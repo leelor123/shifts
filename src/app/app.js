@@ -317,6 +317,7 @@
     }
     App.applyTheme();
     App.recompute();
+    registerSW(); // offline support from the very first visit, before onboarding
     if (S.settings.lock.enabled) App.lock();
     if (!S.settings.onboarded) { App.sheetsApi.onboarding(); return; }
     const hash = (location.hash || '').replace('#', '');
@@ -328,7 +329,6 @@
     if (action === 'start' && !S.activeShift) App.actions['timer-start']();
     if (action === 'add') App.sheetsApi.shiftEditor();
     setTimeout(() => { App.runInsights(); App.autoBackupCheck(); }, 1200);
-    registerSW();
   };
 
   function registerSW() {
