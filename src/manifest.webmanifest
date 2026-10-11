@@ -1,0 +1,25 @@
+{
+  "id": "./",
+  "name": "מעקב משמרות ושכר",
+  "short_name": "משמרות",
+  "description": "מעקב משמרות, חישוב שכר וניתוח תלושים — הכול נשמר בטלפון",
+  "lang": "he",
+  "dir": "rtl",
+  "start_url": "./?source=pwa",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#f7f8fd",
+  "theme_color": "#3a41c6",
+  "categories": ["business", "finance", "productivity"],
+  "icons": [
+    { "src": "icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
+    { "src": "icon-maskable-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" },
+    { "src": "icon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any" }
+  ],
+  "shortcuts": [
+    { "name": "התחל משמרת", "short_name": "התחל משמרת", "url": "./?action=start", "icons": [{ "src": "icon-192.png", "sizes": "192x192", "type": "image/png" }] },
+    { "name": "הוסף משמרת", "short_name": "הוסף משמרת", "url": "./?action=add", "icons": [{ "src": "icon-192.png", "sizes": "192x192", "type": "image/png" }] }
+  ]
+}

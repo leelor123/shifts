@@ -1,0 +1,12 @@
+{
+  "name": "shiftpay",
+  "version": "1.0.0",
+  "private": true,
+  "description": "PWA אישית למעקב משמרות וחישוב שכר",
+  "scripts": {
+    "test": "node tests/run.js",
+    "build": "node tests/run.js && node tools/build.js",
+    "icons": "node tools/make-icons.js docs",
+    "serve": "node tools/serve.js"
+  }
+}
