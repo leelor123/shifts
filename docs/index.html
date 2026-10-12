@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<meta name="theme-color" content="#f6f4ee">
+<meta name="theme-color" content="#0d2b6b">
 <meta name="description" content="מעקב משמרות וחישוב שכר אישי: שבתות, חגים, שעות נוספות, נסיעות, נטו משוער וניתוח תלושים — נשמר בחשבון שלך ועובד גם בלי אינטרנט.">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-capable" content="yes">
@@ -664,8 +664,91 @@ textarea.input.chat-input { min-height: 46px; height: 46px; max-height: 140px; r
 .font-pick .fp-num { font-size: 1.25rem; font-weight: 700; }
 
 /* ---- feedback effects (Settings › Look › Effects & sounds) ---- */
-.fx-pulse { position: fixed; z-index: 9999; width: 14px; height: 14px; margin: -7px 0 0 -7px; border-radius: 50%; border: 2px solid var(--primary); pointer-events: none; animation: fx-pulse .45s var(--ease) forwards; }
-@keyframes fx-pulse { from { transform: scale(.4); opacity: .85; } to { transform: scale(3.4); opacity: 0; } }
+/* tap ring: the outline of the tapped control expands from its centre and fades */
+.fx-ring { position: fixed; z-index: 9999; pointer-events: none; box-sizing: border-box; animation: fx-ring .5s cubic-bezier(.2, .7, .3, 1) forwards; }
+@keyframes fx-ring {
+  from { box-shadow: 0 0 0 0 color-mix(in srgb, var(--primary) 55%, transparent); }
+  to { box-shadow: 0 0 0 12px color-mix(in srgb, var(--primary) 0%, transparent); }
+}
+.fx-coin { position: fixed; z-index: 9999; pointer-events: none; width: 22px; height: 22px; margin: -11px 0 0 -11px; border-radius: 50%; display: grid; place-items: center; font: 800 12px/1 var(--font); color: #8a5300; background: radial-gradient(circle at 35% 35%, #ffe08a, #ffb524 65%, #d68a00); box-shadow: 0 0 0 1.5px #c98200 inset, 0 3px 8px rgba(214, 138, 0, .35); animation: fx-coin 1s cubic-bezier(.2, .8, .3, 1) forwards; }
+@keyframes fx-coin { 0% { transform: translateY(0) scale(.4) rotateY(0); opacity: 0; } 20% { opacity: 1; } 60% { transform: translateY(-34px) scale(1) rotateY(360deg); opacity: 1; } 100% { transform: translateY(-46px) scale(.9) rotateY(540deg); opacity: 0; } }
+.fx-shake { animation: fx-shake .42s cubic-bezier(.36, .07, .19, .97) both; }
+@keyframes fx-shake { 10%, 90% { translate: -2px 0; } 20%, 80% { translate: 4px 0; } 30%, 50%, 70% { translate: -7px 0; } 40%, 60% { translate: 7px 0; } }
+
+/* ---- opening animation ---- */
+#intro { position: fixed; inset: 0; z-index: 10000; display: grid; place-items: center; background: radial-gradient(120% 80% at 50% 30%, #143b8a 0%, #0d2b6b 55%, #0a2156 100%); color: #fff; overflow: hidden; }
+#intro .intro-stage { display: flex; flex-direction: column; align-items: center; margin-top: -6vh; }
+#intro .intro-mark { position: relative; width: 132px; height: 132px; }
+#intro .intro-logo { width: 100%; height: 100%; overflow: visible; }
+#intro .intro-logo path { fill: none; stroke-width: 104; stroke-linecap: round; stroke-linejoin: round; }
+#intro .intro-logo .g { stroke: #2ee59d; }
+#intro .intro-logo .y { stroke: #ffb524; }
+#intro .intro-word { font: 800 2.9rem/1 'Rubik', system-ui, sans-serif; letter-spacing: -.03em; margin-top: 26px; }
+#intro .intro-sub { font: 600 1rem/1.4 'Rubik', 'Assistant', system-ui, sans-serif; color: rgba(255, 255, 255, .72); margin-top: 8px; }
+#intro .intro-coins { position: absolute; inset: 50% auto auto 50%; width: 0; height: 0; }
+#intro .intro-coins i { position: absolute; left: -13px; top: -13px; width: 26px; height: 26px; border-radius: 50%; display: grid; place-items: center; font: 800 14px/1 'Rubik', sans-serif; font-style: normal; color: #8a5300; background: radial-gradient(circle at 35% 35%, #ffe08a, #ffb524 65%, #d68a00); box-shadow: 0 0 0 1.5px #c98200 inset, 0 4px 10px rgba(0, 0, 0, .25); opacity: 0; animation: intro-coin .9s cubic-bezier(.2, .8, .3, 1) forwards; }
+@keyframes intro-coin {
+  0% { opacity: 0; transform: translate(0, 0) scale(.3) rotate(0); }
+  15% { opacity: 1; }
+  55% { opacity: 1; transform: translate(var(--dx), var(--dy)) scale(1) rotate(var(--r)); }
+  100% { opacity: 0; transform: translate(calc(var(--dx) * 1.15), calc(var(--dy) + 70px)) scale(.8) rotate(calc(var(--r) * 2)); }
+}
+/* full version: draw → clock spin → coins → name */
+#intro.play .intro-logo path { stroke-dasharray: 1 2; stroke-dashoffset: 1; animation: intro-draw .6s cubic-bezier(.65, 0, .35, 1) forwards; }
+#intro.play .intro-logo .y { animation-delay: .16s; }
+#intro.play .intro-logo { animation: intro-spin .6s cubic-bezier(.45, 0, .25, 1) .68s both; }
+#intro.play .intro-word { opacity: 0; animation: intro-up .5s cubic-bezier(.2, .8, .3, 1) .78s forwards; }
+#intro.play .intro-sub { opacity: 0; animation: intro-up .5s cubic-bezier(.2, .8, .3, 1) .9s forwards; }
+@keyframes intro-draw { from { stroke-dashoffset: 1; } to { stroke-dashoffset: 0; } }
+@keyframes intro-spin { from { transform: rotate(-360deg) scale(1); } 60% { transform: rotate(14deg) scale(1.06); } to { transform: rotate(0) scale(1); } }
+@keyframes intro-up { from { opacity: 0; transform: translateY(14px); } to { opacity: 1; transform: none; } }
+/* still waiting for the app: the logo keeps turning */
+#intro.wait .intro-logo { animation: intro-turn 1.1s linear infinite; }
+@keyframes intro-turn { to { transform: rotate(360deg); } }
+#intro.out { animation: intro-out .5s cubic-bezier(.7, 0, .3, 1) forwards; pointer-events: none; }
+#intro.out .intro-stage { animation: intro-stage-out .5s cubic-bezier(.7, 0, .3, 1) forwards; }
+@keyframes intro-out { to { opacity: 0; } }
+@keyframes intro-stage-out { to { transform: scale(.82); opacity: 0; } }
+#intro.still.out { animation-duration: .25s; }
+
+/* ---- pull to refresh ---- */
+html, body { overscroll-behavior-y: contain; }
+.ptr { position: fixed; top: calc(var(--safe-t) + 6px); left: 50%; z-index: 60; transform: translate(-50%, -64px); opacity: 0; pointer-events: none; }
+.ptr.settle { transition: transform .35s var(--ease), opacity .35s var(--ease); }
+.ptr-disc { position: relative; width: 44px; height: 44px; border-radius: 50%; background: var(--surface-hi); box-shadow: 0 4px 14px rgba(0, 0, 0, .16), 0 0 0 1px var(--line); display: grid; place-items: center; transition: background-color .2s; }
+.ptr-disc svg { width: 26px; height: 26px; overflow: visible; }
+.ptr-disc path { fill: none; stroke-width: 120; stroke-linecap: round; stroke-dasharray: 1 2; stroke-dashoffset: calc(1 - var(--p, 0)); }
+.ptr-disc .g { stroke: #2ee59d; }
+.ptr-disc .y { stroke: #ffb524; }
+.ptr.armed .ptr-disc { background: #0d2b6b; animation: ptr-pop .25s cubic-bezier(.34, 1.56, .64, 1); }
+.ptr.spin .ptr-disc { background: #0d2b6b; animation: intro-turn .8s linear infinite; --p: 1; }
+.ptr-check { position: absolute; inset: 0; display: grid; place-items: center; color: #fff; font: 800 20px/1 var(--font); opacity: 0; transform: scale(.5); transition: opacity .2s, transform .25s cubic-bezier(.34, 1.56, .64, 1); }
+.ptr.done .ptr-disc { background: var(--good-mark); transform: none !important; }
+.ptr.done .ptr-disc svg { opacity: 0; }
+.ptr.done .ptr-check { opacity: 1; transform: none; }
+@keyframes ptr-pop { 50% { scale: 1.18; } }
+
+/* ---- small moments ---- */
+body.fx .fresh .wave { display: inline-block; transform-origin: 70% 80%; animation: fx-wave 1.6s ease-in-out .2s 1; }
+@keyframes fx-wave { 0%, 60%, 100% { transform: rotate(0); } 10%, 30% { transform: rotate(14deg); } 20% { transform: rotate(-8deg); } 40% { transform: rotate(-4deg); } 50% { transform: rotate(10deg); } }
+body.fx .fresh .chart path[fill]:not([fill="none"]), body.fx .fresh .chart rect:not(.hit) { transform-box: fill-box; transform-origin: 50% 100%; animation: fx-grow .6s cubic-bezier(.2, .8, .3, 1) both; }
+body.fx .fresh .chart path[fill="none"] { stroke-dasharray: 3000; stroke-dashoffset: 3000; animation: fx-line 1s cubic-bezier(.4, 0, .2, 1) forwards; }
+@keyframes fx-grow { from { transform: scaleY(0); } to { transform: scaleY(1); } }
+@keyframes fx-line { to { stroke-dashoffset: 0; } }
+body.fx .fresh .progress i, body.fx .fresh .progress b { animation: fx-fill .9s cubic-bezier(.2, .8, .3, 1) both; transform-origin: right; }
+[dir="rtl"] body.fx .fresh .progress i { transform-origin: right; }
+@keyframes fx-fill { from { transform: scaleX(0); } }
+body.fx .fresh .dot-badge { animation: fx-badge .5s cubic-bezier(.34, 1.56, .64, 1) .3s both; }
+@keyframes fx-badge { from { transform: scale(0); } }
+::view-transition-old(root), ::view-transition-new(root) { animation: none; mix-blend-mode: normal; }
+::view-transition-new(root) { animation: fx-reveal .6s cubic-bezier(.4, 0, .2, 1) both; }
+@keyframes fx-reveal { from { clip-path: circle(0 at var(--vt-x, 50%) var(--vt-y, 50%)); } to { clip-path: circle(150vmax at var(--vt-x, 50%) var(--vt-y, 50%)); } }
+.payday { background: linear-gradient(135deg, #0d2b6b, #1d4a8f); color: #fff; border: 0; }
+.payday .pd-title { font: 800 1.35rem/1.2 var(--display); display: flex; align-items: center; gap: 8px; }
+.payday .pd-emoji { font-size: 1.6rem; display: inline-block; animation: fx-float 2.4s ease-in-out infinite; }
+.payday .btn { background: #ffb524; color: #231a05; margin-top: 12px; }
+@keyframes fx-float { 50% { transform: translateY(-4px) rotate(-6deg); } }
+@media (prefers-reduced-motion: reduce) { #intro *, .ptr * { animation: none !important; } }
 .fx-canvas { position: fixed; inset: 0; width: 100vw; height: 100vh; pointer-events: none; z-index: 9998; }
 body.fx .btn, body.fx .nav .fab, body.fx .chip, body.fx .quick button, body.fx .icon-btn, body.fx .nav .pill, body.fx .item { transition: transform .22s cubic-bezier(.34, 1.56, .64, 1), background-color .15s, filter .15s; }
 body.fx .btn:active, body.fx .quick button:active, body.fx .chip:active { transform: scale(.94); }
@@ -677,12 +760,22 @@ body.fx .item:active { transform: scale(.985); }
 </style>
 </head>
 <body>
-<div id="app"><main id="view"><div class="view"><div class="empty"><h3>טוען…</h3></div></div></main></div>
+<div id="intro" aria-hidden="true">
+  <div class="intro-stage">
+    <div class="intro-mark">
+      <svg class="intro-logo" viewBox="0 0 1024 1024"><path class="g" pathLength="1" d="M300 660 A258 258 0 0 1 603 271 L603 600"/><path class="y" pathLength="1" d="M420 422 L420 753 A258 258 0 0 0 720 362"/></svg>
+      <div class="intro-coins"></div>
+    </div>
+    <div class="intro-word">Shaati</div>
+    <div class="intro-sub">מעקב משמרות ושכר</div>
+  </div>
+</div>
+<div id="app"><main id="view"><div class="view"></div></main></div>
 <nav class="nav" id="nav" aria-label="ניווט ראשי"></nav>
 <div id="print-root" aria-hidden="true"></div>
 <noscript><div style="padding:24px;font-family:sans-serif">האפליקציה דורשת JavaScript.</div></noscript>
 <script>
-window.APP_VERSION = '1.3.1';
+window.APP_VERSION = '1.4.0';
 /* ---- core/util.js ---- */
 /* ============================================================
  * util.js — date/time helpers and formatting.
@@ -3588,31 +3681,41 @@ window.APP_VERSION = '1.3.1';
     return U.fmtDate(U.epochKey(ms));
   }
 
-  root.UI = { icon, esc, money, numv, delta, roleDot, emptyState, toast, openSheet, closeTop, closeAll, dialog, confirm, promptText, onSwipe, vibrate, download, shareFile, copyText, numIn, timeAgo, sheets };
+  /** Wrong or missing input: a message plus a shake and a short buzz. */
+  function invalid(text) { toast(text); if (root.Fx) root.Fx.nope(); }
+  root.UI = { invalid, icon, esc, money, numv, delta, roleDot, emptyState, toast, openSheet, closeTop, closeAll, dialog, confirm, promptText, onSwipe, vibrate, download, shareFile, copyText, numIn, timeAgo, sheets };
 })(typeof window !== 'undefined' ? window : globalThis);
 
 /* ---- app/fx.js ---- */
 /* ============================================================
- * fx.js — small feedback touches: a pulse, a soft click sound and a
- * light vibration on every tap, and confetti for moments worth it
- * (finishing or adding a shift, a birthday). Each part can be turned
- * off in Settings › Look; motion also follows the system "reduce
- * motion" setting. Sounds are synthesized with Web Audio (no files).
+ * fx.js — small feedback touches: a ring that hugs the button you
+ * tapped, a soft click and a light vibration; coins and confetti for
+ * money moments; numbers that count up; a shake for wrong input; a
+ * circular reveal when the theme changes. Each part can be turned off
+ * in Settings › Look; motion also follows the system "reduce motion"
+ * setting. Sounds are synthesized with Web Audio (no files).
  * ============================================================ */
 (function (root) {
   'use strict';
   const Fx = {};
   root.Fx = Fx;
-  const prefs = () => (root.Store && root.Store.S.settings && root.Store.S.settings.fx) || {};
+  // the choices are mirrored in localStorage so the opening animation can read them before the data loads
+  const prefs = () => {
+    const s = root.Store && root.Store.S.settings && root.Store.S.settings.fx;
+    if (s) return s;
+    try { return JSON.parse(localStorage.getItem('fxPrefs')) || {}; } catch (e) { return {}; }
+  };
+  Fx.prefs = prefs;
   const reducedMotion = () => !!(root.matchMedia && root.matchMedia('(prefers-reduced-motion: reduce)').matches);
   Fx.motion = () => prefs().effects !== false && !reducedMotion();
+  const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 
   /* ---------------- sound ---------------- */
   let ac = null;
   function audio() {
     const AC = root.AudioContext || root.webkitAudioContext;
     if (!AC) return null;
-    if (!ac) ac = new AC();
+    if (!ac) { try { ac = new AC(); } catch (e) { return null; } }
     if (ac.state === 'suspended') ac.resume().catch(() => {});
     return ac;
   }
@@ -3624,15 +3727,20 @@ window.APP_VERSION = '1.3.1';
     on: [[660, 0, 0.05, 'triangle', 0.05], [990, 0.045, 0.07, 'triangle', 0.05]],
     off: [[880, 0, 0.05, 'triangle', 0.05], [560, 0.045, 0.07, 'triangle', 0.045]],
     soft: [[330, 0, 0.08, 'sine', 0.06, 220]],
+    tick: [[1600, 0, 0.025, 'square', 0.02]],
+    error: [[220, 0, 0.09, 'sawtooth', 0.035, 180], [196, 0.1, 0.12, 'sawtooth', 0.035, 150]],
     start: [[523, 0, 0.09, 'triangle', 0.06], [784, 0.08, 0.16, 'triangle', 0.06]],
     coin: [[1319, 0, 0.07, 'square', 0.022], [1976, 0.065, 0.24, 'square', 0.022]],
     success: [[523, 0, 0.1, 'triangle', 0.055], [659, 0.08, 0.1, 'triangle', 0.055], [784, 0.16, 0.1, 'triangle', 0.055], [1047, 0.24, 0.28, 'triangle', 0.06]],
+    intro: [[392, 0, 0.18, 'sine', 0.05, 523], [587, 0.16, 0.2, 'sine', 0.05, 659], [784, 0.36, 0.34, 'triangle', 0.045]],
+    whoosh: [[300, 0, 0.22, 'sine', 0.03, 900]],
   };
-  Fx.play = function (name) {
+  /** Plays a sound. With {strict: true} it stays silent unless audio is already allowed to play. */
+  Fx.play = function (name, opts) {
     if (prefs().sound === false) return;
     const notes = SOUNDS[name];
     const c = notes && audio();
-    if (!c) return;
+    if (!c || (opts && opts.strict && c.state !== 'running')) return;
     const t0 = c.currentTime + 0.005;
     for (const [f, at, dur, wave, vol, glide] of notes) {
       const o = c.createOscillator();
@@ -3655,18 +3763,25 @@ window.APP_VERSION = '1.3.1';
     try { if (navigator.vibrate) navigator.vibrate(pattern || 8); } catch (e) { /* not supported */ }
   };
 
-  /* ---------------- visuals ---------------- */
-  Fx.pulse = function (x, y) {
-    if (!Fx.motion() || (!x && !y)) return;
+  /* ---------------- tap ring: hugs the tapped control, from its centre ---------------- */
+  Fx.ring = function (el) {
+    if (!Fx.motion() || !el || !el.getBoundingClientRect) return;
+    const r = el.getBoundingClientRect();
+    if (!r.width || !r.height) return;
     const d = document.createElement('div');
-    d.className = 'fx-pulse';
-    d.style.left = x + 'px';
-    d.style.top = y + 'px';
+    d.className = 'fx-ring';
+    d.style.left = r.left + 'px';
+    d.style.top = r.top + 'px';
+    d.style.width = r.width + 'px';
+    d.style.height = r.height + 'px';
+    d.style.borderRadius = getComputedStyle(el).borderRadius || '12px';
     document.body.appendChild(d);
     setTimeout(() => d.remove(), 600);
   };
-  const CONFETTI = ['#2ee59d', '#ffb627', '#3d7bff', '#ff5c8a', '#8b6cff'];
-  Fx.confetti = function (x, y, count) {
+
+  /* ---------------- particles: confetti and ₪ coins ---------------- */
+  const CONFETTI = ['#2ee59d', '#ffb524', '#3d7bff', '#ff5c8a', '#8b6cff'];
+  function burst(x, y, count, kind) {
     if (!Fx.motion()) return;
     const W = root.innerWidth, H = root.innerHeight;
     if (x == null || (!x && !y)) { x = W / 2; y = H * 0.38; }
@@ -3677,55 +3792,225 @@ window.APP_VERSION = '1.3.1';
     document.body.appendChild(cv);
     const g = cv.getContext('2d');
     g.scale(dpr, dpr);
-    const parts = Array.from({ length: count || 70 }, () => {
-      const a = Math.random() * Math.PI * 2, v = 4 + Math.random() * 7;
-      return { x, y, vx: Math.cos(a) * v, vy: Math.sin(a) * v - 6, r: 3 + Math.random() * 4, rot: Math.random() * 6, vr: (Math.random() - 0.5) * 0.4, c: CONFETTI[(Math.random() * CONFETTI.length) | 0], rect: Math.random() < 0.6 };
+    const parts = Array.from({ length: count }, (_, i) => {
+      const coin = kind === 'coins' || (kind === 'mix' && i % 3 === 0);
+      const a = coin ? -Math.PI / 2 + (Math.random() - 0.5) * 2.2 : Math.random() * Math.PI * 2;
+      const v = coin ? 7 + Math.random() * 6 : 4 + Math.random() * 7;
+      return { x, y, vx: Math.cos(a) * v, vy: Math.sin(a) * v - (coin ? 3 : 6), r: coin ? 9 + Math.random() * 3 : 3 + Math.random() * 4, rot: Math.random() * 6, vr: (Math.random() - 0.5) * (coin ? 0.25 : 0.4), c: CONFETTI[(Math.random() * CONFETTI.length) | 0], coin, rect: Math.random() < 0.6 };
     });
     const t0 = performance.now();
     (function frame(t) {
-      const k = (t - t0) / 1400;
+      const k = (t - t0) / 1500;
       g.clearRect(0, 0, W, H);
       for (const p of parts) {
-        p.vy += 0.32; p.vx *= 0.985; p.x += p.vx; p.y += p.vy; p.rot += p.vr;
+        p.vy += p.coin ? 0.42 : 0.32; p.vx *= 0.985; p.x += p.vx; p.y += p.vy; p.rot += p.vr;
         g.save();
         g.globalAlpha = Math.max(0, 1 - k * k);
-        g.translate(p.x, p.y); g.rotate(p.rot); g.fillStyle = p.c;
-        if (p.rect) g.fillRect(-p.r, -p.r / 2, p.r * 2, p.r);
-        else { g.beginPath(); g.arc(0, 0, p.r * 0.7, 0, Math.PI * 2); g.fill(); }
+        g.translate(p.x, p.y);
+        if (p.coin) {
+          g.scale(Math.abs(Math.cos(p.rot)) * 0.85 + 0.15, 1); // spinning coin
+          const grd = g.createRadialGradient(-p.r * 0.3, -p.r * 0.3, 1, 0, 0, p.r);
+          grd.addColorStop(0, '#ffe08a'); grd.addColorStop(0.7, '#ffb524'); grd.addColorStop(1, '#d68a00');
+          g.fillStyle = grd; g.beginPath(); g.arc(0, 0, p.r, 0, Math.PI * 2); g.fill();
+          g.strokeStyle = '#b87300'; g.lineWidth = 1.2; g.stroke();
+          g.fillStyle = '#8a5300'; g.font = `800 ${Math.round(p.r * 1.15)}px Rubik, sans-serif`; g.textAlign = 'center'; g.textBaseline = 'middle';
+          g.fillText('₪', 0, 1);
+        } else {
+          g.rotate(p.rot); g.fillStyle = p.c;
+          if (p.rect) g.fillRect(-p.r, -p.r / 2, p.r * 2, p.r);
+          else { g.beginPath(); g.arc(0, 0, p.r * 0.7, 0, Math.PI * 2); g.fill(); }
+        }
         g.restore();
       }
       if (k < 1) requestAnimationFrame(frame); else cv.remove();
     })(t0);
+  }
+  Fx.confetti = (x, y, n) => burst(x, y, n || 70, 'confetti');
+  Fx.coins = (x, y, n) => burst(x, y, n || 14, 'coins');
+
+  /** A single small coin that pops up from an element (live earnings). */
+  Fx.coinPop = function (el) {
+    if (!Fx.motion() || !el) return;
+    const r = el.getBoundingClientRect();
+    if (!r.width) return;
+    const c = document.createElement('div');
+    c.className = 'fx-coin';
+    c.textContent = '₪';
+    c.style.left = (r.left + r.width / 2) + 'px';
+    c.style.top = r.top + 'px';
+    document.body.appendChild(c);
+    setTimeout(() => c.remove(), 1000);
   };
 
   /* ---------------- moments ---------------- */
   let lastTap = { x: 0, y: 0 };
   Fx.celebrate = function (kind) {
-    if (kind === 'big') { Fx.play('success'); Fx.haptic([12, 60, 18]); Fx.confetti(); }
-    else if (kind === 'coin') { Fx.play('coin'); Fx.haptic([10, 40, 10]); Fx.confetti(lastTap.x, lastTap.y, 30); }
+    if (kind === 'big') { Fx.play('success'); Fx.haptic([12, 60, 18]); burst(null, null, 80, 'mix'); }
+    else if (kind === 'money') { Fx.play('coin'); setTimeout(() => Fx.play('success'), 180); Fx.haptic([10, 40, 10, 40, 16]); burst(null, null, 60, 'mix'); }
+    else if (kind === 'coin') { Fx.play('coin'); Fx.haptic([10, 40, 10]); burst(lastTap.x, lastTap.y, 16, 'coins'); }
     else if (kind === 'start') { Fx.play('start'); Fx.haptic(20); }
   };
 
-  /** Body class that turns on the springy press animations in the CSS. */
-  Fx.apply = () => { if (document.body) document.body.classList.toggle('fx', Fx.motion()); };
+  /** Wrong input: the open sheet (or dialog) shakes, with a short buzz. */
+  Fx.nope = function () {
+    Fx.play('error');
+    Fx.haptic([30, 40, 30]);
+    if (!Fx.motion()) return;
+    const sheets = document.querySelectorAll('.dialog .box, .sheet.show');
+    const el = sheets[sheets.length - 1];
+    if (!el) return;
+    el.classList.remove('fx-shake'); void el.offsetWidth; el.classList.add('fx-shake');
+    setTimeout(() => el.classList.remove('fx-shake'), 500);
+  };
+
+  /** Numbers that count up to their new value (money totals). */
+  const counted = new Map();
+  Fx.countUps = function (container, key, fresh) {
+    container.querySelectorAll('.hero-num').forEach((el, i) => {
+      const walker = document.createTreeWalker(el, NodeFilter.SHOW_TEXT);
+      let node;
+      while ((node = walker.nextNode()) && !/\d/.test(node.nodeValue));
+      if (!node) return;
+      const m = node.nodeValue.match(/-?[\d,]+(\.\d+)?/);
+      if (!m) return;
+      const to = parseFloat(m[0].replace(/,/g, ''));
+      const dec = m[1] ? m[1].length - 1 : 0;
+      const id = key + ':' + i;
+      const prev = counted.get(id);
+      counted.set(id, to);
+      const from = fresh && prev == null ? 0 : prev;
+      if (from == null || from === to || !Fx.motion()) return;
+      const before = node.nodeValue.slice(0, m.index), after = node.nodeValue.slice(m.index + m[0].length);
+      const fmt = (v) => v.toLocaleString('en-US', { minimumFractionDigits: dec, maximumFractionDigits: dec });
+      const t0 = performance.now(), dur = from === 0 ? 900 : 600;
+      (function step(t) {
+        const k = Math.min(1, (t - t0) / dur);
+        const e = 1 - Math.pow(1 - k, 3);
+        node.nodeValue = before + fmt(from + (to - from) * e) + after;
+        if (k < 1 && node.isConnected) requestAnimationFrame(step);
+      })(t0);
+    });
+  };
+
+  /** Theme / colour change spreading as a circle from the finger (View Transitions). */
+  Fx.reveal = function (x, y, update) {
+    if (!document.startViewTransition || !Fx.motion()) return Promise.resolve(update());
+    const de = document.documentElement;
+    de.style.setProperty('--vt-x', (x || root.innerWidth / 2) + 'px');
+    de.style.setProperty('--vt-y', (y || root.innerHeight / 2) + 'px');
+    Fx.play('whoosh');
+    return document.startViewTransition(update).finished.catch(() => {});
+  };
+
+  /** Body class that turns on the springy press animations in the CSS; prefs mirrored for the intro. */
+  Fx.apply = () => {
+    if (document.body) document.body.classList.toggle('fx', Fx.motion());
+    try { localStorage.setItem('fxPrefs', JSON.stringify(prefs())); } catch (e) { /* private mode */ }
+  };
 
   /* ---------------- every tap ---------------- */
   const TAPPABLE = 'button, a[href], [data-act], .item, .chip, [role="button"], label.switch-row';
+  const RINGED = '.btn, .chip, .icon-btn, .quick button, .seg > button, .color-pick > button, .font-pick > button, .card-link';
   document.addEventListener('click', (e) => {
     const t = e.target.closest && e.target.closest(TAPPABLE);
     if (!t || t.disabled) return;
     if (t.matches('label.switch-row') || e.target.matches('input, select, textarea')) return; // switches sound on "change"
     lastTap = { x: e.clientX, y: e.clientY };
-    Fx.pulse(e.clientX, e.clientY);
-    if (t.classList.contains('fab')) { Fx.play('pop'); Fx.haptic(14); }
-    else if (t.closest('#nav')) { Fx.play('nav'); Fx.haptic(6); }
-    else if (t.classList.contains('danger')) { Fx.play('soft'); Fx.haptic(10); }
-    else { Fx.play('tap'); Fx.haptic(6); }
+    if (t.classList.contains('fab')) { Fx.ring(t); Fx.play('pop'); Fx.haptic(14); }
+    else if (t.closest('#nav')) { Fx.ring(t.querySelector('.pill') || t); Fx.play('nav'); Fx.haptic(6); }
+    else {
+      if (t.matches(RINGED)) Fx.ring(t);
+      if (t.classList.contains('danger')) { Fx.play('soft'); Fx.haptic(10); } else { Fx.play('tap'); Fx.haptic(6); }
+    }
   }, true);
   document.addEventListener('change', (e) => {
     const el = e.target;
     if (el && el.matches && el.matches('input[type="checkbox"]')) { Fx.play(el.checked ? 'on' : 'off'); Fx.haptic(8); }
   }, true);
+
+  Fx.sleep = sleep;
+})(typeof window !== 'undefined' ? window : globalThis);
+
+/* ---- app/intro.js ---- */
+/* ============================================================
+ * intro.js — the opening animation (instead of a "loading" text).
+ * The logo draws itself, spins like a clock hand, coins pop out and
+ * the name rises; then it opens onto the app. It doubles as the
+ * loading indicator: if the app needs more time, the logo keeps
+ * turning. Tap to skip. Short version on later opens in the same
+ * session, after the app was opened from a shortcut, or with effects
+ * off / reduced motion. Markup and first frames live in index.html.
+ * ============================================================ */
+(function (root) {
+  'use strict';
+  const Fx = root.Fx;
+  const el = document.getElementById('intro');
+  if (!el) return;
+  const Intro = {};
+  root.Intro = Intro;
+  const started = performance.now();
+  let ready = false, played = false, closed = false;
+
+  let seen = false;
+  try { seen = sessionStorage.getItem('introSeen') === '1'; sessionStorage.setItem('introSeen', '1'); } catch (e) { /* ignore */ }
+  const fromShortcut = /[?&]action=/.test(location.search);
+  const full = !seen && !fromShortcut && Fx.motion();
+  const SEQUENCE_MS = 1350; // draw → spin → coins → name
+
+  function close() {
+    if (closed) return;
+    closed = true;
+    el.classList.add('out');
+    setTimeout(() => { el.remove(); if (root.App && root.App.applyTheme) root.App.applyTheme(); }, 520);
+  }
+  function maybeClose() {
+    if (closed || !ready) return;
+    if (!played) return;
+    close();
+  }
+
+  if (full) {
+    el.classList.add('play');
+    // sound only if the phone already allows it (installed apps usually do); never a late surprise
+    setTimeout(() => Fx.play('intro', { strict: true }), 60);
+    setTimeout(() => {
+      Fx.play('coin', { strict: true });
+      const coins = el.querySelector('.intro-coins');
+      for (let i = 0; i < 7; i++) {
+        const c = document.createElement('i');
+        const a = (-90 + (i - 3) * 26) * Math.PI / 180;
+        c.style.setProperty('--dx', Math.round(Math.cos(a) * (90 + (i % 2) * 30)) + 'px');
+        c.style.setProperty('--dy', Math.round(Math.sin(a) * (80 + (i % 3) * 22)) + 'px');
+        c.style.setProperty('--r', ((i - 3) * 40) + 'deg');
+        c.style.animationDelay = (i * 25) + 'ms';
+        c.textContent = '₪';
+        coins.appendChild(c);
+      }
+    }, 820);
+    setTimeout(() => { played = true; if (!ready) el.classList.add('wait'); maybeClose(); }, SEQUENCE_MS);
+  } else {
+    el.classList.add('still');
+    setTimeout(() => { played = true; maybeClose(); }, 250);
+  }
+
+  // tap to skip
+  el.addEventListener('click', () => { played = true; if (ready) close(); else el.classList.add('wait'); });
+
+  /** Called once the first screen (app, sign-in, terms or setup) has been drawn behind the intro. */
+  Intro.ready = function () {
+    if (ready) return;
+    ready = true;
+    maybeClose();
+  };
+  // the first screen replaces the "loading" placeholder inside #view
+  const view = document.getElementById('view');
+  if (view) {
+    const mo = new MutationObserver(() => { mo.disconnect(); setTimeout(Intro.ready, 60); });
+    mo.observe(view, { childList: true, subtree: true });
+  }
+  // never hold the app hostage
+  setTimeout(() => { ready = true; played = true; close(); }, 9000);
+  Intro.elapsed = () => performance.now() - started;
 })(typeof window !== 'undefined' ? window : globalThis);
 
 /* ---- app/store.js ---- */
@@ -4389,7 +4674,7 @@ window.APP_VERSION = '1.3.1';
     if (link && link.dataset.font !== font) { link.href = App.fontCss(font); link.dataset.font = font; }
     const dark = st.theme === 'dark' || (st.theme !== 'light' && matchMedia('(prefers-color-scheme: dark)').matches);
     const meta = document.querySelector('meta[name="theme-color"]');
-    if (meta) meta.content = dark ? '#0f1413' : '#f6f4ee';
+    if (meta) meta.content = document.getElementById('intro') ? '#0d2b6b' : dark ? '#0f1413' : '#f6f4ee';
     if (root.Fx) root.Fx.apply();
   };
   matchMedia('(prefers-color-scheme: dark)').addEventListener('change', () => App.applyTheme());
@@ -4405,6 +4690,7 @@ window.APP_VERSION = '1.3.1';
   App.renderNav = function () {
     const nav = document.getElementById('nav');
     const unread = S.notifications.filter((n) => !n.read && n.cat !== 'summary').length;
+    try { if (navigator.setAppBadge) { if (unread) navigator.setAppBadge(unread).catch(() => {}); else navigator.clearAppBadge().catch(() => {}); } } catch (e) { /* not supported */ }
     nav.innerHTML = `<div class="nav-inner">${TABS.map((t) => t.id === 'add'
       ? `<div><button class="fab" data-act="add-menu" aria-label="הוספה">${icon('plus')}</button></div>`
       : `<button class="${App.tab === t.id ? 'on' : ''}" data-act="tab" data-tab="${t.id}" aria-label="${t.label}"><span class="pill">${icon(t.icon)}${t.id === 'home' && unread ? `<span class="dot-badge">${unread > 9 ? '9+' : unread}</span>` : ''}</span>${t.label}</button>`).join('')}</div>`;
@@ -4423,13 +4709,38 @@ window.APP_VERSION = '1.3.1';
     const v = document.getElementById('view');
     const fn = App.views[App.tab] || App.views.home;
     const y = opts && opts.keepScroll ? window.scrollY : 0;
-    const cls = opts && opts.keepScroll ? '' : App.enterDir || '';
+    const fresh = !(opts && opts.keepScroll);
+    const cls = fresh ? (App.enterDir || '') + ' fresh' : '';
     App.enterDir = '';
     v.innerHTML = `<div class="view ${cls}" id="view-inner">${fn()}</div>`;
     if (App.views[App.tab + '_mount']) App.views[App.tab + '_mount'](v);
     App.renderNav();
     if (opts && opts.keepScroll) window.scrollTo(0, y);
     App.tickTimer();
+    if (root.Fx) root.Fx.countUps(v, App.tab, fresh);
+  };
+
+  /** Pull-to-refresh: sync with the cloud, look for a new version, recalculate. */
+  App.refresh = async function () {
+    const jobs = [];
+    if (root.Cloud && root.Cloud.user) jobs.push(root.Cloud.syncNow().catch(() => {}));
+    if ('serviceWorker' in navigator) jobs.push(navigator.serviceWorker.getRegistration().then((r) => r && r.update()).catch(() => {}));
+    await Promise.race([Promise.all(jobs), new Promise((r) => setTimeout(r, 5000))]);
+    App.recompute();
+    await App.runInsights();
+    App.rerender();
+  };
+
+  /** A celebration that happens once per key on this phone (goal reached, payday, birthday). */
+  App.celebrateOnce = function (key, fn) {
+    const done = Object.assign({}, S.meta.celebrated);
+    if (done[key]) return;
+    done[key] = Date.now();
+    const keys = Object.keys(done);
+    if (keys.length > 40) delete done[keys[0]];
+    Store.setMeta({ celebrated: done });
+    const run = () => (document.getElementById('intro') || App.blocking ? setTimeout(run, 300) : fn());
+    setTimeout(run, 700);
   };
   App.rerender = () => App.render({ keepScroll: true });
 
@@ -4479,8 +4790,18 @@ window.APP_VERSION = '1.3.1';
       if (!a) return;
       const r = App.previewActive();
       el.textContent = r ? U.money(r.wage) : '';
+      if (r && root.Fx && document.visibilityState === 'visible') {
+        const step = Math.floor(r.wage / 10);
+        if (coinStep != null && step > coinStep) {
+          root.Fx.coinPop(el);
+          if (Math.floor(step / 10) > Math.floor(coinStep / 10)) { root.Fx.play('coin'); const r2 = el.getBoundingClientRect(); root.Fx.coins(r2.left + r2.width / 2, r2.top, 10); }
+        }
+        coinStep = step;
+      }
     });
+    if (!a) coinStep = null;
   };
+  let coinStep = null;
   setInterval(App.tickTimer, 1000);
 
   /** Shift object for the running timer (for previews and saving). */
@@ -4532,6 +4853,7 @@ window.APP_VERSION = '1.3.1';
     }
     await Store.apply([{ store: 'shifts', put: sh }], 'סיום משמרת');
     await Store.setActive(null);
+    if (S.shifts.filter((x) => x.status === 'done').length === 1) App.celebrateOnce('first-shift', () => UI.toast('המשמרת הראשונה שלך נשמרה! 🎉'));
     root.Fx.celebrate('big');
     const r = App.result(sh.id);
     UI.toast(`נשמר: ${U.hm(r ? r.paidMin : 0)} שעות · ${U.money(r ? r.wage : 0)}`, { label: 'ביטול', fn: App.undo });
@@ -4577,6 +4899,8 @@ window.APP_VERSION = '1.3.1';
     App.insights = res;
     const known = new Set(S.notifications.map((n) => n.key));
     const fresh = res.alerts.filter((a) => !known.has(a.key));
+    const record = fresh.find((a) => a.type === 'record');
+    if (record) App.celebrateOnce('record-' + record.key, () => { root.Fx.celebrate('money'); UI.toast(record.title || 'שיא אישי חדש!'); });
     if (fresh.length) {
       const ops = fresh.map((a) => ({ store: 'notifications', put: Object.assign({ id: a.key, createdAt: Date.now(), read: false }, a) }));
       // keep history bounded
@@ -5421,6 +5745,21 @@ window.FIREBASE_CONFIG = {
       </div></div>`;
   }
 
+  /* ---------------- payday ---------------- */
+  function paydayCard() {
+    const emp = S.employers[0];
+    const today = U.todayKey();
+    const P = Engine.periodOf(today, emp);
+    const due = [Engine.periodOf(U.addDays(P.from, -1), emp), P].find((x) => x.payDate === today);
+    if (!due) return '';
+    const sum = Engine.periodSummary(App.model, due.key, emp.id);
+    if (!(sum.gross > 0)) return '';
+    App.celebrateOnce('payday-' + today, () => root.Fx.celebrate('money'));
+    return `<div class="card payday"><div class="pd-title"><span class="pd-emoji" aria-hidden="true">💸</span> היום יום משכורת!</div>
+      <div style="margin-top:6px;opacity:.92">על ${esc(due.label)} מגיעים לך כ-<b>${money(sum.net.net, 0)}</b> ${sum.net.minor ? '' : 'נטו '}(${money(sum.gross, 0)} ברוטו). כשהתלוש מגיע, כדאי לבדוק שהוא תואם.</div>
+      <button class="btn" data-act="payslip-new">${icon('file')} בדיקת תלוש</button></div>`;
+  }
+
   /* ---------------- period card ---------------- */
   function periodCard() {
     const emp = S.employers[0];
@@ -5431,6 +5770,7 @@ window.FIREBASE_CONFIG = {
     const goalNet = S.settings.goal.type === 'net';
     const curVal = goalNet ? sum.net.net : sum.gross;
     const pct = goal ? Math.min(100, (curVal / goal) * 100) : 0;
+    if (goal && pct >= 100) App.celebrateOnce('goal-' + P.key, () => { root.Fx.celebrate('money'); UI.toast('הגעת ליעד החודשי! 🎯'); });
     const projPct = goal && proj && proj.withPlanned ? Math.min(100, ((goalNet ? proj.withPlanned * (sum.gross ? sum.net.net / sum.gross : 0.85) : proj.withPlanned) / goal) * 100) : 0;
     return `<div class="card tonal card-link" data-act="go-summary">
       <div class="row-flex"><div style="flex:1"><div class="small bold">${emp.periodStartDay > 1 ? 'תקופת שכר' : 'החודש'} · ${esc(P.label)}</div>
@@ -5463,12 +5803,11 @@ window.FIREBASE_CONFIG = {
     return `<div class="card share-card"><div class="card-head">${icon('sparkle')}<h3>${esc(w.title)}</h3><button class="icon-btn" data-act="weekly-share" data-id="${esc(w.id)}" aria-label="שתף">${icon('share')}</button><button class="icon-btn" data-act="notif-read" data-id="${esc(w.id)}" aria-label="סגור">${icon('x')}</button></div>
       <div style="font-size:1.05rem">${esc(w.body)}</div><div class="tiny muted" style="margin-top:6px">${esc(w.explain)}</div></div>`;
   }
-  let bdayCelebrated = false;
   function birthdayCard() {
     const b = S.settings.birthDate;
     if (!b || b.slice(5) !== U.todayKey().slice(5)) return '';
     const age = Engine.ageAt(b, U.todayKey());
-    if (!bdayCelebrated) { bdayCelebrated = true; setTimeout(() => root.Fx.celebrate('big'), 700); }
+    App.celebrateOnce('bday-' + U.todayKey(), () => root.Fx.celebrate('big'));
     return `<div class="card bday"><div class="bday-confetti" aria-hidden="true"></div><div class="bday-title">מזל טוב${S.settings.userName ? ', ' + esc(S.settings.userName) : ''}!</div>
       <div>יום הולדת ${age} שמח 🎂 שתהיה שנה של משמרות טובות, בוסים הוגנים ותלושים בלי הפתעות.</div>${age === 18 ? '<div class="small" style="margin-top:6px">מהיום החישוב כולל ניכויי חובה רגילים.</div>' : ''}</div>`;
   }
@@ -5495,9 +5834,10 @@ window.FIREBASE_CONFIG = {
     const recent = results.filter((r) => r.status === 'done').sort((a, b) => b.start - a.start).slice(0, 5);
     const recentEntries = S.entries.slice().sort((a, b) => b.date.localeCompare(a.date)).slice(0, 2);
     return `
-      <div class="topbar"><div class="titles"><h1>${greeting()} 👋</h1><div class="sub">${U.fmtDate(today, 'long')} · ${esc(hd.toString())}${hol ? ' · ' + esc(hol) : ''}</div></div>
+      <div class="topbar"><div class="titles"><h1>${greeting()} <span class="wave">👋</span></h1><div class="sub">${U.fmtDate(today, 'long')} · ${esc(hd.toString())}${hol ? ' · ' + esc(hol) : ''}</div></div>
         ${App.cloudBadge ? App.cloudBadge() : ''}<button class="icon-btn tonal" data-act="insights" aria-label="התראות">${icon('bell')}${unread ? `<span class="dot-badge">${unread > 9 ? '9+' : unread}</span>` : ''}</button></div>
       ${birthdayCard()}
+      ${paydayCard()}
       ${banners()}
       ${timerCard()}
       ${weeklyCard()}
@@ -5956,8 +6296,8 @@ window.FIREBASE_CONFIG = {
     });
 
     async function save() {
-      if (!d.date || !d.startT || !d.endT) { UI.toast('מלא תאריך, שעת התחלה ושעת סיום'); return; }
-      if (!d.roleId) { UI.toast('בחר תפקיד'); return; }
+      if (!d.date || !d.startT || !d.endT) { UI.invalid('מלא תאריך, שעת התחלה ושעת סיום'); return; }
+      if (!d.roleId) { UI.invalid('בחר תפקיד'); return; }
       const sh = shiftFrom(d);
       const hours = (sh.end - sh.start) / U.HOUR;
       if (hours > (+S.settings.alerts.suspiciousHours || 20)) {
@@ -6012,7 +6352,7 @@ window.FIREBASE_CONFIG = {
               note: q('#en-note').value, type: q('#en-type') ? q('#en-type').value : d.type, label: q('#en-label') ? q('#en-label').value : '',
               employerId: q('#en-emp') ? q('#en-emp').value : d.employerId,
             });
-            if (out.kind === 'adjustment' && !(out.amount > 0)) { UI.toast('הזן סכום'); return; }
+            if (out.kind === 'adjustment' && !(out.amount > 0)) { UI.invalid('הזן סכום'); return; }
             if (out.kind === 'adjustment') out.status = 'done';
             UI.closeTop();
             await App.saveOps([{ store: 'entries', put: out }], orig ? 'עריכה' : 'הוספה', 'נשמר');
@@ -6696,7 +7036,7 @@ window.FIREBASE_CONFIG = {
           if (b.hasAttribute('data-ai')) { readInputs(); App.aiAnalyze(d.text, (res) => { Object.assign(d.fields, res.fields); d.other = res.other.length ? res.other : d.other; if (res.period) d.period = res.period; d.notes = res.notes; d.source = 'ai'; redraw(); }); }
           if (b.hasAttribute('data-go')) {
             readInputs();
-            if (!/^\d{4}-\d{2}$/.test(d.period || '')) { UI.toast('בחר את חודש התלוש'); return; }
+            if (!/^\d{4}-\d{2}$/.test(d.period || '')) { UI.invalid('בחר את חודש התלוש'); return; }
             // mapped unknown lines
             for (const o of d.other) {
               if (Payslip.FIELD[o.guess] && !d.fields[o.guess]) d.fields[o.guess] = { value: Math.abs(o.value), line: o.line };
@@ -7312,8 +7652,8 @@ window.FIREBASE_CONFIG = {
           if (b.dataset.rdel) { read(); d.rates.splice(+b.dataset.rdel, 1); redraw(); }
           if (b.hasAttribute('data-save')) {
             read();
-            if (!d.name) { UI.toast('הזן שם'); return; }
-            if (d.rates.some((r) => !(r.rate > 0))) { UI.toast('הזן תעריף לשעה'); return; }
+            if (!d.name) { UI.invalid('הזן שם'); return; }
+            if (d.rates.some((r) => !(r.rate > 0))) { UI.invalid('הזן תעריף לשעה'); return; }
             UI.closeTop();
             await App.saveOps([{ store: 'roles', put: d }], orig ? 'עריכת תפקיד' : 'הוספת תפקיד', 'התפקיד נשמר');
             redrawParent();
@@ -7530,8 +7870,8 @@ window.FIREBASE_CONFIG = {
       el.addEventListener('click', async (e) => {
         const b = e.target.closest('button');
         if (!b) return;
-        if (b.dataset.theme) await Store.setSettings((s) => { s.theme = b.dataset.theme; });
-        else if (b.dataset.accent) await Store.setSettings((s) => { s.accent = b.dataset.accent; });
+        if (b.dataset.theme) await root.Fx.reveal(e.clientX, e.clientY, async () => { await Store.setSettings((s) => { s.theme = b.dataset.theme; }); draw(); });
+        else if (b.dataset.accent) await root.Fx.reveal(e.clientX, e.clientY, async () => { await Store.setSettings((s) => { s.accent = b.dataset.accent; }); draw(); });
         else if (b.dataset.fs) await Store.setSettings((s) => { s.fontScale = +b.dataset.fs; });
         else if (b.dataset.font) await Store.setSettings((s) => { s.font = b.dataset.font; });
         else if (b.hasAttribute('data-fx-try')) { root.Fx.celebrate('big'); return; }
@@ -7553,9 +7893,9 @@ window.FIREBASE_CONFIG = {
       if (set) set.onclick = async () => {
         const p1 = await UI.promptText('קוד חדש', '4–8 ספרות', '', { type: 'password', inputmode: 'numeric', ltr: true, ok: 'המשך' });
         if (!p1) return;
-        if (!/^\d{4,8}$/.test(p1)) { UI.toast('הקוד צריך להיות 4–8 ספרות'); return; }
+        if (!/^\d{4,8}$/.test(p1)) { UI.invalid('הקוד צריך להיות 4–8 ספרות'); return; }
         const p2 = await UI.promptText('אימות', 'הזן שוב את הקוד', '', { type: 'password', inputmode: 'numeric', ltr: true, ok: 'שמור' });
-        if (p1 !== p2) { UI.toast('הקודים לא תואמים'); return; }
+        if (p1 !== p2) { UI.invalid('הקודים לא תואמים'); return; }
         const salt = U.uid();
         const hash = await App.hashPin(p1, salt);
         await Store.setSettings((s) => { s.lock = Object.assign(s.lock, { enabled: true, hash, salt, len: p1.length }); });
@@ -8320,6 +8660,89 @@ window.FIREBASE_CONFIG = {
     ok.onchange = () => { go.disabled = !ok.checked; };
     go.onclick = async () => { App.blocking = null; await App.acceptLegal(); nav.style.display = ''; next(); };
   };
+})(typeof window !== 'undefined' ? window : globalThis);
+
+/* ---- app/ptr.js ---- */
+/* ============================================================
+ * ptr.js — pull down to refresh. The logo draws itself as you pull;
+ * past the threshold it clicks (sound + vibration); on release it
+ * spins while the app syncs with the cloud, looks for a new version
+ * and recalculates, then shows a check. Replaces the browser's own
+ * pull-to-refresh, which would reload the whole app.
+ * ============================================================ */
+(function (root) {
+  'use strict';
+  const { App, Fx } = root;
+  const THRESHOLD = 72, MAX = 128;
+  const LOGO = '<svg viewBox="0 0 1024 1024" aria-hidden="true"><path class="g" pathLength="1" d="M300 660 A258 258 0 0 1 603 271 L603 600"/><path class="y" pathLength="1" d="M420 422 L420 753 A258 258 0 0 0 720 362"/></svg>';
+  const ind = document.createElement('div');
+  ind.className = 'ptr';
+  ind.setAttribute('aria-hidden', 'true');
+  ind.innerHTML = `<div class="ptr-disc">${LOGO}<span class="ptr-check">✓</span></div>`;
+  document.body.appendChild(ind);
+  const disc = ind.firstChild;
+
+  let startY = null, dist = 0, armed = false, busy = false;
+  const inner = () => document.getElementById('view-inner');
+  const blocked = (target) => busy || App.blocking || root.scrollY > 0
+    || document.querySelector('.sheet, .dialog, #intro, #lock')
+    || (target.closest && target.closest('input, textarea, select, .chart, [data-no-ptr]'));
+
+  function paint(d) {
+    const p = Math.min(1, d / THRESHOLD);
+    ind.style.transform = `translate(-50%, ${Math.round(d - 64)}px)`;
+    ind.style.opacity = Math.min(1, d / 36);
+    disc.style.transform = `rotate(${Math.round(d * 3)}deg) scale(${0.7 + 0.3 * p})`;
+    disc.style.setProperty('--p', p.toFixed(3));
+    const v = inner();
+    if (v) v.style.transform = d ? `translateY(${Math.round(d * 0.35)}px)` : '';
+  }
+  function settle(cls) {
+    ind.classList.add('settle');
+    const v = inner();
+    if (v) { v.style.transition = 'transform .35s var(--ease)'; setTimeout(() => { v.style.transition = ''; }, 380); }
+    if (cls) ind.classList.add(cls);
+    paint(0);
+    setTimeout(() => { ind.classList.remove('settle', 'armed', 'spin', 'done'); }, 420);
+  }
+
+  document.addEventListener('touchstart', (e) => {
+    if (e.touches.length !== 1 || blocked(e.target)) { startY = null; return; }
+    startY = e.touches[0].clientY;
+    dist = 0; armed = false;
+    ind.classList.remove('settle');
+  }, { passive: true });
+
+  document.addEventListener('touchmove', (e) => {
+    if (startY == null) return;
+    const dy = e.touches[0].clientY - startY;
+    if (dy <= 0 || root.scrollY > 0) { if (dist) paint(0); dist = 0; return; }
+    dist = Math.min(MAX, dy * 0.5);
+    paint(dist);
+    if (dist >= THRESHOLD && !armed) { armed = true; ind.classList.add('armed'); Fx.haptic(12); Fx.play('tick'); }
+    else if (dist < THRESHOLD && armed) { armed = false; ind.classList.remove('armed'); }
+  }, { passive: true });
+
+  async function end() {
+    if (startY == null) return;
+    startY = null;
+    if (!armed) { settle(); return; }
+    busy = true;
+    ind.classList.add('settle', 'spin');
+    paint(THRESHOLD * 0.9);
+    const t0 = Date.now();
+    try { await App.refresh(); } catch (e) { console.warn('refresh', e); }
+    const left = 700 - (Date.now() - t0);
+    if (left > 0) await Fx.sleep(left);
+    ind.classList.remove('spin');
+    ind.classList.add('done');
+    Fx.play('pop'); Fx.haptic(10);
+    await Fx.sleep(450);
+    settle();
+    busy = false;
+  }
+  document.addEventListener('touchend', end, { passive: true });
+  document.addEventListener('touchcancel', () => { if (startY != null) { startY = null; settle(); } }, { passive: true });
 })(typeof window !== 'undefined' ? window : globalThis);
 
 </script>

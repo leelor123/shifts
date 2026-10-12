@@ -195,8 +195,8 @@
           if (b.dataset.rdel) { read(); d.rates.splice(+b.dataset.rdel, 1); redraw(); }
           if (b.hasAttribute('data-save')) {
             read();
-            if (!d.name) { UI.toast('הזן שם'); return; }
-            if (d.rates.some((r) => !(r.rate > 0))) { UI.toast('הזן תעריף לשעה'); return; }
+            if (!d.name) { UI.invalid('הזן שם'); return; }
+            if (d.rates.some((r) => !(r.rate > 0))) { UI.invalid('הזן תעריף לשעה'); return; }
             UI.closeTop();
             await App.saveOps([{ store: 'roles', put: d }], orig ? 'עריכת תפקיד' : 'הוספת תפקיד', 'התפקיד נשמר');
             redrawParent();
@@ -413,8 +413,8 @@
       el.addEventListener('click', async (e) => {
         const b = e.target.closest('button');
         if (!b) return;
-        if (b.dataset.theme) await Store.setSettings((s) => { s.theme = b.dataset.theme; });
-        else if (b.dataset.accent) await Store.setSettings((s) => { s.accent = b.dataset.accent; });
+        if (b.dataset.theme) await root.Fx.reveal(e.clientX, e.clientY, async () => { await Store.setSettings((s) => { s.theme = b.dataset.theme; }); draw(); });
+        else if (b.dataset.accent) await root.Fx.reveal(e.clientX, e.clientY, async () => { await Store.setSettings((s) => { s.accent = b.dataset.accent; }); draw(); });
         else if (b.dataset.fs) await Store.setSettings((s) => { s.fontScale = +b.dataset.fs; });
         else if (b.dataset.font) await Store.setSettings((s) => { s.font = b.dataset.font; });
         else if (b.hasAttribute('data-fx-try')) { root.Fx.celebrate('big'); return; }
@@ -436,9 +436,9 @@
       if (set) set.onclick = async () => {
         const p1 = await UI.promptText('קוד חדש', '4–8 ספרות', '', { type: 'password', inputmode: 'numeric', ltr: true, ok: 'המשך' });
         if (!p1) return;
-        if (!/^\d{4,8}$/.test(p1)) { UI.toast('הקוד צריך להיות 4–8 ספרות'); return; }
+        if (!/^\d{4,8}$/.test(p1)) { UI.invalid('הקוד צריך להיות 4–8 ספרות'); return; }
         const p2 = await UI.promptText('אימות', 'הזן שוב את הקוד', '', { type: 'password', inputmode: 'numeric', ltr: true, ok: 'שמור' });
-        if (p1 !== p2) { UI.toast('הקודים לא תואמים'); return; }
+        if (p1 !== p2) { UI.invalid('הקודים לא תואמים'); return; }
         const salt = U.uid();
         const hash = await App.hashPin(p1, salt);
         await Store.setSettings((s) => { s.lock = Object.assign(s.lock, { enabled: true, hash, salt, len: p1.length }); });

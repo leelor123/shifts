@@ -405,8 +405,8 @@
     });
 
     async function save() {
-      if (!d.date || !d.startT || !d.endT) { UI.toast('מלא תאריך, שעת התחלה ושעת סיום'); return; }
-      if (!d.roleId) { UI.toast('בחר תפקיד'); return; }
+      if (!d.date || !d.startT || !d.endT) { UI.invalid('מלא תאריך, שעת התחלה ושעת סיום'); return; }
+      if (!d.roleId) { UI.invalid('בחר תפקיד'); return; }
       const sh = shiftFrom(d);
       const hours = (sh.end - sh.start) / U.HOUR;
       if (hours > (+S.settings.alerts.suspiciousHours || 20)) {
@@ -461,7 +461,7 @@
               note: q('#en-note').value, type: q('#en-type') ? q('#en-type').value : d.type, label: q('#en-label') ? q('#en-label').value : '',
               employerId: q('#en-emp') ? q('#en-emp').value : d.employerId,
             });
-            if (out.kind === 'adjustment' && !(out.amount > 0)) { UI.toast('הזן סכום'); return; }
+            if (out.kind === 'adjustment' && !(out.amount > 0)) { UI.invalid('הזן סכום'); return; }
             if (out.kind === 'adjustment') out.status = 'done';
             UI.closeTop();
             await App.saveOps([{ store: 'entries', put: out }], orig ? 'עריכה' : 'הוספה', 'נשמר');

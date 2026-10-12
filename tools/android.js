@@ -46,7 +46,7 @@ async function generate() {
     themeColor: '#1D4A4F', themeColorDark: '#0F1413',
     navigationColor: '#F6F4EE', navigationColorDark: '#0F1413',
     navigationDividerColor: '#E3DFD4', navigationDividerColorDark: '#26302E',
-    backgroundColor: '#F6F4EE',
+    backgroundColor: '#0D2B6B', // same navy as the opening animation: no flash between them
     monochromeIconUrl: `https://${APP.host}${APP.scope}icon-mono-512.png`, // notification icon
     enableNotifications: true,
     orientation: 'portrait',

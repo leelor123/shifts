@@ -171,7 +171,7 @@
           if (b.hasAttribute('data-ai')) { readInputs(); App.aiAnalyze(d.text, (res) => { Object.assign(d.fields, res.fields); d.other = res.other.length ? res.other : d.other; if (res.period) d.period = res.period; d.notes = res.notes; d.source = 'ai'; redraw(); }); }
           if (b.hasAttribute('data-go')) {
             readInputs();
-            if (!/^\d{4}-\d{2}$/.test(d.period || '')) { UI.toast('בחר את חודש התלוש'); return; }
+            if (!/^\d{4}-\d{2}$/.test(d.period || '')) { UI.invalid('בחר את חודש התלוש'); return; }
             // mapped unknown lines
             for (const o of d.other) {
               if (Payslip.FIELD[o.guess] && !d.fields[o.guess]) d.fields[o.guess] = { value: Math.abs(o.value), line: o.line };

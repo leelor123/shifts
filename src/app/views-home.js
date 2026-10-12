@@ -74,6 +74,21 @@
       </div></div>`;
   }
 
+  /* ---------------- payday ---------------- */
+  function paydayCard() {
+    const emp = S.employers[0];
+    const today = U.todayKey();
+    const P = Engine.periodOf(today, emp);
+    const due = [Engine.periodOf(U.addDays(P.from, -1), emp), P].find((x) => x.payDate === today);
+    if (!due) return '';
+    const sum = Engine.periodSummary(App.model, due.key, emp.id);
+    if (!(sum.gross > 0)) return '';
+    App.celebrateOnce('payday-' + today, () => root.Fx.celebrate('money'));
+    return `<div class="card payday"><div class="pd-title"><span class="pd-emoji" aria-hidden="true">💸</span> היום יום משכורת!</div>
+      <div style="margin-top:6px;opacity:.92">על ${esc(due.label)} מגיעים לך כ-<b>${money(sum.net.net, 0)}</b> ${sum.net.minor ? '' : 'נטו '}(${money(sum.gross, 0)} ברוטו). כשהתלוש מגיע, כדאי לבדוק שהוא תואם.</div>
+      <button class="btn" data-act="payslip-new">${icon('file')} בדיקת תלוש</button></div>`;
+  }
+
   /* ---------------- period card ---------------- */
   function periodCard() {
     const emp = S.employers[0];
@@ -84,6 +99,7 @@
     const goalNet = S.settings.goal.type === 'net';
     const curVal = goalNet ? sum.net.net : sum.gross;
     const pct = goal ? Math.min(100, (curVal / goal) * 100) : 0;
+    if (goal && pct >= 100) App.celebrateOnce('goal-' + P.key, () => { root.Fx.celebrate('money'); UI.toast('הגעת ליעד החודשי! 🎯'); });
     const projPct = goal && proj && proj.withPlanned ? Math.min(100, ((goalNet ? proj.withPlanned * (sum.gross ? sum.net.net / sum.gross : 0.85) : proj.withPlanned) / goal) * 100) : 0;
     return `<div class="card tonal card-link" data-act="go-summary">
       <div class="row-flex"><div style="flex:1"><div class="small bold">${emp.periodStartDay > 1 ? 'תקופת שכר' : 'החודש'} · ${esc(P.label)}</div>
@@ -116,12 +132,11 @@
     return `<div class="card share-card"><div class="card-head">${icon('sparkle')}<h3>${esc(w.title)}</h3><button class="icon-btn" data-act="weekly-share" data-id="${esc(w.id)}" aria-label="שתף">${icon('share')}</button><button class="icon-btn" data-act="notif-read" data-id="${esc(w.id)}" aria-label="סגור">${icon('x')}</button></div>
       <div style="font-size:1.05rem">${esc(w.body)}</div><div class="tiny muted" style="margin-top:6px">${esc(w.explain)}</div></div>`;
   }
-  let bdayCelebrated = false;
   function birthdayCard() {
     const b = S.settings.birthDate;
     if (!b || b.slice(5) !== U.todayKey().slice(5)) return '';
     const age = Engine.ageAt(b, U.todayKey());
-    if (!bdayCelebrated) { bdayCelebrated = true; setTimeout(() => root.Fx.celebrate('big'), 700); }
+    App.celebrateOnce('bday-' + U.todayKey(), () => root.Fx.celebrate('big'));
     return `<div class="card bday"><div class="bday-confetti" aria-hidden="true"></div><div class="bday-title">מזל טוב${S.settings.userName ? ', ' + esc(S.settings.userName) : ''}!</div>
       <div>יום הולדת ${age} שמח 🎂 שתהיה שנה של משמרות טובות, בוסים הוגנים ותלושים בלי הפתעות.</div>${age === 18 ? '<div class="small" style="margin-top:6px">מהיום החישוב כולל ניכויי חובה רגילים.</div>' : ''}</div>`;
   }
@@ -148,9 +163,10 @@
     const recent = results.filter((r) => r.status === 'done').sort((a, b) => b.start - a.start).slice(0, 5);
     const recentEntries = S.entries.slice().sort((a, b) => b.date.localeCompare(a.date)).slice(0, 2);
     return `
-      <div class="topbar"><div class="titles"><h1>${greeting()} 👋</h1><div class="sub">${U.fmtDate(today, 'long')} · ${esc(hd.toString())}${hol ? ' · ' + esc(hol) : ''}</div></div>
+      <div class="topbar"><div class="titles"><h1>${greeting()} <span class="wave">👋</span></h1><div class="sub">${U.fmtDate(today, 'long')} · ${esc(hd.toString())}${hol ? ' · ' + esc(hol) : ''}</div></div>
         ${App.cloudBadge ? App.cloudBadge() : ''}<button class="icon-btn tonal" data-act="insights" aria-label="התראות">${icon('bell')}${unread ? `<span class="dot-badge">${unread > 9 ? '9+' : unread}</span>` : ''}</button></div>
       ${birthdayCard()}
+      ${paydayCard()}
       ${banners()}
       ${timerCard()}
       ${weeklyCard()}

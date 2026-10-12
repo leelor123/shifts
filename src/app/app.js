@@ -67,7 +67,7 @@
     if (link && link.dataset.font !== font) { link.href = App.fontCss(font); link.dataset.font = font; }
     const dark = st.theme === 'dark' || (st.theme !== 'light' && matchMedia('(prefers-color-scheme: dark)').matches);
     const meta = document.querySelector('meta[name="theme-color"]');
-    if (meta) meta.content = dark ? '#0f1413' : '#f6f4ee';
+    if (meta) meta.content = document.getElementById('intro') ? '#0d2b6b' : dark ? '#0f1413' : '#f6f4ee';
     if (root.Fx) root.Fx.apply();
   };
   matchMedia('(prefers-color-scheme: dark)').addEventListener('change', () => App.applyTheme());
@@ -83,6 +83,7 @@
   App.renderNav = function () {
     const nav = document.getElementById('nav');
     const unread = S.notifications.filter((n) => !n.read && n.cat !== 'summary').length;
+    try { if (navigator.setAppBadge) { if (unread) navigator.setAppBadge(unread).catch(() => {}); else navigator.clearAppBadge().catch(() => {}); } } catch (e) { /* not supported */ }
     nav.innerHTML = `<div class="nav-inner">${TABS.map((t) => t.id === 'add'
       ? `<div><button class="fab" data-act="add-menu" aria-label="הוספה">${icon('plus')}</button></div>`
       : `<button class="${App.tab === t.id ? 'on' : ''}" data-act="tab" data-tab="${t.id}" aria-label="${t.label}"><span class="pill">${icon(t.icon)}${t.id === 'home' && unread ? `<span class="dot-badge">${unread > 9 ? '9+' : unread}</span>` : ''}</span>${t.label}</button>`).join('')}</div>`;
@@ -101,13 +102,38 @@
     const v = document.getElementById('view');
     const fn = App.views[App.tab] || App.views.home;
     const y = opts && opts.keepScroll ? window.scrollY : 0;
-    const cls = opts && opts.keepScroll ? '' : App.enterDir || '';
+    const fresh = !(opts && opts.keepScroll);
+    const cls = fresh ? (App.enterDir || '') + ' fresh' : '';
     App.enterDir = '';
     v.innerHTML = `<div class="view ${cls}" id="view-inner">${fn()}</div>`;
     if (App.views[App.tab + '_mount']) App.views[App.tab + '_mount'](v);
     App.renderNav();
     if (opts && opts.keepScroll) window.scrollTo(0, y);
     App.tickTimer();
+    if (root.Fx) root.Fx.countUps(v, App.tab, fresh);
+  };
+
+  /** Pull-to-refresh: sync with the cloud, look for a new version, recalculate. */
+  App.refresh = async function () {
+    const jobs = [];
+    if (root.Cloud && root.Cloud.user) jobs.push(root.Cloud.syncNow().catch(() => {}));
+    if ('serviceWorker' in navigator) jobs.push(navigator.serviceWorker.getRegistration().then((r) => r && r.update()).catch(() => {}));
+    await Promise.race([Promise.all(jobs), new Promise((r) => setTimeout(r, 5000))]);
+    App.recompute();
+    await App.runInsights();
+    App.rerender();
+  };
+
+  /** A celebration that happens once per key on this phone (goal reached, payday, birthday). */
+  App.celebrateOnce = function (key, fn) {
+    const done = Object.assign({}, S.meta.celebrated);
+    if (done[key]) return;
+    done[key] = Date.now();
+    const keys = Object.keys(done);
+    if (keys.length > 40) delete done[keys[0]];
+    Store.setMeta({ celebrated: done });
+    const run = () => (document.getElementById('intro') || App.blocking ? setTimeout(run, 300) : fn());
+    setTimeout(run, 700);
   };
   App.rerender = () => App.render({ keepScroll: true });
 
@@ -157,8 +183,18 @@
       if (!a) return;
       const r = App.previewActive();
       el.textContent = r ? U.money(r.wage) : '';
+      if (r && root.Fx && document.visibilityState === 'visible') {
+        const step = Math.floor(r.wage / 10);
+        if (coinStep != null && step > coinStep) {
+          root.Fx.coinPop(el);
+          if (Math.floor(step / 10) > Math.floor(coinStep / 10)) { root.Fx.play('coin'); const r2 = el.getBoundingClientRect(); root.Fx.coins(r2.left + r2.width / 2, r2.top, 10); }
+        }
+        coinStep = step;
+      }
     });
+    if (!a) coinStep = null;
   };
+  let coinStep = null;
   setInterval(App.tickTimer, 1000);
 
   /** Shift object for the running timer (for previews and saving). */
@@ -210,6 +246,7 @@
     }
     await Store.apply([{ store: 'shifts', put: sh }], 'סיום משמרת');
     await Store.setActive(null);
+    if (S.shifts.filter((x) => x.status === 'done').length === 1) App.celebrateOnce('first-shift', () => UI.toast('המשמרת הראשונה שלך נשמרה! 🎉'));
     root.Fx.celebrate('big');
     const r = App.result(sh.id);
     UI.toast(`נשמר: ${U.hm(r ? r.paidMin : 0)} שעות · ${U.money(r ? r.wage : 0)}`, { label: 'ביטול', fn: App.undo });
@@ -255,6 +292,8 @@
     App.insights = res;
     const known = new Set(S.notifications.map((n) => n.key));
     const fresh = res.alerts.filter((a) => !known.has(a.key));
+    const record = fresh.find((a) => a.type === 'record');
+    if (record) App.celebrateOnce('record-' + record.key, () => { root.Fx.celebrate('money'); UI.toast(record.title || 'שיא אישי חדש!'); });
     if (fresh.length) {
       const ops = fresh.map((a) => ({ store: 'notifications', put: Object.assign({ id: a.key, createdAt: Date.now(), read: false }, a) }));
       // keep history bounded

@@ -263,5 +263,7 @@
     return U.fmtDate(U.epochKey(ms));
   }
 
-  root.UI = { icon, esc, money, numv, delta, roleDot, emptyState, toast, openSheet, closeTop, closeAll, dialog, confirm, promptText, onSwipe, vibrate, download, shareFile, copyText, numIn, timeAgo, sheets };
+  /** Wrong or missing input: a message plus a shake and a short buzz. */
+  function invalid(text) { toast(text); if (root.Fx) root.Fx.nope(); }
+  root.UI = { invalid, icon, esc, money, numv, delta, roleDot, emptyState, toast, openSheet, closeTop, closeAll, dialog, confirm, promptText, onSwipe, vibrate, download, shareFile, copyText, numIn, timeAgo, sheets };
 })(typeof window !== 'undefined' ? window : globalThis);
