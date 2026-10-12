@@ -1,0 +1,60 @@
+{
+  "packageId": "io.github.leelor123.shifts",
+  "host": "leelor123.github.io",
+  "name": "מעקב משמרות ושכר",
+  "launcherName": "משמרות ושכר",
+  "display": "standalone",
+  "themeColor": "#1D4A4F",
+  "themeColorDark": "#0F1413",
+  "navigationColor": "#F6F4EE",
+  "navigationColorDark": "#0F1413",
+  "navigationDividerColor": "#E3DFD4",
+  "navigationDividerColorDark": "#26302E",
+  "backgroundColor": "#F6F4EE",
+  "enableNotifications": true,
+  "startUrl": "/shifts/?source=twa",
+  "iconUrl": "https://leelor123.github.io/shifts/icon-512.png",
+  "maskableIconUrl": "https://leelor123.github.io/shifts/icon-maskable-512.png",
+  "splashScreenFadeOutDuration": 300,
+  "signingKey": {
+    "path": "C:\\Users\\User\\ShiftPay-Android\\keys\\shiftpay-upload.jks",
+    "alias": "shiftpay"
+  },
+  "appVersionName": "1.2.0",
+  "appVersionCode": 10200,
+  "shortcuts": [
+    {
+      "name": "התחל משמרת",
+      "shortName": "התחל משמרת",
+      "url": "https://leelor123.github.io/shifts/?action=start",
+      "chosenIconUrl": "https://leelor123.github.io/shifts/icon-192.png"
+    },
+    {
+      "name": "הוסף משמרת",
+      "shortName": "הוסף משמרת",
+      "url": "https://leelor123.github.io/shifts/?action=add",
+      "chosenIconUrl": "https://leelor123.github.io/shifts/icon-192.png"
+    }
+  ],
+  "generatorApp": "bubblewrap-cli",
+  "webManifestUrl": "https://leelor123.github.io/shifts/manifest.webmanifest",
+  "fallbackType": "customtabs",
+  "features": {},
+  "alphaDependencies": {
+    "enabled": false
+  },
+  "enableSiteSettingsShortcut": true,
+  "isChromeOSOnly": false,
+  "isMetaQuest": false,
+  "fullScopeUrl": "https://leelor123.github.io/shifts/",
+  "minSdkVersion": 24,
+  "orientation": "portrait",
+  "fingerprints": [],
+  "additionalTrustedOrigins": [],
+  "retainedBundles": [],
+  "protocolHandlers": [],
+  "fileHandlers": [],
+  "launchHandlerClientMode": "",
+  "displayOverride": [],
+  "appVersion": "1.2.0"
+}

@@ -14,6 +14,9 @@
 | `tools/build.js` | בונה את `docs/` מקובצי המקור |
 | `firestore.rules` | כללי האבטחה של מסד הנתונים: כל משתמש ניגש רק לנתונים שלו |
 | `tools/fbapi.js` | כלי ניהול ל-Firebase (הפעלת שירותים, דומיין מאושר, בדיקת כללי אבטחה) |
+| `tools/legal-pages.js` | יוצר את הדפים הציבוריים: פרטיות, תנאי שימוש, נגישות, מחיקת חשבון (חלק מה-build) |
+| `tools/android.js`, `android/` | בניית אפליקציית האנדרואיד ל-Google Play (Trusted Web Activity) |
+| `store/` | **העלאה ל-Google Play**: המדריך [`store/PLAY_STORE.md`](store/PLAY_STORE.md), טקסטים, צילומי מסך ותמונת נושא |
 
 > למה לא רק קובץ HTML אחד? כדי שאפשר יהיה להתקין את האפליקציה ושהיא תעבוד אופליין, הדפדפן דורש service worker בקובץ נפרד וקובץ manifest. כל הקוד עצמו נמצא ב-`index.html`.
 
@@ -25,6 +28,14 @@
 
 האתר מתארח ב-GitHub Pages מהתיקייה `docs/` במאגר [leelor123/shifts](https://github.com/leelor123/shifts).
 הנתונים נשמרים בטלפון לפי הכתובת הזו, ולכן לא משנים אותה. עדכון גרסה בכתובת הזו לא מוחק נתונים.
+
+---
+
+## אפליקציה ב-Google Play
+
+אפליקציית האנדרואיד היא "מעטפת" (Trusted Web Activity) שפותחת את האתר הזה במסך מלא, ולכן כל עדכון שנדחף לכאן מגיע גם אליה בלי העלאה חדשה לחנות.
+המדריך המלא להעלאה: **[store/PLAY_STORE.md](store/PLAY_STORE.md)**.
+מפתח החתימה נשמר מחוץ למאגר, ב-`%USERPROFILE%\ShiftPay-Android\keys` — לגבות ולא להעלות לשום מקום.
 
 ---
 
