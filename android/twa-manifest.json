@@ -1,8 +1,8 @@
 {
   "packageId": "io.github.leelor123.shifts",
   "host": "leelor123.github.io",
-  "name": "מעקב משמרות ושכר",
-  "launcherName": "משמרות ושכר",
+  "name": "Shaati",
+  "launcherName": "Shaati",
   "display": "standalone",
   "themeColor": "#1D4A4F",
   "themeColorDark": "#0F1413",
@@ -15,13 +15,14 @@
   "startUrl": "/shifts/?source=twa",
   "iconUrl": "https://leelor123.github.io/shifts/icon-512.png",
   "maskableIconUrl": "https://leelor123.github.io/shifts/icon-maskable-512.png",
+  "monochromeIconUrl": "https://leelor123.github.io/shifts/icon-mono-512.png",
   "splashScreenFadeOutDuration": 300,
   "signingKey": {
     "path": "C:\\Users\\User\\ShiftPay-Android\\keys\\shiftpay-upload.jks",
     "alias": "shiftpay"
   },
-  "appVersionName": "1.2.0",
-  "appVersionCode": 10200,
+  "appVersionName": "1.3.0",
+  "appVersionCode": 10300,
   "shortcuts": [
     {
       "name": "התחל משמרת",
@@ -56,5 +57,5 @@
   "fileHandlers": [],
   "launchHandlerClientMode": "",
   "displayOverride": [],
-  "appVersion": "1.2.0"
+  "appVersion": "1.3.0"
 }
