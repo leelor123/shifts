@@ -669,7 +669,7 @@ textarea.input.chat-input { min-height: 46px; height: 46px; max-height: 140px; r
 <div id="print-root" aria-hidden="true"></div>
 <noscript><div style="padding:24px;font-family:sans-serif">האפליקציה דורשת JavaScript.</div></noscript>
 <script>
-window.APP_VERSION = '1.1.1';
+window.APP_VERSION = '1.2.0';
 /* ---- core/util.js ---- */
 /* ============================================================
  * util.js — date/time helpers and formatting.
@@ -2198,7 +2198,7 @@ window.APP_VERSION = '1.1.1';
   };
 
   const pctDev = (cur, base) => (base > 0 ? ((cur - base) / base) * 100 : cur > 0 ? Infinity : 0);
-  const fmtPct = (d) => (d === Infinity ? 'חדש' : (d > 0 ? '+' : '') + Math.round(d) + '%');
+  const fmtPct = (d) => (d === Infinity ? 'לא היה בתקופות הקודמות' : (d > 0 ? '+' : '') + Math.round(d) + '%');
   const avg = (arr) => (arr.length ? arr.reduce((s, x) => s + x, 0) / arr.length : 0);
 
   /** Metrics of a date range used for comparisons. */
@@ -3400,7 +3400,10 @@ window.APP_VERSION = '1.1.1';
     opts = opts || {};
     if (prev == null || !isFinite(prev)) return '';
     if (prev === 0 && cur === 0) return '<span class="delta flat">—</span>';
-    if (prev === 0) return '<span class="delta up">חדש</span>';
+    // nothing in the previous period to compare with
+    if (prev === 0) return opts.compact
+      ? '<span class="delta flat" title="אין נתונים בתקופה הקודמת">—</span>'
+      : '<span class="delta flat" title="בתקופה הקודמת אין נתונים, אז אין למה להשוות">אין נתוני השוואה</span>';
     const d = ((cur - prev) / Math.abs(prev)) * 100;
     if (Math.abs(d) < 0.5) return '<span class="delta flat">= 0%</span>';
     const good = opts.invert ? d < 0 : d > 0;
@@ -4563,7 +4566,9 @@ window.APP_VERSION = '1.1.1';
 
 /* ---- app/firebase-config.js ---- */
 /* Firebase web config — public by design; access to data is enforced by firestore.rules
- * (each signed-in user can read and write only users/{their uid}). */
+ * (each signed-in user can read and write only users/{their uid}).
+ * authDomain stays on firebaseapp.com: it is the only redirect address the Google sign-in client
+ * accepts (checked with `node tools/fbapi.js redirectcheck`). */
 window.FIREBASE_CONFIG = {
   apiKey: 'AIzaSyCOJVJ4voa19xGur66xEYOgHwooKl85vzI',
   authDomain: 'shiftpay-70ab6.firebaseapp.com',
@@ -4682,6 +4687,9 @@ window.FIREBASE_CONFIG = {
     'auth/operation-not-allowed': 'התחברות עם Google לא הופעלה עדיין בפרויקט Firebase.',
     'auth/too-many-requests': 'יותר מדי ניסיונות. נסה שוב בעוד כמה דקות.',
     'auth/user-disabled': 'החשבון חסום.',
+    'auth/popup-blocked': 'הדפדפן חסם את חלון האישור של Google. אפשר חלונות קופצים ונסה שוב.',
+    'auth/requires-recent-login': 'כדי למחוק את החשבון צריך התחברות טרייה: התנתק, התחבר שוב ונסה מיד.',
+    'auth/user-mismatch': 'נבחר חשבון Google אחר. בחר את החשבון שמחובר לאפליקציה.',
   };
   Cloud.errorText = (e) => AUTH_ERRORS[e && e.code] || (e && e.message) || String(e);
 
@@ -4956,10 +4964,17 @@ window.FIREBASE_CONFIG = {
     }
     await Store.wipe();
   }
-  /** Permanently delete everything stored for this user in the cloud, then sign out. */
+  /** Permanently delete everything stored for this user in the cloud, delete the sign-in account
+   *  itself (required by Google Play's account-deletion policy), then clear this device. */
   Cloud.deleteAccountData = async function () {
-    const { fs, db } = await load();
-    const uid = Cloud.user.uid;
+    const { fs, db, au, auth } = await load();
+    const user = auth.currentUser || Cloud.user;
+    const uid = user.uid;
+    // Google requires a recent sign-in to delete an account. Confirm it now, while the tap that
+    // started the deletion still counts as a user gesture (otherwise the popup gets blocked).
+    const last = Date.parse((user.metadata && user.metadata.lastSignInTime) || '') || 0;
+    if (user.delete && Date.now() - last > 4 * 60 * 1000) await au.reauthenticateWithPopup(user, new au.GoogleAuthProvider());
+    detach();
     for (const st of SYNC.concat(['kv'])) {
       const snap = await fs.getDocs(fs.collection(db, 'users', uid, st));
       for (let i = 0; i < snap.docs.length; i += 400) {
@@ -4969,6 +4984,7 @@ window.FIREBASE_CONFIG = {
       }
     }
     await fs.deleteDoc(fs.doc(db, 'users', uid));
+    if (user.delete) await au.deleteUser(user);
     await shutdown();
   };
 
@@ -5077,7 +5093,8 @@ window.FIREBASE_CONFIG = {
       <button class="btn outlined block" data-signout>${icon('lock')} התנתק</button>
       <div class="tiny muted" style="margin:6px 4px 16px">ההתנתקות מוחקת את הנתונים מהטלפון הזה בלבד. הם נשארים בחשבון וחוזרים בהתחברות הבאה.</div>
       <div class="section-title" style="color:var(--bad)">${icon('trash', 's')} אזור מסוכן</div>
-      <div class="card"><button class="btn danger block" data-delete-cloud>מחק את כל הנתונים מהחשבון</button></div>`;
+      <div class="card"><button class="btn danger block" data-delete-cloud>מחק את כל הנתונים מהחשבון</button>
+        <div class="tiny muted" style="margin-top:8px">מוחק לצמיתות את הנתונים מהענן ומהטלפון, ואת החשבון באפליקציה. חשבון Google שלך לא נפגע.</div></div>`;
   };
   App.accountMount = function (el, draw) {
     const q = (s) => el.querySelector(s);
@@ -5092,7 +5109,7 @@ window.FIREBASE_CONFIG = {
       if (await Cloud.signOut()) location.reload();
     };
     if (q('[data-delete-cloud]')) q('[data-delete-cloud]').onclick = async () => {
-      if (!(await UI.confirm('למחוק את כל הנתונים מהחשבון?', 'כל המשמרות, התלושים וההגדרות יימחקו לצמיתות מהענן ומהטלפון. מומלץ לגבות קודם.', 'מחק הכול', true))) return;
+      if (!(await UI.confirm('למחוק את החשבון ואת כל הנתונים?', 'כל המשמרות, התלושים וההגדרות יימחקו לצמיתות מהענן ומהטלפון, והחשבון באפליקציה יימחק. ייתכן ש-Google תבקש לאשר את החשבון שוב. מומלץ לגבות קודם.', 'מחק הכול', true))) return;
       const really = await UI.promptText('אישור סופי', 'הקלד "מחק" כדי לאשר', '');
       if (really !== 'מחק') { UI.toast('בוטל'); return; }
       try { await Cloud.deleteAccountData(); location.reload(); } catch (e) { UI.dialog({ title: 'המחיקה נכשלה', text: Cloud.errorText(e), buttons: [{ label: 'סגור', value: true }] }); }
@@ -6044,7 +6061,7 @@ window.FIREBASE_CONFIG = {
     let h = `<div class="compare-row h"><span></span><span>קודמת</span>${a3 ? `<span>ממוצע 3 ח׳</span>` : ''}${a12 ? `<span>ממוצע 12 ח׳</span>` : ''}</div>`;
     for (const [lab, f, fmt] of rows) {
       const cur = f(t);
-      const cell = (v) => `<span class="num">${fmt(v)}</span> ${UI.delta(cur, v)}`;
+      const cell = (v) => `<span class="num">${fmt(v)}</span> ${UI.delta(cur, v, { compact: true })}`;
       const fa = (a) => (a ? f(Object.assign({}, a, { net: a.net })) : null);
       h += `<div class="compare-row"><span><b>${lab}</b><br><span class="num small">${fmt(cur)}</span></span><span class="small">${cell(f(p))}</span>${a3 ? `<span class="small">${cell(fa(a3))}</span>` : ''}${a12 ? `<span class="small">${cell(fa(a12))}</span>` : ''}</div>`;
     }

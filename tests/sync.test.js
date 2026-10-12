@@ -24,7 +24,7 @@ async function phone(backend, opts) {
   await ctx.Store.load();
   const S = ctx.Store.S;
   return {
-    ctx, client, S, Store: ctx.Store, Cloud: ctx.Cloud,
+    ctx, client, ffs, S, Store: ctx.Store, Cloud: ctx.Cloud,
     shift: (id) => S.shifts.find((x) => x.id === id),
     async add(id, note) { await ctx.Store.apply([{ store: 'shifts', put: { id, kind: 'shift', employerId: 'emp1', roleId: 'r1', status: 'done', start: 1, end: 2, note: note || '' } }], 'x'); },
     async sync() { await ctx.Cloud.syncNow(); await wait(30); },
@@ -137,4 +137,24 @@ T.atest('the running shift timer follows you between phones', async () => {
   await A.Store.setActive({ start: 12345, roleId: 'r1', employerId: 'emp1', splits: [], breaks: [] });
   await A.sync(); await wait(200);
   T.eq(B.S.activeShift && B.S.activeShift.start, 12345);
+});
+
+T.atest('deleting the account removes all cloud data and the sign-in account', async () => {
+  const be = fakeBackend();
+  const A = await phone(be);
+  await A.add('s1'); await A.add('s2');
+  await A.Cloud.connect(user); await wait(30);
+  T.eq(live(be, 'shifts'), 2);
+  const calls = [];
+  const signedIn = Object.assign({}, user, { metadata: { lastSignInTime: new Date(Date.now() - 3600e3).toUTCString() }, delete() {} });
+  A.Cloud._useSdk({ app: {}, auth: { currentUser: signedIn }, db: {}, fs: A.ffs, au: {
+    GoogleAuthProvider: function () {},
+    reauthenticateWithPopup: async (u) => { calls.push('reauth:' + u.uid); },
+    deleteUser: async (u) => { calls.push('delete:' + u.uid); },
+    signOut: async () => { calls.push('signout'); },
+  } });
+  await A.Cloud.deleteAccountData();
+  T.eq([...be.docs.keys()].filter((k) => k.startsWith('users/u1')).length, 0, 'nothing left in the cloud');
+  T.eq(calls.join(','), 'reauth:u1,delete:u1,signout', 'old sign-in is confirmed again, then the account is deleted');
+  T.eq(A.S.shifts.length, 0, 'phone cleared');
 });

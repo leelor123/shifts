@@ -106,6 +106,9 @@
     'auth/operation-not-allowed': 'התחברות עם Google לא הופעלה עדיין בפרויקט Firebase.',
     'auth/too-many-requests': 'יותר מדי ניסיונות. נסה שוב בעוד כמה דקות.',
     'auth/user-disabled': 'החשבון חסום.',
+    'auth/popup-blocked': 'הדפדפן חסם את חלון האישור של Google. אפשר חלונות קופצים ונסה שוב.',
+    'auth/requires-recent-login': 'כדי למחוק את החשבון צריך התחברות טרייה: התנתק, התחבר שוב ונסה מיד.',
+    'auth/user-mismatch': 'נבחר חשבון Google אחר. בחר את החשבון שמחובר לאפליקציה.',
   };
   Cloud.errorText = (e) => AUTH_ERRORS[e && e.code] || (e && e.message) || String(e);
 
@@ -380,10 +383,17 @@
     }
     await Store.wipe();
   }
-  /** Permanently delete everything stored for this user in the cloud, then sign out. */
+  /** Permanently delete everything stored for this user in the cloud, delete the sign-in account
+   *  itself (required by Google Play's account-deletion policy), then clear this device. */
   Cloud.deleteAccountData = async function () {
-    const { fs, db } = await load();
-    const uid = Cloud.user.uid;
+    const { fs, db, au, auth } = await load();
+    const user = auth.currentUser || Cloud.user;
+    const uid = user.uid;
+    // Google requires a recent sign-in to delete an account. Confirm it now, while the tap that
+    // started the deletion still counts as a user gesture (otherwise the popup gets blocked).
+    const last = Date.parse((user.metadata && user.metadata.lastSignInTime) || '') || 0;
+    if (user.delete && Date.now() - last > 4 * 60 * 1000) await au.reauthenticateWithPopup(user, new au.GoogleAuthProvider());
+    detach();
     for (const st of SYNC.concat(['kv'])) {
       const snap = await fs.getDocs(fs.collection(db, 'users', uid, st));
       for (let i = 0; i < snap.docs.length; i += 400) {
@@ -393,6 +403,7 @@
       }
     }
     await fs.deleteDoc(fs.doc(db, 'users', uid));
+    if (user.delete) await au.deleteUser(user);
     await shutdown();
   };
 

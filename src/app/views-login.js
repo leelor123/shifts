@@ -91,7 +91,8 @@
       <button class="btn outlined block" data-signout>${icon('lock')} התנתק</button>
       <div class="tiny muted" style="margin:6px 4px 16px">ההתנתקות מוחקת את הנתונים מהטלפון הזה בלבד. הם נשארים בחשבון וחוזרים בהתחברות הבאה.</div>
       <div class="section-title" style="color:var(--bad)">${icon('trash', 's')} אזור מסוכן</div>
-      <div class="card"><button class="btn danger block" data-delete-cloud>מחק את כל הנתונים מהחשבון</button></div>`;
+      <div class="card"><button class="btn danger block" data-delete-cloud>מחק את כל הנתונים מהחשבון</button>
+        <div class="tiny muted" style="margin-top:8px">מוחק לצמיתות את הנתונים מהענן ומהטלפון, ואת החשבון באפליקציה. חשבון Google שלך לא נפגע.</div></div>`;
   };
   App.accountMount = function (el, draw) {
     const q = (s) => el.querySelector(s);
@@ -106,7 +107,7 @@
       if (await Cloud.signOut()) location.reload();
     };
     if (q('[data-delete-cloud]')) q('[data-delete-cloud]').onclick = async () => {
-      if (!(await UI.confirm('למחוק את כל הנתונים מהחשבון?', 'כל המשמרות, התלושים וההגדרות יימחקו לצמיתות מהענן ומהטלפון. מומלץ לגבות קודם.', 'מחק הכול', true))) return;
+      if (!(await UI.confirm('למחוק את החשבון ואת כל הנתונים?', 'כל המשמרות, התלושים וההגדרות יימחקו לצמיתות מהענן ומהטלפון, והחשבון באפליקציה יימחק. ייתכן ש-Google תבקש לאשר את החשבון שוב. מומלץ לגבות קודם.', 'מחק הכול', true))) return;
       const really = await UI.promptText('אישור סופי', 'הקלד "מחק" כדי לאשר', '');
       if (really !== 'מחק') { UI.toast('בוטל'); return; }
       try { await Cloud.deleteAccountData(); location.reload(); } catch (e) { UI.dialog({ title: 'המחיקה נכשלה', text: Cloud.errorText(e), buttons: [{ label: 'סגור', value: true }] }); }

@@ -32,4 +32,5 @@ fs.writeFileSync(path.join(DIST, 'sw.js'), read('sw.js').replace('__VERSION__', 
 fs.copyFileSync(path.join(SRC, 'manifest.webmanifest'), path.join(DIST, 'manifest.webmanifest'));
 if (!fs.existsSync(path.join(DIST, 'icon-512.png'))) execFileSync(process.execPath, [path.join(__dirname, 'make-icons.js'), DIST], { stdio: 'inherit' });
 fs.writeFileSync(path.join(DIST, '.nojekyll'), '');
+require('./legal-pages').build(SRC, DIST);
 console.log(`built v${version} (${hash}) → ${path.relative(ROOT, DIST)}/index.html ${(html.length / 1024).toFixed(0)} KB`);

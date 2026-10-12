@@ -43,7 +43,7 @@
   };
 
   const pctDev = (cur, base) => (base > 0 ? ((cur - base) / base) * 100 : cur > 0 ? Infinity : 0);
-  const fmtPct = (d) => (d === Infinity ? 'חדש' : (d > 0 ? '+' : '') + Math.round(d) + '%');
+  const fmtPct = (d) => (d === Infinity ? 'לא היה בתקופות הקודמות' : (d > 0 ? '+' : '') + Math.round(d) + '%');
   const avg = (arr) => (arr.length ? arr.reduce((s, x) => s + x, 0) / arr.length : 0);
 
   /** Metrics of a date range used for comparisons. */

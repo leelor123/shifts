@@ -89,7 +89,10 @@
     opts = opts || {};
     if (prev == null || !isFinite(prev)) return '';
     if (prev === 0 && cur === 0) return '<span class="delta flat">—</span>';
-    if (prev === 0) return '<span class="delta up">חדש</span>';
+    // nothing in the previous period to compare with
+    if (prev === 0) return opts.compact
+      ? '<span class="delta flat" title="אין נתונים בתקופה הקודמת">—</span>'
+      : '<span class="delta flat" title="בתקופה הקודמת אין נתונים, אז אין למה להשוות">אין נתוני השוואה</span>';
     const d = ((cur - prev) / Math.abs(prev)) * 100;
     if (Math.abs(d) < 0.5) return '<span class="delta flat">= 0%</span>';
     const good = opts.invert ? d < 0 : d > 0;

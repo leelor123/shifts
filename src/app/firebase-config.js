@@ -1,5 +1,7 @@
 /* Firebase web config — public by design; access to data is enforced by firestore.rules
- * (each signed-in user can read and write only users/{their uid}). */
+ * (each signed-in user can read and write only users/{their uid}).
+ * authDomain stays on firebaseapp.com: it is the only redirect address the Google sign-in client
+ * accepts (checked with `node tools/fbapi.js redirectcheck`). */
 window.FIREBASE_CONFIG = {
   apiKey: 'AIzaSyCOJVJ4voa19xGur66xEYOgHwooKl85vzI',
   authDomain: 'shiftpay-70ab6.firebaseapp.com',

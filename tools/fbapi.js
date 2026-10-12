@@ -31,6 +31,17 @@ async function main() {
     for (const c of p.body.defaultSupportedIdpConfigs || []) console.log('provider:', c.name.split('/').pop(), c.enabled ? 'enabled' : 'disabled');
     if (p.body.error) console.log('providers: error', p.body.error);
   }
+  if (cmd === 'redirectcheck') {
+    // asks Google whether <arg>/__/auth/handler is an allowed redirect for the Google sign-in client
+    // (the client ID is public; the secret is never read)
+    const p = await idt.get(`/projects/${project}/defaultSupportedIdpConfigs/google.com`);
+    const q = new URLSearchParams({ client_id: p.body.clientId, redirect_uri: `https://${arg}/__/auth/handler`, response_type: 'code', scope: 'openid' });
+    const r = await fetch(`https://accounts.google.com/o/oauth2/v2/auth?${q}`, { redirect: 'manual' });
+    const loc = r.headers.get('location') || '';
+    const body = r.status === 200 ? await r.text() : '';
+    const bad = /redirect_uri_mismatch|signin\/oauth\/error/.test(body + loc);
+    console.log(arg, r.status, bad ? 'MISMATCH (not allowed)' : 'allowed', loc.split('?')[0]);
+  }
   if (cmd === 'domains') {
     const r = await idt.get(`/projects/${project}/config`);
     const domains = r.body.authorizedDomains || [];
