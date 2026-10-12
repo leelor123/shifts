@@ -109,6 +109,25 @@ function patchLauncher() {
         super.onRequestPermissionsResult(requestCode, permissions, grantResults);
         if (requestCode == NOTIFICATION_REQUEST) launchTwa();
     }
+
+    // Shaati: open in Chrome when it is installed. Samsung Internet (the default browser on many
+    // Galaxy phones) reports notification permission as granted inside apps like this one but
+    // refuses to show the notifications. Without Chrome, the default browser is used as before.
+    private static final String CHROME = "com.android.chrome";
+
+    @Override
+    protected com.google.androidbrowserhelper.trusted.TwaLauncher createTwaLauncher() {
+        try {
+            if (getPackageManager().getApplicationInfo(CHROME, 0).enabled) {
+                return new com.google.androidbrowserhelper.trusted.TwaLauncher(this, CHROME,
+                        com.google.androidbrowserhelper.trusted.SessionStore.makeSessionId(getTaskId()),
+                        new com.google.androidbrowserhelper.trusted.SharedPreferencesTokenStore(this));
+            }
+        } catch (PackageManager.NameNotFoundException e) {
+            // not installed: fall back to the default browser
+        }
+        return super.createTwaLauncher();
+    }
 `);
   src = src.replace('        super.onCreate(savedInstanceState);\n', `        super.onCreate(savedInstanceState);
         if (mAskNotifications && !isFinishing()) {
