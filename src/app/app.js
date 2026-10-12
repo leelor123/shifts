@@ -84,9 +84,20 @@
     const nav = document.getElementById('nav');
     const unread = S.notifications.filter((n) => !n.read && n.cat !== 'summary').length;
     try { if (navigator.setAppBadge) { if (unread) navigator.setAppBadge(unread).catch(() => {}); else navigator.clearAppBadge().catch(() => {}); } } catch (e) { /* not supported */ }
+    if (nav.firstChild && nav.dataset.built === '1') {
+      nav.querySelectorAll('[data-tab]').forEach((b) => b.classList.toggle('on', b.dataset.tab === App.tab));
+      const pill = nav.querySelector('[data-tab="home"] .pill');
+      const badge = pill && pill.querySelector('.dot-badge');
+      const text = unread && App.tab !== 'home' ? (unread > 9 ? '9+' : String(unread)) : '';
+      if (!text && badge) badge.remove();
+      else if (text && badge) badge.textContent = text;
+      else if (text && pill) pill.insertAdjacentHTML('beforeend', `<span class="dot-badge">${text}</span>`);
+      return;
+    }
+    nav.dataset.built = '1';
     nav.innerHTML = `<div class="nav-inner">${TABS.map((t) => t.id === 'add'
       ? `<div><button class="fab" data-act="add-menu" aria-label="הוספה">${icon('plus')}</button></div>`
-      : `<button class="${App.tab === t.id ? 'on' : ''}" data-act="tab" data-tab="${t.id}" aria-label="${t.label}"><span class="pill">${icon(t.icon)}${t.id === 'home' && unread ? `<span class="dot-badge">${unread > 9 ? '9+' : unread}</span>` : ''}</span>${t.label}</button>`).join('')}</div>`;
+      : `<button class="${App.tab === t.id ? 'on' : ''}" data-act="tab" data-tab="${t.id}" aria-label="${t.label}"><span class="pill">${icon(t.icon)}${t.id === 'home' && unread && App.tab !== 'home' ? `<span class="dot-badge">${unread > 9 ? '9+' : unread}</span>` : ''}</span>${t.label}</button>`).join('')}</div>`;
   };
   const TAB_ORDER = ['home', 'calendar', 'reports', 'settings'];
   App.go = function (tab, opts) {
@@ -94,16 +105,26 @@
     if (tab === App.tab) App.enterDir = '';
     App.tab = tab;
     try { history.replaceState(history.state, '', '#' + tab); } catch (e) { /* ignore */ }
-    App.render(opts);
-    window.scrollTo(0, 0);
+    const dir = App.enterDir;
+    const swap = () => { App.render(opts); window.scrollTo(0, 0); };
+    if (opts && opts.fromNav && dir && document.startViewTransition && root.Fx && root.Fx.motion() && !document.querySelector('.sheet')) {
+      App.enterDir = ''; // the transition animates; no extra CSS entry animation
+      const de = document.documentElement;
+      de.dataset.nav = dir === 'enter-next' ? 'next' : 'prev';
+      const t = document.startViewTransition(swap);
+      t.finished.catch(() => {}).then(() => { delete de.dataset.nav; });
+    } else swap();
   };
+  const seenTabs = new Set();
   App.render = function (opts) {
     if (App.blocking) return; // a full-screen step (login / terms / setup wizard) owns the screen
     const v = document.getElementById('view');
     const fn = App.views[App.tab] || App.views.home;
     const y = opts && opts.keepScroll ? window.scrollY : 0;
     const fresh = !(opts && opts.keepScroll);
-    const cls = fresh ? (App.enterDir || '') + ' fresh' : '';
+    const first = fresh && !seenTabs.has(App.tab);
+    if (first) seenTabs.add(App.tab);
+    const cls = fresh ? (App.enterDir || '') + ' fresh' + (first ? ' first' : '') : '';
     App.enterDir = '';
     v.innerHTML = `<div class="view ${cls}" id="view-inner">${fn()}</div>`;
     if (App.views[App.tab + '_mount']) App.views[App.tab + '_mount'](v);
@@ -165,7 +186,7 @@
     const fn = App.actions[el.dataset.act];
     if (fn) { e.preventDefault(); fn(el, e); }
   });
-  App.actions.tab = (el) => App.go(el.dataset.tab);
+  App.actions.tab = (el) => App.go(el.dataset.tab, { fromNav: true });
   App.actions.undo = () => App.undo();
 
   /* ---------------- live timer ---------------- */

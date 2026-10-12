@@ -8,7 +8,7 @@
 (function (root) {
   'use strict';
   const { App, Fx } = root;
-  const THRESHOLD = 72, MAX = 128;
+  const THRESHOLD = 72, MAX = 128, DEAD_ZONE = 14;
   const LOGO = '<svg viewBox="0 0 1024 1024" aria-hidden="true"><path class="g" pathLength="1" d="M300 660 A258 258 0 0 1 603 271 L603 600"/><path class="y" pathLength="1" d="M420 422 L420 753 A258 258 0 0 0 720 362"/></svg>';
   const ind = document.createElement('div');
   ind.className = 'ptr';
@@ -42,7 +42,7 @@
   }
 
   document.addEventListener('touchstart', (e) => {
-    if (e.touches.length !== 1 || blocked(e.target)) { startY = null; return; }
+    if (e.touches.length !== 1 || blocked(e.target) || !(e.target.closest && e.target.closest('#view'))) { startY = null; return; }
     startY = e.touches[0].clientY;
     dist = 0; armed = false;
     ind.classList.remove('settle');
@@ -50,7 +50,7 @@
 
   document.addEventListener('touchmove', (e) => {
     if (startY == null) return;
-    const dy = e.touches[0].clientY - startY;
+    const dy = e.touches[0].clientY - startY - DEAD_ZONE; // a tap with a tiny finger movement never moves the page
     if (dy <= 0 || root.scrollY > 0) { if (dist) paint(0); dist = 0; return; }
     dist = Math.min(MAX, dy * 0.5);
     paint(dist);
@@ -61,7 +61,7 @@
   async function end() {
     if (startY == null) return;
     startY = null;
-    if (!armed) { settle(); return; }
+    if (!armed) { if (dist) settle(); dist = 0; return; }
     busy = true;
     ind.classList.add('settle', 'spin');
     paint(THRESHOLD * 0.9);

@@ -210,7 +210,8 @@
     de.style.setProperty('--vt-x', (x || root.innerWidth / 2) + 'px');
     de.style.setProperty('--vt-y', (y || root.innerHeight / 2) + 'px');
     Fx.play('whoosh');
-    return document.startViewTransition(update).finished.catch(() => {});
+    de.classList.add('vt-reveal');
+    return document.startViewTransition(update).finished.catch(() => {}).then(() => de.classList.remove('vt-reveal'));
   };
 
   /** Body class that turns on the springy press animations in the CSS; prefs mirrored for the intro. */

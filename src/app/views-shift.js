@@ -36,6 +36,8 @@
         ${opt('entry-new" data-kind="sick', 'thermo', 'יום מחלה', 'יום 1: 0%, ימים 2–3: 50%, מהרביעי: 100%')}
         ${opt('entry-new" data-kind="adjustment" data-type="bonus', 'gift', 'בונוס / טיפים / תוספת', 'סכום חד-פעמי')}
         ${opt('entry-new" data-kind="adjustment" data-type="deduction', 'minus', 'ניכוי', 'ארוחה, ביגוד, קנס…')}
+      </div><div class="list">
+        ${opt('payslip-new', 'receipt', 'תלוש שכר', 'סריקה ובדיקה מול המשמרות שרשמת')}
       </div>`,
     });
   };

@@ -58,6 +58,12 @@
   };
 
   /* ---------------- cloud status in the top bar ---------------- */
+  /** Small sync indicator for the home screen: shown only when something needs attention. */
+  App.syncDot = function () {
+    const st = Cloud.user ? Cloud.status : 'off';
+    if (st !== 'error' && st !== 'offline') return '';
+    return `<button class="icon-btn" data-act="settings-open" data-k="account" aria-label="${esc(Cloud.statusText())}" style="color:${st === 'error' ? 'var(--bad)' : 'var(--warn)'}">${icon(st === 'error' ? 'alert' : 'cloud')}</button>`;
+  };
   App.cloudBadge = function () {
     const st = Cloud.user ? Cloud.status : 'off';
     const color = st === 'synced' ? 'var(--good)' : st === 'error' ? 'var(--bad)' : st === 'offline' ? 'var(--warn)' : 'var(--on-surface-var)';
@@ -66,7 +72,7 @@
   let badgeT = null;
   Cloud.on(() => {
     clearTimeout(badgeT);
-    badgeT = setTimeout(() => { if (App.tab === 'home' && document.getElementById('view-inner')) App.rerender(); }, 300);
+    badgeT = setTimeout(() => { const el = document.getElementById('sync-dot'); if (el) el.innerHTML = App.syncDot(); }, 300);
   });
 
   /* ---------------- settings: account & sync ---------------- */

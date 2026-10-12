@@ -46,32 +46,36 @@
     return h < 5 ? 'לילה טוב' : h < 12 ? 'בוקר טוב' : h < 17 ? 'צהריים טובים' : h < 21 ? 'ערב טוב' : 'לילה טוב';
   }
 
-  /* ---------------- timer card ---------------- */
-  function timerCard() {
+  /* ---------------- home: one number, one action, one highlight ----------------
+   * The home screen answers three questions at a glance: how much have I earned this month,
+   * what do I do now (start / stop a shift), and is there anything I should know (one line).
+   * Everything else is one tap away: the number opens the summary, the line opens insights,
+   * the + button holds every kind of entry (and payslips), the ✨ opens the assistant. */
+
+  /* ---------------- action: start, or the running shift ---------------- */
+  function actionBlock() {
     const a = S.activeShift;
     if (a) {
       const role = App.role(App.currentRole());
       const onBreak = App.onBreak();
       const others = App.roles(a.employerId).filter((r) => r.id !== App.currentRole());
       return `<div class="card timer-card running">
-        <div class="small bold"><span class="pulse"></span>${onBreak ? 'בהפסקה' : 'משמרת פעילה'} · ${esc(role ? role.name : '')}</div>
+        <div class="tc-head"><span class="pulse"></span>${onBreak ? 'בהפסקה' : 'משמרת פעילה'}${role ? ' · ' + esc(role.name) : ''}<span class="spacer"></span><span class="tiny">מ-${U.epochHM(a.start)}</span></div>
         <div class="clock" data-clock="net">0:00:00</div>
-        <div class="meta">התחלת ב-${U.epochHM(a.start)}${(a.breaks || []).length ? ' · הפסקות לא נספרות' : ''} · עד עכשיו כ-<b data-live-pay></b></div>
-        <button class="btn big" data-act="timer-stop">${icon('stop')} סיים משמרת</button>
-        <div class="btn-row" style="margin-top:10px">
-          <button class="btn tonal" data-act="timer-break">${icon(onBreak ? 'play' : 'coffee')} ${onBreak ? 'חזור מהפסקה' : 'הפסקה'}</button>
-          ${others.length ? `<button class="btn tonal" data-act="timer-switch">${icon('swap')} החלף תפקיד</button>` : ''}
+        <div class="meta">עד עכשיו <b data-live-pay></b>${(a.breaks || []).length ? ' · הפסקות לא נספרות' : ''}</div>
+        <div class="tc-actions">
+          <button class="btn big" data-act="timer-stop">${icon('stop')} סיים משמרת</button>
+          <button class="icon-btn tonal lg" data-act="timer-break" aria-label="${onBreak ? 'חזור מהפסקה' : 'הפסקה'}">${icon(onBreak ? 'play' : 'coffee')}</button>
+          ${others.length ? `<button class="icon-btn tonal lg" data-act="timer-switch" aria-label="החלף תפקיד">${icon('swap')}</button>` : ''}
         </div></div>`;
     }
     const roles = App.roles();
     const sel = S.meta.lastRole && App.role(S.meta.lastRole) ? S.meta.lastRole : roles[0] && roles[0].id;
-    return `<div class="card timer-card">
-      ${roles.length > 1 ? `<div class="role-picker">${roles.map((r) => `<button class="chip ${r.id === sel ? 'on' : ''}" data-act="pick-role" data-id="${r.id}"><span class="sw" style="background:${r.color}"></span>${esc(r.name)}</button>`).join('')}</div>` : ''}
-      <button class="btn big" data-act="timer-start" data-role="${sel || ''}">${icon('play')} התחל משמרת</button>
-      <div class="btn-row" style="margin-top:10px">
-        <button class="btn text" data-act="shift-new">${icon('edit', 's')} הוספה ידנית</button>
-        <button class="btn text" data-act="dup-last">${icon('copy', 's')} שכפל אחרונה</button>
-      </div></div>`;
+    const role = App.role(sel);
+    return `<div class="home-action">
+      <button class="btn big start" data-act="timer-start" data-role="${sel || ''}">${icon('play')} התחל משמרת</button>
+      ${roles.length > 1 && role ? `<button class="role-chip" data-act="choose-role" aria-label="בחר תפקיד"><span class="sw" style="background:${role.color}"></span>${esc(role.name)}<span class="chev">${icon('left', 's')}</span></button>` : ''}
+    </div>`;
   }
 
   /* ---------------- payday ---------------- */
@@ -89,8 +93,8 @@
       <button class="btn" data-act="payslip-new">${icon('file')} בדיקת תלוש</button></div>`;
   }
 
-  /* ---------------- period card ---------------- */
-  function periodCard() {
+  /* ---------------- the month, in one number ---------------- */
+  function hero() {
     const emp = S.employers[0];
     const P = Engine.periodOf(U.todayKey(), emp);
     const sum = Engine.periodSummary(App.model, P.key, emp.id);
@@ -101,37 +105,38 @@
     const pct = goal ? Math.min(100, (curVal / goal) * 100) : 0;
     if (goal && pct >= 100) App.celebrateOnce('goal-' + P.key, () => { root.Fx.celebrate('money'); UI.toast('הגעת ליעד החודשי! 🎯'); });
     const projPct = goal && proj && proj.withPlanned ? Math.min(100, ((goalNet ? proj.withPlanned * (sum.gross ? sum.net.net / sum.gross : 0.85) : proj.withPlanned) / goal) * 100) : 0;
-    return `<div class="card tonal card-link" data-act="go-summary">
-      <div class="row-flex"><div style="flex:1"><div class="small bold">${emp.periodStartDay > 1 ? 'תקופת שכר' : 'החודש'} · ${esc(P.label)}</div>
-      <div class="tiny" style="opacity:.8">⁦${U.fmtDate(P.from, 'short')}–${U.fmtDate(P.to, 'short')}⁩ · תשלום ב-${U.fmtDate(P.payDate, 'short')}</div></div>${icon('left')}</div>
-      <div style="margin:10px 0 4px"><span class="tiny" style="opacity:.8">ברוטו עד עכשיו</span><div class="hero-num">${money(sum.gross, 0)}</div></div>
-      <div class="kpis" style="margin-top:10px">
-        <div class="kpi"><div class="l">${sum.net.minor ? 'נטו (ללא ניכויים)' : 'נטו משוער'}</div><div class="v">${money(sum.net.net, 0)}</div></div>
-        <div class="kpi"><div class="l">נסיעות</div><div class="v">${money(sum.travel, 0)}</div></div>
-        <div class="kpi"><div class="l">שעות</div><div class="v"><span class="num">${U.hm(sum.hours * 60)}</span></div></div>
-        <div class="kpi"><div class="l">משמרות</div><div class="v">${sum.shifts}</div></div>
-      </div>
-      ${proj && proj.pace ? `<div class="small" style="margin-top:12px">${icon('up', 's')} צפי לסוף ${emp.periodStartDay > 1 ? 'התקופה' : 'החודש'} לפי הקצב: <b>${money(proj.pace, 0)}</b>${proj.plannedCount ? `<br><span style="opacity:.85">מה שכבר רשום + ${proj.plannedCount} משמרות מתוכננות: <b>${money(proj.withPlanned, 0)}</b></span>` : ''}</div>` : ''}
-      ${goal ? `<div style="margin-top:12px"><div class="row-flex small"><span>${icon('target', 's')} יעד ${goalNet ? 'נטו' : 'ברוטו'}: ${money(goal, 0)}</span><span class="spacer"></span><b>${U.num(pct, 0)}%</b></div>
-        <div class="progress" style="margin-top:6px"><b style="width:${projPct}%"></b><i style="width:${pct}%"></i></div></div>` : `<div class="small" style="margin-top:10px;opacity:.85" data-act="settings-goal">${icon('target', 's')} הגדר יעד חודשי</div>`}
-    </div>`;
+    const periodName = emp.periodStartDay > 1 ? 'תקופת השכר' : esc(P.label);
+    return `<section class="home-hero" data-act="go-summary" role="button" aria-label="סיכום ${periodName}">
+      <div class="hh-label">${periodName} · ברוטו עד עכשיו</div>
+      <div class="hero-num">${money(sum.gross, 0)}</div>
+      <div class="hh-stats"><span>${sum.net.minor ? 'נטו' : 'נטו משוער'} <b>${money(sum.net.net, 0)}</b></span><i></i><span><b class="num">${U.hm(sum.hours * 60)}</b> ש׳</span><i></i><span><b>${sum.shifts}</b> משמרות</span></div>
+      ${goal ? `<div class="hh-goal"><div class="progress thin"><b style="width:${projPct}%"></b><i style="width:${pct}%"></i></div>
+        <div class="hh-goal-l">${U.num(pct, 0)}% מיעד ${money(goal, 0)}${proj && proj.pace ? ` · צפי ${money(proj.pace, 0)}` : ''}</div></div>`
+        : (proj && proj.pace ? `<div class="hh-goal-l">צפי לסוף ${emp.periodStartDay > 1 ? 'התקופה' : 'החודש'}: ${money(proj.pace, 0)}</div>` : '')}
+    </section>`;
   }
 
-  function insightsCard() {
-    const ins = App.insights;
-    const live = ins ? ins.live.slice().sort((a, b) => b.priority - a.priority) : [];
+  /* ---------------- one line worth knowing (opens everything else) ---------------- */
+  function highlight() {
+    const now = Date.now();
     const sevOrder = { critical: 0, warn: 1, good: 2, info: 3 };
-    const unread = S.notifications.filter((n) => !n.read && n.type !== 'weekly').sort((a, b) => (sevOrder[a.severity] - sevOrder[b.severity]) || b.createdAt - a.createdAt);
-    const items = [...unread.slice(0, 3), ...live].slice(0, 3);
-    if (!items.length) return '';
-    return `<div class="card"><div class="card-head">${icon('bulb')}<h3>תובנות</h3><button class="btn text sm" data-act="insights">הכול</button></div>${items.map((a) => App.insightRow(a)).join('')}</div>`;
+    const unread = S.notifications.filter((n) => !n.read && n.cat !== 'summary').sort((a, b) => (sevOrder[a.severity] - sevOrder[b.severity]) || b.createdAt - a.createdAt);
+    const urgent = unread.filter((n) => n.severity === 'critical' || n.severity === 'warn');
+    const next = [...App.model.results.values()].filter((r) => r.status === 'planned' && r.start > now && r.start - now < 36 * 3600000).sort((a, b) => a.start - b.start)[0];
+    const weekly = S.notifications.filter((n) => n.type === 'weekly' && !n.read && now - n.createdAt < 4 * U.DAY).sort((a, b) => b.createdAt - a.createdAt)[0];
+    const live = App.insights ? App.insights.live.slice().sort((a, b) => b.priority - a.priority) : [];
+    let item = null;
+    if (urgent[0]) item = { act: 'insights', ic: 'alert', cls: 'sev-' + urgent[0].severity, t: urgent[0].title };
+    else if (next) item = { act: 'shift-open', id: next.id, ic: 'calendar', cls: '', t: `משמרת ${U.epochKey(next.start) === U.todayKey() ? 'היום' : 'מחר'} ב-${U.epochHM(next.start)} · ${App.roleName(next.segments[0].roleId)}` };
+    else if (weekly) item = { act: 'insights', ic: 'sparkle', cls: '', t: 'הסיכום השבועי שלך מוכן' };
+    else if (unread[0]) item = { act: 'insights', ic: App.severityIcon[unread[0].severity] || 'bulb', cls: 'sev-' + (unread[0].severity || 'info'), t: unread[0].title };
+    else if (live[0]) item = { act: 'insights', ic: 'bulb', cls: '', t: live[0].title };
+    if (!item) return '';
+    const more = Math.max(0, unread.length - (unread.some((n) => n.title === item.t) ? 1 : 0));
+    return `<button class="highlight ${item.cls}" data-act="${item.act}"${item.id ? ` data-id="${item.id}"` : ''}>
+      <span class="hl-ic">${icon(item.ic, 's')}</span><span class="hl-t">${esc(item.t)}</span>${more ? `<span class="hl-more">+${more}</span>` : ''}${icon('left', 's')}</button>`;
   }
-  function weeklyCard() {
-    const w = S.notifications.filter((n) => n.type === 'weekly').sort((a, b) => b.createdAt - a.createdAt)[0];
-    if (!w || w.read || Date.now() - w.createdAt > 4 * U.DAY) return '';
-    return `<div class="card share-card"><div class="card-head">${icon('sparkle')}<h3>${esc(w.title)}</h3><button class="icon-btn" data-act="weekly-share" data-id="${esc(w.id)}" aria-label="שתף">${icon('share')}</button><button class="icon-btn" data-act="notif-read" data-id="${esc(w.id)}" aria-label="סגור">${icon('x')}</button></div>
-      <div style="font-size:1.05rem">${esc(w.body)}</div><div class="tiny muted" style="margin-top:6px">${esc(w.explain)}</div></div>`;
-  }
+
   function birthdayCard() {
     const b = S.settings.birthDate;
     if (!b || b.slice(5) !== U.todayKey().slice(5)) return '';
@@ -142,14 +147,14 @@
   }
   function banners() {
     let h = '';
-    if (S.settings.demo) h += `<div class="banner">${icon('flask')}<div style="flex:1">מצב הדגמה פעיל — הנתונים לדוגמה.</div><button class="btn sm" data-act="demo-clear">מחק נתוני דוגמה</button></div>`;
+    if (S.settings.demo) h += `<div class="banner slim">${icon('flask', 's')}<div style="flex:1">מצב הדגמה — נתונים לדוגמה</div><button class="btn text sm" data-act="demo-clear">מחק</button></div>`;
     const B = S.settings.backup;
     const last = Math.max(B.lastBackup || 0);
     if (!S.meta.cloudUid && S.shifts.length > 5 && Date.now() - last > (+S.settings.alerts.backupDays || 30) * U.DAY) {
-      h += `<div class="banner warn">${icon('cloud')}<div style="flex:1">${last ? 'עבר זמן מאז הגיבוי האחרון.' : 'עוד לא גיבית.'} הנתונים שמורים רק בטלפון.</div><button class="btn sm" data-act="backup-now">גבה</button></div>`;
+      h += `<div class="banner slim warn">${icon('cloud', 's')}<div style="flex:1">${last ? 'עבר זמן מאז הגיבוי האחרון' : 'עוד לא גיבית'}</div><button class="btn text sm" data-act="backup-now">גבה</button></div>`;
     }
     const issues = Engine.dataIssues(App.model).filter((i) => i.type === 'overlap');
-    if (issues.length) h += `<div class="banner warn">${icon('alert')}<div style="flex:1">${esc(issues[0].text)}</div><button class="btn sm" data-act="shift-open" data-id="${issues[0].ids[1]}">בדוק</button></div>`;
+    if (issues.length) h += `<div class="banner slim warn">${icon('alert', 's')}<div style="flex:1">${esc(issues[0].text)}</div><button class="btn text sm" data-act="shift-open" data-id="${issues[0].ids[1]}">בדוק</button></div>`;
     return h;
   }
 
@@ -159,33 +164,33 @@
     const hd = HebCal.hebrewDate(today);
     const hol = HebCal.holidaysOn(today).map((h) => h.name).join(', ');
     const results = [...App.model.results.values()];
-    const upcoming = results.filter((r) => r.status === 'planned').sort((a, b) => a.start - b.start).slice(0, 3);
-    const recent = results.filter((r) => r.status === 'done').sort((a, b) => b.start - a.start).slice(0, 5);
-    const recentEntries = S.entries.slice().sort((a, b) => b.date.localeCompare(a.date)).slice(0, 2);
+    const now = Date.now();
+    // planned shifts whose time has passed wait for a "done" tap, so they come first
+    const pending = results.filter((r) => r.status === 'planned' && r.start < now).sort((a, b) => b.start - a.start).slice(0, 2);
+    const recent = results.filter((r) => r.status === 'done').sort((a, b) => b.start - a.start).slice(0, 3);
+    const name = S.settings.userName ? ', ' + esc(String(S.settings.userName).split(' ')[0]) : '';
+    const date = U.fmtDate(today, 'long').replace(/\s\d{4}$/, '');
     return `
-      <div class="topbar"><div class="titles"><h1>${greeting()} <span class="wave">👋</span></h1><div class="sub">${U.fmtDate(today, 'long')} · ${esc(hd.toString())}${hol ? ' · ' + esc(hol) : ''}</div></div>
-        ${App.cloudBadge ? App.cloudBadge() : ''}<button class="icon-btn tonal" data-act="insights" aria-label="התראות">${icon('bell')}${unread ? `<span class="dot-badge">${unread > 9 ? '9+' : unread}</span>` : ''}</button></div>
+      <div class="home-top"><div class="titles"><h1>${greeting()}${name} <span class="wave">👋</span></h1>
+        <div class="sub">${date} · ${esc(hd.toString().replace(/\s\S+$/, ''))}${hol ? ' · ' + esc(hol) : ''}</div></div>
+        <span id="sync-dot">${App.syncDot ? App.syncDot() : ''}</span>
+        <button class="icon-btn" data-act="assistant" aria-label="שאל את העוזר">${icon('sparkle')}</button>
+        <button class="icon-btn" data-act="insights" aria-label="התראות ותובנות">${icon('bell')}${unread ? `<span class="dot-badge">${unread > 9 ? '9+' : unread}</span>` : ''}</button></div>
       ${birthdayCard()}
       ${paydayCard()}
       ${banners()}
-      ${timerCard()}
-      ${weeklyCard()}
-      ${periodCard()}
-      ${insightsCard()}
-      <div class="quick">
-        <button data-act="payslip-new">${icon('receipt')}<span>ניתוח תלוש</span></button>
-        <button data-act="go-summary">${icon('chart')}<span>סיכומים</span></button>
-        <button data-act="assistant">${icon('sparkle')}<span>שאל את העוזר</span></button>
-      </div>
-      ${upcoming.length ? `<div class="section-title">${icon('calendar', 's')} משמרות מתוכננות<span class="spacer"></span><button class="btn text sm" data-act="tab" data-tab="calendar">ללוח</button></div><div class="list">${upcoming.map((r) => App.shiftItem(r, { showOk: true })).join('')}</div>` : ''}
-      <div class="section-title">${icon('clock', 's')} משמרות אחרונות<span class="spacer"></span>${recent.length ? '<button class="btn text sm" data-act="go-shifts">הכול</button>' : ''}</div>
-      ${recent.length ? `<div class="list">${recent.map((r) => App.shiftItem(r)).join('')}${recentEntries.map(App.entryItem).join('')}</div>`
-        : UI.emptyState('clock', 'עוד אין משמרות', 'לחץ על "התחל משמרת" כשאתה מתחיל לעבוד, או הוסף משמרת ידנית.', '<button class="btn tonal" data-act="shift-new">הוסף משמרת</button>')}
+      ${hero()}
+      ${actionBlock()}
+      ${highlight()}
+      ${pending.length + recent.length ? `<div class="home-list-head"><span>${pending.length ? 'לסמן כבוצעה' : 'משמרות אחרונות'}</span><button class="btn text sm" data-act="go-shifts">הכול</button></div>
+        <div class="list home-list">${pending.map((r) => App.shiftItem(r, { showOk: true })).join('')}${recent.slice(0, Math.max(1, 3 - pending.length)).map((r) => App.shiftItem(r)).join('')}</div>`
+        : UI.emptyState('clock', 'עוד אין משמרות', 'לחץ על "התחל משמרת" כשאתה מתחיל לעבוד, או על + כדי להוסיף משמרת שכבר עשית.', '')}
     `;
   };
 
   /* ---------------- actions ---------------- */
   App.actions['pick-role'] = async (el) => { await Store.setMeta({ lastRole: el.dataset.id }); App.rerender(); };
+  App.actions['choose-role'] = () => App.sheetsApi.pickRole('תפקיד למשמרת', async (rid) => { await Store.setMeta({ lastRole: rid }); App.rerender(); });
   App.actions['timer-start'] = async (el) => {
     const roles = App.roles();
     let id = el && el.dataset && el.dataset.role;

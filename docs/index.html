@@ -211,7 +211,7 @@ svg.i.l { width: 32px; height: 32px; }
 .card.tonal .kpi .l { color: inherit; opacity: .8; }
 .kpi .v { font-size: 1.25rem; font-weight: 700; margin-top: 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .kpi .d { font-size: .75rem; margin-top: 2px; }
-.hero-num { font-size: 2.4rem; font-weight: 800; letter-spacing: -.02em; line-height: 1.1; }
+.hero-num { font-size: 2.4rem; font-weight: 800; letter-spacing: -.02em; line-height: 1.1; font-variant-numeric: tabular-nums; }
 
 .delta { font-size: .78rem; font-weight: 600; display: inline-flex; align-items: center; gap: 2px; }
 .delta.up { color: var(--good); }
@@ -517,8 +517,8 @@ h1, h2, .topbar h1, .wizard h1, .sheet .sh-head h2, .hero-num, .bday-title, .cha
 .view { animation: none; }
 .view.enter-next { animation: slideFromStart .22s var(--ease); }
 .view.enter-prev { animation: slideFromEnd .22s var(--ease); }
-@keyframes slideFromStart { from { opacity: .4; transform: translateX(-14px); } to { opacity: 1; transform: none; } }
-@keyframes slideFromEnd { from { opacity: .4; transform: translateX(14px); } to { opacity: 1; transform: none; } }
+@keyframes slideFromStart { from { transform: translateX(-10px); } to { transform: none; } }
+@keyframes slideFromEnd { from { transform: translateX(10px); } to { transform: none; } }
 
 /* cards: paper sheets with a hairline instead of tinted blobs */
 .card { background: var(--surface-1); border: 1px solid var(--line); box-shadow: var(--shadow); border-radius: var(--radius); }
@@ -729,19 +729,27 @@ html, body { overscroll-behavior-y: contain; }
 @keyframes ptr-pop { 50% { scale: 1.18; } }
 
 /* ---- small moments ---- */
-body.fx .fresh .wave { display: inline-block; transform-origin: 70% 80%; animation: fx-wave 1.6s ease-in-out .2s 1; }
+body.fx .first .wave { display: inline-block; transform-origin: 70% 80%; animation: fx-wave 1.6s ease-in-out .2s 1; }
 @keyframes fx-wave { 0%, 60%, 100% { transform: rotate(0); } 10%, 30% { transform: rotate(14deg); } 20% { transform: rotate(-8deg); } 40% { transform: rotate(-4deg); } 50% { transform: rotate(10deg); } }
-body.fx .fresh .chart path[fill]:not([fill="none"]), body.fx .fresh .chart rect:not(.hit) { transform-box: fill-box; transform-origin: 50% 100%; animation: fx-grow .6s cubic-bezier(.2, .8, .3, 1) both; }
-body.fx .fresh .chart path[fill="none"] { stroke-dasharray: 3000; stroke-dashoffset: 3000; animation: fx-line 1s cubic-bezier(.4, 0, .2, 1) forwards; }
+body.fx .first .chart path[fill]:not([fill="none"]), body.fx .first .chart rect:not(.hit) { transform-box: fill-box; transform-origin: 50% 100%; animation: fx-grow .6s cubic-bezier(.2, .8, .3, 1) both; }
+body.fx .first .chart path[fill="none"] { stroke-dasharray: 3000; stroke-dashoffset: 3000; animation: fx-line 1s cubic-bezier(.4, 0, .2, 1) forwards; }
 @keyframes fx-grow { from { transform: scaleY(0); } to { transform: scaleY(1); } }
 @keyframes fx-line { to { stroke-dashoffset: 0; } }
-body.fx .fresh .progress i, body.fx .fresh .progress b { animation: fx-fill .9s cubic-bezier(.2, .8, .3, 1) both; transform-origin: right; }
-[dir="rtl"] body.fx .fresh .progress i { transform-origin: right; }
+body.fx .first .progress i, body.fx .first .progress b { animation: fx-fill .9s cubic-bezier(.2, .8, .3, 1) both; transform-origin: right; }
 @keyframes fx-fill { from { transform: scaleX(0); } }
-body.fx .fresh .dot-badge { animation: fx-badge .5s cubic-bezier(.34, 1.56, .64, 1) .3s both; }
+body.fx .first .dot-badge { animation: fx-badge .5s cubic-bezier(.34, 1.56, .64, 1) .3s both; }
 @keyframes fx-badge { from { transform: scale(0); } }
+html:not(.vt-reveal) #view { view-transition-name: page; }
+html:not(.vt-reveal) .nav { view-transition-name: nav; }
 ::view-transition-old(root), ::view-transition-new(root) { animation: none; mix-blend-mode: normal; }
-::view-transition-new(root) { animation: fx-reveal .6s cubic-bezier(.4, 0, .2, 1) both; }
+html.vt-reveal::view-transition-new(root) { animation: fx-reveal .6s cubic-bezier(.4, 0, .2, 1) both; }
+html[data-nav] { --vt-shift: -12px; }
+html[data-nav="prev"] { --vt-shift: 12px; }
+::view-transition-old(page) { animation: vt-out .14s ease-in both; }
+::view-transition-new(page) { animation: vt-in .26s cubic-bezier(.2, .8, .3, 1) .03s both; }
+::view-transition-group(nav) { animation-duration: .18s; }
+@keyframes vt-out { to { opacity: 0; transform: translateX(calc(var(--vt-shift) * -1)); } }
+@keyframes vt-in { from { opacity: 0; transform: translateX(var(--vt-shift)); } }
 @keyframes fx-reveal { from { clip-path: circle(0 at var(--vt-x, 50%) var(--vt-y, 50%)); } to { clip-path: circle(150vmax at var(--vt-x, 50%) var(--vt-y, 50%)); } }
 .payday { background: linear-gradient(135deg, #0d2b6b, #1d4a8f); color: #fff; border: 0; }
 .payday .pd-title { font: 800 1.35rem/1.2 var(--display); display: flex; align-items: center; gap: 8px; }
@@ -753,9 +761,50 @@ body.fx .fresh .dot-badge { animation: fx-badge .5s cubic-bezier(.34, 1.56, .64,
 body.fx .btn, body.fx .nav .fab, body.fx .chip, body.fx .quick button, body.fx .icon-btn, body.fx .nav .pill, body.fx .item { transition: transform .22s cubic-bezier(.34, 1.56, .64, 1), background-color .15s, filter .15s; }
 body.fx .btn:active, body.fx .quick button:active, body.fx .chip:active { transform: scale(.94); }
 body.fx .nav .fab:active { transform: scale(.88) rotate(-8deg); }
-body.fx .nav button:active .pill { transform: scale(.86); }
+body.fx .nav .pill { transition: transform .12s ease-out, background-color .15s; }
+body.fx .nav button:active .pill { transform: scale(.9); }
 body.fx .icon-btn:active { transform: scale(.86); }
 body.fx .item:active { transform: scale(.985); }
+
+/* ---- home: one number, one action, one highlight ---- */
+.home-top { display: flex; align-items: center; gap: 2px; min-height: 60px; padding: 6px 0 0; }
+.home-top .titles { flex: 1; min-width: 0; }
+.home-top h1 { font-size: 1.3rem; font-weight: 700; margin: 0; letter-spacing: -.01em; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.home-top .sub { font-size: .8rem; color: var(--on-surface-var); margin-top: 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.home-top .icon-btn { position: relative; }
+.home-hero { text-align: center; padding: 34px 8px 26px; margin: 4px -8px 6px; border-radius: 24px; cursor: pointer; -webkit-tap-highlight-color: transparent; transition: background-color .15s; }
+.home-hero:active { background: var(--surface-2); }
+.home-hero .hh-label { font-size: .85rem; font-weight: 600; color: var(--on-surface-var); }
+.home-hero .hero-num { font-size: 3.4rem; line-height: 1.05; margin: 6px 0 10px; }
+.home-hero .hh-stats { display: flex; justify-content: center; align-items: center; flex-wrap: wrap; gap: 6px 10px; font-size: .88rem; color: var(--on-surface-var); }
+.home-hero .hh-stats b { color: var(--on-surface); font-weight: 700; }
+.home-hero .hh-stats i { width: 3px; height: 3px; border-radius: 50%; background: var(--outline); opacity: .6; }
+.home-hero .hh-goal { max-width: 240px; margin: 18px auto 0; }
+.progress.thin { height: 6px; border-radius: 3px; }
+.progress.thin > i, .progress.thin > b { border-radius: 3px; }
+.home-hero .hh-goal-l { font-size: .78rem; color: var(--on-surface-var); margin-top: 8px; }
+.home-action { display: flex; flex-direction: column; align-items: center; gap: 10px; margin: 4px 0 18px; }
+.home-action .btn.start { width: 100%; }
+.role-chip { display: inline-flex; align-items: center; gap: 6px; border: 1px solid var(--line); background: transparent; border-radius: 999px; padding: 6px 10px 6px 12px; font: 600 .85rem var(--font); color: var(--on-surface-var); cursor: pointer; }
+.role-chip .sw { width: 9px; height: 9px; border-radius: 50%; }
+.role-chip .chev { display: grid; transform: rotate(-90deg); opacity: .6; }
+.role-chip .chev svg { width: 14px; height: 14px; }
+.timer-card .tc-head { display: flex; align-items: center; gap: 4px; font-size: .88rem; font-weight: 700; text-align: start; }
+.timer-card .tc-head .tiny { opacity: .75; font-weight: 500; }
+.timer-card .tc-actions { display: flex; gap: 10px; align-items: center; }
+.timer-card .tc-actions .btn.big { flex: 1; }
+.icon-btn.lg { width: 56px; height: 56px; border-radius: 16px; flex: none; }
+.timer-card.running .icon-btn.tonal { background: rgba(255, 255, 255, .12); color: inherit; }
+.highlight { display: flex; align-items: center; gap: 10px; width: 100%; border: 0; border-radius: 14px; padding: 13px 14px; margin: 0 0 22px; background: var(--surface-2); color: var(--on-surface); font: 500 .92rem/1.3 var(--font); text-align: start; cursor: pointer; }
+.highlight .hl-ic { display: grid; place-items: center; width: 30px; height: 30px; border-radius: 10px; background: var(--primary-container); color: var(--on-primary-container); flex: none; }
+.highlight.sev-warn .hl-ic, .highlight.sev-critical .hl-ic { background: var(--warn-bg); color: var(--warn); }
+.highlight.sev-good .hl-ic { background: var(--good-bg); color: var(--good); }
+.highlight .hl-t { flex: 1; min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.highlight .hl-more { font-size: .72rem; font-weight: 700; padding: 2px 8px; border-radius: 999px; background: var(--surface-3); color: var(--on-surface-var); }
+.highlight > svg:last-child { width: 16px; height: 16px; opacity: .5; flex: none; }
+.home-list-head { display: flex; align-items: center; justify-content: space-between; font-size: .85rem; font-weight: 700; color: var(--on-surface-var); margin: 0 4px 8px; }
+.banner.slim { padding: 8px 12px; font-size: .85rem; gap: 8px; margin-bottom: 10px; }
+.banner.slim .btn.text { padding: 4px 8px; min-height: 0; }
 
 </style>
 </head>
@@ -775,7 +824,7 @@ body.fx .item:active { transform: scale(.985); }
 <div id="print-root" aria-hidden="true"></div>
 <noscript><div style="padding:24px;font-family:sans-serif">האפליקציה דורשת JavaScript.</div></noscript>
 <script>
-window.APP_VERSION = '1.4.0';
+window.APP_VERSION = '1.4.1';
 /* ---- core/util.js ---- */
 /* ============================================================
  * util.js — date/time helpers and formatting.
@@ -3899,7 +3948,8 @@ window.APP_VERSION = '1.4.0';
     de.style.setProperty('--vt-x', (x || root.innerWidth / 2) + 'px');
     de.style.setProperty('--vt-y', (y || root.innerHeight / 2) + 'px');
     Fx.play('whoosh');
-    return document.startViewTransition(update).finished.catch(() => {});
+    de.classList.add('vt-reveal');
+    return document.startViewTransition(update).finished.catch(() => {}).then(() => de.classList.remove('vt-reveal'));
   };
 
   /** Body class that turns on the springy press animations in the CSS; prefs mirrored for the intro. */
@@ -4691,9 +4741,20 @@ window.APP_VERSION = '1.4.0';
     const nav = document.getElementById('nav');
     const unread = S.notifications.filter((n) => !n.read && n.cat !== 'summary').length;
     try { if (navigator.setAppBadge) { if (unread) navigator.setAppBadge(unread).catch(() => {}); else navigator.clearAppBadge().catch(() => {}); } } catch (e) { /* not supported */ }
+    if (nav.firstChild && nav.dataset.built === '1') {
+      nav.querySelectorAll('[data-tab]').forEach((b) => b.classList.toggle('on', b.dataset.tab === App.tab));
+      const pill = nav.querySelector('[data-tab="home"] .pill');
+      const badge = pill && pill.querySelector('.dot-badge');
+      const text = unread && App.tab !== 'home' ? (unread > 9 ? '9+' : String(unread)) : '';
+      if (!text && badge) badge.remove();
+      else if (text && badge) badge.textContent = text;
+      else if (text && pill) pill.insertAdjacentHTML('beforeend', `<span class="dot-badge">${text}</span>`);
+      return;
+    }
+    nav.dataset.built = '1';
     nav.innerHTML = `<div class="nav-inner">${TABS.map((t) => t.id === 'add'
       ? `<div><button class="fab" data-act="add-menu" aria-label="הוספה">${icon('plus')}</button></div>`
-      : `<button class="${App.tab === t.id ? 'on' : ''}" data-act="tab" data-tab="${t.id}" aria-label="${t.label}"><span class="pill">${icon(t.icon)}${t.id === 'home' && unread ? `<span class="dot-badge">${unread > 9 ? '9+' : unread}</span>` : ''}</span>${t.label}</button>`).join('')}</div>`;
+      : `<button class="${App.tab === t.id ? 'on' : ''}" data-act="tab" data-tab="${t.id}" aria-label="${t.label}"><span class="pill">${icon(t.icon)}${t.id === 'home' && unread && App.tab !== 'home' ? `<span class="dot-badge">${unread > 9 ? '9+' : unread}</span>` : ''}</span>${t.label}</button>`).join('')}</div>`;
   };
   const TAB_ORDER = ['home', 'calendar', 'reports', 'settings'];
   App.go = function (tab, opts) {
@@ -4701,16 +4762,26 @@ window.APP_VERSION = '1.4.0';
     if (tab === App.tab) App.enterDir = '';
     App.tab = tab;
     try { history.replaceState(history.state, '', '#' + tab); } catch (e) { /* ignore */ }
-    App.render(opts);
-    window.scrollTo(0, 0);
+    const dir = App.enterDir;
+    const swap = () => { App.render(opts); window.scrollTo(0, 0); };
+    if (opts && opts.fromNav && dir && document.startViewTransition && root.Fx && root.Fx.motion() && !document.querySelector('.sheet')) {
+      App.enterDir = ''; // the transition animates; no extra CSS entry animation
+      const de = document.documentElement;
+      de.dataset.nav = dir === 'enter-next' ? 'next' : 'prev';
+      const t = document.startViewTransition(swap);
+      t.finished.catch(() => {}).then(() => { delete de.dataset.nav; });
+    } else swap();
   };
+  const seenTabs = new Set();
   App.render = function (opts) {
     if (App.blocking) return; // a full-screen step (login / terms / setup wizard) owns the screen
     const v = document.getElementById('view');
     const fn = App.views[App.tab] || App.views.home;
     const y = opts && opts.keepScroll ? window.scrollY : 0;
     const fresh = !(opts && opts.keepScroll);
-    const cls = fresh ? (App.enterDir || '') + ' fresh' : '';
+    const first = fresh && !seenTabs.has(App.tab);
+    if (first) seenTabs.add(App.tab);
+    const cls = fresh ? (App.enterDir || '') + ' fresh' + (first ? ' first' : '') : '';
     App.enterDir = '';
     v.innerHTML = `<div class="view ${cls}" id="view-inner">${fn()}</div>`;
     if (App.views[App.tab + '_mount']) App.views[App.tab + '_mount'](v);
@@ -4772,7 +4843,7 @@ window.APP_VERSION = '1.4.0';
     const fn = App.actions[el.dataset.act];
     if (fn) { e.preventDefault(); fn(el, e); }
   });
-  App.actions.tab = (el) => App.go(el.dataset.tab);
+  App.actions.tab = (el) => App.go(el.dataset.tab, { fromNav: true });
   App.actions.undo = () => App.undo();
 
   /* ---------------- live timer ---------------- */
@@ -5611,6 +5682,12 @@ window.FIREBASE_CONFIG = {
   };
 
   /* ---------------- cloud status in the top bar ---------------- */
+  /** Small sync indicator for the home screen: shown only when something needs attention. */
+  App.syncDot = function () {
+    const st = Cloud.user ? Cloud.status : 'off';
+    if (st !== 'error' && st !== 'offline') return '';
+    return `<button class="icon-btn" data-act="settings-open" data-k="account" aria-label="${esc(Cloud.statusText())}" style="color:${st === 'error' ? 'var(--bad)' : 'var(--warn)'}">${icon(st === 'error' ? 'alert' : 'cloud')}</button>`;
+  };
   App.cloudBadge = function () {
     const st = Cloud.user ? Cloud.status : 'off';
     const color = st === 'synced' ? 'var(--good)' : st === 'error' ? 'var(--bad)' : st === 'offline' ? 'var(--warn)' : 'var(--on-surface-var)';
@@ -5619,7 +5696,7 @@ window.FIREBASE_CONFIG = {
   let badgeT = null;
   Cloud.on(() => {
     clearTimeout(badgeT);
-    badgeT = setTimeout(() => { if (App.tab === 'home' && document.getElementById('view-inner')) App.rerender(); }, 300);
+    badgeT = setTimeout(() => { const el = document.getElementById('sync-dot'); if (el) el.innerHTML = App.syncDot(); }, 300);
   });
 
   /* ---------------- settings: account & sync ---------------- */
@@ -5717,32 +5794,36 @@ window.FIREBASE_CONFIG = {
     return h < 5 ? 'לילה טוב' : h < 12 ? 'בוקר טוב' : h < 17 ? 'צהריים טובים' : h < 21 ? 'ערב טוב' : 'לילה טוב';
   }
 
-  /* ---------------- timer card ---------------- */
-  function timerCard() {
+  /* ---------------- home: one number, one action, one highlight ----------------
+   * The home screen answers three questions at a glance: how much have I earned this month,
+   * what do I do now (start / stop a shift), and is there anything I should know (one line).
+   * Everything else is one tap away: the number opens the summary, the line opens insights,
+   * the + button holds every kind of entry (and payslips), the ✨ opens the assistant. */
+
+  /* ---------------- action: start, or the running shift ---------------- */
+  function actionBlock() {
     const a = S.activeShift;
     if (a) {
       const role = App.role(App.currentRole());
       const onBreak = App.onBreak();
       const others = App.roles(a.employerId).filter((r) => r.id !== App.currentRole());
       return `<div class="card timer-card running">
-        <div class="small bold"><span class="pulse"></span>${onBreak ? 'בהפסקה' : 'משמרת פעילה'} · ${esc(role ? role.name : '')}</div>
+        <div class="tc-head"><span class="pulse"></span>${onBreak ? 'בהפסקה' : 'משמרת פעילה'}${role ? ' · ' + esc(role.name) : ''}<span class="spacer"></span><span class="tiny">מ-${U.epochHM(a.start)}</span></div>
         <div class="clock" data-clock="net">0:00:00</div>
-        <div class="meta">התחלת ב-${U.epochHM(a.start)}${(a.breaks || []).length ? ' · הפסקות לא נספרות' : ''} · עד עכשיו כ-<b data-live-pay></b></div>
-        <button class="btn big" data-act="timer-stop">${icon('stop')} סיים משמרת</button>
-        <div class="btn-row" style="margin-top:10px">
-          <button class="btn tonal" data-act="timer-break">${icon(onBreak ? 'play' : 'coffee')} ${onBreak ? 'חזור מהפסקה' : 'הפסקה'}</button>
-          ${others.length ? `<button class="btn tonal" data-act="timer-switch">${icon('swap')} החלף תפקיד</button>` : ''}
+        <div class="meta">עד עכשיו <b data-live-pay></b>${(a.breaks || []).length ? ' · הפסקות לא נספרות' : ''}</div>
+        <div class="tc-actions">
+          <button class="btn big" data-act="timer-stop">${icon('stop')} סיים משמרת</button>
+          <button class="icon-btn tonal lg" data-act="timer-break" aria-label="${onBreak ? 'חזור מהפסקה' : 'הפסקה'}">${icon(onBreak ? 'play' : 'coffee')}</button>
+          ${others.length ? `<button class="icon-btn tonal lg" data-act="timer-switch" aria-label="החלף תפקיד">${icon('swap')}</button>` : ''}
         </div></div>`;
     }
     const roles = App.roles();
     const sel = S.meta.lastRole && App.role(S.meta.lastRole) ? S.meta.lastRole : roles[0] && roles[0].id;
-    return `<div class="card timer-card">
-      ${roles.length > 1 ? `<div class="role-picker">${roles.map((r) => `<button class="chip ${r.id === sel ? 'on' : ''}" data-act="pick-role" data-id="${r.id}"><span class="sw" style="background:${r.color}"></span>${esc(r.name)}</button>`).join('')}</div>` : ''}
-      <button class="btn big" data-act="timer-start" data-role="${sel || ''}">${icon('play')} התחל משמרת</button>
-      <div class="btn-row" style="margin-top:10px">
-        <button class="btn text" data-act="shift-new">${icon('edit', 's')} הוספה ידנית</button>
-        <button class="btn text" data-act="dup-last">${icon('copy', 's')} שכפל אחרונה</button>
-      </div></div>`;
+    const role = App.role(sel);
+    return `<div class="home-action">
+      <button class="btn big start" data-act="timer-start" data-role="${sel || ''}">${icon('play')} התחל משמרת</button>
+      ${roles.length > 1 && role ? `<button class="role-chip" data-act="choose-role" aria-label="בחר תפקיד"><span class="sw" style="background:${role.color}"></span>${esc(role.name)}<span class="chev">${icon('left', 's')}</span></button>` : ''}
+    </div>`;
   }
 
   /* ---------------- payday ---------------- */
@@ -5760,8 +5841,8 @@ window.FIREBASE_CONFIG = {
       <button class="btn" data-act="payslip-new">${icon('file')} בדיקת תלוש</button></div>`;
   }
 
-  /* ---------------- period card ---------------- */
-  function periodCard() {
+  /* ---------------- the month, in one number ---------------- */
+  function hero() {
     const emp = S.employers[0];
     const P = Engine.periodOf(U.todayKey(), emp);
     const sum = Engine.periodSummary(App.model, P.key, emp.id);
@@ -5772,37 +5853,38 @@ window.FIREBASE_CONFIG = {
     const pct = goal ? Math.min(100, (curVal / goal) * 100) : 0;
     if (goal && pct >= 100) App.celebrateOnce('goal-' + P.key, () => { root.Fx.celebrate('money'); UI.toast('הגעת ליעד החודשי! 🎯'); });
     const projPct = goal && proj && proj.withPlanned ? Math.min(100, ((goalNet ? proj.withPlanned * (sum.gross ? sum.net.net / sum.gross : 0.85) : proj.withPlanned) / goal) * 100) : 0;
-    return `<div class="card tonal card-link" data-act="go-summary">
-      <div class="row-flex"><div style="flex:1"><div class="small bold">${emp.periodStartDay > 1 ? 'תקופת שכר' : 'החודש'} · ${esc(P.label)}</div>
-      <div class="tiny" style="opacity:.8">⁦${U.fmtDate(P.from, 'short')}–${U.fmtDate(P.to, 'short')}⁩ · תשלום ב-${U.fmtDate(P.payDate, 'short')}</div></div>${icon('left')}</div>
-      <div style="margin:10px 0 4px"><span class="tiny" style="opacity:.8">ברוטו עד עכשיו</span><div class="hero-num">${money(sum.gross, 0)}</div></div>
-      <div class="kpis" style="margin-top:10px">
-        <div class="kpi"><div class="l">${sum.net.minor ? 'נטו (ללא ניכויים)' : 'נטו משוער'}</div><div class="v">${money(sum.net.net, 0)}</div></div>
-        <div class="kpi"><div class="l">נסיעות</div><div class="v">${money(sum.travel, 0)}</div></div>
-        <div class="kpi"><div class="l">שעות</div><div class="v"><span class="num">${U.hm(sum.hours * 60)}</span></div></div>
-        <div class="kpi"><div class="l">משמרות</div><div class="v">${sum.shifts}</div></div>
-      </div>
-      ${proj && proj.pace ? `<div class="small" style="margin-top:12px">${icon('up', 's')} צפי לסוף ${emp.periodStartDay > 1 ? 'התקופה' : 'החודש'} לפי הקצב: <b>${money(proj.pace, 0)}</b>${proj.plannedCount ? `<br><span style="opacity:.85">מה שכבר רשום + ${proj.plannedCount} משמרות מתוכננות: <b>${money(proj.withPlanned, 0)}</b></span>` : ''}</div>` : ''}
-      ${goal ? `<div style="margin-top:12px"><div class="row-flex small"><span>${icon('target', 's')} יעד ${goalNet ? 'נטו' : 'ברוטו'}: ${money(goal, 0)}</span><span class="spacer"></span><b>${U.num(pct, 0)}%</b></div>
-        <div class="progress" style="margin-top:6px"><b style="width:${projPct}%"></b><i style="width:${pct}%"></i></div></div>` : `<div class="small" style="margin-top:10px;opacity:.85" data-act="settings-goal">${icon('target', 's')} הגדר יעד חודשי</div>`}
-    </div>`;
+    const periodName = emp.periodStartDay > 1 ? 'תקופת השכר' : esc(P.label);
+    return `<section class="home-hero" data-act="go-summary" role="button" aria-label="סיכום ${periodName}">
+      <div class="hh-label">${periodName} · ברוטו עד עכשיו</div>
+      <div class="hero-num">${money(sum.gross, 0)}</div>
+      <div class="hh-stats"><span>${sum.net.minor ? 'נטו' : 'נטו משוער'} <b>${money(sum.net.net, 0)}</b></span><i></i><span><b class="num">${U.hm(sum.hours * 60)}</b> ש׳</span><i></i><span><b>${sum.shifts}</b> משמרות</span></div>
+      ${goal ? `<div class="hh-goal"><div class="progress thin"><b style="width:${projPct}%"></b><i style="width:${pct}%"></i></div>
+        <div class="hh-goal-l">${U.num(pct, 0)}% מיעד ${money(goal, 0)}${proj && proj.pace ? ` · צפי ${money(proj.pace, 0)}` : ''}</div></div>`
+        : (proj && proj.pace ? `<div class="hh-goal-l">צפי לסוף ${emp.periodStartDay > 1 ? 'התקופה' : 'החודש'}: ${money(proj.pace, 0)}</div>` : '')}
+    </section>`;
   }
 
-  function insightsCard() {
-    const ins = App.insights;
-    const live = ins ? ins.live.slice().sort((a, b) => b.priority - a.priority) : [];
+  /* ---------------- one line worth knowing (opens everything else) ---------------- */
+  function highlight() {
+    const now = Date.now();
     const sevOrder = { critical: 0, warn: 1, good: 2, info: 3 };
-    const unread = S.notifications.filter((n) => !n.read && n.type !== 'weekly').sort((a, b) => (sevOrder[a.severity] - sevOrder[b.severity]) || b.createdAt - a.createdAt);
-    const items = [...unread.slice(0, 3), ...live].slice(0, 3);
-    if (!items.length) return '';
-    return `<div class="card"><div class="card-head">${icon('bulb')}<h3>תובנות</h3><button class="btn text sm" data-act="insights">הכול</button></div>${items.map((a) => App.insightRow(a)).join('')}</div>`;
+    const unread = S.notifications.filter((n) => !n.read && n.cat !== 'summary').sort((a, b) => (sevOrder[a.severity] - sevOrder[b.severity]) || b.createdAt - a.createdAt);
+    const urgent = unread.filter((n) => n.severity === 'critical' || n.severity === 'warn');
+    const next = [...App.model.results.values()].filter((r) => r.status === 'planned' && r.start > now && r.start - now < 36 * 3600000).sort((a, b) => a.start - b.start)[0];
+    const weekly = S.notifications.filter((n) => n.type === 'weekly' && !n.read && now - n.createdAt < 4 * U.DAY).sort((a, b) => b.createdAt - a.createdAt)[0];
+    const live = App.insights ? App.insights.live.slice().sort((a, b) => b.priority - a.priority) : [];
+    let item = null;
+    if (urgent[0]) item = { act: 'insights', ic: 'alert', cls: 'sev-' + urgent[0].severity, t: urgent[0].title };
+    else if (next) item = { act: 'shift-open', id: next.id, ic: 'calendar', cls: '', t: `משמרת ${U.epochKey(next.start) === U.todayKey() ? 'היום' : 'מחר'} ב-${U.epochHM(next.start)} · ${App.roleName(next.segments[0].roleId)}` };
+    else if (weekly) item = { act: 'insights', ic: 'sparkle', cls: '', t: 'הסיכום השבועי שלך מוכן' };
+    else if (unread[0]) item = { act: 'insights', ic: App.severityIcon[unread[0].severity] || 'bulb', cls: 'sev-' + (unread[0].severity || 'info'), t: unread[0].title };
+    else if (live[0]) item = { act: 'insights', ic: 'bulb', cls: '', t: live[0].title };
+    if (!item) return '';
+    const more = Math.max(0, unread.length - (unread.some((n) => n.title === item.t) ? 1 : 0));
+    return `<button class="highlight ${item.cls}" data-act="${item.act}"${item.id ? ` data-id="${item.id}"` : ''}>
+      <span class="hl-ic">${icon(item.ic, 's')}</span><span class="hl-t">${esc(item.t)}</span>${more ? `<span class="hl-more">+${more}</span>` : ''}${icon('left', 's')}</button>`;
   }
-  function weeklyCard() {
-    const w = S.notifications.filter((n) => n.type === 'weekly').sort((a, b) => b.createdAt - a.createdAt)[0];
-    if (!w || w.read || Date.now() - w.createdAt > 4 * U.DAY) return '';
-    return `<div class="card share-card"><div class="card-head">${icon('sparkle')}<h3>${esc(w.title)}</h3><button class="icon-btn" data-act="weekly-share" data-id="${esc(w.id)}" aria-label="שתף">${icon('share')}</button><button class="icon-btn" data-act="notif-read" data-id="${esc(w.id)}" aria-label="סגור">${icon('x')}</button></div>
-      <div style="font-size:1.05rem">${esc(w.body)}</div><div class="tiny muted" style="margin-top:6px">${esc(w.explain)}</div></div>`;
-  }
+
   function birthdayCard() {
     const b = S.settings.birthDate;
     if (!b || b.slice(5) !== U.todayKey().slice(5)) return '';
@@ -5813,14 +5895,14 @@ window.FIREBASE_CONFIG = {
   }
   function banners() {
     let h = '';
-    if (S.settings.demo) h += `<div class="banner">${icon('flask')}<div style="flex:1">מצב הדגמה פעיל — הנתונים לדוגמה.</div><button class="btn sm" data-act="demo-clear">מחק נתוני דוגמה</button></div>`;
+    if (S.settings.demo) h += `<div class="banner slim">${icon('flask', 's')}<div style="flex:1">מצב הדגמה — נתונים לדוגמה</div><button class="btn text sm" data-act="demo-clear">מחק</button></div>`;
     const B = S.settings.backup;
     const last = Math.max(B.lastBackup || 0);
     if (!S.meta.cloudUid && S.shifts.length > 5 && Date.now() - last > (+S.settings.alerts.backupDays || 30) * U.DAY) {
-      h += `<div class="banner warn">${icon('cloud')}<div style="flex:1">${last ? 'עבר זמן מאז הגיבוי האחרון.' : 'עוד לא גיבית.'} הנתונים שמורים רק בטלפון.</div><button class="btn sm" data-act="backup-now">גבה</button></div>`;
+      h += `<div class="banner slim warn">${icon('cloud', 's')}<div style="flex:1">${last ? 'עבר זמן מאז הגיבוי האחרון' : 'עוד לא גיבית'}</div><button class="btn text sm" data-act="backup-now">גבה</button></div>`;
     }
     const issues = Engine.dataIssues(App.model).filter((i) => i.type === 'overlap');
-    if (issues.length) h += `<div class="banner warn">${icon('alert')}<div style="flex:1">${esc(issues[0].text)}</div><button class="btn sm" data-act="shift-open" data-id="${issues[0].ids[1]}">בדוק</button></div>`;
+    if (issues.length) h += `<div class="banner slim warn">${icon('alert', 's')}<div style="flex:1">${esc(issues[0].text)}</div><button class="btn text sm" data-act="shift-open" data-id="${issues[0].ids[1]}">בדוק</button></div>`;
     return h;
   }
 
@@ -5830,33 +5912,33 @@ window.FIREBASE_CONFIG = {
     const hd = HebCal.hebrewDate(today);
     const hol = HebCal.holidaysOn(today).map((h) => h.name).join(', ');
     const results = [...App.model.results.values()];
-    const upcoming = results.filter((r) => r.status === 'planned').sort((a, b) => a.start - b.start).slice(0, 3);
-    const recent = results.filter((r) => r.status === 'done').sort((a, b) => b.start - a.start).slice(0, 5);
-    const recentEntries = S.entries.slice().sort((a, b) => b.date.localeCompare(a.date)).slice(0, 2);
+    const now = Date.now();
+    // planned shifts whose time has passed wait for a "done" tap, so they come first
+    const pending = results.filter((r) => r.status === 'planned' && r.start < now).sort((a, b) => b.start - a.start).slice(0, 2);
+    const recent = results.filter((r) => r.status === 'done').sort((a, b) => b.start - a.start).slice(0, 3);
+    const name = S.settings.userName ? ', ' + esc(String(S.settings.userName).split(' ')[0]) : '';
+    const date = U.fmtDate(today, 'long').replace(/\s\d{4}$/, '');
     return `
-      <div class="topbar"><div class="titles"><h1>${greeting()} <span class="wave">👋</span></h1><div class="sub">${U.fmtDate(today, 'long')} · ${esc(hd.toString())}${hol ? ' · ' + esc(hol) : ''}</div></div>
-        ${App.cloudBadge ? App.cloudBadge() : ''}<button class="icon-btn tonal" data-act="insights" aria-label="התראות">${icon('bell')}${unread ? `<span class="dot-badge">${unread > 9 ? '9+' : unread}</span>` : ''}</button></div>
+      <div class="home-top"><div class="titles"><h1>${greeting()}${name} <span class="wave">👋</span></h1>
+        <div class="sub">${date} · ${esc(hd.toString().replace(/\s\S+$/, ''))}${hol ? ' · ' + esc(hol) : ''}</div></div>
+        <span id="sync-dot">${App.syncDot ? App.syncDot() : ''}</span>
+        <button class="icon-btn" data-act="assistant" aria-label="שאל את העוזר">${icon('sparkle')}</button>
+        <button class="icon-btn" data-act="insights" aria-label="התראות ותובנות">${icon('bell')}${unread ? `<span class="dot-badge">${unread > 9 ? '9+' : unread}</span>` : ''}</button></div>
       ${birthdayCard()}
       ${paydayCard()}
       ${banners()}
-      ${timerCard()}
-      ${weeklyCard()}
-      ${periodCard()}
-      ${insightsCard()}
-      <div class="quick">
-        <button data-act="payslip-new">${icon('receipt')}<span>ניתוח תלוש</span></button>
-        <button data-act="go-summary">${icon('chart')}<span>סיכומים</span></button>
-        <button data-act="assistant">${icon('sparkle')}<span>שאל את העוזר</span></button>
-      </div>
-      ${upcoming.length ? `<div class="section-title">${icon('calendar', 's')} משמרות מתוכננות<span class="spacer"></span><button class="btn text sm" data-act="tab" data-tab="calendar">ללוח</button></div><div class="list">${upcoming.map((r) => App.shiftItem(r, { showOk: true })).join('')}</div>` : ''}
-      <div class="section-title">${icon('clock', 's')} משמרות אחרונות<span class="spacer"></span>${recent.length ? '<button class="btn text sm" data-act="go-shifts">הכול</button>' : ''}</div>
-      ${recent.length ? `<div class="list">${recent.map((r) => App.shiftItem(r)).join('')}${recentEntries.map(App.entryItem).join('')}</div>`
-        : UI.emptyState('clock', 'עוד אין משמרות', 'לחץ על "התחל משמרת" כשאתה מתחיל לעבוד, או הוסף משמרת ידנית.', '<button class="btn tonal" data-act="shift-new">הוסף משמרת</button>')}
+      ${hero()}
+      ${actionBlock()}
+      ${highlight()}
+      ${pending.length + recent.length ? `<div class="home-list-head"><span>${pending.length ? 'לסמן כבוצעה' : 'משמרות אחרונות'}</span><button class="btn text sm" data-act="go-shifts">הכול</button></div>
+        <div class="list home-list">${pending.map((r) => App.shiftItem(r, { showOk: true })).join('')}${recent.slice(0, Math.max(1, 3 - pending.length)).map((r) => App.shiftItem(r)).join('')}</div>`
+        : UI.emptyState('clock', 'עוד אין משמרות', 'לחץ על "התחל משמרת" כשאתה מתחיל לעבוד, או על + כדי להוסיף משמרת שכבר עשית.', '')}
     `;
   };
 
   /* ---------------- actions ---------------- */
   App.actions['pick-role'] = async (el) => { await Store.setMeta({ lastRole: el.dataset.id }); App.rerender(); };
+  App.actions['choose-role'] = () => App.sheetsApi.pickRole('תפקיד למשמרת', async (rid) => { await Store.setMeta({ lastRole: rid }); App.rerender(); });
   App.actions['timer-start'] = async (el) => {
     const roles = App.roles();
     let id = el && el.dataset && el.dataset.role;
@@ -5927,6 +6009,8 @@ window.FIREBASE_CONFIG = {
         ${opt('entry-new" data-kind="sick', 'thermo', 'יום מחלה', 'יום 1: 0%, ימים 2–3: 50%, מהרביעי: 100%')}
         ${opt('entry-new" data-kind="adjustment" data-type="bonus', 'gift', 'בונוס / טיפים / תוספת', 'סכום חד-פעמי')}
         ${opt('entry-new" data-kind="adjustment" data-type="deduction', 'minus', 'ניכוי', 'ארוחה, ביגוד, קנס…')}
+      </div><div class="list">
+        ${opt('payslip-new', 'receipt', 'תלוש שכר', 'סריקה ובדיקה מול המשמרות שרשמת')}
       </div>`,
     });
   };
@@ -8673,7 +8757,7 @@ window.FIREBASE_CONFIG = {
 (function (root) {
   'use strict';
   const { App, Fx } = root;
-  const THRESHOLD = 72, MAX = 128;
+  const THRESHOLD = 72, MAX = 128, DEAD_ZONE = 14;
   const LOGO = '<svg viewBox="0 0 1024 1024" aria-hidden="true"><path class="g" pathLength="1" d="M300 660 A258 258 0 0 1 603 271 L603 600"/><path class="y" pathLength="1" d="M420 422 L420 753 A258 258 0 0 0 720 362"/></svg>';
   const ind = document.createElement('div');
   ind.className = 'ptr';
@@ -8707,7 +8791,7 @@ window.FIREBASE_CONFIG = {
   }
 
   document.addEventListener('touchstart', (e) => {
-    if (e.touches.length !== 1 || blocked(e.target)) { startY = null; return; }
+    if (e.touches.length !== 1 || blocked(e.target) || !(e.target.closest && e.target.closest('#view'))) { startY = null; return; }
     startY = e.touches[0].clientY;
     dist = 0; armed = false;
     ind.classList.remove('settle');
@@ -8715,7 +8799,7 @@ window.FIREBASE_CONFIG = {
 
   document.addEventListener('touchmove', (e) => {
     if (startY == null) return;
-    const dy = e.touches[0].clientY - startY;
+    const dy = e.touches[0].clientY - startY - DEAD_ZONE; // a tap with a tiny finger movement never moves the page
     if (dy <= 0 || root.scrollY > 0) { if (dist) paint(0); dist = 0; return; }
     dist = Math.min(MAX, dy * 0.5);
     paint(dist);
@@ -8726,7 +8810,7 @@ window.FIREBASE_CONFIG = {
   async function end() {
     if (startY == null) return;
     startY = null;
-    if (!armed) { settle(); return; }
+    if (!armed) { if (dist) settle(); dist = 0; return; }
     busy = true;
     ind.classList.add('settle', 'spin');
     paint(THRESHOLD * 0.9);
