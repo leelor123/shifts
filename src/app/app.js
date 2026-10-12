@@ -391,7 +391,7 @@
       const wait = Math.ceil((pinWaitUntil - Date.now()) / 1000);
       el.innerHTML = `<div class="empty" style="padding:0"><div class="art">${icon('lock')}</div><h3>האפליקציה נעולה</h3><div>${wait > 0 ? `יותר מדי ניסיונות. נסה שוב בעוד ${wait} שניות` : 'הזן קוד'}</div></div>
         <div class="pin-dots">${[0, 1, 2, 3, 4, 5, 6, 7].slice(0, Math.max(4, (L.len || 4))).map((i) => `<i class="${i < pin.length ? 'f' : ''}"></i>`).join('')}</div>
-        <div class="pin-pad">${[1, 2, 3, 4, 5, 6, 7, 8, 9, L.bioId ? 'bio' : '', 0, '⌫'].map((k) => k === '' ? '<span></span>' : k === 'bio' ? `<button data-bio aria-label="פתח בטביעת אצבע">${icon('hand')}</button>` : `<button data-k="${k}" ${wait > 0 ? 'disabled' : ''}>${k}</button>`).join('')}</div>`;
+        <div class="pin-pad">${[1, 2, 3, 4, 5, 6, 7, 8, 9, L.bioId ? 'bio' : '', 0, '⌫'].map((k) => k === '' ? '<span></span>' : k === 'bio' ? `<button data-bio aria-label="פתח בטביעת אצבע">${icon('finger')}</button>` : `<button data-k="${k}" ${wait > 0 ? 'disabled' : ''}>${k}</button>`).join('')}</div>`;
       if (wait > 0) setTimeout(() => { if (el.isConnected) draw(); }, 1000);
       const bio = el.querySelector('[data-bio]');
       if (bio) bio.onclick = tryBio;

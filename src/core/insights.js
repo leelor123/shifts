@@ -220,7 +220,7 @@
           body: maybeTeen
             ? `${U.money(rate)} לשעה, פחות משכר המינימום למבוגר (${U.money(adult)}). מתחת לגיל 18 המינימום נמוך יותר: הוסף תאריך לידה בהגדרות כדי לבדוק לפי הגיל שלך.`
             : `${U.money(rate)} לשעה, ושכר המינימום${mw.youth ? ` לגיל ${mw.age}` : ''} הוא ${U.money(mw.hourly)}. חסרים ${U.money(mw.hourly - rate)} על כל שעה.`,
-          explain: mw.custom ? 'לפי שכר המינימום שהגדרת בהגדרות.' : `חוק שכר מינימום, התעריף מ-${U.fmtDate(mw.from, 'short')}${mw.youth ? ' (לנוער: ' + Math.round(mw.share * 100) + '% משכר המבוגר)' : ''}.` });
+          explain: mw.custom ? 'לפי שכר המינימום שהגדרת בהגדרות.' : `חוק שכר מינימום, התעריף מ-${U.fmtDate(mw.from)}${mw.youth ? ' (לנוער: ' + Math.round(mw.share * 100) + '% משכר המבוגר)' : ''}.` });
       }
     }
     const ageNow = Engine.ageAt(S.birthDate, today);

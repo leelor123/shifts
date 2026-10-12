@@ -476,7 +476,7 @@
       if (rateForMin + 0.005 < mw) {
         const h = bq || E.hrs.base;
         add({ area: 'שכר מינימום', status: 'bad', title: 'שכר נמוך משכר המינימום', amount: (mw - rateForMin) * h, detail: `${U.money(rateForMin)} לשעה, שכר המינימום ${U.money(mw)}.`, basis: 'שכר מינימום לשעה כפי שמוגדר בהגדרות (עדכן אם השתנה).', confidence: 'high' });
-      } else add({ area: 'שכר מינימום', status: 'ok', title: 'מעל שכר המינימום', detail: `${U.money(rateForMin)} ≥ ${U.money(mw)} לשעה.`, basis: MW.custom ? 'שכר מינימום לשעה (מההגדרות).' : `שכר מינימום ${MW.youth ? 'לנוער בגיל ' + MW.age : 'למבוגר'} לפי החוק, מ-${U.fmtDate(MW.from, 'short')}.`, confidence: 'high' });
+      } else add({ area: 'שכר מינימום', status: 'ok', title: 'מעל שכר המינימום', detail: `${U.money(rateForMin)} ≥ ${U.money(mw)} לשעה.`, basis: MW.custom ? 'שכר מינימום לשעה (מההגדרות).' : `שכר מינימום ${MW.youth ? 'לנוער בגיל ' + MW.age : 'למבוגר'} לפי החוק, מ-${U.fmtDate(MW.from)}.`, confidence: 'high' });
     }
 
     /* 7. pension */

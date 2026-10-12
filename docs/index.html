@@ -2610,7 +2610,7 @@ window.APP_VERSION = '1.5.0';
           body: maybeTeen
             ? `${U.money(rate)} לשעה, פחות משכר המינימום למבוגר (${U.money(adult)}). מתחת לגיל 18 המינימום נמוך יותר: הוסף תאריך לידה בהגדרות כדי לבדוק לפי הגיל שלך.`
             : `${U.money(rate)} לשעה, ושכר המינימום${mw.youth ? ` לגיל ${mw.age}` : ''} הוא ${U.money(mw.hourly)}. חסרים ${U.money(mw.hourly - rate)} על כל שעה.`,
-          explain: mw.custom ? 'לפי שכר המינימום שהגדרת בהגדרות.' : `חוק שכר מינימום, התעריף מ-${U.fmtDate(mw.from, 'short')}${mw.youth ? ' (לנוער: ' + Math.round(mw.share * 100) + '% משכר המבוגר)' : ''}.` });
+          explain: mw.custom ? 'לפי שכר המינימום שהגדרת בהגדרות.' : `חוק שכר מינימום, התעריף מ-${U.fmtDate(mw.from)}${mw.youth ? ' (לנוער: ' + Math.round(mw.share * 100) + '% משכר המבוגר)' : ''}.` });
       }
     }
     const ageNow = Engine.ageAt(S.birthDate, today);
@@ -3412,7 +3412,7 @@ window.APP_VERSION = '1.5.0';
       if (rateForMin + 0.005 < mw) {
         const h = bq || E.hrs.base;
         add({ area: 'שכר מינימום', status: 'bad', title: 'שכר נמוך משכר המינימום', amount: (mw - rateForMin) * h, detail: `${U.money(rateForMin)} לשעה, שכר המינימום ${U.money(mw)}.`, basis: 'שכר מינימום לשעה כפי שמוגדר בהגדרות (עדכן אם השתנה).', confidence: 'high' });
-      } else add({ area: 'שכר מינימום', status: 'ok', title: 'מעל שכר המינימום', detail: `${U.money(rateForMin)} ≥ ${U.money(mw)} לשעה.`, basis: MW.custom ? 'שכר מינימום לשעה (מההגדרות).' : `שכר מינימום ${MW.youth ? 'לנוער בגיל ' + MW.age : 'למבוגר'} לפי החוק, מ-${U.fmtDate(MW.from, 'short')}.`, confidence: 'high' });
+      } else add({ area: 'שכר מינימום', status: 'ok', title: 'מעל שכר המינימום', detail: `${U.money(rateForMin)} ≥ ${U.money(mw)} לשעה.`, basis: MW.custom ? 'שכר מינימום לשעה (מההגדרות).' : `שכר מינימום ${MW.youth ? 'לנוער בגיל ' + MW.age : 'למבוגר'} לפי החוק, מ-${U.fmtDate(MW.from)}.`, confidence: 'high' });
     }
 
     /* 7. pension */
@@ -3641,6 +3641,7 @@ window.APP_VERSION = '1.5.0';
     download: '<path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M7 10l5 5 5-5M12 15V3"/>',
     upload: '<path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M17 8l-5-5-5 5M12 3v12"/>',
     share: '<circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><path d="m8.6 13.5 6.8 4M15.4 6.5l-6.8 4"/>',
+    finger: '<path d="M12 11v2.5a7 7 0 0 1-1.2 4"/><path d="M9 11a3 3 0 0 1 6 0v1.5a10 10 0 0 1-.8 4"/><path d="M6.2 14.5A8 8 0 0 0 7 11a5 5 0 0 1 8.6-3.5"/><path d="M17.6 9.5A5 5 0 0 1 18 11v1.5c0 1.6-.2 3.1-.6 4.5"/><path d="M4.5 9A8 8 0 0 1 16 4.3"/><path d="M19.4 7a8 8 0 0 1 .6 3"/>',
     hand: '<path d="M18 11V6a2 2 0 0 0-4 0v5M14 10V4a2 2 0 0 0-4 0v6M10 10.5V6a2 2 0 0 0-4 0v8"/><path d="M18 8a2 2 0 1 1 4 0v6a8 8 0 0 1-8 8h-2c-2.8 0-4.5-.9-6-2.3l-3.6-3.6a2 2 0 0 1 2.8-2.8L7 15"/>',
     lock: '<rect x="4" y="11" width="16" height="11" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/>',
     search: '<circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3"/>',
@@ -5219,7 +5220,7 @@ window.APP_VERSION = '1.5.0';
       const wait = Math.ceil((pinWaitUntil - Date.now()) / 1000);
       el.innerHTML = `<div class="empty" style="padding:0"><div class="art">${icon('lock')}</div><h3>האפליקציה נעולה</h3><div>${wait > 0 ? `יותר מדי ניסיונות. נסה שוב בעוד ${wait} שניות` : 'הזן קוד'}</div></div>
         <div class="pin-dots">${[0, 1, 2, 3, 4, 5, 6, 7].slice(0, Math.max(4, (L.len || 4))).map((i) => `<i class="${i < pin.length ? 'f' : ''}"></i>`).join('')}</div>
-        <div class="pin-pad">${[1, 2, 3, 4, 5, 6, 7, 8, 9, L.bioId ? 'bio' : '', 0, '⌫'].map((k) => k === '' ? '<span></span>' : k === 'bio' ? `<button data-bio aria-label="פתח בטביעת אצבע">${icon('hand')}</button>` : `<button data-k="${k}" ${wait > 0 ? 'disabled' : ''}>${k}</button>`).join('')}</div>`;
+        <div class="pin-pad">${[1, 2, 3, 4, 5, 6, 7, 8, 9, L.bioId ? 'bio' : '', 0, '⌫'].map((k) => k === '' ? '<span></span>' : k === 'bio' ? `<button data-bio aria-label="פתח בטביעת אצבע">${icon('finger')}</button>` : `<button data-k="${k}" ${wait > 0 ? 'disabled' : ''}>${k}</button>`).join('')}</div>`;
       if (wait > 0) setTimeout(() => { if (el.isConnected) draw(); }, 1000);
       const bio = el.querySelector('[data-bio]');
       if (bio) bio.onclick = tryBio;
@@ -6102,14 +6103,14 @@ window.FIREBASE_CONFIG = {
     const live = App.insights ? App.insights.live.slice().sort((a, b) => b.priority - a.priority) : [];
     let item = null;
     const soon = !S.activeShift && [...App.model.results.values()].filter((r) => r.status === 'planned' && r.start > now - 60 * 60000 && r.start < now + 30 * 60000).sort((a, b) => a.start - b.start)[0];
-    if (soon) item = { act: 'start-planned', id: soon.id, ic: 'play', cls: 'go', t: `משמרת מתוכננת ב-${U.epochHM(soon.start)} · התחל עכשיו` };
+    if (soon) item = { act: 'start-planned', id: soon.id, ic: 'play', cls: 'go', t: `התחל את המשמרת של ${U.epochHM(soon.start)}` };
     else if (urgent[0]) item = { act: 'insights', ic: 'alert', cls: 'sev-' + urgent[0].severity, t: urgent[0].title };
     else if (next) item = { act: 'shift-open', id: next.id, ic: 'calendar', cls: '', t: `משמרת ${U.epochKey(next.start) === U.todayKey() ? 'היום' : 'מחר'} ב-${U.epochHM(next.start)} · ${App.roleName(next.segments[0].roleId)}` };
     else if (weekly) item = { act: 'insights', ic: 'sparkle', cls: '', t: 'הסיכום השבועי שלך מוכן' };
     else if (unread[0]) item = { act: 'insights', ic: App.severityIcon[unread[0].severity] || 'bulb', cls: 'sev-' + (unread[0].severity || 'info'), t: unread[0].title };
     else if (live[0]) item = { act: 'insights', ic: 'bulb', cls: '', t: live[0].title };
     if (!item) return '';
-    const more = Math.max(0, unread.length - (unread.some((n) => n.title === item.t) ? 1 : 0));
+    const more = item.cls === 'go' ? 0 : Math.max(0, unread.length - (unread.some((n) => n.title === item.t) ? 1 : 0));
     return `<button class="highlight ${item.cls}" data-act="${item.act}"${item.id ? ` data-id="${item.id}"` : ''}>
       <span class="hl-ic">${icon(item.ic, 's')}</span><span class="hl-t">${esc(item.t)}</span>${more ? `<span class="hl-more">+${more}</span>` : ''}${icon('left', 's')}</button>`;
   }
@@ -7914,7 +7915,7 @@ window.FIREBASE_CONFIG = {
   function minWageInfo() {
     const L = Engine.legalMinWage(U.todayKey(), S.settings.birthDate);
     return `<div class="kv"><span>לפי החוק${L.youth ? ` (גיל ${L.age})` : ''}</span><b>${U.money(L.hourly)} לשעה</b></div>
-      <div class="tiny muted" style="margin:4px 0 10px">מתעדכן אוטומטית לפי התאריך${S.settings.birthDate ? ' והגיל' : '. מתחת לגיל 18? הוסף תאריך לידה בפרטים אישיים'} (התעריף מ-${U.fmtDate(L.from, 'short')}).</div>`;
+      <div class="tiny muted" style="margin:4px 0 10px">מתעדכן אוטומטית לפי התאריך${S.settings.birthDate ? ' והגיל' : '. מתחת לגיל 18? הוסף תאריך לידה בפרטים אישיים'} (התעריף מ-${U.fmtDate(L.from)}).</div>`;
   }
   RENDER.account ={ render: () => App.accountSection(), mount: (el, draw) => App.accountMount(el, draw) };
   RENDER.personal = {
@@ -8258,7 +8259,7 @@ window.FIREBASE_CONFIG = {
       if (row) App.bio.available().then((ok) => {
         if (!ok) return;
         const on = !!S.settings.lock.bioId;
-        row.innerHTML = `<div class="kv" style="margin:6px 0 10px"><span>${icon('hand', 's')} פתיחה בטביעת אצבע / זיהוי פנים</span><button class="btn ${on ? 'text' : 'tonal'} sm" data-bio-toggle>${on ? 'כבה' : 'הפעל'}</button></div>`;
+        row.innerHTML = `<div class="kv" style="margin:6px 0 10px"><span>${icon('finger', 's')} פתיחה בטביעת אצבע / זיהוי פנים</span><button class="btn ${on ? 'text' : 'tonal'} sm" data-bio-toggle>${on ? 'כבה' : 'הפעל'}</button></div>`;
         row.querySelector('[data-bio-toggle]').onclick = async () => {
           if (on) { await Store.setSettings((s) => { s.lock.bioId = null; }); draw(); return; }
           try {

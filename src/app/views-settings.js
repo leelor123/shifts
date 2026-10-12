@@ -116,7 +116,7 @@
   function minWageInfo() {
     const L = Engine.legalMinWage(U.todayKey(), S.settings.birthDate);
     return `<div class="kv"><span>לפי החוק${L.youth ? ` (גיל ${L.age})` : ''}</span><b>${U.money(L.hourly)} לשעה</b></div>
-      <div class="tiny muted" style="margin:4px 0 10px">מתעדכן אוטומטית לפי התאריך${S.settings.birthDate ? ' והגיל' : '. מתחת לגיל 18? הוסף תאריך לידה בפרטים אישיים'} (התעריף מ-${U.fmtDate(L.from, 'short')}).</div>`;
+      <div class="tiny muted" style="margin:4px 0 10px">מתעדכן אוטומטית לפי התאריך${S.settings.birthDate ? ' והגיל' : '. מתחת לגיל 18? הוסף תאריך לידה בפרטים אישיים'} (התעריף מ-${U.fmtDate(L.from)}).</div>`;
   }
   RENDER.account ={ render: () => App.accountSection(), mount: (el, draw) => App.accountMount(el, draw) };
   RENDER.personal = {
@@ -460,7 +460,7 @@
       if (row) App.bio.available().then((ok) => {
         if (!ok) return;
         const on = !!S.settings.lock.bioId;
-        row.innerHTML = `<div class="kv" style="margin:6px 0 10px"><span>${icon('hand', 's')} פתיחה בטביעת אצבע / זיהוי פנים</span><button class="btn ${on ? 'text' : 'tonal'} sm" data-bio-toggle>${on ? 'כבה' : 'הפעל'}</button></div>`;
+        row.innerHTML = `<div class="kv" style="margin:6px 0 10px"><span>${icon('finger', 's')} פתיחה בטביעת אצבע / זיהוי פנים</span><button class="btn ${on ? 'text' : 'tonal'} sm" data-bio-toggle>${on ? 'כבה' : 'הפעל'}</button></div>`;
         row.querySelector('[data-bio-toggle]').onclick = async () => {
           if (on) { await Store.setSettings((s) => { s.lock.bioId = null; }); draw(); return; }
           try {

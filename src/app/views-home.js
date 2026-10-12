@@ -127,14 +127,14 @@
     const live = App.insights ? App.insights.live.slice().sort((a, b) => b.priority - a.priority) : [];
     let item = null;
     const soon = !S.activeShift && [...App.model.results.values()].filter((r) => r.status === 'planned' && r.start > now - 60 * 60000 && r.start < now + 30 * 60000).sort((a, b) => a.start - b.start)[0];
-    if (soon) item = { act: 'start-planned', id: soon.id, ic: 'play', cls: 'go', t: `משמרת מתוכננת ב-${U.epochHM(soon.start)} · התחל עכשיו` };
+    if (soon) item = { act: 'start-planned', id: soon.id, ic: 'play', cls: 'go', t: `התחל את המשמרת של ${U.epochHM(soon.start)}` };
     else if (urgent[0]) item = { act: 'insights', ic: 'alert', cls: 'sev-' + urgent[0].severity, t: urgent[0].title };
     else if (next) item = { act: 'shift-open', id: next.id, ic: 'calendar', cls: '', t: `משמרת ${U.epochKey(next.start) === U.todayKey() ? 'היום' : 'מחר'} ב-${U.epochHM(next.start)} · ${App.roleName(next.segments[0].roleId)}` };
     else if (weekly) item = { act: 'insights', ic: 'sparkle', cls: '', t: 'הסיכום השבועי שלך מוכן' };
     else if (unread[0]) item = { act: 'insights', ic: App.severityIcon[unread[0].severity] || 'bulb', cls: 'sev-' + (unread[0].severity || 'info'), t: unread[0].title };
     else if (live[0]) item = { act: 'insights', ic: 'bulb', cls: '', t: live[0].title };
     if (!item) return '';
-    const more = Math.max(0, unread.length - (unread.some((n) => n.title === item.t) ? 1 : 0));
+    const more = item.cls === 'go' ? 0 : Math.max(0, unread.length - (unread.some((n) => n.title === item.t) ? 1 : 0));
     return `<button class="highlight ${item.cls}" data-act="${item.act}"${item.id ? ` data-id="${item.id}"` : ''}>
       <span class="hl-ic">${icon(item.ic, 's')}</span><span class="hl-t">${esc(item.t)}</span>${more ? `<span class="hl-more">+${more}</span>` : ''}${icon('left', 's')}</button>`;
   }
