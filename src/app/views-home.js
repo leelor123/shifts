@@ -90,7 +90,7 @@
       <div class="tiny" style="opacity:.8">⁦${U.fmtDate(P.from, 'short')}–${U.fmtDate(P.to, 'short')}⁩ · תשלום ב-${U.fmtDate(P.payDate, 'short')}</div></div>${icon('left')}</div>
       <div style="margin:10px 0 4px"><span class="tiny" style="opacity:.8">ברוטו עד עכשיו</span><div class="hero-num">${money(sum.gross, 0)}</div></div>
       <div class="kpis" style="margin-top:10px">
-        <div class="kpi"><div class="l">נטו משוער</div><div class="v">${money(sum.net.net, 0)}</div></div>
+        <div class="kpi"><div class="l">${sum.net.minor ? 'נטו (ללא ניכויים)' : 'נטו משוער'}</div><div class="v">${money(sum.net.net, 0)}</div></div>
         <div class="kpi"><div class="l">נסיעות</div><div class="v">${money(sum.travel, 0)}</div></div>
         <div class="kpi"><div class="l">שעות</div><div class="v"><span class="num">${U.hm(sum.hours * 60)}</span></div></div>
         <div class="kpi"><div class="l">משמרות</div><div class="v">${sum.shifts}</div></div>
@@ -116,12 +116,19 @@
     return `<div class="card share-card"><div class="card-head">${icon('sparkle')}<h3>${esc(w.title)}</h3><button class="icon-btn" data-act="weekly-share" data-id="${esc(w.id)}" aria-label="שתף">${icon('share')}</button><button class="icon-btn" data-act="notif-read" data-id="${esc(w.id)}" aria-label="סגור">${icon('x')}</button></div>
       <div style="font-size:1.05rem">${esc(w.body)}</div><div class="tiny muted" style="margin-top:6px">${esc(w.explain)}</div></div>`;
   }
+  function birthdayCard() {
+    const b = S.settings.birthDate;
+    if (!b || b.slice(5) !== U.todayKey().slice(5)) return '';
+    const age = Engine.ageAt(b, U.todayKey());
+    return `<div class="card bday"><div class="bday-confetti" aria-hidden="true"></div><div class="bday-title">מזל טוב${S.settings.userName ? ', ' + esc(S.settings.userName) : ''}!</div>
+      <div>יום הולדת ${age} שמח 🎂 שתהיה שנה של משמרות טובות, בוסים הוגנים ותלושים בלי הפתעות.</div>${age === 18 ? '<div class="small" style="margin-top:6px">מהיום החישוב כולל ניכויי חובה רגילים.</div>' : ''}</div>`;
+  }
   function banners() {
     let h = '';
     if (S.settings.demo) h += `<div class="banner">${icon('flask')}<div style="flex:1">מצב הדגמה פעיל — הנתונים לדוגמה.</div><button class="btn sm" data-act="demo-clear">מחק נתוני דוגמה</button></div>`;
     const B = S.settings.backup;
     const last = Math.max(B.lastBackup || 0);
-    if (S.shifts.length > 5 && Date.now() - last > (+S.settings.alerts.backupDays || 30) * U.DAY) {
+    if (!S.meta.cloudUid && S.shifts.length > 5 && Date.now() - last > (+S.settings.alerts.backupDays || 30) * U.DAY) {
       h += `<div class="banner warn">${icon('cloud')}<div style="flex:1">${last ? 'עבר זמן מאז הגיבוי האחרון.' : 'עוד לא גיבית.'} הנתונים שמורים רק בטלפון.</div><button class="btn sm" data-act="backup-now">גבה</button></div>`;
     }
     const issues = Engine.dataIssues(App.model).filter((i) => i.type === 'overlap');
@@ -140,15 +147,17 @@
     const recentEntries = S.entries.slice().sort((a, b) => b.date.localeCompare(a.date)).slice(0, 2);
     return `
       <div class="topbar"><div class="titles"><h1>${greeting()} 👋</h1><div class="sub">${U.fmtDate(today, 'long')} · ${esc(hd.toString())}${hol ? ' · ' + esc(hol) : ''}</div></div>
-        <button class="icon-btn tonal" data-act="insights" aria-label="התראות">${icon('bell')}${unread ? `<span class="dot-badge">${unread > 9 ? '9+' : unread}</span>` : ''}</button></div>
+        ${App.cloudBadge ? App.cloudBadge() : ''}<button class="icon-btn tonal" data-act="insights" aria-label="התראות">${icon('bell')}${unread ? `<span class="dot-badge">${unread > 9 ? '9+' : unread}</span>` : ''}</button></div>
+      ${birthdayCard()}
       ${banners()}
       ${timerCard()}
       ${weeklyCard()}
       ${periodCard()}
       ${insightsCard()}
-      <div class="btn-row" style="margin-bottom:4px">
-        <button class="btn tonal" data-act="payslip-new">${icon('receipt')} ניתוח תלוש</button>
-        <button class="btn tonal" data-act="go-summary">${icon('chart')} סיכומים</button>
+      <div class="quick">
+        <button data-act="payslip-new">${icon('receipt')}<span>ניתוח תלוש</span></button>
+        <button data-act="go-summary">${icon('chart')}<span>סיכומים</span></button>
+        <button data-act="assistant">${icon('sparkle')}<span>שאל את העוזר</span></button>
       </div>
       ${upcoming.length ? `<div class="section-title">${icon('calendar', 's')} משמרות מתוכננות<span class="spacer"></span><button class="btn text sm" data-act="tab" data-tab="calendar">ללוח</button></div><div class="list">${upcoming.map((r) => App.shiftItem(r, { showOk: true })).join('')}</div>` : ''}
       <div class="section-title">${icon('clock', 's')} משמרות אחרונות<span class="spacer"></span>${recent.length ? '<button class="btn text sm" data-act="go-shifts">הכול</button>' : ''}</div>

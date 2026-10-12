@@ -198,7 +198,7 @@
     const wf = Payslip.waterfall(slip.fields);
     const lines = Payslip.explainLines(slip.fields, prev && prev.fields);
     const changes = Payslip.compareSlips(prev && prev.fields, slip.fields);
-    const msg = Payslip.employerMessage(a, { name: S.meta.userName || '' });
+    const msg = Payslip.employerMessage(a, { name: S.settings.userName || '' });
     const order = { bad: 0, warn: 1, ok: 2 };
     return `
       <div class="status-summary"><div class="ok">✅ ${counts.ok}<div class="tiny">תקין</div></div><div class="warn">⚠️ ${counts.warn}<div class="tiny">לבדוק</div></div><div class="bad">❌ ${counts.bad}<div class="tiny">חסר/שגוי</div></div></div>
@@ -317,7 +317,7 @@
   App.aiAnalyze = function (text, onResult) {
     const key = S.settings.ai.apiKey;
     if (!key) {
-      UI.confirm('ניתוח חכם דורש מפתח API', 'אפשר להזין מפתח של Claude בהגדרות › ניתוח AI. בלי מפתח — הניתוח המקומי ממשיך לעבוד כרגיל.', 'להגדרות').then((ok) => { if (ok) { UI.closeAll(); setTimeout(() => App.sheetsApi.settingsSection('ai'), 400); } });
+      UI.confirm('ניתוח חכם דורש מפתח API', 'אפשר להזין מפתח של Claude בהגדרות › מפתח AI. בלי מפתח — הניתוח המקומי ממשיך לעבוד כרגיל.', 'להגדרות').then((ok) => { if (ok) { UI.closeAll(); setTimeout(() => App.sheetsApi.settingsSection('ai'), 400); } });
       return;
     }
     const red = Payslip.redact(text);

@@ -257,3 +257,24 @@ T.test('vacation accrual for a full-time year (5-day week)', () => {
   const b = Engine.leaveBalances(m, '2025-12-31');
   T.near(b.vacationAccrued, 12, 0.6); T.near(b.sickAccrued, 18, 0.9);
 });
+
+T.section('age & minors');
+T.test('age is counted in whole years', () => {
+  T.eq(Engine.ageAt('2008-10-12', '2026-10-11'), 17);
+  T.eq(Engine.ageAt('2008-10-12', '2026-10-12'), 18);
+  T.eq(Engine.ageAt(null, '2026-10-12'), null);
+});
+T.test('under 18: net equals gross (no tax, social security or pension)', () => {
+  const s = Defaults.defaultSettings();
+  s.birthDate = '2010-03-01';
+  const n = Engine.netEstimate({ gross: 4000, pensionBase: 4000, deductions: 0, periodTo: '2026-09-30' }, s);
+  T.eq(n.minor, true); T.near(n.net, 4000); T.near(n.bl + n.health + n.incomeTax + n.pensionEmployee, 0);
+  T.ok(!Engine.pensionActive(Object.assign({}, s, { startDate: '2024-01-01' }), '2026-09-30'), 'no mandatory pension');
+});
+T.test('the day you turn 18 normal deductions apply', () => {
+  const s = Defaults.defaultSettings();
+  s.birthDate = '2008-09-15';
+  const before = Engine.netEstimate({ gross: 9000, pensionBase: 9000, deductions: 0, periodTo: '2026-09-14', pensionActive: false }, s);
+  const after = Engine.netEstimate({ gross: 9000, pensionBase: 9000, deductions: 0, periodTo: '2026-09-30', pensionActive: false }, s);
+  T.near(before.net, 9000); T.ok(after.net < 9000 && !after.minor);
+});

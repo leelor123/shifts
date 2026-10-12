@@ -29,7 +29,7 @@ const sdRoundRect = (x, y, cx, cy, hw, hh, r) => { const qx = Math.abs(x - cx) -
 const sdCircle = (x, y, cx, cy, r) => Math.hypot(x - cx, y - cy) - r;
 const sdSeg = (x, y, ax, ay, bx, by, w) => { const px = x - ax, py = y - ay, dx = bx - ax, dy = by - ay; const t = Math.max(0, Math.min(1, (px * dx + py * dy) / (dx * dx + dy * dy))); return Math.hypot(px - dx * t, py - dy * t) - w / 2; };
 const hsl = (h, s, l) => { s /= 100; l /= 100; const k = (n) => (n + h / 30) % 12; const a = s * Math.min(l, 1 - l); const f = (n) => l - a * Math.max(-1, Math.min(k(n) - 3, Math.min(9 - k(n), 1))); return [f(0) * 255, f(8) * 255, f(4) * 255]; };
-const C1 = hsl(236, 64, 55), C2 = hsl(256, 58, 38), WHITE = [255, 255, 255], AMBER = [237, 161, 0], AMBER_D = [201, 133, 0];
+const C1 = hsl(184, 46, 34), C2 = hsl(192, 52, 16), WHITE = [255, 255, 255], AMBER = [237, 161, 0], AMBER_D = [201, 133, 0];
 
 /** colour of design-space point; returns [r,g,b,a] */
 function shade(x, y, maskable, scale) {
@@ -46,7 +46,7 @@ function shade(x, y, maskable, scale) {
   if (sdSeg(gx, gy, cx, cy, cx + 58, cy + 34, 26) <= 0) col = WHITE;
   // coin
   const kx = 352, ky = 352;
-  if (sdCircle(gx, gy, kx, ky, 86) <= 0) col = hsl(256, 58, 42);
+  if (sdCircle(gx, gy, kx, ky, 86) <= 0) col = hsl(190, 50, 20);
   if (sdCircle(gx, gy, kx, ky, 70) <= 0) col = AMBER;
   // shekel sign ₪ drawn as two interlocking hooks
   const segs = [[-24, 26, -24, -24], [-24, -24, 6, -24], [6, -24, 6, 8], [24, -26, 24, 24], [24, 24, -6, 24], [-6, 24, -6, -8]];
@@ -73,9 +73,9 @@ function render(size, maskable) {
 fs.writeFileSync(path.join(out, 'icon-192.png'), render(192, false));
 fs.writeFileSync(path.join(out, 'icon-512.png'), render(512, false));
 fs.writeFileSync(path.join(out, 'icon-maskable-512.png'), render(512, true));
-const svg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><defs><linearGradient id="g" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="hsl(236 64% 55%)"/><stop offset="1" stop-color="hsl(256 58% 38%)"/></linearGradient></defs>
+const svg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><defs><linearGradient id="g" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="hsl(184 46% 34%)"/><stop offset="1" stop-color="hsl(192 52% 16%)"/></linearGradient></defs>
 <rect width="512" height="512" rx="112" fill="url(#g)"/><circle cx="236" cy="236" r="128" fill="none" stroke="#fff" stroke-width="30"/>
-<path d="M236 236V158M236 236l58 34" stroke="#fff" stroke-width="26" stroke-linecap="round"/><circle cx="352" cy="352" r="86" fill="hsl(256 58% 42%)"/><circle cx="352" cy="352" r="70" fill="#eda100"/>
+<path d="M236 236V158M236 236l58 34" stroke="#fff" stroke-width="26" stroke-linecap="round"/><circle cx="352" cy="352" r="86" fill="hsl(190 50% 20%)"/><circle cx="352" cy="352" r="70" fill="#eda100"/>
 <path d="M328 378v-50h30v32M376 326v50h-30v-32" fill="none" stroke="#fff" stroke-width="11" stroke-linecap="round" stroke-linejoin="round"/></svg>`;
 fs.writeFileSync(path.join(out, 'icon.svg'), svg);
 console.log('icons written to', out);

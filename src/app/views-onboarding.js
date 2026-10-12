@@ -11,6 +11,7 @@
   App.sheetsApi.onboarding = function () {
     const nav = document.getElementById('nav');
     nav.style.display = 'none';
+    App.blocking = 'onboarding';
     const emp = Store.clone(S.employers[0]);
     const st = Store.clone(S.settings);
     let roles = S.roles.length ? Store.clone(S.roles.filter((r) => !r.archived)) : Defaults.defaultRoles(emp.id);
@@ -21,7 +22,7 @@
     const v = document.getElementById('view');
 
     const screens = [
-      () => `<div style="text-align:center;padding-top:6vh"><div class="empty" style="padding-bottom:0"><div class="art" style="width:120px;height:120px;border-radius:40px">${icon('wallet', 'l')}</div></div>
+      () => `<div style="text-align:center;padding-top:6vh"><div class="brand-mark big" aria-hidden="true"></div>
         <h1>מעקב משמרות ושכר</h1><p class="lead">רישום משמרות בלחיצה, חישוב שכר מדויק (שבתות, חגים, שעות נוספות), תובנות, ובדיקת תלוש. הכול נשמר רק בטלפון שלך.</p>
         <p class="small muted">ההגדרה לוקחת כדקה. כל ערך אפשר לשנות אחר כך בהגדרות.</p></div>`,
       () => `<h1>התפקידים שלך</h1><p class="lead">לכל תפקיד שכר שעתי וצבע. העלאות שכר בעתיד מוסיפים מתאריך — בלי לשנות משמרות עבר.</p>
@@ -41,6 +42,7 @@
         <label class="field"><span class="lbl">יום התשלום (בחודש שאחרי)</span><input class="input" type="number" min="1" max="31" id="ob-payday" value="${emp.payDay}"><span class="hint">לפי החוק — עד ה-9. ביום הזה תקבל תזכורת להזין את התלוש.</span></label>`,
       () => `<h1>תחילת העבודה</h1><p class="lead">ממנו מחושבים ותק, דמי הבראה, ימי חופשה ומחלה, ותחילת ההפרשות לפנסיה.</p>
         <label class="field"><span class="lbl">תאריך תחילת העבודה</span><input class="input" type="date" id="ob-start" value="${st.startDate}"></label>
+        <label class="field"><span class="lbl">תאריך לידה (לא חובה)</span><input class="input" type="date" id="ob-birth" value="${st.birthDate || ''}"><span class="hint">לברכת יום הולדת, ולחישוב נכון מתחת לגיל 18 (אז הנטו שווה לברוטו).</span></label>
         <label class="field"><span class="lbl">שבוע עבודה</span><select class="input" id="ob-week"><option value="5" ${+st.leave.workWeek === 5 ? 'selected' : ''}>5 ימים</option><option value="6" ${+st.leave.workWeek === 6 ? 'selected' : ''}>6 ימים</option></select></label>`,
       () => `<h1>שבת וחגים</h1><p class="lead">שעות בשבת ובחג משולמות ב-150%. זמני הכניסה והיציאה מחושבים בטלפון לפי העיר.</p>
         <label class="field"><span class="lbl">העיר שבה אתה עובד</span><select class="input" id="ob-city">${HebCal.CITIES.map((c) => `<option ${c.name === st.rest.city ? 'selected' : ''}>${c.name}</option>`).join('')}</select></label>
@@ -61,7 +63,7 @@
       }
       if (step === 2) { emp.travelPerDay = UI.numIn(q('#ob-travel')) || 0; emp.travelMonthlyCap = UI.numIn(q('#ob-cap')) || 0; }
       if (step === 3) { if (q('#ob-pstart')) emp.periodStartDay = Math.min(28, Math.max(2, UI.numIn(q('#ob-pstart')) || 2)); emp.payDay = UI.numIn(q('#ob-payday')) || 9; }
-      if (step === 4) { st.startDate = q('#ob-start').value || st.startDate; st.leave.workWeek = +q('#ob-week').value; }
+      if (step === 4) { st.startDate = q('#ob-start').value || st.startDate; st.birthDate = q('#ob-birth').value || null; st.leave.workWeek = +q('#ob-week').value; }
       if (step === 5) st.rest.city = q('#ob-city').value;
       if (step === 6) { st.tax.creditPoints = UI.numIn(q('#ob-cp')) || 2.25; st.pension.employeePct = UI.numIn(q('#ob-pen')) || 6; st.hishtalmut.enabled = q('#ob-hish').checked; }
     }
@@ -96,6 +98,7 @@
         ops.push({ store: 'roles', put: rec });
       }
       S.roles.filter((r) => !roles.some((x) => x.id === r.id)).forEach((r) => ops.push({ store: 'roles', del: r.id }));
+      App.blocking = null;
       await Store.apply(ops, null);
       st.onboarded = true;
       await Store.setSettings((s) => Object.assign(s, st));

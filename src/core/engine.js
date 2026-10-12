@@ -564,8 +564,18 @@
     }
     return tax;
   }
+  /** Whole years between a birth date and a date key (null if unknown). */
+  function ageAt(birthKey, k) {
+    if (!birthKey) return null;
+    const B = U.parseKey(birthKey), K = U.parseKey(k);
+    let a = K.y - B.y;
+    if (K.m < B.m || (K.m === B.m && K.d < B.d)) a--;
+    return a;
+  }
+  const isMinor = (settings, k) => { const a = ageAt(settings.birthDate, k || U.todayKey()); return a != null && a < 18; };
   function pensionActive(settings, periodTo) {
     if (!settings.pension.enabled) return false;
+    if (isMinor(settings, periodTo)) return false;
     if (!settings.startDate) return true;
     return monthsBetween(settings.startDate, periodTo) >= (+settings.pension.startAfterMonths || 0);
   }
@@ -577,6 +587,11 @@
     const T = settings.tax;
     const months = p.months || 1;
     const gross = Math.max(0, p.gross);
+    // under 18: no income tax, no National Insurance / health tax, no pension — net equals gross
+    if (isMinor(settings, p.periodTo)) {
+      const deductions = +p.deductions || 0;
+      return { gross, taxBefore: 0, credits: 0, pensionCredit: 0, incomeTax: 0, bl: 0, health: 0, pensionEmployee: 0, pensionEmployer: 0, severance: 0, hishtalmut: 0, hishtalmutEmployer: 0, deductions, net: gross - deductions, pensionActive: false, minor: true };
+    }
     const pActive = p.pensionActive != null ? p.pensionActive : pensionActive(settings, p.periodTo || U.todayKey());
     const pensionEmployee = pActive ? p.pensionBase * (+settings.pension.employeePct || 0) / 100 : 0;
     const pensionEmployer = pActive ? p.pensionBase * (+settings.pension.employerPct || 0) / 100 : 0;
@@ -813,7 +828,7 @@
   root.Engine = {
     makeCtx, roleRate, roundMinutes, monthsBetween, buildSegments, hasOverrides, computeShift, computeAll,
     periodByKey, periodOf, dayValue, computeEntries, travelByDay, incomeTaxRaw, netEstimate, pensionActive,
-    buildModel, totals, periodSummary, rangeSummary, pensionBaseOf, leaveBalances, vacationEntitlement, recuperationDays,
+    buildModel, totals, periodSummary, rangeSummary, pensionBaseOf, leaveBalances, vacationEntitlement, recuperationDays, ageAt, isMinor,
     dataIssues, ADJ_LABELS,
   };
 })(typeof window !== 'undefined' ? window : globalThis);

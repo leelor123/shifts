@@ -39,7 +39,11 @@ self.addEventListener('fetch', (e) => {
     e.respondWith(caches.match(req, { ignoreSearch: true }).then((c) => c || fetch(req)));
     return;
   }
-  // fonts, pdf.js, tesseract, SDK: stale-while-revalidate
+  // only static libraries & fonts are cached; sign-in and Firestore traffic always goes to the network
+  const STATIC = ['fonts.googleapis.com', 'fonts.gstatic.com', 'cdnjs.cloudflare.com', 'cdn.jsdelivr.net', 'tessdata.projectnaptha.com'];
+  const isSdk = url.hostname === 'www.gstatic.com' && url.pathname.startsWith('/firebasejs/');
+  if (!STATIC.includes(url.hostname) && !isSdk) return;
+  // stale-while-revalidate
   e.respondWith((async () => {
     const cache = await caches.open(RUNTIME);
     const cached = await cache.match(req);

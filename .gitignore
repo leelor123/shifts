@@ -2,3 +2,6 @@ dist/
 node_modules/
 *.zip
 .claude/
+firebase-debug.log
+*.log
+.firebase/

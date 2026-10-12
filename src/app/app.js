@@ -38,7 +38,7 @@
 
   /* ---------------- theme ---------------- */
   const ACCENTS = {
-    indigo: [238, 62, 'סגול-כחול'], blue: [212, 75, 'כחול'], teal: [178, 62, 'טורקיז'], green: [145, 45, 'ירוק'],
+    petrol: [186, 48, 'פטרול'], indigo: [238, 62, 'סגול-כחול'], blue: [212, 75, 'כחול'], teal: [178, 62, 'טורקיז'], green: [145, 45, 'ירוק'],
     orange: [24, 80, 'כתום'], pink: [330, 62, 'ורוד'], purple: [275, 52, 'סגול'], red: [2, 68, 'אדום'],
   };
   App.ACCENTS = ACCENTS;
@@ -46,13 +46,13 @@
     const st = S.settings;
     const de = document.documentElement;
     if (st.theme === 'light' || st.theme === 'dark') de.dataset.theme = st.theme; else delete de.dataset.theme;
-    const a = ACCENTS[st.accent] || ACCENTS.indigo;
+    const a = ACCENTS[st.accent] || ACCENTS.petrol;
     de.style.setProperty('--h', a[0]);
     de.style.setProperty('--s', a[1] + '%');
     de.style.setProperty('--fs', st.fontScale || 1);
     const dark = st.theme === 'dark' || (st.theme !== 'light' && matchMedia('(prefers-color-scheme: dark)').matches);
     const meta = document.querySelector('meta[name="theme-color"]');
-    if (meta) meta.content = dark ? `hsl(${a[0]} 13% 13%)` : `hsl(${a[0]} 28% 94%)`;
+    if (meta) meta.content = dark ? '#0f1413' : '#f6f4ee';
   };
   matchMedia('(prefers-color-scheme: dark)').addEventListener('change', () => App.applyTheme());
 
@@ -71,17 +71,23 @@
       ? `<div><button class="fab" data-act="add-menu" aria-label="הוספה">${icon('plus')}</button></div>`
       : `<button class="${App.tab === t.id ? 'on' : ''}" data-act="tab" data-tab="${t.id}" aria-label="${t.label}"><span class="pill">${icon(t.icon)}${t.id === 'home' && unread ? `<span class="dot-badge">${unread > 9 ? '9+' : unread}</span>` : ''}</span>${t.label}</button>`).join('')}</div>`;
   };
+  const TAB_ORDER = ['home', 'calendar', 'reports', 'settings'];
   App.go = function (tab, opts) {
+    App.enterDir = TAB_ORDER.indexOf(tab) >= TAB_ORDER.indexOf(App.tab) ? 'enter-next' : 'enter-prev';
+    if (tab === App.tab) App.enterDir = '';
     App.tab = tab;
     try { history.replaceState(history.state, '', '#' + tab); } catch (e) { /* ignore */ }
     App.render(opts);
     window.scrollTo(0, 0);
   };
   App.render = function (opts) {
+    if (App.blocking) return; // a full-screen step (login / terms / setup wizard) owns the screen
     const v = document.getElementById('view');
     const fn = App.views[App.tab] || App.views.home;
     const y = opts && opts.keepScroll ? window.scrollY : 0;
-    v.innerHTML = `<div class="view" id="view-inner">${fn()}</div>`;
+    const cls = opts && opts.keepScroll ? '' : App.enterDir || '';
+    App.enterDir = '';
+    v.innerHTML = `<div class="view ${cls}" id="view-inner">${fn()}</div>`;
     if (App.views[App.tab + '_mount']) App.views[App.tab + '_mount'](v);
     App.renderNav();
     if (opts && opts.keepScroll) window.scrollTo(0, y);
@@ -226,7 +232,8 @@
     if (!App.model || !S.settings.onboarded) return;
     const res = Insights.run(App.model, {
       now: Date.now(), activeShift: S.activeShift, payslips: S.payslips, gaps: S.gaps,
-      lastBackup: S.settings.backup.lastBackup, roleName: App.roleName,
+      // with cloud sync the data is already safe; the backup reminder only applies to local-only use
+      lastBackup: S.meta.cloudUid ? Date.now() : S.settings.backup.lastBackup, roleName: App.roleName,
     });
     App.insights = res;
     const known = new Set(S.notifications.map((n) => n.key));
@@ -315,17 +322,58 @@
       document.getElementById('view').innerHTML = `<div class="view">${UI.emptyState('alert', 'לא ניתן לפתוח את מסד הנתונים', esc(e.message || e))}</div>`;
       return;
     }
+    // one-time switch of the untouched default colour to the new design (user choices are kept)
+    if (!S.meta.designV2) {
+      if (S.settings.accent === 'indigo') await Store.setSettings((s) => { s.accent = 'petrol'; });
+      await Store.setMeta({ designV2: true });
+    }
     App.applyTheme();
     App.recompute();
     registerSW(); // offline support from the very first visit, before onboarding
     if (S.settings.lock.enabled) App.lock();
+    const params = new URLSearchParams(location.search);
+    App.pendingAction = params.get('action');
+    if (App.pendingAction) history.replaceState(null, '', location.pathname + location.hash);
+
+    // Google sign-in is required once it is set up for this address. Until then (or when it
+    // can't be checked offline) the app keeps working locally, so nobody is ever locked out.
+    const Cloud = root.Cloud;
+    if (!S.meta.cloudUid && !S.meta.cloudReady) {
+      const ready = await Promise.race([Cloud.probe(), new Promise((r) => setTimeout(() => r(null), 5000))]);
+      if (!ready) { App.localOnly = true; App.afterLogin(); return; }
+    }
+    Cloud.onAuthChange = (u) => { if (!u && S.meta.cloudUid) App.showLogin('expired'); };
+    let user = null, failed = false;
+    try {
+      user = await Promise.race([Cloud.start(), new Promise((_, rej) => setTimeout(() => rej(new Error('timeout')), S.meta.cloudUid ? 4000 : 20000))]);
+    } catch (e) { failed = true; }
+    if (user) {
+      if (S.meta.cloudUid === user.uid) {
+        App.afterLogin();
+        Cloud.connect(user).catch((e) => console.warn('sync', e));
+        return;
+      }
+      try { await Cloud.connect(user); } catch (e) { console.error(e); App.showLogin(navigator.onLine ? 'error' : 'offline'); return; }
+      App.afterLogin();
+      return;
+    }
+    if (failed && S.meta.cloudUid) {
+      App.afterLogin();
+      Cloud.start().then((u) => { if (u) Cloud.connect(u).catch(() => {}); else App.showLogin('expired'); }).catch(() => {});
+      return;
+    }
+    App.showLogin(failed ? (navigator.onLine ? 'error' : 'offline') : null);
+  };
+  /** Continue into the app once the user is signed in. */
+  App.afterLogin = function () {
+    if (App.ensureLegal && !App.legalAccepted()) { App.ensureLegal(App.afterLogin); return; }
+    document.getElementById('nav').style.display = '';
     if (!S.settings.onboarded) { App.sheetsApi.onboarding(); return; }
     const hash = (location.hash || '').replace('#', '');
     if (['home', 'calendar', 'reports', 'settings'].includes(hash)) App.tab = hash;
     App.render();
-    const params = new URLSearchParams(location.search);
-    const action = params.get('action');
-    if (action) history.replaceState(null, '', location.pathname + '#' + App.tab);
+    const action = App.pendingAction;
+    App.pendingAction = null;
     if (action === 'start' && !S.activeShift) App.actions['timer-start']();
     if (action === 'add') App.sheetsApi.shiftEditor();
     setTimeout(() => { App.runInsights(); App.autoBackupCheck(); }, 1200);

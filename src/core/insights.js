@@ -39,6 +39,7 @@
     upcoming: { cat: 'reminder', label: 'משמרת קרובה' },
     weekly: { cat: 'summary', label: 'סיכום שבועי' },
     recuperation: { cat: 'money', label: 'דמי הבראה' },
+    birthday: { cat: 'reminder', label: 'יום הולדת' },
   };
 
   const pctDev = (cur, base) => (base > 0 ? ((cur - base) / base) * 100 : cur > 0 ? Infinity : 0);
@@ -412,6 +413,20 @@
             title: 'בדוק שקיבלת דמי הבראה', body: `החודש המעסיק אמור לשלם הבראה. הערכה: ${U.money(rc.amount, 0)}.`,
             explain: 'חודש התשלום מוגדר בהגדרות › חופשה ומחלה.' });
         }
+      }
+    }
+
+    /* ---- birthday ---- */
+    if (S.birthDate && types.birthday !== false) {
+      const b = S.birthDate.slice(5);
+      if (today.slice(5) === b) {
+        const age = Engine.ageAt(S.birthDate, today);
+        alerts.push({ key: 'bday-' + today.slice(0, 4), type: 'birthday', severity: 'good', push: 'critical',
+          title: 'מזל טוב! 🎂', body: `יום הולדת ${age} שמח${S.userName ? ', ' + S.userName : ''}! מאחלים שנה של משמרות טובות ומשכורות שמנות.`,
+          explain: 'לפי תאריך הלידה שהוזן בהגדרות.' });
+        if (age === 18) alerts.push({ key: 'turn18-' + today.slice(0, 4), type: 'birthday', severity: 'info', push: null,
+          title: 'מהיום — ניכויים רגילים', body: 'מגיל 18 מנוכים ביטוח לאומי ומס בריאות, ובהמשך גם פנסיה. הנטו המשוער יחושב מעכשיו בהתאם.',
+          explain: 'לפי תאריך הלידה שהוזן בהגדרות.' });
       }
     }
 

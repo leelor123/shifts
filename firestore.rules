@@ -1,0 +1,26 @@
+rules_version = '2';
+
+// Every user can read and write only their own data under users/{uid}.
+service cloud.firestore {
+  match /databases/{database}/documents {
+    match /users/{uid} {
+      allow read, write: if request.auth != null && request.auth.uid == uid;
+
+      match /{collection}/{docId} {
+        allow read, delete: if request.auth != null && request.auth.uid == uid;
+        // records are stored as {u: updatedAt, d: deleted?, j: json}; cap each document at ~900KB
+        allow create: if valid(uid, collection);
+        // never replace a newer version with an older one (a phone that was offline for a while)
+        allow update: if valid(uid, collection) && request.resource.data.u >= resource.data.u;
+      }
+    }
+
+    function valid(uid, collection) {
+      return request.auth != null && request.auth.uid == uid
+        && collection in ['employers', 'roles', 'shifts', 'entries', 'templates', 'dayRules', 'payslips', 'gaps', 'kv']
+        && request.resource.data.keys().hasOnly(['u', 'd', 'j'])
+        && request.resource.data.u is number
+        && (request.resource.data.j == null || request.resource.data.j.size() < 900000);
+    }
+  }
+}

@@ -5,7 +5,7 @@
  * background and activates when the user taps "עדכן".
  * IndexedDB data is never touched by updates.
  * ============================================================ */
-const VERSION = '1.0.0-8a7092f9';
+const VERSION = '1.1.0-f9d1c0cd';
 const SHELL = 'shiftpay-shell-' + VERSION;
 const RUNTIME = 'shiftpay-runtime-v1';
 const ASSETS = ['./', './index.html', './manifest.webmanifest', './icon.svg', './icon-192.png', './icon-512.png', './icon-maskable-512.png'];
@@ -39,7 +39,11 @@ self.addEventListener('fetch', (e) => {
     e.respondWith(caches.match(req, { ignoreSearch: true }).then((c) => c || fetch(req)));
     return;
   }
-  // fonts, pdf.js, tesseract, SDK: stale-while-revalidate
+  // only static libraries & fonts are cached; sign-in and Firestore traffic always goes to the network
+  const STATIC = ['fonts.googleapis.com', 'fonts.gstatic.com', 'cdnjs.cloudflare.com', 'cdn.jsdelivr.net', 'tessdata.projectnaptha.com'];
+  const isSdk = url.hostname === 'www.gstatic.com' && url.pathname.startsWith('/firebasejs/');
+  if (!STATIC.includes(url.hostname) && !isSdk) return;
+  // stale-while-revalidate
   e.respondWith((async () => {
     const cache = await caches.open(RUNTIME);
     const cached = await cache.match(req);

@@ -70,6 +70,8 @@
     return {
       // --- personal / employment ---
       startDate: null, // employment start (YYYY-MM-DD)
+      birthDate: null, // optional: birthday greeting; under 18 = no tax / social security / pension
+      userName: '', // optional: signature for messages to the employer
       // --- Shabbat & holidays window ---
       rest: {
         mode: 'city',
@@ -130,7 +132,7 @@
           long: true, rest8: true, streak: true, weekHours: true,
           projection: true, goal: true, record: true, goalShifts: true, payslipGap: true, travel: true,
           timer: true, plannedPast: true, idle: true, suspicious: true, payslipDue: true, backup: true, upcoming: true, weekly: true,
-          recuperation: true,
+          recuperation: true, birthday: true,
         },
         longShiftHours: 12, minRestHours: 8, streakDays: 6, weekHoursMax: 50,
         timerHours: 12, idleDays: 7, suspiciousHours: 20, backupDays: 30, upcomingMin: 60,
@@ -138,7 +140,7 @@
         push: true,
       },
       // --- appearance ---
-      theme: 'system', accent: 'indigo', fontScale: 1,
+      theme: 'system', accent: 'petrol', fontScale: 1,
       // --- security ---
       lock: { enabled: false, hash: null, salt: null, timeoutMin: 1 },
       // --- AI ---

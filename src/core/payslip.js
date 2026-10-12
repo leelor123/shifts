@@ -504,7 +504,8 @@
           add({ area: 'פנסיה', status: 'warn', title: 'הפרשת המעסיק נמוכה', amount: pBase * S.pension.employerPct / 100 - pr, detail: `${U.num(pr / pBase * 100, 2)}% במקום ${S.pension.employerPct}%.`, basis: 'צו ההרחבה: לפחות 6.5% תגמולי מעסיק.', confidence: 'low' });
         }
       } else if (!active) {
-        add({ area: 'פנסיה', status: 'ok', title: 'פנסיה עוד לא חובה', detail: `ההפרשות מתחילות אחרי ${S.pension.startAfterMonths} חודשי עבודה.`, basis: 'צו ההרחבה לפנסיה חובה.', confidence: S.startDate ? 'medium' : 'low' });
+        const minorP = Engine.isMinor(S, E.P.to);
+        add({ area: 'פנסיה', status: 'ok', title: 'פנסיה עוד לא חובה', detail: minorP ? 'מתחת לגיל 18 אין חובת הפרשה לפנסיה.' : `ההפרשות מתחילות אחרי ${S.pension.startAfterMonths} חודשי עבודה.`, basis: 'צו ההרחבה לפנסיה חובה.', confidence: S.startDate ? 'medium' : 'low' });
       }
     }
 
@@ -543,7 +544,15 @@
     }
 
     /* 11-12. tax & social security */
-    if (gross) {
+    const minor = Engine.isMinor(S, E.P.to);
+    if (minor) {
+      const blm = (val(F, 'nationalInsurance') || 0) + (val(F, 'healthTax') || 0);
+      const itm = val(F, 'incomeTax') || 0;
+      if (blm > 0) add({ area: 'ביטוח לאומי', status: 'bad', title: 'נוכו ביטוח לאומי / מס בריאות לעובד מתחת לגיל 18', amount: blm, detail: `נוכו ${U.money(blm)}, אבל עובד שטרם מלאו לו 18 פטור מדמי ביטוח לאומי ומס בריאות.`, basis: 'חוק הביטוח הלאומי — פטור לנער עד גיל 18 (לפי תאריך הלידה שהוזן).', confidence: 'medium' });
+      if (itm > 0) add({ area: 'מס הכנסה', status: 'warn', title: 'נוכה מס הכנסה מתחת לגיל 18', amount: itm, detail: `נוכו ${U.money(itm)}. בשכר רגיל של נער/ה, נקודות הזיכוי מאפסות בדרך כלל את המס — כדאי לבדוק שמולא טופס 101.`, basis: 'מדרגות מס ונקודות זיכוי.', confidence: 'low', note: 'מס שנוכה ביתר אפשר לקבל בחזרה בהחזר מס שנתי.' });
+      if (!blm && !itm) add({ area: 'ביטוח לאומי', status: 'ok', title: 'ללא ניכויי חובה — מתחת לגיל 18', detail: 'הנטו אמור להיות שווה לברוטו (פחות ניכויים אישיים, אם יש).', basis: 'פטור לנער עד גיל 18.', confidence: 'medium' });
+    }
+    if (gross && !minor) {
       const est = Engine.netEstimate({ gross, pensionBase: pe ? pe / (S.pension.employeePct / 100) : pBase, pensionActive: !!pe, deductions: 0, periodTo: E.P.to }, Object.assign({}, S, { tax: Object.assign({}, S.tax, { creditPoints: cp != null ? cp : S.tax.creditPoints }) }));
       const it = val(F, 'incomeTax');
       if (it != null) {

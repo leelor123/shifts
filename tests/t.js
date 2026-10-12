@@ -12,4 +12,15 @@ function near(a, b, tol, msg) {
   const t = tol == null ? 0.005 : tol;
   if (!(Math.abs(a - b) <= t)) throw new Error((msg ? msg + ': ' : '') + 'expected ≈' + b + ', got ' + a);
 }
-module.exports = { section, test, ok, eq, near, results };
+/* async tests run after the synchronous ones */
+const asyncTests = [];
+function atest(name, fn) { asyncTests.push({ section: current, name, fn }); }
+async function runAsync() {
+  let sec = null;
+  for (const t of asyncTests) {
+    if (t.section !== sec) { sec = t.section; console.log('\n▸ ' + (sec || 'async')); }
+    try { await t.fn(); results.pass++; console.log('  ✓ ' + t.name); }
+    catch (e) { results.fail++; results.failures.push(t.section + ' / ' + t.name + ': ' + e.message); console.log('  ✗ ' + t.name + '\n      ' + e.message); }
+  }
+}
+module.exports = { section, test, atest, runAsync, ok, eq, near, results };

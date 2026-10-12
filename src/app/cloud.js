@@ -1,0 +1,408 @@
+/* ============================================================
+ * cloud.js — Google sign-in (Firebase Auth) and per-user cloud
+ * sync (Cloud Firestore).
+ *
+ * The phone's IndexedDB stays the working copy, so the app keeps
+ * working offline. Every record carries updatedAt; changes are pushed
+ * to users/{uid}/{store}/{id} and pulled with live listeners, newest
+ * version wins. Deletions travel as tombstones so every device learns
+ * about them. Documents hold the record as JSON ({u, d, j}) to avoid
+ * Firestore type limits (nested arrays, undefined, Infinity).
+ *
+ * Never leaves the phone: the Claude API key, the PIN lock, backup
+ * timestamps, raw payslip text and payslip image/PDF files.
+ * ============================================================ */
+(function (root) {
+  'use strict';
+  const { U, Store, UI } = root;
+  const S = Store.S;
+
+  const SDK = 'https://www.gstatic.com/firebasejs/12.19.0/';
+  const LOCAL_ONLY_SETTINGS = ['ai', 'lock', 'backup'];
+  const LOCAL_ONLY_FIELDS = { payslips: ['text', 'fileId', 'fileName'] };
+  const SYNC = Store.SYNC_STORES;
+
+  const Cloud = { status: 'idle', user: null, error: null, ready: null, connected: false };
+  root.Cloud = Cloud;
+  let fb = null;
+  let unsubs = [];
+  let pushTimer = null, pushing = false, pushAgain = false;
+  const listeners = new Set();
+  Cloud.on = (fn) => listeners.add(fn);
+  function setStatus(st, err) {
+    Cloud.status = st;
+    Cloud.error = err || null;
+    if (err) console.warn('cloud:', err);
+    for (const fn of listeners) { try { fn(st); } catch (e) { console.error(e); } }
+  }
+  const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
+
+  /* ---------------- SDK ---------------- */
+  async function load() {
+    if (fb) return fb;
+    if (!root.FIREBASE_CONFIG) throw new Error('חסרות הגדרות Firebase');
+    const [a, au, fs] = await Promise.all([import(SDK + 'firebase-app.js'), import(SDK + 'firebase-auth.js'), import(SDK + 'firebase-firestore.js')]);
+    const app = a.getApps().length ? a.getApp() : a.initializeApp(root.FIREBASE_CONFIG);
+    let auth;
+    try {
+      auth = au.initializeAuth(app, { persistence: [au.indexedDBLocalPersistence, au.browserLocalPersistence], popupRedirectResolver: au.browserPopupRedirectResolver });
+    } catch (e) { auth = au.getAuth(app); }
+    auth.languageCode = 'he';
+    let db;
+    try { db = fs.initializeFirestore(app, { localCache: fs.persistentLocalCache({ tabManager: fs.persistentMultipleTabManager() }) }); }
+    catch (e) { db = fs.getFirestore(app); }
+    fb = { app, auth, db, au, fs };
+    return fb;
+  }
+
+  /**
+   * Is Google sign-in fully set up for this address? Asks the Identity Toolkit directly
+   * (no SDK needed). true = ready, false = not configured yet, null = can't tell (offline).
+   * Once ready, the answer is remembered on the device.
+   */
+  Cloud.probe = async function () {
+    if (S.meta.cloudReady) return true;
+    const cfg = root.FIREBASE_CONFIG;
+    if (!cfg || !navigator.onLine) return cfg ? null : false;
+    try {
+      const res = await fetch('https://identitytoolkit.googleapis.com/v1/accounts:createAuthUri?key=' + cfg.apiKey, {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ providerId: 'google.com', continueUri: location.origin + location.pathname }),
+      });
+      if (res.ok) { await Store.setMeta({ cloudReady: true }); return true; }
+      const body = await res.json().catch(() => ({}));
+      Cloud.setupProblem = (body.error && body.error.message) || String(res.status);
+      return false;
+    } catch (e) { return null; }
+  };
+
+  /** Tests inject a fake SDK ({app, auth, db, au, fs}) instead of loading Firebase. */
+  Cloud._useSdk = (fake) => { fb = fake; };
+
+  /** Load the SDK and resolve with the signed-in user (or null). */
+  Cloud.start = function () {
+    if (Cloud.ready) return Cloud.ready;
+    Cloud.ready = (async () => {
+      const { auth, au } = await load();
+      try { await au.getRedirectResult(auth); } catch (e) { Cloud.redirectError = e; }
+      return new Promise((resolve) => {
+        let first = true;
+        au.onAuthStateChanged(auth, (user) => {
+          Cloud.user = user;
+          if (first) { first = false; resolve(user); return; }
+          if (Cloud.onAuthChange) Cloud.onAuthChange(user);
+        });
+      });
+    })();
+    Cloud.ready.catch(() => { Cloud.ready = null; });
+    return Cloud.ready;
+  };
+
+  const AUTH_ERRORS = {
+    'auth/popup-closed-by-user': 'חלון ההתחברות נסגר לפני שההתחברות הושלמה.',
+    'auth/cancelled-popup-request': 'ההתחברות בוטלה.',
+    'auth/network-request-failed': 'אין חיבור לאינטרנט. נסה שוב כשיש רשת.',
+    'auth/unauthorized-domain': 'הכתובת של האפליקציה לא מאושרת בהגדרות Firebase (Authorized domains).',
+    'auth/operation-not-allowed': 'התחברות עם Google לא הופעלה עדיין בפרויקט Firebase.',
+    'auth/too-many-requests': 'יותר מדי ניסיונות. נסה שוב בעוד כמה דקות.',
+    'auth/user-disabled': 'החשבון חסום.',
+  };
+  Cloud.errorText = (e) => AUTH_ERRORS[e && e.code] || (e && e.message) || String(e);
+
+  Cloud.signIn = async function () {
+    const { auth, au } = await load();
+    const provider = new au.GoogleAuthProvider();
+    provider.setCustomParameters({ prompt: 'select_account' });
+    try {
+      const cred = await au.signInWithPopup(auth, provider);
+      Cloud.user = cred.user;
+      return cred.user;
+    } catch (e) {
+      if (['auth/popup-blocked', 'auth/operation-not-supported-in-this-environment', 'auth/web-storage-unsupported'].includes(e.code)) {
+        await au.signInWithRedirect(auth, provider); // page navigates away and comes back signed in
+        return null;
+      }
+      throw e;
+    }
+  };
+
+  /* ---------------- encoding ---------------- */
+  function encode(store, rec) {
+    const o = Object.assign({}, rec);
+    delete o._syncedAt;
+    for (const f of LOCAL_ONLY_FIELDS[store] || []) delete o[f];
+    return { u: rec.updatedAt || 0, d: false, j: JSON.stringify(o) };
+  }
+  function decode(store, v, local) {
+    const o = JSON.parse(v.j);
+    o.updatedAt = v.u;
+    if (local) for (const f of LOCAL_ONLY_FIELDS[store] || []) if (local[f] !== undefined) o[f] = local[f];
+    return o;
+  }
+  function encodeSettings() {
+    const o = Object.assign({}, S.settings);
+    for (const k of LOCAL_ONLY_SETTINGS) delete o[k];
+    return { u: S.settings._updatedAt || Date.now(), j: JSON.stringify(o) };
+  }
+  const encodeActive = () => ({ u: S.meta.activeUpdatedAt || Date.now(), j: S.activeShift ? JSON.stringify(S.activeShift) : null });
+  const userDoc = (...p) => fb.fs.doc(fb.db, 'users', Cloud.user.uid, ...p);
+
+  /* ---------------- first connection on a device ---------------- */
+  async function fetchAll(uid) {
+    const { fs, db } = fb;
+    const out = { stores: {}, settings: null, active: null };
+    await Promise.all(SYNC.map(async (st) => {
+      const snap = await fs.getDocsFromServer(fs.collection(db, 'users', uid, st));
+      out.stores[st] = new Map(snap.docs.map((d) => [d.id, d.data()]));
+    }));
+    const [se, ac] = await Promise.all([fs.getDocFromServer(fs.doc(db, 'users', uid, 'kv', 'settings')), fs.getDocFromServer(fs.doc(db, 'users', uid, 'kv', 'active'))]);
+    if (se.exists()) out.settings = se.data();
+    if (ac.exists()) out.active = ac.data();
+    return out;
+  }
+  async function askMode() {
+    return UI.dialog({
+      title: 'יש נתונים גם בטלפון וגם בחשבון',
+      text: 'בטלפון הזה כבר יש משמרות, וגם בחשבון ה-Google שלך שמורים נתונים. מה לעשות?',
+      buttons: [
+        { label: 'לאחד את שניהם (מומלץ)', value: 'merge', cls: '' },
+        { label: 'רק מהחשבון', value: 'cloud', cls: 'text' },
+        { label: 'רק מהטלפון', value: 'local', cls: 'text' },
+      ],
+    });
+  }
+  async function initialMerge(uid) {
+    const R = await fetchAll(uid);
+    const live = (m) => [...m.values()].some((v) => !v.d);
+    const cloudHas = SYNC.some((st) => live(R.stores[st])) || !!R.settings;
+    const localHas = S.shifts.length + S.entries.length + S.payslips.length > 0;
+    let mode = !cloudHas ? 'local' : !localHas ? 'cloud' : (await askMode()) || 'merge';
+    const ops = [];
+    if (mode === 'local') {
+      if (cloudHas) {
+        await Store.touchAll();
+        const pend = S.meta.pendingDeletes || (S.meta.pendingDeletes = []);
+        const now = Date.now();
+        for (const st of SYNC) for (const [id, v] of R.stores[st]) if (!v.d && !S[st].some((x) => x.id === id)) pend.push({ store: st, id, at: now });
+      }
+    } else {
+      for (const st of SYNC) {
+        const remote = R.stores[st];
+        for (const [id, v] of remote) {
+          const local = S[st].find((x) => x.id === id);
+          if (mode === 'merge' && local && (local.updatedAt || 0) >= v.u) continue;
+          if (v.d) { if (local) ops.push({ store: st, del: id }); }
+          else ops.push({ store: st, put: decode(st, v, local) });
+        }
+        if (mode === 'cloud') for (const r of S[st]) if (!remote.has(r.id) || remote.get(r.id).d) ops.push({ store: st, del: r.id });
+      }
+      if (mode === 'cloud') S.meta.pendingDeletes = [];
+      await Store.applyRemote(ops);
+      if (R.settings && (mode === 'cloud' || R.settings.u > (S.settings._updatedAt || 0))) await Store.applyRemoteSettings(JSON.parse(R.settings.j), LOCAL_ONLY_SETTINGS);
+      else await Store.setMeta({ settingsDirty: true });
+      if (R.active && (mode === 'cloud' || R.active.u > (S.meta.activeUpdatedAt || 0))) await Store.applyRemoteActive(R.active.j ? JSON.parse(R.active.j) : null, R.active.u);
+    }
+    return mode;
+  }
+
+  /** Connect a signed-in user: first-time merge if needed, live listeners, push. */
+  Cloud.connect = async function (user) {
+    await load();
+    Cloud.user = user;
+    detach();
+    setStatus('syncing');
+    if (S.meta.cloudUid !== user.uid) {
+      await initialMerge(user.uid); // needs the network the first time
+    }
+    await Store.setMeta({ cloudUid: user.uid, cloudEmail: user.email, cloudName: user.displayName || '', cloudPhoto: user.photoURL || '' });
+    attach(user.uid);
+    Cloud.connected = true;
+    await push();
+  };
+
+  /* ---------------- live listeners (cloud → phone) ---------------- */
+  let incoming = [];
+  let flushTimer = null;
+  function queueRemote(ops) {
+    incoming = incoming.concat(ops);
+    clearTimeout(flushTimer);
+    flushTimer = setTimeout(async () => { const o = incoming; incoming = []; await Store.applyRemote(o); }, 120);
+  }
+  function attach(uid) {
+    const { fs, db } = fb;
+    const onErr = (e) => setStatus('error', e);
+    for (const st of SYNC) {
+      unsubs.push(fs.onSnapshot(fs.collection(db, 'users', uid, st), (snap) => {
+        const ops = [];
+        for (const ch of snap.docChanges()) {
+          if (ch.type === 'removed' || ch.doc.metadata.hasPendingWrites) continue;
+          const v = ch.doc.data();
+          const id = ch.doc.id;
+          const local = S[st].find((x) => x.id === id);
+          if (local && (local.updatedAt || 0) >= v.u) continue;
+          if (v.d) { if (local) ops.push({ store: st, del: id }); }
+          else ops.push({ store: st, put: decode(st, v, local) });
+        }
+        if (ops.length) queueRemote(ops);
+        if (!snap.metadata.fromCache && Cloud.status === 'syncing') setStatus('synced');
+      }, onErr));
+    }
+    unsubs.push(fs.onSnapshot(fs.doc(db, 'users', uid, 'kv', 'settings'), (d) => {
+      if (!d.exists() || d.metadata.hasPendingWrites) return;
+      const v = d.data();
+      if (v.u > (S.settings._updatedAt || 0)) Store.applyRemoteSettings(JSON.parse(v.j), LOCAL_ONLY_SETTINGS);
+    }, onErr));
+    unsubs.push(fs.onSnapshot(fs.doc(db, 'users', uid, 'kv', 'active'), (d) => {
+      if (!d.exists() || d.metadata.hasPendingWrites) return;
+      const v = d.data();
+      if (v.u > (S.meta.activeUpdatedAt || 0)) Store.applyRemoteActive(v.j ? JSON.parse(v.j) : null, v.u);
+    }, onErr));
+  }
+  function detach() { unsubs.forEach((f) => f()); unsubs = []; Cloud.connected = false; }
+
+  /* ---------------- push (phone → cloud) ---------------- */
+  async function push() {
+    if (!fb || !Cloud.user || S.meta.cloudUid !== Cloud.user.uid) return;
+    if (pushing) { pushAgain = true; return; }
+    pushing = true;
+    try {
+      const { fs, db } = fb;
+      const dirty = Store.dirtyRecords();
+      const dels = (S.meta.pendingDeletes || []).slice();
+      const writes = [];
+      for (const { store, rec } of dirty) writes.push([userDoc(store, rec.id), encode(store, rec)]);
+      for (const d of dels) writes.push([userDoc(d.store, d.id), { u: d.at, d: true, j: null }]);
+      const setU = S.meta.settingsDirty ? S.settings._updatedAt : null;
+      const actU = S.meta.activeDirty ? S.meta.activeUpdatedAt : null;
+      if (setU != null) writes.push([userDoc('kv', 'settings'), encodeSettings()]);
+      if (actU != null) writes.push([userDoc('kv', 'active'), encodeActive()]);
+      if (writes.length) {
+        fs.setDoc(fs.doc(db, 'users', Cloud.user.uid), { email: Cloud.user.email || '', updatedAt: Date.now(), schema: Store.SCHEMA_VERSION, app: root.APP_VERSION }).catch(() => {});
+        // One write per document: Firestore queues them in its own IndexedDB until the server confirms.
+        // The security rules refuse a write that is older than what the server has (a phone that was
+        // offline must not overwrite a newer change from another phone); onRejected settles it.
+        for (const [ref, data] of writes) fs.setDoc(ref, data).catch((e) => onRejected(ref, e));
+        await Store.markSynced(dirty.map((x) => ({ store: x.store, id: x.rec.id, at: x.rec.updatedAt })), dels);
+        const patch = {};
+        if (setU != null && S.settings._updatedAt === setU) patch.settingsDirty = false;
+        if (actU != null && S.meta.activeUpdatedAt === actU) patch.activeDirty = false;
+        if (Object.keys(patch).length) await Store.setMeta(patch);
+        setStatus(navigator.onLine ? 'syncing' : 'offline');
+      }
+      fs.waitForPendingWrites(db).then(() => {
+        if (Cloud.status === 'error') return;
+        Store.setMeta({ lastSync: Date.now() });
+        setStatus('synced');
+      }).catch(() => {});
+    } catch (e) {
+      setStatus('error', e);
+    } finally {
+      pushing = false;
+      if (pushAgain) { pushAgain = false; Cloud.schedulePush(); }
+    }
+  }
+  /** The server refused a write. If the cloud holds a newer version, take it; otherwise keep ours dirty. */
+  async function onRejected(ref, e) {
+    const { fs } = fb;
+    const parts = ref.path.split('/'); // users/{uid}/{store}/{id}
+    const store = parts[2], id = parts[3];
+    try {
+      const snap = await fs.getDocFromServer(ref);
+      const v = snap.exists() ? snap.data() : null;
+      if (store === 'kv') {
+        if (v && id === 'settings' && v.u > (S.settings._updatedAt || 0)) return Store.applyRemoteSettings(JSON.parse(v.j), LOCAL_ONLY_SETTINGS);
+        if (v && id === 'active' && v.u > (S.meta.activeUpdatedAt || 0)) return Store.applyRemoteActive(v.j ? JSON.parse(v.j) : null, v.u);
+      } else if (SYNC.includes(store)) {
+        const local = S[store].find((x) => x.id === id);
+        if (v && (!local || (local.updatedAt || 0) < v.u)) {
+          return Store.applyRemote([v.d ? { store, del: id } : { store, put: decode(store, v, local) }]);
+        }
+        if (local) { delete local._syncedAt; await Store.saveAll(); }
+      }
+    } catch (err) { /* offline: retried on the next push */ }
+    setStatus('error', e);
+  }
+  Cloud.schedulePush = function (ms) {
+    clearTimeout(pushTimer);
+    pushTimer = setTimeout(push, ms == null ? 1500 : ms);
+  };
+  Cloud.syncNow = async function () {
+    if (!Cloud.user) return;
+    if (!Cloud.connected) await Cloud.connect(Cloud.user);
+    else await push();
+  };
+  Cloud.hasUnsynced = () => Store.dirtyRecords().length > 0 || (S.meta.pendingDeletes || []).length > 0 || !!S.meta.settingsDirty;
+
+  /* react to local changes */
+  Store.on((ev) => {
+    if (!Cloud.user || !Cloud.connected) return;
+    if (ev.remote) return;
+    if (ev.type === 'restore') { Cloud.afterRestore(ev.mode); return; }
+    if (ev.type === 'data' || ev.type === 'settings' || ev.type === 'active') Cloud.schedulePush(ev.type === 'active' ? 200 : 1500);
+  });
+  window.addEventListener('online', () => { if (Cloud.user && Cloud.connected) Cloud.schedulePush(300); });
+  window.addEventListener('offline', () => { if (Cloud.user) setStatus('offline'); });
+
+  /** After restoring a backup: make the cloud match this device. */
+  Cloud.afterRestore = async function (mode) {
+    if (mode === 'replace') {
+      await Store.touchAll();
+      try {
+        const R = await fetchAll(Cloud.user.uid);
+        const pend = S.meta.pendingDeletes || (S.meta.pendingDeletes = []);
+        const now = Date.now();
+        for (const st of SYNC) for (const [id, v] of R.stores[st]) if (!v.d && !S[st].some((x) => x.id === id)) pend.push({ store: st, id, at: now });
+        await Store.setMeta({ pendingDeletes: pend });
+      } catch (e) { /* offline: the restored records still win by timestamp */ }
+    }
+    await push();
+  };
+
+  /* ---------------- sign out / delete ---------------- */
+  /** Sign out and clear this device. Returns false if the user cancelled. */
+  Cloud.signOut = async function () {
+    if (fb && Cloud.user) {
+      await push();
+      try { await Promise.race([fb.fs.waitForPendingWrites(fb.db), sleep(8000).then(() => { throw new Error('timeout'); })]); }
+      catch (e) {
+        const ok = await UI.confirm('יש שינויים שעוד לא עלו לענן', 'כנראה אין חיבור לאינטרנט. אם תתנתק עכשיו, השינויים האחרונים מהטלפון הזה יאבדו.', 'התנתק בכל זאת', true);
+        if (!ok) return false;
+      }
+    }
+    await shutdown();
+    return true;
+  };
+  async function shutdown() {
+    detach();
+    if (fb) {
+      try { await fb.au.signOut(fb.auth); } catch (e) { /* ignore */ }
+      try { await fb.fs.terminate(fb.db); await fb.fs.clearIndexedDbPersistence(fb.db); } catch (e) { /* ignore */ }
+    }
+    await Store.wipe();
+  }
+  /** Permanently delete everything stored for this user in the cloud, then sign out. */
+  Cloud.deleteAccountData = async function () {
+    const { fs, db } = await load();
+    const uid = Cloud.user.uid;
+    for (const st of SYNC.concat(['kv'])) {
+      const snap = await fs.getDocs(fs.collection(db, 'users', uid, st));
+      for (let i = 0; i < snap.docs.length; i += 400) {
+        const b = fs.writeBatch(db);
+        snap.docs.slice(i, i + 400).forEach((d) => b.delete(d.ref));
+        await b.commit();
+      }
+    }
+    await fs.deleteDoc(fs.doc(db, 'users', uid));
+    await shutdown();
+  };
+
+  Cloud.statusText = function () {
+    const st = Cloud.status;
+    if (!Cloud.user) return 'לא מחובר';
+    if (st === 'synced') return 'מסונכרן' + (S.meta.lastSync ? ' · ' + UI.timeAgo(S.meta.lastSync) : '');
+    if (st === 'syncing') return 'מסנכרן…';
+    if (st === 'offline') return 'אין חיבור — יסונכרן כשתחזור הרשת';
+    if (st === 'error') return 'שגיאת סנכרון: ' + Cloud.errorText(Cloud.error);
+    return 'מחובר';
+  };
+})(typeof window !== 'undefined' ? window : globalThis);

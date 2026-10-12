@@ -70,6 +70,8 @@
 
   /* ---------------- sections ---------------- */
   const SECTIONS = {
+    personal: { icon: 'users', title: 'פרטים אישיים', sub: () => { const a = Engine.ageAt(S.settings.birthDate, U.todayKey()); return (S.settings.userName || 'שם לא הוזן') + (a != null ? ' · גיל ' + a + (a < 18 ? ' (פטור ממסים)' : '') : ''); } },
+    account: { icon: 'cloud', title: 'חשבון וסנכרון', sub: () => (S.meta.cloudEmail || 'לא מחובר') + ' · ' + root.Cloud.statusText() },
     roles: { icon: 'users', title: 'מעסיקים, תפקידים ותעריפים', sub: () => App.roles().map((r) => r.name + ' ' + U.money(Engine.roleRate(r, U.todayKey()), 0)).join(' · ') },
     calc: { icon: 'flask', title: 'חוקי חישוב', sub: () => { const e = S.employers[0]; return `ש״נ אחרי ${e.otThreshold} ש׳ · שבת ${e.restPct}% · עיגול: ${e.roundingMode === 'none' ? 'ללא' : e.roundingUnit + ' דק׳'}`; } },
     rest: { icon: 'candle', title: 'שבת וחגים', sub: () => (S.settings.rest.mode === 'city' ? 'לפי ' + (S.settings.rest.city === '__custom' ? 'מיקום מותאם' : S.settings.rest.city) : `קבוע: ⁦${S.settings.rest.fixedStart}–${S.settings.rest.fixedEnd}⁩`) + (S.dayRules.length ? ` · ${S.dayRules.length} כללי יום` : '') },
@@ -81,7 +83,8 @@
     templates: { icon: 'layers', title: 'תבניות משמרת', sub: () => (S.templates.length ? S.templates.length + ' תבניות' : 'אין תבניות') },
     look: { icon: 'palette', title: 'מראה', sub: () => ({ system: 'לפי המערכת', light: 'בהיר', dark: 'כהה' }[S.settings.theme]) + ' · ' + (App.ACCENTS[S.settings.accent] || [])[2] },
     security: { icon: 'lock', title: 'נעילה בקוד', sub: () => (S.settings.lock.enabled ? 'מופעלת' : 'כבויה') },
-    ai: { icon: 'sparkle', title: 'ניתוח תלושים עם AI', sub: () => (S.settings.ai.apiKey ? 'מפתח מוגדר · ' + S.settings.ai.model : 'אופציונלי — ללא מפתח הכול מקומי') },
+    assistant: { icon: 'sparkle', title: 'עוזר זכויות ושכר (AI)', sub: () => (S.settings.ai.apiKey ? 'מוכן — שאל כל שאלה' : 'דורש מפתח API') },
+    ai: { icon: 'sparkle', title: 'מפתח AI וניתוח תלושים', sub: () => (S.settings.ai.apiKey ? 'מפתח מוגדר · ' + S.settings.ai.model : 'אופציונלי — ללא מפתח הכול מקומי') },
     backup: { icon: 'cloud', title: 'גיבוי ושחזור', sub: () => (S.settings.backup.lastBackup ? 'גיבוי אחרון: ' + UI.timeAgo(S.settings.backup.lastBackup) : 'עוד לא גובה') },
     export: { icon: 'download', title: 'ייצוא נתונים', sub: () => 'CSV / Excel, PDF, יומן' },
     demo: { icon: 'flask', title: 'מצב הדגמה', sub: () => (S.settings.demo ? 'פעיל' : 'נתוני דוגמה לבדיקת האפליקציה') },
@@ -89,12 +92,14 @@
   };
 
   App.views.settings = function () {
-    const groups = [['עבודה ושכר', ['roles', 'calc', 'rest', 'pay', 'net', 'leave', 'goal']], ['אפליקציה', ['alerts', 'templates', 'look', 'security', 'ai']], ['נתונים', ['backup', 'export', 'demo', 'about']]];
+    const groups = [['חשבון', ['account', 'personal']], ['עבודה ושכר', ['roles', 'calc', 'rest', 'pay', 'net', 'leave', 'goal']], ['אפליקציה', ['assistant', 'alerts', 'templates', 'look', 'security', 'ai']], ['נתונים', ['backup', 'export', 'demo', 'about']]];
     return `<div class="topbar"><div class="titles"><h1>הגדרות</h1><div class="sub">כל שינוי נשמר מיד</div></div></div>
       ${groups.map(([g, keys]) => `<div class="section-title">${g}</div><div class="list">${keys.map((k) => { const s = SECTIONS[k]; return `<button class="item" data-act="settings-open" data-k="${k}"><span class="lead" style="background:var(--secondary-container);color:var(--on-secondary-container)">${icon(s.icon)}</span><span class="body"><span class="t">${s.title}</span><span class="s">${esc(s.sub())}</span></span>${icon('left', 's')}</button>`; }).join('')}</div>`).join('')}
-      <div class="ver">גרסה ${root.APP_VERSION} · מבנה נתונים ${Store.SCHEMA_VERSION}</div>`;
+      <div class="section-title">מידע משפטי</div>
+      <div class="list">${[['about', 'info', 'אודות'], ['terms', 'file', 'תנאי שימוש'], ['privacy', 'shield', 'מדיניות פרטיות'], ['disclaimer', 'alert', 'הבהרה משפטית'], ['accessibility', 'eye', 'הצהרת נגישות'], ['licenses', 'layers', 'רישיונות וצד שלישי']].map(([d, ic, t]) => `<button class="item" data-act="legal" data-doc="${d}"><span class="lead" style="background:var(--surface-3)">${icon(ic)}</span><span class="body"><span class="t">${t}</span></span>${icon('left', 's')}</button>`).join('')}</div>
+      <div class="ver">גרסה ${root.APP_VERSION} · מבנה נתונים ${Store.SCHEMA_VERSION}${S.settings.legal ? ' · תנאים ' + esc(S.settings.legal.version) + ' אושרו' : ''}</div>`;
   };
-  App.actions['settings-open'] = (el) => App.sheetsApi.settingsSection(el.dataset.k);
+  App.actions['settings-open'] = (el) => (el.dataset.k === 'assistant' ? App.actions.assistant() : App.sheetsApi.settingsSection(el.dataset.k));
 
   App.sheetsApi.settingsSection = function (k) {
     const s = SECTIONS[k];
@@ -106,6 +111,17 @@
   /* ---------------- renderers ---------------- */
   const HOLS = HebCal.HOLIDAY_DEFS;
   const RENDER = {};
+  RENDER.account = { render: () => App.accountSection(), mount: (el, draw) => App.accountMount(el, draw) };
+  RENDER.personal = {
+    render: () => {
+      const age = Engine.ageAt(S.settings.birthDate, U.todayKey());
+      return `<div class="card">${F.text('שם (לא חובה)', 's.userName', S.settings.userName, 'מופיע בברכות ובחתימה של הודעות למעסיק.')}
+        ${F.date('תאריך לידה (לא חובה)', 's.birthDate', S.settings.birthDate, 'ביום ההולדת תקבל ברכה. מתחת לגיל 18 — חישוב הנטו מתאים לפטור ממסים.').replace('data-s=', 'data-redraw data-s=')}</div>
+        ${age != null ? `<div class="card ${age < 18 ? 'tonal' : ''}"><div class="kv"><span>גיל</span><b>${age}</b></div>
+          ${age < 18 ? `<div class="small" style="margin-top:8px">${icon('info', 's')} מתחת לגיל 18 לא מנוכים מס הכנסה, ביטוח לאומי, מס בריאות ופנסיה, ולכן <b>הנטו שווה לברוטו</b> (פחות ניכויים אישיים כמו ארוחות, אם יש). מגיל 18 החישוב עובר אוטומטית לניכויים הרגילים.</div>` : ''}</div>` : ''}
+        <div class="tiny muted" style="margin:6px 4px">תאריך הלידה נשמר בחשבון שלך ולא משותף עם אף אחד.</div>`;
+    },
+  };
 
   RENDER.roles = {
     render: () => `${S.employers.map((e) => `<div class="card"><div class="card-head">${icon('briefcase')}<h3>${esc(e.name)}</h3><button class="icon-btn" data-emp-edit="${e.id}" aria-label="ערוך מעסיק">${icon('edit', 's')}</button></div>
@@ -472,11 +488,13 @@
           draw();
         }
         if (b.hasAttribute('data-wipe')) {
-          if (!(await UI.confirm('למחוק את כל הנתונים?', 'כל המשמרות, התלושים וההגדרות יימחקו לצמיתות מהטלפון. מומלץ לגבות קודם.', 'מחק הכול', true))) return;
+          if (!(await UI.confirm('למחוק את כל הנתונים?', 'כל המשמרות, התלושים וההגדרות יימחקו לצמיתות מהטלפון ומהחשבון בענן. מומלץ לגבות קודם.', 'מחק הכול', true))) return;
           const really = await UI.promptText('אישור סופי', 'הקלד "מחק" כדי לאשר', '');
           if (really !== 'מחק') { UI.toast('בוטל'); return; }
-          await Store.wipe();
-          location.reload();
+          try {
+            if (root.Cloud.user) await root.Cloud.deleteAccountData(); else await Store.wipe();
+            location.reload();
+          } catch (err) { UI.dialog({ title: 'המחיקה נכשלה', text: root.Cloud.errorText(err), buttons: [{ label: 'סגור', value: true }] }); }
         }
       });
     },
