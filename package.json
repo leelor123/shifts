@@ -6,6 +6,8 @@
   "scripts": {
     "test": "node tests/run.js",
     "build": "node tests/run.js && node tools/build.js",
-    "serve": "node tools/serve.js"
+    "serve": "node tools/serve.js",
+    "e2e": "node tests/e2e/smoke.js docs tests/e2e/out",
+    "perf": "node tests/e2e/perf.js docs"
   }
 }

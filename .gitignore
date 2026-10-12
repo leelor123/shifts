@@ -5,3 +5,4 @@ node_modules/
 firebase-debug.log
 *.log
 .firebase/
+tests/e2e/out/
