@@ -13,7 +13,7 @@
 <link rel="apple-touch-icon" href="icon-192.png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Hebrew:wght@400;500;600;700&family=Frank+Ruhl+Libre:wght@500;700;800&display=swap">
+<link id="font-link" rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Rubik:wght@300..800&display=swap">
 <style>
 /* ============================================================
  * Shift & pay tracker — "pay ledger" identity: warm paper, deep
@@ -30,8 +30,9 @@
   --safe-b: env(safe-area-inset-bottom, 0px);
   --safe-t: env(safe-area-inset-top, 0px);
   --ease: cubic-bezier(.32, .72, 0, 1);
-  --font: 'IBM Plex Sans Hebrew', 'Assistant', system-ui, 'Segoe UI', Arial, sans-serif;
-  --display: 'Frank Ruhl Libre', 'David Libre', Georgia, serif;
+  --app-font: 'Rubik';
+  --font: var(--app-font), 'Assistant', system-ui, 'Segoe UI', Arial, sans-serif;
+  --display: var(--font);
   --amber: #e2a224; --on-amber: #231a05; --amber-soft: #f6e6c1;
 
   --primary: hsl(var(--h) var(--s) 27%);
@@ -504,9 +505,9 @@ details.collapse > .in { padding: 0 16px 14px; }
  * Identity layer (overrides the base component styles above)
  * ============================================================ */
 h1, h2, .topbar h1, .wizard h1, .sheet .sh-head h2, .hero-num, .bday-title, .chat-hello { font-family: var(--display); }
-.topbar h1 { font-size: 1.7rem; font-weight: 700; letter-spacing: 0; }
+.topbar h1 { font-size: 1.65rem; font-weight: 700; letter-spacing: -.01em; }
 .topbar .sub { font-size: .82rem; }
-.hero-num { font-weight: 800; font-size: 2.6rem; letter-spacing: -.01em; }
+.hero-num { font-weight: 700; font-size: 2.6rem; letter-spacing: -.025em; }
 .kpi .v { font-weight: 600; font-variant-numeric: tabular-nums; }
 .section-title { font-size: .78rem; font-weight: 600; color: var(--on-surface-var); letter-spacing: .02em; margin: 24px 2px 10px; }
 .section-title::after { content: ''; flex: 1; height: 1px; background: var(--line); margin-inline-start: 6px; order: 99; }
@@ -559,7 +560,7 @@ details.collapse { background: var(--surface-1); border: 1px solid var(--line); 
 /* timer: amber clock on ink when running */
 .timer-card.running { background: var(--hero); color: var(--on-hero); border-color: transparent; }
 .timer-card.running .clock { color: var(--amber); }
-.timer-card .clock { font-family: var(--display); font-weight: 700; }
+.timer-card .clock { font-family: var(--display); font-weight: 600; letter-spacing: .01em; }
 .timer-card.running .btn.big { background: var(--amber); color: var(--on-amber); }
 .timer-card.running .btn.tonal { background: rgba(255, 255, 255, .1); color: var(--on-hero); }
 
@@ -652,6 +653,14 @@ textarea.input.chat-input { min-height: 46px; height: 46px; max-height: 140px; r
 
 .btn:disabled { opacity: 1; background: var(--surface-3); color: var(--on-surface-var); }
 
+/* font picker (Settings › Appearance) */
+.font-pick { display: grid; gap: 8px; }
+.font-pick button { display: flex; align-items: center; gap: 12px; text-align: start; padding: 12px 14px; border-radius: var(--radius); border: 1px solid var(--line); background: var(--surface-1); cursor: pointer; color: var(--on-surface); }
+.font-pick button.on { border-color: var(--primary); box-shadow: inset 0 0 0 1px var(--primary); }
+.font-pick .fp-sample { flex: 1; font-size: 1.15rem; line-height: 1.3; }
+.font-pick .fp-sample small { display: block; font-size: .78rem; color: var(--on-surface-var); }
+.font-pick .fp-num { font-size: 1.25rem; font-weight: 700; }
+
 </style>
 </head>
 <body>
@@ -660,7 +669,7 @@ textarea.input.chat-input { min-height: 46px; height: 46px; max-height: 140px; r
 <div id="print-root" aria-hidden="true"></div>
 <noscript><div style="padding:24px;font-family:sans-serif">האפליקציה דורשת JavaScript.</div></noscript>
 <script>
-window.APP_VERSION = '1.1.0';
+window.APP_VERSION = '1.1.1';
 /* ---- core/util.js ---- */
 /* ============================================================
  * util.js — date/time helpers and formatting.
@@ -1292,7 +1301,7 @@ window.APP_VERSION = '1.1.0';
         push: true,
       },
       // --- appearance ---
-      theme: 'system', accent: 'petrol', fontScale: 1,
+      theme: 'system', accent: 'petrol', fontScale: 1, font: 'rubik',
       // --- security ---
       lock: { enabled: false, hash: null, salt: null, timeoutMin: 1 },
       // --- AI ---
@@ -4173,6 +4182,17 @@ window.APP_VERSION = '1.1.0';
     orange: [24, 80, 'כתום'], pink: [330, 62, 'ורוד'], purple: [275, 52, 'סגול'], red: [2, 68, 'אדום'],
   };
   App.ACCENTS = ACCENTS;
+  // Hebrew-capable families from Google Fonts (SIL Open Font License)
+  const FONTS = {
+    rubik: ['Rubik', 'Rubik:wght@300..800', 'מודרני ורך'],
+    miriam: ['Miriam Libre', 'Miriam+Libre:wght@400..700', 'נקי וחד'],
+    noto: ['Noto Sans Hebrew', 'Noto+Sans+Hebrew:wght@300..800', 'ניטרלי ומאוזן'],
+    assistant: ['Assistant', 'Assistant:wght@300..800', 'קליל וצר'],
+    heebo: ['Heebo', 'Heebo:wght@300..800', 'הקלאסי של הגרסה הראשונה'],
+    varela: ['Varela Round', 'Varela+Round', 'עגול וידידותי'],
+  };
+  App.FONTS = FONTS;
+  App.fontCss = (key) => 'https://fonts.googleapis.com/css2?family=' + (FONTS[key] || FONTS.rubik)[1] + '&display=swap';
   App.applyTheme = function () {
     const st = S.settings;
     const de = document.documentElement;
@@ -4181,6 +4201,10 @@ window.APP_VERSION = '1.1.0';
     de.style.setProperty('--h', a[0]);
     de.style.setProperty('--s', a[1] + '%');
     de.style.setProperty('--fs', st.fontScale || 1);
+    const font = FONTS[st.font] ? st.font : 'rubik';
+    de.style.setProperty('--app-font', "'" + FONTS[font][0] + "'");
+    const link = document.getElementById('font-link');
+    if (link && link.dataset.font !== font) { link.href = App.fontCss(font); link.dataset.font = font; }
     const dark = st.theme === 'dark' || (st.theme !== 'light' && matchMedia('(prefers-color-scheme: dark)').matches);
     const meta = document.querySelector('meta[name="theme-color"]');
     if (meta) meta.content = dark ? '#0f1413' : '#f6f4ee';
@@ -6803,7 +6827,8 @@ window.FIREBASE_CONFIG = {
     bg.addColorStop(1, col('--surface', '#fbfbff'));
     g.fillStyle = bg; g.fillRect(0, 0, W, H);
     const ink = col('--on-surface', '#111'), sub = col('--on-surface-var', '#555'), prim = col('--primary', '#3f51b5');
-    const font = (w, s) => `${w} ${s}px Heebo, Assistant, Arial, sans-serif`;
+    const fam = (App.FONTS[S.settings.font] || App.FONTS.rubik)[0];
+    const font = (w, s) => `${w} ${s}px '${fam}', Assistant, Arial, sans-serif`;
     g.direction = 'rtl'; g.textAlign = 'right';
     const X = W - 80;
     g.fillStyle = sub; g.font = font(600, 40); g.fillText('סיכום', X, 120);
@@ -7239,8 +7264,15 @@ window.FIREBASE_CONFIG = {
   RENDER.look = {
     render: () => `<div class="section-title">ערכת צבעים</div><div class="seg" style="margin-bottom:14px">${[['system', 'לפי המערכת'], ['light', 'בהיר'], ['dark', 'כהה']].map(([k, l]) => `<button data-theme="${k}" class="${S.settings.theme === k ? 'on' : ''}">${l}</button>`).join('')}</div>
       <div class="section-title">צבע הדגשה</div><div class="color-pick" style="margin-bottom:16px">${Object.entries(App.ACCENTS).map(([k, a]) => `<button data-accent="${k}" class="${S.settings.accent === k ? 'on' : ''}" style="background:hsl(${a[0]} ${a[1]}% 45%)" aria-label="${a[2]}"></button>`).join('')}</div>
+      <div class="section-title">גופן</div>
+      <div class="font-pick">${Object.entries(App.FONTS).map(([k, f]) => `<button data-font="${k}" class="${(S.settings.font || 'rubik') === k ? 'on' : ''}" style="font-family:'${f[0]}', system-ui, sans-serif"><span class="fp-sample">משמרת ערב · ${esc(f[2])}<small>${f[0]}</small></span><span class="fp-num">₪1,240</span></button>`).join('')}</div>
       <div class="section-title">גודל טקסט</div><div class="seg">${[[0.9, 'קטן'], [1, 'רגיל'], [1.1, 'גדול'], [1.2, 'גדול מאוד']].map(([k, l]) => `<button data-fs="${k}" class="${+S.settings.fontScale === k ? 'on' : ''}">${l}</button>`).join('')}</div>`,
     mount: (el, draw) => {
+      // load every family once so the previews show the real fonts
+      for (const k of Object.keys(App.FONTS)) {
+        if (document.querySelector(`link[data-preview="${k}"]`)) continue;
+        const l = document.createElement('link'); l.rel = 'stylesheet'; l.href = App.fontCss(k); l.dataset.preview = k; document.head.appendChild(l);
+      }
       if (el._lookBound) return;
       el._lookBound = true;
       el.addEventListener('click', async (e) => {
@@ -7249,6 +7281,7 @@ window.FIREBASE_CONFIG = {
         if (b.dataset.theme) await Store.setSettings((s) => { s.theme = b.dataset.theme; });
         else if (b.dataset.accent) await Store.setSettings((s) => { s.accent = b.dataset.accent; });
         else if (b.dataset.fs) await Store.setSettings((s) => { s.fontScale = +b.dataset.fs; });
+        else if (b.dataset.font) await Store.setSettings((s) => { s.font = b.dataset.font; });
         else return;
         draw();
       });
@@ -7977,7 +8010,7 @@ window.FIREBASE_CONFIG = {
 <li><b>pdf.js</b> (Mozilla) — Apache License 2.0. לקריאת קובצי PDF.</li>
 <li><b>Tesseract.js</b> ונתוני השפה של Tesseract — Apache License 2.0. לזיהוי טקסט מתמונה.</li>
 <li><b>Anthropic TypeScript SDK</b> — MIT License. לתכונות AI לפי בחירה.</li>
-<li><b>IBM Plex Sans Hebrew</b> ו-<b>Frank Ruhl Libre</b> — SIL Open Font License 1.1, דרך Google Fonts.</li>
+<li><b>גופנים</b> (Rubik, Miriam Libre, Noto Sans Hebrew, Assistant, Heebo, Varela Round) — SIL Open Font License 1.1, דרך Google Fonts.</li>
 <li>חישובי זמני השקיעה מבוססים על אלגוריתם ה-NOAA (נחלת הכלל). לוח השנה העברי מחושב בשיטת Reingold–Dershowitz.</li></ul>
 <p>Google, Firebase, GitHub, Anthropic ו-Claude הם סימנים מסחריים של בעליהם. אין לאפליקציה קשר עסקי אליהם, והם אינם אחראים לה.</p>`,
     },

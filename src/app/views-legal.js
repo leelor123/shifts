@@ -118,7 +118,7 @@
 <li><b>pdf.js</b> (Mozilla) — Apache License 2.0. לקריאת קובצי PDF.</li>
 <li><b>Tesseract.js</b> ונתוני השפה של Tesseract — Apache License 2.0. לזיהוי טקסט מתמונה.</li>
 <li><b>Anthropic TypeScript SDK</b> — MIT License. לתכונות AI לפי בחירה.</li>
-<li><b>IBM Plex Sans Hebrew</b> ו-<b>Frank Ruhl Libre</b> — SIL Open Font License 1.1, דרך Google Fonts.</li>
+<li><b>גופנים</b> (Rubik, Miriam Libre, Noto Sans Hebrew, Assistant, Heebo, Varela Round) — SIL Open Font License 1.1, דרך Google Fonts.</li>
 <li>חישובי זמני השקיעה מבוססים על אלגוריתם ה-NOAA (נחלת הכלל). לוח השנה העברי מחושב בשיטת Reingold–Dershowitz.</li></ul>
 <p>Google, Firebase, GitHub, Anthropic ו-Claude הם סימנים מסחריים של בעליהם. אין לאפליקציה קשר עסקי אליהם, והם אינם אחראים לה.</p>`,
     },

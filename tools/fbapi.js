@@ -25,9 +25,11 @@ async function main() {
   }
   if (cmd === 'authcfg') {
     const r = await idt.get(`/projects/${project}/config`);
-    console.log(JSON.stringify({ authorizedDomains: r.body.authorizedDomains, signIn: r.body.signIn }, null, 1));
+    console.log('authorizedDomains:', (r.body.authorizedDomains || []).join(', '));
     const p = await idt.get(`/projects/${project}/defaultSupportedIdpConfigs`).catch((e) => ({ body: { error: e.message } }));
-    console.log(JSON.stringify(p.body, null, 1));
+    // never print secrets (client secret, password-hash keys)
+    for (const c of p.body.defaultSupportedIdpConfigs || []) console.log('provider:', c.name.split('/').pop(), c.enabled ? 'enabled' : 'disabled');
+    if (p.body.error) console.log('providers: error', p.body.error);
   }
   if (cmd === 'domains') {
     const r = await idt.get(`/projects/${project}/config`);

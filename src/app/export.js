@@ -100,7 +100,8 @@
     bg.addColorStop(1, col('--surface', '#fbfbff'));
     g.fillStyle = bg; g.fillRect(0, 0, W, H);
     const ink = col('--on-surface', '#111'), sub = col('--on-surface-var', '#555'), prim = col('--primary', '#3f51b5');
-    const font = (w, s) => `${w} ${s}px Heebo, Assistant, Arial, sans-serif`;
+    const fam = (App.FONTS[S.settings.font] || App.FONTS.rubik)[0];
+    const font = (w, s) => `${w} ${s}px '${fam}', Assistant, Arial, sans-serif`;
     g.direction = 'rtl'; g.textAlign = 'right';
     const X = W - 80;
     g.fillStyle = sub; g.font = font(600, 40); g.fillText('סיכום', X, 120);

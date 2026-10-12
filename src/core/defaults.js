@@ -140,7 +140,7 @@
         push: true,
       },
       // --- appearance ---
-      theme: 'system', accent: 'petrol', fontScale: 1,
+      theme: 'system', accent: 'petrol', fontScale: 1, font: 'rubik',
       // --- security ---
       lock: { enabled: false, hash: null, salt: null, timeoutMin: 1 },
       // --- AI ---

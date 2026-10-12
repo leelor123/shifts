@@ -42,6 +42,17 @@
     orange: [24, 80, 'כתום'], pink: [330, 62, 'ורוד'], purple: [275, 52, 'סגול'], red: [2, 68, 'אדום'],
   };
   App.ACCENTS = ACCENTS;
+  // Hebrew-capable families from Google Fonts (SIL Open Font License)
+  const FONTS = {
+    rubik: ['Rubik', 'Rubik:wght@300..800', 'מודרני ורך'],
+    miriam: ['Miriam Libre', 'Miriam+Libre:wght@400..700', 'נקי וחד'],
+    noto: ['Noto Sans Hebrew', 'Noto+Sans+Hebrew:wght@300..800', 'ניטרלי ומאוזן'],
+    assistant: ['Assistant', 'Assistant:wght@300..800', 'קליל וצר'],
+    heebo: ['Heebo', 'Heebo:wght@300..800', 'הקלאסי של הגרסה הראשונה'],
+    varela: ['Varela Round', 'Varela+Round', 'עגול וידידותי'],
+  };
+  App.FONTS = FONTS;
+  App.fontCss = (key) => 'https://fonts.googleapis.com/css2?family=' + (FONTS[key] || FONTS.rubik)[1] + '&display=swap';
   App.applyTheme = function () {
     const st = S.settings;
     const de = document.documentElement;
@@ -50,6 +61,10 @@
     de.style.setProperty('--h', a[0]);
     de.style.setProperty('--s', a[1] + '%');
     de.style.setProperty('--fs', st.fontScale || 1);
+    const font = FONTS[st.font] ? st.font : 'rubik';
+    de.style.setProperty('--app-font', "'" + FONTS[font][0] + "'");
+    const link = document.getElementById('font-link');
+    if (link && link.dataset.font !== font) { link.href = App.fontCss(font); link.dataset.font = font; }
     const dark = st.theme === 'dark' || (st.theme !== 'light' && matchMedia('(prefers-color-scheme: dark)').matches);
     const meta = document.querySelector('meta[name="theme-color"]');
     if (meta) meta.content = dark ? '#0f1413' : '#f6f4ee';

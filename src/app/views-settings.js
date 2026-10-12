@@ -393,8 +393,15 @@
   RENDER.look = {
     render: () => `<div class="section-title">ערכת צבעים</div><div class="seg" style="margin-bottom:14px">${[['system', 'לפי המערכת'], ['light', 'בהיר'], ['dark', 'כהה']].map(([k, l]) => `<button data-theme="${k}" class="${S.settings.theme === k ? 'on' : ''}">${l}</button>`).join('')}</div>
       <div class="section-title">צבע הדגשה</div><div class="color-pick" style="margin-bottom:16px">${Object.entries(App.ACCENTS).map(([k, a]) => `<button data-accent="${k}" class="${S.settings.accent === k ? 'on' : ''}" style="background:hsl(${a[0]} ${a[1]}% 45%)" aria-label="${a[2]}"></button>`).join('')}</div>
+      <div class="section-title">גופן</div>
+      <div class="font-pick">${Object.entries(App.FONTS).map(([k, f]) => `<button data-font="${k}" class="${(S.settings.font || 'rubik') === k ? 'on' : ''}" style="font-family:'${f[0]}', system-ui, sans-serif"><span class="fp-sample">משמרת ערב · ${esc(f[2])}<small>${f[0]}</small></span><span class="fp-num">₪1,240</span></button>`).join('')}</div>
       <div class="section-title">גודל טקסט</div><div class="seg">${[[0.9, 'קטן'], [1, 'רגיל'], [1.1, 'גדול'], [1.2, 'גדול מאוד']].map(([k, l]) => `<button data-fs="${k}" class="${+S.settings.fontScale === k ? 'on' : ''}">${l}</button>`).join('')}</div>`,
     mount: (el, draw) => {
+      // load every family once so the previews show the real fonts
+      for (const k of Object.keys(App.FONTS)) {
+        if (document.querySelector(`link[data-preview="${k}"]`)) continue;
+        const l = document.createElement('link'); l.rel = 'stylesheet'; l.href = App.fontCss(k); l.dataset.preview = k; document.head.appendChild(l);
+      }
       if (el._lookBound) return;
       el._lookBound = true;
       el.addEventListener('click', async (e) => {
@@ -403,6 +410,7 @@
         if (b.dataset.theme) await Store.setSettings((s) => { s.theme = b.dataset.theme; });
         else if (b.dataset.accent) await Store.setSettings((s) => { s.accent = b.dataset.accent; });
         else if (b.dataset.fs) await Store.setSettings((s) => { s.fontScale = +b.dataset.fs; });
+        else if (b.dataset.font) await Store.setSettings((s) => { s.font = b.dataset.font; });
         else return;
         draw();
       });
