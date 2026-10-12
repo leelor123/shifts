@@ -70,6 +70,7 @@
 
   /* ---------------- sections ---------------- */
   const SECTIONS = {
+    rights: { icon: 'shield', title: 'הזכויות שלי', sub: () => 'מדריך אישי לפי הגיל והנתונים שלך · גם בלי אינטרנט' },
     personal: { icon: 'users', title: 'פרטים אישיים', sub: () => { const a = Engine.ageAt(S.settings.birthDate, U.todayKey()); return (S.settings.userName || 'שם לא הוזן') + (a != null ? ' · גיל ' + a + (a < 18 ? ' (פטור ממסים)' : '') : ''); } },
     account: { icon: 'cloud', title: 'חשבון וסנכרון', sub: () => (S.meta.cloudEmail || 'לא מחובר') + ' · ' + root.Cloud.statusText() },
     roles: { icon: 'users', title: 'מעסיקים, תפקידים ותעריפים', sub: () => App.roles().map((r) => r.name + ' ' + U.money(Engine.roleRate(r, U.todayKey()), 0)).join(' · ') },
@@ -92,14 +93,14 @@
   };
 
   App.views.settings = function () {
-    const groups = [['חשבון', ['account', 'personal']], ['עבודה ושכר', ['roles', 'calc', 'rest', 'pay', 'net', 'leave', 'goal']], ['אפליקציה', ['assistant', 'alerts', 'templates', 'look', 'security', 'ai']], ['נתונים', ['backup', 'export', 'demo', 'about']]];
+    const groups = [['חשבון', ['account', 'personal']], ['עבודה ושכר', ['rights', 'roles', 'calc', 'rest', 'pay', 'net', 'leave', 'goal']], ['אפליקציה', ['assistant', 'alerts', 'templates', 'look', 'security', 'ai']], ['נתונים', ['backup', 'export', 'demo', 'about']]];
     return `<div class="topbar"><div class="titles"><h1>הגדרות</h1><div class="sub">כל שינוי נשמר מיד</div></div></div>
       ${groups.map(([g, keys]) => `<div class="section-title">${g}</div><div class="list">${keys.map((k) => { const s = SECTIONS[k]; return `<button class="item" data-act="settings-open" data-k="${k}"><span class="lead" style="background:var(--secondary-container);color:var(--on-secondary-container)">${icon(s.icon)}</span><span class="body"><span class="t">${s.title}</span><span class="s">${esc(s.sub())}</span></span>${icon('left', 's')}</button>`; }).join('')}</div>`).join('')}
       <div class="section-title">מידע משפטי</div>
       <div class="list">${[['about', 'info', 'אודות'], ['terms', 'file', 'תנאי שימוש'], ['privacy', 'shield', 'מדיניות פרטיות'], ['disclaimer', 'alert', 'הבהרה משפטית'], ['accessibility', 'eye', 'הצהרת נגישות'], ['licenses', 'layers', 'רישיונות וצד שלישי']].map(([d, ic, t]) => `<button class="item" data-act="legal" data-doc="${d}"><span class="lead" style="background:var(--surface-3)">${icon(ic)}</span><span class="body"><span class="t">${t}</span></span>${icon('left', 's')}</button>`).join('')}</div>
       <div class="ver">גרסה ${root.APP_VERSION} · מבנה נתונים ${Store.SCHEMA_VERSION}${S.settings.legal ? ' · תנאים ' + esc(S.settings.legal.version) + ' אושרו' : ''}</div>`;
   };
-  App.actions['settings-open'] = (el) => (el.dataset.k === 'assistant' ? App.actions.assistant() : App.sheetsApi.settingsSection(el.dataset.k));
+  App.actions['settings-open'] = (el) => (el.dataset.k === 'assistant' ? App.actions.assistant() : el.dataset.k === 'rights' ? App.actions.rights() : App.sheetsApi.settingsSection(el.dataset.k));
 
   App.sheetsApi.settingsSection = function (k) {
     const s = SECTIONS[k];
@@ -436,6 +437,7 @@
     render: () => `<div class="card">${S.settings.lock.enabled
       ? `<div class="banner">${icon('lock')}<div>הנעילה מופעלת. האפליקציה תינעל כשתחזור אליה אחרי ${S.settings.lock.timeoutMin} דק׳.</div></div>
         ${F.sel('נעל אחרי', 's.lock.timeoutMin', [[0, 'מיד'], [1, 'דקה'], [5, '5 דקות'], [15, '15 דקות']], S.settings.lock.timeoutMin)}
+        <div data-bio-row></div>
         <div class="btn-row"><button class="btn tonal" data-pin-set>שנה קוד</button><button class="btn danger" data-pin-off>בטל נעילה</button></div>`
       : `<div class="small" style="margin-bottom:12px">קוד בן 4–8 ספרות שיידרש בכל פתיחה. הקוד נשמר כגיבוב (hash) — לא כטקסט.</div><button class="btn block" data-pin-set>${icon('lock')} הגדר קוד</button>`}
       <div class="tiny muted" style="margin-top:10px">הנעילה מגינה מפני הצצה; הנתונים עצמם לא מוצפנים. שכחת את הקוד? אין שחזור — אפשר רק למחוק את נתוני האתר ולשחזר מגיבוי.</div></div>`,
@@ -453,7 +455,22 @@
         UI.toast('הנעילה הופעלה'); draw();
       };
       const off = el.querySelector('[data-pin-off]');
-      if (off) off.onclick = async () => { if (await UI.confirm('לבטל את הנעילה?', '', 'בטל נעילה')) { await Store.setSettings((s) => { s.lock.enabled = false; s.lock.hash = null; }); draw(); } };
+      if (off) off.onclick = async () => { if (await UI.confirm('לבטל את הנעילה?', '', 'בטל נעילה')) { await Store.setSettings((s) => { s.lock.enabled = false; s.lock.hash = null; s.lock.bioId = null; }); draw(); } };
+      const row = el.querySelector('[data-bio-row]');
+      if (row) App.bio.available().then((ok) => {
+        if (!ok) return;
+        const on = !!S.settings.lock.bioId;
+        row.innerHTML = `<div class="kv" style="margin:6px 0 10px"><span>${icon('hand', 's')} פתיחה בטביעת אצבע / זיהוי פנים</span><button class="btn ${on ? 'text' : 'tonal'} sm" data-bio-toggle>${on ? 'כבה' : 'הפעל'}</button></div>`;
+        row.querySelector('[data-bio-toggle]').onclick = async () => {
+          if (on) { await Store.setSettings((s) => { s.lock.bioId = null; }); draw(); return; }
+          try {
+            const id = await App.bio.enroll();
+            await Store.setSettings((s) => { s.lock.bioId = id; });
+            UI.toast('מעכשיו אפשר לפתוח בטביעת אצבע');
+          } catch (e) { UI.toast(e && e.name === 'NotAllowedError' ? 'בוטל' : 'הטלפון לא תומך בזה'); }
+          draw();
+        };
+      });
     },
   };
 

@@ -126,7 +126,9 @@
     const weekly = S.notifications.filter((n) => n.type === 'weekly' && !n.read && now - n.createdAt < 4 * U.DAY).sort((a, b) => b.createdAt - a.createdAt)[0];
     const live = App.insights ? App.insights.live.slice().sort((a, b) => b.priority - a.priority) : [];
     let item = null;
-    if (urgent[0]) item = { act: 'insights', ic: 'alert', cls: 'sev-' + urgent[0].severity, t: urgent[0].title };
+    const soon = !S.activeShift && [...App.model.results.values()].filter((r) => r.status === 'planned' && r.start > now - 60 * 60000 && r.start < now + 30 * 60000).sort((a, b) => a.start - b.start)[0];
+    if (soon) item = { act: 'start-planned', id: soon.id, ic: 'play', cls: 'go', t: `משמרת מתוכננת ב-${U.epochHM(soon.start)} · התחל עכשיו` };
+    else if (urgent[0]) item = { act: 'insights', ic: 'alert', cls: 'sev-' + urgent[0].severity, t: urgent[0].title };
     else if (next) item = { act: 'shift-open', id: next.id, ic: 'calendar', cls: '', t: `משמרת ${U.epochKey(next.start) === U.todayKey() ? 'היום' : 'מחר'} ב-${U.epochHM(next.start)} · ${App.roleName(next.segments[0].roleId)}` };
     else if (weekly) item = { act: 'insights', ic: 'sparkle', cls: '', t: 'הסיכום השבועי שלך מוכן' };
     else if (unread[0]) item = { act: 'insights', ic: App.severityIcon[unread[0].severity] || 'bulb', cls: 'sev-' + (unread[0].severity || 'info'), t: unread[0].title };
@@ -174,7 +176,7 @@
       <div class="home-top"><div class="titles"><h1>${greeting()}${name} <span class="wave">👋</span></h1>
         <div class="sub">${date} · ${esc(hd.toString().replace(/\s\S+$/, ''))}${hol ? ' · ' + esc(hol) : ''}</div></div>
         <span id="sync-dot">${App.syncDot ? App.syncDot() : ''}</span>
-        <button class="icon-btn" data-act="assistant" aria-label="שאל את העוזר">${icon('sparkle')}</button>
+        <button class="icon-btn" data-act="rights" aria-label="הזכויות שלי">${icon('shield')}</button>
         <button class="icon-btn" data-act="insights" aria-label="התראות ותובנות">${icon('bell')}${unread ? `<span class="dot-badge">${unread > 9 ? '9+' : unread}</span>` : ''}</button></div>
       ${birthdayCard()}
       ${paydayCard()}
@@ -190,6 +192,7 @@
 
   /* ---------------- actions ---------------- */
   App.actions['pick-role'] = async (el) => { await Store.setMeta({ lastRole: el.dataset.id }); App.rerender(); };
+  App.actions['start-planned'] = (el) => { const sh = App.shift(el.dataset.id); if (sh && !S.activeShift) App.startShift(sh.roleId, { fromPlanned: sh.id }); };
   App.actions['choose-role'] = () => App.sheetsApi.pickRole('תפקיד למשמרת', async (rid) => { await Store.setMeta({ lastRole: rid }); App.rerender(); });
   App.actions['timer-start'] = async (el) => {
     const roles = App.roles();

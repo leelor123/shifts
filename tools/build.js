@@ -15,7 +15,7 @@ const JS_ORDER = [
   'app/ui.js', 'app/fx.js', 'app/intro.js', 'app/store.js', 'app/charts.js', 'app/app.js', 'app/firebase-config.js', 'app/cloud.js', 'app/views-login.js',
   'app/views-home.js', 'app/views-shift.js', 'app/views-calendar.js', 'app/views-reports.js',
   'app/views-payslip.js', 'app/views-insights.js', 'app/export.js', 'app/views-settings.js', 'app/views-onboarding.js',
-  'app/views-assistant.js', 'app/views-legal.js', 'app/ptr.js',
+  'app/views-assistant.js', 'app/views-rights.js', 'app/views-legal.js', 'app/ptr.js',
 ];
 const read = (p) => fs.readFileSync(path.join(SRC, p), 'utf8');
 const js = JS_ORDER.map((f) => `/* ---- ${f} ---- */\n${read(f)}`).join('\n');

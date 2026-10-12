@@ -220,6 +220,7 @@
         <div class="list">
           ${r.status === 'planned' ? `<button class="item" data-x="done"><span class="lead">${icon('check')}</span><span class="body"><span class="t">סמן כבוצעה</span></span></button>` : ''}
           <button class="item" data-x="dup"><span class="lead">${icon('copy')}</span><span class="body"><span class="t">שכפל</span><span class="s">אותן שעות בתאריך אחר</span></span></button>
+          <button class="item" data-x="repeat"><span class="lead">${icon('refresh')}</span><span class="body"><span class="t">חזרה שבועית</span><span class="s">אותה משמרת בשבועות הבאים, כמתוכננת</span></span></button>
           <button class="item" data-x="tpl"><span class="lead">${icon('layers')}</span><span class="body"><span class="t">שמור כתבנית</span></span></button>
           <button class="item" data-x="gcal"><span class="lead">${icon('calendar')}</span><span class="body"><span class="t">הוסף ל-Google Calendar</span></span></button>
           ${r.overridden ? `<button class="item" data-x="auto"><span class="lead">${icon('refresh')}</span><span class="body"><span class="t">חזור לחישוב אוטומטי</span><span class="s">מבטל את כל העקיפות במשמרת</span></span></button>` : ''}
@@ -239,6 +240,15 @@
           if (x === 'done') { UI.closeTop(); await App.saveOps([{ store: 'shifts', put: Object.assign(Store.clone(sh), { status: 'done' }) }], 'סימון כבוצעה'); }
           if (x === 'dup') { UI.closeTop(); setTimeout(() => App.sheetsApi.shiftEditor(null, { copyFrom: sh, date: U.addDays(r.dateKey, 1) }), 320); }
           if (x === 'tpl') App.saveTemplate(sh);
+          if (x === 'repeat') {
+            const v = await UI.dialog({ title: 'חזרה שבועית', html: `<label class="field"><span class="lbl">לכמה שבועות קדימה?</span><select class="input">${[1, 2, 3, 4, 6, 8, 12].map((n) => `<option value="${n}" ${n === 4 ? 'selected' : ''}>${n} שבועות</option>`).join('')}</select></label><div class="tiny muted">תאריך שכבר יש בו משמרת באותן שעות ידולג.</div>`, buttons: [{ label: 'ביטול', value: null, cls: 'text' }, { label: 'הוסף', value: 'input' }] });
+            const n = +v;
+            if (!n) return;
+            const ops = App.weeklyCopies(sh, n);
+            if (!ops.length) { UI.toast('כל השבועות כבר תפוסים'); return; }
+            UI.closeTop();
+            await App.saveOps(ops, 'חזרה שבועית', `נוספו ${ops.length} משמרות מתוכננות`);
+          }
           if (x === 'gcal') window.open(App.exporter.gcalLink(sh, r), '_blank');
           if (x === 'auto') {
             if (!(await UI.confirm('לחזור לחישוב אוטומטי?', 'כל העקיפות הידניות במשמרת יימחקו.', 'חזור לאוטומטי'))) return;
@@ -250,6 +260,23 @@
     });
   };
   App.actions['shift-open'] = (el) => App.sheetsApi.shiftDetail(el.dataset.id);
+
+  /** Planned copies of a shift on the same weekday for the next n weeks (same local times, DST-safe). */
+  App.weeklyCopies = function (sh, n) {
+    const at = (epoch, i) => U.toEpoch(U.addDays(U.epochKey(epoch), 7 * i), U.epochHM(epoch));
+    const ops = [];
+    for (let i = 1; i <= n; i++) {
+      const start = at(sh.start, i), end = at(sh.end, i);
+      const busy = S.shifts.some((x) => x.employerId === sh.employerId && x.start < end && x.end > start);
+      if (busy) continue;
+      ops.push({ store: 'shifts', put: {
+        id: U.uid(), kind: 'shift', employerId: sh.employerId, roleId: sh.roleId, status: 'planned', start, end,
+        breakMin: sh.breakMin || 0, breakPaid: sh.breakPaid !== false, noTravel: !!sh.noTravel,
+        splits: (sh.splits || []).map((x) => ({ at: at(x.at, i), roleId: x.roleId })), items: [], note: '',
+      } });
+    }
+    return ops;
+  };
 
   App.saveTemplate = async function (sh) {
     const name = await UI.promptText('שמירת תבנית', 'שם התבנית', `${App.roleName(sh.roleId)} ⁦${U.epochHM(sh.start)}–${U.epochHM(sh.end)}⁩`);

@@ -806,6 +806,31 @@ body.fx .item:active { transform: scale(.985); }
 .banner.slim { padding: 8px 12px; font-size: .85rem; gap: 8px; margin-bottom: 10px; }
 .banner.slim .btn.text { padding: 4px 8px; min-height: 0; }
 
+/* ---- my rights ---- */
+.rights .rt-intro { display: flex; gap: 12px; align-items: center; padding: 4px 4px 12px; }
+.rights .rt-intro > svg { width: 34px; height: 34px; color: var(--primary); flex: none; }
+.rights .rt-search { margin-bottom: 6px; }
+.rights .rt-row { display: flex; gap: 10px; align-items: flex-start; padding: 8px 0; border-bottom: 1px solid var(--line); }
+.rights .rt-row:last-child { border-bottom: 0; }
+.rights .rt-row .t { font-weight: 600; }
+.rights .rt-row .d { font-size: .85rem; color: var(--on-surface-var); }
+.rights .rt-mark { flex: none; display: grid; place-items: center; width: 22px; height: 22px; color: var(--primary); }
+.rights .rt-youth { background: var(--primary-container); color: var(--on-primary-container); border-color: transparent; }
+.rights .rt-youth .rt-row { border-color: rgba(0, 0, 0, .08); }
+.rights .rt-topics { padding: 2px 14px; }
+.rights .rt-topic { border-bottom: 1px solid var(--line); }
+.rights .rt-topic:last-child { border-bottom: 0; }
+.rights .rt-topic summary { display: flex; align-items: center; gap: 10px; padding: 14px 0; font-weight: 700; cursor: pointer; list-style: none; }
+.rights .rt-topic summary::-webkit-details-marker { display: none; }
+.rights .rt-topic summary > span:first-of-type { flex: 1; }
+.rights .rt-topic summary .chev { display: grid; transition: transform .2s; opacity: .5; }
+.rights .rt-topic[open] summary .chev { transform: rotate(-90deg); }
+.rights .rt-body { padding: 0 2px 14px; font-size: .92rem; line-height: 1.6; }
+.rights .rt-body p { margin: 0 0 8px; }
+.rights a { color: var(--primary); font-weight: 600; }
+.rights .rt-help ol { margin: 0 0 12px; padding-inline-start: 20px; line-height: 1.7; }
+.highlight.go .hl-ic { background: var(--primary); color: var(--on-primary); }
+
 </style>
 </head>
 <body>
@@ -5006,11 +5031,15 @@ window.APP_VERSION = '1.4.1';
     return m;
   }
 
-  App.startShift = async function (roleId) {
+  App.startShift = async function (roleId, opts) {
     const role = App.role(roleId) || App.roles()[0];
     if (!role) { UI.toast('הוסף תפקיד בהגדרות'); return; }
+    // a planned shift around now becomes this shift (no leftover duplicate when it is saved)
+    const now = Date.now();
+    const planned = (opts && opts.fromPlanned && App.shift(opts.fromPlanned))
+      || S.shifts.filter((s) => s.status === 'planned' && Math.abs(s.start - now) < 90 * 60000).sort((a, b) => Math.abs(a.start - now) - Math.abs(b.start - now))[0];
     await Store.setMeta({ lastRole: role.id });
-    await Store.setActive({ start: Date.now(), roleId: role.id, employerId: role.employerId || S.employers[0].id, splits: [], breaks: [] });
+    await Store.setActive({ start: now, roleId: role.id, employerId: role.employerId || S.employers[0].id, splits: [], breaks: [], fromPlanned: planned ? planned.id : null });
     root.Fx.celebrate('start');
     UI.toast('המשמרת התחילה — בהצלחה!');
     App.askNotifyPermission();
@@ -5025,7 +5054,10 @@ window.APP_VERSION = '1.4.1';
       const ok = await UI.confirm('משמרת קצרה מאוד', 'המשמרת נמשכה פחות מדקה. לשמור בכל זאת?', 'שמור');
       if (!ok) { await Store.setActive(null); return; }
     }
-    await Store.apply([{ store: 'shifts', put: sh }], 'סיום משמרת');
+    const ops = [{ store: 'shifts', put: sh }];
+    const planned = a.fromPlanned && App.shift(a.fromPlanned);
+    if (planned && planned.status === 'planned') ops.push({ store: 'shifts', del: planned.id });
+    await Store.apply(ops, 'סיום משמרת');
     await Store.setActive(null);
     if (S.shifts.filter((x) => x.status === 'done').length === 1) App.celebrateOnce('first-shift', () => UI.toast('המשמרת הראשונה שלך נשמרה! 🎉'));
     root.Fx.celebrate('big');
@@ -5100,28 +5132,71 @@ window.APP_VERSION = '1.4.1';
     return [...new Uint8Array(buf)].map((b) => b.toString(16).padStart(2, '0')).join('');
   }
   App.hashPin = async (pin, salt) => sha(salt + ':' + pin);
+  /* Fingerprint / face unlock through the phone's own screen lock (WebAuthn, platform authenticator).
+   * There is no server: the phone only answers after the fingerprint matched, which is all this local
+   * privacy lock needs. The credential id stays on this phone (lock settings never sync). */
+  const b64 = (buf) => btoa(String.fromCharCode(...new Uint8Array(buf))).replace(/[+]/g, '-').replace(/[/]/g, '_').replace(/=+$/, '');
+  const unb64 = (s) => Uint8Array.from(atob(s.replace(/-/g, '+').replace(/_/g, '/')), (c) => c.charCodeAt(0));
+  App.bio = {
+    async available() {
+      try { return !!(window.PublicKeyCredential && await PublicKeyCredential.isUserVerifyingPlatformAuthenticatorAvailable()); } catch (e) { return false; }
+    },
+    async enroll() {
+      const cred = await navigator.credentials.create({ publicKey: {
+        challenge: crypto.getRandomValues(new Uint8Array(32)),
+        rp: { name: 'Shaati' },
+        user: { id: crypto.getRandomValues(new Uint8Array(16)), name: 'Shaati', displayName: 'נעילת Shaati' },
+        pubKeyCredParams: [{ type: 'public-key', alg: -7 }, { type: 'public-key', alg: -257 }],
+        authenticatorSelection: { authenticatorAttachment: 'platform', userVerification: 'required', residentKey: 'discouraged' },
+        timeout: 60000, attestation: 'none',
+      } });
+      return b64(cred.rawId);
+    },
+    async verify(id) {
+      const a = await navigator.credentials.get({ publicKey: {
+        challenge: crypto.getRandomValues(new Uint8Array(32)),
+        allowCredentials: [{ type: 'public-key', id: unb64(id), transports: ['internal'] }],
+        userVerification: 'required', timeout: 60000,
+      } });
+      return !!a;
+    },
+  };
+  // after 5 wrong codes each further mistake makes you wait longer (30 s, 1 min, 2 min…)
+  let pinFails = 0, pinWaitUntil = 0;
   App.lock = function () {
     const L = S.settings.lock;
     if (!L.enabled || document.getElementById('lock')) return;
     const el = document.createElement('div');
     el.className = 'lock'; el.id = 'lock';
     let pin = '';
+    const unlock = () => { el.remove(); S.meta._unlockedAt = Date.now(); pinFails = 0; };
+    const tryBio = async () => { try { if (await App.bio.verify(L.bioId)) unlock(); } catch (e) { /* cancelled: the code still works */ } };
     const draw = () => {
-      el.innerHTML = `<div class="empty" style="padding:0"><div class="art">${icon('lock')}</div><h3>האפליקציה נעולה</h3><div>הזן קוד</div></div>
-        <div class="pin-dots">${[0, 1, 2, 3, 4, 5].slice(0, Math.max(4, (L.len || 4))).map((i) => `<i class="${i < pin.length ? 'f' : ''}"></i>`).join('')}</div>
-        <div class="pin-pad">${[1, 2, 3, 4, 5, 6, 7, 8, 9, '', 0, '⌫'].map((k) => k === '' ? '<span></span>' : `<button data-k="${k}">${k}</button>`).join('')}</div>`;
+      const wait = Math.ceil((pinWaitUntil - Date.now()) / 1000);
+      el.innerHTML = `<div class="empty" style="padding:0"><div class="art">${icon('lock')}</div><h3>האפליקציה נעולה</h3><div>${wait > 0 ? `יותר מדי ניסיונות. נסה שוב בעוד ${wait} שניות` : 'הזן קוד'}</div></div>
+        <div class="pin-dots">${[0, 1, 2, 3, 4, 5, 6, 7].slice(0, Math.max(4, (L.len || 4))).map((i) => `<i class="${i < pin.length ? 'f' : ''}"></i>`).join('')}</div>
+        <div class="pin-pad">${[1, 2, 3, 4, 5, 6, 7, 8, 9, L.bioId ? 'bio' : '', 0, '⌫'].map((k) => k === '' ? '<span></span>' : k === 'bio' ? `<button data-bio aria-label="פתח בטביעת אצבע">${icon('hand')}</button>` : `<button data-k="${k}" ${wait > 0 ? 'disabled' : ''}>${k}</button>`).join('')}</div>`;
+      if (wait > 0) setTimeout(() => { if (el.isConnected) draw(); }, 1000);
+      const bio = el.querySelector('[data-bio]');
+      if (bio) bio.onclick = tryBio;
       el.querySelectorAll('[data-k]').forEach((b) => (b.onclick = async () => {
+        if (Date.now() < pinWaitUntil) return;
         const k = b.dataset.k;
         if (k === '⌫') pin = pin.slice(0, -1); else if (pin.length < 8) pin += k;
         draw();
         if (pin.length >= (L.len || 4)) {
-          if ((await App.hashPin(pin, L.salt)) === L.hash) { el.remove(); S.meta._unlockedAt = Date.now(); }
-          else if (pin.length >= (L.len || 4)) { pin = ''; draw(); el.querySelector('.pin-dots').classList.add('shake'); UI.vibrate(80); }
+          if ((await App.hashPin(pin, L.salt)) === L.hash) unlock();
+          else {
+            pin = ''; pinFails++;
+            if (pinFails >= 5) pinWaitUntil = Date.now() + 30000 * Math.pow(2, Math.min(pinFails - 5, 5));
+            draw(); el.querySelector('.pin-dots').classList.add('shake'); UI.vibrate(80);
+          }
         }
       }));
     };
     draw();
     document.body.appendChild(el);
+    if (L.bioId) setTimeout(tryBio, 300);
   };
   let hiddenAt = 0;
   document.addEventListener('visibilitychange', () => {
@@ -5982,7 +6057,9 @@ window.FIREBASE_CONFIG = {
     const weekly = S.notifications.filter((n) => n.type === 'weekly' && !n.read && now - n.createdAt < 4 * U.DAY).sort((a, b) => b.createdAt - a.createdAt)[0];
     const live = App.insights ? App.insights.live.slice().sort((a, b) => b.priority - a.priority) : [];
     let item = null;
-    if (urgent[0]) item = { act: 'insights', ic: 'alert', cls: 'sev-' + urgent[0].severity, t: urgent[0].title };
+    const soon = !S.activeShift && [...App.model.results.values()].filter((r) => r.status === 'planned' && r.start > now - 60 * 60000 && r.start < now + 30 * 60000).sort((a, b) => a.start - b.start)[0];
+    if (soon) item = { act: 'start-planned', id: soon.id, ic: 'play', cls: 'go', t: `משמרת מתוכננת ב-${U.epochHM(soon.start)} · התחל עכשיו` };
+    else if (urgent[0]) item = { act: 'insights', ic: 'alert', cls: 'sev-' + urgent[0].severity, t: urgent[0].title };
     else if (next) item = { act: 'shift-open', id: next.id, ic: 'calendar', cls: '', t: `משמרת ${U.epochKey(next.start) === U.todayKey() ? 'היום' : 'מחר'} ב-${U.epochHM(next.start)} · ${App.roleName(next.segments[0].roleId)}` };
     else if (weekly) item = { act: 'insights', ic: 'sparkle', cls: '', t: 'הסיכום השבועי שלך מוכן' };
     else if (unread[0]) item = { act: 'insights', ic: App.severityIcon[unread[0].severity] || 'bulb', cls: 'sev-' + (unread[0].severity || 'info'), t: unread[0].title };
@@ -6030,7 +6107,7 @@ window.FIREBASE_CONFIG = {
       <div class="home-top"><div class="titles"><h1>${greeting()}${name} <span class="wave">👋</span></h1>
         <div class="sub">${date} · ${esc(hd.toString().replace(/\s\S+$/, ''))}${hol ? ' · ' + esc(hol) : ''}</div></div>
         <span id="sync-dot">${App.syncDot ? App.syncDot() : ''}</span>
-        <button class="icon-btn" data-act="assistant" aria-label="שאל את העוזר">${icon('sparkle')}</button>
+        <button class="icon-btn" data-act="rights" aria-label="הזכויות שלי">${icon('shield')}</button>
         <button class="icon-btn" data-act="insights" aria-label="התראות ותובנות">${icon('bell')}${unread ? `<span class="dot-badge">${unread > 9 ? '9+' : unread}</span>` : ''}</button></div>
       ${birthdayCard()}
       ${paydayCard()}
@@ -6046,6 +6123,7 @@ window.FIREBASE_CONFIG = {
 
   /* ---------------- actions ---------------- */
   App.actions['pick-role'] = async (el) => { await Store.setMeta({ lastRole: el.dataset.id }); App.rerender(); };
+  App.actions['start-planned'] = (el) => { const sh = App.shift(el.dataset.id); if (sh && !S.activeShift) App.startShift(sh.roleId, { fromPlanned: sh.id }); };
   App.actions['choose-role'] = () => App.sheetsApi.pickRole('תפקיד למשמרת', async (rid) => { await Store.setMeta({ lastRole: rid }); App.rerender(); });
   App.actions['timer-start'] = async (el) => {
     const roles = App.roles();
@@ -6301,6 +6379,7 @@ window.FIREBASE_CONFIG = {
         <div class="list">
           ${r.status === 'planned' ? `<button class="item" data-x="done"><span class="lead">${icon('check')}</span><span class="body"><span class="t">סמן כבוצעה</span></span></button>` : ''}
           <button class="item" data-x="dup"><span class="lead">${icon('copy')}</span><span class="body"><span class="t">שכפל</span><span class="s">אותן שעות בתאריך אחר</span></span></button>
+          <button class="item" data-x="repeat"><span class="lead">${icon('refresh')}</span><span class="body"><span class="t">חזרה שבועית</span><span class="s">אותה משמרת בשבועות הבאים, כמתוכננת</span></span></button>
           <button class="item" data-x="tpl"><span class="lead">${icon('layers')}</span><span class="body"><span class="t">שמור כתבנית</span></span></button>
           <button class="item" data-x="gcal"><span class="lead">${icon('calendar')}</span><span class="body"><span class="t">הוסף ל-Google Calendar</span></span></button>
           ${r.overridden ? `<button class="item" data-x="auto"><span class="lead">${icon('refresh')}</span><span class="body"><span class="t">חזור לחישוב אוטומטי</span><span class="s">מבטל את כל העקיפות במשמרת</span></span></button>` : ''}
@@ -6320,6 +6399,15 @@ window.FIREBASE_CONFIG = {
           if (x === 'done') { UI.closeTop(); await App.saveOps([{ store: 'shifts', put: Object.assign(Store.clone(sh), { status: 'done' }) }], 'סימון כבוצעה'); }
           if (x === 'dup') { UI.closeTop(); setTimeout(() => App.sheetsApi.shiftEditor(null, { copyFrom: sh, date: U.addDays(r.dateKey, 1) }), 320); }
           if (x === 'tpl') App.saveTemplate(sh);
+          if (x === 'repeat') {
+            const v = await UI.dialog({ title: 'חזרה שבועית', html: `<label class="field"><span class="lbl">לכמה שבועות קדימה?</span><select class="input">${[1, 2, 3, 4, 6, 8, 12].map((n) => `<option value="${n}" ${n === 4 ? 'selected' : ''}>${n} שבועות</option>`).join('')}</select></label><div class="tiny muted">תאריך שכבר יש בו משמרת באותן שעות ידולג.</div>`, buttons: [{ label: 'ביטול', value: null, cls: 'text' }, { label: 'הוסף', value: 'input' }] });
+            const n = +v;
+            if (!n) return;
+            const ops = App.weeklyCopies(sh, n);
+            if (!ops.length) { UI.toast('כל השבועות כבר תפוסים'); return; }
+            UI.closeTop();
+            await App.saveOps(ops, 'חזרה שבועית', `נוספו ${ops.length} משמרות מתוכננות`);
+          }
           if (x === 'gcal') window.open(App.exporter.gcalLink(sh, r), '_blank');
           if (x === 'auto') {
             if (!(await UI.confirm('לחזור לחישוב אוטומטי?', 'כל העקיפות הידניות במשמרת יימחקו.', 'חזור לאוטומטי'))) return;
@@ -6331,6 +6419,23 @@ window.FIREBASE_CONFIG = {
     });
   };
   App.actions['shift-open'] = (el) => App.sheetsApi.shiftDetail(el.dataset.id);
+
+  /** Planned copies of a shift on the same weekday for the next n weeks (same local times, DST-safe). */
+  App.weeklyCopies = function (sh, n) {
+    const at = (epoch, i) => U.toEpoch(U.addDays(U.epochKey(epoch), 7 * i), U.epochHM(epoch));
+    const ops = [];
+    for (let i = 1; i <= n; i++) {
+      const start = at(sh.start, i), end = at(sh.end, i);
+      const busy = S.shifts.some((x) => x.employerId === sh.employerId && x.start < end && x.end > start);
+      if (busy) continue;
+      ops.push({ store: 'shifts', put: {
+        id: U.uid(), kind: 'shift', employerId: sh.employerId, roleId: sh.roleId, status: 'planned', start, end,
+        breakMin: sh.breakMin || 0, breakPaid: sh.breakPaid !== false, noTravel: !!sh.noTravel,
+        splits: (sh.splits || []).map((x) => ({ at: at(x.at, i), roleId: x.roleId })), items: [], note: '',
+      } });
+    }
+    return ops;
+  };
 
   App.saveTemplate = async function (sh) {
     const name = await UI.promptText('שמירת תבנית', 'שם התבנית', `${App.roleName(sh.roleId)} ⁦${U.epochHM(sh.start)}–${U.epochHM(sh.end)}⁩`);
@@ -7719,6 +7824,7 @@ window.FIREBASE_CONFIG = {
 
   /* ---------------- sections ---------------- */
   const SECTIONS = {
+    rights: { icon: 'shield', title: 'הזכויות שלי', sub: () => 'מדריך אישי לפי הגיל והנתונים שלך · גם בלי אינטרנט' },
     personal: { icon: 'users', title: 'פרטים אישיים', sub: () => { const a = Engine.ageAt(S.settings.birthDate, U.todayKey()); return (S.settings.userName || 'שם לא הוזן') + (a != null ? ' · גיל ' + a + (a < 18 ? ' (פטור ממסים)' : '') : ''); } },
     account: { icon: 'cloud', title: 'חשבון וסנכרון', sub: () => (S.meta.cloudEmail || 'לא מחובר') + ' · ' + root.Cloud.statusText() },
     roles: { icon: 'users', title: 'מעסיקים, תפקידים ותעריפים', sub: () => App.roles().map((r) => r.name + ' ' + U.money(Engine.roleRate(r, U.todayKey()), 0)).join(' · ') },
@@ -7741,14 +7847,14 @@ window.FIREBASE_CONFIG = {
   };
 
   App.views.settings = function () {
-    const groups = [['חשבון', ['account', 'personal']], ['עבודה ושכר', ['roles', 'calc', 'rest', 'pay', 'net', 'leave', 'goal']], ['אפליקציה', ['assistant', 'alerts', 'templates', 'look', 'security', 'ai']], ['נתונים', ['backup', 'export', 'demo', 'about']]];
+    const groups = [['חשבון', ['account', 'personal']], ['עבודה ושכר', ['rights', 'roles', 'calc', 'rest', 'pay', 'net', 'leave', 'goal']], ['אפליקציה', ['assistant', 'alerts', 'templates', 'look', 'security', 'ai']], ['נתונים', ['backup', 'export', 'demo', 'about']]];
     return `<div class="topbar"><div class="titles"><h1>הגדרות</h1><div class="sub">כל שינוי נשמר מיד</div></div></div>
       ${groups.map(([g, keys]) => `<div class="section-title">${g}</div><div class="list">${keys.map((k) => { const s = SECTIONS[k]; return `<button class="item" data-act="settings-open" data-k="${k}"><span class="lead" style="background:var(--secondary-container);color:var(--on-secondary-container)">${icon(s.icon)}</span><span class="body"><span class="t">${s.title}</span><span class="s">${esc(s.sub())}</span></span>${icon('left', 's')}</button>`; }).join('')}</div>`).join('')}
       <div class="section-title">מידע משפטי</div>
       <div class="list">${[['about', 'info', 'אודות'], ['terms', 'file', 'תנאי שימוש'], ['privacy', 'shield', 'מדיניות פרטיות'], ['disclaimer', 'alert', 'הבהרה משפטית'], ['accessibility', 'eye', 'הצהרת נגישות'], ['licenses', 'layers', 'רישיונות וצד שלישי']].map(([d, ic, t]) => `<button class="item" data-act="legal" data-doc="${d}"><span class="lead" style="background:var(--surface-3)">${icon(ic)}</span><span class="body"><span class="t">${t}</span></span>${icon('left', 's')}</button>`).join('')}</div>
       <div class="ver">גרסה ${root.APP_VERSION} · מבנה נתונים ${Store.SCHEMA_VERSION}${S.settings.legal ? ' · תנאים ' + esc(S.settings.legal.version) + ' אושרו' : ''}</div>`;
   };
-  App.actions['settings-open'] = (el) => (el.dataset.k === 'assistant' ? App.actions.assistant() : App.sheetsApi.settingsSection(el.dataset.k));
+  App.actions['settings-open'] = (el) => (el.dataset.k === 'assistant' ? App.actions.assistant() : el.dataset.k === 'rights' ? App.actions.rights() : App.sheetsApi.settingsSection(el.dataset.k));
 
   App.sheetsApi.settingsSection = function (k) {
     const s = SECTIONS[k];
@@ -8085,6 +8191,7 @@ window.FIREBASE_CONFIG = {
     render: () => `<div class="card">${S.settings.lock.enabled
       ? `<div class="banner">${icon('lock')}<div>הנעילה מופעלת. האפליקציה תינעל כשתחזור אליה אחרי ${S.settings.lock.timeoutMin} דק׳.</div></div>
         ${F.sel('נעל אחרי', 's.lock.timeoutMin', [[0, 'מיד'], [1, 'דקה'], [5, '5 דקות'], [15, '15 דקות']], S.settings.lock.timeoutMin)}
+        <div data-bio-row></div>
         <div class="btn-row"><button class="btn tonal" data-pin-set>שנה קוד</button><button class="btn danger" data-pin-off>בטל נעילה</button></div>`
       : `<div class="small" style="margin-bottom:12px">קוד בן 4–8 ספרות שיידרש בכל פתיחה. הקוד נשמר כגיבוב (hash) — לא כטקסט.</div><button class="btn block" data-pin-set>${icon('lock')} הגדר קוד</button>`}
       <div class="tiny muted" style="margin-top:10px">הנעילה מגינה מפני הצצה; הנתונים עצמם לא מוצפנים. שכחת את הקוד? אין שחזור — אפשר רק למחוק את נתוני האתר ולשחזר מגיבוי.</div></div>`,
@@ -8102,7 +8209,22 @@ window.FIREBASE_CONFIG = {
         UI.toast('הנעילה הופעלה'); draw();
       };
       const off = el.querySelector('[data-pin-off]');
-      if (off) off.onclick = async () => { if (await UI.confirm('לבטל את הנעילה?', '', 'בטל נעילה')) { await Store.setSettings((s) => { s.lock.enabled = false; s.lock.hash = null; }); draw(); } };
+      if (off) off.onclick = async () => { if (await UI.confirm('לבטל את הנעילה?', '', 'בטל נעילה')) { await Store.setSettings((s) => { s.lock.enabled = false; s.lock.hash = null; s.lock.bioId = null; }); draw(); } };
+      const row = el.querySelector('[data-bio-row]');
+      if (row) App.bio.available().then((ok) => {
+        if (!ok) return;
+        const on = !!S.settings.lock.bioId;
+        row.innerHTML = `<div class="kv" style="margin:6px 0 10px"><span>${icon('hand', 's')} פתיחה בטביעת אצבע / זיהוי פנים</span><button class="btn ${on ? 'text' : 'tonal'} sm" data-bio-toggle>${on ? 'כבה' : 'הפעל'}</button></div>`;
+        row.querySelector('[data-bio-toggle]').onclick = async () => {
+          if (on) { await Store.setSettings((s) => { s.lock.bioId = null; }); draw(); return; }
+          try {
+            const id = await App.bio.enroll();
+            await Store.setSettings((s) => { s.lock.bioId = id; });
+            UI.toast('מעכשיו אפשר לפתוח בטביעת אצבע');
+          } catch (e) { UI.toast(e && e.name === 'NotAllowedError' ? 'בוטל' : 'הטלפון לא תומך בזה'); }
+          draw();
+        };
+      });
     },
   };
 
@@ -8680,6 +8802,133 @@ window.FIREBASE_CONFIG = {
       },
     });
   }
+})(typeof window !== 'undefined' ? window : globalThis);
+
+/* ---- app/views-rights.js ---- */
+/* ============================================================
+ * views-rights.js — "my rights": an offline guide to workers'
+ * rights in Israel, checked against the user's own data (age,
+ * rates, seniority, settings). Works without internet and without
+ * an AI key; the AI assistant is offered for anything else.
+ * General information, not legal advice; every topic links to
+ * Kol Zchut (kolzchut.org.il) for the full rules.
+ * ============================================================ */
+(function (root) {
+  'use strict';
+  const { U, Engine, Store, UI, App } = root;
+  const S = Store.S;
+  const { icon, esc } = UI;
+
+  const KZ = (page) => 'https://www.kolzchut.org.il/he/' + encodeURIComponent(page.replace(/ /g, '_'));
+  const KZS = (q) => 'https://www.kolzchut.org.il/w/index.php?search=' + encodeURIComponent(q);
+  const link = (href, text) => `<a href="${href}" target="_blank" rel="noopener">${esc(text || 'למידע המלא ב"כל זכות"')} ↗</a>`;
+
+  /* ---------------- the guide (general rules, short and plain) ---------------- */
+  const TOPICS = [
+    { id: 'minwage', ic: 'wallet', t: 'שכר מינימום', b: (c) => `<p>מאפריל 2026: <b>35.40 ₪ לשעה</b> לעובד מגיל 18. לנוער: עד גיל 16 – 26.07 ₪, בגיל 16 – 27.94 ₪, בגיל 17 – 30.92 ₪.</p><p>${c.mw.youth ? `לגיל שלך (${c.mw.age}) המינימום הוא <b>${U.money(c.mw.hourly)}</b>.` : c.mw.age != null ? `המינימום שחל עליך: <b>${U.money(c.mw.hourly)}</b>.` : 'הוסף תאריך לידה בהגדרות כדי לראות את המינימום לגילך.'} מעסיק רשאי לשלם יותר, אבל לא פחות.</p>`, l: () => link(KZ(App.isMinorNow() ? 'שכר מינימום לנוער' : 'שכר מינימום')) },
+    { id: 'overtime', ic: 'clock', t: 'שעות נוספות', b: () => '<p>השעתיים הראשונות מעבר ליום עבודה רגיל משולמות ב-<b>125%</b>, ומעבר לכך ב-<b>150%</b>. גם מעבר ל-42 שעות בשבוע מתחילות שעות נוספות.</p><p>באפליקציה: הגדרות › חוקי חישוב (מתי מתחילות ובאיזה אחוז).</p>', l: () => link(KZS('גמול שעות נוספות')) },
+    { id: 'shabbat', ic: 'candle', t: 'שבת וחגים', b: () => '<p>עבודה במנוחה השבועית (לרוב שבת) משולמת לפחות ב-<b>150%</b>. השעות נקבעות לפי כניסת ויציאת השבת, והאפליקציה מחשבת אותן לפי העיר שלך.</p><p>עובד שעתי זכאי בדרך כלל גם ל<b>דמי חגים</b> אחרי 3 חודשי עבודה, על חג שחל ביום חול, בתנאים שבצו ההרחבה.</p>', l: () => link(KZS('גמול עבודה במנוחה השבועית')) },
+    { id: 'breaks', ic: 'coffee', t: 'הפסקות ומנוחה', b: () => '<p>ביום עבודה של <b>6 שעות ומעלה</b> מגיעה הפסקה של <b>45 דקות</b>, מתוכן חצי שעה ברצף. בין שני ימי עבודה, ומנוחה שבועית של 36 שעות רצופות לפחות.</p>', l: () => link(KZS('הפסקות בעבודה')) },
+    { id: 'travel', ic: 'car', t: 'נסיעות', b: (c) => `<p>המעסיק חייב להחזיר את הוצאות הנסיעה לעבודה ובחזרה, לפי מחיר תחבורה ציבורית ועד תקרה יומית שמתעדכנת מדי שנה. ההחזר הוא בנוסף לשכר.</p><p>${c.travel > 0 ? `באפליקציה מוגדר החזר של <b>${U.money(c.travel)}</b> ליום עבודה.` : 'באפליקציה <b>לא מוגדר</b> החזר נסיעות. אפשר להגדיר בהגדרות › נסיעות ותקופת שכר.'}</p>`, l: () => link(KZS('החזר הוצאות נסיעה לעבודה')) },
+    { id: 'sick', ic: 'thermo', t: 'דמי מחלה', b: (c) => `<p>צוברים <b>1.5 ימי מחלה</b> לכל חודש עבודה מלא (עד 90). התשלום: היום הראשון – 0%, השני והשלישי – 50%, מהרביעי – 100%. צריך אישור מחלה.</p>${c.bal ? `<p>הצבירה שלך לפי האפליקציה: <b>${U.num(c.bal.sickAccrued - c.bal.sickUsed, 1)}</b> ימים.</p>` : ''}`, l: () => link(KZS('דמי מחלה')) },
+    { id: 'vacation', ic: 'beach', t: 'חופשה שנתית', b: (c) => `<p>מגיעים ימי חופשה בתשלום לפי הוותק והיקף המשרה. אסור לוותר עליהם, וכשעוזבים את העבודה מקבלים פדיון על הימים שלא נוצלו.</p>${c.bal ? `<p>היתרה שלך לפי האפליקציה: <b>${U.num(c.bal.vacationAccrued - c.bal.vacationUsed, 1)}</b> ימים.</p>` : ''}`, l: () => link(KZS('חופשה שנתית')) },
+    { id: 'recup', ic: 'gift', t: 'דמי הבראה', b: (c) => `<p>אחרי <b>שנת עבודה</b> מגיעים דמי הבראה: מספר ימים לפי הוותק, כפול תעריף יום הבראה, לפי היקף המשרה.</p><p>${c.bal && c.bal.recuperation ? (c.bal.recuperation.eligible ? `לפי האפליקציה מגיעים לך כ-<b>${U.money(c.bal.recuperation.amount, 0)}</b> לשנה.` : `לפי תאריך תחילת העבודה, הזכאות מתחילה ב-${U.fmtDate(c.bal.recuperation.eligibleFrom)}.`) : 'הגדר תאריך תחילת עבודה כדי לחשב.'}</p>`, l: () => link(KZS('דמי הבראה')) },
+    { id: 'pension', ic: 'shield', t: 'פנסיה', b: (c) => `<p>חובה מגיל <b>21 לגבר ו-20 לאישה</b>, אחרי 6 חודשי עבודה (3 חודשים אם כבר יש לך קרן פעילה). ההפרשה: 6% ממך, 6.5% מהמעסיק ועוד 6% לפיצויים.</p><p>${c.pension}</p>`, l: () => link(KZ('ביטוח פנסיוני לעובדים')) },
+    { id: 'payslip', ic: 'receipt', t: 'תלוש שכר ומועד תשלום', b: () => '<p>מגיע לך <b>תלוש שכר</b> מפורט כל חודש, והשכר צריך להיות משולם עד <b>ה-9 בחודש</b> שאחרי חודש העבודה. איחור מזכה בפיצוי הלנת שכר.</p><p>האפליקציה בודקת את התלוש מול המשמרות שרשמת (כפתור +, "תלוש שכר").</p>', l: () => link(KZS('תלוש שכר')) },
+    { id: 'deduct', ic: 'minus', t: 'ניכויים מהשכר', b: () => '<p>מותר לנכות מהשכר רק ניכויי חובה (מס, ביטוח לאומי, פנסיה) וניכויים שהסכמת להם בכתב. <b>קנסות</b>, חוסרים בקופה או ציוד שנשבר – בדרך כלל אסור לנכות בלי הסכמה.</p>', l: () => link(KZS('ניכויים משכר עבודה')) },
+    { id: 'leave', ic: 'alert', t: 'פיטורים והתפטרות', b: () => '<p>לפני פיטורים מגיע <b>שימוע</b>, ומגיעה <b>הודעה מוקדמת</b> לפי הוותק (גם כשמתפטרים צריך לתת הודעה מוקדמת). אחרי שנת עבודה, בפיטורים מגיעים גם <b>פיצויים</b>.</p>', l: () => link(KZS('הודעה מוקדמת לפיטורים ולהתפטרות')) },
+  ];
+  const YOUTH = (R, age) => [
+    ['clock', `עד <b>${R.dayHours} שעות ביום</b> ועד <b>40 בשבוע</b>${R.dayHours === 9 ? ' (9 רק במקום עבודה של 5 ימים)' : ''}.`],
+    ['moon', `<b>אסור לעבוד בלילה</b>: ${age < 16 ? 'בין 20:00 ל-08:00' : 'בין 22:00 ל-06:00'}, אלא בהיתר מיוחד.`],
+    ['coffee', 'ביום של יותר מ-6 שעות: <b>45 דקות הפסקה</b>, חצי שעה ברצף.'],
+    ['candle', 'ביום שישי ובערב חג: עד <b>7 שעות</b>.'],
+    ['shield', 'צריך <b>אישור רפואי</b> לפני תחילת העבודה, ותוך 7 ימים המעסיק צריך לתת לך <b>הודעה בכתב על תנאי העבודה</b> (שכר לשעה, שעות).'],
+    ['car', '<b>החזר נסיעות</b> מגיע גם לנוער, בנוסף לשכר.'],
+    ['wallet', 'מתחת לגיל 18 בדרך כלל <b>לא מנוכים</b> מס הכנסה, ביטוח לאומי ומס בריאות, כך שהנטו קרוב לברוטו.'],
+  ];
+
+  App.isMinorNow = () => { const a = Engine.ageAt(S.settings.birthDate, U.todayKey()); return a != null && a < 18; };
+
+  /* ---------------- personal context and quick checks ---------------- */
+  function context() {
+    const today = U.todayKey();
+    const emp = S.employers[0];
+    const mw = Engine.minWageFor(S.settings, today);
+    const age = Engine.ageAt(S.settings.birthDate, today);
+    const bal = S.settings.startDate ? Engine.leaveBalances(App.model, today) : null;
+    const minAge = Engine.pensionMinAge(S.settings);
+    let pension;
+    if (age != null && age < minAge) pension = `לפי הגיל שלך, ההפרשה החובה תתחיל בגיל ${minAge}${S.settings.gender ? '' : ' (ציין מגדר בהגדרות לדיוק)'}.`;
+    else if (!S.settings.startDate) pension = 'הגדר תאריך תחילת עבודה כדי לדעת ממתי מגיעה הפרשה.';
+    else {
+      const from = U.addMonths(S.settings.startDate, +S.settings.pension.startAfterMonths || 6);
+      pension = from <= today ? 'לפי הוותק שלך, אמורה להיות הפרשה לפנסיה בתלוש.' : `לפי הוותק שלך, ההפרשה צריכה להתחיל ב-${U.fmtDate(from)}.`;
+    }
+    return { today, emp, mw, age, bal, pension, travel: +emp.travelPerDay || 0 };
+  }
+  function checks(c) {
+    const rows = [];
+    for (const r of App.roles()) {
+      const rate = Engine.roleRate(r, c.today);
+      if (!(rate > 0)) continue;
+      const ok = rate + 0.005 >= c.mw.hourly;
+      rows.push([ok ? 'ok' : 'bad', `${esc(r.name)}: ${U.money(rate)} לשעה`, ok ? `מעל המינימום${c.mw.youth ? ' לגילך' : ''} (${U.money(c.mw.hourly)})` : `נמוך מהמינימום${c.mw.youth ? ' לגילך' : ''}: ${U.money(c.mw.hourly)}`]);
+    }
+    rows.push(c.travel > 0 ? ['ok', 'החזר נסיעות', `${U.money(c.travel)} ליום עבודה`] : ['warn', 'החזר נסיעות', 'לא הוגדר באפליקציה. רוב העובדים זכאים לו']);
+    if (c.bal) {
+      rows.push(['info', 'יתרת חופשה', `${U.num(c.bal.vacationAccrued - c.bal.vacationUsed, 1)} ימים`]);
+      rows.push(['info', 'ימי מחלה צבורים', `${U.num(c.bal.sickAccrued - c.bal.sickUsed, 1)} ימים`]);
+      if (c.bal.recuperation) rows.push(c.bal.recuperation.eligible ? ['ok', 'דמי הבראה', `כ-${U.money(c.bal.recuperation.amount, 0)} לשנה`] : ['info', 'דמי הבראה', `מ-${U.fmtDate(c.bal.recuperation.eligibleFrom, 'short')}`]);
+    } else rows.push(['warn', 'ותק, חופשה והבראה', 'הגדר תאריך תחילת עבודה כדי לחשב']);
+    rows.push(['info', 'פנסיה', c.pension]);
+    return rows;
+  }
+  const MARK = { ok: ['okc', 'var(--good)'], bad: ['alert', 'var(--bad)'], warn: ['alert', 'var(--warn)'], info: ['info', 'var(--on-surface-var)'] };
+
+  function render() {
+    const c = context();
+    const minor = c.age != null && c.age < 18;
+    const R = minor ? Engine.youthRules(c.age, S.settings.leave && S.settings.leave.workWeek) : null;
+    const sub = [c.age != null ? 'גיל ' + c.age : 'גיל לא הוזן', c.bal ? 'ותק ' + U.num(c.bal.seniorityYears, 1) + ' שנים' : null].filter(Boolean).join(' · ');
+    return `<div class="rights">
+      <div class="rt-intro">${icon('shield')}<div><b>מה מגיע לך בעבודה</b><div class="tiny muted">${esc(sub)} · מעודכן לאפריל 2026 · עובד גם בלי אינטרנט</div></div></div>
+      <input class="input rt-search" type="search" placeholder="חיפוש: שבת, נסיעות, הבראה…" aria-label="חיפוש בזכויות">
+      <div class="section-title">${icon('check', 's')} בדיקה מהירה של הנתונים שלך</div>
+      <div class="card rt-checks">${checks(c).map(([k, t, d]) => `<div class="rt-row"><span class="rt-mark" style="color:${MARK[k][1]}">${icon(MARK[k][0], 's')}</span><div><div class="t">${t}</div><div class="d">${esc(d)}</div></div></div>`).join('')}</div>
+      ${minor ? `<div class="section-title">${icon('users', 's')} לבני נוער (גיל ${c.age})</div>
+        <div class="card rt-youth" data-topic="נוער לילה הפסקה שעות אישור רפואי">${YOUTH(R, c.age).map(([ic, t]) => `<div class="rt-row"><span class="rt-mark">${icon(ic, 's')}</span><div class="t">${t}</div></div>`).join('')}
+        <div class="tiny" style="margin-top:8px">${link(KZ('חוק עבודת הנוער'), 'חוק עבודת הנוער ב"כל זכות"')}</div></div>` : ''}
+      <div class="section-title">${icon('list', 's')} המדריך</div>
+      <div class="card rt-topics">${TOPICS.map((tp) => `<details class="rt-topic" data-topic="${esc(tp.t)}"><summary>${icon(tp.ic, 's')}<span>${tp.t}</span><span class="chev">${icon('left', 's')}</span></summary><div class="rt-body">${tp.b(c)}<div class="tiny">${tp.l()}</div></div></details>`).join('')}</div>
+      <div class="section-title">${icon('alert', 's')} משהו לא בסדר?</div>
+      <div class="card rt-help">
+        <ol><li><b>תעד</b>: האפליקציה כבר שומרת את המשמרות. אפשר להפיק דוח PDF בדוחות.</li>
+        <li><b>דבר עם המעסיק</b>: בניתוח תלוש יש הודעה מנומסת מוכנה לשליחה.</li>
+        <li><b>קבל עזרה</b>: ${link(KZS('הגשת תלונה על הפרת חוקי עבודה'), 'איך מגישים תלונה')} · ${link('https://www.kolzchut.org.il/he/', 'כל זכות')}</li></ol>
+        <button class="btn tonal block" data-rt-ai>${icon('sparkle')} שאלה אחרת? שאל את העוזר</button>
+      </div>
+      <div class="tiny muted" style="margin:12px 4px 4px">מידע כללי בלבד ואינו ייעוץ משפטי. תנאים בהסכם קיבוצי, בצו הרחבה או בחוזה שלך יכולים להיות טובים יותר.</div>
+    </div>`;
+  }
+
+  App.actions.rights = function () {
+    UI.openSheet({
+      title: 'הזכויות שלי', full: true, body: render(),
+      onMount: (el) => {
+        const q = el.querySelector('.rt-search');
+        q.oninput = () => {
+          const v = q.value.trim();
+          el.querySelectorAll('.rt-topic').forEach((d) => {
+            const hit = !v || d.textContent.includes(v);
+            d.style.display = hit ? '' : 'none';
+            d.open = !!v && hit;
+          });
+        };
+        el.querySelector('[data-rt-ai]').onclick = () => { UI.closeTop(); setTimeout(() => App.actions.assistant(), 320); };
+      },
+    });
+  };
 })(typeof window !== 'undefined' ? window : globalThis);
 
 /* ---- app/views-legal.js ---- */

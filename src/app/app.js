@@ -246,11 +246,15 @@
     return m;
   }
 
-  App.startShift = async function (roleId) {
+  App.startShift = async function (roleId, opts) {
     const role = App.role(roleId) || App.roles()[0];
     if (!role) { UI.toast('הוסף תפקיד בהגדרות'); return; }
+    // a planned shift around now becomes this shift (no leftover duplicate when it is saved)
+    const now = Date.now();
+    const planned = (opts && opts.fromPlanned && App.shift(opts.fromPlanned))
+      || S.shifts.filter((s) => s.status === 'planned' && Math.abs(s.start - now) < 90 * 60000).sort((a, b) => Math.abs(a.start - now) - Math.abs(b.start - now))[0];
     await Store.setMeta({ lastRole: role.id });
-    await Store.setActive({ start: Date.now(), roleId: role.id, employerId: role.employerId || S.employers[0].id, splits: [], breaks: [] });
+    await Store.setActive({ start: now, roleId: role.id, employerId: role.employerId || S.employers[0].id, splits: [], breaks: [], fromPlanned: planned ? planned.id : null });
     root.Fx.celebrate('start');
     UI.toast('המשמרת התחילה — בהצלחה!');
     App.askNotifyPermission();
@@ -265,7 +269,10 @@
       const ok = await UI.confirm('משמרת קצרה מאוד', 'המשמרת נמשכה פחות מדקה. לשמור בכל זאת?', 'שמור');
       if (!ok) { await Store.setActive(null); return; }
     }
-    await Store.apply([{ store: 'shifts', put: sh }], 'סיום משמרת');
+    const ops = [{ store: 'shifts', put: sh }];
+    const planned = a.fromPlanned && App.shift(a.fromPlanned);
+    if (planned && planned.status === 'planned') ops.push({ store: 'shifts', del: planned.id });
+    await Store.apply(ops, 'סיום משמרת');
     await Store.setActive(null);
     if (S.shifts.filter((x) => x.status === 'done').length === 1) App.celebrateOnce('first-shift', () => UI.toast('המשמרת הראשונה שלך נשמרה! 🎉'));
     root.Fx.celebrate('big');
@@ -340,28 +347,71 @@
     return [...new Uint8Array(buf)].map((b) => b.toString(16).padStart(2, '0')).join('');
   }
   App.hashPin = async (pin, salt) => sha(salt + ':' + pin);
+  /* Fingerprint / face unlock through the phone's own screen lock (WebAuthn, platform authenticator).
+   * There is no server: the phone only answers after the fingerprint matched, which is all this local
+   * privacy lock needs. The credential id stays on this phone (lock settings never sync). */
+  const b64 = (buf) => btoa(String.fromCharCode(...new Uint8Array(buf))).replace(/[+]/g, '-').replace(/[/]/g, '_').replace(/=+$/, '');
+  const unb64 = (s) => Uint8Array.from(atob(s.replace(/-/g, '+').replace(/_/g, '/')), (c) => c.charCodeAt(0));
+  App.bio = {
+    async available() {
+      try { return !!(window.PublicKeyCredential && await PublicKeyCredential.isUserVerifyingPlatformAuthenticatorAvailable()); } catch (e) { return false; }
+    },
+    async enroll() {
+      const cred = await navigator.credentials.create({ publicKey: {
+        challenge: crypto.getRandomValues(new Uint8Array(32)),
+        rp: { name: 'Shaati' },
+        user: { id: crypto.getRandomValues(new Uint8Array(16)), name: 'Shaati', displayName: 'נעילת Shaati' },
+        pubKeyCredParams: [{ type: 'public-key', alg: -7 }, { type: 'public-key', alg: -257 }],
+        authenticatorSelection: { authenticatorAttachment: 'platform', userVerification: 'required', residentKey: 'discouraged' },
+        timeout: 60000, attestation: 'none',
+      } });
+      return b64(cred.rawId);
+    },
+    async verify(id) {
+      const a = await navigator.credentials.get({ publicKey: {
+        challenge: crypto.getRandomValues(new Uint8Array(32)),
+        allowCredentials: [{ type: 'public-key', id: unb64(id), transports: ['internal'] }],
+        userVerification: 'required', timeout: 60000,
+      } });
+      return !!a;
+    },
+  };
+  // after 5 wrong codes each further mistake makes you wait longer (30 s, 1 min, 2 min…)
+  let pinFails = 0, pinWaitUntil = 0;
   App.lock = function () {
     const L = S.settings.lock;
     if (!L.enabled || document.getElementById('lock')) return;
     const el = document.createElement('div');
     el.className = 'lock'; el.id = 'lock';
     let pin = '';
+    const unlock = () => { el.remove(); S.meta._unlockedAt = Date.now(); pinFails = 0; };
+    const tryBio = async () => { try { if (await App.bio.verify(L.bioId)) unlock(); } catch (e) { /* cancelled: the code still works */ } };
     const draw = () => {
-      el.innerHTML = `<div class="empty" style="padding:0"><div class="art">${icon('lock')}</div><h3>האפליקציה נעולה</h3><div>הזן קוד</div></div>
-        <div class="pin-dots">${[0, 1, 2, 3, 4, 5].slice(0, Math.max(4, (L.len || 4))).map((i) => `<i class="${i < pin.length ? 'f' : ''}"></i>`).join('')}</div>
-        <div class="pin-pad">${[1, 2, 3, 4, 5, 6, 7, 8, 9, '', 0, '⌫'].map((k) => k === '' ? '<span></span>' : `<button data-k="${k}">${k}</button>`).join('')}</div>`;
+      const wait = Math.ceil((pinWaitUntil - Date.now()) / 1000);
+      el.innerHTML = `<div class="empty" style="padding:0"><div class="art">${icon('lock')}</div><h3>האפליקציה נעולה</h3><div>${wait > 0 ? `יותר מדי ניסיונות. נסה שוב בעוד ${wait} שניות` : 'הזן קוד'}</div></div>
+        <div class="pin-dots">${[0, 1, 2, 3, 4, 5, 6, 7].slice(0, Math.max(4, (L.len || 4))).map((i) => `<i class="${i < pin.length ? 'f' : ''}"></i>`).join('')}</div>
+        <div class="pin-pad">${[1, 2, 3, 4, 5, 6, 7, 8, 9, L.bioId ? 'bio' : '', 0, '⌫'].map((k) => k === '' ? '<span></span>' : k === 'bio' ? `<button data-bio aria-label="פתח בטביעת אצבע">${icon('hand')}</button>` : `<button data-k="${k}" ${wait > 0 ? 'disabled' : ''}>${k}</button>`).join('')}</div>`;
+      if (wait > 0) setTimeout(() => { if (el.isConnected) draw(); }, 1000);
+      const bio = el.querySelector('[data-bio]');
+      if (bio) bio.onclick = tryBio;
       el.querySelectorAll('[data-k]').forEach((b) => (b.onclick = async () => {
+        if (Date.now() < pinWaitUntil) return;
         const k = b.dataset.k;
         if (k === '⌫') pin = pin.slice(0, -1); else if (pin.length < 8) pin += k;
         draw();
         if (pin.length >= (L.len || 4)) {
-          if ((await App.hashPin(pin, L.salt)) === L.hash) { el.remove(); S.meta._unlockedAt = Date.now(); }
-          else if (pin.length >= (L.len || 4)) { pin = ''; draw(); el.querySelector('.pin-dots').classList.add('shake'); UI.vibrate(80); }
+          if ((await App.hashPin(pin, L.salt)) === L.hash) unlock();
+          else {
+            pin = ''; pinFails++;
+            if (pinFails >= 5) pinWaitUntil = Date.now() + 30000 * Math.pow(2, Math.min(pinFails - 5, 5));
+            draw(); el.querySelector('.pin-dots').classList.add('shake'); UI.vibrate(80);
+          }
         }
       }));
     };
     draw();
     document.body.appendChild(el);
+    if (L.bioId) setTimeout(tryBio, 300);
   };
   let hiddenAt = 0;
   document.addEventListener('visibilitychange', () => {
