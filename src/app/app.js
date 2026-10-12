@@ -402,14 +402,31 @@
   function registerSW() {
     if (!('serviceWorker' in navigator) || location.protocol === 'file:') return;
     navigator.serviceWorker.register('sw.js').then((reg) => {
+      // A new version downloads quietly in the background and switches in when it can't disturb:
+      // right after the app opens, or when the app goes to the background with nothing half-filled.
+      const quietUpdate = (w) => {
+        const busy = () => !!App.blocking || !!document.querySelector('.sheet, .dialog');
+        const apply = () => w.postMessage('skipWaiting');
+        if (performance.now() < 5000 && !busy()) { apply(); return; }
+        const onHide = () => {
+          if (document.visibilityState !== 'hidden' || busy()) return;
+          document.removeEventListener('visibilitychange', onHide);
+          apply();
+        };
+        document.addEventListener('visibilitychange', onHide);
+      };
+      if (reg.waiting && navigator.serviceWorker.controller) quietUpdate(reg.waiting);
       reg.addEventListener('updatefound', () => {
         const nw = reg.installing;
         if (!nw) return;
         nw.addEventListener('statechange', () => {
-          if (nw.state === 'installed' && navigator.serviceWorker.controller) {
-            UI.toast('גרסה חדשה זמינה', { label: 'עדכן', fn: () => { nw.postMessage('skipWaiting'); } });
-          }
+          if (nw.state === 'installed' && navigator.serviceWorker.controller) quietUpdate(nw);
         });
+      });
+      // an app that stays open for days still looks for a new version (a tiny file) once an hour
+      let lastCheck = Date.now();
+      document.addEventListener('visibilitychange', () => {
+        if (document.visibilityState === 'visible' && Date.now() - lastCheck > 60 * 60 * 1000) { lastCheck = Date.now(); reg.update().catch(() => {}); }
       });
       if ('periodicSync' in reg) {
         navigator.permissions.query({ name: 'periodic-background-sync' }).then((p) => {

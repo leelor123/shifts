@@ -43,12 +43,19 @@ self.addEventListener('fetch', (e) => {
   const STATIC = ['fonts.googleapis.com', 'fonts.gstatic.com', 'cdnjs.cloudflare.com', 'cdn.jsdelivr.net', 'tessdata.projectnaptha.com'];
   const isSdk = url.hostname === 'www.gstatic.com' && url.pathname.startsWith('/firebasejs/');
   if (!STATIC.includes(url.hostname) && !isSdk) return;
-  // stale-while-revalidate
+  // Libraries and fonts carry their version in the address, so a copy downloaded once is reused
+  // forever: nothing is downloaded again when the app opens (saves data on limited plans).
   e.respondWith((async () => {
     const cache = await caches.open(RUNTIME);
     const cached = await cache.match(req);
-    const net = fetch(req).then((res) => { if (res && (res.ok || res.type === 'opaque')) cache.put(req, res.clone()); return res; }).catch(() => null);
-    return cached || (await net) || new Response('', { status: 504 });
+    if (cached) return cached;
+    try {
+      const res = await fetch(req);
+      if (res && (res.ok || res.type === 'opaque')) cache.put(req, res.clone());
+      return res;
+    } catch (err) {
+      return new Response('', { status: 504 });
+    }
   })());
 });
 
