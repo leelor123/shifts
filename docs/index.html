@@ -4,13 +4,13 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="theme-color" content="#f6f4ee">
-<meta name="description" content="מעקב משמרות וחישוב שכר אישי: שבתות, חגים, שעות נוספות, נסיעות, נטו משוער וניתוח תלושים — הכול נשמר בטלפון.">
+<meta name="description" content="מעקב משמרות וחישוב שכר אישי: שבתות, חגים, שעות נוספות, נסיעות, נטו משוער וניתוח תלושים — נשמר בחשבון שלך ועובד גם בלי אינטרנט.">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-capable" content="yes">
-<title>מעקב משמרות ושכר</title>
+<title>Shaati · מעקב משמרות ושכר</title>
 <link rel="manifest" href="manifest.webmanifest">
-<link rel="icon" href="icon.svg" type="image/svg+xml">
-<link rel="apple-touch-icon" href="icon-192.png">
+<link rel="icon" href="favicon-48.png" type="image/png">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link id="font-link" rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Rubik:wght@300..800&display=swap">
@@ -592,8 +592,10 @@ details.collapse { background: var(--surface-1); border: 1px solid var(--line); 
 .quick button:active { background: var(--surface-3); }
 
 /* brand mark (app icon) for login, wizard and legal screens */
-.brand-mark { width: 72px; height: 72px; margin: 0 auto 14px; background: url("icon.svg") center / contain no-repeat; border-radius: 18px; }
+.brand-mark { width: 72px; height: 72px; margin: 0 auto 14px; background: url("icon-192.png") center / contain no-repeat; border-radius: 18px; }
 .brand-mark.big { width: 96px; height: 96px; border-radius: 24px; }
+.brand-name { font-family: var(--display); font-weight: 800; font-size: 2.5rem; letter-spacing: -.03em; line-height: 1; margin: 6px 0 4px; }
+.brand-sub { color: var(--on-surface-var); font-weight: 600; margin-bottom: 14px; }
 .empty .art { border-radius: 18px; background: var(--surface-2); color: var(--primary); }
 
 /* birthday */
@@ -661,6 +663,17 @@ textarea.input.chat-input { min-height: 46px; height: 46px; max-height: 140px; r
 .font-pick .fp-sample small { display: block; font-size: .78rem; color: var(--on-surface-var); }
 .font-pick .fp-num { font-size: 1.25rem; font-weight: 700; }
 
+/* ---- feedback effects (Settings › Look › Effects & sounds) ---- */
+.fx-pulse { position: fixed; z-index: 9999; width: 14px; height: 14px; margin: -7px 0 0 -7px; border-radius: 50%; border: 2px solid var(--primary); pointer-events: none; animation: fx-pulse .45s var(--ease) forwards; }
+@keyframes fx-pulse { from { transform: scale(.4); opacity: .85; } to { transform: scale(3.4); opacity: 0; } }
+.fx-canvas { position: fixed; inset: 0; width: 100vw; height: 100vh; pointer-events: none; z-index: 9998; }
+body.fx .btn, body.fx .nav .fab, body.fx .chip, body.fx .quick button, body.fx .icon-btn, body.fx .nav .pill, body.fx .item { transition: transform .22s cubic-bezier(.34, 1.56, .64, 1), background-color .15s, filter .15s; }
+body.fx .btn:active, body.fx .quick button:active, body.fx .chip:active { transform: scale(.94); }
+body.fx .nav .fab:active { transform: scale(.88) rotate(-8deg); }
+body.fx .nav button:active .pill { transform: scale(.86); }
+body.fx .icon-btn:active { transform: scale(.86); }
+body.fx .item:active { transform: scale(.985); }
+
 </style>
 </head>
 <body>
@@ -669,7 +682,7 @@ textarea.input.chat-input { min-height: 46px; height: 46px; max-height: 140px; r
 <div id="print-root" aria-hidden="true"></div>
 <noscript><div style="padding:24px;font-family:sans-serif">האפליקציה דורשת JavaScript.</div></noscript>
 <script>
-window.APP_VERSION = '1.2.0';
+window.APP_VERSION = '1.3.0';
 /* ---- core/util.js ---- */
 /* ============================================================
  * util.js — date/time helpers and formatting.
@@ -1302,6 +1315,7 @@ window.APP_VERSION = '1.2.0';
       },
       // --- appearance ---
       theme: 'system', accent: 'petrol', fontScale: 1, font: 'rubik',
+      fx: { effects: true, sound: true, haptic: true }, // tap pulse / confetti, click sounds, vibration
       // --- security ---
       lock: { enabled: false, hash: null, salt: null, timeoutMin: 1 },
       // --- AI ---
@@ -3524,7 +3538,11 @@ window.APP_VERSION = '1.2.0';
   }
 
   /* ---------------- misc ---------------- */
-  function vibrate(ms) { try { if (navigator.vibrate) navigator.vibrate(ms || 12); } catch (e) { /* ignore */ } }
+  function vibrate(ms) {
+    const fx = root.Store && root.Store.S.settings && root.Store.S.settings.fx;
+    if (fx && fx.haptic === false) return;
+    try { if (navigator.vibrate) navigator.vibrate(ms || 12); } catch (e) { /* ignore */ }
+  }
   function download(filename, content, type) {
     const blob = content instanceof Blob ? content : new Blob([content], { type: type || 'text/plain;charset=utf-8' });
     const url = URL.createObjectURL(blob);
@@ -3571,6 +3589,143 @@ window.APP_VERSION = '1.2.0';
   }
 
   root.UI = { icon, esc, money, numv, delta, roleDot, emptyState, toast, openSheet, closeTop, closeAll, dialog, confirm, promptText, onSwipe, vibrate, download, shareFile, copyText, numIn, timeAgo, sheets };
+})(typeof window !== 'undefined' ? window : globalThis);
+
+/* ---- app/fx.js ---- */
+/* ============================================================
+ * fx.js — small feedback touches: a pulse, a soft click sound and a
+ * light vibration on every tap, and confetti for moments worth it
+ * (finishing or adding a shift, a birthday). Each part can be turned
+ * off in Settings › Look; motion also follows the system "reduce
+ * motion" setting. Sounds are synthesized with Web Audio (no files).
+ * ============================================================ */
+(function (root) {
+  'use strict';
+  const Fx = {};
+  root.Fx = Fx;
+  const prefs = () => (root.Store && root.Store.S.settings && root.Store.S.settings.fx) || {};
+  const reducedMotion = () => !!(root.matchMedia && root.matchMedia('(prefers-reduced-motion: reduce)').matches);
+  Fx.motion = () => prefs().effects !== false && !reducedMotion();
+
+  /* ---------------- sound ---------------- */
+  let ac = null;
+  function audio() {
+    const AC = root.AudioContext || root.webkitAudioContext;
+    if (!AC) return null;
+    if (!ac) ac = new AC();
+    if (ac.state === 'suspended') ac.resume().catch(() => {});
+    return ac;
+  }
+  // notes: [frequency, start (s), duration (s), wave, volume, glide-to frequency]
+  const SOUNDS = {
+    tap: [[1250, 0, 0.035, 'sine', 0.05, 900]],
+    nav: [[740, 0, 0.05, 'triangle', 0.045, 980]],
+    pop: [[520, 0, 0.09, 'sine', 0.08, 1100]],
+    on: [[660, 0, 0.05, 'triangle', 0.05], [990, 0.045, 0.07, 'triangle', 0.05]],
+    off: [[880, 0, 0.05, 'triangle', 0.05], [560, 0.045, 0.07, 'triangle', 0.045]],
+    soft: [[330, 0, 0.08, 'sine', 0.06, 220]],
+    start: [[523, 0, 0.09, 'triangle', 0.06], [784, 0.08, 0.16, 'triangle', 0.06]],
+    coin: [[1319, 0, 0.07, 'square', 0.022], [1976, 0.065, 0.24, 'square', 0.022]],
+    success: [[523, 0, 0.1, 'triangle', 0.055], [659, 0.08, 0.1, 'triangle', 0.055], [784, 0.16, 0.1, 'triangle', 0.055], [1047, 0.24, 0.28, 'triangle', 0.06]],
+  };
+  Fx.play = function (name) {
+    if (prefs().sound === false) return;
+    const notes = SOUNDS[name];
+    const c = notes && audio();
+    if (!c) return;
+    const t0 = c.currentTime + 0.005;
+    for (const [f, at, dur, wave, vol, glide] of notes) {
+      const o = c.createOscillator();
+      const g = c.createGain();
+      o.type = wave || 'sine';
+      o.frequency.setValueAtTime(f, t0 + at);
+      if (glide) o.frequency.exponentialRampToValueAtTime(glide, t0 + at + dur);
+      g.gain.setValueAtTime(0.0001, t0 + at);
+      g.gain.exponentialRampToValueAtTime(vol || 0.05, t0 + at + 0.008);
+      g.gain.exponentialRampToValueAtTime(0.0001, t0 + at + dur);
+      o.connect(g).connect(c.destination);
+      o.start(t0 + at);
+      o.stop(t0 + at + dur + 0.02);
+    }
+  };
+
+  /* ---------------- vibration ---------------- */
+  Fx.haptic = function (pattern) {
+    if (prefs().haptic === false) return;
+    try { if (navigator.vibrate) navigator.vibrate(pattern || 8); } catch (e) { /* not supported */ }
+  };
+
+  /* ---------------- visuals ---------------- */
+  Fx.pulse = function (x, y) {
+    if (!Fx.motion() || (!x && !y)) return;
+    const d = document.createElement('div');
+    d.className = 'fx-pulse';
+    d.style.left = x + 'px';
+    d.style.top = y + 'px';
+    document.body.appendChild(d);
+    setTimeout(() => d.remove(), 600);
+  };
+  const CONFETTI = ['#2ee59d', '#ffb627', '#3d7bff', '#ff5c8a', '#8b6cff'];
+  Fx.confetti = function (x, y, count) {
+    if (!Fx.motion()) return;
+    const W = root.innerWidth, H = root.innerHeight;
+    if (x == null || (!x && !y)) { x = W / 2; y = H * 0.38; }
+    const cv = document.createElement('canvas');
+    cv.className = 'fx-canvas';
+    const dpr = Math.min(2, root.devicePixelRatio || 1);
+    cv.width = W * dpr; cv.height = H * dpr;
+    document.body.appendChild(cv);
+    const g = cv.getContext('2d');
+    g.scale(dpr, dpr);
+    const parts = Array.from({ length: count || 70 }, () => {
+      const a = Math.random() * Math.PI * 2, v = 4 + Math.random() * 7;
+      return { x, y, vx: Math.cos(a) * v, vy: Math.sin(a) * v - 6, r: 3 + Math.random() * 4, rot: Math.random() * 6, vr: (Math.random() - 0.5) * 0.4, c: CONFETTI[(Math.random() * CONFETTI.length) | 0], rect: Math.random() < 0.6 };
+    });
+    const t0 = performance.now();
+    (function frame(t) {
+      const k = (t - t0) / 1400;
+      g.clearRect(0, 0, W, H);
+      for (const p of parts) {
+        p.vy += 0.32; p.vx *= 0.985; p.x += p.vx; p.y += p.vy; p.rot += p.vr;
+        g.save();
+        g.globalAlpha = Math.max(0, 1 - k * k);
+        g.translate(p.x, p.y); g.rotate(p.rot); g.fillStyle = p.c;
+        if (p.rect) g.fillRect(-p.r, -p.r / 2, p.r * 2, p.r);
+        else { g.beginPath(); g.arc(0, 0, p.r * 0.7, 0, Math.PI * 2); g.fill(); }
+        g.restore();
+      }
+      if (k < 1) requestAnimationFrame(frame); else cv.remove();
+    })(t0);
+  };
+
+  /* ---------------- moments ---------------- */
+  let lastTap = { x: 0, y: 0 };
+  Fx.celebrate = function (kind) {
+    if (kind === 'big') { Fx.play('success'); Fx.haptic([12, 60, 18]); Fx.confetti(); }
+    else if (kind === 'coin') { Fx.play('coin'); Fx.haptic([10, 40, 10]); Fx.confetti(lastTap.x, lastTap.y, 30); }
+    else if (kind === 'start') { Fx.play('start'); Fx.haptic(20); }
+  };
+
+  /** Body class that turns on the springy press animations in the CSS. */
+  Fx.apply = () => { if (document.body) document.body.classList.toggle('fx', Fx.motion()); };
+
+  /* ---------------- every tap ---------------- */
+  const TAPPABLE = 'button, a[href], [data-act], .item, .chip, [role="button"], label.switch-row';
+  document.addEventListener('click', (e) => {
+    const t = e.target.closest && e.target.closest(TAPPABLE);
+    if (!t || t.disabled) return;
+    if (t.matches('label.switch-row') || e.target.matches('input, select, textarea')) return; // switches sound on "change"
+    lastTap = { x: e.clientX, y: e.clientY };
+    Fx.pulse(e.clientX, e.clientY);
+    if (t.classList.contains('fab')) { Fx.play('pop'); Fx.haptic(14); }
+    else if (t.closest('#nav')) { Fx.play('nav'); Fx.haptic(6); }
+    else if (t.classList.contains('danger')) { Fx.play('soft'); Fx.haptic(10); }
+    else { Fx.play('tap'); Fx.haptic(6); }
+  }, true);
+  document.addEventListener('change', (e) => {
+    const el = e.target;
+    if (el && el.matches && el.matches('input[type="checkbox"]')) { Fx.play(el.checked ? 'on' : 'off'); Fx.haptic(8); }
+  }, true);
 })(typeof window !== 'undefined' ? window : globalThis);
 
 /* ---- app/store.js ---- */
@@ -3643,6 +3798,7 @@ window.APP_VERSION = '1.2.0';
     S.meta = kvMap.meta || {};
     S.activeShift = kvMap.activeShift || null;
     for (const s of LIST_STORES) S[s] = await getAll(s);
+    S.roles.forEach((r) => safeRecord('roles', r));
     // first run: default employer
     if (!S.employers.length) {
       S.employers = [root.Defaults.defaultEmployer()];
@@ -3672,6 +3828,15 @@ window.APP_VERSION = '1.2.0';
       else out[k] = over[k];
     }
     return out;
+  }
+
+  // meta that describes this phone (account link, sync progress), never taken from a backup
+  const DEVICE_META = ['cloudUid', 'cloudEmail', 'cloudName', 'cloudPhoto', 'cloudReady', 'lastSync', 'designV2', 'chat', 'chatShareData'];
+  const SYNC_META = ['pendingDeletes', 'settingsDirty', 'activeDirty', 'activeUpdatedAt'];
+  /** Values that end up inside HTML attributes must have a safe shape. */
+  function safeRecord(store, r) {
+    if (store === 'roles' && r && typeof r.color === 'string' && !/^#[0-9a-f]{3,8}$/i.test(r.color)) r.color = '#888888';
+    return r;
   }
 
   async function rawPut(store, obj) {
@@ -3763,7 +3928,7 @@ window.APP_VERSION = '1.2.0';
     for (const op of ops) {
       const arr = S[op.store];
       if (op.put) {
-        const obj = Object.assign({}, op.put, { _syncedAt: op.put.updatedAt });
+        const obj = safeRecord(op.store, Object.assign({}, op.put, { _syncedAt: op.put.updatedAt }));
         const i = arr.findIndex((x) => x.id === obj.id);
         if (i >= 0) arr[i] = obj; else arr.push(obj);
         t.objectStore(op.store).put(obj);
@@ -3794,6 +3959,11 @@ window.APP_VERSION = '1.2.0';
     const out = [];
     for (const st of SYNC_STORES) for (const r of S[st]) if ((r.updatedAt || 0) !== r._syncedAt) out.push({ store: st, rec: r });
     return out;
+  }
+  /** This phone has never synced with the signed-in account: offer every local record to it. */
+  async function forgetSyncState() {
+    for (const st of SYNC_STORES) for (const r of S[st]) delete r._syncedAt;
+    await saveAll();
   }
   /** Mark every local record dirty with a fresh timestamp (used to make the cloud match this device). */
   async function touchAll() {
@@ -3911,11 +4081,20 @@ window.APP_VERSION = '1.2.0';
     for (const s of LIST_STORES) incoming[s] = json[s] || [];
     runMigrations(incoming, json.schemaVersion || 1);
     const keepKey = S.settings && S.settings.ai ? S.settings.ai.apiKey : '';
+    for (const s of SYNC_STORES) for (const x of incoming[s]) delete x._syncedAt; // that sync state belongs to the device that made the backup
+    for (const r of incoming.roles) safeRecord('roles', r);
     if (mode === 'replace') {
       S.settings = mergeDeep(root.Defaults.defaultSettings(), incoming.settings || {});
       S.settings.ai.apiKey = keepKey;
+      // keep this phone's account link and sync bookkeeping; take everything else from the backup
+      const device = {};
+      for (const k of DEVICE_META) if (S.meta[k] !== undefined) device[k] = S.meta[k];
       S.meta = Object.assign({}, incoming.meta);
+      for (const k of DEVICE_META.concat(SYNC_META)) delete S.meta[k];
+      Object.assign(S.meta, device);
       S.activeShift = incoming.activeShift;
+      S.meta.activeUpdatedAt = Date.now();
+      S.meta.activeDirty = true;
       for (const s of LIST_STORES) S[s] = incoming[s];
       const t = tx(['files'], 'readwrite');
       t.objectStore('files').clear();
@@ -3950,7 +4129,7 @@ window.APP_VERSION = '1.2.0';
   root.Store = {
     S, load, on, apply, put, del, undo: undoAny, canUndo, setSettings, setMeta, setActive, find, clone,
     putFile, getFile, delFile, exportBackup, importBackup, wipe, saveAll, SCHEMA_VERSION, DB_NAME,
-    SYNC_STORES, applyRemote, markSynced, dirtyRecords, touchAll, applyRemoteSettings, applyRemoteActive,
+    SYNC_STORES, applyRemote, markSynced, dirtyRecords, touchAll, forgetSyncState, applyRemoteSettings, applyRemoteActive,
   };
 })(typeof window !== 'undefined' ? window : globalThis);
 
@@ -4211,6 +4390,7 @@ window.APP_VERSION = '1.2.0';
     const dark = st.theme === 'dark' || (st.theme !== 'light' && matchMedia('(prefers-color-scheme: dark)').matches);
     const meta = document.querySelector('meta[name="theme-color"]');
     if (meta) meta.content = dark ? '#0f1413' : '#f6f4ee';
+    if (root.Fx) root.Fx.apply();
   };
   matchMedia('(prefers-color-scheme: dark)').addEventListener('change', () => App.applyTheme());
 
@@ -4266,6 +4446,7 @@ window.APP_VERSION = '1.2.0';
   /** Save with an Undo snackbar. */
   App.saveOps = async function (ops, label, toastText) {
     await Store.apply(ops, label);
+    if (ops.some((o) => o.store === 'shifts' && o.put && o.put.status !== 'planned')) root.Fx.celebrate('coin');
     UI.toast(toastText || label, { label: 'ביטול', fn: App.undo });
   };
   App.undo = async function () {
@@ -4335,7 +4516,7 @@ window.APP_VERSION = '1.2.0';
     if (!role) { UI.toast('הוסף תפקיד בהגדרות'); return; }
     await Store.setMeta({ lastRole: role.id });
     await Store.setActive({ start: Date.now(), roleId: role.id, employerId: role.employerId || S.employers[0].id, splits: [], breaks: [] });
-    UI.vibrate(20);
+    root.Fx.celebrate('start');
     UI.toast('המשמרת התחילה — בהצלחה!');
     App.askNotifyPermission();
   };
@@ -4351,7 +4532,7 @@ window.APP_VERSION = '1.2.0';
     }
     await Store.apply([{ store: 'shifts', put: sh }], 'סיום משמרת');
     await Store.setActive(null);
-    UI.vibrate([20, 40, 20]);
+    root.Fx.celebrate('big');
     const r = App.result(sh.id);
     UI.toast(`נשמר: ${U.hm(r ? r.paidMin : 0)} שעות · ${U.money(r ? r.wage : 0)}`, { label: 'ביטול', fn: App.undo });
     App.sheetsApi.shiftDetail && App.sheetsApi.shiftDetail(sh.id);
@@ -4382,7 +4563,7 @@ window.APP_VERSION = '1.2.0';
     if (!S.settings.alerts.push || !('Notification' in window) || Notification.permission !== 'granted') return;
     try {
       const reg = await navigator.serviceWorker.getRegistration();
-      const opt = { body: n.body, tag: n.key, icon: 'icon-192.png', badge: 'icon-192.png', lang: 'he', dir: 'rtl', data: { url: './#home' } };
+      const opt = { body: n.body, tag: n.key, icon: 'icon-192.png', badge: 'badge-96.png', lang: 'he', dir: 'rtl', data: { url: './#home' } };
       if (reg) await reg.showNotification(n.title, opt); else new Notification(n.title, opt);
     } catch (e) { console.warn(e); }
   }
@@ -4490,6 +4671,9 @@ window.APP_VERSION = '1.2.0';
     registerSW(); // offline support from the very first visit, before onboarding
     if (S.settings.lock.enabled) App.lock();
     const params = new URLSearchParams(location.search);
+    // opened from the Android app (Trusted Web Activity): remembered for this session
+    try { if (params.get('source') === 'twa' || document.referrer.startsWith('android-app://')) sessionStorage.setItem('androidApp', '1'); } catch (e) { /* ignore */ }
+    try { App.androidApp = sessionStorage.getItem('androidApp') === '1'; } catch (e) { App.androidApp = false; }
     App.pendingAction = params.get('action');
     if (App.pendingAction) history.replaceState(null, '', location.pathname + location.hash);
 
@@ -4795,7 +4979,19 @@ window.FIREBASE_CONFIG = {
     Cloud.user = user;
     detach();
     setStatus('syncing');
+    if (S.meta.cloudUid && S.meta.cloudUid !== user.uid) {
+      // this phone holds another account's data: it must never be mixed into this account
+      const prev = S.meta.cloudEmail || 'החשבון הקודם';
+      if (Cloud.hasUnsynced() && !(await UI.confirm('החלפת חשבון', `בטלפון יש שינויים של ${prev} שעוד לא עלו לענן. אם תמשיך עם ${user.email || 'החשבון החדש'}, הם יימחקו מהטלפון.`, 'המשך בכל זאת', true))) {
+        try { await fb.au.signOut(fb.auth); } catch (e) { /* ignore */ }
+        Cloud.user = null;
+        setStatus('idle');
+        throw Object.assign(new Error(`החיבור בוטל. התחבר עם ${prev} כדי שהשינויים יעלו לחשבון שלו.`), { code: 'app/switch-cancelled' });
+      }
+      await Store.wipe();
+    }
     if (S.meta.cloudUid !== user.uid) {
+      await Store.forgetSyncState(); // nothing on this phone was ever confirmed by this account
       await initialMerge(user.uid); // needs the network the first time
     }
     await Store.setMeta({ cloudUid: user.uid, cloudEmail: user.email, cloudName: user.displayName || '', cloudPhoto: user.photoURL || '' });
@@ -4845,32 +5041,46 @@ window.FIREBASE_CONFIG = {
   function detach() { unsubs.forEach((f) => f()); unsubs = []; Cloud.connected = false; }
 
   /* ---------------- push (phone → cloud) ---------------- */
+  // A change counts as synced only after the server confirmed it, so nothing is lost if the app is
+  // closed (or the phone restarts) before the upload finishes: it is simply sent again next time.
+  const inflight = new Map(); // "store/id" → version currently being written
+  let acked = { items: [], dels: [], settingsU: null, activeU: null };
+  let ackTimer = null;
+  async function flushAcks() {
+    const a = acked;
+    acked = { items: [], dels: [], settingsU: null, activeU: null };
+    if (a.items.length || a.dels.length) await Store.markSynced(a.items, a.dels);
+    const patch = {};
+    if (a.settingsU != null && S.settings._updatedAt === a.settingsU) patch.settingsDirty = false;
+    if (a.activeU != null && S.meta.activeUpdatedAt === a.activeU) patch.activeDirty = false;
+    if (Object.keys(patch).length) await Store.setMeta(patch);
+  }
   async function push() {
     if (!fb || !Cloud.user || S.meta.cloudUid !== Cloud.user.uid) return;
     if (pushing) { pushAgain = true; return; }
     pushing = true;
     try {
       const { fs, db } = fb;
-      const dirty = Store.dirtyRecords();
-      const dels = (S.meta.pendingDeletes || []).slice();
-      const writes = [];
-      for (const { store, rec } of dirty) writes.push([userDoc(store, rec.id), encode(store, rec)]);
-      for (const d of dels) writes.push([userDoc(d.store, d.id), { u: d.at, d: true, j: null }]);
-      const setU = S.meta.settingsDirty ? S.settings._updatedAt : null;
-      const actU = S.meta.activeDirty ? S.meta.activeUpdatedAt : null;
-      if (setU != null) writes.push([userDoc('kv', 'settings'), encodeSettings()]);
-      if (actU != null) writes.push([userDoc('kv', 'active'), encodeActive()]);
-      if (writes.length) {
+      const writes = []; // [key, version, ref, data, onConfirmed]
+      for (const { store, rec } of Store.dirtyRecords()) {
+        const at = rec.updatedAt;
+        writes.push([store + '/' + rec.id, at, userDoc(store, rec.id), encode(store, rec), () => acked.items.push({ store, id: rec.id, at })]);
+      }
+      for (const d of S.meta.pendingDeletes || []) writes.push([d.store + '/' + d.id, 'del' + d.at, userDoc(d.store, d.id), { u: d.at, d: true, j: null }, () => acked.dels.push(d)]);
+      if (S.meta.settingsDirty) { const u = S.settings._updatedAt; writes.push(['kv/settings', u, userDoc('kv', 'settings'), encodeSettings(), () => { acked.settingsU = u; }]); }
+      if (S.meta.activeDirty) { const u = S.meta.activeUpdatedAt; writes.push(['kv/active', u, userDoc('kv', 'active'), encodeActive(), () => { acked.activeU = u; }]); }
+      const fresh = writes.filter(([key, ver]) => inflight.get(key) !== ver);
+      if (fresh.length) {
         fs.setDoc(fs.doc(db, 'users', Cloud.user.uid), { email: Cloud.user.email || '', updatedAt: Date.now(), schema: Store.SCHEMA_VERSION, app: root.APP_VERSION }).catch(() => {});
-        // One write per document: Firestore queues them in its own IndexedDB until the server confirms.
+        // One write per document: Firestore also keeps them in its own IndexedDB until the server confirms.
         // The security rules refuse a write that is older than what the server has (a phone that was
         // offline must not overwrite a newer change from another phone); onRejected settles it.
-        for (const [ref, data] of writes) fs.setDoc(ref, data).catch((e) => onRejected(ref, e));
-        await Store.markSynced(dirty.map((x) => ({ store: x.store, id: x.rec.id, at: x.rec.updatedAt })), dels);
-        const patch = {};
-        if (setU != null && S.settings._updatedAt === setU) patch.settingsDirty = false;
-        if (actU != null && S.meta.activeUpdatedAt === actU) patch.activeDirty = false;
-        if (Object.keys(patch).length) await Store.setMeta(patch);
+        for (const [key, ver, ref, data, onConfirmed] of fresh) {
+          inflight.set(key, ver);
+          fs.setDoc(ref, data)
+            .then(() => { onConfirmed(); clearTimeout(ackTimer); ackTimer = setTimeout(flushAcks, 0); }, (e) => onRejected(ref, e))
+            .finally(() => { if (inflight.get(key) === ver) inflight.delete(key); });
+        }
         setStatus(navigator.onLine ? 'syncing' : 'offline');
       }
       fs.waitForPendingWrites(db).then(() => {
@@ -5022,7 +5232,7 @@ window.FIREBASE_CONFIG = {
     const draw = (msg, isErr) => {
       v.innerHTML = `<div class="wizard"><div class="content" style="display:flex;flex-direction:column;justify-content:center;text-align:center">
         <div class="brand-mark big" aria-hidden="true"></div>
-        <h1>מעקב משמרות ושכר</h1>
+        <h1 class="brand-name">Shaati</h1><div class="brand-sub">מעקב משמרות ושכר</div>
         <p class="lead">התחבר עם חשבון Google. כל הנתונים שלך נשמרים בענן לפי החשבון, וזמינים בכל טלפון שתתחבר ממנו.</p>
         ${S.shifts.length ? `<div class="banner" style="text-align:start">${icon('cloud')}<div>הנתונים שכבר יש בטלפון יעלו לחשבון שלך בהתחברות הראשונה.</div></div>` : ''}
         ${msg ? `<div class="banner ${isErr ? 'warn' : ''}" style="text-align:start">${icon(isErr ? 'alert' : 'info')}<div>${esc(msg)}</div></div>` : ''}
@@ -5236,10 +5446,12 @@ window.FIREBASE_CONFIG = {
     return `<div class="card share-card"><div class="card-head">${icon('sparkle')}<h3>${esc(w.title)}</h3><button class="icon-btn" data-act="weekly-share" data-id="${esc(w.id)}" aria-label="שתף">${icon('share')}</button><button class="icon-btn" data-act="notif-read" data-id="${esc(w.id)}" aria-label="סגור">${icon('x')}</button></div>
       <div style="font-size:1.05rem">${esc(w.body)}</div><div class="tiny muted" style="margin-top:6px">${esc(w.explain)}</div></div>`;
   }
+  let bdayCelebrated = false;
   function birthdayCard() {
     const b = S.settings.birthDate;
     if (!b || b.slice(5) !== U.todayKey().slice(5)) return '';
     const age = Engine.ageAt(b, U.todayKey());
+    if (!bdayCelebrated) { bdayCelebrated = true; setTimeout(() => root.Fx.celebrate('big'), 700); }
     return `<div class="card bday"><div class="bday-confetti" aria-hidden="true"></div><div class="bday-title">מזל טוב${S.settings.userName ? ', ' + esc(S.settings.userName) : ''}!</div>
       <div>יום הולדת ${age} שמח 🎂 שתהיה שנה של משמרות טובות, בוסים הוגנים ותלושים בלי הפתעות.</div>${age === 18 ? '<div class="small" style="margin-top:6px">מהיום החישוב כולל ניכויי חובה רגילים.</div>' : ''}</div>`;
   }
@@ -6792,7 +7004,7 @@ window.FIREBASE_CONFIG = {
   const icsDate = (ms) => new Date(ms).toISOString().replace(/[-:]/g, '').replace(/\.\d{3}/, '');
   const icsEsc = (s) => String(s || '').replace(/\\/g, '\\\\').replace(/\n/g, '\\n').replace(/,/g, '\\,').replace(/;/g, '\\;');
   function ics(results, filename) {
-    const lines = ['BEGIN:VCALENDAR', 'VERSION:2.0', 'PRODID:-//ShiftPay//HE', 'CALSCALE:GREGORIAN', 'METHOD:PUBLISH'];
+    const lines = ['BEGIN:VCALENDAR', 'VERSION:2.0', 'PRODID:-//Shaati//HE', 'CALSCALE:GREGORIAN', 'METHOD:PUBLISH'];
     for (const r of results) {
       const roles = [...new Set(r.segments.map((s) => App.roleName(s.roleId)))].join(' → ');
       const sh = App.shift(r.id) || {};
@@ -6867,7 +7079,7 @@ window.FIREBASE_CONFIG = {
       g.fillStyle = ink; g.font = font(800, 60); g.fillText(v, x - 36, y + 150);
     });
     if (sentence) { g.fillStyle = ink; g.font = font(500, 38); wrap(g, sentence, X, 1110, W - 160, 52); }
-    g.fillStyle = prim; g.font = font(700, 30); g.fillText('מעקב משמרות ושכר', X, H - 60);
+    g.fillStyle = prim; g.font = font(700, 30); g.fillText('Shaati', X, H - 60);
     const blob = await new Promise((res) => c.toBlob(res, 'image/png'));
     await UI.shareFile(`summary-${r.from || ''}.png`, blob, 'סיכום שכר');
   }
@@ -7243,7 +7455,7 @@ window.FIREBASE_CONFIG = {
       const A = S.settings.alerts;
       const perm = 'Notification' in window ? Notification.permission : 'unsupported';
       const t = (k, l) => F.sw(l, '', 's.alerts.types.' + k, A.types[k] !== false);
-      return `<div class="card">${F.sw('התראות פוש בטלפון', perm === 'granted' ? 'מאושר' : perm === 'denied' ? 'חסום — יש לאשר בהגדרות האתר ב-Chrome' : 'דורש אישור', 's.alerts.push', A.push)}
+      return `<div class="card">${F.sw('התראות פוש בטלפון', perm === 'granted' ? 'מאושר' : perm === 'denied' ? (App.androidApp ? 'חסום — יש לאשר בהגדרות הטלפון › אפליקציות › Shaati › התראות' : 'חסום — יש לאשר בהגדרות האתר ב-Chrome') : 'דורש אישור', 's.alerts.push', A.push)}
           ${perm !== 'granted' && perm !== 'unsupported' ? `<button class="btn tonal block" data-perm>${icon('bell')} אשר התראות</button>` : ''}
           ${perm === 'granted' ? `<button class="btn text sm" data-test>${icon('send', 's')} שלח התראת בדיקה</button>` : ''}
           <div class="tiny muted" style="margin-top:6px">לכל היותר התראת חריגה אחת ביום. תזכורות (טיימר, משמרת קרובה, תשלום) נשלחות בנפרד. כשהאפליקציה סגורה, Chrome בודק מדי פעם (לא מדויק לדקה) — לתזכורת מדויקת לפני משמרת, ייצא אותה ליומן.</div></div>
@@ -7283,7 +7495,13 @@ window.FIREBASE_CONFIG = {
       <div class="section-title">צבע הדגשה</div><div class="color-pick" style="margin-bottom:16px">${Object.entries(App.ACCENTS).map(([k, a]) => `<button data-accent="${k}" class="${S.settings.accent === k ? 'on' : ''}" style="background:hsl(${a[0]} ${a[1]}% 45%)" aria-label="${a[2]}"></button>`).join('')}</div>
       <div class="section-title">גופן</div>
       <div class="font-pick">${Object.entries(App.FONTS).map(([k, f]) => `<button data-font="${k}" class="${(S.settings.font || 'rubik') === k ? 'on' : ''}" style="font-family:'${f[0]}', system-ui, sans-serif"><span class="fp-sample">משמרת ערב · ${esc(f[2])}<small>${f[0]}</small></span><span class="fp-num">₪1,240</span></button>`).join('')}</div>
-      <div class="section-title">גודל טקסט</div><div class="seg">${[[0.9, 'קטן'], [1, 'רגיל'], [1.1, 'גדול'], [1.2, 'גדול מאוד']].map(([k, l]) => `<button data-fs="${k}" class="${+S.settings.fontScale === k ? 'on' : ''}">${l}</button>`).join('')}</div>`,
+      <div class="section-title">גודל טקסט</div><div class="seg">${[[0.9, 'קטן'], [1, 'רגיל'], [1.1, 'גדול'], [1.2, 'גדול מאוד']].map(([k, l]) => `<button data-fs="${k}" class="${+S.settings.fontScale === k ? 'on' : ''}">${l}</button>`).join('')}</div>
+      <div class="section-title" style="margin-top:16px">אפקטים וצלילים</div>
+      <div class="card">${F.sw('אנימציות ואפקטים', 'הבזק קטן בכל לחיצה, כפתורים קופצניים וקונפטי כשמסיימים משמרת', 's.fx.effects', (S.settings.fx || {}).effects !== false)}
+        ${F.sw('צלילים', 'צליל קצר ועדין בלחיצה, ו"קופה" כשנשמרת משמרת', 's.fx.sound', (S.settings.fx || {}).sound !== false)}
+        ${F.sw('רטט', 'רטט קל בלחיצה', 's.fx.haptic', (S.settings.fx || {}).haptic !== false)}
+        <button class="btn tonal sm" data-fx-try style="margin-top:8px">${icon('sparkle', 's')} נסה</button>
+        <div class="tiny muted" style="margin-top:8px">כשבטלפון מופעלת "הפחתת אנימציות", האנימציות כבויות גם כאן. עוצמת הצלילים לפי עוצמת המדיה.</div></div>`,
     mount: (el, draw) => {
       // load every family once so the previews show the real fonts
       for (const k of Object.keys(App.FONTS)) {
@@ -7299,6 +7517,7 @@ window.FIREBASE_CONFIG = {
         else if (b.dataset.accent) await Store.setSettings((s) => { s.accent = b.dataset.accent; });
         else if (b.dataset.fs) await Store.setSettings((s) => { s.fontScale = +b.dataset.fs; });
         else if (b.dataset.font) await Store.setSettings((s) => { s.font = b.dataset.font; });
+        else if (b.hasAttribute('data-fx-try')) { root.Fx.celebrate('big'); return; }
         else return;
         draw();
       });
@@ -7473,7 +7692,7 @@ window.FIREBASE_CONFIG = {
 
     const screens = [
       () => `<div style="text-align:center;padding-top:6vh"><div class="brand-mark big" aria-hidden="true"></div>
-        <h1>מעקב משמרות ושכר</h1><p class="lead">רישום משמרות בלחיצה, חישוב שכר מדויק (שבתות, חגים, שעות נוספות), תובנות, ובדיקת תלוש. הכול נשמר רק בטלפון שלך.</p>
+        <h1 class="brand-name">Shaati</h1><div class="brand-sub">מעקב משמרות ושכר</div><p class="lead">רישום משמרות בלחיצה, חישוב שכר מדויק (שבתות, חגים, שעות נוספות), תובנות, ובדיקת תלוש. הנתונים נשמרים בחשבון שלך, ורק לך יש גישה אליהם.</p>
         <p class="small muted">ההגדרה לוקחת כדקה. כל ערך אפשר לשנות אחר כך בהגדרות.</p></div>`,
       () => `<h1>התפקידים שלך</h1><p class="lead">לכל תפקיד שכר שעתי וצבע. העלאות שכר בעתיד מוסיפים מתאריך — בלי לשנות משמרות עבר.</p>
         ${roles.map((r, i) => `<div class="role-edit"><button class="sw" style="background:${r.color}" data-cc="${i}" aria-label="צבע"></button>
@@ -7921,7 +8140,7 @@ window.FIREBASE_CONFIG = {
   const LEGAL_VERSION = '1.0';
   const EFFECTIVE = '12 באוקטובר 2026';
   const CONTACT = 'https://github.com/leelor123/shifts/issues';
-  const APP_NAME = 'מעקב משמרות ושכר';
+  const APP_NAME = 'Shaati';
   App.LEGAL_VERSION = LEGAL_VERSION;
 
   const contact = `<a href="${CONTACT}" target="_blank" rel="noopener">עמוד הפניות של הפרויקט</a>`;

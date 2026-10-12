@@ -68,6 +68,7 @@
     const dark = st.theme === 'dark' || (st.theme !== 'light' && matchMedia('(prefers-color-scheme: dark)').matches);
     const meta = document.querySelector('meta[name="theme-color"]');
     if (meta) meta.content = dark ? '#0f1413' : '#f6f4ee';
+    if (root.Fx) root.Fx.apply();
   };
   matchMedia('(prefers-color-scheme: dark)').addEventListener('change', () => App.applyTheme());
 
@@ -123,6 +124,7 @@
   /** Save with an Undo snackbar. */
   App.saveOps = async function (ops, label, toastText) {
     await Store.apply(ops, label);
+    if (ops.some((o) => o.store === 'shifts' && o.put && o.put.status !== 'planned')) root.Fx.celebrate('coin');
     UI.toast(toastText || label, { label: 'ביטול', fn: App.undo });
   };
   App.undo = async function () {
@@ -192,7 +194,7 @@
     if (!role) { UI.toast('הוסף תפקיד בהגדרות'); return; }
     await Store.setMeta({ lastRole: role.id });
     await Store.setActive({ start: Date.now(), roleId: role.id, employerId: role.employerId || S.employers[0].id, splits: [], breaks: [] });
-    UI.vibrate(20);
+    root.Fx.celebrate('start');
     UI.toast('המשמרת התחילה — בהצלחה!');
     App.askNotifyPermission();
   };
@@ -208,7 +210,7 @@
     }
     await Store.apply([{ store: 'shifts', put: sh }], 'סיום משמרת');
     await Store.setActive(null);
-    UI.vibrate([20, 40, 20]);
+    root.Fx.celebrate('big');
     const r = App.result(sh.id);
     UI.toast(`נשמר: ${U.hm(r ? r.paidMin : 0)} שעות · ${U.money(r ? r.wage : 0)}`, { label: 'ביטול', fn: App.undo });
     App.sheetsApi.shiftDetail && App.sheetsApi.shiftDetail(sh.id);
@@ -239,7 +241,7 @@
     if (!S.settings.alerts.push || !('Notification' in window) || Notification.permission !== 'granted') return;
     try {
       const reg = await navigator.serviceWorker.getRegistration();
-      const opt = { body: n.body, tag: n.key, icon: 'icon-192.png', badge: 'icon-192.png', lang: 'he', dir: 'rtl', data: { url: './#home' } };
+      const opt = { body: n.body, tag: n.key, icon: 'icon-192.png', badge: 'badge-96.png', lang: 'he', dir: 'rtl', data: { url: './#home' } };
       if (reg) await reg.showNotification(n.title, opt); else new Notification(n.title, opt);
     } catch (e) { console.warn(e); }
   }
@@ -347,6 +349,9 @@
     registerSW(); // offline support from the very first visit, before onboarding
     if (S.settings.lock.enabled) App.lock();
     const params = new URLSearchParams(location.search);
+    // opened from the Android app (Trusted Web Activity): remembered for this session
+    try { if (params.get('source') === 'twa' || document.referrer.startsWith('android-app://')) sessionStorage.setItem('androidApp', '1'); } catch (e) { /* ignore */ }
+    try { App.androidApp = sessionStorage.getItem('androidApp') === '1'; } catch (e) { App.androidApp = false; }
     App.pendingAction = params.get('action');
     if (App.pendingAction) history.replaceState(null, '', location.pathname + location.hash);
 

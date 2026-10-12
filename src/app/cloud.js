@@ -214,7 +214,19 @@
     Cloud.user = user;
     detach();
     setStatus('syncing');
+    if (S.meta.cloudUid && S.meta.cloudUid !== user.uid) {
+      // this phone holds another account's data: it must never be mixed into this account
+      const prev = S.meta.cloudEmail || 'החשבון הקודם';
+      if (Cloud.hasUnsynced() && !(await UI.confirm('החלפת חשבון', `בטלפון יש שינויים של ${prev} שעוד לא עלו לענן. אם תמשיך עם ${user.email || 'החשבון החדש'}, הם יימחקו מהטלפון.`, 'המשך בכל זאת', true))) {
+        try { await fb.au.signOut(fb.auth); } catch (e) { /* ignore */ }
+        Cloud.user = null;
+        setStatus('idle');
+        throw Object.assign(new Error(`החיבור בוטל. התחבר עם ${prev} כדי שהשינויים יעלו לחשבון שלו.`), { code: 'app/switch-cancelled' });
+      }
+      await Store.wipe();
+    }
     if (S.meta.cloudUid !== user.uid) {
+      await Store.forgetSyncState(); // nothing on this phone was ever confirmed by this account
       await initialMerge(user.uid); // needs the network the first time
     }
     await Store.setMeta({ cloudUid: user.uid, cloudEmail: user.email, cloudName: user.displayName || '', cloudPhoto: user.photoURL || '' });
@@ -264,32 +276,46 @@
   function detach() { unsubs.forEach((f) => f()); unsubs = []; Cloud.connected = false; }
 
   /* ---------------- push (phone → cloud) ---------------- */
+  // A change counts as synced only after the server confirmed it, so nothing is lost if the app is
+  // closed (or the phone restarts) before the upload finishes: it is simply sent again next time.
+  const inflight = new Map(); // "store/id" → version currently being written
+  let acked = { items: [], dels: [], settingsU: null, activeU: null };
+  let ackTimer = null;
+  async function flushAcks() {
+    const a = acked;
+    acked = { items: [], dels: [], settingsU: null, activeU: null };
+    if (a.items.length || a.dels.length) await Store.markSynced(a.items, a.dels);
+    const patch = {};
+    if (a.settingsU != null && S.settings._updatedAt === a.settingsU) patch.settingsDirty = false;
+    if (a.activeU != null && S.meta.activeUpdatedAt === a.activeU) patch.activeDirty = false;
+    if (Object.keys(patch).length) await Store.setMeta(patch);
+  }
   async function push() {
     if (!fb || !Cloud.user || S.meta.cloudUid !== Cloud.user.uid) return;
     if (pushing) { pushAgain = true; return; }
     pushing = true;
     try {
       const { fs, db } = fb;
-      const dirty = Store.dirtyRecords();
-      const dels = (S.meta.pendingDeletes || []).slice();
-      const writes = [];
-      for (const { store, rec } of dirty) writes.push([userDoc(store, rec.id), encode(store, rec)]);
-      for (const d of dels) writes.push([userDoc(d.store, d.id), { u: d.at, d: true, j: null }]);
-      const setU = S.meta.settingsDirty ? S.settings._updatedAt : null;
-      const actU = S.meta.activeDirty ? S.meta.activeUpdatedAt : null;
-      if (setU != null) writes.push([userDoc('kv', 'settings'), encodeSettings()]);
-      if (actU != null) writes.push([userDoc('kv', 'active'), encodeActive()]);
-      if (writes.length) {
+      const writes = []; // [key, version, ref, data, onConfirmed]
+      for (const { store, rec } of Store.dirtyRecords()) {
+        const at = rec.updatedAt;
+        writes.push([store + '/' + rec.id, at, userDoc(store, rec.id), encode(store, rec), () => acked.items.push({ store, id: rec.id, at })]);
+      }
+      for (const d of S.meta.pendingDeletes || []) writes.push([d.store + '/' + d.id, 'del' + d.at, userDoc(d.store, d.id), { u: d.at, d: true, j: null }, () => acked.dels.push(d)]);
+      if (S.meta.settingsDirty) { const u = S.settings._updatedAt; writes.push(['kv/settings', u, userDoc('kv', 'settings'), encodeSettings(), () => { acked.settingsU = u; }]); }
+      if (S.meta.activeDirty) { const u = S.meta.activeUpdatedAt; writes.push(['kv/active', u, userDoc('kv', 'active'), encodeActive(), () => { acked.activeU = u; }]); }
+      const fresh = writes.filter(([key, ver]) => inflight.get(key) !== ver);
+      if (fresh.length) {
         fs.setDoc(fs.doc(db, 'users', Cloud.user.uid), { email: Cloud.user.email || '', updatedAt: Date.now(), schema: Store.SCHEMA_VERSION, app: root.APP_VERSION }).catch(() => {});
-        // One write per document: Firestore queues them in its own IndexedDB until the server confirms.
+        // One write per document: Firestore also keeps them in its own IndexedDB until the server confirms.
         // The security rules refuse a write that is older than what the server has (a phone that was
         // offline must not overwrite a newer change from another phone); onRejected settles it.
-        for (const [ref, data] of writes) fs.setDoc(ref, data).catch((e) => onRejected(ref, e));
-        await Store.markSynced(dirty.map((x) => ({ store: x.store, id: x.rec.id, at: x.rec.updatedAt })), dels);
-        const patch = {};
-        if (setU != null && S.settings._updatedAt === setU) patch.settingsDirty = false;
-        if (actU != null && S.meta.activeUpdatedAt === actU) patch.activeDirty = false;
-        if (Object.keys(patch).length) await Store.setMeta(patch);
+        for (const [key, ver, ref, data, onConfirmed] of fresh) {
+          inflight.set(key, ver);
+          fs.setDoc(ref, data)
+            .then(() => { onConfirmed(); clearTimeout(ackTimer); ackTimer = setTimeout(flushAcks, 0); }, (e) => onRejected(ref, e))
+            .finally(() => { if (inflight.get(key) === ver) inflight.delete(key); });
+        }
         setStatus(navigator.onLine ? 'syncing' : 'offline');
       }
       fs.waitForPendingWrites(db).then(() => {

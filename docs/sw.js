@@ -5,10 +5,10 @@
  * background and activates when the user taps "עדכן".
  * IndexedDB data is never touched by updates.
  * ============================================================ */
-const VERSION = '1.2.0-29c8825b';
+const VERSION = '1.3.0-59ee0537';
 const SHELL = 'shiftpay-shell-' + VERSION;
 const RUNTIME = 'shiftpay-runtime-v1';
-const ASSETS = ['./', './index.html', './manifest.webmanifest', './icon.svg', './icon-192.png', './icon-512.png', './icon-maskable-512.png'];
+const ASSETS = ['./', './index.html', './manifest.webmanifest', './icon-192.png', './icon-512.png', './icon-maskable-512.png', './badge-96.png', './favicon-48.png'];
 
 self.addEventListener('install', (e) => {
   e.waitUntil(caches.open(SHELL).then((c) => c.addAll(ASSETS.map((u) => new Request(u, { cache: 'reload' })))));
@@ -87,7 +87,7 @@ async function backgroundCheck() {
   const A = d.settings.alerts;
   const types = A.types || {};
   const now = Date.now();
-  const opt = (body, tag) => ({ body, tag, icon: 'icon-192.png', badge: 'icon-192.png', lang: 'he', dir: 'rtl', data: { url: './#home' } });
+  const opt = (body, tag) => ({ body, tag, icon: 'icon-192.png', badge: 'badge-96.png', lang: 'he', dir: 'rtl', data: { url: './#home' } });
   const a = d.activeShift;
   if (types.timer !== false && a && a.start && now - a.start > (A.timerHours || 12) * 3600000) {
     await self.registration.showNotification('שכחת לסיים משמרת?', opt('הטיימר עדיין רץ. לחץ כדי לסיים או לתקן.', 'timer-' + a.start));

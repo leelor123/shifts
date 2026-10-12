@@ -21,7 +21,7 @@ const APP = {
   host: 'leelor123.github.io',
   scope: '/shifts/',
   startUrl: '/shifts/?source=twa',
-  launcherName: 'משמרות ושכר',
+  launcherName: 'Shaati',
 };
 const FINGERPRINTS = path.join(ROOT, 'android', 'fingerprints.json');
 
@@ -47,6 +47,7 @@ async function generate() {
     navigationColor: '#F6F4EE', navigationColorDark: '#0F1413',
     navigationDividerColor: '#E3DFD4', navigationDividerColorDark: '#26302E',
     backgroundColor: '#F6F4EE',
+    monochromeIconUrl: `https://${APP.host}${APP.scope}icon-mono-512.png`, // notification icon
     enableNotifications: true,
     orientation: 'portrait',
     fallbackType: 'customtabs',

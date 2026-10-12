@@ -355,7 +355,7 @@
       const A = S.settings.alerts;
       const perm = 'Notification' in window ? Notification.permission : 'unsupported';
       const t = (k, l) => F.sw(l, '', 's.alerts.types.' + k, A.types[k] !== false);
-      return `<div class="card">${F.sw('התראות פוש בטלפון', perm === 'granted' ? 'מאושר' : perm === 'denied' ? 'חסום — יש לאשר בהגדרות האתר ב-Chrome' : 'דורש אישור', 's.alerts.push', A.push)}
+      return `<div class="card">${F.sw('התראות פוש בטלפון', perm === 'granted' ? 'מאושר' : perm === 'denied' ? (App.androidApp ? 'חסום — יש לאשר בהגדרות הטלפון › אפליקציות › Shaati › התראות' : 'חסום — יש לאשר בהגדרות האתר ב-Chrome') : 'דורש אישור', 's.alerts.push', A.push)}
           ${perm !== 'granted' && perm !== 'unsupported' ? `<button class="btn tonal block" data-perm>${icon('bell')} אשר התראות</button>` : ''}
           ${perm === 'granted' ? `<button class="btn text sm" data-test>${icon('send', 's')} שלח התראת בדיקה</button>` : ''}
           <div class="tiny muted" style="margin-top:6px">לכל היותר התראת חריגה אחת ביום. תזכורות (טיימר, משמרת קרובה, תשלום) נשלחות בנפרד. כשהאפליקציה סגורה, Chrome בודק מדי פעם (לא מדויק לדקה) — לתזכורת מדויקת לפני משמרת, ייצא אותה ליומן.</div></div>
@@ -395,7 +395,13 @@
       <div class="section-title">צבע הדגשה</div><div class="color-pick" style="margin-bottom:16px">${Object.entries(App.ACCENTS).map(([k, a]) => `<button data-accent="${k}" class="${S.settings.accent === k ? 'on' : ''}" style="background:hsl(${a[0]} ${a[1]}% 45%)" aria-label="${a[2]}"></button>`).join('')}</div>
       <div class="section-title">גופן</div>
       <div class="font-pick">${Object.entries(App.FONTS).map(([k, f]) => `<button data-font="${k}" class="${(S.settings.font || 'rubik') === k ? 'on' : ''}" style="font-family:'${f[0]}', system-ui, sans-serif"><span class="fp-sample">משמרת ערב · ${esc(f[2])}<small>${f[0]}</small></span><span class="fp-num">₪1,240</span></button>`).join('')}</div>
-      <div class="section-title">גודל טקסט</div><div class="seg">${[[0.9, 'קטן'], [1, 'רגיל'], [1.1, 'גדול'], [1.2, 'גדול מאוד']].map(([k, l]) => `<button data-fs="${k}" class="${+S.settings.fontScale === k ? 'on' : ''}">${l}</button>`).join('')}</div>`,
+      <div class="section-title">גודל טקסט</div><div class="seg">${[[0.9, 'קטן'], [1, 'רגיל'], [1.1, 'גדול'], [1.2, 'גדול מאוד']].map(([k, l]) => `<button data-fs="${k}" class="${+S.settings.fontScale === k ? 'on' : ''}">${l}</button>`).join('')}</div>
+      <div class="section-title" style="margin-top:16px">אפקטים וצלילים</div>
+      <div class="card">${F.sw('אנימציות ואפקטים', 'הבזק קטן בכל לחיצה, כפתורים קופצניים וקונפטי כשמסיימים משמרת', 's.fx.effects', (S.settings.fx || {}).effects !== false)}
+        ${F.sw('צלילים', 'צליל קצר ועדין בלחיצה, ו"קופה" כשנשמרת משמרת', 's.fx.sound', (S.settings.fx || {}).sound !== false)}
+        ${F.sw('רטט', 'רטט קל בלחיצה', 's.fx.haptic', (S.settings.fx || {}).haptic !== false)}
+        <button class="btn tonal sm" data-fx-try style="margin-top:8px">${icon('sparkle', 's')} נסה</button>
+        <div class="tiny muted" style="margin-top:8px">כשבטלפון מופעלת "הפחתת אנימציות", האנימציות כבויות גם כאן. עוצמת הצלילים לפי עוצמת המדיה.</div></div>`,
     mount: (el, draw) => {
       // load every family once so the previews show the real fonts
       for (const k of Object.keys(App.FONTS)) {
@@ -411,6 +417,7 @@
         else if (b.dataset.accent) await Store.setSettings((s) => { s.accent = b.dataset.accent; });
         else if (b.dataset.fs) await Store.setSettings((s) => { s.fontScale = +b.dataset.fs; });
         else if (b.dataset.font) await Store.setSettings((s) => { s.font = b.dataset.font; });
+        else if (b.hasAttribute('data-fx-try')) { root.Fx.celebrate('big'); return; }
         else return;
         draw();
       });

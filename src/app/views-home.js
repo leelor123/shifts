@@ -116,10 +116,12 @@
     return `<div class="card share-card"><div class="card-head">${icon('sparkle')}<h3>${esc(w.title)}</h3><button class="icon-btn" data-act="weekly-share" data-id="${esc(w.id)}" aria-label="שתף">${icon('share')}</button><button class="icon-btn" data-act="notif-read" data-id="${esc(w.id)}" aria-label="סגור">${icon('x')}</button></div>
       <div style="font-size:1.05rem">${esc(w.body)}</div><div class="tiny muted" style="margin-top:6px">${esc(w.explain)}</div></div>`;
   }
+  let bdayCelebrated = false;
   function birthdayCard() {
     const b = S.settings.birthDate;
     if (!b || b.slice(5) !== U.todayKey().slice(5)) return '';
     const age = Engine.ageAt(b, U.todayKey());
+    if (!bdayCelebrated) { bdayCelebrated = true; setTimeout(() => root.Fx.celebrate('big'), 700); }
     return `<div class="card bday"><div class="bday-confetti" aria-hidden="true"></div><div class="bday-title">מזל טוב${S.settings.userName ? ', ' + esc(S.settings.userName) : ''}!</div>
       <div>יום הולדת ${age} שמח 🎂 שתהיה שנה של משמרות טובות, בוסים הוגנים ותלושים בלי הפתעות.</div>${age === 18 ? '<div class="small" style="margin-top:6px">מהיום החישוב כולל ניכויי חובה רגילים.</div>' : ''}</div>`;
   }

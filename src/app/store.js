@@ -67,6 +67,7 @@
     S.meta = kvMap.meta || {};
     S.activeShift = kvMap.activeShift || null;
     for (const s of LIST_STORES) S[s] = await getAll(s);
+    S.roles.forEach((r) => safeRecord('roles', r));
     // first run: default employer
     if (!S.employers.length) {
       S.employers = [root.Defaults.defaultEmployer()];
@@ -96,6 +97,15 @@
       else out[k] = over[k];
     }
     return out;
+  }
+
+  // meta that describes this phone (account link, sync progress), never taken from a backup
+  const DEVICE_META = ['cloudUid', 'cloudEmail', 'cloudName', 'cloudPhoto', 'cloudReady', 'lastSync', 'designV2', 'chat', 'chatShareData'];
+  const SYNC_META = ['pendingDeletes', 'settingsDirty', 'activeDirty', 'activeUpdatedAt'];
+  /** Values that end up inside HTML attributes must have a safe shape. */
+  function safeRecord(store, r) {
+    if (store === 'roles' && r && typeof r.color === 'string' && !/^#[0-9a-f]{3,8}$/i.test(r.color)) r.color = '#888888';
+    return r;
   }
 
   async function rawPut(store, obj) {
@@ -187,7 +197,7 @@
     for (const op of ops) {
       const arr = S[op.store];
       if (op.put) {
-        const obj = Object.assign({}, op.put, { _syncedAt: op.put.updatedAt });
+        const obj = safeRecord(op.store, Object.assign({}, op.put, { _syncedAt: op.put.updatedAt }));
         const i = arr.findIndex((x) => x.id === obj.id);
         if (i >= 0) arr[i] = obj; else arr.push(obj);
         t.objectStore(op.store).put(obj);
@@ -218,6 +228,11 @@
     const out = [];
     for (const st of SYNC_STORES) for (const r of S[st]) if ((r.updatedAt || 0) !== r._syncedAt) out.push({ store: st, rec: r });
     return out;
+  }
+  /** This phone has never synced with the signed-in account: offer every local record to it. */
+  async function forgetSyncState() {
+    for (const st of SYNC_STORES) for (const r of S[st]) delete r._syncedAt;
+    await saveAll();
   }
   /** Mark every local record dirty with a fresh timestamp (used to make the cloud match this device). */
   async function touchAll() {
@@ -335,11 +350,20 @@
     for (const s of LIST_STORES) incoming[s] = json[s] || [];
     runMigrations(incoming, json.schemaVersion || 1);
     const keepKey = S.settings && S.settings.ai ? S.settings.ai.apiKey : '';
+    for (const s of SYNC_STORES) for (const x of incoming[s]) delete x._syncedAt; // that sync state belongs to the device that made the backup
+    for (const r of incoming.roles) safeRecord('roles', r);
     if (mode === 'replace') {
       S.settings = mergeDeep(root.Defaults.defaultSettings(), incoming.settings || {});
       S.settings.ai.apiKey = keepKey;
+      // keep this phone's account link and sync bookkeeping; take everything else from the backup
+      const device = {};
+      for (const k of DEVICE_META) if (S.meta[k] !== undefined) device[k] = S.meta[k];
       S.meta = Object.assign({}, incoming.meta);
+      for (const k of DEVICE_META.concat(SYNC_META)) delete S.meta[k];
+      Object.assign(S.meta, device);
       S.activeShift = incoming.activeShift;
+      S.meta.activeUpdatedAt = Date.now();
+      S.meta.activeDirty = true;
       for (const s of LIST_STORES) S[s] = incoming[s];
       const t = tx(['files'], 'readwrite');
       t.objectStore('files').clear();
@@ -374,6 +398,6 @@
   root.Store = {
     S, load, on, apply, put, del, undo: undoAny, canUndo, setSettings, setMeta, setActive, find, clone,
     putFile, getFile, delFile, exportBackup, importBackup, wipe, saveAll, SCHEMA_VERSION, DB_NAME,
-    SYNC_STORES, applyRemote, markSynced, dirtyRecords, touchAll, applyRemoteSettings, applyRemoteActive,
+    SYNC_STORES, applyRemote, markSynced, dirtyRecords, touchAll, forgetSyncState, applyRemoteSettings, applyRemoteActive,
   };
 })(typeof window !== 'undefined' ? window : globalThis);

@@ -48,7 +48,7 @@
   const icsDate = (ms) => new Date(ms).toISOString().replace(/[-:]/g, '').replace(/\.\d{3}/, '');
   const icsEsc = (s) => String(s || '').replace(/\\/g, '\\\\').replace(/\n/g, '\\n').replace(/,/g, '\\,').replace(/;/g, '\\;');
   function ics(results, filename) {
-    const lines = ['BEGIN:VCALENDAR', 'VERSION:2.0', 'PRODID:-//ShiftPay//HE', 'CALSCALE:GREGORIAN', 'METHOD:PUBLISH'];
+    const lines = ['BEGIN:VCALENDAR', 'VERSION:2.0', 'PRODID:-//Shaati//HE', 'CALSCALE:GREGORIAN', 'METHOD:PUBLISH'];
     for (const r of results) {
       const roles = [...new Set(r.segments.map((s) => App.roleName(s.roleId)))].join(' → ');
       const sh = App.shift(r.id) || {};
@@ -123,7 +123,7 @@
       g.fillStyle = ink; g.font = font(800, 60); g.fillText(v, x - 36, y + 150);
     });
     if (sentence) { g.fillStyle = ink; g.font = font(500, 38); wrap(g, sentence, X, 1110, W - 160, 52); }
-    g.fillStyle = prim; g.font = font(700, 30); g.fillText('מעקב משמרות ושכר', X, H - 60);
+    g.fillStyle = prim; g.font = font(700, 30); g.fillText('Shaati', X, H - 60);
     const blob = await new Promise((res) => c.toBlob(res, 'image/png'));
     await UI.shareFile(`summary-${r.from || ''}.png`, blob, 'סיכום שכר');
   }

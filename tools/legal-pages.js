@@ -22,7 +22,7 @@ function loadDocs(src) {
 const EN = {
   privacy: `<h2 lang="en" dir="ltr">Summary in English</h2>
 <div lang="en" dir="ltr" class="en">
-<p><b>ShiftPay — shift &amp; pay tracker</b> is a personal tool for Israeli hourly workers.</p>
+<p><b>Shaati — shift &amp; pay tracker</b> is a personal tool for Israeli hourly workers.</p>
 <ul>
 <li><b>Data you enter</b> (shifts, roles and hourly rates, leave days, settings, verified payslip fields, optional name and date of birth) is stored on your device and — after you sign in with Google — in Google Cloud Firestore (region me-west1, Tel Aviv). Security rules allow each signed-in user to access only their own data.</li>
 <li><b>Account data:</b> Google user ID, email, display name and photo, used only for sign-in and display.</li>
@@ -56,7 +56,7 @@ const DELETE = `<p class="meta">מחיקת חשבון ונתונים · Account 
 function page(title, body) {
   return `<!doctype html>
 <html lang="he" dir="rtl"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
-<title>${title} · מעקב משמרות ושכר</title><link rel="icon" href="icon.svg" type="image/svg+xml">
+<title>${title} · Shaati</title><link rel="icon" href="favicon-48.png" type="image/png">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Rubik:wght@400;500;700&display=swap">
 <style>
 :root{--ink:#1b2220;--muted:#5b625e;--line:#e3dfd4;--bg:#f6f4ee;--card:#fdfcf8;--primary:#1d4a4f}
@@ -71,7 +71,7 @@ h1{font-size:1.7rem;margin:8px 0 4px} h2{font-size:1.15rem;margin:22px 0 6px} h4
 .meta,.legal-meta{color:var(--muted);font-size:.85rem} a{color:var(--primary)} ul,ol{padding-inline-start:22px}
 .en{font-family:system-ui,Arial,sans-serif} footer{margin-top:28px;color:var(--muted);font-size:.85rem}
 </style></head><body><main>
-<header><img src="icon-192.png" alt=""><a href="${APP_URL}">מעקב משמרות ושכר</a></header>
+<header><img src="icon-192.png" alt=""><a href="${APP_URL}">Shaati</a></header>
 <h1>${title}</h1><div class="card">${body}</div>
 <footer><a href="privacy.html">מדיניות פרטיות</a> · <a href="terms.html">תנאי שימוש</a> · <a href="accessibility.html">נגישות</a> · <a href="delete-account.html">מחיקת חשבון</a> · <a href="${CONTACT}">יצירת קשר</a></footer>
 </main></body></html>

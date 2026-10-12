@@ -141,6 +141,7 @@
       },
       // --- appearance ---
       theme: 'system', accent: 'petrol', fontScale: 1, font: 'rubik',
+      fx: { effects: true, sound: true, haptic: true }, // tap pulse / confetti, click sounds, vibration
       // --- security ---
       lock: { enabled: false, hash: null, salt: null, timeoutMin: 1 },
       // --- AI ---

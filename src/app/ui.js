@@ -213,7 +213,11 @@
   }
 
   /* ---------------- misc ---------------- */
-  function vibrate(ms) { try { if (navigator.vibrate) navigator.vibrate(ms || 12); } catch (e) { /* ignore */ } }
+  function vibrate(ms) {
+    const fx = root.Store && root.Store.S.settings && root.Store.S.settings.fx;
+    if (fx && fx.haptic === false) return;
+    try { if (navigator.vibrate) navigator.vibrate(ms || 12); } catch (e) { /* ignore */ }
+  }
   function download(filename, content, type) {
     const blob = content instanceof Blob ? content : new Blob([content], { type: type || 'text/plain;charset=utf-8' });
     const url = URL.createObjectURL(blob);

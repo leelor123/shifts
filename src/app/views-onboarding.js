@@ -23,7 +23,7 @@
 
     const screens = [
       () => `<div style="text-align:center;padding-top:6vh"><div class="brand-mark big" aria-hidden="true"></div>
-        <h1>מעקב משמרות ושכר</h1><p class="lead">רישום משמרות בלחיצה, חישוב שכר מדויק (שבתות, חגים, שעות נוספות), תובנות, ובדיקת תלוש. הכול נשמר רק בטלפון שלך.</p>
+        <h1 class="brand-name">Shaati</h1><div class="brand-sub">מעקב משמרות ושכר</div><p class="lead">רישום משמרות בלחיצה, חישוב שכר מדויק (שבתות, חגים, שעות נוספות), תובנות, ובדיקת תלוש. הנתונים נשמרים בחשבון שלך, ורק לך יש גישה אליהם.</p>
         <p class="small muted">ההגדרה לוקחת כדקה. כל ערך אפשר לשנות אחר כך בהגדרות.</p></div>`,
       () => `<h1>התפקידים שלך</h1><p class="lead">לכל תפקיד שכר שעתי וצבע. העלאות שכר בעתיד מוסיפים מתאריך — בלי לשנות משמרות עבר.</p>
         ${roles.map((r, i) => `<div class="role-edit"><button class="sw" style="background:${r.color}" data-cc="${i}" aria-label="צבע"></button>

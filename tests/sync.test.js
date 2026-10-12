@@ -158,3 +158,42 @@ T.atest('deleting the account removes all cloud data and the sign-in account', a
   T.eq(calls.join(','), 'reauth:u1,delete:u1,signout', 'old sign-in is confirmed again, then the account is deleted');
   T.eq(A.S.shifts.length, 0, 'phone cleared');
 });
+
+T.atest('signing in with a different account never mixes the two accounts', async () => {
+  const be = fakeBackend();
+  const B = await phone(be); await B.add('b1', 'belongs to account 2');
+  await B.Cloud.connect({ uid: 'u2', email: 'two@example.com' }); await wait(30);
+  const A = await phone(be); await A.add('a1', 'belongs to account 1');
+  await A.Cloud.connect(user); await wait(30);
+  await A.Cloud.connect({ uid: 'u2', email: 'two@example.com' }); await wait(250);
+  T.ok(!be.docs.has('users/u2/shifts/a1'), 'account 1 data did not leak into account 2');
+  T.ok(!A.shift('a1'), 'the phone shows only the new account');
+  T.eq(A.shift('b1') && A.shift('b1').note, 'belongs to account 2');
+  T.ok(be.docs.has('users/u1/shifts/a1'), 'account 1 data is still safe in account 1');
+});
+
+T.atest('a change is not marked as synced until the server confirms it', async () => {
+  const be = fakeBackend();
+  const A = await phone(be); await A.Cloud.connect(user); await wait(30);
+  A.client.online = false; A.ctx.navigator.onLine = false;
+  await A.add('p1', 'pending'); await A.sync();
+  T.eq(A.Store.dirtyRecords().length, 1, 'still waiting for the server');
+  A.ctx.navigator.onLine = true;
+  await A.client.goOnline(); await wait(100);
+  T.eq(A.Store.dirtyRecords().length, 0, 'confirmed');
+  T.eq(live(be, 'shifts'), 1);
+});
+
+T.atest('restoring a backup keeps the account link and uploads the restored data', async () => {
+  const be = fakeBackend();
+  const A = await phone(be); await A.add('s1', 'before');
+  await A.Cloud.connect(user); await wait(30);
+  const backup = JSON.parse(JSON.stringify(await A.Store.exportBackup(false)));
+  backup.meta.cloudUid = 'someone-else';
+  backup.shifts.push({ id: 's9', kind: 'shift', employerId: 'emp1', roleId: 'r1', status: 'done', start: 1, end: 2, note: 'from backup', updatedAt: 5, _syncedAt: 5 });
+  backup.roles = [{ id: 'r1', name: 'x', color: '#fff" onclick="alert(1)', rates: [], employerId: 'emp1' }];
+  await A.Store.importBackup(backup, 'replace'); await wait(250);
+  T.eq(A.S.meta.cloudUid, 'u1', 'still linked to the signed-in account');
+  T.ok(be.docs.has('users/u1/shifts/s9'), 'restored shift uploaded');
+  T.eq(A.S.roles[0].color, '#888888', 'unsafe colour value replaced');
+});

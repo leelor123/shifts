@@ -1,8 +1,8 @@
 {
   "id": "./",
-  "name": "מעקב משמרות ושכר",
-  "short_name": "משמרות",
-  "description": "מעקב משמרות, חישוב שכר וניתוח תלושים — עובד גם בלי אינטרנט",
+  "name": "Shaati",
+  "short_name": "Shaati",
+  "description": "Shaati — מעקב משמרות, חישוב שכר ובדיקת תלושים. עובד גם בלי אינטרנט",
   "lang": "he",
   "dir": "rtl",
   "start_url": "./?source=pwa",
@@ -16,7 +16,7 @@
     { "src": "icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
     { "src": "icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
     { "src": "icon-maskable-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" },
-    { "src": "icon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any" }
+    { "src": "icon-mono-512.png", "sizes": "512x512", "type": "image/png", "purpose": "monochrome" }
   ],
   "shortcuts": [
     { "name": "התחל משמרת", "short_name": "התחל משמרת", "url": "./?action=start", "icons": [{ "src": "icon-192.png", "sizes": "192x192", "type": "image/png" }] },

@@ -12,7 +12,7 @@
   const LEGAL_VERSION = '1.0';
   const EFFECTIVE = '12 באוקטובר 2026';
   const CONTACT = 'https://github.com/leelor123/shifts/issues';
-  const APP_NAME = 'מעקב משמרות ושכר';
+  const APP_NAME = 'Shaati';
   App.LEGAL_VERSION = LEGAL_VERSION;
 
   const contact = `<a href="${CONTACT}" target="_blank" rel="noopener">עמוד הפניות של הפרויקט</a>`;

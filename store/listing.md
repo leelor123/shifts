@@ -8,7 +8,7 @@
 
 **שם האפליקציה** (עד 30 תווים)
 ```
-מעקב משמרות ושכר
+Shaati – מעקב משמרות ושכר
 ```
 
 **תיאור קצר** (עד 80 תווים)
@@ -18,7 +18,7 @@
 
 **תיאור מלא** (עד 4000 תווים)
 ```
-מעקב משמרות ושכר עוזר לעובדים לפי שעה לדעת בדיוק כמה הרוויחו, ולוודא שהתלוש תואם את מה שעבדו.
+Shaati עוזרת לעובדים לפי שעה לדעת בדיוק כמה הרוויחו, ולוודא שהתלוש תואם את מה שעבדו.
 
 ⏱ מעקב משמרות בלחיצה
 • טיימר משמרת עם הפסקות, או הוספה ידנית של משמרות עבר
@@ -55,9 +55,12 @@
 חשוב: החישובים הם הערכה בלבד ואינם ייעוץ משפטי, חשבונאי או מס. במקרה של ספק כדאי לבדוק מול המעסיק, רואה חשבון או גורם מוסמך.
 ```
 
-**מה חדש בגרסה 1.2.0** (עד 500 תווים)
+**מה חדש בגרסה 1.3.0** (עד 500 תווים)
 ```
 • גרסת אנדרואיד ראשונה ב-Google Play
+• שם ולוגו חדשים: Shaati
+• אפקטים, צלילים ורטט בלחיצה (אפשר לכבות בהגדרות › מראה)
+• שמירה בטוחה יותר בענן
 • מחיקת חשבון מלאה מתוך האפליקציה (נתונים + חשבון)
 • השוואות ברורות יותר כשאין נתונים בתקופה הקודמת
 • דפי פרטיות, תנאי שימוש ונגישות
@@ -69,7 +72,7 @@
 
 **App name**
 ```
-ShiftPay – Shifts & Pay Tracker
+Shaati – Shifts & Pay Tracker
 ```
 
 **Short description**
@@ -79,7 +82,7 @@ Track shifts and pay in Israel: Shabbat, holidays, overtime and payslip checks.
 
 **Full description**
 ```
-ShiftPay helps hourly workers in Israel know exactly what they earned – and check that the payslip matches.
+Shaati helps hourly workers in Israel know exactly what they earned – and check that the payslip matches.
 
 • One-tap shift timer with breaks, or add past shifts manually
 • Several roles and hourly rates, with rate history; templates and duplicates

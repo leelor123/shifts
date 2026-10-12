@@ -20,7 +20,7 @@
     const draw = (msg, isErr) => {
       v.innerHTML = `<div class="wizard"><div class="content" style="display:flex;flex-direction:column;justify-content:center;text-align:center">
         <div class="brand-mark big" aria-hidden="true"></div>
-        <h1>מעקב משמרות ושכר</h1>
+        <h1 class="brand-name">Shaati</h1><div class="brand-sub">מעקב משמרות ושכר</div>
         <p class="lead">התחבר עם חשבון Google. כל הנתונים שלך נשמרים בענן לפי החשבון, וזמינים בכל טלפון שתתחבר ממנו.</p>
         ${S.shifts.length ? `<div class="banner" style="text-align:start">${icon('cloud')}<div>הנתונים שכבר יש בטלפון יעלו לחשבון שלך בהתחברות הראשונה.</div></div>` : ''}
         ${msg ? `<div class="banner ${isErr ? 'warn' : ''}" style="text-align:start">${icon(isErr ? 'alert' : 'info')}<div>${esc(msg)}</div></div>` : ''}
