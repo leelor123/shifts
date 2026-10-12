@@ -849,7 +849,7 @@ body.fx .item:active { transform: scale(.985); }
 <div id="print-root" aria-hidden="true"></div>
 <noscript><div style="padding:24px;font-family:sans-serif">האפליקציה דורשת JavaScript.</div></noscript>
 <script>
-window.APP_VERSION = '1.4.1';
+window.APP_VERSION = '1.5.0';
 /* ---- core/util.js ---- */
 /* ============================================================
  * util.js — date/time helpers and formatting.
@@ -1302,18 +1302,32 @@ window.APP_VERSION = '1.4.1';
   }
   /** Merged rest windows overlapping [fromKey, toKey]:
    *  [{start, end, days:[restDayInfo], eveKey, eveStart (premium window start or null)}] */
+  // per day: is it a rest day, and when does it start and end (shared by neighbouring shifts)
+  const dayCache = new Map();
+  function dayWindow(k, cfg, ignoreRules, base) {
+    const key = base + k;
+    let v = dayCache.get(key);
+    if (v === undefined) {
+      const info = restDayInfo(k, cfg, ignoreRules);
+      v = info ? { info, start: entryTime(U.addDays(k, -1), cfg), end: exitTime(k, cfg) } : null;
+      if (dayCache.size > 50000) dayCache.clear();
+      dayCache.set(key, v);
+    }
+    return v;
+  }
   function restWindows(fromKey, toKey, cfg, ignoreRules) {
-    const sig = cfgSig(cfg, ignoreRules) + fromKey + toKey;
+    const base = cfgSig(cfg, ignoreRules);
+    const sig = base + fromKey + toKey;
     if (windowCache.has(sig)) return windowCache.get(sig);
     const wins = [];
     for (let k = U.addDays(fromKey, -3); k <= U.addDays(toKey, 3); k = U.addDays(k, 1)) {
-      const info = restDayInfo(k, cfg, ignoreRules);
-      if (!info) continue;
-      const w = { start: entryTime(U.addDays(k, -1), cfg), end: exitTime(k, cfg), days: [info] };
+      const dw = dayWindow(k, cfg, ignoreRules, base);
+      if (!dw) continue;
+      const w = { start: dw.start, end: dw.end, days: [dw.info] };
       const prev = wins[wins.length - 1];
       if (prev && w.start <= prev.end + U.MIN) {
         prev.end = Math.max(prev.end, w.end);
-        prev.days.push(info);
+        prev.days.push(dw.info);
       } else wins.push(w);
     }
     for (const w of wins) {
@@ -1324,11 +1338,12 @@ window.APP_VERSION = '1.4.1';
       w.eveStart = wantEve && evs < w.start ? evs : null;
       w.label = w.days.map((d) => d.name).join(', ');
     }
-    if (windowCache.size > 400) windowCache.clear();
+    // one entry per shift range: big enough for years of shifts, so a recalculation after an edit reuses them
+    if (windowCache.size > 20000) windowCache.clear();
     windowCache.set(sig, wins);
     return wins;
   }
-  function clearCache() { windowCache.clear(); }
+  function clearCache() { windowCache.clear(); dayCache.clear(); }
 
   root.HebCal = {
     isLeap, fixedFromHebrew, hebrewFromFixed, keyToRd, rdToKey, hebToKey, gematria, hebrewDate,
@@ -3714,7 +3729,27 @@ window.APP_VERSION = '1.4.1';
   function hideToast() { const el = document.getElementById('toast'); if (el) el.classList.remove('show'); }
 
   /* ---------------- sheets (with Android back button support) ---------------- */
+  // Each open sheet owns one history entry ({sheet: depth}) so the Android back button closes the top
+  // sheet. Back-navigation is asynchronous and closeAll() produces a single popstate for many steps,
+  // so the depth that pending navigations will land on is tracked: quick repeated closes never walk
+  // back out of the app, and a sheet opened while a close is still travelling gets its history entry
+  // only after the close has landed.
   const sheets = [];
+  let pendingDepth = null;
+  let pendingTimer = null;
+  const committed = () => sheets.filter((s) => s.pushed);
+  function pushEntry(entry) { entry.pushed = true; history.pushState({ sheet: committed().length }, ''); }
+  function settlePending() {
+    pendingDepth = null;
+    clearTimeout(pendingTimer);
+    sheets.filter((s) => !s.pushed && !s.closed).forEach(pushEntry);
+  }
+  function navigateBack(steps, depth) {
+    pendingDepth = depth;
+    clearTimeout(pendingTimer);
+    pendingTimer = setTimeout(settlePending, 1500); // never stay stuck if the browser drops the event
+    if (steps === 1) history.back(); else history.go(-steps);
+  }
   function openSheet(opts) {
     // opts: { title, body (html), foot (html), full, onMount(el), onClose(), cls }
     const bd = document.createElement('div');
@@ -3725,9 +3760,9 @@ window.APP_VERSION = '1.4.1';
     sh.setAttribute('aria-modal', 'true');
     sh.innerHTML = `<div class="grab"></div><div class="sh-head"><h2>${opts.title || ''}</h2><button class="icon-btn" data-close aria-label="סגור">${icon('x')}</button></div><div class="sh-body">${opts.body || ''}</div>${opts.foot ? `<div class="sh-foot">${opts.foot}</div>` : ''}`;
     document.body.append(bd, sh);
-    const entry = { bd, sh, opts, closed: false };
+    const entry = { bd, sh, opts, closed: false, pushed: false };
     sheets.push(entry);
-    history.pushState({ sheet: sheets.length }, '');
+    if (pendingDepth === null) pushEntry(entry);
     requestAnimationFrame(() => { bd.classList.add('show'); sh.classList.add('show'); });
     bd.onclick = () => closeTop();
     sh.querySelector('[data-close]').onclick = () => closeTop();
@@ -3751,17 +3786,25 @@ window.APP_VERSION = '1.4.1';
     if (entry.opts.onClose) entry.opts.onClose();
   }
   function closeTop() {
-    if (!sheets.length) return;
-    history.back(); // popstate closes it
+    const top = sheets[sheets.length - 1];
+    if (!top) return;
+    if (!top.pushed) { removeSheet(top); return; } // not in history yet
+    const cur = pendingDepth === null ? committed().length : pendingDepth;
+    if (cur <= 0) return;
+    navigateBack(1, cur - 1); // popstate closes it
   }
   function closeAll() {
-    const n = sheets.length;
-    if (n) history.go(-n);
+    sheets.filter((s) => !s.pushed).forEach(removeSheet);
+    const cur = pendingDepth === null ? committed().length : pendingDepth;
+    if (cur > 0) navigateBack(cur, 0);
   }
   window.addEventListener('popstate', () => {
     const d = document.querySelector('.dialog');
     if (d && d._resolve) { d._resolve(null); d.remove(); }
-    if (sheets.length) removeSheet(sheets[sheets.length - 1]);
+    // one event can stand for several steps (closeAll, or a fast double back)
+    const depth = (history.state && history.state.sheet) || 0;
+    committed().slice(depth).reverse().forEach(removeSheet);
+    if (pendingDepth !== null && depth <= pendingDepth) settlePending();
   });
 
   /* ---------------- dialogs ---------------- */
@@ -4814,7 +4857,8 @@ window.APP_VERSION = '1.4.1';
 
   /* ---------------- model ---------------- */
   App.recompute = function () {
-    root.HebCal.clearCache();
+    // Shabbat/holiday windows are cached under a key made of every rest setting (city, holidays,
+    // day rules…), so they stay valid across recalculations: only the shifts are recomputed
     App.model = Engine.buildModel({
       settings: S.settings, employers: S.employers, roles: S.roles, dayRules: S.dayRules,
       shifts: S.shifts, entries: S.entries,
@@ -8944,7 +8988,7 @@ window.FIREBASE_CONFIG = {
   const { icon, esc } = UI;
 
   const LEGAL_VERSION = '1.0';
-  const EFFECTIVE = '12 באוקטובר 2026';
+  const EFFECTIVE = '13 באוקטובר 2026';
   const CONTACT = 'https://github.com/leelor123/shifts/issues';
   const APP_NAME = 'Shaati';
   App.LEGAL_VERSION = LEGAL_VERSION;
@@ -8990,13 +9034,14 @@ window.FIREBASE_CONFIG = {
       html: `<p class="legal-meta">גרסה ${LEGAL_VERSION} · בתוקף מ-${EFFECTIVE}</p>
 <p>הפרטיות שלך חשובה. מדיניות זו מסבירה איזה מידע נשמר, איפה, ולמה — בהתאם לחוק הגנת הפרטיות, התשמ"א-1981, ולתקנות שמכוחו.</p>
 <h4>1. איזה מידע נשמר</h4>
-<ul><li><b>מידע שאתה מזין:</b> משמרות, תפקידים ותעריפים, חופשה ומחלה, תוספות וניכויים, הגדרות חישוב, נתוני תלושים שאימתת, ובאופן רשות — שם ותאריך לידה.</li>
+<ul><li><b>מידע שאתה מזין:</b> משמרות, תפקידים ותעריפים, חופשה ומחלה, תוספות וניכויים, הגדרות חישוב, נתוני תלושים שאימתת, ובאופן רשות — שם, תאריך לידה ומגדר (משמשים לחישוב שכר המינימום לפי גיל, לבדיקות חוק עבודת הנוער ולגיל הפנסיה).</li>
 <li><b>פרטי חשבון Google בסיסיים:</b> מזהה משתמש, כתובת אימייל, שם ותמונת פרופיל — לצורך התחברות ותצוגה בלבד.</li>
 <li><b>מידע טכני:</b> כתובת IP ופרטי דפדפן שנרשמים אוטומטית אצל ספקי התשתית בעת טעינת האפליקציה. אין באפליקציה כלי ניתוח (אנליטיקה), פרסומות או עוגיות מעקב.</li></ul>
 <h4>2. איפה המידע נשמר</h4>
 <p>במכשיר שלך (אחסון הדפדפן), ולאחר התחברות — גם בענן Google Cloud Firestore, באזור me-west1 (תל אביב). כללי האבטחה במסד הנתונים מאפשרים גישה לנתונים רק למשתמש המחובר שהם שלו. התעבורה מוצפנת (HTTPS), והאחסון בענן מוצפן על ידי Google.</p>
 <h4>3. מה לא יוצא מהטלפון</h4>
 <p>מפתח ה-API, קוד הנעילה, קובצי התלושים עצמם (תמונה ו-PDF) והטקסט הגולמי שזוהה מהם נשמרים רק במכשיר.</p>
+<p><b>פתיחה בטביעת אצבע:</b> הזיהוי מתבצע כולו במנגנון של הטלפון. האפליקציה לא מקבלת, לא שומרת ולא שולחת טביעות אצבע או נתוני פנים; היא שומרת רק מזהה טכני שמאפשר לבקש מהטלפון לאשר את הזהות.</p>
 <h4>4. למה המידע משמש</h4>
 <p>אך ורק לאספקת השירות: חישובים, סנכרון בין מכשירים, התראות ותובנות. המידע אינו נמכר, אינו מושכר ואינו משמש לשיווק או לפרסום.</p>
 <h4>5. העברה לצדדים שלישיים</h4>

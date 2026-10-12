@@ -119,7 +119,27 @@
   function hideToast() { const el = document.getElementById('toast'); if (el) el.classList.remove('show'); }
 
   /* ---------------- sheets (with Android back button support) ---------------- */
+  // Each open sheet owns one history entry ({sheet: depth}) so the Android back button closes the top
+  // sheet. Back-navigation is asynchronous and closeAll() produces a single popstate for many steps,
+  // so the depth that pending navigations will land on is tracked: quick repeated closes never walk
+  // back out of the app, and a sheet opened while a close is still travelling gets its history entry
+  // only after the close has landed.
   const sheets = [];
+  let pendingDepth = null;
+  let pendingTimer = null;
+  const committed = () => sheets.filter((s) => s.pushed);
+  function pushEntry(entry) { entry.pushed = true; history.pushState({ sheet: committed().length }, ''); }
+  function settlePending() {
+    pendingDepth = null;
+    clearTimeout(pendingTimer);
+    sheets.filter((s) => !s.pushed && !s.closed).forEach(pushEntry);
+  }
+  function navigateBack(steps, depth) {
+    pendingDepth = depth;
+    clearTimeout(pendingTimer);
+    pendingTimer = setTimeout(settlePending, 1500); // never stay stuck if the browser drops the event
+    if (steps === 1) history.back(); else history.go(-steps);
+  }
   function openSheet(opts) {
     // opts: { title, body (html), foot (html), full, onMount(el), onClose(), cls }
     const bd = document.createElement('div');
@@ -130,9 +150,9 @@
     sh.setAttribute('aria-modal', 'true');
     sh.innerHTML = `<div class="grab"></div><div class="sh-head"><h2>${opts.title || ''}</h2><button class="icon-btn" data-close aria-label="סגור">${icon('x')}</button></div><div class="sh-body">${opts.body || ''}</div>${opts.foot ? `<div class="sh-foot">${opts.foot}</div>` : ''}`;
     document.body.append(bd, sh);
-    const entry = { bd, sh, opts, closed: false };
+    const entry = { bd, sh, opts, closed: false, pushed: false };
     sheets.push(entry);
-    history.pushState({ sheet: sheets.length }, '');
+    if (pendingDepth === null) pushEntry(entry);
     requestAnimationFrame(() => { bd.classList.add('show'); sh.classList.add('show'); });
     bd.onclick = () => closeTop();
     sh.querySelector('[data-close]').onclick = () => closeTop();
@@ -156,17 +176,25 @@
     if (entry.opts.onClose) entry.opts.onClose();
   }
   function closeTop() {
-    if (!sheets.length) return;
-    history.back(); // popstate closes it
+    const top = sheets[sheets.length - 1];
+    if (!top) return;
+    if (!top.pushed) { removeSheet(top); return; } // not in history yet
+    const cur = pendingDepth === null ? committed().length : pendingDepth;
+    if (cur <= 0) return;
+    navigateBack(1, cur - 1); // popstate closes it
   }
   function closeAll() {
-    const n = sheets.length;
-    if (n) history.go(-n);
+    sheets.filter((s) => !s.pushed).forEach(removeSheet);
+    const cur = pendingDepth === null ? committed().length : pendingDepth;
+    if (cur > 0) navigateBack(cur, 0);
   }
   window.addEventListener('popstate', () => {
     const d = document.querySelector('.dialog');
     if (d && d._resolve) { d._resolve(null); d.remove(); }
-    if (sheets.length) removeSheet(sheets[sheets.length - 1]);
+    // one event can stand for several steps (closeAll, or a fast double back)
+    const depth = (history.state && history.state.sheet) || 0;
+    committed().slice(depth).reverse().forEach(removeSheet);
+    if (pendingDepth !== null && depth <= pendingDepth) settlePending();
   });
 
   /* ---------------- dialogs ---------------- */

@@ -29,7 +29,8 @@
 
   /* ---------------- model ---------------- */
   App.recompute = function () {
-    root.HebCal.clearCache();
+    // Shabbat/holiday windows are cached under a key made of every rest setting (city, holidays,
+    // day rules…), so they stay valid across recalculations: only the shifts are recomputed
     App.model = Engine.buildModel({
       settings: S.settings, employers: S.employers, roles: S.roles, dayRules: S.dayRules,
       shifts: S.shifts, entries: S.entries,

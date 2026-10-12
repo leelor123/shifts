@@ -291,18 +291,32 @@
   }
   /** Merged rest windows overlapping [fromKey, toKey]:
    *  [{start, end, days:[restDayInfo], eveKey, eveStart (premium window start or null)}] */
+  // per day: is it a rest day, and when does it start and end (shared by neighbouring shifts)
+  const dayCache = new Map();
+  function dayWindow(k, cfg, ignoreRules, base) {
+    const key = base + k;
+    let v = dayCache.get(key);
+    if (v === undefined) {
+      const info = restDayInfo(k, cfg, ignoreRules);
+      v = info ? { info, start: entryTime(U.addDays(k, -1), cfg), end: exitTime(k, cfg) } : null;
+      if (dayCache.size > 50000) dayCache.clear();
+      dayCache.set(key, v);
+    }
+    return v;
+  }
   function restWindows(fromKey, toKey, cfg, ignoreRules) {
-    const sig = cfgSig(cfg, ignoreRules) + fromKey + toKey;
+    const base = cfgSig(cfg, ignoreRules);
+    const sig = base + fromKey + toKey;
     if (windowCache.has(sig)) return windowCache.get(sig);
     const wins = [];
     for (let k = U.addDays(fromKey, -3); k <= U.addDays(toKey, 3); k = U.addDays(k, 1)) {
-      const info = restDayInfo(k, cfg, ignoreRules);
-      if (!info) continue;
-      const w = { start: entryTime(U.addDays(k, -1), cfg), end: exitTime(k, cfg), days: [info] };
+      const dw = dayWindow(k, cfg, ignoreRules, base);
+      if (!dw) continue;
+      const w = { start: dw.start, end: dw.end, days: [dw.info] };
       const prev = wins[wins.length - 1];
       if (prev && w.start <= prev.end + U.MIN) {
         prev.end = Math.max(prev.end, w.end);
-        prev.days.push(info);
+        prev.days.push(dw.info);
       } else wins.push(w);
     }
     for (const w of wins) {
@@ -313,11 +327,12 @@
       w.eveStart = wantEve && evs < w.start ? evs : null;
       w.label = w.days.map((d) => d.name).join(', ');
     }
-    if (windowCache.size > 400) windowCache.clear();
+    // one entry per shift range: big enough for years of shifts, so a recalculation after an edit reuses them
+    if (windowCache.size > 20000) windowCache.clear();
     windowCache.set(sig, wins);
     return wins;
   }
-  function clearCache() { windowCache.clear(); }
+  function clearCache() { windowCache.clear(); dayCache.clear(); }
 
   root.HebCal = {
     isLeap, fixedFromHebrew, hebrewFromFixed, keyToRd, rdToKey, hebToKey, gematria, hebrewDate,

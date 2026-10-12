@@ -24,9 +24,10 @@ const EN = {
 <div lang="en" dir="ltr" class="en">
 <p><b>Shaati — shift &amp; pay tracker</b> is a personal tool for Israeli hourly workers.</p>
 <ul>
-<li><b>Data you enter</b> (shifts, roles and hourly rates, leave days, settings, verified payslip fields, optional name and date of birth) is stored on your device and — after you sign in with Google — in Google Cloud Firestore (region me-west1, Tel Aviv). Security rules allow each signed-in user to access only their own data.</li>
+<li><b>Data you enter</b> (shifts, roles and hourly rates, leave days, settings, verified payslip fields, optional name, date of birth and gender, used for the age-based minimum wage, youth-employment checks and the pension age) is stored on your device and — after you sign in with Google — in Google Cloud Firestore (region me-west1, Tel Aviv). Security rules allow each signed-in user to access only their own data.</li>
 <li><b>Account data:</b> Google user ID, email, display name and photo, used only for sign-in and display.</li>
 <li><b>Never uploaded:</b> your Anthropic API key, the PIN lock, payslip image/PDF files and their raw OCR text.</li>
+<li><b>Fingerprint unlock</b> is handled entirely by the phone; the app never receives or stores fingerprint or face data.</li>
 <li><b>No ads, no analytics, no tracking cookies.</b> Data is not sold or shared for marketing.</li>
 <li><b>Third parties:</b> Google (authentication and storage), GitHub (hosting of the app code), Anthropic (only when you use an AI feature with your own API key; payslip text is redacted and shown to you before sending), font/code CDNs.</li>
 <li><b>Your rights:</b> view and edit everything in the app, export it (backup file / CSV), and delete your account and all data at any time (Settings › Account &amp; sync › Delete all data). See <a href="delete-account.html">delete-account.html</a>.</li>
