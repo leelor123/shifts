@@ -573,9 +573,12 @@
     return a;
   }
   const isMinor = (settings, k) => { const a = ageAt(settings.birthDate, k || U.todayKey()); return a != null && a < 18; };
+  /** Mandatory pension (צו ההרחבה לביטוח פנסיוני) starts at 21 for men and 20 for women. */
+  const pensionMinAge = (settings) => (settings.gender === 'f' ? 20 : 21);
   function pensionActive(settings, periodTo) {
     if (!settings.pension.enabled) return false;
-    if (isMinor(settings, periodTo)) return false;
+    const age = ageAt(settings.birthDate, periodTo || U.todayKey());
+    if (age != null && age < pensionMinAge(settings)) return false;
     if (!settings.startDate) return true;
     return monthsBetween(settings.startDate, periodTo) >= (+settings.pension.startAfterMonths || 0);
   }
@@ -825,7 +828,42 @@
     return out;
   }
 
+  /* ---------------- the law: minimum wage and youth employment ----------------
+   * Adult minimum wage per hour as published (monthly ÷ 182 hours). Under 18 it is a share of the
+   * adult monthly wage ÷ 173 hours: 70% under 16, 75% at 16, 83% at 17 (חוק שכר מינימום).
+   * New rates take effect every April; add a row here when they are published. */
+  const MIN_WAGE = [
+    { from: '2023-04-01', monthly: 5880.02, hourly: 32.30 },
+    { from: '2025-04-01', monthly: 6247.67, hourly: 34.32 },
+    { from: '2026-04-01', monthly: 6443.85, hourly: 35.40 },
+  ];
+  const round2 = (x) => Math.round(x * 100) / 100;
+  function legalMinWage(k, birthKey) {
+    const row = MIN_WAGE.filter((r) => r.from <= k).pop() || MIN_WAGE[0];
+    const age = ageAt(birthKey, k);
+    if (age != null && age < 18) {
+      const share = age < 16 ? 0.7 : age < 17 ? 0.75 : 0.83;
+      return { hourly: round2(row.monthly * share / 173), monthly: round2(row.monthly * share), age, youth: true, share, from: row.from };
+    }
+    return { hourly: row.hourly, monthly: row.monthly, age, youth: false, share: 1, from: row.from };
+  }
+  /** The minimum wage the checks use: the user's own figure if they set one, otherwise the law. */
+  function minWageFor(settings, k) {
+    const law = legalMinWage(k, settings.birthDate);
+    const own = +settings.minWageHourly;
+    return own > 0 ? Object.assign({}, law, { hourly: own, custom: true }) : law;
+  }
+  /** Limits of the Youth Employment Law (חוק עבודת הנוער) for a worker of `age` (under 18). */
+  function youthRules(age, workWeek) {
+    return {
+      nightFrom: age < 16 ? 20 : 22, nightTo: age < 16 ? 8 : 6, // no work in this window (unless a permit)
+      dayHours: age >= 16 && +workWeek === 5 ? 9 : 8, // 9 only for 16–17 at a five-day workplace
+      weekHours: 40, eveHours: 7, breakAfterHours: 6, breakMin: 45,
+    };
+  }
+
   root.Engine = {
+    legalMinWage, minWageFor, youthRules, pensionMinAge, MIN_WAGE,
     makeCtx, roleRate, roundMinutes, monthsBetween, buildSegments, hasOverrides, computeShift, computeAll,
     periodByKey, periodOf, dayValue, computeEntries, travelByDay, incomeTaxRaw, netEstimate, pensionActive,
     buildModel, totals, periodSummary, rangeSummary, pensionBaseOf, leaveBalances, vacationEntitlement, recuperationDays, ageAt, isMinor,

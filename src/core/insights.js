@@ -40,6 +40,8 @@
     weekly: { cat: 'summary', label: 'סיכום שבועי' },
     recuperation: { cat: 'money', label: 'דמי הבראה' },
     birthday: { cat: 'reminder', label: 'יום הולדת' },
+    minwage: { cat: 'money', label: 'שכר מינימום' },
+    youth: { cat: 'health', label: 'חוק עבודת הנוער' },
   };
 
   const pctDev = (cur, base) => (base > 0 ? ((cur - base) / base) * 100 : cur > 0 ? Infinity : 0);
@@ -203,6 +205,67 @@
     /* ---- health ---- */
     const done = [...model.results.values()].filter((r) => r.status === 'done').sort((a, b) => a.start - b.start);
     const recentFrom = U.addDays(today, -14);
+    /* ---- the law ---- */
+    if (on('minwage')) {
+      const mw = Engine.minWageFor(S, today);
+      const adult = Engine.legalMinWage(today, null).hourly;
+      for (const role of model.ctx.roles.values()) {
+        if (role.archived) continue;
+        const rate = Engine.roleRate(role, today);
+        if (!(rate > 0) || rate + 0.005 >= mw.hourly) continue;
+        // without a birth date the adult minimum is used; a teen may be fine at a lower rate
+        const maybeTeen = !S.birthDate && !mw.custom && rate >= Engine.legalMinWage(today, U.addDays(today, -16 * 366)).hourly - 0.005;
+        alerts.push({ key: `minw-${role.id}-${mw.from}-${mw.hourly}-${rate}`, type: 'minwage', severity: maybeTeen ? 'warn' : 'critical', push: maybeTeen ? 'anomaly' : 'critical', ref: role.id,
+          title: `התעריף ב${role.name} נמוך משכר המינימום`,
+          body: maybeTeen
+            ? `${U.money(rate)} לשעה, פחות משכר המינימום למבוגר (${U.money(adult)}). מתחת לגיל 18 המינימום נמוך יותר: הוסף תאריך לידה בהגדרות כדי לבדוק לפי הגיל שלך.`
+            : `${U.money(rate)} לשעה, ושכר המינימום${mw.youth ? ` לגיל ${mw.age}` : ''} הוא ${U.money(mw.hourly)}. חסרים ${U.money(mw.hourly - rate)} על כל שעה.`,
+          explain: mw.custom ? 'לפי שכר המינימום שהגדרת בהגדרות.' : `חוק שכר מינימום, התעריף מ-${U.fmtDate(mw.from, 'short')}${mw.youth ? ' (לנוער: ' + Math.round(mw.share * 100) + '% משכר המבוגר)' : ''}.` });
+      }
+    }
+    const ageNow = Engine.ageAt(S.birthDate, today);
+    if (on('youth') && ageNow != null && ageNow < 18) {
+      const from = U.addDays(today, -28);
+      const found = { night: [], day: [], breaks: [], eve: [], week: [] };
+      const dayMin = new Map(), weekMin = new Map();
+      for (const r of done) {
+        if (r.dateKey < from) continue;
+        const age = Engine.ageAt(S.birthDate, r.dateKey);
+        if (age == null || age >= 18) continue;
+        const R = Engine.youthRules(age, S.leave && S.leave.workWeek);
+        let night = 0;
+        for (let t = r.start; t < r.rawEnd; t += 5 * 60000) {
+          const d = new Date(t), h = d.getHours() + d.getMinutes() / 60;
+          if (h >= R.nightFrom || h < R.nightTo) night += 5;
+        }
+        if (night >= 15) found.night.push({ k: r.dateKey, id: r.id, txt: `${U.fmtDate(r.dateKey, 'dm')} עד ${U.epochHM(r.rawEnd)}`, R });
+        if (r.elapsedMin > R.breakAfterHours * 60 && (+r.breakMin || 0) < R.breakMin) found.breaks.push({ k: r.dateKey, id: r.id, txt: U.fmtDate(r.dateKey, 'dm'), R });
+        dayMin.set(r.dateKey, (dayMin.get(r.dateKey) || 0) + r.paidMin);
+        const wk = U.weekStart(r.dateKey, 0);
+        weekMin.set(wk, (weekMin.get(wk) || 0) + r.paidMin);
+        if (!found.ruleOf) found.ruleOf = R;
+      }
+      const R0 = found.ruleOf || Engine.youthRules(ageNow, S.leave && S.leave.workWeek);
+      for (const [k, m] of dayMin) {
+        if (m > R0.dayHours * 60 + 1) found.day.push({ k, txt: `${U.fmtDate(k, 'dm')} (${U.hm(m)})` });
+        if (U.dow(k) === 5 && m > R0.eveHours * 60 + 1) found.eve.push({ k, txt: `${U.fmtDate(k, 'dm')} (${U.hm(m)})` });
+      }
+      for (const [wk, m] of weekMin) if (m > R0.weekHours * 60 + 1) found.week.push({ k: wk, txt: `השבוע של ${U.fmtDate(wk, 'dm')} (${U.hm(m)})` });
+      const law = 'חוק עבודת הנוער. יש חריגים בהיתר של משרד העבודה; כדאי לבדוק עם המעסיק.';
+      const raise = (type, title, body) => {
+        const list = found[type];
+        if (!list.length) return;
+        const last = list.map((x) => x.k).sort().pop();
+        alerts.push({ key: `youth-${type}-${last}`, type: 'youth', severity: 'warn', push: 'anomaly', ref: list[list.length - 1].id || null,
+          title, body: body + ' ' + list.slice(-4).map((x) => x.txt).join(', ') + (list.length > 4 ? ` ועוד ${list.length - 4}` : '') + '.', explain: law });
+      };
+      raise('night', 'עבודת לילה לנוער', `מתחת לגיל 18 אסור לעבוד ${R0.nightFrom === 20 ? 'בין 20:00 ל-08:00 (עד גיל 16)' : 'בין 22:00 ל-06:00'}. נרשמו:`);
+      raise('day', `יום עבודה ארוך מ-${R0.dayHours} שעות`, `לנוער מותר עד ${R0.dayHours} שעות ביום. נרשמו:`);
+      raise('week', 'שבוע של יותר מ-40 שעות', 'לנוער מותר עד 40 שעות בשבוע.');
+      raise('breaks', 'הפסקה קצרה מהחוק', `ביום של יותר מ-6 שעות מגיעות לנער 45 דקות הפסקה (חצי שעה ברצף). לא נרשמה הפסקה כזו ב:`);
+      raise('eve', 'ערב שבת ארוך מ-7 שעות', 'ביום שישי ובערב חג מותר לנוער לעבוד עד 7 שעות. נרשמו:');
+    }
+
     if (on('long')) {
       for (const r of done) {
         if (r.dateKey < recentFrom) continue;

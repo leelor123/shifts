@@ -98,3 +98,35 @@ T.test('weekly summary sentence names the driving role', () => {
   T.ok(r.weekly && r.weekly.sentence.includes('6 שעות יותר'), r.weekly && r.weekly.sentence);
   T.ok(r.weekly.sentence.includes('מזנון'), r.weekly.sentence);
 });
+
+T.section('the law: minimum wage and youth employment');
+const rate = (r) => (d) => { d.roles.forEach((x) => { x.rates = [{ from: '2020-01-01', rate: r }]; }); };
+T.test('an adult paid below the minimum wage gets a critical alert', () => {
+  const r = Insights.run(Engine.buildModel(data([], (d) => { rate(30)(d); d.settings.birthDate = '1995-05-05'; })), { now: NOW });
+  const a = r.alerts.find((x) => x.type === 'minwage');
+  T.ok(a && a.severity === 'critical', 'critical');
+  T.ok(a.body.includes('35.40'), 'mentions the 2026 minimum');
+});
+T.test('a 16-year-old at 30 ₪ is above the youth minimum (27.94)', () => {
+  const r = Insights.run(Engine.buildModel(data([], (d) => { rate(30)(d); d.settings.birthDate = '2010-03-01'; })), { now: NOW });
+  T.ok(!r.alerts.some((x) => x.type === 'minwage'));
+});
+T.test('without a birth date, a teen-level rate is a gentle hint, not an accusation', () => {
+  const r = Insights.run(Engine.buildModel(data([], rate(30))), { now: NOW });
+  const a = r.alerts.find((x) => x.type === 'minwage');
+  T.ok(a && a.severity === 'warn' && a.body.includes('תאריך לידה'));
+});
+T.test('youth law: night work, a long day, no break, a long Friday', () => {
+  const shifts = [
+    shift('2026-10-06', '16:00', '23:30'), // Tue: past 22:00, 7.5h without a break
+    shift('2026-10-08', '08:00', '18:00'), // Thu: 10h
+    shift('2026-10-09', '07:00', '15:00'), // Fri: 8h
+  ];
+  const r = Insights.run(Engine.buildModel(data(shifts, (d) => { d.settings.birthDate = '2009-12-01'; d.settings.leave.workWeek = 6; })), { now: NOW });
+  const types = r.alerts.filter((x) => x.type === 'youth').map((x) => x.key.split('-')[1]);
+  T.ok(types.includes('night'), 'night'); T.ok(types.includes('day'), 'long day'); T.ok(types.includes('breaks'), 'break'); T.ok(types.includes('eve'), 'Friday');
+});
+T.test('youth law checks stay quiet for adults', () => {
+  const r = Insights.run(Engine.buildModel(data([shift('2026-10-06', '16:00', '23:30')], (d) => { d.settings.birthDate = '2000-01-01'; })), { now: NOW });
+  T.ok(!r.alerts.some((x) => x.type === 'youth'));
+});

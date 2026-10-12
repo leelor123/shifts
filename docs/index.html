@@ -1433,7 +1433,8 @@ window.APP_VERSION = '1.4.1';
         recuperationRate: 418, // ₪ per day, private sector
         recuperationMonth: 7, // month the employer pays (0 = paid monthly)
       },
-      minWageHourly: 34.32, // from April 2025
+      minWageHourly: null, // null = by law, from the date and age (Engine.legalMinWage); a number overrides it
+      gender: '', // '' | 'm' | 'f': only for the mandatory-pension age
       // --- goals ---
       goal: { amount: 0, type: 'gross' },
       // --- calendar ---
@@ -1448,7 +1449,7 @@ window.APP_VERSION = '1.4.1';
           long: true, rest8: true, streak: true, weekHours: true,
           projection: true, goal: true, record: true, goalShifts: true, payslipGap: true, travel: true,
           timer: true, plannedPast: true, idle: true, suspicious: true, payslipDue: true, backup: true, upcoming: true, weekly: true,
-          recuperation: true, birthday: true,
+          recuperation: true, birthday: true, minwage: true, youth: true,
         },
         longShiftHours: 12, minRestHours: 8, streakDays: 6, weekHoursMax: 50,
         timerHours: 12, idleDays: 7, suspiciousHours: 20, backupDays: 30, upcomingMin: 60,
@@ -2048,9 +2049,12 @@ window.APP_VERSION = '1.4.1';
     return a;
   }
   const isMinor = (settings, k) => { const a = ageAt(settings.birthDate, k || U.todayKey()); return a != null && a < 18; };
+  /** Mandatory pension (צו ההרחבה לביטוח פנסיוני) starts at 21 for men and 20 for women. */
+  const pensionMinAge = (settings) => (settings.gender === 'f' ? 20 : 21);
   function pensionActive(settings, periodTo) {
     if (!settings.pension.enabled) return false;
-    if (isMinor(settings, periodTo)) return false;
+    const age = ageAt(settings.birthDate, periodTo || U.todayKey());
+    if (age != null && age < pensionMinAge(settings)) return false;
     if (!settings.startDate) return true;
     return monthsBetween(settings.startDate, periodTo) >= (+settings.pension.startAfterMonths || 0);
   }
@@ -2300,7 +2304,42 @@ window.APP_VERSION = '1.4.1';
     return out;
   }
 
+  /* ---------------- the law: minimum wage and youth employment ----------------
+   * Adult minimum wage per hour as published (monthly ÷ 182 hours). Under 18 it is a share of the
+   * adult monthly wage ÷ 173 hours: 70% under 16, 75% at 16, 83% at 17 (חוק שכר מינימום).
+   * New rates take effect every April; add a row here when they are published. */
+  const MIN_WAGE = [
+    { from: '2023-04-01', monthly: 5880.02, hourly: 32.30 },
+    { from: '2025-04-01', monthly: 6247.67, hourly: 34.32 },
+    { from: '2026-04-01', monthly: 6443.85, hourly: 35.40 },
+  ];
+  const round2 = (x) => Math.round(x * 100) / 100;
+  function legalMinWage(k, birthKey) {
+    const row = MIN_WAGE.filter((r) => r.from <= k).pop() || MIN_WAGE[0];
+    const age = ageAt(birthKey, k);
+    if (age != null && age < 18) {
+      const share = age < 16 ? 0.7 : age < 17 ? 0.75 : 0.83;
+      return { hourly: round2(row.monthly * share / 173), monthly: round2(row.monthly * share), age, youth: true, share, from: row.from };
+    }
+    return { hourly: row.hourly, monthly: row.monthly, age, youth: false, share: 1, from: row.from };
+  }
+  /** The minimum wage the checks use: the user's own figure if they set one, otherwise the law. */
+  function minWageFor(settings, k) {
+    const law = legalMinWage(k, settings.birthDate);
+    const own = +settings.minWageHourly;
+    return own > 0 ? Object.assign({}, law, { hourly: own, custom: true }) : law;
+  }
+  /** Limits of the Youth Employment Law (חוק עבודת הנוער) for a worker of `age` (under 18). */
+  function youthRules(age, workWeek) {
+    return {
+      nightFrom: age < 16 ? 20 : 22, nightTo: age < 16 ? 8 : 6, // no work in this window (unless a permit)
+      dayHours: age >= 16 && +workWeek === 5 ? 9 : 8, // 9 only for 16–17 at a five-day workplace
+      weekHours: 40, eveHours: 7, breakAfterHours: 6, breakMin: 45,
+    };
+  }
+
   root.Engine = {
+    legalMinWage, minWageFor, youthRules, pensionMinAge, MIN_WAGE,
     makeCtx, roleRate, roundMinutes, monthsBetween, buildSegments, hasOverrides, computeShift, computeAll,
     periodByKey, periodOf, dayValue, computeEntries, travelByDay, incomeTaxRaw, netEstimate, pensionActive,
     buildModel, totals, periodSummary, rangeSummary, pensionBaseOf, leaveBalances, vacationEntitlement, recuperationDays, ageAt, isMinor,
@@ -2351,6 +2390,8 @@ window.APP_VERSION = '1.4.1';
     weekly: { cat: 'summary', label: 'סיכום שבועי' },
     recuperation: { cat: 'money', label: 'דמי הבראה' },
     birthday: { cat: 'reminder', label: 'יום הולדת' },
+    minwage: { cat: 'money', label: 'שכר מינימום' },
+    youth: { cat: 'health', label: 'חוק עבודת הנוער' },
   };
 
   const pctDev = (cur, base) => (base > 0 ? ((cur - base) / base) * 100 : cur > 0 ? Infinity : 0);
@@ -2514,6 +2555,67 @@ window.APP_VERSION = '1.4.1';
     /* ---- health ---- */
     const done = [...model.results.values()].filter((r) => r.status === 'done').sort((a, b) => a.start - b.start);
     const recentFrom = U.addDays(today, -14);
+    /* ---- the law ---- */
+    if (on('minwage')) {
+      const mw = Engine.minWageFor(S, today);
+      const adult = Engine.legalMinWage(today, null).hourly;
+      for (const role of model.ctx.roles.values()) {
+        if (role.archived) continue;
+        const rate = Engine.roleRate(role, today);
+        if (!(rate > 0) || rate + 0.005 >= mw.hourly) continue;
+        // without a birth date the adult minimum is used; a teen may be fine at a lower rate
+        const maybeTeen = !S.birthDate && !mw.custom && rate >= Engine.legalMinWage(today, U.addDays(today, -16 * 366)).hourly - 0.005;
+        alerts.push({ key: `minw-${role.id}-${mw.from}-${mw.hourly}-${rate}`, type: 'minwage', severity: maybeTeen ? 'warn' : 'critical', push: maybeTeen ? 'anomaly' : 'critical', ref: role.id,
+          title: `התעריף ב${role.name} נמוך משכר המינימום`,
+          body: maybeTeen
+            ? `${U.money(rate)} לשעה, פחות משכר המינימום למבוגר (${U.money(adult)}). מתחת לגיל 18 המינימום נמוך יותר: הוסף תאריך לידה בהגדרות כדי לבדוק לפי הגיל שלך.`
+            : `${U.money(rate)} לשעה, ושכר המינימום${mw.youth ? ` לגיל ${mw.age}` : ''} הוא ${U.money(mw.hourly)}. חסרים ${U.money(mw.hourly - rate)} על כל שעה.`,
+          explain: mw.custom ? 'לפי שכר המינימום שהגדרת בהגדרות.' : `חוק שכר מינימום, התעריף מ-${U.fmtDate(mw.from, 'short')}${mw.youth ? ' (לנוער: ' + Math.round(mw.share * 100) + '% משכר המבוגר)' : ''}.` });
+      }
+    }
+    const ageNow = Engine.ageAt(S.birthDate, today);
+    if (on('youth') && ageNow != null && ageNow < 18) {
+      const from = U.addDays(today, -28);
+      const found = { night: [], day: [], breaks: [], eve: [], week: [] };
+      const dayMin = new Map(), weekMin = new Map();
+      for (const r of done) {
+        if (r.dateKey < from) continue;
+        const age = Engine.ageAt(S.birthDate, r.dateKey);
+        if (age == null || age >= 18) continue;
+        const R = Engine.youthRules(age, S.leave && S.leave.workWeek);
+        let night = 0;
+        for (let t = r.start; t < r.rawEnd; t += 5 * 60000) {
+          const d = new Date(t), h = d.getHours() + d.getMinutes() / 60;
+          if (h >= R.nightFrom || h < R.nightTo) night += 5;
+        }
+        if (night >= 15) found.night.push({ k: r.dateKey, id: r.id, txt: `${U.fmtDate(r.dateKey, 'dm')} עד ${U.epochHM(r.rawEnd)}`, R });
+        if (r.elapsedMin > R.breakAfterHours * 60 && (+r.breakMin || 0) < R.breakMin) found.breaks.push({ k: r.dateKey, id: r.id, txt: U.fmtDate(r.dateKey, 'dm'), R });
+        dayMin.set(r.dateKey, (dayMin.get(r.dateKey) || 0) + r.paidMin);
+        const wk = U.weekStart(r.dateKey, 0);
+        weekMin.set(wk, (weekMin.get(wk) || 0) + r.paidMin);
+        if (!found.ruleOf) found.ruleOf = R;
+      }
+      const R0 = found.ruleOf || Engine.youthRules(ageNow, S.leave && S.leave.workWeek);
+      for (const [k, m] of dayMin) {
+        if (m > R0.dayHours * 60 + 1) found.day.push({ k, txt: `${U.fmtDate(k, 'dm')} (${U.hm(m)})` });
+        if (U.dow(k) === 5 && m > R0.eveHours * 60 + 1) found.eve.push({ k, txt: `${U.fmtDate(k, 'dm')} (${U.hm(m)})` });
+      }
+      for (const [wk, m] of weekMin) if (m > R0.weekHours * 60 + 1) found.week.push({ k: wk, txt: `השבוע של ${U.fmtDate(wk, 'dm')} (${U.hm(m)})` });
+      const law = 'חוק עבודת הנוער. יש חריגים בהיתר של משרד העבודה; כדאי לבדוק עם המעסיק.';
+      const raise = (type, title, body) => {
+        const list = found[type];
+        if (!list.length) return;
+        const last = list.map((x) => x.k).sort().pop();
+        alerts.push({ key: `youth-${type}-${last}`, type: 'youth', severity: 'warn', push: 'anomaly', ref: list[list.length - 1].id || null,
+          title, body: body + ' ' + list.slice(-4).map((x) => x.txt).join(', ') + (list.length > 4 ? ` ועוד ${list.length - 4}` : '') + '.', explain: law });
+      };
+      raise('night', 'עבודת לילה לנוער', `מתחת לגיל 18 אסור לעבוד ${R0.nightFrom === 20 ? 'בין 20:00 ל-08:00 (עד גיל 16)' : 'בין 22:00 ל-06:00'}. נרשמו:`);
+      raise('day', `יום עבודה ארוך מ-${R0.dayHours} שעות`, `לנוער מותר עד ${R0.dayHours} שעות ביום. נרשמו:`);
+      raise('week', 'שבוע של יותר מ-40 שעות', 'לנוער מותר עד 40 שעות בשבוע.');
+      raise('breaks', 'הפסקה קצרה מהחוק', `ביום של יותר מ-6 שעות מגיעות לנער 45 דקות הפסקה (חצי שעה ברצף). לא נרשמה הפסקה כזו ב:`);
+      raise('eve', 'ערב שבת ארוך מ-7 שעות', 'ביום שישי ובערב חג מותר לנוער לעבוד עד 7 שעות. נרשמו:');
+    }
+
     if (on('long')) {
       for (const r of done) {
         if (r.dateKey < recentFrom) continue;
@@ -3265,11 +3367,12 @@ window.APP_VERSION = '1.4.1';
     /* 6. minimum wage */
     const rateForMin = bq && bv ? (F.base.rate || bv / bq) : E.baseRate;
     if (rateForMin > 0) {
-      const mw = +S.minWageHourly || 0;
+      const MW = Engine.minWageFor(S, (slip.period || U.todayKey().slice(0, 7)) + '-15');
+      const mw = MW.hourly;
       if (rateForMin + 0.005 < mw) {
         const h = bq || E.hrs.base;
         add({ area: 'שכר מינימום', status: 'bad', title: 'שכר נמוך משכר המינימום', amount: (mw - rateForMin) * h, detail: `${U.money(rateForMin)} לשעה, שכר המינימום ${U.money(mw)}.`, basis: 'שכר מינימום לשעה כפי שמוגדר בהגדרות (עדכן אם השתנה).', confidence: 'high' });
-      } else add({ area: 'שכר מינימום', status: 'ok', title: 'מעל שכר המינימום', detail: `${U.money(rateForMin)} ≥ ${U.money(mw)} לשעה.`, basis: 'שכר מינימום לשעה (מההגדרות).', confidence: 'high' });
+      } else add({ area: 'שכר מינימום', status: 'ok', title: 'מעל שכר המינימום', detail: `${U.money(rateForMin)} ≥ ${U.money(mw)} לשעה.`, basis: MW.custom ? 'שכר מינימום לשעה (מההגדרות).' : `שכר מינימום ${MW.youth ? 'לנוער בגיל ' + MW.age : 'למבוגר'} לפי החוק, מ-${U.fmtDate(MW.from, 'short')}.`, confidence: 'high' });
     }
 
     /* 7. pension */
@@ -5055,6 +5158,11 @@ window.APP_VERSION = '1.4.1';
     } catch (e) {
       document.getElementById('view').innerHTML = `<div class="view">${UI.emptyState('alert', 'לא ניתן לפתוח את מסד הנתונים', esc(e.message || e))}</div>`;
       return;
+    }
+    // the minimum wage now follows the law (by date and age): stored copies of old defaults are dropped
+    if (!S.meta.minWageAuto) {
+      if ([32.3, 34.32, 34.33].includes(+S.settings.minWageHourly)) await Store.setSettings((s) => { s.minWageHourly = null; });
+      await Store.setMeta({ minWageAuto: true });
     }
     // one-time switch of the untouched default colour to the new design (user choices are kept)
     if (!S.meta.designV2) {
@@ -7652,12 +7760,19 @@ window.FIREBASE_CONFIG = {
   /* ---------------- renderers ---------------- */
   const HOLS = HebCal.HOLIDAY_DEFS;
   const RENDER = {};
-  RENDER.account = { render: () => App.accountSection(), mount: (el, draw) => App.accountMount(el, draw) };
+  /** The minimum wage the law sets today for this user (by date and age). */
+  function minWageInfo() {
+    const L = Engine.legalMinWage(U.todayKey(), S.settings.birthDate);
+    return `<div class="kv"><span>לפי החוק${L.youth ? ` (גיל ${L.age})` : ''}</span><b>${U.money(L.hourly)} לשעה</b></div>
+      <div class="tiny muted" style="margin:4px 0 10px">מתעדכן אוטומטית לפי התאריך${S.settings.birthDate ? ' והגיל' : '. מתחת לגיל 18? הוסף תאריך לידה בפרטים אישיים'} (התעריף מ-${U.fmtDate(L.from, 'short')}).</div>`;
+  }
+  RENDER.account ={ render: () => App.accountSection(), mount: (el, draw) => App.accountMount(el, draw) };
   RENDER.personal = {
     render: () => {
       const age = Engine.ageAt(S.settings.birthDate, U.todayKey());
       return `<div class="card">${F.text('שם (לא חובה)', 's.userName', S.settings.userName, 'מופיע בברכות ובחתימה של הודעות למעסיק.')}
-        ${F.date('תאריך לידה (לא חובה)', 's.birthDate', S.settings.birthDate, 'ביום ההולדת תקבל ברכה. מתחת לגיל 18 — חישוב הנטו מתאים לפטור ממסים.').replace('data-s=', 'data-redraw data-s=')}</div>
+        ${F.date('תאריך לידה (לא חובה)', 's.birthDate', S.settings.birthDate, 'לברכה ביום ההולדת, לשכר המינימום לפי גיל, לבדיקות חוק עבודת הנוער ולגיל הפנסיה.').replace('data-s=', 'data-redraw data-s=')}
+        ${F.sel('מגדר (לא חובה)', 's.gender', [['', 'לא צוין'], ['m', 'גבר'], ['f', 'אישה']], S.settings.gender || '', 'רק לחישוב הפנסיה: חובת הפרשה מגיל 21 לגבר ומגיל 20 לאישה.')}</div>
         ${age != null ? `<div class="card ${age < 18 ? 'tonal' : ''}"><div class="kv"><span>גיל</span><b>${age}</b></div>
           ${age < 18 ? `<div class="small" style="margin-top:8px">${icon('info', 's')} מתחת לגיל 18 לא מנוכים מס הכנסה, ביטוח לאומי, מס בריאות ופנסיה, ולכן <b>הנטו שווה לברוטו</b> (פחות ניכויים אישיים כמו ארוחות, אם יש). מגיל 18 החישוב עובר אוטומטית לניכויים הרגילים.</div>` : ''}</div>` : ''}
         <div class="tiny muted" style="margin:6px 4px">תאריך הלידה נשמר בחשבון שלך ולא משותף עם אף אחד.</div>`;
@@ -7856,7 +7971,8 @@ window.FIREBASE_CONFIG = {
         <div class="section-title">קרן השתלמות</div><div class="card">
           ${F.sw('יש קרן השתלמות', '', 's.hishtalmut.enabled', Hs.enabled).replace('data-s=', 'data-redraw data-s=')}
           ${Hs.enabled ? `<div class="grid3">${F.num('עובד %', 's.hishtalmut.employeePct', Hs.employeePct)}${F.num('מעסיק %', 's.hishtalmut.employerPct', Hs.employerPct)}${F.num('אחרי חודשים', 's.hishtalmut.startAfterMonths', Hs.startAfterMonths)}</div>` : ''}</div>
-        <div class="section-title">שכר מינימום</div><div class="card">${F.num('שכר מינימום לשעה ₪', 's.minWageHourly', S.settings.minWageHourly, 'מאפריל 2025: 34.32 ₪. עדכן כשמתעדכן.')}</div>`;
+        <div class="section-title">שכר מינימום</div><div class="card">${minWageInfo()}
+          ${F.num('לעקוף ידנית (₪ לשעה)', 's.minWageHourly', S.settings.minWageHourly || '', 'השאר ריק כדי להשתמש בשכר המינימום לפי החוק.')}</div>`;
     },
   };
   RENDER.leave = {
@@ -7907,8 +8023,8 @@ window.FIREBASE_CONFIG = {
         <div class="section-title">בריאות ועומס</div><div class="card">
           <div class="grid2">${F.num('משמרת ארוכה מ- (ש׳)', 's.alerts.longShiftHours', A.longShiftHours)}${F.num('מנוחה מינימלית (ש׳)', 's.alerts.minRestHours', A.minRestHours)}</div>
           <div class="grid2">${F.num('ימים ברצף', 's.alerts.streakDays', A.streakDays)}${F.num('שעות בשבוע מעל', 's.alerts.weekHoursMax', A.weekHoursMax)}</div>
-          ${t('long', 'משמרת ארוכה')}${t('rest8', 'מנוחה קצרה בין משמרות')}${t('streak', 'ימים ברצף')}${t('weekHours', 'שבוע עמוס')}</div>
-        <div class="section-title">כסף ויעדים</div><div class="card">${t('projection', 'צפי סוף חודש')}${t('goal', 'יעד חודשי')}${t('goalShifts', 'משמרות חסרות ליעד')}${t('record', 'שיא אישי')}${t('payslipGap', 'פערים בתלוש')}${t('travel', 'תקרת נסיעות')}${t('recuperation', 'דמי הבראה')}</div>
+          ${t('long', 'משמרת ארוכה')}${t('rest8', 'מנוחה קצרה בין משמרות')}${t('streak', 'ימים ברצף')}${t('weekHours', 'שבוע עמוס')}${t('youth', 'חוק עבודת הנוער (מתחת לגיל 18)')}</div>
+        <div class="section-title">כסף ויעדים</div><div class="card">${t('projection', 'צפי סוף חודש')}${t('goal', 'יעד חודשי')}${t('goalShifts', 'משמרות חסרות ליעד')}${t('record', 'שיא אישי')}${t('payslipGap', 'פערים בתלוש')}${t('travel', 'תקרת נסיעות')}${t('recuperation', 'דמי הבראה')}${t('minwage', 'תעריף נמוך משכר המינימום')}</div>
         <div class="section-title">תזכורות ותקינות</div><div class="card">
           <div class="grid2">${F.num('טיימר פעיל יותר מ- (ש׳)', 's.alerts.timerHours', A.timerHours)}${F.num('בלי משמרות (ימים)', 's.alerts.idleDays', A.idleDays)}</div>
           <div class="grid2">${F.num('משמרת חשודה מעל (ש׳)', 's.alerts.suspiciousHours', A.suspiciousHours)}${F.num('תזכורת גיבוי (ימים)', 's.alerts.backupDays', A.backupDays)}</div>
@@ -8408,7 +8524,7 @@ window.FIREBASE_CONFIG = {
         rounding: emp.roundingMode === 'none' ? null : emp.roundingMode + ' ' + emp.roundingUnit + 'min', min_paid_hours_per_shift: emp.minShiftHours || null,
         night_premium: emp.nightEnabled ? emp.nightValue + (emp.nightType === 'fixed' ? ' ILS/h' : '%') : null,
       },
-      tax: { credit_points: st.tax.creditPoints, pension_employee_pct: st.pension.employeePct, pension_starts_after_months: st.pension.startAfterMonths, keren_hishtalmut: st.hishtalmut.enabled, min_wage_hourly_setting: st.minWageHourly },
+      tax: { credit_points: st.tax.creditPoints, pension_employee_pct: st.pension.employeePct, pension_starts_after_months: st.pension.startAfterMonths, keren_hishtalmut: st.hishtalmut.enabled, legal_min_wage_hourly_for_user: Engine.minWageFor(st, today).hourly, mandatory_pension_from_age: Engine.pensionMinAge(st) },
       current_period: per(cur),
       previous_periods: [1, 2, 3].map((i) => per(U.addMonthKey(cur, -i))),
       leave: { vacation_accrued: r2(L.vacationAccrued), vacation_used: L.vacationUsed, sick_accrued: r2(L.sickAccrued), sick_used: L.sickUsed, recuperation: L.recuperation ? { eligible: L.recuperation.eligible, days: L.recuperation.days, estimate: r2(L.recuperation.amount) } : null },

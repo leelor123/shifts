@@ -399,6 +399,11 @@
       document.getElementById('view').innerHTML = `<div class="view">${UI.emptyState('alert', 'לא ניתן לפתוח את מסד הנתונים', esc(e.message || e))}</div>`;
       return;
     }
+    // the minimum wage now follows the law (by date and age): stored copies of old defaults are dropped
+    if (!S.meta.minWageAuto) {
+      if ([32.3, 34.32, 34.33].includes(+S.settings.minWageHourly)) await Store.setSettings((s) => { s.minWageHourly = null; });
+      await Store.setMeta({ minWageAuto: true });
+    }
     // one-time switch of the untouched default colour to the new design (user choices are kept)
     if (!S.meta.designV2) {
       if (S.settings.accent === 'indigo') await Store.setSettings((s) => { s.accent = 'petrol'; });

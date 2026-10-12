@@ -64,7 +64,7 @@
         rounding: emp.roundingMode === 'none' ? null : emp.roundingMode + ' ' + emp.roundingUnit + 'min', min_paid_hours_per_shift: emp.minShiftHours || null,
         night_premium: emp.nightEnabled ? emp.nightValue + (emp.nightType === 'fixed' ? ' ILS/h' : '%') : null,
       },
-      tax: { credit_points: st.tax.creditPoints, pension_employee_pct: st.pension.employeePct, pension_starts_after_months: st.pension.startAfterMonths, keren_hishtalmut: st.hishtalmut.enabled, min_wage_hourly_setting: st.minWageHourly },
+      tax: { credit_points: st.tax.creditPoints, pension_employee_pct: st.pension.employeePct, pension_starts_after_months: st.pension.startAfterMonths, keren_hishtalmut: st.hishtalmut.enabled, legal_min_wage_hourly_for_user: Engine.minWageFor(st, today).hourly, mandatory_pension_from_age: Engine.pensionMinAge(st) },
       current_period: per(cur),
       previous_periods: [1, 2, 3].map((i) => per(U.addMonthKey(cur, -i))),
       leave: { vacation_accrued: r2(L.vacationAccrued), vacation_used: L.vacationUsed, sick_accrued: r2(L.sickAccrued), sick_used: L.sickUsed, recuperation: L.recuperation ? { eligible: L.recuperation.eligible, days: L.recuperation.days, estimate: r2(L.recuperation.amount) } : null },

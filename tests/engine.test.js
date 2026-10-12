@@ -278,3 +278,42 @@ T.test('the day you turn 18 normal deductions apply', () => {
   const after = Engine.netEstimate({ gross: 9000, pensionBase: 9000, deductions: 0, periodTo: '2026-09-30', pensionActive: false }, s);
   T.near(before.net, 9000); T.ok(after.net < 9000 && !after.minor);
 });
+
+T.section('the law: minimum wage, youth, pension age');
+T.test('adult minimum wage follows the April updates', () => {
+  T.eq(Engine.legalMinWage('2025-03-31', null).hourly, 32.30);
+  T.eq(Engine.legalMinWage('2025-04-01', null).hourly, 34.32);
+  T.eq(Engine.legalMinWage('2026-03-31', '1990-01-01').hourly, 34.32);
+  T.eq(Engine.legalMinWage('2026-04-01', '1990-01-01').hourly, 35.40);
+});
+T.test('youth minimum wage matches the published 2026 table', () => {
+  T.eq(Engine.legalMinWage('2026-06-01', '2011-01-01').hourly, 26.07, 'age 15: 70%');
+  T.eq(Engine.legalMinWage('2026-06-01', '2010-01-01').hourly, 27.94, 'age 16: 75%');
+  T.eq(Engine.legalMinWage('2026-06-01', '2009-01-01').hourly, 30.92, 'age 17: 83%');
+  T.eq(Engine.legalMinWage('2026-06-01', '2008-01-01').hourly, 35.40, 'age 18: adult');
+  T.eq(Engine.legalMinWage('2026-06-01', '2009-06-02').age, 16, 'the day before the 17th birthday');
+});
+T.test('a minimum wage set by hand overrides the law', () => {
+  const s = Defaults.defaultSettings();
+  T.eq(Engine.minWageFor(s, '2026-06-01').hourly, 35.40);
+  s.minWageHourly = 40;
+  T.eq(Engine.minWageFor(s, '2026-06-01').hourly, 40);
+  T.ok(Engine.minWageFor(s, '2026-06-01').custom);
+});
+T.test('youth hours: night window and day length by age', () => {
+  T.eq(Engine.youthRules(15, 5).nightFrom, 20);
+  T.eq(Engine.youthRules(15, 5).dayHours, 8);
+  T.eq(Engine.youthRules(16, 5).nightFrom, 22);
+  T.eq(Engine.youthRules(16, 5).dayHours, 9);
+  T.eq(Engine.youthRules(17, 6).dayHours, 8);
+});
+T.test('mandatory pension starts at 21 (men) / 20 (women)', () => {
+  const s = Defaults.defaultSettings();
+  s.pension.enabled = true; s.startDate = '2024-01-01';
+  s.birthDate = '2006-01-01'; // 20 in 2026
+  T.ok(!Engine.pensionActive(s, '2026-06-30'), 'man of 20: not yet');
+  s.gender = 'f';
+  T.ok(Engine.pensionActive(s, '2026-06-30'), 'woman of 20: yes');
+  s.gender = ''; s.birthDate = '2005-01-01';
+  T.ok(Engine.pensionActive(s, '2026-06-30'), 'anyone of 21: yes');
+});

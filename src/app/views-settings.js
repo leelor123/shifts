@@ -111,12 +111,19 @@
   /* ---------------- renderers ---------------- */
   const HOLS = HebCal.HOLIDAY_DEFS;
   const RENDER = {};
-  RENDER.account = { render: () => App.accountSection(), mount: (el, draw) => App.accountMount(el, draw) };
+  /** The minimum wage the law sets today for this user (by date and age). */
+  function minWageInfo() {
+    const L = Engine.legalMinWage(U.todayKey(), S.settings.birthDate);
+    return `<div class="kv"><span>לפי החוק${L.youth ? ` (גיל ${L.age})` : ''}</span><b>${U.money(L.hourly)} לשעה</b></div>
+      <div class="tiny muted" style="margin:4px 0 10px">מתעדכן אוטומטית לפי התאריך${S.settings.birthDate ? ' והגיל' : '. מתחת לגיל 18? הוסף תאריך לידה בפרטים אישיים'} (התעריף מ-${U.fmtDate(L.from, 'short')}).</div>`;
+  }
+  RENDER.account ={ render: () => App.accountSection(), mount: (el, draw) => App.accountMount(el, draw) };
   RENDER.personal = {
     render: () => {
       const age = Engine.ageAt(S.settings.birthDate, U.todayKey());
       return `<div class="card">${F.text('שם (לא חובה)', 's.userName', S.settings.userName, 'מופיע בברכות ובחתימה של הודעות למעסיק.')}
-        ${F.date('תאריך לידה (לא חובה)', 's.birthDate', S.settings.birthDate, 'ביום ההולדת תקבל ברכה. מתחת לגיל 18 — חישוב הנטו מתאים לפטור ממסים.').replace('data-s=', 'data-redraw data-s=')}</div>
+        ${F.date('תאריך לידה (לא חובה)', 's.birthDate', S.settings.birthDate, 'לברכה ביום ההולדת, לשכר המינימום לפי גיל, לבדיקות חוק עבודת הנוער ולגיל הפנסיה.').replace('data-s=', 'data-redraw data-s=')}
+        ${F.sel('מגדר (לא חובה)', 's.gender', [['', 'לא צוין'], ['m', 'גבר'], ['f', 'אישה']], S.settings.gender || '', 'רק לחישוב הפנסיה: חובת הפרשה מגיל 21 לגבר ומגיל 20 לאישה.')}</div>
         ${age != null ? `<div class="card ${age < 18 ? 'tonal' : ''}"><div class="kv"><span>גיל</span><b>${age}</b></div>
           ${age < 18 ? `<div class="small" style="margin-top:8px">${icon('info', 's')} מתחת לגיל 18 לא מנוכים מס הכנסה, ביטוח לאומי, מס בריאות ופנסיה, ולכן <b>הנטו שווה לברוטו</b> (פחות ניכויים אישיים כמו ארוחות, אם יש). מגיל 18 החישוב עובר אוטומטית לניכויים הרגילים.</div>` : ''}</div>` : ''}
         <div class="tiny muted" style="margin:6px 4px">תאריך הלידה נשמר בחשבון שלך ולא משותף עם אף אחד.</div>`;
@@ -315,7 +322,8 @@
         <div class="section-title">קרן השתלמות</div><div class="card">
           ${F.sw('יש קרן השתלמות', '', 's.hishtalmut.enabled', Hs.enabled).replace('data-s=', 'data-redraw data-s=')}
           ${Hs.enabled ? `<div class="grid3">${F.num('עובד %', 's.hishtalmut.employeePct', Hs.employeePct)}${F.num('מעסיק %', 's.hishtalmut.employerPct', Hs.employerPct)}${F.num('אחרי חודשים', 's.hishtalmut.startAfterMonths', Hs.startAfterMonths)}</div>` : ''}</div>
-        <div class="section-title">שכר מינימום</div><div class="card">${F.num('שכר מינימום לשעה ₪', 's.minWageHourly', S.settings.minWageHourly, 'מאפריל 2025: 34.32 ₪. עדכן כשמתעדכן.')}</div>`;
+        <div class="section-title">שכר מינימום</div><div class="card">${minWageInfo()}
+          ${F.num('לעקוף ידנית (₪ לשעה)', 's.minWageHourly', S.settings.minWageHourly || '', 'השאר ריק כדי להשתמש בשכר המינימום לפי החוק.')}</div>`;
     },
   };
   RENDER.leave = {
@@ -366,8 +374,8 @@
         <div class="section-title">בריאות ועומס</div><div class="card">
           <div class="grid2">${F.num('משמרת ארוכה מ- (ש׳)', 's.alerts.longShiftHours', A.longShiftHours)}${F.num('מנוחה מינימלית (ש׳)', 's.alerts.minRestHours', A.minRestHours)}</div>
           <div class="grid2">${F.num('ימים ברצף', 's.alerts.streakDays', A.streakDays)}${F.num('שעות בשבוע מעל', 's.alerts.weekHoursMax', A.weekHoursMax)}</div>
-          ${t('long', 'משמרת ארוכה')}${t('rest8', 'מנוחה קצרה בין משמרות')}${t('streak', 'ימים ברצף')}${t('weekHours', 'שבוע עמוס')}</div>
-        <div class="section-title">כסף ויעדים</div><div class="card">${t('projection', 'צפי סוף חודש')}${t('goal', 'יעד חודשי')}${t('goalShifts', 'משמרות חסרות ליעד')}${t('record', 'שיא אישי')}${t('payslipGap', 'פערים בתלוש')}${t('travel', 'תקרת נסיעות')}${t('recuperation', 'דמי הבראה')}</div>
+          ${t('long', 'משמרת ארוכה')}${t('rest8', 'מנוחה קצרה בין משמרות')}${t('streak', 'ימים ברצף')}${t('weekHours', 'שבוע עמוס')}${t('youth', 'חוק עבודת הנוער (מתחת לגיל 18)')}</div>
+        <div class="section-title">כסף ויעדים</div><div class="card">${t('projection', 'צפי סוף חודש')}${t('goal', 'יעד חודשי')}${t('goalShifts', 'משמרות חסרות ליעד')}${t('record', 'שיא אישי')}${t('payslipGap', 'פערים בתלוש')}${t('travel', 'תקרת נסיעות')}${t('recuperation', 'דמי הבראה')}${t('minwage', 'תעריף נמוך משכר המינימום')}</div>
         <div class="section-title">תזכורות ותקינות</div><div class="card">
           <div class="grid2">${F.num('טיימר פעיל יותר מ- (ש׳)', 's.alerts.timerHours', A.timerHours)}${F.num('בלי משמרות (ימים)', 's.alerts.idleDays', A.idleDays)}</div>
           <div class="grid2">${F.num('משמרת חשודה מעל (ש׳)', 's.alerts.suspiciousHours', A.suspiciousHours)}${F.num('תזכורת גיבוי (ימים)', 's.alerts.backupDays', A.backupDays)}</div>

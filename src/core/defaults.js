@@ -117,7 +117,8 @@
         recuperationRate: 418, // ₪ per day, private sector
         recuperationMonth: 7, // month the employer pays (0 = paid monthly)
       },
-      minWageHourly: 34.32, // from April 2025
+      minWageHourly: null, // null = by law, from the date and age (Engine.legalMinWage); a number overrides it
+      gender: '', // '' | 'm' | 'f': only for the mandatory-pension age
       // --- goals ---
       goal: { amount: 0, type: 'gross' },
       // --- calendar ---
@@ -132,7 +133,7 @@
           long: true, rest8: true, streak: true, weekHours: true,
           projection: true, goal: true, record: true, goalShifts: true, payslipGap: true, travel: true,
           timer: true, plannedPast: true, idle: true, suspicious: true, payslipDue: true, backup: true, upcoming: true, weekly: true,
-          recuperation: true, birthday: true,
+          recuperation: true, birthday: true, minwage: true, youth: true,
         },
         longShiftHours: 12, minRestHours: 8, streakDays: 6, weekHoursMax: 50,
         timerHours: 12, idleDays: 7, suspiciousHours: 20, backupDays: 30, upcomingMin: 60,
