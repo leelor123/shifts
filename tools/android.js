@@ -64,11 +64,59 @@ async function generate() {
   const file = path.join(TWA, 'twa-manifest.json');
   await tm.saveToFile(file);
   await new core.TwaGenerator().createTwaProject(TWA, tm, new core.ConsoleLog('generate'));
+  patchLauncher();
   await shared.generateManifestChecksumFile(file, TWA);
   fs.mkdirSync(path.join(ROOT, 'android'), { recursive: true });
   // keep a copy in the repo (no secrets in it: only the keystore's location)
   fs.copyFileSync(file, path.join(ROOT, 'android', 'twa-manifest.json'));
   console.log(`generated ${APP.packageId} v${pkg.version} (${versionCode(pkg.version)}) → ${TWA}`);
+}
+
+/**
+ * Android 13+ blocks an app's notifications until the app itself asks for them. The browser that
+ * hosts the app (Chrome or Samsung Internet) shows the web app's reminders through this app, so
+ * without this permission they never appear. Ask once, on the first launch, before opening the app.
+ */
+function patchLauncher() {
+  const file = path.join(TWA, 'app', 'src', 'main', 'java', ...APP.packageId.split('.'), 'LauncherActivity.java');
+  let src = fs.readFileSync(file, 'utf8');
+  const need = (a) => { if (!src.includes(a)) throw new Error('LauncherActivity template changed: ' + a); };
+  need('import android.os.Bundle;');
+  need('        extends com.google.androidbrowserhelper.trusted.LauncherActivity {');
+  need('        super.onCreate(savedInstanceState);\n');
+  src = src.replace('import android.os.Bundle;', 'import android.os.Bundle;\nimport android.Manifest;\nimport android.content.pm.PackageManager;');
+  src = src.replace('        extends com.google.androidbrowserhelper.trusted.LauncherActivity {', `        extends com.google.androidbrowserhelper.trusted.LauncherActivity {
+    // Shaati: ask once for notification permission (Android 13+) before opening the app
+    private static final int NOTIFICATION_REQUEST = 7301;
+    private static final String PREFS = "shaati";
+    private static final String ASKED = "askedNotifications";
+    private boolean mAskNotifications;
+
+    private boolean needsNotificationPermission() {
+        if (Build.VERSION.SDK_INT < 33) return false;
+        if (checkSelfPermission(Manifest.permission.POST_NOTIFICATIONS) == PackageManager.PERMISSION_GRANTED) return false;
+        return !getSharedPreferences(PREFS, MODE_PRIVATE).getBoolean(ASKED, false);
+    }
+
+    @Override
+    protected boolean shouldLaunchImmediately() {
+        mAskNotifications = needsNotificationPermission();
+        return !mAskNotifications;
+    }
+
+    @Override
+    public void onRequestPermissionsResult(int requestCode, String[] permissions, int[] grantResults) {
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults);
+        if (requestCode == NOTIFICATION_REQUEST) launchTwa();
+    }
+`);
+  src = src.replace('        super.onCreate(savedInstanceState);\n', `        super.onCreate(savedInstanceState);
+        if (mAskNotifications && !isFinishing()) {
+            getSharedPreferences(PREFS, MODE_PRIVATE).edit().putBoolean(ASKED, true).apply();
+            requestPermissions(new String[] { Manifest.permission.POST_NOTIFICATIONS }, NOTIFICATION_REQUEST);
+        }
+`);
+  fs.writeFileSync(file, src);
 }
 
 function build() {
