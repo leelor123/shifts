@@ -21,8 +21,8 @@
     "path": "C:\\Users\\User\\ShiftPay-Android\\keys\\shiftpay-upload.jks",
     "alias": "shiftpay"
   },
-  "appVersionName": "1.5.0",
-  "appVersionCode": 10500,
+  "appVersionName": "1.7.1",
+  "appVersionCode": 10701,
   "shortcuts": [
     {
       "name": "התחל משמרת",
@@ -57,5 +57,5 @@
   "fileHandlers": [],
   "launchHandlerClientMode": "",
   "displayOverride": [],
-  "appVersion": "1.5.0"
+  "appVersion": "1.7.1"
 }
