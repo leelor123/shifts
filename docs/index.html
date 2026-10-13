@@ -1304,6 +1304,58 @@ body.fx .nav .fab:active { transform: scale(.9) rotate(90deg); }
 /* what's new */
 .wn { display: flex; gap: 12px; align-items: center; padding: 10px 4px; }
 
+/* ---------------- motion that feels alive (and costs the phone nothing: transform/opacity only) ---------------- */
+/* the pay card: soft light drifting behind the amount, and a highlight sweeping round the dial like a second hand */
+.aurora { position: absolute; inset: 0; z-index: -2; overflow: hidden; border-radius: inherit; pointer-events: none; }
+.aurora i { position: absolute; width: 75%; aspect-ratio: 1; border-radius: 50%; will-change: transform; }
+.aurora i:nth-child(1) { top: -35%; right: -20%; background: radial-gradient(circle, hsla(calc(var(--h) + 48), 95%, 70%, .55), transparent 64%); animation: aurora-a 17s ease-in-out infinite alternate; }
+.aurora i:nth-child(2) { bottom: -45%; left: -15%; background: radial-gradient(circle, hsla(calc(var(--h) - 42), 95%, 66%, .5), transparent 64%); animation: aurora-b 21s ease-in-out infinite alternate; }
+.aurora i:nth-child(3) { top: 20%; left: 30%; width: 55%; background: radial-gradient(circle, hsla(168, 90%, 62%, .22), transparent 64%); animation: aurora-c 25s ease-in-out infinite alternate; }
+@keyframes aurora-a { to { transform: translate(-38%, 30%) scale(1.15); } }
+@keyframes aurora-b { to { transform: translate(42%, -26%) scale(1.2); } }
+@keyframes aurora-c { 0% { transform: translate(0, 0) scale(.9); } 50% { transform: translate(-30%, 18%) scale(1.15); } 100% { transform: translate(25%, -12%) scale(1); } }
+.hh-dial::before { content: ''; position: absolute; inset: 0; border-radius: 50%; background: conic-gradient(from 0deg, transparent 0 290deg, rgba(255, 255, 255, .15) 320deg, rgba(255, 255, 255, .95) 359deg, transparent 360deg); animation: dial-sweep 7s linear infinite; }
+@keyframes dial-sweep { to { transform: rotate(360deg); } }
+.timer-card.running { position: relative; overflow: hidden; isolation: isolate; }
+.timer-card.running .aurora i:nth-child(3) { display: none; }
+/* the main action: now and then a glint of light runs across it (right to left, like the reading direction) */
+.home-action .btn.start { position: relative; overflow: hidden; isolation: isolate; }
+.home-action .btn.start::after { content: ''; position: absolute; z-index: -1; top: -20%; bottom: -20%; width: 34%; right: 0; background: linear-gradient(100deg, transparent, rgba(255, 255, 255, .26), transparent); transform: translateX(130%) skewX(-18deg); animation: glint 5.5s cubic-bezier(.4, 0, .2, 1) 1.6s infinite; pointer-events: none; }
+@keyframes glint { 0% { transform: translateX(130%) skewX(-18deg); } 28%, 100% { transform: translateX(-420%) skewX(-18deg); } }
+/* the first look at the home screen: one short, orchestrated entrance */
+.view.first .home-top, .view.first .home-hero, .view.first .home-action, .view.first .timer-card, .view.first .card.guide, .view.first .highlight, .view.first .shortcuts, .view.first .home-list-head, .view.first .home-list, .view.first .empty.fun { animation: rise .55s cubic-bezier(.2, .8, .2, 1) both; }
+.view.first .home-hero { animation-delay: .04s; }
+.view.first .home-action, .view.first .timer-card { animation-delay: .1s; }
+.view.first .card.guide, .view.first .highlight { animation-delay: .16s; }
+.view.first .shortcuts { animation-delay: .22s; }
+.view.first .home-list-head, .view.first .home-list, .view.first .empty.fun { animation-delay: .28s; }
+@keyframes rise { from { opacity: 0; transform: translateY(12px) scale(.985); } }
+.view.first .hero-num { animation: num-in .7s cubic-bezier(.2, .8, .2, 1) .12s both; }
+@keyframes num-in { from { opacity: 0; transform: scale(.92); filter: blur(4px); } }
+/* the setup questions: the background shapes drift slowly */
+.ob-bg i { will-change: transform; animation: ob-blob 24s ease-in-out infinite alternate; }
+.ob-bg i:nth-child(2) { animation-duration: 29s; animation-delay: -9s; }
+@keyframes ob-blob { to { transform: translate(28px, 40px) scale(1.12); } }
+@media (prefers-reduced-motion: reduce) { .aurora i, .hh-dial::before, .home-action .btn.start::after, .view.first *, .ob-bg i { animation: none !important; } }
+body:not(.fx) .aurora i, body:not(.fx) .hh-dial::before, body:not(.fx) .home-action .btn.start::after, body:not(.fx) .ob-bg i { animation: none !important; }
+
+/* saved: a check mark that draws itself */
+.toast .tk { width: 22px; height: 22px; flex: none; }
+.toast .tk circle { fill: #22c98e; transform-origin: center; transform-box: fill-box; animation: tk-pop .35s var(--pop) both; }
+.toast .tk path { fill: none; stroke: #fff; stroke-width: 2.6; stroke-linecap: round; stroke-linejoin: round; stroke-dasharray: 16; stroke-dashoffset: 16; animation: tk-draw .35s ease-out .18s forwards; }
+@keyframes tk-pop { from { transform: scale(.3); } }
+@keyframes tk-draw { to { stroke-dashoffset: 0; } }
+/* loading: shimmering placeholders instead of "loading…" text */
+.skel-wrap { display: grid; gap: 12px; padding: 4px 0; }
+.skel { display: block; background: linear-gradient(90deg, var(--surface-2) 0%, var(--surface-3) 40%, var(--surface-2) 80%); background-size: 300% 100%; animation: skel 1.4s ease-in-out infinite; border-radius: 10px; }
+.skel-card { height: 110px; border-radius: var(--radius); }
+.skel-row { display: flex; gap: 12px; align-items: center; padding: 10px 4px; }
+.skel-dot { width: 40px; height: 40px; border-radius: 12px; flex: none; }
+.skel-lines { flex: 1; display: grid; gap: 8px; }
+.skel-line { height: 12px; } .skel-line.short { width: 40%; height: 10px; }
+@keyframes skel { from { background-position: 100% 0; } to { background-position: -100% 0; } }
+@media (prefers-reduced-motion: reduce) { .skel, .toast .tk * { animation: none !important; } .toast .tk path { stroke-dashoffset: 0; } }
+
 /* keyboard users always see where they are */
 :where(button, a, input, select, textarea, summary, [tabindex]):focus-visible { outline: 3px solid hsla(var(--h), 85%, 60%, .55); outline-offset: 2px; }
 .btn.sm { min-height: 40px; }
@@ -1342,7 +1394,7 @@ body:has(.sheet.show) .toast.show, body:has(.wizard) .toast.show { transform: no
 <div id="print-root" aria-hidden="true"></div>
 <noscript><div style="padding:24px;font-family:sans-serif">האפליקציה דורשת JavaScript.</div></noscript>
 <script>
-window.APP_VERSION = '1.7.1';
+window.APP_VERSION = '1.7.2';
 /* ---- core/util.js ---- */
 /* ============================================================
  * util.js — date/time helpers and formatting.
@@ -4224,10 +4276,12 @@ window.APP_VERSION = '1.7.1';
 
   /* ---------------- toast ---------------- */
   let toastTimer = null;
-  function toast(text, action) {
+  // opts.ok: something was saved: a little check mark draws itself next to the message
+  const TICK = '<svg class="tk" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="11"/><path d="m7 12.5 3.2 3.2L17 9"/></svg>';
+  function toast(text, action, opts) {
     let el = document.getElementById('toast');
     if (!el) { el = document.createElement('div'); el.id = 'toast'; el.className = 'toast'; el.setAttribute('role', 'status'); document.body.appendChild(el); }
-    el.innerHTML = `<div style="flex:1">${esc(text)}</div>` + (action ? `<button class="act">${esc(action.label)}</button>` : '');
+    el.innerHTML = (opts && opts.ok ? TICK : '') + `<div style="flex:1">${esc(text)}</div>` + (action ? `<button class="act">${esc(action.label)}</button>` : '');
     if (action) el.querySelector('.act').onclick = () => { hideToast(); action.fn(); };
     requestAnimationFrame(() => el.classList.add('show'));
     clearTimeout(toastTimer);
@@ -4408,11 +4462,15 @@ window.APP_VERSION = '1.7.1';
     return U.fmtDate(U.epochKey(ms));
   }
 
+  /** A shimmering placeholder while something loads (rows of lines, or cards). */
+  function skeleton(n, kind) {
+    return `<div class="skel-wrap" aria-busy="true" aria-label="טוען">${Array.from({ length: n || 3 }, (_, i) => kind === 'card' ? '<div class="skel skel-card"></div>' : `<div class="skel-row"><span class="skel skel-dot"></span><span class="skel-lines"><span class="skel skel-line" style="width:${70 - (i % 3) * 12}%"></span><span class="skel skel-line short"></span></span></div>`).join('')}</div>`;
+  }
   /** Wrong or missing input: a message plus a shake and a short buzz. */
   function invalid(text) { toast(text); if (root.Fx) root.Fx.nope(); }
   /** An icon in a soft coloured tile (violet, mint, amber, sky, pink, orange, white). */
   const tile = (name, tint, cls) => `<span class="itile t-${tint || 'violet'} ${cls || ''}" aria-hidden="true">${icon(name)}</span>`;
-  root.UI = { tile, invalid, icon, esc, money, numv, delta, roleDot, emptyState, toast, openSheet, closeTop, closeAll, dialog, confirm, promptText, onSwipe, vibrate, download, shareFile, copyText, numIn, timeAgo, sheets };
+  root.UI = { tile, skeleton, invalid, icon, esc, money, numv, delta, roleDot, emptyState, toast, openSheet, closeTop, closeAll, dialog, confirm, promptText, onSwipe, vibrate, download, shareFile, copyText, numIn, timeAgo, sheets };
 })(typeof window !== 'undefined' ? window : globalThis);
 
 /* ---- app/pickers.js ---- */
@@ -5879,7 +5937,7 @@ window.APP_VERSION = '1.7.1';
   App.saveOps = async function (ops, label, toastText) {
     await Store.apply(ops, label);
     if (ops.some((o) => o.store === 'shifts' && o.put && o.put.status !== 'planned')) root.Fx.celebrate('coin');
-    UI.toast(toastText || label, { label: 'ביטול', fn: App.undo });
+    UI.toast(toastText || label, { label: 'ביטול', fn: App.undo }, { ok: true });
   };
   App.undo = async function () {
     const l = await Store.undo();
@@ -5984,7 +6042,7 @@ window.APP_VERSION = '1.7.1';
     if (S.shifts.filter((x) => x.status === 'done').length === 1) App.celebrateOnce('first-shift', () => UI.toast('המשמרת הראשונה שלך נשמרה! 🎉'));
     root.Fx.celebrate('big');
     const r = App.result(sh.id);
-    UI.toast(`נשמר: ${U.hm(r ? r.paidMin : 0)} שעות · ${U.money(r ? r.wage : 0)}`, { label: 'ביטול', fn: App.undo });
+    UI.toast(`נשמר: ${U.hm(r ? r.paidMin : 0)} שעות · ${U.money(r ? r.wage : 0)}`, { label: 'ביטול', fn: App.undo }, { ok: true });
     App.sheetsApi.shiftDetail && App.sheetsApi.shiftDetail(sh.id);
   };
   App.toggleBreak = async function () {
@@ -7202,7 +7260,7 @@ window.FIREBASE_CONFIG = {
       const role = App.role(App.currentRole());
       const onBreak = App.onBreak();
       const others = App.roles(a.employerId).filter((r) => r.id !== App.currentRole());
-      return `<div class="card timer-card running">
+      return `<div class="card timer-card running"><span class="aurora" aria-hidden="true"><i></i><i></i><i></i></span>
         <div class="tc-head"><span class="pulse"></span>${onBreak ? 'בהפסקה' : 'משמרת פעילה'}${role ? ' · ' + esc(role.name) : ''}<span class="spacer"></span><span class="tiny">מ-${U.epochHM(a.start)}</span></div>
         <div class="clock" data-clock="net">0:00:00</div>
         <div class="meta">עד עכשיו <b data-live-pay></b>${(a.breaks || []).length ? ' · הפסקות לא נספרות' : ''}</div>
@@ -7250,7 +7308,7 @@ window.FIREBASE_CONFIG = {
     const projPct = goal && proj && proj.withPlanned ? Math.min(100, ((goalNet ? proj.withPlanned * (sum.gross ? sum.net.net / sum.gross : 0.85) : proj.withPlanned) / goal) * 100) : 0;
     const periodName = emp.periodStartDay > 1 ? 'תקופת השכר' : esc(P.label);
     return `<section class="home-hero" data-act="go-summary" role="button" aria-label="סיכום ${periodName}">
-      <span class="hh-dial" aria-hidden="true"></span>
+      <span class="aurora" aria-hidden="true"><i></i><i></i><i></i></span><span class="hh-dial" aria-hidden="true"></span>
       <div class="hh-label">${UI.term ? UI.term('gross', 'ברוטו') : 'ברוטו'} ${emp.periodStartDay > 1 ? 'בתקופת השכר' : 'ב' + periodName} עד עכשיו</div>
       <div class="hero-num">${money(sum.gross, 0)}</div>
       <div class="hh-stats"><span><b>${money(sum.net.net, 0)}</b><small>${UI.term ? UI.term('net', sum.net.minor ? 'נטו' : 'נטו משוער') : 'נטו'}</small></span><span><b class="num">${U.hm(sum.hours * 60)}</b><small>שעות</small></span><span><b>${sum.shifts}</b><small>${sum.shifts === 1 ? 'משמרת' : 'משמרות'}</small></span></div>
@@ -9060,7 +9118,7 @@ window.FIREBASE_CONFIG = {
         setPath(emp, path.slice(2), v);
         await Store.put('employers', emp);
       }
-      UI.toast('נשמר');
+      UI.toast('נשמר', null, { ok: true });
       if (redraw && t.dataset.redraw != null) redraw();
     });
   }
@@ -10779,7 +10837,7 @@ window.FIREBASE_CONFIG = {
     return entry;
   };
   async function loadMine(box) {
-    box.innerHTML = '<div class="small muted" style="margin:14px 4px">טוען את הפניות שלך…</div>';
+    box.innerHTML = UI.skeleton(2);
     try {
       const list = await myTickets();
       if (!list.length) { box.innerHTML = ''; return; }
@@ -10866,7 +10924,7 @@ window.FIREBASE_CONFIG = {
 
   /* ---------------- one conversation (user or admin) ---------------- */
   Support.thread = async function (tid, asAdmin) {
-    const entry = UI.openSheet({ title: asAdmin ? 'פנייה' : 'הפנייה שלי', full: true, cls: 'chat-sheet', body: '<div class="small muted">טוען…</div>',
+    const entry = UI.openSheet({ title: asAdmin ? 'פנייה' : 'הפנייה שלי', full: true, cls: 'chat-sheet', body: UI.skeleton(3),
       foot: `<textarea class="input chat-input" id="sp-reply" rows="1" maxlength="2000" placeholder="${asAdmin ? 'תשובה…' : 'עוד משהו?'}"></textarea><button class="icon-btn chat-send" data-sp-reply aria-label="שליחה">${icon('send')}</button>` });
     const body = entry.sh.querySelector('.sh-body');
     let t = null;
@@ -11007,7 +11065,7 @@ window.FIREBASE_CONFIG = {
 
   App.actions['admin-dashboard'] = async function () {
     if (!App.isAdmin || !root.Cloud || !root.Cloud.user) return;
-    const entry = UI.openSheet({ title: 'לוח ניהול', full: true, body: '<div class="empty"><h3>טוען נתונים…</h3></div>' });
+    const entry = UI.openSheet({ title: 'לוח ניהול', full: true, body: UI.skeleton(4, 'card') });
     const body = entry.sh.querySelector('.sh-body');
     const load = async () => { try {
       const { fs, db } = await root.Cloud.sdk();
@@ -11020,7 +11078,7 @@ window.FIREBASE_CONFIG = {
       if (entry.closed) return;
       body.innerHTML = (inbox ? `<div class="admin"><div class="section-title">${icon('chat', 's')} פניות ${inbox.count ? `<span class="tag warn">${inbox.count} מחכות לתשובה</span>` : ''}</div>${inbox.html}</div>` : '') + render(rows, admins, root.Cloud.user.uid);
       body.querySelectorAll('[data-adm-ticket]').forEach((b) => (b.onclick = () => root.Support.thread(b.dataset.admTicket, true)));
-      body.querySelector('[data-adm-refresh]').onclick = () => { body.innerHTML = '<div class="empty"><h3>טוען נתונים…</h3></div>'; load(); };
+      body.querySelector('[data-adm-refresh]').onclick = () => { body.innerHTML = UI.skeleton(4, 'card'); load(); };
       body.querySelector('[data-adm-add]').onclick = async () => {
         const uid = body.querySelector('#adm-uid').value.trim();
         if (!/^[A-Za-z0-9]{20,40}$/.test(uid)) { UI.invalid('מזהה משתמש לא תקין'); return; }

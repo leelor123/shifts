@@ -120,10 +120,12 @@
 
   /* ---------------- toast ---------------- */
   let toastTimer = null;
-  function toast(text, action) {
+  // opts.ok: something was saved: a little check mark draws itself next to the message
+  const TICK = '<svg class="tk" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="11"/><path d="m7 12.5 3.2 3.2L17 9"/></svg>';
+  function toast(text, action, opts) {
     let el = document.getElementById('toast');
     if (!el) { el = document.createElement('div'); el.id = 'toast'; el.className = 'toast'; el.setAttribute('role', 'status'); document.body.appendChild(el); }
-    el.innerHTML = `<div style="flex:1">${esc(text)}</div>` + (action ? `<button class="act">${esc(action.label)}</button>` : '');
+    el.innerHTML = (opts && opts.ok ? TICK : '') + `<div style="flex:1">${esc(text)}</div>` + (action ? `<button class="act">${esc(action.label)}</button>` : '');
     if (action) el.querySelector('.act').onclick = () => { hideToast(); action.fn(); };
     requestAnimationFrame(() => el.classList.add('show'));
     clearTimeout(toastTimer);
@@ -304,9 +306,13 @@
     return U.fmtDate(U.epochKey(ms));
   }
 
+  /** A shimmering placeholder while something loads (rows of lines, or cards). */
+  function skeleton(n, kind) {
+    return `<div class="skel-wrap" aria-busy="true" aria-label="טוען">${Array.from({ length: n || 3 }, (_, i) => kind === 'card' ? '<div class="skel skel-card"></div>' : `<div class="skel-row"><span class="skel skel-dot"></span><span class="skel-lines"><span class="skel skel-line" style="width:${70 - (i % 3) * 12}%"></span><span class="skel skel-line short"></span></span></div>`).join('')}</div>`;
+  }
   /** Wrong or missing input: a message plus a shake and a short buzz. */
   function invalid(text) { toast(text); if (root.Fx) root.Fx.nope(); }
   /** An icon in a soft coloured tile (violet, mint, amber, sky, pink, orange, white). */
   const tile = (name, tint, cls) => `<span class="itile t-${tint || 'violet'} ${cls || ''}" aria-hidden="true">${icon(name)}</span>`;
-  root.UI = { tile, invalid, icon, esc, money, numv, delta, roleDot, emptyState, toast, openSheet, closeTop, closeAll, dialog, confirm, promptText, onSwipe, vibrate, download, shareFile, copyText, numIn, timeAgo, sheets };
+  root.UI = { tile, skeleton, invalid, icon, esc, money, numv, delta, roleDot, emptyState, toast, openSheet, closeTop, closeAll, dialog, confirm, promptText, onSwipe, vibrate, download, shareFile, copyText, numIn, timeAgo, sheets };
 })(typeof window !== 'undefined' ? window : globalThis);

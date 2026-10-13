@@ -71,7 +71,7 @@
 
   App.actions['admin-dashboard'] = async function () {
     if (!App.isAdmin || !root.Cloud || !root.Cloud.user) return;
-    const entry = UI.openSheet({ title: 'לוח ניהול', full: true, body: '<div class="empty"><h3>טוען נתונים…</h3></div>' });
+    const entry = UI.openSheet({ title: 'לוח ניהול', full: true, body: UI.skeleton(4, 'card') });
     const body = entry.sh.querySelector('.sh-body');
     const load = async () => { try {
       const { fs, db } = await root.Cloud.sdk();
@@ -84,7 +84,7 @@
       if (entry.closed) return;
       body.innerHTML = (inbox ? `<div class="admin"><div class="section-title">${icon('chat', 's')} פניות ${inbox.count ? `<span class="tag warn">${inbox.count} מחכות לתשובה</span>` : ''}</div>${inbox.html}</div>` : '') + render(rows, admins, root.Cloud.user.uid);
       body.querySelectorAll('[data-adm-ticket]').forEach((b) => (b.onclick = () => root.Support.thread(b.dataset.admTicket, true)));
-      body.querySelector('[data-adm-refresh]').onclick = () => { body.innerHTML = '<div class="empty"><h3>טוען נתונים…</h3></div>'; load(); };
+      body.querySelector('[data-adm-refresh]').onclick = () => { body.innerHTML = UI.skeleton(4, 'card'); load(); };
       body.querySelector('[data-adm-add]').onclick = async () => {
         const uid = body.querySelector('#adm-uid').value.trim();
         if (!/^[A-Za-z0-9]{20,40}$/.test(uid)) { UI.invalid('מזהה משתמש לא תקין'); return; }

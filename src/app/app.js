@@ -178,7 +178,7 @@
   App.saveOps = async function (ops, label, toastText) {
     await Store.apply(ops, label);
     if (ops.some((o) => o.store === 'shifts' && o.put && o.put.status !== 'planned')) root.Fx.celebrate('coin');
-    UI.toast(toastText || label, { label: 'ביטול', fn: App.undo });
+    UI.toast(toastText || label, { label: 'ביטול', fn: App.undo }, { ok: true });
   };
   App.undo = async function () {
     const l = await Store.undo();
@@ -283,7 +283,7 @@
     if (S.shifts.filter((x) => x.status === 'done').length === 1) App.celebrateOnce('first-shift', () => UI.toast('המשמרת הראשונה שלך נשמרה! 🎉'));
     root.Fx.celebrate('big');
     const r = App.result(sh.id);
-    UI.toast(`נשמר: ${U.hm(r ? r.paidMin : 0)} שעות · ${U.money(r ? r.wage : 0)}`, { label: 'ביטול', fn: App.undo });
+    UI.toast(`נשמר: ${U.hm(r ? r.paidMin : 0)} שעות · ${U.money(r ? r.wage : 0)}`, { label: 'ביטול', fn: App.undo }, { ok: true });
     App.sheetsApi.shiftDetail && App.sheetsApi.shiftDetail(sh.id);
   };
   App.toggleBreak = async function () {

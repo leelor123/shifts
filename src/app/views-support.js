@@ -126,7 +126,7 @@
     return entry;
   };
   async function loadMine(box) {
-    box.innerHTML = '<div class="small muted" style="margin:14px 4px">טוען את הפניות שלך…</div>';
+    box.innerHTML = UI.skeleton(2);
     try {
       const list = await myTickets();
       if (!list.length) { box.innerHTML = ''; return; }
@@ -213,7 +213,7 @@
 
   /* ---------------- one conversation (user or admin) ---------------- */
   Support.thread = async function (tid, asAdmin) {
-    const entry = UI.openSheet({ title: asAdmin ? 'פנייה' : 'הפנייה שלי', full: true, cls: 'chat-sheet', body: '<div class="small muted">טוען…</div>',
+    const entry = UI.openSheet({ title: asAdmin ? 'פנייה' : 'הפנייה שלי', full: true, cls: 'chat-sheet', body: UI.skeleton(3),
       foot: `<textarea class="input chat-input" id="sp-reply" rows="1" maxlength="2000" placeholder="${asAdmin ? 'תשובה…' : 'עוד משהו?'}"></textarea><button class="icon-btn chat-send" data-sp-reply aria-label="שליחה">${icon('send')}</button>` });
     const body = entry.sh.querySelector('.sh-body');
     let t = null;

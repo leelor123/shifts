@@ -68,7 +68,7 @@
         setPath(emp, path.slice(2), v);
         await Store.put('employers', emp);
       }
-      UI.toast('נשמר');
+      UI.toast('נשמר', null, { ok: true });
       if (redraw && t.dataset.redraw != null) redraw();
     });
   }
