@@ -76,6 +76,18 @@
     users: '<circle cx="9" cy="8" r="4"/><path d="M2 21a7 7 0 0 1 14 0M16 3.1a4 4 0 0 1 0 7.8M22 21a7 7 0 0 0-5-6.7"/>',
     flask: '<path d="M9 3h6M10 3v6L4 19a2 2 0 0 0 1.7 3h12.6a2 2 0 0 0 1.7-3L14 9V3"/>',
     beach: '<path d="M12 21v-9M5 12a7 7 0 0 1 14 0z"/><path d="M3 21h18"/>',
+    key: '<circle cx="7.5" cy="15.5" r="4.5"/><path d="m10.7 12.3 9.8-9.8M17 6l3 3M14 9l2 2"/>',
+    calc: '<rect x="4" y="2" width="16" height="20" rx="3"/><path d="M8 6.5h8M8 11h.01M12 11h.01M16 11h.01M8 15h.01M12 15h.01M16 15h.01M8 18.5h.01M12 18.5h.01M16 18.5h.01"/>',
+    bug: '<rect x="7" y="7" width="10" height="13" rx="5"/><path d="M9 7.5V6a3 3 0 0 1 6 0v1.5M12 11v9M7 12H3M21 12h-4M7 16.5l-3 1.5M17 16.5l3 1.5M7.5 8.5 5 6.5M16.5 8.5 19 6.5"/>',
+    mail: '<rect x="2" y="4" width="20" height="16" rx="3"/><path d="m22 7-10 6L2 7"/>',
+    help: '<circle cx="12" cy="12" r="9"/><path d="M9.2 9.2a3 3 0 0 1 5.7 1.1c0 2-2.9 2.6-2.9 4.2M12 17.5h.01"/>',
+    chat: '<path d="M21 14.5a2.5 2.5 0 0 1-2.5 2.5H8l-5 4V5.5A2.5 2.5 0 0 1 5.5 3h13A2.5 2.5 0 0 1 21 5.5z"/><path d="M8 9h8M8 12.5h5"/>',
+    bus: '<rect x="4" y="3" width="16" height="15" rx="3"/><path d="M4 11h16M8 18v3M16 18v3M8 14.5h.01M16 14.5h.01"/>',
+    walk: '<circle cx="13.5" cy="4" r="2"/><path d="m10 21 2.2-6.2 2.8 2.7V21M8 13l1.8-4 4.2.6 2.6 3"/>',
+    star: '<path d="m12 2.5 2.9 6 6.6.9-4.8 4.6 1.2 6.5L12 17.4l-5.9 3.1 1.2-6.5L2.5 9.4l6.6-.9z"/>',
+    repeat: '<path d="m17 2 4 4-4 4"/><path d="M3 11V9a3 3 0 0 1 3-3h15M7 22l-4-4 4-4"/><path d="M21 13v2a3 3 0 0 1-3 3H3"/>',
+    smile: '<circle cx="12" cy="12" r="9"/><path d="M8.5 14a4.5 4.5 0 0 0 7 0M9 9.5h.01M15 9.5h.01"/>',
+    rocket: '<path d="M5 15c-1.5 1.3-2 5-2 5s3.7-.5 5-2c.7-.8.7-2.1-.1-2.9a2.2 2.2 0 0 0-2.9-.1z"/><path d="m12 15-3-3a22 22 0 0 1 2-3.9A12.9 12.9 0 0 1 22 2c0 2.7-.8 7.5-6 11a22.4 22.4 0 0 1-4 2z"/><path d="M9 12H4s.6-3 2-4c1.6-1.1 5 0 5 0M12 15v5s3-.6 4-2c1.1-1.6 0-5 0-5"/>',
   };
   function icon(name, cls) {
     return `<svg class="i ${cls || ''}" viewBox="0 0 24 24" aria-hidden="true">${P[name] || P.info}</svg>`;
@@ -294,5 +306,7 @@
 
   /** Wrong or missing input: a message plus a shake and a short buzz. */
   function invalid(text) { toast(text); if (root.Fx) root.Fx.nope(); }
-  root.UI = { invalid, icon, esc, money, numv, delta, roleDot, emptyState, toast, openSheet, closeTop, closeAll, dialog, confirm, promptText, onSwipe, vibrate, download, shareFile, copyText, numIn, timeAgo, sheets };
+  /** An icon in a soft coloured tile (violet, mint, amber, sky, pink, orange, white). */
+  const tile = (name, tint, cls) => `<span class="itile t-${tint || 'violet'} ${cls || ''}" aria-hidden="true">${icon(name)}</span>`;
+  root.UI = { tile, invalid, icon, esc, money, numv, delta, roleDot, emptyState, toast, openSheet, closeTop, closeAll, dialog, confirm, promptText, onSwipe, vibrate, download, shareFile, copyText, numIn, timeAgo, sheets };
 })(typeof window !== 'undefined' ? window : globalThis);

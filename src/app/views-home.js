@@ -107,10 +107,10 @@
     const projPct = goal && proj && proj.withPlanned ? Math.min(100, ((goalNet ? proj.withPlanned * (sum.gross ? sum.net.net / sum.gross : 0.85) : proj.withPlanned) / goal) * 100) : 0;
     const periodName = emp.periodStartDay > 1 ? 'תקופת השכר' : esc(P.label);
     return `<section class="home-hero" data-act="go-summary" role="button" aria-label="סיכום ${periodName}">
-      <span class="hh-spark s1" aria-hidden="true">✦</span><span class="hh-spark s2" aria-hidden="true">✦</span><span class="hh-spark s3" aria-hidden="true">✦</span>
-      <div class="hh-label">${periodName} · ${UI.term ? UI.term('gross', 'ברוטו') : 'ברוטו'} עד עכשיו</div>
+      <span class="hh-dial" aria-hidden="true"></span>
+      <div class="hh-label">${UI.term ? UI.term('gross', 'ברוטו') : 'ברוטו'} ${emp.periodStartDay > 1 ? 'בתקופת השכר' : 'ב' + periodName} עד עכשיו</div>
       <div class="hero-num">${money(sum.gross, 0)}</div>
-      <div class="hh-stats"><span>${UI.term ? UI.term('net', sum.net.minor ? 'נטו' : 'נטו משוער') : 'נטו'} <b>${money(sum.net.net, 0)}</b></span><i></i><span><b class="num">${U.hm(sum.hours * 60)}</b> ש׳</span><i></i><span><b>${sum.shifts}</b> משמרות</span></div>
+      <div class="hh-stats"><span><b>${money(sum.net.net, 0)}</b><small>${UI.term ? UI.term('net', sum.net.minor ? 'נטו' : 'נטו משוער') : 'נטו'}</small></span><span><b class="num">${U.hm(sum.hours * 60)}</b><small>שעות</small></span><span><b>${sum.shifts}</b><small>${sum.shifts === 1 ? 'משמרת' : 'משמרות'}</small></span></div>
       ${goal ? `<div class="hh-goal"><div class="progress thin"><b style="width:${projPct}%"></b><i style="width:${pct}%"></i></div>
         <div class="hh-goal-l">${U.num(pct, 0)}% מיעד ${money(goal, 0)}${proj && proj.pace ? ` · צפי ${money(proj.pace, 0)}` : ''}</div></div>`
         : (proj && proj.pace ? `<div class="hh-goal-l">צפי לסוף ${emp.periodStartDay > 1 ? 'התקופה' : 'החודש'}: ${money(proj.pace, 0)}</div>` : '')}
@@ -142,8 +142,8 @@
 
   /* ---------------- four big doors to the things people look for ---------------- */
   function shortcuts() {
-    const d = (act, emoji, label, cls) => `<button class="sc ${cls}" data-act="${act}"><span class="sc-e" aria-hidden="true">${emoji}</span><span>${label}</span></button>`;
-    return `<div class="shortcuts">${d('shift-new', '➕', 'משמרת שעשיתי', 'c1')}${d('rights', '🛡️', 'מה מגיע לי', 'c2')}${d('payslip-new', '🧾', 'בדיקת תלוש', 'c3')}${d('support', '💬', 'עזרה', 'c4')}</div>`;
+    const d = (act, ic, label, tint) => `<button class="sc" data-act="${act}">${UI.tile(ic, tint)}<span>${label}</span></button>`;
+    return `<div class="shortcuts">${d('shift-new', 'plus', 'משמרת שעשיתי', 'violet')}${d('rights', 'shield', 'מה מגיע לי', 'mint')}${d('payslip-new', 'receipt', 'בדיקת תלוש', 'amber')}${d('support', 'help', 'עזרה', 'sky')}</div>`;
   }
 
   function birthdayCard() {

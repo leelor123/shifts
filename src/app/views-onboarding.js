@@ -55,24 +55,24 @@
         <div class="bubble big">היי! אני שעתי 👋<br>אני אעזור לך לדעת בדיוק כמה כסף מגיע לך</div>
         <h1 class="brand-name">Shaati</h1>
         <div class="ob-points">
-          <div style="--d:0"><span class="ob-emoji">⏱️</span><span>לוחצים כשמתחילים לעבוד, ולוחצים כשמסיימים</span></div>
-          <div style="--d:1"><span class="ob-emoji">💰</span><span>רואים כמה הרווחת, כולל שבתות ושעות נוספות</span></div>
-          <div style="--d:2"><span class="ob-emoji">🛡️</span><span>בודקים שהמשכורת נכונה ושלא מקפחים אותך</span></div>
+          <div style="--d:0">${UI.tile('clock', 'violet')}<span>לוחצים כשמתחילים לעבוד, ולוחצים כשמסיימים</span></div>
+          <div style="--d:1">${UI.tile('wallet', 'mint')}<span>רואים כמה הרווחת, כולל שבתות ושעות נוספות</span></div>
+          <div style="--d:2">${UI.tile('shield', 'amber')}<span>בודקים שהמשכורת נכונה ושלא מקפחים אותך</span></div>
         </div>
-        <p class="small muted">6 שאלות קצרות, פחות מדקה ⚡</p></div>`,
+        <p class="small muted">6 שאלות קצרות, פחות מדקה</p></div>`,
       me: () => `${say(A.name ? 'love' : 'wave', A.name ? `נעים מאוד, ${esc(A.name.split(' ')[0])}! 😍` : 'בוא/י נכיר 😊')}
         <h1>איך קוראים לך?</h1>
         <label class="field"><input class="input big-in" id="ob-name" value="${esc(A.name)}" placeholder="השם שלך" autocomplete="given-name" maxlength="40" enterkeyhint="next"></label>
         <div class="ob-q2">ואת/ה...</div>
-        <div class="ob-chips">${chip('data-gender', 'm', '👦 בן', A.gender === 'm')}${chip('data-gender', 'f', '👧 בת', A.gender === 'f')}${chip('data-gender', 'x', '🙂 לא משנה', A.gender === 'x')}</div>
-        ${why('השם רק כדי שנדבר אליך יפה. בן/בת עוזר לנו לחשב נכון: לבנות מגיע קצת פחות מס 💪')}`,
+        <div class="ob-chips">${chip('data-gender', 'm', 'בן', A.gender === 'm')}${chip('data-gender', 'f', 'בת', A.gender === 'f')}${chip('data-gender', 'x', 'מעדיף/ה לא לומר', A.gender === 'x')}</div>
+        ${why('השם רק כדי שנדבר אליך יפה. בן/בת עוזר לנו לחשב נכון: לבנות מגיע קצת פחות מס.')}`,
       age: () => {
         const a = age();
         return `${say(a != null && a < 18 ? 'wow' : 'happy', a != null ? (a < 18 ? `גיל ${a}! יש לך זכויות מיוחדות, נדאג להן 🛡️` : `גיל ${a}, מעולה 👍`) : 'שאלה קטנה על הגיל 🎂')}
         <h1>${g('מתי נולדת?', 'מתי נולדת?')}</h1>
         <label class="field"><input class="input" type="date" id="ob-birth" data-pick="birth" value="${esc(A.birth)}" min="1940-01-01" max="${U.addDays(today, -365 * 12)}" placeholder="בחירת תאריך לידה"></label>
         <div class="ob-live" id="ob-live-age"></div>
-        <div class="ob-chips">${chip('data-adult', '1', '🧑 אני מעל 18, מעדיף/ה לא לפרט', A.adult)}</div>
+        <div class="ob-chips">${chip('data-adult', '1', 'אני מעל 18, מעדיף/ה לא לפרט', A.adult)}</div>
         ${why('מתחת לגיל 18 יש שכר מינימום אחר, לא משלמים מס, ויש חוקים מיוחדים (כמה שעות מותר לעבוד, הפסקות ועוד). נבדוק הכול בשבילך.')}`;
       },
       job: () => `${say(jobValid().length ? 'love' : 'think', jobValid().length ? 'אחלה! עכשיו נדע כמה הרווחת 💸' : 'איפה עובדים? 🤔')}
@@ -89,7 +89,7 @@
         ${why('ככה נחשב כמה הרווחת בכל משמרת. אפשר לשנות ולהוסיף בכל רגע בהגדרות.')}`,
       travel: () => `${say(A.travel === 'yes' ? 'love' : 'happy', 'הרבה שוכחים את זה! 🚌')}
         <h1>${g('מקבל', 'מקבלת')} כסף על נסיעות?</h1>
-        <div class="ob-chips big">${chip('data-travel', 'yes', '🚌 כן', A.travel === 'yes')}${chip('data-travel', 'no', '🚶 לא', A.travel === 'no')}${chip('data-travel', 'idk', '🤷 לא יודע/ת', A.travel === 'idk')}</div>
+        <div class="ob-chips big">${chip('data-travel', 'yes', icon('bus') + '<span>כן</span>', A.travel === 'yes')}${chip('data-travel', 'no', icon('walk') + '<span>לא</span>', A.travel === 'no')}${chip('data-travel', 'idk', icon('help') + '<span>לא בטוח/ה</span>', A.travel === 'idk')}</div>
         ${A.travel === 'yes' ? `<label class="field ob-pop"><span class="lbl">כמה ליום עבודה? (₪)</span><input class="input" type="number" step="any" inputmode="decimal" id="ob-travel" value="${esc(A.travelAmount)}" placeholder="${USUAL_TRAVEL}"><span class="hint">רוב העובדים מקבלים בערך ${USUAL_TRAVEL} ₪ ליום. אפשר להשאיר ריק ונשים ${USUAL_TRAVEL} ₪.</span></label>` : ''}
         <div class="ob-live" id="ob-live-travel"></div>
         ${why('המעסיק צריך להחזיר לך את דמי הנסיעה לעבודה ובחזרה, בנוסף לשכר. זה כסף שמגיע לך!')}`,
@@ -101,7 +101,7 @@
         ${why('לפי העיר נדע בדיוק מתי שבת וחג נכנסים ויוצאים, וכך כל שעה שעבדת בהם תחושב ב-150% לפחות.')}`,
       start: () => `${say('think', 'אחרונה! 🏁')}
         <h1>מתי ${g('התחלת', 'התחלת')} לעבוד שם?</h1>
-        <div class="ob-chips">${chip('data-start', 'month', '🌱 החודש', A.startPick === 'month')}${chip('data-start', 'months', '🌿 לפני כמה חודשים', A.startPick === 'months')}${chip('data-start', 'year', '🌳 לפני יותר משנה', A.startPick === 'year')}</div>
+        <div class="ob-chips">${chip('data-start', 'month', 'החודש', A.startPick === 'month')}${chip('data-start', 'months', 'לפני כמה חודשים', A.startPick === 'months')}${chip('data-start', 'year', 'לפני יותר משנה', A.startPick === 'year')}</div>
         <label class="field"><span class="lbl">או תאריך מדויק</span><input class="input" type="date" id="ob-start" value="${esc(A.startPick === 'exact' ? A.start : '')}" min="${A.birth ? U.addDays(A.birth, 365 * 12) : '1960-01-01'}" max="${today}" placeholder="בחירת תאריך"></label>
         ${why('לפי הוותק מגיעים ימי חופשה, דמי הבראה ופנסיה. לא בטוח/ה? אפשר לדלג ולהוסיף אחר כך.')}`,
       done: () => {
@@ -112,9 +112,9 @@
           <p class="lead">${demo ? 'אפשר להסתכל על הכול ולמחוק את הדוגמה בכל רגע.' : 'מעכשיו כל משמרת מחושבת לבד.'}</p>
           ${demo ? '' : `<div class="ob-summary">
             ${jobs.map((r) => `<span><i style="background:${r.color}"></i>${esc(r.name)} · ${money(r.rate)}</span>`).join('')}
-            <span>🚌 ${finalTravel() ? money(finalTravel()) + ' ליום' : 'בלי נסיעות'}</span><span>🕯️ ${esc(A.city || st.rest.city)}</span>${age() != null ? `<span>🎂 גיל ${age()}</span>` : ''}
+            <span>${icon('bus', 's')} ${finalTravel() ? money(finalTravel()) + ' ליום' : 'בלי נסיעות'}</span><span>${icon('candle', 's')} ${esc(A.city || st.rest.city)}</span>${age() != null ? `<span>${icon('users', 's')} גיל ${age()}</span>` : ''}
           </div>`}
-          ${needsLogin() ? `${root.App.inAppBrowser && App.inAppBrowser() ? App.openInBrowserCard() : ''}<div class="ob-save"><b>☁️ שמירה בחשבון Google</b><div class="small muted">כדי שכלום לא ילך לאיבוד, ויחכה לך בכל טלפון. רק לך יש גישה.</div></div>` : ''}
+          ${needsLogin() ? `${root.App.inAppBrowser && App.inAppBrowser() ? App.openInBrowserCard() : ''}<div class="ob-save">${UI.tile('cloud', 'sky')}<div><b>שמירה בחשבון Google</b><div class="small muted">כדי שכלום לא ילך לאיבוד, ויחכה לך בכל טלפון. רק לך יש גישה.</div></div></div>` : ''}
           ${msg ? `<div class="banner warn" style="text-align:start">${icon('alert')}<div>${esc(msg)}</div></div>` : ''}
         </div>`;
       },
@@ -154,13 +154,13 @@
       }
       if (key === 'travel') {
         const el = q('#ob-live-travel');
-        if (el) el.innerHTML = A.travel && A.travel !== 'no' ? `${icon('car', 's')} בחודש של 15 ימי עבודה זה עוד <b>${money(finalTravel() * 15)}</b> 🎁` : '';
+        if (el) el.innerHTML = A.travel && A.travel !== 'no' ? `${icon('car', 's')} בחודש של 15 ימי עבודה זה עוד <b>${money(finalTravel() * 15)}</b>` : '';
       }
       if (key === 'age') {
         const el = q('#ob-live-age');
         const a = age();
         if (!el) return;
-        el.innerHTML = a == null ? '' : `${icon('shield', 's')} ${a < 18 ? `שכר המינימום שלך: <b>${U.money(minWage())}</b> לשעה, ובלי מס בכלל 🎉` : `שכר המינימום: <b>${U.money(minWage())}</b> לשעה`}`;
+        el.innerHTML = a == null ? '' : `${icon('shield', 's')} ${a < 18 ? `שכר המינימום שלך: <b>${U.money(minWage())}</b> לשעה, ובלי מס בכלל` : `שכר המינימום: <b>${U.money(minWage())}</b> לשעה`}`;
       }
       if (key === 'city') {
         const el = q('#ob-preview');
@@ -178,7 +178,7 @@
       const qi = step; // questions are steps 1..6
       let foot;
       if (key === 'hi') {
-        foot = `<button class="btn big ob-go" data-next>יאללה, מתחילים! 🚀</button>
+        foot = `<button class="btn big ob-go" data-next>יאללה, מתחילים</button>
           <button class="btn tonal" data-demo>${icon('flask')} רק להציץ (נתונים לדוגמה)</button>
           ${opts.preLogin ? '<button class="btn text" data-have>כבר יש לי חשבון? התחברות</button>' : ''}
           <div class="tiny muted ob-consent">בהמשך אתה מאשר את ${App.legalLinks ? App.legalLinks() : 'תנאי השימוש ומדיניות הפרטיות'}.</div>`;
@@ -188,9 +188,9 @@
           ? `<button class="btn big ob-google" data-save ${saving || (!ready && !loadFailed) ? 'disabled' : ''}>${App.googleIcon || ''}<span>${saving ? 'שומר…' : !ready && !loadFailed ? 'רגע, מכינים את Google…' : 'שמירה עם Google'}</span></button>
             ${blocked ? '<button class="btn text sm" data-redirect>לא נפתח חלון? התחברות בדרך אחרת</button>' : ''}
             ${loadFailed ? '<button class="btn text sm" data-later>להמשיך בינתיים בלי חשבון</button>' : ''}`
-          : `<button class="btn big ob-go" data-save ${saving ? 'disabled' : ''}>${saving ? 'רגע…' : 'יאללה, לאפליקציה! 🎉'}</button>`;
+          : `<button class="btn big ob-go" data-save ${saving ? 'disabled' : ''}>${saving ? 'רגע…' : 'יאללה, לאפליקציה'}</button>`;
       } else {
-        foot = `<button class="btn big ob-go" data-next>${qi === QUESTIONS ? 'סיום ✨' : 'הבא'}</button>`;
+        foot = `<button class="btn big ob-go" data-next>${qi === QUESTIONS ? 'סיום' : 'הבא'}</button>`;
       }
       const top = key === 'hi' || last ? '' : `<div class="ob-top">
         <button class="icon-btn" data-back aria-label="הקודם">${icon('right')}</button>

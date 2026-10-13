@@ -21,13 +21,13 @@
     {
       id: 'shift', t: 'רושמים משמרת ראשונה', s: 'כשמגיעים לעבודה לוחצים "התחל משמרת". שכחת? אפשר להוסיף משמרת שכבר הייתה.',
       done: () => !!S.activeShift || S.shifts.some((x) => x.status === 'done' && !x.demo),
-      acts: [['timer-start', '▶ התחל עכשיו'], ['shift-new', '➕ משמרת שכבר עשיתי']],
+      acts: [['timer-start', 'play', 'התחל עכשיו'], ['shift-new', 'plus', 'משמרת שכבר עשיתי']],
     },
     {
       id: 'notif', t: 'מפעילים תזכורות', s: 'נזכיר לסיים משמרת, ונגיד לך אם משהו בשכר לא נראה נכון.',
-      done: () => !hasNotif() || Notification.permission !== 'default', acts: [['guide-notif', '🔔 להפעיל']],
+      done: () => !hasNotif() || Notification.permission !== 'default', acts: [['guide-notif', 'bell', 'להפעיל']],
     },
-    { id: 'rights', t: 'מגלים מה מגיע לך', s: 'שכר מינימום לגילך, נסיעות, הפסקות, שבת ועוד.', done: () => !!S.meta.usedRights, acts: [['rights', '🛡️ בואו נבדוק']] },
+    { id: 'rights', t: 'מגלים מה מגיע לך', s: 'שכר מינימום לגילך, נסיעות, הפסקות, שבת ועוד.', done: () => !!S.meta.usedRights, acts: [['rights', 'shield', 'בואו נבדוק']] },
   ];
   App.guideCard = function () {
     if (!S.meta.guide || S.meta.guideDone || S.settings.demo) return '';
@@ -46,7 +46,7 @@
       <div class="guide-bar"><i style="width:${Math.round((n / st.length) * 100)}%"></i></div>
       <div class="guide-steps">${st.map((x) => `<div class="gs ${x.ok ? 'ok' : ''} ${x === next ? 'next' : ''}"><span class="gs-dot">${x.ok ? '✓' : ''}</span><div class="gs-b"><div class="gs-t">${x.t}</div>
         ${x === next && x.s ? `<div class="gs-s">${x.s}</div>` : ''}
-        ${x === next && x.acts ? `<div class="gs-acts">${x.acts.map(([a, l], i) => `<button class="btn sm ${i ? 'tonal' : 'go'}" data-act="${a}">${l}</button>`).join('')}</div>` : ''}</div></div>`).join('')}</div>
+        ${x === next && x.acts ? `<div class="gs-acts">${x.acts.map(([a, ic, l], i) => `<button class="btn sm ${i ? 'tonal' : 'go'}" data-act="${a}">${icon(ic, 's')} ${l}</button>`).join('')}</div>` : ''}</div></div>`).join('')}</div>
     </div>`;
   };
   App.actions['guide-hide'] = async () => {
@@ -101,9 +101,9 @@
     setTimeout(() => {
       if (App.tab !== 'home' || App.blocking || document.querySelector('.sheet, .dialog')) return;
       UI.coach([
-        { el: '.home-action .btn.start', text: 'כשמגיעים לעבודה לוחצים כאן ⏱️<br>בסוף לוחצים "סיים משמרת". זה הכול!' },
-        { el: '#nav .fab', text: 'שכחת ללחוץ? כאן מוסיפים משמרת שכבר הייתה, חופשה, בונוס ותלוש ➕', round: true },
-        { el: '.home-hero', text: 'וכאן רואים כמה הרווחת החודש 💰<br>לחיצה פותחת את כל הפירוט' },
+        { el: '.home-action .btn.start', text: 'כשמגיעים לעבודה לוחצים כאן.<br>בסוף לוחצים "סיים משמרת". זה הכול!' },
+        { el: '#nav .fab', text: 'שכחת ללחוץ? כאן מוסיפים משמרת שכבר הייתה, חופשה, בונוס ותלוש', round: true },
+        { el: '.home-hero', text: 'וכאן רואים כמה הרווחת החודש.<br>לחיצה פותחת את כל הפירוט' },
       ], () => Store.setMeta({ coachDone: Date.now() }).catch(() => {}));
     }, 900);
   };
@@ -112,12 +112,12 @@
   const WHATS_NEW = {
     id: '1.7',
     items: [
-      ['🎨', 'עיצוב חדש וצבעוני', 'יותר צבעים, אנימציות וקצת חיים. אפשר להחליף צבע בהגדרות › מראה.'],
-      ['🪙', 'הכירו את שעתי', 'המטבע החמוד שמלווה אותך ומסביר דברים.'],
-      ['📅', 'בוחר תאריך ושעה חדש', 'לוח שנה גדול ונוח, עם "היום" ו"אתמול" בלחיצה.'],
-      ['➕', 'תפריט הוספה מסודר', 'כל האפשרויות במסך אחד, כולל בדיקת תלוש.'],
-      ['💬', 'עזרה ותמיכה', 'שאלות נפוצות, ואפשר לכתוב לנו ישר מהאפליקציה.'],
-      ['🔄', 'רענון חלק', 'מושכים את המסך למטה כדי לסנכרן ולעדכן.'],
+      ['palette', 'violet', 'עיצוב חדש', 'יותר צבע וחיים. אפשר להחליף צבע בהגדרות › מראה.'],
+      ['smile', 'amber', 'הכירו את שעתי', 'המטבע שמלווה אותך ומסביר דברים.'],
+      ['calendar', 'sky', 'בוחר תאריך ושעה חדש', 'לוח שנה גדול ונוח, עם "היום" ו"אתמול" בלחיצה.'],
+      ['plus', 'mint', 'תפריט הוספה מסודר', 'כל האפשרויות במסך אחד, כולל בדיקת תלוש.'],
+      ['chat', 'pink', 'עזרה ותמיכה', 'שאלות נפוצות, ואפשר לכתוב לנו ישר מהאפליקציה.'],
+      ['refresh', 'orange', 'רענון חלק', 'מושכים את המסך למטה כדי לסנכרן ולעדכן.'],
     ],
   };
   App.whatsNew = function () {
@@ -129,8 +129,8 @@
       UI.openSheet({
         title: 'מה חדש? ✨',
         body: `<div class="whats-new">${App.mascotSays('party', 'עדכנו את האפליקציה בשבילך! 🎉', { size: 72 })}
-          ${WHATS_NEW.items.map(([e, t, s], i) => `<div class="wn" style="--d:${i}"><span class="wn-e">${e}</span><div><b>${esc(t)}</b><div class="small muted">${esc(s)}</div></div></div>`).join('')}</div>`,
-        foot: '<button class="btn" data-wn-ok>יאללה! 🚀</button>',
+          ${WHATS_NEW.items.map(([ic, tint, t, s], i) => `<div class="wn" style="--d:${i}">${UI.tile(ic, tint)}<div><b>${esc(t)}</b><div class="small muted">${esc(s)}</div></div></div>`).join('')}</div>`,
+        foot: '<button class="btn" data-wn-ok>מעולה, בואו נמשיך</button>',
         onMount: (el) => { el.querySelector('[data-wn-ok]').onclick = () => UI.closeTop(); if (Fx()) Fx().celebrate('big'); },
       });
     }, 1400);
@@ -157,7 +157,7 @@
     if (e) e.stopPropagation();
     const t = TERMS[el.dataset.term];
     if (!t) return;
-    UI.dialog({ title: '', html: `<div class="term-box">${App.mascot('think', { size: 64 })}<div><h3>מה זה ${esc(t[0])}?</h3><p>${esc(t[1])}</p></div></div>`, buttons: [{ label: 'הבנתי 👍', value: true, cls: '' }] });
+    UI.dialog({ title: '', html: `<div class="term-box">${App.mascot('think', { size: 64 })}<div><h3>מה זה ${esc(t[0])}?</h3><p>${esc(t[1])}</p></div></div>`, buttons: [{ label: 'הבנתי', value: true, cls: '' }] });
   };
   App.TERMS = TERMS;
 })(typeof window !== 'undefined' ? window : globalThis);

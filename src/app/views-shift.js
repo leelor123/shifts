@@ -24,19 +24,19 @@
   /* everything that can be added, as big tiles that all fit on one screen (nothing hides below the fold) */
   App.actions['add-menu'] = () => {
     const tpls = S.templates;
-    const tile = (act, emoji, t, cls, extra) => `<button class="am-tile ${cls || ''}" data-act="${act}" ${extra || ''}><span class="am-e" aria-hidden="true">${emoji}</span><span class="am-t">${t}</span></button>`;
+    const tile = (act, ic, tint, t, cls, extra) => `<button class="am-tile ${cls || ''}" data-act="${act}" ${extra || ''}>${UI.tile(ic, tint)}<span class="am-t">${t}</span></button>`;
     UI.openSheet({
-      title: 'מה להוסיף? ✨',
+      title: 'מה להוסיף?',
       cls: 'add-sheet',
-      body: `<div class="am-main">${tile('shift-new', '⏱️', 'משמרת שעשיתי', 'big g1')}${tile('shift-plan', '📅', 'משמרת עתידית', 'big g2')}</div>
+      body: `<div class="am-main">${tile('shift-new', 'clock', 'glass', 'משמרת שעשיתי', 'big g1')}${tile('shift-plan', 'calendar', 'violet', 'משמרת עתידית', 'big g2')}</div>
         <div class="am-grid">
-          ${S.shifts.some((s) => s.status !== 'planned') ? tile('dup-last', '🔁', 'כמו האחרונה') : ''}
-          ${tpls.length ? tile('tpl-pick', '🧩', 'מתבנית') : ''}
-          ${tile('entry-new', '🏖️', 'יום חופשה', '', 'data-kind="vacation"')}
-          ${tile('entry-new', '🤒', 'יום מחלה', '', 'data-kind="sick"')}
-          ${tile('entry-new', '🎁', 'בונוס / טיפים', '', 'data-kind="adjustment" data-type="bonus"')}
-          ${tile('entry-new', '➖', 'ניכוי', '', 'data-kind="adjustment" data-type="deduction"')}
-          ${tile('payslip-new', '🧾', 'בדיקת תלוש', 'hl')}
+          ${S.shifts.some((s) => s.status !== 'planned') ? tile('dup-last', 'repeat', 'violet', 'כמו האחרונה') : ''}
+          ${tpls.length ? tile('tpl-pick', 'layers', 'sky', 'מתבנית') : ''}
+          ${tile('entry-new', 'beach', 'sky', 'יום חופשה', '', 'data-kind="vacation"')}
+          ${tile('entry-new', 'thermo', 'pink', 'יום מחלה', '', 'data-kind="sick"')}
+          ${tile('entry-new', 'gift', 'amber', 'בונוס / טיפים', '', 'data-kind="adjustment" data-type="bonus"')}
+          ${tile('entry-new', 'minus', 'orange', 'ניכוי', '', 'data-kind="adjustment" data-type="deduction"')}
+          ${tile('payslip-new', 'receipt', 'mint', 'בדיקת תלוש', '')}
         </div>`,
     });
   };
