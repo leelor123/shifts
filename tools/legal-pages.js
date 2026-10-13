@@ -28,7 +28,8 @@ const EN = {
 <li><b>Account data:</b> Google user ID, email, display name and photo, used only for sign-in and display.</li>
 <li><b>Never uploaded:</b> your Anthropic API key, the PIN lock, payslip image/PDF files and their raw OCR text.</li>
 <li><b>Fingerprint unlock</b> is handled entirely by the phone; the app never receives or stores fingerprint or face data.</li>
-<li><b>No ads, no analytics, no tracking cookies.</b> Data is not sold or shared for marketing.</li>
+<li><b>No ads, no tracking cookies, no third-party analytics.</b> Data is not sold or shared for marketing.</li>
+<li><b>Anonymous usage statistics (can be turned off):</b> once a day each device stores one record under a random ID that is not linked to the account: app version, install type, first/last day of use, number of active days, shift and payslip counts, an age group (under/over 18) and which features are on. No name, email, user ID, shift dates or amounts. Only the app's administrators can read it, as aggregate totals. Turning it off (Settings › Account &amp; sync) deletes the record.</li>
 <li><b>Third parties:</b> Google (authentication and storage), GitHub (hosting of the app code), Anthropic (only when you use an AI feature with your own API key; payslip text is redacted and shown to you before sending), font/code CDNs.</li>
 <li><b>Your rights:</b> view and edit everything in the app, export it (backup file / CSV), and delete your account and all data at any time (Settings › Account &amp; sync › Delete all data). See <a href="delete-account.html">delete-account.html</a>.</li>
 <li><b>Children:</b> users under 18 should use the app with a parent's or guardian's consent.</li>

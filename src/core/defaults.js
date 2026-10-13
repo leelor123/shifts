@@ -118,6 +118,7 @@
         recuperationMonth: 7, // month the employer pays (0 = paid monthly)
       },
       minWageHourly: null, // null = by law, from the date and age (Engine.legalMinWage); a number overrides it
+      shareStats: true, // anonymous usage statistics (stats.js); off deletes this device's record
       gender: '', // '' | 'm' | 'f': only for the mandatory-pension age
       // --- goals ---
       goal: { amount: 0, type: 'gross' },

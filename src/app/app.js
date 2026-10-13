@@ -498,11 +498,14 @@
       Cloud.start().then((u) => { if (u) Cloud.connect(u).catch(() => {}); else App.showLogin('expired'); }).catch(() => {});
       return;
     }
+    // a new user answers the setup questions first; signing in comes at the end, to save them
+    if (!S.settings.onboarded && !S.meta.cloudUid) { App.sheetsApi.onboarding({ preLogin: true }); return; }
     App.showLogin(failed ? (navigator.onLine ? 'error' : 'offline') : null);
   };
   /** Continue into the app once the user is signed in. */
   App.afterLogin = function () {
     if (App.ensureLegal && !App.legalAccepted()) { App.ensureLegal(App.afterLogin); return; }
+    if (root.Stats) { root.Stats.markActive().then(() => root.Stats.report()); }
     document.getElementById('nav').style.display = '';
     if (!S.settings.onboarded) { App.sheetsApi.onboarding(); return; }
     const hash = (location.hash || '').replace('#', '');

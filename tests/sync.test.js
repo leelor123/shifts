@@ -197,3 +197,82 @@ T.atest('restoring a backup keeps the account link and uploads the restored data
   T.ok(be.docs.has('users/u1/shifts/s9'), 'restored shift uploaded');
   T.eq(A.S.roles[0].color, '#888888', 'unsafe colour value replaced');
 });
+
+/* ---------------- anonymous statistics ---------------- */
+async function withStats(A, legal) {
+  A.ctx.App = { androidApp: false, roles: () => A.S.roles, legalAccepted: () => legal !== false, tab: 'home' };
+  vm.runInContext(fs.readFileSync(path.join(SRC, 'app/stats.js'), 'utf8'), A.ctx, { filename: 'app/stats.js' });
+  return A.ctx.Stats;
+}
+const statsDocs = (be) => [...be.docs].filter(([k]) => k.startsWith('stats/'));
+
+T.atest('statistics: one anonymous record per device, nothing personal in it', async () => {
+  const be = fakeBackend();
+  const A = await phone(be); await A.add('s1'); await A.add('s2');
+  await withStats(A);
+  await A.Cloud.connect(user); await wait(60);
+  const docs = statsDocs(be);
+  T.eq(docs.length, 1, 'one record');
+  const [key, rec] = docs[0];
+  T.ok(key.length - 6 >= 16 && key.length - 6 <= 40, 'random id within the rule limits');
+  T.eq(Object.keys(rec).sort().join(','), 'age,days,f,first,last,p,ps,s30,sh,t,v');
+  T.eq(rec.sh, 2);
+  const json = JSON.stringify(rec);
+  T.ok(!json.includes('me@example.com') && !json.includes('"u1"') && !json.includes('"Me"'), 'no email, user id or name');
+  T.ok(!key.includes('u1/') && key === 'stats/' + A.S.meta.installId, 'stored under the random device id only');
+});
+
+T.atest('statistics: off deletes the record and stops sending; never before the policy is accepted', async () => {
+  const be = fakeBackend();
+  const A = await phone(be);
+  const Stats = await withStats(A);
+  await A.Cloud.connect(user); await wait(60);
+  T.eq(statsDocs(be).length, 1);
+  await A.Store.setSettings((s) => { s.shareStats = false; });
+  await Stats.forget(); await wait(20);
+  T.eq(statsDocs(be).length, 0, 'removed');
+  await Stats.report(true); await wait(20);
+  T.eq(statsDocs(be).length, 0, 'not sent while off');
+  const B = await phone(be);
+  const SB = await withStats(B, false);
+  await B.Cloud.connect({ uid: 'u3', email: 'x@example.com' }); await wait(60);
+  await SB.report(true); await wait(20);
+  T.eq(statsDocs(be).length, 0, 'not sent before the privacy policy was accepted');
+});
+
+T.atest('statistics: deleting the account also deletes the statistics record', async () => {
+  const be = fakeBackend();
+  const A = await phone(be);
+  await withStats(A);
+  await A.Cloud.connect(user); await wait(60);
+  T.eq(statsDocs(be).length, 1);
+  const signedIn = Object.assign({}, user, { metadata: { lastSignInTime: new Date().toUTCString() }, delete() {} });
+  A.Cloud._useSdk({ app: {}, auth: { currentUser: signedIn }, db: {}, fs: A.ffs, au: { deleteUser: async () => {}, signOut: async () => {} } });
+  await A.Cloud.deleteAccountData();
+  T.eq(statsDocs(be).length, 0, 'statistics record removed');
+});
+
+T.atest('admin rights come only from the admins list', async () => {
+  const be = fakeBackend();
+  const A = await phone(be);
+  const Stats = await withStats(A);
+  await A.Cloud.connect(user); await wait(60);
+  T.eq(A.ctx.App.isAdmin, false, 'a regular user');
+  be.docs.set('admins/u1', { added: 1, by: 'owner-setup' });
+  T.eq(await Stats.checkAdmin(), true, 'listed user is an admin');
+  be.docs.delete('admins/u1');
+  T.eq(await Stats.checkAdmin(), false, 'removed again');
+});
+
+T.atest('statistics: turning it off on one phone removes the other phone\'s record too', async () => {
+  const be = fakeBackend();
+  const A = await phone(be); const SA = await withStats(A);
+  const B = await phone(be); const SB = await withStats(B);
+  await A.Cloud.connect(user); await B.Cloud.connect(user); await wait(80);
+  T.eq(statsDocs(be).length, 2, 'two phones, two records');
+  await B.Store.setSettings((s) => { s.shareStats = false; });
+  await SB.forget(); await B.sync(); await A.sync(); await wait(100);
+  T.eq(A.S.settings.shareStats, false, 'the choice reached the other phone');
+  await SA.report(); await wait(30);
+  T.eq(statsDocs(be).length, 0, 'both records removed');
+});

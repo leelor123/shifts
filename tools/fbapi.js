@@ -42,6 +42,17 @@ async function main() {
     const bad = /redirect_uri_mismatch|signin\/oauth\/error/.test(body + loc);
     console.log(arg, r.status, bad ? 'MISMATCH (not allowed)' : 'allowed', loc.split('?')[0]);
   }
+  if (cmd === 'makeadmin') {
+    // node tools/fbapi.js makeadmin <projectId> <email>  — adds the account to admins/ (owner access, rules don't apply)
+    const look = new Client({ urlPrefix: 'https://identitytoolkit.googleapis.com', apiVersion: 'v1', auth: true });
+    const r = await look.post(`/projects/${project}/accounts:lookup`, { email: [arg] });
+    const users = (r.body && r.body.users) || [];
+    if (!users.length) { console.log('no account with that email has signed in to the app yet'); process.exit(1); }
+    const uid = users[0].localId;
+    const fsApi = new Client({ urlPrefix: 'https://firestore.googleapis.com', apiVersion: 'v1', auth: true });
+    await fsApi.request({ method: 'PATCH', path: `/projects/${project}/databases/(default)/documents/admins/${uid}`, body: { fields: { added: { integerValue: String(Date.now()) }, by: { stringValue: 'owner-setup' } } } });
+    console.log('admin added:', uid.slice(0, 6) + '…');
+  }
   if (cmd === 'domains') {
     const r = await idt.get(`/projects/${project}/config`);
     const domains = r.body.authorizedDomains || [];
@@ -54,6 +65,8 @@ async function main() {
     const db = '/databases/(default)/documents';
     const me = { uid: 'u1', token: { email: 'me@example.com' } };
     const rec = (u) => ({ u, d: false, j: '{"id":"s1"}' });
+    const boss = { uid: 'boss', token: { email: 'boss@example.com' } };
+    const stat = () => ({ v: '1.5.0', p: 'android', first: '2026-10-01', last: '2026-10-13', days: 5, sh: 12, s30: 6, ps: 1, age: 'u18', f: { rights: true }, t: 1790000000000 });
     const cases = [
       ['owner can create a shift', 'ALLOW', 'create', me, `/users/u1/shifts/s1`, rec(5), null],
       ['owner can update with a newer version', 'ALLOW', 'update', me, `/users/u1/shifts/s1`, rec(9), rec(5)],
@@ -67,11 +80,29 @@ async function main() {
       ['tombstone allowed', 'ALLOW', 'update', me, `/users/u1/shifts/s1`, { u: 10, d: true, j: null }, rec(5)],
       ['profile doc writable by owner', 'ALLOW', 'update', me, `/users/u1`, { email: 'me@example.com', updatedAt: 1 }, { email: 'me@example.com' }],
       ['other paths refused', 'DENY', 'create', me, `/other/x`, { a: 1 }, null],
+      ['a device writes its anonymous stats', 'ALLOW', 'create', me, '/stats/abcdef0123456789abcdef', stat(), null],
+      ['stats need a signed-in user', 'DENY', 'create', null, '/stats/abcdef0123456789abcdef', stat(), null],
+      ['stats cannot carry extra fields (e.g. email)', 'DENY', 'create', me, '/stats/abcdef0123456789abcdef', Object.assign(stat(), { email: 'a@b.c' }), null],
+      ['stats platform must be known', 'DENY', 'create', me, '/stats/abcdef0123456789abcdef', Object.assign(stat(), { p: '<b>x</b>' }), null],
+      ['stats dates must be dates', 'DENY', 'create', me, '/stats/abcdef0123456789abcdef', Object.assign(stat(), { last: '<img src=x>' }), null],
+      ['a short stats id is refused', 'DENY', 'create', me, '/stats/abc', stat(), null],
+      ['a regular user cannot read stats', 'DENY', 'get', me, '/stats/abcdef0123456789abcdef', null, stat()],
+      ['an admin can read stats', 'ALLOW', 'get', boss, '/stats/abcdef0123456789abcdef', null, stat(), ['boss']],
+      ['a user can check their own admin entry', 'ALLOW', 'get', me, '/admins/u1', null, { added: 1, by: 'x' }],
+      ['a user cannot read another user’s admin entry', 'DENY', 'get', me, '/admins/boss', null, { added: 1, by: 'x' }],
+      ['a regular user cannot make themselves admin', 'DENY', 'create', me, '/admins/u1', { added: 1, by: 'u1' }, null],
+      ['an admin can add an admin', 'ALLOW', 'create', boss, '/admins/u7', { added: 1, by: 'boss' }, null, ['boss']],
+      ['an admin must sign the entry as themselves', 'DENY', 'create', boss, '/admins/u7', { added: 1, by: 'u1' }, null, ['boss']],
+      ['an admin cannot remove themselves', 'DENY', 'delete', boss, '/admins/boss', null, { added: 1, by: 'x' }, ['boss']],
+      ['an admin can remove another admin', 'ALLOW', 'delete', boss, '/admins/u7', null, { added: 1, by: 'boss' }, ['boss']],
+      ['admin entries cannot be edited', 'DENY', 'update', boss, '/admins/u7', { added: 2, by: 'boss' }, { added: 1, by: 'boss' }, ['boss']],
     ];
-    const testCases = cases.map(([, expect, method, auth, p, data, existing]) => {
+    const testCases = cases.map(([, expect, method, auth, p, data, existing, admins]) => {
       const tc = { expectation: expect, request: { auth: auth || null, path: db + p, method } };
       if (data) tc.request.resource = { data };
-      tc.functionMocks = [];
+      // exists(admins/{uid}) is answered by a mock: true for the listed admins, false for everyone else
+      tc.functionMocks = (admins || []).map((a) => ({ function: 'exists', args: [{ exactValue: '/databases/(default)/documents/admins/' + a }], result: { value: true } }))
+        .concat([{ function: 'exists', args: [{ anyValue: {} }], result: { value: false } }]);
       if (existing) tc.resource = { data: existing };
       return tc;
     });

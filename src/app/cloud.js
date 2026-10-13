@@ -76,6 +76,8 @@
     } catch (e) { return null; }
   };
 
+  /** The loaded Firebase SDK ({app, auth, db, au, fs}) for other modules (statistics, admin). */
+  Cloud.sdk = () => load();
   /** Tests inject a fake SDK ({app, auth, db, au, fs}) instead of loading Firebase. */
   Cloud._useSdk = (fake) => { fb = fake; };
 
@@ -233,6 +235,7 @@
     attach(user.uid);
     Cloud.connected = true;
     await push();
+    if (root.Stats) { root.Stats.report(); root.Stats.checkAdmin(); }
   };
 
   /* ---------------- live listeners (cloud → phone) ---------------- */
@@ -420,6 +423,7 @@
     const last = Date.parse((user.metadata && user.metadata.lastSignInTime) || '') || 0;
     if (user.delete && Date.now() - last > 4 * 60 * 1000) await au.reauthenticateWithPopup(user, new au.GoogleAuthProvider());
     detach();
+    if (root.Stats) await root.Stats.forget();
     for (const st of SYNC.concat(['kv'])) {
       const snap = await fs.getDocs(fs.collection(db, 'users', uid, st));
       for (let i = 0; i < snap.docs.length; i += 400) {

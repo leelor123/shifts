@@ -407,6 +407,23 @@ textarea.input { min-height: 90px; resize: vertical; }
 .hbar .track { flex: 1; height: 14px; border-radius: 4px; background: var(--surface-3); overflow: hidden; }
 .hbar .track i { display: block; height: 100%; border-radius: 4px; }
 .hbar .vv { width: 92px; flex: none; text-align: left; direction: ltr; font-weight: 600; font-variant-numeric: tabular-nums; }
+/* admin dashboard */
+.admin .section-title { margin-top: 18px; }
+.adm-bar { display: flex; align-items: center; gap: 10px; margin: 9px 0; font-size: .85rem; }
+.adm-bar .nm { width: 118px; flex: none; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.adm-bar .track { flex: 1; height: 12px; border-radius: 6px; background: var(--surface-3); overflow: hidden; }
+.adm-bar .track i { display: block; height: 100%; border-radius: 6px; background: var(--primary); min-width: 2px; transition: width .6s cubic-bezier(.2, .8, .2, 1); }
+.adm-bar .vv { width: 74px; flex: none; text-align: left; direction: ltr; font-weight: 600; font-variant-numeric: tabular-nums; font-size: .8rem; }
+.adm-add { display: flex; gap: 8px; margin: 10px 0 8px; }
+.adm-add .input { flex: 1; min-width: 0; font-family: ui-monospace, monospace; font-size: .85rem; }
+.adm-add .btn { flex: none; }
+.admin .kpi .v { font-variant-numeric: tabular-nums; }
+.adm-foot { display: flex; align-items: center; justify-content: space-between; margin: 14px 4px 4px; }
+@media (max-width: 380px) {
+  .adm-bar { gap: 8px; }
+  .adm-bar .nm { width: 92px; font-size: .8rem; }
+  .adm-bar .vv { width: 64px; font-size: .75rem; }
+}
 .stackbar { display: flex; height: 18px; border-radius: 6px; overflow: hidden; gap: 2px; background: var(--surface); }
 .stackbar i { display: block; height: 100%; }
 
@@ -462,6 +479,7 @@ textarea.input { min-height: 90px; resize: vertical; }
 .wizard .foot.col .btn { flex: none; width: 100%; }
 .role-edit { display: grid; grid-template-columns: 44px 1fr 110px 40px; gap: 8px; align-items: center; margin-bottom: 10px; }
 .role-edit .sw { width: 40px; height: 40px; border-radius: 12px; border: 0; cursor: pointer; }
+@media (max-width: 380px) { .role-edit { grid-template-columns: 40px 1fr 76px 32px; gap: 6px; } }
 .lock { position: fixed; inset: 0; z-index: 100; background: var(--surface); display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 18px; padding: 24px; }
 .pin-dots { display: flex; gap: 14px; }
 .pin-dots i { width: 16px; height: 16px; border-radius: 50%; border: 2px solid var(--outline); }
@@ -831,6 +849,45 @@ body.fx .item:active { transform: scale(.985); }
 .rights .rt-help ol { margin: 0 0 12px; padding-inline-start: 20px; line-height: 1.7; }
 .highlight.go .hl-ic { background: var(--primary); color: var(--on-primary); }
 
+/* ---- onboarding: friendly questions ---- */
+.wizard.ob .content { animation: none; }
+.wizard.ob .content.ob-next { animation: ob-in-next .38s cubic-bezier(.2, .8, .3, 1) both; }
+.wizard.ob .content.ob-prev { animation: ob-in-prev .38s cubic-bezier(.2, .8, .3, 1) both; }
+@keyframes ob-in-next { from { opacity: 0; transform: translateX(-28px); } to { opacity: 1; transform: none; } }
+@keyframes ob-in-prev { from { opacity: 0; transform: translateX(28px); } to { opacity: 1; transform: none; } }
+.ob-progress { height: 6px; border-radius: 3px; background: var(--surface-3); margin: 8px 0 10px; overflow: hidden; }
+.ob-progress i { display: block; height: 100%; border-radius: 3px; background: linear-gradient(90deg, #2ee59d, var(--primary)); transition: width .5s cubic-bezier(.2, .8, .3, 1); margin-inline-start: 0; }
+.ob-count { font-size: .8rem; font-weight: 700; color: var(--on-surface-var); margin-bottom: 14px; }
+.ob-hero { font-size: 3.2rem; line-height: 1; margin: 6px 0 12px; display: inline-block; animation: ob-pop .5s cubic-bezier(.34, 1.56, .64, 1) .08s both, ob-float 3s ease-in-out .6s infinite; }
+.ob-hero.sm { font-size: 1.6rem; margin: 0; animation: ob-pop .45s cubic-bezier(.34, 1.56, .64, 1) both; }
+@keyframes ob-pop { from { transform: scale(.2) rotate(-12deg); opacity: 0; } to { transform: none; opacity: 1; } }
+@keyframes ob-float { 50% { transform: translateY(-5px) rotate(-4deg); } }
+.wizard.ob h1 { font-size: 1.75rem; }
+.ob-live { margin-top: 12px; padding: 12px 14px; border-radius: 14px; background: var(--primary-container); color: var(--on-primary-container); font-size: .92rem; line-height: 1.5; }
+.ob-live:empty { display: none; }
+.ob-live svg { vertical-align: -3px; }
+.ob-welcome { text-align: center; padding-top: 4vh; }
+.ob-points { display: grid; gap: 10px; margin: 26px 0 18px; text-align: start; }
+.ob-points > div { display: flex; align-items: center; gap: 12px; padding: 12px 14px; border-radius: 16px; background: var(--surface-1); border: 1px solid var(--line); font-weight: 600; animation: ob-in-next .5s cubic-bezier(.2, .8, .3, 1) calc(.15s + var(--d) * .12s) both; }
+.ob-consent { text-align: center; margin-top: 4px; }
+.ob-done { text-align: center; padding-top: 3vh; }
+.ob-check { width: 92px; height: 92px; margin: 0 auto 16px; }
+.ob-check svg { width: 100%; height: 100%; }
+.ob-check circle { fill: var(--good-bg); stroke: var(--good-mark); stroke-width: 3; stroke-dasharray: 160; stroke-dashoffset: 160; animation: ob-draw .6s ease-out .1s forwards; }
+.ob-check path { fill: none; stroke: var(--good-mark); stroke-width: 4.5; stroke-linecap: round; stroke-linejoin: round; stroke-dasharray: 40; stroke-dashoffset: 40; animation: ob-draw .35s ease-out .55s forwards; }
+@keyframes ob-draw { to { stroke-dashoffset: 0; } }
+.ob-summary { display: flex; flex-wrap: wrap; justify-content: center; gap: 8px; margin: 16px 0; }
+.ob-summary span { display: inline-flex; align-items: center; gap: 6px; padding: 6px 12px; border-radius: 999px; background: var(--surface-2); font-size: .85rem; font-weight: 600; animation: ob-pop .4s cubic-bezier(.34, 1.56, .64, 1) .7s both; }
+.ob-summary i { width: 9px; height: 9px; border-radius: 50%; }
+.ob-save { margin: 18px 0 6px; padding: 14px; border-radius: 16px; border: 1px dashed var(--outline-var); }
+.btn.ob-google { background: #fff; color: #1f1f1f; border: 1px solid #dadce0; gap: 10px; }
+@media (prefers-reduced-motion: reduce) { .wizard.ob *, .ob-hero { animation: none !important; } .ob-check circle, .ob-check path { stroke-dashoffset: 0; } }
+.rights .rt-results { margin-top: 10px; }
+.rights .rt-hit { animation: ob-in-next .3s cubic-bezier(.2, .8, .3, 1) both; }
+.rights .rt-hit-t { display: flex; align-items: center; gap: 8px; font-weight: 800; margin-bottom: 8px; color: var(--primary); }
+.rights .rt-none { text-align: center; }
+.rights .rt-none .btn { margin-top: 12px; }
+
 </style>
 </head>
 <body>
@@ -849,7 +906,7 @@ body.fx .item:active { transform: scale(.985); }
 <div id="print-root" aria-hidden="true"></div>
 <noscript><div style="padding:24px;font-family:sans-serif">האפליקציה דורשת JavaScript.</div></noscript>
 <script>
-window.APP_VERSION = '1.5.0';
+window.APP_VERSION = '1.6.0';
 /* ---- core/util.js ---- */
 /* ============================================================
  * util.js — date/time helpers and formatting.
@@ -1474,6 +1531,7 @@ window.APP_VERSION = '1.5.0';
         recuperationMonth: 7, // month the employer pays (0 = paid monthly)
       },
       minWageHourly: null, // null = by law, from the date and age (Engine.legalMinWage); a number overrides it
+      shareStats: true, // anonymous usage statistics (stats.js); off deletes this device's record
       gender: '', // '' | 'm' | 'f': only for the mandatory-pension age
       // --- goals ---
       goal: { amount: 0, type: 'gross' },
@@ -4338,7 +4396,8 @@ window.APP_VERSION = '1.5.0';
   }
 
   // meta that describes this phone (account link, sync progress), never taken from a backup
-  const DEVICE_META = ['cloudUid', 'cloudEmail', 'cloudName', 'cloudPhoto', 'cloudReady', 'lastSync', 'designV2', 'chat', 'chatShareData'];
+  const DEVICE_META = ['cloudUid', 'cloudEmail', 'cloudName', 'cloudPhoto', 'cloudReady', 'lastSync', 'designV2', 'chat', 'chatShareData',
+    'installId', 'statsSentAt', 'activeDays', 'firstActiveDay', 'lastActiveDay'];
   const SYNC_META = ['pendingDeletes', 'settingsDirty', 'activeDirty', 'activeUpdatedAt'];
   /** Values that end up inside HTML attributes must have a safe shape. */
   function safeRecord(store, r) {
@@ -5327,11 +5386,14 @@ window.APP_VERSION = '1.5.0';
       Cloud.start().then((u) => { if (u) Cloud.connect(u).catch(() => {}); else App.showLogin('expired'); }).catch(() => {});
       return;
     }
+    // a new user answers the setup questions first; signing in comes at the end, to save them
+    if (!S.settings.onboarded && !S.meta.cloudUid) { App.sheetsApi.onboarding({ preLogin: true }); return; }
     App.showLogin(failed ? (navigator.onLine ? 'error' : 'offline') : null);
   };
   /** Continue into the app once the user is signed in. */
   App.afterLogin = function () {
     if (App.ensureLegal && !App.legalAccepted()) { App.ensureLegal(App.afterLogin); return; }
+    if (root.Stats) { root.Stats.markActive().then(() => root.Stats.report()); }
     document.getElementById('nav').style.display = '';
     if (!S.settings.onboarded) { App.sheetsApi.onboarding(); return; }
     const hash = (location.hash || '').replace('#', '');
@@ -5481,6 +5543,8 @@ window.FIREBASE_CONFIG = {
     } catch (e) { return null; }
   };
 
+  /** The loaded Firebase SDK ({app, auth, db, au, fs}) for other modules (statistics, admin). */
+  Cloud.sdk = () => load();
   /** Tests inject a fake SDK ({app, auth, db, au, fs}) instead of loading Firebase. */
   Cloud._useSdk = (fake) => { fb = fake; };
 
@@ -5638,6 +5702,7 @@ window.FIREBASE_CONFIG = {
     attach(user.uid);
     Cloud.connected = true;
     await push();
+    if (root.Stats) { root.Stats.report(); root.Stats.checkAdmin(); }
   };
 
   /* ---------------- live listeners (cloud → phone) ---------------- */
@@ -5825,6 +5890,7 @@ window.FIREBASE_CONFIG = {
     const last = Date.parse((user.metadata && user.metadata.lastSignInTime) || '') || 0;
     if (user.delete && Date.now() - last > 4 * 60 * 1000) await au.reauthenticateWithPopup(user, new au.GoogleAuthProvider());
     detach();
+    if (root.Stats) await root.Stats.forget();
     for (const st of SYNC.concat(['kv'])) {
       const snap = await fs.getDocs(fs.collection(db, 'users', uid, st));
       for (let i = 0; i < snap.docs.length; i += 400) {
@@ -5849,6 +5915,106 @@ window.FIREBASE_CONFIG = {
   };
 })(typeof window !== 'undefined' ? window : globalThis);
 
+/* ---- app/stats.js ---- */
+/* ============================================================
+ * stats.js — anonymous usage statistics for the admin dashboard.
+ *
+ * Once a day, a signed-in device writes one small record to
+ * stats/{random install id}: app version, platform, first/last day
+ * of use, number of active days, shift and payslip counts, an age
+ * group (under / over 18) and which features are on. No name, email,
+ * user id, dates of shifts or amounts: the record cannot be linked
+ * to a person, and only admins can read the collection
+ * (firestore.rules). The user can turn it off in Settings; turning
+ * it off deletes the record.
+ * ============================================================ */
+(function (root) {
+  'use strict';
+  const { U, Store, App } = root;
+  const S = Store.S;
+  const Stats = {};
+  root.Stats = Stats;
+
+  const today = () => U.todayKey();
+  function platform() {
+    if (App.androidApp) return 'android';
+    try { if (root.matchMedia('(display-mode: standalone)').matches) return 'pwa'; } catch (e) { /* ignore */ }
+    return 'web';
+  }
+  /** Count active days on this device (local only). */
+  Stats.markActive = async function () {
+    const k = today();
+    if (S.meta.lastActiveDay === k) return;
+    await Store.setMeta({ lastActiveDay: k, activeDays: (S.meta.activeDays || 0) + 1, firstActiveDay: S.meta.firstActiveDay || k });
+  };
+  Stats.enabled = () => S.settings.shareStats !== false;
+
+  function record() {
+    const k = today();
+    const from30 = U.addDays(k, -30);
+    const done = S.shifts.filter((s) => s.status === 'done');
+    const age = S.settings.birthDate ? root.Engine.ageAt(S.settings.birthDate, k) : null;
+    return {
+      v: String(root.APP_VERSION || '').slice(0, 20),
+      p: platform(),
+      first: S.meta.firstActiveDay || k,
+      last: k,
+      days: Math.min(99999, S.meta.activeDays || 1),
+      sh: Math.min(999999, done.length),
+      s30: Math.min(99999, done.filter((s) => U.epochKey(s.start) >= from30).length),
+      ps: Math.min(99999, S.payslips.length),
+      age: age == null ? '' : age < 18 ? 'u18' : '18p',
+      f: {
+        rights: !!S.meta.usedRights, ai: !!(S.settings.ai && S.settings.ai.apiKey), lock: !!S.settings.lock.enabled,
+        bio: !!S.settings.lock.bioId, dark: S.settings.theme === 'dark', fxOff: !!(S.settings.fx && S.settings.fx.effects === false),
+        goal: +S.settings.goal.amount > 0, demo: !!S.settings.demo, planned: S.shifts.some((s) => s.status === 'planned'),
+        roles: App.roles().length > 1, notif: ('Notification' in root) && Notification.permission === 'granted',
+      },
+      t: Date.now(),
+    };
+  }
+
+  /** Send today's record (at most every 6 hours) when signed in and allowed. */
+  Stats.report = async function (force) {
+    try {
+      const Cloud = root.Cloud;
+      if (!Cloud || !Cloud.user) return;
+      // turned off (maybe on another phone, the setting syncs): this phone's record goes too
+      if (!Stats.enabled()) { if (S.meta.statsSentAt) await Stats.forget(); return; }
+      if (App.legalAccepted && !App.legalAccepted()) return; // only after the privacy policy that describes it was accepted
+      if (!force && S.meta.statsSentAt && Date.now() - S.meta.statsSentAt < 6 * 3600000) return;
+      if (!S.meta.installId) await Store.setMeta({ installId: (root.crypto && crypto.randomUUID ? crypto.randomUUID() : U.uid() + U.uid()).replace(/-/g, '') });
+      const { fs, db } = await Cloud.sdk();
+      await fs.setDoc(fs.doc(db, 'stats', S.meta.installId), record());
+      await Store.setMeta({ statsSentAt: Date.now() });
+    } catch (e) { /* statistics never get in the way */ }
+  };
+  /** Turning statistics off removes this device's record. */
+  Stats.forget = async function () {
+    try {
+      const Cloud = root.Cloud;
+      if (!Cloud || !Cloud.user || !S.meta.installId) return;
+      const { fs, db } = await Cloud.sdk();
+      await fs.deleteDoc(fs.doc(db, 'stats', S.meta.installId));
+      await Store.setMeta({ statsSentAt: null });
+    } catch (e) { /* ignore */ }
+  };
+  /** Is the signed-in user an admin? (the rules let a user read only their own admin entry) */
+  Stats.checkAdmin = async function () {
+    try {
+      const Cloud = root.Cloud;
+      if (!Cloud || !Cloud.user) { App.isAdmin = false; return false; }
+      const { fs, db } = await Cloud.sdk();
+      const snap = await fs.getDoc(fs.doc(db, 'admins', Cloud.user.uid));
+      App.isAdmin = snap.exists();
+    } catch (e) { App.isAdmin = false; }
+    if (App.isAdmin && App.tab === 'settings' && !App.blocking) App.rerender();
+    return App.isAdmin;
+  };
+  record.platform = platform;
+  Stats._record = record;
+})(typeof window !== 'undefined' ? window : globalThis);
+
 /* ---- app/views-login.js ---- */
 /* ============================================================
  * views-login.js — mandatory Google sign-in screen and the
@@ -5861,6 +6027,8 @@ window.FIREBASE_CONFIG = {
   const { icon, esc } = UI;
 
   const GOOGLE_G = '<svg viewBox="0 0 48 48" width="22" height="22" aria-hidden="true"><path fill="#FFC107" d="M43.6 20.5H42V20H24v8h11.3C33.7 32.7 29.2 36 24 36c-6.6 0-12-5.4-12-12s5.4-12 12-12c3.1 0 5.8 1.2 7.9 3.1l5.7-5.7C34 6.1 29.3 4 24 4 12.9 4 4 12.9 4 24s8.9 20 20 20 20-8.9 20-20c0-1.3-.1-2.4-.4-3.5z"/><path fill="#FF3D00" d="m6.3 14.7 6.6 4.8C14.7 15.1 19 12 24 12c3.1 0 5.8 1.2 7.9 3.1l5.7-5.7C34 6.1 29.3 4 24 4 16.3 4 9.7 8.3 6.3 14.7z"/><path fill="#4CAF50" d="M24 44c5.2 0 9.9-2 13.4-5.2l-6.2-5.2C29.2 35.1 26.7 36 24 36c-5.2 0-9.6-3.3-11.3-7.9l-6.5 5C9.5 39.6 16.2 44 24 44z"/><path fill="#1976D2" d="M43.6 20.5H42V20H24v8h11.3c-.8 2.2-2.2 4.2-4.1 5.6l6.2 5.2C37 39.2 44 34 44 24c0-1.3-.1-2.4-.4-3.5z"/></svg>';
+
+  App.googleIcon = GOOGLE_G;
 
   /* ---------------- login screen ---------------- */
   App.showLogin = function (reason) {
@@ -5946,6 +6114,8 @@ window.FIREBASE_CONFIG = {
         <div class="kv"><span>שינויים שממתינים להעלאה</span><b>${Store.dirtyRecords().length + (S.meta.pendingDeletes || []).length}</b></div>
         <div class="btn-row" style="margin-top:10px"><button class="btn tonal" data-sync-now>${icon('refresh')} סנכרן עכשיו</button></div></div>
       <div class="card small"><b>מה נשמר בענן:</b> משמרות, חופשה ומחלה, תוספות, תפקידים ותעריפים, הגדרות, תבניות, תלושים (הנתונים שהוזנו) ופערים פתוחים.<br><b>מה נשאר רק בטלפון:</b> מפתח ה-API של Claude, קוד הנעילה, קובצי התלושים עצמם (תמונה/PDF) והטקסט הגולמי שזוהה מהם.</div>
+      <div class="card"><label class="switch-row"><span class="body"><span class="t">שיתוף סטטיסטיקה אנונימית</span><span class="s">מספר משמרות, ימי שימוש ותכונות פעילות, בלי שם, אימייל או סכומים. עוזר לשפר את האפליקציה.</span></span><input type="checkbox" class="switch" data-share-stats ${S.settings.shareStats !== false ? 'checked' : ''}></label>
+        ${u ? `<div class="kv" style="margin-top:6px"><span class="small">מזהה משתמש (למנהלים)</span><button class="btn text sm" data-copy-uid dir="ltr">${esc(u.uid.slice(0, 8))}… העתק</button></div>` : ''}</div>
       <button class="btn outlined block" data-signout>${icon('lock')} התנתק</button>
       <div class="tiny muted" style="margin:6px 4px 16px">ההתנתקות מוחקת את הנתונים מהטלפון הזה בלבד. הם נשארים בחשבון וחוזרים בהתחברות הבאה.</div>
       <div class="section-title" style="color:var(--bad)">${icon('trash', 's')} אזור מסוכן</div>
@@ -5954,6 +6124,12 @@ window.FIREBASE_CONFIG = {
   };
   App.accountMount = function (el, draw) {
     const q = (s) => el.querySelector(s);
+    if (q('[data-share-stats]')) q('[data-share-stats]').onchange = async (e) => {
+      const on = e.target.checked;
+      await Store.setSettings((s) => { s.shareStats = on; });
+      if (on) root.Stats.report(true); else root.Stats.forget();
+    };
+    if (q('[data-copy-uid]')) q('[data-copy-uid]').onclick = () => UI.copyText(Cloud.user.uid);
     if (q('[data-probe]')) q('[data-probe]').onclick = async () => {
       const ok = await Cloud.probe();
       if (ok) { UI.closeAll(); setTimeout(() => App.showLogin(), 350); }
@@ -7894,6 +8070,7 @@ window.FIREBASE_CONFIG = {
   App.views.settings = function () {
     const groups = [['חשבון', ['account', 'personal']], ['עבודה ושכר', ['rights', 'roles', 'calc', 'rest', 'pay', 'net', 'leave', 'goal']], ['אפליקציה', ['assistant', 'alerts', 'templates', 'look', 'security', 'ai']], ['נתונים', ['backup', 'export', 'demo', 'about']]];
     return `<div class="topbar"><div class="titles"><h1>הגדרות</h1><div class="sub">כל שינוי נשמר מיד</div></div></div>
+      ${App.isAdmin ? `<div class="list" style="margin-top:6px"><button class="item admin-entry" data-act="admin-dashboard"><span class="lead" style="background:var(--primary);color:var(--on-primary)">${icon('chart')}</span><span class="body"><span class="t">לוח ניהול</span><span class="s">משתמשים, פעילות ותכונות (למנהלים בלבד)</span></span>${icon('left', 's')}</button></div>` : ''}
       ${groups.map(([g, keys]) => `<div class="section-title">${g}</div><div class="list">${keys.map((k) => { const s = SECTIONS[k]; return `<button class="item" data-act="settings-open" data-k="${k}"><span class="lead" style="background:var(--secondary-container);color:var(--on-secondary-container)">${icon(s.icon)}</span><span class="body"><span class="t">${s.title}</span><span class="s">${esc(s.sub())}</span></span>${icon('left', 's')}</button>`; }).join('')}</div>`).join('')}
       <div class="section-title">מידע משפטי</div>
       <div class="list">${[['about', 'info', 'אודות'], ['terms', 'file', 'תנאי שימוש'], ['privacy', 'shield', 'מדיניות פרטיות'], ['disclaimer', 'alert', 'הבהרה משפטית'], ['accessibility', 'eye', 'הצהרת נגישות'], ['licenses', 'layers', 'רישיונות וצד שלישי']].map(([d, ic, t]) => `<button class="item" data-act="legal" data-doc="${d}"><span class="lead" style="background:var(--surface-3)">${icon(ic)}</span><span class="body"><span class="t">${t}</span></span>${icon('left', 's')}</button>`).join('')}</div>
@@ -8400,8 +8577,12 @@ window.FIREBASE_CONFIG = {
   const S = Store.S;
   const { icon, esc } = UI;
 
-  /* ---------------- wizard ---------------- */
-  App.sheetsApi.onboarding = function () {
+  /* ---------------- wizard ----------------
+   * A few friendly questions with live previews, then (for a new user) "save to your Google account".
+   * opts.preLogin: the user is not signed in yet; the last step signs in and uploads what they set up.
+   * Returning users skip the questions from the welcome screen ("I already have an account"). */
+  App.sheetsApi.onboarding = function (opts) {
+    opts = opts || {};
     const nav = document.getElementById('nav');
     nav.style.display = 'none';
     App.blocking = 'onboarding';
@@ -8410,42 +8591,66 @@ window.FIREBASE_CONFIG = {
     let roles = S.roles.length ? Store.clone(S.roles.filter((r) => !r.archived)) : Defaults.defaultRoles(emp.id);
     roles.forEach((r) => (r.rate = Engine.roleRate(r, U.todayKey())));
     if (!st.startDate) st.startDate = U.addMonths(U.todayKey(), -3);
-    let step = 0;
-    const STEPS = 7;
+    const needsLogin = () => !!opts.preLogin && !App.localOnly && !(root.Cloud && root.Cloud.user);
+    let step = 0, dir = 'next', saving = false, savedMsg = '', saved = false, demo = false;
+    const STEPS = 8; // welcome, 6 questions, done
     const v = document.getElementById('view');
+    const fx = root.Fx;
+    const hero = (emoji, cls) => `<div class="ob-hero ${cls || ''}" aria-hidden="true">${emoji}</div>`;
+    const money = (n) => U.money(n, Number.isInteger(+n) ? 0 : 2);
 
     const screens = [
-      () => `<div style="text-align:center;padding-top:6vh"><div class="brand-mark big" aria-hidden="true"></div>
-        <h1 class="brand-name">Shaati</h1><div class="brand-sub">מעקב משמרות ושכר</div><p class="lead">רישום משמרות בלחיצה, חישוב שכר מדויק (שבתות, חגים, שעות נוספות), תובנות, ובדיקת תלוש. הנתונים נשמרים בחשבון שלך, ורק לך יש גישה אליהם.</p>
-        <p class="small muted">ההגדרה לוקחת כדקה. כל ערך אפשר לשנות אחר כך בהגדרות.</p></div>`,
-      () => `<h1>התפקידים שלך</h1><p class="lead">לכל תפקיד שכר שעתי וצבע. העלאות שכר בעתיד מוסיפים מתאריך — בלי לשנות משמרות עבר.</p>
+      () => `<div class="ob-welcome">
+        <div class="brand-mark big" aria-hidden="true"></div>
+        <h1 class="brand-name">Shaati</h1><div class="brand-sub">מעקב משמרות ושכר</div>
+        <div class="ob-points">
+          <div style="--d:0">${hero('⏱️', 'sm')}<span>רושמים משמרת בלחיצה אחת</span></div>
+          <div style="--d:1">${hero('🕯️', 'sm')}<span>שבתות, חגים ושעות נוספות מחושבים לבד</span></div>
+          <div style="--d:2">${hero('🧾', 'sm')}<span>בודקים שהתלוש תואם, ויודעים מה מגיע לך</span></div>
+        </div>
+        <p class="small muted">דקה אחת של שאלות קצרות, ומתחילים.</p></div>`,
+      () => `${hero('💼')}<h1>איפה אתה עובד?</h1><p class="lead">התפקידים שלך והשכר לשעה. אפשר להוסיף, לשנות שם וצבע.</p>
         ${roles.map((r, i) => `<div class="role-edit"><button class="sw" style="background:${r.color}" data-cc="${i}" aria-label="צבע"></button>
           <input class="input" data-rn="${i}" value="${esc(r.name)}" placeholder="שם התפקיד">
           <input class="input" type="number" step="any" inputmode="decimal" data-rr="${i}" value="${r.rate || ''}" placeholder="₪ לשעה">
           <button class="icon-btn" data-rx="${i}" aria-label="הסר">${icon('x')}</button></div>`).join('')}
         <button class="btn text" data-radd>${icon('plus', 's')} הוסף תפקיד</button>
-        <div class="banner" style="margin-top:12px">${icon('info')}<div>ערכי ברירת מחדל: סדרן 40 ₪, מזנון 38 ₪, אחמ״ש 48 ₪. עדכן לתעריפים שלך.</div></div>`,
-      () => `<h1>נסיעות</h1><p class="lead">החזר נסיעות לכל יום עבודה.</p>
-        <label class="field"><span class="lbl">סכום ליום עבודה ₪</span><input class="input" type="number" step="any" inputmode="decimal" id="ob-travel" value="${emp.travelPerDay}"><span class="hint">ברירת מחדל 22.60 ₪ — התקרה לפי צו ההרחבה (2025).</span></label>
-        <label class="field"><span class="lbl">תקרה חודשית ₪</span><input class="input" type="number" step="any" inputmode="decimal" id="ob-cap" value="${emp.travelMonthlyCap || ''}" placeholder="ללא תקרה"><span class="hint">למשל מחיר חופשי-חודשי. ריק = ללא תקרה.</span></label>
-        <div class="tiny muted">משמרת מסוימת בלי נסיעות? אפשר לסמן בעריכת המשמרת.</div>`,
-      () => `<h1>תקופת שכר</h1><p class="lead">מתי מתחילה תקופת השכר, ומתי מקבלים משכורת.</p>
-        <div class="seg" style="margin-bottom:14px"><button data-pd="1" class="${emp.periodStartDay <= 1 ? 'on' : ''}">חודש קלנדרי (1 לחודש)</button><button data-pd="custom" class="${emp.periodStartDay > 1 ? 'on' : ''}">תאריך אחר</button></div>
+        <div class="ob-live" id="ob-live-roles"></div>`,
+      () => `${hero('🚌')}<h1>נסיעות</h1><p class="lead">כמה מקבלים על נסיעות לכל יום עבודה? זה בנוסף לשכר.</p>
+        <label class="field"><span class="lbl">₪ ליום עבודה</span><input class="input" type="number" step="any" inputmode="decimal" id="ob-travel" value="${emp.travelPerDay}"></label>
+        <label class="field"><span class="lbl">תקרה חודשית ₪ (לא חובה)</span><input class="input" type="number" step="any" inputmode="decimal" id="ob-cap" value="${emp.travelMonthlyCap || ''}" placeholder="ללא תקרה"><span class="hint">למשל מחיר חופשי-חודשי.</span></label>
+        <div class="ob-live" id="ob-live-travel"></div>`,
+      () => `${hero('📅')}<h1>מתי מקבלים משכורת?</h1><p class="lead">ככה נדע לחשב כל תקופה ולהזכיר לך לבדוק את התלוש.</p>
+        <div class="seg" style="margin-bottom:14px"><button data-pd="1" class="${emp.periodStartDay <= 1 ? 'on' : ''}">חודש רגיל (מה-1)</button><button data-pd="custom" class="${emp.periodStartDay > 1 ? 'on' : ''}">תאריך אחר</button></div>
         ${emp.periodStartDay > 1 ? `<label class="field"><span class="lbl">התקופה מתחילה ב- (יום בחודש)</span><input class="input" type="number" min="2" max="28" id="ob-pstart" value="${emp.periodStartDay}"><span class="hint">למשל 21: מה-21 בחודש ועד ה-20 בחודש הבא.</span></label>` : ''}
-        <label class="field"><span class="lbl">יום התשלום (בחודש שאחרי)</span><input class="input" type="number" min="1" max="31" id="ob-payday" value="${emp.payDay}"><span class="hint">לפי החוק — עד ה-9. ביום הזה תקבל תזכורת להזין את התלוש.</span></label>`,
-      () => `<h1>תחילת העבודה</h1><p class="lead">ממנו מחושבים ותק, דמי הבראה, ימי חופשה ומחלה, ותחילת ההפרשות לפנסיה.</p>
-        <label class="field"><span class="lbl">תאריך תחילת העבודה</span><input class="input" type="date" id="ob-start" value="${st.startDate}"></label>
-        <label class="field"><span class="lbl">תאריך לידה (לא חובה)</span><input class="input" type="date" id="ob-birth" value="${st.birthDate || ''}"><span class="hint">לברכת יום הולדת, ולחישוב נכון מתחת לגיל 18 (אז הנטו שווה לברוטו).</span></label>
-        <label class="field"><span class="lbl">שבוע עבודה</span><select class="input" id="ob-week"><option value="5" ${+st.leave.workWeek === 5 ? 'selected' : ''}>5 ימים</option><option value="6" ${+st.leave.workWeek === 6 ? 'selected' : ''}>6 ימים</option></select></label>`,
-      () => `<h1>שבת וחגים</h1><p class="lead">שעות בשבת ובחג משולמות ב-150%. זמני הכניסה והיציאה מחושבים בטלפון לפי העיר.</p>
-        <label class="field"><span class="lbl">העיר שבה אתה עובד</span><select class="input" id="ob-city">${HebCal.CITIES.map((c) => `<option ${c.name === st.rest.city ? 'selected' : ''}>${c.name}</option>`).join('')}</select></label>
-        <div class="card small" id="ob-preview"></div>
-        <div class="tiny muted">המעסיק מגדיר שבת בשעות קבועות (למשל שישי 16:00 עד שבת 20:00)? אפשר לשנות בהגדרות › שבת וחגים.</div>`,
-      () => `<h1>נטו משוער</h1><p class="lead">כדי להעריך כמה ייכנס לחשבון.</p>
-        <div class="field"><span class="lbl">נקודות זיכוי</span><div class="chips">${[[2.25, 'גבר — 2.25'], [2.75, 'אישה — 2.75']].map(([v2, l]) => `<button class="chip ${+st.tax.creditPoints === v2 ? 'on' : ''}" data-cp="${v2}">${l}</button>`).join('')}</div>
-          <input class="input" type="number" step="0.25" inputmode="decimal" id="ob-cp" value="${st.tax.creditPoints}"><span class="hint">נקודות נוספות: ילדים, תואר, שחרור מצבא, עולה חדש… מופיע בתלוש.</span></label></div>
-        <label class="field"><span class="lbl">הפרשת עובד לפנסיה %</span><input class="input" type="number" step="0.1" inputmode="decimal" id="ob-pen" value="${st.pension.employeePct}"><span class="hint">בדרך כלל 6%. מתחילה אחרי 6 חודשי עבודה (3 אם הייתה לך קרן).</span></label>
-        <label class="switch-row"><span class="body"><span class="t">יש לי קרן השתלמות</span><span class="s">2.5% עובד / 7.5% מעסיק</span></span><input type="checkbox" class="switch" id="ob-hish" ${st.hishtalmut.enabled ? 'checked' : ''}></label>`,
+        <label class="field"><span class="lbl">יום התשלום בחודש שאחרי</span><input class="input" type="number" min="1" max="31" id="ob-payday" value="${emp.payDay}"><span class="hint">לפי החוק, עד ה-9 בחודש.</span></label>`,
+      () => `${hero('🎂')}<h1>קצת עליך</h1><p class="lead">לוותק, לחופשה ולהבראה. ותאריך לידה כדי לבדוק לפי הגיל שלך.</p>
+        <label class="field"><span class="lbl">מתי התחלת לעבוד שם?</span><input class="input" type="date" id="ob-start" value="${st.startDate}"></label>
+        <label class="field"><span class="lbl">תאריך לידה (לא חובה)</span><input class="input" type="date" id="ob-birth" value="${st.birthDate || ''}"><span class="hint">מתחת לגיל 18: שכר מינימום לפי גיל, בדיקות חוק עבודת הנוער, ונטו שווה לברוטו. וגם ברכה ביום ההולדת 🎉</span></label>
+        <label class="field"><span class="lbl">כמה ימים בשבוע עובדים שם?</span><select class="input" id="ob-week"><option value="5" ${+st.leave.workWeek === 5 ? 'selected' : ''}>5 ימים</option><option value="6" ${+st.leave.workWeek === 6 ? 'selected' : ''}>6 ימים</option></select></label>
+        <div class="ob-live" id="ob-live-age"></div>`,
+      () => `${hero('🕯️')}<h1>שבת וחגים</h1><p class="lead">שעות בשבת ובחג שוות לפחות 150%. נחשב אותן לפי העיר.</p>
+        <label class="field"><span class="lbl">באיזו עיר אתה עובד?</span><select class="input" id="ob-city">${HebCal.CITIES.map((c) => `<option ${c.name === st.rest.city ? 'selected' : ''}>${c.name}</option>`).join('')}</select></label>
+        <div class="ob-live" id="ob-preview"></div>`,
+      () => `${hero('💰')}<h1>כמה ייכנס לחשבון?</h1><p class="lead">כדי להעריך את הנטו. אפשר לשנות בכל רגע.</p>
+        <div class="field"><span class="lbl">נקודות זיכוי</span><div class="chips">${[[2.25, 'גבר: 2.25'], [2.75, 'אישה: 2.75']].map(([v2, l]) => `<button class="chip ${+st.tax.creditPoints === v2 ? 'on' : ''}" data-cp="${v2}">${l}</button>`).join('')}</div>
+          <input class="input" type="number" step="0.25" inputmode="decimal" id="ob-cp" value="${st.tax.creditPoints}"><span class="hint">נקודות נוספות (ילדים, תואר, שחרור מצבא) מופיעות בתלוש.</span></div>
+        <label class="field"><span class="lbl">הפרשה שלך לפנסיה %</span><input class="input" type="number" step="0.1" inputmode="decimal" id="ob-pen" value="${st.pension.employeePct}"><span class="hint">בדרך כלל 6%.</span></label>
+        <label class="switch-row"><span class="body"><span class="t">יש לי קרן השתלמות</span></span><input type="checkbox" class="switch" id="ob-hish" ${st.hishtalmut.enabled ? 'checked' : ''}></label>`,
+      () => {
+        const valid = roles.filter((r) => r.name && r.rate > 0);
+        return `<div class="ob-done">
+          <div class="ob-check" aria-hidden="true"><svg viewBox="0 0 52 52"><circle cx="26" cy="26" r="24"/><path d="M15 27l7 7 15-16"/></svg></div>
+          <h1>${demo ? 'הנתונים לדוגמה מוכנים!' : 'הכל מוכן!'}</h1>
+          <p class="lead">${demo ? 'אפשר להסתכל על הכל ולמחוק את הדוגמה בכל רגע.' : 'עכשיו כל משמרת מחושבת לבד.'}</p>
+          ${demo ? '' : `<div class="ob-summary">
+            ${valid.map((r) => `<span><i style="background:${r.color}"></i>${esc(r.name)} · ${money(r.rate)}</span>`).join('')}
+            <span>🚌 ${money(emp.travelPerDay)} ליום</span><span>📅 משכורת ב-${emp.payDay} לחודש</span><span>🕯️ ${esc(st.rest.city)}</span>
+          </div>`}
+          ${needsLogin() ? `<div class="ob-save"><b>שמור את זה בחשבון Google</b><div class="small muted">כדי שהנתונים לא ילכו לאיבוד ויהיו זמינים בכל טלפון. רק לך תהיה גישה אליהם.</div></div>` : ''}
+          ${savedMsg ? `<div class="banner warn" style="text-align:start">${icon('alert')}<div>${esc(savedMsg)}</div></div>` : ''}
+        </div>`;
+      },
     ];
 
     function read() {
@@ -8455,29 +8660,76 @@ window.FIREBASE_CONFIG = {
         v.querySelectorAll('[data-rr]').forEach((i) => (roles[+i.dataset.rr].rate = UI.numIn(i)));
       }
       if (step === 2) { emp.travelPerDay = UI.numIn(q('#ob-travel')) || 0; emp.travelMonthlyCap = UI.numIn(q('#ob-cap')) || 0; }
-      if (step === 3) { if (q('#ob-pstart')) emp.periodStartDay = Math.min(28, Math.max(2, UI.numIn(q('#ob-pstart')) || 2)); emp.payDay = UI.numIn(q('#ob-payday')) || 9; }
+      if (step === 3) { if (q('#ob-pstart')) emp.periodStartDay = Math.min(28, Math.max(2, UI.numIn(q('#ob-pstart')) || 2)); emp.payDay = Math.min(31, Math.max(1, UI.numIn(q('#ob-payday')) || 9)); }
       if (step === 4) { st.startDate = q('#ob-start').value || st.startDate; st.birthDate = q('#ob-birth').value || null; st.leave.workWeek = +q('#ob-week').value; }
       if (step === 5) st.rest.city = q('#ob-city').value;
       if (step === 6) { st.tax.creditPoints = UI.numIn(q('#ob-cp')) || 2.25; st.pension.employeePct = UI.numIn(q('#ob-pen')) || 6; st.hishtalmut.enabled = q('#ob-hish').checked; }
     }
-    function cityPreview() {
-      const el = v.querySelector('#ob-preview');
-      if (!el) return;
-      const cfg = Object.assign({}, st.rest, { city: v.querySelector('#ob-city').value, dayRules: [] });
-      const w = HebCal.restWindows(U.todayKey(), U.addDays(U.todayKey(), 10), cfg).find((x) => x.end > Date.now());
-      el.innerHTML = w ? `${icon('candle', 's')} ${esc(w.label)} הקרובה: כניסה ${U.HEB_DAYS[U.dow(U.epochKey(w.start))]} ${U.epochHM(w.start)}, יציאה ${U.HEB_DAYS[U.dow(U.epochKey(w.end))]} ${U.epochHM(w.end)}` : '';
+    /* live previews: the numbers react while typing */
+    function live() {
+      const q = (s) => v.querySelector(s);
+      if (step === 1) {
+        read();
+        const r = roles.find((x) => x.name && x.rate > 0);
+        const el = q('#ob-live-roles');
+        if (el) el.innerHTML = r ? `${icon('sparkle', 's')} משמרת של 8 שעות כ${esc(r.name)} = <b>${money(r.rate * 8)}</b>` : 'הזן שם ותעריף לפחות לתפקיד אחד';
+      }
+      if (step === 2) {
+        const t = UI.numIn(q('#ob-travel')) || 0, cap = UI.numIn(q('#ob-cap')) || 0;
+        const m = cap ? Math.min(cap, t * 20) : t * 20;
+        q('#ob-live-travel').innerHTML = t ? `${icon('car', 's')} בחודש של 20 ימי עבודה: <b>${money(m)}</b> נסיעות` : '';
+      }
+      if (step === 4) {
+        const b = q('#ob-birth').value;
+        const age = b ? Engine.ageAt(b, U.todayKey()) : null;
+        const el = q('#ob-live-age');
+        if (age == null || age < 0 || age > 100) { el.innerHTML = ''; return; }
+        const mw = Engine.legalMinWage(U.todayKey(), b);
+        el.innerHTML = age < 18
+          ? `${icon('shield', 's')} גיל ${age}: שכר המינימום שלך <b>${U.money(mw.hourly)}</b> לשעה, והנטו שווה לברוטו (בלי מס).`
+          : `${icon('shield', 's')} גיל ${age}: שכר המינימום <b>${U.money(mw.hourly)}</b> לשעה.`;
+      }
+      if (step === 5) {
+        const el = q('#ob-preview');
+        const cfg = Object.assign({}, st.rest, { city: q('#ob-city').value, dayRules: [] });
+        const w = HebCal.restWindows(U.todayKey(), U.addDays(U.todayKey(), 10), cfg).find((x) => x.end > Date.now());
+        el.innerHTML = w ? `${icon('candle', 's')} ${esc(w.label)} הקרובה: כניסה ${U.HEB_DAYS[U.dow(U.epochKey(w.start))]} ${U.epochHM(w.start)}, יציאה ${U.HEB_DAYS[U.dow(U.epochKey(w.end))]} ${U.epochHM(w.end)}` : '';
+      }
     }
     function draw() {
-      v.innerHTML = `<div class="wizard"><div class="steps">${Array.from({ length: STEPS }, (_, i) => `<i class="${i <= step ? 'on' : ''}"></i>`).join('')}</div>
-        <div class="content">${screens[step]()}</div>
-        <div class="foot ${step === 0 ? 'col' : ''}">${step === 0 ? `<button class="btn" data-next>בוא נתחיל</button><button class="btn tonal" data-demo>${icon('flask')} נסה עם נתוני דוגמה</button>`
-          : `<button class="btn tonal" data-back>הקודם</button><button class="btn" data-next>${step === STEPS - 1 ? 'סיום' : 'הבא'}</button>`}</div></div>`;
-      if (step === 5) { cityPreview(); v.querySelector('#ob-city').onchange = cityPreview; }
+      const last = step === STEPS - 1;
+      const qn = step >= 1 && step <= 6 ? `<div class="ob-count">שאלה ${step} מתוך 6${step === 5 ? ' · עוד אחת וסיימנו' : ''}</div>` : '';
+      let foot;
+      if (step === 0) {
+        foot = `<button class="btn big" data-next>בוא נתחיל</button><button class="btn tonal" data-demo>${icon('flask')} נסה עם נתוני דוגמה</button>
+          ${opts.preLogin ? '<button class="btn text" data-have>כבר יש לי חשבון? התחברות</button>' : ''}
+          <div class="tiny muted ob-consent">בהמשך אתה מאשר את ${App.legalLinks ? App.legalLinks() : 'תנאי השימוש ומדיניות הפרטיות'}.</div>`;
+      } else if (last) {
+        foot = needsLogin()
+          ? `<button class="btn big ob-google" data-save ${saving ? 'disabled' : ''}>${App.googleIcon || ''}<span>${saving ? 'שומר…' : 'שמירה עם Google'}</span></button>`
+          : `<button class="btn big" data-save ${saving ? 'disabled' : ''}>${saving ? 'רגע…' : 'יאללה, מתחילים'}</button>`;
+      } else {
+        foot = `<button class="btn tonal" data-back>הקודם</button><button class="btn" data-next>${step === 6 ? 'סיום' : 'הבא'}</button>`;
+      }
+      v.innerHTML = `<div class="wizard ob">${step ? `<div class="ob-progress"><i style="width:${Math.round((step / (STEPS - 1)) * 100)}%"></i></div>` : ''}${qn}
+        <div class="content ob-${dir}">${screens[step]()}</div>
+        <div class="foot ${step === 0 || last ? 'col' : ''}">${foot}</div></div>`;
+      live();
+      const city = v.querySelector('#ob-city');
+      if (city) city.onchange = live;
       window.scrollTo(0, 0);
     }
-    async function finish(withDemo) {
+    function go(next) {
+      read();
+      dir = next > step ? 'next' : 'prev';
+      step = Math.max(0, Math.min(STEPS - 1, next));
+      draw();
+      if (fx) { fx.play(dir === 'next' ? 'pop' : 'soft'); fx.haptic(8); }
+      if (step === STEPS - 1 && fx) setTimeout(() => fx.celebrate('big'), 250);
+    }
+    async function save(withDemo) {
       roles = roles.filter((r) => r.name && r.rate > 0);
-      if (!roles.length) { UI.toast('הוסף לפחות תפקיד אחד עם תעריף'); step = 1; draw(); return; }
+      if (!roles.length) { UI.invalid('הוסף לפחות תפקיד אחד עם שם ותעריף'); go(1); return false; }
       const ops = [{ store: 'employers', put: emp }];
       for (const r of roles) {
         const rec = Object.assign({}, r);
@@ -8491,32 +8743,78 @@ window.FIREBASE_CONFIG = {
         ops.push({ store: 'roles', put: rec });
       }
       S.roles.filter((r) => !roles.some((x) => x.id === r.id)).forEach((r) => ops.push({ store: 'roles', del: r.id }));
-      App.blocking = null;
       await Store.apply(ops, null);
       st.onboarded = true;
       await Store.setSettings((s) => Object.assign(s, st));
-      nav.style.display = '';
       if (withDemo) await App.demo.load();
-      App.go('home');
+      saved = true;
+      return true;
+    }
+    function enterApp() {
+      v.onclick = null;
+      v.oninput = null;
+      App.blocking = null;
+      nav.style.display = '';
+      App.go = prevGo;
+      if (needsLogin()) return; // still on the save step
+      App.afterLogin();
       setTimeout(() => App.runInsights(), 500);
-      UI.toast(withDemo ? 'נטענו נתוני דוגמה — אפשר למחוק אותם מהבאנר' : 'מוכן! לחץ "התחל משמרת" כשאתה מתחיל לעבוד');
+      UI.toast(demo ? 'נטענו נתוני דוגמה. אפשר למחוק אותם מהבאנר' : 'מוכן! לחץ "התחל משמרת" כשאתה מתחיל לעבוד');
+    }
+    async function finishStep() {
+      if (saving) return;
+      saving = true; savedMsg = ''; draw();
+      try {
+        if (!saved && !(await save(false))) { saving = false; return; }
+        if (needsLogin()) {
+          const Cloud = root.Cloud;
+          const user = await Cloud.signIn();
+          if (!user) return; // redirect sign-in: the page reloads signed in and continues
+          await Cloud.connect(user);
+          UI.toast('מחובר כ-' + (user.displayName || user.email));
+        }
+        saving = false;
+        enterApp();
+      } catch (e) {
+        console.error(e);
+        saving = false;
+        savedMsg = root.Cloud ? root.Cloud.errorText(e) : String(e.message || e);
+        draw();
+      }
     }
     v.onclick = async (e) => {
-      const b = e.target.closest('button');
+      const b = e.target.closest('button, a');
       if (!b) return;
-      if (b.hasAttribute('data-next')) { read(); if (step < STEPS - 1) { step++; draw(); } else finish(false); }
-      if (b.hasAttribute('data-back')) { read(); step = Math.max(0, step - 1); draw(); }
-      if (b.hasAttribute('data-demo')) finish(true);
+      if (b.dataset.legal) return; // the terms links open their own sheet
+      if (b.hasAttribute('data-next')) {
+        if (step === 0 && App.acceptLegal) await App.acceptLegal();
+        if (step === 1) { read(); if (!roles.some((r) => r.name && r.rate > 0)) { UI.invalid('הוסף לפחות תפקיד אחד עם שם ותעריף'); return; } }
+        go(step + 1);
+      }
+      if (b.hasAttribute('data-back')) go(step - 1);
+      if (b.hasAttribute('data-demo')) {
+        if (App.acceptLegal) await App.acceptLegal();
+        demo = true;
+        if (await save(true)) go(STEPS - 1);
+      }
+      if (b.hasAttribute('data-have')) {
+        if (App.acceptLegal) await App.acceptLegal();
+        v.onclick = null; App.go = prevGo;
+        App.blocking = null;
+        App.showLogin();
+      }
+      if (b.hasAttribute('data-save')) finishStep();
       if (b.hasAttribute('data-radd')) { read(); const used = new Set(roles.map((r) => r.color)); roles.push({ id: 'r_' + U.uid(), name: '', color: Defaults.ROLE_COLORS.find((c) => !used.has(c)) || '#888', employerId: emp.id, rates: [], rate: null, archived: false }); draw(); }
       if (b.dataset.rx != null) { read(); roles.splice(+b.dataset.rx, 1); draw(); }
       if (b.dataset.cc != null) { read(); const r = roles[+b.dataset.cc]; const i = Defaults.ROLE_COLORS.indexOf(r.color); r.color = Defaults.ROLE_COLORS[(i + 1) % Defaults.ROLE_COLORS.length]; draw(); }
       if (b.dataset.pd) { read(); emp.periodStartDay = b.dataset.pd === '1' ? 1 : Math.max(2, emp.periodStartDay > 1 ? emp.periodStartDay : 21); draw(); }
       if (b.dataset.cp) { v.querySelector('#ob-cp').value = b.dataset.cp; v.querySelectorAll('[data-cp]').forEach((x) => x.classList.toggle('on', x === b)); }
     };
+    v.oninput = () => live();
     draw();
-    // detach the generic view handler when leaving the wizard
+    // leaving the wizard any other way detaches its handlers
     const prevGo = App.go;
-    App.go = function (tab, opts) { v.onclick = null; App.go = prevGo; return prevGo(tab, opts); };
+    App.go = function (tab, o) { v.onclick = null; v.oninput = null; App.go = prevGo; return prevGo(tab, o); };
   };
 
   /* ---------------- demo data ---------------- */
@@ -8938,7 +9236,9 @@ window.FIREBASE_CONFIG = {
     const sub = [c.age != null ? 'גיל ' + c.age : 'גיל לא הוזן', c.bal ? 'ותק ' + U.num(c.bal.seniorityYears, 1) + ' שנים' : null].filter(Boolean).join(' · ');
     return `<div class="rights">
       <div class="rt-intro">${icon('shield')}<div><b>מה מגיע לך בעבודה</b><div class="tiny muted">${esc(sub)} · מעודכן לאפריל 2026 · עובד גם בלי אינטרנט</div></div></div>
-      <input class="input rt-search" type="search" placeholder="חיפוש: שבת, נסיעות, הבראה…" aria-label="חיפוש בזכויות">
+      <input class="input rt-search" type="search" placeholder="חיפוש: שבת, נסיעות, הבראה…" aria-label="חיפוש בזכויות" enterkeyhint="search">
+      <div class="rt-results" aria-live="polite" hidden></div>
+      <div class="rt-main">
       <div class="section-title">${icon('check', 's')} בדיקה מהירה של הנתונים שלך</div>
       <div class="card rt-checks">${checks(c).map(([k, t, d]) => `<div class="rt-row"><span class="rt-mark" style="color:${MARK[k][1]}">${icon(MARK[k][0], 's')}</span><div><div class="t">${t}</div><div class="d">${esc(d)}</div></div></div>`).join('')}</div>
       ${minor ? `<div class="section-title">${icon('users', 's')} לבני נוער (גיל ${c.age})</div>
@@ -8953,26 +9253,166 @@ window.FIREBASE_CONFIG = {
         <li><b>קבל עזרה</b>: ${link(KZS('הגשת תלונה על הפרת חוקי עבודה'), 'איך מגישים תלונה')} · ${link('https://www.kolzchut.org.il/he/', 'כל זכות')}</li></ol>
         <button class="btn tonal block" data-rt-ai>${icon('sparkle')} שאלה אחרת? שאל את העוזר</button>
       </div>
+      </div>
       <div class="tiny muted" style="margin:12px 4px 4px">מידע כללי בלבד ואינו ייעוץ משפטי. תנאים בהסכם קיבוצי, בצו הרחבה או בחוזה שלך יכולים להיות טובים יותר.</div>
     </div>`;
   }
 
+  /* ---------------- search: the answer appears right under the box ---------------- */
+  // extra words people actually type, per topic
+  const KEYWORDS = {
+    minwage: 'משכורת תעריף כמה מגיע לשעה שכר נוער גיל', overtime: 'נוספות ארוכה 125 150 שעות',
+    shabbat: 'שבת חג חגים מנוחה 150 סופש', breaks: 'הפסקה מנוחה אוכל ארוחה', travel: 'נסיעות נסיעה אוטובוס רב קו דלק תחבורה',
+    sick: 'מחלה חולה אישור רופא', vacation: 'חופש חופשה ימי חופש', recup: 'הבראה', pension: 'פנסיה קרן גמל חיסכון הפרשה',
+    payslip: 'תלוש משכורת מתי מקבלים הלנה איחור תשלום', deduct: 'ניכוי קנס חוסר קופה ציוד הורדה מהשכר',
+    leave: 'פיטורים פיטרו התפטרות פיצויים שימוע הודעה מוקדמת עזיבה',
+  };
+  const strip = (h) => h.replace(/<[^>]+>/g, ' ');
+  const norm = (s) => s.replace(/[\u0591-\u05C7"'׳״.,:;()?!–-]/g, ' ').replace(/\s+/g, ' ').trim();
+  function searchIndex(c) {
+    const minor = c.age != null && c.age < 18;
+    const items = TOPICS.map((tp) => ({ t: tp.t, ic: tp.ic, html: tp.b(c) + `<div class="tiny">${tp.l()}</div>`, extra: KEYWORDS[tp.id] || '' }));
+    if (minor) {
+      const R = Engine.youthRules(c.age, S.settings.leave && S.settings.leave.workWeek);
+      items.unshift({ t: `לבני נוער (גיל ${c.age})`, ic: 'users', html: YOUTH(R, c.age).map(([, t]) => `<p>${t}</p>`).join('') + `<div class="tiny">${link(KZ('חוק עבודת הנוער'), 'חוק עבודת הנוער ב"כל זכות"')}</div>`, extra: 'נוער לילה הפסקה שעות 18 גיל אישור רפואי' });
+    }
+    return items.map((it) => Object.assign(it, { text: norm(it.t + ' ' + strip(it.html) + ' ' + it.extra) }));
+  }
+  /** Every word must appear; a Hebrew prefix letter (ו ה ב ל מ ש כ) on a word is optional. */
+  function matches(text, query) {
+    return norm(query).split(' ').filter(Boolean).every((w) => text.includes(w) || (w.length > 3 && /^[והבלמשכ]/.test(w) && text.includes(w.slice(1))));
+  }
+
   App.actions.rights = function () {
+    if (!S.meta.usedRights) Store.setMeta({ usedRights: true });
     UI.openSheet({
       title: 'הזכויות שלי', full: true, body: render(),
       onMount: (el) => {
         const q = el.querySelector('.rt-search');
+        const results = el.querySelector('.rt-results');
+        const main = el.querySelector('.rt-main');
+        const index = searchIndex(context());
         q.oninput = () => {
           const v = q.value.trim();
-          el.querySelectorAll('.rt-topic').forEach((d) => {
-            const hit = !v || d.textContent.includes(v);
-            d.style.display = hit ? '' : 'none';
-            d.open = !!v && hit;
-          });
+          main.hidden = !!v;
+          results.hidden = !v;
+          if (!v) { results.innerHTML = ''; return; }
+          const hits = index.filter((it) => matches(it.text, v));
+          results.innerHTML = hits.length
+            ? hits.map((it) => `<div class="card rt-hit"><div class="rt-hit-t">${icon(it.ic, 's')}<span>${it.t}</span></div><div class="rt-body">${it.html}</div></div>`).join('')
+            : `<div class="card rt-none"><b>לא מצאנו את זה במדריך.</b><div class="small muted">נסה מילה אחרת, או שאל את העוזר.</div><button class="btn tonal block" data-rt-ai>${icon('sparkle')} שאל את העוזר</button></div>`;
+          const body = el.querySelector('.sh-body');
+          if (body) body.scrollTop = 0;
         };
-        el.querySelector('[data-rt-ai]').onclick = () => { UI.closeTop(); setTimeout(() => App.actions.assistant(), 320); };
+        q.onkeydown = (e) => { if (e.key === 'Enter') q.blur(); };
+        el.addEventListener('click', (e) => {
+          if (!e.target.closest('[data-rt-ai]')) return;
+          UI.closeTop();
+          setTimeout(() => App.actions.assistant(), 320);
+        });
       },
     });
+  };
+})(typeof window !== 'undefined' ? window : globalThis);
+
+/* ---- app/views-admin.js ---- */
+/* ============================================================
+ * views-admin.js — the admin dashboard (app owner and managers).
+ * Shown only when admins/{uid} exists for the signed-in user; the
+ * Firestore rules enforce the same on the server, so the data never
+ * reaches anyone else. It reads the anonymous stats/* records only:
+ * no user's shifts, payslips, name or email are ever visible here.
+ * ============================================================ */
+(function (root) {
+  'use strict';
+  const { U, Store, UI, App, Charts } = root;
+  const { icon, esc } = UI;
+
+  const pct = (a, b) => (b ? Math.round((a / b) * 100) : 0);
+  const FEATURES = [
+    ['rights', 'מדריך הזכויות'], ['planned', 'משמרות מתוכננות'], ['roles', 'יותר מתפקיד אחד'], ['goal', 'יעד חודשי'],
+    ['notif', 'התראות מאושרות'], ['lock', 'נעילה בקוד'], ['bio', 'טביעת אצבע'], ['ai', 'מפתח AI'], ['dark', 'מצב כהה'], ['fxOff', 'כיבוי אפקטים'], ['demo', 'מצב הדגמה'],
+  ];
+
+  function kpi(label, value, sub) {
+    return `<div class="kpi"><div class="l">${esc(label)}</div><div class="v">${value}</div>${sub ? `<div class="d">${esc(sub)}</div>` : ''}</div>`;
+  }
+  function barList(entries, total) {
+    return entries.map(([label, n]) => `<div class="adm-bar"><span class="nm">${esc(label)}</span><span class="track"><i style="width:${pct(n, total)}%"></i></span><span class="vv">${n} · ${pct(n, total)}%</span></div>`).join('');
+  }
+  function render(rows, admins, me) {
+    const k = U.todayKey();
+    const n = rows.length;
+    const since = (d) => U.addDays(k, -(d - 1));
+    const activeIn = (d) => rows.filter((r) => r.last >= since(d)).length;
+    const a1 = activeIn(1), a7 = activeIn(7), a30 = activeIn(30);
+    const new7 = rows.filter((r) => r.first >= since(7)).length;
+    const new30 = rows.filter((r) => r.first >= since(30)).length;
+    const days = Array.from({ length: 30 }, (_, i) => U.addDays(k, i - 29));
+    const byFirst = new Map(days.map((d) => [d, 0]));
+    rows.forEach((r) => { if (byFirst.has(r.first)) byFirst.set(r.first, byFirst.get(r.first) + 1); });
+    const returning = rows.filter((r) => (r.days || 0) >= 3).length;
+    const loyal = rows.filter((r) => (r.days || 0) >= 10).length;
+    const count = (key) => { const m = new Map(); rows.forEach((r) => m.set(r[key] || '?', (m.get(r[key] || '?') || 0) + 1)); return [...m].sort((a, b) => b[1] - a[1]); };
+    const PL = { android: 'אפליקציית אנדרואיד', pwa: 'מותקן מהדפדפן', web: 'דפדפן', '?': 'לא ידוע' };
+    const AG = { u18: 'מתחת ל-18', '18p': '18 ומעלה', '?': 'לא הוזן' };
+    const sum = (key) => rows.reduce((s, r) => s + (+r[key] || 0), 0);
+    const active30 = rows.filter((r) => r.last >= since(30));
+    const shifts30 = active30.reduce((s, r) => s + (+r.s30 || 0), 0);
+    return `<div class="admin">
+      <div class="small muted" style="margin:0 4px 12px">${icon('shield', 's')} נתונים אנונימיים בלבד: כל רשומה היא מכשיר, בלי שם, אימייל או נתוני שכר. מתעדכן פעם ביום לכל מכשיר.</div>
+      <div class="card tonal"><div class="kpis">
+        ${kpi('משתמשים (מכשירים)', n, `${new7} חדשים השבוע`)}${kpi('פעילים היום', a1)}${kpi('פעילים ב-7 ימים', a7, pct(a7, n) + '% מהכלל')}${kpi('פעילים ב-30 ימים', a30, pct(a30, n) + '% מהכלל')}
+      </div></div>
+      <div class="section-title">${icon('up', 's')} משתמשים חדשים, 30 ימים אחרונים</div>
+      <div class="card">${Charts.bars(days.map((d) => ({ label: d.slice(8), value: byFirst.get(d), tip: `${U.fmtDate(d, 'dm')}: ${byFirst.get(d)} חדשים` })), { label: 'משתמשים חדשים לפי יום', height: 170 })}
+        <div class="tiny muted">${new30} הצטרפו ב-30 הימים האחרונים.</div></div>
+      <div class="section-title">${icon('refresh', 's')} חוזרים לאפליקציה</div>
+      <div class="card"><div class="kpis three">${kpi('חזרו 3 ימים ומעלה', pct(returning, n) + '%', returning + ' מכשירים')}${kpi('חזרו 10 ימים ומעלה', pct(loyal, n) + '%', loyal + ' מכשירים')}${kpi('ממוצע ימי שימוש', n ? U.num(sum('days') / n, 1) : 0)}</div></div>
+      <div class="section-title">${icon('clock', 's')} שימוש</div>
+      <div class="card"><div class="kpis">${kpi('משמרות שנרשמו', sum('sh').toLocaleString('en-US'))}${kpi('משמרות ב-30 ימים', shifts30.toLocaleString('en-US'))}${kpi('ממוצע למשתמש פעיל', active30.length ? U.num(shifts30 / active30.length, 1) : 0, 'משמרות בחודש')}${kpi('תלושים שנבדקו', sum('ps').toLocaleString('en-US'))}</div></div>
+      <div class="section-title">${icon('users', 's')} מי משתמש</div>
+      <div class="card">${barList(count('age').map(([key, c]) => [AG[key] || key, c]), n)}<div class="divider"></div>${barList(count('p').map(([key, c]) => [PL[key] || key, c]), n)}</div>
+      <div class="section-title">${icon('sparkle', 's')} תכונות בשימוש</div>
+      <div class="card">${barList(FEATURES.map(([key, label]) => [label, rows.filter((r) => r.f && r.f[key]).length]).sort((a, b) => b[1] - a[1]), n)}</div>
+      <div class="section-title">${icon('layers', 's')} גרסאות</div>
+      <div class="card">${barList(count('v').slice(0, 6), n)}</div>
+      <div class="section-title">${icon('lock', 's')} מנהלים</div>
+      <div class="card">
+        <div class="small">${admins.length} מנהלים. כדי להוסיף מנהל: הוא פותח הגדרות › חשבון וסנכרון ומעתיק את "מזהה המשתמש" שלו, ואתה מוסיף אותו כאן.</div>
+        <div class="adm-add"><input class="input" id="adm-uid" placeholder="מזהה משתמש" dir="ltr" autocomplete="off" spellcheck="false"><button class="btn tonal" data-adm-add>${icon('plus', 's')} הוסף</button></div>
+        <div class="tiny muted" dir="ltr" style="text-align:left">${admins.map((a) => esc(a.slice(0, 6) + '…' + (a === me ? ' (אתה)' : ''))).join(' · ')}</div>
+      </div>
+      <div class="adm-foot"><span class="tiny muted">עודכן ${U.epochHM(Date.now())}</span><button class="btn text sm" data-adm-refresh>${icon('refresh', 's')} רענן</button></div>
+    </div>`;
+  }
+
+  App.actions['admin-dashboard'] = async function () {
+    if (!App.isAdmin || !root.Cloud || !root.Cloud.user) return;
+    const entry = UI.openSheet({ title: 'לוח ניהול', full: true, body: '<div class="empty"><h3>טוען נתונים…</h3></div>' });
+    const body = entry.sh.querySelector('.sh-body');
+    const load = async () => { try {
+      const { fs, db } = await root.Cloud.sdk();
+      const snap = await fs.getDocsFromServer(fs.collection(db, 'stats'));
+      const rows = snap.docs.map((d) => d.data()).filter((r) => r && typeof r.last === 'string');
+      let admins = [];
+      try { admins = (await fs.getDocsFromServer(fs.collection(db, 'admins'))).docs.map((d) => d.id); } catch (e) { /* only the list is optional */ }
+      if (entry.closed) return;
+      body.innerHTML = render(rows, admins, root.Cloud.user.uid);
+      body.querySelector('[data-adm-refresh]').onclick = () => { body.innerHTML = '<div class="empty"><h3>טוען נתונים…</h3></div>'; load(); };
+      body.querySelector('[data-adm-add]').onclick = async () => {
+        const uid = body.querySelector('#adm-uid').value.trim();
+        if (!/^[A-Za-z0-9]{20,40}$/.test(uid)) { UI.invalid('מזהה משתמש לא תקין'); return; }
+        try {
+          await fs.setDoc(fs.doc(db, 'admins', uid), { added: Date.now(), by: root.Cloud.user.uid });
+          UI.toast('המנהל נוסף');
+          body.querySelector('#adm-uid').value = '';
+        } catch (e) { UI.toast('ההוספה נכשלה: ' + (e.code || e.message)); }
+      };
+    } catch (e) {
+      if (!entry.closed) body.innerHTML = `<div class="banner warn">${icon('alert')}<div>לא ניתן לטעון את הנתונים (${esc(e.code || e.message || '')}). בדוק חיבור לאינטרנט.</div></div>`;
+    } };
+    load();
   };
 })(typeof window !== 'undefined' ? window : globalThis);
 
@@ -8988,7 +9428,7 @@ window.FIREBASE_CONFIG = {
   const S = Store.S;
   const { icon, esc } = UI;
 
-  const LEGAL_VERSION = '1.0';
+  const LEGAL_VERSION = '1.1';
   const EFFECTIVE = '13 באוקטובר 2026';
   const CONTACT = 'https://github.com/leelor123/shifts/issues';
   const APP_NAME = 'Shaati';
@@ -9037,14 +9477,15 @@ window.FIREBASE_CONFIG = {
 <h4>1. איזה מידע נשמר</h4>
 <ul><li><b>מידע שאתה מזין:</b> משמרות, תפקידים ותעריפים, חופשה ומחלה, תוספות וניכויים, הגדרות חישוב, נתוני תלושים שאימתת, ובאופן רשות — שם, תאריך לידה ומגדר (משמשים לחישוב שכר המינימום לפי גיל, לבדיקות חוק עבודת הנוער ולגיל הפנסיה).</li>
 <li><b>פרטי חשבון Google בסיסיים:</b> מזהה משתמש, כתובת אימייל, שם ותמונת פרופיל — לצורך התחברות ותצוגה בלבד.</li>
-<li><b>מידע טכני:</b> כתובת IP ופרטי דפדפן שנרשמים אוטומטית אצל ספקי התשתית בעת טעינת האפליקציה. אין באפליקציה כלי ניתוח (אנליטיקה), פרסומות או עוגיות מעקב.</li></ul>
+<li><b>מידע טכני:</b> כתובת IP ופרטי דפדפן שנרשמים אוטומטית אצל ספקי התשתית בעת טעינת האפליקציה. אין באפליקציה פרסומות, עוגיות מעקב או כלי ניתוח של צד שלישי.</li>
+<li><b>סטטיסטיקת שימוש אנונימית (אפשר לכבות):</b> פעם ביום נשמרת בענן רשומה אחת לכל מכשיר, תחת מזהה אקראי שאינו קשור לחשבון: גרסת האפליקציה, סוג ההתקנה, היום הראשון והאחרון של השימוש, מספר ימי השימוש, מספר המשמרות והתלושים, קבוצת גיל (מתחת ל-18 או מעל) ואילו תכונות פעילות. הרשומה לא כוללת שם, אימייל, מזהה משתמש, תאריכי משמרות או סכומים, ורק מנהלי האפליקציה רואים אותה, כסיכום מצטבר. אפשר לכבות בהגדרות › חשבון וסנכרון, והכיבוי מוחק את הרשומה.</li></ul>
 <h4>2. איפה המידע נשמר</h4>
 <p>במכשיר שלך (אחסון הדפדפן), ולאחר התחברות — גם בענן Google Cloud Firestore, באזור me-west1 (תל אביב). כללי האבטחה במסד הנתונים מאפשרים גישה לנתונים רק למשתמש המחובר שהם שלו. התעבורה מוצפנת (HTTPS), והאחסון בענן מוצפן על ידי Google.</p>
 <h4>3. מה לא יוצא מהטלפון</h4>
 <p>מפתח ה-API, קוד הנעילה, קובצי התלושים עצמם (תמונה ו-PDF) והטקסט הגולמי שזוהה מהם נשמרים רק במכשיר.</p>
 <p><b>פתיחה בטביעת אצבע:</b> הזיהוי מתבצע כולו במנגנון של הטלפון. האפליקציה לא מקבלת, לא שומרת ולא שולחת טביעות אצבע או נתוני פנים; היא שומרת רק מזהה טכני שמאפשר לבקש מהטלפון לאשר את הזהות.</p>
 <h4>4. למה המידע משמש</h4>
-<p>אך ורק לאספקת השירות: חישובים, סנכרון בין מכשירים, התראות ותובנות. המידע אינו נמכר, אינו מושכר ואינו משמש לשיווק או לפרסום.</p>
+<p>אך ורק לאספקת השירות: חישובים, סנכרון בין מכשירים, התראות ותובנות, והסטטיסטיקה האנונימית משמשת רק כדי להבין כמה משתמשים יש ואילו תכונות כדאי לשפר. המידע אינו נמכר, אינו מושכר ואינו משמש לשיווק או לפרסום.</p>
 <h4>5. העברה לצדדים שלישיים</h4>
 <ul><li><b>Google</b> — אימות התחברות ואחסון בענן.</li>
 <li><b>GitHub</b> — אירוח קוד האפליקציה (ללא הנתונים שלך).</li>
@@ -9146,11 +9587,13 @@ window.FIREBASE_CONFIG = {
       <div class="card small legal-summary"><b>בקצרה:</b><ul>
         <li>החישובים הם הערכה בלבד ואינם ייעוץ משפטי, חשבונאי או מס.</li>
         <li>הנתונים שלך נשמרים בטלפון ובחשבון ה-Google שלך, ורק לך יש גישה אליהם. הם לא נמכרים ולא משמשים לפרסום.</li>
+        <li>נשמרת סטטיסטיקת שימוש אנונימית (כמה משמרות, ימי שימוש, תכונות), בלי שם, אימייל או סכומים. אפשר לכבות בהגדרות.</li>
         <li>תכונות AI פועלות רק כשאתה מפעיל אותן, עם מפתח API שלך.</li>
         <li>אפשר לייצא או למחוק את כל הנתונים בכל רגע.</li></ul></div>
       <div class="btn-row"><button class="btn tonal" data-legal="terms">${icon('file')} תנאי שימוש</button><button class="btn tonal" data-legal="privacy">${icon('shield')} פרטיות</button></div>
-      <label class="switch-row" style="margin-top:8px"><span class="body"><span class="t">קראתי ואני מסכים/ה לתנאי השימוש ולמדיניות הפרטיות</span></span><input type="checkbox" class="switch" id="lg-ok"></label>
-      </div><div class="foot"><button class="btn" id="lg-go" disabled>${icon('check')} אישור והמשך</button></div></div>`;
+      </div><div class="foot col">
+      <label class="switch-row"><span class="body"><span class="t">קראתי ואני מסכים/ה לתנאי השימוש ולמדיניות הפרטיות</span></span><input type="checkbox" class="switch" id="lg-ok"></label>
+      <button class="btn" id="lg-go" disabled>${icon('check')} אישור והמשך</button></div></div>`;
     const ok = v.querySelector('#lg-ok'), go = v.querySelector('#lg-go');
     ok.onchange = () => { go.disabled = !ok.checked; };
     go.onclick = async () => { App.blocking = null; await App.acceptLegal(); nav.style.display = ''; next(); };

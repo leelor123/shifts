@@ -86,7 +86,9 @@
     const sub = [c.age != null ? 'גיל ' + c.age : 'גיל לא הוזן', c.bal ? 'ותק ' + U.num(c.bal.seniorityYears, 1) + ' שנים' : null].filter(Boolean).join(' · ');
     return `<div class="rights">
       <div class="rt-intro">${icon('shield')}<div><b>מה מגיע לך בעבודה</b><div class="tiny muted">${esc(sub)} · מעודכן לאפריל 2026 · עובד גם בלי אינטרנט</div></div></div>
-      <input class="input rt-search" type="search" placeholder="חיפוש: שבת, נסיעות, הבראה…" aria-label="חיפוש בזכויות">
+      <input class="input rt-search" type="search" placeholder="חיפוש: שבת, נסיעות, הבראה…" aria-label="חיפוש בזכויות" enterkeyhint="search">
+      <div class="rt-results" aria-live="polite" hidden></div>
+      <div class="rt-main">
       <div class="section-title">${icon('check', 's')} בדיקה מהירה של הנתונים שלך</div>
       <div class="card rt-checks">${checks(c).map(([k, t, d]) => `<div class="rt-row"><span class="rt-mark" style="color:${MARK[k][1]}">${icon(MARK[k][0], 's')}</span><div><div class="t">${t}</div><div class="d">${esc(d)}</div></div></div>`).join('')}</div>
       ${minor ? `<div class="section-title">${icon('users', 's')} לבני נוער (גיל ${c.age})</div>
@@ -101,24 +103,63 @@
         <li><b>קבל עזרה</b>: ${link(KZS('הגשת תלונה על הפרת חוקי עבודה'), 'איך מגישים תלונה')} · ${link('https://www.kolzchut.org.il/he/', 'כל זכות')}</li></ol>
         <button class="btn tonal block" data-rt-ai>${icon('sparkle')} שאלה אחרת? שאל את העוזר</button>
       </div>
+      </div>
       <div class="tiny muted" style="margin:12px 4px 4px">מידע כללי בלבד ואינו ייעוץ משפטי. תנאים בהסכם קיבוצי, בצו הרחבה או בחוזה שלך יכולים להיות טובים יותר.</div>
     </div>`;
   }
 
+  /* ---------------- search: the answer appears right under the box ---------------- */
+  // extra words people actually type, per topic
+  const KEYWORDS = {
+    minwage: 'משכורת תעריף כמה מגיע לשעה שכר נוער גיל', overtime: 'נוספות ארוכה 125 150 שעות',
+    shabbat: 'שבת חג חגים מנוחה 150 סופש', breaks: 'הפסקה מנוחה אוכל ארוחה', travel: 'נסיעות נסיעה אוטובוס רב קו דלק תחבורה',
+    sick: 'מחלה חולה אישור רופא', vacation: 'חופש חופשה ימי חופש', recup: 'הבראה', pension: 'פנסיה קרן גמל חיסכון הפרשה',
+    payslip: 'תלוש משכורת מתי מקבלים הלנה איחור תשלום', deduct: 'ניכוי קנס חוסר קופה ציוד הורדה מהשכר',
+    leave: 'פיטורים פיטרו התפטרות פיצויים שימוע הודעה מוקדמת עזיבה',
+  };
+  const strip = (h) => h.replace(/<[^>]+>/g, ' ');
+  const norm = (s) => s.replace(/[\u0591-\u05C7"'׳״.,:;()?!–-]/g, ' ').replace(/\s+/g, ' ').trim();
+  function searchIndex(c) {
+    const minor = c.age != null && c.age < 18;
+    const items = TOPICS.map((tp) => ({ t: tp.t, ic: tp.ic, html: tp.b(c) + `<div class="tiny">${tp.l()}</div>`, extra: KEYWORDS[tp.id] || '' }));
+    if (minor) {
+      const R = Engine.youthRules(c.age, S.settings.leave && S.settings.leave.workWeek);
+      items.unshift({ t: `לבני נוער (גיל ${c.age})`, ic: 'users', html: YOUTH(R, c.age).map(([, t]) => `<p>${t}</p>`).join('') + `<div class="tiny">${link(KZ('חוק עבודת הנוער'), 'חוק עבודת הנוער ב"כל זכות"')}</div>`, extra: 'נוער לילה הפסקה שעות 18 גיל אישור רפואי' });
+    }
+    return items.map((it) => Object.assign(it, { text: norm(it.t + ' ' + strip(it.html) + ' ' + it.extra) }));
+  }
+  /** Every word must appear; a Hebrew prefix letter (ו ה ב ל מ ש כ) on a word is optional. */
+  function matches(text, query) {
+    return norm(query).split(' ').filter(Boolean).every((w) => text.includes(w) || (w.length > 3 && /^[והבלמשכ]/.test(w) && text.includes(w.slice(1))));
+  }
+
   App.actions.rights = function () {
+    if (!S.meta.usedRights) Store.setMeta({ usedRights: true });
     UI.openSheet({
       title: 'הזכויות שלי', full: true, body: render(),
       onMount: (el) => {
         const q = el.querySelector('.rt-search');
+        const results = el.querySelector('.rt-results');
+        const main = el.querySelector('.rt-main');
+        const index = searchIndex(context());
         q.oninput = () => {
           const v = q.value.trim();
-          el.querySelectorAll('.rt-topic').forEach((d) => {
-            const hit = !v || d.textContent.includes(v);
-            d.style.display = hit ? '' : 'none';
-            d.open = !!v && hit;
-          });
+          main.hidden = !!v;
+          results.hidden = !v;
+          if (!v) { results.innerHTML = ''; return; }
+          const hits = index.filter((it) => matches(it.text, v));
+          results.innerHTML = hits.length
+            ? hits.map((it) => `<div class="card rt-hit"><div class="rt-hit-t">${icon(it.ic, 's')}<span>${it.t}</span></div><div class="rt-body">${it.html}</div></div>`).join('')
+            : `<div class="card rt-none"><b>לא מצאנו את זה במדריך.</b><div class="small muted">נסה מילה אחרת, או שאל את העוזר.</div><button class="btn tonal block" data-rt-ai>${icon('sparkle')} שאל את העוזר</button></div>`;
+          const body = el.querySelector('.sh-body');
+          if (body) body.scrollTop = 0;
         };
-        el.querySelector('[data-rt-ai]').onclick = () => { UI.closeTop(); setTimeout(() => App.actions.assistant(), 320); };
+        q.onkeydown = (e) => { if (e.key === 'Enter') q.blur(); };
+        el.addEventListener('click', (e) => {
+          if (!e.target.closest('[data-rt-ai]')) return;
+          UI.closeTop();
+          setTimeout(() => App.actions.assistant(), 320);
+        });
       },
     });
   };

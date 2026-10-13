@@ -13,7 +13,7 @@ const server = http.createServer((req, res) => {
   const file = path.join(docs, p === '/' ? 'index.html' : p);
   if (!fs.existsSync(file) || fs.statSync(file).isDirectory()) { res.writeHead(404); res.end(); return; }
   let body = fs.readFileSync(file);
-  if (file.endsWith('index.html')) body = Buffer.from(body.toString('utf8').replace('window.FIREBASE_CONFIG = {', 'window.__NO_CLOUD = {'));
+  if (file.endsWith('index.html') && !/cloud=1/.test(req.url)) body = Buffer.from(body.toString('utf8').replace('window.FIREBASE_CONFIG = {', 'window.__NO_CLOUD = {'));
   res.writeHead(200, { 'Content-Type': TYPES[path.extname(file)] || 'application/octet-stream' });
   res.end(body);
 });
@@ -63,10 +63,10 @@ let errors = [];
     await page.waitForSelector('[data-next]', { timeout: 5000 });
   });
   await step('setup wizard, all steps with defaults', async () => {
-    for (let i = 0; i < 10; i++) {
+    for (let i = 0; i < 12; i++) {
       const done = await ev(() => !App.blocking);
       if (done) break;
-      await page.click('[data-next]'); await sleep(250);
+      await page.click((await page.$('[data-save]')) ? '[data-save]' : '[data-next]'); await sleep(300);
     }
     if (await ev(() => !!App.blocking)) throw new Error('wizard did not finish');
     await sleep(800);
@@ -152,9 +152,25 @@ let errors = [];
     const txt = await ev(() => document.querySelector('.sheet').innerText);
     if (!txt.includes('27.94') && !txt.includes('30.92')) throw new Error('youth minimum missing');
     if (!txt.includes('לבני נוער')) throw new Error('youth section missing');
-    await ev(() => { const q = document.querySelector('.rt-search'); q.value = 'נסיעות'; q.dispatchEvent(new Event('input')); }); await sleep(200);
-    const open = await ev(() => [...document.querySelectorAll('.rt-topic')].filter((d) => d.open).length);
-    if (!open) throw new Error('search did not open a topic');
+    // scroll down first: a search must still show its answer right under the box, without scrolling
+    await ev(() => { document.querySelector('.sheet .sh-body').scrollTop = 900; });
+    const search = (s) => ev((x) => { const q = document.querySelector('.rt-search'); q.value = x; q.dispatchEvent(new Event('input')); }, s);
+    for (const word of ['נסיעות', 'בשבת', 'פיטרו', 'הבראה']) {
+      await search(word); await sleep(250);
+      const r = await ev(() => {
+        const q = document.querySelector('.rt-search').getBoundingClientRect();
+        const hit = document.querySelector('.rt-results .rt-hit');
+        const h = hit && hit.getBoundingClientRect();
+        return { main: document.querySelector('.rt-main').hidden, hits: document.querySelectorAll('.rt-hit').length, gap: h ? h.top - q.bottom : null, inView: h ? h.top < innerHeight - 80 : false, qTop: q.top };
+      });
+      if (!r.main) throw new Error(word + ': the rest of the page was not hidden');
+      if (!r.hits) throw new Error(word + ': no result');
+      if (r.gap < 0 || r.gap > 40 || !r.inView || r.qTop < 0) throw new Error(word + ': result not right under the box ' + JSON.stringify(r));
+    }
+    await search('מעלית חללית'); await sleep(200);
+    if (!(await ev(() => !!document.querySelector('.rt-none [data-rt-ai]')))) throw new Error('no "ask the assistant" for an unknown question');
+    await search(''); await sleep(200);
+    if (await ev(() => document.querySelector('.rt-main').hidden || !document.querySelector('.rt-results').hidden)) throw new Error('clearing the search did not bring the guide back');
     await closeAll();
   });
   await step('youth law alert appears for a 16-year-old night shift', async () => {
@@ -226,8 +242,131 @@ let errors = [];
     const moved = await ev(() => (document.getElementById('view-inner') || {}).style.transform || '');
     if (moved && moved !== 'none' && moved !== '') throw new Error('page moved: ' + moved);
   });
+  await step('anonymous stats: record has only the allowed fields', async () => {
+    const r = await ev(() => Stats._record());
+    const keys = Object.keys(r).sort().join(',');
+    if (keys !== 'age,days,f,first,last,p,ps,s30,sh,t,v') throw new Error('keys: ' + keys);
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(r.first) || !/^\d{4}-\d{2}-\d{2}$/.test(r.last)) throw new Error('dates');
+    if (!['android', 'pwa', 'web'].includes(r.p) || !['u18', '18p', ''].includes(r.age)) throw new Error('enums');
+    if (Object.keys(r.f).length > 16 || Object.values(r.f).some((x) => typeof x !== 'boolean')) throw new Error('features');
+    if (JSON.stringify(r).match(/@|uid|name|email/i)) throw new Error('personal data in the record');
+  });
+  await step('admin dashboard: real numbers, safe from hostile records, add-admin validation', async () => {
+    const res = await ev(async () => {
+      const k = U.todayKey();
+      const evil = '<img src=x onerror="window.__xss=1">';
+      const rows = [
+        { v: '1.6.0', p: 'android', first: k, last: k, days: 12, sh: 40, s30: 9, ps: 2, age: 'u18', f: { rights: true, notif: true }, t: 1 },
+        { v: '1.6.0', p: 'web', first: U.addDays(k, -20), last: U.addDays(k, -3), days: 4, sh: 10, s30: 3, ps: 0, age: '18p', f: { dark: true }, t: 1 },
+        { v: evil, p: evil, first: U.addDays(k, -50), last: U.addDays(k, -40), days: 1, sh: 1, s30: 0, ps: 0, age: evil, f: { [evil]: true }, t: 1 },
+      ];
+      const writes = [];
+      const snap = (list) => ({ docs: list.map(([id, d]) => ({ id, data: () => d })) });
+      const fs = {
+        collection: (db, ...p) => ({ path: p.join('/') }), doc: (db, ...p) => ({ path: p.join('/') }),
+        getDocsFromServer: async (c) => (c.path === 'stats' ? snap(rows.map((r, i) => ['dev' + i, r])) : snap([['adminUid0123456789abcdef', { added: 1, by: 'x' }]])),
+        setDoc: async (ref, d) => { writes.push([ref.path, d]); },
+      };
+      Cloud._useSdk({ fs, db: {} });
+      Cloud.user = { uid: 'adminUid0123456789abcdef' };
+      App.isAdmin = true;
+      App.go('settings');
+      await new Promise((r) => setTimeout(r, 400));
+      const entry = document.querySelector('[data-act="admin-dashboard"]');
+      if (!entry) return { err: 'no admin entry in settings' };
+      entry.click();
+      await new Promise((r) => setTimeout(r, 900));
+      const sh = document.querySelector('.sheet .admin');
+      if (!sh) return { err: 'dashboard did not render' };
+      const kpis = [...sh.querySelectorAll('.kpi .v')].map((x) => x.textContent.trim());
+      const imgs = sh.querySelectorAll('img').length;
+      const input = sh.querySelector('#adm-uid');
+      input.value = 'not valid!'; sh.querySelector('[data-adm-add]').click();
+      await new Promise((r) => setTimeout(r, 200));
+      const badWrites = writes.length;
+      input.value = 'NewAdmin0123456789abcdefgh'; sh.querySelector('[data-adm-add]').click();
+      await new Promise((r) => setTimeout(r, 300));
+      return { kpis, imgs, xss: !!window.__xss, badWrites, writes, text: sh.innerText.includes('<img') };
+    });
+    await closeAll();
+    await ev(() => { App.isAdmin = false; Cloud.user = null; Cloud._useSdk(null); App.go('home'); });
+    if (res.err) throw new Error(res.err);
+    if (res.imgs || res.xss) throw new Error('hostile record ran as HTML');
+    if (!res.text) throw new Error('hostile record should show as plain text');
+    if (res.kpis[0] !== '3' || res.kpis[1] !== '1' || res.kpis[2] !== '2' || res.kpis[3] !== '2') throw new Error('wrong numbers: ' + res.kpis.join(','));
+    if (res.badWrites) throw new Error('an invalid user id was written');
+    const w = res.writes[0];
+    if (!w || w[0] !== 'admins/NewAdmin0123456789abcdefgh' || w[1].by !== 'adminUid0123456789abcdef' || !Number.isInteger(w[1].added) || Object.keys(w[1]).length !== 2) throw new Error('add-admin write: ' + JSON.stringify(w));
+  });
+  await step('a regular user never sees the dashboard', async () => {
+    await ev(() => { App.go('settings'); }); await sleep(400);
+    if (await page.$('[data-act="admin-dashboard"]')) throw new Error('admin entry visible');
+    await ev(() => App.actions['admin-dashboard']()); await sleep(300);
+    if (await page.$('.sheet .admin')) throw new Error('dashboard opened without admin rights');
+    await closeAll();
+  });
   await step('demo data clears', async () => { await ev(() => App.demo.clear()); await sleep(800); });
   await step('delete-all (local) wipes', async () => { await ev(() => Store.wipe()); await sleep(300); if (await ev(() => Store.S.shifts.length)) throw new Error('not wiped'); });
+
+  // a brand-new user (sign-in set up, Google stubbed): the questions come first, sign-in at the end
+  const ctx2 = await (browser.createBrowserContext ? browser.createBrowserContext() : browser.createIncognitoBrowserContext());
+  const p2 = await ctx2.newPage();
+  p2.on('pageerror', (e) => errors.push('pageerror: ' + e.message));
+  p2.on('console', (m) => { if (m.type() === 'error' && !/vibrate|favicon|ERR_|net::|Failed to fetch|dynamically imported/.test(m.text())) errors.push('console: ' + m.text()); });
+  await p2.setViewport({ width: 412, height: 860, deviceScaleFactor: 1, isMobile: true, hasTouch: true });
+  await p2.setRequestInterception(true);
+  p2.on('request', (r) => (r.url().startsWith('http://localhost:8783/') ? r.continue() : r.abort()));
+  await p2.evaluateOnNewDocument(() => {
+    const stubs = {
+      probe: async () => true,
+      start: async () => null,
+      signIn: async () => { window.__signIn = (window.__signIn || 0) + 1; return { uid: 'newUser0123456789abcdef', displayName: 'Test', email: 'test@example.com' }; },
+      connect: async (u) => { window.Cloud.user = u; window.__connected = u.uid; },
+    };
+    let C;
+    Object.defineProperty(window, 'Cloud', { configurable: true, get: () => C, set: (v) => { C = v; for (const k of Object.keys(stubs)) Object.defineProperty(v, k, { configurable: true, get: () => stubs[k], set: () => {} }); } });
+  });
+  const e2 = (fn, ...a) => p2.evaluate(fn, ...a);
+  const shot = (n) => p2.screenshot({ path: path.join(out, n + '.png') }).catch(() => {});
+  await step('new user: welcome screen first, no sign-in wall', async () => {
+    await p2.goto('http://localhost:8783/?cloud=1', { waitUntil: 'load' });
+    await p2.waitForFunction(() => !document.getElementById('intro'), { timeout: 15000 });
+    await p2.waitForSelector('.ob-welcome', { timeout: 8000 });
+    if (await e2(() => App.blocking !== 'onboarding')) throw new Error('sign-in screen shown before the questions');
+    if (!(await p2.$('[data-have]'))) throw new Error('no "I already have an account"');
+    await shot('ob-0');
+  });
+  await step('new user: six questions with live previews', async () => {
+    await p2.click('[data-next]'); await sleep(450);
+    if (!(await e2(() => App.legalAccepted()))) throw new Error('terms not accepted on start');
+    const t1 = await e2(() => document.getElementById('ob-live-roles').textContent);
+    if (!/₪/.test(t1)) throw new Error('no live pay preview: ' + t1);
+    await e2(() => { const i = document.querySelector('[data-rr="0"]'); i.value = '50'; i.dispatchEvent(new Event('input', { bubbles: true })); });
+    if (!(await e2(() => document.getElementById('ob-live-roles').textContent.includes('400')))) throw new Error('preview did not react');
+    await shot('ob-1');
+    await p2.click('[data-next]'); await sleep(450);
+    if (!(await e2(() => /₪/.test(document.getElementById('ob-live-travel').textContent)))) throw new Error('no travel preview');
+    await p2.click('[data-next]'); await sleep(450);
+    await p2.click('[data-next]'); await sleep(450);
+    await e2(() => { const b = document.getElementById('ob-birth'); b.value = U.addDays(U.todayKey(), -16 * 366); b.dispatchEvent(new Event('input', { bubbles: true })); });
+    const age = await e2(() => document.getElementById('ob-live-age').textContent);
+    if (!age.includes('16')) throw new Error('age preview: ' + age);
+    await shot('ob-4');
+    await p2.click('[data-next]'); await sleep(450);
+    await p2.click('[data-next]'); await sleep(450);
+    await p2.click('[data-next]'); await sleep(700);
+    if (!(await p2.$('.ob-google'))) throw new Error('no "save with Google" on the last step');
+    await shot('ob-done');
+  });
+  await step('new user: save with Google signs in and opens the app', async () => {
+    await p2.click('.ob-google'); await sleep(1500);
+    const st = await e2(() => ({ signIn: window.__signIn, connected: window.__connected, onboarded: Store.S.settings.onboarded, blocking: App.blocking, rate: App.roles().some((r) => Engine.roleRate(r, U.todayKey()) === 50), birth: Store.S.settings.birthDate, hero: !!document.querySelector('.home-hero') }));
+    if (st.signIn !== 1 || st.connected !== 'newUser0123456789abcdef') throw new Error('sign-in not done ' + JSON.stringify(st));
+    if (!st.onboarded || st.blocking || !st.hero) throw new Error('not in the app ' + JSON.stringify(st));
+    if (!st.rate || !st.birth) throw new Error('answers not saved ' + JSON.stringify(st));
+    await shot('ob-home');
+  });
+  await ctx2.close();
 
   const failed = results.filter((r) => !r.ok);
   console.log(`\n${results.length - failed.length}/${results.length} steps passed`);

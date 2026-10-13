@@ -1,6 +1,7 @@
 rules_version = '2';
 
 // Every user can read and write only their own data under users/{uid}.
+// Anonymous statistics are readable by admins only; nothing else is reachable.
 service cloud.firestore {
   match /databases/{database}/documents {
     match /users/{uid} {
@@ -13,6 +14,41 @@ service cloud.firestore {
         // never replace a newer version with an older one (a phone that was offline for a while)
         allow update: if valid(uid, collection) && request.resource.data.u >= resource.data.u;
       }
+    }
+
+    // anonymous usage statistics (stats.js): a signed-in device writes its own record under a random id,
+    // with a fixed shape and no personal data; only admins can read them
+    match /stats/{id} {
+      allow create, update: if request.auth != null && id.size() >= 16 && id.size() <= 40 && validStats(request.resource.data);
+      allow delete: if request.auth != null;
+      allow read: if isAdmin();
+    }
+    // admins: a user may check whether they are one; only an admin can add or remove admins
+    match /admins/{uid} {
+      allow get: if request.auth != null && (request.auth.uid == uid || isAdmin());
+      allow list: if isAdmin();
+      allow create: if isAdmin() && request.resource.data.keys().hasOnly(['added', 'by'])
+        && request.resource.data.by == request.auth.uid && request.resource.data.added is int;
+      allow delete: if isAdmin() && uid != request.auth.uid;
+      allow update: if false;
+    }
+
+    function isAdmin() {
+      return request.auth != null && exists(/databases/$(database)/documents/admins/$(request.auth.uid));
+    }
+    function validStats(d) {
+      return d.keys().hasOnly(['v', 'p', 'first', 'last', 'days', 'sh', 's30', 'ps', 'age', 'f', 't'])
+        && d.v is string && d.v.size() <= 20
+        && d.p in ['android', 'pwa', 'web']
+        && d.first is string && d.first.matches('^[0-9]{4}-[0-9]{2}-[0-9]{2}$')
+        && d.last is string && d.last.matches('^[0-9]{4}-[0-9]{2}-[0-9]{2}$')
+        && d.days is int && d.days >= 0 && d.days < 100000
+        && d.sh is int && d.sh >= 0 && d.sh < 1000000
+        && d.s30 is int && d.s30 >= 0 && d.s30 < 100000
+        && d.ps is int && d.ps >= 0 && d.ps < 100000
+        && d.age in ['u18', '18p', '']
+        && d.f is map && d.f.size() <= 16
+        && d.t is int;
     }
 
     function valid(uid, collection) {

@@ -7,8 +7,12 @@
   const S = Store.S;
   const { icon, esc } = UI;
 
-  /* ---------------- wizard ---------------- */
-  App.sheetsApi.onboarding = function () {
+  /* ---------------- wizard ----------------
+   * A few friendly questions with live previews, then (for a new user) "save to your Google account".
+   * opts.preLogin: the user is not signed in yet; the last step signs in and uploads what they set up.
+   * Returning users skip the questions from the welcome screen ("I already have an account"). */
+  App.sheetsApi.onboarding = function (opts) {
+    opts = opts || {};
     const nav = document.getElementById('nav');
     nav.style.display = 'none';
     App.blocking = 'onboarding';
@@ -17,42 +21,66 @@
     let roles = S.roles.length ? Store.clone(S.roles.filter((r) => !r.archived)) : Defaults.defaultRoles(emp.id);
     roles.forEach((r) => (r.rate = Engine.roleRate(r, U.todayKey())));
     if (!st.startDate) st.startDate = U.addMonths(U.todayKey(), -3);
-    let step = 0;
-    const STEPS = 7;
+    const needsLogin = () => !!opts.preLogin && !App.localOnly && !(root.Cloud && root.Cloud.user);
+    let step = 0, dir = 'next', saving = false, savedMsg = '', saved = false, demo = false;
+    const STEPS = 8; // welcome, 6 questions, done
     const v = document.getElementById('view');
+    const fx = root.Fx;
+    const hero = (emoji, cls) => `<div class="ob-hero ${cls || ''}" aria-hidden="true">${emoji}</div>`;
+    const money = (n) => U.money(n, Number.isInteger(+n) ? 0 : 2);
 
     const screens = [
-      () => `<div style="text-align:center;padding-top:6vh"><div class="brand-mark big" aria-hidden="true"></div>
-        <h1 class="brand-name">Shaati</h1><div class="brand-sub">מעקב משמרות ושכר</div><p class="lead">רישום משמרות בלחיצה, חישוב שכר מדויק (שבתות, חגים, שעות נוספות), תובנות, ובדיקת תלוש. הנתונים נשמרים בחשבון שלך, ורק לך יש גישה אליהם.</p>
-        <p class="small muted">ההגדרה לוקחת כדקה. כל ערך אפשר לשנות אחר כך בהגדרות.</p></div>`,
-      () => `<h1>התפקידים שלך</h1><p class="lead">לכל תפקיד שכר שעתי וצבע. העלאות שכר בעתיד מוסיפים מתאריך — בלי לשנות משמרות עבר.</p>
+      () => `<div class="ob-welcome">
+        <div class="brand-mark big" aria-hidden="true"></div>
+        <h1 class="brand-name">Shaati</h1><div class="brand-sub">מעקב משמרות ושכר</div>
+        <div class="ob-points">
+          <div style="--d:0">${hero('⏱️', 'sm')}<span>רושמים משמרת בלחיצה אחת</span></div>
+          <div style="--d:1">${hero('🕯️', 'sm')}<span>שבתות, חגים ושעות נוספות מחושבים לבד</span></div>
+          <div style="--d:2">${hero('🧾', 'sm')}<span>בודקים שהתלוש תואם, ויודעים מה מגיע לך</span></div>
+        </div>
+        <p class="small muted">דקה אחת של שאלות קצרות, ומתחילים.</p></div>`,
+      () => `${hero('💼')}<h1>איפה אתה עובד?</h1><p class="lead">התפקידים שלך והשכר לשעה. אפשר להוסיף, לשנות שם וצבע.</p>
         ${roles.map((r, i) => `<div class="role-edit"><button class="sw" style="background:${r.color}" data-cc="${i}" aria-label="צבע"></button>
           <input class="input" data-rn="${i}" value="${esc(r.name)}" placeholder="שם התפקיד">
           <input class="input" type="number" step="any" inputmode="decimal" data-rr="${i}" value="${r.rate || ''}" placeholder="₪ לשעה">
           <button class="icon-btn" data-rx="${i}" aria-label="הסר">${icon('x')}</button></div>`).join('')}
         <button class="btn text" data-radd>${icon('plus', 's')} הוסף תפקיד</button>
-        <div class="banner" style="margin-top:12px">${icon('info')}<div>ערכי ברירת מחדל: סדרן 40 ₪, מזנון 38 ₪, אחמ״ש 48 ₪. עדכן לתעריפים שלך.</div></div>`,
-      () => `<h1>נסיעות</h1><p class="lead">החזר נסיעות לכל יום עבודה.</p>
-        <label class="field"><span class="lbl">סכום ליום עבודה ₪</span><input class="input" type="number" step="any" inputmode="decimal" id="ob-travel" value="${emp.travelPerDay}"><span class="hint">ברירת מחדל 22.60 ₪ — התקרה לפי צו ההרחבה (2025).</span></label>
-        <label class="field"><span class="lbl">תקרה חודשית ₪</span><input class="input" type="number" step="any" inputmode="decimal" id="ob-cap" value="${emp.travelMonthlyCap || ''}" placeholder="ללא תקרה"><span class="hint">למשל מחיר חופשי-חודשי. ריק = ללא תקרה.</span></label>
-        <div class="tiny muted">משמרת מסוימת בלי נסיעות? אפשר לסמן בעריכת המשמרת.</div>`,
-      () => `<h1>תקופת שכר</h1><p class="lead">מתי מתחילה תקופת השכר, ומתי מקבלים משכורת.</p>
-        <div class="seg" style="margin-bottom:14px"><button data-pd="1" class="${emp.periodStartDay <= 1 ? 'on' : ''}">חודש קלנדרי (1 לחודש)</button><button data-pd="custom" class="${emp.periodStartDay > 1 ? 'on' : ''}">תאריך אחר</button></div>
+        <div class="ob-live" id="ob-live-roles"></div>`,
+      () => `${hero('🚌')}<h1>נסיעות</h1><p class="lead">כמה מקבלים על נסיעות לכל יום עבודה? זה בנוסף לשכר.</p>
+        <label class="field"><span class="lbl">₪ ליום עבודה</span><input class="input" type="number" step="any" inputmode="decimal" id="ob-travel" value="${emp.travelPerDay}"></label>
+        <label class="field"><span class="lbl">תקרה חודשית ₪ (לא חובה)</span><input class="input" type="number" step="any" inputmode="decimal" id="ob-cap" value="${emp.travelMonthlyCap || ''}" placeholder="ללא תקרה"><span class="hint">למשל מחיר חופשי-חודשי.</span></label>
+        <div class="ob-live" id="ob-live-travel"></div>`,
+      () => `${hero('📅')}<h1>מתי מקבלים משכורת?</h1><p class="lead">ככה נדע לחשב כל תקופה ולהזכיר לך לבדוק את התלוש.</p>
+        <div class="seg" style="margin-bottom:14px"><button data-pd="1" class="${emp.periodStartDay <= 1 ? 'on' : ''}">חודש רגיל (מה-1)</button><button data-pd="custom" class="${emp.periodStartDay > 1 ? 'on' : ''}">תאריך אחר</button></div>
         ${emp.periodStartDay > 1 ? `<label class="field"><span class="lbl">התקופה מתחילה ב- (יום בחודש)</span><input class="input" type="number" min="2" max="28" id="ob-pstart" value="${emp.periodStartDay}"><span class="hint">למשל 21: מה-21 בחודש ועד ה-20 בחודש הבא.</span></label>` : ''}
-        <label class="field"><span class="lbl">יום התשלום (בחודש שאחרי)</span><input class="input" type="number" min="1" max="31" id="ob-payday" value="${emp.payDay}"><span class="hint">לפי החוק — עד ה-9. ביום הזה תקבל תזכורת להזין את התלוש.</span></label>`,
-      () => `<h1>תחילת העבודה</h1><p class="lead">ממנו מחושבים ותק, דמי הבראה, ימי חופשה ומחלה, ותחילת ההפרשות לפנסיה.</p>
-        <label class="field"><span class="lbl">תאריך תחילת העבודה</span><input class="input" type="date" id="ob-start" value="${st.startDate}"></label>
-        <label class="field"><span class="lbl">תאריך לידה (לא חובה)</span><input class="input" type="date" id="ob-birth" value="${st.birthDate || ''}"><span class="hint">לברכת יום הולדת, ולחישוב נכון מתחת לגיל 18 (אז הנטו שווה לברוטו).</span></label>
-        <label class="field"><span class="lbl">שבוע עבודה</span><select class="input" id="ob-week"><option value="5" ${+st.leave.workWeek === 5 ? 'selected' : ''}>5 ימים</option><option value="6" ${+st.leave.workWeek === 6 ? 'selected' : ''}>6 ימים</option></select></label>`,
-      () => `<h1>שבת וחגים</h1><p class="lead">שעות בשבת ובחג משולמות ב-150%. זמני הכניסה והיציאה מחושבים בטלפון לפי העיר.</p>
-        <label class="field"><span class="lbl">העיר שבה אתה עובד</span><select class="input" id="ob-city">${HebCal.CITIES.map((c) => `<option ${c.name === st.rest.city ? 'selected' : ''}>${c.name}</option>`).join('')}</select></label>
-        <div class="card small" id="ob-preview"></div>
-        <div class="tiny muted">המעסיק מגדיר שבת בשעות קבועות (למשל שישי 16:00 עד שבת 20:00)? אפשר לשנות בהגדרות › שבת וחגים.</div>`,
-      () => `<h1>נטו משוער</h1><p class="lead">כדי להעריך כמה ייכנס לחשבון.</p>
-        <div class="field"><span class="lbl">נקודות זיכוי</span><div class="chips">${[[2.25, 'גבר — 2.25'], [2.75, 'אישה — 2.75']].map(([v2, l]) => `<button class="chip ${+st.tax.creditPoints === v2 ? 'on' : ''}" data-cp="${v2}">${l}</button>`).join('')}</div>
-          <input class="input" type="number" step="0.25" inputmode="decimal" id="ob-cp" value="${st.tax.creditPoints}"><span class="hint">נקודות נוספות: ילדים, תואר, שחרור מצבא, עולה חדש… מופיע בתלוש.</span></label></div>
-        <label class="field"><span class="lbl">הפרשת עובד לפנסיה %</span><input class="input" type="number" step="0.1" inputmode="decimal" id="ob-pen" value="${st.pension.employeePct}"><span class="hint">בדרך כלל 6%. מתחילה אחרי 6 חודשי עבודה (3 אם הייתה לך קרן).</span></label>
-        <label class="switch-row"><span class="body"><span class="t">יש לי קרן השתלמות</span><span class="s">2.5% עובד / 7.5% מעסיק</span></span><input type="checkbox" class="switch" id="ob-hish" ${st.hishtalmut.enabled ? 'checked' : ''}></label>`,
+        <label class="field"><span class="lbl">יום התשלום בחודש שאחרי</span><input class="input" type="number" min="1" max="31" id="ob-payday" value="${emp.payDay}"><span class="hint">לפי החוק, עד ה-9 בחודש.</span></label>`,
+      () => `${hero('🎂')}<h1>קצת עליך</h1><p class="lead">לוותק, לחופשה ולהבראה. ותאריך לידה כדי לבדוק לפי הגיל שלך.</p>
+        <label class="field"><span class="lbl">מתי התחלת לעבוד שם?</span><input class="input" type="date" id="ob-start" value="${st.startDate}"></label>
+        <label class="field"><span class="lbl">תאריך לידה (לא חובה)</span><input class="input" type="date" id="ob-birth" value="${st.birthDate || ''}"><span class="hint">מתחת לגיל 18: שכר מינימום לפי גיל, בדיקות חוק עבודת הנוער, ונטו שווה לברוטו. וגם ברכה ביום ההולדת 🎉</span></label>
+        <label class="field"><span class="lbl">כמה ימים בשבוע עובדים שם?</span><select class="input" id="ob-week"><option value="5" ${+st.leave.workWeek === 5 ? 'selected' : ''}>5 ימים</option><option value="6" ${+st.leave.workWeek === 6 ? 'selected' : ''}>6 ימים</option></select></label>
+        <div class="ob-live" id="ob-live-age"></div>`,
+      () => `${hero('🕯️')}<h1>שבת וחגים</h1><p class="lead">שעות בשבת ובחג שוות לפחות 150%. נחשב אותן לפי העיר.</p>
+        <label class="field"><span class="lbl">באיזו עיר אתה עובד?</span><select class="input" id="ob-city">${HebCal.CITIES.map((c) => `<option ${c.name === st.rest.city ? 'selected' : ''}>${c.name}</option>`).join('')}</select></label>
+        <div class="ob-live" id="ob-preview"></div>`,
+      () => `${hero('💰')}<h1>כמה ייכנס לחשבון?</h1><p class="lead">כדי להעריך את הנטו. אפשר לשנות בכל רגע.</p>
+        <div class="field"><span class="lbl">נקודות זיכוי</span><div class="chips">${[[2.25, 'גבר: 2.25'], [2.75, 'אישה: 2.75']].map(([v2, l]) => `<button class="chip ${+st.tax.creditPoints === v2 ? 'on' : ''}" data-cp="${v2}">${l}</button>`).join('')}</div>
+          <input class="input" type="number" step="0.25" inputmode="decimal" id="ob-cp" value="${st.tax.creditPoints}"><span class="hint">נקודות נוספות (ילדים, תואר, שחרור מצבא) מופיעות בתלוש.</span></div>
+        <label class="field"><span class="lbl">הפרשה שלך לפנסיה %</span><input class="input" type="number" step="0.1" inputmode="decimal" id="ob-pen" value="${st.pension.employeePct}"><span class="hint">בדרך כלל 6%.</span></label>
+        <label class="switch-row"><span class="body"><span class="t">יש לי קרן השתלמות</span></span><input type="checkbox" class="switch" id="ob-hish" ${st.hishtalmut.enabled ? 'checked' : ''}></label>`,
+      () => {
+        const valid = roles.filter((r) => r.name && r.rate > 0);
+        return `<div class="ob-done">
+          <div class="ob-check" aria-hidden="true"><svg viewBox="0 0 52 52"><circle cx="26" cy="26" r="24"/><path d="M15 27l7 7 15-16"/></svg></div>
+          <h1>${demo ? 'הנתונים לדוגמה מוכנים!' : 'הכל מוכן!'}</h1>
+          <p class="lead">${demo ? 'אפשר להסתכל על הכל ולמחוק את הדוגמה בכל רגע.' : 'עכשיו כל משמרת מחושבת לבד.'}</p>
+          ${demo ? '' : `<div class="ob-summary">
+            ${valid.map((r) => `<span><i style="background:${r.color}"></i>${esc(r.name)} · ${money(r.rate)}</span>`).join('')}
+            <span>🚌 ${money(emp.travelPerDay)} ליום</span><span>📅 משכורת ב-${emp.payDay} לחודש</span><span>🕯️ ${esc(st.rest.city)}</span>
+          </div>`}
+          ${needsLogin() ? `<div class="ob-save"><b>שמור את זה בחשבון Google</b><div class="small muted">כדי שהנתונים לא ילכו לאיבוד ויהיו זמינים בכל טלפון. רק לך תהיה גישה אליהם.</div></div>` : ''}
+          ${savedMsg ? `<div class="banner warn" style="text-align:start">${icon('alert')}<div>${esc(savedMsg)}</div></div>` : ''}
+        </div>`;
+      },
     ];
 
     function read() {
@@ -62,29 +90,76 @@
         v.querySelectorAll('[data-rr]').forEach((i) => (roles[+i.dataset.rr].rate = UI.numIn(i)));
       }
       if (step === 2) { emp.travelPerDay = UI.numIn(q('#ob-travel')) || 0; emp.travelMonthlyCap = UI.numIn(q('#ob-cap')) || 0; }
-      if (step === 3) { if (q('#ob-pstart')) emp.periodStartDay = Math.min(28, Math.max(2, UI.numIn(q('#ob-pstart')) || 2)); emp.payDay = UI.numIn(q('#ob-payday')) || 9; }
+      if (step === 3) { if (q('#ob-pstart')) emp.periodStartDay = Math.min(28, Math.max(2, UI.numIn(q('#ob-pstart')) || 2)); emp.payDay = Math.min(31, Math.max(1, UI.numIn(q('#ob-payday')) || 9)); }
       if (step === 4) { st.startDate = q('#ob-start').value || st.startDate; st.birthDate = q('#ob-birth').value || null; st.leave.workWeek = +q('#ob-week').value; }
       if (step === 5) st.rest.city = q('#ob-city').value;
       if (step === 6) { st.tax.creditPoints = UI.numIn(q('#ob-cp')) || 2.25; st.pension.employeePct = UI.numIn(q('#ob-pen')) || 6; st.hishtalmut.enabled = q('#ob-hish').checked; }
     }
-    function cityPreview() {
-      const el = v.querySelector('#ob-preview');
-      if (!el) return;
-      const cfg = Object.assign({}, st.rest, { city: v.querySelector('#ob-city').value, dayRules: [] });
-      const w = HebCal.restWindows(U.todayKey(), U.addDays(U.todayKey(), 10), cfg).find((x) => x.end > Date.now());
-      el.innerHTML = w ? `${icon('candle', 's')} ${esc(w.label)} הקרובה: כניסה ${U.HEB_DAYS[U.dow(U.epochKey(w.start))]} ${U.epochHM(w.start)}, יציאה ${U.HEB_DAYS[U.dow(U.epochKey(w.end))]} ${U.epochHM(w.end)}` : '';
+    /* live previews: the numbers react while typing */
+    function live() {
+      const q = (s) => v.querySelector(s);
+      if (step === 1) {
+        read();
+        const r = roles.find((x) => x.name && x.rate > 0);
+        const el = q('#ob-live-roles');
+        if (el) el.innerHTML = r ? `${icon('sparkle', 's')} משמרת של 8 שעות כ${esc(r.name)} = <b>${money(r.rate * 8)}</b>` : 'הזן שם ותעריף לפחות לתפקיד אחד';
+      }
+      if (step === 2) {
+        const t = UI.numIn(q('#ob-travel')) || 0, cap = UI.numIn(q('#ob-cap')) || 0;
+        const m = cap ? Math.min(cap, t * 20) : t * 20;
+        q('#ob-live-travel').innerHTML = t ? `${icon('car', 's')} בחודש של 20 ימי עבודה: <b>${money(m)}</b> נסיעות` : '';
+      }
+      if (step === 4) {
+        const b = q('#ob-birth').value;
+        const age = b ? Engine.ageAt(b, U.todayKey()) : null;
+        const el = q('#ob-live-age');
+        if (age == null || age < 0 || age > 100) { el.innerHTML = ''; return; }
+        const mw = Engine.legalMinWage(U.todayKey(), b);
+        el.innerHTML = age < 18
+          ? `${icon('shield', 's')} גיל ${age}: שכר המינימום שלך <b>${U.money(mw.hourly)}</b> לשעה, והנטו שווה לברוטו (בלי מס).`
+          : `${icon('shield', 's')} גיל ${age}: שכר המינימום <b>${U.money(mw.hourly)}</b> לשעה.`;
+      }
+      if (step === 5) {
+        const el = q('#ob-preview');
+        const cfg = Object.assign({}, st.rest, { city: q('#ob-city').value, dayRules: [] });
+        const w = HebCal.restWindows(U.todayKey(), U.addDays(U.todayKey(), 10), cfg).find((x) => x.end > Date.now());
+        el.innerHTML = w ? `${icon('candle', 's')} ${esc(w.label)} הקרובה: כניסה ${U.HEB_DAYS[U.dow(U.epochKey(w.start))]} ${U.epochHM(w.start)}, יציאה ${U.HEB_DAYS[U.dow(U.epochKey(w.end))]} ${U.epochHM(w.end)}` : '';
+      }
     }
     function draw() {
-      v.innerHTML = `<div class="wizard"><div class="steps">${Array.from({ length: STEPS }, (_, i) => `<i class="${i <= step ? 'on' : ''}"></i>`).join('')}</div>
-        <div class="content">${screens[step]()}</div>
-        <div class="foot ${step === 0 ? 'col' : ''}">${step === 0 ? `<button class="btn" data-next>בוא נתחיל</button><button class="btn tonal" data-demo>${icon('flask')} נסה עם נתוני דוגמה</button>`
-          : `<button class="btn tonal" data-back>הקודם</button><button class="btn" data-next>${step === STEPS - 1 ? 'סיום' : 'הבא'}</button>`}</div></div>`;
-      if (step === 5) { cityPreview(); v.querySelector('#ob-city').onchange = cityPreview; }
+      const last = step === STEPS - 1;
+      const qn = step >= 1 && step <= 6 ? `<div class="ob-count">שאלה ${step} מתוך 6${step === 5 ? ' · עוד אחת וסיימנו' : ''}</div>` : '';
+      let foot;
+      if (step === 0) {
+        foot = `<button class="btn big" data-next>בוא נתחיל</button><button class="btn tonal" data-demo>${icon('flask')} נסה עם נתוני דוגמה</button>
+          ${opts.preLogin ? '<button class="btn text" data-have>כבר יש לי חשבון? התחברות</button>' : ''}
+          <div class="tiny muted ob-consent">בהמשך אתה מאשר את ${App.legalLinks ? App.legalLinks() : 'תנאי השימוש ומדיניות הפרטיות'}.</div>`;
+      } else if (last) {
+        foot = needsLogin()
+          ? `<button class="btn big ob-google" data-save ${saving ? 'disabled' : ''}>${App.googleIcon || ''}<span>${saving ? 'שומר…' : 'שמירה עם Google'}</span></button>`
+          : `<button class="btn big" data-save ${saving ? 'disabled' : ''}>${saving ? 'רגע…' : 'יאללה, מתחילים'}</button>`;
+      } else {
+        foot = `<button class="btn tonal" data-back>הקודם</button><button class="btn" data-next>${step === 6 ? 'סיום' : 'הבא'}</button>`;
+      }
+      v.innerHTML = `<div class="wizard ob">${step ? `<div class="ob-progress"><i style="width:${Math.round((step / (STEPS - 1)) * 100)}%"></i></div>` : ''}${qn}
+        <div class="content ob-${dir}">${screens[step]()}</div>
+        <div class="foot ${step === 0 || last ? 'col' : ''}">${foot}</div></div>`;
+      live();
+      const city = v.querySelector('#ob-city');
+      if (city) city.onchange = live;
       window.scrollTo(0, 0);
     }
-    async function finish(withDemo) {
+    function go(next) {
+      read();
+      dir = next > step ? 'next' : 'prev';
+      step = Math.max(0, Math.min(STEPS - 1, next));
+      draw();
+      if (fx) { fx.play(dir === 'next' ? 'pop' : 'soft'); fx.haptic(8); }
+      if (step === STEPS - 1 && fx) setTimeout(() => fx.celebrate('big'), 250);
+    }
+    async function save(withDemo) {
       roles = roles.filter((r) => r.name && r.rate > 0);
-      if (!roles.length) { UI.toast('הוסף לפחות תפקיד אחד עם תעריף'); step = 1; draw(); return; }
+      if (!roles.length) { UI.invalid('הוסף לפחות תפקיד אחד עם שם ותעריף'); go(1); return false; }
       const ops = [{ store: 'employers', put: emp }];
       for (const r of roles) {
         const rec = Object.assign({}, r);
@@ -98,32 +173,78 @@
         ops.push({ store: 'roles', put: rec });
       }
       S.roles.filter((r) => !roles.some((x) => x.id === r.id)).forEach((r) => ops.push({ store: 'roles', del: r.id }));
-      App.blocking = null;
       await Store.apply(ops, null);
       st.onboarded = true;
       await Store.setSettings((s) => Object.assign(s, st));
-      nav.style.display = '';
       if (withDemo) await App.demo.load();
-      App.go('home');
+      saved = true;
+      return true;
+    }
+    function enterApp() {
+      v.onclick = null;
+      v.oninput = null;
+      App.blocking = null;
+      nav.style.display = '';
+      App.go = prevGo;
+      if (needsLogin()) return; // still on the save step
+      App.afterLogin();
       setTimeout(() => App.runInsights(), 500);
-      UI.toast(withDemo ? 'נטענו נתוני דוגמה — אפשר למחוק אותם מהבאנר' : 'מוכן! לחץ "התחל משמרת" כשאתה מתחיל לעבוד');
+      UI.toast(demo ? 'נטענו נתוני דוגמה. אפשר למחוק אותם מהבאנר' : 'מוכן! לחץ "התחל משמרת" כשאתה מתחיל לעבוד');
+    }
+    async function finishStep() {
+      if (saving) return;
+      saving = true; savedMsg = ''; draw();
+      try {
+        if (!saved && !(await save(false))) { saving = false; return; }
+        if (needsLogin()) {
+          const Cloud = root.Cloud;
+          const user = await Cloud.signIn();
+          if (!user) return; // redirect sign-in: the page reloads signed in and continues
+          await Cloud.connect(user);
+          UI.toast('מחובר כ-' + (user.displayName || user.email));
+        }
+        saving = false;
+        enterApp();
+      } catch (e) {
+        console.error(e);
+        saving = false;
+        savedMsg = root.Cloud ? root.Cloud.errorText(e) : String(e.message || e);
+        draw();
+      }
     }
     v.onclick = async (e) => {
-      const b = e.target.closest('button');
+      const b = e.target.closest('button, a');
       if (!b) return;
-      if (b.hasAttribute('data-next')) { read(); if (step < STEPS - 1) { step++; draw(); } else finish(false); }
-      if (b.hasAttribute('data-back')) { read(); step = Math.max(0, step - 1); draw(); }
-      if (b.hasAttribute('data-demo')) finish(true);
+      if (b.dataset.legal) return; // the terms links open their own sheet
+      if (b.hasAttribute('data-next')) {
+        if (step === 0 && App.acceptLegal) await App.acceptLegal();
+        if (step === 1) { read(); if (!roles.some((r) => r.name && r.rate > 0)) { UI.invalid('הוסף לפחות תפקיד אחד עם שם ותעריף'); return; } }
+        go(step + 1);
+      }
+      if (b.hasAttribute('data-back')) go(step - 1);
+      if (b.hasAttribute('data-demo')) {
+        if (App.acceptLegal) await App.acceptLegal();
+        demo = true;
+        if (await save(true)) go(STEPS - 1);
+      }
+      if (b.hasAttribute('data-have')) {
+        if (App.acceptLegal) await App.acceptLegal();
+        v.onclick = null; App.go = prevGo;
+        App.blocking = null;
+        App.showLogin();
+      }
+      if (b.hasAttribute('data-save')) finishStep();
       if (b.hasAttribute('data-radd')) { read(); const used = new Set(roles.map((r) => r.color)); roles.push({ id: 'r_' + U.uid(), name: '', color: Defaults.ROLE_COLORS.find((c) => !used.has(c)) || '#888', employerId: emp.id, rates: [], rate: null, archived: false }); draw(); }
       if (b.dataset.rx != null) { read(); roles.splice(+b.dataset.rx, 1); draw(); }
       if (b.dataset.cc != null) { read(); const r = roles[+b.dataset.cc]; const i = Defaults.ROLE_COLORS.indexOf(r.color); r.color = Defaults.ROLE_COLORS[(i + 1) % Defaults.ROLE_COLORS.length]; draw(); }
       if (b.dataset.pd) { read(); emp.periodStartDay = b.dataset.pd === '1' ? 1 : Math.max(2, emp.periodStartDay > 1 ? emp.periodStartDay : 21); draw(); }
       if (b.dataset.cp) { v.querySelector('#ob-cp').value = b.dataset.cp; v.querySelectorAll('[data-cp]').forEach((x) => x.classList.toggle('on', x === b)); }
     };
+    v.oninput = () => live();
     draw();
-    // detach the generic view handler when leaving the wizard
+    // leaving the wizard any other way detaches its handlers
     const prevGo = App.go;
-    App.go = function (tab, opts) { v.onclick = null; App.go = prevGo; return prevGo(tab, opts); };
+    App.go = function (tab, o) { v.onclick = null; v.oninput = null; App.go = prevGo; return prevGo(tab, o); };
   };
 
   /* ---------------- demo data ---------------- */

@@ -100,7 +100,8 @@
   }
 
   // meta that describes this phone (account link, sync progress), never taken from a backup
-  const DEVICE_META = ['cloudUid', 'cloudEmail', 'cloudName', 'cloudPhoto', 'cloudReady', 'lastSync', 'designV2', 'chat', 'chatShareData'];
+  const DEVICE_META = ['cloudUid', 'cloudEmail', 'cloudName', 'cloudPhoto', 'cloudReady', 'lastSync', 'designV2', 'chat', 'chatShareData',
+    'installId', 'statsSentAt', 'activeDays', 'firstActiveDay', 'lastActiveDay'];
   const SYNC_META = ['pendingDeletes', 'settingsDirty', 'activeDirty', 'activeUpdatedAt'];
   /** Values that end up inside HTML attributes must have a safe shape. */
   function safeRecord(store, r) {

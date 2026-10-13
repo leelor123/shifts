@@ -118,6 +118,7 @@ function fakeClient(backend) {
     getDocsFromServer: async (c) => { needOnline(); return { docs: [...backend.docs].filter(([k]) => parentOf(k) === c.path).map(([k, v]) => snapDoc(k, v, false)) }; },
     getDocs: async (c) => fs.getDocsFromServer(c),
     getDocFromServer: async (d) => { needOnline(); return snapDoc(d.path, backend.docs.get(d.path), false); },
+    getDoc: async (d) => snapDoc(d.path, backend.docs.get(d.path), false),
     onSnapshot: (target, cb) => {
       const isColl = target.path.split('/').length % 2 === 1;
       const s = { kind: isColl ? 'coll' : 'doc', path: target.path, cb };
