@@ -38,21 +38,34 @@
   const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 
   /* ---------------- SDK ---------------- */
-  async function load() {
-    if (fb) return fb;
-    if (!root.FIREBASE_CONFIG) throw new Error('חסרות הגדרות Firebase');
-    const [a, au, fs] = await Promise.all([import(SDK + 'firebase-app.js'), import(SDK + 'firebase-auth.js'), import(SDK + 'firebase-firestore.js')]);
-    const app = a.getApps().length ? a.getApp() : a.initializeApp(root.FIREBASE_CONFIG);
-    let auth;
-    try {
-      auth = au.initializeAuth(app, { persistence: [au.indexedDBLocalPersistence, au.browserLocalPersistence], popupRedirectResolver: au.browserPopupRedirectResolver });
-    } catch (e) { auth = au.getAuth(app); }
-    auth.languageCode = 'he';
-    let db;
-    try { db = fs.initializeFirestore(app, { localCache: fs.persistentLocalCache({ tabManager: fs.persistentMultipleTabManager() }) }); }
-    catch (e) { db = fs.getFirestore(app); }
-    fb = { app, auth, db, au, fs };
-    return fb;
+  let loading = null;
+  function load() {
+    if (fb) return Promise.resolve(fb);
+    if (!root.FIREBASE_CONFIG) return Promise.reject(new Error('חסרות הגדרות Firebase'));
+    if (!loading) {
+      loading = (async () => {
+        const [a, au, fs] = await Promise.all([import(SDK + 'firebase-app.js'), import(SDK + 'firebase-auth.js'), import(SDK + 'firebase-firestore.js')]);
+        const app = a.getApps().length ? a.getApp() : a.initializeApp(root.FIREBASE_CONFIG);
+        let auth;
+        try {
+          // the sign-in is kept in localStorage first: some phones (iPhones especially) lose their IndexedDB
+          // connection when the app goes to the background, which would sign people out. A sign-in already
+          // stored in IndexedDB is moved over by Firebase, so nobody is signed out by this order.
+          auth = au.initializeAuth(app, { persistence: [au.browserLocalPersistence, au.indexedDBLocalPersistence], popupRedirectResolver: au.browserPopupRedirectResolver });
+        } catch (e) { auth = au.getAuth(app); }
+        auth.languageCode = 'he';
+        let db;
+        // Firestore keeps its own copy in IndexedDB; on a phone whose IndexedDB is broken it would fail every
+        // write, so it then works from memory (the app's own store re-sends anything unconfirmed on the next start)
+        const broken = Store.isMemoryOnly && Store.isMemoryOnly();
+        try { db = fs.initializeFirestore(app, { localCache: broken ? fs.memoryLocalCache() : fs.persistentLocalCache({ tabManager: fs.persistentMultipleTabManager() }) }); }
+        catch (e) { db = fs.getFirestore(app); }
+        fb = { app, auth, db, au, fs };
+        return fb;
+      })();
+      loading.catch(() => { loading = null; }); // a failed download (offline) may be tried again
+    }
+    return loading;
   }
 
   /**
@@ -78,6 +91,8 @@
 
   /** The loaded Firebase SDK ({app, auth, db, au, fs}) for other modules (statistics, admin). */
   Cloud.sdk = () => load();
+  /** Is Google sign-in ready to open its window straight from a tap? */
+  Cloud.sdkReady = () => !!fb;
   /** Tests inject a fake SDK ({app, auth, db, au, fs}) instead of loading Firebase. */
   Cloud._useSdk = (fake) => { fb = fake; };
 
@@ -111,24 +126,40 @@
     'auth/popup-blocked': 'הדפדפן חסם את חלון האישור של Google. אפשר חלונות קופצים ונסה שוב.',
     'auth/requires-recent-login': 'כדי למחוק את החשבון צריך התחברות טרייה: התנתק, התחבר שוב ונסה מיד.',
     'auth/user-mismatch': 'נבחר חשבון Google אחר. בחר את החשבון שמחובר לאפליקציה.',
+    'auth/internal-error': 'משהו השתבש בהתחברות. נסה שוב.',
+    'auth/web-storage-unsupported': 'הדפדפן חוסם שמירת נתונים (אולי גלישה בסתר). פתח את האפליקציה בדפדפן רגיל ונסה שוב.',
+    'auth/operation-not-supported-in-this-environment': 'הדפדפן הזה לא תומך בהתחברות. פתח את הקישור ב-Chrome או ב-Safari.',
+    'auth/timeout': 'ההתחברות לקחה יותר מדי זמן. בדוק את החיבור ונסה שוב.',
   };
-  Cloud.errorText = (e) => AUTH_ERRORS[e && e.code] || (e && e.message) || String(e);
+  const STORAGE_ERRORS = ['UnknownError', 'InvalidStateError', 'QuotaExceededError', 'DataError', 'AbortError'];
+  /** A message a person can understand (never raw English from the browser). */
+  Cloud.errorText = function (e) {
+    if (e && AUTH_ERRORS[e.code]) return AUTH_ERRORS[e.code];
+    if (e && STORAGE_ERRORS.includes(e.name)) return 'הדפדפן לא הצליח לשמור את הנתונים. נסה שוב, ואם זה חוזר על עצמו רענן את הדף.';
+    if (!navigator.onLine) return AUTH_ERRORS['auth/network-request-failed'];
+    const msg = (e && e.message) || String(e || '');
+    if (/[\u0590-\u05FF]/.test(msg)) return msg; // already ours, in Hebrew
+    return 'משהו השתבש. נסה שוב בעוד רגע.' + (e && (e.code || e.name) ? ` (${e.code || e.name})` : '');
+  };
 
-  Cloud.signIn = async function () {
-    const { auth, au } = await load();
-    const provider = new au.GoogleAuthProvider();
-    provider.setCustomParameters({ prompt: 'select_account' });
-    try {
-      const cred = await au.signInWithPopup(auth, provider);
-      Cloud.user = cred.user;
-      return cred.user;
-    } catch (e) {
-      if (['auth/popup-blocked', 'auth/operation-not-supported-in-this-environment', 'auth/web-storage-unsupported'].includes(e.code)) {
-        await au.signInWithRedirect(auth, provider); // page navigates away and comes back signed in
-        return null;
-      }
-      throw e;
-    }
+  /**
+   * Opens the Google sign-in window. Browsers only allow a window that opens straight from a tap,
+   * so when the SDK is already loaded nothing is awaited before the window opens.
+   * opts.redirect: the full-page way instead of a window (for browsers that block windows entirely).
+   * Resolves with the user, or null when the page is about to navigate away (redirect).
+   */
+  Cloud.signIn = function (opts) {
+    const go = ({ auth, au }) => {
+      const provider = new au.GoogleAuthProvider();
+      provider.setCustomParameters({ prompt: 'select_account' });
+      if (opts && opts.redirect) return au.signInWithRedirect(auth, provider).then(() => null);
+      return au.signInWithPopup(auth, provider).then((cred) => { Cloud.user = cred.user; return cred.user; }, (e) => {
+        // no windows at all in this browser: the full-page way (it comes back signed in)
+        if (['auth/operation-not-supported-in-this-environment', 'auth/web-storage-unsupported'].includes(e.code)) return au.signInWithRedirect(auth, provider).then(() => null);
+        throw e;
+      });
+    };
+    return fb ? go(fb) : load().then(go);
   };
 
   /* ---------------- encoding ---------------- */
@@ -236,6 +267,7 @@
     Cloud.connected = true;
     await push();
     if (root.Stats) { root.Stats.report(); root.Stats.checkAdmin(); }
+    if (root.Support) root.Support.check();
   };
 
   /* ---------------- live listeners (cloud → phone) ---------------- */
@@ -424,6 +456,7 @@
     if (user.delete && Date.now() - last > 4 * 60 * 1000) await au.reauthenticateWithPopup(user, new au.GoogleAuthProvider());
     detach();
     if (root.Stats) await root.Stats.forget();
+    if (root.Support) await root.Support.forget();
     for (const st of SYNC.concat(['kv'])) {
       const snap = await fs.getDocs(fs.collection(db, 'users', uid, st));
       for (let i = 0; i < snap.docs.length; i += 400) {

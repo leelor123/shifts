@@ -1,7 +1,8 @@
 rules_version = '2';
 
 // Every user can read and write only their own data under users/{uid}.
-// Anonymous statistics are readable by admins only; nothing else is reachable.
+// Anonymous statistics are readable by admins only; support requests by their writer and admins.
+// Nothing else is reachable.
 service cloud.firestore {
   match /databases/{database}/documents {
     match /users/{uid} {
@@ -31,6 +32,57 @@ service cloud.firestore {
         && request.resource.data.by == request.auth.uid && request.resource.data.added is int;
       allow delete: if isAdmin() && uid != request.auth.uid;
       allow update: if false;
+    }
+
+    // support requests (views-support.js): only the person who wrote one and the admins can read it.
+    // Someone who can't sign in may still write one (with an email for the answer) but can't read anything.
+    match /tickets/{tid} {
+      allow create: if validTicket(request.resource.data)
+        && request.resource.data.status == 'open' && request.resource.data.last == 'user' && request.resource.data.seen == true
+        && ((request.auth != null && request.resource.data.uid == request.auth.uid)
+          || (request.auth == null && request.resource.data.uid == '' && 'email' in request.resource.data && request.resource.data.email.matches('^[^@ ]+@[^@ ]+[.][^@ ]+$')));
+      allow get: if isAdmin() || ownTicket();
+      allow list: if isAdmin() || (request.auth != null && resource.data.uid == request.auth.uid);
+      // a conversation only moves forward: who wrote last, status, when, and whether the reply was seen
+      allow update: if validTicket(request.resource.data)
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['status', 'updated', 'last', 'seen'])
+        && (isAdmin() || (ownTicket()
+          && (request.resource.data.status == resource.data.status || request.resource.data.status in ['open', 'closed'])
+          && (request.resource.data.last == resource.data.last || request.resource.data.last == 'user')));
+      allow delete: if isAdmin() || ownTicket();
+
+      match /msgs/{mid} {
+        allow create: if request.auth != null
+          && request.resource.data.keys().hasOnly(['from', 'text', 't'])
+          && request.resource.data.text is string && request.resource.data.text.size() >= 1 && request.resource.data.text.size() <= 2000
+          && request.resource.data.t is int
+          && ((request.resource.data.from == 'user' && ticketOwner(tid) == request.auth.uid)
+            || (request.resource.data.from == 'admin' && isAdmin()));
+        allow read, delete: if request.auth != null && (isAdmin() || ticketOwner(tid) == request.auth.uid);
+        allow update: if false;
+      }
+    }
+
+    function ownTicket() {
+      return request.auth != null && resource.data.uid == request.auth.uid;
+    }
+    function ticketOwner(tid) {
+      return get(/databases/$(database)/documents/tickets/$(tid)).data.uid;
+    }
+    function validTicket(d) {
+      return d.keys().hasOnly(['uid', 'reason', 'text', 'status', 'created', 'updated', 'last', 'seen', 'email', 'name', 'v', 'p', 'dev'])
+        && d.keys().hasAll(['uid', 'reason', 'text', 'status', 'created', 'updated', 'last', 'seen'])
+        && d.uid is string && d.uid.size() <= 40
+        && d.reason in ['login', 'calc', 'payslip', 'rights', 'how', 'bug', 'data', 'notif', 'idea', 'privacy', 'other']
+        && d.text is string && d.text.size() >= 10 && d.text.size() <= 2000
+        && d.status in ['open', 'answered', 'closed']
+        && d.created is int && d.updated is int
+        && d.last in ['user', 'admin'] && d.seen is bool
+        && (!('email' in d) || (d.email is string && d.email.size() <= 100))
+        && (!('name' in d) || (d.name is string && d.name.size() <= 60))
+        && (!('v' in d) || (d.v is string && d.v.size() <= 20))
+        && (!('p' in d) || d.p in ['android', 'pwa', 'web'])
+        && (!('dev' in d) || (d.dev is string && d.dev.size() <= 200));
     }
 
     function isAdmin() {

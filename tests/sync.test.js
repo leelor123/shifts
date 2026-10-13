@@ -276,3 +276,65 @@ T.atest('statistics: turning it off on one phone removes the other phone\'s reco
   await SA.report(); await wait(30);
   T.eq(statsDocs(be).length, 0, 'both records removed');
 });
+
+
+/* ---------------- the phone's own database misbehaving ---------------- */
+async function storeOnly(idb) {
+  const ctx = { console: { log() {}, warn() {}, error() {} }, setTimeout, clearTimeout, indexedDB: idb, navigator: { onLine: true } };
+  ctx.window = ctx;
+  vm.createContext(ctx);
+  for (const f of ['core/util.js', 'core/hebcal.js', 'core/defaults.js', 'app/store.js']) vm.runInContext(fs.readFileSync(path.join(SRC, f), 'utf8'), ctx, { filename: f });
+  await ctx.Store.load();
+  return ctx;
+}
+/** An IndexedDB whose next few write transactions fail, like an iPhone that lost its database connection. */
+function flakyIDB(base, failures) {
+  const st = { left: failures };
+  return { st, open(name, v) {
+    const req = base.open(name, v);
+    let wrapped = null;
+    const proxy = {
+      get result() { return wrapped || req.result; },
+      set onupgradeneeded(f) { req.onupgradeneeded = f; },
+      set onerror(f) { req.onerror = f; },
+      set onblocked(f) { req.onblocked = f; },
+      set onsuccess(f) {
+        req.onsuccess = () => {
+          const d = req.result;
+          wrapped = Object.assign(Object.create(d), { transaction: (s, m) => {
+            if (m === 'readwrite' && st.left > 0) { st.left--; const e = new Error('Connection to Indexed Database server lost'); e.name = 'UnknownError'; throw e; }
+            return d.transaction(s, m);
+          } });
+          f();
+        };
+      },
+    };
+    return proxy;
+  } };
+}
+T.atest('storage: a lost database connection is reopened and the save goes through', async () => {
+  const base = fakeIndexedDB();
+  const idb = flakyIDB(base, 0);
+  const ctx = await storeOnly(idb);
+  idb.st.left = 2; // the next two writes fail
+  await ctx.Store.apply([{ store: 'shifts', put: { id: 's1', kind: 'shift', employerId: 'emp1', roleId: 'r1', status: 'done', start: 1, end: 2 } }], 'x');
+  T.eq(idb.st.left, 0, 'both failures happened');
+  const again = await storeOnly(base);
+  T.ok(again.Store.S.shifts.some((x) => x.id === 's1'), 'the shift is in the database after reopening');
+  idb.st.left = 5; // more failures than the retries: the app carries on from memory instead of freezing
+  let lost = 0;
+  ctx.Store.on((ev) => { if (ev.type === 'storage-lost') lost++; });
+  await ctx.Store.setSettings((x) => { x.userName = 'a'; });
+  T.ok(ctx.Store.isMemoryOnly(), 'switched to memory');
+  T.eq(lost, 1, 'the app was told once');
+  T.eq(ctx.Store.S.settings.userName, 'a', 'the change is kept in memory');
+});
+T.atest('storage: a browser without a database still works from memory', async () => {
+  const broken = { open() { throw new Error('IndexedDB is disabled'); } };
+  const ctx = await storeOnly(broken);
+  T.ok(ctx.Store.isMemoryOnly(), 'memory mode');
+  await ctx.Store.apply([{ store: 'shifts', put: { id: 's1', kind: 'shift', employerId: 'emp1', roleId: 'r1', status: 'done', start: 1, end: 2 } }], 'x');
+  await ctx.Store.setSettings((s) => { s.onboarded = true; });
+  T.eq(ctx.Store.S.shifts.length, 1, 'saving works');
+  T.ok(ctx.Store.S.settings.onboarded, 'settings work');
+});

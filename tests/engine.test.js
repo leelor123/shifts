@@ -215,7 +215,7 @@ T.test('split: 3h סדרן then אחמ״ש', () => {
 
 T.section('travel, periods, net, leave');
 T.test('travel per day with monthly cap', () => {
-  const d = setup((x) => { x.employers[0].travelMonthlyCap = 100; });
+  const d = setup((x) => { x.employers[0].travelPerDay = 22.6; x.employers[0].travelMonthlyCap = 100; });
   d.shifts = ['2026-10-04', '2026-10-05', '2026-10-06', '2026-10-07', '2026-10-08', '2026-10-11'].map((k) => shift(k, '08:00', '12:00'));
   d.shifts.push(shift('2026-10-11', '14:00', '16:00')); // 2nd shift same day: travel once
   const m = Engine.buildModel(d);

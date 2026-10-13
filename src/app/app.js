@@ -39,7 +39,7 @@
 
   /* ---------------- theme ---------------- */
   const ACCENTS = {
-    petrol: [186, 48, 'פטרול'], indigo: [238, 62, 'סגול-כחול'], blue: [212, 75, 'כחול'], teal: [178, 62, 'טורקיז'], green: [145, 45, 'ירוק'],
+    candy: [258, 72, 'סגול-ורוד'], petrol: [186, 48, 'פטרול'], indigo: [238, 62, 'סגול-כחול'], blue: [212, 75, 'כחול'], teal: [178, 62, 'טורקיז'], green: [145, 45, 'ירוק'],
     orange: [24, 80, 'כתום'], pink: [330, 62, 'ורוד'], purple: [275, 52, 'סגול'], red: [2, 68, 'אדום'],
   };
   App.ACCENTS = ACCENTS;
@@ -58,7 +58,7 @@
     const st = S.settings;
     const de = document.documentElement;
     if (st.theme === 'light' || st.theme === 'dark') de.dataset.theme = st.theme; else delete de.dataset.theme;
-    const a = ACCENTS[st.accent] || ACCENTS.petrol;
+    const a = ACCENTS[st.accent] || ACCENTS.candy;
     de.style.setProperty('--h', a[0]);
     de.style.setProperty('--s', a[1] + '%');
     de.style.setProperty('--fs', st.fontScale || 1);
@@ -162,6 +162,11 @@
   /* ---------------- data change pipeline ---------------- */
   let insightTimer = null;
   Store.on((ev) => {
+    if (ev.type === 'storage-lost') {
+      UI.toast('השמירה בטלפון לא עובדת כרגע. ' + (root.Cloud && root.Cloud.user ? 'הנתונים נשמרים בחשבון שלך ☁️' : 'כדאי להתחבר לחשבון כדי לא לאבד נתונים.'));
+      App.rerender();
+      return;
+    }
     if (ev.type === 'active') { App.rerender(); return; }
     App.recompute();
     if (ev.type === 'settings') App.applyTheme();
@@ -460,6 +465,11 @@
       if (S.settings.accent === 'indigo') await Store.setSettings((s) => { s.accent = 'petrol'; });
       await Store.setMeta({ designV2: true });
     }
+    // the brighter design (v3): the untouched default colour moves to the new default, once
+    if (!S.meta.designV3) {
+      if (S.settings.accent === 'petrol') await Store.setSettings((s) => { s.accent = 'candy'; });
+      await Store.setMeta({ designV3: true });
+    }
     App.applyTheme();
     App.recompute();
     registerSW(); // offline support from the very first visit, before onboarding
@@ -471,36 +481,47 @@
     App.pendingAction = params.get('action');
     if (App.pendingAction) history.replaceState(null, '', location.pathname + location.hash);
 
-    // Google sign-in is required once it is set up for this address. Until then (or when it
-    // can't be checked offline) the app keeps working locally, so nobody is ever locked out.
+    // Google sign-in is required. Nothing on screen waits for Google to load: a returning user goes
+    // straight in (the account reconnects in the background), a new user starts the setup questions
+    // right away while Google loads behind them (it's needed only at the last step).
     const Cloud = root.Cloud;
-    if (!S.meta.cloudUid && !S.meta.cloudReady) {
-      const ready = await Promise.race([Cloud.probe(), new Promise((r) => setTimeout(() => r(null), 5000))]);
-      if (!ready) { App.localOnly = true; App.afterLogin(); return; }
-    }
+    if (!root.FIREBASE_CONFIG) { App.localOnly = true; App.afterLogin(); return; } // a copy without sign-in (tests)
     Cloud.onAuthChange = (u) => { if (!u && S.meta.cloudUid) App.showLogin('expired'); };
-    let user = null, failed = false;
-    try {
-      user = await Promise.race([Cloud.start(), new Promise((_, rej) => setTimeout(() => rej(new Error('timeout')), S.meta.cloudUid ? 4000 : 20000))]);
-    } catch (e) { failed = true; }
-    if (user) {
-      if (S.meta.cloudUid === user.uid) {
+    if (S.meta.cloudUid) {
+      let user = null, failed = false;
+      try {
+        user = await Promise.race([Cloud.start(), new Promise((_, rej) => setTimeout(() => rej(new Error('timeout')), 4000))]);
+      } catch (e) { failed = true; }
+      if (user) {
+        if (S.meta.cloudUid === user.uid) {
+          App.afterLogin();
+          Cloud.connect(user).catch((e) => console.warn('sync', e));
+          return;
+        }
+        try { await Cloud.connect(user); } catch (e) { console.error(e); App.showLogin(navigator.onLine ? 'error' : 'offline'); return; }
         App.afterLogin();
-        Cloud.connect(user).catch((e) => console.warn('sync', e));
         return;
       }
+      if (failed) {
+        // slow or no network: the app opens with what's on the phone and connects when it can
+        App.afterLogin();
+        Cloud.start().then((u) => { if (u) Cloud.connect(u).catch(() => {}); else App.showLogin('expired'); }).catch(() => {});
+        return;
+      }
+      App.showLogin('expired');
+      return;
+    }
+    // nobody has signed in on this phone yet
+    const starting = Cloud.start().catch((e) => { console.warn('sign-in not available yet', e); return null; });
+    if (!S.settings.onboarded) App.sheetsApi.onboarding({ preLogin: true });
+    else App.showLogin();
+    // back from a full-page Google sign-in, or a sign-in that was already in the browser: finish it
+    starting.then(async (user) => {
+      if (!user || S.meta.cloudUid || App.blocking === 'onboarding') return; // the questions connect at their last step
       try { await Cloud.connect(user); } catch (e) { console.error(e); App.showLogin(navigator.onLine ? 'error' : 'offline'); return; }
+      App.blocking = null;
       App.afterLogin();
-      return;
-    }
-    if (failed && S.meta.cloudUid) {
-      App.afterLogin();
-      Cloud.start().then((u) => { if (u) Cloud.connect(u).catch(() => {}); else App.showLogin('expired'); }).catch(() => {});
-      return;
-    }
-    // a new user answers the setup questions first; signing in comes at the end, to save them
-    if (!S.settings.onboarded && !S.meta.cloudUid) { App.sheetsApi.onboarding({ preLogin: true }); return; }
-    App.showLogin(failed ? (navigator.onLine ? 'error' : 'offline') : null);
+    });
   };
   /** Continue into the app once the user is signed in. */
   App.afterLogin = function () {
@@ -516,6 +537,7 @@
     if (action === 'start' && !S.activeShift) App.actions['timer-start']();
     if (action === 'add') App.sheetsApi.shiftEditor();
     setTimeout(() => { App.runInsights(); App.autoBackupCheck(); }, 1200);
+    if (App.whatsNew) App.whatsNew();
   };
 
   function registerSW() {
@@ -559,5 +581,10 @@
     navigator.serviceWorker.addEventListener('controllerchange', () => { if (hadController && !reloading) { reloading = true; location.reload(); } });
   }
 
+  // a storage hiccup inside a background save is already handled by the store; never let it surface as a crash
+  window.addEventListener('unhandledrejection', (e) => {
+    const r = e.reason;
+    if (r && ['UnknownError', 'InvalidStateError', 'QuotaExceededError', 'AbortError', 'TransactionInactiveError'].includes(r.name)) { e.preventDefault(); console.warn('storage', r); }
+  });
   document.addEventListener('DOMContentLoaded', () => App.boot());
 })(typeof window !== 'undefined' ? window : globalThis);

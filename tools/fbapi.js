@@ -66,6 +66,8 @@ async function main() {
     const me = { uid: 'u1', token: { email: 'me@example.com' } };
     const rec = (u) => ({ u, d: false, j: '{"id":"s1"}' });
     const boss = { uid: 'boss', token: { email: 'boss@example.com' } };
+    const tk = (o) => Object.assign({ uid: 'u1', reason: 'bug', text: 'the button does not work', status: 'open', created: 1, updated: 1, last: 'user', seen: true }, o || {});
+    const owner = (uid) => [{ function: 'get', args: [{ exactValue: '/databases/(default)/documents/tickets/t1' }], result: { value: { data: { uid } } } }];
     const stat = () => ({ v: '1.5.0', p: 'android', first: '2026-10-01', last: '2026-10-13', days: 5, sh: 12, s30: 6, ps: 1, age: 'u18', f: { rights: true }, t: 1790000000000 });
     const cases = [
       ['owner can create a shift', 'ALLOW', 'create', me, `/users/u1/shifts/s1`, rec(5), null],
@@ -96,13 +98,35 @@ async function main() {
       ['an admin cannot remove themselves', 'DENY', 'delete', boss, '/admins/boss', null, { added: 1, by: 'x' }, ['boss']],
       ['an admin can remove another admin', 'ALLOW', 'delete', boss, '/admins/u7', null, { added: 1, by: 'boss' }, ['boss']],
       ['admin entries cannot be edited', 'DENY', 'update', boss, '/admins/u7', { added: 2, by: 'boss' }, { added: 1, by: 'boss' }, ['boss']],
+      ['a user opens a support request', 'ALLOW', 'create', me, '/tickets/t1', tk(), null],
+      ['a request in someone else’s name is refused', 'DENY', 'create', me, '/tickets/t1', tk({ uid: 'u2' }), null],
+      ['someone who can’t sign in may write, with an email', 'ALLOW', 'create', null, '/tickets/t2', tk({ uid: '', email: 'kid@example.com' }), null],
+      ['…but not without an email', 'DENY', 'create', null, '/tickets/t2', tk({ uid: '' }), null],
+      ['…and not in a user’s name', 'DENY', 'create', null, '/tickets/t2', tk({ email: 'kid@example.com' }), null],
+      ['a request cannot carry extra fields', 'DENY', 'create', me, '/tickets/t1', tk({ admin: true }), null],
+      ['a new request cannot start as answered', 'DENY', 'create', me, '/tickets/t1', tk({ status: 'answered' }), null],
+      ['a too-short request is refused', 'DENY', 'create', me, '/tickets/t1', tk({ text: 'hi' }), null],
+      ['the writer can read their request', 'ALLOW', 'get', me, '/tickets/t1', null, tk()],
+      ['another user cannot read it', 'DENY', 'get', { uid: 'u2' }, '/tickets/t1', null, tk()],
+      ['signed-out cannot read any request', 'DENY', 'get', null, '/tickets/t2', null, tk({ uid: '' })],
+      ['an admin can read every request', 'ALLOW', 'get', boss, '/tickets/t1', null, tk(), ['boss']],
+      ['the writer marks a reply as seen', 'ALLOW', 'update', me, '/tickets/t1', tk({ status: 'answered', last: 'admin', seen: true }), tk({ status: 'answered', last: 'admin', seen: false })],
+      ['the writer cannot change what they wrote', 'DENY', 'update', me, '/tickets/t1', tk({ text: 'something else entirely' }), tk()],
+      ['the writer cannot mark it answered', 'DENY', 'update', me, '/tickets/t1', tk({ status: 'answered' }), tk()],
+      ['the writer cannot pose as the team', 'DENY', 'update', me, '/tickets/t1', tk({ last: 'admin' }), tk()],
+      ['an admin answers', 'ALLOW', 'update', boss, '/tickets/t1', tk({ status: 'answered', last: 'admin', seen: false, updated: 9 }), tk(), ['boss']],
+      ['the writer adds a message', 'ALLOW', 'create', me, '/tickets/t1/msgs/m1', { from: 'user', text: 'more info', t: 5 }, null, [], owner('u1')],
+      ['the writer cannot write as the team', 'DENY', 'create', me, '/tickets/t1/msgs/m1', { from: 'admin', text: 'fake answer', t: 5 }, null, [], owner('u1')],
+      ['another user cannot add messages', 'DENY', 'create', { uid: 'u2' }, '/tickets/t1/msgs/m1', { from: 'user', text: 'hi', t: 5 }, null, [], owner('u1')],
+      ['an admin replies in the conversation', 'ALLOW', 'create', boss, '/tickets/t1/msgs/m2', { from: 'admin', text: 'we fixed it', t: 6 }, null, ['boss'], owner('u1')],
+      ['another user cannot read the conversation', 'DENY', 'get', { uid: 'u2' }, '/tickets/t1/msgs/m1', null, { from: 'user', text: 'x', t: 1 }, [], owner('u1')],
     ];
-    const testCases = cases.map(([, expect, method, auth, p, data, existing, admins]) => {
+    const testCases = cases.map(([, expect, method, auth, p, data, existing, admins, mocks]) => {
       const tc = { expectation: expect, request: { auth: auth || null, path: db + p, method } };
       if (data) tc.request.resource = { data };
       // exists(admins/{uid}) is answered by a mock: true for the listed admins, false for everyone else
       tc.functionMocks = (admins || []).map((a) => ({ function: 'exists', args: [{ exactValue: '/databases/(default)/documents/admins/' + a }], result: { value: true } }))
-        .concat([{ function: 'exists', args: [{ anyValue: {} }], result: { value: false } }]);
+        .concat(mocks || []).concat([{ function: 'exists', args: [{ anyValue: {} }], result: { value: false } }]);
       if (existing) tc.resource = { data: existing };
       return tc;
     });

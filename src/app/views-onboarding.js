@@ -1,5 +1,5 @@
 /* ============================================================
- * views-onboarding.js — first-run wizard and demo data.
+ * views-onboarding.js — first-run questions and demo data.
  * ============================================================ */
 (function (root) {
   'use strict';
@@ -7,177 +7,251 @@
   const S = Store.S;
   const { icon, esc } = UI;
 
-  /* ---------------- wizard ----------------
-   * A few friendly questions with live previews, then (for a new user) "save to your Google account".
-   * opts.preLogin: the user is not signed in yet; the last step signs in and uploads what they set up.
-   * Returning users skip the questions from the welcome screen ("I already have an account"). */
+  /* ---------------- the setup questions ----------------
+   * One friendly question per screen, with שעתי (the mascot) cheering along. Nothing is filled in
+   * in advance: the grey text in a field is the usual answer, and a question that's skipped or left
+   * empty simply gets that usual answer. Hard things (tax credit points, 5/6-day week, pension %,
+   * pay period) are not asked here at all; they have sensible values and live in Settings.
+   * opts.preLogin: the user hasn't signed in yet; the last step saves to their Google account.
+   * Moving between screens never waits for storage, so a slow or broken phone database can't
+   * freeze the buttons; the answers are saved once, at the end. */
+  const JOBS = ['מלצרות', 'קופה', 'שליחויות', 'מכירות', 'מטבח', 'בייביסיטר', 'סדרנות', 'מוקד שירות', 'הדרכה', 'אבטחה'];
+  const TOP_CITIES = ['ירושלים', 'תל אביב-יפו', 'חיפה', 'באר שבע', 'ראשון לציון', 'פתח תקווה', 'אשדוד', 'נתניה', 'חולון', 'רמת גן', 'בני ברק', 'רחובות'];
+  const USUAL_TRAVEL = 16;
+
   App.sheetsApi.onboarding = function (opts) {
     opts = opts || {};
     const nav = document.getElementById('nav');
     nav.style.display = 'none';
     App.blocking = 'onboarding';
-    const emp = Store.clone(S.employers[0]);
-    const st = Store.clone(S.settings);
-    let roles = S.roles.length ? Store.clone(S.roles.filter((r) => !r.archived)) : Defaults.defaultRoles(emp.id);
-    roles.forEach((r) => (r.rate = Engine.roleRate(r, U.todayKey())));
-    if (!st.startDate) st.startDate = U.addMonths(U.todayKey(), -3);
-    const needsLogin = () => !!opts.preLogin && !App.localOnly && !(root.Cloud && root.Cloud.user);
-    let step = 0, dir = 'next', saving = false, savedMsg = '', saved = false, demo = false;
-    const STEPS = 8; // welcome, 6 questions, done
     const v = document.getElementById('view');
     const fx = root.Fx;
-    const hero = (emoji, cls) => `<div class="ob-hero ${cls || ''}" aria-hidden="true">${emoji}</div>`;
+    const today = U.todayKey();
+    const emp = Store.clone(S.employers[0]);
+    const st = Store.clone(S.settings);
+    const existing = S.roles.filter((r) => !r.archived);
+    const A = {
+      name: st.userName || '', gender: st.gender || '', birth: st.birthDate || '', adult: false,
+      jobs: existing.length ? existing.map((r) => ({ id: r.id, name: r.name, rate: Engine.roleRate(r, today) || '', color: r.color, rates: r.rates })) : [{ id: 'r_' + U.uid(), name: '', rate: '', color: Defaults.ROLE_COLORS[0] }],
+      travel: '', travelAmount: '', city: '', start: st.startDate || '', startPick: '',
+    };
+    const needsLogin = () => !!opts.preLogin && !App.localOnly && !(root.Cloud && root.Cloud.user);
+    const STEPS = ['hi', 'me', 'age', 'job', 'travel', 'city', 'start', 'done'];
+    const QUESTIONS = STEPS.length - 2;
+    let step = 0, dir = 'next', saving = false, msg = '', saved = false, demo = false, blocked = false, loadFailed = false;
+    // he / she / both, for the questions' wording
+    const g = (m, f) => (A.gender === 'f' ? f : A.gender === 'm' ? m : m + '/' + f.replace(/^.*?(\S)$/, '$1'));
+    const age = () => (A.birth ? Engine.ageAt(A.birth, today) : null);
+    const minWage = () => Engine.legalMinWage(today, A.birth || null).hourly;
     const money = (n) => U.money(n, Number.isInteger(+n) ? 0 : 2);
+    const say = (mood, html) => (App.mascotSays ? App.mascotSays(mood, html, { size: 84 }) : '');
+    const why = (html) => `<div class="ob-why">${icon('info', 's')}<div>${html}</div></div>`;
+    const chip = (attr, val, label, on) => `<button class="ob-chip ${on ? 'on' : ''}" ${attr}="${esc(val)}">${label}</button>`;
+    const jobValid = () => A.jobs.filter((j) => j.name.trim() || +j.rate > 0);
 
-    const screens = [
-      () => `<div class="ob-welcome">
-        <div class="brand-mark big" aria-hidden="true"></div>
-        <h1 class="brand-name">Shaati</h1><div class="brand-sub">מעקב משמרות ושכר</div>
+    const screens = {
+      hi: () => `<div class="ob-welcome">
+        ${App.mascot ? App.mascot('wave', { size: 132, cls: 'hero' }) : '<div class="brand-mark big" aria-hidden="true"></div>'}
+        <div class="bubble big">היי! אני שעתי 👋<br>אני אעזור לך לדעת בדיוק כמה כסף מגיע לך</div>
+        <h1 class="brand-name">Shaati</h1>
         <div class="ob-points">
-          <div style="--d:0">${hero('⏱️', 'sm')}<span>רושמים משמרת בלחיצה אחת</span></div>
-          <div style="--d:1">${hero('🕯️', 'sm')}<span>שבתות, חגים ושעות נוספות מחושבים לבד</span></div>
-          <div style="--d:2">${hero('🧾', 'sm')}<span>בודקים שהתלוש תואם, ויודעים מה מגיע לך</span></div>
+          <div style="--d:0"><span class="ob-emoji">⏱️</span><span>לוחצים כשמתחילים לעבוד, ולוחצים כשמסיימים</span></div>
+          <div style="--d:1"><span class="ob-emoji">💰</span><span>רואים כמה הרווחת, כולל שבתות ושעות נוספות</span></div>
+          <div style="--d:2"><span class="ob-emoji">🛡️</span><span>בודקים שהמשכורת נכונה ושלא מקפחים אותך</span></div>
         </div>
-        <p class="small muted">דקה אחת של שאלות קצרות, ומתחילים.</p></div>`,
-      () => `${hero('💼')}<h1>איפה אתה עובד?</h1><p class="lead">התפקידים שלך והשכר לשעה. אפשר להוסיף, לשנות שם וצבע.</p>
-        ${roles.map((r, i) => `<div class="role-edit"><button class="sw" style="background:${r.color}" data-cc="${i}" aria-label="צבע"></button>
-          <input class="input" data-rn="${i}" value="${esc(r.name)}" placeholder="שם התפקיד">
-          <input class="input" type="number" step="any" inputmode="decimal" data-rr="${i}" value="${r.rate || ''}" placeholder="₪ לשעה">
-          <button class="icon-btn" data-rx="${i}" aria-label="הסר">${icon('x')}</button></div>`).join('')}
-        <button class="btn text" data-radd>${icon('plus', 's')} הוסף תפקיד</button>
-        <div class="ob-live" id="ob-live-roles"></div>`,
-      () => `${hero('🚌')}<h1>נסיעות</h1><p class="lead">כמה מקבלים על נסיעות לכל יום עבודה? זה בנוסף לשכר.</p>
-        <label class="field"><span class="lbl">₪ ליום עבודה</span><input class="input" type="number" step="any" inputmode="decimal" id="ob-travel" value="${emp.travelPerDay}"></label>
-        <label class="field"><span class="lbl">תקרה חודשית ₪ (לא חובה)</span><input class="input" type="number" step="any" inputmode="decimal" id="ob-cap" value="${emp.travelMonthlyCap || ''}" placeholder="ללא תקרה"><span class="hint">למשל מחיר חופשי-חודשי.</span></label>
-        <div class="ob-live" id="ob-live-travel"></div>`,
-      () => `${hero('📅')}<h1>מתי מקבלים משכורת?</h1><p class="lead">ככה נדע לחשב כל תקופה ולהזכיר לך לבדוק את התלוש.</p>
-        <div class="seg" style="margin-bottom:14px"><button data-pd="1" class="${emp.periodStartDay <= 1 ? 'on' : ''}">חודש רגיל (מה-1)</button><button data-pd="custom" class="${emp.periodStartDay > 1 ? 'on' : ''}">תאריך אחר</button></div>
-        ${emp.periodStartDay > 1 ? `<label class="field"><span class="lbl">התקופה מתחילה ב- (יום בחודש)</span><input class="input" type="number" min="2" max="28" id="ob-pstart" value="${emp.periodStartDay}"><span class="hint">למשל 21: מה-21 בחודש ועד ה-20 בחודש הבא.</span></label>` : ''}
-        <label class="field"><span class="lbl">יום התשלום בחודש שאחרי</span><input class="input" type="number" min="1" max="31" id="ob-payday" value="${emp.payDay}"><span class="hint">לפי החוק, עד ה-9 בחודש.</span></label>`,
-      () => `${hero('🎂')}<h1>קצת עליך</h1><p class="lead">לוותק, לחופשה ולהבראה. ותאריך לידה כדי לבדוק לפי הגיל שלך.</p>
-        <label class="field"><span class="lbl">מתי התחלת לעבוד שם?</span><input class="input" type="date" id="ob-start" value="${st.startDate}"></label>
-        <label class="field"><span class="lbl">תאריך לידה (לא חובה)</span><input class="input" type="date" id="ob-birth" value="${st.birthDate || ''}"><span class="hint">מתחת לגיל 18: שכר מינימום לפי גיל, בדיקות חוק עבודת הנוער, ונטו שווה לברוטו. וגם ברכה ביום ההולדת 🎉</span></label>
-        <label class="field"><span class="lbl">כמה ימים בשבוע עובדים שם?</span><select class="input" id="ob-week"><option value="5" ${+st.leave.workWeek === 5 ? 'selected' : ''}>5 ימים</option><option value="6" ${+st.leave.workWeek === 6 ? 'selected' : ''}>6 ימים</option></select></label>
-        <div class="ob-live" id="ob-live-age"></div>`,
-      () => `${hero('🕯️')}<h1>שבת וחגים</h1><p class="lead">שעות בשבת ובחג שוות לפחות 150%. נחשב אותן לפי העיר.</p>
-        <label class="field"><span class="lbl">באיזו עיר אתה עובד?</span><select class="input" id="ob-city">${HebCal.CITIES.map((c) => `<option ${c.name === st.rest.city ? 'selected' : ''}>${c.name}</option>`).join('')}</select></label>
-        <div class="ob-live" id="ob-preview"></div>`,
-      () => `${hero('💰')}<h1>כמה ייכנס לחשבון?</h1><p class="lead">כדי להעריך את הנטו. אפשר לשנות בכל רגע.</p>
-        <div class="field"><span class="lbl">נקודות זיכוי</span><div class="chips">${[[2.25, 'גבר: 2.25'], [2.75, 'אישה: 2.75']].map(([v2, l]) => `<button class="chip ${+st.tax.creditPoints === v2 ? 'on' : ''}" data-cp="${v2}">${l}</button>`).join('')}</div>
-          <input class="input" type="number" step="0.25" inputmode="decimal" id="ob-cp" value="${st.tax.creditPoints}"><span class="hint">נקודות נוספות (ילדים, תואר, שחרור מצבא) מופיעות בתלוש.</span></div>
-        <label class="field"><span class="lbl">הפרשה שלך לפנסיה %</span><input class="input" type="number" step="0.1" inputmode="decimal" id="ob-pen" value="${st.pension.employeePct}"><span class="hint">בדרך כלל 6%.</span></label>
-        <label class="switch-row"><span class="body"><span class="t">יש לי קרן השתלמות</span></span><input type="checkbox" class="switch" id="ob-hish" ${st.hishtalmut.enabled ? 'checked' : ''}></label>`,
-      () => {
-        const valid = roles.filter((r) => r.name && r.rate > 0);
+        <p class="small muted">6 שאלות קצרות, פחות מדקה ⚡</p></div>`,
+      me: () => `${say(A.name ? 'love' : 'wave', A.name ? `נעים מאוד, ${esc(A.name.split(' ')[0])}! 😍` : 'בוא/י נכיר 😊')}
+        <h1>איך קוראים לך?</h1>
+        <label class="field"><input class="input big-in" id="ob-name" value="${esc(A.name)}" placeholder="השם שלך" autocomplete="given-name" maxlength="40" enterkeyhint="next"></label>
+        <div class="ob-q2">ואת/ה...</div>
+        <div class="ob-chips">${chip('data-gender', 'm', '👦 בן', A.gender === 'm')}${chip('data-gender', 'f', '👧 בת', A.gender === 'f')}${chip('data-gender', 'x', '🙂 לא משנה', A.gender === 'x')}</div>
+        ${why('השם רק כדי שנדבר אליך יפה. בן/בת עוזר לנו לחשב נכון: לבנות מגיע קצת פחות מס 💪')}`,
+      age: () => {
+        const a = age();
+        return `${say(a != null && a < 18 ? 'wow' : 'happy', a != null ? (a < 18 ? `גיל ${a}! יש לך זכויות מיוחדות, נדאג להן 🛡️` : `גיל ${a}, מעולה 👍`) : 'שאלה קטנה על הגיל 🎂')}
+        <h1>${g('מתי נולדת?', 'מתי נולדת?')}</h1>
+        <label class="field"><input class="input" type="date" id="ob-birth" data-pick="birth" value="${esc(A.birth)}" min="1940-01-01" max="${U.addDays(today, -365 * 12)}" placeholder="בחירת תאריך לידה"></label>
+        <div class="ob-live" id="ob-live-age"></div>
+        <div class="ob-chips">${chip('data-adult', '1', '🧑 אני מעל 18, מעדיף/ה לא לפרט', A.adult)}</div>
+        ${why('מתחת לגיל 18 יש שכר מינימום אחר, לא משלמים מס, ויש חוקים מיוחדים (כמה שעות מותר לעבוד, הפסקות ועוד). נבדוק הכול בשבילך.')}`;
+      },
+      job: () => `${say(jobValid().length ? 'love' : 'think', jobValid().length ? 'אחלה! עכשיו נדע כמה הרווחת 💸' : 'איפה עובדים? 🤔')}
+        <h1>${g('איפה אתה עובד?', 'איפה את עובדת?')}</h1>
+        <div class="ob-chips small">${JOBS.map((j) => chip('data-jobname', j, j, A.jobs.some((x) => x.name === j))).join('')}</div>
+        ${A.jobs.map((j, i) => `<div class="ob-job" style="--c:${j.color}">
+          <div class="ob-job-head"><span class="sw"></span>${A.jobs.length > 1 ? `עבודה ${i + 1}` : 'העבודה שלך'}${A.jobs.length > 1 ? `<button class="icon-btn sm" data-rx="${i}" aria-label="הסר">${icon('x', 's')}</button>` : ''}</div>
+          <label class="field"><span class="lbl">שם העבודה</span><input class="input" data-jn="${i}" value="${esc(j.name)}" placeholder="למשל: מלצרות בבית קפה" maxlength="40"></label>
+          <label class="field"><span class="lbl">כמה משלמים לך לשעה? (₪)</span><input class="input" type="number" step="any" inputmode="decimal" data-jr="${i}" value="${esc(j.rate)}" placeholder="${U.num(minWage(), 2)}">
+            <span class="hint">לא בטוח/ה? אפשר להשאיר ריק ונשים שכר מינימום${age() != null && age() < 18 ? ' לגילך' : ''}: ${U.money(minWage())} לשעה</span></label>
+        </div>`).join('')}
+        ${A.jobs.length < 4 ? `<button class="btn text sm" data-jadd>${icon('plus', 's')} יש לי עוד עבודה</button>` : ''}
+        <div class="ob-live" id="ob-live-roles"></div>
+        ${why('ככה נחשב כמה הרווחת בכל משמרת. אפשר לשנות ולהוסיף בכל רגע בהגדרות.')}`,
+      travel: () => `${say(A.travel === 'yes' ? 'love' : 'happy', 'הרבה שוכחים את זה! 🚌')}
+        <h1>${g('מקבל', 'מקבלת')} כסף על נסיעות?</h1>
+        <div class="ob-chips big">${chip('data-travel', 'yes', '🚌 כן', A.travel === 'yes')}${chip('data-travel', 'no', '🚶 לא', A.travel === 'no')}${chip('data-travel', 'idk', '🤷 לא יודע/ת', A.travel === 'idk')}</div>
+        ${A.travel === 'yes' ? `<label class="field ob-pop"><span class="lbl">כמה ליום עבודה? (₪)</span><input class="input" type="number" step="any" inputmode="decimal" id="ob-travel" value="${esc(A.travelAmount)}" placeholder="${USUAL_TRAVEL}"><span class="hint">רוב העובדים מקבלים בערך ${USUAL_TRAVEL} ₪ ליום. אפשר להשאיר ריק ונשים ${USUAL_TRAVEL} ₪.</span></label>` : ''}
+        <div class="ob-live" id="ob-live-travel"></div>
+        ${why('המעסיק צריך להחזיר לך את דמי הנסיעה לעבודה ובחזרה, בנוסף לשכר. זה כסף שמגיע לך!')}`,
+      city: () => `${say('wow', 'בשבת מרוויחים לפחות 150%! 🤑')}
+        <h1>באיזו עיר העבודה?</h1>
+        <div class="ob-chips small">${TOP_CITIES.map((c) => chip('data-city', c, esc(c), A.city === c)).join('')}</div>
+        <label class="field"><span class="lbl">עיר אחרת</span><select class="input" id="ob-city"><option value="">בחירה מהרשימה…</option>${HebCal.CITIES.map((c) => `<option ${c.name === A.city ? 'selected' : ''}>${esc(c.name)}</option>`).join('')}</select></label>
+        <div class="ob-live" id="ob-preview"></div>
+        ${why('לפי העיר נדע בדיוק מתי שבת וחג נכנסים ויוצאים, וכך כל שעה שעבדת בהם תחושב ב-150% לפחות.')}`,
+      start: () => `${say('think', 'אחרונה! 🏁')}
+        <h1>מתי ${g('התחלת', 'התחלת')} לעבוד שם?</h1>
+        <div class="ob-chips">${chip('data-start', 'month', '🌱 החודש', A.startPick === 'month')}${chip('data-start', 'months', '🌿 לפני כמה חודשים', A.startPick === 'months')}${chip('data-start', 'year', '🌳 לפני יותר משנה', A.startPick === 'year')}</div>
+        <label class="field"><span class="lbl">או תאריך מדויק</span><input class="input" type="date" id="ob-start" value="${esc(A.startPick === 'exact' ? A.start : '')}" min="${A.birth ? U.addDays(A.birth, 365 * 12) : '1960-01-01'}" max="${today}" placeholder="בחירת תאריך"></label>
+        ${why('לפי הוותק מגיעים ימי חופשה, דמי הבראה ופנסיה. לא בטוח/ה? אפשר לדלג ולהוסיף אחר כך.')}`,
+      done: () => {
+        const jobs = finalJobs();
         return `<div class="ob-done">
-          <div class="ob-check" aria-hidden="true"><svg viewBox="0 0 52 52"><circle cx="26" cy="26" r="24"/><path d="M15 27l7 7 15-16"/></svg></div>
-          <h1>${demo ? 'הנתונים לדוגמה מוכנים!' : 'הכל מוכן!'}</h1>
-          <p class="lead">${demo ? 'אפשר להסתכל על הכל ולמחוק את הדוגמה בכל רגע.' : 'עכשיו כל משמרת מחושבת לבד.'}</p>
+          ${App.mascot ? App.mascot(demo ? 'cool' : 'party', { size: 120, cls: 'hero' }) : ''}
+          <h1>${demo ? 'הנתונים לדוגמה מוכנים!' : A.name ? `הכול מוכן, ${esc(A.name.split(' ')[0])}! 🎉` : 'הכול מוכן! 🎉'}</h1>
+          <p class="lead">${demo ? 'אפשר להסתכל על הכול ולמחוק את הדוגמה בכל רגע.' : 'מעכשיו כל משמרת מחושבת לבד.'}</p>
           ${demo ? '' : `<div class="ob-summary">
-            ${valid.map((r) => `<span><i style="background:${r.color}"></i>${esc(r.name)} · ${money(r.rate)}</span>`).join('')}
-            <span>🚌 ${money(emp.travelPerDay)} ליום</span><span>📅 משכורת ב-${emp.payDay} לחודש</span><span>🕯️ ${esc(st.rest.city)}</span>
+            ${jobs.map((r) => `<span><i style="background:${r.color}"></i>${esc(r.name)} · ${money(r.rate)}</span>`).join('')}
+            <span>🚌 ${finalTravel() ? money(finalTravel()) + ' ליום' : 'בלי נסיעות'}</span><span>🕯️ ${esc(A.city || st.rest.city)}</span>${age() != null ? `<span>🎂 גיל ${age()}</span>` : ''}
           </div>`}
-          ${needsLogin() ? `<div class="ob-save"><b>שמור את זה בחשבון Google</b><div class="small muted">כדי שהנתונים לא ילכו לאיבוד ויהיו זמינים בכל טלפון. רק לך תהיה גישה אליהם.</div></div>` : ''}
-          ${savedMsg ? `<div class="banner warn" style="text-align:start">${icon('alert')}<div>${esc(savedMsg)}</div></div>` : ''}
+          ${needsLogin() ? `${root.App.inAppBrowser && App.inAppBrowser() ? App.openInBrowserCard() : ''}<div class="ob-save"><b>☁️ שמירה בחשבון Google</b><div class="small muted">כדי שכלום לא ילך לאיבוד, ויחכה לך בכל טלפון. רק לך יש גישה.</div></div>` : ''}
+          ${msg ? `<div class="banner warn" style="text-align:start">${icon('alert')}<div>${esc(msg)}</div></div>` : ''}
         </div>`;
       },
-    ];
+    };
+
+    /* answers -> what gets saved (a skipped question gets the usual answer) */
+    function finalJobs() {
+      const list = A.jobs.filter((j) => j.name.trim() || +j.rate > 0).map((j) => Object.assign({}, j, { name: j.name.trim() || 'העבודה שלי', rate: +j.rate > 0 ? +j.rate : minWage() }));
+      return list.length ? list : [{ id: A.jobs[0].id, name: 'העבודה שלי', rate: minWage(), color: A.jobs[0].color }];
+    }
+    function finalTravel() {
+      if (A.travel === 'no') return 0;
+      return +A.travelAmount > 0 ? +A.travelAmount : USUAL_TRAVEL;
+    }
 
     function read() {
       const q = (s) => v.querySelector(s);
-      if (step === 1) {
-        v.querySelectorAll('[data-rn]').forEach((i) => (roles[+i.dataset.rn].name = i.value.trim()));
-        v.querySelectorAll('[data-rr]').forEach((i) => (roles[+i.dataset.rr].rate = UI.numIn(i)));
+      const key = STEPS[step];
+      if (key === 'me' && q('#ob-name')) A.name = q('#ob-name').value.trim().slice(0, 40);
+      if (key === 'age' && q('#ob-birth')) { A.birth = q('#ob-birth').value || ''; if (A.birth) A.adult = false; }
+      if (key === 'job') {
+        v.querySelectorAll('[data-jn]').forEach((i) => (A.jobs[+i.dataset.jn].name = i.value.slice(0, 40)));
+        v.querySelectorAll('[data-jr]').forEach((i) => { const n = UI.numIn(i); A.jobs[+i.dataset.jr].rate = n != null && n > 0 && n < 1000 ? n : ''; });
       }
-      if (step === 2) { emp.travelPerDay = UI.numIn(q('#ob-travel')) || 0; emp.travelMonthlyCap = UI.numIn(q('#ob-cap')) || 0; }
-      if (step === 3) { if (q('#ob-pstart')) emp.periodStartDay = Math.min(28, Math.max(2, UI.numIn(q('#ob-pstart')) || 2)); emp.payDay = Math.min(31, Math.max(1, UI.numIn(q('#ob-payday')) || 9)); }
-      if (step === 4) { st.startDate = q('#ob-start').value || st.startDate; st.birthDate = q('#ob-birth').value || null; st.leave.workWeek = +q('#ob-week').value; }
-      if (step === 5) st.rest.city = q('#ob-city').value;
-      if (step === 6) { st.tax.creditPoints = UI.numIn(q('#ob-cp')) || 2.25; st.pension.employeePct = UI.numIn(q('#ob-pen')) || 6; st.hishtalmut.enabled = q('#ob-hish').checked; }
+      if (key === 'travel' && q('#ob-travel')) { const n = UI.numIn(q('#ob-travel')); A.travelAmount = n != null && n >= 0 && n < 500 ? n : ''; }
+      if (key === 'start' && q('#ob-start') && q('#ob-start').value) { A.start = q('#ob-start').value; A.startPick = 'exact'; }
     }
     /* live previews: the numbers react while typing */
     function live() {
       const q = (s) => v.querySelector(s);
-      if (step === 1) {
+      const key = STEPS[step];
+      if (key === 'job') {
         read();
-        const r = roles.find((x) => x.name && x.rate > 0);
+        const j = finalJobs()[0];
         const el = q('#ob-live-roles');
-        if (el) el.innerHTML = r ? `${icon('sparkle', 's')} משמרת של 8 שעות כ${esc(r.name)} = <b>${money(r.rate * 8)}</b>` : 'הזן שם ותעריף לפחות לתפקיד אחד';
+        if (el) el.innerHTML = `${icon('sparkle', 's')} משמרת של 8 שעות ${j.name !== 'העבודה שלי' ? 'ב' + esc(j.name) + ' ' : ''}= <b>${money(Math.round(j.rate * 8 * 100) / 100)}</b>`;
       }
-      if (step === 2) {
-        const t = UI.numIn(q('#ob-travel')) || 0, cap = UI.numIn(q('#ob-cap')) || 0;
-        const m = cap ? Math.min(cap, t * 20) : t * 20;
-        q('#ob-live-travel').innerHTML = t ? `${icon('car', 's')} בחודש של 20 ימי עבודה: <b>${money(m)}</b> נסיעות` : '';
+      if (key === 'travel') {
+        const el = q('#ob-live-travel');
+        if (el) el.innerHTML = A.travel && A.travel !== 'no' ? `${icon('car', 's')} בחודש של 15 ימי עבודה זה עוד <b>${money(finalTravel() * 15)}</b> 🎁` : '';
       }
-      if (step === 4) {
-        const b = q('#ob-birth').value;
-        const age = b ? Engine.ageAt(b, U.todayKey()) : null;
+      if (key === 'age') {
         const el = q('#ob-live-age');
-        if (age == null || age < 0 || age > 100) { el.innerHTML = ''; return; }
-        const mw = Engine.legalMinWage(U.todayKey(), b);
-        el.innerHTML = age < 18
-          ? `${icon('shield', 's')} גיל ${age}: שכר המינימום שלך <b>${U.money(mw.hourly)}</b> לשעה, והנטו שווה לברוטו (בלי מס).`
-          : `${icon('shield', 's')} גיל ${age}: שכר המינימום <b>${U.money(mw.hourly)}</b> לשעה.`;
+        const a = age();
+        if (!el) return;
+        el.innerHTML = a == null ? '' : `${icon('shield', 's')} ${a < 18 ? `שכר המינימום שלך: <b>${U.money(minWage())}</b> לשעה, ובלי מס בכלל 🎉` : `שכר המינימום: <b>${U.money(minWage())}</b> לשעה`}`;
       }
-      if (step === 5) {
+      if (key === 'city') {
         const el = q('#ob-preview');
-        const cfg = Object.assign({}, st.rest, { city: q('#ob-city').value, dayRules: [] });
-        const w = HebCal.restWindows(U.todayKey(), U.addDays(U.todayKey(), 10), cfg).find((x) => x.end > Date.now());
-        el.innerHTML = w ? `${icon('candle', 's')} ${esc(w.label)} הקרובה: כניסה ${U.HEB_DAYS[U.dow(U.epochKey(w.start))]} ${U.epochHM(w.start)}, יציאה ${U.HEB_DAYS[U.dow(U.epochKey(w.end))]} ${U.epochHM(w.end)}` : '';
+        const city = A.city || '';
+        if (!el) return;
+        if (!city) { el.innerHTML = ''; return; }
+        const cfg = Object.assign({}, st.rest, { city, dayRules: [] });
+        const w = HebCal.restWindows(today, U.addDays(today, 10), cfg).find((x) => x.end > Date.now());
+        el.innerHTML = w ? `${icon('candle', 's')} ${esc(w.label)} הקרובה ב${esc(city)}: נכנסת ${U.HEB_DAYS[U.dow(U.epochKey(w.start))]} ב-${U.epochHM(w.start)}, יוצאת ב-${U.epochHM(w.end)}` : '';
       }
     }
     function draw() {
-      const last = step === STEPS - 1;
-      const qn = step >= 1 && step <= 6 ? `<div class="ob-count">שאלה ${step} מתוך 6${step === 5 ? ' · עוד אחת וסיימנו' : ''}</div>` : '';
+      const key = STEPS[step];
+      const last = key === 'done';
+      const qi = step; // questions are steps 1..6
       let foot;
-      if (step === 0) {
-        foot = `<button class="btn big" data-next>בוא נתחיל</button><button class="btn tonal" data-demo>${icon('flask')} נסה עם נתוני דוגמה</button>
+      if (key === 'hi') {
+        foot = `<button class="btn big ob-go" data-next>יאללה, מתחילים! 🚀</button>
+          <button class="btn tonal" data-demo>${icon('flask')} רק להציץ (נתונים לדוגמה)</button>
           ${opts.preLogin ? '<button class="btn text" data-have>כבר יש לי חשבון? התחברות</button>' : ''}
           <div class="tiny muted ob-consent">בהמשך אתה מאשר את ${App.legalLinks ? App.legalLinks() : 'תנאי השימוש ומדיניות הפרטיות'}.</div>`;
       } else if (last) {
+        const ready = !needsLogin() || root.Cloud.sdkReady();
         foot = needsLogin()
-          ? `<button class="btn big ob-google" data-save ${saving ? 'disabled' : ''}>${App.googleIcon || ''}<span>${saving ? 'שומר…' : 'שמירה עם Google'}</span></button>`
-          : `<button class="btn big" data-save ${saving ? 'disabled' : ''}>${saving ? 'רגע…' : 'יאללה, מתחילים'}</button>`;
+          ? `<button class="btn big ob-google" data-save ${saving || (!ready && !loadFailed) ? 'disabled' : ''}>${App.googleIcon || ''}<span>${saving ? 'שומר…' : !ready && !loadFailed ? 'רגע, מכינים את Google…' : 'שמירה עם Google'}</span></button>
+            ${blocked ? '<button class="btn text sm" data-redirect>לא נפתח חלון? התחברות בדרך אחרת</button>' : ''}
+            ${loadFailed ? '<button class="btn text sm" data-later>להמשיך בינתיים בלי חשבון</button>' : ''}`
+          : `<button class="btn big ob-go" data-save ${saving ? 'disabled' : ''}>${saving ? 'רגע…' : 'יאללה, לאפליקציה! 🎉'}</button>`;
       } else {
-        foot = `<button class="btn tonal" data-back>הקודם</button><button class="btn" data-next>${step === 6 ? 'סיום' : 'הבא'}</button>`;
+        foot = `<button class="btn big ob-go" data-next>${qi === QUESTIONS ? 'סיום ✨' : 'הבא'}</button>`;
       }
-      v.innerHTML = `<div class="wizard ob">${step ? `<div class="ob-progress"><i style="width:${Math.round((step / (STEPS - 1)) * 100)}%"></i></div>` : ''}${qn}
-        <div class="content ob-${dir}">${screens[step]()}</div>
-        <div class="foot ${step === 0 || last ? 'col' : ''}">${foot}</div></div>`;
+      const top = key === 'hi' || last ? '' : `<div class="ob-top">
+        <button class="icon-btn" data-back aria-label="הקודם">${icon('right')}</button>
+        <div class="ob-dots" aria-label="שאלה ${qi} מתוך ${QUESTIONS}">${Array.from({ length: QUESTIONS }, (_, i) => `<i class="${i + 1 < qi ? 'done' : i + 1 === qi ? 'on' : ''}"></i>`).join('')}</div>
+        <button class="btn text sm ob-skip" data-skip>דלג</button></div>`;
+      v.innerHTML = `<div class="wizard ob ob3 step-${key}"><div class="ob-bg" aria-hidden="true"><i></i><i></i><i></i></div>${top}
+        <div class="content ob-${dir}">${screens[key]()}</div>
+        <div class="foot col">${foot}</div></div>`;
       live();
       const city = v.querySelector('#ob-city');
-      if (city) city.onchange = live;
+      if (city) city.onchange = () => { if (city.value) { A.city = city.value; draw(); } };
+      if (App.bindOpenInBrowser) App.bindOpenInBrowser(v);
       window.scrollTo(0, 0);
     }
     function go(next) {
       read();
       dir = next > step ? 'next' : 'prev';
-      step = Math.max(0, Math.min(STEPS - 1, next));
+      step = Math.max(0, Math.min(STEPS.length - 1, next));
       draw();
       if (fx) { fx.play(dir === 'next' ? 'pop' : 'soft'); fx.haptic(8); }
-      if (step === STEPS - 1 && fx) setTimeout(() => fx.celebrate('big'), 250);
-    }
-    async function save(withDemo) {
-      roles = roles.filter((r) => r.name && r.rate > 0);
-      if (!roles.length) { UI.invalid('הוסף לפחות תפקיד אחד עם שם ותעריף'); go(1); return false; }
-      const ops = [{ store: 'employers', put: emp }];
-      for (const r of roles) {
-        const rec = Object.assign({}, r);
-        rec.rates = rec.rates && rec.rates.length ? rec.rates : [{ from: '2000-01-01', rate: r.rate }];
-        // the wizard edits the current rate
-        const sorted = rec.rates.slice().sort((a, b) => a.from.localeCompare(b.from));
-        sorted[sorted.length - 1].rate = r.rate;
-        rec.rates = sorted;
-        delete rec.rate;
-        rec.employerId = emp.id;
-        ops.push({ store: 'roles', put: rec });
+      if (STEPS[step] === 'done' && fx) setTimeout(() => fx.celebrate('big'), 250);
+      if (STEPS[step] === 'done' && needsLogin() && !root.Cloud.sdkReady()) {
+        // Google normally finished loading long ago; on a slow network the button waits for it
+        root.Cloud.sdk().then(() => { if (App.blocking === 'onboarding') draw(); }, () => { loadFailed = true; if (App.blocking === 'onboarding') { msg = navigator.onLine ? 'לא הצלחנו לטעון את Google. נסה שוב בעוד רגע.' : 'אין חיבור לאינטרנט. אפשר להמשיך בינתיים, ונשמור בחשבון כשהרשת תחזור.'; draw(); } });
       }
-      S.roles.filter((r) => !roles.some((x) => x.id === r.id)).forEach((r) => ops.push({ store: 'roles', del: r.id }));
-      await Store.apply(ops, null);
+    }
+    // answering a one-tap question moves on by itself
+    const autoNext = () => setTimeout(() => { if (App.blocking === 'onboarding') go(step + 1); }, 380);
+
+    // the answers are saved once; the demo button and the last step share that one save
+    let saving$ = null;
+    const ensureSaved = (withDemo) => saving$ || (saving$ = save(withDemo));
+    async function save(withDemo) {
+      const jobs = withDemo && !jobValid().length ? Defaults.defaultRoles(emp.id).map((r) => Object.assign(r, { rate: r.rates[0].rate })) : finalJobs();
+      emp.travelPerDay = finalTravel();
+      const ops = [{ store: 'employers', put: emp }];
+      jobs.forEach((j, i) => {
+        const rates = j.rates && j.rates.length ? j.rates.slice().sort((a, b) => a.from.localeCompare(b.from)) : [{ from: '2000-01-01', rate: j.rate }];
+        rates[rates.length - 1] = Object.assign({}, rates[rates.length - 1], { rate: j.rate });
+        ops.push({ store: 'roles', put: { id: j.id || 'r_' + U.uid(), name: j.name, color: j.color || Defaults.ROLE_COLORS[i % Defaults.ROLE_COLORS.length], employerId: emp.id, rates, archived: false } });
+      });
+      S.roles.filter((r) => !jobs.some((x) => x.id === r.id)).forEach((r) => ops.push({ store: 'roles', del: r.id }));
+      st.userName = A.name;
+      st.gender = A.gender === 'm' || A.gender === 'f' ? A.gender : '';
+      if (st.gender === 'f') st.tax.creditPoints = 2.75; else if (st.gender === 'm') st.tax.creditPoints = 2.25;
+      st.birthDate = A.birth || null;
+      if (A.city) st.rest.city = A.city;
+      st.startDate = A.start || null;
       st.onboarded = true;
-      await Store.setSettings((s) => Object.assign(s, st));
-      if (withDemo) await App.demo.load();
+      // the answers are in memory either way; a storage hiccup is reported but never blocks the way in
+      try {
+        await Store.apply(ops, null);
+        await Store.setSettings((s) => Object.assign(s, st));
+        if (withDemo) await App.demo.load();
+      } catch (e) {
+        console.warn('saving the setup answers', e);
+        Object.assign(S.settings, st);
+        UI.toast('לא הצלחנו לשמור בטלפון. התשובות יישמרו בחשבון שלך.');
+      }
       saved = true;
+      if (S.meta.lastRole == null && jobs[0]) Store.setMeta({ lastRole: jobs[0].id }).catch(() => {});
       return true;
     }
     function enterApp() {
@@ -187,64 +261,121 @@
       nav.style.display = '';
       App.go = prevGo;
       if (needsLogin()) return; // still on the save step
+      App.firstRun = !demo; // the home screen walks a new user through the first steps
+      if (!demo && !S.meta.guide) Store.setMeta({ guide: Date.now() }).catch(() => {});
       App.afterLogin();
       setTimeout(() => App.runInsights(), 500);
-      UI.toast(demo ? 'נטענו נתוני דוגמה. אפשר למחוק אותם מהבאנר' : 'מוכן! לחץ "התחל משמרת" כשאתה מתחיל לעבוד');
     }
-    async function finishStep() {
+    function finishStep(redirect) {
       if (saving) return;
-      saving = true; savedMsg = ''; draw();
-      try {
-        if (!saved && !(await save(false))) { saving = false; return; }
-        if (needsLogin()) {
-          const Cloud = root.Cloud;
-          const user = await Cloud.signIn();
-          if (!user) return; // redirect sign-in: the page reloads signed in and continues
+      const Cloud = root.Cloud;
+      if (needsLogin()) {
+        // open the Google window first, inside this tap (the browser blocks it after any waiting); save meanwhile
+        let p;
+        try { p = Cloud.signIn(redirect ? { redirect: true } : null); } catch (e) { p = Promise.reject(e); }
+        p.catch(() => {}); // handled below, after the answers are saved
+        saving = true; msg = ''; blocked = false; draw();
+        ensureSaved(false).then(() => p).then(async (user) => {
+          if (!user) return; // full-page sign-in: the page comes back signed in and finishes there
           await Cloud.connect(user);
           UI.toast('מחובר כ-' + (user.displayName || user.email));
-        }
+          saving = false;
+          enterApp();
+        }).catch((e) => {
+          console.warn('sign-in', e);
+          saving = false;
+          blocked = e && e.code === 'auth/popup-blocked';
+          msg = blocked ? 'הדפדפן חסם את חלון ההתחברות של Google. לחצו שוב על הכפתור 👇' : Cloud.errorText(e);
+          draw();
+        });
+        return;
+      }
+      saving = true; draw();
+      ensureSaved(false).then(async () => {
+        // signed in already (back from Google, or from Settings): make sure the account is connected
+        if (Cloud && Cloud.user && !Cloud.connected && !App.localOnly) { try { await Cloud.connect(Cloud.user); } catch (e) { console.warn(e); } }
         saving = false;
         enterApp();
-      } catch (e) {
-        console.error(e);
-        saving = false;
-        savedMsg = root.Cloud ? root.Cloud.errorText(e) : String(e.message || e);
-        draw();
-      }
+      });
     }
     v.onclick = async (e) => {
       const b = e.target.closest('button, a');
-      if (!b) return;
+      if (!b || b.disabled) return;
       if (b.dataset.legal) return; // the terms links open their own sheet
       if (b.hasAttribute('data-next')) {
-        if (step === 0 && App.acceptLegal) await App.acceptLegal();
-        if (step === 1) { read(); if (!roles.some((r) => r.name && r.rate > 0)) { UI.invalid('הוסף לפחות תפקיד אחד עם שם ותעריף'); return; } }
+        if (step === 0 && App.acceptLegal) App.acceptLegal().catch((x) => console.warn(x)); // never waits: the next screen comes first
         go(step + 1);
-      }
-      if (b.hasAttribute('data-back')) go(step - 1);
-      if (b.hasAttribute('data-demo')) {
-        if (App.acceptLegal) await App.acceptLegal();
+      } else if (b.hasAttribute('data-back')) go(step - 1);
+      else if (b.hasAttribute('data-skip')) {
+        // a skipped question keeps the usual answer
+        const key = STEPS[step];
+        if (key === 'job') { A.jobs.forEach((j) => { j.name = ''; j.rate = ''; }); v.querySelectorAll('[data-jn], [data-jr]').forEach((i) => { i.value = ''; }); }
+        if (key === 'travel' && !A.travel) A.travel = 'idk';
+        go(step + 1);
+      } else if (b.hasAttribute('data-demo')) {
+        if (App.acceptLegal) App.acceptLegal().catch((x) => console.warn(x));
         demo = true;
-        if (await save(true)) go(STEPS - 1);
-      }
-      if (b.hasAttribute('data-have')) {
-        if (App.acceptLegal) await App.acceptLegal();
-        v.onclick = null; App.go = prevGo;
+        go(STEPS.length - 1);
+        await ensureSaved(true);
+        draw();
+      } else if (b.hasAttribute('data-have')) {
+        if (App.acceptLegal) App.acceptLegal().catch((x) => console.warn(x));
+        v.onclick = null; v.oninput = null; App.go = prevGo;
         App.blocking = null;
         App.showLogin();
+      } else if (b.hasAttribute('data-save')) finishStep(false);
+      else if (b.hasAttribute('data-redirect')) finishStep(true);
+      else if (b.hasAttribute('data-later')) { App.localOnly = true; finishStep(false); }
+      else if (b.dataset.gender) {
+        A.gender = b.dataset.gender; read();
+        v.querySelectorAll('[data-gender]').forEach((x) => x.classList.toggle('on', x === b));
+        if (fx) fx.play('on');
+        if (v.querySelector('#ob-name').value.trim()) autoNext();
+      } else if (b.dataset.adult) { A.adult = true; A.birth = ''; const bi = v.querySelector('#ob-birth'); if (bi) bi.value = ''; b.classList.add('on'); if (fx) fx.play('on'); autoNext(); }
+      else if (b.dataset.jobname) {
+        read();
+        const empty = A.jobs.find((j) => !j.name.trim());
+        (empty || A.jobs[A.jobs.length - 1]).name = b.dataset.jobname;
+        draw(); if (fx) fx.play('on');
+        const rate = v.querySelector('[data-jr="' + A.jobs.indexOf(empty || A.jobs[A.jobs.length - 1]) + '"]');
+        if (rate && !rate.value) rate.focus();
+      } else if (b.hasAttribute('data-jadd')) {
+        read();
+        const used = new Set(A.jobs.map((j) => j.color));
+        A.jobs.push({ id: 'r_' + U.uid(), name: '', rate: '', color: Defaults.ROLE_COLORS.find((c) => !used.has(c)) || '#888' });
+        draw();
+      } else if (b.dataset.rx != null) { read(); A.jobs.splice(+b.dataset.rx, 1); draw(); }
+      else if (b.dataset.travel) {
+        read(); A.travel = b.dataset.travel; draw(); if (fx) fx.play('on');
+        if (A.travel === 'yes') { const t = v.querySelector('#ob-travel'); if (t) t.focus(); } else autoNext();
+      } else if (b.dataset.city) { A.city = b.dataset.city; draw(); if (fx) fx.play('on'); autoNext(); }
+      else if (b.dataset.start) {
+        const m = { month: today.slice(0, 8) + '01', months: U.addMonths(today, -3), year: U.addMonths(today, -13) }[b.dataset.start];
+        A.start = A.birth && m < A.birth ? today : m; A.startPick = b.dataset.start;
+        v.querySelectorAll('[data-start]').forEach((x) => x.classList.toggle('on', x === b));
+        if (fx) fx.play('on');
+        autoNext();
       }
-      if (b.hasAttribute('data-save')) finishStep();
-      if (b.hasAttribute('data-radd')) { read(); const used = new Set(roles.map((r) => r.color)); roles.push({ id: 'r_' + U.uid(), name: '', color: Defaults.ROLE_COLORS.find((c) => !used.has(c)) || '#888', employerId: emp.id, rates: [], rate: null, archived: false }); draw(); }
-      if (b.dataset.rx != null) { read(); roles.splice(+b.dataset.rx, 1); draw(); }
-      if (b.dataset.cc != null) { read(); const r = roles[+b.dataset.cc]; const i = Defaults.ROLE_COLORS.indexOf(r.color); r.color = Defaults.ROLE_COLORS[(i + 1) % Defaults.ROLE_COLORS.length]; draw(); }
-      if (b.dataset.pd) { read(); emp.periodStartDay = b.dataset.pd === '1' ? 1 : Math.max(2, emp.periodStartDay > 1 ? emp.periodStartDay : 21); draw(); }
-      if (b.dataset.cp) { v.querySelector('#ob-cp').value = b.dataset.cp; v.querySelectorAll('[data-cp]').forEach((x) => x.classList.toggle('on', x === b)); }
     };
-    v.oninput = () => live();
+    v.oninput = (e) => {
+      if (e.target.id === 'ob-birth') { read(); draw(); return; }
+      if (e.target.id === 'ob-start') { read(); v.querySelectorAll('[data-start]').forEach((x) => x.classList.remove('on')); return; }
+      if (e.target.id === 'ob-name') {
+        // the mascot greets you by name
+        A.name = e.target.value.trim();
+        const bubble = v.querySelector('.m-say .bubble');
+        if (bubble) bubble.innerHTML = A.name ? `נעים מאוד, ${esc(A.name.split(' ')[0])}! 😍` : 'בוא/י נכיר 😊';
+        return;
+      }
+      live();
+    };
+    v.onkeydown = (e) => {
+      if (e.key === 'Enter' && e.target.matches('input') && STEPS[step] !== 'hi' && STEPS[step] !== 'done') { e.preventDefault(); e.target.blur(); go(step + 1); }
+    };
     draw();
     // leaving the wizard any other way detaches its handlers
     const prevGo = App.go;
-    App.go = function (tab, o) { v.onclick = null; v.oninput = null; App.go = prevGo; return prevGo(tab, o); };
+    App.go = function (tab, o) { v.onclick = null; v.oninput = null; v.onkeydown = null; App.go = prevGo; return prevGo(tab, o); };
   };
 
   /* ---------------- demo data ---------------- */

@@ -12,15 +12,16 @@ const pkg = JSON.parse(fs.readFileSync(path.join(ROOT, 'package.json'), 'utf8'))
 
 const JS_ORDER = [
   'core/util.js', 'core/hebcal.js', 'core/defaults.js', 'core/engine.js', 'core/insights.js', 'core/payslip.js',
-  'app/ui.js', 'app/fx.js', 'app/intro.js', 'app/store.js', 'app/charts.js', 'app/app.js', 'app/firebase-config.js', 'app/cloud.js', 'app/stats.js', 'app/views-login.js',
+  'app/ui.js', 'app/pickers.js', 'app/fx.js', 'app/intro.js', 'app/store.js', 'app/charts.js', 'app/app.js', 'app/mascot.js', 'app/firebase-config.js', 'app/cloud.js', 'app/stats.js', 'app/views-login.js',
   'app/views-home.js', 'app/views-shift.js', 'app/views-calendar.js', 'app/views-reports.js',
   'app/views-payslip.js', 'app/views-insights.js', 'app/export.js', 'app/views-settings.js', 'app/views-onboarding.js',
-  'app/views-assistant.js', 'app/views-rights.js', 'app/views-admin.js', 'app/views-legal.js', 'app/ptr.js',
+  'app/views-assistant.js', 'app/views-rights.js', 'app/views-guide.js', 'app/views-support.js', 'app/views-admin.js', 'app/views-legal.js', 'app/ptr.js',
 ];
 const read = (p) => fs.readFileSync(path.join(SRC, p), 'utf8');
 const js = JS_ORDER.map((f) => `/* ---- ${f} ---- */\n${read(f)}`).join('\n');
 if (/<\/script/i.test(js)) throw new Error('JS contains "</script" — would break inlining');
-const css = read('styles.css');
+// styles.css is the base design; styles-v3.css the playful layer on top (pickers, mascot, colours)
+const css = read('styles.css') + '\n' + read('styles-v3.css');
 const hash = crypto.createHash('sha256').update(js + css + read('index.html') + read('sw.js')).digest('hex').slice(0, 8);
 const version = pkg.version;
 

@@ -12,51 +12,100 @@
 
   App.googleIcon = GOOGLE_G;
 
+  /* ---------------- browsers inside other apps ----------------
+   * Instagram, Facebook, TikTok, Snapchat, Telegram and similar apps open links in their own
+   * built-in browser, and Google does not allow signing in there. Those visitors get a clear
+   * way out: open the app in Chrome / Safari. */
+  App.inAppBrowser = function () {
+    const ua = navigator.userAgent || '';
+    if (/FBAN|FBAV|FB_IAB|Instagram|Line\/|Snapchat|TikTok|musical_ly|Bytedance|LinkedInApp|Twitter|Pinterest|KAKAOTALK|MicroMessenger|Telegram/i.test(ua)) return true;
+    if (/Android/i.test(ua) && /; wv\)/.test(ua) && !App.androidApp) return true; // an Android app's WebView
+    // iPhone apps' web views have no "Safari/" in the name (Chrome = CriOS, Firefox = FxiOS); the home-screen app is fine
+    if (/iPhone|iPad|iPod/i.test(ua) && !/Safari\//.test(ua) && !/CriOS|FxiOS|EdgiOS/.test(ua) && !navigator.standalone) return true;
+    return false;
+  };
+  const isAndroid = () => /Android/i.test(navigator.userAgent || '');
+  /** "Open in Chrome" for Android (an intent link), step-by-step words for iPhone, and copy-the-link. */
+  App.openInBrowserCard = function () {
+    const url = location.origin + location.pathname;
+    const intent = 'intent://' + location.host + location.pathname + '#Intent;scheme=https;action=android.intent.action.VIEW;S.browser_fallback_url=' + encodeURIComponent(url) + ';end';
+    return `<div class="card iab-card">
+      <div class="iab-t">${icon('alert', 's')} פתחת את האפליקציה מתוך אפליקציה אחרת</div>
+      <div class="small">Google לא מאפשרת להתחבר מכאן. פותחים בדפדפן ומתחברים בשנייה:</div>
+      ${isAndroid() ? `<a class="btn block" href="${esc(intent)}" target="_blank" rel="noopener">${icon('share', 's')} פתח ב-Chrome</a>`
+        : `<ol class="iab-steps"><li>לוחצים על <b>⋯</b> או על <b>⎋</b> בפינת המסך</li><li>בוחרים <b>"פתח ב-Safari"</b> / <b>"Open in browser"</b></li></ol>`}
+      <button class="btn tonal block" data-copy-link>${icon('copy', 's')} העתק את הקישור</button>
+    </div>`;
+  };
+  App.bindOpenInBrowser = function (el) {
+    const b = el.querySelector('[data-copy-link]');
+    if (b) b.onclick = async () => { await UI.copyText(location.origin + location.pathname); UI.toast('הקישור הועתק. הדבק אותו בדפדפן 👍'); };
+  };
+
   /* ---------------- login screen ---------------- */
   App.showLogin = function (reason) {
     const nav = document.getElementById('nav');
     nav.style.display = 'none';
     App.blocking = 'login';
     const v = document.getElementById('view');
-    let busy = false;
+    let busy = false, failedLoad = false, blocked = false;
     const draw = (msg, isErr) => {
-      v.innerHTML = `<div class="wizard"><div class="content" style="display:flex;flex-direction:column;justify-content:center;text-align:center">
-        <div class="brand-mark big" aria-hidden="true"></div>
+      // the Google window may only open straight from the tap, so the button waits until Google is loaded
+      const ready = Cloud.sdkReady();
+      const label = busy ? 'מתחבר…' : !ready && !failedLoad ? 'רגע, מכינים את Google…' : 'התחברות עם Google';
+      v.innerHTML = `<div class="wizard login"><div class="content" style="display:flex;flex-direction:column;justify-content:center;text-align:center">
+        <div class="login-mascot">${App.mascot ? App.mascot(isErr ? 'think' : 'wave', { size: 110 }) : '<div class="brand-mark big" aria-hidden="true"></div>'}</div>
         <h1 class="brand-name">Shaati</h1><div class="brand-sub">מעקב משמרות ושכר</div>
-        <p class="lead">התחבר עם חשבון Google. כל הנתונים שלך נשמרים בענן לפי החשבון, וזמינים בכל טלפון שתתחבר ממנו.</p>
+        <p class="lead">מתחברים עם Google, וכל מה שרשמת נשמר בחשבון שלך ומחכה לך בכל טלפון.</p>
+        ${App.inAppBrowser() ? App.openInBrowserCard() : ''}
         ${S.shifts.length ? `<div class="banner" style="text-align:start">${icon('cloud')}<div>הנתונים שכבר יש בטלפון יעלו לחשבון שלך בהתחברות הראשונה.</div></div>` : ''}
         ${msg ? `<div class="banner ${isErr ? 'warn' : ''}" style="text-align:start">${icon(isErr ? 'alert' : 'info')}<div>${esc(msg)}</div></div>` : ''}
-        <button class="btn big" data-google style="background:#fff;color:#1f1f1f;border:1px solid #dadce0;margin-top:8px" ${busy ? 'disabled' : ''}>${GOOGLE_G}<span>${busy ? 'מתחבר…' : 'התחברות עם Google'}</span></button>
-        <div class="tiny muted" style="margin-top:12px">בהתחברות אתה מאשר את ${App.legalLinks ? App.legalLinks() : 'תנאי השימוש ומדיניות הפרטיות'}.</div>
-        <div class="tiny muted" style="margin-top:10px;line-height:1.6">${icon('shield', 's')} רק אתה יכול לראות את הנתונים שלך. מפתח ה-API, קוד הנעילה וקובצי התלושים (תמונות ו-PDF) נשארים רק בטלפון. האפליקציה ממשיכה לעבוד גם בלי אינטרנט, ומסנכרנת כשהרשת חוזרת.</div>
+        <button class="btn big ob-google" data-google ${busy || (!ready && !failedLoad) ? 'disabled' : ''}>${GOOGLE_G}<span>${label}</span></button>
+        ${blocked ? '<button class="btn text sm" data-redirect>לא נפתח חלון? התחברות בדרך אחרת</button>' : ''}
+        <button class="btn text sm" data-act="support" style="margin-top:6px">${icon('info', 's')} בעיה בהתחברות? כתבו לנו</button>
+        <div class="tiny muted" style="margin-top:8px">בהתחברות אתה מאשר את ${App.legalLinks ? App.legalLinks() : 'תנאי השימוש ומדיניות הפרטיות'}.</div>
+        <div class="tiny muted" style="margin-top:10px;line-height:1.6">${icon('shield', 's')} רק אתה יכול לראות את הנתונים שלך. האפליקציה עובדת גם בלי אינטרנט, ומסנכרנת כשהרשת חוזרת.</div>
         </div></div>`;
-      v.querySelector('[data-google]').onclick = go;
+      v.querySelector('[data-google]').onclick = () => go(false);
+      const rd = v.querySelector('[data-redirect]');
+      if (rd) rd.onclick = () => go(true);
+      App.bindOpenInBrowser(v);
     };
-    async function go() {
+    let lastMsg = '', lastErr = false;
+    const show = (m, e) => { lastMsg = m || ''; lastErr = !!e; draw(lastMsg, lastErr); };
+    function go(redirect) {
       if (busy) return;
-      busy = true; draw();
-      try {
-        const user = await Cloud.signIn();
-        if (!user) return; // redirect flow: the page will reload signed in
-        draw('מסנכרן את הנתונים…');
+      // no awaiting before this call: the browser allows the Google window only straight from the tap
+      let p;
+      try { p = Cloud.signIn(redirect ? { redirect: true } : null); } catch (e) { p = Promise.reject(e); }
+      busy = true; blocked = false; show('');
+      p.then(async (user) => {
+        if (!user) return; // full-page sign-in: the page comes back signed in
+        show('מסנכרן את הנתונים…');
         await Cloud.connect(user);
         nav.style.display = '';
         App.blocking = null;
         App.afterLogin();
         UI.toast('מחובר כ-' + (user.displayName || user.email));
-      } catch (e) {
-        console.error(e);
+      }).catch((e) => {
+        console.warn('sign-in', e);
         busy = false;
-        draw(Cloud.errorText(e), true);
-      }
+        blocked = e && e.code === 'auth/popup-blocked';
+        show(blocked ? 'הדפדפן חסם את חלון ההתחברות של Google. לחצו שוב על הכפתור 👇' : Cloud.errorText(e), true);
+      });
     }
     const MSG = {
       offline: 'כדי להתחבר בפעם הראשונה צריך חיבור לאינטרנט. התחבר לרשת ונסה שוב.',
       error: 'לא ניתן לטעון את רכיב ההתחברות. בדוק את החיבור ונסה שוב.',
       expired: 'החיבור לחשבון הסתיים. התחבר שוב כדי להמשיך לסנכרן.',
     };
-    const msg = MSG[reason] || (Cloud.redirectError ? Cloud.errorText(Cloud.redirectError) : '');
-    draw(msg, !!msg && reason !== 'expired');
+    show(MSG[reason] || (Cloud.redirectError ? Cloud.errorText(Cloud.redirectError) : ''), !!MSG[reason] && reason !== 'expired' || !!Cloud.redirectError);
+    if (!Cloud.sdkReady()) {
+      Cloud.sdk().then(() => { if (App.blocking === 'login') draw(lastMsg, lastErr); }, () => {
+        failedLoad = true;
+        if (App.blocking === 'login') show(navigator.onLine ? MSG.error : MSG.offline, true);
+      });
+    }
   };
 
   /* ---------------- cloud status in the top bar ---------------- */
@@ -80,6 +129,12 @@
   /* ---------------- settings: account & sync ---------------- */
   App.accountSection = function () {
     const u = Cloud.user;
+    if (!u && !S.meta.cloudUid && root.FIREBASE_CONFIG) {
+      // not signed in yet (e.g. continued without an account while offline): one tap to sign in
+      return `<div class="card"><div class="card-head">${icon('cloud')}<h3>שמירה בחשבון Google</h3></div>
+        <p class="small">עוד לא התחברת, אז הנתונים נשמרים רק בטלפון הזה. מתחברים, וכל מה שכבר רשמת עולה לחשבון ומחכה לך בכל טלפון.</p>
+        <button class="btn big ob-google" data-login>${GOOGLE_G}<span>התחברות עם Google</span></button></div>`;
+    }
     if (!u && !S.meta.cloudUid) {
       return `<div class="card"><div class="card-head">${icon('cloud')}<h3>שמירה בענן</h3></div>
         <p class="small">ההתחברות עם Google עוד לא הופעלה לאפליקציה. בינתיים כל הנתונים נשמרים בטלפון, כרגיל.</p>
@@ -112,6 +167,7 @@
       if (on) root.Stats.report(true); else root.Stats.forget();
     };
     if (q('[data-copy-uid]')) q('[data-copy-uid]').onclick = () => UI.copyText(Cloud.user.uid);
+    if (q('[data-login]')) q('[data-login]').onclick = () => { UI.closeAll(); setTimeout(() => { App.localOnly = false; App.showLogin(); }, 350); };
     if (q('[data-probe]')) q('[data-probe]').onclick = async () => {
       const ok = await Cloud.probe();
       if (ok) { UI.closeAll(); setTimeout(() => App.showLogin(), 350); }

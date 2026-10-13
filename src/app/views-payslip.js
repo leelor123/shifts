@@ -137,7 +137,7 @@
       const missing = Payslip.FIELDS.filter((f) => !d.fields[f.key]);
       return `<div class="banner">${icon('eye')}<div>בדוק שהערכים נכונים ותקן אם צריך. ${d.source === 'ocr' ? 'זיהוי מתמונה עלול לטעות בספרות.' : d.source === 'manual' ? 'הזן את מה שמופיע בתלוש — לפחות ברוטו, נטו ושעות.' : ''}</div></div>
         ${d.notes ? `<div class="banner">${icon('sparkle')}<div>${esc(d.notes)}</div></div>` : ''}
-        <label class="field"><span class="lbl">חודש התלוש</span><input class="input" type="month" id="vf-period" value="${d.period || ''}"></label>
+        <label class="field"><span class="lbl">חודש התלוש</span><input class="input" type="month" id="vf-period" value="${d.period || ''}" min="2000-01" max="${U.todayKey().slice(0, 7)}"></label>
         ${GROUPS.map(([kind, label]) => { const fs = present.filter((f) => f.kind === kind); return fs.length ? `<div class="section-title">${label}</div><div class="card">${fs.map(fieldRow).join('')}</div>` : ''; }).join('')}
         <div class="row-flex" style="gap:8px;margin-bottom:12px"><select class="input" id="vf-add" style="flex:1"><option value="">+ הוסף שורה מהתלוש…</option>${missing.map((f) => `<option value="${f.key}">${esc(f.label)}</option>`).join('')}</select></div>
         ${d.other.length ? `<div class="section-title">שורות שלא זוהו</div><div class="card">${d.other.map((o, i) => `<div style="margin-bottom:10px"><div class="small">${esc(o.line)}</div>

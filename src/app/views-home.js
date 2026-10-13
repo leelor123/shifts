@@ -107,9 +107,10 @@
     const projPct = goal && proj && proj.withPlanned ? Math.min(100, ((goalNet ? proj.withPlanned * (sum.gross ? sum.net.net / sum.gross : 0.85) : proj.withPlanned) / goal) * 100) : 0;
     const periodName = emp.periodStartDay > 1 ? 'תקופת השכר' : esc(P.label);
     return `<section class="home-hero" data-act="go-summary" role="button" aria-label="סיכום ${periodName}">
-      <div class="hh-label">${periodName} · ברוטו עד עכשיו</div>
+      <span class="hh-spark s1" aria-hidden="true">✦</span><span class="hh-spark s2" aria-hidden="true">✦</span><span class="hh-spark s3" aria-hidden="true">✦</span>
+      <div class="hh-label">${periodName} · ${UI.term ? UI.term('gross', 'ברוטו') : 'ברוטו'} עד עכשיו</div>
       <div class="hero-num">${money(sum.gross, 0)}</div>
-      <div class="hh-stats"><span>${sum.net.minor ? 'נטו' : 'נטו משוער'} <b>${money(sum.net.net, 0)}</b></span><i></i><span><b class="num">${U.hm(sum.hours * 60)}</b> ש׳</span><i></i><span><b>${sum.shifts}</b> משמרות</span></div>
+      <div class="hh-stats"><span>${UI.term ? UI.term('net', sum.net.minor ? 'נטו' : 'נטו משוער') : 'נטו'} <b>${money(sum.net.net, 0)}</b></span><i></i><span><b class="num">${U.hm(sum.hours * 60)}</b> ש׳</span><i></i><span><b>${sum.shifts}</b> משמרות</span></div>
       ${goal ? `<div class="hh-goal"><div class="progress thin"><b style="width:${projPct}%"></b><i style="width:${pct}%"></i></div>
         <div class="hh-goal-l">${U.num(pct, 0)}% מיעד ${money(goal, 0)}${proj && proj.pace ? ` · צפי ${money(proj.pace, 0)}` : ''}</div></div>`
         : (proj && proj.pace ? `<div class="hh-goal-l">צפי לסוף ${emp.periodStartDay > 1 ? 'התקופה' : 'החודש'}: ${money(proj.pace, 0)}</div>` : '')}
@@ -139,6 +140,12 @@
       <span class="hl-ic">${icon(item.ic, 's')}</span><span class="hl-t">${esc(item.t)}</span>${more ? `<span class="hl-more">+${more}</span>` : ''}${icon('left', 's')}</button>`;
   }
 
+  /* ---------------- four big doors to the things people look for ---------------- */
+  function shortcuts() {
+    const d = (act, emoji, label, cls) => `<button class="sc ${cls}" data-act="${act}"><span class="sc-e" aria-hidden="true">${emoji}</span><span>${label}</span></button>`;
+    return `<div class="shortcuts">${d('shift-new', '➕', 'משמרת שעשיתי', 'c1')}${d('rights', '🛡️', 'מה מגיע לי', 'c2')}${d('payslip-new', '🧾', 'בדיקת תלוש', 'c3')}${d('support', '💬', 'עזרה', 'c4')}</div>`;
+  }
+
   function birthdayCard() {
     const b = S.settings.birthDate;
     if (!b || b.slice(5) !== U.todayKey().slice(5)) return '';
@@ -149,6 +156,7 @@
   }
   function banners() {
     let h = '';
+    if (Store.isMemoryOnly && Store.isMemoryOnly()) h += `<div class="banner slim warn">${icon('alert', 's')}<div style="flex:1">${root.Cloud && root.Cloud.user ? 'הדפדפן לא שומר נתונים בטלפון כרגע. הכול נשמר בחשבון שלך.' : 'הדפדפן לא שומר נתונים בטלפון. התחבר לחשבון כדי לא לאבד אותם.'}</div></div>`;
     if (S.settings.demo) h += `<div class="banner slim">${icon('flask', 's')}<div style="flex:1">מצב הדגמה — נתונים לדוגמה</div><button class="btn text sm" data-act="demo-clear">מחק</button></div>`;
     const B = S.settings.backup;
     const last = Math.max(B.lastBackup || 0);
@@ -183,10 +191,12 @@
       ${banners()}
       ${hero()}
       ${actionBlock()}
+      ${App.guideCard ? App.guideCard() : ''}
       ${highlight()}
+      ${shortcuts()}
       ${pending.length + recent.length ? `<div class="home-list-head"><span>${pending.length ? 'לסמן כבוצעה' : 'משמרות אחרונות'}</span><button class="btn text sm" data-act="go-shifts">הכול</button></div>
         <div class="list home-list">${pending.map((r) => App.shiftItem(r, { showOk: true })).join('')}${recent.slice(0, Math.max(1, 3 - pending.length)).map((r) => App.shiftItem(r)).join('')}</div>`
-        : UI.emptyState('clock', 'עוד אין משמרות', 'לחץ על "התחל משמרת" כשאתה מתחיל לעבוד, או על + כדי להוסיף משמרת שכבר עשית.', '')}
+        : S.meta.guide && !S.meta.guideDone ? '' : `<div class="empty fun">${App.mascot ? App.mascot('sleepy', { size: 92 }) : ''}<h3>עוד אין משמרות</h3><div>כשמגיעים לעבודה לוחצים על "התחל משמרת".<br>שכחת? לוחצים על <b>+</b> ומוסיפים משמרת שכבר הייתה.</div></div>`}
     `;
   };
 

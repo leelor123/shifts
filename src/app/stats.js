@@ -90,6 +90,7 @@
       const snap = await fs.getDoc(fs.doc(db, 'admins', Cloud.user.uid));
       App.isAdmin = snap.exists();
     } catch (e) { App.isAdmin = false; }
+    if (App.isAdmin && root.Support) root.Support.adminInbox().then(() => { if (App.tab === 'settings' && !App.blocking) App.rerender(); }).catch(() => {});
     if (App.isAdmin && App.tab === 'settings' && !App.blocking) App.rerender();
     return App.isAdmin;
   };

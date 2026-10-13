@@ -18,6 +18,29 @@ const server = http.createServer((req, res) => {
   res.end(body);
 });
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
+// Every visible button on the top layer must really receive a tap at its centre (nothing invisible on top of it).
+// A message bubble is shown first, because a hidden message used to swallow taps.
+const HIT = () => {
+  if (window.UI) UI.toast('בדיקה');
+  const sheet = [...document.querySelectorAll('.sheet.show')].pop();
+  const scope = document.querySelector('.coach') ? null : sheet || document;
+  if (!scope) return [];
+  const navTop = sheet ? Infinity : (document.getElementById('nav').getBoundingClientRect().top || Infinity);
+  const out = [];
+  scope.querySelectorAll('button, a[href], [role="button"]').forEach((b) => {
+    if (!sheet && b.closest('.sheet, .dialog')) return;
+    const r = b.getBoundingClientRect();
+    if (r.width < 4 || r.height < 4) return;
+    const cx = r.left + r.width / 2, cy = r.top + r.height / 2;
+    if (cx < 0 || cy < 0 || cx > innerWidth || cy > innerHeight) return;
+    if (!b.closest('#nav') && cy > navTop) return; // scrolled under the bottom bar
+    const st = getComputedStyle(b);
+    if (st.visibility === 'hidden' || st.pointerEvents === 'none' || b.closest('.toast')) return;
+    const t = document.elementFromPoint(cx, cy);
+    if (!t || !(b === t || b.contains(t) || (t.closest && t.closest('button, a') === b))) out.push((b.dataset.act || b.className || b.tagName) + ' ← ' + (t ? (t.id || String(t.className && t.className.baseVal != null ? 'svg' : t.className) || t.tagName) : 'nothing'));
+  });
+  return out;
+};
 const results = [];
 let errors = [];
 (async () => {
@@ -69,7 +92,29 @@ let errors = [];
       await page.click((await page.$('[data-save]')) ? '[data-save]' : '[data-next]'); await sleep(300);
     }
     if (await ev(() => !!App.blocking)) throw new Error('wizard did not finish');
-    await sleep(800);
+    await sleep(1500);
+    // the first-run tour: close it so the next steps can tap freely
+    for (let i = 0; i < 5 && (await page.$('.coach')); i++) { await page.click('.coach'); await sleep(350); }
+  });
+  await step('every button on the main screens can really be tapped', async () => {
+    const bad = [];
+    for (const tab of ['home', 'calendar', 'reports', 'settings']) { await ev((t) => App.go(t), tab); await sleep(450); bad.push(...(await ev(HIT)).map((x) => tab + ': ' + x)); }
+    await ev(() => App.go('home')); await sleep(300);
+    await page.click('#nav [data-act="add-menu"]'); await sleep(600);
+    bad.push(...(await ev(HIT)).map((x) => '+menu: ' + x));
+    const fits = await ev(() => [...document.querySelectorAll('.sheet .am-tile')].every((t) => t.getBoundingClientRect().bottom <= innerHeight));
+    if (!fits) bad.push('+menu: a tile is below the screen edge');
+    await closeAll();
+    if (bad.length) throw new Error(bad.slice(0, 6).join(' | '));
+  });
+  await step('+ menu: the payslip tile opens the payslip sheet, even with a message on screen', async () => {
+    await ev(() => UI.toast('המשמרת נשמרה', { label: 'ביטול', fn: () => {} }));
+    await page.tap('#nav [data-act="add-menu"]'); await sleep(600);
+    const b = await (await page.$('.sheet [data-act="payslip-new"]')).boundingBox();
+    await page.touchscreen.tap(b.x + b.width / 2, b.y + b.height * 0.85); await sleep(900);
+    const t = await ev(() => [...document.querySelectorAll('.sheet.show h2')].map((x) => x.textContent).join('|'));
+    await closeAll();
+    if (!t.includes('תלוש')) throw new Error('opened: ' + t);
   });
   await step('home renders', async () => { await ev(() => App.go('home')); await sleep(400); if (!(await page.$('.home-hero'))) throw new Error('no hero'); });
   await step('start shift → break → back → stop', async () => {
@@ -264,7 +309,7 @@ let errors = [];
       const snap = (list) => ({ docs: list.map(([id, d]) => ({ id, data: () => d })) });
       const fs = {
         collection: (db, ...p) => ({ path: p.join('/') }), doc: (db, ...p) => ({ path: p.join('/') }),
-        getDocsFromServer: async (c) => (c.path === 'stats' ? snap(rows.map((r, i) => ['dev' + i, r])) : snap([['adminUid0123456789abcdef', { added: 1, by: 'x' }]])),
+        getDocsFromServer: async (c) => (c.path === 'stats' ? snap(rows.map((r, i) => ['dev' + i, r])) : c.path === 'admins' ? snap([['adminUid0123456789abcdef', { added: 1, by: 'x' }]]) : snap([['t1', { uid: 'u5', reason: 'bug', text: evil + ' does not work', status: 'open', created: 1, updated: Date.now(), last: 'user', seen: true, name: evil }]])),
         setDoc: async (ref, d) => { writes.push([ref.path, d]); },
       };
       Cloud._useSdk({ fs, db: {} });
@@ -276,8 +321,9 @@ let errors = [];
       if (!entry) return { err: 'no admin entry in settings' };
       entry.click();
       await new Promise((r) => setTimeout(r, 900));
-      const sh = document.querySelector('.sheet .admin');
-      if (!sh) return { err: 'dashboard did not render' };
+      const sh = document.querySelector('.sheet .sh-body');
+      if (!sh || !sh.querySelector('.admin')) return { err: 'dashboard did not render' };
+      const inbox = !!sh.querySelector('[data-adm-ticket="t1"]');
       const kpis = [...sh.querySelectorAll('.kpi .v')].map((x) => x.textContent.trim());
       const imgs = sh.querySelectorAll('img').length;
       const input = sh.querySelector('#adm-uid');
@@ -286,12 +332,13 @@ let errors = [];
       const badWrites = writes.length;
       input.value = 'NewAdmin0123456789abcdefgh'; sh.querySelector('[data-adm-add]').click();
       await new Promise((r) => setTimeout(r, 300));
-      return { kpis, imgs, xss: !!window.__xss, badWrites, writes, text: sh.innerText.includes('<img') };
+      return { kpis, imgs, xss: !!window.__xss, badWrites, writes, text: sh.innerText.includes('<img'), inbox };
     });
     await closeAll();
     await ev(() => { App.isAdmin = false; Cloud.user = null; Cloud._useSdk(null); App.go('home'); });
     if (res.err) throw new Error(res.err);
     if (res.imgs || res.xss) throw new Error('hostile record ran as HTML');
+    if (!res.inbox) throw new Error('support request not in the admin inbox');
     if (!res.text) throw new Error('hostile record should show as plain text');
     if (res.kpis[0] !== '3' || res.kpis[1] !== '1' || res.kpis[2] !== '2' || res.kpis[3] !== '2') throw new Error('wrong numbers: ' + res.kpis.join(','));
     if (res.badWrites) throw new Error('an invalid user id was written');
@@ -305,68 +352,186 @@ let errors = [];
     if (await page.$('.sheet .admin')) throw new Error('dashboard opened without admin rights');
     await closeAll();
   });
+  await step('impossible dates are refused: a future "done" shift becomes planned, future sick day refused', async () => {
+    await ev(() => App.sheetsApi.shiftEditor()); await sleep(700);
+    await ev(() => { const el = document.querySelector('.sheet [data-f="date"]'); el.value = U.addDays(U.todayKey(), 2); el.dispatchEvent(new Event('input', { bubbles: true })); });
+    await sleep(300);
+    // the date in the future switched it to "planned" by itself; force "done" to test the guard
+    await ev(() => document.querySelector('.sheet [data-status="done"]').click()); await sleep(300);
+    const before = await ev(() => Store.S.shifts.filter((s) => s.status === 'planned').length);
+    await page.click('.sheet [data-save]'); await sleep(500);
+    const asked = await ev(() => (document.querySelector('.dialog h3') || {}).textContent || '');
+    await page.click('.dialog [data-i="1"]'); await sleep(900);
+    const after = await ev(() => Store.S.shifts.filter((s) => s.status === 'planned').length);
+    if (!asked.includes('עוד לא')) throw new Error('no question about a future shift: ' + asked);
+    if (after !== before + 1) throw new Error('not saved as planned');
+    await closeAll();
+    await ev(() => App.sheetsApi.entryEditor(null, { kind: 'sick' })); await sleep(600);
+    const max = await ev(() => document.getElementById('en-date').max);
+    await ev(() => { const el = document.getElementById('en-date'); el.value = U.addDays(U.todayKey(), 3); }); await sleep(100);
+    const n0 = await ev(() => Store.S.entries.length);
+    await page.click('.sheet [data-save]'); await sleep(400);
+    const n1 = await ev(() => Store.S.entries.length);
+    await closeAll();
+    if (max !== await ev(() => U.todayKey())) throw new Error('sick day date picker allows the future');
+    if (n1 !== n0) throw new Error('a future sick day was saved');
+  });
+  await step('custom date and time pickers replace the system ones', async () => {
+    await ev(() => App.sheetsApi.shiftEditor()); await sleep(700);
+    if (!(await ev(() => document.querySelectorAll('.sheet .pk-field').length >= 3))) throw new Error('no picker buttons');
+    await page.click('.sheet .pk-field.pk-date'); await sleep(500);
+    const k = await ev(() => U.addDays(U.todayKey(), -1));
+    await page.click('.pk-quick [data-k="' + k + '"]'); await sleep(500);
+    const v = await ev(() => document.querySelector('.sheet [data-f="date"]').value);
+    if (v !== k) throw new Error('date picker gave ' + v);
+    await page.click('.sheet .pk-field.pk-time'); await sleep(500);
+    await page.click('.pk-quick [data-t="12:00"]'); await sleep(500);
+    const t = await ev(() => document.querySelector('.sheet [data-f="startT"]').value);
+    if (t !== '12:00') throw new Error('time picker gave ' + t);
+    const label = await ev(() => document.querySelector('.sheet .pk-field.pk-date').textContent);
+    if (!label.includes('אתמול')) throw new Error('date button text: ' + label);
+    await closeAll();
+  });
+  await step('help centre: search the questions, send a request (not signed in: needs an email)', async () => {
+    await ev(() => { window.__tickets = []; Cloud._useSdk({ db: {}, fs: { collection: (db, ...p) => ({ path: p.join('/') }), addDoc: async (c, d) => { window.__tickets.push([c.path, d]); return { id: 'x' }; } } }); });
+    await ev(() => App.actions.support()); await sleep(700);
+    await ev(() => { const q = document.getElementById('sp-q'); q.value = 'תלוש'; q.dispatchEvent(new Event('input')); }); await sleep(200);
+    const shown = await ev(() => [...document.querySelectorAll('.sp-f')].filter((d) => !d.hidden).length);
+    if (!shown || shown > 4) throw new Error('search shows ' + shown);
+    await page.click('[data-sp-new]'); await sleep(900);
+    await page.click('[data-r="login"]'); await sleep(300);
+    await page.type('#sp-text', 'לא מצליח להתחבר עם גוגל מהאינסטגרם');
+    const disabledNoMail = await ev(() => document.querySelector('[data-sp-send]').disabled);
+    await page.type('#sp-mail', 'kid@example.com'); await sleep(100);
+    await page.click('[data-sp-send]'); await sleep(900);
+    const t = await ev(() => window.__tickets);
+    await ev(() => { document.querySelectorAll('.dialog').forEach((d) => { if (d._resolve) d._resolve(null); d.remove(); }); Cloud._useSdk(null); });
+    await closeAll();
+    if (!disabledNoMail) throw new Error('could send without an email');
+    const d = t[0] && t[0][1];
+    if (!d || t[0][0] !== 'tickets' || d.uid !== '' || d.email !== 'kid@example.com' || d.reason !== 'login' || d.status !== 'open' || d.last !== 'user') throw new Error('request: ' + JSON.stringify(t));
+  });
   await step('demo data clears', async () => { await ev(() => App.demo.clear()); await sleep(800); });
   await step('delete-all (local) wipes', async () => { await ev(() => Store.wipe()); await sleep(300); if (await ev(() => Store.S.shifts.length)) throw new Error('not wiped'); });
 
-  // a brand-new user (sign-in set up, Google stubbed): the questions come first, sign-in at the end
-  const ctx2 = await (browser.createBrowserContext ? browser.createBrowserContext() : browser.createIncognitoBrowserContext());
-  const p2 = await ctx2.newPage();
-  p2.on('pageerror', (e) => errors.push('pageerror: ' + e.message));
-  p2.on('console', (m) => { if (m.type() === 'error' && !/vibrate|favicon|ERR_|net::|Failed to fetch|dynamically imported/.test(m.text())) errors.push('console: ' + m.text()); });
-  await p2.setViewport({ width: 412, height: 860, deviceScaleFactor: 1, isMobile: true, hasTouch: true });
-  await p2.setRequestInterception(true);
-  p2.on('request', (r) => (r.url().startsWith('http://localhost:8783/') ? r.continue() : r.abort()));
-  await p2.evaluateOnNewDocument(() => {
-    const stubs = {
-      probe: async () => true,
-      start: async () => null,
-      signIn: async () => { window.__signIn = (window.__signIn || 0) + 1; return { uid: 'newUser0123456789abcdef', displayName: 'Test', email: 'test@example.com' }; },
-      connect: async (u) => { window.Cloud.user = u; window.__connected = u.uid; },
-    };
-    let C;
-    Object.defineProperty(window, 'Cloud', { configurable: true, get: () => C, set: (v) => { C = v; for (const k of Object.keys(stubs)) Object.defineProperty(v, k, { configurable: true, get: () => stubs[k], set: () => {} }); } });
-  });
-  const e2 = (fn, ...a) => p2.evaluate(fn, ...a);
-  const shot = (n) => p2.screenshot({ path: path.join(out, n + '.png') }).catch(() => {});
+  // brand-new users (sign-in set up, Google stubbed): the questions come first, sign-in at the end
+  async function newUserPage() {
+    const ctx = await (browser.createBrowserContext ? browser.createBrowserContext() : browser.createIncognitoBrowserContext());
+    const p = await ctx.newPage();
+    p.on('pageerror', (e) => errors.push('pageerror: ' + e.message));
+    p.on('console', (m) => { if (m.type() === 'error' && !/vibrate|favicon|ERR_|net::|Failed to fetch|dynamically imported/.test(m.text())) errors.push('console: ' + m.text()); });
+    await p.setViewport({ width: 412, height: 860, deviceScaleFactor: 1, isMobile: true, hasTouch: true });
+    await p.setRequestInterception(true);
+    p.on('request', (r) => (r.url().startsWith('http://localhost:8783/') ? r.continue() : r.abort()));
+    await p.evaluateOnNewDocument(() => {
+      const stubs = {
+        probe: async () => true,
+        start: async () => null,
+        sdkReady: () => true,
+        signIn: () => { window.__signIn = (window.__signIn || 0) + 1; return Promise.resolve({ uid: 'newUser0123456789abcdef', displayName: 'Test', email: 'test@example.com' }); },
+        connect: async (u) => { window.Cloud.user = u; window.Cloud.connected = true; window.__connected = u.uid; },
+      };
+      let C;
+      Object.defineProperty(window, 'Cloud', { configurable: true, get: () => C, set: (v) => { C = v; for (const k of Object.keys(stubs)) Object.defineProperty(v, k, { configurable: true, get: () => stubs[k], set: () => {} }); } });
+    });
+    await p.goto('http://localhost:8783/?cloud=1', { waitUntil: 'load' });
+    await p.waitForFunction(() => !document.getElementById('intro'), { timeout: 15000 });
+    await p.waitForSelector('.ob-welcome', { timeout: 8000 });
+    return { ctx, p, e: (fn, ...a) => p.evaluate(fn, ...a), shot: (n) => p.screenshot({ path: path.join(out, n + '.png') }).catch(() => {}) };
+  }
+  const N = await newUserPage();
+  const p2 = N.p, e2 = N.e, shot = N.shot;
   await step('new user: welcome screen first, no sign-in wall', async () => {
-    await p2.goto('http://localhost:8783/?cloud=1', { waitUntil: 'load' });
-    await p2.waitForFunction(() => !document.getElementById('intro'), { timeout: 15000 });
-    await p2.waitForSelector('.ob-welcome', { timeout: 8000 });
     if (await e2(() => App.blocking !== 'onboarding')) throw new Error('sign-in screen shown before the questions');
     if (!(await p2.$('[data-have]'))) throw new Error('no "I already have an account"');
+    const blocked = await e2(HIT); if (blocked.length) throw new Error('covered buttons: ' + blocked.join(' | '));
     await shot('ob-0');
   });
-  await step('new user: six questions with live previews', async () => {
+  await step('new user: fun questions with live previews, nothing filled in advance', async () => {
     await p2.click('[data-next]'); await sleep(450);
     if (!(await e2(() => App.legalAccepted()))) throw new Error('terms not accepted on start');
-    const t1 = await e2(() => document.getElementById('ob-live-roles').textContent);
-    if (!/₪/.test(t1)) throw new Error('no live pay preview: ' + t1);
-    await e2(() => { const i = document.querySelector('[data-rr="0"]'); i.value = '50'; i.dispatchEvent(new Event('input', { bubbles: true })); });
-    if (!(await e2(() => document.getElementById('ob-live-roles').textContent.includes('400')))) throw new Error('preview did not react');
-    await shot('ob-1');
-    await p2.click('[data-next]'); await sleep(450);
-    if (!(await e2(() => /₪/.test(document.getElementById('ob-live-travel').textContent)))) throw new Error('no travel preview');
-    await p2.click('[data-next]'); await sleep(450);
-    await p2.click('[data-next]'); await sleep(450);
+    if (await e2(() => document.getElementById('ob-name').value)) throw new Error('name pre-filled');
+    await p2.type('#ob-name', 'נועה');
+    await p2.click('[data-gender="f"]'); await sleep(700);
+    if (!(await p2.$('#ob-birth'))) throw new Error('gender did not move on to the age question');
     await e2(() => { const b = document.getElementById('ob-birth'); b.value = U.addDays(U.todayKey(), -16 * 366); b.dispatchEvent(new Event('input', { bubbles: true })); });
+    await sleep(300);
     const age = await e2(() => document.getElementById('ob-live-age').textContent);
-    if (!age.includes('16')) throw new Error('age preview: ' + age);
-    await shot('ob-4');
+    if (!age.includes('27.94')) throw new Error('age preview: ' + age);
+    if (await e2(() => document.getElementById('ob-birth').max > U.addDays(U.todayKey(), -365 * 12))) throw new Error('a birthday in the future is allowed');
+    await shot('ob-age');
     await p2.click('[data-next]'); await sleep(450);
+    if (await e2(() => document.querySelector('[data-jr="0"]').value)) throw new Error('hourly rate pre-filled');
+    if (!(await e2(() => document.querySelector('[data-jr="0"]').placeholder === '27.94'))) throw new Error('suggested rate is not the youth minimum');
+    await p2.click('[data-jobname="מלצרות"]'); await sleep(300);
+    await e2(() => { const i = document.querySelector('[data-jr="0"]'); i.value = '50'; i.dispatchEvent(new Event('input', { bubbles: true })); });
+    if (!(await e2(() => document.getElementById('ob-live-roles').textContent.includes('400')))) throw new Error('pay preview did not react');
     await p2.click('[data-next]'); await sleep(450);
-    await p2.click('[data-next]'); await sleep(700);
+    await p2.click('[data-travel="yes"]'); await sleep(300);
+    if (!(await e2(() => document.getElementById('ob-travel').placeholder === '16'))) throw new Error('travel suggestion is not 16');
+    if (!(await e2(() => document.getElementById('ob-live-travel').textContent.includes('240')))) throw new Error('no travel preview');
+    await p2.click('[data-next]'); await sleep(450);
+    await p2.click('[data-city="חיפה"]'); await sleep(800);
+    await p2.click('[data-start="months"]'); await sleep(900);
     if (!(await p2.$('.ob-google'))) throw new Error('no "save with Google" on the last step');
+    const blocked = await e2(HIT); if (blocked.length) throw new Error('covered buttons: ' + blocked.join(' | '));
     await shot('ob-done');
   });
   await step('new user: save with Google signs in and opens the app', async () => {
     await p2.click('.ob-google'); await sleep(1500);
-    const st = await e2(() => ({ signIn: window.__signIn, connected: window.__connected, onboarded: Store.S.settings.onboarded, blocking: App.blocking, rate: App.roles().some((r) => Engine.roleRate(r, U.todayKey()) === 50), birth: Store.S.settings.birthDate, hero: !!document.querySelector('.home-hero') }));
+    const st = await e2(() => ({ signIn: window.__signIn, connected: window.__connected, onboarded: Store.S.settings.onboarded, blocking: App.blocking, roles: App.roles().map((r) => r.name + ':' + Engine.roleRate(r, U.todayKey())), birth: Store.S.settings.birthDate, city: Store.S.settings.rest.city, travel: Store.S.employers[0].travelPerDay, cp: Store.S.settings.tax.creditPoints, name: Store.S.settings.userName, start: Store.S.settings.startDate, hero: !!document.querySelector('.home-hero') }));
     if (st.signIn !== 1 || st.connected !== 'newUser0123456789abcdef') throw new Error('sign-in not done ' + JSON.stringify(st));
     if (!st.onboarded || st.blocking || !st.hero) throw new Error('not in the app ' + JSON.stringify(st));
-    if (!st.rate || !st.birth) throw new Error('answers not saved ' + JSON.stringify(st));
+    if (st.roles.join() !== 'מלצרות:50' || !st.birth || st.city !== 'חיפה' || st.travel !== 16 || st.cp !== 2.75 || st.name !== 'נועה' || !st.start) throw new Error('answers not saved ' + JSON.stringify(st));
     await shot('ob-home');
   });
-  await ctx2.close();
+  await step('new user: a short tour points at the main buttons, then the first-steps card', async () => {
+    await p2.waitForSelector('.coach', { timeout: 4000 });
+    for (let i = 0; i < 5 && (await p2.$('.coach')); i++) { await p2.click('.coach'); await sleep(350); }
+    await sleep(400);
+    if (await p2.$('.coach')) throw new Error('tour did not close');
+    if (!(await p2.$('.card.guide'))) throw new Error('no first-steps card');
+    const blocked = await e2(HIT); if (blocked.length) throw new Error('covered buttons: ' + blocked.join(' | '));
+  });
+  await N.ctx.close();
+  await step('new user who skips every question gets the usual answers', async () => {
+    const M = await newUserPage();
+    await M.p.click('[data-next]'); await sleep(400);
+    for (let i = 0; i < 6; i++) { await M.p.click('[data-skip]'); await sleep(350); }
+    if (!(await M.p.$('.ob-google'))) throw new Error('skipping did not reach the end');
+    await M.p.click('.ob-google'); await sleep(1400);
+    const st = await M.e(() => ({ roles: App.roles().map((r) => r.name + ':' + Engine.roleRate(r, U.todayKey())), travel: Store.S.employers[0].travelPerDay, city: Store.S.settings.rest.city, birth: Store.S.settings.birthDate, start: Store.S.settings.startDate, onboarded: Store.S.settings.onboarded }));
+    await M.ctx.close();
+    if (st.roles.join() !== 'העבודה שלי:35.4' || st.travel !== 16 || st.city !== 'תל אביב-יפו' || st.birth !== null || st.start !== null || !st.onboarded) throw new Error('defaults: ' + JSON.stringify(st));
+  });
+  await step('Google popup blocked: a clear message and a second try works', async () => {
+    const M = await newUserPage();
+    await M.e(() => { let n = 0; Object.defineProperty(window.Cloud, 'signIn', { configurable: true, get: () => () => (++n === 1 ? Promise.reject(Object.assign(new Error('blocked'), { code: 'auth/popup-blocked' })) : Promise.resolve({ uid: 'u9', email: 'x@example.com' })) }); });
+    await M.p.click('[data-next]'); await sleep(400);
+    for (let i = 0; i < 6; i++) { await M.p.click('[data-skip]'); await sleep(350); }
+    await M.p.click('.ob-google'); await sleep(600);
+    const msg = await M.e(() => (document.querySelector('.ob-done .banner') || {}).textContent || '');
+    const redirect = !!(await M.p.$('[data-redirect]'));
+    await M.p.click('.ob-google'); await sleep(1200);
+    const inApp = await M.e(() => !App.blocking && !!document.querySelector('.home-hero'));
+    await M.ctx.close();
+    if (!msg.includes('חסם')) throw new Error('message: ' + msg);
+    if (!redirect) throw new Error('no other way offered');
+    if (!inApp) throw new Error('second try did not get in');
+  });
+  await step('the questions keep working when the phone storage fails', async () => {
+    const M = await newUserPage();
+    // every IndexedDB write from now on fails, like the iPhone "Indexed Database server lost" error
+    await M.e(() => { const orig = IDBDatabase.prototype.transaction; IDBDatabase.prototype.transaction = function (s, m) { if (m === 'readwrite') throw new DOMException('Connection to Indexed Database server lost', 'UnknownError'); return orig.call(this, s, m); }; });
+    await M.p.click('[data-next]'); await sleep(450);
+    const moved = await M.e(() => !!document.getElementById('ob-name'));
+    for (let i = 0; i < 6; i++) { await M.p.click('[data-skip]'); await sleep(350); }
+    await M.p.click('.ob-google'); await sleep(2500);
+    const st = await M.e(() => ({ blocking: App.blocking, hero: !!document.querySelector('.home-hero'), onboarded: Store.S.settings.onboarded, banner: (document.querySelector('.banner') || {}).textContent || '' }));
+    await M.ctx.close();
+    if (!moved) throw new Error('the first button did nothing');
+    if (st.blocking || !st.hero || !st.onboarded) throw new Error('stuck: ' + JSON.stringify(st));
+  });
 
   const failed = results.filter((r) => !r.ok);
   console.log(`\n${results.length - failed.length}/${results.length} steps passed`);

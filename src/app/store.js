@@ -26,6 +26,9 @@
   };
 
   let db = null;
+  // true when this browser can't keep a local database (some private modes, a broken storage engine):
+  // the app then runs from memory and the cloud account keeps the data
+  let memoryOnly = false;
   const S = { settings: null, meta: {}, activeShift: null };
   LIST_STORES.forEach((s) => (S[s] = []));
   const listeners = new Set();
@@ -40,26 +43,71 @@
           if (!d.objectStoreNames.contains(name)) d.createObjectStore(name, { keyPath: name === 'kv' ? 'key' : 'id' });
         }
       };
-      req.onsuccess = () => resolve(req.result);
+      req.onsuccess = () => {
+        const d = req.result;
+        // the browser may drop the connection (iPhones do when the app goes to the background): reopen on next use
+        d.onclose = () => { if (db === d) db = null; };
+        d.onversionchange = () => { d.close(); if (db === d) db = null; };
+        resolve(d);
+      };
       req.onerror = () => reject(req.error);
       req.onblocked = () => reject(new Error('מסד הנתונים חסום — סגור לשוניות אחרות של האפליקציה'));
     });
   }
-  function tx(stores, mode) {
-    return db.transaction(stores, mode || 'readonly');
-  }
-  function reqP(r) {
-    return new Promise((res, rej) => { r.onsuccess = () => res(r.result); r.onerror = () => rej(r.error); });
-  }
   function done(t) {
-    return new Promise((res, rej) => { t.oncomplete = () => res(); t.onerror = () => rej(t.error); t.onabort = () => rej(t.error); });
+    return new Promise((res, rej) => { t.oncomplete = () => res(); t.onerror = () => rej(t.error); t.onabort = () => rej(t.error || new Error('transaction aborted')); });
   }
+  const pause = (ms) => new Promise((r) => setTimeout(r, ms));
+  const STORAGE_LOST = ['UnknownError', 'InvalidStateError', 'TransactionInactiveError', 'AbortError', 'QuotaExceededError', 'NotFoundError', 'VersionError', 'Error'];
+  /**
+   * Runs one transaction: body(t) queues the reads/writes and run() waits for the commit.
+   * A lost or broken connection is reopened and the transaction tried again (bodies only write
+   * the current in-memory state, so repeating one is safe). In memory-only mode body gets null.
+   */
+  async function run(stores, mode, body) {
+    for (let attempt = 0; ; attempt++) {
+      if (memoryOnly) return body(null);
+      try {
+        if (!db) db = await openDb();
+        const t = db.transaction(stores, mode || 'readonly');
+        const out = body(t);
+        await done(t);
+        return out;
+      } catch (e) {
+        try { if (db) db.close(); } catch (x) { /* already closed */ }
+        db = null;
+        if (attempt >= 2) {
+          // the phone's storage stopped working (lost connection, storage full): carry on from memory for
+          // this session, so nothing freezes; the cloud copy keeps the data, and the app says so once
+          if (!e || !e.name || STORAGE_LOST.includes(e.name)) {
+            console.warn('local database lost, continuing from memory', e);
+            memoryOnly = true;
+            db = null;
+            emit({ type: 'storage-lost' });
+            return body(null);
+          }
+          throw e;
+        }
+        await pause(120 * (attempt + 1));
+      }
+    }
+  }
+  /** Reads every record of a store. */
   async function getAll(store) {
-    return reqP(tx([store]).objectStore(store).getAll());
+    let req = null;
+    await run([store], 'readonly', (t) => { if (t) req = t.objectStore(store).getAll(); });
+    return (req && req.result) || [];
   }
 
   async function load() {
-    db = await openDb();
+    try {
+      db = await openDb();
+    } catch (e) {
+      // no local database in this browser: keep going from memory (the cloud account keeps the data)
+      console.warn('local database unavailable, running from memory', e);
+      memoryOnly = true;
+      db = null;
+    }
     try { if (navigator.storage && navigator.storage.persist) await navigator.storage.persist(); } catch (e) { /* optional */ }
     const kv = await getAll('kv');
     const kvMap = Object.fromEntries(kv.map((x) => [x.key, x.value]));
@@ -110,31 +158,28 @@
   }
 
   async function rawPut(store, obj) {
-    const t = tx([store], 'readwrite');
-    t.objectStore(store).put(obj);
-    return done(t);
+    return run([store], 'readwrite', (t) => { if (t) t.objectStore(store).put(obj); });
   }
   async function rawDel(store, id) {
-    const t = tx([store], 'readwrite');
-    t.objectStore(store).delete(id);
-    return done(t);
+    return run([store], 'readwrite', (t) => { if (t) t.objectStore(store).delete(id); });
   }
   async function rawKv(key, value) {
     return rawPut('kv', { key, value });
   }
   async function saveAll() {
-    const t = tx(STORES, 'readwrite');
-    for (const s of LIST_STORES) {
-      const os = t.objectStore(s);
-      os.clear();
-      for (const x of S[s]) os.put(x);
-    }
-    const kv = t.objectStore('kv');
-    kv.put({ key: 'settings', value: S.settings });
-    kv.put({ key: 'meta', value: S.meta });
-    kv.put({ key: 'activeShift', value: S.activeShift });
-    kv.put({ key: 'schemaVersion', value: SCHEMA_VERSION });
-    return done(t);
+    return run(STORES, 'readwrite', (t) => {
+      if (!t) return;
+      for (const s of LIST_STORES) {
+        const os = t.objectStore(s);
+        os.clear();
+        for (const x of S[s]) os.put(x);
+      }
+      const kv = t.objectStore('kv');
+      kv.put({ key: 'settings', value: S.settings });
+      kv.put({ key: 'meta', value: S.meta });
+      kv.put({ key: 'activeShift', value: S.activeShift });
+      kv.put({ key: 'schemaVersion', value: SCHEMA_VERSION });
+    });
   }
 
   function emit(what) {
@@ -153,7 +198,7 @@
     opts = opts || {};
     const inverse = [];
     const now = Date.now();
-    const t = tx([...new Set(ops.map((o) => o.store).concat(['kv']))], 'readwrite');
+    const writes = []; // [store, record] or [store, null, id] for a delete
     const pend = S.meta.pendingDeletes || (S.meta.pendingDeletes = []);
     let metaChanged = false;
     for (const op of ops) {
@@ -166,7 +211,7 @@
         const i = arr.findIndex((x) => x.id === obj.id);
         inverse.push(i >= 0 ? { store: op.store, put: clone(arr[i]) } : { store: op.store, del: obj.id });
         if (i >= 0) arr[i] = obj; else arr.push(obj);
-        t.objectStore(op.store).put(obj);
+        writes.push([op.store, obj]);
         const pi = pend.findIndex((d) => d.store === op.store && d.id === obj.id);
         if (pi >= 0) { pend.splice(pi, 1); metaChanged = true; }
       } else if (op.del) {
@@ -174,12 +219,15 @@
         if (i < 0) continue;
         inverse.push({ store: op.store, put: clone(arr[i]) });
         arr.splice(i, 1);
-        t.objectStore(op.store).delete(op.del);
+        writes.push([op.store, null, op.del]);
         if (SYNC_STORES.includes(op.store)) { pend.push({ store: op.store, id: op.del, at: now }); metaChanged = true; }
       }
     }
-    if (metaChanged) t.objectStore('kv').put({ key: 'meta', value: S.meta });
-    await done(t);
+    await run([...new Set(ops.map((o) => o.store).concat(['kv']))], 'readwrite', (t) => {
+      if (!t) return;
+      for (const [st, rec, id] of writes) { if (rec) t.objectStore(st).put(rec); else t.objectStore(st).delete(id); }
+      if (metaChanged) t.objectStore('kv').put({ key: 'meta', value: S.meta });
+    });
     if (label && opts.undo !== false) {
       undoStack.push({ label, ops: inverse.reverse() });
       if (undoStack.length > 30) undoStack.shift();
@@ -194,36 +242,42 @@
    * Deletions are queued in meta.pendingDeletes and sent as tombstones. */
   async function applyRemote(ops) {
     if (!ops.length) return;
-    const t = tx([...new Set(ops.map((o) => o.store))], 'readwrite');
+    const writes = [];
     for (const op of ops) {
       const arr = S[op.store];
       if (op.put) {
         const obj = safeRecord(op.store, Object.assign({}, op.put, { _syncedAt: op.put.updatedAt }));
         const i = arr.findIndex((x) => x.id === obj.id);
         if (i >= 0) arr[i] = obj; else arr.push(obj);
-        t.objectStore(op.store).put(obj);
+        writes.push([op.store, obj]);
       } else if (op.del) {
         const i = arr.findIndex((x) => x.id === op.del);
         if (i >= 0) arr.splice(i, 1);
-        t.objectStore(op.store).delete(op.del);
+        writes.push([op.store, null, op.del]);
       }
     }
-    await done(t);
+    await run([...new Set(ops.map((o) => o.store))], 'readwrite', (t) => {
+      if (!t) return;
+      for (const [st, rec, id] of writes) { if (rec) t.objectStore(st).put(rec); else t.objectStore(st).delete(id); }
+    });
     undoStack.length = 0; // remote changes invalidate local undo history
     emit({ type: 'data', remote: true, stores: ops.map((o) => o.store) });
   }
   /** After a successful push: remember which versions are in the cloud (silent). */
   async function markSynced(items, deletes) {
-    const t = tx([...new Set(items.map((x) => x.store).concat(['kv']))], 'readwrite');
+    const recs = [];
     for (const it of items) {
       const rec = S[it.store].find((x) => x.id === it.id);
-      if (rec && rec.updatedAt === it.at) { rec._syncedAt = it.at; t.objectStore(it.store).put(rec); }
+      if (rec && rec.updatedAt === it.at) { rec._syncedAt = it.at; recs.push([it.store, rec]); }
     }
     if (deletes && deletes.length) {
       S.meta.pendingDeletes = (S.meta.pendingDeletes || []).filter((d) => !deletes.some((x) => x.store === d.store && x.id === d.id && x.at === d.at));
     }
-    t.objectStore('kv').put({ key: 'meta', value: S.meta });
-    await done(t);
+    await run([...new Set(items.map((x) => x.store).concat(['kv']))], 'readwrite', (t) => {
+      if (!t) return;
+      for (const [st, rec] of recs) t.objectStore(st).put(rec);
+      t.objectStore('kv').put({ key: 'meta', value: S.meta });
+    });
   }
   function dirtyRecords() {
     const out = [];
@@ -317,7 +371,9 @@
     await rawPut('files', { id, blob, name, type, at: Date.now() });
   }
   async function getFile(id) {
-    return reqP(tx(['files']).objectStore('files').get(id));
+    let req = null;
+    await run(['files'], 'readonly', (t) => { if (t) req = t.objectStore('files').get(id); });
+    return req ? req.result : undefined;
   }
   async function delFile(id) { return rawDel('files', id); }
 
@@ -366,9 +422,7 @@
       S.meta.activeUpdatedAt = Date.now();
       S.meta.activeDirty = true;
       for (const s of LIST_STORES) S[s] = incoming[s];
-      const t = tx(['files'], 'readwrite');
-      t.objectStore('files').clear();
-      await done(t);
+      await run(['files'], 'readwrite', (t) => { if (t) t.objectStore('files').clear(); });
     } else {
       for (const s of LIST_STORES) {
         const ids = new Set(S[s].map((x) => x.id));
@@ -384,9 +438,7 @@
     emit({ type: 'restore', mode });
   }
   async function wipe() {
-    const t = tx(STORES, 'readwrite');
-    for (const s of STORES) t.objectStore(s).clear();
-    await done(t);
+    await run(STORES, 'readwrite', (t) => { if (t) for (const s of STORES) t.objectStore(s).clear(); });
     S.settings = root.Defaults.defaultSettings();
     S.meta = {}; S.activeShift = null;
     for (const s of LIST_STORES) S[s] = [];
@@ -397,7 +449,7 @@
   }
 
   root.Store = {
-    S, load, on, apply, put, del, undo: undoAny, canUndo, setSettings, setMeta, setActive, find, clone,
+    S, load, on, apply, isMemoryOnly: () => memoryOnly, put, del, undo: undoAny, canUndo, setSettings, setMeta, setActive, find, clone,
     putFile, getFile, delFile, exportBackup, importBackup, wipe, saveAll, SCHEMA_VERSION, DB_NAME,
     SYNC_STORES, applyRemote, markSynced, dirtyRecords, touchAll, forgetSyncState, applyRemoteSettings, applyRemoteActive,
   };

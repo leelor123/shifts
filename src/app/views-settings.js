@@ -14,11 +14,26 @@
     num: (label, path, v, hint, ph) => `<label class="field"><span class="lbl">${label}</span><input class="input" type="number" step="any" inputmode="decimal" data-s="${path}" value="${v == null ? '' : esc(v)}" placeholder="${ph || ''}">${hint ? `<span class="hint">${hint}</span>` : ''}</label>`,
     text: (label, path, v, hint, extra) => `<label class="field"><span class="lbl">${label}</span><input class="input" data-s="${path}" value="${esc(v || '')}" ${extra || ''}>${hint ? `<span class="hint">${hint}</span>` : ''}</label>`,
     time: (label, path, v) => `<label class="field"><span class="lbl">${label}</span><input class="input" type="time" data-s="${path}" value="${esc(v || '')}"></label>`,
-    date: (label, path, v, hint) => `<label class="field"><span class="lbl">${label}</span><input class="input" type="date" data-s="${path}" value="${esc(v || '')}">${hint ? `<span class="hint">${hint}</span>` : ''}</label>`,
+    date: (label, path, v, hint) => `<label class="field"><span class="lbl">${label}</span><input class="input" type="date" data-s="${path}" value="${esc(v || '')}" ${dateLimits(path)}>${hint ? `<span class="hint">${hint}</span>` : ''}</label>`,
     sw: (t, s, path, on) => `<label class="switch-row"><span class="body"><span class="t">${t}</span>${s ? `<span class="s">${s}</span>` : ''}</span><input type="checkbox" class="switch" data-s="${path}" ${on ? 'checked' : ''}></label>`,
     sel: (label, path, opts, v, hint) => `<label class="field"><span class="lbl">${label}</span><select class="input" data-s="${path}">${opts.map(([k, l]) => `<option value="${esc(k)}" ${String(k) === String(v) ? 'selected' : ''}>${esc(l)}</option>`).join('')}</select>${hint ? `<span class="hint">${hint}</span>` : ''}</label>`,
   };
   App.F = F;
+  /* dates that can't be right are not accepted: a birthday in the future, starting work before age 12, … */
+  function dateRules(path) {
+    const today = U.todayKey();
+    const birth = S.settings.birthDate;
+    return {
+      's.birthDate': { min: '1940-01-01', max: U.addDays(today, -365 * 12), pick: 'birth', msg: 'תאריך לידה לא הגיוני' },
+      's.startDate': { min: birth ? U.addDays(birth, 365 * 12) : '1960-01-01', max: today, msg: 'תאריך תחילת העבודה לא יכול להיות בעתיד או לפני גיל 12' },
+      's.leave.vacationOpeningDate': { min: '2000-01-01', max: today, msg: 'התאריך לא יכול להיות בעתיד' },
+    }[path];
+  }
+  function dateLimits(path) {
+    const r = dateRules(path);
+    return r ? `min="${r.min}" max="${r.max}"${r.pick ? ` data-pick="${r.pick}"` : ''}` : '';
+  }
+  App.dateOk = (el) => !(el.type === 'date' && el.value && ((el.min && el.value < el.min) || (el.max && el.value > el.max)));
   function setPath(obj, path, v) {
     const p = path.split('.');
     let o = obj;
@@ -40,6 +55,12 @@
       const t = e.target;
       const path = t.dataset.s;
       if (!path) return;
+      if (!App.dateOk(t)) {
+        const r = dateRules(path);
+        UI.invalid((r && r.msg) || 'התאריך לא הגיוני');
+        if (redraw) redraw();
+        return;
+      }
       const v = readVal(t);
       if (path.startsWith('s.')) await Store.setSettings((st) => setPath(st, path.slice(2), v));
       else if (path.startsWith('e.')) {
@@ -95,8 +116,10 @@
   App.views.settings = function () {
     const groups = [['חשבון', ['account', 'personal']], ['עבודה ושכר', ['rights', 'roles', 'calc', 'rest', 'pay', 'net', 'leave', 'goal']], ['אפליקציה', ['assistant', 'alerts', 'templates', 'look', 'security', 'ai']], ['נתונים', ['backup', 'export', 'demo', 'about']]];
     return `<div class="topbar"><div class="titles"><h1>הגדרות</h1><div class="sub">כל שינוי נשמר מיד</div></div></div>
-      ${App.isAdmin ? `<div class="list" style="margin-top:6px"><button class="item admin-entry" data-act="admin-dashboard"><span class="lead" style="background:var(--primary);color:var(--on-primary)">${icon('chart')}</span><span class="body"><span class="t">לוח ניהול</span><span class="s">משתמשים, פעילות ותכונות (למנהלים בלבד)</span></span>${icon('left', 's')}</button></div>` : ''}
-      ${groups.map(([g, keys]) => `<div class="section-title">${g}</div><div class="list">${keys.map((k) => { const s = SECTIONS[k]; return `<button class="item" data-act="settings-open" data-k="${k}"><span class="lead" style="background:var(--secondary-container);color:var(--on-secondary-container)">${icon(s.icon)}</span><span class="body"><span class="t">${s.title}</span><span class="s">${esc(s.sub())}</span></span>${icon('left', 's')}</button>`; }).join('')}</div>`).join('')}
+      ${App.isAdmin ? `<div class="list" style="margin-top:6px"><button class="item admin-entry" data-act="admin-dashboard"><span class="lead" style="background:var(--primary);color:var(--on-primary)">${icon('chart')}</span><span class="body"><span class="t">לוח ניהול ${App.adminOpenTickets ? `<span class="tag warn">${App.adminOpenTickets} פניות מחכות</span>` : ''}</span><span class="s">משתמשים, פעילות, פניות (למנהלים בלבד)</span></span>${icon('left', 's')}</button></div>` : ''}
+      <div class="list set-list help-list"><button class="item" data-act="support"><span class="lead">💬</span><span class="body"><span class="t">עזרה ותמיכה ${App.supportUnread ? '<span class="tag good">תשובה חדשה</span>' : ''}</span><span class="s">שאלות נפוצות, לכתוב לנו, הפניות שלי</span></span>${icon('left', 's')}</button>
+        <button class="item" data-act="share-app"><span class="lead">🎁</span><span class="body"><span class="t">לשתף עם חברים</span><span class="s">שגם הם ידעו כמה מגיע להם</span></span>${icon('left', 's')}</button></div>
+      ${groups.map(([g, keys]) => `<div class="section-title">${g}</div><div class="list set-list">${keys.map((k) => { const s = SECTIONS[k]; return `<button class="item" data-act="settings-open" data-k="${k}"><span class="lead">${icon(s.icon)}</span><span class="body"><span class="t">${s.title}</span><span class="s">${esc(s.sub())}</span></span>${icon('left', 's')}</button>`; }).join('')}</div>`).join('')}
       <div class="section-title">מידע משפטי</div>
       <div class="list">${[['about', 'info', 'אודות'], ['terms', 'file', 'תנאי שימוש'], ['privacy', 'shield', 'מדיניות פרטיות'], ['disclaimer', 'alert', 'הבהרה משפטית'], ['accessibility', 'eye', 'הצהרת נגישות'], ['licenses', 'layers', 'רישיונות וצד שלישי']].map(([d, ic, t]) => `<button class="item" data-act="legal" data-doc="${d}"><span class="lead" style="background:var(--surface-3)">${icon(ic)}</span><span class="body"><span class="t">${t}</span></span>${icon('left', 's')}</button>`).join('')}</div>
       <div class="ver">גרסה ${root.APP_VERSION} · מבנה נתונים ${Store.SCHEMA_VERSION}${S.settings.legal ? ' · תנאים ' + esc(S.settings.legal.version) + ' אושרו' : ''}</div>`;

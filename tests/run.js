@@ -6,7 +6,7 @@ for (const f of ['util.js', 'hebcal.js', 'defaults.js', 'engine.js', 'insights.j
   try { require(path.join(src, f)); } catch (e) { if (e.code !== 'MODULE_NOT_FOUND') throw e; }
 }
 const T = require('./t.js');
-for (const f of ['engine.test.js', 'insights.test.js', 'payslip.test.js']) {
+for (const f of ['engine.test.js', 'insights.test.js', 'payslip.test.js', 'links.test.js']) {
   try { require(path.join(__dirname, f)); } catch (e) { if (e.code !== 'MODULE_NOT_FOUND') throw e; }
 }
 T.section('cloud sync (simulated phones)');

@@ -21,24 +21,23 @@
   };
 
   /* ---------------- add menu ---------------- */
+  /* everything that can be added, as big tiles that all fit on one screen (nothing hides below the fold) */
   App.actions['add-menu'] = () => {
     const tpls = S.templates;
-    const opt = (act, ic, t, s) => `<button class="item" data-act="${act}"><span class="lead" style="background:var(--primary-container);color:var(--on-primary-container)">${icon(ic)}</span><span class="body"><span class="t">${t}</span><span class="s">${s}</span></span></button>`;
+    const tile = (act, emoji, t, cls, extra) => `<button class="am-tile ${cls || ''}" data-act="${act}" ${extra || ''}><span class="am-e" aria-hidden="true">${emoji}</span><span class="am-t">${t}</span></button>`;
     UI.openSheet({
-      title: 'מה להוסיף?',
-      body: `<div class="list">
-        ${opt('shift-new', 'clock', 'משמרת', 'תאריך, שעות, תפקיד, הפסקה')}
-        ${opt('shift-plan', 'calendar', 'משמרת מתוכננת', 'לתכנון עתידי — לא נספרת עד שמסמנים "בוצעה"')}
-        ${opt('dup-last', 'copy', 'שכפל משמרת אחרונה', 'אותן שעות ותפקיד, היום')}
-        ${tpls.length ? opt('tpl-pick', 'layers', 'מתבנית', tpls.map((t) => esc(t.name)).join(' · ')) : ''}
-      </div><div class="list">
-        ${opt('entry-new" data-kind="vacation', 'beach', 'יום חופשה', 'משולם לפי שכר יומי ממוצע')}
-        ${opt('entry-new" data-kind="sick', 'thermo', 'יום מחלה', 'יום 1: 0%, ימים 2–3: 50%, מהרביעי: 100%')}
-        ${opt('entry-new" data-kind="adjustment" data-type="bonus', 'gift', 'בונוס / טיפים / תוספת', 'סכום חד-פעמי')}
-        ${opt('entry-new" data-kind="adjustment" data-type="deduction', 'minus', 'ניכוי', 'ארוחה, ביגוד, קנס…')}
-      </div><div class="list">
-        ${opt('payslip-new', 'receipt', 'תלוש שכר', 'סריקה ובדיקה מול המשמרות שרשמת')}
-      </div>`,
+      title: 'מה להוסיף? ✨',
+      cls: 'add-sheet',
+      body: `<div class="am-main">${tile('shift-new', '⏱️', 'משמרת שעשיתי', 'big g1')}${tile('shift-plan', '📅', 'משמרת עתידית', 'big g2')}</div>
+        <div class="am-grid">
+          ${S.shifts.some((s) => s.status !== 'planned') ? tile('dup-last', '🔁', 'כמו האחרונה') : ''}
+          ${tpls.length ? tile('tpl-pick', '🧩', 'מתבנית') : ''}
+          ${tile('entry-new', '🏖️', 'יום חופשה', '', 'data-kind="vacation"')}
+          ${tile('entry-new', '🤒', 'יום מחלה', '', 'data-kind="sick"')}
+          ${tile('entry-new', '🎁', 'בונוס / טיפים', '', 'data-kind="adjustment" data-type="bonus"')}
+          ${tile('entry-new', '➖', 'ניכוי', '', 'data-kind="adjustment" data-type="deduction"')}
+          ${tile('payslip-new', '🧾', 'בדיקת תלוש', 'hl')}
+        </div>`,
     });
   };
   const fromMenu = (fn) => (el) => { if (UI.sheets.length) { UI.closeTop(); setTimeout(() => fn(el), 320); } else fn(el); };
@@ -311,7 +310,7 @@
       return `
         <div class="seg" style="margin-bottom:14px"><button data-status="done" class="${d.status === 'done' ? 'on' : ''}">בוצעה</button><button data-status="planned" class="${d.status === 'planned' ? 'on' : ''}">מתוכננת</button></div>
         ${App.multiEmp() ? `<label class="field"><span class="lbl">מעסיק</span>${sel('employerId', S.employers.map((e) => [e.id, esc(e.name)]), d.employerId)}</label>` : ''}
-        <label class="field"><span class="lbl">תאריך</span>${inp('date', d.date, 'type="date"')}</label>
+        <label class="field"><span class="lbl">תאריך</span>${inp('date', d.date, `type="date" min="2000-01-01" max="${U.addDays(U.todayKey(), 366)}"`)}</label>
         <div class="grid2">
           <label class="field"><span class="lbl">התחלה</span>${inp('startT', d.startT, 'type="time"')}</label>
           <label class="field"><span class="lbl">סיום ${overnight ? '<span class="tag planned">למחרת</span>' : ''}</span>${inp('endT', d.endT, 'type="time"')}</label>
@@ -436,7 +435,18 @@
     async function save() {
       if (!d.date || !d.startT || !d.endT) { UI.invalid('מלא תאריך, שעת התחלה ושעת סיום'); return; }
       if (!d.roleId) { UI.invalid('בחר תפקיד'); return; }
+      if (d.date < '2000-01-01' || d.date > U.addDays(U.todayKey(), 366)) { UI.invalid('התאריך לא הגיוני'); return; }
       const sh = shiftFrom(d);
+      // a shift that hasn't happened yet can't be "done": it can be saved as planned
+      if (sh.status === 'done' && sh.end > Date.now() + 5 * 60000) {
+        const started = sh.start <= Date.now();
+        const ok = await UI.confirm(started ? 'המשמרת עוד לא נגמרה' : 'המשמרת הזאת עוד לא קרתה',
+          started ? 'שעת הסיום עוד לא הגיעה. כדי למדוד משמרת שקורית עכשיו, לוחצים "התחל משמרת" בבית. לשמור אותה בינתיים כמשמרת מתוכננת?' : 'התאריך והשעה בעתיד. לשמור אותה כמשמרת מתוכננת? אחרי שתעבוד, מסמנים שהיא בוצעה בלחיצה.',
+          'שמור כמתוכננת');
+        if (!ok) return;
+        sh.status = 'planned';
+        d.status = 'planned';
+      }
       const hours = (sh.end - sh.start) / U.HOUR;
       if (hours > (+S.settings.alerts.suspiciousHours || 20)) {
         if (!(await UI.confirm('משמרת ארוכה מאוד', `המשמרת נמשכת ${U.num(hours, 1)} שעות. לשמור?`, 'שמור'))) return;
@@ -464,7 +474,7 @@
       title: (orig ? 'עריכת ' : '') + titles[d.kind],
       body: `
         ${d.kind === 'adjustment' ? `<div class="field"><span class="lbl">סוג</span><select class="input" id="en-type">${[['bonus', 'בונוס'], ['tips', 'טיפים'], ['addition', 'תוספת חד-פעמית'], ['deduction', 'ניכוי (ארוחה, ביגוד, קנס…)']].map(([v, l]) => `<option value="${v}" ${d.type === v ? 'selected' : ''}>${l}</option>`).join('')}</select></div>` : ''}
-        <label class="field"><span class="lbl">תאריך</span><input class="input" type="date" id="en-date" value="${d.date}"></label>
+        <label class="field"><span class="lbl">תאריך</span><input class="input" type="date" id="en-date" value="${d.date}" min="2000-01-01" max="${d.kind === 'vacation' ? U.addDays(U.todayKey(), 366) : U.todayKey()}"></label>
         ${d.kind !== 'adjustment' ? `<div class="seg" style="margin-bottom:14px"><button data-st="done" class="${d.status !== 'planned' ? 'on' : ''}">נוצל</button><button data-st="planned" class="${d.status === 'planned' ? 'on' : ''}">מתוכנן</button></div>` : ''}
         <label class="field"><span class="lbl">${d.kind === 'adjustment' ? 'סכום ₪' : 'סכום ₪ (ריק = חישוב אוטומטי)'}</span><input class="input" type="number" inputmode="decimal" step="any" id="en-amount" value="${esc(d.amount)}" placeholder="${auto ? U.num(auto.value, 2) : ''}">
           ${auto ? `<span class="hint">${esc(auto.basis)}${d.kind === 'sick' ? ' · לפי יום המחלה ברצף' : ''}</span>` : ''}</label>
@@ -491,6 +501,12 @@
               employerId: q('#en-emp') ? q('#en-emp').value : d.employerId,
             });
             if (out.kind === 'adjustment' && !(out.amount > 0)) { UI.invalid('הזן סכום'); return; }
+            if (!out.date || out.date < '2000-01-01') { UI.invalid('בחר תאריך'); return; }
+            if (out.date > U.todayKey()) {
+              if (out.kind === 'sick') { UI.invalid('יום מחלה לא יכול להיות בעתיד'); return; }
+              if (out.kind === 'adjustment') { UI.invalid('אי אפשר לרשום סכום על תאריך שעוד לא הגיע'); return; }
+              if (out.kind === 'vacation' && out.status !== 'planned') { out.status = 'planned'; UI.toast('נשמר כחופשה מתוכננת'); }
+            }
             if (out.kind === 'adjustment') out.status = 'done';
             UI.closeTop();
             await App.saveOps([{ store: 'entries', put: out }], orig ? 'עריכה' : 'הוספה', 'נשמר');

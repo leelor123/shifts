@@ -17,7 +17,7 @@
       periodStartDay: 1, // 1 = calendar month; otherwise the period runs from this day to (day-1) of next month
       payDay: 9, // day of the following month (by law: up to the 9th)
       // --- travel ---
-      travelPerDay: 22.6, // 2025 extension-order max per day
+      travelPerDay: 16, // what most hourly workers get per day (the legal maximum is higher, ~22.6)
       travelMonthlyCap: 0, // 0 = no cap
       // --- overtime ---
       otMode: 'daily', // daily = all shifts that start on the same date share the 8h counter
@@ -142,7 +142,7 @@
         push: true,
       },
       // --- appearance ---
-      theme: 'system', accent: 'petrol', fontScale: 1, font: 'rubik',
+      theme: 'system', accent: 'candy', fontScale: 1, font: 'rubik',
       fx: { effects: true, sound: true, haptic: true }, // tap pulse / confetti, click sounds, vibration
       // --- security ---
       lock: { enabled: false, hash: null, salt: null, timeoutMin: 1 },
