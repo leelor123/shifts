@@ -750,10 +750,6 @@ html, body { overscroll-behavior-y: contain; }
 /* ---- small moments ---- */
 body.fx .first .wave { display: inline-block; transform-origin: 70% 80%; animation: fx-wave 1.6s ease-in-out .2s 1; }
 @keyframes fx-wave { 0%, 60%, 100% { transform: rotate(0); } 10%, 30% { transform: rotate(14deg); } 20% { transform: rotate(-8deg); } 40% { transform: rotate(-4deg); } 50% { transform: rotate(10deg); } }
-body.fx .first .chart path[fill]:not([fill="none"]), body.fx .first .chart rect:not(.hit) { transform-box: fill-box; transform-origin: 50% 100%; animation: fx-grow .6s cubic-bezier(.2, .8, .3, 1) both; }
-body.fx .first .chart path[fill="none"] { stroke-dasharray: 3000; stroke-dashoffset: 3000; animation: fx-line 1s cubic-bezier(.4, 0, .2, 1) forwards; }
-@keyframes fx-grow { from { transform: scaleY(0); } to { transform: scaleY(1); } }
-@keyframes fx-line { to { stroke-dashoffset: 0; } }
 body.fx .first .progress i, body.fx .first .progress b { animation: fx-fill .9s cubic-bezier(.2, .8, .3, 1) both; transform-origin: right; }
 @keyframes fx-fill { from { transform: scaleX(0); } }
 body.fx .first .dot-badge { animation: fx-badge .5s cubic-bezier(.34, 1.56, .64, 1) .3s both; }
@@ -1051,7 +1047,8 @@ body.fx .nav .fab:active { transform: scale(.9) rotate(90deg); }
   background: repeating-conic-gradient(from -1deg, rgba(255, 255, 255, .34) 0 2deg, transparent 2deg 30deg), repeating-conic-gradient(from -.5deg, rgba(255, 255, 255, .16) 0 1deg, transparent 1deg 6deg);
   -webkit-mask: radial-gradient(circle, transparent 0 61%, #000 61.5% 66%, transparent 66.5%); mask: radial-gradient(circle, transparent 0 61%, #000 61.5% 66%, transparent 66.5%); }
 .hh-dial::after { content: ''; position: absolute; inset: 0; border-radius: 50%; border: 1.5px solid rgba(255, 255, 255, .18); }
-.home-hero:active { filter: brightness(.97); background: var(--grad-hero); }
+/* pressing the card: a cheap opacity change (a filter here would repaint the moving light on every frame) */
+.home-hero:active { background: var(--grad-hero); opacity: .94; }
 .hh-spark { display: none; }
 .home-hero .hh-label, .home-hero .hh-stats, .home-hero .hh-goal-l { color: rgba(255, 255, 255, .86); }
 .home-hero .hh-stats b, .home-hero .hero-num { color: #fff; }
@@ -1077,6 +1074,7 @@ body.fx .nav .fab:active { transform: scale(.9) rotate(90deg); }
 /* four doors */
 .shortcuts { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; margin: 0 0 22px; }
 .sc { display: flex; flex-direction: column; align-items: center; gap: 8px; border: 1px solid var(--line); background: var(--surface-1); box-shadow: var(--sh-1); border-radius: 18px; padding: 12px 4px 10px; font: 600 .76rem/1.25 var(--font); color: var(--on-surface); cursor: pointer; transition: transform .2s var(--pop); text-align: center; }
+.sc > span:last-child { max-width: 100%; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 
 /* first steps */
 .card.guide { border: 1.5px solid color-mix(in srgb, var(--brand) 30%, var(--line)); padding: 14px; }
@@ -1116,6 +1114,7 @@ body.fx .nav .fab:active { transform: scale(.9) rotate(90deg); }
 .am-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
 .am-tile { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 8px; border-radius: 18px; padding: 14px 6px; min-height: 92px; background: var(--surface-1); color: var(--on-surface); font: 600 .86rem/1.25 var(--font); cursor: pointer; box-shadow: var(--sh-1); border: 1px solid var(--line); transition: transform .2s var(--pop); text-align: center; }
 .am-tile.big { min-height: 112px; font-size: 1rem; font-weight: 700; }
+.am-s { display: block; margin-top: -5px; font: 500 .74rem var(--font); opacity: .78; }
 .am-tile.big .itile { width: 48px; height: 48px; border-radius: 14px; }
 .am-tile.big .itile svg { width: 26px; height: 26px; }
 .am-tile.g1 { background: var(--grad-brand); color: #fff; border: 0; box-shadow: var(--sh-brand); }
@@ -1208,6 +1207,8 @@ body.fx .nav .fab:active { transform: scale(.9) rotate(90deg); }
 .pk-cell:disabled { opacity: .3; }
 .pk-quick { display: flex; gap: 8px; flex-wrap: wrap; justify-content: center; margin: 12px 0 2px; }
 .pk-quick .chip { font-weight: 600; }
+.pk-wheels ~ .pk-quick { flex-wrap: nowrap; gap: 6px; }
+.pk-wheels ~ .pk-quick .chip { padding-inline: 10px; min-width: 0; flex: 1 1 0; justify-content: center; font-variant-numeric: tabular-nums; }
 .pk-foot { display: flex; gap: 10px; margin-top: 12px; }
 .pk-foot .btn { flex: 1; }
 .pk-clock { display: flex; justify-content: center; align-items: center; gap: 4px; font: 800 3rem/1 var(--display); direction: ltr; padding: 12px; border-radius: 18px; background: var(--grad-brand); color: #fff; font-variant-numeric: tabular-nums; }
@@ -1216,8 +1217,8 @@ body.fx .nav .fab:active { transform: scale(.9) rotate(90deg); }
 .pk-wheel { height: 220px; width: 86px; overflow-y: auto; scroll-snap-type: y mandatory; scrollbar-width: none; overscroll-behavior: contain; position: relative; z-index: 1; outline: none; -webkit-mask-image: linear-gradient(transparent, #000 32%, #000 68%, transparent); mask-image: linear-gradient(transparent, #000 32%, #000 68%, transparent); }
 .pk-wheel::-webkit-scrollbar { display: none; }
 .pk-pad { height: 88px; }
-.pk-opt { height: 44px; display: grid; place-items: center; scroll-snap-align: center; font: 500 1.35rem var(--display); color: var(--on-surface-var); cursor: pointer; transition: transform .15s, color .15s; font-variant-numeric: tabular-nums; }
-.pk-opt.on { color: var(--on-surface); transform: scale(1.2); font-weight: 700; }
+.pk-opt { height: 44px; display: grid; place-items: center; scroll-snap-align: center; font: 500 1.35rem var(--display); color: var(--on-surface-var); cursor: pointer; transition: color .15s; font-variant-numeric: tabular-nums; backface-visibility: hidden; }
+.pk-opt.on { color: var(--on-surface); font-weight: 700; }
 .pk-colon { font: 700 1.6rem var(--display); z-index: 1; }
 .pk-band { position: absolute; left: 50%; top: 50%; width: 214px; height: 46px; transform: translate(-50%, -50%); border-radius: 14px; background: var(--brand-soft); z-index: 0; }
 
@@ -1371,10 +1372,210 @@ body:not(.fx) .aurora i, body:not(.fx) .hh-dial::before, body:not(.fx) .home-act
 /* with a sheet or a full-screen step open, messages show at the top, away from its buttons */
 body:has(.sheet.show) .toast, body:has(.wizard) .toast { bottom: auto; top: calc(var(--safe-t) + 12px); transform: translateY(-30px); }
 body:has(.sheet.show) .toast.show, body:has(.wizard) .toast.show { transform: none; }
-/* pull to refresh: a springy settle */
+/* pull to refresh: our own only (no browser reload, no Android stretch on top of it), and a springy settle */
+html, body { overscroll-behavior-y: none; }
+body.pulling .aurora i, body.pulling .hh-dial::before, body.pulling .home-action .btn.start::after, body.pulling .mascot * { animation-play-state: paused; }
 .ptr.settle { transition: transform .42s cubic-bezier(.22, 1.3, .36, 1), opacity .3s ease; }
 .ptr.armed .ptr-disc, .ptr.spin .ptr-disc { background: var(--brand-strong); }
 @media (prefers-reduced-motion: reduce) { .mascot *, .ob-bg i, .coach-hole { animation: none !important; } }
+
+/* ---------- charts come alive (see charts.js) ---------- */
+.chart .bar { transform-box: fill-box; transform-origin: 50% 100%; transition: opacity .2s; }
+.chart .bar.neg { transform-origin: 50% 0%; }
+body.fx .chart[data-anim] .bar { animation: ch-grow .75s cubic-bezier(.2, .9, .3, 1.12) var(--d, 0ms) both paused; }
+body.fx .chart[data-anim] .ln { stroke-dasharray: 1; stroke-dashoffset: 1; animation: ch-draw 1.1s cubic-bezier(.4, 0, .2, 1) .1s forwards paused; }
+body.fx .chart[data-anim] .area { animation: ch-fade .9s ease .55s both paused; }
+body.fx .chart[data-anim] .dot { transform-box: fill-box; transform-origin: center; animation: ch-pop .45s cubic-bezier(.34, 1.56, .64, 1) var(--d, 0ms) both paused; }
+body.fx .hbar[data-anim] .track i { transform-origin: right; animation: ch-fill .85s cubic-bezier(.2, .9, .3, 1) var(--d, 0ms) both paused; }
+body.fx .chart[data-anim].in .bar, body.fx .chart[data-anim].in .ln, body.fx .chart[data-anim].in .area, body.fx .chart[data-anim].in .dot, body.fx .hbar[data-anim].in .track i { animation-play-state: running; }
+@keyframes ch-grow { from { transform: scaleY(0); } }
+@keyframes ch-draw { to { stroke-dashoffset: 0; } }
+@keyframes ch-fade { from { opacity: 0; } }
+@keyframes ch-pop { from { transform: scale(0); } }
+@keyframes ch-fill { from { transform: scaleX(0); } }
+/* the same screen redrawing (after a save or a sync) doesn't replay it */
+.view:not(.fresh) .chart *, .view:not(.fresh) .hbar * { animation: none !important; }
+@media (prefers-reduced-motion: reduce) { .chart *, .hbar * { animation: none !important; } }
+@media print { .chart *, .hbar * { animation: none !important; } }
+/* a tapped mark stays bright while the others step back */
+.chart.focus .bar:not(.on) { opacity: .32; }
+.chart .dot { transition: r .2s cubic-bezier(.34, 1.56, .64, 1); }
+.chart .dot.on { r: 6.5px; }
+.chart-tip.pop { animation: tip-pop .22s cubic-bezier(.34, 1.56, .64, 1); }
+@keyframes tip-pop { from { opacity: 0; transform: translate(-50%, -90%) scale(.85); } }
+
+/* ---------- shift length chips, milestone medal ---------- */
+.dur-row { margin: -4px 0 14px; }
+.dur-l { display: block; margin: 0 4px 6px; font-size: .8rem; color: var(--on-surface-var); }
+.dur-l b { color: var(--on-surface); }
+.dur-row .chips { display: grid; grid-template-columns: repeat(6, 1fr); gap: 6px; padding: 0; overflow: visible; }
+.dur-row .chip { justify-content: center; padding-inline: 4px; min-width: 0; font-variant-numeric: tabular-nums; }
+.medal-pop { position: fixed; top: calc(12px + var(--safe-t, 0px)); left: 16px; right: 16px; margin-inline: auto; width: fit-content; z-index: 70; display: flex; align-items: center; gap: 10px; padding: 8px 16px 8px 10px; border-radius: 22px; background: var(--surface-1); color: var(--on-surface); border: 1px solid var(--line); box-shadow: var(--sh-2); pointer-events: none; animation: medal-in .55s cubic-bezier(.34, 1.56, .64, 1) both; max-width: calc(100vw - 32px); }
+.medal-pop b { display: block; font: 700 1.05rem var(--display); }
+.medal-pop small { display: block; font-size: .78rem; color: var(--on-surface-var); }
+.medal-pop .medal-ic { font-size: 1.6rem; animation: medal-swing 1.2s ease-in-out .4s 2; transform-origin: 50% 0; }
+.medal-pop.out { animation: medal-out .45s ease forwards; }
+@keyframes medal-in { from { opacity: 0; transform: translateY(-120%) scale(.9); } }
+@keyframes medal-out { to { opacity: 0; transform: translateY(-120%); } }
+@keyframes medal-swing { 25% { transform: rotate(14deg); } 75% { transform: rotate(-10deg); } }
+@media (prefers-reduced-motion: reduce) { .medal-pop, .medal-pop .medal-ic, .medal-pop.out { animation: none; } }
+
+/* ---------- games ---------- */
+.gm-list { display: grid; gap: 10px; }
+.gm-card { display: flex; align-items: center; gap: 12px; padding: 14px; border-radius: 18px; background: var(--surface-1); border: 1px solid var(--line); box-shadow: var(--sh-1); color: var(--on-surface); text-align: start; cursor: pointer; font: inherit; transition: transform .2s var(--pop); }
+body.fx .gm-card:active { transform: scale(.97); }
+.gm-card .itile { width: 50px; height: 50px; border-radius: 15px; }
+.gm-card .itile svg { width: 26px; height: 26px; }
+.gm-txt { flex: 1; min-width: 0; display: grid; gap: 3px; }
+.gm-txt b { font: 700 1.04rem var(--display); }
+.gm-txt span { font-size: .82rem; line-height: 1.35; color: var(--on-surface-var); }
+.gm-best { display: grid; justify-items: center; min-width: 54px; font: 700 1rem var(--display); color: var(--amber); font-variant-numeric: tabular-nums; }
+.gm-best small { font: 500 .68rem var(--font); color: var(--on-surface-var); }
+.game-sheet .sh-body { display: flex; flex-direction: column; padding-bottom: calc(16px + var(--safe-b)); }
+
+/* coin catcher */
+.cg { flex: 1; display: flex; flex-direction: column; gap: 10px; min-height: 0; }
+.cg-hud { display: flex; align-items: center; justify-content: space-between; gap: 10px; font: 700 1.15rem var(--display); font-variant-numeric: tabular-nums; }
+.cg-score { min-width: 90px; color: var(--amber); }
+.cg-score.bump, .qz-score.bump { animation: hud-bump .3s var(--pop); }
+@keyframes hud-bump { 40% { transform: scale(1.22); } }
+.cg-lives { display: flex; gap: 4px; }
+.cg-lives i { width: 18px; height: 16px; background: #e5484d; clip-path: path('M9 16 1.6 8.6A4.4 4.4 0 0 1 9 2.6a4.4 4.4 0 0 1 7.4 6Z'); transition: transform .25s var(--pop), opacity .25s; }
+.cg-lives i.off { opacity: .2; transform: scale(.7); }
+.cg-time { min-width: 90px; text-align: end; }
+.cg-time::after { content: ' שנ׳'; font: 500 .8rem var(--font); color: var(--on-surface-var); }
+.cg-time.low { color: #e5484d; }
+.cg-stage { position: relative; flex: 1; min-height: 300px; border-radius: 22px; overflow: hidden; touch-action: none; user-select: none; -webkit-user-select: none;
+  background: radial-gradient(120% 70% at 80% 0%, var(--sky-soft), transparent 60%), radial-gradient(90% 60% at 10% 100%, var(--violet-soft), transparent 70%), var(--surface-1); border: 1px solid var(--line); }
+.cg-stage canvas { position: absolute; inset: 0; display: block; }
+.cg-over { position: absolute; inset: 0; display: none; place-items: center; padding: 18px; text-align: center; background: color-mix(in srgb, var(--surface) 78%, transparent); backdrop-filter: blur(3px); -webkit-backdrop-filter: blur(3px); }
+.cg-over.show { display: grid; }
+.cg-count { font: 700 5rem var(--display); color: var(--brand); animation: count-in .6s var(--pop) both; }
+@keyframes count-in { from { opacity: 0; transform: scale(1.8); } 70% { opacity: 1; } }
+.cg-legend { display: flex; flex-wrap: wrap; justify-content: center; gap: 8px 14px; font-size: .84rem; color: var(--on-surface-var); }
+.cg-legend span { display: inline-flex; align-items: center; gap: 6px; }
+.cg-legend i { width: 16px; height: 16px; border-radius: 50%; display: inline-block; }
+.lg-coin { background: radial-gradient(circle at 35% 35%, #ffe08a, #d99a0b); }
+.cg-legend .lg-fine { background: #e5484d; border-radius: 5px; }
+.lg-clock { background: #3b82f6; }
+.gm-intro { display: grid; justify-items: center; gap: 12px; max-width: 320px; }
+.gm-intro-t { font: 700 1.2rem/1.35 var(--display); }
+
+/* the end of a round */
+.gm-end { display: grid; justify-items: center; gap: 6px; text-align: center; margin: auto; padding: 8px 0; animation: rise .45s var(--pop) both; }
+.gm-end-t { font: 700 1.2rem var(--display); margin-top: 4px; }
+.gm-end-n { font: 700 3rem/1.1 var(--display); color: var(--amber); font-variant-numeric: tabular-nums; }
+.gm-end-n small { font-size: 1.1rem; color: var(--on-surface-var); }
+.gm-end-s { color: var(--on-surface-var); font-size: .92rem; }
+.gm-end-b { display: inline-flex; align-items: center; gap: 6px; margin-top: 4px; padding: 6px 12px; border-radius: 999px; background: var(--amber-soft); color: var(--amber); font-weight: 700; font-size: .88rem; }
+.gm-end-a { display: flex; gap: 8px; margin-top: 14px; width: min(320px, 100%); }
+.gm-end-a .btn { flex: 1; white-space: nowrap; }
+.tf .gm-end, .qz .gm-end { margin-top: 24px; }
+
+/* quiz and true/false */
+.qz, .tf { display: flex; flex-direction: column; gap: 12px; flex: 1; }
+.qz-top { display: flex; align-items: center; gap: 10px; }
+.qz-dots { display: flex; gap: 5px; flex: 1; }
+.qz-dots i { flex: 1; height: 6px; border-radius: 3px; background: var(--surface-3); transition: background .3s; }
+.qz-dots i.cur { background: var(--brand); }
+.qz-dots i.ok { background: var(--good); }
+.qz-dots i.no { background: #e5484d; }
+.qz-score { font: 700 1.2rem var(--display); color: var(--amber); min-width: 44px; text-align: end; font-variant-numeric: tabular-nums; }
+.qz-timer { height: 4px; border-radius: 2px; background: var(--surface-3); overflow: hidden; }
+.qz-timer b { display: block; height: 100%; background: var(--grad-brand); transform-origin: right; animation: qz-time linear forwards; }
+@keyframes qz-time { to { transform: scaleX(0); } }
+.qz-card, .tf-card { position: relative; padding: 20px 18px; border-radius: 22px; background: var(--surface-1); border: 1px solid var(--line); box-shadow: var(--sh-1); animation: rise .35s var(--pop) both; transition: background .3s, border-color .3s; }
+.qz-n { font-size: .78rem; color: var(--on-surface-var); margin-bottom: 6px; }
+.qz-streak { color: var(--orange); font-weight: 700; }
+.qz-q { font: 600 1.12rem/1.5 var(--font); }
+.qz-opts { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.qz-opt { position: relative; min-height: 58px; padding: 10px; border-radius: 16px; border: 1.5px solid var(--line); background: var(--surface-1); color: var(--on-surface); font: 700 1.05rem var(--display); cursor: pointer; animation: rise .35s var(--pop) both; animation-delay: calc(var(--d) * 50ms); transition: background .2s, border-color .2s, transform .2s var(--pop); }
+body.fx .qz-opt:active:not(:disabled) { transform: scale(.96); }
+.qz-opt:disabled { cursor: default; opacity: .55; }
+.qz-opt.right { opacity: 1; background: color-mix(in srgb, var(--good) 16%, var(--surface-1)); border-color: var(--good); }
+.qz-opt.wrong { opacity: 1; background: color-mix(in srgb, #e5484d 14%, var(--surface-1)); border-color: #e5484d; animation: gm-shake .4s; }
+@keyframes gm-shake { 20%, 60% { transform: translateX(-6px); } 40%, 80% { transform: translateX(6px); } }
+.qz-pts { position: absolute; top: -10px; inset-inline-start: 10px; padding: 2px 8px; border-radius: 999px; background: var(--grad-money); color: #2b1a00; font-size: .8rem; animation: pts-up .9s var(--pop) both; }
+@keyframes pts-up { from { opacity: 0; transform: translateY(8px) scale(.6); } }
+.qz-x { display: grid; gap: 8px; font-size: .92rem; line-height: 1.5; color: var(--on-surface-var); }
+.qz-x:empty { display: none; }
+.qz-x > * { animation: rise .3s var(--pop) both; }
+.qz-xt { font: 700 1.05rem var(--display); }
+.qz-xt.ok { color: var(--good); }
+.qz-xt.no { color: #e5484d; }
+.tf-s { font: 600 1.18rem/1.55 var(--font); }
+.tf-card.ok { border-color: var(--good); background: color-mix(in srgb, var(--good) 10%, var(--surface-1)); }
+.tf-card.no { border-color: #e5484d; background: color-mix(in srgb, #e5484d 9%, var(--surface-1)); animation: gm-shake .4s; }
+.tf-verdict { position: absolute; top: 12px; inset-inline-end: 14px; font: 700 .8rem var(--display); padding: 3px 10px; border-radius: 999px; background: var(--surface-3); animation: pts-up .4s var(--pop) both; }
+.tf-btns { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.tf-btns .tf-yes { background: var(--grad-go); }
+.tf-btns .tf-no { background: linear-gradient(135deg, #e5484d, #b4232a); }
+.tf-btns .btn:disabled { opacity: .4; }
+.tf-btns .btn.picked:disabled { opacity: 1; box-shadow: 0 0 0 3px var(--surface), 0 0 0 5px currentColor; }
+@media (prefers-reduced-motion: reduce) { .gm-end, .qz-card, .tf-card, .qz-opt, .qz-x > *, .cg-count, .qz-pts { animation: none !important; } }
+
+/* ---------- payslip check (views-payslip.js verifySheet) ---------- */
+.chips.wrap { flex-wrap: wrap; overflow: visible; }
+.vf-head { display: flex; align-items: flex-end; gap: 10px; margin-bottom: 10px; }
+.vf-month { flex: 1; min-width: 0; margin: 0; }
+.vf-badge { display: inline-flex; align-items: center; gap: 6px; padding: 8px 12px; margin-bottom: 4px; border-radius: 999px; background: var(--surface-2); color: var(--on-surface-var); font-size: .78rem; font-weight: 600; white-space: nowrap; }
+.vf-top { padding: 14px; margin-bottom: 12px; }
+.vf-flow { display: flex; align-items: center; gap: 6px; }
+.vf-cell { flex: 1; min-width: 0; text-align: center; padding: 10px 4px; border-radius: 14px; background: var(--surface-2); }
+.vf-cell small { display: block; font-size: .72rem; color: var(--on-surface-var); }
+.vf-cell b { display: block; font: 700 1.04rem var(--display); font-variant-numeric: tabular-nums; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.vf-cell.net { background: color-mix(in srgb, var(--good) 14%, var(--surface-2)); }
+.vf-op { color: var(--on-surface-var); font-weight: 700; }
+.vf-checks { display: grid; gap: 6px; margin-top: 12px; }
+.vf-chk { display: flex; gap: 8px; align-items: flex-start; font-size: .84rem; line-height: 1.45; }
+.vf-chk svg { flex: none; margin-top: 2px; }
+.vf-chk.ok svg { color: var(--good); }
+.vf-chk.warn svg { color: var(--warn-mark); }
+.vf-chk.need svg { color: var(--on-surface-var); }
+.vf-tip { display: flex; gap: 8px; align-items: flex-start; font-size: .82rem; line-height: 1.45; color: var(--on-surface-var); margin: -2px 6px 12px; }
+.vf-tip svg { flex: none; margin-top: 2px; }
+.vf-group { background: var(--surface-1); border: 1px solid var(--line); border-radius: 18px; margin-bottom: 10px; box-shadow: var(--sh-1); }
+.vf-group > summary { list-style: none; display: flex; align-items: center; gap: 10px; padding: 12px 14px; cursor: pointer; }
+.vf-group > summary::-webkit-details-marker { display: none; }
+.vf-group > summary .itile { width: 32px; height: 32px; border-radius: 10px; }
+.vf-group > summary .itile svg { width: 18px; height: 18px; }
+.vf-group > summary b { flex: 1; min-width: 0; }
+.vf-gs { font-size: .8rem; color: var(--on-surface-var); font-variant-numeric: tabular-nums; white-space: nowrap; }
+.vf-chev { display: grid; color: var(--on-surface-var); transform: rotate(-90deg); transition: transform .2s; }
+.vf-group[open] > summary .vf-chev { transform: rotate(90deg); }
+.vf-rows { padding: 0 6px 6px; }
+.vf-row { border-top: 1px solid var(--line); }
+.vf-line { display: flex; align-items: center; gap: 10px; width: 100%; min-height: 48px; padding: 10px 8px; background: none; border: 0; border-radius: 12px; color: inherit; font: inherit; text-align: start; cursor: pointer; transition: background .2s; }
+.vf-l { flex: 1; min-width: 0; display: grid; gap: 1px; }
+.vf-l > span { font-size: .92rem; font-weight: 600; }
+.vf-l small { font-size: .74rem; color: var(--on-surface-var); }
+.vf-l small:empty { display: none; }
+.vf-v { font: 700 .98rem var(--display); font-variant-numeric: tabular-nums; white-space: nowrap; }
+.vf-pen { display: grid; color: var(--on-surface-var); opacity: .55; }
+.vf-need { color: var(--warn); font: 700 .8rem var(--font); }
+.vf-row.need .vf-line { background: color-mix(in srgb, var(--warn-mark) 9%, transparent); }
+.vf-edit { display: none; padding: 2px 8px 12px; }
+.vf-row.open .vf-edit { display: block; animation: rise .25s var(--pop) both; }
+.vf-row.open .vf-line { background: var(--surface-2); }
+.vf-row.open .vf-pen { opacity: 1; color: var(--brand); }
+.vf-src { display: flex; gap: 6px; align-items: center; margin: 8px 2px; font-size: .75rem; color: var(--on-surface-var); }
+.vf-src svg { flex: none; }
+.vf-src span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.vf-inputs { display: flex; gap: 8px; }
+.vf-inputs .field { flex: 1; min-width: 0; margin: 0; }
+.vf-inputs .input { font-variant-numeric: tabular-nums; }
+.vf-acts { display: flex; justify-content: space-between; align-items: center; margin-top: 8px; }
+.vf-add { margin: 2px 0 14px; }
+.vf-start { padding: 16px; }
+.vf-start .chips { margin-top: 10px; flex-wrap: wrap; overflow: visible; }
+.vf-group > :not(summary):not(.vf-rows) { margin-inline: 14px; }
+.vf-group > :last-child:not(summary):not(.vf-rows) { margin-bottom: 14px; }
+.vf-o { padding: 10px 0; border-top: 1px solid var(--line); }
+.vf-o-line { font-size: .8rem; color: var(--on-surface-var); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.vf-o-in { display: grid; grid-template-columns: 1fr 110px; gap: 8px; margin-top: 6px; }
+@media (prefers-reduced-motion: reduce) { .vf-row.open .vf-edit { animation: none; } }
+
+.ob-sub { margin: -4px 2px 10px; font-size: .86rem; line-height: 1.45; color: var(--on-surface-var); }
 
 </style>
 </head>
@@ -1394,7 +1595,7 @@ body:has(.sheet.show) .toast.show, body:has(.wizard) .toast.show { transform: no
 <div id="print-root" aria-hidden="true"></div>
 <noscript><div style="padding:24px;font-family:sans-serif">האפליקציה דורשת JavaScript.</div></noscript>
 <script>
-window.APP_VERSION = '1.7.2';
+window.APP_VERSION = '1.8.0';
 /* ---- core/util.js ---- */
 /* ============================================================
  * util.js — date/time helpers and formatting.
@@ -4153,6 +4354,190 @@ window.APP_VERSION = '1.7.2';
   root.Payslip = { FIELDS, FIELD, HOUR_FIELDS, EXPLAIN, normalize, fixVisual, numbersIn, matchField, pickValues, linesFromPdfItems, detectPeriod, parseText, redact, aiSchema, aiPrompt, fromAi, expected, analyze, waterfall, explainLines, compareSlips, employerMessage };
 })(typeof window !== 'undefined' ? window : globalThis);
 
+/* ---- core/games.js ---- */
+/* ============================================================
+ * games.js — the content of the mini-games, kept apart from the
+ * screens so it can be tested: pay questions ("כמה זה יוצא?") and
+ * true/false statements about workers' rights ("נכון או לא?").
+ *
+ * The rights statements repeat what the rights center says (and are
+ * just as general: information, not legal advice). The minimum wage
+ * figure comes from the engine's table, so it never goes stale.
+ * ============================================================ */
+(function (root) {
+  'use strict';
+
+  /** A small seeded random generator (mulberry32), so a round can be replayed in tests. */
+  function rng(seed) {
+    let a = (seed >>> 0) || 1;
+    return function () {
+      a = (a + 0x6D2B79F5) >>> 0;
+      let t = a;
+      t = Math.imul(t ^ (t >>> 15), t | 1);
+      t ^= t + Math.imul(t ^ (t >>> 7), t | 61);
+      return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+    };
+  }
+  const pick = (r, list) => list[Math.floor(r() * list.length)];
+  function shuffle(r, list) {
+    const a = list.slice();
+    for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(r() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; }
+    return a;
+  }
+  const r2 = (x) => Math.round(x * 100) / 100;
+  const nis = (x) => `${Number.isInteger(r2(x)) ? r2(x) : r2(x).toFixed(2)} ₪`;
+  const HRS = { 0.5: 'חצי שעה', 1: 'שעה', 1.5: 'שעה וחצי', 2: 'שעתיים', 2.5: 'שעתיים וחצי' };
+  const hrs = (x) => HRS[x] || `${x} שעות`;
+
+  /**
+   * Four distinct choices: the right one and three plausible mistakes.
+   * `wrong` lists candidate mistakes in order of preference; anything equal to the answer, not
+   * positive, or too close to another choice to tell apart is skipped, and simple ±steps fill
+   * any gap.
+   */
+  function choices(r, answer, wrong, fmt, step) {
+    const out = [answer];
+    const far = (v) => out.every((o) => Math.abs(o - v) >= (step || 1) - 1e-9);
+    for (const w of wrong) { const v = r2(w); if (out.length < 4 && v > 0 && far(v)) out.push(v); }
+    for (let k = 1; out.length < 4 && k < 40; k++) {
+      for (const v of [r2(answer + k * (step || 1)), r2(answer - k * (step || 1))]) if (out.length < 4 && v > 0 && far(v)) out.push(v);
+    }
+    const opts = shuffle(r, out);
+    return { options: opts.map(fmt), answer: opts.indexOf(answer), value: answer };
+  }
+
+  const ITEMS = [['פיצה משפחתית', 60], ['כרטיס לסרט', 45], ['נעלי ספורט', 420], ['אוזניות אלחוטיות', 240], ['חולצה', 90], ['כרטיס להופעה', 210], ['ארוחה במסעדה', 120], ['מנוי חודשי לחדר כושר', 180], ['משחק למחשב', 150]];
+  /**
+   * The pay questions. ctx: { rate } — the user's own hourly rate, used in some questions so the
+   * numbers feel like theirs (rounded to whole shekels to keep the arithmetic friendly).
+   */
+  const QUESTIONS = [
+    (r) => {
+      const h = pick(r, [3, 4, 5, 6, 7, 8]), p = pick(r, [30, 32, 35, 36, 38, 40, 42, 45, 50]);
+      return Object.assign({ q: `משמרת של ${hrs(h)} ב-${p} ₪ לשעה. כמה זה יוצא?`, x: `${h} × ${p} = ${h * p} ₪` },
+        choices(r, h * p, [(h + 1) * p, (h - 1) * p, h * (p + 5), h * p + 10], nis, 5));
+    },
+    (r) => {
+      const p = pick(r, [32, 36, 40, 44, 48]);
+      return Object.assign({ q: `השכר הרגיל ${p} ₪ לשעה. כמה משלמים על שעה נוספת ראשונה (125%)?`, x: `${p} × 1.25 = ${nis(p * 1.25)}. השעתיים הראשונות מעבר ליום רגיל: 125%, ואחר כך 150%.` },
+        choices(r, p * 1.25, [p * 1.5, p, p * 1.2, p + 5], nis, 1));
+    },
+    (r) => {
+      const p = pick(r, [30, 32, 34, 36, 40, 44, 50]);
+      return Object.assign({ q: `השכר הרגיל ${p} ₪ לשעה. כמה מקבלים לפחות על שעה בשבת (150%)?`, x: `${p} × 1.5 = ${nis(p * 1.5)}. עבודה במנוחה השבועית: לפחות 150%.` },
+        choices(r, p * 1.5, [p * 1.25, p * 2, p, p + 10], nis, 1));
+    },
+    (r) => {
+      const s = pick(r, [7, 8, 9, 10, 14, 15, 16]), L = pick(r, [5, 6, 7, 8]);
+      const e = s + L; // a half-hour unpaid break makes the shift L + 0.5 long
+      return Object.assign({ q: `משמרת מ-${String(s).padStart(2, '0')}:00 עד ${String(e).padStart(2, '0')}:30, עם חצי שעה הפסקה שלא משולמת. כמה שעות משולמות?`, x: `${hrs(L + 0.5)} פחות חצי שעה הפסקה = ${hrs(L)}.` },
+        choices(r, L, [L + 0.5, L + 1, L - 0.5], hrs, 0.5));
+    },
+    (r) => {
+      const d = pick(r, [3, 4, 5, 6, 8, 10]), t = pick(r, [9, 11, 12, 14, 15, 18]);
+      return Object.assign({ q: `${d} ימי עבודה, והחזר הנסיעות ${t} ₪ ליום. כמה החזר מגיע?`, x: `${d} × ${t} = ${d * t} ₪. ההחזר משולם בנוסף לשכר.` },
+        choices(r, d * t, [(d + 1) * t, (d - 1) * t, d * (t + 2), d * t * 2], nis, 2));
+    },
+    (r, ctx) => {
+      const [item, price] = pick(r, ITEMS);
+      const own = ctx && ctx.rate >= 15 && ctx.rate <= 200;
+      const p = own ? Math.round(ctx.rate) : pick(r, [30, 35, 40, 45, 50, 60]);
+      const ans = Math.max(0.5, Math.round((price / p) * 2) / 2);
+      return Object.assign({ q: `${item} עולה ${price} ₪. ${own ? 'בשכר שלך' : 'בשכר של'} (${p} ₪ לשעה), בערך כמה שעות עבודה זה?`, x: `${price} ÷ ${p} ≈ ${hrs(ans)}.` },
+        choices(r, ans, [ans * 2, ans + 2, ans - 1.5, ans / 2], hrs, 1));
+    },
+    (r) => {
+      const n = pick(r, [2, 3, 4, 5]), h = pick(r, [4, 5, 6]), p = pick(r, [30, 35, 40, 45, 50]);
+      return Object.assign({ q: `${n} משמרות של ${hrs(h)} ב-${p} ₪ לשעה. כמה זה יוצא בשבוע?`, x: `${n} × ${h} = ${n * h} שעות, × ${p} = ${n * h * p} ₪.` },
+        choices(r, n * h * p, [(n + 1) * h * p, n * (h + 1) * p, n * h * p - p * h, n * h * p + 50], nis, 10));
+    },
+    (r) => {
+      const d = pick(r, [200, 240, 280, 300, 320]);
+      return Object.assign({ q: `יום המחלה השני משולם ב-50%. השכר ליום ${d} ₪. כמה מקבלים עליו?`, x: `${d} × 50% = ${d / 2} ₪. היום הראשון: 0%, השני והשלישי: 50%, מהרביעי: 100%.` },
+        choices(r, d / 2, [d, d * 0.75, d / 4], nis, 10));
+    },
+    (r) => {
+      const a = pick(r, [30, 40, 50]), pct = pick(r, [5, 10, 20, 25]);
+      const b = a * (1 + pct / 100);
+      return Object.assign({ q: `השכר לשעה עלה מ-${a} ₪ ל-${nis(b)}. בכמה אחוזים?`, x: `${nis(b - a)} מתוך ${a} ₪ = ${pct}%.` },
+        choices(r, pct, [r2(b - a), pct * 2, pct + 5, pct / 2], (v) => `${v}%`, 2.5));
+    },
+  ];
+  /** A round of n pay questions, never the same kind twice in a row. */
+  function quizRound(seed, n, ctx) {
+    const r = rng(seed);
+    const out = [];
+    let lastKind = -1;
+    while (out.length < (n || 10)) {
+      let k = Math.floor(r() * QUESTIONS.length);
+      if (k === lastKind) k = (k + 1) % QUESTIONS.length;
+      lastKind = k;
+      out.push(Object.assign({ kind: k }, QUESTIONS[k](r, ctx || {})));
+    }
+    return out;
+  }
+
+  /**
+   * True or false: workers' rights in Israel (general rules, as in the rights center).
+   * mw: the adult hourly minimum wage today (from the engine).
+   */
+  function facts(mw) {
+    const list = [
+      ['fine', 'מותר למעסיק לנכות מהשכר קנס על איחור, גם בלי הסכמה בכתב.', false, 'מותר לנכות רק ניכויי חובה (מס, ביטוח לאומי, פנסיה) וניכויים שהסכמת להם בכתב.'],
+      ['shabbat', 'עבודה בשבת משולמת לפחות ב-150%.', true, 'עבודה במנוחה השבועית משולמת לפחות ב-150% מהשכר הרגיל.'],
+      ['travel-minor', 'החזר נסיעות מגיע רק לעובדים מגיל 18.', false, 'גם נוער זכאי להחזר נסיעות, והוא משולם בנוסף לשכר.'],
+      ['break', 'ביום עבודה של 6 שעות ומעלה מגיעה הפסקה של 45 דקות.', true, '45 דקות, מתוכן חצי שעה ברצף.'],
+      ['payday', 'את השכר צריך לשלם עד ה-9 בחודש שאחרי חודש העבודה.', true, 'איחור בתשלום מזכה בפיצוי הלנת שכר.'],
+      ['sick-day1', 'על היום הראשון של מחלה מקבלים שכר מלא.', false, 'היום הראשון: 0%. השני והשלישי: 50%. מהרביעי: 100%. צריך אישור מחלה.'],
+      ['overtime', 'השעתיים הנוספות הראשונות ביום משולמות ב-125%.', true, 'מעבר להן משלמים 150%.'],
+      ['vacation', 'אפשר לוותר על ימי החופשה תמורת תוספת לשכר.', false, 'אסור לוותר על חופשה. כשעוזבים את העבודה מקבלים פדיון על הימים שלא נוצלו.'],
+      ['night16', 'נער בן 16 רשאי לעבוד עד חצות בלי היתר מיוחד.', false, 'מגיל 16 אסור לעבוד בין 22:00 ל-06:00 (מתחת ל-16: בין 20:00 ל-08:00), אלא בהיתר.'],
+      ['slip', 'מגיע לך תלוש שכר מפורט בכל חודש.', true, 'כדאי גם לבדוק אותו מול המשמרות שרשמת.'],
+      ['hearing', 'לפני פיטורים מגיע שימוע.', true, 'וגם הודעה מוקדמת לפי הוותק.'],
+      ['tax-minor', 'מתחת לגיל 18 מנכים מהשכר מס הכנסה וביטוח לאומי כמו לכל עובד.', false, 'מתחת ל-18 בדרך כלל לא מנוכים מס הכנסה, ביטוח לאומי ומס בריאות, כך שהנטו קרוב לברוטו.'],
+      ['friday', 'ביום שישי ובערב חג נער עובד עד 7 שעות.', true, 'זה אחד הכללים המיוחדים של חוק עבודת הנוער.'],
+      ['sick-accrue', 'צוברים 1.5 ימי מחלה על כל חודש עבודה מלא.', true, 'עד 90 ימים בסך הכול.'],
+      ['broken', 'אם שברת משהו בעבודה, המעסיק רשאי לקזז את זה מהשכר בלי לשאול.', false, 'חוסרים בקופה או ציוד שנשבר: בדרך כלל אסור לנכות בלי הסכמה בכתב.'],
+      ['recup', 'דמי הבראה מגיעים כבר מהחודש הראשון בעבודה.', false, 'דמי הבראה מגיעים אחרי שנת עבודה.'],
+      ['pension', 'חובת ההפרשה לפנסיה מתחילה מגיל 21 לגבר ומגיל 20 לאישה.', true, 'אחרי 6 חודשי עבודה (או 3, אם כבר יש קרן פעילה).'],
+      ['youth-wage', 'שכר המינימום לנוער זהה לזה של מבוגרים.', false, 'לנוער יש שכר מינימום משלו, נמוך יותר, שעולה עם הגיל.'],
+      ['terms', 'נער שמתחיל לעבוד צריך לקבל הודעה בכתב על תנאי העבודה.', true, 'תוך 7 ימים: שכר לשעה, שעות העבודה ועוד.'],
+    ];
+    if (mw > 0) list.push(['minwage', `שכר המינימום לעובד מגיל 18 הוא ${nis(mw)} לשעה.`, true, 'לנוער יש שכר מינימום נמוך יותר, לפי הגיל.']);
+    return list.map(([id, s, t, x]) => ({ id, s, t, x }));
+  }
+  /** A round of n statements, with both true and false ones. */
+  function factsRound(seed, n, mw) {
+    const r = rng(seed);
+    const all = facts(mw);
+    for (let tries = 0; tries < 20; tries++) {
+      const round = shuffle(r, all).slice(0, n || 10);
+      const t = round.filter((f) => f.t).length;
+      if (t >= 3 && round.length - t >= 3) return round;
+    }
+    return shuffle(r, all).slice(0, n || 10);
+  }
+
+  /** Coin catcher: what falls, how often, and how fast, at second `t` of a 40-second round. */
+  const DROPS = [
+    { k: 'c1', v: 1, w: 30 }, { k: 'c5', v: 5, w: 24 }, { k: 'c10', v: 10, w: 14 },
+    { k: 'b20', v: 20, w: 6 }, { k: 'b50', v: 50, w: 2 }, { k: 'clock', v: 0, w: 2 }, { k: 'fine', v: 0, w: 16, bad: true },
+  ];
+  function coinPace(t) {
+    const f = Math.min(1, t / 40);
+    return { every: 0.62 - 0.32 * f, speed: 190 + 230 * f, fineBoost: 1 + f * 0.8 };
+  }
+  function coinDrop(r, t) {
+    const { fineBoost } = coinPace(t);
+    const ws = DROPS.map((d) => d.w * (d.bad ? fineBoost : 1));
+    let x = r() * ws.reduce((a, b) => a + b, 0);
+    for (let i = 0; i < DROPS.length; i++) { x -= ws[i]; if (x <= 0) return DROPS[i]; }
+    return DROPS[0];
+  }
+
+  root.Games = { rng, quizRound, QUESTIONS, facts, factsRound, coinPace, coinDrop, DROPS, hrs, nis };
+})(typeof window !== 'undefined' ? window : globalThis);
+
 /* ---- app/ui.js ---- */
 /* ============================================================
  * ui.js — small UI toolkit: icons, escaping, toasts, bottom
@@ -4243,6 +4628,7 @@ window.APP_VERSION = '1.7.2';
     star: '<path d="m12 2.5 2.9 6 6.6.9-4.8 4.6 1.2 6.5L12 17.4l-5.9 3.1 1.2-6.5L2.5 9.4l6.6-.9z"/>',
     repeat: '<path d="m17 2 4 4-4 4"/><path d="M3 11V9a3 3 0 0 1 3-3h15M7 22l-4-4 4-4"/><path d="M21 13v2a3 3 0 0 1-3 3H3"/>',
     smile: '<circle cx="12" cy="12" r="9"/><path d="M8.5 14a4.5 4.5 0 0 0 7 0M9 9.5h.01M15 9.5h.01"/>',
+    game: '<rect x="2.5" y="7" width="19" height="11" rx="5.5"/><path d="M7.5 10.5v4M5.5 12.5h4M15.5 11.5h.01M18 13.5h.01"/>',
     rocket: '<path d="M5 15c-1.5 1.3-2 5-2 5s3.7-.5 5-2c.7-.8.7-2.1-.1-2.9a2.2 2.2 0 0 0-2.9-.1z"/><path d="m12 15-3-3a22 22 0 0 1 2-3.9A12.9 12.9 0 0 1 22 2c0 2.7-.8 7.5-6 11a22.4 22.4 0 0 1-4 2z"/><path d="M9 12H4s.6-3 2-4c1.6-1.1 5 0 5 0M12 15v5s3-.6 4-2c1.1-1.6 0-5 0-5"/>',
   };
   function icon(name, cls) {
@@ -4672,11 +5058,32 @@ window.APP_VERSION = '1.7.2';
   }
 
   /* ---------------- time ---------------- */
+  // The wheels go round forever: after 23 comes 00, after 59 comes 00.
+  // The numbers are written COPIES times one after the other; whenever a
+  // wheel comes to rest it is moved, invisibly, back to the same number
+  // in the middle copy, so there is always room to keep turning.
   const ROW = 44;
-  function wheel(count, sel, fmt) {
+  const COPIES = 9, MID = 4;
+  const mod = (a, n) => ((a % n) + n) % n;
+  function wheel(count, sel, fmt, label) {
     let html = '';
-    for (let i = 0; i < count; i++) html += `<div class="pk-opt" data-i="${i}">${fmt(i)}</div>`;
-    return `<div class="pk-wheel" tabindex="0" data-sel="${sel}"><div class="pk-pad"></div>${html}<div class="pk-pad"></div></div>`;
+    for (let c = 0; c < COPIES; c++) for (let v = 0; v < count; v++) html += `<div class="pk-opt" data-i="${c * count + v}" data-v="${v}">${fmt(v)}</div>`;
+    return `<div class="pk-wheel" tabindex="0" role="spinbutton" aria-label="${label}" aria-valuemin="0" aria-valuemax="${count - 1}" aria-valuenow="${sel}" data-n="${count}"><div class="pk-pad"></div>${html}<div class="pk-pad"></div></div>`;
+  }
+  /** The drum look: rows tilt and shrink the further they are from the middle. */
+  function drum(w) {
+    const c = w.scrollTop / ROW;
+    for (const o of w._lit || []) { o.style.transform = ''; o.style.opacity = ''; }
+    const lit = [];
+    for (let i = Math.floor(c) - 3; i <= Math.ceil(c) + 3; i++) {
+      const o = w.children[i + 1]; // children[0] is the top padding
+      if (!o || !o.classList.contains('pk-opt')) continue;
+      const d = i - c, ad = Math.min(3, Math.abs(d));
+      o.style.transform = `perspective(240px) rotateX(${(-d * 17).toFixed(1)}deg) scale(${(1.16 - ad * 0.11).toFixed(3)})`;
+      o.style.opacity = (1 - ad * 0.2).toFixed(2);
+      lit.push(o);
+    }
+    w._lit = lit;
   }
   /** opts: { value: 'HH:MM', title }. Resolves with 'HH:MM' or null. */
   function pickTime(opts) {
@@ -4687,28 +5094,47 @@ window.APP_VERSION = '1.7.2';
     const quick = [['עכשיו', null], ['08:00', '08:00'], ['12:00', '12:00'], ['16:00', '16:00'], ['20:00', '20:00']];
     return host(opts.title || 'בחירת שעה', `
       <div class="pk-show"><div class="pk-clock" data-big></div></div>
-      <div class="pk-wheels">${wheel(24, h, pad)}<span class="pk-colon">:</span>${wheel(60, m, pad)}<div class="pk-band"></div></div>
+      <div class="pk-wheels">${wheel(24, h, pad, 'שעות')}<span class="pk-colon">:</span>${wheel(60, m, pad, 'דקות')}<div class="pk-band"></div></div>
       <div class="pk-quick">${quick.map(([l, t]) => `<button class="chip" data-t="${t || 'now'}">${l}</button>`).join('')}</div>
       <div class="pk-foot"><button class="btn tonal" data-pk-cancel>ביטול</button><button class="btn" data-pk-ok>${icon('check')} בחירה</button></div>`, (el, finish) => {
       const [wh, wm] = el.querySelectorAll('.pk-wheel');
       const big = el.querySelector('[data-big]');
       const show = () => { big.innerHTML = `<span>${pad(h)}</span><i>:</i><span>${pad(m)}</span>`; };
-      const mark = (w, i) => w.querySelectorAll('.pk-opt').forEach((o) => o.classList.toggle('on', +o.dataset.i === i));
+      const mark = (w, v) => {
+        w.querySelectorAll('.pk-opt.on').forEach((o) => o.classList.remove('on'));
+        w.querySelectorAll(`.pk-opt[data-v="${v}"]`).forEach((o) => o.classList.add('on'));
+        w.setAttribute('aria-valuenow', v);
+      };
       function bind(w, get, set) {
-        let t = null, last = get();
+        const n = +w.dataset.n;
+        let last = get(), idle = 0, frame = 0;
+        const at = () => Math.round(w.scrollTop / ROW);
         const settle = () => {
-          const i = Math.max(0, Math.min(w.querySelectorAll('.pk-opt').length - 1, Math.round(w.scrollTop / ROW)));
-          if (i !== last) { last = i; set(i); show(); mark(w, i); if (Fx()) { Fx().play('tick'); Fx().haptic(4); } }
+          const v = mod(at(), n);
+          if (v !== last) { last = v; set(v); show(); mark(w, v); if (Fx()) { Fx().play('tick'); Fx().haptic(4); } }
         };
-        w.addEventListener('scroll', () => { clearTimeout(t); settle(); t = setTimeout(settle, 90); }, { passive: true });
+        // back to the middle copy once the wheel is at rest (same picture, so nothing visibly moves)
+        const recenter = () => {
+          const i = at();
+          if (Math.floor(i / n) !== MID) w.scrollTop = (MID * n + mod(i, n)) * ROW;
+          drum(w);
+        };
+        const hasEnd = 'onscrollend' in w;
+        w.addEventListener('scroll', () => {
+          settle();
+          if (!frame) frame = requestAnimationFrame(() => { frame = 0; drum(w); });
+          if (!hasEnd) { clearTimeout(idle); idle = setTimeout(recenter, 180); }
+        }, { passive: true });
+        if (hasEnd) w.addEventListener('scrollend', recenter);
         w.addEventListener('click', (e) => { const o = e.target.closest('.pk-opt'); if (o) w.scrollTo({ top: +o.dataset.i * ROW, behavior: 'smooth' }); });
         w.addEventListener('keydown', (e) => {
           if (e.key !== 'ArrowUp' && e.key !== 'ArrowDown') return;
           e.preventDefault();
-          w.scrollTo({ top: (get() + (e.key === 'ArrowDown' ? 1 : -1)) * ROW, behavior: 'smooth' });
+          w.scrollTo({ top: (at() + (e.key === 'ArrowDown' ? 1 : -1)) * ROW, behavior: 'smooth' });
         });
-        w.scrollTop = get() * ROW;
+        w.scrollTop = (MID * n + get()) * ROW;
         mark(w, get());
+        drum(w);
       }
       requestAnimationFrame(() => {
         bind(wh, () => h, (i) => { h = i; });
@@ -5575,6 +6001,13 @@ window.APP_VERSION = '1.7.2';
  * charts.js — small dependency-free SVG charts.
  * Thin marks, rounded data ends, recessive grid, one axis,
  * tap/hover tooltip on every mark (data-tip).
+ *
+ * They come alive when they scroll into view: bars grow from the
+ * baseline one after another, lines draw themselves over a soft
+ * area, markers pop in. Tapping a mark keeps it bright and steps
+ * the others back while the tooltip shows. All of it is CSS on
+ * transforms (styles-v3.css), off with reduced motion, and never
+ * replayed when the same screen redraws after a save.
  * ============================================================ */
 (function (root) {
   'use strict';
@@ -5589,7 +6022,10 @@ window.APP_VERSION = '1.7.2';
     const m = n <= 1 ? 1 : n <= 2 ? 2 : n <= 2.5 ? 2.5 : n <= 5 ? 5 : 10;
     return m * p;
   }
-  const short = (v) => (Math.abs(v) >= 10000 ? Math.round(v / 1000) + 'K' : Math.abs(v) >= 1000 ? (v / 1000).toFixed(1).replace('.0', '') + 'K' : String(Math.round(v)));
+  let uid = 0;
+  /** Stagger: the whole chart finishes growing in about half a second, however many bars. */
+  const delay = (i, n, total) => Math.round((i * (total || 480)) / Math.max(1, n));
+  const short = (v) => (Math.abs(v) >= 1000 ? +(v / 1000).toFixed(1) + 'K' : String(Math.round(v)));
   /** Bar with rounded top corners only (4px), anchored to the baseline. */
   function barPath(x, y, w, h, r) {
     r = Math.min(r, w / 2, h);
@@ -5615,14 +6051,14 @@ window.APP_VERSION = '1.7.2';
     const n = data.length || 1;
     const slot = (right - left) / n;
     const bw = Math.max(4, Math.min(28, slot - 6));
-    let s = `<svg class="chart" viewBox="0 0 ${W} ${H}" role="img" aria-label="${esc(opts.label || '')}">`;
+    let s = `<svg class="chart" data-anim viewBox="0 0 ${W} ${H}" role="img" aria-label="${esc(opts.label || '')}">`;
     s += grid(maxV, top, bottom, left, right, opts.axisFmt);
     data.forEach((d, i) => {
       const h = ((bottom - top) * Math.max(0, d.value)) / maxV;
       const x = left + slot * i + (slot - bw) / 2;
       const col = d.color || opts.color || SERIES[0];
-      s += `<path d="${barPath(x, bottom - h, bw, h, 4)}" fill="${col}" opacity="${d.dim ? 0.45 : 1}"/>`;
-      s += `<rect class="hit" x="${left + slot * i}" y="${top}" width="${slot}" height="${bottom - top}" data-tip="${esc(d.tip || d.label + ': ' + d.value)}"/>`;
+      s += `<path class="bar" data-i="${i}" style="--d:${delay(i, n)}ms" d="${barPath(x, bottom - h, bw, h, 4)}" fill="${col}" opacity="${d.dim ? 0.45 : 1}"/>`;
+      s += `<rect class="hit" data-i="${i}" x="${left + slot * i}" y="${top}" width="${slot}" height="${bottom - top}" data-tip="${esc(d.tip || d.label + ': ' + d.value)}"/>`;
       if (n <= 14 || i % Math.ceil(n / 12) === 0) s += `<text x="${x + bw / 2}" y="${H - 8}" text-anchor="middle">${esc(d.label)}</text>`;
     });
     s += `<line class="axis" x1="${left}" x2="${right}" y1="${bottom}" y2="${bottom}"/>`;
@@ -5638,12 +6074,13 @@ window.APP_VERSION = '1.7.2';
     const n = labels.length || 1;
     const slot = (right - left) / n;
     const bw = Math.max(4, Math.min(28, slot - 6));
-    let s = `<svg class="chart" viewBox="0 0 ${W} ${H}" role="img" aria-label="${esc(opts.label || '')}">`;
+    let s = `<svg class="chart" data-anim viewBox="0 0 ${W} ${H}" role="img" aria-label="${esc(opts.label || '')}">`;
     s += grid(maxV, top, bottom, left, right, opts.axisFmt);
     labels.forEach((lab, i) => {
       const x = left + slot * i + (slot - bw) / 2;
       let y = bottom;
       const segs = series.filter((se) => (se.values[i] || 0) > 0);
+      s += `<g class="bar" data-i="${i}" style="--d:${delay(i, n)}ms">`;
       segs.forEach((se, j) => {
         const h = ((bottom - top) * se.values[i]) / maxV;
         const isTop = j === segs.length - 1;
@@ -5652,8 +6089,9 @@ window.APP_VERSION = '1.7.2';
         else s += `<rect x="${x}" y="${y - h + gap}" width="${bw}" height="${Math.max(0, h - gap)}" fill="${se.color}"/>`;
         y -= h;
       });
+      s += '</g>';
       const tip = lab + ' · ' + series.filter((se) => se.values[i]).map((se) => se.name + ' ' + (opts.fmt ? opts.fmt(se.values[i]) : se.values[i])).join(' · ');
-      s += `<rect class="hit" x="${left + slot * i}" y="${top}" width="${slot}" height="${bottom - top}" data-tip="${esc(tip)}"/>`;
+      s += `<rect class="hit" data-i="${i}" x="${left + slot * i}" y="${top}" width="${slot}" height="${bottom - top}" data-tip="${esc(tip)}"/>`;
       if (n <= 14 || i % Math.ceil(n / 12) === 0) s += `<text x="${x + bw / 2}" y="${H - 8}" text-anchor="middle">${esc(lab)}</text>`;
     });
     s += `<line class="axis" x1="${left}" x2="${right}" y1="${bottom}" y2="${bottom}"/>`;
@@ -5674,7 +6112,7 @@ window.APP_VERSION = '1.7.2';
     const n = labels.length;
     const xAt = (i) => left + (n <= 1 ? (right - left) / 2 : ((right - left) * i) / (n - 1));
     const yAt = (v) => bottom - ((bottom - top) * (v - minV)) / (maxV - minV || 1);
-    let s = `<svg class="chart" viewBox="0 0 ${W} ${H}" role="img" aria-label="${esc(opts.label || '')}">`;
+    let s = `<svg class="chart" data-anim viewBox="0 0 ${W} ${H}" role="img" aria-label="${esc(opts.label || '')}">`;
     let g = '<g class="grid">';
     for (let i = 0; i <= 4; i++) {
       const v = minV + ((maxV - minV) / 4) * i;
@@ -5684,12 +6122,19 @@ window.APP_VERSION = '1.7.2';
     s += g + '</g>';
     const col = opts.color || SERIES[0];
     let d = '';
-    vals.forEach((v, i) => { if (v == null) return; d += (d ? 'L' : 'M') + xAt(i) + ',' + yAt(v); });
-    s += `<path d="${d}" fill="none" stroke="${col}" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>`;
+    const pts = [];
+    vals.forEach((v, i) => { if (v == null) return; d += (d ? 'L' : 'M') + xAt(i) + ',' + yAt(v); pts.push(xAt(i)); });
+    // a soft area under the line, fading down to the axis
+    if (pts.length > 1) {
+      const id = 'lg' + ++uid;
+      s += `<defs><linearGradient id="${id}" x1="0" x2="0" y1="0" y2="1"><stop offset="0" stop-color="${col}" stop-opacity=".22"/><stop offset="1" stop-color="${col}" stop-opacity="0"/></linearGradient></defs>`;
+      s += `<path class="area" d="${d}L${pts[pts.length - 1]},${bottom}L${pts[0]},${bottom}Z" fill="url(#${id})"/>`;
+    }
+    s += `<path class="ln" pathLength="1" d="${d}" fill="none" stroke="${col}" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>`;
     vals.forEach((v, i) => {
-      if (v != null) s += `<circle cx="${xAt(i)}" cy="${yAt(v)}" r="4" fill="${col}" stroke="var(--surface-1)" stroke-width="2"/>`;
+      if (v != null) s += `<circle class="dot" data-i="${i}" style="--d:${300 + delay(i, n, 700)}ms" cx="${xAt(i)}" cy="${yAt(v)}" r="4" fill="${col}" stroke="var(--surface-1)" stroke-width="2"/>`;
       const slot = (right - left) / Math.max(1, n - 1);
-      s += `<rect class="hit" x="${xAt(i) - slot / 2}" y="${top}" width="${slot}" height="${bottom - top}" data-tip="${esc(labels[i] + ': ' + (v == null ? '—' : opts.fmt ? opts.fmt(v) : v))}"/>`;
+      s += `<rect class="hit" data-i="${i}" x="${xAt(i) - slot / 2}" y="${top}" width="${slot}" height="${bottom - top}" data-tip="${esc(labels[i] + ': ' + (v == null ? '—' : opts.fmt ? opts.fmt(v) : v))}"/>`;
       if (n <= 14 || i % Math.ceil(n / 12) === 0) s += `<text x="${xAt(i)}" y="${H - 8}" text-anchor="middle">${esc(labels[i])}</text>`;
     });
     return s + '</svg>';
@@ -5704,7 +6149,7 @@ window.APP_VERSION = '1.7.2';
     const slot = (right - left) / n;
     const bw = Math.min(34, slot - 8);
     const yAt = (v) => bottom - ((bottom - top) * v) / maxV;
-    let s = `<svg class="chart" viewBox="0 0 ${W} ${H}" role="img" aria-label="מברוטו לנטו">`;
+    let s = `<svg class="chart" data-anim viewBox="0 0 ${W} ${H}" role="img" aria-label="מברוטו לנטו">`;
     s += grid(maxV, top, bottom, left, right, opts.axisFmt);
     let run = 0;
     steps.forEach((st, i) => {
@@ -5713,12 +6158,13 @@ window.APP_VERSION = '1.7.2';
       if (st.type === 'total') { y0 = 0; y1 = st.value; run = st.value; col = i === 0 ? '#2a78d6' : '#1baf7a'; }
       else { y1 = run; y0 = run + st.value; run = y0; col = '#e34948'; }
       const yt = yAt(Math.max(y0, y1)), yb = yAt(Math.min(y0, y1));
-      s += st.type === 'total' ? `<path d="${barPath(x, yt, bw, yb - yt, 4)}" fill="${col}"/>` : `<rect x="${x}" y="${yt}" width="${bw}" height="${Math.max(1, yb - yt)}" rx="2" fill="${col}" opacity=".85"/>`;
+      const a = `data-i="${i}" style="--d:${i * 130}ms"`;
+      s += st.type === 'total' ? `<path class="bar" ${a} d="${barPath(x, yt, bw, yb - yt, 4)}" fill="${col}"/>` : `<rect class="bar neg" ${a} x="${x}" y="${yt}" width="${bw}" height="${Math.max(1, yb - yt)}" rx="2" fill="${col}" opacity=".85"/>`;
       if (i < n - 1) {
         const yl = yAt(run);
         s += `<line x1="${x + bw}" x2="${x + slot}" y1="${yl}" y2="${yl}" stroke="var(--outline)" stroke-dasharray="3 3"/>`;
       }
-      s += `<rect class="hit" x="${left + slot * i}" y="${top}" width="${slot}" height="${bottom - top}" data-tip="${esc(st.label + ': ' + (opts.fmt ? opts.fmt(st.value) : st.value))}"/>`;
+      s += `<rect class="hit" data-i="${i}" x="${left + slot * i}" y="${top}" width="${slot}" height="${bottom - top}" data-tip="${esc(st.label + ': ' + (opts.fmt ? opts.fmt(st.value) : st.value))}"/>`;
       const words = st.label.split(' ');
       s += `<text x="${x + bw / 2}" y="${bottom + 14}" text-anchor="middle">${esc(words[0])}</text>`;
       if (words[1]) s += `<text x="${x + bw / 2}" y="${bottom + 26}" text-anchor="middle">${esc(words.slice(1).join(' '))}</text>`;
@@ -5730,7 +6176,7 @@ window.APP_VERSION = '1.7.2';
   /** Horizontal bars (HTML) for role/category splits. rows: [{name, value, color, text}] */
   function hbars(rows, fmt) {
     const max = Math.max(1e-9, ...rows.map((r) => r.value));
-    return rows.map((r) => `<div class="hbar"><span class="nm">${esc(r.name)}</span><span class="track"><i style="width:${(r.value / max) * 100}%;background:${r.color}"></i></span><span class="vv">${esc(r.text || (fmt ? fmt(r.value) : r.value))}</span></div>`).join('');
+    return rows.map((r, i) => `<div class="hbar" data-anim><span class="nm">${esc(r.name)}</span><span class="track"><i style="width:${(r.value / max) * 100}%;background:${r.color};--d:${i * 90}ms"></i></span><span class="vv">${esc(r.text || (fmt ? fmt(r.value) : r.value))}</span></div>`).join('');
   }
 
   /* ---------- tooltip (tap or hover) ---------- */
@@ -5739,19 +6185,51 @@ window.APP_VERSION = '1.7.2';
     if (!tipEl) { tipEl = document.createElement('div'); tipEl.className = 'chart-tip'; document.body.appendChild(tipEl); }
     tipEl.textContent = text;
     tipEl.style.display = 'block';
+    tipEl.classList.remove('pop'); void tipEl.offsetWidth; tipEl.classList.add('pop');
     const x = e.clientX || (e.touches && e.touches[0].clientX) || 0;
     const y = e.clientY || (e.touches && e.touches[0].clientY) || 0;
     tipEl.style.left = Math.max(70, Math.min(window.innerWidth - 70, x)) + 'px';
     tipEl.style.top = y + 'px';
   }
-  function hideTip() { if (tipEl) tipEl.style.display = 'none'; }
+  function hideTip() {
+    if (tipEl) tipEl.style.display = 'none';
+    document.querySelectorAll('.chart.focus').forEach((c) => { c.classList.remove('focus'); c.querySelectorAll('.on').forEach((x) => x.classList.remove('on')); });
+  }
+  /** Tapped mark: it (and its marker) stays bright, the rest step back. */
+  function focusMark(t) {
+    const svg = t.closest('svg.chart');
+    if (!svg || t.dataset.i == null) return;
+    document.querySelectorAll('.chart.focus').forEach((c) => { if (c !== svg) c.classList.remove('focus'); });
+    svg.querySelectorAll('.on').forEach((x) => x.classList.remove('on'));
+    svg.querySelectorAll(`[data-i="${t.dataset.i}"]:not(.hit)`).forEach((x) => x.classList.add('on'));
+    svg.classList.add('focus');
+  }
   document.addEventListener('pointerover', (e) => { const t = e.target.closest && e.target.closest('[data-tip]'); if (t && e.pointerType === 'mouse') showTip(e, t.dataset.tip); });
   document.addEventListener('pointerout', (e) => { if (e.target.closest && e.target.closest('[data-tip]')) hideTip(); });
   document.addEventListener('click', (e) => {
     const t = e.target.closest && e.target.closest('[data-tip]');
-    if (t) { showTip(e, t.dataset.tip); clearTimeout(showTip._t); showTip._t = setTimeout(hideTip, 2600); } else hideTip();
+    if (t) { showTip(e, t.dataset.tip); focusMark(t); clearTimeout(showTip._t); showTip._t = setTimeout(hideTip, 2600); } else hideTip();
   });
   window.addEventListener('scroll', hideTip, { passive: true });
+
+  /* ---------- start the entrance animation when a chart scrolls into view ---------- */
+  const io = 'IntersectionObserver' in root ? new IntersectionObserver((list) => {
+    for (const en of list) if (en.isIntersecting) { en.target.classList.add('in'); io.unobserve(en.target); }
+  }, { threshold: 0.2 }) : null;
+  let scanQueued = false;
+  function scan() {
+    scanQueued = false;
+    document.querySelectorAll('[data-anim]:not(.in):not(.watched)').forEach((el) => {
+      el.classList.add('watched');
+      if (io) io.observe(el); else el.classList.add('in');
+    });
+  }
+  if (typeof MutationObserver !== 'undefined' && document.body) {
+    new MutationObserver((recs) => {
+      if (scanQueued) return;
+      for (const r of recs) if (r.addedNodes.length) { scanQueued = true; requestAnimationFrame(scan); return; }
+    }).observe(document.body, { childList: true, subtree: true });
+  }
 
   root.Charts = { bars, stacked, line, waterfall, hbars, SERIES };
 })(typeof window !== 'undefined' ? window : globalThis);
@@ -5918,6 +6396,38 @@ window.APP_VERSION = '1.7.2';
   };
   App.rerender = () => App.render({ keepScroll: true });
 
+  /* ---------------- milestones ----------------
+   * 10, 25, 50… shifts and 1,000, 5,000… shekels earned get a small medal at the top of the
+   * screen (it never covers the save message and its undo button at the bottom). The first
+   * time this runs it only notes where the user already is, so nobody gets a burst of old
+   * medals after an update; deleting shifts never brings a medal back. */
+  const MS_SHIFTS = [10, 25, 50, 100, 200, 300, 500, 1000];
+  const MS_EARNED = [1000, 5000, 10000, 25000, 50000, 100000, 250000];
+  App.milestones = function () {
+    if (S.settings.demo || !App.model) return;
+    const done = [...App.model.results.values()].filter((r) => r.status === 'done');
+    const top = (list, v) => list.filter((x) => v >= x).pop() || 0;
+    const cur = { shifts: top(MS_SHIFTS, done.length), earned: top(MS_EARNED, done.reduce((s, r) => s + (r.total || 0), 0)) };
+    const was = S.meta.ms;
+    if (!was) { Store.setMeta({ ms: cur }).catch(() => {}); return; }
+    let pop = null;
+    if (cur.shifts > (was.shifts || 0)) pop = [`${cur.shifts} משמרות!`, 'כל הכבוד על ההתמדה'];
+    else if (cur.earned > (was.earned || 0)) pop = [`עברת ${U.money(cur.earned, 0)}`, 'שהרווחת מאז שהתחלת לרשום'];
+    if (cur.shifts > (was.shifts || 0) || cur.earned > (was.earned || 0)) Store.setMeta({ ms: { shifts: Math.max(cur.shifts, was.shifts || 0), earned: Math.max(cur.earned, was.earned || 0) } }).catch(() => {});
+    if (pop) setTimeout(() => App.medal(pop[0], pop[1]), 900);
+  };
+  /** A medal that drops in at the top for a few seconds (never blocks taps). */
+  App.medal = function (title, sub) {
+    const el = document.createElement('div');
+    el.className = 'medal-pop';
+    el.setAttribute('role', 'status');
+    el.innerHTML = `${App.mascot ? App.mascot('party', { size: 46 }) : ''}<div><b>${UI.esc(title)}</b><small>${UI.esc(sub)}</small></div><span class="medal-ic" aria-hidden="true">🏅</span>`;
+    document.body.appendChild(el);
+    if (root.Fx) root.Fx.celebrate('big');
+    setTimeout(() => el.classList.add('out'), 3600);
+    setTimeout(() => el.remove(), 4100);
+  };
+
   /* ---------------- data change pipeline ---------------- */
   let insightTimer = null;
   Store.on((ev) => {
@@ -5936,8 +6446,10 @@ window.APP_VERSION = '1.7.2';
   /** Save with an Undo snackbar. */
   App.saveOps = async function (ops, label, toastText) {
     await Store.apply(ops, label);
-    if (ops.some((o) => o.store === 'shifts' && o.put && o.put.status !== 'planned')) root.Fx.celebrate('coin');
+    const doneShift = ops.some((o) => o.store === 'shifts' && o.put && o.put.status !== 'planned');
+    if (doneShift) root.Fx.celebrate('coin');
     UI.toast(toastText || label, { label: 'ביטול', fn: App.undo }, { ok: true });
+    if (doneShift) App.milestones();
   };
   App.undo = async function () {
     const l = await Store.undo();
@@ -6041,6 +6553,7 @@ window.APP_VERSION = '1.7.2';
     await Store.setActive(null);
     if (S.shifts.filter((x) => x.status === 'done').length === 1) App.celebrateOnce('first-shift', () => UI.toast('המשמרת הראשונה שלך נשמרה! 🎉'));
     root.Fx.celebrate('big');
+    App.milestones();
     const r = App.result(sh.id);
     UI.toast(`נשמר: ${U.hm(r ? r.paidMin : 0)} שעות · ${U.money(r ? r.wage : 0)}`, { label: 'ביטול', fn: App.undo }, { ok: true });
     App.sheetsApi.shiftDetail && App.sheetsApi.shiftDetail(sh.id);
@@ -7344,7 +7857,7 @@ window.FIREBASE_CONFIG = {
   /* ---------------- four big doors to the things people look for ---------------- */
   function shortcuts() {
     const d = (act, ic, label, tint) => `<button class="sc" data-act="${act}">${UI.tile(ic, tint)}<span>${label}</span></button>`;
-    return `<div class="shortcuts">${d('shift-new', 'plus', 'משמרת שעשיתי', 'violet')}${d('rights', 'shield', 'מה מגיע לי', 'mint')}${d('payslip-new', 'receipt', 'בדיקת תלוש', 'amber')}${d('support', 'help', 'עזרה', 'sky')}</div>`;
+    return `<div class="shortcuts">${d('shift-new', 'plus', 'משמרת חדשה', 'violet')}${d('rights', 'shield', 'הזכויות שלי', 'mint')}${d('payslip-new', 'receipt', 'בדיקת תלוש', 'amber')}${d('games', 'game', 'משחקים', 'pink')}</div>`;
   }
 
   function birthdayCard() {
@@ -7370,6 +7883,7 @@ window.FIREBASE_CONFIG = {
   }
 
   App.views.home = function () {
+    if (!S.meta.ms && App.milestones) App.milestones(); // notes where the user is, so the next medal is a real one
     const unread = S.notifications.filter((n) => !n.read && n.cat !== 'summary').length;
     const today = U.todayKey();
     const hd = HebCal.hebrewDate(today);
@@ -7385,7 +7899,7 @@ window.FIREBASE_CONFIG = {
       <div class="home-top"><div class="titles"><h1>${greeting()}${name} <span class="wave">👋</span></h1>
         <div class="sub">${date} · ${esc(hd.toString().replace(/\s\S+$/, ''))}${hol ? ' · ' + esc(hol) : ''}</div></div>
         <span id="sync-dot">${App.syncDot ? App.syncDot() : ''}</span>
-        <button class="icon-btn" data-act="rights" aria-label="הזכויות שלי">${icon('shield')}</button>
+        <button class="icon-btn" data-act="support" aria-label="עזרה ותמיכה">${icon('help')}</button>
         <button class="icon-btn" data-act="insights" aria-label="התראות ותובנות">${icon('bell')}${unread ? `<span class="dot-badge">${unread > 9 ? '9+' : unread}</span>` : ''}</button></div>
       ${birthdayCard()}
       ${paydayCard()}
@@ -7397,7 +7911,7 @@ window.FIREBASE_CONFIG = {
       ${shortcuts()}
       ${pending.length + recent.length ? `<div class="home-list-head"><span>${pending.length ? 'לסמן כבוצעה' : 'משמרות אחרונות'}</span><button class="btn text sm" data-act="go-shifts">הכול</button></div>
         <div class="list home-list">${pending.map((r) => App.shiftItem(r, { showOk: true })).join('')}${recent.slice(0, Math.max(1, 3 - pending.length)).map((r) => App.shiftItem(r)).join('')}</div>`
-        : S.meta.guide && !S.meta.guideDone ? '' : `<div class="empty fun">${App.mascot ? App.mascot('sleepy', { size: 92 }) : ''}<h3>עוד אין משמרות</h3><div>כשמגיעים לעבודה לוחצים על "התחל משמרת".<br>שכחת? לוחצים על <b>+</b> ומוסיפים משמרת שכבר הייתה.</div></div>`}
+        : S.meta.guide && !S.meta.guideDone ? '' : `<div class="empty fun">${App.mascot ? App.mascot('sleepy', { size: 92 }) : ''}<h3>עוד אין משמרות</h3><div>בתחילת משמרת לוחצים על "התחל משמרת".<br>משמרת שכבר התקיימה מוסיפים בכפתור <b>+</b>.</div></div>`}
     `;
   };
 
@@ -7463,13 +7977,13 @@ window.FIREBASE_CONFIG = {
   /* everything that can be added, as big tiles that all fit on one screen (nothing hides below the fold) */
   App.actions['add-menu'] = () => {
     const tpls = S.templates;
-    const tile = (act, ic, tint, t, cls, extra) => `<button class="am-tile ${cls || ''}" data-act="${act}" ${extra || ''}>${UI.tile(ic, tint)}<span class="am-t">${t}</span></button>`;
+    const tile = (act, ic, tint, t, cls, extra, sub) => `<button class="am-tile ${cls || ''}" data-act="${act}" ${extra || ''}>${UI.tile(ic, tint)}<span class="am-t">${t}</span>${sub ? `<span class="am-s">${sub}</span>` : ''}</button>`;
     UI.openSheet({
-      title: 'מה להוסיף?',
+      title: 'הוספה',
       cls: 'add-sheet',
-      body: `<div class="am-main">${tile('shift-new', 'clock', 'glass', 'משמרת שעשיתי', 'big g1')}${tile('shift-plan', 'calendar', 'violet', 'משמרת עתידית', 'big g2')}</div>
+      body: `<div class="am-main">${tile('shift-new', 'clock', 'glass', 'רישום משמרת', 'big g1', '', 'שהתקיימה')}${tile('shift-plan', 'calendar', 'violet', 'תכנון משמרת', 'big g2', '', 'לימים הבאים')}</div>
         <div class="am-grid">
-          ${S.shifts.some((s) => s.status !== 'planned') ? tile('dup-last', 'repeat', 'violet', 'כמו האחרונה') : ''}
+          ${S.shifts.some((s) => s.status !== 'planned') ? tile('dup-last', 'repeat', 'violet', 'שכפול האחרונה') : ''}
           ${tpls.length ? tile('tpl-pick', 'layers', 'sky', 'מתבנית') : ''}
           ${tile('entry-new', 'beach', 'sky', 'יום חופשה', '', 'data-kind="vacation"')}
           ${tile('entry-new', 'thermo', 'pink', 'יום מחלה', '', 'data-kind="sick"')}
@@ -7737,6 +8251,10 @@ window.FIREBASE_CONFIG = {
     const sel = (f, options, v) => `<select class="input" data-f="${f}">${options.map(([val, lab]) => `<option value="${val}" ${String(v) === String(val) ? 'selected' : ''}>${lab}</option>`).join('')}</select>`;
     const inp = (f, v, extra) => `<input class="input" data-f="${f}" value="${esc(v == null ? '' : v)}" ${extra || ''}>`;
     const numIn = (f, v, ph) => inp(f, v, `type="number" inputmode="decimal" step="any" placeholder="${ph || ''}"`);
+    // shift length in minutes from the two times (an end before the start means the next day)
+    const toMin = (t) => +t.slice(0, 2) * 60 + +t.slice(3, 5);
+    const lengthMin = () => { if (!d.startT || !d.endT) return null; const m = toMin(d.endT) - toMin(d.startT); return m <= 0 ? m + 1440 : m; };
+    const durChips = () => `<div class="dur-row"><span class="dur-l">${lengthMin() ? `משך המשמרת: <b class="num">${U.hm(lengthMin())}</b> שעות` : 'משך המשמרת (בחירה מהירה)'}</span><div class="chips">${[4, 5, 6, 7, 8, 9].map((h) => `<button class="chip ${lengthMin() === h * 60 ? 'on' : ''}" data-dur="${h}">${h} ש׳</button>`).join('')}</div></div>`;
 
     function ovBlock(key, title, sub, inner) {
       const o = d.ov[key];
@@ -7754,6 +8272,7 @@ window.FIREBASE_CONFIG = {
           <label class="field"><span class="lbl">התחלה</span>${inp('startT', d.startT, 'type="time"')}</label>
           <label class="field"><span class="lbl">סיום ${overnight ? '<span class="tag planned">למחרת</span>' : ''}</span>${inp('endT', d.endT, 'type="time"')}</label>
         </div>
+        ${durChips()}
         <div class="field"><span class="lbl">תפקיד</span><div class="chips">${roleChips(d.roleId, 'data-role')}</div></div>
         <details class="collapse" ${d.splits.length ? 'open' : ''}><summary>${icon('swap', 's')} פיצול בין תפקידים ${d.splits.length ? `<span class="tag">${d.splits.length}</span>` : ''}</summary><div class="in">
           <div class="tiny muted" style="margin-bottom:8px">לדוגמה: התחלת כסדרן, ומ-19:00 עברת לאחמ״ש.</div>
@@ -7839,7 +8358,8 @@ window.FIREBASE_CONFIG = {
             const ns = d.date > U.todayKey() ? 'planned' : 'done';
             if (ns !== d.status) { d.status = ns; redraw(); return; }
           }
-          const structural = e.target.type === 'checkbox' || e.target.tagName === 'SELECT';
+          // the times come from the picker in one go: redraw so "the next day" and the length chips follow
+          const structural = e.target.type === 'checkbox' || e.target.tagName === 'SELECT' || f === 'startT' || f === 'endT';
           if (structural) {
             if (f === 'ov.rest.scope' && v === 'range' && !d.ov.rest.fromT) {
               const r = App.previewShift(shiftFrom(Object.assign({}, d, { ov: emptyOv() })));
@@ -7854,6 +8374,13 @@ window.FIREBASE_CONFIG = {
           if (!t2) return;
           if (t2.dataset.status) { d.status = t2.dataset.status; d.statusTouched = true; redraw(); }
           else if (t2.dataset.role) { d.roleId = t2.dataset.role; redraw(); }
+          else if (t2.dataset.dur) {
+            if (!d.startT) { UI.invalid('קודם בוחרים שעת התחלה'); return; }
+            const m = (toMin(d.startT) + +t2.dataset.dur * 60) % 1440;
+            d.endT = `${String(Math.floor(m / 60)).padStart(2, '0')}:${String(m % 60).padStart(2, '0')}`;
+            redraw();
+            if (root.Fx) root.Fx.play('tick');
+          }
           else if (t2.hasAttribute('data-add-split')) {
             const others = App.roles(d.employerId).filter((r) => r.id !== d.roleId);
             d.splits.push({ t: '', roleId: (others[0] || App.roles()[0]).id }); redraw();
@@ -8273,7 +8800,7 @@ window.FIREBASE_CONFIG = {
     const yearDone = y < U.todayKey().slice(0, 4);
     return `
       <div class="section-title">${icon('chart', 's')} לפי חודשים</div>
-      <div class="card">${Charts.bars(months.map((m) => ({ label: U.HEB_MONTHS[+m.mk.slice(5) - 1].slice(0, 3), value: m.t.gross, tip: `${U.fmtMonth(m.mk)}: ${U.money(m.t.gross, 0)} · ${U.num(m.t.hours, 1)} ש׳` })), { label: 'ברוטו לפי חודש', axisFmt: (v) => '₪' + (v >= 1000 ? Math.round(v / 1000) + 'K' : v) })}
+      <div class="card">${Charts.bars(months.map((m) => ({ label: U.HEB_MONTHS[+m.mk.slice(5) - 1].slice(0, 3), value: m.t.gross, tip: `${U.fmtMonth(m.mk)}: ${U.money(m.t.gross, 0)} · ${U.num(m.t.hours, 1)} ש׳` })), { label: 'ברוטו לפי חודש', axisFmt: (v) => '₪' + (v >= 1000 ? +(v / 1000).toFixed(1) + 'K' : v) })}
         ${best ? `<div class="kv"><span>${icon('up', 's')} החודש הכי טוב</span><b>${U.fmtMonth(best.mk)} · ${U.money(best.t.gross, 0)}</b></div>` : ''}
         ${worst && worst !== best ? `<div class="kv"><span>${icon('down', 's')} החודש הכי חלש</span><b>${U.fmtMonth(worst.mk)} · ${U.money(worst.t.gross, 0)}</b></div>` : ''}
         <div class="kv"><span>מול ${py}</span><span>${U.money(pt.gross, 0)} ${UI.delta(t.gross, pt.gross)}</span></div></div>
@@ -8358,12 +8885,15 @@ window.FIREBASE_CONFIG = {
     const cur = Engine.periodOf(U.todayKey(), emp).key;
     const pks = [];
     for (let i = 11; i >= 0; i--) pks.push(U.addMonthKey(cur, -i));
-    const data = pks.map((pk) => ({ pk, s: Engine.periodSummary(App.model, pk, emp.id) }));
+    let data = pks.map((pk) => ({ pk, s: Engine.periodSummary(App.model, pk, emp.id) }));
+    // months before the first one with any work are left out (but at least half a year is shown)
+    const firstUsed = data.findIndex((d) => d.s.shifts > 0 || d.s.gross > 0);
+    if (firstUsed > 0) data = data.slice(Math.min(firstUsed, data.length - 6));
     const lab = (pk) => U.HEB_MONTHS[+pk.slice(5) - 1].slice(0, 3);
     const roles = App.roles();
     const money0 = (v) => U.money(v, 0);
     return `
-      <div class="card"><div class="card-head"><h3>שכר ברוטו לפי חודש</h3></div>${Charts.bars(data.map((d) => ({ label: lab(d.pk), value: d.s.gross, tip: `${U.fmtMonth(d.pk)}: ${U.money(d.s.gross, 0)} (נטו ~${U.money(d.s.net.net, 0)})`, dim: d.pk === cur })), { label: 'ברוטו לפי חודש', axisFmt: (v) => '₪' + (v >= 1000 ? Math.round(v / 1000) + 'K' : v) })}<div class="tiny muted">החודש הנוכחי מוצג בהיר — עדיין לא הסתיים.</div></div>
+      <div class="card"><div class="card-head"><h3>שכר ברוטו לפי חודש</h3></div>${Charts.bars(data.map((d) => ({ label: lab(d.pk), value: d.s.gross, tip: `${U.fmtMonth(d.pk)}: ${U.money(d.s.gross, 0)} (נטו ~${U.money(d.s.net.net, 0)})`, dim: d.pk === cur })), { label: 'ברוטו לפי חודש', axisFmt: (v) => '₪' + (v >= 1000 ? +(v / 1000).toFixed(1) + 'K' : v) })}<div class="tiny muted">החודש הנוכחי מוצג בהיר — עדיין לא הסתיים.</div></div>
       <div class="card"><div class="card-head"><h3>שעות לפי תפקיד</h3></div>${Charts.stacked(data.map((d) => lab(d.pk)), roles.map((r) => ({ name: r.name, color: r.color, values: data.map((d) => (d.s.byRole[r.id] ? d.s.byRole[r.id].hours : 0)) })), { label: 'שעות לפי תפקיד', fmt: (v) => U.num(v, 1) + ' ש׳' })}</div>
       <div class="card"><div class="card-head"><h3>שכר ממוצע לשעה</h3></div>${Charts.line(data.map((d) => lab(d.pk)), data.map((d) => (d.s.hours ? d.s.avgHourly : null)), { label: 'ממוצע לשעה', fmt: (v) => U.money(v), zero: false, axisFmt: (v) => '₪' + Math.round(v) })}<div class="tiny muted">כולל תוספות שבת ושעות נוספות, בלי נסיעות.</div></div>
       <div class="card"><div class="card-head"><h3>שעות לפי סוג</h3></div>${Charts.stacked(data.map((d) => lab(d.pk)), [
@@ -8577,32 +9107,88 @@ window.FIREBASE_CONFIG = {
     }
   }
 
-  /* ---------------- verification ---------------- */
-  const GROUPS = [['pay', 'תשלומים'], ['ded', 'ניכויים מהעובד'], ['emp', 'הפרשות מעסיק'], ['total', 'סיכומים'], ['info', 'מידע']];
+  /* ---------------- verification ----------------
+   * One calm screen instead of a wall of inputs: a summary on top (month, gross → deductions →
+   * net, and whether the numbers add up), then every line the reader found as a short row
+   * (name · amount). Tapping a row opens it for correction; lines it couldn't place, the raw text
+   * and the AI option wait folded at the bottom. */
+  const GROUPS = [['pay', 'תשלומים', 'wallet', 'mint', true], ['ded', 'ניכויים', 'minus', 'orange', true], ['emp', 'הפרשות המעסיק', 'shield', 'sky', true], ['total', 'סיכומים', 'receipt', 'violet', false], ['info', 'מידע נוסף', 'info', 'sky', false]];
+  const SOURCE = { pdf: ['file', 'נקרא מ-PDF'], ocr: ['camera', 'נקרא מצילום'], ai: ['sparkle', 'נותח בעזרת AI'], manual: ['edit', 'הזנה ידנית'] };
+  const ESSENTIAL = ['gross', 'net', 'base', 'workHours'];
   function verifySheet(draft) {
     const d = { period: draft.period, fields: Store.clone(draft.fields) || {}, other: (draft.other || []).map((o) => Object.assign({ guess: o.guess || 'ignore' }, o)), text: draft.text || '', source: draft.source, fileId: draft.fileId, fileName: draft.fileName, id: draft.id, notes: draft.notes || '' };
     let sheetEl = null;
-    const fieldRow = (f) => {
-      const v = d.fields[f.key] || {};
-      return `<div style="display:grid;grid-template-columns:1fr ${f.hours ? '90px ' : ''}120px 36px;gap:8px;align-items:center;margin-bottom:8px">
-        <div class="small"><b>${esc(f.label)}</b>${v.line && v.line !== 'AI' ? `<div class="tiny muted" style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="${esc(v.line)}">${esc(v.line)}</div>` : v.line === 'AI' ? '<div class="tiny muted">זוהה ע״י AI</div>' : ''}</div>
-        ${f.hours ? `<input class="input" type="number" step="any" inputmode="decimal" data-q="${f.key}" value="${v.qty != null ? v.qty : ''}" placeholder="שעות">` : ''}
-        <input class="input" type="number" step="any" inputmode="decimal" data-v="${f.key}" value="${v.value != null ? v.value : ''}" placeholder="${f.kind === 'info' ? '' : '₪'}">
-        <button class="icon-btn" data-rm="${f.key}" aria-label="הסר">${icon('x', 's')}</button></div>`;
+    const val = (k) => (d.fields[k] && d.fields[k].value != null && d.fields[k].value !== '' ? +d.fields[k].value : null);
+    const shown = (f) => {
+      const v = val(f.key);
+      return v == null ? '<span class="vf-need">להשלים</span>' : f.kind === 'info' ? esc(U.num(v, 2)) : money(v);
     };
+    const subOf = (f) => {
+      const v = d.fields[f.key] || {};
+      if (!f.hours || !v.qty) return '';
+      return `${U.num(v.qty, 2)} ש׳${val(f.key) ? ' · ' + money(val(f.key) / v.qty) + ' לשעה' : ''}`;
+    };
+    const rowHtml = (f) => {
+      const v = d.fields[f.key] || {};
+      const src = v.line && v.line !== 'AI' ? `<div class="vf-src">${icon('file', 's')}<span>${esc(v.line)}</span></div>` : v.line === 'AI' ? `<div class="vf-src">${icon('sparkle', 's')}<span>זוהה ע״י AI</span></div>` : '';
+      return `<div class="vf-row${val(f.key) == null ? ' need' : ''}" data-row="${f.key}">
+        <button class="vf-line" data-open="${f.key}" aria-expanded="false"><span class="vf-l"><span>${esc(f.label)}</span><small data-sub>${subOf(f)}</small></span><span class="vf-v" data-shown>${shown(f)}</span><span class="vf-pen">${icon('edit', 's')}</span></button>
+        <div class="vf-edit">${src}
+          <div class="vf-inputs">
+            ${f.hours ? `<label class="field"><span class="lbl">שעות</span><input class="input" type="number" step="any" inputmode="decimal" data-q="${f.key}" value="${v.qty != null ? v.qty : ''}"></label>` : ''}
+            <label class="field"><span class="lbl">${f.kind === 'info' ? 'ערך' : 'סכום בשקלים'}</span><input class="input" type="number" step="any" inputmode="decimal" data-v="${f.key}" value="${v.value != null ? v.value : ''}"></label>
+          </div>
+          <div class="vf-acts"><button class="btn text sm" data-rm="${f.key}">${icon('trash', 's')} הסרה</button><button class="btn tonal sm" data-close-row>${icon('check', 's')} סיום</button></div>
+        </div></div>`;
+    };
+    function top() {
+      const g = val('gross'), n = val('net');
+      const dedLines = Payslip.FIELDS.filter((f) => f.kind === 'ded' && val(f.key) != null).reduce((s, f) => s + val(f.key), 0);
+      const ded = val('totalDeductions') != null ? val('totalDeductions') : dedLines || (g != null && n != null ? g - n : null);
+      const pays = Payslip.FIELDS.filter((f) => f.kind === 'pay' && val(f.key) != null).reduce((s, f) => s + val(f.key), 0);
+      const checks = [];
+      if (g == null) checks.push(['need', 'חסר ברוטו: הוסיפו אותו כדי שנוכל לבדוק']);
+      if (n == null) checks.push(['need', 'חסר נטו לתשלום']);
+      if (g != null && pays > 0) checks.push(Math.abs(pays - g) <= 2 ? ['ok', 'שורות התשלום מסתכמות לברוטו'] : ['warn', `שורות התשלום מסתכמות ל-${money(pays)}, והברוטו ${money(g)}. אולי חסרה או מיותרת שורה`]);
+      if (g != null && n != null && val('totalDeductions') != null) checks.push(Math.abs(g - val('totalDeductions') - n) <= 2 ? ['ok', 'ברוטו פחות ניכויים שווה לנטו'] : ['warn', `ברוטו פחות ניכויים יוצא ${money(g - val('totalDeductions'))}, והנטו ${money(n)}`]);
+      const cell = (label, v, cls) => `<div class="vf-cell ${cls || ''}"><small>${label}</small><b>${v == null ? '—' : money(v, 0)}</b></div>`;
+      return `<div class="vf-flow">${cell('ברוטו', g)}<span class="vf-op">−</span>${cell('ניכויים', ded)}<span class="vf-op">=</span>${cell('נטו', n, 'net')}</div>
+        ${checks.length ? `<div class="vf-checks">${checks.map(([s, t]) => `<div class="vf-chk ${s}">${icon(s === 'ok' ? 'okc' : 'alert', 's')}<span>${esc(t)}</span></div>`).join('')}</div>` : ''}`;
+    }
+    function groupHead(kind) {
+      const g = GROUPS.find((x) => x[0] === kind);
+      const fs = Payslip.FIELDS.filter((f) => f.kind === kind && d.fields[f.key]);
+      const sum = g[4] ? fs.reduce((s, f) => s + (val(f.key) || 0), 0) : null;
+      return `${UI.tile(g[2], g[3])}<b>${g[1]}</b><span class="vf-gs">${fs.length} ${fs.length === 1 ? 'שורה' : 'שורות'}${sum ? ' · ' + money(sum, 0) : ''}</span>`;
+    }
     function body() {
       const present = Payslip.FIELDS.filter((f) => d.fields[f.key]);
-      const missing = Payslip.FIELDS.filter((f) => !d.fields[f.key]);
-      return `<div class="banner">${icon('eye')}<div>בדוק שהערכים נכונים ותקן אם צריך. ${d.source === 'ocr' ? 'זיהוי מתמונה עלול לטעות בספרות.' : d.source === 'manual' ? 'הזן את מה שמופיע בתלוש — לפחות ברוטו, נטו ושעות.' : ''}</div></div>
-        ${d.notes ? `<div class="banner">${icon('sparkle')}<div>${esc(d.notes)}</div></div>` : ''}
-        <label class="field"><span class="lbl">חודש התלוש</span><input class="input" type="month" id="vf-period" value="${d.period || ''}" min="2000-01" max="${U.todayKey().slice(0, 7)}"></label>
-        ${GROUPS.map(([kind, label]) => { const fs = present.filter((f) => f.kind === kind); return fs.length ? `<div class="section-title">${label}</div><div class="card">${fs.map(fieldRow).join('')}</div>` : ''; }).join('')}
-        <div class="row-flex" style="gap:8px;margin-bottom:12px"><select class="input" id="vf-add" style="flex:1"><option value="">+ הוסף שורה מהתלוש…</option>${missing.map((f) => `<option value="${f.key}">${esc(f.label)}</option>`).join('')}</select></div>
-        ${d.other.length ? `<div class="section-title">שורות שלא זוהו</div><div class="card">${d.other.map((o, i) => `<div style="margin-bottom:10px"><div class="small">${esc(o.line)}</div>
-          <div class="grid2" style="margin-top:6px"><select class="input" data-og="${i}">${[['ignore', 'התעלם'], ['otherDed', 'ניכוי אחר'], ['otherPay', 'תשלום אחר'], ...Payslip.FIELDS.map((f) => [f.key, f.label])].map(([k, l]) => `<option value="${k}" ${o.guess === k ? 'selected' : ''}>${esc(l)}</option>`).join('')}</select>
-          <input class="input" type="number" step="any" data-ov="${i}" value="${o.value}"></div></div>`).join('')}</div>` : ''}
-        ${d.text ? `<details class="collapse"><summary>${icon('file', 's')} הטקסט שזוהה</summary><div class="in"><div class="code">${esc(d.text)}</div></div></details>` : ''}
-        ${d.text ? `<button class="btn outlined block" data-ai>${icon('sparkle')} ניתוח חכם עם Claude ${S.settings.ai.apiKey ? '' : '(דורש מפתח API)'}</button><div class="tiny muted" style="margin:6px 4px 12px">אופציונלי. לפני שליחה יוסתרו ת״ז, פרטי בנק וכתובת, ותראה בדיוק מה נשלח.</div>` : ''}`;
+      const src = SOURCE[d.source] || SOURCE.manual;
+      const empty = !present.length;
+      return `<div class="vf-head">
+          <label class="field vf-month"><span class="lbl">חודש התלוש</span><input class="input" type="month" id="vf-period" value="${d.period || ''}" min="2000-01" max="${U.todayKey().slice(0, 7)}"></label>
+          <span class="vf-badge">${icon(src[0], 's')}${src[1]}</span>
+        </div>
+        <div class="card vf-top" data-top>${top()}</div>
+        ${d.source === 'ocr' ? `<div class="vf-tip">${icon('eye', 's')}<span>זיהוי מצילום עלול לטעות בספרות. כדאי להשוות כל שורה לתלוש.</span></div>` : ''}
+        ${d.notes ? `<div class="vf-tip">${icon('sparkle', 's')}<span>${esc(d.notes)}</span></div>` : ''}
+        ${empty ? `<div class="card vf-start"><b>אילו שורות יש בתלוש?</b><div class="small muted">מספיק להתחיל בעיקר: ברוטו, נטו ושעות.</div>
+          <div class="chips">${ESSENTIAL.map((k) => `<button class="chip" data-add="${k}">${icon('plus', 's')} ${esc(Payslip.FIELD[k].label)}</button>`).join('')}</div></div>` : ''}
+        ${GROUPS.map(([kind, , , , open]) => {
+          const fs = present.filter((f) => f.kind === kind);
+          if (!fs.length) return '';
+          return `<details class="vf-group" data-g="${kind}" ${open || fs.some((f) => val(f.key) == null) ? 'open' : ''}><summary>${groupHead(kind)}<span class="vf-chev">${icon('left', 's')}</span></summary><div class="vf-rows">${fs.map(rowHtml).join('')}</div></details>`;
+        }).join('')}
+        <button class="btn outlined block vf-add" data-addmenu>${icon('plus')} הוספת שורה מהתלוש</button>
+        ${d.other.length ? `<details class="vf-group vf-other"><summary>${UI.tile('help', 'amber')}<b>שורות שלא זוהו</b><span class="vf-gs">${d.other.length}</span><span class="vf-chev">${icon('left', 's')}</span></summary>
+          <div class="small muted" style="margin:0 4px 10px">אם אחת מהן חשובה, בחרו מה היא. השאר יישארו בצד.</div>
+          ${d.other.map((o, i) => `<div class="vf-o"><div class="vf-o-line">${esc(o.line)}</div>
+            <div class="vf-o-in"><select class="input" data-og="${i}" aria-label="מה השורה הזאת">${[['ignore', 'להתעלם'], ['otherDed', 'ניכוי אחר'], ['otherPay', 'תשלום אחר'], ...Payslip.FIELDS.map((f) => [f.key, f.label])].map(([k, l]) => `<option value="${k}" ${o.guess === k ? 'selected' : ''}>${esc(l)}</option>`).join('')}</select>
+            <input class="input" type="number" step="any" inputmode="decimal" data-ov="${i}" value="${o.value}" aria-label="סכום"></div></div>`).join('')}</details>` : ''}
+        ${d.text ? `<details class="vf-group vf-more"><summary>${UI.tile('file', 'violet')}<b>הטקסט שזוהה וניתוח חכם</b><span class="vf-chev">${icon('left', 's')}</span></summary>
+          <div class="code">${esc(d.text)}</div>
+          <button class="btn outlined block" data-ai style="margin-top:10px">${icon('sparkle')} ניתוח חכם עם Claude ${S.settings.ai.apiKey ? '' : '(דורש מפתח API)'}</button>
+          <div class="tiny muted" style="margin:6px 4px 4px">לא חובה. לפני שליחה יוסתרו ת״ז, פרטי בנק וכתובת, ותראו בדיוק מה נשלח.</div></details>` : ''}`;
     }
     function readInputs() {
       const el = sheetEl;
@@ -8612,29 +9198,84 @@ window.FIREBASE_CONFIG = {
       el.querySelectorAll('[data-og]').forEach((s) => { d.other[+s.dataset.og].guess = s.value; });
       el.querySelectorAll('[data-ov]').forEach((i) => { d.other[+i.dataset.ov].value = UI.numIn(i) || 0; });
     }
-    function redraw() { const b = sheetEl.querySelector('.sh-body'); const y = b.scrollTop; b.innerHTML = body(); b.scrollTop = y; bindAdd(); }
-    function bindAdd() {
-      const add = sheetEl.querySelector('#vf-add');
-      if (add) add.onchange = () => { readInputs(); if (add.value) { d.fields[add.value] = { value: null }; redraw(); } };
+    function redraw(openKey) {
+      const b = sheetEl.querySelector('.sh-body');
+      const y = b.scrollTop;
+      b.innerHTML = body();
+      b.scrollTop = y;
+      if (openKey) openRow(openKey, true);
+    }
+    /* typing updates the row, its group and the summary right away (no redraw, so the keyboard stays) */
+    function live(key) {
+      readInputs();
+      const f = Payslip.FIELD[key];
+      const row = sheetEl.querySelector(`[data-row="${key}"]`);
+      if (f && row) {
+        row.querySelector('[data-shown]').innerHTML = shown(f);
+        row.querySelector('[data-sub]').innerHTML = subOf(f);
+        row.classList.toggle('need', val(key) == null);
+        const gs = sheetEl.querySelector(`.vf-group[data-g="${f.kind}"] > summary`);
+        if (gs) gs.innerHTML = groupHead(f.kind) + `<span class="vf-chev">${icon('left', 's')}</span>`;
+      }
+      sheetEl.querySelector('[data-top]').innerHTML = top();
+    }
+    function openRow(key, focus) {
+      sheetEl.querySelectorAll('.vf-row.open').forEach((r) => { if (r.dataset.row !== key) { r.classList.remove('open'); r.querySelector('[data-open]').setAttribute('aria-expanded', 'false'); } });
+      const row = sheetEl.querySelector(`[data-row="${key}"]`);
+      if (!row) return;
+      const was = row.classList.contains('open');
+      row.classList.toggle('open', !was);
+      row.querySelector('[data-open]').setAttribute('aria-expanded', String(!was));
+      if (!was) {
+        const g = row.closest('details');
+        if (g) g.open = true;
+        if (focus) setTimeout(() => { const i = row.querySelector('[data-v]'); if (i) { i.focus(); row.scrollIntoView({ block: 'nearest', behavior: 'smooth' }); } }, 60);
+      }
+    }
+    function addMenu() {
+      const missing = Payslip.FIELDS.filter((f) => !d.fields[f.key]);
+      UI.openSheet({
+        title: 'איזו שורה להוסיף?',
+        body: GROUPS.map(([kind, label]) => { const fs = missing.filter((f) => f.kind === kind); return fs.length ? `<div class="section-title">${label}</div><div class="chips wrap">${fs.map((f) => `<button class="chip" data-pick="${f.key}">${esc(f.label)}</button>`).join('')}</div>` : ''; }).join(''),
+        onMount: (el) => el.addEventListener('click', (e) => {
+          const b = e.target.closest('[data-pick]');
+          if (!b) return;
+          UI.closeTop();
+          addField(b.dataset.pick);
+        }),
+      });
+    }
+    function addField(key) {
+      readInputs();
+      if (!d.fields[key]) d.fields[key] = { value: null };
+      redraw();
+      setTimeout(() => openRow(key, true), 340);
     }
     UI.openSheet({
-      title: 'אימות נתוני התלוש', full: true, body: body(),
-      foot: `<button class="btn" data-go>${icon('check')} נתח</button>`,
+      title: 'אימות נתוני התלוש', full: true, cls: 'vf-sheet', body: body(),
+      foot: `<button class="btn" data-go>${icon('check')} המשך לבדיקה</button>`,
       onMount: (el) => {
-        sheetEl = el; bindAdd();
+        sheetEl = el;
+        el.addEventListener('input', (e) => { const k = e.target.dataset.v || e.target.dataset.q; if (k) live(k); });
+        el.addEventListener('change', (e) => { if (e.target.id === 'vf-period') d.period = e.target.value || d.period; });
         el.addEventListener('click', async (e) => {
           const b = e.target.closest('button');
           if (!b) return;
-          if (b.dataset.rm) { readInputs(); delete d.fields[b.dataset.rm]; redraw(); }
-          if (b.hasAttribute('data-ai')) { readInputs(); App.aiAnalyze(d.text, (res) => { Object.assign(d.fields, res.fields); d.other = res.other.length ? res.other : d.other; if (res.period) d.period = res.period; d.notes = res.notes; d.source = 'ai'; redraw(); }); }
-          if (b.hasAttribute('data-go')) {
+          if (b.dataset.open) openRow(b.dataset.open, true);
+          else if (b.hasAttribute('data-close-row')) { const r = b.closest('.vf-row'); if (r) openRow(r.dataset.row); }
+          else if (b.dataset.rm) { readInputs(); delete d.fields[b.dataset.rm]; redraw(); }
+          else if (b.dataset.add) addField(b.dataset.add);
+          else if (b.hasAttribute('data-addmenu')) { readInputs(); addMenu(); }
+          else if (b.hasAttribute('data-ai')) { readInputs(); App.aiAnalyze(d.text, (res) => { Object.assign(d.fields, res.fields); d.other = res.other.length ? res.other : d.other; if (res.period) d.period = res.period; d.notes = res.notes; d.source = 'ai'; redraw(); }); }
+          else if (b.hasAttribute('data-go')) {
             readInputs();
-            if (!/^\d{4}-\d{2}$/.test(d.period || '')) { UI.invalid('בחר את חודש התלוש'); return; }
+            if (!/^\d{4}-\d{2}$/.test(d.period || '')) { UI.invalid('בחרו את חודש התלוש'); return; }
             // mapped unknown lines
             for (const o of d.other) {
               if (Payslip.FIELD[o.guess] && !d.fields[o.guess]) d.fields[o.guess] = { value: Math.abs(o.value), line: o.line };
             }
             for (const k of Object.keys(d.fields)) if (d.fields[k].value == null && d.fields[k].qty == null) delete d.fields[k];
+            if (!Object.keys(d.fields).length) { UI.invalid('הוסיפו לפחות שורה אחת מהתלוש'); return; }
             UI.closeTop();
             setTimeout(() => analysisSheet({ id: d.id || 'ps_' + U.uid(), period: d.period, fields: d.fields, other: d.other, text: d.text, source: d.source, fileId: d.fileId, fileName: d.fileName, isNew: !d.id }), 320);
           }
@@ -8642,6 +9283,7 @@ window.FIREBASE_CONFIG = {
       },
     });
   }
+  App.payslipVerify = verifySheet; // tests open it with a ready draft
 
   /* ---------------- analysis ---------------- */
   const STATUS = { ok: ['okc', 'תקין', '✅'], warn: ['alert', 'כדאי לבדוק', '⚠️'], bad: ['xc', 'חסר או שגוי', '❌'] };
@@ -9745,10 +10387,11 @@ window.FIREBASE_CONFIG = {
       },
       job: () => `${say(jobValid().length ? 'love' : 'think', jobValid().length ? 'אחלה! עכשיו נדע כמה הרווחת 💸' : 'איפה עובדים? 🤔')}
         <h1>${g('איפה אתה עובד?', 'איפה את עובדת?')}</h1>
+        <div class="ob-sub">אפשר לכתוב כל מקום עבודה או תפקיד. הנה כמה רעיונות לבחירה מהירה:</div>
         <div class="ob-chips small">${JOBS.map((j) => chip('data-jobname', j, j, A.jobs.some((x) => x.name === j))).join('')}</div>
         ${A.jobs.map((j, i) => `<div class="ob-job" style="--c:${j.color}">
           <div class="ob-job-head"><span class="sw"></span>${A.jobs.length > 1 ? `עבודה ${i + 1}` : 'העבודה שלך'}${A.jobs.length > 1 ? `<button class="icon-btn sm" data-rx="${i}" aria-label="הסר">${icon('x', 's')}</button>` : ''}</div>
-          <label class="field"><span class="lbl">שם העבודה</span><input class="input" data-jn="${i}" value="${esc(j.name)}" placeholder="למשל: מלצרות בבית קפה" maxlength="40"></label>
+          <label class="field"><span class="lbl">מקום העבודה או התפקיד</span><input class="input" data-jn="${i}" value="${esc(j.name)}" placeholder="למשל: קופאי בסופר, מלצרית בקפה גרג" maxlength="40" autocomplete="off" enterkeyhint="next"></label>
           <label class="field"><span class="lbl">כמה משלמים לך לשעה? (₪)</span><input class="input" type="number" step="any" inputmode="decimal" data-jr="${i}" value="${esc(j.rate)}" placeholder="${U.num(minWage(), 2)}">
             <span class="hint">לא בטוח/ה? אפשר להשאיר ריק ונשים שכר מינימום${age() != null && age() < 18 ? ' לגילך' : ''}: ${U.money(minWage())} לשעה</span></label>
         </div>`).join('')}
@@ -9818,7 +10461,7 @@ window.FIREBASE_CONFIG = {
         read();
         const j = finalJobs()[0];
         const el = q('#ob-live-roles');
-        if (el) el.innerHTML = `${icon('sparkle', 's')} משמרת של 8 שעות ${j.name !== 'העבודה שלי' ? 'ב' + esc(j.name) + ' ' : ''}= <b>${money(Math.round(j.rate * 8 * 100) / 100)}</b>`;
+        if (el) el.innerHTML = `${icon('sparkle', 's')} משמרת של 8 שעות${j.name !== 'העבודה שלי' ? ' (' + esc(j.name) + ')' : ''} = <b>${money(Math.round(j.rate * 8 * 100) / 100)}</b>`;
       }
       if (key === 'travel') {
         const el = q('#ob-live-travel');
@@ -9846,7 +10489,7 @@ window.FIREBASE_CONFIG = {
       const qi = step; // questions are steps 1..6
       let foot;
       if (key === 'hi') {
-        foot = `<button class="btn big ob-go" data-next>יאללה, מתחילים</button>
+        foot = `<button class="btn big ob-go" data-next>בואו נתחיל</button>
           <button class="btn tonal" data-demo>${icon('flask')} רק להציץ (נתונים לדוגמה)</button>
           ${opts.preLogin ? '<button class="btn text" data-have>כבר יש לי חשבון? התחברות</button>' : ''}
           <div class="tiny muted ob-consent">בהמשך אתה מאשר את ${App.legalLinks ? App.legalLinks() : 'תנאי השימוש ומדיניות הפרטיות'}.</div>`;
@@ -9856,7 +10499,7 @@ window.FIREBASE_CONFIG = {
           ? `<button class="btn big ob-google" data-save ${saving || (!ready && !loadFailed) ? 'disabled' : ''}>${App.googleIcon || ''}<span>${saving ? 'שומר…' : !ready && !loadFailed ? 'רגע, מכינים את Google…' : 'שמירה עם Google'}</span></button>
             ${blocked ? '<button class="btn text sm" data-redirect>לא נפתח חלון? התחברות בדרך אחרת</button>' : ''}
             ${loadFailed ? '<button class="btn text sm" data-later>להמשיך בינתיים בלי חשבון</button>' : ''}`
-          : `<button class="btn big ob-go" data-save ${saving ? 'disabled' : ''}>${saving ? 'רגע…' : 'יאללה, לאפליקציה'}</button>`;
+          : `<button class="btn big ob-go" data-save ${saving ? 'disabled' : ''}>${saving ? 'רגע…' : 'כניסה לאפליקציה'}</button>`;
       } else {
         foot = `<button class="btn big ob-go" data-next>${qi === QUESTIONS ? 'סיום' : 'הבא'}</button>`;
       }
@@ -10463,7 +11106,7 @@ window.FIREBASE_CONFIG = {
     const R = minor ? Engine.youthRules(c.age, S.settings.leave && S.settings.leave.workWeek) : null;
     const sub = [c.age != null ? 'גיל ' + c.age : 'גיל לא הוזן', c.bal ? 'ותק ' + U.num(c.bal.seniorityYears, 1) + ' שנים' : null].filter(Boolean).join(' · ');
     return `<div class="rights">
-      <div class="rt-intro">${icon('shield')}<div><b>מה מגיע לך בעבודה</b><div class="tiny muted">${esc(sub)} · מעודכן לאפריל 2026 · עובד גם בלי אינטרנט</div></div></div>
+      <div class="rt-intro">${icon('shield')}<div><b>הזכויות שלך בעבודה</b><div class="tiny muted">${esc(sub)} · מעודכן לאפריל 2026 · עובד גם בלי אינטרנט</div></div></div>
       <input class="input rt-search" type="search" placeholder="חיפוש: שבת, נסיעות, הבראה…" aria-label="חיפוש בזכויות" enterkeyhint="search">
       <div class="rt-results" aria-live="polite" hidden></div>
       <div class="rt-main">
@@ -10563,17 +11206,17 @@ window.FIREBASE_CONFIG = {
   /* ---------------- first steps ---------------- */
   const hasNotif = () => 'Notification' in root;
   const STEPS = [
-    { id: 'setup', t: 'סיימת את ההגדרה', done: () => true },
+    { id: 'setup', t: 'ההגדרה הושלמה', done: () => true },
     {
-      id: 'shift', t: 'רושמים משמרת ראשונה', s: 'כשמגיעים לעבודה לוחצים "התחל משמרת". שכחת? אפשר להוסיף משמרת שכבר הייתה.',
+      id: 'shift', t: 'רישום המשמרת הראשונה', s: 'בתחילת משמרת לוחצים "התחל משמרת". אפשר גם לרשום משמרת שכבר התקיימה.',
       done: () => !!S.activeShift || S.shifts.some((x) => x.status === 'done' && !x.demo),
-      acts: [['timer-start', 'play', 'התחל עכשיו'], ['shift-new', 'plus', 'משמרת שכבר עשיתי']],
+      acts: [['timer-start', 'play', 'התחלת משמרת'], ['shift-new', 'plus', 'רישום משמרת']],
     },
     {
-      id: 'notif', t: 'מפעילים תזכורות', s: 'נזכיר לסיים משמרת, ונגיד לך אם משהו בשכר לא נראה נכון.',
-      done: () => !hasNotif() || Notification.permission !== 'default', acts: [['guide-notif', 'bell', 'להפעיל']],
+      id: 'notif', t: 'הפעלת תזכורות', s: 'תזכורת לסיים משמרת, והתראה כשמשהו בשכר לא נראה תקין.',
+      done: () => !hasNotif() || Notification.permission !== 'default', acts: [['guide-notif', 'bell', 'הפעלה']],
     },
-    { id: 'rights', t: 'מגלים מה מגיע לך', s: 'שכר מינימום לגילך, נסיעות, הפסקות, שבת ועוד.', done: () => !!S.meta.usedRights, acts: [['rights', 'shield', 'בואו נבדוק']] },
+    { id: 'rights', t: 'היכרות עם הזכויות שלך', s: 'שכר מינימום לגילך, נסיעות, הפסקות, שבת ועוד.', done: () => !!S.meta.usedRights, acts: [['rights', 'shield', 'לזכויות שלי']] },
   ];
   App.guideCard = function () {
     if (!S.meta.guide || S.meta.guideDone || S.settings.demo) return '';
@@ -10656,16 +11299,17 @@ window.FIREBASE_CONFIG = {
 
   /* ---------------- what's new (once per big update, for people who already used the app) ---------------- */
   const WHATS_NEW = {
-    id: '1.7',
+    id: '1.8',
     items: [
-      ['palette', 'violet', 'עיצוב חדש', 'יותר צבע וחיים. אפשר להחליף צבע בהגדרות › מראה.'],
-      ['smile', 'amber', 'הכירו את שעתי', 'המטבע שמלווה אותך ומסביר דברים.'],
-      ['calendar', 'sky', 'בוחר תאריך ושעה חדש', 'לוח שנה גדול ונוח, עם "היום" ו"אתמול" בלחיצה.'],
-      ['plus', 'mint', 'תפריט הוספה מסודר', 'כל האפשרויות במסך אחד, כולל בדיקת תלוש.'],
-      ['chat', 'pink', 'עזרה ותמיכה', 'שאלות נפוצות, ואפשר לכתוב לנו ישר מהאפליקציה.'],
-      ['refresh', 'orange', 'רענון חלק', 'מושכים את המסך למטה כדי לסנכרן ולעדכן.'],
+      ['game', 'pink', 'משחקים', 'שלושה משחקים קצרים על כסף, שכר וזכויות. אפשר לנסות לשבור שיא.'],
+      ['receipt', 'amber', 'אימות תלוש ברור יותר', 'ברוטו, ניכויים ונטו במבט אחד, ובדיקה שהמספרים מסתדרים.'],
+      ['clock', 'violet', 'גלגל שעות שלא נגמר', 'אחרי 23 מגיע 00. ובמשמרת חדשה: כפתורי משך מהירים.'],
+      ['chart', 'sky', 'גרפים חיים', 'העמודות צומחות והקווים נמתחים. לחיצה על עמודה מדגישה אותה.'],
+      ['star', 'orange', 'מדליות', 'ציוני דרך על 10, 25, 50 משמרות ועל סכומים שהרווחת.'],
+      ['refresh', 'mint', 'רענון חלק', 'משיכת המסך למטה עובדת חלק יותר בכל מצב.'],
     ],
   };
+
   App.whatsNew = function () {
     if (!S.settings.onboarded || S.settings.demo || S.meta.whatsNew === WHATS_NEW.id) return;
     Store.setMeta({ whatsNew: WHATS_NEW.id }).catch(() => {});
@@ -10676,7 +11320,7 @@ window.FIREBASE_CONFIG = {
         title: 'מה חדש? ✨',
         body: `<div class="whats-new">${App.mascotSays('party', 'עדכנו את האפליקציה בשבילך! 🎉', { size: 72 })}
           ${WHATS_NEW.items.map(([ic, tint, t, s], i) => `<div class="wn" style="--d:${i}">${UI.tile(ic, tint)}<div><b>${esc(t)}</b><div class="small muted">${esc(s)}</div></div></div>`).join('')}</div>`,
-        foot: '<button class="btn" data-wn-ok>מעולה, בואו נמשיך</button>',
+        foot: '<button class="btn" data-wn-ok>הבנתי, תודה</button>',
         onMount: (el) => { el.querySelector('[data-wn-ok]').onclick = () => UI.closeTop(); if (Fx()) Fx().celebrate('big'); },
       });
     }, 1400);
@@ -10737,7 +11381,7 @@ window.FIREBASE_CONFIG = {
   // [key, icon, tint, label]
   const REASONS = [
     ['login', 'key', 'violet', 'בעיה בהתחברות'], ['calc', 'calc', 'sky', 'החישוב לא נראה נכון'], ['payslip', 'receipt', 'amber', 'תלוש שכר'],
-    ['rights', 'shield', 'mint', 'שאלה על הזכויות שלי'], ['how', 'help', 'violet', 'איך עושים משהו'], ['bug', 'bug', 'pink', 'משהו לא עובד'],
+    ['rights', 'shield', 'mint', 'שאלה על הזכויות שלי'], ['how', 'help', 'violet', 'שאלה על השימוש'], ['bug', 'bug', 'pink', 'דיווח על תקלה'],
     ['data', 'cloud', 'sky', 'נתונים חסרים או סנכרון'], ['notif', 'bell', 'amber', 'התראות ותזכורות'], ['idea', 'bulb', 'mint', 'רעיון לשיפור'],
     ['privacy', 'lock', 'orange', 'פרטיות או מחיקת חשבון'], ['other', 'mail', 'sky', 'משהו אחר'],
   ];
@@ -10989,6 +11633,472 @@ window.FIREBASE_CONFIG = {
       return `<button class="item" data-adm-ticket="${esc(t.id)}">${reasonTile(t.reason)}<span class="body"><span class="t">${esc(label)}${t.name ? ' · ' + esc(t.name) : ''} ${waiting ? '<span class="tag warn">מחכה לתשובה</span>' : ''}${t.email ? ' <span class="tag">מייל</span>' : ''}</span><span class="s">${esc(String(t.text || '').slice(0, 70))}</span></span><span class="trail"><span class="tiny muted">${UI.timeAgo(t.updated || t.created)}</span></span></button>`;
     }).join('')}</div>` : '<div class="small muted" style="margin:4px">אין פניות עדיין 🎉</div>' };
   };
+})(typeof window !== 'undefined' ? window : globalThis);
+
+/* ---- app/views-games.js ---- */
+/* ============================================================
+ * views-games.js — three short games about money and work:
+ *  - "תופסים מטבעות": drag the wallet, catch coins and notes, dodge
+ *    the fines (a 40-second canvas arcade, sprites drawn once, one
+ *    requestAnimationFrame loop that stops when the sheet closes or
+ *    the app goes to the background);
+ *  - "כמה זה יוצא?": quick pay arithmetic against the clock;
+ *  - "נכון או לא?": true or false about workers' rights, with the
+ *    explanation after every answer.
+ * The content lives in core/games.js; best scores in meta.games.
+ * ============================================================ */
+(function (root) {
+  'use strict';
+  const { U, Engine, Store, UI, App, Games } = root;
+  const S = Store.S;
+  const { icon, esc } = UI;
+  const Fx = () => root.Fx;
+  const play = (s) => { if (Fx()) Fx().play(s); };
+  const buzz = (p) => { if (Fx()) Fx().haptic(p); };
+
+  const LIST = [
+    { id: 'coins', ic: 'wallet', tint: 'amber', t: 'תופסים מטבעות', s: 'גוררים את הארנק, תופסים כסף ומתחמקים מקנסות.', unit: ' ₪' },
+    { id: 'quiz', ic: 'calc', tint: 'violet', t: 'כמה זה יוצא?', s: 'חשבון מהיר של שכר, שעות נוספות ושבתות.', unit: ' נק׳' },
+    { id: 'facts', ic: 'shield', tint: 'mint', t: 'נכון או לא?', s: 'כמה טוב אתה מכיר את הזכויות שלך בעבודה?', unit: '/10' },
+  ];
+  const best = (id) => +((S.meta.games || {})[id]) || 0;
+  /** Saves a score; true when it beats the previous best. */
+  function record(id, score) {
+    if (!(score > best(id))) return false;
+    Store.setMeta({ games: Object.assign({}, S.meta.games || {}, { [id]: score }) }).catch(() => {});
+    return true;
+  }
+  function myRate() {
+    const role = App.roles()[0];
+    const r = role ? Engine.roleRate(role, U.todayKey()) : 0;
+    return r > 0 ? r : 0;
+  }
+  const adultMinWage = () => {
+    const today = U.todayKey();
+    try { return Engine.legalMinWage(today, `${+today.slice(0, 4) - 30}-01-01`).hourly; } catch (e) { return 0; }
+  };
+  const seed = () => (Date.now() ^ Math.floor(Math.random() * 1e9)) >>> 0;
+
+  /* ---------------- the hub ---------------- */
+  const cards = () => LIST.map((g) => `<button class="gm-card" data-game="${g.id}">${UI.tile(g.ic, g.tint)}
+    <span class="gm-txt"><b>${g.t}</b><span>${g.s}</span></span>
+    <span class="gm-best">${best(g.id) ? `<small>שיא</small>${best(g.id)}${g.unit}` : '<small>חדש</small>'}</span></button>`).join('');
+  App.actions.games = () => {
+    UI.openSheet({
+      title: 'משחקים',
+      cls: 'games-sheet',
+      body: `${App.mascotSays ? App.mascotSays('party', 'הפסקה קטנה? כל משחק לוקח פחות מדקה.', { size: 64 }) : ''}<div class="gm-list">${cards()}</div>`,
+      onMount: (el) => {
+        const list = el.querySelector('.gm-list');
+        list.addEventListener('click', (e) => {
+          const b = e.target.closest('[data-game]');
+          if (!b) return;
+          const done = () => { if (list.isConnected) list.innerHTML = cards(); };
+          if (b.dataset.game === 'coins') coinGame(done);
+          else if (b.dataset.game === 'quiz') quizGame(done);
+          else factsGame(done);
+        });
+      },
+    });
+  };
+
+  /** The end of a round: mascot, score, best, play again. */
+  function endScreen(box, o) {
+    const isBest = record(o.id, o.score);
+    const mood = o.ratio >= 0.8 ? 'party' : o.ratio >= 0.5 ? 'happy' : 'think';
+    box.innerHTML = `<div class="gm-end">${App.mascot ? App.mascot(mood, { size: 96 }) : ''}
+      <div class="gm-end-t">${esc(o.title)}</div>
+      <div class="gm-end-n">${o.big}</div>
+      ${o.sub ? `<div class="gm-end-s">${o.sub}</div>` : ''}
+      <div class="gm-end-b">${isBest ? `${icon('star', 's')} שיא חדש!` : `השיא שלך: ${best(o.id)}${o.unit}`}</div>
+      <div class="gm-end-a"><button class="btn" data-again>${icon('repeat')} עוד סיבוב</button><button class="btn tonal" data-quit>סיום</button></div></div>`;
+    if (isBest && o.score > 0) { if (Fx()) Fx().celebrate('big'); } else play('pop');
+    box.querySelector('[data-again]').onclick = o.again;
+    box.querySelector('[data-quit]').onclick = () => UI.closeTop();
+  }
+
+  /* ---------------- 1. coin catcher ---------------- */
+  const ROUND = 40;
+  function coinGame(onDone) {
+    let stop = () => {};
+    UI.openSheet({
+      title: 'תופסים מטבעות',
+      full: true,
+      cls: 'game-sheet',
+      body: `<div class="cg">
+        <div class="cg-hud"><span class="cg-score" data-score>0 ₪</span><span class="cg-lives" data-lives aria-label="3 לבבות">${'<i></i>'.repeat(3)}</span><span class="cg-time" data-time>${ROUND}</span></div>
+        <div class="cg-stage" data-no-ptr><canvas aria-label="המשחק"></canvas><div class="cg-over" data-over></div></div></div>`,
+      onMount: (el) => { stop = runCoins(el); },
+      onClose: () => { stop(); onDone(); },
+    });
+  }
+  function runCoins(el) {
+    const stage = el.querySelector('.cg-stage');
+    const cv = stage.querySelector('canvas');
+    const g = cv.getContext('2d');
+    const over = el.querySelector('[data-over]');
+    const hudScore = el.querySelector('[data-score]'), hudTime = el.querySelector('[data-time]'), hudLives = el.querySelector('[data-lives]');
+    const dpr = Math.min(2, root.devicePixelRatio || 1);
+    const ink = getComputedStyle(stage).getPropertyValue('--on-surface').trim() || '#222';
+    let W = 0, H = 0, raf = 0, last = 0, alive = true, paused = false;
+    const rate = myRate();
+
+    /* sprites: drawn once, then only copied */
+    function sprite(w, h, draw) {
+      const c = document.createElement('canvas');
+      c.width = Math.ceil(w * dpr); c.height = Math.ceil(h * dpr);
+      const x = c.getContext('2d');
+      x.scale(dpr, dpr);
+      draw(x, w, h);
+      return c;
+    }
+    const rr = (x, a, b, w, h, r) => { x.beginPath(); x.moveTo(a + r, b); x.arcTo(a + w, b, a + w, b + h, r); x.arcTo(a + w, b + h, a, b + h, r); x.arcTo(a, b + h, a, b, r); x.arcTo(a, b, a + w, b, r); x.closePath(); };
+    const FONT = (px) => `700 ${px}px Fredoka, Rubik, system-ui, sans-serif`;
+    function coin(r, light, dark, label) {
+      return sprite(r * 2 + 4, r * 2 + 4, (x) => {
+        const c = r + 2;
+        const grd = x.createRadialGradient(c - r * 0.4, c - r * 0.4, r * 0.2, c, c, r);
+        grd.addColorStop(0, light); grd.addColorStop(1, dark);
+        x.fillStyle = grd; x.beginPath(); x.arc(c, c, r, 0, Math.PI * 2); x.fill();
+        x.strokeStyle = 'rgba(0,0,0,.18)'; x.lineWidth = 1.5; x.stroke();
+        x.strokeStyle = 'rgba(255,255,255,.55)'; x.lineWidth = 1.2; x.beginPath(); x.arc(c, c, r - 3.5, 0, Math.PI * 2); x.stroke();
+        x.fillStyle = 'rgba(40,30,0,.78)'; x.font = FONT(r * 0.95); x.textAlign = 'center'; x.textBaseline = 'middle';
+        x.fillText(label, c, c + 1);
+      });
+    }
+    function note(w, h, light, dark, label) {
+      return sprite(w + 4, h + 4, (x) => {
+        const grd = x.createLinearGradient(0, 0, w, h);
+        grd.addColorStop(0, light); grd.addColorStop(1, dark);
+        x.fillStyle = grd; rr(x, 2, 2, w, h, 5); x.fill();
+        x.strokeStyle = 'rgba(255,255,255,.6)'; x.lineWidth = 1.2; rr(x, 5, 5, w - 6, h - 6, 3); x.stroke();
+        x.fillStyle = '#fff'; x.font = FONT(h * 0.55); x.textAlign = 'center'; x.textBaseline = 'middle';
+        x.fillText(label, 2 + w / 2, 3 + h / 2);
+      });
+    }
+    const SPR = {
+      c1: { img: coin(14, '#f4f6fa', '#9aa3b5', '1'), r: 14 },
+      c5: { img: coin(16, '#f4f6fa', '#8c96ab', '5'), r: 16 },
+      c10: { img: coin(18, '#ffe08a', '#d99a0b', '10'), r: 18 },
+      b20: { img: note(52, 28, '#ff8a8a', '#d23c3c', '20₪'), r: 20 },
+      b50: { img: note(52, 28, '#6fdc9b', '#1f9a59', '50₪'), r: 20 },
+      clock: { img: sprite(36, 36, (x) => { x.fillStyle = '#3b82f6'; x.beginPath(); x.arc(18, 18, 16, 0, Math.PI * 2); x.fill(); x.fillStyle = '#fff'; x.font = FONT(13); x.textAlign = 'center'; x.textBaseline = 'middle'; x.fillText('+5', 18, 19); }), r: 16 },
+      fine: { img: sprite(44, 44, (x) => { x.fillStyle = '#e5484d'; rr(x, 3, 3, 38, 38, 10); x.fill(); x.strokeStyle = 'rgba(255,255,255,.7)'; x.lineWidth = 1.5; rr(x, 6, 6, 32, 32, 7); x.stroke(); x.fillStyle = '#fff'; x.font = FONT(12.5); x.textAlign = 'center'; x.textBaseline = 'middle'; x.direction = 'rtl'; x.fillText('קנס', 22, 23); }), r: 18 },
+    };
+    const PW = 86, PH = 50;
+    const wallet = sprite(PW, PH, (x) => {
+      const grd = x.createLinearGradient(0, 0, 0, PH);
+      grd.addColorStop(0, '#8b5cf6'); grd.addColorStop(1, '#5b21b6');
+      x.fillStyle = grd; rr(x, 2, 8, PW - 4, PH - 10, 12); x.fill();
+      x.fillStyle = 'rgba(255,255,255,.16)'; rr(x, 2, 8, PW - 4, 16, 12); x.fill();
+      x.fillStyle = '#4c1d95'; rr(x, PW - 34, 18, 32, 18, 8); x.fill();
+      x.fillStyle = '#fbbf24'; x.beginPath(); x.arc(PW - 18, 27, 5, 0, Math.PI * 2); x.fill();
+      x.fillStyle = 'rgba(0,0,0,.25)'; rr(x, 14, 2, PW - 28, 8, 4); x.fill();
+    });
+
+    const st = { t: 0, left: ROUND, score: 0, lives: 3, items: [], floats: [], px: 0, tx: 0, next: 0.5, shake: 0, flash: 0, squash: 0, running: false, r: Games.rng(seed()) };
+    let shownScore = -1, shownTime = -1, shownLives = -1;
+    function hud() {
+      if (st.score !== shownScore) { shownScore = st.score; hudScore.textContent = st.score + ' ₪'; hudScore.classList.remove('bump'); void hudScore.offsetWidth; hudScore.classList.add('bump'); }
+      const tl = Math.max(0, Math.ceil(st.left));
+      if (tl !== shownTime) { shownTime = tl; hudTime.textContent = tl; hudTime.classList.toggle('low', tl <= 5); }
+      if (st.lives !== shownLives) { shownLives = st.lives; hudLives.innerHTML = Array.from({ length: 3 }, (_, i) => `<i class="${i < st.lives ? '' : 'off'}"></i>`).join(''); hudLives.setAttribute('aria-label', st.lives + ' לבבות'); }
+    }
+    function size() {
+      const r = stage.getBoundingClientRect();
+      if (!r.width || !r.height) return;
+      W = r.width; H = r.height;
+      cv.width = Math.round(W * dpr); cv.height = Math.round(H * dpr);
+      cv.style.width = W + 'px'; cv.style.height = H + 'px';
+      g.setTransform(dpr, 0, 0, dpr, 0, 0);
+      st.px = st.tx = Math.min(Math.max(st.tx || W / 2, PW / 2), W - PW / 2);
+      if (!st.running) draw();
+    }
+    const ro = new ResizeObserver(size);
+    ro.observe(stage);
+
+    function spawn() {
+      const d = Games.coinDrop(st.r, st.t);
+      const sp = SPR[d.k];
+      const pace = Games.coinPace(st.t);
+      const bill = d.k[0] === 'b';
+      st.items.push({ d, sp, x: sp.r + 6 + st.r() * (W - sp.r * 2 - 12), y: -sp.r - 4, vy: pace.speed * (bill ? 0.7 : 0.85 + st.r() * 0.3), rot: 0, ph: st.r() * 6, sway: bill ? 1 + st.r() * 5 : 0 });
+    }
+    function floatText(x, y, text, color) { st.floats.push({ x, y, text, color, life: 0.8 }); }
+    function catchIt(it) {
+      st.squash = 1;
+      if (it.d.bad) {
+        st.lives--; st.shake = 0.3; st.flash = 0.35;
+        floatText(it.x, it.y, '−❤', '#e5484d');
+        play('error'); buzz([30, 40, 30]);
+        if (st.lives <= 0) end('lives');
+      } else if (it.d.k === 'clock') {
+        st.left += 5; floatText(it.x, it.y, '+5 שנ׳', '#3b82f6'); play('on'); buzz(10);
+      } else {
+        st.score += it.d.v; floatText(it.x, it.y, '+' + it.d.v, it.d.v >= 10 ? '#d99a0b' : ink);
+        play(it.d.v >= 10 ? 'coin' : 'tick'); buzz(it.d.v >= 10 ? 12 : 6);
+      }
+    }
+    function update(dt) {
+      st.t += dt; st.left -= dt;
+      if (st.left <= 0) { st.left = 0; end('time'); return; }
+      st.next -= dt;
+      if (st.next <= 0) { spawn(); st.next = Games.coinPace(st.t).every * (0.7 + st.r() * 0.6); }
+      st.px += (st.tx - st.px) * (1 - Math.exp(-dt * 24));
+      const py = H - PH / 2 - 14;
+      for (let i = st.items.length - 1; i >= 0; i--) {
+        const it = st.items[i];
+        it.y += it.vy * dt; it.rot = Math.sin(st.t * 2.6 + it.ph) * 0.32; // a wobble, never upside down
+        if (it.sway) it.x += Math.sin(st.t * 3 + it.sway) * 30 * dt;
+        const hit = Math.abs(it.x - st.px) < PW / 2 + it.sp.r * 0.5 && it.y + it.sp.r * 0.6 > py - PH / 2 && it.y - it.sp.r < py + PH / 3;
+        if (hit) { catchIt(it); st.items[i] = st.items[st.items.length - 1]; st.items.pop(); if (!st.running) return; continue; }
+        if (it.y > H + 40) { st.items[i] = st.items[st.items.length - 1]; st.items.pop(); }
+      }
+      for (let i = st.floats.length - 1; i >= 0; i--) { const f = st.floats[i]; f.life -= dt; f.y -= 60 * dt; if (f.life <= 0) st.floats.splice(i, 1); }
+      st.shake = Math.max(0, st.shake - dt); st.flash = Math.max(0, st.flash - dt); st.squash = Math.max(0, st.squash - dt * 5);
+    }
+    function draw() {
+      g.setTransform(dpr, 0, 0, dpr, 0, 0);
+      g.clearRect(0, 0, W, H);
+      if (st.shake) g.translate((Math.random() - 0.5) * 10 * st.shake / 0.3, (Math.random() - 0.5) * 6 * st.shake / 0.3);
+      for (const it of st.items) {
+        const s = it.sp.img, w = s.width / dpr, h = s.height / dpr;
+        g.save(); g.translate(it.x, it.y); g.rotate(it.rot); g.drawImage(s, -w / 2, -h / 2, w, h); g.restore();
+      }
+      const py = H - PH / 2 - 14;
+      const sq = st.squash;
+      g.save(); g.translate(st.px, py); g.scale(1 + sq * 0.12, 1 - sq * 0.12); g.drawImage(wallet, -PW / 2, -PH / 2, PW, PH); g.restore();
+      g.font = FONT(18); g.textAlign = 'center'; g.textBaseline = 'middle';
+      for (const f of st.floats) { g.globalAlpha = Math.min(1, f.life / 0.4); g.fillStyle = f.color; g.fillText(f.text, f.x, f.y); }
+      g.globalAlpha = 1;
+      if (st.flash) { g.setTransform(dpr, 0, 0, dpr, 0, 0); g.fillStyle = `rgba(229,72,77,${(st.flash / 0.35) * 0.22})`; g.fillRect(0, 0, W, H); }
+    }
+    function frame(now) {
+      raf = 0;
+      if (!alive || !st.running || paused) return;
+      const dt = Math.min(0.033, (now - last) / 1000 || 0);
+      last = now;
+      update(dt);
+      if (!st.running) return;
+      draw(); hud();
+      raf = requestAnimationFrame(frame);
+    }
+    function go() {
+      Object.assign(st, { t: 0, left: ROUND, score: 0, lives: 3, items: [], floats: [], next: 0.5, shake: 0, flash: 0, squash: 0, running: true });
+      over.classList.remove('show'); over.innerHTML = '';
+      hud(); last = performance.now();
+      raf = requestAnimationFrame(frame);
+    }
+    function countdown() {
+      let n = 3;
+      over.classList.add('show');
+      const tick = () => {
+        if (!alive) return;
+        if (n === 0) { go(); play('start'); return; }
+        over.innerHTML = `<div class="cg-count">${n}</div>`;
+        play('tick'); n--;
+        setTimeout(tick, 650);
+      };
+      tick();
+    }
+    function end(why) {
+      st.running = false;
+      cancelAnimationFrame(raf); raf = 0;
+      draw(); hud();
+      over.classList.add('show');
+      const mins = rate ? Math.round((st.score / rate) * 60) : 0;
+      const h = Math.floor(mins / 60), m = mins % 60;
+      const span = h ? `${h === 1 ? 'שעה' : h === 2 ? 'שעתיים' : h + ' שעות'}${m ? ` ו-${m} דקות` : ''}` : `${mins} דקות`;
+      endScreen(over, {
+        id: 'coins', unit: ' ₪', score: st.score, ratio: Math.min(1, st.score / 400),
+        title: why === 'lives' ? 'אופס, יותר מדי קנסות' : 'נגמר הזמן!',
+        big: st.score + ' ₪',
+        sub: mins >= 1 ? `בשכר שלך זה כמו ${span} עבודה` : '',
+        again: () => countdown(),
+      });
+    }
+    function intro() {
+      over.classList.add('show');
+      over.innerHTML = `<div class="gm-intro">${App.mascot ? App.mascot('wink', { size: 84 }) : ''}
+        <div class="gm-intro-t">${ROUND} שניות. כמה כסף תספיק לתפוס?</div>
+        <div class="cg-legend"><span><i class="lg-coin"></i>מטבעות ושטרות</span><span><i class="lg-fine"></i>קנס: מוריד לב</span><span><i class="lg-clock"></i>עוד 5 שניות</span></div>
+        <div class="tiny muted">גוררים את הארנק עם האצבע (או החצים במקלדת)</div>
+        <button class="btn big" data-go>${icon('play')} התחלה</button></div>`;
+      over.querySelector('[data-go]').onclick = countdown;
+    }
+
+    /* the finger moves the wallet */
+    const toX = (e) => { const r = stage.getBoundingClientRect(); st.tx = Math.min(Math.max(e.clientX - r.left, PW / 2), W - PW / 2); };
+    const onDown = (e) => { if (!st.running) return; stage.setPointerCapture && stage.setPointerCapture(e.pointerId); toX(e); };
+    const onMove = (e) => { if (st.running && (e.buttons || e.pointerType === 'touch' || e.pointerType === 'mouse')) toX(e); };
+    stage.addEventListener('pointerdown', onDown);
+    stage.addEventListener('pointermove', onMove);
+    const onKey = (e) => {
+      if (!st.running || (e.key !== 'ArrowLeft' && e.key !== 'ArrowRight')) return;
+      e.preventDefault();
+      st.tx = Math.min(Math.max(st.tx + (e.key === 'ArrowLeft' ? -60 : 60), PW / 2), W - PW / 2);
+    };
+    document.addEventListener('keydown', onKey);
+    /* the app went to the background: pause, and wait for a tap to continue */
+    const onVis = () => {
+      if (!document.hidden || !st.running || paused) return;
+      paused = true; cancelAnimationFrame(raf); raf = 0;
+      over.classList.add('show');
+      over.innerHTML = `<div class="gm-intro"><div class="gm-intro-t">המשחק בהפסקה</div><button class="btn big" data-resume>${icon('play')} המשך</button></div>`;
+      over.querySelector('[data-resume]').onclick = () => { paused = false; over.classList.remove('show'); over.innerHTML = ''; last = performance.now(); raf = requestAnimationFrame(frame); };
+    };
+    document.addEventListener('visibilitychange', onVis);
+
+    requestAnimationFrame(() => { size(); intro(); });
+    return function stop() {
+      alive = false; st.running = false;
+      cancelAnimationFrame(raf);
+      ro.disconnect();
+      document.removeEventListener('keydown', onKey);
+      document.removeEventListener('visibilitychange', onVis);
+    };
+  }
+
+  /* ---------------- 2. "how much is it?" ---------------- */
+  const QN = 10, QSEC = 15;
+  function quizGame(onDone) {
+    let stop = () => {};
+    UI.openSheet({
+      title: 'כמה זה יוצא?',
+      full: true,
+      cls: 'game-sheet',
+      body: '<div class="qz" data-box></div>',
+      onMount: (el) => { stop = runQuiz(el.querySelector('[data-box]')); },
+      onClose: () => { stop(); onDone(); },
+    });
+  }
+  const dots = (n, i, res) => `<div class="qz-dots">${Array.from({ length: n }, (_, k) => `<i class="${k < i ? (res[k] ? 'ok' : 'no') : k === i ? 'cur' : ''}"></i>`).join('')}</div>`;
+  function runQuiz(box) {
+    let alive = true, timer = 0, next = 0;
+    let qs, i, score, streak, res, t0, answered;
+    function start() {
+      qs = Games.quizRound(seed(), QN, { rate: myRate() });
+      i = 0; score = 0; streak = 0; res = [];
+      show();
+    }
+    function show() {
+      if (!alive) return;
+      const q = qs[i];
+      answered = false;
+      box.innerHTML = `<div class="qz-top">${dots(QN, i, res)}<span class="qz-score" data-sc>${score}</span></div>
+        <div class="qz-timer"><b style="animation-duration:${QSEC}s"></b></div>
+        <div class="qz-card"><div class="qz-n">שאלה ${i + 1} מתוך ${QN}${streak >= 2 ? ` · <span class="qz-streak">🔥 ${streak} ברצף</span>` : ''}</div><div class="qz-q">${esc(q.q)}</div></div>
+        <div class="qz-opts">${q.options.map((o, k) => `<button class="qz-opt" data-k="${k}" style="--d:${k}">${esc(o)}</button>`).join('')}</div>
+        <div class="qz-x" aria-live="polite"></div>`;
+      t0 = performance.now();
+      clearTimeout(timer);
+      timer = setTimeout(() => answer(-1), QSEC * 1000);
+      box.querySelector('.qz-opts').onclick = (e) => { const b = e.target.closest('[data-k]'); if (b) answer(+b.dataset.k); };
+    }
+    function answer(k) {
+      if (answered || !alive) return;
+      answered = true;
+      clearTimeout(timer);
+      const q = qs[i];
+      const ok = k === q.answer;
+      const took = (performance.now() - t0) / 1000;
+      box.querySelector('.qz-timer b').style.animationPlayState = 'paused';
+      const btns = box.querySelectorAll('.qz-opt');
+      btns.forEach((b) => (b.disabled = true));
+      btns[q.answer].classList.add('right');
+      let pts = 0;
+      if (ok) {
+        streak++;
+        pts = 10 + Math.max(0, Math.round(QSEC - took)) + (streak >= 3 ? 5 : 0);
+        score += pts;
+        play('coin'); buzz(10);
+        const sc = box.querySelector('[data-sc]');
+        sc.textContent = score; sc.classList.add('bump');
+        btns[k].insertAdjacentHTML('beforeend', `<span class="qz-pts">+${pts}</span>`);
+      } else {
+        streak = 0;
+        if (k >= 0) btns[k].classList.add('wrong');
+        play('error'); buzz([20, 30, 20]);
+      }
+      res.push(ok);
+      const x = box.querySelector('.qz-x');
+      x.innerHTML = `<div class="qz-xt ${ok ? 'ok' : 'no'}">${ok ? 'נכון!' : k < 0 ? 'נגמר הזמן' : 'לא בדיוק'}</div><div>${esc(q.x)}</div>
+        ${ok ? '' : `<button class="btn" data-next>${i + 1 < QN ? 'לשאלה הבאה' : 'לתוצאה'}</button>`}`;
+      const go = () => { clearTimeout(next); if (!alive) return; i++; if (i < QN) show(); else finish(); };
+      if (ok) next = setTimeout(go, 1700);
+      else x.querySelector('[data-next]').onclick = go;
+    }
+    function finish() {
+      const right = res.filter(Boolean).length;
+      endScreen(box, {
+        id: 'quiz', unit: ' נק׳', score, ratio: right / QN,
+        title: right === QN ? 'מושלם! כל התשובות נכונות' : right >= 7 ? 'יפה מאוד!' : right >= 4 ? 'לא רע בכלל' : 'עוד סיבוב ותשתפר',
+        big: `${score} <small>נק׳</small>`,
+        sub: `${right} מתוך ${QN} תשובות נכונות`,
+        again: start,
+      });
+    }
+    start();
+    return () => { alive = false; clearTimeout(timer); clearTimeout(next); };
+  }
+
+  /* ---------------- 3. true or false ---------------- */
+  function factsGame(onDone) {
+    let stop = () => {};
+    UI.openSheet({
+      title: 'נכון או לא?',
+      full: true,
+      cls: 'game-sheet',
+      body: '<div class="tf" data-box></div>',
+      onMount: (el) => { stop = runFacts(el.querySelector('[data-box]')); },
+      onClose: () => { stop(); onDone(); },
+    });
+  }
+  function runFacts(box) {
+    let alive = true;
+    let list, i, res;
+    function start() { list = Games.factsRound(seed(), 10, adultMinWage()); i = 0; res = []; show(); }
+    function show() {
+      if (!alive) return;
+      const f = list[i];
+      box.innerHTML = `<div class="qz-top">${dots(list.length, i, res)}<span class="qz-score">${res.filter(Boolean).length}/${list.length}</span></div>
+        <div class="tf-card" data-card><div class="qz-n">${i + 1} מתוך ${list.length}</div><div class="tf-s">${esc(f.s)}</div></div>
+        <div class="tf-btns"><button class="btn big tf-yes" data-a="1">${icon('check')} נכון</button><button class="btn big tf-no" data-a="0">${icon('x')} לא נכון</button></div>
+        <div class="qz-x" aria-live="polite"></div>`;
+      box.querySelector('.tf-btns').onclick = (e) => { const b = e.target.closest('[data-a]'); if (b) answer(b.dataset.a === '1'); };
+    }
+    function answer(a) {
+      const f = list[i];
+      const ok = a === f.t;
+      res.push(ok);
+      box.querySelectorAll('.tf-btns .btn').forEach((b) => { b.disabled = true; b.classList.toggle('picked', (b.dataset.a === '1') === a); });
+      const card = box.querySelector('[data-card]');
+      card.classList.add(ok ? 'ok' : 'no');
+      card.insertAdjacentHTML('beforeend', `<div class="tf-verdict">${f.t ? 'נכון' : 'לא נכון'}</div>`);
+      if (ok) { play('coin'); buzz(10); } else { play('error'); buzz([20, 30, 20]); }
+      box.querySelector('.qz-score').textContent = `${res.filter(Boolean).length}/${list.length}`;
+      const x = box.querySelector('.qz-x');
+      x.innerHTML = `<div class="qz-xt ${ok ? 'ok' : 'no'}">${ok ? 'צדקת!' : 'הפעם לא'}</div><div>${esc(f.x)}</div>
+        <button class="btn" data-next>${i + 1 < list.length ? 'הבא' : 'לתוצאה'}</button>`;
+      x.querySelector('[data-next]').onclick = () => { if (!alive) return; i++; if (i < list.length) show(); else finish(); };
+    }
+    function finish() {
+      const right = res.filter(Boolean).length;
+      endScreen(box, {
+        id: 'facts', unit: '/10', score: right, ratio: right / list.length,
+        title: right >= 9 ? 'מומחה לזכויות!' : right >= 6 ? 'יודע לא מעט' : 'שווה להציץ בזכויות שלך',
+        big: `${right}<small>/${list.length}</small>`,
+        sub: right < 9 ? '<button class="btn text sm" data-rights>לכל הזכויות שלי</button>' : '',
+        again: start,
+      });
+      const r = box.querySelector('[data-rights]');
+      if (r) r.onclick = () => { UI.closeAll(); setTimeout(() => App.actions.rights && App.actions.rights(), 350); };
+    }
+    start();
+    return () => { alive = false; };
+  }
+
+  App.games = { LIST, best };
 })(typeof window !== 'undefined' ? window : globalThis);
 
 /* ---- app/views-admin.js ---- */
@@ -11287,19 +12397,28 @@ window.FIREBASE_CONFIG = {
  * pull and clicks (sound + vibration) past the threshold. On release
  * the page springs to a resting gap where the logo spins while the
  * app syncs with the cloud, looks for a new version and recalculates,
- * then a check mark and a spring back. Every frame is painted in
- * requestAnimationFrame with transforms only (no layout work), so it
- * stays smooth. Replaces the browser's own pull-to-refresh, which
- * would reload the whole app.
+ * then a check mark and a spring back.
+ *
+ * Details that matter:
+ *  - the moving element is #view, which the app never replaces, so a
+ *    redraw during the refresh can't make the page jump;
+ *  - a pull that started on a button never "taps" it on release;
+ *  - Chrome sometimes delivers a touchmove it held back during the last
+ *    gesture (a sideways swipe) after the next touch began; those carry
+ *    an older timestamp and are ignored, or the page would jump;
+ *  - every frame is painted in requestAnimationFrame with transforms
+ *    only; the browser's own pull-to-refresh and stretch effect are
+ *    switched off (overscroll-behavior: none) so they never stack.
  * ============================================================ */
 (function (root) {
   'use strict';
   const { App, Fx } = root;
   const THRESHOLD = 74; // pulled distance (after resistance) that triggers a refresh
-  const MAX = 150; // the page never moves further than this
+  const MAX = 150; // the indicator never moves further than this
   const RESIST = 190; // higher = lighter pull
   const REST = 62; // where the page waits while refreshing
   const SLOP = 10; // finger movement that still counts as a tap
+  const FOLLOW = 0.62; // how far the page moves compared with the indicator
   const LOGO = '<svg viewBox="0 0 1024 1024" aria-hidden="true"><path class="g" pathLength="1" d="M300 660 A258 258 0 0 1 603 271 L603 600"/><path class="y" pathLength="1" d="M420 422 L420 753 A258 258 0 0 0 720 362"/></svg>';
   const ind = document.createElement('div');
   ind.className = 'ptr';
@@ -11307,54 +12426,73 @@ window.FIREBASE_CONFIG = {
   ind.innerHTML = `<div class="ptr-disc">${LOGO}<span class="ptr-check">✓</span></div>`;
   document.body.appendChild(ind);
   const disc = ind.firstChild;
+  const view = () => document.getElementById('view');
 
-  let x0 = 0, y0 = null, pulling = false, dist = 0, armed = false, busy = false, raf = 0, page = null;
+  let x0 = 0, y0 = null, t0 = 0, pulling = false, dist = 0, armed = false, busy = false, raf = 0, settleTimer = 0;
   const blocked = (target) => busy || App.blocking || root.scrollY > 0
     || document.querySelector('.sheet, .dialog, #intro, #lock, .coach')
     || (target.closest && target.closest('input, textarea, select, .chart, [data-no-ptr]'));
   const resist = (dy) => MAX * (1 - Math.exp(-dy / RESIST));
 
-  function paint(d, spinning) {
+  function paint(d) {
     const p = Math.min(1, d / THRESHOLD);
     ind.style.transform = `translate3d(-50%, ${(d - 56).toFixed(1)}px, 0)`;
-    ind.style.opacity = Math.min(1, d / 30).toFixed(2);
-    if (!spinning) disc.style.transform = `rotate(${Math.round(d * 2.6)}deg) scale(${(0.6 + 0.4 * p).toFixed(3)})`;
+    ind.style.opacity = d > 0 ? Math.min(1, d / 30).toFixed(2) : '0';
+    if (!ind.classList.contains('spin') && !ind.classList.contains('done')) disc.style.transform = `rotate(${Math.round(d * 2.6)}deg) scale(${(0.6 + 0.4 * p).toFixed(3)})`;
     disc.style.setProperty('--p', p.toFixed(3));
-    if (page) page.style.transform = d ? `translate3d(0, ${(d * 0.62).toFixed(1)}px, 0)` : '';
+    const v = view();
+    if (v) v.style.transform = d > 0.5 ? `translate3d(0, ${(d * FOLLOW).toFixed(1)}px, 0)` : '';
   }
   const schedule = () => { if (!raf) raf = requestAnimationFrame(() => { raf = 0; paint(dist); }); };
   /** Animate to a distance with a little spring at the end. */
   function springTo(d, ms) {
+    ms = ms || 420;
+    clearTimeout(settleTimer);
+    cancelAnimationFrame(raf); raf = 0;
+    const v = view();
     ind.classList.add('settle');
-    if (page) page.style.transition = `transform ${ms || 420}ms cubic-bezier(.22, 1.3, .36, 1)`;
+    if (v) v.style.transition = `transform ${ms}ms cubic-bezier(.22, 1.3, .36, 1)`;
     dist = d;
-    paint(d, ind.classList.contains('spin'));
-    return new Promise((r) => setTimeout(() => {
-      ind.classList.remove('settle');
-      if (page) { page.style.transition = ''; if (!d) page.style.willChange = ''; }
-      r();
-    }, ms || 420));
+    paint(d);
+    return new Promise((r) => {
+      settleTimer = setTimeout(() => {
+        ind.classList.remove('settle');
+        if (v) { v.style.transition = ''; if (!d) { v.style.willChange = ''; v.style.transform = ''; } }
+        if (!d && !pulling) document.body.classList.remove('pulling');
+        r();
+      }, ms + 20);
+    });
+  }
+  // a pull that began on a button must not press it when the finger lifts
+  function swallowNextClick() {
+    const kill = (e) => { e.stopPropagation(); e.preventDefault(); };
+    root.addEventListener('click', kill, true);
+    setTimeout(() => root.removeEventListener('click', kill, true), 450);
   }
 
   document.addEventListener('touchstart', (e) => {
     if (e.touches.length !== 1 || blocked(e.target) || !(e.target.closest && e.target.closest('#view'))) { y0 = null; return; }
     y0 = e.touches[0].clientY;
     x0 = e.touches[0].clientX;
+    t0 = e.timeStamp;
     pulling = false; dist = 0; armed = false;
   }, { passive: true });
 
   document.addEventListener('touchmove', (e) => {
-    if (y0 == null) return;
+    if (y0 == null || e.timeStamp < t0) return; // a late event from the previous gesture
+    if (e.touches.length !== 1) { cancel(); return; } // a second finger: not a pull any more
     const dy = e.touches[0].clientY - y0;
     const dx = e.touches[0].clientX - x0;
     if (!pulling) {
       // a sideways swipe, a scroll up, or a page that has scrolled: not a pull
-      if (Math.abs(dx) > Math.abs(dy) || dy < -SLOP || root.scrollY > 0) { if (Math.abs(dx) > SLOP || dy < -SLOP) y0 = null; return; }
+      if (root.scrollY > 0 || dy < -SLOP || (Math.abs(dx) > SLOP && Math.abs(dx) > Math.abs(dy))) { y0 = null; return; }
       if (dy < SLOP) return;
       pulling = true;
-      page = document.getElementById('view-inner');
-      if (page) page.style.willChange = 'transform';
-      ind.classList.remove('settle', 'done', 'spin');
+      document.body.classList.add('pulling'); // the decorative motion pauses so every frame goes to the pull
+      clearTimeout(settleTimer);
+      const v = view();
+      if (v) { v.style.transition = ''; v.style.willChange = 'transform'; }
+      ind.classList.remove('settle', 'done', 'spin', 'armed');
     }
     dist = Math.max(0, resist(dy - SLOP));
     if (dist >= THRESHOLD && !armed) { armed = true; ind.classList.add('armed'); Fx.haptic(12); Fx.play('tick'); }
@@ -11362,33 +12500,44 @@ window.FIREBASE_CONFIG = {
     schedule();
   }, { passive: true });
 
+  function cancel() {
+    if (y0 == null) return;
+    y0 = null;
+    if (!pulling) return;
+    pulling = false; armed = false;
+    ind.classList.remove('armed');
+    swallowNextClick();
+    springTo(0, 320);
+  }
+
   async function end() {
     if (y0 == null) return;
     y0 = null;
     if (!pulling) return;
     pulling = false;
-    cancelAnimationFrame(raf); raf = 0;
+    swallowNextClick();
     if (!armed) { await springTo(0, 360); return; }
     busy = true;
-    ind.classList.add('spin');
-    await springTo(REST, 380);
-    const t0 = Date.now();
-    try { await App.refresh(); } catch (e) { console.warn('refresh', e); }
-    const left = 650 - (Date.now() - t0);
-    if (left > 0) await Fx.sleep(left);
-    ind.classList.remove('spin', 'armed');
-    ind.classList.add('done');
-    Fx.play('pop'); Fx.haptic(10);
-    await Fx.sleep(420);
-    page = document.getElementById('view-inner'); // the refresh may have redrawn the page
-    if (page) page.style.transform = `translate3d(0, ${(REST * 0.62).toFixed(1)}px, 0)`;
-    await springTo(0, 420);
-    ind.classList.remove('done');
-    page = null;
-    busy = false;
+    try {
+      ind.classList.remove('armed');
+      ind.classList.add('spin');
+      await springTo(REST, 380);
+      const t0 = Date.now();
+      try { await App.refresh(); } catch (e) { console.warn('refresh', e); }
+      const left = 650 - (Date.now() - t0);
+      if (left > 0) await Fx.sleep(left);
+      ind.classList.remove('spin');
+      ind.classList.add('done');
+      Fx.play('pop'); Fx.haptic(10);
+      await Fx.sleep(420);
+      await springTo(0, 420);
+    } finally {
+      ind.classList.remove('done', 'spin', 'armed');
+      busy = false;
+    }
   }
   document.addEventListener('touchend', end, { passive: true });
-  document.addEventListener('touchcancel', () => { if (y0 != null && pulling) { y0 = null; pulling = false; armed = false; ind.classList.remove('armed'); springTo(0, 300); } else y0 = null; }, { passive: true });
+  document.addEventListener('touchcancel', cancel, { passive: true });
 })(typeof window !== 'undefined' ? window : globalThis);
 
 </script>

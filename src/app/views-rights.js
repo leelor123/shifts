@@ -84,7 +84,7 @@
     const R = minor ? Engine.youthRules(c.age, S.settings.leave && S.settings.leave.workWeek) : null;
     const sub = [c.age != null ? 'גיל ' + c.age : 'גיל לא הוזן', c.bal ? 'ותק ' + U.num(c.bal.seniorityYears, 1) + ' שנים' : null].filter(Boolean).join(' · ');
     return `<div class="rights">
-      <div class="rt-intro">${icon('shield')}<div><b>מה מגיע לך בעבודה</b><div class="tiny muted">${esc(sub)} · מעודכן לאפריל 2026 · עובד גם בלי אינטרנט</div></div></div>
+      <div class="rt-intro">${icon('shield')}<div><b>הזכויות שלך בעבודה</b><div class="tiny muted">${esc(sub)} · מעודכן לאפריל 2026 · עובד גם בלי אינטרנט</div></div></div>
       <input class="input rt-search" type="search" placeholder="חיפוש: שבת, נסיעות, הבראה…" aria-label="חיפוש בזכויות" enterkeyhint="search">
       <div class="rt-results" aria-live="polite" hidden></div>
       <div class="rt-main">

@@ -143,7 +143,7 @@
   /* ---------------- four big doors to the things people look for ---------------- */
   function shortcuts() {
     const d = (act, ic, label, tint) => `<button class="sc" data-act="${act}">${UI.tile(ic, tint)}<span>${label}</span></button>`;
-    return `<div class="shortcuts">${d('shift-new', 'plus', 'משמרת שעשיתי', 'violet')}${d('rights', 'shield', 'מה מגיע לי', 'mint')}${d('payslip-new', 'receipt', 'בדיקת תלוש', 'amber')}${d('support', 'help', 'עזרה', 'sky')}</div>`;
+    return `<div class="shortcuts">${d('shift-new', 'plus', 'משמרת חדשה', 'violet')}${d('rights', 'shield', 'הזכויות שלי', 'mint')}${d('payslip-new', 'receipt', 'בדיקת תלוש', 'amber')}${d('games', 'game', 'משחקים', 'pink')}</div>`;
   }
 
   function birthdayCard() {
@@ -169,6 +169,7 @@
   }
 
   App.views.home = function () {
+    if (!S.meta.ms && App.milestones) App.milestones(); // notes where the user is, so the next medal is a real one
     const unread = S.notifications.filter((n) => !n.read && n.cat !== 'summary').length;
     const today = U.todayKey();
     const hd = HebCal.hebrewDate(today);
@@ -184,7 +185,7 @@
       <div class="home-top"><div class="titles"><h1>${greeting()}${name} <span class="wave">👋</span></h1>
         <div class="sub">${date} · ${esc(hd.toString().replace(/\s\S+$/, ''))}${hol ? ' · ' + esc(hol) : ''}</div></div>
         <span id="sync-dot">${App.syncDot ? App.syncDot() : ''}</span>
-        <button class="icon-btn" data-act="rights" aria-label="הזכויות שלי">${icon('shield')}</button>
+        <button class="icon-btn" data-act="support" aria-label="עזרה ותמיכה">${icon('help')}</button>
         <button class="icon-btn" data-act="insights" aria-label="התראות ותובנות">${icon('bell')}${unread ? `<span class="dot-badge">${unread > 9 ? '9+' : unread}</span>` : ''}</button></div>
       ${birthdayCard()}
       ${paydayCard()}
@@ -196,7 +197,7 @@
       ${shortcuts()}
       ${pending.length + recent.length ? `<div class="home-list-head"><span>${pending.length ? 'לסמן כבוצעה' : 'משמרות אחרונות'}</span><button class="btn text sm" data-act="go-shifts">הכול</button></div>
         <div class="list home-list">${pending.map((r) => App.shiftItem(r, { showOk: true })).join('')}${recent.slice(0, Math.max(1, 3 - pending.length)).map((r) => App.shiftItem(r)).join('')}</div>`
-        : S.meta.guide && !S.meta.guideDone ? '' : `<div class="empty fun">${App.mascot ? App.mascot('sleepy', { size: 92 }) : ''}<h3>עוד אין משמרות</h3><div>כשמגיעים לעבודה לוחצים על "התחל משמרת".<br>שכחת? לוחצים על <b>+</b> ומוסיפים משמרת שכבר הייתה.</div></div>`}
+        : S.meta.guide && !S.meta.guideDone ? '' : `<div class="empty fun">${App.mascot ? App.mascot('sleepy', { size: 92 }) : ''}<h3>עוד אין משמרות</h3><div>בתחילת משמרת לוחצים על "התחל משמרת".<br>משמרת שכבר התקיימה מוסיפים בכפתור <b>+</b>.</div></div>`}
     `;
   };
 

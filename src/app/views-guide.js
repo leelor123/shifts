@@ -17,17 +17,17 @@
   /* ---------------- first steps ---------------- */
   const hasNotif = () => 'Notification' in root;
   const STEPS = [
-    { id: 'setup', t: 'סיימת את ההגדרה', done: () => true },
+    { id: 'setup', t: 'ההגדרה הושלמה', done: () => true },
     {
-      id: 'shift', t: 'רושמים משמרת ראשונה', s: 'כשמגיעים לעבודה לוחצים "התחל משמרת". שכחת? אפשר להוסיף משמרת שכבר הייתה.',
+      id: 'shift', t: 'רישום המשמרת הראשונה', s: 'בתחילת משמרת לוחצים "התחל משמרת". אפשר גם לרשום משמרת שכבר התקיימה.',
       done: () => !!S.activeShift || S.shifts.some((x) => x.status === 'done' && !x.demo),
-      acts: [['timer-start', 'play', 'התחל עכשיו'], ['shift-new', 'plus', 'משמרת שכבר עשיתי']],
+      acts: [['timer-start', 'play', 'התחלת משמרת'], ['shift-new', 'plus', 'רישום משמרת']],
     },
     {
-      id: 'notif', t: 'מפעילים תזכורות', s: 'נזכיר לסיים משמרת, ונגיד לך אם משהו בשכר לא נראה נכון.',
-      done: () => !hasNotif() || Notification.permission !== 'default', acts: [['guide-notif', 'bell', 'להפעיל']],
+      id: 'notif', t: 'הפעלת תזכורות', s: 'תזכורת לסיים משמרת, והתראה כשמשהו בשכר לא נראה תקין.',
+      done: () => !hasNotif() || Notification.permission !== 'default', acts: [['guide-notif', 'bell', 'הפעלה']],
     },
-    { id: 'rights', t: 'מגלים מה מגיע לך', s: 'שכר מינימום לגילך, נסיעות, הפסקות, שבת ועוד.', done: () => !!S.meta.usedRights, acts: [['rights', 'shield', 'בואו נבדוק']] },
+    { id: 'rights', t: 'היכרות עם הזכויות שלך', s: 'שכר מינימום לגילך, נסיעות, הפסקות, שבת ועוד.', done: () => !!S.meta.usedRights, acts: [['rights', 'shield', 'לזכויות שלי']] },
   ];
   App.guideCard = function () {
     if (!S.meta.guide || S.meta.guideDone || S.settings.demo) return '';
@@ -110,16 +110,17 @@
 
   /* ---------------- what's new (once per big update, for people who already used the app) ---------------- */
   const WHATS_NEW = {
-    id: '1.7',
+    id: '1.8',
     items: [
-      ['palette', 'violet', 'עיצוב חדש', 'יותר צבע וחיים. אפשר להחליף צבע בהגדרות › מראה.'],
-      ['smile', 'amber', 'הכירו את שעתי', 'המטבע שמלווה אותך ומסביר דברים.'],
-      ['calendar', 'sky', 'בוחר תאריך ושעה חדש', 'לוח שנה גדול ונוח, עם "היום" ו"אתמול" בלחיצה.'],
-      ['plus', 'mint', 'תפריט הוספה מסודר', 'כל האפשרויות במסך אחד, כולל בדיקת תלוש.'],
-      ['chat', 'pink', 'עזרה ותמיכה', 'שאלות נפוצות, ואפשר לכתוב לנו ישר מהאפליקציה.'],
-      ['refresh', 'orange', 'רענון חלק', 'מושכים את המסך למטה כדי לסנכרן ולעדכן.'],
+      ['game', 'pink', 'משחקים', 'שלושה משחקים קצרים על כסף, שכר וזכויות. אפשר לנסות לשבור שיא.'],
+      ['receipt', 'amber', 'אימות תלוש ברור יותר', 'ברוטו, ניכויים ונטו במבט אחד, ובדיקה שהמספרים מסתדרים.'],
+      ['clock', 'violet', 'גלגל שעות שלא נגמר', 'אחרי 23 מגיע 00. ובמשמרת חדשה: כפתורי משך מהירים.'],
+      ['chart', 'sky', 'גרפים חיים', 'העמודות צומחות והקווים נמתחים. לחיצה על עמודה מדגישה אותה.'],
+      ['star', 'orange', 'מדליות', 'ציוני דרך על 10, 25, 50 משמרות ועל סכומים שהרווחת.'],
+      ['refresh', 'mint', 'רענון חלק', 'משיכת המסך למטה עובדת חלק יותר בכל מצב.'],
     ],
   };
+
   App.whatsNew = function () {
     if (!S.settings.onboarded || S.settings.demo || S.meta.whatsNew === WHATS_NEW.id) return;
     Store.setMeta({ whatsNew: WHATS_NEW.id }).catch(() => {});
@@ -130,7 +131,7 @@
         title: 'מה חדש? ✨',
         body: `<div class="whats-new">${App.mascotSays('party', 'עדכנו את האפליקציה בשבילך! 🎉', { size: 72 })}
           ${WHATS_NEW.items.map(([ic, tint, t, s], i) => `<div class="wn" style="--d:${i}">${UI.tile(ic, tint)}<div><b>${esc(t)}</b><div class="small muted">${esc(s)}</div></div></div>`).join('')}</div>`,
-        foot: '<button class="btn" data-wn-ok>מעולה, בואו נמשיך</button>',
+        foot: '<button class="btn" data-wn-ok>הבנתי, תודה</button>',
         onMount: (el) => { el.querySelector('[data-wn-ok]').onclick = () => UI.closeTop(); if (Fx()) Fx().celebrate('big'); },
       });
     }, 1400);

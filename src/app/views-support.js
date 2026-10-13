@@ -26,7 +26,7 @@
   // [key, icon, tint, label]
   const REASONS = [
     ['login', 'key', 'violet', 'בעיה בהתחברות'], ['calc', 'calc', 'sky', 'החישוב לא נראה נכון'], ['payslip', 'receipt', 'amber', 'תלוש שכר'],
-    ['rights', 'shield', 'mint', 'שאלה על הזכויות שלי'], ['how', 'help', 'violet', 'איך עושים משהו'], ['bug', 'bug', 'pink', 'משהו לא עובד'],
+    ['rights', 'shield', 'mint', 'שאלה על הזכויות שלי'], ['how', 'help', 'violet', 'שאלה על השימוש'], ['bug', 'bug', 'pink', 'דיווח על תקלה'],
     ['data', 'cloud', 'sky', 'נתונים חסרים או סנכרון'], ['notif', 'bell', 'amber', 'התראות ותזכורות'], ['idea', 'bulb', 'mint', 'רעיון לשיפור'],
     ['privacy', 'lock', 'orange', 'פרטיות או מחיקת חשבון'], ['other', 'mail', 'sky', 'משהו אחר'],
   ];

@@ -24,13 +24,13 @@
   /* everything that can be added, as big tiles that all fit on one screen (nothing hides below the fold) */
   App.actions['add-menu'] = () => {
     const tpls = S.templates;
-    const tile = (act, ic, tint, t, cls, extra) => `<button class="am-tile ${cls || ''}" data-act="${act}" ${extra || ''}>${UI.tile(ic, tint)}<span class="am-t">${t}</span></button>`;
+    const tile = (act, ic, tint, t, cls, extra, sub) => `<button class="am-tile ${cls || ''}" data-act="${act}" ${extra || ''}>${UI.tile(ic, tint)}<span class="am-t">${t}</span>${sub ? `<span class="am-s">${sub}</span>` : ''}</button>`;
     UI.openSheet({
-      title: 'מה להוסיף?',
+      title: 'הוספה',
       cls: 'add-sheet',
-      body: `<div class="am-main">${tile('shift-new', 'clock', 'glass', 'משמרת שעשיתי', 'big g1')}${tile('shift-plan', 'calendar', 'violet', 'משמרת עתידית', 'big g2')}</div>
+      body: `<div class="am-main">${tile('shift-new', 'clock', 'glass', 'רישום משמרת', 'big g1', '', 'שהתקיימה')}${tile('shift-plan', 'calendar', 'violet', 'תכנון משמרת', 'big g2', '', 'לימים הבאים')}</div>
         <div class="am-grid">
-          ${S.shifts.some((s) => s.status !== 'planned') ? tile('dup-last', 'repeat', 'violet', 'כמו האחרונה') : ''}
+          ${S.shifts.some((s) => s.status !== 'planned') ? tile('dup-last', 'repeat', 'violet', 'שכפול האחרונה') : ''}
           ${tpls.length ? tile('tpl-pick', 'layers', 'sky', 'מתבנית') : ''}
           ${tile('entry-new', 'beach', 'sky', 'יום חופשה', '', 'data-kind="vacation"')}
           ${tile('entry-new', 'thermo', 'pink', 'יום מחלה', '', 'data-kind="sick"')}
@@ -298,6 +298,10 @@
     const sel = (f, options, v) => `<select class="input" data-f="${f}">${options.map(([val, lab]) => `<option value="${val}" ${String(v) === String(val) ? 'selected' : ''}>${lab}</option>`).join('')}</select>`;
     const inp = (f, v, extra) => `<input class="input" data-f="${f}" value="${esc(v == null ? '' : v)}" ${extra || ''}>`;
     const numIn = (f, v, ph) => inp(f, v, `type="number" inputmode="decimal" step="any" placeholder="${ph || ''}"`);
+    // shift length in minutes from the two times (an end before the start means the next day)
+    const toMin = (t) => +t.slice(0, 2) * 60 + +t.slice(3, 5);
+    const lengthMin = () => { if (!d.startT || !d.endT) return null; const m = toMin(d.endT) - toMin(d.startT); return m <= 0 ? m + 1440 : m; };
+    const durChips = () => `<div class="dur-row"><span class="dur-l">${lengthMin() ? `משך המשמרת: <b class="num">${U.hm(lengthMin())}</b> שעות` : 'משך המשמרת (בחירה מהירה)'}</span><div class="chips">${[4, 5, 6, 7, 8, 9].map((h) => `<button class="chip ${lengthMin() === h * 60 ? 'on' : ''}" data-dur="${h}">${h} ש׳</button>`).join('')}</div></div>`;
 
     function ovBlock(key, title, sub, inner) {
       const o = d.ov[key];
@@ -315,6 +319,7 @@
           <label class="field"><span class="lbl">התחלה</span>${inp('startT', d.startT, 'type="time"')}</label>
           <label class="field"><span class="lbl">סיום ${overnight ? '<span class="tag planned">למחרת</span>' : ''}</span>${inp('endT', d.endT, 'type="time"')}</label>
         </div>
+        ${durChips()}
         <div class="field"><span class="lbl">תפקיד</span><div class="chips">${roleChips(d.roleId, 'data-role')}</div></div>
         <details class="collapse" ${d.splits.length ? 'open' : ''}><summary>${icon('swap', 's')} פיצול בין תפקידים ${d.splits.length ? `<span class="tag">${d.splits.length}</span>` : ''}</summary><div class="in">
           <div class="tiny muted" style="margin-bottom:8px">לדוגמה: התחלת כסדרן, ומ-19:00 עברת לאחמ״ש.</div>
@@ -400,7 +405,8 @@
             const ns = d.date > U.todayKey() ? 'planned' : 'done';
             if (ns !== d.status) { d.status = ns; redraw(); return; }
           }
-          const structural = e.target.type === 'checkbox' || e.target.tagName === 'SELECT';
+          // the times come from the picker in one go: redraw so "the next day" and the length chips follow
+          const structural = e.target.type === 'checkbox' || e.target.tagName === 'SELECT' || f === 'startT' || f === 'endT';
           if (structural) {
             if (f === 'ov.rest.scope' && v === 'range' && !d.ov.rest.fromT) {
               const r = App.previewShift(shiftFrom(Object.assign({}, d, { ov: emptyOv() })));
@@ -415,6 +421,13 @@
           if (!t2) return;
           if (t2.dataset.status) { d.status = t2.dataset.status; d.statusTouched = true; redraw(); }
           else if (t2.dataset.role) { d.roleId = t2.dataset.role; redraw(); }
+          else if (t2.dataset.dur) {
+            if (!d.startT) { UI.invalid('קודם בוחרים שעת התחלה'); return; }
+            const m = (toMin(d.startT) + +t2.dataset.dur * 60) % 1440;
+            d.endT = `${String(Math.floor(m / 60)).padStart(2, '0')}:${String(m % 60).padStart(2, '0')}`;
+            redraw();
+            if (root.Fx) root.Fx.play('tick');
+          }
           else if (t2.hasAttribute('data-add-split')) {
             const others = App.roles(d.employerId).filter((r) => r.id !== d.roleId);
             d.splits.push({ t: '', roleId: (others[0] || App.roles()[0]).id }); redraw();

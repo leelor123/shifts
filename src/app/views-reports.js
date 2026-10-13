@@ -123,7 +123,7 @@
     const yearDone = y < U.todayKey().slice(0, 4);
     return `
       <div class="section-title">${icon('chart', 's')} לפי חודשים</div>
-      <div class="card">${Charts.bars(months.map((m) => ({ label: U.HEB_MONTHS[+m.mk.slice(5) - 1].slice(0, 3), value: m.t.gross, tip: `${U.fmtMonth(m.mk)}: ${U.money(m.t.gross, 0)} · ${U.num(m.t.hours, 1)} ש׳` })), { label: 'ברוטו לפי חודש', axisFmt: (v) => '₪' + (v >= 1000 ? Math.round(v / 1000) + 'K' : v) })}
+      <div class="card">${Charts.bars(months.map((m) => ({ label: U.HEB_MONTHS[+m.mk.slice(5) - 1].slice(0, 3), value: m.t.gross, tip: `${U.fmtMonth(m.mk)}: ${U.money(m.t.gross, 0)} · ${U.num(m.t.hours, 1)} ש׳` })), { label: 'ברוטו לפי חודש', axisFmt: (v) => '₪' + (v >= 1000 ? +(v / 1000).toFixed(1) + 'K' : v) })}
         ${best ? `<div class="kv"><span>${icon('up', 's')} החודש הכי טוב</span><b>${U.fmtMonth(best.mk)} · ${U.money(best.t.gross, 0)}</b></div>` : ''}
         ${worst && worst !== best ? `<div class="kv"><span>${icon('down', 's')} החודש הכי חלש</span><b>${U.fmtMonth(worst.mk)} · ${U.money(worst.t.gross, 0)}</b></div>` : ''}
         <div class="kv"><span>מול ${py}</span><span>${U.money(pt.gross, 0)} ${UI.delta(t.gross, pt.gross)}</span></div></div>
@@ -208,12 +208,15 @@
     const cur = Engine.periodOf(U.todayKey(), emp).key;
     const pks = [];
     for (let i = 11; i >= 0; i--) pks.push(U.addMonthKey(cur, -i));
-    const data = pks.map((pk) => ({ pk, s: Engine.periodSummary(App.model, pk, emp.id) }));
+    let data = pks.map((pk) => ({ pk, s: Engine.periodSummary(App.model, pk, emp.id) }));
+    // months before the first one with any work are left out (but at least half a year is shown)
+    const firstUsed = data.findIndex((d) => d.s.shifts > 0 || d.s.gross > 0);
+    if (firstUsed > 0) data = data.slice(Math.min(firstUsed, data.length - 6));
     const lab = (pk) => U.HEB_MONTHS[+pk.slice(5) - 1].slice(0, 3);
     const roles = App.roles();
     const money0 = (v) => U.money(v, 0);
     return `
-      <div class="card"><div class="card-head"><h3>שכר ברוטו לפי חודש</h3></div>${Charts.bars(data.map((d) => ({ label: lab(d.pk), value: d.s.gross, tip: `${U.fmtMonth(d.pk)}: ${U.money(d.s.gross, 0)} (נטו ~${U.money(d.s.net.net, 0)})`, dim: d.pk === cur })), { label: 'ברוטו לפי חודש', axisFmt: (v) => '₪' + (v >= 1000 ? Math.round(v / 1000) + 'K' : v) })}<div class="tiny muted">החודש הנוכחי מוצג בהיר — עדיין לא הסתיים.</div></div>
+      <div class="card"><div class="card-head"><h3>שכר ברוטו לפי חודש</h3></div>${Charts.bars(data.map((d) => ({ label: lab(d.pk), value: d.s.gross, tip: `${U.fmtMonth(d.pk)}: ${U.money(d.s.gross, 0)} (נטו ~${U.money(d.s.net.net, 0)})`, dim: d.pk === cur })), { label: 'ברוטו לפי חודש', axisFmt: (v) => '₪' + (v >= 1000 ? +(v / 1000).toFixed(1) + 'K' : v) })}<div class="tiny muted">החודש הנוכחי מוצג בהיר — עדיין לא הסתיים.</div></div>
       <div class="card"><div class="card-head"><h3>שעות לפי תפקיד</h3></div>${Charts.stacked(data.map((d) => lab(d.pk)), roles.map((r) => ({ name: r.name, color: r.color, values: data.map((d) => (d.s.byRole[r.id] ? d.s.byRole[r.id].hours : 0)) })), { label: 'שעות לפי תפקיד', fmt: (v) => U.num(v, 1) + ' ש׳' })}</div>
       <div class="card"><div class="card-head"><h3>שכר ממוצע לשעה</h3></div>${Charts.line(data.map((d) => lab(d.pk)), data.map((d) => (d.s.hours ? d.s.avgHourly : null)), { label: 'ממוצע לשעה', fmt: (v) => U.money(v), zero: false, axisFmt: (v) => '₪' + Math.round(v) })}<div class="tiny muted">כולל תוספות שבת ושעות נוספות, בלי נסיעות.</div></div>
       <div class="card"><div class="card-head"><h3>שעות לפי סוג</h3></div>${Charts.stacked(data.map((d) => lab(d.pk)), [

@@ -77,10 +77,11 @@
       },
       job: () => `${say(jobValid().length ? 'love' : 'think', jobValid().length ? 'אחלה! עכשיו נדע כמה הרווחת 💸' : 'איפה עובדים? 🤔')}
         <h1>${g('איפה אתה עובד?', 'איפה את עובדת?')}</h1>
+        <div class="ob-sub">אפשר לכתוב כל מקום עבודה או תפקיד. הנה כמה רעיונות לבחירה מהירה:</div>
         <div class="ob-chips small">${JOBS.map((j) => chip('data-jobname', j, j, A.jobs.some((x) => x.name === j))).join('')}</div>
         ${A.jobs.map((j, i) => `<div class="ob-job" style="--c:${j.color}">
           <div class="ob-job-head"><span class="sw"></span>${A.jobs.length > 1 ? `עבודה ${i + 1}` : 'העבודה שלך'}${A.jobs.length > 1 ? `<button class="icon-btn sm" data-rx="${i}" aria-label="הסר">${icon('x', 's')}</button>` : ''}</div>
-          <label class="field"><span class="lbl">שם העבודה</span><input class="input" data-jn="${i}" value="${esc(j.name)}" placeholder="למשל: מלצרות בבית קפה" maxlength="40"></label>
+          <label class="field"><span class="lbl">מקום העבודה או התפקיד</span><input class="input" data-jn="${i}" value="${esc(j.name)}" placeholder="למשל: קופאי בסופר, מלצרית בקפה גרג" maxlength="40" autocomplete="off" enterkeyhint="next"></label>
           <label class="field"><span class="lbl">כמה משלמים לך לשעה? (₪)</span><input class="input" type="number" step="any" inputmode="decimal" data-jr="${i}" value="${esc(j.rate)}" placeholder="${U.num(minWage(), 2)}">
             <span class="hint">לא בטוח/ה? אפשר להשאיר ריק ונשים שכר מינימום${age() != null && age() < 18 ? ' לגילך' : ''}: ${U.money(minWage())} לשעה</span></label>
         </div>`).join('')}
@@ -150,7 +151,7 @@
         read();
         const j = finalJobs()[0];
         const el = q('#ob-live-roles');
-        if (el) el.innerHTML = `${icon('sparkle', 's')} משמרת של 8 שעות ${j.name !== 'העבודה שלי' ? 'ב' + esc(j.name) + ' ' : ''}= <b>${money(Math.round(j.rate * 8 * 100) / 100)}</b>`;
+        if (el) el.innerHTML = `${icon('sparkle', 's')} משמרת של 8 שעות${j.name !== 'העבודה שלי' ? ' (' + esc(j.name) + ')' : ''} = <b>${money(Math.round(j.rate * 8 * 100) / 100)}</b>`;
       }
       if (key === 'travel') {
         const el = q('#ob-live-travel');
@@ -178,7 +179,7 @@
       const qi = step; // questions are steps 1..6
       let foot;
       if (key === 'hi') {
-        foot = `<button class="btn big ob-go" data-next>יאללה, מתחילים</button>
+        foot = `<button class="btn big ob-go" data-next>בואו נתחיל</button>
           <button class="btn tonal" data-demo>${icon('flask')} רק להציץ (נתונים לדוגמה)</button>
           ${opts.preLogin ? '<button class="btn text" data-have>כבר יש לי חשבון? התחברות</button>' : ''}
           <div class="tiny muted ob-consent">בהמשך אתה מאשר את ${App.legalLinks ? App.legalLinks() : 'תנאי השימוש ומדיניות הפרטיות'}.</div>`;
@@ -188,7 +189,7 @@
           ? `<button class="btn big ob-google" data-save ${saving || (!ready && !loadFailed) ? 'disabled' : ''}>${App.googleIcon || ''}<span>${saving ? 'שומר…' : !ready && !loadFailed ? 'רגע, מכינים את Google…' : 'שמירה עם Google'}</span></button>
             ${blocked ? '<button class="btn text sm" data-redirect>לא נפתח חלון? התחברות בדרך אחרת</button>' : ''}
             ${loadFailed ? '<button class="btn text sm" data-later>להמשיך בינתיים בלי חשבון</button>' : ''}`
-          : `<button class="btn big ob-go" data-save ${saving ? 'disabled' : ''}>${saving ? 'רגע…' : 'יאללה, לאפליקציה'}</button>`;
+          : `<button class="btn big ob-go" data-save ${saving ? 'disabled' : ''}>${saving ? 'רגע…' : 'כניסה לאפליקציה'}</button>`;
       } else {
         foot = `<button class="btn big ob-go" data-next>${qi === QUESTIONS ? 'סיום' : 'הבא'}</button>`;
       }

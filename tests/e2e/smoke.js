@@ -284,8 +284,66 @@ let errors = [];
     const cdp = await page.createCDPSession();
     const t = (type, y) => cdp.send('Input.dispatchTouchEvent', { type, touchPoints: type === 'touchEnd' ? [] : [{ x: 200, y }] });
     await t('touchStart', 300); await t('touchMove', 306); await t('touchMove', 310); await t('touchEnd', 310);
-    const moved = await ev(() => (document.getElementById('view-inner') || {}).style.transform || '');
+    const moved = await ev(() => (document.getElementById('view') || {}).style.transform || '');
     if (moved && moved !== 'none' && moved !== '') throw new Error('page moved: ' + moved);
+  });
+  await step('pull to refresh: a swipe then a pull refreshes once and the page settles back', async () => {
+    await ev(() => { window.__ptrN = 0; const o = App.refresh; App.refresh = function () { window.__ptrN++; return o.apply(this, arguments); }; App.go('home'); window.scrollTo(0, 0); });
+    await sleep(400);
+    const cdp = await page.createCDPSession();
+    const t = (type, x, y) => cdp.send('Input.dispatchTouchEvent', { type, touchPoints: type === 'touchEnd' ? [] : [{ x, y, id: 1 }] });
+    // a sideways swipe first: Chrome may hand its last move to the next gesture late
+    await t('touchStart', 200, 300); for (let i = 1; i <= 5; i++) await t('touchMove', 200 - i * 18, 302); await t('touchEnd');
+    await sleep(200);
+    await t('touchStart', 200, 220);
+    const track = [];
+    for (let i = 1; i <= 12; i++) { await t('touchMove', 200, 220 + i * 22); await sleep(16); track.push(await ev(() => { const m = getComputedStyle(document.getElementById('view')).transform; return m === 'none' ? 0 : +m.split(',')[5].replace(')', ''); })); }
+    await t('touchEnd');
+    for (let i = 1; i < track.length; i++) if (Math.abs(track[i] - track[i - 1]) > 30) throw new Error('page jumped: ' + track.map(Math.round).join(','));
+    await sleep(3000);
+    const r = await ev(() => ({ n: window.__ptrN, tf: document.getElementById('view').style.transform, tab: App.tab }));
+    if (r.n !== 1) throw new Error('refreshed ' + r.n + ' times');
+    if (r.tf) throw new Error('page left moved: ' + r.tf);
+    if (r.tab !== 'home') throw new Error('navigated to ' + r.tab);
+  });
+  await step('time picker: the wheels go round (23 → 00, 00 → 59)', async () => {
+    await ev(() => { window.__t = undefined; UI.pickTime({ value: '23:00' }).then((v) => { window.__t = v; }); }); await sleep(500);
+    await ev(() => { const [h, m] = document.querySelectorAll('.pk-wheel'); h.scrollTop += 44; m.scrollTop -= 44; }); await sleep(700);
+    const shown = await ev(() => document.querySelector('.pk-clock').textContent.replace(/\s/g, ''));
+    if (shown !== '00:59') throw new Error('shows ' + shown);
+    const mid = await ev(() => [...document.querySelectorAll('.pk-wheel')].every((w) => Math.floor(Math.round(w.scrollTop / 44) / +w.dataset.n) === 4));
+    if (!mid) throw new Error('a wheel was not moved back to the middle');
+    await ev(() => document.querySelector('[data-pk-ok]').click()); await sleep(300);
+    if ((await ev(() => window.__t)) !== '00:59') throw new Error('result ' + (await ev(() => window.__t)));
+  });
+  await step('games: every game opens, plays a turn and stops when closed', async () => {
+    await ev(() => App.actions.games()); await sleep(600);
+    if ((await ev(() => document.querySelectorAll('.gm-card').length)) !== 3) throw new Error('hub');
+    await ev(() => document.querySelector('[data-game="coins"]').click()); await sleep(700);
+    await ev(() => document.querySelector('[data-go]').click()); await sleep(2600);
+    const t = await ev(() => +document.querySelector('[data-time]').textContent);
+    if (!(t > 30 && t <= 40)) throw new Error('coin clock ' + t);
+    await ev(() => UI.closeTop()); await sleep(500);
+    if (await ev(() => !!document.querySelector('.cg'))) throw new Error('coin game still there');
+    await ev(() => document.querySelector('[data-game="quiz"]').click()); await sleep(700);
+    await ev(() => document.querySelector('.qz-opt').click()); await sleep(300);
+    if (!(await ev(() => !!document.querySelector('.qz-opt.right')))) throw new Error('quiz answer');
+    await ev(() => UI.closeTop()); await sleep(500);
+    await ev(() => document.querySelector('[data-game="facts"]').click()); await sleep(700);
+    await ev(() => document.querySelector('.tf-yes').click()); await sleep(300);
+    if (!(await ev(() => !!document.querySelector('.tf-card.ok, .tf-card.no')))) throw new Error('facts answer');
+    await closeAll();
+  });
+  await step('payslip check: a short summary that adds up, then the analysis', async () => {
+    await ev(() => App.payslipVerify({ period: '2026-09', source: 'pdf', text: 'x', other: [], fields: { base: { value: 1600, qty: 40 }, travel: { value: 135.6 }, gross: { value: 1735.6 }, nationalInsurance: { value: 21.35 }, totalDeductions: { value: 21.35 }, net: { value: 1714.25 } } }));
+    await sleep(700);
+    const ok = await ev(() => [...document.querySelectorAll('.vf-chk')].map((c) => c.classList.contains('ok')));
+    if (ok.length !== 2 || !ok.every(Boolean)) throw new Error('checks ' + JSON.stringify(ok));
+    const wide = await ev(() => { const b = document.querySelector('.vf-sheet .sh-body'); return b.scrollWidth > b.clientWidth; });
+    if (wide) throw new Error('wider than the screen');
+    await ev(() => document.querySelector('[data-go]').click()); await sleep(900);
+    if (await ev(() => !!document.querySelector('.vf-sheet'))) throw new Error('still on the check');
+    await closeAll();
   });
   await step('anonymous stats: record has only the allowed fields', async () => {
     const r = await ev(() => Stats._record());

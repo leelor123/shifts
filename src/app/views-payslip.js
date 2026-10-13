@@ -119,32 +119,88 @@
     }
   }
 
-  /* ---------------- verification ---------------- */
-  const GROUPS = [['pay', 'תשלומים'], ['ded', 'ניכויים מהעובד'], ['emp', 'הפרשות מעסיק'], ['total', 'סיכומים'], ['info', 'מידע']];
+  /* ---------------- verification ----------------
+   * One calm screen instead of a wall of inputs: a summary on top (month, gross → deductions →
+   * net, and whether the numbers add up), then every line the reader found as a short row
+   * (name · amount). Tapping a row opens it for correction; lines it couldn't place, the raw text
+   * and the AI option wait folded at the bottom. */
+  const GROUPS = [['pay', 'תשלומים', 'wallet', 'mint', true], ['ded', 'ניכויים', 'minus', 'orange', true], ['emp', 'הפרשות המעסיק', 'shield', 'sky', true], ['total', 'סיכומים', 'receipt', 'violet', false], ['info', 'מידע נוסף', 'info', 'sky', false]];
+  const SOURCE = { pdf: ['file', 'נקרא מ-PDF'], ocr: ['camera', 'נקרא מצילום'], ai: ['sparkle', 'נותח בעזרת AI'], manual: ['edit', 'הזנה ידנית'] };
+  const ESSENTIAL = ['gross', 'net', 'base', 'workHours'];
   function verifySheet(draft) {
     const d = { period: draft.period, fields: Store.clone(draft.fields) || {}, other: (draft.other || []).map((o) => Object.assign({ guess: o.guess || 'ignore' }, o)), text: draft.text || '', source: draft.source, fileId: draft.fileId, fileName: draft.fileName, id: draft.id, notes: draft.notes || '' };
     let sheetEl = null;
-    const fieldRow = (f) => {
-      const v = d.fields[f.key] || {};
-      return `<div style="display:grid;grid-template-columns:1fr ${f.hours ? '90px ' : ''}120px 36px;gap:8px;align-items:center;margin-bottom:8px">
-        <div class="small"><b>${esc(f.label)}</b>${v.line && v.line !== 'AI' ? `<div class="tiny muted" style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="${esc(v.line)}">${esc(v.line)}</div>` : v.line === 'AI' ? '<div class="tiny muted">זוהה ע״י AI</div>' : ''}</div>
-        ${f.hours ? `<input class="input" type="number" step="any" inputmode="decimal" data-q="${f.key}" value="${v.qty != null ? v.qty : ''}" placeholder="שעות">` : ''}
-        <input class="input" type="number" step="any" inputmode="decimal" data-v="${f.key}" value="${v.value != null ? v.value : ''}" placeholder="${f.kind === 'info' ? '' : '₪'}">
-        <button class="icon-btn" data-rm="${f.key}" aria-label="הסר">${icon('x', 's')}</button></div>`;
+    const val = (k) => (d.fields[k] && d.fields[k].value != null && d.fields[k].value !== '' ? +d.fields[k].value : null);
+    const shown = (f) => {
+      const v = val(f.key);
+      return v == null ? '<span class="vf-need">להשלים</span>' : f.kind === 'info' ? esc(U.num(v, 2)) : money(v);
     };
+    const subOf = (f) => {
+      const v = d.fields[f.key] || {};
+      if (!f.hours || !v.qty) return '';
+      return `${U.num(v.qty, 2)} ש׳${val(f.key) ? ' · ' + money(val(f.key) / v.qty) + ' לשעה' : ''}`;
+    };
+    const rowHtml = (f) => {
+      const v = d.fields[f.key] || {};
+      const src = v.line && v.line !== 'AI' ? `<div class="vf-src">${icon('file', 's')}<span>${esc(v.line)}</span></div>` : v.line === 'AI' ? `<div class="vf-src">${icon('sparkle', 's')}<span>זוהה ע״י AI</span></div>` : '';
+      return `<div class="vf-row${val(f.key) == null ? ' need' : ''}" data-row="${f.key}">
+        <button class="vf-line" data-open="${f.key}" aria-expanded="false"><span class="vf-l"><span>${esc(f.label)}</span><small data-sub>${subOf(f)}</small></span><span class="vf-v" data-shown>${shown(f)}</span><span class="vf-pen">${icon('edit', 's')}</span></button>
+        <div class="vf-edit">${src}
+          <div class="vf-inputs">
+            ${f.hours ? `<label class="field"><span class="lbl">שעות</span><input class="input" type="number" step="any" inputmode="decimal" data-q="${f.key}" value="${v.qty != null ? v.qty : ''}"></label>` : ''}
+            <label class="field"><span class="lbl">${f.kind === 'info' ? 'ערך' : 'סכום בשקלים'}</span><input class="input" type="number" step="any" inputmode="decimal" data-v="${f.key}" value="${v.value != null ? v.value : ''}"></label>
+          </div>
+          <div class="vf-acts"><button class="btn text sm" data-rm="${f.key}">${icon('trash', 's')} הסרה</button><button class="btn tonal sm" data-close-row>${icon('check', 's')} סיום</button></div>
+        </div></div>`;
+    };
+    function top() {
+      const g = val('gross'), n = val('net');
+      const dedLines = Payslip.FIELDS.filter((f) => f.kind === 'ded' && val(f.key) != null).reduce((s, f) => s + val(f.key), 0);
+      const ded = val('totalDeductions') != null ? val('totalDeductions') : dedLines || (g != null && n != null ? g - n : null);
+      const pays = Payslip.FIELDS.filter((f) => f.kind === 'pay' && val(f.key) != null).reduce((s, f) => s + val(f.key), 0);
+      const checks = [];
+      if (g == null) checks.push(['need', 'חסר ברוטו: הוסיפו אותו כדי שנוכל לבדוק']);
+      if (n == null) checks.push(['need', 'חסר נטו לתשלום']);
+      if (g != null && pays > 0) checks.push(Math.abs(pays - g) <= 2 ? ['ok', 'שורות התשלום מסתכמות לברוטו'] : ['warn', `שורות התשלום מסתכמות ל-${money(pays)}, והברוטו ${money(g)}. אולי חסרה או מיותרת שורה`]);
+      if (g != null && n != null && val('totalDeductions') != null) checks.push(Math.abs(g - val('totalDeductions') - n) <= 2 ? ['ok', 'ברוטו פחות ניכויים שווה לנטו'] : ['warn', `ברוטו פחות ניכויים יוצא ${money(g - val('totalDeductions'))}, והנטו ${money(n)}`]);
+      const cell = (label, v, cls) => `<div class="vf-cell ${cls || ''}"><small>${label}</small><b>${v == null ? '—' : money(v, 0)}</b></div>`;
+      return `<div class="vf-flow">${cell('ברוטו', g)}<span class="vf-op">−</span>${cell('ניכויים', ded)}<span class="vf-op">=</span>${cell('נטו', n, 'net')}</div>
+        ${checks.length ? `<div class="vf-checks">${checks.map(([s, t]) => `<div class="vf-chk ${s}">${icon(s === 'ok' ? 'okc' : 'alert', 's')}<span>${esc(t)}</span></div>`).join('')}</div>` : ''}`;
+    }
+    function groupHead(kind) {
+      const g = GROUPS.find((x) => x[0] === kind);
+      const fs = Payslip.FIELDS.filter((f) => f.kind === kind && d.fields[f.key]);
+      const sum = g[4] ? fs.reduce((s, f) => s + (val(f.key) || 0), 0) : null;
+      return `${UI.tile(g[2], g[3])}<b>${g[1]}</b><span class="vf-gs">${fs.length} ${fs.length === 1 ? 'שורה' : 'שורות'}${sum ? ' · ' + money(sum, 0) : ''}</span>`;
+    }
     function body() {
       const present = Payslip.FIELDS.filter((f) => d.fields[f.key]);
-      const missing = Payslip.FIELDS.filter((f) => !d.fields[f.key]);
-      return `<div class="banner">${icon('eye')}<div>בדוק שהערכים נכונים ותקן אם צריך. ${d.source === 'ocr' ? 'זיהוי מתמונה עלול לטעות בספרות.' : d.source === 'manual' ? 'הזן את מה שמופיע בתלוש — לפחות ברוטו, נטו ושעות.' : ''}</div></div>
-        ${d.notes ? `<div class="banner">${icon('sparkle')}<div>${esc(d.notes)}</div></div>` : ''}
-        <label class="field"><span class="lbl">חודש התלוש</span><input class="input" type="month" id="vf-period" value="${d.period || ''}" min="2000-01" max="${U.todayKey().slice(0, 7)}"></label>
-        ${GROUPS.map(([kind, label]) => { const fs = present.filter((f) => f.kind === kind); return fs.length ? `<div class="section-title">${label}</div><div class="card">${fs.map(fieldRow).join('')}</div>` : ''; }).join('')}
-        <div class="row-flex" style="gap:8px;margin-bottom:12px"><select class="input" id="vf-add" style="flex:1"><option value="">+ הוסף שורה מהתלוש…</option>${missing.map((f) => `<option value="${f.key}">${esc(f.label)}</option>`).join('')}</select></div>
-        ${d.other.length ? `<div class="section-title">שורות שלא זוהו</div><div class="card">${d.other.map((o, i) => `<div style="margin-bottom:10px"><div class="small">${esc(o.line)}</div>
-          <div class="grid2" style="margin-top:6px"><select class="input" data-og="${i}">${[['ignore', 'התעלם'], ['otherDed', 'ניכוי אחר'], ['otherPay', 'תשלום אחר'], ...Payslip.FIELDS.map((f) => [f.key, f.label])].map(([k, l]) => `<option value="${k}" ${o.guess === k ? 'selected' : ''}>${esc(l)}</option>`).join('')}</select>
-          <input class="input" type="number" step="any" data-ov="${i}" value="${o.value}"></div></div>`).join('')}</div>` : ''}
-        ${d.text ? `<details class="collapse"><summary>${icon('file', 's')} הטקסט שזוהה</summary><div class="in"><div class="code">${esc(d.text)}</div></div></details>` : ''}
-        ${d.text ? `<button class="btn outlined block" data-ai>${icon('sparkle')} ניתוח חכם עם Claude ${S.settings.ai.apiKey ? '' : '(דורש מפתח API)'}</button><div class="tiny muted" style="margin:6px 4px 12px">אופציונלי. לפני שליחה יוסתרו ת״ז, פרטי בנק וכתובת, ותראה בדיוק מה נשלח.</div>` : ''}`;
+      const src = SOURCE[d.source] || SOURCE.manual;
+      const empty = !present.length;
+      return `<div class="vf-head">
+          <label class="field vf-month"><span class="lbl">חודש התלוש</span><input class="input" type="month" id="vf-period" value="${d.period || ''}" min="2000-01" max="${U.todayKey().slice(0, 7)}"></label>
+          <span class="vf-badge">${icon(src[0], 's')}${src[1]}</span>
+        </div>
+        <div class="card vf-top" data-top>${top()}</div>
+        ${d.source === 'ocr' ? `<div class="vf-tip">${icon('eye', 's')}<span>זיהוי מצילום עלול לטעות בספרות. כדאי להשוות כל שורה לתלוש.</span></div>` : ''}
+        ${d.notes ? `<div class="vf-tip">${icon('sparkle', 's')}<span>${esc(d.notes)}</span></div>` : ''}
+        ${empty ? `<div class="card vf-start"><b>אילו שורות יש בתלוש?</b><div class="small muted">מספיק להתחיל בעיקר: ברוטו, נטו ושעות.</div>
+          <div class="chips">${ESSENTIAL.map((k) => `<button class="chip" data-add="${k}">${icon('plus', 's')} ${esc(Payslip.FIELD[k].label)}</button>`).join('')}</div></div>` : ''}
+        ${GROUPS.map(([kind, , , , open]) => {
+          const fs = present.filter((f) => f.kind === kind);
+          if (!fs.length) return '';
+          return `<details class="vf-group" data-g="${kind}" ${open || fs.some((f) => val(f.key) == null) ? 'open' : ''}><summary>${groupHead(kind)}<span class="vf-chev">${icon('left', 's')}</span></summary><div class="vf-rows">${fs.map(rowHtml).join('')}</div></details>`;
+        }).join('')}
+        <button class="btn outlined block vf-add" data-addmenu>${icon('plus')} הוספת שורה מהתלוש</button>
+        ${d.other.length ? `<details class="vf-group vf-other"><summary>${UI.tile('help', 'amber')}<b>שורות שלא זוהו</b><span class="vf-gs">${d.other.length}</span><span class="vf-chev">${icon('left', 's')}</span></summary>
+          <div class="small muted" style="margin:0 4px 10px">אם אחת מהן חשובה, בחרו מה היא. השאר יישארו בצד.</div>
+          ${d.other.map((o, i) => `<div class="vf-o"><div class="vf-o-line">${esc(o.line)}</div>
+            <div class="vf-o-in"><select class="input" data-og="${i}" aria-label="מה השורה הזאת">${[['ignore', 'להתעלם'], ['otherDed', 'ניכוי אחר'], ['otherPay', 'תשלום אחר'], ...Payslip.FIELDS.map((f) => [f.key, f.label])].map(([k, l]) => `<option value="${k}" ${o.guess === k ? 'selected' : ''}>${esc(l)}</option>`).join('')}</select>
+            <input class="input" type="number" step="any" inputmode="decimal" data-ov="${i}" value="${o.value}" aria-label="סכום"></div></div>`).join('')}</details>` : ''}
+        ${d.text ? `<details class="vf-group vf-more"><summary>${UI.tile('file', 'violet')}<b>הטקסט שזוהה וניתוח חכם</b><span class="vf-chev">${icon('left', 's')}</span></summary>
+          <div class="code">${esc(d.text)}</div>
+          <button class="btn outlined block" data-ai style="margin-top:10px">${icon('sparkle')} ניתוח חכם עם Claude ${S.settings.ai.apiKey ? '' : '(דורש מפתח API)'}</button>
+          <div class="tiny muted" style="margin:6px 4px 4px">לא חובה. לפני שליחה יוסתרו ת״ז, פרטי בנק וכתובת, ותראו בדיוק מה נשלח.</div></details>` : ''}`;
     }
     function readInputs() {
       const el = sheetEl;
@@ -154,29 +210,84 @@
       el.querySelectorAll('[data-og]').forEach((s) => { d.other[+s.dataset.og].guess = s.value; });
       el.querySelectorAll('[data-ov]').forEach((i) => { d.other[+i.dataset.ov].value = UI.numIn(i) || 0; });
     }
-    function redraw() { const b = sheetEl.querySelector('.sh-body'); const y = b.scrollTop; b.innerHTML = body(); b.scrollTop = y; bindAdd(); }
-    function bindAdd() {
-      const add = sheetEl.querySelector('#vf-add');
-      if (add) add.onchange = () => { readInputs(); if (add.value) { d.fields[add.value] = { value: null }; redraw(); } };
+    function redraw(openKey) {
+      const b = sheetEl.querySelector('.sh-body');
+      const y = b.scrollTop;
+      b.innerHTML = body();
+      b.scrollTop = y;
+      if (openKey) openRow(openKey, true);
+    }
+    /* typing updates the row, its group and the summary right away (no redraw, so the keyboard stays) */
+    function live(key) {
+      readInputs();
+      const f = Payslip.FIELD[key];
+      const row = sheetEl.querySelector(`[data-row="${key}"]`);
+      if (f && row) {
+        row.querySelector('[data-shown]').innerHTML = shown(f);
+        row.querySelector('[data-sub]').innerHTML = subOf(f);
+        row.classList.toggle('need', val(key) == null);
+        const gs = sheetEl.querySelector(`.vf-group[data-g="${f.kind}"] > summary`);
+        if (gs) gs.innerHTML = groupHead(f.kind) + `<span class="vf-chev">${icon('left', 's')}</span>`;
+      }
+      sheetEl.querySelector('[data-top]').innerHTML = top();
+    }
+    function openRow(key, focus) {
+      sheetEl.querySelectorAll('.vf-row.open').forEach((r) => { if (r.dataset.row !== key) { r.classList.remove('open'); r.querySelector('[data-open]').setAttribute('aria-expanded', 'false'); } });
+      const row = sheetEl.querySelector(`[data-row="${key}"]`);
+      if (!row) return;
+      const was = row.classList.contains('open');
+      row.classList.toggle('open', !was);
+      row.querySelector('[data-open]').setAttribute('aria-expanded', String(!was));
+      if (!was) {
+        const g = row.closest('details');
+        if (g) g.open = true;
+        if (focus) setTimeout(() => { const i = row.querySelector('[data-v]'); if (i) { i.focus(); row.scrollIntoView({ block: 'nearest', behavior: 'smooth' }); } }, 60);
+      }
+    }
+    function addMenu() {
+      const missing = Payslip.FIELDS.filter((f) => !d.fields[f.key]);
+      UI.openSheet({
+        title: 'איזו שורה להוסיף?',
+        body: GROUPS.map(([kind, label]) => { const fs = missing.filter((f) => f.kind === kind); return fs.length ? `<div class="section-title">${label}</div><div class="chips wrap">${fs.map((f) => `<button class="chip" data-pick="${f.key}">${esc(f.label)}</button>`).join('')}</div>` : ''; }).join(''),
+        onMount: (el) => el.addEventListener('click', (e) => {
+          const b = e.target.closest('[data-pick]');
+          if (!b) return;
+          UI.closeTop();
+          addField(b.dataset.pick);
+        }),
+      });
+    }
+    function addField(key) {
+      readInputs();
+      if (!d.fields[key]) d.fields[key] = { value: null };
+      redraw();
+      setTimeout(() => openRow(key, true), 340);
     }
     UI.openSheet({
-      title: 'אימות נתוני התלוש', full: true, body: body(),
-      foot: `<button class="btn" data-go>${icon('check')} נתח</button>`,
+      title: 'אימות נתוני התלוש', full: true, cls: 'vf-sheet', body: body(),
+      foot: `<button class="btn" data-go>${icon('check')} המשך לבדיקה</button>`,
       onMount: (el) => {
-        sheetEl = el; bindAdd();
+        sheetEl = el;
+        el.addEventListener('input', (e) => { const k = e.target.dataset.v || e.target.dataset.q; if (k) live(k); });
+        el.addEventListener('change', (e) => { if (e.target.id === 'vf-period') d.period = e.target.value || d.period; });
         el.addEventListener('click', async (e) => {
           const b = e.target.closest('button');
           if (!b) return;
-          if (b.dataset.rm) { readInputs(); delete d.fields[b.dataset.rm]; redraw(); }
-          if (b.hasAttribute('data-ai')) { readInputs(); App.aiAnalyze(d.text, (res) => { Object.assign(d.fields, res.fields); d.other = res.other.length ? res.other : d.other; if (res.period) d.period = res.period; d.notes = res.notes; d.source = 'ai'; redraw(); }); }
-          if (b.hasAttribute('data-go')) {
+          if (b.dataset.open) openRow(b.dataset.open, true);
+          else if (b.hasAttribute('data-close-row')) { const r = b.closest('.vf-row'); if (r) openRow(r.dataset.row); }
+          else if (b.dataset.rm) { readInputs(); delete d.fields[b.dataset.rm]; redraw(); }
+          else if (b.dataset.add) addField(b.dataset.add);
+          else if (b.hasAttribute('data-addmenu')) { readInputs(); addMenu(); }
+          else if (b.hasAttribute('data-ai')) { readInputs(); App.aiAnalyze(d.text, (res) => { Object.assign(d.fields, res.fields); d.other = res.other.length ? res.other : d.other; if (res.period) d.period = res.period; d.notes = res.notes; d.source = 'ai'; redraw(); }); }
+          else if (b.hasAttribute('data-go')) {
             readInputs();
-            if (!/^\d{4}-\d{2}$/.test(d.period || '')) { UI.invalid('בחר את חודש התלוש'); return; }
+            if (!/^\d{4}-\d{2}$/.test(d.period || '')) { UI.invalid('בחרו את חודש התלוש'); return; }
             // mapped unknown lines
             for (const o of d.other) {
               if (Payslip.FIELD[o.guess] && !d.fields[o.guess]) d.fields[o.guess] = { value: Math.abs(o.value), line: o.line };
             }
             for (const k of Object.keys(d.fields)) if (d.fields[k].value == null && d.fields[k].qty == null) delete d.fields[k];
+            if (!Object.keys(d.fields).length) { UI.invalid('הוסיפו לפחות שורה אחת מהתלוש'); return; }
             UI.closeTop();
             setTimeout(() => analysisSheet({ id: d.id || 'ps_' + U.uid(), period: d.period, fields: d.fields, other: d.other, text: d.text, source: d.source, fileId: d.fileId, fileName: d.fileName, isNew: !d.id }), 320);
           }
@@ -184,6 +295,7 @@
       },
     });
   }
+  App.payslipVerify = verifySheet; // tests open it with a ready draft
 
   /* ---------------- analysis ---------------- */
   const STATUS = { ok: ['okc', 'תקין', '✅'], warn: ['alert', 'כדאי לבדוק', '⚠️'], bad: ['xc', 'חסר או שגוי', '❌'] };

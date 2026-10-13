@@ -159,6 +159,38 @@
   };
   App.rerender = () => App.render({ keepScroll: true });
 
+  /* ---------------- milestones ----------------
+   * 10, 25, 50… shifts and 1,000, 5,000… shekels earned get a small medal at the top of the
+   * screen (it never covers the save message and its undo button at the bottom). The first
+   * time this runs it only notes where the user already is, so nobody gets a burst of old
+   * medals after an update; deleting shifts never brings a medal back. */
+  const MS_SHIFTS = [10, 25, 50, 100, 200, 300, 500, 1000];
+  const MS_EARNED = [1000, 5000, 10000, 25000, 50000, 100000, 250000];
+  App.milestones = function () {
+    if (S.settings.demo || !App.model) return;
+    const done = [...App.model.results.values()].filter((r) => r.status === 'done');
+    const top = (list, v) => list.filter((x) => v >= x).pop() || 0;
+    const cur = { shifts: top(MS_SHIFTS, done.length), earned: top(MS_EARNED, done.reduce((s, r) => s + (r.total || 0), 0)) };
+    const was = S.meta.ms;
+    if (!was) { Store.setMeta({ ms: cur }).catch(() => {}); return; }
+    let pop = null;
+    if (cur.shifts > (was.shifts || 0)) pop = [`${cur.shifts} משמרות!`, 'כל הכבוד על ההתמדה'];
+    else if (cur.earned > (was.earned || 0)) pop = [`עברת ${U.money(cur.earned, 0)}`, 'שהרווחת מאז שהתחלת לרשום'];
+    if (cur.shifts > (was.shifts || 0) || cur.earned > (was.earned || 0)) Store.setMeta({ ms: { shifts: Math.max(cur.shifts, was.shifts || 0), earned: Math.max(cur.earned, was.earned || 0) } }).catch(() => {});
+    if (pop) setTimeout(() => App.medal(pop[0], pop[1]), 900);
+  };
+  /** A medal that drops in at the top for a few seconds (never blocks taps). */
+  App.medal = function (title, sub) {
+    const el = document.createElement('div');
+    el.className = 'medal-pop';
+    el.setAttribute('role', 'status');
+    el.innerHTML = `${App.mascot ? App.mascot('party', { size: 46 }) : ''}<div><b>${UI.esc(title)}</b><small>${UI.esc(sub)}</small></div><span class="medal-ic" aria-hidden="true">🏅</span>`;
+    document.body.appendChild(el);
+    if (root.Fx) root.Fx.celebrate('big');
+    setTimeout(() => el.classList.add('out'), 3600);
+    setTimeout(() => el.remove(), 4100);
+  };
+
   /* ---------------- data change pipeline ---------------- */
   let insightTimer = null;
   Store.on((ev) => {
@@ -177,8 +209,10 @@
   /** Save with an Undo snackbar. */
   App.saveOps = async function (ops, label, toastText) {
     await Store.apply(ops, label);
-    if (ops.some((o) => o.store === 'shifts' && o.put && o.put.status !== 'planned')) root.Fx.celebrate('coin');
+    const doneShift = ops.some((o) => o.store === 'shifts' && o.put && o.put.status !== 'planned');
+    if (doneShift) root.Fx.celebrate('coin');
     UI.toast(toastText || label, { label: 'ביטול', fn: App.undo }, { ok: true });
+    if (doneShift) App.milestones();
   };
   App.undo = async function () {
     const l = await Store.undo();
@@ -282,6 +316,7 @@
     await Store.setActive(null);
     if (S.shifts.filter((x) => x.status === 'done').length === 1) App.celebrateOnce('first-shift', () => UI.toast('המשמרת הראשונה שלך נשמרה! 🎉'));
     root.Fx.celebrate('big');
+    App.milestones();
     const r = App.result(sh.id);
     UI.toast(`נשמר: ${U.hm(r ? r.paidMin : 0)} שעות · ${U.money(r ? r.wage : 0)}`, { label: 'ביטול', fn: App.undo }, { ok: true });
     App.sheetsApi.shiftDetail && App.sheetsApi.shiftDetail(sh.id);

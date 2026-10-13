@@ -2,11 +2,11 @@
 process.env.TZ = 'Asia/Jerusalem';
 const path = require('path');
 const src = path.join(__dirname, '..', 'src', 'core');
-for (const f of ['util.js', 'hebcal.js', 'defaults.js', 'engine.js', 'insights.js', 'payslip.js']) {
+for (const f of ['util.js', 'hebcal.js', 'defaults.js', 'engine.js', 'insights.js', 'payslip.js', 'games.js']) {
   try { require(path.join(src, f)); } catch (e) { if (e.code !== 'MODULE_NOT_FOUND') throw e; }
 }
 const T = require('./t.js');
-for (const f of ['engine.test.js', 'insights.test.js', 'payslip.test.js', 'links.test.js']) {
+for (const f of ['engine.test.js', 'insights.test.js', 'payslip.test.js', 'links.test.js', 'games.test.js']) {
   try { require(path.join(__dirname, f)); } catch (e) { if (e.code !== 'MODULE_NOT_FOUND') throw e; }
 }
 T.section('cloud sync (simulated phones)');

@@ -196,11 +196,32 @@
   }
 
   /* ---------------- time ---------------- */
+  // The wheels go round forever: after 23 comes 00, after 59 comes 00.
+  // The numbers are written COPIES times one after the other; whenever a
+  // wheel comes to rest it is moved, invisibly, back to the same number
+  // in the middle copy, so there is always room to keep turning.
   const ROW = 44;
-  function wheel(count, sel, fmt) {
+  const COPIES = 9, MID = 4;
+  const mod = (a, n) => ((a % n) + n) % n;
+  function wheel(count, sel, fmt, label) {
     let html = '';
-    for (let i = 0; i < count; i++) html += `<div class="pk-opt" data-i="${i}">${fmt(i)}</div>`;
-    return `<div class="pk-wheel" tabindex="0" data-sel="${sel}"><div class="pk-pad"></div>${html}<div class="pk-pad"></div></div>`;
+    for (let c = 0; c < COPIES; c++) for (let v = 0; v < count; v++) html += `<div class="pk-opt" data-i="${c * count + v}" data-v="${v}">${fmt(v)}</div>`;
+    return `<div class="pk-wheel" tabindex="0" role="spinbutton" aria-label="${label}" aria-valuemin="0" aria-valuemax="${count - 1}" aria-valuenow="${sel}" data-n="${count}"><div class="pk-pad"></div>${html}<div class="pk-pad"></div></div>`;
+  }
+  /** The drum look: rows tilt and shrink the further they are from the middle. */
+  function drum(w) {
+    const c = w.scrollTop / ROW;
+    for (const o of w._lit || []) { o.style.transform = ''; o.style.opacity = ''; }
+    const lit = [];
+    for (let i = Math.floor(c) - 3; i <= Math.ceil(c) + 3; i++) {
+      const o = w.children[i + 1]; // children[0] is the top padding
+      if (!o || !o.classList.contains('pk-opt')) continue;
+      const d = i - c, ad = Math.min(3, Math.abs(d));
+      o.style.transform = `perspective(240px) rotateX(${(-d * 17).toFixed(1)}deg) scale(${(1.16 - ad * 0.11).toFixed(3)})`;
+      o.style.opacity = (1 - ad * 0.2).toFixed(2);
+      lit.push(o);
+    }
+    w._lit = lit;
   }
   /** opts: { value: 'HH:MM', title }. Resolves with 'HH:MM' or null. */
   function pickTime(opts) {
@@ -211,28 +232,47 @@
     const quick = [['עכשיו', null], ['08:00', '08:00'], ['12:00', '12:00'], ['16:00', '16:00'], ['20:00', '20:00']];
     return host(opts.title || 'בחירת שעה', `
       <div class="pk-show"><div class="pk-clock" data-big></div></div>
-      <div class="pk-wheels">${wheel(24, h, pad)}<span class="pk-colon">:</span>${wheel(60, m, pad)}<div class="pk-band"></div></div>
+      <div class="pk-wheels">${wheel(24, h, pad, 'שעות')}<span class="pk-colon">:</span>${wheel(60, m, pad, 'דקות')}<div class="pk-band"></div></div>
       <div class="pk-quick">${quick.map(([l, t]) => `<button class="chip" data-t="${t || 'now'}">${l}</button>`).join('')}</div>
       <div class="pk-foot"><button class="btn tonal" data-pk-cancel>ביטול</button><button class="btn" data-pk-ok>${icon('check')} בחירה</button></div>`, (el, finish) => {
       const [wh, wm] = el.querySelectorAll('.pk-wheel');
       const big = el.querySelector('[data-big]');
       const show = () => { big.innerHTML = `<span>${pad(h)}</span><i>:</i><span>${pad(m)}</span>`; };
-      const mark = (w, i) => w.querySelectorAll('.pk-opt').forEach((o) => o.classList.toggle('on', +o.dataset.i === i));
+      const mark = (w, v) => {
+        w.querySelectorAll('.pk-opt.on').forEach((o) => o.classList.remove('on'));
+        w.querySelectorAll(`.pk-opt[data-v="${v}"]`).forEach((o) => o.classList.add('on'));
+        w.setAttribute('aria-valuenow', v);
+      };
       function bind(w, get, set) {
-        let t = null, last = get();
+        const n = +w.dataset.n;
+        let last = get(), idle = 0, frame = 0;
+        const at = () => Math.round(w.scrollTop / ROW);
         const settle = () => {
-          const i = Math.max(0, Math.min(w.querySelectorAll('.pk-opt').length - 1, Math.round(w.scrollTop / ROW)));
-          if (i !== last) { last = i; set(i); show(); mark(w, i); if (Fx()) { Fx().play('tick'); Fx().haptic(4); } }
+          const v = mod(at(), n);
+          if (v !== last) { last = v; set(v); show(); mark(w, v); if (Fx()) { Fx().play('tick'); Fx().haptic(4); } }
         };
-        w.addEventListener('scroll', () => { clearTimeout(t); settle(); t = setTimeout(settle, 90); }, { passive: true });
+        // back to the middle copy once the wheel is at rest (same picture, so nothing visibly moves)
+        const recenter = () => {
+          const i = at();
+          if (Math.floor(i / n) !== MID) w.scrollTop = (MID * n + mod(i, n)) * ROW;
+          drum(w);
+        };
+        const hasEnd = 'onscrollend' in w;
+        w.addEventListener('scroll', () => {
+          settle();
+          if (!frame) frame = requestAnimationFrame(() => { frame = 0; drum(w); });
+          if (!hasEnd) { clearTimeout(idle); idle = setTimeout(recenter, 180); }
+        }, { passive: true });
+        if (hasEnd) w.addEventListener('scrollend', recenter);
         w.addEventListener('click', (e) => { const o = e.target.closest('.pk-opt'); if (o) w.scrollTo({ top: +o.dataset.i * ROW, behavior: 'smooth' }); });
         w.addEventListener('keydown', (e) => {
           if (e.key !== 'ArrowUp' && e.key !== 'ArrowDown') return;
           e.preventDefault();
-          w.scrollTo({ top: (get() + (e.key === 'ArrowDown' ? 1 : -1)) * ROW, behavior: 'smooth' });
+          w.scrollTo({ top: (at() + (e.key === 'ArrowDown' ? 1 : -1)) * ROW, behavior: 'smooth' });
         });
-        w.scrollTop = get() * ROW;
+        w.scrollTop = (MID * n + get()) * ROW;
         mark(w, get());
+        drum(w);
       }
       requestAnimationFrame(() => {
         bind(wh, () => h, (i) => { h = i; });
