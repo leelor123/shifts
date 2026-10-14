@@ -251,22 +251,29 @@
       };
       function bind(w, get, set) {
         const n = +w.dataset.n;
-        let last = get(), idle = 0, frame = 0;
+        let last = get(), idle = 0, frame = 0, ticked = 0;
         const at = () => Math.round(w.scrollTop / ROW);
         const settle = () => {
           const v = mod(at(), n);
-          if (v !== last) { last = v; set(v); show(); mark(w, v); if (Fx()) { Fx().play('tick'); Fx().haptic(4); } }
+          if (v === last) return;
+          last = v; set(v); show(); mark(w, v);
+          // a fast spin passes many numbers: one click and buzz per ~40ms is enough (and keeps frames light)
+          const t = performance.now();
+          if (Fx() && t - ticked > 40) { ticked = t; Fx().play('tick'); Fx().haptic(4); }
         };
+        w._settle = settle;
         // back to the middle copy once the wheel is at rest (same picture, so nothing visibly moves)
         const recenter = () => {
           const i = at();
           if (Math.floor(i / n) !== MID) w.scrollTop = (MID * n + mod(i, n)) * ROW;
+          settle();
           drum(w);
         };
         const hasEnd = 'onscrollend' in w;
+        // the number, the highlight and the drum are redrawn at most once per frame, however many
+        // scroll events a fling sends
         w.addEventListener('scroll', () => {
-          settle();
-          if (!frame) frame = requestAnimationFrame(() => { frame = 0; drum(w); });
+          if (!frame) frame = requestAnimationFrame(() => { frame = 0; settle(); drum(w); });
           if (!hasEnd) { clearTimeout(idle); idle = setTimeout(recenter, 180); }
         }, { passive: true });
         if (hasEnd) w.addEventListener('scrollend', recenter);
@@ -294,7 +301,7 @@
           if (Fx()) Fx().play('pop');
           setTimeout(() => finish(`${pad(h)}:${pad(m)}`), 140);
         } else if (b.hasAttribute('data-pk-cancel')) finish(null);
-        else if (b.hasAttribute('data-pk-ok')) finish(`${pad(h)}:${pad(m)}`);
+        else if (b.hasAttribute('data-pk-ok')) { wh._settle(); wm._settle(); finish(`${pad(h)}:${pad(m)}`); } // the very latest position
       });
     });
   }

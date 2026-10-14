@@ -112,15 +112,11 @@
     if (tab === App.tab) App.enterDir = '';
     App.tab = tab;
     try { history.replaceState(history.state, '', '#' + tab); } catch (e) { /* ignore */ }
-    const dir = App.enterDir;
-    const swap = () => { App.render(opts); window.scrollTo(0, 0); };
-    if (opts && opts.fromNav && dir && document.startViewTransition && root.Fx && root.Fx.motion() && !document.querySelector('.sheet')) {
-      App.enterDir = ''; // the transition animates; no extra CSS entry animation
-      const de = document.documentElement;
-      de.dataset.nav = dir === 'enter-next' ? 'next' : 'prev';
-      const t = document.startViewTransition(swap);
-      t.finished.catch(() => {}).then(() => { delete de.dataset.nav; });
-    } else swap();
+    // The new screen slides in with a CSS animation (.view.enter-next/prev) that runs on the GPU. A View
+    // Transition looked similar but froze the screen for ~50ms on every tab switch on a real phone
+    // while the browser photographed the old screen.
+    App.render(opts);
+    window.scrollTo(0, 0);
   };
   const seenTabs = new Set();
   App.render = function (opts) {
