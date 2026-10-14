@@ -2,7 +2,7 @@
 <html lang="he" dir="rtl">
 <head>
 <meta charset="utf-8">
-<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'sha256-1/4s1ouYzEVkdxeTlLsNm1g3KWcqvCPKBklxliB0tBc=' https://www.gstatic.com https://apis.google.com https://cdnjs.cloudflare.com https://cdn.jsdelivr.net 'wasm-unsafe-eval'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com data:; img-src 'self' data: blob: https:; connect-src 'self' https: wss:; frame-src https://shiftpay-70ab6.firebaseapp.com https://accounts.google.com https://apis.google.com https://*.google.com; worker-src 'self' blob: https://cdnjs.cloudflare.com https://cdn.jsdelivr.net; media-src 'self' data: blob:; manifest-src 'self'; object-src 'none'; base-uri 'self'; form-action 'self'">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'sha256-LrZVcfC/DusMENtV/oXk0F79HP0Yf23gOtym4L+IStg=' https://www.gstatic.com https://apis.google.com https://cdnjs.cloudflare.com https://cdn.jsdelivr.net 'wasm-unsafe-eval'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com data:; img-src 'self' data: blob: https:; connect-src 'self' https: wss:; frame-src https://shiftpay-70ab6.firebaseapp.com https://accounts.google.com https://apis.google.com https://*.google.com; worker-src 'self' blob: https://cdnjs.cloudflare.com https://cdn.jsdelivr.net; media-src 'self' data: blob:; manifest-src 'self'; object-src 'none'; base-uri 'self'; form-action 'self'">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="theme-color" content="#0d2b6b">
 <meta name="description" content="מעקב משמרות וחישוב שכר אישי: שבתות, חגים, שעות נוספות, נסיעות, נטו משוער וניתוח תלושים — נשמר בחשבון שלך ועובד גם בלי אינטרנט.">
@@ -1421,6 +1421,23 @@ body.fx .chart[data-anim].in .bar, body.fx .chart[data-anim].in .ln, body.fx .ch
 @keyframes medal-swing { 25% { transform: rotate(14deg); } 75% { transform: rotate(-10deg); } }
 @media (prefers-reduced-motion: reduce) { .medal-pop, .medal-pop .medal-ic, .medal-pop.out { animation: none; } }
 
+/* ---------- medals ---------- */
+.ach-card { display: flex; align-items: center; gap: 12px; width: 100%; margin-top: 12px; padding: 14px; border-radius: 18px; border: 1px dashed var(--outline); background: transparent; color: var(--on-surface); font: inherit; text-align: start; cursor: pointer; }
+body.fx .ach-card:active { transform: scale(.98); }
+.ach-card-e { font-size: 2rem; width: 50px; text-align: center; }
+.ach-head { display: grid; gap: 8px; margin: 2px 4px 14px; }
+.ach-head b { font: 700 1.1rem var(--display); }
+.ach-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
+.ach { display: grid; justify-items: center; align-content: start; gap: 4px; min-height: 118px; padding: 12px 6px; border-radius: 18px; border: 1px solid var(--line); background: var(--surface-1); color: var(--on-surface); font: inherit; text-align: center; cursor: pointer; animation: rise .4s var(--pop) both; animation-delay: calc(var(--k) * 25ms); }
+.ach b { font: 700 .86rem/1.25 var(--display); }
+.ach small { font-size: .72rem; color: var(--on-surface-var); font-variant-numeric: tabular-nums; }
+.ach-e { font-size: 2.1rem; line-height: 1.1; }
+.ach:not(.on) .ach-e { filter: grayscale(1); opacity: .45; }
+.ach:not(.on) b { color: var(--on-surface-var); }
+.ach.on { border-color: color-mix(in srgb, var(--amber) 45%, var(--line)); background: color-mix(in srgb, var(--amber-soft) 55%, var(--surface-1)); }
+.ach.on small { color: var(--amber); font-weight: 700; }
+@media (prefers-reduced-motion: reduce) { .ach { animation: none; } }
+
 /* ---------- games ---------- */
 .gm-list { display: grid; gap: 10px; }
 .gm-card { display: flex; align-items: center; gap: 12px; padding: 14px; border-radius: 18px; background: var(--surface-1); border: 1px solid var(--line); box-shadow: var(--sh-1); color: var(--on-surface); text-align: start; cursor: pointer; font: inherit; transition: transform .2s var(--pop); }
@@ -1583,6 +1600,70 @@ body { overflow-wrap: anywhere; }
 .role-chip { max-width: 100%; }
 .role-chip .rc-n { min-width: 0; max-width: 60vw; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 
+/* ---------- monthly recap (views-recap.js) ---------- */
+.recap-card { display: flex; align-items: center; gap: 12px; width: 100%; margin: 0 0 14px; padding: 14px 16px; border: 0; border-radius: 20px; background: linear-gradient(120deg, #5b21b6, #7c3aed 55%, #db2777); color: #fff; font: inherit; text-align: start; cursor: pointer; box-shadow: var(--sh-brand); position: relative; overflow: hidden; }
+.recap-card::after { content: ''; position: absolute; inset: 0; background: linear-gradient(100deg, transparent 30%, rgba(255,255,255,.22) 50%, transparent 70%); transform: translateX(120%); animation: rc-glint 3.6s ease-in-out 1s infinite; }
+@keyframes rc-glint { 0% { transform: translateX(120%); } 35%, 100% { transform: translateX(-120%); } }
+body.fx .recap-card:active { transform: scale(.98); }
+.rc-spark { font-size: 1.6rem; animation: rc-spark 2.4s ease-in-out infinite; }
+@keyframes rc-spark { 50% { transform: rotate(14deg) scale(1.15); } }
+.rc-t { flex: 1; min-width: 0; display: grid; gap: 2px; }
+.rc-t b { font: 700 1.02rem var(--display); }
+.rc-t span { font-size: .82rem; opacity: .9; }
+
+.story { position: fixed; inset: 0; z-index: 80; display: flex; flex-direction: column; color: #fff; touch-action: none; user-select: none; -webkit-user-select: none; overscroll-behavior: contain;
+  padding: calc(12px + env(safe-area-inset-top, 0px)) 16px calc(22px + env(safe-area-inset-bottom, 0px)); background: #4c1d95; opacity: 0; transform: scale(1.03); transition: opacity .25s ease, transform .3s cubic-bezier(.2, .9, .3, 1); }
+.story.in { opacity: 1; transform: none; }
+.story.out { opacity: 0; transform: scale(.97); }
+.story[data-bg="grad-a"] { background: linear-gradient(165deg, #3b0f80, #6d28d9 55%, #9333ea); }
+.story[data-bg="grad-b"] { background: linear-gradient(165deg, #6b2508, #b45309 55%, #c2410c); }
+.story[data-bg="grad-c"] { background: linear-gradient(165deg, #053b2c, #047857 55%, #0f766e); }
+.story[data-bg="grad-d"] { background: linear-gradient(165deg, #082f49, #0369a1 55%, #1d4ed8); }
+.story[data-bg="grad-e"] { background: linear-gradient(165deg, #6b0f3a, #be185d 55%, #9d174d); }
+.st-bars { display: flex; gap: 4px; padding: 0 2px; }
+.st-bars i { flex: 1; height: 3px; border-radius: 2px; background: rgba(255, 255, 255, .32); overflow: hidden; }
+.st-bars b { display: block; height: 100%; background: #fff; transform: scaleX(0); transform-origin: right; }
+.st-bars b.done { transform: none; }
+.st-bars b.now { animation: st-fill linear forwards; }
+.story.paused .st-bars b.now { animation-play-state: paused; }
+.story.last .st-bars b.now { animation: none; transform: none; }
+@keyframes st-fill { to { transform: scaleX(1); } }
+.st-x { position: absolute; top: calc(22px + env(safe-area-inset-top, 0px)); left: 8px; color: #fff; z-index: 1; }
+.st-card { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 10px; padding: 24px 6px 8px; text-align: center; }
+.st-card.on > * { animation: st-in .55s cubic-bezier(.2, .9, .3, 1.12) both; }
+.st-card.on > :nth-child(2) { animation-delay: .07s; }
+.st-card.on > :nth-child(3) { animation-delay: .14s; }
+.st-card.on > :nth-child(4) { animation-delay: .21s; }
+.st-card.on > :nth-child(n+5) { animation-delay: .28s; }
+.st-card.back.on > * { animation-name: st-in-back; }
+@keyframes st-in { from { opacity: 0; transform: translateX(-26px) scale(.97); } }
+@keyframes st-in-back { from { opacity: 0; transform: translateX(26px) scale(.97); } }
+.st-k { font: 600 1.06rem var(--font); opacity: .9; }
+.st-big { font: 700 2.3rem/1.15 var(--display); max-width: 100%; }
+.st-num { font: 700 4.4rem/1 var(--display); font-variant-numeric: tabular-nums; text-shadow: 0 8px 34px rgba(0, 0, 0, .2); max-width: 100%; }
+.st-unit { margin-top: -4px; font: 600 1.25rem var(--font); }
+.st-sub { max-width: 330px; font-size: 1.02rem; line-height: 1.5; opacity: .93; }
+.st-emoji { font-size: 3.6rem; line-height: 1; filter: drop-shadow(0 8px 18px rgba(0, 0, 0, .25)); }
+.st-pill { margin-top: 4px; padding: 7px 14px; border-radius: 999px; background: rgba(255, 255, 255, .2); font-weight: 700; }
+.st-fun { margin-top: 8px; padding: 10px 16px; border-radius: 16px; background: rgba(255, 255, 255, .16); font-weight: 600; }
+.st-items { display: grid; gap: 8px; justify-items: center; margin-top: 6px; }
+.st-item { display: flex; align-items: center; gap: 10px; font-size: 1.15rem; font-weight: 600; }
+.st-item b { font: 700 2.8rem var(--display); }
+.st-ie { font-size: 2.6rem; }
+.st-or { font-weight: 600; opacity: .75; }
+.st-acts { display: flex; gap: 10px; width: min(340px, 100%); margin-top: 18px; }
+.st-acts .btn { flex: 1; white-space: nowrap; }
+.story .st-share { background: #fff; color: #4c1d95; box-shadow: 0 10px 24px -10px rgba(0, 0, 0, .4); }
+.story .st-acts .btn.tonal { background: rgba(255, 255, 255, .2); color: #fff; }
+.st-hint { display: flex; align-items: center; justify-content: center; gap: 4px; font-size: .8rem; opacity: .7; }
+.story.last .st-hint { visibility: hidden; }
+@media (prefers-reduced-motion: reduce) {
+  .st-card.on > *, .recap-card::after, .rc-spark { animation: none !important; }
+  .st-bars b.now { animation: none; transform: none; }
+  .story, .story.in, .story.out { transition: opacity .2s; transform: none; }
+}
+.recap-btn { margin-top: 12px; background: linear-gradient(120deg, #5b21b6, #7c3aed 55%, #db2777); color: #fff; }
+
 </style>
 </head>
 <body>
@@ -1601,7 +1682,7 @@ body { overflow-wrap: anywhere; }
 <div id="print-root" aria-hidden="true"></div>
 <noscript><div style="padding:24px;font-family:sans-serif">האפליקציה דורשת JavaScript.</div></noscript>
 <script>
-window.APP_VERSION = '1.8.1';
+window.APP_VERSION = '1.9.0';
 /* ---- core/util.js ---- */
 /* ============================================================
  * util.js — date/time helpers and formatting.
@@ -4542,6 +4623,81 @@ window.APP_VERSION = '1.8.1';
   }
 
   root.Games = { rng, quizRound, QUESTIONS, facts, factsRound, coinPace, coinDrop, DROPS, hrs, nis };
+})(typeof window !== 'undefined' ? window : globalThis);
+
+/* ---- core/recap.js ---- */
+/* ============================================================
+ * recap.js — what goes into the monthly recap ("הסיכום החודשי"),
+ * a short story of last month at work: what was earned, how many
+ * hours, the best day, the extras, a fun comparison. Pure data from
+ * the engine's totals, so it can be tested; the screens are in
+ * views-recap.js. A slide is only included when it has something
+ * real to say (no "0 hours of overtime").
+ * ============================================================ */
+(function (root) {
+  'use strict';
+  const U = root.U;
+  // things a paycheck can buy, for the last slide: [name (plural), price ₪, emoji]
+  const ITEMS = [['פיצות משפחתיות', 60, '🍕'], ['כרטיסים לסרט', 45, '🎬'], ['ארוחות המבורגר', 75, '🍔'], ['חולצות', 90, '👕'],
+    ['משחקים למחשב', 150, '🎮'], ['כרטיסים להופעה', 210, '🎤'], ['זוגות נעלי ספורט', 420, '👟'], ['כוסות קפה', 14, '☕']];
+  const r2 = (x) => Math.round(x * 100) / 100;
+
+  /** A small stable hash, so the same month always shows the same items. */
+  function hash(s) { let h = 0; for (let i = 0; i < s.length; i++) h = (h * 31 + s.charCodeAt(i)) | 0; return Math.abs(h); }
+
+  /** Two things the money buys, preferring counts that are fun to read (2–40). */
+  function funItems(money, seed) {
+    if (!(money > 0)) return [];
+    const all = ITEMS.map(([name, price, emoji]) => ({ name, price, emoji, count: Math.floor(money / price) })).filter((x) => x.count >= 1);
+    const nice = all.filter((x) => x.count >= 2 && x.count <= 40);
+    const pool = nice.length >= 2 ? nice : all;
+    if (pool.length <= 2) return pool;
+    const a = hash(String(seed)) % pool.length;
+    let b = (a + 1 + (hash(String(seed) + 'x') % (pool.length - 1))) % pool.length;
+    if (b === a) b = (a + 1) % pool.length;
+    return [pool[a], pool[b]];
+  }
+
+  /** When the shifts usually start, as a style. */
+  function clockStyle(startHours) {
+    if (!startHours || startHours.length < 2) return null;
+    const avg = startHours.reduce((s, h) => s + h, 0) / startHours.length;
+    const type = avg >= 16 ? 'night' : avg < 10 ? 'morning' : 'day';
+    return { type, avgHour: Math.round(avg) % 24 };
+  }
+
+  /**
+   * t, prev: totals objects from Engine.periodSummary / totals (prev may be missing).
+   * opts: { key, label, prevLabel, net, roleName(id) }
+   * Returns { key, label, slides: [{ k, ... }] } or null when there was no work that month.
+   */
+  function build(t, prev, opts) {
+    opts = opts || {};
+    if (!t || !(t.shifts > 0) || !(t.gross > 0)) return null;
+    const slides = [{ k: 'intro', label: opts.label || '' }];
+    const delta = prev && prev.gross > 0 ? Math.round((t.gross / prev.gross - 1) * 100) : null;
+    slides.push({ k: 'earned', gross: r2(t.gross), net: opts.net > 0 ? r2(opts.net) : null, delta: delta != null && Math.abs(delta) < 1000 ? delta : null, prevLabel: opts.prevLabel || '' });
+    slides.push({
+      k: 'time', hours: r2(t.hours), shifts: t.shifts, workDays: t.workDays || 0,
+      longestMin: t.longest ? Math.round(t.longest.paidMin) : 0, longestDate: t.longest ? t.longest.dateKey : null,
+      movies: Math.floor(t.hours / 2),
+    });
+    if (t.bestDay && t.bestDay.amount > 0 && t.shifts > 1) slides.push({ k: 'best', key: t.bestDay.key, amount: r2(t.bestDay.amount) });
+    const extras = (t.restPremium || 0) + (t.otPremium || 0) + (t.nightPremium || 0) + (t.evePremium || 0);
+    if (extras >= 1) slides.push({ k: 'extras', amount: r2(extras), restHours: r2(t.restHours || 0), otHours: r2(t.otHours || 0), travel: r2(t.travel || 0) });
+    else if ((t.travel || 0) >= 1) slides.push({ k: 'travel', amount: r2(t.travel) });
+    const roles = Object.entries(t.byRole || {}).filter(([, v]) => v.hours > 0).sort((a, b) => b[1].hours - a[1].hours);
+    if (roles.length > 1 && t.hours > 0) slides.push({ k: 'role', name: opts.roleName ? opts.roleName(roles[0][0]) : '', hours: r2(roles[0][1].hours), share: Math.round((roles[0][1].hours / t.hours) * 100) });
+    const style = clockStyle(t.startHours);
+    if (style) slides.push(Object.assign({ k: 'clock' }, style));
+    const money = opts.net > 0 ? opts.net : t.gross;
+    const items = funItems(money, opts.key || opts.label || '');
+    if (items.length) slides.push({ k: 'fun', money: r2(money), items });
+    slides.push({ k: 'outro', shifts: t.shifts, gross: r2(t.gross) });
+    return { key: opts.key || '', label: opts.label || '', slides };
+  }
+
+  root.Recap = { build, funItems, clockStyle, ITEMS };
 })(typeof window !== 'undefined' ? window : globalThis);
 
 /* ---- app/ui.js ---- */
@@ -7944,6 +8100,7 @@ window.FIREBASE_CONFIG = {
       ${birthdayCard()}
       ${paydayCard()}
       ${banners()}
+      ${App.recapCard ? App.recapCard() : ''}
       ${hero()}
       ${actionBlock()}
       ${App.guideCard ? App.guideCard() : ''}
@@ -8912,6 +9069,7 @@ window.FIREBASE_CONFIG = {
         ${t.bestDay ? `<div class="kv"><span>היום הרווחי ביותר</span><b>${U.fmtDate(t.bestDay.key, 'short')} · ${U.money(t.bestDay.amount, 0)}</b></div>` : ''}</div>
       ${st.type === 'year' ? yearExtras(t, r) : ''}
       </div>
+      ${st.type === 'month' && t.shifts > 0 && App.recap ? `<button class="btn recap-btn block" data-act="recap-open" data-pk="${Engine.periodOf(r.from, S.employers[0]).key}">✨ הסיכום של החודש כסיפור</button>` : ''}
       <div class="btn-row" style="margin-top:8px">
         <button class="btn tonal" data-act="rep-share-img">${icon('image')} תמונה</button>
         <button class="btn tonal" data-act="rep-pdf">${icon('printer')} PDF</button>
@@ -11340,16 +11498,17 @@ window.FIREBASE_CONFIG = {
 
   /* ---------------- what's new (once per big update, for people who already used the app) ---------------- */
   const WHATS_NEW = {
-    id: '1.8',
+    id: '1.9',
     items: [
-      ['game', 'pink', 'משחקים', 'שלושה משחקים קצרים על כסף, שכר וזכויות. אפשר לנסות לשבור שיא.'],
-      ['receipt', 'amber', 'אימות תלוש ברור יותר', 'ברוטו, ניכויים ונטו במבט אחד, ובדיקה שהמספרים מסתדרים.'],
-      ['clock', 'violet', 'גלגל שעות שלא נגמר', 'אחרי 23 מגיע 00. ובמשמרת חדשה: כפתורי משך מהירים.'],
-      ['chart', 'sky', 'גרפים חיים', 'העמודות צומחות והקווים נמתחים. לחיצה על עמודה מדגישה אותה.'],
-      ['star', 'orange', 'מדליות', 'ציוני דרך על 10, 25, 50 משמרות ועל סכומים שהרווחת.'],
-      ['refresh', 'mint', 'רענון חלק', 'משיכת המסך למטה עובדת חלק יותר בכל מצב.'],
+      ['sparkle', 'pink', 'הסיכום החודשי', 'בתחילת כל חודש: סיפור קצר על החודש שעבר, ותמונה לשיתוף.'],
+      ['star', 'amber', 'המדליות שלי', 'מדליות על משמרות, כסף, תלושים ומשחקים. נמצאות במסך המשחקים.'],
+      ['game', 'violet', 'משחקים', 'שלושה משחקים קצרים על כסף, שכר וזכויות.'],
+      ['receipt', 'orange', 'אימות תלוש ברור יותר', 'ברוטו, ניכויים ונטו במבט אחד, ובדיקה שהמספרים מסתדרים.'],
+      ['shield', 'mint', 'מוגן יותר', 'שכבת הגנה חדשה, וכפתור החזור סוגר רק את החלון העליון.'],
+      ['refresh', 'sky', 'רענון יציב', 'משיכת המסך למטה עובדת חלק גם כשמשהו מתעדכן ברקע.'],
     ],
   };
+
 
   App.whatsNew = function () {
     if (!S.settings.onboarded || S.settings.demo || S.meta.whatsNew === WHATS_NEW.id) return;
@@ -11720,6 +11879,66 @@ window.FIREBASE_CONFIG = {
   };
   const seed = () => (Date.now() ^ Math.floor(Math.random() * 1e9)) >>> 0;
 
+  /* ---------------- medals ----------------
+   * Earned from real work (shift counts, money, a Shabbat or night shift, a 4-week streak),
+   * from using the app well (a payslip check, the rights screen) and from the games.
+   * Worked out live from the data, so they are never out of date. */
+  function bestStreak(keys) {
+    const ws = S.settings.weekStart || 0;
+    const weeks = [...new Set(keys.map((k) => U.weekStart(k, ws)))].sort();
+    let best = 0, run = 0, prev = null;
+    for (const w of weeks) { run = prev && U.addDays(prev, 7) === w ? run + 1 : 1; best = Math.max(best, run); prev = w; }
+    return best;
+  }
+  function achievements() {
+    const done = [...App.model.results.values()].filter((r) => r.status === 'done');
+    const n = done.length;
+    const earned = done.reduce((s, r) => s + (r.total || 0), 0);
+    const streak = bestStreak(done.map((r) => r.dateKey));
+    const g = (id) => best(id);
+    const count = (cur, goal) => ({ cur: Math.min(cur, goal), goal });
+    const money = (v) => U.money(v, 0);
+    return [
+      ['first', '🥇', 'משמרת ראשונה', 'רושמים משמרת אחת', n >= 1, count(n, 1)],
+      ['s10', '🔟', '10 משמרות', 'עשר משמרות רשומות', n >= 10, count(n, 10)],
+      ['s25', '🎖️', '25 משמרות', 'עשרים וחמש משמרות רשומות', n >= 25, count(n, 25)],
+      ['s50', '🏅', '50 משמרות', 'חמישים משמרות רשומות', n >= 50, count(n, 50)],
+      ['s100', '💯', '100 משמרות', 'מאה משמרות רשומות', n >= 100, count(n, 100)],
+      ['s250', '👑', '250 משמרות', 'מאתיים וחמישים משמרות רשומות', n >= 250, count(n, 250)],
+      ['e1k', '💵', money(1000), 'הרווחת יותר מ-' + money(1000) + ' מאז שהתחלת לרשום', earned >= 1000, count(Math.round(earned), 1000)],
+      ['e5k', '💰', money(5000), 'הרווחת יותר מ-' + money(5000), earned >= 5000, count(Math.round(earned), 5000)],
+      ['e10k', '🤑', money(10000), 'הרווחת יותר מ-' + money(10000), earned >= 10000, count(Math.round(earned), 10000)],
+      ['e25k', '🏦', money(25000), 'הרווחת יותר מ-' + money(25000), earned >= 25000, count(Math.round(earned), 25000)],
+      ['streak', '🔥', '4 שבועות ברצף', 'לפחות משמרת אחת בכל שבוע, ארבעה שבועות רצופים', streak >= 4, count(streak, 4)],
+      ['shabbat', '🕯️', 'שבת או חג', 'משמרת שיש בה שעות שבת או חג (ושילמו עליהן תוספת?)', done.some((r) => r.restHours > 0)],
+      ['night', '🌙', 'משמרת לילה', 'משמרת שרובה בלילה', done.some((r) => r.isNightShift)],
+      ['slip', '🧾', 'בדיקת תלוש', 'בודקים תלוש שכר מול המשמרות', S.payslips.length > 0],
+      ['rights', '🛡️', 'הזכויות שלי', 'נכנסים למסך הזכויות ובודקים מה מגיע', !!S.meta.usedRights],
+      ['games', '🎮', 'כל המשחקים', 'משחקים בכל שלושת המשחקים', g('coins') > 0 && g('quiz') > 0 && g('facts') > 0],
+      ['coins', '🪙', 'תופסי כסף', 'אוספים ' + money(300) + ' ב"תופסים מטבעות"', g('coins') >= 300, count(g('coins'), 300)],
+      ['quiz', '🧠', 'אלופי חשבון', '150 נקודות ב"כמה זה יוצא?"', g('quiz') >= 150, count(g('quiz'), 150)],
+      ['facts', '⚖️', 'מומחי זכויות', '10 מתוך 10 ב"נכון או לא?"', g('facts') >= 10, count(g('facts'), 10)],
+    ].map(([id, emoji, title, how, on, prog]) => ({ id, emoji, title, how, on: !!on, prog }));
+  }
+  function medalsSheet() {
+    const list = achievements();
+    const got = list.filter((a) => a.on).length;
+    UI.openSheet({
+      title: 'המדליות שלי',
+      body: `<div class="ach-head"><b>${got} מתוך ${list.length}</b><div class="progress thin"><i style="width:${(got / list.length) * 100}%"></i></div></div>
+        <div class="ach-grid">${list.map((a, k) => `<button class="ach ${a.on ? 'on' : ''}" data-ach="${a.id}" style="--k:${k}">
+          <span class="ach-e" aria-hidden="true">${a.emoji}</span><b>${esc(a.title)}</b>
+          <small>${a.on ? 'הושג' : a.prog && a.prog.goal > 1 ? `${a.prog.cur.toLocaleString('he-IL')} מתוך ${a.prog.goal.toLocaleString('he-IL')}` : 'עוד לא'}</small></button>`).join('')}</div>`,
+      onMount: (el) => el.addEventListener('click', (e) => {
+        const b = e.target.closest('[data-ach]');
+        if (!b) return;
+        const a = list.find((x) => x.id === b.dataset.ach);
+        UI.toast((a.on ? '✓ ' : '🔒 ') + a.how);
+      }),
+    });
+  }
+  App.achievements = achievements;
+
   /* ---------------- the hub ---------------- */
   const cards = () => LIST.map((g) => `<button class="gm-card" data-game="${g.id}">${UI.tile(g.ic, g.tint)}
     <span class="gm-txt"><b>${g.t}</b><span>${g.s}</span></span>
@@ -11728,8 +11947,10 @@ window.FIREBASE_CONFIG = {
     UI.openSheet({
       title: 'משחקים',
       cls: 'games-sheet',
-      body: `${App.mascotSays ? App.mascotSays('party', 'הפסקה קטנה? כל משחק לוקח פחות מדקה.', { size: 64 }) : ''}<div class="gm-list">${cards()}</div>`,
+      body: `${App.mascotSays ? App.mascotSays('party', 'הפסקה קטנה? כל משחק לוקח פחות מדקה.', { size: 64 }) : ''}<div class="gm-list">${cards()}</div>
+        <button class="ach-card" data-medals>${(() => { const l = achievements(); const got = l.filter((a) => a.on).length; return `<span class="ach-card-e" aria-hidden="true">🏅</span><span class="gm-txt"><b>המדליות שלי</b><span>${got} מתוך ${l.length} · על משמרות, כסף, תלושים ומשחקים</span></span>${icon('left', 's')}`; })()}</button>`,
       onMount: (el) => {
+        el.querySelector('[data-medals]').onclick = medalsSheet;
         const list = el.querySelector('.gm-list');
         list.addEventListener('click', (e) => {
           const b = e.target.closest('[data-game]');
@@ -12140,6 +12361,243 @@ window.FIREBASE_CONFIG = {
   }
 
   App.games = { LIST, best };
+})(typeof window !== 'undefined' ? window : globalThis);
+
+/* ---- app/views-recap.js ---- */
+/* ============================================================
+ * views-recap.js — "הסיכום החודשי": last month at work as a short
+ * story of full-screen cards (earned, hours, best day, extras, a fun
+ * comparison), like the stories people know from social apps.
+ *
+ * Tap the left side (or swipe left) for the next card, the right side
+ * for the previous one, hold to pause; the Android back button and
+ * Escape close it. Each card waits ~5s, then moves on by itself
+ * (not with reduced motion: then it waits for a tap). The last card
+ * can share an image of the month. Content: core/recap.js.
+ * A card on the home screen offers it during the first two weeks of
+ * a new pay period; reports offer it for any month with work.
+ * ============================================================ */
+(function (root) {
+  'use strict';
+  const { U, Engine, Store, UI, App, Recap } = root;
+  const S = Store.S;
+  const { icon, esc } = UI;
+  const Fx = () => root.Fx;
+  const money0 = (v) => U.money(v, 0);
+  const DUR = 5200;
+  const BG = ['grad-a', 'grad-b', 'grad-c', 'grad-d', 'grad-e'];
+  const reduced = () => root.matchMedia && root.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+  function dataFor(pk) {
+    const emp = S.employers[0];
+    const t = Engine.periodSummary(App.model, pk, emp.id);
+    const ppk = U.addMonthKey(pk, -1);
+    const prev = Engine.periodSummary(App.model, ppk, emp.id);
+    return Recap.build(t, prev, {
+      key: pk, label: monthName(pk), prevLabel: monthName(ppk), net: t.net && t.net.net,
+      roleName: (id) => App.roleName(id),
+    });
+  }
+  function monthName(pk) { return U.HEB_MONTHS[+pk.slice(5, 7) - 1]; }
+  const lastPeriodKey = () => U.addMonthKey(Engine.periodOf(U.todayKey(), S.employers[0]).key, -1);
+
+  /* ---------------- the cards ---------------- */
+  const num = (to, kind) => `<div class="st-num" data-to="${to}" data-kind="${kind || 'money'}">${kind === 'hours' ? U.num(to, 1) : money0(to)}</div>`;
+  const day = (k) => `${U.HEB_DAYS[U.dow(k)]}, ${+k.slice(8)}.${+k.slice(5, 7)}`;
+  const CARD = {
+    intro: (s) => `${App.mascot ? App.mascot('wave', { size: 120, cls: 'st-m' }) : ''}<div class="st-k">הסיכום החודשי שלך</div><div class="st-big">${esc(s.label)}</div>
+      <div class="st-sub">${S.settings.userName ? esc(String(S.settings.userName).split(' ')[0]) + ', ' : ''}בואו נראה איך היה החודש בעבודה</div>`,
+    earned: (s) => `<div class="st-emoji">💰</div><div class="st-k">הרווחת החודש</div>${num(s.gross)}
+      ${s.net ? `<div class="st-sub">בערך ${money0(s.net)} נטו</div>` : ''}
+      ${s.delta != null && s.delta !== 0 ? `<div class="st-pill ${s.delta > 0 ? 'up' : 'down'}">${s.delta > 0 ? '▲' : '▼'} ${Math.abs(s.delta)}% לעומת ${esc(s.prevLabel)}</div>` : ''}`,
+    time: (s) => `<div class="st-emoji">⏱️</div><div class="st-k">עבדת</div>${num(s.hours, 'hours')}<div class="st-unit">שעות</div>
+      <div class="st-sub">ב-${s.shifts} ${s.shifts === 1 ? 'משמרת' : 'משמרות'}${s.longestDate && s.shifts > 1 ? ` · הארוכה ביותר: ${U.hm(s.longestMin)} ש׳ (${day(s.longestDate)})` : ''}</div>
+      ${s.movies >= 1 ? `<div class="st-fun">🎬 זה כמו ${s.movies} ${s.movies === 1 ? 'סרט' : 'סרטים'} ברצף</div>` : ''}`,
+    best: (s) => `<div class="st-emoji">🏆</div><div class="st-k">היום הכי רווחי</div><div class="st-big">${day(s.key)}</div>${num(s.amount)}`,
+    extras: (s) => `<div class="st-emoji">⭐</div><div class="st-k">תוספות שהרווחת</div>${num(s.amount)}
+      <div class="st-sub">${[s.restHours > 0 ? `שבת וחג: ${U.num(s.restHours, 1)} ש׳` : '', s.otHours > 0 ? `שעות נוספות: ${U.num(s.otHours, 1)} ש׳` : ''].filter(Boolean).join(' · ')}</div>
+      ${s.travel >= 1 ? `<div class="st-fun">🚌 ועוד ${money0(s.travel)} החזר נסיעות</div>` : ''}`,
+    travel: (s) => `<div class="st-emoji">🚌</div><div class="st-k">החזר נסיעות</div>${num(s.amount)}<div class="st-sub">בנוסף לשכר. לא לשכוח לבדוק שהוא בתלוש!</div>`,
+    role: (s) => `<div class="st-emoji">🎯</div><div class="st-k">התפקיד המוביל</div><div class="st-big">${esc(s.name)}</div><div class="st-sub">${U.num(s.hours, 1)} שעות · ${s.share}% מהזמן</div>`,
+    clock: (s) => {
+      const t = { night: ['🦉', 'ינשוף של ערב'], morning: ['🌅', 'משכימי קום'], day: ['☀️', 'צוות הצהריים'] }[s.type];
+      return `<div class="st-emoji">${t[0]}</div><div class="st-k">הסגנון שלך</div><div class="st-big">${t[1]}</div><div class="st-sub">בדרך כלל התחלת בסביבות ${String(s.avgHour).padStart(2, '0')}:00</div>`;
+    },
+    fun: (s) => `<div class="st-k">עם ${money0(s.money)} אפשר לקנות</div>
+      <div class="st-items">${s.items.map((i, n) => `<div class="st-item" style="--n:${n}"><span class="st-ie">${i.emoji}</span><b>${i.count}</b><span>${esc(i.name)}</span></div>`).join('<div class="st-or">או</div>')}</div>`,
+    outro: (s) => `${App.mascot ? App.mascot('party', { size: 120, cls: 'st-m' }) : ''}<div class="st-big">כל הכבוד!</div>
+      <div class="st-sub">${s.shifts} ${s.shifts === 1 ? 'משמרת' : 'משמרות'} ו-${money0(s.gross)} בחודש אחד. שיהיה חודש מעולה גם הבא 💪</div>
+      <div class="st-acts"><button class="btn st-share" data-st-share>${icon('share')} שיתוף תמונה</button><button class="btn tonal" data-st-close>סגירה</button></div>`,
+  };
+
+  /* ---------------- the viewer ---------------- */
+  function open(pk) {
+    const data = dataFor(pk);
+    if (!data) { UI.toast('אין משמרות בחודש הזה'); return; }
+    if (document.querySelector('.story')) return;
+    const n = data.slides.length;
+    const el = document.createElement('div');
+    el.className = 'story';
+    el.setAttribute('role', 'dialog');
+    el.setAttribute('aria-modal', 'true');
+    el.setAttribute('aria-label', 'הסיכום של ' + data.label);
+    el.innerHTML = `<div class="st-bars">${data.slides.map(() => '<i><b></b></i>').join('')}</div>
+      <button class="st-x icon-btn" data-st-close aria-label="סגירה">${icon('x')}</button>
+      <div class="st-card" aria-live="polite"></div>
+      <div class="st-hint" aria-hidden="true">${icon('left', 's')} הקשה למעבר</div>`;
+    document.body.appendChild(el);
+    requestAnimationFrame(() => el.classList.add('in'));
+    let i = -1, closed = false, raf = 0, holdT = 0, held = false;
+    const layer = UI.pushLayer(() => close(true));
+    const card = el.querySelector('.st-card');
+    const bars = [...el.querySelectorAll('.st-bars b')];
+
+    function countUp() {
+      cancelAnimationFrame(raf);
+      const nums = [...card.querySelectorAll('.st-num')];
+      if (!nums.length || reduced()) return;
+      const t0 = performance.now();
+      const fmt = (el2, v) => { el2.textContent = el2.dataset.kind === 'hours' ? U.num(v, 1) : money0(v); };
+      const tick = (now) => {
+        const p = Math.min(1, (now - t0) / 900);
+        const e = 1 - Math.pow(1 - p, 3);
+        nums.forEach((x) => fmt(x, +x.dataset.to * e));
+        if (p < 1) raf = requestAnimationFrame(tick);
+      };
+      raf = requestAnimationFrame(tick);
+    }
+    function show(k) {
+      if (closed || k < 0 || k >= n || k === i) return;
+      const dir = k > i ? 'fwd' : 'back';
+      i = k;
+      const s = data.slides[i];
+      el.dataset.bg = BG[i % BG.length];
+      card.className = 'st-card ' + dir;
+      card.innerHTML = CARD[s.k](s);
+      void card.offsetWidth;
+      card.classList.add('on');
+      bars.forEach((b, j) => { b.className = j < i ? 'done' : j === i ? 'now' : ''; b.style.animationDuration = DUR + 'ms'; });
+      el.classList.toggle('last', i === n - 1);
+      countUp();
+      if (Fx()) Fx().play(i === n - 1 ? 'success' : 'tick');
+      if (i === n - 1 && Fx()) Fx().celebrate('big');
+    }
+    const next = () => { if (i < n - 1) show(i + 1); };
+    const prev = () => { if (i > 0) show(i - 1); };
+    // the bar of the current card finishing moves on by itself
+    el.querySelector('.st-bars').addEventListener('animationend', (e) => { if (e.target === bars[i] && i < n - 1) next(); });
+
+    function close(fromBack) {
+      if (closed) return;
+      closed = true;
+      cancelAnimationFrame(raf);
+      document.removeEventListener('keydown', onKey);
+      el.classList.remove('in');
+      el.classList.add('out');
+      setTimeout(() => el.remove(), 260);
+      if (!fromBack) UI.closeLayer(layer);
+    }
+    const onKey = (e) => {
+      if (e.key === 'Escape') close();
+      else if (e.key === 'ArrowLeft' || e.key === ' ') { e.preventDefault(); next(); } // right to left: left is forward
+      else if (e.key === 'ArrowRight') { e.preventDefault(); prev(); }
+    };
+    document.addEventListener('keydown', onKey);
+
+    // hold to pause; a tap on the left goes forward, on the right goes back; swipe the same way
+    let x0 = 0, y0 = 0;
+    el.addEventListener('pointerdown', (e) => {
+      if (e.target.closest('button')) return;
+      x0 = e.clientX; y0 = e.clientY; held = false;
+      clearTimeout(holdT);
+      holdT = setTimeout(() => { held = true; el.classList.add('paused'); }, 220);
+    });
+    el.addEventListener('pointercancel', () => { clearTimeout(holdT); el.classList.remove('paused'); });
+    el.addEventListener('pointerup', (e) => {
+      clearTimeout(holdT);
+      el.classList.remove('paused');
+      if (e.target.closest('button')) return;
+      if (held) { held = false; return; } // it was a hold: just carry on
+      const dx = e.clientX - x0, dy = e.clientY - y0;
+      if (dy > 90 && dy > Math.abs(dx)) { close(); return; } // swipe down closes
+      if (Math.abs(dx) > 40) { if (dx < 0) next(); else prev(); return; }
+      if (e.clientX > innerWidth * 0.66) prev(); else next();
+    });
+    el.addEventListener('click', (e) => {
+      const b = e.target.closest('button');
+      if (!b) return;
+      if (b.hasAttribute('data-st-close')) close();
+      else if (b.hasAttribute('data-st-share')) shareImage(data);
+    });
+    show(0);
+    return { el, close };
+  }
+
+  /* ---------------- the share image ---------------- */
+  async function shareImage(data) {
+    try {
+      if (document.fonts && document.fonts.ready) await document.fonts.ready;
+      const W = 1080, H = 1350;
+      const c = document.createElement('canvas');
+      c.width = W; c.height = H;
+      const g = c.getContext('2d');
+      const grd = g.createLinearGradient(0, 0, W, H);
+      grd.addColorStop(0, '#5b21b6'); grd.addColorStop(0.55, '#7c3aed'); grd.addColorStop(1, '#db2777');
+      g.fillStyle = grd; g.fillRect(0, 0, W, H);
+      g.fillStyle = 'rgba(255,255,255,.08)';
+      g.beginPath(); g.arc(W * 0.85, H * 0.12, 260, 0, Math.PI * 2); g.fill();
+      g.beginPath(); g.arc(W * 0.1, H * 0.92, 320, 0, Math.PI * 2); g.fill();
+      g.direction = 'rtl'; g.textAlign = 'center'; g.fillStyle = '#fff';
+      const F = (w, px) => `${w} ${px}px Fredoka, Rubik, "Segoe UI", Arial, sans-serif`;
+      const s = Object.fromEntries(data.slides.map((x) => [x.k, x]));
+      g.font = F(600, 52); g.globalAlpha = 0.85; g.fillText('הסיכום החודשי שלי', W / 2, 190); g.globalAlpha = 1;
+      g.font = F(700, 96); g.fillText(data.label, W / 2, 310);
+      g.font = F(700, 190); g.fillText(money0(s.earned.gross), W / 2, 560);
+      g.font = F(500, 50); g.globalAlpha = 0.9; g.fillText('ברוטו', W / 2, 640); g.globalAlpha = 1;
+      const rows = [`⏱️ ${U.num(s.time.hours, 1)} שעות ב-${s.time.shifts} משמרות`];
+      if (s.best) rows.push(`🏆 היום הכי רווחי: ${money0(s.best.amount)}`);
+      if (s.extras) rows.push(`⭐ תוספות: ${money0(s.extras.amount)}`);
+      if (s.fun && s.fun.items[0]) rows.push(`${s.fun.items[0].emoji} שווה ל-${s.fun.items[0].count} ${s.fun.items[0].name}`);
+      g.font = F(600, 54);
+      rows.forEach((t, k) => {
+        const y = 800 + k * 110;
+        g.fillStyle = 'rgba(255,255,255,.14)';
+        const rw = 880, rh = 88, rx = (W - rw) / 2;
+        g.beginPath(); g.roundRect ? g.roundRect(rx, y - 62, rw, rh, 44) : g.rect(rx, y - 62, rw, rh); g.fill();
+        g.fillStyle = '#fff'; g.fillText(t, W / 2, y);
+      });
+      g.font = F(600, 44); g.globalAlpha = 0.8; g.fillText('Shaati · שעתי', W / 2, H - 80); g.globalAlpha = 1;
+      const blob = await new Promise((r) => c.toBlob(r, 'image/png'));
+      if (!blob) throw new Error('no image');
+      await UI.shareFile(`shaati-${data.key}.png`, blob, 'הסיכום החודשי שלי');
+    } catch (e) {
+      console.warn('recap image', e);
+      UI.toast('לא הצלחנו ליצור תמונה');
+    }
+  }
+
+  /* ---------------- where it is offered ---------------- */
+  /** The home card: during the first two weeks of a new pay period, until it is opened. */
+  App.recapCard = function () {
+    const today = U.todayKey();
+    const P = Engine.periodOf(today, S.employers[0]);
+    if (U.diffDays(P.from, today) > 13) return '';
+    const pk = lastPeriodKey();
+    if (S.meta.recapSeen === pk) return '';
+    const sum = Engine.periodSummary(App.model, pk, S.employers[0].id);
+    if (!(sum.shifts > 0)) return '';
+    return `<button class="recap-card" data-act="recap-open" data-pk="${pk}"><span class="rc-spark" aria-hidden="true">✨</span>
+      <span class="rc-t"><b>הסיכום של ${monthName(pk)} מוכן</b><span>${sum.shifts} משמרות · ${money0(sum.gross)}. בואו לראות</span></span>${icon('left', 's')}</button>`;
+  };
+  App.actions['recap-open'] = (el) => {
+    const pk = (el && el.dataset && el.dataset.pk) || lastPeriodKey();
+    if (pk === lastPeriodKey() && S.meta.recapSeen !== pk) {
+      Store.setMeta({ recapSeen: pk }).catch(() => {});
+      setTimeout(() => App.rerender(), 400);
+    }
+    open(pk);
+  };
+  App.recap = { open, dataFor, shareImage };
 })(typeof window !== 'undefined' ? window : globalThis);
 
 /* ---- app/views-admin.js ---- */

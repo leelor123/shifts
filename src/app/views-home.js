@@ -190,6 +190,7 @@
       ${birthdayCard()}
       ${paydayCard()}
       ${banners()}
+      ${App.recapCard ? App.recapCard() : ''}
       ${hero()}
       ${actionBlock()}
       ${App.guideCard ? App.guideCard() : ''}

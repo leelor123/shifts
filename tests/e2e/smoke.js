@@ -381,6 +381,25 @@ let errors = [];
     if (await ev(() => !!document.querySelector('.vf-sheet'))) throw new Error('still on the check');
     await closeAll();
   });
+  await step('monthly recap: a story of last month that the back button closes', async () => {
+    const pk = await ev(() => U.addMonthKey(Engine.periodOf(U.todayKey(), Store.S.employers[0]).key, -1));
+    const has = await ev((pk) => !!App.recap.dataFor(pk), pk);
+    if (!has) return; // no work last month in this test's data: nothing to show
+    await ev((pk) => App.recap.open(pk), pk); await sleep(600);
+    const n = await ev(() => document.querySelectorAll('.story .st-bars i').length);
+    if (n < 4) throw new Error('cards: ' + n);
+    const txt = await ev(() => document.querySelector('.story').innerText);
+    if (/NaN|undefined|Infinity/.test(txt)) throw new Error('broken text');
+    await ev(() => history.back()); await sleep(500);
+    if (await ev(() => !!document.querySelector('.story') || UI.sheets.length > 0)) throw new Error('still open after back');
+  });
+  await step('medals: the collection opens and explains each one', async () => {
+    await ev(() => App.actions.games()); await sleep(600);
+    await ev(() => document.querySelector('[data-medals]').click()); await sleep(700);
+    const n = await ev(() => document.querySelectorAll('.ach').length);
+    if (n !== (await ev(() => App.achievements().length))) throw new Error('medals: ' + n);
+    await closeAll();
+  });
   await step('anonymous stats: record has only the allowed fields', async () => {
     const r = await ev(() => Stats._record());
     const keys = Object.keys(r).sort().join(',');

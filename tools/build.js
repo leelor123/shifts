@@ -7,15 +7,16 @@ const crypto = require('crypto');
 
 const ROOT = path.join(__dirname, '..');
 const SRC = path.join(ROOT, 'src');
-const DIST = path.join(ROOT, 'docs'); // GitHub Pages serves this folder
+// GitHub Pages serves docs/; OUT=<dir> builds somewhere else (so tests running on docs/ aren't disturbed)
+const DIST = process.env.OUT ? path.resolve(process.env.OUT) : path.join(ROOT, 'docs');
 const pkg = JSON.parse(fs.readFileSync(path.join(ROOT, 'package.json'), 'utf8'));
 
 const JS_ORDER = [
-  'core/util.js', 'core/hebcal.js', 'core/defaults.js', 'core/engine.js', 'core/insights.js', 'core/payslip.js', 'core/games.js',
+  'core/util.js', 'core/hebcal.js', 'core/defaults.js', 'core/engine.js', 'core/insights.js', 'core/payslip.js', 'core/games.js', 'core/recap.js',
   'app/ui.js', 'app/pickers.js', 'app/fx.js', 'app/intro.js', 'app/store.js', 'app/charts.js', 'app/app.js', 'app/mascot.js', 'app/firebase-config.js', 'app/cloud.js', 'app/stats.js', 'app/views-login.js',
   'app/views-home.js', 'app/views-shift.js', 'app/views-calendar.js', 'app/views-reports.js',
   'app/views-payslip.js', 'app/views-insights.js', 'app/export.js', 'app/views-settings.js', 'app/views-onboarding.js',
-  'app/views-assistant.js', 'app/views-rights.js', 'app/views-guide.js', 'app/views-support.js', 'app/views-games.js', 'app/views-admin.js', 'app/views-legal.js', 'app/ptr.js',
+  'app/views-assistant.js', 'app/views-rights.js', 'app/views-guide.js', 'app/views-support.js', 'app/views-games.js', 'app/views-recap.js', 'app/views-admin.js', 'app/views-legal.js', 'app/ptr.js',
 ];
 const read = (p) => fs.readFileSync(path.join(SRC, p), 'utf8');
 const js = JS_ORDER.map((f) => `/* ---- ${f} ---- */\n${read(f)}`).join('\n');

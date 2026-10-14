@@ -41,6 +41,66 @@
   };
   const seed = () => (Date.now() ^ Math.floor(Math.random() * 1e9)) >>> 0;
 
+  /* ---------------- medals ----------------
+   * Earned from real work (shift counts, money, a Shabbat or night shift, a 4-week streak),
+   * from using the app well (a payslip check, the rights screen) and from the games.
+   * Worked out live from the data, so they are never out of date. */
+  function bestStreak(keys) {
+    const ws = S.settings.weekStart || 0;
+    const weeks = [...new Set(keys.map((k) => U.weekStart(k, ws)))].sort();
+    let best = 0, run = 0, prev = null;
+    for (const w of weeks) { run = prev && U.addDays(prev, 7) === w ? run + 1 : 1; best = Math.max(best, run); prev = w; }
+    return best;
+  }
+  function achievements() {
+    const done = [...App.model.results.values()].filter((r) => r.status === 'done');
+    const n = done.length;
+    const earned = done.reduce((s, r) => s + (r.total || 0), 0);
+    const streak = bestStreak(done.map((r) => r.dateKey));
+    const g = (id) => best(id);
+    const count = (cur, goal) => ({ cur: Math.min(cur, goal), goal });
+    const money = (v) => U.money(v, 0);
+    return [
+      ['first', '🥇', 'משמרת ראשונה', 'רושמים משמרת אחת', n >= 1, count(n, 1)],
+      ['s10', '🔟', '10 משמרות', 'עשר משמרות רשומות', n >= 10, count(n, 10)],
+      ['s25', '🎖️', '25 משמרות', 'עשרים וחמש משמרות רשומות', n >= 25, count(n, 25)],
+      ['s50', '🏅', '50 משמרות', 'חמישים משמרות רשומות', n >= 50, count(n, 50)],
+      ['s100', '💯', '100 משמרות', 'מאה משמרות רשומות', n >= 100, count(n, 100)],
+      ['s250', '👑', '250 משמרות', 'מאתיים וחמישים משמרות רשומות', n >= 250, count(n, 250)],
+      ['e1k', '💵', money(1000), 'הרווחת יותר מ-' + money(1000) + ' מאז שהתחלת לרשום', earned >= 1000, count(Math.round(earned), 1000)],
+      ['e5k', '💰', money(5000), 'הרווחת יותר מ-' + money(5000), earned >= 5000, count(Math.round(earned), 5000)],
+      ['e10k', '🤑', money(10000), 'הרווחת יותר מ-' + money(10000), earned >= 10000, count(Math.round(earned), 10000)],
+      ['e25k', '🏦', money(25000), 'הרווחת יותר מ-' + money(25000), earned >= 25000, count(Math.round(earned), 25000)],
+      ['streak', '🔥', '4 שבועות ברצף', 'לפחות משמרת אחת בכל שבוע, ארבעה שבועות רצופים', streak >= 4, count(streak, 4)],
+      ['shabbat', '🕯️', 'שבת או חג', 'משמרת שיש בה שעות שבת או חג (ושילמו עליהן תוספת?)', done.some((r) => r.restHours > 0)],
+      ['night', '🌙', 'משמרת לילה', 'משמרת שרובה בלילה', done.some((r) => r.isNightShift)],
+      ['slip', '🧾', 'בדיקת תלוש', 'בודקים תלוש שכר מול המשמרות', S.payslips.length > 0],
+      ['rights', '🛡️', 'הזכויות שלי', 'נכנסים למסך הזכויות ובודקים מה מגיע', !!S.meta.usedRights],
+      ['games', '🎮', 'כל המשחקים', 'משחקים בכל שלושת המשחקים', g('coins') > 0 && g('quiz') > 0 && g('facts') > 0],
+      ['coins', '🪙', 'תופסי כסף', 'אוספים ' + money(300) + ' ב"תופסים מטבעות"', g('coins') >= 300, count(g('coins'), 300)],
+      ['quiz', '🧠', 'אלופי חשבון', '150 נקודות ב"כמה זה יוצא?"', g('quiz') >= 150, count(g('quiz'), 150)],
+      ['facts', '⚖️', 'מומחי זכויות', '10 מתוך 10 ב"נכון או לא?"', g('facts') >= 10, count(g('facts'), 10)],
+    ].map(([id, emoji, title, how, on, prog]) => ({ id, emoji, title, how, on: !!on, prog }));
+  }
+  function medalsSheet() {
+    const list = achievements();
+    const got = list.filter((a) => a.on).length;
+    UI.openSheet({
+      title: 'המדליות שלי',
+      body: `<div class="ach-head"><b>${got} מתוך ${list.length}</b><div class="progress thin"><i style="width:${(got / list.length) * 100}%"></i></div></div>
+        <div class="ach-grid">${list.map((a, k) => `<button class="ach ${a.on ? 'on' : ''}" data-ach="${a.id}" style="--k:${k}">
+          <span class="ach-e" aria-hidden="true">${a.emoji}</span><b>${esc(a.title)}</b>
+          <small>${a.on ? 'הושג' : a.prog && a.prog.goal > 1 ? `${a.prog.cur.toLocaleString('he-IL')} מתוך ${a.prog.goal.toLocaleString('he-IL')}` : 'עוד לא'}</small></button>`).join('')}</div>`,
+      onMount: (el) => el.addEventListener('click', (e) => {
+        const b = e.target.closest('[data-ach]');
+        if (!b) return;
+        const a = list.find((x) => x.id === b.dataset.ach);
+        UI.toast((a.on ? '✓ ' : '🔒 ') + a.how);
+      }),
+    });
+  }
+  App.achievements = achievements;
+
   /* ---------------- the hub ---------------- */
   const cards = () => LIST.map((g) => `<button class="gm-card" data-game="${g.id}">${UI.tile(g.ic, g.tint)}
     <span class="gm-txt"><b>${g.t}</b><span>${g.s}</span></span>
@@ -49,8 +109,10 @@
     UI.openSheet({
       title: 'משחקים',
       cls: 'games-sheet',
-      body: `${App.mascotSays ? App.mascotSays('party', 'הפסקה קטנה? כל משחק לוקח פחות מדקה.', { size: 64 }) : ''}<div class="gm-list">${cards()}</div>`,
+      body: `${App.mascotSays ? App.mascotSays('party', 'הפסקה קטנה? כל משחק לוקח פחות מדקה.', { size: 64 }) : ''}<div class="gm-list">${cards()}</div>
+        <button class="ach-card" data-medals>${(() => { const l = achievements(); const got = l.filter((a) => a.on).length; return `<span class="ach-card-e" aria-hidden="true">🏅</span><span class="gm-txt"><b>המדליות שלי</b><span>${got} מתוך ${l.length} · על משמרות, כסף, תלושים ומשחקים</span></span>${icon('left', 's')}`; })()}</button>`,
       onMount: (el) => {
+        el.querySelector('[data-medals]').onclick = medalsSheet;
         const list = el.querySelector('.gm-list');
         list.addEventListener('click', (e) => {
           const b = e.target.closest('[data-game]');

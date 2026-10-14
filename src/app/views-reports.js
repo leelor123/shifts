@@ -195,6 +195,7 @@
         ${t.bestDay ? `<div class="kv"><span>היום הרווחי ביותר</span><b>${U.fmtDate(t.bestDay.key, 'short')} · ${U.money(t.bestDay.amount, 0)}</b></div>` : ''}</div>
       ${st.type === 'year' ? yearExtras(t, r) : ''}
       </div>
+      ${st.type === 'month' && t.shifts > 0 && App.recap ? `<button class="btn recap-btn block" data-act="recap-open" data-pk="${Engine.periodOf(r.from, S.employers[0]).key}">✨ הסיכום של החודש כסיפור</button>` : ''}
       <div class="btn-row" style="margin-top:8px">
         <button class="btn tonal" data-act="rep-share-img">${icon('image')} תמונה</button>
         <button class="btn tonal" data-act="rep-pdf">${icon('printer')} PDF</button>
