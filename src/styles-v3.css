@@ -487,7 +487,6 @@ body:has(.sheet.show) .toast, body:has(.wizard) .toast { bottom: auto; top: calc
 body:has(.sheet.show) .toast.show, body:has(.wizard) .toast.show { transform: none; }
 /* pull to refresh: our own only (no browser reload, no Android stretch on top of it), and a springy settle */
 html, body { overscroll-behavior-y: none; }
-body.pulling .aurora i, body.pulling .hh-dial::before, body.pulling .home-action .btn.start::after, body.pulling .mascot * { animation-play-state: paused; }
 .ptr.settle { transition: transform .42s cubic-bezier(.22, 1.3, .36, 1), opacity .3s ease; }
 .ptr.armed .ptr-disc, .ptr.spin .ptr-disc { background: var(--brand-strong); }
 @media (prefers-reduced-motion: reduce) { .mascot *, .ob-bg i, .coach-hole { animation: none !important; } }
@@ -532,6 +531,9 @@ body.fx .chart[data-anim].in .bar, body.fx .chart[data-anim].in .ln, body.fx .ch
 @keyframes medal-out { to { opacity: 0; transform: translateY(-120%); } }
 @keyframes medal-swing { 25% { transform: rotate(14deg); } 75% { transform: rotate(-10deg); } }
 @media (prefers-reduced-motion: reduce) { .medal-pop, .medal-pop .medal-ic, .medal-pop.out { animation: none; } }
+
+/* looping decorations carry on across redraws (App.phase in app.js) */
+.aurora i:nth-child(n), .hh-dial::before, .home-action .btn.start::after, .recap-card::after, .rc-spark, .pulse { animation-delay: var(--ph, 0ms); }
 
 /* ---------- settings search ---------- */
 .set-search { position: relative; display: block; margin: 4px 0 10px; }

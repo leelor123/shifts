@@ -71,7 +71,6 @@
       settleTimer = setTimeout(() => {
         ind.classList.remove('settle');
         if (v) { v.style.transition = ''; if (!d) { v.style.willChange = ''; v.style.transform = ''; } }
-        if (!d && !pulling) document.body.classList.remove('pulling');
         r();
       }, ms + 20);
     });
@@ -115,7 +114,6 @@
       if (root.scrollY > 0 || dy < -SLOP || (Math.abs(dx) > SLOP && Math.abs(dx) > Math.abs(dy))) { y0 = null; return; }
       if (dy < SLOP) return;
       pulling = true;
-      document.body.classList.add('pulling'); // the decorative motion pauses so every frame goes to the pull
       clearTimeout(settleTimer);
       const v = view();
       if (v) { v.style.transition = ''; v.style.willChange = 'transform'; }

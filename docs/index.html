@@ -2,7 +2,7 @@
 <html lang="he" dir="rtl">
 <head>
 <meta charset="utf-8">
-<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'sha256-avgrw9mnWA9+jfdqtHa9K0CYpZFVpqHIOoURRgpuamA=' https://www.gstatic.com https://apis.google.com https://cdnjs.cloudflare.com https://cdn.jsdelivr.net 'wasm-unsafe-eval'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com data:; img-src 'self' data: blob: https:; connect-src 'self' https: wss:; frame-src https://shiftpay-70ab6.firebaseapp.com https://accounts.google.com https://apis.google.com https://*.google.com; worker-src 'self' blob: https://cdnjs.cloudflare.com https://cdn.jsdelivr.net; media-src 'self' data: blob:; manifest-src 'self'; object-src 'none'; base-uri 'self'; form-action 'self'">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'sha256-+cwfVmQUIHRFEwnik9UsYU9ZZ7OUmZ/4TdRGRIihneI=' https://www.gstatic.com https://apis.google.com https://cdnjs.cloudflare.com https://cdn.jsdelivr.net 'wasm-unsafe-eval'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com data:; img-src 'self' data: blob: https:; connect-src 'self' https: wss:; frame-src https://shiftpay-70ab6.firebaseapp.com https://accounts.google.com https://apis.google.com https://*.google.com; worker-src 'self' blob: https://cdnjs.cloudflare.com https://cdn.jsdelivr.net; media-src 'self' data: blob:; manifest-src 'self'; object-src 'none'; base-uri 'self'; form-action 'self'">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="theme-color" content="#0d2b6b">
 <meta name="description" content="מעקב משמרות וחישוב שכר אישי: שבתות, חגים, שעות נוספות, נסיעות, נטו משוער וניתוח תלושים — נשמר בחשבון שלך ועובד גם בלי אינטרנט.">
@@ -1375,7 +1375,6 @@ body:has(.sheet.show) .toast, body:has(.wizard) .toast { bottom: auto; top: calc
 body:has(.sheet.show) .toast.show, body:has(.wizard) .toast.show { transform: none; }
 /* pull to refresh: our own only (no browser reload, no Android stretch on top of it), and a springy settle */
 html, body { overscroll-behavior-y: none; }
-body.pulling .aurora i, body.pulling .hh-dial::before, body.pulling .home-action .btn.start::after, body.pulling .mascot * { animation-play-state: paused; }
 .ptr.settle { transition: transform .42s cubic-bezier(.22, 1.3, .36, 1), opacity .3s ease; }
 .ptr.armed .ptr-disc, .ptr.spin .ptr-disc { background: var(--brand-strong); }
 @media (prefers-reduced-motion: reduce) { .mascot *, .ob-bg i, .coach-hole { animation: none !important; } }
@@ -1420,6 +1419,9 @@ body.fx .chart[data-anim].in .bar, body.fx .chart[data-anim].in .ln, body.fx .ch
 @keyframes medal-out { to { opacity: 0; transform: translateY(-120%); } }
 @keyframes medal-swing { 25% { transform: rotate(14deg); } 75% { transform: rotate(-10deg); } }
 @media (prefers-reduced-motion: reduce) { .medal-pop, .medal-pop .medal-ic, .medal-pop.out { animation: none; } }
+
+/* looping decorations carry on across redraws (App.phase in app.js) */
+.aurora i:nth-child(n), .hh-dial::before, .home-action .btn.start::after, .recap-card::after, .rc-spark, .pulse { animation-delay: var(--ph, 0ms); }
 
 /* ---------- settings search ---------- */
 .set-search { position: relative; display: block; margin: 4px 0 10px; }
@@ -1715,7 +1717,7 @@ body.fx .recap-card:active { transform: scale(.98); }
 <div id="print-root" aria-hidden="true"></div>
 <noscript><div style="padding:24px;font-family:sans-serif">האפליקציה דורשת JavaScript.</div></noscript>
 <script>
-window.APP_VERSION = '1.10.1';
+window.APP_VERSION = '1.10.2';
 /* ---- core/util.js ---- */
 /* ============================================================
  * util.js — date/time helpers and formatting.
@@ -4999,8 +5001,10 @@ window.APP_VERSION = '1.10.1';
     return new Promise((resolve) => {
       const el = document.createElement('div');
       el.className = 'dialog';
-      el.innerHTML = `<div class="backdrop show" style="z-index:-1"></div><div class="box" role="alertdialog" aria-modal="true"><h3>${esc(opts.title || '')}</h3><div>${opts.html || esc(opts.text || '')}</div><div class="actions">${(opts.buttons || []).map((b, i) => `<button class="btn ${b.cls || 'text'}" data-i="${i}">${esc(b.label)}</button>`).join('')}</div></div>`;
+      el.innerHTML = `<div class="backdrop" style="z-index:-1"></div><div class="box" role="alertdialog" aria-modal="true"><h3>${esc(opts.title || '')}</h3><div>${opts.html || esc(opts.text || '')}</div><div class="actions">${(opts.buttons || []).map((b, i) => `<button class="btn ${b.cls || 'text'}" data-i="${i}">${esc(b.label)}</button>`).join('')}</div></div>`;
       document.body.appendChild(el);
+      void el.offsetWidth; // fade the dimming in (not at once)
+      el.querySelector('.backdrop').classList.add('show');
       const layer = pushLayer(() => { el.remove(); resolve(null); });
       const done = (v) => { el.remove(); closeLayer(layer); resolve(v); };
       el._resolve = done; // tests close it this way
@@ -5144,13 +5148,16 @@ window.APP_VERSION = '1.10.1';
     return new Promise((resolve) => {
       const el = document.createElement('div');
       el.className = 'dialog pk';
-      el.innerHTML = `<div class="backdrop show" style="z-index:-1"></div>
+      el.innerHTML = `<div class="backdrop" style="z-index:-1"></div>
         <div class="pk-card" role="dialog" aria-modal="true" aria-label="${esc(title)}">
           <div class="pk-grab"></div>
           <div class="pk-head"><h2>${esc(title)}</h2><button class="icon-btn" data-pk-x aria-label="סגור">${icon('x')}</button></div>
           ${inner}
         </div>`;
       document.body.appendChild(el);
+      // the dimming fades in with the card instead of switching on at once (that looked like a flash)
+      void el.offsetWidth;
+      el.querySelector('.backdrop').classList.add('show');
       let done = false;
       const out = () => { el.classList.add('out'); setTimeout(() => el.remove(), 220); };
       // the back button closes the picker (only the picker)
@@ -5380,10 +5387,10 @@ window.APP_VERSION = '1.10.1';
         mark(w, get());
         drum(w);
       }
-      requestAnimationFrame(() => {
-        bind(wh, () => h, (i) => { h = i; });
-        bind(wm, () => m, (i) => { m = i; });
-      });
+      // set up right away (the sheet is already in the page), so the very first frame shows the right
+      // time; waiting for the next frame showed the wheels at 00 for an instant
+      bind(wh, () => h, (i) => { h = i; });
+      bind(wm, () => m, (i) => { m = i; });
       show();
       el.addEventListener('click', (e) => {
         const b = e.target.closest('button');
@@ -5546,7 +5553,18 @@ window.APP_VERSION = '1.10.1';
     d.style.height = r.height + 'px';
     d.style.borderRadius = getComputedStyle(el).borderRadius || '12px';
     document.body.appendChild(d);
-    setTimeout(() => d.remove(), 600);
+    // the ring is drawn above everything at the control's place; if the control moves (a sheet or a
+    // picker sliding away, a list redrawing) or disappears, the ring goes at once instead of being
+    // left floating over whatever comes next
+    const t0 = performance.now();
+    const follow = () => {
+      if (!d.isConnected) return;
+      const n = el.isConnected ? el.getBoundingClientRect() : null;
+      const leaving = el.closest && el.closest('.dialog.out, .sheet:not(.show), .story.out');
+      if (!n || leaving || Math.abs(n.left - r.left) > 1.5 || Math.abs(n.top - r.top) > 1.5 || !n.width) { d.remove(); return; }
+      if (performance.now() - t0 < 600) requestAnimationFrame(follow); else d.remove();
+    };
+    requestAnimationFrame(follow);
   };
 
   /* ---------------- particles: confetti and ₪ coins ---------------- */
@@ -6714,6 +6732,11 @@ window.APP_VERSION = '1.10.1';
     setTimeout(run, 700);
   };
   App.rerender = () => App.render({ keepScroll: true });
+  /* Looping decorations (the glow on the pay card, the dial, the shine on the start button) are
+   * redrawn with the screen after every save or sync. Each new copy gets an offset from one clock
+   * that started with the page, so it carries on exactly where the old copy was instead of
+   * starting over (which looked like a flicker). Use as style="${App.phase()}". */
+  App.phase = () => `--ph:-${Math.round(performance.now())}ms`;
   App.actions['render-retry'] = () => { App.recompute(); App.render(); };
 
   /* ---------------- milestones ----------------
@@ -8102,8 +8125,8 @@ window.FIREBASE_CONFIG = {
       const role = App.role(App.currentRole());
       const onBreak = App.onBreak();
       const others = App.roles(a.employerId).filter((r) => r.id !== App.currentRole());
-      return `<div class="card timer-card running"><span class="aurora" aria-hidden="true"><i></i><i></i><i></i></span>
-        <div class="tc-head"><span class="pulse"></span>${onBreak ? 'בהפסקה' : 'משמרת פעילה'}${role ? ' · ' + esc(role.name) : ''}<span class="spacer"></span><span class="tiny">מ-${U.epochHM(a.start)}</span></div>
+      return `<div class="card timer-card running"><span class="aurora" aria-hidden="true" style="${App.phase()}"><i></i><i></i><i></i></span>
+        <div class="tc-head"><span class="pulse" style="${App.phase()}"></span>${onBreak ? 'בהפסקה' : 'משמרת פעילה'}${role ? ' · ' + esc(role.name) : ''}<span class="spacer"></span><span class="tiny">מ-${U.epochHM(a.start)}</span></div>
         <div class="clock" data-clock="net">0:00:00</div>
         <div class="meta">עד עכשיו <b data-live-pay></b>${(a.breaks || []).length ? ' · הפסקות לא נספרות' : ''}</div>
         <div class="tc-actions">
@@ -8116,7 +8139,7 @@ window.FIREBASE_CONFIG = {
     const sel = S.meta.lastRole && App.role(S.meta.lastRole) ? S.meta.lastRole : roles[0] && roles[0].id;
     const role = App.role(sel);
     return `<div class="home-action">
-      <button class="btn big start" data-act="timer-start" data-role="${sel || ''}">${icon('play')} התחל משמרת</button>
+      <button class="btn big start" style="${App.phase()}" data-act="timer-start" data-role="${sel || ''}">${icon('play')} התחל משמרת</button>
       ${roles.length > 1 && role ? `<button class="role-chip" data-act="choose-role" aria-label="בחר תפקיד"><span class="sw" style="background:${role.color}"></span><span class="rc-n">${esc(role.name)}</span><span class="chev">${icon('left', 's')}</span></button>` : ''}
     </div>`;
   }
@@ -8152,7 +8175,7 @@ window.FIREBASE_CONFIG = {
     // the whole card opens the summary on a tap; keyboards and screen readers get a real button for it
     // (the card itself holds the "what is gross?" buttons, so it can't be one)
     return `<section class="home-hero" data-act="go-summary"><button class="vh" data-act="go-summary">פירוט ${periodName}</button>
-      <span class="aurora" aria-hidden="true"><i></i><i></i><i></i></span><span class="hh-dial" aria-hidden="true"></span>
+      <span class="aurora" aria-hidden="true" style="${App.phase()}"><i></i><i></i><i></i></span><span class="hh-dial" aria-hidden="true" style="${App.phase()}"></span>
       <div class="hh-label">${UI.term ? UI.term('gross', 'ברוטו') : 'ברוטו'} ${emp.periodStartDay > 1 ? 'בתקופת השכר' : 'ב' + periodName} עד עכשיו</div>
       <div class="hero-num">${money(sum.gross, 0)}</div>
       <div class="hh-stats"><span><b>${money(sum.net.net, 0)}</b><small>${UI.term ? UI.term('net', sum.net.minor ? 'נטו' : 'נטו משוער') : 'נטו'}</small></span><span><b class="num">${U.hm(sum.hours * 60)}</b><small>שעות</small></span><span><b>${sum.shifts}</b><small>${sum.shifts === 1 ? 'משמרת' : 'משמרות'}</small></span></div>
@@ -12840,7 +12863,7 @@ window.FIREBASE_CONFIG = {
     if (S.meta.recapSeen === pk) return '';
     const sum = Engine.periodSummary(App.model, pk, S.employers[0].id);
     if (!(sum.shifts > 0)) return '';
-    return `<button class="recap-card" data-act="recap-open" data-pk="${pk}"><span class="rc-spark" aria-hidden="true">✨</span>
+    return `<button class="recap-card" style="${App.phase()}" data-act="recap-open" data-pk="${pk}"><span class="rc-spark" aria-hidden="true">✨</span>
       <span class="rc-t"><b>הסיכום של ${monthName(pk)} מוכן</b><span>${sum.shifts} משמרות · ${money0(sum.gross)}. בואו לראות</span></span>${icon('left', 's')}</button>`;
   };
   App.actions['recap-open'] = (el) => {
@@ -13217,7 +13240,6 @@ window.FIREBASE_CONFIG = {
       settleTimer = setTimeout(() => {
         ind.classList.remove('settle');
         if (v) { v.style.transition = ''; if (!d) { v.style.willChange = ''; v.style.transform = ''; } }
-        if (!d && !pulling) document.body.classList.remove('pulling');
         r();
       }, ms + 20);
     });
@@ -13261,7 +13283,6 @@ window.FIREBASE_CONFIG = {
       if (root.scrollY > 0 || dy < -SLOP || (Math.abs(dx) > SLOP && Math.abs(dx) > Math.abs(dy))) { y0 = null; return; }
       if (dy < SLOP) return;
       pulling = true;
-      document.body.classList.add('pulling'); // the decorative motion pauses so every frame goes to the pull
       clearTimeout(settleTimer);
       const v = view();
       if (v) { v.style.transition = ''; v.style.willChange = 'transform'; }

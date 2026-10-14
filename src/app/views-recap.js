@@ -222,7 +222,7 @@
     if (S.meta.recapSeen === pk) return '';
     const sum = Engine.periodSummary(App.model, pk, S.employers[0].id);
     if (!(sum.shifts > 0)) return '';
-    return `<button class="recap-card" data-act="recap-open" data-pk="${pk}"><span class="rc-spark" aria-hidden="true">✨</span>
+    return `<button class="recap-card" style="${App.phase()}" data-act="recap-open" data-pk="${pk}"><span class="rc-spark" aria-hidden="true">✨</span>
       <span class="rc-t"><b>הסיכום של ${monthName(pk)} מוכן</b><span>${sum.shifts} משמרות · ${money0(sum.gross)}. בואו לראות</span></span>${icon('left', 's')}</button>`;
   };
   App.actions['recap-open'] = (el) => {

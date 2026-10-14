@@ -172,6 +172,11 @@
     setTimeout(run, 700);
   };
   App.rerender = () => App.render({ keepScroll: true });
+  /* Looping decorations (the glow on the pay card, the dial, the shine on the start button) are
+   * redrawn with the screen after every save or sync. Each new copy gets an offset from one clock
+   * that started with the page, so it carries on exactly where the old copy was instead of
+   * starting over (which looked like a flicker). Use as style="${App.phase()}". */
+  App.phase = () => `--ph:-${Math.round(performance.now())}ms`;
   App.actions['render-retry'] = () => { App.recompute(); App.render(); };
 
   /* ---------------- milestones ----------------

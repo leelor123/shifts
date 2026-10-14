@@ -41,13 +41,16 @@
     return new Promise((resolve) => {
       const el = document.createElement('div');
       el.className = 'dialog pk';
-      el.innerHTML = `<div class="backdrop show" style="z-index:-1"></div>
+      el.innerHTML = `<div class="backdrop" style="z-index:-1"></div>
         <div class="pk-card" role="dialog" aria-modal="true" aria-label="${esc(title)}">
           <div class="pk-grab"></div>
           <div class="pk-head"><h2>${esc(title)}</h2><button class="icon-btn" data-pk-x aria-label="סגור">${icon('x')}</button></div>
           ${inner}
         </div>`;
       document.body.appendChild(el);
+      // the dimming fades in with the card instead of switching on at once (that looked like a flash)
+      void el.offsetWidth;
+      el.querySelector('.backdrop').classList.add('show');
       let done = false;
       const out = () => { el.classList.add('out'); setTimeout(() => el.remove(), 220); };
       // the back button closes the picker (only the picker)
@@ -277,10 +280,10 @@
         mark(w, get());
         drum(w);
       }
-      requestAnimationFrame(() => {
-        bind(wh, () => h, (i) => { h = i; });
-        bind(wm, () => m, (i) => { m = i; });
-      });
+      // set up right away (the sheet is already in the page), so the very first frame shows the right
+      // time; waiting for the next frame showed the wheels at 00 for an instant
+      bind(wh, () => h, (i) => { h = i; });
+      bind(wm, () => m, (i) => { m = i; });
       show();
       el.addEventListener('click', (e) => {
         const b = e.target.closest('button');

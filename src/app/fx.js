@@ -89,7 +89,18 @@
     d.style.height = r.height + 'px';
     d.style.borderRadius = getComputedStyle(el).borderRadius || '12px';
     document.body.appendChild(d);
-    setTimeout(() => d.remove(), 600);
+    // the ring is drawn above everything at the control's place; if the control moves (a sheet or a
+    // picker sliding away, a list redrawing) or disappears, the ring goes at once instead of being
+    // left floating over whatever comes next
+    const t0 = performance.now();
+    const follow = () => {
+      if (!d.isConnected) return;
+      const n = el.isConnected ? el.getBoundingClientRect() : null;
+      const leaving = el.closest && el.closest('.dialog.out, .sheet:not(.show), .story.out');
+      if (!n || leaving || Math.abs(n.left - r.left) > 1.5 || Math.abs(n.top - r.top) > 1.5 || !n.width) { d.remove(); return; }
+      if (performance.now() - t0 < 600) requestAnimationFrame(follow); else d.remove();
+    };
+    requestAnimationFrame(follow);
   };
 
   /* ---------------- particles: confetti and ₪ coins ---------------- */

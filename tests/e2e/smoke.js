@@ -439,6 +439,25 @@ let errors = [];
     if (c.split(',').length < 18) throw new Error('clear: ' + c);
     await ev(() => App.go('home'));
   });
+  await step('no flicker: the time wheel, the dimming and the tap ring', async () => {
+    await closeAll(); await ev(() => App.go('home')); await sleep(300);
+    // the wheel is in place from the first frame, and the dimming fades in
+    const first = await ev(() => { UI.pickTime({ value: '09:00' }); const w = document.querySelector('.dialog.pk .pk-wheel'); const bd = document.querySelector('.dialog.pk .backdrop'); return { on: !!w.querySelector('.pk-opt.on'), top: w.scrollTop, op: +getComputedStyle(bd).opacity }; });
+    if (!first.on || first.top < 440) throw new Error('wheel not in place: ' + JSON.stringify(first));
+    if (first.op > 0.5) throw new Error('dimming did not fade in: ' + first.op);
+    // tapping OK: the tap ring goes as soon as the picker starts to close
+    const ghost = await ev(() => new Promise((res) => {
+      document.querySelector('.dialog.pk [data-pk-ok]').click();
+      let n = 0, frames = 0;
+      (function rec() { frames++; if (document.querySelector('.fx-ring') && document.querySelector('.dialog.pk.out')) n++; if (frames < 25) requestAnimationFrame(rec); else res(n); })();
+    }));
+    if (ghost > 1) throw new Error('tap ring left floating for ' + ghost + ' frames');
+    // a redraw does not restart the pay card's glow
+    const prog = () => ev(() => { const a = document.querySelector('.home-hero .aurora i').getAnimations()[0]; if (!a) return null; const c = a.effect.getComputedTiming(); return (c.currentIteration || 0) + (c.progress || 0); });
+    await sleep(600);
+    const p1 = await prog(); await ev(() => App.rerender()); const p2 = await prog();
+    if (p1 != null && p2 != null && Math.abs(p2 - p1) > 0.02) throw new Error('glow restarted: ' + p1 + ' -> ' + p2);
+  });
   await step('anonymous stats: record has only the allowed fields', async () => {
     const r = await ev(() => Stats._record());
     const keys = Object.keys(r).sort().join(',');

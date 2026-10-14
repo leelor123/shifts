@@ -250,8 +250,10 @@
     return new Promise((resolve) => {
       const el = document.createElement('div');
       el.className = 'dialog';
-      el.innerHTML = `<div class="backdrop show" style="z-index:-1"></div><div class="box" role="alertdialog" aria-modal="true"><h3>${esc(opts.title || '')}</h3><div>${opts.html || esc(opts.text || '')}</div><div class="actions">${(opts.buttons || []).map((b, i) => `<button class="btn ${b.cls || 'text'}" data-i="${i}">${esc(b.label)}</button>`).join('')}</div></div>`;
+      el.innerHTML = `<div class="backdrop" style="z-index:-1"></div><div class="box" role="alertdialog" aria-modal="true"><h3>${esc(opts.title || '')}</h3><div>${opts.html || esc(opts.text || '')}</div><div class="actions">${(opts.buttons || []).map((b, i) => `<button class="btn ${b.cls || 'text'}" data-i="${i}">${esc(b.label)}</button>`).join('')}</div></div>`;
       document.body.appendChild(el);
+      void el.offsetWidth; // fade the dimming in (not at once)
+      el.querySelector('.backdrop').classList.add('show');
       const layer = pushLayer(() => { el.remove(); resolve(null); });
       const done = (v) => { el.remove(); closeLayer(layer); resolve(v); };
       el._resolve = done; // tests close it this way
