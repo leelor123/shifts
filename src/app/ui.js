@@ -141,6 +141,7 @@
   // back out of the app, and a sheet opened while a close is still travelling gets its history entry
   // only after the close has landed.
   const sheets = [];
+  let sheetSeq = 0;
   let pendingDepth = null;
   let pendingTimer = null;
   const committed = () => sheets.filter((s) => s.pushed);
@@ -164,7 +165,10 @@
     sh.className = 'sheet' + (opts.full ? ' full' : '') + (opts.cls ? ' ' + opts.cls : '');
     sh.setAttribute('role', 'dialog');
     sh.setAttribute('aria-modal', 'true');
-    sh.innerHTML = `<div class="grab"></div><div class="sh-head"><h2>${opts.title || ''}</h2><button class="icon-btn" data-close aria-label="סגור">${icon('x')}</button></div><div class="sh-body">${opts.body || ''}</div>${opts.foot ? `<div class="sh-foot">${opts.foot}</div>` : ''}`;
+    // screen readers announce the sheet by its title
+    const hid = 'sh-t-' + (++sheetSeq);
+    sh.setAttribute('aria-labelledby', hid);
+    sh.innerHTML = `<div class="grab"></div><div class="sh-head"><h2 id="${hid}">${opts.title || ''}</h2><button class="icon-btn" data-close aria-label="סגור">${icon('x')}</button></div><div class="sh-body">${opts.body || ''}</div>${opts.foot ? `<div class="sh-foot">${opts.foot}</div>` : ''}`;
     document.body.append(bd, sh);
     const entry = { bd, sh, opts, closed: false, pushed: false };
     sheets.push(entry);

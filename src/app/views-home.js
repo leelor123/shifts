@@ -106,7 +106,9 @@
     if (goal && pct >= 100) App.celebrateOnce('goal-' + P.key, () => { root.Fx.celebrate('money'); UI.toast('הגעת ליעד החודשי! 🎯'); });
     const projPct = goal && proj && proj.withPlanned ? Math.min(100, ((goalNet ? proj.withPlanned * (sum.gross ? sum.net.net / sum.gross : 0.85) : proj.withPlanned) / goal) * 100) : 0;
     const periodName = emp.periodStartDay > 1 ? 'תקופת השכר' : esc(P.label);
-    return `<section class="home-hero" data-act="go-summary" role="button" aria-label="סיכום ${periodName}">
+    // the whole card opens the summary on a tap; keyboards and screen readers get a real button for it
+    // (the card itself holds the "what is gross?" buttons, so it can't be one)
+    return `<section class="home-hero" data-act="go-summary"><button class="vh" data-act="go-summary">פירוט ${periodName}</button>
       <span class="aurora" aria-hidden="true"><i></i><i></i><i></i></span><span class="hh-dial" aria-hidden="true"></span>
       <div class="hh-label">${UI.term ? UI.term('gross', 'ברוטו') : 'ברוטו'} ${emp.periodStartDay > 1 ? 'בתקופת השכר' : 'ב' + periodName} עד עכשיו</div>
       <div class="hero-num">${money(sum.gross, 0)}</div>

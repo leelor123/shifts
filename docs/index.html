@@ -2,7 +2,7 @@
 <html lang="he" dir="rtl">
 <head>
 <meta charset="utf-8">
-<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'sha256-LrZVcfC/DusMENtV/oXk0F79HP0Yf23gOtym4L+IStg=' https://www.gstatic.com https://apis.google.com https://cdnjs.cloudflare.com https://cdn.jsdelivr.net 'wasm-unsafe-eval'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com data:; img-src 'self' data: blob: https:; connect-src 'self' https: wss:; frame-src https://shiftpay-70ab6.firebaseapp.com https://accounts.google.com https://apis.google.com https://*.google.com; worker-src 'self' blob: https://cdnjs.cloudflare.com https://cdn.jsdelivr.net; media-src 'self' data: blob:; manifest-src 'self'; object-src 'none'; base-uri 'self'; form-action 'self'">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'sha256-2XFqwOGrJEZfyvQLizL9EQafgZ8vbVxSPMWAVshX4qg=' https://www.gstatic.com https://apis.google.com https://cdnjs.cloudflare.com https://cdn.jsdelivr.net 'wasm-unsafe-eval'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com data:; img-src 'self' data: blob: https:; connect-src 'self' https: wss:; frame-src https://shiftpay-70ab6.firebaseapp.com https://accounts.google.com https://apis.google.com https://*.google.com; worker-src 'self' blob: https://cdnjs.cloudflare.com https://cdn.jsdelivr.net; media-src 'self' data: blob:; manifest-src 'self'; object-src 'none'; base-uri 'self'; form-action 'self'">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="theme-color" content="#0d2b6b">
 <meta name="description" content="מעקב משמרות וחישוב שכר אישי: שבתות, חגים, שעות נוספות, נסיעות, נטו משוער וניתוח תלושים — נשמר בחשבון שלך ועובד גם בלי אינטרנט.">
@@ -1000,7 +1000,7 @@ a { color: var(--brand-strong); }
 .btn.ob-google { background: #fff; color: #1f1f1f; border: 1px solid #dadce0; box-shadow: var(--sh-1); }
 body.fx .btn:active, body.fx .chip:active, body.fx .sc:active, body.fx .am-tile:active, body.fx .ob-chip:active { transform: scale(.96); }
 .chip { border-radius: 999px; background: var(--surface-1); border-color: var(--outline-var); }
-.chip.on { background: var(--brand-strong); color: #fff; border-color: transparent; }
+.chip.on { background: var(--brand-strong); color: var(--on-primary); border-color: transparent; }
 .seg { background: var(--surface-2); border: 0; border-radius: 14px; padding: 4px; gap: 4px; }
 .seg button { border-radius: 10px; color: var(--on-surface-var); }
 .seg button.on { background: var(--surface-1); color: var(--brand-strong); box-shadow: var(--sh-1), 0 0 0 1px var(--line); }
@@ -1181,7 +1181,7 @@ body.fx .nav .fab:active { transform: scale(.9) rotate(90deg); }
 @keyframes pk-down { to { transform: translateY(100%); } }
 .pk-grab { width: 40px; height: 5px; border-radius: 3px; background: var(--outline-var); margin: 10px auto 4px; }
 .pk-head { display: flex; align-items: center; justify-content: space-between; min-height: 44px; }
-.pk-head h3 { margin: 0; font-size: 1.05rem; }
+.pk-head h3, .pk-head h2 { margin: 0; font-size: 1.05rem; }
 .pk-show { margin: 4px 0 10px; }
 .pk-big { display: flex; align-items: center; gap: 14px; padding: 12px 18px; border-radius: 18px; background: var(--grad-brand); color: #fff; min-height: 72px; }
 .pk-big .d { font: 800 2.5rem/1 var(--display); min-width: 1.4em; text-align: center; letter-spacing: -.02em; }
@@ -1244,13 +1244,13 @@ body.fx .nav .fab:active { transform: scale(.9) rotate(90deg); }
 .ob-points > div { display: flex; align-items: center; gap: 12px; padding: 12px 14px; border-radius: 18px; background: var(--surface-1); border: 1px solid var(--line); box-shadow: var(--sh-1); text-align: start; font-weight: 600; animation: ob-in-next .45s cubic-bezier(.2, .8, .3, 1) calc(.15s + var(--d, 0) * .1s) both; }
 .ob-chips { display: flex; flex-wrap: wrap; gap: 8px; margin: 4px 0 14px; }
 .ob-chip { display: inline-flex; align-items: center; justify-content: center; gap: 8px; border: 1.5px solid var(--outline-var); background: var(--surface-1); color: var(--on-surface); border-radius: 999px; padding: 10px 18px; font-weight: 600; font-size: .98rem; cursor: pointer; transition: transform .22s var(--pop), background .2s, border-color .2s, color .2s; min-height: 46px; }
-.ob-chip.on { background: var(--brand-strong); color: #fff; border-color: transparent; }
+.ob-chip.on { background: var(--brand-strong); color: var(--on-primary); border-color: transparent; }
 .ob-chips.small { gap: 8px; }
 .ob-chips.small .ob-chip { padding: 6px 14px; font-size: .9rem; min-height: 42px; }
 .ob-chips.big { display: grid; grid-template-columns: repeat(3, 1fr); }
 .ob-chips.big .ob-chip { flex-direction: column; padding: 16px 6px; font-size: 1rem; border-radius: 18px; min-height: 92px; }
 .ob-chips.big .ob-chip svg { width: 28px; height: 28px; color: var(--brand); }
-.ob-chips.big .ob-chip.on svg { color: #fff; }
+.ob-chips.big .ob-chip.on svg { color: var(--on-primary); }
 .ob-why { display: flex; gap: 10px; align-items: flex-start; margin-top: 14px; padding: 12px 14px; border-radius: 16px; background: var(--surface-2); color: var(--on-surface-var); font-size: .86rem; line-height: 1.55; }
 .ob-why svg { color: var(--brand); margin-top: 1px; flex: none; }
 .ob-job { border: 1px solid var(--line); border-radius: 18px; padding: 12px 12px 0; margin-bottom: 12px; background: var(--surface-1); box-shadow: var(--sh-1); }
@@ -1664,6 +1664,20 @@ body.fx .recap-card:active { transform: scale(.98); }
 }
 .recap-btn { margin-top: 12px; background: linear-gradient(120deg, #5b21b6, #7c3aed 55%, #db2777); color: #fff; }
 
+/* ---------- accessibility details ---------- */
+/* visually hidden until it gets keyboard focus */
+.vh:not(:focus):not(:focus-visible) { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; border: 0; }
+.home-hero .vh:focus { position: absolute; top: 10px; inset-inline-start: 10px; z-index: 2; padding: 6px 12px; border: 0; border-radius: 999px; background: #fff; color: #3b0f80; font: 700 .85rem var(--font); }
+/* readable tags and dimmed days */
+.tag.rest { color: var(--warn); }
+.cal-day.other { opacity: .62; }
+.cal-day.other .hd { visibility: hidden; }
+.card.tonal .insight .b, .card.tonal .insight .x { color: inherit; opacity: .88; }
+.card h2.h3 { margin: 0 0 8px; font-size: 1rem; }
+.card .card-head h2.h3 { margin: 0; flex: 1; }
+/* the unread badge: white on a red dark enough to read in both themes */
+.dot-badge { background: #c9372c; }
+
 </style>
 </head>
 <body>
@@ -1682,7 +1696,7 @@ body.fx .recap-card:active { transform: scale(.98); }
 <div id="print-root" aria-hidden="true"></div>
 <noscript><div style="padding:24px;font-family:sans-serif">האפליקציה דורשת JavaScript.</div></noscript>
 <script>
-window.APP_VERSION = '1.9.0';
+window.APP_VERSION = '1.9.1';
 /* ---- core/util.js ---- */
 /* ============================================================
  * util.js — date/time helpers and formatting.
@@ -4844,6 +4858,7 @@ window.APP_VERSION = '1.9.0';
   // back out of the app, and a sheet opened while a close is still travelling gets its history entry
   // only after the close has landed.
   const sheets = [];
+  let sheetSeq = 0;
   let pendingDepth = null;
   let pendingTimer = null;
   const committed = () => sheets.filter((s) => s.pushed);
@@ -4867,7 +4882,10 @@ window.APP_VERSION = '1.9.0';
     sh.className = 'sheet' + (opts.full ? ' full' : '') + (opts.cls ? ' ' + opts.cls : '');
     sh.setAttribute('role', 'dialog');
     sh.setAttribute('aria-modal', 'true');
-    sh.innerHTML = `<div class="grab"></div><div class="sh-head"><h2>${opts.title || ''}</h2><button class="icon-btn" data-close aria-label="סגור">${icon('x')}</button></div><div class="sh-body">${opts.body || ''}</div>${opts.foot ? `<div class="sh-foot">${opts.foot}</div>` : ''}`;
+    // screen readers announce the sheet by its title
+    const hid = 'sh-t-' + (++sheetSeq);
+    sh.setAttribute('aria-labelledby', hid);
+    sh.innerHTML = `<div class="grab"></div><div class="sh-head"><h2 id="${hid}">${opts.title || ''}</h2><button class="icon-btn" data-close aria-label="סגור">${icon('x')}</button></div><div class="sh-body">${opts.body || ''}</div>${opts.foot ? `<div class="sh-foot">${opts.foot}</div>` : ''}`;
     document.body.append(bd, sh);
     const entry = { bd, sh, opts, closed: false, pushed: false };
     sheets.push(entry);
@@ -5097,7 +5115,7 @@ window.APP_VERSION = '1.9.0';
       el.innerHTML = `<div class="backdrop show" style="z-index:-1"></div>
         <div class="pk-card" role="dialog" aria-modal="true" aria-label="${esc(title)}">
           <div class="pk-grab"></div>
-          <div class="pk-head"><h3>${esc(title)}</h3><button class="icon-btn" data-pk-x aria-label="סגור">${icon('x')}</button></div>
+          <div class="pk-head"><h2>${esc(title)}</h2><button class="icon-btn" data-pk-x aria-label="סגור">${icon('x')}</button></div>
           ${inner}
         </div>`;
       document.body.appendChild(el);
@@ -8016,7 +8034,9 @@ window.FIREBASE_CONFIG = {
     if (goal && pct >= 100) App.celebrateOnce('goal-' + P.key, () => { root.Fx.celebrate('money'); UI.toast('הגעת ליעד החודשי! 🎯'); });
     const projPct = goal && proj && proj.withPlanned ? Math.min(100, ((goalNet ? proj.withPlanned * (sum.gross ? sum.net.net / sum.gross : 0.85) : proj.withPlanned) / goal) * 100) : 0;
     const periodName = emp.periodStartDay > 1 ? 'תקופת השכר' : esc(P.label);
-    return `<section class="home-hero" data-act="go-summary" role="button" aria-label="סיכום ${periodName}">
+    // the whole card opens the summary on a tap; keyboards and screen readers get a real button for it
+    // (the card itself holds the "what is gross?" buttons, so it can't be one)
+    return `<section class="home-hero" data-act="go-summary"><button class="vh" data-act="go-summary">פירוט ${periodName}</button>
       <span class="aurora" aria-hidden="true"><i></i><i></i><i></i></span><span class="hh-dial" aria-hidden="true"></span>
       <div class="hh-label">${UI.term ? UI.term('gross', 'ברוטו') : 'ברוטו'} ${emp.periodStartDay > 1 ? 'בתקופת השכר' : 'ב' + periodName} עד עכשיו</div>
       <div class="hero-num">${money(sum.gross, 0)}</div>
@@ -9091,15 +9111,15 @@ window.FIREBASE_CONFIG = {
     const roles = App.roles();
     const money0 = (v) => U.money(v, 0);
     return `
-      <div class="card"><div class="card-head"><h3>שכר ברוטו לפי חודש</h3></div>${Charts.bars(data.map((d) => ({ label: lab(d.pk), value: d.s.gross, tip: `${U.fmtMonth(d.pk)}: ${U.money(d.s.gross, 0)} (נטו ~${U.money(d.s.net.net, 0)})`, dim: d.pk === cur })), { label: 'ברוטו לפי חודש', axisFmt: (v) => '₪' + (v >= 1000 ? +(v / 1000).toFixed(1) + 'K' : v) })}<div class="tiny muted">החודש הנוכחי מוצג בהיר — עדיין לא הסתיים.</div></div>
-      <div class="card"><div class="card-head"><h3>שעות לפי תפקיד</h3></div>${Charts.stacked(data.map((d) => lab(d.pk)), roles.map((r) => ({ name: r.name, color: r.color, values: data.map((d) => (d.s.byRole[r.id] ? d.s.byRole[r.id].hours : 0)) })), { label: 'שעות לפי תפקיד', fmt: (v) => U.num(v, 1) + ' ש׳' })}</div>
-      <div class="card"><div class="card-head"><h3>שכר ממוצע לשעה</h3></div>${Charts.line(data.map((d) => lab(d.pk)), data.map((d) => (d.s.hours ? d.s.avgHourly : null)), { label: 'ממוצע לשעה', fmt: (v) => U.money(v), zero: false, axisFmt: (v) => '₪' + Math.round(v) })}<div class="tiny muted">כולל תוספות שבת ושעות נוספות, בלי נסיעות.</div></div>
-      <div class="card"><div class="card-head"><h3>שעות לפי סוג</h3></div>${Charts.stacked(data.map((d) => lab(d.pk)), [
+      <div class="card"><div class="card-head"><h2 class="h3">שכר ברוטו לפי חודש</h2></div>${Charts.bars(data.map((d) => ({ label: lab(d.pk), value: d.s.gross, tip: `${U.fmtMonth(d.pk)}: ${U.money(d.s.gross, 0)} (נטו ~${U.money(d.s.net.net, 0)})`, dim: d.pk === cur })), { label: 'ברוטו לפי חודש', axisFmt: (v) => '₪' + (v >= 1000 ? +(v / 1000).toFixed(1) + 'K' : v) })}<div class="tiny muted">החודש הנוכחי מוצג בהיר — עדיין לא הסתיים.</div></div>
+      <div class="card"><div class="card-head"><h2 class="h3">שעות לפי תפקיד</h2></div>${Charts.stacked(data.map((d) => lab(d.pk)), roles.map((r) => ({ name: r.name, color: r.color, values: data.map((d) => (d.s.byRole[r.id] ? d.s.byRole[r.id].hours : 0)) })), { label: 'שעות לפי תפקיד', fmt: (v) => U.num(v, 1) + ' ש׳' })}</div>
+      <div class="card"><div class="card-head"><h2 class="h3">שכר ממוצע לשעה</h2></div>${Charts.line(data.map((d) => lab(d.pk)), data.map((d) => (d.s.hours ? d.s.avgHourly : null)), { label: 'ממוצע לשעה', fmt: (v) => U.money(v), zero: false, axisFmt: (v) => '₪' + Math.round(v) })}<div class="tiny muted">כולל תוספות שבת ושעות נוספות, בלי נסיעות.</div></div>
+      <div class="card"><div class="card-head"><h2 class="h3">שעות לפי סוג</h2></div>${Charts.stacked(data.map((d) => lab(d.pk)), [
         { name: 'רגילות', color: '#2a78d6', values: data.map((d) => d.s.hoursBy.regular) },
         { name: 'נוספות', color: '#eda100', values: data.map((d) => d.s.hoursBy.ot1 + d.s.hoursBy.ot2) },
         { name: 'שבת/חג', color: '#1baf7a', values: data.map((d) => d.s.restHours) },
       ], { label: 'שעות לפי סוג', fmt: (v) => U.num(v, 1) + ' ש׳' })}</div>
-      <div class="card"><div class="card-head"><h3>טבלה</h3></div>${data.slice().reverse().map((d) => `<div class="kv"><span>${U.fmtMonth(d.pk)}</span><span><span class="num">${U.num(d.s.hours, 1)} ש׳</span> · <b>${money0(d.s.gross)}</b></span></div>`).join('')}</div>`;
+      <div class="card"><div class="card-head"><h2 class="h3">טבלה</h2></div>${data.slice().reverse().map((d) => `<div class="kv"><span>${U.fmtMonth(d.pk)}</span><span><span class="num">${U.num(d.s.hours, 1)} ש׳</span> · <b>${money0(d.s.gross)}</b></span></div>`).join('')}</div>`;
   }
 
   /* ---------------- shift list with search & filters ---------------- */
@@ -9510,7 +9530,7 @@ window.FIREBASE_CONFIG = {
         ${f.note ? `<div class="fd small">${icon('info', 's')} ${esc(f.note)}</div>` : ''}
         ${f.shifts && f.shifts.length ? `<div style="margin-top:6px">${f.shifts.slice(0, 6).map((id) => { const r = App.result(id); return r ? `<button class="chip" data-act="shift-open" data-id="${id}">${U.fmtDate(r.dateKey, 'short')} · ${U.hm(r.paidMin)}</button>` : ''; }).join(' ')}</div>` : ''}
         <div class="fb">על מה זה מבוסס: ${esc(f.basis)} · <span class="conf ${f.confidence}">${CONF[f.confidence]}</span></div></div>`).join('')}
-      ${msg ? `<div class="section-title">${icon('send', 's')} מה לעשות</div><div class="card"><div class="small" style="margin-bottom:8px">הודעה מוכנה למעסיק / משאבי אנוש (אפשר לערוך):</div><textarea class="input" id="ps-msg" rows="10">${esc(msg)}</textarea>
+      ${msg ? `<div class="section-title">${icon('send', 's')} מה לעשות</div><div class="card"><div class="small" style="margin-bottom:8px">הודעה מוכנה למעסיק / משאבי אנוש (אפשר לערוך):</div><textarea class="input" id="ps-msg" rows="10" aria-label="הודעה למעסיק">${esc(msg)}</textarea>
         <div class="btn-row" style="margin-top:8px"><button class="btn tonal" data-copy-msg>${icon('copy')} העתק</button><button class="btn tonal" data-share-msg>${icon('share')} שתף</button></div></div>` : ''}
       ${changes.length ? `<div class="section-title">${icon('alert', 's')} שינויים מהתלוש הקודם</div><div class="card">${changes.map((c) => `<div class="kv"><span>${esc(c.text)}</span></div>`).join('')}</div>` : ''}
       ${wf ? `<div class="section-title">${icon('chart', 's')} מברוטו לנטו</div><div class="card">${Charts.waterfall(wf, { fmt: (v) => U.money(v), axisFmt: (v) => '₪' + (v >= 1000 ? (v / 1000).toFixed(1).replace('.0', '') + 'K' : Math.round(v)) })}
@@ -9525,7 +9545,7 @@ window.FIREBASE_CONFIG = {
       title: 'ניתוח תלוש · ' + U.fmtMonth(slip.period), full: true,
       body: analysisHtml(slip, a),
       foot: slip.isNew ? `<button class="btn tonal" data-edit>${icon('edit')} תקן נתונים</button><button class="btn" data-save>${icon('check')} שמור בארכיון</button>`
-        : `<button class="btn danger" data-del style="flex:0 0 auto">${icon('trash')}</button><button class="btn tonal" data-edit>${icon('edit')} תקן נתונים</button>${slip.fileId ? `<button class="btn tonal" data-file style="flex:0 0 auto">${icon('file')}</button>` : ''}`,
+        : `<button class="btn danger" data-del style="flex:0 0 auto" aria-label="מחיקת התלוש">${icon('trash')}</button><button class="btn tonal" data-edit>${icon('edit')} תקן נתונים</button>${slip.fileId ? `<button class="btn tonal" data-file style="flex:0 0 auto">${icon('file')}</button>` : ''}`,
       onMount: (el) => {
         el.addEventListener('click', async (e) => {
           const b = e.target.closest('button');
@@ -10704,7 +10724,7 @@ window.FIREBASE_CONFIG = {
       }
       const top = key === 'hi' || last ? '' : `<div class="ob-top">
         <button class="icon-btn" data-back aria-label="הקודם">${icon('right')}</button>
-        <div class="ob-dots" aria-label="שאלה ${qi} מתוך ${QUESTIONS}">${Array.from({ length: QUESTIONS }, (_, i) => `<i class="${i + 1 < qi ? 'done' : i + 1 === qi ? 'on' : ''}"></i>`).join('')}</div>
+        <div class="ob-dots" role="progressbar" aria-valuemin="1" aria-valuemax="${QUESTIONS}" aria-valuenow="${qi}" aria-label="שאלה ${qi} מתוך ${QUESTIONS}">${Array.from({ length: QUESTIONS }, (_, i) => `<i class="${i + 1 < qi ? 'done' : i + 1 === qi ? 'on' : ''}"></i>`).join('')}</div>
         <button class="btn text sm ob-skip" data-skip>דלג</button></div>`;
       v.innerHTML = `<div class="wizard ob ob3 step-${key}"><div class="ob-bg" aria-hidden="true"><i></i><i></i><i></i></div>${top}
         <div class="content ob-${dir}">${screens[key]()}</div>

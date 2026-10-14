@@ -217,15 +217,15 @@
     const roles = App.roles();
     const money0 = (v) => U.money(v, 0);
     return `
-      <div class="card"><div class="card-head"><h3>שכר ברוטו לפי חודש</h3></div>${Charts.bars(data.map((d) => ({ label: lab(d.pk), value: d.s.gross, tip: `${U.fmtMonth(d.pk)}: ${U.money(d.s.gross, 0)} (נטו ~${U.money(d.s.net.net, 0)})`, dim: d.pk === cur })), { label: 'ברוטו לפי חודש', axisFmt: (v) => '₪' + (v >= 1000 ? +(v / 1000).toFixed(1) + 'K' : v) })}<div class="tiny muted">החודש הנוכחי מוצג בהיר — עדיין לא הסתיים.</div></div>
-      <div class="card"><div class="card-head"><h3>שעות לפי תפקיד</h3></div>${Charts.stacked(data.map((d) => lab(d.pk)), roles.map((r) => ({ name: r.name, color: r.color, values: data.map((d) => (d.s.byRole[r.id] ? d.s.byRole[r.id].hours : 0)) })), { label: 'שעות לפי תפקיד', fmt: (v) => U.num(v, 1) + ' ש׳' })}</div>
-      <div class="card"><div class="card-head"><h3>שכר ממוצע לשעה</h3></div>${Charts.line(data.map((d) => lab(d.pk)), data.map((d) => (d.s.hours ? d.s.avgHourly : null)), { label: 'ממוצע לשעה', fmt: (v) => U.money(v), zero: false, axisFmt: (v) => '₪' + Math.round(v) })}<div class="tiny muted">כולל תוספות שבת ושעות נוספות, בלי נסיעות.</div></div>
-      <div class="card"><div class="card-head"><h3>שעות לפי סוג</h3></div>${Charts.stacked(data.map((d) => lab(d.pk)), [
+      <div class="card"><div class="card-head"><h2 class="h3">שכר ברוטו לפי חודש</h2></div>${Charts.bars(data.map((d) => ({ label: lab(d.pk), value: d.s.gross, tip: `${U.fmtMonth(d.pk)}: ${U.money(d.s.gross, 0)} (נטו ~${U.money(d.s.net.net, 0)})`, dim: d.pk === cur })), { label: 'ברוטו לפי חודש', axisFmt: (v) => '₪' + (v >= 1000 ? +(v / 1000).toFixed(1) + 'K' : v) })}<div class="tiny muted">החודש הנוכחי מוצג בהיר — עדיין לא הסתיים.</div></div>
+      <div class="card"><div class="card-head"><h2 class="h3">שעות לפי תפקיד</h2></div>${Charts.stacked(data.map((d) => lab(d.pk)), roles.map((r) => ({ name: r.name, color: r.color, values: data.map((d) => (d.s.byRole[r.id] ? d.s.byRole[r.id].hours : 0)) })), { label: 'שעות לפי תפקיד', fmt: (v) => U.num(v, 1) + ' ש׳' })}</div>
+      <div class="card"><div class="card-head"><h2 class="h3">שכר ממוצע לשעה</h2></div>${Charts.line(data.map((d) => lab(d.pk)), data.map((d) => (d.s.hours ? d.s.avgHourly : null)), { label: 'ממוצע לשעה', fmt: (v) => U.money(v), zero: false, axisFmt: (v) => '₪' + Math.round(v) })}<div class="tiny muted">כולל תוספות שבת ושעות נוספות, בלי נסיעות.</div></div>
+      <div class="card"><div class="card-head"><h2 class="h3">שעות לפי סוג</h2></div>${Charts.stacked(data.map((d) => lab(d.pk)), [
         { name: 'רגילות', color: '#2a78d6', values: data.map((d) => d.s.hoursBy.regular) },
         { name: 'נוספות', color: '#eda100', values: data.map((d) => d.s.hoursBy.ot1 + d.s.hoursBy.ot2) },
         { name: 'שבת/חג', color: '#1baf7a', values: data.map((d) => d.s.restHours) },
       ], { label: 'שעות לפי סוג', fmt: (v) => U.num(v, 1) + ' ש׳' })}</div>
-      <div class="card"><div class="card-head"><h3>טבלה</h3></div>${data.slice().reverse().map((d) => `<div class="kv"><span>${U.fmtMonth(d.pk)}</span><span><span class="num">${U.num(d.s.hours, 1)} ש׳</span> · <b>${money0(d.s.gross)}</b></span></div>`).join('')}</div>`;
+      <div class="card"><div class="card-head"><h2 class="h3">טבלה</h2></div>${data.slice().reverse().map((d) => `<div class="kv"><span>${U.fmtMonth(d.pk)}</span><span><span class="num">${U.num(d.s.hours, 1)} ש׳</span> · <b>${money0(d.s.gross)}</b></span></div>`).join('')}</div>`;
   }
 
   /* ---------------- shift list with search & filters ---------------- */

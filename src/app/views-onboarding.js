@@ -195,7 +195,7 @@
       }
       const top = key === 'hi' || last ? '' : `<div class="ob-top">
         <button class="icon-btn" data-back aria-label="הקודם">${icon('right')}</button>
-        <div class="ob-dots" aria-label="שאלה ${qi} מתוך ${QUESTIONS}">${Array.from({ length: QUESTIONS }, (_, i) => `<i class="${i + 1 < qi ? 'done' : i + 1 === qi ? 'on' : ''}"></i>`).join('')}</div>
+        <div class="ob-dots" role="progressbar" aria-valuemin="1" aria-valuemax="${QUESTIONS}" aria-valuenow="${qi}" aria-label="שאלה ${qi} מתוך ${QUESTIONS}">${Array.from({ length: QUESTIONS }, (_, i) => `<i class="${i + 1 < qi ? 'done' : i + 1 === qi ? 'on' : ''}"></i>`).join('')}</div>
         <button class="btn text sm ob-skip" data-skip>דלג</button></div>`;
       v.innerHTML = `<div class="wizard ob ob3 step-${key}"><div class="ob-bg" aria-hidden="true"><i></i><i></i><i></i></div>${top}
         <div class="content ob-${dir}">${screens[key]()}</div>

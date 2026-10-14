@@ -44,7 +44,7 @@
       el.innerHTML = `<div class="backdrop show" style="z-index:-1"></div>
         <div class="pk-card" role="dialog" aria-modal="true" aria-label="${esc(title)}">
           <div class="pk-grab"></div>
-          <div class="pk-head"><h3>${esc(title)}</h3><button class="icon-btn" data-pk-x aria-label="סגור">${icon('x')}</button></div>
+          <div class="pk-head"><h2>${esc(title)}</h2><button class="icon-btn" data-pk-x aria-label="סגור">${icon('x')}</button></div>
           ${inner}
         </div>`;
       document.body.appendChild(el);
