@@ -74,7 +74,7 @@
     const role = App.role(sel);
     return `<div class="home-action">
       <button class="btn big start" data-act="timer-start" data-role="${sel || ''}">${icon('play')} התחל משמרת</button>
-      ${roles.length > 1 && role ? `<button class="role-chip" data-act="choose-role" aria-label="בחר תפקיד"><span class="sw" style="background:${role.color}"></span>${esc(role.name)}<span class="chev">${icon('left', 's')}</span></button>` : ''}
+      ${roles.length > 1 && role ? `<button class="role-chip" data-act="choose-role" aria-label="בחר תפקיד"><span class="sw" style="background:${role.color}"></span><span class="rc-n">${esc(role.name)}</span><span class="chev">${icon('left', 's')}</span></button>` : ''}
     </div>`;
   }
 

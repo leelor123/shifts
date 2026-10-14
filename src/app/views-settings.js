@@ -146,7 +146,7 @@
   RENDER.personal = {
     render: () => {
       const age = Engine.ageAt(S.settings.birthDate, U.todayKey());
-      return `<div class="card">${F.text('שם (לא חובה)', 's.userName', S.settings.userName, 'מופיע בברכות ובחתימה של הודעות למעסיק.')}
+      return `<div class="card">${F.text('שם (לא חובה)', 's.userName', S.settings.userName, 'מופיע בברכות ובחתימה של הודעות למעסיק.', 'maxlength="40"')}
         ${F.date('תאריך לידה (לא חובה)', 's.birthDate', S.settings.birthDate, 'לברכה ביום ההולדת, לשכר המינימום לפי גיל, לבדיקות חוק עבודת הנוער ולגיל הפנסיה.').replace('data-s=', 'data-redraw data-s=')}
         ${F.sel('מגדר (לא חובה)', 's.gender', [['', 'לא צוין'], ['m', 'גבר'], ['f', 'אישה']], S.settings.gender || '', 'רק לחישוב הפנסיה: חובת הפרשה מגיל 21 לגבר ומגיל 20 לאישה.')}</div>
         ${age != null ? `<div class="card ${age < 18 ? 'tonal' : ''}"><div class="kv"><span>גיל</span><b>${age}</b></div>
@@ -170,7 +170,7 @@
         if (b.dataset.roleEdit) roleEditor(b.dataset.roleEdit, draw);
         if (b.dataset.roleAdd) roleEditor(null, draw, b.dataset.roleAdd);
         if (b.hasAttribute('data-emp-add')) {
-          const name = await UI.promptText('מעסיק חדש', 'שם המעסיק', '');
+          const name = String((await UI.promptText('מעסיק חדש', 'שם המעסיק', '')) || '').trim().slice(0, 60);
           if (!name) return;
           const emp = Object.assign(Defaults.defaultEmployer('emp_' + U.uid()), { name });
           await Store.put('employers', emp, 'הוספת מעסיק');
@@ -183,7 +183,7 @@
             if (S.shifts.some((x) => x.employerId === emp.id)) { UI.toast('יש משמרות של המעסיק — אי אפשר למחוק'); return; }
             if (!(await UI.confirm('למחוק את המעסיק?', 'התפקידים שלו יימחקו.', 'מחק', true))) return;
             await App.saveOps([{ store: 'employers', del: emp.id }, ...S.roles.filter((x) => x.employerId === emp.id).map((x) => ({ store: 'roles', del: x.id }))], 'מחיקת מעסיק');
-          } else if (r) await Store.put('employers', Object.assign(Store.clone(emp), { name: r }));
+          } else if (r && String(r).trim()) await Store.put('employers', Object.assign(Store.clone(emp), { name: String(r).trim().slice(0, 60) }));
           draw();
         }
       });
@@ -196,7 +196,7 @@
     let el = null;
     const body = () => {
       const rates = d.rates.slice().sort((a, b) => a.from.localeCompare(b.from));
-      return `<label class="field"><span class="lbl">שם התפקיד</span><input class="input" id="re-name" value="${esc(d.name)}" placeholder="למשל: סדרן"></label>
+      return `<label class="field"><span class="lbl">שם התפקיד</span><input class="input" id="re-name" value="${esc(d.name)}" placeholder="למשל: סדרן" maxlength="40"></label>
         <div class="field"><span class="lbl">צבע</span><div class="color-pick">${Defaults.ROLE_COLORS.map((c) => `<button style="background:${c}" class="${d.color === c ? 'on' : ''}" data-color="${c}" aria-label="צבע"></button>`).join('')}</div></div>
         <div class="section-title">${icon('wallet', 's')} תעריפים לפי תאריך</div>
         <div class="tiny muted" style="margin:-4px 4px 10px">העלאת שכר? הוסף תעריף חדש מתאריך מסוים — משמרות קודמות לא ישתנו.</div>
@@ -208,12 +208,13 @@
         ${App.multiEmp() ? `<label class="field" style="margin-top:12px"><span class="lbl">מעסיק</span><select class="input" id="re-emp">${S.employers.map((e) => `<option value="${e.id}" ${e.id === d.employerId ? 'selected' : ''}>${esc(e.name)}</option>`).join('')}</select></label>` : ''}`;
     };
     const read = () => {
-      d.name = el.querySelector('#re-name').value.trim();
-      el.querySelectorAll('[data-rr]').forEach((i) => (d.rates[+i.dataset.rr].rate = UI.numIn(i)));
-      el.querySelectorAll('[data-rf]').forEach((i) => (d.rates[+i.dataset.rf].from = i.value));
+      d.name = el.querySelector('#re-name').value.trim().slice(0, 40);
+      el.querySelectorAll('[data-rr]').forEach((i) => { const r = d.rates[+i.dataset.rr]; if (r) r.rate = UI.numIn(i); });
+      el.querySelectorAll('[data-rf]').forEach((i) => { const r = d.rates[+i.dataset.rf]; if (r) r.from = i.value; });
       const em = el.querySelector('#re-emp'); if (em) d.employerId = em.value;
     };
-    const redraw = () => { read(); el.querySelector('.sh-body').innerHTML = body(); };
+    // the list may just have changed (a rate removed), so the screen is redrawn from d without reading it again
+    const redraw = () => { el.querySelector('.sh-body').innerHTML = body(); };
     UI.openSheet({
       title: orig ? 'עריכת תפקיד' : 'תפקיד חדש', body: body(),
       foot: `${orig ? `<button class="btn danger" data-del style="flex:0 0 auto">${icon('trash')}</button>` : ''}<button class="btn" data-save>${icon('check')} שמור</button>`,

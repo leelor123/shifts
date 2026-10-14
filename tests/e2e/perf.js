@@ -12,7 +12,7 @@ const server = http.createServer((req, res) => {
   const file = path.join(docs, p === '/' ? 'index.html' : p);
   if (!fs.existsSync(file) || fs.statSync(file).isDirectory()) { res.writeHead(404); res.end(); return; }
   let body = fs.readFileSync(file);
-  if (file.endsWith('index.html')) body = Buffer.from(body.toString('utf8').replace('window.FIREBASE_CONFIG = {', 'window.__NO_CLOUD = {'));
+  if (file.endsWith('index.html')) body = Buffer.from(body.toString('utf8').replace('window.FIREBASE_CONFIG = {', 'window.__NO_CLOUD = {').replace(/<meta http-equiv="Content-Security-Policy"[^>]*>/, ''));
   res.writeHead(200, { 'Content-Type': TYPES[path.extname(file)] || 'application/octet-stream' });
   res.end(body);
 });

@@ -13,6 +13,12 @@
  *  - Chrome sometimes delivers a touchmove it held back during the last
  *    gesture (a sideways swipe) after the next touch began; those carry
  *    an older timestamp and are ignored, or the page would jump;
+ *  - the rest of a gesture is heard on the element the finger landed on,
+ *    not on the document: if the screen redraws mid-pull (a sync), that
+ *    element leaves the page and its events no longer reach the document,
+ *    which would leave the page hanging a little lower;
+ *  - a new touch while a pull is still open (a second finger, a gesture
+ *    the browser never finished) springs the page back first;
  *  - every frame is painted in requestAnimationFrame with transforms
  *    only; the browser's own pull-to-refresh and stretch effect are
  *    switched off (overscroll-behavior: none) so they never stack.
@@ -77,15 +83,29 @@
     setTimeout(() => root.removeEventListener('click', kill, true), 450);
   }
 
+  let tgt = null;
+  function unbind() {
+    if (!tgt) return;
+    tgt.removeEventListener('touchmove', move);
+    tgt.removeEventListener('touchend', end);
+    tgt.removeEventListener('touchcancel', cancel);
+    tgt = null;
+  }
   document.addEventListener('touchstart', (e) => {
+    if (pulling) cancel();
     if (e.touches.length !== 1 || blocked(e.target) || !(e.target.closest && e.target.closest('#view'))) { y0 = null; return; }
     y0 = e.touches[0].clientY;
     x0 = e.touches[0].clientX;
     t0 = e.timeStamp;
     pulling = false; dist = 0; armed = false;
+    unbind();
+    tgt = e.target;
+    tgt.addEventListener('touchmove', move, { passive: true });
+    tgt.addEventListener('touchend', end, { passive: true });
+    tgt.addEventListener('touchcancel', cancel, { passive: true });
   }, { passive: true });
 
-  document.addEventListener('touchmove', (e) => {
+  function move(e) {
     if (y0 == null || e.timeStamp < t0) return; // a late event from the previous gesture
     if (e.touches.length !== 1) { cancel(); return; } // a second finger: not a pull any more
     const dy = e.touches[0].clientY - y0;
@@ -105,10 +125,10 @@
     if (dist >= THRESHOLD && !armed) { armed = true; ind.classList.add('armed'); Fx.haptic(12); Fx.play('tick'); }
     else if (dist < THRESHOLD - 6 && armed) { armed = false; ind.classList.remove('armed'); }
     schedule();
-  }, { passive: true });
+  }
 
   function cancel() {
-    if (y0 == null) return;
+    unbind();
     y0 = null;
     if (!pulling) return;
     pulling = false; armed = false;
@@ -118,6 +138,7 @@
   }
 
   async function end() {
+    unbind();
     if (y0 == null) return;
     y0 = null;
     if (!pulling) return;
@@ -143,6 +164,4 @@
       busy = false;
     }
   }
-  document.addEventListener('touchend', end, { passive: true });
-  document.addEventListener('touchcancel', cancel, { passive: true });
 })(typeof window !== 'undefined' ? window : globalThis);

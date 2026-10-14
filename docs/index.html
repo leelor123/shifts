@@ -2,6 +2,7 @@
 <html lang="he" dir="rtl">
 <head>
 <meta charset="utf-8">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'sha256-1/4s1ouYzEVkdxeTlLsNm1g3KWcqvCPKBklxliB0tBc=' https://www.gstatic.com https://apis.google.com https://cdnjs.cloudflare.com https://cdn.jsdelivr.net 'wasm-unsafe-eval'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com data:; img-src 'self' data: blob: https:; connect-src 'self' https: wss:; frame-src https://shiftpay-70ab6.firebaseapp.com https://accounts.google.com https://apis.google.com https://*.google.com; worker-src 'self' blob: https://cdnjs.cloudflare.com https://cdn.jsdelivr.net; media-src 'self' data: blob:; manifest-src 'self'; object-src 'none'; base-uri 'self'; form-action 'self'">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="theme-color" content="#0d2b6b">
 <meta name="description" content="מעקב משמרות וחישוב שכר אישי: שבתות, חגים, שעות נוספות, נסיעות, נטו משוער וניתוח תלושים — נשמר בחשבון שלך ועובד גם בלי אינטרנט.">
@@ -1577,6 +1578,11 @@ body.fx .qz-opt:active:not(:disabled) { transform: scale(.96); }
 
 .ob-sub { margin: -4px 2px 10px; font-size: .86rem; line-height: 1.45; color: var(--on-surface-var); }
 
+/* names and notes people type can be one very long word: they wrap instead of pushing the screen wider */
+body { overflow-wrap: anywhere; }
+.role-chip { max-width: 100%; }
+.role-chip .rc-n { min-width: 0; max-width: 60vw; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
 </style>
 </head>
 <body>
@@ -1595,7 +1601,7 @@ body.fx .qz-opt:active:not(:disabled) { transform: scale(.96); }
 <div id="print-root" aria-hidden="true"></div>
 <noscript><div style="padding:24px;font-family:sans-serif">האפליקציה דורשת JavaScript.</div></noscript>
 <script>
-window.APP_VERSION = '1.8.0';
+window.APP_VERSION = '1.8.1';
 /* ---- core/util.js ---- */
 /* ============================================================
  * util.js — date/time helpers and formatting.
@@ -4722,8 +4728,38 @@ window.APP_VERSION = '1.8.0';
     if (opts.onMount) opts.onMount(sh, entry);
     return entry;
   }
+  /*
+   * Dialogs and pickers are layers too: each owns a history entry like a sheet, so the back
+   * button closes the top dialog (and only it) instead of the sheet underneath, or the app.
+   * onBack runs when back (or closeTop / closeAll) closes it; a dialog that closes itself with
+   * one of its own buttons calls closeLayer, which drops its history entry.
+   */
+  function pushLayer(onBack) {
+    const entry = { layer: true, onBack, closed: false, pushed: false, opts: {} };
+    sheets.push(entry);
+    if (pendingDepth === null) pushEntry(entry);
+    return entry;
+  }
+  function closeLayer(entry) {
+    if (!entry || entry.closed) return;
+    entry.closed = true;
+    const wasPushed = entry.pushed;
+    const top = committed().length;
+    const i = sheets.indexOf(entry);
+    if (i >= 0) sheets.splice(i, 1);
+    if (!wasPushed) return;
+    const cur = pendingDepth === null ? top : pendingDepth;
+    if (cur > 0) navigateBack(1, cur - 1);
+  }
   function removeSheet(entry) {
     if (entry.closed) return;
+    if (entry.layer) {
+      entry.closed = true;
+      const i = sheets.indexOf(entry);
+      if (i >= 0) sheets.splice(i, 1);
+      if (entry.onBack) entry.onBack();
+      return;
+    }
     entry.closed = true;
     entry.bd.classList.remove('show');
     entry.sh.classList.remove('show');
@@ -4746,8 +4782,6 @@ window.APP_VERSION = '1.8.0';
     if (cur > 0) navigateBack(cur, 0);
   }
   window.addEventListener('popstate', () => {
-    const d = document.querySelector('.dialog');
-    if (d && d._resolve) { d._resolve(null); d.remove(); }
     // one event can stand for several steps (closeAll, or a fast double back)
     const depth = (history.state && history.state.sheet) || 0;
     committed().slice(depth).reverse().forEach(removeSheet);
@@ -4761,15 +4795,16 @@ window.APP_VERSION = '1.8.0';
       el.className = 'dialog';
       el.innerHTML = `<div class="backdrop show" style="z-index:-1"></div><div class="box" role="alertdialog" aria-modal="true"><h3>${esc(opts.title || '')}</h3><div>${opts.html || esc(opts.text || '')}</div><div class="actions">${(opts.buttons || []).map((b, i) => `<button class="btn ${b.cls || 'text'}" data-i="${i}">${esc(b.label)}</button>`).join('')}</div></div>`;
       document.body.appendChild(el);
-      el._resolve = resolve;
+      const layer = pushLayer(() => { el.remove(); resolve(null); });
+      const done = (v) => { el.remove(); closeLayer(layer); resolve(v); };
+      el._resolve = done; // tests close it this way
       el.querySelectorAll('[data-i]').forEach((b) => (b.onclick = () => {
         const btn = opts.buttons[+b.dataset.i];
         const v = btn.value !== undefined ? btn.value : +b.dataset.i;
         const input = el.querySelector('input,textarea,select');
-        el.remove();
-        resolve(btn.value === 'input' ? (input ? input.value : null) : v);
+        done(btn.value === 'input' ? (input ? input.value : null) : v);
       }));
-      el.querySelector('.backdrop').onclick = () => { el.remove(); resolve(null); };
+      el.querySelector('.backdrop').onclick = () => done(null);
       const inp = el.querySelector('input,textarea');
       if (inp) setTimeout(() => inp.focus(), 50);
     });
@@ -4801,7 +4836,7 @@ window.APP_VERSION = '1.8.0';
   function vibrate(ms) {
     const fx = root.Store && root.Store.S.settings && root.Store.S.settings.fx;
     if (fx && fx.haptic === false) return;
-    try { if (navigator.vibrate) navigator.vibrate(ms || 12); } catch (e) { /* ignore */ }
+    try { if (navigator.vibrate && (!navigator.userActivation || navigator.userActivation.hasBeenActive)) navigator.vibrate(ms || 12); } catch (e) { /* ignore */ }
   }
   function download(filename, content, type) {
     const blob = content instanceof Blob ? content : new Blob([content], { type: type || 'text/plain;charset=utf-8' });
@@ -4856,7 +4891,7 @@ window.APP_VERSION = '1.8.0';
   function invalid(text) { toast(text); if (root.Fx) root.Fx.nope(); }
   /** An icon in a soft coloured tile (violet, mint, amber, sky, pink, orange, white). */
   const tile = (name, tint, cls) => `<span class="itile t-${tint || 'violet'} ${cls || ''}" aria-hidden="true">${icon(name)}</span>`;
-  root.UI = { tile, skeleton, invalid, icon, esc, money, numv, delta, roleDot, emptyState, toast, openSheet, closeTop, closeAll, dialog, confirm, promptText, onSwipe, vibrate, download, shareFile, copyText, numIn, timeAgo, sheets };
+  root.UI = { pushLayer, closeLayer, tile, skeleton, invalid, icon, esc, money, numv, delta, roleDot, emptyState, toast, openSheet, closeTop, closeAll, dialog, confirm, promptText, onSwipe, vibrate, download, shareFile, copyText, numIn, timeAgo, sheets };
 })(typeof window !== 'undefined' ? window : globalThis);
 
 /* ---- app/pickers.js ---- */
@@ -4911,14 +4946,17 @@ window.APP_VERSION = '1.8.0';
         </div>`;
       document.body.appendChild(el);
       let done = false;
+      const out = () => { el.classList.add('out'); setTimeout(() => el.remove(), 220); };
+      // the back button closes the picker (only the picker)
+      const layer = UI.pushLayer(() => { if (done) return; done = true; out(); resolve(null); });
       const finish = (v) => {
         if (done) return;
         done = true;
-        el.classList.add('out');
-        setTimeout(() => el.remove(), 220);
+        out();
+        UI.closeLayer(layer);
         resolve(v);
       };
-      el._resolve = (v) => { done = true; resolve(v); }; // the back button / tests close it this way
+      el._resolve = (v) => { if (done) return; done = true; el.remove(); UI.closeLayer(layer); resolve(v); }; // tests close it this way
       el.querySelector('.backdrop').onclick = () => finish(null);
       el.querySelector('[data-pk-x]').onclick = () => finish(null);
       // swipe down on the handle closes, like the other sheets
@@ -5284,7 +5322,9 @@ window.APP_VERSION = '1.8.0';
   /* ---------------- vibration ---------------- */
   Fx.haptic = function (pattern) {
     if (prefs().haptic === false) return;
-    try { if (navigator.vibrate) navigator.vibrate(pattern || 8); } catch (e) { /* not supported */ }
+    // before the first tap the browser refuses (and logs a warning), so don't ask
+    const act = navigator.userActivation;
+    try { if (navigator.vibrate && (!act || act.hasBeenActive)) navigator.vibrate(pattern || 8); } catch (e) { /* not supported */ }
   };
 
   /* ---------------- tap ring: hugs the tapped control, from its centre ---------------- */
@@ -7788,7 +7828,7 @@ window.FIREBASE_CONFIG = {
     const role = App.role(sel);
     return `<div class="home-action">
       <button class="btn big start" data-act="timer-start" data-role="${sel || ''}">${icon('play')} התחל משמרת</button>
-      ${roles.length > 1 && role ? `<button class="role-chip" data-act="choose-role" aria-label="בחר תפקיד"><span class="sw" style="background:${role.color}"></span>${esc(role.name)}<span class="chev">${icon('left', 's')}</span></button>` : ''}
+      ${roles.length > 1 && role ? `<button class="role-chip" data-act="choose-role" aria-label="בחר תפקיד"><span class="sw" style="background:${role.color}"></span><span class="rc-n">${esc(role.name)}</span><span class="chev">${icon('left', 's')}</span></button>` : ''}
     </div>`;
   }
 
@@ -8292,7 +8332,7 @@ window.FIREBASE_CONFIG = {
             <button class="icon-btn" data-rm-item="${i}" aria-label="הסר">${icon('x')}</button>
             <div style="grid-column:1/3">${inp('items.' + i + '.label', it.label || '', 'placeholder="תיאור (לא חובה)"')}</div></div>`).join('')}
           <button class="btn text sm" data-add-item>${icon('plus', 's')} הוסף שורה</button></div></details>
-        <label class="field"><span class="lbl">הערה</span><textarea class="input" data-f="note" rows="2" placeholder="לא חובה">${esc(d.note)}</textarea></label>
+        <label class="field"><span class="lbl">הערה</span><textarea class="input" data-f="note" rows="2" maxlength="500" placeholder="לא חובה">${esc(d.note)}</textarea></label>
         <details class="collapse" ${ovCount() ? 'open' : ''}><summary>${icon('hand', 's')} עקיפות ידניות ${ovCount() ? `<span class="tag override">${ovCount()}</span>` : ''}</summary><div class="in">
           <div class="tiny muted" style="margin-bottom:10px">כל רכיב מחושב אוטומטית. הפעל "ידני" רק אם המעסיק מחשב אחרת.</div>
           ${ovBlock('rest', 'תעריף שבת/חג', 'ביטול, הפעלה ידנית, טווח שעות, אחוז או סכום', `
@@ -9135,8 +9175,8 @@ window.FIREBASE_CONFIG = {
         <button class="vf-line" data-open="${f.key}" aria-expanded="false"><span class="vf-l"><span>${esc(f.label)}</span><small data-sub>${subOf(f)}</small></span><span class="vf-v" data-shown>${shown(f)}</span><span class="vf-pen">${icon('edit', 's')}</span></button>
         <div class="vf-edit">${src}
           <div class="vf-inputs">
-            ${f.hours ? `<label class="field"><span class="lbl">שעות</span><input class="input" type="number" step="any" inputmode="decimal" data-q="${f.key}" value="${v.qty != null ? v.qty : ''}"></label>` : ''}
-            <label class="field"><span class="lbl">${f.kind === 'info' ? 'ערך' : 'סכום בשקלים'}</span><input class="input" type="number" step="any" inputmode="decimal" data-v="${f.key}" value="${v.value != null ? v.value : ''}"></label>
+            ${f.hours ? `<label class="field"><span class="lbl">שעות</span><input class="input" type="number" step="any" inputmode="decimal" data-q="${f.key}" value="${v.qty != null ? esc(String(v.qty)) : ''}"></label>` : ''}
+            <label class="field"><span class="lbl">${f.kind === 'info' ? 'ערך' : 'סכום בשקלים'}</span><input class="input" type="number" step="any" inputmode="decimal" data-v="${f.key}" value="${v.value != null ? esc(String(v.value)) : ''}"></label>
           </div>
           <div class="vf-acts"><button class="btn text sm" data-rm="${f.key}">${icon('trash', 's')} הסרה</button><button class="btn tonal sm" data-close-row>${icon('check', 's')} סיום</button></div>
         </div></div>`;
@@ -9184,7 +9224,7 @@ window.FIREBASE_CONFIG = {
           <div class="small muted" style="margin:0 4px 10px">אם אחת מהן חשובה, בחרו מה היא. השאר יישארו בצד.</div>
           ${d.other.map((o, i) => `<div class="vf-o"><div class="vf-o-line">${esc(o.line)}</div>
             <div class="vf-o-in"><select class="input" data-og="${i}" aria-label="מה השורה הזאת">${[['ignore', 'להתעלם'], ['otherDed', 'ניכוי אחר'], ['otherPay', 'תשלום אחר'], ...Payslip.FIELDS.map((f) => [f.key, f.label])].map(([k, l]) => `<option value="${k}" ${o.guess === k ? 'selected' : ''}>${esc(l)}</option>`).join('')}</select>
-            <input class="input" type="number" step="any" inputmode="decimal" data-ov="${i}" value="${o.value}" aria-label="סכום"></div></div>`).join('')}</details>` : ''}
+            <input class="input" type="number" step="any" inputmode="decimal" data-ov="${i}" value="${esc(String(o.value))}" aria-label="סכום"></div></div>`).join('')}</details>` : ''}
         ${d.text ? `<details class="vf-group vf-more"><summary>${UI.tile('file', 'violet')}<b>הטקסט שזוהה וניתוח חכם</b><span class="vf-chev">${icon('left', 's')}</span></summary>
           <div class="code">${esc(d.text)}</div>
           <button class="btn outlined block" data-ai style="margin-top:10px">${icon('sparkle')} ניתוח חכם עם Claude ${S.settings.ai.apiKey ? '' : '(דורש מפתח API)'}</button>
@@ -9838,7 +9878,7 @@ window.FIREBASE_CONFIG = {
   RENDER.personal = {
     render: () => {
       const age = Engine.ageAt(S.settings.birthDate, U.todayKey());
-      return `<div class="card">${F.text('שם (לא חובה)', 's.userName', S.settings.userName, 'מופיע בברכות ובחתימה של הודעות למעסיק.')}
+      return `<div class="card">${F.text('שם (לא חובה)', 's.userName', S.settings.userName, 'מופיע בברכות ובחתימה של הודעות למעסיק.', 'maxlength="40"')}
         ${F.date('תאריך לידה (לא חובה)', 's.birthDate', S.settings.birthDate, 'לברכה ביום ההולדת, לשכר המינימום לפי גיל, לבדיקות חוק עבודת הנוער ולגיל הפנסיה.').replace('data-s=', 'data-redraw data-s=')}
         ${F.sel('מגדר (לא חובה)', 's.gender', [['', 'לא צוין'], ['m', 'גבר'], ['f', 'אישה']], S.settings.gender || '', 'רק לחישוב הפנסיה: חובת הפרשה מגיל 21 לגבר ומגיל 20 לאישה.')}</div>
         ${age != null ? `<div class="card ${age < 18 ? 'tonal' : ''}"><div class="kv"><span>גיל</span><b>${age}</b></div>
@@ -9862,7 +9902,7 @@ window.FIREBASE_CONFIG = {
         if (b.dataset.roleEdit) roleEditor(b.dataset.roleEdit, draw);
         if (b.dataset.roleAdd) roleEditor(null, draw, b.dataset.roleAdd);
         if (b.hasAttribute('data-emp-add')) {
-          const name = await UI.promptText('מעסיק חדש', 'שם המעסיק', '');
+          const name = String((await UI.promptText('מעסיק חדש', 'שם המעסיק', '')) || '').trim().slice(0, 60);
           if (!name) return;
           const emp = Object.assign(Defaults.defaultEmployer('emp_' + U.uid()), { name });
           await Store.put('employers', emp, 'הוספת מעסיק');
@@ -9875,7 +9915,7 @@ window.FIREBASE_CONFIG = {
             if (S.shifts.some((x) => x.employerId === emp.id)) { UI.toast('יש משמרות של המעסיק — אי אפשר למחוק'); return; }
             if (!(await UI.confirm('למחוק את המעסיק?', 'התפקידים שלו יימחקו.', 'מחק', true))) return;
             await App.saveOps([{ store: 'employers', del: emp.id }, ...S.roles.filter((x) => x.employerId === emp.id).map((x) => ({ store: 'roles', del: x.id }))], 'מחיקת מעסיק');
-          } else if (r) await Store.put('employers', Object.assign(Store.clone(emp), { name: r }));
+          } else if (r && String(r).trim()) await Store.put('employers', Object.assign(Store.clone(emp), { name: String(r).trim().slice(0, 60) }));
           draw();
         }
       });
@@ -9888,7 +9928,7 @@ window.FIREBASE_CONFIG = {
     let el = null;
     const body = () => {
       const rates = d.rates.slice().sort((a, b) => a.from.localeCompare(b.from));
-      return `<label class="field"><span class="lbl">שם התפקיד</span><input class="input" id="re-name" value="${esc(d.name)}" placeholder="למשל: סדרן"></label>
+      return `<label class="field"><span class="lbl">שם התפקיד</span><input class="input" id="re-name" value="${esc(d.name)}" placeholder="למשל: סדרן" maxlength="40"></label>
         <div class="field"><span class="lbl">צבע</span><div class="color-pick">${Defaults.ROLE_COLORS.map((c) => `<button style="background:${c}" class="${d.color === c ? 'on' : ''}" data-color="${c}" aria-label="צבע"></button>`).join('')}</div></div>
         <div class="section-title">${icon('wallet', 's')} תעריפים לפי תאריך</div>
         <div class="tiny muted" style="margin:-4px 4px 10px">העלאת שכר? הוסף תעריף חדש מתאריך מסוים — משמרות קודמות לא ישתנו.</div>
@@ -9900,12 +9940,13 @@ window.FIREBASE_CONFIG = {
         ${App.multiEmp() ? `<label class="field" style="margin-top:12px"><span class="lbl">מעסיק</span><select class="input" id="re-emp">${S.employers.map((e) => `<option value="${e.id}" ${e.id === d.employerId ? 'selected' : ''}>${esc(e.name)}</option>`).join('')}</select></label>` : ''}`;
     };
     const read = () => {
-      d.name = el.querySelector('#re-name').value.trim();
-      el.querySelectorAll('[data-rr]').forEach((i) => (d.rates[+i.dataset.rr].rate = UI.numIn(i)));
-      el.querySelectorAll('[data-rf]').forEach((i) => (d.rates[+i.dataset.rf].from = i.value));
+      d.name = el.querySelector('#re-name').value.trim().slice(0, 40);
+      el.querySelectorAll('[data-rr]').forEach((i) => { const r = d.rates[+i.dataset.rr]; if (r) r.rate = UI.numIn(i); });
+      el.querySelectorAll('[data-rf]').forEach((i) => { const r = d.rates[+i.dataset.rf]; if (r) r.from = i.value; });
       const em = el.querySelector('#re-emp'); if (em) d.employerId = em.value;
     };
-    const redraw = () => { read(); el.querySelector('.sh-body').innerHTML = body(); };
+    // the list may just have changed (a rate removed), so the screen is redrawn from d without reading it again
+    const redraw = () => { el.querySelector('.sh-body').innerHTML = body(); };
     UI.openSheet({
       title: orig ? 'עריכת תפקיד' : 'תפקיד חדש', body: body(),
       foot: `${orig ? `<button class="btn danger" data-del style="flex:0 0 auto">${icon('trash')}</button>` : ''}<button class="btn" data-save>${icon('check')} שמור</button>`,
@@ -12406,6 +12447,12 @@ window.FIREBASE_CONFIG = {
  *  - Chrome sometimes delivers a touchmove it held back during the last
  *    gesture (a sideways swipe) after the next touch began; those carry
  *    an older timestamp and are ignored, or the page would jump;
+ *  - the rest of a gesture is heard on the element the finger landed on,
+ *    not on the document: if the screen redraws mid-pull (a sync), that
+ *    element leaves the page and its events no longer reach the document,
+ *    which would leave the page hanging a little lower;
+ *  - a new touch while a pull is still open (a second finger, a gesture
+ *    the browser never finished) springs the page back first;
  *  - every frame is painted in requestAnimationFrame with transforms
  *    only; the browser's own pull-to-refresh and stretch effect are
  *    switched off (overscroll-behavior: none) so they never stack.
@@ -12470,15 +12517,29 @@ window.FIREBASE_CONFIG = {
     setTimeout(() => root.removeEventListener('click', kill, true), 450);
   }
 
+  let tgt = null;
+  function unbind() {
+    if (!tgt) return;
+    tgt.removeEventListener('touchmove', move);
+    tgt.removeEventListener('touchend', end);
+    tgt.removeEventListener('touchcancel', cancel);
+    tgt = null;
+  }
   document.addEventListener('touchstart', (e) => {
+    if (pulling) cancel();
     if (e.touches.length !== 1 || blocked(e.target) || !(e.target.closest && e.target.closest('#view'))) { y0 = null; return; }
     y0 = e.touches[0].clientY;
     x0 = e.touches[0].clientX;
     t0 = e.timeStamp;
     pulling = false; dist = 0; armed = false;
+    unbind();
+    tgt = e.target;
+    tgt.addEventListener('touchmove', move, { passive: true });
+    tgt.addEventListener('touchend', end, { passive: true });
+    tgt.addEventListener('touchcancel', cancel, { passive: true });
   }, { passive: true });
 
-  document.addEventListener('touchmove', (e) => {
+  function move(e) {
     if (y0 == null || e.timeStamp < t0) return; // a late event from the previous gesture
     if (e.touches.length !== 1) { cancel(); return; } // a second finger: not a pull any more
     const dy = e.touches[0].clientY - y0;
@@ -12498,10 +12559,10 @@ window.FIREBASE_CONFIG = {
     if (dist >= THRESHOLD && !armed) { armed = true; ind.classList.add('armed'); Fx.haptic(12); Fx.play('tick'); }
     else if (dist < THRESHOLD - 6 && armed) { armed = false; ind.classList.remove('armed'); }
     schedule();
-  }, { passive: true });
+  }
 
   function cancel() {
-    if (y0 == null) return;
+    unbind();
     y0 = null;
     if (!pulling) return;
     pulling = false; armed = false;
@@ -12511,6 +12572,7 @@ window.FIREBASE_CONFIG = {
   }
 
   async function end() {
+    unbind();
     if (y0 == null) return;
     y0 = null;
     if (!pulling) return;
@@ -12536,8 +12598,6 @@ window.FIREBASE_CONFIG = {
       busy = false;
     }
   }
-  document.addEventListener('touchend', end, { passive: true });
-  document.addEventListener('touchcancel', cancel, { passive: true });
 })(typeof window !== 'undefined' ? window : globalThis);
 
 </script>

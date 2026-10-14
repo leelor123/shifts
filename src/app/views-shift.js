@@ -339,7 +339,7 @@
             <button class="icon-btn" data-rm-item="${i}" aria-label="הסר">${icon('x')}</button>
             <div style="grid-column:1/3">${inp('items.' + i + '.label', it.label || '', 'placeholder="תיאור (לא חובה)"')}</div></div>`).join('')}
           <button class="btn text sm" data-add-item>${icon('plus', 's')} הוסף שורה</button></div></details>
-        <label class="field"><span class="lbl">הערה</span><textarea class="input" data-f="note" rows="2" placeholder="לא חובה">${esc(d.note)}</textarea></label>
+        <label class="field"><span class="lbl">הערה</span><textarea class="input" data-f="note" rows="2" maxlength="500" placeholder="לא חובה">${esc(d.note)}</textarea></label>
         <details class="collapse" ${ovCount() ? 'open' : ''}><summary>${icon('hand', 's')} עקיפות ידניות ${ovCount() ? `<span class="tag override">${ovCount()}</span>` : ''}</summary><div class="in">
           <div class="tiny muted" style="margin-bottom:10px">כל רכיב מחושב אוטומטית. הפעל "ידני" רק אם המעסיק מחשב אחרת.</div>
           ${ovBlock('rest', 'תעריף שבת/חג', 'ביטול, הפעלה ידנית, טווח שעות, אחוז או סכום', `

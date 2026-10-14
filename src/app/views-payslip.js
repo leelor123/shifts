@@ -147,8 +147,8 @@
         <button class="vf-line" data-open="${f.key}" aria-expanded="false"><span class="vf-l"><span>${esc(f.label)}</span><small data-sub>${subOf(f)}</small></span><span class="vf-v" data-shown>${shown(f)}</span><span class="vf-pen">${icon('edit', 's')}</span></button>
         <div class="vf-edit">${src}
           <div class="vf-inputs">
-            ${f.hours ? `<label class="field"><span class="lbl">שעות</span><input class="input" type="number" step="any" inputmode="decimal" data-q="${f.key}" value="${v.qty != null ? v.qty : ''}"></label>` : ''}
-            <label class="field"><span class="lbl">${f.kind === 'info' ? 'ערך' : 'סכום בשקלים'}</span><input class="input" type="number" step="any" inputmode="decimal" data-v="${f.key}" value="${v.value != null ? v.value : ''}"></label>
+            ${f.hours ? `<label class="field"><span class="lbl">שעות</span><input class="input" type="number" step="any" inputmode="decimal" data-q="${f.key}" value="${v.qty != null ? esc(String(v.qty)) : ''}"></label>` : ''}
+            <label class="field"><span class="lbl">${f.kind === 'info' ? 'ערך' : 'סכום בשקלים'}</span><input class="input" type="number" step="any" inputmode="decimal" data-v="${f.key}" value="${v.value != null ? esc(String(v.value)) : ''}"></label>
           </div>
           <div class="vf-acts"><button class="btn text sm" data-rm="${f.key}">${icon('trash', 's')} הסרה</button><button class="btn tonal sm" data-close-row>${icon('check', 's')} סיום</button></div>
         </div></div>`;
@@ -196,7 +196,7 @@
           <div class="small muted" style="margin:0 4px 10px">אם אחת מהן חשובה, בחרו מה היא. השאר יישארו בצד.</div>
           ${d.other.map((o, i) => `<div class="vf-o"><div class="vf-o-line">${esc(o.line)}</div>
             <div class="vf-o-in"><select class="input" data-og="${i}" aria-label="מה השורה הזאת">${[['ignore', 'להתעלם'], ['otherDed', 'ניכוי אחר'], ['otherPay', 'תשלום אחר'], ...Payslip.FIELDS.map((f) => [f.key, f.label])].map(([k, l]) => `<option value="${k}" ${o.guess === k ? 'selected' : ''}>${esc(l)}</option>`).join('')}</select>
-            <input class="input" type="number" step="any" inputmode="decimal" data-ov="${i}" value="${o.value}" aria-label="סכום"></div></div>`).join('')}</details>` : ''}
+            <input class="input" type="number" step="any" inputmode="decimal" data-ov="${i}" value="${esc(String(o.value))}" aria-label="סכום"></div></div>`).join('')}</details>` : ''}
         ${d.text ? `<details class="vf-group vf-more"><summary>${UI.tile('file', 'violet')}<b>הטקסט שזוהה וניתוח חכם</b><span class="vf-chev">${icon('left', 's')}</span></summary>
           <div class="code">${esc(d.text)}</div>
           <button class="btn outlined block" data-ai style="margin-top:10px">${icon('sparkle')} ניתוח חכם עם Claude ${S.settings.ai.apiKey ? '' : '(דורש מפתח API)'}</button>

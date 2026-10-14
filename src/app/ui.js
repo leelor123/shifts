@@ -181,8 +181,38 @@
     if (opts.onMount) opts.onMount(sh, entry);
     return entry;
   }
+  /*
+   * Dialogs and pickers are layers too: each owns a history entry like a sheet, so the back
+   * button closes the top dialog (and only it) instead of the sheet underneath, or the app.
+   * onBack runs when back (or closeTop / closeAll) closes it; a dialog that closes itself with
+   * one of its own buttons calls closeLayer, which drops its history entry.
+   */
+  function pushLayer(onBack) {
+    const entry = { layer: true, onBack, closed: false, pushed: false, opts: {} };
+    sheets.push(entry);
+    if (pendingDepth === null) pushEntry(entry);
+    return entry;
+  }
+  function closeLayer(entry) {
+    if (!entry || entry.closed) return;
+    entry.closed = true;
+    const wasPushed = entry.pushed;
+    const top = committed().length;
+    const i = sheets.indexOf(entry);
+    if (i >= 0) sheets.splice(i, 1);
+    if (!wasPushed) return;
+    const cur = pendingDepth === null ? top : pendingDepth;
+    if (cur > 0) navigateBack(1, cur - 1);
+  }
   function removeSheet(entry) {
     if (entry.closed) return;
+    if (entry.layer) {
+      entry.closed = true;
+      const i = sheets.indexOf(entry);
+      if (i >= 0) sheets.splice(i, 1);
+      if (entry.onBack) entry.onBack();
+      return;
+    }
     entry.closed = true;
     entry.bd.classList.remove('show');
     entry.sh.classList.remove('show');
@@ -205,8 +235,6 @@
     if (cur > 0) navigateBack(cur, 0);
   }
   window.addEventListener('popstate', () => {
-    const d = document.querySelector('.dialog');
-    if (d && d._resolve) { d._resolve(null); d.remove(); }
     // one event can stand for several steps (closeAll, or a fast double back)
     const depth = (history.state && history.state.sheet) || 0;
     committed().slice(depth).reverse().forEach(removeSheet);
@@ -220,15 +248,16 @@
       el.className = 'dialog';
       el.innerHTML = `<div class="backdrop show" style="z-index:-1"></div><div class="box" role="alertdialog" aria-modal="true"><h3>${esc(opts.title || '')}</h3><div>${opts.html || esc(opts.text || '')}</div><div class="actions">${(opts.buttons || []).map((b, i) => `<button class="btn ${b.cls || 'text'}" data-i="${i}">${esc(b.label)}</button>`).join('')}</div></div>`;
       document.body.appendChild(el);
-      el._resolve = resolve;
+      const layer = pushLayer(() => { el.remove(); resolve(null); });
+      const done = (v) => { el.remove(); closeLayer(layer); resolve(v); };
+      el._resolve = done; // tests close it this way
       el.querySelectorAll('[data-i]').forEach((b) => (b.onclick = () => {
         const btn = opts.buttons[+b.dataset.i];
         const v = btn.value !== undefined ? btn.value : +b.dataset.i;
         const input = el.querySelector('input,textarea,select');
-        el.remove();
-        resolve(btn.value === 'input' ? (input ? input.value : null) : v);
+        done(btn.value === 'input' ? (input ? input.value : null) : v);
       }));
-      el.querySelector('.backdrop').onclick = () => { el.remove(); resolve(null); };
+      el.querySelector('.backdrop').onclick = () => done(null);
       const inp = el.querySelector('input,textarea');
       if (inp) setTimeout(() => inp.focus(), 50);
     });
@@ -260,7 +289,7 @@
   function vibrate(ms) {
     const fx = root.Store && root.Store.S.settings && root.Store.S.settings.fx;
     if (fx && fx.haptic === false) return;
-    try { if (navigator.vibrate) navigator.vibrate(ms || 12); } catch (e) { /* ignore */ }
+    try { if (navigator.vibrate && (!navigator.userActivation || navigator.userActivation.hasBeenActive)) navigator.vibrate(ms || 12); } catch (e) { /* ignore */ }
   }
   function download(filename, content, type) {
     const blob = content instanceof Blob ? content : new Blob([content], { type: type || 'text/plain;charset=utf-8' });
@@ -315,5 +344,5 @@
   function invalid(text) { toast(text); if (root.Fx) root.Fx.nope(); }
   /** An icon in a soft coloured tile (violet, mint, amber, sky, pink, orange, white). */
   const tile = (name, tint, cls) => `<span class="itile t-${tint || 'violet'} ${cls || ''}" aria-hidden="true">${icon(name)}</span>`;
-  root.UI = { tile, skeleton, invalid, icon, esc, money, numv, delta, roleDot, emptyState, toast, openSheet, closeTop, closeAll, dialog, confirm, promptText, onSwipe, vibrate, download, shareFile, copyText, numIn, timeAgo, sheets };
+  root.UI = { pushLayer, closeLayer, tile, skeleton, invalid, icon, esc, money, numv, delta, roleDot, emptyState, toast, openSheet, closeTop, closeAll, dialog, confirm, promptText, onSwipe, vibrate, download, shareFile, copyText, numIn, timeAgo, sheets };
 })(typeof window !== 'undefined' ? window : globalThis);

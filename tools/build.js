@@ -26,7 +26,27 @@ const hash = crypto.createHash('sha256').update(js + css + read('index.html') + 
 const version = pkg.version;
 
 fs.mkdirSync(DIST, { recursive: true });
-const html = read('index.html').replace('/*__CSS__*/', () => css).replace('/*__JS__*/', () => js).replace('__VERSION__', version);
+let html = read('index.html').replace('/*__CSS__*/', () => css).replace('/*__JS__*/', () => js).replace('__VERSION__', version);
+// Content-Security-Policy: only the app's own inline script (by its hash) and the libraries it loads
+// on demand may run, so injected markup (an <img onerror>, a <script>) can never execute.
+const inline = [...html.matchAll(/<script>([\s\S]*?)<\/script>/g)].map((m) => "'sha256-" + crypto.createHash('sha256').update(m[1], 'utf8').digest('base64') + "'");
+const CSP = [
+  "default-src 'self'",
+  `script-src 'self' ${inline.join(' ')} https://www.gstatic.com https://apis.google.com https://cdnjs.cloudflare.com https://cdn.jsdelivr.net 'wasm-unsafe-eval'`,
+  "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
+  "font-src 'self' https://fonts.gstatic.com data:",
+  "img-src 'self' data: blob: https:",
+  "connect-src 'self' https: wss:",
+  "frame-src https://shiftpay-70ab6.firebaseapp.com https://accounts.google.com https://apis.google.com https://*.google.com",
+  "worker-src 'self' blob: https://cdnjs.cloudflare.com https://cdn.jsdelivr.net",
+  "media-src 'self' data: blob:",
+  "manifest-src 'self'",
+  "object-src 'none'",
+  "base-uri 'self'",
+  "form-action 'self'",
+].join('; ');
+if (inline.length !== 1) throw new Error('expected exactly one inline script, found ' + inline.length);
+html = html.replace('<meta charset="utf-8">', () => `<meta charset="utf-8">\n<meta http-equiv="Content-Security-Policy" content="${CSP}">`);
 fs.writeFileSync(path.join(DIST, 'index.html'), html);
 fs.writeFileSync(path.join(DIST, 'sw.js'), read('sw.js').replace('__VERSION__', `${version}-${hash}`));
 fs.copyFileSync(path.join(SRC, 'manifest.webmanifest'), path.join(DIST, 'manifest.webmanifest'));

@@ -13,7 +13,7 @@ const server = http.createServer((req, res) => {
   const file = path.join(docs, p === '/' ? 'index.html' : p);
   if (!fs.existsSync(file) || fs.statSync(file).isDirectory()) { res.writeHead(404); res.end(); return; }
   let body = fs.readFileSync(file);
-  if (file.endsWith('index.html') && !/cloud=1/.test(req.url)) body = Buffer.from(body.toString('utf8').replace('window.FIREBASE_CONFIG = {', 'window.__NO_CLOUD = {'));
+  if (file.endsWith('index.html') && !/cloud=1/.test(req.url)) body = Buffer.from(body.toString('utf8').replace('window.FIREBASE_CONFIG = {', 'window.__NO_CLOUD = {').replace(/<meta http-equiv="Content-Security-Policy"[^>]*>/, ''));
   res.writeHead(200, { 'Content-Type': TYPES[path.extname(file)] || 'application/octet-stream' });
   res.end(body);
 });
@@ -306,6 +306,24 @@ let errors = [];
     if (r.tf) throw new Error('page left moved: ' + r.tf);
     if (r.tab !== 'home') throw new Error('navigated to ' + r.tab);
   });
+  await step('pull to refresh survives a redraw mid-pull and a second finger', async () => {
+    await ev(() => { App.go('home'); window.scrollTo(0, 0); }); await sleep(400);
+    const cdp = await page.createCDPSession();
+    const t = (type, pts) => cdp.send('Input.dispatchTouchEvent', { type, touchPoints: pts });
+    await t('touchStart', [{ x: 200, y: 230, id: 1 }]);
+    for (let i = 1; i <= 12; i++) { await t('touchMove', [{ x: 200, y: 230 + i * 22, id: 1 }]); await sleep(16); if (i === 3) await ev(() => App.rerender()); }
+    await t('touchEnd', []);
+    await sleep(3000);
+    const a = await ev(() => document.getElementById('view').style.transform);
+    if (a) throw new Error('after a redraw the page stayed moved: ' + a);
+    await t('touchStart', [{ x: 200, y: 230, id: 1 }]);
+    for (let i = 1; i <= 5; i++) { await t('touchMove', [{ x: 200, y: 230 + i * 20, id: 1 }]); await sleep(16); }
+    await t('touchMove', [{ x: 200, y: 340, id: 1 }, { x: 300, y: 300, id: 2 }]); await sleep(16);
+    await t('touchEnd', []);
+    await sleep(800);
+    const b = await ev(() => document.getElementById('view').style.transform);
+    if (b) throw new Error('after a second finger the page stayed moved: ' + b);
+  });
   await step('time picker: the wheels go round (23 → 00, 00 → 59)', async () => {
     await ev(() => { window.__t = undefined; UI.pickTime({ value: '23:00' }).then((v) => { window.__t = v; }); }); await sleep(500);
     await ev(() => { const [h, m] = document.querySelectorAll('.pk-wheel'); h.scrollTop += 44; m.scrollTop -= 44; }); await sleep(700);
@@ -315,6 +333,24 @@ let errors = [];
     if (!mid) throw new Error('a wheel was not moved back to the middle');
     await ev(() => document.querySelector('[data-pk-ok]').click()); await sleep(300);
     if ((await ev(() => window.__t)) !== '00:59') throw new Error('result ' + (await ev(() => window.__t)));
+  });
+  await step('back button: closes only the top picker or question, never the app', async () => {
+    await ev(() => { App.go('reports'); }); await sleep(300);
+    await ev(() => document.querySelector('[data-act="rep-sub"][data-s="list"]').click()); await sleep(400);
+    await ev(() => document.querySelector('.pk-field').click()); await sleep(400);
+    await ev(() => history.back()); await sleep(450);
+    const s1 = await ev(() => ({ inApp: !!window.App, dialogs: document.querySelectorAll('.dialog').length, layers: UI.sheets.length }));
+    if (!s1.inApp || s1.dialogs || s1.layers) throw new Error('page picker: ' + JSON.stringify(s1));
+    await ev(() => App.sheetsApi.shiftEditor()); await sleep(600);
+    await ev(() => document.querySelector('.sheet .pk-field.pk-date').click()); await sleep(400);
+    await ev(() => history.back()); await sleep(450);
+    const s2 = await ev(() => ({ dialogs: document.querySelectorAll('.dialog').length, sheets: document.querySelectorAll('.sheet.show').length }));
+    if (s2.dialogs !== 0 || s2.sheets !== 1) throw new Error('picker over a sheet: ' + JSON.stringify(s2));
+    await ev(() => { UI.confirm('x', 'y'); }); await sleep(300);
+    await ev(() => history.back()); await sleep(450);
+    const s3 = await ev(() => ({ dialogs: document.querySelectorAll('.dialog').length, sheets: document.querySelectorAll('.sheet.show').length }));
+    if (s3.dialogs !== 0 || s3.sheets !== 1) throw new Error('question over a sheet: ' + JSON.stringify(s3));
+    await closeAll(); await ev(() => App.go('home')); await sleep(300);
   });
   await step('games: every game opens, plays a turn and stops when closed', async () => {
     await ev(() => App.actions.games()); await sleep(600);

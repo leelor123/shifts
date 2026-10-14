@@ -49,14 +49,17 @@
         </div>`;
       document.body.appendChild(el);
       let done = false;
+      const out = () => { el.classList.add('out'); setTimeout(() => el.remove(), 220); };
+      // the back button closes the picker (only the picker)
+      const layer = UI.pushLayer(() => { if (done) return; done = true; out(); resolve(null); });
       const finish = (v) => {
         if (done) return;
         done = true;
-        el.classList.add('out');
-        setTimeout(() => el.remove(), 220);
+        out();
+        UI.closeLayer(layer);
         resolve(v);
       };
-      el._resolve = (v) => { done = true; resolve(v); }; // the back button / tests close it this way
+      el._resolve = (v) => { if (done) return; done = true; el.remove(); UI.closeLayer(layer); resolve(v); }; // tests close it this way
       el.querySelector('.backdrop').onclick = () => finish(null);
       el.querySelector('[data-pk-x]').onclick = () => finish(null);
       // swipe down on the handle closes, like the other sheets

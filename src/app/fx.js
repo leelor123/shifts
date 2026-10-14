@@ -71,7 +71,9 @@
   /* ---------------- vibration ---------------- */
   Fx.haptic = function (pattern) {
     if (prefs().haptic === false) return;
-    try { if (navigator.vibrate) navigator.vibrate(pattern || 8); } catch (e) { /* not supported */ }
+    // before the first tap the browser refuses (and logs a warning), so don't ask
+    const act = navigator.userActivation;
+    try { if (navigator.vibrate && (!act || act.hasBeenActive)) navigator.vibrate(pattern || 8); } catch (e) { /* not supported */ }
   };
 
   /* ---------------- tap ring: hugs the tapped control, from its centre ---------------- */
