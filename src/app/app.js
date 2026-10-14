@@ -606,11 +606,11 @@
 
   function registerSW() {
     if (!('serviceWorker' in navigator) || location.protocol === 'file:') return;
+    const busy = () => !!App.blocking || !!document.querySelector('.sheet, .dialog');
     navigator.serviceWorker.register('sw.js').then((reg) => {
       // A new version downloads quietly in the background and switches in when it can't disturb:
       // right after the app opens, or when the app goes to the background with nothing half-filled.
       const quietUpdate = (w) => {
-        const busy = () => !!App.blocking || !!document.querySelector('.sheet, .dialog');
         const apply = () => w.postMessage('skipWaiting');
         if (performance.now() < 5000 && !busy()) { apply(); return; }
         const onHide = () => {
@@ -639,10 +639,29 @@
         }).catch(() => {});
       }
     }).catch((e) => console.warn('SW', e));
-    // reload only when an update replaced a previous version (not on the very first install)
-    const hadController = !!navigator.serviceWorker.controller;
+    // Reload only when an update replaced a previous version, not when the very first install takes over.
+    // Whether there was a previous version is checked at each change: a page that opened before the
+    // first install (first launch from the store) must still reload on every later update.
+    let current = navigator.serviceWorker.controller;
     let reloading = false;
-    navigator.serviceWorker.addEventListener('controllerchange', () => { if (hadController && !reloading) { reloading = true; location.reload(); } });
+    const reload = () => { if (!reloading) { reloading = true; location.reload(); } };
+    navigator.serviceWorker.addEventListener('controllerchange', () => {
+      const had = current;
+      current = navigator.serviceWorker.controller;
+      if (had) reload();
+    });
+    // Safety net: Android keeps the app's page alive for days. If a newer version has already replaced
+    // this one's files but this page still runs the old code, start over when the app is hidden or
+    // reopened (never in the middle of a form, and at most once per version).
+    document.addEventListener('visibilitychange', () => {
+      if (!window.caches || !navigator.serviceWorker.controller || !window.APP_BUILD || busy()) return;
+      caches.keys().then((keys) => {
+        const shells = keys.filter((k) => k.startsWith('shiftpay-shell-'));
+        if (shells.length !== 1 || shells[0] === 'shiftpay-shell-' + window.APP_BUILD || busy()) return;
+        try { if (sessionStorage.getItem('reloaded-for') === shells[0]) return; sessionStorage.setItem('reloaded-for', shells[0]); } catch (e) { return; }
+        reload();
+      }).catch(() => {});
+    });
   }
 
   // a storage hiccup inside a background save is already handled by the store; never let it surface as a crash

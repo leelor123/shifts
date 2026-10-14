@@ -445,6 +445,9 @@ let errors = [];
     const first = await ev(() => { UI.pickTime({ value: '09:00' }); const w = document.querySelector('.dialog.pk .pk-wheel'); const bd = document.querySelector('.dialog.pk .backdrop'); return { on: !!w.querySelector('.pk-opt.on'), top: w.scrollTop, op: +getComputedStyle(bd).opacity }; });
     if (!first.on || first.top < 440) throw new Error('wheel not in place: ' + JSON.stringify(first));
     if (first.op > 0.5) throw new Error('dimming did not fade in: ' + first.op);
+    // the card keeps its own layer (on Android one frame came out without its background when it lost it)
+    const wc = await ev(() => getComputedStyle(document.querySelector('.dialog.pk .pk-card')).willChange);
+    if (!/transform/.test(wc)) throw new Error('picker card lost will-change: ' + wc);
     // tapping OK: the tap ring goes as soon as the picker starts to close
     const ghost = await ev(() => new Promise((res) => {
       document.querySelector('.dialog.pk [data-pk-ok]').click();

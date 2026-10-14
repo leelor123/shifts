@@ -287,6 +287,10 @@ body.fx .nav .fab:active { transform: scale(.9) rotate(90deg); }
 .pk-field:disabled { opacity: .5; }
 .dialog.pk { place-items: end center; padding: 0; z-index: 70; }
 .pk-card { background: var(--surface-1); width: 100%; max-width: 480px; border-radius: 26px 26px 0 0; padding: 0 16px calc(16px + var(--safe-b)); box-shadow: 0 -10px 40px rgba(0, 0, 0, .18); animation: pk-up .34s cubic-bezier(.2, .9, .3, 1.02); max-height: 94vh; overflow-y: auto; overscroll-behavior: contain; }
+/* The card scrolls (overflow) and has round corners. On Android Chrome, when its slide-up ends and it
+ * leaves its own GPU layer, one frame came out without the card's background (the editor showed
+ * through: the flash when opening the date or time picker). Keeping it on its own layer avoids that. */
+.pk-card { will-change: transform; }
 .dialog.pk.out .pk-card { animation: pk-down .2s ease-in forwards; }
 .dialog.pk.out .backdrop { opacity: 0; transition: opacity .2s; }
 @keyframes pk-up { from { transform: translateY(100%); } }

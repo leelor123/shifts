@@ -29,7 +29,7 @@ const hash = crypto.createHash('sha256').update(js + css + read('index.html') + 
 const version = pkg.version;
 
 fs.mkdirSync(DIST, { recursive: true });
-let html = read('index.html').replace('/*__CSS__*/', () => css).replace('/*__JS__*/', () => js).replace('__VERSION__', version);
+let html = read('index.html').replace('/*__CSS__*/', () => css).replace('/*__JS__*/', () => js).replace('__VERSION__', version).replace('__BUILD__', `${version}-${hash}`);
 // Content-Security-Policy: only the app's own inline script (by its hash) and the libraries it loads
 // on demand may run, so injected markup (an <img onerror>, a <script>) can never execute.
 const inline = [...html.matchAll(/<script>([\s\S]*?)<\/script>/g)].map((m) => "'sha256-" + crypto.createHash('sha256').update(m[1], 'utf8').digest('base64') + "'");
