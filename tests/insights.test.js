@@ -130,3 +130,21 @@ T.test('youth law checks stay quiet for adults', () => {
   const r = Insights.run(Engine.buildModel(data([shift('2026-10-06', '16:00', '23:30')], (d) => { d.settings.birthDate = '2000-01-01'; })), { now: NOW });
   T.ok(!r.alerts.some((x) => x.type === 'youth'));
 });
+
+T.test('odd alert settings never crash or hang the insights', () => {
+  const { Insights, Engine, Defaults, U } = globalThis;
+  const settings = Defaults.defaultSettings();
+  const emp = Defaults.defaultEmployer();
+  const roles = Defaults.defaultRoles(emp.id);
+  const shifts = [];
+  for (let d = 1; d <= 120; d += 2) { const k = U.addDays('2026-06-01', d); const s = U.toEpoch(k, '10:00'); shifts.push({ id: 'x' + d, kind: 'shift', employerId: emp.id, roleId: roles[0].id, status: 'done', start: s, end: s + 5 * 3600000, items: [] }); }
+  for (const v of [-5, 0, 99999999, NaN, 'abc', 2.5]) {
+    const s2 = JSON.parse(JSON.stringify(settings));
+    Object.assign(s2.alerts, { compareWeeks: v, compareMonths: v, minWeeksData: v, deviationPct: v });
+    const model = Engine.buildModel({ settings: s2, employers: [emp], roles, dayRules: [], shifts, entries: [] });
+    const t0 = Date.now();
+    const res = Insights.run ? Insights.run(model, { settings: s2, notifications: [], payslips: [], today: '2026-10-14' }) : null;
+    T.ok(Date.now() - t0 < 3000, 'fast with ' + v);
+    T.ok(res !== undefined, 'ran with ' + v);
+  }
+});

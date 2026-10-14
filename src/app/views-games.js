@@ -21,7 +21,7 @@
   const LIST = [
     { id: 'coins', ic: 'wallet', tint: 'amber', t: 'תופסים מטבעות', s: 'גוררים את הארנק, תופסים כסף ומתחמקים מקנסות.', unit: ' ₪' },
     { id: 'quiz', ic: 'calc', tint: 'violet', t: 'כמה זה יוצא?', s: 'חשבון מהיר של שכר, שעות נוספות ושבתות.', unit: ' נק׳' },
-    { id: 'facts', ic: 'shield', tint: 'mint', t: 'נכון או לא?', s: 'כמה טוב אתה מכיר את הזכויות שלך בעבודה?', unit: '/10' },
+    { id: 'facts', ic: 'shield', tint: 'mint', t: 'נכון או לא?', s: 'בודקים כמה מכירים את הזכויות בעבודה.', unit: '/10' },
   ];
   const best = (id) => +((S.meta.games || {})[id]) || 0;
   /** Saves a score; true when it beats the previous best. */
@@ -72,7 +72,7 @@
       ['e10k', '🤑', money(10000), 'הרווחת יותר מ-' + money(10000), earned >= 10000, count(Math.round(earned), 10000)],
       ['e25k', '🏦', money(25000), 'הרווחת יותר מ-' + money(25000), earned >= 25000, count(Math.round(earned), 25000)],
       ['streak', '🔥', '4 שבועות ברצף', 'לפחות משמרת אחת בכל שבוע, ארבעה שבועות רצופים', streak >= 4, count(streak, 4)],
-      ['shabbat', '🕯️', 'שבת או חג', 'משמרת שיש בה שעות שבת או חג (ושילמו עליהן תוספת?)', done.some((r) => r.restHours > 0)],
+      ['shabbat', '🕯️', 'שבת או חג', 'משמרת עם שעות שבת או חג. כדאי לוודא שקיבלת עליהן תוספת', done.some((r) => r.restHours > 0)],
       ['night', '🌙', 'משמרת לילה', 'משמרת שרובה בלילה', done.some((r) => r.isNightShift)],
       ['slip', '🧾', 'בדיקת תלוש', 'בודקים תלוש שכר מול המשמרות', S.payslips.length > 0],
       ['rights', '🛡️', 'הזכויות שלי', 'נכנסים למסך הזכויות ובודקים מה מגיע', !!S.meta.usedRights],
@@ -344,7 +344,7 @@
     function intro() {
       over.classList.add('show');
       over.innerHTML = `<div class="gm-intro">${App.mascot ? App.mascot('wink', { size: 84 }) : ''}
-        <div class="gm-intro-t">${ROUND} שניות. כמה כסף תספיק לתפוס?</div>
+        <div class="gm-intro-t">${ROUND} שניות. כמה כסף אפשר לתפוס?</div>
         <div class="cg-legend"><span><i class="lg-coin"></i>מטבעות ושטרות</span><span><i class="lg-fine"></i>קנס: מוריד לב</span><span><i class="lg-clock"></i>עוד 5 שניות</span></div>
         <div class="tiny muted">גוררים את הארנק עם האצבע (או החצים במקלדת)</div>
         <button class="btn big" data-go>${icon('play')} התחלה</button></div>`;
@@ -456,7 +456,7 @@
       const right = res.filter(Boolean).length;
       endScreen(box, {
         id: 'quiz', unit: ' נק׳', score, ratio: right / QN,
-        title: right === QN ? 'מושלם! כל התשובות נכונות' : right >= 7 ? 'יפה מאוד!' : right >= 4 ? 'לא רע בכלל' : 'עוד סיבוב ותשתפר',
+        title: right === QN ? 'מושלם! כל התשובות נכונות' : right >= 7 ? 'יפה מאוד!' : right >= 4 ? 'לא רע בכלל' : 'בסיבוב הבא זה יילך טוב יותר',
         big: `${score} <small>נק׳</small>`,
         sub: `${right} מתוך ${QN} תשובות נכונות`,
         again: start,
@@ -510,7 +510,7 @@
       const right = res.filter(Boolean).length;
       endScreen(box, {
         id: 'facts', unit: '/10', score: right, ratio: right / list.length,
-        title: right >= 9 ? 'מומחה לזכויות!' : right >= 6 ? 'יודע לא מעט' : 'שווה להציץ בזכויות שלך',
+        title: right >= 9 ? 'אלופי הזכויות!' : right >= 6 ? 'ידע לא רע בכלל' : 'שווה להציץ בזכויות שלך',
         big: `${right}<small>/${list.length}</small>`,
         sub: right < 9 ? '<button class="btn text sm" data-rights>לכל הזכויות שלי</button>' : '',
         again: start,

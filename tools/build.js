@@ -21,6 +21,8 @@ const JS_ORDER = [
 const read = (p) => fs.readFileSync(path.join(SRC, p), 'utf8');
 const js = JS_ORDER.map((f) => `/* ---- ${f} ---- */\n${read(f)}`).join('\n');
 if (/<\/script/i.test(js)) throw new Error('JS contains "</script" — would break inlining');
+// a typo in any file must stop the build, not reach phones as a blank screen (compiled, not run)
+try { new (require('vm').Script)(js, { filename: 'bundle.js' }); } catch (e) { throw new Error('JS does not compile: ' + e.message + '\n' + String(e.stack || '').split('\n').slice(0, 3).join('\n')); }
 // styles.css is the base design; styles-v3.css the playful layer on top (pickers, mascot, colours)
 const css = read('styles.css') + '\n' + read('styles-v3.css');
 const hash = crypto.createHash('sha256').update(js + css + read('index.html') + read('sw.js')).digest('hex').slice(0, 8);

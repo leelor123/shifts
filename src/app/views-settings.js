@@ -50,6 +50,28 @@
     }
     return el.value;
   }
+  /* numbers people type: never negative (except the Shabbat offsets and coordinates), and within a range
+     where a value would otherwise break a calculation or a screen */
+  const MAY_BE_NEGATIVE = new Set(['s.rest.startOffsetMin', 's.rest.endOffsetMin', 's.rest.lat', 's.rest.lon']);
+  const RANGES = {
+    's.alerts.compareWeeks': [1, 26], 's.alerts.compareMonths': [1, 12], 's.alerts.minWeeksData': [1, 52], 's.alerts.deviationPct': [1, 500],
+    's.alerts.streakDays': [2, 60], 's.alerts.weekHoursMax': [1, 168], 's.alerts.longShiftHours': [1, 48], 's.alerts.minRestHours': [0, 48],
+    's.alerts.timerHours': [1, 72], 's.alerts.idleDays': [1, 365], 's.alerts.suspiciousHours': [1, 72], 's.alerts.backupDays': [1, 365],
+    's.alerts.upcomingMin': [0, 1440], 's.alerts.weeklyHour': [0, 23], 'e.payDay': [1, 31], 'e.otThreshold': [1, 24], 'e.otTier1Hours': [0, 24],
+    'e.minShiftHours': [0, 24], 'e.nightShiftThreshold': [1, 24], 'e.defaultBreakMin': [0, 600], 's.leave.dayHours': [0, 24],
+    's.rest.lat': [-90, 90], 's.rest.lon': [-180, 180], 's.rest.startOffsetMin': [-180, 180], 's.rest.endOffsetMin': [-180, 180],
+    's.rest.candleMin': [0, 120], 's.rest.exitMinutes': [0, 120],
+  };
+  /** Checks a typed number; returns [ok, value, message]. */
+  function checkNumber(path, v) {
+    if (typeof v !== 'number') return [true, v];
+    if (!Number.isFinite(v)) return [false, v, 'המספר לא תקין'];
+    if (v < 0 && !MAY_BE_NEGATIVE.has(path)) return [false, v, 'כאן אי אפשר מספר שלילי'];
+    const r = RANGES[path];
+    if (r && (v < r[0] || v > r[1])) return [true, Math.min(r[1], Math.max(r[0], v)), `הערך הותאם לטווח ${r[0]}–${r[1]}`];
+    if (Math.abs(v) > 1e7) return [false, v, 'המספר גדול מדי'];
+    return [true, v];
+  }
   /** Bind auto-save. empId() returns the employer being edited. */
   function bind(el, empId, redraw) {
     el.addEventListener('change', async (e) => {
@@ -62,14 +84,17 @@
         if (redraw) redraw();
         return;
       }
-      const v = readVal(t);
+      let v = readVal(t);
+      const [ok, fixed, msg] = checkNumber(path, v);
+      if (!ok) { UI.invalid(msg); if (redraw) redraw(); return; }
+      if (fixed !== v) { v = fixed; t.value = fixed; }
       if (path.startsWith('s.')) await Store.setSettings((st) => setPath(st, path.slice(2), v));
       else if (path.startsWith('e.')) {
         const emp = Store.clone(App.employer(empId()));
         setPath(emp, path.slice(2), v);
         await Store.put('employers', emp);
       }
-      UI.toast('נשמר', null, { ok: true });
+      UI.toast(msg || 'נשמר', null, { ok: true });
       if (redraw && t.dataset.redraw != null) redraw();
     });
   }
@@ -114,13 +139,46 @@
     about: { icon: 'info', title: 'אודות והתקנה', sub: () => 'גרסה ' + root.APP_VERSION },
   };
 
+  // extra words people may search for, per section
+  const FIND = {
+    personal: 'שם גיל יום הולדת תאריך לידה מגדר', account: 'התחברות גוגל google סנכרון ענן חשבון התנתקות מחיקת חשבון',
+    roles: 'עבודה מקום עבודה תפקיד מעסיק שכר לשעה תעריף העלאה העלאת שכר', calc: 'שעות נוספות 125 150 עיגול לילה הפסקה',
+    rest: 'שבת חג חגים עיר כניסת שבת יציאת שבת', pay: 'נסיעות החזר נסיעות תקרה תקופת שכר יום תשלום משכורת',
+    net: 'מס מס הכנסה נקודות זיכוי פנסיה ביטוח לאומי מס בריאות השתלמות נטו', leave: 'חופשה מחלה הבראה ותק תחילת עבודה',
+    goal: 'יעד יעדים חיסכון חוסכים', alerts: 'התראות תזכורות פוש הודעות', templates: 'תבנית תבניות משמרת קבועה',
+    look: 'צבע צבעים ערכת נושא כהה בהיר מצב לילה גופן גופנים מראה צלילים רטט', security: 'קוד נעילה טביעת אצבע סיסמה',
+    assistant: 'בינה מלאכותית עוזר שאלות ai', ai: 'מפתח api claude ניתוח תלוש', backup: 'גיבוי שחזור קובץ', export: 'ייצוא אקסל excel csv pdf יומן',
+    demo: 'דוגמה הדגמה', about: 'גרסה התקנה אודות', rights: 'זכויות שכר מינימום',
+  };
+  App.views.settings_mount = function (v) {
+    const q = v.querySelector('#set-q');
+    if (!q) return;
+    const norm = (s) => s.toLowerCase().replace(/["'״׳]/g, '').trim();
+    q.addEventListener('input', () => {
+      const t = norm(q.value);
+      let shown = 0;
+      v.querySelectorAll('.set-list').forEach((list) => {
+        let any = false;
+        // matched from the start of a word: "צבע" finds colours, not the fingerprint ("אצבע")
+        list.querySelectorAll('[data-find]').forEach((it) => { const ok = !t || (' ' + it.dataset.find).includes(' ' + t); it.hidden = !ok; if (ok) { any = true; shown++; } });
+        list.hidden = !any;
+        const title = list.previousElementSibling;
+        if (title && title.classList.contains('section-title')) title.hidden = !any;
+      });
+      const none = v.querySelector('#set-none');
+      if (none) none.hidden = !t || shown > 0;
+    });
+  };
+
   App.views.settings = function () {
     const groups = [['חשבון', ['account', 'personal']], ['עבודה ושכר', ['rights', 'roles', 'calc', 'rest', 'pay', 'net', 'leave', 'goal']], ['אפליקציה', ['assistant', 'alerts', 'templates', 'look', 'security', 'ai']], ['נתונים', ['backup', 'export', 'demo', 'about']]];
     return `<div class="topbar"><div class="titles"><h1>הגדרות</h1><div class="sub">כל שינוי נשמר מיד</div></div></div>
+      <label class="set-search">${icon('search', 's')}<input class="input" id="set-q" type="search" placeholder="חיפוש (למשל: נסיעות, מס, צבע)" aria-label="חיפוש בהגדרות" autocomplete="off"></label>
+      <div class="empty small" id="set-none" hidden>לא נמצאה הגדרה כזו. אפשר לנסות מילה אחרת, או לשאול אותנו בעזרה ותמיכה.</div>
       ${App.isAdmin ? `<div class="list" style="margin-top:6px"><button class="item admin-entry" data-act="admin-dashboard"><span class="lead" style="background:var(--primary);color:var(--on-primary)">${icon('chart')}</span><span class="body"><span class="t">לוח ניהול ${App.adminOpenTickets ? `<span class="tag warn">${App.adminOpenTickets} פניות מחכות</span>` : ''}</span><span class="s">משתמשים, פעילות, פניות (למנהלים בלבד)</span></span>${icon('left', 's')}</button></div>` : ''}
       <div class="list set-list help-list"><button class="item" data-act="support"><span class="lead">${icon('chat')}</span><span class="body"><span class="t">עזרה ותמיכה ${App.supportUnread ? '<span class="tag good">תשובה חדשה</span>' : ''}</span><span class="s">שאלות נפוצות, לכתוב לנו, הפניות שלי</span></span>${icon('left', 's')}</button>
         <button class="item" data-act="share-app"><span class="lead">${icon('share')}</span><span class="body"><span class="t">לשתף עם חברים</span><span class="s">שגם הם ידעו כמה מגיע להם</span></span>${icon('left', 's')}</button></div>
-      ${groups.map(([g, keys]) => `<div class="section-title">${g}</div><div class="list set-list">${keys.map((k) => { const s = SECTIONS[k]; return `<button class="item" data-act="settings-open" data-k="${k}"><span class="lead">${icon(s.icon)}</span><span class="body"><span class="t">${s.title}</span><span class="s">${esc(s.sub())}</span></span>${icon('left', 's')}</button>`; }).join('')}</div>`).join('')}
+      ${groups.map(([g, keys]) => `<div class="section-title">${g}</div><div class="list set-list">${keys.map((k) => { const s = SECTIONS[k]; return `<button class="item" data-act="settings-open" data-k="${k}" data-find="${esc((s.title + ' ' + s.sub() + ' ' + (FIND[k] || '')).toLowerCase().replace(/["'״׳]/g, ''))}"><span class="lead">${icon(s.icon)}</span><span class="body"><span class="t">${s.title}</span><span class="s">${esc(s.sub())}</span></span>${icon('left', 's')}</button>`; }).join('')}</div>`).join('')}
       <div class="section-title">מידע משפטי</div>
       <div class="list">${[['about', 'info', 'אודות'], ['terms', 'file', 'תנאי שימוש'], ['privacy', 'shield', 'מדיניות פרטיות'], ['disclaimer', 'alert', 'הבהרה משפטית'], ['accessibility', 'eye', 'הצהרת נגישות'], ['licenses', 'layers', 'רישיונות וצד שלישי']].map(([d, ic, t]) => `<button class="item" data-act="legal" data-doc="${d}"><span class="lead" style="background:var(--surface-3)">${icon(ic)}</span><span class="body"><span class="t">${t}</span></span>${icon('left', 's')}</button>`).join('')}</div>
       <div class="ver">גרסה ${root.APP_VERSION} · מבנה נתונים ${Store.SCHEMA_VERSION}${S.settings.legal ? ' · תנאים ' + esc(S.settings.legal.version) + ' אושרו' : ''}</div>`;
@@ -539,7 +597,7 @@
         <div class="card"><div class="small">גיבוי אחרון: <b>${B.lastBackup ? U.fmtDate(U.epochKey(B.lastBackup)) + ' (' + UI.timeAgo(B.lastBackup) + ')' : 'אף פעם'}</b></div>
           <div class="btn-row" style="margin-top:12px"><button class="btn" data-bk="share">${icon('share')} גבה ושתף ל-Drive</button></div>
           <div class="btn-row" style="margin-top:8px"><button class="btn tonal" data-bk="dl">${icon('download')} הורד קובץ</button><button class="btn tonal" data-bk="files">${icon('file')} כולל קובצי תלושים</button></div></div>
-        <div class="card">${F.sel('גיבוי אוטומטי', 's.backup.autoEvery', [['weekly', 'כל שבוע'], ['monthly', 'כל חודש'], ['off', 'כבוי']], B.autoEvery, 'בפתיחת האפליקציה, כשהגיע הזמן, קובץ גיבוי יורד אוטומטית לתיקיית ההורדות.').replace('data-s=', 'data-keep-str data-s=')}</div>
+        <div class="card">${F.sel('גיבוי אוטומטי', 's.backup.autoEvery', [['weekly', 'כל שבוע'], ['monthly', 'כל חודש'], ['off', 'כבוי']], B.autoEvery, S.meta.cloudUid ? 'החשבון שלך מחובר, והנתונים כבר נשמרים בענן, לכן לא יורדים קבצים אוטומטית. אפשר תמיד להוריד גיבוי ידני.' : 'בפתיחת האפליקציה, כשהגיע הזמן, קובץ גיבוי יורד אוטומטית לתיקיית ההורדות.').replace('data-s=', 'data-keep-str data-s=')}</div>
         <div class="section-title">${icon('upload', 's')} שחזור</div>
         <div class="card"><label class="btn tonal block">${icon('upload')} בחר קובץ גיבוי (.json)<input type="file" accept="application/json,.json" id="bk-file" hidden></label>
           <div class="tiny muted" style="margin-top:8px">אפשר להחליף את כל הנתונים או למזג (להוסיף רק רשומות חסרות). גיבוי מגרסה ישנה יעבור הגירה אוטומטית.</div></div>

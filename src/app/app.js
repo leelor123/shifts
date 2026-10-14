@@ -490,6 +490,8 @@
   App.autoBackupCheck = async function () {
     const B = S.settings.backup;
     if (!B.autoEvery || B.autoEvery === 'off' || !S.shifts.length) return;
+    // with an account the data is already kept in the cloud: no weekly files piling up in Downloads
+    if (S.settings.demo || S.meta.cloudUid) return;
     const days = B.autoEvery === 'monthly' ? 30 : 7;
     const last = Math.max(B.lastBackup || 0, B.lastAuto || 0);
     if (Date.now() - last < days * U.DAY) return;

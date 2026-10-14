@@ -450,6 +450,12 @@
       if (!d.roleId) { UI.invalid('בחר תפקיד'); return; }
       if (d.date < '2000-01-01' || d.date > U.addDays(U.todayKey(), 366)) { UI.invalid('התאריך לא הגיוני'); return; }
       const sh = shiftFrom(d);
+      // numbers that would quietly change the pay the wrong way
+      if (!(sh.breakMin >= 0) || sh.breakMin > 24 * 60) { UI.invalid('אורך ההפסקה לא הגיוני'); return; }
+      if (sh.breakMin > 0 && sh.breakMin >= (sh.end - sh.start) / 60000) { UI.invalid('ההפסקה ארוכה מהמשמרת עצמה'); return; }
+      if ((sh.items || []).some((x) => !(+x.amount > 0) || +x.amount > 1e6)) { UI.invalid('סכום של תוספת או ניכוי צריך להיות חיובי (לניכוי בוחרים "ניכוי")'); return; }
+      const negative = (o) => o && typeof o === 'object' && Object.values(o).some((v) => (typeof v === 'number' && v < 0) || negative(v));
+      if (negative(sh.overrides)) { UI.invalid('בחישוב הידני אי אפשר מספר שלילי'); return; }
       // a shift that hasn't happened yet can't be "done": it can be saved as planned
       if (sh.status === 'done' && sh.end > Date.now() + 5 * 60000) {
         const started = sh.start <= Date.now();
@@ -514,6 +520,7 @@
               employerId: q('#en-emp') ? q('#en-emp').value : d.employerId,
             });
             if (out.kind === 'adjustment' && !(out.amount > 0)) { UI.invalid('הזן סכום'); return; }
+            if (out.amount != null && (!(out.amount >= 0) || out.amount > 1e6)) { UI.invalid('הסכום לא הגיוני'); return; }
             if (!out.date || out.date < '2000-01-01') { UI.invalid('בחר תאריך'); return; }
             if (out.date > U.todayKey()) {
               if (out.kind === 'sick') { UI.invalid('יום מחלה לא יכול להיות בעתיד'); return; }

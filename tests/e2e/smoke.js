@@ -430,6 +430,15 @@ let errors = [];
     await ev(() => App.render()); await sleep(200);
     if (await ev(() => !!document.querySelector('.save-card'))) throw new Error('still shown after removing');
   });
+  await step('settings search finds sections by everyday words', async () => {
+    await ev(() => App.go('settings')); await sleep(400);
+    const find = (q) => ev((q) => { const i = document.getElementById('set-q'); i.value = q; i.dispatchEvent(new Event('input', { bubbles: true })); return [...document.querySelectorAll('[data-find]')].filter((x) => !x.hidden).map((x) => x.dataset.k).join(','); }, q);
+    const a = await find('נסיעות'), b = await find('צבע'), c = await find('');
+    if (!a.split(',').includes('pay')) throw new Error('travel: ' + a);
+    if (b !== 'look') throw new Error('colour: ' + b);
+    if (c.split(',').length < 18) throw new Error('clear: ' + c);
+    await ev(() => App.go('home'));
+  });
   await step('anonymous stats: record has only the allowed fields', async () => {
     const r = await ev(() => Stats._record());
     const keys = Object.keys(r).sort().join(',');

@@ -182,10 +182,13 @@
     /* ---- deviations ---- */
     const ws = U.weekStart(today, S.weekStart || 0);
     const lastWeek = { from: U.addDays(ws, -7), to: U.addDays(ws, -1) };
-    const nW = +cfg.compareWeeks || 4;
+    // settings come from a form: whole numbers in a sane range, so a typo can't empty a list or loop for ever
+    const span = (v, d, lo, hi) => { const n = Math.round(+v); return Number.isFinite(n) && n >= lo ? Math.min(n, hi) : d; };
+    const nW = span(cfg.compareWeeks, 4, 1, 26);
     const prevWeeks = [];
     for (let i = 1; i <= nW; i++) prevWeeks.push({ from: U.addDays(lastWeek.from, -7 * i), to: U.addDays(lastWeek.to, -7 * i) });
-    const enoughWeeks = first && U.diffDays(first, lastWeek.from) >= 7 * (+cfg.minWeeksData || 4);
+    const minWeeks = span(cfg.minWeeksData, 4, 1, 52);
+    const enoughWeeks = first && U.diffDays(first, lastWeek.from) >= 7 * minWeeks;
     let weekCmp = null;
     if (enoughWeeks) {
       weekCmp = compareSeries(model, lastWeek, prevWeeks, cfg, 'week', 'w-', roleName);
@@ -193,10 +196,10 @@
     }
     const curP = Engine.periodOf(today, emp);
     const lastP = Engine.periodByKey(U.addMonthKey(curP.key, -1), emp);
-    const nM = +cfg.compareMonths || 3;
+    const nM = span(cfg.compareMonths, 3, 1, 12);
     const prevPs = [];
     for (let i = 1; i <= nM; i++) prevPs.push(Engine.periodByKey(U.addMonthKey(lastP.key, -i), emp));
-    const enoughMonths = first && first <= prevPs[prevPs.length - 1].to && U.diffDays(first, lastP.from) >= 7 * (+cfg.minWeeksData || 4);
+    const enoughMonths = first && first <= prevPs[prevPs.length - 1].to && U.diffDays(first, lastP.from) >= 7 * minWeeks;
     if (enoughMonths) {
       const mc = compareSeries(model, lastP, prevPs, cfg, 'month', 'm-', roleName);
       alerts.push(...mc.alerts);

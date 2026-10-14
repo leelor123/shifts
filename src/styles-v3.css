@@ -533,6 +533,12 @@ body.fx .chart[data-anim].in .bar, body.fx .chart[data-anim].in .ln, body.fx .ch
 @keyframes medal-swing { 25% { transform: rotate(14deg); } 75% { transform: rotate(-10deg); } }
 @media (prefers-reduced-motion: reduce) { .medal-pop, .medal-pop .medal-ic, .medal-pop.out { animation: none; } }
 
+/* ---------- settings search ---------- */
+.set-search { position: relative; display: block; margin: 4px 0 10px; }
+.set-search svg { position: absolute; inset-inline-start: 14px; top: 50%; transform: translateY(-50%); color: var(--on-surface-var); pointer-events: none; }
+.set-search .input { padding-inline-start: 40px; }
+#set-none { padding: 18px 8px; }
+
 /* ---------- saving up (home) ---------- */
 .save-card { display: grid; gap: 8px; width: 100%; margin: 0 0 14px; padding: 14px 16px; border-radius: 18px; border: 1px solid var(--line); background: var(--surface-1); box-shadow: var(--sh-1); color: var(--on-surface); font: inherit; text-align: start; cursor: pointer; }
 body.fx .save-card:active { transform: scale(.98); }

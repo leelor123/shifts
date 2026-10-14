@@ -55,20 +55,25 @@ Shaati עוזרת לעובדים לפי שעה לדעת בדיוק כמה הרו
 • לבני נוער: בדיקה אוטומטית של שעות לילה, אורך יום ושבוע והפסקות לפי חוק עבודת הנוער
 • נעילה בקוד או בטביעת אצבע
 
+🎯 יעדים ומוטיבציה
+• יעד חודשי, ויעד חיסכון למשהו שרוצים לקנות – כולל כמה שעות עבודה חסרות
+• סיכום חודשי כסיפור קצר, עם תמונה לשיתוף
+• מדליות על משמרות, כסף ותלושים, ושלושה משחקים קצרים על שכר וזכויות
+
 ✨ עוזר AI (אופציונלי)
 שאלות חופשיות על זכויות, על התלוש או על האפליקציה, עם מפתח API אישי של Anthropic.
 
 חשוב: החישובים הם הערכה בלבד ואינם ייעוץ משפטי, חשבונאי או מס. במקרה של ספק כדאי לבדוק מול המעסיק, רואה חשבון או גורם מוסמך.
 ```
 
-**מה חדש בגרסה 1.7.1** (עד 500 תווים)
+**מה חדש בגרסה 1.10** (עד 500 תווים)
 ```
-• הזכויות שלי: מדריך אישי שעובד גם בלי אינטרנט
-• שכר מינימום לפי גיל ותאריך (מעודכן לאפריל 2026)
-• לבני נוער: בדיקות לפי חוק עבודת הנוער
-• פתיחה בטביעת אצבע וחזרה שבועית למשמרות
-• מסך בית נקי, אנימציית פתיחה ומשיכה לרענון
-• מהיר יותר ושמירה בטוחה יותר בענן
+• סיכום חודשי כסיפור קצר, עם תמונה לשיתוף
+• יעד חיסכון: כמה שעות עבודה חסרות למה שרוצים לקנות
+• מדליות ושלושה משחקים קצרים על כסף, שכר וזכויות
+• אימות תלוש ברור יותר, גלגל שעות שלא נגמר וגרפים חיים
+• משיכה לרענון חלקה, כפתור חזור חכם וחיפוש בהגדרות
+• יציב ומוגן יותר, ונגיש לקוראי מסך
 ```
 
 ---
@@ -98,6 +103,8 @@ Shaati helps hourly workers in Israel know exactly what they earned – and chec
 • Weekly, monthly and yearly summaries with comparisons, charts, Hebrew/Gregorian calendar, CSV and calendar (ICS) export
 • Smart alerts, vacation and sick-day tracking
 • Sign in with Google; your data is stored in your own account and only you can access it. Works offline. No ads, no tracking.
+• Goals: a monthly target and a savings goal for something you want, with the work hours still needed
+• A monthly recap told as a short story, with a shareable image; medals and three short games about pay and rights
 • Optional rights assistant powered by your own Anthropic API key
 
 Calculations are estimates only and are not legal, accounting or tax advice. The app is in Hebrew.

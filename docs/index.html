@@ -2,7 +2,7 @@
 <html lang="he" dir="rtl">
 <head>
 <meta charset="utf-8">
-<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'sha256-LQ2mXAPj3TZt2+FKTmzTBjRJt0Kop/yGLrR9kgc/ZDo=' https://www.gstatic.com https://apis.google.com https://cdnjs.cloudflare.com https://cdn.jsdelivr.net 'wasm-unsafe-eval'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com data:; img-src 'self' data: blob: https:; connect-src 'self' https: wss:; frame-src https://shiftpay-70ab6.firebaseapp.com https://accounts.google.com https://apis.google.com https://*.google.com; worker-src 'self' blob: https://cdnjs.cloudflare.com https://cdn.jsdelivr.net; media-src 'self' data: blob:; manifest-src 'self'; object-src 'none'; base-uri 'self'; form-action 'self'">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'sha256-avgrw9mnWA9+jfdqtHa9K0CYpZFVpqHIOoURRgpuamA=' https://www.gstatic.com https://apis.google.com https://cdnjs.cloudflare.com https://cdn.jsdelivr.net 'wasm-unsafe-eval'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com data:; img-src 'self' data: blob: https:; connect-src 'self' https: wss:; frame-src https://shiftpay-70ab6.firebaseapp.com https://accounts.google.com https://apis.google.com https://*.google.com; worker-src 'self' blob: https://cdnjs.cloudflare.com https://cdn.jsdelivr.net; media-src 'self' data: blob:; manifest-src 'self'; object-src 'none'; base-uri 'self'; form-action 'self'">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="theme-color" content="#0d2b6b">
 <meta name="description" content="מעקב משמרות וחישוב שכר אישי: שבתות, חגים, שעות נוספות, נסיעות, נטו משוער וניתוח תלושים — נשמר בחשבון שלך ועובד גם בלי אינטרנט.">
@@ -1421,6 +1421,12 @@ body.fx .chart[data-anim].in .bar, body.fx .chart[data-anim].in .ln, body.fx .ch
 @keyframes medal-swing { 25% { transform: rotate(14deg); } 75% { transform: rotate(-10deg); } }
 @media (prefers-reduced-motion: reduce) { .medal-pop, .medal-pop .medal-ic, .medal-pop.out { animation: none; } }
 
+/* ---------- settings search ---------- */
+.set-search { position: relative; display: block; margin: 4px 0 10px; }
+.set-search svg { position: absolute; inset-inline-start: 14px; top: 50%; transform: translateY(-50%); color: var(--on-surface-var); pointer-events: none; }
+.set-search .input { padding-inline-start: 40px; }
+#set-none { padding: 18px 8px; }
+
 /* ---------- saving up (home) ---------- */
 .save-card { display: grid; gap: 8px; width: 100%; margin: 0 0 14px; padding: 14px 16px; border-radius: 18px; border: 1px solid var(--line); background: var(--surface-1); box-shadow: var(--sh-1); color: var(--on-surface); font: inherit; text-align: start; cursor: pointer; }
 body.fx .save-card:active { transform: scale(.98); }
@@ -1709,7 +1715,7 @@ body.fx .recap-card:active { transform: scale(.98); }
 <div id="print-root" aria-hidden="true"></div>
 <noscript><div style="padding:24px;font-family:sans-serif">האפליקציה דורשת JavaScript.</div></noscript>
 <script>
-window.APP_VERSION = '1.10.0';
+window.APP_VERSION = '1.10.1';
 /* ---- core/util.js ---- */
 /* ============================================================
  * util.js — date/time helpers and formatting.
@@ -3443,10 +3449,13 @@ window.APP_VERSION = '1.10.0';
     /* ---- deviations ---- */
     const ws = U.weekStart(today, S.weekStart || 0);
     const lastWeek = { from: U.addDays(ws, -7), to: U.addDays(ws, -1) };
-    const nW = +cfg.compareWeeks || 4;
+    // settings come from a form: whole numbers in a sane range, so a typo can't empty a list or loop for ever
+    const span = (v, d, lo, hi) => { const n = Math.round(+v); return Number.isFinite(n) && n >= lo ? Math.min(n, hi) : d; };
+    const nW = span(cfg.compareWeeks, 4, 1, 26);
     const prevWeeks = [];
     for (let i = 1; i <= nW; i++) prevWeeks.push({ from: U.addDays(lastWeek.from, -7 * i), to: U.addDays(lastWeek.to, -7 * i) });
-    const enoughWeeks = first && U.diffDays(first, lastWeek.from) >= 7 * (+cfg.minWeeksData || 4);
+    const minWeeks = span(cfg.minWeeksData, 4, 1, 52);
+    const enoughWeeks = first && U.diffDays(first, lastWeek.from) >= 7 * minWeeks;
     let weekCmp = null;
     if (enoughWeeks) {
       weekCmp = compareSeries(model, lastWeek, prevWeeks, cfg, 'week', 'w-', roleName);
@@ -3454,10 +3463,10 @@ window.APP_VERSION = '1.10.0';
     }
     const curP = Engine.periodOf(today, emp);
     const lastP = Engine.periodByKey(U.addMonthKey(curP.key, -1), emp);
-    const nM = +cfg.compareMonths || 3;
+    const nM = span(cfg.compareMonths, 3, 1, 12);
     const prevPs = [];
     for (let i = 1; i <= nM; i++) prevPs.push(Engine.periodByKey(U.addMonthKey(lastP.key, -i), emp));
-    const enoughMonths = first && first <= prevPs[prevPs.length - 1].to && U.diffDays(first, lastP.from) >= 7 * (+cfg.minWeeksData || 4);
+    const enoughMonths = first && first <= prevPs[prevPs.length - 1].to && U.diffDays(first, lastP.from) >= 7 * minWeeks;
     if (enoughMonths) {
       const mc = compareSeries(model, lastP, prevPs, cfg, 'month', 'm-', roleName);
       alerts.push(...mc.alerts);
@@ -7023,6 +7032,8 @@ window.APP_VERSION = '1.10.0';
   App.autoBackupCheck = async function () {
     const B = S.settings.backup;
     if (!B.autoEvery || B.autoEvery === 'off' || !S.shifts.length) return;
+    // with an account the data is already kept in the cloud: no weekly files piling up in Downloads
+    if (S.settings.demo || S.meta.cloudUid) return;
     const days = B.autoEvery === 'monthly' ? 30 : 7;
     const last = Math.max(B.lastBackup || 0, B.lastAuto || 0);
     if (Date.now() - last < days * U.DAY) return;
@@ -8748,6 +8759,12 @@ window.FIREBASE_CONFIG = {
       if (!d.roleId) { UI.invalid('בחר תפקיד'); return; }
       if (d.date < '2000-01-01' || d.date > U.addDays(U.todayKey(), 366)) { UI.invalid('התאריך לא הגיוני'); return; }
       const sh = shiftFrom(d);
+      // numbers that would quietly change the pay the wrong way
+      if (!(sh.breakMin >= 0) || sh.breakMin > 24 * 60) { UI.invalid('אורך ההפסקה לא הגיוני'); return; }
+      if (sh.breakMin > 0 && sh.breakMin >= (sh.end - sh.start) / 60000) { UI.invalid('ההפסקה ארוכה מהמשמרת עצמה'); return; }
+      if ((sh.items || []).some((x) => !(+x.amount > 0) || +x.amount > 1e6)) { UI.invalid('סכום של תוספת או ניכוי צריך להיות חיובי (לניכוי בוחרים "ניכוי")'); return; }
+      const negative = (o) => o && typeof o === 'object' && Object.values(o).some((v) => (typeof v === 'number' && v < 0) || negative(v));
+      if (negative(sh.overrides)) { UI.invalid('בחישוב הידני אי אפשר מספר שלילי'); return; }
       // a shift that hasn't happened yet can't be "done": it can be saved as planned
       if (sh.status === 'done' && sh.end > Date.now() + 5 * 60000) {
         const started = sh.start <= Date.now();
@@ -8812,6 +8829,7 @@ window.FIREBASE_CONFIG = {
               employerId: q('#en-emp') ? q('#en-emp').value : d.employerId,
             });
             if (out.kind === 'adjustment' && !(out.amount > 0)) { UI.invalid('הזן סכום'); return; }
+            if (out.amount != null && (!(out.amount >= 0) || out.amount > 1e6)) { UI.invalid('הסכום לא הגיוני'); return; }
             if (!out.date || out.date < '2000-01-01') { UI.invalid('בחר תאריך'); return; }
             if (out.date > U.todayKey()) {
               if (out.kind === 'sick') { UI.invalid('יום מחלה לא יכול להיות בעתיד'); return; }
@@ -10088,6 +10106,28 @@ window.FIREBASE_CONFIG = {
     }
     return el.value;
   }
+  /* numbers people type: never negative (except the Shabbat offsets and coordinates), and within a range
+     where a value would otherwise break a calculation or a screen */
+  const MAY_BE_NEGATIVE = new Set(['s.rest.startOffsetMin', 's.rest.endOffsetMin', 's.rest.lat', 's.rest.lon']);
+  const RANGES = {
+    's.alerts.compareWeeks': [1, 26], 's.alerts.compareMonths': [1, 12], 's.alerts.minWeeksData': [1, 52], 's.alerts.deviationPct': [1, 500],
+    's.alerts.streakDays': [2, 60], 's.alerts.weekHoursMax': [1, 168], 's.alerts.longShiftHours': [1, 48], 's.alerts.minRestHours': [0, 48],
+    's.alerts.timerHours': [1, 72], 's.alerts.idleDays': [1, 365], 's.alerts.suspiciousHours': [1, 72], 's.alerts.backupDays': [1, 365],
+    's.alerts.upcomingMin': [0, 1440], 's.alerts.weeklyHour': [0, 23], 'e.payDay': [1, 31], 'e.otThreshold': [1, 24], 'e.otTier1Hours': [0, 24],
+    'e.minShiftHours': [0, 24], 'e.nightShiftThreshold': [1, 24], 'e.defaultBreakMin': [0, 600], 's.leave.dayHours': [0, 24],
+    's.rest.lat': [-90, 90], 's.rest.lon': [-180, 180], 's.rest.startOffsetMin': [-180, 180], 's.rest.endOffsetMin': [-180, 180],
+    's.rest.candleMin': [0, 120], 's.rest.exitMinutes': [0, 120],
+  };
+  /** Checks a typed number; returns [ok, value, message]. */
+  function checkNumber(path, v) {
+    if (typeof v !== 'number') return [true, v];
+    if (!Number.isFinite(v)) return [false, v, 'המספר לא תקין'];
+    if (v < 0 && !MAY_BE_NEGATIVE.has(path)) return [false, v, 'כאן אי אפשר מספר שלילי'];
+    const r = RANGES[path];
+    if (r && (v < r[0] || v > r[1])) return [true, Math.min(r[1], Math.max(r[0], v)), `הערך הותאם לטווח ${r[0]}–${r[1]}`];
+    if (Math.abs(v) > 1e7) return [false, v, 'המספר גדול מדי'];
+    return [true, v];
+  }
   /** Bind auto-save. empId() returns the employer being edited. */
   function bind(el, empId, redraw) {
     el.addEventListener('change', async (e) => {
@@ -10100,14 +10140,17 @@ window.FIREBASE_CONFIG = {
         if (redraw) redraw();
         return;
       }
-      const v = readVal(t);
+      let v = readVal(t);
+      const [ok, fixed, msg] = checkNumber(path, v);
+      if (!ok) { UI.invalid(msg); if (redraw) redraw(); return; }
+      if (fixed !== v) { v = fixed; t.value = fixed; }
       if (path.startsWith('s.')) await Store.setSettings((st) => setPath(st, path.slice(2), v));
       else if (path.startsWith('e.')) {
         const emp = Store.clone(App.employer(empId()));
         setPath(emp, path.slice(2), v);
         await Store.put('employers', emp);
       }
-      UI.toast('נשמר', null, { ok: true });
+      UI.toast(msg || 'נשמר', null, { ok: true });
       if (redraw && t.dataset.redraw != null) redraw();
     });
   }
@@ -10152,13 +10195,46 @@ window.FIREBASE_CONFIG = {
     about: { icon: 'info', title: 'אודות והתקנה', sub: () => 'גרסה ' + root.APP_VERSION },
   };
 
+  // extra words people may search for, per section
+  const FIND = {
+    personal: 'שם גיל יום הולדת תאריך לידה מגדר', account: 'התחברות גוגל google סנכרון ענן חשבון התנתקות מחיקת חשבון',
+    roles: 'עבודה מקום עבודה תפקיד מעסיק שכר לשעה תעריף העלאה העלאת שכר', calc: 'שעות נוספות 125 150 עיגול לילה הפסקה',
+    rest: 'שבת חג חגים עיר כניסת שבת יציאת שבת', pay: 'נסיעות החזר נסיעות תקרה תקופת שכר יום תשלום משכורת',
+    net: 'מס מס הכנסה נקודות זיכוי פנסיה ביטוח לאומי מס בריאות השתלמות נטו', leave: 'חופשה מחלה הבראה ותק תחילת עבודה',
+    goal: 'יעד יעדים חיסכון חוסכים', alerts: 'התראות תזכורות פוש הודעות', templates: 'תבנית תבניות משמרת קבועה',
+    look: 'צבע צבעים ערכת נושא כהה בהיר מצב לילה גופן גופנים מראה צלילים רטט', security: 'קוד נעילה טביעת אצבע סיסמה',
+    assistant: 'בינה מלאכותית עוזר שאלות ai', ai: 'מפתח api claude ניתוח תלוש', backup: 'גיבוי שחזור קובץ', export: 'ייצוא אקסל excel csv pdf יומן',
+    demo: 'דוגמה הדגמה', about: 'גרסה התקנה אודות', rights: 'זכויות שכר מינימום',
+  };
+  App.views.settings_mount = function (v) {
+    const q = v.querySelector('#set-q');
+    if (!q) return;
+    const norm = (s) => s.toLowerCase().replace(/["'״׳]/g, '').trim();
+    q.addEventListener('input', () => {
+      const t = norm(q.value);
+      let shown = 0;
+      v.querySelectorAll('.set-list').forEach((list) => {
+        let any = false;
+        // matched from the start of a word: "צבע" finds colours, not the fingerprint ("אצבע")
+        list.querySelectorAll('[data-find]').forEach((it) => { const ok = !t || (' ' + it.dataset.find).includes(' ' + t); it.hidden = !ok; if (ok) { any = true; shown++; } });
+        list.hidden = !any;
+        const title = list.previousElementSibling;
+        if (title && title.classList.contains('section-title')) title.hidden = !any;
+      });
+      const none = v.querySelector('#set-none');
+      if (none) none.hidden = !t || shown > 0;
+    });
+  };
+
   App.views.settings = function () {
     const groups = [['חשבון', ['account', 'personal']], ['עבודה ושכר', ['rights', 'roles', 'calc', 'rest', 'pay', 'net', 'leave', 'goal']], ['אפליקציה', ['assistant', 'alerts', 'templates', 'look', 'security', 'ai']], ['נתונים', ['backup', 'export', 'demo', 'about']]];
     return `<div class="topbar"><div class="titles"><h1>הגדרות</h1><div class="sub">כל שינוי נשמר מיד</div></div></div>
+      <label class="set-search">${icon('search', 's')}<input class="input" id="set-q" type="search" placeholder="חיפוש (למשל: נסיעות, מס, צבע)" aria-label="חיפוש בהגדרות" autocomplete="off"></label>
+      <div class="empty small" id="set-none" hidden>לא נמצאה הגדרה כזו. אפשר לנסות מילה אחרת, או לשאול אותנו בעזרה ותמיכה.</div>
       ${App.isAdmin ? `<div class="list" style="margin-top:6px"><button class="item admin-entry" data-act="admin-dashboard"><span class="lead" style="background:var(--primary);color:var(--on-primary)">${icon('chart')}</span><span class="body"><span class="t">לוח ניהול ${App.adminOpenTickets ? `<span class="tag warn">${App.adminOpenTickets} פניות מחכות</span>` : ''}</span><span class="s">משתמשים, פעילות, פניות (למנהלים בלבד)</span></span>${icon('left', 's')}</button></div>` : ''}
       <div class="list set-list help-list"><button class="item" data-act="support"><span class="lead">${icon('chat')}</span><span class="body"><span class="t">עזרה ותמיכה ${App.supportUnread ? '<span class="tag good">תשובה חדשה</span>' : ''}</span><span class="s">שאלות נפוצות, לכתוב לנו, הפניות שלי</span></span>${icon('left', 's')}</button>
         <button class="item" data-act="share-app"><span class="lead">${icon('share')}</span><span class="body"><span class="t">לשתף עם חברים</span><span class="s">שגם הם ידעו כמה מגיע להם</span></span>${icon('left', 's')}</button></div>
-      ${groups.map(([g, keys]) => `<div class="section-title">${g}</div><div class="list set-list">${keys.map((k) => { const s = SECTIONS[k]; return `<button class="item" data-act="settings-open" data-k="${k}"><span class="lead">${icon(s.icon)}</span><span class="body"><span class="t">${s.title}</span><span class="s">${esc(s.sub())}</span></span>${icon('left', 's')}</button>`; }).join('')}</div>`).join('')}
+      ${groups.map(([g, keys]) => `<div class="section-title">${g}</div><div class="list set-list">${keys.map((k) => { const s = SECTIONS[k]; return `<button class="item" data-act="settings-open" data-k="${k}" data-find="${esc((s.title + ' ' + s.sub() + ' ' + (FIND[k] || '')).toLowerCase().replace(/["'״׳]/g, ''))}"><span class="lead">${icon(s.icon)}</span><span class="body"><span class="t">${s.title}</span><span class="s">${esc(s.sub())}</span></span>${icon('left', 's')}</button>`; }).join('')}</div>`).join('')}
       <div class="section-title">מידע משפטי</div>
       <div class="list">${[['about', 'info', 'אודות'], ['terms', 'file', 'תנאי שימוש'], ['privacy', 'shield', 'מדיניות פרטיות'], ['disclaimer', 'alert', 'הבהרה משפטית'], ['accessibility', 'eye', 'הצהרת נגישות'], ['licenses', 'layers', 'רישיונות וצד שלישי']].map(([d, ic, t]) => `<button class="item" data-act="legal" data-doc="${d}"><span class="lead" style="background:var(--surface-3)">${icon(ic)}</span><span class="body"><span class="t">${t}</span></span>${icon('left', 's')}</button>`).join('')}</div>
       <div class="ver">גרסה ${root.APP_VERSION} · מבנה נתונים ${Store.SCHEMA_VERSION}${S.settings.legal ? ' · תנאים ' + esc(S.settings.legal.version) + ' אושרו' : ''}</div>`;
@@ -10577,7 +10653,7 @@ window.FIREBASE_CONFIG = {
         <div class="card"><div class="small">גיבוי אחרון: <b>${B.lastBackup ? U.fmtDate(U.epochKey(B.lastBackup)) + ' (' + UI.timeAgo(B.lastBackup) + ')' : 'אף פעם'}</b></div>
           <div class="btn-row" style="margin-top:12px"><button class="btn" data-bk="share">${icon('share')} גבה ושתף ל-Drive</button></div>
           <div class="btn-row" style="margin-top:8px"><button class="btn tonal" data-bk="dl">${icon('download')} הורד קובץ</button><button class="btn tonal" data-bk="files">${icon('file')} כולל קובצי תלושים</button></div></div>
-        <div class="card">${F.sel('גיבוי אוטומטי', 's.backup.autoEvery', [['weekly', 'כל שבוע'], ['monthly', 'כל חודש'], ['off', 'כבוי']], B.autoEvery, 'בפתיחת האפליקציה, כשהגיע הזמן, קובץ גיבוי יורד אוטומטית לתיקיית ההורדות.').replace('data-s=', 'data-keep-str data-s=')}</div>
+        <div class="card">${F.sel('גיבוי אוטומטי', 's.backup.autoEvery', [['weekly', 'כל שבוע'], ['monthly', 'כל חודש'], ['off', 'כבוי']], B.autoEvery, S.meta.cloudUid ? 'החשבון שלך מחובר, והנתונים כבר נשמרים בענן, לכן לא יורדים קבצים אוטומטית. אפשר תמיד להוריד גיבוי ידני.' : 'בפתיחת האפליקציה, כשהגיע הזמן, קובץ גיבוי יורד אוטומטית לתיקיית ההורדות.').replace('data-s=', 'data-keep-str data-s=')}</div>
         <div class="section-title">${icon('upload', 's')} שחזור</div>
         <div class="card"><label class="btn tonal block">${icon('upload')} בחר קובץ גיבוי (.json)<input type="file" accept="application/json,.json" id="bk-file" hidden></label>
           <div class="tiny muted" style="margin-top:8px">אפשר להחליף את כל הנתונים או למזג (להוסיף רק רשומות חסרות). גיבוי מגרסה ישנה יעבור הגירה אוטומטית.</div></div>
@@ -12035,7 +12111,7 @@ window.FIREBASE_CONFIG = {
   const LIST = [
     { id: 'coins', ic: 'wallet', tint: 'amber', t: 'תופסים מטבעות', s: 'גוררים את הארנק, תופסים כסף ומתחמקים מקנסות.', unit: ' ₪' },
     { id: 'quiz', ic: 'calc', tint: 'violet', t: 'כמה זה יוצא?', s: 'חשבון מהיר של שכר, שעות נוספות ושבתות.', unit: ' נק׳' },
-    { id: 'facts', ic: 'shield', tint: 'mint', t: 'נכון או לא?', s: 'כמה טוב אתה מכיר את הזכויות שלך בעבודה?', unit: '/10' },
+    { id: 'facts', ic: 'shield', tint: 'mint', t: 'נכון או לא?', s: 'בודקים כמה מכירים את הזכויות בעבודה.', unit: '/10' },
   ];
   const best = (id) => +((S.meta.games || {})[id]) || 0;
   /** Saves a score; true when it beats the previous best. */
@@ -12086,7 +12162,7 @@ window.FIREBASE_CONFIG = {
       ['e10k', '🤑', money(10000), 'הרווחת יותר מ-' + money(10000), earned >= 10000, count(Math.round(earned), 10000)],
       ['e25k', '🏦', money(25000), 'הרווחת יותר מ-' + money(25000), earned >= 25000, count(Math.round(earned), 25000)],
       ['streak', '🔥', '4 שבועות ברצף', 'לפחות משמרת אחת בכל שבוע, ארבעה שבועות רצופים', streak >= 4, count(streak, 4)],
-      ['shabbat', '🕯️', 'שבת או חג', 'משמרת שיש בה שעות שבת או חג (ושילמו עליהן תוספת?)', done.some((r) => r.restHours > 0)],
+      ['shabbat', '🕯️', 'שבת או חג', 'משמרת עם שעות שבת או חג. כדאי לוודא שקיבלת עליהן תוספת', done.some((r) => r.restHours > 0)],
       ['night', '🌙', 'משמרת לילה', 'משמרת שרובה בלילה', done.some((r) => r.isNightShift)],
       ['slip', '🧾', 'בדיקת תלוש', 'בודקים תלוש שכר מול המשמרות', S.payslips.length > 0],
       ['rights', '🛡️', 'הזכויות שלי', 'נכנסים למסך הזכויות ובודקים מה מגיע', !!S.meta.usedRights],
@@ -12358,7 +12434,7 @@ window.FIREBASE_CONFIG = {
     function intro() {
       over.classList.add('show');
       over.innerHTML = `<div class="gm-intro">${App.mascot ? App.mascot('wink', { size: 84 }) : ''}
-        <div class="gm-intro-t">${ROUND} שניות. כמה כסף תספיק לתפוס?</div>
+        <div class="gm-intro-t">${ROUND} שניות. כמה כסף אפשר לתפוס?</div>
         <div class="cg-legend"><span><i class="lg-coin"></i>מטבעות ושטרות</span><span><i class="lg-fine"></i>קנס: מוריד לב</span><span><i class="lg-clock"></i>עוד 5 שניות</span></div>
         <div class="tiny muted">גוררים את הארנק עם האצבע (או החצים במקלדת)</div>
         <button class="btn big" data-go>${icon('play')} התחלה</button></div>`;
@@ -12470,7 +12546,7 @@ window.FIREBASE_CONFIG = {
       const right = res.filter(Boolean).length;
       endScreen(box, {
         id: 'quiz', unit: ' נק׳', score, ratio: right / QN,
-        title: right === QN ? 'מושלם! כל התשובות נכונות' : right >= 7 ? 'יפה מאוד!' : right >= 4 ? 'לא רע בכלל' : 'עוד סיבוב ותשתפר',
+        title: right === QN ? 'מושלם! כל התשובות נכונות' : right >= 7 ? 'יפה מאוד!' : right >= 4 ? 'לא רע בכלל' : 'בסיבוב הבא זה יילך טוב יותר',
         big: `${score} <small>נק׳</small>`,
         sub: `${right} מתוך ${QN} תשובות נכונות`,
         again: start,
@@ -12524,7 +12600,7 @@ window.FIREBASE_CONFIG = {
       const right = res.filter(Boolean).length;
       endScreen(box, {
         id: 'facts', unit: '/10', score: right, ratio: right / list.length,
-        title: right >= 9 ? 'מומחה לזכויות!' : right >= 6 ? 'יודע לא מעט' : 'שווה להציץ בזכויות שלך',
+        title: right >= 9 ? 'אלופי הזכויות!' : right >= 6 ? 'ידע לא רע בכלל' : 'שווה להציץ בזכויות שלך',
         big: `${right}<small>/${list.length}</small>`,
         sub: right < 9 ? '<button class="btn text sm" data-rights>לכל הזכויות שלי</button>' : '',
         again: start,
