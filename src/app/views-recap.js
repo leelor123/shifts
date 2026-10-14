@@ -132,7 +132,7 @@
       if (!fromBack) UI.closeLayer(layer);
     }
     const onKey = (e) => {
-      if (e.key === 'Escape') close();
+      if (e.key === 'Escape') { e.preventDefault(); close(); } // handled here, so Esc does not also close what is underneath
       else if (e.key === 'ArrowLeft' || e.key === ' ') { e.preventDefault(); next(); } // right to left: left is forward
       else if (e.key === 'ArrowRight') { e.preventDefault(); prev(); }
     };

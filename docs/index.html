@@ -2,7 +2,7 @@
 <html lang="he" dir="rtl">
 <head>
 <meta charset="utf-8">
-<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'sha256-VTOwMmZeJF+3trGuk/IIRFYltkeuihE1xUWOF3ObXwI=' https://www.gstatic.com https://apis.google.com https://cdnjs.cloudflare.com https://cdn.jsdelivr.net 'wasm-unsafe-eval'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com data:; img-src 'self' data: blob: https:; connect-src 'self' https: wss:; frame-src https://shiftpay-70ab6.firebaseapp.com https://accounts.google.com https://apis.google.com https://*.google.com; worker-src 'self' blob: https://cdnjs.cloudflare.com https://cdn.jsdelivr.net; media-src 'self' data: blob:; manifest-src 'self'; object-src 'none'; base-uri 'self'; form-action 'self'">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'sha256-LVFD66jCCbiYvZXdlBQINct7wsev6cq6egZgHPx0bUI=' https://www.gstatic.com https://apis.google.com https://cdnjs.cloudflare.com https://cdn.jsdelivr.net 'wasm-unsafe-eval'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com data:; img-src 'self' data: blob: https:; connect-src 'self' https: wss:; frame-src https://shiftpay-70ab6.firebaseapp.com https://accounts.google.com https://apis.google.com https://*.google.com; worker-src 'self' blob: https://cdnjs.cloudflare.com https://cdn.jsdelivr.net; media-src 'self' data: blob:; manifest-src 'self'; object-src 'none'; base-uri 'self'; form-action 'self'">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="theme-color" content="#0d2b6b">
 <meta name="description" content="מעקב משמרות וחישוב שכר אישי: שבתות, חגים, שעות נוספות, נסיעות, נטו משוער וניתוח תלושים — נשמר בחשבון שלך ועובד גם בלי אינטרנט.">
@@ -1721,8 +1721,8 @@ body.fx .recap-card:active { transform: scale(.98); }
 <div id="print-root" aria-hidden="true"></div>
 <noscript><div style="padding:24px;font-family:sans-serif">האפליקציה דורשת JavaScript.</div></noscript>
 <script>
-window.APP_VERSION = '1.10.3';
-window.APP_BUILD = '1.10.3-838deeef';
+window.APP_VERSION = '1.10.4';
+window.APP_BUILD = '1.10.4-0ec731a6';
 /* ---- core/util.js ---- */
 /* ============================================================
  * util.js — date/time helpers and formatting.
@@ -4901,6 +4901,21 @@ window.APP_BUILD = '1.10.3-838deeef';
   let pendingDepth = null;
   let pendingTimer = null;
   const committed = () => sheets.filter((s) => s.pushed);
+  // On Chrome (the Android app runs on it) the back button closes the top layer through a CloseWatcher
+  // instead: Chrome's back button skips history entries that a page adds without a finger tap, so a
+  // screen the app opened by itself (the "add shift" shortcut, a note at startup) used to close the
+  // whole app on back. Browsers without CloseWatcher keep one history entry per layer.
+  const CW = typeof root.CloseWatcher === 'function' ? root.CloseWatcher : null;
+  function track(entry) {
+    sheets.push(entry);
+    if (CW) {
+      try { entry.watcher = new CW(); } catch (e) { return; }
+      entry.watcher.onclose = () => { entry.watcher = null; removeSheet(entry); };
+      return;
+    }
+    if (pendingDepth === null) pushEntry(entry);
+  }
+  function unwatch(entry) { const w = entry.watcher; entry.watcher = null; if (w) w.destroy(); }
   function pushEntry(entry) { entry.pushed = true; history.pushState({ sheet: committed().length }, ''); }
   function settlePending() {
     pendingDepth = null;
@@ -4927,8 +4942,7 @@ window.APP_BUILD = '1.10.3-838deeef';
     sh.innerHTML = `<div class="grab"></div><div class="sh-head"><h2 id="${hid}">${opts.title || ''}</h2><button class="icon-btn" data-close aria-label="סגור">${icon('x')}</button></div><div class="sh-body">${opts.body || ''}</div>${opts.foot ? `<div class="sh-foot">${opts.foot}</div>` : ''}`;
     document.body.append(bd, sh);
     const entry = { bd, sh, opts, closed: false, pushed: false };
-    sheets.push(entry);
-    if (pendingDepth === null) pushEntry(entry);
+    track(entry);
     requestAnimationFrame(() => { bd.classList.add('show'); sh.classList.add('show'); });
     bd.onclick = () => closeTop();
     sh.querySelector('[data-close]').onclick = () => closeTop();
@@ -4949,13 +4963,13 @@ window.APP_BUILD = '1.10.3-838deeef';
    */
   function pushLayer(onBack) {
     const entry = { layer: true, onBack, closed: false, pushed: false, opts: {} };
-    sheets.push(entry);
-    if (pendingDepth === null) pushEntry(entry);
+    track(entry);
     return entry;
   }
   function closeLayer(entry) {
     if (!entry || entry.closed) return;
     entry.closed = true;
+    unwatch(entry);
     const wasPushed = entry.pushed;
     const top = committed().length;
     const i = sheets.indexOf(entry);
@@ -4966,6 +4980,7 @@ window.APP_BUILD = '1.10.3-838deeef';
   }
   function removeSheet(entry) {
     if (entry.closed) return;
+    unwatch(entry);
     if (entry.layer) {
       entry.closed = true;
       const i = sheets.indexOf(entry);
@@ -4990,7 +5005,7 @@ window.APP_BUILD = '1.10.3-838deeef';
     navigateBack(1, cur - 1); // popstate closes it
   }
   function closeAll() {
-    sheets.filter((s) => !s.pushed).forEach(removeSheet);
+    sheets.filter((s) => !s.pushed).reverse().forEach(removeSheet); // top first
     const cur = pendingDepth === null ? committed().length : pendingDepth;
     if (cur > 0) navigateBack(cur, 0);
   }
@@ -12797,7 +12812,7 @@ window.FIREBASE_CONFIG = {
       if (!fromBack) UI.closeLayer(layer);
     }
     const onKey = (e) => {
-      if (e.key === 'Escape') close();
+      if (e.key === 'Escape') { e.preventDefault(); close(); } // handled here, so Esc does not also close what is underneath
       else if (e.key === 'ArrowLeft' || e.key === ' ') { e.preventDefault(); next(); } // right to left: left is forward
       else if (e.key === 'ArrowRight') { e.preventDefault(); prev(); }
     };

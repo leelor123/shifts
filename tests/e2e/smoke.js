@@ -53,6 +53,8 @@ let errors = [];
   await page.setViewport({ width: 412, height: 860, deviceScaleFactor: 1, isMobile: true, hasTouch: true });
   await page.emulateMediaFeatures([{ name: 'prefers-reduced-motion', value: 'no-preference' }]);
   const ev = (fn, ...a) => page.evaluate(fn, ...a);
+  // the Android back button: on Chrome a close request (Esc on a computer), handled by the top layer's CloseWatcher
+  const back = () => page.keyboard.press('Escape');
   const closeAll = async () => {
     await ev(() => { document.querySelectorAll('.dialog').forEach((d) => { if (d._resolve) d._resolve(null); d.remove(); }); UI.closeAll(); });
     await sleep(500);
@@ -338,19 +340,34 @@ let errors = [];
     await ev(() => { App.go('reports'); }); await sleep(300);
     await ev(() => document.querySelector('[data-act="rep-sub"][data-s="list"]').click()); await sleep(400);
     await ev(() => document.querySelector('.pk-field').click()); await sleep(400);
-    await ev(() => history.back()); await sleep(450);
+    await back(); await sleep(450);
     const s1 = await ev(() => ({ inApp: !!window.App, dialogs: document.querySelectorAll('.dialog').length, layers: UI.sheets.length }));
     if (!s1.inApp || s1.dialogs || s1.layers) throw new Error('page picker: ' + JSON.stringify(s1));
     await ev(() => App.sheetsApi.shiftEditor()); await sleep(600);
     await ev(() => document.querySelector('.sheet .pk-field.pk-date').click()); await sleep(400);
-    await ev(() => history.back()); await sleep(450);
+    await back(); await sleep(450);
     const s2 = await ev(() => ({ dialogs: document.querySelectorAll('.dialog').length, sheets: document.querySelectorAll('.sheet.show').length }));
     if (s2.dialogs !== 0 || s2.sheets !== 1) throw new Error('picker over a sheet: ' + JSON.stringify(s2));
     await ev(() => { UI.confirm('x', 'y'); }); await sleep(300);
-    await ev(() => history.back()); await sleep(450);
+    await back(); await sleep(450);
     const s3 = await ev(() => ({ dialogs: document.querySelectorAll('.dialog').length, sheets: document.querySelectorAll('.sheet.show').length }));
     if (s3.dialogs !== 0 || s3.sheets !== 1) throw new Error('question over a sheet: ' + JSON.stringify(s3));
     await closeAll(); await ev(() => App.go('home')); await sleep(300);
+  });
+  await step('back button: a screen the app opened by itself (shortcut, startup) closes alone, the app stays', async () => {
+    // opened from code with no tap, like the add-shift shortcut: Chrome skips history entries made this way
+    await ev(() => App.sheetsApi.shiftEditor()); await sleep(600);
+    await back(); await sleep(450);
+    const s = await ev(() => ({ inApp: !!window.App, sheets: document.querySelectorAll('.sheet.show').length, layers: UI.sheets.length, len: history.length }));
+    if (!s.inApp || s.sheets || s.layers) throw new Error(JSON.stringify(s));
+    // two layers: back closes only the top one each time
+    await ev(() => App.sheetsApi.shiftEditor()); await sleep(600);
+    await page.tap('.sheet .pk-field.pk-time'); await sleep(500);
+    await back(); await sleep(450);
+    const t = await ev(() => ({ picker: !!document.querySelector('.dialog.pk'), sheets: document.querySelectorAll('.sheet.show').length }));
+    if (t.picker || t.sheets !== 1) throw new Error('picker then editor: ' + JSON.stringify(t));
+    await back(); await sleep(450);
+    if (await ev(() => document.querySelectorAll('.sheet.show').length)) throw new Error('editor still open');
   });
   await step('games: every game opens, plays a turn and stops when closed', async () => {
     await ev(() => App.actions.games()); await sleep(600);
@@ -390,7 +407,7 @@ let errors = [];
     if (n < 4) throw new Error('cards: ' + n);
     const txt = await ev(() => document.querySelector('.story').innerText);
     if (/NaN|undefined|Infinity/.test(txt)) throw new Error('broken text');
-    await ev(() => history.back()); await sleep(500);
+    await back(); await sleep(500);
     if (await ev(() => !!document.querySelector('.story') || UI.sheets.length > 0)) throw new Error('still open after back');
   });
   await step('medals: the collection opens and explains each one', async () => {

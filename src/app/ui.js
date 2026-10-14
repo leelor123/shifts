@@ -145,6 +145,21 @@
   let pendingDepth = null;
   let pendingTimer = null;
   const committed = () => sheets.filter((s) => s.pushed);
+  // On Chrome (the Android app runs on it) the back button closes the top layer through a CloseWatcher
+  // instead: Chrome's back button skips history entries that a page adds without a finger tap, so a
+  // screen the app opened by itself (the "add shift" shortcut, a note at startup) used to close the
+  // whole app on back. Browsers without CloseWatcher keep one history entry per layer.
+  const CW = typeof root.CloseWatcher === 'function' ? root.CloseWatcher : null;
+  function track(entry) {
+    sheets.push(entry);
+    if (CW) {
+      try { entry.watcher = new CW(); } catch (e) { return; }
+      entry.watcher.onclose = () => { entry.watcher = null; removeSheet(entry); };
+      return;
+    }
+    if (pendingDepth === null) pushEntry(entry);
+  }
+  function unwatch(entry) { const w = entry.watcher; entry.watcher = null; if (w) w.destroy(); }
   function pushEntry(entry) { entry.pushed = true; history.pushState({ sheet: committed().length }, ''); }
   function settlePending() {
     pendingDepth = null;
@@ -171,8 +186,7 @@
     sh.innerHTML = `<div class="grab"></div><div class="sh-head"><h2 id="${hid}">${opts.title || ''}</h2><button class="icon-btn" data-close aria-label="סגור">${icon('x')}</button></div><div class="sh-body">${opts.body || ''}</div>${opts.foot ? `<div class="sh-foot">${opts.foot}</div>` : ''}`;
     document.body.append(bd, sh);
     const entry = { bd, sh, opts, closed: false, pushed: false };
-    sheets.push(entry);
-    if (pendingDepth === null) pushEntry(entry);
+    track(entry);
     requestAnimationFrame(() => { bd.classList.add('show'); sh.classList.add('show'); });
     bd.onclick = () => closeTop();
     sh.querySelector('[data-close]').onclick = () => closeTop();
@@ -193,13 +207,13 @@
    */
   function pushLayer(onBack) {
     const entry = { layer: true, onBack, closed: false, pushed: false, opts: {} };
-    sheets.push(entry);
-    if (pendingDepth === null) pushEntry(entry);
+    track(entry);
     return entry;
   }
   function closeLayer(entry) {
     if (!entry || entry.closed) return;
     entry.closed = true;
+    unwatch(entry);
     const wasPushed = entry.pushed;
     const top = committed().length;
     const i = sheets.indexOf(entry);
@@ -210,6 +224,7 @@
   }
   function removeSheet(entry) {
     if (entry.closed) return;
+    unwatch(entry);
     if (entry.layer) {
       entry.closed = true;
       const i = sheets.indexOf(entry);
@@ -234,7 +249,7 @@
     navigateBack(1, cur - 1); // popstate closes it
   }
   function closeAll() {
-    sheets.filter((s) => !s.pushed).forEach(removeSheet);
+    sheets.filter((s) => !s.pushed).reverse().forEach(removeSheet); // top first
     const cur = pendingDepth === null ? committed().length : pendingDepth;
     if (cur > 0) navigateBack(cur, 0);
   }
