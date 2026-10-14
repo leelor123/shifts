@@ -142,7 +142,7 @@ svg.i.s { width: 18px; height: 18px; }
 svg.i.l { width: 32px; height: 32px; }
 
 /* ---------- app shell ---------- */
-#app { max-width: 600px; margin: 0 auto; min-height: 100%; position: relative; }
+#app { max-width: 600px; margin: 0 auto; min-height: 100%; position: relative; overflow-x: clip; } /* nothing may stick out sideways: on a phone a page wider than the screen (even for a moment, as the next tab slides in) zooms out a little, and the bottom bar dropped and flickered */
 .view { padding: calc(8px + var(--safe-t)) 16px calc(var(--nav-h) + var(--safe-b) + 28px); animation: viewIn .28s var(--ease); }
 @keyframes viewIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
 .topbar { display: flex; align-items: center; gap: 8px; min-height: 64px; padding: 8px 0 4px; }
