@@ -1,14 +1,16 @@
 /* ============================================================
- * ptr.js — pull down to refresh. The page follows the finger with a
- * natural, ever-heavier resistance; the logo draws itself as you
- * pull and clicks (sound + vibration) past the threshold. On release
- * the page springs to a resting gap where the logo spins while the
- * app syncs with the cloud, looks for a new version and recalculates,
- * then a check mark and a spring back.
+ * ptr.js — pull down to refresh. The logo comes down with the finger
+ * with a natural, ever-heavier resistance, draws itself as you pull and
+ * clicks (sound + vibration) past the threshold. On release it springs
+ * to a resting place where it spins while the app syncs with the cloud,
+ * looks for a new version and recalculates, then a check mark and back up.
  *
  * Details that matter:
- *  - the moving element is #view, which the app never replaces, so a
- *    redraw during the refresh can't make the page jump;
+ *  - only the logo moves; the page stays where it is (as on Android). When
+ *    the page itself followed the finger it had to go onto its own GPU
+ *    layer, and on a real phone that showed a frame with most of the page
+ *    missing as the pull began, and a white flash on the pay card when the
+ *    screen redrew under it;
  *  - a pull that started on a button never "taps" it on release;
  *  - Chrome sometimes delivers a touchmove it held back during the last
  *    gesture (a sideways swipe) after the next touch began; those carry
@@ -16,9 +18,9 @@
  *  - the rest of a gesture is heard on the element the finger landed on,
  *    not on the document: if the screen redraws mid-pull (a sync), that
  *    element leaves the page and its events no longer reach the document,
- *    which would leave the page hanging a little lower;
+ *    which would leave the logo hanging half way down;
  *  - a new touch while a pull is still open (a second finger, a gesture
- *    the browser never finished) springs the page back first;
+ *    the browser never finished) springs the logo back first;
  *  - every frame is painted in requestAnimationFrame with transforms
  *    only; the browser's own pull-to-refresh and stretch effect are
  *    switched off (overscroll-behavior: none) so they never stack.
@@ -29,9 +31,8 @@
   const THRESHOLD = 74; // pulled distance (after resistance) that triggers a refresh
   const MAX = 150; // the indicator never moves further than this
   const RESIST = 190; // higher = lighter pull
-  const REST = 62; // where the page waits while refreshing
+  const REST = 62; // where the logo waits while refreshing
   const SLOP = 10; // finger movement that still counts as a tap
-  const FOLLOW = 0.62; // how far the page moves compared with the indicator
   const LOGO = '<svg viewBox="0 0 1024 1024" aria-hidden="true"><path class="g" pathLength="1" d="M300 660 A258 258 0 0 1 603 271 L603 600"/><path class="y" pathLength="1" d="M420 422 L420 753 A258 258 0 0 0 720 362"/></svg>';
   const ind = document.createElement('div');
   ind.className = 'ptr';
@@ -39,7 +40,6 @@
   ind.innerHTML = `<div class="ptr-disc">${LOGO}<span class="ptr-check">✓</span></div>`;
   document.body.appendChild(ind);
   const disc = ind.firstChild;
-  const view = () => document.getElementById('view');
 
   let x0 = 0, y0 = null, t0 = 0, pulling = false, dist = 0, armed = false, busy = false, raf = 0, settleTimer = 0;
   const blocked = (target) => busy || App.blocking || root.scrollY > 0
@@ -53,8 +53,6 @@
     ind.style.opacity = d > 0 ? Math.min(1, d / 30).toFixed(2) : '0';
     if (!ind.classList.contains('spin') && !ind.classList.contains('done')) disc.style.transform = `rotate(${Math.round(d * 2.6)}deg) scale(${(0.6 + 0.4 * p).toFixed(3)})`;
     disc.style.setProperty('--p', p.toFixed(3));
-    const v = view();
-    if (v) v.style.transform = d > 0.5 ? `translate3d(0, ${(d * FOLLOW).toFixed(1)}px, 0)` : '';
   }
   const schedule = () => { if (!raf) raf = requestAnimationFrame(() => { raf = 0; paint(dist); }); };
   /** Animate to a distance with a little spring at the end. */
@@ -62,15 +60,12 @@
     ms = ms || 420;
     clearTimeout(settleTimer);
     cancelAnimationFrame(raf); raf = 0;
-    const v = view();
     ind.classList.add('settle');
-    if (v) v.style.transition = `transform ${ms}ms cubic-bezier(.22, 1.3, .36, 1)`;
     dist = d;
     paint(d);
     return new Promise((r) => {
       settleTimer = setTimeout(() => {
         ind.classList.remove('settle');
-        if (v) { v.style.transition = ''; if (!d) { v.style.willChange = ''; v.style.transform = ''; } }
         r();
       }, ms + 20);
     });
@@ -115,8 +110,6 @@
       if (dy < SLOP) return;
       pulling = true;
       clearTimeout(settleTimer);
-      const v = view();
-      if (v) { v.style.transition = ''; v.style.willChange = 'transform'; }
       ind.classList.remove('settle', 'done', 'spin', 'armed');
     }
     dist = Math.max(0, resist(dy - SLOP));
