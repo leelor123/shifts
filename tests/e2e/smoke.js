@@ -515,6 +515,24 @@ let errors = [];
       if (r.length) throw new Error(`to ${tab}: ` + JSON.stringify(r[0]) + ` in ${r.length} frames`);
     }
   });
+  await step('the nights the clocks change: the editor shows what is paid (9 h in October, 7 h in March)', async () => {
+    const cdp = await page.createCDPSession();
+    await cdp.send('Emulation.setTimezoneOverride', { timezoneId: 'Asia/Jerusalem' });
+    try {
+      for (const [date, want, end8] of [['2026-10-24', '9:00', '05:00'], ['2026-03-26', '7:00', '07:00']]) {
+        await closeAll(); await ev(() => App.sheetsApi.shiftEditor()); await sleep(600);
+        const r = await ev((date) => {
+          const set = (f, v) => { const i = document.querySelector(`.sheet [data-f="${f}"]`); i.value = v; i.dispatchEvent(new Event('input', { bubbles: true })); i.dispatchEvent(new Event('change', { bubbles: true })); };
+          set('date', date); set('startT', '22:00'); set('endT', '06:00');
+          const shown = document.querySelector('.sheet .dur-l').textContent;
+          document.querySelector('.sheet [data-dur="8"]').click();
+          return { shown, end8: document.querySelector('.sheet [data-f="endT"]').value };
+        }, date);
+        if (!r.shown.includes(want)) throw new Error(`${date}: editor shows "${r.shown}", paid ${want}`);
+        if (r.end8 !== end8) throw new Error(`${date}: 8 hours from 22:00 should end at ${end8}, not ${r.end8}`);
+      }
+    } finally { await cdp.send('Emulation.setTimezoneOverride', { timezoneId: '' }).catch(() => {}); await closeAll(); }
+  });
   await step('anonymous stats: record has only the allowed fields', async () => {
     const r = await ev(() => Stats._record());
     const keys = Object.keys(r).sort().join(',');

@@ -2,7 +2,7 @@
 <html lang="he" dir="rtl">
 <head>
 <meta charset="utf-8">
-<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'sha256-nGdl3gkRVq/1IQ0oJP8yy3UtbAe4vZraySliEDSyoxM=' https://www.gstatic.com https://apis.google.com https://cdnjs.cloudflare.com https://cdn.jsdelivr.net 'wasm-unsafe-eval'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com data:; img-src 'self' data: blob: https:; connect-src 'self' https: wss:; frame-src https://shiftpay-70ab6.firebaseapp.com https://accounts.google.com https://apis.google.com https://*.google.com; worker-src 'self' blob: https://cdnjs.cloudflare.com https://cdn.jsdelivr.net; media-src 'self' data: blob:; manifest-src 'self'; object-src 'none'; base-uri 'self'; form-action 'self'">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'sha256-daqOXixdCHRknqFCr2PI82s1CcWa4Czm6Infm9sqiTM=' https://www.gstatic.com https://apis.google.com https://cdnjs.cloudflare.com https://cdn.jsdelivr.net 'wasm-unsafe-eval'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com data:; img-src 'self' data: blob: https:; connect-src 'self' https: wss:; frame-src https://shiftpay-70ab6.firebaseapp.com https://accounts.google.com https://apis.google.com https://*.google.com; worker-src 'self' blob: https://cdnjs.cloudflare.com https://cdn.jsdelivr.net; media-src 'self' data: blob:; manifest-src 'self'; object-src 'none'; base-uri 'self'; form-action 'self'">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="theme-color" content="#0d2b6b">
 <meta name="description" content="מעקב משמרות וחישוב שכר אישי: שבתות, חגים, שעות נוספות, נסיעות, נטו משוער וניתוח תלושים — נשמר בחשבון שלך ועובד גם בלי אינטרנט.">
@@ -1753,8 +1753,8 @@ body.fx .recap-card:active { transform: scale(.98); }
 <div id="print-root" aria-hidden="true"></div>
 <noscript><div style="padding:24px;font-family:sans-serif">האפליקציה דורשת JavaScript.</div></noscript>
 <script>
-window.APP_VERSION = '1.11.2';
-window.APP_BUILD = '1.11.2-98140449';
+window.APP_VERSION = '1.11.3';
+window.APP_BUILD = '1.11.3-33a45889';
 /* ---- core/util.js ---- */
 /* ============================================================
  * util.js — date/time helpers and formatting.
@@ -8772,7 +8772,16 @@ window.FIREBASE_CONFIG = {
     const numIn = (f, v, ph) => inp(f, v, `type="number" inputmode="decimal" step="any" placeholder="${ph || ''}"`);
     // shift length in minutes from the two times (an end before the start means the next day)
     const toMin = (t) => +t.slice(0, 2) * 60 + +t.slice(3, 5);
-    const lengthMin = () => { if (!d.startT || !d.endT) return null; const m = toMin(d.endT) - toMin(d.startT); return m <= 0 ? m + 1440 : m; };
+    // The real length, worked out the way the shift is saved: the night the clocks change, 22:00 → 06:00
+    // is 9 hours (October) or 7 (March), and that is what is paid.
+    const lengthMin = () => {
+      if (!d.startT || !d.endT) return null;
+      if (!d.date) { const m = toMin(d.endT) - toMin(d.startT); return m <= 0 ? m + 1440 : m; }
+      const start = U.toEpoch(d.date, d.startT);
+      let end = U.toEpoch(d.date, d.endT);
+      if (end <= start) end = U.toEpoch(U.addDays(d.date, 1), d.endT);
+      return Math.round((end - start) / 60000);
+    };
     const durChips = () => `<div class="dur-row"><span class="dur-l">${lengthMin() ? `משך המשמרת: <b class="num">${U.hm(lengthMin())}</b> שעות` : 'משך המשמרת (בחירה מהירה)'}</span><div class="chips">${[4, 5, 6, 7, 8, 9].map((h) => `<button class="chip ${lengthMin() === h * 60 ? 'on' : ''}" data-dur="${h}">${h} ש׳</button>`).join('')}</div></div>`;
 
     function ovBlock(key, title, sub, inner) {
@@ -8895,8 +8904,8 @@ window.FIREBASE_CONFIG = {
           else if (t2.dataset.role) { d.roleId = t2.dataset.role; redraw(); }
           else if (t2.dataset.dur) {
             if (!d.startT) { UI.invalid('קודם בוחרים שעת התחלה'); return; }
-            const m = (toMin(d.startT) + +t2.dataset.dur * 60) % 1440;
-            d.endT = `${String(Math.floor(m / 60)).padStart(2, '0')}:${String(m % 60).padStart(2, '0')}`;
+            if (d.date) d.endT = U.epochHM(U.toEpoch(d.date, d.startT) + +t2.dataset.dur * 3600000); // real hours, also the night the clocks change
+            else { const m = (toMin(d.startT) + +t2.dataset.dur * 60) % 1440; d.endT = `${String(Math.floor(m / 60)).padStart(2, '0')}:${String(m % 60).padStart(2, '0')}`; }
             redraw();
             if (root.Fx) root.Fx.play('tick');
           }

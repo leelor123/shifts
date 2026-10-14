@@ -300,7 +300,16 @@
     const numIn = (f, v, ph) => inp(f, v, `type="number" inputmode="decimal" step="any" placeholder="${ph || ''}"`);
     // shift length in minutes from the two times (an end before the start means the next day)
     const toMin = (t) => +t.slice(0, 2) * 60 + +t.slice(3, 5);
-    const lengthMin = () => { if (!d.startT || !d.endT) return null; const m = toMin(d.endT) - toMin(d.startT); return m <= 0 ? m + 1440 : m; };
+    // The real length, worked out the way the shift is saved: the night the clocks change, 22:00 → 06:00
+    // is 9 hours (October) or 7 (March), and that is what is paid.
+    const lengthMin = () => {
+      if (!d.startT || !d.endT) return null;
+      if (!d.date) { const m = toMin(d.endT) - toMin(d.startT); return m <= 0 ? m + 1440 : m; }
+      const start = U.toEpoch(d.date, d.startT);
+      let end = U.toEpoch(d.date, d.endT);
+      if (end <= start) end = U.toEpoch(U.addDays(d.date, 1), d.endT);
+      return Math.round((end - start) / 60000);
+    };
     const durChips = () => `<div class="dur-row"><span class="dur-l">${lengthMin() ? `משך המשמרת: <b class="num">${U.hm(lengthMin())}</b> שעות` : 'משך המשמרת (בחירה מהירה)'}</span><div class="chips">${[4, 5, 6, 7, 8, 9].map((h) => `<button class="chip ${lengthMin() === h * 60 ? 'on' : ''}" data-dur="${h}">${h} ש׳</button>`).join('')}</div></div>`;
 
     function ovBlock(key, title, sub, inner) {
@@ -423,8 +432,8 @@
           else if (t2.dataset.role) { d.roleId = t2.dataset.role; redraw(); }
           else if (t2.dataset.dur) {
             if (!d.startT) { UI.invalid('קודם בוחרים שעת התחלה'); return; }
-            const m = (toMin(d.startT) + +t2.dataset.dur * 60) % 1440;
-            d.endT = `${String(Math.floor(m / 60)).padStart(2, '0')}:${String(m % 60).padStart(2, '0')}`;
+            if (d.date) d.endT = U.epochHM(U.toEpoch(d.date, d.startT) + +t2.dataset.dur * 3600000); // real hours, also the night the clocks change
+            else { const m = (toMin(d.startT) + +t2.dataset.dur * 60) % 1440; d.endT = `${String(Math.floor(m / 60)).padStart(2, '0')}:${String(m % 60).padStart(2, '0')}`; }
             redraw();
             if (root.Fx) root.Fx.play('tick');
           }
