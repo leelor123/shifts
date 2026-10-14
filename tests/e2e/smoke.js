@@ -420,6 +420,16 @@ let errors = [];
     await ev(() => Store.apply([{ store: 'shifts', del: 'e2e-ok' }], 'x'));
     await ev(() => App.go('home'));
   });
+  await step('saving up for something: set it, see it on home, remove it', async () => {
+    await ev(() => Store.setSettings((s) => { s.saving = { name: 'אוזניות', price: 900, from: U.addDays(U.todayKey(), -30) }; }));
+    await ev(() => { App.go('home'); App.render(); }); await sleep(400);
+    const c = await ev(() => { const x = document.querySelector('.save-card'); return x ? x.innerText : ''; });
+    if (!/אוזניות/.test(c) || !/%/.test(c)) throw new Error('card: ' + c);
+    if (/NaN|undefined/.test(c)) throw new Error('broken numbers: ' + c);
+    await ev(() => Store.setSettings((s) => { s.saving = { name: '', price: 0, from: '' }; }));
+    await ev(() => App.render()); await sleep(200);
+    if (await ev(() => !!document.querySelector('.save-card'))) throw new Error('still shown after removing');
+  });
   await step('anonymous stats: record has only the allowed fields', async () => {
     const r = await ev(() => Stats._record());
     const keys = Object.keys(r).sort().join(',');

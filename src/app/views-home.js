@@ -142,6 +142,29 @@
       <span class="hl-ic">${icon(item.ic, 's')}</span><span class="hl-t">${esc(item.t)}</span>${more ? `<span class="hl-more">+${more}</span>` : ''}${icon('left', 's')}</button>`;
   }
 
+  /* ---------------- saving up for something ---------------- */
+  function savingCard() {
+    const g = S.settings.saving || {};
+    const price = +g.price || 0;
+    if (!(price > 0) || !g.name) return '';
+    const today = U.todayKey();
+    const from = g.from && g.from <= today ? g.from : today;
+    const sum = Engine.rangeSummary(App.model, from, today);
+    const have = Math.max(0, (sum.net && sum.net.net) || 0);
+    const pct = Math.min(100, (have / price) * 100);
+    const done = have >= price;
+    // hours still needed, at the net per hour of the last three months
+    const recent = Engine.rangeSummary(App.model, U.addDays(today, -90), today);
+    const role = App.roles()[0];
+    const perHour = recent.hours > 0 ? recent.net.net / recent.hours : role ? Engine.roleRate(role, today) : 0;
+    const hoursLeft = !done && perHour > 0 ? Math.ceil((price - have) / perHour) : null;
+    if (done) App.celebrateOnce('saving-' + g.name + '-' + price, () => { root.Fx.celebrate('money'); UI.toast(`יש לך מספיק בשביל ${g.name}! 🎉`); });
+    return `<button class="save-card ${done ? 'done' : ''}" data-act="settings-open" data-k="goal" aria-label="יעד חיסכון: ${esc(g.name)}, ${Math.floor(pct)}%">
+      <span class="sv-top"><span class="sv-e" aria-hidden="true">${done ? '🎉' : '🎯'}</span><b>${esc(g.name)}</b><span class="sv-pct">${Math.floor(pct)}%</span></span>
+      <span class="progress thin"><i style="width:${pct}%"></i></span>
+      <span class="sv-sub">${done ? `יש לך מספיק! הרווחת ${money(have, 0)} מאז שהתחלת לחסוך` : `הרווחת ${money(have, 0)} מתוך ${money(price, 0)}${hoursLeft ? ` · עוד כ-${hoursLeft} שעות עבודה` : ''}`}</span></button>`;
+  }
+
   /* ---------------- four big doors to the things people look for ---------------- */
   function shortcuts() {
     const d = (act, ic, label, tint) => `<button class="sc" data-act="${act}">${UI.tile(ic, tint)}<span>${label}</span></button>`;
@@ -197,6 +220,7 @@
       ${actionBlock()}
       ${App.guideCard ? App.guideCard() : ''}
       ${highlight()}
+      ${savingCard()}
       ${shortcuts()}
       ${pending.length + recent.length ? `<div class="home-list-head"><span>${pending.length ? 'לסמן כבוצעה' : 'משמרות אחרונות'}</span><button class="btn text sm" data-act="go-shifts">הכול</button></div>
         <div class="list home-list">${pending.map((r) => App.shiftItem(r, { showOk: true })).join('')}${recent.slice(0, Math.max(1, 3 - pending.length)).map((r) => App.shiftItem(r)).join('')}</div>`

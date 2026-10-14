@@ -122,6 +122,7 @@
       gender: '', // '' | 'm' | 'f': only for the mandatory-pension age
       // --- goals ---
       goal: { amount: 0, type: 'gross' },
+      saving: { name: '', price: 0, from: '' }, // something to save up for: what, how much, counting the net earned since when
       // --- calendar ---
       weekStart: 0,
       // --- notifications / insights ---

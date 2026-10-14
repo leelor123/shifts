@@ -146,6 +146,8 @@
       clearTimeout(holdT);
       holdT = setTimeout(() => { held = true; el.classList.add('paused'); }, 220);
     });
+    // a finger that moves is swiping, not holding
+    el.addEventListener('pointermove', (e) => { if (!held && (Math.abs(e.clientX - x0) > 12 || Math.abs(e.clientY - y0) > 12)) clearTimeout(holdT); });
     el.addEventListener('pointercancel', () => { clearTimeout(holdT); el.classList.remove('paused'); });
     el.addEventListener('pointerup', (e) => {
       clearTimeout(holdT);

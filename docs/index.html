@@ -2,7 +2,7 @@
 <html lang="he" dir="rtl">
 <head>
 <meta charset="utf-8">
-<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'sha256-tfRO3vMJVu0uaiCtMiWRD3++9NJKc8pOot3yAOtF6jc=' https://www.gstatic.com https://apis.google.com https://cdnjs.cloudflare.com https://cdn.jsdelivr.net 'wasm-unsafe-eval'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com data:; img-src 'self' data: blob: https:; connect-src 'self' https: wss:; frame-src https://shiftpay-70ab6.firebaseapp.com https://accounts.google.com https://apis.google.com https://*.google.com; worker-src 'self' blob: https://cdnjs.cloudflare.com https://cdn.jsdelivr.net; media-src 'self' data: blob:; manifest-src 'self'; object-src 'none'; base-uri 'self'; form-action 'self'">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'sha256-LQ2mXAPj3TZt2+FKTmzTBjRJt0Kop/yGLrR9kgc/ZDo=' https://www.gstatic.com https://apis.google.com https://cdnjs.cloudflare.com https://cdn.jsdelivr.net 'wasm-unsafe-eval'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com data:; img-src 'self' data: blob: https:; connect-src 'self' https: wss:; frame-src https://shiftpay-70ab6.firebaseapp.com https://accounts.google.com https://apis.google.com https://*.google.com; worker-src 'self' blob: https://cdnjs.cloudflare.com https://cdn.jsdelivr.net; media-src 'self' data: blob:; manifest-src 'self'; object-src 'none'; base-uri 'self'; form-action 'self'">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="theme-color" content="#0d2b6b">
 <meta name="description" content="מעקב משמרות וחישוב שכר אישי: שבתות, חגים, שעות נוספות, נסיעות, נטו משוער וניתוח תלושים — נשמר בחשבון שלך ועובד גם בלי אינטרנט.">
@@ -1421,6 +1421,19 @@ body.fx .chart[data-anim].in .bar, body.fx .chart[data-anim].in .ln, body.fx .ch
 @keyframes medal-swing { 25% { transform: rotate(14deg); } 75% { transform: rotate(-10deg); } }
 @media (prefers-reduced-motion: reduce) { .medal-pop, .medal-pop .medal-ic, .medal-pop.out { animation: none; } }
 
+/* ---------- saving up (home) ---------- */
+.save-card { display: grid; gap: 8px; width: 100%; margin: 0 0 14px; padding: 14px 16px; border-radius: 18px; border: 1px solid var(--line); background: var(--surface-1); box-shadow: var(--sh-1); color: var(--on-surface); font: inherit; text-align: start; cursor: pointer; }
+body.fx .save-card:active { transform: scale(.98); }
+.sv-top { display: flex; align-items: center; gap: 8px; }
+.sv-top b { flex: 1; min-width: 0; font: 700 1rem var(--display); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.sv-e { font-size: 1.3rem; }
+.sv-pct { font: 700 1rem var(--display); color: var(--brand); font-variant-numeric: tabular-nums; }
+.sv-sub { font-size: .82rem; color: var(--on-surface-var); }
+.save-card .progress i { background: var(--grad-brand); }
+.save-card.done { border-color: color-mix(in srgb, var(--good) 45%, var(--line)); background: color-mix(in srgb, var(--good) 8%, var(--surface-1)); }
+.save-card.done .progress i { background: var(--good); }
+.save-card.done .sv-pct { color: var(--good); }
+
 /* ---------- medals ---------- */
 .ach-card { display: flex; align-items: center; gap: 12px; width: 100%; margin-top: 12px; padding: 14px; border-radius: 18px; border: 1px dashed var(--outline); background: transparent; color: var(--on-surface); font: inherit; text-align: start; cursor: pointer; }
 body.fx .ach-card:active { transform: scale(.98); }
@@ -1696,7 +1709,7 @@ body.fx .recap-card:active { transform: scale(.98); }
 <div id="print-root" aria-hidden="true"></div>
 <noscript><div style="padding:24px;font-family:sans-serif">האפליקציה דורשת JavaScript.</div></noscript>
 <script>
-window.APP_VERSION = '1.9.2';
+window.APP_VERSION = '1.10.0';
 /* ---- core/util.js ---- */
 /* ============================================================
  * util.js — date/time helpers and formatting.
@@ -2325,6 +2338,7 @@ window.APP_VERSION = '1.9.2';
       gender: '', // '' | 'm' | 'f': only for the mandatory-pension age
       // --- goals ---
       goal: { amount: 0, type: 'gross' },
+      saving: { name: '', price: 0, from: '' }, // something to save up for: what, how much, counting the net earned since when
       // --- calendar ---
       weekStart: 0,
       // --- notifications / insights ---
@@ -8160,6 +8174,29 @@ window.FIREBASE_CONFIG = {
       <span class="hl-ic">${icon(item.ic, 's')}</span><span class="hl-t">${esc(item.t)}</span>${more ? `<span class="hl-more">+${more}</span>` : ''}${icon('left', 's')}</button>`;
   }
 
+  /* ---------------- saving up for something ---------------- */
+  function savingCard() {
+    const g = S.settings.saving || {};
+    const price = +g.price || 0;
+    if (!(price > 0) || !g.name) return '';
+    const today = U.todayKey();
+    const from = g.from && g.from <= today ? g.from : today;
+    const sum = Engine.rangeSummary(App.model, from, today);
+    const have = Math.max(0, (sum.net && sum.net.net) || 0);
+    const pct = Math.min(100, (have / price) * 100);
+    const done = have >= price;
+    // hours still needed, at the net per hour of the last three months
+    const recent = Engine.rangeSummary(App.model, U.addDays(today, -90), today);
+    const role = App.roles()[0];
+    const perHour = recent.hours > 0 ? recent.net.net / recent.hours : role ? Engine.roleRate(role, today) : 0;
+    const hoursLeft = !done && perHour > 0 ? Math.ceil((price - have) / perHour) : null;
+    if (done) App.celebrateOnce('saving-' + g.name + '-' + price, () => { root.Fx.celebrate('money'); UI.toast(`יש לך מספיק בשביל ${g.name}! 🎉`); });
+    return `<button class="save-card ${done ? 'done' : ''}" data-act="settings-open" data-k="goal" aria-label="יעד חיסכון: ${esc(g.name)}, ${Math.floor(pct)}%">
+      <span class="sv-top"><span class="sv-e" aria-hidden="true">${done ? '🎉' : '🎯'}</span><b>${esc(g.name)}</b><span class="sv-pct">${Math.floor(pct)}%</span></span>
+      <span class="progress thin"><i style="width:${pct}%"></i></span>
+      <span class="sv-sub">${done ? `יש לך מספיק! הרווחת ${money(have, 0)} מאז שהתחלת לחסוך` : `הרווחת ${money(have, 0)} מתוך ${money(price, 0)}${hoursLeft ? ` · עוד כ-${hoursLeft} שעות עבודה` : ''}`}</span></button>`;
+  }
+
   /* ---------------- four big doors to the things people look for ---------------- */
   function shortcuts() {
     const d = (act, ic, label, tint) => `<button class="sc" data-act="${act}">${UI.tile(ic, tint)}<span>${label}</span></button>`;
@@ -8215,6 +8252,7 @@ window.FIREBASE_CONFIG = {
       ${actionBlock()}
       ${App.guideCard ? App.guideCard() : ''}
       ${highlight()}
+      ${savingCard()}
       ${shortcuts()}
       ${pending.length + recent.length ? `<div class="home-list-head"><span>${pending.length ? 'לסמן כבוצעה' : 'משמרות אחרונות'}</span><button class="btn text sm" data-act="go-shifts">הכול</button></div>
         <div class="list home-list">${pending.map((r) => App.shiftItem(r, { showOk: true })).join('')}${recent.slice(0, Math.max(1, 3 - pending.length)).map((r) => App.shiftItem(r)).join('')}</div>`
@@ -10027,6 +10065,7 @@ window.FIREBASE_CONFIG = {
       's.birthDate': { min: '1940-01-01', max: U.addDays(today, -365 * 12), pick: 'birth', msg: 'תאריך לידה לא הגיוני' },
       's.startDate': { min: birth ? U.addDays(birth, 365 * 12) : '1960-01-01', max: today, msg: 'תאריך תחילת העבודה לא יכול להיות בעתיד או לפני גיל 12' },
       's.leave.vacationOpeningDate': { min: '2000-01-01', max: today, msg: 'התאריך לא יכול להיות בעתיד' },
+      's.saving.from': { min: '2000-01-01', max: today, msg: 'התאריך לא יכול להיות בעתיד' },
     }[path];
   }
   function dateLimits(path) {
@@ -10100,7 +10139,7 @@ window.FIREBASE_CONFIG = {
     pay: { icon: 'car', title: 'נסיעות ותקופת שכר', sub: () => { const e = S.employers[0]; return `${U.money(e.travelPerDay)} ליום${+e.travelMonthlyCap ? ', תקרה ' + U.money(e.travelMonthlyCap, 0) : ''} · ${e.periodStartDay > 1 ? 'מ-' + e.periodStartDay + ' לחודש' : 'חודש קלנדרי'} · תשלום ב-${e.payDay}`; } },
     net: { icon: 'wallet', title: 'נטו משוער ומס', sub: () => `${S.settings.tax.creditPoints} נק׳ זיכוי · פנסיה ${S.settings.pension.employeePct}%${S.settings.hishtalmut.enabled ? ' · השתלמות' : ''}` },
     leave: { icon: 'beach', title: 'ותק, חופשה, מחלה והבראה', sub: () => (S.settings.startDate ? 'התחלת עבודה: ' + U.fmtDate(S.settings.startDate) : 'הגדר תאריך תחילת עבודה') },
-    goal: { icon: 'target', title: 'יעד חודשי', sub: () => (+S.settings.goal.amount ? U.money(S.settings.goal.amount, 0) + (S.settings.goal.type === 'net' ? ' נטו' : ' ברוטו') : 'לא הוגדר') },
+    goal: { icon: 'target', title: 'יעדים', sub: () => [+S.settings.goal.amount ? 'חודשי: ' + U.money(S.settings.goal.amount, 0) + (S.settings.goal.type === 'net' ? ' נטו' : ' ברוטו') : '', S.settings.saving && +S.settings.saving.price && S.settings.saving.name ? 'חוסכים ל' + S.settings.saving.name : ''].filter(Boolean).join(' · ') || 'יעד חודשי וחיסכון למשהו' },
     alerts: { icon: 'bell', title: 'התראות ותובנות', sub: () => (('Notification' in window) && Notification.permission === 'granted' ? 'פוש מופעל' : 'פוש כבוי') + ' · סף חריגה ' + S.settings.alerts.deviationPct + '%' },
     templates: { icon: 'layers', title: 'תבניות משמרת', sub: () => (S.templates.length ? S.templates.length + ' תבניות' : 'אין תבניות') },
     look: { icon: 'palette', title: 'מראה', sub: () => ({ system: 'לפי המערכת', light: 'בהיר', dark: 'כהה' }[S.settings.theme]) + ' · ' + (App.ACCENTS[S.settings.accent] || [])[2] },
@@ -10380,8 +10419,31 @@ window.FIREBASE_CONFIG = {
   };
 
   RENDER.goal = {
-    render: () => `<div class="card">${F.num('יעד חודשי ₪', 's.goal.amount', S.settings.goal.amount || '', '0 = ללא יעד')}${F.sel('סוג היעד', 's.goal.type', [['gross', 'ברוטו'], ['net', 'נטו משוער']], S.settings.goal.type)}
-      <div class="tiny muted">במסך הבית יופיע פס התקדמות, צפי לפי הקצב, וכמה משמרות חסרות ליעד.</div></div>`,
+    render: () => {
+      const g = S.settings.saving || {};
+      return `<div class="section-title">${icon('target', 's')} יעד חודשי</div>
+      <div class="card">${F.num('יעד חודשי ₪', 's.goal.amount', S.settings.goal.amount || '', '0 = ללא יעד')}${F.sel('סוג היעד', 's.goal.type', [['gross', 'ברוטו'], ['net', 'נטו משוער']], S.settings.goal.type)}
+      <div class="tiny muted">במסך הבית יופיע פס התקדמות, צפי לפי הקצב, וכמה משמרות חסרות ליעד.</div></div>
+      <div class="section-title">🎯 חוסכים למשהו?</div>
+      <div class="card">${F.text('מה רוצים לקנות', 's.saving.name', g.name, '', 'maxlength="40" placeholder="למשל: אוזניות, טיול, טלפון"')}
+        ${F.num('כמה זה עולה (₪)', 's.saving.price', +g.price || '', '', '0')}
+        ${F.date('סופרים מתאריך', 's.saving.from', g.from, 'הנטו שהרווחת מהיום הזה נספר ליעד')}
+        <div class="tiny muted">בבית יופיע כמה כבר הרווחת לקראת זה, וכמה שעות עבודה בערך חסרות.</div>
+        ${+g.price || g.name ? `<button class="btn text sm" data-saving-clear>${icon('trash', 's')} הסרת היעד</button>` : ''}</div>`;
+    },
+    mount: (el, draw) => {
+      const clear = el.querySelector('[data-saving-clear]');
+      if (clear) clear.onclick = async () => { await Store.setSettings((s) => { s.saving = { name: '', price: 0, from: '' }; }); UI.toast('היעד הוסר'); draw(); };
+      // the first time something is set, counting starts today
+      if (el._savingBound) return;
+      el._savingBound = true;
+      el.addEventListener('change', (e) => {
+        const p = e.target.dataset.s;
+        if ((p === 's.saving.price' || p === 's.saving.name') && !(S.settings.saving && S.settings.saving.from)) {
+          setTimeout(async () => { await Store.setSettings((s) => { s.saving = Object.assign({ name: '', price: 0 }, s.saving, { from: U.todayKey() }); }); draw(); }, 50);
+        }
+      });
+    },
   };
 
   RENDER.alerts = {
@@ -11611,16 +11673,17 @@ window.FIREBASE_CONFIG = {
 
   /* ---------------- what's new (once per big update, for people who already used the app) ---------------- */
   const WHATS_NEW = {
-    id: '1.9',
+    id: '1.10',
     items: [
+      ['target', 'mint', 'חוסכים למשהו?', 'מגדירים יעד (אוזניות, טיול…) ורואים בבית כמה שעות עבודה חסרות. בהגדרות › יעדים.'],
       ['sparkle', 'pink', 'הסיכום החודשי', 'בתחילת כל חודש: סיפור קצר על החודש שעבר, ותמונה לשיתוף.'],
       ['star', 'amber', 'המדליות שלי', 'מדליות על משמרות, כסף, תלושים ומשחקים. נמצאות במסך המשחקים.'],
       ['game', 'violet', 'משחקים', 'שלושה משחקים קצרים על כסף, שכר וזכויות.'],
       ['receipt', 'orange', 'אימות תלוש ברור יותר', 'ברוטו, ניכויים ונטו במבט אחד, ובדיקה שהמספרים מסתדרים.'],
-      ['shield', 'mint', 'מוגן יותר', 'שכבת הגנה חדשה, וכפתור החזור סוגר רק את החלון העליון.'],
-      ['refresh', 'sky', 'רענון יציב', 'משיכת המסך למטה עובדת חלק גם כשמשהו מתעדכן ברקע.'],
+      ['shield', 'sky', 'יציב ומוגן יותר', 'שכבת הגנה חדשה, כפתור חזור שסוגר רק את החלון העליון, ושחזור גיבוי בטוח.'],
     ],
   };
+
 
 
   App.whatsNew = function () {
@@ -12625,6 +12688,8 @@ window.FIREBASE_CONFIG = {
       clearTimeout(holdT);
       holdT = setTimeout(() => { held = true; el.classList.add('paused'); }, 220);
     });
+    // a finger that moves is swiping, not holding
+    el.addEventListener('pointermove', (e) => { if (!held && (Math.abs(e.clientX - x0) > 12 || Math.abs(e.clientY - y0) > 12)) clearTimeout(holdT); });
     el.addEventListener('pointercancel', () => { clearTimeout(holdT); el.classList.remove('paused'); });
     el.addEventListener('pointerup', (e) => {
       clearTimeout(holdT);

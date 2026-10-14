@@ -27,6 +27,7 @@
       's.birthDate': { min: '1940-01-01', max: U.addDays(today, -365 * 12), pick: 'birth', msg: 'תאריך לידה לא הגיוני' },
       's.startDate': { min: birth ? U.addDays(birth, 365 * 12) : '1960-01-01', max: today, msg: 'תאריך תחילת העבודה לא יכול להיות בעתיד או לפני גיל 12' },
       's.leave.vacationOpeningDate': { min: '2000-01-01', max: today, msg: 'התאריך לא יכול להיות בעתיד' },
+      's.saving.from': { min: '2000-01-01', max: today, msg: 'התאריך לא יכול להיות בעתיד' },
     }[path];
   }
   function dateLimits(path) {
@@ -100,7 +101,7 @@
     pay: { icon: 'car', title: 'נסיעות ותקופת שכר', sub: () => { const e = S.employers[0]; return `${U.money(e.travelPerDay)} ליום${+e.travelMonthlyCap ? ', תקרה ' + U.money(e.travelMonthlyCap, 0) : ''} · ${e.periodStartDay > 1 ? 'מ-' + e.periodStartDay + ' לחודש' : 'חודש קלנדרי'} · תשלום ב-${e.payDay}`; } },
     net: { icon: 'wallet', title: 'נטו משוער ומס', sub: () => `${S.settings.tax.creditPoints} נק׳ זיכוי · פנסיה ${S.settings.pension.employeePct}%${S.settings.hishtalmut.enabled ? ' · השתלמות' : ''}` },
     leave: { icon: 'beach', title: 'ותק, חופשה, מחלה והבראה', sub: () => (S.settings.startDate ? 'התחלת עבודה: ' + U.fmtDate(S.settings.startDate) : 'הגדר תאריך תחילת עבודה') },
-    goal: { icon: 'target', title: 'יעד חודשי', sub: () => (+S.settings.goal.amount ? U.money(S.settings.goal.amount, 0) + (S.settings.goal.type === 'net' ? ' נטו' : ' ברוטו') : 'לא הוגדר') },
+    goal: { icon: 'target', title: 'יעדים', sub: () => [+S.settings.goal.amount ? 'חודשי: ' + U.money(S.settings.goal.amount, 0) + (S.settings.goal.type === 'net' ? ' נטו' : ' ברוטו') : '', S.settings.saving && +S.settings.saving.price && S.settings.saving.name ? 'חוסכים ל' + S.settings.saving.name : ''].filter(Boolean).join(' · ') || 'יעד חודשי וחיסכון למשהו' },
     alerts: { icon: 'bell', title: 'התראות ותובנות', sub: () => (('Notification' in window) && Notification.permission === 'granted' ? 'פוש מופעל' : 'פוש כבוי') + ' · סף חריגה ' + S.settings.alerts.deviationPct + '%' },
     templates: { icon: 'layers', title: 'תבניות משמרת', sub: () => (S.templates.length ? S.templates.length + ' תבניות' : 'אין תבניות') },
     look: { icon: 'palette', title: 'מראה', sub: () => ({ system: 'לפי המערכת', light: 'בהיר', dark: 'כהה' }[S.settings.theme]) + ' · ' + (App.ACCENTS[S.settings.accent] || [])[2] },
@@ -380,8 +381,31 @@
   };
 
   RENDER.goal = {
-    render: () => `<div class="card">${F.num('יעד חודשי ₪', 's.goal.amount', S.settings.goal.amount || '', '0 = ללא יעד')}${F.sel('סוג היעד', 's.goal.type', [['gross', 'ברוטו'], ['net', 'נטו משוער']], S.settings.goal.type)}
-      <div class="tiny muted">במסך הבית יופיע פס התקדמות, צפי לפי הקצב, וכמה משמרות חסרות ליעד.</div></div>`,
+    render: () => {
+      const g = S.settings.saving || {};
+      return `<div class="section-title">${icon('target', 's')} יעד חודשי</div>
+      <div class="card">${F.num('יעד חודשי ₪', 's.goal.amount', S.settings.goal.amount || '', '0 = ללא יעד')}${F.sel('סוג היעד', 's.goal.type', [['gross', 'ברוטו'], ['net', 'נטו משוער']], S.settings.goal.type)}
+      <div class="tiny muted">במסך הבית יופיע פס התקדמות, צפי לפי הקצב, וכמה משמרות חסרות ליעד.</div></div>
+      <div class="section-title">🎯 חוסכים למשהו?</div>
+      <div class="card">${F.text('מה רוצים לקנות', 's.saving.name', g.name, '', 'maxlength="40" placeholder="למשל: אוזניות, טיול, טלפון"')}
+        ${F.num('כמה זה עולה (₪)', 's.saving.price', +g.price || '', '', '0')}
+        ${F.date('סופרים מתאריך', 's.saving.from', g.from, 'הנטו שהרווחת מהיום הזה נספר ליעד')}
+        <div class="tiny muted">בבית יופיע כמה כבר הרווחת לקראת זה, וכמה שעות עבודה בערך חסרות.</div>
+        ${+g.price || g.name ? `<button class="btn text sm" data-saving-clear>${icon('trash', 's')} הסרת היעד</button>` : ''}</div>`;
+    },
+    mount: (el, draw) => {
+      const clear = el.querySelector('[data-saving-clear]');
+      if (clear) clear.onclick = async () => { await Store.setSettings((s) => { s.saving = { name: '', price: 0, from: '' }; }); UI.toast('היעד הוסר'); draw(); };
+      // the first time something is set, counting starts today
+      if (el._savingBound) return;
+      el._savingBound = true;
+      el.addEventListener('change', (e) => {
+        const p = e.target.dataset.s;
+        if ((p === 's.saving.price' || p === 's.saving.name') && !(S.settings.saving && S.settings.saving.from)) {
+          setTimeout(async () => { await Store.setSettings((s) => { s.saving = Object.assign({ name: '', price: 0 }, s.saving, { from: U.todayKey() }); }); draw(); }, 50);
+        }
+      });
+    },
   };
 
   RENDER.alerts = {
