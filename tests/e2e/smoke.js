@@ -369,9 +369,9 @@ let errors = [];
     await back(); await sleep(450);
     if (await ev(() => document.querySelectorAll('.sheet.show').length)) throw new Error('editor still open');
   });
-  await step('games: every game opens, plays a turn and stops when closed', async () => {
+  await step('games: all five open, play a turn and stop when closed', async () => {
     await ev(() => App.actions.games()); await sleep(600);
-    if ((await ev(() => document.querySelectorAll('.gm-card').length)) !== 3) throw new Error('hub');
+    if (!(await ev(() => document.querySelectorAll('.gm-card').length === App.games.LIST.length && App.games.LIST.length === 5))) throw new Error('hub');
     await ev(() => document.querySelector('[data-game="coins"]').click()); await sleep(700);
     await ev(() => document.querySelector('[data-go]').click()); await sleep(2600);
     const t = await ev(() => +document.querySelector('[data-time]').textContent);
@@ -385,6 +385,26 @@ let errors = [];
     await ev(() => document.querySelector('[data-game="facts"]').click()); await sleep(700);
     await ev(() => document.querySelector('.tf-yes').click()); await sleep(300);
     if (!(await ev(() => !!document.querySelector('.tf-card.ok, .tf-card.no')))) throw new Error('facts answer');
+    await ev(() => UI.closeTop()); await sleep(500);
+    // pairs: a word and its meaning stay up together; two that don't belong turn back
+    await ev(() => document.querySelector('[data-game="pairs"]').click()); await sleep(700);
+    const pr = await ev(() => {
+      const cs = [...document.querySelectorAll('.pr-card')]; const t = cs.map((c) => c.querySelector('.pr-face').textContent);
+      const p = Games.PAIRS.find((x) => x.t === t[0] || x.d === t[0]); const j = t.indexOf(p.t === t[0] ? p.d : p.t);
+      const wrong = t.findIndex((_, k) => k !== 0 && k !== j);
+      return { n: cs.length, j, wrong };
+    });
+    if (pr.n !== 12 || pr.j < 1) throw new Error('pairs board ' + JSON.stringify(pr));
+    await ev((w) => { const cs = document.querySelectorAll('.pr-card'); cs[0].click(); cs[w].click(); }, pr.wrong); await sleep(1200);
+    if (await ev(() => document.querySelectorAll('.pr-card.up').length)) throw new Error('a wrong pair did not turn back');
+    await ev((j) => { const cs = document.querySelectorAll('.pr-card'); cs[0].click(); cs[j].click(); }, pr.j); await sleep(300);
+    if ((await ev(() => document.querySelectorAll('.pr-card.done').length)) !== 2) throw new Error('a right pair was not kept');
+    await ev(() => UI.closeTop()); await sleep(500);
+    // how many hours: the hidden price is revealed after an answer
+    await ev(() => document.querySelector('[data-game="hours"]').click()); await sleep(700);
+    if (!(await ev(() => !!document.querySelector('.hw-card.b .hw-q')))) throw new Error('second price not hidden');
+    await ev(() => document.querySelector('.hw-more').click()); await sleep(400);
+    if (!(await ev(() => !!document.querySelector('.hw-card.b.shown .hw-h')))) throw new Error('price not revealed');
     await closeAll();
   });
   await step('payslip check: a short summary that adds up, then the analysis', async () => {

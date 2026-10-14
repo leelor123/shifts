@@ -1,7 +1,8 @@
 /* ============================================================
  * games.js — the content of the mini-games, kept apart from the
- * screens so it can be tested: pay questions ("כמה זה יוצא?") and
- * true/false statements about workers' rights ("נכון או לא?").
+ * screens so it can be tested: pay questions ("כמה זה יוצא?"),
+ * true/false statements about workers' rights ("נכון או לא?"), the
+ * payslip words of "זוגות" and the prices of "כמה שעות זה?".
  *
  * The rights statements repeat what the rights center says (and are
  * just as general: information, not legal advice). The minimum wage
@@ -178,5 +179,70 @@
     return DROPS[0];
   }
 
-  root.Games = { rng, quizRound, QUESTIONS, facts, factsRound, coinPace, coinDrop, DROPS, hrs, nis };
+  /* ---------------- pairs: words from the payslip and work, and what they mean ----------------
+   * The meanings say the same as the rights center and the true/false game, in a few words. */
+  const PAIRS = [
+    ['gross', 'ברוטו', 'השכר לפני הניכויים'],
+    ['net', 'נטו', 'מה שנכנס לחשבון'],
+    ['ot', 'שעות נוספות', '125%, ואחר כך 150%'],
+    ['rest', 'עבודה בשבת', 'לפחות 150%'],
+    ['travel', 'החזר נסיעות', 'משולם בנוסף לשכר'],
+    ['slip', 'תלוש שכר', 'פירוט השכר בכל חודש'],
+    ['recup', 'דמי הבראה', 'מגיעים אחרי שנת עבודה'],
+    ['sick', 'ימי מחלה', '1.5 ימים על כל חודש'],
+    ['pension', 'פנסיה', 'חיסכון לגיל הפרישה'],
+    ['late', 'הלנת שכר', 'פיצוי על שכר שאיחר'],
+    ['minwage', 'שכר מינימום', 'הכי פחות שמותר לשלם'],
+    ['break', 'הפסקה', '45 דק׳ ביום של 6 שעות'],
+    ['hearing', 'שימוע', 'לפני פיטורים'],
+    ['payday', 'יום תשלום', 'עד ה-9 בחודש'],
+  ].map(([id, t, d]) => ({ id, t, d }));
+  /** A board of n pairs: 2n cards (a word and its meaning) in random order. */
+  function pairsRound(seed, n) {
+    const r = rng(seed);
+    const pairs = shuffle(r, PAIRS).slice(0, Math.min(n || 6, PAIRS.length));
+    const cards = shuffle(r, pairs.flatMap((p) => [{ pair: p.id, kind: 't', text: p.t }, { pair: p.id, kind: 'd', text: p.d }]));
+    return { pairs, cards };
+  }
+  /** Points: 100 for a perfect memory (one try per pair), less for extra tries, plus up to 40 for speed. */
+  function pairsScore(n, moves, secs) {
+    return Math.max(10, 100 - 8 * Math.max(0, moves - n)) + Math.max(0, Math.round(40 - (secs || 0) / 2));
+  }
+
+  /* ---------------- "how many hours is it?": the price of things in hours of work ----------------
+   * Rough prices in Israel (good enough to compare; the game is about the feeling of what money
+   * costs in work, not about exact prices). */
+  const THINGS = [
+    ['☕', 'קפה', 14], ['🚌', 'נסיעה באוטובוס', 6], ['🧋', 'שייק', 24], ['🌯', 'שווארמה בפיתה', 38],
+    ['🎬', 'כרטיס לסרט', 45], ['📺', 'חודש של נטפליקס', 55], ['🍕', 'פיצה משפחתית', 60], ['🍔', 'ארוחת המבורגר', 75],
+    ['👕', 'חולצה ממותגת', 120], ['🏋️', 'חודש בחדר כושר', 180], ['🚗', 'שיעור נהיגה', 180], ['🎤', 'כרטיס להופעה', 210],
+    ['🎧', 'אוזניות אלחוטיות', 240], ['👟', 'נעלי ספורט', 420], ['🎒', 'תיק גב', 160], ['🎮', 'משחק לקונסולה', 250],
+    ['✈️', 'טיסה לאירופה', 1200], ['🕹️', 'קונסולת משחקים', 2200], ['💻', 'מחשב נייד', 3500], ['🛴', 'קורקינט חשמלי', 2500],
+    ['📱', 'אייפון חדש', 4200], ['🚲', 'אופניים חשמליים', 3800], ['🎸', 'גיטרה', 650], ['🌴', 'סוף שבוע באילת', 1500],
+  ].map(([e, name, price]) => ({ e, name, price }));
+  /**
+   * A chain of n things where each one costs clearly more or clearly less than the one before
+   * (at least 20% apart, so there is always a right answer), never the same thing twice in a row.
+   */
+  function hoursRound(seed, n) {
+    const r = rng(seed);
+    const out = [pick(r, THINGS)];
+    while (out.length < (n || 30)) {
+      const prev = out[out.length - 1];
+      const ok = THINGS.filter((t) => t !== prev && !out.slice(-4).includes(t) && Math.max(t.price, prev.price) / Math.min(t.price, prev.price) >= 1.2);
+      out.push(pick(r, ok));
+    }
+    return out;
+  }
+  /** Hours of work as words: "45 דק׳", "שעתיים ו-15 דק׳", "105 שעות". */
+  function workTime(h) {
+    const m = Math.max(5, Math.round((h * 60) / 5) * 5);
+    if (m < 60) return `${m} דק׳`;
+    if (m >= 600) return `${Math.round(m / 60)} שעות`; // from 10 hours on, whole hours are enough
+    const H = Math.floor(m / 60), M = m % 60;
+    const hs = H === 1 ? 'שעה' : H === 2 ? 'שעתיים' : `${H} שעות`;
+    return M ? `${hs} ו-${M} דק׳` : hs;
+  }
+
+  root.Games = { rng, quizRound, QUESTIONS, facts, factsRound, coinPace, coinDrop, DROPS, hrs, nis, PAIRS, pairsRound, pairsScore, THINGS, hoursRound, workTime };
 })(typeof window !== 'undefined' ? window : globalThis);

@@ -1,12 +1,14 @@
 /* ============================================================
- * views-games.js — three short games about money and work:
+ * views-games.js — five short games about money and work:
  *  - "תופסים מטבעות": drag the wallet, catch coins and notes, dodge
  *    the fines (a 40-second canvas arcade, sprites drawn once, one
  *    requestAnimationFrame loop that stops when the sheet closes or
  *    the app goes to the background);
  *  - "כמה זה יוצא?": quick pay arithmetic against the clock;
  *  - "נכון או לא?": true or false about workers' rights, with the
- *    explanation after every answer.
+ *    explanation after every answer;
+ *  - "זוגות": a memory game that pairs payslip words with their meaning;
+ *  - "כמה שעות זה?": higher or lower, in hours of the player's own work.
  * The content lives in core/games.js; best scores in meta.games.
  * ============================================================ */
 (function (root) {
@@ -22,6 +24,8 @@
     { id: 'coins', ic: 'wallet', tint: 'amber', t: 'תופסים מטבעות', s: 'גוררים את הארנק, תופסים כסף ומתחמקים מקנסות.', unit: ' ₪' },
     { id: 'quiz', ic: 'calc', tint: 'violet', t: 'כמה זה יוצא?', s: 'חשבון מהיר של שכר, שעות נוספות ושבתות.', unit: ' נק׳' },
     { id: 'facts', ic: 'shield', tint: 'mint', t: 'נכון או לא?', s: 'בודקים כמה מכירים את הזכויות בעבודה.', unit: '/10' },
+    { id: 'pairs', ic: 'layers', tint: 'pink', t: 'זוגות', s: 'משחק זיכרון: מילה מהתלוש ומה היא אומרת.', unit: ' נק׳' },
+    { id: 'hours', ic: 'clock', tint: 'sky', t: 'כמה שעות זה?', s: 'יותר או פחות? מחירים בשעות של העבודה שלך.', unit: ' ברצף' },
   ];
   const best = (id) => +((S.meta.games || {})[id]) || 0;
   /** Saves a score; true when it beats the previous best. */
@@ -76,10 +80,13 @@
       ['night', '🌙', 'משמרת לילה', 'משמרת שרובה בלילה', done.some((r) => r.isNightShift)],
       ['slip', '🧾', 'בדיקת תלוש', 'בודקים תלוש שכר מול המשמרות', S.payslips.length > 0],
       ['rights', '🛡️', 'הזכויות שלי', 'נכנסים למסך הזכויות ובודקים מה מגיע', !!S.meta.usedRights],
-      ['games', '🎮', 'כל המשחקים', 'משחקים בכל שלושת המשחקים', g('coins') > 0 && g('quiz') > 0 && g('facts') > 0],
+      ['games', '🎮', 'שלושה משחקים', 'משחקים ב"תופסים מטבעות", "כמה זה יוצא?" ו"נכון או לא?"', g('coins') > 0 && g('quiz') > 0 && g('facts') > 0],
+      ['allgames', '🕹️', 'כל המשחקים', 'משחקים בכל חמשת המשחקים', LIST.every((x) => g(x.id) > 0), count(LIST.filter((x) => g(x.id) > 0).length, LIST.length)],
       ['coins', '🪙', 'תופסי כסף', 'אוספים ' + money(300) + ' ב"תופסים מטבעות"', g('coins') >= 300, count(g('coins'), 300)],
       ['quiz', '🧠', 'אלופי חשבון', '150 נקודות ב"כמה זה יוצא?"', g('quiz') >= 150, count(g('quiz'), 150)],
       ['facts', '⚖️', 'מומחי זכויות', '10 מתוך 10 ב"נכון או לא?"', g('facts') >= 10, count(g('facts'), 10)],
+      ['pairs', '🧩', 'זיכרון של פיל', '100 נקודות ב"זוגות"', g('pairs') >= 100, count(g('pairs'), 100)],
+      ['hours', '⏱️', 'יודעים מה שווה כסף', '8 ברצף ב"כמה שעות זה?"', g('hours') >= 8, count(g('hours'), 8)],
     ].map(([id, emoji, title, how, on, prog]) => ({ id, emoji, title, how, on: !!on, prog }));
   }
   function medalsSheet() {
@@ -118,9 +125,8 @@
           const b = e.target.closest('[data-game]');
           if (!b) return;
           const done = () => { if (list.isConnected) list.innerHTML = cards(); };
-          if (b.dataset.game === 'coins') coinGame(done);
-          else if (b.dataset.game === 'quiz') quizGame(done);
-          else factsGame(done);
+          const open = { coins: coinGame, quiz: quizGame, facts: factsGame, pairs: pairsGame, hours: hoursGame }[b.dataset.game];
+          if (open) open(done);
         });
       },
     });
@@ -520,6 +526,146 @@
     }
     start();
     return () => { alive = false; };
+  }
+
+  /* ---------------- 4. pairs (memory) ---------------- */
+  const PN = 6;
+  function pairsGame(onDone) {
+    let stop = () => {};
+    UI.openSheet({
+      title: 'זוגות',
+      full: true,
+      cls: 'game-sheet',
+      body: '<div class="pr" data-box></div>',
+      onMount: (el) => { stop = runPairs(el.querySelector('[data-box]')); },
+      onClose: () => { stop(); onDone(); },
+    });
+  }
+  function runPairs(box) {
+    let alive = true, back = 0, end = 0;
+    let round, open, moves, found, t0, busy;
+    function start() {
+      clearTimeout(back); clearTimeout(end);
+      round = Games.pairsRound(seed(), PN); open = []; moves = 0; found = new Set(); t0 = 0; busy = false;
+      box.innerHTML = `<div class="qz-top"><span class="pr-moves" data-mv>0 ניסיונות</span><span class="qz-score" data-sc>0/${PN}</span></div>
+        <div class="pr-grid">${round.cards.map((c, k) => `<button class="pr-card" data-k="${k}" style="--k:${k}" aria-label="קלף ${k + 1}, הפוך"><span class="pr-in"><span class="pr-back" aria-hidden="true"></span><span class="pr-face ${c.kind === 't' ? 'w' : 'm'}">${esc(c.text)}</span></span></button>`).join('')}</div>
+        <div class="qz-x" aria-live="polite"><div>הופכים שני קלפים ומחפשים מילה מהתלוש ואת מה שהיא אומרת.</div></div>`;
+      box.querySelector('.pr-grid').onclick = (e) => { const b = e.target.closest('[data-k]'); if (b) flip(b); };
+    }
+    const cardEl = (k) => box.querySelector(`[data-k="${k}"]`);
+    const say = (html) => { const x = box.querySelector('.qz-x'); if (x) x.innerHTML = `<div>${html}</div>`; };
+    function flip(b) {
+      const k = +b.dataset.k, c = round.cards[k];
+      if (!alive || busy || found.has(c.pair) || open.includes(k)) return;
+      if (!t0) t0 = performance.now();
+      b.classList.add('up'); b.setAttribute('aria-label', c.text);
+      play('tick'); buzz(6);
+      open.push(k);
+      if (open.length < 2) return;
+      moves++;
+      box.querySelector('[data-mv]').textContent = `${moves} ניסיונות`;
+      const [a, z] = open.map((i) => round.cards[i]);
+      if (a.pair === z.pair) {
+        found.add(a.pair);
+        open.forEach((i) => cardEl(i).classList.add('done'));
+        open = [];
+        const p = round.pairs.find((x) => x.id === a.pair);
+        say(`<b>${esc(p.t)}</b>: ${esc(p.d)} ✓`);
+        const sc = box.querySelector('[data-sc]'); sc.textContent = `${found.size}/${PN}`; sc.classList.remove('bump'); void sc.offsetWidth; sc.classList.add('bump');
+        play('coin'); buzz(10);
+        if (found.size === PN) end = setTimeout(finish, 700);
+      } else {
+        busy = true;
+        back = setTimeout(() => {
+          if (!alive) return;
+          open.forEach((i) => { const el = cardEl(i); if (el) { el.classList.remove('up'); el.setAttribute('aria-label', `קלף ${i + 1}, הפוך`); } });
+          open = []; busy = false;
+        }, 950);
+      }
+    }
+    function finish() {
+      if (!alive) return;
+      const secs = (performance.now() - t0) / 1000;
+      const score = Games.pairsScore(PN, moves, secs);
+      endScreen(box, {
+        id: 'pairs', unit: ' נק׳', score, ratio: Math.min(1, PN / moves),
+        title: moves <= PN + 2 ? 'זיכרון של פיל!' : moves <= PN + 6 ? 'יפה מאוד!' : 'כל הזוגות נמצאו',
+        big: `${score} <small>נק׳</small>`,
+        sub: `${moves} ניסיונות · ${Math.round(secs)} שניות`,
+        again: start,
+      });
+    }
+    start();
+    return () => { alive = false; clearTimeout(back); clearTimeout(end); };
+  }
+
+  /* ---------------- 5. how many hours is it? (higher or lower) ---------------- */
+  function hoursGame(onDone) {
+    let stop = () => {};
+    UI.openSheet({
+      title: 'כמה שעות זה?',
+      full: true,
+      cls: 'game-sheet',
+      body: '<div class="hw" data-box></div>',
+      onMount: (el) => { stop = runHours(el.querySelector('[data-box]')); },
+      onClose: () => { stop(); onDone(); },
+    });
+  }
+  function runHours(box) {
+    let alive = true, next = 0;
+    const own = myRate();
+    const rate = own > 0 ? Math.round(own * 100) / 100 : 40;
+    let chain, i, streak, answered;
+    const money = (v) => `${v.toLocaleString('he-IL')} ₪`;
+    const item = (t, open, cls) => `<div class="hw-card ${cls || ''}"><span class="hw-e" aria-hidden="true">${t.e}</span><b>${esc(t.name)}</b>
+      ${open ? `<span class="hw-p">${money(t.price)}</span><span class="hw-h">${Games.workTime(t.price / rate)}</span>` : '<span class="hw-q" aria-label="מחיר מוסתר">?</span>'}</div>`;
+    function start() { clearTimeout(next); chain = Games.hoursRound(seed(), 60); i = 0; streak = 0; show(); }
+    function show() {
+      if (!alive) return;
+      const a = chain[i], b = chain[i + 1];
+      answered = false;
+      box.innerHTML = `<div class="qz-top"><span class="hw-rate">${own > 0 ? 'לפי השכר שלך' : 'לפי שכר של'} ${money(rate)} לשעה</span><span class="qz-score" data-sc>🔥 ${streak}</span></div>
+        <div class="hw-pair">${item(a, true, 'a')}<span class="hw-vs" aria-hidden="true">או</span>${item(b, false, 'b')}</div>
+        <div class="hw-ask">${esc(b.name)}: יותר או פחות שעות עבודה?</div>
+        <div class="tf-btns"><button class="btn big hw-more" data-a="1">${icon('up')} יותר</button><button class="btn big hw-less" data-a="0">${icon('down')} פחות</button></div>
+        <div class="qz-x" aria-live="polite"></div>`;
+      box.querySelector('.tf-btns').onclick = (e) => { const x = e.target.closest('[data-a]'); if (x) answer(x.dataset.a === '1'); };
+    }
+    function answer(more) {
+      if (answered || !alive) return;
+      answered = true;
+      const a = chain[i], b = chain[i + 1];
+      const ok = (b.price > a.price) === more;
+      box.querySelectorAll('.tf-btns .btn').forEach((x) => { x.disabled = true; x.classList.toggle('picked', (x.dataset.a === '1') === more); });
+      const card = box.querySelector('.hw-card.b');
+      card.outerHTML = item(b, true, 'b shown ' + (ok ? 'ok' : 'no'));
+      const x = box.querySelector('.qz-x');
+      if (ok) {
+        streak++;
+        play('coin'); buzz(10);
+        const sc = box.querySelector('[data-sc]'); sc.textContent = `🔥 ${streak}`; sc.classList.add('bump');
+        x.innerHTML = `<div class="qz-xt ok">${streak >= 5 && streak % 5 === 0 ? `${streak} ברצף! 🔥` : 'נכון!'}</div>`;
+        next = setTimeout(() => { if (!alive) return; i++; if (i + 1 < chain.length) show(); else finish(); }, 1500);
+      } else {
+        play('error'); buzz([20, 30, 20]);
+        x.innerHTML = `<div class="qz-xt no">הפעם לא</div><div>${esc(b.name)} עולה ${money(b.price)}: ${Games.workTime(b.price / rate)} של עבודה, ${b.price > a.price ? 'יותר' : 'פחות'} מ${esc(a.name)}.</div>
+          <button class="btn" data-next>לתוצאה</button>`;
+        x.querySelector('[data-next]').onclick = finish;
+      }
+    }
+    function finish() {
+      if (!alive) return;
+      clearTimeout(next);
+      endScreen(box, {
+        id: 'hours', unit: ' ברצף', score: streak, ratio: Math.min(1, streak / 8),
+        title: streak >= 8 ? 'יודעים בדיוק מה שווה כסף!' : streak >= 4 ? 'יפה!' : 'שווה עוד סיבוב',
+        big: `${streak} <small>ברצף</small>`,
+        sub: 'כל מחיר הוא גם שעות של עבודה',
+        again: start,
+      });
+    }
+    start();
+    return () => { alive = false; clearTimeout(next); };
   }
 
   App.games = { LIST, best };

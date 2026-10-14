@@ -57,3 +57,52 @@ T.test('coin catcher: gets faster, never stops dropping', () => {
   Games.DROPS.forEach((d) => T.ok(seen[d.k] > 0, 'every kind appears: ' + d.k));
   T.ok(seen.fine < 5000 * 0.3, 'fines stay a minority');
 });
+T.test('pairs: every board has n distinct pairs, each word with its own meaning', () => {
+  T.ok(Games.PAIRS.length >= 10, 'enough words');
+  T.eq(new Set(Games.PAIRS.map((p) => p.t)).size, Games.PAIRS.length, 'words are distinct');
+  T.eq(new Set(Games.PAIRS.map((p) => p.d)).size, Games.PAIRS.length, 'meanings are distinct');
+  Games.PAIRS.forEach((p) => T.ok(p.t.length <= 14 && p.d.length <= 24, 'fits on a small card: ' + p.t + ' / ' + p.d));
+  for (let seed = 1; seed <= 300; seed++) {
+    const { pairs, cards } = Games.pairsRound(seed, 6);
+    T.eq(pairs.length, 6); T.eq(cards.length, 12);
+    for (const p of pairs) {
+      const two = cards.filter((c) => c.pair === p.id);
+      T.eq(two.length, 2, 'two cards per pair');
+      T.ok(two.some((c) => c.kind === 't' && c.text === p.t) && two.some((c) => c.kind === 'd' && c.text === p.d), 'a word and its meaning');
+    }
+  }
+  const a = Games.pairsRound(5, 6).cards.map((c) => c.text).join(), b = Games.pairsRound(6, 6).cards.map((c) => c.text).join();
+  T.ok(a !== b, 'boards differ between rounds');
+  T.eq(Games.pairsRound(1, 99).pairs.length, Games.PAIRS.length, 'never more pairs than words');
+});
+T.test('pairs: points reward memory and speed, never below 10', () => {
+  T.eq(Games.pairsScore(6, 6, 0), 140); // perfect and instant
+  T.eq(Games.pairsScore(6, 6, 80), 100); // perfect, slow
+  T.ok(Games.pairsScore(6, 10, 30) < Games.pairsScore(6, 7, 30), 'more tries, fewer points');
+  T.ok(Games.pairsScore(6, 7, 60) < Games.pairsScore(6, 7, 20), 'slower, fewer points');
+  T.eq(Games.pairsScore(6, 60, 600), 10, 'floor');
+});
+T.test('how many hours: always a right answer, no repeats in a row', () => {
+  T.eq(new Set(Games.THINGS.map((t) => t.name)).size, Games.THINGS.length, 'names are distinct');
+  Games.THINGS.forEach((t) => T.ok(t.price > 0 && t.e && t.name, 'well-formed: ' + t.name));
+  for (let seed = 1; seed <= 300; seed++) {
+    const chain = Games.hoursRound(seed, 40);
+    T.eq(chain.length, 40);
+    for (let i = 1; i < chain.length; i++) {
+      const a = chain[i - 1].price, b = chain[i].price;
+      T.ok(Math.max(a, b) / Math.min(a, b) >= 1.2, 'clearly more or less: ' + chain[i - 1].name + ' / ' + chain[i].name);
+      T.ok(chain[i] !== chain[i - 1], 'not the same thing twice in a row');
+    }
+  }
+});
+T.test('how many hours: work time in words', () => {
+  T.eq(Games.workTime(0.01), '5 דק׳');
+  T.eq(Games.workTime(0.75), '45 דק׳');
+  T.eq(Games.workTime(1), 'שעה');
+  T.eq(Games.workTime(2.25), 'שעתיים ו-15 דק׳');
+  T.eq(Games.workTime(3.5), '3 שעות ו-30 דק׳');
+  T.eq(Games.workTime(9.99), '10 שעות');
+  T.eq(Games.workTime(10.9), '11 שעות');
+  T.eq(Games.workTime(105), '105 שעות');
+  T.ok(!/NaN|undefined/.test(Games.workTime(4200 / 29.12)), 'odd rates are fine');
+});

@@ -625,10 +625,10 @@ body.fx .gm-card:active { transform: scale(.97); }
 .gm-end-b { display: inline-flex; align-items: center; gap: 6px; margin-top: 4px; padding: 6px 12px; border-radius: 999px; background: var(--amber-soft); color: var(--amber); font-weight: 700; font-size: .88rem; }
 .gm-end-a { display: flex; gap: 8px; margin-top: 14px; width: min(320px, 100%); }
 .gm-end-a .btn { flex: 1; white-space: nowrap; }
-.tf .gm-end, .qz .gm-end { margin-top: 24px; }
+.tf .gm-end, .qz .gm-end, .pr .gm-end, .hw .gm-end { margin-top: 24px; }
 
 /* quiz and true/false */
-.qz, .tf { display: flex; flex-direction: column; gap: 12px; flex: 1; }
+.qz, .tf, .pr, .hw { display: flex; flex-direction: column; gap: 12px; flex: 1; }
 .qz-top { display: flex; align-items: center; gap: 10px; }
 .qz-dots { display: flex; gap: 5px; flex: 1; }
 .qz-dots i { flex: 1; height: 6px; border-radius: 3px; background: var(--surface-3); transition: background .3s; }
@@ -657,7 +657,7 @@ body.fx .qz-opt:active:not(:disabled) { transform: scale(.96); }
 .qz-x > * { animation: rise .3s var(--pop) both; }
 .qz-xt { font: 700 1.05rem var(--display); }
 .qz-xt.ok { color: var(--good); }
-.qz-xt.no { color: #e5484d; }
+.qz-xt.no { color: var(--bad); } /* the readable red of each theme (#e5484d was too faint on white) */
 .tf-s { font: 600 1.18rem/1.55 var(--font); }
 .tf-card.ok { border-color: var(--good); background: color-mix(in srgb, var(--good) 10%, var(--surface-1)); }
 .tf-card.no { border-color: #e5484d; background: color-mix(in srgb, #e5484d 9%, var(--surface-1)); animation: gm-shake .4s; }
@@ -667,6 +667,39 @@ body.fx .qz-opt:active:not(:disabled) { transform: scale(.96); }
 .tf-btns .tf-no { background: linear-gradient(135deg, #e5484d, #b4232a); }
 .tf-btns .btn:disabled { opacity: .4; }
 .tf-btns .btn.picked:disabled { opacity: 1; box-shadow: 0 0 0 3px var(--surface), 0 0 0 5px currentColor; }
+
+/* ---------- "זוגות": cards that turn over (3D, GPU only) ---------- */
+.pr-moves, .hw-rate { flex: 1; font-size: .85rem; color: var(--on-surface-var); }
+.pr-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
+.pr-card { position: relative; aspect-ratio: 1 / 1.08; min-height: 84px; border: 0; padding: 0; background: none; cursor: pointer; perspective: 700px; animation: rise .35s var(--pop) both; animation-delay: calc(var(--k, 0) * 25ms); -webkit-tap-highlight-color: transparent; }
+.pr-in { position: absolute; inset: 0; transform-style: preserve-3d; transition: transform .4s cubic-bezier(.3, 1.25, .5, 1); }
+.pr-card.up .pr-in { transform: rotateY(180deg); }
+.pr-back, .pr-face { position: absolute; inset: 0; display: grid; place-items: center; padding: 6px; border-radius: 16px; text-align: center; backface-visibility: hidden; -webkit-backface-visibility: hidden; }
+.pr-back { background: var(--grad-brand); box-shadow: var(--sh-1); }
+.pr-back::after { content: '₪'; font: 800 1.7rem var(--display); color: rgba(255, 255, 255, .5); }
+.pr-face { transform: rotateY(180deg); background: var(--surface-1); border: 1.5px solid var(--line); box-shadow: var(--sh-1); color: var(--on-surface); font-size: .8rem; line-height: 1.3; overflow-wrap: anywhere; }
+.pr-face.w { font: 700 .98rem/1.25 var(--display); color: var(--brand-strong); }
+.pr-card.done .pr-face { border-color: var(--good); background: color-mix(in srgb, var(--good) 12%, var(--surface-1)); animation: pr-glow .6s ease-out; }
+@keyframes pr-glow { 40% { box-shadow: 0 0 0 5px color-mix(in srgb, var(--good) 30%, transparent); } }
+.pr-card:focus-visible { outline: 3px solid var(--brand); outline-offset: 2px; border-radius: 16px; }
+
+/* ---------- "כמה שעות זה?": two price cards ---------- */
+.hw-pair { display: grid; grid-template-columns: 1fr auto 1fr; align-items: stretch; gap: 8px; }
+.hw-card { display: grid; justify-items: center; align-content: center; gap: 4px; min-height: 172px; padding: 14px 8px; border-radius: 20px; background: var(--surface-1); border: 1.5px solid var(--line); box-shadow: var(--sh-1); text-align: center; animation: rise .35s var(--pop) both; }
+.hw-card.b { animation-delay: .06s; }
+.hw-card.shown { animation: pts-up .4s var(--pop) both; }
+.hw-card.shown.ok { border-color: var(--good); background: color-mix(in srgb, var(--good) 10%, var(--surface-1)); }
+.hw-card.shown.no { border-color: #e5484d; background: color-mix(in srgb, #e5484d 9%, var(--surface-1)); }
+.hw-e { font-size: 2.6rem; line-height: 1.1; }
+.hw-card b { font: 700 1rem/1.3 var(--display); }
+.hw-p { font-size: .85rem; color: var(--on-surface-var); font-variant-numeric: tabular-nums; }
+.hw-h { font: 700 1.05rem var(--display); color: var(--brand-strong); }
+.hw-q { display: grid; place-items: center; width: 64px; height: 44px; border-radius: 14px; background: var(--brand-soft); color: var(--brand-strong); font: 800 2rem var(--display); }
+.hw-vs { align-self: center; font: 700 .85rem var(--display); color: var(--on-surface-var); }
+.hw-ask { font: 600 1.08rem/1.45 var(--font); text-align: center; }
+.tf-btns .hw-more { background: var(--grad-go); }
+.tf-btns .hw-less { background: var(--grad-brand); }
+@media (prefers-reduced-motion: reduce) { .pr-in { transition: none; } .pr-card, .pr-card.done .pr-face, .hw-card, .hw-card.shown { animation: none; } }
 @media (prefers-reduced-motion: reduce) { .gm-end, .qz-card, .tf-card, .qz-opt, .qz-x > *, .cg-count, .qz-pts { animation: none !important; } }
 
 /* ---------- payslip check (views-payslip.js verifySheet) ---------- */
