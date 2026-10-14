@@ -847,3 +847,4 @@ body.fx .recap-card:active { transform: scale(.98); }
 .card .card-head h2.h3 { margin: 0; flex: 1; }
 /* the unread badge: white on a red dark enough to read in both themes */
 .dot-badge { background: #c9372c; }
+.list-more { margin-top: 10px; gap: 6px; }

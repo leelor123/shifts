@@ -860,3 +860,7 @@ body.fx .item:active { transform: scale(.985); }
 .rights .rt-hit-t { display: flex; align-items: center; gap: 8px; font-weight: 800; margin-bottom: 8px; color: var(--primary); }
 .rights .rt-none { text-align: center; }
 .rights .rt-none .btn { margin-top: 12px; }
+/* a shift row's title: the date and role name are cut with "…", its tags (Shabbat, planned, manual) always show */
+.item .t.shift-title { display: flex; flex-direction: row; align-items: center; gap: 6px; text-overflow: clip; }
+.item .t.shift-title .tt { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.item .t.shift-title .tag { flex: none; }

@@ -2,7 +2,7 @@
 <html lang="he" dir="rtl">
 <head>
 <meta charset="utf-8">
-<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'sha256-+GYLRMqcKRM8E+j8dBeid1+uNVpaf+HZwU+05z4IK6A=' https://www.gstatic.com https://apis.google.com https://cdnjs.cloudflare.com https://cdn.jsdelivr.net 'wasm-unsafe-eval'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com data:; img-src 'self' data: blob: https:; connect-src 'self' https: wss:; frame-src https://shiftpay-70ab6.firebaseapp.com https://accounts.google.com https://apis.google.com https://*.google.com; worker-src 'self' blob: https://cdnjs.cloudflare.com https://cdn.jsdelivr.net; media-src 'self' data: blob:; manifest-src 'self'; object-src 'none'; base-uri 'self'; form-action 'self'">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'sha256-59IA8enXI2TOwgY6KIhRjXvWzzcj3pvghByLbjRBZBM=' https://www.gstatic.com https://apis.google.com https://cdnjs.cloudflare.com https://cdn.jsdelivr.net 'wasm-unsafe-eval'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com data:; img-src 'self' data: blob: https:; connect-src 'self' https: wss:; frame-src https://shiftpay-70ab6.firebaseapp.com https://accounts.google.com https://apis.google.com https://*.google.com; worker-src 'self' blob: https://cdnjs.cloudflare.com https://cdn.jsdelivr.net; media-src 'self' data: blob:; manifest-src 'self'; object-src 'none'; base-uri 'self'; form-action 'self'">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="theme-color" content="#0d2b6b">
 <meta name="description" content="מעקב משמרות וחישוב שכר אישי: שבתות, חגים, שעות נוספות, נסיעות, נטו משוער וניתוח תלושים — נשמר בחשבון שלך ועובד גם בלי אינטרנט.">
@@ -879,6 +879,10 @@ body.fx .item:active { transform: scale(.985); }
 .rights .rt-hit-t { display: flex; align-items: center; gap: 8px; font-weight: 800; margin-bottom: 8px; color: var(--primary); }
 .rights .rt-none { text-align: center; }
 .rights .rt-none .btn { margin-top: 12px; }
+/* a shift row's title: the date and role name are cut with "…", its tags (Shabbat, planned, manual) always show */
+.item .t.shift-title { display: flex; flex-direction: row; align-items: center; gap: 6px; text-overflow: clip; }
+.item .t.shift-title .tt { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.item .t.shift-title .tag { flex: none; }
 
 /* ============================================================
  * styles-v3.css — Shaati's design system, layered on styles.css
@@ -1729,6 +1733,7 @@ body.fx .recap-card:active { transform: scale(.98); }
 .card .card-head h2.h3 { margin: 0; flex: 1; }
 /* the unread badge: white on a red dark enough to read in both themes */
 .dot-badge { background: #c9372c; }
+.list-more { margin-top: 10px; gap: 6px; }
 
 </style>
 </head>
@@ -1748,8 +1753,8 @@ body.fx .recap-card:active { transform: scale(.98); }
 <div id="print-root" aria-hidden="true"></div>
 <noscript><div style="padding:24px;font-family:sans-serif">האפליקציה דורשת JavaScript.</div></noscript>
 <script>
-window.APP_VERSION = '1.11.0';
-window.APP_BUILD = '1.11.0-f6bf0c5a';
+window.APP_VERSION = '1.11.1';
+window.APP_BUILD = '1.11.1-5ea4c35f';
 /* ---- core/util.js ---- */
 /* ============================================================
  * util.js — date/time helpers and formatting.
@@ -8223,7 +8228,7 @@ window.FIREBASE_CONFIG = {
     const emp = App.multiEmp() ? ' · ' + esc(App.employer(r.employerId).name) : '';
     return `<button class="item" data-act="shift-open" data-id="${r.id}">
       <span class="role-bar" style="background:${role ? role.color : '#999'}"></span>
-      <span class="body"><span class="t">${esc(date)}${esc(title)} ${App.restTag(r)} ${App.ovTag(r)} ${planned}</span>
+      <span class="body"><span class="t shift-title"><span class="tt">${esc(date)}${esc(title)}</span>${App.restTag(r)}${App.ovTag(r)}${planned}</span>
       <span class="s"><span class="num">⁦${U.epochHM(r.start)}–${U.epochHM(r.rawEnd)}⁩</span> · ${U.hm(r.paidMin)} ש׳${emp}${sh.note ? ' · ' + esc(sh.note) : ''}</span></span>
       <span class="trail"><span class="a">${money(r.total, 0)}</span>${opts.showOk && r.status === 'planned' ? `<br><span class="tag good" data-act="mark-done" data-id="${r.id}">${icon('check')}בוצעה</span>` : ''}</span></button>`;
   };
@@ -9445,11 +9450,20 @@ window.FIREBASE_CONFIG = {
     }).sort((a, b) => b.start - a.start);
   }
   App.filteredShifts = filtered;
+  // A long history (a few years: 1,000+ shifts) drawn all at once took seconds on a slow phone. The
+  // newest PAGE are drawn and "show more" adds the next PAGE; any change of the filters starts over.
+  const PAGE = 100;
   function listView() {
     const f = st.f;
     const list = filtered();
+    const fkey = JSON.stringify(f);
+    if (st.shownFor !== fkey) { st.shownFor = fkey; st.shown = PAGE; }
+    const shown = Math.min(list.length, st.shown || PAGE);
     const groups = {};
     for (const r of list) (groups[r.dateKey.slice(0, 7)] = groups[r.dateKey.slice(0, 7)] || []).push(r);
+    // month totals always count the whole month; only the rows are cut at `shown`
+    let left = shown;
+    const months = Object.entries(groups).map(([mk, rs]) => { const rows = rs.slice(0, Math.max(0, left)); left -= rows.length; return [mk, rs, rows]; }).filter(([, , rows]) => rows.length);
     const entries = S.entries.filter((e) => (!f.from || e.date >= f.from) && (!f.to || e.date <= f.to) && !f.role && !f.ov && !f.q).sort((a, b) => b.date.localeCompare(a.date));
     return `
       <div class="field" style="position:relative"><input class="input" id="flt-q" placeholder="חיפוש בהערות, תפקיד, תאריך…" value="${esc(f.q)}" style="padding-inline-start:44px"><span style="position:absolute;inset-inline-start:12px;top:14px" class="muted">${icon('search')}</span></div>
@@ -9463,7 +9477,8 @@ window.FIREBASE_CONFIG = {
       </div>
       <div class="grid2"><label class="field"><span class="lbl">מתאריך</span><input class="input" type="date" id="flt-from" value="${f.from}"></label><label class="field"><span class="lbl">עד</span><input class="input" type="date" id="flt-to" value="${f.to}"></label></div>
       <div class="row-flex small" style="margin:0 4px 10px"><span>${list.length} משמרות · ${U.money(list.filter((r) => r.status === 'done').reduce((s, r) => s + r.total, 0), 0)}</span><span class="spacer"></span><button class="btn text sm" data-act="flt-csv">${icon('download', 's')} CSV</button>${f.q || f.role || f.ov || f.from || f.to || f.status !== 'all' ? '<button class="btn text sm" data-act="flt-clear">נקה</button>' : ''}</div>
-      ${list.length ? Object.entries(groups).map(([mk, rs]) => `<div class="section-title">${U.fmtMonth(mk)}<span class="spacer"></span><span class="small muted">${U.money(rs.filter((r) => r.status === 'done').reduce((s, r) => s + r.total, 0), 0)}</span></div><div class="list">${rs.map((r) => App.shiftItem(r)).join('')}</div>`).join('') : UI.emptyState('search', 'לא נמצאו משמרות', 'נסה לשנות את החיפוש או המסננים.')}
+      ${list.length ? months.map(([mk, rs, rows]) => `<div class="section-title">${U.fmtMonth(mk)}<span class="spacer"></span><span class="small muted">${U.money(rs.filter((r) => r.status === 'done').reduce((s, r) => s + r.total, 0), 0)}</span></div><div class="list">${rows.map((r) => App.shiftItem(r)).join('')}</div>`).join('') : UI.emptyState('search', 'לא נמצאו משמרות', 'נסה לשנות את החיפוש או המסננים.')}
+      ${list.length > shown ? `<button class="btn tonal block list-more" data-act="flt-more">${icon('down', 's')} עוד ${Math.min(PAGE, list.length - shown)} משמרות <span class="small muted">(מוצגות ${shown} מתוך ${list.length})</span></button>` : ''}
       ${entries.length ? `<div class="section-title">חופשה, מחלה ותוספות</div><div class="list">${entries.slice(0, 50).map(App.entryItem).join('')}</div>` : ''}`;
   }
 
@@ -9496,6 +9511,7 @@ window.FIREBASE_CONFIG = {
   App.actions['flt-role'] = (el) => { st.f.role = el.dataset.id; App.rerender(); };
   App.actions['flt-status'] = (el) => { st.f.status = el.dataset.s; App.rerender(); };
   App.actions['flt-ov'] = () => { st.f.ov = !st.f.ov; App.rerender(); };
+  App.actions['flt-more'] = () => { st.shown = (st.shown || PAGE) + PAGE; App.rerender(); };
   App.actions['flt-clear'] = () => { st.f = { q: '', role: '', status: 'all', ov: false, from: '', to: '' }; App.rerender(); };
   App.actions['flt-csv'] = () => App.exporter.shiftsCsv(filtered(), 'shifts-filtered.csv');
   App.actions['rep-csv'] = () => {

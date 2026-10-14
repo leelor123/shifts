@@ -247,11 +247,20 @@
     }).sort((a, b) => b.start - a.start);
   }
   App.filteredShifts = filtered;
+  // A long history (a few years: 1,000+ shifts) drawn all at once took seconds on a slow phone. The
+  // newest PAGE are drawn and "show more" adds the next PAGE; any change of the filters starts over.
+  const PAGE = 100;
   function listView() {
     const f = st.f;
     const list = filtered();
+    const fkey = JSON.stringify(f);
+    if (st.shownFor !== fkey) { st.shownFor = fkey; st.shown = PAGE; }
+    const shown = Math.min(list.length, st.shown || PAGE);
     const groups = {};
     for (const r of list) (groups[r.dateKey.slice(0, 7)] = groups[r.dateKey.slice(0, 7)] || []).push(r);
+    // month totals always count the whole month; only the rows are cut at `shown`
+    let left = shown;
+    const months = Object.entries(groups).map(([mk, rs]) => { const rows = rs.slice(0, Math.max(0, left)); left -= rows.length; return [mk, rs, rows]; }).filter(([, , rows]) => rows.length);
     const entries = S.entries.filter((e) => (!f.from || e.date >= f.from) && (!f.to || e.date <= f.to) && !f.role && !f.ov && !f.q).sort((a, b) => b.date.localeCompare(a.date));
     return `
       <div class="field" style="position:relative"><input class="input" id="flt-q" placeholder="חיפוש בהערות, תפקיד, תאריך…" value="${esc(f.q)}" style="padding-inline-start:44px"><span style="position:absolute;inset-inline-start:12px;top:14px" class="muted">${icon('search')}</span></div>
@@ -265,7 +274,8 @@
       </div>
       <div class="grid2"><label class="field"><span class="lbl">מתאריך</span><input class="input" type="date" id="flt-from" value="${f.from}"></label><label class="field"><span class="lbl">עד</span><input class="input" type="date" id="flt-to" value="${f.to}"></label></div>
       <div class="row-flex small" style="margin:0 4px 10px"><span>${list.length} משמרות · ${U.money(list.filter((r) => r.status === 'done').reduce((s, r) => s + r.total, 0), 0)}</span><span class="spacer"></span><button class="btn text sm" data-act="flt-csv">${icon('download', 's')} CSV</button>${f.q || f.role || f.ov || f.from || f.to || f.status !== 'all' ? '<button class="btn text sm" data-act="flt-clear">נקה</button>' : ''}</div>
-      ${list.length ? Object.entries(groups).map(([mk, rs]) => `<div class="section-title">${U.fmtMonth(mk)}<span class="spacer"></span><span class="small muted">${U.money(rs.filter((r) => r.status === 'done').reduce((s, r) => s + r.total, 0), 0)}</span></div><div class="list">${rs.map((r) => App.shiftItem(r)).join('')}</div>`).join('') : UI.emptyState('search', 'לא נמצאו משמרות', 'נסה לשנות את החיפוש או המסננים.')}
+      ${list.length ? months.map(([mk, rs, rows]) => `<div class="section-title">${U.fmtMonth(mk)}<span class="spacer"></span><span class="small muted">${U.money(rs.filter((r) => r.status === 'done').reduce((s, r) => s + r.total, 0), 0)}</span></div><div class="list">${rows.map((r) => App.shiftItem(r)).join('')}</div>`).join('') : UI.emptyState('search', 'לא נמצאו משמרות', 'נסה לשנות את החיפוש או המסננים.')}
+      ${list.length > shown ? `<button class="btn tonal block list-more" data-act="flt-more">${icon('down', 's')} עוד ${Math.min(PAGE, list.length - shown)} משמרות <span class="small muted">(מוצגות ${shown} מתוך ${list.length})</span></button>` : ''}
       ${entries.length ? `<div class="section-title">חופשה, מחלה ותוספות</div><div class="list">${entries.slice(0, 50).map(App.entryItem).join('')}</div>` : ''}`;
   }
 
@@ -298,6 +308,7 @@
   App.actions['flt-role'] = (el) => { st.f.role = el.dataset.id; App.rerender(); };
   App.actions['flt-status'] = (el) => { st.f.status = el.dataset.s; App.rerender(); };
   App.actions['flt-ov'] = () => { st.f.ov = !st.f.ov; App.rerender(); };
+  App.actions['flt-more'] = () => { st.shown = (st.shown || PAGE) + PAGE; App.rerender(); };
   App.actions['flt-clear'] = () => { st.f = { q: '', role: '', status: 'all', ov: false, from: '', to: '' }; App.rerender(); };
   App.actions['flt-csv'] = () => App.exporter.shiftsCsv(filtered(), 'shifts-filtered.csv');
   App.actions['rep-csv'] = () => {
