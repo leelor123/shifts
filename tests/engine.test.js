@@ -317,3 +317,21 @@ T.test('mandatory pension starts at 21 (men) / 20 (women)', () => {
   s.gender = ''; s.birthDate = '2005-01-01';
   T.ok(Engine.pensionActive(s, '2026-06-30'), 'anyone of 21: yes');
 });
+
+T.section('damaged data');
+T.test('broken records are skipped, never fatal', () => {
+  const settings = Defaults.defaultSettings();
+  const emp = Defaults.defaultEmployer();
+  const roles = Defaults.defaultRoles(emp.id);
+  const start = U.toEpoch('2026-09-01', '10:00');
+  const good = { id: 'ok', kind: 'shift', employerId: emp.id, roleId: roles[0].id, status: 'done', start, end: start + 4 * 3600000, items: [] };
+  const shifts = [null, 'x', 42, { id: 'a' }, { id: 'b', start: 'abc', end: 5 }, { id: 'c', start: start + 9, end: start }, { id: 'd', start, end: start + 9 * 24 * 3600000 },
+    { id: 'e', start: NaN, end: Infinity }, { start, end: start + 3600000 }, good];
+  const entries = [null, { id: 'v' }, { id: 'w', date: 12 }, { id: 'x', kind: 'vacation', date: '2026-09-02', status: 'done' }];
+  let m;
+  T.ok((() => { m = Engine.buildModel({ settings, employers: [emp], roles, dayRules: [], shifts, entries }); return true; })(), 'the model builds');
+  T.eq([...m.results.keys()].join(','), 'ok');
+  T.eq(m.entries.length, 1);
+  const t = Engine.totals(m, '2026-09-01', '2026-09-30');
+  T.ok(t.gross > 0 && Number.isFinite(t.gross), 'totals are real numbers');
+});

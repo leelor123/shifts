@@ -407,13 +407,18 @@
    * same date share the daily overtime counter, in chronological order.
    * Returns Map(id -> result).
    */
+  /** A shift the engine can work with: real times, ending after it starts, at most a week long
+   *  (a timer someone forgot to stop is still counted; a garbage end date can't make it loop for years). */
+  const validShift = (s) => !!s && typeof s === 'object' && typeof s.id === 'string'
+    && Number.isFinite(s.start) && Number.isFinite(s.end) && s.end > s.start && s.end - s.start <= 7 * 24 * 3600000;
+  const validEntry = (e) => !!e && typeof e === 'object' && typeof e.id === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(e.date || '');
   function computeAll(shifts, ctx, opts) {
     opts = opts || {};
     const out = new Map();
     const groups = new Map();
     for (const s of shifts) {
-      if (s.kind && s.kind !== 'shift') continue;
-      if (!s.start || !s.end) continue;
+      if (!s || (s.kind && s.kind !== 'shift')) continue;
+      if (!validShift(s)) continue; // a damaged record (an old backup, a bad sync) is skipped, never fatal
       const key = (s.employerId || '') + '|' + U.epochKey(s.start) + '|' + (s.status === 'planned' ? 'p' : 'd');
       if (!groups.has(key)) groups.set(key, []);
       groups.get(key).push(s);
@@ -422,7 +427,11 @@
       list.sort((a, b) => a.start - b.start);
       let prior = 0;
       for (const s of list) {
-        const r = computeShift(s, ctx, { priorMin: prior, ignoreOverrides: opts.ignoreOverrides });
+        let r;
+        try { r = computeShift(s, ctx, { priorMin: prior, ignoreOverrides: opts.ignoreOverrides }); } catch (e) {
+          if (typeof console !== 'undefined') console.warn('shift skipped, it could not be calculated', s.id, e && e.message);
+          continue;
+        }
         out.set(s.id, r);
         prior += r.paidMin;
       }
@@ -625,10 +634,10 @@
    */
   function buildModel(data) {
     const ctx = makeCtx(data);
-    const shifts = data.shifts || [];
+    const shifts = (data.shifts || []).filter(validShift); // damaged records never reach the calculation
     const results = computeAll(shifts, ctx);
     const autoResults = computeAll(shifts.filter(hasOverrides).length || (data.dayRules || []).length ? shifts : [], ctx, { ignoreOverrides: true });
-    const entries = data.entries || [];
+    const entries = (data.entries || []).filter(validEntry);
     const entryVals = computeEntries(entries, ctx, results);
     const travel = travelByDay(results, ctx);
     return { ctx, results, autoResults, entries, entryVals, travel, data };
@@ -863,7 +872,7 @@
   }
 
   root.Engine = {
-    legalMinWage, minWageFor, youthRules, pensionMinAge, MIN_WAGE,
+    validShift, validEntry, legalMinWage, minWageFor, youthRules, pensionMinAge, MIN_WAGE,
     makeCtx, roleRate, roundMinutes, monthsBetween, buildSegments, hasOverrides, computeShift, computeAll,
     periodByKey, periodOf, dayValue, computeEntries, travelByDay, incomeTaxRaw, netEstimate, pensionActive,
     buildModel, totals, periodSummary, rangeSummary, pensionBaseOf, leaveBalances, vacationEntitlement, recuperationDays, ageAt, isMinor,

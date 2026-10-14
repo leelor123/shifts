@@ -528,8 +528,11 @@
         const file = f.files[0];
         if (!file) return;
         try {
-          const json = JSON.parse(await file.text());
-          const n = (json.shifts || []).length;
+          if (file.size > 60 * 1024 * 1024) throw new Error('הקובץ גדול מדי בשביל גיבוי של האפליקציה.');
+          let json;
+          try { json = JSON.parse(await file.text()); } catch (e) { throw new Error('זה לא קובץ גיבוי של האפליקציה (צריך קובץ ‎.json‎ שנוצר בגיבוי).'); }
+          if (!json || typeof json !== 'object' || json.app !== 'shiftpay') throw new Error('זה לא קובץ גיבוי של האפליקציה.');
+          const n = Array.isArray(json.shifts) ? json.shifts.length : 0;
           const mode = await UI.dialog({ title: 'שחזור גיבוי', text: `בקובץ ${n} משמרות (${json.exportedAt ? 'נוצר ' + U.fmtDate(json.exportedAt.slice(0, 10)) : ''}). מה לעשות?`, buttons: [{ label: 'ביטול', value: null }, { label: 'מיזוג', value: 'merge' }, { label: 'החלפה מלאה', value: 'replace', cls: 'danger' }] });
           if (!mode) return;
           await Store.importBackup(json, mode);

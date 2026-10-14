@@ -31,10 +31,16 @@
   App.recompute = function () {
     // Shabbat/holiday windows are cached under a key made of every rest setting (city, holidays,
     // day rules…), so they stay valid across recalculations: only the shifts are recomputed
-    App.model = Engine.buildModel({
-      settings: S.settings, employers: S.employers, roles: S.roles, dayRules: S.dayRules,
-      shifts: S.shifts, entries: S.entries,
-    });
+    try {
+      App.model = Engine.buildModel({
+        settings: S.settings, employers: S.employers, roles: S.roles, dayRules: S.dayRules,
+        shifts: S.shifts, entries: S.entries,
+      });
+    } catch (e) {
+      // never leave the app without numbers: keep the last good calculation (or an empty one)
+      console.error('recalculation failed', e);
+      if (!App.model) App.model = Engine.buildModel({ settings: S.settings, employers: S.employers, roles: S.roles, dayRules: [], shifts: [], entries: [] });
+    }
   };
 
   /* ---------------- theme ---------------- */
@@ -127,8 +133,16 @@
     if (first) seenTabs.add(App.tab);
     const cls = fresh ? (App.enterDir || '') + ' fresh' + (first ? ' first' : '') : '';
     App.enterDir = '';
-    v.innerHTML = `<div class="view ${cls}" id="view-inner">${fn()}</div>`;
-    if (App.views[App.tab + '_mount']) App.views[App.tab + '_mount'](v);
+    // a screen that fails to draw shows a friendly card instead of a blank page
+    let html;
+    try { html = fn(); } catch (e) {
+      console.error('render failed', App.tab, e);
+      html = `<div class="empty render-err">${App.mascot ? App.mascot('think', { size: 96 }) : ''}<h3>משהו השתבש במסך הזה</h3>
+        <div class="small muted">הנתונים שלך שמורים. אפשר לנסות שוב או לעבור למסך אחר.</div>
+        <div class="btn-row" style="margin-top:14px;justify-content:center"><button class="btn" data-act="render-retry">נסה שוב</button><button class="btn tonal" data-act="support">דיווח על תקלה</button></div></div>`;
+    }
+    v.innerHTML = `<div class="view ${cls}" id="view-inner">${html}</div>`;
+    try { if (App.views[App.tab + '_mount']) App.views[App.tab + '_mount'](v); } catch (e) { console.error('mount failed', App.tab, e); }
     App.renderNav();
     if (opts && opts.keepScroll) window.scrollTo(0, y);
     App.tickTimer();
@@ -158,6 +172,7 @@
     setTimeout(run, 700);
   };
   App.rerender = () => App.render({ keepScroll: true });
+  App.actions['render-retry'] = () => { App.recompute(); App.render(); };
 
   /* ---------------- milestones ----------------
    * 10, 25, 50… shifts and 1,000, 5,000… shekels earned get a small medal at the top of the
@@ -319,6 +334,13 @@
     App.milestones();
     const r = App.result(sh.id);
     UI.toast(`נשמר: ${U.hm(r ? r.paidMin : 0)} שעות · ${U.money(r ? r.wage : 0)}`, { label: 'ביטול', fn: App.undo }, { ok: true });
+    // a timer that kept running (the phone in a pocket, a forgotten stop): it is saved, so nothing is
+    // lost, and the end time can be fixed right away
+    const hours = (sh.end - sh.start) / U.HOUR;
+    if (hours > (+S.settings.alerts.suspiciousHours || 20)) {
+      const fix = await UI.confirm('שכחת לעצור?', `הטיימר רץ ${U.num(hours, 1)} שעות, מ-${U.fmtDate(U.epochKey(sh.start), 'short')} ב-${U.epochHM(sh.start)}. אפשר לתקן עכשיו את שעת הסיום.`, 'לתקן');
+      if (fix && App.sheetsApi.shiftEditor) { App.sheetsApi.shiftEditor(sh.id); return; }
+    }
     App.sheetsApi.shiftDetail && App.sheetsApi.shiftDetail(sh.id);
   };
   App.toggleBreak = async function () {

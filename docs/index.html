@@ -2,7 +2,7 @@
 <html lang="he" dir="rtl">
 <head>
 <meta charset="utf-8">
-<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'sha256-2XFqwOGrJEZfyvQLizL9EQafgZ8vbVxSPMWAVshX4qg=' https://www.gstatic.com https://apis.google.com https://cdnjs.cloudflare.com https://cdn.jsdelivr.net 'wasm-unsafe-eval'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com data:; img-src 'self' data: blob: https:; connect-src 'self' https: wss:; frame-src https://shiftpay-70ab6.firebaseapp.com https://accounts.google.com https://apis.google.com https://*.google.com; worker-src 'self' blob: https://cdnjs.cloudflare.com https://cdn.jsdelivr.net; media-src 'self' data: blob:; manifest-src 'self'; object-src 'none'; base-uri 'self'; form-action 'self'">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'sha256-tfRO3vMJVu0uaiCtMiWRD3++9NJKc8pOot3yAOtF6jc=' https://www.gstatic.com https://apis.google.com https://cdnjs.cloudflare.com https://cdn.jsdelivr.net 'wasm-unsafe-eval'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com data:; img-src 'self' data: blob: https:; connect-src 'self' https: wss:; frame-src https://shiftpay-70ab6.firebaseapp.com https://accounts.google.com https://apis.google.com https://*.google.com; worker-src 'self' blob: https://cdnjs.cloudflare.com https://cdn.jsdelivr.net; media-src 'self' data: blob:; manifest-src 'self'; object-src 'none'; base-uri 'self'; form-action 'self'">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="theme-color" content="#0d2b6b">
 <meta name="description" content="מעקב משמרות וחישוב שכר אישי: שבתות, חגים, שעות נוספות, נסיעות, נטו משוער וניתוח תלושים — נשמר בחשבון שלך ועובד גם בלי אינטרנט.">
@@ -1696,7 +1696,7 @@ body.fx .recap-card:active { transform: scale(.98); }
 <div id="print-root" aria-hidden="true"></div>
 <noscript><div style="padding:24px;font-family:sans-serif">האפליקציה דורשת JavaScript.</div></noscript>
 <script>
-window.APP_VERSION = '1.9.1';
+window.APP_VERSION = '1.9.2';
 /* ---- core/util.js ---- */
 /* ============================================================
  * util.js — date/time helpers and formatting.
@@ -2771,13 +2771,18 @@ window.APP_VERSION = '1.9.1';
    * same date share the daily overtime counter, in chronological order.
    * Returns Map(id -> result).
    */
+  /** A shift the engine can work with: real times, ending after it starts, at most a week long
+   *  (a timer someone forgot to stop is still counted; a garbage end date can't make it loop for years). */
+  const validShift = (s) => !!s && typeof s === 'object' && typeof s.id === 'string'
+    && Number.isFinite(s.start) && Number.isFinite(s.end) && s.end > s.start && s.end - s.start <= 7 * 24 * 3600000;
+  const validEntry = (e) => !!e && typeof e === 'object' && typeof e.id === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(e.date || '');
   function computeAll(shifts, ctx, opts) {
     opts = opts || {};
     const out = new Map();
     const groups = new Map();
     for (const s of shifts) {
-      if (s.kind && s.kind !== 'shift') continue;
-      if (!s.start || !s.end) continue;
+      if (!s || (s.kind && s.kind !== 'shift')) continue;
+      if (!validShift(s)) continue; // a damaged record (an old backup, a bad sync) is skipped, never fatal
       const key = (s.employerId || '') + '|' + U.epochKey(s.start) + '|' + (s.status === 'planned' ? 'p' : 'd');
       if (!groups.has(key)) groups.set(key, []);
       groups.get(key).push(s);
@@ -2786,7 +2791,11 @@ window.APP_VERSION = '1.9.1';
       list.sort((a, b) => a.start - b.start);
       let prior = 0;
       for (const s of list) {
-        const r = computeShift(s, ctx, { priorMin: prior, ignoreOverrides: opts.ignoreOverrides });
+        let r;
+        try { r = computeShift(s, ctx, { priorMin: prior, ignoreOverrides: opts.ignoreOverrides }); } catch (e) {
+          if (typeof console !== 'undefined') console.warn('shift skipped, it could not be calculated', s.id, e && e.message);
+          continue;
+        }
         out.set(s.id, r);
         prior += r.paidMin;
       }
@@ -2989,10 +2998,10 @@ window.APP_VERSION = '1.9.1';
    */
   function buildModel(data) {
     const ctx = makeCtx(data);
-    const shifts = data.shifts || [];
+    const shifts = (data.shifts || []).filter(validShift); // damaged records never reach the calculation
     const results = computeAll(shifts, ctx);
     const autoResults = computeAll(shifts.filter(hasOverrides).length || (data.dayRules || []).length ? shifts : [], ctx, { ignoreOverrides: true });
-    const entries = data.entries || [];
+    const entries = (data.entries || []).filter(validEntry);
     const entryVals = computeEntries(entries, ctx, results);
     const travel = travelByDay(results, ctx);
     return { ctx, results, autoResults, entries, entryVals, travel, data };
@@ -3227,7 +3236,7 @@ window.APP_VERSION = '1.9.1';
   }
 
   root.Engine = {
-    legalMinWage, minWageFor, youthRules, pensionMinAge, MIN_WAGE,
+    validShift, validEntry, legalMinWage, minWageFor, youthRules, pensionMinAge, MIN_WAGE,
     makeCtx, roleRate, roundMinutes, monthsBetween, buildSegments, hasOverrides, computeShift, computeAll,
     periodByKey, periodOf, dayValue, computeEntries, travelByDay, incomeTaxRaw, netEstimate, pensionActive,
     buildModel, totals, periodSummary, rangeSummary, pensionBaseOf, leaveBalances, vacationEntitlement, recuperationDays, ageAt, isMinor,
@@ -5275,12 +5284,12 @@ window.APP_VERSION = '1.9.1';
   // wheel comes to rest it is moved, invisibly, back to the same number
   // in the middle copy, so there is always room to keep turning.
   const ROW = 44;
-  const COPIES = 9, MID = 4;
+  const COPIES = 5, MID = 2; // 2 copies of room each way (a strong fling is ~5000px) before the wheel is re-centred
   const mod = (a, n) => ((a % n) + n) % n;
   function wheel(count, sel, fmt, label) {
     let html = '';
     for (let c = 0; c < COPIES; c++) for (let v = 0; v < count; v++) html += `<div class="pk-opt" data-i="${c * count + v}" data-v="${v}">${fmt(v)}</div>`;
-    return `<div class="pk-wheel" tabindex="0" role="spinbutton" aria-label="${label}" aria-valuemin="0" aria-valuemax="${count - 1}" aria-valuenow="${sel}" data-n="${count}"><div class="pk-pad"></div>${html}<div class="pk-pad"></div></div>`;
+    return `<div class="pk-wheel" tabindex="0" role="spinbutton" aria-label="${label}" aria-valuemin="0" aria-valuemax="${count - 1}" aria-valuenow="${sel}" data-n="${count}" data-mid="${MID}"><div class="pk-pad"></div>${html}<div class="pk-pad"></div></div>`;
   }
   /** The drum look: rows tilt and shrink the further they are from the middle. */
   function drum(w) {
@@ -6154,13 +6163,66 @@ window.APP_VERSION = '1.9.1';
     }
     return out;
   }
+  /*
+   * A backup is a file from outside the app (maybe old, maybe edited by hand, maybe damaged), so it is
+   * cleaned before anything is replaced: lists must be lists of records with an id, shifts and entries
+   * must make sense, pay rates must be numbers, and there is a limit to how much a file may hold.
+   * Then the whole thing is calculated once on the side: a file the app can't calculate is refused and
+   * the data on the phone stays as it was.
+   */
+  const MAX_RECORDS = 50000;
+  const isObj = (x) => !!x && typeof x === 'object' && !Array.isArray(x);
+  function cleanList(list) {
+    if (!Array.isArray(list)) return [];
+    const seen = new Set();
+    const out = [];
+    for (const x of list) {
+      if (!isObj(x) || typeof x.id !== 'string' || !x.id || x.id.length > 120 || seen.has(x.id)) continue;
+      seen.add(x.id);
+      out.push(x);
+      if (out.length >= MAX_RECORDS) break;
+    }
+    return out;
+  }
+  function cleanIncoming(inc) {
+    const E = root.Engine;
+    inc.settings = isObj(inc.settings) ? inc.settings : {};
+    inc.meta = isObj(inc.meta) ? inc.meta : {};
+    if (!isObj(inc.activeShift) || !Number.isFinite(inc.activeShift.start) || inc.activeShift.start > Date.now() + 60000) inc.activeShift = null;
+    for (const s of LIST_STORES) inc[s] = cleanList(inc[s]);
+    inc.shifts = inc.shifts.filter((x) => E.validShift(x));
+    inc.entries = inc.entries.filter((x) => E.validEntry(x));
+    const okDay = (k) => typeof k === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(k);
+    inc.roles = inc.roles.filter((r) => {
+      // a role without usable rates is kept with rate 0, so it shows up (as below the minimum) and can be fixed
+      r.rates = (Array.isArray(r.rates) ? r.rates : []).filter((x) => isObj(x) && okDay(x.from) && Number.isFinite(+x.rate) && +x.rate >= 0 && +x.rate < 10000).map((x) => Object.assign({}, x, { rate: +x.rate }));
+      if (typeof r.name !== 'string') r.name = String(r.name == null ? '' : r.name);
+      r.name = r.name.slice(0, 60);
+      if (!r.rates.length) r.rates = [{ from: '2000-01-01', rate: 0 }];
+      return true;
+    });
+    inc.employers = inc.employers.map((e) => Object.assign(root.Defaults.defaultEmployer(e.id), e, { name: String(e.name == null ? '' : e.name).slice(0, 60) }));
+    return inc;
+  }
   /** mode: 'replace' | 'merge' */
   async function importBackup(json, mode) {
-    if (!json || json.app !== 'shiftpay') throw new Error('הקובץ אינו גיבוי של האפליקציה');
-    if ((json.schemaVersion || 1) > SCHEMA_VERSION) throw new Error('הגיבוי נוצר בגרסה חדשה יותר של האפליקציה. עדכן קודם את האפליקציה.');
+    if (!isObj(json) || json.app !== 'shiftpay') throw new Error('הקובץ אינו גיבוי של האפליקציה');
+    if ((+json.schemaVersion || 1) > SCHEMA_VERSION) throw new Error('הגיבוי נוצר בגרסה חדשה יותר של האפליקציה. עדכן קודם את האפליקציה.');
     const incoming = { settings: json.settings, meta: json.meta || {}, activeShift: json.activeShift || null };
     for (const s of LIST_STORES) incoming[s] = json[s] || [];
-    runMigrations(incoming, json.schemaVersion || 1);
+    cleanIncoming(incoming);
+    runMigrations(incoming, +json.schemaVersion || 1);
+    // calculate it once on the side; a file that can't be calculated is refused before anything changes
+    try {
+      const trial = root.Engine.buildModel({
+        settings: mergeDeep(root.Defaults.defaultSettings(), incoming.settings), employers: incoming.employers.length ? incoming.employers : [root.Defaults.defaultEmployer()],
+        roles: incoming.roles, dayRules: incoming.dayRules, shifts: incoming.shifts, entries: incoming.entries,
+      });
+      root.Engine.totals(trial, '2000-01-01', '2100-12-31');
+    } catch (e) {
+      console.warn('backup refused', e);
+      throw new Error('הקובץ פגום ואי אפשר לשחזר ממנו. הנתונים בטלפון לא השתנו.');
+    }
     const keepKey = S.settings && S.settings.ai ? S.settings.ai.apiKey : '';
     for (const s of SYNC_STORES) for (const x of incoming[s]) delete x._syncedAt; // that sync state belongs to the device that made the backup
     for (const r of incoming.roles) safeRecord('roles', r);
@@ -6185,6 +6247,12 @@ window.APP_VERSION = '1.9.1';
       }
     }
     if (!S.employers.length) S.employers = [root.Defaults.defaultEmployer()];
+    // a backup without any job still leaves something to start a shift with (at the legal minimum)
+    if (!S.roles.some((r) => !r.archived)) {
+      let rate = 0;
+      try { rate = root.Engine.minWageFor(S.settings, root.U.todayKey()).hourly || 0; } catch (e) { /* keep 0 */ }
+      S.roles.push({ id: 'r_' + root.U.uid(), name: 'העבודה שלי', color: root.Defaults.ROLE_COLORS[0], employerId: S.employers[0].id, rates: [{ from: '2000-01-01', rate }], archived: false });
+    }
     await saveAll();
     for (const f of json.files || []) {
       try { await putFile(f.id, await dataUrlToBlob(f.data), f.name, f.type); } catch (e) { console.warn('file restore failed', e); }
@@ -6482,10 +6550,16 @@ window.APP_VERSION = '1.9.1';
   App.recompute = function () {
     // Shabbat/holiday windows are cached under a key made of every rest setting (city, holidays,
     // day rules…), so they stay valid across recalculations: only the shifts are recomputed
-    App.model = Engine.buildModel({
-      settings: S.settings, employers: S.employers, roles: S.roles, dayRules: S.dayRules,
-      shifts: S.shifts, entries: S.entries,
-    });
+    try {
+      App.model = Engine.buildModel({
+        settings: S.settings, employers: S.employers, roles: S.roles, dayRules: S.dayRules,
+        shifts: S.shifts, entries: S.entries,
+      });
+    } catch (e) {
+      // never leave the app without numbers: keep the last good calculation (or an empty one)
+      console.error('recalculation failed', e);
+      if (!App.model) App.model = Engine.buildModel({ settings: S.settings, employers: S.employers, roles: S.roles, dayRules: [], shifts: [], entries: [] });
+    }
   };
 
   /* ---------------- theme ---------------- */
@@ -6578,8 +6652,16 @@ window.APP_VERSION = '1.9.1';
     if (first) seenTabs.add(App.tab);
     const cls = fresh ? (App.enterDir || '') + ' fresh' + (first ? ' first' : '') : '';
     App.enterDir = '';
-    v.innerHTML = `<div class="view ${cls}" id="view-inner">${fn()}</div>`;
-    if (App.views[App.tab + '_mount']) App.views[App.tab + '_mount'](v);
+    // a screen that fails to draw shows a friendly card instead of a blank page
+    let html;
+    try { html = fn(); } catch (e) {
+      console.error('render failed', App.tab, e);
+      html = `<div class="empty render-err">${App.mascot ? App.mascot('think', { size: 96 }) : ''}<h3>משהו השתבש במסך הזה</h3>
+        <div class="small muted">הנתונים שלך שמורים. אפשר לנסות שוב או לעבור למסך אחר.</div>
+        <div class="btn-row" style="margin-top:14px;justify-content:center"><button class="btn" data-act="render-retry">נסה שוב</button><button class="btn tonal" data-act="support">דיווח על תקלה</button></div></div>`;
+    }
+    v.innerHTML = `<div class="view ${cls}" id="view-inner">${html}</div>`;
+    try { if (App.views[App.tab + '_mount']) App.views[App.tab + '_mount'](v); } catch (e) { console.error('mount failed', App.tab, e); }
     App.renderNav();
     if (opts && opts.keepScroll) window.scrollTo(0, y);
     App.tickTimer();
@@ -6609,6 +6691,7 @@ window.APP_VERSION = '1.9.1';
     setTimeout(run, 700);
   };
   App.rerender = () => App.render({ keepScroll: true });
+  App.actions['render-retry'] = () => { App.recompute(); App.render(); };
 
   /* ---------------- milestones ----------------
    * 10, 25, 50… shifts and 1,000, 5,000… shekels earned get a small medal at the top of the
@@ -6770,6 +6853,13 @@ window.APP_VERSION = '1.9.1';
     App.milestones();
     const r = App.result(sh.id);
     UI.toast(`נשמר: ${U.hm(r ? r.paidMin : 0)} שעות · ${U.money(r ? r.wage : 0)}`, { label: 'ביטול', fn: App.undo }, { ok: true });
+    // a timer that kept running (the phone in a pocket, a forgotten stop): it is saved, so nothing is
+    // lost, and the end time can be fixed right away
+    const hours = (sh.end - sh.start) / U.HOUR;
+    if (hours > (+S.settings.alerts.suspiciousHours || 20)) {
+      const fix = await UI.confirm('שכחת לעצור?', `הטיימר רץ ${U.num(hours, 1)} שעות, מ-${U.fmtDate(U.epochKey(sh.start), 'short')} ב-${U.epochHM(sh.start)}. אפשר לתקן עכשיו את שעת הסיום.`, 'לתקן');
+      if (fix && App.sheetsApi.shiftEditor) { App.sheetsApi.shiftEditor(sh.id); return; }
+    }
     App.sheetsApi.shiftDetail && App.sheetsApi.shiftDetail(sh.id);
   };
   App.toggleBreak = async function () {
@@ -10438,8 +10528,11 @@ window.FIREBASE_CONFIG = {
         const file = f.files[0];
         if (!file) return;
         try {
-          const json = JSON.parse(await file.text());
-          const n = (json.shifts || []).length;
+          if (file.size > 60 * 1024 * 1024) throw new Error('הקובץ גדול מדי בשביל גיבוי של האפליקציה.');
+          let json;
+          try { json = JSON.parse(await file.text()); } catch (e) { throw new Error('זה לא קובץ גיבוי של האפליקציה (צריך קובץ ‎.json‎ שנוצר בגיבוי).'); }
+          if (!json || typeof json !== 'object' || json.app !== 'shiftpay') throw new Error('זה לא קובץ גיבוי של האפליקציה.');
+          const n = Array.isArray(json.shifts) ? json.shifts.length : 0;
           const mode = await UI.dialog({ title: 'שחזור גיבוי', text: `בקובץ ${n} משמרות (${json.exportedAt ? 'נוצר ' + U.fmtDate(json.exportedAt.slice(0, 10)) : ''}). מה לעשות?`, buttons: [{ label: 'ביטול', value: null }, { label: 'מיזוג', value: 'merge' }, { label: 'החלפה מלאה', value: 'replace', cls: 'danger' }] });
           if (!mode) return;
           await Store.importBackup(json, mode);

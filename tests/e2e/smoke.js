@@ -329,7 +329,7 @@ let errors = [];
     await ev(() => { const [h, m] = document.querySelectorAll('.pk-wheel'); h.scrollTop += 44; m.scrollTop -= 44; }); await sleep(700);
     const shown = await ev(() => document.querySelector('.pk-clock').textContent.replace(/\s/g, ''));
     if (shown !== '00:59') throw new Error('shows ' + shown);
-    const mid = await ev(() => [...document.querySelectorAll('.pk-wheel')].every((w) => Math.floor(Math.round(w.scrollTop / 44) / +w.dataset.n) === 4));
+    const mid = await ev(() => [...document.querySelectorAll('.pk-wheel')].every((w) => Math.floor(Math.round(w.scrollTop / 44) / +w.dataset.n) === +w.dataset.mid));
     if (!mid) throw new Error('a wheel was not moved back to the middle');
     await ev(() => document.querySelector('[data-pk-ok]').click()); await sleep(300);
     if ((await ev(() => window.__t)) !== '00:59') throw new Error('result ' + (await ev(() => window.__t)));
@@ -399,6 +399,26 @@ let errors = [];
     const n = await ev(() => document.querySelectorAll('.ach').length);
     if (n !== (await ev(() => App.achievements().length))) throw new Error('medals: ' + n);
     await closeAll();
+  });
+  await step('a damaged backup is refused or cleaned, never a broken app', async () => {
+    const r1 = await ev(async () => { try { await Store.importBackup({ app: 'nope' }, 'merge'); return 'ok'; } catch (e) { return e.message; } });
+    if (!/אינו גיבוי/.test(r1)) throw new Error('not refused: ' + r1);
+    const r2 = await ev(async () => {
+      const now = Date.now();
+      try {
+        await Store.importBackup({ app: 'shiftpay', shifts: [null, 'x', { id: 'bad', start: 'a', end: 1 }, { id: 'e2e-ok', kind: 'shift', employerId: Store.S.employers[0].id, roleId: Store.S.roles[0].id, status: 'done', start: now - 5 * 3600e3, end: now - 3600e3 }], roles: 'x', entries: [{ id: 'q', date: 'never' }] }, 'merge');
+        return 'ok';
+      } catch (e) { return e.message; }
+    });
+    if (r2 !== 'ok') throw new Error('clean import refused: ' + r2);
+    const st = await ev(() => ({ bad: Store.S.shifts.some((s) => !s || s.id === 'bad'), ok: Store.S.shifts.some((s) => s.id === 'e2e-ok'), q: Store.S.entries.some((e) => e.id === 'q') }));
+    if (st.bad || !st.ok || st.q) throw new Error('not cleaned: ' + JSON.stringify(st));
+    for (const tab of ['home', 'calendar', 'reports', 'settings']) {
+      await ev((t) => App.go(t), tab); await sleep(250);
+      if (await ev(() => !!document.querySelector('.render-err'))) throw new Error(tab + ' failed to draw');
+    }
+    await ev(() => Store.apply([{ store: 'shifts', del: 'e2e-ok' }], 'x'));
+    await ev(() => App.go('home'));
   });
   await step('anonymous stats: record has only the allowed fields', async () => {
     const r = await ev(() => Stats._record());

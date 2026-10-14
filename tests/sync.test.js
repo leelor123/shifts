@@ -16,7 +16,7 @@ async function phone(backend, opts) {
   ctx.addEventListener = () => {};
   ctx.UI = { dialog: async () => opts.answer || 'merge', confirm: async () => true, timeAgo: () => '', toast() {} };
   vm.createContext(ctx);
-  for (const f of ['core/util.js', 'core/hebcal.js', 'core/defaults.js', 'app/store.js', 'app/cloud.js']) {
+  for (const f of ['core/util.js', 'core/hebcal.js', 'core/defaults.js', 'core/engine.js', 'app/store.js', 'app/cloud.js']) {
     vm.runInContext(fs.readFileSync(path.join(SRC, f), 'utf8'), ctx, { filename: f });
   }
   const { client, fs: ffs } = fakeClient(backend);
@@ -283,7 +283,7 @@ async function storeOnly(idb) {
   const ctx = { console: { log() {}, warn() {}, error() {} }, setTimeout, clearTimeout, indexedDB: idb, navigator: { onLine: true } };
   ctx.window = ctx;
   vm.createContext(ctx);
-  for (const f of ['core/util.js', 'core/hebcal.js', 'core/defaults.js', 'app/store.js']) vm.runInContext(fs.readFileSync(path.join(SRC, f), 'utf8'), ctx, { filename: f });
+  for (const f of ['core/util.js', 'core/hebcal.js', 'core/defaults.js', 'core/engine.js', 'app/store.js']) vm.runInContext(fs.readFileSync(path.join(SRC, f), 'utf8'), ctx, { filename: f });
   await ctx.Store.load();
   return ctx;
 }

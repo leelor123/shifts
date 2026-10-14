@@ -399,13 +399,66 @@
     }
     return out;
   }
+  /*
+   * A backup is a file from outside the app (maybe old, maybe edited by hand, maybe damaged), so it is
+   * cleaned before anything is replaced: lists must be lists of records with an id, shifts and entries
+   * must make sense, pay rates must be numbers, and there is a limit to how much a file may hold.
+   * Then the whole thing is calculated once on the side: a file the app can't calculate is refused and
+   * the data on the phone stays as it was.
+   */
+  const MAX_RECORDS = 50000;
+  const isObj = (x) => !!x && typeof x === 'object' && !Array.isArray(x);
+  function cleanList(list) {
+    if (!Array.isArray(list)) return [];
+    const seen = new Set();
+    const out = [];
+    for (const x of list) {
+      if (!isObj(x) || typeof x.id !== 'string' || !x.id || x.id.length > 120 || seen.has(x.id)) continue;
+      seen.add(x.id);
+      out.push(x);
+      if (out.length >= MAX_RECORDS) break;
+    }
+    return out;
+  }
+  function cleanIncoming(inc) {
+    const E = root.Engine;
+    inc.settings = isObj(inc.settings) ? inc.settings : {};
+    inc.meta = isObj(inc.meta) ? inc.meta : {};
+    if (!isObj(inc.activeShift) || !Number.isFinite(inc.activeShift.start) || inc.activeShift.start > Date.now() + 60000) inc.activeShift = null;
+    for (const s of LIST_STORES) inc[s] = cleanList(inc[s]);
+    inc.shifts = inc.shifts.filter((x) => E.validShift(x));
+    inc.entries = inc.entries.filter((x) => E.validEntry(x));
+    const okDay = (k) => typeof k === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(k);
+    inc.roles = inc.roles.filter((r) => {
+      // a role without usable rates is kept with rate 0, so it shows up (as below the minimum) and can be fixed
+      r.rates = (Array.isArray(r.rates) ? r.rates : []).filter((x) => isObj(x) && okDay(x.from) && Number.isFinite(+x.rate) && +x.rate >= 0 && +x.rate < 10000).map((x) => Object.assign({}, x, { rate: +x.rate }));
+      if (typeof r.name !== 'string') r.name = String(r.name == null ? '' : r.name);
+      r.name = r.name.slice(0, 60);
+      if (!r.rates.length) r.rates = [{ from: '2000-01-01', rate: 0 }];
+      return true;
+    });
+    inc.employers = inc.employers.map((e) => Object.assign(root.Defaults.defaultEmployer(e.id), e, { name: String(e.name == null ? '' : e.name).slice(0, 60) }));
+    return inc;
+  }
   /** mode: 'replace' | 'merge' */
   async function importBackup(json, mode) {
-    if (!json || json.app !== 'shiftpay') throw new Error('הקובץ אינו גיבוי של האפליקציה');
-    if ((json.schemaVersion || 1) > SCHEMA_VERSION) throw new Error('הגיבוי נוצר בגרסה חדשה יותר של האפליקציה. עדכן קודם את האפליקציה.');
+    if (!isObj(json) || json.app !== 'shiftpay') throw new Error('הקובץ אינו גיבוי של האפליקציה');
+    if ((+json.schemaVersion || 1) > SCHEMA_VERSION) throw new Error('הגיבוי נוצר בגרסה חדשה יותר של האפליקציה. עדכן קודם את האפליקציה.');
     const incoming = { settings: json.settings, meta: json.meta || {}, activeShift: json.activeShift || null };
     for (const s of LIST_STORES) incoming[s] = json[s] || [];
-    runMigrations(incoming, json.schemaVersion || 1);
+    cleanIncoming(incoming);
+    runMigrations(incoming, +json.schemaVersion || 1);
+    // calculate it once on the side; a file that can't be calculated is refused before anything changes
+    try {
+      const trial = root.Engine.buildModel({
+        settings: mergeDeep(root.Defaults.defaultSettings(), incoming.settings), employers: incoming.employers.length ? incoming.employers : [root.Defaults.defaultEmployer()],
+        roles: incoming.roles, dayRules: incoming.dayRules, shifts: incoming.shifts, entries: incoming.entries,
+      });
+      root.Engine.totals(trial, '2000-01-01', '2100-12-31');
+    } catch (e) {
+      console.warn('backup refused', e);
+      throw new Error('הקובץ פגום ואי אפשר לשחזר ממנו. הנתונים בטלפון לא השתנו.');
+    }
     const keepKey = S.settings && S.settings.ai ? S.settings.ai.apiKey : '';
     for (const s of SYNC_STORES) for (const x of incoming[s]) delete x._syncedAt; // that sync state belongs to the device that made the backup
     for (const r of incoming.roles) safeRecord('roles', r);
@@ -430,6 +483,12 @@
       }
     }
     if (!S.employers.length) S.employers = [root.Defaults.defaultEmployer()];
+    // a backup without any job still leaves something to start a shift with (at the legal minimum)
+    if (!S.roles.some((r) => !r.archived)) {
+      let rate = 0;
+      try { rate = root.Engine.minWageFor(S.settings, root.U.todayKey()).hourly || 0; } catch (e) { /* keep 0 */ }
+      S.roles.push({ id: 'r_' + root.U.uid(), name: 'העבודה שלי', color: root.Defaults.ROLE_COLORS[0], employerId: S.employers[0].id, rates: [{ from: '2000-01-01', rate }], archived: false });
+    }
     await saveAll();
     for (const f of json.files || []) {
       try { await putFile(f.id, await dataUrlToBlob(f.data), f.name, f.type); } catch (e) { console.warn('file restore failed', e); }

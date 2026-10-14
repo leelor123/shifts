@@ -204,12 +204,12 @@
   // wheel comes to rest it is moved, invisibly, back to the same number
   // in the middle copy, so there is always room to keep turning.
   const ROW = 44;
-  const COPIES = 9, MID = 4;
+  const COPIES = 5, MID = 2; // 2 copies of room each way (a strong fling is ~5000px) before the wheel is re-centred
   const mod = (a, n) => ((a % n) + n) % n;
   function wheel(count, sel, fmt, label) {
     let html = '';
     for (let c = 0; c < COPIES; c++) for (let v = 0; v < count; v++) html += `<div class="pk-opt" data-i="${c * count + v}" data-v="${v}">${fmt(v)}</div>`;
-    return `<div class="pk-wheel" tabindex="0" role="spinbutton" aria-label="${label}" aria-valuemin="0" aria-valuemax="${count - 1}" aria-valuenow="${sel}" data-n="${count}"><div class="pk-pad"></div>${html}<div class="pk-pad"></div></div>`;
+    return `<div class="pk-wheel" tabindex="0" role="spinbutton" aria-label="${label}" aria-valuemin="0" aria-valuemax="${count - 1}" aria-valuenow="${sel}" data-n="${count}" data-mid="${MID}"><div class="pk-pad"></div>${html}<div class="pk-pad"></div></div>`;
   }
   /** The drum look: rows tilt and shrink the further they are from the middle. */
   function drum(w) {
