@@ -498,7 +498,7 @@ let errors = [];
     const p1 = await prog(); await ev(() => App.rerender()); const p2 = await prog();
     if (p1 != null && p2 != null && Math.abs(p2 - p1) > 0.02) throw new Error('glow restarted: ' + p1 + ' -> ' + p2);
   });
-  await step('switching tabs: the bottom bar stays put (the page never gets wider than the screen)', async () => {
+  await step('switching tabs: the bottom bar stays put, the page never gets wider than the screen or fades', async () => {
     // On a phone a page wider than the screen, even while the next tab slides in, zooms out a little:
     // the bottom bar dropped ~30px and flickered on every switch.
     await closeAll(); await ev(() => { App.go('home'); scrollTo(0, 0); }); await sleep(400);
@@ -507,7 +507,9 @@ let errors = [];
         const nav = document.getElementById('nav'); const top0 = nav.getBoundingClientRect().top; const h0 = innerHeight; const t0 = performance.now(); const bad = [];
         (function f() {
           const de = document.documentElement; const top = nav.getBoundingClientRect().top;
-          if (Math.abs(top - top0) > 0.5 || innerHeight !== h0 || de.scrollWidth > de.clientWidth + 1) bad.push({ top: Math.round(top - top0), h: innerHeight - h0, w: de.scrollWidth - de.clientWidth });
+          const pv = document.querySelector('#view .view'); const op = pv ? +getComputedStyle(pv).opacity : 1;
+          // and the new screen is never shown faded (it looked like a flash on home)
+          if (Math.abs(top - top0) > 0.5 || innerHeight !== h0 || de.scrollWidth > de.clientWidth + 1 || op < 0.99) bad.push({ top: Math.round(top - top0), h: innerHeight - h0, w: de.scrollWidth - de.clientWidth, op });
           if (performance.now() - t0 < 450) requestAnimationFrame(f); else res(bad);
         })();
         document.querySelector(`.nav [data-tab="${tab}"]`).click();

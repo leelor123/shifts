@@ -2,7 +2,7 @@
 <html lang="he" dir="rtl">
 <head>
 <meta charset="utf-8">
-<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'sha256-0IEbLLLEnhqld4MJNjsrP4/moYoiME10c7PMcwPe3a4=' https://www.gstatic.com https://apis.google.com https://cdnjs.cloudflare.com https://cdn.jsdelivr.net 'wasm-unsafe-eval'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com data:; img-src 'self' data: blob: https:; connect-src 'self' https: wss:; frame-src https://shiftpay-70ab6.firebaseapp.com https://accounts.google.com https://apis.google.com https://*.google.com; worker-src 'self' blob: https://cdnjs.cloudflare.com https://cdn.jsdelivr.net; media-src 'self' data: blob:; manifest-src 'self'; object-src 'none'; base-uri 'self'; form-action 'self'">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'sha256-ylV5V+9MeQ50hwmjzmvCQu3UspCBhypjTe6OMCZjPkE=' https://www.gstatic.com https://apis.google.com https://cdnjs.cloudflare.com https://cdn.jsdelivr.net 'wasm-unsafe-eval'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com data:; img-src 'self' data: blob: https:; connect-src 'self' https: wss:; frame-src https://shiftpay-70ab6.firebaseapp.com https://accounts.google.com https://apis.google.com https://*.google.com; worker-src 'self' blob: https://cdnjs.cloudflare.com https://cdn.jsdelivr.net; media-src 'self' data: blob:; manifest-src 'self'; object-src 'none'; base-uri 'self'; form-action 'self'">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="theme-color" content="#0d2b6b">
 <meta name="description" content="מעקב משמרות וחישוב שכר אישי: שבתות, חגים, שעות נוספות, נסיעות, נטו משוער וניתוח תלושים — נשמר בחשבון שלך ועובד גם בלי אינטרנט.">
@@ -535,11 +535,11 @@ h1, h2, .topbar h1, .wizard h1, .sheet .sh-head h2, .hero-num, .bday-title, .cha
 
 /* views: quick, direction-aware entrance (no generic fade-up) */
 .view { animation: none; }
-/* switching tabs: the new screen glides in (GPU only: transform and opacity; never fully transparent, so no blank frame) */
+/* switching tabs: the new screen glides in a little (GPU only, transform). No fading: a page that appeared at 45% and brightened looked like a flash, most of all on home with its bright pay card */
 .view.enter-next { animation: tab-in-next .26s cubic-bezier(.2, .8, .3, 1); }
 .view.enter-prev { animation: tab-in-prev .26s cubic-bezier(.2, .8, .3, 1); }
-@keyframes tab-in-next { from { transform: translateX(-14px); opacity: .45; } }
-@keyframes tab-in-prev { from { transform: translateX(14px); opacity: .45; } }
+@keyframes tab-in-next { from { transform: translateX(-12px); } }
+@keyframes tab-in-prev { from { transform: translateX(12px); } }
 @media (prefers-reduced-motion: reduce) { .view.enter-next, .view.enter-prev { animation: none; } }
 body:not(.fx) .view.enter-next, body:not(.fx) .view.enter-prev { animation: none; }
 
@@ -1755,8 +1755,8 @@ body.fx .recap-card:active { transform: scale(.98); }
 <div id="print-root" aria-hidden="true"></div>
 <noscript><div style="padding:24px;font-family:sans-serif">האפליקציה דורשת JavaScript.</div></noscript>
 <script>
-window.APP_VERSION = '1.11.4';
-window.APP_BUILD = '1.11.4-2455ec13';
+window.APP_VERSION = '1.11.5';
+window.APP_BUILD = '1.11.5-cb72edc8';
 /* ---- core/util.js ---- */
 /* ============================================================
  * util.js — date/time helpers and formatting.

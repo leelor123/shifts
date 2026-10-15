@@ -516,11 +516,11 @@ h1, h2, .topbar h1, .wizard h1, .sheet .sh-head h2, .hero-num, .bday-title, .cha
 
 /* views: quick, direction-aware entrance (no generic fade-up) */
 .view { animation: none; }
-/* switching tabs: the new screen glides in (GPU only: transform and opacity; never fully transparent, so no blank frame) */
+/* switching tabs: the new screen glides in a little (GPU only, transform). No fading: a page that appeared at 45% and brightened looked like a flash, most of all on home with its bright pay card */
 .view.enter-next { animation: tab-in-next .26s cubic-bezier(.2, .8, .3, 1); }
 .view.enter-prev { animation: tab-in-prev .26s cubic-bezier(.2, .8, .3, 1); }
-@keyframes tab-in-next { from { transform: translateX(-14px); opacity: .45; } }
-@keyframes tab-in-prev { from { transform: translateX(14px); opacity: .45; } }
+@keyframes tab-in-next { from { transform: translateX(-12px); } }
+@keyframes tab-in-prev { from { transform: translateX(12px); } }
 @media (prefers-reduced-motion: reduce) { .view.enter-next, .view.enter-prev { animation: none; } }
 body:not(.fx) .view.enter-next, body:not(.fx) .view.enter-prev { animation: none; }
 
