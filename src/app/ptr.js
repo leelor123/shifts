@@ -25,7 +25,16 @@
  *    the browser never finished) springs the logo back first;
  *  - every frame is painted in requestAnimationFrame with transforms
  *    only; the browser's own pull-to-refresh and stretch effect are
- *    switched off (overscroll-behavior: none) so they never stack.
+ *    switched off (overscroll-behavior: none) so they never stack;
+ *  - while the coin shows, the gesture is the pull's: moving the finger
+ *    back up takes the coin back up with it, and the page does not scroll
+ *    under it (it used to, leaving the coin hanging). At the top of the
+ *    page a downward move scrolls nothing anyway, so holding it costs
+ *    nothing; once the coin is all the way back, the finger scrolls the
+ *    page as usual;
+ *  - the check appears in front of the same disc (a green circle that
+ *    grows), and the hands only pause under it: changing the disc itself
+ *    left it see-through for a few frames, a flash.
  * ============================================================ */
 (function (root) {
   'use strict';
@@ -47,6 +56,7 @@
   const hourHand = ind.querySelector('.ptr-h'), minHand = ind.querySelector('.ptr-m'), tipEl = ind.querySelector('.ptr-tip');
   let tipNow = '';
   const tip = (t) => { if (t !== tipNow) { tipNow = t; tipEl.textContent = t; ind.classList.toggle('tip', !!t); } };
+  let tipShown = false; // the "pull" note comes in past 24px and goes below 14px, so it never blinks at the edge
 
   let x0 = 0, y0 = null, t0 = 0, pulling = false, dist = 0, armed = false, busy = false, raf = 0, settleTimer = 0;
   const blocked = (target) => busy || App.blocking || root.scrollY > 0
@@ -66,7 +76,10 @@
       minHand.style.transform = `rotate(${minA}deg)`;
       hourHand.style.transform = `rotate(${hourA}deg)`;
       disc.style.transform = `scale(${(0.62 + 0.38 * p).toFixed(3)})`;
-      if (pulling) tip(d > 22 ? (armed ? 'שחררו לרענון' : 'משכו לרענון') : '');
+      if (pulling) {
+        tipShown = tipShown ? d > 14 : d > 24;
+        tip(tipShown ? (armed ? 'שחררו לרענון' : 'משכו לרענון') : '');
+      }
     }
     disc.style.setProperty('--p', p.toFixed(3));
   }
@@ -110,7 +123,7 @@
     pulling = false; dist = 0; armed = false;
     unbind();
     tgt = e.target;
-    tgt.addEventListener('touchmove', move, { passive: true });
+    tgt.addEventListener('touchmove', move, { passive: false }); // may hold the gesture during a pull (see above)
     tgt.addEventListener('touchend', end, { passive: true });
     tgt.addEventListener('touchcancel', cancel, { passive: true });
   }, { passive: true });
@@ -123,10 +136,26 @@
     if (!pulling) {
       // a sideways swipe, a scroll up, or a page that has scrolled: not a pull
       if (root.scrollY > 0 || dy < -SLOP || (Math.abs(dx) > SLOP && Math.abs(dx) > Math.abs(dy))) { y0 = null; return; }
+      // at the top, a downward move scrolls nothing: hold it, so the browser never begins a scroll of its own under the pull
+      if (dy > 0 && dy >= Math.abs(dx) && e.cancelable) e.preventDefault();
       if (dy < SLOP) return;
       pulling = true;
+      tipShown = false;
       clearTimeout(settleTimer);
       ind.classList.remove('settle', 'done', 'spin', 'armed');
+    }
+    // the coin is out: the finger moves the coin, not the page
+    if (e.cancelable) e.preventDefault();
+    if (dy <= SLOP) {
+      // all the way back up: the pull is over (no refresh); from here the finger scrolls the page as usual
+      unbind();
+      y0 = null; pulling = false; armed = false; dist = 0;
+      ind.classList.remove('armed');
+      tip('');
+      cancelAnimationFrame(raf); raf = 0;
+      paint(0);
+      swallowNextClick();
+      return;
     }
     dist = Math.max(0, resist(dy - SLOP));
     if (dist >= THRESHOLD && !armed) { armed = true; ind.classList.add('armed'); Fx.haptic(12); Fx.play('tick'); }

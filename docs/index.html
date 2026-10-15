@@ -2,7 +2,7 @@
 <html lang="he" dir="rtl">
 <head>
 <meta charset="utf-8">
-<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'sha256-bHocXNlYAkvaZpQRDJjZkFaPfKhfY4i3vw0e6B16eLU=' https://www.gstatic.com https://apis.google.com https://cdnjs.cloudflare.com https://cdn.jsdelivr.net 'wasm-unsafe-eval'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com data:; img-src 'self' data: blob: https:; connect-src 'self' https: wss:; frame-src https://shiftpay-70ab6.firebaseapp.com https://accounts.google.com https://apis.google.com https://*.google.com; worker-src 'self' blob: https://cdnjs.cloudflare.com https://cdn.jsdelivr.net; media-src 'self' data: blob:; manifest-src 'self'; object-src 'none'; base-uri 'self'; form-action 'self'">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'sha256-OkW/7o5pfLn3K8/KzKpEJG0zy4ThIvW/KIuN6CXfY/0=' https://www.gstatic.com https://apis.google.com https://cdnjs.cloudflare.com https://cdn.jsdelivr.net 'wasm-unsafe-eval'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com data:; img-src 'self' data: blob: https:; connect-src 'self' https: wss:; frame-src https://shiftpay-70ab6.firebaseapp.com https://accounts.google.com https://apis.google.com https://*.google.com; worker-src 'self' blob: https://cdnjs.cloudflare.com https://cdn.jsdelivr.net; media-src 'self' data: blob:; manifest-src 'self'; object-src 'none'; base-uri 'self'; form-action 'self'">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="theme-color" content="#0d2b6b">
 <meta name="description" content="מעקב משמרות וחישוב שכר אישי: שבתות, חגים, שעות נוספות, נסיעות, נטו משוער וניתוח תלושים — נשמר בחשבון שלך ועובד גם בלי אינטרנט.">
@@ -765,10 +765,13 @@ html, body { overscroll-behavior-y: contain; }
 @keyframes ptr-race { from { transform: rotate(var(--m0, 0deg)); } to { transform: rotate(calc(var(--m0, 0deg) + 360deg)); } }
 @keyframes ptr-race-h { from { transform: rotate(var(--h0, 0deg)); } to { transform: rotate(calc(var(--h0, 0deg) + 360deg)); } }
 @keyframes ptr-ring { from { transform: rotate(-90deg); } to { transform: rotate(270deg); } }
-.ptr-check { position: absolute; inset: 0; display: grid; place-items: center; color: #fff; font: 800 22px/1 var(--font); opacity: 0; transform: scale(.5); transition: opacity .2s, transform .25s cubic-bezier(.34, 1.56, .64, 1); }
-.ptr.done .ptr-disc { background: var(--good-mark); transform: none !important; }
-.ptr.done .ptr-face { opacity: 0; }
-.ptr.done .ptr-arc { stroke: #fff; stroke-dasharray: 1 1; stroke-dashoffset: 0; }
+/* done: a green circle with a check grows in front of the same disc; the hands and the ring only pause (no jump) */
+.ptr-check { position: absolute; inset: 0; display: grid; place-items: center; border-radius: 50%; background: var(--good-mark); color: #fff; font: 800 22px/1 var(--font); opacity: 0; transform: scale(.4); transition: opacity .16s ease-out, transform .32s cubic-bezier(.34, 1.56, .64, 1); }
+.ptr.done .ptr-disc { --ink: #fff; --p: 1; }
+.ptr.done .ptr-m { animation: ptr-race .8s linear infinite paused; }
+.ptr.done .ptr-h { animation: ptr-race-h 9.6s linear infinite paused; }
+.ptr.done .ptr-ring { animation: ptr-ring 1.2s linear infinite paused; opacity: 0; transition: opacity .25s; }
+.ptr.done .ptr-arc { stroke-dasharray: .3 .7; stroke-dashoffset: 0; }
 .ptr.done .ptr-check { opacity: 1; transform: none; }
 /* the note under the coin: "pull" → "let go" → "updating…" → "all up to date" */
 .ptr-tip { position: absolute; top: 56px; left: 50%; transform: translateX(-50%) translateY(-4px); padding: 4px 12px; border-radius: 999px; background: var(--surface-hi); color: var(--on-surface); box-shadow: 0 4px 12px rgba(0, 0, 0, .12), 0 0 0 1px var(--line); font: 600 .76rem/1.4 var(--font); white-space: nowrap; opacity: 0; transition: opacity .18s, transform .18s; }
@@ -1405,7 +1408,7 @@ body:has(.sheet.show) .toast.show, body:has(.wizard) .toast.show { transform: no
 /* pull to refresh: our own only (no browser reload, no Android stretch on top of it), and a springy settle */
 html, body { overscroll-behavior-y: none; }
 .ptr.settle { transition: transform .42s cubic-bezier(.22, 1.3, .36, 1), opacity .3s ease; }
-.ptr.armed .ptr-disc, .ptr.spin .ptr-disc { background: var(--grad-hero, var(--brand-strong)); }
+.ptr.armed .ptr-disc, .ptr.spin .ptr-disc, .ptr.done .ptr-disc { background: var(--grad-hero, var(--brand-strong)); }
 @media (prefers-reduced-motion: reduce) { .mascot *, .ob-bg i, .coach-hole { animation: none !important; } }
 
 /* ---------- charts come alive (see charts.js) ---------- */
@@ -1918,6 +1921,17 @@ body.fx .recap-card:active { transform: scale(.98); }
 .sh-head .gm-music + [data-close] { margin-inline-start: 4px; }
 .gm-music[aria-pressed="false"] { color: var(--on-surface-var); }
 
+/* the "travel" switch over the shift lists: the knob slides (transform only), the label stays the same width */
+.home-list-head .spacer { flex: 1; }
+.tr-toggle { display: inline-flex; align-items: center; gap: 6px; min-height: 32px; padding: 0 4px 0 10px; border: 1px solid var(--line); border-radius: 999px; background: var(--surface-1); color: var(--on-surface-var); font: 600 .78rem var(--font); cursor: pointer; }
+.tr-toggle .tr-l { display: inline-flex; align-items: center; gap: 4px; }
+.tr-sw { position: relative; width: 30px; height: 18px; border-radius: 999px; background: var(--outline-var); transition: background-color .18s; }
+.tr-sw i { position: absolute; top: 2px; left: 2px; width: 14px; height: 14px; border-radius: 50%; background: #fff; box-shadow: 0 1px 2px rgba(0, 0, 0, .25); transition: transform .18s cubic-bezier(.3, .7, .4, 1); }
+.tr-toggle.on { color: var(--brand-strong); border-color: var(--brand-soft); }
+.tr-toggle.on .tr-sw { background: var(--brand-strong); }
+.tr-toggle.on .tr-sw i { transform: translateX(12px); }
+@media (prefers-reduced-motion: reduce) { .tr-sw, .tr-sw i { transition: none; } }
+
 </style>
 </head>
 <body>
@@ -1936,8 +1950,8 @@ body.fx .recap-card:active { transform: scale(.98); }
 <div id="print-root" aria-hidden="true"></div>
 <noscript><div style="padding:24px;font-family:sans-serif">האפליקציה דורשת JavaScript.</div></noscript>
 <script>
-window.APP_VERSION = '1.15.0';
-window.APP_BUILD = '1.15.0-385603a7';
+window.APP_VERSION = '1.15.1';
+window.APP_BUILD = '1.15.1-3511a2bf';
 /* ---- core/util.js ---- */
 /* ============================================================
  * util.js — date/time helpers and formatting.
@@ -2588,6 +2602,7 @@ window.APP_BUILD = '1.15.0-385603a7';
       },
       // --- appearance ---
       theme: 'system', accent: 'candy', fontScale: 1, font: 'rubik', skin: '', plusKey: '',
+      withTravel: true, // the amount next to a shift includes its travel pay (a switch over the shift lists)
       lb: { on: false, n: '', e: '', bg: '' }, // the games' champions table: joined, nickname, emoji, background (Plus)
       fx: { effects: true, sound: true, haptic: true, music: true }, // tap pulse / confetti, click sounds, vibration, music in the games
       // --- security ---
@@ -9434,6 +9449,24 @@ window.PAY_CONFIG = {
   /* ---------------- shared fragments ---------------- */
   App.restTag = (r) => (r.restHours > 0.01 ? `<span class="tag rest">${icon('candle')}${esc(r.restLabels[0] || 'שבת/חג')}</span>` : '');
   App.ovTag = (r) => (r.overridden || r.dayRuleHit ? `<span class="tag override" title="עקיפה ידנית">${icon('hand')}ידני</span>` : '');
+  /** A shift's amount as the lists show it: with its travel pay, or without (the "travel" switch). */
+  App.shiftAmount = (r) => (S.settings.withTravel === false ? r.total - ((r.travel && r.travel.amount) || 0) : r.total);
+  /** Does this person get travel pay at all? (only then is there a switch for it) */
+  App.hasTravel = () => { for (const r of App.model.results.values()) if (r.travel && r.travel.amount > 0) return true; return false; };
+  /** The "travel" switch over a list of shifts. */
+  App.travelSwitch = () => {
+    if (!App.hasTravel()) return '';
+    const on = S.settings.withTravel !== false;
+    return `<button class="tr-toggle ${on ? 'on' : ''}" role="switch" aria-checked="${on}" aria-label="הסכומים כוללים נסיעות" data-act="travel-toggle"><span class="tr-l">${icon('bus', 's')}נסיעות</span><span class="tr-sw" aria-hidden="true"><i></i></span></button>`;
+  };
+  let travelTimer = 0;
+  App.actions['travel-toggle'] = (el) => {
+    // the knob slides at once (every switch on the screen); the amounts follow when it has arrived
+    const on = !el.classList.contains('on');
+    document.querySelectorAll('.tr-toggle').forEach((b) => { b.classList.toggle('on', on); b.setAttribute('aria-checked', on); });
+    clearTimeout(travelTimer);
+    travelTimer = setTimeout(() => { Store.setSettings((s) => { s.withTravel = on; }).catch(() => {}); }, 190);
+  };
   App.shiftItem = function (r, opts) {
     opts = opts || {};
     const sh = App.shift(r.id);
@@ -9448,7 +9481,7 @@ window.PAY_CONFIG = {
       <span class="role-bar" style="background:${role ? role.color : '#999'}"></span>
       <span class="body"><span class="t shift-title"><span class="tt">${esc(date)}${esc(title)}</span>${App.restTag(r)}${App.ovTag(r)}${planned}</span>
       <span class="s"><span class="num">⁦${U.epochHM(r.start)}–${U.epochHM(r.rawEnd)}⁩</span> · ${U.hm(r.paidMin)} ש׳${emp}${sh.note ? ' · ' + esc(sh.note) : ''}</span></span>
-      <span class="trail"><span class="a">${money(r.total, 0)}</span>${opts.showOk && r.status === 'planned' ? `<br><span class="tag good" data-act="mark-done" data-id="${r.id}">${icon('check')}בוצעה</span>` : ''}</span></button>`;
+      <span class="trail"><span class="a">${money(App.shiftAmount(r), 0)}</span>${opts.showOk && r.status === 'planned' ? `<br><span class="tag good" data-act="mark-done" data-id="${r.id}">${icon('check')}בוצעה</span>` : ''}</span></button>`;
   };
   App.entryItem = function (e) {
     const v = App.model.entryVals.get(e.id) || { amount: 0, label: '' };
@@ -9651,7 +9684,7 @@ window.PAY_CONFIG = {
       ${root.Plus ? root.Plus.nudgeCard() : ''}
       ${savingCard()}
       ${shortcuts()}
-      ${pending.length + recent.length ? `<div class="home-list-head"><span>${pending.length ? 'לסמן כבוצעה' : 'משמרות אחרונות'}</span><button class="btn text sm" data-act="go-shifts">הכול</button></div>
+      ${pending.length + recent.length ? `<div class="home-list-head"><span>${pending.length ? 'לסמן כבוצעה' : 'משמרות אחרונות'}</span><span class="spacer"></span>${App.travelSwitch()}<button class="btn text sm" data-act="go-shifts">הכול</button></div>
         <div class="list home-list">${pending.map((r) => App.shiftItem(r, { showOk: true })).join('')}${recent.slice(0, Math.max(1, 3 - pending.length)).map((r) => App.shiftItem(r)).join('')}</div>`
         : S.meta.guide && !S.meta.guideDone ? '' : `<div class="empty fun">${App.mascot ? App.mascot('sleepy', { size: 92 }) : ''}<h3>עוד אין משמרות</h3><div>בתחילת משמרת לוחצים על "התחל משמרת".<br>משמרת שכבר התקיימה מוסיפים בכפתור <b>+</b>.</div></div>`}
     `;
@@ -10709,8 +10742,8 @@ window.PAY_CONFIG = {
         <button class="chip ${f.ov ? 'on' : ''}" data-act="flt-ov">${icon('hand', 's')} עם עקיפה</button>
       </div>
       <div class="grid2"><label class="field"><span class="lbl">מתאריך</span><input class="input" type="date" id="flt-from" value="${f.from}"></label><label class="field"><span class="lbl">עד</span><input class="input" type="date" id="flt-to" value="${f.to}"></label></div>
-      <div class="row-flex small" style="margin:0 4px 10px"><span>${list.length} משמרות · ${U.money(list.filter((r) => r.status === 'done').reduce((s, r) => s + r.total, 0), 0)}</span><span class="spacer"></span><button class="btn text sm" data-act="flt-csv">${icon('download', 's')} CSV</button>${f.q || f.role || f.ov || f.from || f.to || f.status !== 'all' ? '<button class="btn text sm" data-act="flt-clear">נקה</button>' : ''}</div>
-      ${list.length ? months.map(([mk, rs, rows]) => `<div class="section-title">${U.fmtMonth(mk)}<span class="spacer"></span><span class="small muted">${U.money(rs.filter((r) => r.status === 'done').reduce((s, r) => s + r.total, 0), 0)}</span></div><div class="list">${rows.map((r) => App.shiftItem(r)).join('')}</div>`).join('') : UI.emptyState('search', 'לא נמצאו משמרות', 'נסה לשנות את החיפוש או המסננים.')}
+      <div class="row-flex small" style="margin:0 4px 10px"><span>${list.length} משמרות · ${U.money(list.filter((r) => r.status === 'done').reduce((s, r) => s + App.shiftAmount(r), 0), 0)}</span><span class="spacer"></span>${App.travelSwitch()}<button class="btn text sm" data-act="flt-csv">${icon('download', 's')} CSV</button>${f.q || f.role || f.ov || f.from || f.to || f.status !== 'all' ? '<button class="btn text sm" data-act="flt-clear">נקה</button>' : ''}</div>
+      ${list.length ? months.map(([mk, rs, rows]) => `<div class="section-title">${U.fmtMonth(mk)}<span class="spacer"></span><span class="small muted">${U.money(rs.filter((r) => r.status === 'done').reduce((s, r) => s + App.shiftAmount(r), 0), 0)}</span></div><div class="list">${rows.map((r) => App.shiftItem(r)).join('')}</div>`).join('') : UI.emptyState('search', 'לא נמצאו משמרות', 'נסה לשנות את החיפוש או המסננים.')}
       ${list.length > shown ? `<button class="btn tonal block list-more" data-act="flt-more">${icon('down', 's')} עוד ${Math.min(PAGE, list.length - shown)} משמרות <span class="small muted">(מוצגות ${shown} מתוך ${list.length})</span></button>` : ''}
       ${entries.length ? `<div class="section-title">חופשה, מחלה ותוספות</div><div class="list">${entries.slice(0, 50).map(App.entryItem).join('')}</div>` : ''}`;
   }
@@ -15244,7 +15277,16 @@ window.PAY_CONFIG = {
  *    the browser never finished) springs the logo back first;
  *  - every frame is painted in requestAnimationFrame with transforms
  *    only; the browser's own pull-to-refresh and stretch effect are
- *    switched off (overscroll-behavior: none) so they never stack.
+ *    switched off (overscroll-behavior: none) so they never stack;
+ *  - while the coin shows, the gesture is the pull's: moving the finger
+ *    back up takes the coin back up with it, and the page does not scroll
+ *    under it (it used to, leaving the coin hanging). At the top of the
+ *    page a downward move scrolls nothing anyway, so holding it costs
+ *    nothing; once the coin is all the way back, the finger scrolls the
+ *    page as usual;
+ *  - the check appears in front of the same disc (a green circle that
+ *    grows), and the hands only pause under it: changing the disc itself
+ *    left it see-through for a few frames, a flash.
  * ============================================================ */
 (function (root) {
   'use strict';
@@ -15266,6 +15308,7 @@ window.PAY_CONFIG = {
   const hourHand = ind.querySelector('.ptr-h'), minHand = ind.querySelector('.ptr-m'), tipEl = ind.querySelector('.ptr-tip');
   let tipNow = '';
   const tip = (t) => { if (t !== tipNow) { tipNow = t; tipEl.textContent = t; ind.classList.toggle('tip', !!t); } };
+  let tipShown = false; // the "pull" note comes in past 24px and goes below 14px, so it never blinks at the edge
 
   let x0 = 0, y0 = null, t0 = 0, pulling = false, dist = 0, armed = false, busy = false, raf = 0, settleTimer = 0;
   const blocked = (target) => busy || App.blocking || root.scrollY > 0
@@ -15285,7 +15328,10 @@ window.PAY_CONFIG = {
       minHand.style.transform = `rotate(${minA}deg)`;
       hourHand.style.transform = `rotate(${hourA}deg)`;
       disc.style.transform = `scale(${(0.62 + 0.38 * p).toFixed(3)})`;
-      if (pulling) tip(d > 22 ? (armed ? 'שחררו לרענון' : 'משכו לרענון') : '');
+      if (pulling) {
+        tipShown = tipShown ? d > 14 : d > 24;
+        tip(tipShown ? (armed ? 'שחררו לרענון' : 'משכו לרענון') : '');
+      }
     }
     disc.style.setProperty('--p', p.toFixed(3));
   }
@@ -15329,7 +15375,7 @@ window.PAY_CONFIG = {
     pulling = false; dist = 0; armed = false;
     unbind();
     tgt = e.target;
-    tgt.addEventListener('touchmove', move, { passive: true });
+    tgt.addEventListener('touchmove', move, { passive: false }); // may hold the gesture during a pull (see above)
     tgt.addEventListener('touchend', end, { passive: true });
     tgt.addEventListener('touchcancel', cancel, { passive: true });
   }, { passive: true });
@@ -15342,10 +15388,26 @@ window.PAY_CONFIG = {
     if (!pulling) {
       // a sideways swipe, a scroll up, or a page that has scrolled: not a pull
       if (root.scrollY > 0 || dy < -SLOP || (Math.abs(dx) > SLOP && Math.abs(dx) > Math.abs(dy))) { y0 = null; return; }
+      // at the top, a downward move scrolls nothing: hold it, so the browser never begins a scroll of its own under the pull
+      if (dy > 0 && dy >= Math.abs(dx) && e.cancelable) e.preventDefault();
       if (dy < SLOP) return;
       pulling = true;
+      tipShown = false;
       clearTimeout(settleTimer);
       ind.classList.remove('settle', 'done', 'spin', 'armed');
+    }
+    // the coin is out: the finger moves the coin, not the page
+    if (e.cancelable) e.preventDefault();
+    if (dy <= SLOP) {
+      // all the way back up: the pull is over (no refresh); from here the finger scrolls the page as usual
+      unbind();
+      y0 = null; pulling = false; armed = false; dist = 0;
+      ind.classList.remove('armed');
+      tip('');
+      cancelAnimationFrame(raf); raf = 0;
+      paint(0);
+      swallowNextClick();
+      return;
     }
     dist = Math.max(0, resist(dy - SLOP));
     if (dist >= THRESHOLD && !armed) { armed = true; ind.classList.add('armed'); Fx.haptic(12); Fx.play('tick'); }

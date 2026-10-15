@@ -495,7 +495,7 @@ body:has(.sheet.show) .toast.show, body:has(.wizard) .toast.show { transform: no
 /* pull to refresh: our own only (no browser reload, no Android stretch on top of it), and a springy settle */
 html, body { overscroll-behavior-y: none; }
 .ptr.settle { transition: transform .42s cubic-bezier(.22, 1.3, .36, 1), opacity .3s ease; }
-.ptr.armed .ptr-disc, .ptr.spin .ptr-disc { background: var(--grad-hero, var(--brand-strong)); }
+.ptr.armed .ptr-disc, .ptr.spin .ptr-disc, .ptr.done .ptr-disc { background: var(--grad-hero, var(--brand-strong)); }
 @media (prefers-reduced-motion: reduce) { .mascot *, .ob-bg i, .coach-hole { animation: none !important; } }
 
 /* ---------- charts come alive (see charts.js) ---------- */
@@ -1007,3 +1007,14 @@ body.fx .recap-card:active { transform: scale(.98); }
 .sh-head .gm-music { margin-inline-start: auto; }
 .sh-head .gm-music + [data-close] { margin-inline-start: 4px; }
 .gm-music[aria-pressed="false"] { color: var(--on-surface-var); }
+
+/* the "travel" switch over the shift lists: the knob slides (transform only), the label stays the same width */
+.home-list-head .spacer { flex: 1; }
+.tr-toggle { display: inline-flex; align-items: center; gap: 6px; min-height: 32px; padding: 0 4px 0 10px; border: 1px solid var(--line); border-radius: 999px; background: var(--surface-1); color: var(--on-surface-var); font: 600 .78rem var(--font); cursor: pointer; }
+.tr-toggle .tr-l { display: inline-flex; align-items: center; gap: 4px; }
+.tr-sw { position: relative; width: 30px; height: 18px; border-radius: 999px; background: var(--outline-var); transition: background-color .18s; }
+.tr-sw i { position: absolute; top: 2px; left: 2px; width: 14px; height: 14px; border-radius: 50%; background: #fff; box-shadow: 0 1px 2px rgba(0, 0, 0, .25); transition: transform .18s cubic-bezier(.3, .7, .4, 1); }
+.tr-toggle.on { color: var(--brand-strong); border-color: var(--brand-soft); }
+.tr-toggle.on .tr-sw { background: var(--brand-strong); }
+.tr-toggle.on .tr-sw i { transform: translateX(12px); }
+@media (prefers-reduced-motion: reduce) { .tr-sw, .tr-sw i { transition: none; } }

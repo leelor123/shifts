@@ -144,6 +144,7 @@
       },
       // --- appearance ---
       theme: 'system', accent: 'candy', fontScale: 1, font: 'rubik', skin: '', plusKey: '',
+      withTravel: true, // the amount next to a shift includes its travel pay (a switch over the shift lists)
       lb: { on: false, n: '', e: '', bg: '' }, // the games' champions table: joined, nickname, emoji, background (Plus)
       fx: { effects: true, sound: true, haptic: true, music: true }, // tap pulse / confetti, click sounds, vibration, music in the games
       // --- security ---

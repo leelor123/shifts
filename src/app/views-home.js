@@ -10,6 +10,24 @@
   /* ---------------- shared fragments ---------------- */
   App.restTag = (r) => (r.restHours > 0.01 ? `<span class="tag rest">${icon('candle')}${esc(r.restLabels[0] || 'שבת/חג')}</span>` : '');
   App.ovTag = (r) => (r.overridden || r.dayRuleHit ? `<span class="tag override" title="עקיפה ידנית">${icon('hand')}ידני</span>` : '');
+  /** A shift's amount as the lists show it: with its travel pay, or without (the "travel" switch). */
+  App.shiftAmount = (r) => (S.settings.withTravel === false ? r.total - ((r.travel && r.travel.amount) || 0) : r.total);
+  /** Does this person get travel pay at all? (only then is there a switch for it) */
+  App.hasTravel = () => { for (const r of App.model.results.values()) if (r.travel && r.travel.amount > 0) return true; return false; };
+  /** The "travel" switch over a list of shifts. */
+  App.travelSwitch = () => {
+    if (!App.hasTravel()) return '';
+    const on = S.settings.withTravel !== false;
+    return `<button class="tr-toggle ${on ? 'on' : ''}" role="switch" aria-checked="${on}" aria-label="הסכומים כוללים נסיעות" data-act="travel-toggle"><span class="tr-l">${icon('bus', 's')}נסיעות</span><span class="tr-sw" aria-hidden="true"><i></i></span></button>`;
+  };
+  let travelTimer = 0;
+  App.actions['travel-toggle'] = (el) => {
+    // the knob slides at once (every switch on the screen); the amounts follow when it has arrived
+    const on = !el.classList.contains('on');
+    document.querySelectorAll('.tr-toggle').forEach((b) => { b.classList.toggle('on', on); b.setAttribute('aria-checked', on); });
+    clearTimeout(travelTimer);
+    travelTimer = setTimeout(() => { Store.setSettings((s) => { s.withTravel = on; }).catch(() => {}); }, 190);
+  };
   App.shiftItem = function (r, opts) {
     opts = opts || {};
     const sh = App.shift(r.id);
@@ -24,7 +42,7 @@
       <span class="role-bar" style="background:${role ? role.color : '#999'}"></span>
       <span class="body"><span class="t shift-title"><span class="tt">${esc(date)}${esc(title)}</span>${App.restTag(r)}${App.ovTag(r)}${planned}</span>
       <span class="s"><span class="num">⁦${U.epochHM(r.start)}–${U.epochHM(r.rawEnd)}⁩</span> · ${U.hm(r.paidMin)} ש׳${emp}${sh.note ? ' · ' + esc(sh.note) : ''}</span></span>
-      <span class="trail"><span class="a">${money(r.total, 0)}</span>${opts.showOk && r.status === 'planned' ? `<br><span class="tag good" data-act="mark-done" data-id="${r.id}">${icon('check')}בוצעה</span>` : ''}</span></button>`;
+      <span class="trail"><span class="a">${money(App.shiftAmount(r), 0)}</span>${opts.showOk && r.status === 'planned' ? `<br><span class="tag good" data-act="mark-done" data-id="${r.id}">${icon('check')}בוצעה</span>` : ''}</span></button>`;
   };
   App.entryItem = function (e) {
     const v = App.model.entryVals.get(e.id) || { amount: 0, label: '' };
@@ -227,7 +245,7 @@
       ${root.Plus ? root.Plus.nudgeCard() : ''}
       ${savingCard()}
       ${shortcuts()}
-      ${pending.length + recent.length ? `<div class="home-list-head"><span>${pending.length ? 'לסמן כבוצעה' : 'משמרות אחרונות'}</span><button class="btn text sm" data-act="go-shifts">הכול</button></div>
+      ${pending.length + recent.length ? `<div class="home-list-head"><span>${pending.length ? 'לסמן כבוצעה' : 'משמרות אחרונות'}</span><span class="spacer"></span>${App.travelSwitch()}<button class="btn text sm" data-act="go-shifts">הכול</button></div>
         <div class="list home-list">${pending.map((r) => App.shiftItem(r, { showOk: true })).join('')}${recent.slice(0, Math.max(1, 3 - pending.length)).map((r) => App.shiftItem(r)).join('')}</div>`
         : S.meta.guide && !S.meta.guideDone ? '' : `<div class="empty fun">${App.mascot ? App.mascot('sleepy', { size: 92 }) : ''}<h3>עוד אין משמרות</h3><div>בתחילת משמרת לוחצים על "התחל משמרת".<br>משמרת שכבר התקיימה מוסיפים בכפתור <b>+</b>.</div></div>`}
     `;

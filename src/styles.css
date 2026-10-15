@@ -746,10 +746,13 @@ html, body { overscroll-behavior-y: contain; }
 @keyframes ptr-race { from { transform: rotate(var(--m0, 0deg)); } to { transform: rotate(calc(var(--m0, 0deg) + 360deg)); } }
 @keyframes ptr-race-h { from { transform: rotate(var(--h0, 0deg)); } to { transform: rotate(calc(var(--h0, 0deg) + 360deg)); } }
 @keyframes ptr-ring { from { transform: rotate(-90deg); } to { transform: rotate(270deg); } }
-.ptr-check { position: absolute; inset: 0; display: grid; place-items: center; color: #fff; font: 800 22px/1 var(--font); opacity: 0; transform: scale(.5); transition: opacity .2s, transform .25s cubic-bezier(.34, 1.56, .64, 1); }
-.ptr.done .ptr-disc { background: var(--good-mark); transform: none !important; }
-.ptr.done .ptr-face { opacity: 0; }
-.ptr.done .ptr-arc { stroke: #fff; stroke-dasharray: 1 1; stroke-dashoffset: 0; }
+/* done: a green circle with a check grows in front of the same disc; the hands and the ring only pause (no jump) */
+.ptr-check { position: absolute; inset: 0; display: grid; place-items: center; border-radius: 50%; background: var(--good-mark); color: #fff; font: 800 22px/1 var(--font); opacity: 0; transform: scale(.4); transition: opacity .16s ease-out, transform .32s cubic-bezier(.34, 1.56, .64, 1); }
+.ptr.done .ptr-disc { --ink: #fff; --p: 1; }
+.ptr.done .ptr-m { animation: ptr-race .8s linear infinite paused; }
+.ptr.done .ptr-h { animation: ptr-race-h 9.6s linear infinite paused; }
+.ptr.done .ptr-ring { animation: ptr-ring 1.2s linear infinite paused; opacity: 0; transition: opacity .25s; }
+.ptr.done .ptr-arc { stroke-dasharray: .3 .7; stroke-dashoffset: 0; }
 .ptr.done .ptr-check { opacity: 1; transform: none; }
 /* the note under the coin: "pull" → "let go" → "updating…" → "all up to date" */
 .ptr-tip { position: absolute; top: 56px; left: 50%; transform: translateX(-50%) translateY(-4px); padding: 4px 12px; border-radius: 999px; background: var(--surface-hi); color: var(--on-surface); box-shadow: 0 4px 12px rgba(0, 0, 0, .12), 0 0 0 1px var(--line); font: 600 .76rem/1.4 var(--font); white-space: nowrap; opacity: 0; transition: opacity .18s, transform .18s; }
