@@ -58,7 +58,7 @@ Shaati עוזרת לעובדים לפי שעה לדעת בדיוק כמה הרו
 🎯 יעדים ומוטיבציה
 • יעד חודשי, ויעד חיסכון למשהו שרוצים לקנות – כולל כמה שעות עבודה חסרות
 • סיכום חודשי כסיפור קצר, עם תמונה לשיתוף
-• מדליות על משמרות, כסף ותלושים, ושלושה משחקים קצרים על שכר וזכויות
+• מדליות על משמרות, כסף ותלושים, וחמישה משחקים קצרים על שכר, זכויות וקריאת תלוש
 
 ✨ עוזר AI (אופציונלי)
 שאלות חופשיות על זכויות, על התלוש או על האפליקציה, עם מפתח API אישי של Anthropic.
@@ -104,7 +104,7 @@ Shaati helps hourly workers in Israel know exactly what they earned – and chec
 • Smart alerts, vacation and sick-day tracking
 • Sign in with Google; your data is stored in your own account and only you can access it. Works offline. No ads, no tracking.
 • Goals: a monthly target and a savings goal for something you want, with the work hours still needed
-• A monthly recap told as a short story, with a shareable image; medals and three short games about pay and rights
+• A monthly recap told as a short story, with a shareable image; medals and five short games about pay, rights and reading a payslip
 • Optional rights assistant powered by your own Anthropic API key
 
 Calculations are estimates only and are not legal, accounting or tax advice. The app is in Hebrew.
