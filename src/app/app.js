@@ -68,6 +68,9 @@
     de.style.setProperty('--h', a[0]);
     de.style.setProperty('--s', a[1] + '%');
     de.style.setProperty('--fs', st.fontScale || 1);
+    // a Shaati Plus skin for the pay card on home (only while Plus is on)
+    const skin = root.Plus ? root.Plus.skin() : '';
+    if (skin) de.dataset.skin = skin; else delete de.dataset.skin;
     const font = FONTS[st.font] ? st.font : 'rubik';
     de.style.setProperty('--app-font', "'" + FONTS[font][0] + "'");
     const link = document.getElementById('font-link');
@@ -597,6 +600,7 @@
     if (action === 'start' && !S.activeShift) App.actions['timer-start']();
     if (action === 'add') App.sheetsApi.shiftEditor();
     setTimeout(() => { App.runInsights(); App.autoBackupCheck(); }, 1200);
+    if (root.Plus) root.Plus.init().catch(() => {}); // is Shaati Plus for sale here, and owned? (Google Play, Android app only)
     if (App.whatsNew) App.whatsNew();
   };
 

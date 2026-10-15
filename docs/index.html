@@ -2,7 +2,7 @@
 <html lang="he" dir="rtl">
 <head>
 <meta charset="utf-8">
-<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'sha256-ylV5V+9MeQ50hwmjzmvCQu3UspCBhypjTe6OMCZjPkE=' https://www.gstatic.com https://apis.google.com https://cdnjs.cloudflare.com https://cdn.jsdelivr.net 'wasm-unsafe-eval'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com data:; img-src 'self' data: blob: https:; connect-src 'self' https: wss:; frame-src https://shiftpay-70ab6.firebaseapp.com https://accounts.google.com https://apis.google.com https://*.google.com; worker-src 'self' blob: https://cdnjs.cloudflare.com https://cdn.jsdelivr.net; media-src 'self' data: blob:; manifest-src 'self'; object-src 'none'; base-uri 'self'; form-action 'self'">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'sha256-esBKHnyw/TlIxgyEKyXdby+OKriDzMb/Cfih44eUw2k=' https://www.gstatic.com https://apis.google.com https://cdnjs.cloudflare.com https://cdn.jsdelivr.net 'wasm-unsafe-eval'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com data:; img-src 'self' data: blob: https:; connect-src 'self' https: wss:; frame-src https://shiftpay-70ab6.firebaseapp.com https://accounts.google.com https://apis.google.com https://*.google.com; worker-src 'self' blob: https://cdnjs.cloudflare.com https://cdn.jsdelivr.net; media-src 'self' data: blob:; manifest-src 'self'; object-src 'none'; base-uri 'self'; form-action 'self'">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="theme-color" content="#0d2b6b">
 <meta name="description" content="מעקב משמרות וחישוב שכר אישי: שבתות, חגים, שעות נוספות, נסיעות, נטו משוער וניתוח תלושים — נשמר בחשבון שלך ועובד גם בלי אינטרנט.">
@@ -1737,6 +1737,38 @@ body.fx .recap-card:active { transform: scale(.98); }
 .dot-badge { background: #c9372c; }
 .list-more { margin-top: 10px; gap: 6px; }
 
+/* ---------- Shaati Plus ----------
+ * Pay-card skins: the same declarations colour the card on home (html[data-skin]) and the preview
+ * tiles (.sk-<id>). Every stop is dark enough for the card's white text (contrast 5:1 or more).
+ * --h tints the card's moving glow and its shadow to match. */
+.sk-gold, html[data-skin="gold"] .home-hero { --h: 40; --grad-hero: radial-gradient(120% 80% at 85% 0%, rgba(255, 214, 120, .28), transparent 60%), linear-gradient(135deg, #6b4400 0%, #8c5f08 52%, #4d3000 100%); }
+.sk-midnight, html[data-skin="midnight"] .home-hero { --h: 228; --grad-hero: radial-gradient(1.5px 1.5px at 18% 28%, rgba(255, 255, 255, .9), transparent), radial-gradient(1.5px 1.5px at 72% 18%, rgba(255, 255, 255, .7), transparent), radial-gradient(1px 1px at 46% 64%, rgba(255, 255, 255, .8), transparent), radial-gradient(1px 1px at 86% 70%, rgba(255, 255, 255, .6), transparent), linear-gradient(135deg, #0b1437 0%, #1b2a6b 60%, #070b20 100%); }
+.sk-sunset, html[data-skin="sunset"] .home-hero { --h: 352; --grad-hero: linear-gradient(135deg, #8a1c3a 0%, #b3361f 55%, #5e1240 100%); }
+.sk-ocean, html[data-skin="ocean"] .home-hero { --h: 192; --grad-hero: linear-gradient(135deg, #04425a 0%, #0a6f7a 55%, #032f4a 100%); }
+.sk-forest, html[data-skin="forest"] .home-hero { --h: 150; --grad-hero: linear-gradient(135deg, #0c3d2a 0%, #17663f 55%, #072a1d 100%); }
+.sk-carbon, html[data-skin="carbon"] .home-hero { --h: 240; --grad-hero: repeating-linear-gradient(45deg, rgba(255, 255, 255, .03) 0 2px, transparent 2px 6px), linear-gradient(135deg, #1c1d22 0%, #34363f 55%, #111216 100%); }
+.skin-pick { display: grid; grid-template-columns: repeat(auto-fill, minmax(84px, 1fr)); gap: 8px; margin-bottom: 16px; }
+.skin-tile { position: relative; display: grid; align-content: space-between; justify-items: start; gap: 6px; min-height: 64px; padding: 8px 10px; border-radius: 14px; border: 0; color: #fff; text-align: start; cursor: pointer; background: var(--grad-hero); box-shadow: var(--sh-1); }
+.skin-tile b { font: 700 1.1rem var(--display); }
+.skin-tile span { font-size: .78rem; font-weight: 600; }
+.skin-tile.on { box-shadow: 0 0 0 3px var(--surface), 0 0 0 5px var(--brand); }
+.skin-lock { position: absolute; top: 6px; inset-inline-end: 6px; display: grid; place-items: center; width: 22px; height: 22px; border-radius: 50%; background: rgba(0, 0, 0, .35); }
+.skin-lock svg { width: 13px; height: 13px; }
+.plus-tag { background: var(--grad-money); color: #2b1a00; margin-inline-start: 6px; }
+.plus-entry .lead.plus-lead { background: var(--grad-money); color: #2b1a00; }
+.plus-sheet .skin-pick { margin-top: 4px; }
+.plus-list { display: grid; gap: 12px; }
+.plus-list > div { display: flex; gap: 10px; align-items: flex-start; }
+.plus-list > div > svg { flex: none; margin-top: 2px; color: var(--brand-strong); }
+.plus-list span { display: grid; gap: 2px; }
+.plus-list small { color: var(--on-surface-var); font-size: .82rem; line-height: 1.4; }
+.plus-buy { margin-top: 14px; background: var(--grad-money); color: #2b1a00; }
+.plus-buy:disabled { opacity: .5; }
+.plus-note { text-align: center; margin-top: 8px; }
+.plus-done { display: flex; align-items: center; justify-content: center; gap: 8px; margin-top: 14px; padding: 12px; border-radius: 14px; background: var(--good-bg); color: var(--good); font-weight: 700; }
+.plus-links { display: flex; flex-wrap: wrap; align-items: center; justify-content: center; gap: 12px; margin-top: 10px; }
+.plus-preview { display: inline-flex; align-items: center; gap: 6px; color: var(--on-surface-var); }
+
 </style>
 </head>
 <body>
@@ -1755,8 +1787,8 @@ body.fx .recap-card:active { transform: scale(.98); }
 <div id="print-root" aria-hidden="true"></div>
 <noscript><div style="padding:24px;font-family:sans-serif">האפליקציה דורשת JavaScript.</div></noscript>
 <script>
-window.APP_VERSION = '1.11.5';
-window.APP_BUILD = '1.11.5-cb72edc8';
+window.APP_VERSION = '1.12.0';
+window.APP_BUILD = '1.12.0-266f66c8';
 /* ---- core/util.js ---- */
 /* ============================================================
  * util.js — date/time helpers and formatting.
@@ -2406,7 +2438,7 @@ window.APP_BUILD = '1.11.5-cb72edc8';
         push: true,
       },
       // --- appearance ---
-      theme: 'system', accent: 'candy', fontScale: 1, font: 'rubik',
+      theme: 'system', accent: 'candy', fontScale: 1, font: 'rubik', skin: '',
       fx: { effects: true, sound: true, haptic: true }, // tap pulse / confetti, click sounds, vibration
       // --- security ---
       lock: { enabled: false, hash: null, salt: null, timeoutMin: 1 },
@@ -6755,6 +6787,9 @@ window.APP_BUILD = '1.11.5-cb72edc8';
     de.style.setProperty('--h', a[0]);
     de.style.setProperty('--s', a[1] + '%');
     de.style.setProperty('--fs', st.fontScale || 1);
+    // a Shaati Plus skin for the pay card on home (only while Plus is on)
+    const skin = root.Plus ? root.Plus.skin() : '';
+    if (skin) de.dataset.skin = skin; else delete de.dataset.skin;
     const font = FONTS[st.font] ? st.font : 'rubik';
     de.style.setProperty('--app-font', "'" + FONTS[font][0] + "'");
     const link = document.getElementById('font-link');
@@ -7284,6 +7319,7 @@ window.APP_BUILD = '1.11.5-cb72edc8';
     if (action === 'start' && !S.activeShift) App.actions['timer-start']();
     if (action === 'add') App.sheetsApi.shiftEditor();
     setTimeout(() => { App.runInsights(); App.autoBackupCheck(); }, 1200);
+    if (root.Plus) root.Plus.init().catch(() => {}); // is Shaati Plus for sale here, and owned? (Google Play, Android app only)
     if (App.whatsNew) App.whatsNew();
   };
 
@@ -8013,6 +8049,168 @@ window.FIREBASE_CONFIG = {
   };
   record.platform = platform;
   Stats._record = record;
+})(typeof window !== 'undefined' ? window : globalThis);
+
+/* ---- app/plus.js ---- */
+/* ============================================================
+ * plus.js — "Shaati Plus": an optional one-time purchase through Google
+ * Play (Digital Goods API + Payment Request, inside the Android app).
+ *
+ * Everything the app does stays free. Plus adds skins for the pay card on
+ * home and says thank you; no ads, no reminders that interrupt. Nothing about
+ * Plus shows until the product exists in Google Play (or for an admin who
+ * previews it), so without it the app looks exactly the same.
+ *
+ * Ownership is read from Google Play when the app starts and after a
+ * purchase, not only remembered on this phone: a refund or a new phone with
+ * the same Google account is handled the same way. When Google Play cannot
+ * be reached (offline) what was known is kept.
+ * ============================================================ */
+(function (root) {
+  'use strict';
+  const { App, Store, UI } = root;
+  const S = Store.S;
+  const { icon, esc } = UI;
+  const BILLING = 'https://play.google.com/billing';
+  const SKU = 'shaati_plus'; // the in-app product's id in Google Play Console (one-time, not a subscription)
+  // Pay-card skins (styles-v3.css .sk-<id>): dark enough everywhere for the card's white text
+  const SKINS = {
+    gold: 'זהב', midnight: 'חצות', sunset: 'שקיעה', ocean: 'אוקיינוס', forest: 'יער', carbon: 'קרבון',
+  };
+  const Plus = { SKU, SKINS, available: false, price: '' };
+  const owned = () => !!(S.meta.plus && S.meta.plus.active);
+  Plus.owned = owned;
+  /** Plus features are on: bought, or an admin previewing them on this phone. */
+  Plus.active = () => owned() || (!!App.isAdmin && !!S.meta.plusPreview);
+  /** Anything about Plus is shown only when it can be bought here, or is already on. */
+  Plus.visible = () => Plus.available || Plus.active();
+  /** The pay-card skin in use ('' = the regular card). */
+  Plus.skin = () => (Plus.active() && SKINS[S.settings.skin] ? S.settings.skin : '');
+
+  async function service() {
+    if (typeof root.getDigitalGoodsService !== 'function') return null; // not inside the Android app from Google Play
+    try { return await root.getDigitalGoodsService(BILLING); } catch (e) { return null; }
+  }
+  function fmtPrice(p) {
+    if (!p) return '';
+    try { return new Intl.NumberFormat('he-IL', { style: 'currency', currency: p.currency, maximumFractionDigits: 2 }).format(+p.value); } catch (e) { return `${p.value} ${p.currency}`; }
+  }
+  async function setOwned(on) {
+    if (on === owned()) return;
+    await Store.setMeta({ plus: { active: on, at: Date.now() } });
+    App.applyTheme();
+    App.rerender();
+  }
+  /** Asks Google Play whether this account owns Plus. Throws when Google Play cannot be reached. */
+  async function check(svc) {
+    const list = await svc.listPurchases();
+    const has = (list || []).some((p) => p && p.itemId === SKU);
+    await setOwned(has);
+    return has;
+  }
+
+  /** At start: is Plus for sale here (the product exists in Google Play), and is it owned? */
+  Plus.init = async function () {
+    const svc = await service();
+    if (!svc) return;
+    let d;
+    try { d = ((await svc.getDetails([SKU])) || [])[0]; } catch (e) { return; }
+    if (!d) return; // not set up in Google Play yet: Plus stays out of sight
+    Plus.available = true;
+    Plus.price = fmtPrice(d.price);
+    try { await check(svc); } catch (e) { /* offline: keep what was known */ }
+    if (App.tab === 'settings') App.rerender();
+  };
+
+  /** The purchase, through Google Play's own sheet. Resolves true when Plus is on. */
+  Plus.buy = async function () {
+    const svc = await service();
+    if (!svc || !Plus.available) { UI.toast('הרכישה זמינה באפליקציה שמותקנת מ-Google Play'); return false; }
+    let res;
+    try {
+      const req = new PaymentRequest([{ supportedMethods: BILLING, data: { sku: SKU } }], { total: { label: 'Total', amount: { currency: 'ILS', value: '0' } } });
+      res = await req.show();
+    } catch (e) {
+      if (!e || e.name !== 'AbortError') UI.toast('הרכישה לא הושלמה. אפשר לנסות שוב');
+      return false; // closed by the user: nothing to say
+    }
+    try {
+      const token = res.details && res.details.purchaseToken;
+      // older versions of the Digital Goods API acknowledge here; newer ones do it by themselves
+      if (token && typeof svc.acknowledge === 'function') await svc.acknowledge(token, 'onetime').catch(() => {});
+      await res.complete('success');
+    } catch (e) { /* the payment itself went through */ }
+    let has;
+    try { has = await check(svc); } catch (e) { has = true; await setOwned(true); } // confirmed again at the next start
+    if (!has) { UI.toast('התשלום עדיין בטיפול אצל Google. Plus יופעל כשהוא יושלם'); return false; }
+    if (root.Fx) root.Fx.celebrate('big');
+    return true;
+  };
+
+  /** "I already bought it": asks Google Play again (a new phone, a reinstall). */
+  Plus.restore = async function () {
+    const svc = await service();
+    if (!svc) { UI.toast('אפשר לשחזר רכישה באפליקציה שמותקנת מ-Google Play'); return; }
+    try { UI.toast((await check(svc)) ? 'Shaati Plus שוחזר ✓' : 'לא נמצאה רכישה בחשבון Google הזה'); } catch (e) { UI.toast('אין חיבור ל-Google Play כרגע. נסו שוב בעוד רגע'); }
+  };
+
+  /** Mini cards of every skin (also used in the settings). */
+  Plus.skinTiles = (cur, locked) => `<div class="skin-pick">
+      <button class="skin-tile ${!cur ? 'on' : ''}" data-skin="" aria-pressed="${!cur}"><b>₪</b><span>רגיל</span></button>
+      ${Object.entries(SKINS).map(([k, name]) => `<button class="skin-tile sk-${k} ${cur === k ? 'on' : ''}" data-skin="${k}" aria-pressed="${cur === k}" aria-label="${name}${locked ? ' (Plus)' : ''}"><b>₪</b><span>${name}</span>${locked ? `<i class="skin-lock" aria-hidden="true">${icon('lock', 's')}</i>` : ''}</button>`).join('')}
+    </div>`;
+  /** A tap on a skin: applies it, or offers Plus when it is locked. */
+  Plus.pickSkin = async (k) => {
+    if (k && !Plus.active()) { Plus.sheet(); return false; }
+    await Store.setSettings((s) => { s.skin = k || ''; });
+    App.applyTheme();
+    if (root.Fx) root.Fx.play('pop');
+    return true;
+  };
+
+  /* ---------------- the Plus page ---------------- */
+  Plus.sheet = function () {
+    const draw = (el) => {
+      const on = Plus.active();
+      el.querySelector('[data-plus-body]').innerHTML = `
+        ${App.mascotSays ? App.mascotSays(on ? 'party' : 'happy', on ? 'תודה שאת/ה איתנו! 💜' : 'רוצים לפרגן לשעתי ולקבל עיצובים מיוחדים?', { size: 64 }) : ''}
+        ${Plus.skinTiles(Plus.skin(), !on)}
+        <div class="card plus-list">
+          <div>${icon('palette', 's')}<span><b>6 עיצובים לכרטיס השכר</b><small>זהב, חצות, שקיעה ועוד, בכרטיס שבמסך הבית</small></span></div>
+          <div>${icon('star', 's')}<span><b>תודה ענקית ממני</b><small>עוזר להמשיך לפתח, ולהשאיר את האפליקציה בלי פרסומות</small></span></div>
+          <div>${icon('check', 's')}<span><b>כל השאר נשאר חינם</b><small>משמרות, חישוב שכר, זכויות, בדיקת תלוש, דוחות ומשחקים</small></span></div>
+        </div>
+        ${on ? `<div class="plus-done">${icon('check')} ${owned() ? 'Shaati Plus פעיל אצלך' : 'תצוגה מקדימה של מנהל'}</div>`
+          : `<button class="btn big block plus-buy" data-plus-buy ${Plus.available ? '' : 'disabled'}>${icon('sparkle')} קנייה חד-פעמית${Plus.price ? ' · ' + esc(Plus.price) : ''}</button>
+             <div class="tiny muted plus-note">תשלום אחד דרך Google Play, בלי מנוי ובלי חיובים נוספים. מתחת לגיל 18: בהסכמת הורה.</div>`}
+        <div class="plus-links">${on && owned() ? '' : '<button class="btn text sm" data-plus-restore>כבר קניתי: שחזור רכישה</button>'}
+          ${App.isAdmin ? `<label class="tiny plus-preview"><input type="checkbox" data-plus-preview ${S.meta.plusPreview ? 'checked' : ''}> תצוגה מקדימה (מנהל)</label>` : ''}</div>`;
+    };
+    UI.openSheet({
+      title: 'Shaati Plus ✨',
+      cls: 'plus-sheet',
+      body: '<div data-plus-body></div>',
+      onMount: (el) => {
+        draw(el);
+        let busy = false;
+        el.addEventListener('click', async (e) => {
+          const b = e.target.closest('button');
+          if (!b || busy) return;
+          if (b.hasAttribute('data-plus-buy')) { busy = true; try { if (await Plus.buy()) draw(el); } finally { busy = false; } }
+          else if (b.hasAttribute('data-plus-restore')) { busy = true; try { await Plus.restore(); draw(el); } finally { busy = false; } }
+          else if (b.dataset.skin !== undefined) { if (b.dataset.skin && !Plus.active()) return; if (await Plus.pickSkin(b.dataset.skin)) draw(el); }
+        });
+        el.addEventListener('change', async (e) => {
+          if (!e.target.matches('[data-plus-preview]')) return;
+          await Store.setMeta({ plusPreview: e.target.checked });
+          App.applyTheme(); App.rerender(); draw(el);
+        });
+      },
+    });
+  };
+  App.actions['plus-open'] = () => Plus.sheet();
+
+  root.Plus = Plus;
 })(typeof window !== 'undefined' ? window : globalThis);
 
 /* ---- app/views-login.js ---- */
@@ -10387,7 +10585,7 @@ window.FIREBASE_CONFIG = {
     rest: 'שבת חג חגים עיר כניסת שבת יציאת שבת', pay: 'נסיעות החזר נסיעות תקרה תקופת שכר יום תשלום משכורת',
     net: 'מס מס הכנסה נקודות זיכוי פנסיה ביטוח לאומי מס בריאות השתלמות נטו', leave: 'חופשה מחלה הבראה ותק תחילת עבודה',
     goal: 'יעד יעדים חיסכון חוסכים', alerts: 'התראות תזכורות פוש הודעות', templates: 'תבנית תבניות משמרת קבועה',
-    look: 'צבע צבעים ערכת נושא כהה בהיר מצב לילה גופן גופנים מראה צלילים רטט', security: 'קוד נעילה טביעת אצבע סיסמה',
+    look: 'צבע צבעים ערכת נושא כהה בהיר מצב לילה גופן גופנים מראה צלילים רטט עיצוב כרטיס plus פלוס', security: 'קוד נעילה טביעת אצבע סיסמה',
     assistant: 'בינה מלאכותית עוזר שאלות ai', ai: 'מפתח api claude ניתוח תלוש', backup: 'גיבוי שחזור קובץ', export: 'ייצוא אקסל excel csv pdf יומן',
     demo: 'דוגמה הדגמה', about: 'גרסה התקנה אודות', rights: 'זכויות שכר מינימום',
   };
@@ -10417,6 +10615,7 @@ window.FIREBASE_CONFIG = {
       <label class="set-search">${icon('search', 's')}<input class="input" id="set-q" type="search" placeholder="חיפוש (למשל: נסיעות, מס, צבע)" aria-label="חיפוש בהגדרות" autocomplete="off"></label>
       <div class="empty small" id="set-none" hidden>לא נמצאה הגדרה כזו. אפשר לנסות מילה אחרת, או לשאול אותנו בעזרה ותמיכה.</div>
       ${App.isAdmin ? `<div class="list" style="margin-top:6px"><button class="item admin-entry" data-act="admin-dashboard"><span class="lead" style="background:var(--primary);color:var(--on-primary)">${icon('chart')}</span><span class="body"><span class="t">לוח ניהול ${App.adminOpenTickets ? `<span class="tag warn">${App.adminOpenTickets} פניות מחכות</span>` : ''}</span><span class="s">משתמשים, פעילות, פניות (למנהלים בלבד)</span></span>${icon('left', 's')}</button></div>` : ''}
+      ${root.Plus && root.Plus.visible() ? `<div class="list" style="margin-top:6px"><button class="item plus-entry" data-act="plus-open"><span class="lead plus-lead">${icon('sparkle')}</span><span class="body"><span class="t">Shaati Plus</span><span class="s">${root.Plus.owned() ? 'פעיל · תודה על התמיכה 💜' : 'עיצובים לכרטיס השכר · תשלום חד-פעמי' + (root.Plus.price ? ' · ' + esc(root.Plus.price) : '')}</span></span>${icon('left', 's')}</button></div>` : ''}
       <div class="list set-list help-list"><button class="item" data-act="support"><span class="lead">${icon('chat')}</span><span class="body"><span class="t">עזרה ותמיכה ${App.supportUnread ? '<span class="tag good">תשובה חדשה</span>' : ''}</span><span class="s">שאלות נפוצות, לכתוב לנו, הפניות שלי</span></span>${icon('left', 's')}</button>
         <button class="item" data-act="share-app"><span class="lead">${icon('share')}</span><span class="body"><span class="t">לשתף עם חברים</span><span class="s">שגם הם ידעו כמה מגיע להם</span></span>${icon('left', 's')}</button></div>
       ${groups.map(([g, keys]) => `<div class="section-title">${g}</div><div class="list set-list">${keys.map((k) => { const s = SECTIONS[k]; return `<button class="item" data-act="settings-open" data-k="${k}" data-find="${esc((s.title + ' ' + s.sub() + ' ' + (FIND[k] || '')).toLowerCase().replace(/["'״׳]/g, ''))}"><span class="lead">${icon(s.icon)}</span><span class="body"><span class="t">${s.title}</span><span class="s">${esc(s.sub())}</span></span>${icon('left', 's')}</button>`; }).join('')}</div>`).join('')}
@@ -10750,6 +10949,7 @@ window.FIREBASE_CONFIG = {
   RENDER.look = {
     render: () => `<div class="section-title">ערכת צבעים</div><div class="seg" style="margin-bottom:14px">${[['system', 'לפי המערכת'], ['light', 'בהיר'], ['dark', 'כהה']].map(([k, l]) => `<button data-theme="${k}" class="${S.settings.theme === k ? 'on' : ''}">${l}</button>`).join('')}</div>
       <div class="section-title">צבע הדגשה</div><div class="color-pick" style="margin-bottom:16px">${Object.entries(App.ACCENTS).map(([k, a]) => `<button data-accent="${k}" class="${S.settings.accent === k ? 'on' : ''}" style="background:hsl(${a[0]} ${a[1]}% 45%)" aria-label="${a[2]}"></button>`).join('')}</div>
+      ${root.Plus && root.Plus.visible() ? `<div class="section-title">כרטיס השכר בבית <span class="tag plus-tag">Plus</span></div>${root.Plus.skinTiles(root.Plus.skin(), !root.Plus.active())}` : ''}
       <div class="section-title">גופן</div>
       <div class="font-pick">${Object.entries(App.FONTS).map(([k, f]) => `<button data-font="${k}" class="${(S.settings.font || 'rubik') === k ? 'on' : ''}" style="font-family:'${f[0]}', system-ui, sans-serif"><span class="fp-sample">משמרת ערב · ${esc(f[2])}<small>${f[0]}</small></span><span class="fp-num">₪1,240</span></button>`).join('')}</div>
       <div class="section-title">גודל טקסט</div><div class="seg">${[[0.9, 'קטן'], [1, 'רגיל'], [1.1, 'גדול'], [1.2, 'גדול מאוד']].map(([k, l]) => `<button data-fs="${k}" class="${+S.settings.fontScale === k ? 'on' : ''}">${l}</button>`).join('')}</div>
@@ -10775,6 +10975,7 @@ window.FIREBASE_CONFIG = {
         else if (b.dataset.fs) await Store.setSettings((s) => { s.fontScale = +b.dataset.fs; });
         else if (b.dataset.font) await Store.setSettings((s) => { s.font = b.dataset.font; });
         else if (b.hasAttribute('data-fx-try')) { root.Fx.celebrate('big'); return; }
+        else if (b.dataset.skin !== undefined && root.Plus) { if (!(await root.Plus.pickSkin(b.dataset.skin))) return; } // a locked one opens Shaati Plus
         else return;
         draw();
       });
@@ -13300,8 +13501,8 @@ window.FIREBASE_CONFIG = {
   const S = Store.S;
   const { icon, esc } = UI;
 
-  const LEGAL_VERSION = '1.1';
-  const EFFECTIVE = '13 באוקטובר 2026';
+  const LEGAL_VERSION = '1.2';
+  const EFFECTIVE = '15 באוקטובר 2026';
   const CONTACT = 'https://github.com/leelor123/shifts/issues';
   const APP_NAME = 'Shaati';
   App.LEGAL_VERSION = LEGAL_VERSION;
@@ -13326,7 +13527,9 @@ window.FIREBASE_CONFIG = {
 <h4>7. קטינים</h4>
 <p>משתמש שטרם מלאו לו 18 רשאי להשתמש באפליקציה בהסכמת הורה או אפוטרופוס.</p>
 <h4>8. זמינות, שינויים והפסקת השירות</h4>
-<p>האפליקציה ניתנת ללא תשלום, "כמות שהיא" (AS IS) ו"כפי שהיא זמינה", ללא כל התחייבות לזמינות רציפה, לדיוק, להתאמה למטרה מסוימת או להיעדר תקלות. המפעיל רשאי לשנות, להוסיף או להפסיק תכונות או את השירות כולו, ככל האפשר בהודעה מראש באפליקציה. שינוי מהותי בתנאים יוצג באפליקציה ויידרש אישורו מחדש.</p>
+<p>השימוש באפליקציה ובכל יכולותיה הבסיסיות — רישום משמרות, חישוב שכר, זכויות, בדיקת תלוש, דוחות ומשחקים — ניתן ללא תשלום. האפליקציה ניתנת "כמות שהיא" (AS IS) ו"כפי שהיא זמינה", ללא כל התחייבות לזמינות רציפה, לדיוק, להתאמה למטרה מסוימת או להיעדר תקלות. המפעיל רשאי לשנות, להוסיף או להפסיק תכונות או את השירות כולו, ככל האפשר בהודעה מראש באפליקציה. שינוי מהותי בתנאים יוצג באפליקציה ויידרש אישורו מחדש.</p>
+<h4>8א. תוספות בתשלום (Shaati Plus)</h4>
+<p>האפליקציה עשויה להציע תוספות אופציונליות בתשלום חד-פעמי ("Shaati Plus"), כגון עיצובים לכרטיס השכר. התוספות אינן משנות את החישובים, את מידע הזכויות או את הכלים הבסיסיים, שנשארים זמינים לכולם ללא תשלום. הרכישה מתבצעת דרך Google Play בלבד, בכפוף לתנאים ולמדיניות ההחזרים של Google Play; המפעיל אינו מקבל ואינו שומר פרטי תשלום. הרכישה משויכת לחשבון Google שבו בוצעה וניתנת לשחזור במכשיר אחר עם אותו חשבון. רכישה בידי משתמש שטרם מלאו לו 18 טעונה הסכמת הורה או אפוטרופוס.</p>
 <h4>9. נתונים וגיבוי</h4>
 <p>המשתמש אחראי לנכונות הנתונים שהזין ולשמירת גיבויים. האפליקציה מציעה סנכרון לחשבון וייצוא לקובץ, אך אינה מתחייבת שנתונים לא יאבדו (למשל בשל תקלה, מחיקה ביוזמת המשתמש או שינוי בשירותי צד שלישי).</p>
 <h4>10. הגבלת אחריות</h4>
@@ -13363,7 +13566,8 @@ window.FIREBASE_CONFIG = {
 <ul><li><b>Google</b> — אימות התחברות ואחסון בענן.</li>
 <li><b>GitHub</b> — אירוח קוד האפליקציה (ללא הנתונים שלך).</li>
 <li><b>Anthropic</b> — רק כשאתה מפעיל תכונת AI, עם המפתח שלך: בניתוח תלוש נשלח הטקסט שאישרת אחרי הסתרה של ת"ז, פרטי בנק, כתובת, טלפון ואימייל; בעוזר נשלחת השאלה, ואם בחרת — סיכום מספרי מהאפליקציה ללא פרטים מזהים.</li>
-<li><b>שרתי הפצת קוד וגופנים</b> (Google Fonts, jsDelivr, cdnjs) — טעינת רכיבים טכניים.</li></ul>
+<li><b>שרתי הפצת קוד וגופנים</b> (Google Fonts, jsDelivr, cdnjs) — טעינת רכיבים טכניים.</li>
+<li><b>Google Play</b> — רק אם רוכשים את Shaati Plus: התשלום מתבצע כולו אצל Google Play. אנחנו לא מקבלים פרטי תשלום; האפליקציה שומרת בטלפון רק שהתוספת פעילה, ובודקת זאת מול Google Play.</li></ul>
 <p>חלק מהשירותים פועלים מחוץ לישראל, ולכן מידע עשוי לעבור אל מחוץ לישראל במסגרתם.</p>
 <h4>6. הזכויות שלך</h4>
 <p>אפשר לעיין בכל המידע ולתקן אותו ישירות באפליקציה; לייצא אותו (הגדרות › גיבוי, ייצוא CSV); ולמחוק אותו לצמיתות (הגדרות › חשבון וסנכרון › מחק את כל הנתונים מהחשבון). התנתקות מוחקת את הנתונים מהמכשיר ומשאירה אותם בחשבון.</p>
@@ -13462,6 +13666,7 @@ window.FIREBASE_CONFIG = {
         <li>הנתונים שלך נשמרים בטלפון ובחשבון ה-Google שלך, ורק לך יש גישה אליהם. הם לא נמכרים ולא משמשים לפרסום.</li>
         <li>נשמרת סטטיסטיקת שימוש אנונימית (כמה משמרות, ימי שימוש, תכונות), בלי שם, אימייל או סכומים. אפשר לכבות בהגדרות.</li>
         <li>תכונות AI פועלות רק כשאתה מפעיל אותן, עם מפתח API שלך.</li>
+        <li>כל מה שבאפליקציה חינמי. תוספת עיצוב אופציונלית (Shaati Plus) נקנית רק דרך Google Play, בתשלום חד-פעמי.</li>
         <li>אפשר לייצא או למחוק את כל הנתונים בכל רגע.</li></ul></div>
       <div class="btn-row"><button class="btn tonal" data-legal="terms">${icon('file')} תנאי שימוש</button><button class="btn tonal" data-legal="privacy">${icon('shield')} פרטיות</button></div>
       </div><div class="foot col">

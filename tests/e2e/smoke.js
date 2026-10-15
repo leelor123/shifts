@@ -535,6 +535,31 @@ let errors = [];
       }
     } finally { await cdp.send('Emulation.setTimezoneOverride', { timezoneId: '' }).catch(() => {}); await closeAll(); }
   });
+  await step('Shaati Plus: out of sight without Google Play; bought once, the pay-card skins work', async () => {
+    await closeAll(); await ev(() => App.go('settings')); await sleep(300);
+    if (await ev(() => !!document.querySelector('[data-act="plus-open"]'))) throw new Error('Plus shown without Google Play');
+    // a pretend Google Play: the product exists, the payment sheet pays at once
+    await ev(async () => {
+      window.__realPR = window.PaymentRequest;
+      window.__pb = { owned: false };
+      window.getDigitalGoodsService = async () => ({
+        getDetails: async (ids) => ids.map((itemId) => ({ itemId, price: { currency: 'ILS', value: '14.90' } })),
+        listPurchases: async () => (__pb.owned ? [{ itemId: Plus.SKU, purchaseToken: 't' }] : []),
+      });
+      window.PaymentRequest = class { async show() { __pb.owned = true; return { details: { purchaseToken: 't' }, complete: async () => {} }; } };
+      await Plus.init(); App.go('settings');
+    });
+    await sleep(300);
+    if (!/14\.90/.test(await ev(() => (document.querySelector('[data-act="plus-open"]') || {}).textContent || ''))) throw new Error('no Plus row with the price');
+    await ev(() => App.actions['plus-open']()); await sleep(500);
+    await ev(() => document.querySelector('.plus-sheet [data-plus-buy]').click()); await sleep(600);
+    if (!(await ev(() => Plus.owned()))) throw new Error('not owned after paying');
+    await ev(() => Plus.pickSkin('gold')); await sleep(200);
+    if ((await ev(() => document.documentElement.dataset.skin)) !== 'gold') throw new Error('skin not applied');
+    // back to a plain phone
+    await ev(async () => { delete window.getDigitalGoodsService; window.PaymentRequest = window.__realPR; Plus.available = false; await Store.setMeta({ plus: { active: false } }); await Store.setSettings((s) => { s.skin = ''; }); App.applyTheme(); });
+    await closeAll(); await ev(() => App.go('home'));
+  });
   await step('anonymous stats: record has only the allowed fields', async () => {
     const r = await ev(() => Stats._record());
     const keys = Object.keys(r).sort().join(',');

@@ -850,3 +850,35 @@ body.fx .recap-card:active { transform: scale(.98); }
 /* the unread badge: white on a red dark enough to read in both themes */
 .dot-badge { background: #c9372c; }
 .list-more { margin-top: 10px; gap: 6px; }
+
+/* ---------- Shaati Plus ----------
+ * Pay-card skins: the same declarations colour the card on home (html[data-skin]) and the preview
+ * tiles (.sk-<id>). Every stop is dark enough for the card's white text (contrast 5:1 or more).
+ * --h tints the card's moving glow and its shadow to match. */
+.sk-gold, html[data-skin="gold"] .home-hero { --h: 40; --grad-hero: radial-gradient(120% 80% at 85% 0%, rgba(255, 214, 120, .28), transparent 60%), linear-gradient(135deg, #6b4400 0%, #8c5f08 52%, #4d3000 100%); }
+.sk-midnight, html[data-skin="midnight"] .home-hero { --h: 228; --grad-hero: radial-gradient(1.5px 1.5px at 18% 28%, rgba(255, 255, 255, .9), transparent), radial-gradient(1.5px 1.5px at 72% 18%, rgba(255, 255, 255, .7), transparent), radial-gradient(1px 1px at 46% 64%, rgba(255, 255, 255, .8), transparent), radial-gradient(1px 1px at 86% 70%, rgba(255, 255, 255, .6), transparent), linear-gradient(135deg, #0b1437 0%, #1b2a6b 60%, #070b20 100%); }
+.sk-sunset, html[data-skin="sunset"] .home-hero { --h: 352; --grad-hero: linear-gradient(135deg, #8a1c3a 0%, #b3361f 55%, #5e1240 100%); }
+.sk-ocean, html[data-skin="ocean"] .home-hero { --h: 192; --grad-hero: linear-gradient(135deg, #04425a 0%, #0a6f7a 55%, #032f4a 100%); }
+.sk-forest, html[data-skin="forest"] .home-hero { --h: 150; --grad-hero: linear-gradient(135deg, #0c3d2a 0%, #17663f 55%, #072a1d 100%); }
+.sk-carbon, html[data-skin="carbon"] .home-hero { --h: 240; --grad-hero: repeating-linear-gradient(45deg, rgba(255, 255, 255, .03) 0 2px, transparent 2px 6px), linear-gradient(135deg, #1c1d22 0%, #34363f 55%, #111216 100%); }
+.skin-pick { display: grid; grid-template-columns: repeat(auto-fill, minmax(84px, 1fr)); gap: 8px; margin-bottom: 16px; }
+.skin-tile { position: relative; display: grid; align-content: space-between; justify-items: start; gap: 6px; min-height: 64px; padding: 8px 10px; border-radius: 14px; border: 0; color: #fff; text-align: start; cursor: pointer; background: var(--grad-hero); box-shadow: var(--sh-1); }
+.skin-tile b { font: 700 1.1rem var(--display); }
+.skin-tile span { font-size: .78rem; font-weight: 600; }
+.skin-tile.on { box-shadow: 0 0 0 3px var(--surface), 0 0 0 5px var(--brand); }
+.skin-lock { position: absolute; top: 6px; inset-inline-end: 6px; display: grid; place-items: center; width: 22px; height: 22px; border-radius: 50%; background: rgba(0, 0, 0, .35); }
+.skin-lock svg { width: 13px; height: 13px; }
+.plus-tag { background: var(--grad-money); color: #2b1a00; margin-inline-start: 6px; }
+.plus-entry .lead.plus-lead { background: var(--grad-money); color: #2b1a00; }
+.plus-sheet .skin-pick { margin-top: 4px; }
+.plus-list { display: grid; gap: 12px; }
+.plus-list > div { display: flex; gap: 10px; align-items: flex-start; }
+.plus-list > div > svg { flex: none; margin-top: 2px; color: var(--brand-strong); }
+.plus-list span { display: grid; gap: 2px; }
+.plus-list small { color: var(--on-surface-var); font-size: .82rem; line-height: 1.4; }
+.plus-buy { margin-top: 14px; background: var(--grad-money); color: #2b1a00; }
+.plus-buy:disabled { opacity: .5; }
+.plus-note { text-align: center; margin-top: 8px; }
+.plus-done { display: flex; align-items: center; justify-content: center; gap: 8px; margin-top: 14px; padding: 12px; border-radius: 14px; background: var(--good-bg); color: var(--good); font-weight: 700; }
+.plus-links { display: flex; flex-wrap: wrap; align-items: center; justify-content: center; gap: 12px; margin-top: 10px; }
+.plus-preview { display: inline-flex; align-items: center; gap: 6px; color: var(--on-surface-var); }

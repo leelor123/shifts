@@ -49,6 +49,8 @@ async function generate() {
     backgroundColor: '#0D2B6B', // same navy as the opening animation: no flash between them
     monochromeIconUrl: `https://${APP.host}${APP.scope}icon-mono-512.png`, // notification icon
     enableNotifications: true,
+    // Google Play Billing (Digital Goods API + Payment Request) for the optional Shaati Plus purchase (src/app/plus.js)
+    features: { playBilling: { enabled: true } },
     orientation: 'portrait',
     fallbackType: 'customtabs',
     minSdkVersion: 24, // androidbrowserhelper 2.7 needs Android 7.0+

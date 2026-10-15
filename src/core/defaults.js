@@ -143,7 +143,7 @@
         push: true,
       },
       // --- appearance ---
-      theme: 'system', accent: 'candy', fontScale: 1, font: 'rubik',
+      theme: 'system', accent: 'candy', fontScale: 1, font: 'rubik', skin: '',
       fx: { effects: true, sound: true, haptic: true }, // tap pulse / confetti, click sounds, vibration
       // --- security ---
       lock: { enabled: false, hash: null, salt: null, timeoutMin: 1 },

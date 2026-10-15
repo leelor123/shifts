@@ -146,7 +146,7 @@
     rest: 'שבת חג חגים עיר כניסת שבת יציאת שבת', pay: 'נסיעות החזר נסיעות תקרה תקופת שכר יום תשלום משכורת',
     net: 'מס מס הכנסה נקודות זיכוי פנסיה ביטוח לאומי מס בריאות השתלמות נטו', leave: 'חופשה מחלה הבראה ותק תחילת עבודה',
     goal: 'יעד יעדים חיסכון חוסכים', alerts: 'התראות תזכורות פוש הודעות', templates: 'תבנית תבניות משמרת קבועה',
-    look: 'צבע צבעים ערכת נושא כהה בהיר מצב לילה גופן גופנים מראה צלילים רטט', security: 'קוד נעילה טביעת אצבע סיסמה',
+    look: 'צבע צבעים ערכת נושא כהה בהיר מצב לילה גופן גופנים מראה צלילים רטט עיצוב כרטיס plus פלוס', security: 'קוד נעילה טביעת אצבע סיסמה',
     assistant: 'בינה מלאכותית עוזר שאלות ai', ai: 'מפתח api claude ניתוח תלוש', backup: 'גיבוי שחזור קובץ', export: 'ייצוא אקסל excel csv pdf יומן',
     demo: 'דוגמה הדגמה', about: 'גרסה התקנה אודות', rights: 'זכויות שכר מינימום',
   };
@@ -176,6 +176,7 @@
       <label class="set-search">${icon('search', 's')}<input class="input" id="set-q" type="search" placeholder="חיפוש (למשל: נסיעות, מס, צבע)" aria-label="חיפוש בהגדרות" autocomplete="off"></label>
       <div class="empty small" id="set-none" hidden>לא נמצאה הגדרה כזו. אפשר לנסות מילה אחרת, או לשאול אותנו בעזרה ותמיכה.</div>
       ${App.isAdmin ? `<div class="list" style="margin-top:6px"><button class="item admin-entry" data-act="admin-dashboard"><span class="lead" style="background:var(--primary);color:var(--on-primary)">${icon('chart')}</span><span class="body"><span class="t">לוח ניהול ${App.adminOpenTickets ? `<span class="tag warn">${App.adminOpenTickets} פניות מחכות</span>` : ''}</span><span class="s">משתמשים, פעילות, פניות (למנהלים בלבד)</span></span>${icon('left', 's')}</button></div>` : ''}
+      ${root.Plus && root.Plus.visible() ? `<div class="list" style="margin-top:6px"><button class="item plus-entry" data-act="plus-open"><span class="lead plus-lead">${icon('sparkle')}</span><span class="body"><span class="t">Shaati Plus</span><span class="s">${root.Plus.owned() ? 'פעיל · תודה על התמיכה 💜' : 'עיצובים לכרטיס השכר · תשלום חד-פעמי' + (root.Plus.price ? ' · ' + esc(root.Plus.price) : '')}</span></span>${icon('left', 's')}</button></div>` : ''}
       <div class="list set-list help-list"><button class="item" data-act="support"><span class="lead">${icon('chat')}</span><span class="body"><span class="t">עזרה ותמיכה ${App.supportUnread ? '<span class="tag good">תשובה חדשה</span>' : ''}</span><span class="s">שאלות נפוצות, לכתוב לנו, הפניות שלי</span></span>${icon('left', 's')}</button>
         <button class="item" data-act="share-app"><span class="lead">${icon('share')}</span><span class="body"><span class="t">לשתף עם חברים</span><span class="s">שגם הם ידעו כמה מגיע להם</span></span>${icon('left', 's')}</button></div>
       ${groups.map(([g, keys]) => `<div class="section-title">${g}</div><div class="list set-list">${keys.map((k) => { const s = SECTIONS[k]; return `<button class="item" data-act="settings-open" data-k="${k}" data-find="${esc((s.title + ' ' + s.sub() + ' ' + (FIND[k] || '')).toLowerCase().replace(/["'״׳]/g, ''))}"><span class="lead">${icon(s.icon)}</span><span class="body"><span class="t">${s.title}</span><span class="s">${esc(s.sub())}</span></span>${icon('left', 's')}</button>`; }).join('')}</div>`).join('')}
@@ -509,6 +510,7 @@
   RENDER.look = {
     render: () => `<div class="section-title">ערכת צבעים</div><div class="seg" style="margin-bottom:14px">${[['system', 'לפי המערכת'], ['light', 'בהיר'], ['dark', 'כהה']].map(([k, l]) => `<button data-theme="${k}" class="${S.settings.theme === k ? 'on' : ''}">${l}</button>`).join('')}</div>
       <div class="section-title">צבע הדגשה</div><div class="color-pick" style="margin-bottom:16px">${Object.entries(App.ACCENTS).map(([k, a]) => `<button data-accent="${k}" class="${S.settings.accent === k ? 'on' : ''}" style="background:hsl(${a[0]} ${a[1]}% 45%)" aria-label="${a[2]}"></button>`).join('')}</div>
+      ${root.Plus && root.Plus.visible() ? `<div class="section-title">כרטיס השכר בבית <span class="tag plus-tag">Plus</span></div>${root.Plus.skinTiles(root.Plus.skin(), !root.Plus.active())}` : ''}
       <div class="section-title">גופן</div>
       <div class="font-pick">${Object.entries(App.FONTS).map(([k, f]) => `<button data-font="${k}" class="${(S.settings.font || 'rubik') === k ? 'on' : ''}" style="font-family:'${f[0]}', system-ui, sans-serif"><span class="fp-sample">משמרת ערב · ${esc(f[2])}<small>${f[0]}</small></span><span class="fp-num">₪1,240</span></button>`).join('')}</div>
       <div class="section-title">גודל טקסט</div><div class="seg">${[[0.9, 'קטן'], [1, 'רגיל'], [1.1, 'גדול'], [1.2, 'גדול מאוד']].map(([k, l]) => `<button data-fs="${k}" class="${+S.settings.fontScale === k ? 'on' : ''}">${l}</button>`).join('')}</div>
@@ -534,6 +536,7 @@
         else if (b.dataset.fs) await Store.setSettings((s) => { s.fontScale = +b.dataset.fs; });
         else if (b.dataset.font) await Store.setSettings((s) => { s.font = b.dataset.font; });
         else if (b.hasAttribute('data-fx-try')) { root.Fx.celebrate('big'); return; }
+        else if (b.dataset.skin !== undefined && root.Plus) { if (!(await root.Plus.pickSkin(b.dataset.skin))) return; } // a locked one opens Shaati Plus
         else return;
         draw();
       });
