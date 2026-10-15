@@ -284,7 +284,7 @@
   /* ---------------- trying it, and offering it at a good moment ----------------
    * What makes people buy, without tricks: seeing it on their own card, a free trial, the price in
    * their own minutes of work, and one quiet offer after they have come to like the app. No pop-ups,
-   * no countdowns; every offer closes with one tap and comes back at most a few times. */
+   * no countdowns; the offer on home closes with one tap and rests for a day. */
   /** Can be bought on this phone (Google Play here, or the web checkout). */
   const buyable = () => Plus.available || Plus.webShop() || sim() === 'free';
   Plus.inTrial = () => !owned() && +((S.meta.plusTrial || {}).until || 0) > Date.now();
@@ -431,44 +431,42 @@
   App.actions['plus-design'] = () => Plus.design();
 
   /**
-   * One quiet card on home, at a good moment: after a few days of real use, not while a trial runs,
-   * at most 3 times ever, 3 weeks apart, each showing for up to 3 days until closed. When a trial ends,
-   * one card asks whether to keep the skin. Nothing at all until Plus can be bought here.
+   * A card on home for someone who uses the app (4 active days and 5 shifts; not a new user, not in the
+   * first-steps guide, not during a trial). Closing it (✕ or "no, thanks") hides it for 24 hours, then
+   * it comes back; there is no "never again". When a trial ends, the card asks whether to keep the skin.
+   * Nothing at all until Plus can be bought here (or an admin previews it, which skips the use check).
    */
+  const NUDGE_REST = DAY; // how long a closed card stays away
   Plus.nudgeCard = function () {
     // a trial that ended while the app was open: the card returns to the regular look
     const want = Plus.skin();
     if ((document.documentElement.dataset.skin || '') !== want) App.applyTheme();
     if (!buyable() || Plus.active() || (S.meta.guide && !S.meta.guideDone)) return '';
-    const now = Date.now();
-    const close = '<button class="icon-btn plus-nudge-x" data-act="plus-nudge-x" aria-label="סגירה">' + icon('x', 's') + '</button>';
+    const n = S.meta.plusNudge || {};
+    if (n.x && Date.now() - n.x < NUDGE_REST) return '';
+    const close = '<button class="icon-btn plus-nudge-x" data-act="plus-nudge-x" aria-label="סגירה ל-24 שעות">' + icon('x', 's') + '</button>';
     if (S.meta.plusTrial && !S.meta.plusTrialEnd) {
       const name = SKINS[S.settings.skin] || 'המיוחד';
       return `<div class="card plus-nudge sk-${SKINS[S.settings.skin] ? S.settings.skin : 'gold'}">${close}
         <div class="pn-t">הניסיון של Shaati Plus הסתיים</div><div class="pn-s">להשאיר את הכרטיס ב${esc(name)}? תשלום אחד, בלי מנוי${Plus.workPrice() ? ' · ' + esc(Plus.workPrice()) : ''}.</div>
         <div class="pn-a"><button class="btn sm" data-act="plus-open">${icon('star', 's')} להשאיר</button><button class="btn text sm" data-act="plus-nudge-x">לא, תודה</button></div></div>`;
     }
-    let n = S.meta.plusNudge || {};
-    const showing = n.at && now - n.at < 3 * DAY && n.x !== n.at;
-    if (!showing) {
-      if (n.off || (n.shown || 0) >= 3 || (n.at && now - n.at < 21 * DAY)) return '';
+    if (!sim()) {
       let done = 0;
       for (const r of App.model.results.values()) if (r.status === 'done') done++;
       if ((S.meta.activeDays || 0) < 4 || done < 5 || S.settings.demo) return '';
-      n = Object.assign({}, n, { at: now, shown: (n.shown || 0) + 1 });
-      Store.setMeta({ plusNudge: n }).catch(() => {});
     }
     return `<div class="card plus-nudge sk-galaxy">${close}
       <div class="pn-t">✨ כרטיס השכר שלך יכול להיראות ככה</div><div class="pn-s">${Object.keys(SKINS).length} עיצובים, רקע בטבלת האלופים, ניתוח וייצוא בלי הגבלה. ${Plus.canTrial() ? `אפשר לנסות ${TRIAL_DAYS} ימים בחינם.` : 'תשלום אחד, בלי מנוי.'}</div>
-      <div class="pn-a"><button class="btn sm" data-act="plus-design">${icon('palette', 's')} ${Plus.canTrial() ? 'לנסות על הכרטיס שלי' : 'לראות'}</button>${n.shown >= 2 ? '<button class="btn text sm" data-act="plus-nudge-off">לא להציג שוב</button>' : ''}</div></div>`;
+      <div class="pn-a"><button class="btn sm" data-act="plus-design">${icon('palette', 's')} ${Plus.canTrial() ? 'לנסות על הכרטיס שלי' : 'לראות'}</button><button class="btn text sm" data-act="plus-nudge-x">לא עכשיו</button></div></div>`;
   };
+  /** ✕, "no, thanks" or "not now": away for 24 hours (the end-of-trial card gives way to the usual one). */
   App.actions['plus-nudge-x'] = async () => {
-    // the end-of-trial card counts as an offer: the next one waits its three weeks
-    if (S.meta.plusTrial && !S.meta.plusTrialEnd) await Store.setMeta({ plusTrialEnd: true, plusNudge: Object.assign({}, S.meta.plusNudge || {}, { at: Date.now(), x: Date.now() }) });
-    else { const n = S.meta.plusNudge || {}; await Store.setMeta({ plusNudge: Object.assign({}, n, { x: n.at }) }); }
+    const patch = { plusNudge: Object.assign({}, S.meta.plusNudge || {}, { x: Date.now() }) };
+    if (S.meta.plusTrial && !S.meta.plusTrialEnd) patch.plusTrialEnd = true;
+    await Store.setMeta(patch);
     App.rerender();
   };
-  App.actions['plus-nudge-off'] = async () => { await Store.setMeta({ plusNudge: Object.assign({}, S.meta.plusNudge || {}, { off: true }) }); App.rerender(); };
 
   App.actions['plus-open'] = () => Plus.sheet();
   /* the admin's preview controls (admin dashboard) */
@@ -484,7 +482,7 @@
     if (!App.isAdmin) return;
     // the offer is for someone without Plus: a running trial (in the preview) ends first
     if (Plus.inTrial()) await Store.setMeta({ plusTrial: Object.assign({}, S.meta.plusTrial, { until: Date.now() - 1000 }) });
-    await Store.setMeta({ plusSim: 'free', plusPreview: false, plusTrialEnd: true, plusNudge: Object.assign({}, S.meta.plusNudge || {}, { at: Date.now(), x: 0, shown: Math.max(1, (S.meta.plusNudge || {}).shown || 0), off: false }) });
+    await Store.setMeta({ plusSim: 'free', plusPreview: false, plusTrialEnd: true, plusNudge: null });
     UI.closeAll(); App.applyTheme(); App.go('home');
     UI.toast('ההצעה מופיעה עכשיו במסך הבית, מתחת לשורת העדכונים');
   };
