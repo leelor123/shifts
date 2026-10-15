@@ -145,7 +145,7 @@
       // --- appearance ---
       theme: 'system', accent: 'candy', fontScale: 1, font: 'rubik', skin: '', plusKey: '',
       lb: { on: false, n: '', e: '', bg: '' }, // the games' champions table: joined, nickname, emoji, background (Plus)
-      fx: { effects: true, sound: true, haptic: true }, // tap pulse / confetti, click sounds, vibration
+      fx: { effects: true, sound: true, haptic: true, music: true }, // tap pulse / confetti, click sounds, vibration, music in the games
       // --- security ---
       lock: { enabled: false, hash: null, salt: null, timeoutMin: 1 },
       // --- AI ---

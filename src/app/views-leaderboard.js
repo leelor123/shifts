@@ -198,10 +198,13 @@
         set(bar, `<div class="lb-me-t"><b>${rows.length >= LIMIT ? 'עוד לא בטופ 50' : `עוד לא שיחקת ${period === 'a' ? 'כאן' : periodName()}`}</b><small>${rows.length >= LIMIT ? `צריך יותר מ-${last.s}${esc(unit)}` : 'משחק אחד וכבר את/ה בטבלה'}</small></div><button class="btn sm" data-lb-play>${icon('play', 's')} לשחק</button>`);
       }
     }
-    /** The other periods of this game, loaded quietly so that switching is instant. */
+    /** The other periods of this game and this period of the other games, loaded quietly so that switching is instant. */
     function prefetch() {
-      const g = game;
-      setTimeout(() => { for (const [p] of PERIODS) if (!cached(g, p)) board(g, p).catch(() => {}); }, 250);
+      const g = game, per = period;
+      setTimeout(() => {
+        for (const [p] of PERIODS) if (!cached(g, p)) board(g, p).catch(() => {});
+        for (const x of games()) if (!cached(x.id, per)) board(x.id, per).catch(() => {});
+      }, 250);
     }
     async function load(el) {
       const my = ++seq;
@@ -231,7 +234,7 @@
     function tabs(el) {
       const me = profile(true);
       set(el.querySelector('[data-lb-tabs]'), `
-        <div class="chips lb-games" role="tablist" aria-label="משחק">${games().map((g) => `<button class="chip ${g.id === game ? 'on' : ''}" role="tab" aria-selected="${g.id === game}" data-game="${g.id}">${esc(SHORT[g.id] || g.t)}</button>`).join('')}</div>
+        <div class="seg lb-games" role="tablist" aria-label="משחק">${games().map((g) => `<button class="${g.id === game ? 'on' : ''}" role="tab" aria-selected="${g.id === game}" data-game="${g.id}">${esc(SHORT[g.id] || g.t)}</button>`).join('')}</div>
         <div class="seg lb-periods" role="tablist" aria-label="תקופה">${PERIODS.map(([k, l]) => `<button class="${k === period ? 'on' : ''}" role="tab" aria-selected="${k === period}" data-period="${k}">${l}</button>`).join('')}</div>
         ${joined() ? `<button class="lb-mine" data-lb-profile><span class="lb-av sm ${me.bg ? 'sk-' + me.bg : ''}"><span aria-hidden="true">${me.e}</span></span><span>${esc(me.n)}</span>${icon('edit', 's')}<span class="vh">עריכת הכינוי</span></button>` : ''}`);
     }

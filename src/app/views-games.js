@@ -140,7 +140,19 @@
     const open = { coins: coinGame, quiz: quizGame, facts: factsGame, pairs: pairsGame, hours: hoursGame }[id];
     if (!open) return;
     if (S.meta.lbLast !== id) Store.setMeta({ lbLast: id }).catch(() => {});
-    open(onDone || (() => {}));
+    open(() => { if (root.Music) root.Music.stop(); if (onDone) onDone(); });
+    // the game's music, and its note button next to the close button
+    const sh = [...document.querySelectorAll('.sheet')].pop();
+    const head = sh && sh.querySelector('.sh-head');
+    if (root.Music && head && !head.querySelector('.gm-music')) {
+      const b = document.createElement('button');
+      b.className = 'icon-btn gm-music';
+      const paint = () => { const on = root.Music.enabled(); b.innerHTML = icon(on ? 'music' : 'musicOff'); b.setAttribute('aria-pressed', on); b.setAttribute('aria-label', on ? 'מוזיקה פועלת' : 'מוזיקה כבויה'); };
+      paint();
+      b.onclick = async () => { await root.Music.toggle(); paint(); };
+      head.insertBefore(b, head.querySelector('[data-close]'));
+      root.Music.play(id);
+    }
   }
 
   /** The end of a round: mascot, score, best, play again. */
@@ -155,7 +167,8 @@
       <div class="gm-end-a"><button class="btn" data-again>${icon('repeat')} עוד סיבוב</button><button class="btn tonal" data-quit>סיום</button></div></div>`;
     if (isBest && o.score > 0) { if (Fx()) Fx().celebrate('big'); } else play('pop');
     if (root.Champions && o.score > 0) root.Champions.afterGame(box, o.id, o.score); // the champions table
-    box.querySelector('[data-again]').onclick = o.again;
+    if (root.Music) root.Music.stop(0.6); // the round is over: the music fades
+    box.querySelector('[data-again]').onclick = () => { if (root.Music) root.Music.play(o.id); o.again(); };
     box.querySelector('[data-quit]').onclick = () => UI.closeTop();
   }
 

@@ -46,6 +46,7 @@
     intro: [[392, 0, 0.18, 'sine', 0.05, 523], [587, 0.16, 0.2, 'sine', 0.05, 659], [784, 0.36, 0.34, 'triangle', 0.045]],
     whoosh: [[300, 0, 0.22, 'sine', 0.03, 900]],
   };
+  Fx.audio = audio; // shared with the games' music (music.js)
   /** Plays a sound. With {strict: true} it stays silent unless audio is already allowed to play. */
   Fx.play = function (name, opts) {
     if (prefs().sound === false) return;

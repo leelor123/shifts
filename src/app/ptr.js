@@ -1,9 +1,11 @@
 /* ============================================================
- * ptr.js — pull down to refresh. The logo comes down with the finger
- * with a natural, ever-heavier resistance, draws itself as you pull and
- * clicks (sound + vibration) past the threshold. On release it springs
- * to a resting place where it spins while the app syncs with the cloud,
- * looks for a new version and recalculates, then a check mark and back up.
+ * ptr.js — pull down to refresh, in Shaati's own look: a clock coin comes
+ * down with the finger (a natural, ever-heavier resistance); its hands turn
+ * and its ring fills as you pull, with a small note under it ("pull" →
+ * "let go"). Past the threshold it clicks (sound + vibration) and lights up.
+ * On release it springs to a resting place where its hands race (time-lapse)
+ * while the app syncs with the cloud, looks for a new version and
+ * recalculates; then a green check, "all up to date", and back up.
  *
  * Details that matter:
  *  - only the logo moves; the page stays where it is (as on Android). When
@@ -33,13 +35,18 @@
   const RESIST = 190; // higher = lighter pull
   const REST = 62; // where the logo waits while refreshing
   const SLOP = 10; // finger movement that still counts as a tap
-  const LOGO = '<svg viewBox="0 0 1024 1024" aria-hidden="true"><path class="g" pathLength="1" d="M300 660 A258 258 0 0 1 603 271 L603 600"/><path class="y" pathLength="1" d="M420 422 L420 753 A258 258 0 0 0 720 362"/></svg>';
+  // the hands are HTML elements, so their spin runs on the GPU even while the refresh keeps the page busy
+  const CLOCK = '<svg class="ptr-ring" viewBox="0 0 48 48"><circle class="ptr-track" cx="24" cy="24" r="21"/><circle class="ptr-arc" cx="24" cy="24" r="21" pathLength="1"/></svg>'
+    + '<span class="ptr-face"><i class="ptr-tk t12"></i><i class="ptr-tk t3"></i><i class="ptr-tk t6"></i><i class="ptr-tk t9"></i><i class="ptr-h"></i><i class="ptr-m"></i><b class="ptr-dot"></b></span>';
   const ind = document.createElement('div');
   ind.className = 'ptr';
   ind.setAttribute('aria-hidden', 'true');
-  ind.innerHTML = `<div class="ptr-disc">${LOGO}<span class="ptr-check">✓</span></div>`;
+  ind.innerHTML = `<div class="ptr-disc">${CLOCK}<span class="ptr-check">✓</span></div><span class="ptr-tip"></span>`;
   document.body.appendChild(ind);
   const disc = ind.firstChild;
+  const hourHand = ind.querySelector('.ptr-h'), minHand = ind.querySelector('.ptr-m'), tipEl = ind.querySelector('.ptr-tip');
+  let tipNow = '';
+  const tip = (t) => { if (t !== tipNow) { tipNow = t; tipEl.textContent = t; ind.classList.toggle('tip', !!t); } };
 
   let x0 = 0, y0 = null, t0 = 0, pulling = false, dist = 0, armed = false, busy = false, raf = 0, settleTimer = 0;
   const blocked = (target) => busy || App.blocking || root.scrollY > 0
@@ -47,11 +54,20 @@
     || (target.closest && target.closest('input, textarea, select, .chart, [data-no-ptr]'));
   const resist = (dy) => MAX * (1 - Math.exp(-dy / RESIST));
 
+  let minA = 0, hourA = 0;
   function paint(d) {
     const p = Math.min(1, d / THRESHOLD);
     ind.style.transform = `translate3d(-50%, ${(d - 56).toFixed(1)}px, 0)`;
     ind.style.opacity = d > 0 ? Math.min(1, d / 30).toFixed(2) : '0';
-    if (!ind.classList.contains('spin') && !ind.classList.contains('done')) disc.style.transform = `rotate(${Math.round(d * 2.6)}deg) scale(${(0.6 + 0.4 * p).toFixed(3)})`;
+    if (!ind.classList.contains('spin') && !ind.classList.contains('done')) {
+      // an hour goes by as you pull to the threshold, and the hands keep going past it
+      minA = Math.round(p * 360 + Math.max(0, d - THRESHOLD) * 5);
+      hourA = Math.round(minA / 12);
+      minHand.style.transform = `rotate(${minA}deg)`;
+      hourHand.style.transform = `rotate(${hourA}deg)`;
+      disc.style.transform = `scale(${(0.62 + 0.38 * p).toFixed(3)})`;
+      if (pulling) tip(d > 22 ? (armed ? 'שחררו לרענון' : 'משכו לרענון') : '');
+    }
     disc.style.setProperty('--p', p.toFixed(3));
   }
   const schedule = () => { if (!raf) raf = requestAnimationFrame(() => { raf = 0; paint(dist); }); };
@@ -124,6 +140,7 @@
     if (!pulling) return;
     pulling = false; armed = false;
     ind.classList.remove('armed');
+    tip('');
     swallowNextClick();
     springTo(0, 320);
   }
@@ -135,10 +152,13 @@
     if (!pulling) return;
     pulling = false;
     swallowNextClick();
-    if (!armed) { await springTo(0, 360); return; }
+    if (!armed) { tip(''); await springTo(0, 360); return; }
     busy = true;
     try {
       ind.classList.remove('armed');
+      disc.style.setProperty('--m0', minA + 'deg');
+      disc.style.setProperty('--h0', hourA + 'deg');
+      tip('מעדכנים…');
       ind.classList.add('spin');
       await springTo(REST, 380);
       const t0 = Date.now();
@@ -147,11 +167,13 @@
       if (left > 0) await Fx.sleep(left);
       ind.classList.remove('spin');
       ind.classList.add('done');
+      tip(navigator.onLine === false ? 'אין חיבור · מוצג מה שבטלפון' : 'הכל מעודכן ✓');
       Fx.play('pop'); Fx.haptic(10);
-      await Fx.sleep(420);
+      await Fx.sleep(700);
       await springTo(0, 420);
     } finally {
       ind.classList.remove('done', 'spin', 'armed');
+      tip('');
       busy = false;
     }
   }

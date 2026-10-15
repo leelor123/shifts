@@ -723,17 +723,37 @@ textarea.input.chat-input { min-height: 46px; height: 46px; max-height: 140px; r
 html, body { overscroll-behavior-y: contain; }
 .ptr { position: fixed; top: calc(var(--safe-t) + 6px); left: 50%; z-index: 60; transform: translate(-50%, -64px); opacity: 0; pointer-events: none; }
 .ptr.settle { transition: transform .35s var(--ease), opacity .35s var(--ease); }
-.ptr-disc { position: relative; width: 44px; height: 44px; border-radius: 50%; background: var(--surface-hi); box-shadow: 0 4px 14px rgba(0, 0, 0, .16), 0 0 0 1px var(--line); display: grid; place-items: center; transition: background-color .2s; }
-.ptr-disc svg { width: 26px; height: 26px; overflow: visible; }
-.ptr-disc path { fill: none; stroke-width: 120; stroke-linecap: round; stroke-dasharray: 1 2; stroke-dashoffset: calc(1 - var(--p, 0)); }
-.ptr-disc .g { stroke: #2ee59d; }
-.ptr-disc .y { stroke: #ffb524; }
-.ptr.armed .ptr-disc { background: #0d2b6b; animation: ptr-pop .25s cubic-bezier(.34, 1.56, .64, 1); }
-.ptr.spin .ptr-disc { background: #0d2b6b; animation: intro-turn .8s linear infinite; --p: 1; }
-.ptr-check { position: absolute; inset: 0; display: grid; place-items: center; color: #fff; font: 800 20px/1 var(--font); opacity: 0; transform: scale(.5); transition: opacity .2s, transform .25s cubic-bezier(.34, 1.56, .64, 1); }
+/* the clock coin: a face with four ticks and two hands, a ring that fills as you pull */
+.ptr-disc { position: relative; width: 46px; height: 46px; border-radius: 50%; background: var(--surface-hi); box-shadow: 0 6px 16px rgba(0, 0, 0, .16), 0 0 0 1px var(--line); transition: background-color .2s; --ink: var(--brand-strong); }
+.ptr-ring { position: absolute; inset: -3px; width: 52px; height: 52px; transform: rotate(-90deg); overflow: visible; }
+.ptr-ring circle { fill: none; stroke-width: 3; }
+.ptr-track { stroke: var(--line); }
+.ptr-arc { stroke: #ffb524; stroke-linecap: round; stroke-dasharray: 1 1; stroke-dashoffset: calc(1 - var(--p, 0)); }
+.ptr-face { position: absolute; inset: 0; transition: opacity .2s; }
+.ptr-tk { position: absolute; left: 50%; top: 50%; width: 2px; height: 5px; margin: -2.5px 0 0 -1px; border-radius: 1px; background: var(--ink); opacity: .45; }
+.ptr-tk.t12 { transform: rotate(0deg) translateY(-15px); } .ptr-tk.t3 { transform: rotate(90deg) translateY(-15px); }
+.ptr-tk.t6 { transform: rotate(180deg) translateY(-15px); } .ptr-tk.t9 { transform: rotate(270deg) translateY(-15px); }
+.ptr-h, .ptr-m { position: absolute; left: 50%; bottom: 50%; border-radius: 3px; background: var(--ink); transform-origin: 50% 100%; will-change: transform; }
+.ptr-h { width: 4px; height: 10px; margin-left: -2px; }
+.ptr-m { width: 3px; height: 15px; margin-left: -1.5px; background: #ffb524; }
+.ptr-dot { position: absolute; left: 50%; top: 50%; width: 6px; height: 6px; margin: -3px 0 0 -3px; border-radius: 50%; background: var(--ink); }
+.ptr.armed .ptr-disc { background: var(--brand-strong); --ink: #fff; animation: ptr-pop .25s cubic-bezier(.34, 1.56, .64, 1); }
+.ptr.spin .ptr-disc { background: var(--brand-strong); --ink: #fff; --p: 1; }
+.ptr.spin .ptr-m { animation: ptr-race .8s linear infinite; }
+.ptr.spin .ptr-h { animation: ptr-race-h 9.6s linear infinite; }
+.ptr.spin .ptr-arc { stroke-dasharray: .3 .7; stroke-dashoffset: 0; }
+.ptr.spin .ptr-ring { animation: ptr-ring 1.2s linear infinite; }
+@keyframes ptr-race { from { transform: rotate(var(--m0, 0deg)); } to { transform: rotate(calc(var(--m0, 0deg) + 360deg)); } }
+@keyframes ptr-race-h { from { transform: rotate(var(--h0, 0deg)); } to { transform: rotate(calc(var(--h0, 0deg) + 360deg)); } }
+@keyframes ptr-ring { from { transform: rotate(-90deg); } to { transform: rotate(270deg); } }
+.ptr-check { position: absolute; inset: 0; display: grid; place-items: center; color: #fff; font: 800 22px/1 var(--font); opacity: 0; transform: scale(.5); transition: opacity .2s, transform .25s cubic-bezier(.34, 1.56, .64, 1); }
 .ptr.done .ptr-disc { background: var(--good-mark); transform: none !important; }
-.ptr.done .ptr-disc svg { opacity: 0; }
+.ptr.done .ptr-face { opacity: 0; }
+.ptr.done .ptr-arc { stroke: #fff; stroke-dasharray: 1 1; stroke-dashoffset: 0; }
 .ptr.done .ptr-check { opacity: 1; transform: none; }
+/* the note under the coin: "pull" → "let go" → "updating…" → "all up to date" */
+.ptr-tip { position: absolute; top: 56px; left: 50%; transform: translateX(-50%) translateY(-4px); padding: 4px 12px; border-radius: 999px; background: var(--surface-hi); color: var(--on-surface); box-shadow: 0 4px 12px rgba(0, 0, 0, .12), 0 0 0 1px var(--line); font: 600 .76rem/1.4 var(--font); white-space: nowrap; opacity: 0; transition: opacity .18s, transform .18s; }
+.ptr.tip .ptr-tip { opacity: 1; transform: translateX(-50%); }
 @keyframes ptr-pop { 50% { scale: 1.18; } }
 
 /* ---- small moments ---- */

@@ -2,7 +2,7 @@
 <html lang="he" dir="rtl">
 <head>
 <meta charset="utf-8">
-<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'sha256-gJa0WXtbrLdrScZc15D1F4IcHO9GuZJdZUzjZs3XzgA=' https://www.gstatic.com https://apis.google.com https://cdnjs.cloudflare.com https://cdn.jsdelivr.net 'wasm-unsafe-eval'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com data:; img-src 'self' data: blob: https:; connect-src 'self' https: wss:; frame-src https://shiftpay-70ab6.firebaseapp.com https://accounts.google.com https://apis.google.com https://*.google.com; worker-src 'self' blob: https://cdnjs.cloudflare.com https://cdn.jsdelivr.net; media-src 'self' data: blob:; manifest-src 'self'; object-src 'none'; base-uri 'self'; form-action 'self'">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'sha256-bHocXNlYAkvaZpQRDJjZkFaPfKhfY4i3vw0e6B16eLU=' https://www.gstatic.com https://apis.google.com https://cdnjs.cloudflare.com https://cdn.jsdelivr.net 'wasm-unsafe-eval'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com data:; img-src 'self' data: blob: https:; connect-src 'self' https: wss:; frame-src https://shiftpay-70ab6.firebaseapp.com https://accounts.google.com https://apis.google.com https://*.google.com; worker-src 'self' blob: https://cdnjs.cloudflare.com https://cdn.jsdelivr.net; media-src 'self' data: blob:; manifest-src 'self'; object-src 'none'; base-uri 'self'; form-action 'self'">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="theme-color" content="#0d2b6b">
 <meta name="description" content="מעקב משמרות וחישוב שכר אישי: שבתות, חגים, שעות נוספות, נסיעות, נטו משוער וניתוח תלושים — נשמר בחשבון שלך ועובד גם בלי אינטרנט.">
@@ -742,17 +742,37 @@ textarea.input.chat-input { min-height: 46px; height: 46px; max-height: 140px; r
 html, body { overscroll-behavior-y: contain; }
 .ptr { position: fixed; top: calc(var(--safe-t) + 6px); left: 50%; z-index: 60; transform: translate(-50%, -64px); opacity: 0; pointer-events: none; }
 .ptr.settle { transition: transform .35s var(--ease), opacity .35s var(--ease); }
-.ptr-disc { position: relative; width: 44px; height: 44px; border-radius: 50%; background: var(--surface-hi); box-shadow: 0 4px 14px rgba(0, 0, 0, .16), 0 0 0 1px var(--line); display: grid; place-items: center; transition: background-color .2s; }
-.ptr-disc svg { width: 26px; height: 26px; overflow: visible; }
-.ptr-disc path { fill: none; stroke-width: 120; stroke-linecap: round; stroke-dasharray: 1 2; stroke-dashoffset: calc(1 - var(--p, 0)); }
-.ptr-disc .g { stroke: #2ee59d; }
-.ptr-disc .y { stroke: #ffb524; }
-.ptr.armed .ptr-disc { background: #0d2b6b; animation: ptr-pop .25s cubic-bezier(.34, 1.56, .64, 1); }
-.ptr.spin .ptr-disc { background: #0d2b6b; animation: intro-turn .8s linear infinite; --p: 1; }
-.ptr-check { position: absolute; inset: 0; display: grid; place-items: center; color: #fff; font: 800 20px/1 var(--font); opacity: 0; transform: scale(.5); transition: opacity .2s, transform .25s cubic-bezier(.34, 1.56, .64, 1); }
+/* the clock coin: a face with four ticks and two hands, a ring that fills as you pull */
+.ptr-disc { position: relative; width: 46px; height: 46px; border-radius: 50%; background: var(--surface-hi); box-shadow: 0 6px 16px rgba(0, 0, 0, .16), 0 0 0 1px var(--line); transition: background-color .2s; --ink: var(--brand-strong); }
+.ptr-ring { position: absolute; inset: -3px; width: 52px; height: 52px; transform: rotate(-90deg); overflow: visible; }
+.ptr-ring circle { fill: none; stroke-width: 3; }
+.ptr-track { stroke: var(--line); }
+.ptr-arc { stroke: #ffb524; stroke-linecap: round; stroke-dasharray: 1 1; stroke-dashoffset: calc(1 - var(--p, 0)); }
+.ptr-face { position: absolute; inset: 0; transition: opacity .2s; }
+.ptr-tk { position: absolute; left: 50%; top: 50%; width: 2px; height: 5px; margin: -2.5px 0 0 -1px; border-radius: 1px; background: var(--ink); opacity: .45; }
+.ptr-tk.t12 { transform: rotate(0deg) translateY(-15px); } .ptr-tk.t3 { transform: rotate(90deg) translateY(-15px); }
+.ptr-tk.t6 { transform: rotate(180deg) translateY(-15px); } .ptr-tk.t9 { transform: rotate(270deg) translateY(-15px); }
+.ptr-h, .ptr-m { position: absolute; left: 50%; bottom: 50%; border-radius: 3px; background: var(--ink); transform-origin: 50% 100%; will-change: transform; }
+.ptr-h { width: 4px; height: 10px; margin-left: -2px; }
+.ptr-m { width: 3px; height: 15px; margin-left: -1.5px; background: #ffb524; }
+.ptr-dot { position: absolute; left: 50%; top: 50%; width: 6px; height: 6px; margin: -3px 0 0 -3px; border-radius: 50%; background: var(--ink); }
+.ptr.armed .ptr-disc { background: var(--brand-strong); --ink: #fff; animation: ptr-pop .25s cubic-bezier(.34, 1.56, .64, 1); }
+.ptr.spin .ptr-disc { background: var(--brand-strong); --ink: #fff; --p: 1; }
+.ptr.spin .ptr-m { animation: ptr-race .8s linear infinite; }
+.ptr.spin .ptr-h { animation: ptr-race-h 9.6s linear infinite; }
+.ptr.spin .ptr-arc { stroke-dasharray: .3 .7; stroke-dashoffset: 0; }
+.ptr.spin .ptr-ring { animation: ptr-ring 1.2s linear infinite; }
+@keyframes ptr-race { from { transform: rotate(var(--m0, 0deg)); } to { transform: rotate(calc(var(--m0, 0deg) + 360deg)); } }
+@keyframes ptr-race-h { from { transform: rotate(var(--h0, 0deg)); } to { transform: rotate(calc(var(--h0, 0deg) + 360deg)); } }
+@keyframes ptr-ring { from { transform: rotate(-90deg); } to { transform: rotate(270deg); } }
+.ptr-check { position: absolute; inset: 0; display: grid; place-items: center; color: #fff; font: 800 22px/1 var(--font); opacity: 0; transform: scale(.5); transition: opacity .2s, transform .25s cubic-bezier(.34, 1.56, .64, 1); }
 .ptr.done .ptr-disc { background: var(--good-mark); transform: none !important; }
-.ptr.done .ptr-disc svg { opacity: 0; }
+.ptr.done .ptr-face { opacity: 0; }
+.ptr.done .ptr-arc { stroke: #fff; stroke-dasharray: 1 1; stroke-dashoffset: 0; }
 .ptr.done .ptr-check { opacity: 1; transform: none; }
+/* the note under the coin: "pull" → "let go" → "updating…" → "all up to date" */
+.ptr-tip { position: absolute; top: 56px; left: 50%; transform: translateX(-50%) translateY(-4px); padding: 4px 12px; border-radius: 999px; background: var(--surface-hi); color: var(--on-surface); box-shadow: 0 4px 12px rgba(0, 0, 0, .12), 0 0 0 1px var(--line); font: 600 .76rem/1.4 var(--font); white-space: nowrap; opacity: 0; transition: opacity .18s, transform .18s; }
+.ptr.tip .ptr-tip { opacity: 1; transform: translateX(-50%); }
 @keyframes ptr-pop { 50% { scale: 1.18; } }
 
 /* ---- small moments ---- */
@@ -1385,7 +1405,7 @@ body:has(.sheet.show) .toast.show, body:has(.wizard) .toast.show { transform: no
 /* pull to refresh: our own only (no browser reload, no Android stretch on top of it), and a springy settle */
 html, body { overscroll-behavior-y: none; }
 .ptr.settle { transition: transform .42s cubic-bezier(.22, 1.3, .36, 1), opacity .3s ease; }
-.ptr.armed .ptr-disc, .ptr.spin .ptr-disc { background: var(--brand-strong); }
+.ptr.armed .ptr-disc, .ptr.spin .ptr-disc { background: var(--grad-hero, var(--brand-strong)); }
 @media (prefers-reduced-motion: reduce) { .mascot *, .ob-bg i, .coach-hole { animation: none !important; } }
 
 /* ---------- charts come alive (see charts.js) ---------- */
@@ -1811,10 +1831,9 @@ body.fx .recap-card:active { transform: scale(.98); }
 
 /* ---------------- the champions table (views-leaderboard.js) ---------------- */
 .lb-card { margin-bottom: 10px; }
-.lb-games { flex-wrap: nowrap; overflow-x: auto; scrollbar-width: none; margin-bottom: 10px; }
-.lb-games::-webkit-scrollbar { display: none; }
-.lb-periods { margin-bottom: 8px; }
-.lb-periods button { font-size: .8rem; padding-inline: 4px; }
+/* the game and period rows: five equal buttons each, no scrolling; the mark moves at once (no fade) */
+.lb-games, .lb-periods { margin-bottom: 8px; }
+.lb-games button, .lb-periods button { min-width: 0; font-size: .8rem; padding-inline: 2px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .lb-mine { display: flex; align-items: center; gap: 8px; margin: 6px auto; padding: 4px 6px 4px 12px; border-radius: 999px; border: 1px solid var(--line); background: var(--surface-1); color: var(--on-surface); font: 600 .85rem var(--font); cursor: pointer; }
 .lb-reset { display: flex; align-items: center; justify-content: center; gap: 6px; margin: 6px 0 14px; text-align: center; }
 .lb-podium { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); align-items: end; gap: 8px; margin: 18px 0 14px; }
@@ -1894,6 +1913,11 @@ body.fx .recap-card:active { transform: scale(.98); }
 @keyframes lb-load { from { background-position: -50% 0; } to { background-position: 150% 0; } }
 @media (prefers-reduced-motion: reduce) { .lb-body.lb-busy::before { animation: none; background-size: 100% 100%; opacity: .5; } }
 
+/* the music button in a game's title bar */
+.sh-head .gm-music { margin-inline-start: auto; }
+.sh-head .gm-music + [data-close] { margin-inline-start: 4px; }
+.gm-music[aria-pressed="false"] { color: var(--on-surface-var); }
+
 </style>
 </head>
 <body>
@@ -1912,8 +1936,8 @@ body.fx .recap-card:active { transform: scale(.98); }
 <div id="print-root" aria-hidden="true"></div>
 <noscript><div style="padding:24px;font-family:sans-serif">האפליקציה דורשת JavaScript.</div></noscript>
 <script>
-window.APP_VERSION = '1.14.2';
-window.APP_BUILD = '1.14.2-ee9a18dd';
+window.APP_VERSION = '1.15.0';
+window.APP_BUILD = '1.15.0-385603a7';
 /* ---- core/util.js ---- */
 /* ============================================================
  * util.js — date/time helpers and formatting.
@@ -2565,7 +2589,7 @@ window.APP_BUILD = '1.14.2-ee9a18dd';
       // --- appearance ---
       theme: 'system', accent: 'candy', fontScale: 1, font: 'rubik', skin: '', plusKey: '',
       lb: { on: false, n: '', e: '', bg: '' }, // the games' champions table: joined, nickname, emoji, background (Plus)
-      fx: { effects: true, sound: true, haptic: true }, // tap pulse / confetti, click sounds, vibration
+      fx: { effects: true, sound: true, haptic: true, music: true }, // tap pulse / confetti, click sounds, vibration, music in the games
       // --- security ---
       lock: { enabled: false, hash: null, salt: null, timeoutMin: 1 },
       // --- AI ---
@@ -5294,6 +5318,8 @@ window.APP_BUILD = '1.14.2-ee9a18dd';
     star: '<path d="m12 2.5 2.9 6 6.6.9-4.8 4.6 1.2 6.5L12 17.4l-5.9 3.1 1.2-6.5L2.5 9.4l6.6-.9z"/>',
     repeat: '<path d="m17 2 4 4-4 4"/><path d="M3 11V9a3 3 0 0 1 3-3h15M7 22l-4-4 4-4"/><path d="M21 13v2a3 3 0 0 1-3 3H3"/>',
     smile: '<circle cx="12" cy="12" r="9"/><path d="M8.5 14a4.5 4.5 0 0 0 7 0M9 9.5h.01M15 9.5h.01"/>',
+    music: '<path d="M9 18V5l11-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="17" cy="16" r="3"/>',
+    musicOff: '<path d="M9 18V9m0-4V5l11-2v9"/><circle cx="6" cy="18" r="3"/><path d="M3 3l18 18"/>',
     trophy: '<path d="M7 4h10v5a5 5 0 0 1-10 0z"/><path d="M7 6H4.5a2.5 2.5 0 0 0 2.6 4M17 6h2.5a2.5 2.5 0 0 1-2.6 4M12 14v4M8 21h8M9.5 18h5"/>',
     game: '<rect x="2.5" y="7" width="19" height="11" rx="5.5"/><path d="M7.5 10.5v4M5.5 12.5h4M15.5 11.5h.01M18 13.5h.01"/>',
     rocket: '<path d="M5 15c-1.5 1.3-2 5-2 5s3.7-.5 5-2c.7-.8.7-2.1-.1-2.9a2.2 2.2 0 0 0-2.9-.1z"/><path d="m12 15-3-3a22 22 0 0 1 2-3.9A12.9 12.9 0 0 1 22 2c0 2.7-.8 7.5-6 11a22.4 22.4 0 0 1-4 2z"/><path d="M9 12H4s.6-3 2-4c1.6-1.1 5 0 5 0M12 15v5s3-.6 4-2c1.1-1.6 0-5 0-5"/>',
@@ -5989,6 +6015,7 @@ window.APP_BUILD = '1.14.2-ee9a18dd';
     intro: [[392, 0, 0.18, 'sine', 0.05, 523], [587, 0.16, 0.2, 'sine', 0.05, 659], [784, 0.36, 0.34, 'triangle', 0.045]],
     whoosh: [[300, 0, 0.22, 'sine', 0.03, 900]],
   };
+  Fx.audio = audio; // shared with the games' music (music.js)
   /** Plays a sound. With {strict: true} it stays silent unless audio is already allowed to play. */
   Fx.play = function (name, opts) {
     if (prefs().sound === false) return;
@@ -6197,6 +6224,311 @@ window.APP_BUILD = '1.14.2-ee9a18dd';
   }, true);
 
   Fx.sleep = sleep;
+})(typeof window !== 'undefined' ? window : globalThis);
+
+/* ---- app/music.js ---- */
+/* ============================================================
+ * music.js — a little music for each game, made in the browser
+ * (Web Audio; no files, nothing downloaded).
+ *
+ * Every game has its own loop: a tempo, four chords, a bass line, a
+ * melody or an arpeggio and a light beat. It starts with a round, plays
+ * softly under the sound effects, fades out when the round ends, stops
+ * when the game closes or the app goes to the background (and comes back
+ * with it), and has its own on/off: the note button in every game, or
+ * Settings › Look. With all sounds off there is no music either.
+ *
+ * Timing: notes are scheduled a little ahead on the audio clock (not on
+ * timers), so a busy moment on the page never makes the beat stumble.
+ * ============================================================ */
+(function (root) {
+  'use strict';
+  const Fx = root.Fx;
+  const Music = { playing: '' };
+  root.Music = Music;
+
+  /* ---------------- the songs ----------------
+   * Notes are written per bar as 16 sixteenths: a note (C5, Bb4, F#3), '.' for silence or '-' to hold
+   * the note before. Chords give the bass and the arpeggios their notes. */
+  const SONGS = {
+    // "תופסים מטבעות": a bright arcade run
+    coins: {
+      bpm: 150, lead: 'square', leadVol: 0.022,
+      chords: [['C3', 'E', 'G'], ['G2', 'B', 'D'], ['A2', 'C', 'E'], ['F2', 'A', 'C']],
+      melody: [
+        'C5 . E5 . G5 . E5 . C6 . G5 . E5 . G5 .',
+        'B4 . D5 . G5 . D5 . B5 - A5 . G5 . D5 .',
+        'A4 . C5 . E5 . C5 . A5 . G5 . E5 . C5 .',
+        'A4 . C5 . F5 . A5 . G5 - E5 . D5 . B4 .',
+      ],
+      bass: 'octaves8', kick: [0, 8], clap: [4, 12], hat: [2, 6, 10, 14],
+    },
+    // "כמה זה יוצא?": thinking music with a clock that ticks
+    quiz: {
+      bpm: 112, lead: 'triangle', leadVol: 0.03,
+      chords: [['A2', 'C', 'E'], ['F2', 'A', 'C'], ['C3', 'E', 'G'], ['G2', 'B', 'D']],
+      melody: [
+        'E5 . . . . . D5 . C5 . . . A4 . . .',
+        'C5 . . . . . A4 . F4 . . . A4 . . .',
+        'G4 . . . C5 . . . E5 . . . G5 . . .',
+        'D5 . . . B4 . . . G4 . . . . . . .',
+      ],
+      arp: 'up8', bass: 'roots4', kick: [0, 10], hat: [2, 6, 10, 14], tick: [0, 4, 8, 12], soft: true,
+    },
+    // "נכון או לא?": sunny, a marimba
+    facts: {
+      bpm: 104, lead: 'marimba', leadVol: 0.06,
+      chords: [['F2', 'A', 'C'], ['C3', 'E', 'G'], ['D3', 'F', 'A'], ['Bb2', 'D', 'F']],
+      melody: [
+        'F5 . A5 . C6 . A5 . G5 . F5 . . . C5 .',
+        'E5 . G5 . C6 . G5 . E5 . D5 . C5 . . .',
+        'D5 . F5 . A5 . F5 . E5 . D5 . A4 . . .',
+        'Bb4 . D5 . F5 . D5 . C5 . . . . . . .',
+      ],
+      bass: 'rootFifth4', kick: [0, 8], clap: [4, 12], soft: true,
+    },
+    // "זוגות": a music box, calm for remembering
+    pairs: {
+      bpm: 88,
+      chords: [['C3', 'E', 'G', 'B'], ['A2', 'C', 'E', 'G'], ['F2', 'A', 'C', 'E'], ['G2', 'B', 'D', 'E']],
+      arp: 'box16', bass: 'half', echo: true, soft: true,
+    },
+    // "כמה שעות זה?": a funky groove
+    hours: {
+      bpm: 116, lead: 'square', leadVol: 0.016,
+      chords: [['E2', 'G', 'B', 'D'], ['A2', 'C#', 'E', 'G'], ['E2', 'G', 'B', 'D'], ['B2', 'D#', 'F#', 'A']],
+      bass: 'funk', stabs: [3, 11], kick: [0, 6, 8], clap: [4, 12], hat: [0, 2, 4, 6, 8, 10, 12, 14],
+    },
+  };
+  Music.SONGS = SONGS;
+
+  const NOTE = { C: 0, 'C#': 1, Db: 1, D: 2, 'D#': 3, Eb: 3, E: 4, F: 5, 'F#': 6, Gb: 6, G: 7, 'G#': 8, Ab: 8, A: 9, 'A#': 10, Bb: 10, B: 11 };
+  /** 'C5' → 72; a name without an octave is placed just above the note before it (for chords). */
+  function midi(name, above) {
+    const m = /^([A-G][#b]?)(-?\d)?$/.exec(name);
+    if (!m) return null;
+    if (m[2] != null) return 12 * (+m[2] + 1) + NOTE[m[1]];
+    let n = (above != null ? above : 48) - ((above != null ? above : 48) % 12) + NOTE[m[1]];
+    while (above != null && n <= above) n += 12;
+    return n;
+  }
+  const hz = (n) => 440 * Math.pow(2, (n - 69) / 12);
+  /** A chord as notes: ['A2', 'C', 'E'] → [45, 48, 52]. */
+  const chordNotes = (c) => { const out = [midi(c[0])]; for (let i = 1; i < c.length; i++) out.push(midi(c[i], out[i - 1])); return out; };
+  /** A bar of the melody: 16 slots of {n, len} (len in sixteenths) or null. */
+  function parseBar(text) {
+    const t = text.trim().split(/\s+/);
+    const out = new Array(16).fill(null);
+    let last = null;
+    t.slice(0, 16).forEach((tok, i) => {
+      if (tok === '-') { if (last) last.len++; return; }
+      if (tok === '.') { last = null; return; }
+      const n = midi(tok);
+      last = n == null ? null : { n, len: 1 };
+      out[i] = last;
+    });
+    return out;
+  }
+  Music._parse = { midi, chordNotes, parseBar };
+
+  /* ---------------- the instruments ---------------- */
+  let ctx = null, out = null, echo = null, noise = null;
+  function setup() {
+    const c = Fx.audio && Fx.audio();
+    if (!c) return null;
+    if (ctx !== c) build(c);
+    return ctx;
+  }
+  /** The mixer on an audio context: master volume, a limiter, the echo and a noise buffer for the drums. */
+  function build(c) {
+    {
+      ctx = c;
+      out = c.createGain();
+      out.gain.value = 0;
+      // a gentle limiter keeps several voices together from ever clipping
+      const comp = c.createDynamicsCompressor();
+      comp.threshold.value = -18; comp.ratio.value = 4; comp.attack.value = 0.005; comp.release.value = 0.15;
+      out.connect(comp).connect(c.destination);
+      // a short echo for the music box
+      echo = c.createDelay(1);
+      echo.delayTime.value = 0.27;
+      const fb = c.createGain(); fb.gain.value = 0.28;
+      const wet = c.createGain(); wet.gain.value = 0.35;
+      echo.connect(fb).connect(echo);
+      echo.connect(wet).connect(out);
+      const len = Math.floor(c.sampleRate * 0.5);
+      noise = c.createBuffer(1, len, c.sampleRate);
+      const d = noise.getChannelData(0);
+      for (let i = 0; i < len; i++) d[i] = Math.random() * 2 - 1;
+    }
+  }
+  let voices = 0;
+  /** One note: an oscillator through an envelope. */
+  function tone(t, n, dur, wave, vol, opts) {
+    const o = ctx.createOscillator();
+    const g = ctx.createGain();
+    o.type = wave;
+    o.frequency.setValueAtTime(hz(n), t);
+    const a = (opts && opts.attack) || 0.006;
+    const d = (opts && opts.decay) || dur;
+    g.gain.setValueAtTime(0.0001, t);
+    g.gain.exponentialRampToValueAtTime(vol, t + a);
+    g.gain.exponentialRampToValueAtTime(vol * ((opts && opts.sustain) || 0.55), t + Math.min(dur, a + d * 0.4));
+    g.gain.exponentialRampToValueAtTime(0.0001, t + dur);
+    o.connect(g).connect(out);
+    if (opts && opts.echo) g.connect(echo);
+    o.start(t);
+    o.stop(t + dur + 0.03);
+    voices++;
+    o.onended = () => { voices--; o.disconnect(); g.disconnect(); };
+  }
+  /** A marimba: a sine and a quiet high partial, both dying away fast. */
+  function marimba(t, n, vol) {
+    tone(t, n, 0.32, 'sine', vol, { attack: 0.003, sustain: 0.25 });
+    tone(t, n + 24, 0.08, 'sine', vol * 0.25, { attack: 0.002, sustain: 0.2 });
+  }
+  function kick(t, vol) {
+    const o = ctx.createOscillator(); const g = ctx.createGain();
+    o.frequency.setValueAtTime(140, t); o.frequency.exponentialRampToValueAtTime(42, t + 0.12);
+    g.gain.setValueAtTime(vol, t); g.gain.exponentialRampToValueAtTime(0.0001, t + 0.16);
+    o.connect(g).connect(out); o.start(t); o.stop(t + 0.18);
+    voices++; o.onended = () => { voices--; o.disconnect(); g.disconnect(); };
+  }
+  function hiss(t, dur, freq, type, vol) {
+    const s = ctx.createBufferSource(); s.buffer = noise;
+    const f = ctx.createBiquadFilter(); f.type = type; f.frequency.value = freq; f.Q.value = type === 'bandpass' ? 0.9 : 0.7;
+    const g = ctx.createGain();
+    g.gain.setValueAtTime(vol, t); g.gain.exponentialRampToValueAtTime(0.0001, t + dur);
+    s.connect(f).connect(g).connect(out); s.start(t); s.stop(t + dur + 0.02);
+    voices++; s.onended = () => { voices--; s.disconnect(); f.disconnect(); g.disconnect(); };
+  }
+
+  /* ---------------- playing ---------------- */
+  let song = null, step = 0, nextAt = 0, timer = 0, wanted = '', bars = null, chords = null;
+  const LOOK = 0.12; // seconds scheduled ahead
+  const MASTER = 0.55; // the music sits under the sound effects (a coin, a right answer)
+  function stepDur() { return 60 / song.bpm / 4; }
+  /** Plays one sixteenth: drums, bass, chords and melody at that moment. */
+  function playStep(t, i) {
+    const s = song, bar = Math.floor(i / 16) % 4, k = i % 16;
+    const ch = chords[bar];
+    const soft = s.soft ? 0.6 : 1;
+    if (s.kick && s.kick.includes(k)) kick(t, 0.32 * soft);
+    if (s.clap && s.clap.includes(k)) hiss(t, 0.11, 1800, 'bandpass', 0.07 * soft);
+    if (s.hat && s.hat.includes(k)) hiss(t, 0.035, 7000, 'highpass', (k % 4 === 2 ? 0.03 : 0.018) * soft);
+    if (s.tick && s.tick.includes(k)) tone(t, 96, 0.03, 'sine', 0.018, { attack: 0.001 });
+    // bass
+    const root = ch[0];
+    const sd = stepDur();
+    if (s.bass === 'octaves8' && k % 2 === 0) tone(t, root + (k % 4 === 2 ? 12 : 0), sd * 1.8, 'triangle', 0.09);
+    if (s.bass === 'roots4' && k % 4 === 0) tone(t, root, sd * 3.5, 'triangle', 0.08);
+    if (s.bass === 'rootFifth4' && k % 4 === 0) tone(t, k % 8 === 0 ? root : root + 7, sd * 3.2, 'triangle', 0.08);
+    if (s.bass === 'half' && k % 8 === 0) tone(t, k === 0 ? root : root + 7, sd * 7.5, 'sine', 0.07, { attack: 0.03, sustain: 0.7 });
+    if (s.bass === 'funk') {
+      const FUNK = { 0: 0, 3: 0, 6: 3, 8: 5, 12: 7, 14: 10 };
+      if (FUNK[k] != null) tone(t, root + FUNK[k], sd * (k === 0 ? 1.8 : 0.9), 'sawtooth', 0.045, { attack: 0.004, sustain: 0.4 });
+    }
+    // chords: arpeggios and stabs
+    if (s.arp === 'up8' && k % 2 === 0) { const up = ch.slice(1).concat(ch[1] + 12); tone(t, up[(k / 2) % up.length] + 12, sd * 1.6, 'triangle', 0.025, { attack: 0.004, sustain: 0.3 }); }
+    if (s.arp === 'box16') {
+      const notes = ch.map((n) => n + 24);
+      const ORDER = [0, 1, 2, 3, 2, 1, 2, 3, 0, 1, 2, 3, 2, 3, 1, 2];
+      tone(t, notes[ORDER[k] % notes.length], 0.45, 'sine', 0.04, { attack: 0.002, sustain: 0.2, echo: true });
+    }
+    if (s.stabs && s.stabs.includes(k)) ch.slice(1).forEach((n) => tone(t, n + 12, 0.09, s.lead || 'square', 0.014, { attack: 0.002, sustain: 0.3 }));
+    // the melody
+    const m = bars && bars[bar][k];
+    if (m) {
+      const dur = m.len * sd * 0.92;
+      if (s.lead === 'marimba') marimba(t, m.n, s.leadVol);
+      else tone(t, m.n, Math.max(0.06, dur), s.lead, s.leadVol, { attack: 0.005, sustain: 0.6 });
+    }
+  }
+  function tick() {
+    if (!song || !ctx) return;
+    // fell far behind (the phone slept a moment): skip ahead rather than play a burst of notes
+    if (nextAt < ctx.currentTime - 0.25) nextAt = ctx.currentTime + 0.05;
+    while (nextAt < ctx.currentTime + LOOK) {
+      try { playStep(nextAt, step); } catch (e) { /* one lost note never stops the song */ }
+      step++;
+      nextAt += stepDur();
+    }
+  }
+  const enabled = () => { const p = Fx.prefs(); return p.music !== false && p.sound !== false; };
+  Music.enabled = enabled;
+  function start(id) {
+    const s = SONGS[id];
+    const c = s && setup();
+    if (!c) return false;
+    song = s; step = 0;
+    chords = s.chords.map(chordNotes);
+    bars = s.melody ? s.melody.map(parseBar) : null;
+    nextAt = c.currentTime + 0.08;
+    const g = out.gain;
+    g.cancelScheduledValues(c.currentTime);
+    g.setValueAtTime(Math.max(0.0001, g.value), c.currentTime);
+    g.linearRampToValueAtTime(MASTER, c.currentTime + 0.35);
+    clearInterval(timer);
+    timer = setInterval(tick, 25);
+    tick();
+    Music.playing = id;
+    return true;
+  }
+  function halt(fade) {
+    clearInterval(timer); timer = 0;
+    song = null;
+    Music.playing = '';
+    if (ctx && out) {
+      const g = out.gain, now = ctx.currentTime;
+      g.cancelScheduledValues(now);
+      g.setValueAtTime(Math.max(0.0001, g.value), now);
+      g.linearRampToValueAtTime(0, now + (fade == null ? 0.3 : fade));
+    }
+  }
+  /** Starts a game's music (or keeps it going); quietly nothing when music is off. */
+  Music.play = function (id) {
+    wanted = id;
+    if (!enabled() || document.hidden) return false;
+    if (Music.playing === id && timer) return true;
+    return start(id);
+  };
+  /** Stops (fading out); the game no longer wants music. */
+  Music.stop = function (fade) { wanted = ''; halt(fade); };
+  /** The on/off of the music (kept in the settings with the other sounds). */
+  Music.toggle = async function () {
+    const on = !enabled() || Fx.prefs().sound === false ? true : false;
+    if (root.Store) await root.Store.setSettings((s) => { s.fx = Object.assign({}, s.fx, { music: on }, on ? { sound: true } : {}); });
+    if (on && wanted) start(wanted); else if (!on) halt(0.2);
+    return on;
+  };
+  // the app in the background: silence; back: the game's music again
+  document.addEventListener('visibilitychange', () => {
+    if (document.hidden) { const w = wanted; halt(0.05); wanted = w; }
+    else if (wanted && enabled()) start(wanted);
+  });
+  Music._stats = () => ({ voices, playing: Music.playing, wanted, step });
+  /** For tests: renders a song's first bars offline and measures its loudness (peak and RMS). */
+  Music._measure = async function (id, bars, raw) {
+    const OAC = root.OfflineAudioContext || root.webkitOfflineAudioContext;
+    if (!OAC || !SONGS[id]) return null;
+    const keep = { ctx, out, echo, noise, song, chords, bars: bars0() };
+    const s = SONGS[id];
+    const secs = (bars || 4) * 16 * (60 / s.bpm / 4) + 0.6;
+    const oc = new OAC(1, Math.ceil(44100 * secs), 44100);
+    build(oc); out.gain.value = MASTER;
+    song = s; chords = s.chords.map(chordNotes); barsSet(s.melody ? s.melody.map(parseBar) : null);
+    const sd = 60 / s.bpm / 4;
+    for (let i = 0; i < (bars || 4) * 16; i++) playStep(0.02 + i * sd, i);
+    const buf = await oc.startRendering();
+    ctx = keep.ctx; out = keep.out; echo = keep.echo; noise = keep.noise; song = keep.song; chords = keep.chords; barsSet(keep.bars);
+    const d = buf.getChannelData(0);
+    if (raw) return d;
+    let peak = 0, sum = 0;
+    for (let i = 0; i < d.length; i++) { const v = Math.abs(d[i]); if (v > peak) peak = v; sum += d[i] * d[i]; }
+    return { peak: +peak.toFixed(3), rms: +Math.sqrt(sum / d.length).toFixed(4) };
+  };
+  function bars0() { return bars; }
+  function barsSet(b) { bars = b; }
 })(typeof window !== 'undefined' ? window : globalThis);
 
 /* ---- app/intro.js ---- */
@@ -11282,7 +11614,7 @@ window.PAY_CONFIG = {
     rest: 'שבת חג חגים עיר כניסת שבת יציאת שבת', pay: 'נסיעות החזר נסיעות תקרה תקופת שכר יום תשלום משכורת',
     net: 'מס מס הכנסה נקודות זיכוי פנסיה ביטוח לאומי מס בריאות השתלמות נטו', leave: 'חופשה מחלה הבראה ותק תחילת עבודה',
     goal: 'יעד יעדים חיסכון חוסכים', alerts: 'התראות תזכורות פוש הודעות', templates: 'תבנית תבניות משמרת קבועה',
-    look: 'צבע צבעים ערכת נושא כהה בהיר מצב לילה גופן גופנים מראה צלילים רטט עיצוב כרטיס plus פלוס', security: 'קוד נעילה טביעת אצבע סיסמה',
+    look: 'צבע צבעים ערכת נושא כהה בהיר מצב לילה גופן גופנים מראה צלילים רטט מוזיקה עיצוב כרטיס plus פלוס', security: 'קוד נעילה טביעת אצבע סיסמה',
     assistant: 'בינה מלאכותית עוזר שאלות ai', ai: 'מפתח api claude ניתוח תלוש', backup: 'גיבוי שחזור קובץ', export: 'ייצוא אקסל excel csv pdf יומן',
     demo: 'דוגמה הדגמה', about: 'גרסה התקנה אודות', rights: 'זכויות שכר מינימום',
   };
@@ -11653,6 +11985,7 @@ window.PAY_CONFIG = {
       <div class="section-title" style="margin-top:16px">אפקטים וצלילים</div>
       <div class="card">${F.sw('אנימציות ואפקטים', 'הבזק קטן בכל לחיצה, כפתורים קופצניים וקונפטי כשמסיימים משמרת', 's.fx.effects', (S.settings.fx || {}).effects !== false)}
         ${F.sw('צלילים', 'צליל קצר ועדין בלחיצה, ו"קופה" כשנשמרת משמרת', 's.fx.sound', (S.settings.fx || {}).sound !== false)}
+        ${F.sw('מוזיקה במשחקים', 'מנגינה קטנה לכל משחק (אפשר גם בכפתור התו בתוך המשחק)', 's.fx.music', (S.settings.fx || {}).music !== false)}
         ${F.sw('רטט', 'רטט קל בלחיצה', 's.fx.haptic', (S.settings.fx || {}).haptic !== false)}
         <button class="btn tonal sm" data-fx-try style="margin-top:8px">${icon('sparkle', 's')} נסה</button>
         <div class="tiny muted" style="margin-top:8px">כשבטלפון מופעלת "הפחתת אנימציות", האנימציות כבויות גם כאן. עוצמת הצלילים לפי עוצמת המדיה.</div></div>`,
@@ -12832,11 +13165,12 @@ window.PAY_CONFIG = {
 
   /* ---------------- what's new (once per big update, for people who already used the app) ---------------- */
   const WHATS_NEW = {
-    id: '1.14',
+    id: '1.15',
     items: [
-      ['trophy', 'amber', 'טבלת האלופים', 'מתחרים על המקום הראשון בכל משחק: היום, השבוע, החודש, השנה ובכל הזמנים. רק כינוי ואימוג׳י, בלי שם אמיתי.'],
-      ['chart', 'violet', 'ניתוח מתקדם', 'איזה יום ואיזו שעה הכי משתלמים לך, השיאים שלך ו"מה אם". בדוחות › סיכום.'],
-      ['sparkle', 'mint', 'חלק יותר', 'המעבר למסך הבית בלי הבהוב, גם בטלפונים חזקים.'],
+      ['music', 'violet', 'מוזיקה במשחקים', 'לכל משחק מנגינה משלו. כפתור התו בתוך המשחק מכבה ומדליק אותה.'],
+      ['trophy', 'amber', 'טבלת האלופים', 'מתחרים על המקום הראשון בכל משחק: היום, השבוע, החודש ובכל הזמנים. רק כינוי ואימוג׳י.'],
+      ['refresh', 'sky', 'משיכה לרענון חדשה', 'מושכים למטה בכל מסך, והמחוגים של השעון רצים עד שהכל מעודכן.'],
+      ['chart', 'mint', 'ניתוח מתקדם', 'איזה יום ואיזו שעה הכי משתלמים לך, שיאים ו"מה אם". בדוחות › סיכום.'],
     ],
   };
 
@@ -13310,7 +13644,19 @@ window.PAY_CONFIG = {
     const open = { coins: coinGame, quiz: quizGame, facts: factsGame, pairs: pairsGame, hours: hoursGame }[id];
     if (!open) return;
     if (S.meta.lbLast !== id) Store.setMeta({ lbLast: id }).catch(() => {});
-    open(onDone || (() => {}));
+    open(() => { if (root.Music) root.Music.stop(); if (onDone) onDone(); });
+    // the game's music, and its note button next to the close button
+    const sh = [...document.querySelectorAll('.sheet')].pop();
+    const head = sh && sh.querySelector('.sh-head');
+    if (root.Music && head && !head.querySelector('.gm-music')) {
+      const b = document.createElement('button');
+      b.className = 'icon-btn gm-music';
+      const paint = () => { const on = root.Music.enabled(); b.innerHTML = icon(on ? 'music' : 'musicOff'); b.setAttribute('aria-pressed', on); b.setAttribute('aria-label', on ? 'מוזיקה פועלת' : 'מוזיקה כבויה'); };
+      paint();
+      b.onclick = async () => { await root.Music.toggle(); paint(); };
+      head.insertBefore(b, head.querySelector('[data-close]'));
+      root.Music.play(id);
+    }
   }
 
   /** The end of a round: mascot, score, best, play again. */
@@ -13325,7 +13671,8 @@ window.PAY_CONFIG = {
       <div class="gm-end-a"><button class="btn" data-again>${icon('repeat')} עוד סיבוב</button><button class="btn tonal" data-quit>סיום</button></div></div>`;
     if (isBest && o.score > 0) { if (Fx()) Fx().celebrate('big'); } else play('pop');
     if (root.Champions && o.score > 0) root.Champions.afterGame(box, o.id, o.score); // the champions table
-    box.querySelector('[data-again]').onclick = o.again;
+    if (root.Music) root.Music.stop(0.6); // the round is over: the music fades
+    box.querySelector('[data-again]').onclick = () => { if (root.Music) root.Music.play(o.id); o.again(); };
     box.querySelector('[data-quit]').onclick = () => UI.closeTop();
   }
 
@@ -14054,10 +14401,13 @@ window.PAY_CONFIG = {
         set(bar, `<div class="lb-me-t"><b>${rows.length >= LIMIT ? 'עוד לא בטופ 50' : `עוד לא שיחקת ${period === 'a' ? 'כאן' : periodName()}`}</b><small>${rows.length >= LIMIT ? `צריך יותר מ-${last.s}${esc(unit)}` : 'משחק אחד וכבר את/ה בטבלה'}</small></div><button class="btn sm" data-lb-play>${icon('play', 's')} לשחק</button>`);
       }
     }
-    /** The other periods of this game, loaded quietly so that switching is instant. */
+    /** The other periods of this game and this period of the other games, loaded quietly so that switching is instant. */
     function prefetch() {
-      const g = game;
-      setTimeout(() => { for (const [p] of PERIODS) if (!cached(g, p)) board(g, p).catch(() => {}); }, 250);
+      const g = game, per = period;
+      setTimeout(() => {
+        for (const [p] of PERIODS) if (!cached(g, p)) board(g, p).catch(() => {});
+        for (const x of games()) if (!cached(x.id, per)) board(x.id, per).catch(() => {});
+      }, 250);
     }
     async function load(el) {
       const my = ++seq;
@@ -14087,7 +14437,7 @@ window.PAY_CONFIG = {
     function tabs(el) {
       const me = profile(true);
       set(el.querySelector('[data-lb-tabs]'), `
-        <div class="chips lb-games" role="tablist" aria-label="משחק">${games().map((g) => `<button class="chip ${g.id === game ? 'on' : ''}" role="tab" aria-selected="${g.id === game}" data-game="${g.id}">${esc(SHORT[g.id] || g.t)}</button>`).join('')}</div>
+        <div class="seg lb-games" role="tablist" aria-label="משחק">${games().map((g) => `<button class="${g.id === game ? 'on' : ''}" role="tab" aria-selected="${g.id === game}" data-game="${g.id}">${esc(SHORT[g.id] || g.t)}</button>`).join('')}</div>
         <div class="seg lb-periods" role="tablist" aria-label="תקופה">${PERIODS.map(([k, l]) => `<button class="${k === period ? 'on' : ''}" role="tab" aria-selected="${k === period}" data-period="${k}">${l}</button>`).join('')}</div>
         ${joined() ? `<button class="lb-mine" data-lb-profile><span class="lb-av sm ${me.bg ? 'sk-' + me.bg : ''}"><span aria-hidden="true">${me.e}</span></span><span>${esc(me.n)}</span>${icon('edit', 's')}<span class="vh">עריכת הכינוי</span></button>` : ''}`);
     }
@@ -14868,11 +15218,13 @@ window.PAY_CONFIG = {
 
 /* ---- app/ptr.js ---- */
 /* ============================================================
- * ptr.js — pull down to refresh. The logo comes down with the finger
- * with a natural, ever-heavier resistance, draws itself as you pull and
- * clicks (sound + vibration) past the threshold. On release it springs
- * to a resting place where it spins while the app syncs with the cloud,
- * looks for a new version and recalculates, then a check mark and back up.
+ * ptr.js — pull down to refresh, in Shaati's own look: a clock coin comes
+ * down with the finger (a natural, ever-heavier resistance); its hands turn
+ * and its ring fills as you pull, with a small note under it ("pull" →
+ * "let go"). Past the threshold it clicks (sound + vibration) and lights up.
+ * On release it springs to a resting place where its hands race (time-lapse)
+ * while the app syncs with the cloud, looks for a new version and
+ * recalculates; then a green check, "all up to date", and back up.
  *
  * Details that matter:
  *  - only the logo moves; the page stays where it is (as on Android). When
@@ -14902,13 +15254,18 @@ window.PAY_CONFIG = {
   const RESIST = 190; // higher = lighter pull
   const REST = 62; // where the logo waits while refreshing
   const SLOP = 10; // finger movement that still counts as a tap
-  const LOGO = '<svg viewBox="0 0 1024 1024" aria-hidden="true"><path class="g" pathLength="1" d="M300 660 A258 258 0 0 1 603 271 L603 600"/><path class="y" pathLength="1" d="M420 422 L420 753 A258 258 0 0 0 720 362"/></svg>';
+  // the hands are HTML elements, so their spin runs on the GPU even while the refresh keeps the page busy
+  const CLOCK = '<svg class="ptr-ring" viewBox="0 0 48 48"><circle class="ptr-track" cx="24" cy="24" r="21"/><circle class="ptr-arc" cx="24" cy="24" r="21" pathLength="1"/></svg>'
+    + '<span class="ptr-face"><i class="ptr-tk t12"></i><i class="ptr-tk t3"></i><i class="ptr-tk t6"></i><i class="ptr-tk t9"></i><i class="ptr-h"></i><i class="ptr-m"></i><b class="ptr-dot"></b></span>';
   const ind = document.createElement('div');
   ind.className = 'ptr';
   ind.setAttribute('aria-hidden', 'true');
-  ind.innerHTML = `<div class="ptr-disc">${LOGO}<span class="ptr-check">✓</span></div>`;
+  ind.innerHTML = `<div class="ptr-disc">${CLOCK}<span class="ptr-check">✓</span></div><span class="ptr-tip"></span>`;
   document.body.appendChild(ind);
   const disc = ind.firstChild;
+  const hourHand = ind.querySelector('.ptr-h'), minHand = ind.querySelector('.ptr-m'), tipEl = ind.querySelector('.ptr-tip');
+  let tipNow = '';
+  const tip = (t) => { if (t !== tipNow) { tipNow = t; tipEl.textContent = t; ind.classList.toggle('tip', !!t); } };
 
   let x0 = 0, y0 = null, t0 = 0, pulling = false, dist = 0, armed = false, busy = false, raf = 0, settleTimer = 0;
   const blocked = (target) => busy || App.blocking || root.scrollY > 0
@@ -14916,11 +15273,20 @@ window.PAY_CONFIG = {
     || (target.closest && target.closest('input, textarea, select, .chart, [data-no-ptr]'));
   const resist = (dy) => MAX * (1 - Math.exp(-dy / RESIST));
 
+  let minA = 0, hourA = 0;
   function paint(d) {
     const p = Math.min(1, d / THRESHOLD);
     ind.style.transform = `translate3d(-50%, ${(d - 56).toFixed(1)}px, 0)`;
     ind.style.opacity = d > 0 ? Math.min(1, d / 30).toFixed(2) : '0';
-    if (!ind.classList.contains('spin') && !ind.classList.contains('done')) disc.style.transform = `rotate(${Math.round(d * 2.6)}deg) scale(${(0.6 + 0.4 * p).toFixed(3)})`;
+    if (!ind.classList.contains('spin') && !ind.classList.contains('done')) {
+      // an hour goes by as you pull to the threshold, and the hands keep going past it
+      minA = Math.round(p * 360 + Math.max(0, d - THRESHOLD) * 5);
+      hourA = Math.round(minA / 12);
+      minHand.style.transform = `rotate(${minA}deg)`;
+      hourHand.style.transform = `rotate(${hourA}deg)`;
+      disc.style.transform = `scale(${(0.62 + 0.38 * p).toFixed(3)})`;
+      if (pulling) tip(d > 22 ? (armed ? 'שחררו לרענון' : 'משכו לרענון') : '');
+    }
     disc.style.setProperty('--p', p.toFixed(3));
   }
   const schedule = () => { if (!raf) raf = requestAnimationFrame(() => { raf = 0; paint(dist); }); };
@@ -14993,6 +15359,7 @@ window.PAY_CONFIG = {
     if (!pulling) return;
     pulling = false; armed = false;
     ind.classList.remove('armed');
+    tip('');
     swallowNextClick();
     springTo(0, 320);
   }
@@ -15004,10 +15371,13 @@ window.PAY_CONFIG = {
     if (!pulling) return;
     pulling = false;
     swallowNextClick();
-    if (!armed) { await springTo(0, 360); return; }
+    if (!armed) { tip(''); await springTo(0, 360); return; }
     busy = true;
     try {
       ind.classList.remove('armed');
+      disc.style.setProperty('--m0', minA + 'deg');
+      disc.style.setProperty('--h0', hourA + 'deg');
+      tip('מעדכנים…');
       ind.classList.add('spin');
       await springTo(REST, 380);
       const t0 = Date.now();
@@ -15016,11 +15386,13 @@ window.PAY_CONFIG = {
       if (left > 0) await Fx.sleep(left);
       ind.classList.remove('spin');
       ind.classList.add('done');
+      tip(navigator.onLine === false ? 'אין חיבור · מוצג מה שבטלפון' : 'הכל מעודכן ✓');
       Fx.play('pop'); Fx.haptic(10);
-      await Fx.sleep(420);
+      await Fx.sleep(700);
       await springTo(0, 420);
     } finally {
       ind.classList.remove('done', 'spin', 'armed');
+      tip('');
       busy = false;
     }
   }
