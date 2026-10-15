@@ -682,6 +682,8 @@ body.fx .qz-opt:active:not(:disabled) { transform: scale(.96); }
 .pr-card.done .pr-face { border-color: var(--good); background: color-mix(in srgb, var(--good) 12%, var(--surface-1)); animation: pr-glow .6s ease-out; }
 @keyframes pr-glow { 40% { box-shadow: 0 0 0 5px color-mix(in srgb, var(--good) 30%, transparent); } }
 .pr-card:focus-visible { outline: 3px solid var(--brand); outline-offset: 2px; border-radius: 16px; }
+/* a short, wide screen (a tablet or a browser on its side): 4 columns of flatter cards, so the board fits */
+@media (orientation: landscape) and (max-height: 560px) { .pr-grid { grid-template-columns: repeat(4, 1fr); } .pr-card { aspect-ratio: 1.7 / 1; min-height: 62px; } }
 
 /* ---------- "כמה שעות זה?": two price cards ---------- */
 .hw-pair { display: grid; grid-template-columns: 1fr auto 1fr; align-items: stretch; gap: 8px; }
