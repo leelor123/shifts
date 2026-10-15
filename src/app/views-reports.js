@@ -176,6 +176,7 @@
         ${t.leavePay ? `<div class="small" style="margin-top:4px">כולל ימי חופשה/מחלה: <b>${U.money(t.leavePay, 0)}</b></div>` : ''}
       </div>
       ${t.overridden ? `<div class="banner warn">${icon('hand')}<div>${t.overridden} משמרות בתקופה כוללות עקיפה ידנית — הן נכללות בסכומים.</div></div>` : ''}
+      <button class="an-entry" data-act="analysis-open">${UI.tile('sparkle', 'violet')}<span class="an-entry-t"><b>ניתוח מתקדם</b><small>איזה יום ושעה הכי משתלמים לך, השיאים שלך ו"מה אם"</small></span>${icon('left', 's')}</button>
       ${st.type !== 'custom' && st.type !== 'year' ? `<div class="section-title">${icon('up', 's')} השוואה</div><div class="card">${compareTable(t, p, a3, a12, st.type)}</div>` : ''}
       ${st.type === 'custom' ? `<div class="section-title">${icon('up', 's')} השוואה לתקופה קודמת באותו אורך</div><div class="card">${compareTable(t, p, null, null, st.type)}</div>` : ''}
       <div class="section-title">${icon('users', 's')} לפי תפקיד</div>

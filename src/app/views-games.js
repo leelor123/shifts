@@ -117,20 +117,30 @@
       title: 'משחקים',
       cls: 'games-sheet',
       body: `${App.mascotSays ? App.mascotSays('party', 'הפסקה קטנה? כל משחק לוקח פחות מדקה.', { size: 64 }) : ''}<div class="gm-list">${cards()}</div>
+        ${root.Champions ? root.Champions.hubCard() : ''}
         <button class="ach-card" data-medals>${(() => { const l = achievements(); const got = l.filter((a) => a.on).length; return `<span class="ach-card-e" aria-hidden="true">🏅</span><span class="gm-txt"><b>המדליות שלי</b><span>${got} מתוך ${l.length} · על משמרות, כסף, תלושים ומשחקים</span></span>${icon('left', 's')}`; })()}</button>`,
       onMount: (el) => {
         el.querySelector('[data-medals]').onclick = medalsSheet;
+        const hub = el.querySelector('[data-lb-hub]');
+        if (hub) hub.onclick = () => root.Champions.open();
         const list = el.querySelector('.gm-list');
         list.addEventListener('click', (e) => {
           const b = e.target.closest('[data-game]');
           if (!b) return;
           const done = () => { if (list.isConnected) list.innerHTML = cards(); };
-          const open = { coins: coinGame, quiz: quizGame, facts: factsGame, pairs: pairsGame, hours: hoursGame }[b.dataset.game];
-          if (open) open(done);
+          playGame(b.dataset.game, done);
         });
       },
     });
   };
+
+  /** Opens a game by its id (also from the champions table); notes it as the last one played. */
+  function playGame(id, onDone) {
+    const open = { coins: coinGame, quiz: quizGame, facts: factsGame, pairs: pairsGame, hours: hoursGame }[id];
+    if (!open) return;
+    if (S.meta.lbLast !== id) Store.setMeta({ lbLast: id }).catch(() => {});
+    open(onDone || (() => {}));
+  }
 
   /** The end of a round: mascot, score, best, play again. */
   function endScreen(box, o) {
@@ -143,6 +153,7 @@
       <div class="gm-end-b">${isBest ? `${icon('star', 's')} שיא חדש!` : `השיא שלך: ${best(o.id)}${o.unit}`}</div>
       <div class="gm-end-a"><button class="btn" data-again>${icon('repeat')} עוד סיבוב</button><button class="btn tonal" data-quit>סיום</button></div></div>`;
     if (isBest && o.score > 0) { if (Fx()) Fx().celebrate('big'); } else play('pop');
+    if (root.Champions && o.score > 0) root.Champions.afterGame(box, o.id, o.score); // the champions table
     box.querySelector('[data-again]').onclick = o.again;
     box.querySelector('[data-quit]').onclick = () => UI.closeTop();
   }
@@ -668,5 +679,5 @@
     return () => { alive = false; clearTimeout(next); };
   }
 
-  App.games = { LIST, best };
+  App.games = { LIST, best, play: playGame };
 })(typeof window !== 'undefined' ? window : globalThis);

@@ -599,6 +599,7 @@
     App.pendingAction = null;
     if (action === 'start' && !S.activeShift) App.actions['timer-start']();
     if (action === 'add') App.sheetsApi.shiftEditor();
+    if (action === 'plus' && root.Plus) setTimeout(() => root.Plus.sheet(), 600); // back from the web checkout (?action=plus): straight to the code field
     setTimeout(() => { App.runInsights(); App.autoBackupCheck(); }, 1200);
     if (root.Plus) root.Plus.init().catch(() => {}); // is Shaati Plus for sale here, and owned? (Google Play, Android app only)
     if (App.whatsNew) App.whatsNew();

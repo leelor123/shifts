@@ -535,7 +535,7 @@ let errors = [];
       }
     } finally { await cdp.send('Emulation.setTimezoneOverride', { timezoneId: '' }).catch(() => {}); await closeAll(); }
   });
-  await step('Shaati Plus: out of sight without Google Play; bought once, the pay-card skins work', async () => {
+  await step('Shaati Plus: out of sight until set up; bought in Google Play or with a code from the web, the skins work', async () => {
     await closeAll(); await ev(() => App.go('settings')); await sleep(300);
     if (await ev(() => !!document.querySelector('[data-act="plus-open"]'))) throw new Error('Plus shown without Google Play');
     // a pretend Google Play: the product exists, the payment sheet pays at once
@@ -556,9 +556,98 @@ let errors = [];
     if (!(await ev(() => Plus.owned()))) throw new Error('not owned after paying');
     await ev(() => Plus.pickSkin('gold')); await sleep(200);
     if ((await ev(() => document.documentElement.dataset.skin)) !== 'gold') throw new Error('skin not applied');
+    // the web: a purchase code from Lemon Squeezy (a pretend licence service), saved in the account
+    await ev(async () => {
+      delete window.getDigitalGoodsService; window.PaymentRequest = window.__realPR; Plus.available = false;
+      await Store.setMeta({ plus: { active: false }, plusInst: null });
+      PAY_CONFIG.lemon = { checkout: 'https://x.lemonsqueezy.com/buy/t', productId: 42, price: '₪14.90' };
+      window.__realFetch = window.fetch;
+      window.fetch = async (u, o) => (String(u).startsWith('https://api.lemonsqueezy.com/')
+        ? new Response(JSON.stringify({ activated: true, valid: true, instance: { id: 'i1' }, meta: { product_id: 42 } }), { status: 200 }) : window.__realFetch(u, o));
+    });
+    if (!(await ev(() => Plus.webShop()))) throw new Error('web checkout not offered');
+    if (!(await ev(() => Plus.redeem('GOOD-1111-2222-3333-444455556666')))) throw new Error('purchase code not accepted');
+    if ((await ev(() => Plus.source())) !== 'web' || !(await ev(() => Store.S.settings.plusKey))) throw new Error('web purchase not saved in the account');
     // back to a plain phone
-    await ev(async () => { delete window.getDigitalGoodsService; window.PaymentRequest = window.__realPR; Plus.available = false; await Store.setMeta({ plus: { active: false } }); await Store.setSettings((s) => { s.skin = ''; }); App.applyTheme(); });
+    await ev(async () => {
+      window.fetch = window.__realFetch; PAY_CONFIG.lemon = { checkout: '', productId: 0, price: '' };
+      await Store.setMeta({ plus: { active: false }, plusInst: null }); await Store.setSettings((s) => { s.skin = ''; s.plusKey = ''; }); App.applyTheme();
+    });
     await closeAll(); await ev(() => App.go('home'));
+  });
+  await step('Shaati Plus: try it on the card, a free trial, then free allowances (analysis, exports; never the games)', async () => {
+    await closeAll();
+    await ev(async () => {
+      window.__realPR = window.PaymentRequest;
+      window.getDigitalGoodsService = async () => ({ getDetails: async (ids) => ids.map((itemId) => ({ itemId, price: { currency: 'ILS', value: '9.90' } })), listPurchases: async () => [] });
+      await Plus.init(); App.go('home');
+    });
+    await sleep(400);
+    await ev(() => document.querySelector('#view .home-hero .hh-skin').click()); await sleep(500);
+    if (!(await ev(() => !!document.querySelector('.design-sheet .design-prev .hero-num')))) throw new Error('no preview of the user\'s card');
+    await ev(() => document.querySelector('[data-pick="ocean"]').click());
+    await ev(() => document.querySelector('[data-design-trial]').click()); await sleep(600);
+    if (!(await ev(() => Plus.inTrial() && document.documentElement.dataset.skin === 'ocean' && Plus.left('game') === Infinity))) throw new Error('trial did not start');
+    // the trial ends: the regular card, and the free allowances
+    await ev(async () => { await Store.setMeta({ plusTrial: { from: 1, until: 2 }, plusUse: {} }); App.go('home'); }); await sleep(300);
+    if (await ev(() => !!document.documentElement.dataset.skin)) throw new Error('skin kept after the trial');
+    const an = await ev(() => { const r = []; for (let i = 0; i < 4; i++) r.push(Plus.use('analysis')); return r.join(); });
+    if (an !== 'true,true,true,false' || !(await ev(() => !!document.querySelector('.limit-sheet')))) throw new Error('analysis allowance: ' + an);
+    if (!(await ev(() => Plus.use('game') && Plus.left('game') === Infinity))) throw new Error('games must never be limited');
+    await closeAll();
+    const exp = await ev(() => { const r = []; for (let i = 0; i < 6; i++) r.push(Plus.use('export')); return r.join(); });
+    if (exp !== 'true,true,true,true,true,false') throw new Error('exports allowance: ' + exp);
+    // back to a plain phone: nothing can be bought, so no limits at all
+    await ev(async () => {
+      delete window.getDigitalGoodsService; window.PaymentRequest = window.__realPR; Plus.available = false;
+      await Store.setMeta({ plusTrial: null, plusTrialEnd: null, plusUse: {}, plusWall: null, plusNudge: null }); await Store.setSettings((s) => { s.skin = ''; }); App.applyTheme();
+    });
+    if (!(await ev(() => Plus.use('analysis') && Plus.use('export') && Plus.left('analysis') === Infinity))) throw new Error('limits without a way to buy');
+    await closeAll(); await ev(() => App.go('home'));
+  });
+  await step('champions table: join with a nickname, a game result lands on today\'s board, leaving deletes the row', async () => {
+    await closeAll();
+    const r = await ev(async () => {
+      // a pretend Firestore with one other player (set with merge on leaf paths, like Firestore)
+      const docs = new Map();
+      const get = (o, p) => p.split('.').reduce((x, k) => (x == null ? undefined : x[k]), o);
+      const merge = (o, d) => { for (const [k, v] of Object.entries(d)) { if (v && typeof v === 'object' && Object.keys(v).length) { o[k] = o[k] && typeof o[k] === 'object' ? o[k] : {}; merge(o[k], v); } else o[k] = v; } return o; };
+      const fs = {
+        doc: (db, ...p) => ({ path: p.join('/') }), collection: (db, c) => ({ c }),
+        getDoc: async (ref) => ({ exists: () => docs.has(ref.path), data: () => JSON.parse(JSON.stringify(docs.get(ref.path) || {})) }),
+        setDoc: async (ref, d, o) => { docs.set(ref.path, o && o.merge ? merge(docs.get(ref.path) || {}, JSON.parse(JSON.stringify(d))) : d); },
+        deleteDoc: async (ref) => { docs.delete(ref.path); },
+        where: (f, op, v) => ({ f, op, v }), orderBy: (f) => ({ f, ord: 1 }), limit: (n) => ({ n }), query: (col, ...c) => ({ col, c }),
+        getDocs: async (q) => {
+          const w = q.c.filter((x) => x.op); const of = q.c.find((x) => x.ord).f;
+          const rows = [...docs].filter(([p]) => p.startsWith('lb/')).filter(([, d]) => w.every((x) => { const v = get(d, x.f); return v != null && (x.op === '>=' ? v >= x.v : v < x.v); }))
+            .filter(([, d]) => get(d, of) != null).sort((a, b) => get(b[1], of) - get(a[1], of));
+          return { docs: rows.map(([p, d]) => ({ id: p.split('/')[1], data: () => d })) };
+        },
+      };
+      window.__realCloud = { user: Cloud.user, sdk: Cloud.sdk };
+      Cloud.user = { uid: 'me-e2e' }; Cloud.sdk = async () => ({ fs, db: {} });
+      const LB = Leaderboard; const k = LB.keys(U.todayKey());
+      docs.set('lb/other', { n: 'נמר מהיר 11', e: '🐯', t: 1, g: { coins: { d: LB.pack(k.d, 300), a: 300 } } });
+      await Store.setSettings((s) => { s.lb = { on: true, n: 'בודק e2e', e: '🚀', bg: '' }; });
+      Champions._reset();
+      const first = await Champions.submit('coins', 200);
+      const second = await Champions.submit('coins', 450);
+      const mine = docs.get('lb/me-e2e');
+      Champions.open('coins');
+      await new Promise((x) => setTimeout(x, 600));
+      const podium = [...document.querySelectorAll('.lb-pod .lb-n')].map((x) => x.textContent).join('|');
+      UI.closeAll();
+      await Champions.forget();
+      const out = { first: first && first.rank, second: second && second.rank, n: mine && mine.n, d: mine && LB.scoreOf(mine.g.coins.d), podium, gone: !docs.has('lb/me-e2e'), on: Store.S.settings.lb.on };
+      Cloud.user = __realCloud.user; Cloud.sdk = __realCloud.sdk; Champions._reset();
+      return out;
+    });
+    if (r.first !== 2 || r.second !== 1) throw new Error('places: ' + JSON.stringify(r));
+    if (r.n !== 'בודק e2e' || r.d !== 450) throw new Error('row: ' + JSON.stringify(r));
+    if (!/נמר מהיר 11\|בודק e2e/.test(r.podium)) throw new Error('podium: ' + r.podium);
+    if (!r.gone || r.on) throw new Error('leaving: ' + JSON.stringify(r));
+    await closeAll();
   });
   await step('anonymous stats: record has only the allowed fields', async () => {
     const r = await ev(() => Stats._record());

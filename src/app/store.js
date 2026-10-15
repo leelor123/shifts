@@ -149,7 +149,9 @@
 
   // meta that describes this phone (account link, sync progress), never taken from a backup
   const DEVICE_META = ['cloudUid', 'cloudEmail', 'cloudName', 'cloudPhoto', 'cloudReady', 'lastSync', 'designV2', 'chat', 'chatShareData',
-    'installId', 'statsSentAt', 'activeDays', 'firstActiveDay', 'lastActiveDay'];
+    'installId', 'statsSentAt', 'activeDays', 'firstActiveDay', 'lastActiveDay',
+    // Shaati Plus is checked on each phone (Google Play / the purchase code): never taken from a backup file
+    'plus', 'plusInst', 'plusPreview', 'plusSeen', 'plusTrial', 'plusTrialEnd', 'plusNudge', 'plusUse', 'plusWall'];
   const SYNC_META = ['pendingDeletes', 'settingsDirty', 'activeDirty', 'activeUpdatedAt'];
   /** Values that end up inside HTML attributes must have a safe shape. */
   function safeRecord(store, r) {
@@ -388,8 +390,9 @@
   async function exportBackup(includeFiles) {
     const out = {
       app: 'shiftpay', schemaVersion: SCHEMA_VERSION, appVersion: root.APP_VERSION, exportedAt: new Date().toISOString(),
-      settings: Object.assign({}, S.settings, { ai: Object.assign({}, S.settings.ai, { apiKey: '' }), lock: Object.assign({}, S.settings.lock) }),
-      meta: S.meta, activeShift: S.activeShift,
+      // keys stay out of files: the AI key, and the Shaati Plus purchase code (a shared backup would give it away)
+      settings: Object.assign({}, S.settings, { ai: Object.assign({}, S.settings.ai, { apiKey: '' }), lock: Object.assign({}, S.settings.lock), plusKey: '' }),
+      meta: Object.fromEntries(Object.entries(S.meta).filter(([k]) => !/^plus/.test(k))), activeShift: S.activeShift,
     };
     for (const s of LIST_STORES) out[s] = S[s];
     if (includeFiles) {
@@ -460,11 +463,13 @@
       throw new Error('הקובץ פגום ואי אפשר לשחזר ממנו. הנתונים בטלפון לא השתנו.');
     }
     const keepKey = S.settings && S.settings.ai ? S.settings.ai.apiKey : '';
+    const keepPlus = (S.settings && S.settings.plusKey) || '';
     for (const s of SYNC_STORES) for (const x of incoming[s]) delete x._syncedAt; // that sync state belongs to the device that made the backup
     for (const r of incoming.roles) safeRecord('roles', r);
     if (mode === 'replace') {
       S.settings = mergeDeep(root.Defaults.defaultSettings(), incoming.settings || {});
       S.settings.ai.apiKey = keepKey;
+      S.settings.plusKey = keepPlus;
       // keep this phone's account link and sync bookkeeping; take everything else from the backup
       const device = {};
       for (const k of DEVICE_META) if (S.meta[k] !== undefined) device[k] = S.meta[k];

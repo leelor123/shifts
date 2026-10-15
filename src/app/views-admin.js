@@ -14,6 +14,7 @@
   const FEATURES = [
     ['rights', 'מדריך הזכויות'], ['planned', 'משמרות מתוכננות'], ['roles', 'יותר מתפקיד אחד'], ['goal', 'יעד חודשי'],
     ['notif', 'התראות מאושרות'], ['lock', 'נעילה בקוד'], ['bio', 'טביעת אצבע'], ['ai', 'מפתח AI'], ['dark', 'מצב כהה'], ['fxOff', 'כיבוי אפקטים'], ['demo', 'מצב הדגמה'],
+    ['plusSeen', 'ראו את Shaati Plus'], ['plusWall', 'הגיעו למכסה חינמית'], ['plusTry', 'ניסו את Plus בחינם'],
   ];
 
   function kpi(label, value, sub) {
@@ -21,6 +22,36 @@
   }
   function barList(entries, total) {
     return entries.map(([label, n]) => `<div class="adm-bar"><span class="nm">${esc(label)}</span><span class="track"><i style="width:${pct(n, total)}%"></i></span><span class="vv">${n} · ${pct(n, total)}%</span></div>`).join('');
+  }
+  /* Shaati Plus and income: from the same anonymous records (a device says only whether Plus is on and
+   * where it was bought). Exact amounts live in Google Play Console and Lemon Squeezy. */
+  function plusSection(rows) {
+    const P = root.Plus;
+    const C = root.PAY_CONFIG || {};
+    const has = (k) => rows.filter((r) => r.f && r.f[k]).length;
+    const buyers = has('plus'), web = has('plusWeb'), play = buyers - web, seen = has('plusSeen'), wall = has('plusWall'), tried = has('plusTry');
+    const triedBought = rows.filter((r) => r.f && r.f.plusTry && r.f.plus).length;
+    const share = rows.length ? (buyers / rows.length) * 100 : 0;
+    const GOAL = 10; // % of users who pay
+    const price = +C.price || 0;
+    // Google keeps 15%; Lemon Squeezy about 5% + 50¢ (≈ ₪1.9) per sale
+    const gross = buyers * price;
+    const net = play * price * 0.85 + web * Math.max(0, price * 0.95 - 1.9);
+    const money = (v) => '₪' + Math.round(v).toLocaleString('en-US');
+    const lemon = C.lemon || {};
+    const playState = P && P.available ? '<span class="tag good">פעיל</span>' : App.androidApp ? '<span class="tag warn">לא מוגדר ב-Play Console</span>' : '<span class="tag">נבדק רק מתוך אפליקציית האנדרואיד</span>';
+    const webState = lemon.checkout && +lemon.productId ? '<span class="tag good">פעיל</span>' : '<span class="tag warn">לא מוגדר</span>';
+    return `<div class="section-title">${icon('sparkle', 's')} Shaati Plus והכנסות</div>
+      <div class="card"><div class="kpis">${kpi('קונים', buyers, `${play} באנדרואיד · ${web} באתר`)}${kpi('משלמים', U.num(share, 1) + '%', `מכל המשתמשים · היעד ${GOAL}%`)}${kpi('הכנסה משוערת', money(gross), '≈ ' + money(net) + ' אחרי עמלות')}${kpi('קנו אחרי ניסיון', pct(triedBought, tried) + '%', `${tried} ניסו בחינם`)}</div>
+        <div class="adm-goal"><div class="progress thin"><i style="width:${Math.min(100, (share / GOAL) * 100)}%"></i></div><span class="tiny muted">${share >= GOAL ? 'היעד הושג 🎉' : `עוד ${Math.max(1, Math.ceil((GOAL / 100) * rows.length - buyers))} קונים ליעד של ${GOAL}%`}</span></div>
+        <div class="divider"></div>
+        <div class="tiny muted" style="margin-bottom:6px">המשפך: מכל המשתמשים, כמה הגיעו לכל שלב</div>
+        ${barList([['ראו את Plus', seen], ['הגיעו למכסה חינמית', wall], ['ניסו בחינם', tried], ['קנו', buyers]], rows.length)}
+        <div class="divider"></div>
+        <div class="adm-pay"><span>Google Play (בתוך האפליקציה)</span>${playState}</div>
+        <div class="adm-pay"><span>אתר ו-iPhone (אשראי, Apple Pay, Google Pay, PayPal)</span>${webState}</div>
+        <div class="btn-row" style="margin-top:10px"><a class="btn tonal sm" href="https://play.google.com/console" target="_blank" rel="noopener">${icon('chart', 's')} Google Play Console</a><a class="btn tonal sm" href="https://app.lemonsqueezy.com/orders" target="_blank" rel="noopener">${icon('receipt', 's')} מכירות באתר</a></div>
+        <div class="tiny muted" style="margin-top:8px">מהסטטיסטיקה האנונימית (מכשירים שלא כיבו אותה), מתעדכן כל כמה שעות. הסכומים המדויקים ותשלומי המס בדוחות של Google Play ושל Lemon Squeezy.</div></div>`;
   }
   function render(rows, admins, me) {
     const k = U.todayKey();
@@ -46,6 +77,7 @@
       <div class="card tonal"><div class="kpis">
         ${kpi('משתמשים (מכשירים)', n, `${new7} חדשים השבוע`)}${kpi('פעילים היום', a1)}${kpi('פעילים ב-7 ימים', a7, pct(a7, n) + '% מהכלל')}${kpi('פעילים ב-30 ימים', a30, pct(a30, n) + '% מהכלל')}
       </div></div>
+      ${plusSection(rows)}
       <div class="section-title">${icon('up', 's')} משתמשים חדשים, 30 ימים אחרונים</div>
       <div class="card">${Charts.bars(days.map((d) => ({ label: d.slice(8), value: byFirst.get(d), tip: `${U.fmtDate(d, 'dm')}: ${byFirst.get(d)} חדשים` })), { label: 'משתמשים חדשים לפי יום', height: 170 })}
         <div class="tiny muted">${new30} הצטרפו ב-30 הימים האחרונים.</div></div>
@@ -69,6 +101,7 @@
     </div>`;
   }
 
+  App.adminView = render; // the page from given records (tests)
   App.actions['admin-dashboard'] = async function () {
     if (!App.isAdmin || !root.Cloud || !root.Cloud.user) return;
     const entry = UI.openSheet({ title: 'לוח ניהול', full: true, body: UI.skeleton(4, 'card') });

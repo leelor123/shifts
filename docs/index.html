@@ -2,7 +2,7 @@
 <html lang="he" dir="rtl">
 <head>
 <meta charset="utf-8">
-<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'sha256-esBKHnyw/TlIxgyEKyXdby+OKriDzMb/Cfih44eUw2k=' https://www.gstatic.com https://apis.google.com https://cdnjs.cloudflare.com https://cdn.jsdelivr.net 'wasm-unsafe-eval'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com data:; img-src 'self' data: blob: https:; connect-src 'self' https: wss:; frame-src https://shiftpay-70ab6.firebaseapp.com https://accounts.google.com https://apis.google.com https://*.google.com; worker-src 'self' blob: https://cdnjs.cloudflare.com https://cdn.jsdelivr.net; media-src 'self' data: blob:; manifest-src 'self'; object-src 'none'; base-uri 'self'; form-action 'self'">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'sha256-UHZFXe52vydjYWH0TODQfteAlKOC8UKF5/HUm9NRyr4=' https://www.gstatic.com https://apis.google.com https://cdnjs.cloudflare.com https://cdn.jsdelivr.net 'wasm-unsafe-eval'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com data:; img-src 'self' data: blob: https:; connect-src 'self' https: wss:; frame-src https://shiftpay-70ab6.firebaseapp.com https://accounts.google.com https://apis.google.com https://*.google.com; worker-src 'self' blob: https://cdnjs.cloudflare.com https://cdn.jsdelivr.net; media-src 'self' data: blob:; manifest-src 'self'; object-src 'none'; base-uri 'self'; form-action 'self'">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="theme-color" content="#0d2b6b">
 <meta name="description" content="מעקב משמרות וחישוב שכר אישי: שבתות, חגים, שעות נוספות, נסיעות, נטו משוער וניתוח תלושים — נשמר בחשבון שלך ועובד גם בלי אינטרנט.">
@@ -536,6 +536,10 @@ h1, h2, .topbar h1, .wizard h1, .sheet .sh-head h2, .hero-num, .bday-title, .cha
 /* views: quick, direction-aware entrance (no generic fade-up) */
 .view { animation: none; }
 /* switching tabs: the new screen glides in a little (GPU only, transform). No fading: a page that appeared at 45% and brightened looked like a flash, most of all on home with its bright pay card */
+/* Every screen keeps its own layer for its whole life. Without it the browser gave the screen a layer
+ * for the slide-in and took it away when the slide ended (~0.28s), repainting the whole screen at that
+ * moment: on home, with the pay card's glows, that repaint flickered on a real phone. */
+.view { will-change: transform; }
 .view.enter-next { animation: tab-in-next .26s cubic-bezier(.2, .8, .3, 1); }
 .view.enter-prev { animation: tab-in-prev .26s cubic-bezier(.2, .8, .3, 1); }
 @keyframes tab-in-next { from { transform: translateX(-12px); } }
@@ -1318,6 +1322,9 @@ body.fx .nav .fab:active { transform: scale(.9) rotate(90deg); }
 @keyframes aurora-a { to { transform: translate(-38%, 30%) scale(1.15); } }
 @keyframes aurora-b { to { transform: translate(42%, -26%) scale(1.2); } }
 @keyframes aurora-c { 0% { transform: translate(0, 0) scale(.9); } 50% { transform: translate(-30%, 18%) scale(1.15); } 100% { transform: translate(25%, -12%) scale(1); } }
+/* rounded, clipped cards with moving parts keep one stable layer, so nothing around them gains or loses
+ * a layer when a screen slides in (the same fix as the hour picker); the active tab icon likewise */
+.home-hero, .home-action .btn.start, .timer-card, .recap-card, .nav .pill, .nav .pill svg { will-change: transform; }
 .hh-dial::before { content: ''; position: absolute; inset: 0; border-radius: 50%; background: conic-gradient(from 0deg, transparent 0 290deg, rgba(255, 255, 255, .15) 320deg, rgba(255, 255, 255, .95) 359deg, transparent 360deg); animation: dial-sweep 7s linear infinite; }
 @keyframes dial-sweep { to { transform: rotate(360deg); } }
 .timer-card.running { position: relative; overflow: hidden; isolation: isolate; }
@@ -1741,12 +1748,18 @@ body.fx .recap-card:active { transform: scale(.98); }
  * Pay-card skins: the same declarations colour the card on home (html[data-skin]) and the preview
  * tiles (.sk-<id>). Every stop is dark enough for the card's white text (contrast 5:1 or more).
  * --h tints the card's moving glow and its shadow to match. */
-.sk-gold, html[data-skin="gold"] .home-hero { --h: 40; --grad-hero: radial-gradient(120% 80% at 85% 0%, rgba(255, 214, 120, .28), transparent 60%), linear-gradient(135deg, #6b4400 0%, #8c5f08 52%, #4d3000 100%); }
+.sk-gold, html[data-skin="gold"] .home-hero { --h: 40; --grad-hero: radial-gradient(120% 80% at 85% 0%, rgba(255, 214, 120, .12), transparent 60%), linear-gradient(135deg, #654000 0%, #6f4b05 52%, #4a2e00 100%); }
 .sk-midnight, html[data-skin="midnight"] .home-hero { --h: 228; --grad-hero: radial-gradient(1.5px 1.5px at 18% 28%, rgba(255, 255, 255, .9), transparent), radial-gradient(1.5px 1.5px at 72% 18%, rgba(255, 255, 255, .7), transparent), radial-gradient(1px 1px at 46% 64%, rgba(255, 255, 255, .8), transparent), radial-gradient(1px 1px at 86% 70%, rgba(255, 255, 255, .6), transparent), linear-gradient(135deg, #0b1437 0%, #1b2a6b 60%, #070b20 100%); }
 .sk-sunset, html[data-skin="sunset"] .home-hero { --h: 352; --grad-hero: linear-gradient(135deg, #8a1c3a 0%, #b3361f 55%, #5e1240 100%); }
 .sk-ocean, html[data-skin="ocean"] .home-hero { --h: 192; --grad-hero: linear-gradient(135deg, #04425a 0%, #0a6f7a 55%, #032f4a 100%); }
 .sk-forest, html[data-skin="forest"] .home-hero { --h: 150; --grad-hero: linear-gradient(135deg, #0c3d2a 0%, #17663f 55%, #072a1d 100%); }
 .sk-carbon, html[data-skin="carbon"] .home-hero { --h: 240; --grad-hero: repeating-linear-gradient(45deg, rgba(255, 255, 255, .03) 0 2px, transparent 2px 6px), linear-gradient(135deg, #1c1d22 0%, #34363f 55%, #111216 100%); }
+.sk-royal, html[data-skin="royal"] .home-hero { --h: 272; --grad-hero: radial-gradient(120% 80% at 15% 0%, rgba(255, 200, 90, .2), transparent 60%), linear-gradient(135deg, #2e0a5c 0%, #4b1690 55%, #1c0640 100%); }
+.sk-rose, html[data-skin="rose"] .home-hero { --h: 335; --grad-hero: radial-gradient(110% 70% at 90% 0%, rgba(255, 170, 205, .2), transparent 60%), linear-gradient(135deg, #6e1240 0%, #94204f 55%, #470c2b 100%); }
+.sk-lava, html[data-skin="lava"] .home-hero { --h: 14; --grad-hero: radial-gradient(90% 60% at 20% 100%, rgba(255, 120, 40, .25), transparent 65%), linear-gradient(135deg, #3a0a02 0%, #7d2006 50%, #2a0701 100%); }
+.sk-neon, html[data-skin="neon"] .home-hero { --h: 300; --grad-hero: radial-gradient(80% 60% at 100% 0%, rgba(255, 0, 170, .35), transparent 60%), radial-gradient(80% 60% at 0% 100%, rgba(0, 229, 255, .28), transparent 60%), linear-gradient(135deg, #12052e 0%, #1d0b4a 55%, #0a0220 100%); }
+.sk-ice, html[data-skin="ice"] .home-hero { --h: 200; --grad-hero: radial-gradient(100% 70% at 85% 0%, rgba(255, 255, 255, .08), transparent 60%), linear-gradient(135deg, #0a3350 0%, #134f72 55%, #082640 100%); }
+.sk-galaxy, html[data-skin="galaxy"] .home-hero { --h: 262; --grad-hero: radial-gradient(1.5px 1.5px at 12% 22%, rgba(255, 255, 255, .9), transparent), radial-gradient(1px 1px at 64% 14%, rgba(255, 255, 255, .7), transparent), radial-gradient(1.5px 1.5px at 38% 78%, rgba(255, 255, 255, .8), transparent), radial-gradient(1px 1px at 90% 58%, rgba(255, 255, 255, .6), transparent), radial-gradient(60% 50% at 80% 20%, rgba(180, 90, 255, .3), transparent 70%), radial-gradient(50% 40% at 20% 85%, rgba(60, 140, 255, .25), transparent 70%), linear-gradient(135deg, #120a2e 0%, #2a1260 55%, #0a0618 100%); }
 .skin-pick { display: grid; grid-template-columns: repeat(auto-fill, minmax(84px, 1fr)); gap: 8px; margin-bottom: 16px; }
 .skin-tile { position: relative; display: grid; align-content: space-between; justify-items: start; gap: 6px; min-height: 64px; padding: 8px 10px; border-radius: 14px; border: 0; color: #fff; text-align: start; cursor: pointer; background: var(--grad-hero); box-shadow: var(--sh-1); }
 .skin-tile b { font: 700 1.1rem var(--display); }
@@ -1768,6 +1781,109 @@ body.fx .recap-card:active { transform: scale(.98); }
 .plus-done { display: flex; align-items: center; justify-content: center; gap: 8px; margin-top: 14px; padding: 12px; border-radius: 14px; background: var(--good-bg); color: var(--good); font-weight: 700; }
 .plus-links { display: flex; flex-wrap: wrap; align-items: center; justify-content: center; gap: 12px; margin-top: 10px; }
 .plus-preview { display: inline-flex; align-items: center; gap: 6px; color: var(--on-surface-var); }
+.plus-pay { display: flex; flex-wrap: wrap; justify-content: center; gap: 6px; margin-top: 10px; }
+.plus-pay span { padding: 3px 10px; border-radius: 999px; border: 1px solid var(--line); background: var(--surface-1); font-size: .76rem; font-weight: 600; color: var(--on-surface-var); }
+.plus-code { margin-top: 12px; }
+.plus-code.hot { border-color: var(--brand); box-shadow: 0 0 0 3px var(--brand-soft); }
+.plus-code .btn { margin-top: 4px; }
+.plus-done.trial { background: var(--brand-soft); color: var(--brand-strong); }
+.plus-buy2 { margin-top: 8px; }
+.plus-work { text-align: center; margin-top: 8px; font-weight: 600; color: var(--brand-strong); }
+.limit-sheet .plus-list { margin-top: 4px; }
+.limit-sheet .btn.text.block { margin-top: 6px; }
+/* "try it on your card": the user's own card, in the chosen skin */
+.design-prev { margin: 2px 0 14px; pointer-events: none; }
+.sheet .design-prev .home-hero { --h: inherit; --grad-hero: inherit; margin: 0; }
+.home-hero .hh-skin { position: absolute; top: 10px; inset-inline-end: 10px; z-index: 1; display: grid; place-items: center; width: 40px; height: 40px; padding: 0; border-radius: 50%; border: 1px solid rgba(255, 255, 255, .24); background: rgba(255, 255, 255, .14); color: #fff; cursor: pointer; }
+.home-hero .hh-skin:active { transform: scale(.92); }
+.home-hero:has(.hh-skin) .hh-label { padding-inline: 44px; }
+/* a quiet offer on home, a few times at most */
+.card.plus-nudge { position: relative; border: 0; color: #fff; background: var(--grad-hero); box-shadow: 0 14px 28px -18px hsla(var(--h), 70%, 40%, .8); }
+.plus-nudge .pn-t { font-weight: 700; padding-inline-end: 34px; }
+.plus-nudge .pn-s { margin-top: 4px; font-size: .88rem; color: rgba(255, 255, 255, .9); }
+.plus-nudge .pn-a { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin-top: 12px; }
+.plus-nudge .btn.sm:not(.text) { background: #fff; color: #3b2500; }
+.plus-nudge .btn.text { color: #fff; }
+.plus-nudge .plus-nudge-x { position: absolute; top: 6px; inset-inline-end: 6px; color: #fff; background: transparent; border: 0; }
+.plus-badge { display: inline-block; margin-inline-end: 6px; padding: 0 8px; border-radius: 999px; background: var(--grad-money); color: #2b1a00; font-size: .7rem; font-weight: 700; line-height: 1.6; vertical-align: 1px; }
+.adm-goal { display: grid; gap: 4px; margin-top: 10px; }
+.adm-pay { display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 6px 0; font-size: .9rem; }
+
+/* ---------------- the champions table (views-leaderboard.js) ---------------- */
+.lb-card { margin-bottom: 10px; }
+.lb-games { flex-wrap: nowrap; overflow-x: auto; scrollbar-width: none; margin-bottom: 10px; }
+.lb-games::-webkit-scrollbar { display: none; }
+.lb-periods { margin-bottom: 8px; }
+.lb-periods button { font-size: .8rem; padding-inline: 4px; }
+.lb-mine { display: flex; align-items: center; gap: 8px; margin: 6px auto; padding: 4px 6px 4px 12px; border-radius: 999px; border: 1px solid var(--line); background: var(--surface-1); color: var(--on-surface); font: 600 .85rem var(--font); cursor: pointer; }
+.lb-reset { display: flex; align-items: center; justify-content: center; gap: 6px; margin: 6px 0 14px; text-align: center; }
+.lb-podium { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); align-items: end; gap: 8px; margin: 18px 0 14px; }
+.lb-pod { display: grid; justify-items: center; gap: 4px; text-align: center; min-width: 0; }
+.lb-pod .lb-n { font-size: .85rem; max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.lb-pod .lb-s { font: 700 .95rem var(--display); color: var(--brand-strong); }
+.lb-pod.empty .lb-n { color: var(--on-surface-var); font-weight: 500; }
+.lb-av { position: relative; display: grid; place-items: center; width: 56px; height: 56px; border-radius: 50%; background: var(--surface-2); font-size: 1.8rem; line-height: 1; box-shadow: var(--sh-1); }
+.lb-av.sm { width: 28px; height: 28px; font-size: 1rem; box-shadow: none; }
+.lb-av[class*="sk-"] { background: var(--grad-hero); }
+.lb-pod.p1 .lb-av { width: 68px; height: 68px; font-size: 2.2rem; box-shadow: 0 0 0 3px #f5b400, var(--sh-1); }
+.lb-pod.p2 .lb-av { box-shadow: 0 0 0 3px #a3adbb, var(--sh-1); }
+.lb-pod.p3 .lb-av { box-shadow: 0 0 0 3px #d08a4f, var(--sh-1); }
+.lb-pod.me .lb-n { color: var(--brand-strong); }
+.lb-crown { position: absolute; top: -20px; font-size: 1.35rem; font-style: normal; transform: rotate(-14deg); }
+.lb-step { width: 100%; display: grid; place-items: center; margin-top: 4px; border-radius: 12px 12px 4px 4px; color: #2b1a00; font: 700 1.2rem var(--display); }
+.lb-pod.p1 .lb-step { height: 64px; background: linear-gradient(180deg, #ffcf4a, #f0a800); }
+.lb-pod.p2 .lb-step { height: 46px; background: linear-gradient(180deg, #d6dce5, #a3adbb); }
+.lb-pod.p3 .lb-step { height: 34px; background: linear-gradient(180deg, #e9ac7a, #d08a4f); }
+.lb-plus { display: inline-block; margin-inline-start: 6px; padding: 0 6px; border-radius: 999px; background: var(--grad-money); color: #2b1a00; font: 700 .62rem/1.6 var(--font); font-style: normal; vertical-align: 2px; }
+.lb-list { list-style: none; margin: 0; padding: 0; display: grid; gap: 6px; }
+.lb-row { display: flex; align-items: center; gap: 10px; min-height: 48px; padding: 8px 12px; border-radius: 14px; background: var(--surface-1); border: 1px solid var(--line); }
+.lb-row .lb-r { width: 24px; flex: none; text-align: center; font: 700 .9rem var(--display); color: var(--on-surface-var); }
+.lb-row .lb-e { font-size: 1.3rem; flex: none; }
+.lb-row .lb-n { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-weight: 600; }
+.lb-row .lb-n small { font-weight: 400; }
+.lb-row .lb-s { font: 700 .95rem var(--display); flex: none; }
+.lb-row.me { border-color: var(--brand); box-shadow: 0 0 0 2px var(--brand-soft); }
+.lb-row.plus { border-color: transparent; color: #fff; background: var(--grad-hero); }
+.lb-row.plus .lb-r { color: #fff; }
+.lb-row.me.plus { box-shadow: 0 0 0 3px var(--brand); }
+.lb-rm { width: 36px; height: 36px; flex: none; }
+.lb-row.plus .lb-rm { color: #fff; }
+.lb-admin { display: flex; flex-wrap: wrap; gap: 4px; align-items: center; margin-top: 8px; }
+.lb-empty .btn { margin-top: 12px; }
+.lb-me { display: flex; align-items: center; gap: 10px; }
+.lb-me-t { flex: 1; min-width: 0; display: grid; gap: 1px; }
+.lb-me-t small { color: var(--on-surface-var); font-size: .8rem; }
+.lb-join .btn { margin-top: 12px; }
+.lb-nick { display: flex; gap: 6px; align-items: center; }
+.lb-nick .input { flex: 1; min-width: 0; }
+.lb-err { display: block; min-height: 1.3em; margin-top: 4px; color: var(--bad); }
+.lb-emoji { display: grid; grid-template-columns: repeat(auto-fill, minmax(44px, 1fr)); gap: 6px; margin-bottom: 14px; }
+.lb-emoji button { height: 44px; border-radius: 12px; border: 1px solid var(--line); background: var(--surface-1); font-size: 1.4rem; cursor: pointer; }
+.lb-emoji button.on { border-color: var(--brand); background: var(--brand-soft); box-shadow: 0 0 0 2px var(--brand-soft); }
+.lb-preview { margin-bottom: 14px; }
+.lb-note { margin: 4px 0 12px; line-height: 1.5; }
+.gm-rank { display: flex; flex-wrap: wrap; align-items: center; justify-content: center; gap: 6px; margin: 2px 0 10px; text-align: center; }
+
+/* ---------------- advanced analysis (views-analysis.js) ---------------- */
+.an-entry { display: flex; align-items: center; gap: 12px; width: 100%; margin: 4px 0 12px; padding: 12px 14px; border-radius: 18px; border: 1px solid var(--line); background: var(--surface-1); color: var(--on-surface); text-align: start; cursor: pointer; box-shadow: var(--sh-1); font: inherit; }
+.an-entry-t { flex: 1; min-width: 0; display: grid; gap: 2px; }
+.an-entry-t small { color: var(--on-surface-var); font-size: .8rem; }
+.an-lead { margin-bottom: 10px; line-height: 1.5; }
+.an-months { display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); gap: 6px; height: 130px; margin-bottom: 10px; }
+.an-m { display: grid; grid-template-rows: auto 1fr auto; justify-items: center; gap: 4px; min-height: 0; }
+.an-mb { width: 70%; height: 100%; display: flex; align-items: flex-end; }
+.an-mb i { display: block; width: 100%; border-radius: 6px 6px 2px 2px; background: var(--brand); }
+.an-mv { font: 600 .75rem var(--display); color: var(--on-surface-var); min-height: 1em; }
+.an-ml { font-size: .72rem; color: var(--on-surface-var); }
+.an-rec { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px 12px; }
+.an-rec > div { display: grid; gap: 2px; align-content: start; }
+.an-rec span { font-size: .8rem; color: var(--on-surface-var); }
+.an-rec b { font: 700 1.15rem var(--display); }
+.an-rec small { font-size: .74rem; color: var(--on-surface-var); line-height: 1.4; }
+.an-if { display: grid; gap: 10px; }
+.an-if > div { display: flex; gap: 8px; align-items: flex-start; line-height: 1.5; }
+.an-if svg { flex: none; margin-top: 3px; color: var(--brand-strong); }
+.an-left { display: flex; flex-wrap: wrap; justify-content: center; align-items: center; gap: 4px; margin-top: 14px; color: var(--on-surface-var); }
 
 </style>
 </head>
@@ -1787,8 +1903,8 @@ body.fx .recap-card:active { transform: scale(.98); }
 <div id="print-root" aria-hidden="true"></div>
 <noscript><div style="padding:24px;font-family:sans-serif">האפליקציה דורשת JavaScript.</div></noscript>
 <script>
-window.APP_VERSION = '1.12.0';
-window.APP_BUILD = '1.12.0-266f66c8';
+window.APP_VERSION = '1.14.0';
+window.APP_BUILD = '1.14.0-f6cd6914';
 /* ---- core/util.js ---- */
 /* ============================================================
  * util.js — date/time helpers and formatting.
@@ -2438,7 +2554,8 @@ window.APP_BUILD = '1.12.0-266f66c8';
         push: true,
       },
       // --- appearance ---
-      theme: 'system', accent: 'candy', fontScale: 1, font: 'rubik', skin: '',
+      theme: 'system', accent: 'candy', fontScale: 1, font: 'rubik', skin: '', plusKey: '',
+      lb: { on: false, n: '', e: '', bg: '' }, // the games' champions table: joined, nickname, emoji, background (Plus)
       fx: { effects: true, sound: true, haptic: true }, // tap pulse / confetti, click sounds, vibration
       // --- security ---
       lock: { enabled: false, hash: null, salt: null, timeoutMin: 1 },
@@ -4885,6 +5002,199 @@ window.APP_BUILD = '1.12.0-266f66c8';
   root.Recap = { build, funItems, clockStyle, ITEMS };
 })(typeof window !== 'undefined' ? window : globalThis);
 
+/* ---- core/analysis.js ---- */
+/* ============================================================
+ * analysis.js — "advanced analysis" of the past year's shifts (pure).
+ *
+ * Which day and which time of day pay best per hour, how the real
+ * hourly pay moved month by month, the records, how much came from
+ * premiums (overtime, Shabbat and holidays, nights), and two "what if"
+ * sums. Pay per hour = the pay for the work itself (with premiums),
+ * without travel, bonuses or tips, so days are compared fairly.
+ * ============================================================ */
+(function (root) {
+  'use strict';
+  const U = root.U;
+  const SLOTS = [
+    { id: 'morning', name: 'בוקר', from: 5, to: 12 },
+    { id: 'noon', name: 'צהריים', from: 12, to: 17 },
+    { id: 'evening', name: 'ערב', from: 17, to: 22 },
+    { id: 'night', name: 'לילה', from: 22, to: 29 },
+  ];
+  const r2 = (n) => Math.round(n * 100) / 100;
+  const slotOf = (ms) => {
+    let h = new Date(ms).getHours();
+    if (h < 5) h += 24;
+    return SLOTS.find((s) => h >= s.from && h < s.to) || SLOTS[3];
+  };
+  const group = (keys) => new Map(keys.map((k) => [k, { n: 0, hours: 0, wage: 0 }]));
+  const add = (g, r) => { g.n++; g.hours += r.paidHours; g.wage += r.wage; };
+  const perHour = (g) => (g.hours > 0 ? r2(g.wage / g.hours) : 0);
+
+  /**
+   * results: the model's results; today: 'YYYY-MM-DD'.
+   * Returns { enough: false, count } when there are fewer than 3 done shifts in the past year.
+   */
+  function analyse(results, today) {
+    const from = U.addDays(today, -364);
+    const list = [...results].filter((r) => r && r.kind === 'shift' && r.status === 'done' && r.paidHours > 0 && r.dateKey >= from && r.dateKey <= today)
+      .sort((a, b) => a.start - b.start);
+    if (list.length < 3) return { enough: false, count: list.length };
+    const all = { n: 0, hours: 0, wage: 0 };
+    const days = group([0, 1, 2, 3, 4, 5, 6]);
+    const slots = group(SLOTS.map((s) => s.id));
+    const thisMonth = today.slice(0, 7);
+    const monthKeys = Array.from({ length: 6 }, (_, i) => U.addMonthKey(thisMonth, i - 5));
+    const months = group(monthKeys);
+    let premiums = 0, bestShift = null, longest = null;
+    for (const r of list) {
+      add(all, r);
+      add(days.get(U.dow(r.dateKey)), r);
+      add(slots.get(slotOf(r.start).id), r);
+      const m = months.get(r.dateKey.slice(0, 7));
+      if (m) add(m, r);
+      premiums += (r.otPremium || 0) + (r.restPremium || 0) + (r.nightPremium || 0) + (r.evePremium || 0);
+      if (!bestShift || r.total > bestShift.total) bestShift = r;
+      if (!longest || r.paidHours > longest.paidHours) longest = r;
+    }
+    const avgHour = perHour(all);
+    // a day or a time of day counts only with at least 2 shifts (one lucky shift is not a pattern)
+    const minN = list.length >= 8 ? 2 : 1;
+    const dayRows = [...days].map(([d, g]) => ({ d, name: U.HEB_DAYS[d], n: g.n, perHour: perHour(g), perShift: g.n ? r2(g.wage / g.n) : 0 }));
+    const slotRows = SLOTS.map((s) => { const g = slots.get(s.id); return { id: s.id, name: s.name, n: g.n, perHour: perHour(g), perShift: g.n ? r2(g.wage / g.n) : 0 }; });
+    const pick = (rows) => rows.filter((x) => x.n >= minN).sort((a, b) => b.perHour - a.perHour)[0] || null;
+    const bestDay = pick(dayRows), bestSlot = pick(slotRows);
+    const monthRows = monthKeys.map((k) => { const g = months.get(k); return { mk: k, n: g.n, hours: r2(g.hours), wage: r2(g.wage), perHour: perHour(g) }; });
+    // the trend: the last month with shifts against the average of the months before it
+    const worked = monthRows.filter((x) => x.n > 0);
+    let trend = null;
+    if (worked.length >= 2) {
+      const last = worked[worked.length - 1];
+      const before = worked.slice(0, -1);
+      const prevAvg = r2(before.reduce((s, x) => s + x.wage, 0) / Math.max(0.01, before.reduce((s, x) => s + x.hours, 0)));
+      trend = { mk: last.mk, perHour: last.perHour, prev: prevAvg, diff: r2(last.perHour - prevAvg) };
+    }
+    const bestMonth = monthRows.filter((x) => x.n > 0).sort((a, b) => b.wage - a.wage)[0] || null;
+    // what if: one more shift a week on the best day; and 2 ₪ more an hour on the same hours
+    const weeks = Math.max(1, (Date.parse(today) - Date.parse(list[0].dateKey)) / (7 * 864e5));
+    const hoursPerMonth = Math.min(all.hours, (all.hours / weeks) * (52 / 12));
+    const whatIf = {
+      extraShift: bestDay ? Math.round(bestDay.perShift * 52 / 12) : 0,
+      raise2: Math.round(2 * hoursPerMonth),
+    };
+    return {
+      enough: true, count: list.length, hours: r2(all.hours), wage: r2(all.wage), avgHour,
+      avgShift: { hours: r2(all.hours / all.n), wage: r2(all.wage / all.n) },
+      days: dayRows, bestDay, slots: slotRows, bestSlot, months: monthRows, trend, bestMonth,
+      premiums: r2(premiums), premiumShare: all.wage ? Math.round((premiums / all.wage) * 100) : 0,
+      bestShift: { dateKey: bestShift.dateKey, total: r2(bestShift.total), hours: r2(bestShift.paidHours) },
+      longest: { dateKey: longest.dateKey, hours: r2(longest.paidHours) },
+      whatIf,
+    };
+  }
+
+  root.Analysis = { analyse, SLOTS, slotOf };
+})(typeof window !== 'undefined' ? window : globalThis);
+
+/* ---- core/leaderboard.js ---- */
+/* ============================================================
+ * leaderboard.js — the games' "champions table" (pure, tested).
+ *
+ * Each player who joined has one public row, lb/{uid}: a nickname, an
+ * emoji, a background (Shaati Plus) and, per game, the best score of
+ * today (d), this week (w, Sunday to Saturday), this month (m), this
+ * year (y) and of all time (a). A period's score is stored together
+ * with the period, as period × 100000 + score, so a board is one range
+ * on one field (no special database index), and yesterday's score
+ * never counts for today. firestore.rules checks the same shape and
+ * the same highest scores (MAX).
+ * ============================================================ */
+(function (root) {
+  'use strict';
+  const U = root.U;
+  const P = 100000;
+  const PERIODS = ['d', 'w', 'm', 'y', 'a'];
+  /** the highest score each game can give (rounding up generously); the rules refuse anything above */
+  const MAX = { coins: 5000, quiz: 3000, facts: 10, pairs: 140, hours: 500 };
+  const EMOJI = ['🦊', '🐯', '🦉', '🐬', '🐺', '🦅', '🦔', '🐧', '🦜', '🐻', '🐢', '🐳', '🐼', '🦁', '🐸', '🐙', '🦄', '🐝', '⚡', '🔥', '⭐', '🚀', '🎧', '⚽'];
+  const NOUNS = ['שועל', 'נמר', 'ינשוף', 'דולפין', 'זאב', 'נשר', 'קיפוד', 'פינגווין', 'תוכי', 'דוב', 'צב', 'לוויתן', 'אריה', 'צפרדע', 'תמנון', 'חד קרן'];
+  const ADJS = ['זריז', 'חכם', 'אמיץ', 'מהיר', 'שמח', 'ערני', 'סקרן', 'נועז', 'רגוע', 'חרוץ'];
+  // nicknames are public: no swearing, no phone numbers (5 digits or more in a row)
+  const BAD = ['זונה', 'זונות', 'כוס', 'זין', 'זיין', 'מזדיין', 'שרמוט', 'שרמוטה', 'מניאק', 'קוקסינל', 'נאצי', 'היטלר', 'מחבל',
+    'fuck', 'shit', 'bitch', 'dick', 'cock', 'pussy', 'porn', 'sex', 'nazi', 'hitler', 'nigg', 'cunt', 'whore', 'slut'];
+  const NICK_RE = /^[א-תa-zA-Z0-9 _.-]{2,16}$/;
+
+  const num = (k) => +k.replace(/-/g, '');
+  /** The period keys of a day: { d: 20261015, w: 20261011 (its Sunday), m: 202610, y: 2026 }. */
+  function keys(dateKey) {
+    return { d: num(dateKey), w: num(U.addDays(dateKey, -U.dow(dateKey))), m: num(dateKey.slice(0, 7)), y: +dateKey.slice(0, 4) };
+  }
+  const pack = (key, score) => key * P + score;
+  const scoreOf = (v) => (Number.isFinite(+v) ? +v % P : 0);
+  const keyOf = (v) => Math.floor(+v / P);
+  /** The range of values that belong to a period now: [from, to). All time: every value. */
+  function range(period, dateKey) {
+    if (period === 'a') return null;
+    const k = keys(dateKey)[period];
+    return [k * P, (k + 1) * P];
+  }
+  /** A game's stored score in a period now (0 when the stored one is from an earlier period). */
+  function scoreIn(gameRow, period, dateKey) {
+    const v = gameRow && gameRow[period];
+    if (v == null) return 0;
+    if (period === 'a') return +v || 0;
+    return keyOf(v) === keys(dateKey)[period] ? scoreOf(v) : 0;
+  }
+  /**
+   * A new score for a game: the periods it improves, as the values to store ({} = no change).
+   * Scores outside 0..MAX are cut to the range (the rules would refuse them).
+   */
+  function improve(gameRow, game, score, dateKey) {
+    const s = Math.max(0, Math.min(MAX[game] || 0, Math.round(+score || 0)));
+    const out = {};
+    if (!(s > 0)) return out;
+    const k = keys(dateKey);
+    for (const p of PERIODS) {
+      if (s <= scoreIn(gameRow, p, dateKey)) continue;
+      out[p] = p === 'a' ? s : pack(k[p], s);
+    }
+    return out;
+  }
+  /** A nickname is shown to everyone: '' when fine, otherwise what is wrong with it. */
+  function nickProblem(n) {
+    const t = String(n || '').trim().replace(/\s+/g, ' ');
+    if (t.length < 2) return 'לפחות 2 תווים';
+    if (t.length > 16) return 'עד 16 תווים';
+    if (!NICK_RE.test(t)) return 'רק אותיות, מספרים ורווחים';
+    if (/\d{5,}/.test(t)) return 'בלי מספרים ארוכים (כמו מספר טלפון)';
+    // short words only as a whole word (so 'מזין' or 'Essex' pass), longer ones anywhere
+    const words = t.toLowerCase().split(/[\s_.-]+/);
+    const low = words.join('');
+    if (BAD.some((w) => (w.length <= 3 ? words.includes(w) : low.includes(w)))) return 'הכינוי הזה לא מתאים לטבלה';
+    return '';
+  }
+  /** A random fun nickname ("שועל זריז 27"); seed makes it repeatable in tests. */
+  function randomNick(seed) {
+    let x = (seed == null ? Math.floor(Math.random() * 1e9) : seed) >>> 0;
+    const next = () => { x = (x * 1664525 + 1013904223) >>> 0; return x; };
+    const n = NOUNS[next() % NOUNS.length], a = ADJS[next() % ADJS.length];
+    return `${n} ${a} ${10 + (next() % 90)}`;
+  }
+  /** "until midnight" / "until Sunday" … for each period, from a date and an hour. */
+  function resetText(period, dateKey, now) {
+    if (period === 'd') {
+      const d = new Date(now); const left = (24 - d.getHours()) * 60 - d.getMinutes();
+      return left > 60 ? `מתאפס בעוד ${Math.floor(left / 60)} שעות` : `מתאפס בעוד ${Math.max(1, left)} דקות`;
+    }
+    if (period === 'w') { const n = 7 - U.dow(dateKey); return n === 1 ? 'מתאפס מחר (יום ראשון)' : `מתאפס בעוד ${n} ימים`; }
+    if (period === 'm') return `מתאפס ב-1 ב${U.HEB_MONTHS[(+dateKey.slice(5, 7)) % 12]}`;
+    if (period === 'y') return `מתאפס ב-1 בינואר ${+dateKey.slice(0, 4) + 1}`;
+    return 'השיאים של כל הזמנים';
+  }
+
+  root.Leaderboard = { P, PERIODS, MAX, EMOJI, keys, pack, scoreOf, keyOf, range, scoreIn, improve, nickProblem, randomNick, resetText };
+})(typeof window !== 'undefined' ? window : globalThis);
+
 /* ---- app/ui.js ---- */
 /* ============================================================
  * ui.js — small UI toolkit: icons, escaping, toasts, bottom
@@ -4975,6 +5285,7 @@ window.APP_BUILD = '1.12.0-266f66c8';
     star: '<path d="m12 2.5 2.9 6 6.6.9-4.8 4.6 1.2 6.5L12 17.4l-5.9 3.1 1.2-6.5L2.5 9.4l6.6-.9z"/>',
     repeat: '<path d="m17 2 4 4-4 4"/><path d="M3 11V9a3 3 0 0 1 3-3h15M7 22l-4-4 4-4"/><path d="M21 13v2a3 3 0 0 1-3 3H3"/>',
     smile: '<circle cx="12" cy="12" r="9"/><path d="M8.5 14a4.5 4.5 0 0 0 7 0M9 9.5h.01M15 9.5h.01"/>',
+    trophy: '<path d="M7 4h10v5a5 5 0 0 1-10 0z"/><path d="M7 6H4.5a2.5 2.5 0 0 0 2.6 4M17 6h2.5a2.5 2.5 0 0 1-2.6 4M12 14v4M8 21h8M9.5 18h5"/>',
     game: '<rect x="2.5" y="7" width="19" height="11" rx="5.5"/><path d="M7.5 10.5v4M5.5 12.5h4M15.5 11.5h.01M18 13.5h.01"/>',
     rocket: '<path d="M5 15c-1.5 1.3-2 5-2 5s3.7-.5 5-2c.7-.8.7-2.1-.1-2.9a2.2 2.2 0 0 0-2.9-.1z"/><path d="m12 15-3-3a22 22 0 0 1 2-3.9A12.9 12.9 0 0 1 22 2c0 2.7-.8 7.5-6 11a22.4 22.4 0 0 1-4 2z"/><path d="M9 12H4s.6-3 2-4c1.6-1.1 5 0 5 0M12 15v5s3-.6 4-2c1.1-1.6 0-5 0-5"/>',
   };
@@ -6113,7 +6424,9 @@ window.APP_BUILD = '1.12.0-266f66c8';
 
   // meta that describes this phone (account link, sync progress), never taken from a backup
   const DEVICE_META = ['cloudUid', 'cloudEmail', 'cloudName', 'cloudPhoto', 'cloudReady', 'lastSync', 'designV2', 'chat', 'chatShareData',
-    'installId', 'statsSentAt', 'activeDays', 'firstActiveDay', 'lastActiveDay'];
+    'installId', 'statsSentAt', 'activeDays', 'firstActiveDay', 'lastActiveDay',
+    // Shaati Plus is checked on each phone (Google Play / the purchase code): never taken from a backup file
+    'plus', 'plusInst', 'plusPreview', 'plusSeen', 'plusTrial', 'plusTrialEnd', 'plusNudge', 'plusUse', 'plusWall'];
   const SYNC_META = ['pendingDeletes', 'settingsDirty', 'activeDirty', 'activeUpdatedAt'];
   /** Values that end up inside HTML attributes must have a safe shape. */
   function safeRecord(store, r) {
@@ -6352,8 +6665,9 @@ window.APP_BUILD = '1.12.0-266f66c8';
   async function exportBackup(includeFiles) {
     const out = {
       app: 'shiftpay', schemaVersion: SCHEMA_VERSION, appVersion: root.APP_VERSION, exportedAt: new Date().toISOString(),
-      settings: Object.assign({}, S.settings, { ai: Object.assign({}, S.settings.ai, { apiKey: '' }), lock: Object.assign({}, S.settings.lock) }),
-      meta: S.meta, activeShift: S.activeShift,
+      // keys stay out of files: the AI key, and the Shaati Plus purchase code (a shared backup would give it away)
+      settings: Object.assign({}, S.settings, { ai: Object.assign({}, S.settings.ai, { apiKey: '' }), lock: Object.assign({}, S.settings.lock), plusKey: '' }),
+      meta: Object.fromEntries(Object.entries(S.meta).filter(([k]) => !/^plus/.test(k))), activeShift: S.activeShift,
     };
     for (const s of LIST_STORES) out[s] = S[s];
     if (includeFiles) {
@@ -6424,11 +6738,13 @@ window.APP_BUILD = '1.12.0-266f66c8';
       throw new Error('הקובץ פגום ואי אפשר לשחזר ממנו. הנתונים בטלפון לא השתנו.');
     }
     const keepKey = S.settings && S.settings.ai ? S.settings.ai.apiKey : '';
+    const keepPlus = (S.settings && S.settings.plusKey) || '';
     for (const s of SYNC_STORES) for (const x of incoming[s]) delete x._syncedAt; // that sync state belongs to the device that made the backup
     for (const r of incoming.roles) safeRecord('roles', r);
     if (mode === 'replace') {
       S.settings = mergeDeep(root.Defaults.defaultSettings(), incoming.settings || {});
       S.settings.ai.apiKey = keepKey;
+      S.settings.plusKey = keepPlus;
       // keep this phone's account link and sync bookkeeping; take everything else from the backup
       const device = {};
       for (const k of DEVICE_META) if (S.meta[k] !== undefined) device[k] = S.meta[k];
@@ -7318,6 +7634,7 @@ window.APP_BUILD = '1.12.0-266f66c8';
     App.pendingAction = null;
     if (action === 'start' && !S.activeShift) App.actions['timer-start']();
     if (action === 'add') App.sheetsApi.shiftEditor();
+    if (action === 'plus' && root.Plus) setTimeout(() => root.Plus.sheet(), 600); // back from the web checkout (?action=plus): straight to the code field
     setTimeout(() => { App.runInsights(); App.autoBackupCheck(); }, 1200);
     if (root.Plus) root.Plus.init().catch(() => {}); // is Shaati Plus for sale here, and owned? (Google Play, Android app only)
     if (App.whatsNew) App.whatsNew();
@@ -7926,6 +8243,7 @@ window.FIREBASE_CONFIG = {
     detach();
     if (root.Stats) await root.Stats.forget();
     if (root.Support) await root.Support.forget();
+    if (root.Champions) await root.Champions.forget();
     for (const st of SYNC.concat(['kv'])) {
       const snap = await fs.getDocs(fs.collection(db, 'users', uid, st));
       for (let i = 0; i < snap.docs.length; i += 400) {
@@ -8004,6 +8322,9 @@ window.FIREBASE_CONFIG = {
         bio: !!S.settings.lock.bioId, dark: S.settings.theme === 'dark', fxOff: !!(S.settings.fx && S.settings.fx.effects === false),
         goal: +S.settings.goal.amount > 0, demo: !!S.settings.demo, planned: S.shifts.some((s) => s.status === 'planned'),
         roles: App.roles().length > 1, notif: ('Notification' in root) && Notification.permission === 'granted',
+        // Shaati Plus, for the admin dashboard's sales numbers (yes/no only)
+        plus: !!(S.meta.plus && S.meta.plus.active), plusWeb: !!(S.meta.plus && S.meta.plus.active && S.meta.plus.src === 'web'), plusSeen: !!S.meta.plusSeen,
+        plusWall: !!S.meta.plusWall, plusTry: !!S.meta.plusTrial, // reached a free allowance / started the free trial (16 keys: the most the rules allow)
       },
       t: Date.now(),
     };
@@ -8051,20 +8372,49 @@ window.FIREBASE_CONFIG = {
   Stats._record = record;
 })(typeof window !== 'undefined' ? window : globalThis);
 
+/* ---- app/pay-config.js ---- */
+/* ============================================================
+ * pay-config.js — public settings of the payments (no secrets here: a
+ * checkout link, a product number and a price are public by nature).
+ *
+ * Inside the Android app from Google Play, Shaati Plus is sold only through
+ * Google Play (its product id is in plus.js). On the web and on iPhone it is
+ * sold through Lemon Squeezy: card, Apple Pay, Google Pay and PayPal, with VAT
+ * handled by them. Empty values = that way of buying is off and out of sight.
+ * ============================================================ */
+window.PAY_CONFIG = {
+  lemon: {
+    checkout: '', // the product's "Share" link, e.g. https://<store>.lemonsqueezy.com/buy/<id>
+    productId: 0, // the product's number (Products › the product › ID): every purchase code is checked against it
+    price: '', // as shown on the button, e.g. '₪9.90'
+  },
+  price: 9.9, // the price in shekels: the income estimate in the admin dashboard, and "≈ N minutes of your work"
+};
+
 /* ---- app/plus.js ---- */
 /* ============================================================
- * plus.js — "Shaati Plus": an optional one-time purchase through Google
- * Play (Digital Goods API + Payment Request, inside the Android app).
+ * plus.js — "Shaati Plus": an optional one-time purchase.
  *
  * Everything the app does stays free. Plus adds skins for the pay card on
  * home and says thank you; no ads, no reminders that interrupt. Nothing about
- * Plus shows until the product exists in Google Play (or for an admin who
+ * Plus shows until a way of buying it is set up (or for an admin who
  * previews it), so without it the app looks exactly the same.
  *
- * Ownership is read from Google Play when the app starts and after a
- * purchase, not only remembered on this phone: a refund or a new phone with
- * the same Google account is handled the same way. When Google Play cannot
- * be reached (offline) what was known is kept.
+ * Two ways of buying, by where the app runs:
+ *  - inside the Android app from Google Play: only Google Play Billing
+ *    (Digital Goods API + Payment Request; card, Google Pay, PayPal or Play
+ *    balance, whatever the account has). Google's rules allow nothing else
+ *    there, so no other way is shown or mentioned;
+ *  - on the web and on iPhone: Lemon Squeezy's checkout (card, Apple Pay,
+ *    Google Pay, PayPal; they handle VAT), which emails a purchase code. The
+ *    code is checked with Lemon Squeezy's licence service (no server of ours,
+ *    no secret in the app) and saved in the account, so every phone of that
+ *    account turns Plus on by itself — the Android app too, which may honour a
+ *    purchase made elsewhere.
+ *
+ * Every start asks both: any "yes" turns Plus on, "no" from all of them
+ * (a refund) turns it off, and no answer (offline) keeps what was known.
+ * Settings (pay-config.js): the web checkout link, product number and price.
  * ============================================================ */
 (function (root) {
   'use strict';
@@ -8073,59 +8423,122 @@ window.FIREBASE_CONFIG = {
   const { icon, esc } = UI;
   const BILLING = 'https://play.google.com/billing';
   const SKU = 'shaati_plus'; // the in-app product's id in Google Play Console (one-time, not a subscription)
+  const LS_API = 'https://api.lemonsqueezy.com/v1/licenses/';
   // Pay-card skins (styles-v3.css .sk-<id>): dark enough everywhere for the card's white text
   const SKINS = {
     gold: 'זהב', midnight: 'חצות', sunset: 'שקיעה', ocean: 'אוקיינוס', forest: 'יער', carbon: 'קרבון',
+    royal: 'מלכותי', rose: 'ורד', lava: 'לבה', neon: 'ניאון', ice: 'קרח', galaxy: 'גלקסיה',
   };
+  const DAY = 86400000;
+  const TRIAL_DAYS = 3; // a free trial, once per phone, wherever Plus can be bought
+  const cfg = () => (root.PAY_CONFIG && root.PAY_CONFIG.lemon) || {};
   const Plus = { SKU, SKINS, available: false, price: '' };
   const owned = () => !!(S.meta.plus && S.meta.plus.active);
   Plus.owned = owned;
-  /** Plus features are on: bought, or an admin previewing them on this phone. */
-  Plus.active = () => owned() || (!!App.isAdmin && !!S.meta.plusPreview);
+  /** 'play' | 'web' | '' — where this phone's Plus comes from. */
+  Plus.source = () => (owned() ? S.meta.plus.src || 'play' : '');
+  /** Inside the Android app from Google Play: it may sell only through Google Play. */
+  const inPlayApp = () => !!App.androidApp || typeof root.getDigitalGoodsService === 'function';
+  Plus.inPlayApp = inPlayApp;
+  /** Buying on the web (card, Apple Pay, Google Pay, PayPal through Lemon Squeezy) is set up and allowed here. */
+  Plus.webShop = () => { const c = cfg(); return !!(c.checkout && +c.productId) && !inPlayApp(); };
+  /** Plus features are on: bought, in the free trial, or an admin previewing them on this phone. */
+  Plus.active = () => owned() || Plus.inTrial() || (!!App.isAdmin && !!S.meta.plusPreview);
   /** Anything about Plus is shown only when it can be bought here, or is already on. */
-  Plus.visible = () => Plus.available || Plus.active();
+  Plus.visible = () => Plus.available || Plus.webShop() || Plus.active();
   /** The pay-card skin in use ('' = the regular card). */
   Plus.skin = () => (Plus.active() && SKINS[S.settings.skin] ? S.settings.skin : '');
 
-  async function service() {
-    if (typeof root.getDigitalGoodsService !== 'function') return null; // not inside the Android app from Google Play
-    try { return await root.getDigitalGoodsService(BILLING); } catch (e) { return null; }
+  async function setOwned(on, src) {
+    const cur = S.meta.plus || {};
+    if (!!cur.active === on && (!on || cur.src === src)) return;
+    await Store.setMeta({ plus: { active: on, src: on ? src : '', at: Date.now() } });
+    App.applyTheme();
+    App.rerender();
   }
   function fmtPrice(p) {
     if (!p) return '';
     try { return new Intl.NumberFormat('he-IL', { style: 'currency', currency: p.currency, maximumFractionDigits: 2 }).format(+p.value); } catch (e) { return `${p.value} ${p.currency}`; }
   }
-  async function setOwned(on) {
-    if (on === owned()) return;
-    await Store.setMeta({ plus: { active: on, at: Date.now() } });
-    App.applyTheme();
-    App.rerender();
+
+  /* ---------------- Google Play (the Android app) ---------------- */
+  async function service() {
+    if (typeof root.getDigitalGoodsService !== 'function') return null;
+    try { return await root.getDigitalGoodsService(BILLING); } catch (e) { return null; }
   }
-  /** Asks Google Play whether this account owns Plus. Throws when Google Play cannot be reached. */
-  async function check(svc) {
-    const list = await svc.listPurchases();
-    const has = (list || []).some((p) => p && p.itemId === SKU);
-    await setOwned(has);
-    return has;
+  /** true / false from Google Play; null when it cannot tell (offline). */
+  async function playOwns(svc) {
+    try { return ((await svc.listPurchases()) || []).some((p) => p && p.itemId === SKU); } catch (e) { return null; }
   }
 
-  /** At start: is Plus for sale here (the product exists in Google Play), and is it owned? */
+  /* ---------------- the web: a purchase code from Lemon Squeezy ---------------- */
+  async function lemon(path, body) {
+    const res = await fetch(LS_API + path, { method: 'POST', headers: { Accept: 'application/json', 'Content-Type': 'application/x-www-form-urlencoded' }, body: new URLSearchParams(body).toString() });
+    let j = {};
+    try { j = (await res.json()) || {}; } catch (e) { /* not JSON */ }
+    return { status: res.status, j };
+  }
+  const ourProduct = (j) => !!(j && j.meta && +j.meta.product_id === +cfg().productId);
+  const deviceName = () => `Shaati · ${App.androidApp ? 'Android' : /iPhone|iPad|iPod/.test(navigator.userAgent) ? 'iPhone' : 'web'} · ${new Date().toISOString().slice(0, 10)}`;
+  /** true / false for the purchase code saved in the account; null when it cannot tell (none, offline). */
+  async function webOwns() {
+    const key = String(S.settings.plusKey || '').trim();
+    if (!key || !+cfg().productId) return null;
+    try {
+      const inst = S.meta.plusInst;
+      if (inst && inst.key === key && inst.id) {
+        const r = await lemon('validate', { license_key: key, instance_id: inst.id });
+        if (r.status >= 500 || r.status === 429) return null;
+        if (r.j.valid && ourProduct(r.j)) return true;
+        // a refund disables the code; only a lost activation of this phone is worth one more try below
+        if (!(r.status === 404 && /instance/i.test(r.j.error || ''))) return false;
+      }
+      // a phone that has not used the code yet (a new phone of the same account)
+      const a = await lemon('activate', { license_key: key, instance_name: deviceName() });
+      if (a.status >= 500 || a.status === 429) return null;
+      if (a.j.activated && ourProduct(a.j) && a.j.instance) { await Store.setMeta({ plusInst: { key, id: a.j.instance.id } }); return true; }
+      return false;
+    } catch (e) { return null; } // offline
+  }
+
+  /** At start: can Plus be bought here, and is it owned (Google Play and/or the account's purchase code)? */
   Plus.init = async function () {
-    const svc = await service();
-    if (!svc) return;
-    let d;
-    try { d = ((await svc.getDetails([SKU])) || [])[0]; } catch (e) { return; }
-    if (!d) return; // not set up in Google Play yet: Plus stays out of sight
-    Plus.available = true;
-    Plus.price = fmtPrice(d.price);
-    try { await check(svc); } catch (e) { /* offline: keep what was known */ }
+    // Google Play: 'na' = nothing to ask here (not the Play app, an Android app without billing, no product
+    // set up); null = could not ask (offline) — never read as "not bought"
+    let play = 'na';
+    if (typeof root.getDigitalGoodsService === 'function') {
+      const svc = await service();
+      if (!svc) play = null;
+      else {
+        let d, failed = false;
+        try { d = ((await svc.getDetails([SKU])) || [])[0]; } catch (e) { failed = true; }
+        if (failed) play = null;
+        else if (d) { Plus.available = true; Plus.price = fmtPrice(d.price); Plus.priceValue = +(d.price && d.price.value) || 0; play = await playOwns(svc); }
+      }
+    }
+    if (!Plus.available && cfg().price) Plus.price = cfg().price;
+    const web = S.settings.plusKey ? await webOwns() : 'na';
+    if (play === true) await setOwned(true, 'play');
+    else if (web === true) await setOwned(true, 'web');
+    else if (play !== null && web !== null) await setOwned(false); // a clear "no" everywhere (a refund): off
+    // otherwise someone could not be asked (offline): keep what was known
+    watchTrial();
     if (App.tab === 'settings') App.rerender();
   };
 
-  /** The purchase, through Google Play's own sheet. Resolves true when Plus is on. */
+  /** Buying: Google Play's own sheet in the Android app, Lemon Squeezy's checkout elsewhere. */
   Plus.buy = async function () {
+    if (inPlayApp()) return buyPlay();
+    if (Plus.webShop()) {
+      root.open(cfg().checkout, '_blank', 'noopener');
+      return false; // Plus turns on with the code from the receipt
+    }
+    UI.toast('הרכישה עוד לא זמינה כאן');
+    return false;
+  };
+  async function buyPlay() {
     const svc = await service();
-    if (!svc || !Plus.available) { UI.toast('הרכישה זמינה באפליקציה שמותקנת מ-Google Play'); return false; }
+    if (!svc || !Plus.available) { UI.toast('הרכישה עוד לא זמינה כאן'); return false; }
     let res;
     try {
       const req = new PaymentRequest([{ supportedMethods: BILLING, data: { sku: SKU } }], { total: { label: 'Total', amount: { currency: 'ILS', value: '0' } } });
@@ -8140,18 +8553,40 @@ window.FIREBASE_CONFIG = {
       if (token && typeof svc.acknowledge === 'function') await svc.acknowledge(token, 'onetime').catch(() => {});
       await res.complete('success');
     } catch (e) { /* the payment itself went through */ }
-    let has;
-    try { has = await check(svc); } catch (e) { has = true; await setOwned(true); } // confirmed again at the next start
-    if (!has) { UI.toast('התשלום עדיין בטיפול אצל Google. Plus יופעל כשהוא יושלם'); return false; }
+    const has = await playOwns(svc);
+    if (has === false) { UI.toast('התשלום עדיין בטיפול אצל Google. Plus יופעל כשהוא יושלם'); return false; }
+    await setOwned(true, 'play'); // (has === null: no answer right now; confirmed again at the next start)
     if (root.Fx) root.Fx.celebrate('big');
     return true;
+  }
+
+  /** The purchase code from the receipt (web). Saved in the account, so the other phones use it too. */
+  Plus.redeem = async function (raw) {
+    const key = String(raw || '').trim();
+    if (!/^[A-Za-z0-9-]{16,64}$/.test(key)) { UI.invalid('הקוד לא נראה תקין. מעתיקים אותו במלואו מהמייל של הקבלה'); return false; }
+    if (!+cfg().productId) { UI.toast('הפעלת קוד עוד לא זמינה'); return false; }
+    let a;
+    try { a = await lemon('activate', { license_key: key, instance_name: deviceName() }); } catch (e) { UI.toast('אין חיבור כרגע. נסו שוב בעוד רגע'); return false; }
+    if (a.j.activated && ourProduct(a.j) && a.j.instance) {
+      await Store.setSettings((s) => { s.plusKey = key; });
+      await Store.setMeta({ plusInst: { key, id: a.j.instance.id } });
+      await setOwned(true, 'web');
+      if (root.Fx) root.Fx.celebrate('big');
+      return true;
+    }
+    if (a.j.activated && a.j.instance && !ourProduct(a.j)) lemon('deactivate', { license_key: key, instance_id: a.j.instance.id }).catch(() => {}); // not ours: give the slot back
+    const err = String(a.j.error || '');
+    UI.toast(a.status === 429 || a.status >= 500 ? 'השירות לא זמין כרגע. נסו שוב בעוד רגע'
+      : /activation limit/i.test(err) ? 'הקוד כבר הופעל בכמה מכשירים. אפשר לפנות אלינו בעזרה ותמיכה'
+        : a.j.activated ? 'הקוד שייך למוצר אחר' : /disabled|expired/i.test(err) ? 'הקוד בוטל (למשל אחרי החזר כספי)' : 'הקוד לא נמצא. בודקים שהועתק במלואו מהמייל');
+    return false;
   };
 
-  /** "I already bought it": asks Google Play again (a new phone, a reinstall). */
+  /** "I already bought it": asks again (a new phone, a reinstall). */
   Plus.restore = async function () {
-    const svc = await service();
-    if (!svc) { UI.toast('אפשר לשחזר רכישה באפליקציה שמותקנת מ-Google Play'); return; }
-    try { UI.toast((await check(svc)) ? 'Shaati Plus שוחזר ✓' : 'לא נמצאה רכישה בחשבון Google הזה'); } catch (e) { UI.toast('אין חיבור ל-Google Play כרגע. נסו שוב בעוד רגע'); }
+    const before = owned();
+    await Plus.init();
+    UI.toast(owned() ? (before ? 'Shaati Plus פעיל ✓' : 'Shaati Plus שוחזר ✓') : inPlayApp() ? 'לא נמצאה רכישה בחשבון Google הזה' : 'לא נמצאה רכישה. אפשר להזין את הקוד מהמייל');
   };
 
   /** Mini cards of every skin (also used in the settings). */
@@ -8170,21 +8605,38 @@ window.FIREBASE_CONFIG = {
 
   /* ---------------- the Plus page ---------------- */
   Plus.sheet = function () {
+    if (!S.meta.plusSeen) Store.setMeta({ plusSeen: true }).catch(() => {});
+    let opened = false; // the web checkout was opened: the code field comes first
     const draw = (el) => {
       const on = Plus.active();
+      const play = inPlayApp();
+      const web = Plus.webShop();
+      const price = Plus.price || cfg().price || '';
+      const trial = Plus.inTrial();
       el.querySelector('[data-plus-body]').innerHTML = `
         ${App.mascotSays ? App.mascotSays(on ? 'party' : 'happy', on ? 'תודה שאת/ה איתנו! 💜' : 'רוצים לפרגן לשעתי ולקבל עיצובים מיוחדים?', { size: 64 }) : ''}
         ${Plus.skinTiles(Plus.skin(), !on)}
         <div class="card plus-list">
-          <div>${icon('palette', 's')}<span><b>6 עיצובים לכרטיס השכר</b><small>זהב, חצות, שקיעה ועוד, בכרטיס שבמסך הבית</small></span></div>
+          <div>${icon('palette', 's')}<span><b>${Object.keys(SKINS).length} עיצובים לכרטיס השכר</b><small>זהב, גלקסיה, ניאון, לבה ועוד, בכרטיס שבמסך הבית</small></span></div>
+          <div>${icon('chart', 's')}<span><b>ניתוח מתקדם וייצוא דוחות בלי הגבלה</b><small>בחינם: ${QUOTA.analysis.n} ניתוחים ו-${QUOTA.export.n} ייצואים בחודש</small></span></div>
+          <div>${icon('trophy', 's')}<span><b>רקע מיוחד בטבלת האלופים</b><small>כולם יראו אותך בעיצוב שבחרת, עם תג Plus</small></span></div>
+          <div>${icon('sparkle', 's')}<span><b>תג תומך/ת במסך הבית</b><small>שכולם יידעו מי עוזר/ת לשעתי להישאר בלי פרסומות</small></span></div>
           <div>${icon('star', 's')}<span><b>תודה ענקית ממני</b><small>עוזר להמשיך לפתח, ולהשאיר את האפליקציה בלי פרסומות</small></span></div>
           <div>${icon('check', 's')}<span><b>כל השאר נשאר חינם</b><small>משמרות, חישוב שכר, זכויות, בדיקת תלוש, דוחות ומשחקים</small></span></div>
         </div>
-        ${on ? `<div class="plus-done">${icon('check')} ${owned() ? 'Shaati Plus פעיל אצלך' : 'תצוגה מקדימה של מנהל'}</div>`
-          : `<button class="btn big block plus-buy" data-plus-buy ${Plus.available ? '' : 'disabled'}>${icon('sparkle')} קנייה חד-פעמית${Plus.price ? ' · ' + esc(Plus.price) : ''}</button>
-             <div class="tiny muted plus-note">תשלום אחד דרך Google Play, בלי מנוי ובלי חיובים נוספים. מתחת לגיל 18: בהסכמת הורה.</div>`}
-        <div class="plus-links">${on && owned() ? '' : '<button class="btn text sm" data-plus-restore>כבר קניתי: שחזור רכישה</button>'}
+        ${on && !trial ? `<div class="plus-done">${icon('check')} ${owned() ? 'Shaati Plus פעיל אצלך' : 'תצוגה מקדימה של מנהל'}</div>`
+          : `${trial ? `<div class="plus-done trial">${icon('sparkle')} תקופת ניסיון · ${trialLeft()}</div>` : ''}
+             ${Plus.canTrial() ? `<button class="btn big block plus-buy" data-plus-trial>${icon('sparkle')} לנסות ${TRIAL_DAYS} ימים בחינם</button>` : ''}
+             <button class="btn ${Plus.canTrial() ? 'tonal plus-buy2' : 'big plus-buy'} block" data-plus-buy ${play ? (Plus.available ? '' : 'disabled') : web ? '' : 'disabled'}>${icon(Plus.canTrial() ? 'star' : 'sparkle', Plus.canTrial() ? 's' : '')} ${trial ? 'קנייה ושמירה' : 'קנייה חד-פעמית'}${price ? ' · ' + esc(price) : ''}</button>
+             ${Plus.workPrice() ? `<div class="tiny plus-work">${esc(Plus.workPrice())}</div>` : ''}
+             <div class="plus-pay">${play ? '<span>Google Play</span><span>כרטיס אשראי</span><span>Google Pay</span><span>PayPal</span>' : '<span>כרטיס אשראי</span><span>Apple Pay</span><span>Google Pay</span><span>PayPal</span>'}</div>
+             <div class="tiny muted plus-note">${play ? 'תשלום אחד דרך Google Play, בלי מנוי ובלי חיובים נוספים.' : 'תשלום אחד בדף תשלום מאובטח של Lemon Squeezy, בלי מנוי. אחרי התשלום מגיע במייל קוד הפעלה.'} מתחת לגיל 18: בהסכמת הורה.</div>`}
+        ${(!on || trial) && !play && web ? `<div class="card plus-code ${opened ? 'hot' : ''}"><label class="field"><span class="lbl">${opened ? 'שילמת? מדביקים כאן את הקוד מהמייל' : 'כבר יש לי קוד מהמייל'}</span>
+            <input class="input" id="plus-key" dir="ltr" autocomplete="off" spellcheck="false" placeholder="XXXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXXXX"></label>
+            <button class="btn tonal block" data-plus-redeem>${icon('key', 's')} הפעלה</button></div>` : ''}
+        <div class="plus-links">${on && owned() ? '' : '<button class="btn text sm" data-plus-restore>שחזור רכישה</button>'}
           ${App.isAdmin ? `<label class="tiny plus-preview"><input type="checkbox" data-plus-preview ${S.meta.plusPreview ? 'checked' : ''}> תצוגה מקדימה (מנהל)</label>` : ''}</div>`;
+      if (opened) { const i = el.querySelector('#plus-key'); if (i) i.focus(); }
     };
     UI.openSheet({
       title: 'Shaati Plus ✨',
@@ -8193,13 +8645,20 @@ window.FIREBASE_CONFIG = {
       onMount: (el) => {
         draw(el);
         let busy = false;
-        el.addEventListener('click', async (e) => {
+        const run = async (fn) => { if (busy) return; busy = true; try { if (await fn()) draw(el); } finally { busy = false; } };
+        el.addEventListener('click', (e) => {
           const b = e.target.closest('button');
-          if (!b || busy) return;
-          if (b.hasAttribute('data-plus-buy')) { busy = true; try { if (await Plus.buy()) draw(el); } finally { busy = false; } }
-          else if (b.hasAttribute('data-plus-restore')) { busy = true; try { await Plus.restore(); draw(el); } finally { busy = false; } }
-          else if (b.dataset.skin !== undefined) { if (b.dataset.skin && !Plus.active()) return; if (await Plus.pickSkin(b.dataset.skin)) draw(el); }
+          if (!b) return;
+          if (b.hasAttribute('data-plus-trial')) run(() => Plus.startTrial(Plus.skin() || 'gold'));
+          else if (b.hasAttribute('data-plus-buy')) run(async () => { const ok = await Plus.buy(); if (!ok && !inPlayApp() && Plus.webShop()) { opened = true; return true; } return ok; });
+          else if (b.hasAttribute('data-plus-redeem')) run(() => Plus.redeem((el.querySelector('#plus-key') || {}).value));
+          else if (b.hasAttribute('data-plus-restore')) run(async () => { await Plus.restore(); return true; });
+          else if (b.dataset.skin !== undefined) {
+            if (b.dataset.skin && !Plus.active()) { UI.closeTop(); setTimeout(() => Plus.design(b.dataset.skin), 320); return; }
+            run(() => Plus.pickSkin(b.dataset.skin));
+          }
         });
+        el.addEventListener('keydown', (e) => { if (e.key === 'Enter' && e.target.id === 'plus-key') run(() => Plus.redeem(e.target.value)); });
         el.addEventListener('change', async (e) => {
           if (!e.target.matches('[data-plus-preview]')) return;
           await Store.setMeta({ plusPreview: e.target.checked });
@@ -8208,6 +8667,195 @@ window.FIREBASE_CONFIG = {
       },
     });
   };
+  /* ---------------- trying it, and offering it at a good moment ----------------
+   * What makes people buy, without tricks: seeing it on their own card, a free trial, the price in
+   * their own minutes of work, and one quiet offer after they have come to like the app. No pop-ups,
+   * no countdowns; every offer closes with one tap and comes back at most a few times. */
+  /** Can be bought on this phone (Google Play here, or the web checkout). */
+  const buyable = () => Plus.available || Plus.webShop();
+  Plus.inTrial = () => !owned() && +((S.meta.plusTrial || {}).until || 0) > Date.now();
+  Plus.canTrial = () => !owned() && !S.meta.plusTrial && buyable();
+  let trialTimer = 0;
+  /** At the end of a trial the look goes back, also when the app stays open. */
+  function watchTrial() {
+    clearTimeout(trialTimer);
+    const until = +((S.meta.plusTrial || {}).until || 0);
+    if (owned() || !(until > Date.now())) return;
+    trialTimer = setTimeout(() => { App.applyTheme(); if (!App.blocking) App.rerender(); }, Math.min(until - Date.now() + 500, 2 ** 31 - 1));
+  }
+  const trialLeft = () => { const d = Math.max(1, Math.ceil(((S.meta.plusTrial || {}).until - Date.now()) / DAY)); return d === 1 ? 'נשאר יום אחד' : `נשארו ${d} ימים`; };
+  Plus.startTrial = async (skin) => {
+    if (!Plus.canTrial()) return false;
+    await Store.setMeta({ plusTrial: { from: Date.now(), until: Date.now() + TRIAL_DAYS * DAY }, plusSeen: true });
+    watchTrial();
+    if (skin && SKINS[skin]) await Store.setSettings((s) => { s.skin = skin; });
+    App.applyTheme();
+    App.rerender();
+    if (root.Fx) root.Fx.celebrate('small');
+    UI.toast(`${TRIAL_DAYS} ימים של Shaati Plus במתנה ✨`);
+    return true;
+  };
+  /** The price as minutes of this user's own work ("≈ 17 דק׳ של העבודה שלך"). */
+  Plus.workPrice = () => {
+    const p = +Plus.priceValue || +(root.PAY_CONFIG || {}).price || 0;
+    const role = App.roles && App.roles()[0];
+    const rate = role ? root.Engine.roleRate(role, root.U.todayKey()) : 0;
+    if (!(p > 0 && rate > 0) || !root.Games) return '';
+    return `≈ ${root.Games.workTime(p / rate)} של העבודה שלך`;
+  };
+
+  /* ---------------- free allowances ----------------
+   * A few extras come with a free allowance, and Plus (or the trial) makes them unlimited. Never the
+   * things that matter (shifts, pay, rights, the payslip check, reports on screen, backup, sync,
+   * sharing, the games), and no allowance at all until Plus can be bought on this phone. Counted on the phone. */
+  const QUOTA = {
+    analysis: { n: 3, per: 'month', what: 'ניתוחים המתקדמים', one: 'ניתוח', unit: 'בחודש' },
+    export: { n: 5, per: 'month', what: 'ייצואי הדוחות (PDF ואקסל)', one: 'ייצוא', unit: 'בחודש' },
+  };
+  Plus.QUOTA = QUOTA;
+  const periodKey = (per) => (per === 'day' ? root.U.todayKey() : root.U.todayKey().slice(0, 7));
+  /** Allowances apply here: Plus can be bought, and is not on. */
+  Plus.limited = () => buyable() && !Plus.active();
+  const usedOf = (id) => { const u = (S.meta.plusUse || {})[id]; return u && u.k === periodKey(QUOTA[id].per) ? +u.n || 0 : 0; };
+  /** What is left of an allowance (Infinity when there is none). */
+  Plus.left = (id) => (QUOTA[id] && Plus.limited() ? Math.max(0, QUOTA[id].n - usedOf(id)) : Infinity);
+  /** Takes one from an allowance: true = go ahead; false = none left (the Plus offer opens instead). */
+  Plus.use = (id) => {
+    if (!QUOTA[id] || !Plus.limited()) return true;
+    const q = QUOTA[id];
+    const left = q.n - usedOf(id);
+    if (left <= 0) {
+      if (!S.meta.plusWall) Store.setMeta({ plusWall: true }).catch(() => {});
+      Plus.limitSheet(id);
+      return false;
+    }
+    Store.setMeta({ plusUse: Object.assign({}, S.meta.plusUse, { [id]: { k: periodKey(q.per), n: usedOf(id) + 1 } }) }).catch(() => {});
+    if (left === 2) UI.toast(`נשאר עוד ${q.one} אחד חינם ${q.per === 'day' ? 'להיום' : 'החודש'}`);
+    return true;
+  };
+  /** "That was the free allowance": when it comes back, and the way to unlimited. */
+  Plus.limitSheet = function (id) {
+    const q = QUOTA[id];
+    const back = q.per === 'day' ? 'מחר' : `ב-1 ב${root.U.HEB_MONTHS[(+root.U.todayKey().slice(5, 7)) % 12]}`;
+    const price = Plus.price || cfg().price || '';
+    UI.openSheet({
+      title: 'נגמרה המכסה החינמית',
+      cls: 'plus-sheet limit-sheet',
+      body: `${App.mascotSays ? App.mascotSays('think', `השתמשת ב-${q.n} ה${q.what} החינמיים ${q.per === 'day' ? 'של היום' : 'של החודש'}. ${back} יש עוד ${q.n}.`, { size: 64 }) : ''}
+        <div class="card plus-list">
+          <div>${icon('sparkle', 's')}<span><b>עם Shaati Plus: בלי הגבלה</b><small>ניתוח מתקדם וייצוא דוחות בלי הגבלה, ${Object.keys(SKINS).length} עיצובים, רקע מיוחד בטבלת האלופים ותג תומך/ת</small></span></div>
+          <div>${icon('check', 's')}<span><b>כל השאר נשאר חינם</b><small>משמרות, חישוב שכר, זכויות, בדיקת תלוש, דוחות במסך, משחקים, גיבוי וסנכרון</small></span></div>
+        </div>
+        ${Plus.canTrial() ? `<button class="btn big block plus-buy" data-limit-trial>${icon('sparkle')} לנסות ${TRIAL_DAYS} ימים בחינם</button>` : `<button class="btn big block plus-buy" data-limit-buy>${icon('sparkle')} Shaati Plus${price ? ' · ' + esc(price) : ''}</button>`}
+        ${Plus.workPrice() ? `<div class="tiny plus-work">${esc(Plus.workPrice())} · תשלום אחד, בלי מנוי</div>` : ''}
+        <button class="btn text block" data-limit-later>${back}, תודה</button>`,
+      onMount: (el) => {
+        el.addEventListener('click', async (e) => {
+          const b = e.target.closest('button');
+          if (!b) return;
+          if (b.hasAttribute('data-limit-trial')) { if (await Plus.startTrial(Plus.skin() || 'gold')) UI.closeTop(); }
+          else if (b.hasAttribute('data-limit-buy')) { UI.closeTop(); setTimeout(() => Plus.sheet(), 320); }
+          else if (b.hasAttribute('data-limit-later')) UI.closeTop();
+        });
+      },
+    });
+  };
+
+  /** "Try it on your card": the user's own pay card, in every skin. */
+  Plus.design = function (start) {
+    let sel = SKINS[start] ? start : Plus.skin() || 'gold';
+    const preview = () => {
+      let html = '';
+      try { html = App.homeHero ? App.homeHero() : ''; } catch (e) { /* no workplace yet */ }
+      if (!html) return '<section class="home-hero"><div class="hh-label">ברוטו החודש עד עכשיו</div><div class="hero-num">₪1,240</div></section>';
+      const t = document.createElement('template');
+      t.innerHTML = html;
+      const c = t.content.firstElementChild;
+      c.querySelectorAll('[id]').forEach((x) => x.removeAttribute('id'));
+      c.querySelectorAll('.vh, .hh-skin').forEach((x) => x.remove());
+      c.querySelectorAll('[data-act], button').forEach((x) => { x.removeAttribute('data-act'); x.setAttribute('tabindex', '-1'); });
+      c.removeAttribute('data-act');
+      return c.outerHTML;
+    };
+    const draw = (el) => {
+      const on = Plus.active();
+      const price = Plus.price || cfg().price || '';
+      el.querySelector('[data-design]').innerHTML = `
+        <div class="design-prev ${sel ? 'sk-' + sel : ''}" aria-hidden="true" inert>${preview()}</div>
+        <div class="skin-pick design-pick">
+          <button class="skin-tile ${!sel ? 'on' : ''}" data-pick="" aria-pressed="${!sel}"><b>₪</b><span>רגיל</span></button>
+          ${Object.entries(SKINS).map(([k, name]) => `<button class="skin-tile sk-${k} ${sel === k ? 'on' : ''}" data-pick="${k}" aria-pressed="${sel === k}"><b>₪</b><span>${name}</span></button>`).join('')}
+        </div>
+        ${on ? `<button class="btn big block" data-design-save>${icon('check')} שמירה</button>
+            ${Plus.inTrial() ? `<div class="tiny muted plus-note">תקופת ניסיון · ${trialLeft()} · <button class="btn text sm" data-design-buy>לקנות ולשמור</button></div>` : ''}`
+          : `${Plus.canTrial() ? `<button class="btn big block plus-buy" data-design-trial>${icon('sparkle')} לנסות ${TRIAL_DAYS} ימים בחינם</button>` : ''}
+             <button class="btn ${Plus.canTrial() ? 'tonal' : 'big plus-buy'} block" data-design-buy ${buyable() ? '' : 'disabled'}>${icon('star', 's')} קנייה חד-פעמית${price ? ' · ' + esc(price) : ''}</button>
+             <div class="tiny muted plus-note">${Plus.workPrice() ? esc(Plus.workPrice()) + ' · ' : ''}בלי מנוי · כל השאר נשאר חינם</div>`}`;
+    };
+    UI.openSheet({
+      title: 'עיצוב כרטיס השכר',
+      cls: 'plus-sheet design-sheet',
+      body: '<div data-design></div>',
+      onMount: (el) => {
+        if (!S.meta.plusSeen) Store.setMeta({ plusSeen: true }).catch(() => {});
+        draw(el);
+        el.addEventListener('click', async (e) => {
+          const b = e.target.closest('button');
+          if (!b) return;
+          if (b.dataset.pick !== undefined) {
+            sel = b.dataset.pick;
+            el.querySelector('.design-prev').className = 'design-prev' + (sel ? ' sk-' + sel : '');
+            el.querySelectorAll('[data-pick]').forEach((x) => { const on = x.dataset.pick === sel; x.classList.toggle('on', on); x.setAttribute('aria-pressed', on); });
+            if (root.Fx) root.Fx.play('tick');
+          } else if (b.hasAttribute('data-design-save')) { await Plus.pickSkin(sel); UI.closeTop(); }
+          else if (b.hasAttribute('data-design-trial')) { if (await Plus.startTrial(sel || 'gold')) UI.closeTop(); }
+          else if (b.hasAttribute('data-design-buy')) { UI.closeTop(); setTimeout(() => Plus.sheet(), 320); }
+        });
+      },
+    });
+  };
+  App.actions['plus-design'] = () => Plus.design();
+
+  /**
+   * One quiet card on home, at a good moment: after a few days of real use, not while a trial runs,
+   * at most 3 times ever, 3 weeks apart, each showing for up to 3 days until closed. When a trial ends,
+   * one card asks whether to keep the skin. Nothing at all until Plus can be bought here.
+   */
+  Plus.nudgeCard = function () {
+    // a trial that ended while the app was open: the card returns to the regular look
+    const want = Plus.skin();
+    if ((document.documentElement.dataset.skin || '') !== want) App.applyTheme();
+    if (!buyable() || Plus.active() || (S.meta.guide && !S.meta.guideDone)) return '';
+    const now = Date.now();
+    const close = '<button class="icon-btn plus-nudge-x" data-act="plus-nudge-x" aria-label="סגירה">' + icon('x', 's') + '</button>';
+    if (S.meta.plusTrial && !S.meta.plusTrialEnd) {
+      const name = SKINS[S.settings.skin] || 'המיוחד';
+      return `<div class="card plus-nudge sk-${SKINS[S.settings.skin] ? S.settings.skin : 'gold'}">${close}
+        <div class="pn-t">הניסיון של Shaati Plus הסתיים</div><div class="pn-s">להשאיר את הכרטיס ב${esc(name)}? תשלום אחד, בלי מנוי${Plus.workPrice() ? ' · ' + esc(Plus.workPrice()) : ''}.</div>
+        <div class="pn-a"><button class="btn sm" data-act="plus-open">${icon('star', 's')} להשאיר</button><button class="btn text sm" data-act="plus-nudge-x">לא, תודה</button></div></div>`;
+    }
+    let n = S.meta.plusNudge || {};
+    const showing = n.at && now - n.at < 3 * DAY && n.x !== n.at;
+    if (!showing) {
+      if (n.off || (n.shown || 0) >= 3 || (n.at && now - n.at < 21 * DAY)) return '';
+      let done = 0;
+      for (const r of App.model.results.values()) if (r.status === 'done') done++;
+      if ((S.meta.activeDays || 0) < 4 || done < 5 || S.settings.demo) return '';
+      n = Object.assign({}, n, { at: now, shown: (n.shown || 0) + 1 });
+      Store.setMeta({ plusNudge: n }).catch(() => {});
+    }
+    return `<div class="card plus-nudge sk-galaxy">${close}
+      <div class="pn-t">✨ כרטיס השכר שלך יכול להיראות ככה</div><div class="pn-s">${Object.keys(SKINS).length} עיצובים, רקע בטבלת האלופים, ניתוח וייצוא בלי הגבלה. ${Plus.canTrial() ? `אפשר לנסות ${TRIAL_DAYS} ימים בחינם.` : 'תשלום אחד, בלי מנוי.'}</div>
+      <div class="pn-a"><button class="btn sm" data-act="plus-design">${icon('palette', 's')} ${Plus.canTrial() ? 'לנסות על הכרטיס שלי' : 'לראות'}</button>${n.shown >= 2 ? '<button class="btn text sm" data-act="plus-nudge-off">לא להציג שוב</button>' : ''}</div></div>`;
+  };
+  App.actions['plus-nudge-x'] = async () => {
+    // the end-of-trial card counts as an offer: the next one waits its three weeks
+    if (S.meta.plusTrial && !S.meta.plusTrialEnd) await Store.setMeta({ plusTrialEnd: true, plusNudge: Object.assign({}, S.meta.plusNudge || {}, { at: Date.now(), x: Date.now() }) });
+    else { const n = S.meta.plusNudge || {}; await Store.setMeta({ plusNudge: Object.assign({}, n, { x: n.at }) }); }
+    App.rerender();
+  };
+  App.actions['plus-nudge-off'] = async () => { await Store.setMeta({ plusNudge: Object.assign({}, S.meta.plusNudge || {}, { off: true }) }); App.rerender(); };
+
   App.actions['plus-open'] = () => Plus.sheet();
 
   root.Plus = Plus;
@@ -8514,7 +9162,9 @@ window.FIREBASE_CONFIG = {
     const periodName = emp.periodStartDay > 1 ? 'תקופת השכר' : esc(P.label);
     // the whole card opens the summary on a tap; keyboards and screen readers get a real button for it
     // (the card itself holds the "what is gross?" buttons, so it can't be one)
+    const P2 = root.Plus;
     return `<section class="home-hero" data-act="go-summary"><button class="vh" data-act="go-summary">פירוט ${periodName}</button>
+      ${P2 && P2.visible() ? `<button class="hh-skin" data-act="plus-design" aria-label="עיצוב כרטיס השכר">${icon('palette', 's')}</button>` : ''}
       <span class="aurora" aria-hidden="true" style="${App.phase()}"><i></i><i></i><i></i></span><span class="hh-dial" aria-hidden="true" style="${App.phase()}"></span>
       <div class="hh-label">${UI.term ? UI.term('gross', 'ברוטו') : 'ברוטו'} ${emp.periodStartDay > 1 ? 'בתקופת השכר' : 'ב' + periodName} עד עכשיו</div>
       <div class="hero-num">${money(sum.gross, 0)}</div>
@@ -8524,6 +9174,8 @@ window.FIREBASE_CONFIG = {
         : (proj && proj.pace ? `<div class="hh-goal-l">צפי לסוף ${emp.periodStartDay > 1 ? 'התקופה' : 'החודש'}: ${money(proj.pace, 0)}</div>` : '')}
     </section>`;
   }
+
+  App.homeHero = hero; // the "try it on your card" preview (plus.js)
 
   /* ---------------- one line worth knowing (opens everything else) ---------------- */
   function highlight() {
@@ -8614,7 +9266,7 @@ window.FIREBASE_CONFIG = {
     const date = U.fmtDate(today, 'long').replace(/\s\d{4}$/, '');
     return `
       <div class="home-top"><div class="titles"><h1>${greeting()}${name} <span class="wave">👋</span></h1>
-        <div class="sub">${date} · ${esc(hd.toString().replace(/\s\S+$/, ''))}${hol ? ' · ' + esc(hol) : ''}</div></div>
+        <div class="sub">${root.Plus && root.Plus.owned() ? '<span class="plus-badge">Plus ✨</span>' : ''}${date} · ${esc(hd.toString().replace(/\s\S+$/, ''))}${hol ? ' · ' + esc(hol) : ''}</div></div>
         <span id="sync-dot">${App.syncDot ? App.syncDot() : ''}</span>
         <button class="icon-btn" data-act="support" aria-label="עזרה ותמיכה">${icon('help')}</button>
         <button class="icon-btn" data-act="insights" aria-label="התראות ותובנות">${icon('bell')}${unread ? `<span class="dot-badge">${unread > 9 ? '9+' : unread}</span>` : ''}</button></div>
@@ -8626,6 +9278,7 @@ window.FIREBASE_CONFIG = {
       ${actionBlock()}
       ${App.guideCard ? App.guideCard() : ''}
       ${highlight()}
+      ${root.Plus ? root.Plus.nudgeCard() : ''}
       ${savingCard()}
       ${shortcuts()}
       ${pending.length + recent.length ? `<div class="home-list-head"><span>${pending.length ? 'לסמן כבוצעה' : 'משמרות אחרונות'}</span><button class="btn text sm" data-act="go-shifts">הכול</button></div>
@@ -9588,6 +10241,7 @@ window.FIREBASE_CONFIG = {
         ${t.leavePay ? `<div class="small" style="margin-top:4px">כולל ימי חופשה/מחלה: <b>${U.money(t.leavePay, 0)}</b></div>` : ''}
       </div>
       ${t.overridden ? `<div class="banner warn">${icon('hand')}<div>${t.overridden} משמרות בתקופה כוללות עקיפה ידנית — הן נכללות בסכומים.</div></div>` : ''}
+      <button class="an-entry" data-act="analysis-open">${UI.tile('sparkle', 'violet')}<span class="an-entry-t"><b>ניתוח מתקדם</b><small>איזה יום ושעה הכי משתלמים לך, השיאים שלך ו"מה אם"</small></span>${icon('left', 's')}</button>
       ${st.type !== 'custom' && st.type !== 'year' ? `<div class="section-title">${icon('up', 's')} השוואה</div><div class="card">${compareTable(t, p, a3, a12, st.type)}</div>` : ''}
       ${st.type === 'custom' ? `<div class="section-title">${icon('up', 's')} השוואה לתקופה קודמת באותו אורך</div><div class="card">${compareTable(t, p, null, null, st.type)}</div>` : ''}
       <div class="section-title">${icon('users', 's')} לפי תפקיד</div>
@@ -10310,7 +10964,10 @@ window.FIREBASE_CONFIG = {
   function csv(rows) { return '\uFEFF' + rows.map((r) => r.map(csvCell).join(',')).join('\r\n'); }
   const n2 = (x) => (Math.round((x || 0) * 100) / 100).toFixed(2);
 
+  // exports use the free allowance (plus.js); with Plus they are unlimited
+  const allowed = () => !root.Plus || root.Plus.use('export');
   function shiftsCsv(results, filename) {
+    if (results.length && !allowed()) return; // an empty file costs nothing
     const head = ['תאריך', 'יום', 'מעסיק', 'תפקיד', 'התחלה', 'סיום', 'שעות לתשלום', 'הפסקה (דק׳)', 'רגילות', '125%', '150%', 'שבת/חג', 'שבת/חג + נוספות', 'לילה', 'שכר עבודה', 'תוספת שבת/חג', 'תוספת ש״נ', 'נסיעות', 'בונוס', 'טיפים', 'תוספות', 'ניכויים', 'סה״כ', 'סטטוס', 'עקיפה ידנית', 'סיבה', 'הערה'];
     const rows = [head];
     for (const r of results) {
@@ -10327,6 +10984,7 @@ window.FIREBASE_CONFIG = {
     UI.toast('קובץ CSV נשמר — נפתח ב-Excel / Google Sheets');
   }
   function monthlyCsv() {
+    if (!allowed()) return;
     const emp = S.employers[0];
     const cur = Engine.periodOf(U.todayKey(), emp).key;
     let first = cur;
@@ -10365,6 +11023,7 @@ window.FIREBASE_CONFIG = {
 
   /* ---------------- printable PDF report ---------------- */
   function printReport(from, to, label) {
+    if (!allowed()) return;
     const t = Engine.rangeSummary(App.model, from, to);
     const list = [...App.model.results.values()].filter((r) => r.status === 'done' && r.dateKey >= from && r.dateKey <= to).sort((a, b) => a.start - b.start);
     const roles = Object.entries(t.byRole).map(([id, v]) => `<tr><td>${esc(App.roleName(id))}</td><td>${U.hours(v.hours)}</td><td>${U.money(v.amount)}</td></tr>`).join('');
@@ -12135,13 +12794,11 @@ window.FIREBASE_CONFIG = {
 
   /* ---------------- what's new (once per big update, for people who already used the app) ---------------- */
   const WHATS_NEW = {
-    id: '1.11',
+    id: '1.14',
     items: [
-      ['layers', 'pink', 'משחק חדש: זוגות', 'משחק זיכרון שמלמד לקרוא את התלוש: ברוטו, נטו, הבראה ועוד.'],
-      ['clock', 'sky', 'משחק חדש: כמה שעות זה?', 'יותר או פחות? כמה שעות מהעבודה שלך שווים אייפון, הופעה או שווארמה.'],
-      ['star', 'amber', 'מדליות חדשות', 'זיכרון של פיל, יודעים מה שווה כסף, ומדליה על כל חמשת המשחקים.'],
-      ['sparkle', 'violet', 'חלק יותר', 'מעבר בין מסכים בלי קפיצות, משיכה לרענון בלי הבהובים, וגלגל שעות חלק.'],
-      ['shield', 'mint', 'כפתור חזור חכם', 'גם כשפותחים מקיצור דרך, "חזור" סוגר רק את החלון ולא את האפליקציה.'],
+      ['trophy', 'amber', 'טבלת האלופים', 'מתחרים על המקום הראשון בכל משחק: היום, השבוע, החודש, השנה ובכל הזמנים. רק כינוי ואימוג׳י, בלי שם אמיתי.'],
+      ['chart', 'violet', 'ניתוח מתקדם', 'איזה יום ואיזו שעה הכי משתלמים לך, השיאים שלך ו"מה אם". בדוחות › סיכום.'],
+      ['sparkle', 'mint', 'חלק יותר', 'המעבר למסך הבית בלי הבהוב, גם בטלפונים חזקים.'],
     ],
   };
 
@@ -12592,20 +13249,30 @@ window.FIREBASE_CONFIG = {
       title: 'משחקים',
       cls: 'games-sheet',
       body: `${App.mascotSays ? App.mascotSays('party', 'הפסקה קטנה? כל משחק לוקח פחות מדקה.', { size: 64 }) : ''}<div class="gm-list">${cards()}</div>
+        ${root.Champions ? root.Champions.hubCard() : ''}
         <button class="ach-card" data-medals>${(() => { const l = achievements(); const got = l.filter((a) => a.on).length; return `<span class="ach-card-e" aria-hidden="true">🏅</span><span class="gm-txt"><b>המדליות שלי</b><span>${got} מתוך ${l.length} · על משמרות, כסף, תלושים ומשחקים</span></span>${icon('left', 's')}`; })()}</button>`,
       onMount: (el) => {
         el.querySelector('[data-medals]').onclick = medalsSheet;
+        const hub = el.querySelector('[data-lb-hub]');
+        if (hub) hub.onclick = () => root.Champions.open();
         const list = el.querySelector('.gm-list');
         list.addEventListener('click', (e) => {
           const b = e.target.closest('[data-game]');
           if (!b) return;
           const done = () => { if (list.isConnected) list.innerHTML = cards(); };
-          const open = { coins: coinGame, quiz: quizGame, facts: factsGame, pairs: pairsGame, hours: hoursGame }[b.dataset.game];
-          if (open) open(done);
+          playGame(b.dataset.game, done);
         });
       },
     });
   };
+
+  /** Opens a game by its id (also from the champions table); notes it as the last one played. */
+  function playGame(id, onDone) {
+    const open = { coins: coinGame, quiz: quizGame, facts: factsGame, pairs: pairsGame, hours: hoursGame }[id];
+    if (!open) return;
+    if (S.meta.lbLast !== id) Store.setMeta({ lbLast: id }).catch(() => {});
+    open(onDone || (() => {}));
+  }
 
   /** The end of a round: mascot, score, best, play again. */
   function endScreen(box, o) {
@@ -12618,6 +13285,7 @@ window.FIREBASE_CONFIG = {
       <div class="gm-end-b">${isBest ? `${icon('star', 's')} שיא חדש!` : `השיא שלך: ${best(o.id)}${o.unit}`}</div>
       <div class="gm-end-a"><button class="btn" data-again>${icon('repeat')} עוד סיבוב</button><button class="btn tonal" data-quit>סיום</button></div></div>`;
     if (isBest && o.score > 0) { if (Fx()) Fx().celebrate('big'); } else play('pop');
+    if (root.Champions && o.score > 0) root.Champions.afterGame(box, o.id, o.score); // the champions table
     box.querySelector('[data-again]').onclick = o.again;
     box.querySelector('[data-quit]').onclick = () => UI.closeTop();
   }
@@ -13143,7 +13811,392 @@ window.FIREBASE_CONFIG = {
     return () => { alive = false; clearTimeout(next); };
   }
 
-  App.games = { LIST, best };
+  App.games = { LIST, best, play: playGame };
+})(typeof window !== 'undefined' ? window : globalThis);
+
+/* ---- app/views-leaderboard.js ---- */
+/* ============================================================
+ * views-leaderboard.js — "טבלת האלופים": the games' champions table.
+ *
+ * Today, this week, this month, this year and all time, per game.
+ * Joining is a choice: a nickname and an emoji (never the real name),
+ * and Shaati Plus members pick a background for their row. Needs the
+ * Google account (the table lives in Firestore, lb/{uid}; the shape and
+ * the highest scores are checked by firestore.rules). The scores and
+ * the period arithmetic are in core/leaderboard.js.
+ * ============================================================ */
+(function (root) {
+  'use strict';
+  const { U, Store, UI, App } = root;
+  const S = Store.S;
+  const { icon, esc } = UI;
+  const LB = root.Leaderboard;
+  const PERIODS = [['d', 'היום'], ['w', 'השבוע'], ['m', 'החודש'], ['y', 'השנה'], ['a', 'כל הזמנים']];
+  const SHORT = { coins: 'מטבעות', quiz: 'חשבון', facts: 'נכון/לא', pairs: 'זוגות', hours: 'שעות' };
+  const LIMIT = 50;
+  const Champions = {};
+  root.Champions = Champions;
+
+  let mine = null; // my row as last read or written: { uid, exists, n, e, bg, p, g }
+  const boards = new Map(); // game|period|day → { at, rows }
+  const Cloud = () => root.Cloud;
+  const signedIn = () => !!(Cloud() && Cloud().user);
+  const uid = () => Cloud().user.uid;
+  const joined = () => signedIn() && !!(S.settings.lb && S.settings.lb.on);
+  const plusOn = () => !!(root.Plus && root.Plus.active());
+  const games = () => (App.games ? App.games.LIST : []);
+  const gameOf = (id) => games().find((g) => g.id === id) || games()[0];
+  const today = () => U.todayKey();
+  Champions.joined = joined;
+
+  /** What this player shows: the background only while Plus is on. */
+  function profile() {
+    const l = S.settings.lb || {};
+    const skins = (root.Plus && root.Plus.SKINS) || {};
+    return { n: l.n || '', e: LB.EMOJI.includes(l.e) ? l.e : LB.EMOJI[0], bg: plusOn() && skins[l.bg] ? l.bg : '', p: plusOn() };
+  }
+  async function readMine() {
+    if (mine && mine.uid === uid()) return mine;
+    const { fs, db } = await Cloud().sdk();
+    const snap = await fs.getDoc(fs.doc(db, 'lb', uid()));
+    mine = Object.assign({ uid: uid(), exists: snap.exists(), g: {} }, snap.exists() ? snap.data() : {});
+    return mine;
+  }
+  /** Saves my row; gPatch = { game: { period: value } } (only what changed; deep-merged). */
+  async function writeMine(gPatch) {
+    const row = await readMine();
+    const { fs, db } = await Cloud().sdk();
+    const pr = profile();
+    const data = { n: pr.n, e: pr.e, bg: pr.bg, p: pr.p, t: Date.now() };
+    // a merge with an empty map would wipe the scores, so g goes only with something in it (or on a new row)
+    if (gPatch && Object.keys(gPatch).length) data.g = gPatch;
+    else if (!row.exists) data.g = {};
+    await fs.setDoc(fs.doc(db, 'lb', uid()), data, { merge: true });
+    Object.assign(row, data, { exists: true, g: row.g || {} });
+    for (const [game, vals] of Object.entries(gPatch || {})) row.g[game] = Object.assign({}, row.g[game], vals);
+    boards.clear();
+  }
+  /** The top of a board, from Firestore (cached for a minute). */
+  async function board(game, period, fresh) {
+    const key = `${game}|${period}|${today()}`;
+    const c = boards.get(key);
+    if (c && !fresh && Date.now() - c.at < 60000) return c.rows;
+    const { fs, db } = await Cloud().sdk();
+    const field = `g.${game}.${period}`;
+    const r = LB.range(period, today());
+    const q = r
+      ? fs.query(fs.collection(db, 'lb'), fs.where(field, '>=', r[0]), fs.where(field, '<', r[1]), fs.orderBy(field, 'desc'), fs.limit(LIMIT))
+      : fs.query(fs.collection(db, 'lb'), fs.orderBy(field, 'desc'), fs.limit(LIMIT));
+    const snap = await fs.getDocs(q);
+    const rows = snap.docs.map((d) => {
+      const x = d.data() || {};
+      const v = x.g && x.g[game] ? x.g[game][period] : 0;
+      return { uid: d.id, n: String(x.n || ''), e: LB.EMOJI.includes(x.e) ? x.e : '🙂', bg: x.p && root.Plus && root.Plus.SKINS[x.bg] ? x.bg : '', p: !!x.p, s: period === 'a' ? +v || 0 : LB.scoreOf(v) };
+    }).filter((x) => x.s > 0).sort((a, b) => b.s - a.s);
+    // equal scores share a place
+    rows.forEach((x, i) => { x.rank = i && rows[i - 1].s === x.s ? rows[i - 1].rank : i + 1; });
+    boards.set(key, { at: Date.now(), rows });
+    return rows;
+  }
+
+  /**
+   * After a game: saves the score where it is a new best and says where the player stands today.
+   * null when not in the table (or offline).
+   */
+  Champions.submit = async function (game, score) {
+    if (!joined() || !LB.MAX[game]) return null;
+    try {
+      const row = await readMine();
+      const before = (boards.get(`${game}|d|${today()}`) || { rows: [] }).rows.find((x) => x.uid === uid());
+      const vals = LB.improve((row.g || {})[game], game, score, today());
+      if (Object.keys(vals).length) await writeMine({ [game]: vals });
+      const rows = await board(game, 'd', true);
+      const meRow = rows.find((x) => x.uid === uid());
+      return { rank: meRow ? meRow.rank : null, before: before ? before.rank : null, improved: Object.keys(vals), of: rows.length };
+    } catch (e) { return null; }
+  };
+
+  /** The line under a game's result: the place today, a new record, or an invitation. */
+  Champions.afterGame = function (box, game, score) {
+    if (!signedIn()) return;
+    const host = box.querySelector('.gm-end-a');
+    if (!host) return;
+    const line = document.createElement('div');
+    line.className = 'gm-rank';
+    host.before(line);
+    if (!joined()) {
+      line.innerHTML = `<button class="btn text sm" data-lb-open>${icon('trophy', 's')} להתחרות בטבלת האלופים</button>`;
+      line.querySelector('[data-lb-open]').onclick = () => Champions.open(game);
+      return;
+    }
+    line.innerHTML = '<span class="muted">🏆 בודקים את המקום שלך…</span>';
+    Champions.submit(game, score).then((r) => {
+      if (!line.isConnected) return;
+      if (!r) { line.remove(); return; }
+      const rec = r.improved.includes('a') ? 'שיא של כל הזמנים!' : r.improved.includes('y') ? 'שיא שנתי חדש!' : r.improved.includes('m') ? 'שיא חודשי חדש!' : r.improved.includes('w') ? 'שיא שבועי חדש!' : '';
+      const up = r.rank && r.before && r.rank < r.before;
+      const txt = !r.rank ? 'עוד לא בטופ 50 של היום. עוד סיבוב?'
+        : r.rank === 1 ? '👑 מקום ראשון היום!' : up ? `🚀 עלית למקום ${r.rank} היום!` : `🏆 מקום ${r.rank} היום`;
+      line.innerHTML = `<span><b>${txt}</b>${rec ? ` · ${rec}` : ''}</span><button class="btn text sm" data-lb-open>לטבלה</button>`;
+      line.querySelector('[data-lb-open]').onclick = () => Champions.open(game);
+      if (r.rank === 1 && (!r.before || r.before > 1) && root.Fx) root.Fx.celebrate('big');
+    });
+  };
+
+  /** A small card for the games list: the place today in the last game played. */
+  Champions.hubCard = function () {
+    const last = (S.meta.lbLast && LB.MAX[S.meta.lbLast]) ? S.meta.lbLast : 'coins';
+    const c = boards.get(`${last}|d|${today()}`);
+    const r = c && signedIn() ? c.rows.find((x) => x.uid === uid()) : null;
+    const sub = !signedIn() ? 'מתחברים ומתחרים על המקום הראשון' : !joined() ? 'היום, השבוע, החודש ובכל הזמנים' : r ? `המקום שלך היום ב${SHORT[last]}: ${r.rank}` : 'מי במקום הראשון היום?';
+    return `<button class="ach-card lb-card" data-lb-hub><span class="ach-card-e" aria-hidden="true">🏆</span><span class="gm-txt"><b>טבלת האלופים</b><span>${esc(sub)}</span></span>${icon('left', 's')}</button>`;
+  };
+
+  /* ---------------- the table ---------------- */
+  Champions.open = function (startGame) {
+    let game = LB.MAX[startGame] ? startGame : (LB.MAX[S.meta.lbLast] ? S.meta.lbLast : 'coins');
+    let period = 'd';
+    let seq = 0;
+    const view = (el) => el.querySelector('[data-lb-body]');
+    const row = (x, meId, admin, unit) => `<li class="lb-row ${x.uid === meId ? 'me' : ''} ${x.bg ? 'plus sk-' + x.bg : ''}">
+        <span class="lb-r">${x.rank}</span><span class="lb-e" aria-hidden="true">${x.e}</span>
+        <span class="lb-n">${esc(x.n)}${x.p ? '<i class="lb-plus">Plus</i>' : ''}${x.uid === meId ? ' <small>(את/ה)</small>' : ''}</span>
+        <b class="lb-s">${x.s}${esc(unit)}</b>${admin && x.uid !== meId ? `<button class="icon-btn lb-rm" data-rm="${esc(x.uid)}" aria-label="הסרת ${esc(x.n)} מהטבלה">${icon('trash', 's')}</button>` : ''}</li>`;
+    const pod = (x, place, meId, unit) => (x ? `<div class="lb-pod p${place} ${x.uid === meId ? 'me' : ''}">
+        <div class="lb-av ${x.bg ? 'sk-' + x.bg : ''}"><span aria-hidden="true">${x.e}</span>${place === 1 ? '<i class="lb-crown" aria-hidden="true">👑</i>' : ''}</div>
+        <b class="lb-n">${esc(x.n)}</b>${x.p ? '<i class="lb-plus">Plus</i>' : ''}<span class="lb-s">${x.s}${esc(unit)}</span><div class="lb-step"><span>${place}</span></div></div>`
+      : `<div class="lb-pod p${place} empty"><div class="lb-av"><span aria-hidden="true">?</span></div><b class="lb-n">פנוי</b><div class="lb-step"><span>${place}</span></div></div>`);
+    async function load(el) {
+      const my = ++seq;
+      const body = view(el);
+      const g = gameOf(game);
+      if (!signedIn()) {
+        body.innerHTML = `<div class="card lb-join">${App.mascotSays ? App.mascotSays('wave', 'הטבלה שמורה בחשבון Google. מתחברים, בוחרים כינוי ומתחרים!', { size: 60 }) : ''}
+          <button class="btn block" data-lb-signin>${icon('cloud', 's')} התחברות לחשבון</button></div>`;
+        return;
+      }
+      body.innerHTML = `<div class="lb-wait">${UI.skeleton ? UI.skeleton(4) : '<span class="muted">טוען…</span>'}</div>`;
+      let rows;
+      try { rows = await board(game, period); } catch (e) {
+        if (my !== seq) return;
+        body.innerHTML = `<div class="empty"><h3>הטבלה לא נטענה</h3><div class="small muted">${navigator.onLine ? 'נסו שוב בעוד רגע' : 'אין חיבור לאינטרנט'}</div><button class="btn tonal" data-lb-retry>נסו שוב</button></div>`;
+        return;
+      }
+      if (my !== seq || !el.isConnected) return;
+      const meId = uid();
+      const meRow = rows.find((x) => x.uid === meId);
+      const admin = !!App.isAdmin;
+      const unit = g.unit || '';
+      const reset = LB.resetText(period, today(), Date.now());
+      const head = `<div class="lb-reset tiny muted">${icon('clock', 's')} ${esc(reset)} · ${rows.length ? `${rows.length >= LIMIT ? '50 הראשונים' : rows.length + ' שחקנים'}` : 'עוד אין שחקנים'}</div>`;
+      if (!rows.length) {
+        body.innerHTML = `${head}<div class="empty fun lb-empty">${App.mascot ? App.mascot('party', { size: 84 }) : ''}<h3>המקום הראשון פנוי!</h3><div>${period === 'a' ? 'עוד אף אחד לא נכנס לטבלה במשחק הזה.' : `עוד אף אחד לא שיחק ${PERIODS.find((p) => p[0] === period)[1].replace('כל הזמנים', '')} ב"${esc(g.t)}".`}</div>
+          <button class="btn" data-lb-play>${icon('play', 's')} לשחק ולתפוס אותו</button></div>`;
+      } else {
+        body.innerHTML = `${head}<div class="lb-podium">${pod(rows[1], 2, meId, unit)}${pod(rows[0], 1, meId, unit)}${pod(rows[2], 3, meId, unit)}</div>
+          ${rows.length > 3 ? `<ol class="lb-list">${rows.slice(3).map((x) => row(x, meId, admin, unit)).join('')}</ol>` : ''}
+          ${admin && rows.slice(0, 3).some((x) => x.uid !== meId) ? `<div class="lb-admin tiny muted">מנהל: ${rows.slice(0, 3).filter((x) => x.uid !== meId).map((x) => `<button class="btn text sm" data-rm="${esc(x.uid)}">הסרת ${esc(x.n)}</button>`).join('')}</div>` : ''}`;
+      }
+      // me: where I stand and how far the next place is
+      const bar = el.querySelector('[data-lb-me]');
+      if (!joined()) {
+        bar.innerHTML = `<div class="lb-me-t"><b>רוצה להופיע כאן?</b><small>בוחרים כינוי ואימוג׳י, בלי שם אמיתי</small></div><button class="btn sm" data-lb-profile>${icon('trophy', 's')} הצטרפות</button>`;
+      } else if (meRow) {
+        const ahead = rows.filter((x) => x.s > meRow.s).pop();
+        bar.innerHTML = `<div class="lb-me-t"><b>${meRow.rank === 1 ? '👑 את/ה במקום הראשון!' : `המקום שלך: ${meRow.rank}`}</b><small>${ahead ? `עוד ${ahead.s - meRow.s + 1}${esc(unit)} כדי לעקוף את ${esc(ahead.n)}` : 'תשמרו על הכתר 😎'}</small></div><button class="btn sm" data-lb-play>${icon('play', 's')} לשחק</button>`;
+      } else {
+        const last = rows[rows.length - 1];
+        bar.innerHTML = `<div class="lb-me-t"><b>${rows.length >= LIMIT ? 'עוד לא בטופ 50' : `עוד לא שיחקת ${period === 'a' ? 'כאן' : PERIODS.find((p) => p[0] === period)[1]}`}</b><small>${rows.length >= LIMIT ? `צריך יותר מ-${last.s}${esc(unit)}` : 'משחק אחד וכבר את/ה בטבלה'}</small></div><button class="btn sm" data-lb-play>${icon('play', 's')} לשחק</button>`;
+      }
+    }
+    function draw(el) {
+      el.querySelector('[data-lb-tabs]').innerHTML = `
+        <div class="chips lb-games" role="tablist" aria-label="משחק">${games().map((g) => `<button class="chip ${g.id === game ? 'on' : ''}" role="tab" aria-selected="${g.id === game}" data-game="${g.id}">${esc(SHORT[g.id] || g.t)}</button>`).join('')}</div>
+        <div class="seg lb-periods" role="tablist" aria-label="תקופה">${PERIODS.map(([k, l]) => `<button class="${k === period ? 'on' : ''}" role="tab" aria-selected="${k === period}" data-period="${k}">${l}</button>`).join('')}</div>
+        ${joined() ? `<button class="lb-mine" data-lb-profile>${(() => { const p = profile(); return `<span class="lb-av sm ${p.bg ? 'sk-' + p.bg : ''}"><span aria-hidden="true">${p.e}</span></span><span>${esc(p.n)}</span>`; })()}${icon('edit', 's')}<span class="vh">עריכת הכינוי</span></button>` : ''}`;
+      load(el);
+    }
+    UI.openSheet({
+      title: 'טבלת האלופים 🏆',
+      full: true,
+      cls: 'lb-sheet',
+      body: '<div data-lb-tabs></div><div data-lb-body></div>',
+      foot: '<div class="lb-me" data-lb-me></div>',
+      onMount: (el) => {
+        draw(el);
+        el.addEventListener('click', async (e) => {
+          const b = e.target.closest('button');
+          if (!b) return;
+          if (b.dataset.game) { game = b.dataset.game; draw(el); }
+          else if (b.dataset.period) { period = b.dataset.period; draw(el); }
+          else if (b.hasAttribute('data-lb-retry')) load(el);
+          else if (b.hasAttribute('data-lb-profile')) Champions.profile(() => { if (el.isConnected) draw(el); });
+          else if (b.hasAttribute('data-lb-signin')) { UI.closeAll(); App.go('settings'); setTimeout(() => App.sheetsApi.settingsSection('account'), 350); }
+          else if (b.hasAttribute('data-lb-play')) {
+            UI.closeTop();
+            setTimeout(() => { if (App.games && App.games.play) App.games.play(game); }, 320);
+          } else if (b.dataset.rm) {
+            if (!(await UI.confirm('להסיר מהטבלה?', 'השורה של השחקן תימחק (למשל כינוי לא מתאים). הוא יוכל להצטרף שוב.', 'הסרה', true))) return;
+            try { const { fs, db } = await Cloud().sdk(); await fs.deleteDoc(fs.doc(db, 'lb', b.dataset.rm)); boards.clear(); load(el); } catch (err) { UI.toast('ההסרה נכשלה'); }
+          }
+        });
+      },
+    });
+  };
+
+  /* ---------------- my nickname, emoji and background ---------------- */
+  Champions.profile = function (done) {
+    const l = S.settings.lb || {};
+    let n = l.n || LB.randomNick(), e = LB.EMOJI.includes(l.e) ? l.e : LB.EMOJI[Math.floor(Math.random() * LB.EMOJI.length)], bg = l.bg || '';
+    const skins = (root.Plus && root.Plus.SKINS) || {};
+    const canBg = plusOn();
+    const showBg = !!(root.Plus && (root.Plus.visible() || canBg));
+    const preview = () => `<li class="lb-row me ${canBg && skins[bg] ? 'plus sk-' + bg : ''}"><span class="lb-r">1</span><span class="lb-e" aria-hidden="true">${e}</span><span class="lb-n">${esc(n || '…')}${canBg ? '<i class="lb-plus">Plus</i>' : ''}</span><b class="lb-s">120</b></li>`;
+    UI.openSheet({
+      title: l.on ? 'הפרופיל שלי בטבלה' : 'הצטרפות לטבלת האלופים',
+      cls: 'lb-profile',
+      body: `<ol class="lb-list lb-preview" aria-hidden="true">${preview()}</ol>
+        <label class="field"><span class="lbl">כינוי (מופיע לכולם)</span>
+          <span class="lb-nick"><input class="input" id="lb-n" maxlength="16" autocomplete="off" value="${esc(n)}"><button class="icon-btn" data-dice aria-label="כינוי אקראי">🎲</button></span>
+          <span class="tiny lb-err" id="lb-err" role="alert"></span></label>
+        <div class="section-title">אימוג׳י</div>
+        <div class="lb-emoji" role="radiogroup" aria-label="אימוג׳י">${LB.EMOJI.map((x) => `<button role="radio" aria-checked="${x === e}" class="${x === e ? 'on' : ''}" data-e="${x}">${x}</button>`).join('')}</div>
+        ${showBg ? `<div class="section-title">רקע בטבלה <span class="tag plus-tag">Plus</span></div>
+          <div class="skin-pick lb-bgs">
+            <button class="skin-tile ${!bg ? 'on' : ''}" data-bg="" aria-pressed="${!bg}"><b>—</b><span>בלי</span></button>
+            ${Object.entries(skins).map(([k, name]) => `<button class="skin-tile sk-${k} ${bg === k ? 'on' : ''}" data-bg="${k}" aria-pressed="${bg === k}" aria-label="${name}${canBg ? '' : ' (Plus)'}"><b>${e}</b><span>${name}</span>${canBg ? '' : `<i class="skin-lock" aria-hidden="true">${icon('lock', 's')}</i>`}</button>`).join('')}
+          </div>` : ''}
+        <div class="tiny muted lb-note">בטבלה מופיעים רק הכינוי, האימוג׳י, הרקע והתוצאות במשחקים. לא שם אמיתי, לא מספר טלפון. אפשר לצאת מהטבלה בכל רגע, והשורה נמחקת.</div>
+        <button class="btn big block" data-save>${icon('check')} ${l.on ? 'שמירה' : 'הצטרפות'}</button>
+        ${l.on ? '<button class="btn text block danger" data-leave>יציאה מהטבלה</button>' : ''}`,
+      onMount: (el) => {
+        const input = el.querySelector('#lb-n');
+        const err = el.querySelector('#lb-err');
+        const redraw = () => { el.querySelector('.lb-preview').innerHTML = preview(); };
+        input.addEventListener('input', () => { n = input.value; err.textContent = ''; redraw(); });
+        el.addEventListener('click', async (ev) => {
+          const b = ev.target.closest('button');
+          if (!b) return;
+          if (b.hasAttribute('data-dice')) { n = LB.randomNick(); input.value = n; err.textContent = ''; redraw(); }
+          else if (b.dataset.e) { e = b.dataset.e; el.querySelectorAll('[data-e]').forEach((x) => { const on = x.dataset.e === e; x.classList.toggle('on', on); x.setAttribute('aria-checked', on); }); el.querySelectorAll('.lb-bgs .skin-tile[data-bg]:not([data-bg=""]) b').forEach((x) => { x.textContent = e; }); redraw(); }
+          else if (b.dataset.bg !== undefined) {
+            if (b.dataset.bg && !canBg) { UI.closeTop(); setTimeout(() => root.Plus.sheet(), 320); return; }
+            bg = b.dataset.bg; el.querySelectorAll('[data-bg]').forEach((x) => { const on = x.dataset.bg === bg; x.classList.toggle('on', on); x.setAttribute('aria-pressed', on); }); redraw();
+          } else if (b.hasAttribute('data-save')) {
+            const nick = String(input.value || '').trim().replace(/\s+/g, ' ');
+            const bad = LB.nickProblem(nick);
+            if (bad) { err.textContent = bad; input.focus(); return; }
+            if (!signedIn()) { UI.toast('צריך להתחבר לחשבון'); return; }
+            b.disabled = true;
+            const wasOn = !!(S.settings.lb && S.settings.lb.on);
+            await Store.setSettings((s) => { s.lb = { on: true, n: nick, e, bg }; });
+            try {
+              await readMine();
+              // joining: the best scores already on this phone go into "all time"
+              const patch = {};
+              if (!wasOn) for (const [g, best] of Object.entries(S.meta.games || {})) { const v = LB.improve((mine.g || {})[g], g, best, today()); if (v.a) patch[g] = { a: v.a }; }
+              await writeMine(patch);
+              UI.toast(wasOn ? 'נשמר ✓' : 'ברוכים הבאים לטבלה! 🏆');
+              UI.closeTop();
+              if (done) done();
+            } catch (x) {
+              if (!wasOn) await Store.setSettings((s) => { s.lb = Object.assign({}, s.lb, { on: false }); });
+              b.disabled = false;
+              UI.toast(navigator.onLine ? 'השמירה נכשלה. נסו שוב' : 'אין חיבור לאינטרנט');
+            }
+          } else if (b.hasAttribute('data-leave')) {
+            if (!(await UI.confirm('לצאת מהטבלה?', 'השורה שלך והתוצאות שבה יימחקו מהטבלה. השיאים בטלפון נשארים.', 'יציאה', true))) return;
+            await Champions.forget();
+            UI.closeTop();
+            if (done) done();
+          }
+        });
+      },
+    });
+  };
+
+  /** Leaving the table (or deleting the account): my row goes. */
+  Champions.forget = async function () {
+    try {
+      if (signedIn()) { const { fs, db } = await Cloud().sdk(); await fs.deleteDoc(fs.doc(db, 'lb', uid())); }
+    } catch (e) { /* offline: the row stays until the next try */ }
+    mine = null; boards.clear();
+    if (S.settings.lb && S.settings.lb.on) await Store.setSettings((s) => { s.lb = Object.assign({}, s.lb, { on: false }); });
+  };
+  /** A changed profile (or Plus turning on or off) reaches the row at the next game; this sends it now. */
+  Champions.sync = async function () { if (joined()) { try { await writeMine(null); } catch (e) { /* next time */ } } };
+  Champions._reset = () => { mine = null; boards.clear(); };
+  App.actions.leaderboard = (el) => Champions.open(el && el.dataset && el.dataset.game);
+})(typeof window !== 'undefined' ? window : globalThis);
+
+/* ---- app/views-analysis.js ---- */
+/* ============================================================
+ * views-analysis.js — "ניתוח מתקדם": what pays best, from the past
+ * year's shifts (the numbers come from core/analysis.js).
+ *
+ * With Shaati Plus as many times as wanted; without it, a few times a
+ * month (plus.js, the "analysis" allowance), and only once Plus can be
+ * bought on this phone. Opening it without enough shifts costs nothing.
+ * ============================================================ */
+(function (root) {
+  'use strict';
+  const { U, UI, App, Store } = root;
+  const S = Store.S;
+  const { icon, esc } = UI;
+  const money = (v) => U.money(v, 0);
+  const COLORS = ['#7c5cff', '#2a78d6', '#1baf7a', '#eda100', '#eb6834', '#d6409f', '#4a3aa7'];
+
+  function body(a) {
+    const bars = (rows, best) => (root.Charts ? root.Charts.hbars(rows.map((x, i) => ({
+      name: x.name, value: x.perHour, color: best && x.name === best.name ? '#1baf7a' : COLORS[i % COLORS.length] + '99',
+      text: U.money(x.perHour),
+    })), null) : '');
+    const t = a.trend;
+    const m = (mk) => U.HEB_MONTHS[+mk.slice(5, 7) - 1];
+    return `
+      <div class="card an-sum"><div class="kpis">
+        <div class="kpi"><div class="l">ממוצע לשעה</div><div class="v">${U.money(a.avgHour)}</div><div class="d">${a.count} משמרות בשנה האחרונה</div></div>
+        <div class="kpi"><div class="l">משמרת ממוצעת</div><div class="v">${money(a.avgShift.wage)}</div><div class="d">${U.hm(a.avgShift.hours * 60)} שעות</div></div>
+      </div></div>
+      ${a.bestDay ? `<div class="section-title">${icon('calendar', 's')} איזה יום הכי משתלם</div>
+        <div class="card"><div class="an-lead">ימי <b>${esc(a.bestDay.name)}</b> משתלמים לך הכי הרבה: <b>${U.money(a.bestDay.perHour)}</b> לשעה בממוצע (${a.bestDay.n} משמרות).</div>${bars(a.days.filter((x) => x.n), a.bestDay)}
+        <div class="tiny muted">ממוצע לשעה, עם תוספות שבת, חג ושעות נוספות (בלי נסיעות ובונוסים)</div></div>` : ''}
+      ${a.bestSlot ? `<div class="section-title">${icon('clock', 's')} איזו שעה הכי משתלמת</div>
+        <div class="card"><div class="an-lead">משמרות <b>${esc(a.bestSlot.name)}</b> מכניסות הכי הרבה לשעה: <b>${U.money(a.bestSlot.perHour)}</b>.</div>${bars(a.slots.filter((x) => x.n), a.bestSlot)}</div>` : ''}
+      <div class="section-title">${icon('chart', 's')} השכר האמיתי לשעה</div>
+      <div class="card"><div class="an-months">${a.months.map((x) => { const max = Math.max(...a.months.map((y) => y.perHour), 1); return `<div class="an-m"><span class="an-mv">${x.n ? Math.round(x.perHour) : ''}</span><span class="an-mb"><i style="height:${x.n ? Math.max(6, (x.perHour / max) * 100) : 0}%"></i></span><span class="an-ml">${esc(m(x.mk))}</span></div>`; }).join('')}</div>
+        ${t ? `<div class="an-lead">${t.diff > 0.5 ? `ב${esc(m(t.mk))} הרווחת <b>${U.money(t.diff)} יותר לשעה</b> מהממוצע של החודשים הקודמים 📈` : t.diff < -0.5 ? `ב${esc(m(t.mk))} השכר לשעה ירד ב-<b>${U.money(-t.diff)}</b> לעומת הממוצע. כדאי לבדוק אם חסרות תוספות.` : `השכר לשעה יציב: בערך ${U.money(t.perHour)}.`}</div>` : ''}</div>
+      <div class="section-title">${icon('star', 's')} השיאים שלך</div>
+      <div class="card an-rec">
+        <div><span>המשמרת הכי רווחית</span><b>${money(a.bestShift.total)}</b><small>${esc(U.fmtDate(a.bestShift.dateKey, 'dm'))} · ${U.hm(a.bestShift.hours * 60)} שעות</small></div>
+        <div><span>המשמרת הכי ארוכה</span><b>${U.hm(a.longest.hours * 60)}</b><small>${esc(U.fmtDate(a.longest.dateKey, 'dm'))}</small></div>
+        ${a.bestMonth ? `<div><span>החודש הכי טוב</span><b>${money(a.bestMonth.wage)}</b><small>${esc(m(a.bestMonth.mk))}</small></div>` : ''}
+        <div><span>תוספות שקיבלת</span><b>${money(a.premiums)}</b><small>${a.premiumShare}% מהשכר: שבתות, חגים, שעות נוספות ולילות</small></div>
+      </div>
+      <div class="section-title">${icon('bulb', 's')} מה אם…</div>
+      <div class="card an-if">
+        ${a.bestDay && a.whatIf.extraShift ? `<div>${icon('plus', 's')}<span>עוד משמרת אחת בשבוע ביום ${esc(a.bestDay.name)} = <b>בערך ${money(a.whatIf.extraShift)} יותר בחודש</b></span></div>` : ''}
+        ${a.whatIf.raise2 ? `<div>${icon('chart', 's')}<span>העלאה של 2 ₪ לשעה = <b>בערך ${money(a.whatIf.raise2)} יותר בחודש</b>, על אותן שעות</span></div>` : ''}
+        <div class="tiny muted">הערכה לפי השנה האחרונה שלך. לא כולל מסים.</div>
+      </div>`;
+  }
+
+  /** Opens the analysis: the allowance is used only when there is something to show. */
+  App.actions['analysis-open'] = function () {
+    const a = root.Analysis.analyse(App.model.results.values(), U.todayKey());
+    if (!a.enough) {
+      UI.openSheet({ title: 'ניתוח מתקדם', cls: 'an-sheet', body: `<div class="empty fun">${App.mascot ? App.mascot('think', { size: 90 }) : ''}<h3>עוד קצת משמרות</h3><div>הניתוח צריך לפחות 3 משמרות שבוצעו בשנה האחרונה${a.count ? ` (יש ${a.count})` : ''}.</div></div>` });
+      return;
+    }
+    if (root.Plus && !root.Plus.use('analysis')) return;
+    const left = root.Plus ? root.Plus.left('analysis') : Infinity;
+    UI.openSheet({
+      title: 'ניתוח מתקדם ✨',
+      full: true,
+      cls: 'an-sheet',
+      body: body(a) + (left !== Infinity ? `<div class="an-left tiny">${left ? `נשארו החודש ${left === 1 ? 'ניתוח אחד' : left + ' ניתוחים'} חינם` : 'זה היה הניתוח החינמי האחרון החודש'} · <button class="btn text sm" data-act="plus-open">בלי הגבלה עם Plus</button></div>` : ''),
+    });
+  };
 })(typeof window !== 'undefined' ? window : globalThis);
 
 /* ---- app/views-recap.js ---- */
@@ -13402,6 +14455,7 @@ window.FIREBASE_CONFIG = {
   const FEATURES = [
     ['rights', 'מדריך הזכויות'], ['planned', 'משמרות מתוכננות'], ['roles', 'יותר מתפקיד אחד'], ['goal', 'יעד חודשי'],
     ['notif', 'התראות מאושרות'], ['lock', 'נעילה בקוד'], ['bio', 'טביעת אצבע'], ['ai', 'מפתח AI'], ['dark', 'מצב כהה'], ['fxOff', 'כיבוי אפקטים'], ['demo', 'מצב הדגמה'],
+    ['plusSeen', 'ראו את Shaati Plus'], ['plusWall', 'הגיעו למכסה חינמית'], ['plusTry', 'ניסו את Plus בחינם'],
   ];
 
   function kpi(label, value, sub) {
@@ -13409,6 +14463,36 @@ window.FIREBASE_CONFIG = {
   }
   function barList(entries, total) {
     return entries.map(([label, n]) => `<div class="adm-bar"><span class="nm">${esc(label)}</span><span class="track"><i style="width:${pct(n, total)}%"></i></span><span class="vv">${n} · ${pct(n, total)}%</span></div>`).join('');
+  }
+  /* Shaati Plus and income: from the same anonymous records (a device says only whether Plus is on and
+   * where it was bought). Exact amounts live in Google Play Console and Lemon Squeezy. */
+  function plusSection(rows) {
+    const P = root.Plus;
+    const C = root.PAY_CONFIG || {};
+    const has = (k) => rows.filter((r) => r.f && r.f[k]).length;
+    const buyers = has('plus'), web = has('plusWeb'), play = buyers - web, seen = has('plusSeen'), wall = has('plusWall'), tried = has('plusTry');
+    const triedBought = rows.filter((r) => r.f && r.f.plusTry && r.f.plus).length;
+    const share = rows.length ? (buyers / rows.length) * 100 : 0;
+    const GOAL = 10; // % of users who pay
+    const price = +C.price || 0;
+    // Google keeps 15%; Lemon Squeezy about 5% + 50¢ (≈ ₪1.9) per sale
+    const gross = buyers * price;
+    const net = play * price * 0.85 + web * Math.max(0, price * 0.95 - 1.9);
+    const money = (v) => '₪' + Math.round(v).toLocaleString('en-US');
+    const lemon = C.lemon || {};
+    const playState = P && P.available ? '<span class="tag good">פעיל</span>' : App.androidApp ? '<span class="tag warn">לא מוגדר ב-Play Console</span>' : '<span class="tag">נבדק רק מתוך אפליקציית האנדרואיד</span>';
+    const webState = lemon.checkout && +lemon.productId ? '<span class="tag good">פעיל</span>' : '<span class="tag warn">לא מוגדר</span>';
+    return `<div class="section-title">${icon('sparkle', 's')} Shaati Plus והכנסות</div>
+      <div class="card"><div class="kpis">${kpi('קונים', buyers, `${play} באנדרואיד · ${web} באתר`)}${kpi('משלמים', U.num(share, 1) + '%', `מכל המשתמשים · היעד ${GOAL}%`)}${kpi('הכנסה משוערת', money(gross), '≈ ' + money(net) + ' אחרי עמלות')}${kpi('קנו אחרי ניסיון', pct(triedBought, tried) + '%', `${tried} ניסו בחינם`)}</div>
+        <div class="adm-goal"><div class="progress thin"><i style="width:${Math.min(100, (share / GOAL) * 100)}%"></i></div><span class="tiny muted">${share >= GOAL ? 'היעד הושג 🎉' : `עוד ${Math.max(1, Math.ceil((GOAL / 100) * rows.length - buyers))} קונים ליעד של ${GOAL}%`}</span></div>
+        <div class="divider"></div>
+        <div class="tiny muted" style="margin-bottom:6px">המשפך: מכל המשתמשים, כמה הגיעו לכל שלב</div>
+        ${barList([['ראו את Plus', seen], ['הגיעו למכסה חינמית', wall], ['ניסו בחינם', tried], ['קנו', buyers]], rows.length)}
+        <div class="divider"></div>
+        <div class="adm-pay"><span>Google Play (בתוך האפליקציה)</span>${playState}</div>
+        <div class="adm-pay"><span>אתר ו-iPhone (אשראי, Apple Pay, Google Pay, PayPal)</span>${webState}</div>
+        <div class="btn-row" style="margin-top:10px"><a class="btn tonal sm" href="https://play.google.com/console" target="_blank" rel="noopener">${icon('chart', 's')} Google Play Console</a><a class="btn tonal sm" href="https://app.lemonsqueezy.com/orders" target="_blank" rel="noopener">${icon('receipt', 's')} מכירות באתר</a></div>
+        <div class="tiny muted" style="margin-top:8px">מהסטטיסטיקה האנונימית (מכשירים שלא כיבו אותה), מתעדכן כל כמה שעות. הסכומים המדויקים ותשלומי המס בדוחות של Google Play ושל Lemon Squeezy.</div></div>`;
   }
   function render(rows, admins, me) {
     const k = U.todayKey();
@@ -13434,6 +14518,7 @@ window.FIREBASE_CONFIG = {
       <div class="card tonal"><div class="kpis">
         ${kpi('משתמשים (מכשירים)', n, `${new7} חדשים השבוע`)}${kpi('פעילים היום', a1)}${kpi('פעילים ב-7 ימים', a7, pct(a7, n) + '% מהכלל')}${kpi('פעילים ב-30 ימים', a30, pct(a30, n) + '% מהכלל')}
       </div></div>
+      ${plusSection(rows)}
       <div class="section-title">${icon('up', 's')} משתמשים חדשים, 30 ימים אחרונים</div>
       <div class="card">${Charts.bars(days.map((d) => ({ label: d.slice(8), value: byFirst.get(d), tip: `${U.fmtDate(d, 'dm')}: ${byFirst.get(d)} חדשים` })), { label: 'משתמשים חדשים לפי יום', height: 170 })}
         <div class="tiny muted">${new30} הצטרפו ב-30 הימים האחרונים.</div></div>
@@ -13457,6 +14542,7 @@ window.FIREBASE_CONFIG = {
     </div>`;
   }
 
+  App.adminView = render; // the page from given records (tests)
   App.actions['admin-dashboard'] = async function () {
     if (!App.isAdmin || !root.Cloud || !root.Cloud.user) return;
     const entry = UI.openSheet({ title: 'לוח ניהול', full: true, body: UI.skeleton(4, 'card') });
@@ -13501,7 +14587,7 @@ window.FIREBASE_CONFIG = {
   const S = Store.S;
   const { icon, esc } = UI;
 
-  const LEGAL_VERSION = '1.2';
+  const LEGAL_VERSION = '1.3';
   const EFFECTIVE = '15 באוקטובר 2026';
   const CONTACT = 'https://github.com/leelor123/shifts/issues';
   const APP_NAME = 'Shaati';
@@ -13529,7 +14615,9 @@ window.FIREBASE_CONFIG = {
 <h4>8. זמינות, שינויים והפסקת השירות</h4>
 <p>השימוש באפליקציה ובכל יכולותיה הבסיסיות — רישום משמרות, חישוב שכר, זכויות, בדיקת תלוש, דוחות ומשחקים — ניתן ללא תשלום. האפליקציה ניתנת "כמות שהיא" (AS IS) ו"כפי שהיא זמינה", ללא כל התחייבות לזמינות רציפה, לדיוק, להתאמה למטרה מסוימת או להיעדר תקלות. המפעיל רשאי לשנות, להוסיף או להפסיק תכונות או את השירות כולו, ככל האפשר בהודעה מראש באפליקציה. שינוי מהותי בתנאים יוצג באפליקציה ויידרש אישורו מחדש.</p>
 <h4>8א. תוספות בתשלום (Shaati Plus)</h4>
-<p>האפליקציה עשויה להציע תוספות אופציונליות בתשלום חד-פעמי ("Shaati Plus"), כגון עיצובים לכרטיס השכר. התוספות אינן משנות את החישובים, את מידע הזכויות או את הכלים הבסיסיים, שנשארים זמינים לכולם ללא תשלום. הרכישה מתבצעת דרך Google Play בלבד, בכפוף לתנאים ולמדיניות ההחזרים של Google Play; המפעיל אינו מקבל ואינו שומר פרטי תשלום. הרכישה משויכת לחשבון Google שבו בוצעה וניתנת לשחזור במכשיר אחר עם אותו חשבון. רכישה בידי משתמש שטרם מלאו לו 18 טעונה הסכמת הורה או אפוטרופוס.</p>
+<p>האפליקציה עשויה להציע תוספות אופציונליות בתשלום חד-פעמי ("Shaati Plus"), כגון עיצובים לכרטיס השכר, ושימוש ללא הגבלה בחלק מהתוספות שיש להן מכסה חינמית (למשל ניתוח מתקדם וייצוא דוחות לקובץ). התוספות אינן משנות את החישובים, את מידע הזכויות או את הכלים הבסיסיים (משמרות, חישוב שכר, זכויות, בדיקת תלוש, דוחות במסך, משחקים, גיבוי וסנכרון), שנשארים זמינים לכולם ללא תשלום וללא הגבלה. ניתן לנסות את Shaati Plus פעם אחת בחינם לתקופה קצרה; הניסיון אינו דורש פרטי תשלום ומסתיים מעצמו, בלי חיוב. באפליקציית האנדרואיד שהותקנה מ-Google Play הרכישה מתבצעת דרך Google Play, בכפוף לתנאים ולמדיניות ההחזרים שלה. באתר ובאייפון הרכישה מתבצעת בדף תשלום של Lemon Squeezy, שהיא המוכרת הרשומה (Merchant of Record) של העסקה ומטפלת בתשלום, בקבלה ובמסים, בכפוף לתנאים ולמדיניות ההחזרים שלה; לאחר התשלום נשלח קוד הפעלה, הנשמר בחשבון המשתמש ומפעיל את התוספת בכל מכשיריו. המפעיל אינו מקבל ואינו שומר פרטי תשלום. החזר כספי מבטל את התוספת. רכישה בידי משתמש שטרם מלאו לו 18 טעונה הסכמת הורה או אפוטרופוס.</p>
+<h4>8ב. טבלת האלופים במשחקים</h4>
+<p>ההשתתפות בטבלת האלופים היא לבחירתך ודורשת התחברות. בטבלה מוצגים לשאר המשתמשים המחוברים הכינוי שבחרת, אימוג׳י, הרקע שבחרת (למנויי Shaati Plus) והתוצאות שלך במשחקים. אין לבחור כינוי שהוא השם המלא שלך, פרטי קשר, או כינוי פוגעני, מטעה או שמתחזה לאחר. המפעיל רשאי להסיר מהטבלה שורה עם כינוי לא מתאים או תוצאה שנראית לא אמיתית. אפשר לצאת מהטבלה בכל עת, והשורה נמחקת.</p>
 <h4>9. נתונים וגיבוי</h4>
 <p>המשתמש אחראי לנכונות הנתונים שהזין ולשמירת גיבויים. האפליקציה מציעה סנכרון לחשבון וייצוא לקובץ, אך אינה מתחייבת שנתונים לא יאבדו (למשל בשל תקלה, מחיקה ביוזמת המשתמש או שינוי בשירותי צד שלישי).</p>
 <h4>10. הגבלת אחריות</h4>
@@ -13554,9 +14642,10 @@ window.FIREBASE_CONFIG = {
 <li><b>פרטי חשבון Google בסיסיים:</b> מזהה משתמש, כתובת אימייל, שם ותמונת פרופיל — לצורך התחברות ותצוגה בלבד.</li>
 <li><b>מידע טכני:</b> כתובת IP ופרטי דפדפן שנרשמים אוטומטית אצל ספקי התשתית בעת טעינת האפליקציה. אין באפליקציה פרסומות, עוגיות מעקב או כלי ניתוח של צד שלישי.</li>
 <li><b>סטטיסטיקת שימוש אנונימית (אפשר לכבות):</b> פעם ביום נשמרת בענן רשומה אחת לכל מכשיר, תחת מזהה אקראי שאינו קשור לחשבון: גרסת האפליקציה, סוג ההתקנה, היום הראשון והאחרון של השימוש, מספר ימי השימוש, מספר המשמרות והתלושים, קבוצת גיל (מתחת ל-18 או מעל) ואילו תכונות פעילות. הרשומה לא כוללת שם, אימייל, מזהה משתמש, תאריכי משמרות או סכומים, ורק מנהלי האפליקציה רואים אותה, כסיכום מצטבר. אפשר לכבות בהגדרות › חשבון וסנכרון, והכיבוי מוחק את הרשומה.</li>
+<li><b>טבלת האלופים (רק אם הצטרפת):</b> הכינוי, האימוג׳י, הרקע ותג Plus שבחרת, והתוצאה הטובה שלך בכל משחק היום, השבוע, החודש, השנה ובכל הזמנים. השורה הזו <b>גלויה לכל המשתמשים המחוברים</b>, בלי שם אמיתי, אימייל או נתוני עבודה. יציאה מהטבלה (או מחיקת החשבון) מוחקת אותה.</li>
 <li><b>פניות לתמיכה (רק אם פנית):</b> נושא הפנייה, מה שכתבת, ההתכתבות איתנו, השם הפרטי שהזנת באפליקציה, ואם בחרת, גרסת האפליקציה וסוג המכשיר. אם פנית בלי להתחבר, גם האימייל שהזנת כדי שנענה לך. הפניות נשמרות בענן, גלויות רק לך ולמנהלי האפליקציה, ונמחקות יחד עם החשבון.</li></ul>
 <h4>2. איפה המידע נשמר</h4>
-<p>במכשיר שלך (אחסון הדפדפן), ולאחר התחברות — גם בענן Google Cloud Firestore, באזור me-west1 (תל אביב). כללי האבטחה במסד הנתונים מאפשרים גישה לנתונים רק למשתמש המחובר שהם שלו. התעבורה מוצפנת (HTTPS), והאחסון בענן מוצפן על ידי Google.</p>
+<p>במכשיר שלך (אחסון הדפדפן), ולאחר התחברות — גם בענן Google Cloud Firestore, באזור me-west1 (תל אביב). כללי האבטחה במסד הנתונים מאפשרים גישה לנתונים רק למשתמש המחובר שהם שלו (חוץ משורה בטבלת האלופים, שגלויה למשתמשים המחוברים אם בחרת להצטרף). התעבורה מוצפנת (HTTPS), והאחסון בענן מוצפן על ידי Google.</p>
 <h4>3. מה לא יוצא מהטלפון</h4>
 <p>מפתח ה-API, קוד הנעילה, קובצי התלושים עצמם (תמונה ו-PDF) והטקסט הגולמי שזוהה מהם נשמרים רק במכשיר.</p>
 <p><b>פתיחה בטביעת אצבע:</b> הזיהוי מתבצע כולו במנגנון של הטלפון. האפליקציה לא מקבלת, לא שומרת ולא שולחת טביעות אצבע או נתוני פנים; היא שומרת רק מזהה טכני שמאפשר לבקש מהטלפון לאשר את הזהות.</p>
@@ -13567,7 +14656,9 @@ window.FIREBASE_CONFIG = {
 <li><b>GitHub</b> — אירוח קוד האפליקציה (ללא הנתונים שלך).</li>
 <li><b>Anthropic</b> — רק כשאתה מפעיל תכונת AI, עם המפתח שלך: בניתוח תלוש נשלח הטקסט שאישרת אחרי הסתרה של ת"ז, פרטי בנק, כתובת, טלפון ואימייל; בעוזר נשלחת השאלה, ואם בחרת — סיכום מספרי מהאפליקציה ללא פרטים מזהים.</li>
 <li><b>שרתי הפצת קוד וגופנים</b> (Google Fonts, jsDelivr, cdnjs) — טעינת רכיבים טכניים.</li>
-<li><b>Google Play</b> — רק אם רוכשים את Shaati Plus: התשלום מתבצע כולו אצל Google Play. אנחנו לא מקבלים פרטי תשלום; האפליקציה שומרת בטלפון רק שהתוספת פעילה, ובודקת זאת מול Google Play.</li></ul>
+<li><b>Google Play</b> — רק אם רוכשים את Shaati Plus באפליקציית האנדרואיד: התשלום מתבצע כולו אצל Google Play. האפליקציה בודקת מולה אם הרכישה קיימת.</li>
+<li><b>Lemon Squeezy</b> — רק אם רוכשים את Shaati Plus באתר או באייפון: התשלום, הקבלה וכתובת האימייל לקבלה נמסרים להם ישירות. האפליקציה שומרת בחשבון שלך רק את קוד ההפעלה, ובודקת מולם שהוא תקף.</li></ul>
+<p>אנחנו לא מקבלים פרטי אשראי או תשלום. בסטטיסטיקה האנונימית נרשם רק אם Shaati Plus פעיל ואיפה נקנה (אנדרואיד או אתר), וכן (כן/לא בלבד) אם דף Plus נפתח, אם התחיל ניסיון חינם ואם הגעת פעם למכסה חינמית.</p>
 <p>חלק מהשירותים פועלים מחוץ לישראל, ולכן מידע עשוי לעבור אל מחוץ לישראל במסגרתם.</p>
 <h4>6. הזכויות שלך</h4>
 <p>אפשר לעיין בכל המידע ולתקן אותו ישירות באפליקציה; לייצא אותו (הגדרות › גיבוי, ייצוא CSV); ולמחוק אותו לצמיתות (הגדרות › חשבון וסנכרון › מחק את כל הנתונים מהחשבון). התנתקות מוחקת את הנתונים מהמכשיר ומשאירה אותם בחשבון.</p>
@@ -13666,7 +14757,8 @@ window.FIREBASE_CONFIG = {
         <li>הנתונים שלך נשמרים בטלפון ובחשבון ה-Google שלך, ורק לך יש גישה אליהם. הם לא נמכרים ולא משמשים לפרסום.</li>
         <li>נשמרת סטטיסטיקת שימוש אנונימית (כמה משמרות, ימי שימוש, תכונות), בלי שם, אימייל או סכומים. אפשר לכבות בהגדרות.</li>
         <li>תכונות AI פועלות רק כשאתה מפעיל אותן, עם מפתח API שלך.</li>
-        <li>כל מה שבאפליקציה חינמי. תוספת עיצוב אופציונלית (Shaati Plus) נקנית רק דרך Google Play, בתשלום חד-פעמי.</li>
+        <li>טבלת האלופים במשחקים היא לבחירתך: מוצגים בה רק כינוי, אימוג׳י ותוצאות.</li>
+        <li>הכלים של האפליקציה והמשחקים חינמיים. לחלק מהתוספות (ניתוח מתקדם, ייצוא דוחות) יש מכסה חינמית, ו-Shaati Plus האופציונלי (תשלום חד-פעמי דרך Google Play או בדף תשלום מאובטח של Lemon Squeezy) פותח אותן בלי הגבלה ומוסיף עיצובים ורקע בטבלה. אנחנו לא רואים פרטי אשראי.</li>
         <li>אפשר לייצא או למחוק את כל הנתונים בכל רגע.</li></ul></div>
       <div class="btn-row"><button class="btn tonal" data-legal="terms">${icon('file')} תנאי שימוש</button><button class="btn tonal" data-legal="privacy">${icon('shield')} פרטיות</button></div>
       </div><div class="foot col">

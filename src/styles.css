@@ -517,6 +517,10 @@ h1, h2, .topbar h1, .wizard h1, .sheet .sh-head h2, .hero-num, .bday-title, .cha
 /* views: quick, direction-aware entrance (no generic fade-up) */
 .view { animation: none; }
 /* switching tabs: the new screen glides in a little (GPU only, transform). No fading: a page that appeared at 45% and brightened looked like a flash, most of all on home with its bright pay card */
+/* Every screen keeps its own layer for its whole life. Without it the browser gave the screen a layer
+ * for the slide-in and took it away when the slide ended (~0.28s), repainting the whole screen at that
+ * moment: on home, with the pay card's glows, that repaint flickered on a real phone. */
+.view { will-change: transform; }
 .view.enter-next { animation: tab-in-next .26s cubic-bezier(.2, .8, .3, 1); }
 .view.enter-prev { animation: tab-in-prev .26s cubic-bezier(.2, .8, .3, 1); }
 @keyframes tab-in-next { from { transform: translateX(-12px); } }

@@ -15,7 +15,10 @@
   function csv(rows) { return '\uFEFF' + rows.map((r) => r.map(csvCell).join(',')).join('\r\n'); }
   const n2 = (x) => (Math.round((x || 0) * 100) / 100).toFixed(2);
 
+  // exports use the free allowance (plus.js); with Plus they are unlimited
+  const allowed = () => !root.Plus || root.Plus.use('export');
   function shiftsCsv(results, filename) {
+    if (results.length && !allowed()) return; // an empty file costs nothing
     const head = ['תאריך', 'יום', 'מעסיק', 'תפקיד', 'התחלה', 'סיום', 'שעות לתשלום', 'הפסקה (דק׳)', 'רגילות', '125%', '150%', 'שבת/חג', 'שבת/חג + נוספות', 'לילה', 'שכר עבודה', 'תוספת שבת/חג', 'תוספת ש״נ', 'נסיעות', 'בונוס', 'טיפים', 'תוספות', 'ניכויים', 'סה״כ', 'סטטוס', 'עקיפה ידנית', 'סיבה', 'הערה'];
     const rows = [head];
     for (const r of results) {
@@ -32,6 +35,7 @@
     UI.toast('קובץ CSV נשמר — נפתח ב-Excel / Google Sheets');
   }
   function monthlyCsv() {
+    if (!allowed()) return;
     const emp = S.employers[0];
     const cur = Engine.periodOf(U.todayKey(), emp).key;
     let first = cur;
@@ -70,6 +74,7 @@
 
   /* ---------------- printable PDF report ---------------- */
   function printReport(from, to, label) {
+    if (!allowed()) return;
     const t = Engine.rangeSummary(App.model, from, to);
     const list = [...App.model.results.values()].filter((r) => r.status === 'done' && r.dateKey >= from && r.dateKey <= to).sort((a, b) => a.start - b.start);
     const roles = Object.entries(t.byRole).map(([id, v]) => `<tr><td>${esc(App.roleName(id))}</td><td>${U.hours(v.hours)}</td><td>${U.money(v.amount)}</td></tr>`).join('');

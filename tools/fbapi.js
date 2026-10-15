@@ -68,6 +68,7 @@ async function main() {
     const boss = { uid: 'boss', token: { email: 'boss@example.com' } };
     const tk = (o) => Object.assign({ uid: 'u1', reason: 'bug', text: 'the button does not work', status: 'open', created: 1, updated: 1, last: 'user', seen: true }, o || {});
     const owner = (uid) => [{ function: 'get', args: [{ exactValue: '/databases/(default)/documents/tickets/t1' }], result: { value: { data: { uid } } } }];
+    const lb = (o) => Object.assign({ n: 'שועל זריז 27', e: '🦊', bg: '', p: false, t: 1790000000000, g: { coins: { d: 2026101500050, a: 50 } } }, o || {});
     const stat = () => ({ v: '1.5.0', p: 'android', first: '2026-10-01', last: '2026-10-13', days: 5, sh: 12, s30: 6, ps: 1, age: 'u18', f: { rights: true }, t: 1790000000000 });
     const cases = [
       ['owner can create a shift', 'ALLOW', 'create', me, `/users/u1/shifts/s1`, rec(5), null],
@@ -120,6 +121,26 @@ async function main() {
       ['another user cannot add messages', 'DENY', 'create', { uid: 'u2' }, '/tickets/t1/msgs/m1', { from: 'user', text: 'hi', t: 5 }, null, [], owner('u1')],
       ['an admin replies in the conversation', 'ALLOW', 'create', boss, '/tickets/t1/msgs/m2', { from: 'admin', text: 'we fixed it', t: 6 }, null, ['boss'], owner('u1')],
       ['another user cannot read the conversation', 'DENY', 'get', { uid: 'u2' }, '/tickets/t1/msgs/m1', null, { from: 'user', text: 'x', t: 1 }, [], owner('u1')],
+      ['a player joins the champions table', 'ALLOW', 'create', me, '/lb/u1', lb(), null],
+      ['a player saves a score', 'ALLOW', 'update', me, '/lb/u1', lb({ g: { coins: { d: 2026101500120, w: 2026101100120, m: 20261000120, y: 202600120, a: 120 }, facts: { a: 10 } } }), lb()],
+      ['a row in someone else’s name is refused', 'DENY', 'create', me, '/lb/u2', lb(), null],
+      ['signed out: cannot write', 'DENY', 'create', null, '/lb/u1', lb(), null],
+      ['a score above the game’s highest is refused', 'DENY', 'update', me, '/lb/u1', lb({ g: { facts: { a: 11 } } }), lb()],
+      ['a packed score above the highest is refused', 'DENY', 'update', me, '/lb/u1', lb({ g: { facts: { d: 2026101500011 } } }), lb()],
+      ['a period that is not a date is refused', 'DENY', 'update', me, '/lb/u1', lb({ g: { coins: { d: 99 } } }), lb()],
+      ['an unknown game is refused', 'DENY', 'update', me, '/lb/u1', lb({ g: { cheat: { a: 1 } } }), lb()],
+      ['a score that is not a whole number is refused', 'DENY', 'update', me, '/lb/u1', lb({ g: { coins: { a: 1.5 } } }), lb()],
+      ['a nickname with markup is refused', 'DENY', 'create', me, '/lb/u1', lb({ n: '<b>x</b>' }), null],
+      ['a nickname with a phone number is refused', 'DENY', 'create', me, '/lb/u1', lb({ n: 'call 0541234567' }), null],
+      ['a nickname too long is refused', 'DENY', 'create', me, '/lb/u1', lb({ n: 'אבגדהוזחטיכלמנסעפ' }), null],
+      ['an unknown emoji is refused', 'DENY', 'create', me, '/lb/u1', lb({ e: '💩' }), null],
+      ['an unknown background is refused', 'DENY', 'create', me, '/lb/u1', lb({ bg: 'url(x)' }), null],
+      ['extra fields (an email) are refused', 'DENY', 'create', me, '/lb/u1', lb({ email: 'a@b.c' }), null],
+      ['a signed-in player reads a row', 'ALLOW', 'get', { uid: 'u2' }, '/lb/u1', null, lb()],
+      ['signed out: cannot read the table', 'DENY', 'get', null, '/lb/u1', null, lb()],
+      ['a player leaves the table', 'ALLOW', 'delete', me, '/lb/u1', null, lb()],
+      ['another player cannot remove a row', 'DENY', 'delete', { uid: 'u2' }, '/lb/u1', null, lb()],
+      ['an admin removes a bad row', 'ALLOW', 'delete', boss, '/lb/u1', null, lb(), ['boss']],
     ];
     const testCases = cases.map(([, expect, method, auth, p, data, existing, admins, mocks]) => {
       const tc = { expectation: expect, request: { auth: auth || null, path: db + p, method } };

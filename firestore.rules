@@ -2,6 +2,7 @@ rules_version = '2';
 
 // Every user can read and write only their own data under users/{uid}.
 // Anonymous statistics are readable by admins only; support requests by their writer and admins.
+// The games' champions table is public to signed-in users: a nickname, an emoji and scores, by choice.
 // Nothing else is reachable.
 service cloud.firestore {
   match /databases/{database}/documents {
@@ -63,6 +64,15 @@ service cloud.firestore {
       }
     }
 
+    // the games' champions table (core/leaderboard.js): a player who joined has one row, written only by them;
+    // every signed-in player can read the table, at most 100 rows at a time; an admin can remove a row
+    match /lb/{uid} {
+      allow get: if request.auth != null;
+      allow list: if request.auth != null && request.query.limit <= 100;
+      allow create, update: if request.auth != null && request.auth.uid == uid && validLb(request.resource.data);
+      allow delete: if request.auth != null && (request.auth.uid == uid || isAdmin());
+    }
+
     function ownTicket() {
       return request.auth != null && resource.data.uid == request.auth.uid;
     }
@@ -101,6 +111,28 @@ service cloud.firestore {
         && d.age in ['u18', '18p', '']
         && d.f is map && d.f.size() <= 16
         && d.t is int;
+    }
+
+    function validLb(d) {
+      return d.keys().hasOnly(['n', 'e', 'bg', 'p', 't', 'g']) && d.keys().hasAll(['n', 'e', 't', 'g'])
+        && d.n is string && d.n.matches('^[א-תa-zA-Z0-9 _.-]{2,16}$') && !d.n.matches('.*[0-9]{5,}.*')
+        && d.e in ['🦊', '🐯', '🦉', '🐬', '🐺', '🦅', '🦔', '🐧', '🦜', '🐻', '🐢', '🐳', '🐼', '🦁', '🐸', '🐙', '🦄', '🐝', '⚡', '🔥', '⭐', '🚀', '🎧', '⚽']
+        && (!('bg' in d) || d.bg in ['', 'gold', 'midnight', 'sunset', 'ocean', 'forest', 'carbon', 'royal', 'rose', 'lava', 'neon', 'ice', 'galaxy'])
+        && (!('p' in d) || d.p is bool)
+        && d.t is int
+        && d.g is map && d.g.keys().hasOnly(['coins', 'quiz', 'facts', 'pairs', 'hours'])
+        && lbGame(d.g, 'coins', 5000) && lbGame(d.g, 'quiz', 3000) && lbGame(d.g, 'facts', 10)
+        && lbGame(d.g, 'pairs', 140) && lbGame(d.g, 'hours', 500);
+    }
+    // a game's best per period: day, week (its Sunday), month and year as period × 100000 + score; all time as the score
+    function lbGame(g, id, max) {
+      return !(id in g) || (g[id] is map && g[id].keys().hasOnly(['d', 'w', 'm', 'y', 'a'])
+        && lbVal(g[id], 'd', 20260101, 21000101, max) && lbVal(g[id], 'w', 20251228, 21000101, max)
+        && lbVal(g[id], 'm', 202601, 210001, max) && lbVal(g[id], 'y', 2026, 2100, max)
+        && (!('a' in g[id]) || (g[id].a is int && g[id].a >= 0 && g[id].a <= max)));
+    }
+    function lbVal(m, k, lo, hi, max) {
+      return !(k in m) || (m[k] is int && m[k] >= lo * 100000 && m[k] < hi * 100000 && m[k] % 100000 <= max);
     }
 
     function valid(uid, collection) {
