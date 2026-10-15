@@ -32,11 +32,15 @@
   const today = () => U.todayKey();
   Champions.joined = joined;
 
-  /** What this player shows: the background only while Plus is on. */
-  function profile() {
+  /** An admin's Plus preview shows the look on this phone only; the public row stays as it really is. */
+  const previewing = () => !!(root.Plus && root.Plus.preview && root.Plus.preview());
+  const realPlus = () => !!(root.Plus && (root.Plus.owned() || (plusOn() && !previewing())));
+  /** What this player shows (local: as seen on this phone, with a preview; otherwise as published). */
+  function profile(local) {
     const l = S.settings.lb || {};
     const skins = (root.Plus && root.Plus.SKINS) || {};
-    return { n: l.n || '', e: LB.EMOJI.includes(l.e) ? l.e : LB.EMOJI[0], bg: plusOn() && skins[l.bg] ? l.bg : '', p: plusOn() };
+    const p = local ? plusOn() : realPlus();
+    return { n: l.n || '', e: LB.EMOJI.includes(l.e) ? l.e : LB.EMOJI[0], bg: p && skins[l.bg] ? l.bg : '', p };
   }
   async function readMine() {
     if (mine && mine.uid === uid()) return mine;
@@ -59,11 +63,19 @@
     for (const [game, vals] of Object.entries(gPatch || {})) row.g[game] = Object.assign({}, row.g[game], vals);
     boards.clear();
   }
-  /** The top of a board, from Firestore (cached for a minute). */
-  async function board(game, period, fresh) {
+  const inflight = new Map();
+  const cached = (game, period) => { const c = boards.get(`${game}|${period}|${today()}`); return c && Date.now() - c.at < 60000 ? c.rows : null; };
+  /** The top of a board, from Firestore (cached for a minute; one request per board at a time). */
+  function board(game, period, fresh) {
     const key = `${game}|${period}|${today()}`;
-    const c = boards.get(key);
-    if (c && !fresh && Date.now() - c.at < 60000) return c.rows;
+    const c = !fresh && cached(game, period);
+    if (c) return Promise.resolve(c);
+    if (!fresh && inflight.has(key)) return inflight.get(key);
+    const p = fetchBoard(game, period, key).finally(() => inflight.delete(key));
+    inflight.set(key, p);
+    return p;
+  }
+  async function fetchBoard(game, period, key) {
     const { fs, db } = await Cloud().sdk();
     const field = `g.${game}.${period}`;
     const r = LB.range(period, today());
@@ -135,12 +147,15 @@
     return `<button class="ach-card lb-card" data-lb-hub><span class="ach-card-e" aria-hidden="true">🏆</span><span class="gm-txt"><b>טבלת האלופים</b><span>${esc(sub)}</span></span>${icon('left', 's')}</button>`;
   };
 
-  /* ---------------- the table ---------------- */
+  /* ---------------- the table ----------------
+   * Switching a game or a period never blanks the table: a board already loaded is drawn at once,
+   * the other periods of the game are loaded quietly in the background, and while a new board
+   * loads the current one stays on screen (a thin line shows the wait). Tabs only change their mark. */
   Champions.open = function (startGame) {
     let game = LB.MAX[startGame] ? startGame : (LB.MAX[S.meta.lbLast] ? S.meta.lbLast : 'coins');
     let period = 'd';
     let seq = 0;
-    const view = (el) => el.querySelector('[data-lb-body]');
+    const set = (node, html) => { if (node && node.__html !== html) { node.innerHTML = html; node.__html = html; } };
     const row = (x, meId, admin, unit) => `<li class="lb-row ${x.uid === meId ? 'me' : ''} ${x.bg ? 'plus sk-' + x.bg : ''}">
         <span class="lb-r">${x.rank}</span><span class="lb-e" aria-hidden="true">${x.e}</span>
         <span class="lb-n">${esc(x.n)}${x.p ? '<i class="lb-plus">Plus</i>' : ''}${x.uid === meId ? ' <small>(את/ה)</small>' : ''}</span>
@@ -149,71 +164,98 @@
         <div class="lb-av ${x.bg ? 'sk-' + x.bg : ''}"><span aria-hidden="true">${x.e}</span>${place === 1 ? '<i class="lb-crown" aria-hidden="true">👑</i>' : ''}</div>
         <b class="lb-n">${esc(x.n)}</b>${x.p ? '<i class="lb-plus">Plus</i>' : ''}<span class="lb-s">${x.s}${esc(unit)}</span><div class="lb-step"><span>${place}</span></div></div>`
       : `<div class="lb-pod p${place} empty"><div class="lb-av"><span aria-hidden="true">?</span></div><b class="lb-n">פנוי</b><div class="lb-step"><span>${place}</span></div></div>`);
-    async function load(el) {
-      const my = ++seq;
-      const body = view(el);
+    const periodName = () => PERIODS.find((p) => p[0] === period)[1];
+    /** The board and my line under it, from rows (no waiting). */
+    function paint(el, rows0) {
       const g = gameOf(game);
-      if (!signedIn()) {
-        body.innerHTML = `<div class="card lb-join">${App.mascotSays ? App.mascotSays('wave', 'הטבלה שמורה בחשבון Google. מתחברים, בוחרים כינוי ומתחרים!', { size: 60 }) : ''}
-          <button class="btn block" data-lb-signin>${icon('cloud', 's')} התחברות לחשבון</button></div>`;
-        return;
-      }
-      body.innerHTML = `<div class="lb-wait">${UI.skeleton ? UI.skeleton(4) : '<span class="muted">טוען…</span>'}</div>`;
-      let rows;
-      try { rows = await board(game, period); } catch (e) {
-        if (my !== seq) return;
-        body.innerHTML = `<div class="empty"><h3>הטבלה לא נטענה</h3><div class="small muted">${navigator.onLine ? 'נסו שוב בעוד רגע' : 'אין חיבור לאינטרנט'}</div><button class="btn tonal" data-lb-retry>נסו שוב</button></div>`;
-        return;
-      }
-      if (my !== seq || !el.isConnected) return;
       const meId = uid();
+      // my own row as this phone shows it (an admin's preview included); the others as published
+      const mineLook = profile(true);
+      const rows = rows0.map((x) => (x.uid === meId ? Object.assign({}, x, { e: mineLook.e, bg: mineLook.bg, p: mineLook.p }) : x));
       const meRow = rows.find((x) => x.uid === meId);
       const admin = !!App.isAdmin;
       const unit = g.unit || '';
       const reset = LB.resetText(period, today(), Date.now());
-      const head = `<div class="lb-reset tiny muted">${icon('clock', 's')} ${esc(reset)} · ${rows.length ? `${rows.length >= LIMIT ? '50 הראשונים' : rows.length + ' שחקנים'}` : 'עוד אין שחקנים'}</div>`;
+      const head = `<div class="lb-reset tiny muted">${icon('clock', 's')} ${esc(reset)} · ${rows.length ? (rows.length >= LIMIT ? '50 הראשונים' : rows.length + ' שחקנים') : 'עוד אין שחקנים'}</div>`;
+      const body = el.querySelector('[data-lb-body]');
       if (!rows.length) {
-        body.innerHTML = `${head}<div class="empty fun lb-empty">${App.mascot ? App.mascot('party', { size: 84 }) : ''}<h3>המקום הראשון פנוי!</h3><div>${period === 'a' ? 'עוד אף אחד לא נכנס לטבלה במשחק הזה.' : `עוד אף אחד לא שיחק ${PERIODS.find((p) => p[0] === period)[1].replace('כל הזמנים', '')} ב"${esc(g.t)}".`}</div>
-          <button class="btn" data-lb-play>${icon('play', 's')} לשחק ולתפוס אותו</button></div>`;
+        set(body, `${head}<div class="empty fun lb-empty">${App.mascot ? App.mascot('party', { size: 84 }) : ''}<h3>המקום הראשון פנוי!</h3><div>${period === 'a' ? 'עוד אף אחד לא נכנס לטבלה במשחק הזה.' : `עוד אף אחד לא שיחק ${periodName()} ב"${esc(g.t)}".`}</div>
+          <button class="btn" data-lb-play>${icon('play', 's')} לשחק ולתפוס אותו</button></div>`);
       } else {
-        body.innerHTML = `${head}<div class="lb-podium">${pod(rows[1], 2, meId, unit)}${pod(rows[0], 1, meId, unit)}${pod(rows[2], 3, meId, unit)}</div>
+        const others = rows.slice(0, 3).filter((x) => x.uid !== meId);
+        set(body, `${head}<div class="lb-podium">${pod(rows[1], 2, meId, unit)}${pod(rows[0], 1, meId, unit)}${pod(rows[2], 3, meId, unit)}</div>
           ${rows.length > 3 ? `<ol class="lb-list">${rows.slice(3).map((x) => row(x, meId, admin, unit)).join('')}</ol>` : ''}
-          ${admin && rows.slice(0, 3).some((x) => x.uid !== meId) ? `<div class="lb-admin tiny muted">מנהל: ${rows.slice(0, 3).filter((x) => x.uid !== meId).map((x) => `<button class="btn text sm" data-rm="${esc(x.uid)}">הסרת ${esc(x.n)}</button>`).join('')}</div>` : ''}`;
+          ${admin && others.length ? `<div class="lb-admin tiny muted">מנהל: ${others.map((x) => `<button class="btn text sm" data-rm="${esc(x.uid)}">הסרת ${esc(x.n)}</button>`).join('')}</div>` : ''}`);
       }
-      // me: where I stand and how far the next place is
       const bar = el.querySelector('[data-lb-me]');
       if (!joined()) {
-        bar.innerHTML = `<div class="lb-me-t"><b>רוצה להופיע כאן?</b><small>בוחרים כינוי ואימוג׳י, בלי שם אמיתי</small></div><button class="btn sm" data-lb-profile>${icon('trophy', 's')} הצטרפות</button>`;
+        set(bar, `<div class="lb-me-t"><b>רוצה להופיע כאן?</b><small>בוחרים כינוי ואימוג׳י, בלי שם אמיתי</small></div><button class="btn sm" data-lb-profile>${icon('trophy', 's')} הצטרפות</button>`);
       } else if (meRow) {
         const ahead = rows.filter((x) => x.s > meRow.s).pop();
-        bar.innerHTML = `<div class="lb-me-t"><b>${meRow.rank === 1 ? '👑 את/ה במקום הראשון!' : `המקום שלך: ${meRow.rank}`}</b><small>${ahead ? `עוד ${ahead.s - meRow.s + 1}${esc(unit)} כדי לעקוף את ${esc(ahead.n)}` : 'תשמרו על הכתר 😎'}</small></div><button class="btn sm" data-lb-play>${icon('play', 's')} לשחק</button>`;
+        set(bar, `<div class="lb-me-t"><b>${meRow.rank === 1 ? '👑 את/ה במקום הראשון!' : `המקום שלך: ${meRow.rank}`}</b><small>${ahead ? `עוד ${ahead.s - meRow.s + 1}${esc(unit)} כדי לעקוף את ${esc(ahead.n)}` : 'תשמרו על הכתר 😎'}</small></div><button class="btn sm" data-lb-play>${icon('play', 's')} לשחק</button>`);
       } else {
         const last = rows[rows.length - 1];
-        bar.innerHTML = `<div class="lb-me-t"><b>${rows.length >= LIMIT ? 'עוד לא בטופ 50' : `עוד לא שיחקת ${period === 'a' ? 'כאן' : PERIODS.find((p) => p[0] === period)[1]}`}</b><small>${rows.length >= LIMIT ? `צריך יותר מ-${last.s}${esc(unit)}` : 'משחק אחד וכבר את/ה בטבלה'}</small></div><button class="btn sm" data-lb-play>${icon('play', 's')} לשחק</button>`;
+        set(bar, `<div class="lb-me-t"><b>${rows.length >= LIMIT ? 'עוד לא בטופ 50' : `עוד לא שיחקת ${period === 'a' ? 'כאן' : periodName()}`}</b><small>${rows.length >= LIMIT ? `צריך יותר מ-${last.s}${esc(unit)}` : 'משחק אחד וכבר את/ה בטבלה'}</small></div><button class="btn sm" data-lb-play>${icon('play', 's')} לשחק</button>`);
       }
     }
-    function draw(el) {
-      el.querySelector('[data-lb-tabs]').innerHTML = `
+    /** The other periods of this game, loaded quietly so that switching is instant. */
+    function prefetch() {
+      const g = game;
+      setTimeout(() => { for (const [p] of PERIODS) if (!cached(g, p)) board(g, p).catch(() => {}); }, 250);
+    }
+    async function load(el) {
+      const my = ++seq;
+      const body = el.querySelector('[data-lb-body]');
+      if (!signedIn()) {
+        set(body, `<div class="card lb-join">${App.mascotSays ? App.mascotSays('wave', 'הטבלה שמורה בחשבון Google. מתחברים, בוחרים כינוי ומתחרים!', { size: 60 }) : ''}
+          <button class="btn block" data-lb-signin>${icon('cloud', 's')} התחברות לחשבון</button></div>`);
+        return;
+      }
+      const now = cached(game, period);
+      if (now) { body.classList.remove('lb-busy'); paint(el, now); prefetch(); return; }
+      // nothing on screen yet (the first open): placeholders; otherwise the current board stays
+      if (!body.__html) set(body, `<div class="lb-wait">${UI.skeleton ? UI.skeleton(4) : ''}</div>`);
+      else body.classList.add('lb-busy');
+      let rows;
+      try { rows = await board(game, period); } catch (e) {
+        if (my !== seq || !el.isConnected) return;
+        body.classList.remove('lb-busy');
+        set(body, `<div class="empty"><h3>הטבלה לא נטענה</h3><div class="small muted">${navigator.onLine ? 'נסו שוב בעוד רגע' : 'אין חיבור לאינטרנט'}</div><button class="btn tonal" data-lb-retry>נסו שוב</button></div>`);
+        return;
+      }
+      if (my !== seq || !el.isConnected) return;
+      body.classList.remove('lb-busy');
+      paint(el, rows);
+      prefetch();
+    }
+    function tabs(el) {
+      const me = profile(true);
+      set(el.querySelector('[data-lb-tabs]'), `
         <div class="chips lb-games" role="tablist" aria-label="משחק">${games().map((g) => `<button class="chip ${g.id === game ? 'on' : ''}" role="tab" aria-selected="${g.id === game}" data-game="${g.id}">${esc(SHORT[g.id] || g.t)}</button>`).join('')}</div>
         <div class="seg lb-periods" role="tablist" aria-label="תקופה">${PERIODS.map(([k, l]) => `<button class="${k === period ? 'on' : ''}" role="tab" aria-selected="${k === period}" data-period="${k}">${l}</button>`).join('')}</div>
-        ${joined() ? `<button class="lb-mine" data-lb-profile>${(() => { const p = profile(); return `<span class="lb-av sm ${p.bg ? 'sk-' + p.bg : ''}"><span aria-hidden="true">${p.e}</span></span><span>${esc(p.n)}</span>`; })()}${icon('edit', 's')}<span class="vh">עריכת הכינוי</span></button>` : ''}`;
-      load(el);
+        ${joined() ? `<button class="lb-mine" data-lb-profile><span class="lb-av sm ${me.bg ? 'sk-' + me.bg : ''}"><span aria-hidden="true">${me.e}</span></span><span>${esc(me.n)}</span>${icon('edit', 's')}<span class="vh">עריכת הכינוי</span></button>` : ''}`);
+    }
+    /** Only the marks move; the buttons themselves stay. */
+    function mark(el) {
+      el.querySelectorAll('[data-game]').forEach((x) => { const on = x.dataset.game === game; x.classList.toggle('on', on); x.setAttribute('aria-selected', on); });
+      el.querySelectorAll('[data-period]').forEach((x) => { const on = x.dataset.period === period; x.classList.toggle('on', on); x.setAttribute('aria-selected', on); });
     }
     UI.openSheet({
       title: 'טבלת האלופים 🏆',
       full: true,
       cls: 'lb-sheet',
-      body: '<div data-lb-tabs></div><div data-lb-body></div>',
+      body: '<div data-lb-tabs></div><div class="lb-body" data-lb-body></div>',
       foot: '<div class="lb-me" data-lb-me></div>',
       onMount: (el) => {
-        draw(el);
+        tabs(el);
+        load(el);
         el.addEventListener('click', async (e) => {
           const b = e.target.closest('button');
           if (!b) return;
-          if (b.dataset.game) { game = b.dataset.game; draw(el); }
-          else if (b.dataset.period) { period = b.dataset.period; draw(el); }
+          if (b.dataset.game) { if (b.dataset.game !== game) { game = b.dataset.game; mark(el); load(el); } }
+          else if (b.dataset.period) { if (b.dataset.period !== period) { period = b.dataset.period; mark(el); load(el); } }
           else if (b.hasAttribute('data-lb-retry')) load(el);
-          else if (b.hasAttribute('data-lb-profile')) Champions.profile(() => { if (el.isConnected) draw(el); });
+          else if (b.hasAttribute('data-lb-profile')) Champions.profile(() => { if (el.isConnected) { tabs(el); load(el); } });
           else if (b.hasAttribute('data-lb-signin')) { UI.closeAll(); App.go('settings'); setTimeout(() => App.sheetsApi.settingsSection('account'), 350); }
           else if (b.hasAttribute('data-lb-play')) {
             UI.closeTop();
@@ -226,13 +268,19 @@
       },
     });
   };
+  /** The games list warms the last game's board of today, so the table opens at once. */
+  Champions.warm = function () {
+    if (!signedIn()) return;
+    const last = LB.MAX[S.meta.lbLast] ? S.meta.lbLast : 'coins';
+    if (!cached(last, 'd')) board(last, 'd').catch(() => {});
+  };
 
   /* ---------------- my nickname, emoji and background ---------------- */
   Champions.profile = function (done) {
     const l = S.settings.lb || {};
     let n = l.n || LB.randomNick(), e = LB.EMOJI.includes(l.e) ? l.e : LB.EMOJI[Math.floor(Math.random() * LB.EMOJI.length)], bg = l.bg || '';
     const skins = (root.Plus && root.Plus.SKINS) || {};
-    const canBg = plusOn();
+    const canBg = plusOn(); // an admin's preview may choose too (it shows only on this phone)
     const showBg = !!(root.Plus && (root.Plus.visible() || canBg));
     const preview = () => `<li class="lb-row me ${canBg && skins[bg] ? 'plus sk-' + bg : ''}"><span class="lb-r">1</span><span class="lb-e" aria-hidden="true">${e}</span><span class="lb-n">${esc(n || '…')}${canBg ? '<i class="lb-plus">Plus</i>' : ''}</span><b class="lb-s">120</b></li>`;
     UI.openSheet({

@@ -41,7 +41,16 @@
     const lemon = C.lemon || {};
     const playState = P && P.available ? '<span class="tag good">פעיל</span>' : App.androidApp ? '<span class="tag warn">לא מוגדר ב-Play Console</span>' : '<span class="tag">נבדק רק מתוך אפליקציית האנדרואיד</span>';
     const webState = lemon.checkout && +lemon.productId ? '<span class="tag good">פעיל</span>' : '<span class="tag warn">לא מוגדר</span>';
+    // the admin's own preview, on this phone only (plus.js: Plus.preview)
+    const mode = P && P.preview ? P.preview() : '';
+    const simBtn = (v, label) => `<button class="${mode === v ? 'on' : ''}" aria-pressed="${mode === v}" data-act="plus-sim" data-v="${v}">${label}</button>`;
+    const preview = `<div class="card adm-preview"><b>תצוגה מקדימה של Plus</b>
+        <div class="tiny muted">רק בטלפון הזה: לא נספר בסטטיסטיקה ולא נראה לשחקנים אחרים. אמיתי ייפתח לכולם כשחשבון התשלומים יוגדר.</div>
+        <div class="seg">${simBtn('', 'כבוי')}${simBtn('free', 'משתמש חינמי')}${simBtn('plus', 'מנוי Plus')}</div>
+        <div class="tiny adm-preview-l">חינמי: מכחול על כרטיס השכר בבית, ניסיון חינם ל-3 ימים, מכסות לניתוח המתקדם (דוחות) ולייצוא, ושורת Plus בהגדרות. מנוי: 12 עיצובים (הגדרות › מראה), רקע בטבלת האלופים ותג במסך הבית.</div>
+        <div class="btn-row"><button class="btn tonal sm" data-act="plus-sim-offer">${icon('sparkle', 's')} להציג את ההצעה בבית</button><button class="btn text sm" data-act="plus-sim-reset">איפוס ניסיון ומכסות</button></div></div>`;
     return `<div class="section-title">${icon('sparkle', 's')} Shaati Plus והכנסות</div>
+      ${preview}
       <div class="card"><div class="kpis">${kpi('קונים', buyers, `${play} באנדרואיד · ${web} באתר`)}${kpi('משלמים', U.num(share, 1) + '%', `מכל המשתמשים · היעד ${GOAL}%`)}${kpi('הכנסה משוערת', money(gross), '≈ ' + money(net) + ' אחרי עמלות')}${kpi('קנו אחרי ניסיון', pct(triedBought, tried) + '%', `${tried} ניסו בחינם`)}</div>
         <div class="adm-goal"><div class="progress thin"><i style="width:${Math.min(100, (share / GOAL) * 100)}%"></i></div><span class="tiny muted">${share >= GOAL ? 'היעד הושג 🎉' : `עוד ${Math.max(1, Math.ceil((GOAL / 100) * rows.length - buyers))} קונים ליעד של ${GOAL}%`}</span></div>
         <div class="divider"></div>

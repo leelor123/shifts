@@ -123,6 +123,7 @@
         el.querySelector('[data-medals]').onclick = medalsSheet;
         const hub = el.querySelector('[data-lb-hub]');
         if (hub) hub.onclick = () => root.Champions.open();
+        if (root.Champions) root.Champions.warm();
         const list = el.querySelector('.gm-list');
         list.addEventListener('click', (e) => {
           const b = e.target.closest('[data-game]');

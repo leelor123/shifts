@@ -2,7 +2,7 @@
 <html lang="he" dir="rtl">
 <head>
 <meta charset="utf-8">
-<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'sha256-UHZFXe52vydjYWH0TODQfteAlKOC8UKF5/HUm9NRyr4=' https://www.gstatic.com https://apis.google.com https://cdnjs.cloudflare.com https://cdn.jsdelivr.net 'wasm-unsafe-eval'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com data:; img-src 'self' data: blob: https:; connect-src 'self' https: wss:; frame-src https://shiftpay-70ab6.firebaseapp.com https://accounts.google.com https://apis.google.com https://*.google.com; worker-src 'self' blob: https://cdnjs.cloudflare.com https://cdn.jsdelivr.net; media-src 'self' data: blob:; manifest-src 'self'; object-src 'none'; base-uri 'self'; form-action 'self'">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'sha256-vINsxxBv3qlxgON56UH0EhfxLmkZoIKygBTGPLLkcRk=' https://www.gstatic.com https://apis.google.com https://cdnjs.cloudflare.com https://cdn.jsdelivr.net 'wasm-unsafe-eval'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com data:; img-src 'self' data: blob: https:; connect-src 'self' https: wss:; frame-src https://shiftpay-70ab6.firebaseapp.com https://accounts.google.com https://apis.google.com https://*.google.com; worker-src 'self' blob: https://cdnjs.cloudflare.com https://cdn.jsdelivr.net; media-src 'self' data: blob:; manifest-src 'self'; object-src 'none'; base-uri 'self'; form-action 'self'">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="theme-color" content="#0d2b6b">
 <meta name="description" content="מעקב משמרות וחישוב שכר אישי: שבתות, חגים, שעות נוספות, נסיעות, נטו משוער וניתוח תלושים — נשמר בחשבון שלך ועובד גם בלי אינטרנט.">
@@ -1884,6 +1884,15 @@ body.fx .recap-card:active { transform: scale(.98); }
 .an-if > div { display: flex; gap: 8px; align-items: flex-start; line-height: 1.5; }
 .an-if svg { flex: none; margin-top: 3px; color: var(--brand-strong); }
 .an-left { display: flex; flex-wrap: wrap; justify-content: center; align-items: center; gap: 4px; margin-top: 14px; color: var(--on-surface-var); }
+.adm-preview { display: grid; gap: 8px; margin-bottom: 10px; }
+.adm-preview .seg { margin: 2px 0; }
+.adm-preview .seg button { font-size: .8rem; padding-inline: 4px; }
+.adm-preview-l { line-height: 1.5; color: var(--on-surface-var); }
+/* the table switches without blanking: while a new board loads, the current one stays and a thin line moves */
+.lb-body { position: relative; }
+.lb-body.lb-busy::before { content: ''; position: absolute; top: -4px; inset-inline: 0; height: 3px; border-radius: 3px; background: linear-gradient(90deg, transparent, var(--brand), transparent); background-size: 50% 100%; background-repeat: no-repeat; animation: lb-load 1s linear infinite; }
+@keyframes lb-load { from { background-position: -50% 0; } to { background-position: 150% 0; } }
+@media (prefers-reduced-motion: reduce) { .lb-body.lb-busy::before { animation: none; background-size: 100% 100%; opacity: .5; } }
 
 </style>
 </head>
@@ -1903,8 +1912,8 @@ body.fx .recap-card:active { transform: scale(.98); }
 <div id="print-root" aria-hidden="true"></div>
 <noscript><div style="padding:24px;font-family:sans-serif">האפליקציה דורשת JavaScript.</div></noscript>
 <script>
-window.APP_VERSION = '1.14.0';
-window.APP_BUILD = '1.14.0-f6cd6914';
+window.APP_VERSION = '1.14.1';
+window.APP_BUILD = '1.14.1-e0ef2384';
 /* ---- core/util.js ---- */
 /* ============================================================
  * util.js — date/time helpers and formatting.
@@ -6426,7 +6435,7 @@ window.APP_BUILD = '1.14.0-f6cd6914';
   const DEVICE_META = ['cloudUid', 'cloudEmail', 'cloudName', 'cloudPhoto', 'cloudReady', 'lastSync', 'designV2', 'chat', 'chatShareData',
     'installId', 'statsSentAt', 'activeDays', 'firstActiveDay', 'lastActiveDay',
     // Shaati Plus is checked on each phone (Google Play / the purchase code): never taken from a backup file
-    'plus', 'plusInst', 'plusPreview', 'plusSeen', 'plusTrial', 'plusTrialEnd', 'plusNudge', 'plusUse', 'plusWall'];
+    'plus', 'plusInst', 'plusPreview', 'plusSeen', 'plusTrial', 'plusTrialEnd', 'plusNudge', 'plusUse', 'plusWall', 'plusSim'];
   const SYNC_META = ['pendingDeletes', 'settingsDirty', 'activeDirty', 'activeUpdatedAt'];
   /** Values that end up inside HTML attributes must have a safe shape. */
   function safeRecord(store, r) {
@@ -8317,15 +8326,15 @@ window.FIREBASE_CONFIG = {
       s30: Math.min(99999, done.filter((s) => U.epochKey(s.start) >= from30).length),
       ps: Math.min(99999, S.payslips.length),
       age: age == null ? '' : age < 18 ? 'u18' : '18p',
-      f: {
+      f: (() => { const sim = !!(root.Plus && root.Plus.preview && root.Plus.preview()); return {
         rights: !!S.meta.usedRights, ai: !!(S.settings.ai && S.settings.ai.apiKey), lock: !!S.settings.lock.enabled,
         bio: !!S.settings.lock.bioId, dark: S.settings.theme === 'dark', fxOff: !!(S.settings.fx && S.settings.fx.effects === false),
         goal: +S.settings.goal.amount > 0, demo: !!S.settings.demo, planned: S.shifts.some((s) => s.status === 'planned'),
         roles: App.roles().length > 1, notif: ('Notification' in root) && Notification.permission === 'granted',
         // Shaati Plus, for the admin dashboard's sales numbers (yes/no only)
-        plus: !!(S.meta.plus && S.meta.plus.active), plusWeb: !!(S.meta.plus && S.meta.plus.active && S.meta.plus.src === 'web'), plusSeen: !!S.meta.plusSeen,
-        plusWall: !!S.meta.plusWall, plusTry: !!S.meta.plusTrial, // reached a free allowance / started the free trial (16 keys: the most the rules allow)
-      },
+        plus: !!(S.meta.plus && S.meta.plus.active), plusWeb: !!(S.meta.plus && S.meta.plus.active && S.meta.plus.src === 'web'), plusSeen: !sim && !!S.meta.plusSeen,
+        plusWall: !sim && !!S.meta.plusWall, plusTry: !sim && !!S.meta.plusTrial, // reached a free allowance / started the free trial (16 keys: the most the rules allow)
+      }; })(), // an admin's Plus preview is never counted
       t: Date.now(),
     };
   }
@@ -8442,10 +8451,17 @@ window.PAY_CONFIG = {
   Plus.inPlayApp = inPlayApp;
   /** Buying on the web (card, Apple Pay, Google Pay, PayPal through Lemon Squeezy) is set up and allowed here. */
   Plus.webShop = () => { const c = cfg(); return !!(c.checkout && +c.productId) && !inPlayApp(); };
+  /**
+   * An admin's preview on this phone only (admin dashboard): 'free' = as a user who has not bought
+   * (the trial, "try it on your card", the offer, the allowances) even before a way of buying is set
+   * up; 'plus' = as a member. Never counted in the statistics or shown to other players.
+   */
+  const sim = () => (App.isAdmin ? (S.meta.plusSim === 'free' ? 'free' : S.meta.plusPreview ? 'plus' : '') : '');
+  Plus.preview = sim;
   /** Plus features are on: bought, in the free trial, or an admin previewing them on this phone. */
-  Plus.active = () => owned() || Plus.inTrial() || (!!App.isAdmin && !!S.meta.plusPreview);
-  /** Anything about Plus is shown only when it can be bought here, or is already on. */
-  Plus.visible = () => Plus.available || Plus.webShop() || Plus.active();
+  Plus.active = () => owned() || Plus.inTrial() || sim() === 'plus';
+  /** Anything about Plus is shown only when it can be bought here, or is already on (or an admin previews it). */
+  Plus.visible = () => Plus.available || Plus.webShop() || Plus.active() || !!sim();
   /** The pay-card skin in use ('' = the regular card). */
   Plus.skin = () => (Plus.active() && SKINS[S.settings.skin] ? S.settings.skin : '');
 
@@ -8528,12 +8544,13 @@ window.PAY_CONFIG = {
 
   /** Buying: Google Play's own sheet in the Android app, Lemon Squeezy's checkout elsewhere. */
   Plus.buy = async function () {
+    if (sim() && !Plus.available && !Plus.webShop()) { UI.toast('תצוגה מקדימה: כאן ייפתח התשלום. הוא יעבוד אחרי שחשבון התשלומים יוגדר'); return false; }
     if (inPlayApp()) return buyPlay();
     if (Plus.webShop()) {
       root.open(cfg().checkout, '_blank', 'noopener');
       return false; // Plus turns on with the code from the receipt
     }
-    UI.toast('הרכישה עוד לא זמינה כאן');
+    UI.toast(sim() ? 'תצוגה מקדימה: כאן ייפתח התשלום. הוא יעבוד אחרי שחשבון התשלומים יוגדר' : 'הרכישה עוד לא זמינה כאן');
     return false;
   };
   async function buyPlay() {
@@ -8627,7 +8644,7 @@ window.PAY_CONFIG = {
         ${on && !trial ? `<div class="plus-done">${icon('check')} ${owned() ? 'Shaati Plus פעיל אצלך' : 'תצוגה מקדימה של מנהל'}</div>`
           : `${trial ? `<div class="plus-done trial">${icon('sparkle')} תקופת ניסיון · ${trialLeft()}</div>` : ''}
              ${Plus.canTrial() ? `<button class="btn big block plus-buy" data-plus-trial>${icon('sparkle')} לנסות ${TRIAL_DAYS} ימים בחינם</button>` : ''}
-             <button class="btn ${Plus.canTrial() ? 'tonal plus-buy2' : 'big plus-buy'} block" data-plus-buy ${play ? (Plus.available ? '' : 'disabled') : web ? '' : 'disabled'}>${icon(Plus.canTrial() ? 'star' : 'sparkle', Plus.canTrial() ? 's' : '')} ${trial ? 'קנייה ושמירה' : 'קנייה חד-פעמית'}${price ? ' · ' + esc(price) : ''}</button>
+             <button class="btn ${Plus.canTrial() ? 'tonal plus-buy2' : 'big plus-buy'} block" data-plus-buy ${(play ? Plus.available : web) || sim() ? '' : 'disabled'}>${icon(Plus.canTrial() ? 'star' : 'sparkle', Plus.canTrial() ? 's' : '')} ${trial ? 'קנייה ושמירה' : 'קנייה חד-פעמית'}${price ? ' · ' + esc(price) : ''}</button>
              ${Plus.workPrice() ? `<div class="tiny plus-work">${esc(Plus.workPrice())}</div>` : ''}
              <div class="plus-pay">${play ? '<span>Google Play</span><span>כרטיס אשראי</span><span>Google Pay</span><span>PayPal</span>' : '<span>כרטיס אשראי</span><span>Apple Pay</span><span>Google Pay</span><span>PayPal</span>'}</div>
              <div class="tiny muted plus-note">${play ? 'תשלום אחד דרך Google Play, בלי מנוי ובלי חיובים נוספים.' : 'תשלום אחד בדף תשלום מאובטח של Lemon Squeezy, בלי מנוי. אחרי התשלום מגיע במייל קוד הפעלה.'} מתחת לגיל 18: בהסכמת הורה.</div>`}
@@ -8661,7 +8678,7 @@ window.PAY_CONFIG = {
         el.addEventListener('keydown', (e) => { if (e.key === 'Enter' && e.target.id === 'plus-key') run(() => Plus.redeem(e.target.value)); });
         el.addEventListener('change', async (e) => {
           if (!e.target.matches('[data-plus-preview]')) return;
-          await Store.setMeta({ plusPreview: e.target.checked });
+          await Store.setMeta({ plusPreview: e.target.checked, plusSim: '' });
           App.applyTheme(); App.rerender(); draw(el);
         });
       },
@@ -8672,7 +8689,7 @@ window.PAY_CONFIG = {
    * their own minutes of work, and one quiet offer after they have come to like the app. No pop-ups,
    * no countdowns; every offer closes with one tap and comes back at most a few times. */
   /** Can be bought on this phone (Google Play here, or the web checkout). */
-  const buyable = () => Plus.available || Plus.webShop();
+  const buyable = () => Plus.available || Plus.webShop() || sim() === 'free';
   Plus.inTrial = () => !owned() && +((S.meta.plusTrial || {}).until || 0) > Date.now();
   Plus.canTrial = () => !owned() && !S.meta.plusTrial && buyable();
   let trialTimer = 0;
@@ -8857,6 +8874,29 @@ window.PAY_CONFIG = {
   App.actions['plus-nudge-off'] = async () => { await Store.setMeta({ plusNudge: Object.assign({}, S.meta.plusNudge || {}, { off: true }) }); App.rerender(); };
 
   App.actions['plus-open'] = () => Plus.sheet();
+  /* the admin's preview controls (admin dashboard) */
+  App.actions['plus-sim'] = async (el) => {
+    if (!App.isAdmin) return;
+    const v = el.dataset.v;
+    await Store.setMeta({ plusSim: v === 'free' ? 'free' : '', plusPreview: v === 'plus' });
+    el.parentElement.querySelectorAll('[data-act="plus-sim"]').forEach((b) => { const on = b === el; b.classList.toggle('on', on); b.setAttribute('aria-pressed', on); });
+    App.applyTheme(); App.rerender();
+    UI.toast(v === 'free' ? 'מצב משתמש חינמי: מכחול על כרטיס השכר, ניסיון חינם ומכסות לניתוח ולייצוא' : v === 'plus' ? 'מצב מנוי Plus: 12 עיצובים, רקע בטבלה ובלי הגבלות' : 'התצוגה המקדימה כבויה');
+  };
+  App.actions['plus-sim-offer'] = async () => {
+    if (!App.isAdmin) return;
+    // the offer is for someone without Plus: a running trial (in the preview) ends first
+    if (Plus.inTrial()) await Store.setMeta({ plusTrial: Object.assign({}, S.meta.plusTrial, { until: Date.now() - 1000 }) });
+    await Store.setMeta({ plusSim: 'free', plusPreview: false, plusTrialEnd: true, plusNudge: Object.assign({}, S.meta.plusNudge || {}, { at: Date.now(), x: 0, shown: Math.max(1, (S.meta.plusNudge || {}).shown || 0), off: false }) });
+    UI.closeAll(); App.applyTheme(); App.go('home');
+    UI.toast('ההצעה מופיעה עכשיו במסך הבית, מתחת לשורת העדכונים');
+  };
+  App.actions['plus-sim-reset'] = async () => {
+    if (!App.isAdmin) return;
+    await Store.setMeta({ plusTrial: null, plusTrialEnd: null, plusNudge: null, plusUse: null, plusWall: null });
+    App.applyTheme(); App.rerender();
+    UI.toast('אופס: אפשר לנסות שוב את הניסיון, המכסות וההצעה');
+  };
 
   root.Plus = Plus;
 })(typeof window !== 'undefined' ? window : globalThis);
@@ -13255,6 +13295,7 @@ window.PAY_CONFIG = {
         el.querySelector('[data-medals]').onclick = medalsSheet;
         const hub = el.querySelector('[data-lb-hub]');
         if (hub) hub.onclick = () => root.Champions.open();
+        if (root.Champions) root.Champions.warm();
         const list = el.querySelector('.gm-list');
         list.addEventListener('click', (e) => {
           const b = e.target.closest('[data-game]');
@@ -13849,11 +13890,15 @@ window.PAY_CONFIG = {
   const today = () => U.todayKey();
   Champions.joined = joined;
 
-  /** What this player shows: the background only while Plus is on. */
-  function profile() {
+  /** An admin's Plus preview shows the look on this phone only; the public row stays as it really is. */
+  const previewing = () => !!(root.Plus && root.Plus.preview && root.Plus.preview());
+  const realPlus = () => !!(root.Plus && (root.Plus.owned() || (plusOn() && !previewing())));
+  /** What this player shows (local: as seen on this phone, with a preview; otherwise as published). */
+  function profile(local) {
     const l = S.settings.lb || {};
     const skins = (root.Plus && root.Plus.SKINS) || {};
-    return { n: l.n || '', e: LB.EMOJI.includes(l.e) ? l.e : LB.EMOJI[0], bg: plusOn() && skins[l.bg] ? l.bg : '', p: plusOn() };
+    const p = local ? plusOn() : realPlus();
+    return { n: l.n || '', e: LB.EMOJI.includes(l.e) ? l.e : LB.EMOJI[0], bg: p && skins[l.bg] ? l.bg : '', p };
   }
   async function readMine() {
     if (mine && mine.uid === uid()) return mine;
@@ -13876,11 +13921,19 @@ window.PAY_CONFIG = {
     for (const [game, vals] of Object.entries(gPatch || {})) row.g[game] = Object.assign({}, row.g[game], vals);
     boards.clear();
   }
-  /** The top of a board, from Firestore (cached for a minute). */
-  async function board(game, period, fresh) {
+  const inflight = new Map();
+  const cached = (game, period) => { const c = boards.get(`${game}|${period}|${today()}`); return c && Date.now() - c.at < 60000 ? c.rows : null; };
+  /** The top of a board, from Firestore (cached for a minute; one request per board at a time). */
+  function board(game, period, fresh) {
     const key = `${game}|${period}|${today()}`;
-    const c = boards.get(key);
-    if (c && !fresh && Date.now() - c.at < 60000) return c.rows;
+    const c = !fresh && cached(game, period);
+    if (c) return Promise.resolve(c);
+    if (!fresh && inflight.has(key)) return inflight.get(key);
+    const p = fetchBoard(game, period, key).finally(() => inflight.delete(key));
+    inflight.set(key, p);
+    return p;
+  }
+  async function fetchBoard(game, period, key) {
     const { fs, db } = await Cloud().sdk();
     const field = `g.${game}.${period}`;
     const r = LB.range(period, today());
@@ -13952,12 +14005,15 @@ window.PAY_CONFIG = {
     return `<button class="ach-card lb-card" data-lb-hub><span class="ach-card-e" aria-hidden="true">🏆</span><span class="gm-txt"><b>טבלת האלופים</b><span>${esc(sub)}</span></span>${icon('left', 's')}</button>`;
   };
 
-  /* ---------------- the table ---------------- */
+  /* ---------------- the table ----------------
+   * Switching a game or a period never blanks the table: a board already loaded is drawn at once,
+   * the other periods of the game are loaded quietly in the background, and while a new board
+   * loads the current one stays on screen (a thin line shows the wait). Tabs only change their mark. */
   Champions.open = function (startGame) {
     let game = LB.MAX[startGame] ? startGame : (LB.MAX[S.meta.lbLast] ? S.meta.lbLast : 'coins');
     let period = 'd';
     let seq = 0;
-    const view = (el) => el.querySelector('[data-lb-body]');
+    const set = (node, html) => { if (node && node.__html !== html) { node.innerHTML = html; node.__html = html; } };
     const row = (x, meId, admin, unit) => `<li class="lb-row ${x.uid === meId ? 'me' : ''} ${x.bg ? 'plus sk-' + x.bg : ''}">
         <span class="lb-r">${x.rank}</span><span class="lb-e" aria-hidden="true">${x.e}</span>
         <span class="lb-n">${esc(x.n)}${x.p ? '<i class="lb-plus">Plus</i>' : ''}${x.uid === meId ? ' <small>(את/ה)</small>' : ''}</span>
@@ -13966,71 +14022,98 @@ window.PAY_CONFIG = {
         <div class="lb-av ${x.bg ? 'sk-' + x.bg : ''}"><span aria-hidden="true">${x.e}</span>${place === 1 ? '<i class="lb-crown" aria-hidden="true">👑</i>' : ''}</div>
         <b class="lb-n">${esc(x.n)}</b>${x.p ? '<i class="lb-plus">Plus</i>' : ''}<span class="lb-s">${x.s}${esc(unit)}</span><div class="lb-step"><span>${place}</span></div></div>`
       : `<div class="lb-pod p${place} empty"><div class="lb-av"><span aria-hidden="true">?</span></div><b class="lb-n">פנוי</b><div class="lb-step"><span>${place}</span></div></div>`);
-    async function load(el) {
-      const my = ++seq;
-      const body = view(el);
+    const periodName = () => PERIODS.find((p) => p[0] === period)[1];
+    /** The board and my line under it, from rows (no waiting). */
+    function paint(el, rows0) {
       const g = gameOf(game);
-      if (!signedIn()) {
-        body.innerHTML = `<div class="card lb-join">${App.mascotSays ? App.mascotSays('wave', 'הטבלה שמורה בחשבון Google. מתחברים, בוחרים כינוי ומתחרים!', { size: 60 }) : ''}
-          <button class="btn block" data-lb-signin>${icon('cloud', 's')} התחברות לחשבון</button></div>`;
-        return;
-      }
-      body.innerHTML = `<div class="lb-wait">${UI.skeleton ? UI.skeleton(4) : '<span class="muted">טוען…</span>'}</div>`;
-      let rows;
-      try { rows = await board(game, period); } catch (e) {
-        if (my !== seq) return;
-        body.innerHTML = `<div class="empty"><h3>הטבלה לא נטענה</h3><div class="small muted">${navigator.onLine ? 'נסו שוב בעוד רגע' : 'אין חיבור לאינטרנט'}</div><button class="btn tonal" data-lb-retry>נסו שוב</button></div>`;
-        return;
-      }
-      if (my !== seq || !el.isConnected) return;
       const meId = uid();
+      // my own row as this phone shows it (an admin's preview included); the others as published
+      const mineLook = profile(true);
+      const rows = rows0.map((x) => (x.uid === meId ? Object.assign({}, x, { e: mineLook.e, bg: mineLook.bg, p: mineLook.p }) : x));
       const meRow = rows.find((x) => x.uid === meId);
       const admin = !!App.isAdmin;
       const unit = g.unit || '';
       const reset = LB.resetText(period, today(), Date.now());
-      const head = `<div class="lb-reset tiny muted">${icon('clock', 's')} ${esc(reset)} · ${rows.length ? `${rows.length >= LIMIT ? '50 הראשונים' : rows.length + ' שחקנים'}` : 'עוד אין שחקנים'}</div>`;
+      const head = `<div class="lb-reset tiny muted">${icon('clock', 's')} ${esc(reset)} · ${rows.length ? (rows.length >= LIMIT ? '50 הראשונים' : rows.length + ' שחקנים') : 'עוד אין שחקנים'}</div>`;
+      const body = el.querySelector('[data-lb-body]');
       if (!rows.length) {
-        body.innerHTML = `${head}<div class="empty fun lb-empty">${App.mascot ? App.mascot('party', { size: 84 }) : ''}<h3>המקום הראשון פנוי!</h3><div>${period === 'a' ? 'עוד אף אחד לא נכנס לטבלה במשחק הזה.' : `עוד אף אחד לא שיחק ${PERIODS.find((p) => p[0] === period)[1].replace('כל הזמנים', '')} ב"${esc(g.t)}".`}</div>
-          <button class="btn" data-lb-play>${icon('play', 's')} לשחק ולתפוס אותו</button></div>`;
+        set(body, `${head}<div class="empty fun lb-empty">${App.mascot ? App.mascot('party', { size: 84 }) : ''}<h3>המקום הראשון פנוי!</h3><div>${period === 'a' ? 'עוד אף אחד לא נכנס לטבלה במשחק הזה.' : `עוד אף אחד לא שיחק ${periodName()} ב"${esc(g.t)}".`}</div>
+          <button class="btn" data-lb-play>${icon('play', 's')} לשחק ולתפוס אותו</button></div>`);
       } else {
-        body.innerHTML = `${head}<div class="lb-podium">${pod(rows[1], 2, meId, unit)}${pod(rows[0], 1, meId, unit)}${pod(rows[2], 3, meId, unit)}</div>
+        const others = rows.slice(0, 3).filter((x) => x.uid !== meId);
+        set(body, `${head}<div class="lb-podium">${pod(rows[1], 2, meId, unit)}${pod(rows[0], 1, meId, unit)}${pod(rows[2], 3, meId, unit)}</div>
           ${rows.length > 3 ? `<ol class="lb-list">${rows.slice(3).map((x) => row(x, meId, admin, unit)).join('')}</ol>` : ''}
-          ${admin && rows.slice(0, 3).some((x) => x.uid !== meId) ? `<div class="lb-admin tiny muted">מנהל: ${rows.slice(0, 3).filter((x) => x.uid !== meId).map((x) => `<button class="btn text sm" data-rm="${esc(x.uid)}">הסרת ${esc(x.n)}</button>`).join('')}</div>` : ''}`;
+          ${admin && others.length ? `<div class="lb-admin tiny muted">מנהל: ${others.map((x) => `<button class="btn text sm" data-rm="${esc(x.uid)}">הסרת ${esc(x.n)}</button>`).join('')}</div>` : ''}`);
       }
-      // me: where I stand and how far the next place is
       const bar = el.querySelector('[data-lb-me]');
       if (!joined()) {
-        bar.innerHTML = `<div class="lb-me-t"><b>רוצה להופיע כאן?</b><small>בוחרים כינוי ואימוג׳י, בלי שם אמיתי</small></div><button class="btn sm" data-lb-profile>${icon('trophy', 's')} הצטרפות</button>`;
+        set(bar, `<div class="lb-me-t"><b>רוצה להופיע כאן?</b><small>בוחרים כינוי ואימוג׳י, בלי שם אמיתי</small></div><button class="btn sm" data-lb-profile>${icon('trophy', 's')} הצטרפות</button>`);
       } else if (meRow) {
         const ahead = rows.filter((x) => x.s > meRow.s).pop();
-        bar.innerHTML = `<div class="lb-me-t"><b>${meRow.rank === 1 ? '👑 את/ה במקום הראשון!' : `המקום שלך: ${meRow.rank}`}</b><small>${ahead ? `עוד ${ahead.s - meRow.s + 1}${esc(unit)} כדי לעקוף את ${esc(ahead.n)}` : 'תשמרו על הכתר 😎'}</small></div><button class="btn sm" data-lb-play>${icon('play', 's')} לשחק</button>`;
+        set(bar, `<div class="lb-me-t"><b>${meRow.rank === 1 ? '👑 את/ה במקום הראשון!' : `המקום שלך: ${meRow.rank}`}</b><small>${ahead ? `עוד ${ahead.s - meRow.s + 1}${esc(unit)} כדי לעקוף את ${esc(ahead.n)}` : 'תשמרו על הכתר 😎'}</small></div><button class="btn sm" data-lb-play>${icon('play', 's')} לשחק</button>`);
       } else {
         const last = rows[rows.length - 1];
-        bar.innerHTML = `<div class="lb-me-t"><b>${rows.length >= LIMIT ? 'עוד לא בטופ 50' : `עוד לא שיחקת ${period === 'a' ? 'כאן' : PERIODS.find((p) => p[0] === period)[1]}`}</b><small>${rows.length >= LIMIT ? `צריך יותר מ-${last.s}${esc(unit)}` : 'משחק אחד וכבר את/ה בטבלה'}</small></div><button class="btn sm" data-lb-play>${icon('play', 's')} לשחק</button>`;
+        set(bar, `<div class="lb-me-t"><b>${rows.length >= LIMIT ? 'עוד לא בטופ 50' : `עוד לא שיחקת ${period === 'a' ? 'כאן' : periodName()}`}</b><small>${rows.length >= LIMIT ? `צריך יותר מ-${last.s}${esc(unit)}` : 'משחק אחד וכבר את/ה בטבלה'}</small></div><button class="btn sm" data-lb-play>${icon('play', 's')} לשחק</button>`);
       }
     }
-    function draw(el) {
-      el.querySelector('[data-lb-tabs]').innerHTML = `
+    /** The other periods of this game, loaded quietly so that switching is instant. */
+    function prefetch() {
+      const g = game;
+      setTimeout(() => { for (const [p] of PERIODS) if (!cached(g, p)) board(g, p).catch(() => {}); }, 250);
+    }
+    async function load(el) {
+      const my = ++seq;
+      const body = el.querySelector('[data-lb-body]');
+      if (!signedIn()) {
+        set(body, `<div class="card lb-join">${App.mascotSays ? App.mascotSays('wave', 'הטבלה שמורה בחשבון Google. מתחברים, בוחרים כינוי ומתחרים!', { size: 60 }) : ''}
+          <button class="btn block" data-lb-signin>${icon('cloud', 's')} התחברות לחשבון</button></div>`);
+        return;
+      }
+      const now = cached(game, period);
+      if (now) { body.classList.remove('lb-busy'); paint(el, now); prefetch(); return; }
+      // nothing on screen yet (the first open): placeholders; otherwise the current board stays
+      if (!body.__html) set(body, `<div class="lb-wait">${UI.skeleton ? UI.skeleton(4) : ''}</div>`);
+      else body.classList.add('lb-busy');
+      let rows;
+      try { rows = await board(game, period); } catch (e) {
+        if (my !== seq || !el.isConnected) return;
+        body.classList.remove('lb-busy');
+        set(body, `<div class="empty"><h3>הטבלה לא נטענה</h3><div class="small muted">${navigator.onLine ? 'נסו שוב בעוד רגע' : 'אין חיבור לאינטרנט'}</div><button class="btn tonal" data-lb-retry>נסו שוב</button></div>`);
+        return;
+      }
+      if (my !== seq || !el.isConnected) return;
+      body.classList.remove('lb-busy');
+      paint(el, rows);
+      prefetch();
+    }
+    function tabs(el) {
+      const me = profile(true);
+      set(el.querySelector('[data-lb-tabs]'), `
         <div class="chips lb-games" role="tablist" aria-label="משחק">${games().map((g) => `<button class="chip ${g.id === game ? 'on' : ''}" role="tab" aria-selected="${g.id === game}" data-game="${g.id}">${esc(SHORT[g.id] || g.t)}</button>`).join('')}</div>
         <div class="seg lb-periods" role="tablist" aria-label="תקופה">${PERIODS.map(([k, l]) => `<button class="${k === period ? 'on' : ''}" role="tab" aria-selected="${k === period}" data-period="${k}">${l}</button>`).join('')}</div>
-        ${joined() ? `<button class="lb-mine" data-lb-profile>${(() => { const p = profile(); return `<span class="lb-av sm ${p.bg ? 'sk-' + p.bg : ''}"><span aria-hidden="true">${p.e}</span></span><span>${esc(p.n)}</span>`; })()}${icon('edit', 's')}<span class="vh">עריכת הכינוי</span></button>` : ''}`;
-      load(el);
+        ${joined() ? `<button class="lb-mine" data-lb-profile><span class="lb-av sm ${me.bg ? 'sk-' + me.bg : ''}"><span aria-hidden="true">${me.e}</span></span><span>${esc(me.n)}</span>${icon('edit', 's')}<span class="vh">עריכת הכינוי</span></button>` : ''}`);
+    }
+    /** Only the marks move; the buttons themselves stay. */
+    function mark(el) {
+      el.querySelectorAll('[data-game]').forEach((x) => { const on = x.dataset.game === game; x.classList.toggle('on', on); x.setAttribute('aria-selected', on); });
+      el.querySelectorAll('[data-period]').forEach((x) => { const on = x.dataset.period === period; x.classList.toggle('on', on); x.setAttribute('aria-selected', on); });
     }
     UI.openSheet({
       title: 'טבלת האלופים 🏆',
       full: true,
       cls: 'lb-sheet',
-      body: '<div data-lb-tabs></div><div data-lb-body></div>',
+      body: '<div data-lb-tabs></div><div class="lb-body" data-lb-body></div>',
       foot: '<div class="lb-me" data-lb-me></div>',
       onMount: (el) => {
-        draw(el);
+        tabs(el);
+        load(el);
         el.addEventListener('click', async (e) => {
           const b = e.target.closest('button');
           if (!b) return;
-          if (b.dataset.game) { game = b.dataset.game; draw(el); }
-          else if (b.dataset.period) { period = b.dataset.period; draw(el); }
+          if (b.dataset.game) { if (b.dataset.game !== game) { game = b.dataset.game; mark(el); load(el); } }
+          else if (b.dataset.period) { if (b.dataset.period !== period) { period = b.dataset.period; mark(el); load(el); } }
           else if (b.hasAttribute('data-lb-retry')) load(el);
-          else if (b.hasAttribute('data-lb-profile')) Champions.profile(() => { if (el.isConnected) draw(el); });
+          else if (b.hasAttribute('data-lb-profile')) Champions.profile(() => { if (el.isConnected) { tabs(el); load(el); } });
           else if (b.hasAttribute('data-lb-signin')) { UI.closeAll(); App.go('settings'); setTimeout(() => App.sheetsApi.settingsSection('account'), 350); }
           else if (b.hasAttribute('data-lb-play')) {
             UI.closeTop();
@@ -14043,13 +14126,19 @@ window.PAY_CONFIG = {
       },
     });
   };
+  /** The games list warms the last game's board of today, so the table opens at once. */
+  Champions.warm = function () {
+    if (!signedIn()) return;
+    const last = LB.MAX[S.meta.lbLast] ? S.meta.lbLast : 'coins';
+    if (!cached(last, 'd')) board(last, 'd').catch(() => {});
+  };
 
   /* ---------------- my nickname, emoji and background ---------------- */
   Champions.profile = function (done) {
     const l = S.settings.lb || {};
     let n = l.n || LB.randomNick(), e = LB.EMOJI.includes(l.e) ? l.e : LB.EMOJI[Math.floor(Math.random() * LB.EMOJI.length)], bg = l.bg || '';
     const skins = (root.Plus && root.Plus.SKINS) || {};
-    const canBg = plusOn();
+    const canBg = plusOn(); // an admin's preview may choose too (it shows only on this phone)
     const showBg = !!(root.Plus && (root.Plus.visible() || canBg));
     const preview = () => `<li class="lb-row me ${canBg && skins[bg] ? 'plus sk-' + bg : ''}"><span class="lb-r">1</span><span class="lb-e" aria-hidden="true">${e}</span><span class="lb-n">${esc(n || '…')}${canBg ? '<i class="lb-plus">Plus</i>' : ''}</span><b class="lb-s">120</b></li>`;
     UI.openSheet({
@@ -14482,7 +14571,16 @@ window.PAY_CONFIG = {
     const lemon = C.lemon || {};
     const playState = P && P.available ? '<span class="tag good">פעיל</span>' : App.androidApp ? '<span class="tag warn">לא מוגדר ב-Play Console</span>' : '<span class="tag">נבדק רק מתוך אפליקציית האנדרואיד</span>';
     const webState = lemon.checkout && +lemon.productId ? '<span class="tag good">פעיל</span>' : '<span class="tag warn">לא מוגדר</span>';
+    // the admin's own preview, on this phone only (plus.js: Plus.preview)
+    const mode = P && P.preview ? P.preview() : '';
+    const simBtn = (v, label) => `<button class="${mode === v ? 'on' : ''}" aria-pressed="${mode === v}" data-act="plus-sim" data-v="${v}">${label}</button>`;
+    const preview = `<div class="card adm-preview"><b>תצוגה מקדימה של Plus</b>
+        <div class="tiny muted">רק בטלפון הזה: לא נספר בסטטיסטיקה ולא נראה לשחקנים אחרים. אמיתי ייפתח לכולם כשחשבון התשלומים יוגדר.</div>
+        <div class="seg">${simBtn('', 'כבוי')}${simBtn('free', 'משתמש חינמי')}${simBtn('plus', 'מנוי Plus')}</div>
+        <div class="tiny adm-preview-l">חינמי: מכחול על כרטיס השכר בבית, ניסיון חינם ל-3 ימים, מכסות לניתוח המתקדם (דוחות) ולייצוא, ושורת Plus בהגדרות. מנוי: 12 עיצובים (הגדרות › מראה), רקע בטבלת האלופים ותג במסך הבית.</div>
+        <div class="btn-row"><button class="btn tonal sm" data-act="plus-sim-offer">${icon('sparkle', 's')} להציג את ההצעה בבית</button><button class="btn text sm" data-act="plus-sim-reset">איפוס ניסיון ומכסות</button></div></div>`;
     return `<div class="section-title">${icon('sparkle', 's')} Shaati Plus והכנסות</div>
+      ${preview}
       <div class="card"><div class="kpis">${kpi('קונים', buyers, `${play} באנדרואיד · ${web} באתר`)}${kpi('משלמים', U.num(share, 1) + '%', `מכל המשתמשים · היעד ${GOAL}%`)}${kpi('הכנסה משוערת', money(gross), '≈ ' + money(net) + ' אחרי עמלות')}${kpi('קנו אחרי ניסיון', pct(triedBought, tried) + '%', `${tried} ניסו בחינם`)}</div>
         <div class="adm-goal"><div class="progress thin"><i style="width:${Math.min(100, (share / GOAL) * 100)}%"></i></div><span class="tiny muted">${share >= GOAL ? 'היעד הושג 🎉' : `עוד ${Math.max(1, Math.ceil((GOAL / 100) * rows.length - buyers))} קונים ליעד של ${GOAL}%`}</span></div>
         <div class="divider"></div>

@@ -48,10 +48,17 @@
   Plus.inPlayApp = inPlayApp;
   /** Buying on the web (card, Apple Pay, Google Pay, PayPal through Lemon Squeezy) is set up and allowed here. */
   Plus.webShop = () => { const c = cfg(); return !!(c.checkout && +c.productId) && !inPlayApp(); };
+  /**
+   * An admin's preview on this phone only (admin dashboard): 'free' = as a user who has not bought
+   * (the trial, "try it on your card", the offer, the allowances) even before a way of buying is set
+   * up; 'plus' = as a member. Never counted in the statistics or shown to other players.
+   */
+  const sim = () => (App.isAdmin ? (S.meta.plusSim === 'free' ? 'free' : S.meta.plusPreview ? 'plus' : '') : '');
+  Plus.preview = sim;
   /** Plus features are on: bought, in the free trial, or an admin previewing them on this phone. */
-  Plus.active = () => owned() || Plus.inTrial() || (!!App.isAdmin && !!S.meta.plusPreview);
-  /** Anything about Plus is shown only when it can be bought here, or is already on. */
-  Plus.visible = () => Plus.available || Plus.webShop() || Plus.active();
+  Plus.active = () => owned() || Plus.inTrial() || sim() === 'plus';
+  /** Anything about Plus is shown only when it can be bought here, or is already on (or an admin previews it). */
+  Plus.visible = () => Plus.available || Plus.webShop() || Plus.active() || !!sim();
   /** The pay-card skin in use ('' = the regular card). */
   Plus.skin = () => (Plus.active() && SKINS[S.settings.skin] ? S.settings.skin : '');
 
@@ -134,12 +141,13 @@
 
   /** Buying: Google Play's own sheet in the Android app, Lemon Squeezy's checkout elsewhere. */
   Plus.buy = async function () {
+    if (sim() && !Plus.available && !Plus.webShop()) { UI.toast('תצוגה מקדימה: כאן ייפתח התשלום. הוא יעבוד אחרי שחשבון התשלומים יוגדר'); return false; }
     if (inPlayApp()) return buyPlay();
     if (Plus.webShop()) {
       root.open(cfg().checkout, '_blank', 'noopener');
       return false; // Plus turns on with the code from the receipt
     }
-    UI.toast('הרכישה עוד לא זמינה כאן');
+    UI.toast(sim() ? 'תצוגה מקדימה: כאן ייפתח התשלום. הוא יעבוד אחרי שחשבון התשלומים יוגדר' : 'הרכישה עוד לא זמינה כאן');
     return false;
   };
   async function buyPlay() {
@@ -233,7 +241,7 @@
         ${on && !trial ? `<div class="plus-done">${icon('check')} ${owned() ? 'Shaati Plus פעיל אצלך' : 'תצוגה מקדימה של מנהל'}</div>`
           : `${trial ? `<div class="plus-done trial">${icon('sparkle')} תקופת ניסיון · ${trialLeft()}</div>` : ''}
              ${Plus.canTrial() ? `<button class="btn big block plus-buy" data-plus-trial>${icon('sparkle')} לנסות ${TRIAL_DAYS} ימים בחינם</button>` : ''}
-             <button class="btn ${Plus.canTrial() ? 'tonal plus-buy2' : 'big plus-buy'} block" data-plus-buy ${play ? (Plus.available ? '' : 'disabled') : web ? '' : 'disabled'}>${icon(Plus.canTrial() ? 'star' : 'sparkle', Plus.canTrial() ? 's' : '')} ${trial ? 'קנייה ושמירה' : 'קנייה חד-פעמית'}${price ? ' · ' + esc(price) : ''}</button>
+             <button class="btn ${Plus.canTrial() ? 'tonal plus-buy2' : 'big plus-buy'} block" data-plus-buy ${(play ? Plus.available : web) || sim() ? '' : 'disabled'}>${icon(Plus.canTrial() ? 'star' : 'sparkle', Plus.canTrial() ? 's' : '')} ${trial ? 'קנייה ושמירה' : 'קנייה חד-פעמית'}${price ? ' · ' + esc(price) : ''}</button>
              ${Plus.workPrice() ? `<div class="tiny plus-work">${esc(Plus.workPrice())}</div>` : ''}
              <div class="plus-pay">${play ? '<span>Google Play</span><span>כרטיס אשראי</span><span>Google Pay</span><span>PayPal</span>' : '<span>כרטיס אשראי</span><span>Apple Pay</span><span>Google Pay</span><span>PayPal</span>'}</div>
              <div class="tiny muted plus-note">${play ? 'תשלום אחד דרך Google Play, בלי מנוי ובלי חיובים נוספים.' : 'תשלום אחד בדף תשלום מאובטח של Lemon Squeezy, בלי מנוי. אחרי התשלום מגיע במייל קוד הפעלה.'} מתחת לגיל 18: בהסכמת הורה.</div>`}
@@ -267,7 +275,7 @@
         el.addEventListener('keydown', (e) => { if (e.key === 'Enter' && e.target.id === 'plus-key') run(() => Plus.redeem(e.target.value)); });
         el.addEventListener('change', async (e) => {
           if (!e.target.matches('[data-plus-preview]')) return;
-          await Store.setMeta({ plusPreview: e.target.checked });
+          await Store.setMeta({ plusPreview: e.target.checked, plusSim: '' });
           App.applyTheme(); App.rerender(); draw(el);
         });
       },
@@ -278,7 +286,7 @@
    * their own minutes of work, and one quiet offer after they have come to like the app. No pop-ups,
    * no countdowns; every offer closes with one tap and comes back at most a few times. */
   /** Can be bought on this phone (Google Play here, or the web checkout). */
-  const buyable = () => Plus.available || Plus.webShop();
+  const buyable = () => Plus.available || Plus.webShop() || sim() === 'free';
   Plus.inTrial = () => !owned() && +((S.meta.plusTrial || {}).until || 0) > Date.now();
   Plus.canTrial = () => !owned() && !S.meta.plusTrial && buyable();
   let trialTimer = 0;
@@ -463,6 +471,29 @@
   App.actions['plus-nudge-off'] = async () => { await Store.setMeta({ plusNudge: Object.assign({}, S.meta.plusNudge || {}, { off: true }) }); App.rerender(); };
 
   App.actions['plus-open'] = () => Plus.sheet();
+  /* the admin's preview controls (admin dashboard) */
+  App.actions['plus-sim'] = async (el) => {
+    if (!App.isAdmin) return;
+    const v = el.dataset.v;
+    await Store.setMeta({ plusSim: v === 'free' ? 'free' : '', plusPreview: v === 'plus' });
+    el.parentElement.querySelectorAll('[data-act="plus-sim"]').forEach((b) => { const on = b === el; b.classList.toggle('on', on); b.setAttribute('aria-pressed', on); });
+    App.applyTheme(); App.rerender();
+    UI.toast(v === 'free' ? 'מצב משתמש חינמי: מכחול על כרטיס השכר, ניסיון חינם ומכסות לניתוח ולייצוא' : v === 'plus' ? 'מצב מנוי Plus: 12 עיצובים, רקע בטבלה ובלי הגבלות' : 'התצוגה המקדימה כבויה');
+  };
+  App.actions['plus-sim-offer'] = async () => {
+    if (!App.isAdmin) return;
+    // the offer is for someone without Plus: a running trial (in the preview) ends first
+    if (Plus.inTrial()) await Store.setMeta({ plusTrial: Object.assign({}, S.meta.plusTrial, { until: Date.now() - 1000 }) });
+    await Store.setMeta({ plusSim: 'free', plusPreview: false, plusTrialEnd: true, plusNudge: Object.assign({}, S.meta.plusNudge || {}, { at: Date.now(), x: 0, shown: Math.max(1, (S.meta.plusNudge || {}).shown || 0), off: false }) });
+    UI.closeAll(); App.applyTheme(); App.go('home');
+    UI.toast('ההצעה מופיעה עכשיו במסך הבית, מתחת לשורת העדכונים');
+  };
+  App.actions['plus-sim-reset'] = async () => {
+    if (!App.isAdmin) return;
+    await Store.setMeta({ plusTrial: null, plusTrialEnd: null, plusNudge: null, plusUse: null, plusWall: null });
+    App.applyTheme(); App.rerender();
+    UI.toast('אופס: אפשר לנסות שוב את הניסיון, המכסות וההצעה');
+  };
 
   root.Plus = Plus;
 })(typeof window !== 'undefined' ? window : globalThis);

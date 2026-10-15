@@ -46,15 +46,15 @@
       s30: Math.min(99999, done.filter((s) => U.epochKey(s.start) >= from30).length),
       ps: Math.min(99999, S.payslips.length),
       age: age == null ? '' : age < 18 ? 'u18' : '18p',
-      f: {
+      f: (() => { const sim = !!(root.Plus && root.Plus.preview && root.Plus.preview()); return {
         rights: !!S.meta.usedRights, ai: !!(S.settings.ai && S.settings.ai.apiKey), lock: !!S.settings.lock.enabled,
         bio: !!S.settings.lock.bioId, dark: S.settings.theme === 'dark', fxOff: !!(S.settings.fx && S.settings.fx.effects === false),
         goal: +S.settings.goal.amount > 0, demo: !!S.settings.demo, planned: S.shifts.some((s) => s.status === 'planned'),
         roles: App.roles().length > 1, notif: ('Notification' in root) && Notification.permission === 'granted',
         // Shaati Plus, for the admin dashboard's sales numbers (yes/no only)
-        plus: !!(S.meta.plus && S.meta.plus.active), plusWeb: !!(S.meta.plus && S.meta.plus.active && S.meta.plus.src === 'web'), plusSeen: !!S.meta.plusSeen,
-        plusWall: !!S.meta.plusWall, plusTry: !!S.meta.plusTrial, // reached a free allowance / started the free trial (16 keys: the most the rules allow)
-      },
+        plus: !!(S.meta.plus && S.meta.plus.active), plusWeb: !!(S.meta.plus && S.meta.plus.active && S.meta.plus.src === 'web'), plusSeen: !sim && !!S.meta.plusSeen,
+        plusWall: !sim && !!S.meta.plusWall, plusTry: !sim && !!S.meta.plusTrial, // reached a free allowance / started the free trial (16 keys: the most the rules allow)
+      }; })(), // an admin's Plus preview is never counted
       t: Date.now(),
     };
   }

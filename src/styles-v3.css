@@ -994,3 +994,12 @@ body.fx .recap-card:active { transform: scale(.98); }
 .an-if > div { display: flex; gap: 8px; align-items: flex-start; line-height: 1.5; }
 .an-if svg { flex: none; margin-top: 3px; color: var(--brand-strong); }
 .an-left { display: flex; flex-wrap: wrap; justify-content: center; align-items: center; gap: 4px; margin-top: 14px; color: var(--on-surface-var); }
+.adm-preview { display: grid; gap: 8px; margin-bottom: 10px; }
+.adm-preview .seg { margin: 2px 0; }
+.adm-preview .seg button { font-size: .8rem; padding-inline: 4px; }
+.adm-preview-l { line-height: 1.5; color: var(--on-surface-var); }
+/* the table switches without blanking: while a new board loads, the current one stays and a thin line moves */
+.lb-body { position: relative; }
+.lb-body.lb-busy::before { content: ''; position: absolute; top: -4px; inset-inline: 0; height: 3px; border-radius: 3px; background: linear-gradient(90deg, transparent, var(--brand), transparent); background-size: 50% 100%; background-repeat: no-repeat; animation: lb-load 1s linear infinite; }
+@keyframes lb-load { from { background-position: -50% 0; } to { background-position: 150% 0; } }
+@media (prefers-reduced-motion: reduce) { .lb-body.lb-busy::before { animation: none; background-size: 100% 100%; opacity: .5; } }
