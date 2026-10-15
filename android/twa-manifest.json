@@ -21,8 +21,8 @@
     "path": "C:\\Users\\User\\ShiftPay-Android\\keys\\shiftpay-upload.jks",
     "alias": "shiftpay"
   },
-  "appVersionName": "1.10.1",
-  "appVersionCode": 11001,
+  "appVersionName": "1.12.0",
+  "appVersionCode": 11200,
   "shortcuts": [
     {
       "name": "התחל משמרת",
@@ -40,7 +40,11 @@
   "generatorApp": "bubblewrap-cli",
   "webManifestUrl": "https://leelor123.github.io/shifts/manifest.webmanifest",
   "fallbackType": "customtabs",
-  "features": {},
+  "features": {
+    "playBilling": {
+      "enabled": true
+    }
+  },
   "alphaDependencies": {
     "enabled": false
   },
@@ -57,5 +61,5 @@
   "fileHandlers": [],
   "launchHandlerClientMode": "",
   "displayOverride": [],
-  "appVersion": "1.10.1"
+  "appVersion": "1.12.0"
 }

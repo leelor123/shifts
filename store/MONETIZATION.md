@@ -24,7 +24,7 @@ Plus כבר בנוי באפליקציה ומחכה. הוא יופיע אוטומ
 
 1. **חשבון מפתח ב-Google Play Console** (אם עוד לא נפתח): ‎$25, על שם ההורה.
 2. **פרופיל תשלומים (חשבון סוחר)**: ב-Play Console › הגדרות › פרופיל תשלומים. ממלאים שם, כתובת וחשבון בנק לקבלת הכסף מ-Google.
-3. **להעלות את האפליקציה בגרסה 1.12.0 ומעלה** (קובץ `app-release-bundle.aab` מהתיקייה `ShiftPay-Android\release\1.12.0`). בגרסה הזו כבר מובנית אפשרות התשלום של Google Play.
+3. **להעלות את האפליקציה בגרסה 1.12.0 ומעלה** (הקובץ `ShiftPay-Android\release\1.12.0\shiftpay-1.12.0.aab`, versionCode 11200). בגרסה הזו כבר מובנית אפשרות התשלום של Google Play.
 4. **ליצור את המוצר**: Play Console › האפליקציה › Monetize › Products › **In-app products** › Create product:
    - Product ID: **`shaati_plus`** (בדיוק כך, באותיות קטנות)
    - Name: **Shaati Plus**
