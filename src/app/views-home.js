@@ -150,18 +150,36 @@
     const next = [...App.model.results.values()].filter((r) => r.status === 'planned' && r.start > now && r.start - now < 36 * 3600000).sort((a, b) => a.start - b.start)[0];
     const weekly = S.notifications.filter((n) => n.type === 'weekly' && !n.read && now - n.createdAt < 4 * U.DAY).sort((a, b) => b.createdAt - a.createdAt)[0];
     const live = App.insights ? App.insights.live.slice().sort((a, b) => b.priority - a.priority) : [];
-    let item = null;
+    let item = null, pay = null;
     const soon = !S.activeShift && [...App.model.results.values()].filter((r) => r.status === 'planned' && r.start > now - 60 * 60000 && r.start < now + 30 * 60000).sort((a, b) => a.start - b.start)[0];
     if (soon) item = { act: 'start-planned', id: soon.id, ic: 'play', cls: 'go', t: `התחל את המשמרת של ${U.epochHM(soon.start)}` };
     else if (urgent[0]) item = { act: 'insights', ic: 'alert', cls: 'sev-' + urgent[0].severity, t: urgent[0].title };
     else if (next) item = { act: 'shift-open', id: next.id, ic: 'calendar', cls: '', t: `משמרת ${U.epochKey(next.start) === U.todayKey() ? 'היום' : 'מחר'} ב-${U.epochHM(next.start)} · ${App.roleName(next.segments[0].roleId)}` };
     else if (weekly) item = { act: 'insights', ic: 'sparkle', cls: '', t: 'הסיכום השבועי שלך מוכן' };
+    // the week before payday: how many days are left and about how much is coming (before tips and notes)
+    else if ((pay = paydaySoon())) item = pay;
     else if (unread[0]) item = { act: 'insights', ic: App.severityIcon[unread[0].severity] || 'bulb', cls: 'sev-' + (unread[0].severity || 'info'), t: unread[0].title };
     else if (live[0]) item = { act: 'insights', ic: 'bulb', cls: '', t: live[0].title };
     if (!item) return '';
     const more = item.cls === 'go' ? 0 : Math.max(0, unread.length - (unread.some((n) => n.title === item.t) ? 1 : 0));
     return `<button class="highlight ${item.cls}" data-act="${item.act}"${item.id ? ` data-id="${item.id}"` : ''}>
       <span class="hl-ic">${icon(item.ic, 's')}</span><span class="hl-t">${esc(item.t)}</span>${more ? `<span class="hl-more">+${more}</span>` : ''}${icon('left', 's')}</button>`;
+  }
+
+  /** The next pay date within a week (of the period that ended, or this one), with its expected net. */
+  function paydaySoon() {
+    const emp = S.employers[0];
+    if (!emp) return null;
+    const today = U.todayKey();
+    const P = Engine.periodOf(today, emp);
+    const next = [Engine.periodOf(U.addDays(P.from, -1), emp), P].find((x) => x.payDate && x.payDate > today);
+    if (!next) return null;
+    const days = U.diffDays(today, next.payDate);
+    if (!(days >= 1 && days <= 7)) return null;
+    const sum = Engine.periodSummary(App.model, next.key, emp.id);
+    if (!(sum.gross > 0)) return null;
+    const when = days === 1 ? 'מחר משכורת' : `עוד ${days} ימים למשכורת`;
+    return { act: 'go-summary', ic: 'wallet', cls: 'payday-soon', t: `💸 ${when} · כ-${U.money(sum.net.net, 0)}` }; // short enough for one line on a small phone
   }
 
   /* ---------------- saving up for something ---------------- */
