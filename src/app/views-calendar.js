@@ -51,7 +51,7 @@
     }
     const dows = [...Array(7)].map((_, i) => U.HEB_DAYS_SHORT[(i + (S.settings.weekStart || 0)) % 7]);
     const hm = HebCal.hebrewDate(first), hm2 = HebCal.hebrewDate(U.monthEnd(mk));
-    const hebLabel = hm.monthStr === hm2.monthStr ? hm.monthStr + ' ' + hm.yearStr : hm.monthStr + '–' + hm2.monthStr + ' ' + hm2.yearStr;
+    const hebLabel = hm.monthStr === hm2.monthStr ? hm.monthStr + ' ' + hm.yearStr : hm.monthStr + '\u2060–\u2060' + hm2.monthStr + ' ' + hm2.yearStr;
     return `<div class="cal-nav"><button class="icon-btn" data-act="cal-nav" data-dir="-1" aria-label="הקודם">${icon('right')}</button><h2>${U.fmtMonth(mk)}<div class="tiny muted" style="font-weight:400">${esc(hebLabel)}</div></h2><button class="icon-btn" data-act="cal-nav" data-dir="1" aria-label="הבא">${icon('left')}</button></div>
       <div class="cal-dow">${dows.map((x) => `<span>${x}</span>`).join('')}</div>
       <div class="cal-grid swipe-area" id="cal-swipe">${cells}</div>
@@ -81,7 +81,7 @@
         bars += `<i style="inset-inline-start:${pos(s.start)}%;width:${Math.max(1.5, pos(s.end) - pos(s.start))}%;background:${role ? role.color : '#999'};opacity:${r.status === 'planned' ? 0.45 : 0.9}"></i>`;
       }
       if (d) { tot += d.total; hrs += d.shifts.filter((r) => r.status === 'done').reduce((s, r) => s + r.paidHours, 0); }
-      const label = d ? d.shifts.map((r) => `${App.roleName(r.segments[0] && r.segments[0].roleId)} ⁦${U.epochHM(r.start)}–${U.epochHM(r.rawEnd)}⁩${r.status === 'planned' ? ' (מתוכננת)' : ''}`).concat(d.entries.map((e) => (e.kind === 'vacation' ? 'חופשה' : e.kind === 'sick' ? 'מחלה' : (App.model.entryVals.get(e.id) || {}).label))).join(' · ') : '';
+      const label = d ? d.shifts.map((r) => `${App.roleName(r.segments[0] && r.segments[0].roleId)} ⁦${U.epochHM(r.start)}\u2060–\u2060${U.epochHM(r.rawEnd)}⁩${r.status === 'planned' ? ' (מתוכננת)' : ''}`).concat(d.entries.map((e) => (e.kind === 'vacation' ? 'חופשה' : e.kind === 'sick' ? 'מחלה' : (App.model.entryVals.get(e.id) || {}).label))).join(' · ') : '';
       rows += `<div class="week-row ${rest ? 'rest' : ''} card-link" data-act="cal-day" data-k="${k}" ${k === today ? 'style="box-shadow:inset 3px 0 0 var(--primary)"' : ''}>
         <div class="wd"><div class="tiny muted">${U.HEB_DAYS[U.dow(k)]}</div><div class="n">${+k.slice(8)}</div><div class="tiny muted">${HebCal.hebrewDate(k).dayStr}</div></div>
         <div class="tl"><div class="row-flex small"><span style="flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${esc(hol.map((h) => h.name).join(', ') || label || '—')}</span>${d && d.total ? `<b>${UI.money(d.total, 0)}</b>` : ''}${d && d.ov ? ` <span class="tag override">${icon('hand')}</span>` : ''}</div>
@@ -128,7 +128,7 @@
         <button class="item" data-r="upcoming"><span class="lead">${icon('calendar')}</span><span class="body"><span class="t">משמרות מתוכננות קדימה</span><span class="s">קובץ .ics עם תזכורת שעה לפני</span></span></button>
         <button class="item" data-r="month"><span class="lead">${icon('grid')}</span><span class="body"><span class="t">כל המשמרות בחודש המוצג</span><span class="s">קובץ .ics</span></span></button>
         <button class="item" data-r="all"><span class="lead">${icon('list')}</span><span class="body"><span class="t">כל המשמרות</span><span class="s">קובץ .ics</span></span></button></div>
-        <div class="tiny muted" style="margin:4px">פתח את הקובץ בטלפון כדי להוסיף ל-Google Calendar. למשמרת בודדת: פתח אותה ← "הוסף ל-Google Calendar".</div>`,
+        <div class="tiny muted" style="margin:4px">פתח את הקובץ בטלפון כדי להוסיף ל-\u2060Google Calendar. למשמרת בודדת: פתח אותה ← "הוסף ל-\u2060Google Calendar".</div>`,
       onMount: (el) => el.querySelectorAll('[data-r]').forEach((b) => (b.onclick = () => {
         const r = b.dataset.r;
         const mk = App.calState.anchor.slice(0, 7);

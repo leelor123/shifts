@@ -105,13 +105,13 @@
         return `<div class="card"><div class="card-head">${icon('sparkle')}<h3>עוזר זכויות ושכר</h3></div>
           <p class="small">שאל כל שאלה על זכויות בעבודה, על התלוש או על האפליקציה, וקבל תשובה מותאמת לנתונים שלך.</p>
           <p class="small">העוזר פועל עם Claude של Anthropic, דרך מפתח API אישי שלך. השימוש מחויב בחשבון שלך שם (בדרך כלל אגורות בודדות לשאלה). המפתח נשמר רק בטלפון.</p>
-          <label class="field"><span class="lbl">מפתח API (מתחיל ב-sk-ant-)</span><input class="input" id="as-key" type="password" autocomplete="off" dir="ltr"></label>
+          <label class="field"><span class="lbl">מפתח API (מתחיל ב-\u2060sk-ant-)</span><input class="input" id="as-key" type="password" autocomplete="off" dir="ltr"></label>
           <div class="tiny muted" style="margin-bottom:10px">יוצרים מפתח באתר console.anthropic.com ‹ API Keys.</div>
           <button class="btn block" data-save-key>${icon('check')} שמור והתחל</button></div>
           ${legalNote()}`;
       }
       const msgs = chat();
-      return `<div class="chat-consent">${icon('shield', 's')}<div>השאלות נשלחות ל-Anthropic לעיבוד. <label class="chat-share"><input type="checkbox" id="as-share" ${shareData() ? 'checked' : ''}> לצרף סיכום מספרי מהאפליקציה (תעריפים, שעות, סכומים, יתרות — בלי שם או פרטים מזהים)</label></div></div>
+      return `<div class="chat-consent">${icon('shield', 's')}<div>השאלות נשלחות ל-\u2060Anthropic לעיבוד. <label class="chat-share"><input type="checkbox" id="as-share" ${shareData() ? 'checked' : ''}> לצרף סיכום מספרי מהאפליקציה (תעריפים, שעות, סכומים, יתרות — בלי שם או פרטים מזהים)</label></div></div>
         ${msgs.length ? '' : `<div class="chat-empty"><div class="chat-hello">שלום! במה אפשר לעזור?</div><div class="chips chat-sugg">${SUGGESTIONS.map((q) => `<button class="chip" data-q="${esc(q)}">${esc(q)}</button>`).join('')}</div></div>`}
         <div class="chat-log" id="as-log">${msgs.map((m) => `<div class="msg ${m.role}">${m.role === 'user' ? esc(m.text) : render(m.text)}</div>`).join('')}</div>
         ${legalNote()}`;
@@ -171,13 +171,13 @@
       } catch (err) {
         console.error(err);
         let msg = 'משהו השתבש. נסה שוב בעוד רגע.';
-        if (!Anthropic) msg = 'לא ניתן לטעון את רכיב ה-AI. בדוק את החיבור לאינטרנט.';
-        else if (err instanceof Anthropic.AuthenticationError) msg = 'מפתח ה-API לא תקין. אפשר לעדכן אותו בהגדרות › מפתח AI.';
+        if (!Anthropic) msg = 'לא ניתן לטעון את רכיב ה-\u2060AI. בדוק את החיבור לאינטרנט.';
+        else if (err instanceof Anthropic.AuthenticationError) msg = 'מפתח ה-\u2060API לא תקין. אפשר לעדכן אותו בהגדרות › מפתח AI.';
         else if (err instanceof Anthropic.PermissionDeniedError) msg = 'למפתח אין הרשאה למודל שנבחר. אפשר לבחור מודל אחר בהגדרות › מפתח AI.';
         else if (err instanceof Anthropic.NotFoundError) msg = 'המודל שנבחר לא זמין. בחר מודל אחר בהגדרות › מפתח AI.';
         else if (err instanceof Anthropic.RateLimitError) msg = 'יותר מדי בקשות כרגע. נסה שוב בעוד דקה.';
         else if (err instanceof Anthropic.APIConnectionError) msg = 'בעיית תקשורת. בדוק את החיבור לאינטרנט.';
-        else if (err instanceof Anthropic.APIError && (err.status === 402 || err.type === 'billing_error')) msg = 'נגמרה היתרה בחשבון ה-API שלך אצל Anthropic.';
+        else if (err instanceof Anthropic.APIError && (err.status === 402 || err.type === 'billing_error')) msg = 'נגמרה היתרה בחשבון ה-\u2060API שלך אצל Anthropic.';
         else if (err instanceof Anthropic.APIError) msg = 'שגיאה מהשרת (' + (err.status || '') + '). נסה שוב בעוד רגע.';
         bubble.classList.add('error');
         acc = acc ? acc + '\n\n(התשובה נקטעה)' : msg;
@@ -201,7 +201,7 @@
           if (b.hasAttribute('data-send')) { const i = el.querySelector('#as-input'); const v = i.value; i.value = ''; send(v); }
           if (b.hasAttribute('data-save-key')) {
             const k = el.querySelector('#as-key').value.trim();
-            if (!/^sk-ant-/.test(k)) { UI.toast('המפתח צריך להתחיל ב-sk-ant-'); return; }
+            if (!/^sk-ant-/.test(k)) { UI.toast('המפתח צריך להתחיל ב-\u2060sk-ant-'); return; }
             await Store.setSettings((s) => { s.ai.apiKey = k; });
             redraw();
           }

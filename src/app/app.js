@@ -559,7 +559,7 @@
     const blob = new Blob([JSON.stringify(data)], { type: 'application/json' });
     UI.download(name, blob);
     await Store.setSettings((s) => { s.backup.lastBackup = Date.now(); if (auto) s.backup.lastAuto = Date.now(); });
-    UI.toast(auto ? 'גיבוי אוטומטי נשמר בהורדות' : 'קובץ הגיבוי נשמר', { label: 'שתף ל-Drive', fn: () => UI.shareFile(name, blob, 'גיבוי משמרות') });
+    UI.toast(auto ? 'גיבוי אוטומטי נשמר בהורדות' : 'קובץ הגיבוי נשמר', { label: 'שתף ל-\u2060Drive', fn: () => UI.shareFile(name, blob, 'גיבוי משמרות') });
   };
 
   /* ---------------- boot ---------------- */

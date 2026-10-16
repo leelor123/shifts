@@ -47,7 +47,7 @@
     const text = lines.join('\n');
     if (text.replace(/\s/g, '').length > 80) return { text, source: 'pdf' };
     // scanned PDF → render & OCR
-    progress('ה-PDF סרוק — מריץ זיהוי טקסט…');
+    progress('ה-\u2060PDF סרוק — מריץ זיהוי טקסט…');
     const page = await doc.getPage(1);
     const vp = page.getViewport({ scale: 2.5 });
     const canvas = document.createElement('canvas');
@@ -125,7 +125,7 @@
    * (name · amount). Tapping a row opens it for correction; lines it couldn't place, the raw text
    * and the AI option wait folded at the bottom. */
   const GROUPS = [['pay', 'תשלומים', 'wallet', 'mint', true], ['ded', 'ניכויים', 'minus', 'orange', true], ['emp', 'הפרשות המעסיק', 'shield', 'sky', true], ['total', 'סיכומים', 'receipt', 'violet', false], ['info', 'מידע נוסף', 'info', 'sky', false]];
-  const SOURCE = { pdf: ['file', 'נקרא מ-PDF'], ocr: ['camera', 'נקרא מצילום'], ai: ['sparkle', 'נותח בעזרת AI'], manual: ['edit', 'הזנה ידנית'] };
+  const SOURCE = { pdf: ['file', 'נקרא מ-\u2060PDF'], ocr: ['camera', 'נקרא מצילום'], ai: ['sparkle', 'נותח בעזרת AI'], manual: ['edit', 'הזנה ידנית'] };
   const ESSENTIAL = ['gross', 'net', 'base', 'workHours'];
   function verifySheet(draft) {
     const d = { period: draft.period, fields: Store.clone(draft.fields) || {}, other: (draft.other || []).map((o) => Object.assign({ guess: o.guess || 'ignore' }, o)), text: draft.text || '', source: draft.source, fileId: draft.fileId, fileName: draft.fileName, id: draft.id, notes: draft.notes || '' };
@@ -316,7 +316,7 @@
       <div class="status-summary"><div class="ok">✅ ${counts.ok}<div class="tiny">תקין</div></div><div class="warn">⚠️ ${counts.warn}<div class="tiny">לבדוק</div></div><div class="bad">❌ ${counts.bad}<div class="tiny">חסר/שגוי</div></div></div>
       ${a.totalMissing > 0 ? `<div class="card tonal"><div class="small">הפרש משוער לטובתך</div><div class="hero-num">${money(a.totalMissing)}</div><div class="tiny">סכום הממצאים המסומנים ❌. בדוק את הפירוט לפני פנייה למעסיק.</div></div>` : counts.bad === 0 ? `<div class="card tonal"><b>${icon('okc', 's')} לא נמצאו חוסרים</b><div class="small">התלוש תואם למשמרות שרשמת${counts.warn ? ', עם כמה נקודות לבדיקה' : ''}.</div></div>` : ''}
       ${a.overridesInPeriod ? `<div class="banner warn">${icon('hand')}<div>${a.overridesInPeriod} משמרות בתקופה כוללות עקיפה ידנית. ממצאים שנובעים מהן מסומנים.</div></div>` : ''}
-      <div class="small muted" style="margin:0 4px 10px">תקופה: ⁦${U.fmtDate(a.expected.P.from)}–${U.fmtDate(a.expected.P.to)}⁩ · ${a.expected.shifts.length} משמרות · ${U.hours(a.expected.t.hours)} ש׳</div>
+      <div class="small muted" style="margin:0 4px 10px">תקופה: ⁦${U.fmtDate(a.expected.P.from)}\u2060–\u2060${U.fmtDate(a.expected.P.to)}⁩ · ${a.expected.shifts.length} משמרות · ${U.hours(a.expected.t.hours)} ש׳</div>
       ${a.findings.slice().sort((x, y) => order[x.status] - order[y.status]).map((f) => `<div class="finding ${f.status}">
         <div class="ft"><span>${STATUS[f.status][2]}</span><span>${esc(f.area)} · ${esc(f.title)}</span>${f.amount > 0 && f.status !== 'ok' ? `<span class="amt">${U.money(f.amount)}</span>` : ''}</div>
         <div class="fd">${esc(f.detail)}</div>
@@ -434,10 +434,10 @@
     }
     const red = Payslip.redact(text);
     UI.openSheet({
-      title: 'לפני שליחה ל-Claude', full: true,
+      title: 'לפני שליחה ל-\u2060Claude', full: true,
       body: `<div class="banner warn">${icon('shield')}<div>זה <b>בדיוק</b> הטקסט שיישלח (${red.count} פרטים אישיים הוסתרו אוטומטית). בדוק וערוך — אפשר למחוק גם שם או כל פרט אחר. הקובץ עצמו לא נשלח.</div></div>
         <textarea class="input" id="ai-text" rows="16" style="font-family:ui-monospace,monospace;font-size:.8rem">${esc(red.text)}</textarea>
-        <div class="small muted" style="margin-top:8px">יישלח אל Anthropic (מודל ${esc(S.settings.ai.model)}) עם המפתח שלך. השימוש מחויב בחשבון ה-API שלך.</div>`,
+        <div class="small muted" style="margin-top:8px">יישלח אל Anthropic (מודל ${esc(S.settings.ai.model)}) עם המפתח שלך. השימוש מחויב בחשבון ה-\u2060API שלך.</div>`,
       foot: `<button class="btn tonal" data-cancel>ביטול</button><button class="btn" data-send>${icon('send')} אני מאשר — שלח</button>`,
       onMount: (el) => {
         el.querySelector('[data-cancel]').onclick = () => UI.closeTop();
@@ -477,7 +477,7 @@
       if (model.startsWith('claude-haiku')) res = await client.messages.create(params); // no server-side fallback for Haiku
       else res = await client.beta.messages.create(Object.assign({ betas: ['server-side-fallback-2026-07-01'], fallbacks: 'default' }, params));
     } catch (err) {
-      if (err instanceof Anthropic.AuthenticationError) throw new Error('מפתח ה-API לא תקין (401). בדוק אותו בהגדרות.');
+      if (err instanceof Anthropic.AuthenticationError) throw new Error('מפתח ה-\u2060API לא תקין (401). בדוק אותו בהגדרות.');
       if (err instanceof Anthropic.PermissionDeniedError) throw new Error('למפתח אין הרשאה למודל הזה (403).');
       if (err instanceof Anthropic.NotFoundError) throw new Error('המודל לא נמצא (404). בחר מודל אחר בהגדרות.');
       if (err instanceof Anthropic.RateLimitError) throw new Error('יותר מדי בקשות (429). נסה שוב בעוד דקה.');

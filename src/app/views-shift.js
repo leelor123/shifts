@@ -51,7 +51,7 @@
   App.actions['tpl-pick'] = fromMenu(() => {
     UI.openSheet({
       title: 'בחר תבנית',
-      body: `<div class="list">${S.templates.map((t) => `<button class="item" data-tpl="${t.id}"><span class="role-bar" style="background:${(App.role(t.roleId) || {}).color || '#999'}"></span><span class="body"><span class="t">${esc(t.name)}</span><span class="s">${esc(App.roleName(t.roleId))} · <span class="num">⁦${t.startT}–${t.endT}⁩</span></span></span></button>`).join('')}</div>`,
+      body: `<div class="list">${S.templates.map((t) => `<button class="item" data-tpl="${t.id}"><span class="role-bar" style="background:${(App.role(t.roleId) || {}).color || '#999'}"></span><span class="body"><span class="t">${esc(t.name)}</span><span class="s">${esc(App.roleName(t.roleId))} · <span class="num">⁦${t.startT}\u2060–\u2060${t.endT}⁩</span></span></span></button>`).join('')}</div>`,
       onMount: (el) => el.querySelectorAll('[data-tpl]').forEach((b) => (b.onclick = () => {
         const t = S.templates.find((x) => x.id === b.dataset.tpl);
         UI.closeTop();
@@ -162,7 +162,7 @@
     }
     h += '</div>';
     const labels = [`<span class="num">${U.epochHM(r.start)}</span>`];
-    if (rests.length) labels.push(`<span class="tag rest">${icon('candle')} ⁦${U.epochHM(rests[0].a)}–${U.epochHM(rests[rests.length - 1].b)}⁩</span>`);
+    if (rests.length) labels.push(`<span class="tag rest">${icon('candle')} ⁦${U.epochHM(rests[0].a)}\u2060–\u2060${U.epochHM(rests[rests.length - 1].b)}⁩</span>`);
     labels.push(`<span class="num">${U.epochHM(r.end)}${U.epochKey(r.end) !== r.dateKey ? ' (+1)' : ''}</span>`);
     return h + `<div class="row-flex tiny muted" style="justify-content:space-between">${labels.join('')}</div>`;
   };
@@ -189,7 +189,7 @@
     if (r.breakMin) notes.push(`הפסקה ${r.breakMin} דק׳ ${r.breakPaid ? 'בתשלום' : 'ללא תשלום — נוכתה יחסית מכל השעות'}`);
     notes.push(`שעות נוספות אחרי ${r.thresholdH} שעות ביום` + (r.priorMin ? ` · כבר עבדת ${U.hm(r.priorMin)} באותו יום לפני המשמרת` : '') + (r.isNightShift && emp.nightShiftShortDay ? ' (משמרת לילה)' : ''));
     const wins = r.restLabels.length ? r.slices.filter((s) => s.autoRest) : [];
-    if (r.autoRestMin > 0) notes.push(`חלון ${esc(r.restLabels.join(', ') || 'שבת/חג')} במשמרת: ⁦${U.epochHM(wins[0].a)}–${U.epochHM(wins[wins.length - 1].b)}⁩ (${S.settings.rest.mode === 'city' ? 'לפי ' + esc(S.settings.rest.city === '__custom' ? 'מיקום מותאם' : S.settings.rest.city) : 'שעות קבועות'})`);
+    if (r.autoRestMin > 0) notes.push(`חלון ${esc(r.restLabels.join(', ') || 'שבת/חג')} במשמרת: ⁦${U.epochHM(wins[0].a)}\u2060–\u2060${U.epochHM(wins[wins.length - 1].b)}⁩ (${S.settings.rest.mode === 'city' ? 'לפי ' + esc(S.settings.rest.city === '__custom' ? 'מיקום מותאם' : S.settings.rest.city).replace(/-/g, '-⁠') : 'שעות קבועות'})`);
     if (r.warnings.length) notes.push('⚠️ ' + r.warnings.join(', '));
     return `<table class="bd">${rows}</table><div class="tiny muted" style="margin-top:8px">${notes.map((n) => '• ' + n).join('<br>')}</div>`;
   };
@@ -221,7 +221,7 @@
           <button class="item" data-x="dup"><span class="lead">${icon('copy')}</span><span class="body"><span class="t">שכפל</span><span class="s">אותן שעות בתאריך אחר</span></span></button>
           <button class="item" data-x="repeat"><span class="lead">${icon('refresh')}</span><span class="body"><span class="t">חזרה שבועית</span><span class="s">אותה משמרת בשבועות הבאים, כמתוכננת</span></span></button>
           <button class="item" data-x="tpl"><span class="lead">${icon('layers')}</span><span class="body"><span class="t">שמור כתבנית</span></span></button>
-          <button class="item" data-x="gcal"><span class="lead">${icon('calendar')}</span><span class="body"><span class="t">הוסף ל-Google Calendar</span></span></button>
+          <button class="item" data-x="gcal"><span class="lead">${icon('calendar')}</span><span class="body"><span class="t">הוסף ל-\u2060Google Calendar</span></span></button>
           ${r.overridden ? `<button class="item" data-x="auto"><span class="lead">${icon('refresh')}</span><span class="body"><span class="t">חזור לחישוב אוטומטי</span><span class="s">מבטל את כל העקיפות במשמרת</span></span></button>` : ''}
         </div>`,
       foot: `<button class="btn danger" data-x="del">${icon('trash')} מחק</button><button class="btn" data-x="edit">${icon('edit')} ערוך</button>`,
@@ -278,7 +278,7 @@
   };
 
   App.saveTemplate = async function (sh) {
-    const name = await UI.promptText('שמירת תבנית', 'שם התבנית', `${App.roleName(sh.roleId)} ⁦${U.epochHM(sh.start)}–${U.epochHM(sh.end)}⁩`);
+    const name = await UI.promptText('שמירת תבנית', 'שם התבנית', `${App.roleName(sh.roleId)} ⁦${U.epochHM(sh.start)}\u2060–\u2060${U.epochHM(sh.end)}⁩`);
     if (!name) return;
     await App.saveOps([{ store: 'templates', put: {
       id: U.uid(), name, roleId: sh.roleId, employerId: sh.employerId, startT: U.epochHM(sh.start), endT: U.epochHM(sh.end),
@@ -404,7 +404,7 @@
       onMount: (el) => {
         sheetEl = el;
         preview();
-        let t = null;
+        let t = null, swT = null;
         el.addEventListener('input', (e) => {
           const f = e.target.dataset.f;
           if (!f) return;
@@ -414,15 +414,19 @@
             const ns = d.date > U.todayKey() ? 'planned' : 'done';
             if (ns !== d.status) { d.status = ns; redraw(); return; }
           }
-          // the times come from the picker in one go: redraw so "the next day" and the length chips follow
-          const structural = e.target.type === 'checkbox' || e.target.tagName === 'SELECT' || f === 'startT' || f === 'endT';
+          // the times come from the picker in one go: redraw so "the next day" and the length chips follow.
+          // Of the switches only the "change by hand" ones open fields; "paid break" and "no travel" only
+          // change the pay, so their switch is left to slide (a redraw put a new one in its place at once)
+          const isSwitch = e.target.type === 'checkbox';
+          const structural = (isSwitch && f.startsWith('ov.')) || e.target.tagName === 'SELECT' || f === 'startT' || f === 'endT';
           if (structural) {
             if (f === 'ov.rest.scope' && v === 'range' && !d.ov.rest.fromT) {
               const r = App.previewShift(shiftFrom(Object.assign({}, d, { ov: emptyOv() })));
               if (r.autoRestRange) { d.ov.rest.fromT = U.epochHM(r.autoRestRange.from); d.ov.rest.toT = U.epochHM(r.autoRestRange.to); }
               else { d.ov.rest.fromT = d.startT; d.ov.rest.toT = d.endT; }
             }
-            redraw();
+            // a switch slides over first (.2s), then the fields it opens come in
+            if (isSwitch) { clearTimeout(swT); swT = setTimeout(redraw, 220); } else redraw();
           } else { clearTimeout(t); t = setTimeout(preview, 120); }
         });
         el.addEventListener('click', async (e) => {
@@ -481,7 +485,7 @@
       }
       const overlap = S.shifts.find((s) => s.id !== sh.id && s.employerId === sh.employerId && s.status === sh.status && s.start < sh.end && s.end > sh.start);
       if (overlap) {
-        if (!(await UI.confirm('חפיפה עם משמרת אחרת', `קיימת משמרת ב-${U.fmtDate(U.epochKey(overlap.start))} ⁦${U.epochHM(overlap.start)}–${U.epochHM(overlap.end)}⁩. לשמור בכל זאת?`, 'שמור'))) return;
+        if (!(await UI.confirm('חפיפה עם משמרת אחרת', `קיימת משמרת ב-${U.fmtDate(U.epochKey(overlap.start))} ⁦${U.epochHM(overlap.start)}\u2060–\u2060${U.epochHM(overlap.end)}⁩. לשמור בכל זאת?`, 'שמור'))) return;
       }
       await Store.setMeta({ lastRole: d.roleId });
       UI.closeTop();

@@ -32,8 +32,8 @@
     return `<div class="card iab-card">
       <div class="iab-t">${icon('alert', 's')} פתחת את האפליקציה מתוך אפליקציה אחרת</div>
       <div class="small">Google לא מאפשרת להתחבר מכאן. פותחים בדפדפן ומתחברים בשנייה:</div>
-      ${isAndroid() ? `<a class="btn block" href="${esc(intent)}" target="_blank" rel="noopener">${icon('share', 's')} פתח ב-Chrome</a>`
-        : `<ol class="iab-steps"><li>לוחצים על <b>⋯</b> או על <b>⎋</b> בפינת המסך</li><li>בוחרים <b>"פתח ב-Safari"</b> / <b>"Open in browser"</b></li></ol>`}
+      ${isAndroid() ? `<a class="btn block" href="${esc(intent)}" target="_blank" rel="noopener">${icon('share', 's')} פתח ב-\u2060Chrome</a>`
+        : `<ol class="iab-steps"><li>לוחצים על <b>⋯</b> או על <b>⎋</b> בפינת המסך</li><li>בוחרים <b>"פתח ב-\u2060Safari"</b> / <b>"Open in browser"</b></li></ol>`}
       <button class="btn tonal block" data-copy-link>${icon('copy', 's')} העתק את הקישור</button>
     </div>`;
   };
@@ -150,7 +150,7 @@
       <div class="card"><div class="kv"><span>מצב</span><b>${esc(Cloud.statusText())}</b></div>
         <div class="kv"><span>שינויים שממתינים להעלאה</span><b>${Store.dirtyRecords().length + (S.meta.pendingDeletes || []).length}</b></div>
         <div class="btn-row" style="margin-top:10px"><button class="btn tonal" data-sync-now>${icon('refresh')} סנכרן עכשיו</button></div></div>
-      <div class="card small"><b>מה נשמר בענן:</b> משמרות, חופשה ומחלה, תוספות, תפקידים ותעריפים, הגדרות, תבניות, תלושים (הנתונים שהוזנו) ופערים פתוחים.<br><b>מה נשאר רק בטלפון:</b> מפתח ה-API של Claude, קוד הנעילה, קובצי התלושים עצמם (תמונה/PDF) והטקסט הגולמי שזוהה מהם.</div>
+      <div class="card small"><b>מה נשמר בענן:</b> משמרות, חופשה ומחלה, תוספות, תפקידים ותעריפים, הגדרות, תבניות, תלושים (הנתונים שהוזנו) ופערים פתוחים.<br><b>מה נשאר רק בטלפון:</b> מפתח ה-\u2060API של Claude, קוד הנעילה, קובצי התלושים עצמם (תמונה/PDF) והטקסט הגולמי שזוהה מהם.</div>
       <div class="card"><label class="switch-row"><span class="body"><span class="t">שיתוף סטטיסטיקה אנונימית</span><span class="s">מספר משמרות, ימי שימוש ותכונות פעילות, בלי שם, אימייל או סכומים. עוזר לשפר את האפליקציה.</span></span><input type="checkbox" class="switch" data-share-stats ${S.settings.shareStats !== false ? 'checked' : ''}></label>
         ${u ? `<div class="kv" style="margin-top:6px"><span class="small">מזהה משתמש (למנהלים)</span><button class="btn text sm" data-copy-uid dir="ltr">${esc(u.uid.slice(0, 8))}… העתק</button></div>` : ''}</div>
       <button class="btn outlined block" data-signout>${icon('lock')} התנתק</button>
@@ -179,7 +179,7 @@
       if (await Cloud.signOut()) location.reload();
     };
     if (q('[data-delete-cloud]')) q('[data-delete-cloud]').onclick = async () => {
-      if (!(await UI.confirm('למחוק את החשבון ואת כל הנתונים?', 'כל המשמרות, התלושים וההגדרות יימחקו לצמיתות מהענן ומהטלפון, והחשבון באפליקציה יימחק. ייתכן ש-Google תבקש לאשר את החשבון שוב. מומלץ לגבות קודם.', 'מחק הכול', true))) return;
+      if (!(await UI.confirm('למחוק את החשבון ואת כל הנתונים?', 'כל המשמרות, התלושים וההגדרות יימחקו לצמיתות מהענן ומהטלפון, והחשבון באפליקציה יימחק. ייתכן ש-\u2060Google תבקש לאשר את החשבון שוב. מומלץ לגבות קודם.', 'מחק הכול', true))) return;
       const really = await UI.promptText('אישור סופי', 'הקלד "מחק" כדי לאשר', '');
       if (really !== 'מחק') { UI.toast('בוטל'); return; }
       try { await Cloud.deleteAccountData(); location.reload(); } catch (e) { UI.dialog({ title: 'המחיקה נכשלה', text: Cloud.errorText(e), buttons: [{ label: 'סגור', value: true }] }); }

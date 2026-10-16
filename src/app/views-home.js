@@ -41,7 +41,7 @@
     return `<button class="item" data-act="shift-open" data-id="${r.id}">
       <span class="role-bar" style="background:${role ? role.color : '#999'}"></span>
       <span class="body"><span class="t shift-title"><span class="tt">${esc(date)}${esc(title)}</span>${App.restTag(r)}${App.ovTag(r)}${planned}</span>
-      <span class="s"><span class="num">⁦${U.epochHM(r.start)}–${U.epochHM(r.rawEnd)}⁩</span> · ${U.hm(r.paidMin)} ש׳${emp}${sh.note ? ' · ' + esc(sh.note) : ''}</span></span>
+      <span class="s"><span class="num">⁦${U.epochHM(r.start)}\u2060–\u2060${U.epochHM(r.rawEnd)}⁩</span> · ${U.hm(r.paidMin)} ש׳${emp}${sh.note ? ' · ' + esc(sh.note) : ''}</span></span>
       <span class="trail"><span class="a">${money(App.shiftAmount(r), 0)}</span>${opts.showOk && r.status === 'planned' ? `<br><span class="tag good" data-act="mark-done" data-id="${r.id}">${icon('check')}בוצעה</span>` : ''}</span></button>`;
   };
   App.entryItem = function (e) {

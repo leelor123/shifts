@@ -2,7 +2,7 @@
 <html lang="he" dir="rtl">
 <head>
 <meta charset="utf-8">
-<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'sha256-nvRsB+jQEb/FrGMoBHwNV3ekMbn30+jJAwMRdMWWIiU=' https://www.gstatic.com https://apis.google.com https://cdnjs.cloudflare.com https://cdn.jsdelivr.net 'wasm-unsafe-eval'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com data:; img-src 'self' data: blob: https:; connect-src 'self' https: wss:; frame-src https://shiftpay-70ab6.firebaseapp.com https://accounts.google.com https://apis.google.com https://*.google.com; worker-src 'self' blob: https://cdnjs.cloudflare.com https://cdn.jsdelivr.net; media-src 'self' data: blob:; manifest-src 'self'; object-src 'none'; base-uri 'self'; form-action 'self'">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'sha256-Gta0ytVfiAq8wivRUB46dy5yv6sxAlY26Kl8ciSZzxo=' https://www.gstatic.com https://apis.google.com https://cdnjs.cloudflare.com https://cdn.jsdelivr.net 'wasm-unsafe-eval'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com data:; img-src 'self' data: blob: https:; connect-src 'self' https: wss:; frame-src https://shiftpay-70ab6.firebaseapp.com https://accounts.google.com https://apis.google.com https://*.google.com; worker-src 'self' blob: https://cdnjs.cloudflare.com https://cdn.jsdelivr.net; media-src 'self' data: blob:; manifest-src 'self'; object-src 'none'; base-uri 'self'; form-action 'self'">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="theme-color" content="#0d2b6b">
 <meta name="description" content="מעקב משמרות וחישוב שכר אישי: שבתות, חגים, שעות נוספות, נסיעות, נטו משוער וניתוח תלושים — נשמר בחשבון שלך ועובד גם בלי אינטרנט.">
@@ -1100,7 +1100,7 @@ body.fx .nav .fab:active { transform: scale(.9) rotate(90deg); }
 /* four doors */
 .shortcuts { display: grid; grid-template-columns: repeat(4, minmax(0, auto)); gap: 8px; margin: 0 0 22px; } /* sized by their labels while they fit; on a narrow phone or with big text they shrink and the labels wrap (before, the last tile went off the screen) */
 .sc { display: flex; flex-direction: column; align-items: center; gap: 8px; border: 1px solid var(--line); background: var(--surface-1); box-shadow: var(--sh-1); border-radius: 18px; padding: 12px 4px 10px; font: 600 .76rem/1.25 var(--font); color: var(--on-surface); cursor: pointer; transition: transform .2s var(--pop); text-align: center; }
-.sc > span:last-child { max-width: 100%; overflow-wrap: anywhere; } /* a label that does not fit takes a second line */
+.sc > span:last-child { max-width: 100%; overflow-wrap: break-word; } /* a label that does not fit takes a second line (between words) */
 
 /* first steps */
 .card.guide { border: 1.5px solid color-mix(in srgb, var(--brand) 30%, var(--line)); padding: 14px; }
@@ -1683,8 +1683,11 @@ body.fx .qz-opt:active:not(:disabled) { transform: scale(.96); }
 
 .ob-sub { margin: -4px 2px 10px; font-size: .86rem; line-height: 1.45; color: var(--on-surface-var); }
 
-/* names and notes people type can be one very long word: they wrap instead of pushing the screen wider */
-body { overflow-wrap: anywhere; }
+/* names and notes people type can be one very long word: they wrap instead of pushing the screen wider.
+ * "break-word", not "anywhere": both break a word that cannot fit its line, but "anywhere" also lets a
+ * box shrink below its longest word, so a button, a tab or a table column next to others was squeezed
+ * until "תמונה" broke into "תמונ/ה" and an amount into one digit per line (until 1.16.2) */
+body { overflow-wrap: break-word; }
 .role-chip { max-width: 100%; }
 .role-chip .rc-n { min-width: 0; max-width: 60vw; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 
@@ -1957,6 +1960,8 @@ body:not(.fx) .highlight:active, body:not(.fx) .lb-mine:active, body:not(.fx) .a
 body.fx .color-pick button:active { scale: .88; }
 body.fx .font-pick button:active { scale: .98; }
 body:not(.fx) .color-pick button:active, body:not(.fx) .font-pick button:active { filter: brightness(.92); }
+/* the last presses that jumped to their pressed size: they spring like every other control */
+body.fx .pk-field, body.fx .ach-card, body.fx .home-hero .hh-skin { transition: transform .22s cubic-bezier(.34, 1.56, .64, 1), background-color .15s; }
 
 /* the daily streak of playing (orange that reads well on light and on dark) */
 :root { --streak-ink: #c2410c; }
@@ -1988,8 +1993,8 @@ body:not(.fx) .color-pick button:active, body:not(.fx) .font-pick button:active 
 <div id="print-root" aria-hidden="true"></div>
 <noscript><div style="padding:24px;font-family:sans-serif">האפליקציה דורשת JavaScript.</div></noscript>
 <script>
-window.APP_VERSION = '1.16.1';
-window.APP_BUILD = '1.16.1-7aeaeeea';
+window.APP_VERSION = '1.16.2';
+window.APP_BUILD = '1.16.2-fc3689bf';
 /* ---- core/util.js ---- */
 /* ============================================================
  * util.js — date/time helpers and formatting.
@@ -3625,7 +3630,7 @@ window.APP_BUILD = '1.16.1-7aeaeeea';
     const curM = metrics(model, cur.from, cur.to);
     const prevM = prevs.map((p) => metrics(model, p.from, p.to));
     const worked = prevM.filter((m) => m.shifts > 0);
-    const baseRange = '⁦' + U.fmtDate(prevs[prevs.length - 1].from, 'short') + '–' + U.fmtDate(prevs[0].to, 'short') + '⁩';
+    const baseRange = '⁦' + U.fmtDate(prevs[prevs.length - 1].from, 'short') + '\u2060–\u2060' + U.fmtDate(prevs[0].to, 'short') + '⁩';
     const label = unit === 'week' ? 'השבוע שהסתיים' : 'בחודש שהסתיים';
     const per = unit === 'week' ? 'לשבוע' : 'לחודש';
     const nPrev = prevs.length + (unit === 'week' ? ' השבועות' : ' החודשים');
@@ -3962,13 +3967,13 @@ window.APP_BUILD = '1.16.1-7aeaeeea';
       if (r.status !== 'planned') continue;
       if (on('plannedPast') && r.rawEnd < now) {
         alerts.push({ key: 'planned-' + r.id, type: 'plannedPast', severity: 'warn', push: 'critical', ref: r.id,
-          title: 'משמרת מתוכננת שעברה', body: `המשמרת של ${U.fmtDate(r.dateKey, 'dm')} (⁦${U.epochHM(r.start)}–${U.epochHM(r.rawEnd)}⁩) לא סומנה כ"בוצעה".`,
+          title: 'משמרת מתוכננת שעברה', body: `המשמרת של ${U.fmtDate(r.dateKey, 'dm')} (⁦${U.epochHM(r.start)}\u2060–\u2060${U.epochHM(r.rawEnd)}⁩) לא סומנה כ"בוצעה".`,
           explain: 'משמרות מתוכננות לא נספרות בשכר עד שמסמנים אותן כבוצעו.' });
       }
       const mins = (r.start - now) / U.MIN;
       if (on('upcoming') && mins > 0 && mins <= (+cfg.upcomingMin || 60)) {
         alerts.push({ key: 'up-' + r.id, type: 'upcoming', severity: 'info', push: 'critical', ref: r.id,
-          title: 'משמרת בעוד ' + Math.round(mins) + ' דקות', body: `${roleName(r.segments[0] ? r.segments[0].roleId : '')} · ⁦${U.epochHM(r.start)}–${U.epochHM(r.rawEnd)}⁩`,
+          title: 'משמרת בעוד ' + Math.round(mins) + ' דקות', body: `${roleName(r.segments[0] ? r.segments[0].roleId : '')} · ⁦${U.epochHM(r.start)}\u2060–\u2060${U.epochHM(r.rawEnd)}⁩`,
           explain: 'תזכורת ' + cfg.upcomingMin + ' דקות לפני משמרת מתוכננת.' });
       }
     }
@@ -4004,7 +4009,7 @@ window.APP_BUILD = '1.16.1-7aeaeeea';
       if (days >= (+cfg.backupDays || 30)) {
         alerts.push({ key: 'backup-' + U.weekStart(today), type: 'backup', severity: 'warn', push: 'critical',
           title: 'הגיע הזמן לגבות', body: lb ? `הגיבוי האחרון היה לפני ${days} ימים.` : 'עוד לא גיבית את הנתונים.',
-          explain: 'הנתונים שמורים רק בטלפון. מומלץ לשמור קובץ גיבוי ב-Google Drive.' });
+          explain: 'הנתונים שמורים רק בטלפון. מומלץ לשמור קובץ גיבוי ב-\u2060Google Drive.' });
       }
     }
     if (on('recuperation') && S.startDate) {
@@ -4083,7 +4088,7 @@ window.APP_BUILD = '1.16.1-7aeaeeea';
       sentence += '.';
     } else if (hasHistory) sentence += ' בערך כמו הממוצע שלך.';
     if (t.restHours >= 1) sentence += ` ${U.num(t.restHours, 1)} מהשעות היו בשבת/חג.`;
-    return { from, to, t, avgHours: ah, sentence, explain: `השבוע ⁦${U.fmtDate(from, 'short')}–${U.fmtDate(to, 'short')}⁩, בהשוואה לממוצע 4 השבועות שלפניו (${U.num(ah, 1)} ש׳).` };
+    return { from, to, t, avgHours: ah, sentence, explain: `השבוע ⁦${U.fmtDate(from, 'short')}\u2060–\u2060${U.fmtDate(to, 'short')}⁩, בהשוואה לממוצע 4 השבועות שלפניו (${U.num(ah, 1)} ש׳).` };
   }
 
   root.Insights = { run, metrics, compareSeries, weeklySummary, TYPE_INFO, pctDev };
@@ -4156,7 +4161,7 @@ window.APP_BUILD = '1.16.1-7aeaeeea';
     travel: 'החזר הוצאות נסיעה לעבודה: לפי מספר ימי העבודה בפועל, עד תקרה יומית (22.60 ₪ לפי צו ההרחבה, 2025). החזר הנסיעות חייב במס.',
     recuperation: 'דמי הבראה: אחרי שנת עבודה. מספר ימים לפי ותק × תעריף יומי (418 ₪ במגזר הפרטי) × היקף המשרה.',
     vacationPay: 'תשלום על ימי חופשה שנוצלו — לפי השכר היומי הממוצע.',
-    sickPay: 'דמי מחלה לפי חוק: יום ראשון — ללא תשלום, ימים 2–3 — 50%, מהיום הרביעי — 100%.',
+    sickPay: 'דמי מחלה לפי חוק: יום ראשון — ללא תשלום, ימים 2\u2060–\u20603 — 50%, מהיום הרביעי — 100%.',
     holidayPay: 'דמי חגים: לעובדים שעתיים אחרי 3 חודשי עבודה, על ימי חג שחלו ביום חול ולא עבדו בהם (לפי צו ההרחבה).',
     bonus: 'בונוס, פרמיה או מענק — לפי מדיניות המעסיק. חייב במס ובביטוח לאומי.',
     diff: 'הפרשים — תיקון של חודשים קודמים (למשל שעות שלא שולמו). כדאי לבדוק אם זה סוגר פער פתוח.',
@@ -4464,7 +4469,7 @@ window.APP_BUILD = '1.16.1-7aeaeeea';
         const amount = exact || diff * E.avgRate;
         add({ area: 'שעות', status: 'bad', title: 'שעות שלא שולמו', amount, shifts: suspects.map((r) => r.id),
           detail: `רשמת ${U.hours(appHours)} שעות, בתלוש ${U.hours(slipHours)}. חסרות ${U.hours(diff)} שעות` + (suspects.length ? ` (${how}: ${dates(suspects)})` : '') + (exact ? `. השכר על ${suspects.length > 1 ? 'המשמרות האלה' : 'המשמרת הזו'} לפי החישוב: ${U.money(amount)} (כולל תוספות).` : `. לפי שכר ממוצע של ${U.money(E.avgRate)} לשעה ≈ ${U.money(amount)}.`),
-          basis: 'השוואת סך השעות בתלוש לשעות ששולמו לפי המשמרות שרשמת לתקופה ' + '⁦' + U.fmtDate(E.P.from, 'short') + '–' + U.fmtDate(E.P.to, 'short') + '⁩.',
+          basis: 'השוואת סך השעות בתלוש לשעות ששולמו לפי המשמרות שרשמת לתקופה ' + '⁦' + U.fmtDate(E.P.from, 'short') + '\u2060–\u2060' + U.fmtDate(E.P.to, 'short') + '⁩.',
           confidence: conf, fromOverride: ovNote(appHours, A.t.hours, slipHours, 0.1) });
       } else if (diff < -0.25) {
         add({ area: 'שעות', status: 'warn', title: 'בתלוש יש יותר שעות ממה שרשמת', detail: `בתלוש ${U.hours(slipHours)} שעות, באפליקציה ${U.hours(appHours)}. אולי שכחת לרשום משמרת?`, basis: 'השוואת סך השעות.', confidence: 'medium' });
@@ -4492,10 +4497,10 @@ window.APP_BUILD = '1.16.1-7aeaeeea';
           confidence: mixed ? 'medium' : 'high', fromOverride: ovNote(E.baseRate, A.baseRate, slipRate, 0.01) });
       } else if (mixed && slipRate < E.baseRate - 0.02 && Math.abs(bq - E.hrs.base) <= 0.25) {
         add({ area: 'תעריף', status: 'warn', title: 'תעריף ממוצע נמוך מהצפוי', amount: (E.baseRate - slipRate) * bq,
-          detail: `בתלוש ${U.money(slipRate)} לשעה בממוצע; לפי המשמרות שרשמת הממוצע המשוקלל ${U.money(E.baseRate)} (תעריפים ⁦${U.money(minRate)}–${U.money(maxRate)}⁩). ייתכן שחלק מהשעות שולמו בתעריף של תפקיד זול יותר — או שחסרות שעות בתפקיד היקר.`,
+          detail: `בתלוש ${U.money(slipRate)} לשעה בממוצע; לפי המשמרות שרשמת הממוצע המשוקלל ${U.money(E.baseRate)} (תעריפים ⁦${U.money(minRate)}\u2060–\u2060${U.money(maxRate)}⁩). ייתכן שחלק מהשעות שולמו בתעריף של תפקיד זול יותר — או שחסרות שעות בתפקיד היקר.`,
           basis: 'השוואת ממוצע משוקלל; תלוי בתמהיל התפקידים.', confidence: 'low' });
       } else {
-        add({ area: 'תעריף', status: 'ok', title: 'התעריף לשעה תקין', detail: `${U.money(slipRate)} לשעה בתלוש (באפליקציה: ${mixed ? '⁦' + U.money(minRate) + '–' + U.money(maxRate) + '⁩' : U.money(E.baseRate)}).` + (mixed && Math.abs(bq - E.hrs.base) > 0.25 ? ' הממוצע לא הושווה כי מספר השעות שונה.' : ''), basis: 'שכר יסוד ÷ שעות רגילות.', confidence: mixed ? 'medium' : 'high' });
+        add({ area: 'תעריף', status: 'ok', title: 'התעריף לשעה תקין', detail: `${U.money(slipRate)} לשעה בתלוש (באפליקציה: ${mixed ? '⁦' + U.money(minRate) + '\u2060–\u2060' + U.money(maxRate) + '⁩' : U.money(E.baseRate)}).` + (mixed && Math.abs(bq - E.hrs.base) > 0.25 ? ' הממוצע לא הושווה כי מספר השעות שונה.' : ''), basis: 'שכר יסוד ÷ שעות רגילות.', confidence: mixed ? 'medium' : 'high' });
       }
     }
 
@@ -4746,7 +4751,7 @@ window.APP_BUILD = '1.16.1-7aeaeeea';
     const bad = analysis.findings.filter((f) => f.status === 'bad' || (opts.includeWarn && f.status === 'warn' && f.amount > 0));
     const P = analysis.expected.P;
     if (!bad.length) return '';
-    let s = `שלום${opts.to ? ' ' + opts.to : ''},\n\nבדקתי את תלוש השכר של ${U.fmtMonth(analysis.period)} מול רישום המשמרות שלי (⁦${U.fmtDate(P.from)}–${U.fmtDate(P.to)}⁩), ונראה לי שיש כמה נקודות שכדאי לבדוק:\n\n`;
+    let s = `שלום${opts.to ? ' ' + opts.to : ''},\n\nבדקתי את תלוש השכר של ${U.fmtMonth(analysis.period)} מול רישום המשמרות שלי (⁦${U.fmtDate(P.from)}\u2060–\u2060${U.fmtDate(P.to)}⁩), ונראה לי שיש כמה נקודות שכדאי לבדוק:\n\n`;
     // findings are written to the user ("רשמת"); the message speaks in first person
     const firstPerson = (t) => t.replace(/(^|\s)רשמת(\s)/g, '$1רשמתי$2').replace(/שרשמת(\s|\)|\.|,)/g, 'שרשמתי$1').replace(/באפליקציה/g, 'לפי הרישום שלי').replace(/שהגדרת/g, 'שסוכמו');
     bad.forEach((f, i) => {
@@ -6109,30 +6114,68 @@ window.APP_BUILD = '1.16.1-7aeaeeea';
   };
 
   /* ---------------- tap ring: hugs the tapped control, from its centre ---------------- */
+  // The ring is drawn above everything, at the control's place. Details that matter:
+  //  - it starts three frames later, once the tap has done its work (the press itself shows at once): if
+  //    by then the control is gone (a new screen), covered (a sheet or a dialog opened over it), leaving
+  //    (its sheet closing), moving (a shake) or only partly on screen, there is no ring at all, so it
+  //    never shows for a frame over whatever came next;
+  //  - a control drawn again in the same place (a tab bar re-rendered by its own tap) keeps its ring;
+  //  - the control shrinks on the press and springs back: its centre stays put, so the ring follows its
+  //    size and hugs it all the way (comparing its edges, as before 1.16.2, took every shrinking control
+  //    for a moving one and dropped the ring after a single frame - most taps had no ring);
+  //  - if the control moves away, leaves (its sheet sliding down) or gets covered while the ring plays,
+  //    the ring goes at once: even a short fade left it floating over the moving sheet.
+  const LAYERS = '.sheet, .dialog, .story, #lock, .coach';
+  const hits = (el, x, y) => { const h = document.elementFromPoint(x, y); return !!h && (h === el || el.contains(h)); };
+  // the centre and the middle of each edge are the control's own (a pill's corners are not)
+  const inView = (el, r) => {
+    const cx = r.left + r.width / 2, cy = r.top + r.height / 2;
+    return hits(el, cx, cy) && hits(el, r.left + 2, cy) && hits(el, r.right - 2, cy) && hits(el, cx, r.top + 2) && hits(el, cx, r.bottom - 2);
+  };
   Fx.ring = function (el) {
     if (!Fx.motion() || !el || !el.getBoundingClientRect) return;
-    const r = el.getBoundingClientRect();
-    if (!r.width || !r.height) return;
-    const d = document.createElement('div');
-    d.className = 'fx-ring';
-    d.style.left = r.left + 'px';
-    d.style.top = r.top + 'px';
-    d.style.width = r.width + 'px';
-    d.style.height = r.height + 'px';
-    d.style.borderRadius = getComputedStyle(el).borderRadius || '12px';
-    document.body.appendChild(d);
-    // the ring is drawn above everything at the control's place; if the control moves (a sheet or a
-    // picker sliding away, a list redrawing) or disappears, the ring goes at once instead of being
-    // left floating over whatever comes next
-    const t0 = performance.now();
-    const follow = () => {
-      if (!d.isConnected) return;
-      const n = el.isConnected ? el.getBoundingClientRect() : null;
-      const leaving = el.closest && el.closest('.dialog.out, .sheet:not(.show), .story.out');
-      if (!n || leaving || Math.abs(n.left - r.left) > 1.5 || Math.abs(n.top - r.top) > 1.5 || !n.width) { d.remove(); return; }
-      if (performance.now() - t0 < 600) requestAnimationFrame(follow); else d.remove();
+    const r0 = el.getBoundingClientRect();
+    if (!r0.width || !r0.height) return;
+    // a whole screen-sized area (a story page) gets no ring
+    if (r0.width * r0.height > root.innerWidth * root.innerHeight * 0.45) return;
+    const cx = r0.left + r0.width / 2, cy = r0.top + r0.height / 2;
+    const sig = (n) => n.tagName + '|' + (n.getAttribute('data-act') || '') + '|' + (n.getAttribute('data-tab') || '') + '|' + (n.getAttribute('data-s') || '');
+    const sig0 = sig(el);
+    const layersBefore = new Set(document.querySelectorAll(LAYERS));
+    let target = el, d = null, t0 = 0, gone = false, calm = 0;
+    const current = () => {
+      if (target.isConnected) return target;
+      for (let n = document.elementFromPoint(cx, cy); n && n !== document.body; n = n.parentElement) if (sig(n) === sig0) return n;
+      return null;
     };
-    requestAnimationFrame(follow);
+    const step = () => {
+      if (gone) return;
+      target = current();
+      const r = target && target.getBoundingClientRect();
+      const ok = r && r.width > 0
+        && Math.abs(r.left + r.width / 2 - cx) <= 1.5 && Math.abs(r.top + r.height / 2 - cy) <= 1.5
+        && Math.abs(r.width - r0.width) < r0.width * 0.2
+        && !target.closest('.dialog.out, .sheet:not(.show), .story.out')
+        && ![...document.querySelectorAll(LAYERS)].some((l) => !layersBefore.has(l) && !l.contains(target))
+        && (d ? hits(target, cx, cy) : inView(target, r));
+      if (!ok) { if (d) { gone = true; d.remove(); } return; }
+      // three calm frames first (~50ms): a tap that redraws or shakes its control shows that, not a ring
+      // that would be gone again a frame later
+      if (!d && ++calm < 3) { requestAnimationFrame(step); return; }
+      if (!d) {
+        d = document.createElement('div');
+        d.className = 'fx-ring';
+        d.style.borderRadius = getComputedStyle(target).borderRadius || '12px';
+        document.body.appendChild(d);
+        t0 = performance.now();
+      }
+      d.style.left = r.left + 'px';
+      d.style.top = r.top + 'px';
+      d.style.width = r.width + 'px';
+      d.style.height = r.height + 'px';
+      if (performance.now() - t0 < 560) requestAnimationFrame(step); else { gone = true; d.remove(); }
+    };
+    requestAnimationFrame(step);
   };
 
   /* ---------------- particles: confetti and ₪ coins ---------------- */
@@ -6266,8 +6309,9 @@ window.APP_BUILD = '1.16.1-7aeaeeea';
   };
 
   /* ---------------- every tap ---------------- */
-  const TAPPABLE = 'button, a[href], [data-act], .item, .chip, [role="button"], label.switch-row';
-  const RINGED = '.btn, .chip, .icon-btn, .quick button, .seg > button, .color-pick > button, .font-pick > button, .card-link';
+  const TAPPABLE = 'button, a[href], [data-act], .item, .chip, [role="button"], [role="tab"], label.switch-row, summary';
+  // every control gets the ring, except the games' own boards (their pieces answer in their own way)
+  const UNRINGED = '.cg-stage *';
   document.addEventListener('click', (e) => {
     const t = e.target.closest && e.target.closest(TAPPABLE);
     if (!t || t.disabled) return;
@@ -6276,13 +6320,17 @@ window.APP_BUILD = '1.16.1-7aeaeeea';
     if (t.classList.contains('fab')) { Fx.ring(t); Fx.play('pop'); Fx.haptic(14); }
     else if (t.closest('#nav')) { Fx.ring(t.querySelector('.pill') || t); Fx.play('nav'); Fx.haptic(6); }
     else {
-      if (t.matches(RINGED)) Fx.ring(t);
+      if (!t.matches(UNRINGED)) Fx.ring(t);
       if (t.classList.contains('danger')) { Fx.play('soft'); Fx.haptic(10); } else { Fx.play('tap'); Fx.haptic(6); }
     }
   }, true);
   document.addEventListener('change', (e) => {
     const el = e.target;
-    if (el && el.matches && el.matches('input[type="checkbox"]')) { Fx.play(el.checked ? 'on' : 'off'); Fx.haptic(8); }
+    if (el && el.matches && el.matches('input[type="checkbox"]')) {
+      Fx.play(el.checked ? 'on' : 'off'); Fx.haptic(8);
+      const row = el.closest('label.switch-row');
+      if (row) Fx.ring(row); // its switch slides, and the row answers like every other control
+    }
   }, true);
 
   Fx.sleep = sleep;
@@ -7997,7 +8045,7 @@ window.APP_BUILD = '1.16.1-7aeaeeea';
     const blob = new Blob([JSON.stringify(data)], { type: 'application/json' });
     UI.download(name, blob);
     await Store.setSettings((s) => { s.backup.lastBackup = Date.now(); if (auto) s.backup.lastAuto = Date.now(); });
-    UI.toast(auto ? 'גיבוי אוטומטי נשמר בהורדות' : 'קובץ הגיבוי נשמר', { label: 'שתף ל-Drive', fn: () => UI.shareFile(name, blob, 'גיבוי משמרות') });
+    UI.toast(auto ? 'גיבוי אוטומטי נשמר בהורדות' : 'קובץ הגיבוי נשמר', { label: 'שתף ל-\u2060Drive', fn: () => UI.shareFile(name, blob, 'גיבוי משמרות') });
   };
 
   /* ---------------- boot ---------------- */
@@ -8369,7 +8417,7 @@ window.FIREBASE_CONFIG = {
     'auth/user-mismatch': 'נבחר חשבון Google אחר. בחר את החשבון שמחובר לאפליקציה.',
     'auth/internal-error': 'משהו השתבש בהתחברות. נסה שוב.',
     'auth/web-storage-unsupported': 'הדפדפן חוסם שמירת נתונים (אולי גלישה בסתר). פתח את האפליקציה בדפדפן רגיל ונסה שוב.',
-    'auth/operation-not-supported-in-this-environment': 'הדפדפן הזה לא תומך בהתחברות. פתח את הקישור ב-Chrome או ב-Safari.',
+    'auth/operation-not-supported-in-this-environment': 'הדפדפן הזה לא תומך בהתחברות. פתח את הקישור ב-\u2060Chrome או ב-\u2060Safari.',
     'auth/timeout': 'ההתחברות לקחה יותר מדי זמן. בדוק את החיבור ונסה שוב.',
   };
   const STORAGE_ERRORS = ['UnknownError', 'InvalidStateError', 'QuotaExceededError', 'DataError', 'AbortError'];
@@ -8440,7 +8488,7 @@ window.FIREBASE_CONFIG = {
   async function askMode() {
     return UI.dialog({
       title: 'יש נתונים גם בטלפון וגם בחשבון',
-      text: 'בטלפון הזה כבר יש משמרות, וגם בחשבון ה-Google שלך שמורים נתונים. מה לעשות?',
+      text: 'בטלפון הזה כבר יש משמרות, וגם בחשבון ה-\u2060Google שלך שמורים נתונים. מה לעשות?',
       buttons: [
         { label: 'לאחד את שניהם (מומלץ)', value: 'merge', cls: '' },
         { label: 'רק מהחשבון', value: 'cloud', cls: 'text' },
@@ -9380,8 +9428,8 @@ window.PAY_CONFIG = {
     return `<div class="card iab-card">
       <div class="iab-t">${icon('alert', 's')} פתחת את האפליקציה מתוך אפליקציה אחרת</div>
       <div class="small">Google לא מאפשרת להתחבר מכאן. פותחים בדפדפן ומתחברים בשנייה:</div>
-      ${isAndroid() ? `<a class="btn block" href="${esc(intent)}" target="_blank" rel="noopener">${icon('share', 's')} פתח ב-Chrome</a>`
-        : `<ol class="iab-steps"><li>לוחצים על <b>⋯</b> או על <b>⎋</b> בפינת המסך</li><li>בוחרים <b>"פתח ב-Safari"</b> / <b>"Open in browser"</b></li></ol>`}
+      ${isAndroid() ? `<a class="btn block" href="${esc(intent)}" target="_blank" rel="noopener">${icon('share', 's')} פתח ב-\u2060Chrome</a>`
+        : `<ol class="iab-steps"><li>לוחצים על <b>⋯</b> או על <b>⎋</b> בפינת המסך</li><li>בוחרים <b>"פתח ב-\u2060Safari"</b> / <b>"Open in browser"</b></li></ol>`}
       <button class="btn tonal block" data-copy-link>${icon('copy', 's')} העתק את הקישור</button>
     </div>`;
   };
@@ -9498,7 +9546,7 @@ window.PAY_CONFIG = {
       <div class="card"><div class="kv"><span>מצב</span><b>${esc(Cloud.statusText())}</b></div>
         <div class="kv"><span>שינויים שממתינים להעלאה</span><b>${Store.dirtyRecords().length + (S.meta.pendingDeletes || []).length}</b></div>
         <div class="btn-row" style="margin-top:10px"><button class="btn tonal" data-sync-now>${icon('refresh')} סנכרן עכשיו</button></div></div>
-      <div class="card small"><b>מה נשמר בענן:</b> משמרות, חופשה ומחלה, תוספות, תפקידים ותעריפים, הגדרות, תבניות, תלושים (הנתונים שהוזנו) ופערים פתוחים.<br><b>מה נשאר רק בטלפון:</b> מפתח ה-API של Claude, קוד הנעילה, קובצי התלושים עצמם (תמונה/PDF) והטקסט הגולמי שזוהה מהם.</div>
+      <div class="card small"><b>מה נשמר בענן:</b> משמרות, חופשה ומחלה, תוספות, תפקידים ותעריפים, הגדרות, תבניות, תלושים (הנתונים שהוזנו) ופערים פתוחים.<br><b>מה נשאר רק בטלפון:</b> מפתח ה-\u2060API של Claude, קוד הנעילה, קובצי התלושים עצמם (תמונה/PDF) והטקסט הגולמי שזוהה מהם.</div>
       <div class="card"><label class="switch-row"><span class="body"><span class="t">שיתוף סטטיסטיקה אנונימית</span><span class="s">מספר משמרות, ימי שימוש ותכונות פעילות, בלי שם, אימייל או סכומים. עוזר לשפר את האפליקציה.</span></span><input type="checkbox" class="switch" data-share-stats ${S.settings.shareStats !== false ? 'checked' : ''}></label>
         ${u ? `<div class="kv" style="margin-top:6px"><span class="small">מזהה משתמש (למנהלים)</span><button class="btn text sm" data-copy-uid dir="ltr">${esc(u.uid.slice(0, 8))}… העתק</button></div>` : ''}</div>
       <button class="btn outlined block" data-signout>${icon('lock')} התנתק</button>
@@ -9527,7 +9575,7 @@ window.PAY_CONFIG = {
       if (await Cloud.signOut()) location.reload();
     };
     if (q('[data-delete-cloud]')) q('[data-delete-cloud]').onclick = async () => {
-      if (!(await UI.confirm('למחוק את החשבון ואת כל הנתונים?', 'כל המשמרות, התלושים וההגדרות יימחקו לצמיתות מהענן ומהטלפון, והחשבון באפליקציה יימחק. ייתכן ש-Google תבקש לאשר את החשבון שוב. מומלץ לגבות קודם.', 'מחק הכול', true))) return;
+      if (!(await UI.confirm('למחוק את החשבון ואת כל הנתונים?', 'כל המשמרות, התלושים וההגדרות יימחקו לצמיתות מהענן ומהטלפון, והחשבון באפליקציה יימחק. ייתכן ש-\u2060Google תבקש לאשר את החשבון שוב. מומלץ לגבות קודם.', 'מחק הכול', true))) return;
       const really = await UI.promptText('אישור סופי', 'הקלד "מחק" כדי לאשר', '');
       if (really !== 'מחק') { UI.toast('בוטל'); return; }
       try { await Cloud.deleteAccountData(); location.reload(); } catch (e) { UI.dialog({ title: 'המחיקה נכשלה', text: Cloud.errorText(e), buttons: [{ label: 'סגור', value: true }] }); }
@@ -9579,7 +9627,7 @@ window.PAY_CONFIG = {
     return `<button class="item" data-act="shift-open" data-id="${r.id}">
       <span class="role-bar" style="background:${role ? role.color : '#999'}"></span>
       <span class="body"><span class="t shift-title"><span class="tt">${esc(date)}${esc(title)}</span>${App.restTag(r)}${App.ovTag(r)}${planned}</span>
-      <span class="s"><span class="num">⁦${U.epochHM(r.start)}–${U.epochHM(r.rawEnd)}⁩</span> · ${U.hm(r.paidMin)} ש׳${emp}${sh.note ? ' · ' + esc(sh.note) : ''}</span></span>
+      <span class="s"><span class="num">⁦${U.epochHM(r.start)}\u2060–\u2060${U.epochHM(r.rawEnd)}⁩</span> · ${U.hm(r.paidMin)} ש׳${emp}${sh.note ? ' · ' + esc(sh.note) : ''}</span></span>
       <span class="trail"><span class="a">${money(App.shiftAmount(r), 0)}</span>${opts.showOk && r.status === 'planned' ? `<br><span class="tag good" data-act="mark-done" data-id="${r.id}">${icon('check')}בוצעה</span>` : ''}</span></button>`;
   };
   App.entryItem = function (e) {
@@ -9896,7 +9944,7 @@ window.PAY_CONFIG = {
   App.actions['tpl-pick'] = fromMenu(() => {
     UI.openSheet({
       title: 'בחר תבנית',
-      body: `<div class="list">${S.templates.map((t) => `<button class="item" data-tpl="${t.id}"><span class="role-bar" style="background:${(App.role(t.roleId) || {}).color || '#999'}"></span><span class="body"><span class="t">${esc(t.name)}</span><span class="s">${esc(App.roleName(t.roleId))} · <span class="num">⁦${t.startT}–${t.endT}⁩</span></span></span></button>`).join('')}</div>`,
+      body: `<div class="list">${S.templates.map((t) => `<button class="item" data-tpl="${t.id}"><span class="role-bar" style="background:${(App.role(t.roleId) || {}).color || '#999'}"></span><span class="body"><span class="t">${esc(t.name)}</span><span class="s">${esc(App.roleName(t.roleId))} · <span class="num">⁦${t.startT}\u2060–\u2060${t.endT}⁩</span></span></span></button>`).join('')}</div>`,
       onMount: (el) => el.querySelectorAll('[data-tpl]').forEach((b) => (b.onclick = () => {
         const t = S.templates.find((x) => x.id === b.dataset.tpl);
         UI.closeTop();
@@ -10007,7 +10055,7 @@ window.PAY_CONFIG = {
     }
     h += '</div>';
     const labels = [`<span class="num">${U.epochHM(r.start)}</span>`];
-    if (rests.length) labels.push(`<span class="tag rest">${icon('candle')} ⁦${U.epochHM(rests[0].a)}–${U.epochHM(rests[rests.length - 1].b)}⁩</span>`);
+    if (rests.length) labels.push(`<span class="tag rest">${icon('candle')} ⁦${U.epochHM(rests[0].a)}\u2060–\u2060${U.epochHM(rests[rests.length - 1].b)}⁩</span>`);
     labels.push(`<span class="num">${U.epochHM(r.end)}${U.epochKey(r.end) !== r.dateKey ? ' (+1)' : ''}</span>`);
     return h + `<div class="row-flex tiny muted" style="justify-content:space-between">${labels.join('')}</div>`;
   };
@@ -10034,7 +10082,7 @@ window.PAY_CONFIG = {
     if (r.breakMin) notes.push(`הפסקה ${r.breakMin} דק׳ ${r.breakPaid ? 'בתשלום' : 'ללא תשלום — נוכתה יחסית מכל השעות'}`);
     notes.push(`שעות נוספות אחרי ${r.thresholdH} שעות ביום` + (r.priorMin ? ` · כבר עבדת ${U.hm(r.priorMin)} באותו יום לפני המשמרת` : '') + (r.isNightShift && emp.nightShiftShortDay ? ' (משמרת לילה)' : ''));
     const wins = r.restLabels.length ? r.slices.filter((s) => s.autoRest) : [];
-    if (r.autoRestMin > 0) notes.push(`חלון ${esc(r.restLabels.join(', ') || 'שבת/חג')} במשמרת: ⁦${U.epochHM(wins[0].a)}–${U.epochHM(wins[wins.length - 1].b)}⁩ (${S.settings.rest.mode === 'city' ? 'לפי ' + esc(S.settings.rest.city === '__custom' ? 'מיקום מותאם' : S.settings.rest.city) : 'שעות קבועות'})`);
+    if (r.autoRestMin > 0) notes.push(`חלון ${esc(r.restLabels.join(', ') || 'שבת/חג')} במשמרת: ⁦${U.epochHM(wins[0].a)}\u2060–\u2060${U.epochHM(wins[wins.length - 1].b)}⁩ (${S.settings.rest.mode === 'city' ? 'לפי ' + esc(S.settings.rest.city === '__custom' ? 'מיקום מותאם' : S.settings.rest.city).replace(/-/g, '-⁠') : 'שעות קבועות'})`);
     if (r.warnings.length) notes.push('⚠️ ' + r.warnings.join(', '));
     return `<table class="bd">${rows}</table><div class="tiny muted" style="margin-top:8px">${notes.map((n) => '• ' + n).join('<br>')}</div>`;
   };
@@ -10066,7 +10114,7 @@ window.PAY_CONFIG = {
           <button class="item" data-x="dup"><span class="lead">${icon('copy')}</span><span class="body"><span class="t">שכפל</span><span class="s">אותן שעות בתאריך אחר</span></span></button>
           <button class="item" data-x="repeat"><span class="lead">${icon('refresh')}</span><span class="body"><span class="t">חזרה שבועית</span><span class="s">אותה משמרת בשבועות הבאים, כמתוכננת</span></span></button>
           <button class="item" data-x="tpl"><span class="lead">${icon('layers')}</span><span class="body"><span class="t">שמור כתבנית</span></span></button>
-          <button class="item" data-x="gcal"><span class="lead">${icon('calendar')}</span><span class="body"><span class="t">הוסף ל-Google Calendar</span></span></button>
+          <button class="item" data-x="gcal"><span class="lead">${icon('calendar')}</span><span class="body"><span class="t">הוסף ל-\u2060Google Calendar</span></span></button>
           ${r.overridden ? `<button class="item" data-x="auto"><span class="lead">${icon('refresh')}</span><span class="body"><span class="t">חזור לחישוב אוטומטי</span><span class="s">מבטל את כל העקיפות במשמרת</span></span></button>` : ''}
         </div>`,
       foot: `<button class="btn danger" data-x="del">${icon('trash')} מחק</button><button class="btn" data-x="edit">${icon('edit')} ערוך</button>`,
@@ -10123,7 +10171,7 @@ window.PAY_CONFIG = {
   };
 
   App.saveTemplate = async function (sh) {
-    const name = await UI.promptText('שמירת תבנית', 'שם התבנית', `${App.roleName(sh.roleId)} ⁦${U.epochHM(sh.start)}–${U.epochHM(sh.end)}⁩`);
+    const name = await UI.promptText('שמירת תבנית', 'שם התבנית', `${App.roleName(sh.roleId)} ⁦${U.epochHM(sh.start)}\u2060–\u2060${U.epochHM(sh.end)}⁩`);
     if (!name) return;
     await App.saveOps([{ store: 'templates', put: {
       id: U.uid(), name, roleId: sh.roleId, employerId: sh.employerId, startT: U.epochHM(sh.start), endT: U.epochHM(sh.end),
@@ -10249,7 +10297,7 @@ window.PAY_CONFIG = {
       onMount: (el) => {
         sheetEl = el;
         preview();
-        let t = null;
+        let t = null, swT = null;
         el.addEventListener('input', (e) => {
           const f = e.target.dataset.f;
           if (!f) return;
@@ -10259,15 +10307,19 @@ window.PAY_CONFIG = {
             const ns = d.date > U.todayKey() ? 'planned' : 'done';
             if (ns !== d.status) { d.status = ns; redraw(); return; }
           }
-          // the times come from the picker in one go: redraw so "the next day" and the length chips follow
-          const structural = e.target.type === 'checkbox' || e.target.tagName === 'SELECT' || f === 'startT' || f === 'endT';
+          // the times come from the picker in one go: redraw so "the next day" and the length chips follow.
+          // Of the switches only the "change by hand" ones open fields; "paid break" and "no travel" only
+          // change the pay, so their switch is left to slide (a redraw put a new one in its place at once)
+          const isSwitch = e.target.type === 'checkbox';
+          const structural = (isSwitch && f.startsWith('ov.')) || e.target.tagName === 'SELECT' || f === 'startT' || f === 'endT';
           if (structural) {
             if (f === 'ov.rest.scope' && v === 'range' && !d.ov.rest.fromT) {
               const r = App.previewShift(shiftFrom(Object.assign({}, d, { ov: emptyOv() })));
               if (r.autoRestRange) { d.ov.rest.fromT = U.epochHM(r.autoRestRange.from); d.ov.rest.toT = U.epochHM(r.autoRestRange.to); }
               else { d.ov.rest.fromT = d.startT; d.ov.rest.toT = d.endT; }
             }
-            redraw();
+            // a switch slides over first (.2s), then the fields it opens come in
+            if (isSwitch) { clearTimeout(swT); swT = setTimeout(redraw, 220); } else redraw();
           } else { clearTimeout(t); t = setTimeout(preview, 120); }
         });
         el.addEventListener('click', async (e) => {
@@ -10326,7 +10378,7 @@ window.PAY_CONFIG = {
       }
       const overlap = S.shifts.find((s) => s.id !== sh.id && s.employerId === sh.employerId && s.status === sh.status && s.start < sh.end && s.end > sh.start);
       if (overlap) {
-        if (!(await UI.confirm('חפיפה עם משמרת אחרת', `קיימת משמרת ב-${U.fmtDate(U.epochKey(overlap.start))} ⁦${U.epochHM(overlap.start)}–${U.epochHM(overlap.end)}⁩. לשמור בכל זאת?`, 'שמור'))) return;
+        if (!(await UI.confirm('חפיפה עם משמרת אחרת', `קיימת משמרת ב-${U.fmtDate(U.epochKey(overlap.start))} ⁦${U.epochHM(overlap.start)}\u2060–\u2060${U.epochHM(overlap.end)}⁩. לשמור בכל זאת?`, 'שמור'))) return;
       }
       await Store.setMeta({ lastRole: d.roleId });
       UI.closeTop();
@@ -10490,7 +10542,7 @@ window.PAY_CONFIG = {
     }
     const dows = [...Array(7)].map((_, i) => U.HEB_DAYS_SHORT[(i + (S.settings.weekStart || 0)) % 7]);
     const hm = HebCal.hebrewDate(first), hm2 = HebCal.hebrewDate(U.monthEnd(mk));
-    const hebLabel = hm.monthStr === hm2.monthStr ? hm.monthStr + ' ' + hm.yearStr : hm.monthStr + '–' + hm2.monthStr + ' ' + hm2.yearStr;
+    const hebLabel = hm.monthStr === hm2.monthStr ? hm.monthStr + ' ' + hm.yearStr : hm.monthStr + '\u2060–\u2060' + hm2.monthStr + ' ' + hm2.yearStr;
     return `<div class="cal-nav"><button class="icon-btn" data-act="cal-nav" data-dir="-1" aria-label="הקודם">${icon('right')}</button><h2>${U.fmtMonth(mk)}<div class="tiny muted" style="font-weight:400">${esc(hebLabel)}</div></h2><button class="icon-btn" data-act="cal-nav" data-dir="1" aria-label="הבא">${icon('left')}</button></div>
       <div class="cal-dow">${dows.map((x) => `<span>${x}</span>`).join('')}</div>
       <div class="cal-grid swipe-area" id="cal-swipe">${cells}</div>
@@ -10520,7 +10572,7 @@ window.PAY_CONFIG = {
         bars += `<i style="inset-inline-start:${pos(s.start)}%;width:${Math.max(1.5, pos(s.end) - pos(s.start))}%;background:${role ? role.color : '#999'};opacity:${r.status === 'planned' ? 0.45 : 0.9}"></i>`;
       }
       if (d) { tot += d.total; hrs += d.shifts.filter((r) => r.status === 'done').reduce((s, r) => s + r.paidHours, 0); }
-      const label = d ? d.shifts.map((r) => `${App.roleName(r.segments[0] && r.segments[0].roleId)} ⁦${U.epochHM(r.start)}–${U.epochHM(r.rawEnd)}⁩${r.status === 'planned' ? ' (מתוכננת)' : ''}`).concat(d.entries.map((e) => (e.kind === 'vacation' ? 'חופשה' : e.kind === 'sick' ? 'מחלה' : (App.model.entryVals.get(e.id) || {}).label))).join(' · ') : '';
+      const label = d ? d.shifts.map((r) => `${App.roleName(r.segments[0] && r.segments[0].roleId)} ⁦${U.epochHM(r.start)}\u2060–\u2060${U.epochHM(r.rawEnd)}⁩${r.status === 'planned' ? ' (מתוכננת)' : ''}`).concat(d.entries.map((e) => (e.kind === 'vacation' ? 'חופשה' : e.kind === 'sick' ? 'מחלה' : (App.model.entryVals.get(e.id) || {}).label))).join(' · ') : '';
       rows += `<div class="week-row ${rest ? 'rest' : ''} card-link" data-act="cal-day" data-k="${k}" ${k === today ? 'style="box-shadow:inset 3px 0 0 var(--primary)"' : ''}>
         <div class="wd"><div class="tiny muted">${U.HEB_DAYS[U.dow(k)]}</div><div class="n">${+k.slice(8)}</div><div class="tiny muted">${HebCal.hebrewDate(k).dayStr}</div></div>
         <div class="tl"><div class="row-flex small"><span style="flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${esc(hol.map((h) => h.name).join(', ') || label || '—')}</span>${d && d.total ? `<b>${UI.money(d.total, 0)}</b>` : ''}${d && d.ov ? ` <span class="tag override">${icon('hand')}</span>` : ''}</div>
@@ -10567,7 +10619,7 @@ window.PAY_CONFIG = {
         <button class="item" data-r="upcoming"><span class="lead">${icon('calendar')}</span><span class="body"><span class="t">משמרות מתוכננות קדימה</span><span class="s">קובץ .ics עם תזכורת שעה לפני</span></span></button>
         <button class="item" data-r="month"><span class="lead">${icon('grid')}</span><span class="body"><span class="t">כל המשמרות בחודש המוצג</span><span class="s">קובץ .ics</span></span></button>
         <button class="item" data-r="all"><span class="lead">${icon('list')}</span><span class="body"><span class="t">כל המשמרות</span><span class="s">קובץ .ics</span></span></button></div>
-        <div class="tiny muted" style="margin:4px">פתח את הקובץ בטלפון כדי להוסיף ל-Google Calendar. למשמרת בודדת: פתח אותה ← "הוסף ל-Google Calendar".</div>`,
+        <div class="tiny muted" style="margin:4px">פתח את הקובץ בטלפון כדי להוסיף ל-\u2060Google Calendar. למשמרת בודדת: פתח אותה ← "הוסף ל-\u2060Google Calendar".</div>`,
       onMount: (el) => el.querySelectorAll('[data-r]').forEach((b) => (b.onclick = () => {
         const r = b.dataset.r;
         const mk = App.calState.anchor.slice(0, 7);
@@ -10600,7 +10652,7 @@ window.PAY_CONFIG = {
   function rangeFor(type, anchor) {
     const emp = S.employers[0];
     if (type === 'week') { const ws = U.weekStart(anchor, S.settings.weekStart || 0); return { from: ws, to: U.addDays(ws, 6), label: `${U.fmtDate(ws, 'dm')} – ${U.fmtDate(U.addDays(ws, 6), 'dm')}` }; }
-    if (type === 'month') { const P = Engine.periodOf(anchor, emp); return { from: P.from, to: P.to, label: P.label, sub: emp.periodStartDay > 1 ? `⁦${U.fmtDate(P.from, 'short')}–${U.fmtDate(P.to, 'short')}⁩` : '' }; }
+    if (type === 'month') { const P = Engine.periodOf(anchor, emp); return { from: P.from, to: P.to, label: P.label, sub: emp.periodStartDay > 1 ? `⁦${U.fmtDate(P.from, 'short')}\u2060–\u2060${U.fmtDate(P.to, 'short')}⁩` : '' }; }
     if (type === 'year') { const y = anchor.slice(0, 4); return { from: y + '-01-01', to: y + '-12-31', label: 'שנת ' + y }; }
     return { from: st.from, to: st.to, label: `${U.fmtDate(st.from, 'short')} – ${U.fmtDate(st.to, 'short')}` };
   }
@@ -10676,7 +10728,7 @@ window.PAY_CONFIG = {
     const worked = months.filter((m) => m.t.shifts > 0);
     const best = worked.slice().sort((a, b) => b.t.gross - a.t.gross)[0];
     const worst = worked.slice().sort((a, b) => a.t.gross - b.t.gross)[0];
-    const seasons = [['חורף (דצמ׳–פבר׳)', [12, 1, 2], '#2a78d6'], ['אביב (מרץ–מאי)', [3, 4, 5], '#1baf7a'], ['קיץ (יוני–אוג׳)', [6, 7, 8], '#eda100'], ['סתיו (ספט׳–נוב׳)', [9, 10, 11], '#eb6834']]
+    const seasons = [['חורף (דצמ׳\u2060–\u2060פבר׳)', [12, 1, 2], '#2a78d6'], ['אביב (מרץ\u2060–\u2060מאי)', [3, 4, 5], '#1baf7a'], ['קיץ (יוני\u2060–\u2060אוג׳)', [6, 7, 8], '#eda100'], ['סתיו (ספט׳\u2060–\u2060נוב׳)', [9, 10, 11], '#eb6834']]
       .map(([name, ms, color]) => ({ name: name.split(' ')[0], full: name, color, value: months.filter((m) => ms.includes(+m.mk.slice(5))).reduce((s, m) => s + m.t.gross, 0) }));
     // previous year
     const py = String(+y - 1);
@@ -10770,7 +10822,7 @@ window.PAY_CONFIG = {
       <div class="section-title">${icon('clock', 's')} לפי סוג שעה</div>
       <div class="card"><div class="stackbar">${types.filter((x) => x.value > 0).map((x) => `<i style="width:${(x.value / totalH) * 100}%;background:${x.color}" data-tip="${esc(x.name)}: ${U.num(x.value, 2)} ש׳"></i>`).join('')}</div>
         ${types.map((x) => `<div class="kv"><span><i style="display:inline-block;width:10px;height:10px;border-radius:3px;background:${x.color};margin-inline-end:6px"></i>${x.name}</span><span class="num">${U.hours(x.value)} ש׳</span></div>`).join('')}
-        <div class="kv"><span>${icon('moon', 's')} שעות לילה (⁦22:00–06:00⁩)</span><span class="num">${U.hours(t.nightAll)} ש׳</span></div>
+        <div class="kv"><span>${icon('moon', 's')} שעות לילה (⁦22:00\u2060–\u206006:00⁩)</span><span class="num">${U.hours(t.nightAll)} ש׳</span></div>
         ${S.employers[0].nightEnabled ? `<div class="kv"><span>מתוכן עם תוספת לילה</span><span class="num">${U.hours(hb.night)} ש׳ · ${U.money(t.nightPremium, 0)}</span></div>` : '<div class="tiny muted">תוספת לילה לא מוגדרת — אפשר להפעיל בהגדרות › חוקי חישוב.</div>'}</div>
       <div class="section-title">${icon('calendar', 's')} ימים</div>
       <div class="card"><div class="kpis three">
@@ -10956,7 +11008,7 @@ window.PAY_CONFIG = {
     const text = lines.join('\n');
     if (text.replace(/\s/g, '').length > 80) return { text, source: 'pdf' };
     // scanned PDF → render & OCR
-    progress('ה-PDF סרוק — מריץ זיהוי טקסט…');
+    progress('ה-\u2060PDF סרוק — מריץ זיהוי טקסט…');
     const page = await doc.getPage(1);
     const vp = page.getViewport({ scale: 2.5 });
     const canvas = document.createElement('canvas');
@@ -11034,7 +11086,7 @@ window.PAY_CONFIG = {
    * (name · amount). Tapping a row opens it for correction; lines it couldn't place, the raw text
    * and the AI option wait folded at the bottom. */
   const GROUPS = [['pay', 'תשלומים', 'wallet', 'mint', true], ['ded', 'ניכויים', 'minus', 'orange', true], ['emp', 'הפרשות המעסיק', 'shield', 'sky', true], ['total', 'סיכומים', 'receipt', 'violet', false], ['info', 'מידע נוסף', 'info', 'sky', false]];
-  const SOURCE = { pdf: ['file', 'נקרא מ-PDF'], ocr: ['camera', 'נקרא מצילום'], ai: ['sparkle', 'נותח בעזרת AI'], manual: ['edit', 'הזנה ידנית'] };
+  const SOURCE = { pdf: ['file', 'נקרא מ-\u2060PDF'], ocr: ['camera', 'נקרא מצילום'], ai: ['sparkle', 'נותח בעזרת AI'], manual: ['edit', 'הזנה ידנית'] };
   const ESSENTIAL = ['gross', 'net', 'base', 'workHours'];
   function verifySheet(draft) {
     const d = { period: draft.period, fields: Store.clone(draft.fields) || {}, other: (draft.other || []).map((o) => Object.assign({ guess: o.guess || 'ignore' }, o)), text: draft.text || '', source: draft.source, fileId: draft.fileId, fileName: draft.fileName, id: draft.id, notes: draft.notes || '' };
@@ -11225,7 +11277,7 @@ window.PAY_CONFIG = {
       <div class="status-summary"><div class="ok">✅ ${counts.ok}<div class="tiny">תקין</div></div><div class="warn">⚠️ ${counts.warn}<div class="tiny">לבדוק</div></div><div class="bad">❌ ${counts.bad}<div class="tiny">חסר/שגוי</div></div></div>
       ${a.totalMissing > 0 ? `<div class="card tonal"><div class="small">הפרש משוער לטובתך</div><div class="hero-num">${money(a.totalMissing)}</div><div class="tiny">סכום הממצאים המסומנים ❌. בדוק את הפירוט לפני פנייה למעסיק.</div></div>` : counts.bad === 0 ? `<div class="card tonal"><b>${icon('okc', 's')} לא נמצאו חוסרים</b><div class="small">התלוש תואם למשמרות שרשמת${counts.warn ? ', עם כמה נקודות לבדיקה' : ''}.</div></div>` : ''}
       ${a.overridesInPeriod ? `<div class="banner warn">${icon('hand')}<div>${a.overridesInPeriod} משמרות בתקופה כוללות עקיפה ידנית. ממצאים שנובעים מהן מסומנים.</div></div>` : ''}
-      <div class="small muted" style="margin:0 4px 10px">תקופה: ⁦${U.fmtDate(a.expected.P.from)}–${U.fmtDate(a.expected.P.to)}⁩ · ${a.expected.shifts.length} משמרות · ${U.hours(a.expected.t.hours)} ש׳</div>
+      <div class="small muted" style="margin:0 4px 10px">תקופה: ⁦${U.fmtDate(a.expected.P.from)}\u2060–\u2060${U.fmtDate(a.expected.P.to)}⁩ · ${a.expected.shifts.length} משמרות · ${U.hours(a.expected.t.hours)} ש׳</div>
       ${a.findings.slice().sort((x, y) => order[x.status] - order[y.status]).map((f) => `<div class="finding ${f.status}">
         <div class="ft"><span>${STATUS[f.status][2]}</span><span>${esc(f.area)} · ${esc(f.title)}</span>${f.amount > 0 && f.status !== 'ok' ? `<span class="amt">${U.money(f.amount)}</span>` : ''}</div>
         <div class="fd">${esc(f.detail)}</div>
@@ -11343,10 +11395,10 @@ window.PAY_CONFIG = {
     }
     const red = Payslip.redact(text);
     UI.openSheet({
-      title: 'לפני שליחה ל-Claude', full: true,
+      title: 'לפני שליחה ל-\u2060Claude', full: true,
       body: `<div class="banner warn">${icon('shield')}<div>זה <b>בדיוק</b> הטקסט שיישלח (${red.count} פרטים אישיים הוסתרו אוטומטית). בדוק וערוך — אפשר למחוק גם שם או כל פרט אחר. הקובץ עצמו לא נשלח.</div></div>
         <textarea class="input" id="ai-text" rows="16" style="font-family:ui-monospace,monospace;font-size:.8rem">${esc(red.text)}</textarea>
-        <div class="small muted" style="margin-top:8px">יישלח אל Anthropic (מודל ${esc(S.settings.ai.model)}) עם המפתח שלך. השימוש מחויב בחשבון ה-API שלך.</div>`,
+        <div class="small muted" style="margin-top:8px">יישלח אל Anthropic (מודל ${esc(S.settings.ai.model)}) עם המפתח שלך. השימוש מחויב בחשבון ה-\u2060API שלך.</div>`,
       foot: `<button class="btn tonal" data-cancel>ביטול</button><button class="btn" data-send>${icon('send')} אני מאשר — שלח</button>`,
       onMount: (el) => {
         el.querySelector('[data-cancel]').onclick = () => UI.closeTop();
@@ -11386,7 +11438,7 @@ window.PAY_CONFIG = {
       if (model.startsWith('claude-haiku')) res = await client.messages.create(params); // no server-side fallback for Haiku
       else res = await client.beta.messages.create(Object.assign({ betas: ['server-side-fallback-2026-07-01'], fallbacks: 'default' }, params));
     } catch (err) {
-      if (err instanceof Anthropic.AuthenticationError) throw new Error('מפתח ה-API לא תקין (401). בדוק אותו בהגדרות.');
+      if (err instanceof Anthropic.AuthenticationError) throw new Error('מפתח ה-\u2060API לא תקין (401). בדוק אותו בהגדרות.');
       if (err instanceof Anthropic.PermissionDeniedError) throw new Error('למפתח אין הרשאה למודל הזה (403).');
       if (err instanceof Anthropic.NotFoundError) throw new Error('המודל לא נמצא (404). בחר מודל אחר בהגדרות.');
       if (err instanceof Anthropic.RateLimitError) throw new Error('יותר מדי בקשות (429). נסה שוב בעוד דקה.');
@@ -11462,7 +11514,7 @@ window.PAY_CONFIG = {
     const { from, to } = n.data;
     const t = root.Engine.rangeSummary(App.model, from, to);
     const p = root.Engine.rangeSummary(App.model, U.addDays(from, -7), U.addDays(to, -7));
-    App.exporter.summaryImage({ from, to, label: `השבוע ⁦${U.fmtDate(from, 'dm')}–${U.fmtDate(to, 'dm')}⁩` }, t, p, n.body);
+    App.exporter.summaryImage({ from, to, label: `השבוע ⁦${U.fmtDate(from, 'dm')}\u2060–\u2060${U.fmtDate(to, 'dm')}⁩` }, t, p, n.body);
   };
 })(typeof window !== 'undefined' ? window : globalThis);
 
@@ -11501,7 +11553,7 @@ window.PAY_CONFIG = {
       ]);
     }
     UI.download(filename || 'shifts.csv', csv(rows), 'text/csv;charset=utf-8');
-    UI.toast('קובץ CSV נשמר — נפתח ב-Excel / Google Sheets');
+    UI.toast('קובץ CSV נשמר — נפתח ב-\u2060Excel / Google Sheets');
   }
   function monthlyCsv() {
     if (!allowed()) return;
@@ -11554,9 +11606,9 @@ window.PAY_CONFIG = {
       <h3>לפי תפקיד</h3><table><tr><th>תפקיד</th><th>שעות</th><th>סכום</th></tr>${roles}</table>
       <h3>לפי סוג שעה</h3><table><tr><th>רגילות</th><th>125%</th><th>150%</th><th>שבת/חג</th><th>שבת/חג + נוספות</th><th>לילה</th></tr><tr><td>${U.hours(t.hoursBy.regular)}</td><td>${U.hours(t.hoursBy.ot1)}</td><td>${U.hours(t.hoursBy.ot2)}</td><td>${U.hours(t.hoursBy.rest)}</td><td>${U.hours(t.hoursBy.restOt1 + t.hoursBy.restOt2)}</td><td>${U.hours(t.hoursBy.night)}</td></tr></table>
       <h3>משמרות</h3><table><tr><th>תאריך</th><th>תפקיד</th><th>שעות</th><th>זמן</th><th>שבת/חג</th><th>נוספות</th><th>שכר</th><th>נסיעות</th><th>סה״כ</th><th>הערות</th></tr>
-      ${list.map((r) => { const sh = App.shift(r.id) || {}; return `<tr><td>${U.fmtDate(r.dateKey, 'short')} ${U.HEB_DAYS_SHORT[U.dow(r.dateKey)]}</td><td>${esc([...new Set(r.segments.map((s) => App.roleName(s.roleId)))].join(' → '))}</td><td>⁦${U.epochHM(r.start)}–${U.epochHM(r.rawEnd)}⁩</td><td>${U.hours(r.paidHours)}</td><td>${r.restHours ? U.hours(r.restHours) : ''}</td><td>${r.otHours ? U.hours(r.otHours) : ''}</td><td>${U.money(r.wage)}</td><td>${U.money(r.travel.amount)}</td><td>${U.money(r.total)}</td><td>${r.overridden || r.dayRuleHit ? '✋ ' + esc(sh.overrideReason || 'עקיפה ידנית') : ''} ${esc(sh.note || '')}</td></tr>`; }).join('')}</table>
+      ${list.map((r) => { const sh = App.shift(r.id) || {}; return `<tr><td>${U.fmtDate(r.dateKey, 'short')} ${U.HEB_DAYS_SHORT[U.dow(r.dateKey)]}</td><td>${esc([...new Set(r.segments.map((s) => App.roleName(s.roleId)))].join(' → '))}</td><td>⁦${U.epochHM(r.start)}\u2060–\u2060${U.epochHM(r.rawEnd)}⁩</td><td>${U.hours(r.paidHours)}</td><td>${r.restHours ? U.hours(r.restHours) : ''}</td><td>${r.otHours ? U.hours(r.otHours) : ''}</td><td>${U.money(r.wage)}</td><td>${U.money(r.travel.amount)}</td><td>${U.money(r.total)}</td><td>${r.overridden || r.dayRuleHit ? '✋ ' + esc(sh.overrideReason || 'עקיפה ידנית') : ''} ${esc(sh.note || '')}</td></tr>`; }).join('')}</table>
       <div style="font-size:8pt;color:#555;margin-top:10pt">נטו משוער — הערכה בלבד. נסיעות לפי ${U.money(S.employers[0].travelPerDay)} ליום${+S.employers[0].travelMonthlyCap ? ', תקרה ' + U.money(S.employers[0].travelMonthlyCap) : ''}.</div></div>`;
-    UI.toast('בחלון ההדפסה בחר "שמור כ-PDF"');
+    UI.toast('בחלון ההדפסה בחר "שמור כ-\u2060PDF"');
     setTimeout(() => window.print(), 300);
   }
 
@@ -11686,7 +11738,7 @@ window.PAY_CONFIG = {
     if (!Number.isFinite(v)) return [false, v, 'המספר לא תקין'];
     if (v < 0 && !MAY_BE_NEGATIVE.has(path)) return [false, v, 'כאן אי אפשר מספר שלילי'];
     const r = RANGES[path];
-    if (r && (v < r[0] || v > r[1])) return [true, Math.min(r[1], Math.max(r[0], v)), `הערך הותאם לטווח ${r[0]}–${r[1]}`];
+    if (r && (v < r[0] || v > r[1])) return [true, Math.min(r[1], Math.max(r[0], v)), `הערך הותאם לטווח ${r[0]}\u2060–\u2060${r[1]}`];
     if (Math.abs(v) > 1e7) return [false, v, 'המספר גדול מדי'];
     return [true, v];
   }
@@ -11696,6 +11748,7 @@ window.PAY_CONFIG = {
       const t = e.target;
       const path = t.dataset.s;
       if (!path) return;
+      const t0 = performance.now();
       if (!App.dateOk(t)) {
         const r = dateRules(path);
         UI.invalid((r && r.msg) || 'התאריך לא הגיוני');
@@ -11713,7 +11766,12 @@ window.PAY_CONFIG = {
         await Store.put('employers', emp);
       }
       UI.toast(msg || 'נשמר', null, { ok: true });
-      if (redraw && t.dataset.redraw != null) redraw();
+      if (redraw && t.dataset.redraw != null) {
+        // a switch slides over first (.2s), then the fields it opens come in (redrawing at once put a new
+        // switch in its place, already on: the knob jumped)
+        const wait = t.type === 'checkbox' ? 220 - (performance.now() - t0) : 0;
+        if (wait > 0) setTimeout(redraw, wait); else redraw();
+      }
     });
   }
   function sectionSheet(title, render, opts) {
@@ -11740,7 +11798,7 @@ window.PAY_CONFIG = {
     account: { icon: 'cloud', title: 'חשבון וסנכרון', sub: () => (S.meta.cloudEmail || 'לא מחובר') + ' · ' + root.Cloud.statusText() },
     roles: { icon: 'users', title: 'מעסיקים, תפקידים ותעריפים', sub: () => App.roles().map((r) => r.name + ' ' + U.money(Engine.roleRate(r, U.todayKey()), 0)).join(' · ') },
     calc: { icon: 'flask', title: 'חוקי חישוב', sub: () => { const e = S.employers[0]; return `ש״נ אחרי ${e.otThreshold} ש׳ · שבת ${e.restPct}% · עיגול: ${e.roundingMode === 'none' ? 'ללא' : e.roundingUnit + ' דק׳'}`; } },
-    rest: { icon: 'candle', title: 'שבת וחגים', sub: () => (S.settings.rest.mode === 'city' ? 'לפי ' + (S.settings.rest.city === '__custom' ? 'מיקום מותאם' : S.settings.rest.city) : `קבוע: ⁦${S.settings.rest.fixedStart}–${S.settings.rest.fixedEnd}⁩`) + (S.dayRules.length ? ` · ${S.dayRules.length} כללי יום` : '') },
+    rest: { icon: 'candle', title: 'שבת וחגים', sub: () => (S.settings.rest.mode === 'city' ? 'לפי ' + (S.settings.rest.city === '__custom' ? 'מיקום מותאם' : S.settings.rest.city) : `קבוע: ⁦${S.settings.rest.fixedStart}\u2060–\u2060${S.settings.rest.fixedEnd}⁩`) + (S.dayRules.length ? ` · ${S.dayRules.length} כללי יום` : '') },
     pay: { icon: 'car', title: 'נסיעות ותקופת שכר', sub: () => { const e = S.employers[0]; return `${U.money(e.travelPerDay)} ליום${+e.travelMonthlyCap ? ', תקרה ' + U.money(e.travelMonthlyCap, 0) : ''} · ${e.periodStartDay > 1 ? 'מ-' + e.periodStartDay + ' לחודש' : 'חודש קלנדרי'} · תשלום ב-${e.payDay}`; } },
     net: { icon: 'wallet', title: 'נטו משוער ומס', sub: () => `${S.settings.tax.creditPoints} נק׳ זיכוי · פנסיה ${S.settings.pension.employeePct}%${S.settings.hishtalmut.enabled ? ' · השתלמות' : ''}` },
     leave: { icon: 'beach', title: 'ותק, חופשה, מחלה והבראה', sub: () => (S.settings.startDate ? 'התחלת עבודה: ' + U.fmtDate(S.settings.startDate) : 'הגדר תאריך תחילת עבודה') },
@@ -12007,7 +12065,7 @@ window.PAY_CONFIG = {
   RENDER.net = {
     render: () => {
       const T = S.settings.tax, P = S.settings.pension, Hs = S.settings.hishtalmut;
-      return `<div class="banner">${icon('info')}<div>הנטו הוא הערכה. ערכי ברירת המחדל לפי 2025–2026 (מדרגות המס הוקפאו עד 2027). עדכן אם השתנו.</div></div>
+      return `<div class="banner">${icon('info')}<div>הנטו הוא הערכה. ערכי ברירת המחדל לפי 2025\u2060–\u20602026 (מדרגות המס הוקפאו עד 2027). עדכן אם השתנו.</div></div>
         <div class="section-title">מס הכנסה</div><div class="card">
           ${F.num('נקודות זיכוי', 's.tax.creditPoints', T.creditPoints, 'תושב/ת: 2.25 · אישה: 2.75 · נוספות על ילדים, תואר, שחרור מצבא, עולה חדש ועוד.')}
           ${F.num('שווי נקודת זיכוי לחודש ₪', 's.tax.creditPointValue', T.creditPointValue)}
@@ -12043,7 +12101,7 @@ window.PAY_CONFIG = {
           <div class="small" style="margin-top:10px">${B.recuperation && B.recuperation.eligible ? `דמי הבראה לשנה: ${B.recuperation.days} ימים × ${U.money(B.recuperation.rate, 0)} × ${U.num(B.jobPct * 100, 0)}% ≈ <b>${U.money(B.recuperation.amount, 0)}</b>` : `דמי הבראה מגיעים אחרי שנת עבודה (מ-${B.recuperation ? U.fmtDate(B.recuperation.eligibleFrom) : '—'}).`}</div>
           <div class="tiny" style="opacity:.8;margin-top:6px">הערכה לפי השעות שרשמת. היקף משרה = שעות חודשיות ÷ ${L.fullTimeHours}.</div></div>` : ''}
         <div class="section-title">חופשה</div><div class="card">
-          ${F.sel('שבוע עבודה', 's.leave.workWeek', [[5, '5 ימים'], [6, '6 ימים']], L.workWeek, '5 ימים: 12 ימי חופשה בשנים 1–5; 6 ימים: 14 (לפי היקף משרה).')}
+          ${F.sel('שבוע עבודה', 's.leave.workWeek', [[5, '5 ימים'], [6, '6 ימים']], L.workWeek, '5 ימים: 12 ימי חופשה בשנים 1\u2060–\u20605; 6 ימים: 14 (לפי היקף משרה).')}
           <div class="grid2">${F.num('יתרת פתיחה — חופשה', 's.leave.vacationOpening', L.vacationOpening)}${F.num('יתרת פתיחה — מחלה', 's.leave.sickOpening', L.sickOpening)}</div>
           ${F.date('יתרות הפתיחה נכונות לתאריך', 's.leave.vacationOpeningDate', L.vacationOpeningDate, 'אם הזנת יתרה מתלוש — התאריך של התלוש. הצבירה תחושב מכאן.')}
           ${F.num('שעות חודשיות למשרה מלאה', 's.leave.fullTimeHours', L.fullTimeHours)}</div>
@@ -12090,7 +12148,7 @@ window.PAY_CONFIG = {
       const A = S.settings.alerts;
       const perm = 'Notification' in window ? Notification.permission : 'unsupported';
       const t = (k, l) => F.sw(l, '', 's.alerts.types.' + k, A.types[k] !== false);
-      return `<div class="card">${F.sw('התראות פוש בטלפון', perm === 'granted' ? 'מאושר' : perm === 'denied' ? (App.androidApp ? 'חסום — יש לאשר בהגדרות הטלפון › אפליקציות › Shaati › התראות' : 'חסום — יש לאשר בהגדרות האתר ב-Chrome') : 'דורש אישור', 's.alerts.push', A.push)}
+      return `<div class="card">${F.sw('התראות פוש בטלפון', perm === 'granted' ? 'מאושר' : perm === 'denied' ? (App.androidApp ? 'חסום — יש לאשר בהגדרות הטלפון › אפליקציות › Shaati › התראות' : 'חסום — יש לאשר בהגדרות האתר ב-\u2060Chrome') : 'דורש אישור', 's.alerts.push', A.push)}
           ${perm !== 'granted' && perm !== 'unsupported' ? `<button class="btn tonal block" data-perm>${icon('bell')} אשר התראות</button>` : ''}
           ${perm === 'granted' ? `<button class="btn text sm" data-test>${icon('send', 's')} שלח התראת בדיקה</button>` : ''}
           <div class="tiny muted" style="margin-top:6px">לכל היותר התראת חריגה אחת ביום. תזכורות (טיימר, משמרת קרובה, תשלום) נשלחות בנפרד. כשהאפליקציה סגורה, Chrome בודק מדי פעם (לא מדויק לדקה) — לתזכורת מדויקת לפני משמרת, ייצא אותה ליומן.</div></div>
@@ -12120,7 +12178,7 @@ window.PAY_CONFIG = {
   };
 
   RENDER.templates = {
-    render: () => `${S.templates.length ? `<div class="list">${S.templates.map((t) => `<div class="item" style="cursor:default"><span class="role-bar" style="background:${(App.role(t.roleId) || {}).color || '#999'}"></span><span class="body"><span class="t">${esc(t.name)}</span><span class="s">${esc(App.roleName(t.roleId))} · <span class="num">⁦${t.startT}–${t.endT}⁩</span>${t.breakMin ? ` · הפסקה ${t.breakMin}` : ''}</span></span><button class="icon-btn" data-tdel="${t.id}" aria-label="מחק">${icon('trash', 's')}</button></div>`).join('')}</div>`
+    render: () => `${S.templates.length ? `<div class="list">${S.templates.map((t) => `<div class="item" style="cursor:default"><span class="role-bar" style="background:${(App.role(t.roleId) || {}).color || '#999'}"></span><span class="body"><span class="t">${esc(t.name)}</span><span class="s">${esc(App.roleName(t.roleId))} · <span class="num">⁦${t.startT}\u2060–\u2060${t.endT}⁩</span>${t.breakMin ? ` · הפסקה ${t.breakMin}` : ''}</span></span><button class="icon-btn" data-tdel="${t.id}" aria-label="מחק">${icon('trash', 's')}</button></div>`).join('')}</div>`
       : UI.emptyState('layers', 'אין תבניות', 'פתח משמרת ← "שמור כתבנית". אחר כך תוכל להוסיף אותה בלחיצה מכפתור ה-+.')}`,
     mount: (el, draw) => el.querySelectorAll('[data-tdel]').forEach((b) => (b.onclick = async () => { await App.saveOps([{ store: 'templates', del: b.dataset.tdel }], 'מחיקת תבנית', 'התבנית נמחקה'); draw(); })),
   };
@@ -12168,14 +12226,14 @@ window.PAY_CONFIG = {
         ${F.sel('נעל אחרי', 's.lock.timeoutMin', [[0, 'מיד'], [1, 'דקה'], [5, '5 דקות'], [15, '15 דקות']], S.settings.lock.timeoutMin)}
         <div data-bio-row></div>
         <div class="btn-row"><button class="btn tonal" data-pin-set>שנה קוד</button><button class="btn danger" data-pin-off>בטל נעילה</button></div>`
-      : `<div class="small" style="margin-bottom:12px">קוד בן 4–8 ספרות שיידרש בכל פתיחה. הקוד נשמר כגיבוב (hash) — לא כטקסט.</div><button class="btn block" data-pin-set>${icon('lock')} הגדר קוד</button>`}
+      : `<div class="small" style="margin-bottom:12px">קוד בן 4\u2060–\u20608 ספרות שיידרש בכל פתיחה. הקוד נשמר כגיבוב (hash) — לא כטקסט.</div><button class="btn block" data-pin-set>${icon('lock')} הגדר קוד</button>`}
       <div class="tiny muted" style="margin-top:10px">הנעילה מגינה מפני הצצה; הנתונים עצמם לא מוצפנים. שכחת את הקוד? אין שחזור — אפשר רק למחוק את נתוני האתר ולשחזר מגיבוי.</div></div>`,
     mount: (el, draw) => {
       const set = el.querySelector('[data-pin-set]');
       if (set) set.onclick = async () => {
-        const p1 = await UI.promptText('קוד חדש', '4–8 ספרות', '', { type: 'password', inputmode: 'numeric', ltr: true, ok: 'המשך' });
+        const p1 = await UI.promptText('קוד חדש', '4\u2060–\u20608 ספרות', '', { type: 'password', inputmode: 'numeric', ltr: true, ok: 'המשך' });
         if (!p1) return;
-        if (!/^\d{4,8}$/.test(p1)) { UI.invalid('הקוד צריך להיות 4–8 ספרות'); return; }
+        if (!/^\d{4,8}$/.test(p1)) { UI.invalid('הקוד צריך להיות 4\u2060–\u20608 ספרות'); return; }
         const p2 = await UI.promptText('אימות', 'הזן שוב את הקוד', '', { type: 'password', inputmode: 'numeric', ltr: true, ok: 'שמור' });
         if (p1 !== p2) { UI.invalid('הקודים לא תואמים'); return; }
         const salt = U.uid();
@@ -12205,19 +12263,19 @@ window.PAY_CONFIG = {
 
   RENDER.ai = {
     render: () => `<div class="banner">${icon('shield')}<div>אופציונלי. בלי מפתח — קריאת התלוש והניתוח רצים רק בטלפון. עם מפתח — אפשר לבקש ניתוח חכם לתלושים בפורמט מורכב. לפני כל שליחה מוסתרים ת״ז, פרטי בנק וכתובת, ותראה ותאשר בדיוק מה נשלח.</div></div>
-      <div class="card">${F.text('מפתח API של Claude', 's.ai.apiKey', S.settings.ai.apiKey, 'נוצר ב-console.anthropic.com. נשמר רק בטלפון ולא נכלל בקובצי גיבוי.', 'type="password" autocomplete="off" dir="ltr"')}
+      <div class="card">${F.text('מפתח API של Claude', 's.ai.apiKey', S.settings.ai.apiKey, 'נוצר ב-\u2060console.anthropic.com. נשמר רק בטלפון ולא נכלל בקובצי גיבוי.', 'type="password" autocomplete="off" dir="ltr"')}
         ${F.sel('מודל', 's.ai.model', [['claude-opus-5-5', 'Claude Opus 5.5 (מומלץ)'], ['claude-sonnet-5-5', 'Claude Sonnet 5.5 (זול יותר)'], ['claude-haiku-5-5', 'Claude Haiku 5.5 (הכי זול)']], S.settings.ai.model).replace('data-s=', 'data-keep-str data-s=')}
         ${S.settings.ai.apiKey ? `<button class="btn danger block" data-ai-clear>${icon('trash')} מחק את המפתח</button>` : ''}</div>
-      <div class="tiny muted" style="margin:6px 4px">השימוש מחויב בחשבון ה-API שלך אצל Anthropic. הניתוח הוא כלי עזר ואינו ייעוץ משפטי או חשבונאי.</div>`,
+      <div class="tiny muted" style="margin:6px 4px">השימוש מחויב בחשבון ה-\u2060API שלך אצל Anthropic. הניתוח הוא כלי עזר ואינו ייעוץ משפטי או חשבונאי.</div>`,
     mount: (el, draw) => { const c = el.querySelector('[data-ai-clear]'); if (c) c.onclick = async () => { await Store.setSettings((s) => { s.ai.apiKey = ''; }); draw(); }; },
   };
 
   RENDER.backup = {
     render: () => {
       const B = S.settings.backup;
-      return `<div class="banner warn">${icon('cloud')}<div>הנתונים שמורים רק בטלפון הזה. שמור גיבוי ב-Google Drive כדי לא לאבד אותם אם הטלפון יוחלף או יאופס.</div></div>
+      return `<div class="banner warn">${icon('cloud')}<div>הנתונים שמורים רק בטלפון הזה. שמור גיבוי ב-\u2060Google Drive כדי לא לאבד אותם אם הטלפון יוחלף או יאופס.</div></div>
         <div class="card"><div class="small">גיבוי אחרון: <b>${B.lastBackup ? U.fmtDate(U.epochKey(B.lastBackup)) + ' (' + UI.timeAgo(B.lastBackup) + ')' : 'אף פעם'}</b></div>
-          <div class="btn-row" style="margin-top:12px"><button class="btn" data-bk="share">${icon('share')} גבה ושתף ל-Drive</button></div>
+          <div class="btn-row" style="margin-top:12px"><button class="btn" data-bk="share">${icon('share')} גבה ושתף ל-\u2060Drive</button></div>
           <div class="btn-row" style="margin-top:8px"><button class="btn tonal" data-bk="dl">${icon('download')} הורד קובץ</button><button class="btn tonal" data-bk="files">${icon('file')} כולל קובצי תלושים</button></div></div>
         <div class="card">${F.sel('גיבוי אוטומטי', 's.backup.autoEvery', [['weekly', 'כל שבוע'], ['monthly', 'כל חודש'], ['off', 'כבוי']], B.autoEvery, S.meta.cloudUid ? 'החשבון שלך מחובר, והנתונים כבר נשמרים בענן, לכן לא יורדים קבצים אוטומטית. אפשר תמיד להוריד גיבוי ידני.' : 'בפתיחת האפליקציה, כשהגיע הזמן, קובץ גיבוי יורד אוטומטית לתיקיית ההורדות.').replace('data-s=', 'data-keep-str data-s=')}</div>
         <div class="section-title">${icon('upload', 's')} שחזור</div>
@@ -12274,7 +12332,7 @@ window.PAY_CONFIG = {
 
   RENDER.export = {
     render: () => `<div class="list">
-      <button class="item" data-x="csv"><span class="lead">${icon('table')}</span><span class="body"><span class="t">כל המשמרות — CSV</span><span class="s">נפתח ב-Excel ו-Google Sheets (עברית תקינה)</span></span></button>
+      <button class="item" data-x="csv"><span class="lead">${icon('table')}</span><span class="body"><span class="t">כל המשמרות — CSV</span><span class="s">נפתח ב-\u2060Excel ו-\u2060Google Sheets (עברית תקינה)</span></span></button>
       <button class="item" data-x="mcsv"><span class="lead">${icon('table')}</span><span class="body"><span class="t">סיכום חודשי — CSV</span><span class="s">חודש בכל שורה: שעות, ברוטו, נטו משוער…</span></span></button>
       <button class="item" data-x="pdf"><span class="lead">${icon('printer')}</span><span class="body"><span class="t">דוח חודשי — PDF</span><span class="s">החודש הנוכחי; לחודשים אחרים: דוחות ← סיכומים</span></span></button>
       <button class="item" data-x="ics"><span class="lead">${icon('calendar')}</span><span class="body"><span class="t">משמרות ליומן — ‎.ics</span><span class="s">כל המשמרות; מתוכננות עם תזכורת</span></span></button></div>`,
@@ -12303,7 +12361,7 @@ window.PAY_CONFIG = {
     render: () => `<div class="card"><div class="kv"><span>גרסת אפליקציה</span><b>${root.APP_VERSION}</b></div><div class="kv"><span>מבנה נתונים</span><b>${Store.SCHEMA_VERSION}</b></div>
         <div class="kv"><span>משמרות</span><b>${S.shifts.length}</b></div><div class="kv"><span>תלושים</span><b>${S.payslips.length}</b></div><div class="kv"><span>אחסון בשימוש</span><b id="ab-storage">…</b></div><div class="kv"><span>אחסון קבוע</span><b id="ab-persist">…</b></div></div>
       <div class="section-title">התקנה כאפליקציה</div>
-      <div class="card small">ב-Chrome: תפריט ⋮ ← "הוספה למסך הבית" ← "התקנה". אחרי ההתקנה: לחיצה ארוכה על האייקון ← "התחל משמרת" / "הוסף משמרת".</div>
+      <div class="card small">ב-\u2060Chrome: תפריט ⋮ ← "הוספה למסך הבית" ← "התקנה". אחרי ההתקנה: לחיצה ארוכה על האייקון ← "התחל משמרת" / "הוסף משמרת".</div>
       <div class="section-title">איך זה עובד</div>
       <div class="card small">כל החישובים מתבצעים בטלפון, כולל זמני שבת וחגים (לוח עברי וחישוב שקיעה מקומיים). האפליקציה עובדת בלי אינטרנט. חיבור נדרש רק בפעם הראשונה של קריאת PDF / זיהוי טקסט מתמונה (טעינת הרכיב), ולניתוח AI אם בחרת בו.</div>
       <div class="disclaimer">${icon('info', 's')}<div>האפליקציה היא כלי עזר אישי. החישובים (נטו, מס, זכויות) הם הערכה ואינם ייעוץ משפטי, חשבונאי או מס.</div></div>`,
@@ -12918,13 +12976,13 @@ window.PAY_CONFIG = {
         return `<div class="card"><div class="card-head">${icon('sparkle')}<h3>עוזר זכויות ושכר</h3></div>
           <p class="small">שאל כל שאלה על זכויות בעבודה, על התלוש או על האפליקציה, וקבל תשובה מותאמת לנתונים שלך.</p>
           <p class="small">העוזר פועל עם Claude של Anthropic, דרך מפתח API אישי שלך. השימוש מחויב בחשבון שלך שם (בדרך כלל אגורות בודדות לשאלה). המפתח נשמר רק בטלפון.</p>
-          <label class="field"><span class="lbl">מפתח API (מתחיל ב-sk-ant-)</span><input class="input" id="as-key" type="password" autocomplete="off" dir="ltr"></label>
+          <label class="field"><span class="lbl">מפתח API (מתחיל ב-\u2060sk-ant-)</span><input class="input" id="as-key" type="password" autocomplete="off" dir="ltr"></label>
           <div class="tiny muted" style="margin-bottom:10px">יוצרים מפתח באתר console.anthropic.com ‹ API Keys.</div>
           <button class="btn block" data-save-key>${icon('check')} שמור והתחל</button></div>
           ${legalNote()}`;
       }
       const msgs = chat();
-      return `<div class="chat-consent">${icon('shield', 's')}<div>השאלות נשלחות ל-Anthropic לעיבוד. <label class="chat-share"><input type="checkbox" id="as-share" ${shareData() ? 'checked' : ''}> לצרף סיכום מספרי מהאפליקציה (תעריפים, שעות, סכומים, יתרות — בלי שם או פרטים מזהים)</label></div></div>
+      return `<div class="chat-consent">${icon('shield', 's')}<div>השאלות נשלחות ל-\u2060Anthropic לעיבוד. <label class="chat-share"><input type="checkbox" id="as-share" ${shareData() ? 'checked' : ''}> לצרף סיכום מספרי מהאפליקציה (תעריפים, שעות, סכומים, יתרות — בלי שם או פרטים מזהים)</label></div></div>
         ${msgs.length ? '' : `<div class="chat-empty"><div class="chat-hello">שלום! במה אפשר לעזור?</div><div class="chips chat-sugg">${SUGGESTIONS.map((q) => `<button class="chip" data-q="${esc(q)}">${esc(q)}</button>`).join('')}</div></div>`}
         <div class="chat-log" id="as-log">${msgs.map((m) => `<div class="msg ${m.role}">${m.role === 'user' ? esc(m.text) : render(m.text)}</div>`).join('')}</div>
         ${legalNote()}`;
@@ -12984,13 +13042,13 @@ window.PAY_CONFIG = {
       } catch (err) {
         console.error(err);
         let msg = 'משהו השתבש. נסה שוב בעוד רגע.';
-        if (!Anthropic) msg = 'לא ניתן לטעון את רכיב ה-AI. בדוק את החיבור לאינטרנט.';
-        else if (err instanceof Anthropic.AuthenticationError) msg = 'מפתח ה-API לא תקין. אפשר לעדכן אותו בהגדרות › מפתח AI.';
+        if (!Anthropic) msg = 'לא ניתן לטעון את רכיב ה-\u2060AI. בדוק את החיבור לאינטרנט.';
+        else if (err instanceof Anthropic.AuthenticationError) msg = 'מפתח ה-\u2060API לא תקין. אפשר לעדכן אותו בהגדרות › מפתח AI.';
         else if (err instanceof Anthropic.PermissionDeniedError) msg = 'למפתח אין הרשאה למודל שנבחר. אפשר לבחור מודל אחר בהגדרות › מפתח AI.';
         else if (err instanceof Anthropic.NotFoundError) msg = 'המודל שנבחר לא זמין. בחר מודל אחר בהגדרות › מפתח AI.';
         else if (err instanceof Anthropic.RateLimitError) msg = 'יותר מדי בקשות כרגע. נסה שוב בעוד דקה.';
         else if (err instanceof Anthropic.APIConnectionError) msg = 'בעיית תקשורת. בדוק את החיבור לאינטרנט.';
-        else if (err instanceof Anthropic.APIError && (err.status === 402 || err.type === 'billing_error')) msg = 'נגמרה היתרה בחשבון ה-API שלך אצל Anthropic.';
+        else if (err instanceof Anthropic.APIError && (err.status === 402 || err.type === 'billing_error')) msg = 'נגמרה היתרה בחשבון ה-\u2060API שלך אצל Anthropic.';
         else if (err instanceof Anthropic.APIError) msg = 'שגיאה מהשרת (' + (err.status || '') + '). נסה שוב בעוד רגע.';
         bubble.classList.add('error');
         acc = acc ? acc + '\n\n(התשובה נקטעה)' : msg;
@@ -13014,7 +13072,7 @@ window.PAY_CONFIG = {
           if (b.hasAttribute('data-send')) { const i = el.querySelector('#as-input'); const v = i.value; i.value = ''; send(v); }
           if (b.hasAttribute('data-save-key')) {
             const k = el.querySelector('#as-key').value.trim();
-            if (!/^sk-ant-/.test(k)) { UI.toast('המפתח צריך להתחיל ב-sk-ant-'); return; }
+            if (!/^sk-ant-/.test(k)) { UI.toast('המפתח צריך להתחיל ב-\u2060sk-ant-'); return; }
             await Store.setSettings((s) => { s.ai.apiKey = k; });
             redraw();
           }
@@ -13417,7 +13475,7 @@ window.PAY_CONFIG = {
     ['איך מתקנים או מוחקים משמרת?', 'לוחצים על המשמרת (בבית, בלוח השנה או בדוחות), ושם אפשר לערוך או למחוק. טעית? מיד אחרי יש כפתור "ביטול".'],
     ['מה זה ברוטו ונטו?', 'ברוטו: כל מה שהרווחת לפני הורדות. נטו: מה שנכנס לבנק אחרי מס, ביטוח לאומי ופנסיה. מתחת לגיל 18 בדרך כלל אין מס, אז הם כמעט שווים.'],
     ['איך מחושבת שבת?', 'לפי העיר שבחרת האפליקציה יודעת מתי שבת נכנסת ויוצאת, וכל דקה בתוכה מחושבת ב-150% לפחות. אפשר לשנות עיר בהגדרות › שבת וחגים.'],
-    ['הנתונים שלי שמורים?', 'כן. בטלפון ובחשבון ה-Google שלך, ורק לך יש גישה אליהם. מחליפים טלפון? מתחברים ומוצאים הכול.'],
+    ['הנתונים שלי שמורים?', 'כן. בטלפון ובחשבון ה-\u2060Google שלך, ורק לך יש גישה אליהם. מחליפים טלפון? מתחברים ומוצאים הכול.'],
     ['איך מקבלים תזכורות?', 'כשמתחילים משמרת הטלפון שואל אם לאשר התראות. אפשר גם בהגדרות › התראות ותובנות.'],
     ['אני מתחת לגיל 18. מה שונה?', 'שכר מינימום לפי הגיל, בדרך כלל בלי מס, ויש כללים מיוחדים: עד 8 שעות ביום, 40 בשבוע, הפסקות ואיסור עבודה מאוחרת בלילה. "מה מגיע לי" בבית מסביר הכול.'],
     ['איך מוחקים את החשבון?', 'הגדרות › חשבון וסנכרון › "מחק את כל הנתונים מהחשבון". זה מוחק הכול מהענן ומהטלפון.'],
@@ -15164,7 +15222,7 @@ window.PAY_CONFIG = {
     const net = play * price * 0.85 + web * Math.max(0, price * 0.95 - 1.9);
     const money = (v) => '₪' + Math.round(v).toLocaleString('en-US');
     const lemon = C.lemon || {};
-    const playState = P && P.available ? '<span class="tag good">פעיל</span>' : App.androidApp ? '<span class="tag warn">לא מוגדר ב-Play Console</span>' : '<span class="tag">נבדק רק מתוך אפליקציית האנדרואיד</span>';
+    const playState = P && P.available ? '<span class="tag good">פעיל</span>' : App.androidApp ? '<span class="tag warn">לא מוגדר ב-\u2060Play Console</span>' : '<span class="tag">נבדק רק מתוך אפליקציית האנדרואיד</span>';
     const webState = lemon.checkout && +lemon.productId ? '<span class="tag good">פעיל</span>' : '<span class="tag warn">לא מוגדר</span>';
     // the admin's own preview, on this phone only (plus.js: Plus.preview)
     const mode = P && P.preview ? P.preview() : '';
@@ -15183,7 +15241,7 @@ window.PAY_CONFIG = {
         ${barList([['ראו את Plus', seen], ['הגיעו למכסה חינמית', wall], ['ניסו בחינם', tried], ['קנו', buyers]], rows.length)}
         <div class="divider"></div>
         <div class="adm-pay"><span>Google Play (בתוך האפליקציה)</span>${playState}</div>
-        <div class="adm-pay"><span>אתר ו-iPhone (אשראי, Apple Pay, Google Pay, PayPal)</span>${webState}</div>
+        <div class="adm-pay"><span>אתר ו-\u2060iPhone (אשראי, Apple Pay, Google Pay, PayPal)</span>${webState}</div>
         <div class="btn-row" style="margin-top:10px"><a class="btn tonal sm" href="https://play.google.com/console" target="_blank" rel="noopener">${icon('chart', 's')} Google Play Console</a><a class="btn tonal sm" href="https://app.lemonsqueezy.com/orders" target="_blank" rel="noopener">${icon('receipt', 's')} מכירות באתר</a></div>
         <div class="tiny muted" style="margin-top:8px">מהסטטיסטיקה האנונימית (מכשירים שלא כיבו אותה), מתעדכן כל כמה שעות. הסכומים המדויקים ותשלומי המס בדוחות של Google Play ושל Lemon Squeezy.</div></div>`;
   }
@@ -15298,7 +15356,7 @@ window.PAY_CONFIG = {
 <h4>3. אין ייעוץ מקצועי</h4>
 <p>שום דבר באפליקציה — לרבות חישובים, ממצאי ניתוח תלוש, תובנות, תשובות העוזר והודעות מוכנות למעסיק — אינו ייעוץ משפטי, חשבונאי, מיסויי, פנסיוני או פיננסי, ואין להסתמך עליו ככזה. לפני כל פעולה (פנייה למעסיק, הליך משפטי, הגשת דוח או בקשת החזר) יש להיוועץ באיש מקצוע מוסמך.</p>
 <h4>4. תכונות בינה מלאכותית</h4>
-<p>ניתוח תלוש חכם ועוזר הזכויות מופעלים רק ביוזמת המשתמש, באמצעות מפתח API אישי שלו מול Anthropic. התוכן נוצר אוטומטית, עלול להיות שגוי או לא מדויק, ואינו מבטא עמדה של המפעיל. עלויות השימוש בשירות ה-AI חלות על המשתמש בלבד, בהתאם להסכם בינו לבין ספק השירות. אין להזין באמצעותן מידע אישי של אנשים אחרים.</p>
+<p>ניתוח תלוש חכם ועוזר הזכויות מופעלים רק ביוזמת המשתמש, באמצעות מפתח API אישי שלו מול Anthropic. התוכן נוצר אוטומטית, עלול להיות שגוי או לא מדויק, ואינו מבטא עמדה של המפעיל. עלויות השימוש בשירות ה-\u2060AI חלות על המשתמש בלבד, בהתאם להסכם בינו לבין ספק השירות. אין להזין באמצעותן מידע אישי של אנשים אחרים.</p>
 <h4>5. חשבון ואבטחה</h4>
 <p>הכניסה לאפליקציה נעשית באמצעות חשבון Google. המשתמש אחראי לשמור על הגישה למכשיר ולחשבון, ולהתנתק או לנעול את האפליקציה במכשיר משותף. נעילה בקוד היא שכבת הגנה בסיסית בלבד.</p>
 <h4>6. שימוש מותר</h4>
@@ -15308,7 +15366,7 @@ window.PAY_CONFIG = {
 <h4>8. זמינות, שינויים והפסקת השירות</h4>
 <p>השימוש באפליקציה ובכל יכולותיה הבסיסיות — רישום משמרות, חישוב שכר, זכויות, בדיקת תלוש, דוחות ומשחקים — ניתן ללא תשלום. האפליקציה ניתנת "כמות שהיא" (AS IS) ו"כפי שהיא זמינה", ללא כל התחייבות לזמינות רציפה, לדיוק, להתאמה למטרה מסוימת או להיעדר תקלות. המפעיל רשאי לשנות, להוסיף או להפסיק תכונות או את השירות כולו, ככל האפשר בהודעה מראש באפליקציה. שינוי מהותי בתנאים יוצג באפליקציה ויידרש אישורו מחדש.</p>
 <h4>8א. תוספות בתשלום (Shaati Plus)</h4>
-<p>האפליקציה עשויה להציע תוספות אופציונליות בתשלום חד-פעמי ("Shaati Plus"), כגון עיצובים לכרטיס השכר, ושימוש ללא הגבלה בחלק מהתוספות שיש להן מכסה חינמית (למשל ניתוח מתקדם וייצוא דוחות לקובץ). התוספות אינן משנות את החישובים, את מידע הזכויות או את הכלים הבסיסיים (משמרות, חישוב שכר, זכויות, בדיקת תלוש, דוחות במסך, משחקים, גיבוי וסנכרון), שנשארים זמינים לכולם ללא תשלום וללא הגבלה. ניתן לנסות את Shaati Plus פעם אחת בחינם לתקופה קצרה; הניסיון אינו דורש פרטי תשלום ומסתיים מעצמו, בלי חיוב. באפליקציית האנדרואיד שהותקנה מ-Google Play הרכישה מתבצעת דרך Google Play, בכפוף לתנאים ולמדיניות ההחזרים שלה. באתר ובאייפון הרכישה מתבצעת בדף תשלום של Lemon Squeezy, שהיא המוכרת הרשומה (Merchant of Record) של העסקה ומטפלת בתשלום, בקבלה ובמסים, בכפוף לתנאים ולמדיניות ההחזרים שלה; לאחר התשלום נשלח קוד הפעלה, הנשמר בחשבון המשתמש ומפעיל את התוספת בכל מכשיריו. המפעיל אינו מקבל ואינו שומר פרטי תשלום. החזר כספי מבטל את התוספת. רכישה בידי משתמש שטרם מלאו לו 18 טעונה הסכמת הורה או אפוטרופוס.</p>
+<p>האפליקציה עשויה להציע תוספות אופציונליות בתשלום חד-פעמי ("Shaati Plus"), כגון עיצובים לכרטיס השכר, ושימוש ללא הגבלה בחלק מהתוספות שיש להן מכסה חינמית (למשל ניתוח מתקדם וייצוא דוחות לקובץ). התוספות אינן משנות את החישובים, את מידע הזכויות או את הכלים הבסיסיים (משמרות, חישוב שכר, זכויות, בדיקת תלוש, דוחות במסך, משחקים, גיבוי וסנכרון), שנשארים זמינים לכולם ללא תשלום וללא הגבלה. ניתן לנסות את Shaati Plus פעם אחת בחינם לתקופה קצרה; הניסיון אינו דורש פרטי תשלום ומסתיים מעצמו, בלי חיוב. באפליקציית האנדרואיד שהותקנה מ-\u2060Google Play הרכישה מתבצעת דרך Google Play, בכפוף לתנאים ולמדיניות ההחזרים שלה. באתר ובאייפון הרכישה מתבצעת בדף תשלום של Lemon Squeezy, שהיא המוכרת הרשומה (Merchant of Record) של העסקה ומטפלת בתשלום, בקבלה ובמסים, בכפוף לתנאים ולמדיניות ההחזרים שלה; לאחר התשלום נשלח קוד הפעלה, הנשמר בחשבון המשתמש ומפעיל את התוספת בכל מכשיריו. המפעיל אינו מקבל ואינו שומר פרטי תשלום. החזר כספי מבטל את התוספת. רכישה בידי משתמש שטרם מלאו לו 18 טעונה הסכמת הורה או אפוטרופוס.</p>
 <h4>8ב. טבלת האלופים במשחקים</h4>
 <p>ההשתתפות בטבלת האלופים היא לבחירתך ודורשת התחברות. בטבלה מוצגים לשאר המשתמשים המחוברים הכינוי שבחרת, אימוג׳י, הרקע שבחרת (למנויי Shaati Plus) והתוצאות שלך במשחקים. אין לבחור כינוי שהוא השם המלא שלך, פרטי קשר, או כינוי פוגעני, מטעה או שמתחזה לאחר. המפעיל רשאי להסיר מהטבלה שורה עם כינוי לא מתאים או תוצאה שנראית לא אמיתית. אפשר לצאת מהטבלה בכל עת, והשורה נמחקת.</p>
 <h4>9. נתונים וגיבוי</h4>
@@ -15340,7 +15398,7 @@ window.PAY_CONFIG = {
 <h4>2. איפה המידע נשמר</h4>
 <p>במכשיר שלך (אחסון הדפדפן), ולאחר התחברות — גם בענן Google Cloud Firestore, באזור me-west1 (תל אביב). כללי האבטחה במסד הנתונים מאפשרים גישה לנתונים רק למשתמש המחובר שהם שלו (חוץ משורה בטבלת האלופים, שגלויה למשתמשים המחוברים אם בחרת להצטרף). התעבורה מוצפנת (HTTPS), והאחסון בענן מוצפן על ידי Google.</p>
 <h4>3. מה לא יוצא מהטלפון</h4>
-<p>מפתח ה-API, קוד הנעילה, קובצי התלושים עצמם (תמונה ו-PDF) והטקסט הגולמי שזוהה מהם נשמרים רק במכשיר.</p>
+<p>מפתח ה-\u2060API, קוד הנעילה, קובצי התלושים עצמם (תמונה ו-\u2060PDF) והטקסט הגולמי שזוהה מהם נשמרים רק במכשיר.</p>
 <p><b>פתיחה בטביעת אצבע:</b> הזיהוי מתבצע כולו במנגנון של הטלפון. האפליקציה לא מקבלת, לא שומרת ולא שולחת טביעות אצבע או נתוני פנים; היא שומרת רק מזהה טכני שמאפשר לבקש מהטלפון לאשר את הזהות.</p>
 <h4>4. למה המידע משמש</h4>
 <p>אך ורק לאספקת השירות: חישובים, סנכרון בין מכשירים, התראות ותובנות, והסטטיסטיקה האנונימית משמשת רק כדי להבין כמה משתמשים יש ואילו תכונות כדאי לשפר. המידע אינו נמכר, אינו מושכר ואינו משמש לשיווק או לפרסום.</p>
@@ -15401,8 +15459,8 @@ window.PAY_CONFIG = {
 <li><b>Tesseract.js</b> ונתוני השפה של Tesseract — Apache License 2.0. לזיהוי טקסט מתמונה.</li>
 <li><b>Anthropic TypeScript SDK</b> — MIT License. לתכונות AI לפי בחירה.</li>
 <li><b>גופנים</b> (Rubik, Miriam Libre, Noto Sans Hebrew, Assistant, Heebo, Varela Round) — SIL Open Font License 1.1, דרך Google Fonts.</li>
-<li>חישובי זמני השקיעה מבוססים על אלגוריתם ה-NOAA (נחלת הכלל). לוח השנה העברי מחושב בשיטת Reingold–Dershowitz.</li></ul>
-<p>Google, Firebase, GitHub, Anthropic ו-Claude הם סימנים מסחריים של בעליהם. אין לאפליקציה קשר עסקי אליהם, והם אינם אחראים לה.</p>`,
+<li>חישובי זמני השקיעה מבוססים על אלגוריתם ה-\u2060NOAA (נחלת הכלל). לוח השנה העברי מחושב בשיטת Reingold–Dershowitz.</li></ul>
+<p>Google, Firebase, GitHub, Anthropic ו-\u2060Claude הם סימנים מסחריים של בעליהם. אין לאפליקציה קשר עסקי אליהם, והם אינם אחראים לה.</p>`,
     },
     about: {
       title: 'אודות',
@@ -15447,11 +15505,11 @@ window.PAY_CONFIG = {
       <p class="lead">${updated ? 'עדכנו את תנאי השימוש ומדיניות הפרטיות.' : 'כדי להמשיך להשתמש באפליקציה, צריך לאשר את תנאי השימוש ומדיניות הפרטיות.'} הנתונים שלך לא משתנים.</p>
       <div class="card small legal-summary"><b>בקצרה:</b><ul>
         <li>החישובים הם הערכה בלבד ואינם ייעוץ משפטי, חשבונאי או מס.</li>
-        <li>הנתונים שלך נשמרים בטלפון ובחשבון ה-Google שלך, ורק לך יש גישה אליהם. הם לא נמכרים ולא משמשים לפרסום.</li>
+        <li>הנתונים שלך נשמרים בטלפון ובחשבון ה-\u2060Google שלך, ורק לך יש גישה אליהם. הם לא נמכרים ולא משמשים לפרסום.</li>
         <li>נשמרת סטטיסטיקת שימוש אנונימית (כמה משמרות, ימי שימוש, תכונות), בלי שם, אימייל או סכומים. אפשר לכבות בהגדרות.</li>
         <li>תכונות AI פועלות רק כשאתה מפעיל אותן, עם מפתח API שלך.</li>
         <li>טבלת האלופים במשחקים היא לבחירתך: מוצגים בה רק כינוי, אימוג׳י ותוצאות.</li>
-        <li>הכלים של האפליקציה והמשחקים חינמיים. לחלק מהתוספות (ניתוח מתקדם, ייצוא דוחות) יש מכסה חינמית, ו-Shaati Plus האופציונלי (תשלום חד-פעמי דרך Google Play או בדף תשלום מאובטח של Lemon Squeezy) פותח אותן בלי הגבלה ומוסיף עיצובים ורקע בטבלה. אנחנו לא רואים פרטי אשראי.</li>
+        <li>הכלים של האפליקציה והמשחקים חינמיים. לחלק מהתוספות (ניתוח מתקדם, ייצוא דוחות) יש מכסה חינמית, ו-\u2060Shaati Plus האופציונלי (תשלום חד-פעמי דרך Google Play או בדף תשלום מאובטח של Lemon Squeezy) פותח אותן בלי הגבלה ומוסיף עיצובים ורקע בטבלה. אנחנו לא רואים פרטי אשראי.</li>
         <li>אפשר לייצא או למחוק את כל הנתונים בכל רגע.</li></ul></div>
       <div class="btn-row"><button class="btn tonal" data-legal="terms">${icon('file')} תנאי שימוש</button><button class="btn tonal" data-legal="privacy">${icon('shield')} פרטיות</button></div>
       </div><div class="foot col">

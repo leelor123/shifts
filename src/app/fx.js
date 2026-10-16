@@ -78,30 +78,68 @@
   };
 
   /* ---------------- tap ring: hugs the tapped control, from its centre ---------------- */
+  // The ring is drawn above everything, at the control's place. Details that matter:
+  //  - it starts three frames later, once the tap has done its work (the press itself shows at once): if
+  //    by then the control is gone (a new screen), covered (a sheet or a dialog opened over it), leaving
+  //    (its sheet closing), moving (a shake) or only partly on screen, there is no ring at all, so it
+  //    never shows for a frame over whatever came next;
+  //  - a control drawn again in the same place (a tab bar re-rendered by its own tap) keeps its ring;
+  //  - the control shrinks on the press and springs back: its centre stays put, so the ring follows its
+  //    size and hugs it all the way (comparing its edges, as before 1.16.2, took every shrinking control
+  //    for a moving one and dropped the ring after a single frame - most taps had no ring);
+  //  - if the control moves away, leaves (its sheet sliding down) or gets covered while the ring plays,
+  //    the ring goes at once: even a short fade left it floating over the moving sheet.
+  const LAYERS = '.sheet, .dialog, .story, #lock, .coach';
+  const hits = (el, x, y) => { const h = document.elementFromPoint(x, y); return !!h && (h === el || el.contains(h)); };
+  // the centre and the middle of each edge are the control's own (a pill's corners are not)
+  const inView = (el, r) => {
+    const cx = r.left + r.width / 2, cy = r.top + r.height / 2;
+    return hits(el, cx, cy) && hits(el, r.left + 2, cy) && hits(el, r.right - 2, cy) && hits(el, cx, r.top + 2) && hits(el, cx, r.bottom - 2);
+  };
   Fx.ring = function (el) {
     if (!Fx.motion() || !el || !el.getBoundingClientRect) return;
-    const r = el.getBoundingClientRect();
-    if (!r.width || !r.height) return;
-    const d = document.createElement('div');
-    d.className = 'fx-ring';
-    d.style.left = r.left + 'px';
-    d.style.top = r.top + 'px';
-    d.style.width = r.width + 'px';
-    d.style.height = r.height + 'px';
-    d.style.borderRadius = getComputedStyle(el).borderRadius || '12px';
-    document.body.appendChild(d);
-    // the ring is drawn above everything at the control's place; if the control moves (a sheet or a
-    // picker sliding away, a list redrawing) or disappears, the ring goes at once instead of being
-    // left floating over whatever comes next
-    const t0 = performance.now();
-    const follow = () => {
-      if (!d.isConnected) return;
-      const n = el.isConnected ? el.getBoundingClientRect() : null;
-      const leaving = el.closest && el.closest('.dialog.out, .sheet:not(.show), .story.out');
-      if (!n || leaving || Math.abs(n.left - r.left) > 1.5 || Math.abs(n.top - r.top) > 1.5 || !n.width) { d.remove(); return; }
-      if (performance.now() - t0 < 600) requestAnimationFrame(follow); else d.remove();
+    const r0 = el.getBoundingClientRect();
+    if (!r0.width || !r0.height) return;
+    // a whole screen-sized area (a story page) gets no ring
+    if (r0.width * r0.height > root.innerWidth * root.innerHeight * 0.45) return;
+    const cx = r0.left + r0.width / 2, cy = r0.top + r0.height / 2;
+    const sig = (n) => n.tagName + '|' + (n.getAttribute('data-act') || '') + '|' + (n.getAttribute('data-tab') || '') + '|' + (n.getAttribute('data-s') || '');
+    const sig0 = sig(el);
+    const layersBefore = new Set(document.querySelectorAll(LAYERS));
+    let target = el, d = null, t0 = 0, gone = false, calm = 0;
+    const current = () => {
+      if (target.isConnected) return target;
+      for (let n = document.elementFromPoint(cx, cy); n && n !== document.body; n = n.parentElement) if (sig(n) === sig0) return n;
+      return null;
     };
-    requestAnimationFrame(follow);
+    const step = () => {
+      if (gone) return;
+      target = current();
+      const r = target && target.getBoundingClientRect();
+      const ok = r && r.width > 0
+        && Math.abs(r.left + r.width / 2 - cx) <= 1.5 && Math.abs(r.top + r.height / 2 - cy) <= 1.5
+        && Math.abs(r.width - r0.width) < r0.width * 0.2
+        && !target.closest('.dialog.out, .sheet:not(.show), .story.out')
+        && ![...document.querySelectorAll(LAYERS)].some((l) => !layersBefore.has(l) && !l.contains(target))
+        && (d ? hits(target, cx, cy) : inView(target, r));
+      if (!ok) { if (d) { gone = true; d.remove(); } return; }
+      // three calm frames first (~50ms): a tap that redraws or shakes its control shows that, not a ring
+      // that would be gone again a frame later
+      if (!d && ++calm < 3) { requestAnimationFrame(step); return; }
+      if (!d) {
+        d = document.createElement('div');
+        d.className = 'fx-ring';
+        d.style.borderRadius = getComputedStyle(target).borderRadius || '12px';
+        document.body.appendChild(d);
+        t0 = performance.now();
+      }
+      d.style.left = r.left + 'px';
+      d.style.top = r.top + 'px';
+      d.style.width = r.width + 'px';
+      d.style.height = r.height + 'px';
+      if (performance.now() - t0 < 560) requestAnimationFrame(step); else { gone = true; d.remove(); }
+    };
+    requestAnimationFrame(step);
   };
 
   /* ---------------- particles: confetti and ₪ coins ---------------- */
@@ -235,8 +273,9 @@
   };
 
   /* ---------------- every tap ---------------- */
-  const TAPPABLE = 'button, a[href], [data-act], .item, .chip, [role="button"], label.switch-row';
-  const RINGED = '.btn, .chip, .icon-btn, .quick button, .seg > button, .color-pick > button, .font-pick > button, .card-link';
+  const TAPPABLE = 'button, a[href], [data-act], .item, .chip, [role="button"], [role="tab"], label.switch-row, summary';
+  // every control gets the ring, except the games' own boards (their pieces answer in their own way)
+  const UNRINGED = '.cg-stage *';
   document.addEventListener('click', (e) => {
     const t = e.target.closest && e.target.closest(TAPPABLE);
     if (!t || t.disabled) return;
@@ -245,13 +284,17 @@
     if (t.classList.contains('fab')) { Fx.ring(t); Fx.play('pop'); Fx.haptic(14); }
     else if (t.closest('#nav')) { Fx.ring(t.querySelector('.pill') || t); Fx.play('nav'); Fx.haptic(6); }
     else {
-      if (t.matches(RINGED)) Fx.ring(t);
+      if (!t.matches(UNRINGED)) Fx.ring(t);
       if (t.classList.contains('danger')) { Fx.play('soft'); Fx.haptic(10); } else { Fx.play('tap'); Fx.haptic(6); }
     }
   }, true);
   document.addEventListener('change', (e) => {
     const el = e.target;
-    if (el && el.matches && el.matches('input[type="checkbox"]')) { Fx.play(el.checked ? 'on' : 'off'); Fx.haptic(8); }
+    if (el && el.matches && el.matches('input[type="checkbox"]')) {
+      Fx.play(el.checked ? 'on' : 'off'); Fx.haptic(8);
+      const row = el.closest('label.switch-row');
+      if (row) Fx.ring(row); // its switch slides, and the row answers like every other control
+    }
   }, true);
 
   Fx.sleep = sleep;

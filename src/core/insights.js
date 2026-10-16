@@ -82,7 +82,7 @@
     const curM = metrics(model, cur.from, cur.to);
     const prevM = prevs.map((p) => metrics(model, p.from, p.to));
     const worked = prevM.filter((m) => m.shifts > 0);
-    const baseRange = '⁦' + U.fmtDate(prevs[prevs.length - 1].from, 'short') + '–' + U.fmtDate(prevs[0].to, 'short') + '⁩';
+    const baseRange = '⁦' + U.fmtDate(prevs[prevs.length - 1].from, 'short') + '\u2060–\u2060' + U.fmtDate(prevs[0].to, 'short') + '⁩';
     const label = unit === 'week' ? 'השבוע שהסתיים' : 'בחודש שהסתיים';
     const per = unit === 'week' ? 'לשבוע' : 'לחודש';
     const nPrev = prevs.length + (unit === 'week' ? ' השבועות' : ' החודשים');
@@ -419,13 +419,13 @@
       if (r.status !== 'planned') continue;
       if (on('plannedPast') && r.rawEnd < now) {
         alerts.push({ key: 'planned-' + r.id, type: 'plannedPast', severity: 'warn', push: 'critical', ref: r.id,
-          title: 'משמרת מתוכננת שעברה', body: `המשמרת של ${U.fmtDate(r.dateKey, 'dm')} (⁦${U.epochHM(r.start)}–${U.epochHM(r.rawEnd)}⁩) לא סומנה כ"בוצעה".`,
+          title: 'משמרת מתוכננת שעברה', body: `המשמרת של ${U.fmtDate(r.dateKey, 'dm')} (⁦${U.epochHM(r.start)}\u2060–\u2060${U.epochHM(r.rawEnd)}⁩) לא סומנה כ"בוצעה".`,
           explain: 'משמרות מתוכננות לא נספרות בשכר עד שמסמנים אותן כבוצעו.' });
       }
       const mins = (r.start - now) / U.MIN;
       if (on('upcoming') && mins > 0 && mins <= (+cfg.upcomingMin || 60)) {
         alerts.push({ key: 'up-' + r.id, type: 'upcoming', severity: 'info', push: 'critical', ref: r.id,
-          title: 'משמרת בעוד ' + Math.round(mins) + ' דקות', body: `${roleName(r.segments[0] ? r.segments[0].roleId : '')} · ⁦${U.epochHM(r.start)}–${U.epochHM(r.rawEnd)}⁩`,
+          title: 'משמרת בעוד ' + Math.round(mins) + ' דקות', body: `${roleName(r.segments[0] ? r.segments[0].roleId : '')} · ⁦${U.epochHM(r.start)}\u2060–\u2060${U.epochHM(r.rawEnd)}⁩`,
           explain: 'תזכורת ' + cfg.upcomingMin + ' דקות לפני משמרת מתוכננת.' });
       }
     }
@@ -461,7 +461,7 @@
       if (days >= (+cfg.backupDays || 30)) {
         alerts.push({ key: 'backup-' + U.weekStart(today), type: 'backup', severity: 'warn', push: 'critical',
           title: 'הגיע הזמן לגבות', body: lb ? `הגיבוי האחרון היה לפני ${days} ימים.` : 'עוד לא גיבית את הנתונים.',
-          explain: 'הנתונים שמורים רק בטלפון. מומלץ לשמור קובץ גיבוי ב-Google Drive.' });
+          explain: 'הנתונים שמורים רק בטלפון. מומלץ לשמור קובץ גיבוי ב-\u2060Google Drive.' });
       }
     }
     if (on('recuperation') && S.startDate) {
@@ -540,7 +540,7 @@
       sentence += '.';
     } else if (hasHistory) sentence += ' בערך כמו הממוצע שלך.';
     if (t.restHours >= 1) sentence += ` ${U.num(t.restHours, 1)} מהשעות היו בשבת/חג.`;
-    return { from, to, t, avgHours: ah, sentence, explain: `השבוע ⁦${U.fmtDate(from, 'short')}–${U.fmtDate(to, 'short')}⁩, בהשוואה לממוצע 4 השבועות שלפניו (${U.num(ah, 1)} ש׳).` };
+    return { from, to, t, avgHours: ah, sentence, explain: `השבוע ⁦${U.fmtDate(from, 'short')}\u2060–\u2060${U.fmtDate(to, 'short')}⁩, בהשוואה לממוצע 4 השבועות שלפניו (${U.num(ah, 1)} ש׳).` };
   }
 
   root.Insights = { run, metrics, compareSeries, weeklySummary, TYPE_INFO, pctDev };

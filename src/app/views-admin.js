@@ -39,7 +39,7 @@
     const net = play * price * 0.85 + web * Math.max(0, price * 0.95 - 1.9);
     const money = (v) => '₪' + Math.round(v).toLocaleString('en-US');
     const lemon = C.lemon || {};
-    const playState = P && P.available ? '<span class="tag good">פעיל</span>' : App.androidApp ? '<span class="tag warn">לא מוגדר ב-Play Console</span>' : '<span class="tag">נבדק רק מתוך אפליקציית האנדרואיד</span>';
+    const playState = P && P.available ? '<span class="tag good">פעיל</span>' : App.androidApp ? '<span class="tag warn">לא מוגדר ב-\u2060Play Console</span>' : '<span class="tag">נבדק רק מתוך אפליקציית האנדרואיד</span>';
     const webState = lemon.checkout && +lemon.productId ? '<span class="tag good">פעיל</span>' : '<span class="tag warn">לא מוגדר</span>';
     // the admin's own preview, on this phone only (plus.js: Plus.preview)
     const mode = P && P.preview ? P.preview() : '';
@@ -58,7 +58,7 @@
         ${barList([['ראו את Plus', seen], ['הגיעו למכסה חינמית', wall], ['ניסו בחינם', tried], ['קנו', buyers]], rows.length)}
         <div class="divider"></div>
         <div class="adm-pay"><span>Google Play (בתוך האפליקציה)</span>${playState}</div>
-        <div class="adm-pay"><span>אתר ו-iPhone (אשראי, Apple Pay, Google Pay, PayPal)</span>${webState}</div>
+        <div class="adm-pay"><span>אתר ו-\u2060iPhone (אשראי, Apple Pay, Google Pay, PayPal)</span>${webState}</div>
         <div class="btn-row" style="margin-top:10px"><a class="btn tonal sm" href="https://play.google.com/console" target="_blank" rel="noopener">${icon('chart', 's')} Google Play Console</a><a class="btn tonal sm" href="https://app.lemonsqueezy.com/orders" target="_blank" rel="noopener">${icon('receipt', 's')} מכירות באתר</a></div>
         <div class="tiny muted" style="margin-top:8px">מהסטטיסטיקה האנונימית (מכשירים שלא כיבו אותה), מתעדכן כל כמה שעות. הסכומים המדויקים ותשלומי המס בדוחות של Google Play ושל Lemon Squeezy.</div></div>`;
   }

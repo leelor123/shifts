@@ -128,7 +128,7 @@
     'auth/user-mismatch': 'נבחר חשבון Google אחר. בחר את החשבון שמחובר לאפליקציה.',
     'auth/internal-error': 'משהו השתבש בהתחברות. נסה שוב.',
     'auth/web-storage-unsupported': 'הדפדפן חוסם שמירת נתונים (אולי גלישה בסתר). פתח את האפליקציה בדפדפן רגיל ונסה שוב.',
-    'auth/operation-not-supported-in-this-environment': 'הדפדפן הזה לא תומך בהתחברות. פתח את הקישור ב-Chrome או ב-Safari.',
+    'auth/operation-not-supported-in-this-environment': 'הדפדפן הזה לא תומך בהתחברות. פתח את הקישור ב-\u2060Chrome או ב-\u2060Safari.',
     'auth/timeout': 'ההתחברות לקחה יותר מדי זמן. בדוק את החיבור ונסה שוב.',
   };
   const STORAGE_ERRORS = ['UnknownError', 'InvalidStateError', 'QuotaExceededError', 'DataError', 'AbortError'];
@@ -199,7 +199,7 @@
   async function askMode() {
     return UI.dialog({
       title: 'יש נתונים גם בטלפון וגם בחשבון',
-      text: 'בטלפון הזה כבר יש משמרות, וגם בחשבון ה-Google שלך שמורים נתונים. מה לעשות?',
+      text: 'בטלפון הזה כבר יש משמרות, וגם בחשבון ה-\u2060Google שלך שמורים נתונים. מה לעשות?',
       buttons: [
         { label: 'לאחד את שניהם (מומלץ)', value: 'merge', cls: '' },
         { label: 'רק מהחשבון', value: 'cloud', cls: 'text' },

@@ -32,7 +32,7 @@
       ]);
     }
     UI.download(filename || 'shifts.csv', csv(rows), 'text/csv;charset=utf-8');
-    UI.toast('קובץ CSV נשמר — נפתח ב-Excel / Google Sheets');
+    UI.toast('קובץ CSV נשמר — נפתח ב-\u2060Excel / Google Sheets');
   }
   function monthlyCsv() {
     if (!allowed()) return;
@@ -85,9 +85,9 @@
       <h3>לפי תפקיד</h3><table><tr><th>תפקיד</th><th>שעות</th><th>סכום</th></tr>${roles}</table>
       <h3>לפי סוג שעה</h3><table><tr><th>רגילות</th><th>125%</th><th>150%</th><th>שבת/חג</th><th>שבת/חג + נוספות</th><th>לילה</th></tr><tr><td>${U.hours(t.hoursBy.regular)}</td><td>${U.hours(t.hoursBy.ot1)}</td><td>${U.hours(t.hoursBy.ot2)}</td><td>${U.hours(t.hoursBy.rest)}</td><td>${U.hours(t.hoursBy.restOt1 + t.hoursBy.restOt2)}</td><td>${U.hours(t.hoursBy.night)}</td></tr></table>
       <h3>משמרות</h3><table><tr><th>תאריך</th><th>תפקיד</th><th>שעות</th><th>זמן</th><th>שבת/חג</th><th>נוספות</th><th>שכר</th><th>נסיעות</th><th>סה״כ</th><th>הערות</th></tr>
-      ${list.map((r) => { const sh = App.shift(r.id) || {}; return `<tr><td>${U.fmtDate(r.dateKey, 'short')} ${U.HEB_DAYS_SHORT[U.dow(r.dateKey)]}</td><td>${esc([...new Set(r.segments.map((s) => App.roleName(s.roleId)))].join(' → '))}</td><td>⁦${U.epochHM(r.start)}–${U.epochHM(r.rawEnd)}⁩</td><td>${U.hours(r.paidHours)}</td><td>${r.restHours ? U.hours(r.restHours) : ''}</td><td>${r.otHours ? U.hours(r.otHours) : ''}</td><td>${U.money(r.wage)}</td><td>${U.money(r.travel.amount)}</td><td>${U.money(r.total)}</td><td>${r.overridden || r.dayRuleHit ? '✋ ' + esc(sh.overrideReason || 'עקיפה ידנית') : ''} ${esc(sh.note || '')}</td></tr>`; }).join('')}</table>
+      ${list.map((r) => { const sh = App.shift(r.id) || {}; return `<tr><td>${U.fmtDate(r.dateKey, 'short')} ${U.HEB_DAYS_SHORT[U.dow(r.dateKey)]}</td><td>${esc([...new Set(r.segments.map((s) => App.roleName(s.roleId)))].join(' → '))}</td><td>⁦${U.epochHM(r.start)}\u2060–\u2060${U.epochHM(r.rawEnd)}⁩</td><td>${U.hours(r.paidHours)}</td><td>${r.restHours ? U.hours(r.restHours) : ''}</td><td>${r.otHours ? U.hours(r.otHours) : ''}</td><td>${U.money(r.wage)}</td><td>${U.money(r.travel.amount)}</td><td>${U.money(r.total)}</td><td>${r.overridden || r.dayRuleHit ? '✋ ' + esc(sh.overrideReason || 'עקיפה ידנית') : ''} ${esc(sh.note || '')}</td></tr>`; }).join('')}</table>
       <div style="font-size:8pt;color:#555;margin-top:10pt">נטו משוער — הערכה בלבד. נסיעות לפי ${U.money(S.employers[0].travelPerDay)} ליום${+S.employers[0].travelMonthlyCap ? ', תקרה ' + U.money(S.employers[0].travelMonthlyCap) : ''}.</div></div>`;
-    UI.toast('בחלון ההדפסה בחר "שמור כ-PDF"');
+    UI.toast('בחלון ההדפסה בחר "שמור כ-\u2060PDF"');
     setTimeout(() => window.print(), 300);
   }
 

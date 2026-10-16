@@ -187,7 +187,7 @@ body.fx .nav .fab:active { transform: scale(.9) rotate(90deg); }
 /* four doors */
 .shortcuts { display: grid; grid-template-columns: repeat(4, minmax(0, auto)); gap: 8px; margin: 0 0 22px; } /* sized by their labels while they fit; on a narrow phone or with big text they shrink and the labels wrap (before, the last tile went off the screen) */
 .sc { display: flex; flex-direction: column; align-items: center; gap: 8px; border: 1px solid var(--line); background: var(--surface-1); box-shadow: var(--sh-1); border-radius: 18px; padding: 12px 4px 10px; font: 600 .76rem/1.25 var(--font); color: var(--on-surface); cursor: pointer; transition: transform .2s var(--pop); text-align: center; }
-.sc > span:last-child { max-width: 100%; overflow-wrap: anywhere; } /* a label that does not fit takes a second line */
+.sc > span:last-child { max-width: 100%; overflow-wrap: break-word; } /* a label that does not fit takes a second line (between words) */
 
 /* first steps */
 .card.guide { border: 1.5px solid color-mix(in srgb, var(--brand) 30%, var(--line)); padding: 14px; }
@@ -770,8 +770,11 @@ body.fx .qz-opt:active:not(:disabled) { transform: scale(.96); }
 
 .ob-sub { margin: -4px 2px 10px; font-size: .86rem; line-height: 1.45; color: var(--on-surface-var); }
 
-/* names and notes people type can be one very long word: they wrap instead of pushing the screen wider */
-body { overflow-wrap: anywhere; }
+/* names and notes people type can be one very long word: they wrap instead of pushing the screen wider.
+ * "break-word", not "anywhere": both break a word that cannot fit its line, but "anywhere" also lets a
+ * box shrink below its longest word, so a button, a tab or a table column next to others was squeezed
+ * until "תמונה" broke into "תמונ/ה" and an amount into one digit per line (until 1.16.2) */
+body { overflow-wrap: break-word; }
 .role-chip { max-width: 100%; }
 .role-chip .rc-n { min-width: 0; max-width: 60vw; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 
@@ -1044,6 +1047,8 @@ body:not(.fx) .highlight:active, body:not(.fx) .lb-mine:active, body:not(.fx) .a
 body.fx .color-pick button:active { scale: .88; }
 body.fx .font-pick button:active { scale: .98; }
 body:not(.fx) .color-pick button:active, body:not(.fx) .font-pick button:active { filter: brightness(.92); }
+/* the last presses that jumped to their pressed size: they spring like every other control */
+body.fx .pk-field, body.fx .ach-card, body.fx .home-hero .hh-skin { transition: transform .22s cubic-bezier(.34, 1.56, .64, 1), background-color .15s; }
 
 /* the daily streak of playing (orange that reads well on light and on dark) */
 :root { --streak-ink: #c2410c; }

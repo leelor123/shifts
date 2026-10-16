@@ -68,7 +68,7 @@
     if (!Number.isFinite(v)) return [false, v, 'המספר לא תקין'];
     if (v < 0 && !MAY_BE_NEGATIVE.has(path)) return [false, v, 'כאן אי אפשר מספר שלילי'];
     const r = RANGES[path];
-    if (r && (v < r[0] || v > r[1])) return [true, Math.min(r[1], Math.max(r[0], v)), `הערך הותאם לטווח ${r[0]}–${r[1]}`];
+    if (r && (v < r[0] || v > r[1])) return [true, Math.min(r[1], Math.max(r[0], v)), `הערך הותאם לטווח ${r[0]}\u2060–\u2060${r[1]}`];
     if (Math.abs(v) > 1e7) return [false, v, 'המספר גדול מדי'];
     return [true, v];
   }
@@ -78,6 +78,7 @@
       const t = e.target;
       const path = t.dataset.s;
       if (!path) return;
+      const t0 = performance.now();
       if (!App.dateOk(t)) {
         const r = dateRules(path);
         UI.invalid((r && r.msg) || 'התאריך לא הגיוני');
@@ -95,7 +96,12 @@
         await Store.put('employers', emp);
       }
       UI.toast(msg || 'נשמר', null, { ok: true });
-      if (redraw && t.dataset.redraw != null) redraw();
+      if (redraw && t.dataset.redraw != null) {
+        // a switch slides over first (.2s), then the fields it opens come in (redrawing at once put a new
+        // switch in its place, already on: the knob jumped)
+        const wait = t.type === 'checkbox' ? 220 - (performance.now() - t0) : 0;
+        if (wait > 0) setTimeout(redraw, wait); else redraw();
+      }
     });
   }
   function sectionSheet(title, render, opts) {
@@ -122,7 +128,7 @@
     account: { icon: 'cloud', title: 'חשבון וסנכרון', sub: () => (S.meta.cloudEmail || 'לא מחובר') + ' · ' + root.Cloud.statusText() },
     roles: { icon: 'users', title: 'מעסיקים, תפקידים ותעריפים', sub: () => App.roles().map((r) => r.name + ' ' + U.money(Engine.roleRate(r, U.todayKey()), 0)).join(' · ') },
     calc: { icon: 'flask', title: 'חוקי חישוב', sub: () => { const e = S.employers[0]; return `ש״נ אחרי ${e.otThreshold} ש׳ · שבת ${e.restPct}% · עיגול: ${e.roundingMode === 'none' ? 'ללא' : e.roundingUnit + ' דק׳'}`; } },
-    rest: { icon: 'candle', title: 'שבת וחגים', sub: () => (S.settings.rest.mode === 'city' ? 'לפי ' + (S.settings.rest.city === '__custom' ? 'מיקום מותאם' : S.settings.rest.city) : `קבוע: ⁦${S.settings.rest.fixedStart}–${S.settings.rest.fixedEnd}⁩`) + (S.dayRules.length ? ` · ${S.dayRules.length} כללי יום` : '') },
+    rest: { icon: 'candle', title: 'שבת וחגים', sub: () => (S.settings.rest.mode === 'city' ? 'לפי ' + (S.settings.rest.city === '__custom' ? 'מיקום מותאם' : S.settings.rest.city) : `קבוע: ⁦${S.settings.rest.fixedStart}\u2060–\u2060${S.settings.rest.fixedEnd}⁩`) + (S.dayRules.length ? ` · ${S.dayRules.length} כללי יום` : '') },
     pay: { icon: 'car', title: 'נסיעות ותקופת שכר', sub: () => { const e = S.employers[0]; return `${U.money(e.travelPerDay)} ליום${+e.travelMonthlyCap ? ', תקרה ' + U.money(e.travelMonthlyCap, 0) : ''} · ${e.periodStartDay > 1 ? 'מ-' + e.periodStartDay + ' לחודש' : 'חודש קלנדרי'} · תשלום ב-${e.payDay}`; } },
     net: { icon: 'wallet', title: 'נטו משוער ומס', sub: () => `${S.settings.tax.creditPoints} נק׳ זיכוי · פנסיה ${S.settings.pension.employeePct}%${S.settings.hishtalmut.enabled ? ' · השתלמות' : ''}` },
     leave: { icon: 'beach', title: 'ותק, חופשה, מחלה והבראה', sub: () => (S.settings.startDate ? 'התחלת עבודה: ' + U.fmtDate(S.settings.startDate) : 'הגדר תאריך תחילת עבודה') },
@@ -389,7 +395,7 @@
   RENDER.net = {
     render: () => {
       const T = S.settings.tax, P = S.settings.pension, Hs = S.settings.hishtalmut;
-      return `<div class="banner">${icon('info')}<div>הנטו הוא הערכה. ערכי ברירת המחדל לפי 2025–2026 (מדרגות המס הוקפאו עד 2027). עדכן אם השתנו.</div></div>
+      return `<div class="banner">${icon('info')}<div>הנטו הוא הערכה. ערכי ברירת המחדל לפי 2025\u2060–\u20602026 (מדרגות המס הוקפאו עד 2027). עדכן אם השתנו.</div></div>
         <div class="section-title">מס הכנסה</div><div class="card">
           ${F.num('נקודות זיכוי', 's.tax.creditPoints', T.creditPoints, 'תושב/ת: 2.25 · אישה: 2.75 · נוספות על ילדים, תואר, שחרור מצבא, עולה חדש ועוד.')}
           ${F.num('שווי נקודת זיכוי לחודש ₪', 's.tax.creditPointValue', T.creditPointValue)}
@@ -425,7 +431,7 @@
           <div class="small" style="margin-top:10px">${B.recuperation && B.recuperation.eligible ? `דמי הבראה לשנה: ${B.recuperation.days} ימים × ${U.money(B.recuperation.rate, 0)} × ${U.num(B.jobPct * 100, 0)}% ≈ <b>${U.money(B.recuperation.amount, 0)}</b>` : `דמי הבראה מגיעים אחרי שנת עבודה (מ-${B.recuperation ? U.fmtDate(B.recuperation.eligibleFrom) : '—'}).`}</div>
           <div class="tiny" style="opacity:.8;margin-top:6px">הערכה לפי השעות שרשמת. היקף משרה = שעות חודשיות ÷ ${L.fullTimeHours}.</div></div>` : ''}
         <div class="section-title">חופשה</div><div class="card">
-          ${F.sel('שבוע עבודה', 's.leave.workWeek', [[5, '5 ימים'], [6, '6 ימים']], L.workWeek, '5 ימים: 12 ימי חופשה בשנים 1–5; 6 ימים: 14 (לפי היקף משרה).')}
+          ${F.sel('שבוע עבודה', 's.leave.workWeek', [[5, '5 ימים'], [6, '6 ימים']], L.workWeek, '5 ימים: 12 ימי חופשה בשנים 1\u2060–\u20605; 6 ימים: 14 (לפי היקף משרה).')}
           <div class="grid2">${F.num('יתרת פתיחה — חופשה', 's.leave.vacationOpening', L.vacationOpening)}${F.num('יתרת פתיחה — מחלה', 's.leave.sickOpening', L.sickOpening)}</div>
           ${F.date('יתרות הפתיחה נכונות לתאריך', 's.leave.vacationOpeningDate', L.vacationOpeningDate, 'אם הזנת יתרה מתלוש — התאריך של התלוש. הצבירה תחושב מכאן.')}
           ${F.num('שעות חודשיות למשרה מלאה', 's.leave.fullTimeHours', L.fullTimeHours)}</div>
@@ -472,7 +478,7 @@
       const A = S.settings.alerts;
       const perm = 'Notification' in window ? Notification.permission : 'unsupported';
       const t = (k, l) => F.sw(l, '', 's.alerts.types.' + k, A.types[k] !== false);
-      return `<div class="card">${F.sw('התראות פוש בטלפון', perm === 'granted' ? 'מאושר' : perm === 'denied' ? (App.androidApp ? 'חסום — יש לאשר בהגדרות הטלפון › אפליקציות › Shaati › התראות' : 'חסום — יש לאשר בהגדרות האתר ב-Chrome') : 'דורש אישור', 's.alerts.push', A.push)}
+      return `<div class="card">${F.sw('התראות פוש בטלפון', perm === 'granted' ? 'מאושר' : perm === 'denied' ? (App.androidApp ? 'חסום — יש לאשר בהגדרות הטלפון › אפליקציות › Shaati › התראות' : 'חסום — יש לאשר בהגדרות האתר ב-\u2060Chrome') : 'דורש אישור', 's.alerts.push', A.push)}
           ${perm !== 'granted' && perm !== 'unsupported' ? `<button class="btn tonal block" data-perm>${icon('bell')} אשר התראות</button>` : ''}
           ${perm === 'granted' ? `<button class="btn text sm" data-test>${icon('send', 's')} שלח התראת בדיקה</button>` : ''}
           <div class="tiny muted" style="margin-top:6px">לכל היותר התראת חריגה אחת ביום. תזכורות (טיימר, משמרת קרובה, תשלום) נשלחות בנפרד. כשהאפליקציה סגורה, Chrome בודק מדי פעם (לא מדויק לדקה) — לתזכורת מדויקת לפני משמרת, ייצא אותה ליומן.</div></div>
@@ -502,7 +508,7 @@
   };
 
   RENDER.templates = {
-    render: () => `${S.templates.length ? `<div class="list">${S.templates.map((t) => `<div class="item" style="cursor:default"><span class="role-bar" style="background:${(App.role(t.roleId) || {}).color || '#999'}"></span><span class="body"><span class="t">${esc(t.name)}</span><span class="s">${esc(App.roleName(t.roleId))} · <span class="num">⁦${t.startT}–${t.endT}⁩</span>${t.breakMin ? ` · הפסקה ${t.breakMin}` : ''}</span></span><button class="icon-btn" data-tdel="${t.id}" aria-label="מחק">${icon('trash', 's')}</button></div>`).join('')}</div>`
+    render: () => `${S.templates.length ? `<div class="list">${S.templates.map((t) => `<div class="item" style="cursor:default"><span class="role-bar" style="background:${(App.role(t.roleId) || {}).color || '#999'}"></span><span class="body"><span class="t">${esc(t.name)}</span><span class="s">${esc(App.roleName(t.roleId))} · <span class="num">⁦${t.startT}\u2060–\u2060${t.endT}⁩</span>${t.breakMin ? ` · הפסקה ${t.breakMin}` : ''}</span></span><button class="icon-btn" data-tdel="${t.id}" aria-label="מחק">${icon('trash', 's')}</button></div>`).join('')}</div>`
       : UI.emptyState('layers', 'אין תבניות', 'פתח משמרת ← "שמור כתבנית". אחר כך תוכל להוסיף אותה בלחיצה מכפתור ה-+.')}`,
     mount: (el, draw) => el.querySelectorAll('[data-tdel]').forEach((b) => (b.onclick = async () => { await App.saveOps([{ store: 'templates', del: b.dataset.tdel }], 'מחיקת תבנית', 'התבנית נמחקה'); draw(); })),
   };
@@ -550,14 +556,14 @@
         ${F.sel('נעל אחרי', 's.lock.timeoutMin', [[0, 'מיד'], [1, 'דקה'], [5, '5 דקות'], [15, '15 דקות']], S.settings.lock.timeoutMin)}
         <div data-bio-row></div>
         <div class="btn-row"><button class="btn tonal" data-pin-set>שנה קוד</button><button class="btn danger" data-pin-off>בטל נעילה</button></div>`
-      : `<div class="small" style="margin-bottom:12px">קוד בן 4–8 ספרות שיידרש בכל פתיחה. הקוד נשמר כגיבוב (hash) — לא כטקסט.</div><button class="btn block" data-pin-set>${icon('lock')} הגדר קוד</button>`}
+      : `<div class="small" style="margin-bottom:12px">קוד בן 4\u2060–\u20608 ספרות שיידרש בכל פתיחה. הקוד נשמר כגיבוב (hash) — לא כטקסט.</div><button class="btn block" data-pin-set>${icon('lock')} הגדר קוד</button>`}
       <div class="tiny muted" style="margin-top:10px">הנעילה מגינה מפני הצצה; הנתונים עצמם לא מוצפנים. שכחת את הקוד? אין שחזור — אפשר רק למחוק את נתוני האתר ולשחזר מגיבוי.</div></div>`,
     mount: (el, draw) => {
       const set = el.querySelector('[data-pin-set]');
       if (set) set.onclick = async () => {
-        const p1 = await UI.promptText('קוד חדש', '4–8 ספרות', '', { type: 'password', inputmode: 'numeric', ltr: true, ok: 'המשך' });
+        const p1 = await UI.promptText('קוד חדש', '4\u2060–\u20608 ספרות', '', { type: 'password', inputmode: 'numeric', ltr: true, ok: 'המשך' });
         if (!p1) return;
-        if (!/^\d{4,8}$/.test(p1)) { UI.invalid('הקוד צריך להיות 4–8 ספרות'); return; }
+        if (!/^\d{4,8}$/.test(p1)) { UI.invalid('הקוד צריך להיות 4\u2060–\u20608 ספרות'); return; }
         const p2 = await UI.promptText('אימות', 'הזן שוב את הקוד', '', { type: 'password', inputmode: 'numeric', ltr: true, ok: 'שמור' });
         if (p1 !== p2) { UI.invalid('הקודים לא תואמים'); return; }
         const salt = U.uid();
@@ -587,19 +593,19 @@
 
   RENDER.ai = {
     render: () => `<div class="banner">${icon('shield')}<div>אופציונלי. בלי מפתח — קריאת התלוש והניתוח רצים רק בטלפון. עם מפתח — אפשר לבקש ניתוח חכם לתלושים בפורמט מורכב. לפני כל שליחה מוסתרים ת״ז, פרטי בנק וכתובת, ותראה ותאשר בדיוק מה נשלח.</div></div>
-      <div class="card">${F.text('מפתח API של Claude', 's.ai.apiKey', S.settings.ai.apiKey, 'נוצר ב-console.anthropic.com. נשמר רק בטלפון ולא נכלל בקובצי גיבוי.', 'type="password" autocomplete="off" dir="ltr"')}
+      <div class="card">${F.text('מפתח API של Claude', 's.ai.apiKey', S.settings.ai.apiKey, 'נוצר ב-\u2060console.anthropic.com. נשמר רק בטלפון ולא נכלל בקובצי גיבוי.', 'type="password" autocomplete="off" dir="ltr"')}
         ${F.sel('מודל', 's.ai.model', [['claude-opus-5-5', 'Claude Opus 5.5 (מומלץ)'], ['claude-sonnet-5-5', 'Claude Sonnet 5.5 (זול יותר)'], ['claude-haiku-5-5', 'Claude Haiku 5.5 (הכי זול)']], S.settings.ai.model).replace('data-s=', 'data-keep-str data-s=')}
         ${S.settings.ai.apiKey ? `<button class="btn danger block" data-ai-clear>${icon('trash')} מחק את המפתח</button>` : ''}</div>
-      <div class="tiny muted" style="margin:6px 4px">השימוש מחויב בחשבון ה-API שלך אצל Anthropic. הניתוח הוא כלי עזר ואינו ייעוץ משפטי או חשבונאי.</div>`,
+      <div class="tiny muted" style="margin:6px 4px">השימוש מחויב בחשבון ה-\u2060API שלך אצל Anthropic. הניתוח הוא כלי עזר ואינו ייעוץ משפטי או חשבונאי.</div>`,
     mount: (el, draw) => { const c = el.querySelector('[data-ai-clear]'); if (c) c.onclick = async () => { await Store.setSettings((s) => { s.ai.apiKey = ''; }); draw(); }; },
   };
 
   RENDER.backup = {
     render: () => {
       const B = S.settings.backup;
-      return `<div class="banner warn">${icon('cloud')}<div>הנתונים שמורים רק בטלפון הזה. שמור גיבוי ב-Google Drive כדי לא לאבד אותם אם הטלפון יוחלף או יאופס.</div></div>
+      return `<div class="banner warn">${icon('cloud')}<div>הנתונים שמורים רק בטלפון הזה. שמור גיבוי ב-\u2060Google Drive כדי לא לאבד אותם אם הטלפון יוחלף או יאופס.</div></div>
         <div class="card"><div class="small">גיבוי אחרון: <b>${B.lastBackup ? U.fmtDate(U.epochKey(B.lastBackup)) + ' (' + UI.timeAgo(B.lastBackup) + ')' : 'אף פעם'}</b></div>
-          <div class="btn-row" style="margin-top:12px"><button class="btn" data-bk="share">${icon('share')} גבה ושתף ל-Drive</button></div>
+          <div class="btn-row" style="margin-top:12px"><button class="btn" data-bk="share">${icon('share')} גבה ושתף ל-\u2060Drive</button></div>
           <div class="btn-row" style="margin-top:8px"><button class="btn tonal" data-bk="dl">${icon('download')} הורד קובץ</button><button class="btn tonal" data-bk="files">${icon('file')} כולל קובצי תלושים</button></div></div>
         <div class="card">${F.sel('גיבוי אוטומטי', 's.backup.autoEvery', [['weekly', 'כל שבוע'], ['monthly', 'כל חודש'], ['off', 'כבוי']], B.autoEvery, S.meta.cloudUid ? 'החשבון שלך מחובר, והנתונים כבר נשמרים בענן, לכן לא יורדים קבצים אוטומטית. אפשר תמיד להוריד גיבוי ידני.' : 'בפתיחת האפליקציה, כשהגיע הזמן, קובץ גיבוי יורד אוטומטית לתיקיית ההורדות.').replace('data-s=', 'data-keep-str data-s=')}</div>
         <div class="section-title">${icon('upload', 's')} שחזור</div>
@@ -656,7 +662,7 @@
 
   RENDER.export = {
     render: () => `<div class="list">
-      <button class="item" data-x="csv"><span class="lead">${icon('table')}</span><span class="body"><span class="t">כל המשמרות — CSV</span><span class="s">נפתח ב-Excel ו-Google Sheets (עברית תקינה)</span></span></button>
+      <button class="item" data-x="csv"><span class="lead">${icon('table')}</span><span class="body"><span class="t">כל המשמרות — CSV</span><span class="s">נפתח ב-\u2060Excel ו-\u2060Google Sheets (עברית תקינה)</span></span></button>
       <button class="item" data-x="mcsv"><span class="lead">${icon('table')}</span><span class="body"><span class="t">סיכום חודשי — CSV</span><span class="s">חודש בכל שורה: שעות, ברוטו, נטו משוער…</span></span></button>
       <button class="item" data-x="pdf"><span class="lead">${icon('printer')}</span><span class="body"><span class="t">דוח חודשי — PDF</span><span class="s">החודש הנוכחי; לחודשים אחרים: דוחות ← סיכומים</span></span></button>
       <button class="item" data-x="ics"><span class="lead">${icon('calendar')}</span><span class="body"><span class="t">משמרות ליומן — ‎.ics</span><span class="s">כל המשמרות; מתוכננות עם תזכורת</span></span></button></div>`,
@@ -685,7 +691,7 @@
     render: () => `<div class="card"><div class="kv"><span>גרסת אפליקציה</span><b>${root.APP_VERSION}</b></div><div class="kv"><span>מבנה נתונים</span><b>${Store.SCHEMA_VERSION}</b></div>
         <div class="kv"><span>משמרות</span><b>${S.shifts.length}</b></div><div class="kv"><span>תלושים</span><b>${S.payslips.length}</b></div><div class="kv"><span>אחסון בשימוש</span><b id="ab-storage">…</b></div><div class="kv"><span>אחסון קבוע</span><b id="ab-persist">…</b></div></div>
       <div class="section-title">התקנה כאפליקציה</div>
-      <div class="card small">ב-Chrome: תפריט ⋮ ← "הוספה למסך הבית" ← "התקנה". אחרי ההתקנה: לחיצה ארוכה על האייקון ← "התחל משמרת" / "הוסף משמרת".</div>
+      <div class="card small">ב-\u2060Chrome: תפריט ⋮ ← "הוספה למסך הבית" ← "התקנה". אחרי ההתקנה: לחיצה ארוכה על האייקון ← "התחל משמרת" / "הוסף משמרת".</div>
       <div class="section-title">איך זה עובד</div>
       <div class="card small">כל החישובים מתבצעים בטלפון, כולל זמני שבת וחגים (לוח עברי וחישוב שקיעה מקומיים). האפליקציה עובדת בלי אינטרנט. חיבור נדרש רק בפעם הראשונה של קריאת PDF / זיהוי טקסט מתמונה (טעינת הרכיב), ולניתוח AI אם בחרת בו.</div>
       <div class="disclaimer">${icon('info', 's')}<div>האפליקציה היא כלי עזר אישי. החישובים (נטו, מס, זכויות) הם הערכה ואינם ייעוץ משפטי, חשבונאי או מס.</div></div>`,
