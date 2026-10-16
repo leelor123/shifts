@@ -30,7 +30,8 @@
     if (ac.state === 'suspended') ac.resume().catch(() => {});
     return ac;
   }
-  // notes: [frequency, start (s), duration (s), wave, volume, glide-to frequency]
+  // notes: [frequency, start (s), duration (s), wave, volume, glide-to frequency]. The wave 'noise' is a
+  // burst of filtered noise (a swish, a thud): its frequency is the filter's centre, and glides like a tone.
   const SOUNDS = {
     tap: [[1250, 0, 0.035, 'sine', 0.05, 900]],
     nav: [[740, 0, 0.05, 'triangle', 0.045, 980]],
@@ -45,29 +46,67 @@
     success: [[523, 0, 0.1, 'triangle', 0.055], [659, 0.08, 0.1, 'triangle', 0.055], [784, 0.16, 0.1, 'triangle', 0.055], [1047, 0.24, 0.28, 'triangle', 0.06]],
     intro: [[392, 0, 0.18, 'sine', 0.05, 523], [587, 0.16, 0.2, 'sine', 0.05, 659], [784, 0.36, 0.34, 'triangle', 0.045]],
     whoosh: [[300, 0, 0.22, 'sine', 0.03, 900]],
+    // the games
+    ding: [[1047, 0, 0.08, 'triangle', 0.06], [1568, 0.06, 0.22, 'sine', 0.05]], // a right answer (its pitch climbs with the streak)
+    bonk: [[233, 0, 0.1, 'square', 0.028, 147], [147, 0.08, 0.22, 'triangle', 0.07, 98]], // a wrong one
+    flip: [[2200, 0, 0.09, 'noise', 0.05, 5200]], // a card turns over
+    match: [[1319, 0, 0.07, 'triangle', 0.05], [1760, 0.06, 0.07, 'triangle', 0.05], [2637, 0.12, 0.26, 'sine', 0.045]],
+    star: [[1568, 0, 0.1, 'triangle', 0.055], [2349, 0.05, 0.32, 'sine', 0.045]],
+    combo: [[784, 0, 0.07, 'triangle', 0.05], [988, 0.06, 0.07, 'triangle', 0.05], [1175, 0.12, 0.07, 'triangle', 0.05], [1568, 0.18, 0.3, 'triangle', 0.055]],
+    fanfare: [[523, 0, 0.11, 'square', 0.028], [523, 0.12, 0.07, 'square', 0.028], [659, 0.2, 0.1, 'square', 0.028], [784, 0.3, 0.5, 'square', 0.032], [392, 0.3, 0.5, 'triangle', 0.05], [1047, 0.3, 0.5, 'triangle', 0.03]],
+    boom: [[900, 0, 0.34, 'noise', 0.13, 140], [120, 0, 0.3, 'sine', 0.11, 40]], // a fine hits the wallet
+    stamp: [[1800, 0, 0.05, 'noise', 0.07, 600], [180, 0, 0.12, 'sine', 0.09, 90]], // the verdict lands
+    swish: [[700, 0, 0.16, 'noise', 0.035, 2600]], // a banner flies in
+    alarm: [[1320, 0, 0.05, 'square', 0.022], [1320, 0.09, 0.05, 'square', 0.022]], // the last seconds
   };
   Fx.audio = audio; // shared with the games' music (music.js)
-  /** Plays a sound. With {strict: true} it stays silent unless audio is already allowed to play. */
+  let noiseBuf = null;
+  const noise = (c) => {
+    if (!noiseBuf) {
+      noiseBuf = c.createBuffer(1, Math.round(c.sampleRate * 0.6), c.sampleRate);
+      const d = noiseBuf.getChannelData(0);
+      for (let i = 0; i < d.length; i++) d[i] = Math.random() * 2 - 1;
+    }
+    return noiseBuf;
+  };
+  /** Plays a sound. With {strict: true} it stays silent unless audio is already allowed to play; {pitch: 1.5}
+   * plays it higher (a streak climbs a scale). */
   Fx.play = function (name, opts) {
     if (prefs().sound === false) return;
     const notes = SOUNDS[name];
     const c = notes && audio();
     if (!c || (opts && opts.strict && c.state !== 'running')) return;
+    const k = (opts && opts.pitch) || 1;
     const t0 = c.currentTime + 0.005;
-    for (const [f, at, dur, wave, vol, glide] of notes) {
-      const o = c.createOscillator();
+    for (const [f0, at, dur, wave, vol, glide0] of notes) {
+      const f = f0 * k, glide = glide0 && glide0 * k;
       const g = c.createGain();
-      o.type = wave || 'sine';
-      o.frequency.setValueAtTime(f, t0 + at);
-      if (glide) o.frequency.exponentialRampToValueAtTime(glide, t0 + at + dur);
+      let src;
+      if (wave === 'noise') {
+        src = c.createBufferSource();
+        src.buffer = noise(c);
+        const bp = c.createBiquadFilter();
+        bp.type = 'bandpass'; bp.Q.value = 1.1;
+        bp.frequency.setValueAtTime(f, t0 + at);
+        if (glide) bp.frequency.exponentialRampToValueAtTime(glide, t0 + at + dur);
+        src.connect(bp).connect(g);
+      } else {
+        src = c.createOscillator();
+        src.type = wave || 'sine';
+        src.frequency.setValueAtTime(f, t0 + at);
+        if (glide) src.frequency.exponentialRampToValueAtTime(glide, t0 + at + dur);
+        src.connect(g);
+      }
       g.gain.setValueAtTime(0.0001, t0 + at);
       g.gain.exponentialRampToValueAtTime(vol || 0.05, t0 + at + 0.008);
       g.gain.exponentialRampToValueAtTime(0.0001, t0 + at + dur);
-      o.connect(g).connect(c.destination);
-      o.start(t0 + at);
-      o.stop(t0 + at + dur + 0.02);
+      g.connect(c.destination);
+      src.start(t0 + at);
+      src.stop(t0 + at + dur + 0.02);
     }
   };
+  /** A step up a cheerful scale (a major pentatonic), for streaks: 0 → 1, 1 → 1.12, … up to about 2.5 (step 7). */
+  Fx.step = (n) => { const S = [0, 2, 4, 7, 9]; const i = Math.max(0, Math.min(n | 0, 7)); return Math.pow(2, (S[i % 5] + 12 * Math.floor(i / 5)) / 12); };
 
   /* ---------------- vibration ---------------- */
   Fx.haptic = function (pattern) {
@@ -274,8 +313,9 @@
 
   /* ---------------- every tap ---------------- */
   const TAPPABLE = 'button, a[href], [data-act], .item, .chip, [role="button"], [role="tab"], label.switch-row, summary';
-  // every control gets the ring, except the games' own boards (their pieces answer in their own way)
-  const UNRINGED = '.cg-stage *';
+  // every control gets the ring, except the games' own pieces: the board, the answers, the cards and the
+  // big yes/no buttons answer with their own sparks and glows (a ring on top of them was one effect too many)
+  const UNRINGED = '.cg-stage *, .qz-opt, .pr-card, .tf-btns .btn';
   document.addEventListener('click', (e) => {
     const t = e.target.closest && e.target.closest(TAPPABLE);
     if (!t || t.disabled) return;

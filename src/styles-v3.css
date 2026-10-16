@@ -680,7 +680,7 @@ body.fx .qz-opt:active:not(:disabled) { transform: scale(.96); }
 .pr-back, .pr-face { position: absolute; inset: 0; display: grid; place-items: center; padding: 6px; border-radius: 16px; text-align: center; backface-visibility: hidden; -webkit-backface-visibility: hidden; }
 .pr-back { background: var(--grad-brand); box-shadow: var(--sh-1); }
 .pr-back::after { content: '₪'; font: 800 1.7rem var(--display); color: rgba(255, 255, 255, .5); }
-.pr-face { transform: rotateY(180deg); background: var(--surface-1); border: 1.5px solid var(--line); box-shadow: var(--sh-1); color: var(--on-surface); font-size: .8rem; line-height: 1.3; overflow-wrap: anywhere; }
+.pr-face { transform: rotateY(180deg); background: var(--surface-1); border: 1.5px solid var(--line); box-shadow: var(--sh-1); color: var(--on-surface); font-size: .8rem; line-height: 1.3; overflow-wrap: break-word; }
 .pr-face.w { font: 700 .98rem/1.25 var(--display); color: var(--brand-strong); }
 .pr-card.done .pr-face { border-color: var(--good); background: color-mix(in srgb, var(--good) 12%, var(--surface-1)); animation: pr-glow .6s ease-out; }
 @keyframes pr-glow { 40% { box-shadow: 0 0 0 5px color-mix(in srgb, var(--good) 30%, transparent); } }
@@ -1061,3 +1061,150 @@ body.fx .pk-field, body.fx .ach-card, body.fx .home-hero .hh-skin { transition: 
 .gm-streak-bar small { flex: 1; min-width: 0; text-align: end; color: var(--on-surface-var); font-size: .8rem; }
 .gm-streak-bar:not(.on) > span { filter: grayscale(.6); }
 @media (prefers-reduced-motion: reduce) { .gm-streak { animation: none; } }
+
+/* ============================================================
+ * The games, in colour (1.17): each game has its own bright backdrop, the quiz answers are four bold tiles
+ * (a colour and a shape each), the true/false and higher/lower buttons press down like real buttons, the
+ * cards of "זוגות" have coloured backs, and the end of a round has turning rays and stars. The effects layer
+ * (gamefx.js) sits on top: sparks and confetti in a canvas, a glow at the edges, a combo banner.
+ * Only transform, scale, rotate, translate and opacity are animated; colours and gradients are drawn once.
+ * ============================================================ */
+.game-sheet {
+  --gm-a: #c4b5fd; --gm-b: #f9a8d4; --gm-base: #f6f2ff; --gm-k: 72%;
+  background:
+    radial-gradient(130% 48% at 100% 0%, color-mix(in srgb, var(--gm-a) var(--gm-k), transparent) 0%, transparent 62%),
+    radial-gradient(120% 48% at 0% 100%, color-mix(in srgb, var(--gm-b) var(--gm-k), transparent) 0%, transparent 64%),
+    var(--gm-base);
+}
+.game-sheet.gs-coins { --gm-a: #fde68a; --gm-b: #c4b5fd; --gm-base: #fffaeb; }
+.game-sheet.gs-quiz { --gm-a: #c4b5fd; --gm-b: #f9a8d4; --gm-base: #f6f2ff; }
+.game-sheet.gs-facts { --gm-a: #99f6c8; --gm-b: #a5f3fc; --gm-base: #eefcf5; }
+.game-sheet.gs-pairs { --gm-a: #fbcfe8; --gm-b: #fde68a; --gm-base: #fdf2f8; }
+.game-sheet.gs-hours { --gm-a: #bae6fd; --gm-b: #c7d2fe; --gm-base: #eff8ff; }
+:root[data-theme="dark"] .game-sheet { --gm-k: 24%; }
+:root[data-theme="dark"] .game-sheet.gs-coins { --gm-base: #1a1408; }
+:root[data-theme="dark"] .game-sheet.gs-quiz { --gm-base: #150f2b; }
+:root[data-theme="dark"] .game-sheet.gs-facts { --gm-base: #08201a; }
+:root[data-theme="dark"] .game-sheet.gs-pairs { --gm-base: #230a1c; }
+:root[data-theme="dark"] .game-sheet.gs-hours { --gm-base: #0a1a2c; }
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) .game-sheet { --gm-k: 24%; }
+  :root:not([data-theme="light"]) .game-sheet.gs-coins { --gm-base: #1a1408; }
+  :root:not([data-theme="light"]) .game-sheet.gs-quiz { --gm-base: #150f2b; }
+  :root:not([data-theme="light"]) .game-sheet.gs-facts { --gm-base: #08201a; }
+  :root:not([data-theme="light"]) .game-sheet.gs-pairs { --gm-base: #230a1c; }
+  :root:not([data-theme="light"]) .game-sheet.gs-hours { --gm-base: #0a1a2c; }
+}
+
+/* the hub: each game card carries its game's colour */
+.gm-card { --gc: #8b5cf6; background: linear-gradient(to left, color-mix(in srgb, var(--gc) 15%, var(--surface-1)) 0%, var(--surface-1) 70%); border-color: color-mix(in srgb, var(--gc) 30%, var(--line)); }
+.gm-card[data-game="coins"] { --gc: #f59e0b; }
+.gm-card[data-game="quiz"] { --gc: #8b5cf6; }
+.gm-card[data-game="facts"] { --gc: #10b981; }
+.gm-card[data-game="pairs"] { --gc: #ec4899; }
+.gm-card[data-game="hours"] { --gc: #0ea5e9; }
+
+/* the effects layer (gamefx.js): made with the game, gone with it */
+.gfx-canvas, .gfx-glow, .gfx-banner { position: absolute; pointer-events: none; }
+.gfx-canvas { inset: 0; width: 100%; height: 100%; z-index: 6; border-radius: inherit; }
+.gfx-glow { inset: 0; z-index: 5; border-radius: inherit; opacity: 0; will-change: opacity; }
+.gfx-glow.good { box-shadow: inset 0 0 0 3px rgba(33, 212, 127, .55), inset 0 0 60px 8px rgba(33, 212, 127, .32); }
+.gfx-glow.bad { box-shadow: inset 0 0 0 3px rgba(255, 77, 94, .65), inset 0 0 70px 12px rgba(255, 77, 94, .38); }
+/* the scores bump on every point, the time bars throb near the end: each keeps a layer of its own for the whole
+   game. Animated without one, the browser made a layer for the bump and, around it, a screen-sized layer for
+   everything that might overlap it - and dropped both 0.3s later, on every coin caught */
+.cg-score, .qz-score { will-change: transform; }
+.cg-time, .qz-timer { will-change: scale; }
+/* the glow and the banner are moved by gamefx.js (Web Animations); at rest they are invisible */
+.gfx-banner { left: 50%; top: 36%; z-index: 7; padding: 10px 24px; border-radius: 999px; background: linear-gradient(135deg, #e11d48, #c2410c); color: #fff; font: 700 1.45rem var(--display); white-space: nowrap; box-shadow: 0 12px 30px -8px rgba(225, 29, 72, .6), inset 0 0 0 2px rgba(255, 255, 255, .25); opacity: 0; transform: translate(-50%, -50%) scale(.4); will-change: transform, opacity; }
+
+/* coins: a night sky in the canvas; "יאללה!" after the countdown; the time throbs at the end */
+.gs-coins .cg-stage { background: #1b1446; border: 0; box-shadow: 0 14px 30px -14px rgba(46, 26, 107, .7); }
+.cg-over { transition: opacity .25s ease-out; }
+.cg-over.fade { opacity: 0; pointer-events: none; }
+.cg-count.go { font-size: 3.4rem; color: #e11d48; }
+.cg-time.low { animation: cg-low .5s ease-in-out infinite alternate; }
+@keyframes cg-low { to { scale: 1.15; } }
+
+/* quiz: four bold answer tiles that press down */
+.qz-opt { --c: #d61f45; --cs: #8d1029; display: flex; align-items: center; justify-content: center; gap: 8px; min-height: 64px; border: 0; color: #fff; background: var(--c);
+  box-shadow: 0 5px 0 var(--cs), 0 12px 18px -8px color-mix(in srgb, var(--c) 60%, transparent); text-shadow: 0 1px 2px rgba(0, 0, 0, .3); transition: transform .14s var(--pop), box-shadow .14s; }
+.qz-opt[data-k="1"] { --c: #1468d0; --cs: #0b4691; }
+.qz-opt[data-k="2"] { --c: #b45309; --cs: #763506; }
+.qz-opt[data-k="3"] { --c: #1d7f2e; --cs: #10511c; }
+.qz-sh { font-size: .85rem; opacity: .85; }
+body.fx .qz-opt:active:not(:disabled) { transform: translateY(4px); box-shadow: 0 1px 0 var(--cs), 0 4px 10px -8px color-mix(in srgb, var(--c) 60%, transparent); }
+.qz-opt:disabled { opacity: .32; }
+.qz-opt.right, .qz-opt.wrong { opacity: 1; background: var(--c); border-color: transparent; }
+.qz-opt.right { box-shadow: 0 0 0 3px var(--surface-1), 0 0 0 6px #13a865, 0 14px 26px -8px rgba(19, 168, 101, .65); animation: qz-win .5s var(--pop); }
+.qz-opt.wrong { box-shadow: 0 0 0 3px var(--surface-1), 0 0 0 6px #e5354a; animation: gm-shake .4s; }
+.qz-opt.right::after, .qz-opt.wrong::after { position: absolute; top: -10px; inset-inline-end: -8px; width: 28px; height: 28px; border-radius: 50%; display: grid; place-items: center; color: #fff; font: 800 1rem/1 var(--display); box-shadow: 0 3px 8px rgba(0, 0, 0, .25); animation: qz-badge .4s var(--pop) both; }
+.qz-opt.right::after { content: '✓'; background: #13a865; }
+.qz-opt.wrong::after { content: '✕'; background: #e5354a; }
+@keyframes qz-win { 40% { scale: 1.07; } }
+@keyframes qz-badge { from { opacity: 0; scale: .2; } }
+/* the time bar: thicker, green → amber → red, and it throbs in the last three seconds */
+.qz-timer { height: 7px; border-radius: 4px; background: color-mix(in srgb, var(--on-surface) 10%, transparent); }
+.qz-timer b { background: #21d47f; border-radius: inherit; animation-name: qz-time, qz-heat; }
+@keyframes qz-heat { 0%, 50% { background-color: #21d47f; } 72% { background-color: #ffb524; } 100% { background-color: #ff4d5e; } }
+.qz-timer.hurry { animation: qz-hurry .45s ease-in-out infinite alternate; }
+@keyframes qz-hurry { to { scale: 1 1.7; } }
+.qz-score { font-size: 1.35rem; }
+
+/* true / false: a card with a colourful frame, the verdict lands like a rubber stamp, buttons that press down */
+.tf-card { border: 2px solid transparent; background: linear-gradient(var(--surface-1), var(--surface-1)) padding-box, linear-gradient(135deg, #34d399, #22d3ee 50%, #a78bfa) border-box; }
+.tf-card.ok { background: linear-gradient(color-mix(in srgb, var(--good) 10%, var(--surface-1)), color-mix(in srgb, var(--good) 10%, var(--surface-1))) padding-box, linear-gradient(var(--good), var(--good)) border-box; }
+.tf-card.no { background: linear-gradient(color-mix(in srgb, #e5484d 9%, var(--surface-1)), color-mix(in srgb, #e5484d 9%, var(--surface-1))) padding-box, linear-gradient(#e5484d, #e5484d) border-box; }
+.tf-verdict { top: 10px; inset-inline-end: 12px; padding: 4px 12px; border-radius: 10px; background: var(--surface-1); border: 2.5px solid currentColor; font: 800 .95rem var(--display); rotate: -9deg; animation: tf-stamp .38s cubic-bezier(.2, 1.5, .4, 1) both; }
+.tf-verdict.t { color: var(--good); }
+.tf-verdict.f { color: var(--bad); }
+@keyframes tf-stamp { from { opacity: 0; scale: 2.6; rotate: -28deg; } 55% { opacity: 1; } }
+.tf-btns .btn { min-height: 60px; font-size: 1.1rem; box-shadow: 0 5px 0 rgba(0, 0, 0, .24), 0 12px 18px -10px rgba(0, 0, 0, .4); transition: transform .14s var(--pop), box-shadow .14s; }
+body.fx .tf-btns .btn:active:not(:disabled) { transform: translateY(4px); box-shadow: 0 1px 0 rgba(0, 0, 0, .24), 0 4px 10px -10px rgba(0, 0, 0, .4); }
+
+/* pairs: every card back has its own colour; a pair found pops, a miss shakes (on the inner card, so the
+   card's own entrance never plays again) */
+.pr-card:nth-child(6n+1) { --pb: linear-gradient(135deg, #8b5cf6, #d946ef); }
+.pr-card:nth-child(6n+2) { --pb: linear-gradient(135deg, #f43f5e, #fb923c); }
+.pr-card:nth-child(6n+3) { --pb: linear-gradient(135deg, #0ea5e9, #6366f1); }
+.pr-card:nth-child(6n+4) { --pb: linear-gradient(135deg, #10b981, #0ea5e9); }
+.pr-card:nth-child(6n+5) { --pb: linear-gradient(135deg, #f59e0b, #ef4444); }
+.pr-card:nth-child(6n) { --pb: linear-gradient(135deg, #ec4899, #8b5cf6); }
+.pr-back { background: radial-gradient(rgba(255, 255, 255, .2) 1.2px, transparent 1.7px) 0 0 / 12px 12px, var(--pb, var(--grad-brand)); box-shadow: inset 0 0 0 2px rgba(255, 255, 255, .25), 0 6px 12px -6px rgba(0, 0, 0, .4); }
+.pr-back::after { color: rgba(255, 255, 255, .9); text-shadow: 0 2px 5px rgba(0, 0, 0, .25); }
+.pr-card.done .pr-in { animation: pr-pop .5s var(--pop) .15s; }
+@keyframes pr-pop { 45% { scale: 1.12; } }
+.pr-card.miss .pr-in { animation: pr-miss .38s ease-in-out; }
+@keyframes pr-miss { 20%, 60% { translate: -5px 0; } 40%, 80% { translate: 5px 0; } }
+
+/* higher or lower: two coloured cards and a "VS" badge that breathes */
+.hw-card.a { background: linear-gradient(170deg, color-mix(in srgb, #3d7bff 16%, var(--surface-1)), var(--surface-1) 70%); border-color: color-mix(in srgb, #3d7bff 38%, var(--line)); }
+.hw-card.b:not(.shown) { background: linear-gradient(170deg, color-mix(in srgb, #ff7a3d 16%, var(--surface-1)), var(--surface-1) 70%); border-color: color-mix(in srgb, #ff7a3d 38%, var(--line)); }
+.hw-vs { display: grid; place-items: center; width: 40px; height: 40px; border-radius: 50%; background: linear-gradient(135deg, #e11d48, #c2410c); color: #fff; font: 800 .9rem var(--display); box-shadow: 0 6px 14px -4px rgba(225, 29, 72, .55); animation: hw-vs 1.6s ease-in-out infinite; }
+@keyframes hw-vs { 50% { scale: 1.12; } }
+.hw-q { animation: hw-q 1.3s ease-in-out infinite; }
+@keyframes hw-q { 50% { rotate: -7deg; scale: 1.06; } }
+
+/* the end of a round: rays turning behind the mascot, up to three stars, a shining "new record" */
+.gm-hero { position: relative; display: grid; place-items: center; }
+.gm-hero > :not(.gm-rays) { position: relative; z-index: 1; }
+.gm-rays { position: absolute; left: 50%; top: 50%; width: 250px; height: 250px; translate: -50% -50%; border-radius: 50%; pointer-events: none;
+  background: repeating-conic-gradient(color-mix(in srgb, var(--amber) 30%, transparent) 0deg 10deg, transparent 10deg 30deg);
+  -webkit-mask: radial-gradient(circle, #000 24%, transparent 68%); mask: radial-gradient(circle, #000 24%, transparent 68%);
+  animation: gm-spin 16s linear infinite; will-change: rotate; }
+.gm-rays.best { background: repeating-conic-gradient(rgba(255, 190, 0, .55) 0deg 10deg, transparent 10deg 30deg); }
+@keyframes gm-spin { to { rotate: 360deg; } }
+.gm-stars { display: flex; align-items: flex-end; gap: 6px; margin: 2px 0; }
+.gm-stars i { width: 34px; height: 34px; background: color-mix(in srgb, var(--on-surface) 14%, transparent); clip-path: polygon(50% 0%, 61.8% 35.4%, 100% 38.2%, 69.1% 61.8%, 80.9% 100%, 50% 76.4%, 19.1% 100%, 30.9% 61.8%, 0% 38.2%, 38.2% 35.4%); }
+.gm-stars i:nth-child(2) { width: 44px; height: 44px; }
+.gm-stars i.on { background: linear-gradient(160deg, #ffe680, #ffb524 55%, #f08c00); animation: gm-star .5s var(--pop) both; }
+@keyframes gm-star { from { scale: 0; rotate: -70deg; } 60% { scale: 1.32; } }
+.gm-end-b.best { position: relative; overflow: hidden; background: linear-gradient(135deg, #ffd84d, #ff9f1a); color: #3a2300; box-shadow: 0 6px 16px -6px rgba(255, 159, 26, .7); }
+.gm-end-b.best::after { content: ''; position: absolute; inset: 0; background: linear-gradient(100deg, transparent 35%, rgba(255, 255, 255, .75) 50%, transparent 65%); animation: gm-shine 2.6s ease-in-out infinite; }
+@keyframes gm-shine { 0% { translate: -130% 0; } 45%, 100% { translate: 130% 0; } }
+
+/* motion off (Settings › Look) or the system's "reduce motion": nothing turns, throbs or shines */
+body:not(.fx) .gm-rays, body:not(.fx) .hw-vs, body:not(.fx) .hw-q, body:not(.fx) .gm-end-b.best::after, body:not(.fx) .qz-timer.hurry, body:not(.fx) .cg-time.low { animation: none; }
+@media (prefers-reduced-motion: reduce) {
+  .gm-rays, .hw-vs, .hw-q, .gm-end-b.best::after, .qz-timer.hurry, .cg-time.low, .gm-stars i.on, .tf-verdict, .pr-card.done .pr-in, .pr-card.miss .pr-in, .qz-opt.right, .qz-opt.right::after, .qz-opt.wrong::after { animation: none !important; }
+}

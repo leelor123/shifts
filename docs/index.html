@@ -2,7 +2,7 @@
 <html lang="he" dir="rtl">
 <head>
 <meta charset="utf-8">
-<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'sha256-Gta0ytVfiAq8wivRUB46dy5yv6sxAlY26Kl8ciSZzxo=' https://www.gstatic.com https://apis.google.com https://cdnjs.cloudflare.com https://cdn.jsdelivr.net 'wasm-unsafe-eval'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com data:; img-src 'self' data: blob: https:; connect-src 'self' https: wss:; frame-src https://shiftpay-70ab6.firebaseapp.com https://accounts.google.com https://apis.google.com https://*.google.com; worker-src 'self' blob: https://cdnjs.cloudflare.com https://cdn.jsdelivr.net; media-src 'self' data: blob:; manifest-src 'self'; object-src 'none'; base-uri 'self'; form-action 'self'">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'sha256-kpN77KATNZEY+LR0NZTxXCJ7MJfFk7EScKUWVWTb0a4=' https://www.gstatic.com https://apis.google.com https://cdnjs.cloudflare.com https://cdn.jsdelivr.net 'wasm-unsafe-eval'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com data:; img-src 'self' data: blob: https:; connect-src 'self' https: wss:; frame-src https://shiftpay-70ab6.firebaseapp.com https://accounts.google.com https://apis.google.com https://*.google.com; worker-src 'self' blob: https://cdnjs.cloudflare.com https://cdn.jsdelivr.net; media-src 'self' data: blob:; manifest-src 'self'; object-src 'none'; base-uri 'self'; form-action 'self'">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="theme-color" content="#0d2b6b">
 <meta name="description" content="מעקב משמרות וחישוב שכר אישי: שבתות, חגים, שעות נוספות, נסיעות, נטו משוער וניתוח תלושים — נשמר בחשבון שלך ועובד גם בלי אינטרנט.">
@@ -1593,7 +1593,7 @@ body.fx .qz-opt:active:not(:disabled) { transform: scale(.96); }
 .pr-back, .pr-face { position: absolute; inset: 0; display: grid; place-items: center; padding: 6px; border-radius: 16px; text-align: center; backface-visibility: hidden; -webkit-backface-visibility: hidden; }
 .pr-back { background: var(--grad-brand); box-shadow: var(--sh-1); }
 .pr-back::after { content: '₪'; font: 800 1.7rem var(--display); color: rgba(255, 255, 255, .5); }
-.pr-face { transform: rotateY(180deg); background: var(--surface-1); border: 1.5px solid var(--line); box-shadow: var(--sh-1); color: var(--on-surface); font-size: .8rem; line-height: 1.3; overflow-wrap: anywhere; }
+.pr-face { transform: rotateY(180deg); background: var(--surface-1); border: 1.5px solid var(--line); box-shadow: var(--sh-1); color: var(--on-surface); font-size: .8rem; line-height: 1.3; overflow-wrap: break-word; }
 .pr-face.w { font: 700 .98rem/1.25 var(--display); color: var(--brand-strong); }
 .pr-card.done .pr-face { border-color: var(--good); background: color-mix(in srgb, var(--good) 12%, var(--surface-1)); animation: pr-glow .6s ease-out; }
 @keyframes pr-glow { 40% { box-shadow: 0 0 0 5px color-mix(in srgb, var(--good) 30%, transparent); } }
@@ -1975,6 +1975,153 @@ body.fx .pk-field, body.fx .ach-card, body.fx .home-hero .hh-skin { transition: 
 .gm-streak-bar:not(.on) > span { filter: grayscale(.6); }
 @media (prefers-reduced-motion: reduce) { .gm-streak { animation: none; } }
 
+/* ============================================================
+ * The games, in colour (1.17): each game has its own bright backdrop, the quiz answers are four bold tiles
+ * (a colour and a shape each), the true/false and higher/lower buttons press down like real buttons, the
+ * cards of "זוגות" have coloured backs, and the end of a round has turning rays and stars. The effects layer
+ * (gamefx.js) sits on top: sparks and confetti in a canvas, a glow at the edges, a combo banner.
+ * Only transform, scale, rotate, translate and opacity are animated; colours and gradients are drawn once.
+ * ============================================================ */
+.game-sheet {
+  --gm-a: #c4b5fd; --gm-b: #f9a8d4; --gm-base: #f6f2ff; --gm-k: 72%;
+  background:
+    radial-gradient(130% 48% at 100% 0%, color-mix(in srgb, var(--gm-a) var(--gm-k), transparent) 0%, transparent 62%),
+    radial-gradient(120% 48% at 0% 100%, color-mix(in srgb, var(--gm-b) var(--gm-k), transparent) 0%, transparent 64%),
+    var(--gm-base);
+}
+.game-sheet.gs-coins { --gm-a: #fde68a; --gm-b: #c4b5fd; --gm-base: #fffaeb; }
+.game-sheet.gs-quiz { --gm-a: #c4b5fd; --gm-b: #f9a8d4; --gm-base: #f6f2ff; }
+.game-sheet.gs-facts { --gm-a: #99f6c8; --gm-b: #a5f3fc; --gm-base: #eefcf5; }
+.game-sheet.gs-pairs { --gm-a: #fbcfe8; --gm-b: #fde68a; --gm-base: #fdf2f8; }
+.game-sheet.gs-hours { --gm-a: #bae6fd; --gm-b: #c7d2fe; --gm-base: #eff8ff; }
+:root[data-theme="dark"] .game-sheet { --gm-k: 24%; }
+:root[data-theme="dark"] .game-sheet.gs-coins { --gm-base: #1a1408; }
+:root[data-theme="dark"] .game-sheet.gs-quiz { --gm-base: #150f2b; }
+:root[data-theme="dark"] .game-sheet.gs-facts { --gm-base: #08201a; }
+:root[data-theme="dark"] .game-sheet.gs-pairs { --gm-base: #230a1c; }
+:root[data-theme="dark"] .game-sheet.gs-hours { --gm-base: #0a1a2c; }
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) .game-sheet { --gm-k: 24%; }
+  :root:not([data-theme="light"]) .game-sheet.gs-coins { --gm-base: #1a1408; }
+  :root:not([data-theme="light"]) .game-sheet.gs-quiz { --gm-base: #150f2b; }
+  :root:not([data-theme="light"]) .game-sheet.gs-facts { --gm-base: #08201a; }
+  :root:not([data-theme="light"]) .game-sheet.gs-pairs { --gm-base: #230a1c; }
+  :root:not([data-theme="light"]) .game-sheet.gs-hours { --gm-base: #0a1a2c; }
+}
+
+/* the hub: each game card carries its game's colour */
+.gm-card { --gc: #8b5cf6; background: linear-gradient(to left, color-mix(in srgb, var(--gc) 15%, var(--surface-1)) 0%, var(--surface-1) 70%); border-color: color-mix(in srgb, var(--gc) 30%, var(--line)); }
+.gm-card[data-game="coins"] { --gc: #f59e0b; }
+.gm-card[data-game="quiz"] { --gc: #8b5cf6; }
+.gm-card[data-game="facts"] { --gc: #10b981; }
+.gm-card[data-game="pairs"] { --gc: #ec4899; }
+.gm-card[data-game="hours"] { --gc: #0ea5e9; }
+
+/* the effects layer (gamefx.js): made with the game, gone with it */
+.gfx-canvas, .gfx-glow, .gfx-banner { position: absolute; pointer-events: none; }
+.gfx-canvas { inset: 0; width: 100%; height: 100%; z-index: 6; border-radius: inherit; }
+.gfx-glow { inset: 0; z-index: 5; border-radius: inherit; opacity: 0; will-change: opacity; }
+.gfx-glow.good { box-shadow: inset 0 0 0 3px rgba(33, 212, 127, .55), inset 0 0 60px 8px rgba(33, 212, 127, .32); }
+.gfx-glow.bad { box-shadow: inset 0 0 0 3px rgba(255, 77, 94, .65), inset 0 0 70px 12px rgba(255, 77, 94, .38); }
+/* the scores bump on every point, the time bars throb near the end: each keeps a layer of its own for the whole
+   game. Animated without one, the browser made a layer for the bump and, around it, a screen-sized layer for
+   everything that might overlap it - and dropped both 0.3s later, on every coin caught */
+.cg-score, .qz-score { will-change: transform; }
+.cg-time, .qz-timer { will-change: scale; }
+/* the glow and the banner are moved by gamefx.js (Web Animations); at rest they are invisible */
+.gfx-banner { left: 50%; top: 36%; z-index: 7; padding: 10px 24px; border-radius: 999px; background: linear-gradient(135deg, #e11d48, #c2410c); color: #fff; font: 700 1.45rem var(--display); white-space: nowrap; box-shadow: 0 12px 30px -8px rgba(225, 29, 72, .6), inset 0 0 0 2px rgba(255, 255, 255, .25); opacity: 0; transform: translate(-50%, -50%) scale(.4); will-change: transform, opacity; }
+
+/* coins: a night sky in the canvas; "יאללה!" after the countdown; the time throbs at the end */
+.gs-coins .cg-stage { background: #1b1446; border: 0; box-shadow: 0 14px 30px -14px rgba(46, 26, 107, .7); }
+.cg-over { transition: opacity .25s ease-out; }
+.cg-over.fade { opacity: 0; pointer-events: none; }
+.cg-count.go { font-size: 3.4rem; color: #e11d48; }
+.cg-time.low { animation: cg-low .5s ease-in-out infinite alternate; }
+@keyframes cg-low { to { scale: 1.15; } }
+
+/* quiz: four bold answer tiles that press down */
+.qz-opt { --c: #d61f45; --cs: #8d1029; display: flex; align-items: center; justify-content: center; gap: 8px; min-height: 64px; border: 0; color: #fff; background: var(--c);
+  box-shadow: 0 5px 0 var(--cs), 0 12px 18px -8px color-mix(in srgb, var(--c) 60%, transparent); text-shadow: 0 1px 2px rgba(0, 0, 0, .3); transition: transform .14s var(--pop), box-shadow .14s; }
+.qz-opt[data-k="1"] { --c: #1468d0; --cs: #0b4691; }
+.qz-opt[data-k="2"] { --c: #b45309; --cs: #763506; }
+.qz-opt[data-k="3"] { --c: #1d7f2e; --cs: #10511c; }
+.qz-sh { font-size: .85rem; opacity: .85; }
+body.fx .qz-opt:active:not(:disabled) { transform: translateY(4px); box-shadow: 0 1px 0 var(--cs), 0 4px 10px -8px color-mix(in srgb, var(--c) 60%, transparent); }
+.qz-opt:disabled { opacity: .32; }
+.qz-opt.right, .qz-opt.wrong { opacity: 1; background: var(--c); border-color: transparent; }
+.qz-opt.right { box-shadow: 0 0 0 3px var(--surface-1), 0 0 0 6px #13a865, 0 14px 26px -8px rgba(19, 168, 101, .65); animation: qz-win .5s var(--pop); }
+.qz-opt.wrong { box-shadow: 0 0 0 3px var(--surface-1), 0 0 0 6px #e5354a; animation: gm-shake .4s; }
+.qz-opt.right::after, .qz-opt.wrong::after { position: absolute; top: -10px; inset-inline-end: -8px; width: 28px; height: 28px; border-radius: 50%; display: grid; place-items: center; color: #fff; font: 800 1rem/1 var(--display); box-shadow: 0 3px 8px rgba(0, 0, 0, .25); animation: qz-badge .4s var(--pop) both; }
+.qz-opt.right::after { content: '✓'; background: #13a865; }
+.qz-opt.wrong::after { content: '✕'; background: #e5354a; }
+@keyframes qz-win { 40% { scale: 1.07; } }
+@keyframes qz-badge { from { opacity: 0; scale: .2; } }
+/* the time bar: thicker, green → amber → red, and it throbs in the last three seconds */
+.qz-timer { height: 7px; border-radius: 4px; background: color-mix(in srgb, var(--on-surface) 10%, transparent); }
+.qz-timer b { background: #21d47f; border-radius: inherit; animation-name: qz-time, qz-heat; }
+@keyframes qz-heat { 0%, 50% { background-color: #21d47f; } 72% { background-color: #ffb524; } 100% { background-color: #ff4d5e; } }
+.qz-timer.hurry { animation: qz-hurry .45s ease-in-out infinite alternate; }
+@keyframes qz-hurry { to { scale: 1 1.7; } }
+.qz-score { font-size: 1.35rem; }
+
+/* true / false: a card with a colourful frame, the verdict lands like a rubber stamp, buttons that press down */
+.tf-card { border: 2px solid transparent; background: linear-gradient(var(--surface-1), var(--surface-1)) padding-box, linear-gradient(135deg, #34d399, #22d3ee 50%, #a78bfa) border-box; }
+.tf-card.ok { background: linear-gradient(color-mix(in srgb, var(--good) 10%, var(--surface-1)), color-mix(in srgb, var(--good) 10%, var(--surface-1))) padding-box, linear-gradient(var(--good), var(--good)) border-box; }
+.tf-card.no { background: linear-gradient(color-mix(in srgb, #e5484d 9%, var(--surface-1)), color-mix(in srgb, #e5484d 9%, var(--surface-1))) padding-box, linear-gradient(#e5484d, #e5484d) border-box; }
+.tf-verdict { top: 10px; inset-inline-end: 12px; padding: 4px 12px; border-radius: 10px; background: var(--surface-1); border: 2.5px solid currentColor; font: 800 .95rem var(--display); rotate: -9deg; animation: tf-stamp .38s cubic-bezier(.2, 1.5, .4, 1) both; }
+.tf-verdict.t { color: var(--good); }
+.tf-verdict.f { color: var(--bad); }
+@keyframes tf-stamp { from { opacity: 0; scale: 2.6; rotate: -28deg; } 55% { opacity: 1; } }
+.tf-btns .btn { min-height: 60px; font-size: 1.1rem; box-shadow: 0 5px 0 rgba(0, 0, 0, .24), 0 12px 18px -10px rgba(0, 0, 0, .4); transition: transform .14s var(--pop), box-shadow .14s; }
+body.fx .tf-btns .btn:active:not(:disabled) { transform: translateY(4px); box-shadow: 0 1px 0 rgba(0, 0, 0, .24), 0 4px 10px -10px rgba(0, 0, 0, .4); }
+
+/* pairs: every card back has its own colour; a pair found pops, a miss shakes (on the inner card, so the
+   card's own entrance never plays again) */
+.pr-card:nth-child(6n+1) { --pb: linear-gradient(135deg, #8b5cf6, #d946ef); }
+.pr-card:nth-child(6n+2) { --pb: linear-gradient(135deg, #f43f5e, #fb923c); }
+.pr-card:nth-child(6n+3) { --pb: linear-gradient(135deg, #0ea5e9, #6366f1); }
+.pr-card:nth-child(6n+4) { --pb: linear-gradient(135deg, #10b981, #0ea5e9); }
+.pr-card:nth-child(6n+5) { --pb: linear-gradient(135deg, #f59e0b, #ef4444); }
+.pr-card:nth-child(6n) { --pb: linear-gradient(135deg, #ec4899, #8b5cf6); }
+.pr-back { background: radial-gradient(rgba(255, 255, 255, .2) 1.2px, transparent 1.7px) 0 0 / 12px 12px, var(--pb, var(--grad-brand)); box-shadow: inset 0 0 0 2px rgba(255, 255, 255, .25), 0 6px 12px -6px rgba(0, 0, 0, .4); }
+.pr-back::after { color: rgba(255, 255, 255, .9); text-shadow: 0 2px 5px rgba(0, 0, 0, .25); }
+.pr-card.done .pr-in { animation: pr-pop .5s var(--pop) .15s; }
+@keyframes pr-pop { 45% { scale: 1.12; } }
+.pr-card.miss .pr-in { animation: pr-miss .38s ease-in-out; }
+@keyframes pr-miss { 20%, 60% { translate: -5px 0; } 40%, 80% { translate: 5px 0; } }
+
+/* higher or lower: two coloured cards and a "VS" badge that breathes */
+.hw-card.a { background: linear-gradient(170deg, color-mix(in srgb, #3d7bff 16%, var(--surface-1)), var(--surface-1) 70%); border-color: color-mix(in srgb, #3d7bff 38%, var(--line)); }
+.hw-card.b:not(.shown) { background: linear-gradient(170deg, color-mix(in srgb, #ff7a3d 16%, var(--surface-1)), var(--surface-1) 70%); border-color: color-mix(in srgb, #ff7a3d 38%, var(--line)); }
+.hw-vs { display: grid; place-items: center; width: 40px; height: 40px; border-radius: 50%; background: linear-gradient(135deg, #e11d48, #c2410c); color: #fff; font: 800 .9rem var(--display); box-shadow: 0 6px 14px -4px rgba(225, 29, 72, .55); animation: hw-vs 1.6s ease-in-out infinite; }
+@keyframes hw-vs { 50% { scale: 1.12; } }
+.hw-q { animation: hw-q 1.3s ease-in-out infinite; }
+@keyframes hw-q { 50% { rotate: -7deg; scale: 1.06; } }
+
+/* the end of a round: rays turning behind the mascot, up to three stars, a shining "new record" */
+.gm-hero { position: relative; display: grid; place-items: center; }
+.gm-hero > :not(.gm-rays) { position: relative; z-index: 1; }
+.gm-rays { position: absolute; left: 50%; top: 50%; width: 250px; height: 250px; translate: -50% -50%; border-radius: 50%; pointer-events: none;
+  background: repeating-conic-gradient(color-mix(in srgb, var(--amber) 30%, transparent) 0deg 10deg, transparent 10deg 30deg);
+  -webkit-mask: radial-gradient(circle, #000 24%, transparent 68%); mask: radial-gradient(circle, #000 24%, transparent 68%);
+  animation: gm-spin 16s linear infinite; will-change: rotate; }
+.gm-rays.best { background: repeating-conic-gradient(rgba(255, 190, 0, .55) 0deg 10deg, transparent 10deg 30deg); }
+@keyframes gm-spin { to { rotate: 360deg; } }
+.gm-stars { display: flex; align-items: flex-end; gap: 6px; margin: 2px 0; }
+.gm-stars i { width: 34px; height: 34px; background: color-mix(in srgb, var(--on-surface) 14%, transparent); clip-path: polygon(50% 0%, 61.8% 35.4%, 100% 38.2%, 69.1% 61.8%, 80.9% 100%, 50% 76.4%, 19.1% 100%, 30.9% 61.8%, 0% 38.2%, 38.2% 35.4%); }
+.gm-stars i:nth-child(2) { width: 44px; height: 44px; }
+.gm-stars i.on { background: linear-gradient(160deg, #ffe680, #ffb524 55%, #f08c00); animation: gm-star .5s var(--pop) both; }
+@keyframes gm-star { from { scale: 0; rotate: -70deg; } 60% { scale: 1.32; } }
+.gm-end-b.best { position: relative; overflow: hidden; background: linear-gradient(135deg, #ffd84d, #ff9f1a); color: #3a2300; box-shadow: 0 6px 16px -6px rgba(255, 159, 26, .7); }
+.gm-end-b.best::after { content: ''; position: absolute; inset: 0; background: linear-gradient(100deg, transparent 35%, rgba(255, 255, 255, .75) 50%, transparent 65%); animation: gm-shine 2.6s ease-in-out infinite; }
+@keyframes gm-shine { 0% { translate: -130% 0; } 45%, 100% { translate: 130% 0; } }
+
+/* motion off (Settings › Look) or the system's "reduce motion": nothing turns, throbs or shines */
+body:not(.fx) .gm-rays, body:not(.fx) .hw-vs, body:not(.fx) .hw-q, body:not(.fx) .gm-end-b.best::after, body:not(.fx) .qz-timer.hurry, body:not(.fx) .cg-time.low { animation: none; }
+@media (prefers-reduced-motion: reduce) {
+  .gm-rays, .hw-vs, .hw-q, .gm-end-b.best::after, .qz-timer.hurry, .cg-time.low, .gm-stars i.on, .tf-verdict, .pr-card.done .pr-in, .pr-card.miss .pr-in, .qz-opt.right, .qz-opt.right::after, .qz-opt.wrong::after { animation: none !important; }
+}
+
 </style>
 </head>
 <body>
@@ -1993,8 +2140,8 @@ body.fx .pk-field, body.fx .ach-card, body.fx .home-hero .hh-skin { transition: 
 <div id="print-root" aria-hidden="true"></div>
 <noscript><div style="padding:24px;font-family:sans-serif">האפליקציה דורשת JavaScript.</div></noscript>
 <script>
-window.APP_VERSION = '1.16.2';
-window.APP_BUILD = '1.16.2-fc3689bf';
+window.APP_VERSION = '1.17.0';
+window.APP_BUILD = '1.17.0-f7050aca';
 /* ---- core/util.js ---- */
 /* ============================================================
  * util.js — date/time helpers and formatting.
@@ -6066,7 +6213,8 @@ window.APP_BUILD = '1.16.2-fc3689bf';
     if (ac.state === 'suspended') ac.resume().catch(() => {});
     return ac;
   }
-  // notes: [frequency, start (s), duration (s), wave, volume, glide-to frequency]
+  // notes: [frequency, start (s), duration (s), wave, volume, glide-to frequency]. The wave 'noise' is a
+  // burst of filtered noise (a swish, a thud): its frequency is the filter's centre, and glides like a tone.
   const SOUNDS = {
     tap: [[1250, 0, 0.035, 'sine', 0.05, 900]],
     nav: [[740, 0, 0.05, 'triangle', 0.045, 980]],
@@ -6081,29 +6229,67 @@ window.APP_BUILD = '1.16.2-fc3689bf';
     success: [[523, 0, 0.1, 'triangle', 0.055], [659, 0.08, 0.1, 'triangle', 0.055], [784, 0.16, 0.1, 'triangle', 0.055], [1047, 0.24, 0.28, 'triangle', 0.06]],
     intro: [[392, 0, 0.18, 'sine', 0.05, 523], [587, 0.16, 0.2, 'sine', 0.05, 659], [784, 0.36, 0.34, 'triangle', 0.045]],
     whoosh: [[300, 0, 0.22, 'sine', 0.03, 900]],
+    // the games
+    ding: [[1047, 0, 0.08, 'triangle', 0.06], [1568, 0.06, 0.22, 'sine', 0.05]], // a right answer (its pitch climbs with the streak)
+    bonk: [[233, 0, 0.1, 'square', 0.028, 147], [147, 0.08, 0.22, 'triangle', 0.07, 98]], // a wrong one
+    flip: [[2200, 0, 0.09, 'noise', 0.05, 5200]], // a card turns over
+    match: [[1319, 0, 0.07, 'triangle', 0.05], [1760, 0.06, 0.07, 'triangle', 0.05], [2637, 0.12, 0.26, 'sine', 0.045]],
+    star: [[1568, 0, 0.1, 'triangle', 0.055], [2349, 0.05, 0.32, 'sine', 0.045]],
+    combo: [[784, 0, 0.07, 'triangle', 0.05], [988, 0.06, 0.07, 'triangle', 0.05], [1175, 0.12, 0.07, 'triangle', 0.05], [1568, 0.18, 0.3, 'triangle', 0.055]],
+    fanfare: [[523, 0, 0.11, 'square', 0.028], [523, 0.12, 0.07, 'square', 0.028], [659, 0.2, 0.1, 'square', 0.028], [784, 0.3, 0.5, 'square', 0.032], [392, 0.3, 0.5, 'triangle', 0.05], [1047, 0.3, 0.5, 'triangle', 0.03]],
+    boom: [[900, 0, 0.34, 'noise', 0.13, 140], [120, 0, 0.3, 'sine', 0.11, 40]], // a fine hits the wallet
+    stamp: [[1800, 0, 0.05, 'noise', 0.07, 600], [180, 0, 0.12, 'sine', 0.09, 90]], // the verdict lands
+    swish: [[700, 0, 0.16, 'noise', 0.035, 2600]], // a banner flies in
+    alarm: [[1320, 0, 0.05, 'square', 0.022], [1320, 0.09, 0.05, 'square', 0.022]], // the last seconds
   };
   Fx.audio = audio; // shared with the games' music (music.js)
-  /** Plays a sound. With {strict: true} it stays silent unless audio is already allowed to play. */
+  let noiseBuf = null;
+  const noise = (c) => {
+    if (!noiseBuf) {
+      noiseBuf = c.createBuffer(1, Math.round(c.sampleRate * 0.6), c.sampleRate);
+      const d = noiseBuf.getChannelData(0);
+      for (let i = 0; i < d.length; i++) d[i] = Math.random() * 2 - 1;
+    }
+    return noiseBuf;
+  };
+  /** Plays a sound. With {strict: true} it stays silent unless audio is already allowed to play; {pitch: 1.5}
+   * plays it higher (a streak climbs a scale). */
   Fx.play = function (name, opts) {
     if (prefs().sound === false) return;
     const notes = SOUNDS[name];
     const c = notes && audio();
     if (!c || (opts && opts.strict && c.state !== 'running')) return;
+    const k = (opts && opts.pitch) || 1;
     const t0 = c.currentTime + 0.005;
-    for (const [f, at, dur, wave, vol, glide] of notes) {
-      const o = c.createOscillator();
+    for (const [f0, at, dur, wave, vol, glide0] of notes) {
+      const f = f0 * k, glide = glide0 && glide0 * k;
       const g = c.createGain();
-      o.type = wave || 'sine';
-      o.frequency.setValueAtTime(f, t0 + at);
-      if (glide) o.frequency.exponentialRampToValueAtTime(glide, t0 + at + dur);
+      let src;
+      if (wave === 'noise') {
+        src = c.createBufferSource();
+        src.buffer = noise(c);
+        const bp = c.createBiquadFilter();
+        bp.type = 'bandpass'; bp.Q.value = 1.1;
+        bp.frequency.setValueAtTime(f, t0 + at);
+        if (glide) bp.frequency.exponentialRampToValueAtTime(glide, t0 + at + dur);
+        src.connect(bp).connect(g);
+      } else {
+        src = c.createOscillator();
+        src.type = wave || 'sine';
+        src.frequency.setValueAtTime(f, t0 + at);
+        if (glide) src.frequency.exponentialRampToValueAtTime(glide, t0 + at + dur);
+        src.connect(g);
+      }
       g.gain.setValueAtTime(0.0001, t0 + at);
       g.gain.exponentialRampToValueAtTime(vol || 0.05, t0 + at + 0.008);
       g.gain.exponentialRampToValueAtTime(0.0001, t0 + at + dur);
-      o.connect(g).connect(c.destination);
-      o.start(t0 + at);
-      o.stop(t0 + at + dur + 0.02);
+      g.connect(c.destination);
+      src.start(t0 + at);
+      src.stop(t0 + at + dur + 0.02);
     }
   };
+  /** A step up a cheerful scale (a major pentatonic), for streaks: 0 → 1, 1 → 1.12, … up to about 2.5 (step 7). */
+  Fx.step = (n) => { const S = [0, 2, 4, 7, 9]; const i = Math.max(0, Math.min(n | 0, 7)); return Math.pow(2, (S[i % 5] + 12 * Math.floor(i / 5)) / 12); };
 
   /* ---------------- vibration ---------------- */
   Fx.haptic = function (pattern) {
@@ -6310,8 +6496,9 @@ window.APP_BUILD = '1.16.2-fc3689bf';
 
   /* ---------------- every tap ---------------- */
   const TAPPABLE = 'button, a[href], [data-act], .item, .chip, [role="button"], [role="tab"], label.switch-row, summary';
-  // every control gets the ring, except the games' own boards (their pieces answer in their own way)
-  const UNRINGED = '.cg-stage *';
+  // every control gets the ring, except the games' own pieces: the board, the answers, the cards and the
+  // big yes/no buttons answer with their own sparks and glows (a ring on top of them was one effect too many)
+  const UNRINGED = '.cg-stage *, .qz-opt, .pr-card, .tf-btns .btn';
   document.addEventListener('click', (e) => {
     const t = e.target.closest && e.target.closest(TAPPABLE);
     if (!t || t.disabled) return;
@@ -6334,6 +6521,256 @@ window.APP_BUILD = '1.16.2-fc3689bf';
   }, true);
 
   Fx.sleep = sleep;
+})(typeof window !== 'undefined' ? window : globalThis);
+
+/* ---- app/gamefx.js ---- */
+/* ============================================================
+ * gamefx.js — what makes the games feel alive: sparks, confetti,
+ * coins and shock rings where something happened, score pop-ups,
+ * a green or red glow at the screen's edges for a right or a wrong
+ * answer, combo banners ("🔥 5 ברצף!"), numbers that count up with
+ * ticks, and stars at the end of a round. Sounds come from Fx.
+ *
+ * Details that matter:
+ *  - one canvas per game, made with the game's sheet and gone with
+ *    it: a layer made or dropped in the middle of an animation
+ *    flickered on the phone. Its loop runs only while something is
+ *    moving; then the canvas is cleared once and left alone;
+ *  - it lives inside the sheet and draws in the sheet's coordinates,
+ *    so whatever is still flying slides away with the sheet;
+ *  - the glow and the banner are two elements made with the canvas,
+ *    animated with opacity and transform only;
+ *  - with motion off (Settings › Look, or the system's "reduce
+ *    motion") nothing flies or glows; the sounds and the numbers
+ *    still tell what happened.
+ * ============================================================ */
+(function (root) {
+  'use strict';
+  const GameFx = {};
+  root.GameFx = GameFx;
+  const Fx = () => root.Fx;
+  const motion = () => !!(Fx() && Fx().motion());
+  const play = (s, o) => { if (Fx()) Fx().play(s, o); };
+  const FONT = (px) => `700 ${px}px Fredoka, Rubik, system-ui, sans-serif`;
+  const PAL = {
+    gold: ['#ffd84d', '#ffb524', '#fff1b8', '#ff9f1a'],
+    good: ['#21d47f', '#7cf5c4', '#ffd84d', '#3d7bff'],
+    party: ['#2ee59d', '#ffb524', '#3d7bff', '#ff5c8a', '#8b6cff', '#22d3ee'],
+    bad: ['#ff4d5e', '#ff8a3d', '#ffd166', '#c81e2d'],
+    brand: ['#8b5cf6', '#c084fc', '#f0abfc', '#ffd84d'],
+  };
+  const rnd = (a, b) => a + Math.random() * (b - a);
+  const pick = (l) => l[(Math.random() * l.length) | 0];
+
+  /** The effects of one game sheet: { burst, ring, text, glow, banner, at, close }. */
+  GameFx.attach = function (sheet) {
+    const cv = document.createElement('canvas');
+    cv.className = 'gfx-canvas';
+    const glowEl = document.createElement('div');
+    glowEl.className = 'gfx-glow';
+    const bannerEl = document.createElement('div');
+    bannerEl.className = 'gfx-banner';
+    for (const e of [cv, glowEl, bannerEl]) e.setAttribute('aria-hidden', 'true');
+    sheet.append(glowEl, bannerEl, cv);
+    const g = cv.getContext('2d');
+    const dpr = Math.min(2, root.devicePixelRatio || 1);
+    let W = 0, H = 0, raf = 0, last = 0, open = true, dirty = false;
+    const parts = [];
+    function size() {
+      W = sheet.clientWidth; H = sheet.clientHeight;
+      cv.width = Math.round(W * dpr); cv.height = Math.round(H * dpr);
+      dirty = true;
+    }
+    size();
+    const ro = new ResizeObserver(() => { size(); if (!raf) draw(); });
+    ro.observe(sheet);
+    const local = (x, y) => { const r = sheet.getBoundingClientRect(); return [x - r.left, y - r.top]; };
+    /** The centre of an element, in screen coordinates. */
+    const at = (el) => { const r = el.getBoundingClientRect(); return [r.left + r.width / 2, r.top + r.height / 2]; };
+
+    function kick() { if (!raf) { last = performance.now(); raf = requestAnimationFrame(frame); } }
+    function frame(now) {
+      raf = 0;
+      const dt = Math.min(0.05, (now - last) / 1000 || 0.016);
+      last = now;
+      for (let i = parts.length - 1; i >= 0; i--) {
+        const p = parts[i];
+        p.t += dt;
+        if (p.t >= p.life) { parts[i] = parts[parts.length - 1]; parts.pop(); continue; }
+        if (p.kind === 'text') { p.y -= p.rise * dt * (1 - p.t / p.life); continue; }
+        if (p.kind === 'ring') continue;
+        p.vy += p.grav * dt;
+        const d = Math.pow(p.drag, dt * 60);
+        p.vx *= d; p.vy *= d;
+        p.x += p.vx * dt; p.y += p.vy * dt; p.rot += p.vr * dt;
+      }
+      draw();
+      if (parts.length) raf = requestAnimationFrame(frame);
+    }
+    function star(r) {
+      g.beginPath();
+      for (let i = 0; i < 8; i++) { const a = (i * Math.PI) / 4, rr = i % 2 ? r * 0.38 : r; g.lineTo(Math.cos(a) * rr, Math.sin(a) * rr); }
+      g.closePath(); g.fill();
+    }
+    function draw() {
+      if (!parts.length && !dirty) return;
+      dirty = parts.length > 0;
+      g.setTransform(dpr, 0, 0, dpr, 0, 0);
+      g.clearRect(0, 0, W, H);
+      for (const p of parts) {
+        const k = p.t / p.life;
+        g.save();
+        g.translate(p.x, p.y);
+        if (p.kind === 'text') {
+          g.globalAlpha = Math.min(1, (1 - k) * 3) * Math.min(1, p.t * 12);
+          const s = 1 + 0.35 * Math.max(0, 1 - p.t * 7); // pops in a little big
+          g.scale(s, s);
+          g.font = FONT(p.size); g.textAlign = 'center'; g.textBaseline = 'middle';
+          g.lineJoin = 'round'; g.lineWidth = Math.max(3, p.size / 5); g.strokeStyle = p.stroke; g.strokeText(p.str, 0, 0);
+          g.fillStyle = p.color; g.fillText(p.str, 0, 0);
+        } else if (p.kind === 'ring') {
+          const e = 1 - Math.pow(1 - k, 3);
+          g.globalAlpha = 1 - k;
+          g.strokeStyle = p.color; g.lineWidth = p.width * (1 - k) + 0.5;
+          g.beginPath(); g.arc(0, 0, p.r0 + (p.r1 - p.r0) * e, 0, Math.PI * 2); g.stroke();
+        } else {
+          g.globalAlpha = Math.max(0, 1 - k * k);
+          g.fillStyle = p.color;
+          if (p.kind === 'spark') {
+            const sp = Math.hypot(p.vx, p.vy), len = Math.min(16, 3 + sp * 0.02);
+            g.rotate(Math.atan2(p.vy, p.vx));
+            g.strokeStyle = p.color; g.lineWidth = p.r; g.lineCap = 'round';
+            g.beginPath(); g.moveTo(-len, 0); g.lineTo(0, 0); g.stroke();
+          } else if (p.kind === 'star') {
+            g.rotate(p.rot); star(p.r * (1 - k * 0.5));
+          } else if (p.kind === 'coin') {
+            g.scale(Math.abs(Math.cos(p.rot)) * 0.85 + 0.15, 1);
+            g.fillStyle = '#ffb524'; g.beginPath(); g.arc(0, 0, p.r, 0, Math.PI * 2); g.fill();
+            g.fillStyle = '#ffe08a'; g.beginPath(); g.arc(-p.r * 0.2, -p.r * 0.2, p.r * 0.55, 0, Math.PI * 2); g.fill();
+            g.fillStyle = '#8a5300'; g.font = `800 ${Math.round(p.r * 1.2)}px Rubik, sans-serif`; g.textAlign = 'center'; g.textBaseline = 'middle'; g.fillText('₪', 0, 1);
+          } else { // confetti
+            g.rotate(p.rot); g.scale(1, Math.abs(Math.cos(p.rot * 1.7)) * 0.8 + 0.2);
+            g.fillRect(-p.r, -p.r * 0.45, p.r * 2, p.r * 0.9);
+          }
+        }
+        g.restore();
+      }
+      g.globalAlpha = 1;
+    }
+
+    const api = {
+      at,
+      /** Sparks, confetti, stars or coins flying out from a point (screen coordinates). */
+      burst(x, y, o) {
+        if (!open || !motion()) return;
+        o = o || {};
+        const [lx, ly] = local(x, y);
+        const pal = PAL[o.palette || 'party'];
+        const kinds = o.kinds || ['spark', 'confetti', 'star'];
+        const n = o.n || 22;
+        for (let i = 0; i < n; i++) {
+          const kind = kinds[i % kinds.length];
+          const a = (o.dir != null ? o.dir : -Math.PI / 2) + (Math.random() - 0.5) * (o.spread != null ? o.spread : Math.PI * 2);
+          const v = rnd(o.speed ? o.speed[0] : 180, o.speed ? o.speed[1] : 520) * (kind === 'spark' ? 1.3 : 1);
+          parts.push({
+            kind, x: lx, y: ly, t: 0, life: rnd(0.55, 1.05) * (o.life || 1),
+            vx: Math.cos(a) * v, vy: Math.sin(a) * v - (o.up || 0), grav: kind === 'spark' ? 520 : kind === 'coin' ? 1300 : 900,
+            drag: kind === 'spark' ? 0.9 : 0.96, rot: Math.random() * 6, vr: rnd(-9, 9),
+            r: kind === 'spark' ? rnd(2, 3.5) : kind === 'coin' ? rnd(8, 11) : kind === 'star' ? rnd(5, 9) : rnd(3.5, 6),
+            color: pick(pal),
+          });
+        }
+        kick();
+      },
+      /** A shock ring that spreads from a point. */
+      ring(x, y, o) {
+        if (!open || !motion()) return;
+        o = o || {};
+        const [lx, ly] = local(x, y);
+        parts.push({ kind: 'ring', x: lx, y: ly, t: 0, life: o.life || 0.5, r0: o.r0 || 8, r1: o.r1 || 90, width: o.width || 7, color: o.color || '#ffd84d' });
+        kick();
+      },
+      /** A short text that pops up and floats away ("+15"). */
+      text(x, y, str, o) {
+        if (!open || !motion()) return;
+        o = o || {};
+        const [lx, ly] = local(x, y);
+        parts.push({ kind: 'text', x: lx, y: ly, t: 0, life: o.life || 0.95, str, size: o.size || 26, rise: o.rise || 90, color: o.color || '#ffb524', stroke: o.stroke || 'rgba(40, 20, 0, .55)' });
+        kick();
+      },
+      /** The screen's edges glow for a moment: 'good' (green) or 'bad' (red). (Web Animations: restarting a
+       * CSS animation needs a forced layout, which cost a frame on a slow phone at the moment of the answer.) */
+      glow(kind) {
+        if (!open || !motion()) return;
+        glowEl.className = 'gfx-glow ' + kind;
+        glowEl.getAnimations().forEach((a) => a.cancel());
+        glowEl.animate([{ opacity: 0 }, { opacity: 1, offset: 0.16 }, { opacity: 0 }], { duration: 620, easing: 'ease-out' });
+      },
+      /** A banner that flies in and out over the game ("🔥 5 ברצף!"). */
+      banner(str) {
+        if (!open) return;
+        play('combo');
+        if (!motion()) return;
+        bannerEl.textContent = str;
+        bannerEl.getAnimations().forEach((a) => a.cancel());
+        const at = (s, r, y, o) => ({ opacity: o, transform: `translate(-50%, ${y}%) scale(${s}) rotate(${r}deg)` });
+        // each step has its own easing (an overshooting curve over the whole would overshoot the last step too)
+        bannerEl.animate([
+          { ...at(0.3, -10, -50, 0), easing: 'cubic-bezier(.2, .9, .3, 1.3)' },
+          { ...at(1.14, 3, -50, 1), offset: 0.16, easing: 'ease-out' },
+          { ...at(1, 0, -50, 1), offset: 0.28 },
+          { ...at(1, 0, -50, 1), offset: 0.76, easing: 'ease-in' },
+          at(0.92, 0, -95, 0),
+        ], { duration: 1300, fill: 'both' });
+      },
+      /** The game closes: nothing new starts; what is in the air finishes and the loop ends by itself. */
+      close() { open = false; ro.disconnect(); },
+    };
+    return api;
+  };
+
+  /** Counts the first number in an element up from 0 (ticks as it goes). Resolves when done. */
+  GameFx.countUp = function (el, o) {
+    o = o || {};
+    return new Promise((resolve) => {
+      const walker = document.createTreeWalker(el, NodeFilter.SHOW_TEXT);
+      let node;
+      while ((node = walker.nextNode()) && !/\d/.test(node.nodeValue));
+      if (!node) { resolve(); return; }
+      const m = node.nodeValue.match(/[\d,]+(\.\d+)?/);
+      const to = parseFloat(m[0].replace(/,/g, ''));
+      if (!motion() || !(to > 0)) { resolve(); return; }
+      const dec = m[1] ? m[1].length - 1 : 0, comma = m[0].includes(',');
+      const before = node.nodeValue.slice(0, m.index), after = node.nodeValue.slice(m.index + m[0].length);
+      const fmt = (v) => (comma ? v.toLocaleString('en-US', { minimumFractionDigits: dec, maximumFractionDigits: dec }) : v.toFixed(dec));
+      const dur = o.ms || Math.min(1100, 450 + to * 4);
+      const t0 = performance.now();
+      let lastTick = 0;
+      node.nodeValue = before + fmt(0) + after;
+      (function step(t) {
+        if (!node.isConnected) { resolve(); return; }
+        const k = Math.min(1, (t - t0) / dur);
+        const e = 1 - Math.pow(1 - k, 3);
+        node.nodeValue = before + fmt(dec ? to * e : Math.round(to * e)) + after;
+        if (t - lastTick > 70 && k < 1) { lastTick = t; play('tick', { pitch: 0.7 + k * 0.8 }); }
+        if (k < 1) requestAnimationFrame(step); else resolve();
+      })(t0);
+    });
+  };
+
+  /** Lights the first n of the stars in a row, one after another, each with a ding and a sparkle. */
+  GameFx.stars = function (row, n, fx) {
+    const list = [...row.querySelectorAll('i')];
+    list.forEach((s, i) => {
+      if (i >= n) return;
+      setTimeout(() => {
+        if (!s.isConnected) return;
+        s.classList.add('on');
+        play('star', { pitch: Fx() ? Fx().step(i * 2) : 1 });
+        if (fx) { const [x, y] = fx.at(s); fx.burst(x, y, { n: 12, palette: 'gold', kinds: ['star', 'spark'], speed: [120, 300] }); }
+      }, motion() ? 120 + i * 300 : 0);
+    });
+  };
 })(typeof window !== 'undefined' ? window : globalThis);
 
 /* ---- app/music.js ---- */
@@ -13373,12 +13810,12 @@ window.PAY_CONFIG = {
 
   /* ---------------- what's new (once per big update, for people who already used the app) ---------------- */
   const WHATS_NEW = {
-    id: '1.16',
+    id: '1.17',
     items: [
-      ['star', 'amber', 'רצף משחק יומי', 'סיבוב אחד ביום בונה רצף 🔥, עם מדליות ל-3, 7 ו-30 ימים.'],
-      ['share', 'violet', 'שתפו את המקום שלכם', 'בטבלת האלופים: כרטיס מעוצב עם המקום שלכם, לשלוח לחברים או לסטורי.'],
-      ['bus', 'sky', 'מתג נסיעות', 'ליד רשימת המשמרות: הסכום של כל משמרת עם נסיעות או בלי.'],
-      ['sparkle', 'mint', 'חלק יותר', 'משיכה לרענון חדשה, אנימציה לכל כפתור, ו"לחצו שוב כדי לצאת" בכפתור החזרה.'],
+      ['sparkle', 'violet', 'המשחקים קיבלו חיים', 'צבעים, ניצוצות, פיצוצים ובאנר 🔥 על רצף, בכל חמשת המשחקים.'],
+      ['music', 'pink', 'צלילים חדשים', 'כל תשובה נכונה ברצף נשמעת גבוה יותר, ושיא חדש מקבל פנפרה.'],
+      ['star', 'amber', 'כוכבים בסוף סיבוב', 'עד שלושה כוכבים, והניקוד נספר מול העיניים.'],
+      ['check', 'mint', 'כל לחיצה מגיבה', 'הטבעת סביב כל כפתור חזרה, ומילים כבר לא נשברות באמצע.'],
     ],
   };
 
@@ -13729,8 +14166,13 @@ window.PAY_CONFIG = {
   const S = Store.S;
   const { icon, esc } = UI;
   const Fx = () => root.Fx;
-  const play = (s) => { if (Fx()) Fx().play(s); };
+  const play = (s, o) => { if (Fx()) Fx().play(s, o); };
   const buzz = (p) => { if (Fx()) Fx().haptic(p); };
+  const step = (n) => (Fx() && Fx().step ? Fx().step(n) : 1); // a streak climbs a scale
+  // the sparks, glows and banners of a game sheet (gamefx.js); a silent stand-in if it is missing
+  const NOFX = { at: () => [0, 0], burst() {}, ring() {}, text() {}, glow() {}, banner() {}, close() {} };
+  const attachFx = (sheet) => (root.GameFx ? root.GameFx.attach(sheet) : NOFX);
+  const STREAKS = [3, 5, 7, 10, 15, 20];
 
   const LIST = [
     { id: 'coins', ic: 'wallet', tint: 'amber', t: 'תופסים מטבעות', s: 'גוררים את הארנק, תופסים כסף ומתחמקים מקנסות.', unit: ' ₪' },
@@ -13892,22 +14334,40 @@ window.PAY_CONFIG = {
     }
   }
 
-  /** The end of a round: mascot, score, best, play again. */
+  /** The end of a round: rays behind the mascot, the score counting up, up to three stars, best, play again. */
   function endScreen(box, o) {
+    const fx = o.fx || NOFX;
     const isBest = record(o.id, o.score);
     const mood = o.ratio >= 0.8 ? 'party' : o.ratio >= 0.5 ? 'happy' : 'think';
-    box.innerHTML = `<div class="gm-end">${App.mascot ? App.mascot(mood, { size: 96 }) : ''}
+    const stars = o.score > 0 ? (o.ratio >= 0.9 ? 3 : o.ratio >= 0.6 ? 2 : o.ratio >= 0.3 ? 1 : 0) : 0;
+    box.innerHTML = `<div class="gm-end"><div class="gm-hero"><span class="gm-rays ${isBest && o.score > 0 ? 'best' : ''}" aria-hidden="true"></span>${App.mascot ? App.mascot(mood, { size: 96 }) : ''}</div>
       <div class="gm-end-t">${esc(o.title)}</div>
+      <div class="gm-stars" role="img" aria-label="${stars} כוכבים מתוך 3"><i></i><i></i><i></i></div>
       <div class="gm-end-n">${o.big}</div>
       ${o.sub ? `<div class="gm-end-s">${o.sub}</div>` : ''}
-      <div class="gm-end-b">${isBest ? `${icon('star', 's')} שיא חדש!` : `השיא שלך: ${best(o.id)}${o.unit}`}</div>
+      <div class="gm-end-b ${isBest && o.score > 0 ? 'best' : ''}">${isBest ? `${icon('star', 's')} שיא חדש!` : `השיא שלך: ${best(o.id)}${o.unit}`}</div>
       <div class="gm-end-a"><button class="btn" data-again>${icon('repeat')} עוד סיבוב</button><button class="btn tonal" data-quit>סיום</button></div></div>`;
     // the daily streak: a new day of playing shows (and the big ones are celebrated)
     const day = markPlayDay();
     if (day.grew && day.n >= 2) {
       box.querySelector('.gm-end-b').insertAdjacentHTML('afterend', `<div class="gm-streak">🔥 רצף של ${day.n} ימים!${[3, 7, 30].includes(day.n) ? ' מדליה חדשה 🏅' : ''}</div>`);
     }
-    if (isBest && o.score > 0 || (day.grew && [3, 7, 30].includes(day.n))) { if (Fx()) Fx().celebrate('big'); } else play('pop');
+    const party = isBest && o.score > 0 || (day.grew && [3, 7, 30].includes(day.n));
+    // the score counts up, then the stars light one by one; a record (or a big streak) ends in a fanfare and confetti
+    const n = box.querySelector('.gm-end-n');
+    play('pop');
+    (root.GameFx ? root.GameFx.countUp(n) : Promise.resolve()).then(() => {
+      if (!n.isConnected) return;
+      if (root.GameFx) root.GameFx.stars(box.querySelector('.gm-stars'), stars, fx);
+      if (!party) return;
+      setTimeout(() => {
+        if (!n.isConnected) return;
+        play('fanfare'); buzz([12, 60, 18]);
+        const [x, y] = fx.at(n);
+        fx.burst(x, y, { n: 70, palette: 'party', kinds: ['confetti', 'star', 'coin', 'confetti'], speed: [260, 700], up: 260 });
+        fx.ring(x, y, { color: '#ffb524', r1: 160, width: 9 });
+      }, 120 + stars * 300);
+    });
     if (root.Champions && o.score > 0) root.Champions.afterGame(box, o.id, o.score); // the champions table
     if (root.Music) root.Music.stop(0.6); // the round is over: the music fades
     box.querySelector('[data-again]').onclick = () => { if (root.Music) root.Music.play(o.id); o.again(); };
@@ -13921,22 +14381,21 @@ window.PAY_CONFIG = {
     UI.openSheet({
       title: 'תופסים מטבעות',
       full: true,
-      cls: 'game-sheet',
+      cls: 'game-sheet gs-coins',
       body: `<div class="cg">
         <div class="cg-hud"><span class="cg-score" data-score>0 ₪</span><span class="cg-lives" data-lives aria-label="3 לבבות">${'<i></i>'.repeat(3)}</span><span class="cg-time" data-time>${ROUND}</span></div>
         <div class="cg-stage" data-no-ptr><canvas aria-label="המשחק"></canvas><div class="cg-over" data-over></div></div></div>`,
-      onMount: (el) => { stop = runCoins(el); },
+      onMount: (el) => { stop = runCoins(el, attachFx(el)); },
       onClose: () => { stop(); onDone(); },
     });
   }
-  function runCoins(el) {
+  function runCoins(el, fx) {
     const stage = el.querySelector('.cg-stage');
     const cv = stage.querySelector('canvas');
     const g = cv.getContext('2d');
     const over = el.querySelector('[data-over]');
     const hudScore = el.querySelector('[data-score]'), hudTime = el.querySelector('[data-time]'), hudLives = el.querySelector('[data-lives]');
     const dpr = Math.min(2, root.devicePixelRatio || 1);
-    const ink = getComputedStyle(stage).getPropertyValue('--on-surface').trim() || '#222';
     let W = 0, H = 0, raf = 0, last = 0, alive = true, paused = false;
     const rate = myRate();
 
@@ -13993,13 +14452,45 @@ window.PAY_CONFIG = {
       x.fillStyle = 'rgba(0,0,0,.25)'; rr(x, 14, 2, PW - 28, 8, 4); x.fill();
     });
 
-    const st = { t: 0, left: ROUND, score: 0, lives: 3, items: [], floats: [], px: 0, tx: 0, next: 0.5, shake: 0, flash: 0, squash: 0, running: false, r: Games.rng(seed()) };
+    // a soft golden halo, drawn once, put under the valuable things and the wallet
+    const HALO = sprite(64, 64, (x) => { const h = x.createRadialGradient(32, 32, 2, 32, 32, 32); h.addColorStop(0, 'rgba(255,214,90,.75)'); h.addColorStop(0.45, 'rgba(255,181,36,.28)'); h.addColorStop(1, 'rgba(255,181,36,0)'); x.fillStyle = h; x.fillRect(0, 0, 64, 64); });
+
+    const st = { t: 0, left: ROUND, score: 0, lives: 3, items: [], floats: [], parts: [], chain: 0, px: 0, tx: 0, next: 0.5, shake: 0, flash: 0, squash: 0, running: false, r: Games.rng(seed()) };
     let shownScore = -1, shownTime = -1, shownLives = -1;
     function hud() {
       if (st.score !== shownScore) { shownScore = st.score; hudScore.textContent = st.score + ' ₪'; hudScore.classList.remove('bump'); void hudScore.offsetWidth; hudScore.classList.add('bump'); }
       const tl = Math.max(0, Math.ceil(st.left));
-      if (tl !== shownTime) { shownTime = tl; hudTime.textContent = tl; hudTime.classList.toggle('low', tl <= 5); }
+      if (tl !== shownTime) {
+        shownTime = tl; hudTime.textContent = tl; hudTime.classList.toggle('low', tl <= 5);
+        if (st.running && tl <= 5 && tl > 0) play('alarm'); // the last seconds tick
+      }
       if (st.lives !== shownLives) { shownLives = st.lives; hudLives.innerHTML = Array.from({ length: 3 }, (_, i) => `<i class="${i < st.lives ? '' : 'off'}"></i>`).join(''); hudLives.setAttribute('aria-label', st.lives + ' לבבות'); }
+    }
+    /* the night sky behind the game: a deep gradient, a city skyline with lit windows, and stars that twinkle
+       (the sky and the city are drawn once per size; only the stars change) */
+    let bg = null, stars = [];
+    function paintBg() {
+      const rr2 = Games.rng(7);
+      bg = sprite(W, H, (x) => {
+        const sky = x.createLinearGradient(0, 0, 0, H);
+        sky.addColorStop(0, '#120d36'); sky.addColorStop(0.55, '#2e1a6b'); sky.addColorStop(1, '#5b21b6');
+        x.fillStyle = sky; x.fillRect(0, 0, W, H);
+        const moon = x.createRadialGradient(W * 0.82, H * 0.13, 4, W * 0.82, H * 0.13, 70);
+        moon.addColorStop(0, 'rgba(255,240,200,.55)'); moon.addColorStop(0.25, 'rgba(255,240,200,.12)'); moon.addColorStop(1, 'rgba(255,240,200,0)');
+        x.fillStyle = moon; x.fillRect(0, 0, W, H);
+        x.fillStyle = '#fff3cf'; x.beginPath(); x.arc(W * 0.82, H * 0.13, 13, 0, Math.PI * 2); x.fill();
+        const glow = x.createRadialGradient(W / 2, H, 10, W / 2, H, H * 0.65);
+        glow.addColorStop(0, 'rgba(255,181,36,.32)'); glow.addColorStop(1, 'rgba(255,181,36,0)');
+        x.fillStyle = glow; x.fillRect(0, 0, W, H);
+        for (let bx = -10; bx < W; ) { // the skyline
+          const bw = 26 + rr2() * 34, bh = 40 + rr2() * 90;
+          x.fillStyle = 'rgba(14, 8, 40, .72)'; x.fillRect(bx, H - bh, bw, bh);
+          x.fillStyle = 'rgba(255, 214, 120, .5)';
+          for (let wy = H - bh + 8; wy < H - 10; wy += 11) for (let wx = bx + 5; wx < bx + bw - 6; wx += 9) if (rr2() < 0.32) x.fillRect(wx, wy, 3.5, 5);
+          bx += bw + 3;
+        }
+      });
+      stars = Array.from({ length: 44 }, () => ({ x: rr2() * W, y: rr2() * H * 0.72, r: 0.6 + rr2() * 1.4, ph: rr2() * 6, sp: 1 + rr2() * 2.5 }));
     }
     function size() {
       const r = stage.getBoundingClientRect();
@@ -14008,6 +14499,7 @@ window.PAY_CONFIG = {
       cv.width = Math.round(W * dpr); cv.height = Math.round(H * dpr);
       cv.style.width = W + 'px'; cv.style.height = H + 'px';
       g.setTransform(dpr, 0, 0, dpr, 0, 0);
+      paintBg();
       st.px = st.tx = Math.min(Math.max(st.tx || W / 2, PW / 2), W - PW / 2);
       if (!st.running) draw();
     }
@@ -14021,19 +14513,44 @@ window.PAY_CONFIG = {
       const bill = d.k[0] === 'b';
       st.items.push({ d, sp, x: sp.r + 6 + st.r() * (W - sp.r * 2 - 12), y: -sp.r - 4, vy: pace.speed * (bill ? 0.7 : 0.85 + st.r() * 0.3), rot: 0, ph: st.r() * 6, sway: bill ? 1 + st.r() * 5 : 0 });
     }
-    function floatText(x, y, text, color) { st.floats.push({ x, y, text, color, life: 0.8 }); }
+    function floatText(x, y, text, color, size) { st.floats.push({ x, y, text, color, size: size || 20, life: 0.85, max: 0.85 }); }
+    /* sparks (short streaks), bits of confetti and shock rings, all inside the stage; with motion off, none */
+    const FX_ON = () => Fx() && Fx().motion();
+    function sparks(x, y, n, colors, o) {
+      if (!FX_ON()) return;
+      o = o || {};
+      for (let i = 0; i < n; i++) {
+        const a = (o.dir != null ? o.dir : -Math.PI / 2) + (Math.random() - 0.5) * (o.spread || Math.PI * 2);
+        const v = (o.v || 260) * (0.4 + Math.random() * 0.8);
+        st.parts.push({ k: o.k || 'spark', x, y, vx: Math.cos(a) * v, vy: Math.sin(a) * v, life: 0, max: 0.35 + Math.random() * 0.4, r: o.r || (1.6 + Math.random() * 1.8), c: colors[(Math.random() * colors.length) | 0], g: o.g != null ? o.g : 420 });
+      }
+    }
+    function ringAt(x, y, c, r1) { if (FX_ON()) st.parts.push({ k: 'ring', x, y, life: 0, max: 0.4, r1: r1 || 46, c }); }
+    const GOLD = ['#ffd84d', '#ffb524', '#fff1b8', '#ffffff'], RED = ['#ff4d5e', '#ff8a3d', '#ffd166', '#ffffff'], BLUE = ['#7cc4ff', '#3b82f6', '#ffffff'];
     function catchIt(it) {
       st.squash = 1;
+      const cy = H - PH - 10;
       if (it.d.bad) {
-        st.lives--; st.shake = 0.3; st.flash = 0.35;
-        floatText(it.x, it.y, '−❤', '#e5484d');
-        play('error'); buzz([30, 40, 30]);
+        st.lives--; st.shake = 0.35; st.flash = 0.35; st.chain = 0;
+        floatText(it.x, it.y - 6, '−❤', '#ff6b78', 24);
+        sparks(it.x, cy, 28, RED, { v: 380 }); sparks(it.x, cy, 10, ['#5b5470', '#3a3450'], { v: 120, g: -60, r: 4, k: 'smoke' });
+        ringAt(it.x, cy, '#ff4d5e', 70);
+        play('boom'); buzz([30, 40, 30]); fx.glow('bad');
         if (st.lives <= 0) end('lives');
       } else if (it.d.k === 'clock') {
-        st.left += 5; floatText(it.x, it.y, '+5 שנ׳', '#3b82f6'); play('on'); buzz(10);
+        st.left += 5; floatText(it.x, it.y, '+5 שנ׳', '#9fd2ff', 22);
+        sparks(it.x, cy, 16, BLUE, { v: 240 }); ringAt(it.x, cy, '#7cc4ff');
+        play('on'); buzz(10);
       } else {
-        st.score += it.d.v; floatText(it.x, it.y, '+' + it.d.v, it.d.v >= 10 ? '#d99a0b' : ink);
-        play(it.d.v >= 10 ? 'coin' : 'tick'); buzz(it.d.v >= 10 ? 12 : 6);
+        st.chain++;
+        const big = it.d.v >= 10;
+        st.score += it.d.v; floatText(it.x, it.y, '+' + it.d.v, big ? '#ffd84d' : '#ffffff', big ? 26 : 20);
+        sparks(it.x, cy, big ? 22 : 10, GOLD, { v: big ? 320 : 220, spread: 2.2 });
+        if (big) ringAt(it.x, cy, '#ffd84d', 58);
+        // the catch sound climbs while the catches keep coming (a missed coin starts it again)
+        play('coin', { pitch: 0.82 + Math.min(st.chain, 14) * 0.035 }); buzz(big ? 12 : 6);
+        if (big) play('star', { pitch: 1.2 });
+        if (st.chain >= 10 && st.chain % 10 === 0) fx.banner(`🔥 ${st.chain} ברצף!`);
       }
     }
     function update(dt) {
@@ -14047,28 +14564,73 @@ window.PAY_CONFIG = {
         const it = st.items[i];
         it.y += it.vy * dt; it.rot = Math.sin(st.t * 2.6 + it.ph) * 0.32; // a wobble, never upside down
         if (it.sway) it.x += Math.sin(st.t * 3 + it.sway) * 30 * dt;
+        // the valuable ones leave a trail of little sparks
+        if ((it.d.v >= 10 || it.d.k === 'clock') && FX_ON() && Math.random() < dt * 22) st.parts.push({ k: 'spark', x: it.x + (Math.random() - 0.5) * it.sp.r, y: it.y - it.sp.r * 0.6, vx: (Math.random() - 0.5) * 30, vy: -20 - Math.random() * 30, life: 0, max: 0.35, r: 1.4 + Math.random(), c: it.d.k === 'clock' ? '#9fd2ff' : '#ffe08a', g: 0 });
         const hit = Math.abs(it.x - st.px) < PW / 2 + it.sp.r * 0.5 && it.y + it.sp.r * 0.6 > py - PH / 2 && it.y - it.sp.r < py + PH / 3;
         if (hit) { catchIt(it); st.items[i] = st.items[st.items.length - 1]; st.items.pop(); if (!st.running) return; continue; }
-        if (it.y > H + 40) { st.items[i] = st.items[st.items.length - 1]; st.items.pop(); }
+        if (it.y > H + 40) { if (!it.d.bad && it.d.k !== 'clock') st.chain = 0; st.items[i] = st.items[st.items.length - 1]; st.items.pop(); }
       }
-      for (let i = st.floats.length - 1; i >= 0; i--) { const f = st.floats[i]; f.life -= dt; f.y -= 60 * dt; if (f.life <= 0) st.floats.splice(i, 1); }
+      for (let i = st.floats.length - 1; i >= 0; i--) { const f = st.floats[i]; f.life -= dt; f.y -= 70 * dt; if (f.life <= 0) st.floats.splice(i, 1); }
+      for (let i = st.parts.length - 1; i >= 0; i--) {
+        const p = st.parts[i];
+        p.life += dt;
+        if (p.life >= p.max) { st.parts[i] = st.parts[st.parts.length - 1]; st.parts.pop(); continue; }
+        if (p.k === 'ring') continue;
+        p.vy += p.g * dt; p.vx *= Math.pow(0.9, dt * 60); p.vy *= Math.pow(0.94, dt * 60);
+        p.x += p.vx * dt; p.y += p.vy * dt;
+      }
       st.shake = Math.max(0, st.shake - dt); st.flash = Math.max(0, st.flash - dt); st.squash = Math.max(0, st.squash - dt * 5);
     }
     function draw() {
       g.setTransform(dpr, 0, 0, dpr, 0, 0);
-      g.clearRect(0, 0, W, H);
-      if (st.shake) g.translate((Math.random() - 0.5) * 10 * st.shake / 0.3, (Math.random() - 0.5) * 6 * st.shake / 0.3);
+      if (bg) g.drawImage(bg, 0, 0, W, H); else g.clearRect(0, 0, W, H);
+      g.fillStyle = '#fff';
+      for (const s of stars) { g.globalAlpha = 0.25 + 0.75 * Math.abs(Math.sin(st.t * s.sp + s.ph)); g.fillRect(s.x, s.y, s.r, s.r); }
+      g.globalAlpha = 1;
+      if (st.shake) g.translate((Math.random() - 0.5) * 12 * st.shake / 0.35, (Math.random() - 0.5) * 7 * st.shake / 0.35);
       for (const it of st.items) {
         const s = it.sp.img, w = s.width / dpr, h = s.height / dpr;
+        if (it.d.v >= 10 || it.d.k === 'clock') { // a halo that breathes
+          const hr = it.sp.r * (2.6 + 0.35 * Math.sin(st.t * 6 + it.ph));
+          g.globalAlpha = it.d.k === 'clock' ? 0.55 : 0.9; g.drawImage(HALO, it.x - hr, it.y - hr, hr * 2, hr * 2); g.globalAlpha = 1;
+        }
         g.save(); g.translate(it.x, it.y); g.rotate(it.rot); g.drawImage(s, -w / 2, -h / 2, w, h); g.restore();
       }
       const py = H - PH / 2 - 14;
       const sq = st.squash;
+      if (sq) { const hr = PW * (0.7 + sq * 0.5); g.globalAlpha = sq; g.drawImage(HALO, st.px - hr, py - hr * 0.8, hr * 2, hr * 1.6); g.globalAlpha = 1; }
       g.save(); g.translate(st.px, py); g.scale(1 + sq * 0.12, 1 - sq * 0.12); g.drawImage(wallet, -PW / 2, -PH / 2, PW, PH); g.restore();
-      g.font = FONT(18); g.textAlign = 'center'; g.textBaseline = 'middle';
-      for (const f of st.floats) { g.globalAlpha = Math.min(1, f.life / 0.4); g.fillStyle = f.color; g.fillText(f.text, f.x, f.y); }
+      for (const p of st.parts) {
+        const k = p.life / p.max;
+        g.globalAlpha = 1 - k;
+        if (p.k === 'ring') {
+          g.strokeStyle = p.c; g.lineWidth = 5 * (1 - k) + 0.5;
+          g.beginPath(); g.arc(p.x, p.y, 8 + (p.r1 - 8) * (1 - Math.pow(1 - k, 3)), 0, Math.PI * 2); g.stroke();
+        } else if (p.k === 'smoke') {
+          g.globalAlpha = 0.5 * (1 - k); g.fillStyle = p.c; g.beginPath(); g.arc(p.x, p.y, p.r * (1 + k * 2.5), 0, Math.PI * 2); g.fill();
+        } else {
+          const len = Math.min(12, 2 + Math.hypot(p.vx, p.vy) * 0.03);
+          const a = Math.atan2(p.vy, p.vx);
+          g.strokeStyle = p.c; g.lineWidth = p.r; g.lineCap = 'round';
+          g.beginPath(); g.moveTo(p.x - Math.cos(a) * len, p.y - Math.sin(a) * len); g.lineTo(p.x, p.y); g.stroke();
+        }
+      }
       g.globalAlpha = 1;
-      if (st.flash) { g.setTransform(dpr, 0, 0, dpr, 0, 0); g.fillStyle = `rgba(229,72,77,${(st.flash / 0.35) * 0.22})`; g.fillRect(0, 0, W, H); }
+      g.textAlign = 'center'; g.textBaseline = 'middle'; g.lineJoin = 'round';
+      for (const f of st.floats) {
+        const k = 1 - f.life / f.max, s = 1 + 0.4 * Math.max(0, 1 - k * 6); // pops in big, then floats away
+        g.globalAlpha = Math.min(1, f.life / 0.35);
+        g.font = FONT(f.size * s); g.lineWidth = 4; g.strokeStyle = 'rgba(20, 10, 50, .75)';
+        g.strokeText(f.text, f.x, f.y); g.fillStyle = f.color; g.fillText(f.text, f.x, f.y);
+      }
+      g.globalAlpha = 1;
+      g.setTransform(dpr, 0, 0, dpr, 0, 0);
+      if (st.flash) { g.fillStyle = `rgba(255,77,94,${(st.flash / 0.35) * 0.26})`; g.fillRect(0, 0, W, H); }
+      // the last five seconds: the edges pulse red
+      if (st.running && st.left <= 5) {
+        g.strokeStyle = `rgba(255, 77, 94, ${0.35 + 0.3 * Math.sin(st.t * 9)})`; g.lineWidth = 8;
+        g.strokeRect(4, 4, W - 8, H - 8);
+      }
     }
     function frame(now) {
       raf = 0;
@@ -14081,20 +14643,25 @@ window.PAY_CONFIG = {
       raf = requestAnimationFrame(frame);
     }
     function go() {
-      Object.assign(st, { t: 0, left: ROUND, score: 0, lives: 3, items: [], floats: [], next: 0.5, shake: 0, flash: 0, squash: 0, running: true });
-      over.classList.remove('show'); over.innerHTML = '';
+      Object.assign(st, { t: 0, left: ROUND, score: 0, lives: 3, items: [], floats: [], parts: [], chain: 0, next: 0.5, shake: 0, flash: 0, squash: 0, running: true });
+      hideOver();
       hud(); last = performance.now();
       raf = requestAnimationFrame(frame);
     }
+    let countT = 0, fadeT = 0;
+    // the overlay (intro, countdown, pause, the end) comes in at once and fades away: its layer goes only
+    // once it is invisible (dropping it in one frame, mid-game, could flash on the phone)
+    function showOver() { clearTimeout(fadeT); over.classList.remove('fade'); over.classList.add('show'); }
+    function hideOver() { clearTimeout(fadeT); over.classList.add('fade'); fadeT = setTimeout(() => { over.classList.remove('show', 'fade'); over.innerHTML = ''; }, 260); }
     function countdown() {
       let n = 3;
-      over.classList.add('show');
+      showOver();
       const tick = () => {
         if (!alive) return;
-        if (n === 0) { go(); play('start'); return; }
+        if (n === 0) { over.innerHTML = '<div class="cg-count go">יאללה!</div>'; play('start'); play('swish'); countT = setTimeout(() => { if (alive) go(); }, 420); return; }
         over.innerHTML = `<div class="cg-count">${n}</div>`;
-        play('tick'); n--;
-        setTimeout(tick, 650);
+        play('ding', { pitch: 0.6 }); n--;
+        countT = setTimeout(tick, 650);
       };
       tick();
     }
@@ -14102,11 +14669,12 @@ window.PAY_CONFIG = {
       st.running = false;
       cancelAnimationFrame(raf); raf = 0;
       draw(); hud();
-      over.classList.add('show');
+      showOver();
       const mins = rate ? Math.round((st.score / rate) * 60) : 0;
       const h = Math.floor(mins / 60), m = mins % 60;
       const span = h ? `${h === 1 ? 'שעה' : h === 2 ? 'שעתיים' : h + ' שעות'}${m ? ` ו-${m} דקות` : ''}` : `${mins} דקות`;
       endScreen(over, {
+        fx,
         id: 'coins', unit: ' ₪', score: st.score, ratio: Math.min(1, st.score / 400),
         title: why === 'lives' ? 'אופס, יותר מדי קנסות' : 'נגמר הזמן!',
         big: st.score + ' ₪',
@@ -14115,7 +14683,7 @@ window.PAY_CONFIG = {
       });
     }
     function intro() {
-      over.classList.add('show');
+      showOver();
       over.innerHTML = `<div class="gm-intro">${App.mascot ? App.mascot('wink', { size: 84 }) : ''}
         <div class="gm-intro-t">${ROUND} שניות. כמה כסף אפשר לתפוס?</div>
         <div class="cg-legend"><span><i class="lg-coin"></i>מטבעות ושטרות</span><span><i class="lg-fine"></i>קנס: מוריד לב</span><span><i class="lg-clock"></i>עוד 5 שניות</span></div>
@@ -14140,16 +14708,17 @@ window.PAY_CONFIG = {
     const onVis = () => {
       if (!document.hidden || !st.running || paused) return;
       paused = true; cancelAnimationFrame(raf); raf = 0;
-      over.classList.add('show');
+      showOver();
       over.innerHTML = `<div class="gm-intro"><div class="gm-intro-t">המשחק בהפסקה</div><button class="btn big" data-resume>${icon('play')} המשך</button></div>`;
-      over.querySelector('[data-resume]').onclick = () => { paused = false; over.classList.remove('show'); over.innerHTML = ''; last = performance.now(); raf = requestAnimationFrame(frame); };
+      over.querySelector('[data-resume]').onclick = () => { paused = false; hideOver(); last = performance.now(); raf = requestAnimationFrame(frame); };
     };
     document.addEventListener('visibilitychange', onVis);
 
     requestAnimationFrame(() => { size(); intro(); });
     return function stop() {
       alive = false; st.running = false;
-      cancelAnimationFrame(raf);
+      cancelAnimationFrame(raf); clearTimeout(countT); clearTimeout(fadeT);
+      fx.close();
       ro.disconnect();
       document.removeEventListener('keydown', onKey);
       document.removeEventListener('visibilitychange', onVis);
@@ -14163,15 +14732,32 @@ window.PAY_CONFIG = {
     UI.openSheet({
       title: 'כמה זה יוצא?',
       full: true,
-      cls: 'game-sheet',
+      cls: 'game-sheet gs-quiz',
       body: '<div class="qz" data-box></div>',
-      onMount: (el) => { stop = runQuiz(el.querySelector('[data-box]')); },
+      onMount: (el) => { stop = runQuiz(el.querySelector('[data-box]'), attachFx(el)); },
       onClose: () => { stop(); onDone(); },
     });
   }
   const dots = (n, i, res) => `<div class="qz-dots">${Array.from({ length: n }, (_, k) => `<i class="${k < i ? (res[k] ? 'ok' : 'no') : k === i ? 'cur' : ''}"></i>`).join('')}</div>`;
-  function runQuiz(box) {
-    let alive = true, timer = 0, next = 0;
+  const SHAPES = ['▲', '◆', '●', '■']; // each answer has its colour and its shape
+  /** A right answer: sparks and a ring from the button, a chime one step higher for each in a row, a banner on
+   * the big streaks. The sparks start on the next frame: measuring the button right after the answer changed
+   * the page would force an extra layout at that very moment (a dropped frame on a slow phone). */
+  function cheer(fx, el, streak) {
+    play('ding', { pitch: step(streak - 1) }); buzz(10);
+    requestAnimationFrame(() => {
+      if (!el.isConnected) return;
+      const [x, y] = fx.at(el);
+      fx.burst(x, y, { palette: 'good', n: 24, speed: [160, 460] });
+      fx.ring(x, y, { color: '#21d47f', r1: 110 });
+      fx.glow('good');
+    });
+    if (STREAKS.includes(streak)) setTimeout(() => fx.banner(`🔥 ${streak} ברצף!`), 260);
+  }
+  /** A wrong one: a low "bonk", a buzz and a red glow at the edges. */
+  function boo(fx) { play('bonk'); buzz([20, 30, 20]); requestAnimationFrame(() => fx.glow('bad')); }
+  function runQuiz(box, fx) {
+    let alive = true, timer = 0, next = 0, hurry = [];
     let qs, i, score, streak, res, t0, answered;
     function start() {
       qs = Games.quizRound(seed(), QN, { rate: myRate() });
@@ -14185,21 +14771,30 @@ window.PAY_CONFIG = {
       box.innerHTML = `<div class="qz-top">${dots(QN, i, res)}<span class="qz-score" data-sc>${score}</span></div>
         <div class="qz-timer"><b style="animation-duration:${QSEC}s"></b></div>
         <div class="qz-card"><div class="qz-n">שאלה ${i + 1} מתוך ${QN}${streak >= 2 ? ` · <span class="qz-streak">🔥 ${streak} ברצף</span>` : ''}</div><div class="qz-q">${esc(q.q)}</div></div>
-        <div class="qz-opts">${q.options.map((o, k) => `<button class="qz-opt" data-k="${k}" style="--d:${k}">${esc(o)}</button>`).join('')}</div>
+        <div class="qz-opts">${q.options.map((o, k) => `<button class="qz-opt" data-k="${k}" style="--d:${k}"><span class="qz-sh" aria-hidden="true">${SHAPES[k] || ''}</span>${esc(o)}</button>`).join('')}</div>
         <div class="qz-x" aria-live="polite"></div>`;
       t0 = performance.now();
-      clearTimeout(timer);
+      clearTimeout(timer); hurry.forEach(clearTimeout);
       timer = setTimeout(() => answer(-1), QSEC * 1000);
+      // the last three seconds tick, and the bar pulses
+      hurry = [3, 2, 1].map((s) => setTimeout(() => {
+        if (!alive || answered) return;
+        play('alarm');
+        const tb = box.querySelector('.qz-timer');
+        if (tb) tb.classList.add('hurry');
+      }, (QSEC - s) * 1000));
+      if (i > 0) play('swish');
       box.querySelector('.qz-opts').onclick = (e) => { const b = e.target.closest('[data-k]'); if (b) answer(+b.dataset.k); };
     }
     function answer(k) {
       if (answered || !alive) return;
       answered = true;
-      clearTimeout(timer);
+      clearTimeout(timer); hurry.forEach(clearTimeout);
       const q = qs[i];
       const ok = k === q.answer;
       const took = (performance.now() - t0) / 1000;
       box.querySelector('.qz-timer b').style.animationPlayState = 'paused';
+      box.querySelector('.qz-timer').classList.remove('hurry');
       const btns = box.querySelectorAll('.qz-opt');
       btns.forEach((b) => (b.disabled = true));
       btns[q.answer].classList.add('right');
@@ -14208,14 +14803,14 @@ window.PAY_CONFIG = {
         streak++;
         pts = 10 + Math.max(0, Math.round(QSEC - took)) + (streak >= 3 ? 5 : 0);
         score += pts;
-        play('coin'); buzz(10);
         const sc = box.querySelector('[data-sc]');
         sc.textContent = score; sc.classList.add('bump');
         btns[k].insertAdjacentHTML('beforeend', `<span class="qz-pts">+${pts}</span>`);
+        cheer(fx, btns[k], streak);
       } else {
         streak = 0;
         if (k >= 0) btns[k].classList.add('wrong');
-        play('error'); buzz([20, 30, 20]);
+        boo(fx);
       }
       res.push(ok);
       const x = box.querySelector('.qz-x');
@@ -14228,6 +14823,7 @@ window.PAY_CONFIG = {
     function finish() {
       const right = res.filter(Boolean).length;
       endScreen(box, {
+        fx,
         id: 'quiz', unit: ' נק׳', score, ratio: right / QN,
         title: right === QN ? 'מושלם! כל התשובות נכונות' : right >= 7 ? 'יפה מאוד!' : right >= 4 ? 'לא רע בכלל' : 'בסיבוב הבא זה יילך טוב יותר',
         big: `${score} <small>נק׳</small>`,
@@ -14236,7 +14832,7 @@ window.PAY_CONFIG = {
       });
     }
     start();
-    return () => { alive = false; clearTimeout(timer); clearTimeout(next); };
+    return () => { alive = false; clearTimeout(timer); clearTimeout(next); hurry.forEach(clearTimeout); fx.close(); };
   }
 
   /* ---------------- 3. true or false ---------------- */
@@ -14245,18 +14841,19 @@ window.PAY_CONFIG = {
     UI.openSheet({
       title: 'נכון או לא?',
       full: true,
-      cls: 'game-sheet',
+      cls: 'game-sheet gs-facts',
       body: '<div class="tf" data-box></div>',
-      onMount: (el) => { stop = runFacts(el.querySelector('[data-box]')); },
+      onMount: (el) => { stop = runFacts(el.querySelector('[data-box]'), attachFx(el)); },
       onClose: () => { stop(); onDone(); },
     });
   }
-  function runFacts(box) {
-    let alive = true;
-    let list, i, res;
-    function start() { list = Games.factsRound(seed(), 10, adultMinWage()); i = 0; res = []; show(); }
+  function runFacts(box, fx) {
+    let alive = true, stampT = 0;
+    let list, i, res, streak;
+    function start() { list = Games.factsRound(seed(), 10, adultMinWage()); i = 0; res = []; streak = 0; show(); }
     function show() {
       if (!alive) return;
+      if (i > 0) play('swish');
       const f = list[i];
       box.innerHTML = `<div class="qz-top">${dots(list.length, i, res)}<span class="qz-score">${res.filter(Boolean).length}/${list.length}</span></div>
         <div class="tf-card" data-card><div class="qz-n">${i + 1} מתוך ${list.length}</div><div class="tf-s">${esc(f.s)}</div></div>
@@ -14271,8 +14868,11 @@ window.PAY_CONFIG = {
       box.querySelectorAll('.tf-btns .btn').forEach((b) => { b.disabled = true; b.classList.toggle('picked', (b.dataset.a === '1') === a); });
       const card = box.querySelector('[data-card]');
       card.classList.add(ok ? 'ok' : 'no');
-      card.insertAdjacentHTML('beforeend', `<div class="tf-verdict">${f.t ? 'נכון' : 'לא נכון'}</div>`);
-      if (ok) { play('coin'); buzz(10); } else { play('error'); buzz([20, 30, 20]); }
+      // the verdict lands on the card like a rubber stamp
+      card.insertAdjacentHTML('beforeend', `<div class="tf-verdict ${f.t ? 't' : 'f'}">${f.t ? 'נכון' : 'לא נכון'}</div>`);
+      clearTimeout(stampT);
+      stampT = setTimeout(() => { if (alive) play('stamp'); }, 150);
+      if (ok) { streak++; cheer(fx, box.querySelector('.tf-btns .picked') || card, streak); } else { streak = 0; boo(fx); }
       box.querySelector('.qz-score').textContent = `${res.filter(Boolean).length}/${list.length}`;
       const x = box.querySelector('.qz-x');
       x.innerHTML = `<div class="qz-xt ${ok ? 'ok' : 'no'}">${ok ? 'צדקת!' : 'הפעם לא'}</div><div>${esc(f.x)}</div>
@@ -14282,6 +14882,7 @@ window.PAY_CONFIG = {
     function finish() {
       const right = res.filter(Boolean).length;
       endScreen(box, {
+        fx,
         id: 'facts', unit: '/10', score: right, ratio: right / list.length,
         title: right >= 9 ? 'אלופי הזכויות!' : right >= 6 ? 'ידע לא רע בכלל' : 'שווה להציץ בזכויות שלך',
         big: `${right}<small>/${list.length}</small>`,
@@ -14292,7 +14893,7 @@ window.PAY_CONFIG = {
       if (r) r.onclick = () => { UI.closeAll(); setTimeout(() => App.actions.rights && App.actions.rights(), 350); };
     }
     start();
-    return () => { alive = false; };
+    return () => { alive = false; clearTimeout(stampT); fx.close(); };
   }
 
   /* ---------------- 4. pairs (memory) ---------------- */
@@ -14302,18 +14903,18 @@ window.PAY_CONFIG = {
     UI.openSheet({
       title: 'זוגות',
       full: true,
-      cls: 'game-sheet',
+      cls: 'game-sheet gs-pairs',
       body: '<div class="pr" data-box></div>',
-      onMount: (el) => { stop = runPairs(el.querySelector('[data-box]')); },
+      onMount: (el) => { stop = runPairs(el.querySelector('[data-box]'), attachFx(el)); },
       onClose: () => { stop(); onDone(); },
     });
   }
-  function runPairs(box) {
+  function runPairs(box, fx) {
     let alive = true, back = 0, end = 0;
-    let round, open, moves, found, t0, busy;
+    let round, open, moves, found, t0, busy, run;
     function start() {
       clearTimeout(back); clearTimeout(end);
-      round = Games.pairsRound(seed(), PN); open = []; moves = 0; found = new Set(); t0 = 0; busy = false;
+      round = Games.pairsRound(seed(), PN); open = []; moves = 0; found = new Set(); t0 = 0; busy = false; run = 0;
       box.innerHTML = `<div class="qz-top"><span class="pr-moves" data-mv>0 ניסיונות</span><span class="qz-score" data-sc>0/${PN}</span></div>
         <div class="pr-grid">${round.cards.map((c, k) => `<button class="pr-card" data-k="${k}" style="--k:${k}" aria-label="קלף ${k + 1}, הפוך"><span class="pr-in"><span class="pr-back" aria-hidden="true"></span><span class="pr-face ${c.kind === 't' ? 'w' : 'm'}">${esc(c.text)}</span></span></button>`).join('')}</div>
         <div class="qz-x" aria-live="polite"><div>הופכים שני קלפים ומחפשים מילה מהתלוש ואת מה שהיא אומרת.</div></div>`;
@@ -14326,26 +14927,36 @@ window.PAY_CONFIG = {
       if (!alive || busy || found.has(c.pair) || open.includes(k)) return;
       if (!t0) t0 = performance.now();
       b.classList.add('up'); b.setAttribute('aria-label', c.text);
-      play('tick'); buzz(6);
+      play('flip', { pitch: 0.9 + Math.random() * 0.2 }); buzz(6);
       open.push(k);
       if (open.length < 2) return;
       moves++;
       box.querySelector('[data-mv]').textContent = `${moves} ניסיונות`;
       const [a, z] = open.map((i) => round.cards[i]);
       if (a.pair === z.pair) {
-        found.add(a.pair);
-        open.forEach((i) => cardEl(i).classList.add('done'));
+        found.add(a.pair); run++;
+        const els = open.map(cardEl);
+        els.forEach((el) => el.classList.add('done'));
         open = [];
         const p = round.pairs.find((x) => x.id === a.pair);
         say(`<b>${esc(p.t)}</b>: ${esc(p.d)} ✓`);
         const sc = box.querySelector('[data-sc]'); sc.textContent = `${found.size}/${PN}`; sc.classList.remove('bump'); void sc.offsetWidth; sc.classList.add('bump');
-        play('coin'); buzz(10);
-        if (found.size === PN) end = setTimeout(finish, 700);
+        // the pair lights up: sparks from both cards, a chime one step higher for every pair found
+        setTimeout(() => {
+          if (!alive) return;
+          play('match', { pitch: step(found.size - 1) }); buzz(10);
+          els.forEach((el) => { const [x, y] = fx.at(el); fx.burst(x, y, { palette: 'gold', n: 14, kinds: ['star', 'spark', 'confetti'], speed: [140, 380] }); fx.ring(x, y, { color: '#21d47f', r1: 70, width: 5 }); });
+          if (run >= 3 && found.size < PN) fx.banner(`🔥 ${run} זוגות ברצף!`);
+        }, 180);
+        if (found.size === PN) end = setTimeout(finish, 900);
       } else {
-        busy = true;
+        busy = true; run = 0;
+        // a miss: both cards give a little shake before they turn back
+        const els = open.map(cardEl);
+        setTimeout(() => { if (alive) { els.forEach((el) => el && el.classList.add('miss')); play('soft'); } }, 380);
         back = setTimeout(() => {
           if (!alive) return;
-          open.forEach((i) => { const el = cardEl(i); if (el) { el.classList.remove('up'); el.setAttribute('aria-label', `קלף ${i + 1}, הפוך`); } });
+          open.forEach((i) => { const el = cardEl(i); if (el) { el.classList.remove('up', 'miss'); el.setAttribute('aria-label', `קלף ${i + 1}, הפוך`); } });
           open = []; busy = false;
         }, 950);
       }
@@ -14355,6 +14966,7 @@ window.PAY_CONFIG = {
       const secs = (performance.now() - t0) / 1000;
       const score = Games.pairsScore(PN, moves, secs);
       endScreen(box, {
+        fx,
         id: 'pairs', unit: ' נק׳', score, ratio: Math.min(1, PN / moves),
         title: moves <= PN + 2 ? 'זיכרון של פיל!' : moves <= PN + 6 ? 'יפה מאוד!' : 'כל הזוגות נמצאו',
         big: `${score} <small>נק׳</small>`,
@@ -14363,7 +14975,7 @@ window.PAY_CONFIG = {
       });
     }
     start();
-    return () => { alive = false; clearTimeout(back); clearTimeout(end); };
+    return () => { alive = false; clearTimeout(back); clearTimeout(end); fx.close(); };
   }
 
   /* ---------------- 5. how many hours is it? (higher or lower) ---------------- */
@@ -14372,13 +14984,13 @@ window.PAY_CONFIG = {
     UI.openSheet({
       title: 'כמה שעות זה?',
       full: true,
-      cls: 'game-sheet',
+      cls: 'game-sheet gs-hours',
       body: '<div class="hw" data-box></div>',
-      onMount: (el) => { stop = runHours(el.querySelector('[data-box]')); },
+      onMount: (el) => { stop = runHours(el.querySelector('[data-box]'), attachFx(el)); },
       onClose: () => { stop(); onDone(); },
     });
   }
-  function runHours(box) {
+  function runHours(box, fx) {
     let alive = true, next = 0;
     const own = myRate();
     const rate = own > 0 ? Math.round(own * 100) / 100 : 40;
@@ -14406,15 +15018,18 @@ window.PAY_CONFIG = {
       box.querySelectorAll('.tf-btns .btn').forEach((x) => { x.disabled = true; x.classList.toggle('picked', (x.dataset.a === '1') === more); });
       const card = box.querySelector('.hw-card.b');
       card.outerHTML = item(b, true, 'b shown ' + (ok ? 'ok' : 'no'));
+      // the price rolls up like a slot machine
+      const shown = box.querySelector('.hw-card.b');
+      if (root.GameFx) root.GameFx.countUp(shown.querySelector('.hw-p'), { ms: 520 });
       const x = box.querySelector('.qz-x');
       if (ok) {
         streak++;
-        play('coin'); buzz(10);
+        cheer(fx, shown, streak);
         const sc = box.querySelector('[data-sc]'); sc.textContent = `🔥 ${streak}`; sc.classList.add('bump');
         x.innerHTML = `<div class="qz-xt ok">${streak >= 5 && streak % 5 === 0 ? `${streak} ברצף! 🔥` : 'נכון!'}</div>`;
         next = setTimeout(() => { if (!alive) return; i++; if (i + 1 < chain.length) show(); else finish(); }, 1500);
       } else {
-        play('error'); buzz([20, 30, 20]);
+        boo(fx);
         x.innerHTML = `<div class="qz-xt no">הפעם לא</div><div>${esc(b.name)} עולה ${money(b.price)}: ${Games.workTime(b.price / rate)} של עבודה, ${b.price > a.price ? 'יותר' : 'פחות'} מ${esc(a.name)}.</div>
           <button class="btn" data-next>לתוצאה</button>`;
         x.querySelector('[data-next]').onclick = finish;
@@ -14424,6 +15039,7 @@ window.PAY_CONFIG = {
       if (!alive) return;
       clearTimeout(next);
       endScreen(box, {
+        fx,
         id: 'hours', unit: ' ברצף', score: streak, ratio: Math.min(1, streak / 8),
         title: streak >= 8 ? 'יודעים בדיוק מה שווה כסף!' : streak >= 4 ? 'יפה!' : 'שווה עוד סיבוב',
         big: `${streak} <small>ברצף</small>`,
@@ -14432,7 +15048,7 @@ window.PAY_CONFIG = {
       });
     }
     start();
-    return () => { alive = false; clearTimeout(next); };
+    return () => { alive = false; clearTimeout(next); fx.close(); };
   }
 
   App.games = { LIST, best, play: playGame };
