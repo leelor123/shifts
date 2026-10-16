@@ -14,7 +14,7 @@
 | מפתח החתימה + הסיסמה | `C:\Users\User\ShiftPay-Android\keys\` (**לגבות! לא להעלות לשום מקום**) |
 | אייקון 512×512 | `store/icon-512.png` |
 | תמונת נושא 1024×500 | `store/feature-graphic.png` |
-| 7 צילומי מסך 1080×1920 | `store/screenshots/` |
+| 8 צילומי מסך 1080×1920 | `store/screenshots/` |
 | שם, תיאור קצר, תיאור מלא, "מה חדש" | `store/listing.md` |
 | מדיניות פרטיות | https://leelor123.github.io/shifts/privacy.html |
 | דף מחיקת חשבון | https://leelor123.github.io/shifts/delete-account.html |
@@ -141,7 +141,7 @@ The app requires signing in with a Google account. Any Google account works; no 
 1. **שם / תיאור קצר / תיאור מלא** — להעתיק מ-`store/listing.md`.
 2. **אייקון** — `store/icon-512.png`
 3. **תמונת נושא (Feature graphic)** — `store/feature-graphic.png`
-4. **צילומי מסך של טלפון** — כל 7 הקבצים מ-`store/screenshots/` לפי הסדר.
+4. **צילומי מסך של טלפון** — כל 8 הקבצים מ-`store/screenshots/` לפי הסדר.
 5. (לא חובה) טאבלט — אפשר לדלג.
 6. שומרים.
 
