@@ -55,6 +55,9 @@ T.test('nicknames: public, so checked', () => {
   T.ok(LB.nickProblem('<b>x</b>'), 'markup');
   T.ok(LB.nickProblem('כוס'), 'a bad word');
   T.ok(LB.nickProblem('F.u.c.k'), 'a bad word with dots');
+  T.ok(LB.nickProblem('Admin'), 'looks like the team');
+  T.ok(LB.nickProblem('מנהל הטבלה'), 'looks like the team (Hebrew)');
+  T.ok(LB.nickProblem('שעתי רשמי'), 'the app name');
   for (let s = 0; s < 300; s++) { const n = LB.randomNick(s); T.eq(LB.nickProblem(n), '', 'random nickname ' + n); }
 });
 T.test('reset texts', () => {

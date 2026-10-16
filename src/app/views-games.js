@@ -49,6 +49,24 @@
    * Earned from real work (shift counts, money, a Shabbat or night shift, a 4-week streak),
    * from using the app well (a payslip check, the rights screen) and from the games.
    * Worked out live from the data, so they are never out of date. */
+  /* ---------------- a daily streak of playing ----------------
+   * A round finished on a day counts that day; a day missed starts again from 1. Kept on the phone
+   * (meta.gameDays: the last day, the streak, the best streak). */
+  function markPlayDay() {
+    const today = U.todayKey();
+    const d = S.meta.gameDays || {};
+    if (d.last === today) return { n: d.n || 1, grew: false };
+    const n = d.last === U.addDays(today, -1) ? (d.n || 0) + 1 : 1;
+    Store.setMeta({ gameDays: { last: today, n, best: Math.max(n, d.best || 0) } }).catch(() => {});
+    return { n, grew: true };
+  }
+  /** The streak as it stands: alive if the last day played is today or yesterday. */
+  function playStreak() {
+    const d = S.meta.gameDays || {};
+    const t = U.todayKey();
+    return { n: d.last === t || d.last === U.addDays(t, -1) ? d.n || 0 : 0, today: d.last === t, best: d.best || 0 };
+  }
+  App.gameStreak = playStreak;
   function bestStreak(keys) {
     const ws = S.settings.weekStart || 0;
     const weeks = [...new Set(keys.map((k) => U.weekStart(k, ws)))].sort();
@@ -87,6 +105,9 @@
       ['facts', '⚖️', 'מומחי זכויות', '10 מתוך 10 ב"נכון או לא?"', g('facts') >= 10, count(g('facts'), 10)],
       ['pairs', '🧩', 'זיכרון של פיל', '100 נקודות ב"זוגות"', g('pairs') >= 100, count(g('pairs'), 100)],
       ['hours', '⏱️', 'יודעים מה שווה כסף', '8 ברצף ב"כמה שעות זה?"', g('hours') >= 8, count(g('hours'), 8)],
+      ['play3', '🔥', 'שלושה ימים של משחק', 'משחקים לפחות סיבוב אחד ביום, שלושה ימים ברצף', playStreak().best >= 3, count(playStreak().best, 3)],
+      ['play7', '⚡', 'שבוע של משחק', 'סיבוב אחד ביום, שבעה ימים ברצף', playStreak().best >= 7, count(playStreak().best, 7)],
+      ['play30', '🌟', 'חודש של משחק', 'סיבוב אחד ביום, שלושים ימים ברצף', playStreak().best >= 30, count(playStreak().best, 30)],
     ].map(([id, emoji, title, how, on, prog]) => ({ id, emoji, title, how, on: !!on, prog }));
   }
   function medalsSheet() {
@@ -116,14 +137,18 @@
     UI.openSheet({
       title: 'משחקים',
       cls: 'games-sheet',
-      body: `${App.mascotSays ? App.mascotSays('party', 'הפסקה קטנה? כל משחק לוקח פחות מדקה.', { size: 64 }) : ''}<div class="gm-list">${cards()}</div>
+      body: `${App.mascotSays ? App.mascotSays('party', 'הפסקה קטנה? כל משחק לוקח פחות מדקה.', { size: 64 }) : ''}${(() => {
+          const st = playStreak();
+          if (!st.n) return '';
+          return `<div class="gm-streak-bar ${st.today ? 'on' : ''}"><span aria-hidden="true">🔥</span><b>${st.n === 1 ? 'יום אחד' : st.n + ' ימים'} ברצף</b><small>${st.today ? 'שיחקת היום. נתראה מחר!' : 'סיבוב אחד היום שומר על הרצף'}</small></div>`;
+        })()}<div class="gm-list">${cards()}</div>
         ${root.Champions ? root.Champions.hubCard() : ''}
         <button class="ach-card" data-medals>${(() => { const l = achievements(); const got = l.filter((a) => a.on).length; return `<span class="ach-card-e" aria-hidden="true">🏅</span><span class="gm-txt"><b>המדליות שלי</b><span>${got} מתוך ${l.length} · על משמרות, כסף, תלושים ומשחקים</span></span>${icon('left', 's')}`; })()}</button>`,
       onMount: (el) => {
         el.querySelector('[data-medals]').onclick = medalsSheet;
         const hub = el.querySelector('[data-lb-hub]');
         if (hub) hub.onclick = () => root.Champions.open();
-        if (root.Champions) root.Champions.warm();
+        if (root.Champions) root.Champions.warm(el);
         const list = el.querySelector('.gm-list');
         list.addEventListener('click', (e) => {
           const b = e.target.closest('[data-game]');
@@ -165,7 +190,12 @@
       ${o.sub ? `<div class="gm-end-s">${o.sub}</div>` : ''}
       <div class="gm-end-b">${isBest ? `${icon('star', 's')} שיא חדש!` : `השיא שלך: ${best(o.id)}${o.unit}`}</div>
       <div class="gm-end-a"><button class="btn" data-again>${icon('repeat')} עוד סיבוב</button><button class="btn tonal" data-quit>סיום</button></div></div>`;
-    if (isBest && o.score > 0) { if (Fx()) Fx().celebrate('big'); } else play('pop');
+    // the daily streak: a new day of playing shows (and the big ones are celebrated)
+    const day = markPlayDay();
+    if (day.grew && day.n >= 2) {
+      box.querySelector('.gm-end-b').insertAdjacentHTML('afterend', `<div class="gm-streak">🔥 רצף של ${day.n} ימים!${[3, 7, 30].includes(day.n) ? ' מדליה חדשה 🏅' : ''}</div>`);
+    }
+    if (isBest && o.score > 0 || (day.grew && [3, 7, 30].includes(day.n))) { if (Fx()) Fx().celebrate('big'); } else play('pop');
     if (root.Champions && o.score > 0) root.Champions.afterGame(box, o.id, o.score); // the champions table
     if (root.Music) root.Music.stop(0.6); // the round is over: the music fades
     box.querySelector('[data-again]').onclick = () => { if (root.Music) root.Music.play(o.id); o.again(); };

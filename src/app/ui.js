@@ -133,7 +133,7 @@
     if (action) el.querySelector('.act').onclick = () => { hideToast(); action.fn(); };
     requestAnimationFrame(() => el.classList.add('show'));
     clearTimeout(toastTimer);
-    toastTimer = setTimeout(hideToast, action ? 6000 : 3200);
+    toastTimer = setTimeout(hideToast, (opts && opts.ms) || (action ? 6000 : 3200));
   }
   function hideToast() { const el = document.getElementById('toast'); if (el) el.classList.remove('show'); }
 
@@ -157,7 +157,7 @@
     sheets.push(entry);
     if (CW) {
       try { entry.watcher = new CW(); } catch (e) { return; }
-      entry.watcher.onclose = () => { entry.watcher = null; removeSheet(entry); };
+      entry.watcher.onclose = () => { entry.watcher = null; if (root.UI) root.UI.lastLayerClose = performance.now(); removeSheet(entry); };
       return;
     }
     if (pendingDepth === null) pushEntry(entry);
@@ -213,6 +213,9 @@
     track(entry);
     return entry;
   }
+  // the last layer closed (also by the back button): the app's "press back again to exit" guard comes back (app.js)
+  // (only with CloseWatcher: without it, layers have their own history entries above the guard, which stays)
+  const guardBack = () => { if (CW) setTimeout(() => { if (!sheets.length && root.App && root.App.back) root.App.back.ensure(); }, 0); };
   function closeLayer(entry) {
     if (!entry || entry.closed) return;
     entry.closed = true;
@@ -221,6 +224,7 @@
     const top = committed().length;
     const i = sheets.indexOf(entry);
     if (i >= 0) sheets.splice(i, 1);
+    guardBack();
     if (!wasPushed) return;
     const cur = pendingDepth === null ? top : pendingDepth;
     if (cur > 0) navigateBack(1, cur - 1);
@@ -233,6 +237,7 @@
       const i = sheets.indexOf(entry);
       if (i >= 0) sheets.splice(i, 1);
       if (entry.onBack) entry.onBack();
+      guardBack();
       return;
     }
     entry.closed = true;
@@ -242,6 +247,7 @@
     const i = sheets.indexOf(entry);
     if (i >= 0) sheets.splice(i, 1);
     if (entry.opts.onClose) entry.opts.onClose();
+    guardBack();
   }
   function closeTop() {
     const top = sheets[sheets.length - 1];
@@ -323,11 +329,11 @@
     document.body.appendChild(a); a.click(); a.remove();
     setTimeout(() => URL.revokeObjectURL(url), 4000);
   }
-  async function shareFile(filename, blob, title) {
+  async function shareFile(filename, blob, title, text) {
     try {
       const file = new File([blob], filename, { type: blob.type });
       if (navigator.canShare && navigator.canShare({ files: [file] })) {
-        await navigator.share({ files: [file], title: title || filename });
+        await navigator.share(Object.assign({ files: [file], title: title || filename }, text ? { text } : {}));
         return true;
       }
     } catch (e) { if (e && e.name === 'AbortError') return true; }

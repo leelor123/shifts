@@ -23,6 +23,7 @@
   // nicknames are public: no swearing, no phone numbers (5 digits or more in a row)
   const BAD = ['זונה', 'זונות', 'כוס', 'זין', 'זיין', 'מזדיין', 'שרמוט', 'שרמוטה', 'מניאק', 'קוקסינל', 'נאצי', 'היטלר', 'מחבל',
     'fuck', 'shit', 'bitch', 'dick', 'cock', 'pussy', 'porn', 'sex', 'nazi', 'hitler', 'nigg', 'cunt', 'whore', 'slut'];
+  const STAFF = ['admin', 'moderator', 'support', 'shaati', 'מנהל', 'מנהלת', 'צוות', 'תמיכה', 'שעתי', 'רשמי'];
   const NICK_RE = /^[א-תa-zA-Z0-9 _.-]{2,16}$/;
 
   const num = (k) => +k.replace(/-/g, '');
@@ -72,6 +73,8 @@
     const words = t.toLowerCase().split(/[\s_.-]+/);
     const low = words.join('');
     if (BAD.some((w) => (w.length <= 3 ? words.includes(w) : low.includes(w)))) return 'הכינוי הזה לא מתאים לטבלה';
+    // nobody may look like the app's own team
+    if (STAFF.some((w) => low.includes(w))) return 'כינוי שנראה כמו צוות האפליקציה שמור';
     return '';
   }
   /** A random fun nickname ("שועל זריז 27"); seed makes it repeatable in tests. */

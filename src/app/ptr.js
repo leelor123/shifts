@@ -135,7 +135,8 @@
     const dx = e.touches[0].clientX - x0;
     if (!pulling) {
       // a sideways swipe, a scroll up, or a page that has scrolled: not a pull
-      if (root.scrollY > 0 || dy < -SLOP || (Math.abs(dx) > SLOP && Math.abs(dx) > Math.abs(dy))) { y0 = null; return; }
+      // (and the listeners go at once, so the rest of this scroll never waits for the page)
+      if (root.scrollY > 0 || dy < -SLOP || (Math.abs(dx) > SLOP && Math.abs(dx) > Math.abs(dy))) { y0 = null; unbind(); return; }
       // at the top, a downward move scrolls nothing: hold it, so the browser never begins a scroll of its own under the pull
       if (dy > 0 && dy >= Math.abs(dx) && e.cancelable) e.preventDefault();
       if (dy < SLOP) return;

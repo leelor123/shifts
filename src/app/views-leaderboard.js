@@ -139,12 +139,14 @@
   };
 
   /** A small card for the games list: the place today in the last game played. */
-  Champions.hubCard = function () {
+  const hubSub = () => {
     const last = (S.meta.lbLast && LB.MAX[S.meta.lbLast]) ? S.meta.lbLast : 'coins';
     const c = boards.get(`${last}|d|${today()}`);
     const r = c && signedIn() ? c.rows.find((x) => x.uid === uid()) : null;
-    const sub = !signedIn() ? 'מתחברים ומתחרים על המקום הראשון' : !joined() ? 'היום, השבוע, החודש ובכל הזמנים' : r ? `המקום שלך היום ב${SHORT[last]}: ${r.rank}` : 'מי במקום הראשון היום?';
-    return `<button class="ach-card lb-card" data-lb-hub><span class="ach-card-e" aria-hidden="true">🏆</span><span class="gm-txt"><b>טבלת האלופים</b><span>${esc(sub)}</span></span>${icon('left', 's')}</button>`;
+    return !signedIn() ? 'מתחברים ומתחרים על המקום הראשון' : !joined() ? 'היום, השבוע, החודש ובכל הזמנים' : r ? `המקום שלך היום ב${SHORT[last]}: ${r.rank}` : 'מי במקום הראשון היום?';
+  };
+  Champions.hubCard = function () {
+    return `<button class="ach-card lb-card" data-lb-hub><span class="ach-card-e" aria-hidden="true">🏆</span><span class="gm-txt"><b>טבלת האלופים</b><span data-lb-sub>${esc(hubSub())}</span></span>${icon('left', 's')}</button>`;
   };
 
   /* ---------------- the table ----------------
@@ -165,6 +167,7 @@
         <b class="lb-n">${esc(x.n)}</b>${x.p ? '<i class="lb-plus">Plus</i>' : ''}<span class="lb-s">${x.s}${esc(unit)}</span><div class="lb-step"><span>${place}</span></div></div>`
       : `<div class="lb-pod p${place} empty"><div class="lb-av"><span aria-hidden="true">?</span></div><b class="lb-n">פנוי</b><div class="lb-step"><span>${place}</span></div></div>`);
     const periodName = () => PERIODS.find((p) => p[0] === period)[1];
+    let lastMe = null;
     /** The board and my line under it, from rows (no waiting). */
     function paint(el, rows0) {
       const g = gameOf(game);
@@ -173,6 +176,7 @@
       const mineLook = profile(true);
       const rows = rows0.map((x) => (x.uid === meId ? Object.assign({}, x, { e: mineLook.e, bg: mineLook.bg, p: mineLook.p }) : x));
       const meRow = rows.find((x) => x.uid === meId);
+      lastMe = meRow ? { game, period, row: meRow } : null;
       const admin = !!App.isAdmin;
       const unit = g.unit || '';
       const reset = LB.resetText(period, today(), Date.now());
@@ -192,7 +196,7 @@
         set(bar, `<div class="lb-me-t"><b>רוצה להופיע כאן?</b><small>בוחרים כינוי ואימוג׳י, בלי שם אמיתי</small></div><button class="btn sm" data-lb-profile>${icon('trophy', 's')} הצטרפות</button>`);
       } else if (meRow) {
         const ahead = rows.filter((x) => x.s > meRow.s).pop();
-        set(bar, `<div class="lb-me-t"><b>${meRow.rank === 1 ? '👑 את/ה במקום הראשון!' : `המקום שלך: ${meRow.rank}`}</b><small>${ahead ? `עוד ${ahead.s - meRow.s + 1}${esc(unit)} כדי לעקוף את ${esc(ahead.n)}` : 'תשמרו על הכתר 😎'}</small></div><button class="btn sm" data-lb-play>${icon('play', 's')} לשחק</button>`);
+        set(bar, `<div class="lb-me-t"><b>${meRow.rank === 1 ? '👑 את/ה במקום הראשון!' : `המקום שלך: ${meRow.rank}`}</b><small>${ahead ? `עוד ${ahead.s - meRow.s + 1}${esc(unit)} כדי לעקוף את ${esc(ahead.n)}` : 'תשמרו על הכתר 😎'}</small></div><button class="icon-btn lb-share" data-lb-share aria-label="שיתוף המקום שלי">${icon('share', 's')}</button><button class="btn sm" data-lb-play>${icon('play', 's')} לשחק</button>`);
       } else {
         const last = rows[rows.length - 1];
         set(bar, `<div class="lb-me-t"><b>${rows.length >= LIMIT ? 'עוד לא בטופ 50' : `עוד לא שיחקת ${period === 'a' ? 'כאן' : periodName()}`}</b><small>${rows.length >= LIMIT ? `צריך יותר מ-${last.s}${esc(unit)}` : 'משחק אחד וכבר את/ה בטבלה'}</small></div><button class="btn sm" data-lb-play>${icon('play', 's')} לשחק</button>`);
@@ -258,6 +262,7 @@
           if (b.dataset.game) { if (b.dataset.game !== game) { game = b.dataset.game; mark(el); load(el); } }
           else if (b.dataset.period) { if (b.dataset.period !== period) { period = b.dataset.period; mark(el); load(el); } }
           else if (b.hasAttribute('data-lb-retry')) load(el);
+          else if (b.hasAttribute('data-lb-share')) { if (lastMe) Champions.shareRank(lastMe.game, lastMe.period, lastMe.row); }
           else if (b.hasAttribute('data-lb-profile')) Champions.profile(() => { if (el.isConnected) { tabs(el); load(el); } });
           else if (b.hasAttribute('data-lb-signin')) { UI.closeAll(); App.go('settings'); setTimeout(() => App.sheetsApi.settingsSection('account'), 350); }
           else if (b.hasAttribute('data-lb-play')) {
@@ -272,10 +277,72 @@
     });
   };
   /** The games list warms the last game's board of today, so the table opens at once. */
-  Champions.warm = function () {
+  Champions.warm = function (el) {
     if (!signedIn()) return;
     const last = LB.MAX[S.meta.lbLast] ? S.meta.lbLast : 'coins';
-    if (!cached(last, 'd')) board(last, 'd').catch(() => {});
+    if (cached(last, 'd')) return;
+    // when it arrives, the card's line says my place (only the text changes)
+    board(last, 'd').then(() => { const sub = el && el.querySelector('[data-lb-sub]'); if (sub && sub.isConnected) { const t = hubSub(); if (sub.textContent !== t) sub.textContent = t; } }).catch(() => {});
+  };
+
+  /* ---------------- "share my place": an image for friends and stories ---------------- */
+  // the skins' colours (styles-v3.css .sk-*), for a Plus member's card
+  const SKIN_COLORS = {
+    gold: ['#654000', '#6f4b05', '#4a2e00'], midnight: ['#0b1437', '#1b2a6b', '#070b20'], sunset: ['#8a1c3a', '#b3361f', '#5e1240'],
+    ocean: ['#04425a', '#0a6f7a', '#032f4a'], forest: ['#0c3d2a', '#17663f', '#072a1d'], carbon: ['#1c1d22', '#34363f', '#111216'],
+    royal: ['#2e0a5c', '#4b1690', '#1c0640'], rose: ['#6e1240', '#94204f', '#470c2b'], lava: ['#3a0a02', '#7d2006', '#2a0701'],
+    neon: ['#12052e', '#1d0b4a', '#0a0220'], ice: ['#0a3350', '#134f72', '#082640'], galaxy: ['#120a2e', '#2a1260', '#0a0618'],
+  };
+  const PERIOD_IN = { d: 'היום', w: 'השבוע', m: 'החודש', y: 'השנה', a: 'בכל הזמנים' };
+  /** Draws the card (1080×1350, fits a story) and hands it to the phone's share sheet. */
+  Champions.shareRank = async function (game, period, row) {
+    try {
+      if (document.fonts && document.fonts.ready) await document.fonts.ready;
+      const g0 = gameOf(game);
+      const W = 1080, H = 1350;
+      const c = document.createElement('canvas');
+      c.width = W; c.height = H;
+      const g = c.getContext('2d');
+      const cols = SKIN_COLORS[row.bg] || ['#4c1d95', '#7c3aed', '#db2777'];
+      const grd = g.createLinearGradient(0, 0, W, H);
+      grd.addColorStop(0, cols[0]); grd.addColorStop(0.55, cols[1]); grd.addColorStop(1, cols[2]);
+      g.fillStyle = grd; g.fillRect(0, 0, W, H);
+      // soft light, and a few sparkles
+      g.fillStyle = 'rgba(255,255,255,.08)';
+      g.beginPath(); g.arc(W * 0.88, H * 0.1, 280, 0, Math.PI * 2); g.fill();
+      g.beginPath(); g.arc(W * 0.08, H * 0.94, 340, 0, Math.PI * 2); g.fill();
+      g.fillStyle = 'rgba(255,255,255,.55)';
+      [[0.14, 0.2, 5], [0.82, 0.32, 4], [0.22, 0.58, 3], [0.9, 0.66, 5], [0.12, 0.8, 4]].forEach(([x, y, r]) => { g.beginPath(); g.arc(W * x, H * y, r, 0, Math.PI * 2); g.fill(); });
+      g.direction = 'rtl'; g.textAlign = 'center'; g.fillStyle = '#fff';
+      const F = (w, px) => `${w} ${px}px Fredoka, Rubik, "Segoe UI", Arial, sans-serif`;
+      const E = (px) => `${px}px "Noto Color Emoji", "Apple Color Emoji", "Segoe UI Emoji", sans-serif`;
+      g.font = F(600, 50); g.globalAlpha = 0.85; g.fillText('טבלת האלופים 🏆', W / 2, 170); g.globalAlpha = 1;
+      const medal = row.rank === 1 ? '👑' : row.rank === 2 ? '🥈' : row.rank === 3 ? '🥉' : '🏆';
+      g.font = E(210); g.fillText(medal, W / 2, 440);
+      g.font = F(700, 150); g.fillText(`מקום ${row.rank}`, W / 2, 640);
+      g.font = F(600, 58); g.globalAlpha = 0.92; g.fillText(`${PERIOD_IN[period] || ''} ב"${g0.t}"`, W / 2, 735); g.globalAlpha = 1;
+      // the score in a pill
+      const score = `${row.s}${g0.unit || ''}`;
+      g.font = F(700, 76);
+      const sw = Math.max(320, g.measureText(score).width + 120);
+      g.fillStyle = 'rgba(255,255,255,.16)';
+      g.beginPath(); g.roundRect ? g.roundRect((W - sw) / 2, 790, sw, 120, 60) : g.rect((W - sw) / 2, 790, sw, 120); g.fill();
+      g.fillStyle = '#fff'; g.fillText(score, W / 2, 875);
+      // who
+      g.font = F(600, 58); g.fillText(`${row.n} ${row.e}`, W / 2, 1010);
+      g.font = F(500, 50); g.globalAlpha = 0.9; g.fillText(row.rank === 1 ? 'מי עוקף אותי? 😎' : 'בואו לנסות לעקוף אותי 😉', W / 2, 1090); g.globalAlpha = 1;
+      g.font = F(600, 42); g.globalAlpha = 0.8; g.fillText('Shaati · שעתי', W / 2, H - 120);
+      g.font = F(500, 34); g.direction = 'ltr'; g.fillText('leelor123.github.io/shifts', W / 2, H - 70); g.globalAlpha = 1;
+      const blob = await new Promise((r) => c.toBlob(r, 'image/png'));
+      if (!blob) throw new Error('no image');
+      const text = `${medal} מקום ${row.rank} ${PERIOD_IN[period] || ''} ב"${g0.t}" בשעתי! מי עוקף אותי? https://leelor123.github.io/shifts/`;
+      await UI.shareFile(`shaati-${game}-${period}.png`, blob, 'טבלת האלופים', text);
+      return true;
+    } catch (e) {
+      console.warn('rank image', e);
+      UI.toast('לא הצלחנו ליצור תמונה');
+      return false;
+    }
   };
 
   /* ---------------- my nickname, emoji and background ---------------- */

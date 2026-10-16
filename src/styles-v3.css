@@ -1018,3 +1018,41 @@ body.fx .recap-card:active { transform: scale(.98); }
 .tr-toggle.on .tr-sw { background: var(--brand-strong); }
 .tr-toggle.on .tr-sw i { transform: translateX(12px); }
 @media (prefers-reduced-motion: reduce) { .tr-sw, .tr-sw i { transition: none; } }
+
+/* ---------------- every control answers a press ----------------
+ * Found by pressing every control on every screen (scratch press-audit.js). Controls inside a rounded,
+ * clipped row (the segmented tabs) get an instant tint, no transition and no scaling: a fade there showed
+ * two tabs lit at once, and moving parts inside a clipped box flickered on a phone. Stand-alone controls
+ * get the app's springy press through the separate "scale" property, so it never fights a transform
+ * they already have (the pairs cards' flip, the calendar's swipe). The refresh coin is not touched. */
+.seg > button:not(.on):not(:disabled):active { background: var(--surface-3); }
+.seg > button.on:active { box-shadow: inset 0 0 0 99px rgba(0, 0, 0, .08); }
+details.collapse > summary:active, .vf-line:active, label.switch-row:active { background: color-mix(in srgb, var(--on-surface) 7%, transparent); }
+label.switch-row { border-radius: 12px; }
+.term:active { background: color-mix(in srgb, currentColor 18%, transparent); border-radius: 4px; }
+a:not(.btn):active { background: color-mix(in srgb, currentColor 14%, transparent); border-radius: 4px; }
+.skin-tile, .cal-day, .pr-card, .tr-toggle, .role-chip, .highlight, .lb-mine, .an-entry, .pk-title, .lb-emoji button { transition: scale .14s cubic-bezier(.3, .7, .4, 1); }
+body.fx .skin-tile:active, body.fx .tr-toggle:active, body.fx .role-chip:active, body.fx .lb-mine:active, body.fx .pk-title:active, body.fx .pr-card:active { scale: .95; }
+body.fx .cal-day:active, body.fx .lb-emoji button:active { scale: .9; }
+body.fx .highlight:active, body.fx .an-entry:active { scale: .98; }
+body:not(.fx) .skin-tile:active, body:not(.fx) .cal-day:active, body:not(.fx) .pr-card:active, body:not(.fx) .tr-toggle:active, body:not(.fx) .role-chip:active,
+body:not(.fx) .highlight:active, body:not(.fx) .lb-mine:active, body:not(.fx) .an-entry:active, body:not(.fx) .pk-title:active, body:not(.fx) .lb-emoji button:active { filter: brightness(.93); }
+.pk-day.on:not(:disabled):active { transform: scale(.9); }
+/* a safety net for anything new: a soft tint where nothing else is set (zero specificity: never wins over a real style) */
+:where(button, a[href], [role="button"], [role="tab"], [data-act], summary):where(:not(:disabled)):where(:active) { background-color: color-mix(in srgb, currentColor 8%, transparent); }
+.color-pick button, .font-pick button { transition: scale .14s cubic-bezier(.3, .7, .4, 1); }
+body.fx .color-pick button:active { scale: .88; }
+body.fx .font-pick button:active { scale: .98; }
+body:not(.fx) .color-pick button:active, body:not(.fx) .font-pick button:active { filter: brightness(.92); }
+
+/* the daily streak of playing (orange that reads well on light and on dark) */
+:root { --streak-ink: #c2410c; }
+:root[data-theme="dark"] { --streak-ink: #fdba74; }
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) { --streak-ink: #fdba74; } }
+.gm-streak { margin-top: 6px; font: 700 .95rem var(--font); color: var(--streak-ink); animation: rise .4s cubic-bezier(.2, .8, .2, 1) both; }
+.gm-streak-bar { display: flex; align-items: center; gap: 8px; margin: 0 0 12px; padding: 10px 14px; border-radius: 16px; background: color-mix(in srgb, #ff8a00 12%, var(--surface-1)); border: 1px solid color-mix(in srgb, #ff8a00 35%, transparent); }
+.gm-streak-bar > span { font-size: 1.4rem; line-height: 1; }
+.gm-streak-bar b { white-space: nowrap; }
+.gm-streak-bar small { flex: 1; min-width: 0; text-align: end; color: var(--on-surface-var); font-size: .8rem; }
+.gm-streak-bar:not(.on) > span { filter: grayscale(.6); }
+@media (prefers-reduced-motion: reduce) { .gm-streak { animation: none; } }

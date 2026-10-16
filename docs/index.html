@@ -2,7 +2,7 @@
 <html lang="he" dir="rtl">
 <head>
 <meta charset="utf-8">
-<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'sha256-OkW/7o5pfLn3K8/KzKpEJG0zy4ThIvW/KIuN6CXfY/0=' https://www.gstatic.com https://apis.google.com https://cdnjs.cloudflare.com https://cdn.jsdelivr.net 'wasm-unsafe-eval'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com data:; img-src 'self' data: blob: https:; connect-src 'self' https: wss:; frame-src https://shiftpay-70ab6.firebaseapp.com https://accounts.google.com https://apis.google.com https://*.google.com; worker-src 'self' blob: https://cdnjs.cloudflare.com https://cdn.jsdelivr.net; media-src 'self' data: blob:; manifest-src 'self'; object-src 'none'; base-uri 'self'; form-action 'self'">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'sha256-3k6vyEDrprqLHnTIWOgsOCPsyyvkl13dhX+kP9NLKUI=' https://www.gstatic.com https://apis.google.com https://cdnjs.cloudflare.com https://cdn.jsdelivr.net 'wasm-unsafe-eval'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com data:; img-src 'self' data: blob: https:; connect-src 'self' https: wss:; frame-src https://shiftpay-70ab6.firebaseapp.com https://accounts.google.com https://apis.google.com https://*.google.com; worker-src 'self' blob: https://cdnjs.cloudflare.com https://cdn.jsdelivr.net; media-src 'self' data: blob:; manifest-src 'self'; object-src 'none'; base-uri 'self'; form-action 'self'">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="theme-color" content="#0d2b6b">
 <meta name="description" content="מעקב משמרות וחישוב שכר אישי: שבתות, חגים, שעות נוספות, נסיעות, נטו משוער וניתוח תלושים — נשמר בחשבון שלך ועובד גם בלי אינטרנט.">
@@ -1932,6 +1932,44 @@ body.fx .recap-card:active { transform: scale(.98); }
 .tr-toggle.on .tr-sw i { transform: translateX(12px); }
 @media (prefers-reduced-motion: reduce) { .tr-sw, .tr-sw i { transition: none; } }
 
+/* ---------------- every control answers a press ----------------
+ * Found by pressing every control on every screen (scratch press-audit.js). Controls inside a rounded,
+ * clipped row (the segmented tabs) get an instant tint, no transition and no scaling: a fade there showed
+ * two tabs lit at once, and moving parts inside a clipped box flickered on a phone. Stand-alone controls
+ * get the app's springy press through the separate "scale" property, so it never fights a transform
+ * they already have (the pairs cards' flip, the calendar's swipe). The refresh coin is not touched. */
+.seg > button:not(.on):not(:disabled):active { background: var(--surface-3); }
+.seg > button.on:active { box-shadow: inset 0 0 0 99px rgba(0, 0, 0, .08); }
+details.collapse > summary:active, .vf-line:active, label.switch-row:active { background: color-mix(in srgb, var(--on-surface) 7%, transparent); }
+label.switch-row { border-radius: 12px; }
+.term:active { background: color-mix(in srgb, currentColor 18%, transparent); border-radius: 4px; }
+a:not(.btn):active { background: color-mix(in srgb, currentColor 14%, transparent); border-radius: 4px; }
+.skin-tile, .cal-day, .pr-card, .tr-toggle, .role-chip, .highlight, .lb-mine, .an-entry, .pk-title, .lb-emoji button { transition: scale .14s cubic-bezier(.3, .7, .4, 1); }
+body.fx .skin-tile:active, body.fx .tr-toggle:active, body.fx .role-chip:active, body.fx .lb-mine:active, body.fx .pk-title:active, body.fx .pr-card:active { scale: .95; }
+body.fx .cal-day:active, body.fx .lb-emoji button:active { scale: .9; }
+body.fx .highlight:active, body.fx .an-entry:active { scale: .98; }
+body:not(.fx) .skin-tile:active, body:not(.fx) .cal-day:active, body:not(.fx) .pr-card:active, body:not(.fx) .tr-toggle:active, body:not(.fx) .role-chip:active,
+body:not(.fx) .highlight:active, body:not(.fx) .lb-mine:active, body:not(.fx) .an-entry:active, body:not(.fx) .pk-title:active, body:not(.fx) .lb-emoji button:active { filter: brightness(.93); }
+.pk-day.on:not(:disabled):active { transform: scale(.9); }
+/* a safety net for anything new: a soft tint where nothing else is set (zero specificity: never wins over a real style) */
+:where(button, a[href], [role="button"], [role="tab"], [data-act], summary):where(:not(:disabled)):where(:active) { background-color: color-mix(in srgb, currentColor 8%, transparent); }
+.color-pick button, .font-pick button { transition: scale .14s cubic-bezier(.3, .7, .4, 1); }
+body.fx .color-pick button:active { scale: .88; }
+body.fx .font-pick button:active { scale: .98; }
+body:not(.fx) .color-pick button:active, body:not(.fx) .font-pick button:active { filter: brightness(.92); }
+
+/* the daily streak of playing (orange that reads well on light and on dark) */
+:root { --streak-ink: #c2410c; }
+:root[data-theme="dark"] { --streak-ink: #fdba74; }
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) { --streak-ink: #fdba74; } }
+.gm-streak { margin-top: 6px; font: 700 .95rem var(--font); color: var(--streak-ink); animation: rise .4s cubic-bezier(.2, .8, .2, 1) both; }
+.gm-streak-bar { display: flex; align-items: center; gap: 8px; margin: 0 0 12px; padding: 10px 14px; border-radius: 16px; background: color-mix(in srgb, #ff8a00 12%, var(--surface-1)); border: 1px solid color-mix(in srgb, #ff8a00 35%, transparent); }
+.gm-streak-bar > span { font-size: 1.4rem; line-height: 1; }
+.gm-streak-bar b { white-space: nowrap; }
+.gm-streak-bar small { flex: 1; min-width: 0; text-align: end; color: var(--on-surface-var); font-size: .8rem; }
+.gm-streak-bar:not(.on) > span { filter: grayscale(.6); }
+@media (prefers-reduced-motion: reduce) { .gm-streak { animation: none; } }
+
 </style>
 </head>
 <body>
@@ -1950,8 +1988,8 @@ body.fx .recap-card:active { transform: scale(.98); }
 <div id="print-root" aria-hidden="true"></div>
 <noscript><div style="padding:24px;font-family:sans-serif">האפליקציה דורשת JavaScript.</div></noscript>
 <script>
-window.APP_VERSION = '1.15.1';
-window.APP_BUILD = '1.15.1-3511a2bf';
+window.APP_VERSION = '1.16.0';
+window.APP_BUILD = '1.16.0-c2db5254';
 /* ---- core/util.js ---- */
 /* ============================================================
  * util.js — date/time helpers and formatting.
@@ -5170,6 +5208,7 @@ window.APP_BUILD = '1.15.1-3511a2bf';
   // nicknames are public: no swearing, no phone numbers (5 digits or more in a row)
   const BAD = ['זונה', 'זונות', 'כוס', 'זין', 'זיין', 'מזדיין', 'שרמוט', 'שרמוטה', 'מניאק', 'קוקסינל', 'נאצי', 'היטלר', 'מחבל',
     'fuck', 'shit', 'bitch', 'dick', 'cock', 'pussy', 'porn', 'sex', 'nazi', 'hitler', 'nigg', 'cunt', 'whore', 'slut'];
+  const STAFF = ['admin', 'moderator', 'support', 'shaati', 'מנהל', 'מנהלת', 'צוות', 'תמיכה', 'שעתי', 'רשמי'];
   const NICK_RE = /^[א-תa-zA-Z0-9 _.-]{2,16}$/;
 
   const num = (k) => +k.replace(/-/g, '');
@@ -5219,6 +5258,8 @@ window.APP_BUILD = '1.15.1-3511a2bf';
     const words = t.toLowerCase().split(/[\s_.-]+/);
     const low = words.join('');
     if (BAD.some((w) => (w.length <= 3 ? words.includes(w) : low.includes(w)))) return 'הכינוי הזה לא מתאים לטבלה';
+    // nobody may look like the app's own team
+    if (STAFF.some((w) => low.includes(w))) return 'כינוי שנראה כמו צוות האפליקציה שמור';
     return '';
   }
   /** A random fun nickname ("שועל זריז 27"); seed makes it repeatable in tests. */
@@ -5379,7 +5420,7 @@ window.APP_BUILD = '1.15.1-3511a2bf';
     if (action) el.querySelector('.act').onclick = () => { hideToast(); action.fn(); };
     requestAnimationFrame(() => el.classList.add('show'));
     clearTimeout(toastTimer);
-    toastTimer = setTimeout(hideToast, action ? 6000 : 3200);
+    toastTimer = setTimeout(hideToast, (opts && opts.ms) || (action ? 6000 : 3200));
   }
   function hideToast() { const el = document.getElementById('toast'); if (el) el.classList.remove('show'); }
 
@@ -5403,7 +5444,7 @@ window.APP_BUILD = '1.15.1-3511a2bf';
     sheets.push(entry);
     if (CW) {
       try { entry.watcher = new CW(); } catch (e) { return; }
-      entry.watcher.onclose = () => { entry.watcher = null; removeSheet(entry); };
+      entry.watcher.onclose = () => { entry.watcher = null; if (root.UI) root.UI.lastLayerClose = performance.now(); removeSheet(entry); };
       return;
     }
     if (pendingDepth === null) pushEntry(entry);
@@ -5459,6 +5500,9 @@ window.APP_BUILD = '1.15.1-3511a2bf';
     track(entry);
     return entry;
   }
+  // the last layer closed (also by the back button): the app's "press back again to exit" guard comes back (app.js)
+  // (only with CloseWatcher: without it, layers have their own history entries above the guard, which stays)
+  const guardBack = () => { if (CW) setTimeout(() => { if (!sheets.length && root.App && root.App.back) root.App.back.ensure(); }, 0); };
   function closeLayer(entry) {
     if (!entry || entry.closed) return;
     entry.closed = true;
@@ -5467,6 +5511,7 @@ window.APP_BUILD = '1.15.1-3511a2bf';
     const top = committed().length;
     const i = sheets.indexOf(entry);
     if (i >= 0) sheets.splice(i, 1);
+    guardBack();
     if (!wasPushed) return;
     const cur = pendingDepth === null ? top : pendingDepth;
     if (cur > 0) navigateBack(1, cur - 1);
@@ -5479,6 +5524,7 @@ window.APP_BUILD = '1.15.1-3511a2bf';
       const i = sheets.indexOf(entry);
       if (i >= 0) sheets.splice(i, 1);
       if (entry.onBack) entry.onBack();
+      guardBack();
       return;
     }
     entry.closed = true;
@@ -5488,6 +5534,7 @@ window.APP_BUILD = '1.15.1-3511a2bf';
     const i = sheets.indexOf(entry);
     if (i >= 0) sheets.splice(i, 1);
     if (entry.opts.onClose) entry.opts.onClose();
+    guardBack();
   }
   function closeTop() {
     const top = sheets[sheets.length - 1];
@@ -5569,11 +5616,11 @@ window.APP_BUILD = '1.15.1-3511a2bf';
     document.body.appendChild(a); a.click(); a.remove();
     setTimeout(() => URL.revokeObjectURL(url), 4000);
   }
-  async function shareFile(filename, blob, title) {
+  async function shareFile(filename, blob, title, text) {
     try {
       const file = new File([blob], filename, { type: blob.type });
       if (navigator.canShare && navigator.canShare({ files: [file] })) {
-        await navigator.share({ files: [file], title: title || filename });
+        await navigator.share(Object.assign({ files: [file], title: title || filename }, text ? { text } : {}));
         return true;
       }
     } catch (e) { if (e && e.name === 'AbortError') return true; }
@@ -7512,6 +7559,58 @@ window.APP_BUILD = '1.15.1-3511a2bf';
     App.render(opts);
     window.scrollTo(0, 0);
   };
+  /* ---------------- the phone's back button on the main screens ----------------
+   * In the installed app, "back" with nothing open goes home from another tab; on home it asks
+   * "press back again to exit" (a note at the bottom) and leaves only on a second press within two
+   * seconds. Open sheets and dialogs still close first, as before. In a browser tab, back stays the
+   * browser's.
+   * The first press is held by a guard under every layer:
+   *  - with CloseWatcher (Chrome, so the Android app): a close watcher. No history entry: Chrome's back
+   *    button skips history entries a page adds without a fresh tap, which would have let a press after
+   *    "back to home" leave the app with no note. A layer closed by the same press as the guard (Chrome
+   *    groups watchers made without a tap) only puts the guard back;
+   *  - without it: one history entry ({guard: true}) under the layers' own entries, added only with no
+   *    layer open and only after the person has touched the app. */
+  const Back = { on: false, armed: false, window: 2000 };
+  App.back = Back;
+  Back.enabled = () => !!(App.androidApp || (root.matchMedia && root.matchMedia('(display-mode: standalone)').matches) || navigator.standalone);
+  const BackCW = typeof root.CloseWatcher === 'function' ? root.CloseWatcher : null;
+  let armTimer = 0, guardWatcher = null;
+  Back.ensure = function () {
+    if (Back.on || Back.armed || App.blocking || !Back.enabled() || (UI.sheets && UI.sheets.length)) return;
+    if (BackCW) {
+      try { guardWatcher = new BackCW(); } catch (e) { return; }
+      Back.on = true;
+      guardWatcher.onclose = () => { guardWatcher = null; Back.on = false; pressed(); };
+      return;
+    }
+    const act = navigator.userActivation;
+    if (act && !act.hasBeenActive) return;
+    try { history.pushState({ guard: true }, '', location.href); Back.on = true; } catch (e) { /* not allowed here */ }
+  };
+  /** A back press reached the main screen. */
+  function pressed() {
+    // a layer that the same press closed (or one still open, or a full-screen step): only put the guard back
+    if (App.blocking || (UI.sheets && UI.sheets.length) || performance.now() - (UI.lastLayerClose || -1e9) < 120) { setTimeout(Back.ensure, 0); return; }
+    if (App.tab !== 'home') { App.go('home'); setTimeout(Back.ensure, 0); return; }
+    Back.armed = true;
+    UI.toast('לחצו שוב על "חזרה" כדי לצאת', null, { ms: Back.window });
+    if (root.Fx) root.Fx.haptic(8);
+    clearTimeout(armTimer);
+    armTimer = setTimeout(() => { Back.armed = false; Back.ensure(); }, Back.window);
+  }
+  if (!BackCW) window.addEventListener('popstate', () => {
+    if (!Back.on) return;
+    const st = history.state;
+    if (st && (st.guard || st.sheet)) return; // still on (or above) the guard: a layer's own step
+    Back.on = false; // a back press took the guard
+    pressed();
+  });
+  // every touch that ends puts the guard back if it is missing (a touch during the two seconds means "stay")
+  document.addEventListener('pointerup', () => {
+    if (Back.armed) { clearTimeout(armTimer); Back.armed = false; }
+    setTimeout(Back.ensure, 0);
+  }, true);
   const seenTabs = new Set();
   App.render = function (opts) {
     if (App.blocking) return; // a full-screen step (login / terms / setup wizard) owns the screen
@@ -13198,12 +13297,12 @@ window.PAY_CONFIG = {
 
   /* ---------------- what's new (once per big update, for people who already used the app) ---------------- */
   const WHATS_NEW = {
-    id: '1.15',
+    id: '1.16',
     items: [
-      ['music', 'violet', 'מוזיקה במשחקים', 'לכל משחק מנגינה משלו. כפתור התו בתוך המשחק מכבה ומדליק אותה.'],
-      ['trophy', 'amber', 'טבלת האלופים', 'מתחרים על המקום הראשון בכל משחק: היום, השבוע, החודש ובכל הזמנים. רק כינוי ואימוג׳י.'],
-      ['refresh', 'sky', 'משיכה לרענון חדשה', 'מושכים למטה בכל מסך, והמחוגים של השעון רצים עד שהכל מעודכן.'],
-      ['chart', 'mint', 'ניתוח מתקדם', 'איזה יום ואיזו שעה הכי משתלמים לך, שיאים ו"מה אם". בדוחות › סיכום.'],
+      ['star', 'amber', 'רצף משחק יומי', 'סיבוב אחד ביום בונה רצף 🔥, עם מדליות ל-3, 7 ו-30 ימים.'],
+      ['share', 'violet', 'שתפו את המקום שלכם', 'בטבלת האלופים: כרטיס מעוצב עם המקום שלכם, לשלוח לחברים או לסטורי.'],
+      ['bus', 'sky', 'מתג נסיעות', 'ליד רשימת המשמרות: הסכום של כל משמרת עם נסיעות או בלי.'],
+      ['sparkle', 'mint', 'חלק יותר', 'משיכה לרענון חדשה, אנימציה לכל כפתור, ו"לחצו שוב כדי לצאת" בכפתור החזרה.'],
     ],
   };
 
@@ -13586,6 +13685,24 @@ window.PAY_CONFIG = {
    * Earned from real work (shift counts, money, a Shabbat or night shift, a 4-week streak),
    * from using the app well (a payslip check, the rights screen) and from the games.
    * Worked out live from the data, so they are never out of date. */
+  /* ---------------- a daily streak of playing ----------------
+   * A round finished on a day counts that day; a day missed starts again from 1. Kept on the phone
+   * (meta.gameDays: the last day, the streak, the best streak). */
+  function markPlayDay() {
+    const today = U.todayKey();
+    const d = S.meta.gameDays || {};
+    if (d.last === today) return { n: d.n || 1, grew: false };
+    const n = d.last === U.addDays(today, -1) ? (d.n || 0) + 1 : 1;
+    Store.setMeta({ gameDays: { last: today, n, best: Math.max(n, d.best || 0) } }).catch(() => {});
+    return { n, grew: true };
+  }
+  /** The streak as it stands: alive if the last day played is today or yesterday. */
+  function playStreak() {
+    const d = S.meta.gameDays || {};
+    const t = U.todayKey();
+    return { n: d.last === t || d.last === U.addDays(t, -1) ? d.n || 0 : 0, today: d.last === t, best: d.best || 0 };
+  }
+  App.gameStreak = playStreak;
   function bestStreak(keys) {
     const ws = S.settings.weekStart || 0;
     const weeks = [...new Set(keys.map((k) => U.weekStart(k, ws)))].sort();
@@ -13624,6 +13741,9 @@ window.PAY_CONFIG = {
       ['facts', '⚖️', 'מומחי זכויות', '10 מתוך 10 ב"נכון או לא?"', g('facts') >= 10, count(g('facts'), 10)],
       ['pairs', '🧩', 'זיכרון של פיל', '100 נקודות ב"זוגות"', g('pairs') >= 100, count(g('pairs'), 100)],
       ['hours', '⏱️', 'יודעים מה שווה כסף', '8 ברצף ב"כמה שעות זה?"', g('hours') >= 8, count(g('hours'), 8)],
+      ['play3', '🔥', 'שלושה ימים של משחק', 'משחקים לפחות סיבוב אחד ביום, שלושה ימים ברצף', playStreak().best >= 3, count(playStreak().best, 3)],
+      ['play7', '⚡', 'שבוע של משחק', 'סיבוב אחד ביום, שבעה ימים ברצף', playStreak().best >= 7, count(playStreak().best, 7)],
+      ['play30', '🌟', 'חודש של משחק', 'סיבוב אחד ביום, שלושים ימים ברצף', playStreak().best >= 30, count(playStreak().best, 30)],
     ].map(([id, emoji, title, how, on, prog]) => ({ id, emoji, title, how, on: !!on, prog }));
   }
   function medalsSheet() {
@@ -13653,14 +13773,18 @@ window.PAY_CONFIG = {
     UI.openSheet({
       title: 'משחקים',
       cls: 'games-sheet',
-      body: `${App.mascotSays ? App.mascotSays('party', 'הפסקה קטנה? כל משחק לוקח פחות מדקה.', { size: 64 }) : ''}<div class="gm-list">${cards()}</div>
+      body: `${App.mascotSays ? App.mascotSays('party', 'הפסקה קטנה? כל משחק לוקח פחות מדקה.', { size: 64 }) : ''}${(() => {
+          const st = playStreak();
+          if (!st.n) return '';
+          return `<div class="gm-streak-bar ${st.today ? 'on' : ''}"><span aria-hidden="true">🔥</span><b>${st.n === 1 ? 'יום אחד' : st.n + ' ימים'} ברצף</b><small>${st.today ? 'שיחקת היום. נתראה מחר!' : 'סיבוב אחד היום שומר על הרצף'}</small></div>`;
+        })()}<div class="gm-list">${cards()}</div>
         ${root.Champions ? root.Champions.hubCard() : ''}
         <button class="ach-card" data-medals>${(() => { const l = achievements(); const got = l.filter((a) => a.on).length; return `<span class="ach-card-e" aria-hidden="true">🏅</span><span class="gm-txt"><b>המדליות שלי</b><span>${got} מתוך ${l.length} · על משמרות, כסף, תלושים ומשחקים</span></span>${icon('left', 's')}`; })()}</button>`,
       onMount: (el) => {
         el.querySelector('[data-medals]').onclick = medalsSheet;
         const hub = el.querySelector('[data-lb-hub]');
         if (hub) hub.onclick = () => root.Champions.open();
-        if (root.Champions) root.Champions.warm();
+        if (root.Champions) root.Champions.warm(el);
         const list = el.querySelector('.gm-list');
         list.addEventListener('click', (e) => {
           const b = e.target.closest('[data-game]');
@@ -13702,7 +13826,12 @@ window.PAY_CONFIG = {
       ${o.sub ? `<div class="gm-end-s">${o.sub}</div>` : ''}
       <div class="gm-end-b">${isBest ? `${icon('star', 's')} שיא חדש!` : `השיא שלך: ${best(o.id)}${o.unit}`}</div>
       <div class="gm-end-a"><button class="btn" data-again>${icon('repeat')} עוד סיבוב</button><button class="btn tonal" data-quit>סיום</button></div></div>`;
-    if (isBest && o.score > 0) { if (Fx()) Fx().celebrate('big'); } else play('pop');
+    // the daily streak: a new day of playing shows (and the big ones are celebrated)
+    const day = markPlayDay();
+    if (day.grew && day.n >= 2) {
+      box.querySelector('.gm-end-b').insertAdjacentHTML('afterend', `<div class="gm-streak">🔥 רצף של ${day.n} ימים!${[3, 7, 30].includes(day.n) ? ' מדליה חדשה 🏅' : ''}</div>`);
+    }
+    if (isBest && o.score > 0 || (day.grew && [3, 7, 30].includes(day.n))) { if (Fx()) Fx().celebrate('big'); } else play('pop');
     if (root.Champions && o.score > 0) root.Champions.afterGame(box, o.id, o.score); // the champions table
     if (root.Music) root.Music.stop(0.6); // the round is over: the music fades
     box.querySelector('[data-again]').onclick = () => { if (root.Music) root.Music.play(o.id); o.again(); };
@@ -14375,12 +14504,14 @@ window.PAY_CONFIG = {
   };
 
   /** A small card for the games list: the place today in the last game played. */
-  Champions.hubCard = function () {
+  const hubSub = () => {
     const last = (S.meta.lbLast && LB.MAX[S.meta.lbLast]) ? S.meta.lbLast : 'coins';
     const c = boards.get(`${last}|d|${today()}`);
     const r = c && signedIn() ? c.rows.find((x) => x.uid === uid()) : null;
-    const sub = !signedIn() ? 'מתחברים ומתחרים על המקום הראשון' : !joined() ? 'היום, השבוע, החודש ובכל הזמנים' : r ? `המקום שלך היום ב${SHORT[last]}: ${r.rank}` : 'מי במקום הראשון היום?';
-    return `<button class="ach-card lb-card" data-lb-hub><span class="ach-card-e" aria-hidden="true">🏆</span><span class="gm-txt"><b>טבלת האלופים</b><span>${esc(sub)}</span></span>${icon('left', 's')}</button>`;
+    return !signedIn() ? 'מתחברים ומתחרים על המקום הראשון' : !joined() ? 'היום, השבוע, החודש ובכל הזמנים' : r ? `המקום שלך היום ב${SHORT[last]}: ${r.rank}` : 'מי במקום הראשון היום?';
+  };
+  Champions.hubCard = function () {
+    return `<button class="ach-card lb-card" data-lb-hub><span class="ach-card-e" aria-hidden="true">🏆</span><span class="gm-txt"><b>טבלת האלופים</b><span data-lb-sub>${esc(hubSub())}</span></span>${icon('left', 's')}</button>`;
   };
 
   /* ---------------- the table ----------------
@@ -14401,6 +14532,7 @@ window.PAY_CONFIG = {
         <b class="lb-n">${esc(x.n)}</b>${x.p ? '<i class="lb-plus">Plus</i>' : ''}<span class="lb-s">${x.s}${esc(unit)}</span><div class="lb-step"><span>${place}</span></div></div>`
       : `<div class="lb-pod p${place} empty"><div class="lb-av"><span aria-hidden="true">?</span></div><b class="lb-n">פנוי</b><div class="lb-step"><span>${place}</span></div></div>`);
     const periodName = () => PERIODS.find((p) => p[0] === period)[1];
+    let lastMe = null;
     /** The board and my line under it, from rows (no waiting). */
     function paint(el, rows0) {
       const g = gameOf(game);
@@ -14409,6 +14541,7 @@ window.PAY_CONFIG = {
       const mineLook = profile(true);
       const rows = rows0.map((x) => (x.uid === meId ? Object.assign({}, x, { e: mineLook.e, bg: mineLook.bg, p: mineLook.p }) : x));
       const meRow = rows.find((x) => x.uid === meId);
+      lastMe = meRow ? { game, period, row: meRow } : null;
       const admin = !!App.isAdmin;
       const unit = g.unit || '';
       const reset = LB.resetText(period, today(), Date.now());
@@ -14428,7 +14561,7 @@ window.PAY_CONFIG = {
         set(bar, `<div class="lb-me-t"><b>רוצה להופיע כאן?</b><small>בוחרים כינוי ואימוג׳י, בלי שם אמיתי</small></div><button class="btn sm" data-lb-profile>${icon('trophy', 's')} הצטרפות</button>`);
       } else if (meRow) {
         const ahead = rows.filter((x) => x.s > meRow.s).pop();
-        set(bar, `<div class="lb-me-t"><b>${meRow.rank === 1 ? '👑 את/ה במקום הראשון!' : `המקום שלך: ${meRow.rank}`}</b><small>${ahead ? `עוד ${ahead.s - meRow.s + 1}${esc(unit)} כדי לעקוף את ${esc(ahead.n)}` : 'תשמרו על הכתר 😎'}</small></div><button class="btn sm" data-lb-play>${icon('play', 's')} לשחק</button>`);
+        set(bar, `<div class="lb-me-t"><b>${meRow.rank === 1 ? '👑 את/ה במקום הראשון!' : `המקום שלך: ${meRow.rank}`}</b><small>${ahead ? `עוד ${ahead.s - meRow.s + 1}${esc(unit)} כדי לעקוף את ${esc(ahead.n)}` : 'תשמרו על הכתר 😎'}</small></div><button class="icon-btn lb-share" data-lb-share aria-label="שיתוף המקום שלי">${icon('share', 's')}</button><button class="btn sm" data-lb-play>${icon('play', 's')} לשחק</button>`);
       } else {
         const last = rows[rows.length - 1];
         set(bar, `<div class="lb-me-t"><b>${rows.length >= LIMIT ? 'עוד לא בטופ 50' : `עוד לא שיחקת ${period === 'a' ? 'כאן' : periodName()}`}</b><small>${rows.length >= LIMIT ? `צריך יותר מ-${last.s}${esc(unit)}` : 'משחק אחד וכבר את/ה בטבלה'}</small></div><button class="btn sm" data-lb-play>${icon('play', 's')} לשחק</button>`);
@@ -14494,6 +14627,7 @@ window.PAY_CONFIG = {
           if (b.dataset.game) { if (b.dataset.game !== game) { game = b.dataset.game; mark(el); load(el); } }
           else if (b.dataset.period) { if (b.dataset.period !== period) { period = b.dataset.period; mark(el); load(el); } }
           else if (b.hasAttribute('data-lb-retry')) load(el);
+          else if (b.hasAttribute('data-lb-share')) { if (lastMe) Champions.shareRank(lastMe.game, lastMe.period, lastMe.row); }
           else if (b.hasAttribute('data-lb-profile')) Champions.profile(() => { if (el.isConnected) { tabs(el); load(el); } });
           else if (b.hasAttribute('data-lb-signin')) { UI.closeAll(); App.go('settings'); setTimeout(() => App.sheetsApi.settingsSection('account'), 350); }
           else if (b.hasAttribute('data-lb-play')) {
@@ -14508,10 +14642,72 @@ window.PAY_CONFIG = {
     });
   };
   /** The games list warms the last game's board of today, so the table opens at once. */
-  Champions.warm = function () {
+  Champions.warm = function (el) {
     if (!signedIn()) return;
     const last = LB.MAX[S.meta.lbLast] ? S.meta.lbLast : 'coins';
-    if (!cached(last, 'd')) board(last, 'd').catch(() => {});
+    if (cached(last, 'd')) return;
+    // when it arrives, the card's line says my place (only the text changes)
+    board(last, 'd').then(() => { const sub = el && el.querySelector('[data-lb-sub]'); if (sub && sub.isConnected) { const t = hubSub(); if (sub.textContent !== t) sub.textContent = t; } }).catch(() => {});
+  };
+
+  /* ---------------- "share my place": an image for friends and stories ---------------- */
+  // the skins' colours (styles-v3.css .sk-*), for a Plus member's card
+  const SKIN_COLORS = {
+    gold: ['#654000', '#6f4b05', '#4a2e00'], midnight: ['#0b1437', '#1b2a6b', '#070b20'], sunset: ['#8a1c3a', '#b3361f', '#5e1240'],
+    ocean: ['#04425a', '#0a6f7a', '#032f4a'], forest: ['#0c3d2a', '#17663f', '#072a1d'], carbon: ['#1c1d22', '#34363f', '#111216'],
+    royal: ['#2e0a5c', '#4b1690', '#1c0640'], rose: ['#6e1240', '#94204f', '#470c2b'], lava: ['#3a0a02', '#7d2006', '#2a0701'],
+    neon: ['#12052e', '#1d0b4a', '#0a0220'], ice: ['#0a3350', '#134f72', '#082640'], galaxy: ['#120a2e', '#2a1260', '#0a0618'],
+  };
+  const PERIOD_IN = { d: 'היום', w: 'השבוע', m: 'החודש', y: 'השנה', a: 'בכל הזמנים' };
+  /** Draws the card (1080×1350, fits a story) and hands it to the phone's share sheet. */
+  Champions.shareRank = async function (game, period, row) {
+    try {
+      if (document.fonts && document.fonts.ready) await document.fonts.ready;
+      const g0 = gameOf(game);
+      const W = 1080, H = 1350;
+      const c = document.createElement('canvas');
+      c.width = W; c.height = H;
+      const g = c.getContext('2d');
+      const cols = SKIN_COLORS[row.bg] || ['#4c1d95', '#7c3aed', '#db2777'];
+      const grd = g.createLinearGradient(0, 0, W, H);
+      grd.addColorStop(0, cols[0]); grd.addColorStop(0.55, cols[1]); grd.addColorStop(1, cols[2]);
+      g.fillStyle = grd; g.fillRect(0, 0, W, H);
+      // soft light, and a few sparkles
+      g.fillStyle = 'rgba(255,255,255,.08)';
+      g.beginPath(); g.arc(W * 0.88, H * 0.1, 280, 0, Math.PI * 2); g.fill();
+      g.beginPath(); g.arc(W * 0.08, H * 0.94, 340, 0, Math.PI * 2); g.fill();
+      g.fillStyle = 'rgba(255,255,255,.55)';
+      [[0.14, 0.2, 5], [0.82, 0.32, 4], [0.22, 0.58, 3], [0.9, 0.66, 5], [0.12, 0.8, 4]].forEach(([x, y, r]) => { g.beginPath(); g.arc(W * x, H * y, r, 0, Math.PI * 2); g.fill(); });
+      g.direction = 'rtl'; g.textAlign = 'center'; g.fillStyle = '#fff';
+      const F = (w, px) => `${w} ${px}px Fredoka, Rubik, "Segoe UI", Arial, sans-serif`;
+      const E = (px) => `${px}px "Noto Color Emoji", "Apple Color Emoji", "Segoe UI Emoji", sans-serif`;
+      g.font = F(600, 50); g.globalAlpha = 0.85; g.fillText('טבלת האלופים 🏆', W / 2, 170); g.globalAlpha = 1;
+      const medal = row.rank === 1 ? '👑' : row.rank === 2 ? '🥈' : row.rank === 3 ? '🥉' : '🏆';
+      g.font = E(210); g.fillText(medal, W / 2, 440);
+      g.font = F(700, 150); g.fillText(`מקום ${row.rank}`, W / 2, 640);
+      g.font = F(600, 58); g.globalAlpha = 0.92; g.fillText(`${PERIOD_IN[period] || ''} ב"${g0.t}"`, W / 2, 735); g.globalAlpha = 1;
+      // the score in a pill
+      const score = `${row.s}${g0.unit || ''}`;
+      g.font = F(700, 76);
+      const sw = Math.max(320, g.measureText(score).width + 120);
+      g.fillStyle = 'rgba(255,255,255,.16)';
+      g.beginPath(); g.roundRect ? g.roundRect((W - sw) / 2, 790, sw, 120, 60) : g.rect((W - sw) / 2, 790, sw, 120); g.fill();
+      g.fillStyle = '#fff'; g.fillText(score, W / 2, 875);
+      // who
+      g.font = F(600, 58); g.fillText(`${row.n} ${row.e}`, W / 2, 1010);
+      g.font = F(500, 50); g.globalAlpha = 0.9; g.fillText(row.rank === 1 ? 'מי עוקף אותי? 😎' : 'בואו לנסות לעקוף אותי 😉', W / 2, 1090); g.globalAlpha = 1;
+      g.font = F(600, 42); g.globalAlpha = 0.8; g.fillText('Shaati · שעתי', W / 2, H - 120);
+      g.font = F(500, 34); g.direction = 'ltr'; g.fillText('leelor123.github.io/shifts', W / 2, H - 70); g.globalAlpha = 1;
+      const blob = await new Promise((r) => c.toBlob(r, 'image/png'));
+      if (!blob) throw new Error('no image');
+      const text = `${medal} מקום ${row.rank} ${PERIOD_IN[period] || ''} ב"${g0.t}" בשעתי! מי עוקף אותי? https://leelor123.github.io/shifts/`;
+      await UI.shareFile(`shaati-${game}-${period}.png`, blob, 'טבלת האלופים', text);
+      return true;
+    } catch (e) {
+      console.warn('rank image', e);
+      UI.toast('לא הצלחנו ליצור תמונה');
+      return false;
+    }
   };
 
   /* ---------------- my nickname, emoji and background ---------------- */
@@ -15387,7 +15583,8 @@ window.PAY_CONFIG = {
     const dx = e.touches[0].clientX - x0;
     if (!pulling) {
       // a sideways swipe, a scroll up, or a page that has scrolled: not a pull
-      if (root.scrollY > 0 || dy < -SLOP || (Math.abs(dx) > SLOP && Math.abs(dx) > Math.abs(dy))) { y0 = null; return; }
+      // (and the listeners go at once, so the rest of this scroll never waits for the page)
+      if (root.scrollY > 0 || dy < -SLOP || (Math.abs(dx) > SLOP && Math.abs(dx) > Math.abs(dy))) { y0 = null; unbind(); return; }
       // at the top, a downward move scrolls nothing: hold it, so the browser never begins a scroll of its own under the pull
       if (dy > 0 && dy >= Math.abs(dx) && e.cancelable) e.preventDefault();
       if (dy < SLOP) return;

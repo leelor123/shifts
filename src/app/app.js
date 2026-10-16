@@ -121,6 +121,58 @@
     App.render(opts);
     window.scrollTo(0, 0);
   };
+  /* ---------------- the phone's back button on the main screens ----------------
+   * In the installed app, "back" with nothing open goes home from another tab; on home it asks
+   * "press back again to exit" (a note at the bottom) and leaves only on a second press within two
+   * seconds. Open sheets and dialogs still close first, as before. In a browser tab, back stays the
+   * browser's.
+   * The first press is held by a guard under every layer:
+   *  - with CloseWatcher (Chrome, so the Android app): a close watcher. No history entry: Chrome's back
+   *    button skips history entries a page adds without a fresh tap, which would have let a press after
+   *    "back to home" leave the app with no note. A layer closed by the same press as the guard (Chrome
+   *    groups watchers made without a tap) only puts the guard back;
+   *  - without it: one history entry ({guard: true}) under the layers' own entries, added only with no
+   *    layer open and only after the person has touched the app. */
+  const Back = { on: false, armed: false, window: 2000 };
+  App.back = Back;
+  Back.enabled = () => !!(App.androidApp || (root.matchMedia && root.matchMedia('(display-mode: standalone)').matches) || navigator.standalone);
+  const BackCW = typeof root.CloseWatcher === 'function' ? root.CloseWatcher : null;
+  let armTimer = 0, guardWatcher = null;
+  Back.ensure = function () {
+    if (Back.on || Back.armed || App.blocking || !Back.enabled() || (UI.sheets && UI.sheets.length)) return;
+    if (BackCW) {
+      try { guardWatcher = new BackCW(); } catch (e) { return; }
+      Back.on = true;
+      guardWatcher.onclose = () => { guardWatcher = null; Back.on = false; pressed(); };
+      return;
+    }
+    const act = navigator.userActivation;
+    if (act && !act.hasBeenActive) return;
+    try { history.pushState({ guard: true }, '', location.href); Back.on = true; } catch (e) { /* not allowed here */ }
+  };
+  /** A back press reached the main screen. */
+  function pressed() {
+    // a layer that the same press closed (or one still open, or a full-screen step): only put the guard back
+    if (App.blocking || (UI.sheets && UI.sheets.length) || performance.now() - (UI.lastLayerClose || -1e9) < 120) { setTimeout(Back.ensure, 0); return; }
+    if (App.tab !== 'home') { App.go('home'); setTimeout(Back.ensure, 0); return; }
+    Back.armed = true;
+    UI.toast('לחצו שוב על "חזרה" כדי לצאת', null, { ms: Back.window });
+    if (root.Fx) root.Fx.haptic(8);
+    clearTimeout(armTimer);
+    armTimer = setTimeout(() => { Back.armed = false; Back.ensure(); }, Back.window);
+  }
+  if (!BackCW) window.addEventListener('popstate', () => {
+    if (!Back.on) return;
+    const st = history.state;
+    if (st && (st.guard || st.sheet)) return; // still on (or above) the guard: a layer's own step
+    Back.on = false; // a back press took the guard
+    pressed();
+  });
+  // every touch that ends puts the guard back if it is missing (a touch during the two seconds means "stay")
+  document.addEventListener('pointerup', () => {
+    if (Back.armed) { clearTimeout(armTimer); Back.armed = false; }
+    setTimeout(Back.ensure, 0);
+  }, true);
   const seenTabs = new Set();
   App.render = function (opts) {
     if (App.blocking) return; // a full-screen step (login / terms / setup wizard) owns the screen
