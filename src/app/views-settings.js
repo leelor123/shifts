@@ -128,7 +128,7 @@
     account: { icon: 'cloud', title: 'חשבון וסנכרון', sub: () => (S.meta.cloudEmail || 'לא מחובר') + ' · ' + root.Cloud.statusText() },
     roles: { icon: 'users', title: 'מעסיקים, תפקידים ותעריפים', sub: () => App.roles().map((r) => r.name + ' ' + U.money(Engine.roleRate(r, U.todayKey()), 0)).join(' · ') },
     calc: { icon: 'flask', title: 'חוקי חישוב', sub: () => { const e = S.employers[0]; return `ש״נ אחרי ${e.otThreshold} ש׳ · שבת ${e.restPct}% · עיגול: ${e.roundingMode === 'none' ? 'ללא' : e.roundingUnit + ' דק׳'}`; } },
-    rest: { icon: 'candle', title: 'שבת וחגים', sub: () => (S.settings.rest.mode === 'city' ? 'לפי ' + (S.settings.rest.city === '__custom' ? 'מיקום מותאם' : S.settings.rest.city) : `קבוע: ⁦${S.settings.rest.fixedStart}\u2060–\u2060${S.settings.rest.fixedEnd}⁩`) + (S.dayRules.length ? ` · ${S.dayRules.length} כללי יום` : '') },
+    rest: { icon: 'candle', title: 'שבת וחגים', sub: () => (S.settings.rest.mode === 'city' ? 'לפי ' + (S.settings.rest.city === '__custom' ? 'מיקום מותאם' : App.placeLabel ? App.placeLabel(S.settings.rest.city).name : S.settings.rest.city) : `קבוע: ⁦${S.settings.rest.fixedStart}\u2060–\u2060${S.settings.rest.fixedEnd}⁩`) + (S.dayRules.length ? ` · ${S.dayRules.length} כללי יום` : '') },
     pay: { icon: 'car', title: 'נסיעות ותקופת שכר', sub: () => { const e = S.employers[0]; return `${U.money(e.travelPerDay)} ליום${+e.travelMonthlyCap ? ', תקרה ' + U.money(e.travelMonthlyCap, 0) : ''} · ${e.periodStartDay > 1 ? 'מ-' + e.periodStartDay + ' לחודש' : 'חודש קלנדרי'} · תשלום ב-${e.payDay}`; } },
     net: { icon: 'wallet', title: 'נטו משוער ומס', sub: () => `${S.settings.tax.creditPoints} נק׳ זיכוי · פנסיה ${S.settings.pension.employeePct}%${S.settings.hishtalmut.enabled ? ' · השתלמות' : ''}` },
     leave: { icon: 'beach', title: 'ותק, חופשה, מחלה והבראה', sub: () => (S.settings.startDate ? 'התחלת עבודה: ' + U.fmtDate(S.settings.startDate) : 'הגדר תאריך תחילת עבודה') },
@@ -351,7 +351,7 @@
       const wins = HebCal.restWindows(U.todayKey(), U.addDays(U.todayKey(), 45), cfg).filter((w) => w.end > Date.now()).slice(0, 6);
       return `<div class="seg" style="margin-bottom:14px"><button data-rmode="city" class="${R.mode === 'city' ? 'on' : ''}">לפי עיר (כניסה/יציאה)</button><button data-rmode="fixed" class="${R.mode === 'fixed' ? 'on' : ''}">שעות קבועות</button></div>
         ${R.mode === 'city' ? `<div class="card">
-          ${F.sel('עיר', 's.rest.city', [...HebCal.CITIES.map((c) => [c.name, c.name]), ['__custom', 'מיקום מותאם (קו רוחב/אורך)']], R.city).replace('data-s=', 'data-redraw data-keep-str data-s=')}
+          <div class="field"><span class="lbl">עיר</span>${App.placeField(R.city, 'עיר')}</div>
           ${R.city === '__custom' ? `<div class="grid2">${F.num('קו רוחב', 's.rest.lat', R.lat)}${F.num('קו אורך', 's.rest.lon', R.lon)}</div>` : ''}
           ${F.num('הדלקת נרות — דקות לפני השקיעה', 's.rest.candleMin', R.candleMin, 'ריק = ברירת המחדל של העיר (ירושלים 40, חיפה 30, אחרות 18)', String(HebCal.locationOf(R).candle))}
           ${F.sel('יציאת שבת/חג', 's.rest.exitMode', [['tzeit', 'צאת הכוכבים (השמש 8.5° מתחת לאופק)'], ['minutes', 'מספר דקות אחרי השקיעה']], R.exitMode).replace('data-s=', 'data-redraw data-s=')}
@@ -376,6 +376,13 @@
         const b = e.target.closest('button');
         if (!b) return;
         if (b.dataset.rmode) { await Store.setSettings((s) => { s.rest.mode = b.dataset.rmode; }); draw(); }
+        if (b.hasAttribute('data-pick-city')) {
+          const name = await App.pickPlace({ title: 'עיר לזמני שבת וחג', current: S.settings.rest.city, custom: true });
+          if (!name || name === S.settings.rest.city) return;
+          await Store.setSettings((s) => { s.rest.city = name; });
+          draw();
+          App.placeFieldHop(el);
+        }
         if (b.dataset.ruleDel) { await App.saveOps([{ store: 'dayRules', del: b.dataset.ruleDel }], 'מחיקת כלל יום'); draw(); }
       });
     },

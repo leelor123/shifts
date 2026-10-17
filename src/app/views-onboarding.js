@@ -16,7 +16,6 @@
    * Moving between screens never waits for storage, so a slow or broken phone database can't
    * freeze the buttons; the answers are saved once, at the end. */
   const JOBS = ['מלצרות', 'קופה', 'שליחויות', 'מכירות', 'מטבח', 'בייביסיטר', 'סדרנות', 'מוקד שירות', 'הדרכה', 'אבטחה'];
-  const TOP_CITIES = ['ירושלים', 'תל אביב-יפו', 'חיפה', 'באר שבע', 'ראשון לציון', 'פתח תקווה', 'אשדוד', 'נתניה', 'חולון', 'רמת גן', 'בני ברק', 'רחובות'];
   const USUAL_TRAVEL = 16;
 
   App.sheetsApi.onboarding = function (opts) {
@@ -96,8 +95,7 @@
         ${why('המעסיק צריך להחזיר לך את דמי הנסיעה לעבודה ובחזרה, בנוסף לשכר. זה כסף שמגיע לך!')}`,
       city: () => `${say('wow', 'בשבת מרוויחים לפחות 150%! 🤑')}
         <h1>באיזו עיר העבודה?</h1>
-        <div class="ob-chips small">${TOP_CITIES.map((c) => chip('data-city', c, esc(c), A.city === c)).join('')}</div>
-        <label class="field"><span class="lbl">עיר אחרת</span><select class="input" id="ob-city"><option value="">בחירה מהרשימה…</option>${HebCal.CITIES.map((c) => `<option ${c.name === A.city ? 'selected' : ''}>${esc(c.name)}</option>`).join('')}</select></label>
+        <div class="field ob-city">${App.placeField(A.city, 'עיר העבודה')}</div>
         <div class="ob-live" id="ob-preview"></div>
         ${why('לפי העיר נדע בדיוק מתי שבת וחג נכנסים ויוצאים, וכך כל שעה שעבדת בהם תחושב ב-150% לפחות.')}`,
       start: () => `${say('think', 'אחרונה! 🏁')}
@@ -201,8 +199,6 @@
         <div class="content ob-${dir}">${screens[key]()}</div>
         <div class="foot col">${foot}</div></div>`;
       live();
-      const city = v.querySelector('#ob-city');
-      if (city) city.onchange = () => { if (city.value) { A.city = city.value; draw(); } };
       if (App.bindOpenInBrowser) App.bindOpenInBrowser(v);
       window.scrollTo(0, 0);
     }
@@ -349,7 +345,12 @@
       else if (b.dataset.travel) {
         read(); A.travel = b.dataset.travel; draw(); if (fx) fx.play('on');
         if (A.travel === 'yes') { const t = v.querySelector('#ob-travel'); if (t) t.focus(); } else autoNext();
-      } else if (b.dataset.city) { A.city = b.dataset.city; draw(); if (fx) fx.play('on'); autoNext(); }
+      } else if (b.hasAttribute('data-pick-city')) {
+        App.pickPlace({ title: 'באיזו עיר העבודה?', current: A.city }).then((name) => {
+          if (!name || App.blocking !== 'onboarding') return;
+          A.city = name; draw(); App.placeFieldHop(v); autoNext();
+        });
+      }
       else if (b.dataset.start) {
         const m = { month: today.slice(0, 8) + '01', months: U.addMonths(today, -3), year: U.addMonths(today, -13) }[b.dataset.start];
         A.start = A.birth && m < A.birth ? today : m; A.startPick = b.dataset.start;

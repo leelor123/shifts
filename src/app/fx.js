@@ -63,6 +63,9 @@
     cash: [[3200, 0, 0.05, 'noise', 0.06, 1600], [1568, 0.03, 0.1, 'square', 0.026], [2093, 0.09, 0.4, 'triangle', 0.05], [2637, 0.09, 0.4, 'sine', 0.03]], // ka-ching
     pause: [[660, 0, 0.09, 'sine', 0.05, 440], [440, 0.08, 0.16, 'sine', 0.05, 330]],
     resume: [[440, 0, 0.08, 'sine', 0.05, 660], [660, 0.07, 0.16, 'sine', 0.05, 880]],
+    // the place picker: a place chosen (a bright rising chime with a sparkle), the phone found where you are (a sonar)
+    pick: [[784, 0, 0.07, 'triangle', 0.05], [1175, 0.055, 0.08, 'triangle', 0.05], [1568, 0.11, 0.24, 'sine', 0.045], [5200, 0.11, 0.12, 'noise', 0.018, 9000]],
+    ping: [[1568, 0, 0.18, 'sine', 0.05, 1320], [1568, 0.22, 0.26, 'sine', 0.022, 1320]],
   };
   Fx.audio = audio; // shared with the games' music (music.js)
   let noiseBuf = null;

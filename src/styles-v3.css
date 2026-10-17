@@ -1262,3 +1262,86 @@ html.ptr-top #view, html.ptr-top #view .chips { touch-action: pan-x pan-down pin
 @keyframes tr-down { from, 45% { color: var(--amber); } }
 body:not(.fx) .tr-up, body:not(.fx) .tr-down { animation: none; }
 @media (prefers-reduced-motion: reduce) { .tr-up, .tr-down { animation: none; } }
+
+/* ---------- the place picker (placepicker.js) ---------- */
+/* every row is exactly --pp-row tall and every letter's title --pp-h: the chunks of 20 rows off screen are skipped
+   (content-visibility) at their exact size, so a jump to a letter lands on it and nothing moves later */
+.pp-sheet { --pp-row: 3.75rem; --pp-h: 2.125rem; }
+.pp-sheet .sh-body { padding-top: 0; }
+.pp [hidden], .pp-top [hidden] { display: none !important; }
+.pp.choosing { pointer-events: none; }
+.pp-top { position: relative; z-index: 3; flex: none; display: flex; gap: 8px; align-items: center; padding: 6px 16px 10px; background: var(--surface); transition: box-shadow .2s ease; }
+.pp-top.lift { box-shadow: 0 10px 14px -14px rgba(0, 0, 0, .45); }
+.pp-search { flex: 1; min-width: 0; display: flex; align-items: center; gap: 8px; height: 48px; padding: 0 12px 0 6px; border-radius: 16px; background: var(--surface-1); border: 1.5px solid var(--outline-var); transition: border-color .2s, box-shadow .2s; cursor: text; }
+.pp-search:focus-within { border-color: var(--brand); box-shadow: 0 0 0 4px hsla(var(--h), 85%, 60%, .16); }
+.pp-search > svg { flex: none; width: 20px; height: 20px; color: var(--on-surface-var); }
+.pp-q { flex: 1; min-width: 0; height: 100%; border: 0; outline: 0; background: none; color: var(--on-surface); font: inherit; font-size: 1rem; -webkit-appearance: none; appearance: none; }
+.pp-q::placeholder { color: var(--on-surface-var); opacity: .8; }
+.pp-q::-webkit-search-cancel-button { -webkit-appearance: none; display: none; }
+.pp-x { flex: none; width: 34px; height: 34px; display: grid; place-items: center; border: 0; border-radius: 50%; background: var(--surface-2); color: var(--on-surface-var); }
+.pp-x svg { width: 16px; height: 16px; }
+.pp-loc { flex: none; display: inline-flex; align-items: center; gap: 6px; height: 48px; padding: 0 14px; border: 0; border-radius: 16px; background: var(--brand-soft); color: var(--on-brand-soft); font: inherit; font-weight: 700; font-size: .9rem; white-space: nowrap; }
+.pp-loc svg { width: 20px; height: 20px; flex: none; }
+.pp-loc:disabled { opacity: 1; }
+body.fx .pp-loc.busy svg { animation: pp-hop .8s ease-in-out infinite; }
+@keyframes pp-hop { 0%, 100% { transform: translateY(0); } 45% { transform: translateY(-5px); } }
+.pp .section-title { margin-inline-end: 30px; }
+.pp-list { display: flex; flex-direction: column; }
+.pp-row { position: relative; display: flex; align-items: center; gap: 12px; width: 100%; height: var(--pp-row); padding: 0 8px; padding-inline-end: 32px; border: 0; border-radius: 16px; background: none; color: var(--on-surface); font: inherit; text-align: start; }
+.pp-res .pp-row { padding-inline-end: 12px; }
+.pp-pic { position: relative; flex: none; width: 2.5rem; height: 2.5rem; border-radius: 50%; display: grid; place-items: center; font-size: 1.25rem; line-height: 1; background: color-mix(in srgb, var(--pc, #7c5cff) 17%, var(--surface-1)); }
+.pc-c { --pc: #7c5cff; } .pc-k { --pc: #22c98e; } .pc-m { --pc: #ffb524; } .pc-y { --pc: #3d9bff; } .pc-v { --pc: #ff5c8a; }
+.pc-w { --pc: #8a8fa3; } .pc-s { --pc: #f47b2f; } .pc-h { --pc: #ff4d6d; } .pc-a { --pc: #3dbbff; } .pc-o { --pc: #e05cff; }
+/* the most common are all cities: each gets its own colour */
+.pp-pop .pp-row:nth-child(6n+1) .pp-pic { --pc: #7c5cff; } .pp-pop .pp-row:nth-child(6n+2) .pp-pic { --pc: #ff5c8a; } .pp-pop .pp-row:nth-child(6n+3) .pp-pic { --pc: #ffb524; }
+.pp-pop .pp-row:nth-child(6n+4) .pp-pic { --pc: #22c98e; } .pp-pop .pp-row:nth-child(6n+5) .pp-pic { --pc: #3d9bff; } .pp-pop .pp-row:nth-child(6n) .pp-pic { --pc: #f47b2f; }
+.pp-tx { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px; }
+.pp-n, .pp-f { display: block; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.pp-n { font-weight: 700; font-size: 1rem; line-height: 1.3; }
+.pp-f { font-size: .78rem; line-height: 1.3; color: var(--on-surface-var); }
+.pp-n mark { background: color-mix(in srgb, var(--amber) 28%, transparent); color: inherit; border-radius: 4px; }
+.pp-ok { position: absolute; bottom: -3px; inset-inline-start: -3px; width: 19px; height: 19px; border-radius: 50%; display: grid; place-items: center; color: #fff; background: var(--brand); box-shadow: 0 0 0 2px var(--surface); opacity: 0; transform: scale(.3) rotate(-25deg); transition: opacity .2s, transform .3s cubic-bezier(.2, .9, .3, 1.5); }
+.pp-ok svg { width: 12px; height: 12px; stroke-width: 3.4; }
+.pp-row[aria-current="true"] { background: color-mix(in srgb, var(--brand) 9%, transparent); }
+.pp-row[aria-current="true"] .pp-ok, .pp-row.picked .pp-ok { opacity: 1; transform: none; }
+.pp-row.picked { background: color-mix(in srgb, var(--brand) 16%, transparent); }
+body.fx .pp-row.picked .pp-pic { animation: pp-boing .5s cubic-bezier(.2, .9, .3, 1.4); }
+@keyframes pp-boing { 0% { transform: scale(1); } 40% { transform: scale(1.32) rotate(-8deg); } 100% { transform: none; } }
+/* once only: hiding the list for a search and showing it again would replay it */
+body.fx .pp-pop:not(.done) .pp-row { animation: pp-in .34s cubic-bezier(.2, .9, .3, 1.15) backwards; animation-delay: calc(var(--i, 0) * 26ms + 140ms); }
+@keyframes pp-in { from { opacity: 0; transform: translateY(10px) scale(.97); } }
+.pp-chunk { content-visibility: auto; }
+.pp-browse.away { content-visibility: hidden; contain-intrinsic-size: 0 0; }
+/* the letter titles scroll with the list (sticky titles inside these sections made the sections composited layers
+   that came and went as a title stuck and let go - the kind of layer change that flashes on a phone) */
+.pp-h { height: var(--pp-h); display: flex; align-items: center; padding: 0 12px; font-weight: 800; font-size: .95rem; color: var(--brand); background: var(--surface); }
+.pp-more { padding: 6px 4px 18px; }
+.pp-hint { text-align: center; font-size: .82rem; color: var(--on-surface-var); }
+.pp-near { display: flex; align-items: center; justify-content: center; gap: 6px; font-size: .88rem; font-weight: 600; color: var(--brand); }
+.pp-near svg { width: 16px; height: 16px; }
+.pp-found { background: color-mix(in srgb, var(--brand) 12%, transparent); }
+.pp-empty { display: flex; flex-direction: column; align-items: center; gap: 4px; padding: 28px 12px; text-align: center; }
+.pp-empty-ic { font-size: 2.4rem; line-height: 1.2; }
+.pp-empty b { font-size: 1.05rem; }
+.pp-empty span:last-child { font-size: .85rem; color: var(--on-surface-var); }
+.pp-rail { position: absolute; inset-inline-end: 3px; bottom: calc(12px + var(--safe-b, 0px)); width: 26px; display: flex; flex-direction: column; padding: 4px 0; z-index: 4; border-radius: 13px; touch-action: none; user-select: none; -webkit-user-select: none; opacity: 0; transition: opacity .3s ease, background-color .2s; will-change: opacity; }
+.pp-rail.show { opacity: 1; }
+.pp-rail.scrub { background: color-mix(in srgb, var(--brand) 12%, transparent); }
+.pp-rail b { flex: 1; min-height: 0; display: grid; place-items: center; font-size: .68rem; font-weight: 800; line-height: 1; color: var(--on-surface-var); transition: color .15s, transform .15s; }
+.pp-rail b.cur { color: var(--brand); transform: scale(1.3); }
+.pp-bubble { position: absolute; top: 0; inset-inline-end: 46px; width: 64px; height: 64px; border-radius: 50%; display: grid; place-items: center; font-size: 2rem; font-weight: 800; color: #fff; background: var(--brand); box-shadow: 0 10px 26px -8px hsla(var(--h), 80%, 40%, .6); opacity: 0; transform: scale(.4); transition: opacity .16s ease, transform .24s cubic-bezier(.2, .9, .3, 1.4); pointer-events: none; z-index: 5; will-change: transform, opacity; }
+.pp-bubble.show { opacity: 1; transform: none; }
+@media (max-width: 345px) {
+  .pp-row { gap: 10px; padding-inline-start: 4px; padding-inline-end: 28px; }
+  .pp-pic { width: 2.25rem; height: 2.25rem; font-size: 1.1rem; }
+  .pp-f { font-size: .74rem; }
+  .pp-loc { padding: 0 10px; }
+  .pp-rail { width: 24px; inset-inline-end: 1px; }
+}
+/* the field that opens the picker (settings, the first steps) */
+.pp-field { display: flex; align-items: center; gap: 10px; width: 100%; min-height: 52px; padding: 6px 14px; text-align: start; font: inherit; color: var(--on-surface); cursor: pointer; }
+.pp-field .pp-fpic { font-size: 1.3rem; line-height: 1; flex: none; }
+.pp-field .pp-fname { flex: 1; min-width: 0; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.pp-field .pp-fname.ph { font-weight: 400; color: var(--on-surface-var); }
+.pp-field > svg { flex: none; width: 18px; height: 18px; color: var(--on-surface-var); }
+body.fx .pp-field.just .pp-fpic { animation: pp-boing .5s cubic-bezier(.2, .9, .3, 1.4); }

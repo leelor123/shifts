@@ -236,7 +236,14 @@
     ['נצרת', 32.6996, 35.3035, 18], ['מגדל העמק', 32.6760, 35.2400, 18], ['טבריה', 32.7922, 35.5312, 18],
     ['צפת', 32.9646, 35.4960, 18], ['קריית שמונה', 33.2073, 35.5697, 18],
   ].map(([name, lat, lon, candle]) => ({ name, lat, lon, candle }));
-  function findCity(name) { return CITIES.find((c) => c.name === name) || CITIES[1]; }
+  // the 44 cities above keep their exact place; any other locality comes from the full list (places.js),
+  // where those 44 have the same coordinates under their CBS spelling
+  function findCity(name) {
+    const old = CITIES.find((c) => c.name === name);
+    if (old) return old;
+    const p = root.Places && root.Places.find(name);
+    return p ? { name: p.name, lat: p.lat, lon: p.lon, candle: p.candle } : CITIES[1];
+  }
 
   /* ---------------- rest windows ---------------- */
   /**

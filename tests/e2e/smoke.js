@@ -835,7 +835,12 @@ let errors = [];
     if (!(await e2(() => document.getElementById('ob-travel').placeholder === '16'))) throw new Error('travel suggestion is not 16');
     if (!(await e2(() => document.getElementById('ob-live-travel').textContent.includes('240')))) throw new Error('no travel preview');
     await p2.click('[data-next]'); await sleep(450);
-    await p2.click('[data-city="חיפה"]'); await sleep(800);
+    // the city: the place picker (search, then the first result), and the wizard moves on by itself
+    await p2.click('[data-pick-city]'); await sleep(900);
+    if (!(await p2.$('.sheet.show.pp-sheet'))) throw new Error('the place picker did not open');
+    await p2.type('.sheet.show .pp-q', 'חיפה'); await sleep(300);
+    await p2.click('.sheet.show .pp-res .pp-row'); await sleep(1600);
+    if (await p2.$('.sheet.show.pp-sheet')) throw new Error('the place picker did not close');
     await p2.click('[data-start="months"]'); await sleep(900);
     if (!(await p2.$('.ob-google'))) throw new Error('no "save with Google" on the last step');
     const blocked = await e2(HIT); if (blocked.length) throw new Error('covered buttons: ' + blocked.join(' | '));
