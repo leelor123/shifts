@@ -385,11 +385,7 @@
         if (Math.abs(g.amount - diff) <= g.amount * 0.2 || (open.length > 1 && Math.abs(total - diff) <= total * 0.2)) ops.push({ store: 'gaps', put: Object.assign({}, g, { status: 'maybe', note: `בתלוש ${U.fmtMonth(slip.period)} יש שורת הפרשים של ${U.money(diff)}` }) });
       }
     }
-    // notable changes vs previous slip → notifications
-    const prev = prevSlipOf(slip.period, slip.id);
-    for (const c of Payslip.compareSlips(prev && prev.fields, slip.fields)) {
-      ops.push({ store: 'notifications', put: { id: 'pschg-' + slip.period + '-' + c.type, key: 'pschg-' + slip.period + '-' + c.type, type: 'payslipGap', cat: 'money', severity: 'warn', title: 'שינוי בתלוש ' + U.fmtMonth(slip.period), body: c.text, explain: 'השוואה לתלוש הקודם (' + U.fmtMonth(prev.period) + ').', createdAt: Date.now(), read: false } });
-    }
+    // changes vs the previous slip show in the slip's own check, not as notifications (few notifications)
     await App.saveOps(ops, 'שמירת תלוש', 'התלוש נשמר בארכיון');
   }
   App.sheetsApi.payslip = (id) => {

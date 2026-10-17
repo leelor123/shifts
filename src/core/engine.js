@@ -18,6 +18,8 @@
   const U = root.U;
   const HebCal = root.HebCal;
   const MIN = U.MIN;
+  /** The break the law asks for: in a working day of 6 hours or more, 45 minutes, 30 of them in a row. */
+  const LAW_BREAK = { afterMin: 360, min: 45, text: 'לפי החוק, במשמרת של 6 שעות ומעלה מגיעה הפסקה של 45 דקות לפחות (30 מהן ברצף)' };
 
   /* ---------------- context helpers ---------------- */
   /** ctx = { settings, employers:[], roles:[], dayRules:[] } -> fast lookup object */
@@ -190,9 +192,16 @@
       slices.push({ a, b, min: (b - a) / MIN, roleId: seg ? seg.roleId : shift.roleId, rest, autoRest, night, eve, winLabel: win ? win.label : null });
     }
 
-    /* ---- breaks ---- */
-    const breakMin = Math.max(0, +shift.breakMin || 0);
+    /* ---- breaks ----
+     * Not entered (null): the law's break - in a day of 6 hours or more, 45 minutes (חוק שעות עבודה ומנוחה
+     * §20; the youth law asks the same), paid or not as the shift says. Entered (a number, 0 too): as entered.
+     * One entered on purpose (breakSet: typed in the editor, or taken with the timer) that is shorter than the
+     * law's in a long shift is flagged; records from before 1.18 (a plain 0) stay as they were, quietly. */
+    const breakAuto = shift.breakMin == null || shift.breakMin === '';
+    const breakMin = breakAuto ? (roundedMin >= LAW_BREAK.afterMin ? LAW_BREAK.min : 0) : Math.max(0, +shift.breakMin || 0);
     const breakPaid = shift.breakPaid !== false;
+    const breakShort = !breakAuto && !!shift.breakSet && roundedMin >= LAW_BREAK.afterMin && breakMin < LAW_BREAK.min;
+    if (breakShort) warnings.push(LAW_BREAK.text);
     if (!breakPaid && breakMin >= roundedMin && roundedMin > 0) warnings.push('ההפסקה ארוכה מהמשמרת');
     const paidFactor = breakPaid || roundedMin === 0 ? 1 : Math.max(0, 1 - breakMin / roundedMin);
     const paidMin = roundedMin * paidFactor;
@@ -372,7 +381,7 @@
     return {
       id: shift.id, kind: 'shift', dateKey: dk, employerId: shift.employerId, status: shift.status || 'done',
       start, end, rawEnd, elapsedMin, roundedMin, roundingDeltaMin: roundedMin - Math.round(elapsedMin),
-      breakMin, breakPaid, paidMin, paidHours: paidMin / 60,
+      breakMin, breakPaid, breakAuto, breakShort, paidMin, paidHours: paidMin / 60,
       segments: segs, slices, pieces, lines, extras,
       base, restPremium, otPremium, nightPremium, evePremium, seniority, minTopUp, adjust,
       wage, hoursBy, byRole,
@@ -392,7 +401,7 @@
   function emptyResult(shift, dk, warnings) {
     return {
       id: shift.id, kind: 'shift', dateKey: dk, employerId: shift.employerId, status: shift.status || 'done',
-      start: shift.start, end: shift.end, rawEnd: shift.end, elapsedMin: 0, roundedMin: 0, roundingDeltaMin: 0, breakMin: 0, breakPaid: true,
+      start: shift.start, end: shift.end, rawEnd: shift.end, elapsedMin: 0, roundedMin: 0, roundingDeltaMin: 0, breakMin: 0, breakPaid: true, breakAuto: false, breakShort: false,
       paidMin: 0, paidHours: 0, segments: [], slices: [], pieces: [], lines: [], extras: [],
       base: 0, restPremium: 0, otPremium: 0, nightPremium: 0, evePremium: 0, seniority: 0, minTopUp: 0, adjust: 0, wage: 0,
       hoursBy: { regular: 0, ot1: 0, ot2: 0, rest: 0, restOt1: 0, restOt2: 0, night: 0, eve: 0 }, byRole: {},
@@ -872,7 +881,7 @@
   }
 
   root.Engine = {
-    validShift, validEntry, legalMinWage, minWageFor, youthRules, pensionMinAge, MIN_WAGE,
+    LAW_BREAK, validShift, validEntry, legalMinWage, minWageFor, youthRules, pensionMinAge, MIN_WAGE,
     makeCtx, roleRate, roundMinutes, monthsBetween, buildSegments, hasOverrides, computeShift, computeAll,
     periodByKey, periodOf, dayValue, computeEntries, travelByDay, incomeTaxRaw, netEstimate, pensionActive,
     buildModel, totals, periodSummary, rangeSummary, pensionBaseOf, leaveBalances, vacationEntitlement, recuperationDays, ageAt, isMinor,

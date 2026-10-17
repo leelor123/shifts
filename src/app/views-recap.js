@@ -93,7 +93,7 @@
       const t0 = performance.now();
       const fmt = (el2, v) => { el2.textContent = el2.dataset.kind === 'hours' ? U.num(v, 1) : money0(v); };
       const tick = (now) => {
-        const p = Math.min(1, (now - t0) / 900);
+        const p = Math.max(0, Math.min(1, (now - t0) / 900)); // never below 0: a frame can begin before t0
         const e = 1 - Math.pow(1 - p, 3);
         nums.forEach((x) => fmt(x, +x.dataset.to * e));
         if (p < 1) raf = requestAnimationFrame(tick);

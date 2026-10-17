@@ -58,6 +58,11 @@
     stamp: [[1800, 0, 0.05, 'noise', 0.07, 600], [180, 0, 0.12, 'sine', 0.09, 90]], // the verdict lands
     swish: [[700, 0, 0.16, 'noise', 0.035, 2600]], // a banner flies in
     alarm: [[1320, 0, 0.05, 'square', 0.022], [1320, 0.09, 0.05, 'square', 0.022]], // the last seconds
+    // a shift
+    shiftStart: [[1400, 0, 0.26, 'noise', 0.03, 4200], [392, 0, 0.09, 'triangle', 0.05], [587, 0.07, 0.09, 'triangle', 0.05], [784, 0.14, 0.12, 'triangle', 0.055], [1175, 0.21, 0.3, 'sine', 0.045]], // power up
+    cash: [[3200, 0, 0.05, 'noise', 0.06, 1600], [1568, 0.03, 0.1, 'square', 0.026], [2093, 0.09, 0.4, 'triangle', 0.05], [2637, 0.09, 0.4, 'sine', 0.03]], // ka-ching
+    pause: [[660, 0, 0.09, 'sine', 0.05, 440], [440, 0.08, 0.16, 'sine', 0.05, 330]],
+    resume: [[440, 0, 0.08, 'sine', 0.05, 660], [660, 0.07, 0.16, 'sine', 0.05, 880]],
   };
   Fx.audio = audio; // shared with the games' music (music.js)
   let noiseBuf = null;
@@ -202,7 +207,7 @@
     });
     const t0 = performance.now();
     (function frame(t) {
-      const k = (t - t0) / 1500;
+      const k = Math.max(0, (t - t0) / 1500); // (a frame's time can be a little before t0)
       g.clearRect(0, 0, W, H);
       for (const p of parts) {
         p.vy += p.coin ? 0.42 : 0.32; p.vx *= 0.985; p.x += p.vx; p.y += p.vy; p.rot += p.vr;
@@ -265,6 +270,39 @@
     setTimeout(() => el.classList.remove('fx-shake'), 500);
   };
 
+  /** The number shown in an element, as a value (₪ 1,234 → 1234), or null. */
+  Fx.shownNumber = function (el) {
+    const m = (el.textContent || '').match(/[\d,]+(\.\d+)?/);
+    return m ? parseFloat(m[0].replace(/,/g, '')) : null;
+  };
+  /** Counts the number shown in an element from one value to its present one, keeping the text around it
+   * (₪, direction marks). It ends on the exact text that was there, so the format never drifts. */
+  Fx.tween = function (el, from, ms) {
+    const walker = document.createTreeWalker(el, NodeFilter.SHOW_TEXT);
+    let node;
+    while ((node = walker.nextNode()) && !/\d/.test(node.nodeValue));
+    if (!node || !Fx.motion()) return;
+    const final = node.nodeValue;
+    const m = final.match(/[\d,]+(\.\d+)?/);
+    const to = parseFloat(m[0].replace(/,/g, ''));
+    if (!(Math.abs(to - from) > 0)) return;
+    const dec = m[1] ? m[1].length - 1 : 0;
+    const group = m[0].includes(',') || Math.max(from, to) >= 1000;
+    const pre = final.slice(0, m.index), post = final.slice(m.index + m[0].length);
+    const fmt = (v) => (group ? v.toLocaleString('en-US', { minimumFractionDigits: dec, maximumFractionDigits: dec }) : v.toFixed(dec));
+    const t0 = performance.now();
+    node.nodeValue = pre + fmt(from) + post;
+    (function step(t) {
+      if (!node.isConnected) return;
+      // a frame's timestamp is when the frame began, which can be a little before t0: never below 0, or the
+      // number would step the wrong way for a frame
+      const k = Math.max(0, Math.min(1, (t - t0) / ms));
+      if (k >= 1) { node.nodeValue = final; return; }
+      node.nodeValue = pre + fmt(from + (to - from) * (1 - Math.pow(1 - k, 3))) + post;
+      requestAnimationFrame(step);
+    })(t0);
+  };
+
   /** Numbers that count up to their new value (money totals). */
   const counted = new Map();
   Fx.countUps = function (container, key, fresh) {
@@ -286,7 +324,7 @@
       const fmt = (v) => v.toLocaleString('en-US', { minimumFractionDigits: dec, maximumFractionDigits: dec });
       const t0 = performance.now(), dur = from === 0 ? 900 : 600;
       (function step(t) {
-        const k = Math.min(1, (t - t0) / dur);
+        const k = Math.max(0, Math.min(1, (t - t0) / dur)); // never below 0 (a count from 0 showed "-12" for a frame)
         const e = 1 - Math.pow(1 - k, 3);
         node.nodeValue = before + fmt(from + (to - from) * e) + after;
         if (k < 1 && node.isConnected) requestAnimationFrame(step);

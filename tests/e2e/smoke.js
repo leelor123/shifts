@@ -220,14 +220,16 @@ let errors = [];
     if (await ev(() => document.querySelector('.rt-main').hidden || !document.querySelector('.rt-results').hidden)) throw new Error('clearing the search did not bring the guide back');
     await closeAll();
   });
-  await step('youth law alert appears for a 16-year-old night shift', async () => {
+  // since 1.18 a "not legal" finding is shown where it belongs, never as a notification
+  await step('youth law: found for a 16-year-old night shift, but not sent as a notification', async () => {
     await ev(async () => {
       const k = U.addDays(U.todayKey(), -3);
       await Store.apply([{ store: 'shifts', put: { kind: 'shift', employerId: Store.S.employers[0].id, roleId: App.roles()[0].id, status: 'done', start: U.toEpoch(k, '17:00'), end: U.toEpoch(k, '23:45'), breakMin: 0, breakPaid: true, items: [], splits: [] } }], null);
       await App.runInsights();
     });
-    const has = await ev(() => Store.S.notifications.some((n) => n.type === 'youth'));
-    if (!has) throw new Error('no youth alert');
+    const st = await ev(() => ({ found: App.insights.alerts.some((a) => a.type === 'youth'), sent: Store.S.notifications.some((n) => n.type === 'youth') }));
+    if (!st.found) throw new Error('the youth law finding is gone');
+    if (st.sent) throw new Error('the youth law finding was sent as a notification');
   });
   await step('insights sheet and filters', async () => {
     await ev(() => App.actions.insights()); await sleep(600);

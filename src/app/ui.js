@@ -129,7 +129,10 @@
   function toast(text, action, opts) {
     let el = document.getElementById('toast');
     if (!el) { el = document.createElement('div'); el.id = 'toast'; el.className = 'toast'; el.setAttribute('role', 'status'); document.body.appendChild(el); }
+    const wasShown = el.classList.contains('show');
     el.innerHTML = (opts && opts.ok ? TICK : '') + `<div style="flex:1">${esc(text)}</div>` + (action ? `<button class="act">${esc(action.label)}</button>` : '');
+    // a new note over one still showing: its text comes in softly (swapped at once, it was a hard cut)
+    if (wasShown && root.Fx && root.Fx.motion() && el.animate) for (const c of el.children) c.animate([{ opacity: 0, transform: 'translateY(6px)' }, { opacity: 1, transform: 'none' }], { duration: 220, easing: 'ease-out' });
     if (action) el.querySelector('.act').onclick = () => { hideToast(); action.fn(); };
     requestAnimationFrame(() => el.classList.add('show'));
     clearTimeout(toastTimer);
@@ -278,8 +281,16 @@
       document.body.appendChild(el);
       void el.offsetWidth; // fade the dimming in (not at once)
       el.querySelector('.backdrop').classList.add('show');
-      const layer = pushLayer(() => { el.remove(); resolve(null); });
-      const done = (v) => { el.remove(); closeLayer(layer); resolve(v); };
+      // closing fades the dimming and the box away; removing them at once made the whole screen flash bright,
+      // right as the sheet under it started to close and the screen behind redrew (a delete looked like a blink).
+      // The answer is given at once - only the picture lingers for a moment, and it takes no taps.
+      const leave = () => {
+        if (el.classList.contains('out')) return;
+        el.classList.add('out');
+        setTimeout(() => el.remove(), 190);
+      };
+      const layer = pushLayer(() => { leave(); resolve(null); });
+      const done = (v) => { leave(); closeLayer(layer); resolve(v); };
       el._resolve = done; // tests close it this way
       el.querySelectorAll('[data-i]').forEach((b) => (b.onclick = () => {
         const btn = opts.buttons[+b.dataset.i];

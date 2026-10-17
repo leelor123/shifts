@@ -50,7 +50,8 @@
       roundingUnit: 15, // minutes
       // --- minimum per shift ---
       minShiftHours: 0, // 0 = disabled
-      // --- breaks ---
+      // --- breaks --- (0 = the law's break: 45 minutes in a day of 6 hours or more, added on its own when a
+      // shift's break is left empty; paid unless switched off, in the job or in the shift)
       defaultBreakMin: 0,
       defaultBreakPaid: true,
     };
@@ -140,6 +141,7 @@
         longShiftHours: 12, minRestHours: 8, streakDays: 6, weekHoursMax: 50,
         timerHours: 12, idleDays: 7, suspiciousHours: 20, backupDays: 30, upcomingMin: 60,
         weeklyDay: 6, weeklyHour: 21,
+        remindPlanned: false, // a reminder before a planned shift: off unless switched on (few notifications)
         push: true,
       },
       // --- appearance ---

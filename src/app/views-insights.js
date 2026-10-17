@@ -7,7 +7,7 @@
   const { U, Store, UI, App } = root;
   const S = Store.S;
   const { icon, esc } = UI;
-  const CATS = [['all', 'הכול'], ['deviation', 'חריגות'], ['health', 'בריאות ועומס'], ['money', 'כסף ויעדים'], ['reminder', 'תזכורות'], ['summary', 'סיכומים שבועיים']];
+  const CATS = [['all', 'הכול'], ['summary', 'סיכומים'], ['money', 'שיאים ויעדים'], ['reminder', 'תזכורות']];
 
   App.actions.insights = () => {
     let cat = 'all';
@@ -16,11 +16,13 @@
       const live = App.insights ? App.insights.live : [];
       const list = S.notifications.filter((n) => cat === 'all' || n.cat === cat).sort((a, b) => b.createdAt - a.createdAt);
       const unread = S.notifications.filter((n) => !n.read).length;
-      return `<div class="chips">${CATS.map(([k, l]) => `<button class="chip ${cat === k ? 'on' : ''}" data-cat="${k}">${l}</button>`).join('')}</div>
+      // only the kinds that have something (and "all")
+      const cats = CATS.filter(([k]) => k === 'all' || k === cat || S.notifications.some((n) => n.cat === k));
+      return `<div class="chips">${cats.length > 2 ? cats.map(([k, l]) => `<button class="chip ${cat === k ? 'on' : ''}" data-cat="${k}">${l}</button>`).join('') : ''}</div>
         ${live.length && (cat === 'all' || cat === 'money') ? `<div class="card tonal">${live.map((a) => App.insightRow(a)).join('')}</div>` : ''}
         <div class="row-flex small" style="margin:4px 4px 8px"><span>${list.length} התראות${unread ? ` · ${unread} חדשות` : ''}</span><span class="spacer"></span>${unread ? '<button class="btn text sm" data-readall>סמן הכול כנקרא</button>' : ''}<button class="btn text sm" data-settings>${icon('settings', 's')} הגדרות</button></div>
         ${list.length ? `<div class="card" style="padding:4px 12px">${list.map((n) => `<div class="card-link" data-n="${esc(n.id)}">${App.insightRow(n, { notif: true })}</div>`).join('')}</div>`
-          : UI.emptyState('bell', 'אין התראות', S.shifts.length < 10 ? 'התראות שמבוססות על ממוצעים יופיעו אחרי 4 שבועות של נתונים.' : 'הכול נראה רגיל. 👌')}
+          : UI.emptyState('bell', 'אין התראות', 'כאן יופיעו הסיכום השבועי והחודשי, שיאים ויעדים, ותזכורות חשובות בלבד.')}
         <div class="tiny muted" style="margin:10px 4px">התראות פוש: ${('Notification' in window) ? (Notification.permission === 'granted' ? 'מופעלות' : Notification.permission === 'denied' ? 'חסומות בדפדפן' : 'לא אושרו עדיין') : 'לא נתמכות'} · לכל היותר התראת חריגה אחת ביום; תזכורות קריטיות בנפרד.</div>`;
     };
     const redraw = () => { sheetEl.querySelector('.sh-body').innerHTML = body(); };
@@ -45,6 +47,7 @@
             else if (rec.ref && S.payslips.find((p) => p.id === rec.ref)) App.sheetsApi.payslip(rec.ref);
             else if (rec.type === 'backup') App.doBackup(false);
             else if (rec.type === 'payslipDue') { UI.closeTop(); setTimeout(() => App.actions['payslip-new'](), 320); }
+            else if (rec.type === 'monthly' && App.recap && rec.data && rec.data.pk) { UI.closeTop(); setTimeout(() => App.recap.open(rec.data.pk), 320); }
           }
         });
       },

@@ -486,7 +486,7 @@
     function frame(now) {
       raf = 0;
       if (!alive || !st.running || paused) return;
-      const dt = Math.min(0.033, (now - last) / 1000 || 0);
+      const dt = Math.max(0, Math.min(0.033, (now - last) / 1000 || 0)); // a frame can begin before `last`
       last = now;
       update(dt);
       if (!st.running) return;

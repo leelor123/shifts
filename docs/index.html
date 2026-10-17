@@ -2,7 +2,7 @@
 <html lang="he" dir="rtl">
 <head>
 <meta charset="utf-8">
-<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'sha256-kpN77KATNZEY+LR0NZTxXCJ7MJfFk7EScKUWVWTb0a4=' https://www.gstatic.com https://apis.google.com https://cdnjs.cloudflare.com https://cdn.jsdelivr.net 'wasm-unsafe-eval'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com data:; img-src 'self' data: blob: https:; connect-src 'self' https: wss:; frame-src https://shiftpay-70ab6.firebaseapp.com https://accounts.google.com https://apis.google.com https://*.google.com; worker-src 'self' blob: https://cdnjs.cloudflare.com https://cdn.jsdelivr.net; media-src 'self' data: blob:; manifest-src 'self'; object-src 'none'; base-uri 'self'; form-action 'self'">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'sha256-u0R9OmeoFcU2vkSUYECOy4KK7TQyAiRqCZFr+bszyHQ=' https://www.gstatic.com https://apis.google.com https://cdnjs.cloudflare.com https://cdn.jsdelivr.net 'wasm-unsafe-eval'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com data:; img-src 'self' data: blob: https:; connect-src 'self' https: wss:; frame-src https://shiftpay-70ab6.firebaseapp.com https://accounts.google.com https://apis.google.com https://*.google.com; worker-src 'self' blob: https://cdnjs.cloudflare.com https://cdn.jsdelivr.net; media-src 'self' data: blob:; manifest-src 'self'; object-src 'none'; base-uri 'self'; form-action 'self'">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="theme-color" content="#0d2b6b">
 <meta name="description" content="מעקב משמרות וחישוב שכר אישי: שבתות, חגים, שעות נוספות, נסיעות, נטו משוער וניתוח תלושים — נשמר בחשבון שלך ועובד גם בלי אינטרנט.">
@@ -2122,6 +2122,60 @@ body:not(.fx) .gm-rays, body:not(.fx) .hw-vs, body:not(.fx) .hw-q, body:not(.fx)
   .gm-rays, .hw-vs, .hw-q, .gm-end-b.best::after, .qz-timer.hurry, .cg-time.low, .gm-stars i.on, .tf-verdict, .pr-card.done .pr-in, .pr-card.miss .pr-in, .qz-opt.right, .qz-opt.right::after, .qz-opt.wrong::after { animation: none !important; }
 }
 
+.lock.out { opacity: 0; transition: opacity .25s ease-out; pointer-events: none; }
+/* the moments of a shift (views-home.js App.shiftMoment): sparks on one screen-wide layer, made once and kept */
+.gfx-screen { position: fixed; inset: 0; z-index: 9997; pointer-events: none; will-change: transform; } /* a layer of its own, always */
+/* the start button breathes: a soft green halo spreads out from it every few seconds (on its own layer, under
+   the button; it carries on from the same clock when home is redrawn) */
+.home-action { position: relative; }
+.start-halo { position: absolute; top: 0; left: 0; right: 0; height: 66px; border-radius: 20px; background: radial-gradient(closest-side, rgba(33, 212, 127, .55), rgba(33, 212, 127, .25) 70%, transparent); pointer-events: none; will-change: transform, opacity; animation: start-halo 2.8s ease-out infinite; animation-delay: var(--ph, 0ms); }
+@keyframes start-halo { 0% { transform: scale(.96, .9); opacity: 0; } 15% { opacity: .9; } 75%, 100% { transform: scale(1.07, 1.45); opacity: 0; } }
+/* a new timer card springs in; the start button springs back when the shift ends */
+.timer-card.tc-enter { animation: tc-enter .62s cubic-bezier(.2, .9, .3, 1.25) both; }
+.timer-card.tc-enter .clock { animation: tc-clock .7s cubic-bezier(.2, .9, .3, 1.3) .12s both; }
+.home-action.ha-enter .btn.start { animation: tc-enter .62s cubic-bezier(.2, .9, .3, 1.25) both; }
+@keyframes tc-enter { from { opacity: 0; transform: scale(.88) translateY(12px); } }
+@keyframes tc-clock { from { opacity: 0; transform: scale(1.35); } }
+/* a break: the clock breathes, the dot turns amber and stands still */
+.timer-card.on-break .clock { animation: tc-break 2.4s ease-in-out infinite; }
+@keyframes tc-break { 50% { opacity: .45; } }
+.timer-card.on-break .pulse { background: #ffb524; animation: none; }
+body:not(.fx) .timer-card.tc-enter, body:not(.fx) .timer-card.tc-enter .clock, body:not(.fx) .home-action.ha-enter .btn.start, body:not(.fx) .timer-card.on-break .clock { animation: none; }
+body:not(.fx) .start-halo { animation: none; opacity: 0; }
+/* the clock keeps a layer of its own: its spring-in and its breathing would otherwise make one and drop it */
+.timer-card .clock { will-change: transform; }
+@media (prefers-reduced-motion: reduce) { .start-halo, .timer-card.tc-enter, .timer-card.tc-enter .clock, .home-action.ha-enter .btn.start, .timer-card.on-break .clock { animation: none; } .start-halo { opacity: 0; } }
+
+/* pull to refresh (ptr.js): at the very top of a screen a finger moving down is the pull's, never the browser's
+   scrolling - also when the touch began while a fling was still settling, when the page is not allowed to hold
+   the gesture from its touchmove. A finger moving up scrolls as always (pan-down), rows still scroll sideways
+   (pan-x; a sideways row is a scroller of its own, so it is named too), pinch-zoom stays. */
+html.ptr-top #view, html.ptr-top #view .chips { touch-action: pan-x pan-down pinch-zoom; }
+
+/* the shift editor: under the break field, the law's break when it is left empty, or a warning (1.18) */
+.brk-note { display: flex; align-items: flex-start; gap: 6px; margin: 0 4px 10px; font-size: .82rem; line-height: 1.45; color: var(--on-surface-var); }
+.brk-note:empty { display: none; }
+.brk-note svg { flex: none; width: 16px; height: 16px; margin-top: 2px; }
+.brk-note.warn { margin: 0 0 12px; padding: 10px 12px; border-radius: 14px; background: color-mix(in srgb, var(--amber) 14%, var(--surface-1)); color: var(--on-surface); border: 1px solid color-mix(in srgb, var(--amber) 40%, transparent); }
+.brk-note.warn svg { color: var(--amber); }
+
+/* a dialog that closes fades out (the box shrinks a little, the dimming lifts) instead of vanishing in one frame */
+.dialog.out { pointer-events: none; }
+.dialog.out .box { animation: dlg-out .17s ease-in forwards; }
+.dialog.out > .backdrop { opacity: 0; transition: opacity .18s ease-out; }
+@keyframes dlg-out { to { opacity: 0; transform: scale(.95); } }
+@media (prefers-reduced-motion: reduce) { .dialog.out .box { animation: none; opacity: 0; } }
+
+/* the travel switch: the amounts roll to their new values (Fx.tween), tinted for a moment - green on the way
+   up, amber on the way down. Digits of one width, so a rolling number never shifts the row sideways. */
+.item .trail .a, [data-tr] { font-variant-numeric: tabular-nums; }
+.tr-up { animation: tr-up 1s ease-out; }
+.tr-down { animation: tr-down 1s ease-out; }
+@keyframes tr-up { from, 45% { color: var(--good); } }
+@keyframes tr-down { from, 45% { color: var(--amber); } }
+body:not(.fx) .tr-up, body:not(.fx) .tr-down { animation: none; }
+@media (prefers-reduced-motion: reduce) { .tr-up, .tr-down { animation: none; } }
+
 </style>
 </head>
 <body>
@@ -2140,8 +2194,8 @@ body:not(.fx) .gm-rays, body:not(.fx) .hw-vs, body:not(.fx) .hw-q, body:not(.fx)
 <div id="print-root" aria-hidden="true"></div>
 <noscript><div style="padding:24px;font-family:sans-serif">האפליקציה דורשת JavaScript.</div></noscript>
 <script>
-window.APP_VERSION = '1.17.0';
-window.APP_BUILD = '1.17.0-f7050aca';
+window.APP_VERSION = '1.18.0';
+window.APP_BUILD = '1.18.0-225d84db';
 /* ---- core/util.js ---- */
 /* ============================================================
  * util.js — date/time helpers and formatting.
@@ -2698,7 +2752,8 @@ window.APP_BUILD = '1.17.0-f7050aca';
       roundingUnit: 15, // minutes
       // --- minimum per shift ---
       minShiftHours: 0, // 0 = disabled
-      // --- breaks ---
+      // --- breaks --- (0 = the law's break: 45 minutes in a day of 6 hours or more, added on its own when a
+      // shift's break is left empty; paid unless switched off, in the job or in the shift)
       defaultBreakMin: 0,
       defaultBreakPaid: true,
     };
@@ -2788,6 +2843,7 @@ window.APP_BUILD = '1.17.0-f7050aca';
         longShiftHours: 12, minRestHours: 8, streakDays: 6, weekHoursMax: 50,
         timerHours: 12, idleDays: 7, suspiciousHours: 20, backupDays: 30, upcomingMin: 60,
         weeklyDay: 6, weeklyHour: 21,
+        remindPlanned: false, // a reminder before a planned shift: off unless switched on (few notifications)
         push: true,
       },
       // --- appearance ---
@@ -2830,6 +2886,8 @@ window.APP_BUILD = '1.17.0-f7050aca';
   const U = root.U;
   const HebCal = root.HebCal;
   const MIN = U.MIN;
+  /** The break the law asks for: in a working day of 6 hours or more, 45 minutes, 30 of them in a row. */
+  const LAW_BREAK = { afterMin: 360, min: 45, text: 'לפי החוק, במשמרת של 6 שעות ומעלה מגיעה הפסקה של 45 דקות לפחות (30 מהן ברצף)' };
 
   /* ---------------- context helpers ---------------- */
   /** ctx = { settings, employers:[], roles:[], dayRules:[] } -> fast lookup object */
@@ -3002,9 +3060,16 @@ window.APP_BUILD = '1.17.0-f7050aca';
       slices.push({ a, b, min: (b - a) / MIN, roleId: seg ? seg.roleId : shift.roleId, rest, autoRest, night, eve, winLabel: win ? win.label : null });
     }
 
-    /* ---- breaks ---- */
-    const breakMin = Math.max(0, +shift.breakMin || 0);
+    /* ---- breaks ----
+     * Not entered (null): the law's break - in a day of 6 hours or more, 45 minutes (חוק שעות עבודה ומנוחה
+     * §20; the youth law asks the same), paid or not as the shift says. Entered (a number, 0 too): as entered.
+     * One entered on purpose (breakSet: typed in the editor, or taken with the timer) that is shorter than the
+     * law's in a long shift is flagged; records from before 1.18 (a plain 0) stay as they were, quietly. */
+    const breakAuto = shift.breakMin == null || shift.breakMin === '';
+    const breakMin = breakAuto ? (roundedMin >= LAW_BREAK.afterMin ? LAW_BREAK.min : 0) : Math.max(0, +shift.breakMin || 0);
     const breakPaid = shift.breakPaid !== false;
+    const breakShort = !breakAuto && !!shift.breakSet && roundedMin >= LAW_BREAK.afterMin && breakMin < LAW_BREAK.min;
+    if (breakShort) warnings.push(LAW_BREAK.text);
     if (!breakPaid && breakMin >= roundedMin && roundedMin > 0) warnings.push('ההפסקה ארוכה מהמשמרת');
     const paidFactor = breakPaid || roundedMin === 0 ? 1 : Math.max(0, 1 - breakMin / roundedMin);
     const paidMin = roundedMin * paidFactor;
@@ -3184,7 +3249,7 @@ window.APP_BUILD = '1.17.0-f7050aca';
     return {
       id: shift.id, kind: 'shift', dateKey: dk, employerId: shift.employerId, status: shift.status || 'done',
       start, end, rawEnd, elapsedMin, roundedMin, roundingDeltaMin: roundedMin - Math.round(elapsedMin),
-      breakMin, breakPaid, paidMin, paidHours: paidMin / 60,
+      breakMin, breakPaid, breakAuto, breakShort, paidMin, paidHours: paidMin / 60,
       segments: segs, slices, pieces, lines, extras,
       base, restPremium, otPremium, nightPremium, evePremium, seniority, minTopUp, adjust,
       wage, hoursBy, byRole,
@@ -3204,7 +3269,7 @@ window.APP_BUILD = '1.17.0-f7050aca';
   function emptyResult(shift, dk, warnings) {
     return {
       id: shift.id, kind: 'shift', dateKey: dk, employerId: shift.employerId, status: shift.status || 'done',
-      start: shift.start, end: shift.end, rawEnd: shift.end, elapsedMin: 0, roundedMin: 0, roundingDeltaMin: 0, breakMin: 0, breakPaid: true,
+      start: shift.start, end: shift.end, rawEnd: shift.end, elapsedMin: 0, roundedMin: 0, roundingDeltaMin: 0, breakMin: 0, breakPaid: true, breakAuto: false, breakShort: false,
       paidMin: 0, paidHours: 0, segments: [], slices: [], pieces: [], lines: [], extras: [],
       base: 0, restPremium: 0, otPremium: 0, nightPremium: 0, evePremium: 0, seniority: 0, minTopUp: 0, adjust: 0, wage: 0,
       hoursBy: { regular: 0, ot1: 0, ot2: 0, rest: 0, restOt1: 0, restOt2: 0, night: 0, eve: 0 }, byRole: {},
@@ -3684,7 +3749,7 @@ window.APP_BUILD = '1.17.0-f7050aca';
   }
 
   root.Engine = {
-    validShift, validEntry, legalMinWage, minWageFor, youthRules, pensionMinAge, MIN_WAGE,
+    LAW_BREAK, validShift, validEntry, legalMinWage, minWageFor, youthRules, pensionMinAge, MIN_WAGE,
     makeCtx, roleRate, roundMinutes, monthsBetween, buildSegments, hasOverrides, computeShift, computeAll,
     periodByKey, periodOf, dayValue, computeEntries, travelByDay, incomeTaxRaw, netEstimate, pensionActive,
     buildModel, totals, periodSummary, rangeSummary, pensionBaseOf, leaveBalances, vacationEntitlement, recuperationDays, ageAt, isMinor,
@@ -5568,7 +5633,10 @@ window.APP_BUILD = '1.17.0-f7050aca';
   function toast(text, action, opts) {
     let el = document.getElementById('toast');
     if (!el) { el = document.createElement('div'); el.id = 'toast'; el.className = 'toast'; el.setAttribute('role', 'status'); document.body.appendChild(el); }
+    const wasShown = el.classList.contains('show');
     el.innerHTML = (opts && opts.ok ? TICK : '') + `<div style="flex:1">${esc(text)}</div>` + (action ? `<button class="act">${esc(action.label)}</button>` : '');
+    // a new note over one still showing: its text comes in softly (swapped at once, it was a hard cut)
+    if (wasShown && root.Fx && root.Fx.motion() && el.animate) for (const c of el.children) c.animate([{ opacity: 0, transform: 'translateY(6px)' }, { opacity: 1, transform: 'none' }], { duration: 220, easing: 'ease-out' });
     if (action) el.querySelector('.act').onclick = () => { hideToast(); action.fn(); };
     requestAnimationFrame(() => el.classList.add('show'));
     clearTimeout(toastTimer);
@@ -5717,8 +5785,16 @@ window.APP_BUILD = '1.17.0-f7050aca';
       document.body.appendChild(el);
       void el.offsetWidth; // fade the dimming in (not at once)
       el.querySelector('.backdrop').classList.add('show');
-      const layer = pushLayer(() => { el.remove(); resolve(null); });
-      const done = (v) => { el.remove(); closeLayer(layer); resolve(v); };
+      // closing fades the dimming and the box away; removing them at once made the whole screen flash bright,
+      // right as the sheet under it started to close and the screen behind redrew (a delete looked like a blink).
+      // The answer is given at once - only the picture lingers for a moment, and it takes no taps.
+      const leave = () => {
+        if (el.classList.contains('out')) return;
+        el.classList.add('out');
+        setTimeout(() => el.remove(), 190);
+      };
+      const layer = pushLayer(() => { leave(); resolve(null); });
+      const done = (v) => { leave(); closeLayer(layer); resolve(v); };
       el._resolve = done; // tests close it this way
       el.querySelectorAll('[data-i]').forEach((b) => (b.onclick = () => {
         const btn = opts.buttons[+b.dataset.i];
@@ -6241,6 +6317,11 @@ window.APP_BUILD = '1.17.0-f7050aca';
     stamp: [[1800, 0, 0.05, 'noise', 0.07, 600], [180, 0, 0.12, 'sine', 0.09, 90]], // the verdict lands
     swish: [[700, 0, 0.16, 'noise', 0.035, 2600]], // a banner flies in
     alarm: [[1320, 0, 0.05, 'square', 0.022], [1320, 0.09, 0.05, 'square', 0.022]], // the last seconds
+    // a shift
+    shiftStart: [[1400, 0, 0.26, 'noise', 0.03, 4200], [392, 0, 0.09, 'triangle', 0.05], [587, 0.07, 0.09, 'triangle', 0.05], [784, 0.14, 0.12, 'triangle', 0.055], [1175, 0.21, 0.3, 'sine', 0.045]], // power up
+    cash: [[3200, 0, 0.05, 'noise', 0.06, 1600], [1568, 0.03, 0.1, 'square', 0.026], [2093, 0.09, 0.4, 'triangle', 0.05], [2637, 0.09, 0.4, 'sine', 0.03]], // ka-ching
+    pause: [[660, 0, 0.09, 'sine', 0.05, 440], [440, 0.08, 0.16, 'sine', 0.05, 330]],
+    resume: [[440, 0, 0.08, 'sine', 0.05, 660], [660, 0.07, 0.16, 'sine', 0.05, 880]],
   };
   Fx.audio = audio; // shared with the games' music (music.js)
   let noiseBuf = null;
@@ -6385,7 +6466,7 @@ window.APP_BUILD = '1.17.0-f7050aca';
     });
     const t0 = performance.now();
     (function frame(t) {
-      const k = (t - t0) / 1500;
+      const k = Math.max(0, (t - t0) / 1500); // (a frame's time can be a little before t0)
       g.clearRect(0, 0, W, H);
       for (const p of parts) {
         p.vy += p.coin ? 0.42 : 0.32; p.vx *= 0.985; p.x += p.vx; p.y += p.vy; p.rot += p.vr;
@@ -6448,6 +6529,39 @@ window.APP_BUILD = '1.17.0-f7050aca';
     setTimeout(() => el.classList.remove('fx-shake'), 500);
   };
 
+  /** The number shown in an element, as a value (₪ 1,234 → 1234), or null. */
+  Fx.shownNumber = function (el) {
+    const m = (el.textContent || '').match(/[\d,]+(\.\d+)?/);
+    return m ? parseFloat(m[0].replace(/,/g, '')) : null;
+  };
+  /** Counts the number shown in an element from one value to its present one, keeping the text around it
+   * (₪, direction marks). It ends on the exact text that was there, so the format never drifts. */
+  Fx.tween = function (el, from, ms) {
+    const walker = document.createTreeWalker(el, NodeFilter.SHOW_TEXT);
+    let node;
+    while ((node = walker.nextNode()) && !/\d/.test(node.nodeValue));
+    if (!node || !Fx.motion()) return;
+    const final = node.nodeValue;
+    const m = final.match(/[\d,]+(\.\d+)?/);
+    const to = parseFloat(m[0].replace(/,/g, ''));
+    if (!(Math.abs(to - from) > 0)) return;
+    const dec = m[1] ? m[1].length - 1 : 0;
+    const group = m[0].includes(',') || Math.max(from, to) >= 1000;
+    const pre = final.slice(0, m.index), post = final.slice(m.index + m[0].length);
+    const fmt = (v) => (group ? v.toLocaleString('en-US', { minimumFractionDigits: dec, maximumFractionDigits: dec }) : v.toFixed(dec));
+    const t0 = performance.now();
+    node.nodeValue = pre + fmt(from) + post;
+    (function step(t) {
+      if (!node.isConnected) return;
+      // a frame's timestamp is when the frame began, which can be a little before t0: never below 0, or the
+      // number would step the wrong way for a frame
+      const k = Math.max(0, Math.min(1, (t - t0) / ms));
+      if (k >= 1) { node.nodeValue = final; return; }
+      node.nodeValue = pre + fmt(from + (to - from) * (1 - Math.pow(1 - k, 3))) + post;
+      requestAnimationFrame(step);
+    })(t0);
+  };
+
   /** Numbers that count up to their new value (money totals). */
   const counted = new Map();
   Fx.countUps = function (container, key, fresh) {
@@ -6469,7 +6583,7 @@ window.APP_BUILD = '1.17.0-f7050aca';
       const fmt = (v) => v.toLocaleString('en-US', { minimumFractionDigits: dec, maximumFractionDigits: dec });
       const t0 = performance.now(), dur = from === 0 ? 900 : 600;
       (function step(t) {
-        const k = Math.min(1, (t - t0) / dur);
+        const k = Math.max(0, Math.min(1, (t - t0) / dur)); // never below 0 (a count from 0 showed "-12" for a frame)
         const e = 1 - Math.pow(1 - k, 3);
         node.nodeValue = before + fmt(from + (to - from) * e) + after;
         if (k < 1 && node.isConnected) requestAnimationFrame(step);
@@ -6562,8 +6676,10 @@ window.APP_BUILD = '1.17.0-f7050aca';
   const rnd = (a, b) => a + Math.random() * (b - a);
   const pick = (l) => l[(Math.random() * l.length) | 0];
 
-  /** The effects of one game sheet: { burst, ring, text, glow, banner, at, close }. */
-  GameFx.attach = function (sheet) {
+  /** The effects of one game sheet: { burst, ring, text, glow, banner, at, close }. With {bare: true} only the
+   * canvas (no edge glow, no banner). */
+  GameFx.attach = function (sheet, opts) {
+    const bare = !!(opts && opts.bare);
     const cv = document.createElement('canvas');
     cv.className = 'gfx-canvas';
     const glowEl = document.createElement('div');
@@ -6571,7 +6687,7 @@ window.APP_BUILD = '1.17.0-f7050aca';
     const bannerEl = document.createElement('div');
     bannerEl.className = 'gfx-banner';
     for (const e of [cv, glowEl, bannerEl]) e.setAttribute('aria-hidden', 'true');
-    sheet.append(glowEl, bannerEl, cv);
+    if (bare) sheet.append(cv); else sheet.append(glowEl, bannerEl, cv);
     const g = cv.getContext('2d');
     const dpr = Math.min(2, root.devicePixelRatio || 1);
     let W = 0, H = 0, raf = 0, last = 0, open = true, dirty = false;
@@ -6591,7 +6707,7 @@ window.APP_BUILD = '1.17.0-f7050aca';
     function kick() { if (!raf) { last = performance.now(); raf = requestAnimationFrame(frame); } }
     function frame(now) {
       raf = 0;
-      const dt = Math.min(0.05, (now - last) / 1000 || 0.016);
+      const dt = Math.max(0, Math.min(0.05, (now - last) / 1000 || 0.016)); // a frame can begin before `last`
       last = now;
       for (let i = parts.length - 1; i >= 0; i--) {
         const p = parts[i];
@@ -6701,14 +6817,14 @@ window.APP_BUILD = '1.17.0-f7050aca';
       /** The screen's edges glow for a moment: 'good' (green) or 'bad' (red). (Web Animations: restarting a
        * CSS animation needs a forced layout, which cost a frame on a slow phone at the moment of the answer.) */
       glow(kind) {
-        if (!open || !motion()) return;
+        if (!open || bare || !motion()) return;
         glowEl.className = 'gfx-glow ' + kind;
         glowEl.getAnimations().forEach((a) => a.cancel());
         glowEl.animate([{ opacity: 0 }, { opacity: 1, offset: 0.16 }, { opacity: 0 }], { duration: 620, easing: 'ease-out' });
       },
       /** A banner that flies in and out over the game ("🔥 5 ברצף!"). */
       banner(str) {
-        if (!open) return;
+        if (!open || bare) return;
         play('combo');
         if (!motion()) return;
         bannerEl.textContent = str;
@@ -6727,6 +6843,20 @@ window.APP_BUILD = '1.17.0-f7050aca';
       close() { open = false; ro.disconnect(); },
     };
     return api;
+  };
+
+  /** One effects layer over the whole screen (above sheets and dialogs), for the big moments outside the games
+   * (a shift starts, a shift ends). Made the first time it is needed and kept for good: it is never dropped,
+   * so no layer comes or goes when it is used. */
+  let screenFx = null;
+  GameFx.screen = function () {
+    if (screenFx) return screenFx;
+    const host = document.createElement('div');
+    host.className = 'gfx-screen';
+    host.setAttribute('aria-hidden', 'true');
+    document.body.appendChild(host);
+    screenFx = GameFx.attach(host, { bare: true });
+    return screenFx;
   };
 
   /** Counts the first number in an element up from 0 (ticks as it goes). Resolves when done. */
@@ -6749,7 +6879,7 @@ window.APP_BUILD = '1.17.0-f7050aca';
       node.nodeValue = before + fmt(0) + after;
       (function step(t) {
         if (!node.isConnected) { resolve(); return; }
-        const k = Math.min(1, (t - t0) / dur);
+        const k = Math.max(0, Math.min(1, (t - t0) / dur));
         const e = 1 - Math.pow(1 - k, 3);
         node.nodeValue = before + fmt(dec ? to * e : Math.round(to * e)) + after;
         if (t - lastTick > 70 && k < 1) { lastTick = t; play('tick', { pitch: 0.7 + k * 0.8 }); }
@@ -8097,6 +8227,11 @@ window.APP_BUILD = '1.17.0-f7050aca';
     setTimeout(Back.ensure, 0);
   }, true);
   const seenTabs = new Set();
+  // the last screen drawn (its tab and its HTML, without the looping decorations' clock, which differs every
+  // time, and without the one-time entrance classes: a redraw that only drops those would replace a card that
+  // has just sprung in, for nothing)
+  let drawn = { tab: '', sig: '' };
+  const sigOf = (html) => html.replace(/--ph:-\d+ms/g, '').replace(/ (tc-enter|ha-enter)\b/g, '');
   App.render = function (opts) {
     if (App.blocking) return; // a full-screen step (login / terms / setup wizard) owns the screen
     const v = document.getElementById('view');
@@ -8115,6 +8250,16 @@ window.APP_BUILD = '1.17.0-f7050aca';
         <div class="small muted">הנתונים שלך שמורים. אפשר לנסות שוב או לעבור למסך אחר.</div>
         <div class="btn-row" style="margin-top:14px;justify-content:center"><button class="btn" data-act="render-retry">נסה שוב</button><button class="btn tonal" data-act="support">דיווח על תקלה</button></div></div>`;
     }
+    // a redraw that would draw exactly what is already there (a save that changed nothing on this screen, the
+    // insights run a moment after every save, a refresh) leaves the screen alone: replacing it cut short what
+    // was moving on it (a count, a tint) and reset sideways-scrolled rows
+    const sig = sigOf(html);
+    if (!fresh && drawn.tab === App.tab && drawn.sig === sig && v.firstElementChild) {
+      App.renderNav();
+      App.tickTimer();
+      return;
+    }
+    drawn = { tab: App.tab, sig };
     v.innerHTML = `<div class="view ${cls}" id="view-inner">${html}</div>`;
     try { if (App.views[App.tab + '_mount']) App.views[App.tab + '_mount'](v); } catch (e) { console.error('mount failed', App.tab, e); }
     App.renderNav();
@@ -8253,14 +8398,18 @@ window.APP_BUILD = '1.17.0-f7050aca';
   setInterval(App.tickTimer, 1000);
 
   /** Shift object for the running timer (for previews and saving). */
-  App.activeAsShift = function (end) {
+  App.activeAsShift = function (end, forSave) {
     const a = S.activeShift;
     if (!a) return null;
     const now = end || Date.now();
     const brkMs = (a.breaks || []).reduce((s, b) => s + ((b.to || now) - b.from), 0);
     return {
       id: '__active', kind: 'shift', employerId: a.employerId, roleId: a.roleId, status: 'done',
-      start: a.start, end: now, splits: a.splits || [], breakMin: Math.round(brkMs / 60000), breakPaid: false,
+      // breaks taken with the timer: those, unpaid (a short one is flagged). None taken: the saved shift gets the
+      // law's break (null); the live "so far" leaves it out, or the amount would drop as the shift passed 6 hours
+      start: a.start, end: now, splits: a.splits || [],
+      ...((a.breaks || []).length ? { breakMin: Math.round(brkMs / 60000), breakPaid: false, breakSet: true }
+        : forSave ? { breakMin: null, breakPaid: (App.employer(a.employerId) || {}).defaultBreakPaid !== false } : { breakMin: 0, breakPaid: true }),
       items: [], note: a.note || '',
     };
   };
@@ -8288,16 +8437,17 @@ window.APP_BUILD = '1.17.0-f7050aca';
     const planned = (opts && opts.fromPlanned && App.shift(opts.fromPlanned))
       || S.shifts.filter((s) => s.status === 'planned' && Math.abs(s.start - now) < 90 * 60000).sort((a, b) => Math.abs(a.start - now) - Math.abs(b.start - now))[0];
     await Store.setMeta({ lastRole: role.id });
+    App.justStarted = Date.now(); // the timer card springs in (the save redraws home at once)
     await Store.setActive({ start: now, roleId: role.id, employerId: role.employerId || S.employers[0].id, splits: [], breaks: [], fromPlanned: planned ? planned.id : null });
-    root.Fx.celebrate('start');
+    if (App.shiftMoment) App.shiftMoment('start', opts && opts.at); else root.Fx.celebrate('start');
     UI.toast('המשמרת התחילה — בהצלחה!');
     App.askNotifyPermission();
   };
-  App.stopShift = async function () {
+  App.stopShift = async function (at) {
     const a = S.activeShift;
     if (!a) return;
     if (a.breaks && a.breaks.length && !a.breaks[a.breaks.length - 1].to) a.breaks[a.breaks.length - 1].to = Date.now();
-    const sh = App.activeAsShift(Date.now());
+    const sh = App.activeAsShift(Date.now(), true);
     sh.id = U.uid();
     if ((sh.end - sh.start) < 60000) {
       const ok = await UI.confirm('משמרת קצרה מאוד', 'המשמרת נמשכה פחות מדקה. לשמור בכל זאת?', 'שמור');
@@ -8307,9 +8457,10 @@ window.APP_BUILD = '1.17.0-f7050aca';
     const planned = a.fromPlanned && App.shift(a.fromPlanned);
     if (planned && planned.status === 'planned') ops.push({ store: 'shifts', del: planned.id });
     await Store.apply(ops, 'סיום משמרת');
+    App.justStopped = Date.now(); // the start button springs back in
     await Store.setActive(null);
     if (S.shifts.filter((x) => x.status === 'done').length === 1) App.celebrateOnce('first-shift', () => UI.toast('המשמרת הראשונה שלך נשמרה! 🎉'));
-    root.Fx.celebrate('big');
+    if (App.shiftMoment) App.shiftMoment('stop', at); else root.Fx.celebrate('big');
     App.milestones();
     const r = App.result(sh.id);
     UI.toast(`נשמר: ${U.hm(r ? r.paidMin : 0)} שעות · ${U.money(r ? r.wage : 0)}`, { label: 'ביטול', fn: App.undo }, { ok: true });
@@ -8322,12 +8473,12 @@ window.APP_BUILD = '1.17.0-f7050aca';
     }
     App.sheetsApi.shiftDetail && App.sheetsApi.shiftDetail(sh.id);
   };
-  App.toggleBreak = async function () {
+  App.toggleBreak = async function (at) {
     const a = Object.assign({}, S.activeShift);
     a.breaks = (a.breaks || []).slice();
     const last = a.breaks[a.breaks.length - 1];
-    if (last && !last.to) { last.to = Date.now(); UI.toast('חזרת מהפסקה'); }
-    else { a.breaks.push({ from: Date.now() }); UI.toast('הפסקה — הזמן לא נספר'); }
+    if (last && !last.to) { last.to = Date.now(); UI.toast('חזרת מהפסקה'); if (App.shiftMoment) App.shiftMoment('resume', at); }
+    else { a.breaks.push({ from: Date.now() }); UI.toast('הפסקה — הזמן לא נספר'); if (App.shiftMoment) App.shiftMoment('pause', at); }
     await Store.setActive(a);
   };
   App.switchRole = async function (roleId) {
@@ -8352,6 +8503,31 @@ window.APP_BUILD = '1.17.0-f7050aca';
       if (reg) await reg.showNotification(n.title, opt); else new Notification(n.title, opt);
     } catch (e) { console.warn(e); }
   }
+  /* Notifications: as few as possible (1.18, the owner's wish). Kept: the weekly and the monthly summary,
+   * good news (a record, a goal reached, a birthday), and three that guard the user's own data or come once a
+   * month (a timer left running, a backup due, payday's payslip). Never a notification that something is "not
+   * legal" (minimum wage, the youth law, rest, long days, hours in a week, a payslip gap), and no nagging (more
+   * hours than usual, no shift for a week, overlaps). The engine still finds those; they show where they belong
+   * (the payslip check, the rights screen, the shift itself), not as notifications. A reminder before a planned
+   * shift only when switched on in Settings. */
+  const NOTIFY = new Set(['weekly', 'monthly', 'record', 'goal', 'birthday', 'timer', 'backup', 'payslipDue', 'upcoming']);
+  const kindSent = (a) => NOTIFY.has(a.type) && !(a.type === 'goal' && a.severity !== 'good');
+  // the reminder before a planned shift is off unless switched on
+  const notifiable = (a) => kindSent(a) && (a.type === 'upcoming' ? S.settings.alerts.remindPlanned === true : S.settings.alerts.types[a.type] !== false);
+  /** The monthly summary: once a pay period is over, its story is ready (it opens the month's recap). */
+  function monthlyAlert() {
+    const emp = S.employers[0];
+    if (!emp) return null;
+    const cur = Engine.periodOf(U.todayKey(), emp);
+    const last = Engine.periodOf(U.addDays(cur.from, -1), emp);
+    const t = Engine.rangeSummary(App.model, last.from, last.to);
+    if (!t || !t.shifts) return null;
+    return {
+      key: 'monthly-' + last.key, type: 'monthly', cat: 'summary', severity: 'info', push: 'anomaly', data: { pk: last.key },
+      title: `הסיכום של ${last.label} מוכן ✨`,
+      body: `${t.shifts === 1 ? 'משמרת אחת' : t.shifts + ' משמרות'} · ${U.num(t.hours, 1)} שעות · ${U.money(t.gross, 0)} ברוטו. לחצו לסיפור של החודש.`,
+    };
+  }
   App.runInsights = async function () {
     if (!App.model || !S.settings.onboarded) return;
     const res = Insights.run(App.model, {
@@ -8360,8 +8536,13 @@ window.APP_BUILD = '1.17.0-f7050aca';
       lastBackup: S.meta.cloudUid ? Date.now() : S.settings.backup.lastBackup, roleName: App.roleName,
     });
     App.insights = res;
+    const month = monthlyAlert();
+    const wanted = res.alerts.filter(notifiable).concat(month && notifiable(month) ? [month] : []);
+    // notifications of the kinds that are no longer sent go from the list too (once)
+    const gone = S.notifications.filter((n) => !kindSent(n));
+    if (gone.length) await Store.apply(gone.map((n) => ({ store: 'notifications', del: n.id })), null);
     const known = new Set(S.notifications.map((n) => n.key));
-    const fresh = res.alerts.filter((a) => !known.has(a.key));
+    const fresh = wanted.filter((a) => !known.has(a.key));
     const record = fresh.find((a) => a.type === 'record');
     if (record) App.celebrateOnce('record-' + record.key, () => { root.Fx.celebrate('money'); UI.toast(record.title || 'שיא אישי חדש!'); });
     if (fresh.length) {
@@ -8426,7 +8607,8 @@ window.APP_BUILD = '1.17.0-f7050aca';
     const el = document.createElement('div');
     el.className = 'lock'; el.id = 'lock';
     let pin = '';
-    const unlock = () => { el.remove(); S.meta._unlockedAt = Date.now(); pinFails = 0; };
+    // unlocking fades the lock screen away (removed at once, it was a hard cut to the app)
+    const unlock = () => { if (el.classList.contains('out')) return; el.classList.add('out'); setTimeout(() => el.remove(), 260); S.meta._unlockedAt = Date.now(); pinFails = 0; };
     const tryBio = async () => { try { if (await App.bio.verify(L.bioId)) unlock(); } catch (e) { /* cancelled: the code still works */ } };
     const draw = () => {
       const wait = Math.ceil((pinWaitUntil - Date.now()) / 1000);
@@ -10049,8 +10231,29 @@ window.PAY_CONFIG = {
     const on = !el.classList.contains('on');
     document.querySelectorAll('.tr-toggle').forEach((b) => { b.classList.toggle('on', on); b.setAttribute('aria-checked', on); });
     clearTimeout(travelTimer);
-    travelTimer = setTimeout(() => { Store.setSettings((s) => { s.withTravel = on; }).catch(() => {}); }, 190);
+    travelTimer = setTimeout(() => {
+      const before = shownAmounts();
+      Store.setSettings((s) => { s.withTravel = on; }).then(() => rollAmounts(before)).catch(() => {});
+    }, 190);
   };
+  /* The amounts follow the switch: each one (every shift, the list's total, each month's total - marked with
+   * data-tr) rolls from what it showed to its new value, tinted green on the way up (the travel pay comes
+   * back) and amber on the way down. The screen is redrawn by the save, so the values shown just before are
+   * kept by their keys; a roll still running when the switch is flipped again starts from where it got to. */
+  function shownAmounts() {
+    const m = new Map();
+    document.querySelectorAll('#view [data-tr]').forEach((x) => { const v = root.Fx.shownNumber(x); if (v != null) m.set(x.dataset.tr, v); });
+    return m;
+  }
+  function rollAmounts(before) {
+    if (!before.size || !root.Fx) return;
+    document.querySelectorAll('#view [data-tr]').forEach((x) => {
+      const from = before.get(x.dataset.tr), to = root.Fx.shownNumber(x);
+      if (from == null || to == null || from === to) return;
+      x.classList.add(to > from ? 'tr-up' : 'tr-down');
+      root.Fx.tween(x, from, 600);
+    });
+  }
   App.shiftItem = function (r, opts) {
     opts = opts || {};
     const sh = App.shift(r.id);
@@ -10065,7 +10268,7 @@ window.PAY_CONFIG = {
       <span class="role-bar" style="background:${role ? role.color : '#999'}"></span>
       <span class="body"><span class="t shift-title"><span class="tt">${esc(date)}${esc(title)}</span>${App.restTag(r)}${App.ovTag(r)}${planned}</span>
       <span class="s"><span class="num">⁦${U.epochHM(r.start)}\u2060–\u2060${U.epochHM(r.rawEnd)}⁩</span> · ${U.hm(r.paidMin)} ש׳${emp}${sh.note ? ' · ' + esc(sh.note) : ''}</span></span>
-      <span class="trail"><span class="a">${money(App.shiftAmount(r), 0)}</span>${opts.showOk && r.status === 'planned' ? `<br><span class="tag good" data-act="mark-done" data-id="${r.id}">${icon('check')}בוצעה</span>` : ''}</span></button>`;
+      <span class="trail"><span class="a" data-tr="s:${r.id}">${money(App.shiftAmount(r), 0)}</span>${opts.showOk && r.status === 'planned' ? `<br><span class="tag good" data-act="mark-done" data-id="${r.id}">${icon('check')}בוצעה</span>` : ''}</span></button>`;
   };
   App.entryItem = function (e) {
     const v = App.model.entryVals.get(e.id) || { amount: 0, label: '' };
@@ -10093,6 +10296,42 @@ window.PAY_CONFIG = {
    * Everything else is one tap away: the number opens the summary, the line opens insights,
    * the + button holds every kind of entry (and payslips), the ✨ opens the assistant. */
 
+  /* ---------------- the moments of a shift ----------------
+   * Starting one: a power-up sound, sparks and two shock rings from the button, and the timer card springs
+   * in. A break: a soft falling sound (a rising one coming back), the clock breathes, the dot turns amber.
+   * Ending one: a cash register's "ka-ching", a fountain of coins from the button, and the start button
+   * springs back. The sparks are on one layer over the whole screen, made once and kept (gamefx.js). A card's
+   * entrance is drawn once, by the first redraw after the start (or the end): a later redraw (the insights a
+   * moment after every save) must not play it again - the card would pop in twice. */
+  const ENTER_MS = 1200;
+  App.shiftMoment = function (kind, at) {
+    const F = root.Fx;
+    if (!F) return;
+    const fx = root.GameFx ? root.GameFx.screen() : null;
+    const [x, y] = at || [root.innerWidth / 2, root.innerHeight * 0.42];
+    if (kind === 'start') {
+      F.play('shiftStart'); F.haptic([12, 40, 24]);
+      if (fx) {
+        fx.burst(x, y, { palette: 'good', n: 36, kinds: ['spark', 'star', 'confetti'], speed: [180, 540] });
+        fx.ring(x, y, { color: '#21d47f', r1: 170, width: 8 });
+        setTimeout(() => fx.ring(x, y, { color: '#ffd84d', r1: 120, width: 5 }), 130);
+      }
+    } else if (kind === 'stop') {
+      F.play('cash'); setTimeout(() => F.play('success'), 280); F.haptic([10, 40, 10, 40, 20]);
+      if (fx) {
+        fx.burst(x, y, { palette: 'gold', n: 50, kinds: ['coin', 'star', 'confetti', 'coin'], speed: [260, 700], up: 240 });
+        fx.ring(x, y, { color: '#ffd84d', r1: 180, width: 9 });
+      }
+    } else if (kind === 'pause' || kind === 'resume') {
+      F.play(kind); F.haptic(10);
+      if (fx) fx.ring(x, y, { color: kind === 'pause' ? '#ffb524' : '#21d47f', r1: 64, width: 5 });
+    }
+  };
+  /** The centre of the element that was tapped (screen coordinates), for the sparks to start there. */
+  const tapped = (el) => { if (!el || !el.getBoundingClientRect) return null; const r = el.getBoundingClientRect(); return r.width ? [r.left + r.width / 2, r.top + r.height / 2] : null; };
+  // true once, for the first redraw after the moment (and only soon after it)
+  const once = (k) => { const t = App[k]; App[k] = 0; return !!t && Date.now() - t < ENTER_MS; };
+
   /* ---------------- action: start, or the running shift ---------------- */
   function actionBlock() {
     const a = S.activeShift;
@@ -10100,7 +10339,7 @@ window.PAY_CONFIG = {
       const role = App.role(App.currentRole());
       const onBreak = App.onBreak();
       const others = App.roles(a.employerId).filter((r) => r.id !== App.currentRole());
-      return `<div class="card timer-card running"><span class="aurora" aria-hidden="true" style="${App.phase()}"><i></i><i></i><i></i></span>
+      return `<div class="card timer-card running${onBreak ? ' on-break' : ''}${once('justStarted') ? ' tc-enter' : ''}"><span class="aurora" aria-hidden="true" style="${App.phase()}"><i></i><i></i><i></i></span>
         <div class="tc-head"><span class="pulse" style="${App.phase()}"></span>${onBreak ? 'בהפסקה' : 'משמרת פעילה'}${role ? ' · ' + esc(role.name) : ''}<span class="spacer"></span><span class="tiny">מ-${U.epochHM(a.start)}</span></div>
         <div class="clock" data-clock="net">0:00:00</div>
         <div class="meta">עד עכשיו <b data-live-pay></b>${(a.breaks || []).length ? ' · הפסקות לא נספרות' : ''}</div>
@@ -10113,7 +10352,8 @@ window.PAY_CONFIG = {
     const roles = App.roles();
     const sel = S.meta.lastRole && App.role(S.meta.lastRole) ? S.meta.lastRole : roles[0] && roles[0].id;
     const role = App.role(sel);
-    return `<div class="home-action">
+    return `<div class="home-action${once('justStopped') ? ' ha-enter' : ''}">
+      <span class="start-halo" aria-hidden="true" style="${App.phase()}"></span>
       <button class="btn big start" style="${App.phase()}" data-act="timer-start" data-role="${sel || ''}">${icon('play')} התחל משמרת</button>
       ${roles.length > 1 && role ? `<button class="role-chip" data-act="choose-role" aria-label="בחר תפקיד"><span class="sw" style="background:${role.color}"></span><span class="rc-n">${esc(role.name)}</span><span class="chev">${icon('left', 's')}</span></button>` : ''}
     </div>`;
@@ -10294,7 +10534,7 @@ window.PAY_CONFIG = {
 
   /* ---------------- actions ---------------- */
   App.actions['pick-role'] = async (el) => { await Store.setMeta({ lastRole: el.dataset.id }); App.rerender(); };
-  App.actions['start-planned'] = (el) => { const sh = App.shift(el.dataset.id); if (sh && !S.activeShift) App.startShift(sh.roleId, { fromPlanned: sh.id }); };
+  App.actions['start-planned'] = (el) => { const sh = App.shift(el.dataset.id); if (sh && !S.activeShift) App.startShift(sh.roleId, { fromPlanned: sh.id, at: tapped(el) }); };
   App.actions['choose-role'] = () => App.sheetsApi.pickRole('תפקיד למשמרת', async (rid) => { await Store.setMeta({ lastRole: rid }); App.rerender(); });
   App.actions['timer-start'] = async (el) => {
     const roles = App.roles();
@@ -10303,10 +10543,10 @@ window.PAY_CONFIG = {
       App.sheetsApi.pickRole('באיזה תפקיד?', (rid) => App.startShift(rid));
       return;
     }
-    App.startShift(id || S.meta.lastRole || (roles[0] && roles[0].id));
+    App.startShift(id || S.meta.lastRole || (roles[0] && roles[0].id), { at: tapped(el) });
   };
-  App.actions['timer-stop'] = () => App.stopShift();
-  App.actions['timer-break'] = () => App.toggleBreak();
+  App.actions['timer-stop'] = (el) => App.stopShift(tapped(el));
+  App.actions['timer-break'] = (el) => App.toggleBreak(tapped(el));
   App.actions['timer-switch'] = () => {
     const a = S.activeShift;
     App.sheetsApi.pickRole('לאיזה תפקיד עברת?', (rid) => App.switchRole(rid), App.roles(a.employerId).filter((r) => r.id !== App.currentRole()));
@@ -10415,7 +10655,8 @@ window.PAY_CONFIG = {
         startT: src ? U.epochHM(src.start) : t ? t.startT : '08:00', endT: src ? U.epochHM(src.end) : t ? t.endT : '16:00',
         roleId: (src && src.roleId) || (t && t.roleId) || S.meta.lastRole || (roles[0] && roles[0].id),
         splits: src ? (src.splits || []).map((x) => ({ t: U.epochHM(x.at), roleId: x.roleId })) : t && t.splits ? t.splits.slice() : [],
-        breakMin: src ? src.breakMin || 0 : t ? t.breakMin || 0 : App.employer(emp.id).defaultBreakMin || 0,
+        // empty = the law's break (null); a copy keeps its own, a job's default is used when one is set
+        breakMin: src ? (src.breakMin == null ? null : src.breakMin) : t ? (t.breakMin == null ? null : t.breakMin) : (+App.employer(emp.id).defaultBreakMin > 0 ? +App.employer(emp.id).defaultBreakMin : null),
         breakPaid: src ? src.breakPaid !== false : t ? t.breakPaid !== false : App.employer(emp.id).defaultBreakPaid !== false,
         noTravel: src ? !!src.noTravel : t ? !!t.noTravel : false, note: '', items: [], ov: emptyOv(), reason: '',
       };
@@ -10432,7 +10673,7 @@ window.PAY_CONFIG = {
       id: sh.id, status: sh.status || 'done', statusTouched: true, employerId: sh.employerId, date: U.epochKey(sh.start),
       startT: U.epochHM(sh.start), endT: U.epochHM(sh.end), roleId: sh.roleId,
       splits: (sh.splits || []).map((x) => ({ t: U.epochHM(x.at), roleId: x.roleId })),
-      breakMin: sh.breakMin || 0, breakPaid: sh.breakPaid !== false, noTravel: !!sh.noTravel, note: sh.note || '',
+      breakMin: sh.breakMin == null ? null : sh.breakMin, breakSet: !!sh.breakSet, breakPaid: sh.breakPaid !== false, noTravel: !!sh.noTravel, note: sh.note || '',
       items: (sh.items || []).map((x) => Object.assign({}, x)), ov, reason: sh.overrideReason || '',
       createdAt: sh.createdAt, demo: sh.demo,
     };
@@ -10457,9 +10698,10 @@ window.PAY_CONFIG = {
     const sh = {
       id: d.id || U.uid(), kind: 'shift', status: d.status, employerId: d.employerId, roleId: d.roleId,
       start, end, splits: d.splits.filter((x) => x.t && x.roleId).map((x) => ({ at: at(x.t), roleId: x.roleId })),
-      breakMin: +d.breakMin || 0, breakPaid: !!d.breakPaid, noTravel: !!d.noTravel, note: d.note || '',
+      breakMin: numOrNull(d.breakMin) == null ? null : +d.breakMin, breakPaid: !!d.breakPaid, noTravel: !!d.noTravel, note: d.note || '',
       items: d.items.filter((x) => +x.amount), overrides: Object.keys(ov).length ? ov : null, overrideReason: Object.keys(ov).length ? d.reason : '',
     };
+    if (d.breakSet && sh.breakMin != null) sh.breakSet = true; // typed on purpose: a short one is flagged
     if (d.createdAt) sh.createdAt = d.createdAt;
     if (d.demo) sh.demo = true;
     return sh;
@@ -10516,7 +10758,7 @@ window.PAY_CONFIG = {
     rows += `<tr class="tot"><td>סה״כ</td><td class="a">${U.money(r.total)}</td></tr>`;
     const notes = [];
     notes.push(`זמן במשמרת: ${U.hm(r.elapsedMin)}` + (r.roundingDeltaMin ? ` · עיגול: ${r.roundingDeltaMin > 0 ? '+' : ''}${r.roundingDeltaMin} דק׳` : ''));
-    if (r.breakMin) notes.push(`הפסקה ${r.breakMin} דק׳ ${r.breakPaid ? 'בתשלום' : 'ללא תשלום — נוכתה יחסית מכל השעות'}`);
+    if (r.breakMin) notes.push(`הפסקה ${r.breakMin} דק׳${r.breakAuto ? ' (אוטומטית לפי החוק)' : ''} ${r.breakPaid ? 'בתשלום' : 'ללא תשלום — נוכתה יחסית מכל השעות'}`);
     notes.push(`שעות נוספות אחרי ${r.thresholdH} שעות ביום` + (r.priorMin ? ` · כבר עבדת ${U.hm(r.priorMin)} באותו יום לפני המשמרת` : '') + (r.isNightShift && emp.nightShiftShortDay ? ' (משמרת לילה)' : ''));
     const wins = r.restLabels.length ? r.slices.filter((s) => s.autoRest) : [];
     if (r.autoRestMin > 0) notes.push(`חלון ${esc(r.restLabels.join(', ') || 'שבת/חג')} במשמרת: ⁦${U.epochHM(wins[0].a)}\u2060–\u2060${U.epochHM(wins[wins.length - 1].b)}⁩ (${S.settings.rest.mode === 'city' ? 'לפי ' + esc(S.settings.rest.city === '__custom' ? 'מיקום מותאם' : S.settings.rest.city).replace(/-/g, '-⁠') : 'שעות קבועות'})`);
@@ -10536,6 +10778,7 @@ window.PAY_CONFIG = {
       title: U.fmtDate(r.dateKey, 'long'),
       body: `<div class="small muted" style="margin-bottom:8px">${esc(hd.toString())} ${App.restTag(r)} ${r.status === 'planned' ? '<span class="tag planned">מתוכננת</span>' : ''}</div>
         ${ovBox}
+        ${r.breakShort ? `<div class="banner warn">${icon('alert')}<div style="flex:1">${esc(Engine.LAW_BREAK.text)}. בהפסקה שנרשמה: ${r.breakMin} דקות.</div></div>` : ''}
         <div class="card">${App.timelineHtml(r)}
           <div class="kpis three" style="margin-top:12px">
             <div class="kpi"><div class="l">שעות לתשלום</div><div class="v"><span class="num">${U.hm(r.paidMin)}</span></div></div>
@@ -10600,7 +10843,8 @@ window.PAY_CONFIG = {
       if (busy) continue;
       ops.push({ store: 'shifts', put: {
         id: U.uid(), kind: 'shift', employerId: sh.employerId, roleId: sh.roleId, status: 'planned', start, end,
-        breakMin: sh.breakMin || 0, breakPaid: sh.breakPaid !== false, noTravel: !!sh.noTravel,
+        breakMin: sh.breakMin == null ? null : sh.breakMin, breakPaid: sh.breakPaid !== false, noTravel: !!sh.noTravel,
+        ...(sh.breakSet && sh.breakMin != null ? { breakSet: true } : {}),
         splits: (sh.splits || []).map((x) => ({ at: at(x.at, i), roleId: x.roleId })), items: [], note: '',
       } });
     }
@@ -10612,7 +10856,7 @@ window.PAY_CONFIG = {
     if (!name) return;
     await App.saveOps([{ store: 'templates', put: {
       id: U.uid(), name, roleId: sh.roleId, employerId: sh.employerId, startT: U.epochHM(sh.start), endT: U.epochHM(sh.end),
-      breakMin: sh.breakMin || 0, breakPaid: sh.breakPaid !== false, noTravel: !!sh.noTravel,
+      breakMin: sh.breakMin == null ? null : sh.breakMin, breakPaid: sh.breakPaid !== false, noTravel: !!sh.noTravel,
       splits: (sh.splits || []).map((x) => ({ t: U.epochHM(x.at), roleId: x.roleId })),
     } }], 'שמירת תבנית', 'התבנית נשמרה');
   };
@@ -10667,9 +10911,10 @@ window.PAY_CONFIG = {
             <button class="icon-btn" data-rm-split="${i}" aria-label="הסר">${icon('x')}</button></div>`).join('')}
           <button class="btn text sm" data-add-split>${icon('plus', 's')} הוסף מעבר תפקיד</button></div></details>
         <div class="grid2">
-          <label class="field"><span class="lbl">הפסקה (דקות)</span>${numIn('breakMin', d.breakMin || '', '0')}</label>
+          <label class="field"><span class="lbl">הפסקה (דקות)</span>${numIn('breakMin', d.breakMin == null ? '' : d.breakMin, 'אוטומטי')}</label>
           <label class="switch-row" style="padding-top:26px"><span class="body"><span class="t small">בתשלום</span></span><input type="checkbox" class="switch" data-f="breakPaid" ${d.breakPaid ? 'checked' : ''}></label>
         </div>
+        <div class="brk-note" data-brk aria-live="polite"></div>
         <label class="switch-row"><span class="body"><span class="t">בלי נסיעות</span><span class="s">המשמרת לא תזכה בנסיעות (${U.money(emp.travelPerDay)} ליום)</span></span><input type="checkbox" class="switch" data-f="noTravel" ${d.noTravel ? 'checked' : ''}></label>
         <details class="collapse" ${d.items.length ? 'open' : ''}><summary>${icon('gift', 's')} תוספות וניכויים ${d.items.length ? `<span class="tag">${d.items.length}</span>` : ''}</summary><div class="in">
           ${d.items.map((it, i) => `<div style="display:grid;grid-template-columns:1.1fr 1fr 40px;gap:8px;align-items:end;margin-bottom:8px">
@@ -10710,7 +10955,17 @@ window.PAY_CONFIG = {
       const sh = shiftFrom(d);
       if (!d.date || !d.startT || !d.endT) { el.innerHTML = '<div class="muted small">מלא תאריך ושעות</div>'; return; }
       const r = App.previewShift(sh);
+      breakNote(r);
       el.innerHTML = App.timelineHtml(r) + `<div class="row-flex" style="margin:10px 0"><div class="hero-num" style="font-size:1.8rem">${money(r.total)}</div><span class="spacer"></span><div class="small muted"><span class="num">${U.hm(r.paidMin)}</span> ש׳</div></div>` + App.breakdownHtml(r, sh);
+    }
+    /** Under the break field: the law's break when it is left empty, or a warning when the one typed is short. */
+    function breakNote(r) {
+      const n = sheetEl && sheetEl.querySelector('[data-brk]');
+      if (!n) return;
+      let html = '', cls = '';
+      if (r.breakShort) { cls = 'warn'; html = `${icon('alert', 's')}<span>${esc(Engine.LAW_BREAK.text)}.</span>`; }
+      else if (r.breakAuto && r.elapsedMin > 0) html = r.breakMin ? `${icon('clock', 's')}<span>הפסקה אוטומטית לפי החוק: ${r.breakMin} דקות${r.breakPaid ? ' (בתשלום)' : ' (לא בתשלום)'}. אפשר לכתוב אחרת.</span>` : `${icon('clock', 's')}<span>במשמרת של פחות מ-6 שעות החוק לא מחייב הפסקה.</span>`;
+      if (n.innerHTML !== html) { n.innerHTML = html; n.className = 'brk-note' + (cls ? ' ' + cls : ''); }
     }
     function redraw() {
       const b = sheetEl.querySelector('.sh-body');
@@ -10740,6 +10995,7 @@ window.PAY_CONFIG = {
           if (!f) return;
           const v = e.target.type === 'checkbox' ? e.target.checked : e.target.value;
           setPath(f, v);
+          if (f === 'breakMin') d.breakSet = true; // typed on purpose
           if (f === 'date' && !d.statusTouched) {
             const ns = d.date > U.todayKey() ? 'planned' : 'done';
             if (ns !== d.status) { d.status = ns; redraw(); return; }
@@ -10794,7 +11050,7 @@ window.PAY_CONFIG = {
       if (d.date < '2000-01-01' || d.date > U.addDays(U.todayKey(), 366)) { UI.invalid('התאריך לא הגיוני'); return; }
       const sh = shiftFrom(d);
       // numbers that would quietly change the pay the wrong way
-      if (!(sh.breakMin >= 0) || sh.breakMin > 24 * 60) { UI.invalid('אורך ההפסקה לא הגיוני'); return; }
+      if (sh.breakMin != null && (!(sh.breakMin >= 0) || sh.breakMin > 24 * 60)) { UI.invalid('אורך ההפסקה לא הגיוני'); return; }
       if (sh.breakMin > 0 && sh.breakMin >= (sh.end - sh.start) / 60000) { UI.invalid('ההפסקה ארוכה מהמשמרת עצמה'); return; }
       if ((sh.items || []).some((x) => !(+x.amount > 0) || +x.amount > 1e6)) { UI.invalid('סכום של תוספת או ניכוי צריך להיות חיובי (לניכוי בוחרים "ניכוי")'); return; }
       const negative = (o) => o && typeof o === 'object' && Object.values(o).some((v) => (typeof v === 'number' && v < 0) || negative(v));
@@ -11348,8 +11604,8 @@ window.PAY_CONFIG = {
         <button class="chip ${f.ov ? 'on' : ''}" data-act="flt-ov">${icon('hand', 's')} עם עקיפה</button>
       </div>
       <div class="grid2"><label class="field"><span class="lbl">מתאריך</span><input class="input" type="date" id="flt-from" value="${f.from}"></label><label class="field"><span class="lbl">עד</span><input class="input" type="date" id="flt-to" value="${f.to}"></label></div>
-      <div class="row-flex small" style="margin:0 4px 10px"><span>${list.length} משמרות · ${U.money(list.filter((r) => r.status === 'done').reduce((s, r) => s + App.shiftAmount(r), 0), 0)}</span><span class="spacer"></span>${App.travelSwitch()}<button class="btn text sm" data-act="flt-csv">${icon('download', 's')} CSV</button>${f.q || f.role || f.ov || f.from || f.to || f.status !== 'all' ? '<button class="btn text sm" data-act="flt-clear">נקה</button>' : ''}</div>
-      ${list.length ? months.map(([mk, rs, rows]) => `<div class="section-title">${U.fmtMonth(mk)}<span class="spacer"></span><span class="small muted">${U.money(rs.filter((r) => r.status === 'done').reduce((s, r) => s + App.shiftAmount(r), 0), 0)}</span></div><div class="list">${rows.map((r) => App.shiftItem(r)).join('')}</div>`).join('') : UI.emptyState('search', 'לא נמצאו משמרות', 'נסה לשנות את החיפוש או המסננים.')}
+      <div class="row-flex small" style="margin:0 4px 10px"><span>${list.length} משמרות · <span data-tr="all">${U.money(list.filter((r) => r.status === 'done').reduce((s, r) => s + App.shiftAmount(r), 0), 0)}</span></span><span class="spacer"></span>${App.travelSwitch()}<button class="btn text sm" data-act="flt-csv">${icon('download', 's')} CSV</button>${f.q || f.role || f.ov || f.from || f.to || f.status !== 'all' ? '<button class="btn text sm" data-act="flt-clear">נקה</button>' : ''}</div>
+      ${list.length ? months.map(([mk, rs, rows]) => `<div class="section-title">${U.fmtMonth(mk)}<span class="spacer"></span><span class="small muted" data-tr="m:${mk}">${U.money(rs.filter((r) => r.status === 'done').reduce((s, r) => s + App.shiftAmount(r), 0), 0)}</span></div><div class="list">${rows.map((r) => App.shiftItem(r)).join('')}</div>`).join('') : UI.emptyState('search', 'לא נמצאו משמרות', 'נסה לשנות את החיפוש או המסננים.')}
       ${list.length > shown ? `<button class="btn tonal block list-more" data-act="flt-more">${icon('down', 's')} עוד ${Math.min(PAGE, list.length - shown)} משמרות <span class="small muted">(מוצגות ${shown} מתוך ${list.length})</span></button>` : ''}
       ${entries.length ? `<div class="section-title">חופשה, מחלה ותוספות</div><div class="list">${entries.slice(0, 50).map(App.entryItem).join('')}</div>` : ''}`;
   }
@@ -11783,11 +12039,7 @@ window.PAY_CONFIG = {
         if (Math.abs(g.amount - diff) <= g.amount * 0.2 || (open.length > 1 && Math.abs(total - diff) <= total * 0.2)) ops.push({ store: 'gaps', put: Object.assign({}, g, { status: 'maybe', note: `בתלוש ${U.fmtMonth(slip.period)} יש שורת הפרשים של ${U.money(diff)}` }) });
       }
     }
-    // notable changes vs previous slip → notifications
-    const prev = prevSlipOf(slip.period, slip.id);
-    for (const c of Payslip.compareSlips(prev && prev.fields, slip.fields)) {
-      ops.push({ store: 'notifications', put: { id: 'pschg-' + slip.period + '-' + c.type, key: 'pschg-' + slip.period + '-' + c.type, type: 'payslipGap', cat: 'money', severity: 'warn', title: 'שינוי בתלוש ' + U.fmtMonth(slip.period), body: c.text, explain: 'השוואה לתלוש הקודם (' + U.fmtMonth(prev.period) + ').', createdAt: Date.now(), read: false } });
-    }
+    // changes vs the previous slip show in the slip's own check, not as notifications (few notifications)
     await App.saveOps(ops, 'שמירת תלוש', 'התלוש נשמר בארכיון');
   }
   App.sheetsApi.payslip = (id) => {
@@ -11901,7 +12153,7 @@ window.PAY_CONFIG = {
   const { U, Store, UI, App } = root;
   const S = Store.S;
   const { icon, esc } = UI;
-  const CATS = [['all', 'הכול'], ['deviation', 'חריגות'], ['health', 'בריאות ועומס'], ['money', 'כסף ויעדים'], ['reminder', 'תזכורות'], ['summary', 'סיכומים שבועיים']];
+  const CATS = [['all', 'הכול'], ['summary', 'סיכומים'], ['money', 'שיאים ויעדים'], ['reminder', 'תזכורות']];
 
   App.actions.insights = () => {
     let cat = 'all';
@@ -11910,11 +12162,13 @@ window.PAY_CONFIG = {
       const live = App.insights ? App.insights.live : [];
       const list = S.notifications.filter((n) => cat === 'all' || n.cat === cat).sort((a, b) => b.createdAt - a.createdAt);
       const unread = S.notifications.filter((n) => !n.read).length;
-      return `<div class="chips">${CATS.map(([k, l]) => `<button class="chip ${cat === k ? 'on' : ''}" data-cat="${k}">${l}</button>`).join('')}</div>
+      // only the kinds that have something (and "all")
+      const cats = CATS.filter(([k]) => k === 'all' || k === cat || S.notifications.some((n) => n.cat === k));
+      return `<div class="chips">${cats.length > 2 ? cats.map(([k, l]) => `<button class="chip ${cat === k ? 'on' : ''}" data-cat="${k}">${l}</button>`).join('') : ''}</div>
         ${live.length && (cat === 'all' || cat === 'money') ? `<div class="card tonal">${live.map((a) => App.insightRow(a)).join('')}</div>` : ''}
         <div class="row-flex small" style="margin:4px 4px 8px"><span>${list.length} התראות${unread ? ` · ${unread} חדשות` : ''}</span><span class="spacer"></span>${unread ? '<button class="btn text sm" data-readall>סמן הכול כנקרא</button>' : ''}<button class="btn text sm" data-settings>${icon('settings', 's')} הגדרות</button></div>
         ${list.length ? `<div class="card" style="padding:4px 12px">${list.map((n) => `<div class="card-link" data-n="${esc(n.id)}">${App.insightRow(n, { notif: true })}</div>`).join('')}</div>`
-          : UI.emptyState('bell', 'אין התראות', S.shifts.length < 10 ? 'התראות שמבוססות על ממוצעים יופיעו אחרי 4 שבועות של נתונים.' : 'הכול נראה רגיל. 👌')}
+          : UI.emptyState('bell', 'אין התראות', 'כאן יופיעו הסיכום השבועי והחודשי, שיאים ויעדים, ותזכורות חשובות בלבד.')}
         <div class="tiny muted" style="margin:10px 4px">התראות פוש: ${('Notification' in window) ? (Notification.permission === 'granted' ? 'מופעלות' : Notification.permission === 'denied' ? 'חסומות בדפדפן' : 'לא אושרו עדיין') : 'לא נתמכות'} · לכל היותר התראת חריגה אחת ביום; תזכורות קריטיות בנפרד.</div>`;
     };
     const redraw = () => { sheetEl.querySelector('.sh-body').innerHTML = body(); };
@@ -11939,6 +12193,7 @@ window.PAY_CONFIG = {
             else if (rec.ref && S.payslips.find((p) => p.id === rec.ref)) App.sheetsApi.payslip(rec.ref);
             else if (rec.type === 'backup') App.doBackup(false);
             else if (rec.type === 'payslipDue') { UI.closeTop(); setTimeout(() => App.actions['payslip-new'](), 320); }
+            else if (rec.type === 'monthly' && App.recap && rec.data && rec.data.pk) { UI.closeTop(); setTimeout(() => App.recap.open(rec.data.pk), 320); }
           }
         });
       },
@@ -12240,7 +12495,7 @@ window.PAY_CONFIG = {
     net: { icon: 'wallet', title: 'נטו משוער ומס', sub: () => `${S.settings.tax.creditPoints} נק׳ זיכוי · פנסיה ${S.settings.pension.employeePct}%${S.settings.hishtalmut.enabled ? ' · השתלמות' : ''}` },
     leave: { icon: 'beach', title: 'ותק, חופשה, מחלה והבראה', sub: () => (S.settings.startDate ? 'התחלת עבודה: ' + U.fmtDate(S.settings.startDate) : 'הגדר תאריך תחילת עבודה') },
     goal: { icon: 'target', title: 'יעדים', sub: () => [+S.settings.goal.amount ? 'חודשי: ' + U.money(S.settings.goal.amount, 0) + (S.settings.goal.type === 'net' ? ' נטו' : ' ברוטו') : '', S.settings.saving && +S.settings.saving.price && S.settings.saving.name ? 'חוסכים ל' + S.settings.saving.name : ''].filter(Boolean).join(' · ') || 'יעד חודשי וחיסכון למשהו' },
-    alerts: { icon: 'bell', title: 'התראות ותובנות', sub: () => (('Notification' in window) && Notification.permission === 'granted' ? 'פוש מופעל' : 'פוש כבוי') + ' · סף חריגה ' + S.settings.alerts.deviationPct + '%' },
+    alerts: { icon: 'bell', title: 'התראות ותובנות', sub: () => (('Notification' in window) && Notification.permission === 'granted' ? 'פוש מופעל' : 'פוש כבוי') + ' · סיכומים ותזכורות' },
     templates: { icon: 'layers', title: 'תבניות משמרת', sub: () => (S.templates.length ? S.templates.length + ' תבניות' : 'אין תבניות') },
     look: { icon: 'palette', title: 'מראה', sub: () => ({ system: 'לפי המערכת', light: 'בהיר', dark: 'כהה' }[S.settings.theme]) + ' · ' + (App.ACCENTS[S.settings.accent] || [])[2] },
     security: { icon: 'lock', title: 'נעילה בקוד', sub: () => (S.settings.lock.enabled ? 'מופעלת' : 'כבויה') },
@@ -12448,7 +12703,7 @@ window.PAY_CONFIG = {
       <div class="section-title">${icon('refresh', 's')} עיגול, מינימום והפסקות</div><div class="card">
         <div class="grid2">${F.sel('עיגול זמן משמרת', 'e.roundingMode', [['none', 'ללא'], ['nearest', 'לקרוב'], ['up', 'למעלה'], ['down', 'למטה']], e.roundingMode)}${F.sel('יחידה', 'e.roundingUnit', [[5, '5 דק׳'], [6, '6 דק׳'], [10, '10 דק׳'], [15, 'רבע שעה'], [30, 'חצי שעה']], e.roundingUnit)}</div>
         ${F.num('מינימום שעות לתשלום במשמרת', 'e.minShiftHours', e.minShiftHours, '0 = ללא. למשל 4: גם אם שוחררת אחרי שעתיים, תקבל 4.')}
-        <div class="grid2">${F.num('הפסקה ברירת מחדל (דק׳)', 'e.defaultBreakMin', e.defaultBreakMin)}${F.sel('הפסקה', 'e.defaultBreakPaid', [['true', 'בתשלום'], ['false', 'ללא תשלום']], String(e.defaultBreakPaid))}</div></div>`,
+        <div class="grid2">${F.num('הפסקה קבועה (דק׳, 0 = לפי החוק)', 'e.defaultBreakMin', e.defaultBreakMin)}${F.sel('הפסקה', 'e.defaultBreakPaid', [['true', 'בתשלום'], ['false', 'ללא תשלום']], String(e.defaultBreakPaid))}</div></div>`,
   };
 
   RENDER.rest = {
@@ -12588,23 +12843,16 @@ window.PAY_CONFIG = {
       return `<div class="card">${F.sw('התראות פוש בטלפון', perm === 'granted' ? 'מאושר' : perm === 'denied' ? (App.androidApp ? 'חסום — יש לאשר בהגדרות הטלפון › אפליקציות › Shaati › התראות' : 'חסום — יש לאשר בהגדרות האתר ב-\u2060Chrome') : 'דורש אישור', 's.alerts.push', A.push)}
           ${perm !== 'granted' && perm !== 'unsupported' ? `<button class="btn tonal block" data-perm>${icon('bell')} אשר התראות</button>` : ''}
           ${perm === 'granted' ? `<button class="btn text sm" data-test>${icon('send', 's')} שלח התראת בדיקה</button>` : ''}
-          <div class="tiny muted" style="margin-top:6px">לכל היותר התראת חריגה אחת ביום. תזכורות (טיימר, משמרת קרובה, תשלום) נשלחות בנפרד. כשהאפליקציה סגורה, Chrome בודק מדי פעם (לא מדויק לדקה) — לתזכורת מדויקת לפני משמרת, ייצא אותה ליומן.</div></div>
-        <div class="section-title">חריגות מהממוצע</div><div class="card">
-          <div class="grid3">${F.num('סף %', 's.alerts.deviationPct', A.deviationPct)}${F.num('שבועות להשוואה', 's.alerts.compareWeeks', A.compareWeeks)}${F.num('חודשים להשוואה', 's.alerts.compareMonths', A.compareMonths)}</div>
-          ${F.num('מינימום שבועות נתונים', 's.alerts.minWeeksData', A.minWeeksData)}
-          ${t('hours', 'שעות')}${t('shifts', 'מספר משמרות')}${t('roles', 'חלוקה בין תפקידים')}${t('rest', 'שעות שבת וחג')}${t('overtime', 'שעות נוספות')}${t('hourly', 'ירידה בשכר לשעה')}${t('shiftLength', 'אורך משמרות')}${t('pattern', 'דפוס שעות (לילה)')}</div>
-        <div class="section-title">בריאות ועומס</div><div class="card">
-          <div class="grid2">${F.num('משמרת ארוכה מ- (ש׳)', 's.alerts.longShiftHours', A.longShiftHours)}${F.num('מנוחה מינימלית (ש׳)', 's.alerts.minRestHours', A.minRestHours)}</div>
-          <div class="grid2">${F.num('ימים ברצף', 's.alerts.streakDays', A.streakDays)}${F.num('שעות בשבוע מעל', 's.alerts.weekHoursMax', A.weekHoursMax)}</div>
-          ${t('long', 'משמרת ארוכה')}${t('rest8', 'מנוחה קצרה בין משמרות')}${t('streak', 'ימים ברצף')}${t('weekHours', 'שבוע עמוס')}${t('youth', 'חוק עבודת הנוער (מתחת לגיל 18)')}</div>
-        <div class="section-title">כסף ויעדים</div><div class="card">${t('projection', 'צפי סוף חודש')}${t('goal', 'יעד חודשי')}${t('goalShifts', 'משמרות חסרות ליעד')}${t('record', 'שיא אישי')}${t('payslipGap', 'פערים בתלוש')}${t('travel', 'תקרת נסיעות')}${t('recuperation', 'דמי הבראה')}${t('minwage', 'תעריף נמוך משכר המינימום')}</div>
-        <div class="section-title">תזכורות ותקינות</div><div class="card">
-          <div class="grid2">${F.num('טיימר פעיל יותר מ- (ש׳)', 's.alerts.timerHours', A.timerHours)}${F.num('בלי משמרות (ימים)', 's.alerts.idleDays', A.idleDays)}</div>
-          <div class="grid2">${F.num('משמרת חשודה מעל (ש׳)', 's.alerts.suspiciousHours', A.suspiciousHours)}${F.num('תזכורת גיבוי (ימים)', 's.alerts.backupDays', A.backupDays)}</div>
-          ${F.num('תזכורת לפני משמרת (דק׳)', 's.alerts.upcomingMin', A.upcomingMin)}
-          ${t('timer', 'שכחתי לסיים משמרת')}${t('plannedPast', 'משמרת מתוכננת שעברה')}${t('idle', 'לא נרשמה משמרת')}${t('suspicious', 'משמרות חופפות / נתון חשוד')}${t('payslipDue', 'הזנת תלוש ביום התשלום')}${t('backup', 'גיבוי')}${t('upcoming', 'לפני משמרת מתוכננת')}</div>
-        <div class="section-title">סיכום שבועי</div><div class="card">${t('weekly', 'סיכום שבועי אוטומטי')}
-          <div class="grid2">${F.sel('ביום', 's.alerts.weeklyDay', U.HEB_DAYS.map((d, i) => [i, d]), A.weeklyDay)}${F.num('בשעה', 's.alerts.weeklyHour', A.weeklyHour)}</div></div>`;
+          <div class="tiny muted" style="margin-top:6px">מעט התראות: הסיכום השבועי והחודשי, שיאים ויעדים, ותזכורות חשובות בלבד. בלי התראות על חריגות.</div></div>
+        <div class="section-title">סיכומים</div><div class="card">${t('weekly', 'סיכום שבועי')}
+          <div class="grid2">${F.sel('ביום', 's.alerts.weeklyDay', U.HEB_DAYS.map((d, i) => [i, d]), A.weeklyDay)}${F.num('בשעה', 's.alerts.weeklyHour', A.weeklyHour)}</div>
+          ${t('monthly', 'סיכום חודשי (כשתקופת השכר נגמרת)')}</div>
+        <div class="section-title">חדשות טובות</div><div class="card">${t('record', 'שיא אישי')}${t('goal', 'הגעת ליעד החודשי')}${t('birthday', 'יום הולדת')}</div>
+        <div class="section-title">תזכורות</div><div class="card">
+          ${t('timer', 'שכחתי לסיים משמרת')}<div class="grid2">${F.num('אחרי (שעות)', 's.alerts.timerHours', A.timerHours)}</div>
+          ${F.sw('לפני משמרת מתוכננת', '', 's.alerts.remindPlanned', A.remindPlanned === true)}
+          ${t('payslipDue', 'ביום התשלום: להזין את התלוש')}
+          ${t('backup', 'תזכורת גיבוי')}<div class="grid2">${F.num('כל (ימים)', 's.alerts.backupDays', A.backupDays)}</div></div>`;
     },
     mount: (el, draw) => {
       const p = el.querySelector('[data-perm]');
@@ -13810,12 +14058,12 @@ window.PAY_CONFIG = {
 
   /* ---------------- what's new (once per big update, for people who already used the app) ---------------- */
   const WHATS_NEW = {
-    id: '1.17',
+    id: '1.18',
     items: [
-      ['sparkle', 'violet', 'המשחקים קיבלו חיים', 'צבעים, ניצוצות, פיצוצים ובאנר 🔥 על רצף, בכל חמשת המשחקים.'],
-      ['music', 'pink', 'צלילים חדשים', 'כל תשובה נכונה ברצף נשמעת גבוה יותר, ושיא חדש מקבל פנפרה.'],
-      ['star', 'amber', 'כוכבים בסוף סיבוב', 'עד שלושה כוכבים, והניקוד נספר מול העיניים.'],
-      ['check', 'mint', 'כל לחיצה מגיבה', 'הטבעת סביב כל כפתור חזרה, ומילים כבר לא נשברות באמצע.'],
+      ['play', 'violet', 'התחלת משמרת חגיגית', 'צליל, רטט וזיקוקים כשמתחילים, יוצאים להפסקה ומסיימים.'],
+      ['car', 'mint', 'הכסף זז מול העיניים', 'מתג הנסיעות מגלגל את הסכומים למעלה ולמטה.'],
+      ['coffee', 'amber', 'הפסקה לפי החוק', 'לא כתבתם הפסקה? היא נכנסת לבד לפי החוק, בתשלום (אפשר לכבות). קצרה מדי? תופיע אזהרה.'],
+      ['bell', 'pink', 'פחות התראות', 'רק הסיכום השבועי והחודשי, חדשות טובות ותזכורות חשובות.'],
     ],
   };
 
@@ -14635,7 +14883,7 @@ window.PAY_CONFIG = {
     function frame(now) {
       raf = 0;
       if (!alive || !st.running || paused) return;
-      const dt = Math.min(0.033, (now - last) / 1000 || 0);
+      const dt = Math.max(0, Math.min(0.033, (now - last) / 1000 || 0)); // a frame can begin before `last`
       last = now;
       update(dt);
       if (!st.running) return;
@@ -15653,7 +15901,7 @@ window.PAY_CONFIG = {
       const t0 = performance.now();
       const fmt = (el2, v) => { el2.textContent = el2.dataset.kind === 'hours' ? U.num(v, 1) : money0(v); };
       const tick = (now) => {
-        const p = Math.min(1, (now - t0) / 900);
+        const p = Math.max(0, Math.min(1, (now - t0) / 900)); // never below 0: a frame can begin before t0
         const e = 1 - Math.pow(1 - p, 3);
         nums.forEach((x) => fmt(x, +x.dataset.to * e));
         if (p < 1) raf = requestAnimationFrame(tick);
@@ -16168,10 +16416,16 @@ window.PAY_CONFIG = {
  *    switched off (overscroll-behavior: none) so they never stack;
  *  - while the coin shows, the gesture is the pull's: moving the finger
  *    back up takes the coin back up with it, and the page does not scroll
- *    under it (it used to, leaving the coin hanging). At the top of the
- *    page a downward move scrolls nothing anyway, so holding it costs
- *    nothing; once the coin is all the way back, the finger scrolls the
- *    page as usual;
+ *    under it (it used to, leaving the coin hanging);
+ *  - at the very top of a screen the browser is told in advance, with CSS
+ *    (touch-action, html.ptr-top), that a finger moving down is not for
+ *    scrolling. Holding the gesture from the touchmove alone was not
+ *    enough: a touch that began while a fling was still settling (a quick
+ *    swipe up to the top, then straight into a pull) comes with touchmoves
+ *    the page is not allowed to hold, so the browser took the gesture and
+ *    scrolled under the coin - stuck, now and then. A finger moving up
+ *    still scrolls the page; once a pull has begun, the page waits for the
+ *    next touch to scroll;
  *  - the check appears in front of the same disc (a green circle that
  *    grows), and the hands only pause under it: changing the disc itself
  *    left it see-through for a few frames, a flash.
@@ -16197,6 +16451,12 @@ window.PAY_CONFIG = {
   let tipNow = '';
   const tip = (t) => { if (t !== tipNow) { tipNow = t; tipEl.textContent = t; ind.classList.toggle('tip', !!t); } };
   let tipShown = false; // the "pull" note comes in past 24px and goes below 14px, so it never blinks at the edge
+
+  // at the very top, a finger moving down belongs to the pull (touch-action in the CSS, under html.ptr-top)
+  const de = document.documentElement;
+  const markTop = () => { const top = root.scrollY <= 0; if (top !== de.classList.contains('ptr-top')) de.classList.toggle('ptr-top', top); };
+  root.addEventListener('scroll', markTop, { passive: true });
+  markTop();
 
   let x0 = 0, y0 = null, t0 = 0, pulling = false, dist = 0, armed = false, busy = false, raf = 0, settleTimer = 0;
   const blocked = (target) => busy || App.blocking || root.scrollY > 0
@@ -16288,7 +16548,7 @@ window.PAY_CONFIG = {
     // the coin is out: the finger moves the coin, not the page
     if (e.cancelable) e.preventDefault();
     if (dy <= SLOP) {
-      // all the way back up: the pull is over (no refresh); from here the finger scrolls the page as usual
+      // all the way back up: the pull is over (no refresh)
       unbind();
       y0 = null; pulling = false; armed = false; dist = 0;
       ind.classList.remove('armed');

@@ -118,7 +118,7 @@ T.test('without a birth date, a teen-level rate is a gentle hint, not an accusat
 });
 T.test('youth law: night work, a long day, no break, a long Friday', () => {
   const shifts = [
-    shift('2026-10-06', '16:00', '23:30'), // Tue: past 22:00, 7.5h without a break
+    Object.assign(shift('2026-10-06', '16:00', '23:30'), { breakMin: 0, breakSet: true }), // Tue: past 22:00, 7.5h, "no break" typed in (an empty break is the law's)
     shift('2026-10-08', '08:00', '18:00'), // Thu: 10h
     shift('2026-10-09', '07:00', '15:00'), // Fri: 8h
   ];

@@ -36,8 +36,10 @@
   const rnd = (a, b) => a + Math.random() * (b - a);
   const pick = (l) => l[(Math.random() * l.length) | 0];
 
-  /** The effects of one game sheet: { burst, ring, text, glow, banner, at, close }. */
-  GameFx.attach = function (sheet) {
+  /** The effects of one game sheet: { burst, ring, text, glow, banner, at, close }. With {bare: true} only the
+   * canvas (no edge glow, no banner). */
+  GameFx.attach = function (sheet, opts) {
+    const bare = !!(opts && opts.bare);
     const cv = document.createElement('canvas');
     cv.className = 'gfx-canvas';
     const glowEl = document.createElement('div');
@@ -45,7 +47,7 @@
     const bannerEl = document.createElement('div');
     bannerEl.className = 'gfx-banner';
     for (const e of [cv, glowEl, bannerEl]) e.setAttribute('aria-hidden', 'true');
-    sheet.append(glowEl, bannerEl, cv);
+    if (bare) sheet.append(cv); else sheet.append(glowEl, bannerEl, cv);
     const g = cv.getContext('2d');
     const dpr = Math.min(2, root.devicePixelRatio || 1);
     let W = 0, H = 0, raf = 0, last = 0, open = true, dirty = false;
@@ -65,7 +67,7 @@
     function kick() { if (!raf) { last = performance.now(); raf = requestAnimationFrame(frame); } }
     function frame(now) {
       raf = 0;
-      const dt = Math.min(0.05, (now - last) / 1000 || 0.016);
+      const dt = Math.max(0, Math.min(0.05, (now - last) / 1000 || 0.016)); // a frame can begin before `last`
       last = now;
       for (let i = parts.length - 1; i >= 0; i--) {
         const p = parts[i];
@@ -175,14 +177,14 @@
       /** The screen's edges glow for a moment: 'good' (green) or 'bad' (red). (Web Animations: restarting a
        * CSS animation needs a forced layout, which cost a frame on a slow phone at the moment of the answer.) */
       glow(kind) {
-        if (!open || !motion()) return;
+        if (!open || bare || !motion()) return;
         glowEl.className = 'gfx-glow ' + kind;
         glowEl.getAnimations().forEach((a) => a.cancel());
         glowEl.animate([{ opacity: 0 }, { opacity: 1, offset: 0.16 }, { opacity: 0 }], { duration: 620, easing: 'ease-out' });
       },
       /** A banner that flies in and out over the game ("🔥 5 ברצף!"). */
       banner(str) {
-        if (!open) return;
+        if (!open || bare) return;
         play('combo');
         if (!motion()) return;
         bannerEl.textContent = str;
@@ -201,6 +203,20 @@
       close() { open = false; ro.disconnect(); },
     };
     return api;
+  };
+
+  /** One effects layer over the whole screen (above sheets and dialogs), for the big moments outside the games
+   * (a shift starts, a shift ends). Made the first time it is needed and kept for good: it is never dropped,
+   * so no layer comes or goes when it is used. */
+  let screenFx = null;
+  GameFx.screen = function () {
+    if (screenFx) return screenFx;
+    const host = document.createElement('div');
+    host.className = 'gfx-screen';
+    host.setAttribute('aria-hidden', 'true');
+    document.body.appendChild(host);
+    screenFx = GameFx.attach(host, { bare: true });
+    return screenFx;
   };
 
   /** Counts the first number in an element up from 0 (ticks as it goes). Resolves when done. */
@@ -223,7 +239,7 @@
       node.nodeValue = before + fmt(0) + after;
       (function step(t) {
         if (!node.isConnected) { resolve(); return; }
-        const k = Math.min(1, (t - t0) / dur);
+        const k = Math.max(0, Math.min(1, (t - t0) / dur));
         const e = 1 - Math.pow(1 - k, 3);
         node.nodeValue = before + fmt(dec ? to * e : Math.round(to * e)) + after;
         if (t - lastTick > 70 && k < 1) { lastTick = t; play('tick', { pitch: 0.7 + k * 0.8 }); }

@@ -174,6 +174,11 @@
     setTimeout(Back.ensure, 0);
   }, true);
   const seenTabs = new Set();
+  // the last screen drawn (its tab and its HTML, without the looping decorations' clock, which differs every
+  // time, and without the one-time entrance classes: a redraw that only drops those would replace a card that
+  // has just sprung in, for nothing)
+  let drawn = { tab: '', sig: '' };
+  const sigOf = (html) => html.replace(/--ph:-\d+ms/g, '').replace(/ (tc-enter|ha-enter)\b/g, '');
   App.render = function (opts) {
     if (App.blocking) return; // a full-screen step (login / terms / setup wizard) owns the screen
     const v = document.getElementById('view');
@@ -192,6 +197,16 @@
         <div class="small muted">הנתונים שלך שמורים. אפשר לנסות שוב או לעבור למסך אחר.</div>
         <div class="btn-row" style="margin-top:14px;justify-content:center"><button class="btn" data-act="render-retry">נסה שוב</button><button class="btn tonal" data-act="support">דיווח על תקלה</button></div></div>`;
     }
+    // a redraw that would draw exactly what is already there (a save that changed nothing on this screen, the
+    // insights run a moment after every save, a refresh) leaves the screen alone: replacing it cut short what
+    // was moving on it (a count, a tint) and reset sideways-scrolled rows
+    const sig = sigOf(html);
+    if (!fresh && drawn.tab === App.tab && drawn.sig === sig && v.firstElementChild) {
+      App.renderNav();
+      App.tickTimer();
+      return;
+    }
+    drawn = { tab: App.tab, sig };
     v.innerHTML = `<div class="view ${cls}" id="view-inner">${html}</div>`;
     try { if (App.views[App.tab + '_mount']) App.views[App.tab + '_mount'](v); } catch (e) { console.error('mount failed', App.tab, e); }
     App.renderNav();
@@ -330,14 +345,18 @@
   setInterval(App.tickTimer, 1000);
 
   /** Shift object for the running timer (for previews and saving). */
-  App.activeAsShift = function (end) {
+  App.activeAsShift = function (end, forSave) {
     const a = S.activeShift;
     if (!a) return null;
     const now = end || Date.now();
     const brkMs = (a.breaks || []).reduce((s, b) => s + ((b.to || now) - b.from), 0);
     return {
       id: '__active', kind: 'shift', employerId: a.employerId, roleId: a.roleId, status: 'done',
-      start: a.start, end: now, splits: a.splits || [], breakMin: Math.round(brkMs / 60000), breakPaid: false,
+      // breaks taken with the timer: those, unpaid (a short one is flagged). None taken: the saved shift gets the
+      // law's break (null); the live "so far" leaves it out, or the amount would drop as the shift passed 6 hours
+      start: a.start, end: now, splits: a.splits || [],
+      ...((a.breaks || []).length ? { breakMin: Math.round(brkMs / 60000), breakPaid: false, breakSet: true }
+        : forSave ? { breakMin: null, breakPaid: (App.employer(a.employerId) || {}).defaultBreakPaid !== false } : { breakMin: 0, breakPaid: true }),
       items: [], note: a.note || '',
     };
   };
@@ -365,16 +384,17 @@
     const planned = (opts && opts.fromPlanned && App.shift(opts.fromPlanned))
       || S.shifts.filter((s) => s.status === 'planned' && Math.abs(s.start - now) < 90 * 60000).sort((a, b) => Math.abs(a.start - now) - Math.abs(b.start - now))[0];
     await Store.setMeta({ lastRole: role.id });
+    App.justStarted = Date.now(); // the timer card springs in (the save redraws home at once)
     await Store.setActive({ start: now, roleId: role.id, employerId: role.employerId || S.employers[0].id, splits: [], breaks: [], fromPlanned: planned ? planned.id : null });
-    root.Fx.celebrate('start');
+    if (App.shiftMoment) App.shiftMoment('start', opts && opts.at); else root.Fx.celebrate('start');
     UI.toast('המשמרת התחילה — בהצלחה!');
     App.askNotifyPermission();
   };
-  App.stopShift = async function () {
+  App.stopShift = async function (at) {
     const a = S.activeShift;
     if (!a) return;
     if (a.breaks && a.breaks.length && !a.breaks[a.breaks.length - 1].to) a.breaks[a.breaks.length - 1].to = Date.now();
-    const sh = App.activeAsShift(Date.now());
+    const sh = App.activeAsShift(Date.now(), true);
     sh.id = U.uid();
     if ((sh.end - sh.start) < 60000) {
       const ok = await UI.confirm('משמרת קצרה מאוד', 'המשמרת נמשכה פחות מדקה. לשמור בכל זאת?', 'שמור');
@@ -384,9 +404,10 @@
     const planned = a.fromPlanned && App.shift(a.fromPlanned);
     if (planned && planned.status === 'planned') ops.push({ store: 'shifts', del: planned.id });
     await Store.apply(ops, 'סיום משמרת');
+    App.justStopped = Date.now(); // the start button springs back in
     await Store.setActive(null);
     if (S.shifts.filter((x) => x.status === 'done').length === 1) App.celebrateOnce('first-shift', () => UI.toast('המשמרת הראשונה שלך נשמרה! 🎉'));
-    root.Fx.celebrate('big');
+    if (App.shiftMoment) App.shiftMoment('stop', at); else root.Fx.celebrate('big');
     App.milestones();
     const r = App.result(sh.id);
     UI.toast(`נשמר: ${U.hm(r ? r.paidMin : 0)} שעות · ${U.money(r ? r.wage : 0)}`, { label: 'ביטול', fn: App.undo }, { ok: true });
@@ -399,12 +420,12 @@
     }
     App.sheetsApi.shiftDetail && App.sheetsApi.shiftDetail(sh.id);
   };
-  App.toggleBreak = async function () {
+  App.toggleBreak = async function (at) {
     const a = Object.assign({}, S.activeShift);
     a.breaks = (a.breaks || []).slice();
     const last = a.breaks[a.breaks.length - 1];
-    if (last && !last.to) { last.to = Date.now(); UI.toast('חזרת מהפסקה'); }
-    else { a.breaks.push({ from: Date.now() }); UI.toast('הפסקה — הזמן לא נספר'); }
+    if (last && !last.to) { last.to = Date.now(); UI.toast('חזרת מהפסקה'); if (App.shiftMoment) App.shiftMoment('resume', at); }
+    else { a.breaks.push({ from: Date.now() }); UI.toast('הפסקה — הזמן לא נספר'); if (App.shiftMoment) App.shiftMoment('pause', at); }
     await Store.setActive(a);
   };
   App.switchRole = async function (roleId) {
@@ -429,6 +450,31 @@
       if (reg) await reg.showNotification(n.title, opt); else new Notification(n.title, opt);
     } catch (e) { console.warn(e); }
   }
+  /* Notifications: as few as possible (1.18, the owner's wish). Kept: the weekly and the monthly summary,
+   * good news (a record, a goal reached, a birthday), and three that guard the user's own data or come once a
+   * month (a timer left running, a backup due, payday's payslip). Never a notification that something is "not
+   * legal" (minimum wage, the youth law, rest, long days, hours in a week, a payslip gap), and no nagging (more
+   * hours than usual, no shift for a week, overlaps). The engine still finds those; they show where they belong
+   * (the payslip check, the rights screen, the shift itself), not as notifications. A reminder before a planned
+   * shift only when switched on in Settings. */
+  const NOTIFY = new Set(['weekly', 'monthly', 'record', 'goal', 'birthday', 'timer', 'backup', 'payslipDue', 'upcoming']);
+  const kindSent = (a) => NOTIFY.has(a.type) && !(a.type === 'goal' && a.severity !== 'good');
+  // the reminder before a planned shift is off unless switched on
+  const notifiable = (a) => kindSent(a) && (a.type === 'upcoming' ? S.settings.alerts.remindPlanned === true : S.settings.alerts.types[a.type] !== false);
+  /** The monthly summary: once a pay period is over, its story is ready (it opens the month's recap). */
+  function monthlyAlert() {
+    const emp = S.employers[0];
+    if (!emp) return null;
+    const cur = Engine.periodOf(U.todayKey(), emp);
+    const last = Engine.periodOf(U.addDays(cur.from, -1), emp);
+    const t = Engine.rangeSummary(App.model, last.from, last.to);
+    if (!t || !t.shifts) return null;
+    return {
+      key: 'monthly-' + last.key, type: 'monthly', cat: 'summary', severity: 'info', push: 'anomaly', data: { pk: last.key },
+      title: `הסיכום של ${last.label} מוכן ✨`,
+      body: `${t.shifts === 1 ? 'משמרת אחת' : t.shifts + ' משמרות'} · ${U.num(t.hours, 1)} שעות · ${U.money(t.gross, 0)} ברוטו. לחצו לסיפור של החודש.`,
+    };
+  }
   App.runInsights = async function () {
     if (!App.model || !S.settings.onboarded) return;
     const res = Insights.run(App.model, {
@@ -437,8 +483,13 @@
       lastBackup: S.meta.cloudUid ? Date.now() : S.settings.backup.lastBackup, roleName: App.roleName,
     });
     App.insights = res;
+    const month = monthlyAlert();
+    const wanted = res.alerts.filter(notifiable).concat(month && notifiable(month) ? [month] : []);
+    // notifications of the kinds that are no longer sent go from the list too (once)
+    const gone = S.notifications.filter((n) => !kindSent(n));
+    if (gone.length) await Store.apply(gone.map((n) => ({ store: 'notifications', del: n.id })), null);
     const known = new Set(S.notifications.map((n) => n.key));
-    const fresh = res.alerts.filter((a) => !known.has(a.key));
+    const fresh = wanted.filter((a) => !known.has(a.key));
     const record = fresh.find((a) => a.type === 'record');
     if (record) App.celebrateOnce('record-' + record.key, () => { root.Fx.celebrate('money'); UI.toast(record.title || 'שיא אישי חדש!'); });
     if (fresh.length) {
@@ -503,7 +554,8 @@
     const el = document.createElement('div');
     el.className = 'lock'; el.id = 'lock';
     let pin = '';
-    const unlock = () => { el.remove(); S.meta._unlockedAt = Date.now(); pinFails = 0; };
+    // unlocking fades the lock screen away (removed at once, it was a hard cut to the app)
+    const unlock = () => { if (el.classList.contains('out')) return; el.classList.add('out'); setTimeout(() => el.remove(), 260); S.meta._unlockedAt = Date.now(); pinFails = 0; };
     const tryBio = async () => { try { if (await App.bio.verify(L.bioId)) unlock(); } catch (e) { /* cancelled: the code still works */ } };
     const draw = () => {
       const wait = Math.ceil((pinWaitUntil - Date.now()) / 1000);

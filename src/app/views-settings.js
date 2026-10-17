@@ -133,7 +133,7 @@
     net: { icon: 'wallet', title: 'נטו משוער ומס', sub: () => `${S.settings.tax.creditPoints} נק׳ זיכוי · פנסיה ${S.settings.pension.employeePct}%${S.settings.hishtalmut.enabled ? ' · השתלמות' : ''}` },
     leave: { icon: 'beach', title: 'ותק, חופשה, מחלה והבראה', sub: () => (S.settings.startDate ? 'התחלת עבודה: ' + U.fmtDate(S.settings.startDate) : 'הגדר תאריך תחילת עבודה') },
     goal: { icon: 'target', title: 'יעדים', sub: () => [+S.settings.goal.amount ? 'חודשי: ' + U.money(S.settings.goal.amount, 0) + (S.settings.goal.type === 'net' ? ' נטו' : ' ברוטו') : '', S.settings.saving && +S.settings.saving.price && S.settings.saving.name ? 'חוסכים ל' + S.settings.saving.name : ''].filter(Boolean).join(' · ') || 'יעד חודשי וחיסכון למשהו' },
-    alerts: { icon: 'bell', title: 'התראות ותובנות', sub: () => (('Notification' in window) && Notification.permission === 'granted' ? 'פוש מופעל' : 'פוש כבוי') + ' · סף חריגה ' + S.settings.alerts.deviationPct + '%' },
+    alerts: { icon: 'bell', title: 'התראות ותובנות', sub: () => (('Notification' in window) && Notification.permission === 'granted' ? 'פוש מופעל' : 'פוש כבוי') + ' · סיכומים ותזכורות' },
     templates: { icon: 'layers', title: 'תבניות משמרת', sub: () => (S.templates.length ? S.templates.length + ' תבניות' : 'אין תבניות') },
     look: { icon: 'palette', title: 'מראה', sub: () => ({ system: 'לפי המערכת', light: 'בהיר', dark: 'כהה' }[S.settings.theme]) + ' · ' + (App.ACCENTS[S.settings.accent] || [])[2] },
     security: { icon: 'lock', title: 'נעילה בקוד', sub: () => (S.settings.lock.enabled ? 'מופעלת' : 'כבויה') },
@@ -341,7 +341,7 @@
       <div class="section-title">${icon('refresh', 's')} עיגול, מינימום והפסקות</div><div class="card">
         <div class="grid2">${F.sel('עיגול זמן משמרת', 'e.roundingMode', [['none', 'ללא'], ['nearest', 'לקרוב'], ['up', 'למעלה'], ['down', 'למטה']], e.roundingMode)}${F.sel('יחידה', 'e.roundingUnit', [[5, '5 דק׳'], [6, '6 דק׳'], [10, '10 דק׳'], [15, 'רבע שעה'], [30, 'חצי שעה']], e.roundingUnit)}</div>
         ${F.num('מינימום שעות לתשלום במשמרת', 'e.minShiftHours', e.minShiftHours, '0 = ללא. למשל 4: גם אם שוחררת אחרי שעתיים, תקבל 4.')}
-        <div class="grid2">${F.num('הפסקה ברירת מחדל (דק׳)', 'e.defaultBreakMin', e.defaultBreakMin)}${F.sel('הפסקה', 'e.defaultBreakPaid', [['true', 'בתשלום'], ['false', 'ללא תשלום']], String(e.defaultBreakPaid))}</div></div>`,
+        <div class="grid2">${F.num('הפסקה קבועה (דק׳, 0 = לפי החוק)', 'e.defaultBreakMin', e.defaultBreakMin)}${F.sel('הפסקה', 'e.defaultBreakPaid', [['true', 'בתשלום'], ['false', 'ללא תשלום']], String(e.defaultBreakPaid))}</div></div>`,
   };
 
   RENDER.rest = {
@@ -481,23 +481,16 @@
       return `<div class="card">${F.sw('התראות פוש בטלפון', perm === 'granted' ? 'מאושר' : perm === 'denied' ? (App.androidApp ? 'חסום — יש לאשר בהגדרות הטלפון › אפליקציות › Shaati › התראות' : 'חסום — יש לאשר בהגדרות האתר ב-\u2060Chrome') : 'דורש אישור', 's.alerts.push', A.push)}
           ${perm !== 'granted' && perm !== 'unsupported' ? `<button class="btn tonal block" data-perm>${icon('bell')} אשר התראות</button>` : ''}
           ${perm === 'granted' ? `<button class="btn text sm" data-test>${icon('send', 's')} שלח התראת בדיקה</button>` : ''}
-          <div class="tiny muted" style="margin-top:6px">לכל היותר התראת חריגה אחת ביום. תזכורות (טיימר, משמרת קרובה, תשלום) נשלחות בנפרד. כשהאפליקציה סגורה, Chrome בודק מדי פעם (לא מדויק לדקה) — לתזכורת מדויקת לפני משמרת, ייצא אותה ליומן.</div></div>
-        <div class="section-title">חריגות מהממוצע</div><div class="card">
-          <div class="grid3">${F.num('סף %', 's.alerts.deviationPct', A.deviationPct)}${F.num('שבועות להשוואה', 's.alerts.compareWeeks', A.compareWeeks)}${F.num('חודשים להשוואה', 's.alerts.compareMonths', A.compareMonths)}</div>
-          ${F.num('מינימום שבועות נתונים', 's.alerts.minWeeksData', A.minWeeksData)}
-          ${t('hours', 'שעות')}${t('shifts', 'מספר משמרות')}${t('roles', 'חלוקה בין תפקידים')}${t('rest', 'שעות שבת וחג')}${t('overtime', 'שעות נוספות')}${t('hourly', 'ירידה בשכר לשעה')}${t('shiftLength', 'אורך משמרות')}${t('pattern', 'דפוס שעות (לילה)')}</div>
-        <div class="section-title">בריאות ועומס</div><div class="card">
-          <div class="grid2">${F.num('משמרת ארוכה מ- (ש׳)', 's.alerts.longShiftHours', A.longShiftHours)}${F.num('מנוחה מינימלית (ש׳)', 's.alerts.minRestHours', A.minRestHours)}</div>
-          <div class="grid2">${F.num('ימים ברצף', 's.alerts.streakDays', A.streakDays)}${F.num('שעות בשבוע מעל', 's.alerts.weekHoursMax', A.weekHoursMax)}</div>
-          ${t('long', 'משמרת ארוכה')}${t('rest8', 'מנוחה קצרה בין משמרות')}${t('streak', 'ימים ברצף')}${t('weekHours', 'שבוע עמוס')}${t('youth', 'חוק עבודת הנוער (מתחת לגיל 18)')}</div>
-        <div class="section-title">כסף ויעדים</div><div class="card">${t('projection', 'צפי סוף חודש')}${t('goal', 'יעד חודשי')}${t('goalShifts', 'משמרות חסרות ליעד')}${t('record', 'שיא אישי')}${t('payslipGap', 'פערים בתלוש')}${t('travel', 'תקרת נסיעות')}${t('recuperation', 'דמי הבראה')}${t('minwage', 'תעריף נמוך משכר המינימום')}</div>
-        <div class="section-title">תזכורות ותקינות</div><div class="card">
-          <div class="grid2">${F.num('טיימר פעיל יותר מ- (ש׳)', 's.alerts.timerHours', A.timerHours)}${F.num('בלי משמרות (ימים)', 's.alerts.idleDays', A.idleDays)}</div>
-          <div class="grid2">${F.num('משמרת חשודה מעל (ש׳)', 's.alerts.suspiciousHours', A.suspiciousHours)}${F.num('תזכורת גיבוי (ימים)', 's.alerts.backupDays', A.backupDays)}</div>
-          ${F.num('תזכורת לפני משמרת (דק׳)', 's.alerts.upcomingMin', A.upcomingMin)}
-          ${t('timer', 'שכחתי לסיים משמרת')}${t('plannedPast', 'משמרת מתוכננת שעברה')}${t('idle', 'לא נרשמה משמרת')}${t('suspicious', 'משמרות חופפות / נתון חשוד')}${t('payslipDue', 'הזנת תלוש ביום התשלום')}${t('backup', 'גיבוי')}${t('upcoming', 'לפני משמרת מתוכננת')}</div>
-        <div class="section-title">סיכום שבועי</div><div class="card">${t('weekly', 'סיכום שבועי אוטומטי')}
-          <div class="grid2">${F.sel('ביום', 's.alerts.weeklyDay', U.HEB_DAYS.map((d, i) => [i, d]), A.weeklyDay)}${F.num('בשעה', 's.alerts.weeklyHour', A.weeklyHour)}</div></div>`;
+          <div class="tiny muted" style="margin-top:6px">מעט התראות: הסיכום השבועי והחודשי, שיאים ויעדים, ותזכורות חשובות בלבד. בלי התראות על חריגות.</div></div>
+        <div class="section-title">סיכומים</div><div class="card">${t('weekly', 'סיכום שבועי')}
+          <div class="grid2">${F.sel('ביום', 's.alerts.weeklyDay', U.HEB_DAYS.map((d, i) => [i, d]), A.weeklyDay)}${F.num('בשעה', 's.alerts.weeklyHour', A.weeklyHour)}</div>
+          ${t('monthly', 'סיכום חודשי (כשתקופת השכר נגמרת)')}</div>
+        <div class="section-title">חדשות טובות</div><div class="card">${t('record', 'שיא אישי')}${t('goal', 'הגעת ליעד החודשי')}${t('birthday', 'יום הולדת')}</div>
+        <div class="section-title">תזכורות</div><div class="card">
+          ${t('timer', 'שכחתי לסיים משמרת')}<div class="grid2">${F.num('אחרי (שעות)', 's.alerts.timerHours', A.timerHours)}</div>
+          ${F.sw('לפני משמרת מתוכננת', '', 's.alerts.remindPlanned', A.remindPlanned === true)}
+          ${t('payslipDue', 'ביום התשלום: להזין את התלוש')}
+          ${t('backup', 'תזכורת גיבוי')}<div class="grid2">${F.num('כל (ימים)', 's.alerts.backupDays', A.backupDays)}</div></div>`;
     },
     mount: (el, draw) => {
       const p = el.querySelector('[data-perm]');

@@ -335,3 +335,28 @@ T.test('broken records are skipped, never fatal', () => {
   const t = Engine.totals(m, '2026-09-01', '2026-09-30');
   T.ok(t.gross > 0 && Number.isFinite(t.gross), 'totals are real numbers');
 });
+
+T.section('breaks by the law (1.18)');
+T.test('no break entered, 8h: the law\'s 45 minutes (unpaid here), flagged as automatic', () => {
+  const r = calc(setup(), shift('2026-10-11', '08:00', '16:00', { breakMin: null, breakPaid: false }));
+  T.eq(r.breakMin, 45); T.ok(r.breakAuto); T.ok(!r.breakShort); T.near(r.paidHours, 8 - 0.75);
+});
+T.test('no break entered, paid breaks: 45 minutes, nothing comes off', () => {
+  const r = calc(setup(), shift('2026-10-11', '08:00', '16:00', { breakMin: undefined, breakPaid: true }));
+  T.eq(r.breakMin, 45); T.near(r.paidHours, 8);
+});
+T.test('no break entered, under 6 hours: no break', () => {
+  const r = calc(setup(), shift('2026-10-11', '08:00', '13:30', { breakMin: null, breakPaid: false }));
+  T.eq(r.breakMin, 0); T.near(r.paidHours, 5.5);
+});
+T.test('a short break typed in a long shift is flagged; the same number from an old record is not', () => {
+  const typed = calc(setup(), shift('2026-10-11', '08:00', '16:00', { breakMin: 20, breakSet: true, breakPaid: false }));
+  T.ok(typed.breakShort && typed.warnings.some((w) => w.includes('45 דקות')));
+  T.near(typed.paidHours, 8 - 20 / 60);
+  const old = calc(setup(), shift('2026-10-11', '08:00', '16:00', { breakMin: 0, breakPaid: true }));
+  T.ok(!old.breakShort && !old.breakAuto); T.near(old.paidHours, 8);
+});
+T.test('45 minutes typed in a long shift: fine', () => {
+  const r = calc(setup(), shift('2026-10-11', '08:00', '16:00', { breakMin: 45, breakSet: true, breakPaid: false }));
+  T.ok(!r.breakShort);
+});

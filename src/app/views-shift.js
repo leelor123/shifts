@@ -85,7 +85,8 @@
         startT: src ? U.epochHM(src.start) : t ? t.startT : '08:00', endT: src ? U.epochHM(src.end) : t ? t.endT : '16:00',
         roleId: (src && src.roleId) || (t && t.roleId) || S.meta.lastRole || (roles[0] && roles[0].id),
         splits: src ? (src.splits || []).map((x) => ({ t: U.epochHM(x.at), roleId: x.roleId })) : t && t.splits ? t.splits.slice() : [],
-        breakMin: src ? src.breakMin || 0 : t ? t.breakMin || 0 : App.employer(emp.id).defaultBreakMin || 0,
+        // empty = the law's break (null); a copy keeps its own, a job's default is used when one is set
+        breakMin: src ? (src.breakMin == null ? null : src.breakMin) : t ? (t.breakMin == null ? null : t.breakMin) : (+App.employer(emp.id).defaultBreakMin > 0 ? +App.employer(emp.id).defaultBreakMin : null),
         breakPaid: src ? src.breakPaid !== false : t ? t.breakPaid !== false : App.employer(emp.id).defaultBreakPaid !== false,
         noTravel: src ? !!src.noTravel : t ? !!t.noTravel : false, note: '', items: [], ov: emptyOv(), reason: '',
       };
@@ -102,7 +103,7 @@
       id: sh.id, status: sh.status || 'done', statusTouched: true, employerId: sh.employerId, date: U.epochKey(sh.start),
       startT: U.epochHM(sh.start), endT: U.epochHM(sh.end), roleId: sh.roleId,
       splits: (sh.splits || []).map((x) => ({ t: U.epochHM(x.at), roleId: x.roleId })),
-      breakMin: sh.breakMin || 0, breakPaid: sh.breakPaid !== false, noTravel: !!sh.noTravel, note: sh.note || '',
+      breakMin: sh.breakMin == null ? null : sh.breakMin, breakSet: !!sh.breakSet, breakPaid: sh.breakPaid !== false, noTravel: !!sh.noTravel, note: sh.note || '',
       items: (sh.items || []).map((x) => Object.assign({}, x)), ov, reason: sh.overrideReason || '',
       createdAt: sh.createdAt, demo: sh.demo,
     };
@@ -127,9 +128,10 @@
     const sh = {
       id: d.id || U.uid(), kind: 'shift', status: d.status, employerId: d.employerId, roleId: d.roleId,
       start, end, splits: d.splits.filter((x) => x.t && x.roleId).map((x) => ({ at: at(x.t), roleId: x.roleId })),
-      breakMin: +d.breakMin || 0, breakPaid: !!d.breakPaid, noTravel: !!d.noTravel, note: d.note || '',
+      breakMin: numOrNull(d.breakMin) == null ? null : +d.breakMin, breakPaid: !!d.breakPaid, noTravel: !!d.noTravel, note: d.note || '',
       items: d.items.filter((x) => +x.amount), overrides: Object.keys(ov).length ? ov : null, overrideReason: Object.keys(ov).length ? d.reason : '',
     };
+    if (d.breakSet && sh.breakMin != null) sh.breakSet = true; // typed on purpose: a short one is flagged
     if (d.createdAt) sh.createdAt = d.createdAt;
     if (d.demo) sh.demo = true;
     return sh;
@@ -186,7 +188,7 @@
     rows += `<tr class="tot"><td>סה״כ</td><td class="a">${U.money(r.total)}</td></tr>`;
     const notes = [];
     notes.push(`זמן במשמרת: ${U.hm(r.elapsedMin)}` + (r.roundingDeltaMin ? ` · עיגול: ${r.roundingDeltaMin > 0 ? '+' : ''}${r.roundingDeltaMin} דק׳` : ''));
-    if (r.breakMin) notes.push(`הפסקה ${r.breakMin} דק׳ ${r.breakPaid ? 'בתשלום' : 'ללא תשלום — נוכתה יחסית מכל השעות'}`);
+    if (r.breakMin) notes.push(`הפסקה ${r.breakMin} דק׳${r.breakAuto ? ' (אוטומטית לפי החוק)' : ''} ${r.breakPaid ? 'בתשלום' : 'ללא תשלום — נוכתה יחסית מכל השעות'}`);
     notes.push(`שעות נוספות אחרי ${r.thresholdH} שעות ביום` + (r.priorMin ? ` · כבר עבדת ${U.hm(r.priorMin)} באותו יום לפני המשמרת` : '') + (r.isNightShift && emp.nightShiftShortDay ? ' (משמרת לילה)' : ''));
     const wins = r.restLabels.length ? r.slices.filter((s) => s.autoRest) : [];
     if (r.autoRestMin > 0) notes.push(`חלון ${esc(r.restLabels.join(', ') || 'שבת/חג')} במשמרת: ⁦${U.epochHM(wins[0].a)}\u2060–\u2060${U.epochHM(wins[wins.length - 1].b)}⁩ (${S.settings.rest.mode === 'city' ? 'לפי ' + esc(S.settings.rest.city === '__custom' ? 'מיקום מותאם' : S.settings.rest.city).replace(/-/g, '-⁠') : 'שעות קבועות'})`);
@@ -206,6 +208,7 @@
       title: U.fmtDate(r.dateKey, 'long'),
       body: `<div class="small muted" style="margin-bottom:8px">${esc(hd.toString())} ${App.restTag(r)} ${r.status === 'planned' ? '<span class="tag planned">מתוכננת</span>' : ''}</div>
         ${ovBox}
+        ${r.breakShort ? `<div class="banner warn">${icon('alert')}<div style="flex:1">${esc(Engine.LAW_BREAK.text)}. בהפסקה שנרשמה: ${r.breakMin} דקות.</div></div>` : ''}
         <div class="card">${App.timelineHtml(r)}
           <div class="kpis three" style="margin-top:12px">
             <div class="kpi"><div class="l">שעות לתשלום</div><div class="v"><span class="num">${U.hm(r.paidMin)}</span></div></div>
@@ -270,7 +273,8 @@
       if (busy) continue;
       ops.push({ store: 'shifts', put: {
         id: U.uid(), kind: 'shift', employerId: sh.employerId, roleId: sh.roleId, status: 'planned', start, end,
-        breakMin: sh.breakMin || 0, breakPaid: sh.breakPaid !== false, noTravel: !!sh.noTravel,
+        breakMin: sh.breakMin == null ? null : sh.breakMin, breakPaid: sh.breakPaid !== false, noTravel: !!sh.noTravel,
+        ...(sh.breakSet && sh.breakMin != null ? { breakSet: true } : {}),
         splits: (sh.splits || []).map((x) => ({ at: at(x.at, i), roleId: x.roleId })), items: [], note: '',
       } });
     }
@@ -282,7 +286,7 @@
     if (!name) return;
     await App.saveOps([{ store: 'templates', put: {
       id: U.uid(), name, roleId: sh.roleId, employerId: sh.employerId, startT: U.epochHM(sh.start), endT: U.epochHM(sh.end),
-      breakMin: sh.breakMin || 0, breakPaid: sh.breakPaid !== false, noTravel: !!sh.noTravel,
+      breakMin: sh.breakMin == null ? null : sh.breakMin, breakPaid: sh.breakPaid !== false, noTravel: !!sh.noTravel,
       splits: (sh.splits || []).map((x) => ({ t: U.epochHM(x.at), roleId: x.roleId })),
     } }], 'שמירת תבנית', 'התבנית נשמרה');
   };
@@ -337,9 +341,10 @@
             <button class="icon-btn" data-rm-split="${i}" aria-label="הסר">${icon('x')}</button></div>`).join('')}
           <button class="btn text sm" data-add-split>${icon('plus', 's')} הוסף מעבר תפקיד</button></div></details>
         <div class="grid2">
-          <label class="field"><span class="lbl">הפסקה (דקות)</span>${numIn('breakMin', d.breakMin || '', '0')}</label>
+          <label class="field"><span class="lbl">הפסקה (דקות)</span>${numIn('breakMin', d.breakMin == null ? '' : d.breakMin, 'אוטומטי')}</label>
           <label class="switch-row" style="padding-top:26px"><span class="body"><span class="t small">בתשלום</span></span><input type="checkbox" class="switch" data-f="breakPaid" ${d.breakPaid ? 'checked' : ''}></label>
         </div>
+        <div class="brk-note" data-brk aria-live="polite"></div>
         <label class="switch-row"><span class="body"><span class="t">בלי נסיעות</span><span class="s">המשמרת לא תזכה בנסיעות (${U.money(emp.travelPerDay)} ליום)</span></span><input type="checkbox" class="switch" data-f="noTravel" ${d.noTravel ? 'checked' : ''}></label>
         <details class="collapse" ${d.items.length ? 'open' : ''}><summary>${icon('gift', 's')} תוספות וניכויים ${d.items.length ? `<span class="tag">${d.items.length}</span>` : ''}</summary><div class="in">
           ${d.items.map((it, i) => `<div style="display:grid;grid-template-columns:1.1fr 1fr 40px;gap:8px;align-items:end;margin-bottom:8px">
@@ -380,7 +385,17 @@
       const sh = shiftFrom(d);
       if (!d.date || !d.startT || !d.endT) { el.innerHTML = '<div class="muted small">מלא תאריך ושעות</div>'; return; }
       const r = App.previewShift(sh);
+      breakNote(r);
       el.innerHTML = App.timelineHtml(r) + `<div class="row-flex" style="margin:10px 0"><div class="hero-num" style="font-size:1.8rem">${money(r.total)}</div><span class="spacer"></span><div class="small muted"><span class="num">${U.hm(r.paidMin)}</span> ש׳</div></div>` + App.breakdownHtml(r, sh);
+    }
+    /** Under the break field: the law's break when it is left empty, or a warning when the one typed is short. */
+    function breakNote(r) {
+      const n = sheetEl && sheetEl.querySelector('[data-brk]');
+      if (!n) return;
+      let html = '', cls = '';
+      if (r.breakShort) { cls = 'warn'; html = `${icon('alert', 's')}<span>${esc(Engine.LAW_BREAK.text)}.</span>`; }
+      else if (r.breakAuto && r.elapsedMin > 0) html = r.breakMin ? `${icon('clock', 's')}<span>הפסקה אוטומטית לפי החוק: ${r.breakMin} דקות${r.breakPaid ? ' (בתשלום)' : ' (לא בתשלום)'}. אפשר לכתוב אחרת.</span>` : `${icon('clock', 's')}<span>במשמרת של פחות מ-6 שעות החוק לא מחייב הפסקה.</span>`;
+      if (n.innerHTML !== html) { n.innerHTML = html; n.className = 'brk-note' + (cls ? ' ' + cls : ''); }
     }
     function redraw() {
       const b = sheetEl.querySelector('.sh-body');
@@ -410,6 +425,7 @@
           if (!f) return;
           const v = e.target.type === 'checkbox' ? e.target.checked : e.target.value;
           setPath(f, v);
+          if (f === 'breakMin') d.breakSet = true; // typed on purpose
           if (f === 'date' && !d.statusTouched) {
             const ns = d.date > U.todayKey() ? 'planned' : 'done';
             if (ns !== d.status) { d.status = ns; redraw(); return; }
@@ -464,7 +480,7 @@
       if (d.date < '2000-01-01' || d.date > U.addDays(U.todayKey(), 366)) { UI.invalid('התאריך לא הגיוני'); return; }
       const sh = shiftFrom(d);
       // numbers that would quietly change the pay the wrong way
-      if (!(sh.breakMin >= 0) || sh.breakMin > 24 * 60) { UI.invalid('אורך ההפסקה לא הגיוני'); return; }
+      if (sh.breakMin != null && (!(sh.breakMin >= 0) || sh.breakMin > 24 * 60)) { UI.invalid('אורך ההפסקה לא הגיוני'); return; }
       if (sh.breakMin > 0 && sh.breakMin >= (sh.end - sh.start) / 60000) { UI.invalid('ההפסקה ארוכה מהמשמרת עצמה'); return; }
       if ((sh.items || []).some((x) => !(+x.amount > 0) || +x.amount > 1e6)) { UI.invalid('סכום של תוספת או ניכוי צריך להיות חיובי (לניכוי בוחרים "ניכוי")'); return; }
       const negative = (o) => o && typeof o === 'object' && Object.values(o).some((v) => (typeof v === 'number' && v < 0) || negative(v));

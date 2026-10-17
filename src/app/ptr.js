@@ -28,10 +28,16 @@
  *    switched off (overscroll-behavior: none) so they never stack;
  *  - while the coin shows, the gesture is the pull's: moving the finger
  *    back up takes the coin back up with it, and the page does not scroll
- *    under it (it used to, leaving the coin hanging). At the top of the
- *    page a downward move scrolls nothing anyway, so holding it costs
- *    nothing; once the coin is all the way back, the finger scrolls the
- *    page as usual;
+ *    under it (it used to, leaving the coin hanging);
+ *  - at the very top of a screen the browser is told in advance, with CSS
+ *    (touch-action, html.ptr-top), that a finger moving down is not for
+ *    scrolling. Holding the gesture from the touchmove alone was not
+ *    enough: a touch that began while a fling was still settling (a quick
+ *    swipe up to the top, then straight into a pull) comes with touchmoves
+ *    the page is not allowed to hold, so the browser took the gesture and
+ *    scrolled under the coin - stuck, now and then. A finger moving up
+ *    still scrolls the page; once a pull has begun, the page waits for the
+ *    next touch to scroll;
  *  - the check appears in front of the same disc (a green circle that
  *    grows), and the hands only pause under it: changing the disc itself
  *    left it see-through for a few frames, a flash.
@@ -57,6 +63,12 @@
   let tipNow = '';
   const tip = (t) => { if (t !== tipNow) { tipNow = t; tipEl.textContent = t; ind.classList.toggle('tip', !!t); } };
   let tipShown = false; // the "pull" note comes in past 24px and goes below 14px, so it never blinks at the edge
+
+  // at the very top, a finger moving down belongs to the pull (touch-action in the CSS, under html.ptr-top)
+  const de = document.documentElement;
+  const markTop = () => { const top = root.scrollY <= 0; if (top !== de.classList.contains('ptr-top')) de.classList.toggle('ptr-top', top); };
+  root.addEventListener('scroll', markTop, { passive: true });
+  markTop();
 
   let x0 = 0, y0 = null, t0 = 0, pulling = false, dist = 0, armed = false, busy = false, raf = 0, settleTimer = 0;
   const blocked = (target) => busy || App.blocking || root.scrollY > 0
@@ -148,7 +160,7 @@
     // the coin is out: the finger moves the coin, not the page
     if (e.cancelable) e.preventDefault();
     if (dy <= SLOP) {
-      // all the way back up: the pull is over (no refresh); from here the finger scrolls the page as usual
+      // all the way back up: the pull is over (no refresh)
       unbind();
       y0 = null; pulling = false; armed = false; dist = 0;
       ind.classList.remove('armed');

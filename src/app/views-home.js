@@ -26,8 +26,29 @@
     const on = !el.classList.contains('on');
     document.querySelectorAll('.tr-toggle').forEach((b) => { b.classList.toggle('on', on); b.setAttribute('aria-checked', on); });
     clearTimeout(travelTimer);
-    travelTimer = setTimeout(() => { Store.setSettings((s) => { s.withTravel = on; }).catch(() => {}); }, 190);
+    travelTimer = setTimeout(() => {
+      const before = shownAmounts();
+      Store.setSettings((s) => { s.withTravel = on; }).then(() => rollAmounts(before)).catch(() => {});
+    }, 190);
   };
+  /* The amounts follow the switch: each one (every shift, the list's total, each month's total - marked with
+   * data-tr) rolls from what it showed to its new value, tinted green on the way up (the travel pay comes
+   * back) and amber on the way down. The screen is redrawn by the save, so the values shown just before are
+   * kept by their keys; a roll still running when the switch is flipped again starts from where it got to. */
+  function shownAmounts() {
+    const m = new Map();
+    document.querySelectorAll('#view [data-tr]').forEach((x) => { const v = root.Fx.shownNumber(x); if (v != null) m.set(x.dataset.tr, v); });
+    return m;
+  }
+  function rollAmounts(before) {
+    if (!before.size || !root.Fx) return;
+    document.querySelectorAll('#view [data-tr]').forEach((x) => {
+      const from = before.get(x.dataset.tr), to = root.Fx.shownNumber(x);
+      if (from == null || to == null || from === to) return;
+      x.classList.add(to > from ? 'tr-up' : 'tr-down');
+      root.Fx.tween(x, from, 600);
+    });
+  }
   App.shiftItem = function (r, opts) {
     opts = opts || {};
     const sh = App.shift(r.id);
@@ -42,7 +63,7 @@
       <span class="role-bar" style="background:${role ? role.color : '#999'}"></span>
       <span class="body"><span class="t shift-title"><span class="tt">${esc(date)}${esc(title)}</span>${App.restTag(r)}${App.ovTag(r)}${planned}</span>
       <span class="s"><span class="num">⁦${U.epochHM(r.start)}\u2060–\u2060${U.epochHM(r.rawEnd)}⁩</span> · ${U.hm(r.paidMin)} ש׳${emp}${sh.note ? ' · ' + esc(sh.note) : ''}</span></span>
-      <span class="trail"><span class="a">${money(App.shiftAmount(r), 0)}</span>${opts.showOk && r.status === 'planned' ? `<br><span class="tag good" data-act="mark-done" data-id="${r.id}">${icon('check')}בוצעה</span>` : ''}</span></button>`;
+      <span class="trail"><span class="a" data-tr="s:${r.id}">${money(App.shiftAmount(r), 0)}</span>${opts.showOk && r.status === 'planned' ? `<br><span class="tag good" data-act="mark-done" data-id="${r.id}">${icon('check')}בוצעה</span>` : ''}</span></button>`;
   };
   App.entryItem = function (e) {
     const v = App.model.entryVals.get(e.id) || { amount: 0, label: '' };
@@ -70,6 +91,42 @@
    * Everything else is one tap away: the number opens the summary, the line opens insights,
    * the + button holds every kind of entry (and payslips), the ✨ opens the assistant. */
 
+  /* ---------------- the moments of a shift ----------------
+   * Starting one: a power-up sound, sparks and two shock rings from the button, and the timer card springs
+   * in. A break: a soft falling sound (a rising one coming back), the clock breathes, the dot turns amber.
+   * Ending one: a cash register's "ka-ching", a fountain of coins from the button, and the start button
+   * springs back. The sparks are on one layer over the whole screen, made once and kept (gamefx.js). A card's
+   * entrance is drawn once, by the first redraw after the start (or the end): a later redraw (the insights a
+   * moment after every save) must not play it again - the card would pop in twice. */
+  const ENTER_MS = 1200;
+  App.shiftMoment = function (kind, at) {
+    const F = root.Fx;
+    if (!F) return;
+    const fx = root.GameFx ? root.GameFx.screen() : null;
+    const [x, y] = at || [root.innerWidth / 2, root.innerHeight * 0.42];
+    if (kind === 'start') {
+      F.play('shiftStart'); F.haptic([12, 40, 24]);
+      if (fx) {
+        fx.burst(x, y, { palette: 'good', n: 36, kinds: ['spark', 'star', 'confetti'], speed: [180, 540] });
+        fx.ring(x, y, { color: '#21d47f', r1: 170, width: 8 });
+        setTimeout(() => fx.ring(x, y, { color: '#ffd84d', r1: 120, width: 5 }), 130);
+      }
+    } else if (kind === 'stop') {
+      F.play('cash'); setTimeout(() => F.play('success'), 280); F.haptic([10, 40, 10, 40, 20]);
+      if (fx) {
+        fx.burst(x, y, { palette: 'gold', n: 50, kinds: ['coin', 'star', 'confetti', 'coin'], speed: [260, 700], up: 240 });
+        fx.ring(x, y, { color: '#ffd84d', r1: 180, width: 9 });
+      }
+    } else if (kind === 'pause' || kind === 'resume') {
+      F.play(kind); F.haptic(10);
+      if (fx) fx.ring(x, y, { color: kind === 'pause' ? '#ffb524' : '#21d47f', r1: 64, width: 5 });
+    }
+  };
+  /** The centre of the element that was tapped (screen coordinates), for the sparks to start there. */
+  const tapped = (el) => { if (!el || !el.getBoundingClientRect) return null; const r = el.getBoundingClientRect(); return r.width ? [r.left + r.width / 2, r.top + r.height / 2] : null; };
+  // true once, for the first redraw after the moment (and only soon after it)
+  const once = (k) => { const t = App[k]; App[k] = 0; return !!t && Date.now() - t < ENTER_MS; };
+
   /* ---------------- action: start, or the running shift ---------------- */
   function actionBlock() {
     const a = S.activeShift;
@@ -77,7 +134,7 @@
       const role = App.role(App.currentRole());
       const onBreak = App.onBreak();
       const others = App.roles(a.employerId).filter((r) => r.id !== App.currentRole());
-      return `<div class="card timer-card running"><span class="aurora" aria-hidden="true" style="${App.phase()}"><i></i><i></i><i></i></span>
+      return `<div class="card timer-card running${onBreak ? ' on-break' : ''}${once('justStarted') ? ' tc-enter' : ''}"><span class="aurora" aria-hidden="true" style="${App.phase()}"><i></i><i></i><i></i></span>
         <div class="tc-head"><span class="pulse" style="${App.phase()}"></span>${onBreak ? 'בהפסקה' : 'משמרת פעילה'}${role ? ' · ' + esc(role.name) : ''}<span class="spacer"></span><span class="tiny">מ-${U.epochHM(a.start)}</span></div>
         <div class="clock" data-clock="net">0:00:00</div>
         <div class="meta">עד עכשיו <b data-live-pay></b>${(a.breaks || []).length ? ' · הפסקות לא נספרות' : ''}</div>
@@ -90,7 +147,8 @@
     const roles = App.roles();
     const sel = S.meta.lastRole && App.role(S.meta.lastRole) ? S.meta.lastRole : roles[0] && roles[0].id;
     const role = App.role(sel);
-    return `<div class="home-action">
+    return `<div class="home-action${once('justStopped') ? ' ha-enter' : ''}">
+      <span class="start-halo" aria-hidden="true" style="${App.phase()}"></span>
       <button class="btn big start" style="${App.phase()}" data-act="timer-start" data-role="${sel || ''}">${icon('play')} התחל משמרת</button>
       ${roles.length > 1 && role ? `<button class="role-chip" data-act="choose-role" aria-label="בחר תפקיד"><span class="sw" style="background:${role.color}"></span><span class="rc-n">${esc(role.name)}</span><span class="chev">${icon('left', 's')}</span></button>` : ''}
     </div>`;
@@ -271,7 +329,7 @@
 
   /* ---------------- actions ---------------- */
   App.actions['pick-role'] = async (el) => { await Store.setMeta({ lastRole: el.dataset.id }); App.rerender(); };
-  App.actions['start-planned'] = (el) => { const sh = App.shift(el.dataset.id); if (sh && !S.activeShift) App.startShift(sh.roleId, { fromPlanned: sh.id }); };
+  App.actions['start-planned'] = (el) => { const sh = App.shift(el.dataset.id); if (sh && !S.activeShift) App.startShift(sh.roleId, { fromPlanned: sh.id, at: tapped(el) }); };
   App.actions['choose-role'] = () => App.sheetsApi.pickRole('תפקיד למשמרת', async (rid) => { await Store.setMeta({ lastRole: rid }); App.rerender(); });
   App.actions['timer-start'] = async (el) => {
     const roles = App.roles();
@@ -280,10 +338,10 @@
       App.sheetsApi.pickRole('באיזה תפקיד?', (rid) => App.startShift(rid));
       return;
     }
-    App.startShift(id || S.meta.lastRole || (roles[0] && roles[0].id));
+    App.startShift(id || S.meta.lastRole || (roles[0] && roles[0].id), { at: tapped(el) });
   };
-  App.actions['timer-stop'] = () => App.stopShift();
-  App.actions['timer-break'] = () => App.toggleBreak();
+  App.actions['timer-stop'] = (el) => App.stopShift(tapped(el));
+  App.actions['timer-break'] = (el) => App.toggleBreak(tapped(el));
   App.actions['timer-switch'] = () => {
     const a = S.activeShift;
     App.sheetsApi.pickRole('לאיזה תפקיד עברת?', (rid) => App.switchRole(rid), App.roles(a.employerId).filter((r) => r.id !== App.currentRole()));

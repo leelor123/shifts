@@ -1208,3 +1208,57 @@ body:not(.fx) .gm-rays, body:not(.fx) .hw-vs, body:not(.fx) .hw-q, body:not(.fx)
 @media (prefers-reduced-motion: reduce) {
   .gm-rays, .hw-vs, .hw-q, .gm-end-b.best::after, .qz-timer.hurry, .cg-time.low, .gm-stars i.on, .tf-verdict, .pr-card.done .pr-in, .pr-card.miss .pr-in, .qz-opt.right, .qz-opt.right::after, .qz-opt.wrong::after { animation: none !important; }
 }
+
+.lock.out { opacity: 0; transition: opacity .25s ease-out; pointer-events: none; }
+/* the moments of a shift (views-home.js App.shiftMoment): sparks on one screen-wide layer, made once and kept */
+.gfx-screen { position: fixed; inset: 0; z-index: 9997; pointer-events: none; will-change: transform; } /* a layer of its own, always */
+/* the start button breathes: a soft green halo spreads out from it every few seconds (on its own layer, under
+   the button; it carries on from the same clock when home is redrawn) */
+.home-action { position: relative; }
+.start-halo { position: absolute; top: 0; left: 0; right: 0; height: 66px; border-radius: 20px; background: radial-gradient(closest-side, rgba(33, 212, 127, .55), rgba(33, 212, 127, .25) 70%, transparent); pointer-events: none; will-change: transform, opacity; animation: start-halo 2.8s ease-out infinite; animation-delay: var(--ph, 0ms); }
+@keyframes start-halo { 0% { transform: scale(.96, .9); opacity: 0; } 15% { opacity: .9; } 75%, 100% { transform: scale(1.07, 1.45); opacity: 0; } }
+/* a new timer card springs in; the start button springs back when the shift ends */
+.timer-card.tc-enter { animation: tc-enter .62s cubic-bezier(.2, .9, .3, 1.25) both; }
+.timer-card.tc-enter .clock { animation: tc-clock .7s cubic-bezier(.2, .9, .3, 1.3) .12s both; }
+.home-action.ha-enter .btn.start { animation: tc-enter .62s cubic-bezier(.2, .9, .3, 1.25) both; }
+@keyframes tc-enter { from { opacity: 0; transform: scale(.88) translateY(12px); } }
+@keyframes tc-clock { from { opacity: 0; transform: scale(1.35); } }
+/* a break: the clock breathes, the dot turns amber and stands still */
+.timer-card.on-break .clock { animation: tc-break 2.4s ease-in-out infinite; }
+@keyframes tc-break { 50% { opacity: .45; } }
+.timer-card.on-break .pulse { background: #ffb524; animation: none; }
+body:not(.fx) .timer-card.tc-enter, body:not(.fx) .timer-card.tc-enter .clock, body:not(.fx) .home-action.ha-enter .btn.start, body:not(.fx) .timer-card.on-break .clock { animation: none; }
+body:not(.fx) .start-halo { animation: none; opacity: 0; }
+/* the clock keeps a layer of its own: its spring-in and its breathing would otherwise make one and drop it */
+.timer-card .clock { will-change: transform; }
+@media (prefers-reduced-motion: reduce) { .start-halo, .timer-card.tc-enter, .timer-card.tc-enter .clock, .home-action.ha-enter .btn.start, .timer-card.on-break .clock { animation: none; } .start-halo { opacity: 0; } }
+
+/* pull to refresh (ptr.js): at the very top of a screen a finger moving down is the pull's, never the browser's
+   scrolling - also when the touch began while a fling was still settling, when the page is not allowed to hold
+   the gesture from its touchmove. A finger moving up scrolls as always (pan-down), rows still scroll sideways
+   (pan-x; a sideways row is a scroller of its own, so it is named too), pinch-zoom stays. */
+html.ptr-top #view, html.ptr-top #view .chips { touch-action: pan-x pan-down pinch-zoom; }
+
+/* the shift editor: under the break field, the law's break when it is left empty, or a warning (1.18) */
+.brk-note { display: flex; align-items: flex-start; gap: 6px; margin: 0 4px 10px; font-size: .82rem; line-height: 1.45; color: var(--on-surface-var); }
+.brk-note:empty { display: none; }
+.brk-note svg { flex: none; width: 16px; height: 16px; margin-top: 2px; }
+.brk-note.warn { margin: 0 0 12px; padding: 10px 12px; border-radius: 14px; background: color-mix(in srgb, var(--amber) 14%, var(--surface-1)); color: var(--on-surface); border: 1px solid color-mix(in srgb, var(--amber) 40%, transparent); }
+.brk-note.warn svg { color: var(--amber); }
+
+/* a dialog that closes fades out (the box shrinks a little, the dimming lifts) instead of vanishing in one frame */
+.dialog.out { pointer-events: none; }
+.dialog.out .box { animation: dlg-out .17s ease-in forwards; }
+.dialog.out > .backdrop { opacity: 0; transition: opacity .18s ease-out; }
+@keyframes dlg-out { to { opacity: 0; transform: scale(.95); } }
+@media (prefers-reduced-motion: reduce) { .dialog.out .box { animation: none; opacity: 0; } }
+
+/* the travel switch: the amounts roll to their new values (Fx.tween), tinted for a moment - green on the way
+   up, amber on the way down. Digits of one width, so a rolling number never shifts the row sideways. */
+.item .trail .a, [data-tr] { font-variant-numeric: tabular-nums; }
+.tr-up { animation: tr-up 1s ease-out; }
+.tr-down { animation: tr-down 1s ease-out; }
+@keyframes tr-up { from, 45% { color: var(--good); } }
+@keyframes tr-down { from, 45% { color: var(--amber); } }
+body:not(.fx) .tr-up, body:not(.fx) .tr-down { animation: none; }
+@media (prefers-reduced-motion: reduce) { .tr-up, .tr-down { animation: none; } }

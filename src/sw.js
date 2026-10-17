@@ -99,7 +99,7 @@ async function backgroundCheck() {
   if (types.timer !== false && a && a.start && now - a.start > (A.timerHours || 12) * 3600000) {
     await self.registration.showNotification('שכחת לסיים משמרת?', opt('הטיימר עדיין רץ. לחץ כדי לסיים או לתקן.', 'timer-' + a.start));
   }
-  if (types.upcoming !== false) {
+  if (A.remindPlanned === true && types.upcoming !== false) { // off unless switched on (few notifications)
     for (const s of d.shifts || []) {
       if (s.status !== 'planned') continue;
       const mins = (s.start - now) / 60000;

@@ -5,7 +5,7 @@
  * background and activates when the user taps "עדכן".
  * IndexedDB data is never touched by updates.
  * ============================================================ */
-const VERSION = '1.17.0-f7050aca';
+const VERSION = '1.18.0-225d84db';
 const SHELL = 'shiftpay-shell-' + VERSION;
 const RUNTIME = 'shiftpay-runtime-v1';
 const ASSETS = ['./', './index.html', './manifest.webmanifest', './icon-192.png', './icon-512.png', './icon-maskable-512.png', './badge-96.png', './favicon-48.png'];
@@ -99,7 +99,7 @@ async function backgroundCheck() {
   if (types.timer !== false && a && a.start && now - a.start > (A.timerHours || 12) * 3600000) {
     await self.registration.showNotification('שכחת לסיים משמרת?', opt('הטיימר עדיין רץ. לחץ כדי לסיים או לתקן.', 'timer-' + a.start));
   }
-  if (types.upcoming !== false) {
+  if (A.remindPlanned === true && types.upcoming !== false) { // off unless switched on (few notifications)
     for (const s of d.shifts || []) {
       if (s.status !== 'planned') continue;
       const mins = (s.start - now) / 60000;
