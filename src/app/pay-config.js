@@ -11,7 +11,8 @@ window.PAY_CONFIG = {
   lemon: {
     checkout: '', // the product's "Share" link, e.g. https://<store>.lemonsqueezy.com/buy/<id>
     productId: 0, // the product's number (Products › the product › ID): every purchase code is checked against it
-    price: '', // as shown on the button, e.g. '₪9.90'
+    price: '₪6.90', // as shown on the button (with "לחודש" after it)
   },
-  price: 9.9, // the price in shekels: the income estimate in the admin dashboard, and "≈ N minutes of your work"
+  price: 6.9, // the monthly price in shekels: the income estimate in the admin dashboard, and "≈ N minutes of your work"
+  monthly: true, // Plus is a monthly subscription (Google Play's product: plus.js SUB; on the web a Lemon Squeezy subscription)
 };

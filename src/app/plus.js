@@ -1,5 +1,5 @@
 /* ============================================================
- * plus.js — "Shaati Plus": an optional one-time purchase.
+ * plus.js — "Shaati Plus": an optional monthly subscription (₪6.90).
  *
  * Everything the app does stays free. Plus adds skins for the pay card on
  * home and says thank you; no ads, no reminders that interrupt. Nothing about
@@ -19,7 +19,11 @@
  *    purchase made elsewhere.
  *
  * Every start asks both: any "yes" turns Plus on, "no" from all of them
- * (a refund) turns it off, and no answer (offline) keeps what was known.
+ * (a refund, a subscription that ended) turns it off, and no answer
+ * (offline) keeps what was known. Plus is a monthly subscription: Google
+ * Play's subscription product (SUB) in the Android app, a Lemon Squeezy
+ * subscription on the web (its purchase code expires when it ends). Anyone
+ * who bought the earlier one-time product (SKU) keeps it.
  * Settings (pay-config.js): the web checkout link, product number and price.
  * ============================================================ */
 (function (root) {
@@ -28,7 +32,8 @@
   const S = Store.S;
   const { icon, esc } = UI;
   const BILLING = 'https://play.google.com/billing';
-  const SKU = 'shaati_plus'; // the in-app product's id in Google Play Console (one-time, not a subscription)
+  const SUB = 'shaati_plus_monthly'; // the subscription's id in Google Play Console (a monthly base plan, ₪6.90)
+  const SKU = 'shaati_plus'; // the earlier one-time product: whoever bought it keeps Plus
   const LS_API = 'https://api.lemonsqueezy.com/v1/licenses/';
   // Pay-card skins (styles-v3.css .sk-<id>): dark enough everywhere for the card's white text
   const SKINS = {
@@ -36,9 +41,16 @@
     royal: 'מלכותי', rose: 'ורד', lava: 'לבה', neon: 'ניאון', ice: 'קרח', galaxy: 'גלקסיה',
   };
   const DAY = 86400000;
+  // a photo of one's own on the pay card (Plus): kept on this phone only (never synced, never on the champions
+  // table), checked on the phone before it is used
+  const PHOTO = 'photo';
+  const photo = () => (typeof S.meta.skinPhoto === 'string' && S.meta.skinPhoto.startsWith('data:image/jpeg') ? S.meta.skinPhoto : '');
+  const NSFW_LIB = 'https://cdn.jsdelivr.net/npm/nsfwjs@4.4.0/dist/browser/nsfwjs.min.js';
+  const NSFW_MODEL = 'https://cdn.jsdelivr.net/gh/infinitered/nsfwjs@v4.4.0/models/mobilenet_v2/';
   const TRIAL_DAYS = 3; // a free trial, once per phone, wherever Plus can be bought
   const cfg = () => (root.PAY_CONFIG && root.PAY_CONFIG.lemon) || {};
-  const Plus = { SKU, SKINS, available: false, price: '' };
+  const Plus = { SKU, SUB, SKINS, available: false, price: '', monthly: true };
+  let playSku = SUB; // what Google Play sells here (the subscription; the one-time product only if that is all there is)
   const owned = () => !!(S.meta.plus && S.meta.plus.active);
   Plus.owned = owned;
   /** 'play' | 'web' | '' — where this phone's Plus comes from. */
@@ -60,7 +72,9 @@
   /** Anything about Plus is shown only when it can be bought here, or is already on (or an admin previews it). */
   Plus.visible = () => Plus.available || Plus.webShop() || Plus.active() || !!sim();
   /** The pay-card skin in use ('' = the regular card). */
-  Plus.skin = () => (Plus.active() && SKINS[S.settings.skin] ? S.settings.skin : '');
+  Plus.skin = () => (!Plus.active() ? '' : SKINS[S.settings.skin] ? S.settings.skin : S.settings.skin === PHOTO && photo() ? PHOTO : '');
+  /** The card's own photo (html --sk-photo) while that skin is on. */
+  Plus.paintPhoto = (de, skin) => { if (skin === PHOTO) de.style.setProperty('--sk-photo', `url("${photo()}")`); else de.style.removeProperty('--sk-photo'); };
 
   async function setOwned(on, src) {
     const cur = S.meta.plus || {};
@@ -73,6 +87,12 @@
     if (!p) return '';
     try { return new Intl.NumberFormat('he-IL', { style: 'currency', currency: p.currency, maximumFractionDigits: 2 }).format(+p.value); } catch (e) { return `${p.value} ${p.currency}`; }
   }
+  /** The price as it is said: "₪6.90 לחודש" for the subscription. */
+  Plus.priceText = () => { const pr = Plus.price || cfg().price || ''; return pr ? pr + (Plus.monthly ? ' לחודש' : '') : ''; };
+  const buyWord = () => (Plus.monthly ? 'מנוי חודשי' : 'קנייה חד-פעמית');
+  const termsWord = () => (Plus.monthly ? 'בלי התחייבות, מבטלים בכל רגע' : 'תשלום אחד, בלי מנוי');
+  // where a subscriber stops it: Google Play's subscriptions page, or Lemon Squeezy's orders page (from the email)
+  const manageUrl = () => (Plus.source() === 'web' ? 'https://app.lemonsqueezy.com/my-orders' : `https://play.google.com/store/account/subscriptions?sku=${SUB}&package=io.github.leelor123.shifts`);
 
   /* ---------------- Google Play (the Android app) ---------------- */
   async function service() {
@@ -81,7 +101,7 @@
   }
   /** true / false from Google Play; null when it cannot tell (offline). */
   async function playOwns(svc) {
-    try { return ((await svc.listPurchases()) || []).some((p) => p && p.itemId === SKU); } catch (e) { return null; }
+    try { return ((await svc.listPurchases()) || []).some((p) => p && (p.itemId === SUB || p.itemId === SKU)); } catch (e) { return null; }
   }
 
   /* ---------------- the web: a purchase code from Lemon Squeezy ---------------- */
@@ -124,12 +144,19 @@
       if (!svc) play = null;
       else {
         let d, failed = false;
-        try { d = ((await svc.getDetails([SKU])) || [])[0]; } catch (e) { failed = true; }
+        try { const all = (await svc.getDetails([SUB, SKU])) || []; d = all.find((x) => x && x.itemId === SUB) || all.find((x) => x && x.itemId === SKU); } catch (e) { failed = true; }
         if (failed) play = null;
-        else if (d) { Plus.available = true; Plus.price = fmtPrice(d.price); Plus.priceValue = +(d.price && d.price.value) || 0; play = await playOwns(svc); }
+        else if (d) {
+          Plus.available = true;
+          playSku = d.itemId;
+          Plus.monthly = d.itemId === SUB || !!d.subscriptionPeriod;
+          Plus.price = fmtPrice(d.price);
+          Plus.priceValue = +(d.price && d.price.value) || 0;
+          play = await playOwns(svc);
+        }
       }
     }
-    if (!Plus.available && cfg().price) Plus.price = cfg().price;
+    if (!Plus.available && cfg().price) { Plus.price = cfg().price; Plus.monthly = (root.PAY_CONFIG || {}).monthly !== false; }
     const web = S.settings.plusKey ? await webOwns() : 'na';
     if (play === true) await setOwned(true, 'play');
     else if (web === true) await setOwned(true, 'web');
@@ -155,7 +182,7 @@
     if (!svc || !Plus.available) { UI.toast('הרכישה עוד לא זמינה כאן'); return false; }
     let res;
     try {
-      const req = new PaymentRequest([{ supportedMethods: BILLING, data: { sku: SKU } }], { total: { label: 'Total', amount: { currency: 'ILS', value: '0' } } });
+      const req = new PaymentRequest([{ supportedMethods: BILLING, data: { sku: playSku } }], { total: { label: 'Total', amount: { currency: 'ILS', value: '0' } } });
       res = await req.show();
     } catch (e) {
       if (!e || e.name !== 'AbortError') UI.toast('הרכישה לא הושלמה. אפשר לנסות שוב');
@@ -207,13 +234,74 @@
   Plus.skinTiles = (cur, locked) => `<div class="skin-pick">
       <button class="skin-tile ${!cur ? 'on' : ''}" data-skin="" aria-pressed="${!cur}"><b>₪</b><span>רגיל</span></button>
       ${Object.entries(SKINS).map(([k, name]) => `<button class="skin-tile sk-${k} ${cur === k ? 'on' : ''}" data-skin="${k}" aria-pressed="${cur === k}" aria-label="${name}${locked ? ' (Plus)' : ''}"><b>₪</b><span>${name}</span>${locked ? `<i class="skin-lock" aria-hidden="true">${icon('lock', 's')}</i>` : ''}</button>`).join('')}
+      ${photoTile(cur === PHOTO, locked)}
     </div>`;
+  // the photo tile: the photo itself once there is one, a camera before
+  function photoTile(on, locked) {
+    const has = !!photo();
+    return `<button class="skin-tile sk-photo-tile ${has ? 'has' : ''} ${on ? 'on' : ''}" data-skin="${PHOTO}" aria-pressed="${on}" aria-label="תמונה שלי${locked ? ' (Plus)' : on ? ' (לחיצה מחליפה את התמונה)' : ''}" ${has ? `style="--sk-photo:url('${photo()}')"` : ''}>${has ? '<b>₪</b>' : icon('camera')}<span>${on ? 'החלפה' : 'תמונה שלי'}</span>${locked ? `<i class="skin-lock" aria-hidden="true">${icon('lock', 's')}</i>` : ''}</button>`;
+  }
   /** A tap on a skin: applies it, or offers Plus when it is locked. */
   Plus.pickSkin = async (k) => {
     if (k && !Plus.active()) { Plus.sheet(); return false; }
+    // the photo: chosen now when there is none (or the one on the card is tapped again: another one)
+    if (k === PHOTO && (!photo() || Plus.skin() === PHOTO)) return Plus.pickPhoto();
     await Store.setSettings((s) => { s.skin = k || ''; });
     App.applyTheme();
     if (root.Fx) root.Fx.play('pop');
+    return true;
+  };
+
+  /** Opens the phone's photo picker (called straight from the tap, as browsers ask) and puts the photo on the card. */
+  Plus.pickPhoto = () => new Promise((resolve) => {
+    // in the page (a detached input gives an empty file in some browsers, no change event on iPhone)
+    const inp = document.createElement('input');
+    inp.type = 'file';
+    inp.accept = 'image/*';
+    inp.hidden = true;
+    document.body.appendChild(inp);
+    let done = false;
+    const end = (v) => { if (done) return; done = true; inp.remove(); window.removeEventListener('focus', back); resolve(v); };
+    inp.addEventListener('change', async () => { const f = inp.files && inp.files[0]; if (!f) { end(false); return; } done = true; inp.remove(); window.removeEventListener('focus', back); resolve(await Plus.setPhoto(f)); });
+    inp.addEventListener('cancel', () => end(false));
+    // closed without a choice where there is no "cancel" event: back in the page and still nothing
+    const back = () => setTimeout(() => { if (!done && !(inp.files && inp.files.length)) end(false); }, 1500);
+    window.addEventListener('focus', back);
+    inp.click();
+  });
+  async function toCanvas(file) {
+    const bmp = await createImageBitmap(file);
+    const k = Math.min(1, 1200 / Math.max(bmp.width, bmp.height));
+    const c = document.createElement('canvas');
+    c.width = Math.max(1, Math.round(bmp.width * k)); c.height = Math.max(1, Math.round(bmp.height * k));
+    c.getContext('2d').drawImage(bmp, 0, 0, c.width, c.height);
+    if (bmp.close) bmp.close();
+    return c;
+  }
+  let nsfw = null;
+  /** true when the picture is fine for the card (an on-phone model; the picture goes nowhere). */
+  Plus.imageOk = async function (canvas) {
+    await App.loadLib(NSFW_LIB);
+    if (!nsfw) nsfw = await root.nsfwjs.load(NSFW_MODEL);
+    const p = await nsfw.classify(canvas);
+    const v = (n) => +((p.find((x) => x.className === n) || {}).probability) || 0;
+    return v('Porn') + v('Hentai') < 0.45 && v('Sexy') < 0.75;
+  };
+  Plus.setPhoto = async function (file) {
+    if (!file || !/^image\//.test(file.type)) { UI.invalid('צריך לבחור תמונה'); return false; }
+    if (file.size > 30 * 1024 * 1024) { UI.invalid('התמונה גדולה מדי'); return false; }
+    UI.toast('בודקים את התמונה… 🔍');
+    let canvas;
+    try { canvas = await toCanvas(file); } catch (e) { console.warn('photo', e); UI.invalid('לא הצלחנו לפתוח את התמונה. אפשר לנסות אחרת'); return false; }
+    let ok;
+    try { ok = await Plus.imageOk(canvas); } catch (e) { console.warn('image check', e); UI.invalid('כדי לבדוק את התמונה צריך אינטרנט (רק בפעם הראשונה). נסו שוב כשיש חיבור'); return false; }
+    if (!ok) { UI.invalid('התמונה הזאת לא מתאימה לכרטיס 🙂 אפשר לבחור תמונה אחרת'); return false; }
+    await Store.setMeta({ skinPhoto: canvas.toDataURL('image/jpeg', 0.82) });
+    await Store.setSettings((st) => { st.skin = PHOTO; });
+    App.applyTheme();
+    App.rerender();
+    if (root.Fx) root.Fx.celebrate('small');
+    UI.toast('התמונה על כרטיס השכר ✨');
     return true;
   };
 
@@ -225,7 +313,7 @@
       const on = Plus.active();
       const play = inPlayApp();
       const web = Plus.webShop();
-      const price = Plus.price || cfg().price || '';
+      const price = Plus.priceText();
       const trial = Plus.inTrial();
       el.querySelector('[data-plus-body]').innerHTML = `
         ${App.mascotSays ? App.mascotSays(on ? 'party' : 'happy', on ? 'תודה שאת/ה איתנו! 💜' : 'רוצים לפרגן לשעתי ולקבל עיצובים מיוחדים?', { size: 64 }) : ''}
@@ -238,13 +326,16 @@
           <div>${icon('star', 's')}<span><b>תודה ענקית ממני</b><small>עוזר להמשיך לפתח, ולהשאיר את האפליקציה בלי פרסומות</small></span></div>
           <div>${icon('check', 's')}<span><b>כל השאר נשאר חינם</b><small>משמרות, חישוב שכר, זכויות, בדיקת תלוש, דוחות ומשחקים</small></span></div>
         </div>
-        ${on && !trial ? `<div class="plus-done">${icon('check')} ${owned() ? 'Shaati Plus פעיל אצלך' : 'תצוגה מקדימה של מנהל'}</div>`
+        ${on && !trial ? `<div class="plus-done">${icon('check')} ${owned() ? 'Shaati Plus פעיל אצלך' : 'תצוגה מקדימה של מנהל'}</div>
+            ${owned() && Plus.monthly ? `<button class="btn text sm block" data-plus-manage>${icon('wallet', 's')} ניהול או ביטול המנוי</button>` : ''}`
           : `${trial ? `<div class="plus-done trial">${icon('sparkle')} תקופת ניסיון · ${trialLeft()}</div>` : ''}
              ${Plus.canTrial() ? `<button class="btn big block plus-buy" data-plus-trial>${icon('sparkle')} לנסות ${TRIAL_DAYS} ימים בחינם</button>` : ''}
-             <button class="btn ${Plus.canTrial() ? 'tonal plus-buy2' : 'big plus-buy'} block" data-plus-buy ${(play ? Plus.available : web) || sim() ? '' : 'disabled'}>${icon(Plus.canTrial() ? 'star' : 'sparkle', Plus.canTrial() ? 's' : '')} ${trial ? 'קנייה ושמירה' : 'קנייה חד-פעמית'}${price ? ' · ' + esc(price) : ''}</button>
+             <button class="btn ${Plus.canTrial() ? 'tonal plus-buy2' : 'big plus-buy'} block" data-plus-buy ${(play ? Plus.available : web) || sim() ? '' : 'disabled'}>${icon(Plus.canTrial() ? 'star' : 'sparkle', Plus.canTrial() ? 's' : '')} ${trial ? 'להמשיך עם Plus' : buyWord()}${price ? ' · ' + esc(price) : ''}</button>
              ${Plus.workPrice() ? `<div class="tiny plus-work">${esc(Plus.workPrice())}</div>` : ''}
              <div class="plus-pay">${play ? '<span>Google Play</span><span>כרטיס אשראי</span><span>Google Pay</span><span>PayPal</span>' : '<span>כרטיס אשראי</span><span>Apple Pay</span><span>Google Pay</span><span>PayPal</span>'}</div>
-             <div class="tiny muted plus-note">${play ? 'תשלום אחד דרך Google Play, בלי מנוי ובלי חיובים נוספים.' : 'תשלום אחד בדף תשלום מאובטח של Lemon Squeezy, בלי מנוי. אחרי התשלום מגיע במייל קוד הפעלה.'} מתחת לגיל 18: בהסכמת הורה.</div>`}
+             <div class="tiny muted plus-note">${Plus.monthly
+                ? (play ? 'מנוי חודשי דרך Google Play, מתחדש כל חודש. מבטלים בכל רגע ב-⁠Google Play › תשלומים ומינויים, ו-⁠Plus נשאר עד סוף החודש ששולם.' : 'מנוי חודשי בדף תשלום מאובטח של Lemon Squeezy, מתחדש כל חודש. מבטלים בכל רגע מהקישור שבמייל. אחרי התשלום מגיע במייל קוד הפעלה.')
+                : (play ? 'תשלום אחד דרך Google Play, בלי מנוי ובלי חיובים נוספים.' : 'תשלום אחד בדף תשלום מאובטח של Lemon Squeezy, בלי מנוי. אחרי התשלום מגיע במייל קוד הפעלה.')} מתחת לגיל 18: בהסכמת הורה.</div>`}
         ${(!on || trial) && !play && web ? `<div class="card plus-code ${opened ? 'hot' : ''}"><label class="field"><span class="lbl">${opened ? 'שילמת? מדביקים כאן את הקוד מהמייל' : 'כבר יש לי קוד מהמייל'}</span>
             <input class="input" id="plus-key" dir="ltr" autocomplete="off" spellcheck="false" placeholder="XXXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXXXX"></label>
             <button class="btn tonal block" data-plus-redeem>${icon('key', 's')} הפעלה</button></div>` : ''}
@@ -267,6 +358,7 @@
           else if (b.hasAttribute('data-plus-buy')) run(async () => { const ok = await Plus.buy(); if (!ok && !inPlayApp() && Plus.webShop()) { opened = true; return true; } return ok; });
           else if (b.hasAttribute('data-plus-redeem')) run(() => Plus.redeem((el.querySelector('#plus-key') || {}).value));
           else if (b.hasAttribute('data-plus-restore')) run(async () => { await Plus.restore(); return true; });
+          else if (b.hasAttribute('data-plus-manage')) root.open(manageUrl(), '_blank', 'noopener');
           else if (b.dataset.skin !== undefined) {
             if (b.dataset.skin && !Plus.active()) { UI.closeTop(); setTimeout(() => Plus.design(b.dataset.skin), 320); return; }
             run(() => Plus.pickSkin(b.dataset.skin));
@@ -309,13 +401,22 @@
     UI.toast(`${TRIAL_DAYS} ימים של Shaati Plus במתנה ✨`);
     return true;
   };
-  /** The price as minutes of this user's own work ("≈ 17 דק׳ של העבודה שלך"). */
+  /** This user's average pay per hour: the last three months of shifts done (Shabbat, overtime and all), else the job's rate. */
+  function avgHourly() {
+    const from = Date.now() - 92 * DAY;
+    let wage = 0, min = 0;
+    if (App.model) for (const r of App.model.results.values()) if (r.status === 'done' && r.start >= from && r.paidMin > 0) { wage += +r.wage || 0; min += r.paidMin; }
+    if (min >= 120 && wage > 0) return wage / (min / 60);
+    const role = App.roles && App.roles()[0];
+    return role ? root.Engine.roleRate(role, root.U.todayKey()) : 0;
+  }
+  Plus.avgHourly = avgHourly;
+  /** The price as this user's own work: "≈ 10 דק׳ מהעבודה שלך בחודש (לפי ממוצע של ₪41.20 לשעה)". */
   Plus.workPrice = () => {
     const p = +Plus.priceValue || +(root.PAY_CONFIG || {}).price || 0;
-    const role = App.roles && App.roles()[0];
-    const rate = role ? root.Engine.roleRate(role, root.U.todayKey()) : 0;
+    const rate = avgHourly();
     if (!(p > 0 && rate > 0) || !root.Games) return '';
-    return `≈ ${root.Games.workTime(p / rate)} של העבודה שלך`;
+    return `≈ ${root.Games.workTime(p / rate)} מהעבודה שלך${Plus.monthly ? ' בחודש' : ''} (לפי ממוצע של ${root.U.money(rate)} לשעה)`;
   };
 
   /* ---------------- free allowances ----------------
@@ -351,7 +452,7 @@
   Plus.limitSheet = function (id) {
     const q = QUOTA[id];
     const back = q.per === 'day' ? 'מחר' : `ב-1 ב${root.U.HEB_MONTHS[(+root.U.todayKey().slice(5, 7)) % 12]}`;
-    const price = Plus.price || cfg().price || '';
+    const price = Plus.priceText();
     UI.openSheet({
       title: 'נגמרה המכסה החינמית',
       cls: 'plus-sheet limit-sheet',
@@ -361,7 +462,7 @@
           <div>${icon('check', 's')}<span><b>כל השאר נשאר חינם</b><small>משמרות, חישוב שכר, זכויות, בדיקת תלוש, דוחות במסך, משחקים, גיבוי וסנכרון</small></span></div>
         </div>
         ${Plus.canTrial() ? `<button class="btn big block plus-buy" data-limit-trial>${icon('sparkle')} לנסות ${TRIAL_DAYS} ימים בחינם</button>` : `<button class="btn big block plus-buy" data-limit-buy>${icon('sparkle')} Shaati Plus${price ? ' · ' + esc(price) : ''}</button>`}
-        ${Plus.workPrice() ? `<div class="tiny plus-work">${esc(Plus.workPrice())} · תשלום אחד, בלי מנוי</div>` : ''}
+        ${Plus.workPrice() ? `<div class="tiny plus-work">${esc(Plus.workPrice())} · ${termsWord()}</div>` : ''}
         <button class="btn text block" data-limit-later>${back}, תודה</button>`,
       onMount: (el) => {
         el.addEventListener('click', async (e) => {
@@ -393,7 +494,7 @@
     };
     const draw = (el) => {
       const on = Plus.active();
-      const price = Plus.price || cfg().price || '';
+      const price = Plus.priceText();
       el.querySelector('[data-design]').innerHTML = `
         <div class="design-prev ${sel ? 'sk-' + sel : ''}" aria-hidden="true" inert>${preview()}</div>
         <div class="skin-pick design-pick">
@@ -401,10 +502,10 @@
           ${Object.entries(SKINS).map(([k, name]) => `<button class="skin-tile sk-${k} ${sel === k ? 'on' : ''}" data-pick="${k}" aria-pressed="${sel === k}"><b>₪</b><span>${name}</span></button>`).join('')}
         </div>
         ${on ? `<button class="btn big block" data-design-save>${icon('check')} שמירה</button>
-            ${Plus.inTrial() ? `<div class="tiny muted plus-note">תקופת ניסיון · ${trialLeft()} · <button class="btn text sm" data-design-buy>לקנות ולשמור</button></div>` : ''}`
+            ${Plus.inTrial() ? `<div class="tiny muted plus-note">תקופת ניסיון · ${trialLeft()} · <button class="btn text sm" data-design-buy>להמשיך עם Plus</button></div>` : ''}`
           : `${Plus.canTrial() ? `<button class="btn big block plus-buy" data-design-trial>${icon('sparkle')} לנסות ${TRIAL_DAYS} ימים בחינם</button>` : ''}
-             <button class="btn ${Plus.canTrial() ? 'tonal' : 'big plus-buy'} block" data-design-buy ${buyable() ? '' : 'disabled'}>${icon('star', 's')} קנייה חד-פעמית${price ? ' · ' + esc(price) : ''}</button>
-             <div class="tiny muted plus-note">${Plus.workPrice() ? esc(Plus.workPrice()) + ' · ' : ''}בלי מנוי · כל השאר נשאר חינם</div>`}`;
+             <button class="btn ${Plus.canTrial() ? 'tonal' : 'big plus-buy'} block" data-design-buy ${buyable() ? '' : 'disabled'}>${icon('star', 's')} ${buyWord()}${price ? ' · ' + esc(price) : ''}</button>
+             <div class="tiny muted plus-note">${Plus.workPrice() ? esc(Plus.workPrice()) + ' · ' : ''}${termsWord()} · כל השאר נשאר חינם</div>`}`;
     };
     UI.openSheet({
       title: 'עיצוב כרטיס השכר',
@@ -448,7 +549,7 @@
     if (S.meta.plusTrial && !S.meta.plusTrialEnd) {
       const name = SKINS[S.settings.skin] || 'המיוחד';
       return `<div class="card plus-nudge sk-${SKINS[S.settings.skin] ? S.settings.skin : 'gold'}">${close}
-        <div class="pn-t">הניסיון של Shaati Plus הסתיים</div><div class="pn-s">להשאיר את הכרטיס ב${esc(name)}? תשלום אחד, בלי מנוי${Plus.workPrice() ? ' · ' + esc(Plus.workPrice()) : ''}.</div>
+        <div class="pn-t">הניסיון של Shaati Plus הסתיים</div><div class="pn-s">להשאיר את הכרטיס ב${esc(name)}? ${Plus.priceText() ? esc(Plus.priceText()) + ', ' : ''}${termsWord()}${Plus.workPrice() ? ' · ' + esc(Plus.workPrice()) : ''}.</div>
         <div class="pn-a"><button class="btn sm" data-act="plus-open">${icon('star', 's')} להשאיר</button><button class="btn text sm" data-act="plus-nudge-x">לא, תודה</button></div></div>`;
     }
     if (!sim()) {
@@ -457,7 +558,7 @@
       if ((S.meta.activeDays || 0) < 4 || done < 5 || S.settings.demo) return '';
     }
     return `<div class="card plus-nudge sk-galaxy">${close}
-      <div class="pn-t">✨ כרטיס השכר שלך יכול להיראות ככה</div><div class="pn-s">${Object.keys(SKINS).length} עיצובים, רקע בטבלת האלופים, ניתוח וייצוא בלי הגבלה. ${Plus.canTrial() ? `אפשר לנסות ${TRIAL_DAYS} ימים בחינם.` : 'תשלום אחד, בלי מנוי.'}</div>
+      <div class="pn-t">✨ כרטיס השכר שלך יכול להיראות ככה</div><div class="pn-s">${Object.keys(SKINS).length} עיצובים, רקע בטבלת האלופים, ניתוח וייצוא בלי הגבלה. ${Plus.canTrial() ? `אפשר לנסות ${TRIAL_DAYS} ימים בחינם.` : (Plus.priceText() ? esc(Plus.priceText()) + ', ' : '') + termsWord() + '.'}</div>
       <div class="pn-a"><button class="btn sm" data-act="plus-design">${icon('palette', 's')} ${Plus.canTrial() ? 'לנסות על הכרטיס שלי' : 'לראות'}</button><button class="btn text sm" data-act="plus-nudge-x">לא עכשיו</button></div></div>`;
   };
   /** ✕, "no, thanks" or "not now": away for 24 hours (the end-of-trial card gives way to the usual one). */

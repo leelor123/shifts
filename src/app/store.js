@@ -151,7 +151,9 @@
   const DEVICE_META = ['cloudUid', 'cloudEmail', 'cloudName', 'cloudPhoto', 'cloudReady', 'lastSync', 'designV2', 'chat', 'chatShareData',
     'installId', 'statsSentAt', 'activeDays', 'firstActiveDay', 'lastActiveDay',
     // Shaati Plus is checked on each phone (Google Play / the purchase code): never taken from a backup file
-    'plus', 'plusInst', 'plusPreview', 'plusSeen', 'plusTrial', 'plusTrialEnd', 'plusNudge', 'plusUse', 'plusWall', 'plusSim'];
+    'plus', 'plusInst', 'plusPreview', 'plusSeen', 'plusTrial', 'plusTrialEnd', 'plusNudge', 'plusUse', 'plusWall', 'plusSim',
+    'review', // when this phone was last asked for a rating
+    'skinPhoto']; // the pay card's own photo (Plus): this phone only
   const SYNC_META = ['pendingDeletes', 'settingsDirty', 'activeDirty', 'activeUpdatedAt'];
   /** Values that end up inside HTML attributes must have a safe shape. */
   function safeRecord(store, r) {
@@ -392,7 +394,8 @@
       app: 'shiftpay', schemaVersion: SCHEMA_VERSION, appVersion: root.APP_VERSION, exportedAt: new Date().toISOString(),
       // keys stay out of files: the AI key, and the Shaati Plus purchase code (a shared backup would give it away)
       settings: Object.assign({}, S.settings, { ai: Object.assign({}, S.settings.ai, { apiKey: '' }), lock: Object.assign({}, S.settings.lock), plusKey: '' }),
-      meta: Object.fromEntries(Object.entries(S.meta).filter(([k]) => !/^plus/.test(k))), activeShift: S.activeShift,
+      // (and not the pay card's own photo: big, and private if the file is shared)
+      meta: Object.fromEntries(Object.entries(S.meta).filter(([k]) => !/^plus/.test(k) && k !== 'skinPhoto')), activeShift: S.activeShift,
     };
     for (const s of LIST_STORES) out[s] = S[s];
     if (includeFiles) {

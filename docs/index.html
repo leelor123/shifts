@@ -2,7 +2,7 @@
 <html lang="he" dir="rtl">
 <head>
 <meta charset="utf-8">
-<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'sha256-FG0xnfgk+yf6Qhfv1urCIagcVC6Ph6vReKUQ3eplrbM=' https://www.gstatic.com https://apis.google.com https://cdnjs.cloudflare.com https://cdn.jsdelivr.net 'wasm-unsafe-eval'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com data:; img-src 'self' data: blob: https:; connect-src 'self' https: wss:; frame-src https://shiftpay-70ab6.firebaseapp.com https://accounts.google.com https://apis.google.com https://*.google.com; worker-src 'self' blob: https://cdnjs.cloudflare.com https://cdn.jsdelivr.net; media-src 'self' data: blob:; manifest-src 'self'; object-src 'none'; base-uri 'self'; form-action 'self'">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'sha256-UNkxQDUJcHgRhOf8jGhBgW36AQa2NL7yVD7w4X8M4nc=' https://www.gstatic.com https://apis.google.com https://cdnjs.cloudflare.com https://cdn.jsdelivr.net 'wasm-unsafe-eval'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com data:; img-src 'self' data: blob: https:; connect-src 'self' https: wss:; frame-src https://shiftpay-70ab6.firebaseapp.com https://accounts.google.com https://apis.google.com https://*.google.com; worker-src 'self' blob: https://cdnjs.cloudflare.com https://cdn.jsdelivr.net; media-src 'self' data: blob:; manifest-src 'self'; object-src 'none'; base-uri 'self'; form-action 'self'">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="theme-color" content="#0d2b6b">
 <meta name="description" content="מעקב משמרות וחישוב שכר אישי: שבתות, חגים, שעות נוספות, נסיעות, נטו משוער וניתוח תלושים — נשמר בחשבון שלך ועובד גם בלי אינטרנט.">
@@ -1904,6 +1904,10 @@ body.fx .recap-card:active { transform: scale(.98); }
 .sk-neon, html[data-skin="neon"] .home-hero { --h: 300; --grad-hero: radial-gradient(80% 60% at 100% 0%, rgba(255, 0, 170, .35), transparent 60%), radial-gradient(80% 60% at 0% 100%, rgba(0, 229, 255, .28), transparent 60%), linear-gradient(135deg, #12052e 0%, #1d0b4a 55%, #0a0220 100%); }
 .sk-ice, html[data-skin="ice"] .home-hero { --h: 200; --grad-hero: radial-gradient(100% 70% at 85% 0%, rgba(255, 255, 255, .08), transparent 60%), linear-gradient(135deg, #0a3350 0%, #134f72 55%, #082640 100%); }
 .sk-galaxy, html[data-skin="galaxy"] .home-hero { --h: 262; --grad-hero: radial-gradient(1.5px 1.5px at 12% 22%, rgba(255, 255, 255, .9), transparent), radial-gradient(1px 1px at 64% 14%, rgba(255, 255, 255, .7), transparent), radial-gradient(1.5px 1.5px at 38% 78%, rgba(255, 255, 255, .8), transparent), radial-gradient(1px 1px at 90% 58%, rgba(255, 255, 255, .6), transparent), radial-gradient(60% 50% at 80% 20%, rgba(180, 90, 255, .3), transparent 70%), radial-gradient(50% 40% at 20% 85%, rgba(60, 140, 255, .25), transparent 70%), linear-gradient(135deg, #120a2e 0%, #2a1260 55%, #0a0618 100%); }
+/* a photo of one's own: darkened from top to bottom so the card's white text stays readable on any picture */
+.sk-photo-tile.has, html[data-skin="photo"] .home-hero { --h: 225; --grad-hero: linear-gradient(180deg, rgba(8, 10, 28, .5) 0%, rgba(8, 10, 28, .42) 45%, rgba(8, 10, 28, .7) 100%), var(--sk-photo) center / cover no-repeat, #1c1f3a; }
+.sk-photo-tile:not(.has) { background: var(--surface-2); color: var(--on-surface); border: 1.5px dashed var(--outline); box-shadow: none; }
+.sk-photo-tile:not(.has) svg { width: 22px; height: 22px; color: var(--brand); }
 .skin-pick { display: grid; grid-template-columns: repeat(auto-fill, minmax(84px, 1fr)); gap: 8px; margin-bottom: 16px; }
 .skin-tile { position: relative; display: grid; align-content: space-between; justify-items: start; gap: 6px; min-height: 64px; padding: 8px 10px; border-radius: 14px; border: 0; color: #fff; text-align: start; cursor: pointer; background: var(--grad-hero); box-shadow: var(--sh-1); }
 .skin-tile b { font: 700 1.1rem var(--display); }
@@ -2268,7 +2272,7 @@ body:not(.fx) .start-halo { animation: none; opacity: 0; }
    scrolling - also when the touch began while a fling was still settling, when the page is not allowed to hold
    the gesture from its touchmove. A finger moving up scrolls as always (pan-down), rows still scroll sideways
    (pan-x; a sideways row is a scroller of its own, so it is named too), pinch-zoom stays. */
-html.ptr-top #view, html.ptr-top #view .chips { touch-action: pan-x pan-down pinch-zoom; }
+html.ptr-top #view, html.ptr-top #view .chips, html.ptr-top #view .set-chips { touch-action: pan-x pan-down pinch-zoom; }
 
 /* the shift editor: under the break field, the law's break when it is left empty, or a warning (1.18) */
 .brk-note { display: flex; align-items: flex-start; gap: 6px; margin: 0 4px 10px; font-size: .82rem; line-height: 1.45; color: var(--on-surface-var); }
@@ -2391,6 +2395,49 @@ body.fx .cal-day.hello, body.fx .week-row.hello { animation: cal-hello .55s cubi
 .input.unclean, textarea.unclean { border-color: var(--danger, #d93a3a) !important; }
 .unclean-hint { font-size: .78rem; color: var(--danger, #d93a3a); margin: 4px 4px 0; }
 
+/* ---------- asking for a rating (review.js) ---------- */
+.rv { display: flex; flex-direction: column; align-items: center; text-align: center; padding: 0 4px 6px; }
+.rv .rv-mascot { margin: -4px 0 2px; }
+.rv-stars { display: flex; gap: 8px; margin: 2px 0 12px; direction: ltr; }
+.rv-star { display: grid; place-items: center; width: 42px; height: 42px; will-change: transform; animation: rv-pop .55s cubic-bezier(.34, 1.56, .64, 1) both; animation-delay: calc(.18s + var(--i) * .09s); }
+.rv-star svg { width: 38px; height: 38px; fill: #ffc83d; stroke: #d99a00; stroke-width: 1.4; filter: drop-shadow(0 3px 6px rgba(217, 154, 0, .35)); }
+@keyframes rv-pop { 0% { transform: scale(0) rotate(-40deg); opacity: 0; } 60% { transform: scale(1.25) rotate(8deg); opacity: 1; } 100% { transform: none; opacity: 1; } }
+.rv-s { margin: 0 0 18px; color: var(--on-surface-var); line-height: 1.55; max-width: 34ch; }
+.rv .btn { margin-bottom: 8px; }
+.rv .rv-go { background: var(--grad-money); color: #2b1a00; }
+.rv .rv-go svg { fill: currentColor; }
+@media (prefers-reduced-motion: reduce) { .rv-star { animation: none; } }
+
+/* ---------- importing an hours report (import.js) ---------- */
+.imp-pick { margin: 6px 0 10px; }
+.imp-kinds { display: flex; flex-wrap: wrap; justify-content: center; gap: 6px; margin-bottom: 14px; }
+.imp-kinds span { display: inline-flex; align-items: center; gap: 5px; padding: 4px 10px; border-radius: 999px; background: var(--surface-2); color: var(--on-surface-var); font-size: .8rem; font-weight: 600; }
+.imp-kinds svg { width: 14px; height: 14px; }
+.imp-paste { margin: 0 0 12px; border: 1px solid var(--line); border-radius: 16px; padding: 10px 12px; background: var(--surface-1); }
+.imp-paste summary { cursor: pointer; font-weight: 700; display: flex; align-items: center; gap: 8px; min-height: 32px; }
+.imp-paste textarea { margin: 10px 0; direction: ltr; text-align: left; font-variant-numeric: tabular-nums; }
+.imp-privacy { display: flex; align-items: center; gap: 6px; justify-content: center; }
+.imp-busy { display: flex; flex-direction: column; align-items: center; gap: 14px; padding: 28px 8px; text-align: center; }
+.imp-bar { width: 70%; height: 6px; border-radius: 3px; background: var(--surface-3); overflow: hidden; }
+.imp-bar i { display: block; width: 40%; height: 100%; border-radius: 3px; background: var(--grad-brand, var(--brand)); animation: imp-bar 1.1s ease-in-out infinite; }
+@keyframes imp-bar { 0% { transform: translateX(160%); } 100% { transform: translateX(-260%); } }
+.imp-head { display: flex; align-items: center; justify-content: space-between; margin: 6px 2px 8px; }
+.imp-list { display: flex; flex-direction: column; gap: 6px; padding-bottom: 8px; }
+.imp-row { display: flex; align-items: center; gap: 12px; width: 100%; min-height: 58px; padding: 8px 12px; border-radius: 16px; border: 1.5px solid var(--line); background: var(--surface-1); color: var(--on-surface); text-align: start; cursor: pointer; font: inherit; transition: background-color .18s, border-color .18s, opacity .18s, transform .2s var(--pop); opacity: .62; }
+.imp-row.on { opacity: 1; border-color: var(--brand); background: var(--brand-soft); }
+.imp-row:active { transform: scale(.98); }
+.imp-check { flex: none; width: 26px; height: 26px; border-radius: 8px; border: 2px solid var(--outline); display: grid; place-items: center; transition: background-color .18s, border-color .18s; }
+.imp-check svg { width: 15px; height: 15px; color: #fff; stroke-width: 3; transform: scale(0); transition: transform .26s var(--pop); }
+.imp-row.on .imp-check { background: var(--brand); border-color: var(--brand); }
+.imp-row.on .imp-check svg { transform: scale(1); }
+.imp-d { flex: 1; display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+.imp-d small { color: var(--on-surface-var); font-size: .8rem; }
+.imp-h { flex: none; display: flex; flex-direction: column; align-items: flex-end; gap: 3px; font-weight: 700; font-variant-numeric: tabular-nums; }
+.imp-h .tag { font-style: normal; font-size: .68rem; }
+.imp-tips ul { margin: 6px 0 0; padding-inline-start: 18px; line-height: 1.6; }
+.imp-note { display: flex; gap: 6px; align-items: center; margin: -4px 2px 10px; }
+@media (prefers-reduced-motion: reduce) { .imp-bar i { animation-duration: 3s; } }
+
 </style>
 </head>
 <body>
@@ -2418,7 +2465,7 @@ body.fx .cal-day.hello, body.fx .week-row.hello { animation: cal-hello .55s cubi
 <noscript><div style="padding:24px;font-family:sans-serif">האפליקציה דורשת JavaScript.</div></noscript>
 <script>
 window.APP_VERSION = '1.20.0';
-window.APP_BUILD = '1.20.0-b96c0386';
+window.APP_BUILD = '1.20.0-8ec23fce';
 /* ---- core/util.js ---- */
 /* ============================================================
  * util.js — date/time helpers and formatting.
@@ -2649,6 +2696,129 @@ window.APP_BUILD = '1.20.0-b96c0386';
   }
 
   root.Clean = { isClean, norm };
+})(typeof window !== 'undefined' ? window : globalThis);
+
+/* ---- core/timesheet.js ---- */
+/* ============================================================
+ * timesheet.js — reading an hours report someone already has (from the employer's clock system, an Excel
+ * sheet, a PDF, a photo, a note) into shifts.
+ *
+ * The report is read line by line (a spreadsheet row is a line). A line with a date is a shift when it
+ * also has:
+ *   - two times ("08:00 16:30", "8:00-16:30", "16:30 08:00" when a clock prints the exit first is read in
+ *     order of the day: the earlier one starts), the first two in the line; an end before the start is
+ *     the next morning (a night shift);
+ *   - one time and a number of hours ("08:00 ... 8.5"): it ends that many hours later;
+ *   - only a number of hours ("8.5", "8:30" as a total is a time, so only decimals count here): the start
+ *     is not known — the shift is kept with hours only, and the screen asks when such shifts start.
+ * Dates: 14/10/2026, 14.10.26, 14-10-2026, 2026-10-14, and 14/10 or 14.10 without a year (only when the
+ * line also has times or hours, so "8.5" alone is never a date). Without a year: the latest such date that
+ * is not in the future. Days come before months (as in Israel). Header and total lines (סה"כ, total) are
+ * left out. Times may be "8:00:00", "8:00 AM", "20.30" inside a range ("08.30-16.00").
+ * ============================================================ */
+(function (root) {
+  'use strict';
+  const pad = (n) => String(n).padStart(2, '0');
+  const key = (y, m, d) => `${y}-${pad(m)}-${pad(d)}`;
+  const validDate = (y, m, d) => m >= 1 && m <= 12 && d >= 1 && d <= new Date(y, m, 0).getDate() && y >= 2000 && y <= 2100;
+  const toMin = (t) => +t.slice(0, 2) * 60 + +t.slice(3, 5);
+  const fromMin = (m) => { m = ((m % 1440) + 1440) % 1440; return pad(Math.floor(m / 60)) + ':' + pad(m % 60); };
+
+  const TOTAL = /סה["״']?כ|סיכום|total|sum\b/i;
+  // a time: 8:00, 08:00:00, 8:00 PM; a range may also use dots (08.30-16.00)
+  const TIME = /(?<![\d:.])(\d{1,2}):(\d{2})(?::\d{2})?(?:\s*([AaPp])\.?[Mm]\.?)?(?![\d])/g;
+  const RANGE_DOT = /(?<![\d.:])(\d{1,2})\.(\d{2})\s*[-–—]\s*(\d{1,2})\.(\d{2})(?![\d.])/;
+  const DATE_FULL = /(?<!\d)(\d{1,2})[./-](\d{1,2})[./-](\d{2}|\d{4})(?!\d)/;
+  const DATE_ISO = /(?<!\d)(\d{4})-(\d{1,2})-(\d{1,2})(?!\d)/;
+  const DATE_SHORT = /(?<![\d.:])(\d{1,2})[./](\d{1,2})(?![\d.:/])/;
+  const HOURS = /(?<![\d:./-])(\d{1,2}(?:\.\d{1,2})?)(?![\d:./-])/g;
+
+  function hm(h, m, ap) {
+    h = +h; m = +m;
+    if (ap) { const p = ap.toLowerCase() === 'p'; if (h === 12) h = p ? 12 : 0; else if (p) h += 12; }
+    return h < 24 && m < 60 ? pad(h) + ':' + pad(m) : null;
+  }
+  /** The latest date with this day and month that is not after today. */
+  function yearFor(m, d, today) {
+    const ty = +today.slice(0, 4);
+    for (const y of [ty, ty - 1]) if (validDate(y, m, d) && key(y, m, d) <= today) return y;
+    return ty - 1;
+  }
+
+  /**
+   * text → { rows: [{ date, start, end, hours, overnight, line, n }], noStart: count of rows with hours only,
+   *          guessedYear: true when some dates had no year }
+   */
+  function parse(text, opts) {
+    opts = opts || {};
+    const today = opts.today || new Date().toISOString().slice(0, 10);
+    const rows = [];
+    let guessedYear = false;
+    let exitFirst = false; // a header line with the exit column before the entry column
+    String(text || '').split(/\r?\n/).forEach((raw, n) => {
+      const line = raw.replace(/‎|‏|‪|‫|‬|⁦|⁧|⁨|⁩/g, '').replace(/\s+/g, ' ').trim();
+      if (!line || TOTAL.test(line)) return;
+      const iIn = line.search(/כניסה|התחלה|\bin\b|\bstart\b/i), iOut = line.search(/יציאה|סיום|\bout\b|\bend\b/i);
+      if (iIn >= 0 && iOut >= 0 && !/\d{1,2}[:.]\d{2}/.test(line)) { exitFirst = iOut < iIn; return; }
+      // the times first (so a time is never read as a date)
+      let rest = line;
+      const times = [];
+      const dot = rest.match(RANGE_DOT);
+      if (dot) {
+        const a = hm(dot[1], dot[2]), b = hm(dot[3], dot[4]);
+        if (a && b) { times.push(a, b); rest = rest.replace(dot[0], ' '); }
+      }
+      rest = rest.replace(TIME, (all, h, m, ap) => { const t = hm(h, m, ap); if (t) times.push(t); return ' '; });
+      // the date
+      let date = null, ym = null;
+      let mm = rest.match(DATE_ISO);
+      if (mm && validDate(+mm[1], +mm[2], +mm[3])) { date = key(+mm[1], +mm[2], +mm[3]); rest = rest.replace(mm[0], ' '); }
+      if (!date && (mm = rest.match(DATE_FULL))) {
+        let y = +mm[3]; if (y < 100) y += 2000;
+        if (validDate(y, +mm[2], +mm[1])) { date = key(y, +mm[2], +mm[1]); rest = rest.replace(mm[0], ' '); }
+      }
+      // hours as a number ("8.5", "8"), not part of anything else
+      const nums = [];
+      rest.replace(HOURS, (all, v) => { nums.push(+v); return all; });
+      if (!date && (mm = rest.match(DATE_SHORT)) && (times.length || nums.length)) {
+        const d = +mm[1], m = +mm[2];
+        const y = yearFor(m, d, today);
+        if (validDate(y, m, d)) { date = key(y, m, d); ym = true; rest = rest.replace(mm[0], ' '); nums.length = 0; rest.replace(HOURS, (all, v) => { nums.push(+v); return all; }); }
+      }
+      if (!date) return;
+      const hoursNum = nums.find((v) => v >= 0.5 && v <= 24 && (v % 1 !== 0 || v <= 16));
+      let start = null, end = null, hours = null;
+      if (times.length >= 2) {
+        start = times[0]; end = times[1];
+        if (exitFirst) { const t = start; start = end; end = t; }
+        // the exit printed before the entry, without a header to say so: a "night" of more than 12 hours that
+        // is a normal day the other way round (17:00 08:00 → 08:00-17:00; 22:00 06:00 stays a night)
+        const d1 = (toMin(end) - toMin(start) + 1440) % 1440;
+        const d2 = (toMin(start) - toMin(end) + 1440) % 1440;
+        if (toMin(end) < toMin(start) && d1 > 12 * 60 && d2 <= 12 * 60) { const t = start; start = end; end = t; }
+        hours = ((toMin(end) - toMin(start) + 1440) % 1440 || 1440) / 60;
+      } else if (times.length === 1 && hoursNum) {
+        start = times[0]; hours = hoursNum; end = fromMin(toMin(start) + Math.round(hoursNum * 60));
+      } else if (hoursNum) {
+        hours = hoursNum;
+      } else return;
+      if (!(hours > 0 && hours <= 24)) return;
+      if (ym) guessedYear = true;
+      rows.push({ date, start, end, hours: Math.round(hours * 100) / 100, overnight: !!(start && end && toMin(end) <= toMin(start)), line: raw.trim().slice(0, 120), n });
+    });
+    return { rows, noStart: rows.filter((r) => !r.start).length, guessedYear };
+  }
+
+  /** A row → start and end (epoch ms), with a start time for rows that have hours only. */
+  function times(row, startFor, toEpoch) {
+    const s = row.start || startFor;
+    if (!s) return null;
+    const start = toEpoch(row.date, s);
+    const end = start + Math.round(row.hours * 60) * 60000;
+    return { start, end };
+  }
+
+  root.Timesheet = { parse, times };
 })(typeof window !== 'undefined' ? window : globalThis);
 
 /* ---- core/places-data.js ---- */
@@ -9411,7 +9581,9 @@ window.APP_BUILD = '1.20.0-b96c0386';
   const DEVICE_META = ['cloudUid', 'cloudEmail', 'cloudName', 'cloudPhoto', 'cloudReady', 'lastSync', 'designV2', 'chat', 'chatShareData',
     'installId', 'statsSentAt', 'activeDays', 'firstActiveDay', 'lastActiveDay',
     // Shaati Plus is checked on each phone (Google Play / the purchase code): never taken from a backup file
-    'plus', 'plusInst', 'plusPreview', 'plusSeen', 'plusTrial', 'plusTrialEnd', 'plusNudge', 'plusUse', 'plusWall', 'plusSim'];
+    'plus', 'plusInst', 'plusPreview', 'plusSeen', 'plusTrial', 'plusTrialEnd', 'plusNudge', 'plusUse', 'plusWall', 'plusSim',
+    'review', // when this phone was last asked for a rating
+    'skinPhoto']; // the pay card's own photo (Plus): this phone only
   const SYNC_META = ['pendingDeletes', 'settingsDirty', 'activeDirty', 'activeUpdatedAt'];
   /** Values that end up inside HTML attributes must have a safe shape. */
   function safeRecord(store, r) {
@@ -9652,7 +9824,8 @@ window.APP_BUILD = '1.20.0-b96c0386';
       app: 'shiftpay', schemaVersion: SCHEMA_VERSION, appVersion: root.APP_VERSION, exportedAt: new Date().toISOString(),
       // keys stay out of files: the AI key, and the Shaati Plus purchase code (a shared backup would give it away)
       settings: Object.assign({}, S.settings, { ai: Object.assign({}, S.settings.ai, { apiKey: '' }), lock: Object.assign({}, S.settings.lock), plusKey: '' }),
-      meta: Object.fromEntries(Object.entries(S.meta).filter(([k]) => !/^plus/.test(k))), activeShift: S.activeShift,
+      // (and not the pay card's own photo: big, and private if the file is shared)
+      meta: Object.fromEntries(Object.entries(S.meta).filter(([k]) => !/^plus/.test(k) && k !== 'skinPhoto')), activeShift: S.activeShift,
     };
     for (const s of LIST_STORES) out[s] = S[s];
     if (includeFiles) {
@@ -10091,6 +10264,7 @@ window.APP_BUILD = '1.20.0-b96c0386';
     // a Shaati Plus skin for the pay card on home (only while Plus is on)
     const skin = root.Plus ? root.Plus.skin() : '';
     if (skin) de.dataset.skin = skin; else delete de.dataset.skin;
+    if (root.Plus && root.Plus.paintPhoto) root.Plus.paintPhoto(de, skin);
     const font = FONTS[st.font] ? st.font : 'rubik';
     de.style.setProperty('--app-font', "'" + FONTS[font][0] + "'");
     const link = document.getElementById('font-link');
@@ -10462,6 +10636,7 @@ window.APP_BUILD = '1.20.0-b96c0386';
       if (fix && App.sheetsApi.shiftEditor) { App.sheetsApi.shiftEditor(sh.id); return; }
     }
     App.sheetsApi.shiftDetail && App.sheetsApi.shiftDetail(sh.id);
+    if (App.reviewAfterShift) App.reviewAfterShift(); // a good moment, once that screen is closed
   };
   App.toggleBreak = async function (at) {
     const a = Object.assign({}, S.activeShift);
@@ -11502,14 +11677,15 @@ window.PAY_CONFIG = {
   lemon: {
     checkout: '', // the product's "Share" link, e.g. https://<store>.lemonsqueezy.com/buy/<id>
     productId: 0, // the product's number (Products › the product › ID): every purchase code is checked against it
-    price: '', // as shown on the button, e.g. '₪9.90'
+    price: '₪6.90', // as shown on the button (with "לחודש" after it)
   },
-  price: 9.9, // the price in shekels: the income estimate in the admin dashboard, and "≈ N minutes of your work"
+  price: 6.9, // the monthly price in shekels: the income estimate in the admin dashboard, and "≈ N minutes of your work"
+  monthly: true, // Plus is a monthly subscription (Google Play's product: plus.js SUB; on the web a Lemon Squeezy subscription)
 };
 
 /* ---- app/plus.js ---- */
 /* ============================================================
- * plus.js — "Shaati Plus": an optional one-time purchase.
+ * plus.js — "Shaati Plus": an optional monthly subscription (₪6.90).
  *
  * Everything the app does stays free. Plus adds skins for the pay card on
  * home and says thank you; no ads, no reminders that interrupt. Nothing about
@@ -11529,7 +11705,11 @@ window.PAY_CONFIG = {
  *    purchase made elsewhere.
  *
  * Every start asks both: any "yes" turns Plus on, "no" from all of them
- * (a refund) turns it off, and no answer (offline) keeps what was known.
+ * (a refund, a subscription that ended) turns it off, and no answer
+ * (offline) keeps what was known. Plus is a monthly subscription: Google
+ * Play's subscription product (SUB) in the Android app, a Lemon Squeezy
+ * subscription on the web (its purchase code expires when it ends). Anyone
+ * who bought the earlier one-time product (SKU) keeps it.
  * Settings (pay-config.js): the web checkout link, product number and price.
  * ============================================================ */
 (function (root) {
@@ -11538,7 +11718,8 @@ window.PAY_CONFIG = {
   const S = Store.S;
   const { icon, esc } = UI;
   const BILLING = 'https://play.google.com/billing';
-  const SKU = 'shaati_plus'; // the in-app product's id in Google Play Console (one-time, not a subscription)
+  const SUB = 'shaati_plus_monthly'; // the subscription's id in Google Play Console (a monthly base plan, ₪6.90)
+  const SKU = 'shaati_plus'; // the earlier one-time product: whoever bought it keeps Plus
   const LS_API = 'https://api.lemonsqueezy.com/v1/licenses/';
   // Pay-card skins (styles-v3.css .sk-<id>): dark enough everywhere for the card's white text
   const SKINS = {
@@ -11546,9 +11727,16 @@ window.PAY_CONFIG = {
     royal: 'מלכותי', rose: 'ורד', lava: 'לבה', neon: 'ניאון', ice: 'קרח', galaxy: 'גלקסיה',
   };
   const DAY = 86400000;
+  // a photo of one's own on the pay card (Plus): kept on this phone only (never synced, never on the champions
+  // table), checked on the phone before it is used
+  const PHOTO = 'photo';
+  const photo = () => (typeof S.meta.skinPhoto === 'string' && S.meta.skinPhoto.startsWith('data:image/jpeg') ? S.meta.skinPhoto : '');
+  const NSFW_LIB = 'https://cdn.jsdelivr.net/npm/nsfwjs@4.4.0/dist/browser/nsfwjs.min.js';
+  const NSFW_MODEL = 'https://cdn.jsdelivr.net/gh/infinitered/nsfwjs@v4.4.0/models/mobilenet_v2/';
   const TRIAL_DAYS = 3; // a free trial, once per phone, wherever Plus can be bought
   const cfg = () => (root.PAY_CONFIG && root.PAY_CONFIG.lemon) || {};
-  const Plus = { SKU, SKINS, available: false, price: '' };
+  const Plus = { SKU, SUB, SKINS, available: false, price: '', monthly: true };
+  let playSku = SUB; // what Google Play sells here (the subscription; the one-time product only if that is all there is)
   const owned = () => !!(S.meta.plus && S.meta.plus.active);
   Plus.owned = owned;
   /** 'play' | 'web' | '' — where this phone's Plus comes from. */
@@ -11570,7 +11758,9 @@ window.PAY_CONFIG = {
   /** Anything about Plus is shown only when it can be bought here, or is already on (or an admin previews it). */
   Plus.visible = () => Plus.available || Plus.webShop() || Plus.active() || !!sim();
   /** The pay-card skin in use ('' = the regular card). */
-  Plus.skin = () => (Plus.active() && SKINS[S.settings.skin] ? S.settings.skin : '');
+  Plus.skin = () => (!Plus.active() ? '' : SKINS[S.settings.skin] ? S.settings.skin : S.settings.skin === PHOTO && photo() ? PHOTO : '');
+  /** The card's own photo (html --sk-photo) while that skin is on. */
+  Plus.paintPhoto = (de, skin) => { if (skin === PHOTO) de.style.setProperty('--sk-photo', `url("${photo()}")`); else de.style.removeProperty('--sk-photo'); };
 
   async function setOwned(on, src) {
     const cur = S.meta.plus || {};
@@ -11583,6 +11773,12 @@ window.PAY_CONFIG = {
     if (!p) return '';
     try { return new Intl.NumberFormat('he-IL', { style: 'currency', currency: p.currency, maximumFractionDigits: 2 }).format(+p.value); } catch (e) { return `${p.value} ${p.currency}`; }
   }
+  /** The price as it is said: "₪6.90 לחודש" for the subscription. */
+  Plus.priceText = () => { const pr = Plus.price || cfg().price || ''; return pr ? pr + (Plus.monthly ? ' לחודש' : '') : ''; };
+  const buyWord = () => (Plus.monthly ? 'מנוי חודשי' : 'קנייה חד-פעמית');
+  const termsWord = () => (Plus.monthly ? 'בלי התחייבות, מבטלים בכל רגע' : 'תשלום אחד, בלי מנוי');
+  // where a subscriber stops it: Google Play's subscriptions page, or Lemon Squeezy's orders page (from the email)
+  const manageUrl = () => (Plus.source() === 'web' ? 'https://app.lemonsqueezy.com/my-orders' : `https://play.google.com/store/account/subscriptions?sku=${SUB}&package=io.github.leelor123.shifts`);
 
   /* ---------------- Google Play (the Android app) ---------------- */
   async function service() {
@@ -11591,7 +11787,7 @@ window.PAY_CONFIG = {
   }
   /** true / false from Google Play; null when it cannot tell (offline). */
   async function playOwns(svc) {
-    try { return ((await svc.listPurchases()) || []).some((p) => p && p.itemId === SKU); } catch (e) { return null; }
+    try { return ((await svc.listPurchases()) || []).some((p) => p && (p.itemId === SUB || p.itemId === SKU)); } catch (e) { return null; }
   }
 
   /* ---------------- the web: a purchase code from Lemon Squeezy ---------------- */
@@ -11634,12 +11830,19 @@ window.PAY_CONFIG = {
       if (!svc) play = null;
       else {
         let d, failed = false;
-        try { d = ((await svc.getDetails([SKU])) || [])[0]; } catch (e) { failed = true; }
+        try { const all = (await svc.getDetails([SUB, SKU])) || []; d = all.find((x) => x && x.itemId === SUB) || all.find((x) => x && x.itemId === SKU); } catch (e) { failed = true; }
         if (failed) play = null;
-        else if (d) { Plus.available = true; Plus.price = fmtPrice(d.price); Plus.priceValue = +(d.price && d.price.value) || 0; play = await playOwns(svc); }
+        else if (d) {
+          Plus.available = true;
+          playSku = d.itemId;
+          Plus.monthly = d.itemId === SUB || !!d.subscriptionPeriod;
+          Plus.price = fmtPrice(d.price);
+          Plus.priceValue = +(d.price && d.price.value) || 0;
+          play = await playOwns(svc);
+        }
       }
     }
-    if (!Plus.available && cfg().price) Plus.price = cfg().price;
+    if (!Plus.available && cfg().price) { Plus.price = cfg().price; Plus.monthly = (root.PAY_CONFIG || {}).monthly !== false; }
     const web = S.settings.plusKey ? await webOwns() : 'na';
     if (play === true) await setOwned(true, 'play');
     else if (web === true) await setOwned(true, 'web');
@@ -11665,7 +11868,7 @@ window.PAY_CONFIG = {
     if (!svc || !Plus.available) { UI.toast('הרכישה עוד לא זמינה כאן'); return false; }
     let res;
     try {
-      const req = new PaymentRequest([{ supportedMethods: BILLING, data: { sku: SKU } }], { total: { label: 'Total', amount: { currency: 'ILS', value: '0' } } });
+      const req = new PaymentRequest([{ supportedMethods: BILLING, data: { sku: playSku } }], { total: { label: 'Total', amount: { currency: 'ILS', value: '0' } } });
       res = await req.show();
     } catch (e) {
       if (!e || e.name !== 'AbortError') UI.toast('הרכישה לא הושלמה. אפשר לנסות שוב');
@@ -11717,13 +11920,74 @@ window.PAY_CONFIG = {
   Plus.skinTiles = (cur, locked) => `<div class="skin-pick">
       <button class="skin-tile ${!cur ? 'on' : ''}" data-skin="" aria-pressed="${!cur}"><b>₪</b><span>רגיל</span></button>
       ${Object.entries(SKINS).map(([k, name]) => `<button class="skin-tile sk-${k} ${cur === k ? 'on' : ''}" data-skin="${k}" aria-pressed="${cur === k}" aria-label="${name}${locked ? ' (Plus)' : ''}"><b>₪</b><span>${name}</span>${locked ? `<i class="skin-lock" aria-hidden="true">${icon('lock', 's')}</i>` : ''}</button>`).join('')}
+      ${photoTile(cur === PHOTO, locked)}
     </div>`;
+  // the photo tile: the photo itself once there is one, a camera before
+  function photoTile(on, locked) {
+    const has = !!photo();
+    return `<button class="skin-tile sk-photo-tile ${has ? 'has' : ''} ${on ? 'on' : ''}" data-skin="${PHOTO}" aria-pressed="${on}" aria-label="תמונה שלי${locked ? ' (Plus)' : on ? ' (לחיצה מחליפה את התמונה)' : ''}" ${has ? `style="--sk-photo:url('${photo()}')"` : ''}>${has ? '<b>₪</b>' : icon('camera')}<span>${on ? 'החלפה' : 'תמונה שלי'}</span>${locked ? `<i class="skin-lock" aria-hidden="true">${icon('lock', 's')}</i>` : ''}</button>`;
+  }
   /** A tap on a skin: applies it, or offers Plus when it is locked. */
   Plus.pickSkin = async (k) => {
     if (k && !Plus.active()) { Plus.sheet(); return false; }
+    // the photo: chosen now when there is none (or the one on the card is tapped again: another one)
+    if (k === PHOTO && (!photo() || Plus.skin() === PHOTO)) return Plus.pickPhoto();
     await Store.setSettings((s) => { s.skin = k || ''; });
     App.applyTheme();
     if (root.Fx) root.Fx.play('pop');
+    return true;
+  };
+
+  /** Opens the phone's photo picker (called straight from the tap, as browsers ask) and puts the photo on the card. */
+  Plus.pickPhoto = () => new Promise((resolve) => {
+    // in the page (a detached input gives an empty file in some browsers, no change event on iPhone)
+    const inp = document.createElement('input');
+    inp.type = 'file';
+    inp.accept = 'image/*';
+    inp.hidden = true;
+    document.body.appendChild(inp);
+    let done = false;
+    const end = (v) => { if (done) return; done = true; inp.remove(); window.removeEventListener('focus', back); resolve(v); };
+    inp.addEventListener('change', async () => { const f = inp.files && inp.files[0]; if (!f) { end(false); return; } done = true; inp.remove(); window.removeEventListener('focus', back); resolve(await Plus.setPhoto(f)); });
+    inp.addEventListener('cancel', () => end(false));
+    // closed without a choice where there is no "cancel" event: back in the page and still nothing
+    const back = () => setTimeout(() => { if (!done && !(inp.files && inp.files.length)) end(false); }, 1500);
+    window.addEventListener('focus', back);
+    inp.click();
+  });
+  async function toCanvas(file) {
+    const bmp = await createImageBitmap(file);
+    const k = Math.min(1, 1200 / Math.max(bmp.width, bmp.height));
+    const c = document.createElement('canvas');
+    c.width = Math.max(1, Math.round(bmp.width * k)); c.height = Math.max(1, Math.round(bmp.height * k));
+    c.getContext('2d').drawImage(bmp, 0, 0, c.width, c.height);
+    if (bmp.close) bmp.close();
+    return c;
+  }
+  let nsfw = null;
+  /** true when the picture is fine for the card (an on-phone model; the picture goes nowhere). */
+  Plus.imageOk = async function (canvas) {
+    await App.loadLib(NSFW_LIB);
+    if (!nsfw) nsfw = await root.nsfwjs.load(NSFW_MODEL);
+    const p = await nsfw.classify(canvas);
+    const v = (n) => +((p.find((x) => x.className === n) || {}).probability) || 0;
+    return v('Porn') + v('Hentai') < 0.45 && v('Sexy') < 0.75;
+  };
+  Plus.setPhoto = async function (file) {
+    if (!file || !/^image\//.test(file.type)) { UI.invalid('צריך לבחור תמונה'); return false; }
+    if (file.size > 30 * 1024 * 1024) { UI.invalid('התמונה גדולה מדי'); return false; }
+    UI.toast('בודקים את התמונה… 🔍');
+    let canvas;
+    try { canvas = await toCanvas(file); } catch (e) { console.warn('photo', e); UI.invalid('לא הצלחנו לפתוח את התמונה. אפשר לנסות אחרת'); return false; }
+    let ok;
+    try { ok = await Plus.imageOk(canvas); } catch (e) { console.warn('image check', e); UI.invalid('כדי לבדוק את התמונה צריך אינטרנט (רק בפעם הראשונה). נסו שוב כשיש חיבור'); return false; }
+    if (!ok) { UI.invalid('התמונה הזאת לא מתאימה לכרטיס 🙂 אפשר לבחור תמונה אחרת'); return false; }
+    await Store.setMeta({ skinPhoto: canvas.toDataURL('image/jpeg', 0.82) });
+    await Store.setSettings((st) => { st.skin = PHOTO; });
+    App.applyTheme();
+    App.rerender();
+    if (root.Fx) root.Fx.celebrate('small');
+    UI.toast('התמונה על כרטיס השכר ✨');
     return true;
   };
 
@@ -11735,7 +11999,7 @@ window.PAY_CONFIG = {
       const on = Plus.active();
       const play = inPlayApp();
       const web = Plus.webShop();
-      const price = Plus.price || cfg().price || '';
+      const price = Plus.priceText();
       const trial = Plus.inTrial();
       el.querySelector('[data-plus-body]').innerHTML = `
         ${App.mascotSays ? App.mascotSays(on ? 'party' : 'happy', on ? 'תודה שאת/ה איתנו! 💜' : 'רוצים לפרגן לשעתי ולקבל עיצובים מיוחדים?', { size: 64 }) : ''}
@@ -11748,13 +12012,16 @@ window.PAY_CONFIG = {
           <div>${icon('star', 's')}<span><b>תודה ענקית ממני</b><small>עוזר להמשיך לפתח, ולהשאיר את האפליקציה בלי פרסומות</small></span></div>
           <div>${icon('check', 's')}<span><b>כל השאר נשאר חינם</b><small>משמרות, חישוב שכר, זכויות, בדיקת תלוש, דוחות ומשחקים</small></span></div>
         </div>
-        ${on && !trial ? `<div class="plus-done">${icon('check')} ${owned() ? 'Shaati Plus פעיל אצלך' : 'תצוגה מקדימה של מנהל'}</div>`
+        ${on && !trial ? `<div class="plus-done">${icon('check')} ${owned() ? 'Shaati Plus פעיל אצלך' : 'תצוגה מקדימה של מנהל'}</div>
+            ${owned() && Plus.monthly ? `<button class="btn text sm block" data-plus-manage>${icon('wallet', 's')} ניהול או ביטול המנוי</button>` : ''}`
           : `${trial ? `<div class="plus-done trial">${icon('sparkle')} תקופת ניסיון · ${trialLeft()}</div>` : ''}
              ${Plus.canTrial() ? `<button class="btn big block plus-buy" data-plus-trial>${icon('sparkle')} לנסות ${TRIAL_DAYS} ימים בחינם</button>` : ''}
-             <button class="btn ${Plus.canTrial() ? 'tonal plus-buy2' : 'big plus-buy'} block" data-plus-buy ${(play ? Plus.available : web) || sim() ? '' : 'disabled'}>${icon(Plus.canTrial() ? 'star' : 'sparkle', Plus.canTrial() ? 's' : '')} ${trial ? 'קנייה ושמירה' : 'קנייה חד-פעמית'}${price ? ' · ' + esc(price) : ''}</button>
+             <button class="btn ${Plus.canTrial() ? 'tonal plus-buy2' : 'big plus-buy'} block" data-plus-buy ${(play ? Plus.available : web) || sim() ? '' : 'disabled'}>${icon(Plus.canTrial() ? 'star' : 'sparkle', Plus.canTrial() ? 's' : '')} ${trial ? 'להמשיך עם Plus' : buyWord()}${price ? ' · ' + esc(price) : ''}</button>
              ${Plus.workPrice() ? `<div class="tiny plus-work">${esc(Plus.workPrice())}</div>` : ''}
              <div class="plus-pay">${play ? '<span>Google Play</span><span>כרטיס אשראי</span><span>Google Pay</span><span>PayPal</span>' : '<span>כרטיס אשראי</span><span>Apple Pay</span><span>Google Pay</span><span>PayPal</span>'}</div>
-             <div class="tiny muted plus-note">${play ? 'תשלום אחד דרך Google Play, בלי מנוי ובלי חיובים נוספים.' : 'תשלום אחד בדף תשלום מאובטח של Lemon Squeezy, בלי מנוי. אחרי התשלום מגיע במייל קוד הפעלה.'} מתחת לגיל 18: בהסכמת הורה.</div>`}
+             <div class="tiny muted plus-note">${Plus.monthly
+                ? (play ? 'מנוי חודשי דרך Google Play, מתחדש כל חודש. מבטלים בכל רגע ב-⁠Google Play › תשלומים ומינויים, ו-⁠Plus נשאר עד סוף החודש ששולם.' : 'מנוי חודשי בדף תשלום מאובטח של Lemon Squeezy, מתחדש כל חודש. מבטלים בכל רגע מהקישור שבמייל. אחרי התשלום מגיע במייל קוד הפעלה.')
+                : (play ? 'תשלום אחד דרך Google Play, בלי מנוי ובלי חיובים נוספים.' : 'תשלום אחד בדף תשלום מאובטח של Lemon Squeezy, בלי מנוי. אחרי התשלום מגיע במייל קוד הפעלה.')} מתחת לגיל 18: בהסכמת הורה.</div>`}
         ${(!on || trial) && !play && web ? `<div class="card plus-code ${opened ? 'hot' : ''}"><label class="field"><span class="lbl">${opened ? 'שילמת? מדביקים כאן את הקוד מהמייל' : 'כבר יש לי קוד מהמייל'}</span>
             <input class="input" id="plus-key" dir="ltr" autocomplete="off" spellcheck="false" placeholder="XXXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXXXX"></label>
             <button class="btn tonal block" data-plus-redeem>${icon('key', 's')} הפעלה</button></div>` : ''}
@@ -11777,6 +12044,7 @@ window.PAY_CONFIG = {
           else if (b.hasAttribute('data-plus-buy')) run(async () => { const ok = await Plus.buy(); if (!ok && !inPlayApp() && Plus.webShop()) { opened = true; return true; } return ok; });
           else if (b.hasAttribute('data-plus-redeem')) run(() => Plus.redeem((el.querySelector('#plus-key') || {}).value));
           else if (b.hasAttribute('data-plus-restore')) run(async () => { await Plus.restore(); return true; });
+          else if (b.hasAttribute('data-plus-manage')) root.open(manageUrl(), '_blank', 'noopener');
           else if (b.dataset.skin !== undefined) {
             if (b.dataset.skin && !Plus.active()) { UI.closeTop(); setTimeout(() => Plus.design(b.dataset.skin), 320); return; }
             run(() => Plus.pickSkin(b.dataset.skin));
@@ -11819,13 +12087,22 @@ window.PAY_CONFIG = {
     UI.toast(`${TRIAL_DAYS} ימים של Shaati Plus במתנה ✨`);
     return true;
   };
-  /** The price as minutes of this user's own work ("≈ 17 דק׳ של העבודה שלך"). */
+  /** This user's average pay per hour: the last three months of shifts done (Shabbat, overtime and all), else the job's rate. */
+  function avgHourly() {
+    const from = Date.now() - 92 * DAY;
+    let wage = 0, min = 0;
+    if (App.model) for (const r of App.model.results.values()) if (r.status === 'done' && r.start >= from && r.paidMin > 0) { wage += +r.wage || 0; min += r.paidMin; }
+    if (min >= 120 && wage > 0) return wage / (min / 60);
+    const role = App.roles && App.roles()[0];
+    return role ? root.Engine.roleRate(role, root.U.todayKey()) : 0;
+  }
+  Plus.avgHourly = avgHourly;
+  /** The price as this user's own work: "≈ 10 דק׳ מהעבודה שלך בחודש (לפי ממוצע של ₪41.20 לשעה)". */
   Plus.workPrice = () => {
     const p = +Plus.priceValue || +(root.PAY_CONFIG || {}).price || 0;
-    const role = App.roles && App.roles()[0];
-    const rate = role ? root.Engine.roleRate(role, root.U.todayKey()) : 0;
+    const rate = avgHourly();
     if (!(p > 0 && rate > 0) || !root.Games) return '';
-    return `≈ ${root.Games.workTime(p / rate)} של העבודה שלך`;
+    return `≈ ${root.Games.workTime(p / rate)} מהעבודה שלך${Plus.monthly ? ' בחודש' : ''} (לפי ממוצע של ${root.U.money(rate)} לשעה)`;
   };
 
   /* ---------------- free allowances ----------------
@@ -11861,7 +12138,7 @@ window.PAY_CONFIG = {
   Plus.limitSheet = function (id) {
     const q = QUOTA[id];
     const back = q.per === 'day' ? 'מחר' : `ב-1 ב${root.U.HEB_MONTHS[(+root.U.todayKey().slice(5, 7)) % 12]}`;
-    const price = Plus.price || cfg().price || '';
+    const price = Plus.priceText();
     UI.openSheet({
       title: 'נגמרה המכסה החינמית',
       cls: 'plus-sheet limit-sheet',
@@ -11871,7 +12148,7 @@ window.PAY_CONFIG = {
           <div>${icon('check', 's')}<span><b>כל השאר נשאר חינם</b><small>משמרות, חישוב שכר, זכויות, בדיקת תלוש, דוחות במסך, משחקים, גיבוי וסנכרון</small></span></div>
         </div>
         ${Plus.canTrial() ? `<button class="btn big block plus-buy" data-limit-trial>${icon('sparkle')} לנסות ${TRIAL_DAYS} ימים בחינם</button>` : `<button class="btn big block plus-buy" data-limit-buy>${icon('sparkle')} Shaati Plus${price ? ' · ' + esc(price) : ''}</button>`}
-        ${Plus.workPrice() ? `<div class="tiny plus-work">${esc(Plus.workPrice())} · תשלום אחד, בלי מנוי</div>` : ''}
+        ${Plus.workPrice() ? `<div class="tiny plus-work">${esc(Plus.workPrice())} · ${termsWord()}</div>` : ''}
         <button class="btn text block" data-limit-later>${back}, תודה</button>`,
       onMount: (el) => {
         el.addEventListener('click', async (e) => {
@@ -11903,7 +12180,7 @@ window.PAY_CONFIG = {
     };
     const draw = (el) => {
       const on = Plus.active();
-      const price = Plus.price || cfg().price || '';
+      const price = Plus.priceText();
       el.querySelector('[data-design]').innerHTML = `
         <div class="design-prev ${sel ? 'sk-' + sel : ''}" aria-hidden="true" inert>${preview()}</div>
         <div class="skin-pick design-pick">
@@ -11911,10 +12188,10 @@ window.PAY_CONFIG = {
           ${Object.entries(SKINS).map(([k, name]) => `<button class="skin-tile sk-${k} ${sel === k ? 'on' : ''}" data-pick="${k}" aria-pressed="${sel === k}"><b>₪</b><span>${name}</span></button>`).join('')}
         </div>
         ${on ? `<button class="btn big block" data-design-save>${icon('check')} שמירה</button>
-            ${Plus.inTrial() ? `<div class="tiny muted plus-note">תקופת ניסיון · ${trialLeft()} · <button class="btn text sm" data-design-buy>לקנות ולשמור</button></div>` : ''}`
+            ${Plus.inTrial() ? `<div class="tiny muted plus-note">תקופת ניסיון · ${trialLeft()} · <button class="btn text sm" data-design-buy>להמשיך עם Plus</button></div>` : ''}`
           : `${Plus.canTrial() ? `<button class="btn big block plus-buy" data-design-trial>${icon('sparkle')} לנסות ${TRIAL_DAYS} ימים בחינם</button>` : ''}
-             <button class="btn ${Plus.canTrial() ? 'tonal' : 'big plus-buy'} block" data-design-buy ${buyable() ? '' : 'disabled'}>${icon('star', 's')} קנייה חד-פעמית${price ? ' · ' + esc(price) : ''}</button>
-             <div class="tiny muted plus-note">${Plus.workPrice() ? esc(Plus.workPrice()) + ' · ' : ''}בלי מנוי · כל השאר נשאר חינם</div>`}`;
+             <button class="btn ${Plus.canTrial() ? 'tonal' : 'big plus-buy'} block" data-design-buy ${buyable() ? '' : 'disabled'}>${icon('star', 's')} ${buyWord()}${price ? ' · ' + esc(price) : ''}</button>
+             <div class="tiny muted plus-note">${Plus.workPrice() ? esc(Plus.workPrice()) + ' · ' : ''}${termsWord()} · כל השאר נשאר חינם</div>`}`;
     };
     UI.openSheet({
       title: 'עיצוב כרטיס השכר',
@@ -11958,7 +12235,7 @@ window.PAY_CONFIG = {
     if (S.meta.plusTrial && !S.meta.plusTrialEnd) {
       const name = SKINS[S.settings.skin] || 'המיוחד';
       return `<div class="card plus-nudge sk-${SKINS[S.settings.skin] ? S.settings.skin : 'gold'}">${close}
-        <div class="pn-t">הניסיון של Shaati Plus הסתיים</div><div class="pn-s">להשאיר את הכרטיס ב${esc(name)}? תשלום אחד, בלי מנוי${Plus.workPrice() ? ' · ' + esc(Plus.workPrice()) : ''}.</div>
+        <div class="pn-t">הניסיון של Shaati Plus הסתיים</div><div class="pn-s">להשאיר את הכרטיס ב${esc(name)}? ${Plus.priceText() ? esc(Plus.priceText()) + ', ' : ''}${termsWord()}${Plus.workPrice() ? ' · ' + esc(Plus.workPrice()) : ''}.</div>
         <div class="pn-a"><button class="btn sm" data-act="plus-open">${icon('star', 's')} להשאיר</button><button class="btn text sm" data-act="plus-nudge-x">לא, תודה</button></div></div>`;
     }
     if (!sim()) {
@@ -11967,7 +12244,7 @@ window.PAY_CONFIG = {
       if ((S.meta.activeDays || 0) < 4 || done < 5 || S.settings.demo) return '';
     }
     return `<div class="card plus-nudge sk-galaxy">${close}
-      <div class="pn-t">✨ כרטיס השכר שלך יכול להיראות ככה</div><div class="pn-s">${Object.keys(SKINS).length} עיצובים, רקע בטבלת האלופים, ניתוח וייצוא בלי הגבלה. ${Plus.canTrial() ? `אפשר לנסות ${TRIAL_DAYS} ימים בחינם.` : 'תשלום אחד, בלי מנוי.'}</div>
+      <div class="pn-t">✨ כרטיס השכר שלך יכול להיראות ככה</div><div class="pn-s">${Object.keys(SKINS).length} עיצובים, רקע בטבלת האלופים, ניתוח וייצוא בלי הגבלה. ${Plus.canTrial() ? `אפשר לנסות ${TRIAL_DAYS} ימים בחינם.` : (Plus.priceText() ? esc(Plus.priceText()) + ', ' : '') + termsWord() + '.'}</div>
       <div class="pn-a"><button class="btn sm" data-act="plus-design">${icon('palette', 's')} ${Plus.canTrial() ? 'לנסות על הכרטיס שלי' : 'לראות'}</button><button class="btn text sm" data-act="plus-nudge-x">לא עכשיו</button></div></div>`;
   };
   /** ✕, "no, thanks" or "not now": away for 24 hours (the end-of-trial card gives way to the usual one). */
@@ -12004,6 +12281,324 @@ window.PAY_CONFIG = {
   };
 
   root.Plus = Plus;
+})(typeof window !== 'undefined' ? window : globalThis);
+
+/* ---- app/review.js ---- */
+/* ============================================================
+ * review.js — now and then, a friendly screen asking for a rating.
+ *
+ * When: someone who uses the app (6 active days, 6 shifts done, past the first steps, not the demo), at a
+ * good moment (the shift that was just ended has been looked at and closed, nothing else open). Then not
+ * again for 45 days after "later", 200 days after "rate", and never more than 5 times. One per phone.
+ *
+ * What: stars that pop in with a twinkle, and three ways out that everyone sees alike (Google's rules: no
+ * asking how they feel first, no sending only the happy ones to the store): rate on Google Play, send an
+ * idea or a remark to us, or later. In the Android app "rate" opens the app's page in the Play Store; on
+ * the web, where there is no store page, the screen asks to share the app with friends instead.
+ * ============================================================ */
+(function (root) {
+  'use strict';
+  const { App, Store, UI } = root;
+  const S = Store.S;
+  const { icon } = UI;
+  const DAY = 86400000;
+  const PKG = 'io.github.leelor123.shifts';
+  const STORE_WEB = `https://play.google.com/store/apps/details?id=${PKG}`;
+  // the Play Store app itself (Chrome hands the intent over); its web page when the store app is missing
+  const STORE_APP = `intent://details?id=${PKG}#Intent;scheme=market;package=com.android.vending;S.browser_fallback_url=${encodeURIComponent(STORE_WEB)};end`;
+  const LATER = 45 * DAY, AFTER_RATE = 200 * DAY, MAX_ASKS = 5;
+
+  const state = () => S.meta.review || {};
+  /** Is now a time to ask? (the conditions above; App.reviewNow() skips them for a preview) */
+  App.reviewDue = function () {
+    if (App.blocking || S.settings.demo || (S.meta.guide && !S.meta.guideDone)) return false;
+    if ((S.meta.activeDays || 0) < 6) return false;
+    let done = 0;
+    for (const r of App.model.results.values()) if (r.status === 'done') done++;
+    if (done < 6) return false;
+    const st = state();
+    if ((st.n || 0) >= MAX_ASKS) return false;
+    if (st.at && Date.now() - st.at < (st.rated ? AFTER_RATE : LATER)) return false;
+    return true;
+  };
+  async function note(patch) { await Store.setMeta({ review: Object.assign({}, state(), patch) }); }
+
+  /** The screen. */
+  App.reviewNow = function (opts) {
+    const preview = !!(opts && opts.preview);
+    const play = !!App.androidApp;
+    const stars = [0, 1, 2, 3, 4].map((i) => `<i class="rv-star" style="--i:${i}">${icon('star')}</i>`).join('');
+    let answered = false;
+    UI.openSheet({
+      title: play ? 'נהנים משעתי? 💜' : 'נהנים משעתי? ספרו לחברים 💜', cls: 'review-sheet',
+      body: `<div class="rv">
+        ${App.mascot ? App.mascot('love', { size: 96, cls: 'rv-mascot' }) : ''}
+        <div class="rv-stars" aria-hidden="true">${stars}</div>
+        <p class="rv-s">${play ? 'ביקורת קצרה ב-⁠Google Play עוזרת לעוד עובדים לגלות כמה מגיע להם. זה לוקח 10 שניות, וזה עושה לנו את היום.' : 'כל שיתוף עוזר לעוד עובדים לדעת כמה מגיע להם, ולבדוק שמשלמים להם נכון.'}</p>
+        <button class="btn big block rv-go" data-rv-go>${icon(play ? 'star' : 'share', 's')} ${play ? 'לדרג ב-⁠Google Play' : 'לשתף עם חברים'}</button>
+        <button class="btn tonal block" data-rv-idea>${icon('chat', 's')} יש לי רעיון או הערה</button>
+        <button class="btn text block" data-rv-later>אולי אחר כך</button>
+      </div>`,
+      onMount: (el) => {
+        if (!preview) note({ at: Date.now(), n: (state().n || 0) + 1, rated: false }).catch(() => {});
+        if (root.Fx) setTimeout(() => root.Fx.play('pick'), 380);
+        el.addEventListener('click', async (e) => {
+          const b = e.target.closest('button');
+          if (!b) return;
+          if (b.hasAttribute('data-rv-go')) {
+            answered = true;
+            if (!preview) await note({ rated: true, at: Date.now() });
+            if (root.Fx) root.Fx.celebrate('small');
+            UI.closeTop();
+            if (play) setTimeout(() => { root.location.href = STORE_APP; }, 260);
+            else setTimeout(() => App.actions['share-app'] && App.actions['share-app'](), 320);
+          } else if (b.hasAttribute('data-rv-idea')) {
+            answered = true;
+            UI.closeTop();
+            setTimeout(() => root.Support && root.Support.newTicket('idea'), 320);
+          } else if (b.hasAttribute('data-rv-later')) { answered = true; UI.closeTop(); }
+        });
+      },
+      onClose: () => { if (!answered && !preview) note({ at: Date.now() }).catch(() => {}); },
+    });
+  };
+
+  // the admin's preview (admin dashboard): the screen as users see it, without counting as an ask
+  App.actions['review-preview'] = () => { if (!App.isAdmin) return; UI.closeAll(); setTimeout(() => App.reviewNow({ preview: true }), 350); };
+
+  /** After a shift was ended: once its screen (and anything opened from it) is closed, ask if it is time. */
+  App.reviewAfterShift = function () {
+    if (!App.reviewDue()) return;
+    let tries = 0;
+    const wait = setInterval(() => {
+      tries++;
+      if (tries > 240) { clearInterval(wait); return; } // two minutes, then another time
+      if (UI.sheets.length || document.querySelector('.dialog') || App.blocking || document.visibilityState !== 'visible') return;
+      clearInterval(wait);
+      setTimeout(() => { if (!UI.sheets.length && !document.querySelector('.dialog') && App.reviewDue()) App.reviewNow(); }, 1100);
+    }, 500);
+  };
+})(typeof window !== 'undefined' ? window : globalThis);
+
+/* ---- app/import.js ---- */
+/* ============================================================
+ * import.js — "I already have an hours report": a file in any usual shape (Excel, CSV, PDF, a photo or a
+ * screenshot, text) or pasted text becomes shifts.
+ *
+ * Read on the phone (nothing is sent anywhere): a spreadsheet with SheetJS (its date cells read as dates,
+ * so no day/month mix-up), a PDF with pdf.js, a picture with the Hebrew OCR the payslip check uses, text
+ * as it is (also in the Hebrew Windows code page old Excel exports use). core/timesheet.js finds the shifts.
+ * What is missing is asked, once for all of them: the job (when there is more than one), when shifts with
+ * hours only start. Every shift found is shown and can be left out; one that is already in the app (the
+ * same time) starts left out, so importing twice adds nothing twice. One tap adds them, and one undoes it.
+ * ============================================================ */
+(function (root) {
+  'use strict';
+  const { App, Store, UI, U } = root;
+  const S = Store.S;
+  const { icon, esc } = UI;
+  const XLSX_SRC = 'https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js';
+  const pad = (n) => String(n).padStart(2, '0');
+
+  /* ---------------- a file → text, a line per row ---------------- */
+  function decode(buf) {
+    const utf = new TextDecoder('utf-8').decode(buf);
+    if (!utf.includes('�')) return utf;
+    try { return new TextDecoder('windows-1255').decode(buf); } catch (e) { return utf; }
+  }
+  // a date or time cell is a number of days since 30.12.1899 (the fraction is the time of day). Read here, in
+  // UTC: through a local Date the old time zones of 1899 move times by a minute (09:15 came out 09:14)
+  function serialText(v) {
+    let days = Math.floor(v + 1e-9), mins = Math.round((v - days) * 1440);
+    if (mins >= 1440) { days++; mins -= 1440; }
+    const time = pad(Math.floor(mins / 60)) + ':' + pad(mins % 60);
+    if (days < 1) return time; // a time only
+    const d = new Date(Date.UTC(1899, 11, 30) + days * 86400000);
+    const date = `${d.getUTCFullYear()}-${pad(d.getUTCMonth() + 1)}-${pad(d.getUTCDate())}`;
+    return mins ? date + ' ' + time : date;
+  }
+  function cellText(X, c) {
+    if (!c) return '';
+    if (c.t === 'n' && c.z && X.SSF.is_date(c.z)) return serialText(c.v);
+    if (c.t === 'd' && c.v instanceof Date && !isNaN(c.v)) return serialText(c.v.getTime() / 86400000 + 25569 - c.v.getTimezoneOffset() / 1440);
+    return c.w != null ? String(c.w) : c.v == null ? '' : String(c.v);
+  }
+  function sheetText(X, ws) {
+    if (!ws || !ws['!ref']) return '';
+    const R = X.utils.decode_range(ws['!ref']);
+    const lines = [];
+    for (let r = R.s.r; r <= R.e.r && r < R.s.r + 3000; r++) {
+      const cells = [];
+      for (let c = R.s.c; c <= R.e.c && c < R.s.c + 40; c++) cells.push(cellText(X, ws[X.utils.encode_cell({ r, c })]));
+      lines.push(cells.join(' | '));
+    }
+    return lines.join('\n');
+  }
+  async function readFile(file, progress) {
+    const name = file.name || '';
+    if (/\.(xlsx|xlsm|xls|ods)$/i.test(name) || /spreadsheet|excel/i.test(file.type)) {
+      progress('קורא את הגיליון…');
+      await App.loadLib(XLSX_SRC);
+      const X = root.XLSX;
+      const wb = X.read(await file.arrayBuffer(), { type: 'array', cellNF: true });
+      return wb.SheetNames.slice(0, 12).map((n) => sheetText(X, wb.Sheets[n])).join('\n');
+    }
+    if (/\.(csv|tsv|txt)$/i.test(name) || /^text\//.test(file.type)) {
+      return decode(await file.arrayBuffer()).replace(/[;,\t]/g, ' | ');
+    }
+    if (/\.pdf$/i.test(name) || file.type === 'application/pdf' || /^image\//.test(file.type)) {
+      if (!App.readDocText) throw new Error('הקריאה לא זמינה כרגע');
+      return (await App.readDocText(file, progress)).text;
+    }
+    throw new Error('סוג קובץ שלא מכירים. אפשר Excel, ‏CSV, ‏PDF, תמונה או טקסט');
+  }
+
+  /* ---------------- the screen ---------------- */
+  // from the add menu the menu goes; from a settings page it stays under (back returns there)
+  App.actions['import-hours'] = () => App.importHours();
+  App.importHours = function (opts) {
+    if (UI.sheets.length && !(opts && opts.over)) UI.closeAll();
+    let rows = [], noStart = 0, guessedYear = false;
+    let roleId = S.meta.lastRole && App.roles().some((r) => r.id === S.meta.lastRole) ? S.meta.lastRole : (App.roles()[0] || {}).id;
+    let startFor = '09:00';
+    const entry = UI.openSheet({
+      title: 'ייבוא דוח שעות', full: true, cls: 'import-sheet',
+      body: '<div id="imp"></div>',
+      foot: '<button class="btn big" data-imp-save></button>',
+    });
+    const box = entry.sh.querySelector('#imp');
+    const save = entry.sh.querySelector('[data-imp-save]');
+    // the add button (and its bar) only once there is something to add
+    const showSave = (on) => { const f = entry.sh.querySelector('.sh-foot'); if (f) f.style.display = on ? '' : 'none'; };
+    const role = () => App.roles().find((r) => r.id === roleId) || App.roles()[0];
+    const toEpoch = (k, hm) => U.toEpoch(k, hm);
+    // where each row lands, and whether that time is already taken
+    const place = (r) => {
+      const t = root.Timesheet.times(r, startFor, toEpoch);
+      if (!t) return null;
+      const emp = role() && role().employerId;
+      t.taken = S.shifts.some((x) => x.employerId === emp && x.start < t.end && x.end > t.start);
+      return t;
+    };
+
+    function start() {
+      showSave(false);
+      box.innerHTML = `${App.mascotSays ? App.mascotSays('happy', 'יש לך דוח שעות מהעבודה? אכניס את כל המשמרות בבת אחת 📄', { size: 64 }) : ''}
+        <label class="btn big block imp-pick">${icon('upload')} בחירת קובץ<input type="file" id="imp-file" hidden accept=".xlsx,.xls,.xlsm,.ods,.csv,.tsv,.txt,.pdf,image/*,text/*,application/pdf,application/vnd.ms-excel,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"></label>
+        <div class="imp-kinds">${[['file', 'Excel'], ['file', 'CSV'], ['file', 'PDF'], ['camera', 'צילום או צילום מסך']].map(([ic, t]) => `<span>${icon(ic, 's')}${t}</span>`).join('')}</div>
+        <details class="imp-paste"><summary>${icon('edit', 's')} או להדביק טקסט</summary>
+          <textarea class="input" id="imp-text" rows="6" placeholder="למשל:&#10;14/10/2026 08:00 16:30&#10;15/10/2026 16:00 23:00"></textarea>
+          <button class="btn tonal block" data-imp-read>${icon('check', 's')} קריאה</button></details>
+        <div class="tiny muted imp-privacy">${icon('shield', 's')} הקובץ נקרא בטלפון בלבד, ולא נשלח לשום מקום.</div>`;
+    }
+    function busy(text) { box.innerHTML = `<div class="imp-busy">${App.mascot ? App.mascot('think', { size: 84 }) : ''}<div class="imp-bar" aria-hidden="true"><i></i></div><div class="small" id="imp-progress" role="status">${esc(text)}</div></div>`; }
+    function progress(text) { const p = box.querySelector('#imp-progress'); if (p) p.textContent = text; }
+    function none(sample) {
+      showSave(false);
+      box.innerHTML = `${App.mascotSays ? App.mascotSays('think', 'לא מצאתי בדוח משמרות שאני יודע לקרוא 🤔', { size: 64 }) : ''}
+        <div class="card small imp-tips"><b>מה עוזר:</b><ul><li>שבכל שורה יהיו תאריך ושעות (למשל 14/10/2026 08:00 16:30)</li><li>קובץ Excel או CSV נקרא הכי טוב</li><li>בצילום: שהדוח ישר, חד ומואר</li></ul></div>
+        ${sample ? `<details class="imp-paste"><summary>מה שנקרא מהקובץ</summary><div class="code">${esc(sample.slice(0, 1500))}</div></details>` : ''}
+        <button class="btn tonal block" data-imp-again>${icon('upload', 's')} לנסות קובץ אחר</button>
+        <button class="btn text block" data-act="support">לשלוח לנו את הדוח ונעזור</button>`;
+    }
+    function review() {
+      const roles = App.roles();
+      const list = rows.map((r, i) => {
+        const t = place(r);
+        if (r.on == null) r.on = !(t && t.taken);
+        const day = U.HEB_DAYS ? U.HEB_DAYS[U.dow(r.date)] : '';
+        const when = r.start ? `⁦${r.start}⁠–⁠${r.end}⁩` : `${U.num(r.hours, 2)} שעות · ${startFor ? 'מ-' + startFor : 'שעה לא ידועה'}`;
+        return `<button class="imp-row ${r.on ? 'on' : ''}" data-i="${i}" aria-pressed="${r.on}"><span class="imp-check" aria-hidden="true">${icon('check', 's')}</span>
+          <span class="imp-d"><b>${esc(day)} ${U.fmtDate(r.date, 'short')}</b><small>${when}${r.overnight ? ' · לילה' : ''}</small></span>
+          <span class="imp-h">${U.num(r.hours, 2)} ש׳${t && t.taken ? '<i class="tag">כבר קיימת</i>' : ''}${t && t.end > Date.now() ? '<i class="tag planned">עתידית</i>' : ''}</span></button>`;
+      }).join('');
+      const first = rows[0].date, last = rows[rows.length - 1].date;
+      box.innerHTML = `${App.mascotSays ? App.mascotSays('love', `מצאתי ${rows.length === 1 ? 'משמרת אחת' : rows.length + ' משמרות'}! 🎉 בודקים רגע ומוסיפים`, { size: 64 }) : ''}
+        ${roles.length > 1 ? `<div class="field"><span class="lbl">לאיזה תפקיד לשייך?</span><div class="chips imp-roles">${roles.map((r) => `<button class="chip ${r.id === roleId ? 'on' : ''}" data-imp-role="${r.id}"><span class="sw" style="background:${r.color}"></span>${esc(r.name)}${App.multiEmp() ? ' · ' + esc((App.employer(r.employerId) || {}).name || '') : ''}</button>`).join('')}</div></div>` : ''}
+        ${noStart ? `<label class="field"><span class="lbl">${noStart === 1 ? 'במשמרת אחת' : `ב-${noStart} משמרות`} כתוב רק כמה שעות. באיזו שעה הן מתחילות?</span><input class="input" type="time" id="imp-start" value="${startFor}"></label>` : ''}
+        ${guessedYear ? `<div class="tiny muted imp-note">${icon('info', 's')} בשורות בלי שנה לקחנו את התאריך האחרון שכבר עבר.</div>` : ''}
+        <div class="imp-head"><b>${first === last ? U.fmtDate(first, 'short') : `⁦${U.fmtDate(first, 'short')}⁠–⁠${U.fmtDate(last, 'short')}⁩`}</b><button class="btn text sm" data-imp-all>${rows.every((r) => r.on) ? 'לבטל הכול' : 'לסמן הכול'}</button></div>
+        <div class="imp-list">${list}</div>`;
+      showSave(true);
+      count();
+    }
+    // a row on or off: in place (nothing else moves), and the button says how many
+    function count() {
+      const n = rows.filter((r) => r.on && (r.start || startFor)).length;
+      save.disabled = !n;
+      save.innerHTML = `${icon('plus', 's')} ${n === 1 ? 'הוספת משמרת אחת' : `הוספת ${n} משמרות`}`;
+      const all = box.querySelector('[data-imp-all]');
+      if (all) all.textContent = rows.every((r) => r.on) ? 'לבטל הכול' : 'לסמן הכול';
+    }
+    async function parse(text) {
+      const p = root.Timesheet.parse(text, { today: U.todayKey() });
+      // the same shift twice in one report (two sheets, a repeated line): once
+      const seen = new Set();
+      rows = p.rows.filter((r) => { const k = r.date + r.start + r.end + r.hours; if (seen.has(k)) return false; seen.add(k); return true; })
+        .sort((a, b) => (a.date + (a.start || '')).localeCompare(b.date + (b.start || '')));
+      noStart = rows.filter((r) => !r.start).length;
+      guessedYear = p.guessedYear;
+      if (!rows.length) { none(text); return; }
+      if (root.Fx) root.Fx.play('pick');
+      review();
+    }
+    async function fromFile(file) {
+      if (!file) return;
+      if (file.size > 25 * 1024 * 1024) { UI.invalid('הקובץ גדול מדי (עד 25MB)'); return; }
+      busy('קורא את הקובץ…');
+      try { await parse(await readFile(file, progress)); } catch (e) {
+        console.warn('import', e);
+        start();
+        UI.invalid(e && e.message && /[א-ת]/.test(e.message) ? e.message : 'לא הצלחנו לקרוא את הקובץ. אפשר לנסות קובץ אחר או להדביק טקסט');
+      }
+    }
+    async function add() {
+      const r0 = role();
+      if (!r0) return;
+      const emp = App.employer(r0.employerId) || S.employers[0];
+      const ops = [];
+      for (const r of rows) {
+        if (!r.on) continue;
+        const t = place(r);
+        if (!t) continue;
+        ops.push({ store: 'shifts', put: {
+          id: U.uid(), kind: 'shift', employerId: r0.employerId, roleId: r0.id, status: t.end > Date.now() ? 'planned' : 'done', start: t.start, end: t.end,
+          breakMin: null, breakPaid: emp.defaultBreakPaid !== false, noTravel: false, splits: [], items: [], note: 'יובא מדוח שעות',
+        } });
+      }
+      if (!ops.length) return;
+      save.disabled = true;
+      UI.closeTop();
+      await App.saveOps(ops, 'ייבוא דוח שעות', ops.length === 1 ? 'נוספה משמרת אחת מהדוח' : `נוספו ${ops.length} משמרות מהדוח`);
+      if (root.Fx) root.Fx.celebrate('big');
+    }
+
+    entry.sh.addEventListener('change', (e) => {
+      if (e.target.id === 'imp-file') fromFile(e.target.files && e.target.files[0]);
+      if (e.target.id === 'imp-start' && /^\d{2}:\d{2}$/.test(e.target.value)) { startFor = e.target.value; review(); }
+    });
+    entry.sh.addEventListener('click', (e) => {
+      const b = e.target.closest('button');
+      if (!b) return;
+      if (b.hasAttribute('data-imp-read')) { const t = box.querySelector('#imp-text').value; if (t.trim()) parse(t); else UI.invalid('מדביקים קודם את הטקסט'); }
+      else if (b.hasAttribute('data-imp-again')) start();
+      else if (b.dataset.impRole) { roleId = b.dataset.impRole; rows.forEach((r) => { r.on = null; }); review(); if (root.Fx) root.Fx.play('on'); }
+      else if (b.hasAttribute('data-imp-all')) {
+        const all = rows.every((r) => r.on);
+        rows.forEach((r) => { r.on = !all; });
+        box.querySelectorAll('.imp-row').forEach((x) => { x.classList.toggle('on', !all); x.setAttribute('aria-pressed', String(!all)); });
+        count();
+      } else if (b.classList.contains('imp-row')) {
+        const r = rows[+b.dataset.i];
+        r.on = !r.on;
+        b.classList.toggle('on', r.on); b.setAttribute('aria-pressed', String(r.on));
+        if (root.Fx) root.Fx.play(r.on ? 'on' : 'off');
+        count();
+      }
+      else if (b.hasAttribute('data-imp-save')) add();
+    });
+    start();
+  };
 })(typeof window !== 'undefined' ? window : globalThis);
 
 /* ---- app/views-login.js ---- */
@@ -12601,6 +13196,7 @@ window.PAY_CONFIG = {
           ${tile('entry-new', 'gift', 'amber', 'בונוס / טיפים', '', 'data-kind="adjustment" data-type="bonus"')}
           ${tile('entry-new', 'minus', 'orange', 'ניכוי', '', 'data-kind="adjustment" data-type="deduction"')}
           ${tile('payslip-new', 'receipt', 'mint', 'בדיקת תלוש', '')}
+          ${tile('import-hours', 'upload', 'violet', 'ייבוא דוח שעות', '')}
         </div>`,
     });
   };
@@ -13768,6 +14364,9 @@ window.PAY_CONFIG = {
     if (file.type === 'application/pdf' || /\.pdf$/i.test(file.name)) return extractPdf(file, progress);
     return { text: await ocr(file, progress), source: 'ocr' };
   }
+  // the hours-report import reads PDFs and pictures the same way (import.js)
+  App.readDocText = extract;
+  App.loadLib = loadScript;
 
   /* ---------------- flow: upload → extract → verify ---------------- */
   App.actions['payslip-new'] = () => {
@@ -15050,6 +15649,7 @@ window.PAY_CONFIG = {
     assistant: { icon: 'sparkle', title: 'עוזר זכויות ושכר (AI)', sub: () => (S.settings.ai.apiKey ? 'מוכן — שאל כל שאלה' : 'דורש מפתח API') },
     ai: { icon: 'sparkle', title: 'מפתח AI וניתוח תלושים', sub: () => (S.settings.ai.apiKey ? 'מפתח מוגדר · ' + S.settings.ai.model : 'אופציונלי — ללא מפתח הכול מקומי') },
     backup: { icon: 'cloud', title: 'גיבוי ושחזור', sub: () => (S.settings.backup.lastBackup ? 'גיבוי אחרון: ' + UI.timeAgo(S.settings.backup.lastBackup) : 'עוד לא גובה') },
+    import: { icon: 'upload', title: 'ייבוא דוח שעות', sub: () => 'Excel, CSV, PDF או צילום: כל המשמרות בבת אחת' },
     export: { icon: 'download', title: 'ייצוא נתונים', sub: () => 'CSV / Excel, PDF, יומן' },
     demo: { icon: 'flask', title: 'מצב הדגמה', sub: () => (S.settings.demo ? 'פעיל' : 'נתוני דוגמה לבדיקת האפליקציה') },
     about: { icon: 'info', title: 'אודות והתקנה', sub: () => 'גרסה ' + root.APP_VERSION },
@@ -15063,7 +15663,7 @@ window.PAY_CONFIG = {
     net: 'מס מס הכנסה נקודות זיכוי פנסיה ביטוח לאומי מס בריאות השתלמות נטו', leave: 'חופשה מחלה הבראה ותק תחילת עבודה',
     goal: 'יעד יעדים חיסכון חוסכים', alerts: 'התראות תזכורות פוש הודעות', templates: 'תבנית תבניות משמרת קבועה',
     look: 'צבע צבעים ערכת נושא כהה בהיר מצב לילה גופן גופנים מראה צלילים רטט מוזיקה עיצוב כרטיס plus פלוס', security: 'קוד נעילה טביעת אצבע סיסמה',
-    assistant: 'בינה מלאכותית עוזר שאלות ai', ai: 'מפתח api claude ניתוח תלוש', backup: 'גיבוי שחזור קובץ', export: 'ייצוא אקסל excel csv pdf יומן',
+    assistant: 'בינה מלאכותית עוזר שאלות ai', ai: 'מפתח api claude ניתוח תלוש', backup: 'גיבוי שחזור קובץ', import: 'ייבוא דוח שעות נוכחות שעון אקסל excel csv pdf צילום קובץ להעלות משמרות מהעבודה', export: 'ייצוא אקסל excel csv pdf יומן',
     demo: 'דוגמה הדגמה', about: 'גרסה התקנה אודות', rights: 'זכויות שכר מינימום',
   };
   // the page is a few colourful doors; each opens its own small page with the sections behind it
@@ -15074,7 +15674,7 @@ window.PAY_CONFIG = {
     { id: 'money', icon: 'wallet', tint: 'sky', title: 'נטו, מס וזכויות', keys: ['net', 'leave', 'rights'], sub: () => `${S.settings.tax.creditPoints} נק׳ זיכוי · פנסיה ${S.settings.pension.employeePct}%` },
     { id: 'goals', icon: 'target', tint: 'pink', title: 'יעדים ותזכורות', keys: ['goal', 'alerts'], sub: () => (+S.settings.goal.amount ? 'יעד ' + U.money(S.settings.goal.amount, 0) : 'יעד, חיסכון והתראות') },
     { id: 'look', icon: 'palette', tint: 'orange', title: 'מראה ונעילה', keys: ['look', 'security'], sub: () => ({ system: 'לפי המערכת', light: 'בהיר', dark: 'כהה' }[S.settings.theme] || '') + (S.settings.lock.enabled ? ' · נעול 🔒' : '') },
-    { id: 'data', icon: 'cloud', tint: 'mint', title: 'גיבוי ונתונים', keys: ['backup', 'export', 'demo'], sub: () => (S.settings.backup.lastBackup ? 'גיבוי ' + UI.timeAgo(S.settings.backup.lastBackup) : 'גיבוי, ייצוא, נתוני דוגמה') },
+    { id: 'data', icon: 'cloud', tint: 'mint', title: 'גיבוי, ייבוא ונתונים', keys: ['backup', 'import', 'export', 'demo'], sub: () => (S.settings.backup.lastBackup ? 'גיבוי ' + UI.timeAgo(S.settings.backup.lastBackup) : 'גיבוי, ייצוא, נתוני דוגמה') },
     { id: 'more', icon: 'sparkle', tint: 'violet', title: 'עוזר AI ואודות', keys: ['assistant', 'ai', 'about'], sub: () => 'גרסה ' + root.APP_VERSION },
   ];
   const catOf = (k) => CATS.find((c) => c.keys.includes(k));
@@ -15186,7 +15786,7 @@ window.PAY_CONFIG = {
       <div id="set-home">
       <div class="set-chips" aria-label="בעיות נפוצות">${CHIPS.map(([ic, tint, i]) => `<button class="set-chip t-${tint}" data-set-chip="${i}">${icon(ic, 's')}<span>${esc(PROBLEMS[i][0])}</span></button>`).join('')}</div>
       ${App.isAdmin ? `<div class="list" style="margin-top:6px"><button class="item admin-entry" data-act="admin-dashboard"><span class="lead" style="background:var(--primary);color:var(--on-primary)">${icon('chart')}</span><span class="body"><span class="t">לוח ניהול ${App.adminOpenTickets ? `<span class="tag warn">${App.adminOpenTickets} פניות מחכות</span>` : ''}</span><span class="s">משתמשים, פעילות, פניות (למנהלים בלבד)</span></span>${icon('left', 's')}</button></div>` : ''}
-      ${root.Plus && root.Plus.visible() ? `<div class="list" style="margin-top:6px"><button class="item plus-entry" data-act="plus-open"><span class="lead plus-lead">${icon('sparkle')}</span><span class="body"><span class="t">Shaati Plus</span><span class="s">${root.Plus.owned() ? 'פעיל · תודה על התמיכה 💜' : 'עיצובים לכרטיס השכר · תשלום חד-פעמי' + (root.Plus.price ? ' · ' + esc(root.Plus.price) : '')}</span></span>${icon('left', 's')}</button></div>` : ''}
+      ${root.Plus && root.Plus.visible() ? `<div class="list" style="margin-top:6px"><button class="item plus-entry" data-act="plus-open"><span class="lead plus-lead">${icon('sparkle')}</span><span class="body"><span class="t">Shaati Plus</span><span class="s">${root.Plus.owned() ? 'פעיל · תודה על התמיכה 💜' : 'עיצובים לכרטיס השכר' + (root.Plus.priceText && root.Plus.priceText() ? ' · ' + esc(root.Plus.priceText()) : '')}</span></span>${icon('left', 's')}</button></div>` : ''}
       <div class="set-cats">${CATS.map((c, i) => `<button class="set-cat" data-act="settings-cat" data-cat="${c.id}" style="--i:${i}">${UI.tile(c.icon, c.tint)}<span class="t">${c.title}</span><span class="s">${esc(c.sub())}</span><span class="n" aria-hidden="true">${c.keys.length}</span></button>`).join('')}</div>
       <div class="list set-list help-list"><button class="item" data-act="support"><span class="lead">${icon('chat')}</span><span class="body"><span class="t">עזרה ותמיכה ${App.supportUnread ? '<span class="tag good">תשובה חדשה</span>' : ''}</span><span class="s">שאלות נפוצות, לכתוב לנו, הפניות שלי</span></span>${icon('left', 's')}</button>
         <button class="item" data-act="share-app"><span class="lead">${icon('share')}</span><span class="body"><span class="t">לשתף עם חברים</span><span class="s">שגם הם ידעו כמה מגיע להם</span></span>${icon('left', 's')}</button>
@@ -15194,7 +15794,7 @@ window.PAY_CONFIG = {
       <div class="ver">גרסה ${root.APP_VERSION} · מבנה נתונים ${Store.SCHEMA_VERSION}${S.settings.legal ? ' · תנאים ' + esc(S.settings.legal.version) + ' אושרו' : ''}</div>
       </div>`;
   };
-  App.actions['settings-open'] = (el) => (el.dataset.k === 'assistant' ? (App.openAssistantOver || App.actions.assistant)() : el.dataset.k === 'rights' ? App.actions.rights() : App.sheetsApi.settingsSection(el.dataset.k));
+  App.actions['settings-open'] = (el) => (el.dataset.k === 'import' ? App.importHours({ over: true }) : el.dataset.k === 'assistant' ? (App.openAssistantOver || App.actions.assistant)() : el.dataset.k === 'rights' ? App.actions.rights() : App.sheetsApi.settingsSection(el.dataset.k));
   // a door: its own small page with the sections behind it (their lines stay up to date while it is open)
   App.actions['settings-cat'] = (el) => {
     const c = CATS.find((x) => x.id === el.dataset.cat);
@@ -15215,7 +15815,7 @@ window.PAY_CONFIG = {
   // a search result: the section opens at the field, which lights up for a moment
   App.actions['settings-go'] = (el) => {
     const k = el.dataset.k;
-    if (k === 'assistant' || k === 'rights') { App.actions['settings-open'](el); return; }
+    if (k === 'assistant' || k === 'rights' || k === 'import') { App.actions['settings-open'](el); return; }
     App.sheetsApi.settingsSection(k, el.dataset.f || '');
   };
   function spotlight(sheet, label) {
@@ -16763,11 +17363,11 @@ window.PAY_CONFIG = {
     id: '1.20',
     items: [
       ['sparkle', 'violet', 'פתיחה חדשה ומרשימה', 'שעון שמתקתק, לוגו שנוחת עם מטבעות וזיקוקים, וצליל שכיף לשמוע.'],
+      ['upload', 'pink', 'ייבוא דוח שעות', 'יש דוח מהעבודה? Excel, ‏PDF או צילום, וכל המשמרות נכנסות בבת אחת. בהוספה (+) או בהגדרות.'],
       ['pin', 'mint', 'בחירת עיר חדשה', 'כל היישובים בישראל, עם חיפוש ומשפט קטן על כל מקום. "המיקום שלי" בוחר לבד את הכי קרוב.'],
       ['coffee', 'amber', 'הפסקה לפי החוק', 'לא כתבתם הפסקה? היא נכנסת לבד לפי החוק, בתשלום. קצרה מדי? תופיע אזהרה.'],
       ['star', 'sky', 'תעריף מיוחד באחוזים', 'יום בחירות? 200% למשמרת אחת (בעקיפות הידניות), או ליום שלם בלחיצה על היום בלוח השנה.'],
       ['search', 'violet', 'הגדרות חדשות', 'הכול מסודר בקטגוריות, והחיפוש מבין בעיות: כתבו "השכר לא נכון" ותגיעו ישר לשדה הנכון.'],
-      ['check', 'pink', 'בחירות בסגנון שעתי', 'כל רשימת בחירה נפתחת עכשיו בעיצוב של האפליקציה, עם צליל ואנימציה.'],
     ],
   };
 
@@ -18855,10 +19455,10 @@ window.PAY_CONFIG = {
         <div class="tiny muted">רק בטלפון הזה: לא נספר בסטטיסטיקה ולא נראה לשחקנים אחרים. אמיתי ייפתח לכולם כשחשבון התשלומים יוגדר.</div>
         <div class="seg">${simBtn('', 'כבוי')}${simBtn('free', 'משתמש חינמי')}${simBtn('plus', 'מנוי Plus')}</div>
         <div class="tiny adm-preview-l">חינמי: מכחול על כרטיס השכר בבית, ניסיון חינם ל-3 ימים, מכסות לניתוח המתקדם (דוחות) ולייצוא, ושורת Plus בהגדרות. מנוי: 12 עיצובים (הגדרות › מראה), רקע בטבלת האלופים ותג במסך הבית.</div>
-        <div class="btn-row"><button class="btn tonal sm" data-act="plus-sim-offer">${icon('sparkle', 's')} להציג את ההצעה בבית</button><button class="btn text sm" data-act="plus-sim-reset">איפוס ניסיון ומכסות</button></div></div>`;
+        <div class="btn-row"><button class="btn tonal sm" data-act="plus-sim-offer">${icon('sparkle', 's')} להציג את ההצעה בבית</button><button class="btn text sm" data-act="plus-sim-reset">איפוס ניסיון ומכסות</button><button class="btn text sm" data-act="review-preview">${icon('star', 's')} מסך בקשת הדירוג</button></div></div>`;
     return `<div class="section-title">${icon('sparkle', 's')} Shaati Plus והכנסות</div>
       ${preview}
-      <div class="card"><div class="kpis">${kpi('קונים', buyers, `${play} באנדרואיד · ${web} באתר`)}${kpi('משלמים', U.num(share, 1) + '%', `מכל המשתמשים · היעד ${GOAL}%`)}${kpi('הכנסה משוערת', money(gross), '≈ ' + money(net) + ' אחרי עמלות')}${kpi('קנו אחרי ניסיון', pct(triedBought, tried) + '%', `${tried} ניסו בחינם`)}</div>
+      <div class="card"><div class="kpis">${kpi(C.monthly ? 'מנויים' : 'קונים', buyers, `${play} באנדרואיד · ${web} באתר`)}${kpi('משלמים', U.num(share, 1) + '%', `מכל המשתמשים · היעד ${GOAL}%`)}${kpi(C.monthly ? 'הכנסה בחודש' : 'הכנסה משוערת', money(gross), '≈ ' + money(net) + ' אחרי עמלות')}${kpi('קנו אחרי ניסיון', pct(triedBought, tried) + '%', `${tried} ניסו בחינם`)}</div>
         <div class="adm-goal"><div class="progress thin"><i style="width:${Math.min(100, (share / GOAL) * 100)}%"></i></div><span class="tiny muted">${share >= GOAL ? 'היעד הושג 🎉' : `עוד ${Math.max(1, Math.ceil((GOAL / 100) * rows.length - buyers))} קונים ליעד של ${GOAL}%`}</span></div>
         <div class="divider"></div>
         <div class="tiny muted" style="margin-bottom:6px">המשפך: מכל המשתמשים, כמה הגיעו לכל שלב</div>
@@ -18971,8 +19571,8 @@ window.PAY_CONFIG = {
   const S = Store.S;
   const { icon, esc } = UI;
 
-  const LEGAL_VERSION = '1.3';
-  const EFFECTIVE = '15 באוקטובר 2026';
+  const LEGAL_VERSION = '1.4';
+  const EFFECTIVE = '21 באוקטובר 2026';
   const CONTACT = 'https://github.com/leelor123/shifts/issues';
   const APP_NAME = 'Shaati';
   App.LEGAL_VERSION = LEGAL_VERSION;
@@ -18999,7 +19599,7 @@ window.PAY_CONFIG = {
 <h4>8. זמינות, שינויים והפסקת השירות</h4>
 <p>השימוש באפליקציה ובכל יכולותיה הבסיסיות — רישום משמרות, חישוב שכר, זכויות, בדיקת תלוש, דוחות ומשחקים — ניתן ללא תשלום. האפליקציה ניתנת "כמות שהיא" (AS IS) ו"כפי שהיא זמינה", ללא כל התחייבות לזמינות רציפה, לדיוק, להתאמה למטרה מסוימת או להיעדר תקלות. המפעיל רשאי לשנות, להוסיף או להפסיק תכונות או את השירות כולו, ככל האפשר בהודעה מראש באפליקציה. שינוי מהותי בתנאים יוצג באפליקציה ויידרש אישורו מחדש.</p>
 <h4>8א. תוספות בתשלום (Shaati Plus)</h4>
-<p>האפליקציה עשויה להציע תוספות אופציונליות בתשלום חד-פעמי ("Shaati Plus"), כגון עיצובים לכרטיס השכר, ושימוש ללא הגבלה בחלק מהתוספות שיש להן מכסה חינמית (למשל ניתוח מתקדם וייצוא דוחות לקובץ). התוספות אינן משנות את החישובים, את מידע הזכויות או את הכלים הבסיסיים (משמרות, חישוב שכר, זכויות, בדיקת תלוש, דוחות במסך, משחקים, גיבוי וסנכרון), שנשארים זמינים לכולם ללא תשלום וללא הגבלה. ניתן לנסות את Shaati Plus פעם אחת בחינם לתקופה קצרה; הניסיון אינו דורש פרטי תשלום ומסתיים מעצמו, בלי חיוב. באפליקציית האנדרואיד שהותקנה מ-\u2060Google Play הרכישה מתבצעת דרך Google Play, בכפוף לתנאים ולמדיניות ההחזרים שלה. באתר ובאייפון הרכישה מתבצעת בדף תשלום של Lemon Squeezy, שהיא המוכרת הרשומה (Merchant of Record) של העסקה ומטפלת בתשלום, בקבלה ובמסים, בכפוף לתנאים ולמדיניות ההחזרים שלה; לאחר התשלום נשלח קוד הפעלה, הנשמר בחשבון המשתמש ומפעיל את התוספת בכל מכשיריו. המפעיל אינו מקבל ואינו שומר פרטי תשלום. החזר כספי מבטל את התוספת. רכישה בידי משתמש שטרם מלאו לו 18 טעונה הסכמת הורה או אפוטרופוס.</p>
+<p>האפליקציה עשויה להציע תוספות אופציונליות במנוי חודשי ("Shaati Plus"), כגון עיצובים לכרטיס השכר, ושימוש ללא הגבלה בחלק מהתוספות שיש להן מכסה חינמית (למשל ניתוח מתקדם וייצוא דוחות לקובץ). התוספות אינן משנות את החישובים, את מידע הזכויות או את הכלים הבסיסיים (משמרות, חישוב שכר, זכויות, בדיקת תלוש, דוחות במסך, משחקים, גיבוי וסנכרון), שנשארים זמינים לכולם ללא תשלום וללא הגבלה. ניתן לנסות את Shaati Plus פעם אחת בחינם לתקופה קצרה; הניסיון אינו דורש פרטי תשלום ומסתיים מעצמו, בלי חיוב. המנוי מתחדש אוטומטית בכל חודש, במחיר שמוצג לפני הרכישה, עד שמבטלים אותו. אפשר לבטל בכל עת: באפליקציית האנדרואיד דרך Google Play (תשלומים ומינויים), ובאתר ובאייפון דרך הקישור שבמייל של Lemon Squeezy. לאחר ביטול התוספת נשארת פעילה עד סוף התקופה ששולמה, ולא יתבצעו חיובים נוספים. שינוי מחיר יימסר מראש, בהתאם לכללי ספק התשלום. רכישה חד-פעמית של Shaati Plus שבוצעה בעבר נשארת בתוקף. באפליקציית האנדרואיד שהותקנה מ-\u2060Google Play הרכישה מתבצעת דרך Google Play, בכפוף לתנאים ולמדיניות ההחזרים שלה. באתר ובאייפון הרכישה מתבצעת בדף תשלום של Lemon Squeezy, שהיא המוכרת הרשומה (Merchant of Record) של העסקה ומטפלת בתשלום, בקבלה ובמסים, בכפוף לתנאים ולמדיניות ההחזרים שלה; לאחר התשלום נשלח קוד הפעלה, הנשמר בחשבון המשתמש ומפעיל את התוספת בכל מכשיריו. המפעיל אינו מקבל ואינו שומר פרטי תשלום. החזר כספי או סיום המנוי מבטלים את התוספת. רכישה בידי משתמש שטרם מלאו לו 18 טעונה הסכמת הורה או אפוטרופוס.</p>
 <h4>8ב. טבלת האלופים במשחקים</h4>
 <p>ההשתתפות בטבלת האלופים היא לבחירתך ודורשת התחברות. בטבלה מוצגים לשאר המשתמשים המחוברים הכינוי שבחרת, אימוג׳י, הרקע שבחרת (למנויי Shaati Plus) והתוצאות שלך במשחקים. אין לבחור כינוי שהוא השם המלא שלך, פרטי קשר, או כינוי פוגעני, מטעה או שמתחזה לאחר. המפעיל רשאי להסיר מהטבלה שורה עם כינוי לא מתאים או תוצאה שנראית לא אמיתית. אפשר לצאת מהטבלה בכל עת, והשורה נמחקת.</p>
 <h4>9. נתונים וגיבוי</h4>
@@ -19142,7 +19742,7 @@ window.PAY_CONFIG = {
         <li>נשמרת סטטיסטיקת שימוש אנונימית (כמה משמרות, ימי שימוש, תכונות), בלי שם, אימייל או סכומים. אפשר לכבות בהגדרות.</li>
         <li>תכונות AI פועלות רק כשאתה מפעיל אותן, עם מפתח API שלך.</li>
         <li>טבלת האלופים במשחקים היא לבחירתך: מוצגים בה רק כינוי, אימוג׳י ותוצאות.</li>
-        <li>הכלים של האפליקציה והמשחקים חינמיים. לחלק מהתוספות (ניתוח מתקדם, ייצוא דוחות) יש מכסה חינמית, ו-\u2060Shaati Plus האופציונלי (תשלום חד-פעמי דרך Google Play או בדף תשלום מאובטח של Lemon Squeezy) פותח אותן בלי הגבלה ומוסיף עיצובים ורקע בטבלה. אנחנו לא רואים פרטי אשראי.</li>
+        <li>הכלים של האפליקציה והמשחקים חינמיים. לחלק מהתוספות (ניתוח מתקדם, ייצוא דוחות) יש מכסה חינמית, ו-\u2060Shaati Plus האופציונלי (מנוי חודשי שאפשר לבטל בכל רגע, דרך Google Play או בדף תשלום מאובטח של Lemon Squeezy) פותח אותן בלי הגבלה ומוסיף עיצובים ורקע בטבלה. אנחנו לא רואים פרטי אשראי.</li>
         <li>אפשר לייצא או למחוק את כל הנתונים בכל רגע.</li></ul></div>
       <div class="btn-row"><button class="btn tonal" data-legal="terms">${icon('file')} תנאי שימוש</button><button class="btn tonal" data-legal="privacy">${icon('shield')} פרטיות</button></div>
       </div><div class="foot col">

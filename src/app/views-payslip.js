@@ -70,6 +70,9 @@
     if (file.type === 'application/pdf' || /\.pdf$/i.test(file.name)) return extractPdf(file, progress);
     return { text: await ocr(file, progress), source: 'ocr' };
   }
+  // the hours-report import reads PDFs and pictures the same way (import.js)
+  App.readDocText = extract;
+  App.loadLib = loadScript;
 
   /* ---------------- flow: upload → extract → verify ---------------- */
   App.actions['payslip-new'] = () => {

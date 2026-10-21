@@ -144,6 +144,7 @@
     assistant: { icon: 'sparkle', title: 'עוזר זכויות ושכר (AI)', sub: () => (S.settings.ai.apiKey ? 'מוכן — שאל כל שאלה' : 'דורש מפתח API') },
     ai: { icon: 'sparkle', title: 'מפתח AI וניתוח תלושים', sub: () => (S.settings.ai.apiKey ? 'מפתח מוגדר · ' + S.settings.ai.model : 'אופציונלי — ללא מפתח הכול מקומי') },
     backup: { icon: 'cloud', title: 'גיבוי ושחזור', sub: () => (S.settings.backup.lastBackup ? 'גיבוי אחרון: ' + UI.timeAgo(S.settings.backup.lastBackup) : 'עוד לא גובה') },
+    import: { icon: 'upload', title: 'ייבוא דוח שעות', sub: () => 'Excel, CSV, PDF או צילום: כל המשמרות בבת אחת' },
     export: { icon: 'download', title: 'ייצוא נתונים', sub: () => 'CSV / Excel, PDF, יומן' },
     demo: { icon: 'flask', title: 'מצב הדגמה', sub: () => (S.settings.demo ? 'פעיל' : 'נתוני דוגמה לבדיקת האפליקציה') },
     about: { icon: 'info', title: 'אודות והתקנה', sub: () => 'גרסה ' + root.APP_VERSION },
@@ -157,7 +158,7 @@
     net: 'מס מס הכנסה נקודות זיכוי פנסיה ביטוח לאומי מס בריאות השתלמות נטו', leave: 'חופשה מחלה הבראה ותק תחילת עבודה',
     goal: 'יעד יעדים חיסכון חוסכים', alerts: 'התראות תזכורות פוש הודעות', templates: 'תבנית תבניות משמרת קבועה',
     look: 'צבע צבעים ערכת נושא כהה בהיר מצב לילה גופן גופנים מראה צלילים רטט מוזיקה עיצוב כרטיס plus פלוס', security: 'קוד נעילה טביעת אצבע סיסמה',
-    assistant: 'בינה מלאכותית עוזר שאלות ai', ai: 'מפתח api claude ניתוח תלוש', backup: 'גיבוי שחזור קובץ', export: 'ייצוא אקסל excel csv pdf יומן',
+    assistant: 'בינה מלאכותית עוזר שאלות ai', ai: 'מפתח api claude ניתוח תלוש', backup: 'גיבוי שחזור קובץ', import: 'ייבוא דוח שעות נוכחות שעון אקסל excel csv pdf צילום קובץ להעלות משמרות מהעבודה', export: 'ייצוא אקסל excel csv pdf יומן',
     demo: 'דוגמה הדגמה', about: 'גרסה התקנה אודות', rights: 'זכויות שכר מינימום',
   };
   // the page is a few colourful doors; each opens its own small page with the sections behind it
@@ -168,7 +169,7 @@
     { id: 'money', icon: 'wallet', tint: 'sky', title: 'נטו, מס וזכויות', keys: ['net', 'leave', 'rights'], sub: () => `${S.settings.tax.creditPoints} נק׳ זיכוי · פנסיה ${S.settings.pension.employeePct}%` },
     { id: 'goals', icon: 'target', tint: 'pink', title: 'יעדים ותזכורות', keys: ['goal', 'alerts'], sub: () => (+S.settings.goal.amount ? 'יעד ' + U.money(S.settings.goal.amount, 0) : 'יעד, חיסכון והתראות') },
     { id: 'look', icon: 'palette', tint: 'orange', title: 'מראה ונעילה', keys: ['look', 'security'], sub: () => ({ system: 'לפי המערכת', light: 'בהיר', dark: 'כהה' }[S.settings.theme] || '') + (S.settings.lock.enabled ? ' · נעול 🔒' : '') },
-    { id: 'data', icon: 'cloud', tint: 'mint', title: 'גיבוי ונתונים', keys: ['backup', 'export', 'demo'], sub: () => (S.settings.backup.lastBackup ? 'גיבוי ' + UI.timeAgo(S.settings.backup.lastBackup) : 'גיבוי, ייצוא, נתוני דוגמה') },
+    { id: 'data', icon: 'cloud', tint: 'mint', title: 'גיבוי, ייבוא ונתונים', keys: ['backup', 'import', 'export', 'demo'], sub: () => (S.settings.backup.lastBackup ? 'גיבוי ' + UI.timeAgo(S.settings.backup.lastBackup) : 'גיבוי, ייצוא, נתוני דוגמה') },
     { id: 'more', icon: 'sparkle', tint: 'violet', title: 'עוזר AI ואודות', keys: ['assistant', 'ai', 'about'], sub: () => 'גרסה ' + root.APP_VERSION },
   ];
   const catOf = (k) => CATS.find((c) => c.keys.includes(k));
@@ -280,7 +281,7 @@
       <div id="set-home">
       <div class="set-chips" aria-label="בעיות נפוצות">${CHIPS.map(([ic, tint, i]) => `<button class="set-chip t-${tint}" data-set-chip="${i}">${icon(ic, 's')}<span>${esc(PROBLEMS[i][0])}</span></button>`).join('')}</div>
       ${App.isAdmin ? `<div class="list" style="margin-top:6px"><button class="item admin-entry" data-act="admin-dashboard"><span class="lead" style="background:var(--primary);color:var(--on-primary)">${icon('chart')}</span><span class="body"><span class="t">לוח ניהול ${App.adminOpenTickets ? `<span class="tag warn">${App.adminOpenTickets} פניות מחכות</span>` : ''}</span><span class="s">משתמשים, פעילות, פניות (למנהלים בלבד)</span></span>${icon('left', 's')}</button></div>` : ''}
-      ${root.Plus && root.Plus.visible() ? `<div class="list" style="margin-top:6px"><button class="item plus-entry" data-act="plus-open"><span class="lead plus-lead">${icon('sparkle')}</span><span class="body"><span class="t">Shaati Plus</span><span class="s">${root.Plus.owned() ? 'פעיל · תודה על התמיכה 💜' : 'עיצובים לכרטיס השכר · תשלום חד-פעמי' + (root.Plus.price ? ' · ' + esc(root.Plus.price) : '')}</span></span>${icon('left', 's')}</button></div>` : ''}
+      ${root.Plus && root.Plus.visible() ? `<div class="list" style="margin-top:6px"><button class="item plus-entry" data-act="plus-open"><span class="lead plus-lead">${icon('sparkle')}</span><span class="body"><span class="t">Shaati Plus</span><span class="s">${root.Plus.owned() ? 'פעיל · תודה על התמיכה 💜' : 'עיצובים לכרטיס השכר' + (root.Plus.priceText && root.Plus.priceText() ? ' · ' + esc(root.Plus.priceText()) : '')}</span></span>${icon('left', 's')}</button></div>` : ''}
       <div class="set-cats">${CATS.map((c, i) => `<button class="set-cat" data-act="settings-cat" data-cat="${c.id}" style="--i:${i}">${UI.tile(c.icon, c.tint)}<span class="t">${c.title}</span><span class="s">${esc(c.sub())}</span><span class="n" aria-hidden="true">${c.keys.length}</span></button>`).join('')}</div>
       <div class="list set-list help-list"><button class="item" data-act="support"><span class="lead">${icon('chat')}</span><span class="body"><span class="t">עזרה ותמיכה ${App.supportUnread ? '<span class="tag good">תשובה חדשה</span>' : ''}</span><span class="s">שאלות נפוצות, לכתוב לנו, הפניות שלי</span></span>${icon('left', 's')}</button>
         <button class="item" data-act="share-app"><span class="lead">${icon('share')}</span><span class="body"><span class="t">לשתף עם חברים</span><span class="s">שגם הם ידעו כמה מגיע להם</span></span>${icon('left', 's')}</button>
@@ -288,7 +289,7 @@
       <div class="ver">גרסה ${root.APP_VERSION} · מבנה נתונים ${Store.SCHEMA_VERSION}${S.settings.legal ? ' · תנאים ' + esc(S.settings.legal.version) + ' אושרו' : ''}</div>
       </div>`;
   };
-  App.actions['settings-open'] = (el) => (el.dataset.k === 'assistant' ? (App.openAssistantOver || App.actions.assistant)() : el.dataset.k === 'rights' ? App.actions.rights() : App.sheetsApi.settingsSection(el.dataset.k));
+  App.actions['settings-open'] = (el) => (el.dataset.k === 'import' ? App.importHours({ over: true }) : el.dataset.k === 'assistant' ? (App.openAssistantOver || App.actions.assistant)() : el.dataset.k === 'rights' ? App.actions.rights() : App.sheetsApi.settingsSection(el.dataset.k));
   // a door: its own small page with the sections behind it (their lines stay up to date while it is open)
   App.actions['settings-cat'] = (el) => {
     const c = CATS.find((x) => x.id === el.dataset.cat);
@@ -309,7 +310,7 @@
   // a search result: the section opens at the field, which lights up for a moment
   App.actions['settings-go'] = (el) => {
     const k = el.dataset.k;
-    if (k === 'assistant' || k === 'rights') { App.actions['settings-open'](el); return; }
+    if (k === 'assistant' || k === 'rights' || k === 'import') { App.actions['settings-open'](el); return; }
     App.sheetsApi.settingsSection(k, el.dataset.f || '');
   };
   function spotlight(sheet, label) {

@@ -71,6 +71,7 @@
     // a Shaati Plus skin for the pay card on home (only while Plus is on)
     const skin = root.Plus ? root.Plus.skin() : '';
     if (skin) de.dataset.skin = skin; else delete de.dataset.skin;
+    if (root.Plus && root.Plus.paintPhoto) root.Plus.paintPhoto(de, skin);
     const font = FONTS[st.font] ? st.font : 'rubik';
     de.style.setProperty('--app-font', "'" + FONTS[font][0] + "'");
     const link = document.getElementById('font-link');
@@ -442,6 +443,7 @@
       if (fix && App.sheetsApi.shiftEditor) { App.sheetsApi.shiftEditor(sh.id); return; }
     }
     App.sheetsApi.shiftDetail && App.sheetsApi.shiftDetail(sh.id);
+    if (App.reviewAfterShift) App.reviewAfterShift(); // a good moment, once that screen is closed
   };
   App.toggleBreak = async function (at) {
     const a = Object.assign({}, S.activeShift);
