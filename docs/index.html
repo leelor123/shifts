@@ -2,7 +2,7 @@
 <html lang="he" dir="rtl">
 <head>
 <meta charset="utf-8">
-<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'sha256-UNkxQDUJcHgRhOf8jGhBgW36AQa2NL7yVD7w4X8M4nc=' https://www.gstatic.com https://apis.google.com https://cdnjs.cloudflare.com https://cdn.jsdelivr.net 'wasm-unsafe-eval'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com data:; img-src 'self' data: blob: https:; connect-src 'self' https: wss:; frame-src https://shiftpay-70ab6.firebaseapp.com https://accounts.google.com https://apis.google.com https://*.google.com; worker-src 'self' blob: https://cdnjs.cloudflare.com https://cdn.jsdelivr.net; media-src 'self' data: blob:; manifest-src 'self'; object-src 'none'; base-uri 'self'; form-action 'self'">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'sha256-eZWMt5wRr83RQMwlmlGMiQLUUwy14HPKI90yhy7Yt94=' https://www.gstatic.com https://apis.google.com https://cdnjs.cloudflare.com https://cdn.jsdelivr.net 'wasm-unsafe-eval'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com data:; img-src 'self' data: blob: https:; connect-src 'self' https: wss:; frame-src https://shiftpay-70ab6.firebaseapp.com https://accounts.google.com https://apis.google.com https://*.google.com; worker-src 'self' blob: https://cdnjs.cloudflare.com https://cdn.jsdelivr.net; media-src 'self' data: blob:; manifest-src 'self'; object-src 'none'; base-uri 'self'; form-action 'self'">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="theme-color" content="#0d2b6b">
 <meta name="description" content="מעקב משמרות וחישוב שכר אישי: שבתות, חגים, שעות נוספות, נסיעות, נטו משוער וניתוח תלושים — נשמר בחשבון שלך ועובד גם בלי אינטרנט.">
@@ -1108,7 +1108,9 @@ body.fx .btn:active, body.fx .chip:active, body.fx .sc:active, body.fx .am-tile:
 .set-list .item:nth-child(6n) .lead { background: var(--orange-soft); color: var(--orange); }
 
 /* bottom bar: a tinted pill for the current tab, an amber + */
-.nav { background: color-mix(in srgb, var(--surface-1) 90%, transparent); backdrop-filter: saturate(1.4) blur(16px); -webkit-backdrop-filter: saturate(1.4) blur(16px); border-top: 1px solid var(--line); box-shadow: none; }
+/* opaque, no backdrop blur: the bar is on screen under every sheet and dialog, and a blur recomputed under moving
+   layers is a known source of one-frame flashes on Android GPUs (behind 90% the blur hardly showed anyway) */
+.nav { background: var(--surface-1); border-top: 1px solid var(--line); box-shadow: none; }
 .nav button { color: var(--on-surface-var); }
 .nav button .pill { width: 56px; height: 32px; border-radius: 16px; transition: background .2s; }
 .nav button.on .pill { background: var(--brand-soft); color: var(--brand-strong); }
@@ -2437,6 +2439,7 @@ body.fx .cal-day.hello, body.fx .week-row.hello { animation: cal-hello .55s cubi
 .imp-tips ul { margin: 6px 0 0; padding-inline-start: 18px; line-height: 1.6; }
 .imp-note { display: flex; gap: 6px; align-items: center; margin: -4px 2px 10px; }
 @media (prefers-reduced-motion: reduce) { .imp-bar i { animation-duration: 3s; } }
+.login .login-email { margin-top: 10px; }
 
 </style>
 </head>
@@ -2465,7 +2468,7 @@ body.fx .cal-day.hello, body.fx .week-row.hello { animation: cal-hello .55s cubi
 <noscript><div style="padding:24px;font-family:sans-serif">האפליקציה דורשת JavaScript.</div></noscript>
 <script>
 window.APP_VERSION = '1.20.0';
-window.APP_BUILD = '1.20.0-8ec23fce';
+window.APP_BUILD = '1.20.0-35692bde';
 /* ---- core/util.js ---- */
 /* ============================================================
  * util.js — date/time helpers and formatting.
@@ -11065,6 +11068,9 @@ window.APP_BUILD = '1.20.0-8ec23fce';
  * (each signed-in user can read and write only users/{their uid}).
  * authDomain stays on firebaseapp.com: it is the only redirect address the Google sign-in client
  * accepts (checked with `node tools/fbapi.js redirectcheck`). */
+// signing in with an email link (no password): on once "Email link" is turned on in Firebase Authentication
+// (node tools/fbapi.js emaillink shiftpay-70ab6); until then the button stays out of sight
+window.AUTH_EMAIL_LINK = false;
 window.FIREBASE_CONFIG = {
   apiKey: 'AIzaSyCOJVJ4voa19xGur66xEYOgHwooKl85vzI',
   authDomain: 'shiftpay-70ab6.firebaseapp.com',
@@ -11179,6 +11185,8 @@ window.FIREBASE_CONFIG = {
     Cloud.ready = (async () => {
       const { auth, au } = await load();
       try { await au.getRedirectResult(auth); } catch (e) { Cloud.redirectError = e; }
+      // opened from the sign-in link in an email: finish signing in here
+      if (/[?&]oobCode=/.test(location.search)) { try { await Cloud.finishEmailLink(); } catch (e) { Cloud.redirectError = e; } }
       return new Promise((resolve) => {
         let first = true;
         au.onAuthStateChanged(auth, (user) => {
@@ -11197,7 +11205,12 @@ window.FIREBASE_CONFIG = {
     'auth/cancelled-popup-request': 'ההתחברות בוטלה.',
     'auth/network-request-failed': 'אין חיבור לאינטרנט. נסה שוב כשיש רשת.',
     'auth/unauthorized-domain': 'הכתובת של האפליקציה לא מאושרת בהגדרות Firebase (Authorized domains).',
-    'auth/operation-not-allowed': 'התחברות עם Google לא הופעלה עדיין בפרויקט Firebase.',
+    'auth/operation-not-allowed': 'סוג ההתחברות הזה עוד לא הופעל. אפשר בינתיים להתחבר עם Google.',
+    'auth/invalid-email': 'כתובת האימייל לא תקינה.',
+    'auth/missing-email': 'צריך לכתוב כתובת אימייל.',
+    'auth/invalid-action-code': 'הקישור כבר נוצל או שפג תוקפו. שלחו קישור חדש מהאפליקציה.',
+    'auth/expired-action-code': 'פג תוקף הקישור. שלחו קישור חדש מהאפליקציה.',
+    'auth/quota-exceeded': 'נשלחו יותר מדי קישורים היום. נסו שוב מחר, או התחברו עם Google.',
     'auth/too-many-requests': 'יותר מדי ניסיונות. נסה שוב בעוד כמה דקות.',
     'auth/user-disabled': 'החשבון חסום.',
     'auth/popup-blocked': 'הדפדפן חסם את חלון האישור של Google. אפשר חלונות קופצים ונסה שוב.',
@@ -11237,6 +11250,37 @@ window.FIREBASE_CONFIG = {
       });
     };
     return fb ? go(fb) : load().then(go);
+  };
+
+  /* ---------------- signing in with an email link (no password) ---------------- */
+  const EMAIL_KEY = 'shaati.emailForSignIn';
+  /** Sends a sign-in link to this email; opening it (on this phone) signs in. */
+  Cloud.sendEmailLink = async function (email) {
+    const { auth, au } = await load();
+    await au.sendSignInLinkToEmail(auth, email, { url: location.origin + location.pathname + '?signin=email', handleCodeInApp: true });
+    try { localStorage.setItem(EMAIL_KEY, email); } catch (e) { /* asked again when the link is opened */ }
+  };
+  /** The page was opened from that link: signs in. The email is the one saved when the link was sent; opened
+   *  elsewhere (another browser), it is asked once. The link leaves the address either way. */
+  Cloud.finishEmailLink = async function () {
+    const { auth, au } = await load();
+    if (typeof au.isSignInWithEmailLink !== 'function' || !au.isSignInWithEmailLink(auth, location.href)) return null;
+    const clean = () => { try { history.replaceState(history.state, '', location.pathname); } catch (e) { /* ignore */ } };
+    let email = '';
+    try { email = localStorage.getItem(EMAIL_KEY) || ''; } catch (e) { /* ignore */ }
+    if (!email && root.UI) {
+      for (let i = 0; i < 40 && document.getElementById('intro'); i++) await new Promise((r) => setTimeout(r, 150));
+      email = String((await root.UI.promptText('השלמת ההתחברות', 'לאיזה אימייל נשלח הקישור?', '', { type: 'email', inputmode: 'email', ltr: true, ok: 'התחברות' })) || '').trim();
+    }
+    if (!email) { clean(); return null; }
+    try {
+      const cred = await au.signInWithEmailLink(auth, email, location.href);
+      Cloud.user = cred.user;
+      return cred.user;
+    } finally {
+      try { localStorage.removeItem(EMAIL_KEY); } catch (e) { /* ignore */ }
+      clean();
+    }
   };
 
   /* ---------------- encoding ---------------- */
@@ -11530,7 +11574,10 @@ window.FIREBASE_CONFIG = {
     // Google requires a recent sign-in to delete an account. Confirm it now, while the tap that
     // started the deletion still counts as a user gesture (otherwise the popup gets blocked).
     const last = Date.parse((user.metadata && user.metadata.lastSignInTime) || '') || 0;
-    if (user.delete && Date.now() - last > 4 * 60 * 1000) await au.reauthenticateWithPopup(user, new au.GoogleAuthProvider());
+    // (an account from before email sign-in has no list here: it signed in with Google)
+    const pd = user.providerData || [];
+    const viaGoogle = !pd.length || pd.some((x) => x && x.providerId === 'google.com');
+    if (user.delete && viaGoogle && Date.now() - last > 4 * 60 * 1000) await au.reauthenticateWithPopup(user, new au.GoogleAuthProvider());
     detach();
     if (root.Stats) await root.Stats.forget();
     if (root.Support) await root.Support.forget();
@@ -12646,6 +12693,24 @@ window.PAY_CONFIG = {
     if (b) b.onclick = async () => { await UI.copyText(location.origin + location.pathname); UI.toast('הקישור הועתק. הדבק אותו בדפדפן 👍'); };
   };
 
+  /* ---------------- signing in with an email link ---------------- */
+  /** Asks for the email and sends the sign-in link. true when it was sent. */
+  App.emailSignIn = async function () {
+    const v = await UI.dialog({
+      title: 'התחברות עם אימייל',
+      html: `<p class="small muted" style="margin-top:0">נשלח לך קישור. לוחצים עליו בטלפון הזה ומחוברים, בלי סיסמה.</p>
+        <label class="field"><span class="lbl">האימייל שלך</span><input class="input ltr" type="email" name="email" autocomplete="email" inputmode="email" placeholder="name@example.com" maxlength="100"></label>`,
+      buttons: [{ label: 'ביטול', value: null }, { label: 'שליחת קישור', value: 'form' }],
+    });
+    if (!v) return false;
+    const email = String(v.email || '').trim();
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(email)) { UI.invalid('כתובת האימייל לא נראית תקינה'); return false; }
+    try { await Cloud.sendEmailLink(email); } catch (e) { console.warn('email link', e); UI.invalid(Cloud.errorText(e)); return false; }
+    if (root.Fx) root.Fx.play('pick');
+    await UI.dialog({ title: 'שלחנו לך קישור 📬', html: `<p style="margin-top:0">שלחנו קישור התחברות ל-<b dir="ltr">${esc(email)}</b>.</p><p class="small muted">פותחים את המייל בטלפון הזה ולוחצים על הקישור. לא הגיע תוך דקה? כדאי לבדוק גם בספאם.</p>`, buttons: [{ label: 'הבנתי', value: true }] });
+    return true;
+  };
+
   /* ---------------- login screen ---------------- */
   App.showLogin = function (reason) {
     const nav = document.getElementById('nav');
@@ -12660,17 +12725,20 @@ window.PAY_CONFIG = {
       v.innerHTML = `<div class="wizard login"><div class="content" style="display:flex;flex-direction:column;justify-content:center;text-align:center">
         <div class="login-mascot">${App.mascot ? App.mascot(isErr ? 'think' : 'wave', { size: 110 }) : '<div class="brand-mark big" aria-hidden="true"></div>'}</div>
         <h1 class="brand-name">Shaati</h1><div class="brand-sub">מעקב משמרות ושכר</div>
-        <p class="lead">מתחברים עם Google, וכל מה שרשמת נשמר בחשבון שלך ומחכה לך בכל טלפון.</p>
+        <p class="lead">מתחברים עם Google${root.AUTH_EMAIL_LINK ? ' או עם אימייל' : ''}, וכל מה שרשמת נשמר בחשבון שלך ומחכה לך בכל טלפון.</p>
         ${App.inAppBrowser() ? App.openInBrowserCard() : ''}
         ${S.shifts.length ? `<div class="banner" style="text-align:start">${icon('cloud')}<div>הנתונים שכבר יש בטלפון יעלו לחשבון שלך בהתחברות הראשונה.</div></div>` : ''}
         ${msg ? `<div class="banner ${isErr ? 'warn' : ''}" style="text-align:start">${icon(isErr ? 'alert' : 'info')}<div>${esc(msg)}</div></div>` : ''}
         <button class="btn big ob-google" data-google ${busy || (!ready && !failedLoad) ? 'disabled' : ''}>${GOOGLE_G}<span>${label}</span></button>
         ${blocked ? '<button class="btn text sm" data-redirect>לא נפתח חלון? התחברות בדרך אחרת</button>' : ''}
+        ${root.AUTH_EMAIL_LINK ? `<button class="btn tonal login-email" data-email>${icon('mail', 's')} התחברות עם אימייל, בלי סיסמה</button>` : ''}
         <button class="btn text sm" data-act="support" style="margin-top:6px">${icon('info', 's')} בעיה בהתחברות? כתבו לנו</button>
         <div class="tiny muted" style="margin-top:8px">בהתחברות את/ה מאשר/ת את ${App.legalLinks ? App.legalLinks() : 'תנאי השימוש ומדיניות הפרטיות'}.</div>
         <div class="tiny muted" style="margin-top:10px;line-height:1.6">${icon('shield', 's')} רק את/ה יכול/ה לראות את הנתונים שלך. האפליקציה עובדת גם בלי אינטרנט, ומסנכרנת כשהרשת חוזרת.</div>
         </div></div>`;
       v.querySelector('[data-google]').onclick = () => go(false);
+      const em = v.querySelector('[data-email]');
+      if (em) em.onclick = async () => { if (await App.emailSignIn()) show('שלחנו קישור למייל. פותחים אותו בטלפון הזה כדי להתחבר 📬'); };
       const rd = v.querySelector('[data-redirect]');
       if (rd) rd.onclick = () => go(true);
       App.bindOpenInBrowser(v);
@@ -16551,6 +16619,7 @@ window.PAY_CONFIG = {
         foot = needsLogin()
           ? `<button class="btn big ob-google" data-save ${saving || (!ready && !loadFailed) ? 'disabled' : ''}>${App.googleIcon || ''}<span>${saving ? 'שומר…' : !ready && !loadFailed ? 'רגע, מכינים את Google…' : 'שמירה עם Google'}</span></button>
             ${blocked ? '<button class="btn text sm" data-redirect>לא נפתח חלון? התחברות בדרך אחרת</button>' : ''}
+            ${saving || !root.AUTH_EMAIL_LINK ? '' : `<button class="btn text sm" data-email-save>${icon('mail', 's')} או שמירה עם אימייל, בלי סיסמה</button>`}
             ${loadFailed ? '<button class="btn text sm" data-later>להמשיך בינתיים בלי חשבון</button>' : ''}`
           : `<button class="btn big ob-go" data-save ${saving ? 'disabled' : ''}>${saving ? 'רגע…' : 'כניסה לאפליקציה'}</button>`;
       } else {
@@ -16691,6 +16760,8 @@ window.PAY_CONFIG = {
       } else if (b.hasAttribute('data-save')) finishStep(false);
       else if (b.hasAttribute('data-redirect')) finishStep(true);
       else if (b.hasAttribute('data-later')) { App.localOnly = true; finishStep(false); }
+      // with an email: the link is sent, and the app opens now; opening the link signs in and the answers go up
+      else if (b.hasAttribute('data-email-save')) { App.emailSignIn().then((sent) => { if (sent && App.blocking === 'onboarding') { App.localOnly = true; finishStep(false); } }); }
       else if (b.dataset.gender) {
         A.gender = b.dataset.gender; read();
         v.querySelectorAll('[data-gender]').forEach((x) => x.classList.toggle('on', x === b));
