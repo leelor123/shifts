@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Shaati widget (android/widgets; copied into the Android project by tools/android.js) -->
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/w_root" android:layout_width="match_parent" android:layout_height="match_parent"
+    android:orientation="vertical" android:gravity="start" android:layoutDirection="rtl"
+    android:background="@drawable/w_bg" android:padding="14dp">
+    <TextView android:id="@+id/w_label" android:layout_width="wrap_content" android:layout_height="wrap_content" android:singleLine="true" android:ellipsize="end" android:textDirection="rtl" android:text="החודש שלי" android:textColor="@color/w_sub" android:textSize="13sp" />
+    <TextView android:id="@+id/w_amount" android:layout_width="match_parent" android:layout_height="0dp" android:layout_weight="1" android:gravity="center_vertical|start" android:singleLine="true" android:text="₪—" android:textColor="@color/w_text" android:textStyle="bold" android:autoSizeTextType="uniform" android:autoSizeMinTextSize="20sp" android:autoSizeMaxTextSize="40sp" android:textDirection="rtl" />
+    <TextView android:id="@+id/w_line" android:layout_width="wrap_content" android:layout_height="wrap_content" android:singleLine="true" android:ellipsize="end" android:textDirection="rtl" android:textColor="@color/w_sub" android:textSize="12sp" />
+    <ProgressBar android:id="@+id/w_bar" style="@android:style/Widget.ProgressBar.Horizontal" android:layout_width="match_parent" android:layout_height="8dp" android:layout_marginTop="8dp" android:max="100" android:progress="0" android:progressDrawable="@drawable/w_progress" android:layoutDirection="rtl" android:visibility="gone" />
+    <TextView android:id="@+id/w_goal" android:layout_width="wrap_content" android:layout_height="wrap_content" android:singleLine="true" android:ellipsize="end" android:textDirection="rtl" android:layout_marginTop="4dp" android:textColor="@color/w_sub" android:textSize="11sp" />
+</LinearLayout>

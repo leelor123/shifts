@@ -33,13 +33,16 @@
       name: st.userName || '', gender: st.gender || '', birth: st.birthDate || '', adult: false,
       jobs: existing.length ? existing.map((r) => ({ id: r.id, name: r.name, rate: Engine.roleRate(r, today) || '', color: r.color, rates: r.rates })) : [{ id: 'r_' + U.uid(), name: '', rate: '', color: Defaults.ROLE_COLORS[0] }],
       travel: '', travelAmount: '', city: '', start: st.startDate || '', startPick: '',
+      // the workplace's own name (empty while it is still the default one)
+      empName: emp.name && emp.name !== Defaults.defaultEmployer().name ? emp.name : '',
     };
     const needsLogin = () => !!opts.preLogin && !App.localOnly && !(root.Cloud && root.Cloud.user);
     const STEPS = ['hi', 'me', 'age', 'job', 'travel', 'city', 'start', 'done'];
     const QUESTIONS = STEPS.length - 2;
     let step = 0, dir = 'next', saving = false, msg = '', saved = false, demo = false, blocked = false, loadFailed = false;
     // he / she / both, for the questions' wording
-    const g = (m, f) => (A.gender === 'f' ? f : A.gender === 'm' ? m : m + '/' + f.replace(/^.*?(\S)$/, '$1'));
+    // he / she wording; not chosen: the neutral form given, or "מקבל/ת" when the feminine word only adds letters
+    const g = (m, f, x) => (A.gender === 'f' ? f : A.gender === 'm' || m === f ? m : x || (f.startsWith(m) ? m + '/' + f.slice(m.length) : m + '/' + f));
     const age = () => (A.birth ? Engine.ageAt(A.birth, today) : null);
     const minWage = () => Engine.legalMinWage(today, A.birth || null).hourly;
     const money = (n) => U.money(n, Number.isInteger(+n) ? 0 : 2);
@@ -68,23 +71,25 @@
       age: () => {
         const a = age();
         return `${say(a != null && a < 18 ? 'wow' : 'happy', a != null ? (a < 18 ? `גיל ${a}! יש לך זכויות מיוחדות, נדאג להן 🛡️` : `גיל ${a}, מעולה 👍`) : 'שאלה קטנה על הגיל 🎂')}
-        <h1>${g('מתי נולדת?', 'מתי נולדת?')}</h1>
+        <h1>מתי נולדת?</h1>
         <label class="field"><input class="input" type="date" id="ob-birth" data-pick="birth" value="${esc(A.birth)}" min="1940-01-01" max="${U.addDays(today, -365 * 12)}" placeholder="בחירת תאריך לידה"></label>
         <div class="ob-live" id="ob-live-age"></div>
         <div class="ob-chips">${chip('data-adult', '1', 'אני מעל 18, מעדיף/ה לא לפרט', A.adult)}</div>
         ${why('מתחת לגיל 18 יש שכר מינימום אחר, לא משלמים מס, ויש חוקים מיוחדים (כמה שעות מותר לעבוד, הפסקות ועוד). נבדוק הכול בשבילך.')}`;
       },
       job: () => `${say(jobValid().length ? 'love' : 'think', jobValid().length ? 'אחלה! עכשיו נדע כמה הרווחת 💸' : 'איפה עובדים? 🤔')}
-        <h1>${g('איפה אתה עובד?', 'איפה את עובדת?')}</h1>
-        <div class="ob-sub">אפשר לכתוב כל מקום עבודה או תפקיד. הנה כמה רעיונות לבחירה מהירה:</div>
+        <h1>${g('איפה אתה עובד?', 'איפה את עובדת?', 'איפה את/ה עובד/ת?')}</h1>
+        <label class="field ob-emp"><span class="lbl">שם מקום העבודה</span><input class="input" id="ob-emp" value="${esc(A.empName)}" placeholder="למשל: סופר יוחננוף, קפה גרג" maxlength="40" autocomplete="organization"></label>
+        <div class="ob-sub">ומה התפקיד שלך שם? אפשר לבחור מהרעיונות או לכתוב:</div>
         <div class="ob-chips small">${JOBS.map((j) => chip('data-jobname', j, j, A.jobs.some((x) => x.name === j))).join('')}</div>
         ${A.jobs.map((j, i) => `<div class="ob-job" style="--c:${j.color}">
-          <div class="ob-job-head"><span class="sw"></span>${A.jobs.length > 1 ? `עבודה ${i + 1}` : 'העבודה שלך'}${A.jobs.length > 1 ? `<button class="icon-btn sm" data-rx="${i}" aria-label="הסר">${icon('x', 's')}</button>` : ''}</div>
-          <label class="field"><span class="lbl">מקום העבודה או התפקיד</span><input class="input" data-jn="${i}" value="${esc(j.name)}" placeholder="למשל: קופאי בסופר, מלצרית בקפה גרג" maxlength="40" autocomplete="off" enterkeyhint="next"></label>
-          <label class="field"><span class="lbl">כמה משלמים לך לשעה? (₪)</span><input class="input" type="number" step="any" inputmode="decimal" data-jr="${i}" value="${esc(j.rate)}" placeholder="${U.num(minWage(), 2)}">
+          <div class="ob-job-head"><span class="sw"></span>${A.jobs.length > 1 ? 'תפקיד ' + (i + 1) : 'התפקיד שלך'}${A.jobs.length > 1 ? `<button class="icon-btn sm" data-rx="${i}" aria-label="הסר את התפקיד">${icon('x', 's')}</button>` : ''}</div>
+          <label class="field"><span class="lbl">שם התפקיד</span><input class="input" data-jn="${i}" value="${esc(j.name)}" placeholder="למשל: קופאי, מלצרית, סדרן" maxlength="40" autocomplete="organization-title"></label>
+          <label class="field"><span class="lbl">כמה משלמים לך לשעה בתפקיד הזה? (₪)</span><input class="input" type="number" step="any" inputmode="decimal" data-jr="${i}" value="${esc(j.rate)}" placeholder="${U.num(minWage(), 2)}">
             <span class="hint">לא בטוח/ה? אפשר להשאיר ריק ונשים שכר מינימום${age() != null && age() < 18 ? ' לגילך' : ''}: ${U.money(minWage())} לשעה</span></label>
         </div>`).join('')}
-        ${A.jobs.length < 4 ? `<button class="btn text sm" data-jadd>${icon('plus', 's')} יש לי עוד עבודה</button>` : ''}
+        ${A.jobs.length < 6 ? `<button class="btn text sm" data-jadd>${icon('plus', 's')} הוסף תפקיד באותו מקום עבודה</button>` : ''}
+        <div class="tiny muted ob-more-emp">עובד/ת גם במקום אחר? אפשר להוסיף מקום עבודה נוסף אחר כך, בהגדרות › מקומות עבודה.</div>
         <div class="ob-live" id="ob-live-roles"></div>
         ${why('ככה נחשב כמה הרווחת בכל משמרת. אפשר לשנות ולהוסיף בכל רגע בהגדרות.')}`,
       travel: () => `${say(A.travel === 'yes' ? 'love' : 'happy', 'הרבה שוכחים את זה! 🚌')}
@@ -99,7 +104,7 @@
         <div class="ob-live" id="ob-preview"></div>
         ${why('לפי העיר נדע בדיוק מתי שבת וחג נכנסים ויוצאים, וכך כל שעה שעבדת בהם תחושב ב-150% לפחות.')}`,
       start: () => `${say('think', 'אחרונה! 🏁')}
-        <h1>מתי ${g('התחלת', 'התחלת')} לעבוד שם?</h1>
+        <h1>מתי התחלת לעבוד שם?</h1>
         <div class="ob-chips">${chip('data-start', 'month', 'החודש', A.startPick === 'month')}${chip('data-start', 'months', 'לפני כמה חודשים', A.startPick === 'months')}${chip('data-start', 'year', 'לפני יותר משנה', A.startPick === 'year')}</div>
         <label class="field"><span class="lbl">או תאריך מדויק</span><input class="input" type="date" id="ob-start" value="${esc(A.startPick === 'exact' ? A.start : '')}" min="${A.birth ? U.addDays(A.birth, 365 * 12) : '1960-01-01'}" max="${today}" placeholder="בחירת תאריך"></label>
         ${why('לפי הוותק מגיעים ימי חופשה, דמי הבראה ופנסיה. לא בטוח/ה? אפשר לדלג ולהוסיף אחר כך.')}`,
@@ -135,6 +140,7 @@
       if (key === 'me' && q('#ob-name')) A.name = q('#ob-name').value.trim().slice(0, 40);
       if (key === 'age' && q('#ob-birth')) { A.birth = q('#ob-birth').value || ''; if (A.birth) A.adult = false; }
       if (key === 'job') {
+        if (q('#ob-emp')) A.empName = q('#ob-emp').value.trim().slice(0, 40);
         v.querySelectorAll('[data-jn]').forEach((i) => (A.jobs[+i.dataset.jn].name = i.value.slice(0, 40)));
         v.querySelectorAll('[data-jr]').forEach((i) => { const n = UI.numIn(i); A.jobs[+i.dataset.jr].rate = n != null && n > 0 && n < 1000 ? n : ''; });
       }
@@ -180,7 +186,7 @@
         foot = `<button class="btn big ob-go" data-next>בואו נתחיל</button>
           <button class="btn tonal" data-demo>${icon('flask')} רק להציץ (נתונים לדוגמה)</button>
           ${opts.preLogin ? '<button class="btn text" data-have>כבר יש לי חשבון? התחברות</button>' : ''}
-          <div class="tiny muted ob-consent">בהמשך אתה מאשר את ${App.legalLinks ? App.legalLinks() : 'תנאי השימוש ומדיניות הפרטיות'}.</div>`;
+          <div class="tiny muted ob-consent">בהמשך את/ה מאשר/ת את ${App.legalLinks ? App.legalLinks() : 'תנאי השימוש ומדיניות הפרטיות'}.</div>`;
       } else if (last) {
         const ready = !needsLogin() || root.Cloud.sdkReady();
         foot = needsLogin()
@@ -204,6 +210,8 @@
     }
     function go(next) {
       read();
+      // forward only with clean words (the name, the workplace, the roles)
+      if (next > step && !App.ensureClean(A.name, A.empName, ...A.jobs.map((j) => j.name))) return;
       dir = next > step ? 'next' : 'prev';
       step = Math.max(0, Math.min(STEPS.length - 1, next));
       draw();
@@ -223,6 +231,7 @@
     async function save(withDemo) {
       const jobs = withDemo && !jobValid().length ? Defaults.defaultRoles(emp.id).map((r) => Object.assign(r, { rate: r.rates[0].rate })) : finalJobs();
       emp.travelPerDay = finalTravel();
+      if (A.empName) emp.name = A.empName;
       const ops = [{ store: 'employers', put: emp }];
       jobs.forEach((j, i) => {
         const rates = j.rates && j.rates.length ? j.rates.slice().sort((a, b) => a.from.localeCompare(b.from)) : [{ from: '2000-01-01', rate: j.rate }];
@@ -306,7 +315,7 @@
       else if (b.hasAttribute('data-skip')) {
         // a skipped question keeps the usual answer
         const key = STEPS[step];
-        if (key === 'job') { A.jobs.forEach((j) => { j.name = ''; j.rate = ''; }); v.querySelectorAll('[data-jn], [data-jr]').forEach((i) => { i.value = ''; }); }
+        if (key === 'job') { A.empName = ''; A.jobs.forEach((j) => { j.name = ''; j.rate = ''; }); v.querySelectorAll('[data-jn], [data-jr]').forEach((i) => { i.value = ''; }); }
         if (key === 'travel' && !A.travel) A.travel = 'idk';
         go(step + 1);
       } else if (b.hasAttribute('data-demo')) {

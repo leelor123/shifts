@@ -67,6 +67,7 @@ async function generate() {
   await tm.saveToFile(file);
   await new core.TwaGenerator().createTwaProject(TWA, tm, new core.ConsoleLog('generate'));
   patchLauncher();
+  patchWidgets();
   await shared.generateManifestChecksumFile(file, TWA);
   fs.mkdirSync(path.join(ROOT, 'android'), { recursive: true });
   // keep a copy in the repo (no secrets in it: only the keystore's location)
@@ -121,14 +122,80 @@ function patchLauncher() {
     protected com.google.androidbrowserhelper.trusted.TwaLauncher createTwaLauncher() {
         try {
             if (getPackageManager().getApplicationInfo(CHROME, 0).enabled) {
-                return new com.google.androidbrowserhelper.trusted.TwaLauncher(this, CHROME,
+                return mShaatiLauncher = new com.google.androidbrowserhelper.trusted.TwaLauncher(this, CHROME,
                         com.google.androidbrowserhelper.trusted.SessionStore.makeSessionId(getTaskId()),
                         new com.google.androidbrowserhelper.trusted.SharedPreferencesTokenStore(this));
             }
         } catch (PackageManager.NameNotFoundException e) {
             // not installed: fall back to the default browser
         }
-        return super.createTwaLauncher();
+        return mShaatiLauncher = super.createTwaLauncher();
+    }
+
+    // Shaati: the home-screen widgets (WidgetData) get their numbers from the web app over a message channel.
+    // Once the page has loaded, the app asks Chrome for a channel to the site; when it is ready it says hello,
+    // and the page answers with a snapshot (JSON) now and whenever its numbers change. Everything else the
+    // browser helper's own callback does is passed on to it unchanged.
+    private com.google.androidbrowserhelper.trusted.TwaLauncher mShaatiLauncher;
+    private boolean mChannelRequested;
+    private static final android.net.Uri SHAATI_ORIGIN = android.net.Uri.parse("https://leelor123.github.io");
+
+    @Override
+    protected androidx.browser.customtabs.CustomTabsCallback getCustomTabsCallback() {
+        final androidx.browser.customtabs.CustomTabsCallback inner = super.getCustomTabsCallback();
+        return new androidx.browser.customtabs.CustomTabsCallback() {
+            @Override
+            public void onNavigationEvent(int navigationEvent, Bundle extras) {
+                if (inner != null) inner.onNavigationEvent(navigationEvent, extras);
+                if (navigationEvent == NAVIGATION_FINISHED && !mChannelRequested) {
+                    androidx.browser.customtabs.CustomTabsSession s = widgetSession();
+                    if (s != null) mChannelRequested = s.requestPostMessageChannel(SHAATI_ORIGIN, SHAATI_ORIGIN, new Bundle());
+                }
+            }
+
+            @Override
+            public void extraCallback(String callbackName, Bundle args) {
+                if (inner != null) inner.extraCallback(callbackName, args);
+            }
+
+            @Override
+            public Bundle extraCallbackWithResult(String callbackName, Bundle args) {
+                return inner != null ? inner.extraCallbackWithResult(callbackName, args) : null;
+            }
+
+            @Override
+            public void onRelationshipValidationResult(int relation, android.net.Uri origin, boolean result, Bundle extras) {
+                if (inner != null) inner.onRelationshipValidationResult(relation, origin, result, extras);
+            }
+
+            @Override
+            public void onMessageChannelReady(Bundle extras) {
+                if (inner != null) inner.onMessageChannelReady(extras);
+                androidx.browser.customtabs.CustomTabsSession s = widgetSession();
+                if (s != null) s.postMessage("shaati:widgets", null);
+            }
+
+            @Override
+            public void onPostMessage(String message, Bundle extras) {
+                if (inner != null) inner.onPostMessage(message, extras);
+                WidgetData.save(getApplicationContext(), message);
+            }
+        };
+    }
+
+    // the launcher's session (it keeps it private): found by its type, which survives code shrinking
+    private androidx.browser.customtabs.CustomTabsSession widgetSession() {
+        if (mShaatiLauncher == null) return null;
+        for (java.lang.reflect.Field f : com.google.androidbrowserhelper.trusted.TwaLauncher.class.getDeclaredFields()) {
+            if (!androidx.browser.customtabs.CustomTabsSession.class.isAssignableFrom(f.getType())) continue;
+            try {
+                f.setAccessible(true);
+                return (androidx.browser.customtabs.CustomTabsSession) f.get(mShaatiLauncher);
+            } catch (Exception e) {
+                return null;
+            }
+        }
+        return null;
     }
 `);
   src = src.replace('        super.onCreate(savedInstanceState);\n', `        super.onCreate(savedInstanceState);
@@ -138,6 +205,40 @@ function patchLauncher() {
         }
 `);
   fs.writeFileSync(file, src);
+}
+
+/**
+ * The home-screen widgets (android/widgets): their Java classes and resources go into the project, each is
+ * registered as an app-widget receiver, PostMessageService lets Chrome open the message channel the
+ * widgets' numbers come through (LauncherActivity, above), and code shrinking keeps the launcher's session
+ * field the bridge reads.
+ */
+function patchWidgets() {
+  const SRC = path.join(ROOT, 'android', 'widgets');
+  const main = path.join(TWA, 'app', 'src', 'main');
+  const javaDir = path.join(main, 'java', ...APP.packageId.split('.'));
+  for (const f of fs.readdirSync(path.join(SRC, 'java'))) fs.copyFileSync(path.join(SRC, 'java', f), path.join(javaDir, f));
+  for (const d of fs.readdirSync(path.join(SRC, 'res'))) {
+    fs.mkdirSync(path.join(main, 'res', d), { recursive: true });
+    for (const f of fs.readdirSync(path.join(SRC, 'res', d))) fs.copyFileSync(path.join(SRC, 'res', d, f), path.join(main, 'res', d, f));
+  }
+  const mf = path.join(main, 'AndroidManifest.xml');
+  let m = fs.readFileSync(mf, 'utf8');
+  if (!m.includes('</application>')) throw new Error('AndroidManifest.xml template changed');
+  const receiver = (name, key) => `        <receiver android:name=".${name}" android:exported="false" android:label="@string/w_${key}_name">
+            <intent-filter><action android:name="android.appwidget.action.APPWIDGET_UPDATE" /></intent-filter>
+            <meta-data android:name="android.appwidget.provider" android:resource="@xml/w_${key}_info" />
+        </receiver>\n`;
+  m = m.replace('</application>', `        <!-- Shaati: the message channel the widgets' numbers come through, and the widgets -->
+        <service android:name="androidx.browser.customtabs.PostMessageService" android:exported="true" />
+${receiver('ShiftWidget', 'shift')}${receiver('MonthWidget', 'month')}${receiver('GoalWidget', 'goal')}${receiver('PaydayWidget', 'payday')}${receiver('ComboWidget', 'combo')}    </application>`);
+  fs.writeFileSync(mf, m);
+  const gf = path.join(TWA, 'app', 'build.gradle');
+  let g = fs.readFileSync(gf, 'utf8');
+  if (!g.includes('            minifyEnabled true\n')) throw new Error('build.gradle template changed');
+  g = g.replace('            minifyEnabled true\n', "            minifyEnabled true\n            proguardFiles 'shaati-rules.pro'\n");
+  fs.writeFileSync(gf, g);
+  fs.writeFileSync(path.join(TWA, 'app', 'shaati-rules.pro'), '# Shaati: the widgets bridge reads the launcher\'s session (LauncherActivity.widgetSession)\n-keepclassmembers class com.google.androidbrowserhelper.trusted.TwaLauncher { androidx.browser.customtabs.CustomTabsSession *; }\n');
 }
 
 function build() {
@@ -166,7 +267,8 @@ function build() {
 
 function assetlinks() {
   const fps = JSON.parse(fs.readFileSync(FINGERPRINTS, 'utf8')).map((f) => f.sha256);
-  const json = [{ relation: ['delegate_permission/common.handle_all_urls'], target: { namespace: 'android_app', package_name: APP.packageId, sha256_cert_fingerprints: fps } }];
+  // use_as_origin: the app may speak for the site in the widgets' message channel (LauncherActivity)
+  const json = [{ relation: ['delegate_permission/common.handle_all_urls', 'delegate_permission/common.use_as_origin'], target: { namespace: 'android_app', package_name: APP.packageId, sha256_cert_fingerprints: fps } }];
   console.log(JSON.stringify(json, null, 2));
 }
 

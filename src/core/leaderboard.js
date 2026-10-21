@@ -73,6 +73,7 @@
     const words = t.toLowerCase().split(/[\s_.-]+/);
     const low = words.join('');
     if (BAD.some((w) => (w.length <= 3 ? words.includes(w) : low.includes(w)))) return 'הכינוי הזה לא מתאים לטבלה';
+    if (root.Clean && !root.Clean.isClean(t)) return 'הכינוי הזה לא מתאים לטבלה';
     // nobody may look like the app's own team
     if (STAFF.some((w) => low.includes(w))) return 'כינוי שנראה כמו צוות האפליקציה שמור';
     return '';

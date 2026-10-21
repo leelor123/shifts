@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Shaati widget (android/widgets; copied into the Android project by tools/android.js) -->
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/w_root" android:layout_width="match_parent" android:layout_height="match_parent"
+    android:orientation="vertical" android:gravity="center_vertical" android:layoutDirection="rtl"
+    android:background="@drawable/w_bg" android:padding="12dp">
+    <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="horizontal" android:gravity="center_vertical">
+        <TextView android:id="@+id/w_icon" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="🎯" android:textSize="20sp" />
+        <TextView android:id="@+id/w_title" android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:layout_marginStart="8dp" android:singleLine="true" android:ellipsize="end" android:text="היעד שלי" android:textColor="@color/w_text" android:textSize="15sp" android:textStyle="bold" android:textDirection="rtl" />
+        <TextView android:id="@+id/w_pct" android:layout_width="wrap_content" android:layout_height="wrap_content" android:singleLine="true" android:ellipsize="end" android:textDirection="rtl" android:textColor="@color/w_gold" android:textSize="15sp" android:textStyle="bold" />
+    </LinearLayout>
+    <ProgressBar android:id="@+id/w_bar" style="@android:style/Widget.ProgressBar.Horizontal" android:layout_width="match_parent" android:layout_height="8dp" android:layout_marginTop="8dp" android:max="100" android:progress="0" android:progressDrawable="@drawable/w_progress" android:layoutDirection="rtl" />
+    <TextView android:id="@+id/w_sub" android:layout_width="wrap_content" android:layout_height="wrap_content" android:singleLine="true" android:ellipsize="end" android:textDirection="rtl" android:layout_marginTop="4dp" android:textColor="@color/w_sub" android:textSize="12sp" />
+</LinearLayout>

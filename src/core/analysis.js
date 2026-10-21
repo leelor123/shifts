@@ -48,7 +48,7 @@
       add(slots.get(slotOf(r.start).id), r);
       const m = months.get(r.dateKey.slice(0, 7));
       if (m) add(m, r);
-      premiums += (r.otPremium || 0) + (r.restPremium || 0) + (r.nightPremium || 0) + (r.evePremium || 0);
+      premiums += (r.otPremium || 0) + (r.restPremium || 0) + (r.nightPremium || 0) + (r.evePremium || 0) + (r.specialPremium || 0);
       if (!bestShift || r.total > bestShift.total) bestShift = r;
       if (!longest || r.paidHours > longest.paidHours) longest = r;
     }

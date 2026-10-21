@@ -94,6 +94,8 @@
     if (UI.sheets.length) UI.closeAll();
     setTimeout(openChat, UI.sheets.length ? 350 : 0);
   };
+  // from a settings page: on top of it, so back returns there
+  App.openAssistantOver = () => openChat();
   function openChat() {
     let sheetEl = null;
     let busy = false;

@@ -182,15 +182,27 @@ let errors = [];
     await ev(() => { App.reportsState.f.q = ''; App.reportsState.f.ov = true; App.go('reports'); }); await sleep(300);
     await ev(() => { App.reportsState.f.ov = false; App.go('reports'); });
   });
-  await step('every settings section opens', async () => {
-    const keys = await ev(() => [...document.querySelectorAll('[data-act="settings-open"]')].map((b) => b.dataset.k));
-    await ev(() => App.go('settings')); await sleep(300);
-    const all = await ev(() => [...document.querySelectorAll('[data-act="settings-open"]')].map((b) => b.dataset.k));
-    for (const k of all) {
-      await ev((key) => document.querySelector(`[data-act="settings-open"][data-k="${key}"]`).click(), k); await sleep(450);
+  // every section opens from its door, and back returns to the door (in two halves: 20 seconds per step)
+  const doorsOpened = [];
+  const openDoors = async (from, to) => {
+    await closeAll(); await ev(() => App.go('settings')); await sleep(300);
+    const cats = (await ev(() => [...document.querySelectorAll('[data-act="settings-cat"]')].map((b) => b.dataset.cat))).slice(from, to);
+    for (const c of cats) {
+      await ev((c) => document.querySelector(`[data-act="settings-cat"][data-cat="${c}"]`).click(), c); await sleep(400);
+      const keys = await ev(() => [...document.querySelectorAll('.sheet.show [data-act="settings-open"]')].map((b) => b.dataset.k));
+      for (const k of keys) {
+        await ev((key) => document.querySelector(`.sheet.show [data-act="settings-open"][data-k="${key}"]`).click(), k); await sleep(380);
+        await ev(() => { document.querySelectorAll('.dialog').forEach((d) => { if (d._resolve) d._resolve(null); d.remove(); }); UI.closeTop(); }); await sleep(320);
+        if (!(await ev(() => !!document.querySelector('.sheet.show #set-cat-list')))) throw new Error('back did not return to the door after ' + k);
+      }
+      doorsOpened.push(...keys);
       await closeAll();
     }
-    if (all.length < 15) throw new Error('only ' + all.length + ' sections');
+  };
+  await step('settings sections open from their doors (1/2)', () => openDoors(0, 4));
+  await step('settings sections open from their doors (2/2)', async () => {
+    await openDoors(4, 99);
+    if (doorsOpened.length < 18 || new Set(doorsOpened).size !== doorsOpened.length) throw new Error('sections: ' + doorsOpened.join(','));
   });
   await step('legal documents open', async () => { for (const d of ['terms', 'privacy', 'disclaimer', 'accessibility', 'about']) { await ev((x) => App.sheetsApi.legal(x), d); await sleep(350); await closeAll(); } });
   await step('rights center: checks, search, topic, youth section', async () => {
@@ -471,11 +483,11 @@ let errors = [];
   });
   await step('settings search finds sections by everyday words', async () => {
     await ev(() => App.go('settings')); await sleep(400);
-    const find = (q) => ev((q) => { const i = document.getElementById('set-q'); i.value = q; i.dispatchEvent(new Event('input', { bubbles: true })); return [...document.querySelectorAll('[data-find]')].filter((x) => !x.hidden).map((x) => x.dataset.k).join(','); }, q);
+    const find = (q) => ev((q) => { const i = document.getElementById('set-q'); i.value = q; i.dispatchEvent(new Event('input', { bubbles: true })); return [...new Set([...document.querySelectorAll('#set-res [data-act="settings-go"]:not(.prob)')].map((x) => x.dataset.k))].join(','); }, q);
     const a = await find('נסיעות'), b = await find('צבע'), c = await find('');
     if (!a.split(',').includes('pay')) throw new Error('travel: ' + a);
     if (b !== 'look') throw new Error('colour: ' + b);
-    if (c.split(',').length < 18) throw new Error('clear: ' + c);
+    if (c !== '' || await ev(() => document.getElementById('set-home').hidden)) throw new Error('clear: ' + c);
     await ev(() => App.go('home'));
   });
   await step('no flicker: the time wheel, the dimming and the tap ring', async () => {
@@ -765,7 +777,10 @@ let errors = [];
     await page.click('[data-sp-new]'); await sleep(900);
     await page.click('[data-r="login"]'); await sleep(300);
     await page.type('#sp-text', 'לא מצליח להתחבר עם גוגל מהאינסטגרם');
-    const disabledNoMail = await ev(() => document.querySelector('[data-sp-send]').disabled);
+    // without an email the button looks not ready, and a tap only says what is missing
+    const paleNoMail = await ev(() => document.querySelector('[data-sp-send]').getAttribute('aria-disabled') === 'true');
+    await page.click('[data-sp-send]'); await sleep(500);
+    const disabledNoMail = paleNoMail && (await ev(() => window.__tickets.length === 0 && /אימייל/.test((document.querySelector('.toast') || {}).textContent || '')));
     await page.type('#sp-mail', 'kid@example.com'); await sleep(100);
     await page.click('[data-sp-send]'); await sleep(900);
     const t = await ev(() => window.__tickets);

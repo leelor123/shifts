@@ -125,7 +125,16 @@
       const inbox = root.Support ? await root.Support.adminInbox().catch((e) => ({ count: 0, html: `<div class="small muted">לא ניתן לטעון פניות (${esc(e.code || e.message || '')})</div>` })) : null;
       if (entry.closed) return;
       body.innerHTML = (inbox ? `<div class="admin"><div class="section-title">${icon('chat', 's')} פניות ${inbox.count ? `<span class="tag warn">${inbox.count} מחכות לתשובה</span>` : ''}</div>${inbox.html}</div>` : '') + render(rows, admins, root.Cloud.user.uid);
-      body.querySelectorAll('[data-adm-ticket]').forEach((b) => (b.onclick = () => root.Support.thread(b.dataset.admTicket, true)));
+      body.querySelectorAll('[data-adm-ticket]').forEach((b) => (b.onclick = () => root.Support.thread(b.dataset.admTicket, true, load)));
+      const delClosed = body.querySelector('[data-adm-del-closed]');
+      if (delClosed) delClosed.onclick = async () => {
+        const n = inbox.closed.length;
+        if (!(await UI.confirm(`למחוק ${n === 1 ? 'פנייה סגורה אחת' : n + ' פניות סגורות'}?`, 'הן וכל ההודעות בהן יימחקו לתמיד. פניות פתוחות לא נוגעים בהן.', 'מחק', true))) return;
+        delClosed.disabled = true;
+        const done = await root.Support.removeClosed(inbox.closed);
+        if (done) UI.toast(done === 1 ? 'פנייה אחת נמחקה' : done + ' פניות נמחקו');
+        load();
+      };
       body.querySelector('[data-adm-refresh]').onclick = () => { body.innerHTML = UI.skeleton(4, 'card'); load(); };
       body.querySelector('[data-adm-add]').onclick = async () => {
         const uid = body.querySelector('#adm-uid').value.trim();

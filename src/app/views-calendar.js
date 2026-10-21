@@ -98,7 +98,7 @@
     const st = App.calState;
     const roles = App.roles();
     return `<div class="topbar"><div class="titles"><h1>לוח שנה</h1></div>
-        <button class="icon-btn" data-act="cal-today" aria-label="היום">${icon('target')}</button>
+        <button class="btn tonal sm cal-today-btn" data-act="cal-today">${icon('target', 's')} היום</button>
         <button class="icon-btn" data-act="cal-export" aria-label="ייצוא ליומן">${icon('download')}</button></div>
       <div class="seg" style="margin-bottom:12px"><button class="${st.mode === 'month' ? 'on' : ''}" data-act="cal-mode" data-m="month">חודש</button><button class="${st.mode === 'week' ? 'on' : ''}" data-act="cal-mode" data-m="week">שבוע</button></div>
       ${st.mode === 'month' ? monthView(map) : weekView(map)}
@@ -114,7 +114,21 @@
   };
 
   App.actions['cal-mode'] = (el) => { App.calState.mode = el.dataset.m; App.rerender(); };
-  App.actions['cal-today'] = () => { App.calState.anchor = U.todayKey(); App.rerender(); };
+  // "today": to today's month (or week), and today's square says hello (on today's month already, the screen did
+  // not change and the button seemed dead)
+  App.actions['cal-today'] = () => {
+    const st = App.calState, today = U.todayKey();
+    const same = st.mode === 'month' ? st.anchor.slice(0, 7) === today.slice(0, 7) : U.weekStart(st.anchor, S.settings.weekStart || 0) === U.weekStart(today, S.settings.weekStart || 0);
+    st.anchor = today;
+    if (!same) App.render();
+    requestAnimationFrame(() => {
+      const el = document.querySelector('#view .cal-day.today, #view .week-row[data-k="' + today + '"]');
+      if (!el) return;
+      el.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
+      el.classList.remove('hello'); void el.offsetWidth; el.classList.add('hello');
+      if (root.Fx) { root.Fx.play('tick'); root.Fx.ring(el); }
+    });
+  };
   App.actions['cal-nav'] = (el) => {
     const dir = +el.dataset.dir;
     App.calState.anchor = App.calState.mode === 'month' ? U.addMonths(App.calState.anchor.slice(0, 7) + '-01', dir) : U.addDays(App.calState.anchor, 7 * dir);

@@ -360,3 +360,43 @@ T.test('45 minutes typed in a long shift: fine', () => {
   const r = calc(setup(), shift('2026-10-11', '08:00', '16:00', { breakMin: 45, breakSet: true, breakPaid: false }));
   T.ok(!r.breakShort);
 });
+
+T.section('a special rate (1.21): a shift override or a calendar day, e.g. election day 200%');
+T.test('a shift at 200%: every hour at least 200%, the difference as one line', () => {
+  const plain = calc(setup(), shift('2026-10-13', '08:00', '16:00', { breakMin: 0, breakSet: true }));
+  const r = calc(setup(), shift('2026-10-13', '08:00', '16:00', { breakMin: 0, breakSet: true, overrides: { special: { pct: 200, reason: 'יום בחירות' } } }));
+  const rate = plain.lines[0].rate;
+  T.near(r.wage, 8 * rate * 2); // 8 regular hours (no overtime at 8): all at 200%
+  T.near(r.specialPremium, 8 * rate);
+  T.ok(r.extras.some((x) => x.kind === 'special' && /200%/.test(x.label) && /בחירות/.test(x.label)));
+  T.ok(r.overridden && r.overrideList.some((x) => /תעריף מיוחד 200%/.test(x)));
+});
+T.test('a long day at 200%: overtime hours (125/150) are lifted to 200 too', () => {
+  const plain = calc(setup(), shift('2026-10-13', '06:00', '18:00', { breakMin: 0, breakSet: true }));
+  const r = calc(setup(), shift('2026-10-13', '06:00', '18:00', { breakMin: 0, breakSet: true, overrides: { special: { pct: 200 } } }));
+  T.near(r.wage, 12 * plain.lines[0].rate * 2);
+});
+T.test('an hour already worth more keeps its own (special 120% on Shabbat stays 150%)', () => {
+  const plain = calc(setup(), shift('2026-10-17', '10:00', '14:00', { breakMin: 0, breakSet: true }));
+  const r = calc(setup(), shift('2026-10-17', '10:00', '14:00', { breakMin: 0, breakSet: true, overrides: { special: { pct: 120 } } }));
+  T.near(r.wage, plain.wage);
+  T.near(r.specialPremium, 0);
+});
+T.test('a calendar day at 200% (a day rule): every shift that day, flagged as a day rule; other days untouched', () => {
+  const data = setup((d) => { d.dayRules = [{ id: 'dr_2026-10-13', date: '2026-10-13', type: 'pct', pct: 200, reason: 'יום בחירות' }]; });
+  const plain = calc(setup(), shift('2026-10-13', '08:00', '12:00'));
+  const r = calc(data, shift('2026-10-13', '08:00', '12:00'));
+  T.near(r.wage, plain.wage * 2);
+  T.ok(r.dayRuleHit);
+  const other = calc(data, shift('2026-10-14', '08:00', '12:00'));
+  T.near(other.wage, plain.wage);
+  T.ok(!other.dayRuleHit);
+  // the day stays a regular day for Shabbat purposes
+  T.ok(!HebCal.restDayInfo('2026-10-13', Object.assign({}, data.settings.rest, { dayRules: data.dayRules })));
+});
+T.test('a night shift into a 200% day: only the hours of that day', () => {
+  const data = setup((d) => { d.dayRules = [{ id: 'dr_2026-10-13', date: '2026-10-13', type: 'pct', pct: 200 }]; });
+  const r = calc(data, shift('2026-10-12', '22:00', '02:00'));
+  const plain = calc(setup(), shift('2026-10-12', '22:00', '02:00'));
+  T.near(r.specialPremium, 2 * plain.lines[0].rate);
+});

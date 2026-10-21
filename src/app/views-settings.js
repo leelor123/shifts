@@ -16,6 +16,8 @@
     time: (label, path, v) => `<label class="field"><span class="lbl">${label}</span><input class="input" type="time" data-s="${path}" value="${esc(v || '')}"></label>`,
     date: (label, path, v, hint) => `<label class="field"><span class="lbl">${label}</span><input class="input" type="date" data-s="${path}" value="${esc(v || '')}" ${dateLimits(path)}>${hint ? `<span class="hint">${hint}</span>` : ''}</label>`,
     sw: (t, s, path, on) => `<label class="switch-row"><span class="body"><span class="t">${t}</span>${s ? `<span class="s">${s}</span>` : ''}</span><input type="checkbox" class="switch" data-s="${path}" ${on ? 'checked' : ''}></label>`,
+    // a few short choices as chips that light up (an emoji for each): opts [[value, label, emoji]]
+    chips: (label, path, opts, v, hint) => `<div class="field"><span class="lbl">${label}</span><select class="input" data-s="${path}" data-ui="chips">${opts.map(([k, l, e]) => `<option value="${esc(k)}" ${e ? `data-e="${esc(e)}"` : ''} ${String(k) === String(v) ? 'selected' : ''}>${esc(l)}</option>`).join('')}</select>${hint ? `<span class="hint">${hint}</span>` : ''}</div>`,
     sel: (label, path, opts, v, hint) => `<label class="field"><span class="lbl">${label}</span><select class="input" data-s="${path}">${opts.map(([k, l]) => `<option value="${esc(k)}" ${String(k) === String(v) ? 'selected' : ''}>${esc(l)}</option>`).join('')}</select>${hint ? `<span class="hint">${hint}</span>` : ''}</label>`,
   };
   App.F = F;
@@ -86,6 +88,7 @@
         return;
       }
       let v = readVal(t);
+      if (typeof v === 'string' && !App.ensureClean(v)) { if (redraw) redraw(); return; }
       const [ok, fixed, msg] = checkNumber(path, v);
       if (!ok) { UI.invalid(msg); if (redraw) redraw(); return; }
       if (fixed !== v) { v = fixed; t.value = fixed; }
@@ -117,6 +120,7 @@
         bind(el, () => empId, draw);
         el.addEventListener('click', (e) => { const b = e.target.closest('[data-emp]'); if (b) { empId = b.dataset.emp; draw(); } });
         if (opts.mount) opts.mount(el, draw);
+        if (opts.focus) spotlight(el, opts.focus);
       },
     });
   }
@@ -134,7 +138,7 @@
     leave: { icon: 'beach', title: 'ותק, חופשה, מחלה והבראה', sub: () => (S.settings.startDate ? 'התחלת עבודה: ' + U.fmtDate(S.settings.startDate) : 'הגדר תאריך תחילת עבודה') },
     goal: { icon: 'target', title: 'יעדים', sub: () => [+S.settings.goal.amount ? 'חודשי: ' + U.money(S.settings.goal.amount, 0) + (S.settings.goal.type === 'net' ? ' נטו' : ' ברוטו') : '', S.settings.saving && +S.settings.saving.price && S.settings.saving.name ? 'חוסכים ל' + S.settings.saving.name : ''].filter(Boolean).join(' · ') || 'יעד חודשי וחיסכון למשהו' },
     alerts: { icon: 'bell', title: 'התראות ותובנות', sub: () => (('Notification' in window) && Notification.permission === 'granted' ? 'פוש מופעל' : 'פוש כבוי') + ' · סיכומים ותזכורות' },
-    templates: { icon: 'layers', title: 'תבניות משמרת', sub: () => (S.templates.length ? S.templates.length + ' תבניות' : 'אין תבניות') },
+    templates: { icon: 'layers', title: 'תבניות משמרת', sub: () => (S.templates.length === 1 ? 'תבנית אחת' : S.templates.length ? S.templates.length + ' תבניות' : 'אין תבניות') },
     look: { icon: 'palette', title: 'מראה', sub: () => ({ system: 'לפי המערכת', light: 'בהיר', dark: 'כהה' }[S.settings.theme]) + ' · ' + (App.ACCENTS[S.settings.accent] || [])[2] },
     security: { icon: 'lock', title: 'נעילה בקוד', sub: () => (S.settings.lock.enabled ? 'מופעלת' : 'כבויה') },
     assistant: { icon: 'sparkle', title: 'עוזר זכויות ושכר (AI)', sub: () => (S.settings.ai.apiKey ? 'מוכן — שאל כל שאלה' : 'דורש מפתח API') },
@@ -147,56 +151,190 @@
 
   // extra words people may search for, per section
   const FIND = {
-    personal: 'שם גיל יום הולדת תאריך לידה מגדר', account: 'התחברות גוגל google סנכרון ענן חשבון התנתקות מחיקת חשבון',
-    roles: 'עבודה מקום עבודה תפקיד מעסיק שכר לשעה תעריף העלאה העלאת שכר', calc: 'שעות נוספות 125 150 עיגול לילה הפסקה',
-    rest: 'שבת חג חגים עיר כניסת שבת יציאת שבת', pay: 'נסיעות החזר נסיעות תקרה תקופת שכר יום תשלום משכורת',
+    personal: 'שם גיל יום הולדת תאריך לידה מגדר נוער', account: 'התחברות גוגל google סנכרון ענן חשבון התנתקות מחיקת חשבון טלפון חדש',
+    roles: 'עבודה מקום עבודה תפקיד מעסיק שכר לשעה תעריף העלאה העלאת שכר', calc: 'שעות נוספות 125 150 עיגול לילה הפסקה ותק',
+    rest: 'שבת חג חגים עיר כניסת שבת יציאת שבת כלל יום', pay: 'נסיעות החזר נסיעות תקרה תקופת שכר יום תשלום משכורת',
     net: 'מס מס הכנסה נקודות זיכוי פנסיה ביטוח לאומי מס בריאות השתלמות נטו', leave: 'חופשה מחלה הבראה ותק תחילת עבודה',
     goal: 'יעד יעדים חיסכון חוסכים', alerts: 'התראות תזכורות פוש הודעות', templates: 'תבנית תבניות משמרת קבועה',
     look: 'צבע צבעים ערכת נושא כהה בהיר מצב לילה גופן גופנים מראה צלילים רטט מוזיקה עיצוב כרטיס plus פלוס', security: 'קוד נעילה טביעת אצבע סיסמה',
     assistant: 'בינה מלאכותית עוזר שאלות ai', ai: 'מפתח api claude ניתוח תלוש', backup: 'גיבוי שחזור קובץ', export: 'ייצוא אקסל excel csv pdf יומן',
     demo: 'דוגמה הדגמה', about: 'גרסה התקנה אודות', rights: 'זכויות שכר מינימום',
   };
+  // the page is a few colourful doors; each opens its own small page with the sections behind it
+  const CATS = [
+    { id: 'me', icon: 'users', tint: 'violet', title: 'אני והחשבון', keys: ['personal', 'account'], sub: () => [S.settings.userName, S.meta.cloudEmail ? 'מחובר/ת ☁️' : 'לא מחובר/ת'].filter(Boolean).join(' · ') },
+    { id: 'work', icon: 'briefcase', tint: 'mint', title: 'העבודה שלי', keys: ['roles', 'pay', 'templates'], sub: () => { const r = App.roles(); return r.length === 1 ? `${r[0].name} · ${U.money(Engine.roleRate(r[0], U.todayKey()), 0)} לשעה` : r.length + ' תפקידים' + (S.employers.length > 1 ? ' · ' + S.employers.length + ' מקומות עבודה' : ''); } },
+    { id: 'calc', icon: 'flask', tint: 'amber', title: 'חישוב השכר', keys: ['calc', 'rest'], sub: () => 'שעות נוספות, לילה, שבת וחגים' },
+    { id: 'money', icon: 'wallet', tint: 'sky', title: 'נטו, מס וזכויות', keys: ['net', 'leave', 'rights'], sub: () => `${S.settings.tax.creditPoints} נק׳ זיכוי · פנסיה ${S.settings.pension.employeePct}%` },
+    { id: 'goals', icon: 'target', tint: 'pink', title: 'יעדים ותזכורות', keys: ['goal', 'alerts'], sub: () => (+S.settings.goal.amount ? 'יעד ' + U.money(S.settings.goal.amount, 0) : 'יעד, חיסכון והתראות') },
+    { id: 'look', icon: 'palette', tint: 'orange', title: 'מראה ונעילה', keys: ['look', 'security'], sub: () => ({ system: 'לפי המערכת', light: 'בהיר', dark: 'כהה' }[S.settings.theme] || '') + (S.settings.lock.enabled ? ' · נעול 🔒' : '') },
+    { id: 'data', icon: 'cloud', tint: 'mint', title: 'גיבוי ונתונים', keys: ['backup', 'export', 'demo'], sub: () => (S.settings.backup.lastBackup ? 'גיבוי ' + UI.timeAgo(S.settings.backup.lastBackup) : 'גיבוי, ייצוא, נתוני דוגמה') },
+    { id: 'more', icon: 'sparkle', tint: 'violet', title: 'עוזר AI ואודות', keys: ['assistant', 'ai', 'about'], sub: () => 'גרסה ' + root.APP_VERSION },
+  ];
+  const catOf = (k) => CATS.find((c) => c.keys.includes(k));
+  App.settingsKeys = () => CATS.flatMap((c) => c.keys); // every section, door by door
+  App.settingsCats = () => CATS.map((c) => c.id);
+  const sectionRow = (k) => { const s = SECTIONS[k]; return `<button class="item" data-act="settings-open" data-k="${k}"><span class="lead">${icon(s.icon)}</span><span class="body"><span class="t">${s.title}</span><span class="s">${esc(s.sub())}</span></span>${icon('left', 's')}</button>`; };
+
+  /* problems people come here with, and where the answer is: each is [what it says, the words that find it, [[section, field label]]] */
+  const PROBLEMS = [
+    ['השכר לא יוצא כמו בתלוש', 'משכורת לא נכון לא תואם תלוש פחות כסף טעות בשכר חסר כסף', [['roles', 'תעריף'], ['calc', 'שעות רגילות ביום'], ['pay', 'התקופה מתחילה ב-']]],
+    ['שבת או חג לא מחושבים 150%', 'שבת לא נחשבת חג לא נחשב 150 שבת לא נכונה כניסת שבת', [['rest', ''], ['calc', 'שבת/חג %']]],
+    ['שעות נוספות לא נכונות', 'נוספות 125 150 שעות נוספות לא נחשבות אחרי 8 שעות', [['calc', 'שעות רגילות ביום'], ['calc', 'אחוז דרגה 1']]],
+    ['לא מקבל/ת נסיעות', 'נסיעות דמי נסיעה אוטובוס רב קו החזר נסיעות', [['pay', 'סכום ליום עבודה ₪']]],
+    ['ההפסקה מורידה לי שעות', 'הפסקה מורידה שעות הפסקה בתשלום ארוחה', [['calc', 'הפסקה קבועה (דק׳, 0 = לפי החוק)']]],
+    ['הנטו לא נכון', 'נטו מס הכנסה ביטוח לאומי פנסיה ניכויים נקודות זיכוי', [['net', 'נקודות זיכוי'], ['net', 'פנסיה חובה'], ['personal', 'תאריך לידה (לא חובה)']]],
+    ['אני מתחת לגיל 18', 'נוער גיל 16 17 15 שכר מינימום נוער פטור ממס', [['personal', 'תאריך לידה (לא חובה)']]],
+    ['קיבלתי העלאה', 'העלאה העלאת שכר תעריף חדש שינוי תעריף', [['roles', 'תעריף']]],
+    ['המשכורת מגיעה בתאריך אחר', 'יום תשלום מתי משכורת תאריך משכורת תקופת שכר מה 10', [['pay', 'יום התשלום (בחודש שאחרי)'], ['pay', 'התקופה מתחילה ב-']]],
+    ['לא מקבל/ת התראות', 'התראות תזכורות פוש לא מקבל הודעות', [['alerts', 'התראות פוש בטלפון']]],
+    ['הצלילים מפריעים', 'צלילים להשתיק שקט רעש מוזיקה רטט', [['look', 'צלילים'], ['look', 'רטט']]],
+    ['רוצה צבע אחר או מצב כהה', 'צבע כהה בהיר מצב לילה עיצוב', [['look', '']]],
+    ['עברתי לטלפון חדש', 'טלפון חדש העברה מכשיר חדש להעביר נתונים', [['account', ''], ['backup', '']]],
+    ['נמחקו לי משמרות', 'נמחק נמחקו שחזור גיבוי איבדתי', [['backup', '']]],
+    ['חופשה או מחלה לא נכונות', 'חופשה ימי חופש מחלה הבראה ותק יתרה', [['leave', 'תאריך תחילת עבודה'], ['leave', 'יתרת פתיחה — חופשה']]],
+    ['שכחתי את קוד הנעילה', 'קוד נעילה שכחתי סיסמה טביעת אצבע', [['security', '']]],
+    ['עובד/ת בעוד מקום', 'עוד מקום עבודה מעסיק נוסף שני מקומות', [['roles', '']]],
+    ['יום בחירות או יום מיוחד', 'בחירות 200 יום מיוחד אחוז מיוחד', [['rest', 'כללי יום']]],
+  ];
+  const CHIPS = [['wallet', 'mint', 0], ['candle', 'amber', 1], ['clock', 'violet', 2], ['bus', 'sky', 3], ['coffee', 'orange', 4], ['receipt', 'pink', 5], ['bell', 'violet', 9], ['cloud', 'sky', 12]];
+
+  // search: Hebrew written loosely (no niqqud, final letters, quotes) and matched from the start of words
+  const FINALS = { 'ך': 'כ', 'ם': 'מ', 'ן': 'נ', 'ף': 'פ', 'ץ': 'צ' };
+  const norm = (s) => String(s || '').toLowerCase().replace(/[֑-ׇ]/g, '').replace(/[ךםןףץ]/g, (c) => FINALS[c]).replace(/["'״׳()\-–,.:/%₪?!]/g, ' ').replace(/\s+/g, ' ').trim();
+  // every word of the question starts a word here ("צבע" finds colours, not the fingerprint, "אצבע"); a Hebrew
+  // prefix on a longer word comes off ("בנסיעות" finds travel)
+  const hitWord = (hay, w) => (' ' + hay).includes(' ' + w) || (w.length >= 4 && /^[הבלומשכ]/.test(w) && (' ' + hay).includes(' ' + w.slice(1)));
+  const hit = (hay, words) => words.every((w) => hitWord(hay, w));
+  let INDEX = null;
+  // every field of every section, read from the sections' own pages (so the search never falls behind them)
+  function buildIndex() {
+    const out = [];
+    const tpl = document.createElement('template');
+    Object.keys(SECTIONS).forEach((k) => {
+      const s = SECTIONS[k];
+      out.push({ k, label: '', text: norm(s.title + ' ' + (FIND[k] || '')) });
+      if (!RENDER[k] || k === 'account') return;
+      try {
+        tpl.innerHTML = RENDER[k].render(App.employer(S.employers[0].id));
+        const seen = new Set();
+        tpl.content.querySelectorAll('.lbl, .switch-row .t, .section-title, summary b, h3').forEach((el) => {
+          const label = (el.firstChild && el.firstChild.nodeType === 3 ? el.firstChild.textContent : el.textContent).trim();
+          if (!label || label.length > 60 || seen.has(label) || label === s.title) return;
+          seen.add(label);
+          out.push({ k, label, text: norm(label + ' ' + s.title) });
+        });
+      } catch (e) { /* a section that can't draw here is still found by its title */ }
+    });
+    return out;
+  }
+  function results(q) {
+    const words = norm(q).split(' ').filter(Boolean);
+    if (!words.length) return null;
+    if (!INDEX) INDEX = buildIndex();
+    const probs = PROBLEMS.filter(([t, w]) => hit(norm(t + ' ' + w), words)).slice(0, 3);
+    const fields = INDEX.filter((x) => hit(x.text, words));
+    // the section itself first, then its fields; one row per (section, label)
+    fields.sort((a, b) => (a.label ? 1 : 0) - (b.label ? 1 : 0));
+    return { probs, fields: fields.slice(0, 14) };
+  }
+  const goRow = (k, label, title, sub, cls) => `<button class="item ${cls || ''}" data-act="settings-go" data-k="${k}" data-f="${esc(label)}"><span class="lead">${icon(SECTIONS[k].icon)}</span><span class="body"><span class="t">${esc(title)}</span><span class="s">${esc(sub)}</span></span>${icon('left', 's')}</button>`;
+  function resultsHtml(r) {
+    if (!r.probs.length && !r.fields.length) {
+      return `<div class="set-none">${App.mascot ? App.mascot('think', { size: 64 }) : ''}<div><b>לא מצאנו הגדרה כזו</b><div class="small muted">אפשר לנסות מילה אחרת, או לכתוב לנו ונעזור.</div></div></div>
+        <button class="btn tonal block" data-act="support">${icon('chat', 's')} לכתוב לנו</button>`;
+    }
+    return (r.probs.length ? `<div class="section-title">${icon('sparkle', 's')} אולי זה מה שמחפשים</div>${r.probs.map(([t, , where]) => `<div class="set-prob"><div class="set-prob-t">${esc(t)}</div><div class="list">${where.map(([k, f]) => goRow(k, f, f || SECTIONS[k].title, f ? SECTIONS[k].title : SECTIONS[k].sub(), 'prob')).join('')}</div></div>`).join('')}` : '')
+      + (r.fields.length ? `<div class="section-title">${icon('search', 's')} הגדרות</div><div class="list">${r.fields.map((x) => goRow(x.k, x.label, x.label || SECTIONS[x.k].title, x.label ? catOf(x.k) ? catOf(x.k).title + ' › ' + SECTIONS[x.k].title : SECTIONS[x.k].title : SECTIONS[x.k].sub())).join('')}</div>` : '');
+  }
+
+  let lastQ = '';
   App.views.settings_mount = function (v) {
     const q = v.querySelector('#set-q');
     if (!q) return;
-    const norm = (s) => s.toLowerCase().replace(/["'״׳]/g, '').trim();
-    q.addEventListener('input', () => {
-      const t = norm(q.value);
-      let shown = 0;
-      v.querySelectorAll('.set-list').forEach((list) => {
-        let any = false;
-        // matched from the start of a word: "צבע" finds colours, not the fingerprint ("אצבע")
-        list.querySelectorAll('[data-find]').forEach((it) => { const ok = !t || (' ' + it.dataset.find).includes(' ' + t); it.hidden = !ok; if (ok) { any = true; shown++; } });
-        list.hidden = !any;
-        const title = list.previousElementSibling;
-        if (title && title.classList.contains('section-title')) title.hidden = !any;
-      });
-      const none = v.querySelector('#set-none');
-      if (none) none.hidden = !t || shown > 0;
-    });
+    const home = v.querySelector('#set-home');
+    const res = v.querySelector('#set-res');
+    const clear = v.querySelector('[data-set-clear]');
+    const run = () => {
+      lastQ = q.value;
+      const r = results(q.value);
+      clear.hidden = !q.value;
+      home.hidden = !!r;
+      res.hidden = !r;
+      res.innerHTML = r ? resultsHtml(r) : '';
+    };
+    q.addEventListener('input', run);
+    clear.addEventListener('click', () => { q.value = ''; run(); q.focus(); });
+    v.querySelectorAll('[data-set-chip]').forEach((b) => b.addEventListener('click', () => {
+      q.value = PROBLEMS[+b.dataset.setChip][0];
+      run();
+      if (root.Fx) root.Fx.play('pick');
+    }));
+    if (lastQ) { q.value = lastQ; run(); }
   };
 
   App.views.settings = function () {
-    const groups = [['חשבון', ['account', 'personal']], ['עבודה ושכר', ['rights', 'roles', 'calc', 'rest', 'pay', 'net', 'leave', 'goal']], ['אפליקציה', ['assistant', 'alerts', 'templates', 'look', 'security', 'ai']], ['נתונים', ['backup', 'export', 'demo', 'about']]];
     return `<div class="topbar"><div class="titles"><h1>הגדרות</h1><div class="sub">כל שינוי נשמר מיד</div></div></div>
-      <label class="set-search">${icon('search', 's')}<input class="input" id="set-q" type="search" placeholder="חיפוש (למשל: נסיעות, מס, צבע)" aria-label="חיפוש בהגדרות" autocomplete="off"></label>
-      <div class="empty small" id="set-none" hidden>לא נמצאה הגדרה כזו. אפשר לנסות מילה אחרת, או לשאול אותנו בעזרה ותמיכה.</div>
+      <div class="set-search">${icon('search', 's')}<input class="input" id="set-q" type="text" enterkeyhint="search" placeholder="מה לשנות? או מה הבעיה?" aria-label="חיפוש בהגדרות" autocomplete="off"><button class="icon-btn sm set-clear" data-set-clear hidden aria-label="ניקוי החיפוש">${icon('x', 's')}</button></div>
+      <div id="set-res" hidden></div>
+      <div id="set-home">
+      <div class="set-chips" aria-label="בעיות נפוצות">${CHIPS.map(([ic, tint, i]) => `<button class="set-chip t-${tint}" data-set-chip="${i}">${icon(ic, 's')}<span>${esc(PROBLEMS[i][0])}</span></button>`).join('')}</div>
       ${App.isAdmin ? `<div class="list" style="margin-top:6px"><button class="item admin-entry" data-act="admin-dashboard"><span class="lead" style="background:var(--primary);color:var(--on-primary)">${icon('chart')}</span><span class="body"><span class="t">לוח ניהול ${App.adminOpenTickets ? `<span class="tag warn">${App.adminOpenTickets} פניות מחכות</span>` : ''}</span><span class="s">משתמשים, פעילות, פניות (למנהלים בלבד)</span></span>${icon('left', 's')}</button></div>` : ''}
       ${root.Plus && root.Plus.visible() ? `<div class="list" style="margin-top:6px"><button class="item plus-entry" data-act="plus-open"><span class="lead plus-lead">${icon('sparkle')}</span><span class="body"><span class="t">Shaati Plus</span><span class="s">${root.Plus.owned() ? 'פעיל · תודה על התמיכה 💜' : 'עיצובים לכרטיס השכר · תשלום חד-פעמי' + (root.Plus.price ? ' · ' + esc(root.Plus.price) : '')}</span></span>${icon('left', 's')}</button></div>` : ''}
+      <div class="set-cats">${CATS.map((c, i) => `<button class="set-cat" data-act="settings-cat" data-cat="${c.id}" style="--i:${i}">${UI.tile(c.icon, c.tint)}<span class="t">${c.title}</span><span class="s">${esc(c.sub())}</span><span class="n" aria-hidden="true">${c.keys.length}</span></button>`).join('')}</div>
       <div class="list set-list help-list"><button class="item" data-act="support"><span class="lead">${icon('chat')}</span><span class="body"><span class="t">עזרה ותמיכה ${App.supportUnread ? '<span class="tag good">תשובה חדשה</span>' : ''}</span><span class="s">שאלות נפוצות, לכתוב לנו, הפניות שלי</span></span>${icon('left', 's')}</button>
-        <button class="item" data-act="share-app"><span class="lead">${icon('share')}</span><span class="body"><span class="t">לשתף עם חברים</span><span class="s">שגם הם ידעו כמה מגיע להם</span></span>${icon('left', 's')}</button></div>
-      ${groups.map(([g, keys]) => `<div class="section-title">${g}</div><div class="list set-list">${keys.map((k) => { const s = SECTIONS[k]; return `<button class="item" data-act="settings-open" data-k="${k}" data-find="${esc((s.title + ' ' + s.sub() + ' ' + (FIND[k] || '')).toLowerCase().replace(/["'״׳]/g, ''))}"><span class="lead">${icon(s.icon)}</span><span class="body"><span class="t">${s.title}</span><span class="s">${esc(s.sub())}</span></span>${icon('left', 's')}</button>`; }).join('')}</div>`).join('')}
-      <div class="section-title">מידע משפטי</div>
-      <div class="list">${[['about', 'info', 'אודות'], ['terms', 'file', 'תנאי שימוש'], ['privacy', 'shield', 'מדיניות פרטיות'], ['disclaimer', 'alert', 'הבהרה משפטית'], ['accessibility', 'eye', 'הצהרת נגישות'], ['licenses', 'layers', 'רישיונות וצד שלישי']].map(([d, ic, t]) => `<button class="item" data-act="legal" data-doc="${d}"><span class="lead" style="background:var(--surface-3)">${icon(ic)}</span><span class="body"><span class="t">${t}</span></span>${icon('left', 's')}</button>`).join('')}</div>
-      <div class="ver">גרסה ${root.APP_VERSION} · מבנה נתונים ${Store.SCHEMA_VERSION}${S.settings.legal ? ' · תנאים ' + esc(S.settings.legal.version) + ' אושרו' : ''}</div>`;
+        <button class="item" data-act="share-app"><span class="lead">${icon('share')}</span><span class="body"><span class="t">לשתף עם חברים</span><span class="s">שגם הם ידעו כמה מגיע להם</span></span>${icon('left', 's')}</button>
+        <button class="item" data-act="settings-legal"><span class="lead">${icon('file')}</span><span class="body"><span class="t">מידע משפטי</span><span class="s">תנאי שימוש, פרטיות, נגישות ורישיונות</span></span>${icon('left', 's')}</button></div>
+      <div class="ver">גרסה ${root.APP_VERSION} · מבנה נתונים ${Store.SCHEMA_VERSION}${S.settings.legal ? ' · תנאים ' + esc(S.settings.legal.version) + ' אושרו' : ''}</div>
+      </div>`;
   };
-  App.actions['settings-open'] = (el) => (el.dataset.k === 'assistant' ? App.actions.assistant() : el.dataset.k === 'rights' ? App.actions.rights() : App.sheetsApi.settingsSection(el.dataset.k));
+  App.actions['settings-open'] = (el) => (el.dataset.k === 'assistant' ? (App.openAssistantOver || App.actions.assistant)() : el.dataset.k === 'rights' ? App.actions.rights() : App.sheetsApi.settingsSection(el.dataset.k));
+  // a door: its own small page with the sections behind it (their lines stay up to date while it is open)
+  App.actions['settings-cat'] = (el) => {
+    const c = CATS.find((x) => x.id === el.dataset.cat);
+    if (!c) return;
+    let off = null;
+    const list = () => c.keys.map(sectionRow).join('');
+    UI.openSheet({
+      title: c.title, cls: 'set-cat-sheet',
+      body: `<div class="set-cat-head">${UI.tile(c.icon, c.tint)}<div class="small muted">${esc(c.sub())}</div></div><div class="list set-list" id="set-cat-list">${list()}</div>`,
+      onMount: (sh) => { off = Store.on(() => { const l = sh.querySelector('#set-cat-list'); if (l) l.innerHTML = list(); }); },
+      onClose: () => { if (off) off(); },
+    });
+  };
+  App.actions['settings-legal'] = () => UI.openSheet({
+    title: 'מידע משפטי',
+    body: `<div class="list">${[['about', 'info', 'אודות'], ['terms', 'file', 'תנאי שימוש'], ['privacy', 'shield', 'מדיניות פרטיות'], ['disclaimer', 'alert', 'הבהרה משפטית'], ['accessibility', 'eye', 'הצהרת נגישות'], ['licenses', 'layers', 'רישיונות וצד שלישי']].map(([d, ic, t]) => `<button class="item" data-act="legal" data-doc="${d}"><span class="lead" style="background:var(--surface-3)">${icon(ic)}</span><span class="body"><span class="t">${t}</span></span>${icon('left', 's')}</button>`).join('')}</div>`,
+  });
+  // a search result: the section opens at the field, which lights up for a moment
+  App.actions['settings-go'] = (el) => {
+    const k = el.dataset.k;
+    if (k === 'assistant' || k === 'rights') { App.actions['settings-open'](el); return; }
+    App.sheetsApi.settingsSection(k, el.dataset.f || '');
+  };
+  function spotlight(sheet, label) {
+    if (!label) return;
+    const want = label.trim();
+    const el = [...sheet.querySelectorAll('.lbl, .switch-row .t, .section-title, summary b, h3')].find((x) => {
+      const t = (x.firstChild && x.firstChild.nodeType === 3 ? x.firstChild.textContent : x.textContent).trim();
+      return t === want || t.startsWith(want);
+    });
+    if (!el) return;
+    const det = el.closest('details');
+    if (det && !det.open) det.open = true;
+    const box = el.closest('.switch-row, .field, .card, details') || el;
+    setTimeout(() => {
+      box.scrollIntoView({ block: 'center', behavior: 'smooth' });
+      box.classList.remove('set-hl'); void box.offsetWidth; box.classList.add('set-hl');
+      setTimeout(() => box.classList.remove('set-hl'), 2200);
+    }, 360);
+  }
 
-  App.sheetsApi.settingsSection = function (k) {
+  App.sheetsApi.settingsSection = function (k, focus) {
     const s = SECTIONS[k];
     const R = RENDER[k];
     if (!R) return;
-    sectionSheet(s.title, R.render, { perEmployer: R.perEmployer, mount: R.mount });
+    sectionSheet(s.title, R.render, { perEmployer: R.perEmployer, mount: R.mount, focus });
   };
 
   /* ---------------- renderers ---------------- */
@@ -214,7 +352,7 @@
       const age = Engine.ageAt(S.settings.birthDate, U.todayKey());
       return `<div class="card">${F.text('שם (לא חובה)', 's.userName', S.settings.userName, 'מופיע בברכות ובחתימה של הודעות למעסיק.', 'maxlength="40"')}
         ${F.date('תאריך לידה (לא חובה)', 's.birthDate', S.settings.birthDate, 'לברכה ביום ההולדת, לשכר המינימום לפי גיל, לבדיקות חוק עבודת הנוער ולגיל הפנסיה.').replace('data-s=', 'data-redraw data-s=')}
-        ${F.sel('מגדר (לא חובה)', 's.gender', [['', 'לא צוין'], ['m', 'גבר'], ['f', 'אישה']], S.settings.gender || '', 'רק לחישוב הפנסיה: חובת הפרשה מגיל 21 לגבר ומגיל 20 לאישה.')}</div>
+        ${F.chips('מגדר (לא חובה)', 's.gender', [['m', 'גבר', '👨'], ['f', 'אישה', '👩'], ['', 'לא צוין', '🙂']], S.settings.gender || '', 'רק לחישוב הפנסיה: חובת הפרשה מגיל 21 לגבר ומגיל 20 לאישה.')}</div>
         ${age != null ? `<div class="card ${age < 18 ? 'tonal' : ''}"><div class="kv"><span>גיל</span><b>${age}</b></div>
           ${age < 18 ? `<div class="small" style="margin-top:8px">${icon('info', 's')} מתחת לגיל 18 לא מנוכים מס הכנסה, ביטוח לאומי, מס בריאות ופנסיה, ולכן <b>הנטו שווה לברוטו</b> (פחות ניכויים אישיים כמו ארוחות, אם יש). מגיל 18 החישוב עובר אוטומטית לניכויים הרגילים.</div>` : ''}</div>` : ''}
         <div class="tiny muted" style="margin:6px 4px">תאריך הלידה נשמר בחשבון שלך ולא משותף עם אף אחד.</div>`;
@@ -237,7 +375,7 @@
         if (b.dataset.roleAdd) roleEditor(null, draw, b.dataset.roleAdd);
         if (b.hasAttribute('data-emp-add')) {
           const name = String((await UI.promptText('מעסיק חדש', 'שם המעסיק', '')) || '').trim().slice(0, 60);
-          if (!name) return;
+          if (!name || !App.ensureClean(name)) return;
           const emp = Object.assign(Defaults.defaultEmployer('emp_' + U.uid()), { name });
           await Store.put('employers', emp, 'הוספת מעסיק');
           draw();
@@ -249,7 +387,7 @@
             if (S.shifts.some((x) => x.employerId === emp.id)) { UI.toast('יש משמרות של המעסיק — אי אפשר למחוק'); return; }
             if (!(await UI.confirm('למחוק את המעסיק?', 'התפקידים שלו יימחקו.', 'מחק', true))) return;
             await App.saveOps([{ store: 'employers', del: emp.id }, ...S.roles.filter((x) => x.employerId === emp.id).map((x) => ({ store: 'roles', del: x.id }))], 'מחיקת מעסיק');
-          } else if (r && String(r).trim()) await Store.put('employers', Object.assign(Store.clone(emp), { name: String(r).trim().slice(0, 60) }));
+          } else if (r && String(r).trim() && App.ensureClean(String(r))) await Store.put('employers', Object.assign(Store.clone(emp), { name: String(r).trim().slice(0, 60) }));
           draw();
         }
       });
@@ -295,6 +433,7 @@
           if (b.hasAttribute('data-save')) {
             read();
             if (!d.name) { UI.invalid('הזן שם'); return; }
+            if (!App.ensureClean(d.name)) return;
             if (d.rates.some((r) => !(r.rate > 0))) { UI.invalid('הזן תעריף לשעה'); return; }
             UI.closeTop();
             await App.saveOps([{ store: 'roles', put: d }], orig ? 'עריכת תפקיד' : 'הוספת תפקיד', 'התפקיד נשמר');
@@ -367,7 +506,7 @@
         <div class="card">${F.sw('ביום שישי', '', 's.rest.eveFriday', R.eveFriday)}${F.sw('בערב חג', '', 's.rest.eveHoliday', R.eveHoliday)}${F.time('החל משעה', 's.rest.eveFrom', R.eveFrom)}
           <div class="tiny muted">האחוז מוגדר ב"חוקי חישוב". חל מהשעה הזו ועד כניסת השבת/החג.</div></div>
         <div class="section-title">${icon('hand', 's')} כללי יום ידניים</div>
-        <div class="card">${S.dayRules.length ? S.dayRules.slice().sort((a, b) => b.date.localeCompare(a.date)).map((r) => `<div class="kv"><span>${U.fmtDate(r.date)} · ${r.type === 'cancel' ? 'ביטול 150%' : 'יום מנוחה ידני'}${r.reason ? ' — ' + esc(r.reason) : ''}</span><button class="btn text sm" data-rule-del="${r.id}">מחק</button></div>`).join('') : '<div class="muted small">אין. אפשר לבטל 150% לתאריך (למשל חג שזוהה בטעות) מתוך לוח השנה ← לחיצה על היום.</div>'}</div>`;
+        <div class="card">${S.dayRules.length ? S.dayRules.slice().sort((a, b) => b.date.localeCompare(a.date)).map((r) => `<div class="kv"><span>${U.fmtDate(r.date)} · ${r.type === 'cancel' ? 'ביטול 150%' : r.type === 'pct' ? 'תעריף מיוחד ' + (+r.pct) + '%' : 'יום מנוחה ידני'}${r.reason ? ' — ' + esc(r.reason) : ''}</span><button class="btn text sm" data-rule-del="${r.id}">מחק</button></div>`).join('') : '<div class="muted small">אין. אפשר לבטל 150% לתאריך (למשל חג שזוהה בטעות) מתוך לוח השנה ← לחיצה על היום.</div>'}</div>`;
     },
     mount: (el, draw) => {
       if (el._restBound) return;

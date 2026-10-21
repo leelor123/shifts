@@ -306,12 +306,47 @@
     });
   }
 
+  /* ---------------- a list of choices (the app's own <select>) ---------------- */
+  /**
+   * opts: { title, value, options: [{ value, label, disabled }] }
+   * Resolves with the value chosen, or null when closed without choosing.
+   */
+  function pickOption(opts) {
+    const list = opts.options || [];
+    const cur = String(opts.value);
+    const inner = `<div class="pk-choices" role="listbox" aria-label="${esc(opts.title || '')}">${list.map((o, i) => {
+      const on = String(o.value) === cur;
+      return `<button type="button" class="pk-ch ${on ? 'on' : ''}" role="option" aria-selected="${on}" data-i="${i}" style="--i:${Math.min(i, 10)}" ${o.disabled ? 'disabled' : ''}><span class="pk-dot" aria-hidden="true">${icon('check', 's')}</span><span class="pk-ol">${esc(o.label)}</span></button>`;
+    }).join('')}</div>`;
+    return host(opts.title || 'בחירה', inner, (el, finish) => {
+      const box = el.querySelector('.pk-choices');
+      const on = box.querySelector('.pk-ch.on');
+      if (on) on.scrollIntoView({ block: 'nearest' });
+      let chose = false;
+      box.addEventListener('click', (e) => {
+        const b = e.target.closest('.pk-ch');
+        if (!b || b.disabled || chose) return;
+        chose = true; // one tap chooses: a second tap while it closes changes nothing
+        box.classList.add('done');
+        box.querySelectorAll('.pk-ch').forEach((x) => { x.classList.toggle('on', x === b); x.setAttribute('aria-selected', String(x === b)); });
+        b.classList.add('chosen');
+        if (Fx()) { Fx().play('pick'); Fx().haptic && Fx().haptic(8); }
+        setTimeout(() => finish(list[+b.dataset.i].value), 190);
+      });
+    });
+  }
+
   /* ---------------- turning the native inputs into picker buttons ---------------- */
   const valueDesc = Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, 'value');
   function labelOf(input) {
     const f = input.closest('.field, label');
     const l = f && f.querySelector('.lbl');
-    return (l && l.textContent.trim()) || input.getAttribute('aria-label') || '';
+    if (l && l.textContent.trim()) return l.textContent.trim();
+    if (input.getAttribute('aria-label')) return input.getAttribute('aria-label');
+    // a field inside a titled block (the shift editor's manual overrides): the block's title
+    const block = input.closest('.ov-block');
+    const t = block && block.querySelector('.ov-head .t');
+    return t && t.firstChild ? t.firstChild.textContent.trim() : '';
   }
   function enhance(input) {
     if (input.dataset.pk) return;
@@ -350,13 +385,93 @@
     input.after(btn);
     render();
   }
+  /* <select>: a button with the choice that opens the list above (or, with data-ui="chips", the choices as chips
+     right there). The real select stays hidden and keeps the value, so the screens that read it don't change;
+     setting .value or .selectedIndex from code updates what is shown. */
+  const selValue = Object.getOwnPropertyDescriptor(HTMLSelectElement.prototype, 'value');
+  const selIndex = Object.getOwnPropertyDescriptor(HTMLSelectElement.prototype, 'selectedIndex');
+  function watchValue(sel, render) {
+    Object.defineProperty(sel, 'value', { configurable: true, get() { return selValue.get.call(this); }, set(v) { selValue.set.call(this, v); render(); } });
+    Object.defineProperty(sel, 'selectedIndex', { configurable: true, get() { return selIndex.get.call(this); }, set(v) { selIndex.set.call(this, v); render(); } });
+  }
+  function choose(sel, v) {
+    sel.value = v;
+    sel.dispatchEvent(new Event('input', { bubbles: true }));
+    sel.dispatchEvent(new Event('change', { bubbles: true }));
+  }
+  function enhanceSelect(sel) {
+    if (sel.dataset.pk) return;
+    sel.dataset.pk = 'select';
+    if (sel.dataset.ui === 'chips') { chipsFor(sel); return; }
+    const btn = document.createElement('button');
+    btn.type = 'button';
+    btn.className = 'input pk-field pk-select';
+    btn.setAttribute('aria-haspopup', 'listbox');
+    const render = () => {
+      const o = sel.options[sel.selectedIndex];
+      const text = o ? o.textContent.trim() : '';
+      btn.innerHTML = `<span class="${text ? 'v' : 'ph'}">${esc(text || 'בחירה')}</span>${icon('chevdown', 's')}`;
+      btn.disabled = sel.disabled;
+      btn.setAttribute('aria-label', (labelOf(sel) ? labelOf(sel) + ': ' : '') + (text || 'לא נבחר'));
+    };
+    watchValue(sel, render);
+    btn.addEventListener('click', async (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      if (sel.disabled || btn.dataset.open) return;
+      btn.dataset.open = '1'; // a double tap opens one list
+      const options = [...sel.options].map((o) => ({ value: o.value, label: o.textContent.trim(), disabled: o.disabled }));
+      const v = await pickOption({ title: labelOf(sel) || 'בחירה', value: sel.value, options });
+      delete btn.dataset.open;
+      if (v == null || v === sel.value) return;
+      choose(sel, v);
+      btn.classList.remove('picked'); void btn.offsetWidth; btn.classList.add('picked');
+    });
+    sel.classList.add('pk-native');
+    sel.tabIndex = -1;
+    sel.after(btn);
+    render();
+  }
+  // a few short choices, all in sight: chips that light up (an emoji from data-e on each option)
+  function chipsFor(sel) {
+    const wrap = document.createElement('div');
+    wrap.className = 'pk-chips';
+    wrap.setAttribute('role', 'radiogroup');
+    if (labelOf(sel)) wrap.setAttribute('aria-label', labelOf(sel));
+    wrap.innerHTML = [...sel.options].map((o, i) => `<button type="button" class="pk-chip" role="radio" data-i="${i}">${o.dataset.e ? `<span class="e" aria-hidden="true">${esc(o.dataset.e)}</span>` : ''}<span>${esc(o.textContent.trim())}</span></button>`).join('');
+    const render = () => wrap.querySelectorAll('.pk-chip').forEach((b) => {
+      const on = +b.dataset.i === sel.selectedIndex;
+      b.classList.toggle('on', on);
+      b.setAttribute('aria-checked', String(on));
+      b.disabled = sel.disabled;
+    });
+    watchValue(sel, render);
+    wrap.addEventListener('click', (e) => {
+      const b = e.target.closest('.pk-chip');
+      if (!b || sel.disabled) return;
+      e.preventDefault(); // inside a <label>: the tap stays on the chip
+      const o = sel.options[+b.dataset.i];
+      if (!o || o.value === sel.value) return;
+      choose(sel, o.value);
+      b.classList.remove('pop'); void b.offsetWidth; b.classList.add('pop');
+      if (Fx()) { Fx().play('on'); Fx().haptic && Fx().haptic(8); }
+    });
+    sel.classList.add('pk-native');
+    sel.tabIndex = -1;
+    sel.after(wrap);
+    render();
+  }
+
   const SEL = 'input[type="date"]:not([data-pk]), input[type="time"]:not([data-pk]), input[type="month"]:not([data-pk])';
-  function scan(rootEl) { (rootEl || document).querySelectorAll(SEL).forEach(enhance); }
+  function scan(rootEl) {
+    (rootEl || document).querySelectorAll(SEL).forEach(enhance);
+    (rootEl || document).querySelectorAll('select:not([data-pk])').forEach(enhanceSelect);
+  }
   const mo = new MutationObserver((list) => {
     for (const r of list) if (r.addedNodes.length) { scan(document.body); return; }
   });
   function start() { scan(document.body); mo.observe(document.body, { childList: true, subtree: true }); }
   if (document.body) start(); else document.addEventListener('DOMContentLoaded', start);
 
-  Object.assign(UI, { pickDate, pickMonth, pickTime, fmtPickDate: fmtDate });
+  Object.assign(UI, { pickDate, pickMonth, pickTime, pickOption, fmtPickDate: fmtDate });
 })(typeof window !== 'undefined' ? window : globalThis);

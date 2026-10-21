@@ -146,10 +146,11 @@
     const entry = UI.openSheet({
       title: 'פנייה חדשה', full: true,
       body: `<div class="support" id="sp-new"></div>`,
-      foot: `<button class="btn go" data-sp-send disabled>${icon('send', 's')} שליחה</button>`,
+      foot: `<button class="btn go" data-sp-send aria-disabled="true">${icon('send', 's')} שליחה</button>`,
     });
     const box = entry.sh.querySelector('#sp-new');
     const send = entry.sh.querySelector('[data-sp-send]');
+    let sending = false;
     function draw() {
       box.innerHTML = `${App.mascotSays ? App.mascotSays(reason ? 'think' : 'happy', reason ? 'ספרו לנו בכמה מילים 👇' : 'על מה הפנייה?', { size: 64 }) : ''}
         <div class="sp-reasons">${REASONS.map(([k, ic, tint, l]) => `<button class="sp-r ${k === reason ? 'on' : ''}" data-r="${k}">${UI.tile(ic, tint)}<span>${esc(l)}</span></button>`).join('')}</div>
@@ -166,24 +167,38 @@
       const mail = m ? m.value.trim() : '';
       return { text, mail, ok: reason && text.length >= 10 && (!anon || /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(mail)) };
     };
-    const check = () => { send.disabled = !val().ok; };
+    // the button always answers: until the request is ready it looks paler, and a tap says what is missing
+    const check = () => { send.setAttribute('aria-disabled', String(!val().ok)); };
     box.addEventListener('click', (e) => {
       const b = e.target.closest('[data-r]');
       if (!b) return;
-      const typed = box.querySelector('#sp-text') ? box.querySelector('#sp-text').value : '';
+      // what was typed survives the redraw: the text, the email and the switch
+      const q = (s) => box.querySelector(s);
+      const kept = { text: q('#sp-text') ? q('#sp-text').value : '', mail: q('#sp-mail') ? q('#sp-mail').value : '', tech: q('#sp-tech') ? q('#sp-tech').checked : true };
       reason = b.dataset.r;
       draw();
-      if (typed) box.querySelector('#sp-text').value = typed;
+      if (kept.text) q('#sp-text').value = kept.text;
+      if (kept.mail && q('#sp-mail')) q('#sp-mail').value = kept.mail;
+      if (q('#sp-tech')) q('#sp-tech').checked = kept.tech;
+      check(); // what was typed came back: the button may be ready again
       if (Fx()) Fx().play('on');
       setTimeout(() => { const t = box.querySelector('#sp-text'); if (t) t.focus(); }, 60);
     });
     box.addEventListener('input', check);
     send.onclick = async () => {
       const v = val();
-      if (!v.ok) { UI.invalid(v.text.length < 10 ? 'כתבו קצת יותר (לפחות 10 תווים)' : 'בדקו את כתובת האימייל'); return; }
+      if (sending) return;
+      if (v.ok && !App.ensureClean(v.text)) return;
+      if (!v.ok) {
+        UI.invalid(!reason ? 'בחרו קודם על מה הפנייה 👆' : v.text.length < 10 ? 'כתבו קצת יותר (לפחות 10 תווים)' : 'בדקו את כתובת האימייל');
+        const f = box.querySelector(!reason ? '.sp-reasons' : v.text.length < 10 ? '#sp-text' : '#sp-mail');
+        if (f) { f.scrollIntoView({ block: 'center', behavior: 'smooth' }); if (f.focus && reason) f.focus(); }
+        return;
+      }
       // a gentle limit, so a stuck button can't flood the inbox
       const recent = (S.meta.ticketTimes || []).filter((t) => Date.now() - t < 24 * 3600000);
       if (recent.length >= 5) { UI.invalid('שלחת כבר כמה פניות היום. נענה בהקדם 🙏'); return; }
+      sending = true;
       send.disabled = true;
       send.innerHTML = 'שולח…';
       try {
@@ -203,6 +218,7 @@
         setTimeout(() => UI.dialog({ title: '', html: `<div class="term-box">${App.mascot('love', { size: 70 })}<div><h3>הפנייה נשלחה! 💌</h3><p>${anon ? 'נענה לך במייל בהקדם.' : 'נענה בהקדם, והתשובה תופיע כאן באפליקציה (עזרה ותמיכה › הפניות שלי).'}</p></div></div>`, buttons: [{ label: 'תודה!', value: true, cls: '' }] }), 350);
       } catch (e) {
         console.error(e);
+        sending = false;
         send.disabled = false;
         send.innerHTML = `${icon('send', 's')} שליחה`;
         UI.invalid('השליחה נכשלה: ' + (Cloud() ? Cloud().errorText(e) : 'נסו שוב'));
@@ -212,7 +228,7 @@
   };
 
   /* ---------------- one conversation (user or admin) ---------------- */
-  Support.thread = async function (tid, asAdmin) {
+  Support.thread = async function (tid, asAdmin, onChange) {
     const entry = UI.openSheet({ title: asAdmin ? 'פנייה' : 'הפנייה שלי', full: true, cls: 'chat-sheet', body: UI.skeleton(3),
       foot: `<textarea class="input chat-input" id="sp-reply" rows="1" maxlength="2000" placeholder="${asAdmin ? 'תשובה…' : 'עוד משהו?'}"></textarea><button class="icon-btn chat-send" data-sp-reply aria-label="שליחה">${icon('send')}</button>` });
     const body = entry.sh.querySelector('.sh-body');
@@ -229,20 +245,35 @@
       body.innerHTML = `<div class="sp-head">${reasonTile(t.reason)}<div><b>${esc(label)}</b><div class="tiny muted"><span class="sp-st ${STATUS[t.status] ? STATUS[t.status][1] : ''}">${STATUS[t.status] ? STATUS[t.status][0] : ''}</span> · נפתחה ${U.fmtDate(U.epochKey(t.created))}</div></div></div>
         ${asAdmin ? `<div class="card small sp-meta">${t.name ? `<div>שם: <b>${esc(t.name)}</b></div>` : ''}${t.email ? `<div>אימייל: <a href="mailto:${esc(t.email)}?subject=${encodeURIComponent('Shaati: הפנייה שלך')}" dir="ltr">${esc(t.email)}</a> (לא מחובר, לענות במייל)</div>` : ''}${t.v ? `<div dir="ltr" style="text-align:left">${esc(t.v)} · ${esc(t.p || '')}<br><span class="tiny">${esc(t.dev || '')}</span></div>` : '<div class="tiny muted">בלי פרטים טכניים</div>'}</div>` : ''}
         <div class="chat-log">${bubble('user', t.text, t.created)}${msgs.map((m) => bubble(m.from, m.text, m.t)).join('')}</div>
-        ${t.status !== 'closed' ? `<button class="btn text sm" data-sp-close>${icon('check', 's')} ${asAdmin ? 'סגור את הפנייה' : 'הבעיה נפתרה, אפשר לסגור'}</button>` : ''}`;
+        ${t.status !== 'closed' ? `<button class="btn text sm" data-sp-close>${icon('check', 's')} ${asAdmin ? 'סגור את הפנייה' : 'הבעיה נפתרה, אפשר לסגור'}</button>` : ''}
+        ${asAdmin && t.status === 'closed' ? `<button class="btn text sm danger-text" data-sp-del>${icon('trash', 's')} מחק את הפנייה</button>` : ''}`;
       if (!asAdmin && t.last === 'admin' && !t.seen) {
         fs.updateDoc(ref, { seen: true }).catch(() => {});
         App.supportUnread = Math.max(0, (App.supportUnread || 1) - 1);
       }
       const c = body.querySelector('[data-sp-close]');
-      if (c) c.onclick = async () => { await fs.updateDoc(ref, { status: 'closed', updated: Date.now() }); UI.toast('הפנייה נסגרה'); load(); };
+      if (c) c.onclick = async () => { await fs.updateDoc(ref, { status: 'closed', updated: Date.now() }); UI.toast('הפנייה נסגרה'); load(); if (onChange) onChange(); };
+      const del = body.querySelector('[data-sp-del]');
+      if (del) del.onclick = async () => {
+        if (!(await UI.confirm('למחוק את הפנייה?', 'הפנייה וכל ההודעות בה יימחקו לתמיד, גם אצל מי ששלח אותה.', 'מחק', true))) return;
+        del.disabled = true;
+        if (await Support.remove(tid)) { UI.closeTop(); UI.toast('הפנייה נמחקה'); if (onChange) onChange(); } else del.disabled = false;
+      };
       body.scrollTop = body.scrollHeight;
       if (t.email && asAdmin) entry.sh.querySelector('.sh-foot').hidden = true;
     }
-    entry.sh.querySelector('[data-sp-reply]').onclick = async () => {
+    let replying = false;
+    const replyBtn = entry.sh.querySelector('[data-sp-reply]');
+    // pressed before the keyboard closed, or twice: one message only
+    replyBtn.addEventListener('pointerdown', (e) => e.preventDefault()); // the tap does not take the focus (the keyboard stays, the tap lands)
+    replyBtn.onclick = async () => {
       const ta = entry.sh.querySelector('#sp-reply');
       const text = ta.value.trim();
-      if (!text) return;
+      if (!text) { UI.invalid('כתבו הודעה קודם'); ta.focus(); return; }
+      if (!App.ensureClean(text)) return;
+      if (replying) return;
+      replying = true;
+      replyBtn.disabled = true;
       try {
         const now = Date.now();
         await fs.addDoc(fs.collection(db, 'tickets', tid, 'msgs'), { from: asAdmin ? 'admin' : 'user', text: text.slice(0, 2000), t: now });
@@ -251,6 +282,8 @@
         if (Fx()) Fx().play('pop');
         load();
       } catch (e) { UI.invalid('השליחה נכשלה: ' + Cloud().errorText(e)); }
+      replying = false;
+      replyBtn.disabled = false;
     };
     try { await load(); } catch (e) { body.innerHTML = `<div class="banner warn">${icon('alert')}<div>לא הצלחנו לטעון (${esc(e.code || e.message || '')}).</div></div>`; }
   };
@@ -264,6 +297,27 @@
     UI.toast('הקישור הועתק. אפשר להדביק בוואטסאפ 💚');
   };
 
+  /** Admin: delete a closed request with its messages (the rules allow it only once it is closed). */
+  Support.remove = async function (tid) {
+    try {
+      const { fs, db } = await Cloud().sdk();
+      const msgs = await fs.getDocs(fs.collection(db, 'tickets', tid, 'msgs'));
+      for (const m of msgs.docs) await fs.deleteDoc(m.ref);
+      await fs.deleteDoc(fs.doc(db, 'tickets', tid));
+      return true;
+    } catch (e) {
+      console.warn('deleting a request', e);
+      UI.invalid('המחיקה נכשלה: ' + (Cloud() ? Cloud().errorText(e) : 'נסו שוב'));
+      return false;
+    }
+  };
+  /** Admin: delete every closed request; returns how many went. */
+  Support.removeClosed = async function (ids) {
+    let n = 0;
+    for (const id of ids) { if (await Support.remove(id)) n++; else break; }
+    return n;
+  };
+
   /* ---------------- admin: the inbox ---------------- */
   /** HTML for the admin dashboard: open requests first. */
   Support.adminInbox = async function () {
@@ -272,10 +326,12 @@
     const order = { open: 0, answered: 1, closed: 2 };
     list.sort((a, b) => (order[a.status] - order[b.status]) || ((a.last === 'user' ? 0 : 1) - (b.last === 'user' ? 0 : 1)) || b.updated - a.updated);
     App.adminOpenTickets = list.filter((t) => t.status === 'open' && t.last === 'user').length;
-    return { count: App.adminOpenTickets, total: list.length, html: list.length ? `<div class="list">${list.slice(0, 40).map((t) => {
+    const closed = list.filter((t) => t.status === 'closed').map((t) => t.id);
+    return { count: App.adminOpenTickets, total: list.length, closed, html: list.length ? `<div class="list">${list.slice(0, 40).map((t) => {
       const label = reasonOf(t.reason)[3];
       const waiting = t.status === 'open' && t.last === 'user';
-      return `<button class="item" data-adm-ticket="${esc(t.id)}">${reasonTile(t.reason)}<span class="body"><span class="t">${esc(label)}${t.name ? ' · ' + esc(t.name) : ''} ${waiting ? '<span class="tag warn">מחכה לתשובה</span>' : ''}${t.email ? ' <span class="tag">מייל</span>' : ''}</span><span class="s">${esc(String(t.text || '').slice(0, 70))}</span></span><span class="trail"><span class="tiny muted">${UI.timeAgo(t.updated || t.created)}</span></span></button>`;
-    }).join('')}</div>` : '<div class="small muted" style="margin:4px">אין פניות עדיין 🎉</div>' };
+      return `<button class="item" data-adm-ticket="${esc(t.id)}">${reasonTile(t.reason)}<span class="body"><span class="t">${esc(label)}${t.name ? ' · ' + esc(t.name) : ''} ${waiting ? '<span class="tag warn">מחכה לתשובה</span>' : ''}${t.email ? ' <span class="tag">מייל</span>' : ''}</span><span class="s">${esc(String(t.text || '').slice(0, 70))}</span></span><span class="trail">${t.status === 'closed' ? '<span class="sp-st closed">סגורה</span><br>' : ''}<span class="tiny muted">${UI.timeAgo(t.updated || t.created)}</span></span></button>`;
+    }).join('')}</div>
+    ${closed.length ? `<button class="btn text sm danger-text" data-adm-del-closed>${icon('trash', 's')} מחק את הפניות הסגורות (${closed.length})</button>` : ''}` : '<div class="small muted" style="margin:4px">אין פניות עדיין 🎉</div>' };
   };
 })(typeof window !== 'undefined' ? window : globalThis);

@@ -285,6 +285,34 @@ body.fx .nav .fab:active { transform: scale(.9) rotate(90deg); }
 .pk-field.pk-time .v { flex: none; font-size: 1.15rem; font-weight: 700; font-variant-numeric: tabular-nums; direction: ltr; }
 .pk-field:active { transform: scale(.985); }
 .pk-field:disabled { opacity: .5; }
+/* the app's own <select>: a field with the choice, a list sheet, or chips */
+.pk-field.pk-select .v, .pk-field.pk-select .ph { line-height: 1.35; }
+.pk-field.pk-select .i { color: var(--on-surface-var); }
+.pk-field.picked .v { animation: pk-picked .42s cubic-bezier(.34, 1.56, .64, 1); }
+@keyframes pk-picked { 0% { transform: scale(.94); opacity: .4; } 60% { transform: scale(1.03); opacity: 1; } 100% { transform: none; } }
+.pk-choices.done { pointer-events: none; }
+.pk-choices { display: flex; flex-direction: column; gap: 8px; padding: 6px 0 4px; }
+.pk-ch { display: flex; align-items: center; gap: 12px; width: 100%; min-height: 56px; padding: 10px 14px; border: 1.5px solid var(--line); border-radius: 18px; background: var(--surface-2); color: var(--on-surface); font: 600 1rem var(--font); text-align: start; cursor: pointer; transition: background-color .18s, border-color .18s, color .18s, transform .22s cubic-bezier(.34, 1.56, .64, 1); }
+.pk-ch:active { transform: scale(.98); }
+.pk-ch.on { background: var(--brand-soft); border-color: var(--brand); color: var(--on-brand-soft); }
+.pk-ch:disabled { opacity: .45; }
+.pk-ch.chosen { animation: pk-chosen .34s cubic-bezier(.34, 1.56, .64, 1); }
+@keyframes pk-chosen { 45% { transform: scale(1.03); } }
+.pk-ol { flex: 1; line-height: 1.35; }
+.pk-dot { flex: none; width: 26px; height: 26px; border-radius: 50%; border: 2px solid var(--outline); display: grid; place-items: center; transition: background-color .18s, border-color .18s; }
+.pk-dot .i { width: 15px; height: 15px; color: #fff; stroke-width: 3; transform: scale(0); transition: transform .28s cubic-bezier(.34, 1.56, .64, 1); }
+.pk-ch.on .pk-dot { background: var(--brand); border-color: var(--brand); }
+.pk-ch.on .pk-dot .i { transform: scale(1); }
+.pk-chips { display: flex; flex-wrap: wrap; gap: 8px; }
+.pk-chip { display: inline-flex; align-items: center; gap: 7px; min-height: 46px; padding: 8px 16px; border-radius: 999px; border: 1.5px solid var(--line); background: var(--surface-2); color: var(--on-surface); font: 600 .95rem var(--font); cursor: pointer; transition: background-color .18s, border-color .18s, color .18s, transform .22s cubic-bezier(.34, 1.56, .64, 1); }
+.pk-chip .e { font-size: 1.2rem; line-height: 1; display: inline-block; transition: transform .32s cubic-bezier(.34, 1.56, .64, 1); }
+.pk-chip.on { background: var(--brand-soft); border-color: var(--brand); color: var(--on-brand-soft); }
+.pk-chip.on .e { transform: scale(1.2) rotate(-10deg); }
+.pk-chip:active { transform: scale(.95); }
+.pk-chip:disabled { opacity: .5; }
+.pk-chip.pop { animation: pk-chip-pop .4s cubic-bezier(.34, 1.56, .64, 1); }
+@keyframes pk-chip-pop { 40% { transform: scale(1.08); } }
+@media (prefers-reduced-motion: reduce) { .pk-ch.chosen, .pk-chip.pop, .pk-field.picked .v { animation: none; } }
 .dialog.pk { place-items: end center; padding: 0; z-index: 70; }
 .pk-card { background: var(--surface-1); width: 100%; max-width: 480px; border-radius: 26px 26px 0 0; padding: 0 16px calc(16px + var(--safe-b)); box-shadow: 0 -10px 40px rgba(0, 0, 0, .18); animation: pk-up .34s cubic-bezier(.2, .9, .3, 1.02); max-height: 94vh; overflow-y: auto; overscroll-behavior: contain; }
 /* The card scrolls (overflow) and has round corners. On Android Chrome, when its slide-up ends and it
@@ -418,6 +446,8 @@ body.fx .nav .fab:active { transform: scale(.9) rotate(90deg); }
 .sp-st.closed { background: var(--surface-3); color: var(--on-surface-var); }
 .sp-head { display: flex; gap: 10px; align-items: center; margin-bottom: 12px; }
 .sp-meta { line-height: 1.7; }
+.btn.text.danger-text { color: var(--bad); }
+.btn.text.danger-text:disabled { opacity: .5; }
 
 /* what's new */
 .wn { display: flex; gap: 12px; align-items: center; padding: 10px 4px; }
@@ -486,7 +516,9 @@ body:not(.fx) .aurora i, body:not(.fx) .hh-dial::before, body:not(.fx) .home-act
 /* ---------------- behaviour ---------------- */
 /* messages at the bottom never block taps: an invisible (or visible) message used to sit on top of the buttons
    under it (the + menu's last tile, a screen's Next button). Only its own action button takes taps. */
-.toast { pointer-events: none; visibility: hidden; transition: transform .25s var(--ease), opacity .25s var(--ease), visibility 0s linear .25s; }
+/* a note keeps one compositing layer of its own (will-change): when a new note's text slid in over one still showing,
+   the note was given a layer for that moment and drew see-through for a frame (a blink of the dark box) */
+.toast { pointer-events: none; visibility: hidden; will-change: transform, opacity; transition: transform .25s var(--ease), opacity .25s var(--ease), visibility 0s linear .25s; }
 .toast.show { visibility: visible; transition: transform .25s var(--ease), opacity .25s var(--ease), visibility 0s; }
 .toast.show .act { pointer-events: auto; color: hsl(var(--h) 90% 82%); }
 /* with a sheet or a full-screen step open, messages show at the top, away from its buttons */
@@ -543,10 +575,41 @@ body.fx .chart[data-anim].in .bar, body.fx .chart[data-anim].in .ln, body.fx .ch
 .aurora i:nth-child(n), .hh-dial::before, .home-action .btn.start::after, .recap-card::after, .rc-spark, .pulse { animation-delay: var(--ph, 0ms); }
 
 /* ---------- settings search ---------- */
-.set-search { position: relative; display: block; margin: 4px 0 10px; }
-.set-search svg { position: absolute; inset-inline-start: 14px; top: 50%; transform: translateY(-50%); color: var(--on-surface-var); pointer-events: none; }
-.set-search .input { padding-inline-start: 40px; }
-#set-none { padding: 18px 8px; }
+.set-search { position: relative; display: block; margin: 4px 0 12px; }
+.set-search > svg { position: absolute; inset-inline-start: 14px; top: 50%; transform: translateY(-50%); color: var(--on-surface-var); pointer-events: none; }
+.set-search .input { padding-inline-start: 40px; padding-inline-end: 44px; }
+.set-search .set-clear[hidden] { display: none; }
+.set-search .set-clear { position: absolute; inset-inline-end: 6px; top: 50%; transform: translateY(-50%); width: 36px; height: 36px; }
+/* problems people come with: a row of chips that scrolls sideways */
+.set-chips { display: flex; gap: 8px; overflow-x: auto; scrollbar-width: none; margin: 0 -16px 14px; padding: 2px 16px 4px; scroll-padding-inline: 16px; }
+.set-chips::-webkit-scrollbar { display: none; }
+.set-chip { flex: none; display: inline-flex; align-items: center; gap: 6px; min-height: 40px; padding: 6px 14px 6px 12px; border-radius: 999px; border: 1px solid var(--line); background: var(--surface-1); color: var(--on-surface); font: 600 .84rem var(--font); white-space: nowrap; cursor: pointer; box-shadow: var(--sh-1); transition: transform .2s var(--pop); }
+.set-chip svg { width: 16px; height: 16px; flex: none; }
+.set-chip.t-violet svg { color: var(--violet); } .set-chip.t-mint svg { color: var(--mint); } .set-chip.t-amber svg { color: var(--amber); }
+.set-chip.t-sky svg { color: var(--sky); } .set-chip.t-pink svg { color: var(--pink); } .set-chip.t-orange svg { color: var(--orange); }
+.set-chip:active { transform: scale(.95); }
+/* the doors: two by two, each with its colour, what is behind it and how many */
+.set-cats { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin: 4px 0 18px; }
+.set-cat { position: relative; display: flex; flex-direction: column; align-items: flex-start; gap: 6px; min-height: 118px; padding: 14px; border-radius: 20px; border: 1px solid var(--line); background: var(--surface-1); color: var(--on-surface); text-align: start; cursor: pointer; box-shadow: var(--sh-1); transition: transform .22s var(--pop); overflow: hidden; }
+.set-cat .itile { width: 44px; height: 44px; border-radius: 14px; }
+.set-cat .t { font: 800 .98rem/1.25 var(--display, var(--font)); }
+.set-cat .s { font-size: .78rem; line-height: 1.35; color: var(--on-surface-var); display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+.set-cat .n { position: absolute; top: 12px; inset-inline-end: 12px; min-width: 22px; height: 22px; padding: 0 6px; border-radius: 11px; background: var(--surface-2); color: var(--on-surface-var); font: 700 .72rem/22px var(--font); text-align: center; }
+.set-cat:active { transform: scale(.96); }
+.view.first .set-cat { animation: rise .5s cubic-bezier(.2, .8, .2, 1) both; animation-delay: calc(var(--i) * 35ms + 60ms); }
+.view.first .set-chips { animation: rise .5s cubic-bezier(.2, .8, .2, 1) both; animation-delay: .03s; }
+.set-cat-head { display: flex; align-items: center; gap: 12px; margin: 0 2px 12px; }
+.set-cat-head .itile { width: 48px; height: 48px; border-radius: 15px; }
+/* search results: a problem with where its answer is, then the settings found */
+.set-prob { margin-bottom: 12px; }
+.set-prob-t { font-weight: 800; margin: 2px 4px 8px; }
+.set-prob .item.prob .lead { background: var(--mint-soft); color: var(--mint); }
+.set-none { display: flex; align-items: center; gap: 12px; padding: 14px 6px 16px; }
+#set-res .section-title svg { width: 16px; height: 16px; vertical-align: -3px; }
+/* the field a search led to lights up for a moment */
+.set-hl { animation: set-hl 2.1s ease-out; border-radius: 14px; }
+@keyframes set-hl { 0%, 35% { box-shadow: 0 0 0 3px var(--brand), 0 0 0 9px var(--brand-soft); background-color: var(--brand-soft); } 100% { box-shadow: 0 0 0 0 transparent; } }
+@media (prefers-reduced-motion: reduce) { .view.first .set-cat, .view.first .set-chips { animation: none; } }
 
 /* ---------- saving up (home) ---------- */
 .save-card { display: grid; gap: 8px; width: 100%; margin: 0 0 14px; padding: 14px 16px; border-radius: 18px; border: 1px solid var(--line); background: var(--surface-1); box-shadow: var(--sh-1); color: var(--on-surface); font: inherit; text-align: start; cursor: pointer; }
@@ -1345,3 +1408,17 @@ body.fx .pp-pop:not(.done) .pp-row { animation: pp-in .34s cubic-bezier(.2, .9, 
 .pp-field .pp-fname.ph { font-weight: 400; color: var(--on-surface-var); }
 .pp-field > svg { flex: none; width: 18px; height: 18px; color: var(--on-surface-var); }
 body.fx .pp-field.just .pp-fpic { animation: pp-boing .5s cubic-bezier(.2, .9, .3, 1.4); }
+
+/* the on-screen keyboard (ui.js sets --kb, --vvh and html.kb-open): a sheet fits the visible part, its bottom (the
+   send / save button) right above the keyboard; the first steps' "next" too */
+html.kb-open .sheet { bottom: var(--kb); max-height: calc(var(--vvh) - 8px); }
+html.kb-open .sheet.full { height: calc(var(--vvh) - 8px); }
+html.kb-open .wizard .foot { bottom: var(--kb); }
+.btn[aria-disabled="true"] { opacity: .55; }
+/* the calendar's "today": today's square gives a little hop */
+.cal-today-btn { gap: 4px; }
+body.fx .cal-day.hello, body.fx .week-row.hello { animation: cal-hello .55s cubic-bezier(.2, .9, .3, 1.5); }
+@keyframes cal-hello { 0% { transform: scale(1); } 35% { transform: scale(1.18); } 100% { transform: none; } }
+/* an unfit word in a field (app.js): a red edge and a quiet note under it */
+.input.unclean, textarea.unclean { border-color: var(--danger, #d93a3a) !important; }
+.unclean-hint { font-size: .78rem; color: var(--danger, #d93a3a); margin: 4px 4px 0; }

@@ -12,13 +12,15 @@ const DIST = process.env.OUT ? path.resolve(process.env.OUT) : path.join(ROOT, '
 const pkg = JSON.parse(fs.readFileSync(path.join(ROOT, 'package.json'), 'utf8'));
 
 const JS_ORDER = [
-  'core/util.js', 'core/places-data.js', 'core/places.js', 'core/hebcal.js', 'core/defaults.js', 'core/engine.js', 'core/insights.js', 'core/payslip.js', 'core/games.js', 'core/recap.js', 'core/analysis.js', 'core/leaderboard.js',
+  'core/util.js', 'core/clean.js', 'core/places-data.js', 'core/places.js', 'core/hebcal.js', 'core/defaults.js', 'core/engine.js', 'core/insights.js', 'core/payslip.js', 'core/games.js', 'core/recap.js', 'core/analysis.js', 'core/leaderboard.js',
   'app/ui.js', 'app/pickers.js', 'app/fx.js', 'app/gamefx.js', 'app/music.js', 'app/intro.js', 'app/store.js', 'app/charts.js', 'app/app.js', 'app/mascot.js', 'app/firebase-config.js', 'app/cloud.js', 'app/stats.js', 'app/pay-config.js', 'app/plus.js', 'app/views-login.js',
   'app/views-home.js', 'app/views-shift.js', 'app/views-calendar.js', 'app/views-reports.js',
-  'app/views-payslip.js', 'app/views-insights.js', 'app/export.js', 'app/placepicker.js', 'app/views-settings.js', 'app/views-onboarding.js',
+  'app/views-payslip.js', 'app/views-insights.js', 'app/export.js', 'app/placepicker.js', 'app/widgets.js', 'app/views-settings.js', 'app/views-onboarding.js',
   'app/views-assistant.js', 'app/views-rights.js', 'app/views-guide.js', 'app/views-support.js', 'app/views-games.js', 'app/views-leaderboard.js', 'app/views-analysis.js', 'app/views-recap.js', 'app/views-admin.js', 'app/views-legal.js', 'app/ptr.js',
 ];
-const read = (p) => fs.readFileSync(path.join(SRC, p), 'utf8');
+// line ends as the browser will see them: the HTML parser turns CR LF into LF inside the script, so a file saved
+// with Windows line ends would give the page a different hash than the policy's, and the app would not start
+const read = (p) => fs.readFileSync(path.join(SRC, p), 'utf8').replace(/\r\n?/g, '\n');
 const js = JS_ORDER.map((f) => `/* ---- ${f} ---- */\n${read(f)}`).join('\n');
 if (/<\/script/i.test(js)) throw new Error('JS contains "</script" — would break inlining');
 // a typo in any file must stop the build, not reach phones as a blank screen (compiled, not run)
@@ -33,6 +35,8 @@ let html = read('index.html').replace('/*__CSS__*/', () => css).replace('/*__JS_
 // Content-Security-Policy: only the app's own inline script (by its hash) and the libraries it loads
 // on demand may run, so injected markup (an <img onerror>, a <script>) can never execute.
 const inline = [...html.matchAll(/<script>([\s\S]*?)<\/script>/g)].map((m) => "'sha256-" + crypto.createHash('sha256').update(m[1], 'utf8').digest('base64') + "'");
+// characters the HTML parser changes before hashing (CR, NUL) would make the hash above wrong in the browser
+if ([...html.matchAll(/<script>([\s\S]*?)<\/script>/g)].some((m) => /[\r\0]/.test(m[1]))) throw new Error('the inline script has CR or NUL characters: the policy hash would not match');
 const CSP = [
   "default-src 'self'",
   `script-src 'self' ${inline.join(' ')} https://www.gstatic.com https://apis.google.com https://cdnjs.cloudflare.com https://cdn.jsdelivr.net 'wasm-unsafe-eval'`,

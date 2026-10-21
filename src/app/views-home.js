@@ -63,7 +63,7 @@
       <span class="role-bar" style="background:${role ? role.color : '#999'}"></span>
       <span class="body"><span class="t shift-title"><span class="tt">${esc(date)}${esc(title)}</span>${App.restTag(r)}${App.ovTag(r)}${planned}</span>
       <span class="s"><span class="num">⁦${U.epochHM(r.start)}\u2060–\u2060${U.epochHM(r.rawEnd)}⁩</span> · ${U.hm(r.paidMin)} ש׳${emp}${sh.note ? ' · ' + esc(sh.note) : ''}</span></span>
-      <span class="trail"><span class="a" data-tr="s:${r.id}">${money(App.shiftAmount(r), 0)}</span>${opts.showOk && r.status === 'planned' ? `<br><span class="tag good" data-act="mark-done" data-id="${r.id}">${icon('check')}בוצעה</span>` : ''}</span></button>`;
+      <span class="trail"><span class="a" data-tr="s:${r.id}">${money(App.shiftAmount(r), 0)}</span>${opts.showOk && r.status === 'planned' && r.end <= Date.now() ? `<br><span class="tag good" data-act="mark-done" data-id="${r.id}">${icon('check')}בוצעה</span>` : ''}</span></button>`;
   };
   App.entryItem = function (e) {
     const v = App.model.entryVals.get(e.id) || { amount: 0, label: '' };
@@ -99,6 +99,7 @@
    * entrance is drawn once, by the first redraw after the start (or the end): a later redraw (the insights a
    * moment after every save) must not play it again - the card would pop in twice. */
   const ENTER_MS = 1200;
+  // the rings start at the button's edge (r0): from its centre they began as a solid dot, a frame that looked like a blink
   App.shiftMoment = function (kind, at) {
     const F = root.Fx;
     if (!F) return;
@@ -108,18 +109,18 @@
       F.play('shiftStart'); F.haptic([12, 40, 24]);
       if (fx) {
         fx.burst(x, y, { palette: 'good', n: 36, kinds: ['spark', 'star', 'confetti'], speed: [180, 540] });
-        fx.ring(x, y, { color: '#21d47f', r1: 170, width: 8 });
-        setTimeout(() => fx.ring(x, y, { color: '#ffd84d', r1: 120, width: 5 }), 130);
+        fx.ring(x, y, { r0: 26, color: '#21d47f', r1: 170, width: 8 });
+        setTimeout(() => fx.ring(x, y, { r0: 26, color: '#ffd84d', r1: 120, width: 5 }), 130);
       }
     } else if (kind === 'stop') {
       F.play('cash'); setTimeout(() => F.play('success'), 280); F.haptic([10, 40, 10, 40, 20]);
       if (fx) {
         fx.burst(x, y, { palette: 'gold', n: 50, kinds: ['coin', 'star', 'confetti', 'coin'], speed: [260, 700], up: 240 });
-        fx.ring(x, y, { color: '#ffd84d', r1: 180, width: 9 });
+        fx.ring(x, y, { r0: 26, color: '#ffd84d', r1: 180, width: 9 });
       }
     } else if (kind === 'pause' || kind === 'resume') {
       F.play(kind); F.haptic(10);
-      if (fx) fx.ring(x, y, { color: kind === 'pause' ? '#ffb524' : '#21d47f', r1: 64, width: 5 });
+      if (fx) fx.ring(x, y, { r0: 26, color: kind === 'pause' ? '#ffb524' : '#21d47f', r1: 64, width: 5 });
     }
   };
   /** The centre of the element that was tapped (screen coordinates), for the sparks to start there. */
@@ -350,9 +351,8 @@
   App.actions['go-shifts'] = () => { App.reportsState.sub = 'list'; App.go('reports'); };
   App.actions['mark-done'] = async (el, e) => {
     e.stopPropagation();
-    const sh = Store.clone(App.shift(el.dataset.id));
-    sh.status = 'done';
-    await App.saveOps([{ store: 'shifts', put: sh }], 'סימון כבוצעה', 'המשמרת סומנה כבוצעה');
+    const sh = App.shift(el.dataset.id);
+    if (sh) await App.markDone(sh);
   };
   App.actions['notif-read'] = async (el) => {
     const n = S.notifications.find((x) => x.id === el.dataset.id);

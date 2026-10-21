@@ -683,41 +683,96 @@ textarea.input.chat-input { min-height: 46px; height: 46px; max-height: 140px; r
 .fx-shake { animation: fx-shake .42s cubic-bezier(.36, .07, .19, .97) both; }
 @keyframes fx-shake { 10%, 90% { translate: -2px 0; } 20%, 80% { translate: 4px 0; } 30%, 50%, 70% { translate: -7px 0; } 40%, 60% { translate: 7px 0; } }
 
-/* ---- opening animation ---- */
-#intro { position: fixed; inset: 0; z-index: 10000; display: grid; place-items: center; background: radial-gradient(120% 80% at 50% 30%, #143b8a 0%, #0d2b6b 55%, #0a2156 100%); color: #fff; overflow: hidden; }
-#intro .intro-stage { display: flex; flex-direction: column; align-items: center; margin-top: -6vh; }
+/* ---- opening animation (intro.js) ---- */
+#intro { position: fixed; inset: 0; z-index: 10000; display: grid; place-items: center; overflow: hidden; color: #fff;
+  background: radial-gradient(120% 80% at 50% 32%, #1a3f94 0%, #0d2b6b 55%, #081c4a 100%); }
+#intro .intro-glow { position: absolute; left: 50%; top: 44%; width: 520px; height: 520px; margin: -260px 0 0 -260px; border-radius: 50%;
+  background: radial-gradient(circle, rgba(46, 229, 157, .30) 0%, rgba(80, 120, 255, .16) 38%, transparent 68%); opacity: 0; will-change: transform, opacity; }
+#intro .intro-flash { position: absolute; left: 50%; top: 44%; width: 640px; height: 640px; margin: -320px 0 0 -320px; border-radius: 50%; background: radial-gradient(circle, rgba(255, 250, 225, .9) 0%, rgba(255, 216, 120, .35) 22%, transparent 60%); opacity: 0; will-change: transform, opacity; pointer-events: none; }
+#intro .intro-stage { position: relative; display: flex; flex-direction: column; align-items: center; margin-top: -6vh; will-change: transform; }
 #intro .intro-mark { position: relative; width: 132px; height: 132px; }
-#intro .intro-logo { width: 100%; height: 100%; overflow: visible; }
+#intro .intro-logo { position: absolute; inset: 0; width: 100%; height: 100%; overflow: visible; will-change: transform; }
 #intro .intro-logo path { fill: none; stroke-width: 104; stroke-linecap: round; stroke-linejoin: round; }
 #intro .intro-logo .g { stroke: #2ee59d; }
 #intro .intro-logo .y { stroke: #ffb524; }
-#intro .intro-word { font: 800 2.9rem/1 'Rubik', system-ui, sans-serif; letter-spacing: -.03em; margin-top: 26px; }
-#intro .intro-sub { font: 600 1rem/1.4 'Rubik', 'Assistant', system-ui, sans-serif; color: rgba(255, 255, 255, .72); margin-top: 8px; }
-#intro .intro-coins { position: absolute; inset: 50% auto auto 50%; width: 0; height: 0; }
-#intro .intro-coins i { position: absolute; left: -13px; top: -13px; width: 26px; height: 26px; border-radius: 50%; display: grid; place-items: center; font: 800 14px/1 'Rubik', sans-serif; font-style: normal; color: #8a5300; background: radial-gradient(circle at 35% 35%, #ffe08a, #ffb524 65%, #d68a00); box-shadow: 0 0 0 1.5px #c98200 inset, 0 4px 10px rgba(0, 0, 0, .25); opacity: 0; animation: intro-coin .9s cubic-bezier(.2, .8, .3, 1) forwards; }
-@keyframes intro-coin {
+#intro .intro-ghost { opacity: 0; }
+/* the clock's 12 marks around the logo */
+#intro .intro-dial { position: absolute; left: 50%; top: 50%; width: 0; height: 0; }
+#intro .intro-dial i { position: absolute; left: -3px; top: -9px; width: 6px; height: 18px; border-radius: 3px; background: rgba(255, 255, 255, .85);
+  transform: rotate(calc(var(--k) * 30deg)) translateY(-104px) scale(0); opacity: 0; will-change: transform, opacity; }
+#intro .intro-dial i:nth-child(3n+1) { height: 24px; top: -12px; background: #ffd77a; }
+#intro .intro-wave { position: absolute; left: 50%; top: 50%; width: 220px; height: 220px; margin: -110px 0 0 -110px; border-radius: 50%;
+  border: 6px solid rgba(255, 216, 100, .9); opacity: 0; transform: scale(.4); will-change: transform, opacity; }
+#intro .intro-wave.w2 { border-color: rgba(46, 229, 157, .8); border-width: 4px; }
+#intro .intro-coins, #intro .intro-sparks { position: absolute; left: 50%; top: 50%; width: 0; height: 0; }
+#intro .intro-coins i { position: absolute; left: -14px; top: -14px; width: 28px; height: 28px; border-radius: 50%; display: grid; place-items: center;
+  font: 800 15px/1 'Rubik', sans-serif; font-style: normal; color: #8a5300; background: radial-gradient(circle at 35% 35%, #fff2b8, #ffb524 62%, #d68a00);
+  box-shadow: 0 0 0 1.5px #c98200 inset, 0 4px 10px rgba(0, 0, 0, .3); opacity: 0; will-change: transform, opacity; }
+#intro .intro-sparks i { position: absolute; left: -4px; top: -4px; width: 8px; height: 8px; border-radius: 50%; background: var(--c, #fff);
+  box-shadow: 0 0 10px 2px var(--c, #fff); opacity: 0; will-change: transform, opacity; }
+#intro .intro-word { direction: ltr; display: flex; font: 800 3.1rem/1 'Rubik', system-ui, sans-serif; letter-spacing: -.03em; margin-top: 30px; }
+#intro .intro-word span { display: inline-block; opacity: 0; will-change: transform, opacity; }
+#intro .intro-sub { font: 600 1rem/1.4 'Rubik', 'Assistant', system-ui, sans-serif; color: rgba(255, 255, 255, .74); margin-top: 10px; opacity: 0; will-change: transform, opacity; }
+#intro .intro-twinkles { position: absolute; inset: -40px -70px; pointer-events: none; }
+#intro .intro-twinkles i { position: absolute; width: 14px; height: 14px; opacity: 0; will-change: transform, opacity; font-style: normal; }
+#intro .intro-twinkles i::before { content: '✦'; position: absolute; inset: 0; display: grid; place-items: center; font-size: 14px; color: #ffe7a3; text-shadow: 0 0 8px #ffd25a; }
+
+/* ---------- the full show ---------- */
+#intro.play .intro-glow { animation: i-glow 1.9s cubic-bezier(.3, .7, .3, 1) forwards; }
+@keyframes i-glow { 0% { opacity: 0; transform: scale(.5); } 30% { opacity: .7; } 60% { opacity: 1; transform: scale(1.05); } 100% { opacity: .85; transform: scale(1); } }
+#intro.play .intro-dial i { animation: i-tick .3s cubic-bezier(.2, .9, .3, 1.6) forwards, i-tick-out .5s cubic-bezier(.4, 0, .2, 1) 1.16s forwards; animation-delay: calc(var(--k) * 30ms), 1.16s; }
+@keyframes i-tick { to { opacity: 1; transform: rotate(calc(var(--k) * 30deg)) translateY(-104px) scale(1); } }
+@keyframes i-tick-out { from { opacity: 1; transform: rotate(calc(var(--k) * 30deg)) translateY(-104px) scale(1); } to { opacity: 0; transform: rotate(calc(var(--k) * 30deg)) translateY(-170px) scale(.4, 1.6); } }
+/* the first frame painted (before the script starts the show) is the show's own first frame: an empty dial, an undrawn logo
+   (drawn at first and hidden a moment later, the logo blinked) */
+#intro .intro-logo.main path { stroke-dasharray: 1 2; stroke-dashoffset: 1; }
+#intro.still .intro-logo.main path { stroke-dashoffset: 0; }
+#intro.play .intro-logo.main path { animation: i-draw .52s cubic-bezier(.65, 0, .35, 1) .12s forwards; }
+#intro.play .intro-logo.main .y { animation-delay: .28s; }
+@keyframes i-draw { from { stroke-dashoffset: 1; } to { stroke-dashoffset: 0; } }
+#intro.play .intro-logo.main { animation: i-spin .46s cubic-bezier(.5, 0, .2, 1) .7s both, i-land .5s cubic-bezier(.2, .9, .3, 1.4) 1.16s both; }
+@keyframes i-spin { from { transform: rotate(-360deg) scale(1); } to { transform: rotate(0deg) scale(1.08); } }
+@keyframes i-land { 0% { transform: scale(1.08); } 18% { transform: scale(1.22, .86); } 45% { transform: scale(.94, 1.06); } 100% { transform: none; } }
+/* two faint copies trail the spin, like motion blur */
+#intro.play .intro-ghost { animation: i-ghost .46s cubic-bezier(.5, 0, .2, 1) both; }
+#intro.play .intro-ghost.g1 { animation-delay: .74s; }
+#intro.play .intro-ghost.g2 { animation-delay: .78s; }
+@keyframes i-ghost { 0% { opacity: 0; transform: rotate(-360deg); } 15% { opacity: .22; } 85% { opacity: .12; } 100% { opacity: 0; transform: rotate(0deg); } }
+#intro.play .intro-flash { animation: i-flash .5s cubic-bezier(.2, .8, .3, 1) 1.15s forwards; }
+@keyframes i-flash { 0% { opacity: 0; transform: scale(.3); } 18% { opacity: .85; transform: scale(.75); } 100% { opacity: 0; transform: scale(1.25); } }
+#intro.play .intro-wave { animation: i-wave .62s cubic-bezier(.1, .7, .3, 1) 1.16s forwards; }
+#intro.play .intro-wave.w2 { animation-delay: 1.24s; }
+@keyframes i-wave { 0% { opacity: .95; transform: scale(.45); } 100% { opacity: 0; transform: scale(2.6); } }
+#intro.play .intro-stage { animation: i-shake .26s linear 1.16s; }
+@keyframes i-shake { 0%, 100% { transform: none; } 20% { transform: translate(3px, 2px); } 40% { transform: translate(-3px, -1px); } 60% { transform: translate(2px, -2px); } 80% { transform: translate(-1px, 1px); } }
+#intro.play .intro-coins i { animation: i-coin 1.05s cubic-bezier(.15, .7, .35, 1) forwards; animation-delay: calc(1.18s + var(--d)); }
+@keyframes i-coin {
   0% { opacity: 0; transform: translate(0, 0) scale(.3) rotate(0); }
-  15% { opacity: 1; }
-  55% { opacity: 1; transform: translate(var(--dx), var(--dy)) scale(1) rotate(var(--r)); }
-  100% { opacity: 0; transform: translate(calc(var(--dx) * 1.15), calc(var(--dy) + 70px)) scale(.8) rotate(calc(var(--r) * 2)); }
+  12% { opacity: 1; }
+  55% { opacity: 1; transform: translate(var(--dx), var(--dy)) scale(var(--s)) rotate(var(--r)); }
+  100% { opacity: 0; transform: translate(calc(var(--dx) * 1.2), calc(var(--dy) + 90px)) scale(calc(var(--s) * .8)) rotate(calc(var(--r) * 2)); }
 }
-/* full version: draw → clock spin → coins → name */
-#intro.play .intro-logo path { stroke-dasharray: 1 2; stroke-dashoffset: 1; animation: intro-draw .6s cubic-bezier(.65, 0, .35, 1) forwards; }
-#intro.play .intro-logo .y { animation-delay: .16s; }
-#intro.play .intro-logo { animation: intro-spin .6s cubic-bezier(.45, 0, .25, 1) .68s both; }
-#intro.play .intro-word { opacity: 0; animation: intro-up .5s cubic-bezier(.2, .8, .3, 1) .78s forwards; }
-#intro.play .intro-sub { opacity: 0; animation: intro-up .5s cubic-bezier(.2, .8, .3, 1) .9s forwards; }
-@keyframes intro-draw { from { stroke-dashoffset: 1; } to { stroke-dashoffset: 0; } }
-@keyframes intro-spin { from { transform: rotate(-360deg) scale(1); } 60% { transform: rotate(14deg) scale(1.06); } to { transform: rotate(0) scale(1); } }
-@keyframes intro-up { from { opacity: 0; transform: translateY(14px); } to { opacity: 1; transform: none; } }
-/* still waiting for the app: the logo keeps turning */
-#intro.wait .intro-logo { animation: intro-turn 1.1s linear infinite; }
-@keyframes intro-turn { to { transform: rotate(360deg); } }
-#intro.out { animation: intro-out .5s cubic-bezier(.7, 0, .3, 1) forwards; pointer-events: none; }
-#intro.out .intro-stage { animation: intro-stage-out .5s cubic-bezier(.7, 0, .3, 1) forwards; }
-@keyframes intro-out { to { opacity: 0; } }
-@keyframes intro-stage-out { to { transform: scale(.82); opacity: 0; } }
+#intro.play .intro-sparks i { animation: i-spark .7s cubic-bezier(.1, .8, .3, 1) forwards; animation-delay: calc(1.16s + var(--d)); }
+@keyframes i-spark { 0% { opacity: 1; transform: translate(0, 0) scale(1.2); } 100% { opacity: 0; transform: translate(var(--dx), var(--dy)) scale(.2); } }
+#intro.play .intro-word span { animation: i-letter .5s cubic-bezier(.2, .9, .3, 1.5) forwards; animation-delay: calc(1.26s + var(--k) * 60ms); }
+@keyframes i-letter { 0% { opacity: 0; transform: translateY(26px) scale(.5) rotate(-12deg); } 60% { opacity: 1; } 100% { opacity: 1; transform: none; } }
+#intro.play .intro-sub { animation: i-up .5s cubic-bezier(.2, .8, .3, 1) 1.72s forwards; }
+@keyframes i-up { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: none; } }
+#intro.play .intro-twinkles i { animation: i-twinkle .8s ease-in-out forwards; animation-delay: calc(1.62s + var(--d)); }
+@keyframes i-twinkle { 0% { opacity: 0; transform: scale(0) rotate(0); } 40% { opacity: 1; transform: scale(1.3) rotate(90deg); } 100% { opacity: 0; transform: scale(.2) rotate(180deg); } }
+
+/* still loading after the show: the logo keeps turning, the marks breathe */
+#intro.wait .intro-logo.main { animation: i-turn 1.1s linear infinite; }
+@keyframes i-turn { to { transform: rotate(360deg); } }
+/* the way out: the logo flies at you, the night lifts */
+#intro.out { animation: i-out .5s cubic-bezier(.6, 0, .3, 1) forwards; pointer-events: none; }
+#intro.out .intro-stage { animation: i-stage-out .5s cubic-bezier(.6, 0, .3, 1) forwards; }
+@keyframes i-out { 0% { opacity: 1; } 40% { opacity: 1; } 100% { opacity: 0; } }
+@keyframes i-stage-out { to { transform: scale(1.9); opacity: 0; } }
+/* short version */
+#intro.still .intro-word span, #intro.still .intro-sub { opacity: 1; }
 #intro.still.out { animation-duration: .25s; }
+#intro.still.out .intro-stage { animation: none; }
 
 /* ---- pull to refresh ---- */
 html, body { overscroll-behavior-y: contain; }

@@ -110,7 +110,7 @@
   function hasOverrides(shift) {
     const o = shift.overrides;
     if (!o) return false;
-    return !!(o.rate || o.rest || o.ot || o.night || o.travel);
+    return !!(o.rate || o.rest || o.ot || o.night || o.travel || o.special);
   }
 
   /**
@@ -148,7 +148,7 @@
       ? dailyWindows(start, end, emp.nightFrom || '22:00', emp.nightTo || '06:00') : [];
     const lawNight = dailyWindows(start, end, '22:00', '06:00');
     // Did a manual day rule (bulk cancel / force) change the rest windows of this shift?
-    let dayRuleHit = false;
+    let dayRuleHit = false; // (also set below when a day's special rate applies)
     if (!ignoreRules && (ctx.dayRules || []).length) {
       const raw = HebCal.restWindows(U.addDays(dk, -1), U.addDays(U.epochKey(end), 1), ctx.restCfg, true)
         .filter((w) => w.end > start && w.start < end).map((w) => w.start + '-' + w.end).join();
@@ -169,6 +169,9 @@
     evesAll.forEach(([s, e]) => { addB(s); addB(e); });
     nightIvs.forEach(([s, e]) => { addB(s); addB(e); });
     if (restRange) { addB(restRange[0]); addB(restRange[1]); }
+    // a day with a special rate (a calendar day rule) begins and ends at midnight
+    const pctRules = ignoreRules ? [] : (ctx.dayRules || []).filter((x) => x.type === 'pct' && +x.pct > 0);
+    pctRules.forEach((x) => { addB(U.toEpoch(x.date, '00:00')); addB(U.toEpoch(U.addDays(x.date, 1), '00:00')); });
     const bounds = [...bset].sort((a, b) => a - b);
 
     const autoRestIvs = wins.map((w) => [w.start, w.end]);
@@ -250,6 +253,19 @@
       return roleRate(ctx.roles.get(roleId), dk);
     };
 
+    /* ---- a special rate ----
+     * The shift's own (a manual override), or the day's (a calendar day rule, e.g. election day at 200%): every
+     * hour is paid at least that much; an hour already worth more (a Shabbat hour in overtime) keeps its own. */
+    const specialOv = ov.special && +ov.special.pct > 0 ? { pct: +ov.special.pct, reason: ov.special.reason || '' } : null;
+    const specialAt = (t) => {
+      if (specialOv) return specialOv;
+      if (!pctRules.length) return null;
+      const k = U.epochKey(t);
+      const r = pctRules.find((x) => x.date === k);
+      return r ? { pct: +r.pct, reason: r.reason || '', day: true } : null;
+    };
+    let specialPremium = 0, specialHours = 0, specialTop = null;
+
     /* ---- wage lines ---- */
     const groups = new Map();
     let base = 0, restPremium = 0, otPremium = 0, nightPremium = 0, evePremium = 0, seniority = 0;
@@ -274,7 +290,16 @@
       byRole[p.roleId] = byRole[p.roleId] || { hours: 0, amount: 0 };
       byRole[p.roleId].hours += h;
       byRole[p.roleId].amount += h * rate * pct / 100;
+      const sp = specialAt((p.a + p.b) / 2);
+      if (sp && sp.pct > pct) {
+        const up = h * rate * (sp.pct - pct) / 100;
+        specialPremium += up;
+        specialHours += h;
+        byRole[p.roleId].amount += up;
+        if (!specialTop || sp.pct > specialTop.pct) specialTop = sp;
+      }
     }
+    if (specialTop && specialTop.day) dayRuleHit = true;
     // night premium
     const nightOv = ov.night || null;
     const nightOn = emp.nightEnabled || (nightOv && (nightOv.mode === 'all' || nightOv.mode === 'pct'));
@@ -310,6 +335,7 @@
     if (nightPremium > 0) extras.push({ kind: 'night', label: 'תוספת לילה', detail: U.hours(hoursBy.night) + ' ש׳', amount: nightPremium });
     if (evePremium > 0) extras.push({ kind: 'eve', label: 'תוספת ערב שבת/חג', detail: U.hours(hoursBy.eve) + ' ש׳ × ' + emp.evePct + '%', amount: evePremium });
     if (seniority > 0) extras.push({ kind: 'seniority', label: 'תוספת ותק', detail: '', amount: seniority });
+    if (specialPremium > 0) extras.push({ kind: 'special', label: `תעריף מיוחד ${specialTop.pct}%${specialTop.reason ? ' · ' + specialTop.reason : ''}`, detail: U.hours(specialHours) + ' ש׳, ההפרש מעבר לתעריף הרגיל', amount: specialPremium });
 
     // minimum paid hours per shift
     let minTopUp = 0;
@@ -352,6 +378,7 @@
       }
     }
     if (ov.rate && +ov.rate.rate > 0) overrideList.push('תעריף ידני ' + U.money(+ov.rate.rate));
+    if (specialOv) overrideList.push('תעריף מיוחד ' + specialOv.pct + '%');
 
     /* ---- travel ---- */
     let travel = { mode: 'auto', amount: +emp.travelPerDay || 0 };
@@ -371,7 +398,7 @@
       else if (it.type === 'deduction') deductions += a;
     }
 
-    const wage = base + restPremium + otPremium + nightPremium + evePremium + seniority + minTopUp + adjust;
+    const wage = base + restPremium + otPremium + nightPremium + evePremium + seniority + minTopUp + adjust + specialPremium;
     const restLabels = [...new Set(slices.filter((s) => s.rest && s.winLabel).map((s) => s.winLabel))];
     const autoRestRange = wins.length ? { from: Math.max(start, wins[0].start), to: Math.min(end, wins[wins.length - 1].end) } : null;
     const autoRestMin = slices.filter((s) => s.autoRest).reduce((m, s) => m + s.min, 0);
@@ -383,7 +410,7 @@
       start, end, rawEnd, elapsedMin, roundedMin, roundingDeltaMin: roundedMin - Math.round(elapsedMin),
       breakMin, breakPaid, breakAuto, breakShort, paidMin, paidHours: paidMin / 60,
       segments: segs, slices, pieces, lines, extras,
-      base, restPremium, otPremium, nightPremium, evePremium, seniority, minTopUp, adjust,
+      base, restPremium, otPremium, nightPremium, evePremium, seniority, minTopUp, adjust, specialPremium, specialHours,
       wage, hoursBy, byRole,
       restHours: hoursBy.rest + hoursBy.restOt1 + hoursBy.restOt2,
       otHours: hoursBy.ot1 + hoursBy.ot2 + hoursBy.restOt1 + hoursBy.restOt2,
@@ -403,7 +430,7 @@
       id: shift.id, kind: 'shift', dateKey: dk, employerId: shift.employerId, status: shift.status || 'done',
       start: shift.start, end: shift.end, rawEnd: shift.end, elapsedMin: 0, roundedMin: 0, roundingDeltaMin: 0, breakMin: 0, breakPaid: true, breakAuto: false, breakShort: false,
       paidMin: 0, paidHours: 0, segments: [], slices: [], pieces: [], lines: [], extras: [],
-      base: 0, restPremium: 0, otPremium: 0, nightPremium: 0, evePremium: 0, seniority: 0, minTopUp: 0, adjust: 0, wage: 0,
+      base: 0, restPremium: 0, otPremium: 0, nightPremium: 0, evePremium: 0, seniority: 0, minTopUp: 0, adjust: 0, specialPremium: 0, specialHours: 0, wage: 0,
       hoursBy: { regular: 0, ot1: 0, ot2: 0, rest: 0, restOt1: 0, restOt2: 0, night: 0, eve: 0 }, byRole: {},
       restHours: 0, otHours: 0, nightHours: 0, lawNightHours: 0, isNightShift: false, travel: { mode: 'none', amount: 0 },
       bonus: 0, tips: 0, additions: 0, deductions: 0, total: 0, restLabels: [], autoRestRange: null, autoRestMin: 0,
@@ -654,7 +681,7 @@
 
   function emptyTotals() {
     return {
-      hours: 0, shifts: 0, wage: 0, base: 0, restPremium: 0, otPremium: 0, nightPremium: 0, evePremium: 0, seniority: 0, minTopUp: 0, adjust: 0,
+      hours: 0, shifts: 0, wage: 0, base: 0, restPremium: 0, otPremium: 0, nightPremium: 0, evePremium: 0, seniority: 0, minTopUp: 0, adjust: 0, specialPremium: 0,
       travel: 0, travelRaw: 0, bonus: 0, tips: 0, additions: 0, deductions: 0, leavePay: 0, vacationDays: 0, sickDays: 0,
       hoursBy: { regular: 0, ot1: 0, ot2: 0, rest: 0, restOt1: 0, restOt2: 0, night: 0, eve: 0 },
       byRole: {}, workDays: 0, days: 0, dayTotals: {}, longest: null, bestDay: null, overridden: 0, nightShifts: 0, nightAll: 0,
@@ -675,7 +702,7 @@
       t.shifts++;
       t.hours += r.paidHours;
       t.wage += r.wage; t.base += r.base; t.restPremium += r.restPremium; t.otPremium += r.otPremium;
-      t.nightPremium += r.nightPremium; t.evePremium += r.evePremium; t.seniority += r.seniority; t.minTopUp += r.minTopUp; t.adjust += r.adjust;
+      t.nightPremium += r.nightPremium; t.evePremium += r.evePremium; t.seniority += r.seniority; t.minTopUp += r.minTopUp; t.adjust += r.adjust; t.specialPremium += r.specialPremium || 0;
       t.bonus += r.bonus; t.tips += r.tips; t.additions += r.additions; t.deductions += r.deductions;
       for (const k in r.hoursBy) t.hoursBy[k] += r.hoursBy[k];
       for (const id in r.byRole) {

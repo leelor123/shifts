@@ -50,7 +50,8 @@ service cloud.firestore {
         && (isAdmin() || (ownTicket()
           && (request.resource.data.status == resource.data.status || request.resource.data.status in ['open', 'closed'])
           && (request.resource.data.last == resource.data.last || request.resource.data.last == 'user')));
-      allow delete: if isAdmin() || ownTicket();
+      // the writer may remove their own (deleting the account); an admin only one that was closed
+      allow delete: if ownTicket() || (isAdmin() && resource.data.status == 'closed');
 
       match /msgs/{mid} {
         allow create: if request.auth != null
@@ -59,7 +60,8 @@ service cloud.firestore {
           && request.resource.data.t is int
           && ((request.resource.data.from == 'user' && ticketOwner(tid) == request.auth.uid)
             || (request.resource.data.from == 'admin' && isAdmin()));
-        allow read, delete: if request.auth != null && (isAdmin() || ticketOwner(tid) == request.auth.uid);
+        allow read: if request.auth != null && (isAdmin() || ticketOwner(tid) == request.auth.uid);
+        allow delete: if request.auth != null && (ticketOwner(tid) == request.auth.uid || (isAdmin() && ticketStatus(tid) == 'closed'));
         allow update: if false;
       }
     }
@@ -78,6 +80,9 @@ service cloud.firestore {
     }
     function ticketOwner(tid) {
       return get(/databases/$(database)/documents/tickets/$(tid)).data.uid;
+    }
+    function ticketStatus(tid) {
+      return get(/databases/$(database)/documents/tickets/$(tid)).data.status;
     }
     function validTicket(d) {
       return d.keys().hasOnly(['uid', 'reason', 'text', 'status', 'created', 'updated', 'last', 'seen', 'email', 'name', 'v', 'p', 'dev'])

@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <color name="w_bg1">#5B3DF5</color>
+    <color name="w_bg2">#9257FF</color>
+    <color name="w_text">#FFFFFF</color>
+    <color name="w_sub">#E9E1FF</color>
+    <color name="w_gold">#FFD25A</color>
+    <color name="w_go">#15B67A</color>
+    <color name="w_amber">#FFC13D</color>
+    <color name="w_stop_text">#3A2600</color>
+    <color name="w_chip">#29FFFFFF</color>
+    <color name="w_track">#40FFFFFF</color>
+</resources>

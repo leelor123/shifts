@@ -24,6 +24,7 @@
     copy: '<rect x="9" y="9" width="12" height="12" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/>',
     left: '<path d="m15 18-6-6 6-6"/>',
     right: '<path d="m9 18 6-6-6-6"/>',
+    chevdown: '<path d="m6 9 6 6 6-6"/>',
     x: '<path d="M18 6 6 18M6 6l12 12"/>',
     check: '<path d="M20 6 9 17l-5-5"/>',
     receipt: '<path d="M5 2v20l2-1.5L9 22l2-1.5L13 22l2-1.5L17 22l2-1.5V2l-2 1.5L15 2l-2 1.5L11 2 9 3.5 7 2z"/><path d="M9 8h6M9 12h6M9 16h4"/>',
@@ -132,8 +133,9 @@
     if (!el) { el = document.createElement('div'); el.id = 'toast'; el.className = 'toast'; el.setAttribute('role', 'status'); document.body.appendChild(el); }
     const wasShown = el.classList.contains('show');
     el.innerHTML = (opts && opts.ok ? TICK : '') + `<div style="flex:1">${esc(text)}</div>` + (action ? `<button class="act">${esc(action.label)}</button>` : '');
-    // a new note over one still showing: its text comes in softly (swapped at once, it was a hard cut)
-    if (wasShown && root.Fx && root.Fx.motion() && el.animate) for (const c of el.children) c.animate([{ opacity: 0, transform: 'translateY(6px)' }, { opacity: 1, transform: 'none' }], { duration: 220, easing: 'ease-out' });
+    // a new note over one still showing: the box gives a little bump (its own layer, its own transform). Sliding
+    // the new text in instead made the whole box draw see-through for a frame now and then (a blink)
+    if (wasShown && root.Fx && root.Fx.motion() && el.animate) el.animate([{ transform: 'scale(.96)' }, { transform: 'scale(1.015)', offset: 0.6 }, { transform: 'none' }], { duration: 240, easing: 'ease-out' });
     if (action) el.querySelector('.act').onclick = () => { hideToast(); action.fn(); };
     requestAnimationFrame(() => el.classList.add('show'));
     clearTimeout(toastTimer);
@@ -297,6 +299,8 @@
         const btn = opts.buttons[+b.dataset.i];
         const v = btn.value !== undefined ? btn.value : +b.dataset.i;
         const input = el.querySelector('input,textarea,select');
+        // value 'form': every named field, as an object ({ pct: '200', reason: '' })
+        if (btn.value === 'form') { const o = {}; el.querySelectorAll('[name]').forEach((x) => { o[x.name] = x.value; }); done(o); return; }
         done(btn.value === 'input' ? (input ? input.value : null) : v);
       }));
       el.querySelector('.backdrop').onclick = () => done(null);
@@ -386,5 +390,33 @@
   function invalid(text) { toast(text); if (root.Fx) root.Fx.nope(); }
   /** An icon in a soft coloured tile (violet, mint, amber, sky, pink, orange, white). */
   const tile = (name, tint, cls) => `<span class="itile t-${tint || 'violet'} ${cls || ''}" aria-hidden="true">${icon(name)}</span>`;
+  /*
+   * The on-screen keyboard. On Android the page stays its full height under the keyboard, so a sheet's bottom (its
+   * "send" or "save" button) and the first steps' "next" were hidden behind it while typing. --kb is the keyboard's
+   * height (what of the page lies under it) and --vvh the visible height; html.kb-open moves those bottoms above
+   * the keyboard (styles-v3.css). Updated once a frame while the keyboard slides.
+   */
+  (function keyboard() {
+    const vv = root.visualViewport;
+    if (!vv) return;
+    const de = document.documentElement;
+    let raf = 0, last = '';
+    const fit = () => {
+      raf = 0;
+      const kb = Math.max(0, Math.round(root.innerHeight - vv.height - vv.offsetTop));
+      const open = kb > 80;
+      const key = kb + '|' + Math.round(vv.height);
+      if (key === last) return;
+      last = key;
+      de.style.setProperty('--kb', (open ? kb : 0) + 'px');
+      de.style.setProperty('--vvh', Math.round(vv.height) + 'px');
+      if (open !== de.classList.contains('kb-open')) de.classList.toggle('kb-open', open);
+    };
+    const later = () => { if (!raf) raf = requestAnimationFrame(fit); };
+    vv.addEventListener('resize', later);
+    vv.addEventListener('scroll', later);
+    fit();
+  })();
+
   root.UI = { pushLayer, closeLayer, tile, skeleton, invalid, icon, esc, money, numv, delta, roleDot, emptyState, toast, openSheet, closeTop, closeAll, dialog, confirm, promptText, onSwipe, vibrate, download, shareFile, copyText, numIn, timeAgo, sheets };
 })(typeof window !== 'undefined' ? window : globalThis);

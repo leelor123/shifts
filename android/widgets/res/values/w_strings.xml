@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="w_shift_name">שעתי · משמרת</string>
+    <string name="w_shift_desc">התחלת משמרת בלחיצה, ושעון רץ בזמן משמרת</string>
+    <string name="w_month_name">שעתי · החודש שלי</string>
+    <string name="w_month_desc">כמה הרווחת החודש, היעד והצפי</string>
+    <string name="w_goal_name">שעתי · יעד</string>
+    <string name="w_goal_desc">ההתקדמות ליעד החיסכון או ליעד החודשי</string>
+    <string name="w_payday_name">שעתי · משכורת</string>
+    <string name="w_payday_desc">כמה ימים נשארו למשכורת וכמה בערך תקבלו</string>
+    <string name="w_combo_name">שעתי · הכול ביחד</string>
+    <string name="w_combo_desc">משמרת, החודש, היעד והמשכורת בווידג׳ט אחד</string>
+</resources>

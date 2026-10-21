@@ -238,6 +238,27 @@
     setTimeout(run, 700);
   };
   App.rerender = () => App.render({ keepScroll: true });
+
+  /* ---------------- clean language (core/clean.js) ----------------
+   * Every name, job, workplace, note and reason passes through here before it is saved; while typing, a field
+   * with an unfit word says so quietly under itself. */
+  App.cleanText = (t) => !root.Clean || root.Clean.isClean(t);
+  App.ensureClean = function (...texts) {
+    if (texts.every((t) => App.cleanText(t))) return true;
+    UI.invalid('בואו נשמור על שפה נקייה 🙂 יש כאן מילה שלא מתאימה');
+    return false;
+  };
+  document.addEventListener('input', (e) => {
+    const t = e.target;
+    if (!t || !t.matches || !t.matches('textarea, input:not([type]), input[type="text"]') || t.matches('.pp-q, [data-no-clean]')) return;
+    const bad = !App.cleanText(t.value);
+    if (bad === t.classList.contains('unclean')) return;
+    t.classList.toggle('unclean', bad);
+    t.setAttribute('aria-invalid', String(bad));
+    let hint = t.nextElementSibling && t.nextElementSibling.classList.contains('unclean-hint') ? t.nextElementSibling : null;
+    if (bad && !hint) { hint = document.createElement('div'); hint.className = 'unclean-hint'; hint.setAttribute('role', 'status'); hint.textContent = 'בואו נשמור על שפה נקייה 🙂'; t.after(hint); }
+    if (!bad && hint) hint.remove();
+  }, true);
   /* Looping decorations (the glow on the pay card, the dial, the shine on the start button) are
    * redrawn with the screen after every save or sync. Each new copy gets an offset from one clock
    * that started with the page, so it carries on exactly where the old copy was instead of
@@ -385,7 +406,9 @@
       || S.shifts.filter((s) => s.status === 'planned' && Math.abs(s.start - now) < 90 * 60000).sort((a, b) => Math.abs(a.start - now) - Math.abs(b.start - now))[0];
     await Store.setMeta({ lastRole: role.id });
     App.justStarted = Date.now(); // the timer card springs in (the save redraws home at once)
-    await Store.setActive({ start: now, roleId: role.id, employerId: role.employerId || S.employers[0].id, splits: [], breaks: [], fromPlanned: planned ? planned.id : null });
+    // a planned shift that has already begun can be measured from its planned start (App.markDone)
+    const start = opts && opts.startAt && opts.startAt < now && now - opts.startAt < 24 * 3600000 ? opts.startAt : now;
+    await Store.setActive({ start, roleId: role.id, employerId: role.employerId || S.employers[0].id, splits: [], breaks: [], fromPlanned: planned ? planned.id : null });
     if (App.shiftMoment) App.shiftMoment('start', opts && opts.at); else root.Fx.celebrate('start');
     UI.toast('המשמרת התחילה — בהצלחה!');
     App.askNotifyPermission();
@@ -508,6 +531,7 @@
       }
     }
     if (App.tab === 'home') App.rerender();
+    if (App.widgets) App.widgets.push(); // the forecast may have moved
   };
   setInterval(() => App.runInsights(), 5 * 60 * 1000);
 
@@ -701,7 +725,10 @@
     App.render();
     const action = App.pendingAction;
     App.pendingAction = null;
+    // done once: a reload (or the browser's own restore) must never start or end a shift again
+    if (action) { try { const u = new URL(location.href); u.searchParams.delete('action'); history.replaceState(history.state, '', u.pathname + u.search + u.hash); } catch (e) { /* ignore */ } }
     if (action === 'start' && !S.activeShift) App.actions['timer-start']();
+    if (action === 'stop' && S.activeShift) App.stopShift(); // the widget's "end" button
     if (action === 'add') App.sheetsApi.shiftEditor();
     if (action === 'plus' && root.Plus) setTimeout(() => root.Plus.sheet(), 600); // back from the web checkout (?action=plus): straight to the code field
     setTimeout(() => { App.runInsights(); App.autoBackupCheck(); }, 1200);

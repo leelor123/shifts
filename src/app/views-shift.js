@@ -69,6 +69,7 @@
       night: { on: false, mode: 'off', pct: '', amount: '' },
       travel: { on: false, mode: 'off', amount: '' },
       rate: { on: false, rate: '' },
+      special: { on: false, pct: '', reason: '' },
     };
   }
   function draftFrom(sh, opts) {
@@ -99,6 +100,7 @@
     if (o.night) Object.assign(ov.night, { on: true, mode: o.night.mode, pct: o.night.pct || '', amount: o.night.amount != null ? o.night.amount : '' });
     if (o.travel) Object.assign(ov.travel, { on: true, mode: o.travel.mode, amount: o.travel.amount != null ? o.travel.amount : '' });
     if (o.rate) Object.assign(ov.rate, { on: true, rate: o.rate.rate });
+    if (o.special) Object.assign(ov.special, { on: true, pct: o.special.pct, reason: o.special.reason || '' });
     return {
       id: sh.id, status: sh.status || 'done', statusTouched: true, employerId: sh.employerId, date: U.epochKey(sh.start),
       startT: U.epochHM(sh.start), endT: U.epochHM(sh.end), roleId: sh.roleId,
@@ -125,6 +127,7 @@
     if (d.ov.night.on) ov.night = { mode: d.ov.night.mode, pct: numOrNull(d.ov.night.pct), amount: numOrNull(d.ov.night.amount) };
     if (d.ov.travel.on) ov.travel = { mode: d.ov.travel.mode, amount: numOrNull(d.ov.travel.amount) };
     if (d.ov.rate.on && numOrNull(d.ov.rate.rate)) ov.rate = { rate: +d.ov.rate.rate };
+    if (d.ov.special.on && numOrNull(d.ov.special.pct)) ov.special = { pct: +d.ov.special.pct, reason: String(d.ov.special.reason || '').trim().slice(0, 40) };
     const sh = {
       id: d.id || U.uid(), kind: 'shift', status: d.status, employerId: d.employerId, roleId: d.roleId,
       start, end, splits: d.splits.filter((x) => x.t && x.roleId).map((x) => ({ at: at(x.t), roleId: x.roleId })),
@@ -197,6 +200,23 @@
   };
 
   /* ---------------- shift detail ---------------- */
+  /**
+   * Mark a planned shift as done, only once it has ended: one still running can be measured on the timer from its
+   * planned start instead, and one in the future waits (every path that marks a shift done comes here).
+   */
+  App.markDone = async function (sh) {
+    const now = Date.now();
+    if (sh.end > now + 60000) {
+      if (sh.start <= now && !S.activeShift) {
+        const ok = await UI.confirm('המשמרת עוד לא נגמרה', `היא התחילה ב-${U.epochHM(sh.start)} ומסתיימת ב-${U.epochHM(sh.end)}. להפעיל את השעון מ-${U.epochHM(sh.start)}? בסוף לוחצים "סיים משמרת".`, 'הפעל שעון');
+        if (ok) await App.startShift(sh.roleId, { fromPlanned: sh.id, startAt: sh.start });
+      } else UI.toast(sh.start <= now ? 'המשמרת עוד לא נגמרה. אפשר לסמן אותה כבוצעה אחרי שהיא מסתיימת' : `המשמרת עוד לא קרתה. אפשר לסמן אותה כבוצעה אחרי ${U.fmtDate(U.epochKey(sh.end), 'short')} ב-${U.epochHM(sh.end)}`);
+      return false;
+    }
+    await App.saveOps([{ store: 'shifts', put: Object.assign(Store.clone(sh), { status: 'done' }) }], 'סימון כבוצעה', 'המשמרת סומנה כבוצעה');
+    return true;
+  };
+
   App.sheetsApi.shiftDetail = function (id) {
     const sh = App.shift(id);
     const r = App.result(id);
@@ -220,7 +240,7 @@
         ${r.overridden ? `<div class="small muted" style="margin:-4px 4px 12px">בלי העקיפה החישוב היה ${U.money(r.wage + autoDiff)} (${autoDiff >= 0 ? '+' : ''}${U.money(autoDiff)}).</div>` : ''}
         ${sh.note ? `<div class="card outlined small">${icon('edit', 's')} ${esc(sh.note)}</div>` : ''}
         <div class="list">
-          ${r.status === 'planned' ? `<button class="item" data-x="done"><span class="lead">${icon('check')}</span><span class="body"><span class="t">סמן כבוצעה</span></span></button>` : ''}
+          ${r.status === 'planned' && r.end <= Date.now() ? `<button class="item" data-x="done"><span class="lead">${icon('check')}</span><span class="body"><span class="t">סמן כבוצעה</span></span></button>` : ''}
           <button class="item" data-x="dup"><span class="lead">${icon('copy')}</span><span class="body"><span class="t">שכפל</span><span class="s">אותן שעות בתאריך אחר</span></span></button>
           <button class="item" data-x="repeat"><span class="lead">${icon('refresh')}</span><span class="body"><span class="t">חזרה שבועית</span><span class="s">אותה משמרת בשבועות הבאים, כמתוכננת</span></span></button>
           <button class="item" data-x="tpl"><span class="lead">${icon('layers')}</span><span class="body"><span class="t">שמור כתבנית</span></span></button>
@@ -239,7 +259,7 @@
             UI.closeTop();
             await App.saveOps([{ store: 'shifts', del: id }], 'מחיקת משמרת', 'המשמרת נמחקה');
           }
-          if (x === 'done') { UI.closeTop(); await App.saveOps([{ store: 'shifts', put: Object.assign(Store.clone(sh), { status: 'done' }) }], 'סימון כבוצעה'); }
+          if (x === 'done') { UI.closeTop(); await App.markDone(sh); }
           if (x === 'dup') { UI.closeTop(); setTimeout(() => App.sheetsApi.shiftEditor(null, { copyFrom: sh, date: U.addDays(r.dateKey, 1) }), 320); }
           if (x === 'tpl') App.saveTemplate(sh);
           if (x === 'repeat') {
@@ -283,7 +303,7 @@
 
   App.saveTemplate = async function (sh) {
     const name = await UI.promptText('שמירת תבנית', 'שם התבנית', `${App.roleName(sh.roleId)} ⁦${U.epochHM(sh.start)}\u2060–\u2060${U.epochHM(sh.end)}⁩`);
-    if (!name) return;
+    if (!name || !App.ensureClean(name)) return;
     await App.saveOps([{ store: 'templates', put: {
       id: U.uid(), name, roleId: sh.roleId, employerId: sh.employerId, startT: U.epochHM(sh.start), endT: U.epochHM(sh.end),
       breakMin: sh.breakMin == null ? null : sh.breakMin, breakPaid: sh.breakPaid !== false, noTravel: !!sh.noTravel,
@@ -298,7 +318,7 @@
     let sheetEl = null;
 
     const roleChips = (sel, attr) => App.roles(d.employerId).map((r) => `<button class="chip ${r.id === sel ? 'on' : ''}" ${attr}="${r.id}"><span class="sw" style="background:${r.color}"></span>${esc(r.name)}</button>`).join('');
-    const ovCount = () => ['rest', 'ot', 'night', 'travel', 'rate'].filter((k) => d.ov[k].on).length;
+    const ovCount = () => ['rest', 'ot', 'night', 'travel', 'rate', 'special'].filter((k) => d.ov[k].on).length;
     const sel = (f, options, v) => `<select class="input" data-f="${f}">${options.map(([val, lab]) => `<option value="${val}" ${String(v) === String(val) ? 'selected' : ''}>${lab}</option>`).join('')}</select>`;
     const inp = (f, v, extra) => `<input class="input" data-f="${f}" value="${esc(v == null ? '' : v)}" ${extra || ''}>`;
     const numIn = (f, v, ph) => inp(f, v, `type="number" inputmode="decimal" step="any" placeholder="${ph || ''}"`);
@@ -322,7 +342,7 @@
     }
     function body() {
       const emp = App.employer(d.employerId);
-      const rest = d.ov.rest, ot = d.ov.ot, night = d.ov.night, trv = d.ov.travel, rate = d.ov.rate;
+      const rest = d.ov.rest, ot = d.ov.ot, night = d.ov.night, trv = d.ov.travel, rate = d.ov.rate, spc = d.ov.special;
       const overnight = d.startT && d.endT && d.endT <= d.startT;
       return `
         <div class="seg" style="margin-bottom:14px"><button data-status="done" class="${d.status === 'done' ? 'on' : ''}">בוצעה</button><button data-status="planned" class="${d.status === 'planned' ? 'on' : ''}">מתוכננת</button></div>
@@ -372,6 +392,7 @@
           ${ovBlock('travel', 'נסיעות', 'ביטול או סכום אחר למשמרת', `
             <div class="field">${sel('ov.travel.mode', [['off', 'בלי נסיעות'], ['amount', 'סכום אחר']], trv.mode)}</div>
             ${trv.mode === 'amount' ? `<label class="field"><span class="lbl">סכום ₪</span>${numIn('ov.travel.amount', trv.amount, String(emp.travelPerDay))}</label>` : ''}`)}
+          ${ovBlock('special', 'תעריף מיוחד באחוזים', 'למשל יום בחירות: 200% על כל שעה', `<div class="grid2"><label class="field"><span class="lbl">אחוז לכל שעה</span>${numIn('ov.special.pct', spc.pct, '200')}</label><label class="field"><span class="lbl">על מה (לא חובה)</span>${inp('ov.special.reason', spc.reason, 'maxlength="40" placeholder="יום בחירות"')}</label></div><div class="tiny muted">כל שעה במשמרת תשולם לפחות באחוז הזה. שעה ששווה יותר (שבת, שעות נוספות) נשארת כמו שהיא. ליום שלם לכל המשמרות: בלוח השנה, בלחיצה על היום.</div>`)}
           ${ovBlock('rate', 'תעריף לשעה', 'לכל המשמרת, במקום תעריף התפקיד', `<label class="field"><span class="lbl">₪ לשעה</span>${numIn('ov.rate.rate', rate.rate, '0')}</label>`)}
           ${ovCount() ? `<label class="field"><span class="lbl">סיבה (לא חובה)</span>${inp('reason', d.reason, 'placeholder="למשל: המעסיק לא מחשיב את השעה הזו כשבת"')}</label>
           <button class="btn outlined block" data-reset-ov>${icon('refresh', 's')} חזור לחישוב אוטומטי</button>` : ''}
@@ -479,12 +500,15 @@
       if (!d.roleId) { UI.invalid('בחר תפקיד'); return; }
       if (d.date < '2000-01-01' || d.date > U.addDays(U.todayKey(), 366)) { UI.invalid('התאריך לא הגיוני'); return; }
       const sh = shiftFrom(d);
+      if (!App.ensureClean(sh.note, sh.overrideReason, ...(sh.items || []).map((x) => x.label || ''), (sh.overrides && sh.overrides.special && sh.overrides.special.reason) || '')) return;
       // numbers that would quietly change the pay the wrong way
       if (sh.breakMin != null && (!(sh.breakMin >= 0) || sh.breakMin > 24 * 60)) { UI.invalid('אורך ההפסקה לא הגיוני'); return; }
       if (sh.breakMin > 0 && sh.breakMin >= (sh.end - sh.start) / 60000) { UI.invalid('ההפסקה ארוכה מהמשמרת עצמה'); return; }
       if ((sh.items || []).some((x) => !(+x.amount > 0) || +x.amount > 1e6)) { UI.invalid('סכום של תוספת או ניכוי צריך להיות חיובי (לניכוי בוחרים "ניכוי")'); return; }
       const negative = (o) => o && typeof o === 'object' && Object.values(o).some((v) => (typeof v === 'number' && v < 0) || negative(v));
       if (negative(sh.overrides)) { UI.invalid('בחישוב הידני אי אפשר מספר שלילי'); return; }
+      const spc = sh.overrides && sh.overrides.special;
+      if (spc && !(spc.pct >= 100 && spc.pct <= 1000)) { UI.invalid('תעריף מיוחד: אחוז בין 100 ל-1000 (למשל 200)'); return; }
       // a shift that hasn't happened yet can't be "done": it can be saved as planned
       if (sh.status === 'done' && sh.end > Date.now() + 5 * 60000) {
         const started = sh.start <= Date.now();
@@ -583,11 +607,12 @@
       title: U.fmtDate(k, 'long'),
       body: `<div class="small muted" style="margin-bottom:10px">${esc(HebCal.hebrewDate(k).toString())}${hols.length ? ' · ' + esc(hols.map((h) => h.name).join(', ')) : ''}</div>
         ${restLine ? `<div class="banner">${'<div>' + restLine + '</div>'}</div>` : ''}
-        ${rule ? `<div class="banner warn">${icon('hand')}<div style="flex:1">${rule.type === 'cancel' ? 'תעריף שבת/חג בוטל ידנית לתאריך זה' : 'סומן ידנית כיום מנוחה (150%)'}${rule.reason ? ' — ' + esc(rule.reason) : ''}</div><button class="btn sm" data-rule-del>בטל</button></div>` : ''}
+        ${rule ? `<div class="banner warn">${icon('hand')}<div style="flex:1">${rule.type === 'cancel' ? 'תעריף שבת/חג בוטל ידנית לתאריך זה' : rule.type === 'pct' ? `תעריף מיוחד ${+rule.pct}% לכל שעה ביום הזה` : 'סומן ידנית כיום מנוחה (150%)'}${rule.reason ? ' — ' + esc(rule.reason) : ''}</div><button class="btn sm" data-rule-del>בטל</button></div>` : ''}
         ${results.length || entries.length ? `<div class="list">${results.map((r) => App.shiftItem(r, { noDate: true })).join('')}${entries.map(App.entryItem).join('')}</div>${sum ? `<div class="small" style="margin:0 4px 12px">סה״כ ביום: <b>${U.money(sum)}</b></div>` : ''}` : '<div class="muted small" style="margin:6px 4px 14px">אין רישומים ביום זה.</div>'}
         <div class="btn-row"><button class="btn" data-add-shift>${icon('plus')} משמרת</button><button class="btn tonal" data-add-other>${icon('beach')} חופשה / מחלה / תוספת</button></div>
         <div class="divider"></div>
         ${!rule && autoInfo ? `<button class="btn outlined block" data-rule="cancel">${icon('hand', 's')} בטל 150% בתאריך זה לכל המשמרות</button><div class="tiny muted" style="margin:6px 4px">למשל חג שזוהה בטעות. אפשר לבטל.</div>` : ''}
+        ${!rule ? `<button class="btn outlined block" data-rule="pct">${icon('star', 's')} תעריף מיוחד לכל היום (למשל יום בחירות)</button><div class="tiny muted" style="margin:6px 4px 10px">באחוזים, לכל המשמרות ביום הזה. למשל ביום בחירות: 200%.</div>` : ''}
         ${!rule && !info ? `<button class="btn outlined block" data-rule="force">${icon('candle', 's')} סמן כיום מנוחה (150%)</button>` : ''}`,
       onMount: (el) => {
         el.addEventListener('click', async (e) => {
@@ -597,6 +622,17 @@
           if (b.hasAttribute('data-add-other')) {
             UI.closeTop();
             setTimeout(() => UI.openSheet({ title: 'הוספה ל-' + U.fmtDate(k, 'dm'), body: `<div class="list">${[['vacation', 'beach', 'יום חופשה'], ['sick', 'thermo', 'יום מחלה'], ['adjustment', 'gift', 'בונוס / תוספת / ניכוי']].map(([kind, ic, t]) => `<button class="item" data-k="${kind}"><span class="lead">${icon(ic)}</span><span class="body"><span class="t">${t}</span></span></button>`).join('')}</div>`, onMount: (el2) => el2.querySelectorAll('[data-k]').forEach((x) => (x.onclick = () => { UI.closeTop(); setTimeout(() => App.sheetsApi.entryEditor(null, { kind: x.dataset.k, date: k }), 320); })) }), 320);
+          }
+          if (b.dataset.rule === 'pct') {
+            const v = await UI.dialog({ title: 'תעריף מיוחד ל-' + U.fmtDate(k, 'dm'), html: `<label class="field"><span class="lbl">אחוז לכל שעה ביום הזה</span><input class="input" name="pct" type="number" inputmode="numeric" min="100" max="1000" value="200"></label><label class="field"><span class="lbl">על מה (לא חובה)</span><input class="input" name="reason" maxlength="40" placeholder="יום בחירות"></label><div class="tiny muted">כל שעה בכל המשמרות ביום הזה תשולם לפחות באחוז הזה. שעה ששווה יותר (שבת, שעות נוספות) נשארת כמו שהיא.</div>`, buttons: [{ label: 'ביטול', value: null }, { label: 'החל', value: 'form', cls: '' }] });
+            if (!v) return;
+            const pct = +v.pct;
+            if (!(pct >= 100 && pct <= 1000)) { UI.invalid('אחוז בין 100 ל-1000 (למשל 200)'); return; }
+            const reason = String(v.reason || '').trim().slice(0, 40);
+            if (App.cleanText && !App.cleanText(reason)) { UI.invalid('בואו נשמור על שפה נקייה 🙂'); return; }
+            UI.closeTop();
+            await App.saveOps([{ store: 'dayRules', put: { id: 'dr_' + k, date: k, type: 'pct', pct, reason } }], 'כלל יום', `כל שעה ב-${U.fmtDate(k, 'dm')} תשולם לפחות ${pct}%`);
+            return;
           }
           if (b.dataset.rule) {
             const reason = await UI.promptText(b.dataset.rule === 'cancel' ? 'ביטול 150% לתאריך' : 'סימון יום מנוחה', 'סיבה (לא חובה)', '', { ok: 'החל' });

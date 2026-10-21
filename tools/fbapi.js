@@ -67,7 +67,7 @@ async function main() {
     const rec = (u) => ({ u, d: false, j: '{"id":"s1"}' });
     const boss = { uid: 'boss', token: { email: 'boss@example.com' } };
     const tk = (o) => Object.assign({ uid: 'u1', reason: 'bug', text: 'the button does not work', status: 'open', created: 1, updated: 1, last: 'user', seen: true }, o || {});
-    const owner = (uid) => [{ function: 'get', args: [{ exactValue: '/databases/(default)/documents/tickets/t1' }], result: { value: { data: { uid } } } }];
+    const owner = (uid, status) => [{ function: 'get', args: [{ exactValue: '/databases/(default)/documents/tickets/t1' }], result: { value: { data: { uid, status: status || 'open' } } } }];
     const lb = (o) => Object.assign({ n: 'שועל זריז 27', e: '🦊', bg: '', p: false, t: 1790000000000, g: { coins: { d: 2026101500050, a: 50 } } }, o || {});
     const stat = () => ({ v: '1.5.0', p: 'android', first: '2026-10-01', last: '2026-10-13', days: 5, sh: 12, s30: 6, ps: 1, age: 'u18', f: { rights: true }, t: 1790000000000 });
     const cases = [
@@ -121,6 +121,15 @@ async function main() {
       ['another user cannot add messages', 'DENY', 'create', { uid: 'u2' }, '/tickets/t1/msgs/m1', { from: 'user', text: 'hi', t: 5 }, null, [], owner('u1')],
       ['an admin replies in the conversation', 'ALLOW', 'create', boss, '/tickets/t1/msgs/m2', { from: 'admin', text: 'we fixed it', t: 6 }, null, ['boss'], owner('u1')],
       ['another user cannot read the conversation', 'DENY', 'get', { uid: 'u2' }, '/tickets/t1/msgs/m1', null, { from: 'user', text: 'x', t: 1 }, [], owner('u1')],
+      ['an admin deletes a closed request', 'ALLOW', 'delete', boss, '/tickets/t1', null, tk({ status: 'closed' }), ['boss']],
+      ['an admin cannot delete an open request', 'DENY', 'delete', boss, '/tickets/t1', null, tk(), ['boss']],
+      ['an admin cannot delete an answered request', 'DENY', 'delete', boss, '/tickets/t1', null, tk({ status: 'answered' }), ['boss']],
+      ['the writer deletes their own (account deletion)', 'ALLOW', 'delete', me, '/tickets/t1', null, tk()],
+      ['another user cannot delete it', 'DENY', 'delete', { uid: 'u2' }, '/tickets/t1', null, tk({ status: 'closed' })],
+      ['an admin deletes the messages of a closed request', 'ALLOW', 'delete', boss, '/tickets/t1/msgs/m1', null, { from: 'user', text: 'x', t: 1 }, ['boss'], owner('u1', 'closed')],
+      ['an admin cannot delete the messages of an open request', 'DENY', 'delete', boss, '/tickets/t1/msgs/m1', null, { from: 'user', text: 'x', t: 1 }, ['boss'], owner('u1', 'open')],
+      ['the writer deletes their messages', 'ALLOW', 'delete', me, '/tickets/t1/msgs/m1', null, { from: 'user', text: 'x', t: 1 }, [], owner('u1')],
+      ['another user cannot delete the messages', 'DENY', 'delete', { uid: 'u2' }, '/tickets/t1/msgs/m1', null, { from: 'user', text: 'x', t: 1 }, [], owner('u1', 'closed')],
       ['a player joins the champions table', 'ALLOW', 'create', me, '/lb/u1', lb(), null],
       ['a player saves a score', 'ALLOW', 'update', me, '/lb/u1', lb({ g: { coins: { d: 2026101500120, w: 2026101100120, m: 20261000120, y: 202600120, a: 120 }, facts: { a: 10 } } }), lb()],
       ['a row in someone else’s name is refused', 'DENY', 'create', me, '/lb/u2', lb(), null],

@@ -2,7 +2,7 @@
 <html lang="he" dir="rtl">
 <head>
 <meta charset="utf-8">
-<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'sha256-f+ZjCHai5VOm+AaMOnt3ININi1OgkbhZcXmcT23OlX8=' https://www.gstatic.com https://apis.google.com https://cdnjs.cloudflare.com https://cdn.jsdelivr.net 'wasm-unsafe-eval'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com data:; img-src 'self' data: blob: https:; connect-src 'self' https: wss:; frame-src https://shiftpay-70ab6.firebaseapp.com https://accounts.google.com https://apis.google.com https://*.google.com; worker-src 'self' blob: https://cdnjs.cloudflare.com https://cdn.jsdelivr.net; media-src 'self' data: blob:; manifest-src 'self'; object-src 'none'; base-uri 'self'; form-action 'self'">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'sha256-FG0xnfgk+yf6Qhfv1urCIagcVC6Ph6vReKUQ3eplrbM=' https://www.gstatic.com https://apis.google.com https://cdnjs.cloudflare.com https://cdn.jsdelivr.net 'wasm-unsafe-eval'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com data:; img-src 'self' data: blob: https:; connect-src 'self' https: wss:; frame-src https://shiftpay-70ab6.firebaseapp.com https://accounts.google.com https://apis.google.com https://*.google.com; worker-src 'self' blob: https://cdnjs.cloudflare.com https://cdn.jsdelivr.net; media-src 'self' data: blob:; manifest-src 'self'; object-src 'none'; base-uri 'self'; form-action 'self'">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="theme-color" content="#0d2b6b">
 <meta name="description" content="מעקב משמרות וחישוב שכר אישי: שבתות, חגים, שעות נוספות, נסיעות, נטו משוער וניתוח תלושים — נשמר בחשבון שלך ועובד גם בלי אינטרנט.">
@@ -702,41 +702,96 @@ textarea.input.chat-input { min-height: 46px; height: 46px; max-height: 140px; r
 .fx-shake { animation: fx-shake .42s cubic-bezier(.36, .07, .19, .97) both; }
 @keyframes fx-shake { 10%, 90% { translate: -2px 0; } 20%, 80% { translate: 4px 0; } 30%, 50%, 70% { translate: -7px 0; } 40%, 60% { translate: 7px 0; } }
 
-/* ---- opening animation ---- */
-#intro { position: fixed; inset: 0; z-index: 10000; display: grid; place-items: center; background: radial-gradient(120% 80% at 50% 30%, #143b8a 0%, #0d2b6b 55%, #0a2156 100%); color: #fff; overflow: hidden; }
-#intro .intro-stage { display: flex; flex-direction: column; align-items: center; margin-top: -6vh; }
+/* ---- opening animation (intro.js) ---- */
+#intro { position: fixed; inset: 0; z-index: 10000; display: grid; place-items: center; overflow: hidden; color: #fff;
+  background: radial-gradient(120% 80% at 50% 32%, #1a3f94 0%, #0d2b6b 55%, #081c4a 100%); }
+#intro .intro-glow { position: absolute; left: 50%; top: 44%; width: 520px; height: 520px; margin: -260px 0 0 -260px; border-radius: 50%;
+  background: radial-gradient(circle, rgba(46, 229, 157, .30) 0%, rgba(80, 120, 255, .16) 38%, transparent 68%); opacity: 0; will-change: transform, opacity; }
+#intro .intro-flash { position: absolute; left: 50%; top: 44%; width: 640px; height: 640px; margin: -320px 0 0 -320px; border-radius: 50%; background: radial-gradient(circle, rgba(255, 250, 225, .9) 0%, rgba(255, 216, 120, .35) 22%, transparent 60%); opacity: 0; will-change: transform, opacity; pointer-events: none; }
+#intro .intro-stage { position: relative; display: flex; flex-direction: column; align-items: center; margin-top: -6vh; will-change: transform; }
 #intro .intro-mark { position: relative; width: 132px; height: 132px; }
-#intro .intro-logo { width: 100%; height: 100%; overflow: visible; }
+#intro .intro-logo { position: absolute; inset: 0; width: 100%; height: 100%; overflow: visible; will-change: transform; }
 #intro .intro-logo path { fill: none; stroke-width: 104; stroke-linecap: round; stroke-linejoin: round; }
 #intro .intro-logo .g { stroke: #2ee59d; }
 #intro .intro-logo .y { stroke: #ffb524; }
-#intro .intro-word { font: 800 2.9rem/1 'Rubik', system-ui, sans-serif; letter-spacing: -.03em; margin-top: 26px; }
-#intro .intro-sub { font: 600 1rem/1.4 'Rubik', 'Assistant', system-ui, sans-serif; color: rgba(255, 255, 255, .72); margin-top: 8px; }
-#intro .intro-coins { position: absolute; inset: 50% auto auto 50%; width: 0; height: 0; }
-#intro .intro-coins i { position: absolute; left: -13px; top: -13px; width: 26px; height: 26px; border-radius: 50%; display: grid; place-items: center; font: 800 14px/1 'Rubik', sans-serif; font-style: normal; color: #8a5300; background: radial-gradient(circle at 35% 35%, #ffe08a, #ffb524 65%, #d68a00); box-shadow: 0 0 0 1.5px #c98200 inset, 0 4px 10px rgba(0, 0, 0, .25); opacity: 0; animation: intro-coin .9s cubic-bezier(.2, .8, .3, 1) forwards; }
-@keyframes intro-coin {
+#intro .intro-ghost { opacity: 0; }
+/* the clock's 12 marks around the logo */
+#intro .intro-dial { position: absolute; left: 50%; top: 50%; width: 0; height: 0; }
+#intro .intro-dial i { position: absolute; left: -3px; top: -9px; width: 6px; height: 18px; border-radius: 3px; background: rgba(255, 255, 255, .85);
+  transform: rotate(calc(var(--k) * 30deg)) translateY(-104px) scale(0); opacity: 0; will-change: transform, opacity; }
+#intro .intro-dial i:nth-child(3n+1) { height: 24px; top: -12px; background: #ffd77a; }
+#intro .intro-wave { position: absolute; left: 50%; top: 50%; width: 220px; height: 220px; margin: -110px 0 0 -110px; border-radius: 50%;
+  border: 6px solid rgba(255, 216, 100, .9); opacity: 0; transform: scale(.4); will-change: transform, opacity; }
+#intro .intro-wave.w2 { border-color: rgba(46, 229, 157, .8); border-width: 4px; }
+#intro .intro-coins, #intro .intro-sparks { position: absolute; left: 50%; top: 50%; width: 0; height: 0; }
+#intro .intro-coins i { position: absolute; left: -14px; top: -14px; width: 28px; height: 28px; border-radius: 50%; display: grid; place-items: center;
+  font: 800 15px/1 'Rubik', sans-serif; font-style: normal; color: #8a5300; background: radial-gradient(circle at 35% 35%, #fff2b8, #ffb524 62%, #d68a00);
+  box-shadow: 0 0 0 1.5px #c98200 inset, 0 4px 10px rgba(0, 0, 0, .3); opacity: 0; will-change: transform, opacity; }
+#intro .intro-sparks i { position: absolute; left: -4px; top: -4px; width: 8px; height: 8px; border-radius: 50%; background: var(--c, #fff);
+  box-shadow: 0 0 10px 2px var(--c, #fff); opacity: 0; will-change: transform, opacity; }
+#intro .intro-word { direction: ltr; display: flex; font: 800 3.1rem/1 'Rubik', system-ui, sans-serif; letter-spacing: -.03em; margin-top: 30px; }
+#intro .intro-word span { display: inline-block; opacity: 0; will-change: transform, opacity; }
+#intro .intro-sub { font: 600 1rem/1.4 'Rubik', 'Assistant', system-ui, sans-serif; color: rgba(255, 255, 255, .74); margin-top: 10px; opacity: 0; will-change: transform, opacity; }
+#intro .intro-twinkles { position: absolute; inset: -40px -70px; pointer-events: none; }
+#intro .intro-twinkles i { position: absolute; width: 14px; height: 14px; opacity: 0; will-change: transform, opacity; font-style: normal; }
+#intro .intro-twinkles i::before { content: '✦'; position: absolute; inset: 0; display: grid; place-items: center; font-size: 14px; color: #ffe7a3; text-shadow: 0 0 8px #ffd25a; }
+
+/* ---------- the full show ---------- */
+#intro.play .intro-glow { animation: i-glow 1.9s cubic-bezier(.3, .7, .3, 1) forwards; }
+@keyframes i-glow { 0% { opacity: 0; transform: scale(.5); } 30% { opacity: .7; } 60% { opacity: 1; transform: scale(1.05); } 100% { opacity: .85; transform: scale(1); } }
+#intro.play .intro-dial i { animation: i-tick .3s cubic-bezier(.2, .9, .3, 1.6) forwards, i-tick-out .5s cubic-bezier(.4, 0, .2, 1) 1.16s forwards; animation-delay: calc(var(--k) * 30ms), 1.16s; }
+@keyframes i-tick { to { opacity: 1; transform: rotate(calc(var(--k) * 30deg)) translateY(-104px) scale(1); } }
+@keyframes i-tick-out { from { opacity: 1; transform: rotate(calc(var(--k) * 30deg)) translateY(-104px) scale(1); } to { opacity: 0; transform: rotate(calc(var(--k) * 30deg)) translateY(-170px) scale(.4, 1.6); } }
+/* the first frame painted (before the script starts the show) is the show's own first frame: an empty dial, an undrawn logo
+   (drawn at first and hidden a moment later, the logo blinked) */
+#intro .intro-logo.main path { stroke-dasharray: 1 2; stroke-dashoffset: 1; }
+#intro.still .intro-logo.main path { stroke-dashoffset: 0; }
+#intro.play .intro-logo.main path { animation: i-draw .52s cubic-bezier(.65, 0, .35, 1) .12s forwards; }
+#intro.play .intro-logo.main .y { animation-delay: .28s; }
+@keyframes i-draw { from { stroke-dashoffset: 1; } to { stroke-dashoffset: 0; } }
+#intro.play .intro-logo.main { animation: i-spin .46s cubic-bezier(.5, 0, .2, 1) .7s both, i-land .5s cubic-bezier(.2, .9, .3, 1.4) 1.16s both; }
+@keyframes i-spin { from { transform: rotate(-360deg) scale(1); } to { transform: rotate(0deg) scale(1.08); } }
+@keyframes i-land { 0% { transform: scale(1.08); } 18% { transform: scale(1.22, .86); } 45% { transform: scale(.94, 1.06); } 100% { transform: none; } }
+/* two faint copies trail the spin, like motion blur */
+#intro.play .intro-ghost { animation: i-ghost .46s cubic-bezier(.5, 0, .2, 1) both; }
+#intro.play .intro-ghost.g1 { animation-delay: .74s; }
+#intro.play .intro-ghost.g2 { animation-delay: .78s; }
+@keyframes i-ghost { 0% { opacity: 0; transform: rotate(-360deg); } 15% { opacity: .22; } 85% { opacity: .12; } 100% { opacity: 0; transform: rotate(0deg); } }
+#intro.play .intro-flash { animation: i-flash .5s cubic-bezier(.2, .8, .3, 1) 1.15s forwards; }
+@keyframes i-flash { 0% { opacity: 0; transform: scale(.3); } 18% { opacity: .85; transform: scale(.75); } 100% { opacity: 0; transform: scale(1.25); } }
+#intro.play .intro-wave { animation: i-wave .62s cubic-bezier(.1, .7, .3, 1) 1.16s forwards; }
+#intro.play .intro-wave.w2 { animation-delay: 1.24s; }
+@keyframes i-wave { 0% { opacity: .95; transform: scale(.45); } 100% { opacity: 0; transform: scale(2.6); } }
+#intro.play .intro-stage { animation: i-shake .26s linear 1.16s; }
+@keyframes i-shake { 0%, 100% { transform: none; } 20% { transform: translate(3px, 2px); } 40% { transform: translate(-3px, -1px); } 60% { transform: translate(2px, -2px); } 80% { transform: translate(-1px, 1px); } }
+#intro.play .intro-coins i { animation: i-coin 1.05s cubic-bezier(.15, .7, .35, 1) forwards; animation-delay: calc(1.18s + var(--d)); }
+@keyframes i-coin {
   0% { opacity: 0; transform: translate(0, 0) scale(.3) rotate(0); }
-  15% { opacity: 1; }
-  55% { opacity: 1; transform: translate(var(--dx), var(--dy)) scale(1) rotate(var(--r)); }
-  100% { opacity: 0; transform: translate(calc(var(--dx) * 1.15), calc(var(--dy) + 70px)) scale(.8) rotate(calc(var(--r) * 2)); }
+  12% { opacity: 1; }
+  55% { opacity: 1; transform: translate(var(--dx), var(--dy)) scale(var(--s)) rotate(var(--r)); }
+  100% { opacity: 0; transform: translate(calc(var(--dx) * 1.2), calc(var(--dy) + 90px)) scale(calc(var(--s) * .8)) rotate(calc(var(--r) * 2)); }
 }
-/* full version: draw → clock spin → coins → name */
-#intro.play .intro-logo path { stroke-dasharray: 1 2; stroke-dashoffset: 1; animation: intro-draw .6s cubic-bezier(.65, 0, .35, 1) forwards; }
-#intro.play .intro-logo .y { animation-delay: .16s; }
-#intro.play .intro-logo { animation: intro-spin .6s cubic-bezier(.45, 0, .25, 1) .68s both; }
-#intro.play .intro-word { opacity: 0; animation: intro-up .5s cubic-bezier(.2, .8, .3, 1) .78s forwards; }
-#intro.play .intro-sub { opacity: 0; animation: intro-up .5s cubic-bezier(.2, .8, .3, 1) .9s forwards; }
-@keyframes intro-draw { from { stroke-dashoffset: 1; } to { stroke-dashoffset: 0; } }
-@keyframes intro-spin { from { transform: rotate(-360deg) scale(1); } 60% { transform: rotate(14deg) scale(1.06); } to { transform: rotate(0) scale(1); } }
-@keyframes intro-up { from { opacity: 0; transform: translateY(14px); } to { opacity: 1; transform: none; } }
-/* still waiting for the app: the logo keeps turning */
-#intro.wait .intro-logo { animation: intro-turn 1.1s linear infinite; }
-@keyframes intro-turn { to { transform: rotate(360deg); } }
-#intro.out { animation: intro-out .5s cubic-bezier(.7, 0, .3, 1) forwards; pointer-events: none; }
-#intro.out .intro-stage { animation: intro-stage-out .5s cubic-bezier(.7, 0, .3, 1) forwards; }
-@keyframes intro-out { to { opacity: 0; } }
-@keyframes intro-stage-out { to { transform: scale(.82); opacity: 0; } }
+#intro.play .intro-sparks i { animation: i-spark .7s cubic-bezier(.1, .8, .3, 1) forwards; animation-delay: calc(1.16s + var(--d)); }
+@keyframes i-spark { 0% { opacity: 1; transform: translate(0, 0) scale(1.2); } 100% { opacity: 0; transform: translate(var(--dx), var(--dy)) scale(.2); } }
+#intro.play .intro-word span { animation: i-letter .5s cubic-bezier(.2, .9, .3, 1.5) forwards; animation-delay: calc(1.26s + var(--k) * 60ms); }
+@keyframes i-letter { 0% { opacity: 0; transform: translateY(26px) scale(.5) rotate(-12deg); } 60% { opacity: 1; } 100% { opacity: 1; transform: none; } }
+#intro.play .intro-sub { animation: i-up .5s cubic-bezier(.2, .8, .3, 1) 1.72s forwards; }
+@keyframes i-up { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: none; } }
+#intro.play .intro-twinkles i { animation: i-twinkle .8s ease-in-out forwards; animation-delay: calc(1.62s + var(--d)); }
+@keyframes i-twinkle { 0% { opacity: 0; transform: scale(0) rotate(0); } 40% { opacity: 1; transform: scale(1.3) rotate(90deg); } 100% { opacity: 0; transform: scale(.2) rotate(180deg); } }
+
+/* still loading after the show: the logo keeps turning, the marks breathe */
+#intro.wait .intro-logo.main { animation: i-turn 1.1s linear infinite; }
+@keyframes i-turn { to { transform: rotate(360deg); } }
+/* the way out: the logo flies at you, the night lifts */
+#intro.out { animation: i-out .5s cubic-bezier(.6, 0, .3, 1) forwards; pointer-events: none; }
+#intro.out .intro-stage { animation: i-stage-out .5s cubic-bezier(.6, 0, .3, 1) forwards; }
+@keyframes i-out { 0% { opacity: 1; } 40% { opacity: 1; } 100% { opacity: 0; } }
+@keyframes i-stage-out { to { transform: scale(1.9); opacity: 0; } }
+/* short version */
+#intro.still .intro-word span, #intro.still .intro-sub { opacity: 1; }
 #intro.still.out { animation-duration: .25s; }
+#intro.still.out .intro-stage { animation: none; }
 
 /* ---- pull to refresh ---- */
 html, body { overscroll-behavior-y: contain; }
@@ -1198,6 +1253,34 @@ body.fx .nav .fab:active { transform: scale(.9) rotate(90deg); }
 .pk-field.pk-time .v { flex: none; font-size: 1.15rem; font-weight: 700; font-variant-numeric: tabular-nums; direction: ltr; }
 .pk-field:active { transform: scale(.985); }
 .pk-field:disabled { opacity: .5; }
+/* the app's own <select>: a field with the choice, a list sheet, or chips */
+.pk-field.pk-select .v, .pk-field.pk-select .ph { line-height: 1.35; }
+.pk-field.pk-select .i { color: var(--on-surface-var); }
+.pk-field.picked .v { animation: pk-picked .42s cubic-bezier(.34, 1.56, .64, 1); }
+@keyframes pk-picked { 0% { transform: scale(.94); opacity: .4; } 60% { transform: scale(1.03); opacity: 1; } 100% { transform: none; } }
+.pk-choices.done { pointer-events: none; }
+.pk-choices { display: flex; flex-direction: column; gap: 8px; padding: 6px 0 4px; }
+.pk-ch { display: flex; align-items: center; gap: 12px; width: 100%; min-height: 56px; padding: 10px 14px; border: 1.5px solid var(--line); border-radius: 18px; background: var(--surface-2); color: var(--on-surface); font: 600 1rem var(--font); text-align: start; cursor: pointer; transition: background-color .18s, border-color .18s, color .18s, transform .22s cubic-bezier(.34, 1.56, .64, 1); }
+.pk-ch:active { transform: scale(.98); }
+.pk-ch.on { background: var(--brand-soft); border-color: var(--brand); color: var(--on-brand-soft); }
+.pk-ch:disabled { opacity: .45; }
+.pk-ch.chosen { animation: pk-chosen .34s cubic-bezier(.34, 1.56, .64, 1); }
+@keyframes pk-chosen { 45% { transform: scale(1.03); } }
+.pk-ol { flex: 1; line-height: 1.35; }
+.pk-dot { flex: none; width: 26px; height: 26px; border-radius: 50%; border: 2px solid var(--outline); display: grid; place-items: center; transition: background-color .18s, border-color .18s; }
+.pk-dot .i { width: 15px; height: 15px; color: #fff; stroke-width: 3; transform: scale(0); transition: transform .28s cubic-bezier(.34, 1.56, .64, 1); }
+.pk-ch.on .pk-dot { background: var(--brand); border-color: var(--brand); }
+.pk-ch.on .pk-dot .i { transform: scale(1); }
+.pk-chips { display: flex; flex-wrap: wrap; gap: 8px; }
+.pk-chip { display: inline-flex; align-items: center; gap: 7px; min-height: 46px; padding: 8px 16px; border-radius: 999px; border: 1.5px solid var(--line); background: var(--surface-2); color: var(--on-surface); font: 600 .95rem var(--font); cursor: pointer; transition: background-color .18s, border-color .18s, color .18s, transform .22s cubic-bezier(.34, 1.56, .64, 1); }
+.pk-chip .e { font-size: 1.2rem; line-height: 1; display: inline-block; transition: transform .32s cubic-bezier(.34, 1.56, .64, 1); }
+.pk-chip.on { background: var(--brand-soft); border-color: var(--brand); color: var(--on-brand-soft); }
+.pk-chip.on .e { transform: scale(1.2) rotate(-10deg); }
+.pk-chip:active { transform: scale(.95); }
+.pk-chip:disabled { opacity: .5; }
+.pk-chip.pop { animation: pk-chip-pop .4s cubic-bezier(.34, 1.56, .64, 1); }
+@keyframes pk-chip-pop { 40% { transform: scale(1.08); } }
+@media (prefers-reduced-motion: reduce) { .pk-ch.chosen, .pk-chip.pop, .pk-field.picked .v { animation: none; } }
 .dialog.pk { place-items: end center; padding: 0; z-index: 70; }
 .pk-card { background: var(--surface-1); width: 100%; max-width: 480px; border-radius: 26px 26px 0 0; padding: 0 16px calc(16px + var(--safe-b)); box-shadow: 0 -10px 40px rgba(0, 0, 0, .18); animation: pk-up .34s cubic-bezier(.2, .9, .3, 1.02); max-height: 94vh; overflow-y: auto; overscroll-behavior: contain; }
 /* The card scrolls (overflow) and has round corners. On Android Chrome, when its slide-up ends and it
@@ -1331,6 +1414,8 @@ body.fx .nav .fab:active { transform: scale(.9) rotate(90deg); }
 .sp-st.closed { background: var(--surface-3); color: var(--on-surface-var); }
 .sp-head { display: flex; gap: 10px; align-items: center; margin-bottom: 12px; }
 .sp-meta { line-height: 1.7; }
+.btn.text.danger-text { color: var(--bad); }
+.btn.text.danger-text:disabled { opacity: .5; }
 
 /* what's new */
 .wn { display: flex; gap: 12px; align-items: center; padding: 10px 4px; }
@@ -1399,7 +1484,9 @@ body:not(.fx) .aurora i, body:not(.fx) .hh-dial::before, body:not(.fx) .home-act
 /* ---------------- behaviour ---------------- */
 /* messages at the bottom never block taps: an invisible (or visible) message used to sit on top of the buttons
    under it (the + menu's last tile, a screen's Next button). Only its own action button takes taps. */
-.toast { pointer-events: none; visibility: hidden; transition: transform .25s var(--ease), opacity .25s var(--ease), visibility 0s linear .25s; }
+/* a note keeps one compositing layer of its own (will-change): when a new note's text slid in over one still showing,
+   the note was given a layer for that moment and drew see-through for a frame (a blink of the dark box) */
+.toast { pointer-events: none; visibility: hidden; will-change: transform, opacity; transition: transform .25s var(--ease), opacity .25s var(--ease), visibility 0s linear .25s; }
 .toast.show { visibility: visible; transition: transform .25s var(--ease), opacity .25s var(--ease), visibility 0s; }
 .toast.show .act { pointer-events: auto; color: hsl(var(--h) 90% 82%); }
 /* with a sheet or a full-screen step open, messages show at the top, away from its buttons */
@@ -1456,10 +1543,41 @@ body.fx .chart[data-anim].in .bar, body.fx .chart[data-anim].in .ln, body.fx .ch
 .aurora i:nth-child(n), .hh-dial::before, .home-action .btn.start::after, .recap-card::after, .rc-spark, .pulse { animation-delay: var(--ph, 0ms); }
 
 /* ---------- settings search ---------- */
-.set-search { position: relative; display: block; margin: 4px 0 10px; }
-.set-search svg { position: absolute; inset-inline-start: 14px; top: 50%; transform: translateY(-50%); color: var(--on-surface-var); pointer-events: none; }
-.set-search .input { padding-inline-start: 40px; }
-#set-none { padding: 18px 8px; }
+.set-search { position: relative; display: block; margin: 4px 0 12px; }
+.set-search > svg { position: absolute; inset-inline-start: 14px; top: 50%; transform: translateY(-50%); color: var(--on-surface-var); pointer-events: none; }
+.set-search .input { padding-inline-start: 40px; padding-inline-end: 44px; }
+.set-search .set-clear[hidden] { display: none; }
+.set-search .set-clear { position: absolute; inset-inline-end: 6px; top: 50%; transform: translateY(-50%); width: 36px; height: 36px; }
+/* problems people come with: a row of chips that scrolls sideways */
+.set-chips { display: flex; gap: 8px; overflow-x: auto; scrollbar-width: none; margin: 0 -16px 14px; padding: 2px 16px 4px; scroll-padding-inline: 16px; }
+.set-chips::-webkit-scrollbar { display: none; }
+.set-chip { flex: none; display: inline-flex; align-items: center; gap: 6px; min-height: 40px; padding: 6px 14px 6px 12px; border-radius: 999px; border: 1px solid var(--line); background: var(--surface-1); color: var(--on-surface); font: 600 .84rem var(--font); white-space: nowrap; cursor: pointer; box-shadow: var(--sh-1); transition: transform .2s var(--pop); }
+.set-chip svg { width: 16px; height: 16px; flex: none; }
+.set-chip.t-violet svg { color: var(--violet); } .set-chip.t-mint svg { color: var(--mint); } .set-chip.t-amber svg { color: var(--amber); }
+.set-chip.t-sky svg { color: var(--sky); } .set-chip.t-pink svg { color: var(--pink); } .set-chip.t-orange svg { color: var(--orange); }
+.set-chip:active { transform: scale(.95); }
+/* the doors: two by two, each with its colour, what is behind it and how many */
+.set-cats { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin: 4px 0 18px; }
+.set-cat { position: relative; display: flex; flex-direction: column; align-items: flex-start; gap: 6px; min-height: 118px; padding: 14px; border-radius: 20px; border: 1px solid var(--line); background: var(--surface-1); color: var(--on-surface); text-align: start; cursor: pointer; box-shadow: var(--sh-1); transition: transform .22s var(--pop); overflow: hidden; }
+.set-cat .itile { width: 44px; height: 44px; border-radius: 14px; }
+.set-cat .t { font: 800 .98rem/1.25 var(--display, var(--font)); }
+.set-cat .s { font-size: .78rem; line-height: 1.35; color: var(--on-surface-var); display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+.set-cat .n { position: absolute; top: 12px; inset-inline-end: 12px; min-width: 22px; height: 22px; padding: 0 6px; border-radius: 11px; background: var(--surface-2); color: var(--on-surface-var); font: 700 .72rem/22px var(--font); text-align: center; }
+.set-cat:active { transform: scale(.96); }
+.view.first .set-cat { animation: rise .5s cubic-bezier(.2, .8, .2, 1) both; animation-delay: calc(var(--i) * 35ms + 60ms); }
+.view.first .set-chips { animation: rise .5s cubic-bezier(.2, .8, .2, 1) both; animation-delay: .03s; }
+.set-cat-head { display: flex; align-items: center; gap: 12px; margin: 0 2px 12px; }
+.set-cat-head .itile { width: 48px; height: 48px; border-radius: 15px; }
+/* search results: a problem with where its answer is, then the settings found */
+.set-prob { margin-bottom: 12px; }
+.set-prob-t { font-weight: 800; margin: 2px 4px 8px; }
+.set-prob .item.prob .lead { background: var(--mint-soft); color: var(--mint); }
+.set-none { display: flex; align-items: center; gap: 12px; padding: 14px 6px 16px; }
+#set-res .section-title svg { width: 16px; height: 16px; vertical-align: -3px; }
+/* the field a search led to lights up for a moment */
+.set-hl { animation: set-hl 2.1s ease-out; border-radius: 14px; }
+@keyframes set-hl { 0%, 35% { box-shadow: 0 0 0 3px var(--brand), 0 0 0 9px var(--brand-soft); background-color: var(--brand-soft); } 100% { box-shadow: 0 0 0 0 transparent; } }
+@media (prefers-reduced-motion: reduce) { .view.first .set-cat, .view.first .set-chips { animation: none; } }
 
 /* ---------- saving up (home) ---------- */
 .save-card { display: grid; gap: 8px; width: 100%; margin: 0 0 14px; padding: 14px 16px; border-radius: 18px; border: 1px solid var(--line); background: var(--surface-1); box-shadow: var(--sh-1); color: var(--on-surface); font: inherit; text-align: start; cursor: pointer; }
@@ -2259,17 +2377,39 @@ body.fx .pp-pop:not(.done) .pp-row { animation: pp-in .34s cubic-bezier(.2, .9, 
 .pp-field > svg { flex: none; width: 18px; height: 18px; color: var(--on-surface-var); }
 body.fx .pp-field.just .pp-fpic { animation: pp-boing .5s cubic-bezier(.2, .9, .3, 1.4); }
 
+/* the on-screen keyboard (ui.js sets --kb, --vvh and html.kb-open): a sheet fits the visible part, its bottom (the
+   send / save button) right above the keyboard; the first steps' "next" too */
+html.kb-open .sheet { bottom: var(--kb); max-height: calc(var(--vvh) - 8px); }
+html.kb-open .sheet.full { height: calc(var(--vvh) - 8px); }
+html.kb-open .wizard .foot { bottom: var(--kb); }
+.btn[aria-disabled="true"] { opacity: .55; }
+/* the calendar's "today": today's square gives a little hop */
+.cal-today-btn { gap: 4px; }
+body.fx .cal-day.hello, body.fx .week-row.hello { animation: cal-hello .55s cubic-bezier(.2, .9, .3, 1.5); }
+@keyframes cal-hello { 0% { transform: scale(1); } 35% { transform: scale(1.18); } 100% { transform: none; } }
+/* an unfit word in a field (app.js): a red edge and a quiet note under it */
+.input.unclean, textarea.unclean { border-color: var(--danger, #d93a3a) !important; }
+.unclean-hint { font-size: .78rem; color: var(--danger, #d93a3a); margin: 4px 4px 0; }
+
 </style>
 </head>
 <body>
 <div id="intro" aria-hidden="true">
+  <div class="intro-glow"></div>
+  <div class="intro-flash"></div>
   <div class="intro-stage">
     <div class="intro-mark">
-      <svg class="intro-logo" viewBox="0 0 1024 1024"><path class="g" pathLength="1" d="M300 660 A258 258 0 0 1 603 271 L603 600"/><path class="y" pathLength="1" d="M420 422 L420 753 A258 258 0 0 0 720 362"/></svg>
+      <div class="intro-dial"><i style="--k:0"></i><i style="--k:1"></i><i style="--k:2"></i><i style="--k:3"></i><i style="--k:4"></i><i style="--k:5"></i><i style="--k:6"></i><i style="--k:7"></i><i style="--k:8"></i><i style="--k:9"></i><i style="--k:10"></i><i style="--k:11"></i></div>
+      <div class="intro-wave"></div><div class="intro-wave w2"></div>
+      <svg class="intro-logo intro-ghost g2" viewBox="0 0 1024 1024"><path class="g" d="M300 660 A258 258 0 0 1 603 271 L603 600"/><path class="y" d="M420 422 L420 753 A258 258 0 0 0 720 362"/></svg>
+      <svg class="intro-logo intro-ghost g1" viewBox="0 0 1024 1024"><path class="g" d="M300 660 A258 258 0 0 1 603 271 L603 600"/><path class="y" d="M420 422 L420 753 A258 258 0 0 0 720 362"/></svg>
+      <svg class="intro-logo main" viewBox="0 0 1024 1024"><path class="g" pathLength="1" d="M300 660 A258 258 0 0 1 603 271 L603 600"/><path class="y" pathLength="1" d="M420 422 L420 753 A258 258 0 0 0 720 362"/></svg>
+      <div class="intro-sparks"></div>
       <div class="intro-coins"></div>
     </div>
-    <div class="intro-word">Shaati</div>
+    <div class="intro-word"><span style="--k:0">S</span><span style="--k:1">h</span><span style="--k:2">a</span><span style="--k:3">a</span><span style="--k:4">t</span><span style="--k:5">i</span></div>
     <div class="intro-sub">מעקב משמרות ושכר</div>
+    <div class="intro-twinkles"><i style="left:8%;top:62%;--d:0ms"></i><i style="right:6%;top:58%;--d:90ms"></i><i style="left:22%;top:96%;--d:160ms"></i><i style="right:20%;top:2%;--d:230ms"></i><i style="left:2%;top:10%;--d:300ms"></i></div>
   </div>
 </div>
 <div id="app"><main id="view"><div class="view"></div></main></div>
@@ -2277,8 +2417,8 @@ body.fx .pp-field.just .pp-fpic { animation: pp-boing .5s cubic-bezier(.2, .9, .
 <div id="print-root" aria-hidden="true"></div>
 <noscript><div style="padding:24px;font-family:sans-serif">האפליקציה דורשת JavaScript.</div></noscript>
 <script>
-window.APP_VERSION = '1.19.0';
-window.APP_BUILD = '1.19.0-c8e8e79f';
+window.APP_VERSION = '1.20.0';
+window.APP_BUILD = '1.20.0-b96c0386';
 /* ---- core/util.js ---- */
 /* ============================================================
  * util.js — date/time helpers and formatting.
@@ -2435,6 +2575,80 @@ window.APP_BUILD = '1.19.0-c8e8e79f';
     weekStart, rangeKeys, inRange, clamp, round2, sum, money, num, hours, hm, fmtDate, fmtMonth, pct,
     HEB_MONTHS, HEB_DAYS, HEB_DAYS_SHORT,
   };
+})(typeof window !== 'undefined' ? window : globalThis);
+
+/* ---- core/clean.js ---- */
+/* ============================================================
+ * clean.js — keeping what people type clean: names, jobs, workplaces, notes, reasons, nicknames.
+ *
+ * Words are checked whole, not as pieces of other words ("מזין נתונים" is fine, "כוס קפה" is fine), after a
+ * Hebrew prefix (ו, ה, ב, ל, מ, ש, כ and pairs of them) is taken off. The usual tricks are seen through:
+ * niqqud, final letters, a letter typed many times ("זייייין"), dots or spaces between the letters of a long
+ * word ("ש.ר.מ.ו.ט.ה"), digits and symbols for letters ("sh1t", "f*ck"). Short words are matched only whole,
+ * so a real word that merely contains one is never refused.
+ * ============================================================ */
+(function (root) {
+  'use strict';
+  const FINAL = { 'ך': 'כ', 'ם': 'מ', 'ן': 'נ', 'ף': 'פ', 'ץ': 'צ' };
+  const LEET = { '0': 'o', '1': 'i', '3': 'e', '4': 'a', '5': 's', '7': 't', '@': 'a', '$': 's', '!': 'i' };
+  /** Lower case, no niqqud, final letters as plain ones, digits and symbols read as the letters they stand for. */
+  function norm(s) {
+    return String(s || '').toLowerCase().normalize('NFKD')
+      .replace(/[֑-ׇ]/g, '')
+      .replace(/[ךםןףץ]/g, (c) => FINAL[c])
+      .replace(/[0134578@$!]/g, (c) => LEET[c] || c);
+  }
+  const squeeze = (w) => w.replace(/(.)\1+/g, '$1'); // "זייייין" → "זין", "fuuuck" → "fuck"
+
+  // whole words (each written normalised and squeezed)
+  const HE = ['זין', 'זינ', 'זיון', 'זיונ', 'לזינ', 'מזדינ', 'תזדינ', 'הזדינ', 'זדינ', 'כוסית', 'כוסיות', 'כוסאמק', 'כוסעמק', 'כוסאמא', 'כוסאמכ',
+    'שרמוטה', 'שרמוט', 'שרמוטות', 'זונה', 'זונות', 'בנזונה', 'מניאק', 'מניאקית', 'מניאקים', 'חרא', 'חארה', 'קוקסינל', 'מזדינת', 'זנזונת',
+    'מפגר', 'מפגרת', 'מפגרים', 'דביל', 'דבילית', 'אידיוט', 'אידיוטית', 'מטומטמ', 'מטומטמת', 'פוסטמה', 'חמאר'];
+  // (left out on purpose, for the jobs and notes they belong to: זבל, מוצץ, שתן, כלבה, בהמה, כוס, תחת, Niger)
+  const EN = ['fuck', 'fuk', 'fck', 'fucker', 'fucking', 'motherfucker', 'shit', 'shitty', 'bitch', 'bitches', 'cunt', 'dick', 'dickhead', 'cock', 'pussy',
+    'asshole', 'ashole', 'bastard', 'slut', 'whore', 'nigger', 'nigga', 'faggot', 'fag', 'retard', 'retarded', 'porn', 'porno', 'boobs',
+    'tits', 'wanker', 'twat', 'hitler', 'nazi'];
+  // phrases of two words (some are fine word by word: "כוס" is also a cup)
+  const PHRASES = [['כוס', 'אמק'], ['כוס', 'אמכ'], ['כוס', 'עמק'], ['כוס', 'אמא'], ['בנ', 'זונה'], ['יא', 'זונה'], ['בת', 'זונה'], ['son', 'of', 'a', 'bitch']];
+  // as written, and with doubled letters collapsed (that form is used only for a word typed with doubled
+  // letters: "זייייין"; squeezing everything made "Niger" the same as a slur)
+  const RAW = new Set(HE.concat(EN));
+  const SQ = new Set(HE.concat(EN).map(squeeze));
+  const LONG = [...RAW].filter((w) => w.length >= 5); // also found with dots or spaces between the letters
+  const PREFIX = /^(וש|וה|וב|ול|ומ|שה|שב|של|שמ|כש|מה|לה|בה|ו|ה|ב|ל|מ|ש|כ)(?=..)/;
+
+  // a prefix comes off only to reveal a word of 4 letters or more: a short one inside a real word ("מזין",
+  // "הזין נתונים") is never taken for a bad word
+  function wordBad(w) {
+    if (!w) return false;
+    const doubled = /(.)\1/.test(w);
+    const is = (x) => RAW.has(x) || (doubled && SQ.has(squeeze(x)));
+    if (is(w)) return true;
+    const p = w.replace(PREFIX, '');
+    if (p !== w && p.length >= 4 && is(p)) return true;
+    const p2 = p.replace(PREFIX, '');
+    return p2 !== p && p2.length >= 4 && is(p2);
+  }
+
+  /** True when the text is clean (empty text is clean). */
+  function isClean(text) {
+    const n = norm(text);
+    if (!n.trim()) return true;
+    const words = n.split(/[^א-תa-z*]+/).map((w) => w.replace(/\*/g, '')).filter(Boolean);
+    if (words.some(wordBad)) return false;
+    for (const ph of PHRASES) {
+      for (let i = 0; i + ph.length <= words.length; i++) {
+        if (ph.every((x, j) => words[i + j] === x || squeeze(words[i + j]) === x || words[i + j].replace(PREFIX, '') === x)) return false;
+      }
+    }
+    // a long bad word spelled with something between its letters ("ש.ר.מ.ו.ט.ה", "f u c k i n g")
+    const joined = squeeze(n.replace(/[^א-תa-z]+/g, ''));
+    const spaced = /[א-תa-z][^א-תa-z]+[א-תa-z][^א-תa-z]+[א-תa-z]/.test(n);
+    if (spaced && LONG.some((w) => joined.includes(w))) return false;
+    return true;
+  }
+
+  root.Clean = { isClean, norm };
 })(typeof window !== 'undefined' ? window : globalThis);
 
 /* ---- core/places-data.js ---- */
@@ -4479,7 +4693,7 @@ window.APP_BUILD = '1.19.0-c8e8e79f';
   function hasOverrides(shift) {
     const o = shift.overrides;
     if (!o) return false;
-    return !!(o.rate || o.rest || o.ot || o.night || o.travel);
+    return !!(o.rate || o.rest || o.ot || o.night || o.travel || o.special);
   }
 
   /**
@@ -4517,7 +4731,7 @@ window.APP_BUILD = '1.19.0-c8e8e79f';
       ? dailyWindows(start, end, emp.nightFrom || '22:00', emp.nightTo || '06:00') : [];
     const lawNight = dailyWindows(start, end, '22:00', '06:00');
     // Did a manual day rule (bulk cancel / force) change the rest windows of this shift?
-    let dayRuleHit = false;
+    let dayRuleHit = false; // (also set below when a day's special rate applies)
     if (!ignoreRules && (ctx.dayRules || []).length) {
       const raw = HebCal.restWindows(U.addDays(dk, -1), U.addDays(U.epochKey(end), 1), ctx.restCfg, true)
         .filter((w) => w.end > start && w.start < end).map((w) => w.start + '-' + w.end).join();
@@ -4538,6 +4752,9 @@ window.APP_BUILD = '1.19.0-c8e8e79f';
     evesAll.forEach(([s, e]) => { addB(s); addB(e); });
     nightIvs.forEach(([s, e]) => { addB(s); addB(e); });
     if (restRange) { addB(restRange[0]); addB(restRange[1]); }
+    // a day with a special rate (a calendar day rule) begins and ends at midnight
+    const pctRules = ignoreRules ? [] : (ctx.dayRules || []).filter((x) => x.type === 'pct' && +x.pct > 0);
+    pctRules.forEach((x) => { addB(U.toEpoch(x.date, '00:00')); addB(U.toEpoch(U.addDays(x.date, 1), '00:00')); });
     const bounds = [...bset].sort((a, b) => a - b);
 
     const autoRestIvs = wins.map((w) => [w.start, w.end]);
@@ -4619,6 +4836,19 @@ window.APP_BUILD = '1.19.0-c8e8e79f';
       return roleRate(ctx.roles.get(roleId), dk);
     };
 
+    /* ---- a special rate ----
+     * The shift's own (a manual override), or the day's (a calendar day rule, e.g. election day at 200%): every
+     * hour is paid at least that much; an hour already worth more (a Shabbat hour in overtime) keeps its own. */
+    const specialOv = ov.special && +ov.special.pct > 0 ? { pct: +ov.special.pct, reason: ov.special.reason || '' } : null;
+    const specialAt = (t) => {
+      if (specialOv) return specialOv;
+      if (!pctRules.length) return null;
+      const k = U.epochKey(t);
+      const r = pctRules.find((x) => x.date === k);
+      return r ? { pct: +r.pct, reason: r.reason || '', day: true } : null;
+    };
+    let specialPremium = 0, specialHours = 0, specialTop = null;
+
     /* ---- wage lines ---- */
     const groups = new Map();
     let base = 0, restPremium = 0, otPremium = 0, nightPremium = 0, evePremium = 0, seniority = 0;
@@ -4643,7 +4873,16 @@ window.APP_BUILD = '1.19.0-c8e8e79f';
       byRole[p.roleId] = byRole[p.roleId] || { hours: 0, amount: 0 };
       byRole[p.roleId].hours += h;
       byRole[p.roleId].amount += h * rate * pct / 100;
+      const sp = specialAt((p.a + p.b) / 2);
+      if (sp && sp.pct > pct) {
+        const up = h * rate * (sp.pct - pct) / 100;
+        specialPremium += up;
+        specialHours += h;
+        byRole[p.roleId].amount += up;
+        if (!specialTop || sp.pct > specialTop.pct) specialTop = sp;
+      }
     }
+    if (specialTop && specialTop.day) dayRuleHit = true;
     // night premium
     const nightOv = ov.night || null;
     const nightOn = emp.nightEnabled || (nightOv && (nightOv.mode === 'all' || nightOv.mode === 'pct'));
@@ -4679,6 +4918,7 @@ window.APP_BUILD = '1.19.0-c8e8e79f';
     if (nightPremium > 0) extras.push({ kind: 'night', label: 'תוספת לילה', detail: U.hours(hoursBy.night) + ' ש׳', amount: nightPremium });
     if (evePremium > 0) extras.push({ kind: 'eve', label: 'תוספת ערב שבת/חג', detail: U.hours(hoursBy.eve) + ' ש׳ × ' + emp.evePct + '%', amount: evePremium });
     if (seniority > 0) extras.push({ kind: 'seniority', label: 'תוספת ותק', detail: '', amount: seniority });
+    if (specialPremium > 0) extras.push({ kind: 'special', label: `תעריף מיוחד ${specialTop.pct}%${specialTop.reason ? ' · ' + specialTop.reason : ''}`, detail: U.hours(specialHours) + ' ש׳, ההפרש מעבר לתעריף הרגיל', amount: specialPremium });
 
     // minimum paid hours per shift
     let minTopUp = 0;
@@ -4721,6 +4961,7 @@ window.APP_BUILD = '1.19.0-c8e8e79f';
       }
     }
     if (ov.rate && +ov.rate.rate > 0) overrideList.push('תעריף ידני ' + U.money(+ov.rate.rate));
+    if (specialOv) overrideList.push('תעריף מיוחד ' + specialOv.pct + '%');
 
     /* ---- travel ---- */
     let travel = { mode: 'auto', amount: +emp.travelPerDay || 0 };
@@ -4740,7 +4981,7 @@ window.APP_BUILD = '1.19.0-c8e8e79f';
       else if (it.type === 'deduction') deductions += a;
     }
 
-    const wage = base + restPremium + otPremium + nightPremium + evePremium + seniority + minTopUp + adjust;
+    const wage = base + restPremium + otPremium + nightPremium + evePremium + seniority + minTopUp + adjust + specialPremium;
     const restLabels = [...new Set(slices.filter((s) => s.rest && s.winLabel).map((s) => s.winLabel))];
     const autoRestRange = wins.length ? { from: Math.max(start, wins[0].start), to: Math.min(end, wins[wins.length - 1].end) } : null;
     const autoRestMin = slices.filter((s) => s.autoRest).reduce((m, s) => m + s.min, 0);
@@ -4752,7 +4993,7 @@ window.APP_BUILD = '1.19.0-c8e8e79f';
       start, end, rawEnd, elapsedMin, roundedMin, roundingDeltaMin: roundedMin - Math.round(elapsedMin),
       breakMin, breakPaid, breakAuto, breakShort, paidMin, paidHours: paidMin / 60,
       segments: segs, slices, pieces, lines, extras,
-      base, restPremium, otPremium, nightPremium, evePremium, seniority, minTopUp, adjust,
+      base, restPremium, otPremium, nightPremium, evePremium, seniority, minTopUp, adjust, specialPremium, specialHours,
       wage, hoursBy, byRole,
       restHours: hoursBy.rest + hoursBy.restOt1 + hoursBy.restOt2,
       otHours: hoursBy.ot1 + hoursBy.ot2 + hoursBy.restOt1 + hoursBy.restOt2,
@@ -4772,7 +5013,7 @@ window.APP_BUILD = '1.19.0-c8e8e79f';
       id: shift.id, kind: 'shift', dateKey: dk, employerId: shift.employerId, status: shift.status || 'done',
       start: shift.start, end: shift.end, rawEnd: shift.end, elapsedMin: 0, roundedMin: 0, roundingDeltaMin: 0, breakMin: 0, breakPaid: true, breakAuto: false, breakShort: false,
       paidMin: 0, paidHours: 0, segments: [], slices: [], pieces: [], lines: [], extras: [],
-      base: 0, restPremium: 0, otPremium: 0, nightPremium: 0, evePremium: 0, seniority: 0, minTopUp: 0, adjust: 0, wage: 0,
+      base: 0, restPremium: 0, otPremium: 0, nightPremium: 0, evePremium: 0, seniority: 0, minTopUp: 0, adjust: 0, specialPremium: 0, specialHours: 0, wage: 0,
       hoursBy: { regular: 0, ot1: 0, ot2: 0, rest: 0, restOt1: 0, restOt2: 0, night: 0, eve: 0 }, byRole: {},
       restHours: 0, otHours: 0, nightHours: 0, lawNightHours: 0, isNightShift: false, travel: { mode: 'none', amount: 0 },
       bonus: 0, tips: 0, additions: 0, deductions: 0, total: 0, restLabels: [], autoRestRange: null, autoRestMin: 0,
@@ -5023,7 +5264,7 @@ window.APP_BUILD = '1.19.0-c8e8e79f';
 
   function emptyTotals() {
     return {
-      hours: 0, shifts: 0, wage: 0, base: 0, restPremium: 0, otPremium: 0, nightPremium: 0, evePremium: 0, seniority: 0, minTopUp: 0, adjust: 0,
+      hours: 0, shifts: 0, wage: 0, base: 0, restPremium: 0, otPremium: 0, nightPremium: 0, evePremium: 0, seniority: 0, minTopUp: 0, adjust: 0, specialPremium: 0,
       travel: 0, travelRaw: 0, bonus: 0, tips: 0, additions: 0, deductions: 0, leavePay: 0, vacationDays: 0, sickDays: 0,
       hoursBy: { regular: 0, ot1: 0, ot2: 0, rest: 0, restOt1: 0, restOt2: 0, night: 0, eve: 0 },
       byRole: {}, workDays: 0, days: 0, dayTotals: {}, longest: null, bestDay: null, overridden: 0, nightShifts: 0, nightAll: 0,
@@ -5044,7 +5285,7 @@ window.APP_BUILD = '1.19.0-c8e8e79f';
       t.shifts++;
       t.hours += r.paidHours;
       t.wage += r.wage; t.base += r.base; t.restPremium += r.restPremium; t.otPremium += r.otPremium;
-      t.nightPremium += r.nightPremium; t.evePremium += r.evePremium; t.seniority += r.seniority; t.minTopUp += r.minTopUp; t.adjust += r.adjust;
+      t.nightPremium += r.nightPremium; t.evePremium += r.evePremium; t.seniority += r.seniority; t.minTopUp += r.minTopUp; t.adjust += r.adjust; t.specialPremium += r.specialPremium || 0;
       t.bonus += r.bonus; t.tips += r.tips; t.additions += r.additions; t.deductions += r.deductions;
       for (const k in r.hoursBy) t.hoursBy[k] += r.hoursBy[k];
       for (const id in r.byRole) {
@@ -6789,7 +7030,7 @@ window.APP_BUILD = '1.19.0-c8e8e79f';
       movies: Math.floor(t.hours / 2),
     });
     if (t.bestDay && t.bestDay.amount > 0 && t.shifts > 1) slides.push({ k: 'best', key: t.bestDay.key, amount: r2(t.bestDay.amount) });
-    const extras = (t.restPremium || 0) + (t.otPremium || 0) + (t.nightPremium || 0) + (t.evePremium || 0);
+    const extras = (t.restPremium || 0) + (t.otPremium || 0) + (t.nightPremium || 0) + (t.evePremium || 0) + (t.specialPremium || 0);
     if (extras >= 1) slides.push({ k: 'extras', amount: r2(extras), restHours: r2(t.restHours || 0), otHours: r2(t.otHours || 0), travel: r2(t.travel || 0) });
     else if ((t.travel || 0) >= 1) slides.push({ k: 'travel', amount: r2(t.travel) });
     const roles = Object.entries(t.byRole || {}).filter(([, v]) => v.hours > 0).sort((a, b) => b[1].hours - a[1].hours);
@@ -6857,7 +7098,7 @@ window.APP_BUILD = '1.19.0-c8e8e79f';
       add(slots.get(slotOf(r.start).id), r);
       const m = months.get(r.dateKey.slice(0, 7));
       if (m) add(m, r);
-      premiums += (r.otPremium || 0) + (r.restPremium || 0) + (r.nightPremium || 0) + (r.evePremium || 0);
+      premiums += (r.otPremium || 0) + (r.restPremium || 0) + (r.nightPremium || 0) + (r.evePremium || 0) + (r.specialPremium || 0);
       if (!bestShift || r.total > bestShift.total) bestShift = r;
       if (!longest || r.paidHours > longest.paidHours) longest = r;
     }
@@ -6976,6 +7217,7 @@ window.APP_BUILD = '1.19.0-c8e8e79f';
     const words = t.toLowerCase().split(/[\s_.-]+/);
     const low = words.join('');
     if (BAD.some((w) => (w.length <= 3 ? words.includes(w) : low.includes(w)))) return 'הכינוי הזה לא מתאים לטבלה';
+    if (root.Clean && !root.Clean.isClean(t)) return 'הכינוי הזה לא מתאים לטבלה';
     // nobody may look like the app's own team
     if (STAFF.some((w) => low.includes(w))) return 'כינוי שנראה כמו צוות האפליקציה שמור';
     return '';
@@ -7029,6 +7271,7 @@ window.APP_BUILD = '1.19.0-c8e8e79f';
     copy: '<rect x="9" y="9" width="12" height="12" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/>',
     left: '<path d="m15 18-6-6 6-6"/>',
     right: '<path d="m9 18 6-6-6-6"/>',
+    chevdown: '<path d="m6 9 6 6 6-6"/>',
     x: '<path d="M18 6 6 18M6 6l12 12"/>',
     check: '<path d="M20 6 9 17l-5-5"/>',
     receipt: '<path d="M5 2v20l2-1.5L9 22l2-1.5L13 22l2-1.5L17 22l2-1.5V2l-2 1.5L15 2l-2 1.5L11 2 9 3.5 7 2z"/><path d="M9 8h6M9 12h6M9 16h4"/>',
@@ -7137,8 +7380,9 @@ window.APP_BUILD = '1.19.0-c8e8e79f';
     if (!el) { el = document.createElement('div'); el.id = 'toast'; el.className = 'toast'; el.setAttribute('role', 'status'); document.body.appendChild(el); }
     const wasShown = el.classList.contains('show');
     el.innerHTML = (opts && opts.ok ? TICK : '') + `<div style="flex:1">${esc(text)}</div>` + (action ? `<button class="act">${esc(action.label)}</button>` : '');
-    // a new note over one still showing: its text comes in softly (swapped at once, it was a hard cut)
-    if (wasShown && root.Fx && root.Fx.motion() && el.animate) for (const c of el.children) c.animate([{ opacity: 0, transform: 'translateY(6px)' }, { opacity: 1, transform: 'none' }], { duration: 220, easing: 'ease-out' });
+    // a new note over one still showing: the box gives a little bump (its own layer, its own transform). Sliding
+    // the new text in instead made the whole box draw see-through for a frame now and then (a blink)
+    if (wasShown && root.Fx && root.Fx.motion() && el.animate) el.animate([{ transform: 'scale(.96)' }, { transform: 'scale(1.015)', offset: 0.6 }, { transform: 'none' }], { duration: 240, easing: 'ease-out' });
     if (action) el.querySelector('.act').onclick = () => { hideToast(); action.fn(); };
     requestAnimationFrame(() => el.classList.add('show'));
     clearTimeout(toastTimer);
@@ -7302,6 +7546,8 @@ window.APP_BUILD = '1.19.0-c8e8e79f';
         const btn = opts.buttons[+b.dataset.i];
         const v = btn.value !== undefined ? btn.value : +b.dataset.i;
         const input = el.querySelector('input,textarea,select');
+        // value 'form': every named field, as an object ({ pct: '200', reason: '' })
+        if (btn.value === 'form') { const o = {}; el.querySelectorAll('[name]').forEach((x) => { o[x.name] = x.value; }); done(o); return; }
         done(btn.value === 'input' ? (input ? input.value : null) : v);
       }));
       el.querySelector('.backdrop').onclick = () => done(null);
@@ -7391,6 +7637,34 @@ window.APP_BUILD = '1.19.0-c8e8e79f';
   function invalid(text) { toast(text); if (root.Fx) root.Fx.nope(); }
   /** An icon in a soft coloured tile (violet, mint, amber, sky, pink, orange, white). */
   const tile = (name, tint, cls) => `<span class="itile t-${tint || 'violet'} ${cls || ''}" aria-hidden="true">${icon(name)}</span>`;
+  /*
+   * The on-screen keyboard. On Android the page stays its full height under the keyboard, so a sheet's bottom (its
+   * "send" or "save" button) and the first steps' "next" were hidden behind it while typing. --kb is the keyboard's
+   * height (what of the page lies under it) and --vvh the visible height; html.kb-open moves those bottoms above
+   * the keyboard (styles-v3.css). Updated once a frame while the keyboard slides.
+   */
+  (function keyboard() {
+    const vv = root.visualViewport;
+    if (!vv) return;
+    const de = document.documentElement;
+    let raf = 0, last = '';
+    const fit = () => {
+      raf = 0;
+      const kb = Math.max(0, Math.round(root.innerHeight - vv.height - vv.offsetTop));
+      const open = kb > 80;
+      const key = kb + '|' + Math.round(vv.height);
+      if (key === last) return;
+      last = key;
+      de.style.setProperty('--kb', (open ? kb : 0) + 'px');
+      de.style.setProperty('--vvh', Math.round(vv.height) + 'px');
+      if (open !== de.classList.contains('kb-open')) de.classList.toggle('kb-open', open);
+    };
+    const later = () => { if (!raf) raf = requestAnimationFrame(fit); };
+    vv.addEventListener('resize', later);
+    vv.addEventListener('scroll', later);
+    fit();
+  })();
+
   root.UI = { pushLayer, closeLayer, tile, skeleton, invalid, icon, esc, money, numv, delta, roleDot, emptyState, toast, openSheet, closeTop, closeAll, dialog, confirm, promptText, onSwipe, vibrate, download, shareFile, copyText, numIn, timeAgo, sheets };
 })(typeof window !== 'undefined' ? window : globalThis);
 
@@ -7703,12 +7977,47 @@ window.APP_BUILD = '1.19.0-c8e8e79f';
     });
   }
 
+  /* ---------------- a list of choices (the app's own <select>) ---------------- */
+  /**
+   * opts: { title, value, options: [{ value, label, disabled }] }
+   * Resolves with the value chosen, or null when closed without choosing.
+   */
+  function pickOption(opts) {
+    const list = opts.options || [];
+    const cur = String(opts.value);
+    const inner = `<div class="pk-choices" role="listbox" aria-label="${esc(opts.title || '')}">${list.map((o, i) => {
+      const on = String(o.value) === cur;
+      return `<button type="button" class="pk-ch ${on ? 'on' : ''}" role="option" aria-selected="${on}" data-i="${i}" style="--i:${Math.min(i, 10)}" ${o.disabled ? 'disabled' : ''}><span class="pk-dot" aria-hidden="true">${icon('check', 's')}</span><span class="pk-ol">${esc(o.label)}</span></button>`;
+    }).join('')}</div>`;
+    return host(opts.title || 'בחירה', inner, (el, finish) => {
+      const box = el.querySelector('.pk-choices');
+      const on = box.querySelector('.pk-ch.on');
+      if (on) on.scrollIntoView({ block: 'nearest' });
+      let chose = false;
+      box.addEventListener('click', (e) => {
+        const b = e.target.closest('.pk-ch');
+        if (!b || b.disabled || chose) return;
+        chose = true; // one tap chooses: a second tap while it closes changes nothing
+        box.classList.add('done');
+        box.querySelectorAll('.pk-ch').forEach((x) => { x.classList.toggle('on', x === b); x.setAttribute('aria-selected', String(x === b)); });
+        b.classList.add('chosen');
+        if (Fx()) { Fx().play('pick'); Fx().haptic && Fx().haptic(8); }
+        setTimeout(() => finish(list[+b.dataset.i].value), 190);
+      });
+    });
+  }
+
   /* ---------------- turning the native inputs into picker buttons ---------------- */
   const valueDesc = Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, 'value');
   function labelOf(input) {
     const f = input.closest('.field, label');
     const l = f && f.querySelector('.lbl');
-    return (l && l.textContent.trim()) || input.getAttribute('aria-label') || '';
+    if (l && l.textContent.trim()) return l.textContent.trim();
+    if (input.getAttribute('aria-label')) return input.getAttribute('aria-label');
+    // a field inside a titled block (the shift editor's manual overrides): the block's title
+    const block = input.closest('.ov-block');
+    const t = block && block.querySelector('.ov-head .t');
+    return t && t.firstChild ? t.firstChild.textContent.trim() : '';
   }
   function enhance(input) {
     if (input.dataset.pk) return;
@@ -7747,15 +8056,95 @@ window.APP_BUILD = '1.19.0-c8e8e79f';
     input.after(btn);
     render();
   }
+  /* <select>: a button with the choice that opens the list above (or, with data-ui="chips", the choices as chips
+     right there). The real select stays hidden and keeps the value, so the screens that read it don't change;
+     setting .value or .selectedIndex from code updates what is shown. */
+  const selValue = Object.getOwnPropertyDescriptor(HTMLSelectElement.prototype, 'value');
+  const selIndex = Object.getOwnPropertyDescriptor(HTMLSelectElement.prototype, 'selectedIndex');
+  function watchValue(sel, render) {
+    Object.defineProperty(sel, 'value', { configurable: true, get() { return selValue.get.call(this); }, set(v) { selValue.set.call(this, v); render(); } });
+    Object.defineProperty(sel, 'selectedIndex', { configurable: true, get() { return selIndex.get.call(this); }, set(v) { selIndex.set.call(this, v); render(); } });
+  }
+  function choose(sel, v) {
+    sel.value = v;
+    sel.dispatchEvent(new Event('input', { bubbles: true }));
+    sel.dispatchEvent(new Event('change', { bubbles: true }));
+  }
+  function enhanceSelect(sel) {
+    if (sel.dataset.pk) return;
+    sel.dataset.pk = 'select';
+    if (sel.dataset.ui === 'chips') { chipsFor(sel); return; }
+    const btn = document.createElement('button');
+    btn.type = 'button';
+    btn.className = 'input pk-field pk-select';
+    btn.setAttribute('aria-haspopup', 'listbox');
+    const render = () => {
+      const o = sel.options[sel.selectedIndex];
+      const text = o ? o.textContent.trim() : '';
+      btn.innerHTML = `<span class="${text ? 'v' : 'ph'}">${esc(text || 'בחירה')}</span>${icon('chevdown', 's')}`;
+      btn.disabled = sel.disabled;
+      btn.setAttribute('aria-label', (labelOf(sel) ? labelOf(sel) + ': ' : '') + (text || 'לא נבחר'));
+    };
+    watchValue(sel, render);
+    btn.addEventListener('click', async (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      if (sel.disabled || btn.dataset.open) return;
+      btn.dataset.open = '1'; // a double tap opens one list
+      const options = [...sel.options].map((o) => ({ value: o.value, label: o.textContent.trim(), disabled: o.disabled }));
+      const v = await pickOption({ title: labelOf(sel) || 'בחירה', value: sel.value, options });
+      delete btn.dataset.open;
+      if (v == null || v === sel.value) return;
+      choose(sel, v);
+      btn.classList.remove('picked'); void btn.offsetWidth; btn.classList.add('picked');
+    });
+    sel.classList.add('pk-native');
+    sel.tabIndex = -1;
+    sel.after(btn);
+    render();
+  }
+  // a few short choices, all in sight: chips that light up (an emoji from data-e on each option)
+  function chipsFor(sel) {
+    const wrap = document.createElement('div');
+    wrap.className = 'pk-chips';
+    wrap.setAttribute('role', 'radiogroup');
+    if (labelOf(sel)) wrap.setAttribute('aria-label', labelOf(sel));
+    wrap.innerHTML = [...sel.options].map((o, i) => `<button type="button" class="pk-chip" role="radio" data-i="${i}">${o.dataset.e ? `<span class="e" aria-hidden="true">${esc(o.dataset.e)}</span>` : ''}<span>${esc(o.textContent.trim())}</span></button>`).join('');
+    const render = () => wrap.querySelectorAll('.pk-chip').forEach((b) => {
+      const on = +b.dataset.i === sel.selectedIndex;
+      b.classList.toggle('on', on);
+      b.setAttribute('aria-checked', String(on));
+      b.disabled = sel.disabled;
+    });
+    watchValue(sel, render);
+    wrap.addEventListener('click', (e) => {
+      const b = e.target.closest('.pk-chip');
+      if (!b || sel.disabled) return;
+      e.preventDefault(); // inside a <label>: the tap stays on the chip
+      const o = sel.options[+b.dataset.i];
+      if (!o || o.value === sel.value) return;
+      choose(sel, o.value);
+      b.classList.remove('pop'); void b.offsetWidth; b.classList.add('pop');
+      if (Fx()) { Fx().play('on'); Fx().haptic && Fx().haptic(8); }
+    });
+    sel.classList.add('pk-native');
+    sel.tabIndex = -1;
+    sel.after(wrap);
+    render();
+  }
+
   const SEL = 'input[type="date"]:not([data-pk]), input[type="time"]:not([data-pk]), input[type="month"]:not([data-pk])';
-  function scan(rootEl) { (rootEl || document).querySelectorAll(SEL).forEach(enhance); }
+  function scan(rootEl) {
+    (rootEl || document).querySelectorAll(SEL).forEach(enhance);
+    (rootEl || document).querySelectorAll('select:not([data-pk])').forEach(enhanceSelect);
+  }
   const mo = new MutationObserver((list) => {
     for (const r of list) if (r.addedNodes.length) { scan(document.body); return; }
   });
   function start() { scan(document.body); mo.observe(document.body, { childList: true, subtree: true }); }
   if (document.body) start(); else document.addEventListener('DOMContentLoaded', start);
 
-  Object.assign(UI, { pickDate, pickMonth, pickTime, fmtPickDate: fmtDate });
+  Object.assign(UI, { pickDate, pickMonth, pickTime, pickOption, fmtPickDate: fmtDate });
 })(typeof window !== 'undefined' ? window : globalThis);
 
 /* ---- app/fx.js ---- */
@@ -8715,13 +9104,20 @@ window.APP_BUILD = '1.19.0-c8e8e79f';
 
 /* ---- app/intro.js ---- */
 /* ============================================================
- * intro.js — the opening animation (instead of a "loading" text).
- * The logo draws itself, spins like a clock hand, coins pop out and
- * the name rises; then it opens onto the app. It doubles as the
- * loading indicator: if the app needs more time, the logo keeps
- * turning. Tap to skip. Short version on later opens in the same
- * session, after the app was opened from a shortcut, or with effects
- * off / reduced motion. Markup and first frames live in index.html.
+ * intro.js — the opening show (instead of a "loading" text), about two seconds:
+ * the clock's twelve marks tick in, the logo draws itself and spins like a clock hand, it lands with a
+ * thump, a flash, two shockwaves, sparks and a burst of coins (cha-ching), the name pops in letter by
+ * letter (a note each, up a happy scale), a warm chord, and the logo flies at you as the app appears.
+ * It doubles as the loading indicator: if the app needs more time, the logo keeps turning. Tap to skip.
+ * Short version on later opens in the same session, after the app was opened from a shortcut, or with
+ * effects off / reduced motion. Markup and first frames live in index.html.
+ *
+ * Details that matter:
+ *  - every moving part is a transform or opacity (the compositor plays them even while the app is busy
+ *    starting up underneath); only the logo's own drawing is painted;
+ *  - the whole sound is scheduled at once on the audio clock, in step with the animation's timeline, so a
+ *    busy start-up never makes it late or ragged; only if the phone already allows sound (installed apps
+ *    usually do), never a late surprise.
  * ============================================================ */
 (function (root) {
   'use strict';
@@ -8731,13 +9127,13 @@ window.APP_BUILD = '1.19.0-c8e8e79f';
   const Intro = {};
   root.Intro = Intro;
   const started = performance.now();
-  let ready = false, played = false, closed = false;
+  let ready = false, played = false, closed = false, master = null;
 
   let seen = false;
   try { seen = sessionStorage.getItem('introSeen') === '1'; sessionStorage.setItem('introSeen', '1'); } catch (e) { /* ignore */ }
   const fromShortcut = /[?&]action=/.test(location.search);
   const full = !seen && !fromShortcut && Fx.motion();
-  const SEQUENCE_MS = 1350; // draw → spin → coins → name
+  const SEQUENCE_MS = 1950; // marks → draw → spin → land (1.16s) → name → chord
 
   function close() {
     if (closed) return;
@@ -8751,32 +9147,98 @@ window.APP_BUILD = '1.19.0-c8e8e79f';
     close();
   }
 
-  if (full) {
-    el.classList.add('play');
-    // sound only if the phone already allows it (installed apps usually do); never a late surprise
-    setTimeout(() => Fx.play('intro', { strict: true }), 60);
-    setTimeout(() => {
-      Fx.play('coin', { strict: true });
-      const coins = el.querySelector('.intro-coins');
-      for (let i = 0; i < 7; i++) {
-        const c = document.createElement('i');
-        const a = (-90 + (i - 3) * 26) * Math.PI / 180;
-        c.style.setProperty('--dx', Math.round(Math.cos(a) * (90 + (i % 2) * 30)) + 'px');
-        c.style.setProperty('--dy', Math.round(Math.sin(a) * (80 + (i % 3) * 22)) + 'px');
-        c.style.setProperty('--r', ((i - 3) * 40) + 'deg');
-        c.style.animationDelay = (i * 25) + 'ms';
-        c.textContent = '₪';
-        coins.appendChild(c);
+  /** The sound of the show, every note placed ahead on the audio clock (t0 = the moment the show starts). */
+  function score(c, t0) {
+    master = c.createGain();
+    master.gain.value = 0.9;
+    master.connect(c.destination);
+    let nb = null;
+    const noise = () => {
+      if (!nb) { nb = c.createBuffer(1, Math.round(c.sampleRate * 0.8), c.sampleRate); const d = nb.getChannelData(0); for (let i = 0; i < d.length; i++) d[i] = Math.random() * 2 - 1; }
+      return nb;
+    };
+    // one note: when, how long, wave ('noise' = filtered noise), volume, frequency (and where it glides);
+    // a hit comes in at once and fades; a swell (a swish, a whoosh) builds up and then goes
+    const note = (at, dur, wave, vol, f, f2, q, swell) => {
+      const g = c.createGain();
+      let s;
+      if (wave === 'noise') {
+        s = c.createBufferSource(); s.buffer = noise();
+        const bp = c.createBiquadFilter(); bp.type = 'bandpass'; bp.Q.value = q || 1.2;
+        bp.frequency.setValueAtTime(f, t0 + at); if (f2) bp.frequency.exponentialRampToValueAtTime(f2, t0 + at + dur);
+        s.connect(bp).connect(g);
+      } else {
+        s = c.createOscillator(); s.type = wave;
+        s.frequency.setValueAtTime(f, t0 + at); if (f2) s.frequency.exponentialRampToValueAtTime(f2, t0 + at + dur);
+        s.connect(g);
       }
-    }, 820);
+      g.gain.setValueAtTime(0.0001, t0 + at);
+      if (swell) g.gain.exponentialRampToValueAtTime(vol, t0 + at + dur * 0.72);
+      else g.gain.exponentialRampToValueAtTime(vol, t0 + at + Math.min(0.012, dur / 3));
+      g.gain.exponentialRampToValueAtTime(0.0001, t0 + at + dur);
+      g.connect(master);
+      s.start(t0 + at); s.stop(t0 + at + dur + 0.03);
+    };
+    // the clock winds up: twelve ticks, each a little higher
+    for (let k = 0; k < 12; k++) { note(k * 0.03, 0.03, 'square', 0.016, 1900 * Math.pow(2, k / 14)); note(k * 0.03, 0.02, 'noise', 0.028, 6000, null, 3); }
+    // the logo draws itself: a soft rising swish
+    note(0.12, 0.6, 'noise', 0.06, 700, 3600, 0.8, true);
+    note(0.12, 0.6, 'sine', 0.012, 392, 784, 0, true);
+    // the spin: a whoosh that speeds up
+    note(0.70, 0.48, 'noise', 0.08, 900, 4200, 1.4, true);
+    note(0.70, 0.48, 'sine', 0.025, 220, 660, 0, true);
+    // it lands: a deep thump and a click
+    note(1.16, 0.34, 'sine', 0.18, 150, 42);
+    note(1.16, 0.06, 'noise', 0.12, 2400, 600, 0.8);
+    note(1.16, 0.5, 'noise', 0.035, 300, 120, 0.7);
+    // the coins: cha-ching
+    note(1.20, 0.07, 'noise', 0.06, 5200, 3000, 2);
+    note(1.21, 0.10, 'square', 0.022, 1319);
+    note(1.27, 0.38, 'square', 0.02, 1976);
+    note(1.27, 0.38, 'triangle', 0.03, 2637);
+    note(1.34, 0.12, 'noise', 0.03, 7000, 9000, 3);
+    // the name: a pluck for each letter, up a happy scale
+    [1047, 1175, 1319, 1568, 1760, 2093].forEach((f, k) => { note(1.26 + k * 0.06, 0.16, 'triangle', 0.045, f); note(1.26 + k * 0.06, 0.08, 'sine', 0.02, f * 2); });
+    // and a warm, bright chord to finish
+    [[523, 0], [659, 0.025], [784, 0.05], [988, 0.075], [1319, 0.1]].forEach(([f, d]) => { note(1.66 + d, 1.1, 'triangle', 0.035, f); note(1.66 + d, 1.1, 'sine', 0.025, f * 1.002); });
+    note(1.66, 0.9, 'noise', 0.018, 8000, 11000, 2);
+  }
+  Intro.score = score; // tests render it offline
+
+  if (full) {
+    // the coins and the sparks that fly out when the logo lands
+    const coins = el.querySelector('.intro-coins');
+    for (let i = 0; i < 12; i++) {
+      const c = document.createElement('i');
+      const a = (-90 + (i - 5.5) * 25) * Math.PI / 180, dist = 105 + (i % 3) * 32;
+      c.style.cssText = `--dx:${Math.round(Math.cos(a) * dist)}px;--dy:${Math.round(Math.sin(a) * dist * 0.9)}px;--r:${(i - 5.5) * 34}deg;--s:${(0.8 + (i % 4) * 0.12).toFixed(2)};--d:${i * 18}ms`;
+      c.textContent = '₪';
+      coins.appendChild(c);
+    }
+    const sparks = el.querySelector('.intro-sparks');
+    const COL = ['#2ee59d', '#ffd25a', '#8fb4ff', '#ff7ab6', '#ffffff'];
+    for (let i = 0; i < 18; i++) {
+      const s = document.createElement('i');
+      const a = (i / 18) * Math.PI * 2, dist = 120 + (i % 3) * 40;
+      s.style.cssText = `--dx:${Math.round(Math.cos(a) * dist)}px;--dy:${Math.round(Math.sin(a) * dist)}px;--c:${COL[i % COL.length]};--d:${(i % 4) * 14}ms`;
+      sparks.appendChild(s);
+    }
+    el.classList.add('play');
+    // the sound starts with the show (only if the phone already allows sound)
+    const c = Fx.prefs().sound !== false && Fx.audio && Fx.audio();
+    if (c && c.state === 'running') { try { score(c, c.currentTime + 0.02); } catch (e) { /* no sound */ } }
     setTimeout(() => { played = true; if (!ready) el.classList.add('wait'); maybeClose(); }, SEQUENCE_MS);
   } else {
     el.classList.add('still');
     setTimeout(() => { played = true; maybeClose(); }, 250);
   }
 
-  // tap to skip
-  el.addEventListener('click', () => { played = true; if (ready) close(); else el.classList.add('wait'); });
+  // tap to skip (the rest of the show's sound fades out quickly, so the last chord never plays over the app)
+  el.addEventListener('click', () => {
+    played = true;
+    if (master) { try { master.gain.setTargetAtTime(0.0001, master.context.currentTime, 0.04); } catch (e) { /* ignore */ } }
+    if (ready) close(); else el.classList.add('wait');
+  });
 
   /** Called once the first screen (app, sign-in, terms or setup) has been drawn behind the intro. */
   Intro.ready = function () {
@@ -9796,6 +10258,27 @@ window.APP_BUILD = '1.19.0-c8e8e79f';
     setTimeout(run, 700);
   };
   App.rerender = () => App.render({ keepScroll: true });
+
+  /* ---------------- clean language (core/clean.js) ----------------
+   * Every name, job, workplace, note and reason passes through here before it is saved; while typing, a field
+   * with an unfit word says so quietly under itself. */
+  App.cleanText = (t) => !root.Clean || root.Clean.isClean(t);
+  App.ensureClean = function (...texts) {
+    if (texts.every((t) => App.cleanText(t))) return true;
+    UI.invalid('בואו נשמור על שפה נקייה 🙂 יש כאן מילה שלא מתאימה');
+    return false;
+  };
+  document.addEventListener('input', (e) => {
+    const t = e.target;
+    if (!t || !t.matches || !t.matches('textarea, input:not([type]), input[type="text"]') || t.matches('.pp-q, [data-no-clean]')) return;
+    const bad = !App.cleanText(t.value);
+    if (bad === t.classList.contains('unclean')) return;
+    t.classList.toggle('unclean', bad);
+    t.setAttribute('aria-invalid', String(bad));
+    let hint = t.nextElementSibling && t.nextElementSibling.classList.contains('unclean-hint') ? t.nextElementSibling : null;
+    if (bad && !hint) { hint = document.createElement('div'); hint.className = 'unclean-hint'; hint.setAttribute('role', 'status'); hint.textContent = 'בואו נשמור על שפה נקייה 🙂'; t.after(hint); }
+    if (!bad && hint) hint.remove();
+  }, true);
   /* Looping decorations (the glow on the pay card, the dial, the shine on the start button) are
    * redrawn with the screen after every save or sync. Each new copy gets an offset from one clock
    * that started with the page, so it carries on exactly where the old copy was instead of
@@ -9943,7 +10426,9 @@ window.APP_BUILD = '1.19.0-c8e8e79f';
       || S.shifts.filter((s) => s.status === 'planned' && Math.abs(s.start - now) < 90 * 60000).sort((a, b) => Math.abs(a.start - now) - Math.abs(b.start - now))[0];
     await Store.setMeta({ lastRole: role.id });
     App.justStarted = Date.now(); // the timer card springs in (the save redraws home at once)
-    await Store.setActive({ start: now, roleId: role.id, employerId: role.employerId || S.employers[0].id, splits: [], breaks: [], fromPlanned: planned ? planned.id : null });
+    // a planned shift that has already begun can be measured from its planned start (App.markDone)
+    const start = opts && opts.startAt && opts.startAt < now && now - opts.startAt < 24 * 3600000 ? opts.startAt : now;
+    await Store.setActive({ start, roleId: role.id, employerId: role.employerId || S.employers[0].id, splits: [], breaks: [], fromPlanned: planned ? planned.id : null });
     if (App.shiftMoment) App.shiftMoment('start', opts && opts.at); else root.Fx.celebrate('start');
     UI.toast('המשמרת התחילה — בהצלחה!');
     App.askNotifyPermission();
@@ -10066,6 +10551,7 @@ window.APP_BUILD = '1.19.0-c8e8e79f';
       }
     }
     if (App.tab === 'home') App.rerender();
+    if (App.widgets) App.widgets.push(); // the forecast may have moved
   };
   setInterval(() => App.runInsights(), 5 * 60 * 1000);
 
@@ -10259,7 +10745,10 @@ window.APP_BUILD = '1.19.0-c8e8e79f';
     App.render();
     const action = App.pendingAction;
     App.pendingAction = null;
+    // done once: a reload (or the browser's own restore) must never start or end a shift again
+    if (action) { try { const u = new URL(location.href); u.searchParams.delete('action'); history.replaceState(history.state, '', u.pathname + u.search + u.hash); } catch (e) { /* ignore */ } }
     if (action === 'start' && !S.activeShift) App.actions['timer-start']();
+    if (action === 'stop' && S.activeShift) App.stopShift(); // the widget's "end" button
     if (action === 'add') App.sheetsApi.shiftEditor();
     if (action === 'plus' && root.Plus) setTimeout(() => root.Plus.sheet(), 600); // back from the web checkout (?action=plus): straight to the code field
     setTimeout(() => { App.runInsights(); App.autoBackupCheck(); }, 1200);
@@ -11583,8 +12072,8 @@ window.PAY_CONFIG = {
         <button class="btn big ob-google" data-google ${busy || (!ready && !failedLoad) ? 'disabled' : ''}>${GOOGLE_G}<span>${label}</span></button>
         ${blocked ? '<button class="btn text sm" data-redirect>לא נפתח חלון? התחברות בדרך אחרת</button>' : ''}
         <button class="btn text sm" data-act="support" style="margin-top:6px">${icon('info', 's')} בעיה בהתחברות? כתבו לנו</button>
-        <div class="tiny muted" style="margin-top:8px">בהתחברות אתה מאשר את ${App.legalLinks ? App.legalLinks() : 'תנאי השימוש ומדיניות הפרטיות'}.</div>
-        <div class="tiny muted" style="margin-top:10px;line-height:1.6">${icon('shield', 's')} רק אתה יכול לראות את הנתונים שלך. האפליקציה עובדת גם בלי אינטרנט, ומסנכרנת כשהרשת חוזרת.</div>
+        <div class="tiny muted" style="margin-top:8px">בהתחברות את/ה מאשר/ת את ${App.legalLinks ? App.legalLinks() : 'תנאי השימוש ומדיניות הפרטיות'}.</div>
+        <div class="tiny muted" style="margin-top:10px;line-height:1.6">${icon('shield', 's')} רק את/ה יכול/ה לראות את הנתונים שלך. האפליקציה עובדת גם בלי אינטרנט, ומסנכרנת כשהרשת חוזרת.</div>
         </div></div>`;
       v.querySelector('[data-google]').onclick = () => go(false);
       const rd = v.querySelector('[data-redirect]');
@@ -11773,7 +12262,7 @@ window.PAY_CONFIG = {
       <span class="role-bar" style="background:${role ? role.color : '#999'}"></span>
       <span class="body"><span class="t shift-title"><span class="tt">${esc(date)}${esc(title)}</span>${App.restTag(r)}${App.ovTag(r)}${planned}</span>
       <span class="s"><span class="num">⁦${U.epochHM(r.start)}\u2060–\u2060${U.epochHM(r.rawEnd)}⁩</span> · ${U.hm(r.paidMin)} ש׳${emp}${sh.note ? ' · ' + esc(sh.note) : ''}</span></span>
-      <span class="trail"><span class="a" data-tr="s:${r.id}">${money(App.shiftAmount(r), 0)}</span>${opts.showOk && r.status === 'planned' ? `<br><span class="tag good" data-act="mark-done" data-id="${r.id}">${icon('check')}בוצעה</span>` : ''}</span></button>`;
+      <span class="trail"><span class="a" data-tr="s:${r.id}">${money(App.shiftAmount(r), 0)}</span>${opts.showOk && r.status === 'planned' && r.end <= Date.now() ? `<br><span class="tag good" data-act="mark-done" data-id="${r.id}">${icon('check')}בוצעה</span>` : ''}</span></button>`;
   };
   App.entryItem = function (e) {
     const v = App.model.entryVals.get(e.id) || { amount: 0, label: '' };
@@ -11809,6 +12298,7 @@ window.PAY_CONFIG = {
    * entrance is drawn once, by the first redraw after the start (or the end): a later redraw (the insights a
    * moment after every save) must not play it again - the card would pop in twice. */
   const ENTER_MS = 1200;
+  // the rings start at the button's edge (r0): from its centre they began as a solid dot, a frame that looked like a blink
   App.shiftMoment = function (kind, at) {
     const F = root.Fx;
     if (!F) return;
@@ -11818,18 +12308,18 @@ window.PAY_CONFIG = {
       F.play('shiftStart'); F.haptic([12, 40, 24]);
       if (fx) {
         fx.burst(x, y, { palette: 'good', n: 36, kinds: ['spark', 'star', 'confetti'], speed: [180, 540] });
-        fx.ring(x, y, { color: '#21d47f', r1: 170, width: 8 });
-        setTimeout(() => fx.ring(x, y, { color: '#ffd84d', r1: 120, width: 5 }), 130);
+        fx.ring(x, y, { r0: 26, color: '#21d47f', r1: 170, width: 8 });
+        setTimeout(() => fx.ring(x, y, { r0: 26, color: '#ffd84d', r1: 120, width: 5 }), 130);
       }
     } else if (kind === 'stop') {
       F.play('cash'); setTimeout(() => F.play('success'), 280); F.haptic([10, 40, 10, 40, 20]);
       if (fx) {
         fx.burst(x, y, { palette: 'gold', n: 50, kinds: ['coin', 'star', 'confetti', 'coin'], speed: [260, 700], up: 240 });
-        fx.ring(x, y, { color: '#ffd84d', r1: 180, width: 9 });
+        fx.ring(x, y, { r0: 26, color: '#ffd84d', r1: 180, width: 9 });
       }
     } else if (kind === 'pause' || kind === 'resume') {
       F.play(kind); F.haptic(10);
-      if (fx) fx.ring(x, y, { color: kind === 'pause' ? '#ffb524' : '#21d47f', r1: 64, width: 5 });
+      if (fx) fx.ring(x, y, { r0: 26, color: kind === 'pause' ? '#ffb524' : '#21d47f', r1: 64, width: 5 });
     }
   };
   /** The centre of the element that was tapped (screen coordinates), for the sparks to start there. */
@@ -12060,9 +12550,8 @@ window.PAY_CONFIG = {
   App.actions['go-shifts'] = () => { App.reportsState.sub = 'list'; App.go('reports'); };
   App.actions['mark-done'] = async (el, e) => {
     e.stopPropagation();
-    const sh = Store.clone(App.shift(el.dataset.id));
-    sh.status = 'done';
-    await App.saveOps([{ store: 'shifts', put: sh }], 'סימון כבוצעה', 'המשמרת סומנה כבוצעה');
+    const sh = App.shift(el.dataset.id);
+    if (sh) await App.markDone(sh);
   };
   App.actions['notif-read'] = async (el) => {
     const n = S.notifications.find((x) => x.id === el.dataset.id);
@@ -12144,6 +12633,7 @@ window.PAY_CONFIG = {
       night: { on: false, mode: 'off', pct: '', amount: '' },
       travel: { on: false, mode: 'off', amount: '' },
       rate: { on: false, rate: '' },
+      special: { on: false, pct: '', reason: '' },
     };
   }
   function draftFrom(sh, opts) {
@@ -12174,6 +12664,7 @@ window.PAY_CONFIG = {
     if (o.night) Object.assign(ov.night, { on: true, mode: o.night.mode, pct: o.night.pct || '', amount: o.night.amount != null ? o.night.amount : '' });
     if (o.travel) Object.assign(ov.travel, { on: true, mode: o.travel.mode, amount: o.travel.amount != null ? o.travel.amount : '' });
     if (o.rate) Object.assign(ov.rate, { on: true, rate: o.rate.rate });
+    if (o.special) Object.assign(ov.special, { on: true, pct: o.special.pct, reason: o.special.reason || '' });
     return {
       id: sh.id, status: sh.status || 'done', statusTouched: true, employerId: sh.employerId, date: U.epochKey(sh.start),
       startT: U.epochHM(sh.start), endT: U.epochHM(sh.end), roleId: sh.roleId,
@@ -12200,6 +12691,7 @@ window.PAY_CONFIG = {
     if (d.ov.night.on) ov.night = { mode: d.ov.night.mode, pct: numOrNull(d.ov.night.pct), amount: numOrNull(d.ov.night.amount) };
     if (d.ov.travel.on) ov.travel = { mode: d.ov.travel.mode, amount: numOrNull(d.ov.travel.amount) };
     if (d.ov.rate.on && numOrNull(d.ov.rate.rate)) ov.rate = { rate: +d.ov.rate.rate };
+    if (d.ov.special.on && numOrNull(d.ov.special.pct)) ov.special = { pct: +d.ov.special.pct, reason: String(d.ov.special.reason || '').trim().slice(0, 40) };
     const sh = {
       id: d.id || U.uid(), kind: 'shift', status: d.status, employerId: d.employerId, roleId: d.roleId,
       start, end, splits: d.splits.filter((x) => x.t && x.roleId).map((x) => ({ at: at(x.t), roleId: x.roleId })),
@@ -12272,6 +12764,23 @@ window.PAY_CONFIG = {
   };
 
   /* ---------------- shift detail ---------------- */
+  /**
+   * Mark a planned shift as done, only once it has ended: one still running can be measured on the timer from its
+   * planned start instead, and one in the future waits (every path that marks a shift done comes here).
+   */
+  App.markDone = async function (sh) {
+    const now = Date.now();
+    if (sh.end > now + 60000) {
+      if (sh.start <= now && !S.activeShift) {
+        const ok = await UI.confirm('המשמרת עוד לא נגמרה', `היא התחילה ב-${U.epochHM(sh.start)} ומסתיימת ב-${U.epochHM(sh.end)}. להפעיל את השעון מ-${U.epochHM(sh.start)}? בסוף לוחצים "סיים משמרת".`, 'הפעל שעון');
+        if (ok) await App.startShift(sh.roleId, { fromPlanned: sh.id, startAt: sh.start });
+      } else UI.toast(sh.start <= now ? 'המשמרת עוד לא נגמרה. אפשר לסמן אותה כבוצעה אחרי שהיא מסתיימת' : `המשמרת עוד לא קרתה. אפשר לסמן אותה כבוצעה אחרי ${U.fmtDate(U.epochKey(sh.end), 'short')} ב-${U.epochHM(sh.end)}`);
+      return false;
+    }
+    await App.saveOps([{ store: 'shifts', put: Object.assign(Store.clone(sh), { status: 'done' }) }], 'סימון כבוצעה', 'המשמרת סומנה כבוצעה');
+    return true;
+  };
+
   App.sheetsApi.shiftDetail = function (id) {
     const sh = App.shift(id);
     const r = App.result(id);
@@ -12295,7 +12804,7 @@ window.PAY_CONFIG = {
         ${r.overridden ? `<div class="small muted" style="margin:-4px 4px 12px">בלי העקיפה החישוב היה ${U.money(r.wage + autoDiff)} (${autoDiff >= 0 ? '+' : ''}${U.money(autoDiff)}).</div>` : ''}
         ${sh.note ? `<div class="card outlined small">${icon('edit', 's')} ${esc(sh.note)}</div>` : ''}
         <div class="list">
-          ${r.status === 'planned' ? `<button class="item" data-x="done"><span class="lead">${icon('check')}</span><span class="body"><span class="t">סמן כבוצעה</span></span></button>` : ''}
+          ${r.status === 'planned' && r.end <= Date.now() ? `<button class="item" data-x="done"><span class="lead">${icon('check')}</span><span class="body"><span class="t">סמן כבוצעה</span></span></button>` : ''}
           <button class="item" data-x="dup"><span class="lead">${icon('copy')}</span><span class="body"><span class="t">שכפל</span><span class="s">אותן שעות בתאריך אחר</span></span></button>
           <button class="item" data-x="repeat"><span class="lead">${icon('refresh')}</span><span class="body"><span class="t">חזרה שבועית</span><span class="s">אותה משמרת בשבועות הבאים, כמתוכננת</span></span></button>
           <button class="item" data-x="tpl"><span class="lead">${icon('layers')}</span><span class="body"><span class="t">שמור כתבנית</span></span></button>
@@ -12314,7 +12823,7 @@ window.PAY_CONFIG = {
             UI.closeTop();
             await App.saveOps([{ store: 'shifts', del: id }], 'מחיקת משמרת', 'המשמרת נמחקה');
           }
-          if (x === 'done') { UI.closeTop(); await App.saveOps([{ store: 'shifts', put: Object.assign(Store.clone(sh), { status: 'done' }) }], 'סימון כבוצעה'); }
+          if (x === 'done') { UI.closeTop(); await App.markDone(sh); }
           if (x === 'dup') { UI.closeTop(); setTimeout(() => App.sheetsApi.shiftEditor(null, { copyFrom: sh, date: U.addDays(r.dateKey, 1) }), 320); }
           if (x === 'tpl') App.saveTemplate(sh);
           if (x === 'repeat') {
@@ -12358,7 +12867,7 @@ window.PAY_CONFIG = {
 
   App.saveTemplate = async function (sh) {
     const name = await UI.promptText('שמירת תבנית', 'שם התבנית', `${App.roleName(sh.roleId)} ⁦${U.epochHM(sh.start)}\u2060–\u2060${U.epochHM(sh.end)}⁩`);
-    if (!name) return;
+    if (!name || !App.ensureClean(name)) return;
     await App.saveOps([{ store: 'templates', put: {
       id: U.uid(), name, roleId: sh.roleId, employerId: sh.employerId, startT: U.epochHM(sh.start), endT: U.epochHM(sh.end),
       breakMin: sh.breakMin == null ? null : sh.breakMin, breakPaid: sh.breakPaid !== false, noTravel: !!sh.noTravel,
@@ -12373,7 +12882,7 @@ window.PAY_CONFIG = {
     let sheetEl = null;
 
     const roleChips = (sel, attr) => App.roles(d.employerId).map((r) => `<button class="chip ${r.id === sel ? 'on' : ''}" ${attr}="${r.id}"><span class="sw" style="background:${r.color}"></span>${esc(r.name)}</button>`).join('');
-    const ovCount = () => ['rest', 'ot', 'night', 'travel', 'rate'].filter((k) => d.ov[k].on).length;
+    const ovCount = () => ['rest', 'ot', 'night', 'travel', 'rate', 'special'].filter((k) => d.ov[k].on).length;
     const sel = (f, options, v) => `<select class="input" data-f="${f}">${options.map(([val, lab]) => `<option value="${val}" ${String(v) === String(val) ? 'selected' : ''}>${lab}</option>`).join('')}</select>`;
     const inp = (f, v, extra) => `<input class="input" data-f="${f}" value="${esc(v == null ? '' : v)}" ${extra || ''}>`;
     const numIn = (f, v, ph) => inp(f, v, `type="number" inputmode="decimal" step="any" placeholder="${ph || ''}"`);
@@ -12397,7 +12906,7 @@ window.PAY_CONFIG = {
     }
     function body() {
       const emp = App.employer(d.employerId);
-      const rest = d.ov.rest, ot = d.ov.ot, night = d.ov.night, trv = d.ov.travel, rate = d.ov.rate;
+      const rest = d.ov.rest, ot = d.ov.ot, night = d.ov.night, trv = d.ov.travel, rate = d.ov.rate, spc = d.ov.special;
       const overnight = d.startT && d.endT && d.endT <= d.startT;
       return `
         <div class="seg" style="margin-bottom:14px"><button data-status="done" class="${d.status === 'done' ? 'on' : ''}">בוצעה</button><button data-status="planned" class="${d.status === 'planned' ? 'on' : ''}">מתוכננת</button></div>
@@ -12447,6 +12956,7 @@ window.PAY_CONFIG = {
           ${ovBlock('travel', 'נסיעות', 'ביטול או סכום אחר למשמרת', `
             <div class="field">${sel('ov.travel.mode', [['off', 'בלי נסיעות'], ['amount', 'סכום אחר']], trv.mode)}</div>
             ${trv.mode === 'amount' ? `<label class="field"><span class="lbl">סכום ₪</span>${numIn('ov.travel.amount', trv.amount, String(emp.travelPerDay))}</label>` : ''}`)}
+          ${ovBlock('special', 'תעריף מיוחד באחוזים', 'למשל יום בחירות: 200% על כל שעה', `<div class="grid2"><label class="field"><span class="lbl">אחוז לכל שעה</span>${numIn('ov.special.pct', spc.pct, '200')}</label><label class="field"><span class="lbl">על מה (לא חובה)</span>${inp('ov.special.reason', spc.reason, 'maxlength="40" placeholder="יום בחירות"')}</label></div><div class="tiny muted">כל שעה במשמרת תשולם לפחות באחוז הזה. שעה ששווה יותר (שבת, שעות נוספות) נשארת כמו שהיא. ליום שלם לכל המשמרות: בלוח השנה, בלחיצה על היום.</div>`)}
           ${ovBlock('rate', 'תעריף לשעה', 'לכל המשמרת, במקום תעריף התפקיד', `<label class="field"><span class="lbl">₪ לשעה</span>${numIn('ov.rate.rate', rate.rate, '0')}</label>`)}
           ${ovCount() ? `<label class="field"><span class="lbl">סיבה (לא חובה)</span>${inp('reason', d.reason, 'placeholder="למשל: המעסיק לא מחשיב את השעה הזו כשבת"')}</label>
           <button class="btn outlined block" data-reset-ov>${icon('refresh', 's')} חזור לחישוב אוטומטי</button>` : ''}
@@ -12554,12 +13064,15 @@ window.PAY_CONFIG = {
       if (!d.roleId) { UI.invalid('בחר תפקיד'); return; }
       if (d.date < '2000-01-01' || d.date > U.addDays(U.todayKey(), 366)) { UI.invalid('התאריך לא הגיוני'); return; }
       const sh = shiftFrom(d);
+      if (!App.ensureClean(sh.note, sh.overrideReason, ...(sh.items || []).map((x) => x.label || ''), (sh.overrides && sh.overrides.special && sh.overrides.special.reason) || '')) return;
       // numbers that would quietly change the pay the wrong way
       if (sh.breakMin != null && (!(sh.breakMin >= 0) || sh.breakMin > 24 * 60)) { UI.invalid('אורך ההפסקה לא הגיוני'); return; }
       if (sh.breakMin > 0 && sh.breakMin >= (sh.end - sh.start) / 60000) { UI.invalid('ההפסקה ארוכה מהמשמרת עצמה'); return; }
       if ((sh.items || []).some((x) => !(+x.amount > 0) || +x.amount > 1e6)) { UI.invalid('סכום של תוספת או ניכוי צריך להיות חיובי (לניכוי בוחרים "ניכוי")'); return; }
       const negative = (o) => o && typeof o === 'object' && Object.values(o).some((v) => (typeof v === 'number' && v < 0) || negative(v));
       if (negative(sh.overrides)) { UI.invalid('בחישוב הידני אי אפשר מספר שלילי'); return; }
+      const spc = sh.overrides && sh.overrides.special;
+      if (spc && !(spc.pct >= 100 && spc.pct <= 1000)) { UI.invalid('תעריף מיוחד: אחוז בין 100 ל-1000 (למשל 200)'); return; }
       // a shift that hasn't happened yet can't be "done": it can be saved as planned
       if (sh.status === 'done' && sh.end > Date.now() + 5 * 60000) {
         const started = sh.start <= Date.now();
@@ -12658,11 +13171,12 @@ window.PAY_CONFIG = {
       title: U.fmtDate(k, 'long'),
       body: `<div class="small muted" style="margin-bottom:10px">${esc(HebCal.hebrewDate(k).toString())}${hols.length ? ' · ' + esc(hols.map((h) => h.name).join(', ')) : ''}</div>
         ${restLine ? `<div class="banner">${'<div>' + restLine + '</div>'}</div>` : ''}
-        ${rule ? `<div class="banner warn">${icon('hand')}<div style="flex:1">${rule.type === 'cancel' ? 'תעריף שבת/חג בוטל ידנית לתאריך זה' : 'סומן ידנית כיום מנוחה (150%)'}${rule.reason ? ' — ' + esc(rule.reason) : ''}</div><button class="btn sm" data-rule-del>בטל</button></div>` : ''}
+        ${rule ? `<div class="banner warn">${icon('hand')}<div style="flex:1">${rule.type === 'cancel' ? 'תעריף שבת/חג בוטל ידנית לתאריך זה' : rule.type === 'pct' ? `תעריף מיוחד ${+rule.pct}% לכל שעה ביום הזה` : 'סומן ידנית כיום מנוחה (150%)'}${rule.reason ? ' — ' + esc(rule.reason) : ''}</div><button class="btn sm" data-rule-del>בטל</button></div>` : ''}
         ${results.length || entries.length ? `<div class="list">${results.map((r) => App.shiftItem(r, { noDate: true })).join('')}${entries.map(App.entryItem).join('')}</div>${sum ? `<div class="small" style="margin:0 4px 12px">סה״כ ביום: <b>${U.money(sum)}</b></div>` : ''}` : '<div class="muted small" style="margin:6px 4px 14px">אין רישומים ביום זה.</div>'}
         <div class="btn-row"><button class="btn" data-add-shift>${icon('plus')} משמרת</button><button class="btn tonal" data-add-other>${icon('beach')} חופשה / מחלה / תוספת</button></div>
         <div class="divider"></div>
         ${!rule && autoInfo ? `<button class="btn outlined block" data-rule="cancel">${icon('hand', 's')} בטל 150% בתאריך זה לכל המשמרות</button><div class="tiny muted" style="margin:6px 4px">למשל חג שזוהה בטעות. אפשר לבטל.</div>` : ''}
+        ${!rule ? `<button class="btn outlined block" data-rule="pct">${icon('star', 's')} תעריף מיוחד לכל היום (למשל יום בחירות)</button><div class="tiny muted" style="margin:6px 4px 10px">באחוזים, לכל המשמרות ביום הזה. למשל ביום בחירות: 200%.</div>` : ''}
         ${!rule && !info ? `<button class="btn outlined block" data-rule="force">${icon('candle', 's')} סמן כיום מנוחה (150%)</button>` : ''}`,
       onMount: (el) => {
         el.addEventListener('click', async (e) => {
@@ -12672,6 +13186,17 @@ window.PAY_CONFIG = {
           if (b.hasAttribute('data-add-other')) {
             UI.closeTop();
             setTimeout(() => UI.openSheet({ title: 'הוספה ל-' + U.fmtDate(k, 'dm'), body: `<div class="list">${[['vacation', 'beach', 'יום חופשה'], ['sick', 'thermo', 'יום מחלה'], ['adjustment', 'gift', 'בונוס / תוספת / ניכוי']].map(([kind, ic, t]) => `<button class="item" data-k="${kind}"><span class="lead">${icon(ic)}</span><span class="body"><span class="t">${t}</span></span></button>`).join('')}</div>`, onMount: (el2) => el2.querySelectorAll('[data-k]').forEach((x) => (x.onclick = () => { UI.closeTop(); setTimeout(() => App.sheetsApi.entryEditor(null, { kind: x.dataset.k, date: k }), 320); })) }), 320);
+          }
+          if (b.dataset.rule === 'pct') {
+            const v = await UI.dialog({ title: 'תעריף מיוחד ל-' + U.fmtDate(k, 'dm'), html: `<label class="field"><span class="lbl">אחוז לכל שעה ביום הזה</span><input class="input" name="pct" type="number" inputmode="numeric" min="100" max="1000" value="200"></label><label class="field"><span class="lbl">על מה (לא חובה)</span><input class="input" name="reason" maxlength="40" placeholder="יום בחירות"></label><div class="tiny muted">כל שעה בכל המשמרות ביום הזה תשולם לפחות באחוז הזה. שעה ששווה יותר (שבת, שעות נוספות) נשארת כמו שהיא.</div>`, buttons: [{ label: 'ביטול', value: null }, { label: 'החל', value: 'form', cls: '' }] });
+            if (!v) return;
+            const pct = +v.pct;
+            if (!(pct >= 100 && pct <= 1000)) { UI.invalid('אחוז בין 100 ל-1000 (למשל 200)'); return; }
+            const reason = String(v.reason || '').trim().slice(0, 40);
+            if (App.cleanText && !App.cleanText(reason)) { UI.invalid('בואו נשמור על שפה נקייה 🙂'); return; }
+            UI.closeTop();
+            await App.saveOps([{ store: 'dayRules', put: { id: 'dr_' + k, date: k, type: 'pct', pct, reason } }], 'כלל יום', `כל שעה ב-${U.fmtDate(k, 'dm')} תשולם לפחות ${pct}%`);
+            return;
           }
           if (b.dataset.rule) {
             const reason = await UI.promptText(b.dataset.rule === 'cancel' ? 'ביטול 150% לתאריך' : 'סימון יום מנוחה', 'סיבה (לא חובה)', '', { ok: 'החל' });
@@ -12787,7 +13312,7 @@ window.PAY_CONFIG = {
     const st = App.calState;
     const roles = App.roles();
     return `<div class="topbar"><div class="titles"><h1>לוח שנה</h1></div>
-        <button class="icon-btn" data-act="cal-today" aria-label="היום">${icon('target')}</button>
+        <button class="btn tonal sm cal-today-btn" data-act="cal-today">${icon('target', 's')} היום</button>
         <button class="icon-btn" data-act="cal-export" aria-label="ייצוא ליומן">${icon('download')}</button></div>
       <div class="seg" style="margin-bottom:12px"><button class="${st.mode === 'month' ? 'on' : ''}" data-act="cal-mode" data-m="month">חודש</button><button class="${st.mode === 'week' ? 'on' : ''}" data-act="cal-mode" data-m="week">שבוע</button></div>
       ${st.mode === 'month' ? monthView(map) : weekView(map)}
@@ -12803,7 +13328,21 @@ window.PAY_CONFIG = {
   };
 
   App.actions['cal-mode'] = (el) => { App.calState.mode = el.dataset.m; App.rerender(); };
-  App.actions['cal-today'] = () => { App.calState.anchor = U.todayKey(); App.rerender(); };
+  // "today": to today's month (or week), and today's square says hello (on today's month already, the screen did
+  // not change and the button seemed dead)
+  App.actions['cal-today'] = () => {
+    const st = App.calState, today = U.todayKey();
+    const same = st.mode === 'month' ? st.anchor.slice(0, 7) === today.slice(0, 7) : U.weekStart(st.anchor, S.settings.weekStart || 0) === U.weekStart(today, S.settings.weekStart || 0);
+    st.anchor = today;
+    if (!same) App.render();
+    requestAnimationFrame(() => {
+      const el = document.querySelector('#view .cal-day.today, #view .week-row[data-k="' + today + '"]');
+      if (!el) return;
+      el.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
+      el.classList.remove('hello'); void el.offsetWidth; el.classList.add('hello');
+      if (root.Fx) { root.Fx.play('tick'); root.Fx.ring(el); }
+    });
+  };
   App.actions['cal-nav'] = (el) => {
     const dir = +el.dataset.dir;
     App.calState.anchor = App.calState.mode === 'month' ? U.addMonths(App.calState.anchor.slice(0, 7) + '-01', dir) : U.addDays(App.calState.anchor, 7 * dir);
@@ -14259,6 +14798,111 @@ window.PAY_CONFIG = {
   };
 })(typeof window !== 'undefined' ? window : globalThis);
 
+/* ---- app/widgets.js ---- */
+/* ============================================================
+ * widgets.js — the numbers for the home-screen widgets of the Android app (android/widgets).
+ *
+ * The Android app opens a message channel to this page once it has loaded (LauncherActivity) and says
+ * hello with a port; the page answers on that port with a snapshot (JSON) of what the widgets show, and
+ * sends a new one whenever its numbers change, when it comes back to the front, and every ten minutes
+ * while open (the month's forecast moves with time). The widgets keep the last one; the running shift's
+ * clock and the days to payday are counted on the phone itself.
+ *
+ * The snapshot carries text ready to show (money written out the way the app writes it), so the widgets
+ * show exactly what the home screen shows. Nothing here leaves the phone: the channel only reaches the
+ * Shaati app it runs in (Chrome checks the app against the site's Digital Asset Links).
+ * ============================================================ */
+(function (root) {
+  'use strict';
+  const { App, Store } = root;
+  const S = Store.S;
+  const m0 = (n) => U.money(n || 0, 0);
+
+  /** What the widgets show now, or null before the app has data. */
+  App.widgetSnapshot = function () {
+    const emp = S.employers[0];
+    if (!emp || !App.model || !S.settings.onboarded) return null;
+    const today = U.todayKey();
+    const P = Engine.periodOf(today, emp);
+    const sum = Engine.periodSummary(App.model, P.key, emp.id);
+    const proj = App.insights && App.insights.projection;
+    const goalAmt = +S.settings.goal.amount || 0;
+    const goalNet = S.settings.goal.type === 'net';
+    const cur = goalNet ? sum.net.net : sum.gross;
+    const day = Engine.rangeSummary(App.model, today, today);
+    // the next payday (of the period that ended, or this one) and about how much is coming
+    const next = [Engine.periodOf(U.addDays(P.from, -1), emp), P].find((x) => x.payDate && x.payDate >= today);
+    const paySum = next && Engine.periodSummary(App.model, next.key, emp.id);
+    // saving up for something (as on the home screen's card)
+    const g = S.settings.saving || {};
+    let saving = null;
+    if (+g.price > 0 && g.name) {
+      const from = g.from && g.from <= today ? g.from : today;
+      const have = Math.max(0, (Engine.rangeSummary(App.model, from, today).net || {}).net || 0);
+      saving = { name: g.name, pct: Math.min(100, Math.floor((have / g.price) * 100)), left: m0(Math.max(0, g.price - have)) };
+    }
+    const a = S.activeShift;
+    let active = null;
+    if (a && a.start) {
+      const br = a.breaks || [];
+      const open = br.length && !br[br.length - 1].to ? br[br.length - 1] : null;
+      const role = App.role(a.roleId);
+      const rate = role ? Engine.roleRate(role, U.epochKey(a.start)) : 0;
+      active = {
+        start: a.start, breakAt: open ? open.from : 0,
+        breakMs: br.filter((b) => b.to).reduce((s, b) => s + (b.to - b.from), 0),
+        role: App.roleName(a.roleId) || '', rate: rate ? U.money(rate) + ' לשעה' : '',
+      };
+    }
+    return {
+      v: 1, at: Date.now(),
+      // "אוקטובר" (this year's months without the year: a small widget has little room)
+      period: emp.periodStartDay > 1 ? 'תקופת השכר' : P.label.replace(' ' + today.slice(0, 4), ''), periodTo: P.to,
+      gross: m0(sum.gross), net: m0(sum.net.net), hours: U.hm(sum.hours * 60), shifts: sum.shifts,
+      today: m0(day.gross), pace: proj && proj.pace ? m0(proj.pace) : '',
+      goal: goalAmt ? { pct: Math.min(100, Math.floor((cur / goalAmt) * 100)), of: m0(goalAmt), left: m0(Math.max(0, goalAmt - cur)) } : null,
+      payday: paySum && paySum.gross > 0 ? { date: next.payDate, amount: m0(paySum.net.net) } : null,
+      saving, active,
+    };
+  };
+
+  let port = null, last = '', timer = 0;
+  function send(force) {
+    if (!port) return;
+    let snap = null;
+    try { snap = App.widgetSnapshot(); } catch (e) { return; }
+    if (!snap) return;
+    const key = JSON.stringify(Object.assign({}, snap, { at: 0 }));
+    if (!force && key === last) return; // nothing new for the widgets
+    last = key;
+    try { port.postMessage(JSON.stringify(snap)); } catch (e) { port = null; }
+  }
+  App.widgets = {
+    /** The numbers may have changed: send them soon (several changes in a row make one message). */
+    push() { if (!port) return; clearTimeout(timer); timer = setTimeout(() => send(false), 700); },
+    send,
+    get connected() { return !!port; },
+  };
+
+  // the Android app says hello with a port (only the app this page runs in can: the message comes from
+  // the site's own origin, which Chrome grants only to the app the site's Digital Asset Links name)
+  root.addEventListener('message', (e) => {
+    if (e.origin !== location.origin || e.data !== 'shaati:widgets' || !e.ports || !e.ports[0]) return;
+    port = e.ports[0];
+    last = '';
+    // this Android app has widgets: say so once
+    if (!Store.S.meta.widgetsTip) {
+      Store.setMeta({ widgetsTip: Date.now() }).catch(() => {});
+      setTimeout(() => { if (!App.blocking) root.UI.toast('חדש: ווידג׳טים למסך הבית! 🧩 לחיצה ארוכה על מסך הבית › ווידג׳טים › שעתי'); }, 2500);
+    }
+    try { port.onmessage = (m) => { if (m.data === 'refresh') send(true); }; } catch (err) { /* ignore */ }
+    send(true);
+  });
+  Store.on(() => App.widgets.push());
+  document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'visible') App.widgets.push(); });
+  setInterval(() => { if (document.visibilityState === 'visible') send(false); }, 10 * 60 * 1000);
+})(typeof window !== 'undefined' ? window : globalThis);
+
 /* ---- app/views-settings.js ---- */
 /* ============================================================
  * views-settings.js — settings (auto-saved), employers & roles
@@ -14278,6 +14922,8 @@ window.PAY_CONFIG = {
     time: (label, path, v) => `<label class="field"><span class="lbl">${label}</span><input class="input" type="time" data-s="${path}" value="${esc(v || '')}"></label>`,
     date: (label, path, v, hint) => `<label class="field"><span class="lbl">${label}</span><input class="input" type="date" data-s="${path}" value="${esc(v || '')}" ${dateLimits(path)}>${hint ? `<span class="hint">${hint}</span>` : ''}</label>`,
     sw: (t, s, path, on) => `<label class="switch-row"><span class="body"><span class="t">${t}</span>${s ? `<span class="s">${s}</span>` : ''}</span><input type="checkbox" class="switch" data-s="${path}" ${on ? 'checked' : ''}></label>`,
+    // a few short choices as chips that light up (an emoji for each): opts [[value, label, emoji]]
+    chips: (label, path, opts, v, hint) => `<div class="field"><span class="lbl">${label}</span><select class="input" data-s="${path}" data-ui="chips">${opts.map(([k, l, e]) => `<option value="${esc(k)}" ${e ? `data-e="${esc(e)}"` : ''} ${String(k) === String(v) ? 'selected' : ''}>${esc(l)}</option>`).join('')}</select>${hint ? `<span class="hint">${hint}</span>` : ''}</div>`,
     sel: (label, path, opts, v, hint) => `<label class="field"><span class="lbl">${label}</span><select class="input" data-s="${path}">${opts.map(([k, l]) => `<option value="${esc(k)}" ${String(k) === String(v) ? 'selected' : ''}>${esc(l)}</option>`).join('')}</select>${hint ? `<span class="hint">${hint}</span>` : ''}</label>`,
   };
   App.F = F;
@@ -14348,6 +14994,7 @@ window.PAY_CONFIG = {
         return;
       }
       let v = readVal(t);
+      if (typeof v === 'string' && !App.ensureClean(v)) { if (redraw) redraw(); return; }
       const [ok, fixed, msg] = checkNumber(path, v);
       if (!ok) { UI.invalid(msg); if (redraw) redraw(); return; }
       if (fixed !== v) { v = fixed; t.value = fixed; }
@@ -14379,6 +15026,7 @@ window.PAY_CONFIG = {
         bind(el, () => empId, draw);
         el.addEventListener('click', (e) => { const b = e.target.closest('[data-emp]'); if (b) { empId = b.dataset.emp; draw(); } });
         if (opts.mount) opts.mount(el, draw);
+        if (opts.focus) spotlight(el, opts.focus);
       },
     });
   }
@@ -14396,7 +15044,7 @@ window.PAY_CONFIG = {
     leave: { icon: 'beach', title: 'ותק, חופשה, מחלה והבראה', sub: () => (S.settings.startDate ? 'התחלת עבודה: ' + U.fmtDate(S.settings.startDate) : 'הגדר תאריך תחילת עבודה') },
     goal: { icon: 'target', title: 'יעדים', sub: () => [+S.settings.goal.amount ? 'חודשי: ' + U.money(S.settings.goal.amount, 0) + (S.settings.goal.type === 'net' ? ' נטו' : ' ברוטו') : '', S.settings.saving && +S.settings.saving.price && S.settings.saving.name ? 'חוסכים ל' + S.settings.saving.name : ''].filter(Boolean).join(' · ') || 'יעד חודשי וחיסכון למשהו' },
     alerts: { icon: 'bell', title: 'התראות ותובנות', sub: () => (('Notification' in window) && Notification.permission === 'granted' ? 'פוש מופעל' : 'פוש כבוי') + ' · סיכומים ותזכורות' },
-    templates: { icon: 'layers', title: 'תבניות משמרת', sub: () => (S.templates.length ? S.templates.length + ' תבניות' : 'אין תבניות') },
+    templates: { icon: 'layers', title: 'תבניות משמרת', sub: () => (S.templates.length === 1 ? 'תבנית אחת' : S.templates.length ? S.templates.length + ' תבניות' : 'אין תבניות') },
     look: { icon: 'palette', title: 'מראה', sub: () => ({ system: 'לפי המערכת', light: 'בהיר', dark: 'כהה' }[S.settings.theme]) + ' · ' + (App.ACCENTS[S.settings.accent] || [])[2] },
     security: { icon: 'lock', title: 'נעילה בקוד', sub: () => (S.settings.lock.enabled ? 'מופעלת' : 'כבויה') },
     assistant: { icon: 'sparkle', title: 'עוזר זכויות ושכר (AI)', sub: () => (S.settings.ai.apiKey ? 'מוכן — שאל כל שאלה' : 'דורש מפתח API') },
@@ -14409,56 +15057,190 @@ window.PAY_CONFIG = {
 
   // extra words people may search for, per section
   const FIND = {
-    personal: 'שם גיל יום הולדת תאריך לידה מגדר', account: 'התחברות גוגל google סנכרון ענן חשבון התנתקות מחיקת חשבון',
-    roles: 'עבודה מקום עבודה תפקיד מעסיק שכר לשעה תעריף העלאה העלאת שכר', calc: 'שעות נוספות 125 150 עיגול לילה הפסקה',
-    rest: 'שבת חג חגים עיר כניסת שבת יציאת שבת', pay: 'נסיעות החזר נסיעות תקרה תקופת שכר יום תשלום משכורת',
+    personal: 'שם גיל יום הולדת תאריך לידה מגדר נוער', account: 'התחברות גוגל google סנכרון ענן חשבון התנתקות מחיקת חשבון טלפון חדש',
+    roles: 'עבודה מקום עבודה תפקיד מעסיק שכר לשעה תעריף העלאה העלאת שכר', calc: 'שעות נוספות 125 150 עיגול לילה הפסקה ותק',
+    rest: 'שבת חג חגים עיר כניסת שבת יציאת שבת כלל יום', pay: 'נסיעות החזר נסיעות תקרה תקופת שכר יום תשלום משכורת',
     net: 'מס מס הכנסה נקודות זיכוי פנסיה ביטוח לאומי מס בריאות השתלמות נטו', leave: 'חופשה מחלה הבראה ותק תחילת עבודה',
     goal: 'יעד יעדים חיסכון חוסכים', alerts: 'התראות תזכורות פוש הודעות', templates: 'תבנית תבניות משמרת קבועה',
     look: 'צבע צבעים ערכת נושא כהה בהיר מצב לילה גופן גופנים מראה צלילים רטט מוזיקה עיצוב כרטיס plus פלוס', security: 'קוד נעילה טביעת אצבע סיסמה',
     assistant: 'בינה מלאכותית עוזר שאלות ai', ai: 'מפתח api claude ניתוח תלוש', backup: 'גיבוי שחזור קובץ', export: 'ייצוא אקסל excel csv pdf יומן',
     demo: 'דוגמה הדגמה', about: 'גרסה התקנה אודות', rights: 'זכויות שכר מינימום',
   };
+  // the page is a few colourful doors; each opens its own small page with the sections behind it
+  const CATS = [
+    { id: 'me', icon: 'users', tint: 'violet', title: 'אני והחשבון', keys: ['personal', 'account'], sub: () => [S.settings.userName, S.meta.cloudEmail ? 'מחובר/ת ☁️' : 'לא מחובר/ת'].filter(Boolean).join(' · ') },
+    { id: 'work', icon: 'briefcase', tint: 'mint', title: 'העבודה שלי', keys: ['roles', 'pay', 'templates'], sub: () => { const r = App.roles(); return r.length === 1 ? `${r[0].name} · ${U.money(Engine.roleRate(r[0], U.todayKey()), 0)} לשעה` : r.length + ' תפקידים' + (S.employers.length > 1 ? ' · ' + S.employers.length + ' מקומות עבודה' : ''); } },
+    { id: 'calc', icon: 'flask', tint: 'amber', title: 'חישוב השכר', keys: ['calc', 'rest'], sub: () => 'שעות נוספות, לילה, שבת וחגים' },
+    { id: 'money', icon: 'wallet', tint: 'sky', title: 'נטו, מס וזכויות', keys: ['net', 'leave', 'rights'], sub: () => `${S.settings.tax.creditPoints} נק׳ זיכוי · פנסיה ${S.settings.pension.employeePct}%` },
+    { id: 'goals', icon: 'target', tint: 'pink', title: 'יעדים ותזכורות', keys: ['goal', 'alerts'], sub: () => (+S.settings.goal.amount ? 'יעד ' + U.money(S.settings.goal.amount, 0) : 'יעד, חיסכון והתראות') },
+    { id: 'look', icon: 'palette', tint: 'orange', title: 'מראה ונעילה', keys: ['look', 'security'], sub: () => ({ system: 'לפי המערכת', light: 'בהיר', dark: 'כהה' }[S.settings.theme] || '') + (S.settings.lock.enabled ? ' · נעול 🔒' : '') },
+    { id: 'data', icon: 'cloud', tint: 'mint', title: 'גיבוי ונתונים', keys: ['backup', 'export', 'demo'], sub: () => (S.settings.backup.lastBackup ? 'גיבוי ' + UI.timeAgo(S.settings.backup.lastBackup) : 'גיבוי, ייצוא, נתוני דוגמה') },
+    { id: 'more', icon: 'sparkle', tint: 'violet', title: 'עוזר AI ואודות', keys: ['assistant', 'ai', 'about'], sub: () => 'גרסה ' + root.APP_VERSION },
+  ];
+  const catOf = (k) => CATS.find((c) => c.keys.includes(k));
+  App.settingsKeys = () => CATS.flatMap((c) => c.keys); // every section, door by door
+  App.settingsCats = () => CATS.map((c) => c.id);
+  const sectionRow = (k) => { const s = SECTIONS[k]; return `<button class="item" data-act="settings-open" data-k="${k}"><span class="lead">${icon(s.icon)}</span><span class="body"><span class="t">${s.title}</span><span class="s">${esc(s.sub())}</span></span>${icon('left', 's')}</button>`; };
+
+  /* problems people come here with, and where the answer is: each is [what it says, the words that find it, [[section, field label]]] */
+  const PROBLEMS = [
+    ['השכר לא יוצא כמו בתלוש', 'משכורת לא נכון לא תואם תלוש פחות כסף טעות בשכר חסר כסף', [['roles', 'תעריף'], ['calc', 'שעות רגילות ביום'], ['pay', 'התקופה מתחילה ב-']]],
+    ['שבת או חג לא מחושבים 150%', 'שבת לא נחשבת חג לא נחשב 150 שבת לא נכונה כניסת שבת', [['rest', ''], ['calc', 'שבת/חג %']]],
+    ['שעות נוספות לא נכונות', 'נוספות 125 150 שעות נוספות לא נחשבות אחרי 8 שעות', [['calc', 'שעות רגילות ביום'], ['calc', 'אחוז דרגה 1']]],
+    ['לא מקבל/ת נסיעות', 'נסיעות דמי נסיעה אוטובוס רב קו החזר נסיעות', [['pay', 'סכום ליום עבודה ₪']]],
+    ['ההפסקה מורידה לי שעות', 'הפסקה מורידה שעות הפסקה בתשלום ארוחה', [['calc', 'הפסקה קבועה (דק׳, 0 = לפי החוק)']]],
+    ['הנטו לא נכון', 'נטו מס הכנסה ביטוח לאומי פנסיה ניכויים נקודות זיכוי', [['net', 'נקודות זיכוי'], ['net', 'פנסיה חובה'], ['personal', 'תאריך לידה (לא חובה)']]],
+    ['אני מתחת לגיל 18', 'נוער גיל 16 17 15 שכר מינימום נוער פטור ממס', [['personal', 'תאריך לידה (לא חובה)']]],
+    ['קיבלתי העלאה', 'העלאה העלאת שכר תעריף חדש שינוי תעריף', [['roles', 'תעריף']]],
+    ['המשכורת מגיעה בתאריך אחר', 'יום תשלום מתי משכורת תאריך משכורת תקופת שכר מה 10', [['pay', 'יום התשלום (בחודש שאחרי)'], ['pay', 'התקופה מתחילה ב-']]],
+    ['לא מקבל/ת התראות', 'התראות תזכורות פוש לא מקבל הודעות', [['alerts', 'התראות פוש בטלפון']]],
+    ['הצלילים מפריעים', 'צלילים להשתיק שקט רעש מוזיקה רטט', [['look', 'צלילים'], ['look', 'רטט']]],
+    ['רוצה צבע אחר או מצב כהה', 'צבע כהה בהיר מצב לילה עיצוב', [['look', '']]],
+    ['עברתי לטלפון חדש', 'טלפון חדש העברה מכשיר חדש להעביר נתונים', [['account', ''], ['backup', '']]],
+    ['נמחקו לי משמרות', 'נמחק נמחקו שחזור גיבוי איבדתי', [['backup', '']]],
+    ['חופשה או מחלה לא נכונות', 'חופשה ימי חופש מחלה הבראה ותק יתרה', [['leave', 'תאריך תחילת עבודה'], ['leave', 'יתרת פתיחה — חופשה']]],
+    ['שכחתי את קוד הנעילה', 'קוד נעילה שכחתי סיסמה טביעת אצבע', [['security', '']]],
+    ['עובד/ת בעוד מקום', 'עוד מקום עבודה מעסיק נוסף שני מקומות', [['roles', '']]],
+    ['יום בחירות או יום מיוחד', 'בחירות 200 יום מיוחד אחוז מיוחד', [['rest', 'כללי יום']]],
+  ];
+  const CHIPS = [['wallet', 'mint', 0], ['candle', 'amber', 1], ['clock', 'violet', 2], ['bus', 'sky', 3], ['coffee', 'orange', 4], ['receipt', 'pink', 5], ['bell', 'violet', 9], ['cloud', 'sky', 12]];
+
+  // search: Hebrew written loosely (no niqqud, final letters, quotes) and matched from the start of words
+  const FINALS = { 'ך': 'כ', 'ם': 'מ', 'ן': 'נ', 'ף': 'פ', 'ץ': 'צ' };
+  const norm = (s) => String(s || '').toLowerCase().replace(/[֑-ׇ]/g, '').replace(/[ךםןףץ]/g, (c) => FINALS[c]).replace(/["'״׳()\-–,.:/%₪?!]/g, ' ').replace(/\s+/g, ' ').trim();
+  // every word of the question starts a word here ("צבע" finds colours, not the fingerprint, "אצבע"); a Hebrew
+  // prefix on a longer word comes off ("בנסיעות" finds travel)
+  const hitWord = (hay, w) => (' ' + hay).includes(' ' + w) || (w.length >= 4 && /^[הבלומשכ]/.test(w) && (' ' + hay).includes(' ' + w.slice(1)));
+  const hit = (hay, words) => words.every((w) => hitWord(hay, w));
+  let INDEX = null;
+  // every field of every section, read from the sections' own pages (so the search never falls behind them)
+  function buildIndex() {
+    const out = [];
+    const tpl = document.createElement('template');
+    Object.keys(SECTIONS).forEach((k) => {
+      const s = SECTIONS[k];
+      out.push({ k, label: '', text: norm(s.title + ' ' + (FIND[k] || '')) });
+      if (!RENDER[k] || k === 'account') return;
+      try {
+        tpl.innerHTML = RENDER[k].render(App.employer(S.employers[0].id));
+        const seen = new Set();
+        tpl.content.querySelectorAll('.lbl, .switch-row .t, .section-title, summary b, h3').forEach((el) => {
+          const label = (el.firstChild && el.firstChild.nodeType === 3 ? el.firstChild.textContent : el.textContent).trim();
+          if (!label || label.length > 60 || seen.has(label) || label === s.title) return;
+          seen.add(label);
+          out.push({ k, label, text: norm(label + ' ' + s.title) });
+        });
+      } catch (e) { /* a section that can't draw here is still found by its title */ }
+    });
+    return out;
+  }
+  function results(q) {
+    const words = norm(q).split(' ').filter(Boolean);
+    if (!words.length) return null;
+    if (!INDEX) INDEX = buildIndex();
+    const probs = PROBLEMS.filter(([t, w]) => hit(norm(t + ' ' + w), words)).slice(0, 3);
+    const fields = INDEX.filter((x) => hit(x.text, words));
+    // the section itself first, then its fields; one row per (section, label)
+    fields.sort((a, b) => (a.label ? 1 : 0) - (b.label ? 1 : 0));
+    return { probs, fields: fields.slice(0, 14) };
+  }
+  const goRow = (k, label, title, sub, cls) => `<button class="item ${cls || ''}" data-act="settings-go" data-k="${k}" data-f="${esc(label)}"><span class="lead">${icon(SECTIONS[k].icon)}</span><span class="body"><span class="t">${esc(title)}</span><span class="s">${esc(sub)}</span></span>${icon('left', 's')}</button>`;
+  function resultsHtml(r) {
+    if (!r.probs.length && !r.fields.length) {
+      return `<div class="set-none">${App.mascot ? App.mascot('think', { size: 64 }) : ''}<div><b>לא מצאנו הגדרה כזו</b><div class="small muted">אפשר לנסות מילה אחרת, או לכתוב לנו ונעזור.</div></div></div>
+        <button class="btn tonal block" data-act="support">${icon('chat', 's')} לכתוב לנו</button>`;
+    }
+    return (r.probs.length ? `<div class="section-title">${icon('sparkle', 's')} אולי זה מה שמחפשים</div>${r.probs.map(([t, , where]) => `<div class="set-prob"><div class="set-prob-t">${esc(t)}</div><div class="list">${where.map(([k, f]) => goRow(k, f, f || SECTIONS[k].title, f ? SECTIONS[k].title : SECTIONS[k].sub(), 'prob')).join('')}</div></div>`).join('')}` : '')
+      + (r.fields.length ? `<div class="section-title">${icon('search', 's')} הגדרות</div><div class="list">${r.fields.map((x) => goRow(x.k, x.label, x.label || SECTIONS[x.k].title, x.label ? catOf(x.k) ? catOf(x.k).title + ' › ' + SECTIONS[x.k].title : SECTIONS[x.k].title : SECTIONS[x.k].sub())).join('')}</div>` : '');
+  }
+
+  let lastQ = '';
   App.views.settings_mount = function (v) {
     const q = v.querySelector('#set-q');
     if (!q) return;
-    const norm = (s) => s.toLowerCase().replace(/["'״׳]/g, '').trim();
-    q.addEventListener('input', () => {
-      const t = norm(q.value);
-      let shown = 0;
-      v.querySelectorAll('.set-list').forEach((list) => {
-        let any = false;
-        // matched from the start of a word: "צבע" finds colours, not the fingerprint ("אצבע")
-        list.querySelectorAll('[data-find]').forEach((it) => { const ok = !t || (' ' + it.dataset.find).includes(' ' + t); it.hidden = !ok; if (ok) { any = true; shown++; } });
-        list.hidden = !any;
-        const title = list.previousElementSibling;
-        if (title && title.classList.contains('section-title')) title.hidden = !any;
-      });
-      const none = v.querySelector('#set-none');
-      if (none) none.hidden = !t || shown > 0;
-    });
+    const home = v.querySelector('#set-home');
+    const res = v.querySelector('#set-res');
+    const clear = v.querySelector('[data-set-clear]');
+    const run = () => {
+      lastQ = q.value;
+      const r = results(q.value);
+      clear.hidden = !q.value;
+      home.hidden = !!r;
+      res.hidden = !r;
+      res.innerHTML = r ? resultsHtml(r) : '';
+    };
+    q.addEventListener('input', run);
+    clear.addEventListener('click', () => { q.value = ''; run(); q.focus(); });
+    v.querySelectorAll('[data-set-chip]').forEach((b) => b.addEventListener('click', () => {
+      q.value = PROBLEMS[+b.dataset.setChip][0];
+      run();
+      if (root.Fx) root.Fx.play('pick');
+    }));
+    if (lastQ) { q.value = lastQ; run(); }
   };
 
   App.views.settings = function () {
-    const groups = [['חשבון', ['account', 'personal']], ['עבודה ושכר', ['rights', 'roles', 'calc', 'rest', 'pay', 'net', 'leave', 'goal']], ['אפליקציה', ['assistant', 'alerts', 'templates', 'look', 'security', 'ai']], ['נתונים', ['backup', 'export', 'demo', 'about']]];
     return `<div class="topbar"><div class="titles"><h1>הגדרות</h1><div class="sub">כל שינוי נשמר מיד</div></div></div>
-      <label class="set-search">${icon('search', 's')}<input class="input" id="set-q" type="search" placeholder="חיפוש (למשל: נסיעות, מס, צבע)" aria-label="חיפוש בהגדרות" autocomplete="off"></label>
-      <div class="empty small" id="set-none" hidden>לא נמצאה הגדרה כזו. אפשר לנסות מילה אחרת, או לשאול אותנו בעזרה ותמיכה.</div>
+      <div class="set-search">${icon('search', 's')}<input class="input" id="set-q" type="text" enterkeyhint="search" placeholder="מה לשנות? או מה הבעיה?" aria-label="חיפוש בהגדרות" autocomplete="off"><button class="icon-btn sm set-clear" data-set-clear hidden aria-label="ניקוי החיפוש">${icon('x', 's')}</button></div>
+      <div id="set-res" hidden></div>
+      <div id="set-home">
+      <div class="set-chips" aria-label="בעיות נפוצות">${CHIPS.map(([ic, tint, i]) => `<button class="set-chip t-${tint}" data-set-chip="${i}">${icon(ic, 's')}<span>${esc(PROBLEMS[i][0])}</span></button>`).join('')}</div>
       ${App.isAdmin ? `<div class="list" style="margin-top:6px"><button class="item admin-entry" data-act="admin-dashboard"><span class="lead" style="background:var(--primary);color:var(--on-primary)">${icon('chart')}</span><span class="body"><span class="t">לוח ניהול ${App.adminOpenTickets ? `<span class="tag warn">${App.adminOpenTickets} פניות מחכות</span>` : ''}</span><span class="s">משתמשים, פעילות, פניות (למנהלים בלבד)</span></span>${icon('left', 's')}</button></div>` : ''}
       ${root.Plus && root.Plus.visible() ? `<div class="list" style="margin-top:6px"><button class="item plus-entry" data-act="plus-open"><span class="lead plus-lead">${icon('sparkle')}</span><span class="body"><span class="t">Shaati Plus</span><span class="s">${root.Plus.owned() ? 'פעיל · תודה על התמיכה 💜' : 'עיצובים לכרטיס השכר · תשלום חד-פעמי' + (root.Plus.price ? ' · ' + esc(root.Plus.price) : '')}</span></span>${icon('left', 's')}</button></div>` : ''}
+      <div class="set-cats">${CATS.map((c, i) => `<button class="set-cat" data-act="settings-cat" data-cat="${c.id}" style="--i:${i}">${UI.tile(c.icon, c.tint)}<span class="t">${c.title}</span><span class="s">${esc(c.sub())}</span><span class="n" aria-hidden="true">${c.keys.length}</span></button>`).join('')}</div>
       <div class="list set-list help-list"><button class="item" data-act="support"><span class="lead">${icon('chat')}</span><span class="body"><span class="t">עזרה ותמיכה ${App.supportUnread ? '<span class="tag good">תשובה חדשה</span>' : ''}</span><span class="s">שאלות נפוצות, לכתוב לנו, הפניות שלי</span></span>${icon('left', 's')}</button>
-        <button class="item" data-act="share-app"><span class="lead">${icon('share')}</span><span class="body"><span class="t">לשתף עם חברים</span><span class="s">שגם הם ידעו כמה מגיע להם</span></span>${icon('left', 's')}</button></div>
-      ${groups.map(([g, keys]) => `<div class="section-title">${g}</div><div class="list set-list">${keys.map((k) => { const s = SECTIONS[k]; return `<button class="item" data-act="settings-open" data-k="${k}" data-find="${esc((s.title + ' ' + s.sub() + ' ' + (FIND[k] || '')).toLowerCase().replace(/["'״׳]/g, ''))}"><span class="lead">${icon(s.icon)}</span><span class="body"><span class="t">${s.title}</span><span class="s">${esc(s.sub())}</span></span>${icon('left', 's')}</button>`; }).join('')}</div>`).join('')}
-      <div class="section-title">מידע משפטי</div>
-      <div class="list">${[['about', 'info', 'אודות'], ['terms', 'file', 'תנאי שימוש'], ['privacy', 'shield', 'מדיניות פרטיות'], ['disclaimer', 'alert', 'הבהרה משפטית'], ['accessibility', 'eye', 'הצהרת נגישות'], ['licenses', 'layers', 'רישיונות וצד שלישי']].map(([d, ic, t]) => `<button class="item" data-act="legal" data-doc="${d}"><span class="lead" style="background:var(--surface-3)">${icon(ic)}</span><span class="body"><span class="t">${t}</span></span>${icon('left', 's')}</button>`).join('')}</div>
-      <div class="ver">גרסה ${root.APP_VERSION} · מבנה נתונים ${Store.SCHEMA_VERSION}${S.settings.legal ? ' · תנאים ' + esc(S.settings.legal.version) + ' אושרו' : ''}</div>`;
+        <button class="item" data-act="share-app"><span class="lead">${icon('share')}</span><span class="body"><span class="t">לשתף עם חברים</span><span class="s">שגם הם ידעו כמה מגיע להם</span></span>${icon('left', 's')}</button>
+        <button class="item" data-act="settings-legal"><span class="lead">${icon('file')}</span><span class="body"><span class="t">מידע משפטי</span><span class="s">תנאי שימוש, פרטיות, נגישות ורישיונות</span></span>${icon('left', 's')}</button></div>
+      <div class="ver">גרסה ${root.APP_VERSION} · מבנה נתונים ${Store.SCHEMA_VERSION}${S.settings.legal ? ' · תנאים ' + esc(S.settings.legal.version) + ' אושרו' : ''}</div>
+      </div>`;
   };
-  App.actions['settings-open'] = (el) => (el.dataset.k === 'assistant' ? App.actions.assistant() : el.dataset.k === 'rights' ? App.actions.rights() : App.sheetsApi.settingsSection(el.dataset.k));
+  App.actions['settings-open'] = (el) => (el.dataset.k === 'assistant' ? (App.openAssistantOver || App.actions.assistant)() : el.dataset.k === 'rights' ? App.actions.rights() : App.sheetsApi.settingsSection(el.dataset.k));
+  // a door: its own small page with the sections behind it (their lines stay up to date while it is open)
+  App.actions['settings-cat'] = (el) => {
+    const c = CATS.find((x) => x.id === el.dataset.cat);
+    if (!c) return;
+    let off = null;
+    const list = () => c.keys.map(sectionRow).join('');
+    UI.openSheet({
+      title: c.title, cls: 'set-cat-sheet',
+      body: `<div class="set-cat-head">${UI.tile(c.icon, c.tint)}<div class="small muted">${esc(c.sub())}</div></div><div class="list set-list" id="set-cat-list">${list()}</div>`,
+      onMount: (sh) => { off = Store.on(() => { const l = sh.querySelector('#set-cat-list'); if (l) l.innerHTML = list(); }); },
+      onClose: () => { if (off) off(); },
+    });
+  };
+  App.actions['settings-legal'] = () => UI.openSheet({
+    title: 'מידע משפטי',
+    body: `<div class="list">${[['about', 'info', 'אודות'], ['terms', 'file', 'תנאי שימוש'], ['privacy', 'shield', 'מדיניות פרטיות'], ['disclaimer', 'alert', 'הבהרה משפטית'], ['accessibility', 'eye', 'הצהרת נגישות'], ['licenses', 'layers', 'רישיונות וצד שלישי']].map(([d, ic, t]) => `<button class="item" data-act="legal" data-doc="${d}"><span class="lead" style="background:var(--surface-3)">${icon(ic)}</span><span class="body"><span class="t">${t}</span></span>${icon('left', 's')}</button>`).join('')}</div>`,
+  });
+  // a search result: the section opens at the field, which lights up for a moment
+  App.actions['settings-go'] = (el) => {
+    const k = el.dataset.k;
+    if (k === 'assistant' || k === 'rights') { App.actions['settings-open'](el); return; }
+    App.sheetsApi.settingsSection(k, el.dataset.f || '');
+  };
+  function spotlight(sheet, label) {
+    if (!label) return;
+    const want = label.trim();
+    const el = [...sheet.querySelectorAll('.lbl, .switch-row .t, .section-title, summary b, h3')].find((x) => {
+      const t = (x.firstChild && x.firstChild.nodeType === 3 ? x.firstChild.textContent : x.textContent).trim();
+      return t === want || t.startsWith(want);
+    });
+    if (!el) return;
+    const det = el.closest('details');
+    if (det && !det.open) det.open = true;
+    const box = el.closest('.switch-row, .field, .card, details') || el;
+    setTimeout(() => {
+      box.scrollIntoView({ block: 'center', behavior: 'smooth' });
+      box.classList.remove('set-hl'); void box.offsetWidth; box.classList.add('set-hl');
+      setTimeout(() => box.classList.remove('set-hl'), 2200);
+    }, 360);
+  }
 
-  App.sheetsApi.settingsSection = function (k) {
+  App.sheetsApi.settingsSection = function (k, focus) {
     const s = SECTIONS[k];
     const R = RENDER[k];
     if (!R) return;
-    sectionSheet(s.title, R.render, { perEmployer: R.perEmployer, mount: R.mount });
+    sectionSheet(s.title, R.render, { perEmployer: R.perEmployer, mount: R.mount, focus });
   };
 
   /* ---------------- renderers ---------------- */
@@ -14476,7 +15258,7 @@ window.PAY_CONFIG = {
       const age = Engine.ageAt(S.settings.birthDate, U.todayKey());
       return `<div class="card">${F.text('שם (לא חובה)', 's.userName', S.settings.userName, 'מופיע בברכות ובחתימה של הודעות למעסיק.', 'maxlength="40"')}
         ${F.date('תאריך לידה (לא חובה)', 's.birthDate', S.settings.birthDate, 'לברכה ביום ההולדת, לשכר המינימום לפי גיל, לבדיקות חוק עבודת הנוער ולגיל הפנסיה.').replace('data-s=', 'data-redraw data-s=')}
-        ${F.sel('מגדר (לא חובה)', 's.gender', [['', 'לא צוין'], ['m', 'גבר'], ['f', 'אישה']], S.settings.gender || '', 'רק לחישוב הפנסיה: חובת הפרשה מגיל 21 לגבר ומגיל 20 לאישה.')}</div>
+        ${F.chips('מגדר (לא חובה)', 's.gender', [['m', 'גבר', '👨'], ['f', 'אישה', '👩'], ['', 'לא צוין', '🙂']], S.settings.gender || '', 'רק לחישוב הפנסיה: חובת הפרשה מגיל 21 לגבר ומגיל 20 לאישה.')}</div>
         ${age != null ? `<div class="card ${age < 18 ? 'tonal' : ''}"><div class="kv"><span>גיל</span><b>${age}</b></div>
           ${age < 18 ? `<div class="small" style="margin-top:8px">${icon('info', 's')} מתחת לגיל 18 לא מנוכים מס הכנסה, ביטוח לאומי, מס בריאות ופנסיה, ולכן <b>הנטו שווה לברוטו</b> (פחות ניכויים אישיים כמו ארוחות, אם יש). מגיל 18 החישוב עובר אוטומטית לניכויים הרגילים.</div>` : ''}</div>` : ''}
         <div class="tiny muted" style="margin:6px 4px">תאריך הלידה נשמר בחשבון שלך ולא משותף עם אף אחד.</div>`;
@@ -14499,7 +15281,7 @@ window.PAY_CONFIG = {
         if (b.dataset.roleAdd) roleEditor(null, draw, b.dataset.roleAdd);
         if (b.hasAttribute('data-emp-add')) {
           const name = String((await UI.promptText('מעסיק חדש', 'שם המעסיק', '')) || '').trim().slice(0, 60);
-          if (!name) return;
+          if (!name || !App.ensureClean(name)) return;
           const emp = Object.assign(Defaults.defaultEmployer('emp_' + U.uid()), { name });
           await Store.put('employers', emp, 'הוספת מעסיק');
           draw();
@@ -14511,7 +15293,7 @@ window.PAY_CONFIG = {
             if (S.shifts.some((x) => x.employerId === emp.id)) { UI.toast('יש משמרות של המעסיק — אי אפשר למחוק'); return; }
             if (!(await UI.confirm('למחוק את המעסיק?', 'התפקידים שלו יימחקו.', 'מחק', true))) return;
             await App.saveOps([{ store: 'employers', del: emp.id }, ...S.roles.filter((x) => x.employerId === emp.id).map((x) => ({ store: 'roles', del: x.id }))], 'מחיקת מעסיק');
-          } else if (r && String(r).trim()) await Store.put('employers', Object.assign(Store.clone(emp), { name: String(r).trim().slice(0, 60) }));
+          } else if (r && String(r).trim() && App.ensureClean(String(r))) await Store.put('employers', Object.assign(Store.clone(emp), { name: String(r).trim().slice(0, 60) }));
           draw();
         }
       });
@@ -14557,6 +15339,7 @@ window.PAY_CONFIG = {
           if (b.hasAttribute('data-save')) {
             read();
             if (!d.name) { UI.invalid('הזן שם'); return; }
+            if (!App.ensureClean(d.name)) return;
             if (d.rates.some((r) => !(r.rate > 0))) { UI.invalid('הזן תעריף לשעה'); return; }
             UI.closeTop();
             await App.saveOps([{ store: 'roles', put: d }], orig ? 'עריכת תפקיד' : 'הוספת תפקיד', 'התפקיד נשמר');
@@ -14629,7 +15412,7 @@ window.PAY_CONFIG = {
         <div class="card">${F.sw('ביום שישי', '', 's.rest.eveFriday', R.eveFriday)}${F.sw('בערב חג', '', 's.rest.eveHoliday', R.eveHoliday)}${F.time('החל משעה', 's.rest.eveFrom', R.eveFrom)}
           <div class="tiny muted">האחוז מוגדר ב"חוקי חישוב". חל מהשעה הזו ועד כניסת השבת/החג.</div></div>
         <div class="section-title">${icon('hand', 's')} כללי יום ידניים</div>
-        <div class="card">${S.dayRules.length ? S.dayRules.slice().sort((a, b) => b.date.localeCompare(a.date)).map((r) => `<div class="kv"><span>${U.fmtDate(r.date)} · ${r.type === 'cancel' ? 'ביטול 150%' : 'יום מנוחה ידני'}${r.reason ? ' — ' + esc(r.reason) : ''}</span><button class="btn text sm" data-rule-del="${r.id}">מחק</button></div>`).join('') : '<div class="muted small">אין. אפשר לבטל 150% לתאריך (למשל חג שזוהה בטעות) מתוך לוח השנה ← לחיצה על היום.</div>'}</div>`;
+        <div class="card">${S.dayRules.length ? S.dayRules.slice().sort((a, b) => b.date.localeCompare(a.date)).map((r) => `<div class="kv"><span>${U.fmtDate(r.date)} · ${r.type === 'cancel' ? 'ביטול 150%' : r.type === 'pct' ? 'תעריף מיוחד ' + (+r.pct) + '%' : 'יום מנוחה ידני'}${r.reason ? ' — ' + esc(r.reason) : ''}</span><button class="btn text sm" data-rule-del="${r.id}">מחק</button></div>`).join('') : '<div class="muted small">אין. אפשר לבטל 150% לתאריך (למשל חג שזוהה בטעות) מתוך לוח השנה ← לחיצה על היום.</div>'}</div>`;
     },
     mount: (el, draw) => {
       if (el._restBound) return;
@@ -15009,13 +15792,16 @@ window.PAY_CONFIG = {
       name: st.userName || '', gender: st.gender || '', birth: st.birthDate || '', adult: false,
       jobs: existing.length ? existing.map((r) => ({ id: r.id, name: r.name, rate: Engine.roleRate(r, today) || '', color: r.color, rates: r.rates })) : [{ id: 'r_' + U.uid(), name: '', rate: '', color: Defaults.ROLE_COLORS[0] }],
       travel: '', travelAmount: '', city: '', start: st.startDate || '', startPick: '',
+      // the workplace's own name (empty while it is still the default one)
+      empName: emp.name && emp.name !== Defaults.defaultEmployer().name ? emp.name : '',
     };
     const needsLogin = () => !!opts.preLogin && !App.localOnly && !(root.Cloud && root.Cloud.user);
     const STEPS = ['hi', 'me', 'age', 'job', 'travel', 'city', 'start', 'done'];
     const QUESTIONS = STEPS.length - 2;
     let step = 0, dir = 'next', saving = false, msg = '', saved = false, demo = false, blocked = false, loadFailed = false;
     // he / she / both, for the questions' wording
-    const g = (m, f) => (A.gender === 'f' ? f : A.gender === 'm' ? m : m + '/' + f.replace(/^.*?(\S)$/, '$1'));
+    // he / she wording; not chosen: the neutral form given, or "מקבל/ת" when the feminine word only adds letters
+    const g = (m, f, x) => (A.gender === 'f' ? f : A.gender === 'm' || m === f ? m : x || (f.startsWith(m) ? m + '/' + f.slice(m.length) : m + '/' + f));
     const age = () => (A.birth ? Engine.ageAt(A.birth, today) : null);
     const minWage = () => Engine.legalMinWage(today, A.birth || null).hourly;
     const money = (n) => U.money(n, Number.isInteger(+n) ? 0 : 2);
@@ -15044,23 +15830,25 @@ window.PAY_CONFIG = {
       age: () => {
         const a = age();
         return `${say(a != null && a < 18 ? 'wow' : 'happy', a != null ? (a < 18 ? `גיל ${a}! יש לך זכויות מיוחדות, נדאג להן 🛡️` : `גיל ${a}, מעולה 👍`) : 'שאלה קטנה על הגיל 🎂')}
-        <h1>${g('מתי נולדת?', 'מתי נולדת?')}</h1>
+        <h1>מתי נולדת?</h1>
         <label class="field"><input class="input" type="date" id="ob-birth" data-pick="birth" value="${esc(A.birth)}" min="1940-01-01" max="${U.addDays(today, -365 * 12)}" placeholder="בחירת תאריך לידה"></label>
         <div class="ob-live" id="ob-live-age"></div>
         <div class="ob-chips">${chip('data-adult', '1', 'אני מעל 18, מעדיף/ה לא לפרט', A.adult)}</div>
         ${why('מתחת לגיל 18 יש שכר מינימום אחר, לא משלמים מס, ויש חוקים מיוחדים (כמה שעות מותר לעבוד, הפסקות ועוד). נבדוק הכול בשבילך.')}`;
       },
       job: () => `${say(jobValid().length ? 'love' : 'think', jobValid().length ? 'אחלה! עכשיו נדע כמה הרווחת 💸' : 'איפה עובדים? 🤔')}
-        <h1>${g('איפה אתה עובד?', 'איפה את עובדת?')}</h1>
-        <div class="ob-sub">אפשר לכתוב כל מקום עבודה או תפקיד. הנה כמה רעיונות לבחירה מהירה:</div>
+        <h1>${g('איפה אתה עובד?', 'איפה את עובדת?', 'איפה את/ה עובד/ת?')}</h1>
+        <label class="field ob-emp"><span class="lbl">שם מקום העבודה</span><input class="input" id="ob-emp" value="${esc(A.empName)}" placeholder="למשל: סופר יוחננוף, קפה גרג" maxlength="40" autocomplete="organization"></label>
+        <div class="ob-sub">ומה התפקיד שלך שם? אפשר לבחור מהרעיונות או לכתוב:</div>
         <div class="ob-chips small">${JOBS.map((j) => chip('data-jobname', j, j, A.jobs.some((x) => x.name === j))).join('')}</div>
         ${A.jobs.map((j, i) => `<div class="ob-job" style="--c:${j.color}">
-          <div class="ob-job-head"><span class="sw"></span>${A.jobs.length > 1 ? `עבודה ${i + 1}` : 'העבודה שלך'}${A.jobs.length > 1 ? `<button class="icon-btn sm" data-rx="${i}" aria-label="הסר">${icon('x', 's')}</button>` : ''}</div>
-          <label class="field"><span class="lbl">מקום העבודה או התפקיד</span><input class="input" data-jn="${i}" value="${esc(j.name)}" placeholder="למשל: קופאי בסופר, מלצרית בקפה גרג" maxlength="40" autocomplete="off" enterkeyhint="next"></label>
-          <label class="field"><span class="lbl">כמה משלמים לך לשעה? (₪)</span><input class="input" type="number" step="any" inputmode="decimal" data-jr="${i}" value="${esc(j.rate)}" placeholder="${U.num(minWage(), 2)}">
+          <div class="ob-job-head"><span class="sw"></span>${A.jobs.length > 1 ? 'תפקיד ' + (i + 1) : 'התפקיד שלך'}${A.jobs.length > 1 ? `<button class="icon-btn sm" data-rx="${i}" aria-label="הסר את התפקיד">${icon('x', 's')}</button>` : ''}</div>
+          <label class="field"><span class="lbl">שם התפקיד</span><input class="input" data-jn="${i}" value="${esc(j.name)}" placeholder="למשל: קופאי, מלצרית, סדרן" maxlength="40" autocomplete="organization-title"></label>
+          <label class="field"><span class="lbl">כמה משלמים לך לשעה בתפקיד הזה? (₪)</span><input class="input" type="number" step="any" inputmode="decimal" data-jr="${i}" value="${esc(j.rate)}" placeholder="${U.num(minWage(), 2)}">
             <span class="hint">לא בטוח/ה? אפשר להשאיר ריק ונשים שכר מינימום${age() != null && age() < 18 ? ' לגילך' : ''}: ${U.money(minWage())} לשעה</span></label>
         </div>`).join('')}
-        ${A.jobs.length < 4 ? `<button class="btn text sm" data-jadd>${icon('plus', 's')} יש לי עוד עבודה</button>` : ''}
+        ${A.jobs.length < 6 ? `<button class="btn text sm" data-jadd>${icon('plus', 's')} הוסף תפקיד באותו מקום עבודה</button>` : ''}
+        <div class="tiny muted ob-more-emp">עובד/ת גם במקום אחר? אפשר להוסיף מקום עבודה נוסף אחר כך, בהגדרות › מקומות עבודה.</div>
         <div class="ob-live" id="ob-live-roles"></div>
         ${why('ככה נחשב כמה הרווחת בכל משמרת. אפשר לשנות ולהוסיף בכל רגע בהגדרות.')}`,
       travel: () => `${say(A.travel === 'yes' ? 'love' : 'happy', 'הרבה שוכחים את זה! 🚌')}
@@ -15075,7 +15863,7 @@ window.PAY_CONFIG = {
         <div class="ob-live" id="ob-preview"></div>
         ${why('לפי העיר נדע בדיוק מתי שבת וחג נכנסים ויוצאים, וכך כל שעה שעבדת בהם תחושב ב-150% לפחות.')}`,
       start: () => `${say('think', 'אחרונה! 🏁')}
-        <h1>מתי ${g('התחלת', 'התחלת')} לעבוד שם?</h1>
+        <h1>מתי התחלת לעבוד שם?</h1>
         <div class="ob-chips">${chip('data-start', 'month', 'החודש', A.startPick === 'month')}${chip('data-start', 'months', 'לפני כמה חודשים', A.startPick === 'months')}${chip('data-start', 'year', 'לפני יותר משנה', A.startPick === 'year')}</div>
         <label class="field"><span class="lbl">או תאריך מדויק</span><input class="input" type="date" id="ob-start" value="${esc(A.startPick === 'exact' ? A.start : '')}" min="${A.birth ? U.addDays(A.birth, 365 * 12) : '1960-01-01'}" max="${today}" placeholder="בחירת תאריך"></label>
         ${why('לפי הוותק מגיעים ימי חופשה, דמי הבראה ופנסיה. לא בטוח/ה? אפשר לדלג ולהוסיף אחר כך.')}`,
@@ -15111,6 +15899,7 @@ window.PAY_CONFIG = {
       if (key === 'me' && q('#ob-name')) A.name = q('#ob-name').value.trim().slice(0, 40);
       if (key === 'age' && q('#ob-birth')) { A.birth = q('#ob-birth').value || ''; if (A.birth) A.adult = false; }
       if (key === 'job') {
+        if (q('#ob-emp')) A.empName = q('#ob-emp').value.trim().slice(0, 40);
         v.querySelectorAll('[data-jn]').forEach((i) => (A.jobs[+i.dataset.jn].name = i.value.slice(0, 40)));
         v.querySelectorAll('[data-jr]').forEach((i) => { const n = UI.numIn(i); A.jobs[+i.dataset.jr].rate = n != null && n > 0 && n < 1000 ? n : ''; });
       }
@@ -15156,7 +15945,7 @@ window.PAY_CONFIG = {
         foot = `<button class="btn big ob-go" data-next>בואו נתחיל</button>
           <button class="btn tonal" data-demo>${icon('flask')} רק להציץ (נתונים לדוגמה)</button>
           ${opts.preLogin ? '<button class="btn text" data-have>כבר יש לי חשבון? התחברות</button>' : ''}
-          <div class="tiny muted ob-consent">בהמשך אתה מאשר את ${App.legalLinks ? App.legalLinks() : 'תנאי השימוש ומדיניות הפרטיות'}.</div>`;
+          <div class="tiny muted ob-consent">בהמשך את/ה מאשר/ת את ${App.legalLinks ? App.legalLinks() : 'תנאי השימוש ומדיניות הפרטיות'}.</div>`;
       } else if (last) {
         const ready = !needsLogin() || root.Cloud.sdkReady();
         foot = needsLogin()
@@ -15180,6 +15969,8 @@ window.PAY_CONFIG = {
     }
     function go(next) {
       read();
+      // forward only with clean words (the name, the workplace, the roles)
+      if (next > step && !App.ensureClean(A.name, A.empName, ...A.jobs.map((j) => j.name))) return;
       dir = next > step ? 'next' : 'prev';
       step = Math.max(0, Math.min(STEPS.length - 1, next));
       draw();
@@ -15199,6 +15990,7 @@ window.PAY_CONFIG = {
     async function save(withDemo) {
       const jobs = withDemo && !jobValid().length ? Defaults.defaultRoles(emp.id).map((r) => Object.assign(r, { rate: r.rates[0].rate })) : finalJobs();
       emp.travelPerDay = finalTravel();
+      if (A.empName) emp.name = A.empName;
       const ops = [{ store: 'employers', put: emp }];
       jobs.forEach((j, i) => {
         const rates = j.rates && j.rates.length ? j.rates.slice().sort((a, b) => a.from.localeCompare(b.from)) : [{ from: '2000-01-01', rate: j.rate }];
@@ -15282,7 +16074,7 @@ window.PAY_CONFIG = {
       else if (b.hasAttribute('data-skip')) {
         // a skipped question keeps the usual answer
         const key = STEPS[step];
-        if (key === 'job') { A.jobs.forEach((j) => { j.name = ''; j.rate = ''; }); v.querySelectorAll('[data-jn], [data-jr]').forEach((i) => { i.value = ''; }); }
+        if (key === 'job') { A.empName = ''; A.jobs.forEach((j) => { j.name = ''; j.rate = ''; }); v.querySelectorAll('[data-jn], [data-jr]').forEach((i) => { i.value = ''; }); }
         if (key === 'travel' && !A.travel) A.travel = 'idk';
         go(step + 1);
       } else if (b.hasAttribute('data-demo')) {
@@ -15558,6 +16350,8 @@ window.PAY_CONFIG = {
     if (UI.sheets.length) UI.closeAll();
     setTimeout(openChat, UI.sheets.length ? 350 : 0);
   };
+  // from a settings page: on top of it, so back returns there
+  App.openAssistantOver = () => openChat();
   function openChat() {
     let sheetEl = null;
     let busy = false;
@@ -15966,12 +16760,14 @@ window.PAY_CONFIG = {
 
   /* ---------------- what's new (once per big update, for people who already used the app) ---------------- */
   const WHATS_NEW = {
-    id: '1.19',
+    id: '1.20',
     items: [
-      ['pin', 'violet', 'בחירת עיר חדשה', 'כל היישובים בישראל: חיפוש, קפיצה לפי אות ומשפט קטן על כל מקום.'],
-      ['target', 'mint', 'לפי המיקום שלך', 'לחיצה על "המיקום שלי" בוחרת לבד את היישוב הכי קרוב.'],
+      ['sparkle', 'violet', 'פתיחה חדשה ומרשימה', 'שעון שמתקתק, לוגו שנוחת עם מטבעות וזיקוקים, וצליל שכיף לשמוע.'],
+      ['pin', 'mint', 'בחירת עיר חדשה', 'כל היישובים בישראל, עם חיפוש ומשפט קטן על כל מקום. "המיקום שלי" בוחר לבד את הכי קרוב.'],
       ['coffee', 'amber', 'הפסקה לפי החוק', 'לא כתבתם הפסקה? היא נכנסת לבד לפי החוק, בתשלום. קצרה מדי? תופיע אזהרה.'],
-      ['bell', 'pink', 'פחות התראות', 'רק הסיכום השבועי והחודשי, חדשות טובות ותזכורות חשובות.'],
+      ['star', 'sky', 'תעריף מיוחד באחוזים', 'יום בחירות? 200% למשמרת אחת (בעקיפות הידניות), או ליום שלם בלחיצה על היום בלוח השנה.'],
+      ['search', 'violet', 'הגדרות חדשות', 'הכול מסודר בקטגוריות, והחיפוש מבין בעיות: כתבו "השכר לא נכון" ותגיעו ישר לשדה הנכון.'],
+      ['check', 'pink', 'בחירות בסגנון שעתי', 'כל רשימת בחירה נפתחת עכשיו בעיצוב של האפליקציה, עם צליל ואנימציה.'],
     ],
   };
 
@@ -16168,10 +16964,11 @@ window.PAY_CONFIG = {
     const entry = UI.openSheet({
       title: 'פנייה חדשה', full: true,
       body: `<div class="support" id="sp-new"></div>`,
-      foot: `<button class="btn go" data-sp-send disabled>${icon('send', 's')} שליחה</button>`,
+      foot: `<button class="btn go" data-sp-send aria-disabled="true">${icon('send', 's')} שליחה</button>`,
     });
     const box = entry.sh.querySelector('#sp-new');
     const send = entry.sh.querySelector('[data-sp-send]');
+    let sending = false;
     function draw() {
       box.innerHTML = `${App.mascotSays ? App.mascotSays(reason ? 'think' : 'happy', reason ? 'ספרו לנו בכמה מילים 👇' : 'על מה הפנייה?', { size: 64 }) : ''}
         <div class="sp-reasons">${REASONS.map(([k, ic, tint, l]) => `<button class="sp-r ${k === reason ? 'on' : ''}" data-r="${k}">${UI.tile(ic, tint)}<span>${esc(l)}</span></button>`).join('')}</div>
@@ -16188,24 +16985,38 @@ window.PAY_CONFIG = {
       const mail = m ? m.value.trim() : '';
       return { text, mail, ok: reason && text.length >= 10 && (!anon || /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(mail)) };
     };
-    const check = () => { send.disabled = !val().ok; };
+    // the button always answers: until the request is ready it looks paler, and a tap says what is missing
+    const check = () => { send.setAttribute('aria-disabled', String(!val().ok)); };
     box.addEventListener('click', (e) => {
       const b = e.target.closest('[data-r]');
       if (!b) return;
-      const typed = box.querySelector('#sp-text') ? box.querySelector('#sp-text').value : '';
+      // what was typed survives the redraw: the text, the email and the switch
+      const q = (s) => box.querySelector(s);
+      const kept = { text: q('#sp-text') ? q('#sp-text').value : '', mail: q('#sp-mail') ? q('#sp-mail').value : '', tech: q('#sp-tech') ? q('#sp-tech').checked : true };
       reason = b.dataset.r;
       draw();
-      if (typed) box.querySelector('#sp-text').value = typed;
+      if (kept.text) q('#sp-text').value = kept.text;
+      if (kept.mail && q('#sp-mail')) q('#sp-mail').value = kept.mail;
+      if (q('#sp-tech')) q('#sp-tech').checked = kept.tech;
+      check(); // what was typed came back: the button may be ready again
       if (Fx()) Fx().play('on');
       setTimeout(() => { const t = box.querySelector('#sp-text'); if (t) t.focus(); }, 60);
     });
     box.addEventListener('input', check);
     send.onclick = async () => {
       const v = val();
-      if (!v.ok) { UI.invalid(v.text.length < 10 ? 'כתבו קצת יותר (לפחות 10 תווים)' : 'בדקו את כתובת האימייל'); return; }
+      if (sending) return;
+      if (v.ok && !App.ensureClean(v.text)) return;
+      if (!v.ok) {
+        UI.invalid(!reason ? 'בחרו קודם על מה הפנייה 👆' : v.text.length < 10 ? 'כתבו קצת יותר (לפחות 10 תווים)' : 'בדקו את כתובת האימייל');
+        const f = box.querySelector(!reason ? '.sp-reasons' : v.text.length < 10 ? '#sp-text' : '#sp-mail');
+        if (f) { f.scrollIntoView({ block: 'center', behavior: 'smooth' }); if (f.focus && reason) f.focus(); }
+        return;
+      }
       // a gentle limit, so a stuck button can't flood the inbox
       const recent = (S.meta.ticketTimes || []).filter((t) => Date.now() - t < 24 * 3600000);
       if (recent.length >= 5) { UI.invalid('שלחת כבר כמה פניות היום. נענה בהקדם 🙏'); return; }
+      sending = true;
       send.disabled = true;
       send.innerHTML = 'שולח…';
       try {
@@ -16225,6 +17036,7 @@ window.PAY_CONFIG = {
         setTimeout(() => UI.dialog({ title: '', html: `<div class="term-box">${App.mascot('love', { size: 70 })}<div><h3>הפנייה נשלחה! 💌</h3><p>${anon ? 'נענה לך במייל בהקדם.' : 'נענה בהקדם, והתשובה תופיע כאן באפליקציה (עזרה ותמיכה › הפניות שלי).'}</p></div></div>`, buttons: [{ label: 'תודה!', value: true, cls: '' }] }), 350);
       } catch (e) {
         console.error(e);
+        sending = false;
         send.disabled = false;
         send.innerHTML = `${icon('send', 's')} שליחה`;
         UI.invalid('השליחה נכשלה: ' + (Cloud() ? Cloud().errorText(e) : 'נסו שוב'));
@@ -16234,7 +17046,7 @@ window.PAY_CONFIG = {
   };
 
   /* ---------------- one conversation (user or admin) ---------------- */
-  Support.thread = async function (tid, asAdmin) {
+  Support.thread = async function (tid, asAdmin, onChange) {
     const entry = UI.openSheet({ title: asAdmin ? 'פנייה' : 'הפנייה שלי', full: true, cls: 'chat-sheet', body: UI.skeleton(3),
       foot: `<textarea class="input chat-input" id="sp-reply" rows="1" maxlength="2000" placeholder="${asAdmin ? 'תשובה…' : 'עוד משהו?'}"></textarea><button class="icon-btn chat-send" data-sp-reply aria-label="שליחה">${icon('send')}</button>` });
     const body = entry.sh.querySelector('.sh-body');
@@ -16251,20 +17063,35 @@ window.PAY_CONFIG = {
       body.innerHTML = `<div class="sp-head">${reasonTile(t.reason)}<div><b>${esc(label)}</b><div class="tiny muted"><span class="sp-st ${STATUS[t.status] ? STATUS[t.status][1] : ''}">${STATUS[t.status] ? STATUS[t.status][0] : ''}</span> · נפתחה ${U.fmtDate(U.epochKey(t.created))}</div></div></div>
         ${asAdmin ? `<div class="card small sp-meta">${t.name ? `<div>שם: <b>${esc(t.name)}</b></div>` : ''}${t.email ? `<div>אימייל: <a href="mailto:${esc(t.email)}?subject=${encodeURIComponent('Shaati: הפנייה שלך')}" dir="ltr">${esc(t.email)}</a> (לא מחובר, לענות במייל)</div>` : ''}${t.v ? `<div dir="ltr" style="text-align:left">${esc(t.v)} · ${esc(t.p || '')}<br><span class="tiny">${esc(t.dev || '')}</span></div>` : '<div class="tiny muted">בלי פרטים טכניים</div>'}</div>` : ''}
         <div class="chat-log">${bubble('user', t.text, t.created)}${msgs.map((m) => bubble(m.from, m.text, m.t)).join('')}</div>
-        ${t.status !== 'closed' ? `<button class="btn text sm" data-sp-close>${icon('check', 's')} ${asAdmin ? 'סגור את הפנייה' : 'הבעיה נפתרה, אפשר לסגור'}</button>` : ''}`;
+        ${t.status !== 'closed' ? `<button class="btn text sm" data-sp-close>${icon('check', 's')} ${asAdmin ? 'סגור את הפנייה' : 'הבעיה נפתרה, אפשר לסגור'}</button>` : ''}
+        ${asAdmin && t.status === 'closed' ? `<button class="btn text sm danger-text" data-sp-del>${icon('trash', 's')} מחק את הפנייה</button>` : ''}`;
       if (!asAdmin && t.last === 'admin' && !t.seen) {
         fs.updateDoc(ref, { seen: true }).catch(() => {});
         App.supportUnread = Math.max(0, (App.supportUnread || 1) - 1);
       }
       const c = body.querySelector('[data-sp-close]');
-      if (c) c.onclick = async () => { await fs.updateDoc(ref, { status: 'closed', updated: Date.now() }); UI.toast('הפנייה נסגרה'); load(); };
+      if (c) c.onclick = async () => { await fs.updateDoc(ref, { status: 'closed', updated: Date.now() }); UI.toast('הפנייה נסגרה'); load(); if (onChange) onChange(); };
+      const del = body.querySelector('[data-sp-del]');
+      if (del) del.onclick = async () => {
+        if (!(await UI.confirm('למחוק את הפנייה?', 'הפנייה וכל ההודעות בה יימחקו לתמיד, גם אצל מי ששלח אותה.', 'מחק', true))) return;
+        del.disabled = true;
+        if (await Support.remove(tid)) { UI.closeTop(); UI.toast('הפנייה נמחקה'); if (onChange) onChange(); } else del.disabled = false;
+      };
       body.scrollTop = body.scrollHeight;
       if (t.email && asAdmin) entry.sh.querySelector('.sh-foot').hidden = true;
     }
-    entry.sh.querySelector('[data-sp-reply]').onclick = async () => {
+    let replying = false;
+    const replyBtn = entry.sh.querySelector('[data-sp-reply]');
+    // pressed before the keyboard closed, or twice: one message only
+    replyBtn.addEventListener('pointerdown', (e) => e.preventDefault()); // the tap does not take the focus (the keyboard stays, the tap lands)
+    replyBtn.onclick = async () => {
       const ta = entry.sh.querySelector('#sp-reply');
       const text = ta.value.trim();
-      if (!text) return;
+      if (!text) { UI.invalid('כתבו הודעה קודם'); ta.focus(); return; }
+      if (!App.ensureClean(text)) return;
+      if (replying) return;
+      replying = true;
+      replyBtn.disabled = true;
       try {
         const now = Date.now();
         await fs.addDoc(fs.collection(db, 'tickets', tid, 'msgs'), { from: asAdmin ? 'admin' : 'user', text: text.slice(0, 2000), t: now });
@@ -16273,6 +17100,8 @@ window.PAY_CONFIG = {
         if (Fx()) Fx().play('pop');
         load();
       } catch (e) { UI.invalid('השליחה נכשלה: ' + Cloud().errorText(e)); }
+      replying = false;
+      replyBtn.disabled = false;
     };
     try { await load(); } catch (e) { body.innerHTML = `<div class="banner warn">${icon('alert')}<div>לא הצלחנו לטעון (${esc(e.code || e.message || '')}).</div></div>`; }
   };
@@ -16286,6 +17115,27 @@ window.PAY_CONFIG = {
     UI.toast('הקישור הועתק. אפשר להדביק בוואטסאפ 💚');
   };
 
+  /** Admin: delete a closed request with its messages (the rules allow it only once it is closed). */
+  Support.remove = async function (tid) {
+    try {
+      const { fs, db } = await Cloud().sdk();
+      const msgs = await fs.getDocs(fs.collection(db, 'tickets', tid, 'msgs'));
+      for (const m of msgs.docs) await fs.deleteDoc(m.ref);
+      await fs.deleteDoc(fs.doc(db, 'tickets', tid));
+      return true;
+    } catch (e) {
+      console.warn('deleting a request', e);
+      UI.invalid('המחיקה נכשלה: ' + (Cloud() ? Cloud().errorText(e) : 'נסו שוב'));
+      return false;
+    }
+  };
+  /** Admin: delete every closed request; returns how many went. */
+  Support.removeClosed = async function (ids) {
+    let n = 0;
+    for (const id of ids) { if (await Support.remove(id)) n++; else break; }
+    return n;
+  };
+
   /* ---------------- admin: the inbox ---------------- */
   /** HTML for the admin dashboard: open requests first. */
   Support.adminInbox = async function () {
@@ -16294,11 +17144,13 @@ window.PAY_CONFIG = {
     const order = { open: 0, answered: 1, closed: 2 };
     list.sort((a, b) => (order[a.status] - order[b.status]) || ((a.last === 'user' ? 0 : 1) - (b.last === 'user' ? 0 : 1)) || b.updated - a.updated);
     App.adminOpenTickets = list.filter((t) => t.status === 'open' && t.last === 'user').length;
-    return { count: App.adminOpenTickets, total: list.length, html: list.length ? `<div class="list">${list.slice(0, 40).map((t) => {
+    const closed = list.filter((t) => t.status === 'closed').map((t) => t.id);
+    return { count: App.adminOpenTickets, total: list.length, closed, html: list.length ? `<div class="list">${list.slice(0, 40).map((t) => {
       const label = reasonOf(t.reason)[3];
       const waiting = t.status === 'open' && t.last === 'user';
-      return `<button class="item" data-adm-ticket="${esc(t.id)}">${reasonTile(t.reason)}<span class="body"><span class="t">${esc(label)}${t.name ? ' · ' + esc(t.name) : ''} ${waiting ? '<span class="tag warn">מחכה לתשובה</span>' : ''}${t.email ? ' <span class="tag">מייל</span>' : ''}</span><span class="s">${esc(String(t.text || '').slice(0, 70))}</span></span><span class="trail"><span class="tiny muted">${UI.timeAgo(t.updated || t.created)}</span></span></button>`;
-    }).join('')}</div>` : '<div class="small muted" style="margin:4px">אין פניות עדיין 🎉</div>' };
+      return `<button class="item" data-adm-ticket="${esc(t.id)}">${reasonTile(t.reason)}<span class="body"><span class="t">${esc(label)}${t.name ? ' · ' + esc(t.name) : ''} ${waiting ? '<span class="tag warn">מחכה לתשובה</span>' : ''}${t.email ? ' <span class="tag">מייל</span>' : ''}</span><span class="s">${esc(String(t.text || '').slice(0, 70))}</span></span><span class="trail">${t.status === 'closed' ? '<span class="sp-st closed">סגורה</span><br>' : ''}<span class="tiny muted">${UI.timeAgo(t.updated || t.created)}</span></span></button>`;
+    }).join('')}</div>
+    ${closed.length ? `<button class="btn text sm danger-text" data-adm-del-closed>${icon('trash', 's')} מחק את הפניות הסגורות (${closed.length})</button>` : ''}` : '<div class="small muted" style="margin:4px">אין פניות עדיין 🎉</div>' };
   };
 })(typeof window !== 'undefined' ? window : globalThis);
 
@@ -18080,7 +18932,16 @@ window.PAY_CONFIG = {
       const inbox = root.Support ? await root.Support.adminInbox().catch((e) => ({ count: 0, html: `<div class="small muted">לא ניתן לטעון פניות (${esc(e.code || e.message || '')})</div>` })) : null;
       if (entry.closed) return;
       body.innerHTML = (inbox ? `<div class="admin"><div class="section-title">${icon('chat', 's')} פניות ${inbox.count ? `<span class="tag warn">${inbox.count} מחכות לתשובה</span>` : ''}</div>${inbox.html}</div>` : '') + render(rows, admins, root.Cloud.user.uid);
-      body.querySelectorAll('[data-adm-ticket]').forEach((b) => (b.onclick = () => root.Support.thread(b.dataset.admTicket, true)));
+      body.querySelectorAll('[data-adm-ticket]').forEach((b) => (b.onclick = () => root.Support.thread(b.dataset.admTicket, true, load)));
+      const delClosed = body.querySelector('[data-adm-del-closed]');
+      if (delClosed) delClosed.onclick = async () => {
+        const n = inbox.closed.length;
+        if (!(await UI.confirm(`למחוק ${n === 1 ? 'פנייה סגורה אחת' : n + ' פניות סגורות'}?`, 'הן וכל ההודעות בהן יימחקו לתמיד. פניות פתוחות לא נוגעים בהן.', 'מחק', true))) return;
+        delClosed.disabled = true;
+        const done = await root.Support.removeClosed(inbox.closed);
+        if (done) UI.toast(done === 1 ? 'פנייה אחת נמחקה' : done + ' פניות נמחקו');
+        load();
+      };
       body.querySelector('[data-adm-refresh]').onclick = () => { body.innerHTML = UI.skeleton(4, 'card'); load(); };
       body.querySelector('[data-adm-add]').onclick = async () => {
         const uid = body.querySelector('#adm-uid').value.trim();

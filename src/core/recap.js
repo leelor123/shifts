@@ -55,7 +55,7 @@
       movies: Math.floor(t.hours / 2),
     });
     if (t.bestDay && t.bestDay.amount > 0 && t.shifts > 1) slides.push({ k: 'best', key: t.bestDay.key, amount: r2(t.bestDay.amount) });
-    const extras = (t.restPremium || 0) + (t.otPremium || 0) + (t.nightPremium || 0) + (t.evePremium || 0);
+    const extras = (t.restPremium || 0) + (t.otPremium || 0) + (t.nightPremium || 0) + (t.evePremium || 0) + (t.specialPremium || 0);
     if (extras >= 1) slides.push({ k: 'extras', amount: r2(extras), restHours: r2(t.restHours || 0), otHours: r2(t.otHours || 0), travel: r2(t.travel || 0) });
     else if ((t.travel || 0) >= 1) slides.push({ k: 'travel', amount: r2(t.travel) });
     const roles = Object.entries(t.byRole || {}).filter(([, v]) => v.hours > 0).sort((a, b) => b[1].hours - a[1].hours);
