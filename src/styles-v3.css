@@ -140,7 +140,9 @@ body.fx .btn:active, body.fx .chip:active, body.fx .sc:active, body.fx .am-tile:
 .set-list .item:nth-child(6n) .lead { background: var(--orange-soft); color: var(--orange); }
 
 /* bottom bar: a tinted pill for the current tab, an amber + */
-.nav { background: color-mix(in srgb, var(--surface-1) 90%, transparent); backdrop-filter: saturate(1.4) blur(16px); -webkit-backdrop-filter: saturate(1.4) blur(16px); border-top: 1px solid var(--line); box-shadow: none; }
+/* opaque, no backdrop blur: the bar is on screen under every sheet and dialog, and a blur recomputed under moving
+   layers is a known source of one-frame flashes on Android GPUs (behind 90% the blur hardly showed anyway) */
+.nav { background: var(--surface-1); border-top: 1px solid var(--line); box-shadow: none; }
 .nav button { color: var(--on-surface-var); }
 .nav button .pill { width: 56px; height: 32px; border-radius: 16px; transition: background .2s; }
 .nav button.on .pill { background: var(--brand-soft); color: var(--brand-strong); }
@@ -1469,3 +1471,4 @@ body.fx .cal-day.hello, body.fx .week-row.hello { animation: cal-hello .55s cubi
 .imp-tips ul { margin: 6px 0 0; padding-inline-start: 18px; line-height: 1.6; }
 .imp-note { display: flex; gap: 6px; align-items: center; margin: -4px 2px 10px; }
 @media (prefers-reduced-motion: reduce) { .imp-bar i { animation-duration: 3s; } }
+.login .login-email { margin-top: 10px; }

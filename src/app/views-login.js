@@ -42,6 +42,24 @@
     if (b) b.onclick = async () => { await UI.copyText(location.origin + location.pathname); UI.toast('הקישור הועתק. הדבק אותו בדפדפן 👍'); };
   };
 
+  /* ---------------- signing in with an email link ---------------- */
+  /** Asks for the email and sends the sign-in link. true when it was sent. */
+  App.emailSignIn = async function () {
+    const v = await UI.dialog({
+      title: 'התחברות עם אימייל',
+      html: `<p class="small muted" style="margin-top:0">נשלח לך קישור. לוחצים עליו בטלפון הזה ומחוברים, בלי סיסמה.</p>
+        <label class="field"><span class="lbl">האימייל שלך</span><input class="input ltr" type="email" name="email" autocomplete="email" inputmode="email" placeholder="name@example.com" maxlength="100"></label>`,
+      buttons: [{ label: 'ביטול', value: null }, { label: 'שליחת קישור', value: 'form' }],
+    });
+    if (!v) return false;
+    const email = String(v.email || '').trim();
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(email)) { UI.invalid('כתובת האימייל לא נראית תקינה'); return false; }
+    try { await Cloud.sendEmailLink(email); } catch (e) { console.warn('email link', e); UI.invalid(Cloud.errorText(e)); return false; }
+    if (root.Fx) root.Fx.play('pick');
+    await UI.dialog({ title: 'שלחנו לך קישור 📬', html: `<p style="margin-top:0">שלחנו קישור התחברות ל-<b dir="ltr">${esc(email)}</b>.</p><p class="small muted">פותחים את המייל בטלפון הזה ולוחצים על הקישור. לא הגיע תוך דקה? כדאי לבדוק גם בספאם.</p>`, buttons: [{ label: 'הבנתי', value: true }] });
+    return true;
+  };
+
   /* ---------------- login screen ---------------- */
   App.showLogin = function (reason) {
     const nav = document.getElementById('nav');
@@ -56,17 +74,20 @@
       v.innerHTML = `<div class="wizard login"><div class="content" style="display:flex;flex-direction:column;justify-content:center;text-align:center">
         <div class="login-mascot">${App.mascot ? App.mascot(isErr ? 'think' : 'wave', { size: 110 }) : '<div class="brand-mark big" aria-hidden="true"></div>'}</div>
         <h1 class="brand-name">Shaati</h1><div class="brand-sub">מעקב משמרות ושכר</div>
-        <p class="lead">מתחברים עם Google, וכל מה שרשמת נשמר בחשבון שלך ומחכה לך בכל טלפון.</p>
+        <p class="lead">מתחברים עם Google${root.AUTH_EMAIL_LINK ? ' או עם אימייל' : ''}, וכל מה שרשמת נשמר בחשבון שלך ומחכה לך בכל טלפון.</p>
         ${App.inAppBrowser() ? App.openInBrowserCard() : ''}
         ${S.shifts.length ? `<div class="banner" style="text-align:start">${icon('cloud')}<div>הנתונים שכבר יש בטלפון יעלו לחשבון שלך בהתחברות הראשונה.</div></div>` : ''}
         ${msg ? `<div class="banner ${isErr ? 'warn' : ''}" style="text-align:start">${icon(isErr ? 'alert' : 'info')}<div>${esc(msg)}</div></div>` : ''}
         <button class="btn big ob-google" data-google ${busy || (!ready && !failedLoad) ? 'disabled' : ''}>${GOOGLE_G}<span>${label}</span></button>
         ${blocked ? '<button class="btn text sm" data-redirect>לא נפתח חלון? התחברות בדרך אחרת</button>' : ''}
+        ${root.AUTH_EMAIL_LINK ? `<button class="btn tonal login-email" data-email>${icon('mail', 's')} התחברות עם אימייל, בלי סיסמה</button>` : ''}
         <button class="btn text sm" data-act="support" style="margin-top:6px">${icon('info', 's')} בעיה בהתחברות? כתבו לנו</button>
         <div class="tiny muted" style="margin-top:8px">בהתחברות את/ה מאשר/ת את ${App.legalLinks ? App.legalLinks() : 'תנאי השימוש ומדיניות הפרטיות'}.</div>
         <div class="tiny muted" style="margin-top:10px;line-height:1.6">${icon('shield', 's')} רק את/ה יכול/ה לראות את הנתונים שלך. האפליקציה עובדת גם בלי אינטרנט, ומסנכרנת כשהרשת חוזרת.</div>
         </div></div>`;
       v.querySelector('[data-google]').onclick = () => go(false);
+      const em = v.querySelector('[data-email]');
+      if (em) em.onclick = async () => { if (await App.emailSignIn()) show('שלחנו קישור למייל. פותחים אותו בטלפון הזה כדי להתחבר 📬'); };
       const rd = v.querySelector('[data-redirect]');
       if (rd) rd.onclick = () => go(true);
       App.bindOpenInBrowser(v);

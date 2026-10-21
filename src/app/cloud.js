@@ -102,6 +102,8 @@
     Cloud.ready = (async () => {
       const { auth, au } = await load();
       try { await au.getRedirectResult(auth); } catch (e) { Cloud.redirectError = e; }
+      // opened from the sign-in link in an email: finish signing in here
+      if (/[?&]oobCode=/.test(location.search)) { try { await Cloud.finishEmailLink(); } catch (e) { Cloud.redirectError = e; } }
       return new Promise((resolve) => {
         let first = true;
         au.onAuthStateChanged(auth, (user) => {
@@ -120,7 +122,12 @@
     'auth/cancelled-popup-request': 'ההתחברות בוטלה.',
     'auth/network-request-failed': 'אין חיבור לאינטרנט. נסה שוב כשיש רשת.',
     'auth/unauthorized-domain': 'הכתובת של האפליקציה לא מאושרת בהגדרות Firebase (Authorized domains).',
-    'auth/operation-not-allowed': 'התחברות עם Google לא הופעלה עדיין בפרויקט Firebase.',
+    'auth/operation-not-allowed': 'סוג ההתחברות הזה עוד לא הופעל. אפשר בינתיים להתחבר עם Google.',
+    'auth/invalid-email': 'כתובת האימייל לא תקינה.',
+    'auth/missing-email': 'צריך לכתוב כתובת אימייל.',
+    'auth/invalid-action-code': 'הקישור כבר נוצל או שפג תוקפו. שלחו קישור חדש מהאפליקציה.',
+    'auth/expired-action-code': 'פג תוקף הקישור. שלחו קישור חדש מהאפליקציה.',
+    'auth/quota-exceeded': 'נשלחו יותר מדי קישורים היום. נסו שוב מחר, או התחברו עם Google.',
     'auth/too-many-requests': 'יותר מדי ניסיונות. נסה שוב בעוד כמה דקות.',
     'auth/user-disabled': 'החשבון חסום.',
     'auth/popup-blocked': 'הדפדפן חסם את חלון האישור של Google. אפשר חלונות קופצים ונסה שוב.',
@@ -160,6 +167,37 @@
       });
     };
     return fb ? go(fb) : load().then(go);
+  };
+
+  /* ---------------- signing in with an email link (no password) ---------------- */
+  const EMAIL_KEY = 'shaati.emailForSignIn';
+  /** Sends a sign-in link to this email; opening it (on this phone) signs in. */
+  Cloud.sendEmailLink = async function (email) {
+    const { auth, au } = await load();
+    await au.sendSignInLinkToEmail(auth, email, { url: location.origin + location.pathname + '?signin=email', handleCodeInApp: true });
+    try { localStorage.setItem(EMAIL_KEY, email); } catch (e) { /* asked again when the link is opened */ }
+  };
+  /** The page was opened from that link: signs in. The email is the one saved when the link was sent; opened
+   *  elsewhere (another browser), it is asked once. The link leaves the address either way. */
+  Cloud.finishEmailLink = async function () {
+    const { auth, au } = await load();
+    if (typeof au.isSignInWithEmailLink !== 'function' || !au.isSignInWithEmailLink(auth, location.href)) return null;
+    const clean = () => { try { history.replaceState(history.state, '', location.pathname); } catch (e) { /* ignore */ } };
+    let email = '';
+    try { email = localStorage.getItem(EMAIL_KEY) || ''; } catch (e) { /* ignore */ }
+    if (!email && root.UI) {
+      for (let i = 0; i < 40 && document.getElementById('intro'); i++) await new Promise((r) => setTimeout(r, 150));
+      email = String((await root.UI.promptText('השלמת ההתחברות', 'לאיזה אימייל נשלח הקישור?', '', { type: 'email', inputmode: 'email', ltr: true, ok: 'התחברות' })) || '').trim();
+    }
+    if (!email) { clean(); return null; }
+    try {
+      const cred = await au.signInWithEmailLink(auth, email, location.href);
+      Cloud.user = cred.user;
+      return cred.user;
+    } finally {
+      try { localStorage.removeItem(EMAIL_KEY); } catch (e) { /* ignore */ }
+      clean();
+    }
   };
 
   /* ---------------- encoding ---------------- */
@@ -453,7 +491,10 @@
     // Google requires a recent sign-in to delete an account. Confirm it now, while the tap that
     // started the deletion still counts as a user gesture (otherwise the popup gets blocked).
     const last = Date.parse((user.metadata && user.metadata.lastSignInTime) || '') || 0;
-    if (user.delete && Date.now() - last > 4 * 60 * 1000) await au.reauthenticateWithPopup(user, new au.GoogleAuthProvider());
+    // (an account from before email sign-in has no list here: it signed in with Google)
+    const pd = user.providerData || [];
+    const viaGoogle = !pd.length || pd.some((x) => x && x.providerId === 'google.com');
+    if (user.delete && viaGoogle && Date.now() - last > 4 * 60 * 1000) await au.reauthenticateWithPopup(user, new au.GoogleAuthProvider());
     detach();
     if (root.Stats) await root.Stats.forget();
     if (root.Support) await root.Support.forget();

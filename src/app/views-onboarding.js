@@ -192,6 +192,7 @@
         foot = needsLogin()
           ? `<button class="btn big ob-google" data-save ${saving || (!ready && !loadFailed) ? 'disabled' : ''}>${App.googleIcon || ''}<span>${saving ? 'שומר…' : !ready && !loadFailed ? 'רגע, מכינים את Google…' : 'שמירה עם Google'}</span></button>
             ${blocked ? '<button class="btn text sm" data-redirect>לא נפתח חלון? התחברות בדרך אחרת</button>' : ''}
+            ${saving || !root.AUTH_EMAIL_LINK ? '' : `<button class="btn text sm" data-email-save>${icon('mail', 's')} או שמירה עם אימייל, בלי סיסמה</button>`}
             ${loadFailed ? '<button class="btn text sm" data-later>להמשיך בינתיים בלי חשבון</button>' : ''}`
           : `<button class="btn big ob-go" data-save ${saving ? 'disabled' : ''}>${saving ? 'רגע…' : 'כניסה לאפליקציה'}</button>`;
       } else {
@@ -332,6 +333,8 @@
       } else if (b.hasAttribute('data-save')) finishStep(false);
       else if (b.hasAttribute('data-redirect')) finishStep(true);
       else if (b.hasAttribute('data-later')) { App.localOnly = true; finishStep(false); }
+      // with an email: the link is sent, and the app opens now; opening the link signs in and the answers go up
+      else if (b.hasAttribute('data-email-save')) { App.emailSignIn().then((sent) => { if (sent && App.blocking === 'onboarding') { App.localOnly = true; finishStep(false); } }); }
       else if (b.dataset.gender) {
         A.gender = b.dataset.gender; read();
         v.querySelectorAll('[data-gender]').forEach((x) => x.classList.toggle('on', x === b));

@@ -1,7 +1,8 @@
 /* Admin helper that reuses the Firebase CLI login (dev tool, not part of the app).
  *   node tools/fbapi.js domains <projectId> <domain>    add an authorized sign-in domain
  *   node tools/fbapi.js authcfg <projectId>             show Auth config (providers, domains)
- *   node tools/fbapi.js ruletest <projectId>            run security-rule test cases */
+ *   node tools/fbapi.js ruletest <projectId>            run security-rule test cases
+ *   node tools/fbapi.js emaillink <projectId>           turn on signing in with an email link (no password) */
 const path = require('path');
 const { execSync } = require('child_process');
 const lib = path.join(execSync('npm root -g').toString().trim(), 'firebase-tools', 'lib');
@@ -22,6 +23,10 @@ async function main() {
       for (let i = 0; i < 30 && op && op.name && !op.done; i++) { await new Promise((res) => setTimeout(res, 3000)); op = (await su.get(`/${op.name}`)).body; }
       console.log(svc, op && op.error ? 'ERROR ' + JSON.stringify(op.error) : 'enabled');
     }
+  }
+  if (cmd === 'emaillink') {
+    const r = await idt.patch(`/projects/${project}/config?updateMask=signIn.email.enabled,signIn.email.passwordRequired`, { signIn: { email: { enabled: true, passwordRequired: false } } });
+    console.log('email link sign-in:', r.body.signIn && r.body.signIn.email && r.body.signIn.email.enabled ? 'on' : JSON.stringify(r.body).slice(0, 300));
   }
   if (cmd === 'authcfg') {
     const r = await idt.get(`/projects/${project}/config`);
