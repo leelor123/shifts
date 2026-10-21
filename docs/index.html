@@ -2,7 +2,7 @@
 <html lang="he" dir="rtl">
 <head>
 <meta charset="utf-8">
-<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'sha256-eZWMt5wRr83RQMwlmlGMiQLUUwy14HPKI90yhy7Yt94=' https://www.gstatic.com https://apis.google.com https://cdnjs.cloudflare.com https://cdn.jsdelivr.net 'wasm-unsafe-eval'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com data:; img-src 'self' data: blob: https:; connect-src 'self' https: wss:; frame-src https://shiftpay-70ab6.firebaseapp.com https://accounts.google.com https://apis.google.com https://*.google.com; worker-src 'self' blob: https://cdnjs.cloudflare.com https://cdn.jsdelivr.net; media-src 'self' data: blob:; manifest-src 'self'; object-src 'none'; base-uri 'self'; form-action 'self'">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'sha256-FTv7BSDBpQJIQCSbuAYmK0b9IcPpWZxSZN0HOq+DTt4=' https://www.gstatic.com https://apis.google.com https://cdnjs.cloudflare.com https://cdn.jsdelivr.net 'wasm-unsafe-eval'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com data:; img-src 'self' data: blob: https:; connect-src 'self' https: wss:; frame-src https://shiftpay-70ab6.firebaseapp.com https://accounts.google.com https://apis.google.com https://*.google.com; worker-src 'self' blob: https://cdnjs.cloudflare.com https://cdn.jsdelivr.net; media-src 'self' data: blob:; manifest-src 'self'; object-src 'none'; base-uri 'self'; form-action 'self'">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="theme-color" content="#0d2b6b">
 <meta name="description" content="מעקב משמרות וחישוב שכר אישי: שבתות, חגים, שעות נוספות, נסיעות, נטו משוער וניתוח תלושים — נשמר בחשבון שלך ועובד גם בלי אינטרנט.">
@@ -1130,8 +1130,9 @@ body.fx .nav .fab:active { transform: scale(.9) rotate(90deg); }
   background: repeating-conic-gradient(from -1deg, rgba(255, 255, 255, .34) 0 2deg, transparent 2deg 30deg), repeating-conic-gradient(from -.5deg, rgba(255, 255, 255, .16) 0 1deg, transparent 1deg 6deg);
   -webkit-mask: radial-gradient(circle, transparent 0 61%, #000 61.5% 66%, transparent 66.5%); mask: radial-gradient(circle, transparent 0 61%, #000 61.5% 66%, transparent 66.5%); }
 .hh-dial::after { content: ''; position: absolute; inset: 0; border-radius: 50%; border: 1.5px solid rgba(255, 255, 255, .18); }
-/* pressing the card: a cheap opacity change (a filter here would repaint the moving light on every frame) */
-.home-hero:active { background: var(--grad-hero); opacity: .94; }
+/* pressing the card: a cheap opacity change (a filter here would repaint the moving light on every frame); not when
+ * the press is on a button inside it (the skin brush, "what is gross?"): the whole card blinked */
+.home-hero:active:not(:has(button:active)) { background: var(--grad-hero); opacity: .94; }
 .hh-spark { display: none; }
 .home-hero .hh-label, .home-hero .hh-stats, .home-hero .hh-goal-l { color: rgba(255, 255, 255, .86); }
 .home-hero .hh-stats b, .home-hero .hero-num { color: #fff; }
@@ -1907,7 +1908,7 @@ body.fx .recap-card:active { transform: scale(.98); }
 .sk-ice, html[data-skin="ice"] .home-hero { --h: 200; --grad-hero: radial-gradient(100% 70% at 85% 0%, rgba(255, 255, 255, .08), transparent 60%), linear-gradient(135deg, #0a3350 0%, #134f72 55%, #082640 100%); }
 .sk-galaxy, html[data-skin="galaxy"] .home-hero { --h: 262; --grad-hero: radial-gradient(1.5px 1.5px at 12% 22%, rgba(255, 255, 255, .9), transparent), radial-gradient(1px 1px at 64% 14%, rgba(255, 255, 255, .7), transparent), radial-gradient(1.5px 1.5px at 38% 78%, rgba(255, 255, 255, .8), transparent), radial-gradient(1px 1px at 90% 58%, rgba(255, 255, 255, .6), transparent), radial-gradient(60% 50% at 80% 20%, rgba(180, 90, 255, .3), transparent 70%), radial-gradient(50% 40% at 20% 85%, rgba(60, 140, 255, .25), transparent 70%), linear-gradient(135deg, #120a2e 0%, #2a1260 55%, #0a0618 100%); }
 /* a photo of one's own: darkened from top to bottom so the card's white text stays readable on any picture */
-.sk-photo-tile.has, html[data-skin="photo"] .home-hero { --h: 225; --grad-hero: linear-gradient(180deg, rgba(8, 10, 28, .5) 0%, rgba(8, 10, 28, .42) 45%, rgba(8, 10, 28, .7) 100%), var(--sk-photo) center / cover no-repeat, #1c1f3a; }
+.sk-photo-tile.has, .design-prev.sk-photo, html[data-skin="photo"] .home-hero { --h: 225; --grad-hero: linear-gradient(180deg, rgba(8, 10, 28, .5) 0%, rgba(8, 10, 28, .42) 45%, rgba(8, 10, 28, .7) 100%), var(--sk-photo) center / cover no-repeat, #1c1f3a; }
 .sk-photo-tile:not(.has) { background: var(--surface-2); color: var(--on-surface); border: 1.5px dashed var(--outline); box-shadow: none; }
 .sk-photo-tile:not(.has) svg { width: 22px; height: 22px; color: var(--brand); }
 .skin-pick { display: grid; grid-template-columns: repeat(auto-fill, minmax(84px, 1fr)); gap: 8px; margin-bottom: 16px; }
@@ -1943,7 +1944,9 @@ body.fx .recap-card:active { transform: scale(.98); }
 .limit-sheet .btn.text.block { margin-top: 6px; }
 /* "try it on your card": the user's own card, in the chosen skin */
 .design-prev { margin: 2px 0 14px; pointer-events: none; }
-.sheet .design-prev .home-hero { --h: inherit; --grad-hero: inherit; margin: 0; }
+.sheet .design-prev .home-hero { --h: inherit; --grad-hero: inherit; margin: 0; will-change: auto; }
+.design-prev .aurora i { animation: none !important; will-change: auto; }
+.design-prev .hh-dial::before { display: none; }
 .home-hero .hh-skin { position: absolute; top: 10px; inset-inline-end: 10px; z-index: 1; display: grid; place-items: center; width: 40px; height: 40px; padding: 0; border-radius: 50%; border: 1px solid rgba(255, 255, 255, .24); background: rgba(255, 255, 255, .14); color: #fff; cursor: pointer; }
 .home-hero .hh-skin:active { transform: scale(.92); }
 .home-hero:has(.hh-skin) .hh-label { padding-inline: 44px; }
@@ -2467,8 +2470,8 @@ body.fx .cal-day.hello, body.fx .week-row.hello { animation: cal-hello .55s cubi
 <div id="print-root" aria-hidden="true"></div>
 <noscript><div style="padding:24px;font-family:sans-serif">האפליקציה דורשת JavaScript.</div></noscript>
 <script>
-window.APP_VERSION = '1.20.0';
-window.APP_BUILD = '1.20.0-35692bde';
+window.APP_VERSION = '1.20.1';
+window.APP_BUILD = '1.20.1-cd0f83c8';
 /* ---- core/util.js ---- */
 /* ============================================================
  * util.js — date/time helpers and formatting.
@@ -11979,14 +11982,22 @@ window.PAY_CONFIG = {
     if (k && !Plus.active()) { Plus.sheet(); return false; }
     // the photo: chosen now when there is none (or the one on the card is tapped again: another one)
     if (k === PHOTO && (!photo() || Plus.skin() === PHOTO)) return Plus.pickPhoto();
+    return applySkin(k);
+  };
+  /** Puts a skin on the card ('' = the regular one), without asking anything (the photo one only once there is a photo). */
+  async function applySkin(k) {
+    if (k === PHOTO && !photo()) return false;
     await Store.setSettings((s) => { s.skin = k || ''; });
     App.applyTheme();
     if (root.Fx) root.Fx.play('pop');
     return true;
-  };
+  }
 
-  /** Opens the phone's photo picker (called straight from the tap, as browsers ask) and puts the photo on the card. */
-  Plus.pickPhoto = () => new Promise((resolve) => {
+  /**
+   * Opens the phone's photo picker (called straight from the tap, as browsers ask) and puts the photo on the card.
+   * opts.keep: only keep the photo (the design sheet shows it first, and the card gets it on "save").
+   */
+  Plus.pickPhoto = (opts) => new Promise((resolve) => {
     // in the page (a detached input gives an empty file in some browsers, no change event on iPhone)
     const inp = document.createElement('input');
     inp.type = 'file';
@@ -11995,7 +12006,7 @@ window.PAY_CONFIG = {
     document.body.appendChild(inp);
     let done = false;
     const end = (v) => { if (done) return; done = true; inp.remove(); window.removeEventListener('focus', back); resolve(v); };
-    inp.addEventListener('change', async () => { const f = inp.files && inp.files[0]; if (!f) { end(false); return; } done = true; inp.remove(); window.removeEventListener('focus', back); resolve(await Plus.setPhoto(f)); });
+    inp.addEventListener('change', async () => { const f = inp.files && inp.files[0]; if (!f) { end(false); return; } done = true; inp.remove(); window.removeEventListener('focus', back); resolve(await Plus.setPhoto(f, opts)); });
     inp.addEventListener('cancel', () => end(false));
     // closed without a choice where there is no "cancel" event: back in the page and still nothing
     const back = () => setTimeout(() => { if (!done && !(inp.files && inp.files.length)) end(false); }, 1500);
@@ -12020,7 +12031,7 @@ window.PAY_CONFIG = {
     const v = (n) => +((p.find((x) => x.className === n) || {}).probability) || 0;
     return v('Porn') + v('Hentai') < 0.45 && v('Sexy') < 0.75;
   };
-  Plus.setPhoto = async function (file) {
+  Plus.setPhoto = async function (file, opts) {
     if (!file || !/^image\//.test(file.type)) { UI.invalid('צריך לבחור תמונה'); return false; }
     if (file.size > 30 * 1024 * 1024) { UI.invalid('התמונה גדולה מדי'); return false; }
     UI.toast('בודקים את התמונה… 🔍');
@@ -12030,6 +12041,11 @@ window.PAY_CONFIG = {
     try { ok = await Plus.imageOk(canvas); } catch (e) { console.warn('image check', e); UI.invalid('כדי לבדוק את התמונה צריך אינטרנט (רק בפעם הראשונה). נסו שוב כשיש חיבור'); return false; }
     if (!ok) { UI.invalid('התמונה הזאת לא מתאימה לכרטיס 🙂 אפשר לבחור תמונה אחרת'); return false; }
     await Store.setMeta({ skinPhoto: canvas.toDataURL('image/jpeg', 0.82) });
+    if (opts && opts.keep) {
+      if (Plus.skin() === PHOTO) App.applyTheme(); // the card already shows the photo: the new one
+      UI.toast('התמונה מוכנה ✨');
+      return true;
+    }
     await Store.setSettings((st) => { st.skin = PHOTO; });
     App.applyTheme();
     App.rerender();
@@ -12127,7 +12143,7 @@ window.PAY_CONFIG = {
     if (!Plus.canTrial()) return false;
     await Store.setMeta({ plusTrial: { from: Date.now(), until: Date.now() + TRIAL_DAYS * DAY }, plusSeen: true });
     watchTrial();
-    if (skin && SKINS[skin]) await Store.setSettings((s) => { s.skin = skin; });
+    if (skin && (SKINS[skin] || (skin === PHOTO && photo()))) await Store.setSettings((s) => { s.skin = skin; });
     App.applyTheme();
     App.rerender();
     if (root.Fx) root.Fx.celebrate('small');
@@ -12209,9 +12225,31 @@ window.PAY_CONFIG = {
     });
   };
 
-  /** "Try it on your card": the user's own pay card, in every skin. */
+  /**
+   * "Try it on your card": the user's own pay card, in every skin and with a photo of one's own. The copy of
+   * the card holds still (its moving lights stay on the real card behind the sheet; two of them at once
+   * slowed phones down, and every skin switch repainted moving layers, which flashed).
+   */
   Plus.design = function (start) {
-    let sel = SKINS[start] ? start : Plus.skin() || 'gold';
+    let sel = (SKINS[start] || (start === PHOTO && photo())) ? start : Plus.skin() || 'gold';
+    // the photo tile: the photo once there is one (the sheet holds it in --sk-photo), a camera before
+    const photoPick = () => {
+      const has = !!photo(), on = sel === PHOTO;
+      return `<button class="skin-tile sk-photo-tile ${has ? 'has' : ''} ${on ? 'on' : ''}" data-pick="${PHOTO}" aria-pressed="${on}" aria-label="${photoLabel()}">${has ? '<b>₪</b>' : icon('camera')}<span>${on ? 'החלפה' : 'תמונה שלי'}</span></button>`;
+    };
+    const photoLabel = () => (sel === PHOTO ? 'תמונה שלי (לחיצה מחליפה את התמונה)' : photo() ? 'תמונה שלי' : 'תמונה שלי (בחירת תמונה)');
+    const holdPhoto = (el) => { if (photo()) el.querySelector('[data-design]').style.setProperty('--sk-photo', `url("${photo()}")`); };
+    // the choice, shown in place: the card's class and the tiles (nothing is drawn again, so a press springs back as usual)
+    const paint = (el) => {
+      el.querySelector('.design-prev').className = 'design-prev' + (sel ? ' sk-' + sel : '');
+      el.querySelectorAll('[data-pick]').forEach((x) => { const on = x.dataset.pick === sel; x.classList.toggle('on', on); x.setAttribute('aria-pressed', on); });
+      const ph = el.querySelector(`[data-pick="${PHOTO}"]`);
+      if (!ph) return;
+      ph.classList.toggle('has', !!photo());
+      if (photo() && !ph.querySelector('b')) ph.firstElementChild.outerHTML = '<b>₪</b>';
+      ph.querySelector('span').textContent = sel === PHOTO ? 'החלפה' : 'תמונה שלי';
+      ph.setAttribute('aria-label', photoLabel());
+    };
     const preview = () => {
       let html = '';
       try { html = App.homeHero ? App.homeHero() : ''; } catch (e) { /* no workplace yet */ }
@@ -12233,6 +12271,7 @@ window.PAY_CONFIG = {
         <div class="skin-pick design-pick">
           <button class="skin-tile ${!sel ? 'on' : ''}" data-pick="" aria-pressed="${!sel}"><b>₪</b><span>רגיל</span></button>
           ${Object.entries(SKINS).map(([k, name]) => `<button class="skin-tile sk-${k} ${sel === k ? 'on' : ''}" data-pick="${k}" aria-pressed="${sel === k}"><b>₪</b><span>${name}</span></button>`).join('')}
+          ${photoPick()}
         </div>
         ${on ? `<button class="btn big block" data-design-save>${icon('check')} שמירה</button>
             ${Plus.inTrial() ? `<div class="tiny muted plus-note">תקופת ניסיון · ${trialLeft()} · <button class="btn text sm" data-design-buy>להמשיך עם Plus</button></div>` : ''}`
@@ -12247,15 +12286,22 @@ window.PAY_CONFIG = {
       onMount: (el) => {
         if (!S.meta.plusSeen) Store.setMeta({ plusSeen: true }).catch(() => {});
         draw(el);
+        holdPhoto(el);
         el.addEventListener('click', async (e) => {
           const b = e.target.closest('button');
           if (!b) return;
           if (b.dataset.pick !== undefined) {
-            sel = b.dataset.pick;
-            el.querySelector('.design-prev').className = 'design-prev' + (sel ? ' sk-' + sel : '');
-            el.querySelectorAll('[data-pick]').forEach((x) => { const on = x.dataset.pick === sel; x.classList.toggle('on', on); x.setAttribute('aria-pressed', on); });
+            const k = b.dataset.pick;
+            if (k === sel && k !== PHOTO) return; // already on the card: nothing to switch
+            if (k === PHOTO && (!photo() || sel === PHOTO)) {
+              // a photo (or another one): the picker opens straight from the tap, and the card shows it once it is checked
+              Plus.pickPhoto({ keep: true }).then((ok) => { if (!ok || !el.isConnected) return; sel = PHOTO; holdPhoto(el); paint(el); });
+              return;
+            }
+            sel = k;
+            paint(el);
             if (root.Fx) root.Fx.play('tick');
-          } else if (b.hasAttribute('data-design-save')) { await Plus.pickSkin(sel); UI.closeTop(); }
+          } else if (b.hasAttribute('data-design-save')) { await applySkin(sel); UI.closeTop(); }
           else if (b.hasAttribute('data-design-trial')) { if (await Plus.startTrial(sel || 'gold')) UI.closeTop(); }
           else if (b.hasAttribute('data-design-buy')) { UI.closeTop(); setTimeout(() => Plus.sheet(), 320); }
         });
@@ -14224,7 +14270,7 @@ window.PAY_CONFIG = {
       <div class="card"><div class="stackbar">${types.filter((x) => x.value > 0).map((x) => `<i style="width:${(x.value / totalH) * 100}%;background:${x.color}" data-tip="${esc(x.name)}: ${U.num(x.value, 2)} ש׳"></i>`).join('')}</div>
         ${types.map((x) => `<div class="kv"><span><i style="display:inline-block;width:10px;height:10px;border-radius:3px;background:${x.color};margin-inline-end:6px"></i>${x.name}</span><span class="num">${U.hours(x.value)} ש׳</span></div>`).join('')}
         <div class="kv"><span>${icon('moon', 's')} שעות לילה (⁦22:00\u2060–\u206006:00⁩)</span><span class="num">${U.hours(t.nightAll)} ש׳</span></div>
-        ${S.employers[0].nightEnabled ? `<div class="kv"><span>מתוכן עם תוספת לילה</span><span class="num">${U.hours(hb.night)} ש׳ · ${U.money(t.nightPremium, 0)}</span></div>` : '<div class="tiny muted">תוספת לילה לא מוגדרת — אפשר להפעיל בהגדרות › חוקי חישוב.</div>'}</div>
+        ${S.employers[0].nightEnabled ? `<div class="kv"><span>מתוכן עם תוספת לילה</span><span class="num">${U.hours(hb.night)} ש׳ · ${U.money(t.nightPremium, 0)}</span></div>` : '<div class="tiny muted">תוספת לילה לא מוגדרת — אפשר להפעיל בהגדרות › חישוב השכר › חוקי חישוב.</div>'}</div>
       <div class="section-title">${icon('calendar', 's')} ימים</div>
       <div class="card"><div class="kpis three">
         <div class="kpi"><div class="l">ימי עבודה</div><div class="v">${t.workDays}</div></div>
@@ -14790,7 +14836,7 @@ window.PAY_CONFIG = {
   App.aiAnalyze = function (text, onResult) {
     const key = S.settings.ai.apiKey;
     if (!key) {
-      UI.confirm('ניתוח חכם דורש מפתח API', 'אפשר להזין מפתח של Claude בהגדרות › מפתח AI. בלי מפתח — הניתוח המקומי ממשיך לעבוד כרגיל.', 'להגדרות').then((ok) => { if (ok) { UI.closeAll(); setTimeout(() => App.sheetsApi.settingsSection('ai'), 400); } });
+      UI.confirm('ניתוח חכם דורש מפתח API', 'אפשר להזין מפתח של Claude בהגדרות › עוזר AI ואודות › מפתח AI. בלי מפתח — הניתוח המקומי ממשיך לעבוד כרגיל.', 'להגדרות').then((ok) => { if (ok) { UI.closeAll(); setTimeout(() => App.sheetsApi.settingsSection('ai'), 400); } });
       return;
     }
     const red = Payslip.redact(text);
@@ -16516,7 +16562,7 @@ window.PAY_CONFIG = {
             <span class="hint">לא בטוח/ה? אפשר להשאיר ריק ונשים שכר מינימום${age() != null && age() < 18 ? ' לגילך' : ''}: ${U.money(minWage())} לשעה</span></label>
         </div>`).join('')}
         ${A.jobs.length < 6 ? `<button class="btn text sm" data-jadd>${icon('plus', 's')} הוסף תפקיד באותו מקום עבודה</button>` : ''}
-        <div class="tiny muted ob-more-emp">עובד/ת גם במקום אחר? אפשר להוסיף מקום עבודה נוסף אחר כך, בהגדרות › מקומות עבודה.</div>
+        <div class="tiny muted ob-more-emp">עובד/ת גם במקום אחר? אפשר להוסיף מקום עבודה נוסף אחר כך, בהגדרות › העבודה שלי.</div>
         <div class="ob-live" id="ob-live-roles"></div>
         ${why('ככה נחשב כמה הרווחת בכל משמרת. אפשר לשנות ולהוסיף בכל רגע בהגדרות.')}`,
       travel: () => `${say(A.travel === 'yes' ? 'love' : 'happy', 'הרבה שוכחים את זה! 🚌')}
@@ -17101,9 +17147,9 @@ window.PAY_CONFIG = {
         console.error(err);
         let msg = 'משהו השתבש. נסה שוב בעוד רגע.';
         if (!Anthropic) msg = 'לא ניתן לטעון את רכיב ה-\u2060AI. בדוק את החיבור לאינטרנט.';
-        else if (err instanceof Anthropic.AuthenticationError) msg = 'מפתח ה-\u2060API לא תקין. אפשר לעדכן אותו בהגדרות › מפתח AI.';
-        else if (err instanceof Anthropic.PermissionDeniedError) msg = 'למפתח אין הרשאה למודל שנבחר. אפשר לבחור מודל אחר בהגדרות › מפתח AI.';
-        else if (err instanceof Anthropic.NotFoundError) msg = 'המודל שנבחר לא זמין. בחר מודל אחר בהגדרות › מפתח AI.';
+        else if (err instanceof Anthropic.AuthenticationError) msg = 'מפתח ה-\u2060API לא תקין. אפשר לעדכן אותו בהגדרות › עוזר AI ואודות › מפתח AI.';
+        else if (err instanceof Anthropic.PermissionDeniedError) msg = 'למפתח אין הרשאה למודל שנבחר. אפשר לבחור מודל אחר בהגדרות › עוזר AI ואודות › מפתח AI.';
+        else if (err instanceof Anthropic.NotFoundError) msg = 'המודל שנבחר לא זמין. בחר מודל אחר בהגדרות › עוזר AI ואודות › מפתח AI.';
         else if (err instanceof Anthropic.RateLimitError) msg = 'יותר מדי בקשות כרגע. נסה שוב בעוד דקה.';
         else if (err instanceof Anthropic.APIConnectionError) msg = 'בעיית תקשורת. בדוק את החיבור לאינטרנט.';
         else if (err instanceof Anthropic.APIError && (err.status === 402 || err.type === 'billing_error')) msg = 'נגמרה היתרה בחשבון ה-\u2060API שלך אצל Anthropic.';
@@ -17172,10 +17218,10 @@ window.PAY_CONFIG = {
   /* ---------------- the guide (general rules, short and plain) ---------------- */
   const TOPICS = [
     { id: 'minwage', ic: 'wallet', t: 'שכר מינימום', b: (c) => `<p>מאפריל 2026: <b>35.40 ₪ לשעה</b> לעובד מגיל 18. לנוער: עד גיל 16 – 26.07 ₪, בגיל 16 – 27.94 ₪, בגיל 17 – 30.92 ₪.</p><p>${c.mw.youth ? `לגיל שלך (${c.mw.age}) המינימום הוא <b>${U.money(c.mw.hourly)}</b>.` : c.mw.age != null ? `המינימום שחל עליך: <b>${U.money(c.mw.hourly)}</b>.` : 'הוסף תאריך לידה בהגדרות כדי לראות את המינימום לגילך.'} מעסיק רשאי לשלם יותר, אבל לא פחות.</p>`, l: () => link(KZ(App.isMinorNow() ? 'תשלום שכר לבני נוער' : 'שכר מינימום')) },
-    { id: 'overtime', ic: 'clock', t: 'שעות נוספות', b: () => '<p>השעתיים הראשונות מעבר ליום עבודה רגיל משולמות ב-<b>125%</b>, ומעבר לכך ב-<b>150%</b>. גם מעבר ל-42 שעות בשבוע מתחילות שעות נוספות.</p><p>באפליקציה: הגדרות › חוקי חישוב (מתי מתחילות ובאיזה אחוז).</p>', l: () => link(KZ('גמול עבור שעות נוספות')) },
+    { id: 'overtime', ic: 'clock', t: 'שעות נוספות', b: () => '<p>השעתיים הראשונות מעבר ליום עבודה רגיל משולמות ב-<b>125%</b>, ומעבר לכך ב-<b>150%</b>. גם מעבר ל-42 שעות בשבוע מתחילות שעות נוספות.</p><p>באפליקציה: הגדרות › חישוב השכר › חוקי חישוב (מתי מתחילות ובאיזה אחוז).</p>', l: () => link(KZ('גמול עבור שעות נוספות')) },
     { id: 'shabbat', ic: 'candle', t: 'שבת וחגים', b: () => '<p>עבודה במנוחה השבועית (לרוב שבת) משולמת לפחות ב-<b>150%</b>. השעות נקבעות לפי כניסת ויציאת השבת, והאפליקציה מחשבת אותן לפי העיר שלך.</p><p>עובד שעתי זכאי בדרך כלל גם ל<b>דמי חגים</b> אחרי 3 חודשי עבודה, על חג שחל ביום חול, בתנאים שבצו ההרחבה.</p>', l: () => link(KZ('גמול עבור העסקה במנוחה השבועית')) },
     { id: 'breaks', ic: 'coffee', t: 'הפסקות ומנוחה', b: () => '<p>ביום עבודה של <b>6 שעות ומעלה</b> מגיעה הפסקה של <b>45 דקות</b>, מתוכן חצי שעה ברצף. בין שני ימי עבודה, ומנוחה שבועית של 36 שעות רצופות לפחות.</p>', l: () => link(KZ(App.isMinorNow() ? 'הפסקות בעבודה לנוער' : 'הפסקות בעבודה')) },
-    { id: 'travel', ic: 'car', t: 'נסיעות', b: (c) => `<p>המעסיק חייב להחזיר את הוצאות הנסיעה לעבודה ובחזרה, לפי מחיר תחבורה ציבורית ועד תקרה יומית שמתעדכנת מדי שנה. ההחזר הוא בנוסף לשכר.</p><p>${c.travel > 0 ? `באפליקציה מוגדר החזר של <b>${U.money(c.travel)}</b> ליום עבודה.` : 'באפליקציה <b>לא מוגדר</b> החזר נסיעות. אפשר להגדיר בהגדרות › נסיעות ותקופת שכר.'}</p>`, l: () => link(KZ('החזר הוצאות נסיעה')) },
+    { id: 'travel', ic: 'car', t: 'נסיעות', b: (c) => `<p>המעסיק חייב להחזיר את הוצאות הנסיעה לעבודה ובחזרה, לפי מחיר תחבורה ציבורית ועד תקרה יומית שמתעדכנת מדי שנה. ההחזר הוא בנוסף לשכר.</p><p>${c.travel > 0 ? `באפליקציה מוגדר החזר של <b>${U.money(c.travel)}</b> ליום עבודה.` : 'באפליקציה <b>לא מוגדר</b> החזר נסיעות. אפשר להגדיר בהגדרות › העבודה שלי › נסיעות ותקופת שכר.'}</p>`, l: () => link(KZ('החזר הוצאות נסיעה')) },
     { id: 'sick', ic: 'thermo', t: 'דמי מחלה', b: (c) => `<p>צוברים <b>1.5 ימי מחלה</b> לכל חודש עבודה מלא (עד 90). התשלום: היום הראשון – 0%, השני והשלישי – 50%, מהרביעי – 100%. צריך אישור מחלה.</p>${c.bal ? `<p>הצבירה שלך לפי האפליקציה: <b>${U.num(c.bal.sickAccrued - c.bal.sickUsed, 1)}</b> ימים.</p>` : ''}`, l: () => link(KZ('דמי מחלה')) },
     { id: 'vacation', ic: 'beach', t: 'חופשה שנתית', b: (c) => `<p>מגיעים ימי חופשה בתשלום לפי הוותק והיקף המשרה. אסור לוותר עליהם, וכשעוזבים את העבודה מקבלים פדיון על הימים שלא נוצלו.</p>${c.bal ? `<p>היתרה שלך לפי האפליקציה: <b>${U.num(c.bal.vacationAccrued - c.bal.vacationUsed, 1)}</b> ימים.</p>` : ''}`, l: () => link(KZ('חופשה שנתית לעובדים בשכר שעתי או יומי')) },
     { id: 'recup', ic: 'gift', t: 'דמי הבראה', b: (c) => `<p>אחרי <b>שנת עבודה</b> מגיעים דמי הבראה: מספר ימים לפי הוותק, כפול תעריף יום הבראה, לפי היקף המשרה.</p><p>${c.bal && c.bal.recuperation ? (c.bal.recuperation.eligible ? `לפי האפליקציה מגיעים לך כ-<b>${U.money(c.bal.recuperation.amount, 0)}</b> לשנה.` : `לפי תאריך תחילת העבודה, הזכאות מתחילה ב-${U.fmtDate(c.bal.recuperation.eligibleFrom)}.`) : 'הגדר תאריך תחילת עבודה כדי לחשב.'}</p>`, l: () => link(KZ('דמי הבראה')) },
@@ -17531,14 +17577,14 @@ window.PAY_CONFIG = {
   const FAQ = [
     ['איך רושמים משמרת?', 'בבית לוחצים "התחל משמרת" כשמגיעים לעבודה, ו"סיים משמרת" כשהולכים. שכחת? לוחצים על + ובוחרים "משמרת", ומזינים תאריך ושעות.'],
     ['למה הסכום שונה מהתלוש?', 'האפליקציה מחשבת לפי מה שרשמת ולפי החוק. הבדלים נפוצים: משמרת שלא נרשמה, נסיעות, הפסקות, או מס. לבדיקה מדויקת: + › "בדיקת תלוש" ומצלמים את התלוש.'],
-    ['איך משנים את השכר לשעה?', 'הגדרות › מעסיקים, תפקידים ותעריפים. שם אפשר לשנות תעריף, להוסיף תפקיד, לשנות שם וצבע.'],
+    ['איך משנים את השכר לשעה?', 'הגדרות › העבודה שלי › מעסיקים, תפקידים ותעריפים. שם אפשר לשנות תעריף, להוסיף תפקיד, לשנות שם וצבע.'],
     ['איך מתקנים או מוחקים משמרת?', 'לוחצים על המשמרת (בבית, בלוח השנה או בדוחות), ושם אפשר לערוך או למחוק. טעית? מיד אחרי יש כפתור "ביטול".'],
     ['מה זה ברוטו ונטו?', 'ברוטו: כל מה שהרווחת לפני הורדות. נטו: מה שנכנס לבנק אחרי מס, ביטוח לאומי ופנסיה. מתחת לגיל 18 בדרך כלל אין מס, אז הם כמעט שווים.'],
-    ['איך מחושבת שבת?', 'לפי העיר שבחרת האפליקציה יודעת מתי שבת נכנסת ויוצאת, וכל דקה בתוכה מחושבת ב-150% לפחות. אפשר לשנות עיר בהגדרות › שבת וחגים.'],
+    ['איך מחושבת שבת?', 'לפי העיר שבחרת האפליקציה יודעת מתי שבת נכנסת ויוצאת, וכל דקה בתוכה מחושבת ב-150% לפחות. אפשר לשנות עיר בהגדרות › חישוב השכר › שבת וחגים.'],
     ['הנתונים שלי שמורים?', 'כן. בטלפון ובחשבון ה-\u2060Google שלך, ורק לך יש גישה אליהם. מחליפים טלפון? מתחברים ומוצאים הכול.'],
-    ['איך מקבלים תזכורות?', 'כשמתחילים משמרת הטלפון שואל אם לאשר התראות. אפשר גם בהגדרות › התראות ותובנות.'],
+    ['איך מקבלים תזכורות?', 'כשמתחילים משמרת הטלפון שואל אם לאשר התראות. אפשר גם בהגדרות › יעדים ותזכורות › התראות ותובנות.'],
     ['אני מתחת לגיל 18. מה שונה?', 'שכר מינימום לפי הגיל, בדרך כלל בלי מס, ויש כללים מיוחדים: עד 8 שעות ביום, 40 בשבוע, הפסקות ואיסור עבודה מאוחרת בלילה. "מה מגיע לי" בבית מסביר הכול.'],
-    ['איך מוחקים את החשבון?', 'הגדרות › חשבון וסנכרון › "מחק את כל הנתונים מהחשבון". זה מוחק הכול מהענן ומהטלפון.'],
+    ['איך מוחקים את החשבון?', 'הגדרות › אני והחשבון › חשבון וסנכרון › "מחק את כל הנתונים מהחשבון". זה מוחק הכול מהענן ומהטלפון.'],
   ];
   const STATUS = { open: ['ממתינה לתשובה', 'open'], answered: ['נענתה ✓', 'answered'], closed: ['סגורה', 'closed'] };
 
@@ -19525,7 +19571,7 @@ window.PAY_CONFIG = {
     const preview = `<div class="card adm-preview"><b>תצוגה מקדימה של Plus</b>
         <div class="tiny muted">רק בטלפון הזה: לא נספר בסטטיסטיקה ולא נראה לשחקנים אחרים. אמיתי ייפתח לכולם כשחשבון התשלומים יוגדר.</div>
         <div class="seg">${simBtn('', 'כבוי')}${simBtn('free', 'משתמש חינמי')}${simBtn('plus', 'מנוי Plus')}</div>
-        <div class="tiny adm-preview-l">חינמי: מכחול על כרטיס השכר בבית, ניסיון חינם ל-3 ימים, מכסות לניתוח המתקדם (דוחות) ולייצוא, ושורת Plus בהגדרות. מנוי: 12 עיצובים (הגדרות › מראה), רקע בטבלת האלופים ותג במסך הבית.</div>
+        <div class="tiny adm-preview-l">חינמי: מכחול על כרטיס השכר בבית, ניסיון חינם ל-3 ימים, מכסות לניתוח המתקדם (דוחות) ולייצוא, ושורת Plus בהגדרות. מנוי: 12 עיצובים (הגדרות › מראה ונעילה), רקע בטבלת האלופים ותג במסך הבית.</div>
         <div class="btn-row"><button class="btn tonal sm" data-act="plus-sim-offer">${icon('sparkle', 's')} להציג את ההצעה בבית</button><button class="btn text sm" data-act="plus-sim-reset">איפוס ניסיון ומכסות</button><button class="btn text sm" data-act="review-preview">${icon('star', 's')} מסך בקשת הדירוג</button></div></div>`;
     return `<div class="section-title">${icon('sparkle', 's')} Shaati Plus והכנסות</div>
       ${preview}
@@ -19580,7 +19626,7 @@ window.PAY_CONFIG = {
       <div class="card">${barList(count('v').slice(0, 6), n)}</div>
       <div class="section-title">${icon('lock', 's')} מנהלים</div>
       <div class="card">
-        <div class="small">${admins.length} מנהלים. כדי להוסיף מנהל: הוא פותח הגדרות › חשבון וסנכרון ומעתיק את "מזהה המשתמש" שלו, ואתה מוסיף אותו כאן.</div>
+        <div class="small">${admins.length} מנהלים. כדי להוסיף מנהל: הוא פותח הגדרות › אני והחשבון › חשבון וסנכרון ומעתיק את "מזהה המשתמש" שלו, ואתה מוסיף אותו כאן.</div>
         <div class="adm-add"><input class="input" id="adm-uid" placeholder="מזהה משתמש" dir="ltr" autocomplete="off" spellcheck="false"><button class="btn tonal" data-adm-add>${icon('plus', 's')} הוסף</button></div>
         <div class="tiny muted" dir="ltr" style="text-align:left">${admins.map((a) => esc(a.slice(0, 6) + '…' + (a === me ? ' (אתה)' : ''))).join(' · ')}</div>
       </div>
@@ -19696,7 +19742,7 @@ window.PAY_CONFIG = {
 <ul><li><b>מידע שאתה מזין:</b> משמרות, תפקידים ותעריפים, חופשה ומחלה, תוספות וניכויים, הגדרות חישוב, נתוני תלושים שאימתת, ובאופן רשות — שם, תאריך לידה ומגדר (משמשים לחישוב שכר המינימום לפי גיל, לבדיקות חוק עבודת הנוער ולגיל הפנסיה).</li>
 <li><b>פרטי חשבון Google בסיסיים:</b> מזהה משתמש, כתובת אימייל, שם ותמונת פרופיל — לצורך התחברות ותצוגה בלבד.</li>
 <li><b>מידע טכני:</b> כתובת IP ופרטי דפדפן שנרשמים אוטומטית אצל ספקי התשתית בעת טעינת האפליקציה. אין באפליקציה פרסומות, עוגיות מעקב או כלי ניתוח של צד שלישי.</li>
-<li><b>סטטיסטיקת שימוש אנונימית (אפשר לכבות):</b> פעם ביום נשמרת בענן רשומה אחת לכל מכשיר, תחת מזהה אקראי שאינו קשור לחשבון: גרסת האפליקציה, סוג ההתקנה, היום הראשון והאחרון של השימוש, מספר ימי השימוש, מספר המשמרות והתלושים, קבוצת גיל (מתחת ל-18 או מעל) ואילו תכונות פעילות. הרשומה לא כוללת שם, אימייל, מזהה משתמש, תאריכי משמרות או סכומים, ורק מנהלי האפליקציה רואים אותה, כסיכום מצטבר. אפשר לכבות בהגדרות › חשבון וסנכרון, והכיבוי מוחק את הרשומה.</li>
+<li><b>סטטיסטיקת שימוש אנונימית (אפשר לכבות):</b> פעם ביום נשמרת בענן רשומה אחת לכל מכשיר, תחת מזהה אקראי שאינו קשור לחשבון: גרסת האפליקציה, סוג ההתקנה, היום הראשון והאחרון של השימוש, מספר ימי השימוש, מספר המשמרות והתלושים, קבוצת גיל (מתחת ל-18 או מעל) ואילו תכונות פעילות. הרשומה לא כוללת שם, אימייל, מזהה משתמש, תאריכי משמרות או סכומים, ורק מנהלי האפליקציה רואים אותה, כסיכום מצטבר. אפשר לכבות בהגדרות › אני והחשבון › חשבון וסנכרון, והכיבוי מוחק את הרשומה.</li>
 <li><b>טבלת האלופים (רק אם הצטרפת):</b> הכינוי, האימוג׳י, הרקע ותג Plus שבחרת, והתוצאה הטובה שלך בכל משחק היום, השבוע, החודש, השנה ובכל הזמנים. השורה הזו <b>גלויה לכל המשתמשים המחוברים</b>, בלי שם אמיתי, אימייל או נתוני עבודה. יציאה מהטבלה (או מחיקת החשבון) מוחקת אותה.</li>
 <li><b>פניות לתמיכה (רק אם פנית):</b> נושא הפנייה, מה שכתבת, ההתכתבות איתנו, השם הפרטי שהזנת באפליקציה, ואם בחרת, גרסת האפליקציה וסוג המכשיר. אם פנית בלי להתחבר, גם האימייל שהזנת כדי שנענה לך. הפניות נשמרות בענן, גלויות רק לך ולמנהלי האפליקציה, ונמחקות יחד עם החשבון.</li></ul>
 <h4>2. איפה המידע נשמר</h4>
@@ -19716,7 +19762,7 @@ window.PAY_CONFIG = {
 <p>אנחנו לא מקבלים פרטי אשראי או תשלום. בסטטיסטיקה האנונימית נרשם רק אם Shaati Plus פעיל ואיפה נקנה (אנדרואיד או אתר), וכן (כן/לא בלבד) אם דף Plus נפתח, אם התחיל ניסיון חינם ואם הגעת פעם למכסה חינמית.</p>
 <p>חלק מהשירותים פועלים מחוץ לישראל, ולכן מידע עשוי לעבור אל מחוץ לישראל במסגרתם.</p>
 <h4>6. הזכויות שלך</h4>
-<p>אפשר לעיין בכל המידע ולתקן אותו ישירות באפליקציה; לייצא אותו (הגדרות › גיבוי, ייצוא CSV); ולמחוק אותו לצמיתות (הגדרות › חשבון וסנכרון › מחק את כל הנתונים מהחשבון). התנתקות מוחקת את הנתונים מהמכשיר ומשאירה אותם בחשבון.</p>
+<p>אפשר לעיין בכל המידע ולתקן אותו ישירות באפליקציה; לייצא אותו (הגדרות › גיבוי, ייבוא ונתונים › גיבוי, ייצוא CSV); ולמחוק אותו לצמיתות (הגדרות › אני והחשבון › חשבון וסנכרון › מחק את כל הנתונים מהחשבון). התנתקות מוחקת את הנתונים מהמכשיר ומשאירה אותם בחשבון.</p>
 <h4>7. מידע על אחרים</h4>
 <p>אין להזין לאפליקציה מידע אישי של אנשים אחרים (למשל פרטי עמיתים) ללא הסכמתם.</p>
 <h4>8. אבטחה</h4>
@@ -19745,7 +19791,7 @@ window.PAY_CONFIG = {
 <p>אנחנו רוצים שהאפליקציה תהיה נוחה לכל אחד. היא פותחה מתוך שאיפה לעמוד בהנחיות WCAG 2.1 ברמה AA ובתקן הישראלי 5568, ככל שהדבר אפשרי באפליקציה אישית.</p>
 <h4>מה נעשה</h4>
 <ul><li>ממשק מלא בעברית, מימין לשמאל.</li>
-<li>הגדלת טקסט (הגדרות › מראה), מצב כהה וניגודיות צבעים בדוקה.</li>
+<li>הגדלת טקסט (הגדרות › מראה ונעילה), מצב כהה וניגודיות צבעים בדוקה.</li>
 <li>כפתורים גדולים לשימוש ביד אחת, ותוויות לרכיבים עבור קוראי מסך.</li>
 <li>מידע שמוצג בגרפים מוצג גם כטקסט וכמספרים.</li>
 <li>האפליקציה מכבדת את הגדרת "הפחתת תנועה" של המכשיר.</li></ul>

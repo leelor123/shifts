@@ -174,9 +174,9 @@
         console.error(err);
         let msg = 'משהו השתבש. נסה שוב בעוד רגע.';
         if (!Anthropic) msg = 'לא ניתן לטעון את רכיב ה-\u2060AI. בדוק את החיבור לאינטרנט.';
-        else if (err instanceof Anthropic.AuthenticationError) msg = 'מפתח ה-\u2060API לא תקין. אפשר לעדכן אותו בהגדרות › מפתח AI.';
-        else if (err instanceof Anthropic.PermissionDeniedError) msg = 'למפתח אין הרשאה למודל שנבחר. אפשר לבחור מודל אחר בהגדרות › מפתח AI.';
-        else if (err instanceof Anthropic.NotFoundError) msg = 'המודל שנבחר לא זמין. בחר מודל אחר בהגדרות › מפתח AI.';
+        else if (err instanceof Anthropic.AuthenticationError) msg = 'מפתח ה-\u2060API לא תקין. אפשר לעדכן אותו בהגדרות › עוזר AI ואודות › מפתח AI.';
+        else if (err instanceof Anthropic.PermissionDeniedError) msg = 'למפתח אין הרשאה למודל שנבחר. אפשר לבחור מודל אחר בהגדרות › עוזר AI ואודות › מפתח AI.';
+        else if (err instanceof Anthropic.NotFoundError) msg = 'המודל שנבחר לא זמין. בחר מודל אחר בהגדרות › עוזר AI ואודות › מפתח AI.';
         else if (err instanceof Anthropic.RateLimitError) msg = 'יותר מדי בקשות כרגע. נסה שוב בעוד דקה.';
         else if (err instanceof Anthropic.APIConnectionError) msg = 'בעיית תקשורת. בדוק את החיבור לאינטרנט.';
         else if (err instanceof Anthropic.APIError && (err.status === 402 || err.type === 'billing_error')) msg = 'נגמרה היתרה בחשבון ה-\u2060API שלך אצל Anthropic.';

@@ -44,17 +44,33 @@ const DELETE = `<p class="meta">מחיקת חשבון ונתונים · Account 
 <h2>איך מוחקים את החשבון ואת כל הנתונים</h2>
 <ol>
 <li>פתחו את האפליקציה בטלפון, או בדפדפן בכתובת <a href="${APP_URL}">${APP_URL}</a>, והתחברו עם אותו חשבון Google.</li>
-<li>היכנסו ל<b>הגדרות › חשבון וסנכרון</b>.</li>
+<li>היכנסו ל<b>הגדרות › אני והחשבון › חשבון וסנכרון</b>.</li>
 <li>לחצו <b>"מחק את כל הנתונים מהחשבון"</b> ואשרו.</li>
 </ol>
-<p>המחיקה מיידית וסופית: כל הנתונים שנשמרו בחשבון (משמרות, תפקידים ותעריפים, הגדרות, תלושים, פערים, ימי חופשה ומחלה) נמחקים מהענן, החשבון עצמו נמחק ממערכת ההתחברות, והנתונים נמחקים גם מהמכשיר. לא נשמר עותק נוסף. לפני המחיקה אפשר לייצא גיבוי (הגדרות › גיבוי).</p>
+<p>המחיקה מיידית וסופית: כל הנתונים שנשמרו בחשבון (משמרות, תפקידים ותעריפים, הגדרות, תלושים, פערים, ימי חופשה ומחלה) נמחקים מהענן, החשבון עצמו נמחק ממערכת ההתחברות, והנתונים נמחקים גם מהמכשיר. לא נשמר עותק נוסף. לפני המחיקה אפשר לייצא גיבוי (הגדרות › גיבוי, ייבוא ונתונים).</p>
+<h2 id="data">מחיקת חלק מהנתונים, בלי למחוק את החשבון</h2>
+<ul>
+<li><b>משמרת או כל רשומה אחרת:</b> פותחים אותה ולוחצים על סמל הפח. המחיקה מגיעה גם לענן.</li>
+<li><b>טבלת האלופים:</b> בטבלת האלופים לוחצים על הכינוי שלכם › <b>יציאה מהטבלה</b>. השורה והתוצאות נמחקות מהענן.</li>
+<li><b>סטטיסטיקת שימוש אנונימית:</b> <b>הגדרות › אני והחשבון › חשבון וסנכרון</b> › מכבים את <b>שיתוף סטטיסטיקה אנונימית</b>. הרשומה נמחקת מהענן.</li>
+<li><b>פניות לתמיכה:</b> אפשר לבקש בפנייה שנמחק אותן.</li>
+<li><b>הנתונים בטלפון:</b> <b>התנתק</b> (באותו מקום בהגדרות) מוחק את הנתונים מהמכשיר ומשאיר אותם בחשבון. תמונת הרקע של כרטיס השכר ודוחות שעות שמייבאים נשמרים בטלפון בלבד.</li>
+</ul>
 <p>אם אין לכם גישה לאפליקציה, אפשר לפנות דרך <a href="${CONTACT}">עמוד הפניות</a> (בלי לפרסם פרטים אישיים — נחזור אליכם לאימות).</p>
 <h2 lang="en" dir="ltr">How to delete your account and data</h2>
 <div lang="en" dir="ltr" class="en"><ol>
 <li>Open the app (or <a href="${APP_URL}">${APP_URL}</a> in any browser) and sign in with the same Google account.</li>
-<li>Go to <b>Settings › Account &amp; sync</b> (הגדרות › חשבון וסנכרון).</li>
+<li>Go to <b>Settings › Me &amp; my account › Account &amp; sync</b> (הגדרות › אני והחשבון › חשבון וסנכרון).</li>
 <li>Tap <b>Delete all data</b> (מחק את כל הנתונים מהחשבון) and confirm.</li></ol>
-<p>Deletion is immediate and permanent: all data stored for the account in the cloud is deleted, the sign-in account is deleted, and local data on the device is cleared. No copy is retained. If you cannot access the app, open a request at <a href="${CONTACT}">${CONTACT}</a> (do not post personal details publicly; we will contact you to verify).</p></div>`;
+<p>Deletion is immediate and permanent: all data stored for the account in the cloud is deleted, the sign-in account is deleted, and local data on the device is cleared. No copy is retained. If you cannot access the app, open a request at <a href="${CONTACT}">${CONTACT}</a> (do not post personal details publicly; we will contact you to verify).</p>
+<h2 id="data-en">Deleting some data without deleting the account</h2>
+<ul>
+<li><b>A shift or any other record:</b> open it and tap the trash icon. The deletion reaches the cloud too.</li>
+<li><b>Champions table:</b> tap your nickname › <b>Leave the table</b> (יציאה מהטבלה). Your row and scores are deleted from the cloud.</li>
+<li><b>Anonymous usage statistics:</b> Settings › Me &amp; my account › Account &amp; sync › turn off <b>Share anonymous statistics</b> (שיתוף סטטיסטיקה אנונימית). The record is deleted.</li>
+<li><b>Support requests:</b> ask in a request and we delete them.</li>
+<li><b>Data on the phone:</b> <b>Sign out</b> (התנתק, same place) clears the device and keeps the data in the account. The pay-card photo and imported timesheets stay on the phone only.</li>
+</ul></div>`;
 
 function page(title, body) {
   return `<!doctype html>

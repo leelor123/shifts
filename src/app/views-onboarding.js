@@ -89,7 +89,7 @@
             <span class="hint">לא בטוח/ה? אפשר להשאיר ריק ונשים שכר מינימום${age() != null && age() < 18 ? ' לגילך' : ''}: ${U.money(minWage())} לשעה</span></label>
         </div>`).join('')}
         ${A.jobs.length < 6 ? `<button class="btn text sm" data-jadd>${icon('plus', 's')} הוסף תפקיד באותו מקום עבודה</button>` : ''}
-        <div class="tiny muted ob-more-emp">עובד/ת גם במקום אחר? אפשר להוסיף מקום עבודה נוסף אחר כך, בהגדרות › מקומות עבודה.</div>
+        <div class="tiny muted ob-more-emp">עובד/ת גם במקום אחר? אפשר להוסיף מקום עבודה נוסף אחר כך, בהגדרות › העבודה שלי.</div>
         <div class="ob-live" id="ob-live-roles"></div>
         ${why('ככה נחשב כמה הרווחת בכל משמרת. אפשר לשנות ולהוסיף בכל רגע בהגדרות.')}`,
       travel: () => `${say(A.travel === 'yes' ? 'love' : 'happy', 'הרבה שוכחים את זה! 🚌')}

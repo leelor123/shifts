@@ -246,14 +246,22 @@
     if (k && !Plus.active()) { Plus.sheet(); return false; }
     // the photo: chosen now when there is none (or the one on the card is tapped again: another one)
     if (k === PHOTO && (!photo() || Plus.skin() === PHOTO)) return Plus.pickPhoto();
+    return applySkin(k);
+  };
+  /** Puts a skin on the card ('' = the regular one), without asking anything (the photo one only once there is a photo). */
+  async function applySkin(k) {
+    if (k === PHOTO && !photo()) return false;
     await Store.setSettings((s) => { s.skin = k || ''; });
     App.applyTheme();
     if (root.Fx) root.Fx.play('pop');
     return true;
-  };
+  }
 
-  /** Opens the phone's photo picker (called straight from the tap, as browsers ask) and puts the photo on the card. */
-  Plus.pickPhoto = () => new Promise((resolve) => {
+  /**
+   * Opens the phone's photo picker (called straight from the tap, as browsers ask) and puts the photo on the card.
+   * opts.keep: only keep the photo (the design sheet shows it first, and the card gets it on "save").
+   */
+  Plus.pickPhoto = (opts) => new Promise((resolve) => {
     // in the page (a detached input gives an empty file in some browsers, no change event on iPhone)
     const inp = document.createElement('input');
     inp.type = 'file';
@@ -262,7 +270,7 @@
     document.body.appendChild(inp);
     let done = false;
     const end = (v) => { if (done) return; done = true; inp.remove(); window.removeEventListener('focus', back); resolve(v); };
-    inp.addEventListener('change', async () => { const f = inp.files && inp.files[0]; if (!f) { end(false); return; } done = true; inp.remove(); window.removeEventListener('focus', back); resolve(await Plus.setPhoto(f)); });
+    inp.addEventListener('change', async () => { const f = inp.files && inp.files[0]; if (!f) { end(false); return; } done = true; inp.remove(); window.removeEventListener('focus', back); resolve(await Plus.setPhoto(f, opts)); });
     inp.addEventListener('cancel', () => end(false));
     // closed without a choice where there is no "cancel" event: back in the page and still nothing
     const back = () => setTimeout(() => { if (!done && !(inp.files && inp.files.length)) end(false); }, 1500);
@@ -287,7 +295,7 @@
     const v = (n) => +((p.find((x) => x.className === n) || {}).probability) || 0;
     return v('Porn') + v('Hentai') < 0.45 && v('Sexy') < 0.75;
   };
-  Plus.setPhoto = async function (file) {
+  Plus.setPhoto = async function (file, opts) {
     if (!file || !/^image\//.test(file.type)) { UI.invalid('צריך לבחור תמונה'); return false; }
     if (file.size > 30 * 1024 * 1024) { UI.invalid('התמונה גדולה מדי'); return false; }
     UI.toast('בודקים את התמונה… 🔍');
@@ -297,6 +305,11 @@
     try { ok = await Plus.imageOk(canvas); } catch (e) { console.warn('image check', e); UI.invalid('כדי לבדוק את התמונה צריך אינטרנט (רק בפעם הראשונה). נסו שוב כשיש חיבור'); return false; }
     if (!ok) { UI.invalid('התמונה הזאת לא מתאימה לכרטיס 🙂 אפשר לבחור תמונה אחרת'); return false; }
     await Store.setMeta({ skinPhoto: canvas.toDataURL('image/jpeg', 0.82) });
+    if (opts && opts.keep) {
+      if (Plus.skin() === PHOTO) App.applyTheme(); // the card already shows the photo: the new one
+      UI.toast('התמונה מוכנה ✨');
+      return true;
+    }
     await Store.setSettings((st) => { st.skin = PHOTO; });
     App.applyTheme();
     App.rerender();
@@ -394,7 +407,7 @@
     if (!Plus.canTrial()) return false;
     await Store.setMeta({ plusTrial: { from: Date.now(), until: Date.now() + TRIAL_DAYS * DAY }, plusSeen: true });
     watchTrial();
-    if (skin && SKINS[skin]) await Store.setSettings((s) => { s.skin = skin; });
+    if (skin && (SKINS[skin] || (skin === PHOTO && photo()))) await Store.setSettings((s) => { s.skin = skin; });
     App.applyTheme();
     App.rerender();
     if (root.Fx) root.Fx.celebrate('small');
@@ -476,9 +489,31 @@
     });
   };
 
-  /** "Try it on your card": the user's own pay card, in every skin. */
+  /**
+   * "Try it on your card": the user's own pay card, in every skin and with a photo of one's own. The copy of
+   * the card holds still (its moving lights stay on the real card behind the sheet; two of them at once
+   * slowed phones down, and every skin switch repainted moving layers, which flashed).
+   */
   Plus.design = function (start) {
-    let sel = SKINS[start] ? start : Plus.skin() || 'gold';
+    let sel = (SKINS[start] || (start === PHOTO && photo())) ? start : Plus.skin() || 'gold';
+    // the photo tile: the photo once there is one (the sheet holds it in --sk-photo), a camera before
+    const photoPick = () => {
+      const has = !!photo(), on = sel === PHOTO;
+      return `<button class="skin-tile sk-photo-tile ${has ? 'has' : ''} ${on ? 'on' : ''}" data-pick="${PHOTO}" aria-pressed="${on}" aria-label="${photoLabel()}">${has ? '<b>₪</b>' : icon('camera')}<span>${on ? 'החלפה' : 'תמונה שלי'}</span></button>`;
+    };
+    const photoLabel = () => (sel === PHOTO ? 'תמונה שלי (לחיצה מחליפה את התמונה)' : photo() ? 'תמונה שלי' : 'תמונה שלי (בחירת תמונה)');
+    const holdPhoto = (el) => { if (photo()) el.querySelector('[data-design]').style.setProperty('--sk-photo', `url("${photo()}")`); };
+    // the choice, shown in place: the card's class and the tiles (nothing is drawn again, so a press springs back as usual)
+    const paint = (el) => {
+      el.querySelector('.design-prev').className = 'design-prev' + (sel ? ' sk-' + sel : '');
+      el.querySelectorAll('[data-pick]').forEach((x) => { const on = x.dataset.pick === sel; x.classList.toggle('on', on); x.setAttribute('aria-pressed', on); });
+      const ph = el.querySelector(`[data-pick="${PHOTO}"]`);
+      if (!ph) return;
+      ph.classList.toggle('has', !!photo());
+      if (photo() && !ph.querySelector('b')) ph.firstElementChild.outerHTML = '<b>₪</b>';
+      ph.querySelector('span').textContent = sel === PHOTO ? 'החלפה' : 'תמונה שלי';
+      ph.setAttribute('aria-label', photoLabel());
+    };
     const preview = () => {
       let html = '';
       try { html = App.homeHero ? App.homeHero() : ''; } catch (e) { /* no workplace yet */ }
@@ -500,6 +535,7 @@
         <div class="skin-pick design-pick">
           <button class="skin-tile ${!sel ? 'on' : ''}" data-pick="" aria-pressed="${!sel}"><b>₪</b><span>רגיל</span></button>
           ${Object.entries(SKINS).map(([k, name]) => `<button class="skin-tile sk-${k} ${sel === k ? 'on' : ''}" data-pick="${k}" aria-pressed="${sel === k}"><b>₪</b><span>${name}</span></button>`).join('')}
+          ${photoPick()}
         </div>
         ${on ? `<button class="btn big block" data-design-save>${icon('check')} שמירה</button>
             ${Plus.inTrial() ? `<div class="tiny muted plus-note">תקופת ניסיון · ${trialLeft()} · <button class="btn text sm" data-design-buy>להמשיך עם Plus</button></div>` : ''}`
@@ -514,15 +550,22 @@
       onMount: (el) => {
         if (!S.meta.plusSeen) Store.setMeta({ plusSeen: true }).catch(() => {});
         draw(el);
+        holdPhoto(el);
         el.addEventListener('click', async (e) => {
           const b = e.target.closest('button');
           if (!b) return;
           if (b.dataset.pick !== undefined) {
-            sel = b.dataset.pick;
-            el.querySelector('.design-prev').className = 'design-prev' + (sel ? ' sk-' + sel : '');
-            el.querySelectorAll('[data-pick]').forEach((x) => { const on = x.dataset.pick === sel; x.classList.toggle('on', on); x.setAttribute('aria-pressed', on); });
+            const k = b.dataset.pick;
+            if (k === sel && k !== PHOTO) return; // already on the card: nothing to switch
+            if (k === PHOTO && (!photo() || sel === PHOTO)) {
+              // a photo (or another one): the picker opens straight from the tap, and the card shows it once it is checked
+              Plus.pickPhoto({ keep: true }).then((ok) => { if (!ok || !el.isConnected) return; sel = PHOTO; holdPhoto(el); paint(el); });
+              return;
+            }
+            sel = k;
+            paint(el);
             if (root.Fx) root.Fx.play('tick');
-          } else if (b.hasAttribute('data-design-save')) { await Plus.pickSkin(sel); UI.closeTop(); }
+          } else if (b.hasAttribute('data-design-save')) { await applySkin(sel); UI.closeTop(); }
           else if (b.hasAttribute('data-design-trial')) { if (await Plus.startTrial(sel || 'gold')) UI.closeTop(); }
           else if (b.hasAttribute('data-design-buy')) { UI.closeTop(); setTimeout(() => Plus.sheet(), 320); }
         });

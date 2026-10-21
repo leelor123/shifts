@@ -162,8 +162,9 @@ body.fx .nav .fab:active { transform: scale(.9) rotate(90deg); }
   background: repeating-conic-gradient(from -1deg, rgba(255, 255, 255, .34) 0 2deg, transparent 2deg 30deg), repeating-conic-gradient(from -.5deg, rgba(255, 255, 255, .16) 0 1deg, transparent 1deg 6deg);
   -webkit-mask: radial-gradient(circle, transparent 0 61%, #000 61.5% 66%, transparent 66.5%); mask: radial-gradient(circle, transparent 0 61%, #000 61.5% 66%, transparent 66.5%); }
 .hh-dial::after { content: ''; position: absolute; inset: 0; border-radius: 50%; border: 1.5px solid rgba(255, 255, 255, .18); }
-/* pressing the card: a cheap opacity change (a filter here would repaint the moving light on every frame) */
-.home-hero:active { background: var(--grad-hero); opacity: .94; }
+/* pressing the card: a cheap opacity change (a filter here would repaint the moving light on every frame); not when
+ * the press is on a button inside it (the skin brush, "what is gross?"): the whole card blinked */
+.home-hero:active:not(:has(button:active)) { background: var(--grad-hero); opacity: .94; }
 .hh-spark { display: none; }
 .home-hero .hh-label, .home-hero .hh-stats, .home-hero .hh-goal-l { color: rgba(255, 255, 255, .86); }
 .home-hero .hh-stats b, .home-hero .hero-num { color: #fff; }
@@ -939,7 +940,7 @@ body.fx .recap-card:active { transform: scale(.98); }
 .sk-ice, html[data-skin="ice"] .home-hero { --h: 200; --grad-hero: radial-gradient(100% 70% at 85% 0%, rgba(255, 255, 255, .08), transparent 60%), linear-gradient(135deg, #0a3350 0%, #134f72 55%, #082640 100%); }
 .sk-galaxy, html[data-skin="galaxy"] .home-hero { --h: 262; --grad-hero: radial-gradient(1.5px 1.5px at 12% 22%, rgba(255, 255, 255, .9), transparent), radial-gradient(1px 1px at 64% 14%, rgba(255, 255, 255, .7), transparent), radial-gradient(1.5px 1.5px at 38% 78%, rgba(255, 255, 255, .8), transparent), radial-gradient(1px 1px at 90% 58%, rgba(255, 255, 255, .6), transparent), radial-gradient(60% 50% at 80% 20%, rgba(180, 90, 255, .3), transparent 70%), radial-gradient(50% 40% at 20% 85%, rgba(60, 140, 255, .25), transparent 70%), linear-gradient(135deg, #120a2e 0%, #2a1260 55%, #0a0618 100%); }
 /* a photo of one's own: darkened from top to bottom so the card's white text stays readable on any picture */
-.sk-photo-tile.has, html[data-skin="photo"] .home-hero { --h: 225; --grad-hero: linear-gradient(180deg, rgba(8, 10, 28, .5) 0%, rgba(8, 10, 28, .42) 45%, rgba(8, 10, 28, .7) 100%), var(--sk-photo) center / cover no-repeat, #1c1f3a; }
+.sk-photo-tile.has, .design-prev.sk-photo, html[data-skin="photo"] .home-hero { --h: 225; --grad-hero: linear-gradient(180deg, rgba(8, 10, 28, .5) 0%, rgba(8, 10, 28, .42) 45%, rgba(8, 10, 28, .7) 100%), var(--sk-photo) center / cover no-repeat, #1c1f3a; }
 .sk-photo-tile:not(.has) { background: var(--surface-2); color: var(--on-surface); border: 1.5px dashed var(--outline); box-shadow: none; }
 .sk-photo-tile:not(.has) svg { width: 22px; height: 22px; color: var(--brand); }
 .skin-pick { display: grid; grid-template-columns: repeat(auto-fill, minmax(84px, 1fr)); gap: 8px; margin-bottom: 16px; }
@@ -975,7 +976,9 @@ body.fx .recap-card:active { transform: scale(.98); }
 .limit-sheet .btn.text.block { margin-top: 6px; }
 /* "try it on your card": the user's own card, in the chosen skin */
 .design-prev { margin: 2px 0 14px; pointer-events: none; }
-.sheet .design-prev .home-hero { --h: inherit; --grad-hero: inherit; margin: 0; }
+.sheet .design-prev .home-hero { --h: inherit; --grad-hero: inherit; margin: 0; will-change: auto; }
+.design-prev .aurora i { animation: none !important; will-change: auto; }
+.design-prev .hh-dial::before { display: none; }
 .home-hero .hh-skin { position: absolute; top: 10px; inset-inline-end: 10px; z-index: 1; display: grid; place-items: center; width: 40px; height: 40px; padding: 0; border-radius: 50%; border: 1px solid rgba(255, 255, 255, .24); background: rgba(255, 255, 255, .14); color: #fff; cursor: pointer; }
 .home-hero .hh-skin:active { transform: scale(.92); }
 .home-hero:has(.hh-skin) .hh-label { padding-inline: 44px; }

@@ -61,10 +61,10 @@ https://leelor123.github.io/shifts/privacy.html
 
 ### גישה לאפליקציה (App access)
 בוחרים **"כל הפונקציונליות או חלק ממנה מוגבלים"** (All or some functionality is restricted) › הוספת הוראות:
-- שם: `Google sign-in`
+- שם: `Guest mode (sample data, no login)`, ולסמן שזה נותן גישה לכל התכונות (העיצובים של Plus מוצגים בתצוגה המקדימה בחינם)
 - הוראות (באנגלית, בשביל הבודקים של Google):
 ```
-No special credentials are needed. On the welcome screen tap "רק להציץ (נתונים לדוגמה)" (Just look, with sample data) to explore every feature with demo data. Saving to the cloud asks for a Google sign-in; any Google account works.
+No login is needed to review the app. On the first screen tap the second button, "רק להציץ (נתונים לדוגמה)" (Just look - sample data). The app opens in guest mode with a full sample month, and every feature works: shifts, pay calculation, payslip check, rights, reports, games and settings. Google Sign-In only backs up and syncs a user's own data. Shaati Plus (optional) only adds pay-card designs, all shown on your card via the brush button on home.
 ```
 
 ### מודעות (Ads)
@@ -114,9 +114,12 @@ No special credentials are needed. On the welcome screen tap "רק להציץ (�
 | הודעות | הודעות אחרות באפליקציה (פניות לתמיכה) | כן | לא | אופציונלי | תקשורת עם המפתח, פונקציונליות |
 | מידע פיננסי | היסטוריית רכישות (האם יש מנוי Plus) | כן | לא | אופציונלי | פונקציונליות |
 | פעילות באפליקציה | תוכן אחר שהמשתמש יצר: כינוי ותוצאות בטבלת האלופים (רק למי שהצטרף) | כן | לא | אופציונלי | פונקציונליות |
+| מיקום | מיקום משוער (היישוב שנבחר לזמני שבת, נשמר בחשבון) | כן | לא | אופציונלי | פונקציונליות |
+| מזהה מכשיר או מזהים אחרים | המזהה האקראי של רשומת הסטטיסטיקה האנונימית | כן | לא | אופציונלי | ניתוח נתונים |
 
 - "האם הנתונים מעובדים באופן זמני (ephemeral)?" — **לא** (הם נשמרים בחשבון).
-- **לא** לסמן: מיקום ("המיקום שלי" רק בוחר את היישוב הקרוב על הטלפון, המיקום לא נשלח לשום מקום), תמונות וקבצים (תלושים, דוחות שעות ותמונת הרקע נקראים ונשמרים על הטלפון בלבד), אנשי קשר, מזהי מכשיר, אבחון/קריסות, היסטוריית גלישה.
+- שיטת יצירת חשבון: **OAuth** (Google). קישור למחיקת חלק מהנתונים בלי למחוק את החשבון: `https://leelor123.github.io/shifts/delete-account.html#data`.
+- **לא** לסמן: מיקום מדויק ("המיקום שלי" רק בוחר את היישוב הקרוב על הטלפון; נשמר רק שם היישוב), תמונות וקבצים (תלושים, דוחות שעות ותמונת הרקע נקראים ונשמרים על הטלפון בלבד), אנשי קשר, מזהי מכשיר, אבחון/קריסות, היסטוריית גלישה.
 - "משותף" = לא, כי Google Firebase הוא ספק שירות שמעבד בשבילך, ושליחת שאלות ל-Anthropic קורית רק כשהמשתמש מפעיל את העוזר עם המפתח שלו (העברה ביוזמת המשתמש לא נחשבת "שיתוף").
 
 ### מחיקת חשבון (אם מופיע ככרטיס נפרד)

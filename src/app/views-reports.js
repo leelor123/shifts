@@ -186,7 +186,7 @@
       <div class="card"><div class="stackbar">${types.filter((x) => x.value > 0).map((x) => `<i style="width:${(x.value / totalH) * 100}%;background:${x.color}" data-tip="${esc(x.name)}: ${U.num(x.value, 2)} ש׳"></i>`).join('')}</div>
         ${types.map((x) => `<div class="kv"><span><i style="display:inline-block;width:10px;height:10px;border-radius:3px;background:${x.color};margin-inline-end:6px"></i>${x.name}</span><span class="num">${U.hours(x.value)} ש׳</span></div>`).join('')}
         <div class="kv"><span>${icon('moon', 's')} שעות לילה (⁦22:00\u2060–\u206006:00⁩)</span><span class="num">${U.hours(t.nightAll)} ש׳</span></div>
-        ${S.employers[0].nightEnabled ? `<div class="kv"><span>מתוכן עם תוספת לילה</span><span class="num">${U.hours(hb.night)} ש׳ · ${U.money(t.nightPremium, 0)}</span></div>` : '<div class="tiny muted">תוספת לילה לא מוגדרת — אפשר להפעיל בהגדרות › חוקי חישוב.</div>'}</div>
+        ${S.employers[0].nightEnabled ? `<div class="kv"><span>מתוכן עם תוספת לילה</span><span class="num">${U.hours(hb.night)} ש׳ · ${U.money(t.nightPremium, 0)}</span></div>` : '<div class="tiny muted">תוספת לילה לא מוגדרת — אפשר להפעיל בהגדרות › חישוב השכר › חוקי חישוב.</div>'}</div>
       <div class="section-title">${icon('calendar', 's')} ימים</div>
       <div class="card"><div class="kpis three">
         <div class="kpi"><div class="l">ימי עבודה</div><div class="v">${t.workDays}</div></div>
