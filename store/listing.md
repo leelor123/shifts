@@ -22,13 +22,16 @@ Shaati עוזרת לעובדים לפי שעה לדעת בדיוק כמה הרו
 
 ⏱ מעקב משמרות בלחיצה
 • טיימר משמרת עם הפסקות, או הוספה ידנית של משמרות עבר
+• ייבוא דוח שעות מהעבודה: Excel, CSV, PDF או צילום, וכל המשמרות נכנסות בבת אחת
 • כמה תפקידים ותעריפים, כולל היסטוריית שינויי שכר
 • תבניות למשמרות קבועות ושכפול משמרת בלחיצה
 • נסיעות, בונוסים, טיפים וניכויים
+• ווידג'טים למסך הבית: התחלת משמרת, החודש, היעד ויום המשכורת
 
 💰 חישוב שכר לפי הכללים בישראל
-• תוספת שבת וחג לפי זמני כניסת ויציאת השבת בעיר שלך (לוח עברי מובנה)
+• תוספת שבת וחג לפי זמני כניסת ויציאת השבת ביישוב שלך (כל היישובים בישראל, לוח עברי מובנה)
 • שעות נוספות לפי מדרגות יומיות, תוספת לילה, עיגול דקות ומשמרת מינימום
+• הפסקה לפי החוק, ותעריף מיוחד באחוזים ליום מיוחד (למשל 200% ביום בחירות)
 • הערכת נטו: מס הכנסה, נקודות זיכוי, ביטוח לאומי, מס בריאות ופנסיה
 • לעובדים מתחת לגיל 18 – השכר מוצג בלי ניכויים, כפי שמקובל לרוב
 
@@ -54,6 +57,7 @@ Shaati עוזרת לעובדים לפי שעה לדעת בדיוק כמה הרו
 • שכר המינימום לפי הגיל והתאריך, והתראה אם התעריף שלך נמוך ממנו
 • לבני נוער: בדיקה אוטומטית של שעות לילה, אורך יום ושבוע והפסקות לפי חוק עבודת הנוער
 • נעילה בקוד או בטביעת אצבע
+• הגדרות מסודרות בקטגוריות, עם חיפוש שמבין בעיות ("השכר לא יוצא נכון")
 
 🎯 יעדים ומוטיבציה
 • יעד חודשי, ויעד חיסכון למשהו שרוצים לקנות – כולל כמה שעות עבודה חסרות
@@ -63,13 +67,25 @@ Shaati עוזרת לעובדים לפי שעה לדעת בדיוק כמה הרו
 • מוזיקה לכל משחק, ורצף יומי עם מדליות
 • ניתוח מתקדם: איזה יום ואיזו שעה הכי משתלמים לך, ושאלות "מה אם"
 
+✨ Shaati Plus (אופציונלי)
+עיצובים לכרטיס השכר, תמונה משלך כרקע, ניתוח וייצוא בלי הגבלה. מנוי חודשי שמבטלים בכל רגע; כל השאר נשאר חינם.
+
 ✨ עוזר AI (אופציונלי)
 שאלות חופשיות על זכויות, על התלוש או על האפליקציה, עם מפתח API אישי של Anthropic.
 
 חשוב: החישובים הם הערכה בלבד ואינם ייעוץ משפטי, חשבונאי או מס. במקרה של ספק כדאי לבדוק מול המעסיק, רואה חשבון או גורם מוסמך.
 ```
 
-**מה חדש בגרסה 1.16** (עד 500 תווים)
+**מה חדש בגרסה 1.20** (עד 500 תווים)
+```
+• ייבוא דוח שעות: Excel, PDF או צילום, וכל המשמרות נכנסות בבת אחת
+• ווידג'טים למסך הבית: התחלת משמרת, החודש, היעד ויום המשכורת
+• תעריף מיוחד באחוזים ליום מיוחד, והפסקה לפי החוק
+• הגדרות חדשות בקטגוריות, עם חיפוש שמבין בעיות
+• בחירת יישוב מכל הארץ, ופתיחה חדשה ומרשימה
+```
+
+**מה חדש בגרסה 1.16**
 ```
 • מוזיקה לכל משחק, רצף משחק יומי ומדליות חדשות
 • טבלת האלופים: שתפו את המקום שלכם בכרטיס מעוצב
@@ -114,7 +130,9 @@ Shaati helps hourly workers in Israel know exactly what they earned – and chec
 
 • One-tap shift timer with breaks, or add past shifts manually
 • Several roles and hourly rates, with rate history; templates and duplicates
-• Shabbat & holiday premiums based on your city's Shabbat times (built-in Hebrew calendar)
+• Import an hours report from work (Excel, CSV, PDF or a photo) and add all the shifts at once
+• Home-screen widgets: start a shift, this month, your goal and payday
+• Shabbat & holiday premiums based on your town's Shabbat times (every locality in Israel, built-in Hebrew calendar); a special percent rate for special days
 • Daily overtime tiers, night premium, rounding and minimum shift
 • Net pay estimate (income tax, credit points, National Insurance, health tax, pension); under-18 workers see pay without deductions
 • Payslip check: scan a PDF or photo on your phone and see missing hours, unpaid premiums, travel and more – with an estimated gap and a ready-to-send message for your employer
