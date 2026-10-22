@@ -9,8 +9,8 @@
 
 | מה | איפה |
 |---|---|
-| **קובץ להעלאה ל-Play** (App Bundle חתום) | `C:\Users\User\ShiftPay-Android\release\1.20.0\shiftpay-1.21.0.aab` |
-| קובץ APK לבדיקה בטלפון (לא לחנות) | `C:\Users\User\ShiftPay-Android\release\1.20.0\shiftpay-1.21.0.apk` |
+| **קובץ להעלאה ל-Play** (App Bundle חתום) | `C:\Users\User\ShiftPay-Android\release\1.21.0\shiftpay-1.21.0.aab` (וגם בתיקייה `play-upload`) |
+| קובץ APK לבדיקה בטלפון (לא לחנות) | `C:\Users\User\ShiftPay-Android\release\1.21.0\shiftpay-1.21.0.apk` |
 | מפתח החתימה + הסיסמה | `C:\Users\User\ShiftPay-Android\keys\` (**לגבות! לא להעלות לשום מקום**) |
 | אייקון 512×512 | `store/icon-512.png` |
 | תמונת נושא 1024×500 | `store/feature-graphic.png` |
