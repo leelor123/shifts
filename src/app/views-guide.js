@@ -127,7 +127,9 @@
     if (!S.settings.onboarded || S.settings.demo || S.meta.whatsNew === WHATS_NEW.id) return;
     Store.setMeta({ whatsNew: WHATS_NEW.id }).catch(() => {});
     if (S.meta.guide && Date.now() - S.meta.guide < 3 * U.DAY) return; // a brand-new user already got the tour
-    setTimeout(() => {
+    // a moment after the opening show has gone (it never slides up under the leaving show)
+    const later = (fn) => (root.Intro && root.Intro.after ? root.Intro.after(fn, 900) : setTimeout(fn, 1400));
+    later(() => {
       if (App.blocking || document.querySelector('.sheet, .dialog, .coach')) return;
       UI.openSheet({
         title: 'מה חדש? ✨',
@@ -136,7 +138,7 @@
         foot: '<button class="btn" data-wn-ok>הבנתי, תודה</button>',
         onMount: (el) => { el.querySelector('[data-wn-ok]').onclick = () => UI.closeTop(); if (Fx()) Fx().celebrate('big'); },
       });
-    }, 1400);
+    });
   };
 
   /* ---------------- words explained ---------------- */

@@ -141,12 +141,21 @@
     ready = true;
     maybeClose();
   };
-  // the first screen replaces the "loading" placeholder inside #view
+  // the first screen replaces the "loading" placeholder inside #view; the show leaves once that screen has been
+  // painted (two frames) and has had a moment to settle, so it never uncovers a screen still being drawn
   const view = document.getElementById('view');
   if (view) {
-    const mo = new MutationObserver(() => { mo.disconnect(); setTimeout(Intro.ready, 60); });
+    const mo = new MutationObserver(() => {
+      mo.disconnect();
+      requestAnimationFrame(() => requestAnimationFrame(() => setTimeout(Intro.ready, 80)));
+    });
     mo.observe(view, { childList: true, subtree: true });
   }
+  /** Runs fn once the show has gone (at once when there is none): for things that open over the app. */
+  Intro.after = function (fn, delay) {
+    const wait = () => (document.getElementById('intro') ? setTimeout(wait, 150) : setTimeout(fn, delay || 0));
+    wait();
+  };
   // never hold the app hostage
   setTimeout(() => { ready = true; played = true; close(); }, 9000);
   Intro.elapsed = () => performance.now() - started;

@@ -188,7 +188,10 @@
     const fresh = !(opts && opts.keepScroll);
     const first = fresh && !seenTabs.has(App.tab);
     if (first) seenTabs.add(App.tab);
-    const cls = fresh ? (App.enterDir || '') + ' fresh' + (first ? ' first' : '') : '';
+    // under the opening show the screen is drawn still: the show's way out is its entrance (when the account
+    // loaded late, the cards rose and the pay counted up right under the leaving show)
+    const covered = !!document.getElementById('intro');
+    const cls = fresh && !covered ? (App.enterDir || '') + ' fresh' + (first ? ' first' : '') : '';
     App.enterDir = '';
     // a screen that fails to draw shows a friendly card instead of a blank page
     let html;
@@ -213,7 +216,7 @@
     App.renderNav();
     if (opts && opts.keepScroll) window.scrollTo(0, y);
     App.tickTimer();
-    if (root.Fx) root.Fx.countUps(v, App.tab, fresh);
+    if (root.Fx) root.Fx.countUps(v, App.tab, fresh && !covered);
   };
 
   /** Pull-to-refresh: sync with the cloud, look for a new version, recalculate. */
@@ -500,13 +503,14 @@
       body: `${t.shifts === 1 ? 'משמרת אחת' : t.shifts + ' משמרות'} · ${U.num(t.hours, 1)} שעות · ${U.money(t.gross, 0)} ברוטו. לחצו לסיפור של החודש.`,
     };
   }
+  const insightsNow = () => Insights.run(App.model, {
+    now: Date.now(), activeShift: S.activeShift, payslips: S.payslips, gaps: S.gaps,
+    // with cloud sync the data is already safe; the backup reminder only applies to local-only use
+    lastBackup: S.meta.cloudUid ? Date.now() : S.settings.backup.lastBackup, roleName: App.roleName,
+  });
   App.runInsights = async function () {
     if (!App.model || !S.settings.onboarded) return;
-    const res = Insights.run(App.model, {
-      now: Date.now(), activeShift: S.activeShift, payslips: S.payslips, gaps: S.gaps,
-      // with cloud sync the data is already safe; the backup reminder only applies to local-only use
-      lastBackup: S.meta.cloudUid ? Date.now() : S.settings.backup.lastBackup, roleName: App.roleName,
-    });
+    const res = insightsNow();
     App.insights = res;
     const month = monthlyAlert();
     const wanted = res.alerts.filter(notifiable).concat(month && notifiable(month) ? [month] : []);
@@ -724,6 +728,9 @@
     if (!S.settings.onboarded) { App.sheetsApi.onboarding(); return; }
     const hash = (location.hash || '').replace('#', '');
     if (['home', 'calendar', 'reports', 'settings'].includes(hash)) App.tab = hash;
+    // the first screen is drawn whole: what the insights add to it (the month's forecast on the pay card) used
+    // to come a second later with a redraw, and the card grew a line just after the opening show
+    if (!App.insights && App.model) { try { App.insights = insightsNow(); } catch (e) { console.warn('insights', e); } }
     App.render();
     const action = App.pendingAction;
     App.pendingAction = null;

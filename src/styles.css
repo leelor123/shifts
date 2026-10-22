@@ -685,7 +685,8 @@ textarea.input.chat-input { min-height: 46px; height: 46px; max-height: 140px; r
 
 /* ---- opening animation (intro.js) ---- */
 #intro { position: fixed; inset: 0; z-index: 10000; display: grid; place-items: center; overflow: hidden; color: #fff;
-  background: radial-gradient(120% 80% at 50% 32%, #1a3f94 0%, #0d2b6b 55%, #081c4a 100%); }
+  background: radial-gradient(120% 80% at 50% 32%, #1a3f94 0%, #0d2b6b 55%, #081c4a 100%);
+  will-change: opacity; /* its own layer from the start: the fade-out never has to build (and paint) a full-screen layer as it begins */ }
 #intro .intro-glow { position: absolute; left: 50%; top: 44%; width: 520px; height: 520px; margin: -260px 0 0 -260px; border-radius: 50%;
   background: radial-gradient(circle, rgba(46, 229, 157, .30) 0%, rgba(80, 120, 255, .16) 38%, transparent 68%); opacity: 0; will-change: transform, opacity; }
 #intro .intro-flash { position: absolute; left: 50%; top: 44%; width: 640px; height: 640px; margin: -320px 0 0 -320px; border-radius: 50%; background: radial-gradient(circle, rgba(255, 250, 225, .9) 0%, rgba(255, 216, 120, .35) 22%, transparent 60%); opacity: 0; will-change: transform, opacity; pointer-events: none; }
