@@ -17,8 +17,9 @@
   const { icon, esc } = UI;
   const Fx = () => root.Fx;
 
-  const MONTHS = U.HEB_MONTHS;
-  const DAYS_SHORT = ['א', 'ב', 'ג', 'ד', 'ה', 'ו', 'ש'];
+  const MONTHS = U.MONTHS;
+  // i18n-keep
+  const DAYS_SHORT = U.LANG === 'he' ? ['א', 'ב', 'ג', 'ד', 'ה', 'ו', 'ש'] : U.DAYS_SHORT;
   const pad = (n) => String(n).padStart(2, '0');
   const keyOf = (y, m, d) => `${y}-${pad(m)}-${pad(d)}`;
   const parse = (k) => { const [y, m, d] = String(k).split('-').map(Number); return { y, m, d }; };
@@ -28,10 +29,9 @@
   /* ---------------- formatting for the field buttons ---------------- */
   function fmtDate(k) {
     if (!isKey(k)) return '';
-    const { y, m, d } = parse(k);
     const today = U.todayKey();
     const rel = k === today ? 'היום · ' : k === U.addDays(today, -1) ? 'אתמול · ' : k === U.addDays(today, 1) ? 'מחר · ' : '';
-    return `${rel}${U.HEB_DAYS[U.dow(k)]}, ${d} ב${MONTHS[m - 1]} ${y}`;
+    return rel + U.fmtDate(k, 'dmy');
   }
   const fmtMonth = (mk) => (/^\d{4}-\d{2}$/.test(mk || '') ? U.fmtMonth(mk) : '');
   const fmtTime = (t) => (/^\d{2}:\d{2}/.test(t || '') ? t.slice(0, 5) : '');
@@ -105,7 +105,7 @@
       const head = el.querySelector('[data-view]');
       const okBtn = el.querySelector('[data-pk-ok]');
       function drawBig() {
-        big.innerHTML = sel ? `<span class="d">${parse(sel).d}</span><span class="r"><b>${U.HEB_DAYS[U.dow(sel)]}</b><span>${MONTHS[parse(sel).m - 1]} ${parse(sel).y}</span></span>` : `<span class="r"><b>${opts.mode === 'birth' ? 'מתי נולדת?' : 'בחר יום'}</b><span>${view === 'years' ? 'קודם השנה' : 'לחץ על יום בלוח'}</span></span>`;
+        big.innerHTML = sel ? `<span class="d">${parse(sel).d}</span><span class="r"><b>${U.DAYS[U.dow(sel)]}</b><span>${MONTHS[parse(sel).m - 1]} ${parse(sel).y}</span></span>` : `<span class="r"><b>${opts.mode === 'birth' ? 'מתי נולדת?' : 'בחר יום'}</b><span>${view === 'years' ? 'קודם השנה' : 'לחץ על יום בלוח'}</span></span>`;
         okBtn.disabled = !sel;
       }
       function draw(anim) {

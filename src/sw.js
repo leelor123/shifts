@@ -10,8 +10,31 @@ const SHELL = 'shiftpay-shell-' + VERSION;
 const RUNTIME = 'shiftpay-runtime-v1';
 const ASSETS = ['./', './index.html', './manifest.webmanifest', './icon-192.png', './icon-512.png', './icon-maskable-512.png', './badge-96.png', './favicon-48.png'];
 
+/* ---- the language ----
+ * Each language is its own page (index.html is Hebrew, index.ar.html, index.ru.html, index.en.html: the build
+ * writes them). The language chosen in the app is kept here, in a cache of its own (a worker cannot read the
+ * page's localStorage), so opening the app serves that page at once, also offline. */
+const LANGS = ['he', 'ar', 'ru', 'en'];
+const LANG_CACHE = 'shiftpay-lang';
+async function chosenLang() {
+  try {
+    const r = await (await caches.open(LANG_CACHE)).match('./__lang');
+    const l = r ? (await r.text()).trim() : 'he';
+    return LANGS.includes(l) ? l : 'he';
+  } catch (err) { return 'he'; }
+}
+const pageOf = (l) => (l === 'he' ? './index.html' : './index.' + l + '.html');
+const manifestOf = (l) => (l === 'he' ? './manifest.webmanifest' : './manifest.' + l + '.webmanifest');
+// a page that names its file (index.ru.html) is that file; the app's own address (./, ./?source=twa) is the chosen one
+const PAGE_FILE = /\/index(?:\.(ar|ru|en))?\.html$/;
+
 self.addEventListener('install', (e) => {
-  e.waitUntil(caches.open(SHELL).then((c) => c.addAll(ASSETS.map((u) => new Request(u, { cache: 'reload' })))));
+  e.waitUntil((async () => {
+    const l = await chosenLang();
+    const list = ASSETS.concat(l === 'he' ? [] : [pageOf(l), manifestOf(l)]);
+    const c = await caches.open(SHELL);
+    await c.addAll(list.map((u) => new Request(u, { cache: 'reload' })));
+  })());
 });
 self.addEventListener('activate', (e) => {
   e.waitUntil((async () => {
@@ -48,9 +71,17 @@ self.addEventListener('fetch', (e) => {
   if (url.hostname === 'api.anthropic.com') return; // never cache API calls
   if (req.mode === 'navigate') {
     e.respondWith((async () => {
-      const cached = await caches.match('./index.html', { ignoreSearch: true });
+      const named = PAGE_FILE.exec(url.pathname);
+      const lang = named ? named[1] || 'he' : await chosenLang();
+      const page = pageOf(lang);
+      const cached = await caches.match(page, { ignoreSearch: true });
       if (cached) return cached;
-      try { return await fetch(req); } catch (err) { return new Response('אין חיבור', { status: 503, headers: { 'Content-Type': 'text/plain; charset=utf-8' } }); }
+      try {
+        const res = await fetch(named ? req : page);
+        // the language's page, kept for next time (and offline)
+        if (res.ok && !named) caches.open(SHELL).then((c) => c.put(page, res.clone())).catch(() => {});
+        return res;
+      } catch (err) { return new Response(T(lang).offline, { status: 503, headers: { 'Content-Type': 'text/plain; charset=utf-8' } }); }
     })());
     return;
   }
@@ -89,6 +120,14 @@ self.addEventListener('notificationclick', (e) => {
 });
 
 /* ---- background check (Chrome periodic background sync, installed PWA only) ---- */
+// what the worker says itself, in each language
+const WORDS = {
+  he: { offline: 'אין חיבור', timerT: 'שכחת לסיים משמרת?', timerB: 'הטיימר עדיין רץ. לחץ כדי לסיים או לתקן.', upT: 'משמרת מתקרבת', upB: 'מתחילה ב-{0}' },
+  ar: { offline: 'لا يوجد اتصال', timerT: 'هل نسيت إنهاء الوردية؟', timerB: 'المؤقت ما زال يعمل. اضغط لإنهائه أو تصحيحه.', upT: 'وردية قريبة', upB: 'تبدأ الساعة {0}' },
+  ru: { offline: 'Нет подключения', timerT: 'Забыли закончить смену?', timerB: 'Таймер всё ещё идёт. Нажмите, чтобы завершить или исправить.', upT: 'Скоро смена', upB: 'Начало в {0}' },
+  en: { offline: 'No connection', timerT: 'Forgot to end your shift?', timerB: 'The timer is still running. Tap to end or fix it.', upT: 'Shift coming up', upB: 'Starts at {0}' },
+};
+const T = (l) => WORDS[l] || WORDS.he;
 function readDb() {
   return new Promise((resolve) => {
     const req = indexedDB.open('shiftpay');
@@ -113,10 +152,11 @@ async function backgroundCheck() {
   const A = d.settings.alerts;
   const types = A.types || {};
   const now = Date.now();
-  const opt = (body, tag) => ({ body, tag, icon: 'icon-192.png', badge: 'badge-96.png', lang: 'he', dir: 'rtl', data: { url: './#home' } });
+  const lang = await chosenLang(), w = T(lang);
+  const opt = (body, tag) => ({ body, tag, icon: 'icon-192.png', badge: 'badge-96.png', lang, dir: lang === 'he' || lang === 'ar' ? 'rtl' : 'ltr', data: { url: './#home' } });
   const a = d.activeShift;
   if (types.timer !== false && a && a.start && now - a.start > (A.timerHours || 12) * 3600000) {
-    await self.registration.showNotification('שכחת לסיים משמרת?', opt('הטיימר עדיין רץ. לחץ כדי לסיים או לתקן.', 'timer-' + a.start));
+    await self.registration.showNotification(w.timerT, opt(w.timerB, 'timer-' + a.start));
   }
   if (A.remindPlanned === true && types.upcoming !== false) { // off unless switched on (few notifications)
     for (const s of d.shifts || []) {
@@ -124,7 +164,7 @@ async function backgroundCheck() {
       const mins = (s.start - now) / 60000;
       if (mins > 0 && mins <= Math.max(A.upcomingMin || 60, 90)) {
         const t = new Date(s.start);
-        await self.registration.showNotification('משמרת מתקרבת', opt(`מתחילה ב-${String(t.getHours()).padStart(2, '0')}:${String(t.getMinutes()).padStart(2, '0')}`, 'up-' + s.id));
+        await self.registration.showNotification(w.upT, opt(w.upB.replace('{0}', `${String(t.getHours()).padStart(2, '0')}:${String(t.getMinutes()).padStart(2, '0')}`), 'up-' + s.id));
       }
     }
   }

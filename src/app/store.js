@@ -51,7 +51,7 @@
         resolve(d);
       };
       req.onerror = () => reject(req.error);
-      req.onblocked = () => reject(new Error('מסד הנתונים חסום — סגור לשוניות אחרות של האפליקציה'));
+      req.onblocked = () => reject(root.U.oops('מסד הנתונים חסום — סגור לשוניות אחרות של האפליקציה'));
     });
   }
   function done(t) {
@@ -449,8 +449,8 @@
   }
   /** mode: 'replace' | 'merge' */
   async function importBackup(json, mode) {
-    if (!isObj(json) || json.app !== 'shiftpay') throw new Error('הקובץ אינו גיבוי של האפליקציה');
-    if ((+json.schemaVersion || 1) > SCHEMA_VERSION) throw new Error('הגיבוי נוצר בגרסה חדשה יותר של האפליקציה. עדכן קודם את האפליקציה.');
+    if (!isObj(json) || json.app !== 'shiftpay') throw root.U.oops('הקובץ אינו גיבוי של האפליקציה');
+    if ((+json.schemaVersion || 1) > SCHEMA_VERSION) throw root.U.oops('הגיבוי נוצר בגרסה חדשה יותר של האפליקציה. עדכן קודם את האפליקציה.');
     const incoming = { settings: json.settings, meta: json.meta || {}, activeShift: json.activeShift || null };
     for (const s of LIST_STORES) incoming[s] = json[s] || [];
     cleanIncoming(incoming);
@@ -464,7 +464,7 @@
       root.Engine.totals(trial, '2000-01-01', '2100-12-31');
     } catch (e) {
       console.warn('backup refused', e);
-      throw new Error('הקובץ פגום ואי אפשר לשחזר ממנו. הנתונים בטלפון לא השתנו.');
+      throw root.U.oops('הקובץ פגום ואי אפשר לשחזר ממנו. הנתונים בטלפון לא השתנו.');
     }
     const keepKey = S.settings && S.settings.ai ? S.settings.ai.apiKey : '';
     const keepPlus = (S.settings && S.settings.plusKey) || '';

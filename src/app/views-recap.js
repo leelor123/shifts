@@ -32,12 +32,12 @@
       roleName: (id) => App.roleName(id),
     });
   }
-  function monthName(pk) { return U.HEB_MONTHS[+pk.slice(5, 7) - 1]; }
+  function monthName(pk) { return U.MONTHS[+pk.slice(5, 7) - 1]; }
   const lastPeriodKey = () => U.addMonthKey(Engine.periodOf(U.todayKey(), S.employers[0]).key, -1);
 
   /* ---------------- the cards ---------------- */
   const num = (to, kind) => `<div class="st-num" data-to="${to}" data-kind="${kind || 'money'}">${kind === 'hours' ? U.num(to, 1) : money0(to)}</div>`;
-  const day = (k) => `${U.HEB_DAYS[U.dow(k)]}, ${+k.slice(8)}.${+k.slice(5, 7)}`;
+  const day = (k) => `${U.DAYS[U.dow(k)]}, ${+k.slice(8)}.${+k.slice(5, 7)}`;
   const CARD = {
     intro: (s) => `${App.mascot ? App.mascot('wave', { size: 120, cls: 'st-m' }) : ''}<div class="st-k">הסיכום החודשי שלך</div><div class="st-big">${esc(s.label)}</div>
       <div class="st-sub">${S.settings.userName ? esc(String(S.settings.userName).split(' ')[0]) + ', ' : ''}בואו נראה איך היה החודש בעבודה</div>`,

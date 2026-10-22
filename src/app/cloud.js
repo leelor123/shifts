@@ -41,7 +41,7 @@
   let loading = null;
   function load() {
     if (fb) return Promise.resolve(fb);
-    if (!root.FIREBASE_CONFIG) return Promise.reject(new Error('חסרות הגדרות Firebase'));
+    if (!root.FIREBASE_CONFIG) return Promise.reject(root.U.oops('חסרות הגדרות Firebase'));
     if (!loading) {
       loading = (async () => {
         const [a, au, fs] = await Promise.all([import(SDK + 'firebase-app.js'), import(SDK + 'firebase-auth.js'), import(SDK + 'firebase-firestore.js')]);
@@ -53,7 +53,7 @@
           // stored in IndexedDB is moved over by Firebase, so nobody is signed out by this order.
           auth = au.initializeAuth(app, { persistence: [au.browserLocalPersistence, au.indexedDBLocalPersistence], popupRedirectResolver: au.browserPopupRedirectResolver });
         } catch (e) { auth = au.getAuth(app); }
-        auth.languageCode = 'he';
+        auth.languageCode = root.U.LANG; // Google's sign-in window and e-mails in the app's language
         let db;
         // Firestore keeps its own copy in IndexedDB; on a phone whose IndexedDB is broken it would fail every
         // write, so it then works from memory (the app's own store re-sends anything unconfirmed on the next start)
@@ -145,7 +145,7 @@
     if (e && STORAGE_ERRORS.includes(e.name)) return 'הדפדפן לא הצליח לשמור את הנתונים. נסה שוב, ואם זה חוזר על עצמו רענן את הדף.';
     if (!navigator.onLine) return AUTH_ERRORS['auth/network-request-failed'];
     const msg = (e && e.message) || String(e || '');
-    if (/[\u0590-\u05FF]/.test(msg)) return msg; // already ours, in Hebrew
+    if ((e && e.ours) || /[\u0590-\u05FF]/.test(msg)) return msg; // already ours
     return 'משהו השתבש. נסה שוב בעוד רגע.' + (e && (e.code || e.name) ? ` (${e.code || e.name})` : '');
   };
 
@@ -292,7 +292,7 @@
         try { await fb.au.signOut(fb.auth); } catch (e) { /* ignore */ }
         Cloud.user = null;
         setStatus('idle');
-        throw Object.assign(new Error(`החיבור בוטל. התחבר עם ${prev} כדי שהשינויים יעלו לחשבון שלו.`), { code: 'app/switch-cancelled' });
+        throw Object.assign(root.U.oops(`החיבור בוטל. התחבר עם ${prev} כדי שהשינויים יעלו לחשבון שלו.`), { code: 'app/switch-cancelled' });
       }
       await Store.wipe();
     }

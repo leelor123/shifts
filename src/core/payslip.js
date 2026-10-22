@@ -166,6 +166,7 @@
     return rows.map((r) => r.items.sort((a, b) => b.x - a.x).map((i) => i.s).join(' '));
   }
 
+  // i18n-keep
   const MONTHS = ['ינואר', 'פברואר', 'מרץ', 'אפריל', 'מאי', 'יוני', 'יולי', 'אוגוסט', 'ספטמבר', 'אוקטובר', 'נובמבר', 'דצמבר'];
   function detectPeriod(text) {
     const counts = {};
@@ -274,6 +275,7 @@
     };
   }
   function aiPrompt() {
+    // i18n-keep-start
     return 'You read the text of an Israeli payslip (תלוש שכר) produced by PDF text extraction or Hebrew OCR. ' +
       'Hebrew words may appear reversed (visual order) and table columns may be out of order; reconstruct the meaning carefully. ' +
       'Personal details were replaced with placeholders such as [ת״ז הוסתרה]; ignore them.\n' +
@@ -283,6 +285,7 @@
       'Field keys: ' + FIELDS.map((f) => `${f.key} = ${f.label}`).join('; ') + '.\n' +
       'Put every other payment, deduction or employer-contribution line in otherLines. ' +
       'period is the pay month (YYYY-MM) if visible, otherwise an empty string. notes: one short Hebrew sentence about anything unclear, or an empty string.';
+    // i18n-keep-end
   }
   /** Convert AI JSON to the same {fields, other, period} shape as parseText. */
   function fromAi(json) {
@@ -656,7 +659,9 @@
     if (!bad.length) return '';
     let s = `שלום${opts.to ? ' ' + opts.to : ''},\n\nבדקתי את תלוש השכר של ${U.fmtMonth(analysis.period)} מול רישום המשמרות שלי (⁦${U.fmtDate(P.from)}\u2060–\u2060${U.fmtDate(P.to)}⁩), ונראה לי שיש כמה נקודות שכדאי לבדוק:\n\n`;
     // findings are written to the user ("רשמת"); the message speaks in first person
+    // i18n-keep-start
     const firstPerson = (t) => t.replace(/(^|\s)רשמת(\s)/g, '$1רשמתי$2').replace(/שרשמת(\s|\)|\.|,)/g, 'שרשמתי$1').replace(/באפליקציה/g, 'לפי הרישום שלי').replace(/שהגדרת/g, 'שסוכמו');
+    // i18n-keep-end
     bad.forEach((f, i) => {
       s += `${i + 1}. ${f.title}: ${firstPerson(f.detail)}`;
       if (f.amount > 0 && !/≈|לפי החישוב/.test(f.detail)) s += ` (הפרש משוער: ${U.money(f.amount)})`;

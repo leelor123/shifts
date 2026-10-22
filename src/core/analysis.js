@@ -55,7 +55,7 @@
     const avgHour = perHour(all);
     // a day or a time of day counts only with at least 2 shifts (one lucky shift is not a pattern)
     const minN = list.length >= 8 ? 2 : 1;
-    const dayRows = [...days].map(([d, g]) => ({ d, name: U.HEB_DAYS[d], n: g.n, perHour: perHour(g), perShift: g.n ? r2(g.wage / g.n) : 0 }));
+    const dayRows = [...days].map(([d, g]) => ({ d, name: U.DAYS[d], n: g.n, perHour: perHour(g), perShift: g.n ? r2(g.wage / g.n) : 0 }));
     const slotRows = SLOTS.map((s) => { const g = slots.get(s.id); return { id: s.id, name: s.name, n: g.n, perHour: perHour(g), perShift: g.n ? r2(g.wage / g.n) : 0 }; });
     const pick = (rows) => rows.filter((x) => x.n >= minN).sort((a, b) => b.perHour - a.perHour)[0] || null;
     const bestDay = pick(dayRows), bestSlot = pick(slotRows);

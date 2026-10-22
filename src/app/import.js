@@ -64,10 +64,10 @@
       return decode(await file.arrayBuffer()).replace(/[;,\t]/g, ' | ');
     }
     if (/\.pdf$/i.test(name) || file.type === 'application/pdf' || /^image\//.test(file.type)) {
-      if (!App.readDocText) throw new Error('הקריאה לא זמינה כרגע');
+      if (!App.readDocText) throw root.U.oops('הקריאה לא זמינה כרגע');
       return (await App.readDocText(file, progress)).text;
     }
-    throw new Error('סוג קובץ שלא מכירים. אפשר Excel, ‏CSV, ‏PDF, תמונה או טקסט');
+    throw root.U.oops('סוג קובץ שלא מכירים. אפשר Excel, ‏CSV, ‏PDF, תמונה או טקסט');
   }
 
   /* ---------------- the screen ---------------- */
@@ -123,7 +123,7 @@
       const list = rows.map((r, i) => {
         const t = place(r);
         if (r.on == null) r.on = !(t && t.taken);
-        const day = U.HEB_DAYS ? U.HEB_DAYS[U.dow(r.date)] : '';
+        const day = U.DAYS ? U.DAYS[U.dow(r.date)] : '';
         const when = r.start ? `⁦${r.start}⁠–⁠${r.end}⁩` : `${U.num(r.hours, 2)} שעות · ${startFor ? 'מ-' + startFor : 'שעה לא ידועה'}`;
         return `<button class="imp-row ${r.on ? 'on' : ''}" data-i="${i}" aria-pressed="${r.on}"><span class="imp-check" aria-hidden="true">${icon('check', 's')}</span>
           <span class="imp-d"><b>${esc(day)} ${U.fmtDate(r.date, 'short')}</b><small>${when}${r.overnight ? ' · לילה' : ''}</small></span>
@@ -166,7 +166,7 @@
       try { await parse(await readFile(file, progress)); } catch (e) {
         console.warn('import', e);
         start();
-        UI.invalid(e && e.message && /[א-ת]/.test(e.message) ? e.message : 'לא הצלחנו לקרוא את הקובץ. אפשר לנסות קובץ אחר או להדביק טקסט');
+        UI.invalid(root.U.ours(e) ? e.message : 'לא הצלחנו לקרוא את הקובץ. אפשר לנסות קובץ אחר או להדביק טקסט');
       }
     }
     async function add() {

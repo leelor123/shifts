@@ -21,9 +21,12 @@
   const NOUNS = ['שועל', 'נמר', 'ינשוף', 'דולפין', 'זאב', 'נשר', 'קיפוד', 'פינגווין', 'תוכי', 'דוב', 'צב', 'לוויתן', 'אריה', 'צפרדע', 'תמנון', 'חד קרן'];
   const ADJS = ['זריז', 'חכם', 'אמיץ', 'מהיר', 'שמח', 'ערני', 'סקרן', 'נועז', 'רגוע', 'חרוץ'];
   // nicknames are public: no swearing, no phone numbers (5 digits or more in a row)
+  // i18n-keep-start
   const BAD = ['זונה', 'זונות', 'כוס', 'זין', 'זיין', 'מזדיין', 'שרמוט', 'שרמוטה', 'מניאק', 'קוקסינל', 'נאצי', 'היטלר', 'מחבל',
     'fuck', 'shit', 'bitch', 'dick', 'cock', 'pussy', 'porn', 'sex', 'nazi', 'hitler', 'nigg', 'cunt', 'whore', 'slut'];
   const STAFF = ['admin', 'moderator', 'support', 'shaati', 'מנהל', 'מנהלת', 'צוות', 'תמיכה', 'שעתי', 'רשמי'];
+  // i18n-keep-end
+  // the same letters firestore.rules allows (so in Arabic and Russian the made-up names are in English)
   const NICK_RE = /^[א-תa-zA-Z0-9 _.-]{2,16}$/;
 
   const num = (k) => +k.replace(/-/g, '');
@@ -92,8 +95,8 @@
       return left > 60 ? `מתאפס בעוד ${Math.floor(left / 60)} שעות` : `מתאפס בעוד ${Math.max(1, left)} דקות`;
     }
     if (period === 'w') { const n = 7 - U.dow(dateKey); return n === 1 ? 'מתאפס מחר (יום ראשון)' : `מתאפס בעוד ${n} ימים`; }
-    if (period === 'm') return `מתאפס ב-1 ב${U.HEB_MONTHS[(+dateKey.slice(5, 7)) % 12]}`;
-    if (period === 'y') return `מתאפס ב-1 בינואר ${+dateKey.slice(0, 4) + 1}`;
+    if (period === 'm') return `מתאפס ב-${U.fmtDate(U.addMonthKey(dateKey.slice(0, 7), 1) + '-01', 'dm')}`;
+    if (period === 'y') return `מתאפס ב-${U.fmtDate(`${+dateKey.slice(0, 4) + 1}-01-01`, 'dm')} ${+dateKey.slice(0, 4) + 1}`;
     return 'השיאים של כל הזמנים';
   }
 

@@ -49,10 +49,10 @@
         ${d && d.ov ? '<span class="ovr" title="עקיפה ידנית"></span>' : ''}${hol.some((h) => h.rest) ? '<span class="hol">🕯</span>' : hol.length ? '<span class="hol">•</span>' : ''}
         <span class="dn">${+k.slice(8)}</span><span class="hd">${hd.dayStr}</span><span class="dots">${dots}</span>${d && d.total ? `<span class="amt">${shortMoney(d.total)}</span>` : ''}</button>`;
     }
-    const dows = [...Array(7)].map((_, i) => U.HEB_DAYS_SHORT[(i + (S.settings.weekStart || 0)) % 7]);
+    const dows = [...Array(7)].map((_, i) => U.DAYS_SHORT[(i + (S.settings.weekStart || 0)) % 7]);
     const hm = HebCal.hebrewDate(first), hm2 = HebCal.hebrewDate(U.monthEnd(mk));
     const hebLabel = hm.monthStr === hm2.monthStr ? hm.monthStr + ' ' + hm.yearStr : hm.monthStr + '\u2060–\u2060' + hm2.monthStr + ' ' + hm2.yearStr;
-    return `<div class="cal-nav"><button class="icon-btn" data-act="cal-nav" data-dir="-1" aria-label="הקודם">${icon('right')}</button><h2>${U.fmtMonth(mk)}<div class="tiny muted" style="font-weight:400">${esc(hebLabel)}</div></h2><button class="icon-btn" data-act="cal-nav" data-dir="1" aria-label="הבא">${icon('left')}</button></div>
+    return `<div class="cal-nav"><button class="icon-btn" data-act="cal-nav" data-dir="-1" aria-label="הקודם">${icon('right')}</button><h2>${U.fmtMonth(mk)}${hm.monthStr ? `<div class="tiny muted" style="font-weight:400">${esc(hebLabel)}</div>` : ''}</h2><button class="icon-btn" data-act="cal-nav" data-dir="1" aria-label="הבא">${icon('left')}</button></div>
       <div class="cal-dow">${dows.map((x) => `<span>${x}</span>`).join('')}</div>
       <div class="cal-grid swipe-area" id="cal-swipe">${cells}</div>
       <div class="row-flex small" style="margin:10px 4px"><span>סה״כ בחודש: <b>${UI.money(monthTotal, 0)}</b></span><span class="spacer"></span><span class="muted"><span class="num">${U.hm(monthHours * 60)}</span> ש׳</span></div>`;
@@ -83,7 +83,7 @@
       if (d) { tot += d.total; hrs += d.shifts.filter((r) => r.status === 'done').reduce((s, r) => s + r.paidHours, 0); }
       const label = d ? d.shifts.map((r) => `${App.roleName(r.segments[0] && r.segments[0].roleId)} ⁦${U.epochHM(r.start)}\u2060–\u2060${U.epochHM(r.rawEnd)}⁩${r.status === 'planned' ? ' (מתוכננת)' : ''}`).concat(d.entries.map((e) => (e.kind === 'vacation' ? 'חופשה' : e.kind === 'sick' ? 'מחלה' : (App.model.entryVals.get(e.id) || {}).label))).join(' · ') : '';
       rows += `<div class="week-row ${rest ? 'rest' : ''} card-link" data-act="cal-day" data-k="${k}" ${k === today ? 'style="box-shadow:inset 3px 0 0 var(--primary)"' : ''}>
-        <div class="wd"><div class="tiny muted">${U.HEB_DAYS[U.dow(k)]}</div><div class="n">${+k.slice(8)}</div><div class="tiny muted">${HebCal.hebrewDate(k).dayStr}</div></div>
+        <div class="wd"><div class="tiny muted">${U.DAYS[U.dow(k)]}</div><div class="n">${+k.slice(8)}</div>${U.LANG === 'he' ? `<div class="tiny muted">${HebCal.hebrewDate(k).dayStr}</div>` : ''}</div>
         <div class="tl"><div class="row-flex small"><span style="flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${esc(hol.map((h) => h.name).join(', ') || label || '—')}</span>${d && d.total ? `<b>${UI.money(d.total, 0)}</b>` : ''}${d && d.ov ? ` <span class="tag override">${icon('hand')}</span>` : ''}</div>
         <div class="timeline">${bars}</div>${hol.length && label ? `<div class="tiny muted">${esc(label)}</div>` : ''}</div></div>`;
     }

@@ -107,7 +107,7 @@
         : `${App.mascotSays ? App.mascotSays('love', rows.length ? `מצאתי ${rows.length === 1 ? 'משמרת אחת' : rows.length + ' משמרות'} שלך! 🎉 בודקים רגע ומוסיפים` : 'לא מצאתי משמרות בשם הזה', { size: 64 }) : ''}`;
       const thisWeek = U.addDays(U.todayKey(), -U.dow(U.todayKey())), nextWeek = U.addDays(thisWeek, 7);
       const list = rows.map((r, i) => {
-        const day = U.HEB_DAYS ? U.HEB_DAYS[U.dow(r.date)] : '';
+        const day = U.DAYS ? U.DAYS[U.dow(r.date)] : '';
         return `<div class="imp-row sc-row ${r.on ? 'on' : ''}" data-i="${i}">
           <button class="sc-tog" data-sc-tog="${i}" aria-pressed="${r.on}" aria-label="${esc(day + ' ' + U.fmtDate(r.date, 'short'))}"><span class="imp-check" aria-hidden="true">${icon('check', 's')}</span>
             <span class="imp-d"><b>${esc(day)} ${U.fmtDate(r.date, 'short')}</b><small>${r.taken ? '<i class="tag">כבר קיימת</i>' : ''}${r.guess ? '<i class="tag warn">שעה משוערת</i>' : ''}${r.e < Date.now() ? '<i class="tag">עברה</i>' : ''}</small></span></button>
@@ -146,7 +146,7 @@
       } catch (e) {
         console.warn('schedule', e);
         start();
-        UI.invalid(e && e.message && /[א-ת]/.test(e.message) ? e.message : 'לא הצלחנו לקרוא את הסידור. אפשר לנסות שוב או להדביק את ההודעה');
+        UI.invalid(root.U.ours(e) ? e.message : 'לא הצלחנו לקרוא את הסידור. אפשר לנסות שוב או להדביק את ההודעה');
       }
     }
     // the picture, read by Claude (the person's own key; asked first, since it goes to Anthropic)

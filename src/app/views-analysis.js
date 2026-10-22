@@ -20,7 +20,7 @@
       text: U.money(x.perHour),
     })), null) : '');
     const t = a.trend;
-    const m = (mk) => U.HEB_MONTHS[+mk.slice(5, 7) - 1];
+    const m = (mk) => U.MONTHS[+mk.slice(5, 7) - 1];
     return `
       <div class="card an-sum"><div class="kpis">
         <div class="kpi"><div class="l">ממוצע לשעה</div><div class="v">${U.money(a.avgHour)}</div><div class="d">${a.count} משמרות בשנה האחרונה</div></div>

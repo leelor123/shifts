@@ -174,7 +174,7 @@
         if (!city) { el.innerHTML = ''; return; }
         const cfg = Object.assign({}, st.rest, { city, dayRules: [] });
         const w = HebCal.restWindows(today, U.addDays(today, 10), cfg).find((x) => x.end > Date.now());
-        el.innerHTML = w ? `${icon('candle', 's')} ${esc(w.label)} הקרובה ב${esc(city)}: נכנסת ${U.HEB_DAYS[U.dow(U.epochKey(w.start))]} ב-${U.epochHM(w.start)}, יוצאת ב-${U.epochHM(w.end)}` : '';
+        el.innerHTML = w ? `${icon('candle', 's')} ${esc(w.label)} הקרובה ב${esc(city)}: נכנסת ${U.DAYS[U.dow(U.epochKey(w.start))]} ב-${U.epochHM(w.start)}, יוצאת ב-${U.epochHM(w.end)}` : '';
       }
     }
     function draw() {

@@ -528,7 +528,7 @@
     if (!S.settings.alerts.push || !('Notification' in window) || Notification.permission !== 'granted') return;
     try {
       const reg = await navigator.serviceWorker.getRegistration();
-      const opt = { body: n.body, tag: n.key, icon: 'icon-192.png', badge: 'badge-96.png', lang: 'he', dir: 'rtl', data: { url: './#home' } };
+      const opt = { body: n.body, tag: n.key, icon: 'icon-192.png', badge: 'badge-96.png', lang: U.LANG, dir: U.RTL ? 'rtl' : 'ltr', data: { url: './#home' } };
       if (reg) await reg.showNotification(n.title, opt); else new Notification(n.title, opt);
     } catch (e) { console.warn(e); }
   }
@@ -771,6 +771,8 @@
     }
     // nobody has signed in on this phone yet
     const starting = Cloud.start().catch((e) => { console.warn('sign-in not available yet', e); return null; });
+    // the very first open: which language (another one reopens the app in it)
+    if (root.Lang && !root.Lang.stored() && !S.settings.onboarded) await root.Lang.firstRun();
     if (!S.settings.onboarded) App.sheetsApi.onboarding({ preLogin: true });
     else App.showLogin();
     // back from a full-page Google sign-in, or a sign-in that was already in the browser: finish it
@@ -784,6 +786,7 @@
   /** Continue into the app once the user is signed in. */
   App.afterLogin = function () {
     if (App.ensureLegal && !App.legalAccepted()) { App.ensureLegal(App.afterLogin); return; }
+    if (root.Lang && S.settings.onboarded) root.Lang.adopt();
     if (root.Stats) { root.Stats.markActive().then(() => root.Stats.report()); }
     document.getElementById('nav').style.display = '';
     if (!S.settings.onboarded) { App.sheetsApi.onboarding(); return; }

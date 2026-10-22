@@ -1497,3 +1497,75 @@ body.fx .cal-day.hello, body.fx .week-row.hello { animation: cal-hello .55s cubi
 .sc-row .tag { font-style: normal; font-size: .68rem; }
 .sched-sheet .sc-ai { margin-top: 4px; }
 .sched-sheet .sc-names .chip, .sched-sheet .sc-week .chip { font-weight: 600; }
+
+/* ---- the language picker (lang.js): the first open's screen, the opening show's sky, four doors ---- */
+.lp-host { position: fixed; inset: 0; z-index: 9000; color: #fff; overflow: hidden;
+  background: radial-gradient(120% 80% at 50% 32%, #1a3f94 0%, #0d2b6b 55%, #081c4a 100%); }
+.lp-host .lp { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 18px;
+  padding: calc(20px + env(safe-area-inset-top, 0px)) max(18px, env(safe-area-inset-right, 0px)) calc(22px + env(safe-area-inset-bottom, 0px)) max(18px, env(safe-area-inset-left, 0px)); }
+.lp-orbs { position: absolute; inset: 0; pointer-events: none; }
+.lp-orbs i { position: absolute; width: 60vmax; height: 60vmax; border-radius: 50%; opacity: .32; will-change: transform;
+  background: radial-gradient(circle, var(--c) 0%, transparent 62%); animation: lp-drift 14s ease-in-out infinite alternate; }
+.lp-orbs i:nth-child(1) { --c: #2ee59d; left: -30vmax; top: -24vmax; }
+.lp-orbs i:nth-child(2) { --c: #ffb524; right: -32vmax; top: 18vh; animation-duration: 17s; animation-delay: -6s; }
+.lp-orbs i:nth-child(3) { --c: #a98bff; left: -10vmax; bottom: -38vmax; animation-duration: 19s; animation-delay: -11s; }
+@keyframes lp-drift { to { transform: translate3d(6vmax, 5vmax, 0) scale(1.12); } }
+.lp-logo { position: relative; display: flex; align-items: center; gap: 10px; direction: ltr; font: 800 1.35rem/1 'Rubik', system-ui, sans-serif; letter-spacing: -.02em; opacity: .95; }
+.lp-logo svg { width: 38px; height: 38px; overflow: visible; }
+.lp-logo path { fill: none; stroke-width: 104; stroke-linecap: round; stroke-linejoin: round; }
+.lp-logo .g { stroke: #2ee59d; } .lp-logo .y { stroke: #ffb524; }
+/* the greeting and the question: one language at a time, sliding up into place */
+.lp-hello, .lp-ask { position: relative; display: grid; width: 100%; text-align: center; }
+.lp-hello span, .lp-ask span { grid-area: 1 / 1; opacity: 0; transform: translateY(14px) scale(.98); transition: opacity .45s ease, transform .55s var(--pop, cubic-bezier(.34, 1.56, .64, 1)); }
+.lp-hello span.on, .lp-ask span.on { opacity: 1; transform: none; }
+.lp-hello span { font: 800 clamp(2.6rem, 12vw, 3.6rem)/1.1 'Rubik', system-ui, sans-serif; letter-spacing: -.02em;
+  background: linear-gradient(100deg, #fff 20%, var(--a) 120%); -webkit-background-clip: text; background-clip: text; color: transparent; }
+.lp-ask span { font: 500 1.05rem/1.4 'Rubik', system-ui, sans-serif; color: rgba(255, 255, 255, .78); }
+.static .lp-hello span, .static .lp-ask span { transition: none; }
+/* the four doors */
+.lp-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; width: min(100%, 420px); margin-top: 6px; }
+.lp-card { position: relative; display: flex; flex-direction: column; align-items: center; gap: 6px; padding: 18px 10px 14px; border-radius: 24px; cursor: pointer;
+  color: #fff; font: inherit; background: rgba(255, 255, 255, .07); border: 1px solid rgba(255, 255, 255, .14);
+  box-shadow: 0 1px 0 rgba(255, 255, 255, .08) inset, 0 10px 30px -18px rgba(0, 0, 0, .6);
+  transition: scale .35s var(--pop, cubic-bezier(.34, 1.56, .64, 1)), background-color .25s ease, border-color .25s ease, opacity .35s ease, transform .5s var(--pop, cubic-bezier(.34, 1.56, .64, 1)); }
+.lp-host.in .lp-card { animation: lp-in .7s var(--pop, cubic-bezier(.34, 1.56, .64, 1)) both; animation-delay: calc(240ms + var(--i) * 70ms); }
+@keyframes lp-in { from { opacity: 0; transform: translateY(26px) scale(.94); } }
+.lp-card:active { scale: .95; background: rgba(255, 255, 255, .12); }
+.lp-card.sug { border-color: rgba(255, 255, 255, .42); background: rgba(255, 255, 255, .11); }
+.lp-card.sug::after { content: ''; position: absolute; inset: -1px; border-radius: inherit; pointer-events: none;
+  box-shadow: 0 0 0 2px var(--g1), 0 0 28px -4px var(--g1); opacity: .9; animation: lp-glow 2.4s ease-in-out infinite; }
+@keyframes lp-glow { 50% { opacity: .35; } }
+.lp-glyph { display: grid; place-items: center; width: 62px; height: 62px; border-radius: 50%; font: 800 2rem/1 'Rubik', system-ui, sans-serif; color: #fff;
+  background: linear-gradient(140deg, var(--g1), var(--g2)); box-shadow: 0 8px 22px -8px var(--g2); text-shadow: 0 1px 2px rgba(0, 0, 0, .18); }
+.lp-name { font-weight: 700; font-size: 1.12rem; }
+.lp-hi { font-size: .8rem; opacity: .7; }
+.lp-sug { position: absolute; top: -9px; inset-inline-end: 12px; padding: 3px 9px; border-radius: 999px; font-size: .68rem; font-weight: 700; color: #10203f;
+  background: linear-gradient(140deg, var(--g1), var(--g2)); box-shadow: 0 4px 12px -4px var(--g2); }
+.lp-later { font-size: .8rem; color: rgba(255, 255, 255, .6); text-align: center; }
+/* chosen: the others step back, the chosen one comes forward, its colour fills the screen from its letter */
+.lp-host.chosen .lp-card:not(.picked) { opacity: 0; transform: scale(.9); }
+.lp-host.chosen .lp-card.picked { scale: 1.06; }
+.lp-host.chosen .lp-hello, .lp-host.chosen .lp-ask, .lp-host.chosen .lp-later { opacity: 0; transition: opacity .3s ease; }
+.lp-fill { position: fixed; z-index: 9500; width: 60px; height: 60px; margin: -30px 0 0 -30px; border-radius: 50%; pointer-events: none;
+  background: linear-gradient(140deg, var(--g1), var(--g2)); transform: scale(0); will-change: transform, opacity;
+  transition: transform .62s cubic-bezier(.7, 0, .2, 1), opacity .5s ease, background .4s ease; }
+.lp-fill.go { transform: scale(var(--s)); }
+.lp-fill.to-intro { background: #0d2b6b; }
+.lp-fill.fade { opacity: 0; }
+.lp-host.out { opacity: 0; transition: opacity .45s ease; }
+@media (prefers-reduced-motion: reduce) { .lp-orbs i, .lp-card.sug::after, .lp-host.in .lp-card { animation: none !important; } .lp-fill { transition: none; } }
+/* in settings: the same doors in a sheet, on the app's own colours */
+.lp-in-sheet { display: flex; flex-direction: column; align-items: center; gap: 12px; padding: 4px 0 8px; }
+.lp-in-sheet .lp-hello span { font-size: 2.1rem; background: linear-gradient(100deg, var(--on-surface) 30%, var(--a) 130%); -webkit-background-clip: text; background-clip: text; }
+.lp-in-sheet .lp-ask span { color: var(--on-surface-var); }
+.lp-in-sheet .lp-card { color: var(--on-surface); background: var(--surface-2, rgba(0, 0, 0, .03)); border-color: var(--line); box-shadow: none; }
+.lp-in-sheet .lp-card.cur { border-color: var(--brand); background: var(--brand-soft); }
+.lp-in-sheet .lp-later { color: var(--on-surface-var); }
+.lp-tick { position: absolute; top: 10px; inset-inline-end: 12px; width: 22px; height: 22px; border-radius: 50%; display: grid; place-items: center; font-size: .75rem; color: #fff; background: var(--brand); }
+.lp-offer { display: flex; align-items: center; gap: 14px; }
+.lp-offer p { margin: 0; line-height: 1.5; }
+/* settings: the language, at the top, in its own name */
+.topbar .lang-pill { margin-inline-start: auto; display: inline-flex; align-items: center; gap: 6px; padding: 8px 12px; border-radius: 999px; border: 1px solid var(--line);
+  background: var(--surface); color: var(--on-surface); font: 600 .85rem/1 inherit; cursor: pointer; transition: scale .3s var(--pop), background-color .2s ease; }
+.topbar .lang-pill svg { width: 16px; height: 16px; color: var(--brand); }
+.topbar .lang-pill:active { scale: .94; background: var(--brand-soft); }

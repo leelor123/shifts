@@ -123,7 +123,7 @@
       body: `<div class="ach-head"><b>${got} מתוך ${list.length}</b><div class="progress thin"><i style="width:${(got / list.length) * 100}%"></i></div></div>
         <div class="ach-grid">${list.map((a, k) => `<button class="ach ${a.on ? 'on' : ''}" data-ach="${a.id}" style="--k:${k}">
           <span class="ach-e" aria-hidden="true">${a.emoji}</span><b>${esc(a.title)}</b>
-          <small>${a.on ? 'הושג' : a.prog && a.prog.goal > 1 ? `${a.prog.cur.toLocaleString('he-IL')} מתוך ${a.prog.goal.toLocaleString('he-IL')}` : 'עוד לא'}</small></button>`).join('')}</div>`,
+          <small>${a.on ? 'הושג' : a.prog && a.prog.goal > 1 ? `${a.prog.cur.toLocaleString('en-US')} מתוך ${a.prog.goal.toLocaleString('en-US')}` : 'עוד לא'}</small></button>`).join('')}</div>`,
       onMount: (el) => el.addEventListener('click', (e) => {
         const b = e.target.closest('[data-ach]');
         if (!b) return;
@@ -846,7 +846,7 @@
     const own = myRate();
     const rate = own > 0 ? Math.round(own * 100) / 100 : 40;
     let chain, i, streak, answered;
-    const money = (v) => `${v.toLocaleString('he-IL')} ₪`;
+    const money = (v) => `${v.toLocaleString('en-US')} ₪`;
     const item = (t, open, cls) => `<div class="hw-card ${cls || ''}"><span class="hw-e" aria-hidden="true">${t.e}</span><b>${esc(t.name)}</b>
       ${open ? `<span class="hw-p">${money(t.price)}</span><span class="hw-h">${Games.workTime(t.price / rate)}</span>` : '<span class="hw-q" aria-label="מחיר מוסתר">?</span>'}</div>`;
     function start() { clearTimeout(next); chain = Games.hoursRound(seed(), 60); i = 0; streak = 0; show(); }

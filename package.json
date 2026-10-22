@@ -9,5 +9,9 @@
     "serve": "node tools/serve.js",
     "e2e": "node tests/e2e/smoke.js docs tests/e2e/out",
     "perf": "node tests/e2e/perf.js docs"
+  },
+  "devDependencies": {
+    "acorn": "^8.12.1",
+    "acorn-walk": "^8.3.4"
   }
 }

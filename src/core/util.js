@@ -102,24 +102,48 @@
   const round2 = (n) => Math.round((n + Number.EPSILON) * 100) / 100;
   const sum = (arr, f) => arr.reduce((s, x) => s + (f ? f(x) : x), 0);
 
-  /* ---------------- formatting (Hebrew) ---------------- */
-  const HEB_MONTHS = ['ינואר', 'פברואר', 'מרץ', 'אפריל', 'מאי', 'יוני', 'יולי', 'אוגוסט', 'ספטמבר', 'אוקטובר', 'נובמבר', 'דצמבר'];
-  const HEB_DAYS = ['ראשון', 'שני', 'שלישי', 'רביעי', 'חמישי', 'שישי', 'שבת'];
-  const HEB_DAYS_SHORT = ['א׳', 'ב׳', 'ג׳', 'ד׳', 'ה׳', 'ו׳', 'ש׳'];
+  /* ---------------- formatting ---------------- */
+  // The app's language: each language has its own bundle (tools/i18n.js), whose <html lang> says which.
+  const LANG = (typeof document !== 'undefined' && document.documentElement && document.documentElement.lang) || 'he';
+  const RTL = LANG === 'he' || LANG === 'ar';
+  // dates in the language; numbers always with a comma between thousands and a point before the agorot (what
+  // the payslip shows, and what the counting animations read)
+  const LOCALE = { he: 'he-IL', ar: 'ar-IL-u-nu-latn', ru: 'ru-RU', en: 'en-IL' }[LANG] || 'he-IL';
+  const NUM_LOCALE = { he: 'he-IL', ar: 'ar-IL-u-nu-latn', en: 'en-IL' }[LANG] || 'en-US';
+  const names = (opts, n, at) => [...Array(n)].map((_, i) => new Intl.DateTimeFormat(LOCALE, opts).format(at(i)));
+  // i18n-keep-start
+  const MONTHS = LANG === 'he' ? ['ינואר', 'פברואר', 'מרץ', 'אפריל', 'מאי', 'יוני', 'יולי', 'אוגוסט', 'ספטמבר', 'אוקטובר', 'נובמבר', 'דצמבר'] : names({ month: 'long' }, 12, (i) => new Date(2026, i, 15, 12));
+  const DAYS = LANG === 'he' ? ['ראשון', 'שני', 'שלישי', 'רביעי', 'חמישי', 'שישי', 'שבת'] : names({ weekday: 'long' }, 7, (i) => new Date(2026, 0, 4 + i, 12));
+  const DAYS_SHORT = LANG === 'he' ? ['א׳', 'ב׳', 'ג׳', 'ד׳', 'ה׳', 'ו׳', 'ש׳'] : names({ weekday: 'short' }, 7, (i) => new Date(2026, 0, 4 + i, 12));
+  // for a chart's axis: three letters in Hebrew (ינו׳), the language's own short name otherwise
+  const MONTHS_SHORT = LANG === 'he' ? MONTHS.map((m) => m.slice(0, 3)) : names({ month: 'short' }, 12, (i) => new Date(2026, i, 15, 12));
+  // i18n-keep-end
 
-  let moneyFmt, moneyFmt0, numFmt;
+  let moneyFmt, moneyFmt0;
   function money(n, decimals) {
     if (n == null || isNaN(n)) n = 0;
     if (!moneyFmt) {
-      moneyFmt = new Intl.NumberFormat('he-IL', { style: 'currency', currency: 'ILS', minimumFractionDigits: 2, maximumFractionDigits: 2 });
-      moneyFmt0 = new Intl.NumberFormat('he-IL', { style: 'currency', currency: 'ILS', minimumFractionDigits: 0, maximumFractionDigits: 0 });
+      const make = (d) => {
+        if (LANG === 'ru') { const f = new Intl.NumberFormat('en-US', { minimumFractionDigits: d, maximumFractionDigits: d }); return { format: (v) => f.format(v) + ' ₪' }; }
+        return new Intl.NumberFormat(NUM_LOCALE, { style: 'currency', currency: 'ILS', minimumFractionDigits: d, maximumFractionDigits: d });
+      };
+      moneyFmt = make(2);
+      moneyFmt0 = make(0);
     }
     return (decimals === 0 ? moneyFmt0 : moneyFmt).format(n);
   }
   function num(n, d) {
     if (n == null || isNaN(n)) n = 0;
     const dd = d == null ? 2 : d;
-    return new Intl.NumberFormat('he-IL', { minimumFractionDigits: 0, maximumFractionDigits: dd }).format(n);
+    return new Intl.NumberFormat(NUM_LOCALE, { minimumFractionDigits: 0, maximumFractionDigits: dd }).format(n);
+  }
+  /** An error whose message is for the person (shown as is), unlike the browser's own. */
+  function oops(message, extra) {
+    return Object.assign(new Error(message), { ours: true }, extra);
+  }
+  /** Whether an error's message is one of ours, to show as is. */
+  function ours(e) {
+    return !!(e && e.message && (e.ours || /[֐-׿]/.test(e.message)));
   }
   /** Hours as decimal with 2 digits, e.g. 7.5 -> "7.50" */
   function hours(h) {
@@ -132,16 +156,30 @@
     const a = Math.abs(m);
     return sign + Math.floor(a / 60) + ':' + pad(a % 60);
   }
+  const dateFmts = {};
+  const intl = (k, opts) => (dateFmts[JSON.stringify(opts)] || (dateFmts[JSON.stringify(opts)] = new Intl.DateTimeFormat(LOCALE, opts))).format(new Date(+k.slice(0, 4), +k.slice(5, 7) - 1, +k.slice(8, 10) || 1, 12));
+  /** A date key as text: 'short' 5/1, 'long' with the day of the week, 'dmy' the same without the word "day",
+   *  'dm' 5 in January, otherwise 05/01/2026. */
   function fmtDate(k, opts) {
     const { y, m, d } = parseKey(k);
     if (opts === 'short') return d + '/' + m;
-    if (opts === 'long') return 'יום ' + HEB_DAYS[dow(k)] + ', ' + d + ' ב' + HEB_MONTHS[m - 1] + ' ' + y;
-    if (opts === 'dm') return d + ' ב' + HEB_MONTHS[m - 1];
+    if (LANG !== 'he') {
+      if (opts === 'long' || opts === 'dmy') return intl(k, { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });
+      if (opts === 'dm') return intl(k, { day: 'numeric', month: 'long' });
+      return pad(d) + '/' + pad(m) + '/' + y;
+    }
+    // i18n-keep-start
+    if (opts === 'long') return 'יום ' + DAYS[dow(k)] + ', ' + d + ' ב' + MONTHS[m - 1] + ' ' + y;
+    if (opts === 'dmy') return DAYS[dow(k)] + ', ' + d + ' ב' + MONTHS[m - 1] + ' ' + y;
+    if (opts === 'dm') return d + ' ב' + MONTHS[m - 1];
+    // i18n-keep-end
     return pad(d) + '/' + pad(m) + '/' + y;
   }
+  /** A month key as "January 2026". */
   function fmtMonth(mk) {
+    if (LANG !== 'he') return intl(mk + '-01', { month: 'long', year: 'numeric' });
     const [y, m] = mk.split('-').map(Number);
-    return HEB_MONTHS[m - 1] + ' ' + y;
+    return MONTHS[m - 1] + ' ' + y;
   }
   function pct(n, d) {
     return num(n, d == null ? 0 : d) + '%';
@@ -150,7 +188,7 @@
   root.U = {
     pad, MIN, HOUR, DAY, uid, dateKey, parseKey, keyToDate, addDays, addMonths, dow, diffDays,
     toEpoch, dayStart, epochKey, epochHM, todayKey, monthKey, monthStart, monthEnd, addMonthKey,
-    weekStart, rangeKeys, inRange, clamp, round2, sum, money, num, hours, hm, fmtDate, fmtMonth, pct,
-    HEB_MONTHS, HEB_DAYS, HEB_DAYS_SHORT,
+    weekStart, rangeKeys, inRange, clamp, round2, sum, money, num, hours, hm, fmtDate, fmtMonth, pct, oops, ours,
+    LANG, RTL, LOCALE, MONTHS, MONTHS_SHORT, DAYS, DAYS_SHORT,
   };
 })(typeof window !== 'undefined' ? window : globalThis);

@@ -56,7 +56,7 @@
     const roles = [...new Set(r.segments.map((s) => s.roleId))];
     const role = App.role(roles[0]);
     const title = roles.map(App.roleName).join(' → ');
-    const date = opts.noDate ? '' : U.fmtDate(r.dateKey, 'short') + ' · ' + U.HEB_DAYS[U.dow(r.dateKey)] + ' · ';
+    const date = opts.noDate ? '' : U.fmtDate(r.dateKey, 'short') + ' · ' + U.DAYS[U.dow(r.dateKey)] + ' · ';
     const planned = r.status === 'planned' ? '<span class="tag planned">מתוכננת</span>' : '';
     const emp = App.multiEmp() ? ' · ' + esc(App.employer(r.employerId).name) : '';
     return `<button class="item" data-act="shift-open" data-id="${r.id}">
@@ -320,7 +320,7 @@
     const date = U.fmtDate(today, 'long').replace(/\s\d{4}$/, '');
     return `
       <div class="home-top"><div class="titles"><h1>${greeting()}${name} <span class="wave">👋</span></h1>
-        <div class="sub">${root.Plus && root.Plus.owned() ? '<span class="plus-badge">Plus ✨</span>' : ''}${date} · ${esc(hd.toString().replace(/\s\S+$/, ''))}${hol ? ' · ' + esc(hol) : ''}</div></div>
+        <div class="sub">${root.Plus && root.Plus.owned() ? '<span class="plus-badge">Plus ✨</span>' : ''}${date}${hd.dayStr ? ' · ' + esc(hd.toString().replace(/\s\S+$/, '')) : ''}${hol ? ' · ' + esc(hol) : ''}</div></div>
         <span id="sync-dot">${App.syncDot ? App.syncDot() : ''}</span>
         <button class="icon-btn" data-act="support" aria-label="עזרה ותמיכה">${icon('help')}</button>
         <button class="icon-btn" data-act="insights" aria-label="התראות ותובנות">${icon('bell')}${unread ? `<span class="dot-badge">${unread > 9 ? '9+' : unread}</span>` : ''}</button></div>

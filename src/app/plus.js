@@ -85,7 +85,7 @@
   }
   function fmtPrice(p) {
     if (!p) return '';
-    try { return new Intl.NumberFormat('he-IL', { style: 'currency', currency: p.currency, maximumFractionDigits: 2 }).format(+p.value); } catch (e) { return `${p.value} ${p.currency}`; }
+    try { return new Intl.NumberFormat(root.U.LOCALE, { style: 'currency', currency: p.currency, maximumFractionDigits: 2 }).format(+p.value); } catch (e) { return `${p.value} ${p.currency}`; }
   }
   /** The price as it is said: "₪6.90 לחודש" for the subscription. */
   Plus.priceText = () => { const pr = Plus.price || cfg().price || ''; return pr ? pr + (Plus.monthly ? ' לחודש' : '') : ''; };
@@ -464,7 +464,7 @@
   /** "That was the free allowance": when it comes back, and the way to unlimited. */
   Plus.limitSheet = function (id) {
     const q = QUOTA[id];
-    const back = q.per === 'day' ? 'מחר' : `ב-1 ב${root.U.HEB_MONTHS[(+root.U.todayKey().slice(5, 7)) % 12]}`;
+    const back = q.per === 'day' ? 'מחר' : `ב-${root.U.fmtDate(root.U.addMonthKey(root.U.todayKey().slice(0, 7), 1) + '-01', 'dm')}`;
     const price = Plus.priceText();
     UI.openSheet({
       title: 'נגמרה המכסה החינמית',

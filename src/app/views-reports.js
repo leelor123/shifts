@@ -123,7 +123,7 @@
     const yearDone = y < U.todayKey().slice(0, 4);
     return `
       <div class="section-title">${icon('chart', 's')} לפי חודשים</div>
-      <div class="card">${Charts.bars(months.map((m) => ({ label: U.HEB_MONTHS[+m.mk.slice(5) - 1].slice(0, 3), value: m.t.gross, tip: `${U.fmtMonth(m.mk)}: ${U.money(m.t.gross, 0)} · ${U.num(m.t.hours, 1)} ש׳` })), { label: 'ברוטו לפי חודש', axisFmt: (v) => '₪' + (v >= 1000 ? +(v / 1000).toFixed(1) + 'K' : v) })}
+      <div class="card">${Charts.bars(months.map((m) => ({ label: U.MONTHS_SHORT[+m.mk.slice(5) - 1], value: m.t.gross, tip: `${U.fmtMonth(m.mk)}: ${U.money(m.t.gross, 0)} · ${U.num(m.t.hours, 1)} ש׳` })), { label: 'ברוטו לפי חודש', axisFmt: (v) => '₪' + (v >= 1000 ? +(v / 1000).toFixed(1) + 'K' : v) })}
         ${best ? `<div class="kv"><span>${icon('up', 's')} החודש הכי טוב</span><b>${U.fmtMonth(best.mk)} · ${U.money(best.t.gross, 0)}</b></div>` : ''}
         ${worst && worst !== best ? `<div class="kv"><span>${icon('down', 's')} החודש הכי חלש</span><b>${U.fmtMonth(worst.mk)} · ${U.money(worst.t.gross, 0)}</b></div>` : ''}
         <div class="kv"><span>מול ${py}</span><span>${U.money(pt.gross, 0)} ${UI.delta(t.gross, pt.gross)}</span></div></div>
@@ -215,7 +215,7 @@
     // months before the first one with any work are left out (but at least half a year is shown)
     const firstUsed = data.findIndex((d) => d.s.shifts > 0 || d.s.gross > 0);
     if (firstUsed > 0) data = data.slice(Math.min(firstUsed, data.length - 6));
-    const lab = (pk) => U.HEB_MONTHS[+pk.slice(5) - 1].slice(0, 3);
+    const lab = (pk) => U.MONTHS_SHORT[+pk.slice(5) - 1];
     const roles = App.roles();
     const money0 = (v) => U.money(v, 0);
     return `

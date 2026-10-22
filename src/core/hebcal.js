@@ -80,6 +80,7 @@
   function hebToKey(y, m, d) { return rdToKey(fixedFromHebrew(y, m, d)); }
 
   /* ---------------- Hebrew numerals ---------------- */
+  // i18n-keep-start
   const ONES = ['', 'א', 'ב', 'ג', 'ד', 'ה', 'ו', 'ז', 'ח', 'ט'];
   const TENS = ['', 'י', 'כ', 'ל', 'מ', 'נ', 'ס', 'ע', 'פ', 'צ'];
   function gematria(n) {
@@ -98,11 +99,15 @@
   function monthName(m, y) {
     const names = ['', 'ניסן', 'אייר', 'סיוון', 'תמוז', 'אב', 'אלול', 'תשרי', 'חשוון', 'כסלו', 'טבת', 'שבט', 'אדר', 'אדר ב׳'];
     if (m === ADAR && isLeap(y)) return 'אדר א׳';
+    // i18n-keep-end
     return names[m];
   }
   /** Hebrew date for a Gregorian date key. */
+  // (in the other languages the Jewish date is not shown: its letters are Hebrew)
+  const SHOW = !root.U || root.U.LANG === 'he';
   function hebrewDate(k) {
     const h = hebrewFromFixed(keyToRd(k));
+    if (!SHOW) return Object.assign(h, { dayStr: '', monthStr: '', yearStr: '', toString() { return ''; } });
     return Object.assign(h, {
       dayStr: gematria(h.d),
       monthStr: monthName(h.m, h.y),

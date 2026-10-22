@@ -139,6 +139,7 @@
     goal: { icon: 'target', title: 'יעדים', sub: () => [+S.settings.goal.amount ? 'חודשי: ' + U.money(S.settings.goal.amount, 0) + (S.settings.goal.type === 'net' ? ' נטו' : ' ברוטו') : '', S.settings.saving && +S.settings.saving.price && S.settings.saving.name ? 'חוסכים ל' + S.settings.saving.name : ''].filter(Boolean).join(' · ') || 'יעד חודשי וחיסכון למשהו' },
     alerts: { icon: 'bell', title: 'התראות ותובנות', sub: () => (('Notification' in window) && Notification.permission === 'granted' ? 'פוש מופעל' : 'פוש כבוי') + ' · סיכומים ותזכורות' },
     templates: { icon: 'layers', title: 'תבניות משמרת', sub: () => (S.templates.length === 1 ? 'תבנית אחת' : S.templates.length ? S.templates.length + ' תבניות' : 'אין תבניות') },
+    lang: { icon: 'globe', title: 'שפה · Language', sub: () => (root.Lang ? root.Lang.LANGS.map((l) => l.name).join(' · ') : '') },
     look: { icon: 'palette', title: 'מראה', sub: () => ({ system: 'לפי המערכת', light: 'בהיר', dark: 'כהה' }[S.settings.theme]) + ' · ' + (App.ACCENTS[S.settings.accent] || [])[2] },
     security: { icon: 'lock', title: 'נעילה בקוד', sub: () => (S.settings.lock.enabled ? 'מופעלת' : 'כבויה') },
     assistant: { icon: 'sparkle', title: 'עוזר זכויות ושכר (AI)', sub: () => (S.settings.ai.apiKey ? 'מוכן — שאל כל שאלה' : 'דורש מפתח API') },
@@ -158,7 +159,7 @@
     rest: 'שבת חג חגים עיר כניסת שבת יציאת שבת כלל יום', pay: 'נסיעות החזר נסיעות תקרה תקופת שכר יום תשלום משכורת',
     net: 'מס מס הכנסה נקודות זיכוי פנסיה ביטוח לאומי מס בריאות השתלמות נטו', leave: 'חופשה מחלה הבראה ותק תחילת עבודה',
     goal: 'יעד יעדים חיסכון חוסכים', alerts: 'התראות תזכורות פוש הודעות', templates: 'תבנית תבניות משמרת קבועה',
-    look: 'צבע צבעים ערכת נושא כהה בהיר מצב לילה גופן גופנים מראה צלילים רטט מוזיקה עיצוב כרטיס plus פלוס', security: 'קוד נעילה טביעת אצבע סיסמה',
+    lang: 'שפה שפות language english русский русский язык العربية عربي ערבית רוסית אנגלית תרגום', look: 'צבע צבעים ערכת נושא כהה בהיר מצב לילה גופן גופנים מראה צלילים רטט מוזיקה עיצוב כרטיס plus פלוס', security: 'קוד נעילה טביעת אצבע סיסמה',
     assistant: 'בינה מלאכותית עוזר שאלות ai', ai: 'מפתח api claude ניתוח תלוש', backup: 'גיבוי שחזור קובץ', schedule: 'סידור עבודה סידור משמרות שבוע הבא צילום תמונה צילום מסך וואטסאפ whatsapp הודעה טבלה מתוכננות לוח', import: 'ייבוא דוח שעות נוכחות שעון אקסל excel csv pdf צילום קובץ להעלות משמרות מהעבודה', export: 'ייצוא אקסל excel csv pdf יומן',
     demo: 'דוגמה הדגמה', about: 'גרסה התקנה אודות', rights: 'זכויות שכר מינימום',
   };
@@ -169,7 +170,7 @@
     { id: 'calc', icon: 'flask', tint: 'amber', title: 'חישוב השכר', keys: ['calc', 'rest'], sub: () => 'שעות נוספות, לילה, שבת וחגים' },
     { id: 'money', icon: 'wallet', tint: 'sky', title: 'נטו, מס וזכויות', keys: ['net', 'leave', 'rights'], sub: () => `${S.settings.tax.creditPoints} נק׳ זיכוי · פנסיה ${S.settings.pension.employeePct}%` },
     { id: 'goals', icon: 'target', tint: 'pink', title: 'יעדים ותזכורות', keys: ['goal', 'alerts'], sub: () => (+S.settings.goal.amount ? 'יעד ' + U.money(S.settings.goal.amount, 0) : 'יעד, חיסכון והתראות') },
-    { id: 'look', icon: 'palette', tint: 'orange', title: 'מראה ונעילה', keys: ['look', 'security'], sub: () => ({ system: 'לפי המערכת', light: 'בהיר', dark: 'כהה' }[S.settings.theme] || '') + (S.settings.lock.enabled ? ' · נעול 🔒' : '') },
+    { id: 'look', icon: 'palette', tint: 'orange', title: 'מראה ונעילה', keys: ['lang', 'look', 'security'], sub: () => ({ system: 'לפי המערכת', light: 'בהיר', dark: 'כהה' }[S.settings.theme] || '') + (S.settings.lock.enabled ? ' · נעול 🔒' : '') },
     { id: 'data', icon: 'cloud', tint: 'mint', title: 'גיבוי, ייבוא ונתונים', keys: ['backup', 'import', 'schedule', 'export', 'demo'], sub: () => (S.settings.backup.lastBackup ? 'גיבוי ' + UI.timeAgo(S.settings.backup.lastBackup) : 'גיבוי, ייצוא, נתוני דוגמה') },
     { id: 'more', icon: 'sparkle', tint: 'violet', title: 'עוזר AI ואודות', keys: ['assistant', 'ai', 'about'], sub: () => 'גרסה ' + root.APP_VERSION },
   ];
@@ -276,7 +277,8 @@
   };
 
   App.views.settings = function () {
-    return `<div class="topbar"><div class="titles"><h1>הגדרות</h1><div class="sub">כל שינוי נשמר מיד</div></div></div>
+    const cur = root.Lang && root.Lang.LANGS.find((l) => l.id === root.Lang.current);
+    return `<div class="topbar"><div class="titles"><h1>הגדרות</h1><div class="sub">כל שינוי נשמר מיד</div></div>${cur ? `<button class="lang-pill" data-act="lang-open" aria-label="שפה · Language">${icon('globe', 's')}<span lang="${cur.id}">${cur.name}</span></button>` : ''}</div>
       <div class="set-search">${icon('search', 's')}<input class="input" id="set-q" type="text" enterkeyhint="search" placeholder="מה לשנות? או מה הבעיה?" aria-label="חיפוש בהגדרות" autocomplete="off"><button class="icon-btn sm set-clear" data-set-clear hidden aria-label="ניקוי החיפוש">${icon('x', 's')}</button></div>
       <div id="set-res" hidden></div>
       <div id="set-home">
@@ -290,7 +292,8 @@
       <div class="ver">גרסה ${root.APP_VERSION} · מבנה נתונים ${Store.SCHEMA_VERSION}${S.settings.legal ? ' · תנאים ' + esc(S.settings.legal.version) + ' אושרו' : ''}</div>
       </div>`;
   };
-  App.actions['settings-open'] = (el) => (el.dataset.k === 'import' ? App.importHours({ over: true }) : el.dataset.k === 'schedule' ? App.importSchedule({ over: true }) : el.dataset.k === 'assistant' ? (App.openAssistantOver || App.actions.assistant)() : el.dataset.k === 'rights' ? App.actions.rights() : App.sheetsApi.settingsSection(el.dataset.k));
+  App.actions['lang-open'] = () => root.Lang && root.Lang.sheet();
+  App.actions['settings-open'] = (el) => (el.dataset.k === 'lang' && root.Lang ? root.Lang.sheet() : el.dataset.k === 'import' ? App.importHours({ over: true }) : el.dataset.k === 'schedule' ? App.importSchedule({ over: true }) : el.dataset.k === 'assistant' ? (App.openAssistantOver || App.actions.assistant)() : el.dataset.k === 'rights' ? App.actions.rights() : App.sheetsApi.settingsSection(el.dataset.k));
   // a door: its own small page with the sections behind it (their lines stay up to date while it is open)
   App.actions['settings-cat'] = (el) => {
     const c = CATS.find((x) => x.id === el.dataset.cat);
@@ -311,7 +314,7 @@
   // a search result: the section opens at the field, which lights up for a moment
   App.actions['settings-go'] = (el) => {
     const k = el.dataset.k;
-    if (k === 'assistant' || k === 'rights' || k === 'import' || k === 'schedule') { App.actions['settings-open'](el); return; }
+    if (k === 'assistant' || k === 'rights' || k === 'import' || k === 'schedule' || k === 'lang') { App.actions['settings-open'](el); return; }
     App.sheetsApi.settingsSection(k, el.dataset.f || '');
   };
   function spotlight(sheet, label) {
@@ -589,7 +592,7 @@
           <div class="grid2">${[0, 1, 2, 3].map((i) => F.num(['מחלה יום 1 %', 'יום 2 %', 'יום 3 %', 'מהיום ה-4 %'][i], 's.leave.sickPct.' + i, L.sickPct[i])).join('')}</div></div>
         <div class="section-title">הבראה</div><div class="card">
           ${F.num('תעריף ליום הבראה ₪', 's.leave.recuperationRate', L.recuperationRate, 'מגזר פרטי: 418 ₪.')}
-          ${F.sel('חודש תשלום', 's.leave.recuperationMonth', [[0, 'בכל חודש (חלק יחסי)'], ...U.HEB_MONTHS.map((m, i) => [i + 1, m])], L.recuperationMonth)}</div>`;
+          ${F.sel('חודש תשלום', 's.leave.recuperationMonth', [[0, 'בכל חודש (חלק יחסי)'], ...U.MONTHS.map((m, i) => [i + 1, m])], L.recuperationMonth)}</div>`;
     },
   };
 
@@ -631,7 +634,7 @@
           ${perm === 'granted' ? `<button class="btn text sm" data-test>${icon('send', 's')} שלח התראת בדיקה</button>` : ''}
           <div class="tiny muted" style="margin-top:6px">מעט התראות: הסיכום השבועי והחודשי, שיאים ויעדים, ותזכורות חשובות בלבד. בלי התראות על חריגות.</div></div>
         <div class="section-title">סיכומים</div><div class="card">${t('weekly', 'סיכום שבועי')}
-          <div class="grid2">${F.sel('ביום', 's.alerts.weeklyDay', U.HEB_DAYS.map((d, i) => [i, d]), A.weeklyDay)}${F.num('בשעה', 's.alerts.weeklyHour', A.weeklyHour)}</div>
+          <div class="grid2">${F.sel('ביום', 's.alerts.weeklyDay', U.DAYS.map((d, i) => [i, d]), A.weeklyDay)}${F.num('בשעה', 's.alerts.weeklyHour', A.weeklyHour)}</div>
           ${t('monthly', 'סיכום חודשי (כשתקופת השכר נגמרת)')}</div>
         <div class="section-title">חדשות טובות</div><div class="card">${t('record', 'שיא אישי')}${t('goal', 'הגעת ליעד החודשי')}${t('birthday', 'יום הולדת')}</div>
         <div class="section-title">תזכורות</div><div class="card">
@@ -761,10 +764,10 @@
         const file = f.files[0];
         if (!file) return;
         try {
-          if (file.size > 60 * 1024 * 1024) throw new Error('הקובץ גדול מדי בשביל גיבוי של האפליקציה.');
+          if (file.size > 60 * 1024 * 1024) throw root.U.oops('הקובץ גדול מדי בשביל גיבוי של האפליקציה.');
           let json;
-          try { json = JSON.parse(await file.text()); } catch (e) { throw new Error('זה לא קובץ גיבוי של האפליקציה (צריך קובץ ‎.json‎ שנוצר בגיבוי).'); }
-          if (!json || typeof json !== 'object' || json.app !== 'shiftpay') throw new Error('זה לא קובץ גיבוי של האפליקציה.');
+          try { json = JSON.parse(await file.text()); } catch (e) { throw root.U.oops('זה לא קובץ גיבוי של האפליקציה (צריך קובץ ‎.json‎ שנוצר בגיבוי).'); }
+          if (!json || typeof json !== 'object' || json.app !== 'shiftpay') throw root.U.oops('זה לא קובץ גיבוי של האפליקציה.');
           const n = Array.isArray(json.shifts) ? json.shifts.length : 0;
           const mode = await UI.dialog({ title: 'שחזור גיבוי', text: `בקובץ ${n} משמרות (${json.exportedAt ? 'נוצר ' + U.fmtDate(json.exportedAt.slice(0, 10)) : ''}). מה לעשות?`, buttons: [{ label: 'ביטול', value: null }, { label: 'מיזוג', value: 'merge' }, { label: 'החלפה מלאה', value: 'replace', cls: 'danger' }] });
           if (!mode) return;

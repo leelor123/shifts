@@ -24,7 +24,7 @@
     loaded[src] = new Promise((res, rej) => {
       const s = document.createElement('script');
       s.src = src; s.async = true; s.crossOrigin = 'anonymous';
-      s.onload = res; s.onerror = () => { delete loaded[src]; rej(new Error('לא ניתן לטעון רכיב (נדרש אינטרנט בשימוש הראשון)')); };
+      s.onload = res; s.onerror = () => { delete loaded[src]; rej(root.U.oops('לא ניתן לטעון רכיב (נדרש אינטרנט בשימוש הראשון)')); };
       document.head.appendChild(s);
     });
     return loaded[src];
@@ -481,7 +481,7 @@
           <span class="body"><span class="t">${esc(g.title)} · ${U.fmtMonth(g.period)}</span><span class="s">${g.status === 'maybe' ? esc(g.note || 'ייתכן שהוחזר') : 'עוד לא הוחזר'}</span></span>
           <span class="trail"><span class="a">${money(g.amount, 0)}</span><br><button class="btn text sm" data-act="gap-set" data-id="${esc(g.id)}" data-s="resolved">הוחזר ✓</button></span></div>`).join('')}</div>
         <button class="btn tonal block" data-act="claim-report" style="margin-top:8px">${icon('file', 's')} דוח ומכתב לבירור מול המעסיק</button>` : ''}
-      ${trend.length >= 2 ? `<div class="section-title">${icon('chart', 's')} מגמות</div><div class="card">${Charts.stacked(trend.map((p) => U.HEB_MONTHS[+p.period.slice(5) - 1].slice(0, 3)), [
+      ${trend.length >= 2 ? `<div class="section-title">${icon('chart', 's')} מגמות</div><div class="card">${Charts.stacked(trend.map((p) => U.MONTHS_SHORT[+p.period.slice(5) - 1]), [
         { name: 'נטו', color: '#1baf7a', values: trend.map((p) => (p.fields.net ? +p.fields.net.value : 0)) },
         { name: 'ניכויים', color: '#e34948', values: trend.map((p) => (p.fields.gross && p.fields.net ? Math.max(0, p.fields.gross.value - p.fields.net.value) : 0)) },
       ], { label: 'נטו וניכויים לפי חודש', fmt: (v) => U.money(v, 0) })}
@@ -533,8 +533,8 @@
    * blocks such as an image). Used by the payslip check and the schedule reader. */
   App.claudeJson = (system, content, schema) => claudeJson(system, content, schema);
   async function claudeJson(system, content, schema) {
-    if (!navigator.onLine) throw new Error('אין חיבור לאינטרנט');
-    if (!S.settings.ai.apiKey) throw new Error('צריך מפתח API של Claude (הגדרות › עוזר AI ואודות › מפתח AI)');
+    if (!navigator.onLine) throw root.U.oops('אין חיבור לאינטרנט');
+    if (!S.settings.ai.apiKey) throw root.U.oops('צריך מפתח API של Claude (הגדרות › עוזר AI ואודות › מפתח AI)');
     const mod = await import(/* webpackIgnore: true */ LIBS.anthropic);
     const Anthropic = mod.default || mod.Anthropic;
     const client = new Anthropic({ apiKey: S.settings.ai.apiKey, dangerouslyAllowBrowser: true });
@@ -551,18 +551,18 @@
       if (model.startsWith('claude-haiku')) res = await client.messages.create(params); // no server-side fallback for Haiku
       else res = await client.beta.messages.create(Object.assign({ betas: ['server-side-fallback-2026-07-01'], fallbacks: 'default' }, params));
     } catch (err) {
-      if (err instanceof Anthropic.AuthenticationError) throw new Error('מפתח ה-\u2060API לא תקין (401). בדוק אותו בהגדרות.');
-      if (err instanceof Anthropic.PermissionDeniedError) throw new Error('למפתח אין הרשאה למודל הזה (403).');
-      if (err instanceof Anthropic.NotFoundError) throw new Error('המודל לא נמצא (404). בחר מודל אחר בהגדרות.');
-      if (err instanceof Anthropic.RateLimitError) throw new Error('יותר מדי בקשות (429). נסה שוב בעוד דקה.');
-      if (err instanceof Anthropic.APIConnectionError) throw new Error('בעיית תקשורת עם השרת. בדוק את החיבור.');
-      if (err instanceof Anthropic.APIError) throw new Error(`שגיאת API ${err.status || ''}: ${err.message}`);
+      if (err instanceof Anthropic.AuthenticationError) throw root.U.oops('מפתח ה-\u2060API לא תקין (401). בדוק אותו בהגדרות.');
+      if (err instanceof Anthropic.PermissionDeniedError) throw root.U.oops('למפתח אין הרשאה למודל הזה (403).');
+      if (err instanceof Anthropic.NotFoundError) throw root.U.oops('המודל לא נמצא (404). בחר מודל אחר בהגדרות.');
+      if (err instanceof Anthropic.RateLimitError) throw root.U.oops('יותר מדי בקשות (429). נסה שוב בעוד דקה.');
+      if (err instanceof Anthropic.APIConnectionError) throw root.U.oops('בעיית תקשורת עם השרת. בדוק את החיבור.');
+      if (err instanceof Anthropic.APIError) throw root.U.oops(`שגיאת API ${err.status || ''}: ${err.message}`);
       throw err;
     }
-    if (res.stop_reason === 'refusal') throw new Error('הבקשה נדחתה על ידי המודל' + (res.stop_details && res.stop_details.explanation ? ': ' + res.stop_details.explanation : '.'));
-    if (res.stop_reason === 'max_tokens') throw new Error('התשובה נקטעה. נסה לקצר את הטקסט.');
+    if (res.stop_reason === 'refusal') throw root.U.oops('הבקשה נדחתה על ידי המודל' + (res.stop_details && res.stop_details.explanation ? ': ' + res.stop_details.explanation : '.'));
+    if (res.stop_reason === 'max_tokens') throw root.U.oops('התשובה נקטעה. נסה לקצר את הטקסט.');
     const block = res.content.find((b) => b.type === 'text');
-    if (!block) throw new Error('לא התקבלה תשובה');
+    if (!block) throw root.U.oops('לא התקבלה תשובה');
     return JSON.parse(block.text);
   }
 })(typeof window !== 'undefined' ? window : globalThis);
