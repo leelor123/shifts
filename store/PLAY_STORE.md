@@ -9,8 +9,8 @@
 
 | מה | איפה |
 |---|---|
-| **קובץ להעלאה ל-Play** (App Bundle חתום) | `C:\Users\User\ShiftPay-Android\release\1.20.0\shiftpay-1.20.0.aab` |
-| קובץ APK לבדיקה בטלפון (לא לחנות) | `C:\Users\User\ShiftPay-Android\release\1.20.0\shiftpay-1.20.0.apk` |
+| **קובץ להעלאה ל-Play** (App Bundle חתום) | `C:\Users\User\ShiftPay-Android\release\1.20.0\shiftpay-1.21.0.aab` |
+| קובץ APK לבדיקה בטלפון (לא לחנות) | `C:\Users\User\ShiftPay-Android\release\1.20.0\shiftpay-1.21.0.apk` |
 | מפתח החתימה + הסיסמה | `C:\Users\User\ShiftPay-Android\keys\` (**לגבות! לא להעלות לשום מקום**) |
 | אייקון 512×512 | `store/icon-512.png` |
 | תמונת נושא 1024×500 | `store/feature-graphic.png` |
@@ -20,7 +20,7 @@
 | דף מחיקת חשבון | https://leelor123.github.io/shifts/delete-account.html |
 | אימות האתר מול האפליקציה (Digital Asset Links) | https://leelor123.github.io/.well-known/assetlinks.json |
 
-פרטים טכניים: שם החבילה `io.github.leelor123.shifts`, גרסה 1.20.0 (קוד גרסה 12000, כולל תשלום דרך Google Play ו-5 ווידג'טים למסך הבית), Android 7.0 ומעלה, target SDK 36.
+פרטים טכניים: שם החבילה `io.github.leelor123.shifts`, גרסה 1.21.0 (קוד גרסה 12100, כולל תשלום דרך Google Play ו-5 ווידג'טים למסך הבית), Android 7.0 ומעלה, target SDK 36.
 ההרשאה היחידה שהאפליקציה מבקשת: התראות.
 
 ---
@@ -163,7 +163,7 @@ No login is needed to review the app. On the first screen tap the second button,
 ## שלב 4א — בדיקה פנימית: להתקין מהחנות כבר היום (מומלץ ראשון)
 
 לפני הבדיקה הסגורה כדאי לפתוח **בדיקה פנימית (Internal testing)**: בלי המתנה לבדיקה של Google, עד 100 בודקים.
-1. **בדיקה › בדיקה פנימית › יצירת גרסה**, לאשר **Play App Signing** (מפתח של Google), להעלות את `shiftpay-1.20.0.aab`, שם גרסה `1.20.0`, הערות מ-"מה חדש בגרסה 1.20".
+1. **בדיקה › בדיקה פנימית › יצירת גרסה**, לאשר **Play App Signing** (מפתח של Google), להעלות את `shiftpay-1.21.0.aab`, שם גרסה `1.21.0`, הערות מ-"מה חדש בגרסה 1.21".
 2. **בודקים**: רשימה עם האימייל שלך. שומרים, ופותחים את **קישור ההצטרפות** בטלפון.
 3. מתקינים מ-Play, ובודקים: פתיחה במסך מלא (בלי שורת כתובת, אחרי שלב 6), התראות, ו**הווידג'טים** (לחיצה ארוכה על מסך הבית › ווידג'טים › Shaati).
 
@@ -175,7 +175,7 @@ No login is needed to review the app. On the first screen tap the second button,
 2. **בודקים (Testers)** › יצירת רשימת אימייל › להוסיף לפחות **12 כתובות Gmail** (חברים, משפחה — כדאי 15, למקרה שמישהו לא מצטרף).
 3. **יצירת גרסה (Create new release)**:
    - כשנשאל על **חתימת אפליקציות ב-Google Play (Play App Signing)** — לאשר את ברירת המחדל ("Use Google-generated key").
-   - "הוספה מספרייה" (Add from library) › בוחרים את 1.20.0 שכבר הועלתה בבדיקה הפנימית (או מעלים את `shiftpay-1.20.0.aab`).
+   - "הוספה מספרייה" (Add from library) › בוחרים את 1.20.0 שכבר הועלתה בבדיקה הפנימית (או מעלים את `shiftpay-1.21.0.aab`).
    - שם הגרסה: `1.20.0`. הערות גרסה: "מה חדש בגרסה 1.20" מ-`listing.md`.
    - **הבא › שמירה › שליחה לבדיקה** (Send for review).
 4. אחרי האישור (בדרך כלל עד כמה ימים): בכרטיס הבודקים יש **קישור הצטרפות** — שולחים אותו ל-12 הבודקים. כל אחד לוחץ "הצטרף" ומתקין מהחנות.
@@ -233,5 +233,5 @@ Google חותמת מחדש את האפליקציה במפתח שלה, ולכן �
 
 ## בדיקה בטלפון כבר עכשיו (לא חובה)
 
-אפשר להעתיק את `shiftpay-1.20.0.apk` לטלפון (כבל USB / Google Drive) ולפתוח אותו — האפליקציה תותקן ותיפתח במסך מלא.
+אפשר להעתיק את `shiftpay-1.21.0.apk` לטלפון (כבל USB / Google Drive) ולפתוח אותו — האפליקציה תותקן ותיפתח במסך מלא.
 לפני ההתקנה מהחנות צריך להסיר את הגרסה הזו (החתימה שונה).

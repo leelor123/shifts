@@ -21,8 +21,8 @@
     "path": "C:\\Users\\User\\ShiftPay-Android\\keys\\shiftpay-upload.jks",
     "alias": "shiftpay"
   },
-  "appVersionName": "1.20.0",
-  "appVersionCode": 12000,
+  "appVersionName": "1.21.0",
+  "appVersionCode": 12100,
   "shortcuts": [
     {
       "name": "התחל משמרת",
@@ -34,6 +34,12 @@
       "name": "הוסף משמרת",
       "shortName": "הוסף משמרת",
       "url": "https://leelor123.github.io/shifts/?action=add",
+      "chosenIconUrl": "https://leelor123.github.io/shifts/icon-192.png"
+    },
+    {
+      "name": "ייבוא סידור עבודה",
+      "shortName": "סידור עבודה",
+      "url": "https://leelor123.github.io/shifts/?action=schedule",
       "chosenIconUrl": "https://leelor123.github.io/shifts/icon-192.png"
     }
   ],
@@ -53,6 +59,30 @@
   "isMetaQuest": false,
   "fullScopeUrl": "https://leelor123.github.io/shifts/",
   "minSdkVersion": 24,
+  "shareTarget": {
+    "action": "https://leelor123.github.io/shifts/share-in",
+    "method": "POST",
+    "enctype": "multipart/form-data",
+    "params": {
+      "title": "title",
+      "text": "text",
+      "url": "url",
+      "files": [
+        {
+          "name": "file",
+          "accept": [
+            "image/*",
+            "application/pdf",
+            "text/plain",
+            "text/csv",
+            "text/comma-separated-values",
+            "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+            "application/vnd.ms-excel"
+          ]
+        }
+      ]
+    }
+  },
   "orientation": "portrait",
   "fingerprints": [],
   "additionalTrustedOrigins": [],
@@ -61,5 +91,5 @@
   "fileHandlers": [],
   "launchHandlerClientMode": "",
   "displayOverride": [],
-  "appVersion": "1.20.0"
+  "appVersion": "1.21.0"
 }
