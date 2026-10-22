@@ -128,6 +128,18 @@
   // true once, for the first redraw after the moment (and only soon after it)
   const once = (k) => { const t = App[k]; App[k] = 0; return !!t && Date.now() - t < ENTER_MS; };
 
+  /* ---------------- "did you forget to end it?" on the running shift ---------------- */
+  // the likely end ready to tap: the planned end, or the usual length of this person's shifts (App.overdue)
+  function overdueBlock() {
+    const od = App.overdue && App.overdue();
+    if (!od) return '';
+    const k = U.epochKey(od.end);
+    const when = U.epochHM(od.end) + (k === U.todayKey() ? '' : k === U.addDays(U.todayKey(), -1) ? ' אתמול' : ' · ' + U.fmtDate(k, 'short'));
+    const why = od.why === 'planned' ? `המשמרת הייתה אמורה להסתיים ב-${U.epochHM(od.end)}` : `בדרך כלל המשמרות שלך נמשכות כ-${U.hm(Math.round(od.usual / 60000))} שעות`;
+    return `<div class="tc-overdue" role="status"><div class="tc-od-t">${icon('clock', 's')}<span><b>שכחת לסיים את המשמרת?</b><small>${esc(why)}</small></span></div>
+      <div class="tc-od-a"><button class="btn sm tc-od-end" data-act="timer-stop-at" data-at="${od.end}">סיום ב-${esc(when)}</button><button class="btn text sm" data-act="timer-still">עדיין בעבודה</button></div></div>`;
+  }
+
   /* ---------------- action: start, or the running shift ---------------- */
   function actionBlock() {
     const a = S.activeShift;
@@ -139,6 +151,7 @@
         <div class="tc-head"><span class="pulse" style="${App.phase()}"></span>${onBreak ? 'בהפסקה' : 'משמרת פעילה'}${role ? ' · ' + esc(role.name) : ''}<span class="spacer"></span><span class="tiny">מ-${U.epochHM(a.start)}</span></div>
         <div class="clock" data-clock="net">0:00:00</div>
         <div class="meta">עד עכשיו <b data-live-pay></b>${(a.breaks || []).length ? ' · הפסקות לא נספרות' : ''}</div>
+        ${overdueBlock()}
         <div class="tc-actions">
           <button class="btn big" data-act="timer-stop">${icon('stop')} סיים משמרת</button>
           <button class="icon-btn tonal lg" data-act="timer-break" aria-label="${onBreak ? 'חזור מהפסקה' : 'הפסקה'}">${icon(onBreak ? 'play' : 'coffee')}</button>
@@ -342,6 +355,13 @@
     App.startShift(id || S.meta.lastRole || (roles[0] && roles[0].id), { at: tapped(el) });
   };
   App.actions['timer-stop'] = (el) => App.stopShift(tapped(el));
+  App.actions['timer-stop-at'] = (el) => App.stopShift(tapped(el), +el.dataset.at);
+  App.actions['timer-still'] = async () => {
+    const a = S.activeShift;
+    if (!a) return;
+    await Store.setActive(Object.assign({}, a, { stillAt: Date.now() }));
+    UI.toast('בסדר, נשאל שוב בעוד שעתיים');
+  };
   App.actions['timer-break'] = (el) => App.toggleBreak(tapped(el));
   App.actions['timer-switch'] = () => {
     const a = S.activeShift;

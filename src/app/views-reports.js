@@ -201,7 +201,8 @@
         <button class="btn tonal" data-act="rep-share-img">${icon('image')} תמונה</button>
         <button class="btn tonal" data-act="rep-pdf">${icon('printer')} PDF</button>
         <button class="btn tonal" data-act="rep-csv">${icon('table')} CSV</button>
-      </div>`;
+      </div>
+      <button class="btn text block" data-act="claim-report" style="margin-top:4px">${icon('file', 's')} דוח ומכתב לבירור מול המעסיק</button>`;
   }
 
   /* ---------------- charts ---------------- */

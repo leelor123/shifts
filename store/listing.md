@@ -22,7 +22,9 @@ Shaati עוזרת לעובדים לפי שעה לדעת בדיוק כמה הרו
 
 ⏱ מעקב משמרות בלחיצה
 • טיימר משמרת עם הפסקות, או הוספה ידנית של משמרות עבר
+• ייבוא סידור עבודה: מצלמים את הסידור או מדביקים את ההודעה מוואטסאפ (או משתפים ישר מוואטסאפ), והמשמרות שלך נכנסות ללוח
 • ייבוא דוח שעות מהעבודה: Excel, CSV, PDF או צילום, וכל המשמרות נכנסות בבת אחת
+• "שכחת לסיים את המשמרת?": שאלה עדינה עם שעת הסיום הרגילה שלך מוכנה ללחיצה
 • כמה תפקידים ותעריפים, כולל היסטוריית שינויי שכר
 • תבניות למשמרות קבועות ושכפול משמרת בלחיצה
 • נסיעות, בונוסים, טיפים וניכויים
@@ -39,6 +41,7 @@ Shaati עוזרת לעובדים לפי שעה לדעת בדיוק כמה הרו
 • מעלים תלוש (PDF או צילום) והאפליקציה קוראת אותו – הכול על הטלפון
 • השוואה למשמרות שרשמת: שעות חסרות, תוספות שלא שולמו, נסיעות ועוד
 • סכום הפער המשוער והסבר לכל ממצא, כולל נוסח מוכן לפנייה למעסיק
+• דוח לבירור שכר וזכויות (PDF) ומכתב מוכן למעסיק: כל הממצאים, דמי חגים וכל המשמרות במקום אחד
 
 📊 סיכומים והתראות
 • סיכום שבועי, חודשי ושנתי עם השוואה לתקופה הקודמת
@@ -54,7 +57,8 @@ Shaati עוזרת לעובדים לפי שעה לדעת בדיוק כמה הרו
 
 ⚖️ הזכויות שלך
 • מדריך זכויות אישי שעובד גם בלי אינטרנט: שכר מינימום, שעות נוספות, שבת, נסיעות, מחלה, חופשה, הבראה ופנסיה
-• שכר המינימום לפי הגיל והתאריך, והתראה אם התעריף שלך נמוך ממנו
+• שכר המינימום לפי הגיל והתאריך, והתראה אם התעריף שלך נמוך ממנו (למלצרים: כולל הטיפים)
+• דמי חגים: האפליקציה בודקת על אילו חגים מגיע לך תשלום, וכמה
 • לבני נוער: בדיקה אוטומטית של שעות לילה, אורך יום ושבוע והפסקות לפי חוק עבודת הנוער
 • נעילה בקוד או בטביעת אצבע
 • הגדרות מסודרות בקטגוריות, עם חיפוש שמבין בעיות ("השכר לא יוצא נכון")
@@ -76,7 +80,16 @@ Shaati עוזרת לעובדים לפי שעה לדעת בדיוק כמה הרו
 חשוב: החישובים הם הערכה בלבד ואינם ייעוץ משפטי, חשבונאי או מס. במקרה של ספק כדאי לבדוק מול המעסיק, רואה חשבון או גורם מוסמך.
 ```
 
-**מה חדש בגרסה 1.20** (עד 500 תווים)
+**מה חדש בגרסה 1.21** (עד 500 תווים)
+```
+• ייבוא סידור עבודה: צילום של הסידור או ההודעה מוואטסאפ, והמשמרות שלך בלוח
+• שיתוף ישר מוואטסאפ ל-Shaati: סידור, תלוש או דוח שעות
+• דמי חגים: על אילו חגים מגיע לך תשלום, וכמה
+• דוח ומכתב לבירור מול המעסיק
+• "שכחת לסיים את המשמרת?" עם שעת הסיום מוכנה ללחיצה
+```
+
+**מה חדש בגרסה 1.20**
 ```
 • ייבוא דוח שעות: Excel, PDF או צילום, וכל המשמרות נכנסות בבת אחת
 • ווידג'טים למסך הבית: התחלת משמרת, החודש, היעד ויום המשכורת
@@ -130,12 +143,15 @@ Shaati helps hourly workers in Israel know exactly what they earned – and chec
 
 • One-tap shift timer with breaks, or add past shifts manually
 • Several roles and hourly rates, with rate history; templates and duplicates
+• Import your work schedule: a photo of it or the WhatsApp message (or share it straight from WhatsApp), and your shifts land in the calendar
 • Import an hours report from work (Excel, CSV, PDF or a photo) and add all the shifts at once
+• "Forgot to end your shift?": a gentle question with your usual end time ready to tap
 • Home-screen widgets: start a shift, this month, your goal and payday
 • Shabbat & holiday premiums based on your town's Shabbat times (every locality in Israel, built-in Hebrew calendar); a special percent rate for special days
 • Daily overtime tiers, night premium, rounding and minimum shift
 • Net pay estimate (income tax, credit points, National Insurance, health tax, pension); under-18 workers see pay without deductions
 • Payslip check: scan a PDF or photo on your phone and see missing hours, unpaid premiums, travel and more – with an estimated gap and a ready-to-send message for your employer
+• Holiday pay check, and a report + letter for raising pay issues with your employer
 • Weekly, monthly and yearly summaries with comparisons, charts, Hebrew/Gregorian calendar, CSV and calendar (ICS) export
 • Smart alerts, vacation and sick-day tracking
 • Sign in with Google; your data is stored in your own account and only you can access it. Works offline. No ads, no tracking.

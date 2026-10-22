@@ -5,7 +5,7 @@
  * background and activates when the user taps "עדכן".
  * IndexedDB data is never touched by updates.
  * ============================================================ */
-const VERSION = '1.20.3-b91b2a4d';
+const VERSION = '1.21.0-00a596a6';
 const SHELL = 'shiftpay-shell-' + VERSION;
 const RUNTIME = 'shiftpay-runtime-v1';
 const ASSETS = ['./', './index.html', './manifest.webmanifest', './icon-192.png', './icon-512.png', './icon-maskable-512.png', './badge-96.png', './favicon-48.png'];
@@ -22,10 +22,29 @@ self.addEventListener('activate', (e) => {
 });
 self.addEventListener('message', (e) => { if (e.data === 'skipWaiting') self.skipWaiting(); });
 
+/* ---- shared to the app (Android's share sheet: a work schedule from WhatsApp, a payslip, a report) ----
+ * The share arrives as a form; what was shared is kept for a moment in its own cache, and the app opens on
+ * ?action=share-in, which takes it from there (and empties it). */
+const SHARE = 'shiftpay-share';
+async function receiveShare(req) {
+  try {
+    const form = await req.formData();
+    const file = form.get('file');
+    const text = ['title', 'text', 'url'].map((k) => form.get(k)).filter((v) => typeof v === 'string' && v.trim()).join('\n');
+    const cache = await caches.open(SHARE);
+    const hasFile = file && typeof file === 'object' && file.size > 0;
+    await cache.put('./__share/meta', new Response(JSON.stringify({ text, name: hasFile ? file.name || '' : '', type: hasFile ? file.type || '' : '', at: Date.now() }), { headers: { 'Content-Type': 'application/json' } }));
+    if (hasFile) await cache.put('./__share/file', new Response(file, { headers: { 'Content-Type': file.type || 'application/octet-stream' } }));
+    else await cache.delete('./__share/file');
+  } catch (err) { /* nothing usable was shared: the app opens as usual */ }
+  return Response.redirect(new URL('./?action=share-in', self.registration.scope).href, 303);
+}
+
 self.addEventListener('fetch', (e) => {
   const req = e.request;
-  if (req.method !== 'GET') return;
   const url = new URL(req.url);
+  if (req.method === 'POST' && url.origin === self.location.origin && url.pathname.endsWith('/share-in')) { e.respondWith(receiveShare(req)); return; }
+  if (req.method !== 'GET') return;
   if (url.hostname === 'api.anthropic.com') return; // never cache API calls
   if (req.mode === 'navigate') {
     e.respondWith((async () => {

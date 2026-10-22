@@ -73,6 +73,73 @@
   // the hours-report import reads PDFs and pictures the same way (import.js)
   App.readDocText = extract;
   App.loadLib = loadScript;
+  /**
+   * A picture or a PDF → its words, each with its box ({ text, x0, y0, x1, y1 }, y down), for reading a table
+   * (a work schedule): a picture through the same Hebrew OCR, a PDF from its own text (an OCR of the first page
+   * when it is scanned).
+   */
+  App.readDocWords = async function (file, progress) {
+    const isPdf = file.type === 'application/pdf' || /\.pdf$/i.test(file.name || '');
+    if (isPdf) {
+      await loadScript(LIBS.pdf);
+      const pdfjs = root.pdfjsLib;
+      pdfjs.GlobalWorkerOptions.workerSrc = LIBS.pdfWorker;
+      const doc = await pdfjs.getDocument({ data: await file.arrayBuffer() }).promise;
+      const page = await doc.getPage(1);
+      const tc = await page.getTextContent();
+      const words = tc.items.filter((it) => it.str && it.str.trim()).map((it) => {
+        const x = it.transform[4], y = it.transform[5], hgt = it.height || Math.abs(it.transform[3]) || 10;
+        return { text: it.str.trim(), x0: x, x1: x + (it.width || hgt * it.str.length * 0.5), y0: -(y + hgt), y1: -y };
+      });
+      if (words.length > 6) return { words, text: words.map((w) => w.text).join(' '), source: 'pdf' };
+      progress('ה-⁠PDF סרוק — מריץ זיהוי טקסט…');
+      const vp = page.getViewport({ scale: 2.5 });
+      const canvas = document.createElement('canvas');
+      canvas.width = vp.width; canvas.height = vp.height;
+      await page.render({ canvasContext: canvas.getContext('2d'), viewport: vp }).promise;
+      return Object.assign(await ocrWords(canvas, progress), { source: 'ocr' });
+    }
+    return Object.assign(await ocrWords(file, progress), { source: 'ocr' });
+  };
+  async function ocrPass(image, lang, progress, label) {
+    const worker = await root.Tesseract.createWorker(lang, 1, {
+      logger: (m) => { if (m.status === 'recognizing text') progress(`${label}… ${Math.round(m.progress * 100)}%`); },
+    });
+    try {
+      const { data } = await worker.recognize(image);
+      let ws = data.words;
+      if (!ws && data.blocks) ws = data.blocks.flatMap((b) => (b.paragraphs || []).flatMap((p) => (p.lines || []).flatMap((l) => l.words || [])));
+      const words = (ws || []).filter((w) => w && w.text && w.text.trim() && (w.confidence == null || w.confidence > 20))
+        .map((w) => ({ text: w.text.trim(), x0: w.bbox.x0, y0: w.bbox.y0, x1: w.bbox.x1, y1: w.bbox.y1 }));
+      return { words, text: data.text || '' };
+    } finally { await worker.terminate(); }
+  }
+  // hours like 08:00-16:00 (or 8-16) in a word
+  const TIMEY = /\d{1,2}(?::\d{2})?\s*[-–—]\s*\d{1,2}(?::\d{2})?|\d{1,2}:\d{2}/;
+  /**
+   * The words of a picture. The Hebrew model sometimes misreads hours that sit next to Hebrew ("08:00-16:00"
+   * came out "60 ה"), so a second pass reads the picture with the English model only, which reads digits well:
+   * hours it finds where the first pass has no hours take the place of what the first pass read there.
+   */
+  async function ocrWords(image, progress) {
+    await loadScript(LIBS.tesseract);
+    progress('טוען מנוע זיהוי עברית (פעם ראשונה ~10MB)…');
+    const he = await ocrPass(image, 'heb+eng', progress, 'מזהה טקסט');
+    let en;
+    try { en = await ocrPass(image, 'eng', progress, 'בודק את השעות'); } catch (e) { return he; }
+    const overlap = (a, b) => {
+      const ix = Math.max(0, Math.min(a.x1, b.x1) - Math.max(a.x0, b.x0)), iy = Math.max(0, Math.min(a.y1, b.y1) - Math.max(a.y0, b.y0));
+      return ix * iy / Math.max(1, Math.min((a.x1 - a.x0) * (a.y1 - a.y0), (b.x1 - b.x0) * (b.y1 - b.y0)));
+    };
+    let words = he.words.slice();
+    for (const w of en.words) {
+      if (!TIMEY.test(w.text)) continue;
+      const near = words.filter((h) => overlap(h, w) > 0.3);
+      if (near.some((h) => TIMEY.test(h.text))) continue;
+      words = words.filter((h) => !near.includes(h)).concat([w]);
+    }
+    return { words, text: he.text };
+  }
 
   /* ---------------- flow: upload → extract → verify ---------------- */
   App.actions['payslip-new'] = () => {
@@ -96,6 +163,8 @@
       },
     });
   };
+  /** A payslip file that came from elsewhere (shared to the app): straight to reading it. */
+  App.payslipFromFile = (file) => { if (UI.sheets.length) UI.closeAll(); startExtraction(file); };
   function defaultPeriod() {
     const emp = S.employers[0];
     return U.addMonthKey(Engine.periodOf(U.todayKey(), emp).key, -1);
@@ -410,7 +479,8 @@
       ${gaps.length ? `<div class="section-title">${icon('alert', 's')} פערים פתוחים<span class="spacer"></span><span class="small">${U.money(gaps.filter((g) => g.status === 'open').reduce((s, g) => s + g.amount, 0), 0)}</span></div>
         <div class="list">${gaps.map((g) => `<div class="item" style="cursor:default"><span class="lead" style="background:${g.status === 'maybe' ? 'var(--warn-bg)' : 'var(--bad-bg)'};color:${g.status === 'maybe' ? 'var(--warn)' : 'var(--bad)'}">${icon(g.status === 'maybe' ? 'refresh' : 'xc')}</span>
           <span class="body"><span class="t">${esc(g.title)} · ${U.fmtMonth(g.period)}</span><span class="s">${g.status === 'maybe' ? esc(g.note || 'ייתכן שהוחזר') : 'עוד לא הוחזר'}</span></span>
-          <span class="trail"><span class="a">${money(g.amount, 0)}</span><br><button class="btn text sm" data-act="gap-set" data-id="${esc(g.id)}" data-s="resolved">הוחזר ✓</button></span></div>`).join('')}</div>` : ''}
+          <span class="trail"><span class="a">${money(g.amount, 0)}</span><br><button class="btn text sm" data-act="gap-set" data-id="${esc(g.id)}" data-s="resolved">הוחזר ✓</button></span></div>`).join('')}</div>
+        <button class="btn tonal block" data-act="claim-report" style="margin-top:8px">${icon('file', 's')} דוח ומכתב לבירור מול המעסיק</button>` : ''}
       ${trend.length >= 2 ? `<div class="section-title">${icon('chart', 's')} מגמות</div><div class="card">${Charts.stacked(trend.map((p) => U.HEB_MONTHS[+p.period.slice(5) - 1].slice(0, 3)), [
         { name: 'נטו', color: '#1baf7a', values: trend.map((p) => (p.fields.net ? +p.fields.net.value : 0)) },
         { name: 'ניכויים', color: '#e34948', values: trend.map((p) => (p.fields.gross && p.fields.net ? Math.max(0, p.fields.gross.value - p.fields.net.value) : 0)) },
@@ -458,8 +528,13 @@
       },
     });
   };
-  async function callClaude(text) {
+  const callClaude = (text) => claudeJson(Payslip.aiPrompt(), text, Payslip.aiSchema());
+  /** One request to Claude with the person's own key, answered as JSON in the schema given (content: text, or
+   * blocks such as an image). Used by the payslip check and the schedule reader. */
+  App.claudeJson = (system, content, schema) => claudeJson(system, content, schema);
+  async function claudeJson(system, content, schema) {
     if (!navigator.onLine) throw new Error('אין חיבור לאינטרנט');
+    if (!S.settings.ai.apiKey) throw new Error('צריך מפתח API של Claude (הגדרות › עוזר AI ואודות › מפתח AI)');
     const mod = await import(/* webpackIgnore: true */ LIBS.anthropic);
     const Anthropic = mod.default || mod.Anthropic;
     const client = new Anthropic({ apiKey: S.settings.ai.apiKey, dangerouslyAllowBrowser: true });
@@ -467,9 +542,9 @@
     const params = {
       model,
       max_tokens: 16000,
-      system: Payslip.aiPrompt(),
-      messages: [{ role: 'user', content: text }],
-      output_config: { effort: 'medium', format: { type: 'json_schema', schema: Payslip.aiSchema() } },
+      system,
+      messages: [{ role: 'user', content }],
+      output_config: { effort: 'medium', format: { type: 'json_schema', schema } },
     };
     let res;
     try {

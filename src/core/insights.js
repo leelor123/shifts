@@ -41,6 +41,7 @@
     recuperation: { cat: 'money', label: 'דמי הבראה' },
     birthday: { cat: 'reminder', label: 'יום הולדת' },
     minwage: { cat: 'money', label: 'שכר מינימום' },
+    holidayPay: { cat: 'money', label: 'דמי חגים' },
     youth: { cat: 'health', label: 'חוק עבודת הנוער' },
   };
 
@@ -215,7 +216,26 @@
       for (const role of model.ctx.roles.values()) {
         if (role.archived) continue;
         const rate = Engine.roleRate(role, today);
-        if (!(rate > 0) || rate + 0.005 >= mw.hourly) continue;
+        if (rate + 0.005 >= mw.hourly) continue;
+        // a waiter's tips (restaurant, café, bar) are wages: what counts is the pay per hour with them (the last 30
+        // days of this role's shifts); tips that bring it to the minimum are fine, said quietly
+        let hrs = 0, tipsSum = 0;
+        for (const r of model.results.values()) {
+          if (r.status !== 'done' || r.dateKey < U.addDays(today, -30) || !(r.paidMin > 0)) continue;
+          if (!(r.segments && r.segments[0] && r.segments[0].roleId === role.id)) continue;
+          hrs += r.paidMin / 60; tipsSum += +r.tips || 0;
+        }
+        if (tipsSum > 0 && hrs > 0) {
+          const eff = rate + tipsSum / hrs;
+          if (eff + 0.005 >= mw.hourly) {
+            alerts.push({ key: `minwt-${role.id}-${mw.hourly}-${rate}`, type: 'minwage', severity: 'info', ref: role.id,
+              title: `ב${role.name} השכר עם הטיפים מעל המינימום`,
+              body: `${U.money(rate)} לשעה ועוד הטיפים: בממוצע ${U.money(eff)} לשעה בחודש האחרון, מעל שכר המינימום (${U.money(mw.hourly)}). במסעדה, בית קפה או בר הטיפים הם חלק מהשכר, וצריכים להופיע בתלוש.`,
+              explain: 'הסכום שמגיע (טיפים בלבד, או שכר וטיפים) צריך להיות לפחות שכר המינימום לכל שעה. באולמות וגני אירועים הטיפים אינם חלק מהשכר.' });
+            continue;
+          }
+        }
+        if (!(rate > 0) && !(tipsSum > 0)) continue;
         // without a birth date the adult minimum is used; a teen may be fine at a lower rate
         const maybeTeen = !S.birthDate && !mw.custom && rate >= Engine.legalMinWage(today, U.addDays(today, -16 * 366)).hourly - 0.005;
         alerts.push({ key: `minw-${role.id}-${mw.from}-${mw.hourly}-${rate}`, type: 'minwage', severity: maybeTeen ? 'warn' : 'critical', push: maybeTeen ? 'anomaly' : 'critical', ref: role.id,
@@ -224,6 +244,21 @@
             ? `${U.money(rate)} לשעה, פחות משכר המינימום למבוגר (${U.money(adult)}). מתחת לגיל 18 המינימום נמוך יותר: הוסף תאריך לידה בהגדרות כדי לבדוק לפי הגיל שלך.`
             : `${U.money(rate)} לשעה, ושכר המינימום${mw.youth ? ` לגיל ${mw.age}` : ''} הוא ${U.money(mw.hourly)}. חסרים ${U.money(mw.hourly - rate)} על כל שעה.`,
           explain: mw.custom ? 'לפי שכר המינימום שהגדרת בהגדרות.' : `חוק שכר מינימום, התעריף מ-${U.fmtDate(mw.from)}${mw.youth ? ' (לנוער: ' + Math.round(mw.share * 100) + '% משכר המבוגר)' : ''}.` });
+      }
+    }
+    // holiday pay: the holidays of the last six weeks that look due (Engine.holidayPay), together in one note
+    // (a season of holidays, as in Tishrei, was four notes at once)
+    if (on('holidayPay') && Engine.holidayPay) {
+      const due = Engine.holidayPay(model, U.addDays(today, -42), U.addDays(today, -1), today).filter((h) => h.status === 'due' && h.amount > 0);
+      if (due.length) {
+        const h = due[0], sum = due.reduce((a, x) => a + x.amount, 0);
+        const names = due.map((x) => x.name).join(', ');
+        alerts.push({ key: 'holpay-' + due.map((x) => x.key).join('-'), type: 'holidayPay', severity: 'info', ref: h.key,
+          title: due.length === 1 ? `דמי חג על ${h.name}?` : `דמי חגים על ${due.length} חגים?`,
+          body: due.length === 1
+            ? `לא עבדת ב${h.name} (${U.fmtDate(h.key, 'short')}), ולפי המשמרות שלך נראה שמגיע לך עליו תשלום של יום עבודה רגיל: כ-${U.money(h.amount, 0)}. כדאי לבדוק שהוא מופיע בתלוש.`
+            : `לא עבדת ב${names}, ולפי המשמרות שלך נראה שמגיע לך עליהם תשלום של יום עבודה רגיל כל אחד: בסך הכול כ-${U.money(sum, 0)}. כדאי לבדוק שהם מופיעים בתלוש.`,
+          explain: `ממוצע של ${U.num(h.avgHours, 1)} שעות ביום בשלושת החודשים שלפני החג, כפול ${U.money(h.rate)} לשעה. מגיע אחרי 3 חודשי עבודה, כשהחג חל ביום עבודה רגיל שלך. בזכויות › דמי חגים.` });
       }
     }
     const ageNow = Engine.ageAt(S.birthDate, today);
@@ -409,10 +444,13 @@
     const a = state.activeShift;
     if (on('timer') && a && a.start) {
       const h = (now - a.start) / U.HOUR;
-      if (h > (+cfg.timerHours || 12)) {
+      // the set limit (12 hours), or sooner: three hours past how long this person's shifts usually last
+      const usualH = (+state.usualShiftMs || 0) / U.HOUR;
+      const limit = Math.min(+cfg.timerHours || 12, usualH >= 1 ? usualH + 3 : Infinity);
+      if (h > limit) {
         alerts.push({ key: 'timer-' + a.start, type: 'timer', severity: 'critical', push: 'critical',
-          title: 'שכחת לסיים משמרת?', body: `הטיימר רץ כבר ${U.num(h, 1)} שעות (מאז ${U.epochHM(a.start)}).`,
-          explain: 'הסף שהוגדר: ' + cfg.timerHours + ' שעות.' });
+          title: 'שכחת לסיים משמרת?', body: `הטיימר רץ כבר ${U.num(h, 1)} שעות (מאז ${U.epochHM(a.start)})` + (usualH >= 1 ? `, ובדרך כלל המשמרות שלך נמשכות כ-${U.hm(Math.round(usualH * 60))}.` : '.'),
+          explain: usualH >= 1 && limit < (+cfg.timerHours || 12) ? 'שלוש שעות אחרי האורך הרגיל של המשמרות שלך.' : 'הסף שהוגדר: ' + (cfg.timerHours || 12) + ' שעות.' });
       }
     }
     for (const r of model.results.values()) {

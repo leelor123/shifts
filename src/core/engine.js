@@ -805,6 +805,54 @@
     return 10;
   }
   /** Estimated accrual of vacation / sick days and recuperation, as of `asOf`. */
+  /**
+   * Holiday pay (דמי חגים) for an hourly worker, holiday by holiday (the extension order, framework agreement
+   * 2000 §7, as Kol Zchut explains it): the nine rest days of the Jewish holidays, paid when the worker has
+   * three months at the workplace, the holiday fell on a day they would have worked and did not work because of
+   * it, and they worked the day before and after or were away with the employer's consent (not scheduled counts).
+   * A holiday on Friday or Shabbat is paid only to someone who works on that day. The pay is a regular day's:
+   * the average daily hours of the three months before × the hourly rate (no travel).
+   * What the app cannot know (whether they "would have worked") is read from their own shifts: a weekday they
+   * usually work, or shifts on most days. A holiday they worked on is paid as work; holiday pay comes on top only
+   * when the work was not their choice (said, not counted).
+   * → [{ key, id, name, dow, status: 'due'|'maybe'|'worked'|'weekend'|'seniority'|'nowork', amount, avgHours, rate }]
+   */
+  function holidayPay(model, from, to, today) {
+    const ctx = model.ctx, settings = ctx.settings;
+    const out = [];
+    const years = new Set([+from.slice(0, 4), +to.slice(0, 4)]);
+    const hols = [...years].flatMap((y) => HebCal.holidaysForYear(y)).filter((h) => h.rest && h.key >= from && h.key <= to && h.key <= today);
+    const done = [...model.results.values()].filter((r) => r.status === 'done' && r.paidMin > 0);
+    // before the first shift in the app nothing is known (not "did not work"): those holidays are left out
+    const first = done.reduce((m, r) => (r.dateKey < m ? r.dateKey : m), '9999');
+    for (const h of hols.filter((x) => x.key > first)) {
+      const dow = U.dow(h.key);
+      const item = { key: h.key, id: h.id, name: h.name, dow, status: 'due', amount: 0, avgHours: 0, rate: 0 };
+      out.push(item);
+      if (settings.startDate && monthsBetween(settings.startDate, h.key) < 3) { item.status = 'seniority'; continue; }
+      const winFrom = U.addDays(h.key, -91), winTo = U.addDays(h.key, -1);
+      const win = done.filter((r) => r.dateKey >= winFrom && r.dateKey <= winTo);
+      const days = new Map(); // date → paid hours that day
+      for (const r of win) days.set(r.dateKey, (days.get(r.dateKey) || 0) + r.paidMin / 60);
+      if (!days.size) { item.status = 'nowork'; continue; }
+      let hours = 0; for (const v of days.values()) hours += v;
+      item.avgHours = hours / days.size;
+      // the role worked most in those months, and its rate on the holiday
+      const byRole = new Map();
+      for (const r of win) { const id = r.segments && r.segments[0] && r.segments[0].roleId; if (id) byRole.set(id, (byRole.get(id) || 0) + r.paidMin); }
+      const roleId = [...byRole.entries()].sort((a, b) => b[1] - a[1])[0];
+      const role = roleId && ctx.roles.get(roleId[0]);
+      item.rate = role ? roleRate(role, h.key) : 0;
+      item.amount = Math.round(item.avgHours * item.rate * 100) / 100;
+      const sameWeekday = [...days.keys()].filter((k) => U.dow(k) === dow).length; // of 13 weeks
+      const usual = sameWeekday >= 5, busy = days.size / 13 >= 4;
+      if (done.some((r) => r.dateKey === h.key)) item.status = 'worked';
+      else if ((dow === 5 || dow === 6) && !usual) item.status = 'weekend';
+      else item.status = usual || busy ? 'due' : 'maybe';
+    }
+    return out;
+  }
+
   function leaveBalances(model, asOf) {
     const S = model.ctx.settings;
     const L = S.leave;
@@ -911,7 +959,7 @@
     LAW_BREAK, validShift, validEntry, legalMinWage, minWageFor, youthRules, pensionMinAge, MIN_WAGE,
     makeCtx, roleRate, roundMinutes, monthsBetween, buildSegments, hasOverrides, computeShift, computeAll,
     periodByKey, periodOf, dayValue, computeEntries, travelByDay, incomeTaxRaw, netEstimate, pensionActive,
-    buildModel, totals, periodSummary, rangeSummary, pensionBaseOf, leaveBalances, vacationEntitlement, recuperationDays, ageAt, isMinor,
+    buildModel, totals, periodSummary, rangeSummary, pensionBaseOf, leaveBalances, holidayPay, vacationEntitlement, recuperationDays, ageAt, isMinor,
     dataIssues, ADJ_LABELS,
   };
 })(typeof window !== 'undefined' ? window : globalThis);

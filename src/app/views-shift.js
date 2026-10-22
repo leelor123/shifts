@@ -38,6 +38,7 @@
           ${tile('entry-new', 'minus', 'orange', 'ניכוי', '', 'data-kind="adjustment" data-type="deduction"')}
           ${tile('payslip-new', 'receipt', 'mint', 'בדיקת תלוש', '')}
           ${tile('import-hours', 'upload', 'violet', 'ייבוא דוח שעות', '')}
+          ${tile('import-schedule', 'calendar', 'sky', 'ייבוא סידור עבודה', '')}
         </div>`,
     });
   };

@@ -2,7 +2,7 @@
 <html lang="he" dir="rtl">
 <head>
 <meta charset="utf-8">
-<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'sha256-y+UBPAbC15QRWkUQL8wuPCJyLQgAL6GX7puNHu/a4bo=' https://www.gstatic.com https://apis.google.com https://cdnjs.cloudflare.com https://cdn.jsdelivr.net 'wasm-unsafe-eval'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com data:; img-src 'self' data: blob: https:; connect-src 'self' https: wss:; frame-src https://shiftpay-70ab6.firebaseapp.com https://accounts.google.com https://apis.google.com https://*.google.com; worker-src 'self' blob: https://cdnjs.cloudflare.com https://cdn.jsdelivr.net; media-src 'self' data: blob:; manifest-src 'self'; object-src 'none'; base-uri 'self'; form-action 'self'">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'sha256-OdM4qVjY+gijfVfEHpcXtehJplW/Lhd+Pk/tCC33U9A=' https://www.gstatic.com https://apis.google.com https://cdnjs.cloudflare.com https://cdn.jsdelivr.net 'wasm-unsafe-eval'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com data:; img-src 'self' data: blob: https:; connect-src 'self' https: wss:; frame-src https://shiftpay-70ab6.firebaseapp.com https://accounts.google.com https://apis.google.com https://*.google.com; worker-src 'self' blob: https://cdnjs.cloudflare.com https://cdn.jsdelivr.net; media-src 'self' data: blob:; manifest-src 'self'; object-src 'none'; base-uri 'self'; form-action 'self'">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="theme-color" content="#0d2b6b">
 <meta name="description" content="מעקב משמרות וחישוב שכר אישי: שבתות, חגים, שעות נוספות, נסיעות, נטו משוער וניתוח תלושים — נשמר בחשבון שלך ועובד גם בלי אינטרנט.">
@@ -903,11 +903,11 @@ body.fx .item:active { transform: scale(.985); }
 .rights .rt-intro { display: flex; gap: 12px; align-items: center; padding: 4px 4px 12px; }
 .rights .rt-intro > svg { width: 34px; height: 34px; color: var(--primary); flex: none; }
 .rights .rt-search { margin-bottom: 6px; }
-.rights .rt-row { display: flex; gap: 10px; align-items: flex-start; padding: 8px 0; border-bottom: 1px solid var(--line); }
-.rights .rt-row:last-child { border-bottom: 0; }
-.rights .rt-row .t { font-weight: 600; }
-.rights .rt-row .d { font-size: .85rem; color: var(--on-surface-var); }
-.rights .rt-mark { flex: none; display: grid; place-items: center; width: 22px; height: 22px; color: var(--primary); }
+.rights .rt-row, .claim-sheet .rt-row { display: flex; gap: 10px; align-items: flex-start; padding: 8px 0; border-bottom: 1px solid var(--line); }
+.rights .rt-row:last-child, .claim-sheet .rt-row:last-child { border-bottom: 0; }
+.rights .rt-row .t, .claim-sheet .rt-row .t { font-weight: 600; }
+.rights .rt-row .d, .claim-sheet .rt-row .d { font-size: .85rem; color: var(--on-surface-var); }
+.rights .rt-mark, .claim-sheet .rt-mark { flex: none; display: grid; place-items: center; width: 22px; height: 22px; color: var(--primary); }
 .rights .rt-youth { background: var(--primary-container); color: var(--on-primary-container); border-color: transparent; }
 .rights .rt-youth .rt-row { border-color: rgba(0, 0, 0, .08); }
 .rights .rt-topics { padding: 2px 14px; }
@@ -1151,6 +1151,16 @@ body.fx .nav .fab:active { transform: scale(.9) rotate(90deg); }
 .timer-card.running { background: linear-gradient(140deg, hsl(calc(var(--h) - 4) 45% 20%) 0%, hsl(var(--h) 50% 28%) 100%); border-radius: 24px; box-shadow: var(--sh-2); }
 .timer-card.running .clock { color: #ffc23d; }
 .timer-card.running .btn.big { background: var(--grad-money); color: #2b1a00; box-shadow: none; }
+/* "did you forget to end it?": a quiet block on the running card, the likely end ready to tap */
+.timer-card .tc-overdue { display: grid; gap: 10px; margin: -4px 0 14px; padding: 12px; border-radius: 16px; background: rgba(255, 255, 255, .1); border: 1px solid rgba(255, 255, 255, .16); text-align: start; }
+.timer-card .tc-od-t { display: flex; gap: 10px; align-items: flex-start; }
+.timer-card .tc-od-t svg { flex: none; margin-top: 2px; color: #ffc23d; }
+.timer-card .tc-od-t span { display: grid; gap: 2px; min-width: 0; }
+.timer-card .tc-od-t b { font-size: .95rem; }
+.timer-card .tc-od-t small { font-size: .82rem; opacity: .86; }
+.timer-card .tc-od-a { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+.timer-card .tc-od-a .tc-od-end { background: var(--grad-money); color: #2b1a00; box-shadow: none; }
+.timer-card .tc-od-a .btn.text { color: inherit; }
 .highlight { border-radius: 16px; background: var(--surface-1); border: 1px solid var(--line); box-shadow: var(--sh-1); }
 .highlight .hl-ic { background: var(--brand-soft); color: var(--brand-strong); border-radius: 10px; }
 .empty.fun { padding: 18px 16px 6px; }
@@ -2445,6 +2455,18 @@ body.fx .cal-day.hello, body.fx .week-row.hello { animation: cal-hello .55s cubi
 @media (prefers-reduced-motion: reduce) { .imp-bar i { animation-duration: 3s; } }
 .login .login-email { margin-top: 10px; }
 
+/* work schedule import (schedule-import.js): a row toggles on its left part, its hours open the time pickers */
+.imp-row.sc-row { padding: 0; gap: 0; cursor: default; }
+.sc-row .sc-tog { flex: 1; display: flex; align-items: center; gap: 12px; min-width: 0; min-height: 58px; padding: 8px 12px; border: 0; border-radius: 16px; background: none; color: inherit; font: inherit; text-align: start; cursor: pointer; }
+.sc-row .sc-time { flex: none; display: inline-flex; align-items: center; gap: 6px; margin-inline-end: 8px; padding: 8px 10px; border-radius: 12px; border: 1px solid var(--line); background: var(--surface-2); color: var(--on-surface); font: 700 .95rem var(--font); font-variant-numeric: tabular-nums; cursor: pointer; transition: scale .14s cubic-bezier(.3, .7, .4, 1); }
+.sc-row .sc-time:active { scale: .94; }
+.sc-row .sc-time svg { width: 14px; height: 14px; color: var(--brand); }
+.sc-row .imp-d small { display: flex; flex-wrap: wrap; gap: 4px; }
+.sc-row .imp-d small:empty { display: none; }
+.sc-row .tag { font-style: normal; font-size: .68rem; }
+.sched-sheet .sc-ai { margin-top: 4px; }
+.sched-sheet .sc-names .chip, .sched-sheet .sc-week .chip { font-weight: 600; }
+
 </style>
 </head>
 <body>
@@ -2471,8 +2493,8 @@ body.fx .cal-day.hello, body.fx .week-row.hello { animation: cal-hello .55s cubi
 <div id="print-root" aria-hidden="true"></div>
 <noscript><div style="padding:24px;font-family:sans-serif">האפליקציה דורשת JavaScript.</div></noscript>
 <script>
-window.APP_VERSION = '1.20.3';
-window.APP_BUILD = '1.20.3-b91b2a4d';
+window.APP_VERSION = '1.21.0';
+window.APP_BUILD = '1.21.0-00a596a6';
 /* ---- core/util.js ---- */
 /* ============================================================
  * util.js — date/time helpers and formatting.
@@ -2826,6 +2848,348 @@ window.APP_BUILD = '1.20.3-b91b2a4d';
   }
 
   root.Timesheet = { parse, times };
+})(typeof window !== 'undefined' ? window : globalThis);
+
+/* ---- core/schedule.js ---- */
+/* ============================================================
+ * schedule.js — a work schedule (סידור עבודה) someone was sent, into their planned shifts: a WhatsApp
+ * message or other text, or the table in a photo, a screenshot or a PDF (its words, each with its place).
+ *
+ * Text, a line at a time (a day may head the lines under it):
+ *   - a day: a name (ראשון…שבת, "יום א׳"…"ש׳", Sun…Sat) or a date (26/10, 26.10.26, 2026-10-26); a line
+ *     with three days or more is a table's head, and each row under it gives one cell per day, in order;
+ *   - a shift: a range ("8-16", "08:00–16:30", "16 עד 24"; an end before the start is the next morning,
+ *     "22-06"), a shift's name (בוקר, צהריים, ערב, לילה, or the person's own template names) with its usual
+ *     hours, or one time ("מ-16:00") lasting the person's usual length (both marked as a guess). Off (חופש,
+ *     OFF, a dash) is a day with no shift. A range must last between half an hour and 16 hours (so "12-11"
+ *     is a date, not a 23-hour shift);
+ *   - whose: the words before a shift, after the day or the shift before it ("ראשון: דני 8-16, מאיה 16-24").
+ *     A schedule with no names at all is the person's own (a message to them); otherwise each shift keeps its
+ *     name and the screen keeps the person's (pick()).
+ * A day name alone lands in the week the screen chose (from its Sunday); a date without a year is the
+ * nearest one from two months back.
+ *
+ * A table's words (OCR or PDF, words with boxes): the words are put in rows by height; the row with three
+ * days or more is the head, and each word under it goes to the nearest day's column; the words outside the
+ * columns are the row's name. When the days run down the side instead (a row per day), the head row holds the
+ * names and each column is a person.
+ * ============================================================ */
+(function (root) {
+  'use strict';
+  const pad = (n) => String(n).padStart(2, '0');
+  const toMin = (t) => +t.slice(0, 2) * 60 + +t.slice(3, 5);
+  const fromMin = (m) => { m = ((m % 1440) + 1440) % 1440; return pad(Math.floor(m / 60)) + ':' + pad(m % 60); };
+  const HE = '\\u0590-\\u05FF';
+  const keyOf = (y, m, d) => `${y}-${pad(m)}-${pad(d)}`;
+  const validDate = (y, m, d) => m >= 1 && m <= 12 && d >= 1 && d <= new Date(y, m, 0).getDate() && y >= 2000 && y <= 2100;
+  const dowOf = (k) => new Date(+k.slice(0, 4), +k.slice(5, 7) - 1, +k.slice(8, 10)).getDay();
+  const addDays = (k, n) => { const d = new Date(+k.slice(0, 4), +k.slice(5, 7) - 1, +k.slice(8, 10) + n); return keyOf(d.getFullYear(), d.getMonth() + 1, d.getDate()); };
+
+  const DAY_NAMES = { 'ראשון': 0, 'שני': 1, 'שלישי': 2, 'רביעי': 3, 'חמישי': 4, 'שישי': 5, 'שבת': 6 };
+  const DAY_LETTERS = { 'א': 0, 'ב': 1, 'ג': 2, 'ד': 3, 'ה': 4, 'ו': 5, 'ש': 6 };
+  const DAY_EN = { sun: 0, mon: 1, tue: 2, wed: 3, thu: 4, fri: 5, sat: 6 };
+  // a shift's name and its usual hours (the person's own templates come first)
+  const NAMED = { 'בוקר': ['07:00', '15:00'], 'צהריים': ['11:00', '19:00'], 'צהרים': ['11:00', '19:00'], 'ערב': ['15:00', '23:00'], 'לילה': ['23:00', '07:00'],
+    morning: ['07:00', '15:00'], noon: ['11:00', '19:00'], evening: ['15:00', '23:00'], night: ['23:00', '07:00'] };
+  const OFF_WORDS = ['חופש', 'חופשה', 'מחלה', 'חופשי', 'off', 'x', '-', '—', '–'];
+  // words around a name that are not the name
+  const NOISE = new Set(['משמרת', 'משמרות', 'בין', 'השעות', 'שעות', 'עד', 'מ', 'מה', 'יום', 'ביום', 'שבוע', 'הבא', 'השבוע', 'סידור', 'עבודה', 'סידור', 'לשבוע', 'עובד', 'עובדת', 'shift', 'from', 'to', 'week', 'and', 'ו', 'את', 'של', 'גם', 'אצל']);
+
+  const DATE_FULL = /(?<![\d:])(\d{1,2})[./-](\d{1,2})[./-](\d{4}|\d{2})(?![\d:])/g;
+  const DATE_ISO = /(?<!\d)(\d{4})-(\d{1,2})-(\d{1,2})(?!\d)/g;
+  const DATE_SHORT = /(?<![\d:./-])(\d{1,2})[./](\d{1,2})(?![\d:./-])/g;
+  const DAY_NAME_RE = new RegExp(`(?<![${HE}])(?:ב?יום\\s+)?(?:ה|ב|ל)?(ראשון|שני|שלישי|רביעי|חמישי|שישי|שבת)(?![${HE}])`, 'g');
+  const DAY_LETTER_RE = new RegExp(`(?<![${HE}])(?:(?:ב?יום\\s+)([אבגדהוש])['׳"״]?|([אבגדהוש])['׳](?:["״])?)(?![${HE}])`, 'g');
+  const DAY_EN_RE = /\b(sun|mon|tue|wed|thu|fri|sat)[a-z]*\.?(?![a-z])/gi;
+  // a date with the month's Hebrew name: "25 באוקטובר", "26 אוק׳", "3 בנובמבר 2026"
+  const MONTHS_HE = ['ינו', 'פבר', 'מרץ', 'אפר', 'מאי', 'יונ', 'יול', 'אוג', 'ספט', 'אוק', 'נוב', 'דצמ'];
+  const DATE_HE_RE = new RegExp(`(?<!\\d)(\\d{1,2})\\s*ב?(${MONTHS_HE.join('|')})[${HE}'׳]*(?:\\s+(\\d{4}))?`, 'g');
+  const RANGE_RE = /(?<![\d:./])(\d{1,2})(?:[:.](\d{2}))?\s*(?:-|–|—|עד|to)\s*(\d{1,2})(?:[:.](\d{2}))?(?![\d:./])/g;
+  const TIME_RE = /(?<![\d:./])(\d{1,2}):(\d{2})(?![\d:./])/g;
+
+  /** The date of a day/month without a year: the nearest one from two months back. */
+  function nearYear(d, m, today) {
+    const ty = +today.slice(0, 4);
+    for (const y of [ty, ty + 1, ty - 1]) {
+      if (!validDate(y, m, d)) continue;
+      const k = keyOf(y, m, d);
+      const diff = (new Date(y, m - 1, d) - new Date(ty, +today.slice(5, 7) - 1, +today.slice(8, 10))) / 86400000;
+      if (diff >= -62 && diff <= 300) return k;
+    }
+    return null;
+  }
+  /** Every day mentioned in a piece of text: { at, len, dow, date } (a name and a date side by side are one). */
+  function daysIn(text, today) {
+    const found = [];
+    const add = (m, dow, date) => found.push({ at: m.index, len: m[0].length, dow: date ? dowOf(date) : dow, date: date || null });
+    for (const m of text.matchAll(DATE_ISO)) if (validDate(+m[1], +m[2], +m[3])) add(m, null, keyOf(+m[1], +m[2], +m[3]));
+    for (const m of text.matchAll(DATE_FULL)) {
+      const y = m[3].length === 2 ? 2000 + +m[3] : +m[3];
+      if (validDate(y, +m[2], +m[1]) && !found.some((f) => m.index >= f.at && m.index < f.at + f.len)) add(m, null, keyOf(y, +m[2], +m[1]));
+    }
+    for (const m of text.matchAll(DATE_HE_RE)) {
+      const mo = MONTHS_HE.indexOf(m[2]) + 1, d = +m[1];
+      const k = m[3] ? (validDate(+m[3], mo, d) ? keyOf(+m[3], mo, d) : null) : nearYear(d, mo, today);
+      if (k && !found.some((f) => m.index >= f.at && m.index < f.at + f.len)) add(m, null, k);
+    }
+    for (const m of text.matchAll(DATE_SHORT)) {
+      if (found.some((f) => m.index >= f.at && m.index < f.at + f.len)) continue;
+      const k = nearYear(+m[1], +m[2], today);
+      if (k) add(m, null, k);
+    }
+    for (const m of text.matchAll(DAY_NAME_RE)) add(m, DAY_NAMES[m[1]], null);
+    for (const m of text.matchAll(DAY_LETTER_RE)) add(m, DAY_LETTERS[m[1] || m[2]], null);
+    for (const m of text.matchAll(DAY_EN_RE)) add(m, DAY_EN[m[1].toLowerCase()], null);
+    found.sort((a, b) => a.at - b.at);
+    // a name next to its date ("ראשון 25/10", "25.10 יום א׳") is one day: the date (when they disagree, the date)
+    const out = [];
+    for (const f of found) {
+      const p = out[out.length - 1];
+      if (p && f.at - (p.at + p.len) <= 4 && (p.date ? !f.date : f.date)) {
+        p.date = p.date || f.date; p.dow = dowOf(p.date); p.len = f.at + f.len - p.at; continue;
+      }
+      out.push(Object.assign({}, f));
+    }
+    return out;
+  }
+  function blank(text, spans) { let s = text; for (const f of spans) s = s.slice(0, f.at) + ' '.repeat(f.len) + s.slice(f.at + f.len); return s; }
+  function hhmm(h, m) { h = +h; m = +(m || 0); if (h === 24 && !m) h = 0; return h < 24 && m < 60 ? pad(h) + ':' + pad(m) : null; }
+  /** The shifts in a piece of text (no days in it): { at, len, start, end, guess, off, label }. */
+  function shiftsIn(text, named) {
+    const out = [];
+    const taken = (i) => out.some((s) => i >= s.at && i < s.at + s.len);
+    for (const m of text.matchAll(RANGE_RE)) {
+      const a = hhmm(m[1], m[2]), b = hhmm(m[3], m[4]);
+      if (!a || !b) continue;
+      let len = toMin(b) - toMin(a); if (len <= 0) len += 1440;
+      if (len < 30 || len > 16 * 60) continue;
+      out.push({ at: m.index, len: m[0].length, start: a, end: b, guess: null, label: m[0].trim() });
+    }
+    const words = [...text.matchAll(new RegExp(`[${HE}A-Za-z'׳"״]+|[-–—x]`, 'g'))];
+    for (const w of words) {
+      if (taken(w.index)) continue;
+      const word = w[0].replace(/^[וה](?=(בוקר|ערב|לילה|צהריים|צהרים)$)/, '').toLowerCase();
+      const n = named[word];
+      if (n) { out.push({ at: w.index, len: w[0].length, start: n[0], end: n[1], guess: 'named', label: w[0] }); continue; }
+      if (OFF_WORDS.includes(word) && (word.length > 1 || /^\s*[-–—x]\s*$/i.test(text.trim()) || /(^|[\s,|:;])[-–—x]([\s,|;]|$)/i.test(text.slice(Math.max(0, w.index - 1), w.index + 2)))) {
+        out.push({ at: w.index, len: w[0].length, off: true, label: w[0] });
+      }
+    }
+    for (const m of text.matchAll(TIME_RE)) {
+      if (taken(m.index)) continue;
+      const a = hhmm(m[1], m[2]);
+      if (a) out.push({ at: m.index, len: m[0].length, start: a, end: null, guess: 'single', label: m[0] });
+    }
+    out.sort((a, b) => a.at - b.at);
+    // two times side by side ("08:00 16:30", a cell split in two) are one range
+    for (let i = 0; i + 1 < out.length; i++) {
+      const a = out[i], b = out[i + 1];
+      if (a.guess !== 'single' || b.guess !== 'single' || !/^\s*(?:-|–|—|עד|to)?\s*$/.test(text.slice(a.at + a.len, b.at))) continue;
+      let len = toMin(b.start) - toMin(a.start); if (len <= 0) len += 1440;
+      if (len < 30 || len > 16 * 60) continue;
+      out.splice(i, 2, { at: a.at, len: b.at + b.len - a.at, start: a.start, end: b.start, guess: null, label: text.slice(a.at, b.at + b.len).trim() });
+    }
+    return out;
+  }
+  /** The words that name someone in a stretch of text ('' when none). */
+  function nameIn(text, named) {
+    const ws = (text.match(new RegExp(`[${HE}A-Za-z]{2,}`, 'g')) || []).filter((w) => !NOISE.has(w.toLowerCase()) && !named[w.toLowerCase()] && !OFF_WORDS.includes(w.toLowerCase()));
+    return ws.slice(0, 3).join(' ');
+  }
+  function namedMap(extra) {
+    const m = Object.assign({}, NAMED);
+    for (const [k, v] of Object.entries(extra || {})) if (v && v[0] && v[1]) m[k.toLowerCase()] = v;
+    return m;
+  }
+
+  /**
+   * Text → entries: { date | dow, start, end, guess, who, line }.
+   * opts: { today, named: { name: ['HH:MM', 'HH:MM'] } (the person's templates) }
+   */
+  function parseText(text, opts) {
+    opts = opts || {};
+    const today = opts.today;
+    const named = namedMap(opts.named);
+    const entries = [];
+    let day = null; // the day heading the lines under it
+    let head = null; // a table's head: its days in order
+    const lines = String(text || '').replace(/\r/g, '').split('\n');
+    lines.forEach((raw, li) => {
+      const line = raw.replace(/[‎‏‪-‮⁦-⁩]/g, '').replace(/\*/g, ' ');
+      if (!line.trim()) return;
+      const days = daysIn(line, today);
+      const rest = blank(line, days);
+      const shifts = shiftsIn(rest, named);
+      // days with no shifts among them: a table's head
+      if (days.length >= 3 && !shifts.some((s) => !s.off)) { head = days; day = null; return; }
+      // several days in one line ("ראשון 8-16 שני 9-17"): each shift goes with the day before it
+      if (days.length >= 2) {
+        head = null;
+        let from = 0;
+        for (const s of shifts) {
+          const d = days.filter((x) => x.at < s.at).pop() || days[0];
+          const who = nameIn(rest.slice(Math.max(from, d.at + d.len), s.at), named);
+          from = s.at + s.len;
+          if (!s.off) entries.push(entryOf(d, s, who, li));
+        }
+        day = days[days.length - 1];
+        return;
+      }
+      if (days.length) { day = days[0]; head = null; }
+      if (!shifts.length) return;
+      // a row under a table's head: one cell per day, in order (the name is what comes before)
+      if (head && !days.length) {
+        const who = nameIn(rest.slice(0, shifts[0].at), named) || nameIn(rest.slice(shifts[shifts.length - 1].at + shifts[shifts.length - 1].len), named);
+        shifts.slice(0, head.length).forEach((s, i) => { if (!s.off) entries.push(entryOf(head[i], s, who, li)); });
+        return;
+      }
+      if (!day) return;
+      let from = 0;
+      const mine = [];
+      for (const s of shifts) {
+        const who = nameIn(rest.slice(from, s.at), named);
+        from = s.at + s.len;
+        if (!s.off) { const e = entryOf(day, s, who, li); entries.push(e); mine.push(e); }
+      }
+      // a name after the hours ("22:00-06:00 לי"): the last shift's, when it had none before it
+      const last = mine[mine.length - 1];
+      if (last && !last.who) last.who = nameIn(rest.slice(from), named);
+    });
+    return finish(entries);
+  }
+  function entryOf(d, s, who, line) {
+    return { date: d.date, dow: d.dow, start: s.start, end: s.end, guess: s.guess, label: s.label, who: who || '', line };
+  }
+  function finish(entries) {
+    // the same shift twice (a message repeated): once
+    const seen = new Set();
+    const out = entries.filter((e) => { const k = [e.date || e.dow, e.start, e.end, e.who].join('|'); if (seen.has(k)) return false; seen.add(k); return true; });
+    const names = [...new Set(out.map((e) => e.who).filter(Boolean))];
+    return { entries: out, names, personal: !names.length, needsWeek: out.some((e) => e.date == null) };
+  }
+
+  /** Words with boxes ({ text, x0, y0, x1, y1 }) → entries, as parseText. */
+  function parseWords(words, opts) {
+    opts = opts || {};
+    const today = opts.today;
+    const named = namedMap(opts.named);
+    const W = (words || []).filter((w) => w && String(w.text || '').trim()).map((w) => ({ text: String(w.text).trim(), x0: +w.x0, x1: +w.x1, y0: +w.y0, y1: +w.y1, cx: (+w.x0 + +w.x1) / 2, cy: (+w.y0 + +w.y1) / 2 }));
+    if (!W.length) return finish([]);
+    const hs = W.map((w) => w.y1 - w.y0).sort((a, b) => a - b);
+    const h = hs[Math.floor(hs.length / 2)] || 10;
+    // rows by height
+    const rows = [];
+    for (const w of W.slice().sort((a, b) => a.cy - b.cy)) {
+      const r = rows.find((x) => Math.abs(x.cy - w.cy) < h * 0.6);
+      if (r) { r.words.push(w); r.cy = (r.cy * (r.words.length - 1) + w.cy) / r.words.length; } else rows.push({ cy: w.cy, words: [w] });
+    }
+    // the words of a row read right to left (Hebrew), as one text, with each day found in it
+    const rowDays = (r) => {
+      const ws = r.words.slice().sort((a, b) => b.cx - a.cx);
+      const out = [];
+      ws.forEach((w, i) => {
+        const pair = i + 1 < ws.length && Math.abs(ws[i + 1].x1 - w.x0) < h * 1.2 ? w.text + ' ' + ws[i + 1].text : null;
+        const d = daysIn(w.text, today)[0] || (pair && daysIn(pair, today)[0] && /^(יום|ביום)$/.test(w.text) ? daysIn(pair, today)[0] : null);
+        if (d && !out.some((o) => Math.abs(o.cx - w.cx) < h * 2.5)) out.push({ cx: w.cx, dow: d.dow, date: d.date, w });
+      });
+      return out;
+    };
+    const entries = [];
+    const headIdx = rows.findIndex((r) => rowDays(r).length >= 3);
+    if (headIdx >= 0) {
+      // days across the top: a column per day (a row of dates right under the names fills them in)
+      const cols = rowDays(rows[headIdx]);
+      const nextRow = rows[headIdx + 1];
+      // the date under a day's name; OCR often reads the "/" of a date as a 1 ("25110"): put back, it counts
+      // only when it gives exactly the date of that column's day
+      const dateFor = (c) => {
+        const w = nextRow && nextRow.words.filter((x) => Math.abs(x.cx - c.cx) < h * 3).sort((a, b) => Math.abs(a.cx - c.cx) - Math.abs(b.cx - c.cx))[0];
+        if (!w) return null;
+        const d = daysIn(w.text, today)[0];
+        if (d && d.date) return d;
+        if (c.dow == null || !/^\d{3,6}$/.test(w.text)) return null;
+        for (let i = 1; i < w.text.length - 1; i++) {
+          if (w.text[i] !== '1') continue;
+          const d2 = daysIn(w.text.slice(0, i) + '/' + w.text.slice(i + 1), today)[0];
+          if (d2 && d2.date && d2.dow === c.dow) return d2;
+        }
+        return null;
+      };
+      let dated = 0;
+      for (const c of cols) { const d = dateFor(c); if (d) { c.date = d.date; c.dow = d.dow; dated++; } }
+      const gap = cols.length > 1 ? Math.min(...cols.slice(1).map((c, i) => Math.abs(c.cx - cols[i].cx))) : h * 8;
+      const skip = new Set([headIdx]); if (dated >= 2) skip.add(headIdx + 1);
+      rows.forEach((r, ri) => {
+        if (skip.has(ri) || ri < headIdx) return;
+        const cells = cols.map(() => []); const label = [];
+        for (const w of r.words) {
+          let best = -1, bd = Infinity;
+          cols.forEach((c, i) => { const d = Math.abs(c.cx - w.cx); if (d < bd) { bd = d; best = i; } });
+          if (bd <= gap * 0.55) cells[best].push(w); else label.push(w);
+        }
+        const who = nameIn(label.sort((a, b) => b.cx - a.cx).map((w) => w.text).join(' '), named);
+        cells.forEach((ws, i) => {
+          const text = ws.sort((a, b) => a.cx - b.cx).map((w) => w.text).join(' ');
+          const s = shiftsIn(text, named).find((x) => !x.off);
+          if (s) entries.push(entryOf(cols[i], s, who, ri));
+        });
+      });
+      return finish(entries);
+    }
+    // days down the side: a row per day, the head row (above the first day) holds a column per person
+    const dayRows = rows.map((r, i) => ({ i, d: rowDays(r)[0] })).filter((x) => x.d);
+    if (dayRows.length >= 2) {
+      const first = dayRows[0].i;
+      const headRow = rows.slice(0, first).reverse().find((r) => r.words.some((w) => nameIn(w.text, named)));
+      const people = headRow ? headRow.words.filter((w) => nameIn(w.text, named) && !daysIn(w.text, today).length).map((w) => ({ cx: w.cx, who: nameIn(w.text, named) })) : [];
+      for (const { i, d } of dayRows) {
+        const r = rows[i];
+        const ws = r.words.filter((w) => w !== d.w);
+        if (people.length) {
+          const cells = people.map(() => []);
+          for (const w of ws) { let best = 0, bd = Infinity; people.forEach((p, k) => { const dd = Math.abs(p.cx - w.cx); if (dd < bd) { bd = dd; best = k; } }); cells[best].push(w); }
+          cells.forEach((cw, k) => { const s = shiftsIn(cw.sort((a, b) => a.cx - b.cx).map((w) => w.text).join(' '), named).find((x) => !x.off); if (s) entries.push(entryOf(d, s, people[k].who, i)); });
+        } else {
+          const s = shiftsIn(ws.sort((a, b) => a.cx - b.cx).map((w) => w.text).join(' '), named).find((x) => !x.off);
+          if (s) entries.push(entryOf(d, s, '', i));
+        }
+      }
+      return finish(entries);
+    }
+    // no table shape: read as text, a row a line
+    return parseText(rows.map((r) => r.words.slice().sort((a, b) => b.cx - a.cx).map((w) => w.text).join(' ')).join('\n'), opts);
+  }
+
+  const norm = (s) => String(s || '').toLowerCase().replace(/[֑-ׇ'׳"״.]/g, '').replace(/\s+/g, ' ').trim();
+  /** Is this name the person's? (any of their names, a whole word: "לי" is in "לי בטן", not in "לילך") */
+  function isMine(who, mine) {
+    const w = norm(who);
+    if (!w) return false;
+    return (mine || []).map(norm).filter(Boolean).some((n) => w === n || w.split(' ').includes(n) || n.split(' ').includes(w));
+  }
+  /** The person's entries: theirs by name, or all of them in a schedule with no names. */
+  function pick(res, mine) {
+    if (res.personal) return res.entries.slice();
+    return res.entries.filter((e) => isMine(e.who, mine));
+  }
+  /** The Sunday of the week a schedule is most likely for: this week until Wednesday, then the next. */
+  function weekStartFor(today) {
+    const dow = dowOf(today);
+    return dow <= 3 ? addDays(today, -dow) : addDays(today, 7 - dow);
+  }
+  /** Entries → rows with a date and both times: a day name lands in the week from weekStart; a single time
+   * lasts lenMin. */
+  function rowsOf(entries, weekStart, lenMin) {
+    return entries.map((e) => {
+      const date = e.date || (e.dow != null ? addDays(weekStart, e.dow) : null);
+      if (!date || !e.start) return null;
+      const end = e.end || fromMin(toMin(e.start) + (lenMin || 480));
+      let len = toMin(end) - toMin(e.start); if (len <= 0) len += 1440;
+      return { date, start: e.start, end, overnight: toMin(end) <= toMin(e.start), hours: len / 60, guess: e.end ? e.guess : 'single', label: e.label, who: e.who };
+    }).filter(Boolean).sort((a, b) => (a.date + a.start).localeCompare(b.date + b.start));
+  }
+
+  root.Schedule = { parseText, parseWords, pick, isMine, weekStartFor, rowsOf, NAMED };
 })(typeof window !== 'undefined' ? window : globalThis);
 
 /* ---- core/places-data.js ---- */
@@ -5565,6 +5929,54 @@ window.APP_BUILD = '1.20.3-b91b2a4d';
     return 10;
   }
   /** Estimated accrual of vacation / sick days and recuperation, as of `asOf`. */
+  /**
+   * Holiday pay (דמי חגים) for an hourly worker, holiday by holiday (the extension order, framework agreement
+   * 2000 §7, as Kol Zchut explains it): the nine rest days of the Jewish holidays, paid when the worker has
+   * three months at the workplace, the holiday fell on a day they would have worked and did not work because of
+   * it, and they worked the day before and after or were away with the employer's consent (not scheduled counts).
+   * A holiday on Friday or Shabbat is paid only to someone who works on that day. The pay is a regular day's:
+   * the average daily hours of the three months before × the hourly rate (no travel).
+   * What the app cannot know (whether they "would have worked") is read from their own shifts: a weekday they
+   * usually work, or shifts on most days. A holiday they worked on is paid as work; holiday pay comes on top only
+   * when the work was not their choice (said, not counted).
+   * → [{ key, id, name, dow, status: 'due'|'maybe'|'worked'|'weekend'|'seniority'|'nowork', amount, avgHours, rate }]
+   */
+  function holidayPay(model, from, to, today) {
+    const ctx = model.ctx, settings = ctx.settings;
+    const out = [];
+    const years = new Set([+from.slice(0, 4), +to.slice(0, 4)]);
+    const hols = [...years].flatMap((y) => HebCal.holidaysForYear(y)).filter((h) => h.rest && h.key >= from && h.key <= to && h.key <= today);
+    const done = [...model.results.values()].filter((r) => r.status === 'done' && r.paidMin > 0);
+    // before the first shift in the app nothing is known (not "did not work"): those holidays are left out
+    const first = done.reduce((m, r) => (r.dateKey < m ? r.dateKey : m), '9999');
+    for (const h of hols.filter((x) => x.key > first)) {
+      const dow = U.dow(h.key);
+      const item = { key: h.key, id: h.id, name: h.name, dow, status: 'due', amount: 0, avgHours: 0, rate: 0 };
+      out.push(item);
+      if (settings.startDate && monthsBetween(settings.startDate, h.key) < 3) { item.status = 'seniority'; continue; }
+      const winFrom = U.addDays(h.key, -91), winTo = U.addDays(h.key, -1);
+      const win = done.filter((r) => r.dateKey >= winFrom && r.dateKey <= winTo);
+      const days = new Map(); // date → paid hours that day
+      for (const r of win) days.set(r.dateKey, (days.get(r.dateKey) || 0) + r.paidMin / 60);
+      if (!days.size) { item.status = 'nowork'; continue; }
+      let hours = 0; for (const v of days.values()) hours += v;
+      item.avgHours = hours / days.size;
+      // the role worked most in those months, and its rate on the holiday
+      const byRole = new Map();
+      for (const r of win) { const id = r.segments && r.segments[0] && r.segments[0].roleId; if (id) byRole.set(id, (byRole.get(id) || 0) + r.paidMin); }
+      const roleId = [...byRole.entries()].sort((a, b) => b[1] - a[1])[0];
+      const role = roleId && ctx.roles.get(roleId[0]);
+      item.rate = role ? roleRate(role, h.key) : 0;
+      item.amount = Math.round(item.avgHours * item.rate * 100) / 100;
+      const sameWeekday = [...days.keys()].filter((k) => U.dow(k) === dow).length; // of 13 weeks
+      const usual = sameWeekday >= 5, busy = days.size / 13 >= 4;
+      if (done.some((r) => r.dateKey === h.key)) item.status = 'worked';
+      else if ((dow === 5 || dow === 6) && !usual) item.status = 'weekend';
+      else item.status = usual || busy ? 'due' : 'maybe';
+    }
+    return out;
+  }
+
   function leaveBalances(model, asOf) {
     const S = model.ctx.settings;
     const L = S.leave;
@@ -5671,7 +6083,7 @@ window.APP_BUILD = '1.20.3-b91b2a4d';
     LAW_BREAK, validShift, validEntry, legalMinWage, minWageFor, youthRules, pensionMinAge, MIN_WAGE,
     makeCtx, roleRate, roundMinutes, monthsBetween, buildSegments, hasOverrides, computeShift, computeAll,
     periodByKey, periodOf, dayValue, computeEntries, travelByDay, incomeTaxRaw, netEstimate, pensionActive,
-    buildModel, totals, periodSummary, rangeSummary, pensionBaseOf, leaveBalances, vacationEntitlement, recuperationDays, ageAt, isMinor,
+    buildModel, totals, periodSummary, rangeSummary, pensionBaseOf, leaveBalances, holidayPay, vacationEntitlement, recuperationDays, ageAt, isMinor,
     dataIssues, ADJ_LABELS,
   };
 })(typeof window !== 'undefined' ? window : globalThis);
@@ -5720,6 +6132,7 @@ window.APP_BUILD = '1.20.3-b91b2a4d';
     recuperation: { cat: 'money', label: 'דמי הבראה' },
     birthday: { cat: 'reminder', label: 'יום הולדת' },
     minwage: { cat: 'money', label: 'שכר מינימום' },
+    holidayPay: { cat: 'money', label: 'דמי חגים' },
     youth: { cat: 'health', label: 'חוק עבודת הנוער' },
   };
 
@@ -5894,7 +6307,26 @@ window.APP_BUILD = '1.20.3-b91b2a4d';
       for (const role of model.ctx.roles.values()) {
         if (role.archived) continue;
         const rate = Engine.roleRate(role, today);
-        if (!(rate > 0) || rate + 0.005 >= mw.hourly) continue;
+        if (rate + 0.005 >= mw.hourly) continue;
+        // a waiter's tips (restaurant, café, bar) are wages: what counts is the pay per hour with them (the last 30
+        // days of this role's shifts); tips that bring it to the minimum are fine, said quietly
+        let hrs = 0, tipsSum = 0;
+        for (const r of model.results.values()) {
+          if (r.status !== 'done' || r.dateKey < U.addDays(today, -30) || !(r.paidMin > 0)) continue;
+          if (!(r.segments && r.segments[0] && r.segments[0].roleId === role.id)) continue;
+          hrs += r.paidMin / 60; tipsSum += +r.tips || 0;
+        }
+        if (tipsSum > 0 && hrs > 0) {
+          const eff = rate + tipsSum / hrs;
+          if (eff + 0.005 >= mw.hourly) {
+            alerts.push({ key: `minwt-${role.id}-${mw.hourly}-${rate}`, type: 'minwage', severity: 'info', ref: role.id,
+              title: `ב${role.name} השכר עם הטיפים מעל המינימום`,
+              body: `${U.money(rate)} לשעה ועוד הטיפים: בממוצע ${U.money(eff)} לשעה בחודש האחרון, מעל שכר המינימום (${U.money(mw.hourly)}). במסעדה, בית קפה או בר הטיפים הם חלק מהשכר, וצריכים להופיע בתלוש.`,
+              explain: 'הסכום שמגיע (טיפים בלבד, או שכר וטיפים) צריך להיות לפחות שכר המינימום לכל שעה. באולמות וגני אירועים הטיפים אינם חלק מהשכר.' });
+            continue;
+          }
+        }
+        if (!(rate > 0) && !(tipsSum > 0)) continue;
         // without a birth date the adult minimum is used; a teen may be fine at a lower rate
         const maybeTeen = !S.birthDate && !mw.custom && rate >= Engine.legalMinWage(today, U.addDays(today, -16 * 366)).hourly - 0.005;
         alerts.push({ key: `minw-${role.id}-${mw.from}-${mw.hourly}-${rate}`, type: 'minwage', severity: maybeTeen ? 'warn' : 'critical', push: maybeTeen ? 'anomaly' : 'critical', ref: role.id,
@@ -5903,6 +6335,21 @@ window.APP_BUILD = '1.20.3-b91b2a4d';
             ? `${U.money(rate)} לשעה, פחות משכר המינימום למבוגר (${U.money(adult)}). מתחת לגיל 18 המינימום נמוך יותר: הוסף תאריך לידה בהגדרות כדי לבדוק לפי הגיל שלך.`
             : `${U.money(rate)} לשעה, ושכר המינימום${mw.youth ? ` לגיל ${mw.age}` : ''} הוא ${U.money(mw.hourly)}. חסרים ${U.money(mw.hourly - rate)} על כל שעה.`,
           explain: mw.custom ? 'לפי שכר המינימום שהגדרת בהגדרות.' : `חוק שכר מינימום, התעריף מ-${U.fmtDate(mw.from)}${mw.youth ? ' (לנוער: ' + Math.round(mw.share * 100) + '% משכר המבוגר)' : ''}.` });
+      }
+    }
+    // holiday pay: the holidays of the last six weeks that look due (Engine.holidayPay), together in one note
+    // (a season of holidays, as in Tishrei, was four notes at once)
+    if (on('holidayPay') && Engine.holidayPay) {
+      const due = Engine.holidayPay(model, U.addDays(today, -42), U.addDays(today, -1), today).filter((h) => h.status === 'due' && h.amount > 0);
+      if (due.length) {
+        const h = due[0], sum = due.reduce((a, x) => a + x.amount, 0);
+        const names = due.map((x) => x.name).join(', ');
+        alerts.push({ key: 'holpay-' + due.map((x) => x.key).join('-'), type: 'holidayPay', severity: 'info', ref: h.key,
+          title: due.length === 1 ? `דמי חג על ${h.name}?` : `דמי חגים על ${due.length} חגים?`,
+          body: due.length === 1
+            ? `לא עבדת ב${h.name} (${U.fmtDate(h.key, 'short')}), ולפי המשמרות שלך נראה שמגיע לך עליו תשלום של יום עבודה רגיל: כ-${U.money(h.amount, 0)}. כדאי לבדוק שהוא מופיע בתלוש.`
+            : `לא עבדת ב${names}, ולפי המשמרות שלך נראה שמגיע לך עליהם תשלום של יום עבודה רגיל כל אחד: בסך הכול כ-${U.money(sum, 0)}. כדאי לבדוק שהם מופיעים בתלוש.`,
+          explain: `ממוצע של ${U.num(h.avgHours, 1)} שעות ביום בשלושת החודשים שלפני החג, כפול ${U.money(h.rate)} לשעה. מגיע אחרי 3 חודשי עבודה, כשהחג חל ביום עבודה רגיל שלך. בזכויות › דמי חגים.` });
       }
     }
     const ageNow = Engine.ageAt(S.birthDate, today);
@@ -6088,10 +6535,13 @@ window.APP_BUILD = '1.20.3-b91b2a4d';
     const a = state.activeShift;
     if (on('timer') && a && a.start) {
       const h = (now - a.start) / U.HOUR;
-      if (h > (+cfg.timerHours || 12)) {
+      // the set limit (12 hours), or sooner: three hours past how long this person's shifts usually last
+      const usualH = (+state.usualShiftMs || 0) / U.HOUR;
+      const limit = Math.min(+cfg.timerHours || 12, usualH >= 1 ? usualH + 3 : Infinity);
+      if (h > limit) {
         alerts.push({ key: 'timer-' + a.start, type: 'timer', severity: 'critical', push: 'critical',
-          title: 'שכחת לסיים משמרת?', body: `הטיימר רץ כבר ${U.num(h, 1)} שעות (מאז ${U.epochHM(a.start)}).`,
-          explain: 'הסף שהוגדר: ' + cfg.timerHours + ' שעות.' });
+          title: 'שכחת לסיים משמרת?', body: `הטיימר רץ כבר ${U.num(h, 1)} שעות (מאז ${U.epochHM(a.start)})` + (usualH >= 1 ? `, ובדרך כלל המשמרות שלך נמשכות כ-${U.hm(Math.round(usualH * 60))}.` : '.'),
+          explain: usualH >= 1 && limit < (+cfg.timerHours || 12) ? 'שלוש שעות אחרי האורך הרגיל של המשמרות שלך.' : 'הסף שהוגדר: ' + (cfg.timerHours || 12) + ' שעות.' });
       }
     }
     for (const r of model.results.values()) {
@@ -10485,6 +10935,8 @@ window.APP_BUILD = '1.20.3-b91b2a4d';
     setTimeout(run, 700);
   };
   App.rerender = () => App.render({ keepScroll: true });
+  /** A word by the person's gender (settings): g('עובד', 'עובדת') → "עובד" / "עובדת", or "עובד/ת" when not said. */
+  App.g = (m, f, x) => { const gd = S.settings.gender; if (gd === 'f') return f; if (gd === 'm' || m === f) return m; return x || (f.startsWith(m) ? m + '/' + f.slice(m.length) : m + '/' + f); };
 
   /* ---------------- clean language (core/clean.js) ----------------
    * Every name, job, workplace, note and reason passes through here before it is saved; while typing, a field
@@ -10608,9 +11060,53 @@ window.APP_BUILD = '1.20.3-b91b2a4d';
       }
     });
     if (!a) coinStep = null;
+    // the "did you forget to end it?" question comes (and goes) on the timer card by itself
+    const card = a && App.tab === 'home' && !App.blocking && document.querySelector('#view .timer-card');
+    if (card && !!App.overdue() !== !!card.querySelector('.tc-overdue')) App.rerender();
   };
   let coinStep = null;
   setInterval(App.tickTimer, 1000);
+
+  /* ---------------- "forgot to end the shift?" ----------------
+   * A shift that runs well past its planned end, or well past how long this person's shifts in that role usually
+   * last, gets a quiet question on the timer card with the likely end ready to tap ("end at 16:10"). Nothing
+   * changes without a tap; "still working" puts it off for two hours. */
+  const usualCache = new Map();
+  /** How long this person's shifts in a role usually last (ms, the median of the last 12; any role when that
+   * role has fewer than 4), or 0 when there are too few to tell. */
+  App.usualShiftMs = function (roleId) {
+    const hit = usualCache.get(roleId);
+    if (hit && Date.now() - hit.t < 60000 && hit.n === S.shifts.length) return hit.v;
+    const lens = (byRole) => S.shifts
+      .filter((s) => s.status === 'done' && s.end > s.start && (!byRole || s.roleId === roleId))
+      .sort((x, y) => y.start - x.start).slice(0, 12)
+      .map((s) => s.end - s.start).filter((ms) => ms >= 30 * 60000 && ms <= 20 * U.HOUR)
+      .sort((x, y) => x - y);
+    let l = lens(true);
+    if (l.length < 4) l = lens(false);
+    const v = l.length >= 4 ? l[Math.floor(l.length / 2)] : 0;
+    usualCache.set(roleId, { t: Date.now(), n: S.shifts.length, v });
+    return v;
+  };
+  /** The running shift is well past its planned end or its usual length: { end, why: 'planned'|'usual', usual }. */
+  App.overdue = function () {
+    const a = S.activeShift;
+    if (!a || !a.start) return null;
+    const now = Date.now();
+    if (a.stillAt && now - a.stillAt < 2 * U.HOUR) return null;
+    const planned = a.fromPlanned && App.shift(a.fromPlanned);
+    let end, why;
+    if (planned && planned.end > a.start) { end = planned.end; why = 'planned'; }
+    else {
+      const u = App.usualShiftMs(App.currentRole() || a.roleId);
+      if (!u) return null;
+      end = Math.round((a.start + u) / (5 * 60000)) * (5 * 60000); // the usual end, to the nearest five minutes
+      why = 'usual';
+    }
+    const grace = why === 'planned' ? 45 * 60000 : Math.max(45 * 60000, (end - a.start) * 0.25);
+    if (end <= a.start || now < end + grace) return null;
+    return { end, why, usual: end - a.start };
+  };
 
   /** Shift object for the running timer (for previews and saving). */
   App.activeAsShift = function (end, forSave) {
@@ -10628,13 +11124,16 @@ window.APP_BUILD = '1.20.3-b91b2a4d';
       items: [], note: a.note || '',
     };
   };
-  let previewCache = { t: 0, r: null };
+  let previewCache = { t: 0, r: null, key: '' };
   App.previewActive = function () {
-    if (Date.now() - previewCache.t < 15000 && previewCache.r) return previewCache.r;
+    const a = S.activeShift;
+    // the same running shift (a new one, an edited start, a break or a role switch is another)
+    const key = a ? [a.start, a.roleId, (a.breaks || []).map((b) => b.from + '-' + (b.to || '')).join(','), (a.splits || []).length].join('|') : '';
+    if (Date.now() - previewCache.t < 15000 && previewCache.r && previewCache.key === key) return previewCache.r;
     const sh = App.activeAsShift();
     if (!sh) return null;
     const r = Engine.computeShift(sh, App.model.ctx, { priorMin: priorMinutes(sh) });
-    previewCache = { t: Date.now(), r };
+    previewCache = { t: Date.now(), r, key };
     return r;
   };
   function priorMinutes(sh) {
@@ -10660,11 +11159,14 @@ window.APP_BUILD = '1.20.3-b91b2a4d';
     UI.toast('המשמרת התחילה — בהצלחה!');
     App.askNotifyPermission();
   };
-  App.stopShift = async function (at) {
+  /** Ends the running shift now, or at endAt (an earlier moment: "end at 16:10" for a shift left running). */
+  App.stopShift = async function (at, endAt) {
     const a = S.activeShift;
     if (!a) return;
-    if (a.breaks && a.breaks.length && !a.breaks[a.breaks.length - 1].to) a.breaks[a.breaks.length - 1].to = Date.now();
-    const sh = App.activeAsShift(Date.now(), true);
+    const end = endAt && endAt > a.start && endAt < Date.now() ? endAt : Date.now();
+    // breaks after the end are dropped, one still open closes at the end
+    if (a.breaks && a.breaks.length) a.breaks = a.breaks.filter((b) => b.from < end).map((b) => ({ from: b.from, to: Math.min(b.to || end, end) }));
+    const sh = App.activeAsShift(end, true);
     sh.id = U.uid();
     if ((sh.end - sh.start) < 60000) {
       const ok = await UI.confirm('משמרת קצרה מאוד', 'המשמרת נמשכה פחות מדקה. לשמור בכל זאת?', 'שמור');
@@ -10684,8 +11186,10 @@ window.APP_BUILD = '1.20.3-b91b2a4d';
     // a timer that kept running (the phone in a pocket, a forgotten stop): it is saved, so nothing is
     // lost, and the end time can be fixed right away
     const hours = (sh.end - sh.start) / U.HOUR;
-    if (hours > (+S.settings.alerts.suspiciousHours || 20)) {
-      const fix = await UI.confirm('שכחת לעצור?', `הטיימר רץ ${U.num(hours, 1)} שעות, מ-${U.fmtDate(U.epochKey(sh.start), 'short')} ב-${U.epochHM(sh.start)}. אפשר לתקן עכשיו את שעת הסיום.`, 'לתקן');
+    const usual = App.usualShiftMs(a.roleId);
+    const muchLonger = usual && sh.end - sh.start > Math.max(usual * 1.6, usual + 3 * U.HOUR);
+    if (!endAt && (hours > (+S.settings.alerts.suspiciousHours || 20) || muchLonger)) {
+      const fix = await UI.confirm('שכחת לעצור?', `הטיימר רץ ${U.num(hours, 1)} שעות, מ-${U.fmtDate(U.epochKey(sh.start), 'short')} ב-${U.epochHM(sh.start)}${usual ? `, ובדרך כלל המשמרות שלך נמשכות כ-${U.hm(Math.round(usual / 60000))}` : ''}. אפשר לתקן עכשיו את שעת הסיום.`, 'לתקן');
       if (fix && App.sheetsApi.shiftEditor) { App.sheetsApi.shiftEditor(sh.id); return; }
     }
     App.sheetsApi.shiftDetail && App.sheetsApi.shiftDetail(sh.id);
@@ -10728,7 +11232,7 @@ window.APP_BUILD = '1.20.3-b91b2a4d';
    * hours than usual, no shift for a week, overlaps). The engine still finds those; they show where they belong
    * (the payslip check, the rights screen, the shift itself), not as notifications. A reminder before a planned
    * shift only when switched on in Settings. */
-  const NOTIFY = new Set(['weekly', 'monthly', 'record', 'goal', 'birthday', 'timer', 'backup', 'payslipDue', 'upcoming']);
+  const NOTIFY = new Set(['weekly', 'monthly', 'record', 'goal', 'birthday', 'timer', 'backup', 'payslipDue', 'upcoming', 'holidayPay']);
   const kindSent = (a) => NOTIFY.has(a.type) && !(a.type === 'goal' && a.severity !== 'good');
   // the reminder before a planned shift is off unless switched on
   const notifiable = (a) => kindSent(a) && (a.type === 'upcoming' ? S.settings.alerts.remindPlanned === true : S.settings.alerts.types[a.type] !== false);
@@ -10750,6 +11254,8 @@ window.APP_BUILD = '1.20.3-b91b2a4d';
     now: Date.now(), activeShift: S.activeShift, payslips: S.payslips, gaps: S.gaps,
     // with cloud sync the data is already safe; the backup reminder only applies to local-only use
     lastBackup: S.meta.cloudUid ? Date.now() : S.settings.backup.lastBackup, roleName: App.roleName,
+    // how long this person's shifts usually last: the "forgot to end it?" reminder comes sooner for short shifts
+    usualShiftMs: S.activeShift ? App.usualShiftMs(S.activeShift.roleId) : 0,
   });
   App.runInsights = async function () {
     if (!App.model || !S.settings.onboarded) return;
@@ -10987,6 +11493,8 @@ window.APP_BUILD = '1.20.3-b91b2a4d';
     if (action === 'start' && !S.activeShift) App.actions['timer-start']();
     if (action === 'stop' && S.activeShift) App.stopShift(); // the widget's "end" button
     if (action === 'add') App.sheetsApi.shiftEditor();
+    if (action === 'schedule' && App.importSchedule) App.importSchedule(); // the app icon's shortcut
+    if (action === 'share-in' && App.receiveShare) App.receiveShare(); // shared to the app (sw.js)
     if (action === 'plus' && root.Plus) setTimeout(() => root.Plus.sheet(), 600); // back from the web checkout (?action=plus): straight to the code field
     setTimeout(() => { App.runInsights(); App.autoBackupCheck(); }, 1200);
     // is Shaati Plus for sale here, and owned? (Google Play, Android app only) The opening show waits for the
@@ -12765,7 +13273,477 @@ window.PAY_CONFIG = {
       else if (b.hasAttribute('data-imp-save')) add();
     });
     start();
+    // a report that came from elsewhere (shared to the app): read at once
+    if (opts && opts.file) fromFile(opts.file);
+    else if (opts && opts.text) parse(opts.text);
   };
+})(typeof window !== 'undefined' ? window : globalThis);
+
+/* ---- app/schedule-import.js ---- */
+/* ============================================================
+ * schedule-import.js — "I got the work schedule": a photo or a screenshot of it, or the WhatsApp message,
+ * becomes the person's planned shifts.
+ *
+ * Read on the phone (core/schedule.js): a message as text; a photo with the Hebrew OCR, word by word with
+ * their places, so a table's columns and rows hold. With the person's own Claude key a photo can be read by
+ * Claude instead (asked first; the picture is sent to Anthropic). A schedule with names keeps the person's
+ * shifts (their name is remembered, and when it is not there the names found are offered); day names land in
+ * the week chosen (this one until Wednesday, then the next). Every shift is shown before anything is added, a
+ * guessed time says so and can be set, one already in the app starts left out, and one tap adds them.
+ * ============================================================ */
+(function (root) {
+  'use strict';
+  const { App, Store, UI, U } = root;
+  const S = Store.S;
+  const { icon, esc } = UI;
+  const SC = () => root.Schedule;
+
+  // the person's own shift names (templates): "קופה" → its hours
+  const named = () => Object.fromEntries((S.templates || []).filter((t) => t.name && t.startT && t.endT).map((t) => [t.name.trim(), [t.startT, t.endT]]));
+  // their name as it is likely written in a schedule: the one used last, else the first name
+  function myNames() {
+    const out = [];
+    if (S.meta.schedName) out.push(S.meta.schedName);
+    for (const n of [S.settings.userName, S.meta.cloudName]) {
+      const v = String(n || '').trim();
+      if (v && !out.includes(v)) { out.push(v); const first = v.split(/\s+/)[0]; if (first !== v && !out.includes(first)) out.push(first); }
+    }
+    return out;
+  }
+
+  App.actions['import-schedule'] = () => App.importSchedule();
+  App.importSchedule = function (opts) {
+    opts = opts || {};
+    if (UI.sheets.length && !opts.over) UI.closeAll();
+    let res = null; // what was read: { entries, names, personal, needsWeek }
+    let who = []; // whose shifts (names)
+    let week = SC().weekStartFor(U.todayKey());
+    let rows = [];
+    let roleId = S.meta.lastRole && App.roles().some((r) => r.id === S.meta.lastRole) ? S.meta.lastRole : (App.roles()[0] || {}).id;
+    let lastFile = null;
+    const entry = UI.openSheet({
+      title: 'ייבוא סידור עבודה', full: true, cls: 'import-sheet sched-sheet',
+      body: '<div id="sc"></div>',
+      foot: '<button class="btn big" data-sc-save></button>',
+    });
+    const box = entry.sh.querySelector('#sc');
+    const save = entry.sh.querySelector('[data-sc-save]');
+    const showSave = (on) => { const f = entry.sh.querySelector('.sh-foot'); if (f) f.style.display = on ? '' : 'none'; };
+    const role = () => App.roles().find((r) => r.id === roleId) || App.roles()[0];
+    const usualMin = () => Math.round((App.usualShiftMs ? App.usualShiftMs(roleId) : 0) / 60000) || 480;
+    const hasKey = () => !!(S.settings.ai && S.settings.ai.apiKey);
+
+    function start() {
+      showSave(false);
+      const name = myNames()[0] || '';
+      box.innerHTML = `${App.mascotSays ? App.mascotSays('happy', 'קיבלת סידור עבודה? צלם אותו או הדבק את ההודעה, ואכניס את המשמרות שלך ללוח 📅', { size: 64 }) : ''}
+        <label class="field"><span class="lbl">השם שלך בסידור</span><input class="input" id="sc-name" value="${esc(name)}" placeholder="למשל: לי" autocomplete="given-name"></label>
+        <label class="btn big block imp-pick">${icon('camera')} צילום או צילום מסך של הסידור<input type="file" id="sc-file" hidden accept="image/*,application/pdf"></label>
+        ${opts.text ? '' : `<details class="imp-paste"${opts.paste ? ' open' : ''}><summary>${icon('chat', 's')} או להדביק את ההודעה מוואטסאפ</summary>
+          <textarea class="input" id="sc-text" rows="6" placeholder="למשל:&#10;ראשון: דני 8-16, לי 16-24&#10;שני: לי 8-16"></textarea>
+          <button class="btn tonal block" data-sc-read>${icon('check', 's')} קריאה</button></details>`}
+        ${hasKey() ? `<label class="switch-row sc-ai"><span class="body"><span class="t">קריאה חכמה עם Claude</span><span class="s">לטבלאות מסובכות. התמונה נשלחת ל-⁠Anthropic עם המפתח שלך</span></span><input type="checkbox" class="switch" id="sc-ai" ${S.meta.schedAi ? 'checked' : ''}></label>` : ''}
+        <div class="tiny muted imp-privacy">${icon('shield', 's')} ${hasKey() ? 'בלי קריאה חכמה, ' : ''}הסידור נקרא בטלפון בלבד, ולא נשלח לשום מקום.</div>`;
+      if (opts.text) { const t = opts.text; opts.text = null; parse(() => SC().parseText(t, { today: U.todayKey(), named: named() })); }
+    }
+    function busy(text) { showSave(false); box.innerHTML = `<div class="imp-busy">${App.mascot ? App.mascot('think', { size: 84 }) : ''}<div class="imp-bar" aria-hidden="true"><i></i></div><div class="small" id="sc-progress" role="status">${esc(text)}</div></div>`; }
+    function progress(text) { const p = box.querySelector('#sc-progress'); if (p) p.textContent = text; }
+    function none(sample) {
+      showSave(false);
+      box.innerHTML = `${App.mascotSays ? App.mascotSays('think', 'לא מצאתי בסידור משמרות שאני יודע לקרוא 🤔', { size: 64 }) : ''}
+        <div class="card small imp-tips"><b>מה עוזר:</b><ul><li>צילום ישר, חד ומואר של הטבלה (צילום מסך הכי טוב)</li><li>להדביק את ההודעה מוואטסאפ במקום תמונה שלה</li><li>שליד כל יום יהיו שעות, למשל: ראשון 8-16</li></ul></div>
+        ${sample ? `<details class="imp-paste"><summary>מה שנקרא</summary><div class="code">${esc(sample.slice(0, 1500))}</div></details>` : ''}
+        ${hasKey() && lastFile && /^image\//.test(lastFile.type) ? `<button class="btn tonal block" data-sc-ai-now>${icon('sparkle', 's')} לנסות קריאה חכמה עם Claude</button>` : ''}
+        <button class="btn tonal block" data-sc-again>${icon('camera', 's')} לנסות שוב</button>`;
+    }
+    // what was read → whose (the person's name, or the names to choose from) → the review
+    function parse(read) {
+      let r;
+      try { r = read(); } catch (e) { console.warn('schedule', e); r = null; }
+      if (!r || !r.entries.length) { none(r && r.text); return; }
+      res = r;
+      const mine = myNames();
+      who = res.personal ? [] : res.names.filter((n) => SC().isMine(n, mine));
+      if (root.Fx) root.Fx.play('pick');
+      review();
+    }
+    function placed() {
+      const es = res.personal ? res.entries : res.entries.filter((e) => who.some((w) => SC().isMine(e.who, [w])));
+      const prev = new Map(rows.map((r) => [r.k, r]));
+      rows = SC().rowsOf(es, week, usualMin()).map((r) => {
+        const k = [r.date, r.start, r.end].join('|');
+        const old = prev.get(k);
+        const start = U.toEpoch(r.date, r.start);
+        let end = U.toEpoch(r.date, r.end); if (end <= start) end = U.toEpoch(U.addDays(r.date, 1), r.end);
+        const emp = role() && role().employerId;
+        const taken = S.shifts.some((x) => x.employerId === emp && x.start < end && x.end > start);
+        return Object.assign(r, { k, s: start, e: end, taken, on: old ? old.on : !taken });
+      });
+    }
+    function review() {
+      placed();
+      const roles = App.roles();
+      const names = res.personal ? [] : res.names;
+      const head = names.length && !who.length
+        ? `${App.mascotSays ? App.mascotSays('think', `מצאתי בסידור ${names.length} שמות. מי את/ה?`, { size: 64 }) : ''}`
+        : `${App.mascotSays ? App.mascotSays('love', rows.length ? `מצאתי ${rows.length === 1 ? 'משמרת אחת' : rows.length + ' משמרות'} שלך! 🎉 בודקים רגע ומוסיפים` : 'לא מצאתי משמרות בשם הזה', { size: 64 }) : ''}`;
+      const thisWeek = U.addDays(U.todayKey(), -U.dow(U.todayKey())), nextWeek = U.addDays(thisWeek, 7);
+      const list = rows.map((r, i) => {
+        const day = U.HEB_DAYS ? U.HEB_DAYS[U.dow(r.date)] : '';
+        return `<div class="imp-row sc-row ${r.on ? 'on' : ''}" data-i="${i}">
+          <button class="sc-tog" data-sc-tog="${i}" aria-pressed="${r.on}" aria-label="${esc(day + ' ' + U.fmtDate(r.date, 'short'))}"><span class="imp-check" aria-hidden="true">${icon('check', 's')}</span>
+            <span class="imp-d"><b>${esc(day)} ${U.fmtDate(r.date, 'short')}</b><small>${r.taken ? '<i class="tag">כבר קיימת</i>' : ''}${r.guess ? '<i class="tag warn">שעה משוערת</i>' : ''}${r.e < Date.now() ? '<i class="tag">עברה</i>' : ''}</small></span></button>
+          <button class="sc-time" data-sc-time="${i}" aria-label="שינוי השעות"><span class="num">⁦${r.start}⁠–⁠${r.end}⁩</span>${icon('edit', 's')}</button></div>`;
+      }).join('');
+      box.innerHTML = `${head}
+        ${names.length ? `<div class="field"><span class="lbl">${who.length ? 'המשמרות של' : 'מי את/ה בסידור?'}</span><div class="chips sc-names">${names.map((n) => `<button class="chip ${who.includes(n) ? 'on' : ''}" data-sc-who="${esc(n)}" aria-pressed="${who.includes(n)}">${esc(n)}</button>`).join('')}</div></div>` : ''}
+        ${res.needsWeek && (who.length || !names.length) ? `<div class="field"><span class="lbl">לאיזה שבוע?</span><div class="chips sc-week">${[[thisWeek, 'השבוע'], [nextWeek, 'שבוע הבא']].map(([k, t]) => `<button class="chip ${week === k ? 'on' : ''}" data-sc-week="${k}" aria-pressed="${week === k}">${t} · מ-${U.fmtDate(k, 'short')}</button>`).join('')}</div></div>` : ''}
+        ${roles.length > 1 && rows.length ? `<div class="field"><span class="lbl">לאיזה תפקיד לשייך?</span><div class="chips imp-roles">${roles.map((r) => `<button class="chip ${r.id === roleId ? 'on' : ''}" data-sc-role="${r.id}"><span class="sw" style="background:${r.color}"></span>${esc(r.name)}${App.multiEmp() ? ' · ' + esc((App.employer(r.employerId) || {}).name || '') : ''}</button>`).join('')}</div></div>` : ''}
+        ${rows.length ? `<div class="imp-list sc-list">${list}</div>
+          ${rows.some((r) => r.guess) ? `<div class="tiny muted imp-note">${icon('info', 's')} "שעה משוערת": לפי שם המשמרת או האורך הרגיל שלך. לחיצה על השעות משנה אותן.</div>` : ''}
+          ${S.settings.alerts && !S.settings.alerts.remindPlanned ? `<label class="switch-row"><span class="body"><span class="t">להזכיר לי לפני כל משמרת</span><span class="s">שעה לפני, בהתראה</span></span><input type="checkbox" class="switch" id="sc-remind"></label>` : ''}` : ''}`;
+      showSave(rows.length > 0);
+      count();
+    }
+    function count() {
+      const n = rows.filter((r) => r.on).length;
+      save.disabled = !n;
+      save.innerHTML = `${icon('calendar', 's')} ${n === 1 ? 'הוספת משמרת אחת ללוח' : `הוספת ${n} משמרות ללוח`}`;
+    }
+    async function fromFile(file) {
+      if (!file) return;
+      lastFile = file;
+      if (file.size > 25 * 1024 * 1024) { UI.invalid('הקובץ גדול מדי (עד 25MB)'); return; }
+      const ai = hasKey() && /^image\//.test(file.type) && !!(box.querySelector('#sc-ai') || {}).checked;
+      if (ai) { await viaClaude(file); return; }
+      busy('קורא את הסידור…');
+      try {
+        const got = await App.readDocWords(file, progress);
+        parse(() => {
+          const r = SC().parseWords(got.words, { today: U.todayKey(), named: named() });
+          if (!r.entries.length && got.text) Object.assign(r, SC().parseText(got.text, { today: U.todayKey(), named: named() }));
+          r.text = got.text;
+          return r;
+        });
+      } catch (e) {
+        console.warn('schedule', e);
+        start();
+        UI.invalid(e && e.message && /[א-ת]/.test(e.message) ? e.message : 'לא הצלחנו לקרוא את הסידור. אפשר לנסות שוב או להדביק את ההודעה');
+      }
+    }
+    // the picture, read by Claude (the person's own key; asked first, since it goes to Anthropic)
+    async function viaClaude(file) {
+      const ok = await UI.confirm('קריאה חכמה עם Claude', 'התמונה של הסידור, עם השמות שבה, תישלח ל-⁠Anthropic עם המפתח שלך, רק כדי לקרוא אותה. השימוש מחויב בחשבון ה-⁠API שלך.', 'לשלוח');
+      if (!ok) { start(); return; }
+      busy('Claude קורא את הסידור…');
+      try {
+        const data = await jpegBase64(file);
+        const json = await App.claudeJson(aiPrompt(), [
+          { type: 'image', source: { type: 'base64', media_type: 'image/jpeg', data } },
+          { type: 'text', text: 'Read every shift in this work schedule.' },
+        ], AI_SCHEMA);
+        parse(() => fromAi(json));
+      } catch (e) {
+        console.warn('schedule ai', e);
+        start();
+        UI.dialog({ title: 'הקריאה החכמה נכשלה', text: String((e && e.message) || e), buttons: [{ label: 'סגור', value: true }] });
+      }
+    }
+    async function add() {
+      const r0 = role();
+      if (!r0) return;
+      const emp = App.employer(r0.employerId) || S.employers[0];
+      const ops = rows.filter((r) => r.on).map((r) => ({ store: 'shifts', put: {
+        id: U.uid(), kind: 'shift', employerId: r0.employerId, roleId: r0.id, status: r.e > Date.now() ? 'planned' : 'done', start: r.s, end: r.e,
+        breakMin: null, breakPaid: emp.defaultBreakPaid !== false, noTravel: false, splits: [], items: [], note: 'מסידור העבודה',
+      } }));
+      if (!ops.length) return;
+      save.disabled = true;
+      const remind = !!(box.querySelector('#sc-remind') || {}).checked;
+      const name = (who[0] || (box.querySelector('#sc-name') || {}).value || '').trim();
+      UI.closeTop();
+      if (name && name !== S.meta.schedName) await Store.setMeta({ schedName: name });
+      if (remind) await Store.setSettings((st) => { st.alerts.remindPlanned = true; });
+      await App.saveOps(ops, 'ייבוא סידור עבודה', ops.length === 1 ? 'משמרת אחת נוספה ללוח' : `${ops.length} משמרות נוספו ללוח 📅`);
+      if (root.Fx) root.Fx.celebrate('big');
+    }
+
+    entry.sh.addEventListener('change', (e) => {
+      if (e.target.id === 'sc-file') fromFile(e.target.files && e.target.files[0]);
+      if (e.target.id === 'sc-ai') Store.setMeta({ schedAi: e.target.checked }).catch(() => {});
+      if (e.target.id === 'sc-name') { const v = e.target.value.trim(); if (v) S.meta.schedName = v; }
+    });
+    entry.sh.addEventListener('click', async (e) => {
+      const b = e.target.closest('button');
+      if (!b) return;
+      if (b.hasAttribute('data-sc-read')) {
+        const t = box.querySelector('#sc-text').value;
+        const n = (box.querySelector('#sc-name') || {}).value;
+        if (n && n.trim()) S.meta.schedName = n.trim();
+        if (t.trim()) parse(() => Object.assign(SC().parseText(t, { today: U.todayKey(), named: named() }), { text: t })); else UI.invalid('מדביקים קודם את ההודעה');
+      } else if (b.hasAttribute('data-sc-again')) start();
+      else if (b.hasAttribute('data-sc-ai-now') && lastFile) viaClaude(lastFile);
+      else if (b.dataset.scWho != null) {
+        const n = b.dataset.scWho;
+        who = who.includes(n) ? who.filter((x) => x !== n) : who.concat([n]);
+        if (root.Fx) root.Fx.play('on');
+        review();
+      } else if (b.dataset.scWeek) { week = b.dataset.scWeek; if (root.Fx) root.Fx.play('on'); review(); }
+      else if (b.dataset.scRole) { roleId = b.dataset.scRole; rows.forEach((r) => { r.on = null; }); rows = []; if (root.Fx) root.Fx.play('on'); review(); }
+      else if (b.dataset.scTog != null) {
+        const r = rows[+b.dataset.scTog];
+        r.on = !r.on;
+        const row = b.closest('.sc-row');
+        row.classList.toggle('on', r.on); b.setAttribute('aria-pressed', String(r.on));
+        if (root.Fx) root.Fx.play(r.on ? 'on' : 'off');
+        count();
+      } else if (b.dataset.scTime != null) {
+        const r = rows[+b.dataset.scTime];
+        const st = await UI.pickTime({ value: r.start, title: 'שעת התחלה' });
+        if (!st) return;
+        const en = await UI.pickTime({ value: r.end, title: 'שעת סיום' });
+        if (!en) return;
+        // the change is kept for this shift (its key changes, so it is found by its place in the list)
+        const src = res.entries.find((x) => (x.date || U.addDays(week, x.dow)) === r.date && x.start === r.start);
+        if (src) { src.start = st; src.end = en; src.guess = null; }
+        review();
+      } else if (b.hasAttribute('data-sc-save')) add();
+    });
+    start();
+    // a picture that came from elsewhere (shared to the app from WhatsApp): read at once
+    if (opts.file) fromFile(opts.file);
+  };
+
+  /* ---------------- Claude (optional) ---------------- */
+  const AI_SCHEMA = {
+    type: 'object', additionalProperties: false, required: ['shifts'],
+    properties: { shifts: { type: 'array', items: { type: 'object', additionalProperties: false, required: ['who', 'date', 'day', 'start', 'end'],
+      properties: { who: { type: 'string' }, date: { type: 'string' }, day: { type: 'integer' }, start: { type: 'string' }, end: { type: 'string' } } } } },
+  };
+  function aiPrompt() {
+    const t = U.todayKey();
+    return `You read a work schedule (usually Hebrew, sometimes English) from a picture and list every shift of every person in it.
+Today is ${t} (${['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'][U.dow(t)]}). Weeks start on Sunday.
+For each shift give: who (the person's name exactly as written; "" if the schedule has no names), date (YYYY-MM-DD when the schedule shows dates, else ""), day (0=Sunday … 6=Saturday, the day of the week; -1 if unknown), start and end ("HH:MM", 24-hour; an end on the next morning is just its time).
+A cell with only a shift name and no hours: use בוקר 07:00-15:00, צהריים 11:00-19:00, ערב 15:00-23:00, לילה 23:00-07:00. Leave out days off (חופש, OFF, empty cells). Do not invent shifts.`;
+  }
+  function fromAi(json) {
+    const hm = (s) => { const m = /^(\d{1,2}):(\d{2})$/.exec(String(s || '').trim()); return m && +m[1] < 24 && +m[2] < 60 ? String(+m[1]).padStart(2, '0') + ':' + m[2] : null; };
+    const entries = ((json && json.shifts) || []).map((x) => {
+      const date = /^\d{4}-\d{2}-\d{2}$/.test(x.date || '') ? x.date : null;
+      const start = hm(x.start), end = hm(x.end);
+      const dow = date ? U.dow(date) : (x.day >= 0 && x.day <= 6 ? x.day : null);
+      if (!start || !end || (date == null && dow == null)) return null;
+      return { date, dow, start, end, guess: null, label: start + '-' + end, who: String(x.who || '').trim() };
+    }).filter(Boolean);
+    const names = [...new Set(entries.map((e) => e.who).filter(Boolean))];
+    return { entries, names, personal: !names.length, needsWeek: entries.some((e) => e.date == null) };
+  }
+  async function jpegBase64(file) {
+    const bmp = await createImageBitmap(file);
+    const k = Math.min(1, 1600 / Math.max(bmp.width, bmp.height));
+    const c = document.createElement('canvas');
+    c.width = Math.max(1, Math.round(bmp.width * k)); c.height = Math.max(1, Math.round(bmp.height * k));
+    c.getContext('2d').drawImage(bmp, 0, 0, c.width, c.height);
+    if (bmp.close) bmp.close();
+    return c.toDataURL('image/jpeg', 0.85).split(',')[1];
+  }
+  App.scheduleFromAi = fromAi; // tests
+
+  /* ---------------- shared to the app (Android's share sheet) ----------------
+   * The service worker keeps what was shared (sw.js); here it goes where it belongs: a spreadsheet to the hours
+   * report; text to the work schedule (or the hours report, when it reads as one); a picture or a PDF asks
+   * what it is (a work schedule, a payslip, an hours report). */
+  App.receiveShare = async function () {
+    let meta = null, file = null;
+    try {
+      const cache = await caches.open('shiftpay-share');
+      const m = await cache.match('./__share/meta');
+      if (m) meta = await m.json();
+      const r = await cache.match('./__share/file');
+      if (r && meta) { const blob = await r.blob(); file = new File([blob], meta.name || 'shared', { type: meta.type || blob.type || '' }); }
+      await cache.delete('./__share/meta');
+      await cache.delete('./__share/file');
+    } catch (e) { console.warn('share', e); }
+    if (!meta || Date.now() - (+meta.at || 0) > 10 * 60000) return; // nothing, or an old one
+    const text = String(meta.text || '');
+    if (!file) {
+      if (!text.trim()) return;
+      const today = U.todayKey();
+      const asSchedule = SC().parseText(text, { today, named: named() }).entries.length;
+      if (!asSchedule && root.Timesheet && root.Timesheet.parse(text, { today }).rows.length) App.importHours({ text });
+      else App.importSchedule({ text });
+      return;
+    }
+    if (/\.(xlsx|xlsm|xls|ods|csv|tsv)$/i.test(file.name) || /spreadsheet|excel|csv/i.test(file.type)) { App.importHours({ file }); return; }
+    if (UI.sheets.length) UI.closeAll();
+    const tile = (k, ic, tint, t, sub) => `<button class="am-tile" data-share-as="${k}">${UI.tile(ic, tint)}<span class="am-t">${t}</span><span class="am-s">${sub}</span></button>`;
+    UI.openSheet({
+      title: 'מה שיתפת?', cls: 'share-sheet',
+      body: `<div class="am-grid share-as">${tile('schedule', 'calendar', 'sky', 'סידור עבודה', 'למשמרות בלוח')}${tile('payslip', 'receipt', 'mint', 'תלוש שכר', 'לבדיקה')}${tile('hours', 'upload', 'violet', 'דוח שעות', 'למשמרות שהיו')}</div>`,
+      onMount: (el) => el.addEventListener('click', (e) => {
+        const b = e.target.closest('[data-share-as]');
+        if (!b) return;
+        const k = b.dataset.shareAs;
+        UI.closeTop();
+        setTimeout(() => {
+          if (k === 'schedule') App.importSchedule({ file });
+          else if (k === 'payslip') App.payslipFromFile(file);
+          else App.importHours({ file });
+        }, 320);
+      }),
+    });
+  };
+})(typeof window !== 'undefined' ? window : globalThis);
+
+/* ---- app/claim-report.js ---- */
+/* ============================================================
+ * claim-report.js — "something is not right with my pay": one document that gathers everything for a talk
+ * with the employer, an accountant, a workers' organisation or a lawyer, and a letter to send.
+ *
+ * For a period (the last pay period, three months, a year): what the payslips were checked against and what
+ * was missing (Payslip.analyze, the gaps still open), the rights that look unpaid (holiday pay, the minimum
+ * wage, travel), the law's terms in one line each, and every shift with its hours and the pay the law gives
+ * for it. Printed to PDF from the phone (the print window, as the reports screen does); the letter is copied
+ * or shared. Nothing is sent anywhere by the app.
+ * ============================================================ */
+(function (root) {
+  'use strict';
+  const { App, Store, UI, U, Engine } = root;
+  const S = Store.S;
+  const { icon, esc } = UI;
+
+  const LAWS = [
+    ['חוק שעות עבודה ומנוחה', 'שעות נוספות (125%, 150%), עבודה במנוחה השבועית ובחגים (150% לפחות), הפסקות.'],
+    ['חוק שכר מינימום', 'שכר המינימום לשעה, ולנוער לפי הגיל. אי אפשר לוותר עליו.'],
+    ['צו הרחבה (הסכם מסגרת 2000)', 'דמי חגים: 9 ימי חג בשנה לעובד/ת בשכר שעתי, אחרי 3 חודשי עבודה.'],
+    ['צו הרחבה בדבר השתתפות המעסיק בהוצאות נסיעה', 'החזר נסיעות לעבודה ובחזרה, עד התקרה היומית.'],
+    ['חוק הגנת השכר', 'תלוש שכר מפורט, ותשלום השכר עד ה-9 בחודש שאחרי.'],
+    ['חוק חופשה שנתית, חוק דמי מחלה, צו הרחבה בדבר דמי הבראה', 'ימי חופשה, ימי מחלה ודמי הבראה לפי הוותק והיקף המשרה.'],
+  ];
+
+  // what was found in the period: the payslips' findings, the rights that look unpaid, the shifts
+  function gather(from, to) {
+    const today = U.todayKey();
+    const slips = S.payslips.filter((p) => p.period && p.period >= from.slice(0, 7) && p.period <= to.slice(0, 7)).sort((a, b) => a.period.localeCompare(b.period));
+    const findings = [];
+    for (const slip of slips) {
+      let a = null;
+      try { a = root.Payslip.analyze(slip, App.model); } catch (e) { console.warn('claim', e); }
+      if (!a) continue;
+      for (const f of a.findings) if (f.status === 'bad' || (f.status === 'warn' && f.amount > 0)) findings.push(Object.assign({ period: slip.period }, f));
+    }
+    const gaps = S.gaps.filter((g) => g.status !== 'resolved' && g.period >= from.slice(0, 7) && g.period <= to.slice(0, 7));
+    const holidays = Engine.holidayPay ? Engine.holidayPay(App.model, from, to, today).filter((h) => h.status === 'due') : [];
+    const mw = Engine.minWageFor(S.settings, today);
+    const lowRoles = App.roles().filter((r) => { const rate = Engine.roleRate(r, today); return rate > 0 && rate + 0.005 < mw.hourly; });
+    const shifts = [...App.model.results.values()].filter((r) => r.status === 'done' && r.dateKey >= from && r.dateKey <= to).sort((a, b) => a.start - b.start);
+    const sum = Engine.rangeSummary(App.model, from, to);
+    return { from, to, slips, findings, gaps, holidays, mw, lowRoles, shifts, sum };
+  }
+  const total = (d) => d.findings.filter((f) => f.status === 'bad').reduce((a, f) => a + Math.max(0, f.amount || 0), 0) + d.holidays.reduce((a, h) => a + h.amount, 0);
+
+  /** The letter (first person, polite), from what was found. */
+  function letter(d) {
+    const items = [];
+    for (const f of d.findings.filter((x) => x.status === 'bad')) items.push(`${U.fmtMonth(f.period)}: ${f.title}${f.amount > 0 ? ` (הפרש משוער ${U.money(f.amount)})` : ''}.`);
+    for (const h of d.holidays) items.push(`דמי חג על ${h.name} (${U.fmtDate(h.key, 'short')}): לפי ממוצע השעות שלי, כ-${U.money(h.amount)}.`);
+    for (const r of d.lowRoles) items.push(`התעריף ב${r.name} (${U.money(Engine.roleRate(r, U.todayKey()))} לשעה) נמוך משכר המינימום (${U.money(d.mw.hourly)}).`);
+    if (!items.length) return '';
+    const name = S.settings.userName || '';
+    const t = total(d);
+    return `שלום,\n\nבדקתי את השכר שלי לתקופה ${U.fmtDate(d.from)} עד ${U.fmtDate(d.to)} מול רישום המשמרות שלי ומול הזכויות לפי החוק, ויש כמה דברים שאשמח שנבדוק יחד:\n\n${items.map((x, i) => `${i + 1}. ${x}`).join('\n')}\n${t > 0 ? `\nסה״כ הפרש משוער: ${U.money(t)}.\n` : ''}\nמצורף דוח מפורט עם כל המשמרות והחישוב. אשמח שתבדקו ותעדכנו אותי, ואם צריך, שיתוקן בתלוש הבא. אם פספסתי משהו, אשמח להסבר.\n\nתודה רבה,\n${name}`.trim();
+  }
+
+  /** The printable report (#print-root, then the print window: "save as PDF"). */
+  function print(d) {
+    const emp = S.employers[0] || {};
+    const sum = d.sum;
+    const t = total(d);
+    const el = document.getElementById('print-root');
+    const row = (cells) => `<tr>${cells.map((c) => `<td>${c}</td>`).join('')}</tr>`;
+    el.innerHTML = `<div dir="rtl" class="claim">
+      <h1>דוח לבירור שכר וזכויות</h1>
+      <div>${esc(S.settings.userName || '')}${emp.name ? ' · ' + esc(emp.name) : ''} · ${U.fmtDate(d.from)} – ${U.fmtDate(d.to)} · הופק ${U.fmtDate(U.todayKey())}</div><br>
+      <span class="kp">משמרות: <b>${sum.shifts}</b></span><span class="kp">שעות: <b>${U.hours(sum.hours)}</b></span><span class="kp">שכר לפי החוק (ברוטו): <b>${U.money(sum.gross)}</b></span>${t > 0 ? `<span class="kp">הפרש משוער: <b>${U.money(t)}</b></span>` : ''}
+      <h3>מה נמצא</h3>
+      ${d.findings.length || d.holidays.length || d.lowRoles.length ? `<table><tr><th>תקופה</th><th>נושא</th><th>פירוט</th><th>הפרש משוער</th></tr>
+        ${d.findings.map((f) => row([U.fmtMonth(f.period), esc(f.title), esc(f.detail || ''), f.amount > 0 ? U.money(f.amount) : '—'])).join('')}
+        ${d.holidays.map((h) => row([U.fmtDate(h.key, 'short'), 'דמי חג: ' + esc(h.name), `לא היה יום עבודה בגלל החג. ממוצע ${U.num(h.avgHours, 1)} שעות ביום × ${U.money(h.rate)} (3 חודשים לפני החג)`, U.money(h.amount)])).join('')}
+        ${d.lowRoles.map((r) => row(['היום', 'שכר מינימום: ' + esc(r.name), `${U.money(Engine.roleRate(r, U.todayKey()))} לשעה, המינימום ${U.money(d.mw.hourly)}`, '—'])).join('')}</table>`
+        : '<div>לא נמצאו פערים בתלושים שהוזנו או זכויות שנראות חסרות לתקופה הזאת.</div>'}
+      ${d.slips.length ? `<div style="font-size:9pt">תלושים שנבדקו: ${d.slips.map((p) => U.fmtMonth(p.period)).join(', ')}.</div>` : '<div style="font-size:9pt">לא הוזנו תלושים לתקופה הזאת. בדיקת תלוש (בהוספה +) משווה כל תלוש לרישום המשמרות.</div>'}
+      <h3>לפי סוג שעה</h3><table><tr><th>רגילות</th><th>125%</th><th>150%</th><th>שבת/חג</th><th>שבת/חג + נוספות</th><th>לילה</th></tr>${row([U.hours(sum.hoursBy.regular), U.hours(sum.hoursBy.ot1), U.hours(sum.hoursBy.ot2), U.hours(sum.hoursBy.rest), U.hours(sum.hoursBy.restOt1 + sum.hoursBy.restOt2), U.hours(sum.hoursBy.night)])}</table>
+      <h3>המשמרות</h3><table><tr><th>תאריך</th><th>תפקיד</th><th>שעות</th><th>זמן</th><th>נוספות</th><th>שבת/חג</th><th>שכר לפי החוק</th></tr>
+        ${d.shifts.map((r) => row([`${U.fmtDate(r.dateKey, 'short')} ${U.HEB_DAYS_SHORT[U.dow(r.dateKey)]}`, esc([...new Set(r.segments.map((s) => App.roleName(s.roleId)))].join(' → ')), `⁦${U.epochHM(r.start)}–${U.epochHM(r.end)}⁩`, U.hours(r.paidHours), r.otHours ? U.hours(r.otHours) : '', r.restHours ? U.hours(r.restHours) : '', U.money(r.wage)])).join('')}</table>
+      <h3>על מה זה נשען</h3><table>${LAWS.map(([a, b]) => row([`<b>${a}</b>`, b])).join('')}</table>
+      <div style="font-size:8pt;color:#555;margin-top:10pt">חושב באפליקציית Shaati לפי המשמרות והתלושים שהוזנו בה, וההגדרות (תעריף, שעות נוספות, שבת וחגים לפי ${esc((S.settings.rest && S.settings.rest.city) || 'העיר שנבחרה')}). זה כלי עזר ואינו ייעוץ משפטי: הסכם קיבוצי, צו הרחבה ענפי או החוזה שלך יכולים לקבוע אחרת. מומלץ לצרף את התלושים ודוחות הנוכחות. מידע נוסף: kolzchut.org.il</div>
+    </div>`;
+    UI.toast('בחלון ההדפסה בחר "שמור כ-⁠PDF"');
+    setTimeout(() => window.print(), 300);
+  }
+
+  /* ---------------- the screen ---------------- */
+  App.actions['claim-report'] = () => { if (UI.sheets.length) { UI.closeAll(); setTimeout(() => App.claimReport(), 320); } else App.claimReport(); };
+  App.claimReport = function () {
+    if (UI.sheets.length) UI.closeAll();
+    const P = Engine.periodOf(U.todayKey(), S.employers[0]);
+    const lastP = Engine.periodOf(U.addDays(P.from, -1), S.employers[0]);
+    const today = U.todayKey();
+    const RANGES = [
+      ['last', 'התקופה הקודמת', lastP.from, lastP.to],
+      ['q', '3 חודשים', U.addMonths(today, -3), today],
+      ['y', 'שנה', U.addMonths(today, -12), today],
+    ];
+    let pick = 'q';
+    let d = null;
+    const entry = UI.openSheet({
+      title: 'דוח לבירור שכר וזכויות', full: true, cls: 'claim-sheet',
+      body: '<div id="cl"></div>',
+      foot: `<button class="btn tonal" data-cl-letter>${icon('chat', 's')} מכתב למעסיק</button><button class="btn" data-cl-pdf>${icon('file', 's')} הפקת PDF</button>`,
+    });
+    const box = entry.sh.querySelector('#cl');
+    function draw() {
+      const r = RANGES.find((x) => x[0] === pick);
+      d = gather(r[2], r[3]);
+      const t = total(d);
+      const n = d.findings.filter((f) => f.status === 'bad').length + d.holidays.length + d.lowRoles.length;
+      box.innerHTML = `${App.mascotSays ? App.mascotSays(n ? 'think' : 'happy', n ? `מצאתי ${n === 1 ? 'דבר אחד' : n + ' דברים'} שכדאי לבדוק עם המעסיק${t > 0 ? `, בסך כ-${U.money(t, 0)}` : ''}.` : 'לא מצאתי פערים לתקופה הזאת. אפשר עדיין להפיק דוח מסודר של המשמרות והשכר.', { size: 64 }) : ''}
+        <div class="field"><span class="lbl">לאיזו תקופה?</span><div class="chips">${RANGES.map(([k, l, a, b]) => `<button class="chip ${pick === k ? 'on' : ''}" data-cl-range="${k}" aria-pressed="${pick === k}">${l}</button>`).join('')}</div></div>
+        <div class="card cl-what">
+          <div class="rt-row"><span class="rt-mark">${icon('receipt', 's')}</span><div><div class="t">${d.slips.length ? `${d.slips.length === 1 ? 'תלוש אחד נבדק' : d.slips.length + ' תלושים נבדקו'}` : 'לא הוזנו תלושים לתקופה'}</div><div class="d">${d.findings.length ? `${d.findings.length === 1 ? 'ממצא אחד' : d.findings.length + ' ממצאים'} מהבדיקה` : d.slips.length ? 'לא נמצאו פערים בתלושים' : 'בדיקת תלוש (בהוספה +) מוסיפה את ההשוואה לדוח'}</div></div></div>
+          <div class="rt-row"><span class="rt-mark">${icon('calendar', 's')}</span><div><div class="t">דמי חגים</div><div class="d">${d.holidays.length ? `כ-${U.money(d.holidays.reduce((a, h) => a + h.amount, 0), 0)} על ${d.holidays.length === 1 ? 'יום חג אחד' : d.holidays.length + ' ימי חג'}` : 'לא נראה שחסר'}</div></div></div>
+          <div class="rt-row"><span class="rt-mark">${icon('wallet', 's')}</span><div><div class="t">שכר מינימום</div><div class="d">${d.lowRoles.length ? d.lowRoles.map((r) => esc(r.name)).join(', ') + ': נמוך מהמינימום' : 'התעריפים מעל המינימום'}</div></div></div>
+          <div class="rt-row"><span class="rt-mark">${icon('clock', 's')}</span><div><div class="t">${d.sum.shifts} משמרות · ${U.hours(d.sum.hours)} שעות</div><div class="d">כל משמרת עם השעות והשכר לפי החוק</div></div></div>
+        </div>
+        <div class="tiny muted">${icon('shield', 's')} הדוח נוצר בטלפון. הוא כלי עזר ולא ייעוץ משפטי; הסכם קיבוצי או צו הרחבה ענפי יכולים לקבוע אחרת.</div>`;
+    }
+    entry.sh.addEventListener('click', async (e) => {
+      const b = e.target.closest('button');
+      if (!b) return;
+      if (b.dataset.clRange) { pick = b.dataset.clRange; if (root.Fx) root.Fx.play('on'); draw(); }
+      else if (b.hasAttribute('data-cl-pdf')) print(d);
+      else if (b.hasAttribute('data-cl-letter')) {
+        const text = letter(d);
+        if (!text) { UI.toast('לא נמצא מה לבקש לתקופה הזאת'); return; }
+        UI.openSheet({
+          title: 'מכתב למעסיק', cls: 'claim-letter',
+          body: `<div class="small muted" style="margin-bottom:8px">אפשר לערוך לפני ששולחים. כדאי לצרף את הדוח (PDF).</div><textarea class="input" id="cl-text" rows="14">${esc(text)}</textarea>`,
+          foot: `<button class="btn tonal" data-cl-copy>${icon('copy', 's')} העתקה</button><button class="btn" data-cl-share>${icon('share', 's')} שיתוף</button>`,
+          onMount: (el) => el.addEventListener('click', async (ev) => {
+            const x = ev.target.closest('button');
+            if (!x) return;
+            const v = el.querySelector('#cl-text').value;
+            if (x.hasAttribute('data-cl-copy')) { try { await navigator.clipboard.writeText(v); UI.toast('הועתק ✓'); } catch (err) { el.querySelector('#cl-text').select(); UI.toast('מסמנים ומעתיקים'); } }
+            if (x.hasAttribute('data-cl-share')) { if (navigator.share) navigator.share({ text: v }).catch(() => {}); else { try { await navigator.clipboard.writeText(v); UI.toast('הועתק ✓'); } catch (err) { /* ignore */ } } }
+          }),
+        });
+      }
+    });
+    draw();
+  };
+  App.claimData = gather; // tests
+  App.claimLetter = (from, to) => letter(gather(from, to));
 })(typeof window !== 'undefined' ? window : globalThis);
 
 /* ---- app/views-login.js ---- */
@@ -13110,6 +14088,18 @@ window.PAY_CONFIG = {
   // true once, for the first redraw after the moment (and only soon after it)
   const once = (k) => { const t = App[k]; App[k] = 0; return !!t && Date.now() - t < ENTER_MS; };
 
+  /* ---------------- "did you forget to end it?" on the running shift ---------------- */
+  // the likely end ready to tap: the planned end, or the usual length of this person's shifts (App.overdue)
+  function overdueBlock() {
+    const od = App.overdue && App.overdue();
+    if (!od) return '';
+    const k = U.epochKey(od.end);
+    const when = U.epochHM(od.end) + (k === U.todayKey() ? '' : k === U.addDays(U.todayKey(), -1) ? ' אתמול' : ' · ' + U.fmtDate(k, 'short'));
+    const why = od.why === 'planned' ? `המשמרת הייתה אמורה להסתיים ב-${U.epochHM(od.end)}` : `בדרך כלל המשמרות שלך נמשכות כ-${U.hm(Math.round(od.usual / 60000))} שעות`;
+    return `<div class="tc-overdue" role="status"><div class="tc-od-t">${icon('clock', 's')}<span><b>שכחת לסיים את המשמרת?</b><small>${esc(why)}</small></span></div>
+      <div class="tc-od-a"><button class="btn sm tc-od-end" data-act="timer-stop-at" data-at="${od.end}">סיום ב-${esc(when)}</button><button class="btn text sm" data-act="timer-still">עדיין בעבודה</button></div></div>`;
+  }
+
   /* ---------------- action: start, or the running shift ---------------- */
   function actionBlock() {
     const a = S.activeShift;
@@ -13121,6 +14111,7 @@ window.PAY_CONFIG = {
         <div class="tc-head"><span class="pulse" style="${App.phase()}"></span>${onBreak ? 'בהפסקה' : 'משמרת פעילה'}${role ? ' · ' + esc(role.name) : ''}<span class="spacer"></span><span class="tiny">מ-${U.epochHM(a.start)}</span></div>
         <div class="clock" data-clock="net">0:00:00</div>
         <div class="meta">עד עכשיו <b data-live-pay></b>${(a.breaks || []).length ? ' · הפסקות לא נספרות' : ''}</div>
+        ${overdueBlock()}
         <div class="tc-actions">
           <button class="btn big" data-act="timer-stop">${icon('stop')} סיים משמרת</button>
           <button class="icon-btn tonal lg" data-act="timer-break" aria-label="${onBreak ? 'חזור מהפסקה' : 'הפסקה'}">${icon(onBreak ? 'play' : 'coffee')}</button>
@@ -13324,6 +14315,13 @@ window.PAY_CONFIG = {
     App.startShift(id || S.meta.lastRole || (roles[0] && roles[0].id), { at: tapped(el) });
   };
   App.actions['timer-stop'] = (el) => App.stopShift(tapped(el));
+  App.actions['timer-stop-at'] = (el) => App.stopShift(tapped(el), +el.dataset.at);
+  App.actions['timer-still'] = async () => {
+    const a = S.activeShift;
+    if (!a) return;
+    await Store.setActive(Object.assign({}, a, { stillAt: Date.now() }));
+    UI.toast('בסדר, נשאל שוב בעוד שעתיים');
+  };
   App.actions['timer-break'] = (el) => App.toggleBreak(tapped(el));
   App.actions['timer-switch'] = () => {
     const a = S.activeShift;
@@ -13385,6 +14383,7 @@ window.PAY_CONFIG = {
           ${tile('entry-new', 'minus', 'orange', 'ניכוי', '', 'data-kind="adjustment" data-type="deduction"')}
           ${tile('payslip-new', 'receipt', 'mint', 'בדיקת תלוש', '')}
           ${tile('import-hours', 'upload', 'violet', 'ייבוא דוח שעות', '')}
+          ${tile('import-schedule', 'calendar', 'sky', 'ייבוא סידור עבודה', '')}
         </div>`,
     });
   };
@@ -14104,7 +15103,7 @@ window.PAY_CONFIG = {
         <span><i style="background:transparent;box-shadow:inset 0 0 0 1.5px var(--outline)"></i>מתוכננת</span>
         <span><i style="background:var(--rest-tint);border:1px solid var(--rest-mark)"></i>שבת/חג</span>
         <span><i style="background:var(--override)"></i>עקיפה ידנית</span></div>
-      <button class="btn tonal block" data-act="shift-plan">${icon('plus')} תכנן משמרת</button>`;
+      <div class="btn-row cal-plan"><button class="btn tonal" data-act="shift-plan">${icon('plus')} תכנן משמרת</button><button class="btn tonal" data-act="import-schedule">${icon('camera')} ייבוא סידור</button></div>`;
   };
   App.views.calendar_mount = function (v) {
     const el = v.querySelector('#cal-swipe');
@@ -14359,7 +15358,8 @@ window.PAY_CONFIG = {
         <button class="btn tonal" data-act="rep-share-img">${icon('image')} תמונה</button>
         <button class="btn tonal" data-act="rep-pdf">${icon('printer')} PDF</button>
         <button class="btn tonal" data-act="rep-csv">${icon('table')} CSV</button>
-      </div>`;
+      </div>
+      <button class="btn text block" data-act="claim-report" style="margin-top:4px">${icon('file', 's')} דוח ומכתב לבירור מול המעסיק</button>`;
   }
 
   /* ---------------- charts ---------------- */
@@ -14555,6 +15555,73 @@ window.PAY_CONFIG = {
   // the hours-report import reads PDFs and pictures the same way (import.js)
   App.readDocText = extract;
   App.loadLib = loadScript;
+  /**
+   * A picture or a PDF → its words, each with its box ({ text, x0, y0, x1, y1 }, y down), for reading a table
+   * (a work schedule): a picture through the same Hebrew OCR, a PDF from its own text (an OCR of the first page
+   * when it is scanned).
+   */
+  App.readDocWords = async function (file, progress) {
+    const isPdf = file.type === 'application/pdf' || /\.pdf$/i.test(file.name || '');
+    if (isPdf) {
+      await loadScript(LIBS.pdf);
+      const pdfjs = root.pdfjsLib;
+      pdfjs.GlobalWorkerOptions.workerSrc = LIBS.pdfWorker;
+      const doc = await pdfjs.getDocument({ data: await file.arrayBuffer() }).promise;
+      const page = await doc.getPage(1);
+      const tc = await page.getTextContent();
+      const words = tc.items.filter((it) => it.str && it.str.trim()).map((it) => {
+        const x = it.transform[4], y = it.transform[5], hgt = it.height || Math.abs(it.transform[3]) || 10;
+        return { text: it.str.trim(), x0: x, x1: x + (it.width || hgt * it.str.length * 0.5), y0: -(y + hgt), y1: -y };
+      });
+      if (words.length > 6) return { words, text: words.map((w) => w.text).join(' '), source: 'pdf' };
+      progress('ה-⁠PDF סרוק — מריץ זיהוי טקסט…');
+      const vp = page.getViewport({ scale: 2.5 });
+      const canvas = document.createElement('canvas');
+      canvas.width = vp.width; canvas.height = vp.height;
+      await page.render({ canvasContext: canvas.getContext('2d'), viewport: vp }).promise;
+      return Object.assign(await ocrWords(canvas, progress), { source: 'ocr' });
+    }
+    return Object.assign(await ocrWords(file, progress), { source: 'ocr' });
+  };
+  async function ocrPass(image, lang, progress, label) {
+    const worker = await root.Tesseract.createWorker(lang, 1, {
+      logger: (m) => { if (m.status === 'recognizing text') progress(`${label}… ${Math.round(m.progress * 100)}%`); },
+    });
+    try {
+      const { data } = await worker.recognize(image);
+      let ws = data.words;
+      if (!ws && data.blocks) ws = data.blocks.flatMap((b) => (b.paragraphs || []).flatMap((p) => (p.lines || []).flatMap((l) => l.words || [])));
+      const words = (ws || []).filter((w) => w && w.text && w.text.trim() && (w.confidence == null || w.confidence > 20))
+        .map((w) => ({ text: w.text.trim(), x0: w.bbox.x0, y0: w.bbox.y0, x1: w.bbox.x1, y1: w.bbox.y1 }));
+      return { words, text: data.text || '' };
+    } finally { await worker.terminate(); }
+  }
+  // hours like 08:00-16:00 (or 8-16) in a word
+  const TIMEY = /\d{1,2}(?::\d{2})?\s*[-–—]\s*\d{1,2}(?::\d{2})?|\d{1,2}:\d{2}/;
+  /**
+   * The words of a picture. The Hebrew model sometimes misreads hours that sit next to Hebrew ("08:00-16:00"
+   * came out "60 ה"), so a second pass reads the picture with the English model only, which reads digits well:
+   * hours it finds where the first pass has no hours take the place of what the first pass read there.
+   */
+  async function ocrWords(image, progress) {
+    await loadScript(LIBS.tesseract);
+    progress('טוען מנוע זיהוי עברית (פעם ראשונה ~10MB)…');
+    const he = await ocrPass(image, 'heb+eng', progress, 'מזהה טקסט');
+    let en;
+    try { en = await ocrPass(image, 'eng', progress, 'בודק את השעות'); } catch (e) { return he; }
+    const overlap = (a, b) => {
+      const ix = Math.max(0, Math.min(a.x1, b.x1) - Math.max(a.x0, b.x0)), iy = Math.max(0, Math.min(a.y1, b.y1) - Math.max(a.y0, b.y0));
+      return ix * iy / Math.max(1, Math.min((a.x1 - a.x0) * (a.y1 - a.y0), (b.x1 - b.x0) * (b.y1 - b.y0)));
+    };
+    let words = he.words.slice();
+    for (const w of en.words) {
+      if (!TIMEY.test(w.text)) continue;
+      const near = words.filter((h) => overlap(h, w) > 0.3);
+      if (near.some((h) => TIMEY.test(h.text))) continue;
+      words = words.filter((h) => !near.includes(h)).concat([w]);
+    }
+    return { words, text: he.text };
+  }
 
   /* ---------------- flow: upload → extract → verify ---------------- */
   App.actions['payslip-new'] = () => {
@@ -14578,6 +15645,8 @@ window.PAY_CONFIG = {
       },
     });
   };
+  /** A payslip file that came from elsewhere (shared to the app): straight to reading it. */
+  App.payslipFromFile = (file) => { if (UI.sheets.length) UI.closeAll(); startExtraction(file); };
   function defaultPeriod() {
     const emp = S.employers[0];
     return U.addMonthKey(Engine.periodOf(U.todayKey(), emp).key, -1);
@@ -14892,7 +15961,8 @@ window.PAY_CONFIG = {
       ${gaps.length ? `<div class="section-title">${icon('alert', 's')} פערים פתוחים<span class="spacer"></span><span class="small">${U.money(gaps.filter((g) => g.status === 'open').reduce((s, g) => s + g.amount, 0), 0)}</span></div>
         <div class="list">${gaps.map((g) => `<div class="item" style="cursor:default"><span class="lead" style="background:${g.status === 'maybe' ? 'var(--warn-bg)' : 'var(--bad-bg)'};color:${g.status === 'maybe' ? 'var(--warn)' : 'var(--bad)'}">${icon(g.status === 'maybe' ? 'refresh' : 'xc')}</span>
           <span class="body"><span class="t">${esc(g.title)} · ${U.fmtMonth(g.period)}</span><span class="s">${g.status === 'maybe' ? esc(g.note || 'ייתכן שהוחזר') : 'עוד לא הוחזר'}</span></span>
-          <span class="trail"><span class="a">${money(g.amount, 0)}</span><br><button class="btn text sm" data-act="gap-set" data-id="${esc(g.id)}" data-s="resolved">הוחזר ✓</button></span></div>`).join('')}</div>` : ''}
+          <span class="trail"><span class="a">${money(g.amount, 0)}</span><br><button class="btn text sm" data-act="gap-set" data-id="${esc(g.id)}" data-s="resolved">הוחזר ✓</button></span></div>`).join('')}</div>
+        <button class="btn tonal block" data-act="claim-report" style="margin-top:8px">${icon('file', 's')} דוח ומכתב לבירור מול המעסיק</button>` : ''}
       ${trend.length >= 2 ? `<div class="section-title">${icon('chart', 's')} מגמות</div><div class="card">${Charts.stacked(trend.map((p) => U.HEB_MONTHS[+p.period.slice(5) - 1].slice(0, 3)), [
         { name: 'נטו', color: '#1baf7a', values: trend.map((p) => (p.fields.net ? +p.fields.net.value : 0)) },
         { name: 'ניכויים', color: '#e34948', values: trend.map((p) => (p.fields.gross && p.fields.net ? Math.max(0, p.fields.gross.value - p.fields.net.value) : 0)) },
@@ -14940,8 +16010,13 @@ window.PAY_CONFIG = {
       },
     });
   };
-  async function callClaude(text) {
+  const callClaude = (text) => claudeJson(Payslip.aiPrompt(), text, Payslip.aiSchema());
+  /** One request to Claude with the person's own key, answered as JSON in the schema given (content: text, or
+   * blocks such as an image). Used by the payslip check and the schedule reader. */
+  App.claudeJson = (system, content, schema) => claudeJson(system, content, schema);
+  async function claudeJson(system, content, schema) {
     if (!navigator.onLine) throw new Error('אין חיבור לאינטרנט');
+    if (!S.settings.ai.apiKey) throw new Error('צריך מפתח API של Claude (הגדרות › עוזר AI ואודות › מפתח AI)');
     const mod = await import(/* webpackIgnore: true */ LIBS.anthropic);
     const Anthropic = mod.default || mod.Anthropic;
     const client = new Anthropic({ apiKey: S.settings.ai.apiKey, dangerouslyAllowBrowser: true });
@@ -14949,9 +16024,9 @@ window.PAY_CONFIG = {
     const params = {
       model,
       max_tokens: 16000,
-      system: Payslip.aiPrompt(),
-      messages: [{ role: 'user', content: text }],
-      output_config: { effort: 'medium', format: { type: 'json_schema', schema: Payslip.aiSchema() } },
+      system,
+      messages: [{ role: 'user', content }],
+      output_config: { effort: 'medium', format: { type: 'json_schema', schema } },
     };
     let res;
     try {
@@ -15838,6 +16913,7 @@ window.PAY_CONFIG = {
     ai: { icon: 'sparkle', title: 'מפתח AI וניתוח תלושים', sub: () => (S.settings.ai.apiKey ? 'מפתח מוגדר · ' + S.settings.ai.model : 'אופציונלי — ללא מפתח הכול מקומי') },
     backup: { icon: 'cloud', title: 'גיבוי ושחזור', sub: () => (S.settings.backup.lastBackup ? 'גיבוי אחרון: ' + UI.timeAgo(S.settings.backup.lastBackup) : 'עוד לא גובה') },
     import: { icon: 'upload', title: 'ייבוא דוח שעות', sub: () => 'Excel, CSV, PDF או צילום: כל המשמרות בבת אחת' },
+    schedule: { icon: 'calendar', title: 'ייבוא סידור עבודה', sub: () => 'צילום של הסידור או ההודעה מוואטסאפ: המשמרות שלך נכנסות ללוח' },
     export: { icon: 'download', title: 'ייצוא נתונים', sub: () => 'CSV / Excel, PDF, יומן' },
     demo: { icon: 'flask', title: 'מצב הדגמה', sub: () => (S.settings.demo ? 'פעיל' : 'נתוני דוגמה לבדיקת האפליקציה') },
     about: { icon: 'info', title: 'אודות והתקנה', sub: () => 'גרסה ' + root.APP_VERSION },
@@ -15851,7 +16927,7 @@ window.PAY_CONFIG = {
     net: 'מס מס הכנסה נקודות זיכוי פנסיה ביטוח לאומי מס בריאות השתלמות נטו', leave: 'חופשה מחלה הבראה ותק תחילת עבודה',
     goal: 'יעד יעדים חיסכון חוסכים', alerts: 'התראות תזכורות פוש הודעות', templates: 'תבנית תבניות משמרת קבועה',
     look: 'צבע צבעים ערכת נושא כהה בהיר מצב לילה גופן גופנים מראה צלילים רטט מוזיקה עיצוב כרטיס plus פלוס', security: 'קוד נעילה טביעת אצבע סיסמה',
-    assistant: 'בינה מלאכותית עוזר שאלות ai', ai: 'מפתח api claude ניתוח תלוש', backup: 'גיבוי שחזור קובץ', import: 'ייבוא דוח שעות נוכחות שעון אקסל excel csv pdf צילום קובץ להעלות משמרות מהעבודה', export: 'ייצוא אקסל excel csv pdf יומן',
+    assistant: 'בינה מלאכותית עוזר שאלות ai', ai: 'מפתח api claude ניתוח תלוש', backup: 'גיבוי שחזור קובץ', schedule: 'סידור עבודה סידור משמרות שבוע הבא צילום תמונה צילום מסך וואטסאפ whatsapp הודעה טבלה מתוכננות לוח', import: 'ייבוא דוח שעות נוכחות שעון אקסל excel csv pdf צילום קובץ להעלות משמרות מהעבודה', export: 'ייצוא אקסל excel csv pdf יומן',
     demo: 'דוגמה הדגמה', about: 'גרסה התקנה אודות', rights: 'זכויות שכר מינימום',
   };
   // the page is a few colourful doors; each opens its own small page with the sections behind it
@@ -15862,7 +16938,7 @@ window.PAY_CONFIG = {
     { id: 'money', icon: 'wallet', tint: 'sky', title: 'נטו, מס וזכויות', keys: ['net', 'leave', 'rights'], sub: () => `${S.settings.tax.creditPoints} נק׳ זיכוי · פנסיה ${S.settings.pension.employeePct}%` },
     { id: 'goals', icon: 'target', tint: 'pink', title: 'יעדים ותזכורות', keys: ['goal', 'alerts'], sub: () => (+S.settings.goal.amount ? 'יעד ' + U.money(S.settings.goal.amount, 0) : 'יעד, חיסכון והתראות') },
     { id: 'look', icon: 'palette', tint: 'orange', title: 'מראה ונעילה', keys: ['look', 'security'], sub: () => ({ system: 'לפי המערכת', light: 'בהיר', dark: 'כהה' }[S.settings.theme] || '') + (S.settings.lock.enabled ? ' · נעול 🔒' : '') },
-    { id: 'data', icon: 'cloud', tint: 'mint', title: 'גיבוי, ייבוא ונתונים', keys: ['backup', 'import', 'export', 'demo'], sub: () => (S.settings.backup.lastBackup ? 'גיבוי ' + UI.timeAgo(S.settings.backup.lastBackup) : 'גיבוי, ייצוא, נתוני דוגמה') },
+    { id: 'data', icon: 'cloud', tint: 'mint', title: 'גיבוי, ייבוא ונתונים', keys: ['backup', 'import', 'schedule', 'export', 'demo'], sub: () => (S.settings.backup.lastBackup ? 'גיבוי ' + UI.timeAgo(S.settings.backup.lastBackup) : 'גיבוי, ייצוא, נתוני דוגמה') },
     { id: 'more', icon: 'sparkle', tint: 'violet', title: 'עוזר AI ואודות', keys: ['assistant', 'ai', 'about'], sub: () => 'גרסה ' + root.APP_VERSION },
   ];
   const catOf = (k) => CATS.find((c) => c.keys.includes(k));
@@ -15982,7 +17058,7 @@ window.PAY_CONFIG = {
       <div class="ver">גרסה ${root.APP_VERSION} · מבנה נתונים ${Store.SCHEMA_VERSION}${S.settings.legal ? ' · תנאים ' + esc(S.settings.legal.version) + ' אושרו' : ''}</div>
       </div>`;
   };
-  App.actions['settings-open'] = (el) => (el.dataset.k === 'import' ? App.importHours({ over: true }) : el.dataset.k === 'assistant' ? (App.openAssistantOver || App.actions.assistant)() : el.dataset.k === 'rights' ? App.actions.rights() : App.sheetsApi.settingsSection(el.dataset.k));
+  App.actions['settings-open'] = (el) => (el.dataset.k === 'import' ? App.importHours({ over: true }) : el.dataset.k === 'schedule' ? App.importSchedule({ over: true }) : el.dataset.k === 'assistant' ? (App.openAssistantOver || App.actions.assistant)() : el.dataset.k === 'rights' ? App.actions.rights() : App.sheetsApi.settingsSection(el.dataset.k));
   // a door: its own small page with the sections behind it (their lines stay up to date while it is open)
   App.actions['settings-cat'] = (el) => {
     const c = CATS.find((x) => x.id === el.dataset.cat);
@@ -16003,7 +17079,7 @@ window.PAY_CONFIG = {
   // a search result: the section opens at the field, which lights up for a moment
   App.actions['settings-go'] = (el) => {
     const k = el.dataset.k;
-    if (k === 'assistant' || k === 'rights' || k === 'import') { App.actions['settings-open'](el); return; }
+    if (k === 'assistant' || k === 'rights' || k === 'import' || k === 'schedule') { App.actions['settings-open'](el); return; }
     App.sheetsApi.settingsSection(k, el.dataset.f || '');
   };
   function spotlight(sheet, label) {
@@ -17294,6 +18370,8 @@ window.PAY_CONFIG = {
     { id: 'minwage', ic: 'wallet', t: 'שכר מינימום', b: (c) => `<p>מאפריל 2026: <b>35.40 ₪ לשעה</b> לעובד מגיל 18. לנוער: עד גיל 16 – 26.07 ₪, בגיל 16 – 27.94 ₪, בגיל 17 – 30.92 ₪.</p><p>${c.mw.youth ? `לגיל שלך (${c.mw.age}) המינימום הוא <b>${U.money(c.mw.hourly)}</b>.` : c.mw.age != null ? `המינימום שחל עליך: <b>${U.money(c.mw.hourly)}</b>.` : 'הוסף תאריך לידה בהגדרות כדי לראות את המינימום לגילך.'} מעסיק רשאי לשלם יותר, אבל לא פחות.</p>`, l: () => link(KZ(App.isMinorNow() ? 'תשלום שכר לבני נוער' : 'שכר מינימום')) },
     { id: 'overtime', ic: 'clock', t: 'שעות נוספות', b: () => '<p>השעתיים הראשונות מעבר ליום עבודה רגיל משולמות ב-<b>125%</b>, ומעבר לכך ב-<b>150%</b>. גם מעבר ל-42 שעות בשבוע מתחילות שעות נוספות.</p><p>באפליקציה: הגדרות › חישוב השכר › חוקי חישוב (מתי מתחילות ובאיזה אחוז).</p>', l: () => link(KZ('גמול עבור שעות נוספות')) },
     { id: 'shabbat', ic: 'candle', t: 'שבת וחגים', b: () => '<p>עבודה במנוחה השבועית (לרוב שבת) משולמת לפחות ב-<b>150%</b>. השעות נקבעות לפי כניסת ויציאת השבת, והאפליקציה מחשבת אותן לפי העיר שלך.</p><p>עובד שעתי זכאי בדרך כלל גם ל<b>דמי חגים</b> אחרי 3 חודשי עבודה, על חג שחל ביום חול, בתנאים שבצו ההרחבה.</p>', l: () => link(KZ('גמול עבור העסקה במנוחה השבועית')) },
+    { id: 'holidays', ic: 'calendar', t: 'דמי חגים', b: (c) => `<p>בשכר לפי שעה מגיע תשלום על <b>9 ימי חג</b> בשנה שבהם לא עבדת בגלל החג: ראש השנה, יום כיפור, סוכות, שמחת תורה, פסח ושביעי של פסח, שבועות ויום העצמאות (מי שאינו יהודי יכול לבחור בחגי הדת שלו). התנאים: <b>3 חודשי עבודה</b> במקום, החג חל ביום שבו ${App.g('היית אמור', 'היית אמורה')} לעבוד, ועבדת ביום שלפניו ושאחריו (או שלא שובצת בהם). התשלום: יום עבודה רגיל, לפי ממוצע השעות היומי שלך כפול השכר לשעה. חג ביום שישי או בשבת משתלם רק למי שעובד בימים האלה.</p>${holidayList(c)}`, l: () => link(KZ('דמי חגים')) },
+    { id: 'tips', ic: 'gift', t: 'טיפים (מלצרים)', b: () => '<p>במסעדה, בית קפה או בר הטיפים הם <b>חלק מהשכר</b>: הם עוברים דרך המעסיק ומופיעים בתלוש, ולכן נחשבים גם בפנסיה, בחופשה, בדמי מחלה ובפיצויים.</p><p>מה שמגיע לך לכל שעה, טיפים בלבד או שכר וטיפים, צריך להיות <b>לפחות שכר המינימום</b>. אסור לממן מהטיפים נסיעות או דמי הבראה, אלא בהסכמה בכתב וכשיש בטיפים יותר מהשכר שסוכם.</p><p>באולמות וגני אירועים הטיפים אינם חלק מהשכר. באפליקציה רושמים טיפים בכל משמרת (או בהוספה › בונוס / טיפים), והבדיקה של שכר המינימום מחשבת אותם.</p>', l: () => link(KZ('תשר ("טיפ") למלצרים במסעדות, בתי קפה וברים')) },
     { id: 'breaks', ic: 'coffee', t: 'הפסקות ומנוחה', b: () => '<p>ביום עבודה של <b>6 שעות ומעלה</b> מגיעה הפסקה של <b>45 דקות</b>, מתוכן חצי שעה ברצף. בין שני ימי עבודה, ומנוחה שבועית של 36 שעות רצופות לפחות.</p>', l: () => link(KZ(App.isMinorNow() ? 'הפסקות בעבודה לנוער' : 'הפסקות בעבודה')) },
     { id: 'travel', ic: 'car', t: 'נסיעות', b: (c) => `<p>המעסיק חייב להחזיר את הוצאות הנסיעה לעבודה ובחזרה, לפי מחיר תחבורה ציבורית ועד תקרה יומית שמתעדכנת מדי שנה. ההחזר הוא בנוסף לשכר.</p><p>${c.travel > 0 ? `באפליקציה מוגדר החזר של <b>${U.money(c.travel)}</b> ליום עבודה.` : 'באפליקציה <b>לא מוגדר</b> החזר נסיעות. אפשר להגדיר בהגדרות › העבודה שלי › נסיעות ותקופת שכר.'}</p>`, l: () => link(KZ('החזר הוצאות נסיעה')) },
     { id: 'sick', ic: 'thermo', t: 'דמי מחלה', b: (c) => `<p>צוברים <b>1.5 ימי מחלה</b> לכל חודש עבודה מלא (עד 90). התשלום: היום הראשון – 0%, השני והשלישי – 50%, מהרביעי – 100%. צריך אישור מחלה.</p>${c.bal ? `<p>הצבירה שלך לפי האפליקציה: <b>${U.num(c.bal.sickAccrued - c.bal.sickUsed, 1)}</b> ימים.</p>` : ''}`, l: () => link(KZ('דמי מחלה')) },
@@ -17331,7 +18409,8 @@ window.PAY_CONFIG = {
       const from = U.addMonths(S.settings.startDate, +S.settings.pension.startAfterMonths || 6);
       pension = from <= today ? 'לפי הוותק שלך, אמורה להיות הפרשה לפנסיה בתלוש.' : `לפי הוותק שלך, ההפרשה צריכה להתחיל ב-${U.fmtDate(from)}.`;
     }
-    return { today, emp, mw, age, bal, pension, travel: +emp.travelPerDay || 0 };
+    const holidays = App.model ? Engine.holidayPay(App.model, U.addDays(today, -365), today, today) : [];
+    return { today, emp, mw, age, bal, pension, holidays, travel: +emp.travelPerDay || 0 };
   }
   function checks(c) {
     const rows = [];
@@ -17347,8 +18426,25 @@ window.PAY_CONFIG = {
       rows.push(['info', 'ימי מחלה צבורים', `${U.num(c.bal.sickAccrued - c.bal.sickUsed, 1)} ימים`]);
       if (c.bal.recuperation) rows.push(c.bal.recuperation.eligible ? ['ok', 'דמי הבראה', `כ-${U.money(c.bal.recuperation.amount, 0)} לשנה`] : ['info', 'דמי הבראה', `מ-${U.fmtDate(c.bal.recuperation.eligibleFrom, 'short')}`]);
     } else rows.push(['warn', 'ותק, חופשה והבראה', 'הגדר תאריך תחילת עבודה כדי לחשב']);
+    const hd = (c.holidays || []).filter((h) => h.status === 'due');
+    if (hd.length) rows.push(['info', 'דמי חגים', `כ-${U.money(hd.reduce((a, h) => a + h.amount, 0), 0)} על ${hd.length === 1 ? 'יום חג אחד' : hd.length + ' ימי חג'} בשנה האחרונה (אם לא שולמו)`]);
     rows.push(['info', 'פנסיה', c.pension]);
     return rows;
+  }
+  // the holidays of the last twelve months, each with what the app sees for it (Engine.holidayPay)
+  const HOL_STATUS = {
+    due: (h) => ['ok', `מגיע כ-${U.money(h.amount, 0)}`],
+    maybe: (h) => ['warn', `אולי כ-${U.money(h.amount, 0)}, אם ${App.g('היית אמור', 'היית אמורה')} לעבוד ביום הזה`],
+    worked: () => ['info', `עבדת בחג: מגיע תשלום על העבודה. אם לא ${App.g('בחרת', 'בחרת')} לעבוד בו אלא ${App.g('נדרשת', 'נדרשת')}, מגיעים גם דמי חג`],
+    weekend: (h) => ['info', `חל ביום ${U.HEB_DAYS[h.dow]}: משתלם רק למי שעובד ביום הזה`],
+    seniority: () => ['info', 'לפני 3 חודשי עבודה'],
+    nowork: () => ['info', 'לא עבדת בחודשים שלפניו'],
+  };
+  function holidayList(c) {
+    if (!c.holidays || !c.holidays.length) return '';
+    const due = c.holidays.filter((h) => h.status === 'due');
+    return `<div class="rt-hol">${c.holidays.map((h) => { const [k, t] = HOL_STATUS[h.status](h); return `<div class="rt-row"><span class="rt-mark" style="color:${MARK[k][1]}">${icon(MARK[k][0], 's')}</span><div><div class="t">${esc(h.name)} · ${U.fmtDate(h.key, 'short')}</div><div class="d">${esc(t)}</div></div></div>`; }).join('')}</div>
+      ${due.length ? `<p class="small">בשנה האחרונה: כ-<b>${U.money(due.reduce((a, h) => a + h.amount, 0), 0)}</b> על ${due.length === 1 ? 'יום חג אחד' : due.length + ' ימי חג'}. כדאי לבדוק שבתלושים של החודשים האלה יש שורה של "דמי חג" או "חגים".</p>` : ''}`;
   }
   const MARK = { ok: ['okc', 'var(--good)'], bad: ['alert', 'var(--bad)'], warn: ['alert', 'var(--warn)'], info: ['info', 'var(--on-surface-var)'] };
 
@@ -17371,9 +18467,10 @@ window.PAY_CONFIG = {
       <div class="card rt-topics">${TOPICS.map((tp) => `<details class="rt-topic" data-topic="${esc(tp.t)}"><summary>${icon(tp.ic, 's')}<span>${tp.t}</span><span class="chev">${icon('left', 's')}</span></summary><div class="rt-body">${tp.b(c)}<div class="tiny">${tp.l()}</div></div></details>`).join('')}</div>
       <div class="section-title">${icon('alert', 's')} משהו לא בסדר?</div>
       <div class="card rt-help">
-        <ol><li><b>תעד</b>: האפליקציה כבר שומרת את המשמרות. אפשר להפיק דוח PDF בדוחות.</li>
+        <ol><li><b>תעד</b>: האפליקציה כבר שומרת את המשמרות, והדוח לבירור מרכז הכול (תלושים, דמי חגים, כל המשמרות) עם מכתב מוכן.</li>
         <li><b>דבר עם המעסיק</b>: בניתוח תלוש יש הודעה מנומסת מוכנה לשליחה.</li>
         <li><b>קבל עזרה</b>: ${link(KZ('מינהל הסדרה ואכיפת חוקי עבודה'), 'איך מגישים תלונה')} · ${link('https://www.kolzchut.org.il/he/', 'כל זכות')}</li></ol>
+        <button class="btn block" data-act="claim-report" style="margin-bottom:8px">${icon('file')} דוח ומכתב לבירור מול המעסיק</button>
         <button class="btn tonal block" data-rt-ai>${icon('sparkle')} שאלה אחרת? שאל את העוזר</button>
       </div>
       </div>
@@ -17551,14 +18648,14 @@ window.PAY_CONFIG = {
 
   /* ---------------- what's new (once per big update, for people who already used the app) ---------------- */
   const WHATS_NEW = {
-    id: '1.20',
+    id: '1.21',
     items: [
-      ['sparkle', 'violet', 'פתיחה חדשה ומרשימה', 'שעון שמתקתק, לוגו שנוחת עם מטבעות וזיקוקים, וצליל שכיף לשמוע.'],
-      ['upload', 'pink', 'ייבוא דוח שעות', 'יש דוח מהעבודה? Excel, ‏PDF או צילום, וכל המשמרות נכנסות בבת אחת. בהוספה (+) או בהגדרות.'],
-      ['pin', 'mint', 'בחירת עיר חדשה', 'כל היישובים בישראל, עם חיפוש ומשפט קטן על כל מקום. "המיקום שלי" בוחר לבד את הכי קרוב.'],
-      ['coffee', 'amber', 'הפסקה לפי החוק', 'לא כתבתם הפסקה? היא נכנסת לבד לפי החוק, בתשלום. קצרה מדי? תופיע אזהרה.'],
-      ['star', 'sky', 'תעריף מיוחד באחוזים', 'יום בחירות? 200% למשמרת אחת (בעקיפות הידניות), או ליום שלם בלחיצה על היום בלוח השנה.'],
-      ['search', 'violet', 'הגדרות חדשות', 'הכול מסודר בקטגוריות, והחיפוש מבין בעיות: כתבו "השכר לא נכון" ותגיעו ישר לשדה הנכון.'],
+      ['calendar', 'sky', 'ייבוא סידור עבודה', 'מצלמים את הסידור או מדביקים את ההודעה מוואטסאפ, והמשמרות שלך נכנסות ללוח. בהוספה (+) או בלוח השנה.'],
+      ['share', 'violet', 'שיתוף ישר מוואטסאפ', 'לחיצה ארוכה על הסידור בוואטסאפ › שיתוף › Shaati. גם תלוש או דוח שעות.'],
+      ['star', 'mint', 'דמי חגים', 'האפליקציה בודקת על אילו חגים מגיע לך תשלום כשלא עבדת, וכמה. בזכויות › דמי חגים.'],
+      ['file', 'pink', 'דוח ומכתב למעסיק', 'משהו לא מסתדר בשכר? דוח מסודר (PDF) עם כל הממצאים והמשמרות, ומכתב מנומס מוכן. בזכויות או בדוחות.'],
+      ['clock', 'amber', '"שכחת לסיים את המשמרת?"', 'משמרת שנמשכת הרבה יותר מהרגיל שלך שואלת בעדינות, עם שעת הסיום הנכונה מוכנה ללחיצה.'],
+      ['sparkle', 'mint', 'פתיחה חלקה', 'האינטרו מחכה שהכול ייטען, ומסך הבית מופיע מוכן, בלי קפיצות.'],
     ],
   };
 

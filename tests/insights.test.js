@@ -148,3 +148,39 @@ T.test('odd alert settings never crash or hang the insights', () => {
     T.ok(res !== undefined, 'ran with ' + v);
   }
 });
+
+T.section('holiday pay alert');
+T.test('a weekday holiday of the last weeks, not worked, after 3 months: "holiday pay on …?" with the amount', () => {
+  const { U, HebCal, Engine, Defaults, Insights } = globalThis;
+  const settings = Defaults.defaultSettings(); settings.startDate = '2025-01-01';
+  const emp = Defaults.defaultEmployer(); const roles = Defaults.defaultRoles();
+  const rest = new Set(HebCal.holidaysForYear(2026).filter((h) => h.rest).map((h) => h.key));
+  const shifts = []; let n = 0;
+  for (let k = '2026-06-01'; k <= '2026-10-20'; k = U.addDays(k, 1)) if (U.dow(k) <= 4 && !rest.has(k)) shifts.push({ id: 'h' + (++n), kind: 'shift', employerId: 'emp1', roleId: 'r_sadran', status: 'done', start: U.toEpoch(k, '08:00'), end: U.toEpoch(k, '16:00'), breakMin: 0, breakPaid: true, items: [] });
+  const model = Engine.buildModel({ settings, employers: [emp], roles, dayRules: [], shifts, entries: [] });
+  // Yom Kippur 2026 is a Monday (21/9): due; the alert comes within six weeks of it
+  const yk = HebCal.holidaysForYear(2026).find((h) => h.id === 'yk');
+  T.eq(U.dow(yk.key), 1);
+  const res = Insights.run(model, { now: U.toEpoch(U.addDays(yk.key, 10), '12:00'), activeShift: null, payslips: [], gaps: [], lastBackup: Date.now() });
+  const all = res.alerts.filter((x) => x.type === 'holidayPay');
+  T.eq(all.length, 1, 'the holidays of the season in one note');
+  const a = all[0];
+  T.ok(/יום כיפור/.test(a.title + a.body), a.title + ' / ' + a.body); T.ok(/640|320/.test(a.body), a.body);
+});
+
+T.section('minimum wage with tips');
+T.test('a waiter below the minimum rate, tips bring it over: a quiet note, not an alarm; without tips: the alarm', () => {
+  const { U, Engine, Defaults, Insights } = globalThis;
+  const settings = Defaults.defaultSettings(); settings.startDate = '2025-01-01'; settings.birthDate = '1995-05-05';
+  const emp = Defaults.defaultEmployer(); const roles = Defaults.defaultRoles(); roles[0].rates = [{ from: '2000-01-01', rate: 30 }];
+  const run = (tips) => {
+    const shifts = []; let n = 0; const today = U.todayKey();
+    for (let i = 1; i <= 12; i++) { const k = U.addDays(today, -i * 2); shifts.push({ id: 't' + (++n), kind: 'shift', employerId: 'emp1', roleId: roles[0].id, status: 'done', start: U.toEpoch(k, '12:00'), end: U.toEpoch(k, '18:00'), breakMin: 0, breakPaid: true, items: tips ? [{ type: 'tips', amount: tips }] : [] }); }
+    const model = Engine.buildModel({ settings, employers: [emp], roles, dayRules: [], shifts, entries: [] });
+    return Insights.run(model, { now: Date.now(), activeShift: null, payslips: [], gaps: [], lastBackup: Date.now() }).alerts.filter((a) => a.type === 'minwage');
+  };
+  const withTips = run(120); // 6 hours, ₪120 tips: +₪20 an hour
+  T.ok(withTips.length === 1 && withTips[0].severity === 'info' && /עם הטיפים/.test(withTips[0].title), JSON.stringify(withTips.map((a) => [a.severity, a.title])));
+  const without = run(0);
+  T.ok(without.length === 1 && without[0].severity === 'critical', JSON.stringify(without.map((a) => [a.severity, a.title])));
+});

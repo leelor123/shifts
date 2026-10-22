@@ -106,7 +106,7 @@
         <span><i style="background:transparent;box-shadow:inset 0 0 0 1.5px var(--outline)"></i>מתוכננת</span>
         <span><i style="background:var(--rest-tint);border:1px solid var(--rest-mark)"></i>שבת/חג</span>
         <span><i style="background:var(--override)"></i>עקיפה ידנית</span></div>
-      <button class="btn tonal block" data-act="shift-plan">${icon('plus')} תכנן משמרת</button>`;
+      <div class="btn-row cal-plan"><button class="btn tonal" data-act="shift-plan">${icon('plus')} תכנן משמרת</button><button class="btn tonal" data-act="import-schedule">${icon('camera')} ייבוא סידור</button></div>`;
   };
   App.views.calendar_mount = function (v) {
     const el = v.querySelector('#cal-swipe');

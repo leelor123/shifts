@@ -242,6 +242,8 @@
     setTimeout(run, 700);
   };
   App.rerender = () => App.render({ keepScroll: true });
+  /** A word by the person's gender (settings): g('עובד', 'עובדת') → "עובד" / "עובדת", or "עובד/ת" when not said. */
+  App.g = (m, f, x) => { const gd = S.settings.gender; if (gd === 'f') return f; if (gd === 'm' || m === f) return m; return x || (f.startsWith(m) ? m + '/' + f.slice(m.length) : m + '/' + f); };
 
   /* ---------------- clean language (core/clean.js) ----------------
    * Every name, job, workplace, note and reason passes through here before it is saved; while typing, a field
@@ -365,9 +367,53 @@
       }
     });
     if (!a) coinStep = null;
+    // the "did you forget to end it?" question comes (and goes) on the timer card by itself
+    const card = a && App.tab === 'home' && !App.blocking && document.querySelector('#view .timer-card');
+    if (card && !!App.overdue() !== !!card.querySelector('.tc-overdue')) App.rerender();
   };
   let coinStep = null;
   setInterval(App.tickTimer, 1000);
+
+  /* ---------------- "forgot to end the shift?" ----------------
+   * A shift that runs well past its planned end, or well past how long this person's shifts in that role usually
+   * last, gets a quiet question on the timer card with the likely end ready to tap ("end at 16:10"). Nothing
+   * changes without a tap; "still working" puts it off for two hours. */
+  const usualCache = new Map();
+  /** How long this person's shifts in a role usually last (ms, the median of the last 12; any role when that
+   * role has fewer than 4), or 0 when there are too few to tell. */
+  App.usualShiftMs = function (roleId) {
+    const hit = usualCache.get(roleId);
+    if (hit && Date.now() - hit.t < 60000 && hit.n === S.shifts.length) return hit.v;
+    const lens = (byRole) => S.shifts
+      .filter((s) => s.status === 'done' && s.end > s.start && (!byRole || s.roleId === roleId))
+      .sort((x, y) => y.start - x.start).slice(0, 12)
+      .map((s) => s.end - s.start).filter((ms) => ms >= 30 * 60000 && ms <= 20 * U.HOUR)
+      .sort((x, y) => x - y);
+    let l = lens(true);
+    if (l.length < 4) l = lens(false);
+    const v = l.length >= 4 ? l[Math.floor(l.length / 2)] : 0;
+    usualCache.set(roleId, { t: Date.now(), n: S.shifts.length, v });
+    return v;
+  };
+  /** The running shift is well past its planned end or its usual length: { end, why: 'planned'|'usual', usual }. */
+  App.overdue = function () {
+    const a = S.activeShift;
+    if (!a || !a.start) return null;
+    const now = Date.now();
+    if (a.stillAt && now - a.stillAt < 2 * U.HOUR) return null;
+    const planned = a.fromPlanned && App.shift(a.fromPlanned);
+    let end, why;
+    if (planned && planned.end > a.start) { end = planned.end; why = 'planned'; }
+    else {
+      const u = App.usualShiftMs(App.currentRole() || a.roleId);
+      if (!u) return null;
+      end = Math.round((a.start + u) / (5 * 60000)) * (5 * 60000); // the usual end, to the nearest five minutes
+      why = 'usual';
+    }
+    const grace = why === 'planned' ? 45 * 60000 : Math.max(45 * 60000, (end - a.start) * 0.25);
+    if (end <= a.start || now < end + grace) return null;
+    return { end, why, usual: end - a.start };
+  };
 
   /** Shift object for the running timer (for previews and saving). */
   App.activeAsShift = function (end, forSave) {
@@ -385,13 +431,16 @@
       items: [], note: a.note || '',
     };
   };
-  let previewCache = { t: 0, r: null };
+  let previewCache = { t: 0, r: null, key: '' };
   App.previewActive = function () {
-    if (Date.now() - previewCache.t < 15000 && previewCache.r) return previewCache.r;
+    const a = S.activeShift;
+    // the same running shift (a new one, an edited start, a break or a role switch is another)
+    const key = a ? [a.start, a.roleId, (a.breaks || []).map((b) => b.from + '-' + (b.to || '')).join(','), (a.splits || []).length].join('|') : '';
+    if (Date.now() - previewCache.t < 15000 && previewCache.r && previewCache.key === key) return previewCache.r;
     const sh = App.activeAsShift();
     if (!sh) return null;
     const r = Engine.computeShift(sh, App.model.ctx, { priorMin: priorMinutes(sh) });
-    previewCache = { t: Date.now(), r };
+    previewCache = { t: Date.now(), r, key };
     return r;
   };
   function priorMinutes(sh) {
@@ -417,11 +466,14 @@
     UI.toast('המשמרת התחילה — בהצלחה!');
     App.askNotifyPermission();
   };
-  App.stopShift = async function (at) {
+  /** Ends the running shift now, or at endAt (an earlier moment: "end at 16:10" for a shift left running). */
+  App.stopShift = async function (at, endAt) {
     const a = S.activeShift;
     if (!a) return;
-    if (a.breaks && a.breaks.length && !a.breaks[a.breaks.length - 1].to) a.breaks[a.breaks.length - 1].to = Date.now();
-    const sh = App.activeAsShift(Date.now(), true);
+    const end = endAt && endAt > a.start && endAt < Date.now() ? endAt : Date.now();
+    // breaks after the end are dropped, one still open closes at the end
+    if (a.breaks && a.breaks.length) a.breaks = a.breaks.filter((b) => b.from < end).map((b) => ({ from: b.from, to: Math.min(b.to || end, end) }));
+    const sh = App.activeAsShift(end, true);
     sh.id = U.uid();
     if ((sh.end - sh.start) < 60000) {
       const ok = await UI.confirm('משמרת קצרה מאוד', 'המשמרת נמשכה פחות מדקה. לשמור בכל זאת?', 'שמור');
@@ -441,8 +493,10 @@
     // a timer that kept running (the phone in a pocket, a forgotten stop): it is saved, so nothing is
     // lost, and the end time can be fixed right away
     const hours = (sh.end - sh.start) / U.HOUR;
-    if (hours > (+S.settings.alerts.suspiciousHours || 20)) {
-      const fix = await UI.confirm('שכחת לעצור?', `הטיימר רץ ${U.num(hours, 1)} שעות, מ-${U.fmtDate(U.epochKey(sh.start), 'short')} ב-${U.epochHM(sh.start)}. אפשר לתקן עכשיו את שעת הסיום.`, 'לתקן');
+    const usual = App.usualShiftMs(a.roleId);
+    const muchLonger = usual && sh.end - sh.start > Math.max(usual * 1.6, usual + 3 * U.HOUR);
+    if (!endAt && (hours > (+S.settings.alerts.suspiciousHours || 20) || muchLonger)) {
+      const fix = await UI.confirm('שכחת לעצור?', `הטיימר רץ ${U.num(hours, 1)} שעות, מ-${U.fmtDate(U.epochKey(sh.start), 'short')} ב-${U.epochHM(sh.start)}${usual ? `, ובדרך כלל המשמרות שלך נמשכות כ-${U.hm(Math.round(usual / 60000))}` : ''}. אפשר לתקן עכשיו את שעת הסיום.`, 'לתקן');
       if (fix && App.sheetsApi.shiftEditor) { App.sheetsApi.shiftEditor(sh.id); return; }
     }
     App.sheetsApi.shiftDetail && App.sheetsApi.shiftDetail(sh.id);
@@ -485,7 +539,7 @@
    * hours than usual, no shift for a week, overlaps). The engine still finds those; they show where they belong
    * (the payslip check, the rights screen, the shift itself), not as notifications. A reminder before a planned
    * shift only when switched on in Settings. */
-  const NOTIFY = new Set(['weekly', 'monthly', 'record', 'goal', 'birthday', 'timer', 'backup', 'payslipDue', 'upcoming']);
+  const NOTIFY = new Set(['weekly', 'monthly', 'record', 'goal', 'birthday', 'timer', 'backup', 'payslipDue', 'upcoming', 'holidayPay']);
   const kindSent = (a) => NOTIFY.has(a.type) && !(a.type === 'goal' && a.severity !== 'good');
   // the reminder before a planned shift is off unless switched on
   const notifiable = (a) => kindSent(a) && (a.type === 'upcoming' ? S.settings.alerts.remindPlanned === true : S.settings.alerts.types[a.type] !== false);
@@ -507,6 +561,8 @@
     now: Date.now(), activeShift: S.activeShift, payslips: S.payslips, gaps: S.gaps,
     // with cloud sync the data is already safe; the backup reminder only applies to local-only use
     lastBackup: S.meta.cloudUid ? Date.now() : S.settings.backup.lastBackup, roleName: App.roleName,
+    // how long this person's shifts usually last: the "forgot to end it?" reminder comes sooner for short shifts
+    usualShiftMs: S.activeShift ? App.usualShiftMs(S.activeShift.roleId) : 0,
   });
   App.runInsights = async function () {
     if (!App.model || !S.settings.onboarded) return;
@@ -744,6 +800,8 @@
     if (action === 'start' && !S.activeShift) App.actions['timer-start']();
     if (action === 'stop' && S.activeShift) App.stopShift(); // the widget's "end" button
     if (action === 'add') App.sheetsApi.shiftEditor();
+    if (action === 'schedule' && App.importSchedule) App.importSchedule(); // the app icon's shortcut
+    if (action === 'share-in' && App.receiveShare) App.receiveShare(); // shared to the app (sw.js)
     if (action === 'plus' && root.Plus) setTimeout(() => root.Plus.sheet(), 600); // back from the web checkout (?action=plus): straight to the code field
     setTimeout(() => { App.runInsights(); App.autoBackupCheck(); }, 1200);
     // is Shaati Plus for sale here, and owned? (Google Play, Android app only) The opening show waits for the

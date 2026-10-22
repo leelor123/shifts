@@ -215,5 +215,8 @@
       else if (b.hasAttribute('data-imp-save')) add();
     });
     start();
+    // a report that came from elsewhere (shared to the app): read at once
+    if (opts && opts.file) fromFile(opts.file);
+    else if (opts && opts.text) parse(opts.text);
   };
 })(typeof window !== 'undefined' ? window : globalThis);

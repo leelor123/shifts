@@ -20,6 +20,8 @@
     { id: 'minwage', ic: 'wallet', t: 'שכר מינימום', b: (c) => `<p>מאפריל 2026: <b>35.40 ₪ לשעה</b> לעובד מגיל 18. לנוער: עד גיל 16 – 26.07 ₪, בגיל 16 – 27.94 ₪, בגיל 17 – 30.92 ₪.</p><p>${c.mw.youth ? `לגיל שלך (${c.mw.age}) המינימום הוא <b>${U.money(c.mw.hourly)}</b>.` : c.mw.age != null ? `המינימום שחל עליך: <b>${U.money(c.mw.hourly)}</b>.` : 'הוסף תאריך לידה בהגדרות כדי לראות את המינימום לגילך.'} מעסיק רשאי לשלם יותר, אבל לא פחות.</p>`, l: () => link(KZ(App.isMinorNow() ? 'תשלום שכר לבני נוער' : 'שכר מינימום')) },
     { id: 'overtime', ic: 'clock', t: 'שעות נוספות', b: () => '<p>השעתיים הראשונות מעבר ליום עבודה רגיל משולמות ב-<b>125%</b>, ומעבר לכך ב-<b>150%</b>. גם מעבר ל-42 שעות בשבוע מתחילות שעות נוספות.</p><p>באפליקציה: הגדרות › חישוב השכר › חוקי חישוב (מתי מתחילות ובאיזה אחוז).</p>', l: () => link(KZ('גמול עבור שעות נוספות')) },
     { id: 'shabbat', ic: 'candle', t: 'שבת וחגים', b: () => '<p>עבודה במנוחה השבועית (לרוב שבת) משולמת לפחות ב-<b>150%</b>. השעות נקבעות לפי כניסת ויציאת השבת, והאפליקציה מחשבת אותן לפי העיר שלך.</p><p>עובד שעתי זכאי בדרך כלל גם ל<b>דמי חגים</b> אחרי 3 חודשי עבודה, על חג שחל ביום חול, בתנאים שבצו ההרחבה.</p>', l: () => link(KZ('גמול עבור העסקה במנוחה השבועית')) },
+    { id: 'holidays', ic: 'calendar', t: 'דמי חגים', b: (c) => `<p>בשכר לפי שעה מגיע תשלום על <b>9 ימי חג</b> בשנה שבהם לא עבדת בגלל החג: ראש השנה, יום כיפור, סוכות, שמחת תורה, פסח ושביעי של פסח, שבועות ויום העצמאות (מי שאינו יהודי יכול לבחור בחגי הדת שלו). התנאים: <b>3 חודשי עבודה</b> במקום, החג חל ביום שבו ${App.g('היית אמור', 'היית אמורה')} לעבוד, ועבדת ביום שלפניו ושאחריו (או שלא שובצת בהם). התשלום: יום עבודה רגיל, לפי ממוצע השעות היומי שלך כפול השכר לשעה. חג ביום שישי או בשבת משתלם רק למי שעובד בימים האלה.</p>${holidayList(c)}`, l: () => link(KZ('דמי חגים')) },
+    { id: 'tips', ic: 'gift', t: 'טיפים (מלצרים)', b: () => '<p>במסעדה, בית קפה או בר הטיפים הם <b>חלק מהשכר</b>: הם עוברים דרך המעסיק ומופיעים בתלוש, ולכן נחשבים גם בפנסיה, בחופשה, בדמי מחלה ובפיצויים.</p><p>מה שמגיע לך לכל שעה, טיפים בלבד או שכר וטיפים, צריך להיות <b>לפחות שכר המינימום</b>. אסור לממן מהטיפים נסיעות או דמי הבראה, אלא בהסכמה בכתב וכשיש בטיפים יותר מהשכר שסוכם.</p><p>באולמות וגני אירועים הטיפים אינם חלק מהשכר. באפליקציה רושמים טיפים בכל משמרת (או בהוספה › בונוס / טיפים), והבדיקה של שכר המינימום מחשבת אותם.</p>', l: () => link(KZ('תשר ("טיפ") למלצרים במסעדות, בתי קפה וברים')) },
     { id: 'breaks', ic: 'coffee', t: 'הפסקות ומנוחה', b: () => '<p>ביום עבודה של <b>6 שעות ומעלה</b> מגיעה הפסקה של <b>45 דקות</b>, מתוכן חצי שעה ברצף. בין שני ימי עבודה, ומנוחה שבועית של 36 שעות רצופות לפחות.</p>', l: () => link(KZ(App.isMinorNow() ? 'הפסקות בעבודה לנוער' : 'הפסקות בעבודה')) },
     { id: 'travel', ic: 'car', t: 'נסיעות', b: (c) => `<p>המעסיק חייב להחזיר את הוצאות הנסיעה לעבודה ובחזרה, לפי מחיר תחבורה ציבורית ועד תקרה יומית שמתעדכנת מדי שנה. ההחזר הוא בנוסף לשכר.</p><p>${c.travel > 0 ? `באפליקציה מוגדר החזר של <b>${U.money(c.travel)}</b> ליום עבודה.` : 'באפליקציה <b>לא מוגדר</b> החזר נסיעות. אפשר להגדיר בהגדרות › העבודה שלי › נסיעות ותקופת שכר.'}</p>`, l: () => link(KZ('החזר הוצאות נסיעה')) },
     { id: 'sick', ic: 'thermo', t: 'דמי מחלה', b: (c) => `<p>צוברים <b>1.5 ימי מחלה</b> לכל חודש עבודה מלא (עד 90). התשלום: היום הראשון – 0%, השני והשלישי – 50%, מהרביעי – 100%. צריך אישור מחלה.</p>${c.bal ? `<p>הצבירה שלך לפי האפליקציה: <b>${U.num(c.bal.sickAccrued - c.bal.sickUsed, 1)}</b> ימים.</p>` : ''}`, l: () => link(KZ('דמי מחלה')) },
@@ -57,7 +59,8 @@
       const from = U.addMonths(S.settings.startDate, +S.settings.pension.startAfterMonths || 6);
       pension = from <= today ? 'לפי הוותק שלך, אמורה להיות הפרשה לפנסיה בתלוש.' : `לפי הוותק שלך, ההפרשה צריכה להתחיל ב-${U.fmtDate(from)}.`;
     }
-    return { today, emp, mw, age, bal, pension, travel: +emp.travelPerDay || 0 };
+    const holidays = App.model ? Engine.holidayPay(App.model, U.addDays(today, -365), today, today) : [];
+    return { today, emp, mw, age, bal, pension, holidays, travel: +emp.travelPerDay || 0 };
   }
   function checks(c) {
     const rows = [];
@@ -73,8 +76,25 @@
       rows.push(['info', 'ימי מחלה צבורים', `${U.num(c.bal.sickAccrued - c.bal.sickUsed, 1)} ימים`]);
       if (c.bal.recuperation) rows.push(c.bal.recuperation.eligible ? ['ok', 'דמי הבראה', `כ-${U.money(c.bal.recuperation.amount, 0)} לשנה`] : ['info', 'דמי הבראה', `מ-${U.fmtDate(c.bal.recuperation.eligibleFrom, 'short')}`]);
     } else rows.push(['warn', 'ותק, חופשה והבראה', 'הגדר תאריך תחילת עבודה כדי לחשב']);
+    const hd = (c.holidays || []).filter((h) => h.status === 'due');
+    if (hd.length) rows.push(['info', 'דמי חגים', `כ-${U.money(hd.reduce((a, h) => a + h.amount, 0), 0)} על ${hd.length === 1 ? 'יום חג אחד' : hd.length + ' ימי חג'} בשנה האחרונה (אם לא שולמו)`]);
     rows.push(['info', 'פנסיה', c.pension]);
     return rows;
+  }
+  // the holidays of the last twelve months, each with what the app sees for it (Engine.holidayPay)
+  const HOL_STATUS = {
+    due: (h) => ['ok', `מגיע כ-${U.money(h.amount, 0)}`],
+    maybe: (h) => ['warn', `אולי כ-${U.money(h.amount, 0)}, אם ${App.g('היית אמור', 'היית אמורה')} לעבוד ביום הזה`],
+    worked: () => ['info', `עבדת בחג: מגיע תשלום על העבודה. אם לא ${App.g('בחרת', 'בחרת')} לעבוד בו אלא ${App.g('נדרשת', 'נדרשת')}, מגיעים גם דמי חג`],
+    weekend: (h) => ['info', `חל ביום ${U.HEB_DAYS[h.dow]}: משתלם רק למי שעובד ביום הזה`],
+    seniority: () => ['info', 'לפני 3 חודשי עבודה'],
+    nowork: () => ['info', 'לא עבדת בחודשים שלפניו'],
+  };
+  function holidayList(c) {
+    if (!c.holidays || !c.holidays.length) return '';
+    const due = c.holidays.filter((h) => h.status === 'due');
+    return `<div class="rt-hol">${c.holidays.map((h) => { const [k, t] = HOL_STATUS[h.status](h); return `<div class="rt-row"><span class="rt-mark" style="color:${MARK[k][1]}">${icon(MARK[k][0], 's')}</span><div><div class="t">${esc(h.name)} · ${U.fmtDate(h.key, 'short')}</div><div class="d">${esc(t)}</div></div></div>`; }).join('')}</div>
+      ${due.length ? `<p class="small">בשנה האחרונה: כ-<b>${U.money(due.reduce((a, h) => a + h.amount, 0), 0)}</b> על ${due.length === 1 ? 'יום חג אחד' : due.length + ' ימי חג'}. כדאי לבדוק שבתלושים של החודשים האלה יש שורה של "דמי חג" או "חגים".</p>` : ''}`;
   }
   const MARK = { ok: ['okc', 'var(--good)'], bad: ['alert', 'var(--bad)'], warn: ['alert', 'var(--warn)'], info: ['info', 'var(--on-surface-var)'] };
 
@@ -97,9 +117,10 @@
       <div class="card rt-topics">${TOPICS.map((tp) => `<details class="rt-topic" data-topic="${esc(tp.t)}"><summary>${icon(tp.ic, 's')}<span>${tp.t}</span><span class="chev">${icon('left', 's')}</span></summary><div class="rt-body">${tp.b(c)}<div class="tiny">${tp.l()}</div></div></details>`).join('')}</div>
       <div class="section-title">${icon('alert', 's')} משהו לא בסדר?</div>
       <div class="card rt-help">
-        <ol><li><b>תעד</b>: האפליקציה כבר שומרת את המשמרות. אפשר להפיק דוח PDF בדוחות.</li>
+        <ol><li><b>תעד</b>: האפליקציה כבר שומרת את המשמרות, והדוח לבירור מרכז הכול (תלושים, דמי חגים, כל המשמרות) עם מכתב מוכן.</li>
         <li><b>דבר עם המעסיק</b>: בניתוח תלוש יש הודעה מנומסת מוכנה לשליחה.</li>
         <li><b>קבל עזרה</b>: ${link(KZ('מינהל הסדרה ואכיפת חוקי עבודה'), 'איך מגישים תלונה')} · ${link('https://www.kolzchut.org.il/he/', 'כל זכות')}</li></ol>
+        <button class="btn block" data-act="claim-report" style="margin-bottom:8px">${icon('file')} דוח ומכתב לבירור מול המעסיק</button>
         <button class="btn tonal block" data-rt-ai>${icon('sparkle')} שאלה אחרת? שאל את העוזר</button>
       </div>
       </div>

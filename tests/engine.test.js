@@ -400,3 +400,35 @@ T.test('a night shift into a 200% day: only the hours of that day', () => {
   const plain = calc(setup(), shift('2026-10-12', '22:00', '02:00'));
   T.near(r.specialPremium, 2 * plain.lines[0].rate);
 });
+
+T.section('holiday pay (דמי חגים)');
+{
+  // someone who works Sunday to Thursday, 08:00-16:00, from January 2026 (never on the holidays themselves)
+  const rest = new Set(HebCal.holidaysForYear(2026).filter((h) => h.rest).map((h) => h.key));
+  const weekdays = (from, to, dows) => { const out = []; for (let k = from; k <= to; k = U.addDays(k, 1)) if (dows.includes(U.dow(k)) && !rest.has(k)) out.push(shift(k, '08:00', '16:00')); return out; };
+  const hp = (mod) => { const d = setup(mod); return Engine.holidayPay(Engine.buildModel(d), '2026-01-01', '2026-12-31', '2026-10-21'); };
+  T.test('a weekday holiday is due: a regular day (8 hours × the rate); Friday/Shabbat ones are not', () => {
+    const list = hp((d) => { d.shifts = weekdays('2026-01-01', '2026-10-20', [0, 1, 2, 3, 4]); });
+    T.ok(list.length >= 9, 'the nine rest days of 2026 so far: ' + list.length);
+    for (const h of list) {
+      if (h.dow === 5 || h.dow === 6) T.eq(h.status, 'weekend', h.name);
+      else { T.eq(h.status, 'due', h.name); T.near(h.amount, 320); T.near(h.avgHours, 8); }
+    }
+  });
+  T.test('less than three months at the workplace: not yet', () => {
+    const list = hp((d) => { d.settings.startDate = '2026-02-01'; d.shifts = weekdays('2026-02-01', '2026-10-20', [0, 1, 2, 3, 4]); });
+    const pesach = list.find((h) => h.id === 'pesach1');
+    T.eq(pesach.status, 'seniority');
+  });
+  T.test('worked on the holiday: paid as work (holiday pay only when it was not their choice)', () => {
+    const list = hp((d) => { const a = HebCal.holidaysForYear(2026).find((h) => h.id === 'atzmaut').key; d.shifts = weekdays('2026-01-01', '2026-10-20', [0, 1, 2, 3, 4]).concat([shift(a, '09:00', '15:00')]); });
+    T.eq(list.find((h) => h.id === 'atzmaut').status, 'worked');
+  });
+  T.test('two days a week, a holiday on another weekday: maybe (they might not have worked that day)', () => {
+    const list = hp((d) => { d.shifts = weekdays('2026-01-01', '2026-10-20', [1, 2]); });
+    const wed = list.find((h) => h.dow === 3);
+    if (wed) T.eq(wed.status, 'maybe', wed.name);
+    const mon = list.find((h) => h.dow === 1);
+    if (mon) T.eq(mon.status, 'due', mon.name);
+  });
+}
