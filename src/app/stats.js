@@ -86,13 +86,22 @@
   };
   /** Is the signed-in user an admin? (the rules let a user read only their own admin entry) */
   Stats.checkAdmin = async function () {
+    const before = !!App.isAdmin;
     try {
       const Cloud = root.Cloud;
-      if (!Cloud || !Cloud.user) { App.isAdmin = false; return false; }
-      const { fs, db } = await Cloud.sdk();
-      const snap = await fs.getDoc(fs.doc(db, 'admins', Cloud.user.uid));
-      App.isAdmin = snap.exists();
-    } catch (e) { App.isAdmin = false; }
+      if (!Cloud || !Cloud.user) { App.isAdmin = false; }
+      else {
+        const { fs, db } = await Cloud.sdk();
+        const snap = await fs.getDoc(fs.doc(db, 'admins', Cloud.user.uid));
+        App.isAdmin = snap.exists();
+      }
+    } catch (e) { App.isAdmin = before && navigator.onLine === false; } // offline: keep what this phone knew
+    // remembered on this phone, so the next start draws the admin's look (a previewed Plus design on the pay
+    // card) from the first frame instead of switching to it a moment later; the server's rules decide what an
+    // admin may really do
+    const uid = App.isAdmin && root.Cloud && root.Cloud.user ? root.Cloud.user.uid : '';
+    if ((S.meta.adminUid || '') !== uid) await Store.setMeta({ adminUid: uid }).catch(() => {});
+    if (App.isAdmin !== before) { if (App.applyTheme) App.applyTheme(); if (App.rerender && !App.blocking) App.rerender(); }
     if (App.isAdmin && root.Support) root.Support.adminInbox().then(() => { if (App.tab === 'settings' && !App.blocking) App.rerender(); }).catch(() => {});
     if (App.isAdmin && App.tab === 'settings' && !App.blocking) App.rerender();
     return App.isAdmin;

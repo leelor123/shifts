@@ -1,6 +1,6 @@
 {
   "name": "shiftpay",
-  "version": "1.20.2",
+  "version": "1.20.3",
   "private": true,
   "description": "PWA אישית למעקב משמרות וחישוב שכר",
   "scripts": {

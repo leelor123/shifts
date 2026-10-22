@@ -22,7 +22,14 @@
   const Intro = {};
   root.Intro = Intro;
   const started = performance.now();
-  let ready = false, played = false, closed = false, master = null;
+  let ready = false, played = false, closed = false, leaving = false, master = null;
+  // The show stays until the app has finished starting, so nothing it does is seen loading: the first screen
+  // settles under it for a moment, and the start-up work that can still change that screen (the account, the
+  // admin check, Google Play, the fonts) is waited for, within a limit.
+  const CALM_MS = 700; // the first screen sits under the show at least this long
+  const HOLD_MAX = 2500; // the most the show waits for start-up work after it could have left
+  let drawnAt = 0, holdUntil = 0, recheck = 0;
+  const holds = new Set();
 
   let seen = false;
   try { seen = sessionStorage.getItem('introSeen') === '1'; sessionStorage.setItem('introSeen', '1'); } catch (e) { /* ignore */ }
@@ -37,10 +44,35 @@
     setTimeout(() => { el.remove(); if (root.App && root.App.applyTheme) root.App.applyTheme(); }, 520);
   }
   function maybeClose() {
-    if (closed || !ready) return;
-    if (!played) return;
-    close();
+    if (closed || leaving || !ready || !played) return;
+    const now = performance.now();
+    let wait = drawnAt + CALM_MS - now;
+    if (wait <= 0 && holds.size) {
+      if (!holdUntil) holdUntil = now + HOLD_MAX;
+      wait = holdUntil - now;
+    }
+    if (wait > 0) {
+      el.classList.add('wait'); // the logo keeps turning, as while loading
+      clearTimeout(recheck);
+      recheck = setTimeout(maybeClose, Math.min(wait, 250) + 5);
+      return;
+    }
+    leave();
   }
+  /** The last look: the app draws itself once more under the show (anything that changed while it waited
+   * lands unseen), then the show goes once that has been painted. */
+  function leave() {
+    leaving = true;
+    clearTimeout(recheck);
+    try { if (Intro.beforeLeave) Intro.beforeLeave(); } catch (e) { console.warn('intro', e); }
+    requestAnimationFrame(() => requestAnimationFrame(() => setTimeout(close, 80)));
+  }
+  /** Start-up work the show waits for (within HOLD_MAX) before it leaves. */
+  Intro.hold = function (p) {
+    if (closed || leaving || !p || typeof p.then !== 'function') return;
+    const h = Promise.resolve(p).catch(() => {}).then(() => { holds.delete(h); maybeClose(); });
+    holds.add(h);
+  };
 
   /** The sound of the show, every note placed ahead on the audio clock (t0 = the moment the show starts). */
   function score(c, t0) {
@@ -147,6 +179,7 @@
   if (view) {
     const mo = new MutationObserver(() => {
       mo.disconnect();
+      drawnAt = performance.now();
       requestAnimationFrame(() => requestAnimationFrame(() => setTimeout(Intro.ready, 80)));
     });
     mo.observe(view, { childList: true, subtree: true });

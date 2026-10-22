@@ -667,6 +667,8 @@
       if (S.settings.accent === 'petrol') await Store.setSettings((s) => { s.accent = 'candy'; });
       await Store.setMeta({ designV3: true });
     }
+    // the admin of this account, as this phone last heard it (checked again once the account connects)
+    App.isAdmin = !!S.meta.adminUid && S.meta.adminUid === S.meta.cloudUid;
     App.applyTheme();
     App.recompute();
     registerSW(); // offline support from the very first visit, before onboarding
@@ -692,7 +694,9 @@
       if (user) {
         if (S.meta.cloudUid === user.uid) {
           App.afterLogin();
-          Cloud.connect(user).catch((e) => console.warn('sync', e));
+          // the opening show waits for the account to connect and for the admin check (within its limit)
+          const c = Cloud.connect(user).then(() => Cloud.adminCheck).catch((e) => console.warn('sync', e));
+          if (root.Intro && root.Intro.hold) root.Intro.hold(c);
           return;
         }
         try { await Cloud.connect(user); } catch (e) { console.error(e); App.showLogin(navigator.onLine ? 'error' : 'offline'); return; }
@@ -702,6 +706,7 @@
       if (failed) {
         // slow or no network: the app opens with what's on the phone and connects when it can
         App.afterLogin();
+        // (the opening show does not wait for it: it already waited for the account as long as is reasonable)
         Cloud.start().then((u) => { if (u) Cloud.connect(u).catch(() => {}); else App.showLogin('expired'); }).catch(() => {});
         return;
       }
@@ -741,19 +746,26 @@
     if (action === 'add') App.sheetsApi.shiftEditor();
     if (action === 'plus' && root.Plus) setTimeout(() => root.Plus.sheet(), 600); // back from the web checkout (?action=plus): straight to the code field
     setTimeout(() => { App.runInsights(); App.autoBackupCheck(); }, 1200);
-    if (root.Plus) root.Plus.init().catch(() => {}); // is Shaati Plus for sale here, and owned? (Google Play, Android app only)
+    // is Shaati Plus for sale here, and owned? (Google Play, Android app only) The opening show waits for the
+    // answer (it can put a design and the brush on the pay card) and for the fonts, so neither lands after it
+    const Intro = root.Intro;
+    if (root.Plus) { const p = root.Plus.init().catch(() => {}); if (Intro && Intro.hold) Intro.hold(p); }
+    if (Intro && Intro.hold && document.fonts && document.fonts.ready) requestAnimationFrame(() => Intro.hold(document.fonts.ready));
     if (App.whatsNew) App.whatsNew();
   };
+  // just before the opening show leaves, the app draws itself once more under it (still), so anything the
+  // start-up work changed (the account, the admin check, Google Play) is already in place when it shows
+  if (root.Intro) root.Intro.beforeLeave = () => { App.applyTheme(); if (!App.blocking) App.rerender(); };
 
   function registerSW() {
     if (!('serviceWorker' in navigator) || location.protocol === 'file:') return;
     const busy = () => !!App.blocking || !!document.querySelector('.sheet, .dialog');
     navigator.serviceWorker.register('sw.js').then((reg) => {
-      // A new version downloads quietly in the background and switches in when it can't disturb:
-      // right after the app opens, or when the app goes to the background with nothing half-filled.
+      // A new version downloads quietly in the background and switches in when it can't disturb: when the app
+      // goes to the background with nothing half-filled, so the next look at it is the new version. Never while
+      // it opens: the reload that switching in needs flashed the screen right as the opening show handed over.
       const quietUpdate = (w) => {
         const apply = () => w.postMessage('skipWaiting');
-        if (performance.now() < 5000 && !busy()) { apply(); return; }
         const onHide = () => {
           if (document.visibilityState !== 'hidden' || busy()) return;
           document.removeEventListener('visibilitychange', onHide);
@@ -795,6 +807,8 @@
     // this one's files but this page still runs the old code, start over when the app is hidden or
     // reopened (never in the middle of a form, and at most once per version).
     document.addEventListener('visibilitychange', () => {
+      // only while hidden: a reload as the app comes back into view flashed the screen
+      if (document.visibilityState !== 'hidden') return;
       if (!window.caches || !navigator.serviceWorker.controller || !window.APP_BUILD || busy()) return;
       caches.keys().then((keys) => {
         const shells = keys.filter((k) => k.startsWith('shiftpay-shell-'));

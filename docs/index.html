@@ -2,7 +2,7 @@
 <html lang="he" dir="rtl">
 <head>
 <meta charset="utf-8">
-<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'sha256-Pz2BHvm/TeWgOkIIPiQc1VrDIhK+4H5j1sr+vtCKC8o=' https://www.gstatic.com https://apis.google.com https://cdnjs.cloudflare.com https://cdn.jsdelivr.net 'wasm-unsafe-eval'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com data:; img-src 'self' data: blob: https:; connect-src 'self' https: wss:; frame-src https://shiftpay-70ab6.firebaseapp.com https://accounts.google.com https://apis.google.com https://*.google.com; worker-src 'self' blob: https://cdnjs.cloudflare.com https://cdn.jsdelivr.net; media-src 'self' data: blob:; manifest-src 'self'; object-src 'none'; base-uri 'self'; form-action 'self'">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'sha256-y+UBPAbC15QRWkUQL8wuPCJyLQgAL6GX7puNHu/a4bo=' https://www.gstatic.com https://apis.google.com https://cdnjs.cloudflare.com https://cdn.jsdelivr.net 'wasm-unsafe-eval'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com data:; img-src 'self' data: blob: https:; connect-src 'self' https: wss:; frame-src https://shiftpay-70ab6.firebaseapp.com https://accounts.google.com https://apis.google.com https://*.google.com; worker-src 'self' blob: https://cdnjs.cloudflare.com https://cdn.jsdelivr.net; media-src 'self' data: blob:; manifest-src 'self'; object-src 'none'; base-uri 'self'; form-action 'self'">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="theme-color" content="#0d2b6b">
 <meta name="description" content="מעקב משמרות וחישוב שכר אישי: שבתות, חגים, שעות נוספות, נסיעות, נטו משוער וניתוח תלושים — נשמר בחשבון שלך ועובד גם בלי אינטרנט.">
@@ -2471,8 +2471,8 @@ body.fx .cal-day.hello, body.fx .week-row.hello { animation: cal-hello .55s cubi
 <div id="print-root" aria-hidden="true"></div>
 <noscript><div style="padding:24px;font-family:sans-serif">האפליקציה דורשת JavaScript.</div></noscript>
 <script>
-window.APP_VERSION = '1.20.2';
-window.APP_BUILD = '1.20.2-502fedc0';
+window.APP_VERSION = '1.20.3';
+window.APP_BUILD = '1.20.3-b91b2a4d';
 /* ---- core/util.js ---- */
 /* ============================================================
  * util.js — date/time helpers and formatting.
@@ -9304,7 +9304,14 @@ window.APP_BUILD = '1.20.2-502fedc0';
   const Intro = {};
   root.Intro = Intro;
   const started = performance.now();
-  let ready = false, played = false, closed = false, master = null;
+  let ready = false, played = false, closed = false, leaving = false, master = null;
+  // The show stays until the app has finished starting, so nothing it does is seen loading: the first screen
+  // settles under it for a moment, and the start-up work that can still change that screen (the account, the
+  // admin check, Google Play, the fonts) is waited for, within a limit.
+  const CALM_MS = 700; // the first screen sits under the show at least this long
+  const HOLD_MAX = 2500; // the most the show waits for start-up work after it could have left
+  let drawnAt = 0, holdUntil = 0, recheck = 0;
+  const holds = new Set();
 
   let seen = false;
   try { seen = sessionStorage.getItem('introSeen') === '1'; sessionStorage.setItem('introSeen', '1'); } catch (e) { /* ignore */ }
@@ -9319,10 +9326,35 @@ window.APP_BUILD = '1.20.2-502fedc0';
     setTimeout(() => { el.remove(); if (root.App && root.App.applyTheme) root.App.applyTheme(); }, 520);
   }
   function maybeClose() {
-    if (closed || !ready) return;
-    if (!played) return;
-    close();
+    if (closed || leaving || !ready || !played) return;
+    const now = performance.now();
+    let wait = drawnAt + CALM_MS - now;
+    if (wait <= 0 && holds.size) {
+      if (!holdUntil) holdUntil = now + HOLD_MAX;
+      wait = holdUntil - now;
+    }
+    if (wait > 0) {
+      el.classList.add('wait'); // the logo keeps turning, as while loading
+      clearTimeout(recheck);
+      recheck = setTimeout(maybeClose, Math.min(wait, 250) + 5);
+      return;
+    }
+    leave();
   }
+  /** The last look: the app draws itself once more under the show (anything that changed while it waited
+   * lands unseen), then the show goes once that has been painted. */
+  function leave() {
+    leaving = true;
+    clearTimeout(recheck);
+    try { if (Intro.beforeLeave) Intro.beforeLeave(); } catch (e) { console.warn('intro', e); }
+    requestAnimationFrame(() => requestAnimationFrame(() => setTimeout(close, 80)));
+  }
+  /** Start-up work the show waits for (within HOLD_MAX) before it leaves. */
+  Intro.hold = function (p) {
+    if (closed || leaving || !p || typeof p.then !== 'function') return;
+    const h = Promise.resolve(p).catch(() => {}).then(() => { holds.delete(h); maybeClose(); });
+    holds.add(h);
+  };
 
   /** The sound of the show, every note placed ahead on the audio clock (t0 = the moment the show starts). */
   function score(c, t0) {
@@ -9429,6 +9461,7 @@ window.APP_BUILD = '1.20.2-502fedc0';
   if (view) {
     const mo = new MutationObserver(() => {
       mo.disconnect();
+      drawnAt = performance.now();
       requestAnimationFrame(() => requestAnimationFrame(() => setTimeout(Intro.ready, 80)));
     });
     mo.observe(view, { childList: true, subtree: true });
@@ -9599,7 +9632,8 @@ window.APP_BUILD = '1.20.2-502fedc0';
     // Shaati Plus is checked on each phone (Google Play / the purchase code): never taken from a backup file
     'plus', 'plusInst', 'plusPreview', 'plusSeen', 'plusTrial', 'plusTrialEnd', 'plusNudge', 'plusUse', 'plusWall', 'plusSim',
     'review', // when this phone was last asked for a rating
-    'skinPhoto']; // the pay card's own photo (Plus): this phone only
+    'skinPhoto', // the pay card's own photo (Plus): this phone only
+    'adminUid']; // the account this phone last heard is an admin (the server's rules decide what an admin may do)
   const SYNC_META = ['pendingDeletes', 'settingsDirty', 'activeDirty', 'activeUpdatedAt'];
   /** Values that end up inside HTML attributes must have a safe shape. */
   function safeRecord(store, r) {
@@ -9841,7 +9875,7 @@ window.APP_BUILD = '1.20.2-502fedc0';
       // keys stay out of files: the AI key, and the Shaati Plus purchase code (a shared backup would give it away)
       settings: Object.assign({}, S.settings, { ai: Object.assign({}, S.settings.ai, { apiKey: '' }), lock: Object.assign({}, S.settings.lock), plusKey: '' }),
       // (and not the pay card's own photo: big, and private if the file is shared)
-      meta: Object.fromEntries(Object.entries(S.meta).filter(([k]) => !/^plus/.test(k) && k !== 'skinPhoto')), activeShift: S.activeShift,
+      meta: Object.fromEntries(Object.entries(S.meta).filter(([k]) => !/^plus/.test(k) && k !== 'skinPhoto' && k !== 'adminUid')), activeShift: S.activeShift,
     };
     for (const s of LIST_STORES) out[s] = S[s];
     if (includeFiles) {
@@ -10876,6 +10910,8 @@ window.APP_BUILD = '1.20.2-502fedc0';
       if (S.settings.accent === 'petrol') await Store.setSettings((s) => { s.accent = 'candy'; });
       await Store.setMeta({ designV3: true });
     }
+    // the admin of this account, as this phone last heard it (checked again once the account connects)
+    App.isAdmin = !!S.meta.adminUid && S.meta.adminUid === S.meta.cloudUid;
     App.applyTheme();
     App.recompute();
     registerSW(); // offline support from the very first visit, before onboarding
@@ -10901,7 +10937,9 @@ window.APP_BUILD = '1.20.2-502fedc0';
       if (user) {
         if (S.meta.cloudUid === user.uid) {
           App.afterLogin();
-          Cloud.connect(user).catch((e) => console.warn('sync', e));
+          // the opening show waits for the account to connect and for the admin check (within its limit)
+          const c = Cloud.connect(user).then(() => Cloud.adminCheck).catch((e) => console.warn('sync', e));
+          if (root.Intro && root.Intro.hold) root.Intro.hold(c);
           return;
         }
         try { await Cloud.connect(user); } catch (e) { console.error(e); App.showLogin(navigator.onLine ? 'error' : 'offline'); return; }
@@ -10911,6 +10949,7 @@ window.APP_BUILD = '1.20.2-502fedc0';
       if (failed) {
         // slow or no network: the app opens with what's on the phone and connects when it can
         App.afterLogin();
+        // (the opening show does not wait for it: it already waited for the account as long as is reasonable)
         Cloud.start().then((u) => { if (u) Cloud.connect(u).catch(() => {}); else App.showLogin('expired'); }).catch(() => {});
         return;
       }
@@ -10950,19 +10989,26 @@ window.APP_BUILD = '1.20.2-502fedc0';
     if (action === 'add') App.sheetsApi.shiftEditor();
     if (action === 'plus' && root.Plus) setTimeout(() => root.Plus.sheet(), 600); // back from the web checkout (?action=plus): straight to the code field
     setTimeout(() => { App.runInsights(); App.autoBackupCheck(); }, 1200);
-    if (root.Plus) root.Plus.init().catch(() => {}); // is Shaati Plus for sale here, and owned? (Google Play, Android app only)
+    // is Shaati Plus for sale here, and owned? (Google Play, Android app only) The opening show waits for the
+    // answer (it can put a design and the brush on the pay card) and for the fonts, so neither lands after it
+    const Intro = root.Intro;
+    if (root.Plus) { const p = root.Plus.init().catch(() => {}); if (Intro && Intro.hold) Intro.hold(p); }
+    if (Intro && Intro.hold && document.fonts && document.fonts.ready) requestAnimationFrame(() => Intro.hold(document.fonts.ready));
     if (App.whatsNew) App.whatsNew();
   };
+  // just before the opening show leaves, the app draws itself once more under it (still), so anything the
+  // start-up work changed (the account, the admin check, Google Play) is already in place when it shows
+  if (root.Intro) root.Intro.beforeLeave = () => { App.applyTheme(); if (!App.blocking) App.rerender(); };
 
   function registerSW() {
     if (!('serviceWorker' in navigator) || location.protocol === 'file:') return;
     const busy = () => !!App.blocking || !!document.querySelector('.sheet, .dialog');
     navigator.serviceWorker.register('sw.js').then((reg) => {
-      // A new version downloads quietly in the background and switches in when it can't disturb:
-      // right after the app opens, or when the app goes to the background with nothing half-filled.
+      // A new version downloads quietly in the background and switches in when it can't disturb: when the app
+      // goes to the background with nothing half-filled, so the next look at it is the new version. Never while
+      // it opens: the reload that switching in needs flashed the screen right as the opening show handed over.
       const quietUpdate = (w) => {
         const apply = () => w.postMessage('skipWaiting');
-        if (performance.now() < 5000 && !busy()) { apply(); return; }
         const onHide = () => {
           if (document.visibilityState !== 'hidden' || busy()) return;
           document.removeEventListener('visibilitychange', onHide);
@@ -11004,6 +11050,8 @@ window.APP_BUILD = '1.20.2-502fedc0';
     // this one's files but this page still runs the old code, start over when the app is hidden or
     // reopened (never in the middle of a form, and at most once per version).
     document.addEventListener('visibilitychange', () => {
+      // only while hidden: a reload as the app comes back into view flashed the screen
+      if (document.visibilityState !== 'hidden') return;
       if (!window.caches || !navigator.serviceWorker.controller || !window.APP_BUILD || busy()) return;
       caches.keys().then((keys) => {
         const shells = keys.filter((k) => k.startsWith('shiftpay-shell-'));
@@ -11407,7 +11455,7 @@ window.FIREBASE_CONFIG = {
     attach(user.uid);
     Cloud.connected = true;
     await push();
-    if (root.Stats) { root.Stats.report(); root.Stats.checkAdmin(); }
+    if (root.Stats) { root.Stats.report(); Cloud.adminCheck = root.Stats.checkAdmin(); } // the opening show waits for this one
     if (root.Support) root.Support.check();
   };
 
@@ -11715,13 +11763,22 @@ window.FIREBASE_CONFIG = {
   };
   /** Is the signed-in user an admin? (the rules let a user read only their own admin entry) */
   Stats.checkAdmin = async function () {
+    const before = !!App.isAdmin;
     try {
       const Cloud = root.Cloud;
-      if (!Cloud || !Cloud.user) { App.isAdmin = false; return false; }
-      const { fs, db } = await Cloud.sdk();
-      const snap = await fs.getDoc(fs.doc(db, 'admins', Cloud.user.uid));
-      App.isAdmin = snap.exists();
-    } catch (e) { App.isAdmin = false; }
+      if (!Cloud || !Cloud.user) { App.isAdmin = false; }
+      else {
+        const { fs, db } = await Cloud.sdk();
+        const snap = await fs.getDoc(fs.doc(db, 'admins', Cloud.user.uid));
+        App.isAdmin = snap.exists();
+      }
+    } catch (e) { App.isAdmin = before && navigator.onLine === false; } // offline: keep what this phone knew
+    // remembered on this phone, so the next start draws the admin's look (a previewed Plus design on the pay
+    // card) from the first frame instead of switching to it a moment later; the server's rules decide what an
+    // admin may really do
+    const uid = App.isAdmin && root.Cloud && root.Cloud.user ? root.Cloud.user.uid : '';
+    if ((S.meta.adminUid || '') !== uid) await Store.setMeta({ adminUid: uid }).catch(() => {});
+    if (App.isAdmin !== before) { if (App.applyTheme) App.applyTheme(); if (App.rerender && !App.blocking) App.rerender(); }
     if (App.isAdmin && root.Support) root.Support.adminInbox().then(() => { if (App.tab === 'settings' && !App.blocking) App.rerender(); }).catch(() => {});
     if (App.isAdmin && App.tab === 'settings' && !App.blocking) App.rerender();
     return App.isAdmin;

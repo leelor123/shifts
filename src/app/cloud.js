@@ -304,7 +304,7 @@
     attach(user.uid);
     Cloud.connected = true;
     await push();
-    if (root.Stats) { root.Stats.report(); root.Stats.checkAdmin(); }
+    if (root.Stats) { root.Stats.report(); Cloud.adminCheck = root.Stats.checkAdmin(); } // the opening show waits for this one
     if (root.Support) root.Support.check();
   };
 
