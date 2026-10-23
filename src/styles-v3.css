@@ -1582,3 +1582,5 @@ html[dir="ltr"] #print-root th, html[dir="ltr"] #print-root td { text-align: lef
 /* "+1" next to Arabic text came out "1+": a count with a sign keeps its own left-to-right order */
 .hl-more { direction: ltr; unicode-bidi: isolate; }
 .qz-pts { direction: ltr; unicode-bidi: isolate; }
+/* the alerts list's header: in a long language (Russian) its two buttons go to a second line instead of out of the sheet */
+.row-flex:has(> [data-readall]) { flex-wrap: wrap; row-gap: 0; }
