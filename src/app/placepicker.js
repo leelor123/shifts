@@ -65,11 +65,13 @@
     return azParts;
   }
 
+  // outside Hebrew a place is shown by its English name (the list has one for every locality): "Tel Aviv - Yafo"
+  const enName = (p) => p.en.replace(/(^|[\s(-])([a-z])/g, (m, a, b) => a + b.toUpperCase());
   /** The name and picture shown for a stored place ('__custom' = a position typed in). */
   App.placeLabel = function (name) {
     if (name === '__custom') return { pic: '📍', name: 'מיקום מותאם (קו רוחב/אורך)' };
     const p = Places.find(name);
-    return p ? { pic: p.pic, name: p.name } : { pic: '📍', name: name || '' };
+    return p ? { pic: p.pic, name: root.U.LANG !== 'he' && p.en ? enName(p) : p.name } : { pic: '📍', name: name || '' };
   };
 
   /** The field that opens the picker (data-pick-city): the place chosen with its picture, or an invitation. */

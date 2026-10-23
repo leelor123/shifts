@@ -207,7 +207,7 @@
       <div class="hh-stats"><span><b>${money(sum.net.net, 0)}</b><small>${UI.term ? UI.term('net', sum.net.minor ? 'נטו' : 'נטו משוער') : 'נטו'}</small></span><span><b class="num">${U.hm(sum.hours * 60)}</b><small>שעות</small></span><span><b>${sum.shifts}</b><small>${sum.shifts === 1 ? 'משמרת' : 'משמרות'}</small></span></div>
       ${goal ? `<div class="hh-goal"><div class="progress thin"><b style="width:${projPct}%"></b><i style="width:${pct}%"></i></div>
         <div class="hh-goal-l">${U.num(pct, 0)}% מיעד ${money(goal, 0)}${proj && proj.pace ? ` · צפי ${money(proj.pace, 0)}` : ''}</div></div>`
-        : (proj && proj.pace ? `<div class="hh-goal-l">צפי לסוף ${emp.periodStartDay > 1 ? 'התקופה' : 'החודש'}: ${money(proj.pace, 0)}</div>` : '')}
+        : (proj && proj.pace ? `<div class="hh-goal-l">${emp.periodStartDay > 1 ? 'צפי לסוף התקופה' : 'צפי לסוף החודש'}: ${money(proj.pace, 0)}</div>` : '')}
     </section>`;
   }
 

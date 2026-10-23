@@ -2,7 +2,7 @@
 <html lang="en" dir="ltr">
 <head>
 <meta charset="utf-8">
-<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'sha256-P1vY/EiXw5RkSguavX5FeRFgUvcBGNPUKJiorElIG7g=' 'sha256-Nx+KWKhEY113JWXd4RjnvIVcviKmsSAdpwiKg702EOc=' https://www.gstatic.com https://apis.google.com https://cdnjs.cloudflare.com https://cdn.jsdelivr.net 'wasm-unsafe-eval'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com data:; img-src 'self' data: blob: https:; connect-src 'self' https: wss:; frame-src https://shiftpay-70ab6.firebaseapp.com https://accounts.google.com https://apis.google.com https://*.google.com; worker-src 'self' blob: https://cdnjs.cloudflare.com https://cdn.jsdelivr.net; media-src 'self' data: blob:; manifest-src 'self'; object-src 'none'; base-uri 'self'; form-action 'self'">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'sha256-P1vY/EiXw5RkSguavX5FeRFgUvcBGNPUKJiorElIG7g=' 'sha256-Ky6Qo/+GIc7nUFx+ZgUb84wn2S+CcGeVHcbmzIP8mcg=' https://www.gstatic.com https://apis.google.com https://cdnjs.cloudflare.com https://cdn.jsdelivr.net 'wasm-unsafe-eval'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com data:; img-src 'self' data: blob: https:; connect-src 'self' https: wss:; frame-src https://shiftpay-70ab6.firebaseapp.com https://accounts.google.com https://apis.google.com https://*.google.com; worker-src 'self' blob: https://cdnjs.cloudflare.com https://cdn.jsdelivr.net; media-src 'self' data: blob:; manifest-src 'self'; object-src 'none'; base-uri 'self'; form-action 'self'">
 <script>(function(){try{var l=localStorage.getItem('shaati.lang'),h=document.documentElement.lang;if(l&&l!==h&&/^(he|ar|ru|en)$/.test(l)&&!sessionStorage.getItem('langHop')){sessionStorage.setItem('langHop','1');location.replace((l==='he'?'index.html':'index.'+l+'.html')+location.search+location.hash)}else sessionStorage.removeItem('langHop')}catch(e){}})();</script>
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="theme-color" content="#0d2b6b">
@@ -2545,6 +2545,19 @@ body.fx .cal-day.hello, body.fx .week-row.hello { animation: cal-hello .55s cubi
 .topbar .lang-pill svg { width: 16px; height: 16px; color: var(--brand); }
 .topbar .lang-pill:active { scale: .94; background: var(--brand-soft); }
 
+/* ---- left-to-right languages (English, Russian): what points along the reading direction turns around ---- */
+/* (the separate scale property, so it adds to any transform an icon already has) */
+html[dir="ltr"] svg.i-dir { scale: -1 1; }
+/* numbers in their own left-to-right box sit at the reading start (time/date/number fields) or the line's end
+ * (amounts in a breakdown, a bar's value); in a left-to-right language those sides swap */
+html[dir="ltr"] .input[type="time"], html[dir="ltr"] .input[type="date"], html[dir="ltr"] .input[type="number"], html[dir="ltr"] .input.ltr { text-align: left; }
+html[dir="ltr"] .bd td.a, html[dir="ltr"] .hbar .vv, html[dir="ltr"] .adm-bar .vv { text-align: right; }
+html[dir="ltr"] .bd .f { text-align: left; }
+html[dir="ltr"] #print-root th, html[dir="ltr"] #print-root td { text-align: left; }
+/* "+1" next to Arabic text came out "1+": a count with a sign keeps its own left-to-right order */
+.hl-more { direction: ltr; unicode-bidi: isolate; }
+.qz-pts { direction: ltr; unicode-bidi: isolate; }
+
 </style>
 </head>
 <body>
@@ -2572,7 +2585,7 @@ body.fx .cal-day.hello, body.fx .week-row.hello { animation: cal-hello .55s cubi
 <noscript><div style="padding:24px;font-family:sans-serif">The app needs JavaScript.</div></noscript>
 <script>
 window.APP_VERSION = '1.21.1';
-window.APP_BUILD = '1.21.1-d2004eee';
+window.APP_BUILD = '1.21.1-65868616';
 /* ---- core/util.js ---- */
 /* ============================================================
  * util.js — date/time helpers and formatting.
@@ -7148,7 +7161,7 @@ window.APP_BUILD = '1.21.1-d2004eee';
     const ratio = curSum.gross > 0 ? curSum.net.net / curSum.gross : 0.85;
     const projection = { period: curP, actual: curSum.gross, actualNet: curSum.net.net, pace, withPlanned, plannedCount: planned.shifts, elapsed, total };
     if (on('projection') && pace != null && curSum.gross > 0) {
-      live.push({ type: 'projection', priority: 2, title: "Forecast to the end of " + (emp.periodStartDay > 1 ? "the period" : "This month"),
+      live.push({ type: 'projection', priority: 2, title: emp.periodStartDay > 1 ? "Forecast for the end of the period" : "Forecast for the end of the month",
         body: `At the current pace: about ${U.money(pace, 0)} gross` + (planned.shifts ? `; with the ${planned.shifts} planned ${globalThis.U.plural(planned.shifts, {"one":"shift","other":"shifts"})}: ${U.money(withPlanned, 0)}.` : '.'),
         explain: `${U.money(curSum.gross, 0)} so far over ${elapsed} of ${total} days, scaled up at the same pace.` });
     }
@@ -8679,8 +8692,10 @@ Total estimated difference: ${U.money(tot)}.
     game: '<rect x="2.5" y="7" width="19" height="11" rx="5.5"/><path d="M7.5 10.5v4M5.5 12.5h4M15.5 11.5h.01M18 13.5h.01"/>',
     rocket: '<path d="M5 15c-1.5 1.3-2 5-2 5s3.7-.5 5-2c.7-.8.7-2.1-.1-2.9a2.2 2.2 0 0 0-2.9-.1z"/><path d="m12 15-3-3a22 22 0 0 1 2-3.9A12.9 12.9 0 0 1 22 2c0 2.7-.8 7.5-6 11a22.4 22.4 0 0 1-4 2z"/><path d="M9 12H4s.6-3 2-4c1.6-1.1 5 0 5 0M12 15v5s3-.6 4-2c1.1-1.6 0-5 0-5"/>',
   };
+  // the icons that point along the reading direction: mirrored in a left-to-right language (styles-v3.css)
+  const DIR = new Set(['left', 'right', 'send', 'undo']);
   function icon(name, cls) {
-    return `<svg class="i ${cls || ''}" viewBox="0 0 24 24" aria-hidden="true">${P[name] || P.info}</svg>`;
+    return `<svg class="i ${DIR.has(name) ? 'i-dir ' : ''}${cls || ''}" viewBox="0 0 24 24" aria-hidden="true">${P[name] || P.info}</svg>`;
   }
 
   /* ---------------- escaping & fragments ---------------- */
@@ -8910,7 +8925,9 @@ Total estimated difference: ${U.money(tot)}.
     el.addEventListener('touchend', (e) => {
       if (x0 == null) return;
       const dx = e.changedTouches[0].clientX - x0, dy = e.changedTouches[0].clientY - y0;
-      if (Math.abs(dx) > 60 && Math.abs(dx) > Math.abs(dy) * 1.5 && Date.now() - t0 < 700) fn(dx > 0 ? 'right' : 'left');
+      // told as in a right-to-left screen ('right' = forward, toward the next page): turned around in a left-to-right one
+      const fwd = document.documentElement.dir === 'ltr' ? dx < 0 : dx > 0;
+      if (Math.abs(dx) > 60 && Math.abs(dx) > Math.abs(dy) * 1.5 && Date.now() - t0 < 700) fn(fwd ? 'right' : 'left');
       x0 = null;
     });
   }
@@ -11348,7 +11365,7 @@ Total estimated difference: ${U.money(tot)}.
     if (!S.roles.some((r) => !r.archived)) {
       let rate = 0;
       try { rate = root.Engine.minWageFor(S.settings, root.U.todayKey()).hourly || 0; } catch (e) { /* keep 0 */ }
-      S.roles.push({ id: 'r_' + root.U.uid(), name: "My job", color: root.Defaults.ROLE_COLORS[0], employerId: S.employers[0].id, rates: [{ from: '2000-01-01', rate }], archived: false });
+      S.roles.push({ id: 'r_' + root.U.uid(), name: "My work", color: root.Defaults.ROLE_COLORS[0], employerId: S.employers[0].id, rates: [{ from: '2000-01-01', rate }], archived: false });
     }
     await saveAll();
     for (const f of json.files || []) {
@@ -15311,7 +15328,7 @@ ${name}`.trim();
       <div class="hh-stats"><span><b>${money(sum.net.net, 0)}</b><small>${UI.term ? UI.term('net', sum.net.minor ? "Net" : "Estimated net") : "Net"}</small></span><span><b class="num">${U.hm(sum.hours * 60)}</b><small>Hours</small></span><span><b>${sum.shifts}</b><small>${sum.shifts === 1 ? "Shift" : "Shifts"}</small></span></div>
       ${goal ? `<div class="hh-goal"><div class="progress thin"><b style="width:${projPct}%"></b><i style="width:${pct}%"></i></div>
         <div class="hh-goal-l">${U.num(pct, 0)}% of the ${money(goal, 0)} goal${proj && proj.pace ? ` · forecast ${money(proj.pace, 0)}` : ''}</div></div>`
-        : (proj && proj.pace ? `<div class="hh-goal-l">Forecast for the end of ${emp.periodStartDay > 1 ? "the period" : "This month"}: ${money(proj.pace, 0)}</div>` : '')}
+        : (proj && proj.pace ? `<div class="hh-goal-l">${emp.periodStartDay > 1 ? "Forecast for the end of the period" : "Forecast for the end of the month"}: ${money(proj.pace, 0)}</div>` : '')}
     </section>`;
   }
 
@@ -15685,7 +15702,7 @@ ${name}`.trim();
     if (r.breakMin) notes.push(`Break ${r.breakMin} min${r.breakAuto ? " (automatic, by law)" : ''} ${r.breakPaid ? "Paid" : "unpaid — taken proportionally from all hours"}`);
     notes.push(`Overtime after ${r.thresholdH} hours a day` + (r.priorMin ? ` · you already worked ${U.hm(r.priorMin)} that day before this shift` : '') + (r.isNightShift && emp.nightShiftShortDay ? " (night shift)" : ''));
     const wins = r.restLabels.length ? r.slices.filter((s) => s.autoRest) : [];
-    if (r.autoRestMin > 0) notes.push(`${esc(r.restLabels.join(', ') || "Shabbat/holiday")} window in the shift: ⁦${U.epochHM(wins[0].a)}⁠–⁠${U.epochHM(wins[wins.length - 1].b)}⁩ (${S.settings.rest.mode === 'city' ? "By " + esc(S.settings.rest.city === '__custom' ? "Custom location" : S.settings.rest.city).replace(/-/g, '-⁠') : "fixed hours"})`);
+    if (r.autoRestMin > 0) notes.push(`${esc(r.restLabels.join(', ') || "Shabbat/holiday")} window in the shift: ⁦${U.epochHM(wins[0].a)}⁠–⁠${U.epochHM(wins[wins.length - 1].b)}⁩ (${S.settings.rest.mode === 'city' ? "By " + esc(S.settings.rest.city === '__custom' ? "Custom location" : App.placeLabel(S.settings.rest.city).name).replace(/-/g, '-⁠') : "fixed hours"})`);
     if (r.warnings.length) notes.push('⚠️ ' + r.warnings.join(', '));
     return `<table class="bd">${rows}</table><div class="tiny muted" style="margin-top:8px">${notes.map((n) => '• ' + n).join('<br>')}</div>`;
   };
@@ -17480,11 +17497,13 @@ ${name}`.trim();
     return azParts;
   }
 
+  // outside Hebrew a place is shown by its English name (the list has one for every locality): "Tel Aviv - Yafo"
+  const enName = (p) => p.en.replace(/(^|[\s(-])([a-z])/g, (m, a, b) => a + b.toUpperCase());
   /** The name and picture shown for a stored place ('__custom' = a position typed in). */
   App.placeLabel = function (name) {
     if (name === '__custom') return { pic: '📍', name: "Custom location (latitude/longitude)" };
     const p = Places.find(name);
-    return p ? { pic: p.pic, name: p.name } : { pic: '📍', name: name || '' };
+    return p ? { pic: p.pic, name: root.U.LANG !== 'he' && p.en ? enName(p) : p.name } : { pic: '📍', name: name || '' };
   };
 
   /** The field that opens the picker (data-pick-city): the place chosen with its picture, or an invitation. */
@@ -18083,7 +18102,7 @@ ${name}`.trim();
   // the page is a few colourful doors; each opens its own small page with the sections behind it
   const CATS = [
     { id: 'me', icon: 'users', tint: 'violet', title: "Me and my account", keys: ['personal', 'account'], sub: () => [S.settings.userName, S.meta.cloudEmail ? "Signed in ☁️" : "Not signed in"].filter(Boolean).join(' · ') },
-    { id: 'work', icon: 'briefcase', tint: 'mint', title: "My job", keys: ['roles', 'pay', 'templates'], sub: () => { const r = App.roles(); return r.length === 1 ? `${r[0].name} · ${U.money(Engine.roleRate(r[0], U.todayKey()), 0)} an hour` : `${r.length} ${globalThis.U.plural(r.length, {"one":"role","other":"roles"})}` + (S.employers.length > 1 ? ' · ' + `${S.employers.length} ${globalThis.U.plural(S.employers.length, {"one":"workplace","other":"workplaces"})}` : ''); } },
+    { id: 'work', icon: 'briefcase', tint: 'mint', title: "My work", keys: ['roles', 'pay', 'templates'], sub: () => { const r = App.roles(); return r.length === 1 ? `${r[0].name} · ${U.money(Engine.roleRate(r[0], U.todayKey()), 0)} an hour` : `${r.length} ${globalThis.U.plural(r.length, {"one":"role","other":"roles"})}` + (S.employers.length > 1 ? ' · ' + `${S.employers.length} ${globalThis.U.plural(S.employers.length, {"one":"workplace","other":"workplaces"})}` : ''); } },
     { id: 'calc', icon: 'flask', tint: 'amber', title: "Pay calculation", keys: ['calc', 'rest'], sub: () => "Overtime, night, Shabbat and holidays" },
     { id: 'money', icon: 'wallet', tint: 'sky', title: "Net, tax and benefits", keys: ['net', 'leave', 'rights'], sub: () => `${S.settings.tax.creditPoints} credit points · pension ${S.settings.pension.employeePct}%` },
     { id: 'goals', icon: 'target', tint: 'pink', title: "Goals and reminders", keys: ['goal', 'alerts'], sub: () => (+S.settings.goal.amount ? "Goal " + U.money(S.settings.goal.amount, 0) : "Goal, saving and notifications") },
@@ -18197,7 +18216,7 @@ ${name}`.trim();
   App.views.settings = function () {
     const cur = root.Lang && root.Lang.LANGS.find((l) => l.id === root.Lang.current);
     return `<div class="topbar"><div class="titles"><h1>Settings</h1><div class="sub">Every change is saved right away</div></div>${cur ? `<button class="lang-pill" data-act="lang-open" aria-label="Language">${icon('globe', 's')}<span lang="${cur.id}">${cur.name}</span></button>` : ''}</div>
-      <div class="set-search">${icon('search', 's')}<input class="input" id="set-q" type="text" enterkeyhint="search" placeholder="What to change? Or what’s the problem?" aria-label="Search settings" autocomplete="off"><button class="icon-btn sm set-clear" data-set-clear hidden aria-label="Clear the search">${icon('x', 's')}</button></div>
+      <div class="set-search">${icon('search', 's')}<input class="input" id="set-q" type="text" enterkeyhint="search" placeholder="Search, or describe a problem" aria-label="Search settings" autocomplete="off"><button class="icon-btn sm set-clear" data-set-clear hidden aria-label="Clear the search">${icon('x', 's')}</button></div>
       <div id="set-res" hidden></div>
       <div id="set-home">
       <div class="set-chips" aria-label="Common problems">${CHIPS.map(([ic, tint, i]) => `<button class="set-chip t-${tint}" data-set-chip="${i}">${icon(ic, 's')}<span>${esc(PROBLEMS[i][0])}</span></button>`).join('')}</div>
@@ -18902,8 +18921,8 @@ ${name}`.trim();
 
     /* answers -> what gets saved (a skipped question gets the usual answer) */
     function finalJobs() {
-      const list = A.jobs.filter((j) => j.name.trim() || +j.rate > 0).map((j) => Object.assign({}, j, { name: j.name.trim() || "My job", rate: +j.rate > 0 ? +j.rate : minWage() }));
-      return list.length ? list : [{ id: A.jobs[0].id, name: "My job", rate: minWage(), color: A.jobs[0].color }];
+      const list = A.jobs.filter((j) => j.name.trim() || +j.rate > 0).map((j) => Object.assign({}, j, { name: j.name.trim() || "My work", rate: +j.rate > 0 ? +j.rate : minWage() }));
+      return list.length ? list : [{ id: A.jobs[0].id, name: "My work", rate: minWage(), color: A.jobs[0].color }];
     }
     function finalTravel() {
       if (A.travel === 'no') return 0;
@@ -18931,7 +18950,7 @@ ${name}`.trim();
         read();
         const j = finalJobs()[0];
         const el = q('#ob-live-roles');
-        if (el) el.innerHTML = `${icon('sparkle', 's')} An 8-hour shift${j.name !== "My job" ? ' (' + esc(j.name) + ')' : ''} = <b>${money(Math.round(j.rate * 8 * 100) / 100)}</b>`;
+        if (el) el.innerHTML = `${icon('sparkle', 's')} An 8-hour shift${j.name !== "My work" ? ' (' + esc(j.name) + ')' : ''} = <b>${money(Math.round(j.rate * 8 * 100) / 100)}</b>`;
       }
       if (key === 'travel') {
         const el = q('#ob-live-travel');
@@ -21772,7 +21791,8 @@ What the app has (for "how do I" questions): a "Start shift" button with a timer
     };
     document.addEventListener('keydown', onKey);
 
-    // hold to pause; a tap on the left goes forward, on the right goes back; swipe the same way
+    // hold to pause; a tap on the left goes forward, on the right goes back (the other way round in a left-to-right
+    // language); swipe the same way
     let x0 = 0, y0 = 0;
     el.addEventListener('pointerdown', (e) => {
       if (e.target.closest('button')) return;
@@ -21791,7 +21811,8 @@ What the app has (for "how do I" questions): a "Start shift" button with a timer
       const dx = e.clientX - x0, dy = e.clientY - y0;
       if (dy > 90 && dy > Math.abs(dx)) { close(); return; } // swipe down closes
       if (Math.abs(dx) > 40) { if (dx < 0) next(); else prev(); return; }
-      if (e.clientX > innerWidth * 0.66) prev(); else next();
+      // the side the stories came from goes back: the right third here, the left third in a left-to-right language
+      if (document.documentElement.dir === 'ltr' ? e.clientX < innerWidth * 0.34 : e.clientX > innerWidth * 0.66) prev(); else next();
     });
     el.addEventListener('click', (e) => {
       const b = e.target.closest('button');

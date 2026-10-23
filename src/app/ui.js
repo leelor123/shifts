@@ -96,8 +96,10 @@
     game: '<rect x="2.5" y="7" width="19" height="11" rx="5.5"/><path d="M7.5 10.5v4M5.5 12.5h4M15.5 11.5h.01M18 13.5h.01"/>',
     rocket: '<path d="M5 15c-1.5 1.3-2 5-2 5s3.7-.5 5-2c.7-.8.7-2.1-.1-2.9a2.2 2.2 0 0 0-2.9-.1z"/><path d="m12 15-3-3a22 22 0 0 1 2-3.9A12.9 12.9 0 0 1 22 2c0 2.7-.8 7.5-6 11a22.4 22.4 0 0 1-4 2z"/><path d="M9 12H4s.6-3 2-4c1.6-1.1 5 0 5 0M12 15v5s3-.6 4-2c1.1-1.6 0-5 0-5"/>',
   };
+  // the icons that point along the reading direction: mirrored in a left-to-right language (styles-v3.css)
+  const DIR = new Set(['left', 'right', 'send', 'undo']);
   function icon(name, cls) {
-    return `<svg class="i ${cls || ''}" viewBox="0 0 24 24" aria-hidden="true">${P[name] || P.info}</svg>`;
+    return `<svg class="i ${DIR.has(name) ? 'i-dir ' : ''}${cls || ''}" viewBox="0 0 24 24" aria-hidden="true">${P[name] || P.info}</svg>`;
   }
 
   /* ---------------- escaping & fragments ---------------- */
@@ -327,7 +329,9 @@
     el.addEventListener('touchend', (e) => {
       if (x0 == null) return;
       const dx = e.changedTouches[0].clientX - x0, dy = e.changedTouches[0].clientY - y0;
-      if (Math.abs(dx) > 60 && Math.abs(dx) > Math.abs(dy) * 1.5 && Date.now() - t0 < 700) fn(dx > 0 ? 'right' : 'left');
+      // told as in a right-to-left screen ('right' = forward, toward the next page): turned around in a left-to-right one
+      const fwd = document.documentElement.dir === 'ltr' ? dx < 0 : dx > 0;
+      if (Math.abs(dx) > 60 && Math.abs(dx) > Math.abs(dy) * 1.5 && Date.now() - t0 < 700) fn(fwd ? 'right' : 'left');
       x0 = null;
     });
   }

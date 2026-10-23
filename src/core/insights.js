@@ -364,7 +364,7 @@
     const ratio = curSum.gross > 0 ? curSum.net.net / curSum.gross : 0.85;
     const projection = { period: curP, actual: curSum.gross, actualNet: curSum.net.net, pace, withPlanned, plannedCount: planned.shifts, elapsed, total };
     if (on('projection') && pace != null && curSum.gross > 0) {
-      live.push({ type: 'projection', priority: 2, title: 'צפי לסוף ' + (emp.periodStartDay > 1 ? 'התקופה' : 'החודש'),
+      live.push({ type: 'projection', priority: 2, title: emp.periodStartDay > 1 ? 'צפי לסוף התקופה' : 'צפי לסוף החודש',
         body: `לפי הקצב הנוכחי: כ-${U.money(pace, 0)} ברוטו` + (planned.shifts ? `; עם ${planned.shifts} המשמרות המתוכננות: ${U.money(withPlanned, 0)}.` : '.'),
         explain: `${U.money(curSum.gross, 0)} עד היום ב-${elapsed} מתוך ${total} ימים, מוכפל לפי הקצב.` });
     }

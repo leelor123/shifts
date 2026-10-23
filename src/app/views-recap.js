@@ -138,7 +138,8 @@
     };
     document.addEventListener('keydown', onKey);
 
-    // hold to pause; a tap on the left goes forward, on the right goes back; swipe the same way
+    // hold to pause; a tap on the left goes forward, on the right goes back (the other way round in a left-to-right
+    // language); swipe the same way
     let x0 = 0, y0 = 0;
     el.addEventListener('pointerdown', (e) => {
       if (e.target.closest('button')) return;
@@ -157,7 +158,8 @@
       const dx = e.clientX - x0, dy = e.clientY - y0;
       if (dy > 90 && dy > Math.abs(dx)) { close(); return; } // swipe down closes
       if (Math.abs(dx) > 40) { if (dx < 0) next(); else prev(); return; }
-      if (e.clientX > innerWidth * 0.66) prev(); else next();
+      // the side the stories came from goes back: the right third here, the left third in a left-to-right language
+      if (document.documentElement.dir === 'ltr' ? e.clientX < innerWidth * 0.34 : e.clientX > innerWidth * 0.66) prev(); else next();
     });
     el.addEventListener('click', (e) => {
       const b = e.target.closest('button');

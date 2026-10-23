@@ -249,8 +249,8 @@
   "where": [
    "app/app.js:327",
    "app/app.js:492",
-   "app/ui.js:313",
-   "app/ui.js:320",
+   "app/ui.js:315",
+   "app/ui.js:322",
    "app/views-login.js:52",
    "app/views-settings.js:391",
    "app/views-settings.js:773",
@@ -305,7 +305,7 @@
   "kind": "lit",
   "where": [
    "app/app.js:479",
-   "app/ui.js:320",
+   "app/ui.js:322",
    "app/views-settings.js:391",
    "app/views-settings.js:712",
    "app/views-shift.js:526",
@@ -1605,7 +1605,7 @@
    "app/views-home.js:205",
    "app/views-home.js:205",
    "app/views-payslip.js:242",
-   "app/views-recap.js:192",
+   "app/views-recap.js:194",
    "app/views-reports.js:68",
    "app/views-settings.js:604",
    "core/games.js:185",
@@ -2072,7 +2072,7 @@
   "kind": "lit",
   "where": [
    "app/pickers.js:95",
-   "app/ui.js:381"
+   "app/ui.js:385"
   ]
  },
  {
@@ -2161,7 +2161,7 @@
   "kind": "lit",
   "where": [
    "app/pickers.js:238",
-   "app/ui.js:377"
+   "app/ui.js:381"
   ]
  },
  {
@@ -2201,126 +2201,126 @@
   "where": [
    "app/pickers.js:364",
    "app/pickers.js:415",
-   "app/placepicker.js:78"
+   "app/placepicker.js:80"
   ]
  },
  {
   "key": "מיקום מותאם (קו רוחב/אורך)",
   "kind": "lit",
   "where": [
-   "app/placepicker.js:70"
+   "app/placepicker.js:72"
   ]
  },
  {
   "key": "יישוב",
   "kind": "lit",
   "where": [
-   "app/placepicker.js:78"
+   "app/placepicker.js:80"
   ]
  },
  {
   "key": "{0}<span class=\"pp-fname ph\">בחירת יישוב</span>",
   "kind": "tpl",
   "where": [
-   "app/placepicker.js:79"
+   "app/placepicker.js:81"
   ]
  },
  {
   "key": "<div class=\"pp\">\n        <div class=\"pp-top\">\n          <label class=\"pp-search\">{0}<input type=\"search\" class=\"pp-q\" placeholder=\"חיפוש יישוב\" autocomplete=\"off\" autocorrect=\"off\" spellcheck=\"false\" enterkeyhint=\"search\" aria-label=\"חיפוש יישוב\"><button type=\"button\" class=\"pp-x\" aria-label=\"ניקוי החיפוש\" hidden>{1}</button></label>\n          <button type=\"button\" class=\"pp-loc\">{2}<span>המיקום שלי</span></button>\n        </div>\n        <div class=\"pp-browse\">\n          {3}\n          <div class=\"section-title\">🔥 הכי נפוצים</div>\n          <div class=\"pp-list pp-pop\">{4}</div>\n          <div class=\"section-title\">כל היישובים, מא׳ ועד ת׳</div>\n          <div class=\"pp-az\"></div>\n          {5}\n        </div>\n        <div class=\"pp-res\" hidden><div class=\"pp-list\"></div><div class=\"pp-more\" aria-live=\"polite\"></div></div>\n      </div>",
   "kind": "tpl",
   "where": [
-   "app/placepicker.js:100"
+   "app/placepicker.js:102"
   ]
  },
  {
   "key": "<div class=\"section-title\">הבחירה שלך</div><div class=\"pp-list\">{0}</div>",
   "kind": "tpl",
   "where": [
-   "app/placepicker.js:106"
+   "app/placepicker.js:108"
   ]
  },
  {
   "key": "<div class=\"section-title\">לא ברשימה?</div><div class=\"pp-list\"><button type=\"button\" class=\"pp-row\" data-custom{0}><span class=\"pp-pic pc-y\" aria-hidden=\"true\">📍<span class=\"pp-ok\">{1}</span></span><span class=\"pp-tx\"><span class=\"pp-n\">מיקום מותאם</span><span class=\"pp-f\">לפי קו רוחב וקו אורך</span></span></button></div>",
   "kind": "tpl",
   "where": [
-   "app/placepicker.js:111"
+   "app/placepicker.js:113"
   ]
  },
  {
   "key": "בחירת יישוב",
   "kind": "lit",
   "where": [
-   "app/placepicker.js:115"
+   "app/placepicker.js:117"
   ]
  },
  {
   "key": "<div class=\"pp-empty\"><span class=\"pp-empty-ic\" aria-hidden=\"true\">🧭</span><b>לא מצאנו יישוב כזה</b><span>אפשר לנסות רק את תחילת השם, או באנגלית</span></div>",
   "kind": "tpl",
   "where": [
-   "app/placepicker.js:202"
+   "app/placepicker.js:204"
   ]
  },
  {
   "key": "<div class=\"pp-hint\">ועוד {0} יישובים. כדאי להמשיך לכתוב</div>",
   "kind": "tpl",
   "where": [
-   "app/placepicker.js:203"
+   "app/placepicker.js:205"
   ]
  },
  {
   "key": "המיקום שלי",
   "kind": "lit",
   "where": [
-   "app/placepicker.js:231"
+   "app/placepicker.js:233"
   ]
  },
  {
   "key": "אין כאן איתור מיקום. אפשר לחפש לפי השם",
   "kind": "lit",
   "where": [
-   "app/placepicker.js:234"
+   "app/placepicker.js:236"
   ]
  },
  {
   "key": "מאתרים…",
   "kind": "lit",
   "where": [
-   "app/placepicker.js:236"
+   "app/placepicker.js:238"
   ]
  },
  {
   "key": "המיקום שלך מחוץ לישראל, אז אי אפשר לבחור לפיו. אפשר לחפש לפי השם",
   "kind": "lit",
   "where": [
-   "app/placepicker.js:241"
+   "app/placepicker.js:243"
   ]
  },
  {
   "key": "אין הרשאה למיקום. אפשר לאשר אותה בהגדרות ולנסות שוב",
   "kind": "lit",
   "where": [
-   "app/placepicker.js:246"
+   "app/placepicker.js:248"
   ]
  },
  {
   "key": "לא הצלחנו לאתר את המיקום. אפשר לנסות שוב או לחפש לפי השם",
   "kind": "lit",
   "where": [
-   "app/placepicker.js:246"
+   "app/placepicker.js:248"
   ]
  },
  {
   "key": "<div class=\"pp-near\">{0} הכי קרוב למיקום שלך{1}</div>",
   "kind": "tpl",
   "where": [
-   "app/placepicker.js:259"
+   "app/placepicker.js:261"
   ]
  },
  {
   "key": " · {0} ק״מ",
   "kind": "tpl",
   "where": [
-   "app/placepicker.js:259"
+   "app/placepicker.js:261"
   ]
  },
  {
@@ -3560,56 +3560,56 @@
   "key": "<span class=\"delta flat\" title=\"אין נתונים בתקופה הקודמת\">—</span>",
   "kind": "lit",
   "where": [
-   "app/ui.js:114"
+   "app/ui.js:116"
   ]
  },
  {
   "key": "<span class=\"delta flat\" title=\"בתקופה הקודמת אין נתונים, אז אין למה להשוות\">אין נתוני השוואה</span>",
   "kind": "lit",
   "where": [
-   "app/ui.js:115"
+   "app/ui.js:117"
   ]
  },
  {
   "key": "<div class=\"grab\"></div><div class=\"sh-head\"><h2 id=\"{0}\">{1}</h2><button class=\"icon-btn\" data-close aria-label=\"סגור\">{2}</button></div><div class=\"sh-body\">{3}</div>{4}",
   "kind": "tpl",
   "where": [
-   "app/ui.js:196"
+   "app/ui.js:198"
   ]
  },
  {
   "key": "אישור",
   "kind": "lit",
   "where": [
-   "app/ui.js:313"
+   "app/ui.js:315"
   ]
  },
  {
   "key": "לפני {0} דק׳",
   "kind": "tpl",
   "where": [
-   "app/ui.js:378"
+   "app/ui.js:382"
   ]
  },
  {
   "key": "לפני {0} שע׳",
   "kind": "tpl",
   "where": [
-   "app/ui.js:379"
+   "app/ui.js:383"
   ]
  },
  {
   "key": "לפני {0} ימים",
   "kind": "tpl",
   "where": [
-   "app/ui.js:382"
+   "app/ui.js:386"
   ]
  },
  {
   "key": "<div class=\"skel-wrap\" aria-busy=\"true\" aria-label=\"טוען\">{0}</div>",
   "kind": "tpl",
   "where": [
-   "app/ui.js:388"
+   "app/ui.js:392"
   ]
  },
  {
@@ -6341,14 +6341,7 @@
   ]
  },
  {
-  "key": "<div class=\"hh-goal-l\">צפי לסוף {0}: {1}</div>",
-  "kind": "tpl",
-  "where": [
-   "app/views-home.js:210"
-  ]
- },
- {
-  "key": "התקופה",
+  "key": "צפי לסוף התקופה",
   "kind": "lit",
   "where": [
    "app/views-home.js:210",
@@ -6356,13 +6349,10 @@
   ]
  },
  {
-  "key": "החודש",
+  "key": "צפי לסוף החודש",
   "kind": "lit",
   "where": [
    "app/views-home.js:210",
-   "app/views-leaderboard.js:17",
-   "app/views-leaderboard.js:296",
-   "app/views-onboarding.js:108",
    "core/insights.js:367"
   ]
  },
@@ -6684,6 +6674,15 @@
   "kind": "tpl",
   "where": [
    "app/views-insights.js:63"
+  ]
+ },
+ {
+  "key": "החודש",
+  "kind": "lit",
+  "where": [
+   "app/views-leaderboard.js:17",
+   "app/views-leaderboard.js:296",
+   "app/views-onboarding.js:108"
   ]
  },
  {
@@ -7113,7 +7112,7 @@
   "kind": "lit",
   "where": [
    "app/views-leaderboard.js:334",
-   "app/views-recap.js:205"
+   "app/views-recap.js:207"
   ]
  },
  {
@@ -7135,7 +7134,7 @@
   "kind": "lit",
   "where": [
    "app/views-leaderboard.js:343",
-   "app/views-recap.js:211"
+   "app/views-recap.js:213"
   ]
  },
  {
@@ -9328,43 +9327,43 @@
   "key": "הסיכום החודשי שלי",
   "kind": "lit",
   "where": [
-   "app/views-recap.js:189",
-   "app/views-recap.js:208"
+   "app/views-recap.js:191",
+   "app/views-recap.js:210"
   ]
  },
  {
   "key": "⏱️ {0} שעות ב-{1} משמרות",
   "kind": "tpl",
   "where": [
-   "app/views-recap.js:193"
+   "app/views-recap.js:195"
   ]
  },
  {
   "key": "🏆 היום הכי רווחי: {0}",
   "kind": "tpl",
   "where": [
-   "app/views-recap.js:194"
+   "app/views-recap.js:196"
   ]
  },
  {
   "key": "⭐ תוספות: {0}",
   "kind": "tpl",
   "where": [
-   "app/views-recap.js:195"
+   "app/views-recap.js:197"
   ]
  },
  {
   "key": "{0} שווה ל-{1} {2}",
   "kind": "tpl",
   "where": [
-   "app/views-recap.js:196"
+   "app/views-recap.js:198"
   ]
  },
  {
   "key": "<button class=\"recap-card\" style=\"{0}\" data-act=\"recap-open\" data-pk=\"{1}\"><span class=\"rc-spark\" aria-hidden=\"true\">✨</span>\n      <span class=\"rc-t\"><b>הסיכום של {2} מוכן</b><span>{3} משמרות · {4}. בואו לראות</span></span>{5}</button>",
   "kind": "tpl",
   "where": [
-   "app/views-recap.js:225"
+   "app/views-recap.js:227"
   ]
  },
  {
@@ -17886,13 +17885,6 @@
   "kind": "lit",
   "where": [
    "core/insights.js:349"
-  ]
- },
- {
-  "key": "צפי לסוף ",
-  "kind": "lit",
-  "where": [
-   "core/insights.js:367"
   ]
  },
  {

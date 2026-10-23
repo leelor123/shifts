@@ -1569,3 +1569,16 @@ body.fx .cal-day.hello, body.fx .week-row.hello { animation: cal-hello .55s cubi
   background: var(--surface); color: var(--on-surface); font: 600 .85rem/1 inherit; cursor: pointer; transition: scale .3s var(--pop), background-color .2s ease; }
 .topbar .lang-pill svg { width: 16px; height: 16px; color: var(--brand); }
 .topbar .lang-pill:active { scale: .94; background: var(--brand-soft); }
+
+/* ---- left-to-right languages (English, Russian): what points along the reading direction turns around ---- */
+/* (the separate scale property, so it adds to any transform an icon already has) */
+html[dir="ltr"] svg.i-dir { scale: -1 1; }
+/* numbers in their own left-to-right box sit at the reading start (time/date/number fields) or the line's end
+ * (amounts in a breakdown, a bar's value); in a left-to-right language those sides swap */
+html[dir="ltr"] .input[type="time"], html[dir="ltr"] .input[type="date"], html[dir="ltr"] .input[type="number"], html[dir="ltr"] .input.ltr { text-align: left; }
+html[dir="ltr"] .bd td.a, html[dir="ltr"] .hbar .vv, html[dir="ltr"] .adm-bar .vv { text-align: right; }
+html[dir="ltr"] .bd .f { text-align: left; }
+html[dir="ltr"] #print-root th, html[dir="ltr"] #print-root td { text-align: left; }
+/* "+1" next to Arabic text came out "1+": a count with a sign keeps its own left-to-right order */
+.hl-more { direction: ltr; unicode-bidi: isolate; }
+.qz-pts { direction: ltr; unicode-bidi: isolate; }
