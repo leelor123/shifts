@@ -3,7 +3,9 @@
 For the release that ships the app in these languages. In Play Console: Grow › Store presence › Main store listing ›
 "Manage translations" › add **English (United States) – en-US**, **Russian – ru-RU** and **Arabic – ar**, then paste.
 The Hebrew page (iw-IL) stays the default. Limits: name 30, short description 80, full description 4000 characters.
-Screenshots: the Hebrew ones can stay at first; per-language screenshots are a later improvement.
+Screenshots: each language has its own 8 (1080x1920, real screens of 1.22.1) in `store/screenshots/en|ru|ar/`
+(also in C:UsersUserShiftPay-Androidplay-uploadscreenshots-en|ru|ar). In each translation: Phone screenshots ›
+remove the Hebrew ones it copied, upload 01-08 in order. The icon and the feature graphic stay the same.
 
 ---
 
