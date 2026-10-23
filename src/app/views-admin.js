@@ -129,10 +129,10 @@
       const delClosed = body.querySelector('[data-adm-del-closed]');
       if (delClosed) delClosed.onclick = async () => {
         const n = inbox.closed.length;
-        if (!(await UI.confirm(`למחוק ${n === 1 ? 'פנייה סגורה אחת' : n + ' פניות סגורות'}?`, 'הן וכל ההודעות בהן יימחקו לתמיד. פניות פתוחות לא נוגעים בהן.', 'מחק', true))) return;
+        if (!(await UI.confirm(`למחוק ${n === 1 ? 'פנייה סגורה אחת' : `${n} פניות סגורות`}?`, 'הן וכל ההודעות בהן יימחקו לתמיד. פניות פתוחות לא נוגעים בהן.', 'מחק', true))) return;
         delClosed.disabled = true;
         const done = await root.Support.removeClosed(inbox.closed);
-        if (done) UI.toast(done === 1 ? 'פנייה אחת נמחקה' : done + ' פניות נמחקו');
+        if (done) UI.toast(done === 1 ? 'פנייה אחת נמחקה' : `${done} פניות נמחקו`);
         load();
       };
       body.querySelector('[data-adm-refresh]').onclick = () => { body.innerHTML = UI.skeleton(4, 'card'); load(); };

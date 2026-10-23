@@ -137,6 +137,15 @@
     const dd = d == null ? 2 : d;
     return new Intl.NumberFormat(NUM_LOCALE, { minimumFractionDigits: 0, maximumFractionDigits: dd }).format(n);
   }
+  /** The form of a count's noun in the language: forms by plural category (one, two, few, many, other; Intl.PluralRules),
+   *  for a number or a number written as text ("8.5", "1,234"). */
+  let pluralRules;
+  function plural(n, forms) {
+    const v = typeof n === 'number' ? n : parseFloat(String(n).replace(/[^\d.-]/g, '')) || 0;
+    if (!pluralRules) pluralRules = new Intl.PluralRules(LOCALE);
+    const c = pluralRules.select(Math.abs(v));
+    return forms[c] != null ? forms[c] : forms.other != null ? forms.other : forms.many != null ? forms.many : Object.values(forms)[0];
+  }
   /** An error whose message is for the person (shown as is), unlike the browser's own. */
   function oops(message, extra) {
     return Object.assign(new Error(message), { ours: true }, extra);
@@ -188,7 +197,7 @@
   root.U = {
     pad, MIN, HOUR, DAY, uid, dateKey, parseKey, keyToDate, addDays, addMonths, dow, diffDays,
     toEpoch, dayStart, epochKey, epochHM, todayKey, monthKey, monthStart, monthEnd, addMonthKey,
-    weekStart, rangeKeys, inRange, clamp, round2, sum, money, num, hours, hm, fmtDate, fmtMonth, pct, oops, ours,
+    weekStart, rangeKeys, inRange, clamp, round2, sum, money, num, hours, hm, fmtDate, fmtMonth, pct, oops, ours, plural,
     LANG, RTL, LOCALE, MONTHS, MONTHS_SHORT, DAYS, DAYS_SHORT,
   };
 })(typeof window !== 'undefined' ? window : globalThis);

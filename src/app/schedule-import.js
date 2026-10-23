@@ -104,7 +104,7 @@
       const names = res.personal ? [] : res.names;
       const head = names.length && !who.length
         ? `${App.mascotSays ? App.mascotSays('think', `מצאתי בסידור ${names.length} שמות. מי את/ה?`, { size: 64 }) : ''}`
-        : `${App.mascotSays ? App.mascotSays('love', rows.length ? `מצאתי ${rows.length === 1 ? 'משמרת אחת' : rows.length + ' משמרות'} שלך! 🎉 בודקים רגע ומוסיפים` : 'לא מצאתי משמרות בשם הזה', { size: 64 }) : ''}`;
+        : `${App.mascotSays ? App.mascotSays('love', rows.length ? `מצאתי ${rows.length === 1 ? 'משמרת אחת' : `${rows.length} משמרות`} שלך! 🎉 בודקים רגע ומוסיפים` : 'לא מצאתי משמרות בשם הזה', { size: 64 }) : ''}`;
       const thisWeek = U.addDays(U.todayKey(), -U.dow(U.todayKey())), nextWeek = U.addDays(thisWeek, 7);
       const list = rows.map((r, i) => {
         const day = U.DAYS ? U.DAYS[U.dow(r.date)] : '';
@@ -240,6 +240,7 @@
   };
   function aiPrompt() {
     const t = U.todayKey();
+    // i18n-keep the model's instructions (English, with the Hebrew of the schedules it reads)
     return `You read a work schedule (usually Hebrew, sometimes English) from a picture and list every shift of every person in it.
 Today is ${t} (${['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'][U.dow(t)]}). Weeks start on Sunday.
 For each shift give: who (the person's name exactly as written; "" if the schedule has no names), date (YYYY-MM-DD when the schedule shows dates, else ""), day (0=Sunday … 6=Saturday, the day of the week; -1 if unknown), start and end ("HH:MM", 24-hour; an end on the next morning is just its time).

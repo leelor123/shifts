@@ -145,7 +145,7 @@
       body: `${App.mascotSays ? App.mascotSays('party', 'הפסקה קטנה? כל משחק לוקח פחות מדקה.', { size: 64 }) : ''}${(() => {
           const st = playStreak();
           if (!st.n) return '';
-          return `<div class="gm-streak-bar ${st.today ? 'on' : ''}"><span aria-hidden="true">🔥</span><b>${st.n === 1 ? 'יום אחד' : st.n + ' ימים'} ברצף</b><small>${st.today ? 'שיחקת היום. נתראה מחר!' : 'סיבוב אחד היום שומר על הרצף'}</small></div>`;
+          return `<div class="gm-streak-bar ${st.today ? 'on' : ''}"><span aria-hidden="true">🔥</span><b>${st.n === 1 ? 'יום אחד ברצף' : `${st.n} ימים ברצף`}</b><small>${st.today ? 'שיחקת היום. נתראה מחר!' : 'סיבוב אחד היום שומר על הרצף'}</small></div>`;
         })()}<div class="gm-list">${cards()}</div>
         ${root.Champions ? root.Champions.hubCard() : ''}
         <button class="ach-card" data-medals>${(() => { const l = achievements(); const got = l.filter((a) => a.on).length; return `<span class="ach-card-e" aria-hidden="true">🏅</span><span class="gm-txt"><b>המדליות שלי</b><span>${got} מתוך ${l.length} · על משמרות, כסף, תלושים ומשחקים</span></span>${icon('left', 's')}`; })()}</button>`,
@@ -523,7 +523,7 @@
       showOver();
       const mins = rate ? Math.round((st.score / rate) * 60) : 0;
       const h = Math.floor(mins / 60), m = mins % 60;
-      const span = h ? `${h === 1 ? 'שעה' : h === 2 ? 'שעתיים' : h + ' שעות'}${m ? ` ו-${m} דקות` : ''}` : `${mins} דקות`;
+      const span = h ? `${h === 1 ? 'שעה' : h === 2 ? 'שעתיים' : `${h} שעות`}${m ? ` ו-${m} דקות` : ''}` : `${mins} דקות`;
       endScreen(over, {
         fx,
         id: 'coins', unit: ' ₪', score: st.score, ratio: Math.min(1, st.score / 400),

@@ -554,7 +554,7 @@
     return {
       key: 'monthly-' + last.key, type: 'monthly', cat: 'summary', severity: 'info', push: 'anomaly', data: { pk: last.key },
       title: `הסיכום של ${last.label} מוכן ✨`,
-      body: `${t.shifts === 1 ? 'משמרת אחת' : t.shifts + ' משמרות'} · ${U.num(t.hours, 1)} שעות · ${U.money(t.gross, 0)} ברוטו. לחצו לסיפור של החודש.`,
+      body: `${t.shifts === 1 ? 'משמרת אחת' : `${t.shifts} משמרות`} · ${U.num(t.hours, 1)} שעות · ${U.money(t.gross, 0)} ברוטו. לחצו לסיפור של החודש.`,
     };
   }
   const insightsNow = () => Insights.run(App.model, {

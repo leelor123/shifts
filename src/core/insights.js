@@ -472,7 +472,7 @@
       const gap = U.diffDays(lastKey, today);
       if (gap >= (+cfg.idleDays || 7)) {
         alerts.push({ key: 'idle-' + lastKey, type: 'idle', severity: 'info', push: 'anomaly',
-          title: 'לא נרשמה משמרת כבר ' + gap + ' ימים', body: 'שכחת לרשום משמרות? אם היית בחופש — תהנה!',
+          title: `לא נרשמה משמרת כבר ${gap} ימים`, body: 'שכחת לרשום משמרות? אם היית בחופש — תהנה!',
           explain: 'המשמרת האחרונה: ' + U.fmtDate(lastKey) + '. הסף: ' + cfg.idleDays + ' ימים.' });
       }
     }

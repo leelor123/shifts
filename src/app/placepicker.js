@@ -30,7 +30,9 @@
 
   /** The typed part of a name, marked. */
   function mark(name, q) {
+    // i18n-keep-start (place names are Hebrew)
     const t = String(q || '').trim().replace(/'/g, '׳').replace(/"/g, '״');
+    // i18n-keep-end
     const i = t ? name.indexOf(t) : -1;
     if (i < 0) return esc(name);
     return esc(name.slice(0, i)) + '<mark>' + esc(name.slice(i, i + t.length)) + '</mark>' + esc(name.slice(i + t.length));

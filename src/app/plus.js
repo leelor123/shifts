@@ -458,7 +458,7 @@
       return false;
     }
     Store.setMeta({ plusUse: Object.assign({}, S.meta.plusUse, { [id]: { k: periodKey(q.per), n: usedOf(id) + 1 } }) }).catch(() => {});
-    if (left === 2) UI.toast(`נשאר עוד ${q.one} אחד חינם ${q.per === 'day' ? 'להיום' : 'החודש'}`);
+    if (left === 2) UI.toast(`נשאר עוד ${q.one} אחד חינם ${q.per === 'day' ? 'להיום' : 'לחודש הזה'}`);
     return true;
   };
   /** "That was the free allowance": when it comes back, and the way to unlimited. */

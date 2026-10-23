@@ -138,7 +138,7 @@
     leave: { icon: 'beach', title: 'ותק, חופשה, מחלה והבראה', sub: () => (S.settings.startDate ? 'התחלת עבודה: ' + U.fmtDate(S.settings.startDate) : 'הגדר תאריך תחילת עבודה') },
     goal: { icon: 'target', title: 'יעדים', sub: () => [+S.settings.goal.amount ? 'חודשי: ' + U.money(S.settings.goal.amount, 0) + (S.settings.goal.type === 'net' ? ' נטו' : ' ברוטו') : '', S.settings.saving && +S.settings.saving.price && S.settings.saving.name ? 'חוסכים ל' + S.settings.saving.name : ''].filter(Boolean).join(' · ') || 'יעד חודשי וחיסכון למשהו' },
     alerts: { icon: 'bell', title: 'התראות ותובנות', sub: () => (('Notification' in window) && Notification.permission === 'granted' ? 'פוש מופעל' : 'פוש כבוי') + ' · סיכומים ותזכורות' },
-    templates: { icon: 'layers', title: 'תבניות משמרת', sub: () => (S.templates.length === 1 ? 'תבנית אחת' : S.templates.length ? S.templates.length + ' תבניות' : 'אין תבניות') },
+    templates: { icon: 'layers', title: 'תבניות משמרת', sub: () => (S.templates.length === 1 ? 'תבנית אחת' : S.templates.length ? `${S.templates.length} תבניות` : 'אין תבניות') },
     lang: { icon: 'globe', title: 'שפה · Language', sub: () => (root.Lang ? root.Lang.LANGS.map((l) => l.name).join(' · ') : '') },
     look: { icon: 'palette', title: 'מראה', sub: () => ({ system: 'לפי המערכת', light: 'בהיר', dark: 'כהה' }[S.settings.theme]) + ' · ' + (App.ACCENTS[S.settings.accent] || [])[2] },
     security: { icon: 'lock', title: 'נעילה בקוד', sub: () => (S.settings.lock.enabled ? 'מופעלת' : 'כבויה') },
@@ -166,7 +166,7 @@
   // the page is a few colourful doors; each opens its own small page with the sections behind it
   const CATS = [
     { id: 'me', icon: 'users', tint: 'violet', title: 'אני והחשבון', keys: ['personal', 'account'], sub: () => [S.settings.userName, S.meta.cloudEmail ? 'מחובר/ת ☁️' : 'לא מחובר/ת'].filter(Boolean).join(' · ') },
-    { id: 'work', icon: 'briefcase', tint: 'mint', title: 'העבודה שלי', keys: ['roles', 'pay', 'templates'], sub: () => { const r = App.roles(); return r.length === 1 ? `${r[0].name} · ${U.money(Engine.roleRate(r[0], U.todayKey()), 0)} לשעה` : r.length + ' תפקידים' + (S.employers.length > 1 ? ' · ' + S.employers.length + ' מקומות עבודה' : ''); } },
+    { id: 'work', icon: 'briefcase', tint: 'mint', title: 'העבודה שלי', keys: ['roles', 'pay', 'templates'], sub: () => { const r = App.roles(); return r.length === 1 ? `${r[0].name} · ${U.money(Engine.roleRate(r[0], U.todayKey()), 0)} לשעה` : `${r.length} תפקידים` + (S.employers.length > 1 ? ' · ' + S.employers.length + ' מקומות עבודה' : ''); } },
     { id: 'calc', icon: 'flask', tint: 'amber', title: 'חישוב השכר', keys: ['calc', 'rest'], sub: () => 'שעות נוספות, לילה, שבת וחגים' },
     { id: 'money', icon: 'wallet', tint: 'sky', title: 'נטו, מס וזכויות', keys: ['net', 'leave', 'rights'], sub: () => `${S.settings.tax.creditPoints} נק׳ זיכוי · פנסיה ${S.settings.pension.employeePct}%` },
     { id: 'goals', icon: 'target', tint: 'pink', title: 'יעדים ותזכורות', keys: ['goal', 'alerts'], sub: () => (+S.settings.goal.amount ? 'יעד ' + U.money(S.settings.goal.amount, 0) : 'יעד, חיסכון והתראות') },
@@ -794,7 +794,7 @@
         if (b.hasAttribute('data-wipe')) {
           if (!(await UI.confirm('למחוק את כל הנתונים?', 'כל המשמרות, התלושים וההגדרות יימחקו לצמיתות מהטלפון ומהחשבון בענן. מומלץ לגבות קודם.', 'מחק הכול', true))) return;
           const really = await UI.promptText('אישור סופי', 'הקלד "מחק" כדי לאשר', '');
-          if (really !== 'מחק') { UI.toast('בוטל'); return; }
+          if (String(really || '').trim().toLowerCase() !== 'מחק'.toLowerCase()) { UI.toast('בוטל'); return; }
           try {
             if (root.Cloud.user) await root.Cloud.deleteAccountData(); else await Store.wipe();
             location.reload();

@@ -375,11 +375,11 @@
   function timeAgo(ms) {
     const d = (Date.now() - ms) / 60000;
     if (d < 1) return 'עכשיו';
-    if (d < 60) return 'לפני ' + Math.round(d) + ' דק׳';
-    if (d < 60 * 24) return 'לפני ' + Math.round(d / 60) + ' שע׳';
+    if (d < 60) return `לפני ${Math.round(d)} דק׳`;
+    if (d < 60 * 24) return `לפני ${Math.round(d / 60)} שע׳`;
     const days = Math.round(d / 1440);
     if (days === 1) return 'אתמול';
-    if (days < 30) return 'לפני ' + days + ' ימים';
+    if (days < 30) return `לפני ${days} ימים`;
     return U.fmtDate(U.epochKey(ms));
   }
 

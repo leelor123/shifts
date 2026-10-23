@@ -202,7 +202,7 @@
     if (q('[data-delete-cloud]')) q('[data-delete-cloud]').onclick = async () => {
       if (!(await UI.confirm('למחוק את החשבון ואת כל הנתונים?', 'כל המשמרות, התלושים וההגדרות יימחקו לצמיתות מהענן ומהטלפון, והחשבון באפליקציה יימחק. ייתכן ש-\u2060Google תבקש לאשר את החשבון שוב. מומלץ לגבות קודם.', 'מחק הכול', true))) return;
       const really = await UI.promptText('אישור סופי', 'הקלד "מחק" כדי לאשר', '');
-      if (really !== 'מחק') { UI.toast('בוטל'); return; }
+      if (String(really || '').trim().toLowerCase() !== 'מחק'.toLowerCase()) { UI.toast('בוטל'); return; }
       try { await Cloud.deleteAccountData(); location.reload(); } catch (e) { UI.dialog({ title: 'המחיקה נכשלה', text: Cloud.errorText(e), buttons: [{ label: 'סגור', value: true }] }); }
     };
   };

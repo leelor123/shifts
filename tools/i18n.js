@@ -8,9 +8,13 @@
  * downloaded.
  *
  * Kept in Hebrew (they read Hebrew, or are data):
- *   - anything between "// i18n-keep-start" and "// i18n-keep-end", or right after a "i18n-keep" comment;
+ *   - anything between "// i18n-keep-start" and "// i18n-keep-end", or on the line under a "// i18n-keep" comment;
  *   - whole files in KEEP_FILES (parsers of Hebrew payslips, reports and schedules; the list of localities);
  *   - regular expressions (and strings passed to new RegExp).
+ *
+ * A translation may give a count's noun in each plural form of its language: {0#one:смена;few:смены;many:смен;other:смены}
+ * becomes the right form for the number in {0} (Intl.PluralRules, U.plural). {1#-} leaves expression 1 out: the Hebrew's
+ * own choice of the noun (`${n === 1 ? 'משמרת' : 'משמרות'}`) when the translation already gives it by {0}'s plural form.
  *
  *   node tools/i18n.js extract        update i18n/catalog.json and add new keys (null) to each i18n/<lang>.json
  *   node tools/i18n.js check [lang]   every translation present, the same {n} placeholders and HTML tags, no Hebrew
@@ -45,12 +49,17 @@ function nodesOf(code, file) {
   let open = null;
   for (const c of comments) {
     const t = c.value.trim();
-    if (t === 'i18n-keep-start') open = c.end;
-    else if (t === 'i18n-keep-end' && open != null) { keep.push([open, c.start]); open = null; }
-    else if (t === 'i18n-keep') keepNext.push(c.end);
+    // (a pragma may be followed by a reason: // i18n-keep-start (place names are Hebrew))
+    if (/^i18n-keep-start(\s|$)/.test(t)) open = c.end;
+    else if (/^i18n-keep-end(\s|$)/.test(t) && open != null) { keep.push([open, c.start]); open = null; }
+    else if (/^i18n-keep(\s|$)/.test(t)) keepNext.push(c.end);
   }
   if (open != null) keep.push([open, code.length]);
-  const kept = (n) => keep.some(([a, b]) => n.start >= a && n.end <= b) || keepNext.some((e) => n.start >= e && n.start - e <= 3 && /^\s*$/.test(code.slice(e, n.start)));
+  // "i18n-keep" alone keeps everything on the line under it
+  const nl = []; for (let i = code.indexOf('\n'); i >= 0; i = code.indexOf('\n', i + 1)) nl.push(i);
+  const lineOf = (pos) => { let lo = 0, hi = nl.length; while (lo < hi) { const m = (lo + hi) >> 1; if (nl[m] < pos) lo = m + 1; else hi = m; } return lo; };
+  const keepLines = new Set(keepNext.map((e) => lineOf(e) + 1));
+  const kept = (n) => keep.some(([a, b]) => n.start >= a && n.end <= b) || keepLines.has(lineOf(n.start));
   const out = [];
   walk.ancestor(ast, {
     Literal(node, anc) {
@@ -121,7 +130,8 @@ function extract() {
   return list;
 }
 
-const placeholders = (s) => (String(s).match(/\{\d+\}/g) || []).sort().join(',');
+// {0} and {0#…} (a plural form of {0}) both stand for expression 0
+const placeholders = (s) => [...new Set((String(s).match(/\{\d+(?:#[^}]*)?\}/g) || []).map((p) => p.replace(/#.*\}/, '}')))].sort().join(',');
 const tags = (s) => (String(s).match(/<\/?[a-z][a-z0-9]*/gi) || []).map((t) => t.toLowerCase()).sort().join(',');
 function check(only) {
   const list = JSON.parse(fs.readFileSync(path.join(DIR, 'catalog.json'), 'utf8'));
@@ -172,7 +182,15 @@ function applyCode(code, file, dict) {
   }
   function rebuild(n, t) {
     // the translation's text with each {i} back as the i-th expression (with its own Hebrew translated too)
-    return t.split(/(\{\d+\})/).map((part) => { const m = /^\{(\d+)\}$/.exec(part); return m ? '${' + render(n.exprs[+m[1]].start, n.exprs[+m[1]].end) + '}' : escTpl(part); }).join('');
+    return t.split(/(\{\d+(?:#[^}]*)?\})/).map((part) => {
+      const m = /^\{(\d+)(?:#([^}]*))?\}$/.exec(part);
+      if (!m) return escTpl(part);
+      const expr = render(n.exprs[+m[1]].start, n.exprs[+m[1]].end);
+      if (!m[2]) return '${' + expr + '}';
+      if (m[2] === '-') return '';
+      const forms = Object.fromEntries(m[2].split(';').map((f) => f.split(':')).map(([k, ...v]) => [k.trim(), v.join(':')]));
+      return '${globalThis.U.plural(' + expr + ', ' + JSON.stringify(forms) + ')}';
+    }).join('');
   }
   return render(0, code.length);
 }

@@ -62,7 +62,7 @@
       title: 'ניתוח מתקדם ✨',
       full: true,
       cls: 'an-sheet',
-      body: body(a) + (left !== Infinity ? `<div class="an-left tiny">${left ? `נשארו החודש ${left === 1 ? 'ניתוח אחד' : left + ' ניתוחים'} חינם` : 'זה היה הניתוח החינמי האחרון החודש'} · <button class="btn text sm" data-act="plus-open">בלי הגבלה עם Plus</button></div>` : ''),
+      body: body(a) + (left !== Infinity ? `<div class="an-left tiny">${left ? `נשארו החודש ${left === 1 ? 'ניתוח אחד' : `${left} ניתוחים`} חינם` : 'זה היה הניתוח החינמי האחרון החודש'} · <button class="btn text sm" data-act="plus-open">בלי הגבלה עם Plus</button></div>` : ''),
     });
   };
 })(typeof window !== 'undefined' ? window : globalThis);
