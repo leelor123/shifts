@@ -1416,7 +1416,7 @@
   "where": [
    "app/export.js:22",
    "app/export.js:43",
-   "app/views-guide.js:151",
+   "app/views-guide.js:152",
    "app/views-reports.js:169",
    "app/views-rights.js:48",
    "app/views-shift.js:394",
@@ -1601,7 +1601,7 @@
   "where": [
    "app/export.js:43",
    "app/export.js:114",
-   "app/views-guide.js:147",
+   "app/views-guide.js:148",
    "app/views-home.js:205",
    "app/views-home.js:205",
    "app/views-payslip.js:242",
@@ -3179,7 +3179,7 @@
   "where": [
    "app/schedule-import.js:43",
    "app/schedule-import.js:185",
-   "app/views-guide.js:116",
+   "app/views-guide.js:117",
    "app/views-settings.js:149",
    "app/views-shift.js:41",
    "manifest"
@@ -3491,7 +3491,7 @@
   "kind": "lit",
   "where": [
    "app/schedule-import.js:302",
-   "app/views-guide.js:153",
+   "app/views-guide.js:154",
    "app/views-support.js:28",
    "core/games.js:190"
   ]
@@ -5743,45 +5743,59 @@
   ]
  },
  {
+  "key": "שעתי גם בערבית, ברוסית ובאנגלית",
+  "kind": "lit",
+  "where": [
+   "app/views-guide.js:115"
+  ]
+ },
+ {
+  "key": "כל המסכים, החישובים, הדוחות והמכתבים בשפה שבחרת. בהגדרות › מראה ונעילה › שפה.",
+  "kind": "lit",
+  "where": [
+   "app/views-guide.js:115"
+  ]
+ },
+ {
   "key": "צילום של דוח שעות נקרא כמו טבלה",
-  "kind": "lit",
-  "where": [
-   "app/views-guide.js:115"
-  ]
- },
- {
-  "key": "כל דוח, בכל סידור עמודות: גם צילום עקום, עם צל או של מסך כהה. האפליקציה מבינה מה כניסה, מה יציאה ומה סה\"כ, ומתעלמת מכל השאר.",
-  "kind": "lit",
-  "where": [
-   "app/views-guide.js:115"
-  ]
- },
- {
-  "key": "מצלמים את הסידור או מדביקים את ההודעה מוואטסאפ, והמשמרות שלך נכנסות ללוח. בהוספה (+) או בלוח השנה.",
   "kind": "lit",
   "where": [
    "app/views-guide.js:116"
   ]
  },
  {
-  "key": "שיתוף ישר מוואטסאפ",
+  "key": "כל דוח, בכל סידור עמודות: גם צילום עקום, עם צל או של מסך כהה. האפליקציה מבינה מה כניסה, מה יציאה ומה סה\"כ, ומתעלמת מכל השאר.",
+  "kind": "lit",
+  "where": [
+   "app/views-guide.js:116"
+  ]
+ },
+ {
+  "key": "מצלמים את הסידור או מדביקים את ההודעה מוואטסאפ, והמשמרות שלך נכנסות ללוח. בהוספה (+) או בלוח השנה.",
   "kind": "lit",
   "where": [
    "app/views-guide.js:117"
+  ]
+ },
+ {
+  "key": "שיתוף ישר מוואטסאפ",
+  "kind": "lit",
+  "where": [
+   "app/views-guide.js:118"
   ]
  },
  {
   "key": "לחיצה ארוכה על הסידור בוואטסאפ › שיתוף › Shaati. גם תלוש או דוח שעות.",
   "kind": "lit",
   "where": [
-   "app/views-guide.js:117"
+   "app/views-guide.js:118"
   ]
  },
  {
   "key": "דמי חגים",
   "kind": "lit",
   "where": [
-   "app/views-guide.js:118",
+   "app/views-guide.js:119",
    "app/views-rights.js:45",
    "app/views-rights.js:102",
    "core/insights.js:44",
@@ -5792,84 +5806,84 @@
   "key": "האפליקציה בודקת על אילו חגים מגיע לך תשלום כשלא עבדת, וכמה. בזכויות › דמי חגים.",
   "kind": "lit",
   "where": [
-   "app/views-guide.js:118"
+   "app/views-guide.js:119"
   ]
  },
  {
   "key": "דוח ומכתב למעסיק",
   "kind": "lit",
   "where": [
-   "app/views-guide.js:119"
+   "app/views-guide.js:120"
   ]
  },
  {
   "key": "משהו לא מסתדר בשכר? דוח מסודר (PDF) עם כל הממצאים והמשמרות, ומכתב מנומס מוכן. בזכויות או בדוחות.",
   "kind": "lit",
   "where": [
-   "app/views-guide.js:119"
+   "app/views-guide.js:120"
   ]
  },
  {
   "key": "\"שכחת לסיים את המשמרת?\"",
   "kind": "lit",
   "where": [
-   "app/views-guide.js:120"
+   "app/views-guide.js:121"
   ]
  },
  {
   "key": "משמרת שנמשכת הרבה יותר מהרגיל שלך שואלת בעדינות, עם שעת הסיום הנכונה מוכנה ללחיצה.",
   "kind": "lit",
   "where": [
-   "app/views-guide.js:120"
+   "app/views-guide.js:121"
   ]
  },
  {
   "key": "פתיחה חלקה",
   "kind": "lit",
   "where": [
-   "app/views-guide.js:121"
+   "app/views-guide.js:122"
   ]
  },
  {
   "key": "האינטרו מחכה שהכול ייטען, ומסך הבית מופיע מוכן: בלי קפיצות, ובלי הבהוב של כרטיס השכר בסוף האינטרו.",
   "kind": "lit",
   "where": [
-   "app/views-guide.js:121"
+   "app/views-guide.js:122"
   ]
  },
  {
   "key": "מה חדש? ✨",
   "kind": "lit",
   "where": [
-   "app/views-guide.js:136"
+   "app/views-guide.js:137"
   ]
  },
  {
   "key": "עדכנו את האפליקציה בשבילך! 🎉",
   "kind": "lit",
   "where": [
-   "app/views-guide.js:137"
+   "app/views-guide.js:138"
   ]
  },
  {
   "key": "<button class=\"btn\" data-wn-ok>הבנתי, תודה</button>",
   "kind": "lit",
   "where": [
-   "app/views-guide.js:139"
+   "app/views-guide.js:140"
   ]
  },
  {
   "key": "כל הכסף שהרווחת לפני שמורידים ממנו מס, ביטוח לאומי ופנסיה.",
   "kind": "lit",
   "where": [
-   "app/views-guide.js:147"
+   "app/views-guide.js:148"
   ]
  },
  {
   "key": "נטו",
   "kind": "lit",
   "where": [
-   "app/views-guide.js:148",
+   "app/views-guide.js:149",
    "app/views-home.js:207",
    "app/views-home.js:207",
    "app/views-payslip.js:242",
@@ -5883,14 +5897,14 @@
   "key": "הכסף שבאמת נכנס לחשבון הבנק, אחרי כל ההורדות. מתחת לגיל 18 בדרך כלל אין מס, אז הנטו קרוב לברוטו.",
   "kind": "lit",
   "where": [
-   "app/views-guide.js:148"
+   "app/views-guide.js:149"
   ]
  },
  {
   "key": "שעות נוספות",
   "kind": "lit",
   "where": [
-   "app/views-guide.js:149",
+   "app/views-guide.js:150",
    "app/views-rights.js:43",
    "app/views-shift.js:385",
    "core/engine.js:324",
@@ -5904,14 +5918,14 @@
   "key": "שעות מעבר ליום עבודה רגיל (בדרך כלל אחרי 8 שעות). השעתיים הראשונות שוות 125%, ואחר כך 150%.",
   "kind": "lit",
   "where": [
-   "app/views-guide.js:149"
+   "app/views-guide.js:150"
   ]
  },
  {
   "key": "שבת וחג",
   "kind": "lit",
   "where": [
-   "app/views-guide.js:150",
+   "app/views-guide.js:151",
    "core/payslip.js:423",
    "core/payslip.js:430",
    "core/payslip.js:440",
@@ -5924,21 +5938,21 @@
   "key": "שעה שעבדת בשבת או בחג שווה לפחות 150% מהשכר הרגיל. האפליקציה יודעת לבד מתי שבת נכנסת ויוצאת לפי העיר שלך.",
   "kind": "lit",
   "where": [
-   "app/views-guide.js:150"
+   "app/views-guide.js:151"
   ]
  },
  {
   "key": "כסף שהמעסיק מחזיר לך על הנסיעה לעבודה ובחזרה, לכל יום עבודה, בנוסף לשכר.",
   "kind": "lit",
   "where": [
-   "app/views-guide.js:151"
+   "app/views-guide.js:152"
   ]
  },
  {
   "key": "פנסיה",
   "kind": "lit",
   "where": [
-   "app/views-guide.js:152",
+   "app/views-guide.js:153",
    "app/views-rights.js:52",
    "app/views-rights.js:103",
    "core/games.js:193",
@@ -5953,21 +5967,21 @@
   "key": "חיסכון לגיל מבוגר. מגיל 21 (גברים) או 20 (נשים), אחרי חצי שנה בעבודה, המעסיק חייב להפריש לך כסף לקרן פנסיה.",
   "kind": "lit",
   "where": [
-   "app/views-guide.js:152"
+   "app/views-guide.js:153"
   ]
  },
  {
   "key": "הדף שהמעסיק נותן כל חודש, ובו כמה שעות עבדת וכמה שילמו לך. באפליקציה אפשר לצלם אותו ולבדוק שהכול נכון.",
   "kind": "lit",
   "where": [
-   "app/views-guide.js:153"
+   "app/views-guide.js:154"
   ]
  },
  {
   "key": "שכר מינימום",
   "kind": "lit",
   "where": [
-   "app/views-guide.js:154",
+   "app/views-guide.js:155",
    "app/views-rights.js:42",
    "core/games.js:195",
    "core/insights.js:43",
@@ -5979,14 +5993,14 @@
   "key": "הכי מעט שמותר לשלם לשעה. מתחת לגיל 18 הוא קצת נמוך יותר, לפי הגיל. מעסיק שמשלם פחות עובר על החוק.",
   "kind": "lit",
   "where": [
-   "app/views-guide.js:154"
+   "app/views-guide.js:155"
   ]
  },
  {
   "key": "נקודות זיכוי",
   "kind": "lit",
   "where": [
-   "app/views-guide.js:155",
+   "app/views-guide.js:156",
    "app/views-settings.js:189",
    "app/views-settings.js:552",
    "core/payslip.js:18",
@@ -5997,14 +6011,14 @@
   "key": "הנחה במס הכנסה שכל עובד מקבל. לגברים 2.25 נקודות, לנשים 2.75. יש נקודות נוספות (ילדים, תואר, שחרור מצבא) והן מופיעות בתלוש.",
   "kind": "lit",
   "where": [
-   "app/views-guide.js:155"
+   "app/views-guide.js:156"
   ]
  },
  {
   "key": "תקופת שכר",
   "kind": "lit",
   "where": [
-   "app/views-guide.js:156",
+   "app/views-guide.js:157",
    "app/views-reports.js:159"
   ]
  },
@@ -6012,14 +6026,14 @@
   "key": "הימים שעליהם מקבלים משכורת אחת. אצל רוב המעסיקים זה חודש רגיל, מה-1 ועד סוף החודש.",
   "kind": "lit",
   "where": [
-   "app/views-guide.js:156"
+   "app/views-guide.js:157"
   ]
  },
  {
   "key": "משמרת מתוכננת",
   "kind": "lit",
   "where": [
-   "app/views-guide.js:157",
+   "app/views-guide.js:158",
    "app/views-shift.js:438"
   ]
  },
@@ -6027,14 +6041,14 @@
   "key": "משמרת עתידית שרשמת כדי לא לשכוח. היא לא נספרת בשכר עד שמסמנים שהיא בוצעה.",
   "kind": "lit",
   "where": [
-   "app/views-guide.js:157"
+   "app/views-guide.js:158"
   ]
  },
  {
   "key": "דמי הבראה",
   "kind": "lit",
   "where": [
-   "app/views-guide.js:158",
+   "app/views-guide.js:159",
    "app/views-rights.js:51",
    "app/views-rights.js:99",
    "app/views-rights.js:99",
@@ -6047,21 +6061,21 @@
   "key": "תוספת שנתית שמגיעה אחרי שנה בעבודה, לפי הוותק והיקף המשרה.",
   "kind": "lit",
   "where": [
-   "app/views-guide.js:158"
+   "app/views-guide.js:159"
   ]
  },
  {
   "key": "<div class=\"term-box\">{0}<div><h3>מה זה {1}?</h3><p>{2}</p></div></div>",
   "kind": "tpl",
   "where": [
-   "app/views-guide.js:166"
+   "app/views-guide.js:167"
   ]
  },
  {
   "key": "הבנתי",
   "kind": "lit",
   "where": [
-   "app/views-guide.js:166",
+   "app/views-guide.js:167",
    "app/views-login.js:59"
   ]
  },

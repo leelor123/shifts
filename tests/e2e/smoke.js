@@ -815,11 +815,18 @@ let errors = [];
     });
     await p.goto('http://localhost:8783/?cloud=1', { waitUntil: 'load' });
     await p.waitForFunction(() => !document.getElementById('intro'), { timeout: 15000 });
+    // the very first open asks for the language: Hebrew (this page's) goes on to the questions
+    const picker = await p.waitForSelector('.lp-host.in', { timeout: 8000 }).then(() => true).catch(() => false);
+    if (picker) { await p.evaluate(() => document.querySelector('.lp-card[data-lang="he"]').click()); await p.waitForFunction(() => !document.querySelector('.lp-host'), { timeout: 8000 }); }
     await p.waitForSelector('.ob-welcome', { timeout: 8000 });
-    return { ctx, p, e: (fn, ...a) => p.evaluate(fn, ...a), shot: (n) => p.screenshot({ path: path.join(out, n + '.png') }).catch(() => {}) };
+    return { ctx, p, picker, e: (fn, ...a) => p.evaluate(fn, ...a), shot: (n) => p.screenshot({ path: path.join(out, n + '.png') }).catch(() => {}) };
   }
   const N = await newUserPage();
   const p2 = N.p, e2 = N.e, shot = N.shot;
+  await step('new user: the language first, then the welcome screen', async () => {
+    if (!N.picker) throw new Error('no language picker on the very first open');
+    if (!(await e2(() => localStorage.getItem('shaati.lang') === 'he' && document.documentElement.lang === 'he'))) throw new Error('Hebrew not kept');
+  });
   await step('new user: welcome screen first, no sign-in wall', async () => {
     if (await e2(() => App.blocking !== 'onboarding')) throw new Error('sign-in screen shown before the questions');
     if (!(await p2.$('[data-have]'))) throw new Error('no "I already have an account"');
