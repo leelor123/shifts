@@ -166,7 +166,7 @@
   // the page is a few colourful doors; each opens its own small page with the sections behind it
   const CATS = [
     { id: 'me', icon: 'users', tint: 'violet', title: 'אני והחשבון', keys: ['personal', 'account'], sub: () => [S.settings.userName, S.meta.cloudEmail ? 'מחובר/ת ☁️' : 'לא מחובר/ת'].filter(Boolean).join(' · ') },
-    { id: 'work', icon: 'briefcase', tint: 'mint', title: 'העבודה שלי', keys: ['roles', 'pay', 'templates'], sub: () => { const r = App.roles(); return r.length === 1 ? `${r[0].name} · ${U.money(Engine.roleRate(r[0], U.todayKey()), 0)} לשעה` : `${r.length} תפקידים` + (S.employers.length > 1 ? ' · ' + S.employers.length + ' מקומות עבודה' : ''); } },
+    { id: 'work', icon: 'briefcase', tint: 'mint', title: 'העבודה שלי', keys: ['roles', 'pay', 'templates'], sub: () => { const r = App.roles(); return r.length === 1 ? `${r[0].name} · ${U.money(Engine.roleRate(r[0], U.todayKey()), 0)} לשעה` : `${r.length} תפקידים` + (S.employers.length > 1 ? ' · ' + `${S.employers.length} מקומות עבודה` : ''); } },
     { id: 'calc', icon: 'flask', tint: 'amber', title: 'חישוב השכר', keys: ['calc', 'rest'], sub: () => 'שעות נוספות, לילה, שבת וחגים' },
     { id: 'money', icon: 'wallet', tint: 'sky', title: 'נטו, מס וזכויות', keys: ['net', 'leave', 'rights'], sub: () => `${S.settings.tax.creditPoints} נק׳ זיכוי · פנסיה ${S.settings.pension.employeePct}%` },
     { id: 'goals', icon: 'target', tint: 'pink', title: 'יעדים ותזכורות', keys: ['goal', 'alerts'], sub: () => (+S.settings.goal.amount ? 'יעד ' + U.money(S.settings.goal.amount, 0) : 'יעד, חיסכון והתראות') },
@@ -203,6 +203,7 @@
   const CHIPS = [['wallet', 'mint', 0], ['candle', 'amber', 1], ['clock', 'violet', 2], ['bus', 'sky', 3], ['coffee', 'orange', 4], ['receipt', 'pink', 5], ['bell', 'violet', 9], ['cloud', 'sky', 12]];
 
   // search: Hebrew written loosely (no niqqud, final letters, quotes) and matched from the start of words
+  // i18n-keep the final letters' plain forms
   const FINALS = { 'ך': 'כ', 'ם': 'מ', 'ן': 'נ', 'ף': 'פ', 'ץ': 'צ' };
   const norm = (s) => String(s || '').toLowerCase().replace(/[֑-ׇ]/g, '').replace(/[ךםןףץ]/g, (c) => FINALS[c]).replace(/["'״׳()\-–,.:/%₪?!]/g, ' ').replace(/\s+/g, ' ').trim();
   // every word of the question starts a word here ("צבע" finds colours, not the fingerprint, "אצבע"); a Hebrew

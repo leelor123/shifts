@@ -223,6 +223,7 @@
 
   /* ---------------- cities ---------------- */
   // [name, lat, lon, candle-lighting minutes before sunset]
+  // i18n-keep-start the names are keys (settings and the localities list are in Hebrew)
   const CITIES = [
     ['ירושלים', 31.7690, 35.2163, 40], ['תל אביב-יפו', 32.0809, 34.7806, 18], ['חיפה', 32.7940, 34.9896, 30],
     ['באר שבע', 31.2518, 34.7913, 18], ['אילת', 29.5581, 34.9482, 18], ['נתניה', 32.3215, 34.8532, 18],
@@ -241,6 +242,7 @@
     ['נצרת', 32.6996, 35.3035, 18], ['מגדל העמק', 32.6760, 35.2400, 18], ['טבריה', 32.7922, 35.5312, 18],
     ['צפת', 32.9646, 35.4960, 18], ['קריית שמונה', 33.2073, 35.5697, 18],
   ].map(([name, lat, lon, candle]) => ({ name, lat, lon, candle }));
+  // i18n-keep-end
   // the 44 cities above keep their exact place; any other locality comes from the full list (places.js),
   // where those 44 have the same coordinates under their CBS spelling
   function findCity(name) {

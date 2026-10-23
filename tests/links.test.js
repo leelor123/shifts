@@ -17,9 +17,15 @@ T.section('links to Kol Zchut');
 T.test('every Kol Zchut link is a checked article, never the search page', () => {
   const src = fs.readFileSync(path.join(__dirname, '..', 'src', 'app', 'views-rights.js'), 'utf8');
   T.ok(!/index\.php\?search=/.test(src), 'no links to the search page (it answers 404)');
-  // every quoted title inside KZ(…), including both sides of KZ(minor ? 'a' : 'b')
-  const titles = src.split('KZ(').slice(1).flatMap((seg) => [...seg.slice(0, seg.indexOf("')") + 1).matchAll(/'([^']+)'/g)].map((m) => m[1]));
+  // the titles are kept in one table (PAGES, never translated: they are the link's address), and every KZ(…) uses it
+  const table = src.slice(src.indexOf('const PAGES = {'), src.indexOf('};', src.indexOf('const PAGES = {')));
+  const pages = Object.fromEntries([...table.matchAll(/(\w+): '([^']+)'/g)].map((m) => [m[1], m[2]]));
+  const titles = Object.values(pages);
   T.ok(titles.length >= 12, 'links found: ' + titles.length);
   const unknown = titles.filter((t) => !VERIFIED.has(t));
   T.eq(unknown.join(', '), '', 'every title was checked');
+  const calls = src.split('KZ(').slice(1).map((seg) => seg.slice(0, seg.indexOf(')')));
+  T.eq(calls.filter((c) => /'/.test(c)).join(' | '), '', 'no title written inside KZ(…) itself');
+  const used = calls.flatMap((c) => [...c.matchAll(/PAGES\.(\w+)/g)].map((m) => m[1]));
+  T.eq(used.filter((k) => !pages[k]).join(', '), '', 'every PAGES key used exists');
 });

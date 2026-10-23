@@ -175,6 +175,7 @@
     const re1 = /(?:^|[^\d])(\d{1,2})[\/.-](20\d{2})(?!\d)/g;
     while ((m = re1.exec(text))) bump(+m[2], +m[1]);
     MONTHS.forEach((name, i) => {
+      // i18n-keep a pattern for the Hebrew payslip's text
       const re = new RegExp(name + "\\s*['׳]?\\s*(20\\d{2})", 'g');
       let mm;
       while ((mm = re.exec(text))) { bump(+mm[1], i + 1); bump(+mm[1], i + 1); }

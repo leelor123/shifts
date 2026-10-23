@@ -76,6 +76,7 @@
       // --- Shabbat & holidays window ---
       rest: {
         mode: 'city',
+        // i18n-keep a city's name is its key in the localities list
         city: 'תל אביב-יפו',
         lat: 32.08, lon: 34.78, candleMin: null,
         exitMode: 'tzeit', tzeitDeg: 8.5, exitMinutes: 40,

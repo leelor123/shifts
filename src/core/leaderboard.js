@@ -86,7 +86,8 @@
     let x = (seed == null ? Math.floor(Math.random() * 1e9) : seed) >>> 0;
     const next = () => { x = (x * 1664525 + 1013904223) >>> 0; return x; };
     const n = NOUNS[next() % NOUNS.length], a = ADJS[next() % ADJS.length];
-    return `${n} ${a} ${10 + (next() % 90)}`;
+    // English (the made-up names in every language but Hebrew) puts the describing word first: "Swift Fox 27"
+    return U.LANG === 'he' ? `${n} ${a} ${10 + (next() % 90)}` : `${a} ${n} ${10 + (next() % 90)}`;
   }
   /** "until midnight" / "until Sunday" … for each period, from a date and an hour. */
   function resetText(period, dateKey, now) {
