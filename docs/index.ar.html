@@ -2,7 +2,7 @@
 <html lang="ar" dir="rtl">
 <head>
 <meta charset="utf-8">
-<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'sha256-P1vY/EiXw5RkSguavX5FeRFgUvcBGNPUKJiorElIG7g=' 'sha256-2i9KVu/KIdZbLLr/EMyZ1sUJ4wpTx+xIAlvoG5meBj0=' https://www.gstatic.com https://apis.google.com https://cdnjs.cloudflare.com https://cdn.jsdelivr.net 'wasm-unsafe-eval'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com data:; img-src 'self' data: blob: https:; connect-src 'self' https: wss:; frame-src https://shiftpay-70ab6.firebaseapp.com https://accounts.google.com https://apis.google.com https://*.google.com; worker-src 'self' blob: https://cdnjs.cloudflare.com https://cdn.jsdelivr.net; media-src 'self' data: blob:; manifest-src 'self'; object-src 'none'; base-uri 'self'; form-action 'self'">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'sha256-P1vY/EiXw5RkSguavX5FeRFgUvcBGNPUKJiorElIG7g=' 'sha256-VCBsRG5HBTC/7vfZFmsHDcoAHcQ3aoGYZnwrI2WRxZQ=' https://www.gstatic.com https://apis.google.com https://cdnjs.cloudflare.com https://cdn.jsdelivr.net 'wasm-unsafe-eval'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com data:; img-src 'self' data: blob: https:; connect-src 'self' https: wss:; frame-src https://shiftpay-70ab6.firebaseapp.com https://accounts.google.com https://apis.google.com https://*.google.com; worker-src 'self' blob: https://cdnjs.cloudflare.com https://cdn.jsdelivr.net; media-src 'self' data: blob:; manifest-src 'self'; object-src 'none'; base-uri 'self'; form-action 'self'">
 <script>(function(){try{var l=localStorage.getItem('shaati.lang'),h=document.documentElement.lang;if(l&&l!==h&&/^(he|ar|ru|en)$/.test(l)&&!sessionStorage.getItem('langHop')){sessionStorage.setItem('langHop','1');location.replace((l==='he'?'index.html':'index.'+l+'.html')+location.search+location.hash)}else sessionStorage.removeItem('langHop')}catch(e){}})();</script>
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="theme-color" content="#0d2b6b">
@@ -2514,7 +2514,7 @@ body.fx .cal-day.hello, body.fx .week-row.hello { animation: cal-hello .55s cubi
   background: linear-gradient(140deg, var(--g1), var(--g2)); box-shadow: 0 8px 22px -8px var(--g2); text-shadow: 0 1px 2px rgba(0, 0, 0, .18); }
 .lp-name { font-weight: 700; font-size: 1.12rem; }
 .lp-hi { font-size: .8rem; opacity: .7; }
-.lp-sug { position: absolute; top: -9px; inset-inline-end: 12px; padding: 3px 9px; border-radius: 999px; font-size: .68rem; font-weight: 700; color: #10203f;
+.lp-sug { position: absolute; top: -9px; inset-inline-end: 12px; padding: 3px 9px; line-height: 1.35; white-space: nowrap; z-index: 1; border-radius: 999px; font-size: .68rem; font-weight: 700; color: #10203f;
   background: linear-gradient(140deg, var(--g1), var(--g2)); box-shadow: 0 4px 12px -4px var(--g2); }
 .lp-later { font-size: .8rem; color: rgba(255, 255, 255, .6); text-align: center; }
 /* chosen: the others step back, the chosen one comes forward, its colour fills the screen from its letter */
@@ -2585,7 +2585,7 @@ html[dir="ltr"] #print-root th, html[dir="ltr"] #print-root td { text-align: lef
 <noscript><div style="padding:24px;font-family:sans-serif">يتطلب التطبيق JavaScript.</div></noscript>
 <script>
 window.APP_VERSION = '1.21.1';
-window.APP_BUILD = '1.21.1-65868616';
+window.APP_BUILD = '1.21.1-c0cc2638';
 /* ---- core/util.js ---- */
 /* ============================================================
  * util.js — date/time helpers and formatting.

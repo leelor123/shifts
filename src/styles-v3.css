@@ -1539,7 +1539,7 @@ body.fx .cal-day.hello, body.fx .week-row.hello { animation: cal-hello .55s cubi
   background: linear-gradient(140deg, var(--g1), var(--g2)); box-shadow: 0 8px 22px -8px var(--g2); text-shadow: 0 1px 2px rgba(0, 0, 0, .18); }
 .lp-name { font-weight: 700; font-size: 1.12rem; }
 .lp-hi { font-size: .8rem; opacity: .7; }
-.lp-sug { position: absolute; top: -9px; inset-inline-end: 12px; padding: 3px 9px; border-radius: 999px; font-size: .68rem; font-weight: 700; color: #10203f;
+.lp-sug { position: absolute; top: -9px; inset-inline-end: 12px; padding: 3px 9px; line-height: 1.35; white-space: nowrap; z-index: 1; border-radius: 999px; font-size: .68rem; font-weight: 700; color: #10203f;
   background: linear-gradient(140deg, var(--g1), var(--g2)); box-shadow: 0 4px 12px -4px var(--g2); }
 .lp-later { font-size: .8rem; color: rgba(255, 255, 255, .6); text-align: center; }
 /* chosen: the others step back, the chosen one comes forward, its colour fills the screen from its letter */
