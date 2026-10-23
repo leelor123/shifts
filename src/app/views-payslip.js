@@ -32,7 +32,7 @@
   const DISCLAIMER = `<div class="disclaimer">${icon('info', 's')}<div>הניתוח הוא כלי עזר בלבד ואינו ייעוץ משפטי או חשבונאי. חישובים שתלויים בהסכם קיבוצי, בחוזה או בוותק מסומנים ברמת ביטחון נמוכה. במקרה של ספק — פנה למשאבי אנוש, לרו״ח, לארגון העובדים או לאתר "כל זכות".</div></div>`;
 
   /* ---------------- extraction ---------------- */
-  async function extractPdf(file, progress) {
+  async function extractPdf(file, progress, opts) {
     await loadScript(LIBS.pdf);
     const pdfjs = root.pdfjsLib;
     pdfjs.GlobalWorkerOptions.workerSrc = LIBS.pdfWorker;
@@ -46,6 +46,7 @@
     }
     const text = lines.join('\n');
     if (text.replace(/\s/g, '').length > 80) return { text, source: 'pdf' };
+    if (opts && opts.noOcr) return { text, source: 'scan' }; // the caller reads the picture its own way
     // scanned PDF → render & OCR
     progress('ה-\u2060PDF סרוק — מריץ זיהוי טקסט…');
     const page = await doc.getPage(1);
@@ -66,8 +67,8 @@
       return data.text;
     } finally { await worker.terminate(); }
   }
-  async function extract(file, progress) {
-    if (file.type === 'application/pdf' || /\.pdf$/i.test(file.name)) return extractPdf(file, progress);
+  async function extract(file, progress, opts) {
+    if (file.type === 'application/pdf' || /\.pdf$/i.test(file.name)) return extractPdf(file, progress, opts);
     return { text: await ocr(file, progress), source: 'ocr' };
   }
   // the hours-report import reads PDFs and pictures the same way (import.js)
@@ -122,6 +123,8 @@
    * hours it finds where the first pass has no hours take the place of what the first pass read there.
    */
   async function ocrWords(image, progress) {
+    // the picture made easy to read first (app/docread.js: light evened out, two readings)
+    if (root.DocRead) { const got = await root.DocRead.words(image, progress); return { words: got.words, text: got.he.map((w) => w.text).join(' ') }; }
     await loadScript(LIBS.tesseract);
     progress('טוען מנוע זיהוי עברית (פעם ראשונה ~10MB)…');
     const he = await ocrPass(image, 'heb+eng', progress, 'מזהה טקסט');

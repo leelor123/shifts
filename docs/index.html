@@ -2,7 +2,8 @@
 <html lang="he" dir="rtl">
 <head>
 <meta charset="utf-8">
-<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'sha256-OdM4qVjY+gijfVfEHpcXtehJplW/Lhd+Pk/tCC33U9A=' https://www.gstatic.com https://apis.google.com https://cdnjs.cloudflare.com https://cdn.jsdelivr.net 'wasm-unsafe-eval'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com data:; img-src 'self' data: blob: https:; connect-src 'self' https: wss:; frame-src https://shiftpay-70ab6.firebaseapp.com https://accounts.google.com https://apis.google.com https://*.google.com; worker-src 'self' blob: https://cdnjs.cloudflare.com https://cdn.jsdelivr.net; media-src 'self' data: blob:; manifest-src 'self'; object-src 'none'; base-uri 'self'; form-action 'self'">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'sha256-P1vY/EiXw5RkSguavX5FeRFgUvcBGNPUKJiorElIG7g=' 'sha256-e8/BgnAgc4v1PaiohMEkho73pBtdXd/h8ua3boEh8CM=' https://www.gstatic.com https://apis.google.com https://cdnjs.cloudflare.com https://cdn.jsdelivr.net 'wasm-unsafe-eval'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com data:; img-src 'self' data: blob: https:; connect-src 'self' https: wss:; frame-src https://shiftpay-70ab6.firebaseapp.com https://accounts.google.com https://apis.google.com https://*.google.com; worker-src 'self' blob: https://cdnjs.cloudflare.com https://cdn.jsdelivr.net; media-src 'self' data: blob:; manifest-src 'self'; object-src 'none'; base-uri 'self'; form-action 'self'">
+<script>(function(){try{var l=localStorage.getItem('shaati.lang'),h=document.documentElement.lang;if(l&&l!==h&&/^(he|ar|ru|en)$/.test(l)&&!sessionStorage.getItem('langHop')){sessionStorage.setItem('langHop','1');location.replace((l==='he'?'index.html':'index.'+l+'.html')+location.search+location.hash)}else sessionStorage.removeItem('langHop')}catch(e){}})();</script>
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="theme-color" content="#0d2b6b">
 <meta name="description" content="מעקב משמרות וחישוב שכר אישי: שבתות, חגים, שעות נוספות, נסיעות, נטו משוער וניתוח תלושים — נשמר בחשבון שלך ועובד גם בלי אינטרנט.">
@@ -704,7 +705,10 @@ textarea.input.chat-input { min-height: 46px; height: 46px; max-height: 140px; r
 
 /* ---- opening animation (intro.js) ---- */
 #intro { position: fixed; inset: 0; z-index: 10000; display: grid; place-items: center; overflow: hidden; color: #fff;
-  background: radial-gradient(120% 80% at 50% 32%, #1a3f94 0%, #0d2b6b 55%, #081c4a 100%);
+  /* not quite opaque (.996, not to be seen): a fully opaque screen on top tells the phone's browser that nothing under
+   * it is seen, so it does not draw the app until the show fades, and then the pay card (a big photo, light, text)
+   * came up half drawn for a frame or two as the show left; this way the first screen is drawn, ready, under it */
+  background: radial-gradient(120% 80% at 50% 32%, rgba(26, 63, 148, .996) 0%, rgba(13, 43, 107, .996) 55%, rgba(8, 28, 74, .996) 100%);
   will-change: opacity; /* its own layer from the start: the fade-out never has to build (and paint) a full-screen layer as it begins */ }
 #intro .intro-glow { position: absolute; left: 50%; top: 44%; width: 520px; height: 520px; margin: -260px 0 0 -260px; border-radius: 50%;
   background: radial-gradient(circle, rgba(46, 229, 157, .30) 0%, rgba(80, 120, 255, .16) 38%, transparent 68%); opacity: 0; will-change: transform, opacity; }
@@ -788,7 +792,9 @@ textarea.input.chat-input { min-height: 46px; height: 46px; max-height: 140px; r
 #intro.out { animation: i-out .5s cubic-bezier(.6, 0, .3, 1) forwards; pointer-events: none; }
 #intro.out .intro-stage { animation: i-stage-out .5s cubic-bezier(.6, 0, .3, 1) forwards; }
 @keyframes i-out { 0% { opacity: 1; } 40% { opacity: 1; } 100% { opacity: 0; } }
-@keyframes i-stage-out { to { transform: scale(1.9); opacity: 0; } }
+/* a gentle zoom (1.3, was 1.9): a bigger one made the phone redraw the whole show at almost twice its size at the
+ * moment it had to draw the first screen too, and parts of the pay card were missing for a frame */
+@keyframes i-stage-out { to { transform: scale(1.3); opacity: 0; } }
 /* short version */
 #intro.still .intro-word span, #intro.still .intro-sub { opacity: 1; }
 #intro.still.out { animation-duration: .25s; }
@@ -2467,6 +2473,78 @@ body.fx .cal-day.hello, body.fx .week-row.hello { animation: cal-hello .55s cubi
 .sched-sheet .sc-ai { margin-top: 4px; }
 .sched-sheet .sc-names .chip, .sched-sheet .sc-week .chip { font-weight: 600; }
 
+/* ---- the language picker (lang.js): the first open's screen, the opening show's sky, four doors ---- */
+.lp-host { position: fixed; inset: 0; z-index: 9000; color: #fff; overflow: hidden;
+  background: radial-gradient(120% 80% at 50% 32%, #1a3f94 0%, #0d2b6b 55%, #081c4a 100%); }
+.lp-host .lp { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 18px;
+  padding: calc(20px + env(safe-area-inset-top, 0px)) max(18px, env(safe-area-inset-right, 0px)) calc(22px + env(safe-area-inset-bottom, 0px)) max(18px, env(safe-area-inset-left, 0px)); }
+.lp-orbs { position: absolute; inset: 0; pointer-events: none; }
+.lp-orbs i { position: absolute; width: 60vmax; height: 60vmax; border-radius: 50%; opacity: .32; will-change: transform;
+  background: radial-gradient(circle, var(--c) 0%, transparent 62%); animation: lp-drift 14s ease-in-out infinite alternate; }
+.lp-orbs i:nth-child(1) { --c: #2ee59d; left: -30vmax; top: -24vmax; }
+.lp-orbs i:nth-child(2) { --c: #ffb524; right: -32vmax; top: 18vh; animation-duration: 17s; animation-delay: -6s; }
+.lp-orbs i:nth-child(3) { --c: #a98bff; left: -10vmax; bottom: -38vmax; animation-duration: 19s; animation-delay: -11s; }
+@keyframes lp-drift { to { transform: translate3d(6vmax, 5vmax, 0) scale(1.12); } }
+.lp-logo { position: relative; display: flex; align-items: center; gap: 10px; direction: ltr; font: 800 1.35rem/1 'Rubik', system-ui, sans-serif; letter-spacing: -.02em; opacity: .95; }
+.lp-logo svg { width: 38px; height: 38px; overflow: visible; }
+.lp-logo path { fill: none; stroke-width: 104; stroke-linecap: round; stroke-linejoin: round; }
+.lp-logo .g { stroke: #2ee59d; } .lp-logo .y { stroke: #ffb524; }
+/* the greeting and the question: one language at a time, sliding up into place */
+.lp-hello, .lp-ask { position: relative; display: grid; width: 100%; text-align: center; }
+.lp-hello span, .lp-ask span { grid-area: 1 / 1; opacity: 0; transform: translateY(14px) scale(.98); transition: opacity .45s ease, transform .55s var(--pop, cubic-bezier(.34, 1.56, .64, 1)); }
+.lp-hello span.on, .lp-ask span.on { opacity: 1; transform: none; }
+.lp-hello span { font: 800 clamp(2.6rem, 12vw, 3.6rem)/1.1 'Rubik', system-ui, sans-serif; letter-spacing: -.02em;
+  background: linear-gradient(100deg, #fff 20%, var(--a) 120%); -webkit-background-clip: text; background-clip: text; color: transparent; }
+.lp-ask span { font: 500 1.05rem/1.4 'Rubik', system-ui, sans-serif; color: rgba(255, 255, 255, .78); }
+.static .lp-hello span, .static .lp-ask span { transition: none; }
+/* the four doors */
+.lp-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; width: min(100%, 420px); margin-top: 6px; }
+.lp-card { position: relative; display: flex; flex-direction: column; align-items: center; gap: 6px; padding: 18px 10px 14px; border-radius: 24px; cursor: pointer;
+  color: #fff; font: inherit; background: rgba(255, 255, 255, .07); border: 1px solid rgba(255, 255, 255, .14);
+  box-shadow: 0 1px 0 rgba(255, 255, 255, .08) inset, 0 10px 30px -18px rgba(0, 0, 0, .6);
+  transition: scale .35s var(--pop, cubic-bezier(.34, 1.56, .64, 1)), background-color .25s ease, border-color .25s ease, opacity .35s ease, transform .5s var(--pop, cubic-bezier(.34, 1.56, .64, 1)); }
+.lp-host.in .lp-card { animation: lp-in .7s var(--pop, cubic-bezier(.34, 1.56, .64, 1)) both; animation-delay: calc(240ms + var(--i) * 70ms); }
+@keyframes lp-in { from { opacity: 0; transform: translateY(26px) scale(.94); } }
+.lp-card:active { scale: .95; background: rgba(255, 255, 255, .12); }
+.lp-card.sug { border-color: rgba(255, 255, 255, .42); background: rgba(255, 255, 255, .11); }
+.lp-card.sug::after { content: ''; position: absolute; inset: -1px; border-radius: inherit; pointer-events: none;
+  box-shadow: 0 0 0 2px var(--g1), 0 0 28px -4px var(--g1); opacity: .9; animation: lp-glow 2.4s ease-in-out infinite; }
+@keyframes lp-glow { 50% { opacity: .35; } }
+.lp-glyph { display: grid; place-items: center; width: 62px; height: 62px; border-radius: 50%; font: 800 2rem/1 'Rubik', system-ui, sans-serif; color: #fff;
+  background: linear-gradient(140deg, var(--g1), var(--g2)); box-shadow: 0 8px 22px -8px var(--g2); text-shadow: 0 1px 2px rgba(0, 0, 0, .18); }
+.lp-name { font-weight: 700; font-size: 1.12rem; }
+.lp-hi { font-size: .8rem; opacity: .7; }
+.lp-sug { position: absolute; top: -9px; inset-inline-end: 12px; padding: 3px 9px; border-radius: 999px; font-size: .68rem; font-weight: 700; color: #10203f;
+  background: linear-gradient(140deg, var(--g1), var(--g2)); box-shadow: 0 4px 12px -4px var(--g2); }
+.lp-later { font-size: .8rem; color: rgba(255, 255, 255, .6); text-align: center; }
+/* chosen: the others step back, the chosen one comes forward, its colour fills the screen from its letter */
+.lp-host.chosen .lp-card:not(.picked) { opacity: 0; transform: scale(.9); }
+.lp-host.chosen .lp-card.picked { scale: 1.06; }
+.lp-host.chosen .lp-hello, .lp-host.chosen .lp-ask, .lp-host.chosen .lp-later { opacity: 0; transition: opacity .3s ease; }
+.lp-fill { position: fixed; z-index: 9500; width: 60px; height: 60px; margin: -30px 0 0 -30px; border-radius: 50%; pointer-events: none;
+  background: linear-gradient(140deg, var(--g1), var(--g2)); transform: scale(0); will-change: transform, opacity;
+  transition: transform .62s cubic-bezier(.7, 0, .2, 1), opacity .5s ease, background .4s ease; }
+.lp-fill.go { transform: scale(var(--s)); }
+.lp-fill.to-intro { background: #0d2b6b; }
+.lp-fill.fade { opacity: 0; }
+.lp-host.out { opacity: 0; transition: opacity .45s ease; }
+@media (prefers-reduced-motion: reduce) { .lp-orbs i, .lp-card.sug::after, .lp-host.in .lp-card { animation: none !important; } .lp-fill { transition: none; } }
+/* in settings: the same doors in a sheet, on the app's own colours */
+.lp-in-sheet { display: flex; flex-direction: column; align-items: center; gap: 12px; padding: 4px 0 8px; }
+.lp-in-sheet .lp-hello span { font-size: 2.1rem; background: linear-gradient(100deg, var(--on-surface) 30%, var(--a) 130%); -webkit-background-clip: text; background-clip: text; }
+.lp-in-sheet .lp-ask span { color: var(--on-surface-var); }
+.lp-in-sheet .lp-card { color: var(--on-surface); background: var(--surface-2, rgba(0, 0, 0, .03)); border-color: var(--line); box-shadow: none; }
+.lp-in-sheet .lp-card.cur { border-color: var(--brand); background: var(--brand-soft); }
+.lp-in-sheet .lp-later { color: var(--on-surface-var); }
+.lp-tick { position: absolute; top: 10px; inset-inline-end: 12px; width: 22px; height: 22px; border-radius: 50%; display: grid; place-items: center; font-size: .75rem; color: #fff; background: var(--brand); }
+.lp-offer { display: flex; align-items: center; gap: 14px; }
+.lp-offer p { margin: 0; line-height: 1.5; }
+/* settings: the language, at the top, in its own name */
+.topbar .lang-pill { margin-inline-start: auto; display: inline-flex; align-items: center; gap: 6px; padding: 8px 12px; border-radius: 999px; border: 1px solid var(--line);
+  background: var(--surface); color: var(--on-surface); font: 600 .85rem/1 inherit; cursor: pointer; transition: scale .3s var(--pop), background-color .2s ease; }
+.topbar .lang-pill svg { width: 16px; height: 16px; color: var(--brand); }
+.topbar .lang-pill:active { scale: .94; background: var(--brand-soft); }
+
 </style>
 </head>
 <body>
@@ -2493,8 +2571,8 @@ body.fx .cal-day.hello, body.fx .week-row.hello { animation: cal-hello .55s cubi
 <div id="print-root" aria-hidden="true"></div>
 <noscript><div style="padding:24px;font-family:sans-serif">האפליקציה דורשת JavaScript.</div></noscript>
 <script>
-window.APP_VERSION = '1.21.0';
-window.APP_BUILD = '1.21.0-00a596a6';
+window.APP_VERSION = '1.21.1';
+window.APP_BUILD = '1.21.1-d2004eee';
 /* ---- core/util.js ---- */
 /* ============================================================
  * util.js — date/time helpers and formatting.
@@ -2600,24 +2678,57 @@ window.APP_BUILD = '1.21.0-00a596a6';
   const round2 = (n) => Math.round((n + Number.EPSILON) * 100) / 100;
   const sum = (arr, f) => arr.reduce((s, x) => s + (f ? f(x) : x), 0);
 
-  /* ---------------- formatting (Hebrew) ---------------- */
-  const HEB_MONTHS = ['ינואר', 'פברואר', 'מרץ', 'אפריל', 'מאי', 'יוני', 'יולי', 'אוגוסט', 'ספטמבר', 'אוקטובר', 'נובמבר', 'דצמבר'];
-  const HEB_DAYS = ['ראשון', 'שני', 'שלישי', 'רביעי', 'חמישי', 'שישי', 'שבת'];
-  const HEB_DAYS_SHORT = ['א׳', 'ב׳', 'ג׳', 'ד׳', 'ה׳', 'ו׳', 'ש׳'];
+  /* ---------------- formatting ---------------- */
+  // The app's language: each language has its own bundle (tools/i18n.js), whose <html lang> says which.
+  const LANG = (typeof document !== 'undefined' && document.documentElement && document.documentElement.lang) || 'he';
+  const RTL = LANG === 'he' || LANG === 'ar';
+  // dates in the language; numbers always with a comma between thousands and a point before the agorot (what
+  // the payslip shows, and what the counting animations read)
+  const LOCALE = { he: 'he-IL', ar: 'ar-IL-u-nu-latn', ru: 'ru-RU', en: 'en-IL' }[LANG] || 'he-IL';
+  const NUM_LOCALE = { he: 'he-IL', ar: 'ar-IL-u-nu-latn', en: 'en-IL' }[LANG] || 'en-US';
+  const names = (opts, n, at) => [...Array(n)].map((_, i) => new Intl.DateTimeFormat(LOCALE, opts).format(at(i)));
+  // i18n-keep-start
+  const MONTHS = LANG === 'he' ? ['ינואר', 'פברואר', 'מרץ', 'אפריל', 'מאי', 'יוני', 'יולי', 'אוגוסט', 'ספטמבר', 'אוקטובר', 'נובמבר', 'דצמבר'] : names({ month: 'long' }, 12, (i) => new Date(2026, i, 15, 12));
+  const DAYS = LANG === 'he' ? ['ראשון', 'שני', 'שלישי', 'רביעי', 'חמישי', 'שישי', 'שבת'] : names({ weekday: 'long' }, 7, (i) => new Date(2026, 0, 4 + i, 12));
+  const DAYS_SHORT = LANG === 'he' ? ['א׳', 'ב׳', 'ג׳', 'ד׳', 'ה׳', 'ו׳', 'ש׳'] : names({ weekday: 'short' }, 7, (i) => new Date(2026, 0, 4 + i, 12));
+  // for a chart's axis: three letters in Hebrew (ינו׳), the language's own short name otherwise
+  const MONTHS_SHORT = LANG === 'he' ? MONTHS.map((m) => m.slice(0, 3)) : names({ month: 'short' }, 12, (i) => new Date(2026, i, 15, 12));
+  // i18n-keep-end
 
-  let moneyFmt, moneyFmt0, numFmt;
+  let moneyFmt, moneyFmt0;
   function money(n, decimals) {
     if (n == null || isNaN(n)) n = 0;
     if (!moneyFmt) {
-      moneyFmt = new Intl.NumberFormat('he-IL', { style: 'currency', currency: 'ILS', minimumFractionDigits: 2, maximumFractionDigits: 2 });
-      moneyFmt0 = new Intl.NumberFormat('he-IL', { style: 'currency', currency: 'ILS', minimumFractionDigits: 0, maximumFractionDigits: 0 });
+      const make = (d) => {
+        if (LANG === 'ru') { const f = new Intl.NumberFormat('en-US', { minimumFractionDigits: d, maximumFractionDigits: d }); return { format: (v) => f.format(v) + ' ₪' }; }
+        return new Intl.NumberFormat(NUM_LOCALE, { style: 'currency', currency: 'ILS', minimumFractionDigits: d, maximumFractionDigits: d });
+      };
+      moneyFmt = make(2);
+      moneyFmt0 = make(0);
     }
     return (decimals === 0 ? moneyFmt0 : moneyFmt).format(n);
   }
   function num(n, d) {
     if (n == null || isNaN(n)) n = 0;
     const dd = d == null ? 2 : d;
-    return new Intl.NumberFormat('he-IL', { minimumFractionDigits: 0, maximumFractionDigits: dd }).format(n);
+    return new Intl.NumberFormat(NUM_LOCALE, { minimumFractionDigits: 0, maximumFractionDigits: dd }).format(n);
+  }
+  /** The form of a count's noun in the language: forms by plural category (one, two, few, many, other; Intl.PluralRules),
+   *  for a number or a number written as text ("8.5", "1,234"). */
+  let pluralRules;
+  function plural(n, forms) {
+    const v = typeof n === 'number' ? n : parseFloat(String(n).replace(/[^\d.-]/g, '')) || 0;
+    if (!pluralRules) pluralRules = new Intl.PluralRules(LOCALE);
+    const c = pluralRules.select(Math.abs(v));
+    return forms[c] != null ? forms[c] : forms.other != null ? forms.other : forms.many != null ? forms.many : Object.values(forms)[0];
+  }
+  /** An error whose message is for the person (shown as is), unlike the browser's own. */
+  function oops(message, extra) {
+    return Object.assign(new Error(message), { ours: true }, extra);
+  }
+  /** Whether an error's message is one of ours, to show as is. */
+  function ours(e) {
+    return !!(e && e.message && (e.ours || /[֐-׿]/.test(e.message)));
   }
   /** Hours as decimal with 2 digits, e.g. 7.5 -> "7.50" */
   function hours(h) {
@@ -2630,16 +2741,30 @@ window.APP_BUILD = '1.21.0-00a596a6';
     const a = Math.abs(m);
     return sign + Math.floor(a / 60) + ':' + pad(a % 60);
   }
+  const dateFmts = {};
+  const intl = (k, opts) => (dateFmts[JSON.stringify(opts)] || (dateFmts[JSON.stringify(opts)] = new Intl.DateTimeFormat(LOCALE, opts))).format(new Date(+k.slice(0, 4), +k.slice(5, 7) - 1, +k.slice(8, 10) || 1, 12));
+  /** A date key as text: 'short' 5/1, 'long' with the day of the week, 'dmy' the same without the word "day",
+   *  'dm' 5 in January, otherwise 05/01/2026. */
   function fmtDate(k, opts) {
     const { y, m, d } = parseKey(k);
     if (opts === 'short') return d + '/' + m;
-    if (opts === 'long') return 'יום ' + HEB_DAYS[dow(k)] + ', ' + d + ' ב' + HEB_MONTHS[m - 1] + ' ' + y;
-    if (opts === 'dm') return d + ' ב' + HEB_MONTHS[m - 1];
+    if (LANG !== 'he') {
+      if (opts === 'long' || opts === 'dmy') return intl(k, { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });
+      if (opts === 'dm') return intl(k, { day: 'numeric', month: 'long' });
+      return pad(d) + '/' + pad(m) + '/' + y;
+    }
+    // i18n-keep-start
+    if (opts === 'long') return 'יום ' + DAYS[dow(k)] + ', ' + d + ' ב' + MONTHS[m - 1] + ' ' + y;
+    if (opts === 'dmy') return DAYS[dow(k)] + ', ' + d + ' ב' + MONTHS[m - 1] + ' ' + y;
+    if (opts === 'dm') return d + ' ב' + MONTHS[m - 1];
+    // i18n-keep-end
     return pad(d) + '/' + pad(m) + '/' + y;
   }
+  /** A month key as "January 2026". */
   function fmtMonth(mk) {
+    if (LANG !== 'he') return intl(mk + '-01', { month: 'long', year: 'numeric' });
     const [y, m] = mk.split('-').map(Number);
-    return HEB_MONTHS[m - 1] + ' ' + y;
+    return MONTHS[m - 1] + ' ' + y;
   }
   function pct(n, d) {
     return num(n, d == null ? 0 : d) + '%';
@@ -2648,8 +2773,8 @@ window.APP_BUILD = '1.21.0-00a596a6';
   root.U = {
     pad, MIN, HOUR, DAY, uid, dateKey, parseKey, keyToDate, addDays, addMonths, dow, diffDays,
     toEpoch, dayStart, epochKey, epochHM, todayKey, monthKey, monthStart, monthEnd, addMonthKey,
-    weekStart, rangeKeys, inRange, clamp, round2, sum, money, num, hours, hm, fmtDate, fmtMonth, pct,
-    HEB_MONTHS, HEB_DAYS, HEB_DAYS_SHORT,
+    weekStart, rangeKeys, inRange, clamp, round2, sum, money, num, hours, hm, fmtDate, fmtMonth, pct, oops, ours, plural,
+    LANG, RTL, LOCALE, MONTHS, MONTHS_SHORT, DAYS, DAYS_SHORT,
   };
 })(typeof window !== 'undefined' ? window : globalThis);
 
@@ -2847,7 +2972,567 @@ window.APP_BUILD = '1.21.0-00a596a6';
     return { start, end };
   }
 
-  root.Timesheet = { parse, times };
+  /* ============================================================
+   * A photo (or a PDF) of a report, read as a TABLE: words with their place on the page
+   * ({ text, x0, y0, x1, y1 }, y down), as the reader gives them (app/docread.js).
+   *
+   * Every report is a little different, so nothing is assumed about the layout; it is found:
+   *   1. the words are cleaned (a reader's O for 0, l for 1, ; for :) and each says what it can be: a time,
+   *      a date, a range "8:00-16:30", a number, a day of the week, a column name;
+   *   2. rows: words side by side on the same line belong to one row, followed word to word (so a photo
+   *      taken at an angle still has straight rows); the angle is measured and taken out;
+   *   3. columns: the times of all the rows fall into columns. Which is the entry and which the exit is
+   *      taken from the column names when they were read (כניסה/יציאה, In/Out, התחלה/סיום), and checked
+   *      against the numbers themselves: the pair whose difference is a shift's length in nearly every row
+   *      (and which another column — the total — often equals). A total, a break, an overtime column (125%)
+   *      or a note never becomes a shift;
+   *   4. dates: from the date column; one the reader got wrong ("25110" for 25/10, an 8 for a 6) is put
+   *      right from the rows around it, which go day by day, and from the day of the week when there is one;
+   *      a row with no date but between two dates and a day of the week gets its date from them;
+   *   5. a row with an entry and no exit (a missed clock-out) is left out and counted, and rows like
+   *      vacation, sickness, a holiday or a weekend without hours are simply no shifts.
+   * A phone app's list, where the date is on one line and the hours on the line under it, is read too.
+   * ============================================================ */
+  const BIDI = /[‎‏‪-‮⁦-⁩]/g;
+  const HE_MONTHS = ['ינואר', 'פברואר', 'מרץ', 'אפריל', 'מאי', 'יוני', 'יולי', 'אוגוסט', 'ספטמבר', 'אוקטובר', 'נובמבר', 'דצמבר'];
+  const EN_MONTHS = ['jan', 'feb', 'mar', 'apr', 'may', 'jun', 'jul', 'aug', 'sep', 'oct', 'nov', 'dec'];
+  const DOW_WORDS = [['ראשון', 'sun', 'sunday'], ['שני', 'mon', 'monday'], ['שלישי', 'tue', 'tues', 'tuesday'], ['רביעי', 'wed', 'wednesday'], ['חמישי', 'thu', 'thur', 'thurs', 'thursday'], ['שישי', 'fri', 'friday'], ['שבת', 'sat', 'saturday']];
+  const DOW_LETTER = { 'א': 0, 'ב': 1, 'ג': 2, 'ד': 3, 'ה': 4, 'ו': 5, 'ש': 6 };
+  // column names (without quotes): what each column holds
+  const ROLE = [
+    ['date', /^(תאריך|date|תאריכים)$/i],
+    ['dow', /^(יום|day|weekday)$/i],
+    ['in', /^(כניסה|כניסה\d|התחלה|התחלת|in|start|entry|clockin|time-?in)$/i],
+    ['out', /^(יציאה|יציאה\d|סיום|יציאת|out|end|exit|finish|clockout|time-?out)$/i],
+    ['total', /^(סהכ|סה״כ|total|hours|שעות|נטו|ש"ע|duration)$/i],
+    ['break', /^(הפסקה|הפסקות|break|breaks|הפ)$/i],
+  ];
+  const SKIP_ROW = /סה["״']?כ|סיכום|total|summary|ממוצע|average/i;
+
+  const clean = (t) => String(t).replace(BIDI, '').replace(/^[|[\](){}<>"'`,;•·*_~]+|[|[\](){}<>"'`,;•·*_~]+$/g, '').trim();
+  /** A reader's letters inside a number, back to digits (only in what is mostly digits). */
+  function digits(t) {
+    const nd = (t.match(/\d/g) || []).length;
+    const look = (t.match(/[OoQD°lI|!\][Ss$BZz]/g) || []).length; // letters that look like digits
+    const other = (t.match(/[A-Za-zא-ת]/g) || []).length - (t.match(/[OoQDlISsBZz]/g) || []).length;
+    if (nd < 2 || other > 0 || look > nd) return t;
+    return t.replace(/[OoQD°]/g, '0').replace(/[lI|!\]\[]/g, '1').replace(/[Ss$]/g, '5').replace(/B/g, '8').replace(/[Zz]/g, '2')
+      .replace(/[;]/g, ':').replace(/,/g, '.').replace(/[–—]/g, '-').replace(/\s+/g, '').replace(/^[.:-]+|[.:-]+$/g, '');
+  }
+  const validHM = (h, m) => h >= 0 && h <= 24 && m >= 0 && m <= 59 && !(h === 24 && m > 0);
+  const hmOf = (h, m) => pad(h % 24) + ':' + pad(m);
+
+  /** What a cleaned word can be: [{ k: 'time'|'date'|'range'|'num'|'dow'|'year'|'mash'|'month', … }] */
+  function itemsOf(raw) {
+    const t0 = clean(raw);
+    if (!t0) return [];
+    const out = [];
+    let m;
+    if ((m = /^(\d{1,2}):(\d{2})(?::\d{2})?\s*([AaPp])\.?[Mm]\.?$/.exec(t0))) {
+      let h = +m[1]; const pm = m[3].toLowerCase() === 'p';
+      if (h === 12) h = pm ? 12 : 0; else if (pm) h += 12;
+      return validHM(h, +m[2]) ? [{ k: 'time', v: hmOf(h, +m[2]), pad: true }] : [];
+    }
+    const t = digits(t0);
+    // a range; one side may have lost its colon (8:00-1445)
+    if ((m = /^(\d{1,2})(?:[:.]?(\d{2}))?-(\d{1,2})(?:[:.]?(\d{2}))?$/.exec(t)) && (m[2] || m[4] || t.includes(':')) && /[:.]/.test(t)) {
+      const a = [+m[1], +(m[2] || 0)], b = [+m[3], +(m[4] || 0)];
+      if (validHM(...a) && validHM(...b)) return [{ k: 'range', a: hmOf(...a), b: hmOf(...b) }];
+    }
+    if ((m = /^(\d{4})-(\d{1,2})-(\d{1,2})$/.exec(t))) return [{ k: 'date', d: +m[3], m: +m[2], y: +m[1], sure: true }];
+    if ((m = /^(\d{1,2})[./-](\d{1,2})[./-](\d{2}|\d{4})$/.exec(t))) { let y = +m[3]; if (y < 100) y += 2000; return [{ k: 'date', d: +m[1], m: +m[2], y, sure: true }]; }
+    if ((m = /^(\d{1,2})\/(\d{1,2})$/.exec(t))) return [{ k: 'date', d: +m[1], m: +m[2], sure: true }];
+    if ((m = /^(\d{1,2}):(\d{2})(?::(\d{2}))?$/.exec(t))) { if (validHM(+m[1], +m[2])) out.push({ k: 'time', v: hmOf(+m[1], +m[2]), pad: m[1].length === 2 }); return out; }
+    if ((m = /^(\d{1,2})\.(\d{1,2})$/.exec(t))) {
+      // 14.10 a date, 08.30 a time, 8.5 hours: each is kept as a possibility, the column decides
+      if (+m[1] >= 1 && +m[1] <= 31 && +m[2] >= 1 && +m[2] <= 12) out.push({ k: 'date', d: +m[1], m: +m[2], sure: false });
+      if (m[2].length === 2 && validHM(+m[1], +m[2])) out.push({ k: 'time', v: hmOf(+m[1], +m[2]), pad: m[1].length === 2, weak: true });
+      out.push({ k: 'num', v: +t });
+      return out;
+    }
+    if ((m = /^\d+\.\d+$/.exec(t))) return [{ k: 'num', v: +t }];
+    if (/^\d+$/.test(t)) {
+      if (/^20\d\d$/.test(t)) out.push({ k: 'year', v: +t });
+      if (t.length <= 2) out.push({ k: 'num', v: +t });
+      // 0800 / 830: a time that lost its colon (taken only in a time column)
+      if (t.length >= 3 && t.length <= 4) { const h = +t.slice(0, t.length - 2), mi = +t.slice(-2); if (validHM(h, mi)) out.push({ k: 'time', v: hmOf(h, mi), pad: t.length === 4, weak: true, bare: true }); }
+      if (t.length >= 3 && t.length <= 10) out.push({ k: 'mash', s: t }); // 110 = 1/10 with the / read as 1
+      return out;
+    }
+    if (/\d/.test(t) && /[./:-]/.test(t) && t.length <= 12) return [{ k: 'mash', s: t.replace(/\D/g, ''), raw: t }];
+    // words
+    const w = t0.replace(/["״'׳`]/g, '').toLowerCase();
+    if (w.length === 1 && DOW_LETTER[w] != null && /[׳'"״]/.test(String(raw))) out.push({ k: 'dow', v: DOW_LETTER[w] });
+    else if (w.length === 1 && DOW_LETTER[w] != null) out.push({ k: 'dow', v: DOW_LETTER[w], weak: true });
+    const di = DOW_WORDS.findIndex((a) => a.includes(w) || a.includes(w.replace(/^(ב|ה|יום)/, '')));
+    if (di >= 0) out.push({ k: 'dow', v: di });
+    const mi = HE_MONTHS.findIndex((x) => w === x || w === 'ב' + x || w === 'ל' + x || (x === 'מרץ' && /^[בל]?מרס$/.test(w)));
+    if (mi >= 0) out.push({ k: 'month', v: mi + 1 });
+    const ei = EN_MONTHS.findIndex((x) => w.startsWith(x) && w.length <= 9);
+    if (ei >= 0 && /^[a-z]+$/.test(w)) out.push({ k: 'month', v: ei + 1 });
+    for (const [role, re] of ROLE) if (re.test(w.replace(/[-\s]/g, '')) || re.test(w)) { out.push({ k: 'role', v: role, n: (/(\d)$/.exec(w) || [])[1] }); break; }
+    return out;
+  }
+
+  /** Words → rows (top to bottom), each its words left to right, with the page's angle taken out. */
+  function rowsOf(words) {
+    const ws = words.map((w, i) => ({ ...w, i, cx: (w.x0 + w.x1) / 2, cy: (w.y0 + w.y1) / 2, h: Math.max(1, w.y1 - w.y0), w: Math.max(1, w.x1 - w.x0) }));
+    const hs = ws.map((w) => w.h).sort((a, b) => a - b);
+    const mh = hs[Math.floor(hs.length / 2)] || 20;
+    const parent = ws.map((_, i) => i);
+    const find = (i) => (parent[i] === i ? i : (parent[i] = find(parent[i])));
+    const vov = (a, b) => (Math.min(a.y1, b.y1) - Math.max(a.y0, b.y0)) / Math.min(a.h, b.h);
+    // each word joins the nearest word to its right that shares its line (tall boxes — a logo, two lines
+    // read as one — join nothing)
+    for (const a of ws) {
+      if (a.h > mh * 2.4) continue;
+      let best = null, bd = Infinity;
+      for (const b of ws) {
+        if (b === a || b.h > mh * 2.4 || b.cx <= a.cx) continue;
+        if (vov(a, b) < 0.45) continue;
+        const d = b.x0 - a.x1 + Math.abs(b.cy - a.cy) * 4;
+        if (d < bd) { bd = d; best = b; }
+      }
+      if (best) parent[find(a.i)] = find(best.i);
+    }
+    const groups = new Map();
+    for (const w of ws) { const r = find(w.i); (groups.get(r) || groups.set(r, []).get(r)).push(w); }
+    let rows = [...groups.values()];
+    // the angle: how much a line climbs from each word to the next one in its row, the middle of them all
+    // (a row that joined two lines by mistake is one odd step among many), never more than 8°
+    const slopes = [];
+    for (const r of rows) {
+      const s = r.slice().sort((a, b) => a.cx - b.cx);
+      for (let i = 1; i < s.length; i++) {
+        const dx = s[i].cx - s[i - 1].cx;
+        if (dx > mh * 2 && Math.abs(s[i].h - s[i - 1].h) < mh * 0.5) slopes.push((s[i].cy - s[i - 1].cy) / dx);
+      }
+    }
+    slopes.sort((a, b) => a - b);
+    const slope = slopes.length >= 3 ? Math.max(-0.14, Math.min(0.14, slopes[Math.floor(slopes.length / 2)])) : 0;
+    const th = Math.atan(slope), cos = Math.cos(th), sin = Math.sin(th);
+    for (const w of ws) { w.x = w.cx * cos + w.cy * sin; w.y = -w.cx * sin + w.cy * cos; }
+    rows = rows.map((r) => r.sort((a, b) => a.x - b.x)).map((r) => ({ words: r, y: r.map((w) => w.y).sort((a, b) => a - b)[Math.floor(r.length / 2)] }));
+    rows.sort((a, b) => a.y - b.y);
+    return { rows, mh, slope };
+  }
+
+  /** Close positions (on one axis) → groups: [{ at, members }]. */
+  function cluster(points, tol) {
+    const ps = points.slice().sort((a, b) => a.x - b.x);
+    const out = [];
+    for (const p of ps) {
+      const last = out[out.length - 1];
+      if (last && p.x - last.xs[last.xs.length - 1] <= tol) { last.members.push(p); last.xs.push(p.x); }
+      else out.push({ members: [p], xs: [p.x] });
+    }
+    for (const c of out) c.at = c.xs[Math.floor(c.xs.length / 2)];
+    return out;
+  }
+
+  const minOf = (t) => +t.slice(0, 2) * 60 + +t.slice(3, 5);
+  const span = (a, b) => (minOf(b) - minOf(a) + 1440) % 1440;
+  // how much a gap from entry to exit looks like a shift
+  const plaus = (d) => (d >= 20 && d <= 12 * 60 ? 1 : d > 12 * 60 && d <= 16 * 60 ? 0.3 : -1);
+
+  /** The possible dates of digits run together ("25110" = 25/10 with the / read as 1). */
+  function mashDates(s, year) {
+    const out = [];
+    for (let dl = 1; dl <= 2; dl++) for (let skip = 0; skip <= 1; skip++) for (let ml = 1; ml <= 2; ml++) {
+      const d = +s.slice(0, dl), rest = s.slice(dl + skip), m = +rest.slice(0, ml), tail = rest.slice(ml);
+      if (skip && !/[17/|]/.test(s[dl])) continue;
+      if (!(d >= 1 && d <= 31 && m >= 1 && m <= 12)) continue;
+      let y = null;
+      if (tail) {
+        const t = tail.replace(/^[17]/, (x) => (tail.length === 3 || tail.length === 5 ? '' : x));
+        if (t.length === 2) y = 2000 + +t; else if (t.length === 4) y = +t; else continue;
+        if (year && y !== year) continue;
+      }
+      out.push({ d, m, y });
+    }
+    return out;
+  }
+  // a digit the reader may have mistaken for another
+  const LOOKALIKE = { 0: '869', 1: '74', 2: '7', 3: '85', 4: '19', 5: '63', 6: '58', 7: '12', 8: '3605', 9: '84' };
+
+  function parseWords(words, opts) {
+    opts = opts || {};
+    const today = opts.today || new Date().toISOString().slice(0, 10);
+    const { rows, mh } = rowsOf((words || []).filter((w) => w && w.text && clean(w.text)));
+    const dbg = [];
+    // a reader that lost the colons read "08:02:26" as three numbers side by side: one time again
+    for (const r of rows) {
+      const ws = r.words, out = [];
+      for (let i = 0; i < ws.length; i++) {
+        const run = [ws[i]];
+        while (run.length < 3 && i + run.length < ws.length && /^\d{2}$/.test(clean(run[0].text)) && /^\d{2}$/.test(clean(ws[i + run.length].text)) && ws[i + run.length].x0 - run[run.length - 1].x1 < mh * 1.3) run.push(ws[i + run.length]);
+        const p = run.map((w) => +clean(w.text));
+        if (run.length === 3 && p[0] <= 23 && p[1] <= 59 && p[2] <= 59) {
+          out.push(Object.assign({}, run[0], { text: run.map((w) => clean(w.text)).join(':'), x0: run[0].x0, x1: run[2].x1, cx: (run[0].x0 + run[2].x1) / 2, x: (run[0].x + run[2].x) / 2 }));
+          i += 2;
+        } else out.push(ws[i]);
+      }
+      r.words = out;
+    }
+    // every word's possibilities
+    for (const r of rows) for (const w of r.words) w.items = itemsOf(w.text);
+    // "7:11" then "PM": the afternoon
+    for (const r of rows) r.words.forEach((w, i) => {
+      const t = w.items.find((it) => it.k === 'time');
+      const nx = r.words[i + 1];
+      if (!t || !nx || nx.x0 - w.x1 > mh * 1.5) return;
+      const ap = /^([AaPp])\.?[Mm]\.?$/.exec(clean(nx.text));
+      if (!ap) return;
+      let h = +t.v.slice(0, 2);
+      const pm = ap[1].toLowerCase() === 'p';
+      if (h === 12) h = pm ? 12 : 0; else if (pm && h < 12) h += 12;
+      t.v = pad(h) + t.v.slice(2); t.pad = true; t.weak = false;
+    });
+    const textOf = (r) => r.words.map((w) => clean(w.text)).join(' ');
+    // reading direction: a Hebrew report reads right to left
+    const heb = rows.reduce((s, r) => s + r.words.filter((w) => /[א-ת]/.test(w.text)).length, 0);
+    const lat = rows.reduce((s, r) => s + r.words.filter((w) => /[A-Za-z]{2}/.test(w.text)).length, 0);
+    const rtl = heb >= lat;
+    const before = (a, b) => (rtl ? a > b : a < b); // a comes before b in reading
+
+    /* ---- the header: column names ---- */
+    let header = null;
+    rows.forEach((r, ri) => {
+      const roles = r.words.flatMap((w) => w.items.filter((it) => it.k === 'role').map((it) => ({ role: it.v, n: it.n, x: w.x })));
+      const kinds = new Set(roles.map((x) => x.role));
+      const score = kinds.size + (kinds.has('in') && kinds.has('out') ? 2 : 0);
+      if (kinds.size >= 2 && (kinds.has('in') || kinds.has('out') || kinds.has('date')) && (!header || score > header.score)) header = { ri, roles, score, y: r.y };
+    });
+    if (header) dbg.push('header: ' + header.roles.map((x) => x.role + (x.n || '') + '@' + Math.round(x.x)).join(' '));
+
+    /* ---- year and month of the report (for dates without a year) ---- */
+    const years = new Map();
+    let docMonth = null;
+    for (const r of rows) for (const w of r.words) for (const it of w.items) {
+      if (it.k === 'date' && it.y) years.set(it.y, (years.get(it.y) || 0) + 3);
+      if (it.k === 'year') years.set(it.v, (years.get(it.v) || 0) + 1);
+      if (it.k === 'month' && !docMonth) docMonth = it.v;
+    }
+    const docYear = years.size ? [...years.entries()].sort((a, b) => b[1] - a[1])[0][0] : null;
+
+    /* ---- the date column ---- */
+    const datePts = [];
+    rows.forEach((r, ri) => r.words.forEach((w) => { if (w.items.some((it) => (it.k === 'date' && it.sure) || it.k === 'mash')) datePts.push({ x: w.x, ri, w }); }));
+    const colW = (() => { const ws = rows.flatMap((r) => r.words.filter((w) => w.items.some((it) => it.k === 'time' || it.k === 'date')).map((w) => w.x1 - w.x0)).sort((a, b) => a - b); return ws[Math.floor(ws.length / 2)] || mh * 3; })();
+    const tol = Math.max(colW * 0.55, mh * 1.2);
+    const dateCols = cluster(datePts, tol).map((c) => ({ ...c, rows: new Set(c.members.map((p) => p.ri)).size }));
+    let dateCol = null;
+    const hDate = header && header.roles.find((x) => x.role === 'date');
+    if (hDate) dateCol = dateCols.filter((c) => Math.abs(c.at - hDate.x) < colW * 1.5).sort((a, b) => b.rows - a.rows)[0] || null;
+    if (!dateCol) dateCol = dateCols.filter((c) => c.rows >= 2).sort((a, b) => b.rows - a.rows)[0] || null;
+    const inDateCol = (w) => dateCol && Math.abs(w.x - dateCol.at) <= tol * 1.6;
+
+    /* ---- the time columns ---- */
+    const timePts = [];
+    rows.forEach((r, ri) => {
+      if (header && ri <= header.ri && !r.words.some((w) => w.items.some((it) => it.k === 'time' && !it.weak))) return;
+      r.words.forEach((w) => {
+        if (inDateCol(w) && w.items.some((it) => it.k === 'date' || it.k === 'mash')) return;
+        const t = w.items.find((it) => it.k === 'time');
+        if (t) timePts.push({ x: w.x, ri, v: t.v, pad: t.pad, weak: t.weak, bare: t.bare, w });
+      });
+    });
+    let cols = cluster(timePts, tol).map((c, i) => ({ i, at: c.at, members: c.members, rows: new Set(c.members.map((p) => p.ri)).size, strong: c.members.filter((p) => !p.weak).length }));
+    // a column of bare "0800" or of dotted "8.30" counts only when it is a real column (most of it times)
+    cols = cols.filter((c) => c.rows >= 2 && c.strong >= c.members.length * 0.5);
+    const at = (c, ri) => { const p = c.members.find((q) => q.ri === ri); return p ? p.v : null; };
+    // the pair of columns that is entry → exit
+    const pairScore = (a, b) => {
+      let s = 0, n = 0;
+      for (let ri = 0; ri < rows.length; ri++) {
+        const x = at(a, ri), y = at(b, ri);
+        if (x == null || y == null) continue;
+        const d = span(x, y);
+        n++; s += plaus(d);
+        // another column equals the difference: a total (or the total after a break)
+        if (cols.some((c) => c !== a && c !== b && at(c, ri) != null && [0, 15, 30, 45, 60].some((br) => Math.abs(minOf(at(c, ri)) - (d - br)) <= 2))) s += 0.6;
+      }
+      return { s, n };
+    };
+    // a duration column prints 8:09, a clock 08:09: a column of times under 10:00 with no leading zero is a total
+    const unpadded = (c) => { const small = c.members.filter((p) => minOf(p.v) < 600); return small.length >= 2 && small.filter((p) => !p.pad).length >= small.length * 0.8; };
+    const hRole = (role) => (header ? header.roles.filter((x) => x.role === role).sort((a, b) => (before(a.x, b.x) ? -1 : 1)) : []);
+    const nearest = (x) => cols.filter((c) => Math.abs(c.at - x) < colW * 1.6).sort((a, b) => Math.abs(a.at - x) - Math.abs(b.at - x))[0] || null;
+    const pairs = [];
+    const hin = hRole('in'), hout = hRole('out');
+    if (hin.length && hout.length) {
+      for (let k = 0; k < Math.min(hin.length, hout.length); k++) {
+        const a = nearest(hin[k].x), b = nearest(hout[k].x);
+        if (a && b && a !== b) pairs.push({ a, b, from: 'header', ...pairScore(a, b) });
+      }
+    }
+    let best = null;
+    for (const a of cols) for (const b of cols) {
+      if (a === b) continue;
+      const sc = pairScore(a, b);
+      let s = sc.s;
+      if (unpadded(a) || unpadded(b)) s -= sc.n * 0.5;
+      // the usual order: the entry right before the exit
+      const between = cols.filter((c) => c !== a && c !== b && (before(a.at, c.at) && before(c.at, b.at))).length;
+      if (before(a.at, b.at) && !between) s += sc.n * 0.15;
+      if (!best || s > best.s2) best = { a, b, from: 'numbers', s: sc.s, n: sc.n, s2: s };
+    }
+    if (best && (!pairs.length || pairs[0].s < best.s * 0.6 || pairs[0].n < 2)) {
+      if (pairs.length) dbg.push(`header pair weak (${pairs[0].s.toFixed(1)}/${pairs[0].n}), numbers pair ${best.s.toFixed(1)}/${best.n}`);
+      pairs.length = 0; pairs.push(best);
+      // a second entry/exit pair (a split shift) after the first
+      let second = null;
+      for (const a of cols) for (const b of cols) {
+        if ([best.a, best.b].includes(a) || [best.a, best.b].includes(b) || a === b || unpadded(a) || unpadded(b)) continue;
+        if (!before(best.b.at, a.at) || !before(a.at, b.at)) continue;
+        const sc = pairScore(a, b);
+        if (sc.n >= 2 && sc.s >= sc.n * 0.8 && (!second || sc.s > second.s)) second = { a, b, from: 'numbers', ...sc };
+      }
+      if (second) pairs.push(second);
+    }
+    const pairCols = new Set(pairs.flatMap((p) => [p.a, p.b]));
+    dbg.push('time columns: ' + cols.map((c) => `${Math.round(c.at)}(${c.rows}${unpadded(c) ? ',dur' : ''})`).join(' ') + ' | pairs: ' + pairs.map((p) => `${Math.round(p.a.at)}→${Math.round(p.b.at)} ${p.from} ${p.s.toFixed(1)}/${p.n}`).join(', '));
+
+    // the column of the shift's length (סה"כ): the one that, row after row, is exit − entry (or that minus a
+    // break); the one that agrees most often (a 100% column agrees only on short days)
+    const BREAKS = [0, 15, 20, 30, 45, 60];
+    let totalCol = null;
+    if (pairs.length) {
+      let bestK = 0;
+      for (const c of cols) {
+        if (pairCols.has(c)) continue;
+        let n = 0, m = 0;
+        for (let ri = 0; ri < rows.length; ri++) {
+          const a = at(pairs[0].a, ri), b = at(pairs[0].b, ri), v = at(c, ri);
+          if (!a || !b || !v) continue;
+          m++; if (BREAKS.some((br) => Math.abs(minOf(v) - (span(a, b) - br)) <= 2)) n++;
+        }
+        const k = n + n / Math.max(1, m);
+        if (m >= 2 && n >= m * 0.6 && k > bestK) { bestK = k; totalCol = c; }
+      }
+    }
+    // a column named סה"כ / Total is the length, even when too few rows agree to show it
+    const hTotal = hRole('total')[0];
+    if (!totalCol && hTotal && pairs.length) totalCol = cols.filter((c) => !pairCols.has(c) && Math.abs(c.at - hTotal.x) < colW * 1.6).sort((p, q) => Math.abs(p.at - hTotal.x) - Math.abs(q.at - hTotal.x))[0] || null;
+    // or hours as a number (8.75): the column of numbers that is the shift's length in most rows
+    let decCol = null;
+    if (pairs.length && !totalCol) {
+      const pts = [];
+      rows.forEach((r, ri) => r.words.forEach((w) => { const it = w.items.find((x) => x.k === 'num' && !Number.isInteger(x.v) && x.v >= 0.25 && x.v <= 16); if (it) pts.push({ x: w.x, ri, v: it.v, w }); }));
+      let bestK = 0;
+      for (const c of cluster(pts, tol)) {
+        let n = 0, m = 0;
+        for (const p of c.members) {
+          const a = at(pairs[0].a, p.ri), b = at(pairs[0].b, p.ri);
+          if (!a || !b) continue;
+          m++; if (BREAKS.some((br) => Math.abs(p.v * 60 - (span(a, b) - br)) <= 3)) n++;
+        }
+        const k = n + n / Math.max(1, m);
+        if (m >= 2 && n >= m * 0.6 && k > bestK) { bestK = k; decCol = c; }
+      }
+    }
+    const lenAt = (ri) => {
+      if (totalCol && at(totalCol, ri)) return minOf(at(totalCol, ri));
+      const p = decCol && decCol.members.find((q) => q.ri === ri);
+      return p ? Math.round(p.v * 60) : null;
+    };
+    if (totalCol || decCol) dbg.push('length column ' + Math.round((totalCol || decCol).at));
+    const differsBy = (x, y) => [...x].filter((ch, i) => ch !== y[i]).length;
+
+    /* ---- each row: its date, its times ---- */
+    const found = [];
+    let lastDateRow = null, pendingLen = null;
+    // where the entry and the exit sit in rows read with both (an app's cards): a lone time is the one it is nearer
+    const sides = { a: [], b: [] };
+    const mid = (xs) => xs.slice().sort((p, q) => p - q)[xs.length >> 1];
+    let skippedNoOut = 0;
+    rows.forEach((r, ri) => {
+      if (header && ri <= header.ri) return;
+      const text = textOf(r);
+      const items = r.words.flatMap((w) => w.items.map((it) => ({ ...it, w })));
+      // the date
+      let date = null, dow = null, dateWord = null;
+      const dateIts = items.filter((it) => it.k === 'date' && (it.sure || inDateCol(it.w)));
+      const pref = dateIts.find((it) => inDateCol(it.w)) || dateIts[0];
+      if (pref) { date = { d: pref.d, m: pref.m, y: pref.y || null }; dateWord = pref.w; }
+      const mash = !date && items.find((it) => it.k === 'mash' && inDateCol(it.w));
+      // "13 באוקטובר", "Oct 13"
+      if (!date) {
+        const mo = items.find((it) => it.k === 'month');
+        if (mo) {
+          const n = items.filter((it) => it.k === 'num' && it.v >= 1 && it.v <= 31 && Number.isInteger(it.v)).sort((a, b) => Math.abs(a.w.x - mo.w.x) - Math.abs(b.w.x - mo.w.x))[0];
+          if (n) date = { d: n.v, m: mo.v, y: (items.find((it) => it.k === 'year') || {}).v || null };
+        }
+      }
+      const dw = items.find((it) => it.k === 'dow' && !it.weak) || items.find((it) => it.k === 'dow' && (!dateWord || Math.abs(it.w.x - dateWord.x) < colW * 3));
+      if (dw) dow = dw.v;
+      // how long the shift was, as the report writes it: its total column (8:30), hours in the row (8.5), or
+      // in an app's card the "8.25 שעות" line above the times
+      // (only from a column that agrees with the times in most rows; a card's "8.25 שעות" only fills a
+      // missing exit)
+      let len = lenAt(ri), sure = len != null, card = false;
+      if (len == null) {
+        const dec = items.find((it) => it.k === 'num' && !Number.isInteger(it.v) && it.v >= 0.5 && it.v <= 16) ;
+        if (dec && /שעות|hours|ש["׳']/i.test(textOf(r))) len = Math.round(dec.v * 60);
+      }
+      if (len == null && pendingLen && r.y - pendingLen.y < mh * 4) { len = pendingLen.min; card = true; }
+      // the times
+      const shifts = [];
+      // a split day (two entries and exits): the total is the whole day's, so the first pair gets what the others leave
+      const rest = pairs.slice(1).reduce((s, p) => { const a = at(p.a, ri), b = at(p.b, ri); return a && b ? s + span(a, b) : s; }, 0);
+      if (len != null && rest) len -= rest;
+      for (const p of pairs) {
+        let a = at(p.a, ri), b = at(p.b, ri);
+        if (p === pairs[0] && len != null && len > 0) {
+          // an exit the reader got one digit wrong (02:23 for 22:23), or missed, put right from the length
+          if (a && b && sure && !BREAKS.some((br) => Math.abs(span(a, b) - len - br) <= 2)) {
+            const fixB = fromMin(minOf(a) + len), fixA = fromMin(minOf(b) - len);
+            if (differsBy(b, fixB) === 1) { dbg.push(`exit fixed from the total: ${a}-${b} → ${fixB}`); b = fixB; }
+            else if (differsBy(a, fixA) === 1) { dbg.push(`entry fixed from the total: ${a}-${b} → ${fixA}`); a = fixA; }
+          } else if (a && !b) { b = fromMin(minOf(a) + len); dbg.push(`exit from the total: ${a}+${len}m`); }
+          else if (!a && b && (sure || card)) { a = fromMin(minOf(b) - len); dbg.push(`entry from the total: ${b}-${len}m`); }
+        }
+        if (a && b) shifts.push([a, b]);
+        else if (a && !b && p === pairs[0]) skippedNoOut++;
+      }
+      const range = items.find((it) => it.k === 'range');
+      if (!shifts.length && range) shifts.push([range.a, range.b]);
+      if (!shifts.length) {
+        // times in the row outside the known columns (a row the columns missed): two of them, in reading order
+        const ts = r.words.filter((w) => !inDateCol(w)).map((w) => ({ w, t: w.items.find((it) => it.k === 'time' && !it.weak) })).filter((x) => x.t && !cols.some((c) => (c === totalCol || unpadded(c)) && c.members.some((m) => m.w === x.w)));
+        if (ts.length === 2) {
+          // which one starts: the order that makes a likelier shift; when both could, two times close together
+          // ("08:51 - 16:37" in one cell) read left to right like any number, two apart in the reading order
+          const [l, rr] = ts[0].w.x < ts[1].w.x ? ts : [ts[1], ts[0]];
+          const fwdP = plaus(span(l.t.v, rr.t.v)), backP = plaus(span(rr.t.v, l.t.v));
+          const near = rr.w.x0 - l.w.x1 < mh * 4;
+          const [p, q] = fwdP > backP ? [l, rr] : backP > fwdP ? [rr, l] : near || !rtl ? [l, rr] : [rr, l];
+          if (plaus(span(p.t.v, q.t.v)) > 0) { shifts.push([p.t.v, q.t.v]); sides.a.push(p.w.x); sides.b.push(q.w.x); }
+        }
+        else if (ts.length === 1 && len != null && !pairs.length) {
+          const x = ts[0].w.x, t = ts[0].t.v;
+          const exit = sides.a.length && sides.b.length && Math.abs(mid(sides.a) - mid(sides.b)) > mh * 2 && Math.abs(x - mid(sides.b)) < Math.abs(x - mid(sides.a));
+          shifts.push(exit ? [fromMin(minOf(t) - len), t] : [t, fromMin(minOf(t) + len)]);
+          dbg.push(`one time read, the other from the hours: ${shifts[0].join('-')}`);
+        }
+        else if (ts.length === 1 && len != null && Math.abs(ts[0].w.x - pairs[0].a.at) < tol * 2) shifts.push([ts[0].t.v, fromMin(minOf(ts[0].t.v) + len)]);
+      }
+      // a card's hours line (no times): for the times under it
+      if (!shifts.length && len != null && /שעות|hours|ש["׳']/i.test(text)) { pendingLen = { min: len, y: r.y }; if (!date) return; }
+      if (shifts.length) pendingLen = null;
+      const isTotalRow = SKIP_ROW.test(text) && !date;
+      if (isTotalRow) return;
+      const row = { ri, y: r.y, date, dow, mash: mash ? mash.s : null, shifts, text };
+      // an app's card: the date on its own line, the hours on the next one
+      if (!date && !mash && shifts.length && lastDateRow && !lastDateRow.shifts.length && !lastDateRow.used && r.y - lastDateRow.y < mh * 4) {
+        row.date = lastDateRow.date; row.dow = row.dow == null ? lastDateRow.dow : row.dow; lastDateRow.used = true;
+      }
+      if (date || mash || shifts.length || dow != null) found.push(row);
+      if (date) lastDateRow = row;
+    });
+    // date-only rows that lent their date to the next row are not rows of their own
+    const list = found.filter((r) => !(r.used && !r.shifts.length));
+
+    /* ---- the year, then dates put right from the rows around them ---- */
+    const yearOf = (d) => d.y || docYear || null;
+    const keyOf = (d) => {
+      const y = yearOf(d) || yearFor(d.m, d.d, today);
+      return validDate(y, d.m, d.d) ? key(y, d.m, d.d) : null;
+    };
+    const dowOf = (k) => new Date(+k.slice(0, 4), +k.slice(5, 7) - 1, +k.slice(8, 10), 12).getDay();
+    const addDays = (k, n) => { const d = new Date(+k.slice(0, 4), +k.slice(5, 7) - 1, +k.slice(8, 10) + n, 12); return key(d.getFullYear(), d.getMonth() + 1, d.getDate()); };
+    for (const r of list) r.key = r.date ? keyOf(r.date) : null;
+    // the report's order: most reports go forward in time
+    const ks = list.filter((r) => r.key);
+    let up = 0, down = 0;
+    for (let i = 1; i < ks.length; i++) { if (ks[i].key > ks[i - 1].key) up++; else if (ks[i].key < ks[i - 1].key) down++; }
+    const fwd = up >= down;
+    const cmp = (a, b) => (fwd ? a < b : a > b);
+    // the report's month: most of its dates (a monthly report), when there is one
+    const monthsSeen = new Map();
+    for (const r of list) if (r.date) monthsSeen.set(r.date.m, (monthsSeen.get(r.date.m) || 0) + 1);
+    const topM = [...monthsSeen.entries()].sort((a, b) => b[1] - a[1])[0];
+    const mainMonth = topM && topM[1] >= Math.max(3, list.filter((r) => r.date).length * 0.6) ? topM[0] : null;
+    const candidatesFor = (r) => {
+      const c = [];
+      if (r.mash) for (const x of mashDates(r.mash, docYear)) c.push(x);
+      if (r.date) {
+        const { d, m } = r.date;
+        const ds = String(d);
+        for (let i = 0; i < ds.length; i++) for (const alt of LOOKALIKE[ds[i]] || '') c.push({ d: +(ds.slice(0, i) + alt + ds.slice(i + 1)), m, y: r.date.y });
+        if (ds.length === 1) for (const lead of '123') c.push({ d: +(lead + ds), m, y: r.date.y });
+        if (ds.length === 2) c.push({ d: +ds[0], m, y: r.date.y }, { d: +ds[1], m, y: r.date.y });
+        // the month misread (08 for 09): the report's own month first
+        const ms = String(m);
+        for (let i = 0; i < ms.length; i++) for (const alt of LOOKALIKE[ms[i]] || '') c.push({ d, m: +(ms.slice(0, i) + alt + ms.slice(i + 1)), y: r.date.y });
+        if (mainMonth && mainMonth !== m) c.push({ d, m: mainMonth, y: r.date.y });
+      }
+      return c.map((x) => keyOf(x)).filter(Boolean);
+    };
+    // a date of another month in a report of one month, that would fit as this month's: misread
+    for (let i = 0; i < list.length; i++) {
+      const r = list[i];
+      if (!r.key || !r.date || !mainMonth || r.date.m === mainMonth) continue;
+      const alt = keyOf({ d: r.date.d, m: mainMonth, y: r.date.y });
+      const prev = list.slice(0, i).reverse().find((x) => x.key && x.date && x.date.m === mainMonth);
+      const next = list.slice(i + 1).find((x) => x.key && x.date && x.date.m === mainMonth);
+      if (!alt || !(prev || next)) continue;
+      const fits = (!prev || cmp(prev.key, alt)) && (!next || cmp(alt, next.key)) && (r.dow == null || dowOf(alt) === r.dow);
+      const near = [prev, next].filter(Boolean).every((x) => Math.abs((new Date(x.key) - new Date(alt)) / 864e5) <= 7);
+      if (fits && near) { dbg.push(`month fixed: ${r.key} → ${alt}`); r.key = alt; }
+    }
+    // the dates to trust: the longest run of rows whose dates go in order (and whose day of the week, when
+    // the row has one, agrees); the others are checked against them
+    const dowOk = (r, k) => r.dow == null || dowOf(k) === r.dow;
+    const idx = list.map((r, i) => i).filter((i) => list[i].key);
+    const len = idx.map(() => 1), from = idx.map(() => -1);
+    for (let a = 0; a < idx.length; a++) for (let b = 0; b < a; b++) {
+      const ka = list[idx[a]].key, kb = list[idx[b]].key;
+      if ((cmp(kb, ka) || kb === ka) && len[b] + 1 > len[a]) { len[a] = len[b] + 1; from[a] = b; }
+    }
+    const trusted = new Set();
+    for (let a = len.indexOf(Math.max(0, ...len)); a >= 0 && idx.length; a = from[a]) trusted.add(idx[a]);
+    for (let i = 0; i < list.length; i++) {
+      const r = list[i];
+      if (trusted.has(i) && dowOk(r, r.key)) continue;
+      let p = i - 1; while (p >= 0 && !trusted.has(p)) p--;
+      let q = i + 1; while (q < list.length && !trusted.has(q)) q++;
+      const prev = p >= 0 ? list[p] : null, next = q < list.length ? list[q] : null;
+      const inOrder = (k) => (!prev || cmp(prev.key, k) || (prev.key === k && r.shifts.length && prev.shifts.length)) && (!next || cmp(k, next.key) || (k === next.key && r.shifts.length && next.shifts.length));
+      // the possible readings of what was read that fit between its neighbours (and its day of the week)
+      const all = [...new Set(candidatesFor(r))].filter(inOrder);
+      let cands = all.filter((k) => dowOk(r, k));
+      // nothing to read from: the dates between the neighbours, with its day of the week
+      if (!cands.length && !(r.key && inOrder(r.key)) && prev && next) {
+        const between = [];
+        for (let k = addDays(prev.key, fwd ? 1 : -1), n = 0; k !== next.key && n < 10; k = addDays(k, fwd ? 1 : -1), n++) between.push(k);
+        cands = between.filter((k) => dowOk(r, k) && (r.dow != null || between.length === 1));
+      }
+      // the one day between its neighbours, and the date read says that day too: the day letter was misread
+      if (!cands.length && prev && next && all.length === 1 && all[0] === addDays(prev.key, fwd ? 1 : -1) && addDays(all[0], fwd ? 1 : -1) === next.key) cands = all;
+      if (r.key && inOrder(r.key) && (dowOk(r, r.key) || !cands.length)) continue; // as read (a day letter misread is likelier)
+      if (cands.length === 1) { dbg.push(`date fixed: "${r.text.slice(0, 40)}" ${r.key || '?'} → ${cands[0]}`); r.key = cands[0]; trusted.add(i); }
+      else if (r.key || r.shifts.length) { dbg.push(`date unclear, left out: ${r.key || '?'} "${r.text.slice(0, 40)}" (${cands.join(',')})`); r.key = null; }
+    }
+
+    /* ---- the shifts ---- */
+    const out = [];
+    let guessedYear = false;
+    for (const r of list) {
+      if (!r.key || !r.shifts.length) continue;
+      if (r.date && !r.date.y && !docYear) guessedYear = true;
+      for (const [start, end] of r.shifts) {
+        const d = span(start, end) || 1440;
+        if (d < 10 || d > 16 * 60) { dbg.push(`not a shift: ${r.key} ${start}-${end}`); continue; }
+        out.push({ date: r.key, start, end, hours: Math.round(d / 60 * 100) / 100, overnight: minOf(end) <= minOf(start), line: r.text.slice(0, 120), n: r.ri });
+      }
+    }
+    const res = { rows: out, noStart: 0, guessedYear, skipped: skippedNoOut, rtl, text: rows.map((r) => (rtl ? r.words.slice().reverse() : r.words).map((w) => clean(w.text)).join(' ')).join('\n') };
+    if (opts.debug) res.debug = dbg.concat(rows.map((r, i) => `${i}: y${Math.round(r.y)} ${textOf(r)}`)).join('\n');
+    return res;
+  }
+
+  root.Timesheet = { parse, times, parseWords, itemsOf };
 })(typeof window !== 'undefined' ? window : globalThis);
 
 /* ---- core/schedule.js ---- */
@@ -4686,6 +5371,7 @@ window.APP_BUILD = '1.21.0-00a596a6';
   function hebToKey(y, m, d) { return rdToKey(fixedFromHebrew(y, m, d)); }
 
   /* ---------------- Hebrew numerals ---------------- */
+  // i18n-keep-start
   const ONES = ['', 'א', 'ב', 'ג', 'ד', 'ה', 'ו', 'ז', 'ח', 'ט'];
   const TENS = ['', 'י', 'כ', 'ל', 'מ', 'נ', 'ס', 'ע', 'פ', 'צ'];
   function gematria(n) {
@@ -4704,11 +5390,15 @@ window.APP_BUILD = '1.21.0-00a596a6';
   function monthName(m, y) {
     const names = ['', 'ניסן', 'אייר', 'סיוון', 'תמוז', 'אב', 'אלול', 'תשרי', 'חשוון', 'כסלו', 'טבת', 'שבט', 'אדר', 'אדר ב׳'];
     if (m === ADAR && isLeap(y)) return 'אדר א׳';
+    // i18n-keep-end
     return names[m];
   }
   /** Hebrew date for a Gregorian date key. */
+  // (in the other languages the Jewish date is not shown: its letters are Hebrew)
+  const SHOW = !root.U || root.U.LANG === 'he';
   function hebrewDate(k) {
     const h = hebrewFromFixed(keyToRd(k));
+    if (!SHOW) return Object.assign(h, { dayStr: '', monthStr: '', yearStr: '', toString() { return ''; } });
     return Object.assign(h, {
       dayStr: gematria(h.d),
       monthStr: monthName(h.m, h.y),
@@ -4824,6 +5514,7 @@ window.APP_BUILD = '1.21.0-00a596a6';
 
   /* ---------------- cities ---------------- */
   // [name, lat, lon, candle-lighting minutes before sunset]
+  // i18n-keep-start the names are keys (settings and the localities list are in Hebrew)
   const CITIES = [
     ['ירושלים', 31.7690, 35.2163, 40], ['תל אביב-יפו', 32.0809, 34.7806, 18], ['חיפה', 32.7940, 34.9896, 30],
     ['באר שבע', 31.2518, 34.7913, 18], ['אילת', 29.5581, 34.9482, 18], ['נתניה', 32.3215, 34.8532, 18],
@@ -4842,6 +5533,7 @@ window.APP_BUILD = '1.21.0-00a596a6';
     ['נצרת', 32.6996, 35.3035, 18], ['מגדל העמק', 32.6760, 35.2400, 18], ['טבריה', 32.7922, 35.5312, 18],
     ['צפת', 32.9646, 35.4960, 18], ['קריית שמונה', 33.2073, 35.5697, 18],
   ].map(([name, lat, lon, candle]) => ({ name, lat, lon, candle }));
+  // i18n-keep-end
   // the 44 cities above keep their exact place; any other locality comes from the full list (places.js),
   // where those 44 have the same coordinates under their CBS spelling
   function findCity(name) {
@@ -5034,6 +5726,7 @@ window.APP_BUILD = '1.21.0-00a596a6';
       // --- Shabbat & holidays window ---
       rest: {
         mode: 'city',
+        // i18n-keep a city's name is its key in the localities list
         city: 'תל אביב-יפו',
         lat: 32.08, lon: 34.78, candleMin: null,
         exitMode: 'tzeit', tzeitDeg: 8.5, exitMinutes: 40,
@@ -6563,7 +7256,7 @@ window.APP_BUILD = '1.21.0-00a596a6';
       const gap = U.diffDays(lastKey, today);
       if (gap >= (+cfg.idleDays || 7)) {
         alerts.push({ key: 'idle-' + lastKey, type: 'idle', severity: 'info', push: 'anomaly',
-          title: 'לא נרשמה משמרת כבר ' + gap + ' ימים', body: 'שכחת לרשום משמרות? אם היית בחופש — תהנה!',
+          title: `לא נרשמה משמרת כבר ${gap} ימים`, body: 'שכחת לרשום משמרות? אם היית בחופש — תהנה!',
           explain: 'המשמרת האחרונה: ' + U.fmtDate(lastKey) + '. הסף: ' + cfg.idleDays + ' ימים.' });
       }
     }
@@ -6844,6 +7537,7 @@ window.APP_BUILD = '1.21.0-00a596a6';
     return rows.map((r) => r.items.sort((a, b) => b.x - a.x).map((i) => i.s).join(' '));
   }
 
+  // i18n-keep
   const MONTHS = ['ינואר', 'פברואר', 'מרץ', 'אפריל', 'מאי', 'יוני', 'יולי', 'אוגוסט', 'ספטמבר', 'אוקטובר', 'נובמבר', 'דצמבר'];
   function detectPeriod(text) {
     const counts = {};
@@ -6852,6 +7546,7 @@ window.APP_BUILD = '1.21.0-00a596a6';
     const re1 = /(?:^|[^\d])(\d{1,2})[\/.-](20\d{2})(?!\d)/g;
     while ((m = re1.exec(text))) bump(+m[2], +m[1]);
     MONTHS.forEach((name, i) => {
+      // i18n-keep a pattern for the Hebrew payslip's text
       const re = new RegExp(name + "\\s*['׳]?\\s*(20\\d{2})", 'g');
       let mm;
       while ((mm = re.exec(text))) { bump(+mm[1], i + 1); bump(+mm[1], i + 1); }
@@ -6952,6 +7647,7 @@ window.APP_BUILD = '1.21.0-00a596a6';
     };
   }
   function aiPrompt() {
+    // i18n-keep-start
     return 'You read the text of an Israeli payslip (תלוש שכר) produced by PDF text extraction or Hebrew OCR. ' +
       'Hebrew words may appear reversed (visual order) and table columns may be out of order; reconstruct the meaning carefully. ' +
       'Personal details were replaced with placeholders such as [ת״ז הוסתרה]; ignore them.\n' +
@@ -6961,6 +7657,7 @@ window.APP_BUILD = '1.21.0-00a596a6';
       'Field keys: ' + FIELDS.map((f) => `${f.key} = ${f.label}`).join('; ') + '.\n' +
       'Put every other payment, deduction or employer-contribution line in otherLines. ' +
       'period is the pay month (YYYY-MM) if visible, otherwise an empty string. notes: one short Hebrew sentence about anything unclear, or an empty string.';
+    // i18n-keep-end
   }
   /** Convert AI JSON to the same {fields, other, period} shape as parseText. */
   function fromAi(json) {
@@ -7334,7 +8031,9 @@ window.APP_BUILD = '1.21.0-00a596a6';
     if (!bad.length) return '';
     let s = `שלום${opts.to ? ' ' + opts.to : ''},\n\nבדקתי את תלוש השכר של ${U.fmtMonth(analysis.period)} מול רישום המשמרות שלי (⁦${U.fmtDate(P.from)}\u2060–\u2060${U.fmtDate(P.to)}⁩), ונראה לי שיש כמה נקודות שכדאי לבדוק:\n\n`;
     // findings are written to the user ("רשמת"); the message speaks in first person
+    // i18n-keep-start
     const firstPerson = (t) => t.replace(/(^|\s)רשמת(\s)/g, '$1רשמתי$2').replace(/שרשמת(\s|\)|\.|,)/g, 'שרשמתי$1').replace(/באפליקציה/g, 'לפי הרישום שלי').replace(/שהגדרת/g, 'שסוכמו');
+    // i18n-keep-end
     bad.forEach((f, i) => {
       s += `${i + 1}. ${f.title}: ${firstPerson(f.detail)}`;
       if (f.amount > 0 && !/≈|לפי החישוב/.test(f.detail)) s += ` (הפרש משוער: ${U.money(f.amount)})`;
@@ -7732,7 +8431,7 @@ window.APP_BUILD = '1.21.0-00a596a6';
     const avgHour = perHour(all);
     // a day or a time of day counts only with at least 2 shifts (one lucky shift is not a pattern)
     const minN = list.length >= 8 ? 2 : 1;
-    const dayRows = [...days].map(([d, g]) => ({ d, name: U.HEB_DAYS[d], n: g.n, perHour: perHour(g), perShift: g.n ? r2(g.wage / g.n) : 0 }));
+    const dayRows = [...days].map(([d, g]) => ({ d, name: U.DAYS[d], n: g.n, perHour: perHour(g), perShift: g.n ? r2(g.wage / g.n) : 0 }));
     const slotRows = SLOTS.map((s) => { const g = slots.get(s.id); return { id: s.id, name: s.name, n: g.n, perHour: perHour(g), perShift: g.n ? r2(g.wage / g.n) : 0 }; });
     const pick = (rows) => rows.filter((x) => x.n >= minN).sort((a, b) => b.perHour - a.perHour)[0] || null;
     const bestDay = pick(dayRows), bestSlot = pick(slotRows);
@@ -7792,9 +8491,12 @@ window.APP_BUILD = '1.21.0-00a596a6';
   const NOUNS = ['שועל', 'נמר', 'ינשוף', 'דולפין', 'זאב', 'נשר', 'קיפוד', 'פינגווין', 'תוכי', 'דוב', 'צב', 'לוויתן', 'אריה', 'צפרדע', 'תמנון', 'חד קרן'];
   const ADJS = ['זריז', 'חכם', 'אמיץ', 'מהיר', 'שמח', 'ערני', 'סקרן', 'נועז', 'רגוע', 'חרוץ'];
   // nicknames are public: no swearing, no phone numbers (5 digits or more in a row)
+  // i18n-keep-start
   const BAD = ['זונה', 'זונות', 'כוס', 'זין', 'זיין', 'מזדיין', 'שרמוט', 'שרמוטה', 'מניאק', 'קוקסינל', 'נאצי', 'היטלר', 'מחבל',
     'fuck', 'shit', 'bitch', 'dick', 'cock', 'pussy', 'porn', 'sex', 'nazi', 'hitler', 'nigg', 'cunt', 'whore', 'slut'];
   const STAFF = ['admin', 'moderator', 'support', 'shaati', 'מנהל', 'מנהלת', 'צוות', 'תמיכה', 'שעתי', 'רשמי'];
+  // i18n-keep-end
+  // the same letters firestore.rules allows (so in Arabic and Russian the made-up names are in English)
   const NICK_RE = /^[א-תa-zA-Z0-9 _.-]{2,16}$/;
 
   const num = (k) => +k.replace(/-/g, '');
@@ -7854,7 +8556,8 @@ window.APP_BUILD = '1.21.0-00a596a6';
     let x = (seed == null ? Math.floor(Math.random() * 1e9) : seed) >>> 0;
     const next = () => { x = (x * 1664525 + 1013904223) >>> 0; return x; };
     const n = NOUNS[next() % NOUNS.length], a = ADJS[next() % ADJS.length];
-    return `${n} ${a} ${10 + (next() % 90)}`;
+    // English (the made-up names in every language but Hebrew) puts the describing word first: "Swift Fox 27"
+    return U.LANG === 'he' ? `${n} ${a} ${10 + (next() % 90)}` : `${a} ${n} ${10 + (next() % 90)}`;
   }
   /** "until midnight" / "until Sunday" … for each period, from a date and an hour. */
   function resetText(period, dateKey, now) {
@@ -7863,8 +8566,8 @@ window.APP_BUILD = '1.21.0-00a596a6';
       return left > 60 ? `מתאפס בעוד ${Math.floor(left / 60)} שעות` : `מתאפס בעוד ${Math.max(1, left)} דקות`;
     }
     if (period === 'w') { const n = 7 - U.dow(dateKey); return n === 1 ? 'מתאפס מחר (יום ראשון)' : `מתאפס בעוד ${n} ימים`; }
-    if (period === 'm') return `מתאפס ב-1 ב${U.HEB_MONTHS[(+dateKey.slice(5, 7)) % 12]}`;
-    if (period === 'y') return `מתאפס ב-1 בינואר ${+dateKey.slice(0, 4) + 1}`;
+    if (period === 'm') return `מתאפס ב-${U.fmtDate(U.addMonthKey(dateKey.slice(0, 7), 1) + '-01', 'dm')}`;
+    if (period === 'y') return `מתאפס ב-${U.fmtDate(`${+dateKey.slice(0, 4) + 1}-01-01`, 'dm')} ${+dateKey.slice(0, 4) + 1}`;
     return 'השיאים של כל הזמנים';
   }
 
@@ -7937,6 +8640,7 @@ window.APP_BUILD = '1.21.0-00a596a6';
     layers: '<path d="m12 2 10 5-10 5L2 7z"/><path d="m2 17 10 5 10-5M2 12l10 5 10-5"/>',
     list: '<path d="M8 6h13M8 12h13M8 18h13M3 6h.01M3 12h.01M3 18h.01"/>',
     grid: '<rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/>',
+    globe: '<circle cx="12" cy="12" r="10"/><path d="M2 12h20"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/>',
     camera: '<path d="M14.5 4h-5L7 7H4a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2h-3z"/><circle cx="12" cy="13" r="3"/>',
     more: '<circle cx="12" cy="5" r="1"/><circle cx="12" cy="12" r="1"/><circle cx="12" cy="19" r="1"/>',
     refresh: '<path d="M21 12a9 9 0 1 1-3-6.7L21 8"/><path d="M21 3v5h-5"/>',
@@ -8248,11 +8952,11 @@ window.APP_BUILD = '1.21.0-00a596a6';
   function timeAgo(ms) {
     const d = (Date.now() - ms) / 60000;
     if (d < 1) return 'עכשיו';
-    if (d < 60) return 'לפני ' + Math.round(d) + ' דק׳';
-    if (d < 60 * 24) return 'לפני ' + Math.round(d / 60) + ' שע׳';
+    if (d < 60) return `לפני ${Math.round(d)} דק׳`;
+    if (d < 60 * 24) return `לפני ${Math.round(d / 60)} שע׳`;
     const days = Math.round(d / 1440);
     if (days === 1) return 'אתמול';
-    if (days < 30) return 'לפני ' + days + ' ימים';
+    if (days < 30) return `לפני ${days} ימים`;
     return U.fmtDate(U.epochKey(ms));
   }
 
@@ -8315,8 +9019,9 @@ window.APP_BUILD = '1.21.0-00a596a6';
   const { icon, esc } = UI;
   const Fx = () => root.Fx;
 
-  const MONTHS = U.HEB_MONTHS;
-  const DAYS_SHORT = ['א', 'ב', 'ג', 'ד', 'ה', 'ו', 'ש'];
+  const MONTHS = U.MONTHS;
+  // i18n-keep
+  const DAYS_SHORT = U.LANG === 'he' ? ['א', 'ב', 'ג', 'ד', 'ה', 'ו', 'ש'] : U.DAYS_SHORT;
   const pad = (n) => String(n).padStart(2, '0');
   const keyOf = (y, m, d) => `${y}-${pad(m)}-${pad(d)}`;
   const parse = (k) => { const [y, m, d] = String(k).split('-').map(Number); return { y, m, d }; };
@@ -8326,10 +9031,9 @@ window.APP_BUILD = '1.21.0-00a596a6';
   /* ---------------- formatting for the field buttons ---------------- */
   function fmtDate(k) {
     if (!isKey(k)) return '';
-    const { y, m, d } = parse(k);
     const today = U.todayKey();
     const rel = k === today ? 'היום · ' : k === U.addDays(today, -1) ? 'אתמול · ' : k === U.addDays(today, 1) ? 'מחר · ' : '';
-    return `${rel}${U.HEB_DAYS[U.dow(k)]}, ${d} ב${MONTHS[m - 1]} ${y}`;
+    return rel + U.fmtDate(k, 'dmy');
   }
   const fmtMonth = (mk) => (/^\d{4}-\d{2}$/.test(mk || '') ? U.fmtMonth(mk) : '');
   const fmtTime = (t) => (/^\d{2}:\d{2}/.test(t || '') ? t.slice(0, 5) : '');
@@ -8403,7 +9107,7 @@ window.APP_BUILD = '1.21.0-00a596a6';
       const head = el.querySelector('[data-view]');
       const okBtn = el.querySelector('[data-pk-ok]');
       function drawBig() {
-        big.innerHTML = sel ? `<span class="d">${parse(sel).d}</span><span class="r"><b>${U.HEB_DAYS[U.dow(sel)]}</b><span>${MONTHS[parse(sel).m - 1]} ${parse(sel).y}</span></span>` : `<span class="r"><b>${opts.mode === 'birth' ? 'מתי נולדת?' : 'בחר יום'}</b><span>${view === 'years' ? 'קודם השנה' : 'לחץ על יום בלוח'}</span></span>`;
+        big.innerHTML = sel ? `<span class="d">${parse(sel).d}</span><span class="r"><b>${U.DAYS[U.dow(sel)]}</b><span>${MONTHS[parse(sel).m - 1]} ${parse(sel).y}</span></span>` : `<span class="r"><b>${opts.mode === 'birth' ? 'מתי נולדת?' : 'בחר יום'}</b><span>${view === 'years' ? 'קודם השנה' : 'לחץ על יום בלוח'}</span></span>`;
         okBtn.disabled = !sel;
       }
       function draw(anim) {
@@ -9926,6 +10630,219 @@ window.APP_BUILD = '1.21.0-00a596a6';
   Intro.elapsed = () => performance.now() - started;
 })(typeof window !== 'undefined' ? window : globalThis);
 
+/* ---- app/lang.js ---- */
+/* ============================================================
+ * lang.js — the app's language: chosen on the very first open, changed in settings any time.
+ *
+ * Each language is a page of its own (index.html Hebrew, index.ar.html, index.ru.html, index.en.html; see
+ * tools/i18n.js), so a language costs nothing while the app runs. The choice is kept on the phone twice: in
+ * localStorage, where a page looks first thing (and moves to the right page before anything is drawn), and in
+ * a cache the service worker reads, so the app opens straight in its language, also offline.
+ *
+ * The first open: the opening show gives way to a screen that greets in all four languages at once
+ * (שלום · مرحبا · Привет · Hello), with the phone's own language suggested; one tap and the app goes on in it.
+ * Someone already using the app (in Hebrew) whose phone speaks another language is offered the switch once.
+ *
+ * Everything here is written in each language itself, so this file is never translated (tools/i18n.js).
+ * ============================================================ */
+(function (root) {
+  'use strict';
+  const { U } = root;
+  const KEY = 'shaati.lang', OFFERED = 'shaati.langOffered';
+  const LANGS = [
+    { id: 'he', name: 'עברית', glyph: 'א', hello: 'שלום', ask: 'באיזו שפה נוח לך?', sug: 'מומלץ', later: 'אפשר לשנות בכל רגע בהגדרות', dir: 'rtl', g: ['#2ee59d', '#0fb6a8'] },
+    { id: 'ar', name: 'العربية', glyph: 'ع', hello: 'مرحبا', ask: 'بأي لغة تفضّل؟', sug: 'مقترحة', later: 'يمكن التغيير في أي وقت من الإعدادات', dir: 'rtl', g: ['#ffd25a', '#ff8a3d'] },
+    { id: 'ru', name: 'Русский', glyph: 'Я', hello: 'Привет', ask: 'На каком языке вам удобнее?', sug: 'Рекомендуем', later: 'Язык можно сменить в настройках', dir: 'ltr', g: ['#a98bff', '#5b8cff'] },
+    { id: 'en', name: 'English', glyph: 'A', hello: 'Hello', ask: 'Which language suits you?', sug: 'Suggested', later: 'You can change it any time in Settings', dir: 'ltr', g: ['#ff7ab6', '#ff5a6e'] },
+  ];
+  const byId = (id) => LANGS.find((l) => l.id === id);
+  const Lang = { LANGS };
+  root.Lang = Lang;
+  Lang.current = (U && U.LANG) || document.documentElement.lang || 'he';
+
+  Lang.stored = function () {
+    try { const l = localStorage.getItem(KEY); return byId(l) ? l : null; } catch (e) { return null; }
+  };
+  /** The phone's language, if the app speaks it (Hebrew also from the old code "iw"). */
+  Lang.device = function () {
+    const list = (navigator.languages && navigator.languages.length ? navigator.languages : [navigator.language || '']).map((x) => String(x).toLowerCase());
+    for (const x of list) {
+      const p = x.split('-')[0];
+      if (p === 'he' || p === 'iw') return 'he';
+      if (byId(p)) return p;
+    }
+    return null;
+  };
+  /** Keeps the choice where the page and the service worker look for it. */
+  async function remember(id) {
+    try { localStorage.setItem(KEY, id); } catch (e) { /* the worker's copy still holds it */ }
+    try { const c = await caches.open('shiftpay-lang'); await c.put('./__lang', new Response(id, { headers: { 'Content-Type': 'text/plain' } })); } catch (e) { /* no cache: localStorage alone */ }
+  }
+  const pageOf = (id) => (id === 'he' ? './index.html' : './index.' + id + '.html');
+  /** The language's page put in the app's offline copy, so the move works (and stays) without internet. */
+  async function fetchPage(id) {
+    try {
+      const shell = (await caches.keys()).find((k) => k.startsWith('shiftpay-shell-'));
+      if (!shell) return true;
+      const c = await caches.open(shell);
+      if (await c.match(pageOf(id))) return true;
+      const res = await fetch(pageOf(id), { cache: 'reload' });
+      if (!res.ok) return false;
+      await c.put(pageOf(id), res);
+      const man = id === 'he' ? './manifest.webmanifest' : './manifest.' + id + '.webmanifest';
+      fetch(man, { cache: 'reload' }).then((r) => r.ok && c.put(man, r)).catch(() => {});
+      return true;
+    } catch (e) { return navigator.onLine; }
+  }
+  /** Keeps the language; if it is not this page's, the app reopens in it (the address stays, the place in the app too). */
+  Lang.set = async function (id, opts) {
+    if (!byId(id)) return;
+    await remember(id);
+    if (id === Lang.current) return;
+    const ok = await fetchPage(id);
+    if (!ok) { if (root.UI) root.UI.invalid(byId(id).name + ': no connection'); return; }
+    try { sessionStorage.setItem('introSeen', '1'); sessionStorage.setItem('langMove', '1'); } catch (e) { /* ignore */ }
+    const hash = opts && opts.hash != null ? opts.hash : location.hash;
+    location.replace(pageOf(id).replace('./', '') + location.search + hash);
+  };
+
+  /* ---------------- the picker ---------------- */
+  const LOGO = '<svg viewBox="0 0 1024 1024" aria-hidden="true"><path class="g" d="M300 660 A258 258 0 0 1 603 271 L603 600"/><path class="y" d="M420 422 L420 753 A258 258 0 0 0 720 362"/></svg>';
+  function markup(sug, inSheet) {
+    const order = LANGS;
+    const s = byId(sug) || byId(Lang.current);
+    return `<div class="lp${inSheet ? ' lp-in-sheet' : ''}" role="dialog" aria-modal="true" aria-label="${LANGS.map((l) => l.ask).join(' / ')}">
+      ${inSheet ? '' : `<div class="lp-orbs" aria-hidden="true"><i></i><i></i><i></i></div><div class="lp-logo">${LOGO}<b>Shaati</b></div>`}
+      <div class="lp-hello" aria-hidden="true">${order.map((l, i) => `<span lang="${l.id}" dir="${l.dir}" style="--i:${i};--a:${l.g[0]}">${l.hello}</span>`).join('')}</div>
+      <div class="lp-ask" aria-hidden="true">${order.map((l, i) => `<span lang="${l.id}" dir="${l.dir}" style="--i:${i}">${l.ask}</span>`).join('')}</div>
+      <div class="lp-grid">${order.map((l, i) => `<button class="lp-card${l.id === s.id ? ' sug' : ''}${l.id === Lang.current && inSheet ? ' cur' : ''}" data-lang="${l.id}" lang="${l.id}" dir="${l.dir}" style="--i:${i};--g1:${l.g[0]};--g2:${l.g[1]}">
+          <span class="lp-glyph" aria-hidden="true">${l.glyph}</span>
+          <span class="lp-name">${l.name}</span>
+          <span class="lp-hi">${l.hello}</span>
+          ${l.id === s.id && !inSheet ? `<span class="lp-sug">${l.sug}</span>` : ''}
+          ${l.id === Lang.current && inSheet ? '<span class="lp-tick" aria-hidden="true">✓</span>' : ''}
+        </button>`).join('')}</div>
+      <div class="lp-later" lang="${s.id}" dir="${s.dir}">${s.later}</div>
+    </div>`;
+  }
+  /** The chosen card takes the screen in its colours, then the app goes on (or reopens in that language). */
+  function burst(card, done) {
+    const r = card.querySelector('.lp-glyph').getBoundingClientRect();
+    const fill = document.createElement('div');
+    fill.className = 'lp-fill';
+    const cx = r.left + r.width / 2, cy = r.top + r.height / 2;
+    const reach = Math.hypot(Math.max(cx, innerWidth - cx), Math.max(cy, innerHeight - cy));
+    fill.style.cssText = `left:${cx}px;top:${cy}px;--s:${(reach / 30).toFixed(2)};--g1:${card.style.getPropertyValue('--g1')};--g2:${card.style.getPropertyValue('--g2')}`;
+    document.body.appendChild(fill);
+    requestAnimationFrame(() => requestAnimationFrame(() => fill.classList.add('go')));
+    setTimeout(() => done(fill), root.Fx && !root.Fx.motion() ? 0 : 520);
+  }
+
+  /**
+   * The first open: a full screen before anything else. Resolves when the choice is this page's language (the
+   * app goes on); for another language the app reopens in it.
+   */
+  Lang.firstRun = function () {
+    return new Promise((resolve) => {
+      const host = document.createElement('div');
+      host.className = 'lp-host';
+      host.innerHTML = markup(Lang.device() || 'he', false);
+      document.body.appendChild(host);
+      // the opening show leaves once this screen is drawn (it watches #view)
+      const view = document.getElementById('view');
+      if (view) view.innerHTML = '<div class="view lp-under"></div>';
+      requestAnimationFrame(() => host.classList.add('in'));
+      cycle(host);
+      host.addEventListener('click', (e) => {
+        const card = e.target.closest('.lp-card');
+        if (!card || host.classList.contains('chosen')) return;
+        host.classList.add('chosen');
+        card.classList.add('picked');
+        if (root.Fx) { root.Fx.play && root.Fx.play('pick'); }
+        const id = card.dataset.lang;
+        burst(card, async (fill) => {
+          if (id !== Lang.current) {
+            fill.classList.add('to-intro'); // under the reopening, the opening show's colours
+            await Lang.set(id);
+            return;
+          }
+          await remember(id);
+          host.classList.add('out');
+          fill.classList.add('fade');
+          setTimeout(() => { host.remove(); fill.remove(); }, 560);
+          resolve(id);
+        });
+      });
+    });
+  };
+  // the greeting and the question go round the four languages
+  function cycle(box) {
+    const hello = box.querySelectorAll('.lp-hello span'), ask = box.querySelectorAll('.lp-ask span');
+    let k = 0;
+    const show = () => {
+      hello.forEach((s, i) => s.classList.toggle('on', i === k));
+      ask.forEach((s, i) => s.classList.toggle('on', i === k));
+    };
+    show();
+    if (root.Fx && !root.Fx.motion()) { box.classList.add('static'); return; }
+    const t = setInterval(() => {
+      if (!box.isConnected) { clearInterval(t); return; }
+      k = (k + 1) % LANGS.length; show();
+    }, 1600);
+  }
+
+  /** In settings: the same cards in a sheet; another language reopens the app in it, on the settings tab. */
+  Lang.sheet = function () {
+    const UI = root.UI;
+    UI.openSheet({
+      title: { he: 'שפה · Language', ar: 'اللغة · Language', ru: 'Язык · Language', en: 'Language' }[Lang.current] || 'Language',
+      body: markup(Lang.current, true),
+      onMount: (el) => {
+        cycle(el);
+        el.addEventListener('click', (e) => {
+          const card = e.target.closest('.lp-card');
+          if (!card) return;
+          const id = card.dataset.lang;
+          if (id === Lang.current) { remember(id); UI.closeTop(); return; }
+          card.classList.add('picked');
+          burst(card, (fill) => { fill.classList.add('to-intro'); Lang.set(id, { hash: '#settings' }); });
+        });
+      },
+    });
+  };
+
+  /** Someone who already used the app before languages existed: the page's language is kept as the choice,
+   *  and if the phone speaks another one the app knows, the switch is offered once (in that language). */
+  Lang.adopt = function () {
+    if (Lang.stored()) return;
+    remember(Lang.current);
+    const d = Lang.device();
+    let offered = false;
+    try { offered = localStorage.getItem(OFFERED) === '1'; localStorage.setItem(OFFERED, '1'); } catch (e) { offered = true; }
+    if (!d || d === Lang.current || offered) return;
+    const l = byId(d);
+    const T = {
+      ar: ['Shaati متوفّر الآن بالعربية', 'التطبيق كله بالعربية: الورديات، الراتب، الحقوق.', 'التبديل إلى العربية', 'البقاء بالعبرية'],
+      ru: ['Shaati теперь на русском', 'Всё приложение на русском: смены, зарплата, права.', 'Перейти на русский', 'Оставить иврит'],
+      en: ['Shaati now speaks English', 'The whole app in English: shifts, pay, your rights.', 'Switch to English', 'Keep Hebrew'],
+    }[d];
+    if (!T) return;
+    const go = () => {
+      if (root.App && root.App.blocking) return;
+      root.UI.openSheet({
+        title: T[0],
+        body: `<div class="lp-offer" lang="${d}" dir="${l.dir}"><span class="lp-glyph" style="--g1:${l.g[0]};--g2:${l.g[1]}" aria-hidden="true">${l.glyph}</span><p>${T[1]}</p></div>`,
+        foot: `<button class="btn" data-lp-yes lang="${d}" dir="${l.dir}">${T[2]}</button><button class="btn text" data-lp-no lang="${d}" dir="${l.dir}">${T[3]}</button>`,
+        onMount: (el) => {
+          el.querySelector('[data-lp-yes]').onclick = () => Lang.set(d);
+          el.querySelector('[data-lp-no]').onclick = () => root.UI.closeTop();
+        },
+      });
+    };
+    if (root.Intro && root.Intro.after) root.Intro.after(go, 1400); else setTimeout(go, 1400);
+  };
+})(typeof window !== 'undefined' ? window : globalThis);
+
 /* ---- app/store.js ---- */
 /* ============================================================
  * store.js — IndexedDB persistence, in-memory state, undo,
@@ -9980,7 +10897,7 @@ window.APP_BUILD = '1.21.0-00a596a6';
         resolve(d);
       };
       req.onerror = () => reject(req.error);
-      req.onblocked = () => reject(new Error('מסד הנתונים חסום — סגור לשוניות אחרות של האפליקציה'));
+      req.onblocked = () => reject(root.U.oops('מסד הנתונים חסום — סגור לשוניות אחרות של האפליקציה'));
     });
   }
   function done(t) {
@@ -10378,8 +11295,8 @@ window.APP_BUILD = '1.21.0-00a596a6';
   }
   /** mode: 'replace' | 'merge' */
   async function importBackup(json, mode) {
-    if (!isObj(json) || json.app !== 'shiftpay') throw new Error('הקובץ אינו גיבוי של האפליקציה');
-    if ((+json.schemaVersion || 1) > SCHEMA_VERSION) throw new Error('הגיבוי נוצר בגרסה חדשה יותר של האפליקציה. עדכן קודם את האפליקציה.');
+    if (!isObj(json) || json.app !== 'shiftpay') throw root.U.oops('הקובץ אינו גיבוי של האפליקציה');
+    if ((+json.schemaVersion || 1) > SCHEMA_VERSION) throw root.U.oops('הגיבוי נוצר בגרסה חדשה יותר של האפליקציה. עדכן קודם את האפליקציה.');
     const incoming = { settings: json.settings, meta: json.meta || {}, activeShift: json.activeShift || null };
     for (const s of LIST_STORES) incoming[s] = json[s] || [];
     cleanIncoming(incoming);
@@ -10393,7 +11310,7 @@ window.APP_BUILD = '1.21.0-00a596a6';
       root.Engine.totals(trial, '2000-01-01', '2100-12-31');
     } catch (e) {
       console.warn('backup refused', e);
-      throw new Error('הקובץ פגום ואי אפשר לשחזר ממנו. הנתונים בטלפון לא השתנו.');
+      throw root.U.oops('הקובץ פגום ואי אפשר לשחזר ממנו. הנתונים בטלפון לא השתנו.');
     }
     const keepKey = S.settings && S.settings.ai ? S.settings.ai.apiKey : '';
     const keepPlus = (S.settings && S.settings.plusKey) || '';
@@ -11221,7 +12138,7 @@ window.APP_BUILD = '1.21.0-00a596a6';
     if (!S.settings.alerts.push || !('Notification' in window) || Notification.permission !== 'granted') return;
     try {
       const reg = await navigator.serviceWorker.getRegistration();
-      const opt = { body: n.body, tag: n.key, icon: 'icon-192.png', badge: 'badge-96.png', lang: 'he', dir: 'rtl', data: { url: './#home' } };
+      const opt = { body: n.body, tag: n.key, icon: 'icon-192.png', badge: 'badge-96.png', lang: U.LANG, dir: U.RTL ? 'rtl' : 'ltr', data: { url: './#home' } };
       if (reg) await reg.showNotification(n.title, opt); else new Notification(n.title, opt);
     } catch (e) { console.warn(e); }
   }
@@ -11247,7 +12164,7 @@ window.APP_BUILD = '1.21.0-00a596a6';
     return {
       key: 'monthly-' + last.key, type: 'monthly', cat: 'summary', severity: 'info', push: 'anomaly', data: { pk: last.key },
       title: `הסיכום של ${last.label} מוכן ✨`,
-      body: `${t.shifts === 1 ? 'משמרת אחת' : t.shifts + ' משמרות'} · ${U.num(t.hours, 1)} שעות · ${U.money(t.gross, 0)} ברוטו. לחצו לסיפור של החודש.`,
+      body: `${t.shifts === 1 ? 'משמרת אחת' : `${t.shifts} משמרות`} · ${U.num(t.hours, 1)} שעות · ${U.money(t.gross, 0)} ברוטו. לחצו לסיפור של החודש.`,
     };
   }
   const insightsNow = () => Insights.run(App.model, {
@@ -11464,6 +12381,8 @@ window.APP_BUILD = '1.21.0-00a596a6';
     }
     // nobody has signed in on this phone yet
     const starting = Cloud.start().catch((e) => { console.warn('sign-in not available yet', e); return null; });
+    // the very first open: which language (another one reopens the app in it)
+    if (root.Lang && !root.Lang.stored() && !S.settings.onboarded) await root.Lang.firstRun();
     if (!S.settings.onboarded) App.sheetsApi.onboarding({ preLogin: true });
     else App.showLogin();
     // back from a full-page Google sign-in, or a sign-in that was already in the browser: finish it
@@ -11477,6 +12396,7 @@ window.APP_BUILD = '1.21.0-00a596a6';
   /** Continue into the app once the user is signed in. */
   App.afterLogin = function () {
     if (App.ensureLegal && !App.legalAccepted()) { App.ensureLegal(App.afterLogin); return; }
+    if (root.Lang && S.settings.onboarded) root.Lang.adopt();
     if (root.Stats) { root.Stats.markActive().then(() => root.Stats.report()); }
     document.getElementById('nav').style.display = '';
     if (!S.settings.onboarded) { App.sheetsApi.onboarding(); return; }
@@ -11495,6 +12415,7 @@ window.APP_BUILD = '1.21.0-00a596a6';
     if (action === 'add') App.sheetsApi.shiftEditor();
     if (action === 'schedule' && App.importSchedule) App.importSchedule(); // the app icon's shortcut
     if (action === 'share-in' && App.receiveShare) App.receiveShare(); // shared to the app (sw.js)
+    if (action === 'support' && App.actions.support) setTimeout(() => App.actions.support(), 300); // Play testers' feedback link
     if (action === 'plus' && root.Plus) setTimeout(() => root.Plus.sheet(), 600); // back from the web checkout (?action=plus): straight to the code field
     setTimeout(() => { App.runInsights(); App.autoBackupCheck(); }, 1200);
     // is Shaati Plus for sale here, and owned? (Google Play, Android app only) The opening show waits for the
@@ -11700,7 +12621,7 @@ window.FIREBASE_CONFIG = {
   let loading = null;
   function load() {
     if (fb) return Promise.resolve(fb);
-    if (!root.FIREBASE_CONFIG) return Promise.reject(new Error('חסרות הגדרות Firebase'));
+    if (!root.FIREBASE_CONFIG) return Promise.reject(root.U.oops('חסרות הגדרות Firebase'));
     if (!loading) {
       loading = (async () => {
         const [a, au, fs] = await Promise.all([import(SDK + 'firebase-app.js'), import(SDK + 'firebase-auth.js'), import(SDK + 'firebase-firestore.js')]);
@@ -11712,7 +12633,7 @@ window.FIREBASE_CONFIG = {
           // stored in IndexedDB is moved over by Firebase, so nobody is signed out by this order.
           auth = au.initializeAuth(app, { persistence: [au.browserLocalPersistence, au.indexedDBLocalPersistence], popupRedirectResolver: au.browserPopupRedirectResolver });
         } catch (e) { auth = au.getAuth(app); }
-        auth.languageCode = 'he';
+        auth.languageCode = root.U.LANG; // Google's sign-in window and e-mails in the app's language
         let db;
         // Firestore keeps its own copy in IndexedDB; on a phone whose IndexedDB is broken it would fail every
         // write, so it then works from memory (the app's own store re-sends anything unconfirmed on the next start)
@@ -11804,7 +12725,7 @@ window.FIREBASE_CONFIG = {
     if (e && STORAGE_ERRORS.includes(e.name)) return 'הדפדפן לא הצליח לשמור את הנתונים. נסה שוב, ואם זה חוזר על עצמו רענן את הדף.';
     if (!navigator.onLine) return AUTH_ERRORS['auth/network-request-failed'];
     const msg = (e && e.message) || String(e || '');
-    if (/[\u0590-\u05FF]/.test(msg)) return msg; // already ours, in Hebrew
+    if ((e && e.ours) || /[\u0590-\u05FF]/.test(msg)) return msg; // already ours
     return 'משהו השתבש. נסה שוב בעוד רגע.' + (e && (e.code || e.name) ? ` (${e.code || e.name})` : '');
   };
 
@@ -11951,7 +12872,7 @@ window.FIREBASE_CONFIG = {
         try { await fb.au.signOut(fb.auth); } catch (e) { /* ignore */ }
         Cloud.user = null;
         setStatus('idle');
-        throw Object.assign(new Error(`החיבור בוטל. התחבר עם ${prev} כדי שהשינויים יעלו לחשבון שלו.`), { code: 'app/switch-cancelled' });
+        throw Object.assign(root.U.oops(`החיבור בוטל. התחבר עם ${prev} כדי שהשינויים יעלו לחשבון שלו.`), { code: 'app/switch-cancelled' });
       }
       await Store.wipe();
     }
@@ -12403,7 +13324,7 @@ window.PAY_CONFIG = {
   }
   function fmtPrice(p) {
     if (!p) return '';
-    try { return new Intl.NumberFormat('he-IL', { style: 'currency', currency: p.currency, maximumFractionDigits: 2 }).format(+p.value); } catch (e) { return `${p.value} ${p.currency}`; }
+    try { return new Intl.NumberFormat(root.U.LOCALE, { style: 'currency', currency: p.currency, maximumFractionDigits: 2 }).format(+p.value); } catch (e) { return `${p.value} ${p.currency}`; }
   }
   /** The price as it is said: "₪6.90 לחודש" for the subscription. */
   Plus.priceText = () => { const pr = Plus.price || cfg().price || ''; return pr ? pr + (Plus.monthly ? ' לחודש' : '') : ''; };
@@ -12776,13 +13697,13 @@ window.PAY_CONFIG = {
       return false;
     }
     Store.setMeta({ plusUse: Object.assign({}, S.meta.plusUse, { [id]: { k: periodKey(q.per), n: usedOf(id) + 1 } }) }).catch(() => {});
-    if (left === 2) UI.toast(`נשאר עוד ${q.one} אחד חינם ${q.per === 'day' ? 'להיום' : 'החודש'}`);
+    if (left === 2) UI.toast(`נשאר עוד ${q.one} אחד חינם ${q.per === 'day' ? 'להיום' : 'לחודש הזה'}`);
     return true;
   };
   /** "That was the free allowance": when it comes back, and the way to unlimited. */
   Plus.limitSheet = function (id) {
     const q = QUOTA[id];
-    const back = q.per === 'day' ? 'מחר' : `ב-1 ב${root.U.HEB_MONTHS[(+root.U.todayKey().slice(5, 7)) % 12]}`;
+    const back = q.per === 'day' ? 'מחר' : `ב-${root.U.fmtDate(root.U.addMonthKey(root.U.todayKey().slice(0, 7), 1) + '-01', 'dm')}`;
     const price = Plus.priceText();
     UI.openSheet({
       title: 'נגמרה המכסה החינמית',
@@ -13055,6 +13976,194 @@ window.PAY_CONFIG = {
   };
 })(typeof window !== 'undefined' ? window : globalThis);
 
+/* ---- app/docread.js ---- */
+/* ============================================================
+ * docread.js — reading a photo of a document (an hours report, a work schedule) on the phone.
+ *
+ * A photo is first made easy to read: turned the right way up, brought to a size the reader likes, its light
+ * evened out (a shadow or a dim corner becomes the same white paper as the rest) and a dark screenshot turned
+ * into dark-on-light. Then two readings of the same picture: the Hebrew model for the words (the column
+ * names, the days), and one that only knows digits and : / . - for the numbers, which it reads much better
+ * (the Hebrew model turned "08:00" next to Hebrew into letters). Both keep where each word is on the page,
+ * so the report is read as a table (core/timesheet.js parseWords), not as a stream of text.
+ * ============================================================ */
+(function (root) {
+  'use strict';
+  const TESSERACT = 'https://cdn.jsdelivr.net/npm/tesseract.js@5.1.1/dist/tesseract.min.js';
+  const DocRead = {};
+
+  /* ---------------- the picture ---------------- */
+  /** An image file → a canvas of grey, evened-out light, dark text on light paper. */
+  DocRead.prep = async function (blob, opts) {
+    opts = opts || {};
+    const bmp = await createImageBitmap(blob, { imageOrientation: 'from-image' });
+    const long = Math.max(bmp.width, bmp.height);
+    // the reader does best with letters ~25-40px tall: big phone photos come down, small screenshots go up
+    const s = long > 2600 ? 2600 / long : long < 1500 ? 1500 / long : 1;
+    const W = Math.round(bmp.width * s), H = Math.round(bmp.height * s);
+    const c = document.createElement('canvas');
+    c.width = W; c.height = H;
+    const g = c.getContext('2d', { willReadFrequently: true });
+    g.imageSmoothingQuality = 'high';
+    g.drawImage(bmp, 0, 0, W, H);
+    if (bmp.close) bmp.close();
+    const img = g.getImageData(0, 0, W, H), px = img.data, n = W * H;
+    const gray = new Uint8ClampedArray(n);
+    let sum = 0;
+    for (let i = 0, j = 0; i < n; i++, j += 4) { const v = (px[j] * 77 + px[j + 1] * 150 + px[j + 2] * 29) >> 8; gray[i] = v; sum += v; }
+    // a dark screen (light letters): the other way round
+    if (sum / n < 110) for (let i = 0; i < n; i++) gray[i] = 255 - gray[i];
+    // the paper's own brightness, block by block (the brightest of each block), smoothed over the page:
+    // every pixel divided by it, so shadow and glare go and the paper is white everywhere
+    const B = Math.max(24, Math.round(Math.max(W, H) / 48));
+    const bw = Math.ceil(W / B), bh = Math.ceil(H / B);
+    const bg = new Float32Array(bw * bh);
+    for (let by = 0; by < bh; by++) for (let bx = 0; bx < bw; bx++) {
+      // the 95th brightest, not the brightest (a speck of noise or glare is not the paper)
+      const hist = new Uint32Array(256); let cnt = 0;
+      for (let y = by * B; y < Math.min(H, by * B + B); y += 2) for (let x = bx * B; x < Math.min(W, bx * B + B); x += 2) { hist[gray[y * W + x]]++; cnt++; }
+      let k = 255, acc = 0; const want = cnt * 0.05;
+      while (k > 0 && acc + hist[k] < want) { acc += hist[k]; k--; }
+      bg[by * bw + bx] = Math.max(k, 40);
+    }
+    // a block that is all ink (inside a dark header cell) takes its neighbours' paper
+    const bg2 = bg.slice();
+    for (let by = 0; by < bh; by++) for (let bx = 0; bx < bw; bx++) {
+      let m = bg[by * bw + bx];
+      for (let dy = -1; dy <= 1; dy++) for (let dx = -1; dx <= 1; dx++) { const yy = by + dy, xx = bx + dx; if (yy >= 0 && yy < bh && xx >= 0 && xx < bw) m = Math.max(m, bg[yy * bw + xx] * 0.92); }
+      bg2[by * bw + bx] = m;
+    }
+    const norm = new Uint8ClampedArray(n);
+    for (let y = 0; y < H; y++) {
+      const fy = Math.min(bh - 1.001, Math.max(0, y / B - 0.5)), y0 = Math.floor(fy), ty = fy - y0;
+      for (let x = 0; x < W; x++) {
+        const fx = Math.min(bw - 1.001, Math.max(0, x / B - 0.5)), x0 = Math.floor(fx), tx = fx - x0;
+        const a = bg2[y0 * bw + x0], b = bg2[y0 * bw + Math.min(bw - 1, x0 + 1)], c2 = bg2[Math.min(bh - 1, y0 + 1) * bw + x0], d = bg2[Math.min(bh - 1, y0 + 1) * bw + Math.min(bw - 1, x0 + 1)];
+        const paper = (a * (1 - tx) + b * tx) * (1 - ty) + (c2 * (1 - tx) + d * tx) * ty;
+        // (no cut-off to white: the dots of a ":" and a thin "/" are faint after a blurry photo, and the
+        // reader needs them)
+        norm[y * W + x] = gray[y * W + x] * 255 / paper;
+      }
+    }
+    if (opts.bin) for (let i = 0; i < n; i++) norm[i] = norm[i] < opts.bin ? 0 : 255;
+    if (opts.lines) unline(norm, W, H);
+    const out = g.createImageData(W, H), o = out.data;
+    for (let i = 0, j = 0; i < n; i++, j += 4) { o[j] = o[j + 1] = o[j + 2] = norm[i]; o[j + 3] = 255; }
+    g.putImageData(out, 0, 0);
+    return c;
+  };
+  /**
+   * A table's lines out (to white): the reader skips numbers that touch a cell's border. A line is a run of
+   * ink much longer than any letter's stroke; a line in a tilted photo climbs, so a run may step one pixel up
+   * or down. Done in both directions.
+   */
+  function unline(px, W, H) {
+    const INK = 165;
+    const ink = new Uint8Array(W * H);
+    for (let i = 0; i < W * H; i++) ink[i] = px[i] < INK ? 1 : 0;
+    const kill = new Uint8Array(W * H);
+    const LH = Math.max(70, Math.round(W / 22)), LV = Math.max(60, Math.round(H / 30));
+    // across: a pixel is on the run when it or the one above/below is ink
+    for (let y = 1; y < H - 1; y++) {
+      let x = 0;
+      while (x < W) {
+        const on = (xx) => ink[y * W + xx] || ink[(y - 1) * W + xx] || ink[(y + 1) * W + xx];
+        if (!on(x)) { x++; continue; }
+        let e = x; while (e < W && on(e)) e++;
+        if (e - x >= LH) for (let k = x; k < e; k++) if (ink[y * W + k]) kill[y * W + k] = 1;
+        x = e;
+      }
+    }
+    for (let x = 1; x < W - 1; x++) {
+      let y = 0;
+      while (y < H) {
+        const on = (yy) => ink[yy * W + x] || ink[yy * W + x - 1] || ink[yy * W + x + 1];
+        if (!on(y)) { y++; continue; }
+        let e = y; while (e < H && on(e)) e++;
+        if (e - y >= LV) for (let k = y; k < e; k++) if (ink[k * W + x]) kill[k * W + x] = 1;
+        y = e;
+      }
+    }
+    // the line's soft grey edge goes with it
+    for (let y = 1; y < H - 1; y++) for (let x = 1; x < W - 1; x++) {
+      const i = y * W + x;
+      if (kill[i]) { px[i] = 255; continue; }
+      if (px[i] < 235 && (kill[i - 1] || kill[i + 1] || kill[i - W] || kill[i + W]) && !ink[i]) px[i] = 255;
+    }
+  }
+
+  /* ---------------- reading ---------------- */
+  function load() {
+    if (root.Tesseract) return Promise.resolve();
+    if (root.App && root.App.loadLib) return root.App.loadLib(TESSERACT);
+    return Promise.reject(root.U && root.U.oops ? root.U.oops('לא ניתן לטעון רכיב') : new Error('no reader'));
+  }
+  async function pass(image, lang, params, progress, label) {
+    const worker = await root.Tesseract.createWorker(lang, 1, {
+      logger: (m) => { if (m.status === 'recognizing text' && progress) progress(`${label}… ${Math.round(m.progress * 100)}%`); },
+    });
+    try {
+      if (params) await worker.setParameters(params);
+      const { data } = await worker.recognize(image);
+      let ws = data.words;
+      if (!ws && data.blocks) ws = data.blocks.flatMap((b) => (b.paragraphs || []).flatMap((p) => (p.lines || []).flatMap((l) => l.words || [])));
+      return (ws || []).filter((w) => w && w.text && w.text.trim())
+        .map((w) => ({ text: w.text.trim(), x0: w.bbox.x0, y0: w.bbox.y0, x1: w.bbox.x1, y1: w.bbox.y1, conf: w.confidence }));
+    } finally { await worker.terminate(); }
+  }
+  const NUMERIC = /^[\d:./\-–]+$/;
+  const overlap = (a, b) => {
+    const ix = Math.max(0, Math.min(a.x1, b.x1) - Math.max(a.x0, b.x0)), iy = Math.max(0, Math.min(a.y1, b.y1) - Math.max(a.y0, b.y0));
+    return ix * iy / Math.max(1, Math.min((a.x1 - a.x0) * (a.y1 - a.y0), (b.x1 - b.x0) * (b.y1 - b.y0)));
+  };
+  /**
+   * The words of a picture with their boxes: the Hebrew reading for words, the digits reading for numbers.
+   * opts.prep = false reads the picture as it is.
+   */
+  DocRead.words = async function (blob, progress, opts) {
+    opts = opts || {};
+    progress = progress || (() => {});
+    await load();
+    progress('מכין את התמונה…');
+    const image = opts.prep === false ? blob : await DocRead.prep(blob, opts);
+    // the second reading sees the picture in pure black and white: what one reading misses (a faint date,
+    // a time by a cell's border) the other often gets
+    const image2 = opts.prep === false || opts.bin2 === 0 ? image : await DocRead.prep(blob, Object.assign({}, opts, { bin: opts.bin2 || 170 }));
+    progress('טוען מנוע זיהוי עברית (פעם ראשונה ~10MB)…');
+    const he = await pass(image, 'heb+eng', { tessedit_pageseg_mode: opts.psm || '11', preserve_interword_spaces: '1' }, progress, 'קורא את המילים');
+    let dg = [];
+    try { dg = await pass(image2, opts.digitsLang || 'eng', Object.assign({ tessedit_pageseg_mode: opts.psmDigits || '11' }, opts.whitelist ? { tessedit_char_whitelist: '0123456789:./-' } : {}), progress, 'קורא את המספרים'); } catch (e) { /* the words alone */ }
+    // the words: Hebrew/English words from the first reading; numbers from whichever reading read them
+    // better (a whole time or date over a broken one, then the surer one)
+    const isWord = (w) => /[A-Za-zא-ת]/.test(w.text) && !/^[\dOolISB:./-]+$/.test(w.text);
+    const words = he.filter(isWord);
+    const shape = (t) => (/^\d{1,2}:\d{2}$|^\d{1,2}[./-]\d{1,2}[./-]\d{2,4}$|^\d{1,2}\/\d{1,2}$|^\d{1,2}:\d{2}-\d{1,2}:\d{2}$/.test(t) ? 3 : /^\d+\.\d+$/.test(t) ? 2 : 1);
+    const sh = (w) => shape(w.text.replace(/^[-.:]+|[-.:]+$/g, ''));
+    const better = (a, b) => sh(a) - sh(b) || a.conf - b.conf;
+    const nums = [];
+    for (const w of dg.concat(he)) {
+      if (isWord(w) || !/\d/.test(w.text) || !NUMERIC.test(w.text.replace(/[|[\]()'"`,;]/g, '')) || !(w.conf > 15 || sh(w) >= 2)) continue; // a whole time read unsurely is still a time
+      const k = nums.findIndex((d) => overlap(d, w) > 0.3);
+      if (k < 0) nums.push(w);
+      else if (better(w, nums[k]) > 0) nums[k] = w;
+    }
+    // a digits-reading "number" on top of a Hebrew word is the Hebrew word misread: not a number
+    const out = words.concat(nums.filter((d) => !words.some((w) => overlap(w, d) > 0.5 && w.conf > 60)));
+    return { words: out, he, dg, canvas: image };
+  };
+
+  /** A photo of an hours report → shifts (core/timesheet.js parseWords). */
+  DocRead.readTimesheet = async function (blob, progress, opts) {
+    opts = opts || {};
+    const got = await DocRead.words(blob, progress, opts);
+    progress && progress('מסדר את הטבלה…');
+    const res = root.Timesheet.parseWords(got.words, { today: opts.today, debug: opts.debug });
+    return Object.assign(res, { words: got.words }, opts.debug ? { he: got.he, dg: got.dg } : {});
+  };
+
+  root.DocRead = DocRead;
+})(typeof window !== 'undefined' ? window : globalThis);
+
 /* ---- app/import.js ---- */
 /* ============================================================
  * import.js — "I already have an hours report": a file in any usual shape (Excel, CSV, PDF, a photo or a
@@ -13121,11 +14230,24 @@ window.PAY_CONFIG = {
     if (/\.(csv|tsv|txt)$/i.test(name) || /^text\//.test(file.type)) {
       return decode(await file.arrayBuffer()).replace(/[;,\t]/g, ' | ');
     }
-    if (/\.pdf$/i.test(name) || file.type === 'application/pdf' || /^image\//.test(file.type)) {
-      if (!App.readDocText) throw new Error('הקריאה לא זמינה כרגע');
-      return (await App.readDocText(file, progress)).text;
+    const isPdf = /\.pdf$/i.test(name) || file.type === 'application/pdf';
+    if (isPdf || /^image\//.test(file.type)) {
+      if (!App.readDocText || !App.readDocWords) throw root.U.oops('הקריאה לא זמינה כרגע');
+      // a PDF with text: its lines (all its pages); when they hold no shifts, or it is a picture, it is read as a
+      // table: each word where it stands on the page (core/timesheet.js parseWords)
+      if (isPdf) {
+        const doc = await App.readDocText(file, progress, { noOcr: true });
+        if (doc.source === 'pdf' && root.Timesheet.parse(doc.text, { today: U.todayKey() }).rows.length >= 2) return doc.text;
+      }
+      const got = await App.readDocWords(file, progress);
+      progress('מסדר את הטבלה…');
+      const res = root.Timesheet.parseWords(got.words, { today: U.todayKey() });
+      // the words read in reading order, for the "what was read" box and as a last try as plain text
+      const text = res.text || '';
+      if (!res.rows.length) return text;
+      return { result: res, text };
     }
-    throw new Error('סוג קובץ שלא מכירים. אפשר Excel, ‏CSV, ‏PDF, תמונה או טקסט');
+    throw root.U.oops('סוג קובץ שלא מכירים. אפשר Excel, ‏CSV, ‏PDF, תמונה או טקסט');
   }
 
   /* ---------------- the screen ---------------- */
@@ -13133,7 +14255,7 @@ window.PAY_CONFIG = {
   App.actions['import-hours'] = () => App.importHours();
   App.importHours = function (opts) {
     if (UI.sheets.length && !(opts && opts.over)) UI.closeAll();
-    let rows = [], noStart = 0, guessedYear = false;
+    let rows = [], noStart = 0, guessedYear = false, noExit = 0;
     let roleId = S.meta.lastRole && App.roles().some((r) => r.id === S.meta.lastRole) ? S.meta.lastRole : (App.roles()[0] || {}).id;
     let startFor = '09:00';
     const entry = UI.openSheet({
@@ -13164,7 +14286,7 @@ window.PAY_CONFIG = {
         <details class="imp-paste"><summary>${icon('edit', 's')} או להדביק טקסט</summary>
           <textarea class="input" id="imp-text" rows="6" placeholder="למשל:&#10;14/10/2026 08:00 16:30&#10;15/10/2026 16:00 23:00"></textarea>
           <button class="btn tonal block" data-imp-read>${icon('check', 's')} קריאה</button></details>
-        <div class="tiny muted imp-privacy">${icon('shield', 's')} הקובץ נקרא בטלפון בלבד, ולא נשלח לשום מקום.</div>`;
+        <div class="tiny muted imp-privacy">${icon('shield', 's')} הקובץ נקרא בטלפון בלבד, ולא נשלח לשום מקום. צילום נקרא כטבלה: כל דוח, בכל סידור עמודות.</div>`;
     }
     function busy(text) { box.innerHTML = `<div class="imp-busy">${App.mascot ? App.mascot('think', { size: 84 }) : ''}<div class="imp-bar" aria-hidden="true"><i></i></div><div class="small" id="imp-progress" role="status">${esc(text)}</div></div>`; }
     function progress(text) { const p = box.querySelector('#imp-progress'); if (p) p.textContent = text; }
@@ -13181,16 +14303,17 @@ window.PAY_CONFIG = {
       const list = rows.map((r, i) => {
         const t = place(r);
         if (r.on == null) r.on = !(t && t.taken);
-        const day = U.HEB_DAYS ? U.HEB_DAYS[U.dow(r.date)] : '';
+        const day = U.DAYS ? U.DAYS[U.dow(r.date)] : '';
         const when = r.start ? `⁦${r.start}⁠–⁠${r.end}⁩` : `${U.num(r.hours, 2)} שעות · ${startFor ? 'מ-' + startFor : 'שעה לא ידועה'}`;
         return `<button class="imp-row ${r.on ? 'on' : ''}" data-i="${i}" aria-pressed="${r.on}"><span class="imp-check" aria-hidden="true">${icon('check', 's')}</span>
           <span class="imp-d"><b>${esc(day)} ${U.fmtDate(r.date, 'short')}</b><small>${when}${r.overnight ? ' · לילה' : ''}</small></span>
           <span class="imp-h">${U.num(r.hours, 2)} ש׳${t && t.taken ? '<i class="tag">כבר קיימת</i>' : ''}${t && t.end > Date.now() ? '<i class="tag planned">עתידית</i>' : ''}</span></button>`;
       }).join('');
       const first = rows[0].date, last = rows[rows.length - 1].date;
-      box.innerHTML = `${App.mascotSays ? App.mascotSays('love', `מצאתי ${rows.length === 1 ? 'משמרת אחת' : rows.length + ' משמרות'}! 🎉 בודקים רגע ומוסיפים`, { size: 64 }) : ''}
+      box.innerHTML = `${App.mascotSays ? App.mascotSays('love', `מצאתי ${rows.length === 1 ? 'משמרת אחת' : `${rows.length} משמרות`}! 🎉 בודקים רגע ומוסיפים`, { size: 64 }) : ''}
         ${roles.length > 1 ? `<div class="field"><span class="lbl">לאיזה תפקיד לשייך?</span><div class="chips imp-roles">${roles.map((r) => `<button class="chip ${r.id === roleId ? 'on' : ''}" data-imp-role="${r.id}"><span class="sw" style="background:${r.color}"></span>${esc(r.name)}${App.multiEmp() ? ' · ' + esc((App.employer(r.employerId) || {}).name || '') : ''}</button>`).join('')}</div></div>` : ''}
         ${noStart ? `<label class="field"><span class="lbl">${noStart === 1 ? 'במשמרת אחת' : `ב-${noStart} משמרות`} כתוב רק כמה שעות. באיזו שעה הן מתחילות?</span><input class="input" type="time" id="imp-start" value="${startFor}"></label>` : ''}
+        ${noExit ? `<div class="tiny muted imp-note">${icon('info', 's')} ${noExit === 1 ? 'בשורה אחת' : `ב-${noExit} שורות`} יש כניסה בלי יציאה, ולכן ${noExit === 1 ? 'היא לא נכנסה' : 'הן לא נכנסו'}. אפשר להוסיף ${noExit === 1 ? 'אותה' : 'אותן'} ידנית.</div>` : ''}
         ${guessedYear ? `<div class="tiny muted imp-note">${icon('info', 's')} בשורות בלי שנה לקחנו את התאריך האחרון שכבר עבר.</div>` : ''}
         <div class="imp-head"><b>${first === last ? U.fmtDate(first, 'short') : `⁦${U.fmtDate(first, 'short')}⁠–⁠${U.fmtDate(last, 'short')}⁩`}</b><button class="btn text sm" data-imp-all>${rows.every((r) => r.on) ? 'לבטל הכול' : 'לסמן הכול'}</button></div>
         <div class="imp-list">${list}</div>`;
@@ -13205,14 +14328,17 @@ window.PAY_CONFIG = {
       const all = box.querySelector('[data-imp-all]');
       if (all) all.textContent = rows.every((r) => r.on) ? 'לבטל הכול' : 'לסמן הכול';
     }
-    async function parse(text) {
-      const p = root.Timesheet.parse(text, { today: U.todayKey() });
+    async function parse(got) {
+      // read as a table (a picture) or as lines of text
+      const text = typeof got === 'string' ? got : got.text;
+      const p = typeof got === 'string' ? root.Timesheet.parse(text, { today: U.todayKey() }) : got.result;
       // the same shift twice in one report (two sheets, a repeated line): once
       const seen = new Set();
       rows = p.rows.filter((r) => { const k = r.date + r.start + r.end + r.hours; if (seen.has(k)) return false; seen.add(k); return true; })
         .sort((a, b) => (a.date + (a.start || '')).localeCompare(b.date + (b.start || '')));
       noStart = rows.filter((r) => !r.start).length;
       guessedYear = p.guessedYear;
+      noExit = p.skipped || 0; // an entry without an exit (a missed clock-out)
       if (!rows.length) { none(text); return; }
       if (root.Fx) root.Fx.play('pick');
       review();
@@ -13224,7 +14350,7 @@ window.PAY_CONFIG = {
       try { await parse(await readFile(file, progress)); } catch (e) {
         console.warn('import', e);
         start();
-        UI.invalid(e && e.message && /[א-ת]/.test(e.message) ? e.message : 'לא הצלחנו לקרוא את הקובץ. אפשר לנסות קובץ אחר או להדביק טקסט');
+        UI.invalid(root.U.ours(e) ? e.message : 'לא הצלחנו לקרוא את הקובץ. אפשר לנסות קובץ אחר או להדביק טקסט');
       }
     }
     async function add() {
@@ -13386,10 +14512,10 @@ window.PAY_CONFIG = {
       const names = res.personal ? [] : res.names;
       const head = names.length && !who.length
         ? `${App.mascotSays ? App.mascotSays('think', `מצאתי בסידור ${names.length} שמות. מי את/ה?`, { size: 64 }) : ''}`
-        : `${App.mascotSays ? App.mascotSays('love', rows.length ? `מצאתי ${rows.length === 1 ? 'משמרת אחת' : rows.length + ' משמרות'} שלך! 🎉 בודקים רגע ומוסיפים` : 'לא מצאתי משמרות בשם הזה', { size: 64 }) : ''}`;
+        : `${App.mascotSays ? App.mascotSays('love', rows.length ? `מצאתי ${rows.length === 1 ? 'משמרת אחת' : `${rows.length} משמרות`} שלך! 🎉 בודקים רגע ומוסיפים` : 'לא מצאתי משמרות בשם הזה', { size: 64 }) : ''}`;
       const thisWeek = U.addDays(U.todayKey(), -U.dow(U.todayKey())), nextWeek = U.addDays(thisWeek, 7);
       const list = rows.map((r, i) => {
-        const day = U.HEB_DAYS ? U.HEB_DAYS[U.dow(r.date)] : '';
+        const day = U.DAYS ? U.DAYS[U.dow(r.date)] : '';
         return `<div class="imp-row sc-row ${r.on ? 'on' : ''}" data-i="${i}">
           <button class="sc-tog" data-sc-tog="${i}" aria-pressed="${r.on}" aria-label="${esc(day + ' ' + U.fmtDate(r.date, 'short'))}"><span class="imp-check" aria-hidden="true">${icon('check', 's')}</span>
             <span class="imp-d"><b>${esc(day)} ${U.fmtDate(r.date, 'short')}</b><small>${r.taken ? '<i class="tag">כבר קיימת</i>' : ''}${r.guess ? '<i class="tag warn">שעה משוערת</i>' : ''}${r.e < Date.now() ? '<i class="tag">עברה</i>' : ''}</small></span></button>
@@ -13428,7 +14554,7 @@ window.PAY_CONFIG = {
       } catch (e) {
         console.warn('schedule', e);
         start();
-        UI.invalid(e && e.message && /[א-ת]/.test(e.message) ? e.message : 'לא הצלחנו לקרוא את הסידור. אפשר לנסות שוב או להדביק את ההודעה');
+        UI.invalid(root.U.ours(e) ? e.message : 'לא הצלחנו לקרוא את הסידור. אפשר לנסות שוב או להדביק את ההודעה');
       }
     }
     // the picture, read by Claude (the person's own key; asked first, since it goes to Anthropic)
@@ -13522,6 +14648,7 @@ window.PAY_CONFIG = {
   };
   function aiPrompt() {
     const t = U.todayKey();
+    // i18n-keep the model's instructions (English, with the Hebrew of the schedules it reads)
     return `You read a work schedule (usually Hebrew, sometimes English) from a picture and list every shift of every person in it.
 Today is ${t} (${['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'][U.dow(t)]}). Weeks start on Sunday.
 For each shift give: who (the person's name exactly as written; "" if the schedule has no names), date (YYYY-MM-DD when the schedule shows dates, else ""), day (0=Sunday … 6=Saturday, the day of the week; -1 if unknown), start and end ("HH:MM", 24-hour; an end on the next morning is just its time).
@@ -13675,7 +14802,7 @@ A cell with only a shift name and no hours: use בוקר 07:00-15:00, צהריי
       ${d.slips.length ? `<div style="font-size:9pt">תלושים שנבדקו: ${d.slips.map((p) => U.fmtMonth(p.period)).join(', ')}.</div>` : '<div style="font-size:9pt">לא הוזנו תלושים לתקופה הזאת. בדיקת תלוש (בהוספה +) משווה כל תלוש לרישום המשמרות.</div>'}
       <h3>לפי סוג שעה</h3><table><tr><th>רגילות</th><th>125%</th><th>150%</th><th>שבת/חג</th><th>שבת/חג + נוספות</th><th>לילה</th></tr>${row([U.hours(sum.hoursBy.regular), U.hours(sum.hoursBy.ot1), U.hours(sum.hoursBy.ot2), U.hours(sum.hoursBy.rest), U.hours(sum.hoursBy.restOt1 + sum.hoursBy.restOt2), U.hours(sum.hoursBy.night)])}</table>
       <h3>המשמרות</h3><table><tr><th>תאריך</th><th>תפקיד</th><th>שעות</th><th>זמן</th><th>נוספות</th><th>שבת/חג</th><th>שכר לפי החוק</th></tr>
-        ${d.shifts.map((r) => row([`${U.fmtDate(r.dateKey, 'short')} ${U.HEB_DAYS_SHORT[U.dow(r.dateKey)]}`, esc([...new Set(r.segments.map((s) => App.roleName(s.roleId)))].join(' → ')), `⁦${U.epochHM(r.start)}–${U.epochHM(r.end)}⁩`, U.hours(r.paidHours), r.otHours ? U.hours(r.otHours) : '', r.restHours ? U.hours(r.restHours) : '', U.money(r.wage)])).join('')}</table>
+        ${d.shifts.map((r) => row([`${U.fmtDate(r.dateKey, 'short')} ${U.DAYS_SHORT[U.dow(r.dateKey)]}`, esc([...new Set(r.segments.map((s) => App.roleName(s.roleId)))].join(' → ')), `⁦${U.epochHM(r.start)}–${U.epochHM(r.end)}⁩`, U.hours(r.paidHours), r.otHours ? U.hours(r.otHours) : '', r.restHours ? U.hours(r.restHours) : '', U.money(r.wage)])).join('')}</table>
       <h3>על מה זה נשען</h3><table>${LAWS.map(([a, b]) => row([`<b>${a}</b>`, b])).join('')}</table>
       <div style="font-size:8pt;color:#555;margin-top:10pt">חושב באפליקציית Shaati לפי המשמרות והתלושים שהוזנו בה, וההגדרות (תעריף, שעות נוספות, שבת וחגים לפי ${esc((S.settings.rest && S.settings.rest.city) || 'העיר שנבחרה')}). זה כלי עזר ואינו ייעוץ משפטי: הסכם קיבוצי, צו הרחבה ענפי או החוזה שלך יכולים לקבוע אחרת. מומלץ לצרף את התלושים ודוחות הנוכחות. מידע נוסף: kolzchut.org.il</div>
     </div>`;
@@ -13708,11 +14835,11 @@ A cell with only a shift name and no hours: use בוקר 07:00-15:00, צהריי
       d = gather(r[2], r[3]);
       const t = total(d);
       const n = d.findings.filter((f) => f.status === 'bad').length + d.holidays.length + d.lowRoles.length;
-      box.innerHTML = `${App.mascotSays ? App.mascotSays(n ? 'think' : 'happy', n ? `מצאתי ${n === 1 ? 'דבר אחד' : n + ' דברים'} שכדאי לבדוק עם המעסיק${t > 0 ? `, בסך כ-${U.money(t, 0)}` : ''}.` : 'לא מצאתי פערים לתקופה הזאת. אפשר עדיין להפיק דוח מסודר של המשמרות והשכר.', { size: 64 }) : ''}
+      box.innerHTML = `${App.mascotSays ? App.mascotSays(n ? 'think' : 'happy', n ? `מצאתי ${n === 1 ? 'דבר אחד' : `${n} דברים`} שכדאי לבדוק עם המעסיק${t > 0 ? `, בסך כ-${U.money(t, 0)}` : ''}.` : 'לא מצאתי פערים לתקופה הזאת. אפשר עדיין להפיק דוח מסודר של המשמרות והשכר.', { size: 64 }) : ''}
         <div class="field"><span class="lbl">לאיזו תקופה?</span><div class="chips">${RANGES.map(([k, l, a, b]) => `<button class="chip ${pick === k ? 'on' : ''}" data-cl-range="${k}" aria-pressed="${pick === k}">${l}</button>`).join('')}</div></div>
         <div class="card cl-what">
-          <div class="rt-row"><span class="rt-mark">${icon('receipt', 's')}</span><div><div class="t">${d.slips.length ? `${d.slips.length === 1 ? 'תלוש אחד נבדק' : d.slips.length + ' תלושים נבדקו'}` : 'לא הוזנו תלושים לתקופה'}</div><div class="d">${d.findings.length ? `${d.findings.length === 1 ? 'ממצא אחד' : d.findings.length + ' ממצאים'} מהבדיקה` : d.slips.length ? 'לא נמצאו פערים בתלושים' : 'בדיקת תלוש (בהוספה +) מוסיפה את ההשוואה לדוח'}</div></div></div>
-          <div class="rt-row"><span class="rt-mark">${icon('calendar', 's')}</span><div><div class="t">דמי חגים</div><div class="d">${d.holidays.length ? `כ-${U.money(d.holidays.reduce((a, h) => a + h.amount, 0), 0)} על ${d.holidays.length === 1 ? 'יום חג אחד' : d.holidays.length + ' ימי חג'}` : 'לא נראה שחסר'}</div></div></div>
+          <div class="rt-row"><span class="rt-mark">${icon('receipt', 's')}</span><div><div class="t">${d.slips.length ? `${d.slips.length === 1 ? 'תלוש אחד נבדק' : `${d.slips.length} תלושים נבדקו`}` : 'לא הוזנו תלושים לתקופה'}</div><div class="d">${d.findings.length ? `${d.findings.length === 1 ? 'ממצא אחד' : `${d.findings.length} ממצאים`} מהבדיקה` : d.slips.length ? 'לא נמצאו פערים בתלושים' : 'בדיקת תלוש (בהוספה +) מוסיפה את ההשוואה לדוח'}</div></div></div>
+          <div class="rt-row"><span class="rt-mark">${icon('calendar', 's')}</span><div><div class="t">דמי חגים</div><div class="d">${d.holidays.length ? `כ-${U.money(d.holidays.reduce((a, h) => a + h.amount, 0), 0)} על ${d.holidays.length === 1 ? 'יום חג אחד' : `${d.holidays.length} ימי חג`}` : 'לא נראה שחסר'}</div></div></div>
           <div class="rt-row"><span class="rt-mark">${icon('wallet', 's')}</span><div><div class="t">שכר מינימום</div><div class="d">${d.lowRoles.length ? d.lowRoles.map((r) => esc(r.name)).join(', ') + ': נמוך מהמינימום' : 'התעריפים מעל המינימום'}</div></div></div>
           <div class="rt-row"><span class="rt-mark">${icon('clock', 's')}</span><div><div class="t">${d.sum.shifts} משמרות · ${U.hours(d.sum.hours)} שעות</div><div class="d">כל משמרת עם השעות והשכר לפי החוק</div></div></div>
         </div>
@@ -13951,7 +15078,7 @@ A cell with only a shift name and no hours: use בוקר 07:00-15:00, צהריי
     if (q('[data-delete-cloud]')) q('[data-delete-cloud]').onclick = async () => {
       if (!(await UI.confirm('למחוק את החשבון ואת כל הנתונים?', 'כל המשמרות, התלושים וההגדרות יימחקו לצמיתות מהענן ומהטלפון, והחשבון באפליקציה יימחק. ייתכן ש-\u2060Google תבקש לאשר את החשבון שוב. מומלץ לגבות קודם.', 'מחק הכול', true))) return;
       const really = await UI.promptText('אישור סופי', 'הקלד "מחק" כדי לאשר', '');
-      if (really !== 'מחק') { UI.toast('בוטל'); return; }
+      if (String(really || '').trim().toLowerCase() !== 'מחק'.toLowerCase()) { UI.toast('בוטל'); return; }
       try { await Cloud.deleteAccountData(); location.reload(); } catch (e) { UI.dialog({ title: 'המחיקה נכשלה', text: Cloud.errorText(e), buttons: [{ label: 'סגור', value: true }] }); }
     };
   };
@@ -14016,7 +15143,7 @@ A cell with only a shift name and no hours: use בוקר 07:00-15:00, צהריי
     const roles = [...new Set(r.segments.map((s) => s.roleId))];
     const role = App.role(roles[0]);
     const title = roles.map(App.roleName).join(' → ');
-    const date = opts.noDate ? '' : U.fmtDate(r.dateKey, 'short') + ' · ' + U.HEB_DAYS[U.dow(r.dateKey)] + ' · ';
+    const date = opts.noDate ? '' : U.fmtDate(r.dateKey, 'short') + ' · ' + U.DAYS[U.dow(r.dateKey)] + ' · ';
     const planned = r.status === 'planned' ? '<span class="tag planned">מתוכננת</span>' : '';
     const emp = App.multiEmp() ? ' · ' + esc(App.employer(r.employerId).name) : '';
     return `<button class="item" data-act="shift-open" data-id="${r.id}">
@@ -14280,7 +15407,7 @@ A cell with only a shift name and no hours: use בוקר 07:00-15:00, צהריי
     const date = U.fmtDate(today, 'long').replace(/\s\d{4}$/, '');
     return `
       <div class="home-top"><div class="titles"><h1>${greeting()}${name} <span class="wave">👋</span></h1>
-        <div class="sub">${root.Plus && root.Plus.owned() ? '<span class="plus-badge">Plus ✨</span>' : ''}${date} · ${esc(hd.toString().replace(/\s\S+$/, ''))}${hol ? ' · ' + esc(hol) : ''}</div></div>
+        <div class="sub">${root.Plus && root.Plus.owned() ? '<span class="plus-badge">Plus ✨</span>' : ''}${date}${hd.dayStr ? ' · ' + esc(hd.toString().replace(/\s\S+$/, '')) : ''}${hol ? ' · ' + esc(hol) : ''}</div></div>
         <span id="sync-dot">${App.syncDot ? App.syncDot() : ''}</span>
         <button class="icon-btn" data-act="support" aria-label="עזרה ותמיכה">${icon('help')}</button>
         <button class="icon-btn" data-act="insights" aria-label="התראות ותובנות">${icon('bell')}${unread ? `<span class="dot-badge">${unread > 9 ? '9+' : unread}</span>` : ''}</button></div>
@@ -15046,10 +16173,10 @@ A cell with only a shift name and no hours: use בוקר 07:00-15:00, צהריי
         ${d && d.ov ? '<span class="ovr" title="עקיפה ידנית"></span>' : ''}${hol.some((h) => h.rest) ? '<span class="hol">🕯</span>' : hol.length ? '<span class="hol">•</span>' : ''}
         <span class="dn">${+k.slice(8)}</span><span class="hd">${hd.dayStr}</span><span class="dots">${dots}</span>${d && d.total ? `<span class="amt">${shortMoney(d.total)}</span>` : ''}</button>`;
     }
-    const dows = [...Array(7)].map((_, i) => U.HEB_DAYS_SHORT[(i + (S.settings.weekStart || 0)) % 7]);
+    const dows = [...Array(7)].map((_, i) => U.DAYS_SHORT[(i + (S.settings.weekStart || 0)) % 7]);
     const hm = HebCal.hebrewDate(first), hm2 = HebCal.hebrewDate(U.monthEnd(mk));
     const hebLabel = hm.monthStr === hm2.monthStr ? hm.monthStr + ' ' + hm.yearStr : hm.monthStr + '\u2060–\u2060' + hm2.monthStr + ' ' + hm2.yearStr;
-    return `<div class="cal-nav"><button class="icon-btn" data-act="cal-nav" data-dir="-1" aria-label="הקודם">${icon('right')}</button><h2>${U.fmtMonth(mk)}<div class="tiny muted" style="font-weight:400">${esc(hebLabel)}</div></h2><button class="icon-btn" data-act="cal-nav" data-dir="1" aria-label="הבא">${icon('left')}</button></div>
+    return `<div class="cal-nav"><button class="icon-btn" data-act="cal-nav" data-dir="-1" aria-label="הקודם">${icon('right')}</button><h2>${U.fmtMonth(mk)}${hm.monthStr ? `<div class="tiny muted" style="font-weight:400">${esc(hebLabel)}</div>` : ''}</h2><button class="icon-btn" data-act="cal-nav" data-dir="1" aria-label="הבא">${icon('left')}</button></div>
       <div class="cal-dow">${dows.map((x) => `<span>${x}</span>`).join('')}</div>
       <div class="cal-grid swipe-area" id="cal-swipe">${cells}</div>
       <div class="row-flex small" style="margin:10px 4px"><span>סה״כ בחודש: <b>${UI.money(monthTotal, 0)}</b></span><span class="spacer"></span><span class="muted"><span class="num">${U.hm(monthHours * 60)}</span> ש׳</span></div>`;
@@ -15080,7 +16207,7 @@ A cell with only a shift name and no hours: use בוקר 07:00-15:00, צהריי
       if (d) { tot += d.total; hrs += d.shifts.filter((r) => r.status === 'done').reduce((s, r) => s + r.paidHours, 0); }
       const label = d ? d.shifts.map((r) => `${App.roleName(r.segments[0] && r.segments[0].roleId)} ⁦${U.epochHM(r.start)}\u2060–\u2060${U.epochHM(r.rawEnd)}⁩${r.status === 'planned' ? ' (מתוכננת)' : ''}`).concat(d.entries.map((e) => (e.kind === 'vacation' ? 'חופשה' : e.kind === 'sick' ? 'מחלה' : (App.model.entryVals.get(e.id) || {}).label))).join(' · ') : '';
       rows += `<div class="week-row ${rest ? 'rest' : ''} card-link" data-act="cal-day" data-k="${k}" ${k === today ? 'style="box-shadow:inset 3px 0 0 var(--primary)"' : ''}>
-        <div class="wd"><div class="tiny muted">${U.HEB_DAYS[U.dow(k)]}</div><div class="n">${+k.slice(8)}</div><div class="tiny muted">${HebCal.hebrewDate(k).dayStr}</div></div>
+        <div class="wd"><div class="tiny muted">${U.DAYS[U.dow(k)]}</div><div class="n">${+k.slice(8)}</div>${U.LANG === 'he' ? `<div class="tiny muted">${HebCal.hebrewDate(k).dayStr}</div>` : ''}</div>
         <div class="tl"><div class="row-flex small"><span style="flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${esc(hol.map((h) => h.name).join(', ') || label || '—')}</span>${d && d.total ? `<b>${UI.money(d.total, 0)}</b>` : ''}${d && d.ov ? ` <span class="tag override">${icon('hand')}</span>` : ''}</div>
         <div class="timeline">${bars}</div>${hol.length && label ? `<div class="tiny muted">${esc(label)}</div>` : ''}</div></div>`;
     }
@@ -15280,7 +16407,7 @@ A cell with only a shift name and no hours: use בוקר 07:00-15:00, צהריי
     const yearDone = y < U.todayKey().slice(0, 4);
     return `
       <div class="section-title">${icon('chart', 's')} לפי חודשים</div>
-      <div class="card">${Charts.bars(months.map((m) => ({ label: U.HEB_MONTHS[+m.mk.slice(5) - 1].slice(0, 3), value: m.t.gross, tip: `${U.fmtMonth(m.mk)}: ${U.money(m.t.gross, 0)} · ${U.num(m.t.hours, 1)} ש׳` })), { label: 'ברוטו לפי חודש', axisFmt: (v) => '₪' + (v >= 1000 ? +(v / 1000).toFixed(1) + 'K' : v) })}
+      <div class="card">${Charts.bars(months.map((m) => ({ label: U.MONTHS_SHORT[+m.mk.slice(5) - 1], value: m.t.gross, tip: `${U.fmtMonth(m.mk)}: ${U.money(m.t.gross, 0)} · ${U.num(m.t.hours, 1)} ש׳` })), { label: 'ברוטו לפי חודש', axisFmt: (v) => '₪' + (v >= 1000 ? +(v / 1000).toFixed(1) + 'K' : v) })}
         ${best ? `<div class="kv"><span>${icon('up', 's')} החודש הכי טוב</span><b>${U.fmtMonth(best.mk)} · ${U.money(best.t.gross, 0)}</b></div>` : ''}
         ${worst && worst !== best ? `<div class="kv"><span>${icon('down', 's')} החודש הכי חלש</span><b>${U.fmtMonth(worst.mk)} · ${U.money(worst.t.gross, 0)}</b></div>` : ''}
         <div class="kv"><span>מול ${py}</span><span>${U.money(pt.gross, 0)} ${UI.delta(t.gross, pt.gross)}</span></div></div>
@@ -15372,7 +16499,7 @@ A cell with only a shift name and no hours: use בוקר 07:00-15:00, צהריי
     // months before the first one with any work are left out (but at least half a year is shown)
     const firstUsed = data.findIndex((d) => d.s.shifts > 0 || d.s.gross > 0);
     if (firstUsed > 0) data = data.slice(Math.min(firstUsed, data.length - 6));
-    const lab = (pk) => U.HEB_MONTHS[+pk.slice(5) - 1].slice(0, 3);
+    const lab = (pk) => U.MONTHS_SHORT[+pk.slice(5) - 1];
     const roles = App.roles();
     const money0 = (v) => U.money(v, 0);
     return `
@@ -15506,7 +16633,7 @@ A cell with only a shift name and no hours: use בוקר 07:00-15:00, צהריי
     loaded[src] = new Promise((res, rej) => {
       const s = document.createElement('script');
       s.src = src; s.async = true; s.crossOrigin = 'anonymous';
-      s.onload = res; s.onerror = () => { delete loaded[src]; rej(new Error('לא ניתן לטעון רכיב (נדרש אינטרנט בשימוש הראשון)')); };
+      s.onload = res; s.onerror = () => { delete loaded[src]; rej(root.U.oops('לא ניתן לטעון רכיב (נדרש אינטרנט בשימוש הראשון)')); };
       document.head.appendChild(s);
     });
     return loaded[src];
@@ -15514,7 +16641,7 @@ A cell with only a shift name and no hours: use בוקר 07:00-15:00, צהריי
   const DISCLAIMER = `<div class="disclaimer">${icon('info', 's')}<div>הניתוח הוא כלי עזר בלבד ואינו ייעוץ משפטי או חשבונאי. חישובים שתלויים בהסכם קיבוצי, בחוזה או בוותק מסומנים ברמת ביטחון נמוכה. במקרה של ספק — פנה למשאבי אנוש, לרו״ח, לארגון העובדים או לאתר "כל זכות".</div></div>`;
 
   /* ---------------- extraction ---------------- */
-  async function extractPdf(file, progress) {
+  async function extractPdf(file, progress, opts) {
     await loadScript(LIBS.pdf);
     const pdfjs = root.pdfjsLib;
     pdfjs.GlobalWorkerOptions.workerSrc = LIBS.pdfWorker;
@@ -15528,6 +16655,7 @@ A cell with only a shift name and no hours: use בוקר 07:00-15:00, צהריי
     }
     const text = lines.join('\n');
     if (text.replace(/\s/g, '').length > 80) return { text, source: 'pdf' };
+    if (opts && opts.noOcr) return { text, source: 'scan' }; // the caller reads the picture its own way
     // scanned PDF → render & OCR
     progress('ה-\u2060PDF סרוק — מריץ זיהוי טקסט…');
     const page = await doc.getPage(1);
@@ -15548,8 +16676,8 @@ A cell with only a shift name and no hours: use בוקר 07:00-15:00, צהריי
       return data.text;
     } finally { await worker.terminate(); }
   }
-  async function extract(file, progress) {
-    if (file.type === 'application/pdf' || /\.pdf$/i.test(file.name)) return extractPdf(file, progress);
+  async function extract(file, progress, opts) {
+    if (file.type === 'application/pdf' || /\.pdf$/i.test(file.name)) return extractPdf(file, progress, opts);
     return { text: await ocr(file, progress), source: 'ocr' };
   }
   // the hours-report import reads PDFs and pictures the same way (import.js)
@@ -15604,6 +16732,8 @@ A cell with only a shift name and no hours: use בוקר 07:00-15:00, צהריי
    * hours it finds where the first pass has no hours take the place of what the first pass read there.
    */
   async function ocrWords(image, progress) {
+    // the picture made easy to read first (app/docread.js: light evened out, two readings)
+    if (root.DocRead) { const got = await root.DocRead.words(image, progress); return { words: got.words, text: got.he.map((w) => w.text).join(' ') }; }
     await loadScript(LIBS.tesseract);
     progress('טוען מנוע זיהוי עברית (פעם ראשונה ~10MB)…');
     const he = await ocrPass(image, 'heb+eng', progress, 'מזהה טקסט');
@@ -15963,7 +17093,7 @@ A cell with only a shift name and no hours: use בוקר 07:00-15:00, צהריי
           <span class="body"><span class="t">${esc(g.title)} · ${U.fmtMonth(g.period)}</span><span class="s">${g.status === 'maybe' ? esc(g.note || 'ייתכן שהוחזר') : 'עוד לא הוחזר'}</span></span>
           <span class="trail"><span class="a">${money(g.amount, 0)}</span><br><button class="btn text sm" data-act="gap-set" data-id="${esc(g.id)}" data-s="resolved">הוחזר ✓</button></span></div>`).join('')}</div>
         <button class="btn tonal block" data-act="claim-report" style="margin-top:8px">${icon('file', 's')} דוח ומכתב לבירור מול המעסיק</button>` : ''}
-      ${trend.length >= 2 ? `<div class="section-title">${icon('chart', 's')} מגמות</div><div class="card">${Charts.stacked(trend.map((p) => U.HEB_MONTHS[+p.period.slice(5) - 1].slice(0, 3)), [
+      ${trend.length >= 2 ? `<div class="section-title">${icon('chart', 's')} מגמות</div><div class="card">${Charts.stacked(trend.map((p) => U.MONTHS_SHORT[+p.period.slice(5) - 1]), [
         { name: 'נטו', color: '#1baf7a', values: trend.map((p) => (p.fields.net ? +p.fields.net.value : 0)) },
         { name: 'ניכויים', color: '#e34948', values: trend.map((p) => (p.fields.gross && p.fields.net ? Math.max(0, p.fields.gross.value - p.fields.net.value) : 0)) },
       ], { label: 'נטו וניכויים לפי חודש', fmt: (v) => U.money(v, 0) })}
@@ -16015,8 +17145,8 @@ A cell with only a shift name and no hours: use בוקר 07:00-15:00, צהריי
    * blocks such as an image). Used by the payslip check and the schedule reader. */
   App.claudeJson = (system, content, schema) => claudeJson(system, content, schema);
   async function claudeJson(system, content, schema) {
-    if (!navigator.onLine) throw new Error('אין חיבור לאינטרנט');
-    if (!S.settings.ai.apiKey) throw new Error('צריך מפתח API של Claude (הגדרות › עוזר AI ואודות › מפתח AI)');
+    if (!navigator.onLine) throw root.U.oops('אין חיבור לאינטרנט');
+    if (!S.settings.ai.apiKey) throw root.U.oops('צריך מפתח API של Claude (הגדרות › עוזר AI ואודות › מפתח AI)');
     const mod = await import(/* webpackIgnore: true */ LIBS.anthropic);
     const Anthropic = mod.default || mod.Anthropic;
     const client = new Anthropic({ apiKey: S.settings.ai.apiKey, dangerouslyAllowBrowser: true });
@@ -16033,18 +17163,18 @@ A cell with only a shift name and no hours: use בוקר 07:00-15:00, צהריי
       if (model.startsWith('claude-haiku')) res = await client.messages.create(params); // no server-side fallback for Haiku
       else res = await client.beta.messages.create(Object.assign({ betas: ['server-side-fallback-2026-07-01'], fallbacks: 'default' }, params));
     } catch (err) {
-      if (err instanceof Anthropic.AuthenticationError) throw new Error('מפתח ה-\u2060API לא תקין (401). בדוק אותו בהגדרות.');
-      if (err instanceof Anthropic.PermissionDeniedError) throw new Error('למפתח אין הרשאה למודל הזה (403).');
-      if (err instanceof Anthropic.NotFoundError) throw new Error('המודל לא נמצא (404). בחר מודל אחר בהגדרות.');
-      if (err instanceof Anthropic.RateLimitError) throw new Error('יותר מדי בקשות (429). נסה שוב בעוד דקה.');
-      if (err instanceof Anthropic.APIConnectionError) throw new Error('בעיית תקשורת עם השרת. בדוק את החיבור.');
-      if (err instanceof Anthropic.APIError) throw new Error(`שגיאת API ${err.status || ''}: ${err.message}`);
+      if (err instanceof Anthropic.AuthenticationError) throw root.U.oops('מפתח ה-\u2060API לא תקין (401). בדוק אותו בהגדרות.');
+      if (err instanceof Anthropic.PermissionDeniedError) throw root.U.oops('למפתח אין הרשאה למודל הזה (403).');
+      if (err instanceof Anthropic.NotFoundError) throw root.U.oops('המודל לא נמצא (404). בחר מודל אחר בהגדרות.');
+      if (err instanceof Anthropic.RateLimitError) throw root.U.oops('יותר מדי בקשות (429). נסה שוב בעוד דקה.');
+      if (err instanceof Anthropic.APIConnectionError) throw root.U.oops('בעיית תקשורת עם השרת. בדוק את החיבור.');
+      if (err instanceof Anthropic.APIError) throw root.U.oops(`שגיאת API ${err.status || ''}: ${err.message}`);
       throw err;
     }
-    if (res.stop_reason === 'refusal') throw new Error('הבקשה נדחתה על ידי המודל' + (res.stop_details && res.stop_details.explanation ? ': ' + res.stop_details.explanation : '.'));
-    if (res.stop_reason === 'max_tokens') throw new Error('התשובה נקטעה. נסה לקצר את הטקסט.');
+    if (res.stop_reason === 'refusal') throw root.U.oops('הבקשה נדחתה על ידי המודל' + (res.stop_details && res.stop_details.explanation ? ': ' + res.stop_details.explanation : '.'));
+    if (res.stop_reason === 'max_tokens') throw root.U.oops('התשובה נקטעה. נסה לקצר את הטקסט.');
     const block = res.content.find((b) => b.type === 'text');
-    if (!block) throw new Error('לא התקבלה תשובה');
+    if (!block) throw root.U.oops('לא התקבלה תשובה');
     return JSON.parse(block.text);
   }
 })(typeof window !== 'undefined' ? window : globalThis);
@@ -16143,7 +17273,7 @@ A cell with only a shift name and no hours: use בוקר 07:00-15:00, צהריי
     for (const r of results) {
       const sh = App.shift(r.id) || {};
       rows.push([
-        r.dateKey, U.HEB_DAYS[U.dow(r.dateKey)], App.employer(r.employerId).name, [...new Set(r.segments.map((s) => App.roleName(s.roleId)))].join(' → '),
+        r.dateKey, U.DAYS[U.dow(r.dateKey)], App.employer(r.employerId).name, [...new Set(r.segments.map((s) => App.roleName(s.roleId)))].join(' → '),
         U.epochHM(r.start), U.epochHM(r.rawEnd), n2(r.paidHours), r.breakMin || 0,
         n2(r.hoursBy.regular), n2(r.hoursBy.ot1), n2(r.hoursBy.ot2), n2(r.hoursBy.rest), n2(r.hoursBy.restOt1 + r.hoursBy.restOt2), n2(r.hoursBy.night),
         n2(r.wage), n2(r.restPremium), n2(r.otPremium), n2(r.travel.amount), n2(r.bonus), n2(r.tips), n2(r.additions), n2(r.deductions), n2(r.total),
@@ -16204,7 +17334,7 @@ A cell with only a shift name and no hours: use בוקר 07:00-15:00, צהריי
       <h3>לפי תפקיד</h3><table><tr><th>תפקיד</th><th>שעות</th><th>סכום</th></tr>${roles}</table>
       <h3>לפי סוג שעה</h3><table><tr><th>רגילות</th><th>125%</th><th>150%</th><th>שבת/חג</th><th>שבת/חג + נוספות</th><th>לילה</th></tr><tr><td>${U.hours(t.hoursBy.regular)}</td><td>${U.hours(t.hoursBy.ot1)}</td><td>${U.hours(t.hoursBy.ot2)}</td><td>${U.hours(t.hoursBy.rest)}</td><td>${U.hours(t.hoursBy.restOt1 + t.hoursBy.restOt2)}</td><td>${U.hours(t.hoursBy.night)}</td></tr></table>
       <h3>משמרות</h3><table><tr><th>תאריך</th><th>תפקיד</th><th>שעות</th><th>זמן</th><th>שבת/חג</th><th>נוספות</th><th>שכר</th><th>נסיעות</th><th>סה״כ</th><th>הערות</th></tr>
-      ${list.map((r) => { const sh = App.shift(r.id) || {}; return `<tr><td>${U.fmtDate(r.dateKey, 'short')} ${U.HEB_DAYS_SHORT[U.dow(r.dateKey)]}</td><td>${esc([...new Set(r.segments.map((s) => App.roleName(s.roleId)))].join(' → '))}</td><td>⁦${U.epochHM(r.start)}\u2060–\u2060${U.epochHM(r.rawEnd)}⁩</td><td>${U.hours(r.paidHours)}</td><td>${r.restHours ? U.hours(r.restHours) : ''}</td><td>${r.otHours ? U.hours(r.otHours) : ''}</td><td>${U.money(r.wage)}</td><td>${U.money(r.travel.amount)}</td><td>${U.money(r.total)}</td><td>${r.overridden || r.dayRuleHit ? '✋ ' + esc(sh.overrideReason || 'עקיפה ידנית') : ''} ${esc(sh.note || '')}</td></tr>`; }).join('')}</table>
+      ${list.map((r) => { const sh = App.shift(r.id) || {}; return `<tr><td>${U.fmtDate(r.dateKey, 'short')} ${U.DAYS_SHORT[U.dow(r.dateKey)]}</td><td>${esc([...new Set(r.segments.map((s) => App.roleName(s.roleId)))].join(' → '))}</td><td>⁦${U.epochHM(r.start)}\u2060–\u2060${U.epochHM(r.rawEnd)}⁩</td><td>${U.hours(r.paidHours)}</td><td>${r.restHours ? U.hours(r.restHours) : ''}</td><td>${r.otHours ? U.hours(r.otHours) : ''}</td><td>${U.money(r.wage)}</td><td>${U.money(r.travel.amount)}</td><td>${U.money(r.total)}</td><td>${r.overridden || r.dayRuleHit ? '✋ ' + esc(sh.overrideReason || 'עקיפה ידנית') : ''} ${esc(sh.note || '')}</td></tr>`; }).join('')}</table>
       <div style="font-size:8pt;color:#555;margin-top:10pt">נטו משוער — הערכה בלבד. נסיעות לפי ${U.money(S.employers[0].travelPerDay)} ליום${+S.employers[0].travelMonthlyCap ? ', תקרה ' + U.money(S.employers[0].travelMonthlyCap) : ''}.</div></div>`;
     UI.toast('בחלון ההדפסה בחר "שמור כ-\u2060PDF"');
     setTimeout(() => window.print(), 300);
@@ -16298,7 +17428,9 @@ A cell with only a shift name and no hours: use בוקר 07:00-15:00, צהריי
 
   /** The typed part of a name, marked. */
   function mark(name, q) {
+    // i18n-keep-start (place names are Hebrew)
     const t = String(q || '').trim().replace(/'/g, '׳').replace(/"/g, '״');
+    // i18n-keep-end
     const i = t ? name.indexOf(t) : -1;
     if (i < 0) return esc(name);
     return esc(name.slice(0, i)) + '<mark>' + esc(name.slice(i, i + t.length)) + '</mark>' + esc(name.slice(i + t.length));
@@ -16906,7 +18038,8 @@ A cell with only a shift name and no hours: use בוקר 07:00-15:00, צהריי
     leave: { icon: 'beach', title: 'ותק, חופשה, מחלה והבראה', sub: () => (S.settings.startDate ? 'התחלת עבודה: ' + U.fmtDate(S.settings.startDate) : 'הגדר תאריך תחילת עבודה') },
     goal: { icon: 'target', title: 'יעדים', sub: () => [+S.settings.goal.amount ? 'חודשי: ' + U.money(S.settings.goal.amount, 0) + (S.settings.goal.type === 'net' ? ' נטו' : ' ברוטו') : '', S.settings.saving && +S.settings.saving.price && S.settings.saving.name ? 'חוסכים ל' + S.settings.saving.name : ''].filter(Boolean).join(' · ') || 'יעד חודשי וחיסכון למשהו' },
     alerts: { icon: 'bell', title: 'התראות ותובנות', sub: () => (('Notification' in window) && Notification.permission === 'granted' ? 'פוש מופעל' : 'פוש כבוי') + ' · סיכומים ותזכורות' },
-    templates: { icon: 'layers', title: 'תבניות משמרת', sub: () => (S.templates.length === 1 ? 'תבנית אחת' : S.templates.length ? S.templates.length + ' תבניות' : 'אין תבניות') },
+    templates: { icon: 'layers', title: 'תבניות משמרת', sub: () => (S.templates.length === 1 ? 'תבנית אחת' : S.templates.length ? `${S.templates.length} תבניות` : 'אין תבניות') },
+    lang: { icon: 'globe', title: 'שפה · Language', sub: () => (root.Lang ? root.Lang.LANGS.map((l) => l.name).join(' · ') : '') },
     look: { icon: 'palette', title: 'מראה', sub: () => ({ system: 'לפי המערכת', light: 'בהיר', dark: 'כהה' }[S.settings.theme]) + ' · ' + (App.ACCENTS[S.settings.accent] || [])[2] },
     security: { icon: 'lock', title: 'נעילה בקוד', sub: () => (S.settings.lock.enabled ? 'מופעלת' : 'כבויה') },
     assistant: { icon: 'sparkle', title: 'עוזר זכויות ושכר (AI)', sub: () => (S.settings.ai.apiKey ? 'מוכן — שאל כל שאלה' : 'דורש מפתח API') },
@@ -16926,18 +18059,18 @@ A cell with only a shift name and no hours: use בוקר 07:00-15:00, צהריי
     rest: 'שבת חג חגים עיר כניסת שבת יציאת שבת כלל יום', pay: 'נסיעות החזר נסיעות תקרה תקופת שכר יום תשלום משכורת',
     net: 'מס מס הכנסה נקודות זיכוי פנסיה ביטוח לאומי מס בריאות השתלמות נטו', leave: 'חופשה מחלה הבראה ותק תחילת עבודה',
     goal: 'יעד יעדים חיסכון חוסכים', alerts: 'התראות תזכורות פוש הודעות', templates: 'תבנית תבניות משמרת קבועה',
-    look: 'צבע צבעים ערכת נושא כהה בהיר מצב לילה גופן גופנים מראה צלילים רטט מוזיקה עיצוב כרטיס plus פלוס', security: 'קוד נעילה טביעת אצבע סיסמה',
+    lang: 'שפה שפות language english русский русский язык العربية عربي ערבית רוסית אנגלית תרגום', look: 'צבע צבעים ערכת נושא כהה בהיר מצב לילה גופן גופנים מראה צלילים רטט מוזיקה עיצוב כרטיס plus פלוס', security: 'קוד נעילה טביעת אצבע סיסמה',
     assistant: 'בינה מלאכותית עוזר שאלות ai', ai: 'מפתח api claude ניתוח תלוש', backup: 'גיבוי שחזור קובץ', schedule: 'סידור עבודה סידור משמרות שבוע הבא צילום תמונה צילום מסך וואטסאפ whatsapp הודעה טבלה מתוכננות לוח', import: 'ייבוא דוח שעות נוכחות שעון אקסל excel csv pdf צילום קובץ להעלות משמרות מהעבודה', export: 'ייצוא אקסל excel csv pdf יומן',
     demo: 'דוגמה הדגמה', about: 'גרסה התקנה אודות', rights: 'זכויות שכר מינימום',
   };
   // the page is a few colourful doors; each opens its own small page with the sections behind it
   const CATS = [
     { id: 'me', icon: 'users', tint: 'violet', title: 'אני והחשבון', keys: ['personal', 'account'], sub: () => [S.settings.userName, S.meta.cloudEmail ? 'מחובר/ת ☁️' : 'לא מחובר/ת'].filter(Boolean).join(' · ') },
-    { id: 'work', icon: 'briefcase', tint: 'mint', title: 'העבודה שלי', keys: ['roles', 'pay', 'templates'], sub: () => { const r = App.roles(); return r.length === 1 ? `${r[0].name} · ${U.money(Engine.roleRate(r[0], U.todayKey()), 0)} לשעה` : r.length + ' תפקידים' + (S.employers.length > 1 ? ' · ' + S.employers.length + ' מקומות עבודה' : ''); } },
+    { id: 'work', icon: 'briefcase', tint: 'mint', title: 'העבודה שלי', keys: ['roles', 'pay', 'templates'], sub: () => { const r = App.roles(); return r.length === 1 ? `${r[0].name} · ${U.money(Engine.roleRate(r[0], U.todayKey()), 0)} לשעה` : `${r.length} תפקידים` + (S.employers.length > 1 ? ' · ' + `${S.employers.length} מקומות עבודה` : ''); } },
     { id: 'calc', icon: 'flask', tint: 'amber', title: 'חישוב השכר', keys: ['calc', 'rest'], sub: () => 'שעות נוספות, לילה, שבת וחגים' },
     { id: 'money', icon: 'wallet', tint: 'sky', title: 'נטו, מס וזכויות', keys: ['net', 'leave', 'rights'], sub: () => `${S.settings.tax.creditPoints} נק׳ זיכוי · פנסיה ${S.settings.pension.employeePct}%` },
     { id: 'goals', icon: 'target', tint: 'pink', title: 'יעדים ותזכורות', keys: ['goal', 'alerts'], sub: () => (+S.settings.goal.amount ? 'יעד ' + U.money(S.settings.goal.amount, 0) : 'יעד, חיסכון והתראות') },
-    { id: 'look', icon: 'palette', tint: 'orange', title: 'מראה ונעילה', keys: ['look', 'security'], sub: () => ({ system: 'לפי המערכת', light: 'בהיר', dark: 'כהה' }[S.settings.theme] || '') + (S.settings.lock.enabled ? ' · נעול 🔒' : '') },
+    { id: 'look', icon: 'palette', tint: 'orange', title: 'מראה ונעילה', keys: ['lang', 'look', 'security'], sub: () => ({ system: 'לפי המערכת', light: 'בהיר', dark: 'כהה' }[S.settings.theme] || '') + (S.settings.lock.enabled ? ' · נעול 🔒' : '') },
     { id: 'data', icon: 'cloud', tint: 'mint', title: 'גיבוי, ייבוא ונתונים', keys: ['backup', 'import', 'schedule', 'export', 'demo'], sub: () => (S.settings.backup.lastBackup ? 'גיבוי ' + UI.timeAgo(S.settings.backup.lastBackup) : 'גיבוי, ייצוא, נתוני דוגמה') },
     { id: 'more', icon: 'sparkle', tint: 'violet', title: 'עוזר AI ואודות', keys: ['assistant', 'ai', 'about'], sub: () => 'גרסה ' + root.APP_VERSION },
   ];
@@ -16970,6 +18103,7 @@ A cell with only a shift name and no hours: use בוקר 07:00-15:00, צהריי
   const CHIPS = [['wallet', 'mint', 0], ['candle', 'amber', 1], ['clock', 'violet', 2], ['bus', 'sky', 3], ['coffee', 'orange', 4], ['receipt', 'pink', 5], ['bell', 'violet', 9], ['cloud', 'sky', 12]];
 
   // search: Hebrew written loosely (no niqqud, final letters, quotes) and matched from the start of words
+  // i18n-keep the final letters' plain forms
   const FINALS = { 'ך': 'כ', 'ם': 'מ', 'ן': 'נ', 'ף': 'פ', 'ץ': 'צ' };
   const norm = (s) => String(s || '').toLowerCase().replace(/[֑-ׇ]/g, '').replace(/[ךםןףץ]/g, (c) => FINALS[c]).replace(/["'״׳()\-–,.:/%₪?!]/g, ' ').replace(/\s+/g, ' ').trim();
   // every word of the question starts a word here ("צבע" finds colours, not the fingerprint, "אצבע"); a Hebrew
@@ -17044,7 +18178,8 @@ A cell with only a shift name and no hours: use בוקר 07:00-15:00, צהריי
   };
 
   App.views.settings = function () {
-    return `<div class="topbar"><div class="titles"><h1>הגדרות</h1><div class="sub">כל שינוי נשמר מיד</div></div></div>
+    const cur = root.Lang && root.Lang.LANGS.find((l) => l.id === root.Lang.current);
+    return `<div class="topbar"><div class="titles"><h1>הגדרות</h1><div class="sub">כל שינוי נשמר מיד</div></div>${cur ? `<button class="lang-pill" data-act="lang-open" aria-label="שפה · Language">${icon('globe', 's')}<span lang="${cur.id}">${cur.name}</span></button>` : ''}</div>
       <div class="set-search">${icon('search', 's')}<input class="input" id="set-q" type="text" enterkeyhint="search" placeholder="מה לשנות? או מה הבעיה?" aria-label="חיפוש בהגדרות" autocomplete="off"><button class="icon-btn sm set-clear" data-set-clear hidden aria-label="ניקוי החיפוש">${icon('x', 's')}</button></div>
       <div id="set-res" hidden></div>
       <div id="set-home">
@@ -17058,7 +18193,8 @@ A cell with only a shift name and no hours: use בוקר 07:00-15:00, צהריי
       <div class="ver">גרסה ${root.APP_VERSION} · מבנה נתונים ${Store.SCHEMA_VERSION}${S.settings.legal ? ' · תנאים ' + esc(S.settings.legal.version) + ' אושרו' : ''}</div>
       </div>`;
   };
-  App.actions['settings-open'] = (el) => (el.dataset.k === 'import' ? App.importHours({ over: true }) : el.dataset.k === 'schedule' ? App.importSchedule({ over: true }) : el.dataset.k === 'assistant' ? (App.openAssistantOver || App.actions.assistant)() : el.dataset.k === 'rights' ? App.actions.rights() : App.sheetsApi.settingsSection(el.dataset.k));
+  App.actions['lang-open'] = () => root.Lang && root.Lang.sheet();
+  App.actions['settings-open'] = (el) => (el.dataset.k === 'lang' && root.Lang ? root.Lang.sheet() : el.dataset.k === 'import' ? App.importHours({ over: true }) : el.dataset.k === 'schedule' ? App.importSchedule({ over: true }) : el.dataset.k === 'assistant' ? (App.openAssistantOver || App.actions.assistant)() : el.dataset.k === 'rights' ? App.actions.rights() : App.sheetsApi.settingsSection(el.dataset.k));
   // a door: its own small page with the sections behind it (their lines stay up to date while it is open)
   App.actions['settings-cat'] = (el) => {
     const c = CATS.find((x) => x.id === el.dataset.cat);
@@ -17079,7 +18215,7 @@ A cell with only a shift name and no hours: use בוקר 07:00-15:00, צהריי
   // a search result: the section opens at the field, which lights up for a moment
   App.actions['settings-go'] = (el) => {
     const k = el.dataset.k;
-    if (k === 'assistant' || k === 'rights' || k === 'import' || k === 'schedule') { App.actions['settings-open'](el); return; }
+    if (k === 'assistant' || k === 'rights' || k === 'import' || k === 'schedule' || k === 'lang') { App.actions['settings-open'](el); return; }
     App.sheetsApi.settingsSection(k, el.dataset.f || '');
   };
   function spotlight(sheet, label) {
@@ -17357,7 +18493,7 @@ A cell with only a shift name and no hours: use בוקר 07:00-15:00, צהריי
           <div class="grid2">${[0, 1, 2, 3].map((i) => F.num(['מחלה יום 1 %', 'יום 2 %', 'יום 3 %', 'מהיום ה-4 %'][i], 's.leave.sickPct.' + i, L.sickPct[i])).join('')}</div></div>
         <div class="section-title">הבראה</div><div class="card">
           ${F.num('תעריף ליום הבראה ₪', 's.leave.recuperationRate', L.recuperationRate, 'מגזר פרטי: 418 ₪.')}
-          ${F.sel('חודש תשלום', 's.leave.recuperationMonth', [[0, 'בכל חודש (חלק יחסי)'], ...U.HEB_MONTHS.map((m, i) => [i + 1, m])], L.recuperationMonth)}</div>`;
+          ${F.sel('חודש תשלום', 's.leave.recuperationMonth', [[0, 'בכל חודש (חלק יחסי)'], ...U.MONTHS.map((m, i) => [i + 1, m])], L.recuperationMonth)}</div>`;
     },
   };
 
@@ -17399,7 +18535,7 @@ A cell with only a shift name and no hours: use בוקר 07:00-15:00, צהריי
           ${perm === 'granted' ? `<button class="btn text sm" data-test>${icon('send', 's')} שלח התראת בדיקה</button>` : ''}
           <div class="tiny muted" style="margin-top:6px">מעט התראות: הסיכום השבועי והחודשי, שיאים ויעדים, ותזכורות חשובות בלבד. בלי התראות על חריגות.</div></div>
         <div class="section-title">סיכומים</div><div class="card">${t('weekly', 'סיכום שבועי')}
-          <div class="grid2">${F.sel('ביום', 's.alerts.weeklyDay', U.HEB_DAYS.map((d, i) => [i, d]), A.weeklyDay)}${F.num('בשעה', 's.alerts.weeklyHour', A.weeklyHour)}</div>
+          <div class="grid2">${F.sel('ביום', 's.alerts.weeklyDay', U.DAYS.map((d, i) => [i, d]), A.weeklyDay)}${F.num('בשעה', 's.alerts.weeklyHour', A.weeklyHour)}</div>
           ${t('monthly', 'סיכום חודשי (כשתקופת השכר נגמרת)')}</div>
         <div class="section-title">חדשות טובות</div><div class="card">${t('record', 'שיא אישי')}${t('goal', 'הגעת ליעד החודשי')}${t('birthday', 'יום הולדת')}</div>
         <div class="section-title">תזכורות</div><div class="card">
@@ -17529,10 +18665,10 @@ A cell with only a shift name and no hours: use בוקר 07:00-15:00, צהריי
         const file = f.files[0];
         if (!file) return;
         try {
-          if (file.size > 60 * 1024 * 1024) throw new Error('הקובץ גדול מדי בשביל גיבוי של האפליקציה.');
+          if (file.size > 60 * 1024 * 1024) throw root.U.oops('הקובץ גדול מדי בשביל גיבוי של האפליקציה.');
           let json;
-          try { json = JSON.parse(await file.text()); } catch (e) { throw new Error('זה לא קובץ גיבוי של האפליקציה (צריך קובץ ‎.json‎ שנוצר בגיבוי).'); }
-          if (!json || typeof json !== 'object' || json.app !== 'shiftpay') throw new Error('זה לא קובץ גיבוי של האפליקציה.');
+          try { json = JSON.parse(await file.text()); } catch (e) { throw root.U.oops('זה לא קובץ גיבוי של האפליקציה (צריך קובץ ‎.json‎ שנוצר בגיבוי).'); }
+          if (!json || typeof json !== 'object' || json.app !== 'shiftpay') throw root.U.oops('זה לא קובץ גיבוי של האפליקציה.');
           const n = Array.isArray(json.shifts) ? json.shifts.length : 0;
           const mode = await UI.dialog({ title: 'שחזור גיבוי', text: `בקובץ ${n} משמרות (${json.exportedAt ? 'נוצר ' + U.fmtDate(json.exportedAt.slice(0, 10)) : ''}). מה לעשות?`, buttons: [{ label: 'ביטול', value: null }, { label: 'מיזוג', value: 'merge' }, { label: 'החלפה מלאה', value: 'replace', cls: 'danger' }] });
           if (!mode) return;
@@ -17559,7 +18695,7 @@ A cell with only a shift name and no hours: use בוקר 07:00-15:00, צהריי
         if (b.hasAttribute('data-wipe')) {
           if (!(await UI.confirm('למחוק את כל הנתונים?', 'כל המשמרות, התלושים וההגדרות יימחקו לצמיתות מהטלפון ומהחשבון בענן. מומלץ לגבות קודם.', 'מחק הכול', true))) return;
           const really = await UI.promptText('אישור סופי', 'הקלד "מחק" כדי לאשר', '');
-          if (really !== 'מחק') { UI.toast('בוטל'); return; }
+          if (String(really || '').trim().toLowerCase() !== 'מחק'.toLowerCase()) { UI.toast('בוטל'); return; }
           try {
             if (root.Cloud.user) await root.Cloud.deleteAccountData(); else await Store.wipe();
             location.reload();
@@ -17797,7 +18933,7 @@ A cell with only a shift name and no hours: use בוקר 07:00-15:00, צהריי
         if (!city) { el.innerHTML = ''; return; }
         const cfg = Object.assign({}, st.rest, { city, dayRules: [] });
         const w = HebCal.restWindows(today, U.addDays(today, 10), cfg).find((x) => x.end > Date.now());
-        el.innerHTML = w ? `${icon('candle', 's')} ${esc(w.label)} הקרובה ב${esc(city)}: נכנסת ${U.HEB_DAYS[U.dow(U.epochKey(w.start))]} ב-${U.epochHM(w.start)}, יוצאת ב-${U.epochHM(w.end)}` : '';
+        el.innerHTML = w ? `${icon('candle', 's')} ${esc(w.label)} הקרובה ב${esc(city)}: נכנסת ${U.DAYS[U.dow(U.epochKey(w.start))]} ב-${U.epochHM(w.start)}, יוצאת ב-${U.epochHM(w.end)}` : '';
       }
     }
     function draw() {
@@ -18362,25 +19498,47 @@ A cell with only a shift name and no hours: use בוקר 07:00-15:00, צהריי
   const S = Store.S;
   const { icon, esc } = UI;
 
+  // i18n-keep-start the pages' names on Kol Zchut: they are the link's address (the site in Hebrew)
+  const PAGES = {
+    minWage: 'שכר מינימום',
+    youthPay: 'תשלום שכר לבני נוער',
+    overtime: 'גמול עבור שעות נוספות',
+    weeklyRest: 'גמול עבור העסקה במנוחה השבועית',
+    holidayPay: 'דמי חגים',
+    tips: 'תשר ("טיפ") למלצרים במסעדות, בתי קפה וברים',
+    youthBreaks: 'הפסקות בעבודה לנוער',
+    breaks: 'הפסקות בעבודה',
+    travel: 'החזר הוצאות נסיעה',
+    sick: 'דמי מחלה',
+    vacation: 'חופשה שנתית לעובדים בשכר שעתי או יומי',
+    recuperation: 'דמי הבראה',
+    pension: 'חובת ביטוח פנסיוני לעובדים',
+    payslip: 'תלוש שכר',
+    deductions: 'ניכויים משכר העובד',
+    notice: 'הודעה מוקדמת לפיטורים או התפטרות',
+    youthGuide: 'זכותון נוער עובד',
+    enforcement: 'מינהל הסדרה ואכיפת חוקי עבודה',
+  };
+  // i18n-keep-end
   const KZ = (page) => 'https://www.kolzchut.org.il/he/' + encodeURIComponent(page.replace(/ /g, '_'));
   const link = (href, text) => `<a href="${href}" target="_blank" rel="noopener">${esc(text || 'למידע המלא ב"כל זכות"')} ↗</a>`;
 
   /* ---------------- the guide (general rules, short and plain) ---------------- */
   const TOPICS = [
-    { id: 'minwage', ic: 'wallet', t: 'שכר מינימום', b: (c) => `<p>מאפריל 2026: <b>35.40 ₪ לשעה</b> לעובד מגיל 18. לנוער: עד גיל 16 – 26.07 ₪, בגיל 16 – 27.94 ₪, בגיל 17 – 30.92 ₪.</p><p>${c.mw.youth ? `לגיל שלך (${c.mw.age}) המינימום הוא <b>${U.money(c.mw.hourly)}</b>.` : c.mw.age != null ? `המינימום שחל עליך: <b>${U.money(c.mw.hourly)}</b>.` : 'הוסף תאריך לידה בהגדרות כדי לראות את המינימום לגילך.'} מעסיק רשאי לשלם יותר, אבל לא פחות.</p>`, l: () => link(KZ(App.isMinorNow() ? 'תשלום שכר לבני נוער' : 'שכר מינימום')) },
-    { id: 'overtime', ic: 'clock', t: 'שעות נוספות', b: () => '<p>השעתיים הראשונות מעבר ליום עבודה רגיל משולמות ב-<b>125%</b>, ומעבר לכך ב-<b>150%</b>. גם מעבר ל-42 שעות בשבוע מתחילות שעות נוספות.</p><p>באפליקציה: הגדרות › חישוב השכר › חוקי חישוב (מתי מתחילות ובאיזה אחוז).</p>', l: () => link(KZ('גמול עבור שעות נוספות')) },
-    { id: 'shabbat', ic: 'candle', t: 'שבת וחגים', b: () => '<p>עבודה במנוחה השבועית (לרוב שבת) משולמת לפחות ב-<b>150%</b>. השעות נקבעות לפי כניסת ויציאת השבת, והאפליקציה מחשבת אותן לפי העיר שלך.</p><p>עובד שעתי זכאי בדרך כלל גם ל<b>דמי חגים</b> אחרי 3 חודשי עבודה, על חג שחל ביום חול, בתנאים שבצו ההרחבה.</p>', l: () => link(KZ('גמול עבור העסקה במנוחה השבועית')) },
-    { id: 'holidays', ic: 'calendar', t: 'דמי חגים', b: (c) => `<p>בשכר לפי שעה מגיע תשלום על <b>9 ימי חג</b> בשנה שבהם לא עבדת בגלל החג: ראש השנה, יום כיפור, סוכות, שמחת תורה, פסח ושביעי של פסח, שבועות ויום העצמאות (מי שאינו יהודי יכול לבחור בחגי הדת שלו). התנאים: <b>3 חודשי עבודה</b> במקום, החג חל ביום שבו ${App.g('היית אמור', 'היית אמורה')} לעבוד, ועבדת ביום שלפניו ושאחריו (או שלא שובצת בהם). התשלום: יום עבודה רגיל, לפי ממוצע השעות היומי שלך כפול השכר לשעה. חג ביום שישי או בשבת משתלם רק למי שעובד בימים האלה.</p>${holidayList(c)}`, l: () => link(KZ('דמי חגים')) },
-    { id: 'tips', ic: 'gift', t: 'טיפים (מלצרים)', b: () => '<p>במסעדה, בית קפה או בר הטיפים הם <b>חלק מהשכר</b>: הם עוברים דרך המעסיק ומופיעים בתלוש, ולכן נחשבים גם בפנסיה, בחופשה, בדמי מחלה ובפיצויים.</p><p>מה שמגיע לך לכל שעה, טיפים בלבד או שכר וטיפים, צריך להיות <b>לפחות שכר המינימום</b>. אסור לממן מהטיפים נסיעות או דמי הבראה, אלא בהסכמה בכתב וכשיש בטיפים יותר מהשכר שסוכם.</p><p>באולמות וגני אירועים הטיפים אינם חלק מהשכר. באפליקציה רושמים טיפים בכל משמרת (או בהוספה › בונוס / טיפים), והבדיקה של שכר המינימום מחשבת אותם.</p>', l: () => link(KZ('תשר ("טיפ") למלצרים במסעדות, בתי קפה וברים')) },
-    { id: 'breaks', ic: 'coffee', t: 'הפסקות ומנוחה', b: () => '<p>ביום עבודה של <b>6 שעות ומעלה</b> מגיעה הפסקה של <b>45 דקות</b>, מתוכן חצי שעה ברצף. בין שני ימי עבודה, ומנוחה שבועית של 36 שעות רצופות לפחות.</p>', l: () => link(KZ(App.isMinorNow() ? 'הפסקות בעבודה לנוער' : 'הפסקות בעבודה')) },
-    { id: 'travel', ic: 'car', t: 'נסיעות', b: (c) => `<p>המעסיק חייב להחזיר את הוצאות הנסיעה לעבודה ובחזרה, לפי מחיר תחבורה ציבורית ועד תקרה יומית שמתעדכנת מדי שנה. ההחזר הוא בנוסף לשכר.</p><p>${c.travel > 0 ? `באפליקציה מוגדר החזר של <b>${U.money(c.travel)}</b> ליום עבודה.` : 'באפליקציה <b>לא מוגדר</b> החזר נסיעות. אפשר להגדיר בהגדרות › העבודה שלי › נסיעות ותקופת שכר.'}</p>`, l: () => link(KZ('החזר הוצאות נסיעה')) },
-    { id: 'sick', ic: 'thermo', t: 'דמי מחלה', b: (c) => `<p>צוברים <b>1.5 ימי מחלה</b> לכל חודש עבודה מלא (עד 90). התשלום: היום הראשון – 0%, השני והשלישי – 50%, מהרביעי – 100%. צריך אישור מחלה.</p>${c.bal ? `<p>הצבירה שלך לפי האפליקציה: <b>${U.num(c.bal.sickAccrued - c.bal.sickUsed, 1)}</b> ימים.</p>` : ''}`, l: () => link(KZ('דמי מחלה')) },
-    { id: 'vacation', ic: 'beach', t: 'חופשה שנתית', b: (c) => `<p>מגיעים ימי חופשה בתשלום לפי הוותק והיקף המשרה. אסור לוותר עליהם, וכשעוזבים את העבודה מקבלים פדיון על הימים שלא נוצלו.</p>${c.bal ? `<p>היתרה שלך לפי האפליקציה: <b>${U.num(c.bal.vacationAccrued - c.bal.vacationUsed, 1)}</b> ימים.</p>` : ''}`, l: () => link(KZ('חופשה שנתית לעובדים בשכר שעתי או יומי')) },
-    { id: 'recup', ic: 'gift', t: 'דמי הבראה', b: (c) => `<p>אחרי <b>שנת עבודה</b> מגיעים דמי הבראה: מספר ימים לפי הוותק, כפול תעריף יום הבראה, לפי היקף המשרה.</p><p>${c.bal && c.bal.recuperation ? (c.bal.recuperation.eligible ? `לפי האפליקציה מגיעים לך כ-<b>${U.money(c.bal.recuperation.amount, 0)}</b> לשנה.` : `לפי תאריך תחילת העבודה, הזכאות מתחילה ב-${U.fmtDate(c.bal.recuperation.eligibleFrom)}.`) : 'הגדר תאריך תחילת עבודה כדי לחשב.'}</p>`, l: () => link(KZ('דמי הבראה')) },
-    { id: 'pension', ic: 'shield', t: 'פנסיה', b: (c) => `<p>חובה מגיל <b>21 לגבר ו-20 לאישה</b>, אחרי 6 חודשי עבודה (3 חודשים אם כבר יש לך קרן פעילה). ההפרשה: 6% ממך, 6.5% מהמעסיק ועוד 6% לפיצויים.</p><p>${c.pension}</p>`, l: () => link(KZ('חובת ביטוח פנסיוני לעובדים')) },
-    { id: 'payslip', ic: 'receipt', t: 'תלוש שכר ומועד תשלום', b: () => '<p>מגיע לך <b>תלוש שכר</b> מפורט כל חודש, והשכר צריך להיות משולם עד <b>ה-9 בחודש</b> שאחרי חודש העבודה. איחור מזכה בפיצוי הלנת שכר.</p><p>האפליקציה בודקת את התלוש מול המשמרות שרשמת (כפתור +, "תלוש שכר").</p>', l: () => link(KZ('תלוש שכר')) },
-    { id: 'deduct', ic: 'minus', t: 'ניכויים מהשכר', b: () => '<p>מותר לנכות מהשכר רק ניכויי חובה (מס, ביטוח לאומי, פנסיה) וניכויים שהסכמת להם בכתב. <b>קנסות</b>, חוסרים בקופה או ציוד שנשבר – בדרך כלל אסור לנכות בלי הסכמה.</p>', l: () => link(KZ('ניכויים משכר העובד')) },
-    { id: 'leave', ic: 'alert', t: 'פיטורים והתפטרות', b: () => '<p>לפני פיטורים מגיע <b>שימוע</b>, ומגיעה <b>הודעה מוקדמת</b> לפי הוותק (גם כשמתפטרים צריך לתת הודעה מוקדמת). אחרי שנת עבודה, בפיטורים מגיעים גם <b>פיצויים</b>.</p>', l: () => link(KZ('הודעה מוקדמת לפיטורים או התפטרות')) },
+    { id: 'minwage', ic: 'wallet', t: 'שכר מינימום', b: (c) => `<p>מאפריל 2026: <b>35.40 ₪ לשעה</b> לעובד מגיל 18. לנוער: עד גיל 16 – 26.07 ₪, בגיל 16 – 27.94 ₪, בגיל 17 – 30.92 ₪.</p><p>${c.mw.youth ? `לגיל שלך (${c.mw.age}) המינימום הוא <b>${U.money(c.mw.hourly)}</b>.` : c.mw.age != null ? `המינימום שחל עליך: <b>${U.money(c.mw.hourly)}</b>.` : 'הוסף תאריך לידה בהגדרות כדי לראות את המינימום לגילך.'} מעסיק רשאי לשלם יותר, אבל לא פחות.</p>`, l: () => link(KZ(App.isMinorNow() ? PAGES.youthPay : PAGES.minWage)) },
+    { id: 'overtime', ic: 'clock', t: 'שעות נוספות', b: () => '<p>השעתיים הראשונות מעבר ליום עבודה רגיל משולמות ב-<b>125%</b>, ומעבר לכך ב-<b>150%</b>. גם מעבר ל-42 שעות בשבוע מתחילות שעות נוספות.</p><p>באפליקציה: הגדרות › חישוב השכר › חוקי חישוב (מתי מתחילות ובאיזה אחוז).</p>', l: () => link(KZ(PAGES.overtime)) },
+    { id: 'shabbat', ic: 'candle', t: 'שבת וחגים', b: () => '<p>עבודה במנוחה השבועית (לרוב שבת) משולמת לפחות ב-<b>150%</b>. השעות נקבעות לפי כניסת ויציאת השבת, והאפליקציה מחשבת אותן לפי העיר שלך.</p><p>עובד שעתי זכאי בדרך כלל גם ל<b>דמי חגים</b> אחרי 3 חודשי עבודה, על חג שחל ביום חול, בתנאים שבצו ההרחבה.</p>', l: () => link(KZ(PAGES.weeklyRest)) },
+    { id: 'holidays', ic: 'calendar', t: 'דמי חגים', b: (c) => `<p>בשכר לפי שעה מגיע תשלום על <b>9 ימי חג</b> בשנה שבהם לא עבדת בגלל החג: ראש השנה, יום כיפור, סוכות, שמחת תורה, פסח ושביעי של פסח, שבועות ויום העצמאות (מי שאינו יהודי יכול לבחור בחגי הדת שלו). התנאים: <b>3 חודשי עבודה</b> במקום, החג חל ביום שבו ${App.g('היית אמור', 'היית אמורה')} לעבוד, ועבדת ביום שלפניו ושאחריו (או שלא שובצת בהם). התשלום: יום עבודה רגיל, לפי ממוצע השעות היומי שלך כפול השכר לשעה. חג ביום שישי או בשבת משתלם רק למי שעובד בימים האלה.</p>${holidayList(c)}`, l: () => link(KZ(PAGES.holidayPay)) },
+    { id: 'tips', ic: 'gift', t: 'טיפים (מלצרים)', b: () => '<p>במסעדה, בית קפה או בר הטיפים הם <b>חלק מהשכר</b>: הם עוברים דרך המעסיק ומופיעים בתלוש, ולכן נחשבים גם בפנסיה, בחופשה, בדמי מחלה ובפיצויים.</p><p>מה שמגיע לך לכל שעה, טיפים בלבד או שכר וטיפים, צריך להיות <b>לפחות שכר המינימום</b>. אסור לממן מהטיפים נסיעות או דמי הבראה, אלא בהסכמה בכתב וכשיש בטיפים יותר מהשכר שסוכם.</p><p>באולמות וגני אירועים הטיפים אינם חלק מהשכר. באפליקציה רושמים טיפים בכל משמרת (או בהוספה › בונוס / טיפים), והבדיקה של שכר המינימום מחשבת אותם.</p>', l: () => link(KZ(PAGES.tips)) },
+    { id: 'breaks', ic: 'coffee', t: 'הפסקות ומנוחה', b: () => '<p>ביום עבודה של <b>6 שעות ומעלה</b> מגיעה הפסקה של <b>45 דקות</b>, מתוכן חצי שעה ברצף. בין שני ימי עבודה, ומנוחה שבועית של 36 שעות רצופות לפחות.</p>', l: () => link(KZ(App.isMinorNow() ? PAGES.youthBreaks : PAGES.breaks)) },
+    { id: 'travel', ic: 'car', t: 'נסיעות', b: (c) => `<p>המעסיק חייב להחזיר את הוצאות הנסיעה לעבודה ובחזרה, לפי מחיר תחבורה ציבורית ועד תקרה יומית שמתעדכנת מדי שנה. ההחזר הוא בנוסף לשכר.</p><p>${c.travel > 0 ? `באפליקציה מוגדר החזר של <b>${U.money(c.travel)}</b> ליום עבודה.` : 'באפליקציה <b>לא מוגדר</b> החזר נסיעות. אפשר להגדיר בהגדרות › העבודה שלי › נסיעות ותקופת שכר.'}</p>`, l: () => link(KZ(PAGES.travel)) },
+    { id: 'sick', ic: 'thermo', t: 'דמי מחלה', b: (c) => `<p>צוברים <b>1.5 ימי מחלה</b> לכל חודש עבודה מלא (עד 90). התשלום: היום הראשון – 0%, השני והשלישי – 50%, מהרביעי – 100%. צריך אישור מחלה.</p>${c.bal ? `<p>הצבירה שלך לפי האפליקציה: <b>${U.num(c.bal.sickAccrued - c.bal.sickUsed, 1)}</b> ימים.</p>` : ''}`, l: () => link(KZ(PAGES.sick)) },
+    { id: 'vacation', ic: 'beach', t: 'חופשה שנתית', b: (c) => `<p>מגיעים ימי חופשה בתשלום לפי הוותק והיקף המשרה. אסור לוותר עליהם, וכשעוזבים את העבודה מקבלים פדיון על הימים שלא נוצלו.</p>${c.bal ? `<p>היתרה שלך לפי האפליקציה: <b>${U.num(c.bal.vacationAccrued - c.bal.vacationUsed, 1)}</b> ימים.</p>` : ''}`, l: () => link(KZ(PAGES.vacation)) },
+    { id: 'recup', ic: 'gift', t: 'דמי הבראה', b: (c) => `<p>אחרי <b>שנת עבודה</b> מגיעים דמי הבראה: מספר ימים לפי הוותק, כפול תעריף יום הבראה, לפי היקף המשרה.</p><p>${c.bal && c.bal.recuperation ? (c.bal.recuperation.eligible ? `לפי האפליקציה מגיעים לך כ-<b>${U.money(c.bal.recuperation.amount, 0)}</b> לשנה.` : `לפי תאריך תחילת העבודה, הזכאות מתחילה ב-${U.fmtDate(c.bal.recuperation.eligibleFrom)}.`) : 'הגדר תאריך תחילת עבודה כדי לחשב.'}</p>`, l: () => link(KZ(PAGES.recuperation)) },
+    { id: 'pension', ic: 'shield', t: 'פנסיה', b: (c) => `<p>חובה מגיל <b>21 לגבר ו-20 לאישה</b>, אחרי 6 חודשי עבודה (3 חודשים אם כבר יש לך קרן פעילה). ההפרשה: 6% ממך, 6.5% מהמעסיק ועוד 6% לפיצויים.</p><p>${c.pension}</p>`, l: () => link(KZ(PAGES.pension)) },
+    { id: 'payslip', ic: 'receipt', t: 'תלוש שכר ומועד תשלום', b: () => '<p>מגיע לך <b>תלוש שכר</b> מפורט כל חודש, והשכר צריך להיות משולם עד <b>ה-9 בחודש</b> שאחרי חודש העבודה. איחור מזכה בפיצוי הלנת שכר.</p><p>האפליקציה בודקת את התלוש מול המשמרות שרשמת (כפתור +, "תלוש שכר").</p>', l: () => link(KZ(PAGES.payslip)) },
+    { id: 'deduct', ic: 'minus', t: 'ניכויים מהשכר', b: () => '<p>מותר לנכות מהשכר רק ניכויי חובה (מס, ביטוח לאומי, פנסיה) וניכויים שהסכמת להם בכתב. <b>קנסות</b>, חוסרים בקופה או ציוד שנשבר – בדרך כלל אסור לנכות בלי הסכמה.</p>', l: () => link(KZ(PAGES.deductions)) },
+    { id: 'leave', ic: 'alert', t: 'פיטורים והתפטרות', b: () => '<p>לפני פיטורים מגיע <b>שימוע</b>, ומגיעה <b>הודעה מוקדמת</b> לפי הוותק (גם כשמתפטרים צריך לתת הודעה מוקדמת). אחרי שנת עבודה, בפיטורים מגיעים גם <b>פיצויים</b>.</p>', l: () => link(KZ(PAGES.notice)) },
   ];
   const YOUTH = (R, age) => [
     ['clock', `עד <b>${R.dayHours} שעות ביום</b> ועד <b>40 בשבוע</b>${R.dayHours === 9 ? ' (9 רק במקום עבודה של 5 ימים)' : ''}.`],
@@ -18427,7 +19585,7 @@ A cell with only a shift name and no hours: use בוקר 07:00-15:00, צהריי
       if (c.bal.recuperation) rows.push(c.bal.recuperation.eligible ? ['ok', 'דמי הבראה', `כ-${U.money(c.bal.recuperation.amount, 0)} לשנה`] : ['info', 'דמי הבראה', `מ-${U.fmtDate(c.bal.recuperation.eligibleFrom, 'short')}`]);
     } else rows.push(['warn', 'ותק, חופשה והבראה', 'הגדר תאריך תחילת עבודה כדי לחשב']);
     const hd = (c.holidays || []).filter((h) => h.status === 'due');
-    if (hd.length) rows.push(['info', 'דמי חגים', `כ-${U.money(hd.reduce((a, h) => a + h.amount, 0), 0)} על ${hd.length === 1 ? 'יום חג אחד' : hd.length + ' ימי חג'} בשנה האחרונה (אם לא שולמו)`]);
+    if (hd.length) rows.push(['info', 'דמי חגים', `כ-${U.money(hd.reduce((a, h) => a + h.amount, 0), 0)} על ${hd.length === 1 ? 'יום חג אחד' : `${hd.length} ימי חג`} בשנה האחרונה (אם לא שולמו)`]);
     rows.push(['info', 'פנסיה', c.pension]);
     return rows;
   }
@@ -18436,7 +19594,7 @@ A cell with only a shift name and no hours: use בוקר 07:00-15:00, צהריי
     due: (h) => ['ok', `מגיע כ-${U.money(h.amount, 0)}`],
     maybe: (h) => ['warn', `אולי כ-${U.money(h.amount, 0)}, אם ${App.g('היית אמור', 'היית אמורה')} לעבוד ביום הזה`],
     worked: () => ['info', `עבדת בחג: מגיע תשלום על העבודה. אם לא ${App.g('בחרת', 'בחרת')} לעבוד בו אלא ${App.g('נדרשת', 'נדרשת')}, מגיעים גם דמי חג`],
-    weekend: (h) => ['info', `חל ביום ${U.HEB_DAYS[h.dow]}: משתלם רק למי שעובד ביום הזה`],
+    weekend: (h) => ['info', `חל ביום ${U.DAYS[h.dow]}: משתלם רק למי שעובד ביום הזה`],
     seniority: () => ['info', 'לפני 3 חודשי עבודה'],
     nowork: () => ['info', 'לא עבדת בחודשים שלפניו'],
   };
@@ -18444,7 +19602,7 @@ A cell with only a shift name and no hours: use בוקר 07:00-15:00, צהריי
     if (!c.holidays || !c.holidays.length) return '';
     const due = c.holidays.filter((h) => h.status === 'due');
     return `<div class="rt-hol">${c.holidays.map((h) => { const [k, t] = HOL_STATUS[h.status](h); return `<div class="rt-row"><span class="rt-mark" style="color:${MARK[k][1]}">${icon(MARK[k][0], 's')}</span><div><div class="t">${esc(h.name)} · ${U.fmtDate(h.key, 'short')}</div><div class="d">${esc(t)}</div></div></div>`; }).join('')}</div>
-      ${due.length ? `<p class="small">בשנה האחרונה: כ-<b>${U.money(due.reduce((a, h) => a + h.amount, 0), 0)}</b> על ${due.length === 1 ? 'יום חג אחד' : due.length + ' ימי חג'}. כדאי לבדוק שבתלושים של החודשים האלה יש שורה של "דמי חג" או "חגים".</p>` : ''}`;
+      ${due.length ? `<p class="small">בשנה האחרונה: כ-<b>${U.money(due.reduce((a, h) => a + h.amount, 0), 0)}</b> על ${due.length === 1 ? 'יום חג אחד' : `${due.length} ימי חג`}. כדאי לבדוק שבתלושים של החודשים האלה יש שורה של "דמי חג" או "חגים".</p>` : ''}`;
   }
   const MARK = { ok: ['okc', 'var(--good)'], bad: ['alert', 'var(--bad)'], warn: ['alert', 'var(--warn)'], info: ['info', 'var(--on-surface-var)'] };
 
@@ -18462,14 +19620,14 @@ A cell with only a shift name and no hours: use בוקר 07:00-15:00, צהריי
       <div class="card rt-checks">${checks(c).map(([k, t, d]) => `<div class="rt-row"><span class="rt-mark" style="color:${MARK[k][1]}">${icon(MARK[k][0], 's')}</span><div><div class="t">${t}</div><div class="d">${esc(d)}</div></div></div>`).join('')}</div>
       ${minor ? `<div class="section-title">${icon('users', 's')} לבני נוער (גיל ${c.age})</div>
         <div class="card rt-youth" data-topic="נוער לילה הפסקה שעות אישור רפואי">${YOUTH(R, c.age).map(([ic, t]) => `<div class="rt-row"><span class="rt-mark">${icon(ic, 's')}</span><div class="t">${t}</div></div>`).join('')}
-        <div class="tiny" style="margin-top:8px">${link(KZ('זכותון נוער עובד'), 'המדריך לנוער עובד ב"כל זכות"')}</div></div>` : ''}
+        <div class="tiny" style="margin-top:8px">${link(KZ(PAGES.youthGuide), 'המדריך לנוער עובד ב"כל זכות"')}</div></div>` : ''}
       <div class="section-title">${icon('list', 's')} המדריך</div>
       <div class="card rt-topics">${TOPICS.map((tp) => `<details class="rt-topic" data-topic="${esc(tp.t)}"><summary>${icon(tp.ic, 's')}<span>${tp.t}</span><span class="chev">${icon('left', 's')}</span></summary><div class="rt-body">${tp.b(c)}<div class="tiny">${tp.l()}</div></div></details>`).join('')}</div>
       <div class="section-title">${icon('alert', 's')} משהו לא בסדר?</div>
       <div class="card rt-help">
         <ol><li><b>תעד</b>: האפליקציה כבר שומרת את המשמרות, והדוח לבירור מרכז הכול (תלושים, דמי חגים, כל המשמרות) עם מכתב מוכן.</li>
         <li><b>דבר עם המעסיק</b>: בניתוח תלוש יש הודעה מנומסת מוכנה לשליחה.</li>
-        <li><b>קבל עזרה</b>: ${link(KZ('מינהל הסדרה ואכיפת חוקי עבודה'), 'איך מגישים תלונה')} · ${link('https://www.kolzchut.org.il/he/', 'כל זכות')}</li></ol>
+        <li><b>קבל עזרה</b>: ${link(KZ(PAGES.enforcement), 'איך מגישים תלונה')} · ${link('https://www.kolzchut.org.il/he/', 'כל זכות')}</li></ol>
         <button class="btn block" data-act="claim-report" style="margin-bottom:8px">${icon('file')} דוח ומכתב לבירור מול המעסיק</button>
         <button class="btn tonal block" data-rt-ai>${icon('sparkle')} שאלה אחרת? שאל את העוזר</button>
       </div>
@@ -18494,7 +19652,7 @@ A cell with only a shift name and no hours: use בוקר 07:00-15:00, צהריי
     const items = TOPICS.map((tp) => ({ t: tp.t, ic: tp.ic, html: tp.b(c) + `<div class="tiny">${tp.l()}</div>`, extra: KEYWORDS[tp.id] || '' }));
     if (minor) {
       const R = Engine.youthRules(c.age, S.settings.leave && S.settings.leave.workWeek);
-      items.unshift({ t: `לבני נוער (גיל ${c.age})`, ic: 'users', html: YOUTH(R, c.age).map(([, t]) => `<p>${t}</p>`).join('') + `<div class="tiny">${link(KZ('זכותון נוער עובד'), 'המדריך לנוער עובד ב"כל זכות"')}</div>`, extra: 'נוער לילה הפסקה שעות 18 גיל אישור רפואי' });
+      items.unshift({ t: `לבני נוער (גיל ${c.age})`, ic: 'users', html: YOUTH(R, c.age).map(([, t]) => `<p>${t}</p>`).join('') + `<div class="tiny">${link(KZ(PAGES.youthGuide), 'המדריך לנוער עובד ב"כל זכות"')}</div>`, extra: 'נוער לילה הפסקה שעות 18 גיל אישור רפואי' });
     }
     return items.map((it) => Object.assign(it, { text: norm(it.t + ' ' + strip(it.html) + ' ' + it.extra) }));
   }
@@ -18648,14 +19806,15 @@ A cell with only a shift name and no hours: use בוקר 07:00-15:00, צהריי
 
   /* ---------------- what's new (once per big update, for people who already used the app) ---------------- */
   const WHATS_NEW = {
-    id: '1.21',
+    id: '1.21.1',
     items: [
+      ['camera', 'violet', 'צילום של דוח שעות נקרא כמו טבלה', 'כל דוח, בכל סידור עמודות: גם צילום עקום, עם צל או של מסך כהה. האפליקציה מבינה מה כניסה, מה יציאה ומה סה"כ, ומתעלמת מכל השאר.'],
       ['calendar', 'sky', 'ייבוא סידור עבודה', 'מצלמים את הסידור או מדביקים את ההודעה מוואטסאפ, והמשמרות שלך נכנסות ללוח. בהוספה (+) או בלוח השנה.'],
       ['share', 'violet', 'שיתוף ישר מוואטסאפ', 'לחיצה ארוכה על הסידור בוואטסאפ › שיתוף › Shaati. גם תלוש או דוח שעות.'],
       ['star', 'mint', 'דמי חגים', 'האפליקציה בודקת על אילו חגים מגיע לך תשלום כשלא עבדת, וכמה. בזכויות › דמי חגים.'],
       ['file', 'pink', 'דוח ומכתב למעסיק', 'משהו לא מסתדר בשכר? דוח מסודר (PDF) עם כל הממצאים והמשמרות, ומכתב מנומס מוכן. בזכויות או בדוחות.'],
       ['clock', 'amber', '"שכחת לסיים את המשמרת?"', 'משמרת שנמשכת הרבה יותר מהרגיל שלך שואלת בעדינות, עם שעת הסיום הנכונה מוכנה ללחיצה.'],
-      ['sparkle', 'mint', 'פתיחה חלקה', 'האינטרו מחכה שהכול ייטען, ומסך הבית מופיע מוכן, בלי קפיצות.'],
+      ['sparkle', 'mint', 'פתיחה חלקה', 'האינטרו מחכה שהכול ייטען, ומסך הבית מופיע מוכן: בלי קפיצות, ובלי הבהוב של כרטיס השכר בסוף האינטרו.'],
     ],
   };
 
@@ -19170,7 +20329,7 @@ A cell with only a shift name and no hours: use בוקר 07:00-15:00, צהריי
       body: `<div class="ach-head"><b>${got} מתוך ${list.length}</b><div class="progress thin"><i style="width:${(got / list.length) * 100}%"></i></div></div>
         <div class="ach-grid">${list.map((a, k) => `<button class="ach ${a.on ? 'on' : ''}" data-ach="${a.id}" style="--k:${k}">
           <span class="ach-e" aria-hidden="true">${a.emoji}</span><b>${esc(a.title)}</b>
-          <small>${a.on ? 'הושג' : a.prog && a.prog.goal > 1 ? `${a.prog.cur.toLocaleString('he-IL')} מתוך ${a.prog.goal.toLocaleString('he-IL')}` : 'עוד לא'}</small></button>`).join('')}</div>`,
+          <small>${a.on ? 'הושג' : a.prog && a.prog.goal > 1 ? `${a.prog.cur.toLocaleString('en-US')} מתוך ${a.prog.goal.toLocaleString('en-US')}` : 'עוד לא'}</small></button>`).join('')}</div>`,
       onMount: (el) => el.addEventListener('click', (e) => {
         const b = e.target.closest('[data-ach]');
         if (!b) return;
@@ -19192,7 +20351,7 @@ A cell with only a shift name and no hours: use בוקר 07:00-15:00, צהריי
       body: `${App.mascotSays ? App.mascotSays('party', 'הפסקה קטנה? כל משחק לוקח פחות מדקה.', { size: 64 }) : ''}${(() => {
           const st = playStreak();
           if (!st.n) return '';
-          return `<div class="gm-streak-bar ${st.today ? 'on' : ''}"><span aria-hidden="true">🔥</span><b>${st.n === 1 ? 'יום אחד' : st.n + ' ימים'} ברצף</b><small>${st.today ? 'שיחקת היום. נתראה מחר!' : 'סיבוב אחד היום שומר על הרצף'}</small></div>`;
+          return `<div class="gm-streak-bar ${st.today ? 'on' : ''}"><span aria-hidden="true">🔥</span><b>${st.n === 1 ? 'יום אחד ברצף' : `${st.n} ימים ברצף`}</b><small>${st.today ? 'שיחקת היום. נתראה מחר!' : 'סיבוב אחד היום שומר על הרצף'}</small></div>`;
         })()}<div class="gm-list">${cards()}</div>
         ${root.Champions ? root.Champions.hubCard() : ''}
         <button class="ach-card" data-medals>${(() => { const l = achievements(); const got = l.filter((a) => a.on).length; return `<span class="ach-card-e" aria-hidden="true">🏅</span><span class="gm-txt"><b>המדליות שלי</b><span>${got} מתוך ${l.length} · על משמרות, כסף, תלושים ומשחקים</span></span>${icon('left', 's')}`; })()}</button>`,
@@ -19570,7 +20729,7 @@ A cell with only a shift name and no hours: use בוקר 07:00-15:00, צהריי
       showOver();
       const mins = rate ? Math.round((st.score / rate) * 60) : 0;
       const h = Math.floor(mins / 60), m = mins % 60;
-      const span = h ? `${h === 1 ? 'שעה' : h === 2 ? 'שעתיים' : h + ' שעות'}${m ? ` ו-${m} דקות` : ''}` : `${mins} דקות`;
+      const span = h ? `${h === 1 ? 'שעה' : h === 2 ? 'שעתיים' : `${h} שעות`}${m ? ` ו-${m} דקות` : ''}` : `${mins} דקות`;
       endScreen(over, {
         fx,
         id: 'coins', unit: ' ₪', score: st.score, ratio: Math.min(1, st.score / 400),
@@ -19893,7 +21052,7 @@ A cell with only a shift name and no hours: use בוקר 07:00-15:00, צהריי
     const own = myRate();
     const rate = own > 0 ? Math.round(own * 100) / 100 : 40;
     let chain, i, streak, answered;
-    const money = (v) => `${v.toLocaleString('he-IL')} ₪`;
+    const money = (v) => `${v.toLocaleString('en-US')} ₪`;
     const item = (t, open, cls) => `<div class="hw-card ${cls || ''}"><span class="hw-e" aria-hidden="true">${t.e}</span><b>${esc(t.name)}</b>
       ${open ? `<span class="hw-p">${money(t.price)}</span><span class="hw-h">${Games.workTime(t.price / rate)}</span>` : '<span class="hw-q" aria-label="מחיר מוסתר">?</span>'}</div>`;
     function start() { clearTimeout(next); chain = Games.hoursRound(seed(), 60); i = 0; streak = 0; show(); }
@@ -20408,7 +21567,7 @@ A cell with only a shift name and no hours: use בוקר 07:00-15:00, צהריי
       text: U.money(x.perHour),
     })), null) : '');
     const t = a.trend;
-    const m = (mk) => U.HEB_MONTHS[+mk.slice(5, 7) - 1];
+    const m = (mk) => U.MONTHS[+mk.slice(5, 7) - 1];
     return `
       <div class="card an-sum"><div class="kpis">
         <div class="kpi"><div class="l">ממוצע לשעה</div><div class="v">${U.money(a.avgHour)}</div><div class="d">${a.count} משמרות בשנה האחרונה</div></div>
@@ -20450,7 +21609,7 @@ A cell with only a shift name and no hours: use בוקר 07:00-15:00, צהריי
       title: 'ניתוח מתקדם ✨',
       full: true,
       cls: 'an-sheet',
-      body: body(a) + (left !== Infinity ? `<div class="an-left tiny">${left ? `נשארו החודש ${left === 1 ? 'ניתוח אחד' : left + ' ניתוחים'} חינם` : 'זה היה הניתוח החינמי האחרון החודש'} · <button class="btn text sm" data-act="plus-open">בלי הגבלה עם Plus</button></div>` : ''),
+      body: body(a) + (left !== Infinity ? `<div class="an-left tiny">${left ? `נשארו החודש ${left === 1 ? 'ניתוח אחד' : `${left} ניתוחים`} חינם` : 'זה היה הניתוח החינמי האחרון החודש'} · <button class="btn text sm" data-act="plus-open">בלי הגבלה עם Plus</button></div>` : ''),
     });
   };
 })(typeof window !== 'undefined' ? window : globalThis);
@@ -20490,12 +21649,12 @@ A cell with only a shift name and no hours: use בוקר 07:00-15:00, צהריי
       roleName: (id) => App.roleName(id),
     });
   }
-  function monthName(pk) { return U.HEB_MONTHS[+pk.slice(5, 7) - 1]; }
+  function monthName(pk) { return U.MONTHS[+pk.slice(5, 7) - 1]; }
   const lastPeriodKey = () => U.addMonthKey(Engine.periodOf(U.todayKey(), S.employers[0]).key, -1);
 
   /* ---------------- the cards ---------------- */
   const num = (to, kind) => `<div class="st-num" data-to="${to}" data-kind="${kind || 'money'}">${kind === 'hours' ? U.num(to, 1) : money0(to)}</div>`;
-  const day = (k) => `${U.HEB_DAYS[U.dow(k)]}, ${+k.slice(8)}.${+k.slice(5, 7)}`;
+  const day = (k) => `${U.DAYS[U.dow(k)]}, ${+k.slice(8)}.${+k.slice(5, 7)}`;
   const CARD = {
     intro: (s) => `${App.mascot ? App.mascot('wave', { size: 120, cls: 'st-m' }) : ''}<div class="st-k">הסיכום החודשי שלך</div><div class="st-big">${esc(s.label)}</div>
       <div class="st-sub">${S.settings.userName ? esc(String(S.settings.userName).split(' ')[0]) + ', ' : ''}בואו נראה איך היה החודש בעבודה</div>`,
@@ -20826,10 +21985,10 @@ A cell with only a shift name and no hours: use בוקר 07:00-15:00, צהריי
       const delClosed = body.querySelector('[data-adm-del-closed]');
       if (delClosed) delClosed.onclick = async () => {
         const n = inbox.closed.length;
-        if (!(await UI.confirm(`למחוק ${n === 1 ? 'פנייה סגורה אחת' : n + ' פניות סגורות'}?`, 'הן וכל ההודעות בהן יימחקו לתמיד. פניות פתוחות לא נוגעים בהן.', 'מחק', true))) return;
+        if (!(await UI.confirm(`למחוק ${n === 1 ? 'פנייה סגורה אחת' : `${n} פניות סגורות`}?`, 'הן וכל ההודעות בהן יימחקו לתמיד. פניות פתוחות לא נוגעים בהן.', 'מחק', true))) return;
         delClosed.disabled = true;
         const done = await root.Support.removeClosed(inbox.closed);
-        if (done) UI.toast(done === 1 ? 'פנייה אחת נמחקה' : done + ' פניות נמחקו');
+        if (done) UI.toast(done === 1 ? 'פנייה אחת נמחקה' : `${done} פניות נמחקו`);
         load();
       };
       body.querySelector('[data-adm-refresh]').onclick = () => { body.innerHTML = UI.skeleton(4, 'card'); load(); };
