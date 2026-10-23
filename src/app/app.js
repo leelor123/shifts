@@ -802,6 +802,7 @@
     if (action === 'add') App.sheetsApi.shiftEditor();
     if (action === 'schedule' && App.importSchedule) App.importSchedule(); // the app icon's shortcut
     if (action === 'share-in' && App.receiveShare) App.receiveShare(); // shared to the app (sw.js)
+    if (action === 'support' && App.actions.support) setTimeout(() => App.actions.support(), 300); // Play testers' feedback link
     if (action === 'plus' && root.Plus) setTimeout(() => root.Plus.sheet(), 600); // back from the web checkout (?action=plus): straight to the code field
     setTimeout(() => { App.runInsights(); App.autoBackupCheck(); }, 1200);
     // is Shaati Plus for sale here, and owned? (Google Play, Android app only) The opening show waits for the

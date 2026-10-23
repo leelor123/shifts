@@ -63,9 +63,22 @@
     if (/\.(csv|tsv|txt)$/i.test(name) || /^text\//.test(file.type)) {
       return decode(await file.arrayBuffer()).replace(/[;,\t]/g, ' | ');
     }
-    if (/\.pdf$/i.test(name) || file.type === 'application/pdf' || /^image\//.test(file.type)) {
-      if (!App.readDocText) throw new Error('הקריאה לא זמינה כרגע');
-      return (await App.readDocText(file, progress)).text;
+    const isPdf = /\.pdf$/i.test(name) || file.type === 'application/pdf';
+    if (isPdf || /^image\//.test(file.type)) {
+      if (!App.readDocText || !App.readDocWords) throw new Error('הקריאה לא זמינה כרגע');
+      // a PDF with text: its lines (all its pages); when they hold no shifts, or it is a picture, it is read as a
+      // table: each word where it stands on the page (core/timesheet.js parseWords)
+      if (isPdf) {
+        const doc = await App.readDocText(file, progress, { noOcr: true });
+        if (doc.source === 'pdf' && root.Timesheet.parse(doc.text, { today: U.todayKey() }).rows.length >= 2) return doc.text;
+      }
+      const got = await App.readDocWords(file, progress);
+      progress('מסדר את הטבלה…');
+      const res = root.Timesheet.parseWords(got.words, { today: U.todayKey() });
+      // the words read in reading order, for the "what was read" box and as a last try as plain text
+      const text = res.text || '';
+      if (!res.rows.length) return text;
+      return { result: res, text };
     }
     throw new Error('סוג קובץ שלא מכירים. אפשר Excel, ‏CSV, ‏PDF, תמונה או טקסט');
   }
@@ -75,7 +88,7 @@
   App.actions['import-hours'] = () => App.importHours();
   App.importHours = function (opts) {
     if (UI.sheets.length && !(opts && opts.over)) UI.closeAll();
-    let rows = [], noStart = 0, guessedYear = false;
+    let rows = [], noStart = 0, guessedYear = false, noExit = 0;
     let roleId = S.meta.lastRole && App.roles().some((r) => r.id === S.meta.lastRole) ? S.meta.lastRole : (App.roles()[0] || {}).id;
     let startFor = '09:00';
     const entry = UI.openSheet({
@@ -106,7 +119,7 @@
         <details class="imp-paste"><summary>${icon('edit', 's')} או להדביק טקסט</summary>
           <textarea class="input" id="imp-text" rows="6" placeholder="למשל:&#10;14/10/2026 08:00 16:30&#10;15/10/2026 16:00 23:00"></textarea>
           <button class="btn tonal block" data-imp-read>${icon('check', 's')} קריאה</button></details>
-        <div class="tiny muted imp-privacy">${icon('shield', 's')} הקובץ נקרא בטלפון בלבד, ולא נשלח לשום מקום.</div>`;
+        <div class="tiny muted imp-privacy">${icon('shield', 's')} הקובץ נקרא בטלפון בלבד, ולא נשלח לשום מקום. צילום נקרא כטבלה: כל דוח, בכל סידור עמודות.</div>`;
     }
     function busy(text) { box.innerHTML = `<div class="imp-busy">${App.mascot ? App.mascot('think', { size: 84 }) : ''}<div class="imp-bar" aria-hidden="true"><i></i></div><div class="small" id="imp-progress" role="status">${esc(text)}</div></div>`; }
     function progress(text) { const p = box.querySelector('#imp-progress'); if (p) p.textContent = text; }
@@ -133,6 +146,7 @@
       box.innerHTML = `${App.mascotSays ? App.mascotSays('love', `מצאתי ${rows.length === 1 ? 'משמרת אחת' : rows.length + ' משמרות'}! 🎉 בודקים רגע ומוסיפים`, { size: 64 }) : ''}
         ${roles.length > 1 ? `<div class="field"><span class="lbl">לאיזה תפקיד לשייך?</span><div class="chips imp-roles">${roles.map((r) => `<button class="chip ${r.id === roleId ? 'on' : ''}" data-imp-role="${r.id}"><span class="sw" style="background:${r.color}"></span>${esc(r.name)}${App.multiEmp() ? ' · ' + esc((App.employer(r.employerId) || {}).name || '') : ''}</button>`).join('')}</div></div>` : ''}
         ${noStart ? `<label class="field"><span class="lbl">${noStart === 1 ? 'במשמרת אחת' : `ב-${noStart} משמרות`} כתוב רק כמה שעות. באיזו שעה הן מתחילות?</span><input class="input" type="time" id="imp-start" value="${startFor}"></label>` : ''}
+        ${noExit ? `<div class="tiny muted imp-note">${icon('info', 's')} ${noExit === 1 ? 'בשורה אחת' : `ב-${noExit} שורות`} יש כניסה בלי יציאה, ולכן ${noExit === 1 ? 'היא לא נכנסה' : 'הן לא נכנסו'}. אפשר להוסיף ${noExit === 1 ? 'אותה' : 'אותן'} ידנית.</div>` : ''}
         ${guessedYear ? `<div class="tiny muted imp-note">${icon('info', 's')} בשורות בלי שנה לקחנו את התאריך האחרון שכבר עבר.</div>` : ''}
         <div class="imp-head"><b>${first === last ? U.fmtDate(first, 'short') : `⁦${U.fmtDate(first, 'short')}⁠–⁠${U.fmtDate(last, 'short')}⁩`}</b><button class="btn text sm" data-imp-all>${rows.every((r) => r.on) ? 'לבטל הכול' : 'לסמן הכול'}</button></div>
         <div class="imp-list">${list}</div>`;
@@ -147,14 +161,17 @@
       const all = box.querySelector('[data-imp-all]');
       if (all) all.textContent = rows.every((r) => r.on) ? 'לבטל הכול' : 'לסמן הכול';
     }
-    async function parse(text) {
-      const p = root.Timesheet.parse(text, { today: U.todayKey() });
+    async function parse(got) {
+      // read as a table (a picture) or as lines of text
+      const text = typeof got === 'string' ? got : got.text;
+      const p = typeof got === 'string' ? root.Timesheet.parse(text, { today: U.todayKey() }) : got.result;
       // the same shift twice in one report (two sheets, a repeated line): once
       const seen = new Set();
       rows = p.rows.filter((r) => { const k = r.date + r.start + r.end + r.hours; if (seen.has(k)) return false; seen.add(k); return true; })
         .sort((a, b) => (a.date + (a.start || '')).localeCompare(b.date + (b.start || '')));
       noStart = rows.filter((r) => !r.start).length;
       guessedYear = p.guessedYear;
+      noExit = p.skipped || 0; // an entry without an exit (a missed clock-out)
       if (!rows.length) { none(text); return; }
       if (root.Fx) root.Fx.play('pick');
       review();
