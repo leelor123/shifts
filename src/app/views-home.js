@@ -56,7 +56,7 @@
     const roles = [...new Set(r.segments.map((s) => s.roleId))];
     const role = App.role(roles[0]);
     const title = roles.map(App.roleName).join(' → ');
-    const date = opts.noDate ? '' : U.fmtDate(r.dateKey, 'short') + ' · ' + U.DAYS[U.dow(r.dateKey)] + ' · ';
+    const date = opts.noDate ? '' : U.fmtDate(r.dateKey, 'short') + ' · ' + (U.LANG === 'he' ? U.DAYS : U.DAYS_SHORT)[U.dow(r.dateKey)] + ' · '; // ("Thu" in English: the Hebrew name is already short)
     const planned = r.status === 'planned' ? '<span class="tag planned">מתוכננת</span>' : '';
     const emp = App.multiEmp() ? ' · ' + esc(App.employer(r.employerId).name) : '';
     return `<button class="item" data-act="shift-open" data-id="${r.id}">

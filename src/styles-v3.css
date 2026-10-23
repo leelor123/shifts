@@ -1584,3 +1584,8 @@ html[dir="ltr"] #print-root th, html[dir="ltr"] #print-root td { text-align: lef
 .qz-pts { direction: ltr; unicode-bidi: isolate; }
 /* the alerts list's header: in a long language (Russian) its two buttons go to a second line instead of out of the sheet */
 .row-flex:has(> [data-readall]) { flex-wrap: wrap; row-gap: 0; }
+/* longer words in the other languages: a list row's second line, a chart's names and the champions table's tabs
+   wrap between words (two lines at most) instead of being cut short; Hebrew fits on one line and keeps its look */
+html:not([lang="he"]) .item .s, html:not([lang="he"]) .hbar .nm { white-space: normal; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; }
+html:not([lang="he"]) .hbar .nm { line-height: 1.2; }
+html:not([lang="he"]) .lb-games button, html:not([lang="he"]) .lb-periods button { white-space: normal; overflow-wrap: normal; line-height: 1.15; text-wrap: balance; padding-block: 3px; }

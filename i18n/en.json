@@ -916,7 +916,7 @@
  "כל הזמנים": "All time",
  "מטבעות": "Coins",
  "חשבון": "Math",
- "נכון/לא": "True/false",
+ "נכון/לא": "True / false",
  "<button class=\"btn text sm\" data-lb-open>{0} להתחרות בטבלת האלופים</button>": "<button class=\"btn text sm\" data-lb-open>{0} Compete on the leaderboard</button>",
  "<span class=\"muted\">🏆 בודקים את המקום שלך…</span>": "<span class=\"muted\">🏆 Checking your place…</span>",
  "שיא של כל הזמנים!": "All-time record!",
