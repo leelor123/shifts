@@ -143,9 +143,9 @@ T.test('slip-to-slip changes', () => {
 });
 T.test('missing shift with overtime is not double counted', () => {
   const shifts = septShifts();
-  shifts.push(shift('2026-09-29', '08:00', '18:00')); // 10h incl. 2h at 125%, not on the slip
+  shifts.push(shift('2026-09-29', '08:00', '18:00')); // 10h: 8.6 regular + 1.4 at 125% (the law's day in a five-day week), not on the slip
   const a = Payslip.analyze(Payslip.parseText(SAMPLE), model(shifts));
   const h = a.findings.find((x) => x.area === 'שעות');
-  T.eq(h.status, 'bad'); T.near(h.amount, 8 * 40 + 2 * 50, 0.01); T.eq(h.confidence, 'high');
+  T.eq(h.status, 'bad'); T.near(h.amount, 8.6 * 40 + 1.4 * 50, 0.01); T.eq(h.confidence, 'high');
   T.eq(a.findings.find((x) => x.area === 'שעות נוספות').status, 'ok');
 });

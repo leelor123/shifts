@@ -131,7 +131,7 @@
     personal: { icon: 'users', title: 'פרטים אישיים', sub: () => { const a = Engine.ageAt(S.settings.birthDate, U.todayKey()); return (S.settings.userName || 'שם לא הוזן') + (a != null ? ' · גיל ' + a + (a < 18 ? ' (פטור ממסים)' : '') : ''); } },
     account: { icon: 'cloud', title: 'חשבון וסנכרון', sub: () => (S.meta.cloudEmail || 'לא מחובר') + ' · ' + root.Cloud.statusText() },
     roles: { icon: 'users', title: 'מעסיקים, תפקידים ותעריפים', sub: () => App.roles().map((r) => r.name + ' ' + U.money(Engine.roleRate(r, U.todayKey()), 0)).join(' · ') },
-    calc: { icon: 'flask', title: 'חוקי חישוב', sub: () => { const e = S.employers[0]; return `ש״נ אחרי ${e.otThreshold} ש׳ · שבת ${e.restPct}% · עיגול: ${e.roundingMode === 'none' ? 'ללא' : e.roundingUnit + ' דק׳'}`; } },
+    calc: { icon: 'flask', title: 'חוקי חישוב', sub: () => { const e = S.employers[0]; return `${Engine.otByLaw(e) ? 'ש״נ לפי החוק' : `ש״נ אחרי ${e.otThreshold} ש׳`} · שבת ${e.restPct}% · עיגול: ${e.roundingMode === 'none' ? 'ללא' : e.roundingUnit + ' דק׳'}`; } },
     rest: { icon: 'candle', title: 'שבת וחגים', sub: () => (S.settings.rest.mode === 'city' ? 'לפי ' + (S.settings.rest.city === '__custom' ? 'מיקום מותאם' : App.placeLabel ? App.placeLabel(S.settings.rest.city).name : S.settings.rest.city) : `קבוע: ⁦${S.settings.rest.fixedStart}\u2060–\u2060${S.settings.rest.fixedEnd}⁩`) + (S.dayRules.length ? ` · ${S.dayRules.length} כללי יום` : '') },
     pay: { icon: 'car', title: 'נסיעות ותקופת שכר', sub: () => { const e = S.employers[0]; return `${U.money(e.travelPerDay)} ליום${+e.travelMonthlyCap ? ', תקרה ' + U.money(e.travelMonthlyCap, 0) : ''} · ${e.periodStartDay > 1 ? 'מ-' + e.periodStartDay + ' לחודש' : 'חודש קלנדרי'} · תשלום ב-${e.payDay}`; } },
     net: { icon: 'wallet', title: 'נטו משוער ומס', sub: () => `${S.settings.tax.creditPoints} נק׳ זיכוי · פנסיה ${S.settings.pension.employeePct}%${S.settings.hishtalmut.enabled ? ' · השתלמות' : ''}` },
@@ -468,11 +468,13 @@
     perEmployer: true,
     render: (e) => `
       <div class="section-title">${icon('clock', 's')} שעות נוספות</div><div class="card">
-        ${F.num('שעות רגילות ביום', 'e.otThreshold', e.otThreshold, 'אחריהן מתחילות שעות נוספות. חוק: 8.6 בשבוע של 5 ימים, 8 בשבוע של 6 ימים.')}
+        ${F.sw('לפי החוק (מומלץ)', +S.settings.leave.workWeek === 6 ? 'ביום מעל 8 שעות (בשישי מעל 7), במשמרת לילה מעל 7, ובשבוע מעל 42 שעות רגילות' : 'ביום מעל 8.6 שעות, במשמרת לילה מעל 7, ובשבוע מעל 42 שעות רגילות', 'e.otLaw', Engine.otByLaw(e)).replace('data-s=', 'data-redraw data-s=')}
+        ${F.sel('ימי עבודה בשבוע במקום העבודה', 's.leave.workWeek', [[5, '5 ימים (ראשון עד חמישי)'], [6, '6 ימים']], +S.settings.leave.workWeek === 6 ? 6 : 5).replace('data-s=', 'data-redraw data-s=')}
+        ${Engine.otByLaw(e) ? '' : F.num('שעות רגילות ביום', 'e.otThreshold', e.otThreshold, 'אחריהן מתחילות שעות נוספות (שעות מעל 42 בשבוע הן נוספות תמיד).')}
         <div class="grid3">${F.num('שעות בדרגה 1', 'e.otTier1Hours', e.otTier1Hours)}${F.num('אחוז דרגה 1', 'e.otTier1Pct', e.otTier1Pct)}${F.num('אחוז דרגה 2', 'e.otTier2Pct', e.otTier2Pct)}</div>
         ${F.sel('ספירה', 'e.otMode', [['daily', 'ליום עבודה (כל המשמרות שמתחילות באותו יום)'], ['shift', 'לכל משמרת בנפרד']], e.otMode)}
-        ${F.sw('משמרת לילה = יום קצר', 'משמרת שלפחות שעתיים ממנה בין 22:00 ל-06:00', 'e.nightShiftShortDay', e.nightShiftShortDay)}
-        ${e.nightShiftShortDay ? F.num('שעות רגילות במשמרת לילה', 'e.nightShiftThreshold', e.nightShiftThreshold) : ''}</div>
+        ${Engine.otByLaw(e) ? '' : `${F.sw('משמרת לילה = יום קצר', 'משמרת שלפחות שעתיים ממנה בין 22:00 ל-06:00', 'e.nightShiftShortDay', e.nightShiftShortDay).replace('data-s=', 'data-redraw data-s=')}
+        ${e.nightShiftShortDay ? F.num('שעות רגילות במשמרת לילה', 'e.nightShiftThreshold', e.nightShiftThreshold) : ''}`}</div>
       <div class="section-title">${icon('candle', 's')} שבת וחג</div><div class="card">
         <div class="grid3">${F.num('שבת/חג %', 'e.restPct', e.restPct)}${F.num('+ נוספות דרגה 1', 'e.restOt1Pct', e.restOt1Pct)}${F.num('+ נוספות דרגה 2', 'e.restOt2Pct', e.restOt2Pct)}</div>
         ${F.num('תוספת ערב שבת/חג %', 'e.evePct', e.evePct, '0 = ללא. השעות שבהן חלה התוספת מוגדרות במסך "שבת וחגים".')}</div>

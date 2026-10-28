@@ -20,12 +20,13 @@
       travelPerDay: 16, // what most hourly workers get per day (the legal maximum is higher, ~22.6)
       travelMonthlyCap: 0, // 0 = no cap
       // --- overtime ---
-      otMode: 'daily', // daily = all shifts that start on the same date share the 8h counter
-      otThreshold: 8, // hours/day at 100%
+      otMode: 'daily', // daily = all shifts that start on the same date share the day's counter
+      otLaw: true, // by the law: 8.6 h a day in a five-day week, 8 in a six-day week (Friday 7), 7 in a night shift; 42 a week
+      otThreshold: 8, // hours/day at 100% when otLaw is off (set by hand)
       otTier1Hours: 2, // first OT hours at tier 1
       otTier1Pct: 125,
       otTier2Pct: 150,
-      nightShiftShortDay: false, // law: night shift (>=2h between 22-06) -> 7h day
+      nightShiftShortDay: false, // when otLaw is off: a night shift (>=2h between 22-06) -> a shorter day (by the law it is)
       nightShiftThreshold: 7,
       // --- rest days (Shabbat / holidays) ---
       restPct: 150,

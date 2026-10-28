@@ -113,9 +113,29 @@
     return !!(o.rate || o.rest || o.ot || o.night || o.travel || o.special);
   }
 
+  /* ---------------- overtime: the law's limits ----------------
+   * By the law (חוק שעות עבודה ומנוחה; kolzchut.org.il "גמול עבור שעות נוספות"), in the private sector: first the
+   * day — 8.6 hours in a five-day week (8 h 36 min), 8 in a six-day week and 7 on its Friday, 7 in a night shift (at
+   * least 2 hours between 22:00 and 06:00) — then the week: regular hours beyond 42 (Sunday to Saturday) are overtime
+   * too. (The five-day week's one short day of 7.6 hours comes out the same through the 42.) An employer whose
+   * daily limit was set by hand (anything but the old default 8) keeps it; otLaw says which one applies. */
+  const WEEK_REG_H = 42;
+  const otByLaw = (emp) => (emp.otLaw != null ? !!emp.otLaw : !(+emp.otThreshold > 0) || +emp.otThreshold === 8);
+  /** The day's regular hours before overtime starts. */
+  function otDayHours(emp, settings, dateKey, nightShift) {
+    if (otByLaw(emp)) {
+      if (nightShift) return 7;
+      const six = +((settings && settings.leave) || {}).workWeek === 6;
+      return six ? (U.dow(dateKey) === 5 ? 7 : 8) : 8.6;
+    }
+    return emp.nightShiftShortDay && nightShift ? +emp.nightShiftThreshold || 7 : +emp.otThreshold || 8;
+  }
+
   /**
    * Compute pay for one shift.
    * opts.priorMin  — paid minutes already worked earlier the same workday (daily OT)
+   * opts.priorOtMin — of them, the overtime minutes (the day's first two overtime hours are tier 1)
+   * opts.weekRegMin — regular (not overtime) minutes already worked earlier the same week (the 42-hour limit)
    * opts.ignoreOverrides — compute as if no manual overrides / day rules existed
    */
   function computeShift(shift, ctx, opts) {
@@ -213,28 +233,42 @@
     const lawNightMin = overlapMin(start, end, lawNight);
     const lawNightPaidH = (lawNightMin * paidFactor) / 60; // hours between 22:00-06:00, for reports
     const isNightShift = lawNightMin >= 120;
-    let thresholdH = +emp.otThreshold || 8;
-    if (emp.nightShiftShortDay && isNightShift) thresholdH = +emp.nightShiftThreshold || 7;
+    let thresholdH = otDayHours(emp, settings, dk, isNightShift);
     const otOv = ov.ot || null;
     if (otOv && otOv.mode === 'threshold' && +otOv.hours > 0) thresholdH = +otOv.hours;
     const otOff = otOv && otOv.mode === 'off';
     const t1 = thresholdH * 60;
-    const t2 = t1 + (+emp.otTier1Hours || 2) * 60;
-    let cum = emp.otMode === 'daily' ? Math.max(0, +opts.priorMin || 0) : 0;
+    const tier1Min = (+emp.otTier1Hours || 2) * 60;
+    const daily = emp.otMode === 'daily';
+    let cum = daily ? Math.max(0, +opts.priorMin || 0) : 0; // the day's paid minutes so far
+    let dayOt = daily ? Math.max(0, +opts.priorOtMin || 0) : 0; // of them, overtime
+    let weekReg = Math.max(0, +opts.weekRegMin || 0); // the week's regular minutes so far
+    const weekCap = WEEK_REG_H * 60;
+    let regMin = 0, otMin = 0, weekOtMin = 0;
 
     const pieces = [];
     for (const s of slices) {
       let pm = s.min * paidFactor;
       if (pm <= 0) continue;
-      if (otOff) { pieces.push(Object.assign({}, s, { tier: 0, pm })); cum += pm; continue; }
-      const edges = [[0, t1], [1, t2], [2, Infinity]];
-      let lo = 0;
-      for (const [tier, hi] of edges) {
-        const from = Math.max(cum, lo), to = Math.min(cum + pm, hi);
-        if (to > from) pieces.push(Object.assign({}, s, { tier, pm: to - from }));
-        lo = hi;
+      if (otOff) { pieces.push(Object.assign({}, s, { tier: 0, pm })); cum += pm; regMin += pm; weekReg += pm; continue; }
+      // regular while both the day's and the week's regular hours last; then overtime: the day's first two
+      // overtime hours at tier 1, the rest at tier 2
+      while (pm > 1e-9) {
+        const dayRoom = t1 - cum, weekRoom = weekCap - weekReg;
+        const room = Math.min(dayRoom, weekRoom);
+        if (room > 1e-9) {
+          const x = Math.min(pm, room);
+          pieces.push(Object.assign({}, s, { tier: 0, pm: x }));
+          cum += x; weekReg += x; regMin += x; pm -= x;
+          continue;
+        }
+        const t1Room = tier1Min - dayOt;
+        const tier = t1Room > 1e-9 ? 1 : 2;
+        const x = tier === 1 ? Math.min(pm, t1Room) : pm;
+        pieces.push(Object.assign({}, s, { tier, pm: x }));
+        if (dayRoom > 1e-9) weekOtMin += x; // overtime only because of the week's 42 hours
+        cum += x; dayOt += x; otMin += x; pm -= x;
       }
-      cum += pm;
     }
 
     /* ---- multipliers ---- */
@@ -418,7 +452,8 @@
       travel, bonus, tips, additions, deductions,
       total: wage + travel.amount + bonus + additions,
       restLabels, autoRestRange, autoRestMin,
-      thresholdH, priorMin: +opts.priorMin || 0,
+      thresholdH, priorMin: +opts.priorMin || 0, otByLaw: otByLaw(emp),
+      regMin, otMin, weekOtMin, weekRegBefore: Math.max(0, +opts.weekRegMin || 0),
       overridden: !opts.ignoreOverrides && hasOverrides(shift), overrideList,
       dayRuleHit,
       warnings,
@@ -459,17 +494,25 @@
       if (!groups.has(key)) groups.set(key, []);
       groups.get(key).push(s);
     }
-    for (const list of groups.values()) {
+    // days in date order, so the week's regular hours (the 42-hour limit) add up from Sunday on
+    const weekReg = new Map(); // employer|status|the week's Sunday → regular minutes so far
+    const keys = [...groups.keys()].sort((a, b) => { const [ea, da, sa] = a.split('|'), [eb, db, sb] = b.split('|'); return ea === eb ? (sa === sb ? (da < db ? -1 : da > db ? 1 : 0) : sa < sb ? -1 : 1) : ea < eb ? -1 : 1; });
+    for (const key of keys) {
+      const list = groups.get(key);
       list.sort((a, b) => a.start - b.start);
-      let prior = 0;
+      const [emp, dk, st] = key.split('|');
+      const wk = emp + '|' + st + '|' + U.addDays(dk, -U.dow(dk));
+      let prior = 0, priorOt = 0;
       for (const s of list) {
         let r;
-        try { r = computeShift(s, ctx, { priorMin: prior, ignoreOverrides: opts.ignoreOverrides }); } catch (e) {
+        try { r = computeShift(s, ctx, { priorMin: prior, priorOtMin: priorOt, weekRegMin: weekReg.get(wk) || 0, ignoreOverrides: opts.ignoreOverrides }); } catch (e) {
           if (typeof console !== 'undefined') console.warn('shift skipped, it could not be calculated', s.id, e && e.message);
           continue;
         }
         out.set(s.id, r);
         prior += r.paidMin;
+        priorOt += r.otMin || 0;
+        weekReg.set(wk, (weekReg.get(wk) || 0) + (r.regMin || 0));
       }
     }
     return out;
@@ -987,7 +1030,7 @@
   }
 
   root.Engine = {
-    LAW_BREAK, validShift, validEntry, legalMinWage, minWageFor, youthRules, pensionMinAge, MIN_WAGE, BL_YEARS, RECUP_YEARS, blLimits, recuperationRate,
+    LAW_BREAK, validShift, validEntry, otByLaw, otDayHours, WEEK_REG_H, legalMinWage, minWageFor, youthRules, pensionMinAge, MIN_WAGE, BL_YEARS, RECUP_YEARS, blLimits, recuperationRate,
     makeCtx, roleRate, roundMinutes, monthsBetween, buildSegments, hasOverrides, computeShift, computeAll,
     periodByKey, periodOf, dayValue, computeEntries, travelByDay, incomeTaxRaw, netEstimate, pensionActive,
     buildModel, totals, periodSummary, rangeSummary, pensionBaseOf, leaveBalances, holidayPay, vacationEntitlement, recuperationDays, ageAt, isMinor,

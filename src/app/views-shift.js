@@ -194,7 +194,8 @@
     const notes = [];
     notes.push(`זמן במשמרת: ${U.hm(r.elapsedMin)}` + (r.roundingDeltaMin ? ` · עיגול: ${r.roundingDeltaMin > 0 ? '+' : ''}${r.roundingDeltaMin} דק׳` : ''));
     if (r.breakMin) notes.push(`הפסקה ${r.breakMin} דק׳${r.breakAuto ? ' (אוטומטית לפי החוק)' : ''} ${r.breakPaid ? 'בתשלום' : 'ללא תשלום — נוכתה יחסית מכל השעות'}`);
-    notes.push(`שעות נוספות אחרי ${r.thresholdH} שעות ביום` + (r.priorMin ? ` · כבר עבדת ${U.hm(r.priorMin)} באותו יום לפני המשמרת` : '') + (r.isNightShift && emp.nightShiftShortDay ? ' (משמרת לילה)' : ''));
+    notes.push(`שעות נוספות אחרי ${+(+r.thresholdH).toFixed(2)} שעות ביום${r.otByLaw ? ' (לפי החוק)' : ''}` + (r.priorMin ? ` · כבר עבדת ${U.hm(r.priorMin)} באותו יום לפני המשמרת` : '') + (r.isNightShift && (r.otByLaw || emp.nightShiftShortDay) ? ' (משמרת לילה)' : '')
+      + (r.weekOtMin > 0 ? ` · ${U.hm(r.weekOtMin)} מהן נוספות כי עברת 42 שעות רגילות השבוע` : ''));
     const wins = r.restLabels.length ? r.slices.filter((s) => s.autoRest) : [];
     if (r.autoRestMin > 0) notes.push(`חלון ${esc(r.restLabels.join(', ') || 'שבת/חג')} במשמרת: ⁦${U.epochHM(wins[0].a)}\u2060–\u2060${U.epochHM(wins[wins.length - 1].b)}⁩ (${S.settings.rest.mode === 'city' ? 'לפי ' + esc(S.settings.rest.city === '__custom' ? 'מיקום מותאם' : App.placeLabel(S.settings.rest.city).name).replace(/-/g, '-⁠') : 'שעות קבועות'})`);
     if (r.warnings.length) notes.push('⚠️ ' + r.warnings.join(', '));
@@ -386,7 +387,7 @@
             ${rest.scope !== 'off' ? `<div class="grid2"><label class="field"><span class="lbl">אחוז</span>${numIn('ov.rest.pct', rest.pct, String(emp.restPct))}</label><label class="field"><span class="lbl">או סכום תוספת ₪</span>${numIn('ov.rest.amount', rest.amount, 'אוטומטי')}</label></div>` : ''}`)}
           ${ovBlock('ot', 'שעות נוספות', 'ביטול, סף אחר, אחוז או סכום', `
             <div class="field">${sel('ov.ot.mode', [['off', 'בטל שעות נוספות'], ['threshold', 'סף שעות אחר'], ['pct', 'אחוז אחיד לשעות הנוספות'], ['amount', 'סכום תוספת ידני']], ot.mode)}</div>
-            ${ot.mode === 'threshold' ? `<label class="field"><span class="lbl">שעות נוספות אחרי (שעות)</span>${numIn('ov.ot.hours', ot.hours, String(emp.otThreshold))}</label>` : ''}
+            ${ot.mode === 'threshold' ? `<label class="field"><span class="lbl">שעות נוספות אחרי (שעות)</span>${numIn('ov.ot.hours', ot.hours, String(Engine.otDayHours(emp, S.settings, U.todayKey(), false)))}</label>` : ''}
             ${ot.mode === 'pct' ? `<label class="field"><span class="lbl">אחוז</span>${numIn('ov.ot.pct', ot.pct, '125')}</label>` : ''}
             ${ot.mode === 'amount' ? `<label class="field"><span class="lbl">סכום התוספת ₪ (מעבר ל-100%)</span>${numIn('ov.ot.amount', ot.amount, '0')}</label>` : ''}`)}
           ${ovBlock('night', 'תוספת לילה', emp.nightEnabled ? 'מוגדרת: ' + emp.nightValue + (emp.nightType === 'fixed' ? ' ₪ לשעה' : '%') : 'לא מוגדרת אצל המעסיק', `

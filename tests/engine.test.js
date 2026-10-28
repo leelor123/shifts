@@ -6,7 +6,8 @@ const T = require('./t.js');
 function setup(mod) {
   const settings = Defaults.defaultSettings();
   settings.startDate = '2025-01-01';
-  const emp = Defaults.defaultEmployer();
+  // the tier mechanics with a plain 8-hour day set by hand; the law's own limits are tested in "overtime by the law"
+  const emp = Object.assign(Defaults.defaultEmployer(), { otLaw: false, otThreshold: 8 });
   const roles = Defaults.defaultRoles();
   const data = { settings, employers: [emp], roles, dayRules: [], shifts: [], entries: [] };
   if (mod) mod(data);
@@ -436,3 +437,68 @@ T.section('holiday pay (דמי חגים)');
     if (mon) T.eq(mon.status, 'due', mon.name);
   });
 }
+
+T.section('overtime by the law');
+// a week with no holiday: Sunday 1 to Saturday 7 November 2026; the employer keeps the default (by the law)
+function lawModel(workWeek, shifts, empMod) {
+  const d = setup((x) => { x.settings.leave.workWeek = workWeek; x.employers[0] = Object.assign(Defaults.defaultEmployer(), empMod || {}); x.shifts = shifts; });
+  return Engine.buildModel(d);
+}
+const R = (m, s) => m.results.get(s.id);
+T.test('five-day week: a 9-hour day is 8.6 regular hours and 0.4 at 125%', () => {
+  const s = shift('2026-11-02', '08:00', '17:00');
+  const r = R(lawModel(5, [s]), s);
+  T.near(r.hoursBy.regular, 8.6); T.near(r.hoursBy.ot1, 0.4); T.near(r.hoursBy.ot2, 0);
+  T.near(r.thresholdH, 8.6); T.ok(r.otByLaw);
+});
+T.test('six-day week: 9 hours → 8 + 1 at 125%; Friday 8 hours → 7 + 1', () => {
+  const a = shift('2026-11-02', '08:00', '17:00'), f = shift('2026-11-06', '06:00', '14:00');
+  const m = lawModel(6, [a, f]);
+  T.near(R(m, a).hoursBy.regular, 8); T.near(R(m, a).hoursBy.ot1, 1);
+  T.near(R(m, f).hoursBy.regular, 7); T.near(R(m, f).hoursBy.ot1, 1);
+});
+T.test('a night shift (2+ hours between 22:00 and 06:00): 7 regular hours', () => {
+  const s = shift('2026-11-02', '22:00', '06:00');
+  const r = R(lawModel(5, [s]), s);
+  T.ok(r.isNightShift); T.near(r.hoursBy.regular, 7); T.near(r.hoursBy.ot1, 1);
+});
+T.test('kolzchut: five days of 8.6 hours and 3 on Friday → Thursday 1 at 125%, Friday 2 at 125% and 1 at 150%', () => {
+  const days = ['2026-11-01', '2026-11-02', '2026-11-03', '2026-11-04', '2026-11-05'].map((d) => shift(d, '08:00', '16:36'));
+  const fri = shift('2026-11-06', '08:00', '11:00');
+  const m = lawModel(5, days.concat(fri));
+  for (const d of days.slice(0, 4)) { T.near(R(m, d).hoursBy.regular, 8.6); T.near(R(m, d).hoursBy.ot1, 0); }
+  T.near(R(m, days[4]).hoursBy.regular, 7.6, 1e-6, 'Thursday reaches the 42 hours'); T.near(R(m, days[4]).hoursBy.ot1, 1);
+  T.near(R(m, days[4]).weekOtMin, 60, 1e-6, '...an hour of the week, not of the day');
+  T.near(R(m, fri).hoursBy.regular, 0); T.near(R(m, fri).hoursBy.ot1, 2); T.near(R(m, fri).hoursBy.ot2, 1);
+});
+T.test('kolzchut: six-day week, Sunday 9 h, Monday–Thursday 8 h, Friday 5 h → Sunday 1 at 125%; Friday 2 regular, 2 at 125%, 1 at 150%', () => {
+  const sun = shift('2026-11-01', '08:00', '17:00');
+  const mid = ['2026-11-02', '2026-11-03', '2026-11-04', '2026-11-05'].map((d) => shift(d, '08:00', '16:00'));
+  const fri = shift('2026-11-06', '06:00', '11:00');
+  const m = lawModel(6, [sun].concat(mid, fri));
+  T.near(R(m, sun).hoursBy.regular, 8); T.near(R(m, sun).hoursBy.ot1, 1);
+  T.near(R(m, fri).hoursBy.regular, 2); T.near(R(m, fri).hoursBy.ot1, 2); T.near(R(m, fri).hoursBy.ot2, 1);
+});
+T.test('the week counts Sunday to Saturday: last week\'s hours don\'t count this week', () => {
+  const prev = ['2026-10-25', '2026-10-26', '2026-10-27', '2026-10-28', '2026-10-29'].map((d) => shift(d, '08:00', '16:36'));
+  const sun = shift('2026-11-01', '08:00', '16:00');
+  T.near(R(lawModel(5, prev.concat(sun)), sun).hoursBy.regular, 8);
+});
+T.test('Shabbat after the week\'s 42 hours: overtime from its first hour (175%)', () => {
+  const days = ['2026-11-01', '2026-11-02', '2026-11-03', '2026-11-04', '2026-11-05'].map((d) => shift(d, '08:00', '16:36'));
+  const sat = shift('2026-11-07', '10:00', '13:00');
+  const r = R(lawModel(5, days.concat(sat)), sat);
+  T.near(r.hoursBy.rest, 0); T.near(r.hoursBy.restOt1, 2); T.near(r.hoursBy.restOt2, 1);
+});
+T.test('an employer\'s own daily hours stay (anything but the old default 8); the old default follows the law', () => {
+  const s = shift('2026-11-02', '08:00', '18:00');
+  T.near(R(lawModel(5, [s], { otLaw: undefined, otThreshold: 9 }), s).hoursBy.regular, 9, 1e-6, 'set by hand: 9');
+  T.near(R(lawModel(5, [s], { otLaw: undefined, otThreshold: 8 }), s).hoursBy.regular, 8.6, 1e-6, 'the old default: by the law');
+  T.near(R(lawModel(5, [s], { otLaw: false, otThreshold: 8 }), s).hoursBy.regular, 8, 1e-6, 'by hand, chosen as 8');
+  T.ok(!R(lawModel(5, [s], { otLaw: undefined, otThreshold: 9 }), s).otByLaw);
+});
+T.test('shifts of one day share the day\'s overtime tiers (the first two overtime hours of the day at 125%)', () => {
+  const a = shift('2026-11-02', '06:00', '15:36'), b = shift('2026-11-02', '17:00', '19:00'); // 9.6 h, then 2 h
+  const m = lawModel(5, [a, b]);
+  T.near(R(m, a).hoursBy.ot1, 1); T.near(R(m, b).hoursBy.ot1, 1); T.near(R(m, b).hoursBy.ot2, 1);
+});

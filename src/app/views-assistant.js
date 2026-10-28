@@ -58,7 +58,7 @@
       employment_start: st.startDate, seniority_months: L.seniorityMonths, job_percent_last_12m: Math.round(L.jobPct * 100),
       roles: App.roles().map((r) => ({ name: r.name, rate_now: Engine.roleRate(r, today), rate_history: r.rates.map((x) => ({ from: x.from, rate: x.rate })) })),
       rules: {
-        overtime_after_hours: emp.otThreshold, ot_tier1_hours: emp.otTier1Hours, ot_pct: [emp.otTier1Pct, emp.otTier2Pct],
+        overtime_after_hours: Engine.otByLaw(emp) ? 'by the law: 8.6 a day in a five-day week, 8 in a six-day week (Friday 7), 7 in a night shift; and over 42 regular hours a week' : emp.otThreshold, ot_tier1_hours: emp.otTier1Hours, ot_pct: [emp.otTier1Pct, emp.otTier2Pct],
         shabbat_holiday_pct: emp.restPct, shabbat_overtime_pct: [emp.restOt1Pct, emp.restOt2Pct], shabbat_window: st.rest.mode === 'city' ? 'city:' + st.rest.city : st.rest.fixedStart + '-' + st.rest.fixedEnd,
         travel_per_day: emp.travelPerDay, travel_monthly_cap: emp.travelMonthlyCap || null, pay_period_start_day: emp.periodStartDay, pay_day: emp.payDay,
         rounding: emp.roundingMode === 'none' ? null : emp.roundingMode + ' ' + emp.roundingUnit + 'min', min_paid_hours_per_shift: emp.minShiftHours || null,

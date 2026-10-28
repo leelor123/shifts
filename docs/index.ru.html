@@ -2,7 +2,7 @@
 <html lang="ru" dir="ltr">
 <head>
 <meta charset="utf-8">
-<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'sha256-FgNk6U022o0tzGprl1MJbN7Uezv3SKotwh8ovG5xA8c=' 'sha256-HGFGBs0jvto6NjZpEcQe6Pypc6OoLKt9s5UvSUEiaKM=' https://www.gstatic.com https://apis.google.com https://cdnjs.cloudflare.com https://cdn.jsdelivr.net 'wasm-unsafe-eval'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com data:; img-src 'self' data: blob: https:; connect-src 'self' https: wss:; frame-src https://shiftpay-70ab6.firebaseapp.com https://accounts.google.com https://apis.google.com https://*.google.com; worker-src 'self' blob: https://cdnjs.cloudflare.com https://cdn.jsdelivr.net; media-src 'self' data: blob:; manifest-src 'self'; object-src 'none'; base-uri 'self'; form-action 'self'">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'sha256-FgNk6U022o0tzGprl1MJbN7Uezv3SKotwh8ovG5xA8c=' 'sha256-Ni8Y/BNlB9MT74s/xLlgfv1ddhrBh78Y05igQQj2nE4=' https://www.gstatic.com https://apis.google.com https://cdnjs.cloudflare.com https://cdn.jsdelivr.net 'wasm-unsafe-eval'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com data:; img-src 'self' data: blob: https:; connect-src 'self' https: wss:; frame-src https://shiftpay-70ab6.firebaseapp.com https://accounts.google.com https://apis.google.com https://*.google.com; worker-src 'self' blob: https://cdnjs.cloudflare.com https://cdn.jsdelivr.net; media-src 'self' data: blob:; manifest-src 'self'; object-src 'none'; base-uri 'self'; form-action 'self'">
 <script>(function(){try{var l=localStorage.getItem('shaati.lang'),h=document.documentElement.lang;if(l&&l!==h&&/^(he|ar|ru|en|fr|es)$/.test(l)&&!sessionStorage.getItem('langHop')){sessionStorage.setItem('langHop','1');location.replace((l==='he'?'index.html':'index.'+l+'.html')+location.search+location.hash)}else sessionStorage.removeItem('langHop')}catch(e){}})();</script>
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="theme-color" content="#0d2b6b">
@@ -2683,8 +2683,8 @@ html.hide-money .money { filter: blur(7px); user-select: none; }
 <div id="print-root" aria-hidden="true"></div>
 <noscript><div style="padding:24px;font-family:sans-serif">Для приложения нужен JavaScript.</div></noscript>
 <script>
-window.APP_VERSION = '1.26.0';
-window.APP_BUILD = '1.26.0-fe4324c2';
+window.APP_VERSION = '1.27.0';
+window.APP_BUILD = '1.27.0-ff36e5bc';
 /* ---- core/util.js ---- */
 /* ============================================================
  * util.js — date/time helpers and formatting.
@@ -5876,12 +5876,13 @@ window.APP_BUILD = '1.26.0-fe4324c2';
       travelPerDay: 16, // what most hourly workers get per day (the legal maximum is higher, ~22.6)
       travelMonthlyCap: 0, // 0 = no cap
       // --- overtime ---
-      otMode: 'daily', // daily = all shifts that start on the same date share the 8h counter
-      otThreshold: 8, // hours/day at 100%
+      otMode: 'daily', // daily = all shifts that start on the same date share the day's counter
+      otLaw: true, // by the law: 8.6 h a day in a five-day week, 8 in a six-day week (Friday 7), 7 in a night shift; 42 a week
+      otThreshold: 8, // hours/day at 100% when otLaw is off (set by hand)
       otTier1Hours: 2, // first OT hours at tier 1
       otTier1Pct: 125,
       otTier2Pct: 150,
-      nightShiftShortDay: false, // law: night shift (>=2h between 22-06) -> 7h day
+      nightShiftShortDay: false, // when otLaw is off: a night shift (>=2h between 22-06) -> a shorter day (by the law it is)
       nightShiftThreshold: 7,
       // --- rest days (Shabbat / holidays) ---
       restPct: 150,
@@ -6147,9 +6148,29 @@ window.APP_BUILD = '1.26.0-fe4324c2';
     return !!(o.rate || o.rest || o.ot || o.night || o.travel || o.special);
   }
 
+  /* ---------------- overtime: the law's limits ----------------
+   * By the law (חוק שעות עבודה ומנוחה; kolzchut.org.il "גמול עבור שעות נוספות"), in the private sector: first the
+   * day — 8.6 hours in a five-day week (8 h 36 min), 8 in a six-day week and 7 on its Friday, 7 in a night shift (at
+   * least 2 hours between 22:00 and 06:00) — then the week: regular hours beyond 42 (Sunday to Saturday) are overtime
+   * too. (The five-day week's one short day of 7.6 hours comes out the same through the 42.) An employer whose
+   * daily limit was set by hand (anything but the old default 8) keeps it; otLaw says which one applies. */
+  const WEEK_REG_H = 42;
+  const otByLaw = (emp) => (emp.otLaw != null ? !!emp.otLaw : !(+emp.otThreshold > 0) || +emp.otThreshold === 8);
+  /** The day's regular hours before overtime starts. */
+  function otDayHours(emp, settings, dateKey, nightShift) {
+    if (otByLaw(emp)) {
+      if (nightShift) return 7;
+      const six = +((settings && settings.leave) || {}).workWeek === 6;
+      return six ? (U.dow(dateKey) === 5 ? 7 : 8) : 8.6;
+    }
+    return emp.nightShiftShortDay && nightShift ? +emp.nightShiftThreshold || 7 : +emp.otThreshold || 8;
+  }
+
   /**
    * Compute pay for one shift.
    * opts.priorMin  — paid minutes already worked earlier the same workday (daily OT)
+   * opts.priorOtMin — of them, the overtime minutes (the day's first two overtime hours are tier 1)
+   * opts.weekRegMin — regular (not overtime) minutes already worked earlier the same week (the 42-hour limit)
    * opts.ignoreOverrides — compute as if no manual overrides / day rules existed
    */
   function computeShift(shift, ctx, opts) {
@@ -6247,28 +6268,42 @@ window.APP_BUILD = '1.26.0-fe4324c2';
     const lawNightMin = overlapMin(start, end, lawNight);
     const lawNightPaidH = (lawNightMin * paidFactor) / 60; // hours between 22:00-06:00, for reports
     const isNightShift = lawNightMin >= 120;
-    let thresholdH = +emp.otThreshold || 8;
-    if (emp.nightShiftShortDay && isNightShift) thresholdH = +emp.nightShiftThreshold || 7;
+    let thresholdH = otDayHours(emp, settings, dk, isNightShift);
     const otOv = ov.ot || null;
     if (otOv && otOv.mode === 'threshold' && +otOv.hours > 0) thresholdH = +otOv.hours;
     const otOff = otOv && otOv.mode === 'off';
     const t1 = thresholdH * 60;
-    const t2 = t1 + (+emp.otTier1Hours || 2) * 60;
-    let cum = emp.otMode === 'daily' ? Math.max(0, +opts.priorMin || 0) : 0;
+    const tier1Min = (+emp.otTier1Hours || 2) * 60;
+    const daily = emp.otMode === 'daily';
+    let cum = daily ? Math.max(0, +opts.priorMin || 0) : 0; // the day's paid minutes so far
+    let dayOt = daily ? Math.max(0, +opts.priorOtMin || 0) : 0; // of them, overtime
+    let weekReg = Math.max(0, +opts.weekRegMin || 0); // the week's regular minutes so far
+    const weekCap = WEEK_REG_H * 60;
+    let regMin = 0, otMin = 0, weekOtMin = 0;
 
     const pieces = [];
     for (const s of slices) {
       let pm = s.min * paidFactor;
       if (pm <= 0) continue;
-      if (otOff) { pieces.push(Object.assign({}, s, { tier: 0, pm })); cum += pm; continue; }
-      const edges = [[0, t1], [1, t2], [2, Infinity]];
-      let lo = 0;
-      for (const [tier, hi] of edges) {
-        const from = Math.max(cum, lo), to = Math.min(cum + pm, hi);
-        if (to > from) pieces.push(Object.assign({}, s, { tier, pm: to - from }));
-        lo = hi;
+      if (otOff) { pieces.push(Object.assign({}, s, { tier: 0, pm })); cum += pm; regMin += pm; weekReg += pm; continue; }
+      // regular while both the day's and the week's regular hours last; then overtime: the day's first two
+      // overtime hours at tier 1, the rest at tier 2
+      while (pm > 1e-9) {
+        const dayRoom = t1 - cum, weekRoom = weekCap - weekReg;
+        const room = Math.min(dayRoom, weekRoom);
+        if (room > 1e-9) {
+          const x = Math.min(pm, room);
+          pieces.push(Object.assign({}, s, { tier: 0, pm: x }));
+          cum += x; weekReg += x; regMin += x; pm -= x;
+          continue;
+        }
+        const t1Room = tier1Min - dayOt;
+        const tier = t1Room > 1e-9 ? 1 : 2;
+        const x = tier === 1 ? Math.min(pm, t1Room) : pm;
+        pieces.push(Object.assign({}, s, { tier, pm: x }));
+        if (dayRoom > 1e-9) weekOtMin += x; // overtime only because of the week's 42 hours
+        cum += x; dayOt += x; otMin += x; pm -= x;
       }
-      cum += pm;
     }
 
     /* ---- multipliers ---- */
@@ -6452,7 +6487,8 @@ window.APP_BUILD = '1.26.0-fe4324c2';
       travel, bonus, tips, additions, deductions,
       total: wage + travel.amount + bonus + additions,
       restLabels, autoRestRange, autoRestMin,
-      thresholdH, priorMin: +opts.priorMin || 0,
+      thresholdH, priorMin: +opts.priorMin || 0, otByLaw: otByLaw(emp),
+      regMin, otMin, weekOtMin, weekRegBefore: Math.max(0, +opts.weekRegMin || 0),
       overridden: !opts.ignoreOverrides && hasOverrides(shift), overrideList,
       dayRuleHit,
       warnings,
@@ -6493,17 +6529,25 @@ window.APP_BUILD = '1.26.0-fe4324c2';
       if (!groups.has(key)) groups.set(key, []);
       groups.get(key).push(s);
     }
-    for (const list of groups.values()) {
+    // days in date order, so the week's regular hours (the 42-hour limit) add up from Sunday on
+    const weekReg = new Map(); // employer|status|the week's Sunday → regular minutes so far
+    const keys = [...groups.keys()].sort((a, b) => { const [ea, da, sa] = a.split('|'), [eb, db, sb] = b.split('|'); return ea === eb ? (sa === sb ? (da < db ? -1 : da > db ? 1 : 0) : sa < sb ? -1 : 1) : ea < eb ? -1 : 1; });
+    for (const key of keys) {
+      const list = groups.get(key);
       list.sort((a, b) => a.start - b.start);
-      let prior = 0;
+      const [emp, dk, st] = key.split('|');
+      const wk = emp + '|' + st + '|' + U.addDays(dk, -U.dow(dk));
+      let prior = 0, priorOt = 0;
       for (const s of list) {
         let r;
-        try { r = computeShift(s, ctx, { priorMin: prior, ignoreOverrides: opts.ignoreOverrides }); } catch (e) {
+        try { r = computeShift(s, ctx, { priorMin: prior, priorOtMin: priorOt, weekRegMin: weekReg.get(wk) || 0, ignoreOverrides: opts.ignoreOverrides }); } catch (e) {
           if (typeof console !== 'undefined') console.warn('shift skipped, it could not be calculated', s.id, e && e.message);
           continue;
         }
         out.set(s.id, r);
         prior += r.paidMin;
+        priorOt += r.otMin || 0;
+        weekReg.set(wk, (weekReg.get(wk) || 0) + (r.regMin || 0));
       }
     }
     return out;
@@ -7021,7 +7065,7 @@ window.APP_BUILD = '1.26.0-fe4324c2';
   }
 
   root.Engine = {
-    LAW_BREAK, validShift, validEntry, legalMinWage, minWageFor, youthRules, pensionMinAge, MIN_WAGE, BL_YEARS, RECUP_YEARS, blLimits, recuperationRate,
+    LAW_BREAK, validShift, validEntry, otByLaw, otDayHours, WEEK_REG_H, legalMinWage, minWageFor, youthRules, pensionMinAge, MIN_WAGE, BL_YEARS, RECUP_YEARS, blLimits, recuperationRate,
     makeCtx, roleRate, roundMinutes, monthsBetween, buildSegments, hasOverrides, computeShift, computeAll,
     periodByKey, periodOf, dayValue, computeEntries, travelByDay, incomeTaxRaw, netEstimate, pensionActive,
     buildModel, totals, periodSummary, rangeSummary, pensionBaseOf, leaveBalances, holidayPay, vacationEntitlement, recuperationDays, ageAt, isMinor,
@@ -8107,7 +8151,7 @@ window.APP_BUILD = '1.26.0-fe4324c2';
         const amount = E.avgRate * (missing125 * 0.25 + missing150 * 0.5);
         add({ area: "Сверхурочные", status: 'bad', title: "Не хватает сверхурочных", amount, shifts: otShifts.map((r) => r.id),
           detail: `В приложении ${U.hours(appOt1)} ч по 125% и ${U.hours(appOt2)} ч по 150% (${dates(otShifts)})${covered.length ? ", не считая полностью отсутствующих смен" : ''}; в листе ${U.hours(qty(F, 'ot125') || 0)} и ${U.hours(qty(F, 'ot150') || 0)}. Недостающая надбавка ≈ ${U.money(amount)}.`,
-          basis: "Ежедневные сверхурочные после " + model.ctx.primaryEmployer().otThreshold + " ч (по настройкам).", confidence: 'medium',
+          basis: Engine.otByLaw(model.ctx.primaryEmployer()) ? "Сверхурочные по закону: свыше 8,6 часа в день (8 при шестидневке, 7 в ночную смену) и свыше 42 обычных часов в неделю." : "Ежедневные сверхурочные после " + model.ctx.primaryEmployer().otThreshold + " ч (по настройкам).", confidence: 'medium',
           fromOverride: ovNote(appOt, A.t.hoursBy.ot1 + A.t.hoursBy.ot2, slipOt, 0.1) });
       } else add({ area: "Сверхурочные", status: 'ok', title: "Сверхурочные в порядке", detail: `${U.hours(slipOt)} в листе против ${U.hours(appOt)} в приложении.`, basis: "Сравнение часов 125%/150%.", confidence: 'medium' });
     }
@@ -16242,7 +16286,8 @@ ${name}`.trim();
     const notes = [];
     notes.push(`Время в смене: ${U.hm(r.elapsedMin)}` + (r.roundingDeltaMin ? ` · округление: ${r.roundingDeltaMin > 0 ? '+' : ''}${r.roundingDeltaMin} мин` : ''));
     if (r.breakMin) notes.push(`Перерыв ${r.breakMin} мин${r.breakAuto ? " (автоматически, по закону)" : ''} ${r.breakPaid ? "Оплачиваемый" : "неоплачиваемый — вычтен пропорционально из всех часов"}`);
-    notes.push(`Сверхурочные после ${r.thresholdH} ч в день` + (r.priorMin ? ` · в этот день вы уже отработали ${U.hm(r.priorMin)} до этой смены` : '') + (r.isNightShift && emp.nightShiftShortDay ? " (ночная смена)" : ''));
+    notes.push(`Сверхурочные после ${+(+r.thresholdH).toFixed(2)} ч в день${r.otByLaw ? "(по закону)" : ''}` + (r.priorMin ? ` · в этот день вы уже отработали ${U.hm(r.priorMin)} до этой смены` : '') + (r.isNightShift && (r.otByLaw || emp.nightShiftShortDay) ? " (ночная смена)" : '')
+      + (r.weekOtMin > 0 ? ` · ${U.hm(r.weekOtMin)} из них сверхурочные, так как вы превысили 42 обычных часа на этой неделе` : ''));
     const wins = r.restLabels.length ? r.slices.filter((s) => s.autoRest) : [];
     if (r.autoRestMin > 0) notes.push(`Период «${esc(r.restLabels.join(', ') || "Шаббат/праздник")}» в смене: ⁦${U.epochHM(wins[0].a)}⁠–⁠${U.epochHM(wins[wins.length - 1].b)}⁩ (${S.settings.rest.mode === 'city' ? "По городу " + esc(S.settings.rest.city === '__custom' ? "Своё местоположение" : App.placeLabel(S.settings.rest.city).name).replace(/-/g, '-⁠') : "фиксированные часы"})`);
     if (r.warnings.length) notes.push('⚠️ ' + r.warnings.join(', '));
@@ -16434,7 +16479,7 @@ ${name}`.trim();
             ${rest.scope !== 'off' ? `<div class="grid2"><label class="field"><span class="lbl">Процент</span>${numIn('ov.rest.pct', rest.pct, String(emp.restPct))}</label><label class="field"><span class="lbl">Или сумма надбавки, ₪</span>${numIn('ov.rest.amount', rest.amount, "Автоматически")}</label></div>` : ''}`)}
           ${ovBlock('ot', "Сверхурочные", "Отменить, другой порог, процент или сумма", `
             <div class="field">${sel('ov.ot.mode', [['off', "Отменить сверхурочные"], ['threshold', "Другой порог часов"], ['pct', "Единый процент для сверхурочных"], ['amount', "Сумма надбавки вручную"]], ot.mode)}</div>
-            ${ot.mode === 'threshold' ? `<label class="field"><span class="lbl">Сверхурочные после (часов)</span>${numIn('ov.ot.hours', ot.hours, String(emp.otThreshold))}</label>` : ''}
+            ${ot.mode === 'threshold' ? `<label class="field"><span class="lbl">Сверхурочные после (часов)</span>${numIn('ov.ot.hours', ot.hours, String(Engine.otDayHours(emp, S.settings, U.todayKey(), false)))}</label>` : ''}
             ${ot.mode === 'pct' ? `<label class="field"><span class="lbl">Процент</span>${numIn('ov.ot.pct', ot.pct, '125')}</label>` : ''}
             ${ot.mode === 'amount' ? `<label class="field"><span class="lbl">Сумма надбавки, ₪ (сверх 100%)</span>${numIn('ov.ot.amount', ot.amount, '0')}</label>` : ''}`)}
           ${ovBlock('night', "Ночная надбавка", emp.nightEnabled ? "Задано: " + emp.nightValue + (emp.nightType === 'fixed' ? " ₪ в час" : '%') : "Не задано у этого работодателя", `
@@ -18697,7 +18742,7 @@ ${name}`.trim();
     personal: { icon: 'users', title: "Личные данные", sub: () => { const a = Engine.ageAt(S.settings.birthDate, U.todayKey()); return (S.settings.userName || "Имя не указано") + (a != null ? " · возраст " + a + (a < 18 ? " (освобождение от налогов)" : '') : ''); } },
     account: { icon: 'cloud', title: "Аккаунт и синхронизация", sub: () => (S.meta.cloudEmail || "Не подключено") + ' · ' + root.Cloud.statusText() },
     roles: { icon: 'users', title: "Работодатели, должности и ставки", sub: () => App.roles().map((r) => r.name + ' ' + U.money(Engine.roleRate(r, U.todayKey()), 0)).join(' · ') },
-    calc: { icon: 'flask', title: "Правила расчёта", sub: () => { const e = S.employers[0]; return `Сверхурочные после ${e.otThreshold} ч · шаббат ${e.restPct}% · округление: ${e.roundingMode === 'none' ? "нет" : e.roundingUnit + " мин"}`; } },
+    calc: { icon: 'flask', title: "Правила расчёта", sub: () => { const e = S.employers[0]; return `${Engine.otByLaw(e) ? "Сверхурочные по закону" : `Сверхурочные после ${e.otThreshold} ч`} · шаббат ${e.restPct}% · округление: ${e.roundingMode === 'none' ? "нет" : e.roundingUnit + " мин"}`; } },
     rest: { icon: 'candle', title: "Шаббат и праздники", sub: () => (S.settings.rest.mode === 'city' ? "По городу " + (S.settings.rest.city === '__custom' ? "Своё местоположение" : App.placeLabel ? App.placeLabel(S.settings.rest.city).name : S.settings.rest.city) : `Фиксировано: ⁦${S.settings.rest.fixedStart}⁠–⁠${S.settings.rest.fixedEnd}⁩`) + (S.dayRules.length ? ` · правил для дней: ${S.dayRules.length}` : '') },
     pay: { icon: 'car', title: "Проезд и расчётный период", sub: () => { const e = S.employers[0]; return `${U.money(e.travelPerDay)} в день${+e.travelMonthlyCap ? ", лимит " + U.money(e.travelMonthlyCap, 0) : ''} · ${e.periodStartDay > 1 ? "с " + e.periodStartDay + " в месяц" : "Календарный месяц"} · выплата ${e.payDay}-го`; } },
     net: { icon: 'wallet', title: "Расчётное нетто и налог", sub: () => `Льготных пунктов: ${S.settings.tax.creditPoints} · пенсия ${S.settings.pension.employeePct}%${S.settings.hishtalmut.enabled ? " · керен иштальмут" : ''}` },
@@ -19034,11 +19079,13 @@ ${name}`.trim();
     perEmployer: true,
     render: (e) => `
       <div class="section-title">${icon('clock', 's')} Сверхурочные</div><div class="card">
-        ${F.num("Обычных часов в день", 'e.otThreshold', e.otThreshold, "После них начинаются сверхурочные. По закону: 8,6 при пятидневке, 8 при шестидневке.")}
+        ${F.sw("По закону (рекомендуется)", +S.settings.leave.workWeek === 6 ? "Свыше 8 часов в день (в пятницу свыше 7), в ночную смену свыше 7 и свыше 42 обычных часов в неделю" : "Свыше 8,6 часа в день, в ночную смену свыше 7 и свыше 42 обычных часов в неделю", 'e.otLaw', Engine.otByLaw(e)).replace('data-s=', 'data-redraw data-s=')}
+        ${F.sel("Рабочих дней в неделю на работе", 's.leave.workWeek', [[5, "5 дней (воскресенье–четверг)"], [6, "6 дней"]], +S.settings.leave.workWeek === 6 ? 6 : 5).replace('data-s=', 'data-redraw data-s=')}
+        ${Engine.otByLaw(e) ? '' : F.num("Обычных часов в день", 'e.otThreshold', e.otThreshold, "После них начинаются сверхурочные (часы сверх 42 в неделю — всегда сверхурочные).")}
         <div class="grid3">${F.num("Часов на 1-й ступени", 'e.otTier1Hours', e.otTier1Hours)}${F.num("Ставка 1-й ступени, %", 'e.otTier1Pct', e.otTier1Pct)}${F.num("Ставка 2-й ступени, %", 'e.otTier2Pct', e.otTier2Pct)}</div>
         ${F.sel("Подсчёт", 'e.otMode', [['daily', "За рабочий день (все смены, начинающиеся в этот день)"], ['shift', "Для каждой смены отдельно"]], e.otMode)}
-        ${F.sw("Ночная смена = короткий день", "Смена, в которой не меньше двух часов приходится на 22:00–06:00", 'e.nightShiftShortDay', e.nightShiftShortDay)}
-        ${e.nightShiftShortDay ? F.num("Обычных часов в ночной смене", 'e.nightShiftThreshold', e.nightShiftThreshold) : ''}</div>
+        ${Engine.otByLaw(e) ? '' : `${F.sw("Ночная смена = короткий день", "Смена, в которой не меньше двух часов приходится на 22:00–06:00", 'e.nightShiftShortDay', e.nightShiftShortDay).replace('data-s=', 'data-redraw data-s=')}
+        ${e.nightShiftShortDay ? F.num("Обычных часов в ночной смене", 'e.nightShiftThreshold', e.nightShiftThreshold) : ''}`}</div>
       <div class="section-title">${icon('candle', 's')} Шаббат и праздники</div><div class="card">
         <div class="grid3">${F.num("Шаббат/праздник, %", 'e.restPct', e.restPct)}${F.num("+ сверхурочные 1-й ступени", 'e.restOt1Pct', e.restOt1Pct)}${F.num("+ сверхурочные 2-й ступени", 'e.restOt2Pct', e.restOt2Pct)}</div>
         ${F.num("Надбавка в канун шаббата/праздника, %", 'e.evePct', e.evePct, "0 = нет. Часы, к которым она применяется, задаются на экране «Шаббат и праздники».")}</div>
@@ -20051,7 +20098,7 @@ ${name}`.trim();
       employment_start: st.startDate, seniority_months: L.seniorityMonths, job_percent_last_12m: Math.round(L.jobPct * 100),
       roles: App.roles().map((r) => ({ name: r.name, rate_now: Engine.roleRate(r, today), rate_history: r.rates.map((x) => ({ from: x.from, rate: x.rate })) })),
       rules: {
-        overtime_after_hours: emp.otThreshold, ot_tier1_hours: emp.otTier1Hours, ot_pct: [emp.otTier1Pct, emp.otTier2Pct],
+        overtime_after_hours: Engine.otByLaw(emp) ? 'by the law: 8.6 a day in a five-day week, 8 in a six-day week (Friday 7), 7 in a night shift; and over 42 regular hours a week' : emp.otThreshold, ot_tier1_hours: emp.otTier1Hours, ot_pct: [emp.otTier1Pct, emp.otTier2Pct],
         shabbat_holiday_pct: emp.restPct, shabbat_overtime_pct: [emp.restOt1Pct, emp.restOt2Pct], shabbat_window: st.rest.mode === 'city' ? 'city:' + st.rest.city : st.rest.fixedStart + '-' + st.rest.fixedEnd,
         travel_per_day: emp.travelPerDay, travel_monthly_cap: emp.travelMonthlyCap || null, pay_period_start_day: emp.periodStartDay, pay_day: emp.payDay,
         rounding: emp.roundingMode === 'none' ? null : emp.roundingMode + ' ' + emp.roundingUnit + 'min', min_paid_hours_per_shift: emp.minShiftHours || null,
@@ -20563,8 +20610,9 @@ ${name}`.trim();
 
   /* ---------------- what's new (once per big update, for people who already used the app) ---------------- */
   const WHATS_NEW = {
-    id: '1.26.0',
+    id: '1.27.0',
     items: [
+      ['clock', 'violet', "Сверхурочные точно по закону", "В день: свыше 8,6 часа при пятидневке (8 при шестидневке), свыше 7 в ночную смену; в неделю: свыше 42 обычных часов. Уже записанные смены тоже пересчитаны. В Настройках › Правила расчёта."],
       ['users', 'pink', "Соревнование с друзьями", "Пригласите друга по ссылке и узнайте, кто зарабатывает больше в час, за месяц и за год. Суммы можно скрыть, а друзей — удалить. В Играх › Соревнование с друзьями."],
       ['smile', 'amber', "Ваше имя, а не ник", "В таблице чемпионов и в соревновании показывается ваше имя (его можно изменить), на любом языке."],
       ['home', 'violet', "Главный экран как вам удобно", "В Настройках › Вид › Главный экран: скройте ярлыки, строку новостей или еврейскую дату и выберите, сколько последних смен показывать."],
@@ -20573,7 +20621,6 @@ ${name}`.trim();
       ['refresh', 'mint', "С сайта сразу в новую версию", "Вход с сайта или по ссылке в браузере всегда открывает последнюю версию, а не старую копию с прошлого визита."],
       ['bell', 'sky', "Напоминания о сменах — полностью под вашим контролем", "Сколько угодно напоминаний и за сколько угодно времени, также накануне вечером, и вопрос после смены, отработали ли вы её. В Настройки › Уведомления и подсказки."],
       ['chart', 'mint', "Средняя месячная зарплата", "В отчётах: среднее за последние 3, 6 или 12 месяцев, за этот год или за всё время, с самым высоким и самым низким месяцем."],
-      ['eye', 'violet', "Режим конфиденциальности", "Глаз на карточке зарплаты размывает все суммы — например, когда вы показываете кому-то телефон."],
     ],
   };
 

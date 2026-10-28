@@ -2,7 +2,7 @@
 <html lang="en" dir="ltr">
 <head>
 <meta charset="utf-8">
-<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'sha256-FgNk6U022o0tzGprl1MJbN7Uezv3SKotwh8ovG5xA8c=' 'sha256-rbBJBUx2v8u/cZ2ENAzeu17qR1ZJuTp5uJsoZ2bQ7/s=' https://www.gstatic.com https://apis.google.com https://cdnjs.cloudflare.com https://cdn.jsdelivr.net 'wasm-unsafe-eval'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com data:; img-src 'self' data: blob: https:; connect-src 'self' https: wss:; frame-src https://shiftpay-70ab6.firebaseapp.com https://accounts.google.com https://apis.google.com https://*.google.com; worker-src 'self' blob: https://cdnjs.cloudflare.com https://cdn.jsdelivr.net; media-src 'self' data: blob:; manifest-src 'self'; object-src 'none'; base-uri 'self'; form-action 'self'">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'sha256-FgNk6U022o0tzGprl1MJbN7Uezv3SKotwh8ovG5xA8c=' 'sha256-mZ1//0NgLxGdji75qQzyV7fPGMd7bRGjH2tvorBc7ME=' https://www.gstatic.com https://apis.google.com https://cdnjs.cloudflare.com https://cdn.jsdelivr.net 'wasm-unsafe-eval'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com data:; img-src 'self' data: blob: https:; connect-src 'self' https: wss:; frame-src https://shiftpay-70ab6.firebaseapp.com https://accounts.google.com https://apis.google.com https://*.google.com; worker-src 'self' blob: https://cdnjs.cloudflare.com https://cdn.jsdelivr.net; media-src 'self' data: blob:; manifest-src 'self'; object-src 'none'; base-uri 'self'; form-action 'self'">
 <script>(function(){try{var l=localStorage.getItem('shaati.lang'),h=document.documentElement.lang;if(l&&l!==h&&/^(he|ar|ru|en|fr|es)$/.test(l)&&!sessionStorage.getItem('langHop')){sessionStorage.setItem('langHop','1');location.replace((l==='he'?'index.html':'index.'+l+'.html')+location.search+location.hash)}else sessionStorage.removeItem('langHop')}catch(e){}})();</script>
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="theme-color" content="#0d2b6b">
@@ -2683,8 +2683,8 @@ html.hide-money .money { filter: blur(7px); user-select: none; }
 <div id="print-root" aria-hidden="true"></div>
 <noscript><div style="padding:24px;font-family:sans-serif">The app needs JavaScript.</div></noscript>
 <script>
-window.APP_VERSION = '1.26.0';
-window.APP_BUILD = '1.26.0-fe4324c2';
+window.APP_VERSION = '1.27.0';
+window.APP_BUILD = '1.27.0-ff36e5bc';
 /* ---- core/util.js ---- */
 /* ============================================================
  * util.js — date/time helpers and formatting.
@@ -5876,12 +5876,13 @@ window.APP_BUILD = '1.26.0-fe4324c2';
       travelPerDay: 16, // what most hourly workers get per day (the legal maximum is higher, ~22.6)
       travelMonthlyCap: 0, // 0 = no cap
       // --- overtime ---
-      otMode: 'daily', // daily = all shifts that start on the same date share the 8h counter
-      otThreshold: 8, // hours/day at 100%
+      otMode: 'daily', // daily = all shifts that start on the same date share the day's counter
+      otLaw: true, // by the law: 8.6 h a day in a five-day week, 8 in a six-day week (Friday 7), 7 in a night shift; 42 a week
+      otThreshold: 8, // hours/day at 100% when otLaw is off (set by hand)
       otTier1Hours: 2, // first OT hours at tier 1
       otTier1Pct: 125,
       otTier2Pct: 150,
-      nightShiftShortDay: false, // law: night shift (>=2h between 22-06) -> 7h day
+      nightShiftShortDay: false, // when otLaw is off: a night shift (>=2h between 22-06) -> a shorter day (by the law it is)
       nightShiftThreshold: 7,
       // --- rest days (Shabbat / holidays) ---
       restPct: 150,
@@ -6147,9 +6148,29 @@ window.APP_BUILD = '1.26.0-fe4324c2';
     return !!(o.rate || o.rest || o.ot || o.night || o.travel || o.special);
   }
 
+  /* ---------------- overtime: the law's limits ----------------
+   * By the law (חוק שעות עבודה ומנוחה; kolzchut.org.il "גמול עבור שעות נוספות"), in the private sector: first the
+   * day — 8.6 hours in a five-day week (8 h 36 min), 8 in a six-day week and 7 on its Friday, 7 in a night shift (at
+   * least 2 hours between 22:00 and 06:00) — then the week: regular hours beyond 42 (Sunday to Saturday) are overtime
+   * too. (The five-day week's one short day of 7.6 hours comes out the same through the 42.) An employer whose
+   * daily limit was set by hand (anything but the old default 8) keeps it; otLaw says which one applies. */
+  const WEEK_REG_H = 42;
+  const otByLaw = (emp) => (emp.otLaw != null ? !!emp.otLaw : !(+emp.otThreshold > 0) || +emp.otThreshold === 8);
+  /** The day's regular hours before overtime starts. */
+  function otDayHours(emp, settings, dateKey, nightShift) {
+    if (otByLaw(emp)) {
+      if (nightShift) return 7;
+      const six = +((settings && settings.leave) || {}).workWeek === 6;
+      return six ? (U.dow(dateKey) === 5 ? 7 : 8) : 8.6;
+    }
+    return emp.nightShiftShortDay && nightShift ? +emp.nightShiftThreshold || 7 : +emp.otThreshold || 8;
+  }
+
   /**
    * Compute pay for one shift.
    * opts.priorMin  — paid minutes already worked earlier the same workday (daily OT)
+   * opts.priorOtMin — of them, the overtime minutes (the day's first two overtime hours are tier 1)
+   * opts.weekRegMin — regular (not overtime) minutes already worked earlier the same week (the 42-hour limit)
    * opts.ignoreOverrides — compute as if no manual overrides / day rules existed
    */
   function computeShift(shift, ctx, opts) {
@@ -6247,28 +6268,42 @@ window.APP_BUILD = '1.26.0-fe4324c2';
     const lawNightMin = overlapMin(start, end, lawNight);
     const lawNightPaidH = (lawNightMin * paidFactor) / 60; // hours between 22:00-06:00, for reports
     const isNightShift = lawNightMin >= 120;
-    let thresholdH = +emp.otThreshold || 8;
-    if (emp.nightShiftShortDay && isNightShift) thresholdH = +emp.nightShiftThreshold || 7;
+    let thresholdH = otDayHours(emp, settings, dk, isNightShift);
     const otOv = ov.ot || null;
     if (otOv && otOv.mode === 'threshold' && +otOv.hours > 0) thresholdH = +otOv.hours;
     const otOff = otOv && otOv.mode === 'off';
     const t1 = thresholdH * 60;
-    const t2 = t1 + (+emp.otTier1Hours || 2) * 60;
-    let cum = emp.otMode === 'daily' ? Math.max(0, +opts.priorMin || 0) : 0;
+    const tier1Min = (+emp.otTier1Hours || 2) * 60;
+    const daily = emp.otMode === 'daily';
+    let cum = daily ? Math.max(0, +opts.priorMin || 0) : 0; // the day's paid minutes so far
+    let dayOt = daily ? Math.max(0, +opts.priorOtMin || 0) : 0; // of them, overtime
+    let weekReg = Math.max(0, +opts.weekRegMin || 0); // the week's regular minutes so far
+    const weekCap = WEEK_REG_H * 60;
+    let regMin = 0, otMin = 0, weekOtMin = 0;
 
     const pieces = [];
     for (const s of slices) {
       let pm = s.min * paidFactor;
       if (pm <= 0) continue;
-      if (otOff) { pieces.push(Object.assign({}, s, { tier: 0, pm })); cum += pm; continue; }
-      const edges = [[0, t1], [1, t2], [2, Infinity]];
-      let lo = 0;
-      for (const [tier, hi] of edges) {
-        const from = Math.max(cum, lo), to = Math.min(cum + pm, hi);
-        if (to > from) pieces.push(Object.assign({}, s, { tier, pm: to - from }));
-        lo = hi;
+      if (otOff) { pieces.push(Object.assign({}, s, { tier: 0, pm })); cum += pm; regMin += pm; weekReg += pm; continue; }
+      // regular while both the day's and the week's regular hours last; then overtime: the day's first two
+      // overtime hours at tier 1, the rest at tier 2
+      while (pm > 1e-9) {
+        const dayRoom = t1 - cum, weekRoom = weekCap - weekReg;
+        const room = Math.min(dayRoom, weekRoom);
+        if (room > 1e-9) {
+          const x = Math.min(pm, room);
+          pieces.push(Object.assign({}, s, { tier: 0, pm: x }));
+          cum += x; weekReg += x; regMin += x; pm -= x;
+          continue;
+        }
+        const t1Room = tier1Min - dayOt;
+        const tier = t1Room > 1e-9 ? 1 : 2;
+        const x = tier === 1 ? Math.min(pm, t1Room) : pm;
+        pieces.push(Object.assign({}, s, { tier, pm: x }));
+        if (dayRoom > 1e-9) weekOtMin += x; // overtime only because of the week's 42 hours
+        cum += x; dayOt += x; otMin += x; pm -= x;
       }
-      cum += pm;
     }
 
     /* ---- multipliers ---- */
@@ -6452,7 +6487,8 @@ window.APP_BUILD = '1.26.0-fe4324c2';
       travel, bonus, tips, additions, deductions,
       total: wage + travel.amount + bonus + additions,
       restLabels, autoRestRange, autoRestMin,
-      thresholdH, priorMin: +opts.priorMin || 0,
+      thresholdH, priorMin: +opts.priorMin || 0, otByLaw: otByLaw(emp),
+      regMin, otMin, weekOtMin, weekRegBefore: Math.max(0, +opts.weekRegMin || 0),
       overridden: !opts.ignoreOverrides && hasOverrides(shift), overrideList,
       dayRuleHit,
       warnings,
@@ -6493,17 +6529,25 @@ window.APP_BUILD = '1.26.0-fe4324c2';
       if (!groups.has(key)) groups.set(key, []);
       groups.get(key).push(s);
     }
-    for (const list of groups.values()) {
+    // days in date order, so the week's regular hours (the 42-hour limit) add up from Sunday on
+    const weekReg = new Map(); // employer|status|the week's Sunday → regular minutes so far
+    const keys = [...groups.keys()].sort((a, b) => { const [ea, da, sa] = a.split('|'), [eb, db, sb] = b.split('|'); return ea === eb ? (sa === sb ? (da < db ? -1 : da > db ? 1 : 0) : sa < sb ? -1 : 1) : ea < eb ? -1 : 1; });
+    for (const key of keys) {
+      const list = groups.get(key);
       list.sort((a, b) => a.start - b.start);
-      let prior = 0;
+      const [emp, dk, st] = key.split('|');
+      const wk = emp + '|' + st + '|' + U.addDays(dk, -U.dow(dk));
+      let prior = 0, priorOt = 0;
       for (const s of list) {
         let r;
-        try { r = computeShift(s, ctx, { priorMin: prior, ignoreOverrides: opts.ignoreOverrides }); } catch (e) {
+        try { r = computeShift(s, ctx, { priorMin: prior, priorOtMin: priorOt, weekRegMin: weekReg.get(wk) || 0, ignoreOverrides: opts.ignoreOverrides }); } catch (e) {
           if (typeof console !== 'undefined') console.warn('shift skipped, it could not be calculated', s.id, e && e.message);
           continue;
         }
         out.set(s.id, r);
         prior += r.paidMin;
+        priorOt += r.otMin || 0;
+        weekReg.set(wk, (weekReg.get(wk) || 0) + (r.regMin || 0));
       }
     }
     return out;
@@ -7021,7 +7065,7 @@ window.APP_BUILD = '1.26.0-fe4324c2';
   }
 
   root.Engine = {
-    LAW_BREAK, validShift, validEntry, legalMinWage, minWageFor, youthRules, pensionMinAge, MIN_WAGE, BL_YEARS, RECUP_YEARS, blLimits, recuperationRate,
+    LAW_BREAK, validShift, validEntry, otByLaw, otDayHours, WEEK_REG_H, legalMinWage, minWageFor, youthRules, pensionMinAge, MIN_WAGE, BL_YEARS, RECUP_YEARS, blLimits, recuperationRate,
     makeCtx, roleRate, roundMinutes, monthsBetween, buildSegments, hasOverrides, computeShift, computeAll,
     periodByKey, periodOf, dayValue, computeEntries, travelByDay, incomeTaxRaw, netEstimate, pensionActive,
     buildModel, totals, periodSummary, rangeSummary, pensionBaseOf, leaveBalances, holidayPay, vacationEntitlement, recuperationDays, ageAt, isMinor,
@@ -8107,7 +8151,7 @@ window.APP_BUILD = '1.26.0-fe4324c2';
         const amount = E.avgRate * (missing125 * 0.25 + missing150 * 0.5);
         add({ area: "Overtime", status: 'bad', title: "Overtime missing", amount, shifts: otShifts.map((r) => r.id),
           detail: `The app has ${U.hours(appOt1)} h at 125% and ${U.hours(appOt2)} h at 150% (${dates(otShifts)})${covered.length ? ", not counting the shifts that are missing altogether" : ''}; the payslip ${U.hours(qty(F, 'ot125') || 0)} and ${U.hours(qty(F, 'ot150') || 0)}. The missing bonus ≈ ${U.money(amount)}.`,
-          basis: "Daily overtime after " + model.ctx.primaryEmployer().otThreshold + " hours (by the settings).", confidence: 'medium',
+          basis: Engine.otByLaw(model.ctx.primaryEmployer()) ? "Overtime by the law: over 8.6 hours a day (8 in a six-day week, 7 in a night shift) and over 42 regular hours a week." : "Daily overtime after " + model.ctx.primaryEmployer().otThreshold + " hours (by the settings).", confidence: 'medium',
           fromOverride: ovNote(appOt, A.t.hoursBy.ot1 + A.t.hoursBy.ot2, slipOt, 0.1) });
       } else add({ area: "Overtime", status: 'ok', title: "Overtime is fine", detail: `${U.hours(slipOt)} on the payslip vs. ${U.hours(appOt)} in the app.`, basis: "Comparing 125%/150% hours.", confidence: 'medium' });
     }
@@ -16242,7 +16286,8 @@ ${name}`.trim();
     const notes = [];
     notes.push(`Time on shift: ${U.hm(r.elapsedMin)}` + (r.roundingDeltaMin ? ` · rounding: ${r.roundingDeltaMin > 0 ? '+' : ''}${r.roundingDeltaMin} min` : ''));
     if (r.breakMin) notes.push(`Break ${r.breakMin} min${r.breakAuto ? " (automatic, by law)" : ''} ${r.breakPaid ? "Paid" : "unpaid — taken proportionally from all hours"}`);
-    notes.push(`Overtime after ${r.thresholdH} hours a day` + (r.priorMin ? ` · you already worked ${U.hm(r.priorMin)} that day before this shift` : '') + (r.isNightShift && emp.nightShiftShortDay ? " (night shift)" : ''));
+    notes.push(`Overtime after ${+(+r.thresholdH).toFixed(2)} hours a day${r.otByLaw ? "(by the law)" : ''}` + (r.priorMin ? ` · you already worked ${U.hm(r.priorMin)} that day before this shift` : '') + (r.isNightShift && (r.otByLaw || emp.nightShiftShortDay) ? " (night shift)" : '')
+      + (r.weekOtMin > 0 ? ` · ${U.hm(r.weekOtMin)} of them overtime because you passed 42 regular hours this week` : ''));
     const wins = r.restLabels.length ? r.slices.filter((s) => s.autoRest) : [];
     if (r.autoRestMin > 0) notes.push(`${esc(r.restLabels.join(', ') || "Shabbat/holiday")} window in the shift: ⁦${U.epochHM(wins[0].a)}⁠–⁠${U.epochHM(wins[wins.length - 1].b)}⁩ (${S.settings.rest.mode === 'city' ? "By " + esc(S.settings.rest.city === '__custom' ? "Custom location" : App.placeLabel(S.settings.rest.city).name).replace(/-/g, '-⁠') : "fixed hours"})`);
     if (r.warnings.length) notes.push('⚠️ ' + r.warnings.join(', '));
@@ -16434,7 +16479,7 @@ ${name}`.trim();
             ${rest.scope !== 'off' ? `<div class="grid2"><label class="field"><span class="lbl">Percentage</span>${numIn('ov.rest.pct', rest.pct, String(emp.restPct))}</label><label class="field"><span class="lbl">Or an extra amount ₪</span>${numIn('ov.rest.amount', rest.amount, "Automatic")}</label></div>` : ''}`)}
           ${ovBlock('ot', "Overtime", "Turn off, a different threshold, a percentage or an amount", `
             <div class="field">${sel('ov.ot.mode', [['off', "Turn off overtime"], ['threshold', "A different hours threshold"], ['pct', "One rate for all overtime hours"], ['amount', "Manual extra amount"]], ot.mode)}</div>
-            ${ot.mode === 'threshold' ? `<label class="field"><span class="lbl">Overtime after (hours)</span>${numIn('ov.ot.hours', ot.hours, String(emp.otThreshold))}</label>` : ''}
+            ${ot.mode === 'threshold' ? `<label class="field"><span class="lbl">Overtime after (hours)</span>${numIn('ov.ot.hours', ot.hours, String(Engine.otDayHours(emp, S.settings, U.todayKey(), false)))}</label>` : ''}
             ${ot.mode === 'pct' ? `<label class="field"><span class="lbl">Percentage</span>${numIn('ov.ot.pct', ot.pct, '125')}</label>` : ''}
             ${ot.mode === 'amount' ? `<label class="field"><span class="lbl">Extra amount ₪ (beyond 100%)</span>${numIn('ov.ot.amount', ot.amount, '0')}</label>` : ''}`)}
           ${ovBlock('night', "Night bonus", emp.nightEnabled ? "Set: " + emp.nightValue + (emp.nightType === 'fixed' ? " ₪ an hour" : '%') : "Not set for this employer", `
@@ -18697,7 +18742,7 @@ ${name}`.trim();
     personal: { icon: 'users', title: "Personal details", sub: () => { const a = Engine.ageAt(S.settings.birthDate, U.todayKey()); return (S.settings.userName || "No name entered") + (a != null ? " · age " + a + (a < 18 ? " (tax exempt)" : '') : ''); } },
     account: { icon: 'cloud', title: "Account and sync", sub: () => (S.meta.cloudEmail || "Not signed in") + ' · ' + root.Cloud.statusText() },
     roles: { icon: 'users', title: "Employers, roles and rates", sub: () => App.roles().map((r) => r.name + ' ' + U.money(Engine.roleRate(r, U.todayKey()), 0)).join(' · ') },
-    calc: { icon: 'flask', title: "Calculation rules", sub: () => { const e = S.employers[0]; return `OT after ${e.otThreshold} h · Shabbat ${e.restPct}% · rounding: ${e.roundingMode === 'none' ? "none" : e.roundingUnit + " min"}`; } },
+    calc: { icon: 'flask', title: "Calculation rules", sub: () => { const e = S.employers[0]; return `${Engine.otByLaw(e) ? "OT by the law" : `OT after ${e.otThreshold} h`} · Shabbat ${e.restPct}% · rounding: ${e.roundingMode === 'none' ? "none" : e.roundingUnit + " min"}`; } },
     rest: { icon: 'candle', title: "Shabbat and holidays", sub: () => (S.settings.rest.mode === 'city' ? "By " + (S.settings.rest.city === '__custom' ? "Custom location" : App.placeLabel ? App.placeLabel(S.settings.rest.city).name : S.settings.rest.city) : `Fixed: ⁦${S.settings.rest.fixedStart}⁠–⁠${S.settings.rest.fixedEnd}⁩`) + (S.dayRules.length ? ` · ${S.dayRules.length} day ${globalThis.U.plural(S.dayRules.length, {"one":"rule","other":"rules"})}` : '') },
     pay: { icon: 'car', title: "Travel and pay period", sub: () => { const e = S.employers[0]; return `${U.money(e.travelPerDay)} a day${+e.travelMonthlyCap ? ", cap " + U.money(e.travelMonthlyCap, 0) : ''} · ${e.periodStartDay > 1 ? "from " + e.periodStartDay + " a month" : "Calendar month"} · paid on day ${e.payDay}`; } },
     net: { icon: 'wallet', title: "Estimated net and tax", sub: () => `${S.settings.tax.creditPoints} credit points · pension ${S.settings.pension.employeePct}%${S.settings.hishtalmut.enabled ? " · study fund" : ''}` },
@@ -19034,11 +19079,13 @@ ${name}`.trim();
     perEmployer: true,
     render: (e) => `
       <div class="section-title">${icon('clock', 's')} Overtime</div><div class="card">
-        ${F.num("Regular hours a day", 'e.otThreshold', e.otThreshold, "Overtime starts after them. By law: 8.6 in a 5-day week, 8 in a 6-day week.")}
+        ${F.sw("By the law (recommended)", +S.settings.leave.workWeek === 6 ? "Over 8 hours a day (over 7 on Friday), over 7 in a night shift, and over 42 regular hours a week" : "Over 8.6 hours a day, over 7 in a night shift, and over 42 regular hours a week", 'e.otLaw', Engine.otByLaw(e)).replace('data-s=', 'data-redraw data-s=')}
+        ${F.sel("Working days a week at the workplace", 's.leave.workWeek', [[5, "5 days (Sunday to Thursday)"], [6, "6 days"]], +S.settings.leave.workWeek === 6 ? 6 : 5).replace('data-s=', 'data-redraw data-s=')}
+        ${Engine.otByLaw(e) ? '' : F.num("Regular hours a day", 'e.otThreshold', e.otThreshold, "Overtime starts after them (hours beyond 42 a week are always overtime).")}
         <div class="grid3">${F.num("Hours at tier 1", 'e.otTier1Hours', e.otTier1Hours)}${F.num("Tier 1 %", 'e.otTier1Pct', e.otTier1Pct)}${F.num("Tier 2 %", 'e.otTier2Pct', e.otTier2Pct)}</div>
         ${F.sel("Counting", 'e.otMode', [['daily', "Per workday (all shifts starting that day)"], ['shift', "Per shift"]], e.otMode)}
-        ${F.sw("Night shift = short day", "A shift with at least two hours between 22:00 and 06:00", 'e.nightShiftShortDay', e.nightShiftShortDay)}
-        ${e.nightShiftShortDay ? F.num("Regular hours on a night shift", 'e.nightShiftThreshold', e.nightShiftThreshold) : ''}</div>
+        ${Engine.otByLaw(e) ? '' : `${F.sw("Night shift = short day", "A shift with at least two hours between 22:00 and 06:00", 'e.nightShiftShortDay', e.nightShiftShortDay).replace('data-s=', 'data-redraw data-s=')}
+        ${e.nightShiftShortDay ? F.num("Regular hours on a night shift", 'e.nightShiftThreshold', e.nightShiftThreshold) : ''}`}</div>
       <div class="section-title">${icon('candle', 's')} Shabbat and holidays</div><div class="card">
         <div class="grid3">${F.num("Shabbat/holiday %", 'e.restPct', e.restPct)}${F.num("+ OT tier 1", 'e.restOt1Pct', e.restOt1Pct)}${F.num("+ OT tier 2", 'e.restOt2Pct', e.restOt2Pct)}</div>
         ${F.num("Shabbat/holiday eve bonus %", 'e.evePct', e.evePct, "0 = none. The hours it applies to are set on the \"Shabbat and holidays\" screen.")}</div>
@@ -20051,7 +20098,7 @@ What the app has (for "how do I" questions): a "Start shift" button with a timer
       employment_start: st.startDate, seniority_months: L.seniorityMonths, job_percent_last_12m: Math.round(L.jobPct * 100),
       roles: App.roles().map((r) => ({ name: r.name, rate_now: Engine.roleRate(r, today), rate_history: r.rates.map((x) => ({ from: x.from, rate: x.rate })) })),
       rules: {
-        overtime_after_hours: emp.otThreshold, ot_tier1_hours: emp.otTier1Hours, ot_pct: [emp.otTier1Pct, emp.otTier2Pct],
+        overtime_after_hours: Engine.otByLaw(emp) ? 'by the law: 8.6 a day in a five-day week, 8 in a six-day week (Friday 7), 7 in a night shift; and over 42 regular hours a week' : emp.otThreshold, ot_tier1_hours: emp.otTier1Hours, ot_pct: [emp.otTier1Pct, emp.otTier2Pct],
         shabbat_holiday_pct: emp.restPct, shabbat_overtime_pct: [emp.restOt1Pct, emp.restOt2Pct], shabbat_window: st.rest.mode === 'city' ? 'city:' + st.rest.city : st.rest.fixedStart + '-' + st.rest.fixedEnd,
         travel_per_day: emp.travelPerDay, travel_monthly_cap: emp.travelMonthlyCap || null, pay_period_start_day: emp.periodStartDay, pay_day: emp.payDay,
         rounding: emp.roundingMode === 'none' ? null : emp.roundingMode + ' ' + emp.roundingUnit + 'min', min_paid_hours_per_shift: emp.minShiftHours || null,
@@ -20563,8 +20610,9 @@ What the app has (for "how do I" questions): a "Start shift" button with a timer
 
   /* ---------------- what's new (once per big update, for people who already used the app) ---------------- */
   const WHATS_NEW = {
-    id: '1.26.0',
+    id: '1.27.0',
     items: [
+      ['clock', 'violet', "Overtime exactly by the law", "A day: over 8.6 hours in a five-day week (8 in a six-day week), over 7 in a night shift; a week: over 42 regular hours. Shifts already entered are counted again too. In Settings › Calculation rules."],
       ['users', 'pink', "Competition with friends", "Invite a friend with a link and see who earns more per hour, this month and this year. You can hide your amounts and remove friends. In Games › Competition with friends."],
       ['smile', 'amber', "Your name, not a nickname", "The champions table and the competition show your first name (you can change it), in any language."],
       ['home', 'violet', "The home screen your way", "In Settings › Appearance › Home screen: hide the shortcuts, the update line or the Hebrew date, and choose how many recent shifts show."],
@@ -20573,7 +20621,6 @@ What the app has (for "how do I" questions): a "Start shift" button with a timer
       ['refresh', 'mint', "From the website straight to the new version", "Opening from the website or a link in the browser always gets the latest version, not an old copy from your last visit."],
       ['bell', 'sky', "Shift reminders, fully in your hands", "As many reminders as you like and as long before as you like, also the evening before, and a question after the shift whether you worked it. In Settings › Notifications and insights."],
       ['chart', 'mint', "Average monthly pay", "In Reports: the average of the last 3, 6 or 12 months, of this year or of all time, with the highest and lowest month."],
-      ['eye', 'violet', "Privacy mode", "The eye on the pay card blurs all the amounts, for example when you show someone your phone."],
     ],
   };
 

@@ -456,7 +456,7 @@
         const amount = E.avgRate * (missing125 * 0.25 + missing150 * 0.5);
         add({ area: 'שעות נוספות', status: 'bad', title: 'שעות נוספות חסרות', amount, shifts: otShifts.map((r) => r.id),
           detail: `באפליקציה ${U.hours(appOt1)} ש׳ ב-125% ו-${U.hours(appOt2)} ש׳ ב-150% (${dates(otShifts)})${covered.length ? ', לא כולל המשמרות שחסרות לגמרי' : ''}; בתלוש ${U.hours(qty(F, 'ot125') || 0)} ו-${U.hours(qty(F, 'ot150') || 0)}. התוספת החסרה ≈ ${U.money(amount)}.`,
-          basis: 'שעות נוספות יומיות אחרי ' + model.ctx.primaryEmployer().otThreshold + ' שעות (לפי ההגדרות).', confidence: 'medium',
+          basis: Engine.otByLaw(model.ctx.primaryEmployer()) ? 'שעות נוספות לפי החוק: ביום מעל 8.6 שעות (8 בשבוע של 6 ימים, 7 במשמרת לילה) ובשבוע מעל 42 שעות רגילות.' : 'שעות נוספות יומיות אחרי ' + model.ctx.primaryEmployer().otThreshold + ' שעות (לפי ההגדרות).', confidence: 'medium',
           fromOverride: ovNote(appOt, A.t.hoursBy.ot1 + A.t.hoursBy.ot2, slipOt, 0.1) });
       } else add({ area: 'שעות נוספות', status: 'ok', title: 'שעות נוספות תקינות', detail: `${U.hours(slipOt)} בתלוש מול ${U.hours(appOt)} באפליקציה.`, basis: 'השוואת שעות 125%/150%.', confidence: 'medium' });
     }
