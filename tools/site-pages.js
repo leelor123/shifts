@@ -37,6 +37,11 @@ const recupRows = [[1, 'שנה ראשונה'], [2, 'שנה 2–3'], [4, 'שנה 
 const D = globalThis.Defaults.defaultEmployer();
 const REST = [+(D.restPct || 150), +(D.restOt1Pct || 175), +(D.restOt2Pct || 200)];
 const OT = [+(D.otTier1Pct || 125), +(D.otTier2Pct || 150)];
+// overtime by the law, from the engine (a weekday: Monday 2 November 2026; a Friday: the 6th)
+const lawEmp = Object.assign({}, D, { otLaw: true });
+const dayH = (ww, dk, night) => Engine.otDayHours(lawEmp, { leave: { workWeek: ww } }, dk, night);
+const OTL = { five: dayH(5, '2026-11-02'), six: dayH(6, '2026-11-02'), sixFri: dayH(6, '2026-11-06'), night: dayH(5, '2026-11-02', true), week: Engine.WEEK_REG_H, t1h: +(D.otTier1Hours || 2) };
+const hm = (h) => { const m = Math.round(h * 60); return `${Math.floor(m / 60)}:${String(m % 60).padStart(2, '0')}`; };
 
 /* ---------------- the pages ---------------- */
 const PAGES = [
@@ -90,6 +95,35 @@ const PAGES = [
     sources: [['דמי הבראה', GOV.recup]],
   },
   {
+    slug: 'overtime',
+    title: 'שעות נוספות: מתי מתחילות וכמה משלמים?',
+    desc: `בשבוע עבודה של 5 ימים שעות נוספות מתחילות אחרי ${OTL.five} שעות ביום (${hm(OTL.five)}), בשבוע של 6 ימים אחרי ${OTL.six}, במשמרת לילה אחרי ${OTL.night}, ובכל שבוע מעל ${OTL.week} שעות רגילות. ${OTL.t1h} השעות הנוספות הראשונות ב-${OT[0]}%, ומהשלישית ${OT[1]}%.`,
+    answer: `בשבוע עבודה של 5 ימים, כל שעה אחרי <b>${OTL.five} שעות ביום</b> (${hm(OTL.five)}) היא שעה נוספת, וגם כל שעה רגילה מעל <b>${OTL.week} שעות בשבוע</b>. על ${OTL.t1h} השעות הנוספות הראשונות ביום משלמים ${OT[0]}%, ומהשלישית ${OT[1]}%.`,
+    body: `
+      <h2>מתי מתחילות שעות נוספות?</h2>
+      <div class="tbl"><table><thead><tr><th>מתי</th><th>שעות רגילות</th></tr></thead><tbody>
+        <tr><td>שבוע של 5 ימים</td><td><b>${OTL.five} שעות ביום</b> (${hm(OTL.five)})</td></tr>
+        <tr><td>שבוע של 6 ימים</td><td><b>${OTL.six} שעות ביום</b>, ביום שישי ${OTL.sixFri}</td></tr>
+        <tr><td>משמרת לילה (שעתיים לפחות בין 22:00 ל-06:00)</td><td><b>${OTL.night} שעות</b></td></tr>
+        <tr><td>בכל שבוע (ראשון עד שבת)</td><td><b>${OTL.week} שעות רגילות</b></td></tr>
+      </tbody></table></div>
+      <p>קודם בודקים כל יום, ואחר כך את השבוע: שעות רגילות שעברו את ${OTL.week} השעות בשבוע הן שעות נוספות, גם אם באותו יום לא עברתם את השעות של היום.</p>
+      <h2>כמה משלמים?</h2>
+      <div class="tbl"><table><thead><tr><th>שעה נוספת</th><th>ביום חול</th><th>בשבת ובחג</th></tr></thead><tbody>
+        <tr><td>${OTL.t1h} הראשונות ביום</td><td><b>${OT[0]}%</b></td><td><b>${REST[1]}%</b></td></tr>
+        <tr><td>מהשלישית</td><td><b>${OT[1]}%</b></td><td><b>${REST[2]}%</b></td></tr>
+      </tbody></table></div>
+      <h2>דוגמה</h2>
+      <p>שכר של ${nis(40)} לשעה, יום של 10 שעות בשבוע של 5 ימים: ${OTL.five} שעות רגילות (${nis(OTL.five * 40)}) ועוד ${(10 - OTL.five).toFixed(1)} שעות ב-${OT[0]}% (${nis((10 - OTL.five) * 40 * OT[0] / 100)}), ובסך הכול <b>${nis(OTL.five * 40 + (10 - OTL.five) * 40 * OT[0] / 100)}</b>.</p>`,
+    faq: [
+      ['אחרי כמה שעות מתחילות שעות נוספות?', `בשבוע של 5 ימים אחרי ${OTL.five} שעות ביום (${hm(OTL.five)}), בשבוע של 6 ימים אחרי ${OTL.six} (בשישי ${OTL.sixFri}), ובמשמרת לילה אחרי ${OTL.night}.`],
+      ['ומה עם השבוע?', `כל שעה רגילה מעל ${OTL.week} שעות בשבוע (ראשון עד שבת) היא שעה נוספת.`],
+      ['כמה משלמים על שעה נוספת?', `${OT[0]}% על ${OT[0] === 125 ? 'שתי' : ''} השעות הנוספות הראשונות ביום ו-${OT[1]}% מהשלישית. בשבת ובחג: ${REST[1]}% ו-${REST[2]}%.`],
+      ['מעסיק יכול לא לשלם על שעות נוספות?', 'לא, אי אפשר לוותר על התוספת, אלא אם העובד עבד שעות נוספות בלי אישור המעסיק.'],
+    ],
+    sources: [['שעות נוספות', GOV.hours]],
+  },
+  {
     slug: 'shabbat-pay',
     title: 'כמה משלמים על עבודה בשבת ובחג?',
     desc: `על כל שעה בשבת או בחג משלמים לפחות ${REST[0]}% מהשכר הרגיל. שעות נוספות בשבת: ${REST[1]}% ו-${REST[2]}%.`,
@@ -136,6 +170,7 @@ h2 { font: 700 1.35rem/1.35 Fredoka, Rubik, sans-serif; margin: 34px 0 10px; tex
 table { width: 100%; border-collapse: collapse; }
 th, td { padding: 11px 10px; text-align: start; border-bottom: 1px solid var(--line); }
 td { white-space: nowrap; }
+td:first-child { white-space: normal; } /* the label wraps between words; the numbers stay on one line */
 th { line-height: 1.3; }
 @media (max-width: 420px) { th, td { padding: 10px 8px; font-size: .95rem; } }
 th { font-size: .9rem; color: var(--ink-2); font-weight: 600; background: var(--surface-2); }
