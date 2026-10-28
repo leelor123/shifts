@@ -720,7 +720,8 @@
       <div class="font-pick">${Object.entries(App.FONTS).map(([k, f]) => `<button data-font="${k}" class="${(S.settings.font || 'rubik') === k ? 'on' : ''}" style="font-family:'${f[0]}', system-ui, sans-serif"><span class="fp-sample">משמרת ערב · ${esc(f[2])}<small>${f[0]}</small></span><span class="fp-num">₪1,240</span></button>`).join('')}</div>
       <div class="section-title">גודל טקסט</div><div class="seg">${[[0.9, 'קטן'], [1, 'רגיל'], [1.1, 'גדול'], [1.2, 'גדול מאוד']].map(([k, l]) => `<button data-fs="${k}" class="${+S.settings.fontScale === k ? 'on' : ''}">${l}</button>`).join('')}</div>
       <div class="section-title" style="margin-top:16px">מסך הבית</div>
-      <div class="card">${F.sw('קיצורי דרך', 'ארבעה כפתורים גדולים: משמרת חדשה, הזכויות, בדיקת תלוש ומשחקים', 's.home.shortcuts', (S.settings.home || {}).shortcuts !== false)}
+      <div class="card"><div class="hm-recent"><span class="t">המספר הגדול בכרטיס השכר</span><div class="seg">${[['gross', 'ברוטו'], ['net', 'נטו']].map(([k, l]) => `<button data-home-big="${k}" class="${((S.settings.home || {}).big === 'net' ? 'net' : 'gross') === k ? 'on' : ''}">${l}</button>`).join('')}</div></div>
+        ${F.sw('קיצורי דרך', 'ארבעה כפתורים גדולים: משמרת חדשה, הזכויות, בדיקת תלוש ומשחקים', 's.home.shortcuts', (S.settings.home || {}).shortcuts !== false)}
         ${F.sw('שורת עדכון', 'משמרת שמתקרבת, התראה חשובה או משכורת בדרך, מתחת לכפתור המשמרת', 's.home.highlight', (S.settings.home || {}).highlight !== false)}
         ${F.sw('תאריך עברי וחגים', 'בשורה שמתחת לברכה', 's.home.hebDate', (S.settings.home || {}).hebDate !== false)}
         <div class="hm-recent"><span class="t">משמרות אחרונות בבית</span><div class="seg">${[[0, 'בלי'], [3, '3'], [5, '5'], [8, '8']].map(([k, l]) => `<button data-home-recent="${k}" class="${((S.settings.home || {}).recent == null ? 3 : +(S.settings.home || {}).recent) === k ? 'on' : ''}">${l}</button>`).join('')}</div></div></div>
@@ -747,6 +748,7 @@
         if (b.dataset.theme) await root.Fx.reveal(e.clientX, e.clientY, async () => { await Store.setSettings((s) => { s.theme = b.dataset.theme; }); draw(); });
         else if (b.dataset.accent) await root.Fx.reveal(e.clientX, e.clientY, async () => { await Store.setSettings((s) => { s.accent = b.dataset.accent; }); draw(); });
         else if (b.dataset.fs) await Store.setSettings((s) => { s.fontScale = +b.dataset.fs; });
+        else if (b.dataset.homeBig) await Store.setSettings((s) => { s.home = Object.assign({}, s.home, { big: b.dataset.homeBig }); });
         else if (b.dataset.homeRecent !== undefined) await Store.setSettings((s) => { s.home = Object.assign({}, s.home, { recent: +b.dataset.homeRecent }); });
         else if (b.dataset.font) await Store.setSettings((s) => { s.font = b.dataset.font; });
         else if (b.hasAttribute('data-fx-try')) { root.Fx.celebrate('big'); return; }

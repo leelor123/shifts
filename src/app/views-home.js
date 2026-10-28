@@ -195,22 +195,29 @@
     const pct = goal ? Math.min(100, (curVal / goal) * 100) : 0;
     if (goal && pct >= 100) App.celebrateOnce('goal-' + P.key, () => { root.Fx.celebrate('money'); UI.toast('הגעת ליעד החודשי! 🎯'); });
     const fc = proj && proj.forecast != null ? proj.forecast : null; // what was earned + the planned shifts + the pace after them
-    const projPct = goal && fc ? Math.min(100, ((goalNet ? fc * (sum.gross ? sum.net.net / sum.gross : 0.85) : fc) / goal) * 100) : 0;
+    const netShare = sum.gross ? sum.net.net / sum.gross : 0.85;
+    const projPct = goal && fc ? Math.min(100, ((goalNet ? fc * netShare : fc) / goal) * 100) : 0;
     const fcNote = proj && proj.plannedCount ? ` <span class="hh-fc-n">(כולל ${proj.plannedCount} מתוכננות)</span>` : '';
     const periodName = emp.periodStartDay > 1 ? 'תקופת השכר' : esc(P.label);
     // the whole card opens the summary on a tap; keyboards and screen readers get a real button for it
     // (the card itself holds the "what is gross?" buttons, so it can't be one)
     const P2 = root.Plus;
+    // the big number: gross, or the net estimate if the user chose it (settings › appearance › home screen)
+    const bigNet = (S.settings.home || {}).big === 'net';
+    // the forecast in the kind it stands next to: a net goal, or a net big number
+    const fcShown = (net) => (net ? fc * netShare : fc);
+    const grossT = UI.term ? UI.term('gross', 'ברוטו') : 'ברוטו';
+    const netT = UI.term ? UI.term('net', sum.net.minor ? 'נטו' : 'נטו משוער') : 'נטו';
     return `<section class="home-hero" data-act="go-summary"><button class="vh" data-act="go-summary">פירוט ${periodName}</button>
       ${P2 && P2.visible() ? `<button class="hh-skin" data-act="plus-design" aria-label="עיצוב כרטיס השכר">${icon('palette', 's')}</button>` : ''}
       <button class="hh-eye ${S.settings.hideMoney ? 'off' : ''}" data-act="toggle-money" aria-label="${S.settings.hideMoney ? 'הצגת הסכומים' : 'הסתרת הסכומים'}" aria-pressed="${!!S.settings.hideMoney}">${icon('eye', 's')}</button>
       <span class="aurora" aria-hidden="true" style="${App.phase()}"><i></i><i></i><i></i></span><span class="hh-dial" aria-hidden="true" style="${App.phase()}"></span>
-      <div class="hh-label">${UI.term ? UI.term('gross', 'ברוטו') : 'ברוטו'} ${emp.periodStartDay > 1 ? 'בתקופת השכר' : 'ב' + periodName} עד עכשיו</div>
-      <div class="hero-num">${money(sum.gross, 0)}</div>
-      <div class="hh-stats"><span><b>${money(sum.net.net, 0)}</b><small>${UI.term ? UI.term('net', sum.net.minor ? 'נטו' : 'נטו משוער') : 'נטו'}</small></span><span><b class="num">${U.hm(sum.hours * 60)}</b><small>שעות</small></span><span><b>${sum.shifts}</b><small>${sum.shifts === 1 ? 'משמרת' : 'משמרות'}</small></span></div>
+      <div class="hh-label">${bigNet ? netT : grossT} ${emp.periodStartDay > 1 ? 'בתקופת השכר' : 'ב' + periodName} עד עכשיו</div>
+      <div class="hero-num">${money(bigNet ? sum.net.net : sum.gross, 0)}</div>
+      <div class="hh-stats"><span><b>${money(bigNet ? sum.gross : sum.net.net, 0)}</b><small>${bigNet ? grossT : netT}</small></span><span><b class="num">${U.hm(sum.hours * 60)}</b><small>שעות</small></span><span><b>${sum.shifts}</b><small>${sum.shifts === 1 ? 'משמרת' : 'משמרות'}</small></span></div>
       ${goal ? `<div class="hh-goal"><div class="progress thin"><b style="width:${projPct}%"></b><i style="width:${pct}%"></i></div>
-        <div class="hh-goal-l">${U.num(pct, 0)}% מיעד ${money(goal, 0)}${fc ? ` · צפי ${money(fc, 0)}${fcNote}` : ''}</div></div>`
-        : (fc ? `<div class="hh-goal-l">${emp.periodStartDay > 1 ? 'צפי לסוף התקופה' : 'צפי לסוף החודש'}: ${money(fc, 0)}${fcNote}</div>` : '')}
+        <div class="hh-goal-l">${U.num(pct, 0)}% מיעד ${money(goal, 0)}${fc ? ` · צפי ${money(fcShown(goalNet), 0)}${fcNote}` : ''}</div></div>`
+        : (fc ? `<div class="hh-goal-l">${emp.periodStartDay > 1 ? 'צפי לסוף התקופה' : 'צפי לסוף החודש'}: ${money(fcShown(bigNet), 0)}${fcNote}</div>` : '')}
     </section>`;
   }
 
