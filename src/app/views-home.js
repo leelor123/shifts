@@ -203,6 +203,7 @@
     const P2 = root.Plus;
     return `<section class="home-hero" data-act="go-summary"><button class="vh" data-act="go-summary">פירוט ${periodName}</button>
       ${P2 && P2.visible() ? `<button class="hh-skin" data-act="plus-design" aria-label="עיצוב כרטיס השכר">${icon('palette', 's')}</button>` : ''}
+      <button class="hh-eye ${S.settings.hideMoney ? 'off' : ''}" data-act="toggle-money" aria-label="${S.settings.hideMoney ? 'הצגת הסכומים' : 'הסתרת הסכומים'}" aria-pressed="${!!S.settings.hideMoney}">${icon('eye', 's')}</button>
       <span class="aurora" aria-hidden="true" style="${App.phase()}"><i></i><i></i><i></i></span><span class="hh-dial" aria-hidden="true" style="${App.phase()}"></span>
       <div class="hh-label">${UI.term ? UI.term('gross', 'ברוטו') : 'ברוטו'} ${emp.periodStartDay > 1 ? 'בתקופת השכר' : 'ב' + periodName} עד עכשיו</div>
       <div class="hero-num">${money(sum.gross, 0)}</div>
@@ -329,6 +330,7 @@
       ${birthdayCard()}
       ${paydayCard()}
       ${banners()}
+      ${App.wrappedCard ? App.wrappedCard() : ''}
       ${App.recapCard ? App.recapCard() : ''}
       ${hero()}
       ${actionBlock()}
@@ -388,6 +390,13 @@
     e.stopPropagation();
     const sh = App.shift(el.dataset.id);
     if (sh) await App.markDone(sh);
+  };
+  App.actions['toggle-money'] = async (el, e) => {
+    if (e) e.stopPropagation(); // the card under it opens the summary
+    await Store.setSettings((s) => { s.hideMoney = !s.hideMoney; });
+    App.applyTheme();
+    if (root.Fx) root.Fx.play('on');
+    App.rerender();
   };
   App.actions['mark-done-all'] = async () => {
     const now = Date.now();

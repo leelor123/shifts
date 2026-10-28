@@ -1498,7 +1498,7 @@ body.fx .cal-day.hello, body.fx .week-row.hello { animation: cal-hello .55s cubi
 .sched-sheet .sc-ai { margin-top: 4px; }
 .sched-sheet .sc-names .chip, .sched-sheet .sc-week .chip { font-weight: 600; }
 
-/* ---- the language picker (lang.js): the first open's screen, the opening show's sky, four doors ---- */
+/* ---- the language picker (lang.js): the first open's screen, the opening show's sky, six doors ---- */
 .lp-host { position: fixed; inset: 0; z-index: 9000; color: #fff; overflow: hidden;
   background: radial-gradient(120% 80% at 50% 32%, #1a3f94 0%, #0d2b6b 55%, #081c4a 100%); }
 .lp-host .lp { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 18px;
@@ -1522,9 +1522,9 @@ body.fx .cal-day.hello, body.fx .week-row.hello { animation: cal-hello .55s cubi
   background: linear-gradient(100deg, #fff 20%, var(--a) 120%); -webkit-background-clip: text; background-clip: text; color: transparent; }
 .lp-ask span { font: 500 1.05rem/1.4 'Rubik', system-ui, sans-serif; color: rgba(255, 255, 255, .78); }
 .static .lp-hello span, .static .lp-ask span { transition: none; }
-/* the four doors */
-.lp-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; width: min(100%, 420px); margin-top: 6px; }
-.lp-card { position: relative; display: flex; flex-direction: column; align-items: center; gap: 6px; padding: 18px 10px 14px; border-radius: 24px; cursor: pointer;
+/* the doors: six, three to a row */
+.lp-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; width: min(100%, 440px); margin-top: 6px; }
+.lp-card { position: relative; display: flex; flex-direction: column; align-items: center; gap: 6px; padding: 16px 4px 12px; border-radius: 22px; cursor: pointer; min-width: 0;
   color: #fff; font: inherit; background: rgba(255, 255, 255, .07); border: 1px solid rgba(255, 255, 255, .14);
   box-shadow: 0 1px 0 rgba(255, 255, 255, .08) inset, 0 10px 30px -18px rgba(0, 0, 0, .6);
   transition: scale .35s var(--pop, cubic-bezier(.34, 1.56, .64, 1)), background-color .25s ease, border-color .25s ease, opacity .35s ease, transform .5s var(--pop, cubic-bezier(.34, 1.56, .64, 1)); }
@@ -1535,11 +1535,11 @@ body.fx .cal-day.hello, body.fx .week-row.hello { animation: cal-hello .55s cubi
 .lp-card.sug::after { content: ''; position: absolute; inset: -1px; border-radius: inherit; pointer-events: none;
   box-shadow: 0 0 0 2px var(--g1), 0 0 28px -4px var(--g1); opacity: .9; animation: lp-glow 2.4s ease-in-out infinite; }
 @keyframes lp-glow { 50% { opacity: .35; } }
-.lp-glyph { display: grid; place-items: center; width: 62px; height: 62px; border-radius: 50%; font: 800 2rem/1 'Rubik', system-ui, sans-serif; color: #fff;
+.lp-glyph { display: grid; place-items: center; width: 54px; height: 54px; border-radius: 50%; font: 800 1.75rem/1 'Rubik', system-ui, sans-serif; color: #fff;
   background: linear-gradient(140deg, var(--g1), var(--g2)); box-shadow: 0 8px 22px -8px var(--g2); text-shadow: 0 1px 2px rgba(0, 0, 0, .18); }
-.lp-name { font-weight: 700; font-size: 1.12rem; }
-.lp-hi { font-size: .8rem; opacity: .7; }
-.lp-sug { position: absolute; top: -9px; inset-inline-end: 12px; padding: 3px 9px; line-height: 1.35; white-space: nowrap; z-index: 1; border-radius: 999px; font-size: .68rem; font-weight: 700; color: #10203f;
+.lp-name { font-weight: 700; font-size: 1rem; max-width: 100%; }
+.lp-hi { font-size: .78rem; opacity: .7; }
+.lp-sug { position: absolute; top: -9px; left: 50%; translate: -50% 0; padding: 3px 8px; line-height: 1.35; white-space: nowrap; z-index: 1; border-radius: 999px; font-size: .68rem; font-weight: 700; color: #10203f;
   background: linear-gradient(140deg, var(--g1), var(--g2)); box-shadow: 0 4px 12px -4px var(--g2); }
 .lp-later { font-size: .8rem; color: rgba(255, 255, 255, .6); text-align: center; }
 /* chosen: the others step back, the chosen one comes forward, its colour fills the screen from its letter */
@@ -1605,3 +1605,23 @@ html:not([lang="he"]) .lb-games button, html:not([lang="he"]) .lb-periods button
 .done-cta .dc-t { font-weight: 700; display: flex; gap: 6px; align-items: center; color: var(--warn); }
 .done-cta .dc-s { font-size: .86rem; color: var(--on-surface-var); margin: 4px 0 12px; }
 .home-hero .hh-fc-n { opacity: .8; font-size: .92em; }
+/* the reminders before a planned shift (settings › alerts) */
+.rm-box { padding: 4px 0 8px; display: grid; grid-template-columns: minmax(0, 1fr); gap: 10px; }
+.rm-box > .lbl { font-size: .86rem; color: var(--on-surface-var); }
+.rm-chips { display: flex; flex-wrap: wrap; gap: 6px; }
+.rm-custom { display: flex; flex-wrap: wrap; gap: 8px; align-items: stretch; }
+.rm-custom .input { min-width: 0; }
+.rm-custom #rm-n { flex: 0 0 88px; text-align: center; }
+.rm-custom #rm-u, .rm-custom .pk-field { flex: 1 1 80px; width: auto; }
+.rm-custom .btn { flex: 1 0 auto; padding-inline: 16px; }
+/* the average monthly pay (reports) */
+.avg-card .avg-seg { margin-bottom: 12px; }
+.avg-card .avg-seg button { font-size: .85rem; padding-inline: 4px; white-space: nowrap; }
+/* a month's name whole, on two lines if it must (never cut) */
+.avg-bars .hbar .nm { width: 96px; white-space: normal; line-height: 1.2; overflow-wrap: normal; }
+.found-share { margin-top: 10px; }
+/* privacy: amounts blurred on screen (Settings › appearance, or the eye on the pay card) */
+html.hide-money .money { filter: blur(7px); user-select: none; }
+.home-hero .hh-eye { position: absolute; top: 10px; inset-inline-start: 10px; z-index: 1; display: grid; place-items: center; width: 40px; height: 40px; padding: 0; border-radius: 50%; border: 1px solid rgba(255, 255, 255, .24); background: rgba(255, 255, 255, .14); color: #fff; cursor: pointer; transition: scale .14s cubic-bezier(.3, .7, .4, 1); }
+.home-hero .hh-eye:active { scale: .9; }
+.home-hero .hh-eye.off::after { content: ''; position: absolute; width: 22px; height: 2px; border-radius: 2px; background: #fff; transform: rotate(-45deg); box-shadow: 0 0 0 1.5px rgba(40, 20, 90, .5); }

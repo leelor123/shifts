@@ -93,10 +93,10 @@
         brackets: [ // monthly
           [7010, 10], [10060, 14], [16150, 20], [22440, 31], [46690, 35], [60130, 47], [Infinity, 50],
         ],
-        blReducedThreshold: 7522, // 60% of average wage
+        blReducedThreshold: null, // null = by law for the period's year (Engine.BL_YEARS); a number overrides it
         blReducedPct: 1.04, healthReducedPct: 3.23,
         blFullPct: 7, healthFullPct: 5.17,
-        blCeiling: 50695,
+        blCeiling: null, // null = by law (Engine.BL_YEARS)
         pensionCreditPct: 35, pensionCreditCap: 9700,
       },
       pension: {
@@ -116,7 +116,7 @@
         dayHours: 8, dayFixed: 0,
         sickPct: [0, 50, 50, 100], // day1, day2, day3, day4+
         sickPerMonth: 1.5,
-        recuperationRate: 418, // ₪ per day, private sector
+        recuperationRate: null, // ₪ per day; null = by law, private sector (Engine.RECUP_YEARS)
         recuperationMonth: 7, // month the employer pays (0 = paid monthly)
       },
       minWageHourly: null, // null = by law, from the date and age (Engine.legalMinWage); a number overrides it
@@ -136,18 +136,23 @@
           hours: true, shifts: true, roles: true, rest: true, overtime: true, hourly: true, shiftLength: true, pattern: true,
           long: true, rest8: true, streak: true, weekHours: true,
           projection: true, goal: true, record: true, goalShifts: true, payslipGap: true, travel: true,
-          timer: true, plannedPast: true, idle: true, suspicious: true, payslipDue: true, backup: true, upcoming: true, weekly: true,
+          timer: true, plannedPast: true, idle: true, suspicious: true, payslipDue: true, backup: true, upcoming: true, weekly: true, confirmDone: true,
           recuperation: true, birthday: true, minwage: true, youth: true,
         },
         longShiftHours: 12, minRestHours: 8, streakDays: 6, weekHoursMax: 50,
         timerHours: 12, idleDays: 7, suspiciousHours: 20, backupDays: 30, upcomingMin: 60,
         weeklyDay: 6, weeklyHour: 21,
         remindPlanned: false, // a reminder before a planned shift: off unless switched on (few notifications)
+        // the reminders around a planned shift, all the user's to choose: minutes before (any number of them), the
+        // evening before at a set hour, a question after it ends (did you work it? so the pay comes in), and how
+        // the notification behaves (stays until closed, silent)
+        reminders: { before: [60], eveOn: false, eve: '20:00', confirmAfter: 30, sticky: false, silent: false },
         push: true,
       },
       // --- appearance ---
       theme: 'system', accent: 'candy', fontScale: 1, font: 'rubik', skin: '', plusKey: '',
       withTravel: true, // the amount next to a shift includes its travel pay (a switch over the shift lists)
+      hideMoney: false, // privacy: amounts blurred on screen (the eye on the pay card shows them)
       lb: { on: false, n: '', e: '', bg: '' }, // the games' champions table: joined, nickname, emoji, background (Plus)
       fx: { effects: true, sound: true, haptic: true, music: true }, // tap pulse / confetti, click sounds, vibration, music in the games
       // --- security ---
@@ -161,5 +166,11 @@
     };
   }
 
-  root.Defaults = { ROLE_COLORS, defaultEmployer, defaultRoles, defaultSettings };
+  /* Until when the legal numbers kept here (not by date in Engine) were confirmed right; tests/law.test.js fails
+   * after that day: check them (gov.il, btl.gov.il, the tax authority), update, and move the date on.
+   *  - tax: the monthly brackets and the credit point's value (frozen 2025–2027);
+   *  - travel: the daily cap in the texts (22.60, the extension order; unchanged in 2026). */
+  const LAW_CHECKED = { tax: '2027-12-31', travel: '2026-12-31' };
+
+  root.Defaults = { ROLE_COLORS, defaultEmployer, defaultRoles, defaultSettings, LAW_CHECKED };
 })(typeof window !== 'undefined' ? window : globalThis);

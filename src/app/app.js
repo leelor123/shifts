@@ -64,6 +64,7 @@
     const st = S.settings;
     const de = document.documentElement;
     if (st.theme === 'light' || st.theme === 'dark') de.dataset.theme = st.theme; else delete de.dataset.theme;
+    de.classList.toggle('hide-money', !!st.hideMoney); // privacy: amounts blurred
     const a = ACCENTS[st.accent] || ACCENTS.candy;
     de.style.setProperty('--h', a[0]);
     de.style.setProperty('--s', a[1] + '%');
@@ -529,9 +530,33 @@
     try {
       const reg = await navigator.serviceWorker.getRegistration();
       const opt = { body: n.body, tag: n.key, icon: 'icon-192.png', badge: 'badge-96.png', lang: U.LANG, dir: U.RTL ? 'rtl' : 'ltr', data: { url: './#home' } };
+      // the shift reminders as the user set them: staying until closed, or silent
+      const R = S.settings.alerts.reminders || {};
+      const shiftNote = n.type === 'upcoming' || n.type === 'confirmDone';
+      if (shiftNote) {
+        if (R.sticky) opt.requireInteraction = true;
+        if (R.silent) opt.silent = true;
+        // the offline worker may have shown this one already, while the app was closed: once is enough
+        if (await App.shownNote(n.key)) return;
+      }
       if (reg) await reg.showNotification(n.title, opt); else new Notification(n.title, opt);
+      if (shiftNote) App.shownNote(n.key, true);
     } catch (e) { console.warn(e); }
   }
+  /** The shift reminders shown, shared with the offline worker (sw.js reads and writes the same list). */
+  App.shownNote = async function (tag, mark) {
+    try {
+      const c = await caches.open('shiftpay-shown');
+      const r = await c.match('./__shown');
+      const list = r ? await r.json() : {};
+      if (!mark) return !!list[tag];
+      list[tag] = Date.now();
+      // a week is enough to remember
+      for (const k of Object.keys(list)) if (Date.now() - list[k] > 7 * U.DAY) delete list[k];
+      await c.put('./__shown', new Response(JSON.stringify(list), { headers: { 'Content-Type': 'application/json' } }));
+      return true;
+    } catch (e) { return false; }
+  };
   /* Notifications: as few as possible (1.18, the owner's wish). Kept: the weekly and the monthly summary,
    * good news (a record, a goal reached, a birthday), and three that guard the user's own data or come once a
    * month (a timer left running, a backup due, payday's payslip). Never a notification that something is "not
@@ -539,7 +564,7 @@
    * hours than usual, no shift for a week, overlaps). The engine still finds those; they show where they belong
    * (the payslip check, the rights screen, the shift itself), not as notifications. A reminder before a planned
    * shift only when switched on in Settings. */
-  const NOTIFY = new Set(['weekly', 'monthly', 'record', 'goal', 'birthday', 'timer', 'backup', 'payslipDue', 'upcoming', 'holidayPay']);
+  const NOTIFY = new Set(['weekly', 'monthly', 'record', 'goal', 'birthday', 'timer', 'backup', 'payslipDue', 'upcoming', 'confirmDone', 'holidayPay']);
   const kindSent = (a) => NOTIFY.has(a.type) && !(a.type === 'goal' && a.severity !== 'good');
   // the reminder before a planned shift is off unless switched on
   const notifiable = (a) => kindSent(a) && (a.type === 'upcoming' ? S.settings.alerts.remindPlanned === true : S.settings.alerts.types[a.type] !== false);
@@ -707,6 +732,12 @@
     } catch (e) {
       document.getElementById('view').innerHTML = `<div class="view">${UI.emptyState('alert', 'לא ניתן לפתוח את מסד הנתונים', esc(e.message || e))}</div>`;
       return;
+    }
+    // the heavy start-up below waits for the opening show's logo to finish drawing (about 0.8 s): that drawing is
+    // the one part of the show the main thread paints, and a busy start-up froze it halfway on slow phones
+    if (root.Intro && root.Intro.drawn) {
+      if (root.Cloud && root.Cloud.preload) root.Cloud.preload(); // the sign-in's code downloads meanwhile
+      await root.Intro.drawn();
     }
     // the minimum wage now follows the law (by date and age): stored copies of old defaults are dropped
     if (!S.meta.minWageAuto) {

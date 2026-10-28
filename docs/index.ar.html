@@ -2,8 +2,8 @@
 <html lang="ar" dir="rtl">
 <head>
 <meta charset="utf-8">
-<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'sha256-P1vY/EiXw5RkSguavX5FeRFgUvcBGNPUKJiorElIG7g=' 'sha256-hBbIi5nN5JyatRbwl2UaY4GlFfnoFIqkYGlkeF6RNQo=' https://www.gstatic.com https://apis.google.com https://cdnjs.cloudflare.com https://cdn.jsdelivr.net 'wasm-unsafe-eval'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com data:; img-src 'self' data: blob: https:; connect-src 'self' https: wss:; frame-src https://shiftpay-70ab6.firebaseapp.com https://accounts.google.com https://apis.google.com https://*.google.com; worker-src 'self' blob: https://cdnjs.cloudflare.com https://cdn.jsdelivr.net; media-src 'self' data: blob:; manifest-src 'self'; object-src 'none'; base-uri 'self'; form-action 'self'">
-<script>(function(){try{var l=localStorage.getItem('shaati.lang'),h=document.documentElement.lang;if(l&&l!==h&&/^(he|ar|ru|en)$/.test(l)&&!sessionStorage.getItem('langHop')){sessionStorage.setItem('langHop','1');location.replace((l==='he'?'index.html':'index.'+l+'.html')+location.search+location.hash)}else sessionStorage.removeItem('langHop')}catch(e){}})();</script>
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'sha256-FgNk6U022o0tzGprl1MJbN7Uezv3SKotwh8ovG5xA8c=' 'sha256-UnyQGHbdq2T0Z4iw/y6KMBTYSCMscGz5Z61aa/zc1E0=' https://www.gstatic.com https://apis.google.com https://cdnjs.cloudflare.com https://cdn.jsdelivr.net 'wasm-unsafe-eval'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com data:; img-src 'self' data: blob: https:; connect-src 'self' https: wss:; frame-src https://shiftpay-70ab6.firebaseapp.com https://accounts.google.com https://apis.google.com https://*.google.com; worker-src 'self' blob: https://cdnjs.cloudflare.com https://cdn.jsdelivr.net; media-src 'self' data: blob:; manifest-src 'self'; object-src 'none'; base-uri 'self'; form-action 'self'">
+<script>(function(){try{var l=localStorage.getItem('shaati.lang'),h=document.documentElement.lang;if(l&&l!==h&&/^(he|ar|ru|en|fr|es)$/.test(l)&&!sessionStorage.getItem('langHop')){sessionStorage.setItem('langHop','1');location.replace((l==='he'?'index.html':'index.'+l+'.html')+location.search+location.hash)}else sessionStorage.removeItem('langHop')}catch(e){}})();</script>
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="theme-color" content="#0d2b6b">
 <meta name="description" content="تتبّع شخصي للورديات وحساب الأجر: أيام السبت والأعياد والساعات الإضافية والسفر والصافي التقديري وفحص القسائم — محفوظ في حسابك ويعمل دون إنترنت أيضًا.">
@@ -2475,7 +2475,7 @@ body.fx .cal-day.hello, body.fx .week-row.hello { animation: cal-hello .55s cubi
 .sched-sheet .sc-ai { margin-top: 4px; }
 .sched-sheet .sc-names .chip, .sched-sheet .sc-week .chip { font-weight: 600; }
 
-/* ---- the language picker (lang.js): the first open's screen, the opening show's sky, four doors ---- */
+/* ---- the language picker (lang.js): the first open's screen, the opening show's sky, six doors ---- */
 .lp-host { position: fixed; inset: 0; z-index: 9000; color: #fff; overflow: hidden;
   background: radial-gradient(120% 80% at 50% 32%, #1a3f94 0%, #0d2b6b 55%, #081c4a 100%); }
 .lp-host .lp { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 18px;
@@ -2499,9 +2499,9 @@ body.fx .cal-day.hello, body.fx .week-row.hello { animation: cal-hello .55s cubi
   background: linear-gradient(100deg, #fff 20%, var(--a) 120%); -webkit-background-clip: text; background-clip: text; color: transparent; }
 .lp-ask span { font: 500 1.05rem/1.4 'Rubik', system-ui, sans-serif; color: rgba(255, 255, 255, .78); }
 .static .lp-hello span, .static .lp-ask span { transition: none; }
-/* the four doors */
-.lp-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; width: min(100%, 420px); margin-top: 6px; }
-.lp-card { position: relative; display: flex; flex-direction: column; align-items: center; gap: 6px; padding: 18px 10px 14px; border-radius: 24px; cursor: pointer;
+/* the doors: six, three to a row */
+.lp-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; width: min(100%, 440px); margin-top: 6px; }
+.lp-card { position: relative; display: flex; flex-direction: column; align-items: center; gap: 6px; padding: 16px 4px 12px; border-radius: 22px; cursor: pointer; min-width: 0;
   color: #fff; font: inherit; background: rgba(255, 255, 255, .07); border: 1px solid rgba(255, 255, 255, .14);
   box-shadow: 0 1px 0 rgba(255, 255, 255, .08) inset, 0 10px 30px -18px rgba(0, 0, 0, .6);
   transition: scale .35s var(--pop, cubic-bezier(.34, 1.56, .64, 1)), background-color .25s ease, border-color .25s ease, opacity .35s ease, transform .5s var(--pop, cubic-bezier(.34, 1.56, .64, 1)); }
@@ -2512,11 +2512,11 @@ body.fx .cal-day.hello, body.fx .week-row.hello { animation: cal-hello .55s cubi
 .lp-card.sug::after { content: ''; position: absolute; inset: -1px; border-radius: inherit; pointer-events: none;
   box-shadow: 0 0 0 2px var(--g1), 0 0 28px -4px var(--g1); opacity: .9; animation: lp-glow 2.4s ease-in-out infinite; }
 @keyframes lp-glow { 50% { opacity: .35; } }
-.lp-glyph { display: grid; place-items: center; width: 62px; height: 62px; border-radius: 50%; font: 800 2rem/1 'Rubik', system-ui, sans-serif; color: #fff;
+.lp-glyph { display: grid; place-items: center; width: 54px; height: 54px; border-radius: 50%; font: 800 1.75rem/1 'Rubik', system-ui, sans-serif; color: #fff;
   background: linear-gradient(140deg, var(--g1), var(--g2)); box-shadow: 0 8px 22px -8px var(--g2); text-shadow: 0 1px 2px rgba(0, 0, 0, .18); }
-.lp-name { font-weight: 700; font-size: 1.12rem; }
-.lp-hi { font-size: .8rem; opacity: .7; }
-.lp-sug { position: absolute; top: -9px; inset-inline-end: 12px; padding: 3px 9px; line-height: 1.35; white-space: nowrap; z-index: 1; border-radius: 999px; font-size: .68rem; font-weight: 700; color: #10203f;
+.lp-name { font-weight: 700; font-size: 1rem; max-width: 100%; }
+.lp-hi { font-size: .78rem; opacity: .7; }
+.lp-sug { position: absolute; top: -9px; left: 50%; translate: -50% 0; padding: 3px 8px; line-height: 1.35; white-space: nowrap; z-index: 1; border-radius: 999px; font-size: .68rem; font-weight: 700; color: #10203f;
   background: linear-gradient(140deg, var(--g1), var(--g2)); box-shadow: 0 4px 12px -4px var(--g2); }
 .lp-later { font-size: .8rem; color: rgba(255, 255, 255, .6); text-align: center; }
 /* chosen: the others step back, the chosen one comes forward, its colour fills the screen from its letter */
@@ -2582,6 +2582,26 @@ html:not([lang="he"]) .lb-games button, html:not([lang="he"]) .lb-periods button
 .done-cta .dc-t { font-weight: 700; display: flex; gap: 6px; align-items: center; color: var(--warn); }
 .done-cta .dc-s { font-size: .86rem; color: var(--on-surface-var); margin: 4px 0 12px; }
 .home-hero .hh-fc-n { opacity: .8; font-size: .92em; }
+/* the reminders before a planned shift (settings › alerts) */
+.rm-box { padding: 4px 0 8px; display: grid; grid-template-columns: minmax(0, 1fr); gap: 10px; }
+.rm-box > .lbl { font-size: .86rem; color: var(--on-surface-var); }
+.rm-chips { display: flex; flex-wrap: wrap; gap: 6px; }
+.rm-custom { display: flex; flex-wrap: wrap; gap: 8px; align-items: stretch; }
+.rm-custom .input { min-width: 0; }
+.rm-custom #rm-n { flex: 0 0 88px; text-align: center; }
+.rm-custom #rm-u, .rm-custom .pk-field { flex: 1 1 80px; width: auto; }
+.rm-custom .btn { flex: 1 0 auto; padding-inline: 16px; }
+/* the average monthly pay (reports) */
+.avg-card .avg-seg { margin-bottom: 12px; }
+.avg-card .avg-seg button { font-size: .85rem; padding-inline: 4px; white-space: nowrap; }
+/* a month's name whole, on two lines if it must (never cut) */
+.avg-bars .hbar .nm { width: 96px; white-space: normal; line-height: 1.2; overflow-wrap: normal; }
+.found-share { margin-top: 10px; }
+/* privacy: amounts blurred on screen (Settings › appearance, or the eye on the pay card) */
+html.hide-money .money { filter: blur(7px); user-select: none; }
+.home-hero .hh-eye { position: absolute; top: 10px; inset-inline-start: 10px; z-index: 1; display: grid; place-items: center; width: 40px; height: 40px; padding: 0; border-radius: 50%; border: 1px solid rgba(255, 255, 255, .24); background: rgba(255, 255, 255, .14); color: #fff; cursor: pointer; transition: scale .14s cubic-bezier(.3, .7, .4, 1); }
+.home-hero .hh-eye:active { scale: .9; }
+.home-hero .hh-eye.off::after { content: ''; position: absolute; width: 22px; height: 2px; border-radius: 2px; background: #fff; transform: rotate(-45deg); box-shadow: 0 0 0 1.5px rgba(40, 20, 90, .5); }
 
 </style>
 </head>
@@ -2609,8 +2629,8 @@ html:not([lang="he"]) .lb-games button, html:not([lang="he"]) .lb-periods button
 <div id="print-root" aria-hidden="true"></div>
 <noscript><div style="padding:24px;font-family:sans-serif">يتطلب التطبيق JavaScript.</div></noscript>
 <script>
-window.APP_VERSION = '1.22.2';
-window.APP_BUILD = '1.22.2-f3455345';
+window.APP_VERSION = '1.23.0';
+window.APP_BUILD = '1.23.0-81c2bca9';
 /* ---- core/util.js ---- */
 /* ============================================================
  * util.js — date/time helpers and formatting.
@@ -2722,7 +2742,7 @@ window.APP_BUILD = '1.22.2-f3455345';
   const RTL = LANG === 'he' || LANG === 'ar';
   // dates in the language; numbers always with a comma between thousands and a point before the agorot (what
   // the payslip shows, and what the counting animations read)
-  const LOCALE = { he: 'he-IL', ar: 'ar-IL-u-nu-latn', ru: 'ru-RU', en: 'en-IL' }[LANG] || 'he-IL';
+  const LOCALE = { he: 'he-IL', ar: 'ar-IL-u-nu-latn', ru: 'ru-RU', en: 'en-IL', fr: 'fr-FR', es: 'es-ES' }[LANG] || 'he-IL';
   const NUM_LOCALE = { he: 'he-IL', ar: 'ar-IL-u-nu-latn', en: 'en-IL' }[LANG] || 'en-US';
   const names = (opts, n, at) => [...Array(n)].map((_, i) => new Intl.DateTimeFormat(LOCALE, opts).format(at(i)));
   // i18n-keep-start
@@ -2738,7 +2758,7 @@ window.APP_BUILD = '1.22.2-f3455345';
     if (n == null || isNaN(n)) n = 0;
     if (!moneyFmt) {
       const make = (d) => {
-        if (LANG === 'ru') { const f = new Intl.NumberFormat('en-US', { minimumFractionDigits: d, maximumFractionDigits: d }); return { format: (v) => f.format(v) + ' ₪' }; }
+        if (LANG === 'ru' || LANG === 'fr' || LANG === 'es') { const f = new Intl.NumberFormat('en-US', { minimumFractionDigits: d, maximumFractionDigits: d }); return { format: (v) => f.format(v) + ' ₪' }; }
         return new Intl.NumberFormat(NUM_LOCALE, { style: 'currency', currency: 'ILS', minimumFractionDigits: d, maximumFractionDigits: d });
       };
       moneyFmt = make(2);
@@ -5875,10 +5895,10 @@ window.APP_BUILD = '1.22.2-f3455345';
         brackets: [ // monthly
           [7010, 10], [10060, 14], [16150, 20], [22440, 31], [46690, 35], [60130, 47], [Infinity, 50],
         ],
-        blReducedThreshold: 7522, // 60% of average wage
+        blReducedThreshold: null, // null = by law for the period's year (Engine.BL_YEARS); a number overrides it
         blReducedPct: 1.04, healthReducedPct: 3.23,
         blFullPct: 7, healthFullPct: 5.17,
-        blCeiling: 50695,
+        blCeiling: null, // null = by law (Engine.BL_YEARS)
         pensionCreditPct: 35, pensionCreditCap: 9700,
       },
       pension: {
@@ -5898,7 +5918,7 @@ window.APP_BUILD = '1.22.2-f3455345';
         dayHours: 8, dayFixed: 0,
         sickPct: [0, 50, 50, 100], // day1, day2, day3, day4+
         sickPerMonth: 1.5,
-        recuperationRate: 418, // ₪ per day, private sector
+        recuperationRate: null, // ₪ per day; null = by law, private sector (Engine.RECUP_YEARS)
         recuperationMonth: 7, // month the employer pays (0 = paid monthly)
       },
       minWageHourly: null, // null = by law, from the date and age (Engine.legalMinWage); a number overrides it
@@ -5918,18 +5938,23 @@ window.APP_BUILD = '1.22.2-f3455345';
           hours: true, shifts: true, roles: true, rest: true, overtime: true, hourly: true, shiftLength: true, pattern: true,
           long: true, rest8: true, streak: true, weekHours: true,
           projection: true, goal: true, record: true, goalShifts: true, payslipGap: true, travel: true,
-          timer: true, plannedPast: true, idle: true, suspicious: true, payslipDue: true, backup: true, upcoming: true, weekly: true,
+          timer: true, plannedPast: true, idle: true, suspicious: true, payslipDue: true, backup: true, upcoming: true, weekly: true, confirmDone: true,
           recuperation: true, birthday: true, minwage: true, youth: true,
         },
         longShiftHours: 12, minRestHours: 8, streakDays: 6, weekHoursMax: 50,
         timerHours: 12, idleDays: 7, suspiciousHours: 20, backupDays: 30, upcomingMin: 60,
         weeklyDay: 6, weeklyHour: 21,
         remindPlanned: false, // a reminder before a planned shift: off unless switched on (few notifications)
+        // the reminders around a planned shift, all the user's to choose: minutes before (any number of them), the
+        // evening before at a set hour, a question after it ends (did you work it? so the pay comes in), and how
+        // the notification behaves (stays until closed, silent)
+        reminders: { before: [60], eveOn: false, eve: '20:00', confirmAfter: 30, sticky: false, silent: false },
         push: true,
       },
       // --- appearance ---
       theme: 'system', accent: 'candy', fontScale: 1, font: 'rubik', skin: '', plusKey: '',
       withTravel: true, // the amount next to a shift includes its travel pay (a switch over the shift lists)
+      hideMoney: false, // privacy: amounts blurred on screen (the eye on the pay card shows them)
       lb: { on: false, n: '', e: '', bg: '' }, // the games' champions table: joined, nickname, emoji, background (Plus)
       fx: { effects: true, sound: true, haptic: true, music: true }, // tap pulse / confetti, click sounds, vibration, music in the games
       // --- security ---
@@ -5943,7 +5968,13 @@ window.APP_BUILD = '1.22.2-f3455345';
     };
   }
 
-  root.Defaults = { ROLE_COLORS, defaultEmployer, defaultRoles, defaultSettings };
+  /* Until when the legal numbers kept here (not by date in Engine) were confirmed right; tests/law.test.js fails
+   * after that day: check them (gov.il, btl.gov.il, the tax authority), update, and move the date on.
+   *  - tax: the monthly brackets and the credit point's value (frozen 2025–2027);
+   *  - travel: the daily cap in the texts (22.60, the extension order; unchanged in 2026). */
+  const LAW_CHECKED = { tax: '2027-12-31', travel: '2026-12-31' };
+
+  root.Defaults = { ROLE_COLORS, defaultEmployer, defaultRoles, defaultSettings, LAW_CHECKED };
 })(typeof window !== 'undefined' ? window : globalThis);
 
 /* ---- core/engine.js ---- */
@@ -6602,8 +6633,9 @@ window.APP_BUILD = '1.22.2-f3455345';
     const credits = (+T.creditPoints || 0) * (+T.creditPointValue || 0) * months;
     const pensionCredit = Math.min(pensionEmployee, 0.07 * Math.min(gross, (+T.pensionCreditCap || 9700) * months)) * (+T.pensionCreditPct || 35) / 100;
     const incomeTax = Math.max(0, taxBefore - credits - pensionCredit);
-    const thr = (+T.blReducedThreshold || 0) * months;
-    const ceil = (+T.blCeiling || Infinity) * months;
+    const lim = blLimits(T, p.periodTo || U.todayKey());
+    const thr = lim.thr * months;
+    const ceil = lim.ceil * months;
     const g1 = Math.min(gross, thr), g2 = Math.max(0, Math.min(gross, ceil) - thr);
     const bl = g1 * T.blReducedPct / 100 + g2 * T.blFullPct / 100;
     const health = g1 * T.healthReducedPct / 100 + g2 * T.healthFullPct / 100;
@@ -6847,8 +6879,8 @@ window.APP_BUILD = '1.22.2-f3455345';
     const eligible = res.seniorityMonths >= 12;
     const days = recuperationDays(Math.max(1, year));
     res.recuperation = {
-      eligible, yearOfService: year, days, rate: +L.recuperationRate || 418,
-      amount: eligible ? days * (+L.recuperationRate || 418) * res.jobPct : 0,
+      eligible, yearOfService: year, days, rate: recuperationRate(L, asOf),
+      amount: eligible ? days * recuperationRate(L, asOf) * res.jobPct : 0,
       eligibleFrom: U.addMonths(start, 12),
     };
     return res;
@@ -6879,6 +6911,36 @@ window.APP_BUILD = '1.22.2-f3455345';
     { from: '2025-04-01', monthly: 6247.67, hourly: 34.32 },
     { from: '2026-04-01', monthly: 6443.85, hourly: 35.40 },
   ];
+  /* Other yearly legal numbers, by the year they apply to (tests/law.test.js fails once a year runs past its table:
+   * check the new values and add a row). A setting left empty — or still holding a value an earlier version saved
+   * as its default — follows these; any other number the user typed wins.
+   *  - National Insurance: the reduced-rate threshold and the ceiling, monthly (from 2026 indexed to prices, every
+   *    January 1st; 2026: btl.gov.il notice for employers);
+   *  - recuperation pay: the day rate, private sector (extension order; 2026: 451.50, published 18.8.2026, for the
+   *    whole 2026 recuperation year). */
+  const BL_YEARS = { 2025: [7522, 50695], 2026: [7703, 51910] };
+  const RECUP_YEARS = { 2023: 418, 2026: 451.5 };
+  function byYear(table, k) {
+    const y = +String(k || U.todayKey()).slice(0, 4);
+    const years = Object.keys(table).map(Number).sort((a, b) => a - b);
+    let v = table[years[0]];
+    for (const x of years) if (x <= y) v = table[x];
+    return v;
+  }
+  const lawValue = (v, known) => !(+v > 0) || known.includes(+v);
+  /** National Insurance's threshold and ceiling (monthly) for a date, unless the settings name others. */
+  function blLimits(T, k) {
+    const [thr, ceil] = byYear(BL_YEARS, k);
+    const rows = Object.values(BL_YEARS);
+    return {
+      thr: lawValue(T.blReducedThreshold, rows.map((r) => r[0])) ? thr : +T.blReducedThreshold,
+      ceil: lawValue(T.blCeiling, rows.map((r) => r[1])) ? ceil : +T.blCeiling,
+    };
+  }
+  /** The recuperation day rate for a date, unless the settings name another. */
+  function recuperationRate(L, k) {
+    return lawValue(L.recuperationRate, Object.values(RECUP_YEARS)) ? byYear(RECUP_YEARS, k) : +L.recuperationRate;
+  }
   const round2 = (x) => Math.round(x * 100) / 100;
   function legalMinWage(k, birthKey) {
     const row = MIN_WAGE.filter((r) => r.from <= k).pop() || MIN_WAGE[0];
@@ -6905,7 +6967,7 @@ window.APP_BUILD = '1.22.2-f3455345';
   }
 
   root.Engine = {
-    LAW_BREAK, validShift, validEntry, legalMinWage, minWageFor, youthRules, pensionMinAge, MIN_WAGE,
+    LAW_BREAK, validShift, validEntry, legalMinWage, minWageFor, youthRules, pensionMinAge, MIN_WAGE, BL_YEARS, RECUP_YEARS, blLimits, recuperationRate,
     makeCtx, roleRate, roundMinutes, monthsBetween, buildSegments, hasOverrides, computeShift, computeAll,
     periodByKey, periodOf, dayValue, computeEntries, travelByDay, incomeTaxRaw, netEstimate, pensionActive,
     buildModel, totals, periodSummary, rangeSummary, pensionBaseOf, leaveBalances, holidayPay, vacationEntitlement, recuperationDays, ageAt, isMinor,
@@ -7387,11 +7449,32 @@ window.APP_BUILD = '1.22.2-f3455345';
           title: "وردية مخطط لها انقضت", body: `الوردية في ${U.fmtDate(r.dateKey, 'dm')} (⁦${U.epochHM(r.start)}⁠–⁠${U.epochHM(r.rawEnd)}⁩) لم تُحدَّد "منجزة".`,
           explain: "الورديات المخطط لها لا تُحتسب في الأجر حتى تحدّدها كمنجزة." });
       }
+      const RM = cfg.reminders || {};
+      const offs = (Array.isArray(RM.before) && RM.before.length ? RM.before : [+cfg.upcomingMin || 60]).map(Number).filter((x) => x > 0).sort((a, b) => a - b);
       const mins = (r.start - now) / U.MIN;
-      if (on('upcoming') && mins > 0 && mins <= (+cfg.upcomingMin || 60)) {
-        alerts.push({ key: 'up-' + r.id, type: 'upcoming', severity: 'info', push: 'critical', ref: r.id,
-          title: "وردية بعد " + Math.round(mins) + " دقيقة", body: `${roleName(r.segments[0] ? r.segments[0].roleId : '')} · ⁦${U.epochHM(r.start)}\u2060–\u2060${U.epochHM(r.rawEnd)}⁩`,
-          explain: "تذكير قبل " + cfg.upcomingMin + " دقيقة من وردية مخطط لها." });
+      const what = `${roleName(r.segments[0] ? r.segments[0].roleId : '')} · ⁦${U.epochHM(r.start)}⁠–⁠${U.epochHM(r.rawEnd)}⁩`;
+      if (on('upcoming') && mins > 0) {
+        // the nearest reminder whose time has come (each one fires once: its own key)
+        const off = offs.find((o) => mins <= o);
+        if (off != null) {
+          const when = mins < 90 ? "بعد " + Math.round(mins) + " دقيقة" : r.dateKey === today ? "اليوم الساعة " + U.epochHM(r.start) : r.dateKey === U.addDays(today, 1) ? "غدًا الساعة " + U.epochHM(r.start) : U.fmtDate(r.dateKey, 'dm') + " يوم " + U.epochHM(r.start);
+          alerts.push({ key: 'up-' + r.id + '-' + off, type: 'upcoming', severity: 'info', push: 'critical', ref: r.id,
+            title: "وردية " + when, body: what, explain: "تذكير قبل وردية مخططة (الإعدادات › التنبيهات)." });
+        }
+        // the evening before, at the hour chosen
+        if (RM.eveOn && /^\d{1,2}:\d{2}$/.test(RM.eve || '')) {
+          const eveAt = U.toEpoch(U.addDays(r.dateKey, -1), RM.eve);
+          if (now >= eveAt && r.start - now > 60 * U.MIN && r.start - eveAt > 2 * 60 * U.MIN) {
+            alerts.push({ key: 'eve-' + r.id, type: 'upcoming', severity: 'info', push: 'critical', ref: r.id,
+              title: (r.dateKey === U.addDays(today, 1) ? "غدًا" : U.fmtDate(r.dateKey, 'dm')) + ": وردية الساعة " + U.epochHM(r.start), body: what, explain: "تذكير في المساء السابق (الإعدادات › التنبيهات)." });
+          }
+        }
+      }
+      // after it ended: did you work it? (a planned shift is not in the pay until it is confirmed)
+      const ca = +RM.confirmAfter || 0;
+      if (on('confirmDone') && ca > 0 && r.rawEnd + ca * U.MIN <= now && now - r.rawEnd < 3 * U.DAY) {
+        alerts.push({ key: 'cd-' + r.id, type: 'confirmDone', severity: 'info', push: 'critical', ref: r.id,
+          title: "هل عملت في الوردية؟", body: `${U.fmtDate(r.dateKey, 'dm')} · ${what}. اضغط "عملت" ليُحتسب الأجر.`, explain: "تُحتسب الوردية المخططة في أجرك فقط بعد أن تؤكد أنك عملت فيها." });
       }
     }
     if (on('idle') && done.length >= 3 && !a) {
@@ -7576,7 +7659,7 @@ window.APP_BUILD = '1.22.2-f3455345';
     night: "علاوة على ساعات الليل — بحسب الاتفاق أو العرف لدى صاحب العمل (ليست إلزامية قانونيًا لكل العمال).",
     seniority: "علاوة أقدمية — بحسب اتفاقية جماعية أو عقد شخصي.",
     travel: "استرداد نفقات السفر إلى العمل: بحسب عدد أيام العمل الفعلية، حتى سقف يومي (22.60 ₪ بحسب أمر التوسيع، 2025). استرداد السفر خاضع للضريبة.",
-    recuperation: "بدل الاستجمام: بعد سنة عمل. عدد أيام بحسب الأقدمية × تعرفة يومية (418 ₪ في القطاع الخاص) × نطاق الوظيفة.",
+    recuperation: "بدل الاستجمام: بعد سنة عمل. عدد أيام بحسب الأقدمية × تعرفة يومية (451.50 ₪ في القطاع الخاص، 2026) × نطاق الوظيفة.",
     vacationPay: "الدفع عن أيام الإجازة المستغلة — بحسب متوسط الأجر اليومي.",
     sickPay: "أجر المرض حسب القانون: اليوم الأول — بلا أجر، الأيام 2⁠–⁠3 — 50%، من اليوم الرابع — 100%.",
     holidayPay: "بدل الأعياد: للعمال بالساعة بعد 3 أشهر عمل، عن أيام عيد وقعت في أيام عادية ولم يعملوا فيها (بحسب أمر التوسيع).",
@@ -7586,8 +7669,8 @@ window.APP_BUILD = '1.22.2-f3455345';
     net: "الصافي: ما يصل إلى حسابك البنكي — الإجمالي ناقص كل الاقتطاعات.",
     totalDeductions: "كل الاقتطاعات من الإجمالي: ضريبة الدخل، التأمين الوطني، ضريبة الصحة، التقاعد واقتطاعات أخرى.",
     incomeTax: "ضريبة الدخل: تُحسب بحسب شرائح الضريبة (10%، 14%، 20%...) على الأجر الشهري، ناقص خصم عن كل نقطة استحقاق (242 ₪ للنقطة) وناقص خصم عن إيداع التقاعد. إذا ارتفعت — غالبًا لأن الإجمالي ارتفع وانتقلت إلى شريحة أعلى.",
-    nationalInsurance: "التأمين الوطني (حصة العامل): 1.04% على الأجر حتى 7,522 ₪ و7% فوق ذلك (2025). يتغيّر مباشرة مع الإجمالي.",
-    healthTax: "ضريبة الصحة: 3.23% حتى 7,522 ₪ و5.17% فوق ذلك (2025). تموّل صندوق المرضى.",
+    nationalInsurance: "التأمين الوطني (حصة العامل): 1.04% على الأجر حتى 7,703 ₪ و7% فوق ذلك (2026). يتغيّر مباشرة مع الإجمالي.",
+    healthTax: "ضريبة الصحة: 3.23% حتى 7,703 ₪ و5.17% فوق ذلك (2026). تموّل صندوق المرضى.",
     pensionEmployee: "مساهمة العامل في التقاعد: عادةً 6% من الأجر المحدِّد. تُدّخر باسمك وتقلّل ضريبة الدخل (خصم 35%).",
     pensionEmployer: "مساهمة صاحب العمل في مخصصات التقاعد: عادةً 6.5%. لا تُخصم من الصافي — إنه مال إضافي يُدّخر لك.",
     severance: "مساهمة صاحب العمل في التعويضات: من 6% حتى 8.33%. تتراكم في صندوق التقاعد.",
@@ -9783,6 +9866,9 @@ window.APP_BUILD = '1.22.2-f3455345';
     if (!r0.width || !r0.height) return;
     // a whole screen-sized area (a story page) gets no ring
     if (r0.width * r0.height > root.innerWidth * root.innerHeight * 0.45) return;
+    // one ring at a time, from the moment of the tap: a ring still fading on the tab just left, next to the
+    // mark that moved to the new one, looked like two tabs picked at once (flicking through the champions table)
+    document.querySelectorAll('.fx-ring').forEach((x) => x.remove());
     const cx = r0.left + r0.width / 2, cy = r0.top + r0.height / 2;
     const sig = (n) => n.tagName + '|' + (n.getAttribute('data-act') || '') + '|' + (n.getAttribute('data-tab') || '') + '|' + (n.getAttribute('data-s') || '');
     const sig0 = sig(el);
@@ -9807,6 +9893,7 @@ window.APP_BUILD = '1.22.2-f3455345';
       // three calm frames first (~50ms): a tap that redraws or shakes its control shows that, not a ring
       // that would be gone again a frame later
       if (!d && ++calm < 3) { requestAnimationFrame(step); return; }
+      if (d && !d.isConnected) { gone = true; return; } // a newer tap's ring took over
       if (!d) {
         d = document.createElement('div');
         d.className = 'fx-ring';
@@ -10611,11 +10698,12 @@ window.APP_BUILD = '1.22.2-f3455345';
   const Intro = {};
   root.Intro = Intro;
   const started = performance.now();
-  let ready = false, played = false, closed = false, leaving = false, master = null;
+  let ready = false, played = false, closed = false, leaving = false, master = null, skipped = false;
   // The show stays until the app has finished starting, so nothing it does is seen loading: the first screen
   // settles under it for a moment, and the start-up work that can still change that screen (the account, the
   // admin check, Google Play, the fonts) is waited for, within a limit.
   const CALM_MS = 700; // the first screen sits under the show at least this long
+  const SKIP_CALM_MS = 300; // ... or this long after a tap to skip (it is still drawn whole, just not waited on)
   const HOLD_MAX = 2500; // the most the show waits for start-up work after it could have left
   let drawnAt = 0, holdUntil = 0, recheck = 0;
   const holds = new Set();
@@ -10635,7 +10723,7 @@ window.APP_BUILD = '1.22.2-f3455345';
   function maybeClose() {
     if (closed || leaving || !ready || !played) return;
     const now = performance.now();
-    let wait = drawnAt + CALM_MS - now;
+    let wait = drawnAt + (skipped ? SKIP_CALM_MS : CALM_MS) - now;
     if (wait <= 0 && holds.size) {
       if (!holdUntil) holdUntil = now + HOLD_MAX;
       wait = holdUntil - now;
@@ -10721,6 +10809,14 @@ window.APP_BUILD = '1.22.2-f3455345';
   }
   Intro.score = score; // tests render it offline
 
+  // The logo drawing itself (0.12–0.8 s) is the one part of the show the main thread paints; the rest runs on
+  // the compositor. The app's heavy start-up (the whole calculation, the first screen) waits for this, so the
+  // drawing never stops halfway on a slow phone (it did: 0.2–0.4 s frozen); the spin and the landing don't mind.
+  let drawnDone = null;
+  const drawn = new Promise((r) => { drawnDone = r; });
+  /** Resolves once the logo has drawn itself (at once without the full show, or after a tap to skip). */
+  Intro.drawn = () => drawn;
+
   if (full) {
     // the coins and the sparks that fly out when the logo lands
     const coins = el.querySelector('.intro-coins');
@@ -10740,18 +10836,23 @@ window.APP_BUILD = '1.22.2-f3455345';
       sparks.appendChild(s);
     }
     el.classList.add('play');
+    const y = el.querySelector('.intro-logo.main .y');
+    if (y) y.addEventListener('animationend', () => drawnDone(), { once: true });
+    setTimeout(() => drawnDone(), 1100); // never later than this, whatever happens to the animation
     // the sound starts with the show (only if the phone already allows sound)
     const c = Fx.prefs().sound !== false && Fx.audio && Fx.audio();
     if (c && c.state === 'running') { try { score(c, c.currentTime + 0.02); } catch (e) { /* no sound */ } }
     setTimeout(() => { played = true; if (!ready) el.classList.add('wait'); maybeClose(); }, SEQUENCE_MS);
   } else {
     el.classList.add('still');
+    drawnDone();
     setTimeout(() => { played = true; maybeClose(); }, 250);
   }
 
   // tap to skip (the rest of the show's sound fades out quickly, so the last chord never plays over the app)
   el.addEventListener('click', () => {
-    played = true;
+    played = true; skipped = true;
+    drawnDone();
     if (master) { try { master.gain.setTargetAtTime(0.0001, master.context.currentTime, 0.04); } catch (e) { /* ignore */ } }
     if (ready) close(); else el.classList.add('wait');
   });
@@ -10792,7 +10893,7 @@ window.APP_BUILD = '1.22.2-f3455345';
  * localStorage, where a page looks first thing (and moves to the right page before anything is drawn), and in
  * a cache the service worker reads, so the app opens straight in its language, also offline.
  *
- * The first open: the opening show gives way to a screen that greets in all four languages at once
+ * The first open: the opening show gives way to a screen that greets in all six languages at once
  * (שלום · مرحبا · Привет · Hello), with the phone's own language suggested; one tap and the app goes on in it.
  * Someone already using the app (in Hebrew) whose phone speaks another language is offered the switch once.
  *
@@ -10807,6 +10908,8 @@ window.APP_BUILD = '1.22.2-f3455345';
     { id: 'ar', name: 'العربية', glyph: 'ع', hello: 'مرحبا', ask: 'بأي لغة تفضّل؟', sug: 'مقترحة', later: 'يمكن التغيير في أي وقت من الإعدادات', dir: 'rtl', g: ['#ffd25a', '#ff8a3d'] },
     { id: 'ru', name: 'Русский', glyph: 'Я', hello: 'Привет', ask: 'На каком языке вам удобнее?', sug: 'Рекомендуем', later: 'Язык можно сменить в настройках', dir: 'ltr', g: ['#a98bff', '#5b8cff'] },
     { id: 'en', name: 'English', glyph: 'A', hello: 'Hello', ask: 'Which language suits you?', sug: 'Suggested', later: 'You can change it any time in Settings', dir: 'ltr', g: ['#ff7ab6', '#ff5a6e'] },
+    { id: 'fr', name: 'Français', glyph: 'É', hello: 'Bonjour', ask: 'Quelle langue vous convient ?', sug: 'Recommandé', later: 'Modifiable à tout moment dans les Réglages', dir: 'ltr', g: ['#6fd3ff', '#3a6dff'] },
+    { id: 'es', name: 'Español', glyph: 'Ñ', hello: 'Hola', ask: '¿Qué idioma prefieres?', sug: 'Recomendado', later: 'Puedes cambiarlo cuando quieras en Ajustes', dir: 'ltr', g: ['#d4f25a', '#62c43f'] },
   ];
   const byId = (id) => LANGS.find((l) => l.id === id);
   const Lang = { LANGS };
@@ -10928,7 +11031,7 @@ window.APP_BUILD = '1.22.2-f3455345';
       });
     });
   };
-  // the greeting and the question go round the four languages
+  // the greeting and the question go round the six languages
   function cycle(box) {
     const hello = box.querySelectorAll('.lp-hello span'), ask = box.querySelectorAll('.lp-ask span');
     let k = 0;
@@ -10948,7 +11051,7 @@ window.APP_BUILD = '1.22.2-f3455345';
   Lang.sheet = function () {
     const UI = root.UI;
     UI.openSheet({
-      title: { he: 'שפה · Language', ar: 'اللغة · Language', ru: 'Язык · Language', en: 'Language' }[Lang.current] || 'Language',
+      title: { he: 'שפה · Language', ar: 'اللغة · Language', ru: 'Язык · Language', en: 'Language', fr: 'Langue · Language', es: 'Idioma · Language' }[Lang.current] || 'Language',
       body: markup(Lang.current, true),
       onMount: (el) => {
         cycle(el);
@@ -10978,6 +11081,8 @@ window.APP_BUILD = '1.22.2-f3455345';
       ar: ['Shaati متوفّر الآن بالعربية', 'التطبيق كله بالعربية: الورديات، الراتب، الحقوق.', 'التبديل إلى العربية', 'البقاء بالعبرية'],
       ru: ['Shaati теперь на русском', 'Всё приложение на русском: смены, зарплата, права.', 'Перейти на русский', 'Оставить иврит'],
       en: ['Shaati now speaks English', 'The whole app in English: shifts, pay, your rights.', 'Switch to English', 'Keep Hebrew'],
+      fr: ['Shaati parle maintenant français', 'Toute l’application en français : services, salaire, droits.', 'Passer au français', 'Garder l’hébreu'],
+      es: ['Shaati ya habla español', 'Toda la app en español: turnos, salario, derechos.', 'Cambiar a español', 'Seguir en hebreo'],
     }[d];
     if (!T) return;
     const go = () => {
@@ -11827,6 +11932,7 @@ window.APP_BUILD = '1.22.2-f3455345';
     const st = S.settings;
     const de = document.documentElement;
     if (st.theme === 'light' || st.theme === 'dark') de.dataset.theme = st.theme; else delete de.dataset.theme;
+    de.classList.toggle('hide-money', !!st.hideMoney); // privacy: amounts blurred
     const a = ACCENTS[st.accent] || ACCENTS.candy;
     de.style.setProperty('--h', a[0]);
     de.style.setProperty('--s', a[1] + '%');
@@ -12292,9 +12398,33 @@ window.APP_BUILD = '1.22.2-f3455345';
     try {
       const reg = await navigator.serviceWorker.getRegistration();
       const opt = { body: n.body, tag: n.key, icon: 'icon-192.png', badge: 'badge-96.png', lang: U.LANG, dir: U.RTL ? 'rtl' : 'ltr', data: { url: './#home' } };
+      // the shift reminders as the user set them: staying until closed, or silent
+      const R = S.settings.alerts.reminders || {};
+      const shiftNote = n.type === 'upcoming' || n.type === 'confirmDone';
+      if (shiftNote) {
+        if (R.sticky) opt.requireInteraction = true;
+        if (R.silent) opt.silent = true;
+        // the offline worker may have shown this one already, while the app was closed: once is enough
+        if (await App.shownNote(n.key)) return;
+      }
       if (reg) await reg.showNotification(n.title, opt); else new Notification(n.title, opt);
+      if (shiftNote) App.shownNote(n.key, true);
     } catch (e) { console.warn(e); }
   }
+  /** The shift reminders shown, shared with the offline worker (sw.js reads and writes the same list). */
+  App.shownNote = async function (tag, mark) {
+    try {
+      const c = await caches.open('shiftpay-shown');
+      const r = await c.match('./__shown');
+      const list = r ? await r.json() : {};
+      if (!mark) return !!list[tag];
+      list[tag] = Date.now();
+      // a week is enough to remember
+      for (const k of Object.keys(list)) if (Date.now() - list[k] > 7 * U.DAY) delete list[k];
+      await c.put('./__shown', new Response(JSON.stringify(list), { headers: { 'Content-Type': 'application/json' } }));
+      return true;
+    } catch (e) { return false; }
+  };
   /* Notifications: as few as possible (1.18, the owner's wish). Kept: the weekly and the monthly summary,
    * good news (a record, a goal reached, a birthday), and three that guard the user's own data or come once a
    * month (a timer left running, a backup due, payday's payslip). Never a notification that something is "not
@@ -12302,7 +12432,7 @@ window.APP_BUILD = '1.22.2-f3455345';
    * hours than usual, no shift for a week, overlaps). The engine still finds those; they show where they belong
    * (the payslip check, the rights screen, the shift itself), not as notifications. A reminder before a planned
    * shift only when switched on in Settings. */
-  const NOTIFY = new Set(['weekly', 'monthly', 'record', 'goal', 'birthday', 'timer', 'backup', 'payslipDue', 'upcoming', 'holidayPay']);
+  const NOTIFY = new Set(['weekly', 'monthly', 'record', 'goal', 'birthday', 'timer', 'backup', 'payslipDue', 'upcoming', 'confirmDone', 'holidayPay']);
   const kindSent = (a) => NOTIFY.has(a.type) && !(a.type === 'goal' && a.severity !== 'good');
   // the reminder before a planned shift is off unless switched on
   const notifiable = (a) => kindSent(a) && (a.type === 'upcoming' ? S.settings.alerts.remindPlanned === true : S.settings.alerts.types[a.type] !== false);
@@ -12470,6 +12600,12 @@ window.APP_BUILD = '1.22.2-f3455345';
     } catch (e) {
       document.getElementById('view').innerHTML = `<div class="view">${UI.emptyState('alert', "تعذّر فتح قاعدة البيانات", esc(e.message || e))}</div>`;
       return;
+    }
+    // the heavy start-up below waits for the opening show's logo to finish drawing (about 0.8 s): that drawing is
+    // the one part of the show the main thread paints, and a busy start-up froze it halfway on slow phones
+    if (root.Intro && root.Intro.drawn) {
+      if (root.Cloud && root.Cloud.preload) root.Cloud.preload(); // the sign-in's code downloads meanwhile
+      await root.Intro.drawn();
     }
     // the minimum wage now follows the law (by date and age): stored copies of old defaults are dropped
     if (!S.meta.minWageAuto) {
@@ -12772,6 +12908,18 @@ window.FIREBASE_CONFIG = {
 
   /* ---------------- SDK ---------------- */
   let loading = null;
+  /** Starts downloading the SDK without running it (the app opens: the network works while the opening show's
+   *  logo draws itself, and the code runs only after, so it never stalls that drawing). */
+  Cloud.preload = function () {
+    if (fb || loading || !root.FIREBASE_CONFIG || Cloud.preloaded) return;
+    Cloud.preloaded = true;
+    for (const f of ['firebase-app.js', 'firebase-auth.js', 'firebase-firestore.js']) {
+      const l = document.createElement('link');
+      l.rel = 'modulepreload';
+      l.href = SDK + f;
+      document.head.appendChild(l);
+    }
+  };
   function load() {
     if (fb) return Promise.resolve(fb);
     if (!root.FIREBASE_CONFIG) return Promise.reject(root.U.oops("إعدادات Firebase مفقودة"));
@@ -15462,12 +15610,13 @@ ${name}`.trim();
     // the whole card opens the summary on a tap; keyboards and screen readers get a real button for it
     // (the card itself holds the "what is gross?" buttons, so it can't be one)
     const P2 = root.Plus;
-    return `<section class="home-hero" data-act="go-summary"><button class="vh" data-act="go-summary">تفاصيل ${periodName}</button>
+    return `<section class="home-hero" data-act="go-summary"><button class="vh" data-act="go-summary">التفاصيل ${periodName}</button>
       ${P2 && P2.visible() ? `<button class="hh-skin" data-act="plus-design" aria-label="تصميم بطاقة الأجر">${icon('palette', 's')}</button>` : ''}
+      <button class="hh-eye ${S.settings.hideMoney ? 'off' : ''}" data-act="toggle-money" aria-label="${S.settings.hideMoney ? "إظهار المبالغ" : "إخفاء المبالغ"}" aria-pressed="${!!S.settings.hideMoney}">${icon('eye', 's')}</button>
       <span class="aurora" aria-hidden="true" style="${App.phase()}"><i></i><i></i><i></i></span><span class="hh-dial" aria-hidden="true" style="${App.phase()}"></span>
       <div class="hh-label">${UI.term ? UI.term('gross', "الإجمالي") : "الإجمالي"} ${emp.periodStartDay > 1 ? "في فترة الأجر" : "في " + periodName} حتى الآن</div>
       <div class="hero-num">${money(sum.gross, 0)}</div>
-      <div class="hh-stats"><span><b>${money(sum.net.net, 0)}</b><small>${UI.term ? UI.term('net', sum.net.minor ? "الصافي" : "الصافي التقديري") : "الصافي"}</small></span><span><b class="num">${U.hm(sum.hours * 60)}</b><small>الساعات</small></span><span><b>${sum.shifts}</b><small>${sum.shifts === 1 ? "وردية" : "الورديات"}</small></span></div>
+      <div class="hh-stats"><span><b>${money(sum.net.net, 0)}</b><small>${UI.term ? UI.term('net', sum.net.minor ? "الصافي" : "الصافي التقديري") : "الصافي"}</small></span><span><b class="num">${U.hm(sum.hours * 60)}</b><small>ساعات</small></span><span><b>${sum.shifts}</b><small>${sum.shifts === 1 ? "وردية" : "الورديات"}</small></span></div>
       ${goal ? `<div class="hh-goal"><div class="progress thin"><b style="width:${projPct}%"></b><i style="width:${pct}%"></i></div>
         <div class="hh-goal-l">${U.num(pct, 0)}% من هدف ${money(goal, 0)}${fc ? ` · التوقع ${money(fc, 0)}${fcNote}` : ''}</div></div>`
         : (fc ? `<div class="hh-goal-l">${emp.periodStartDay > 1 ? "التوقع حتى نهاية الفترة" : "التوقع حتى نهاية الشهر"}: ${money(fc, 0)}${fcNote}</div>` : '')}
@@ -15590,6 +15739,7 @@ ${name}`.trim();
       ${birthdayCard()}
       ${paydayCard()}
       ${banners()}
+      ${App.wrappedCard ? App.wrappedCard() : ''}
       ${App.recapCard ? App.recapCard() : ''}
       ${hero()}
       ${actionBlock()}
@@ -15649,6 +15799,13 @@ ${name}`.trim();
     e.stopPropagation();
     const sh = App.shift(el.dataset.id);
     if (sh) await App.markDone(sh);
+  };
+  App.actions['toggle-money'] = async (el, e) => {
+    if (e) e.stopPropagation(); // the card under it opens the summary
+    await Store.setSettings((s) => { s.hideMoney = !s.hideMoney; });
+    App.applyTheme();
+    if (root.Fx) root.Fx.play('on');
+    App.rerender();
   };
   App.actions['mark-done-all'] = async () => {
     const now = Date.now();
@@ -16534,6 +16691,47 @@ ${name}`.trim();
     return { n: list.length, gross: avg((x) => x.gross), net: avg((x) => x.net.net), hours: avg((x) => x.hours), shifts: avg((x) => x.shifts), travel: avg((x) => x.travel), avgHourly: avg((x) => x.avgHourly), avgShift: avg((x) => x.avgShift) };
   }
 
+  /* ---- the average monthly pay: over the last 3 / 6 / 12 pay periods that ended, this year's, or all of them ----
+   * only periods with work count (a month off would pull the average down); the current one, not over yet, never */
+  // short on the buttons (five fit in a row on a small phone), whole for screen readers
+  const AVG_RANGES = [[3, "3 أشهر", "آخر 3 أشهر"], [6, "6 أشهر", "آخر 6 أشهر"], [12, "12 شهرًا", "آخر 12 شهرًا"], ['year', "هذه السنة", "هذه السنة"], ['all', "الكل", "كل الوقت"]];
+  App.monthAverage = function (range) {
+    const emp = S.employers[0];
+    const first = firstData();
+    if (!emp || !first) return null;
+    const cur = Engine.periodOf(U.todayKey(), emp);
+    const list = [];
+    let p = Engine.periodOf(U.addDays(cur.from, -1), emp);
+    for (let i = 0; i < 600 && p.to >= first; i++) {
+      if (range === 'year' && p.to.slice(0, 4) !== U.todayKey().slice(0, 4)) break;
+      if (typeof range === 'number' && i >= range) break;
+      const s = Engine.periodSummary(App.model, p.key, emp.id);
+      if (s.shifts > 0) list.push({ p, s });
+      p = Engine.periodOf(U.addDays(p.from, -1), emp);
+    }
+    if (!list.length) return { n: 0 };
+    const avg = (f) => list.reduce((sum, x) => sum + f(x.s), 0) / list.length;
+    const byGross = list.slice().sort((a, b) => b.s.gross - a.s.gross);
+    return { n: list.length, gross: avg((s) => s.gross), net: avg((s) => s.net.net), hours: avg((s) => s.hours), shifts: avg((s) => s.shifts),
+      best: byGross[0], low: byGross[byGross.length - 1], list: list.reverse() };
+  };
+  function avgCard() {
+    const range = st.avgRange == null ? 12 : st.avgRange;
+    const a = App.monthAverage(range);
+    if (!a) return '';
+    // whole labels (a word put in the middle of another sentence reads wrong in other languages)
+    const byPeriod = S.employers[0].periodStartDay > 1;
+    const body = !a.n ? `<div class="small muted">${range === 'year' ? "لم ينتهِ بعد هذا العام شهر عملت فيه." : "لا يوجد بعد شهر منتهٍ فيه ورديات."}</div>`
+      : `<div class="kpis three">
+          <div class="kpi"><div class="l">${byPeriod ? "الإجمالي لكل فترة أجر" : "الإجمالي شهريًا"}</div><div class="v">${money(a.gross, 0)}</div></div>
+          <div class="kpi"><div class="l">الصافي التقديري</div><div class="v">${money(a.net, 0)}</div></div>
+          <div class="kpi"><div class="l">${byPeriod ? "ساعات لكل فترة أجر" : "ساعات شهريًا"}</div><div class="v"><span class="num">${U.hm(a.hours * 60)}</span></div></div></div>
+        ${a.n > 1 ? '<div class="avg-bars">' + Charts.hbars(a.list.map((x) => ({ name: x.p.label, value: x.s.gross, color: 'var(--brand, #6d28d9)', text: U.money(x.s.gross, 0) }))) + '</div>' : ''}
+        <div class="tiny muted" style="margin-top:6px">حسب ${a.n === 1 ? "شهر واحد" : a.n + " أشهر"} انتهت وعملت فيها (الشهر بلا ورديات لا يُحتسب)${a.n > 1 ? ` · الأعلى: ${esc(a.best.p.label)} ${U.money(a.best.s.gross, 0)} · الأدنى: ${esc(a.low.p.label)} ${U.money(a.low.s.gross, 0)}` : ''}</div>`;
+    return `<div class="section-title">${icon('chart', 's')} متوسط الأجر الشهري</div>
+      <div class="card avg-card"><div class="seg avg-seg" role="tablist" aria-label="نطاق المتوسط">${AVG_RANGES.map(([k, l, full]) => `<button class="${String(range) === String(k) ? 'on' : ''}" role="tab" aria-selected="${String(range) === String(k)}" aria-label="${full}" data-act="rep-avg" data-r="${k}">${l}</button>`).join('')}</div>${body}</div>`;
+  }
+
   /* ---------------- summary ---------------- */
   App.summaryData = function (type, anchor) {
     const r = rangeFor(type, anchor);
@@ -16552,7 +16750,6 @@ ${name}`.trim();
       ["الساعات", (x) => x.hours, (v) => U.num(v, 1)], ["الورديات", (x) => x.shifts, (v) => U.num(v, 1)],
       ["المعدل للساعة", (x) => x.avgHourly, (v) => U.money(v)], ["ساعات لكل وردية", (x) => x.avgShift, (v) => U.num(v, 1)],
     ];
-    const per = type === 'week' ? "أسبوعيًا" : "شهريًا";
     let h = `<div class="compare-row h"><span></span><span>السابقة</span>${a3 ? `<span>متوسط 3 أشهر</span>` : ''}${a12 ? `<span>متوسط 12 شهرًا</span>` : ''}</div>`;
     for (const [lab, f, fmt] of rows) {
       const cur = f(t);
@@ -16560,7 +16757,7 @@ ${name}`.trim();
       const fa = (a) => (a ? f(Object.assign({}, a, { net: a.net })) : null);
       h += `<div class="compare-row"><span><b>${lab}</b><br><span class="num small">${fmt(cur)}</span></span><span class="small">${cell(f(p))}</span>${a3 ? `<span class="small">${cell(fa(a3))}</span>` : ''}${a12 ? `<span class="small">${cell(fa(a12))}</span>` : ''}</div>`;
     }
-    return h + `<div class="tiny muted" style="margin-top:6px">الأسهم: تغيّر الفترة الحالية مقارنةً بكل عمود. المتوسطات ${per}${a3 ? ` (3 أشهر = ${type === 'week' ? "أسابيع" : "فترات"}: ${a3.n})` : ''}${a12 ? `، (12 شهرًا = ${a12.n})` : ''} — فقط من الفترات التي فيها بيانات.</div>`;
+    return h + `<div class="tiny muted" style="margin-top:6px">الأسهم: تغيّر الفترة الحالية مقارنةً بكل عمود. ${type === 'week' ? "متوسطات أسبوعية" : "متوسطات شهرية"}${a3 ? ` (3 أشهر = ${type === 'week' ? "أسابيع" : "فترات"}: ${a3.n})` : ''}${a12 ? `، (12 شهرًا = ${a12.n})` : ''} — فقط من الفترات التي فيها بيانات.</div>`;
   }
 
   function yearExtras(t, r) {
@@ -16644,7 +16841,7 @@ ${name}`.trim();
         : `<div class="cal-nav"><button class="icon-btn" data-act="rep-nav" data-dir="-1" aria-label="السابق">${icon('right')}</button><h2>${esc(r.label)}${r.sub ? `<div class="tiny muted" style="font-weight:400">${r.sub}</div>` : ''}</h2><button class="icon-btn" data-act="rep-nav" data-dir="1" aria-label="التالي">${icon('left')}</button></div>`}
       <div id="rep-swipe" class="swipe-area">
       <div class="card tonal">
-        <div class="tiny" style="opacity:.8">الإجمالي</div><div class="hero-num">${money(t.gross, 0)}</div><div class="small">${UI.delta(t.gross, p.gross)} مقارنةً بالفترة السابقة (${U.money(p.gross, 0)})</div>
+        <div class="tiny" style="opacity:.8">إجمالي</div><div class="hero-num">${money(t.gross, 0)}</div><div class="small">${UI.delta(t.gross, p.gross)} مقارنةً بالفترة السابقة (${U.money(p.gross, 0)})</div>
         <div class="kpis" style="margin-top:12px">
           ${kpi("الصافي التقديري", t.net.net, p.net.net, (v) => money(v, 0))}
           ${kpi("الساعات", t.hours, p.hours, (v) => `<span class="num">${U.hm(v * 60)}</span>`)}
@@ -16662,6 +16859,7 @@ ${name}`.trim();
       <button class="an-entry" data-act="analysis-open">${UI.tile('sparkle', 'violet')}<span class="an-entry-t"><b>تحليل متقدم</b><small>أي يوم وساعة الأكثر ربحًا لك، أرقامك القياسية و"ماذا لو"</small></span>${icon('left', 's')}</button>
       ${st.type !== 'custom' && st.type !== 'year' ? `<div class="section-title">${icon('up', 's')} مقارنة</div><div class="card">${compareTable(t, p, a3, a12, st.type)}</div>` : ''}
       ${st.type === 'custom' ? `<div class="section-title">${icon('up', 's')} مقارنة بالفترة السابقة بنفس الطول</div><div class="card">${compareTable(t, p, null, null, st.type)}</div>` : ''}
+      ${st.type !== 'custom' ? avgCard() : ''}
       <div class="section-title">${icon('users', 's')} حسب الوظيفة</div>
       <div class="card">${roles.length ? Charts.hbars(roles.map((x) => ({ name: x.role ? x.role.name : '?', value: x.hours, color: x.role ? x.role.color : '#999', text: U.num(x.hours, 1) + " س" })))
         + '<div class="divider"></div>' + Charts.hbars(roles.map((x) => ({ name: x.role ? x.role.name : '?', value: x.amount, color: x.role ? x.role.color : '#999', text: U.money(x.amount, 0) }))) : "<div class=\"muted small\">لا توجد بيانات</div>"}</div>
@@ -16680,12 +16878,13 @@ ${name}`.trim();
       ${st.type === 'year' ? yearExtras(t, r) : ''}
       </div>
       ${st.type === 'month' && t.shifts > 0 && App.recap ? `<button class="btn recap-btn block" data-act="recap-open" data-pk="${Engine.periodOf(r.from, S.employers[0]).key}">✨ ملخص الشهر كقصة</button>` : ''}
+      ${st.type === 'year' && t.shifts > 0 && App.recap ? `<button class="btn recap-btn block" data-act="recap-open" data-pk="Y${r.from.slice(0, 4)}">🎁 سنتك كقصة (Wrapped)</button>` : ''}
       <div class="btn-row" style="margin-top:8px">
         <button class="btn tonal" data-act="rep-share-img">${icon('image')} صورة</button>
         <button class="btn tonal" data-act="rep-pdf">${icon('printer')} PDF</button>
         <button class="btn tonal" data-act="rep-csv">${icon('table')} CSV</button>
       </div>
-      <button class="btn text block" data-act="claim-report" style="margin-top:4px">${icon('file', 's')} تقرير ورسالة للاستيضاح مع صاحب العمل</button>`;
+      <button class="btn text block" data-act="claim-report" style="margin-top:4px">${icon('file', 's')} تقرير ورسالة للمراجعة مع صاحب العمل</button>`;
   }
 
   /* ---------------- charts ---------------- */
@@ -16788,6 +16987,7 @@ ${name}`.trim();
   };
 
   App.actions['rep-sub'] = (el) => { st.sub = el.dataset.s; App.render(); };
+  App.actions['rep-avg'] = (el) => { const v = el.dataset.r; st.avgRange = /^\d+$/.test(v) ? +v : v; if (root.Fx) root.Fx.play('on'); App.render(); };
   App.actions['rep-type'] = (el) => { st.type = el.dataset.t; App.rerender(); };
   App.actions['rep-nav'] = (el) => { st.anchor = shiftAnchor(st.type, rangeFor(st.type, st.anchor).from, +el.dataset.dir); App.rerender(); };
   App.actions['flt-role'] = (el) => { st.f.role = el.dataset.id; App.rerender(); };
@@ -17200,7 +17400,7 @@ ${name}`.trim();
     const order = { bad: 0, warn: 1, ok: 2 };
     return `
       <div class="status-summary"><div class="ok">✅ ${counts.ok}<div class="tiny">سليم</div></div><div class="warn">⚠️ ${counts.warn}<div class="tiny">للفحص</div></div><div class="bad">❌ ${counts.bad}<div class="tiny">ناقص/خاطئ</div></div></div>
-      ${a.totalMissing > 0 ? `<div class="card tonal"><div class="small">الفرق التقديري لصالحك</div><div class="hero-num">${money(a.totalMissing)}</div><div class="tiny">مجموع الملاحظات المعلَّمة بـ ❌. افحص التفاصيل قبل التوجه إلى صاحب العمل.</div></div>` : counts.bad === 0 ? `<div class="card tonal"><b>${icon('okc', 's')} لم يُعثر على نقص</b><div class="small">القسيمة تطابق الورديات التي سجّلتها${counts.warn ? "، مع بعض النقاط للفحص" : ''}.</div></div>` : ''}
+      ${a.totalMissing > 0 ? `<div class="card tonal"><div class="small">الفرق التقديري لصالحك</div><div class="hero-num">${money(a.totalMissing)}</div><div class="tiny">مجموع الملاحظات المعلَّمة بـ ❌. افحص التفاصيل قبل التوجه إلى صاحب العمل.</div><button class="btn tonal sm found-share" data-act="found-share" data-amount="${Math.round(a.totalMissing)}" data-k="found">${icon('share', 's')} شارك: Shaati وجد لي ${money(a.totalMissing, 0)}</button></div>` : counts.bad === 0 ? `<div class="card tonal"><b>${icon('okc', 's')} لم يُعثر على نقص</b><div class="small">القسيمة تطابق الورديات التي سجّلتها${counts.warn ? "، مع بعض النقاط للفحص" : ''}.</div></div>` : ''}
       ${a.overridesInPeriod ? `<div class="banner warn">${icon('hand')}<div>${a.overridesInPeriod} ورديات في الفترة تتضمن تعديلًا يدويًا. الملاحظات الناتجة عنها معلَّمة.</div></div>` : ''}
       <div class="small muted" style="margin:0 4px 10px">الفترة: ⁦${U.fmtDate(a.expected.P.from)}⁠–⁠${U.fmtDate(a.expected.P.to)}⁩ · ${a.expected.shifts.length} ورديات · ${U.hours(a.expected.t.hours)} س</div>
       ${a.findings.slice().sort((x, y) => order[x.status] - order[y.status]).map((f) => `<div class="finding ${f.status}">
@@ -17281,7 +17481,47 @@ ${name}`.trim();
   App.actions['payslip-open'] = (el) => App.sheetsApi.payslip(el.dataset.id);
   App.actions['gap-set'] = async (el) => {
     const g = S.gaps.find((x) => x.id === el.dataset.id);
-    if (g) await App.saveOps([{ store: 'gaps', put: Object.assign({}, g, { status: el.dataset.s }) }], "تحديث فرق", el.dataset.s === 'resolved' ? "تم تعليمه كمُسترد" : "تم التحديث");
+    if (!g) return;
+    await App.saveOps([{ store: 'gaps', put: Object.assign({}, g, { status: el.dataset.s }) }], "تحديث فرق", el.dataset.s === 'resolved' ? "تم تعليمه كمُسترد" : "تم التحديث");
+    // the money came back thanks to the check: the best moment there is — celebrated, and shareable
+    if (el.dataset.s === 'resolved' && g.amount > 0) {
+      if (root.Fx) root.Fx.celebrate('money');
+      const back = S.gaps.filter((x) => x.status === 'resolved').reduce((sum, x) => sum + x.amount, 0) + (g.status === 'resolved' ? 0 : g.amount);
+      UI.openSheet({ title: "عاد مالك إليك! 🎉", body: `${App.mascotSays ? App.mascotSays('party', `استرجعت ${U.money(g.amount, 0)} كانت مستحقة لك. أحسنت لأنك تحققت!`, { size: 72 }) : ''}
+        ${back > g.amount ? `<div class="small muted" style="margin:6px 0 12px">في المجموع استرجع لك Shaati ${U.money(back, 0)}.</div>` : ''}
+        <button class="btn big block" data-act="found-share" data-amount="${Math.round(g.amount)}" data-k="back">${icon('share')} شارك وساعد أصدقاءك على الفحص</button>` });
+    }
+  };
+  /** A picture to share: "Shaati found me ₪X" (the slip's check) or "I got back ₪X" — no employer, no name. */
+  App.actions['found-share'] = async (el) => {
+    const amount = +el.dataset.amount || 0, back = el.dataset.k === 'back';
+    try {
+      if (document.fonts && document.fonts.ready) await document.fonts.ready;
+      const W = 1080, H = 1350;
+      const c = document.createElement('canvas'); c.width = W; c.height = H;
+      const g = c.getContext('2d');
+      const grd = g.createLinearGradient(0, 0, W, H);
+      grd.addColorStop(0, back ? '#047857' : '#5b21b6'); grd.addColorStop(0.55, back ? '#059669' : '#7c3aed'); grd.addColorStop(1, back ? '#0d9488' : '#db2777');
+      g.fillStyle = grd; g.fillRect(0, 0, W, H);
+      g.fillStyle = 'rgba(255,255,255,.08)';
+      g.beginPath(); g.arc(W * 0.85, H * 0.12, 260, 0, Math.PI * 2); g.fill();
+      g.beginPath(); g.arc(W * 0.1, H * 0.9, 320, 0, Math.PI * 2); g.fill();
+      g.direction = U.RTL ? 'rtl' : 'ltr'; g.textAlign = 'center'; g.fillStyle = '#fff';
+      const F = (w, px) => `${w} ${px}px Fredoka, Rubik, "Segoe UI", Arial, sans-serif`;
+      g.font = '150px "Segoe UI Emoji", "Noto Color Emoji", sans-serif'; g.fillText(back ? '🎉' : '🔍', W / 2, 300);
+      g.font = F(600, 64); g.fillText(back ? "استرجعت" : "Shaati وجد لي", W / 2, 460);
+      g.font = F(700, 210); g.fillText(U.money(amount, 0), W / 2, 700);
+      g.font = F(600, 58); g.globalAlpha = 0.92; g.fillText(back ? "كانت مستحقة لي من العمل" : "ناقصة في قسيمتي", W / 2, 800); g.globalAlpha = 1;
+      g.fillStyle = 'rgba(255,255,255,.16)';
+      const rw = 900, rh = 120, rx = (W - rw) / 2, ry = 930;
+      g.beginPath(); if (g.roundRect) g.roundRect(rx, ry, rw, rh, 60); else g.rect(rx, ry, rw, rh); g.fill();
+      g.fillStyle = '#fff'; g.font = F(600, 50); g.fillText("من حقكم أن تتحققوا أيضًا 👇", W / 2, ry + 78);
+      g.font = F(700, 64); g.fillText('shaati.web.app', W / 2, 1170);
+      g.font = F(600, 44); g.globalAlpha = 0.8; g.fillText("Shaati", W / 2, H - 70); g.globalAlpha = 1;
+      const blob = await new Promise((r) => c.toBlob(r, 'image/png'));
+      if (!blob) throw new Error('no image');
+      await UI.shareFile(back ? 'shaati-back.png' : 'shaati-found.png', blob, back ? "استرجعت مالًا كان مستحقًا لي" : "وجد Shaati مالًا ناقصًا في قسيمتي", `${back ? "استرجعت" : "Shaati وجد لي"} ${U.money(amount, 0)} ${back ? "كانت مستحقة لي من العمل" : "ناقصة في قسيمتي"}. من المفيد أن تتحققوا أنتم أيضًا: https://shaati.web.app`);
+    } catch (e) { console.warn('found image', e); UI.toast("لم نتمكن من إنشاء الصورة"); }
   };
 
   /* ---------------- payslips tab (in reports) ---------------- */
@@ -18263,7 +18503,7 @@ ${name}`.trim();
     rest: "سبت عيد أعياد مدينة دخول السبت خروج السبت قاعدة يوم", pay: "سفر استرداد نفقات السفر سقف فترة الراتب يوم الدفع راتب",
     net: "ضريبة ضريبة الدخل نقاط الاستحقاق تقاعد التأمين الوطني ضريبة الصحة صندوق الاستكمال صافي", leave: "إجازة مرض استجمام أقدمية بدء العمل",
     goal: "هدف أهداف ادخار توفير", alerts: "إشعارات تذكيرات تنبيهات رسائل", templates: "قالب قوالب وردية ثابتة",
-    lang: "لغة لغات language english русский العربية عربي إنجليزي روسي عبري ترجمة", look: "لون ألوان سمة داكن فاتح الوضع الليلي خط خطوط مظهر أصوات اهتزاز موسيقى تصميم البطاقة plus بلس", security: "قفل رمز بصمة الإصبع كلمة المرور",
+    lang: "لغة لغات language english русский العربية عربي إنجليزي روسي فرنسي إسباني français español عبري ترجمة", look: "لون ألوان سمة داكن فاتح الوضع الليلي خط خطوط مظهر أصوات اهتزاز موسيقى تصميم البطاقة plus بلس", security: "قفل رمز بصمة الإصبع كلمة المرور",
     assistant: "ذكاء اصطناعي مساعد أسئلة ai", ai: "مفتاح api claude تحليل القسيمة", backup: "نسخ احتياطي استعادة ملف", schedule: "جدول العمل جدول الورديات الأسبوع القادم صورة لقطة شاشة واتساب whatsapp رسالة جدول مخطط تقويم", import: "استيراد تقرير ساعات حضور ساعة excel csv pdf صورة ملف رفع ورديات من العمل", export: "تصدير excel csv pdf تقويم",
     demo: "مثال عرض تجريبي", about: "إصدار تثبيت حول", rights: "حقوق الحد الأدنى للأجور",
   };
@@ -18651,6 +18891,9 @@ ${name}`.trim();
   RENDER.net = {
     render: () => {
       const T = S.settings.tax, P = S.settings.pension, Hs = S.settings.hishtalmut;
+      // the law's numbers for this year, shown in empty fields; a number typed in is the user's own
+      const bl = Engine.blLimits(T, U.todayKey()), law = Engine.blLimits({}, U.todayKey());
+      bl.own = { thr: bl.thr !== law.thr, ceil: bl.ceil !== law.ceil };
       return `<div class="banner">${icon('info')}<div>الصافي تقدير. القيم الافتراضية بحسب 2025⁠–⁠2026 (شرائح الضريبة مجمّدة حتى 2027). حدّثها إن تغيّرت.</div></div>
         <div class="section-title">ضريبة الدخل</div><div class="card">
           ${F.num("نقاط الاستحقاق الضريبي", 's.tax.creditPoints', T.creditPoints, "مقيم: 2.25 · امرأة: 2.75 · وإضافية عن الأولاد والشهادة والتسريح من الجيش والمهاجر الجديد وغيرها.")}
@@ -18658,10 +18901,10 @@ ${name}`.trim();
           <div class="tiny muted" style="margin:6px 4px">شرائح الضريبة الشهرية:</div>
           ${T.brackets.map((b, i) => `<div class="grid2">${F.num(i === T.brackets.length - 1 ? "فوق" : "حتى ₪", 's.tax.brackets.' + i + '.0', b[0] === Infinity || b[0] == null ? '' : b[0], '', '∞')}${F.num('%', 's.tax.brackets.' + i + '.1', b[1])}</div>`).join('')}</div>
         <div class="section-title">التأمين الوطني وضريبة الصحة</div><div class="card">
-          ${F.num("حد النسبة المخفّضة ₪ (60% من متوسط الأجر)", 's.tax.blReducedThreshold', T.blReducedThreshold)}
+          ${F.num("حد النسبة المخفّضة ₪", 's.tax.blReducedThreshold', bl.own.thr ? T.blReducedThreshold : '', "فارغ = حسب القانون لكل سنة", U.num(bl.thr, 0))}
           <div class="grid2">${F.num("التأمين الوطني مخفّض %", 's.tax.blReducedPct', T.blReducedPct)}${F.num("التأمين الوطني كامل %", 's.tax.blFullPct', T.blFullPct)}</div>
           <div class="grid2">${F.num("الصحة مخفّض %", 's.tax.healthReducedPct', T.healthReducedPct)}${F.num("الصحة كامل %", 's.tax.healthFullPct', T.healthFullPct)}</div>
-          ${F.num("السقف ₪", 's.tax.blCeiling', T.blCeiling)}</div>
+          ${F.num("السقف ₪", 's.tax.blCeiling', bl.own.ceil ? T.blCeiling : '', "فارغ = حسب القانون لكل سنة", U.num(bl.ceil, 0))}</div>
         <div class="section-title">التقاعد</div><div class="card">
           ${F.sw("تقاعد إلزامي", '', 's.pension.enabled', P.enabled)}
           <div class="grid3">${F.num("العامل %", 's.pension.employeePct', P.employeePct)}${F.num("صاحب العمل %", 's.pension.employerPct', P.employerPct)}${F.num("التعويضات %", 's.pension.severancePct', P.severancePct)}</div>
@@ -18696,7 +18939,7 @@ ${name}`.trim();
           ${L.dayValueMode === 'hours' ? F.num("ساعات في اليوم", 's.leave.dayHours', L.dayHours) : ''}${L.dayValueMode === 'fixed' ? F.num("المبلغ لليوم ₪", 's.leave.dayFixed', L.dayFixed) : ''}
           <div class="grid2">${[0, 1, 2, 3].map((i) => F.num(["المرض اليوم 1 %", "اليوم 2 %", "اليوم 3 %", "من اليوم الرابع %"][i], 's.leave.sickPct.' + i, L.sickPct[i])).join('')}</div></div>
         <div class="section-title">الاستجمام</div><div class="card">
-          ${F.num("تعرفة يوم الاستجمام ₪", 's.leave.recuperationRate', L.recuperationRate, "القطاع الخاص: 418 ₪.")}
+          ${F.num("تعرفة يوم الاستجمام ₪", 's.leave.recuperationRate', Engine.recuperationRate(L, U.todayKey()) !== Engine.recuperationRate({}, U.todayKey()) ? L.recuperationRate : '', "فارغ = حسب أمر التوسيع في القطاع الخاص (من 2026: 451.50 ₪ لليوم)", String(Engine.recuperationRate({}, U.todayKey())))}
           ${F.sel("شهر الدفع", 's.leave.recuperationMonth', [[0, "كل شهر (جزء نسبي)"], ...U.MONTHS.map((m, i) => [i + 1, m])], L.recuperationMonth)}</div>`;
     },
   };
@@ -18729,6 +18972,31 @@ ${name}`.trim();
     },
   };
 
+  /* the reminders before a planned shift: as many as wanted, at any time before it, and the evening before */
+  const REMIND_AT = [10, 15, 30, 45, 60, 90, 120, 180, 240, 360, 720, 1440, 2880];
+  const minLabel = (m) => (m < 60 ? `${m} د` : m % 1440 === 0 ? (m === 1440 ? "يوم واحد" : m === 2880 ? "يومان" : `${m / 1440} ${globalThis.U.plural(m / 1440, {"one":"يوم","two":"يومان","few":"أيام","many":"يومًا","other":"يوم"})}`) : m === 60 ? "ساعة" : m === 120 ? "ساعتان" : m === 90 ? "ساعة ونصف" : m % 60 === 0 ? `${m / 60} ساعات` : `${Math.floor(m / 60)}:${String(m % 60).padStart(2, '0')} س`);
+  const remindList = (A) => { const R = A.reminders || {}; return (Array.isArray(R.before) && R.before.length ? R.before : [+A.upcomingMin || 60]).map(Number).filter((x) => x > 0).sort((a, b) => b - a); };
+  function remindSummary(A) {
+    const R = A.reminders || {};
+    const parts = remindList(A).map((m) => minLabel(m) + " قبل");
+    if (R.eveOn) parts.unshift("في المساء السابق الساعة " + (R.eve || '20:00'));
+    return parts.join(' · ');
+  }
+  function remindBox(A) {
+    const R = A.reminders || {};
+    const on = new Set(remindList(A));
+    const all = [...new Set(REMIND_AT.concat([...on]))].sort((a, b) => a - b);
+    return `<div class="rm-box">
+      <div class="lbl">متى نذكّرك (يمكنك اختيار عدة أوقات)</div>
+      <div class="chips rm-chips">${all.map((m) => `<button class="chip ${on.has(m) ? 'on' : ''}" data-rm="${m}" aria-pressed="${on.has(m)}">${minLabel(m)}</button>`).join('')}</div>
+      <div class="rm-custom"><input class="input" type="number" inputmode="numeric" min="1" max="999" id="rm-n" placeholder="آخر"><select class="input" id="rm-u"><option value="1">دقائق</option><option value="60" selected>ساعات</option><option value="1440">أيام</option></select><button class="btn tonal" data-rm-add>${icon('plus', 's')} إضافة</button></div>
+      ${F.sw("وأيضًا في المساء السابق", "تذكير في اليوم السابق للوردية، في الوقت الذي تختاره", 's.alerts.reminders.eveOn', !!R.eveOn).replace('data-s=', 'data-redraw data-s=')}
+      ${R.eveOn ? `<div class="grid2">${F.time("في الساعة", 's.alerts.reminders.eve', R.eve || '20:00')}</div>` : ''}
+      ${F.sw("يبقى الإشعار حتى تغلقه", "لا يختفي من الشاشة وحده", 's.alerts.reminders.sticky', !!R.sticky)}
+      ${F.sw("بدون صوت أو اهتزاز", '', 's.alerts.reminders.silent', !!R.silent)}
+    </div>`;
+  }
+
   RENDER.alerts = {
     render: () => {
       const A = S.settings.alerts;
@@ -18744,11 +19012,36 @@ ${name}`.trim();
         <div class="section-title">أخبار جيدة</div><div class="card">${t('record', "رقم قياسي شخصي")}${t('goal', "وصلت إلى الهدف الشهري")}${t('birthday', "عيد الميلاد")}</div>
         <div class="section-title">التذكيرات</div><div class="card">
           ${t('timer', "نسيت إنهاء وردية")}<div class="grid2">${F.num("بعد (ساعات)", 's.alerts.timerHours', A.timerHours)}</div>
-          ${F.sw("قبل وردية مخطط لها", '', 's.alerts.remindPlanned', A.remindPlanned === true)}
+          ${F.sw("قبل وردية مخطط لها", A.remindPlanned === true ? remindSummary(A) : "متوقف", 's.alerts.remindPlanned', A.remindPlanned === true).replace('data-s=', 'data-redraw data-s=')}
+          ${A.remindPlanned === true ? remindBox(A) : ''}
+          ${t('confirmDone', "بعد وردية مخططة: اسألني إن كنت عملت").replace('data-s=', 'data-redraw data-s=')}
+          ${A.types.confirmDone !== false ? `<div class="grid2">${F.sel("كم من الوقت بعد انتهائها", 's.alerts.reminders.confirmAfter', [[15, "15 دقيقة"], [30, "نصف ساعة"], [60, "ساعة"], [120, "ساعتان"], [240, "4 ساعات"], [480, "8 ساعات"]], (A.reminders || {}).confirmAfter || 30)}</div>` : ''}
           ${t('payslipDue', "يوم الدفع: أدخل قسيمة الراتب")}
           ${t('backup', "تذكير بالنسخ الاحتياطي")}<div class="grid2">${F.num("كل (أيام)", 's.alerts.backupDays', A.backupDays)}</div></div>`;
     },
     mount: (el, draw) => {
+      // a reminder time on or off; at least one stays (with none the switch above turns them off)
+      const setList = async (fn) => {
+        await Store.setSettings((st) => {
+          const R = st.alerts.reminders = Object.assign({}, st.alerts.reminders);
+          const cur = Array.isArray(R.before) && R.before.length ? R.before.slice() : [+st.alerts.upcomingMin || 60];
+          R.before = [...new Set(fn(cur).map(Number).filter((x) => x > 0 && x <= 14 * 1440))].sort((a, b) => b - a);
+        });
+        if (root.Fx) root.Fx.play('on');
+        draw();
+      };
+      el.querySelectorAll('[data-rm]').forEach((b) => (b.onclick = () => {
+        const m = +b.dataset.rm;
+        const cur = remindList(S.settings.alerts);
+        if (cur.includes(m) && cur.length === 1) { UI.toast("يلزم تذكير واحد على الأقل. لإيقافها، استخدم المفتاح في الأعلى"); return; }
+        setList((l) => (l.includes(m) ? l.filter((x) => x !== m) : l.concat([m])));
+      }));
+      const add = el.querySelector('[data-rm-add]');
+      if (add) add.onclick = () => {
+        const n = +el.querySelector('#rm-n').value, u = +el.querySelector('#rm-u').value;
+        if (!(n > 0) || n * u > 14 * 1440) { UI.invalid("رقم حتى 14 يومًا"); return; }
+        setList((l) => l.concat([Math.round(n * u)]));
+      };
       const p = el.querySelector('[data-perm]');
       if (p) p.onclick = async () => { await Notification.requestPermission(); draw(); };
       const t = el.querySelector('[data-test]');
@@ -18769,6 +19062,8 @@ ${name}`.trim();
       <div class="section-title">الخط</div>
       <div class="font-pick">${Object.entries(App.FONTS).map(([k, f]) => `<button data-font="${k}" class="${(S.settings.font || 'rubik') === k ? 'on' : ''}" style="font-family:'${f[0]}', system-ui, sans-serif"><span class="fp-sample">وردية مسائية · ${esc(f[2])}<small>${f[0]}</small></span><span class="fp-num">₪1,240</span></button>`).join('')}</div>
       <div class="section-title">حجم النص</div><div class="seg">${[[0.9, "صغير"], [1, "عادي"], [1.1, "كبير"], [1.2, "كبير جدًا"]].map(([k, l]) => `<button data-fs="${k}" class="${+S.settings.fontScale === k ? 'on' : ''}">${l}</button>`).join('')}</div>
+      <div class="section-title" style="margin-top:16px">الخصوصية</div>
+      <div class="card">${F.sw("إخفاء المبالغ", "تُموَّه المبالغ على الشاشة، مثلًا عندما تُري هاتفك لأحد. العين في بطاقة الأجر تُظهرها", 's.hideMoney', !!S.settings.hideMoney)}</div>
       <div class="section-title" style="margin-top:16px">المؤثرات والأصوات</div>
       <div class="card">${F.sw("الحركات والمؤثرات", "وميض صغير مع كل نقرة، أزرار مرنة وقصاصات ملوّنة عند إنهاء وردية", 's.fx.effects', (S.settings.fx || {}).effects !== false)}
         ${F.sw("الأصوات", "صوت قصير ولطيف عند النقر، و\"رنّة الصندوق\" عند حفظ وردية", 's.fx.sound', (S.settings.fx || {}).sound !== false)}
@@ -20033,19 +20328,16 @@ ${name}`.trim();
 
   /* ---------------- what's new (once per big update, for people who already used the app) ---------------- */
   const WHATS_NEW = {
-    id: '1.22.2',
+    id: '1.23.0',
     items: [
+      ['bell', 'sky', "تذكيرات الورديات بتحكّم كامل", "عدد التذكيرات الذي تريده وقبل الوقت الذي تريده، وأيضًا في المساء السابق، وسؤال بعد الوردية إن كنت عملت فيها. في الإعدادات › الإشعارات والرؤى."],
+      ['chart', 'mint', "متوسط الراتب الشهري", "في التقارير: متوسط آخر 3 أو 6 أو 12 شهرًا، أو هذه السنة أو كل الوقت، مع أعلى شهر وأدناه."],
+      ['eye', 'violet', "وضع الخصوصية", "العين في بطاقة الراتب تموّه كل المبالغ، مثلًا عندما تُري أحدًا هاتفك."],
+      ['share', 'pink', "Shaati وجدت لك مالًا؟ أخبر أصدقاءك", "الفرق الذي وُجد في القسيمة، أو المال الذي عاد إليك، يصبح صورة للمشاركة، كي يفحص أصدقاؤك قسائمهم أيضًا."],
+      ['globe', 'amber', "Shaati بالفرنسية والإسبانية أيضًا", "ست لغات: العبرية والعربية والروسية والإنجليزية والفرنسية والإسبانية. في الإعدادات › المظهر والقفل › اللغة."],
       ['check', 'mint', "وردية انتهت؟ أكّدها بنقرة", "تُحتسب الوردية المخططة في أجرك فقط بعد أن تؤكد أنك عملت فيها. الآن الأمر واضح: بطاقة في الشاشة الرئيسية مع زر كبير لكل وردية."],
       ['file', 'violet', "تقارير الساعات من PDF تُقرأ بدقة", "حتى التقارير التي تُرسم فيها كل حرف على حدة، ولم يعد عمود \"الساعات المعيارية\" يُخلط بوقت الدخول."],
       ['chart', 'amber', "توقع أذكى لنهاية الشهر", "يشمل التوقع وردياتك المخططة، وبعدها فقط يضيف وتيرتك المعتادة."],
-      ['globe', 'sky', "Shaati بالعربية والروسية والإنجليزية", "كل الشاشات والحسابات والتقارير والرسائل باللغة التي تختارها. في الإعدادات › المظهر والقفل › اللغة."],
-      ['camera', 'violet', "صورة تقرير الساعات تُقرأ كجدول", "أي تقرير، بأي ترتيب أعمدة: حتى صورة مائلة، مع ظل، أو لشاشة داكنة. يفهم التطبيق ما هو الدخول وما هو الخروج وما هو المجموع، ويتجاهل كل ما عدا ذلك."],
-      ['calendar', 'sky', "استيراد جدول العمل", "صوّر الجدول أو الصق رسالة واتساب، وتدخل وردياتك إلى التقويم. في الإضافة (+) أو في التقويم."],
-      ['share', 'violet', "المشاركة مباشرة من واتساب", "اضغط مطولًا على الجدول في واتساب › مشاركة › Shaati. وكذلك القسيمة أو تقرير الساعات."],
-      ['star', 'mint', "بدل الأعياد", "يفحص التطبيق عن أي أعياد يحق لك أجر عندما لم تعمل، وكم. في الحقوق › بدل الأعياد."],
-      ['file', 'pink', "تقرير ورسالة لصاحب العمل", "هل هناك خلل في أجرك؟ تقرير منظّم (PDF) بكل الملاحظات والورديات، ورسالة مهذبة جاهزة. في الحقوق أو التقارير."],
-      ['clock', 'amber', "\"نسيت إنهاء الوردية؟\"", "الوردية التي تستمر أطول بكثير من المعتاد تسأل بلطف، مع وقت الانتهاء الصحيح جاهزًا للضغط."],
-      ['sparkle', 'mint', "بداية سلسة", "تنتظر المقدمة تحميل كل شيء، وتظهر الشاشة الرئيسية جاهزة: بلا قفزات، وبلا وميض لبطاقة الراتب في نهاية المقدمة."],
     ],
   };
 
@@ -21406,11 +21698,20 @@ ${name}`.trim();
     await fs.setDoc(fs.doc(db, 'lb', uid()), data, { merge: true });
     Object.assign(row, data, { exists: true, g: row.g || {} });
     for (const [game, vals] of Object.entries(gPatch || {})) row.g[game] = Object.assign({}, row.g[game], vals);
-    boards.clear();
+    // only the boards my new scores change are read again; my name or look changes in the others in place
+    for (const key of [...boards.keys()]) {
+      const [g, p] = key.split('|');
+      if (gPatch && gPatch[g] && p in gPatch[g]) { boards.delete(key); continue; }
+      const me = boards.get(key).rows.find((x) => x.uid === uid());
+      if (me) Object.assign(me, { n: pr.n, e: pr.e, bg: pr.bg, p: pr.p });
+    }
   }
   const inflight = new Map();
-  const cached = (game, period) => { const c = boards.get(`${game}|${period}|${today()}`); return c && Date.now() - c.at < 60000 ? c.rows : null; };
-  /** The top of a board, from Firestore (cached for a minute; one request per board at a time). */
+  // Every board read costs up to 50 reads of the free daily quota: a board is kept 10 minutes (the one on screen is
+  // refreshed quietly once it is 2 minutes old), and a score of mine updates my own row in place.
+  const KEEP_MS = 10 * 60000, FRESH_MS = 2 * 60000;
+  const cached = (game, period, maxAge) => { const c = boards.get(`${game}|${period}|${today()}`); return c && Date.now() - c.at < (maxAge || KEEP_MS) ? c.rows : null; };
+  /** The top of a board, from Firestore (kept 10 minutes; one request per board at a time). */
   function board(game, period, fresh) {
     const key = `${game}|${period}|${today()}`;
     const c = !fresh && cached(game, period);
@@ -21547,7 +21848,8 @@ ${name}`.trim();
         set(bar, `<div class="lb-me-t"><b>${rows.length >= LIMIT ? "لست ضمن أفضل 50 بعد" : `لم تلعب ${period === 'a' ? "هنا" : periodName()} بعد`}</b><small>${rows.length >= LIMIT ? `تحتاج إلى أكثر من ${last.s}${esc(unit)}` : "لعبة واحدة وتصبح في الجدول"}</small></div><button class="btn sm" data-lb-play>${icon('play', 's')} العب</button>`);
       }
     }
-    /** The other periods of this game and this period of the other games, loaded quietly so that switching is instant. */
+    /** The other periods of this game and this period of the other games, loaded quietly so that switching is
+     *  instant (kept 10 minutes, so opening the table again soon reads nothing). */
     function prefetch() {
       const g = game, per = period;
       setTimeout(() => {
@@ -21564,7 +21866,15 @@ ${name}`.trim();
         return;
       }
       const now = cached(game, period);
-      if (now) { body.classList.remove('lb-busy'); paint(el, now); prefetch(); return; }
+      if (now) {
+        body.classList.remove('lb-busy'); paint(el, now); prefetch();
+        // kept a while: shown at once, and read again quietly if it is no longer fresh
+        if (!cached(game, period, FRESH_MS)) {
+          const g = game, p = period;
+          board(g, p, true).then((rows) => { if (my === seq && el.isConnected && g === game && p === period) paint(el, rows); }).catch(() => {});
+        }
+        return;
+      }
       // nothing on screen yet (the first open): placeholders; otherwise the current board stays
       if (!body.__html) set(body, `<div class="lb-wait">${UI.skeleton ? UI.skeleton(4) : ''}</div>`);
       else body.classList.add('lb-busy');
@@ -21677,7 +21987,7 @@ ${name}`.trim();
       g.font = F(600, 58); g.fillText(`${row.n} ${row.e}`, W / 2, 1010);
       g.font = F(500, 50); g.globalAlpha = 0.9; g.fillText(row.rank === 1 ? "من يتجاوزني؟ 😎" : "تعالوا وحاولوا تجاوزي 😉", W / 2, 1090); g.globalAlpha = 1;
       g.font = F(600, 42); g.globalAlpha = 0.8; g.fillText("Shaati", W / 2, H - 120);
-      g.font = F(500, 34); g.direction = 'ltr'; g.fillText('leelor123.github.io/shifts', W / 2, H - 70); g.globalAlpha = 1;
+      g.font = F(500, 34); g.direction = 'ltr'; g.fillText('shaati.web.app', W / 2, H - 70); g.globalAlpha = 1;
       const blob = await new Promise((r) => c.toBlob(r, 'image/png'));
       if (!blob) throw new Error('no image');
       const text = `${medal} المركز ${row.rank} ${PERIOD_IN[period] || ''} في "${g0.t}" على Shaati! من يتجاوزني؟ https://leelor123.github.io/shifts/`;
@@ -21872,6 +22182,7 @@ ${name}`.trim();
 
   function dataFor(pk) {
     const emp = S.employers[0];
+    if (/^Y\d{4}$/.test(pk)) return yearFor(+pk.slice(1));
     const t = Engine.periodSummary(App.model, pk, emp.id);
     const ppk = U.addMonthKey(pk, -1);
     const prev = Engine.periodSummary(App.model, ppk, emp.id);
@@ -21881,20 +22192,41 @@ ${name}`.trim();
     });
   }
   function monthName(pk) { return U.MONTHS[+pk.slice(5, 7) - 1]; }
+  /** The whole year as a story ("Shaati Wrapped"): its totals, the net as the months' nets added up (tax goes by
+   * month), and the best month. */
+  function yearFor(y) {
+    const emp = S.employers[0];
+    const t = Engine.totals(App.model, y + '-01-01', y + '-12-31', {});
+    const prev = Engine.totals(App.model, (y - 1) + '-01-01', (y - 1) + '-12-31', {});
+    let net = 0, best = null;
+    for (let m = 1; m <= 12; m++) {
+      const pk = y + '-' + String(m).padStart(2, '0');
+      const ms = Engine.periodSummary(App.model, pk, emp.id);
+      net += (ms.net && ms.net.net) || 0;
+      if (ms.shifts > 0 && (!best || ms.gross > best.amount)) best = { label: U.MONTHS[m - 1], amount: Math.round(ms.gross * 100) / 100 };
+    }
+    const data = Recap.build(t, prev, { key: 'Y' + y, label: String(y), prevLabel: String(y - 1), net, roleName: (id) => App.roleName(id) });
+    if (!data) return null;
+    data.year = true;
+    if (best && t.shifts > 1) data.slides.splice(2, 0, Object.assign({ k: 'bestMonth' }, best));
+    return data;
+  }
   const lastPeriodKey = () => U.addMonthKey(Engine.periodOf(U.todayKey(), S.employers[0]).key, -1);
 
+  let YEAR = false; // the story open is a year's (Shaati Wrapped)
   /* ---------------- the cards ---------------- */
   const num = (to, kind) => `<div class="st-num" data-to="${to}" data-kind="${kind || 'money'}">${kind === 'hours' ? U.num(to, 1) : money0(to)}</div>`;
   const day = (k) => `${U.DAYS[U.dow(k)]}, ${+k.slice(8)}.${+k.slice(5, 7)}`;
   const CARD = {
-    intro: (s) => `${App.mascot ? App.mascot('wave', { size: 120, cls: 'st-m' }) : ''}<div class="st-k">ملخصك الشهري</div><div class="st-big">${esc(s.label)}</div>
-      <div class="st-sub">${S.settings.userName ? esc(String(S.settings.userName).split(' ')[0]) + ', ' : ''}لنرَ كيف كان الشهر في العمل</div>`,
-    earned: (s) => `<div class="st-emoji">💰</div><div class="st-k">ربحت هذا الشهر</div>${num(s.gross)}
+    intro: (s) => `${App.mascot ? App.mascot('wave', { size: 120, cls: 'st-m' }) : ''}<div class="st-k">${YEAR ? "سنتك في العمل" : "ملخصك الشهري"}</div><div class="st-big">${esc(s.label)}</div>
+      <div class="st-sub">${S.settings.userName ? esc(String(S.settings.userName).split(' ')[0]) + ', ' : ''}${YEAR ? "لنرَ كيف كانت السنة في العمل" : "لنرَ كيف كان الشهر في العمل"}</div>`,
+    earned: (s) => `<div class="st-emoji">💰</div><div class="st-k">${YEAR ? "ربحت هذه السنة" : "ربحت هذا الشهر"}</div>${num(s.gross)}
       ${s.net ? `<div class="st-sub">نحو ${money0(s.net)} صافيًا</div>` : ''}
       ${s.delta != null && s.delta !== 0 ? `<div class="st-pill ${s.delta > 0 ? 'up' : 'down'}">${s.delta > 0 ? '▲' : '▼'} ${Math.abs(s.delta)}% مقارنةً بـ${esc(s.prevLabel)}</div>` : ''}`,
     time: (s) => `<div class="st-emoji">⏱️</div><div class="st-k">عملت</div>${num(s.hours, 'hours')}<div class="st-unit">ساعة</div>
       <div class="st-sub">في ${s.shifts} ${globalThis.U.plural(s.shifts, {"one":"وردية","two":"ورديتين","few":"ورديات","many":"وردية","other":"وردية"})}${s.longestDate && s.shifts > 1 ? ` · الأطول: ${U.hm(s.longestMin)} س (${day(s.longestDate)})` : ''}</div>
       ${s.movies >= 1 ? `<div class="st-fun">🎬 هذا يعادل ${s.movies} ${globalThis.U.plural(s.movies, {"one":"فيلم","two":"فيلمين","few":"أفلام","many":"فيلمًا","other":"فيلم"})} على التوالي</div>` : ''}`,
+    bestMonth: (s) => `<div class="st-emoji">📅</div><div class="st-k">الشهر الأكثر ربحًا</div><div class="st-big">${esc(s.label)}</div>${num(s.amount)}`,
     best: (s) => `<div class="st-emoji">🏆</div><div class="st-k">اليوم الأكثر ربحًا</div><div class="st-big">${day(s.key)}</div>${num(s.amount)}`,
     extras: (s) => `<div class="st-emoji">⭐</div><div class="st-k">الإضافات التي ربحتها</div>${num(s.amount)}
       <div class="st-sub">${[s.restHours > 0 ? `السبت والأعياد: ${U.num(s.restHours, 1)} س` : '', s.otHours > 0 ? `الساعات الإضافية: ${U.num(s.otHours, 1)} س` : ''].filter(Boolean).join(' · ')}</div>
@@ -21908,14 +22240,15 @@ ${name}`.trim();
     fun: (s) => `<div class="st-k">بـ${money0(s.money)} يمكنك شراء</div>
       <div class="st-items">${s.items.map((i, n) => `<div class="st-item" style="--n:${n}"><span class="st-ie">${i.emoji}</span><b>${i.count}</b><span>${esc(i.name)}</span></div>`).join("<div class=\"st-or\">أو</div>")}</div>`,
     outro: (s) => `${App.mascot ? App.mascot('party', { size: 120, cls: 'st-m' }) : ''}<div class="st-big">أحسنت!</div>
-      <div class="st-sub">${s.shifts} ${globalThis.U.plural(s.shifts, {"one":"وردية","two":"ورديتان","few":"ورديات","many":"وردية","other":"وردية"})} و${money0(s.gross)} في شهر واحد. نتمنى لك شهرًا قادمًا رائعًا أيضًا 💪</div>
+      <div class="st-sub">${s.shifts} ${s.shifts === 1 ? "وردية" : "الورديات"} و${money0(s.gross)} ${YEAR ? "في سنة واحدة. لتكن السنة القادمة رائعة أيضًا 💪" : "في شهر واحد. نتمنى لك شهرًا قادمًا رائعًا أيضًا 💪"}</div>
       <div class="st-acts"><button class="btn st-share" data-st-share>${icon('share')} مشاركة صورة</button><button class="btn tonal" data-st-close>إغلاق</button></div>`,
   };
 
   /* ---------------- the viewer ---------------- */
   function open(pk) {
     const data = dataFor(pk);
-    if (!data) { UI.toast("لا ورديات في هذا الشهر"); return; }
+    if (!data) { UI.toast(/^Y/.test(pk) ? "لا ورديات في هذه السنة" : "لا ورديات في هذا الشهر"); return; }
+    YEAR = !!data.year;
     if (document.querySelector('.story')) return;
     const n = data.slides.length;
     const el = document.createElement('div');
@@ -22036,7 +22369,7 @@ ${name}`.trim();
       g.direction = 'rtl'; g.textAlign = 'center'; g.fillStyle = '#fff';
       const F = (w, px) => `${w} ${px}px Fredoka, Rubik, "Segoe UI", Arial, sans-serif`;
       const s = Object.fromEntries(data.slides.map((x) => [x.k, x]));
-      g.font = F(600, 52); g.globalAlpha = 0.85; g.fillText("ملخصي الشهري", W / 2, 190); g.globalAlpha = 1;
+      g.font = F(600, 52); g.globalAlpha = 0.85; g.fillText(data.year ? "سنتي في العمل · Shaati Wrapped" : "ملخصي الشهري", W / 2, 190); g.globalAlpha = 1;
       g.font = F(700, 96); g.fillText(data.label, W / 2, 310);
       g.font = F(700, 190); g.fillText(money0(s.earned.gross), W / 2, 560);
       g.font = F(500, 50); g.globalAlpha = 0.9; g.fillText("الإجمالي", W / 2, 640); g.globalAlpha = 1;
@@ -22055,7 +22388,7 @@ ${name}`.trim();
       g.font = F(600, 44); g.globalAlpha = 0.8; g.fillText("Shaati", W / 2, H - 80); g.globalAlpha = 1;
       const blob = await new Promise((r) => c.toBlob(r, 'image/png'));
       if (!blob) throw new Error('no image');
-      await UI.shareFile(`shaati-${data.key}.png`, blob, "ملخصي الشهري");
+      await UI.shareFile(`shaati-${data.key}.png`, blob, data.year ? "سنتي في العمل" : "ملخصي الشهري", data.year ? `سنتي في العمل: ${money0(s.earned.gross)} يوم${s.time.shifts} ورديات 💪 #ShaatiWrapped https://shaati.web.app` : undefined);
     } catch (e) {
       console.warn('recap image', e);
       UI.toast("لم نتمكن من إنشاء الصورة");
@@ -22063,6 +22396,16 @@ ${name}`.trim();
   }
 
   /* ---------------- where it is offered ---------------- */
+  /** Shaati Wrapped on the home screen: through December (this year so far) and January (the year that ended). */
+  App.wrappedCard = function () {
+    const today = U.todayKey(), m = +today.slice(5, 7), y = +today.slice(0, 4);
+    const year = m === 12 ? y : m === 1 ? y - 1 : null;
+    if (!year || S.meta.wrappedSeen === 'Y' + year) return '';
+    const t = Engine.totals(App.model, year + '-01-01', year + '-12-31', {});
+    if (!(t.shifts >= 5)) return '';
+    return `<button class="recap-card wrapped-card" style="${App.phase()}" data-act="recap-open" data-pk="Y${year}"><span class="rc-spark" aria-hidden="true">🎁</span>
+      <span class="rc-t"><b>سنتك في Shaati: ${year}</b><span>${t.shifts} ورديات · ${money0(t.gross)}. قصة سنتك بانتظارك</span></span>${icon('left', 's')}</button>`;
+  };
   /** The home card: during the first two weeks of a new pay period, until it is opened. */
   App.recapCard = function () {
     const today = U.todayKey();
@@ -22077,6 +22420,7 @@ ${name}`.trim();
   };
   App.actions['recap-open'] = (el) => {
     const pk = (el && el.dataset && el.dataset.pk) || lastPeriodKey();
+    if (/^Y\d{4}$/.test(pk) && S.meta.wrappedSeen !== pk) { Store.setMeta({ wrappedSeen: pk }).catch(() => {}); setTimeout(() => App.rerender(), 400); }
     if (pk === lastPeriodKey() && S.meta.recapSeen !== pk) {
       Store.setMeta({ recapSeen: pk }).catch(() => {});
       setTimeout(() => App.rerender(), 400);

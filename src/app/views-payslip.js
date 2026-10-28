@@ -392,7 +392,7 @@
     const order = { bad: 0, warn: 1, ok: 2 };
     return `
       <div class="status-summary"><div class="ok">✅ ${counts.ok}<div class="tiny">תקין</div></div><div class="warn">⚠️ ${counts.warn}<div class="tiny">לבדוק</div></div><div class="bad">❌ ${counts.bad}<div class="tiny">חסר/שגוי</div></div></div>
-      ${a.totalMissing > 0 ? `<div class="card tonal"><div class="small">הפרש משוער לטובתך</div><div class="hero-num">${money(a.totalMissing)}</div><div class="tiny">סכום הממצאים המסומנים ❌. בדוק את הפירוט לפני פנייה למעסיק.</div></div>` : counts.bad === 0 ? `<div class="card tonal"><b>${icon('okc', 's')} לא נמצאו חוסרים</b><div class="small">התלוש תואם למשמרות שרשמת${counts.warn ? ', עם כמה נקודות לבדיקה' : ''}.</div></div>` : ''}
+      ${a.totalMissing > 0 ? `<div class="card tonal"><div class="small">הפרש משוער לטובתך</div><div class="hero-num">${money(a.totalMissing)}</div><div class="tiny">סכום הממצאים המסומנים ❌. בדוק את הפירוט לפני פנייה למעסיק.</div><button class="btn tonal sm found-share" data-act="found-share" data-amount="${Math.round(a.totalMissing)}" data-k="found">${icon('share', 's')} שתף: שעתי מצאה לי ${money(a.totalMissing, 0)}</button></div>` : counts.bad === 0 ? `<div class="card tonal"><b>${icon('okc', 's')} לא נמצאו חוסרים</b><div class="small">התלוש תואם למשמרות שרשמת${counts.warn ? ', עם כמה נקודות לבדיקה' : ''}.</div></div>` : ''}
       ${a.overridesInPeriod ? `<div class="banner warn">${icon('hand')}<div>${a.overridesInPeriod} משמרות בתקופה כוללות עקיפה ידנית. ממצאים שנובעים מהן מסומנים.</div></div>` : ''}
       <div class="small muted" style="margin:0 4px 10px">תקופה: ⁦${U.fmtDate(a.expected.P.from)}\u2060–\u2060${U.fmtDate(a.expected.P.to)}⁩ · ${a.expected.shifts.length} משמרות · ${U.hours(a.expected.t.hours)} ש׳</div>
       ${a.findings.slice().sort((x, y) => order[x.status] - order[y.status]).map((f) => `<div class="finding ${f.status}">
@@ -473,7 +473,47 @@
   App.actions['payslip-open'] = (el) => App.sheetsApi.payslip(el.dataset.id);
   App.actions['gap-set'] = async (el) => {
     const g = S.gaps.find((x) => x.id === el.dataset.id);
-    if (g) await App.saveOps([{ store: 'gaps', put: Object.assign({}, g, { status: el.dataset.s }) }], 'עדכון פער', el.dataset.s === 'resolved' ? 'סומן כהוחזר' : 'עודכן');
+    if (!g) return;
+    await App.saveOps([{ store: 'gaps', put: Object.assign({}, g, { status: el.dataset.s }) }], 'עדכון פער', el.dataset.s === 'resolved' ? 'סומן כהוחזר' : 'עודכן');
+    // the money came back thanks to the check: the best moment there is — celebrated, and shareable
+    if (el.dataset.s === 'resolved' && g.amount > 0) {
+      if (root.Fx) root.Fx.celebrate('money');
+      const back = S.gaps.filter((x) => x.status === 'resolved').reduce((sum, x) => sum + x.amount, 0) + (g.status === 'resolved' ? 0 : g.amount);
+      UI.openSheet({ title: 'הכסף חזר אליך! 🎉', body: `${App.mascotSays ? App.mascotSays('party', `קיבלת בחזרה ${U.money(g.amount, 0)} שהגיעו לך. כל הכבוד שבדקת!`, { size: 72 }) : ''}
+        ${back > g.amount ? `<div class="small muted" style="margin:6px 0 12px">בסך הכול שעתי החזירה לך ${U.money(back, 0)}.</div>` : ''}
+        <button class="btn big block" data-act="found-share" data-amount="${Math.round(g.amount)}" data-k="back">${icon('share')} לשתף ולעזור לחברים לבדוק</button>` });
+    }
+  };
+  /** A picture to share: "Shaati found me ₪X" (the slip's check) or "I got back ₪X" — no employer, no name. */
+  App.actions['found-share'] = async (el) => {
+    const amount = +el.dataset.amount || 0, back = el.dataset.k === 'back';
+    try {
+      if (document.fonts && document.fonts.ready) await document.fonts.ready;
+      const W = 1080, H = 1350;
+      const c = document.createElement('canvas'); c.width = W; c.height = H;
+      const g = c.getContext('2d');
+      const grd = g.createLinearGradient(0, 0, W, H);
+      grd.addColorStop(0, back ? '#047857' : '#5b21b6'); grd.addColorStop(0.55, back ? '#059669' : '#7c3aed'); grd.addColorStop(1, back ? '#0d9488' : '#db2777');
+      g.fillStyle = grd; g.fillRect(0, 0, W, H);
+      g.fillStyle = 'rgba(255,255,255,.08)';
+      g.beginPath(); g.arc(W * 0.85, H * 0.12, 260, 0, Math.PI * 2); g.fill();
+      g.beginPath(); g.arc(W * 0.1, H * 0.9, 320, 0, Math.PI * 2); g.fill();
+      g.direction = U.RTL ? 'rtl' : 'ltr'; g.textAlign = 'center'; g.fillStyle = '#fff';
+      const F = (w, px) => `${w} ${px}px Fredoka, Rubik, "Segoe UI", Arial, sans-serif`;
+      g.font = '150px "Segoe UI Emoji", "Noto Color Emoji", sans-serif'; g.fillText(back ? '🎉' : '🔍', W / 2, 300);
+      g.font = F(600, 64); g.fillText(back ? 'קיבלתי בחזרה' : 'שעתי מצאה לי', W / 2, 460);
+      g.font = F(700, 210); g.fillText(U.money(amount, 0), W / 2, 700);
+      g.font = F(600, 58); g.globalAlpha = 0.92; g.fillText(back ? 'שהגיעו לי מהעבודה' : 'שחסרים לי בתלוש', W / 2, 800); g.globalAlpha = 1;
+      g.fillStyle = 'rgba(255,255,255,.16)';
+      const rw = 900, rh = 120, rx = (W - rw) / 2, ry = 930;
+      g.beginPath(); if (g.roundRect) g.roundRect(rx, ry, rw, rh, 60); else g.rect(rx, ry, rw, rh); g.fill();
+      g.fillStyle = '#fff'; g.font = F(600, 50); g.fillText('גם לכם מגיע לבדוק 👇', W / 2, ry + 78);
+      g.font = F(700, 64); g.fillText('shaati.web.app', W / 2, 1170);
+      g.font = F(600, 44); g.globalAlpha = 0.8; g.fillText('Shaati · שעתי', W / 2, H - 70); g.globalAlpha = 1;
+      const blob = await new Promise((r) => c.toBlob(r, 'image/png'));
+      if (!blob) throw new Error('no image');
+      await UI.shareFile(back ? 'shaati-back.png' : 'shaati-found.png', blob, back ? 'קיבלתי בחזרה כסף שהגיע לי' : 'שעתי מצאה לי כסף שחסר בתלוש', `${back ? 'קיבלתי בחזרה' : 'שעתי מצאה לי'} ${U.money(amount, 0)} ${back ? 'שהגיעו לי מהעבודה' : 'שחסרים לי בתלוש'}. גם לכם כדאי לבדוק: https://shaati.web.app`);
+    } catch (e) { console.warn('found image', e); UI.toast('לא הצלחנו ליצור תמונה'); }
   };
 
   /* ---------------- payslips tab (in reports) ---------------- */

@@ -108,7 +108,7 @@
   const RTL = LANG === 'he' || LANG === 'ar';
   // dates in the language; numbers always with a comma between thousands and a point before the agorot (what
   // the payslip shows, and what the counting animations read)
-  const LOCALE = { he: 'he-IL', ar: 'ar-IL-u-nu-latn', ru: 'ru-RU', en: 'en-IL' }[LANG] || 'he-IL';
+  const LOCALE = { he: 'he-IL', ar: 'ar-IL-u-nu-latn', ru: 'ru-RU', en: 'en-IL', fr: 'fr-FR', es: 'es-ES' }[LANG] || 'he-IL';
   const NUM_LOCALE = { he: 'he-IL', ar: 'ar-IL-u-nu-latn', en: 'en-IL' }[LANG] || 'en-US';
   const names = (opts, n, at) => [...Array(n)].map((_, i) => new Intl.DateTimeFormat(LOCALE, opts).format(at(i)));
   // i18n-keep-start
@@ -124,7 +124,7 @@
     if (n == null || isNaN(n)) n = 0;
     if (!moneyFmt) {
       const make = (d) => {
-        if (LANG === 'ru') { const f = new Intl.NumberFormat('en-US', { minimumFractionDigits: d, maximumFractionDigits: d }); return { format: (v) => f.format(v) + ' ₪' }; }
+        if (LANG === 'ru' || LANG === 'fr' || LANG === 'es') { const f = new Intl.NumberFormat('en-US', { minimumFractionDigits: d, maximumFractionDigits: d }); return { format: (v) => f.format(v) + ' ₪' }; }
         return new Intl.NumberFormat(NUM_LOCALE, { style: 'currency', currency: 'ILS', minimumFractionDigits: d, maximumFractionDigits: d });
       };
       moneyFmt = make(2);

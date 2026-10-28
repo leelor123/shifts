@@ -14,7 +14,7 @@ const ASSETS = ['./', './index.html', './manifest.webmanifest', './icon-192.png'
  * Each language is its own page (index.html is Hebrew, index.ar.html, index.ru.html, index.en.html: the build
  * writes them). The language chosen in the app is kept here, in a cache of its own (a worker cannot read the
  * page's localStorage), so opening the app serves that page at once, also offline. */
-const LANGS = ['he', 'ar', 'ru', 'en'];
+const LANGS = ['he', 'ar', 'ru', 'en', 'fr', 'es'];
 const LANG_CACHE = 'shiftpay-lang';
 async function chosenLang() {
   try {
@@ -26,7 +26,7 @@ async function chosenLang() {
 const pageOf = (l) => (l === 'he' ? './index.html' : './index.' + l + '.html');
 const manifestOf = (l) => (l === 'he' ? './manifest.webmanifest' : './manifest.' + l + '.webmanifest');
 // a page that names its file (index.ru.html) is that file; the app's own address (./, ./?source=twa) is the chosen one
-const PAGE_FILE = /\/index(?:\.(ar|ru|en))?\.html$/;
+const PAGE_FILE = /\/index(?:\.(ar|ru|en|fr|es))?\.html$/;
 
 self.addEventListener('install', (e) => {
   e.waitUntil((async () => {
@@ -122,10 +122,12 @@ self.addEventListener('notificationclick', (e) => {
 /* ---- background check (Chrome periodic background sync, installed PWA only) ---- */
 // what the worker says itself, in each language
 const WORDS = {
-  he: { offline: 'אין חיבור', timerT: 'שכחת לסיים משמרת?', timerB: 'הטיימר עדיין רץ. לחץ כדי לסיים או לתקן.', upT: 'משמרת מתקרבת', upB: 'מתחילה ב-{0}' },
-  ar: { offline: 'لا يوجد اتصال', timerT: 'هل نسيت إنهاء الوردية؟', timerB: 'المؤقت ما زال يعمل. اضغط لإنهائه أو تصحيحه.', upT: 'وردية قريبة', upB: 'تبدأ الساعة {0}' },
-  ru: { offline: 'Нет подключения', timerT: 'Забыли закончить смену?', timerB: 'Таймер всё ещё идёт. Нажмите, чтобы завершить или исправить.', upT: 'Скоро смена', upB: 'Начало в {0}' },
-  en: { offline: 'No connection', timerT: 'Forgot to end your shift?', timerB: 'The timer is still running. Tap to end or fix it.', upT: 'Shift coming up', upB: 'Starts at {0}' },
+  he: { offline: 'אין חיבור', timerT: 'שכחת לסיים משמרת?', timerB: 'הטיימר עדיין רץ. לחץ כדי לסיים או לתקן.', upT: 'משמרת מתקרבת', upB: 'מתחילה ב-{0}', eveB: 'מחר משמרת ב-{0}', cdT: 'עבדת במשמרת?', cdB: 'לחץ "עבדתי" כדי שהשכר ייכנס.' },
+  ar: { offline: 'لا يوجد اتصال', timerT: 'هل نسيت إنهاء الوردية؟', timerB: 'المؤقت ما زال يعمل. اضغط لإنهائه أو تصحيحه.', upT: 'وردية قريبة', upB: 'تبدأ الساعة {0}', eveB: 'غدًا وردية الساعة {0}', cdT: 'هل عملت في الوردية؟', cdB: 'اضغط "عملت" ليُحتسب الأجر.' },
+  ru: { offline: 'Нет подключения', timerT: 'Забыли закончить смену?', timerB: 'Таймер всё ещё идёт. Нажмите, чтобы завершить или исправить.', upT: 'Скоро смена', upB: 'Начало в {0}', eveB: 'Завтра смена в {0}', cdT: 'Вы отработали смену?', cdB: 'Нажмите «Я работал(а)», чтобы зарплата учлась.' },
+  en: { offline: 'No connection', timerT: 'Forgot to end your shift?', timerB: 'The timer is still running. Tap to end or fix it.', upT: 'Shift coming up', upB: 'Starts at {0}', eveB: 'Shift tomorrow at {0}', cdT: 'Did you work the shift?', cdB: 'Tap "I worked" so the pay comes in.' },
+  fr: { offline: 'Pas de connexion', timerT: 'Oublié de terminer le service ?', timerB: 'Le chrono tourne toujours. Touchez pour le terminer ou le corriger.', upT: 'Service bientôt', upB: 'Commence à {0}', eveB: 'Service demain à {0}', cdT: 'Avez-vous effectué le service ?', cdB: 'Touchez « J’ai travaillé » pour que le salaire soit compté.' },
+  es: { offline: 'Sin conexión', timerT: '¿Olvidaste terminar el turno?', timerB: 'El reloj sigue en marcha. Toca para terminarlo o corregirlo.', upT: 'Turno pronto', upB: 'Empieza a las {0}', eveB: 'Turno mañana a las {0}', cdT: '¿Trabajaste el turno?', cdB: 'Toca «Trabajé» para que entre el salario.' },
 };
 const T = (l) => WORDS[l] || WORDS.he;
 function readDb() {
@@ -158,15 +160,42 @@ async function backgroundCheck() {
   if (types.timer !== false && a && a.start && now - a.start > (A.timerHours || 12) * 3600000) {
     await self.registration.showNotification(w.timerT, opt(w.timerB, 'timer-' + a.start));
   }
-  if (A.remindPlanned === true && types.upcoming !== false) { // off unless switched on (few notifications)
-    for (const s of d.shifts || []) {
-      if (s.status !== 'planned') continue;
-      const mins = (s.start - now) / 60000;
-      if (mins > 0 && mins <= Math.max(A.upcomingMin || 60, 90)) {
-        const t = new Date(s.start);
-        await self.registration.showNotification(w.upT, opt(w.upB.replace('{0}', `${String(t.getHours()).padStart(2, '0')}:${String(t.getMinutes()).padStart(2, '0')}`), 'up-' + s.id));
+  // the reminders around a planned shift, as set in the app (the same tags as the app's, each shown once: the
+  // list of shown ones is shared with the app in the cache 'shiftpay-shown')
+  const R = A.reminders || {};
+  const shownC = await caches.open('shiftpay-shown');
+  const shownR = await shownC.match('./__shown');
+  const shown = shownR ? await shownR.json().catch(() => ({})) : {};
+  let changed = false;
+  const show = async (title, body, tag) => {
+    if (shown[tag]) return;
+    const o = opt(body, tag);
+    if (R.sticky) o.requireInteraction = true;
+    if (R.silent) o.silent = true;
+    await self.registration.showNotification(title, o);
+    shown[tag] = now; changed = true;
+  };
+  const hm = (ms) => { const t = new Date(ms); return String(t.getHours()).padStart(2, '0') + ':' + String(t.getMinutes()).padStart(2, '0'); };
+  const offs = (Array.isArray(R.before) && R.before.length ? R.before : [A.upcomingMin || 60]).map(Number).filter((x) => x > 0).sort((x, y) => x - y);
+  for (const s of d.shifts || []) {
+    if (s.status !== 'planned' || s.deleted) continue;
+    const mins = (s.start - now) / 60000;
+    if (A.remindPlanned === true && types.upcoming !== false && mins > 0) { // off unless switched on (few notifications)
+      const off = offs.find((o) => mins <= o);
+      if (off != null) await show(w.upT, w.upB.replace('{0}', hm(s.start)), 'up-' + s.id + '-' + off);
+      if (R.eveOn && /^\d{1,2}:\d{2}$/.test(R.eve || '')) {
+        const e0 = new Date(s.start); e0.setDate(e0.getDate() - 1);
+        const [h, m] = R.eve.split(':').map(Number); e0.setHours(h, m, 0, 0);
+        if (now >= e0.getTime() && mins > 60 && s.start - e0.getTime() > 2 * 3600000) await show(w.upT, w.eveB.replace('{0}', hm(s.start)), 'eve-' + s.id);
       }
     }
+    // after it: did you work it? (it is not in the pay until confirmed)
+    const ca = +R.confirmAfter || 0;
+    if (types.confirmDone !== false && ca > 0 && s.end + ca * 60000 <= now && now - s.end < 3 * 86400000) await show(w.cdT, w.cdB, 'cd-' + s.id);
+  }
+  if (changed) {
+    for (const k of Object.keys(shown)) if (now - shown[k] > 7 * 86400000) delete shown[k];
+    await shownC.put('./__shown', new Response(JSON.stringify(shown), { headers: { 'Content-Type': 'application/json' } }));
   }
 }
 self.addEventListener('periodicsync', (e) => { if (e.tag === 'shiftpay-check') e.waitUntil(backgroundCheck()); });

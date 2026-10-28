@@ -1,0 +1,107 @@
+{
+  "id": "./",
+  "name": "Shaati",
+  "short_name": "Shaati",
+  "description": "Shaati — registro de turnos, cálculo del salario y revisión de nóminas. También funciona sin conexión",
+  "lang": "es",
+  "dir": "ltr",
+  "start_url": "./?source=pwa",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#0d2b6b",
+  "theme_color": "#1d4a4f",
+  "categories": [
+    "business",
+    "finance",
+    "productivity"
+  ],
+  "icons": [
+    {
+      "src": "icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "icon-maskable-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
+    },
+    {
+      "src": "icon-mono-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "monochrome"
+    }
+  ],
+  "shortcuts": [
+    {
+      "name": "Iniciar turno",
+      "short_name": "Iniciar turno",
+      "url": "./?action=start",
+      "icons": [
+        {
+          "src": "icon-192.png",
+          "sizes": "192x192",
+          "type": "image/png"
+        }
+      ]
+    },
+    {
+      "name": "Añadir turno",
+      "short_name": "Añadir turno",
+      "url": "./?action=add",
+      "icons": [
+        {
+          "src": "icon-192.png",
+          "sizes": "192x192",
+          "type": "image/png"
+        }
+      ]
+    },
+    {
+      "name": "Importar un horario de trabajo",
+      "short_name": "Horario de trabajo",
+      "url": "./?action=schedule",
+      "icons": [
+        {
+          "src": "icon-192.png",
+          "sizes": "192x192",
+          "type": "image/png"
+        }
+      ]
+    }
+  ],
+  "share_target": {
+    "action": "./share-in",
+    "method": "POST",
+    "enctype": "multipart/form-data",
+    "params": {
+      "title": "title",
+      "text": "text",
+      "url": "url",
+      "files": [
+        {
+          "name": "file",
+          "accept": [
+            "image/*",
+            "application/pdf",
+            "text/plain",
+            "text/csv",
+            "text/comma-separated-values",
+            "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+            "application/vnd.ms-excel"
+          ]
+        }
+      ]
+    }
+  }
+}

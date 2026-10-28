@@ -27,7 +27,7 @@ const ROOT = path.join(__dirname, '..');
 const SRC = path.join(ROOT, 'src');
 const DIR = path.join(ROOT, 'i18n');
 const HE = /[֐-׿]/;
-const LANGS = { he: { dir: 'rtl', name: 'עברית' }, ar: { dir: 'rtl', name: 'العربية' }, ru: { dir: 'ltr', name: 'Русский' }, en: { dir: 'ltr', name: 'English' } };
+const LANGS = { he: { dir: 'rtl', name: 'עברית' }, ar: { dir: 'rtl', name: 'العربية' }, ru: { dir: 'ltr', name: 'Русский' }, en: { dir: 'ltr', name: 'English' }, fr: { dir: 'ltr', name: 'Français' }, es: { dir: 'ltr', name: 'Español' } };
 // files that read Hebrew (or are data in Hebrew): never translated
 const KEEP_FILES = new Set(['core/timesheet.js', 'core/schedule.js', 'core/places-data.js', 'core/places.js', 'core/clean.js', 'app/lang.js']);
 // values of these properties are words matched against Hebrew text (a payslip's line names), never shown

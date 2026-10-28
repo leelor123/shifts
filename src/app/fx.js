@@ -149,6 +149,9 @@
     if (!r0.width || !r0.height) return;
     // a whole screen-sized area (a story page) gets no ring
     if (r0.width * r0.height > root.innerWidth * root.innerHeight * 0.45) return;
+    // one ring at a time, from the moment of the tap: a ring still fading on the tab just left, next to the
+    // mark that moved to the new one, looked like two tabs picked at once (flicking through the champions table)
+    document.querySelectorAll('.fx-ring').forEach((x) => x.remove());
     const cx = r0.left + r0.width / 2, cy = r0.top + r0.height / 2;
     const sig = (n) => n.tagName + '|' + (n.getAttribute('data-act') || '') + '|' + (n.getAttribute('data-tab') || '') + '|' + (n.getAttribute('data-s') || '');
     const sig0 = sig(el);
@@ -173,6 +176,7 @@
       // three calm frames first (~50ms): a tap that redraws or shakes its control shows that, not a ring
       // that would be gone again a frame later
       if (!d && ++calm < 3) { requestAnimationFrame(step); return; }
+      if (d && !d.isConnected) { gone = true; return; } // a newer tap's ring took over
       if (!d) {
         d = document.createElement('div');
         d.className = 'fx-ring';

@@ -159,7 +159,7 @@
     rest: 'שבת חג חגים עיר כניסת שבת יציאת שבת כלל יום', pay: 'נסיעות החזר נסיעות תקרה תקופת שכר יום תשלום משכורת',
     net: 'מס מס הכנסה נקודות זיכוי פנסיה ביטוח לאומי מס בריאות השתלמות נטו', leave: 'חופשה מחלה הבראה ותק תחילת עבודה',
     goal: 'יעד יעדים חיסכון חוסכים', alerts: 'התראות תזכורות פוש הודעות', templates: 'תבנית תבניות משמרת קבועה',
-    lang: 'שפה שפות language english русский русский язык العربية عربي ערבית רוסית אנגלית תרגום', look: 'צבע צבעים ערכת נושא כהה בהיר מצב לילה גופן גופנים מראה צלילים רטט מוזיקה עיצוב כרטיס plus פלוס', security: 'קוד נעילה טביעת אצבע סיסמה',
+    lang: 'שפה שפות language english русский русский язык العربية عربي ערבית רוסית אנגלית צרפתית ספרדית français francais español espanol french spanish תרגום', look: 'צבע צבעים ערכת נושא כהה בהיר מצב לילה גופן גופנים מראה צלילים רטט מוזיקה עיצוב כרטיס plus פלוס', security: 'קוד נעילה טביעת אצבע סיסמה',
     assistant: 'בינה מלאכותית עוזר שאלות ai', ai: 'מפתח api claude ניתוח תלוש', backup: 'גיבוי שחזור קובץ', schedule: 'סידור עבודה סידור משמרות שבוע הבא צילום תמונה צילום מסך וואטסאפ whatsapp הודעה טבלה מתוכננות לוח', import: 'ייבוא דוח שעות נוכחות שעון אקסל excel csv pdf צילום קובץ להעלות משמרות מהעבודה', export: 'ייצוא אקסל excel csv pdf יומן',
     demo: 'דוגמה הדגמה', about: 'גרסה התקנה אודות', rights: 'זכויות שכר מינימום',
   };
@@ -547,6 +547,9 @@
   RENDER.net = {
     render: () => {
       const T = S.settings.tax, P = S.settings.pension, Hs = S.settings.hishtalmut;
+      // the law's numbers for this year, shown in empty fields; a number typed in is the user's own
+      const bl = Engine.blLimits(T, U.todayKey()), law = Engine.blLimits({}, U.todayKey());
+      bl.own = { thr: bl.thr !== law.thr, ceil: bl.ceil !== law.ceil };
       return `<div class="banner">${icon('info')}<div>הנטו הוא הערכה. ערכי ברירת המחדל לפי 2025\u2060–\u20602026 (מדרגות המס הוקפאו עד 2027). עדכן אם השתנו.</div></div>
         <div class="section-title">מס הכנסה</div><div class="card">
           ${F.num('נקודות זיכוי', 's.tax.creditPoints', T.creditPoints, 'תושב/ת: 2.25 · אישה: 2.75 · נוספות על ילדים, תואר, שחרור מצבא, עולה חדש ועוד.')}
@@ -554,10 +557,10 @@
           <div class="tiny muted" style="margin:6px 4px">מדרגות מס חודשיות:</div>
           ${T.brackets.map((b, i) => `<div class="grid2">${F.num(i === T.brackets.length - 1 ? 'מעל' : 'עד ₪', 's.tax.brackets.' + i + '.0', b[0] === Infinity || b[0] == null ? '' : b[0], '', '∞')}${F.num('%', 's.tax.brackets.' + i + '.1', b[1])}</div>`).join('')}</div>
         <div class="section-title">ביטוח לאומי ומס בריאות</div><div class="card">
-          ${F.num('סף שיעור מופחת ₪ (60% מהשכר הממוצע)', 's.tax.blReducedThreshold', T.blReducedThreshold)}
+          ${F.num('סף שיעור מופחת ₪', 's.tax.blReducedThreshold', bl.own.thr ? T.blReducedThreshold : '', 'ריק = לפי החוק בכל שנה', U.num(bl.thr, 0))}
           <div class="grid2">${F.num('ב״ל מופחת %', 's.tax.blReducedPct', T.blReducedPct)}${F.num('ב״ל מלא %', 's.tax.blFullPct', T.blFullPct)}</div>
           <div class="grid2">${F.num('בריאות מופחת %', 's.tax.healthReducedPct', T.healthReducedPct)}${F.num('בריאות מלא %', 's.tax.healthFullPct', T.healthFullPct)}</div>
-          ${F.num('תקרה ₪', 's.tax.blCeiling', T.blCeiling)}</div>
+          ${F.num('תקרה ₪', 's.tax.blCeiling', bl.own.ceil ? T.blCeiling : '', 'ריק = לפי החוק בכל שנה', U.num(bl.ceil, 0))}</div>
         <div class="section-title">פנסיה</div><div class="card">
           ${F.sw('פנסיה חובה', '', 's.pension.enabled', P.enabled)}
           <div class="grid3">${F.num('עובד %', 's.pension.employeePct', P.employeePct)}${F.num('מעסיק %', 's.pension.employerPct', P.employerPct)}${F.num('פיצויים %', 's.pension.severancePct', P.severancePct)}</div>
@@ -592,7 +595,7 @@
           ${L.dayValueMode === 'hours' ? F.num('שעות ליום', 's.leave.dayHours', L.dayHours) : ''}${L.dayValueMode === 'fixed' ? F.num('סכום ליום ₪', 's.leave.dayFixed', L.dayFixed) : ''}
           <div class="grid2">${[0, 1, 2, 3].map((i) => F.num(['מחלה יום 1 %', 'יום 2 %', 'יום 3 %', 'מהיום ה-4 %'][i], 's.leave.sickPct.' + i, L.sickPct[i])).join('')}</div></div>
         <div class="section-title">הבראה</div><div class="card">
-          ${F.num('תעריף ליום הבראה ₪', 's.leave.recuperationRate', L.recuperationRate, 'מגזר פרטי: 418 ₪.')}
+          ${F.num('תעריף ליום הבראה ₪', 's.leave.recuperationRate', Engine.recuperationRate(L, U.todayKey()) !== Engine.recuperationRate({}, U.todayKey()) ? L.recuperationRate : '', 'ריק = לפי צו ההרחבה במגזר הפרטי (מ-2026: 451.50 ₪ ליום)', String(Engine.recuperationRate({}, U.todayKey())))}
           ${F.sel('חודש תשלום', 's.leave.recuperationMonth', [[0, 'בכל חודש (חלק יחסי)'], ...U.MONTHS.map((m, i) => [i + 1, m])], L.recuperationMonth)}</div>`;
     },
   };
@@ -625,6 +628,31 @@
     },
   };
 
+  /* the reminders before a planned shift: as many as wanted, at any time before it, and the evening before */
+  const REMIND_AT = [10, 15, 30, 45, 60, 90, 120, 180, 240, 360, 720, 1440, 2880];
+  const minLabel = (m) => (m < 60 ? `${m} דק׳` : m % 1440 === 0 ? (m === 1440 ? 'יום אחד' : m === 2880 ? 'יומיים' : `${m / 1440} ימים`) : m === 60 ? 'שעה' : m === 120 ? 'שעתיים' : m === 90 ? 'שעה וחצי' : m % 60 === 0 ? `${m / 60} שעות` : `${Math.floor(m / 60)}:${String(m % 60).padStart(2, '0')} ש׳`);
+  const remindList = (A) => { const R = A.reminders || {}; return (Array.isArray(R.before) && R.before.length ? R.before : [+A.upcomingMin || 60]).map(Number).filter((x) => x > 0).sort((a, b) => b - a); };
+  function remindSummary(A) {
+    const R = A.reminders || {};
+    const parts = remindList(A).map((m) => minLabel(m) + ' לפני');
+    if (R.eveOn) parts.unshift('בערב שלפני ב-' + (R.eve || '20:00'));
+    return parts.join(' · ');
+  }
+  function remindBox(A) {
+    const R = A.reminders || {};
+    const on = new Set(remindList(A));
+    const all = [...new Set(REMIND_AT.concat([...on]))].sort((a, b) => a - b);
+    return `<div class="rm-box">
+      <div class="lbl">מתי להזכיר (אפשר לבחור כמה)</div>
+      <div class="chips rm-chips">${all.map((m) => `<button class="chip ${on.has(m) ? 'on' : ''}" data-rm="${m}" aria-pressed="${on.has(m)}">${minLabel(m)}</button>`).join('')}</div>
+      <div class="rm-custom"><input class="input" type="number" inputmode="numeric" min="1" max="999" id="rm-n" placeholder="זמן אחר"><select class="input" id="rm-u"><option value="1">דקות</option><option value="60" selected>שעות</option><option value="1440">ימים</option></select><button class="btn tonal" data-rm-add>${icon('plus', 's')} הוסף</button></div>
+      ${F.sw('גם בערב שלפני', 'תזכורת ביום שלפני המשמרת, בשעה שבחרת', 's.alerts.reminders.eveOn', !!R.eveOn).replace('data-s=', 'data-redraw data-s=')}
+      ${R.eveOn ? `<div class="grid2">${F.time('בשעה', 's.alerts.reminders.eve', R.eve || '20:00')}</div>` : ''}
+      ${F.sw('ההתראה נשארת עד שסוגרים אותה', 'לא נעלמת לבד מהמסך', 's.alerts.reminders.sticky', !!R.sticky)}
+      ${F.sw('בלי צליל ורטט', '', 's.alerts.reminders.silent', !!R.silent)}
+    </div>`;
+  }
+
   RENDER.alerts = {
     render: () => {
       const A = S.settings.alerts;
@@ -640,11 +668,36 @@
         <div class="section-title">חדשות טובות</div><div class="card">${t('record', 'שיא אישי')}${t('goal', 'הגעת ליעד החודשי')}${t('birthday', 'יום הולדת')}</div>
         <div class="section-title">תזכורות</div><div class="card">
           ${t('timer', 'שכחתי לסיים משמרת')}<div class="grid2">${F.num('אחרי (שעות)', 's.alerts.timerHours', A.timerHours)}</div>
-          ${F.sw('לפני משמרת מתוכננת', '', 's.alerts.remindPlanned', A.remindPlanned === true)}
+          ${F.sw('לפני משמרת מתוכננת', A.remindPlanned === true ? remindSummary(A) : 'כבוי', 's.alerts.remindPlanned', A.remindPlanned === true).replace('data-s=', 'data-redraw data-s=')}
+          ${A.remindPlanned === true ? remindBox(A) : ''}
+          ${t('confirmDone', 'אחרי משמרת מתוכננת: לשאול אם עבדת').replace('data-s=', 'data-redraw data-s=')}
+          ${A.types.confirmDone !== false ? `<div class="grid2">${F.sel('כמה זמן אחרי הסיום', 's.alerts.reminders.confirmAfter', [[15, '15 דקות'], [30, 'חצי שעה'], [60, 'שעה'], [120, 'שעתיים'], [240, '4 שעות'], [480, '8 שעות']], (A.reminders || {}).confirmAfter || 30)}</div>` : ''}
           ${t('payslipDue', 'ביום התשלום: להזין את התלוש')}
           ${t('backup', 'תזכורת גיבוי')}<div class="grid2">${F.num('כל (ימים)', 's.alerts.backupDays', A.backupDays)}</div></div>`;
     },
     mount: (el, draw) => {
+      // a reminder time on or off; at least one stays (with none the switch above turns them off)
+      const setList = async (fn) => {
+        await Store.setSettings((st) => {
+          const R = st.alerts.reminders = Object.assign({}, st.alerts.reminders);
+          const cur = Array.isArray(R.before) && R.before.length ? R.before.slice() : [+st.alerts.upcomingMin || 60];
+          R.before = [...new Set(fn(cur).map(Number).filter((x) => x > 0 && x <= 14 * 1440))].sort((a, b) => b - a);
+        });
+        if (root.Fx) root.Fx.play('on');
+        draw();
+      };
+      el.querySelectorAll('[data-rm]').forEach((b) => (b.onclick = () => {
+        const m = +b.dataset.rm;
+        const cur = remindList(S.settings.alerts);
+        if (cur.includes(m) && cur.length === 1) { UI.toast('צריך לפחות תזכורת אחת. כדי לכבות, מכבים את המתג למעלה'); return; }
+        setList((l) => (l.includes(m) ? l.filter((x) => x !== m) : l.concat([m])));
+      }));
+      const add = el.querySelector('[data-rm-add]');
+      if (add) add.onclick = () => {
+        const n = +el.querySelector('#rm-n').value, u = +el.querySelector('#rm-u').value;
+        if (!(n > 0) || n * u > 14 * 1440) { UI.invalid('מספר בין 1 ל-14 ימים'); return; }
+        setList((l) => l.concat([Math.round(n * u)]));
+      };
       const p = el.querySelector('[data-perm]');
       if (p) p.onclick = async () => { await Notification.requestPermission(); draw(); };
       const t = el.querySelector('[data-test]');
@@ -665,6 +718,8 @@
       <div class="section-title">גופן</div>
       <div class="font-pick">${Object.entries(App.FONTS).map(([k, f]) => `<button data-font="${k}" class="${(S.settings.font || 'rubik') === k ? 'on' : ''}" style="font-family:'${f[0]}', system-ui, sans-serif"><span class="fp-sample">משמרת ערב · ${esc(f[2])}<small>${f[0]}</small></span><span class="fp-num">₪1,240</span></button>`).join('')}</div>
       <div class="section-title">גודל טקסט</div><div class="seg">${[[0.9, 'קטן'], [1, 'רגיל'], [1.1, 'גדול'], [1.2, 'גדול מאוד']].map(([k, l]) => `<button data-fs="${k}" class="${+S.settings.fontScale === k ? 'on' : ''}">${l}</button>`).join('')}</div>
+      <div class="section-title" style="margin-top:16px">פרטיות</div>
+      <div class="card">${F.sw('הסתרת סכומים', 'הסכומים מטושטשים במסך, למשל כשמראים את הטלפון למישהו. העין בכרטיס השכר מציגה אותם', 's.hideMoney', !!S.settings.hideMoney)}</div>
       <div class="section-title" style="margin-top:16px">אפקטים וצלילים</div>
       <div class="card">${F.sw('אנימציות ואפקטים', 'הבזק קטן בכל לחיצה, כפתורים קופצניים וקונפטי כשמסיימים משמרת', 's.fx.effects', (S.settings.fx || {}).effects !== false)}
         ${F.sw('צלילים', 'צליל קצר ועדין בלחיצה, ו"קופה" כשנשמרת משמרת', 's.fx.sound', (S.settings.fx || {}).sound !== false)}

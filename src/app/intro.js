@@ -22,11 +22,12 @@
   const Intro = {};
   root.Intro = Intro;
   const started = performance.now();
-  let ready = false, played = false, closed = false, leaving = false, master = null;
+  let ready = false, played = false, closed = false, leaving = false, master = null, skipped = false;
   // The show stays until the app has finished starting, so nothing it does is seen loading: the first screen
   // settles under it for a moment, and the start-up work that can still change that screen (the account, the
   // admin check, Google Play, the fonts) is waited for, within a limit.
   const CALM_MS = 700; // the first screen sits under the show at least this long
+  const SKIP_CALM_MS = 300; // ... or this long after a tap to skip (it is still drawn whole, just not waited on)
   const HOLD_MAX = 2500; // the most the show waits for start-up work after it could have left
   let drawnAt = 0, holdUntil = 0, recheck = 0;
   const holds = new Set();
@@ -46,7 +47,7 @@
   function maybeClose() {
     if (closed || leaving || !ready || !played) return;
     const now = performance.now();
-    let wait = drawnAt + CALM_MS - now;
+    let wait = drawnAt + (skipped ? SKIP_CALM_MS : CALM_MS) - now;
     if (wait <= 0 && holds.size) {
       if (!holdUntil) holdUntil = now + HOLD_MAX;
       wait = holdUntil - now;
@@ -132,6 +133,14 @@
   }
   Intro.score = score; // tests render it offline
 
+  // The logo drawing itself (0.12–0.8 s) is the one part of the show the main thread paints; the rest runs on
+  // the compositor. The app's heavy start-up (the whole calculation, the first screen) waits for this, so the
+  // drawing never stops halfway on a slow phone (it did: 0.2–0.4 s frozen); the spin and the landing don't mind.
+  let drawnDone = null;
+  const drawn = new Promise((r) => { drawnDone = r; });
+  /** Resolves once the logo has drawn itself (at once without the full show, or after a tap to skip). */
+  Intro.drawn = () => drawn;
+
   if (full) {
     // the coins and the sparks that fly out when the logo lands
     const coins = el.querySelector('.intro-coins');
@@ -151,18 +160,23 @@
       sparks.appendChild(s);
     }
     el.classList.add('play');
+    const y = el.querySelector('.intro-logo.main .y');
+    if (y) y.addEventListener('animationend', () => drawnDone(), { once: true });
+    setTimeout(() => drawnDone(), 1100); // never later than this, whatever happens to the animation
     // the sound starts with the show (only if the phone already allows sound)
     const c = Fx.prefs().sound !== false && Fx.audio && Fx.audio();
     if (c && c.state === 'running') { try { score(c, c.currentTime + 0.02); } catch (e) { /* no sound */ } }
     setTimeout(() => { played = true; if (!ready) el.classList.add('wait'); maybeClose(); }, SEQUENCE_MS);
   } else {
     el.classList.add('still');
+    drawnDone();
     setTimeout(() => { played = true; maybeClose(); }, 250);
   }
 
   // tap to skip (the rest of the show's sound fades out quickly, so the last chord never plays over the app)
   el.addEventListener('click', () => {
-    played = true;
+    played = true; skipped = true;
+    drawnDone();
     if (master) { try { master.gain.setTargetAtTime(0.0001, master.context.currentTime, 0.04); } catch (e) { /* ignore */ } }
     if (ready) close(); else el.classList.add('wait');
   });

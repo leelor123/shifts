@@ -39,6 +39,18 @@
 
   /* ---------------- SDK ---------------- */
   let loading = null;
+  /** Starts downloading the SDK without running it (the app opens: the network works while the opening show's
+   *  logo draws itself, and the code runs only after, so it never stalls that drawing). */
+  Cloud.preload = function () {
+    if (fb || loading || !root.FIREBASE_CONFIG || Cloud.preloaded) return;
+    Cloud.preloaded = true;
+    for (const f of ['firebase-app.js', 'firebase-auth.js', 'firebase-firestore.js']) {
+      const l = document.createElement('link');
+      l.rel = 'modulepreload';
+      l.href = SDK + f;
+      document.head.appendChild(l);
+    }
+  };
   function load() {
     if (fb) return Promise.resolve(fb);
     if (!root.FIREBASE_CONFIG) return Promise.reject(root.U.oops('חסרות הגדרות Firebase'));

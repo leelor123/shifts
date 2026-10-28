@@ -24,6 +24,7 @@
 
   function dataFor(pk) {
     const emp = S.employers[0];
+    if (/^Y\d{4}$/.test(pk)) return yearFor(+pk.slice(1));
     const t = Engine.periodSummary(App.model, pk, emp.id);
     const ppk = U.addMonthKey(pk, -1);
     const prev = Engine.periodSummary(App.model, ppk, emp.id);
@@ -33,20 +34,41 @@
     });
   }
   function monthName(pk) { return U.MONTHS[+pk.slice(5, 7) - 1]; }
+  /** The whole year as a story ("Shaati Wrapped"): its totals, the net as the months' nets added up (tax goes by
+   * month), and the best month. */
+  function yearFor(y) {
+    const emp = S.employers[0];
+    const t = Engine.totals(App.model, y + '-01-01', y + '-12-31', {});
+    const prev = Engine.totals(App.model, (y - 1) + '-01-01', (y - 1) + '-12-31', {});
+    let net = 0, best = null;
+    for (let m = 1; m <= 12; m++) {
+      const pk = y + '-' + String(m).padStart(2, '0');
+      const ms = Engine.periodSummary(App.model, pk, emp.id);
+      net += (ms.net && ms.net.net) || 0;
+      if (ms.shifts > 0 && (!best || ms.gross > best.amount)) best = { label: U.MONTHS[m - 1], amount: Math.round(ms.gross * 100) / 100 };
+    }
+    const data = Recap.build(t, prev, { key: 'Y' + y, label: String(y), prevLabel: String(y - 1), net, roleName: (id) => App.roleName(id) });
+    if (!data) return null;
+    data.year = true;
+    if (best && t.shifts > 1) data.slides.splice(2, 0, Object.assign({ k: 'bestMonth' }, best));
+    return data;
+  }
   const lastPeriodKey = () => U.addMonthKey(Engine.periodOf(U.todayKey(), S.employers[0]).key, -1);
 
+  let YEAR = false; // the story open is a year's (Shaati Wrapped)
   /* ---------------- the cards ---------------- */
   const num = (to, kind) => `<div class="st-num" data-to="${to}" data-kind="${kind || 'money'}">${kind === 'hours' ? U.num(to, 1) : money0(to)}</div>`;
   const day = (k) => `${U.DAYS[U.dow(k)]}, ${+k.slice(8)}.${+k.slice(5, 7)}`;
   const CARD = {
-    intro: (s) => `${App.mascot ? App.mascot('wave', { size: 120, cls: 'st-m' }) : ''}<div class="st-k">הסיכום החודשי שלך</div><div class="st-big">${esc(s.label)}</div>
-      <div class="st-sub">${S.settings.userName ? esc(String(S.settings.userName).split(' ')[0]) + ', ' : ''}בואו נראה איך היה החודש בעבודה</div>`,
-    earned: (s) => `<div class="st-emoji">💰</div><div class="st-k">הרווחת החודש</div>${num(s.gross)}
+    intro: (s) => `${App.mascot ? App.mascot('wave', { size: 120, cls: 'st-m' }) : ''}<div class="st-k">${YEAR ? 'השנה שלך בעבודה' : 'הסיכום החודשי שלך'}</div><div class="st-big">${esc(s.label)}</div>
+      <div class="st-sub">${S.settings.userName ? esc(String(S.settings.userName).split(' ')[0]) + ', ' : ''}${YEAR ? 'בואו נראה איך הייתה השנה בעבודה' : 'בואו נראה איך היה החודש בעבודה'}</div>`,
+    earned: (s) => `<div class="st-emoji">💰</div><div class="st-k">${YEAR ? 'הרווחת השנה' : 'הרווחת החודש'}</div>${num(s.gross)}
       ${s.net ? `<div class="st-sub">בערך ${money0(s.net)} נטו</div>` : ''}
       ${s.delta != null && s.delta !== 0 ? `<div class="st-pill ${s.delta > 0 ? 'up' : 'down'}">${s.delta > 0 ? '▲' : '▼'} ${Math.abs(s.delta)}% לעומת ${esc(s.prevLabel)}</div>` : ''}`,
     time: (s) => `<div class="st-emoji">⏱️</div><div class="st-k">עבדת</div>${num(s.hours, 'hours')}<div class="st-unit">שעות</div>
       <div class="st-sub">ב-${s.shifts} ${s.shifts === 1 ? 'משמרת' : 'משמרות'}${s.longestDate && s.shifts > 1 ? ` · הארוכה ביותר: ${U.hm(s.longestMin)} ש׳ (${day(s.longestDate)})` : ''}</div>
       ${s.movies >= 1 ? `<div class="st-fun">🎬 זה כמו ${s.movies} ${s.movies === 1 ? 'סרט' : 'סרטים'} ברצף</div>` : ''}`,
+    bestMonth: (s) => `<div class="st-emoji">📅</div><div class="st-k">החודש הכי רווחי</div><div class="st-big">${esc(s.label)}</div>${num(s.amount)}`,
     best: (s) => `<div class="st-emoji">🏆</div><div class="st-k">היום הכי רווחי</div><div class="st-big">${day(s.key)}</div>${num(s.amount)}`,
     extras: (s) => `<div class="st-emoji">⭐</div><div class="st-k">תוספות שהרווחת</div>${num(s.amount)}
       <div class="st-sub">${[s.restHours > 0 ? `שבת וחג: ${U.num(s.restHours, 1)} ש׳` : '', s.otHours > 0 ? `שעות נוספות: ${U.num(s.otHours, 1)} ש׳` : ''].filter(Boolean).join(' · ')}</div>
@@ -60,14 +82,15 @@
     fun: (s) => `<div class="st-k">עם ${money0(s.money)} אפשר לקנות</div>
       <div class="st-items">${s.items.map((i, n) => `<div class="st-item" style="--n:${n}"><span class="st-ie">${i.emoji}</span><b>${i.count}</b><span>${esc(i.name)}</span></div>`).join('<div class="st-or">או</div>')}</div>`,
     outro: (s) => `${App.mascot ? App.mascot('party', { size: 120, cls: 'st-m' }) : ''}<div class="st-big">כל הכבוד!</div>
-      <div class="st-sub">${s.shifts} ${s.shifts === 1 ? 'משמרת' : 'משמרות'} ו-${money0(s.gross)} בחודש אחד. שיהיה חודש מעולה גם הבא 💪</div>
+      <div class="st-sub">${s.shifts} ${s.shifts === 1 ? 'משמרת' : 'משמרות'} ו-${money0(s.gross)} ${YEAR ? 'בשנה אחת. שתהיה שנה מעולה גם הבאה 💪' : 'בחודש אחד. שיהיה חודש מעולה גם הבא 💪'}</div>
       <div class="st-acts"><button class="btn st-share" data-st-share>${icon('share')} שיתוף תמונה</button><button class="btn tonal" data-st-close>סגירה</button></div>`,
   };
 
   /* ---------------- the viewer ---------------- */
   function open(pk) {
     const data = dataFor(pk);
-    if (!data) { UI.toast('אין משמרות בחודש הזה'); return; }
+    if (!data) { UI.toast(/^Y/.test(pk) ? 'אין משמרות בשנה הזאת' : 'אין משמרות בחודש הזה'); return; }
+    YEAR = !!data.year;
     if (document.querySelector('.story')) return;
     const n = data.slides.length;
     const el = document.createElement('div');
@@ -188,7 +211,7 @@
       g.direction = 'rtl'; g.textAlign = 'center'; g.fillStyle = '#fff';
       const F = (w, px) => `${w} ${px}px Fredoka, Rubik, "Segoe UI", Arial, sans-serif`;
       const s = Object.fromEntries(data.slides.map((x) => [x.k, x]));
-      g.font = F(600, 52); g.globalAlpha = 0.85; g.fillText('הסיכום החודשי שלי', W / 2, 190); g.globalAlpha = 1;
+      g.font = F(600, 52); g.globalAlpha = 0.85; g.fillText(data.year ? 'השנה שלי בעבודה · Shaati Wrapped' : 'הסיכום החודשי שלי', W / 2, 190); g.globalAlpha = 1;
       g.font = F(700, 96); g.fillText(data.label, W / 2, 310);
       g.font = F(700, 190); g.fillText(money0(s.earned.gross), W / 2, 560);
       g.font = F(500, 50); g.globalAlpha = 0.9; g.fillText('ברוטו', W / 2, 640); g.globalAlpha = 1;
@@ -207,7 +230,7 @@
       g.font = F(600, 44); g.globalAlpha = 0.8; g.fillText('Shaati · שעתי', W / 2, H - 80); g.globalAlpha = 1;
       const blob = await new Promise((r) => c.toBlob(r, 'image/png'));
       if (!blob) throw new Error('no image');
-      await UI.shareFile(`shaati-${data.key}.png`, blob, 'הסיכום החודשי שלי');
+      await UI.shareFile(`shaati-${data.key}.png`, blob, data.year ? 'השנה שלי בעבודה' : 'הסיכום החודשי שלי', data.year ? `השנה שלי בעבודה: ${money0(s.earned.gross)} ב-${s.time.shifts} משמרות 💪 #ShaatiWrapped https://shaati.web.app` : undefined);
     } catch (e) {
       console.warn('recap image', e);
       UI.toast('לא הצלחנו ליצור תמונה');
@@ -215,6 +238,16 @@
   }
 
   /* ---------------- where it is offered ---------------- */
+  /** Shaati Wrapped on the home screen: through December (this year so far) and January (the year that ended). */
+  App.wrappedCard = function () {
+    const today = U.todayKey(), m = +today.slice(5, 7), y = +today.slice(0, 4);
+    const year = m === 12 ? y : m === 1 ? y - 1 : null;
+    if (!year || S.meta.wrappedSeen === 'Y' + year) return '';
+    const t = Engine.totals(App.model, year + '-01-01', year + '-12-31', {});
+    if (!(t.shifts >= 5)) return '';
+    return `<button class="recap-card wrapped-card" style="${App.phase()}" data-act="recap-open" data-pk="Y${year}"><span class="rc-spark" aria-hidden="true">🎁</span>
+      <span class="rc-t"><b>השנה שלך ב-Shaati: ${year}</b><span>${t.shifts} משמרות · ${money0(t.gross)}. הסיפור של השנה מחכה</span></span>${icon('left', 's')}</button>`;
+  };
   /** The home card: during the first two weeks of a new pay period, until it is opened. */
   App.recapCard = function () {
     const today = U.todayKey();
@@ -229,6 +262,7 @@
   };
   App.actions['recap-open'] = (el) => {
     const pk = (el && el.dataset && el.dataset.pk) || lastPeriodKey();
+    if (/^Y\d{4}$/.test(pk) && S.meta.wrappedSeen !== pk) { Store.setMeta({ wrappedSeen: pk }).catch(() => {}); setTimeout(() => App.rerender(), 400); }
     if (pk === lastPeriodKey() && S.meta.recapSeen !== pk) {
       Store.setMeta({ recapSeen: pk }).catch(() => {});
       setTimeout(() => App.rerender(), 400);

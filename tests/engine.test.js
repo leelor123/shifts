@@ -235,10 +235,14 @@ T.test('net estimate for 6,000 ₪', () => {
 });
 T.test('net estimate for 15,000 ₪ (no pension)', () => {
   const s = Defaults.defaultSettings();
-  const n = Engine.netEstimate({ gross: 15000, pensionBase: 15000, deductions: 0, pensionActive: false }, s);
+  const n = Engine.netEstimate({ gross: 15000, pensionBase: 15000, deductions: 0, pensionActive: false, periodTo: '2025-10-31' }, s);
   const tax = 7010 * 0.1 + (10060 - 7010) * 0.14 + (15000 - 10060) * 0.2 - 2.25 * 242;
   T.near(n.incomeTax, tax);
   T.near(n.bl, 7522 * 0.0104 + (15000 - 7522) * 0.07);
+  // 2026: the threshold moved to 7,703
+  const n26 = Engine.netEstimate({ gross: 15000, pensionBase: 15000, deductions: 0, pensionActive: false, periodTo: '2026-10-31' }, s);
+  T.near(n26.bl, 7703 * 0.0104 + (15000 - 7703) * 0.07);
+  T.near(n26.health, 7703 * 0.0323 + (15000 - 7703) * 0.0517);
 });
 T.test('sick days: 0%, 50%, 50%, 100%', () => {
   const d = setup((x) => { x.settings.leave.dayValueMode = 'fixed'; x.settings.leave.dayFixed = 300; });

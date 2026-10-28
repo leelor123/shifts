@@ -201,3 +201,30 @@ T.test('earned + the planned shifts + the pace only after the last planned one',
   const pr0 = Insights.run(Engine.buildModel(data(shifts)), { now: NOW }).projection;
   T.near(pr0.forecast, pr0.pace, 0.01);
 });
+
+T.section('reminders around a planned shift');
+const plannedAt = (k, a, b) => { const s = shift(k, a, b); s.status = 'planned'; return s; };
+const ups = (r) => r.alerts.filter((a) => a.type === 'upcoming' || a.type === 'confirmDone').map((a) => a.key.replace(/-i\d+/, '')).sort().join(',');
+T.test('several reminders before: the nearest whose time has come, each once', () => {
+  const p = plannedAt('2026-10-12', '12:00', '18:00'); // today 12:00; "now" is 10:00
+  const d = data([p], (x) => { x.settings.alerts.remindPlanned = true; x.settings.alerts.reminders.before = [180, 60, 15]; });
+  const at = (hm) => Insights.run(Engine.buildModel(d), { now: U.toEpoch('2026-10-12', hm) });
+  T.eq(ups(at('09:30')), 'up-180', 'two and a half hours before: the 3-hour one');
+  T.eq(ups(at('11:10')), 'up-60', 'fifty minutes before: the 1-hour one');
+  T.eq(ups(at('11:50')), 'up-15', 'ten minutes before: the 15-minute one');
+  T.eq(ups(at('08:00')), '', 'four hours before: none yet');
+});
+T.test('the evening before at the hour chosen', () => {
+  const p = plannedAt('2026-10-13', '09:00', '15:00');
+  const d = data([p], (x) => { x.settings.alerts.remindPlanned = true; x.settings.alerts.reminders.before = [60]; x.settings.alerts.reminders.eveOn = true; x.settings.alerts.reminders.eve = '20:00'; });
+  T.eq(ups(Insights.run(Engine.buildModel(d), { now: U.toEpoch('2026-10-12', '19:00') })), '');
+  T.eq(ups(Insights.run(Engine.buildModel(d), { now: U.toEpoch('2026-10-12', '20:30') })), 'eve');
+});
+T.test('after it ended: "did you work it?" once its time has come', () => {
+  const p = plannedAt('2026-10-12', '06:00', '09:00');
+  const d = data([p], (x) => { x.settings.alerts.reminders.confirmAfter = 30; });
+  T.eq(ups(Insights.run(Engine.buildModel(d), { now: U.toEpoch('2026-10-12', '09:20') })), '');
+  T.eq(ups(Insights.run(Engine.buildModel(d), { now: U.toEpoch('2026-10-12', '09:40') })), 'cd');
+  d.settings.alerts.types.confirmDone = false;
+  T.eq(ups(Insights.run(Engine.buildModel(d), { now: U.toEpoch('2026-10-12', '09:40') })), '', 'switched off');
+});

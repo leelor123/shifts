@@ -61,11 +61,20 @@
     await fs.setDoc(fs.doc(db, 'lb', uid()), data, { merge: true });
     Object.assign(row, data, { exists: true, g: row.g || {} });
     for (const [game, vals] of Object.entries(gPatch || {})) row.g[game] = Object.assign({}, row.g[game], vals);
-    boards.clear();
+    // only the boards my new scores change are read again; my name or look changes in the others in place
+    for (const key of [...boards.keys()]) {
+      const [g, p] = key.split('|');
+      if (gPatch && gPatch[g] && p in gPatch[g]) { boards.delete(key); continue; }
+      const me = boards.get(key).rows.find((x) => x.uid === uid());
+      if (me) Object.assign(me, { n: pr.n, e: pr.e, bg: pr.bg, p: pr.p });
+    }
   }
   const inflight = new Map();
-  const cached = (game, period) => { const c = boards.get(`${game}|${period}|${today()}`); return c && Date.now() - c.at < 60000 ? c.rows : null; };
-  /** The top of a board, from Firestore (cached for a minute; one request per board at a time). */
+  // Every board read costs up to 50 reads of the free daily quota: a board is kept 10 minutes (the one on screen is
+  // refreshed quietly once it is 2 minutes old), and a score of mine updates my own row in place.
+  const KEEP_MS = 10 * 60000, FRESH_MS = 2 * 60000;
+  const cached = (game, period, maxAge) => { const c = boards.get(`${game}|${period}|${today()}`); return c && Date.now() - c.at < (maxAge || KEEP_MS) ? c.rows : null; };
+  /** The top of a board, from Firestore (kept 10 minutes; one request per board at a time). */
   function board(game, period, fresh) {
     const key = `${game}|${period}|${today()}`;
     const c = !fresh && cached(game, period);
@@ -202,7 +211,8 @@
         set(bar, `<div class="lb-me-t"><b>${rows.length >= LIMIT ? 'עוד לא בטופ 50' : `עוד לא שיחקת ${period === 'a' ? 'כאן' : periodName()}`}</b><small>${rows.length >= LIMIT ? `צריך יותר מ-${last.s}${esc(unit)}` : 'משחק אחד וכבר את/ה בטבלה'}</small></div><button class="btn sm" data-lb-play>${icon('play', 's')} לשחק</button>`);
       }
     }
-    /** The other periods of this game and this period of the other games, loaded quietly so that switching is instant. */
+    /** The other periods of this game and this period of the other games, loaded quietly so that switching is
+     *  instant (kept 10 minutes, so opening the table again soon reads nothing). */
     function prefetch() {
       const g = game, per = period;
       setTimeout(() => {
@@ -219,7 +229,15 @@
         return;
       }
       const now = cached(game, period);
-      if (now) { body.classList.remove('lb-busy'); paint(el, now); prefetch(); return; }
+      if (now) {
+        body.classList.remove('lb-busy'); paint(el, now); prefetch();
+        // kept a while: shown at once, and read again quietly if it is no longer fresh
+        if (!cached(game, period, FRESH_MS)) {
+          const g = game, p = period;
+          board(g, p, true).then((rows) => { if (my === seq && el.isConnected && g === game && p === period) paint(el, rows); }).catch(() => {});
+        }
+        return;
+      }
       // nothing on screen yet (the first open): placeholders; otherwise the current board stays
       if (!body.__html) set(body, `<div class="lb-wait">${UI.skeleton ? UI.skeleton(4) : ''}</div>`);
       else body.classList.add('lb-busy');
@@ -332,7 +350,7 @@
       g.font = F(600, 58); g.fillText(`${row.n} ${row.e}`, W / 2, 1010);
       g.font = F(500, 50); g.globalAlpha = 0.9; g.fillText(row.rank === 1 ? 'מי עוקף אותי? 😎' : 'בואו לנסות לעקוף אותי 😉', W / 2, 1090); g.globalAlpha = 1;
       g.font = F(600, 42); g.globalAlpha = 0.8; g.fillText('Shaati · שעתי', W / 2, H - 120);
-      g.font = F(500, 34); g.direction = 'ltr'; g.fillText('leelor123.github.io/shifts', W / 2, H - 70); g.globalAlpha = 1;
+      g.font = F(500, 34); g.direction = 'ltr'; g.fillText('shaati.web.app', W / 2, H - 70); g.globalAlpha = 1;
       const blob = await new Promise((r) => c.toBlob(r, 'image/png'));
       if (!blob) throw new Error('no image');
       const text = `${medal} מקום ${row.rank} ${PERIOD_IN[period] || ''} ב"${g0.t}" בשעתי! מי עוקף אותי? https://leelor123.github.io/shifts/`;

@@ -51,6 +51,47 @@
     return { n: list.length, gross: avg((x) => x.gross), net: avg((x) => x.net.net), hours: avg((x) => x.hours), shifts: avg((x) => x.shifts), travel: avg((x) => x.travel), avgHourly: avg((x) => x.avgHourly), avgShift: avg((x) => x.avgShift) };
   }
 
+  /* ---- the average monthly pay: over the last 3 / 6 / 12 pay periods that ended, this year's, or all of them ----
+   * only periods with work count (a month off would pull the average down); the current one, not over yet, never */
+  // short on the buttons (five fit in a row on a small phone), whole for screen readers
+  const AVG_RANGES = [[3, '3 ח׳', '3 החודשים האחרונים'], [6, '6 ח׳', '6 החודשים האחרונים'], [12, '12 ח׳', '12 החודשים האחרונים'], ['year', 'השנה', 'השנה'], ['all', 'הכול', 'כל הזמן']];
+  App.monthAverage = function (range) {
+    const emp = S.employers[0];
+    const first = firstData();
+    if (!emp || !first) return null;
+    const cur = Engine.periodOf(U.todayKey(), emp);
+    const list = [];
+    let p = Engine.periodOf(U.addDays(cur.from, -1), emp);
+    for (let i = 0; i < 600 && p.to >= first; i++) {
+      if (range === 'year' && p.to.slice(0, 4) !== U.todayKey().slice(0, 4)) break;
+      if (typeof range === 'number' && i >= range) break;
+      const s = Engine.periodSummary(App.model, p.key, emp.id);
+      if (s.shifts > 0) list.push({ p, s });
+      p = Engine.periodOf(U.addDays(p.from, -1), emp);
+    }
+    if (!list.length) return { n: 0 };
+    const avg = (f) => list.reduce((sum, x) => sum + f(x.s), 0) / list.length;
+    const byGross = list.slice().sort((a, b) => b.s.gross - a.s.gross);
+    return { n: list.length, gross: avg((s) => s.gross), net: avg((s) => s.net.net), hours: avg((s) => s.hours), shifts: avg((s) => s.shifts),
+      best: byGross[0], low: byGross[byGross.length - 1], list: list.reverse() };
+  };
+  function avgCard() {
+    const range = st.avgRange == null ? 12 : st.avgRange;
+    const a = App.monthAverage(range);
+    if (!a) return '';
+    // whole labels (a word put in the middle of another sentence reads wrong in other languages)
+    const byPeriod = S.employers[0].periodStartDay > 1;
+    const body = !a.n ? `<div class="small muted">${range === 'year' ? 'השנה עוד לא הסתיים חודש שעבדת בו.' : 'עוד אין חודש שהסתיים עם משמרות.'}</div>`
+      : `<div class="kpis three">
+          <div class="kpi"><div class="l">${byPeriod ? 'ברוטו לתקופת שכר' : 'ברוטו לחודש'}</div><div class="v">${money(a.gross, 0)}</div></div>
+          <div class="kpi"><div class="l">נטו משוער</div><div class="v">${money(a.net, 0)}</div></div>
+          <div class="kpi"><div class="l">${byPeriod ? 'שעות לתקופת שכר' : 'שעות לחודש'}</div><div class="v"><span class="num">${U.hm(a.hours * 60)}</span></div></div></div>
+        ${a.n > 1 ? '<div class="avg-bars">' + Charts.hbars(a.list.map((x) => ({ name: x.p.label, value: x.s.gross, color: 'var(--brand, #6d28d9)', text: U.money(x.s.gross, 0) }))) + '</div>' : ''}
+        <div class="tiny muted" style="margin-top:6px">לפי ${a.n === 1 ? 'חודש אחד' : a.n + ' חודשים'} שהסתיימו ועבדת בהם (חודש בלי משמרות לא נכלל)${a.n > 1 ? ` · הגבוה: ${esc(a.best.p.label)} ${U.money(a.best.s.gross, 0)} · הנמוך: ${esc(a.low.p.label)} ${U.money(a.low.s.gross, 0)}` : ''}</div>`;
+    return `<div class="section-title">${icon('chart', 's')} משכורת חודשית ממוצעת</div>
+      <div class="card avg-card"><div class="seg avg-seg" role="tablist" aria-label="טווח הממוצע">${AVG_RANGES.map(([k, l, full]) => `<button class="${String(range) === String(k) ? 'on' : ''}" role="tab" aria-selected="${String(range) === String(k)}" aria-label="${full}" data-act="rep-avg" data-r="${k}">${l}</button>`).join('')}</div>${body}</div>`;
+  }
+
   /* ---------------- summary ---------------- */
   App.summaryData = function (type, anchor) {
     const r = rangeFor(type, anchor);
@@ -69,7 +110,6 @@
       ['שעות', (x) => x.hours, (v) => U.num(v, 1)], ['משמרות', (x) => x.shifts, (v) => U.num(v, 1)],
       ['ממוצע לשעה', (x) => x.avgHourly, (v) => U.money(v)], ['שעות למשמרת', (x) => x.avgShift, (v) => U.num(v, 1)],
     ];
-    const per = type === 'week' ? 'לשבוע' : 'לחודש';
     let h = `<div class="compare-row h"><span></span><span>קודמת</span>${a3 ? `<span>ממוצע 3 ח׳</span>` : ''}${a12 ? `<span>ממוצע 12 ח׳</span>` : ''}</div>`;
     for (const [lab, f, fmt] of rows) {
       const cur = f(t);
@@ -77,7 +117,7 @@
       const fa = (a) => (a ? f(Object.assign({}, a, { net: a.net })) : null);
       h += `<div class="compare-row"><span><b>${lab}</b><br><span class="num small">${fmt(cur)}</span></span><span class="small">${cell(f(p))}</span>${a3 ? `<span class="small">${cell(fa(a3))}</span>` : ''}${a12 ? `<span class="small">${cell(fa(a12))}</span>` : ''}</div>`;
     }
-    return h + `<div class="tiny muted" style="margin-top:6px">החיצים: שינוי של התקופה הנוכחית ביחס לכל עמודה. ממוצעים ${per}${a3 ? ` (3 ח׳ = ${a3.n} ${type === 'week' ? 'שבועות' : 'תקופות'})` : ''}${a12 ? `, (12 ח׳ = ${a12.n})` : ''} — רק מתקופות שיש בהן נתונים.</div>`;
+    return h + `<div class="tiny muted" style="margin-top:6px">החיצים: שינוי של התקופה הנוכחית ביחס לכל עמודה. ${type === 'week' ? 'ממוצעים לשבוע' : 'ממוצעים לחודש'}${a3 ? ` (3 ח׳ = ${a3.n} ${type === 'week' ? 'שבועות' : 'תקופות'})` : ''}${a12 ? `, (12 ח׳ = ${a12.n})` : ''} — רק מתקופות שיש בהן נתונים.</div>`;
   }
 
   function yearExtras(t, r) {
@@ -179,6 +219,7 @@
       <button class="an-entry" data-act="analysis-open">${UI.tile('sparkle', 'violet')}<span class="an-entry-t"><b>ניתוח מתקדם</b><small>איזה יום ושעה הכי משתלמים לך, השיאים שלך ו"מה אם"</small></span>${icon('left', 's')}</button>
       ${st.type !== 'custom' && st.type !== 'year' ? `<div class="section-title">${icon('up', 's')} השוואה</div><div class="card">${compareTable(t, p, a3, a12, st.type)}</div>` : ''}
       ${st.type === 'custom' ? `<div class="section-title">${icon('up', 's')} השוואה לתקופה קודמת באותו אורך</div><div class="card">${compareTable(t, p, null, null, st.type)}</div>` : ''}
+      ${st.type !== 'custom' ? avgCard() : ''}
       <div class="section-title">${icon('users', 's')} לפי תפקיד</div>
       <div class="card">${roles.length ? Charts.hbars(roles.map((x) => ({ name: x.role ? x.role.name : '?', value: x.hours, color: x.role ? x.role.color : '#999', text: U.num(x.hours, 1) + ' ש׳' })))
         + '<div class="divider"></div>' + Charts.hbars(roles.map((x) => ({ name: x.role ? x.role.name : '?', value: x.amount, color: x.role ? x.role.color : '#999', text: U.money(x.amount, 0) }))) : '<div class="muted small">אין נתונים</div>'}</div>
@@ -197,6 +238,7 @@
       ${st.type === 'year' ? yearExtras(t, r) : ''}
       </div>
       ${st.type === 'month' && t.shifts > 0 && App.recap ? `<button class="btn recap-btn block" data-act="recap-open" data-pk="${Engine.periodOf(r.from, S.employers[0]).key}">✨ הסיכום של החודש כסיפור</button>` : ''}
+      ${st.type === 'year' && t.shifts > 0 && App.recap ? `<button class="btn recap-btn block" data-act="recap-open" data-pk="Y${r.from.slice(0, 4)}">🎁 השנה שלך כסיפור (Wrapped)</button>` : ''}
       <div class="btn-row" style="margin-top:8px">
         <button class="btn tonal" data-act="rep-share-img">${icon('image')} תמונה</button>
         <button class="btn tonal" data-act="rep-pdf">${icon('printer')} PDF</button>
@@ -305,6 +347,7 @@
   };
 
   App.actions['rep-sub'] = (el) => { st.sub = el.dataset.s; App.render(); };
+  App.actions['rep-avg'] = (el) => { const v = el.dataset.r; st.avgRange = /^\d+$/.test(v) ? +v : v; if (root.Fx) root.Fx.play('on'); App.render(); };
   App.actions['rep-type'] = (el) => { st.type = el.dataset.t; App.rerender(); };
   App.actions['rep-nav'] = (el) => { st.anchor = shiftAnchor(st.type, rangeFor(st.type, st.anchor).from, +el.dataset.dir); App.rerender(); };
   App.actions['flt-role'] = (el) => { st.f.role = el.dataset.id; App.rerender(); };

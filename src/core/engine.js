@@ -653,8 +653,9 @@
     const credits = (+T.creditPoints || 0) * (+T.creditPointValue || 0) * months;
     const pensionCredit = Math.min(pensionEmployee, 0.07 * Math.min(gross, (+T.pensionCreditCap || 9700) * months)) * (+T.pensionCreditPct || 35) / 100;
     const incomeTax = Math.max(0, taxBefore - credits - pensionCredit);
-    const thr = (+T.blReducedThreshold || 0) * months;
-    const ceil = (+T.blCeiling || Infinity) * months;
+    const lim = blLimits(T, p.periodTo || U.todayKey());
+    const thr = lim.thr * months;
+    const ceil = lim.ceil * months;
     const g1 = Math.min(gross, thr), g2 = Math.max(0, Math.min(gross, ceil) - thr);
     const bl = g1 * T.blReducedPct / 100 + g2 * T.blFullPct / 100;
     const health = g1 * T.healthReducedPct / 100 + g2 * T.healthFullPct / 100;
@@ -898,8 +899,8 @@
     const eligible = res.seniorityMonths >= 12;
     const days = recuperationDays(Math.max(1, year));
     res.recuperation = {
-      eligible, yearOfService: year, days, rate: +L.recuperationRate || 418,
-      amount: eligible ? days * (+L.recuperationRate || 418) * res.jobPct : 0,
+      eligible, yearOfService: year, days, rate: recuperationRate(L, asOf),
+      amount: eligible ? days * recuperationRate(L, asOf) * res.jobPct : 0,
       eligibleFrom: U.addMonths(start, 12),
     };
     return res;
@@ -930,6 +931,36 @@
     { from: '2025-04-01', monthly: 6247.67, hourly: 34.32 },
     { from: '2026-04-01', monthly: 6443.85, hourly: 35.40 },
   ];
+  /* Other yearly legal numbers, by the year they apply to (tests/law.test.js fails once a year runs past its table:
+   * check the new values and add a row). A setting left empty — or still holding a value an earlier version saved
+   * as its default — follows these; any other number the user typed wins.
+   *  - National Insurance: the reduced-rate threshold and the ceiling, monthly (from 2026 indexed to prices, every
+   *    January 1st; 2026: btl.gov.il notice for employers);
+   *  - recuperation pay: the day rate, private sector (extension order; 2026: 451.50, published 18.8.2026, for the
+   *    whole 2026 recuperation year). */
+  const BL_YEARS = { 2025: [7522, 50695], 2026: [7703, 51910] };
+  const RECUP_YEARS = { 2023: 418, 2026: 451.5 };
+  function byYear(table, k) {
+    const y = +String(k || U.todayKey()).slice(0, 4);
+    const years = Object.keys(table).map(Number).sort((a, b) => a - b);
+    let v = table[years[0]];
+    for (const x of years) if (x <= y) v = table[x];
+    return v;
+  }
+  const lawValue = (v, known) => !(+v > 0) || known.includes(+v);
+  /** National Insurance's threshold and ceiling (monthly) for a date, unless the settings name others. */
+  function blLimits(T, k) {
+    const [thr, ceil] = byYear(BL_YEARS, k);
+    const rows = Object.values(BL_YEARS);
+    return {
+      thr: lawValue(T.blReducedThreshold, rows.map((r) => r[0])) ? thr : +T.blReducedThreshold,
+      ceil: lawValue(T.blCeiling, rows.map((r) => r[1])) ? ceil : +T.blCeiling,
+    };
+  }
+  /** The recuperation day rate for a date, unless the settings name another. */
+  function recuperationRate(L, k) {
+    return lawValue(L.recuperationRate, Object.values(RECUP_YEARS)) ? byYear(RECUP_YEARS, k) : +L.recuperationRate;
+  }
   const round2 = (x) => Math.round(x * 100) / 100;
   function legalMinWage(k, birthKey) {
     const row = MIN_WAGE.filter((r) => r.from <= k).pop() || MIN_WAGE[0];
@@ -956,7 +987,7 @@
   }
 
   root.Engine = {
-    LAW_BREAK, validShift, validEntry, legalMinWage, minWageFor, youthRules, pensionMinAge, MIN_WAGE,
+    LAW_BREAK, validShift, validEntry, legalMinWage, minWageFor, youthRules, pensionMinAge, MIN_WAGE, BL_YEARS, RECUP_YEARS, blLimits, recuperationRate,
     makeCtx, roleRate, roundMinutes, monthsBetween, buildSegments, hasOverrides, computeShift, computeAll,
     periodByKey, periodOf, dayValue, computeEntries, travelByDay, incomeTaxRaw, netEstimate, pensionActive,
     buildModel, totals, periodSummary, rangeSummary, pensionBaseOf, leaveBalances, holidayPay, vacationEntitlement, recuperationDays, ageAt, isMinor,

@@ -471,11 +471,32 @@
           title: 'משמרת מתוכננת שעברה', body: `המשמרת של ${U.fmtDate(r.dateKey, 'dm')} (⁦${U.epochHM(r.start)}\u2060–\u2060${U.epochHM(r.rawEnd)}⁩) לא סומנה כ"בוצעה".`,
           explain: 'משמרות מתוכננות לא נספרות בשכר עד שמסמנים אותן כבוצעו.' });
       }
+      const RM = cfg.reminders || {};
+      const offs = (Array.isArray(RM.before) && RM.before.length ? RM.before : [+cfg.upcomingMin || 60]).map(Number).filter((x) => x > 0).sort((a, b) => a - b);
       const mins = (r.start - now) / U.MIN;
-      if (on('upcoming') && mins > 0 && mins <= (+cfg.upcomingMin || 60)) {
-        alerts.push({ key: 'up-' + r.id, type: 'upcoming', severity: 'info', push: 'critical', ref: r.id,
-          title: 'משמרת בעוד ' + Math.round(mins) + ' דקות', body: `${roleName(r.segments[0] ? r.segments[0].roleId : '')} · ⁦${U.epochHM(r.start)}\u2060–\u2060${U.epochHM(r.rawEnd)}⁩`,
-          explain: 'תזכורת ' + cfg.upcomingMin + ' דקות לפני משמרת מתוכננת.' });
+      const what = `${roleName(r.segments[0] ? r.segments[0].roleId : '')} · ⁦${U.epochHM(r.start)}⁠–⁠${U.epochHM(r.rawEnd)}⁩`;
+      if (on('upcoming') && mins > 0) {
+        // the nearest reminder whose time has come (each one fires once: its own key)
+        const off = offs.find((o) => mins <= o);
+        if (off != null) {
+          const when = mins < 90 ? 'בעוד ' + Math.round(mins) + ' דקות' : r.dateKey === today ? 'היום ב-' + U.epochHM(r.start) : r.dateKey === U.addDays(today, 1) ? 'מחר ב-' + U.epochHM(r.start) : U.fmtDate(r.dateKey, 'dm') + ' ב-' + U.epochHM(r.start);
+          alerts.push({ key: 'up-' + r.id + '-' + off, type: 'upcoming', severity: 'info', push: 'critical', ref: r.id,
+            title: 'משמרת ' + when, body: what, explain: 'תזכורת לפני משמרת מתוכננת (בהגדרות › התראות).' });
+        }
+        // the evening before, at the hour chosen
+        if (RM.eveOn && /^\d{1,2}:\d{2}$/.test(RM.eve || '')) {
+          const eveAt = U.toEpoch(U.addDays(r.dateKey, -1), RM.eve);
+          if (now >= eveAt && r.start - now > 60 * U.MIN && r.start - eveAt > 2 * 60 * U.MIN) {
+            alerts.push({ key: 'eve-' + r.id, type: 'upcoming', severity: 'info', push: 'critical', ref: r.id,
+              title: (r.dateKey === U.addDays(today, 1) ? 'מחר' : U.fmtDate(r.dateKey, 'dm')) + ': משמרת ב-' + U.epochHM(r.start), body: what, explain: 'תזכורת בערב שלפני (בהגדרות › התראות).' });
+          }
+        }
+      }
+      // after it ended: did you work it? (a planned shift is not in the pay until it is confirmed)
+      const ca = +RM.confirmAfter || 0;
+      if (on('confirmDone') && ca > 0 && r.rawEnd + ca * U.MIN <= now && now - r.rawEnd < 3 * U.DAY) {
+        alerts.push({ key: 'cd-' + r.id, type: 'confirmDone', severity: 'info', push: 'critical', ref: r.id,
+          title: 'עבדת במשמרת?', body: `${U.fmtDate(r.dateKey, 'dm')} · ${what}. לוחצים "עבדתי" כדי שהשכר ייכנס.`, explain: 'משמרת מתוכננת נכנסת לשכר רק אחרי שמאשרים שעבדת בה.' });
       }
     }
     if (on('idle') && done.length >= 3 && !a) {
