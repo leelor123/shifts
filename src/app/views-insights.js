@@ -46,6 +46,7 @@
             if (rec.ref && App.shift(rec.ref)) App.sheetsApi.shiftDetail(rec.ref);
             else if (rec.ref && S.payslips.find((p) => p.id === rec.ref)) App.sheetsApi.payslip(rec.ref);
             else if (rec.type === 'backup') App.doBackup(false);
+            else if (rec.type === 'workweek') { UI.closeTop(); setTimeout(() => App.sheetsApi.settingsSection('calc'), 320); }
             else if (rec.type === 'payslipDue') { UI.closeTop(); setTimeout(() => App.actions['payslip-new'](), 320); }
             else if (rec.type === 'monthly' && App.recap && rec.data && rec.data.pk) { UI.closeTop(); setTimeout(() => App.recap.open(rec.data.pk), 320); }
           }

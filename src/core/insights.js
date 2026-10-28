@@ -304,6 +304,19 @@
       raise('eve', 'ערב שבת ארוך מ-7 שעות', 'ביום שישי ובערב חג מותר לנוער לעבוד עד 7 שעות. נרשמו:');
     }
 
+    // overtime by the law starts after 8.6 hours in a five-day week but after 8 in a six-day one: someone who works on
+    // Fridays again and again while the work week is still the default (five) is asked once which it is
+    if (on('workweek') && Engine.otByLaw && Engine.otByLaw(emp) && +((S.leave || {}).workWeek || 5) === 5) {
+      const from8 = U.addDays(today, -56);
+      const fridays = new Set(done.filter((r) => r.dateKey >= from8 && U.dow(r.dateKey) === 5).map((r) => r.dateKey));
+      if (fridays.size >= 3) {
+        alerts.push({ key: 'workweek-ask', type: 'workweek', severity: 'info',
+          title: 'עובדים אצלך גם בימי שישי?',
+          body: `עבדת ${fridays.size} ימי שישי בחודשיים האחרונים. אם במקום העבודה עובדים 6 ימים בשבוע, שעות נוספות מתחילות אחרי 8 שעות ביום ולא אחרי 8.6. אפשר לבחור בהגדרות › חוקי חישוב.`,
+          explain: 'חוק שעות עבודה ומנוחה: בשבוע של 5 ימים יום עבודה של 8.6 שעות, בשבוע של 6 ימים 8 שעות (בשישי 7).' });
+      }
+    }
+
     if (on('long')) {
       for (const r of done) {
         if (r.dateKey < recentFrom) continue;

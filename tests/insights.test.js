@@ -228,3 +228,14 @@ T.test('after it ended: "did you work it?" once its time has come', () => {
   d.settings.alerts.types.confirmDone = false;
   T.eq(ups(Insights.run(Engine.buildModel(d), { now: U.toEpoch('2026-10-12', '09:40') })), '', 'switched off');
 });
+
+T.section('the work week');
+T.test('Fridays again and again with a five-day week: asked once whether the workplace works six days', () => {
+  const fridays = ['2026-09-18', '2026-09-25', '2026-10-02', '2026-10-09'].map((d) => shift(d, '07:00', '12:00'));
+  const ask = (d) => Insights.run(Engine.buildModel(d), { now: NOW }).alerts.filter((a) => a.type === 'workweek');
+  T.eq(ask(data(fridays)).length, 1, 'four Fridays in two months');
+  T.eq(ask(data(fridays.slice(0, 2))).length, 0, 'two are not enough');
+  T.eq(ask(data(fridays, (d) => { d.settings.leave.workWeek = 6; })).length, 0, 'a six-day week already chosen');
+  T.eq(ask(data(fridays, (d) => { d.employers[0].otLaw = false; })).length, 0, 'overtime set by hand: the week does not matter');
+  T.eq(ask(data(fridays, (d) => { d.settings.alerts.types = { workweek: false }; })).length, 0, 'turned off');
+});
