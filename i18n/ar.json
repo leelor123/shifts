@@ -1472,6 +1472,7 @@
  "בוצעו": "المنجزة",
  "מתוכננות": "المخطط لها",
  "<button class=\"btn text sm\" data-act=\"flt-clear\">נקה</button>": "<button class=\"btn text sm\" data-act=\"flt-clear\">مسح</button>",
+ "<span class=\"small muted\">מתוכנן</span>": "<span class=\"small muted\">مخطط له</span>",
  "לא נמצאו משמרות": "لم يتم العثور على ورديات",
  "נסה לשנות את החיפוש או המסננים.": "جرّب تغيير البحث أو عوامل التصفية.",
  "<button class=\"btn tonal block list-more\" data-act=\"flt-more\">{0} עוד {1} משמרות <span class=\"small muted\">(מוצגות {2} מתוך {3})</span></button>": "<button class=\"btn tonal block list-more\" data-act=\"flt-more\">{0} {1} {1#one:وردية;two:ورديتان;few:ورديات;many:وردية;other:وردية} أخرى <span class=\"small muted\">(معروض {2} من {3})</span></button>",

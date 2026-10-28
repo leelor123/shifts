@@ -10701,6 +10701,13 @@
   ]
  },
  {
+  "key": "<span class=\"small muted\">מתוכנן</span>",
+  "kind": "lit",
+  "where": [
+   "app/views-reports.js:321"
+  ]
+ },
+ {
   "key": "לא נמצאו משמרות",
   "kind": "lit",
   "where": [

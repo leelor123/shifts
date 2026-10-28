@@ -1472,6 +1472,7 @@
  "בוצעו": "Выполненные",
  "מתוכננות": "Запланированные",
  "<button class=\"btn text sm\" data-act=\"flt-clear\">נקה</button>": "<button class=\"btn text sm\" data-act=\"flt-clear\">Сбросить</button>",
+ "<span class=\"small muted\">מתוכנן</span>": "<span class=\"small muted\">Запланировано</span>",
  "לא נמצאו משמרות": "Смены не найдены",
  "נסה לשנות את החיפוש או המסננים.": "Попробуйте изменить поиск или фильтры.",
  "<button class=\"btn tonal block list-more\" data-act=\"flt-more\">{0} עוד {1} משמרות <span class=\"small muted\">(מוצגות {2} מתוך {3})</span></button>": "<button class=\"btn tonal block list-more\" data-act=\"flt-more\">{0} Ещё {1} {1#one:смена;few:смены;many:смен;other:смены} <span class=\"small muted\">(показано {2} из {3})</span></button>",

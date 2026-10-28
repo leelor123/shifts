@@ -1472,6 +1472,7 @@
  "בוצעו": "Done",
  "מתוכננות": "Planned",
  "<button class=\"btn text sm\" data-act=\"flt-clear\">נקה</button>": "<button class=\"btn text sm\" data-act=\"flt-clear\">Clear</button>",
+ "<span class=\"small muted\">מתוכנן</span>": "<span class=\"small muted\">Planned</span>",
  "לא נמצאו משמרות": "No shifts found",
  "נסה לשנות את החיפוש או המסננים.": "Try changing the search or the filters.",
  "<button class=\"btn tonal block list-more\" data-act=\"flt-more\">{0} עוד {1} משמרות <span class=\"small muted\">(מוצגות {2} מתוך {3})</span></button>": "<button class=\"btn tonal block list-more\" data-act=\"flt-more\">{0} {1} more {1#one:shift;other:shifts} <span class=\"small muted\">(showing {2} of {3})</span></button>",

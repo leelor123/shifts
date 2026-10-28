@@ -1472,6 +1472,7 @@
  "בוצעו": "Effectué",
  "מתוכננות": "Prévu",
  "<button class=\"btn text sm\" data-act=\"flt-clear\">נקה</button>": "<button class=\"btn text sm\" data-act=\"flt-clear\">Effacer</button>",
+ "<span class=\"small muted\">מתוכנן</span>": "<span class=\"small muted\">Prévu</span>",
  "לא נמצאו משמרות": "Aucun service trouvé",
  "נסה לשנות את החיפוש או המסננים.": "Essayez de changer la recherche ou les filtres.",
  "<button class=\"btn tonal block list-more\" data-act=\"flt-more\">{0} עוד {1} משמרות <span class=\"small muted\">(מוצגות {2} מתוך {3})</span></button>": "<button class=\"btn tonal block list-more\" data-act=\"flt-more\">{0} {1} plus {1#one:service;other:services} <span class=\"small muted\">(affichage de {2} sur {3})</span></button>",
