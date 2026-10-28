@@ -57,13 +57,13 @@
     const role = App.role(roles[0]);
     const title = roles.map(App.roleName).join(' → ');
     const date = opts.noDate ? '' : U.fmtDate(r.dateKey, 'short') + ' · ' + (U.LANG === 'he' ? U.DAYS : U.DAYS_SHORT)[U.dow(r.dateKey)] + ' · '; // ("Thu" in English: the Hebrew name is already short)
-    const planned = r.status === 'planned' ? '<span class="tag planned">מתוכננת</span>' : '';
+    const planned = r.status === 'planned' ? (r.end <= Date.now() ? '<span class="tag warn">ממתינה לאישור</span>' : '<span class="tag planned">מתוכננת</span>') : '';
     const emp = App.multiEmp() ? ' · ' + esc(App.employer(r.employerId).name) : '';
     return `<button class="item" data-act="shift-open" data-id="${r.id}">
       <span class="role-bar" style="background:${role ? role.color : '#999'}"></span>
       <span class="body"><span class="t shift-title"><span class="tt">${esc(date)}${esc(title)}</span>${App.restTag(r)}${App.ovTag(r)}${planned}</span>
       <span class="s"><span class="num">⁦${U.epochHM(r.start)}\u2060–\u2060${U.epochHM(r.rawEnd)}⁩</span> · ${U.hm(r.paidMin)} ש׳${emp}${sh.note ? ' · ' + esc(sh.note) : ''}</span></span>
-      <span class="trail"><span class="a" data-tr="s:${r.id}">${money(App.shiftAmount(r), 0)}</span>${opts.showOk && r.status === 'planned' && r.end <= Date.now() ? `<br><span class="tag good" data-act="mark-done" data-id="${r.id}">${icon('check')}בוצעה</span>` : ''}</span></button>`;
+      <span class="trail"><span class="a" data-tr="s:${r.id}">${money(App.shiftAmount(r), 0)}</span></span></button>`;
   };
   App.entryItem = function (e) {
     const v = App.model.entryVals.get(e.id) || { amount: 0, label: '' };
@@ -314,7 +314,7 @@
     const results = [...App.model.results.values()];
     const now = Date.now();
     // planned shifts whose time has passed wait for a "done" tap, so they come first
-    const pending = results.filter((r) => r.status === 'planned' && r.start < now).sort((a, b) => b.start - a.start).slice(0, 2);
+    const pending = results.filter((r) => r.status === 'planned' && r.end <= now).sort((a, b) => b.start - a.start);
     const recent = results.filter((r) => r.status === 'done').sort((a, b) => b.start - a.start).slice(0, 3);
     const name = S.settings.userName ? ', ' + esc(String(S.settings.userName).split(' ')[0]) : '';
     const date = U.fmtDate(today, 'long').replace(/\s\d{4}$/, '');
@@ -335,11 +335,24 @@
       ${root.Plus ? root.Plus.nudgeCard() : ''}
       ${savingCard()}
       ${shortcuts()}
-      ${pending.length + recent.length ? `<div class="home-list-head"><span>${pending.length ? 'לסמן כבוצעה' : 'משמרות אחרונות'}</span><span class="spacer"></span>${App.travelSwitch()}<button class="btn text sm" data-act="go-shifts">הכול</button></div>
-        <div class="list home-list">${pending.map((r) => App.shiftItem(r, { showOk: true })).join('')}${recent.slice(0, Math.max(1, 3 - pending.length)).map((r) => App.shiftItem(r)).join('')}</div>`
+      ${pendingCard(pending)}
+      ${recent.length ? `<div class="home-list-head"><span>משמרות אחרונות</span><span class="spacer"></span>${App.travelSwitch()}<button class="btn text sm" data-act="go-shifts">הכול</button></div>
+        <div class="list home-list">${recent.slice(0, pending.length ? 2 : 3).map((r) => App.shiftItem(r)).join('')}</div>`
+        : pending.length ? ''
         : S.meta.guide && !S.meta.guideDone ? '' : `<div class="empty fun">${App.mascot ? App.mascot('sleepy', { size: 92 }) : ''}<h3>עוד אין משמרות</h3><div>בתחילת משמרת לוחצים על "התחל משמרת".<br>משמרת שכבר התקיימה מוסיפים בכפתור <b>+</b>.</div></div>`}
     `;
   };
+
+  /** Planned shifts whose time has passed: not in the pay until confirmed, so they ask for it plainly. */
+  function pendingCard(pending) {
+    if (!pending.length) return '';
+    const total = pending.reduce((s, r) => s + (r.wage || 0), 0);
+    const row = (r) => `<div class="pd-row"><button class="pd-info" data-act="shift-open" data-id="${r.id}"><b>${U.fmtDate(r.dateKey, 'short')} · ${(U.LANG === 'he' ? U.DAYS : U.DAYS_SHORT)[U.dow(r.dateKey)]}</b><span>${U.epochHM(r.start)}–${U.epochHM(r.end)} · ${esc(App.roleName(r.segments[0] && r.segments[0].roleId))}</span></button>
+      <button class="btn go pd-ok" data-act="mark-done" data-id="${r.id}">${icon('check', 's')} עבדתי · ${money(r.wage, 0)}</button></div>`;
+    return `<div class="card pending-card"><div class="pd-head">${icon('alert', 's')}<div><b>${pending.length === 1 ? 'עבדת במשמרת הזאת?' : 'עבדת במשמרות האלה?'}</b><div class="small">משמרת מתוכננת נכנסת לשכר רק אחרי שמאשרים שעבדת בה.</div></div></div>
+      ${pending.slice(0, 3).map(row).join('')}
+      ${pending.length > 1 ? `<button class="btn tonal block pd-all" data-act="mark-done-all">${icon('check', 's')} עבדתי בכולן${pending.length > 3 ? ` (${pending.length})` : ''} · ${money(total, 0)}</button>` : ''}</div>`;
+  }
 
   /* ---------------- actions ---------------- */
   App.actions['pick-role'] = async (el) => { await Store.setMeta({ lastRole: el.dataset.id }); App.rerender(); };
@@ -373,6 +386,14 @@
     e.stopPropagation();
     const sh = App.shift(el.dataset.id);
     if (sh) await App.markDone(sh);
+  };
+  App.actions['mark-done-all'] = async () => {
+    const now = Date.now();
+    const list = S.shifts.filter((s) => s.status === 'planned' && s.end <= now);
+    if (!list.length) return;
+    const total = list.reduce((sum, s) => sum + ((App.result(s.id) || {}).wage || 0), 0);
+    await App.saveOps(list.map((s) => ({ store: 'shifts', put: Object.assign(Store.clone(s), { status: 'done' }) })), 'סימון כבוצעה', `${list.length} משמרות נכנסו לשכר: +${U.money(total, 0)}`);
+    if (root.Fx) root.Fx.play('coin');
   };
   App.actions['notif-read'] = async (el) => {
     const n = S.notifications.find((x) => x.id === el.dataset.id);

@@ -215,7 +215,9 @@
       } else UI.toast(sh.start <= now ? 'המשמרת עוד לא נגמרה. אפשר לסמן אותה כבוצעה אחרי שהיא מסתיימת' : `המשמרת עוד לא קרתה. אפשר לסמן אותה כבוצעה אחרי ${U.fmtDate(U.epochKey(sh.end), 'short')} ב-${U.epochHM(sh.end)}`);
       return false;
     }
-    await App.saveOps([{ store: 'shifts', put: Object.assign(Store.clone(sh), { status: 'done' }) }], 'סימון כבוצעה', 'המשמרת סומנה כבוצעה');
+    const r = App.result(sh.id);
+    await App.saveOps([{ store: 'shifts', put: Object.assign(Store.clone(sh), { status: 'done' }) }], 'סימון כבוצעה', r && r.wage > 0 ? `המשמרת נכנסה לשכר: +${U.money(r.wage, 0)}` : 'המשמרת סומנה כבוצעה');
+    if (root.Fx) root.Fx.play('coin');
     return true;
   };
 
@@ -228,7 +230,8 @@
     const autoDiff = r.overridden && App.model.autoResults.get(id) ? App.model.autoResults.get(id).wage - r.wage : 0;
     UI.openSheet({
       title: U.fmtDate(r.dateKey, 'long'),
-      body: `<div class="small muted" style="margin-bottom:8px">${esc(hd.toString())} ${App.restTag(r)} ${r.status === 'planned' ? '<span class="tag planned">מתוכננת</span>' : ''}</div>
+      body: `<div class="small muted" style="margin-bottom:8px">${esc(hd.toString())} ${App.restTag(r)} ${r.status === 'planned' ? (r.end <= Date.now() ? '<span class="tag warn">ממתינה לאישור</span>' : '<span class="tag planned">מתוכננת</span>') : ''}</div>
+        ${r.status === 'planned' && r.end <= Date.now() ? `<div class="card done-cta"><div class="dc-t">${icon('alert', 's')} המשמרת עוד לא נכנסה לשכר</div><div class="dc-s">משמרת מתוכננת נספרת בשכר רק אחרי שמאשרים שעבדת בה.</div><button class="btn go big block" data-x="done">${icon('check')} עבדתי, להכניס לשכר · ${money(r.wage, 0)}</button></div>` : ''}
         ${ovBox}
         ${r.breakShort ? `<div class="banner warn">${icon('alert')}<div style="flex:1">${esc(Engine.LAW_BREAK.text)}. בהפסקה שנרשמה: ${r.breakMin} דקות.</div></div>` : ''}
         <div class="card">${App.timelineHtml(r)}
@@ -242,7 +245,6 @@
         ${r.overridden ? `<div class="small muted" style="margin:-4px 4px 12px">בלי העקיפה החישוב היה ${U.money(r.wage + autoDiff)} (${autoDiff >= 0 ? '+' : ''}${U.money(autoDiff)}).</div>` : ''}
         ${sh.note ? `<div class="card outlined small">${icon('edit', 's')} ${esc(sh.note)}</div>` : ''}
         <div class="list">
-          ${r.status === 'planned' && r.end <= Date.now() ? `<button class="item" data-x="done"><span class="lead">${icon('check')}</span><span class="body"><span class="t">סמן כבוצעה</span></span></button>` : ''}
           <button class="item" data-x="dup"><span class="lead">${icon('copy')}</span><span class="body"><span class="t">שכפל</span><span class="s">אותן שעות בתאריך אחר</span></span></button>
           <button class="item" data-x="repeat"><span class="lead">${icon('refresh')}</span><span class="body"><span class="t">חזרה שבועית</span><span class="s">אותה משמרת בשבועות הבאים, כמתוכננת</span></span></button>
           <button class="item" data-x="tpl"><span class="lead">${icon('layers')}</span><span class="body"><span class="t">שמור כתבנית</span></span></button>

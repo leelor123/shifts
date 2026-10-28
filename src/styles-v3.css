@@ -1589,3 +1589,18 @@ html[dir="ltr"] #print-root th, html[dir="ltr"] #print-root td { text-align: lef
 html:not([lang="he"]) .item .s, html:not([lang="he"]) .hbar .nm { white-space: normal; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; }
 html:not([lang="he"]) .hbar .nm { line-height: 1.2; }
 html:not([lang="he"]) .lb-games button, html:not([lang="he"]) .lb-periods button { white-space: normal; overflow-wrap: normal; line-height: 1.15; text-wrap: balance; padding-block: 3px; }
+
+/* planned shifts whose time has passed: not in the pay until confirmed — a plain question and a button each */
+.pending-card { border: 1.5px solid var(--warn); padding: 14px; }
+.pending-card .pd-head { display: flex; gap: 10px; align-items: flex-start; margin-bottom: 8px; }
+.pending-card .pd-head > svg { color: var(--warn); flex: none; margin-top: 3px; }
+.pending-card .pd-head .small { color: var(--on-surface-var); margin-top: 2px; }
+.pending-card .pd-row { display: flex; align-items: center; gap: 10px; padding: 10px 0 2px; border-top: 1px solid var(--line); margin-top: 8px; }
+.pending-card .pd-info { flex: 1; min-width: 0; display: flex; flex-direction: column; align-items: flex-start; gap: 2px; background: none; border: 0; padding: 0; text-align: start; color: inherit; font: inherit; cursor: pointer; transition: scale .12s; }
+.pending-card .pd-info:active { scale: .97; }
+.pending-card .pd-info span { font-size: .82rem; color: var(--on-surface-var); }
+.pending-card .pd-ok { flex: none; min-height: 42px; padding: 0 14px; border-radius: 12px; font-weight: 700; white-space: nowrap; }
+.pending-card .pd-all { margin-top: 12px; }
+.done-cta { border: 1.5px solid var(--warn); }
+.done-cta .dc-t { font-weight: 700; display: flex; gap: 6px; align-items: center; color: var(--warn); }
+.done-cta .dc-s { font-size: .86rem; color: var(--on-surface-var); margin: 4px 0 12px; }
