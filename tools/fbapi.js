@@ -74,6 +74,10 @@ async function main() {
     const tk = (o) => Object.assign({ uid: 'u1', reason: 'bug', text: 'the button does not work', status: 'open', created: 1, updated: 1, last: 'user', seen: true }, o || {});
     const owner = (uid, status) => [{ function: 'get', args: [{ exactValue: '/databases/(default)/documents/tickets/t1' }], result: { value: { data: { uid, status: status || 'open' } } } }];
     const lb = (o) => Object.assign({ n: 'שועל זריז 27', e: '🦊', bg: '', p: false, t: 1790000000000, g: { coins: { d: 2026101500050, a: 50 } } }, o || {});
+    const frS = (o) => Object.assign({ m: { k: 202610, v: 6834 }, y: { k: 2026, v: 40000 }, a: 52000, h: 42.5 }, o || {});
+    const frNoS = (o) => Object.assign({ n: 'שועל זריז 27', e: '🦊', t: 1790000000000, hide: false, f: ['u2'] }, o || {});
+    const fr = (o) => Object.assign(frNoS(), { s: frS() }, o || {});
+    const inv = (o) => Object.assign({ from: 'u1', n: 'שועל זריז 27', e: '🦊', t: 1790000000000, to: '' }, o || {});
     const stat = () => ({ v: '1.5.0', p: 'android', first: '2026-10-01', last: '2026-10-13', days: 5, sh: 12, s30: 6, ps: 1, age: 'u18', f: { rights: true }, t: 1790000000000 });
     const cases = [
       ['owner can create a shift', 'ALLOW', 'create', me, `/users/u1/shifts/s1`, rec(5), null],
@@ -155,6 +159,38 @@ async function main() {
       ['a player leaves the table', 'ALLOW', 'delete', me, '/lb/u1', null, lb()],
       ['another player cannot remove a row', 'DENY', 'delete', { uid: 'u2' }, '/lb/u1', null, lb()],
       ['an admin removes a bad row', 'ALLOW', 'delete', boss, '/lb/u1', null, lb(), ['boss']],
+      // the friends' competition: a card is read only by the friends it lists; an invitation is accepted once
+      ['a player saves their friends card', 'ALLOW', 'create', me, '/fr/u1', fr(), null],
+      ['a card in someone else’s name is refused', 'DENY', 'create', me, '/fr/u2', fr(), null],
+      ['a listed friend reads the card', 'ALLOW', 'get', { uid: 'u2' }, '/fr/u1', null, fr()],
+      ['someone not on the list cannot read it', 'DENY', 'get', { uid: 'u3' }, '/fr/u1', null, fr()],
+      ['signed out: cannot read a card', 'DENY', 'get', null, '/fr/u1', null, fr()],
+      ['the cards cannot be listed', 'DENY', 'list', { uid: 'u2' }, '/fr/u1', null, fr()],
+      ['hidden amounts: a card without them', 'ALLOW', 'update', me, '/fr/u1', frNoS({ hide: true }), fr()],
+      ['hidden amounts: a card that still carries them is refused', 'DENY', 'update', me, '/fr/u1', fr({ hide: true }), fr()],
+      ['an amount out of range is refused', 'DENY', 'update', me, '/fr/u1', fr({ s: frS({ m: { k: 202610, v: 20000000 } }) }), fr()],
+      ['a month that is not a month is refused', 'DENY', 'update', me, '/fr/u1', fr({ s: frS({ m: { k: 99, v: 1 } }) }), fr()],
+      ['more than 50 friends is refused', 'DENY', 'update', me, '/fr/u1', fr({ f: Array.from({ length: 51 }, (_, i) => 'u' + i) }), fr()],
+      ['extra fields (an email) on a card are refused', 'DENY', 'update', me, '/fr/u1', fr({ email: 'a@b.c' }), fr()],
+      ['a nickname with a phone number on a card is refused', 'DENY', 'create', me, '/fr/u1', fr({ n: 'call 0541234567' }), null],
+      ['another player cannot delete a card', 'DENY', 'delete', { uid: 'u2' }, '/fr/u1', null, fr()],
+      ['a player removes their card', 'ALLOW', 'delete', me, '/fr/u1', null, fr()],
+      ['a player makes an invitation', 'ALLOW', 'create', me, '/inv/abcdefghijklmnop1', inv(), null],
+      ['an invitation in someone else’s name is refused', 'DENY', 'create', me, '/inv/abcdefghijklmnop1', inv({ from: 'u2' }), null],
+      ['a short (guessable) code is refused', 'DENY', 'create', me, '/inv/abc', inv(), null],
+      ['an invitation made already accepted is refused', 'DENY', 'create', me, '/inv/abcdefghijklmnop1', inv({ to: 'u2' }), null],
+      ['whoever has the link reads the invitation', 'ALLOW', 'get', { uid: 'u2' }, '/inv/abcdefghijklmnop1', null, inv()],
+      ['signed out: cannot read an invitation', 'DENY', 'get', null, '/inv/abcdefghijklmnop1', null, inv()],
+      ['the friend accepts', 'ALLOW', 'update', { uid: 'u2' }, '/inv/abcdefghijklmnop1', inv({ to: 'u2' }), inv()],
+      ['accepting in someone else’s name is refused', 'DENY', 'update', { uid: 'u2' }, '/inv/abcdefghijklmnop1', inv({ to: 'u3' }), inv()],
+      ['the sender cannot accept their own', 'DENY', 'update', me, '/inv/abcdefghijklmnop1', inv({ to: 'u1' }), inv()],
+      ['an invitation accepted once cannot be taken again', 'DENY', 'update', { uid: 'u3' }, '/inv/abcdefghijklmnop1', inv({ to: 'u3' }), inv({ to: 'u2' })],
+      ['accepting cannot change the sender', 'DENY', 'update', { uid: 'u2' }, '/inv/abcdefghijklmnop1', inv({ to: 'u2', from: 'u2' }), inv()],
+      ['the sender lists their invitations', 'ALLOW', 'list', me, '/inv/abcdefghijklmnop1', null, inv()],
+      ['another player cannot list them', 'DENY', 'list', { uid: 'u2' }, '/inv/abcdefghijklmnop1', null, inv()],
+      ['the sender deletes an invitation', 'ALLOW', 'delete', me, '/inv/abcdefghijklmnop1', null, inv({ to: 'u2' })],
+      ['the friend who accepted deletes it', 'ALLOW', 'delete', { uid: 'u2' }, '/inv/abcdefghijklmnop1', null, inv({ to: 'u2' })],
+      ['a third player cannot delete it', 'DENY', 'delete', { uid: 'u3' }, '/inv/abcdefghijklmnop1', null, inv({ to: 'u2' })],
     ];
     const testCases = cases.map(([, expect, method, auth, p, data, existing, admins, mocks]) => {
       const tc = { expectation: expect, request: { auth: auth || null, path: db + p, method } };

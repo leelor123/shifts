@@ -3,6 +3,7 @@ rules_version = '2';
 // Every user can read and write only their own data under users/{uid}.
 // Anonymous statistics are readable by admins only; support requests by their writer and admins.
 // The games' champions table is public to signed-in users: a nickname, an emoji and scores, by choice.
+// The friends' competition: a player's card is read only by the friends they chose (and only with amounts if they show them).
 // Nothing else is reachable.
 service cloud.firestore {
   match /databases/{database}/documents {
@@ -73,6 +74,50 @@ service cloud.firestore {
       allow list: if request.auth != null && request.query.limit <= 100;
       allow create, update: if request.auth != null && request.auth.uid == uid && validLb(request.resource.data);
       allow delete: if request.auth != null && (request.auth.uid == uid || isAdmin());
+    }
+
+    // the friends' competition (views-friends.js): a player's card, written only by them, read only by them and by
+    // the friends they list in f (both sides list each other once an invitation is accepted). Amounts (s) are left
+    // out when the player hides them.
+    match /fr/{uid} {
+      allow get: if request.auth != null && (request.auth.uid == uid || request.auth.uid in resource.data.f);
+      allow list: if false;
+      allow create, update: if request.auth != null && request.auth.uid == uid && validFr(request.resource.data);
+      allow delete: if request.auth != null && request.auth.uid == uid;
+    }
+    // an invitation to be friends: made by its sender under a long random code that only the link carries; whoever
+    // opens the link may read it and accept it once (to = their uid); the sender lists their own to see who accepted
+    match /inv/{code} {
+      allow create: if request.auth != null && code.size() >= 16 && code.size() <= 40
+        && request.resource.data.keys().hasOnly(['from', 'n', 'e', 't', 'to'])
+        && request.resource.data.from == request.auth.uid && request.resource.data.to == ''
+        && validNick(request.resource.data.n) && request.resource.data.e in ['🦊', '🐯', '🦉', '🐬', '🐺', '🦅', '🦔', '🐧', '🦜', '🐻', '🐢', '🐳', '🐼', '🦁', '🐸', '🐙', '🦄', '🐝', '⚡', '🔥', '⭐', '🚀', '🎧', '⚽']
+        && request.resource.data.t is int;
+      allow get: if request.auth != null;
+      allow list: if request.auth != null && resource.data.from == request.auth.uid;
+      allow update: if request.auth != null && resource.data.to == '' && resource.data.from != request.auth.uid
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['to'])
+        && request.resource.data.to == request.auth.uid;
+      allow delete: if request.auth != null && (resource.data.from == request.auth.uid || resource.data.to == request.auth.uid);
+    }
+
+    function validNick(n) {
+      return n is string && n.matches('^[א-תa-zA-Z0-9 _.-]{2,16}$') && !n.matches('.*[0-9]{5,}.*');
+    }
+    function validFr(d) {
+      return d.keys().hasOnly(['n', 'e', 't', 'hide', 'f', 's']) && d.keys().hasAll(['n', 'e', 't', 'hide', 'f'])
+        && validNick(d.n) && d.e in ['🦊', '🐯', '🦉', '🐬', '🐺', '🦅', '🦔', '🐧', '🦜', '🐻', '🐢', '🐳', '🐼', '🦁', '🐸', '🐙', '🦄', '🐝', '⚡', '🔥', '⭐', '🚀', '🎧', '⚽']
+        && d.t is int && d.hide is bool
+        && d.f is list && d.f.size() <= 50
+        && (!('s' in d) || (d.hide == false && frStats(d.s)));
+    }
+    // this month's and this year's gross (with their month and year, so an old one never counts), all time, per hour
+    function frStats(s) {
+      return s is map && s.keys().hasOnly(['m', 'y', 'a', 'h']) && s.keys().hasAll(['m', 'y', 'a', 'h'])
+        && s.m is map && s.m.keys().hasOnly(['k', 'v']) && s.m.k is int && s.m.k >= 202601 && s.m.k < 210001 && s.m.v is int && s.m.v >= 0 && s.m.v <= 10000000
+        && s.y is map && s.y.keys().hasOnly(['k', 'v']) && s.y.k is int && s.y.k >= 2026 && s.y.k < 2100 && s.y.v is int && s.y.v >= 0 && s.y.v <= 100000000
+        && s.a is int && s.a >= 0 && s.a <= 1000000000
+        && (s.h is int || s.h is float) && s.h >= 0 && s.h <= 2000;
     }
 
     function ownTicket() {
