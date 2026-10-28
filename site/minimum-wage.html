@@ -24,6 +24,7 @@
 :root { --bg: #f7f5ff; --surface: #fff; --surface-2: #f0ecff; --ink: #1b1530; --ink-2: #5d5677; --line: #e5e0f5; --brand: #5a33e6; --brand-2: #7c4dff; --gold: #ffb020; --cta-1: #5a33e6; --cta-2: #7c4dff; color-scheme: light; }
 @media (prefers-color-scheme: dark) { :root { --bg: #0e0b1a; --surface: #17132a; --surface-2: #211b3a; --ink: #f1edff; --ink-2: #b6aed3; --line: #2c2548; --brand: #9b7dff; --brand-2: #b39cff; color-scheme: dark; } }
 * { box-sizing: border-box; }
+[hidden] { display: none !important; } /* (a rule that sets display would show what is hidden) */
 body { margin: 0; background: var(--bg); color: var(--ink); font: 400 1.05rem/1.7 Rubik, system-ui, sans-serif; overflow-wrap: break-word; }
 a { color: var(--brand); }
 header { position: sticky; top: 0; z-index: 2; background: color-mix(in srgb, var(--bg) 88%, transparent); backdrop-filter: blur(10px); border-bottom: 1px solid var(--line); }
@@ -82,7 +83,7 @@ footer { text-align: center; color: var(--ink-2); font-size: .9rem; padding: 0 1
   <p class="src">המקור הרשמי: <a href="https://www.gov.il/he/Departments/Guides/minimum-wage" rel="noopener">שכר מינימום ב-gov.il</a> · <a href="https://www.gov.il/he/Departments/Guides/rights-of-working-youth" rel="noopener">זכויות בני נוער בעבודה ב-gov.il</a></p>
   <div class="note">שעתי אינה גוף ממשלתי ואינה מייצגת גוף ממשלתי. המידע כללי ואינו ייעוץ משפטי; בהסכם קיבוצי, צו הרחבה ענפי או חוזה אישי ייתכנו זכויות נוספות. עודכן ב-28.10.2026.</div>
   <h2>עוד שאלות</h2>
-  <div class="more"><a href="recuperation-pay">דמי הבראה 2026: כמה משלמים ליום, וכמה ימים מגיעים</a><a href="shabbat-pay">כמה משלמים על עבודה בשבת ובחג?</a></div>
+  <div class="more"><a href="check">מרמים אותך? בדיקה של 10 שניות</a><a href="recuperation-pay">דמי הבראה 2026: כמה משלמים ליום, וכמה ימים מגיעים</a><a href="shabbat-pay">כמה משלמים על עבודה בשבת ובחג?</a></div>
 </main>
 <footer>שעתי · <a href="./">לאתר</a> · <a href="https://leelor123.github.io/shifts/privacy.html">פרטיות</a></footer>
 </body>

@@ -119,6 +119,7 @@ const CSS = `
 :root { --bg: #f7f5ff; --surface: #fff; --surface-2: #f0ecff; --ink: #1b1530; --ink-2: #5d5677; --line: #e5e0f5; --brand: #5a33e6; --brand-2: #7c4dff; --gold: #ffb020; --cta-1: #5a33e6; --cta-2: #7c4dff; color-scheme: light; }
 @media (prefers-color-scheme: dark) { :root { --bg: #0e0b1a; --surface: #17132a; --surface-2: #211b3a; --ink: #f1edff; --ink-2: #b6aed3; --line: #2c2548; --brand: #9b7dff; --brand-2: #b39cff; color-scheme: dark; } }
 * { box-sizing: border-box; }
+[hidden] { display: none !important; } /* (a rule that sets display would show what is hidden) */
 body { margin: 0; background: var(--bg); color: var(--ink); font: 400 1.05rem/1.7 Rubik, system-ui, sans-serif; overflow-wrap: break-word; }
 a { color: var(--brand); }
 header { position: sticky; top: 0; z-index: 2; background: color-mix(in srgb, var(--bg) 88%, transparent); backdrop-filter: blur(10px); border-bottom: 1px solid var(--line); }
@@ -195,7 +196,7 @@ function page(p) {
   <p class="src">המקור הרשמי: ${p.sources.map(([l, h]) => `<a href="${h}" rel="noopener">${esc(l)} ב-gov.il</a>`).join(' · ')}</p>
   <div class="note">שעתי אינה גוף ממשלתי ואינה מייצגת גוף ממשלתי. המידע כללי ואינו ייעוץ משפטי; בהסכם קיבוצי, צו הרחבה ענפי או חוזה אישי ייתכנו זכויות נוספות. עודכן ב-${dmy(today)}.</div>
   <h2>עוד שאלות</h2>
-  <div class="more">${others.map((x) => `<a href="${x.slug}">${esc(x.title)}</a>`).join('')}</div>
+  <div class="more"><a href="check">${esc(CHECK.title)}</a>${others.map((x) => `<a href="${x.slug}">${esc(x.title)}</a>`).join('')}</div>
 </main>
 <footer>שעתי · <a href="./">לאתר</a> · <a href="https://leelor123.github.io/shifts/privacy.html">פרטיות</a></footer>
 </body>
@@ -203,10 +204,104 @@ function page(p) {
 `;
 }
 
+/* ---------------- the 10-second check: "are they cheating you?" ---------------- */
+const CHECK = { slug: 'check', title: 'מרמים אותך? בדיקה של 10 שניות', desc: `מכניסים גיל ושכר לשעה, ורואים אם משלמים לך לפי החוק (${mwYear}): שכר מינימום לנוער ולמבוגרים, ושבת ב-${REST[0]}%. בלי הרשמה, שום דבר לא נשלח.` };
+const CHECK_CSS = `
+.ck { background: var(--surface); border-radius: 22px; padding: 18px; box-shadow: 0 6px 24px rgba(40, 20, 120, .08); display: grid; gap: 16px; }
+.ck label, .ck .q { font-weight: 600; display: grid; gap: 8px; }
+.ages { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 8px; }
+.ages button { font: 600 1rem Rubik, sans-serif; border: 1.5px solid var(--line); background: var(--bg); color: var(--ink); border-radius: 14px; padding: 12px 4px; cursor: pointer; }
+.ages button[aria-pressed="true"] { border-color: var(--brand); background: var(--surface-2); color: var(--brand); }
+.ck input[type="number"] { font: 600 1.15rem Rubik, sans-serif; padding: 12px 14px; border: 1.5px solid var(--line); border-radius: 14px; background: var(--bg); color: var(--ink); width: 100%; box-sizing: border-box; }
+.ck input[type="number"]:focus { outline: 2px solid var(--brand); outline-offset: 1px; }
+.ck .sw { display: flex; align-items: center; gap: 10px; font-weight: 500; }
+.ck .sw input { width: 22px; height: 22px; accent-color: var(--brand); }
+.ck small { color: var(--ink-2); font-weight: 400; }
+#ck-out { border-radius: 22px; padding: 20px; display: grid; gap: 8px; text-align: center; color: #fff; }
+#ck-out.bad { background: linear-gradient(135deg, #4a1fd6, #b02adf); }
+#ck-out.good { background: linear-gradient(135deg, #0b7a4b, #14b8a6); }
+#ck-title { font: 700 1.5rem Fredoka, Rubik, sans-serif; }
+#ck-big { font: 800 clamp(1.6rem, 7vw, 2.3rem)/1.2 Fredoka, Rubik, sans-serif; }
+#ck-why { opacity: .92; }
+.ck-acts { display: flex; flex-wrap: wrap; gap: 10px; justify-content: center; margin-top: 6px; }
+.ck-acts button { font: 700 1rem Rubik, sans-serif; border: 0; border-radius: 999px; padding: 12px 18px; cursor: pointer; background: #fff; color: #3a1fb0; }
+.ck-acts button.wa { background: #25d366; color: #063b1c; }
+.priv { font-size: .92rem; color: var(--ink-2); text-align: center; }`;
+function checkPage() {
+  const url = `${SITE}/check`;
+  return `<!doctype html>
+<html lang="he" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>${esc(CHECK.title)} · שעתי</title>
+<meta name="description" content="${esc(CHECK.desc)}">
+<link rel="canonical" href="${url}">
+<meta name="theme-color" content="#5a33e6">
+<meta property="og:type" content="website">
+<meta property="og:locale" content="he_IL">
+<meta property="og:site_name" content="שעתי">
+<meta property="og:title" content="${esc(CHECK.title)}">
+<meta property="og:description" content="${esc(CHECK.desc)}">
+<meta property="og:url" content="${url}">
+<meta property="og:image" content="${SITE}/img/og.png">
+<link rel="icon" href="img/favicon-48.png" sizes="48x48">
+<link rel="apple-touch-icon" href="img/apple-touch-icon.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Rubik:wght@400..800&family=Fredoka:wght@500..700&display=swap">
+<style>${CSS}${CHECK_CSS}</style>
+</head>
+<body>
+<header><div class="bar"><a class="logo" href="./"><img src="img/apple-touch-icon.png" alt="">שעתי</a><a class="btn" href="${APP}">לפתוח את שעתי</a></div></header>
+<main>
+  <h1>${esc(CHECK.title)}</h1>
+  <p>שתי שאלות, ורואים אם משלמים לך לפחות שכר מינימום לפי החוק. בלי הרשמה, ושום דבר לא נשלח.</p>
+  <div class="ck">
+    <div class="q">בן/בת כמה את/ה?
+      <div class="ages" role="group" aria-label="גיל">
+        <button type="button" data-age="u16" aria-pressed="false">מתחת ל-16</button>
+        <button type="button" data-age="a16" aria-pressed="false">16</button>
+        <button type="button" data-age="a17" aria-pressed="false">17</button>
+        <button type="button" data-age="adult" aria-pressed="false">18 ומעלה</button>
+      </div>
+    </div>
+    <label for="ck-wage"><span>כמה משלמים לך לשעה (₪)?</span><input id="ck-wage" type="number" inputmode="decimal" min="0" step="0.01" placeholder="למשל 32"></label>
+    <label for="ck-hours"><span>כמה שעות בחודש, בערך? <small>(לא חובה)</small></span><input id="ck-hours" type="number" inputmode="numeric" min="0" step="1" placeholder="למשל 60"></label>
+    <label class="sw"><input id="ck-shab" type="checkbox"> בשבת משלמים לי אותו תעריף כמו ביום חול</label>
+    <label id="ck-shab-h" for="ck-shab-hours" hidden><span>כמה מהשעות האלה בשבת?</span><input id="ck-shab-hours" type="number" inputmode="numeric" min="0" step="1" placeholder="למשל 8"></label>
+  </div>
+  <div id="ck-out" hidden aria-live="polite">
+    <div id="ck-title"></div>
+    <div id="ck-big"></div>
+    <div id="ck-why"></div>
+    <div class="ck-acts"><button type="button" id="ck-share">📸 תמונה לסטורי</button><button type="button" class="wa" id="ck-wa">שליחה בוואטסאפ</button></div>
+  </div>
+  <div class="cta"><b>זה רק שכר המינימום</b><span>שעתי בודקת את כל השאר: שבתות וחגים לפי העיר, שעות נוספות, נסיעות, הבראה, ואת התלוש עד השקל. חינם ובלי פרסומות.</span><a class="btn" href="${APP}">לבדוק את התלוש בשעתי</a></div>
+  <p class="src">המקור הרשמי: ${[['שכר מינימום', GOV.minwage], ['זכויות בני נוער בעבודה', GOV.youth], ['מנוחה שבועית וחגים', GOV.rest]].map(([l, h]) => `<a href="${h}" rel="noopener">${esc(l)} ב-gov.il</a>`).join(' · ')}</p>
+  <div class="note">שעתי אינה גוף ממשלתי ואינה מייצגת גוף ממשלתי. הבדיקה כללית ואינה ייעוץ משפטי: לפי שכר המינימום מ-${dmy(MW.from)} ולפי הגיל; לחניכים, לבעלי מוגבלות ובהסכמים מיוחדים יש כללים אחרים. עודכן ב-${dmy(today)}.</div>
+  <h2>עוד שאלות</h2>
+  <div class="more">${PAGES.map((x) => `<a href="${x.slug}">${esc(x.title)}</a>`).join('')}</div>
+</main>
+<footer>שעתי · <a href="./">לאתר</a> · <a href="https://leelor123.github.io/shifts/privacy.html">פרטיות</a></footer>
+<script src="check.js"></script>
+</body>
+</html>
+`;
+}
+const CHECK_DATA = {
+  min: { u16: Y[0].hourly, a16: Y[1].hourly, a17: Y[2].hourly, adult: MW.hourly },
+  label: { u16: 'מתחת לגיל 16', a16: 'בגיל 16', a17: 'בגיל 17', adult: 'מגיל 18' },
+  rest: REST[0], from: MW.from,
+};
+fs.writeFileSync(path.join(ROOT, 'site', 'check.html'), checkPage());
+fs.writeFileSync(path.join(ROOT, 'site', 'check.js'), fs.readFileSync(path.join(__dirname, 'site-check.js'), 'utf8').replace('const D = __DATA__;', 'const D = ' + JSON.stringify(CHECK_DATA) + ';'));
+
 for (const p of PAGES) fs.writeFileSync(path.join(ROOT, 'site', p.slug + '.html'), page(p));
 fs.writeFileSync(path.join(ROOT, 'site', 'sitemap.xml'), `<?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
   <url><loc>${SITE}/</loc><lastmod>${today}</lastmod></url>
+  <url><loc>${SITE}/check</loc><lastmod>${today}</lastmod></url>
 ${PAGES.map((p) => `  <url><loc>${SITE}/${p.slug}</loc><lastmod>${today}</lastmod></url>`).join('\n')}
 </urlset>
 `);
