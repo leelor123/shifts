@@ -1604,3 +1604,4 @@ html:not([lang="he"]) .lb-games button, html:not([lang="he"]) .lb-periods button
 .done-cta { border: 1.5px solid var(--warn); }
 .done-cta .dc-t { font-weight: 700; display: flex; gap: 6px; align-items: center; color: var(--warn); }
 .done-cta .dc-s { font-size: .86rem; color: var(--on-surface-var); margin: 4px 0 12px; }
+.home-hero .hh-fc-n { opacity: .8; font-size: .92em; }

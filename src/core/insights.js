@@ -353,7 +353,8 @@
 
     /* ---- money ---- */
     const curSum = Engine.periodSummary(model, curP.key, emp.id);
-    const planned = Engine.totals(model, today > curP.from ? U.addDays(today, 0) : curP.from, curP.to, { status: 'planned' });
+    // every planned shift of the period: the ones to come and the ones that happened and wait for a "done"
+    const planned = Engine.totals(model, curP.from, curP.to, { status: 'planned' });
     const elapsed = Math.max(1, U.diffDays(curP.from, today) + 1);
     const total = U.diffDays(curP.from, curP.to) + 1;
     const goal = +(S.goal && S.goal.amount) || 0;
@@ -361,12 +362,22 @@
     const curVal = goalNet ? curSum.net.net : curSum.gross;
     const pace = elapsed >= 3 ? (curSum.gross / elapsed) * total : null;
     const withPlanned = curSum.gross + planned.wage + planned.travel;
+    // the forecast: what was earned + the planned shifts + the usual pace only for the days after the last
+    // planned one (the plan already speaks for the days up to it, so nothing is counted twice)
+    let forecast = pace, lastPlan = null;
+    if (planned.shifts) {
+      for (const r of model.results.values()) if (r.status === 'planned' && r.dateKey >= curP.from && r.dateKey <= curP.to && (!lastPlan || r.dateKey > lastPlan)) lastPlan = r.dateKey;
+      const after = lastPlan ? Math.max(0, U.diffDays(lastPlan > today ? lastPlan : today, curP.to)) : 0;
+      forecast = withPlanned + (elapsed >= 3 ? (curSum.gross / elapsed) * after : 0);
+    }
     const ratio = curSum.gross > 0 ? curSum.net.net / curSum.gross : 0.85;
-    const projection = { period: curP, actual: curSum.gross, actualNet: curSum.net.net, pace, withPlanned, plannedCount: planned.shifts, elapsed, total };
-    if (on('projection') && pace != null && curSum.gross > 0) {
+    const projection = { period: curP, actual: curSum.gross, actualNet: curSum.net.net, pace, withPlanned, forecast, plannedCount: planned.shifts, plannedWage: planned.wage + planned.travel, lastPlan, elapsed, total };
+    if (on('projection') && forecast != null && (curSum.gross > 0 || planned.shifts)) {
       live.push({ type: 'projection', priority: 2, title: emp.periodStartDay > 1 ? 'צפי לסוף התקופה' : 'צפי לסוף החודש',
-        body: `לפי הקצב הנוכחי: כ-${U.money(pace, 0)} ברוטו` + (planned.shifts ? `; עם ${planned.shifts} המשמרות המתוכננות: ${U.money(withPlanned, 0)}.` : '.'),
-        explain: `${U.money(curSum.gross, 0)} עד היום ב-${elapsed} מתוך ${total} ימים, מוכפל לפי הקצב.` });
+        body: `כ-${U.money(forecast, 0)} ברוטו` + (planned.shifts ? `, כולל ${planned.shifts} משמרות מתוכננות (${U.money(planned.wage + planned.travel, 0)}).` : ', לפי הקצב שלך עד היום.'),
+        explain: planned.shifts
+          ? `${U.money(curSum.gross, 0)} עד היום, ועוד המשמרות המתוכננות עד ${U.fmtDate(lastPlan, 'short')}${lastPlan < curP.to && elapsed >= 3 ? ', ואחריהן לפי הקצב שלך' : ''}.`
+          : `${U.money(curSum.gross, 0)} עד היום ב-${elapsed} מתוך ${total} ימים, מוכפל לפי הקצב.` });
     }
     if (goal > 0) {
       const target = goal;

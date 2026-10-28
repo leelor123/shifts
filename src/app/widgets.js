@@ -58,7 +58,7 @@
       // "אוקטובר" (this year's months without the year: a small widget has little room)
       period: emp.periodStartDay > 1 ? 'תקופת השכר' : P.label.replace(' ' + today.slice(0, 4), ''), periodTo: P.to,
       gross: m0(sum.gross), net: m0(sum.net.net), hours: U.hm(sum.hours * 60), shifts: sum.shifts,
-      today: m0(day.gross), pace: proj && proj.pace ? m0(proj.pace) : '',
+      today: m0(day.gross), pace: proj && proj.forecast != null ? m0(proj.forecast) : '', // the forecast (with the planned shifts)
       goal: goalAmt ? { pct: Math.min(100, Math.floor((cur / goalAmt) * 100)), of: m0(goalAmt), left: m0(Math.max(0, goalAmt - cur)) } : null,
       payday: paySum && paySum.gross > 0 ? { date: next.payDate, amount: m0(paySum.net.net) } : null,
       saving, active,

@@ -660,7 +660,7 @@
   "where": [
    "app/claim-report.js:74",
    "app/pickers.js:95",
-   "app/views-home.js:229",
+   "app/views-home.js:231",
    "app/views-leaderboard.js:17",
    "app/views-leaderboard.js:296"
   ]
@@ -1548,7 +1548,7 @@
   "where": [
    "app/export.js:43",
    "app/export.js:121",
-   "app/views-home.js:207",
+   "app/views-home.js:209",
    "app/views-recap.js:48",
    "app/views-recap.js:63",
    "app/views-reports.js:69",
@@ -1602,14 +1602,14 @@
    "app/export.js:43",
    "app/export.js:114",
    "app/views-guide.js:148",
-   "app/views-home.js:205",
-   "app/views-home.js:205",
+   "app/views-home.js:207",
+   "app/views-home.js:207",
    "app/views-payslip.js:245",
    "app/views-recap.js:194",
    "app/views-reports.js:68",
    "app/views-settings.js:604",
    "core/games.js:185",
-   "core/insights.js:376",
+   "core/insights.js:387",
    "core/payslip.js:24",
    "core/payslip.js:582",
    "core/payslip.js:600"
@@ -1621,11 +1621,11 @@
   "where": [
    "app/export.js:43",
    "app/export.js:121",
-   "app/views-home.js:207",
+   "app/views-home.js:209",
    "app/views-reports.js:68",
    "app/views-reports.js:166",
    "app/views-settings.js:604",
-   "core/insights.js:376"
+   "core/insights.js:387"
   ]
  },
  {
@@ -2088,7 +2088,7 @@
   "where": [
    "app/pickers.js:95",
    "app/plus.js:467",
-   "app/views-home.js:229"
+   "app/views-home.js:231"
   ]
  },
  {
@@ -4839,7 +4839,7 @@
   "kind": "lit",
   "where": [
    "app/views-games.js:104",
-   "app/views-home.js:283",
+   "app/views-home.js:285",
    "app/views-shift.js:39"
   ]
  },
@@ -4855,7 +4855,7 @@
   "kind": "lit",
   "where": [
    "app/views-games.js:105",
-   "app/views-home.js:283",
+   "app/views-home.js:285",
    "app/views-rights.js:204",
    "app/views-settings.js:130"
   ]
@@ -5068,7 +5068,7 @@
   "kind": "lit",
   "where": [
    "app/views-games.js:143",
-   "app/views-home.js:283"
+   "app/views-home.js:285"
   ]
  },
  {
@@ -5541,7 +5541,7 @@
   "kind": "lit",
   "where": [
    "app/views-games.js:884",
-   "core/insights.js:576"
+   "core/insights.js:587"
   ]
  },
  {
@@ -5549,7 +5549,7 @@
   "kind": "lit",
   "where": [
    "app/views-games.js:884",
-   "core/insights.js:576"
+   "core/insights.js:587"
   ]
  },
  {
@@ -5884,8 +5884,8 @@
   "kind": "lit",
   "where": [
    "app/views-guide.js:149",
-   "app/views-home.js:207",
-   "app/views-home.js:207",
+   "app/views-home.js:209",
+   "app/views-home.js:209",
    "app/views-payslip.js:245",
    "app/views-payslip.js:491",
    "core/games.js:186",
@@ -6299,10 +6299,17 @@
   ]
  },
  {
+  "key": " <span class=\"hh-fc-n\">(כולל {0} מתוכננות)</span>",
+  "kind": "tpl",
+  "where": [
+   "app/views-home.js:199"
+  ]
+ },
+ {
   "key": "תקופת השכר",
   "kind": "lit",
   "where": [
-   "app/views-home.js:198",
+   "app/views-home.js:200",
    "app/widgets.js:59"
   ]
  },
@@ -6310,35 +6317,35 @@
   "key": "<section class=\"home-hero\" data-act=\"go-summary\"><button class=\"vh\" data-act=\"go-summary\">פירוט {0}</button>\n      {1}\n      <span class=\"aurora\" aria-hidden=\"true\" style=\"{2}\"><i></i><i></i><i></i></span><span class=\"hh-dial\" aria-hidden=\"true\" style=\"{3}\"></span>\n      <div class=\"hh-label\">{4} {5} עד עכשיו</div>\n      <div class=\"hero-num\">{6}</div>\n      <div class=\"hh-stats\"><span><b>{7}</b><small>{8}</small></span><span><b class=\"num\">{9}</b><small>שעות</small></span><span><b>{10}</b><small>{11}</small></span></div>\n      {12}\n    </section>",
   "kind": "tpl",
   "where": [
-   "app/views-home.js:202"
+   "app/views-home.js:204"
   ]
  },
  {
   "key": "<button class=\"hh-skin\" data-act=\"plus-design\" aria-label=\"עיצוב כרטיס השכר\">{0}</button>",
   "kind": "tpl",
   "where": [
-   "app/views-home.js:203"
+   "app/views-home.js:205"
   ]
  },
  {
   "key": "בתקופת השכר",
   "kind": "lit",
   "where": [
-   "app/views-home.js:205"
+   "app/views-home.js:207"
   ]
  },
  {
   "key": "ב",
   "kind": "lit",
   "where": [
-   "app/views-home.js:205"
+   "app/views-home.js:207"
   ]
  },
  {
   "key": "משמרת",
   "kind": "lit",
   "where": [
-   "app/views-home.js:207",
+   "app/views-home.js:209",
    "app/views-recap.js:48",
    "app/views-recap.js:63"
   ]
@@ -6347,114 +6354,114 @@
   "key": "<div class=\"hh-goal\"><div class=\"progress thin\"><b style=\"width:{0}%\"></b><i style=\"width:{1}%\"></i></div>\n        <div class=\"hh-goal-l\">{2}% מיעד {3}{4}</div></div>",
   "kind": "tpl",
   "where": [
-   "app/views-home.js:208"
+   "app/views-home.js:210"
   ]
  },
  {
-  "key": " · צפי {0}",
+  "key": " · צפי {0}{1}",
   "kind": "tpl",
   "where": [
-   "app/views-home.js:209"
+   "app/views-home.js:211"
   ]
  },
  {
   "key": "צפי לסוף התקופה",
   "kind": "lit",
   "where": [
-   "app/views-home.js:210",
-   "core/insights.js:367"
+   "app/views-home.js:212",
+   "core/insights.js:376"
   ]
  },
  {
   "key": "צפי לסוף החודש",
   "kind": "lit",
   "where": [
-   "app/views-home.js:210",
-   "core/insights.js:367"
+   "app/views-home.js:212",
+   "core/insights.js:376"
   ]
  },
  {
   "key": "התחל את המשמרת של {0}",
   "kind": "tpl",
   "where": [
-   "app/views-home.js:227"
+   "app/views-home.js:229"
   ]
  },
  {
   "key": "משמרת {0} ב-{1} · {2}",
   "kind": "tpl",
   "where": [
-   "app/views-home.js:229"
+   "app/views-home.js:231"
   ]
  },
  {
   "key": "הסיכום השבועי שלך מוכן",
   "kind": "lit",
   "where": [
-   "app/views-home.js:230"
+   "app/views-home.js:232"
   ]
  },
  {
   "key": "מחר משכורת",
   "kind": "lit",
   "where": [
-   "app/views-home.js:253"
+   "app/views-home.js:255"
   ]
  },
  {
   "key": "עוד {0} ימים למשכורת",
   "kind": "tpl",
   "where": [
-   "app/views-home.js:253"
+   "app/views-home.js:255"
   ]
  },
  {
   "key": "💸 {0} · כ-{1}",
   "kind": "tpl",
   "where": [
-   "app/views-home.js:254"
+   "app/views-home.js:256"
   ]
  },
  {
   "key": "יש לך מספיק בשביל {0}! 🎉",
   "kind": "tpl",
   "where": [
-   "app/views-home.js:273"
+   "app/views-home.js:275"
   ]
  },
  {
   "key": "<button class=\"save-card {0}\" data-act=\"settings-open\" data-k=\"goal\" aria-label=\"יעד חיסכון: {1}, {2}%\">\n      <span class=\"sv-top\"><span class=\"sv-e\" aria-hidden=\"true\">{3}</span><b>{4}</b><span class=\"sv-pct\">{5}%</span></span>\n      <span class=\"progress thin\"><i style=\"width:{6}%\"></i></span>\n      <span class=\"sv-sub\">{7}</span></button>",
   "kind": "tpl",
   "where": [
-   "app/views-home.js:274"
+   "app/views-home.js:276"
   ]
  },
  {
   "key": "יש לך מספיק! הרווחת {0} מאז שהתחלת לחסוך",
   "kind": "tpl",
   "where": [
-   "app/views-home.js:277"
+   "app/views-home.js:279"
   ]
  },
  {
   "key": "הרווחת {0} מתוך {1}{2}",
   "kind": "tpl",
   "where": [
-   "app/views-home.js:277"
+   "app/views-home.js:279"
   ]
  },
  {
   "key": " · עוד כ-{0} שעות עבודה",
   "kind": "tpl",
   "where": [
-   "app/views-home.js:277"
+   "app/views-home.js:279"
   ]
  },
  {
   "key": "משמרת חדשה",
   "kind": "lit",
   "where": [
-   "app/views-home.js:283",
+   "app/views-home.js:285",
    "app/views-shift.js:440"
   ]
  },
@@ -6462,154 +6469,154 @@
   "key": "<div class=\"card bday\"><div class=\"bday-confetti\" aria-hidden=\"true\"></div><div class=\"bday-title\">מזל טוב{0}!</div>\n      <div>יום הולדת {1} שמח 🎂 שתהיה שנה של משמרות טובות, בוסים הוגנים ותלושים בלי הפתעות.</div>{2}</div>",
   "kind": "tpl",
   "where": [
-   "app/views-home.js:291"
+   "app/views-home.js:293"
   ]
  },
  {
   "key": "<div class=\"small\" style=\"margin-top:6px\">מהיום החישוב כולל ניכויי חובה רגילים.</div>",
   "kind": "lit",
   "where": [
-   "app/views-home.js:292"
+   "app/views-home.js:294"
   ]
  },
  {
   "key": "הדפדפן לא שומר נתונים בטלפון כרגע. הכול נשמר בחשבון שלך.",
   "kind": "lit",
   "where": [
-   "app/views-home.js:296"
+   "app/views-home.js:298"
   ]
  },
  {
   "key": "הדפדפן לא שומר נתונים בטלפון. התחבר לחשבון כדי לא לאבד אותם.",
   "kind": "lit",
   "where": [
-   "app/views-home.js:296"
+   "app/views-home.js:298"
   ]
  },
  {
   "key": "<div class=\"banner slim\">{0}<div style=\"flex:1\">מצב הדגמה — נתונים לדוגמה</div><button class=\"btn text sm\" data-act=\"demo-clear\">מחק</button></div>",
   "kind": "tpl",
   "where": [
-   "app/views-home.js:297"
+   "app/views-home.js:299"
   ]
  },
  {
   "key": "<div class=\"banner slim warn\">{0}<div style=\"flex:1\">{1}</div><button class=\"btn text sm\" data-act=\"backup-now\">גבה</button></div>",
   "kind": "tpl",
   "where": [
-   "app/views-home.js:301"
+   "app/views-home.js:303"
   ]
  },
  {
   "key": "עבר זמן מאז הגיבוי האחרון",
   "kind": "lit",
   "where": [
-   "app/views-home.js:301"
+   "app/views-home.js:303"
   ]
  },
  {
   "key": "עוד לא גיבית",
   "kind": "lit",
   "where": [
-   "app/views-home.js:301"
+   "app/views-home.js:303"
   ]
  },
  {
   "key": "<div class=\"banner slim warn\">{0}<div style=\"flex:1\">{1}</div><button class=\"btn text sm\" data-act=\"shift-open\" data-id=\"{2}\">בדוק</button></div>",
   "kind": "tpl",
   "where": [
-   "app/views-home.js:304"
+   "app/views-home.js:306"
   ]
  },
  {
   "key": "\n      <div class=\"home-top\"><div class=\"titles\"><h1>{0}{1} <span class=\"wave\">👋</span></h1>\n        <div class=\"sub\">{2}{3}{4}{5}</div></div>\n        <span id=\"sync-dot\">{6}</span>\n        <button class=\"icon-btn\" data-act=\"support\" aria-label=\"עזרה ותמיכה\">{7}</button>\n        <button class=\"icon-btn\" data-act=\"insights\" aria-label=\"התראות ותובנות\">{8}{9}</button></div>\n      {10}\n      {11}\n      {12}\n      {13}\n      {14}\n      {15}\n      {16}\n      {17}\n      {18}\n      {19}\n      {20}\n      {21}\n      {22}\n    ",
   "kind": "tpl",
   "where": [
-   "app/views-home.js:321"
+   "app/views-home.js:323"
   ]
  },
  {
   "key": "<div class=\"home-list-head\"><span>משמרות אחרונות</span><span class=\"spacer\"></span>{0}<button class=\"btn text sm\" data-act=\"go-shifts\">הכול</button></div>\n        <div class=\"list home-list\">{1}</div>",
   "kind": "tpl",
   "where": [
-   "app/views-home.js:339"
+   "app/views-home.js:341"
   ]
  },
  {
   "key": "<div class=\"empty fun\">{0}<h3>עוד אין משמרות</h3><div>בתחילת משמרת לוחצים על \"התחל משמרת\".<br>משמרת שכבר התקיימה מוסיפים בכפתור <b>+</b>.</div></div>",
   "kind": "tpl",
   "where": [
-   "app/views-home.js:342"
+   "app/views-home.js:344"
   ]
  },
  {
   "key": "<div class=\"pd-row\"><button class=\"pd-info\" data-act=\"shift-open\" data-id=\"{0}\"><b>{1} · {2}</b><span>{3}–{4} · {5}</span></button>\n      <button class=\"btn go pd-ok\" data-act=\"mark-done\" data-id=\"{6}\">{7} עבדתי · {8}</button></div>",
   "kind": "tpl",
   "where": [
-   "app/views-home.js:350"
+   "app/views-home.js:352"
   ]
  },
  {
   "key": "<div class=\"card pending-card\"><div class=\"pd-head\">{0}<div><b>{1}</b><div class=\"small\">משמרת מתוכננת נכנסת לשכר רק אחרי שמאשרים שעבדת בה.</div></div></div>\n      {2}\n      {3}</div>",
   "kind": "tpl",
   "where": [
-   "app/views-home.js:352"
+   "app/views-home.js:354"
   ]
  },
  {
   "key": "עבדת במשמרת הזאת?",
   "kind": "lit",
   "where": [
-   "app/views-home.js:352"
+   "app/views-home.js:354"
   ]
  },
  {
   "key": "עבדת במשמרות האלה?",
   "kind": "lit",
   "where": [
-   "app/views-home.js:352"
+   "app/views-home.js:354"
   ]
  },
  {
   "key": "<button class=\"btn tonal block pd-all\" data-act=\"mark-done-all\">{0} עבדתי בכולן{1} · {2}</button>",
   "kind": "tpl",
   "where": [
-   "app/views-home.js:354"
+   "app/views-home.js:356"
   ]
  },
  {
   "key": "תפקיד למשמרת",
   "kind": "lit",
   "where": [
-   "app/views-home.js:360"
+   "app/views-home.js:362"
   ]
  },
  {
   "key": "באיזה תפקיד?",
   "kind": "lit",
   "where": [
-   "app/views-home.js:365"
+   "app/views-home.js:367"
   ]
  },
  {
   "key": "בסדר, נשאל שוב בעוד שעתיים",
   "kind": "lit",
   "where": [
-   "app/views-home.js:376"
+   "app/views-home.js:378"
   ]
  },
  {
   "key": "לאיזה תפקיד עברת?",
   "kind": "lit",
   "where": [
-   "app/views-home.js:381"
+   "app/views-home.js:383"
   ]
  },
  {
   "key": "סימון כבוצעה",
   "kind": "lit",
   "where": [
-   "app/views-home.js:395",
+   "app/views-home.js:397",
    "app/views-shift.js:219"
   ]
  },
@@ -6617,7 +6624,7 @@
   "key": "{0} משמרות נכנסו לשכר: +{1}",
   "kind": "tpl",
   "where": [
-   "app/views-home.js:395"
+   "app/views-home.js:397"
   ]
  },
  {
@@ -17345,7 +17352,7 @@
   "kind": "lit",
   "where": [
    "core/insights.js:34",
-   "core/insights.js:460"
+   "core/insights.js:471"
   ]
  },
  {
@@ -17360,7 +17367,7 @@
   "kind": "lit",
   "where": [
    "core/insights.js:36",
-   "core/insights.js:483"
+   "core/insights.js:494"
   ]
  },
  {
@@ -17925,7 +17932,7 @@
    "core/insights.js:327",
    "core/insights.js:339",
    "core/insights.js:349",
-   "core/insights.js:453"
+   "core/insights.js:464"
   ]
  },
  {
@@ -18006,501 +18013,522 @@
   ]
  },
  {
-  "key": "לפי הקצב הנוכחי: כ-{0} ברוטו",
+  "key": "כ-{0} ברוטו",
   "kind": "tpl",
   "where": [
-   "core/insights.js:368"
+   "core/insights.js:377"
   ]
  },
  {
-  "key": "; עם {0} המשמרות המתוכננות: {1}.",
+  "key": ", כולל {0} משמרות מתוכננות ({1}).",
   "kind": "tpl",
   "where": [
-   "core/insights.js:368"
+   "core/insights.js:377"
   ]
  },
  {
-  "key": "{0} עד היום ב-{1} מתוך {2} ימים, מוכפל לפי הקצב.",
-  "kind": "tpl",
-  "where": [
-   "core/insights.js:369"
-  ]
- },
- {
-  "key": "עברת את היעד החודשי! 🎉",
-  "kind": "lit",
-  "where": [
-   "core/insights.js:376"
-  ]
- },
- {
-  "key": "הגעת ל-{0} {1} מתוך יעד של {2}.",
-  "kind": "tpl",
-  "where": [
-   "core/insights.js:376"
-  ]
- },
- {
-  "key": "היעד מוגדר בהגדרות › יעדים.",
+  "key": ", לפי הקצב שלך עד היום.",
   "kind": "lit",
   "where": [
    "core/insights.js:377"
   ]
  },
  {
+  "key": "{0} עד היום, ועוד המשמרות המתוכננות עד {1}{2}.",
+  "kind": "tpl",
+  "where": [
+   "core/insights.js:379"
+  ]
+ },
+ {
+  "key": ", ואחריהן לפי הקצב שלך",
+  "kind": "lit",
+  "where": [
+   "core/insights.js:379"
+  ]
+ },
+ {
+  "key": "{0} עד היום ב-{1} מתוך {2} ימים, מוכפל לפי הקצב.",
+  "kind": "tpl",
+  "where": [
+   "core/insights.js:380"
+  ]
+ },
+ {
+  "key": "עברת את היעד החודשי! 🎉",
+  "kind": "lit",
+  "where": [
+   "core/insights.js:387"
+  ]
+ },
+ {
+  "key": "הגעת ל-{0} {1} מתוך יעד של {2}.",
+  "kind": "tpl",
+  "where": [
+   "core/insights.js:387"
+  ]
+ },
+ {
+  "key": "היעד מוגדר בהגדרות › יעדים.",
+  "kind": "lit",
+  "where": [
+   "core/insights.js:388"
+  ]
+ },
+ {
   "key": "לפי הקצב, לא תגיע ליעד",
   "kind": "lit",
   "where": [
-   "core/insights.js:382"
+   "core/insights.js:393"
   ]
  },
  {
   "key": "צפי: {0} מתוך {1}.",
   "kind": "tpl",
   "where": [
-   "core/insights.js:382"
+   "core/insights.js:393"
   ]
  },
  {
   "key": "הצפי מבוסס על הקצב מתחילת התקופה. ההתראה נשלחת אחרי שעברה חצי מהתקופה.",
   "kind": "lit",
   "where": [
-   "core/insights.js:383"
+   "core/insights.js:394"
   ]
  },
  {
   "key": "עוד כ-",
   "kind": "lit",
   "where": [
-   "core/insights.js:390"
+   "core/insights.js:401"
   ]
  },
  {
   "key": " משמרות ליעד",
   "kind": "lit",
   "where": [
-   "core/insights.js:390"
+   "core/insights.js:401"
   ]
  },
  {
   "key": "חסרים {0} ליעד של {1}. משמרת ממוצעת שלך שווה כ-{2}.",
   "kind": "tpl",
   "where": [
-   "core/insights.js:391"
+   "core/insights.js:402"
   ]
  },
  {
   "key": "ממוצע 20 המשמרות האחרונות, כולל נסיעות.",
   "kind": "lit",
   "where": [
-   "core/insights.js:392"
+   "core/insights.js:403"
   ]
  },
  {
   "key": "שיא אישי: השבוע הכי רווחי! 🏆",
   "kind": "lit",
   "where": [
-   "core/insights.js:405"
+   "core/insights.js:416"
   ]
  },
  {
   "key": "{0} ברוטו בשבוע שהסתיים. השיא הקודם: {1}.",
   "kind": "tpl",
   "where": [
-   "core/insights.js:405"
+   "core/insights.js:416"
   ]
  },
  {
   "key": "השוואה לכל השבועות מאז המשמרת הראשונה שנרשמה.",
   "kind": "lit",
   "where": [
-   "core/insights.js:406"
+   "core/insights.js:417"
   ]
  },
  {
   "key": "שיא אישי: החודש הכי רווחי! 🏆",
   "kind": "lit",
   "where": [
-   "core/insights.js:416"
+   "core/insights.js:427"
   ]
  },
  {
   "key": "{0} ברוטו ב{1}. השיא הקודם: {2}.",
   "kind": "tpl",
   "where": [
-   "core/insights.js:416"
+   "core/insights.js:427"
   ]
  },
  {
   "key": "השוואה לכל החודשים הקודמים.",
   "kind": "lit",
   "where": [
-   "core/insights.js:417"
+   "core/insights.js:428"
   ]
  },
  {
   "key": "הנסיעות הגיעו לתקרה החודשית",
   "kind": "lit",
   "where": [
-   "core/insights.js:426"
+   "core/insights.js:437"
   ]
  },
  {
   "key": "ב{0} צברת {1} נסיעות, אבל התקרה היא {2}.",
   "kind": "tpl",
   "where": [
-   "core/insights.js:426"
+   "core/insights.js:437"
   ]
  },
  {
   "key": "התקרה מוגדרת בהגדרות › מעסיק › נסיעות.",
   "kind": "lit",
   "where": [
-   "core/insights.js:427"
+   "core/insights.js:438"
   ]
  },
  {
   "key": " פערים",
   "kind": "lit",
   "where": [
-   "core/insights.js:438"
+   "core/insights.js:449"
   ]
  },
  {
   "key": "פער",
   "kind": "lit",
   "where": [
-   "core/insights.js:438"
+   "core/insights.js:449"
   ]
  },
  {
   "key": " בתלוש ",
   "kind": "lit",
   "where": [
-   "core/insights.js:438"
+   "core/insights.js:449"
   ]
  },
  {
   "key": "נמצא בניתוח התלוש. אפשר לסמן כל פער כ\"הוחזר\" בדוחות › תלושים.",
   "kind": "lit",
   "where": [
-   "core/insights.js:440"
+   "core/insights.js:451"
   ]
  },
  {
   "key": "שכחת לסיים משמרת?",
   "kind": "lit",
   "where": [
-   "core/insights.js:452"
+   "core/insights.js:463"
   ]
  },
  {
   "key": "הטיימר רץ כבר {0} שעות (מאז {1})",
   "kind": "tpl",
   "where": [
-   "core/insights.js:452"
+   "core/insights.js:463"
   ]
  },
  {
   "key": ", ובדרך כלל המשמרות שלך נמשכות כ-{0}.",
   "kind": "tpl",
   "where": [
-   "core/insights.js:452"
+   "core/insights.js:463"
   ]
  },
  {
   "key": "שלוש שעות אחרי האורך הרגיל של המשמרות שלך.",
   "kind": "lit",
   "where": [
-   "core/insights.js:453"
+   "core/insights.js:464"
   ]
  },
  {
   "key": " שעות.",
   "kind": "lit",
   "where": [
-   "core/insights.js:453"
+   "core/insights.js:464"
   ]
  },
  {
   "key": "המשמרת של {0} (⁦{1}⁠–⁠{2}⁩) לא סומנה כ\"בוצעה\".",
   "kind": "tpl",
   "where": [
-   "core/insights.js:460"
+   "core/insights.js:471"
   ]
  },
  {
   "key": "משמרות מתוכננות לא נספרות בשכר עד שמסמנים אותן כבוצעו.",
   "kind": "lit",
   "where": [
-   "core/insights.js:461"
+   "core/insights.js:472"
   ]
  },
  {
   "key": "משמרת בעוד ",
   "kind": "lit",
   "where": [
-   "core/insights.js:466"
+   "core/insights.js:477"
   ]
  },
  {
   "key": " דקות",
   "kind": "lit",
   "where": [
-   "core/insights.js:466"
+   "core/insights.js:477"
   ]
  },
  {
   "key": "תזכורת ",
   "kind": "lit",
   "where": [
-   "core/insights.js:467"
+   "core/insights.js:478"
   ]
  },
  {
   "key": " דקות לפני משמרת מתוכננת.",
   "kind": "lit",
   "where": [
-   "core/insights.js:467"
+   "core/insights.js:478"
   ]
  },
  {
   "key": "לא נרשמה משמרת כבר {0} ימים",
   "kind": "tpl",
   "where": [
-   "core/insights.js:475"
+   "core/insights.js:486"
   ]
  },
  {
   "key": "שכחת לרשום משמרות? אם היית בחופש — תהנה!",
   "kind": "lit",
   "where": [
-   "core/insights.js:475"
+   "core/insights.js:486"
   ]
  },
  {
   "key": "המשמרת האחרונה: ",
   "kind": "lit",
   "where": [
-   "core/insights.js:476"
+   "core/insights.js:487"
   ]
  },
  {
   "key": ". הסף: ",
   "kind": "lit",
   "where": [
-   "core/insights.js:476"
+   "core/insights.js:487"
   ]
  },
  {
   "key": " ימים.",
   "kind": "lit",
   "where": [
-   "core/insights.js:476"
+   "core/insights.js:487"
   ]
  },
  {
   "key": "משמרות חופפות",
   "kind": "lit",
   "where": [
-   "core/insights.js:483"
+   "core/insights.js:494"
   ]
  },
  {
   "key": "בדיקת תקינות אוטומטית: חפיפות, משמרות ארוכות מ-",
   "kind": "lit",
   "where": [
-   "core/insights.js:484"
+   "core/insights.js:495"
   ]
  },
  {
   "key": " שעות, סיום לפני התחלה.",
   "kind": "lit",
   "where": [
-   "core/insights.js:484"
+   "core/insights.js:495"
   ]
  },
  {
   "key": "הגיע יום התשלום — הזן את התלוש",
   "kind": "lit",
   "where": [
-   "core/insights.js:492"
+   "core/insights.js:503"
   ]
  },
  {
   "key": "העלה את התלוש של {0} כדי לבדוק שקיבלת את כל מה שמגיע לך.",
   "kind": "tpl",
   "where": [
-   "core/insights.js:492"
+   "core/insights.js:503"
   ]
  },
  {
   "key": "יום התשלום מוגדר: ",
   "kind": "lit",
   "where": [
-   "core/insights.js:493"
+   "core/insights.js:504"
   ]
  },
  {
   "key": " לחודש.",
   "kind": "lit",
   "where": [
-   "core/insights.js:493"
+   "core/insights.js:504"
   ]
  },
  {
   "key": "הגיע הזמן לגבות",
   "kind": "lit",
   "where": [
-   "core/insights.js:501"
+   "core/insights.js:512"
   ]
  },
  {
   "key": "הגיבוי האחרון היה לפני {0} ימים.",
   "kind": "tpl",
   "where": [
-   "core/insights.js:501"
+   "core/insights.js:512"
   ]
  },
  {
   "key": "עוד לא גיבית את הנתונים.",
   "kind": "lit",
   "where": [
-   "core/insights.js:501"
+   "core/insights.js:512"
   ]
  },
  {
   "key": "הנתונים שמורים רק בטלפון. מומלץ לשמור קובץ גיבוי ב-⁠Google Drive.",
   "kind": "lit",
   "where": [
-   "core/insights.js:502"
+   "core/insights.js:513"
   ]
  },
  {
   "key": "השלמת שנת עבודה — מגיעים לך דמי הבראה",
   "kind": "lit",
   "where": [
-   "core/insights.js:511"
+   "core/insights.js:522"
   ]
  },
  {
   "key": "הערכה: {0} ימים × {1} × היקף משרה {2}% ≈ {3}.",
   "kind": "tpl",
   "where": [
-   "core/insights.js:511"
+   "core/insights.js:522"
   ]
  },
  {
   "key": "לפי צו ההרחבה: אחרי שנת עבודה, לפי ותק והיקף משרה. ההיקף מחושב מהשעות בפועל.",
   "kind": "lit",
   "where": [
-   "core/insights.js:512"
+   "core/insights.js:523"
   ]
  },
  {
   "key": "בדוק שקיבלת דמי הבראה",
   "kind": "lit",
   "where": [
-   "core/insights.js:517"
+   "core/insights.js:528"
   ]
  },
  {
   "key": "החודש המעסיק אמור לשלם הבראה. הערכה: {0}.",
   "kind": "tpl",
   "where": [
-   "core/insights.js:517"
+   "core/insights.js:528"
   ]
  },
  {
   "key": "חודש התשלום מוגדר בהגדרות › חופשה ומחלה.",
   "kind": "lit",
   "where": [
-   "core/insights.js:518"
+   "core/insights.js:529"
   ]
  },
  {
   "key": "מזל טוב! 🎂",
   "kind": "lit",
   "where": [
-   "core/insights.js:529"
+   "core/insights.js:540"
   ]
  },
  {
   "key": "יום הולדת {0} שמח{1}! מאחלים שנה של משמרות טובות ומשכורות שמנות.",
   "kind": "tpl",
   "where": [
-   "core/insights.js:529"
+   "core/insights.js:540"
   ]
  },
  {
   "key": "לפי תאריך הלידה שהוזן בהגדרות.",
   "kind": "lit",
   "where": [
-   "core/insights.js:530",
-   "core/insights.js:533"
+   "core/insights.js:541",
+   "core/insights.js:544"
   ]
  },
  {
   "key": "מהיום — ניכויים רגילים",
   "kind": "lit",
   "where": [
-   "core/insights.js:532"
+   "core/insights.js:543"
   ]
  },
  {
   "key": "מגיל 18 מנוכים ביטוח לאומי ומס בריאות, ובהמשך גם פנסיה. הנטו המשוער יחושב מעכשיו בהתאם.",
   "kind": "lit",
   "where": [
-   "core/insights.js:532"
+   "core/insights.js:543"
   ]
  },
  {
   "key": "הסיכום השבועי שלך",
   "kind": "lit",
   "where": [
-   "core/insights.js:548"
+   "core/insights.js:559"
   ]
  },
  {
   "key": "השבוע עבדת {0} שעות ב-{1} משמרות והרווחת {2} ברוטו.",
   "kind": "tpl",
   "where": [
-   "core/insights.js:566"
+   "core/insights.js:577"
   ]
  },
  {
   "key": " זה {0} שעות {1} מהממוצע",
   "kind": "tpl",
   "where": [
-   "core/insights.js:576"
+   "core/insights.js:587"
   ]
  },
  {
   "key": ", בעיקר ב{0}",
   "kind": "tpl",
   "where": [
-   "core/insights.js:577"
+   "core/insights.js:588"
   ]
  },
  {
   "key": " בערך כמו הממוצע שלך.",
   "kind": "lit",
   "where": [
-   "core/insights.js:579"
+   "core/insights.js:590"
   ]
  },
  {
   "key": " {0} מהשעות היו בשבת/חג.",
   "kind": "tpl",
   "where": [
-   "core/insights.js:580"
+   "core/insights.js:591"
   ]
  },
  {
   "key": "השבוע ⁦{0}⁠–⁠{1}⁩, בהשוואה לממוצע 4 השבועות שלפניו ({2} ש׳).",
   "kind": "tpl",
   "where": [
-   "core/insights.js:581"
+   "core/insights.js:592"
   ]
  },
  {

@@ -2,7 +2,7 @@
 <html lang="ru" dir="ltr">
 <head>
 <meta charset="utf-8">
-<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'sha256-P1vY/EiXw5RkSguavX5FeRFgUvcBGNPUKJiorElIG7g=' 'sha256-WbqfiDtcaGKnk29jpFFOQvFmMgqiNY0jRp2CxXkVntY=' https://www.gstatic.com https://apis.google.com https://cdnjs.cloudflare.com https://cdn.jsdelivr.net 'wasm-unsafe-eval'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com data:; img-src 'self' data: blob: https:; connect-src 'self' https: wss:; frame-src https://shiftpay-70ab6.firebaseapp.com https://accounts.google.com https://apis.google.com https://*.google.com; worker-src 'self' blob: https://cdnjs.cloudflare.com https://cdn.jsdelivr.net; media-src 'self' data: blob:; manifest-src 'self'; object-src 'none'; base-uri 'self'; form-action 'self'">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'sha256-P1vY/EiXw5RkSguavX5FeRFgUvcBGNPUKJiorElIG7g=' 'sha256-wjiyNWGGI0ucxeaea2Y0EY9JUG+yeN2Axf7fjUQXha4=' https://www.gstatic.com https://apis.google.com https://cdnjs.cloudflare.com https://cdn.jsdelivr.net 'wasm-unsafe-eval'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com data:; img-src 'self' data: blob: https:; connect-src 'self' https: wss:; frame-src https://shiftpay-70ab6.firebaseapp.com https://accounts.google.com https://apis.google.com https://*.google.com; worker-src 'self' blob: https://cdnjs.cloudflare.com https://cdn.jsdelivr.net; media-src 'self' data: blob:; manifest-src 'self'; object-src 'none'; base-uri 'self'; form-action 'self'">
 <script>(function(){try{var l=localStorage.getItem('shaati.lang'),h=document.documentElement.lang;if(l&&l!==h&&/^(he|ar|ru|en)$/.test(l)&&!sessionStorage.getItem('langHop')){sessionStorage.setItem('langHop','1');location.replace((l==='he'?'index.html':'index.'+l+'.html')+location.search+location.hash)}else sessionStorage.removeItem('langHop')}catch(e){}})();</script>
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="theme-color" content="#0d2b6b">
@@ -2581,6 +2581,7 @@ html:not([lang="he"]) .lb-games button, html:not([lang="he"]) .lb-periods button
 .done-cta { border: 1.5px solid var(--warn); }
 .done-cta .dc-t { font-weight: 700; display: flex; gap: 6px; align-items: center; color: var(--warn); }
 .done-cta .dc-s { font-size: .86rem; color: var(--on-surface-var); margin: 4px 0 12px; }
+.home-hero .hh-fc-n { opacity: .8; font-size: .92em; }
 
 </style>
 </head>
@@ -2609,7 +2610,7 @@ html:not([lang="he"]) .lb-games button, html:not([lang="he"]) .lb-periods button
 <noscript><div style="padding:24px;font-family:sans-serif">Для приложения нужен JavaScript.</div></noscript>
 <script>
 window.APP_VERSION = '1.22.1';
-window.APP_BUILD = '1.22.1-48f179e0';
+window.APP_BUILD = '1.22.1-9ffcd100';
 /* ---- core/util.js ---- */
 /* ============================================================
  * util.js — date/time helpers and formatting.
@@ -7268,7 +7269,8 @@ window.APP_BUILD = '1.22.1-48f179e0';
 
     /* ---- money ---- */
     const curSum = Engine.periodSummary(model, curP.key, emp.id);
-    const planned = Engine.totals(model, today > curP.from ? U.addDays(today, 0) : curP.from, curP.to, { status: 'planned' });
+    // every planned shift of the period: the ones to come and the ones that happened and wait for a "done"
+    const planned = Engine.totals(model, curP.from, curP.to, { status: 'planned' });
     const elapsed = Math.max(1, U.diffDays(curP.from, today) + 1);
     const total = U.diffDays(curP.from, curP.to) + 1;
     const goal = +(S.goal && S.goal.amount) || 0;
@@ -7276,12 +7278,22 @@ window.APP_BUILD = '1.22.1-48f179e0';
     const curVal = goalNet ? curSum.net.net : curSum.gross;
     const pace = elapsed >= 3 ? (curSum.gross / elapsed) * total : null;
     const withPlanned = curSum.gross + planned.wage + planned.travel;
+    // the forecast: what was earned + the planned shifts + the usual pace only for the days after the last
+    // planned one (the plan already speaks for the days up to it, so nothing is counted twice)
+    let forecast = pace, lastPlan = null;
+    if (planned.shifts) {
+      for (const r of model.results.values()) if (r.status === 'planned' && r.dateKey >= curP.from && r.dateKey <= curP.to && (!lastPlan || r.dateKey > lastPlan)) lastPlan = r.dateKey;
+      const after = lastPlan ? Math.max(0, U.diffDays(lastPlan > today ? lastPlan : today, curP.to)) : 0;
+      forecast = withPlanned + (elapsed >= 3 ? (curSum.gross / elapsed) * after : 0);
+    }
     const ratio = curSum.gross > 0 ? curSum.net.net / curSum.gross : 0.85;
-    const projection = { period: curP, actual: curSum.gross, actualNet: curSum.net.net, pace, withPlanned, plannedCount: planned.shifts, elapsed, total };
-    if (on('projection') && pace != null && curSum.gross > 0) {
+    const projection = { period: curP, actual: curSum.gross, actualNet: curSum.net.net, pace, withPlanned, forecast, plannedCount: planned.shifts, plannedWage: planned.wage + planned.travel, lastPlan, elapsed, total };
+    if (on('projection') && forecast != null && (curSum.gross > 0 || planned.shifts)) {
       live.push({ type: 'projection', priority: 2, title: emp.periodStartDay > 1 ? "Прогноз на конец периода" : "Прогноз на конец месяца",
-        body: `При нынешнем темпе: около ${U.money(pace, 0)} брутто` + (planned.shifts ? `; с запланированными сменами (${planned.shifts}): ${U.money(withPlanned, 0)}.` : '.'),
-        explain: `${U.money(curSum.gross, 0)} на сегодня за ${elapsed} из ${total} дн., пересчитано по темпу.` });
+        body: `около${U.money(forecast, 0)} брутто` + (planned.shifts ? `, включая ${planned.shifts} ${globalThis.U.plural(planned.shifts, {"one":"запланированную смену","few":"запланированные смены","many":"запланированных смен","other":"запланированной смены"})} (${U.money(planned.wage + planned.travel, 0)}).` : ", по вашему темпу до сегодняшнего дня."),
+        explain: planned.shifts
+          ? `${U.money(curSum.gross, 0)} на сегодня, плюс запланированные смены до ${U.fmtDate(lastPlan, 'short')}${lastPlan < curP.to && elapsed >= 3 ? ", а после них — по вашему темпу" : ''}.`
+          : `${U.money(curSum.gross, 0)} на сегодня за ${elapsed} из ${total} дн., пересчитано по темпу.` });
     }
     if (goal > 0) {
       const target = goal;
@@ -15443,7 +15455,9 @@ ${name}`.trim();
     const curVal = goalNet ? sum.net.net : sum.gross;
     const pct = goal ? Math.min(100, (curVal / goal) * 100) : 0;
     if (goal && pct >= 100) App.celebrateOnce('goal-' + P.key, () => { root.Fx.celebrate('money'); UI.toast("Вы достигли цели на месяц! 🎯"); });
-    const projPct = goal && proj && proj.withPlanned ? Math.min(100, ((goalNet ? proj.withPlanned * (sum.gross ? sum.net.net / sum.gross : 0.85) : proj.withPlanned) / goal) * 100) : 0;
+    const fc = proj && proj.forecast != null ? proj.forecast : null; // what was earned + the planned shifts + the pace after them
+    const projPct = goal && fc ? Math.min(100, ((goalNet ? fc * (sum.gross ? sum.net.net / sum.gross : 0.85) : fc) / goal) * 100) : 0;
+    const fcNote = proj && proj.plannedCount ? ` <span class="hh-fc-n">(вкл. ${proj.plannedCount} заплан.)</span>` : '';
     const periodName = emp.periodStartDay > 1 ? "расчётный период" : esc(P.label);
     // the whole card opens the summary on a tap; keyboards and screen readers get a real button for it
     // (the card itself holds the "what is gross?" buttons, so it can't be one)
@@ -15455,8 +15469,8 @@ ${name}`.trim();
       <div class="hero-num">${money(sum.gross, 0)}</div>
       <div class="hh-stats"><span><b>${money(sum.net.net, 0)}</b><small>${UI.term ? UI.term('net', sum.net.minor ? "Нетто" : "Нетто (оценка)") : "Нетто"}</small></span><span><b class="num">${U.hm(sum.hours * 60)}</b><small>Часы</small></span><span><b>${sum.shifts}</b><small>${sum.shifts === 1 ? "Смена" : "Смены"}</small></span></div>
       ${goal ? `<div class="hh-goal"><div class="progress thin"><b style="width:${projPct}%"></b><i style="width:${pct}%"></i></div>
-        <div class="hh-goal-l">${U.num(pct, 0)}% от цели ${money(goal, 0)}${proj && proj.pace ? ` · прогноз ${money(proj.pace, 0)}` : ''}</div></div>`
-        : (proj && proj.pace ? `<div class="hh-goal-l">${emp.periodStartDay > 1 ? "Прогноз на конец периода" : "Прогноз на конец месяца"}: ${money(proj.pace, 0)}</div>` : '')}
+        <div class="hh-goal-l">${U.num(pct, 0)}% от цели ${money(goal, 0)}${fc ? ` · прогноз ${money(fc, 0)}${fcNote}` : ''}</div></div>`
+        : (fc ? `<div class="hh-goal-l">${emp.periodStartDay > 1 ? "Прогноз на конец периода" : "Прогноз на конец месяца"}: ${money(fc, 0)}${fcNote}</div>` : '')}
     </section>`;
   }
 
@@ -15571,8 +15585,8 @@ ${name}`.trim();
       <div class="home-top"><div class="titles"><h1>${greeting()}${name} <span class="wave">👋</span></h1>
         <div class="sub">${root.Plus && root.Plus.owned() ? '<span class="plus-badge">Plus ✨</span>' : ''}${date}${hd.dayStr ? ' · ' + esc(hd.toString().replace(/\s\S+$/, '')) : ''}${hol ? ' · ' + esc(hol) : ''}</div></div>
         <span id="sync-dot">${App.syncDot ? App.syncDot() : ''}</span>
-        <button class="icon-btn" data-act="support" aria-label="עזרה ותמיכה">${icon('help')}</button>
-        <button class="icon-btn" data-act="insights" aria-label="התראות ותובנות">${icon('bell')}${unread ? `<span class="dot-badge">${unread > 9 ? '9+' : unread}</span>` : ''}</button></div>
+        <button class="icon-btn" data-act="support" aria-label="Помощь и поддержка">${icon('help')}</button>
+        <button class="icon-btn" data-act="insights" aria-label="Уведомления и подсказки">${icon('bell')}${unread ? `<span class="dot-badge">${unread > 9 ? '9+' : unread}</span>` : ''}</button></div>
       ${birthdayCard()}
       ${paydayCard()}
       ${banners()}
@@ -18043,7 +18057,7 @@ ${name}`.trim();
       // "אוקטובר" (this year's months without the year: a small widget has little room)
       period: emp.periodStartDay > 1 ? "расчётный период" : P.label.replace(' ' + today.slice(0, 4), ''), periodTo: P.to,
       gross: m0(sum.gross), net: m0(sum.net.net), hours: U.hm(sum.hours * 60), shifts: sum.shifts,
-      today: m0(day.gross), pace: proj && proj.pace ? m0(proj.pace) : '',
+      today: m0(day.gross), pace: proj && proj.forecast != null ? m0(proj.forecast) : '', // the forecast (with the planned shifts)
       goal: goalAmt ? { pct: Math.min(100, Math.floor((cur / goalAmt) * 100)), of: m0(goalAmt), left: m0(Math.max(0, goalAmt - cur)) } : null,
       payday: paySum && paySum.gross > 0 ? { date: next.payDate, amount: m0(paySum.net.net) } : null,
       saving, active,

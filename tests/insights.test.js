@@ -184,3 +184,20 @@ T.test('a waiter below the minimum rate, tips bring it over: a quiet note, not a
   const without = run(0);
   T.ok(without.length === 1 && without[0].severity === 'critical', JSON.stringify(without.map((a) => [a.severity, a.title])));
 });
+
+T.section('the month\'s forecast');
+T.test('earned + the planned shifts + the pace only after the last planned one', () => {
+  // October 2026, today the 12th: four done shifts so far, two planned (one already happened, waiting for "done")
+  const shifts = ['2026-10-04', '2026-10-05', '2026-10-07', '2026-10-08'].map((k) => shift(k, '09:00', '17:00'));
+  const p1 = shift('2026-10-11', '09:00', '17:00'); p1.status = 'planned';
+  const p2 = shift('2026-10-20', '09:00', '17:00'); p2.status = 'planned';
+  const model = Engine.buildModel(data(shifts.concat([p1, p2])));
+  const pr = Insights.run(model, { now: NOW }).projection;
+  const per = (pr.actual / pr.elapsed) * 11; // 21–31 October, after the last planned day, at the pace so far
+  T.eq(pr.plannedCount, 2);
+  T.near(pr.forecast, pr.actual + pr.plannedWage + per, 1);
+  T.ok(pr.forecast > pr.withPlanned, 'the days after the plan add the usual pace');
+  // without a plan the forecast is the pace, as before
+  const pr0 = Insights.run(Engine.buildModel(data(shifts)), { now: NOW }).projection;
+  T.near(pr0.forecast, pr0.pace, 0.01);
+});

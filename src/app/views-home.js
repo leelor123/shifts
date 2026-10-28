@@ -194,7 +194,9 @@
     const curVal = goalNet ? sum.net.net : sum.gross;
     const pct = goal ? Math.min(100, (curVal / goal) * 100) : 0;
     if (goal && pct >= 100) App.celebrateOnce('goal-' + P.key, () => { root.Fx.celebrate('money'); UI.toast('הגעת ליעד החודשי! 🎯'); });
-    const projPct = goal && proj && proj.withPlanned ? Math.min(100, ((goalNet ? proj.withPlanned * (sum.gross ? sum.net.net / sum.gross : 0.85) : proj.withPlanned) / goal) * 100) : 0;
+    const fc = proj && proj.forecast != null ? proj.forecast : null; // what was earned + the planned shifts + the pace after them
+    const projPct = goal && fc ? Math.min(100, ((goalNet ? fc * (sum.gross ? sum.net.net / sum.gross : 0.85) : fc) / goal) * 100) : 0;
+    const fcNote = proj && proj.plannedCount ? ` <span class="hh-fc-n">(כולל ${proj.plannedCount} מתוכננות)</span>` : '';
     const periodName = emp.periodStartDay > 1 ? 'תקופת השכר' : esc(P.label);
     // the whole card opens the summary on a tap; keyboards and screen readers get a real button for it
     // (the card itself holds the "what is gross?" buttons, so it can't be one)
@@ -206,8 +208,8 @@
       <div class="hero-num">${money(sum.gross, 0)}</div>
       <div class="hh-stats"><span><b>${money(sum.net.net, 0)}</b><small>${UI.term ? UI.term('net', sum.net.minor ? 'נטו' : 'נטו משוער') : 'נטו'}</small></span><span><b class="num">${U.hm(sum.hours * 60)}</b><small>שעות</small></span><span><b>${sum.shifts}</b><small>${sum.shifts === 1 ? 'משמרת' : 'משמרות'}</small></span></div>
       ${goal ? `<div class="hh-goal"><div class="progress thin"><b style="width:${projPct}%"></b><i style="width:${pct}%"></i></div>
-        <div class="hh-goal-l">${U.num(pct, 0)}% מיעד ${money(goal, 0)}${proj && proj.pace ? ` · צפי ${money(proj.pace, 0)}` : ''}</div></div>`
-        : (proj && proj.pace ? `<div class="hh-goal-l">${emp.periodStartDay > 1 ? 'צפי לסוף התקופה' : 'צפי לסוף החודש'}: ${money(proj.pace, 0)}</div>` : '')}
+        <div class="hh-goal-l">${U.num(pct, 0)}% מיעד ${money(goal, 0)}${fc ? ` · צפי ${money(fc, 0)}${fcNote}` : ''}</div></div>`
+        : (fc ? `<div class="hh-goal-l">${emp.periodStartDay > 1 ? 'צפי לסוף התקופה' : 'צפי לסוף החודש'}: ${money(fc, 0)}${fcNote}</div>` : '')}
     </section>`;
   }
 
