@@ -28,6 +28,26 @@ const manifestOf = (l) => (l === 'he' ? './manifest.webmanifest' : './manifest.'
 // a page that names its file (index.ru.html) is that file; the app's own address (./, ./?source=twa) is the chosen one
 const PAGE_FILE = /\/index(?:\.(ar|ru|en|fr|es))?\.html$/;
 
+/* ---- a visit in a browser gets the version that is live now ----
+ * The installed app (its address carries ?source=) opens from the copy kept here at once and switches to a new
+ * version when it goes to the background. A visit in a browser (from the website, a shared link) asks the server
+ * for the page first, for a moment: a copy kept from an earlier visit was an old version. The question is cheap
+ * (the browser asks "changed since?" and gets "no" when it hasn't); offline it fails at once and the copy opens. */
+const FRESH_WAIT = 800;
+const verOf = (build) => String(build).split('-')[0].split('.').map(Number);
+const olderThan = (a, b) => { const x = verOf(a), y = verOf(b); for (let i = 0; i < 3; i++) if ((x[i] || 0) !== (y[i] || 0)) return (x[i] || 0) < (y[i] || 0); return false; };
+async function livePage(page) {
+  const net = fetch(page, { cache: 'no-cache' }).then(async (res) => {
+    if (!res.ok) return null;
+    const html = await res.text();
+    const m = /APP_BUILD = '([^']+)'/.exec(html);
+    // the same version as the copy here, or older (a server still catching up after a release): the copy
+    if (!m || m[1] === VERSION || olderThan(m[1], VERSION)) return null;
+    return new Response(html, { headers: { 'Content-Type': 'text/html; charset=utf-8' } });
+  }).catch(() => null);
+  return Promise.race([net, new Promise((r) => setTimeout(() => r(null), FRESH_WAIT))]);
+}
+
 self.addEventListener('install', (e) => {
   e.waitUntil((async () => {
     const l = await chosenLang();
@@ -75,6 +95,7 @@ self.addEventListener('fetch', (e) => {
       const lang = named ? named[1] || 'he' : await chosenLang();
       const page = pageOf(lang);
       const cached = await caches.match(page, { ignoreSearch: true });
+      if (cached && !url.searchParams.has('source') && !url.searchParams.has('action')) return (await livePage(page)) || cached;
       if (cached) return cached;
       try {
         const res = await fetch(named ? req : page);

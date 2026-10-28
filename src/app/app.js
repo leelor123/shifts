@@ -906,6 +906,11 @@
       caches.keys().then((keys) => {
         const shells = keys.filter((k) => k.startsWith('shiftpay-shell-'));
         if (shells.length !== 1 || shells[0] === 'shiftpay-shell-' + window.APP_BUILD || busy()) return;
+        // a page newer than the files kept here (a browser visit gets the live page first) waits for its own
+        // version to install; starting over now would open the older copy
+        const ver = (b) => String(b).replace('shiftpay-shell-', '').split('-')[0].split('.').map(Number);
+        const kept = ver(shells[0]), mine = ver(window.APP_BUILD);
+        for (let i = 0; i < 3; i++) if ((kept[i] || 0) !== (mine[i] || 0)) { if ((kept[i] || 0) < (mine[i] || 0)) return; break; }
         try { if (sessionStorage.getItem('reloaded-for') === shells[0]) return; sessionStorage.setItem('reloaded-for', shells[0]); } catch (e) { return; }
         reload();
       }).catch(() => {});
