@@ -2,7 +2,7 @@
 <html lang="he" dir="rtl">
 <head>
 <meta charset="utf-8">
-<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'sha256-P1vY/EiXw5RkSguavX5FeRFgUvcBGNPUKJiorElIG7g=' 'sha256-jr2HJujquk1XWDUmEK2GK1ZGYQXuEAR/dKhxecMtxLg=' https://www.gstatic.com https://apis.google.com https://cdnjs.cloudflare.com https://cdn.jsdelivr.net 'wasm-unsafe-eval'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com data:; img-src 'self' data: blob: https:; connect-src 'self' https: wss:; frame-src https://shiftpay-70ab6.firebaseapp.com https://accounts.google.com https://apis.google.com https://*.google.com; worker-src 'self' blob: https://cdnjs.cloudflare.com https://cdn.jsdelivr.net; media-src 'self' data: blob:; manifest-src 'self'; object-src 'none'; base-uri 'self'; form-action 'self'">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'sha256-P1vY/EiXw5RkSguavX5FeRFgUvcBGNPUKJiorElIG7g=' 'sha256-yU2DqZZHSRak0Kha1EkBGPVukTFDA8MjaKF2i+/WElY=' https://www.gstatic.com https://apis.google.com https://cdnjs.cloudflare.com https://cdn.jsdelivr.net 'wasm-unsafe-eval'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com data:; img-src 'self' data: blob: https:; connect-src 'self' https: wss:; frame-src https://shiftpay-70ab6.firebaseapp.com https://accounts.google.com https://apis.google.com https://*.google.com; worker-src 'self' blob: https://cdnjs.cloudflare.com https://cdn.jsdelivr.net; media-src 'self' data: blob:; manifest-src 'self'; object-src 'none'; base-uri 'self'; form-action 'self'">
 <script>(function(){try{var l=localStorage.getItem('shaati.lang'),h=document.documentElement.lang;if(l&&l!==h&&/^(he|ar|ru|en)$/.test(l)&&!sessionStorage.getItem('langHop')){sessionStorage.setItem('langHop','1');location.replace((l==='he'?'index.html':'index.'+l+'.html')+location.search+location.hash)}else sessionStorage.removeItem('langHop')}catch(e){}})();</script>
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="theme-color" content="#0d2b6b">
@@ -2609,8 +2609,8 @@ html:not([lang="he"]) .lb-games button, html:not([lang="he"]) .lb-periods button
 <div id="print-root" aria-hidden="true"></div>
 <noscript><div style="padding:24px;font-family:sans-serif">האפליקציה דורשת JavaScript.</div></noscript>
 <script>
-window.APP_VERSION = '1.22.1';
-window.APP_BUILD = '1.22.1-9ffcd100';
+window.APP_VERSION = '1.22.2';
+window.APP_BUILD = '1.22.2-f3455345';
 /* ---- core/util.js ---- */
 /* ============================================================
  * util.js — date/time helpers and formatting.
@@ -20016,8 +20016,11 @@ A cell with only a shift name and no hours: use בוקר 07:00-15:00, צהריי
 
   /* ---------------- what's new (once per big update, for people who already used the app) ---------------- */
   const WHATS_NEW = {
-    id: '1.22.0',
+    id: '1.22.2',
     items: [
+      ['check', 'mint', 'משמרת שעברה? מאשרים בלחיצה', 'משמרת מתוכננת נכנסת לשכר רק אחרי שמאשרים שעבדת בה. עכשיו זה ברור: כרטיס בבית עם כפתור גדול לכל משמרת.'],
+      ['file', 'violet', 'דוח שעות מ-PDF נקרא מדויק', 'גם דוחות שבהם כל אות מצוירת לחוד, ועמודת "תקן" כבר לא מתבלבלת עם שעת הכניסה.'],
+      ['chart', 'amber', 'צפי חכם יותר לסוף החודש', 'הצפי כולל את המשמרות המתוכננות, ורק אחריהן מוסיף לפי הקצב שלך.'],
       ['globe', 'sky', 'שעתי גם בערבית, ברוסית ובאנגלית', 'כל המסכים, החישובים, הדוחות והמכתבים בשפה שבחרת. בהגדרות › מראה ונעילה › שפה.'],
       ['camera', 'violet', 'צילום של דוח שעות נקרא כמו טבלה', 'כל דוח, בכל סידור עמודות: גם צילום עקום, עם צל או של מסך כהה. האפליקציה מבינה מה כניסה, מה יציאה ומה סה"כ, ומתעלמת מכל השאר.'],
       ['calendar', 'sky', 'ייבוא סידור עבודה', 'מצלמים את הסידור או מדביקים את ההודעה מוואטסאפ, והמשמרות שלך נכנסות ללוח. בהוספה (+) או בלוח השנה.'],
