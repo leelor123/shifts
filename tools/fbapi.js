@@ -65,6 +65,17 @@ async function main() {
     const u = await idt.patch(`/projects/${project}/config`, { authorizedDomains: domains }, { queryParams: { updateMask: 'authorizedDomains' } });
     console.log('authorizedDomains:', u.body.authorizedDomains.join(', '));
   }
+  // are the rules in use the ones in firestore.rules here? (a release whose app needs new rules waits for them)
+  if (cmd === 'liverules') {
+    const rulesApi = new Client({ urlPrefix: 'https://firebaserules.googleapis.com', apiVersion: 'v1', auth: true });
+    const rel = (await rulesApi.get(`/projects/${project}/releases/cloud.firestore`)).body;
+    const set = (await rulesApi.get(`/${rel.rulesetName}`)).body;
+    const live = ((set.source && set.source.files) || []).map((f) => f.content).join('\n');
+    const local = fs.readFileSync(path.join(__dirname, '..', 'firestore.rules'), 'utf8');
+    const norm = (s) => s.replace(/\r/g, '').trim();
+    console.log(norm(live) === norm(local) ? `live rules = firestore.rules (released ${rel.updateTime})` : `live rules DIFFER from firestore.rules (released ${rel.updateTime})`);
+    process.exit(norm(live) === norm(local) ? 0 : 1);
+  }
   if (cmd === 'ruletest') {
     const rules = fs.readFileSync(path.join(__dirname, '..', 'firestore.rules'), 'utf8');
     const db = '/databases/(default)/documents';

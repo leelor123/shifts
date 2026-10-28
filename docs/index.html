@@ -2,7 +2,7 @@
 <html lang="he" dir="rtl">
 <head>
 <meta charset="utf-8">
-<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'sha256-FgNk6U022o0tzGprl1MJbN7Uezv3SKotwh8ovG5xA8c=' 'sha256-JCpHrYTZLMAPhDnMyylPU8d1QjMEImjE4I0LGDmKCFQ=' https://www.gstatic.com https://apis.google.com https://cdnjs.cloudflare.com https://cdn.jsdelivr.net 'wasm-unsafe-eval'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com data:; img-src 'self' data: blob: https:; connect-src 'self' https: wss:; frame-src https://shiftpay-70ab6.firebaseapp.com https://accounts.google.com https://apis.google.com https://*.google.com; worker-src 'self' blob: https://cdnjs.cloudflare.com https://cdn.jsdelivr.net; media-src 'self' data: blob:; manifest-src 'self'; object-src 'none'; base-uri 'self'; form-action 'self'">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'sha256-FgNk6U022o0tzGprl1MJbN7Uezv3SKotwh8ovG5xA8c=' 'sha256-oHnqNOh3g7KbHJglDmYbkgHggSgALIf5UrpIup8eemU=' https://www.gstatic.com https://apis.google.com https://cdnjs.cloudflare.com https://cdn.jsdelivr.net 'wasm-unsafe-eval'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com data:; img-src 'self' data: blob: https:; connect-src 'self' https: wss:; frame-src https://shiftpay-70ab6.firebaseapp.com https://accounts.google.com https://apis.google.com https://*.google.com; worker-src 'self' blob: https://cdnjs.cloudflare.com https://cdn.jsdelivr.net; media-src 'self' data: blob:; manifest-src 'self'; object-src 'none'; base-uri 'self'; form-action 'self'">
 <script>(function(){try{var l=localStorage.getItem('shaati.lang'),h=document.documentElement.lang;if(l&&l!==h&&/^(he|ar|ru|en|fr|es)$/.test(l)&&!sessionStorage.getItem('langHop')){sessionStorage.setItem('langHop','1');location.replace((l==='he'?'index.html':'index.'+l+'.html')+location.search+location.hash)}else sessionStorage.removeItem('langHop')}catch(e){}})();</script>
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="theme-color" content="#0d2b6b">
@@ -2583,6 +2583,32 @@ html:not([lang="he"]) .lb-games button, html:not([lang="he"]) .lb-periods button
 .hm-recent .t { flex: 1 1 130px; font-weight: 600; }
 .hm-recent .seg { flex: 0 1 220px; min-width: 0; }
 .hm-recent .seg button { min-width: 0; }
+/* the friends' competition (views-friends.js): rows like the champions table's, each a button */
+.fr-list { margin: 12px 0 14px; }
+.fr-row { width: 100%; display: flex; align-items: center; gap: 10px; min-height: 52px; padding: 8px 12px; border-radius: 14px; background: var(--surface-1); border: 1px solid var(--line); color: inherit; font: inherit; text-align: start; cursor: pointer; transition: scale .12s; }
+.fr-row:active { scale: .98; }
+.fr-row .lb-r { width: 24px; flex: none; text-align: center; font: 700 .9rem var(--display); color: var(--on-surface-var); }
+.fr-row .lb-e { font-size: 1.3rem; flex: none; }
+.fr-row .lb-n { flex: 1; min-width: 0; font-weight: 600; display: flex; flex-direction: column; overflow-wrap: normal; }
+.fr-row .lb-n small { font-weight: 400; }
+.fr-row .lb-n .fr-sub { font-size: .75rem; color: var(--on-surface-var); }
+.fr-row .lb-s { font: 700 .95rem var(--display); flex: none; white-space: nowrap; }
+.fr-row.me { border-color: var(--brand); box-shadow: 0 0 0 2px var(--brand-soft); cursor: default; }
+.fr-row.me:active { scale: none; }
+.fr-row.pending { opacity: .75; border-style: dashed; }
+.fr-row .fr-wait { font-size: .8rem; font-weight: 600; color: var(--on-surface-var); }
+.fr-row .fr-hid { font-size: 1.1rem; }
+.fr-list .fr-empty, .fr-signin .fr-empty { list-style: none; display: grid; justify-items: center; text-align: center; gap: 6px; padding: 18px 8px; color: var(--on-surface-var); }
+.fr-empty > span[aria-hidden] { font-size: 2.6rem; }
+.fr-empty b { color: var(--on-surface); font-size: 1.05rem; }
+.fr-signin .btn { margin-top: 8px; }
+.fr-inv-btn { margin-bottom: 14px; }
+.fr-opts { padding: 4px 12px 8px; margin-bottom: 8px; }
+.fr-links { display: flex; justify-content: space-between; flex-wrap: wrap; gap: 4px; padding-top: 4px; border-top: 1px solid var(--line); }
+.fr-invite { display: grid; justify-items: center; text-align: center; gap: 4px; padding: 10px 6px 16px; }
+.fr-invite .fr-inv-e { font-size: 3rem; line-height: 1.1; }
+.fr-invite b { font: 700 1.25rem var(--display); }
+.fr-menu .item.danger .t { color: var(--bad); }
 /* on an iPhone in a browser: add the app to the home screen */
 .ios-card { padding: 14px; border: 1.5px solid color-mix(in srgb, var(--brand) 35%, transparent); }
 .ios-card .ic-head { display: flex; gap: 12px; align-items: flex-start; margin-bottom: 12px; }
@@ -2657,8 +2683,8 @@ html.hide-money .money { filter: blur(7px); user-select: none; }
 <div id="print-root" aria-hidden="true"></div>
 <noscript><div style="padding:24px;font-family:sans-serif">האפליקציה דורשת JavaScript.</div></noscript>
 <script>
-window.APP_VERSION = '1.25.0';
-window.APP_BUILD = '1.25.0-0c2ac4e1';
+window.APP_VERSION = '1.26.0';
+window.APP_BUILD = '1.26.0-fe4324c2';
 /* ---- core/util.js ---- */
 /* ============================================================
  * util.js — date/time helpers and formatting.
@@ -8750,8 +8776,9 @@ window.APP_BUILD = '1.25.0-0c2ac4e1';
     'fuck', 'shit', 'bitch', 'dick', 'cock', 'pussy', 'porn', 'sex', 'nazi', 'hitler', 'nigg', 'cunt', 'whore', 'slut'];
   const STAFF = ['admin', 'moderator', 'support', 'shaati', 'מנהל', 'מנהלת', 'צוות', 'תמיכה', 'שעתי', 'רשמי'];
   // i18n-keep-end
-  // the same letters firestore.rules allows (so in Arabic and Russian the made-up names are in English)
-  const NICK_RE = /^[א-תa-zA-Z0-9 _.-]{2,16}$/;
+  // the same letters firestore.rules allows: a first name in any of the app's languages (Hebrew, Latin with its
+  // accents, Cyrillic, Arabic), digits, and an apostrophe or geresh (ג'ני, D'Angelo)
+  const NICK_RE = /^[א-תa-zA-ZÀ-ÖØ-öø-ÿЀ-ӿ\u0600-\u06FF0-9 _.'׳-]{2,16}$/;
 
   const num = (k) => +k.replace(/-/g, '');
   /** The period keys of a day: { d: 20261015, w: 20261011 (its Sunday), m: 202610, y: 2026 }. */
@@ -8796,16 +8823,23 @@ window.APP_BUILD = '1.25.0-0c2ac4e1';
     if (t.length > 16) return 'עד 16 תווים';
     if (!NICK_RE.test(t)) return 'רק אותיות, מספרים ורווחים';
     if (/\d{5,}/.test(t)) return 'בלי מספרים ארוכים (כמו מספר טלפון)';
+    if (!/[^\d\s_.'׳-]/.test(t)) return 'צריך לפחות אות אחת';
     // short words only as a whole word (so 'מזין' or 'Essex' pass), longer ones anywhere
     const words = t.toLowerCase().split(/[\s_.-]+/);
     const low = words.join('');
-    if (BAD.some((w) => (w.length <= 3 ? words.includes(w) : low.includes(w)))) return 'הכינוי הזה לא מתאים לטבלה';
-    if (root.Clean && !root.Clean.isClean(t)) return 'הכינוי הזה לא מתאים לטבלה';
+    if (BAD.some((w) => (w.length <= 3 ? words.includes(w) : low.includes(w)))) return 'השם הזה לא מתאים לטבלה';
+    if (root.Clean && !root.Clean.isClean(t)) return 'השם הזה לא מתאים לטבלה';
     // nobody may look like the app's own team
     if (STAFF.some((w) => low.includes(w))) return 'כינוי שנראה כמו צוות האפליקציה שמור';
     return '';
   }
   /** A random fun nickname ("שועל זריז 27"); seed makes it repeatable in tests. */
+  /** The first name from the user's name (the first word, cut to 16 letters), or '' when it would not pass. */
+  function firstName(full) {
+    const w = String(full || '').trim().split(/\s+/)[0] || '';
+    const n = w.slice(0, 16);
+    return n && !nickProblem(n) ? n : '';
+  }
   function randomNick(seed) {
     let x = (seed == null ? Math.floor(Math.random() * 1e9) : seed) >>> 0;
     const next = () => { x = (x * 1664525 + 1013904223) >>> 0; return x; };
@@ -8825,7 +8859,92 @@ window.APP_BUILD = '1.25.0-0c2ac4e1';
     return 'השיאים של כל הזמנים';
   }
 
-  root.Leaderboard = { P, PERIODS, MAX, EMOJI, keys, pack, scoreOf, keyOf, range, scoreIn, improve, nickProblem, randomNick, resetText };
+  root.Leaderboard = { P, PERIODS, MAX, EMOJI, keys, pack, scoreOf, keyOf, range, scoreIn, improve, nickProblem, firstName, randomNick, resetText };
+})(typeof window !== 'undefined' ? window : globalThis);
+
+/* ---- core/friends.js ---- */
+/* ============================================================
+ * friends.js — the friends' competition (pure, tested).
+ *
+ * Friends add each other with an invitation link; each one has a card,
+ * fr/{uid}: a nickname, an emoji, the friends it lets read it (f), and
+ * the amounts (s) unless the player hides them:
+ *   m: this month's gross  { k: 202610, v: 6834 }
+ *   y: this year's gross   { k: 2026,   v: 40210 }
+ *   a: all time's gross
+ *   h: pay per hour this year (the work's pay, premiums included,
+ *      without travel or bonuses; all time when nothing this year)
+ * A month or a year is stored with its key, so last month's amount
+ * never counts as this month's. firestore.rules checks the same shape.
+ * ============================================================ */
+(function (root) {
+  'use strict';
+  const U = root.U;
+  const MAX_FRIENDS = 50;
+  const PERIODS = ['h', 'm', 'y', 'a'];
+  const monthKey = (k) => +k.slice(0, 7).replace('-', '');
+  const yearKey = (k) => +k.slice(0, 4);
+
+  /** My amounts as of a day, from the app's model (Engine.totals: worked shifts only). */
+  function stats(model, Engine, dateKey) {
+    const all = Engine.totals(model, '1900-01-01', dateKey);
+    const yr = Engine.totals(model, dateKey.slice(0, 4) + '-01-01', dateKey);
+    const mo = Engine.totals(model, dateKey.slice(0, 7) + '-01', dateKey);
+    const base = yr.hours >= 1 ? yr : all;
+    const h = base.hours >= 1 ? Math.round((base.wage / base.hours) * 100) / 100 : 0;
+    const whole = (v) => Math.max(0, Math.round(v || 0));
+    return { m: { k: monthKey(dateKey), v: whole(mo.gross) }, y: { k: yearKey(dateKey), v: whole(yr.gross) }, a: whole(all.gross), h: Math.max(0, Math.min(2000, h)) };
+  }
+
+  /** A card's amount in a period now (0 for a month or a year that has passed; null when hidden). */
+  function valueOf(s, period, dateKey) {
+    if (!s) return null;
+    if (period === 'm') return s.m && s.m.k === monthKey(dateKey) ? +s.m.v || 0 : 0;
+    if (period === 'y') return s.y && s.y.k === yearKey(dateKey) ? +s.y.v || 0 : 0;
+    if (period === 'a') return +s.a || 0;
+    if (period === 'h') return +s.h || 0;
+    return null;
+  }
+
+  /**
+   * The table: rows { uid, n, e, s, hide, state } (state: 'ok', 'pending' = they did not let me read yet).
+   * Ranked by the period's amount, highest first (equal amounts share a place); then the ones who hide
+   * their amounts, then the ones still pending — each group by nickname.
+   */
+  function table(rows, period, dateKey) {
+    const byName = (a, b) => String(a.n || '').localeCompare(String(b.n || ''), 'he');
+    const shown = rows.filter((r) => r.state !== 'pending' && !r.hide && r.s).map((r) => Object.assign({}, r, { v: valueOf(r.s, period, dateKey) }));
+    shown.sort((a, b) => b.v - a.v || byName(a, b));
+    let rank = 0, prev = null;
+    shown.forEach((r, i) => { if (r.v !== prev) { rank = i + 1; prev = r.v; } r.rank = rank; });
+    const hidden = rows.filter((r) => r.state !== 'pending' && (r.hide || !r.s)).map((r) => Object.assign({}, r, { v: null, rank: null })).sort(byName);
+    const pending = rows.filter((r) => r.state === 'pending').map((r) => Object.assign({}, r, { v: null, rank: null })).sort(byName);
+    return shown.concat(hidden, pending);
+  }
+
+  /** A friends list with one added (no duplicates, never myself, at most 50). */
+  function addFriend(list, uid, me) {
+    const out = (list || []).filter((x, i, a) => typeof x === 'string' && x && x !== me && a.indexOf(x) === i);
+    if (uid && uid !== me && !out.includes(uid) && out.length < MAX_FRIENDS) out.push(uid);
+    return out;
+  }
+  const removeFriend = (list, uid) => (list || []).filter((x) => x !== uid);
+
+  /** An invitation code: 20 letters and digits (too many to guess; the rules want 16 or more). */
+  function code(rand) {
+    const abc = 'abcdefghijkmnpqrstuvwxyz23456789';
+    const bytes = rand ? rand(20) : Array.from({ length: 20 }, () => Math.floor(Math.random() * 256));
+    return Array.from(bytes, (b) => abc[b % abc.length]).join('');
+  }
+  /** The code from an address (?friend=CODE), if it is one. */
+  function codeFrom(search) {
+    const m = /[?&]friend=([a-z0-9]{16,40})(?:&|$)/.exec(String(search || ''));
+    return m ? m[1] : null;
+  }
+  const INVITE_DAYS = 14; // an invitation link older than this is not accepted
+
+  root.Friends = { MAX_FRIENDS, PERIODS, INVITE_DAYS, stats, valueOf, table, addFriend, removeFriend, code, codeFrom, monthKey, yearKey };
+  if (typeof module !== 'undefined') module.exports = root.Friends;
 })(typeof window !== 'undefined' ? window : globalThis);
 
 /* ---- app/ui.js ---- */
@@ -11934,6 +12053,8 @@ window.APP_BUILD = '1.25.0-0c2ac4e1';
       console.error('recalculation failed', e);
       if (!App.model) App.model = Engine.buildModel({ settings: S.settings, employers: S.employers, roles: S.roles, dayRules: [], shifts: [], entries: [] });
     }
+    // the friends' competition sends my card when its amounts changed (a little later, at most once in 20 s)
+    if (root.FriendsView) root.FriendsView.changed();
   };
 
   /* ---------------- theme ---------------- */
@@ -12738,6 +12859,7 @@ window.APP_BUILD = '1.25.0-0c2ac4e1';
     if (root.Plus) { const p = root.Plus.init().catch(() => {}); if (Intro && Intro.hold) Intro.hold(p); }
     if (Intro && Intro.hold && document.fonts && document.fonts.ready) requestAnimationFrame(() => Intro.hold(document.fonts.ready));
     if (App.whatsNew) App.whatsNew();
+    if (root.FriendsView) root.FriendsView.boot(); // an invitation that came with the address, accepted ones of mine
   };
   // just before the opening show leaves, the app draws itself once more under it (still), so anything the
   // start-up work changed (the account, the admin check, Google Play) is already in place when it shows
@@ -13410,6 +13532,7 @@ window.FIREBASE_CONFIG = {
     if (root.Stats) await root.Stats.forget();
     if (root.Support) await root.Support.forget();
     if (root.Champions) await root.Champions.forget();
+    if (root.FriendsView) await root.FriendsView.forget();
     for (const st of SYNC.concat(['kv'])) {
       const snap = await fs.getDocs(fs.collection(db, 'users', uid, st));
       for (let i = 0; i < snap.docs.length; i += 400) {
@@ -20423,8 +20546,10 @@ A cell with only a shift name and no hours: use בוקר 07:00-15:00, צהריי
 
   /* ---------------- what's new (once per big update, for people who already used the app) ---------------- */
   const WHATS_NEW = {
-    id: '1.25.0',
+    id: '1.26.0',
     items: [
+      ['users', 'pink', 'התחרות עם החברים', 'מזמינים חבר בקישור ורואים מי מרוויח יותר לשעה, החודש והשנה. אפשר להסתיר את הסכומים ולהסיר חברים. במשחקים › התחרות עם החברים.'],
+      ['smile', 'amber', 'השם שלך, לא כינוי', 'בטבלת האלופים ובתחרות מופיע השם הפרטי שלך (אפשר לשנות), בכל שפה.'],
       ['home', 'violet', 'מסך הבית כמו שנוח לך', 'בהגדרות › מראה › מסך הבית: להסתיר קיצורי דרך, שורת עדכון או תאריך עברי, ולבחור כמה משמרות אחרונות יופיעו.'],
       ['wallet', 'mint', 'הנטו בגדול', 'אפשר לבחור שהמספר הגדול בכרטיס השכר יהיה הנטו המשוער. גם הצפי לסוף החודש יוצג אז בנטו.'],
       ['addSq', 'sky', 'באייפון? שעתי על מסך הבית', 'הדרכה בשלושה צעדים: כך הנתונים נשמרים ותזכורות מגיעות גם באייפון. בהגדרות › אודות והתקנה.'],
@@ -20432,8 +20557,6 @@ A cell with only a shift name and no hours: use בוקר 07:00-15:00, צהריי
       ['bell', 'sky', 'תזכורות למשמרת בשליטה מלאה', 'כמה תזכורות שרוצים וכמה זמן לפני, גם בערב שלפני, ושאלה אחרי המשמרת אם עבדת בה. בהגדרות › התראות ותובנות.'],
       ['chart', 'mint', 'משכורת חודשית ממוצעת', 'בדוחות: הממוצע של 3, 6 או 12 החודשים האחרונים, של השנה או של כל הזמן, עם החודש הגבוה והנמוך.'],
       ['eye', 'violet', 'מצב פרטיות', 'העין בכרטיס השכר מטשטשת את כל הסכומים, למשל כשמראים למישהו את הטלפון.'],
-      ['globe', 'amber', 'שעתי גם בצרפתית ובספרדית', 'שש שפות: עברית, ערבית, רוסית, אנגלית, צרפתית וספרדית. בהגדרות › מראה ונעילה › שפה.'],
-      ['check', 'mint', 'משמרת שעברה? מאשרים בלחיצה', 'משמרת מתוכננת נכנסת לשכר רק אחרי שמאשרים שעבדת בה. עכשיו זה ברור: כרטיס בבית עם כפתור גדול לכל משמרת.'],
     ],
   };
 
@@ -20973,11 +21096,14 @@ A cell with only a shift name and no hours: use בוקר 07:00-15:00, צהריי
           return `<div class="gm-streak-bar ${st.today ? 'on' : ''}"><span aria-hidden="true">🔥</span><b>${st.n === 1 ? 'יום אחד ברצף' : `${st.n} ימים ברצף`}</b><small>${st.today ? 'שיחקת היום. נתראה מחר!' : 'סיבוב אחד היום שומר על הרצף'}</small></div>`;
         })()}<div class="gm-list">${cards()}</div>
         ${root.Champions ? root.Champions.hubCard() : ''}
+        ${root.FriendsView ? root.FriendsView.hubCard() : ''}
         <button class="ach-card" data-medals>${(() => { const l = achievements(); const got = l.filter((a) => a.on).length; return `<span class="ach-card-e" aria-hidden="true">🏅</span><span class="gm-txt"><b>המדליות שלי</b><span>${got} מתוך ${l.length} · על משמרות, כסף, תלושים ומשחקים</span></span>${icon('left', 's')}`; })()}</button>`,
       onMount: (el) => {
         el.querySelector('[data-medals]').onclick = medalsSheet;
         const hub = el.querySelector('[data-lb-hub]');
         if (hub) hub.onclick = () => root.Champions.open();
+        const fr = el.querySelector('[data-fr-hub]');
+        if (fr) fr.onclick = () => root.FriendsView.open();
         if (root.Champions) root.Champions.warm(el);
         const list = el.querySelector('.gm-list');
         list.addEventListener('click', (e) => {
@@ -22109,7 +22235,8 @@ A cell with only a shift name and no hours: use בוקר 07:00-15:00, צהריי
   /* ---------------- my nickname, emoji and background ---------------- */
   Champions.profile = function (done) {
     const l = S.settings.lb || {};
-    let n = l.n || LB.randomNick(), e = LB.EMOJI.includes(l.e) ? l.e : LB.EMOJI[Math.floor(Math.random() * LB.EMOJI.length)], bg = l.bg || '';
+    // the name: the one chosen before, or the user's first name (a made-up nickname felt childish)
+    let n = l.n || LB.firstName(S.settings.userName), e = LB.EMOJI.includes(l.e) ? l.e : LB.EMOJI[Math.floor(Math.random() * LB.EMOJI.length)], bg = l.bg || '';
     const skins = (root.Plus && root.Plus.SKINS) || {};
     const canBg = plusOn(); // an admin's preview may choose too (it shows only on this phone)
     const showBg = !!(root.Plus && (root.Plus.visible() || canBg));
@@ -22118,8 +22245,8 @@ A cell with only a shift name and no hours: use בוקר 07:00-15:00, צהריי
       title: l.on ? 'הפרופיל שלי בטבלה' : 'הצטרפות לטבלת האלופים',
       cls: 'lb-profile',
       body: `<ol class="lb-list lb-preview" aria-hidden="true">${preview()}</ol>
-        <label class="field"><span class="lbl">כינוי (מופיע לכולם)</span>
-          <span class="lb-nick"><input class="input" id="lb-n" maxlength="16" autocomplete="off" value="${esc(n)}"><button class="icon-btn" data-dice aria-label="כינוי אקראי">🎲</button></span>
+        <label class="field"><span class="lbl">השם שלך בטבלה (מופיע לכולם)</span>
+          <span class="lb-nick"><input class="input" id="lb-n" maxlength="16" autocomplete="given-name" placeholder="השם הפרטי שלך" value="${esc(n)}"></span>
           <span class="tiny lb-err" id="lb-err" role="alert"></span></label>
         <div class="section-title">אימוג׳י</div>
         <div class="lb-emoji" role="radiogroup" aria-label="אימוג׳י">${LB.EMOJI.map((x) => `<button role="radio" aria-checked="${x === e}" class="${x === e ? 'on' : ''}" data-e="${x}">${x}</button>`).join('')}</div>
@@ -22128,7 +22255,7 @@ A cell with only a shift name and no hours: use בוקר 07:00-15:00, צהריי
             <button class="skin-tile ${!bg ? 'on' : ''}" data-bg="" aria-pressed="${!bg}"><b>—</b><span>בלי</span></button>
             ${Object.entries(skins).map(([k, name]) => `<button class="skin-tile sk-${k} ${bg === k ? 'on' : ''}" data-bg="${k}" aria-pressed="${bg === k}" aria-label="${name}${canBg ? '' : ' (Plus)'}"><b>${e}</b><span>${name}</span>${canBg ? '' : `<i class="skin-lock" aria-hidden="true">${icon('lock', 's')}</i>`}</button>`).join('')}
           </div>` : ''}
-        <div class="tiny muted lb-note">בטבלה מופיעים רק הכינוי, האימוג׳י, הרקע והתוצאות במשחקים. לא שם אמיתי, לא מספר טלפון. אפשר לצאת מהטבלה בכל רגע, והשורה נמחקת.</div>
+        <div class="tiny muted lb-note">בטבלה מופיעים רק השם שבחרת, האימוג׳י, הרקע והתוצאות במשחקים. מספיק שם פרטי, בלי שם משפחה ובלי מספר טלפון. אפשר לצאת מהטבלה בכל רגע, והשורה נמחקת.</div>
         <button class="btn big block" data-save>${icon('check')} ${l.on ? 'שמירה' : 'הצטרפות'}</button>
         ${l.on ? '<button class="btn text block danger" data-leave>יציאה מהטבלה</button>' : ''}`,
       onMount: (el) => {
@@ -22139,8 +22266,7 @@ A cell with only a shift name and no hours: use בוקר 07:00-15:00, צהריי
         el.addEventListener('click', async (ev) => {
           const b = ev.target.closest('button');
           if (!b) return;
-          if (b.hasAttribute('data-dice')) { n = LB.randomNick(); input.value = n; err.textContent = ''; redraw(); }
-          else if (b.dataset.e) { e = b.dataset.e; el.querySelectorAll('[data-e]').forEach((x) => { const on = x.dataset.e === e; x.classList.toggle('on', on); x.setAttribute('aria-checked', on); }); el.querySelectorAll('.lb-bgs .skin-tile[data-bg]:not([data-bg=""]) b').forEach((x) => { x.textContent = e; }); redraw(); }
+          if (b.dataset.e) { e = b.dataset.e; el.querySelectorAll('[data-e]').forEach((x) => { const on = x.dataset.e === e; x.classList.toggle('on', on); x.setAttribute('aria-checked', on); }); el.querySelectorAll('.lb-bgs .skin-tile[data-bg]:not([data-bg=""]) b').forEach((x) => { x.textContent = e; }); redraw(); }
           else if (b.dataset.bg !== undefined) {
             if (b.dataset.bg && !canBg) { UI.closeTop(); setTimeout(() => root.Plus.sheet(), 320); return; }
             bg = b.dataset.bg; el.querySelectorAll('[data-bg]').forEach((x) => { const on = x.dataset.bg === bg; x.classList.toggle('on', on); x.setAttribute('aria-pressed', on); }); redraw();
@@ -22189,6 +22315,399 @@ A cell with only a shift name and no hours: use בוקר 07:00-15:00, צהריי
   Champions.sync = async function () { if (joined()) { try { await writeMine(null); } catch (e) { /* next time */ } } };
   Champions._reset = () => { mine = null; boards.clear(); };
   App.actions.leaderboard = (el) => Champions.open(el && el.dataset && el.dataset.game);
+})(typeof window !== 'undefined' ? window : globalThis);
+
+/* ---- app/views-friends.js ---- */
+/* ============================================================
+ * views-friends.js — "התחרות עם החברים": who earns the most, per hour, this month,
+ * this year and all time, among friends who added each other.
+ *
+ * A friend is added with an invitation link (?friend=CODE): the sender makes
+ * inv/{code}; whoever opens it accepts it (sets "to" to their uid) and lists the
+ * sender as a friend; the sender's app sees the accepted invitation the next time
+ * it opens and lists them back. A card (fr/{uid}) is read only by the friends it
+ * lists (firestore.rules), so removing or blocking someone takes them off my list
+ * and they can't read me any more. "Hide my amounts" keeps the card without them.
+ * Shows only a nickname and an emoji, never a name. The amounts, the order and
+ * the friends list are worked out in core/friends.js.
+ * ============================================================ */
+(function (root) {
+  'use strict';
+  const { U, Store, UI, App, Engine } = root;
+  const S = Store.S;
+  const { icon, esc } = UI;
+  const FR = root.Friends;
+  const LB = root.Leaderboard;
+  const View = {};
+  root.FriendsView = View;
+
+  const PERIODS = [['h', 'שכר לשעה'], ['m', 'החודש'], ['y', 'השנה'], ['a', 'כל הזמנים']];
+  const APP_URL = 'https://leelor123.github.io/shifts/';
+  const Cloud = () => root.Cloud;
+  const signedIn = () => !!(Cloud() && Cloud().user);
+  const uid = () => Cloud().user.uid;
+  const me = () => S.settings.fr || {};
+  const joined = () => signedIn() && !!me().on;
+  const today = () => U.todayKey();
+  View.joined = joined;
+
+  /* ---------------- an invitation that came with the address ----------------
+   * Kept until it is handled (signing in may take a reload), and taken off the address at once. */
+  const INV_KEY = 'shaati.frInvite';
+  try {
+    const c = FR.codeFrom(location.search);
+    if (c) {
+      localStorage.setItem(INV_KEY, c);
+      const u = new URL(location.href); u.searchParams.delete('friend');
+      history.replaceState(history.state, '', u.pathname + (u.search || '') + u.hash);
+    }
+  } catch (e) { /* no storage: the link still works while the page stays open */ }
+  const pendingCode = () => { try { return localStorage.getItem(INV_KEY); } catch (e) { return null; } };
+  const dropCode = () => { try { localStorage.removeItem(INV_KEY); } catch (e) { /* none */ } };
+
+  /* ---------------- my card ---------------- */
+  function card() {
+    const m = me();
+    const c = { n: m.n, e: m.e, t: Date.now(), hide: !!m.hide, f: FR.addFriend(m.f || [], null, uid()) };
+    if (!m.hide) c.s = FR.stats(App.model, Engine, today());
+    return c;
+  }
+  let pubTimer = 0;
+  /** Sends my card when something in it changed (or when asked); the whole card, so hidden amounts go. */
+  async function publish(force) {
+    if (!joined() || !App.model) return;
+    const c = card();
+    const sig = JSON.stringify(Object.assign({}, c, { t: 0 }));
+    if (!force && S.meta.frPub === sig) return;
+    const { fs, db } = await Cloud().sdk();
+    await fs.setDoc(fs.doc(db, 'fr', uid()), c);
+    await Store.setMeta({ frPub: sig });
+    const mine = cards.get(uid()); if (mine) cards.delete(uid());
+  }
+  View.publish = publish;
+  /** The numbers changed (App.recompute): my card follows a little later, at most once in 20 seconds. */
+  View.changed = function () {
+    if (!joined() && !(pendingCode() && signedIn())) return;
+    clearTimeout(pubTimer);
+    pubTimer = setTimeout(() => {
+      if (pendingCode() && signedIn()) handleInvite();
+      publish().catch(() => {});
+    }, 20000);
+  };
+
+  /* ---------------- friends' cards ---------------- */
+  const cards = new Map(); // uid → { at, c (null: not readable — they haven't added me, or removed me) }
+  const KEEP_MS = 5 * 60000;
+  async function readCard(fuid, fresh) {
+    const k = cards.get(fuid);
+    // a card I may not read yet (waiting for them) is asked again soon; a readable one is kept 5 minutes
+    if (!fresh && k && Date.now() - k.at < (k.c ? KEEP_MS : 30000)) return k.c;
+    const { fs, db } = await Cloud().sdk();
+    let c = null;
+    try { const snap = await fs.getDoc(fs.doc(db, 'fr', fuid)); c = snap.exists() ? snap.data() : null; } catch (e) {
+      if (!(e && /permission/i.test(e.code || e.message || ''))) throw e; // offline: the caller says so
+    }
+    cards.set(fuid, { at: Date.now(), c });
+    return c;
+  }
+
+  /** Invitations of mine that friends accepted: they join my list; old unanswered ones go. */
+  async function checkInvites() {
+    if (!joined()) return;
+    const { fs, db } = await Cloud().sdk();
+    const snap = await fs.getDocs(fs.query(fs.collection(db, 'inv'), fs.where('from', '==', uid())));
+    let f = me().f || [];
+    const blocked = me().blocked || [];
+    for (const d of snap.docs) {
+      const v = d.data();
+      if (v.to) {
+        if (!blocked.includes(v.to)) f = FR.addFriend(f, v.to, uid());
+        await fs.deleteDoc(fs.doc(db, 'inv', d.id)).catch(() => {});
+      } else if (Date.now() - (v.t || 0) > FR.INVITE_DAYS * U.DAY) await fs.deleteDoc(fs.doc(db, 'inv', d.id)).catch(() => {});
+    }
+    if (f.length !== (me().f || []).length) {
+      await Store.setSettings((s) => { s.fr = Object.assign({}, s.fr, { f }); });
+      await publish(true);
+      UI.toast('חבר/ה חדש/ה הצטרף/ה לתחרות 🤝');
+    }
+  }
+
+  /* ---------------- joining: a nickname and an emoji ---------------- */
+  function profileSheet(done, opts) {
+    opts = opts || {};
+    // the name: the one chosen before, else the user's first name (friends know each other by name)
+    let n = me().n || LB.firstName(S.settings.userName) || (S.settings.lb && S.settings.lb.n) || '';
+    let e = LB.EMOJI.includes(me().e) ? me().e : (S.settings.lb && LB.EMOJI.includes(S.settings.lb.e) ? S.settings.lb.e : LB.EMOJI[Math.floor(Math.random() * LB.EMOJI.length)]);
+    UI.openSheet({
+      title: me().on ? 'השם שלי בתחרות' : 'הצטרפות לתחרות עם החברים',
+      cls: 'lb-profile fr-profile',
+      body: `${opts.intro || ''}
+        <label class="field"><span class="lbl">השם שלך (החברים יראו אותו)</span>
+          <span class="lb-nick"><input class="input" id="fr-n" maxlength="16" autocomplete="given-name" placeholder="השם הפרטי שלך" value="${esc(n)}"></span>
+          <span class="tiny lb-err" id="fr-err" role="alert"></span></label>
+        <div class="section-title">אימוג׳י</div>
+        <div class="lb-emoji" role="radiogroup" aria-label="אימוג׳י">${LB.EMOJI.map((x) => `<button role="radio" aria-checked="${x === e}" class="${x === e ? 'on' : ''}" data-e="${x}">${x}</button>`).join('')}</div>
+        <div class="tiny muted lb-note">רק החברים שהוספת רואים את הכרטיס שלך: השם, האימוג׳י והסכומים (אפשר להסתיר אותם). שום פרט אחר.</div>
+        <button class="btn big block" data-save>${icon('check')} ${me().on ? 'שמירה' : (opts.cta || 'הצטרפות')}</button>`,
+      onMount: (el) => {
+        const input = el.querySelector('#fr-n');
+        const err = el.querySelector('#fr-err');
+        input.addEventListener('input', () => { err.textContent = ''; });
+        el.addEventListener('click', async (ev) => {
+          const b = ev.target.closest('button');
+          if (!b) return;
+          if (b.dataset.e) { e = b.dataset.e; el.querySelectorAll('[data-e]').forEach((x) => { const on = x.dataset.e === e; x.classList.toggle('on', on); x.setAttribute('aria-checked', on); }); }
+          else if (b.hasAttribute('data-save')) {
+            n = String(input.value || '').trim().replace(/\s+/g, ' ');
+            const bad = LB.nickProblem(n);
+            if (bad) { err.textContent = bad; input.focus(); return; }
+            if (!signedIn()) { UI.toast('צריך להתחבר לחשבון'); return; }
+            b.disabled = true;
+            const was = me();
+            await Store.setSettings((s) => { s.fr = Object.assign({ f: [], blocked: [], hide: false }, s.fr, { on: true, n, e }); });
+            try {
+              await publish(true);
+              UI.closeTop();
+              if (done) setTimeout(done, 280);
+            } catch (x) {
+              await Store.setSettings((s) => { s.fr = was.on ? was : Object.assign({}, s.fr, { on: false }); });
+              b.disabled = false;
+              UI.toast(navigator.onLine ? 'השמירה נכשלה. נסו שוב' : 'אין חיבור לאינטרנט');
+            }
+          }
+        });
+      },
+    });
+  }
+  const signIn = () => { UI.closeAll(); App.go('settings'); setTimeout(() => App.sheetsApi.settingsSection('account'), 350); };
+
+  /* ---------------- inviting ---------------- */
+  View.invite = async function () {
+    if (!signedIn()) { signedOutSheet(); return; }
+    if (!joined()) { profileSheet(() => View.invite(), { cta: 'הצטרפות והזמנה' }); return; }
+    const code = FR.code((k) => { const a = new Uint8Array(k); crypto.getRandomValues(a); return a; });
+    try {
+      const { fs, db } = await Cloud().sdk();
+      await fs.setDoc(fs.doc(db, 'inv', code), { from: uid(), n: me().n, e: me().e, t: Date.now(), to: '' });
+    } catch (e) { UI.toast(navigator.onLine ? 'לא הצלחנו ליצור הזמנה. נסו שוב' : 'אין חיבור לאינטרנט'); return; }
+    const url = `${APP_URL}?friend=${code}`;
+    const text = `${me().e} ${me().n} מזמין/ה אותך לתחרות בשעתי: מי מרוויח יותר לשעה, החודש והשנה? 💸`;
+    try { if (navigator.share) { await navigator.share({ title: 'Shaati', text, url }); return; } } catch (e) { if (e && e.name === 'AbortError') return; }
+    await UI.copyText(text + ' ' + url);
+    UI.toast('הקישור הועתק. אפשר להדביק בוואטסאפ 💚');
+  };
+
+  /* ---------------- accepting ---------------- */
+  let handling = false;
+  async function handleInvite() {
+    const code = pendingCode();
+    if (!code || handling) return;
+    if (!signedIn()) { signedOutSheet(true); return; }
+    handling = true;
+    try {
+      const { fs, db } = await Cloud().sdk();
+      const snap = await fs.getDoc(fs.doc(db, 'inv', code));
+      const v = snap.exists() ? snap.data() : null;
+      const blocked = me().blocked || [];
+      if (!v || Date.now() - (v.t || 0) > FR.INVITE_DAYS * U.DAY) { dropCode(); UI.toast('ההזמנה כבר לא בתוקף. בקשו קישור חדש'); return; }
+      if (v.from === uid()) { dropCode(); UI.toast('זו ההזמנה שלך: שלחו אותה לחבר'); return; }
+      if (blocked.includes(v.from)) { dropCode(); return; }
+      if (v.to && v.to !== uid()) { dropCode(); UI.toast('מישהו כבר הצטרף עם ההזמנה הזו. בקשו קישור חדש'); return; }
+      if ((me().f || []).includes(v.from) && v.to === uid()) { dropCode(); View.open(); return; }
+      acceptSheet(code, v);
+    } catch (e) {
+      UI.toast(navigator.onLine ? 'לא הצלחנו לפתוח את ההזמנה. ננסה שוב בפתיחה הבאה' : 'אין חיבור לאינטרנט. ננסה שוב');
+    } finally { handling = false; }
+  }
+  View.handleInvite = handleInvite;
+  function acceptSheet(code, v) {
+    const accept = async (btn) => {
+      if (btn) btn.disabled = true;
+      try {
+        const { fs, db } = await Cloud().sdk();
+        await fs.setDoc(fs.doc(db, 'inv', code), { to: uid() }, { merge: true });
+        await Store.setSettings((s) => { s.fr = Object.assign({}, s.fr, { f: FR.addFriend((s.fr || {}).f || [], v.from, uid()) }); });
+        // until the sender's app lists me back, the table shows them as waiting, by the name in the invitation
+        await Store.setMeta({ frNames: Object.assign({}, S.meta.frNames, { [v.from]: { n: v.n, e: v.e } }) });
+        await publish(true);
+        dropCode();
+        UI.closeAll();
+        if (root.Fx) root.Fx.celebrate('big');
+        UI.toast(`התחרות עם ${v.n} התחילה! 🤝`);
+        setTimeout(() => View.open(), 450);
+      } catch (e) {
+        if (btn) btn.disabled = false;
+        UI.toast(navigator.onLine ? 'ההצטרפות נכשלה. נסו שוב' : 'אין חיבור לאינטרנט');
+      }
+    };
+    const intro = `<div class="fr-invite"><span class="fr-inv-e" aria-hidden="true">${esc(v.e)}</span><b>${esc(v.n)}</b><span>מזמין/ה אותך לתחרות: מי מרוויח יותר לשעה, החודש והשנה? 💸</span></div>`;
+    if (!joined()) { profileSheet(() => accept(), { intro, cta: 'מצטרפים לתחרות' }); return; }
+    UI.openSheet({
+      title: 'הזמנה לתחרות',
+      cls: 'fr-accept',
+      body: `${intro}
+        <div class="tiny muted lb-note">החברים בתחרות רואים רק את השם, האימוג׳י והסכומים שלך${me().hide ? ' (שאצלך מוסתרים)' : ''}. אפשר להסיר חבר בכל רגע.</div>
+        <button class="btn big block go" data-acc>${icon('check')} מצטרפים</button>
+        <button class="btn text block" data-no>לא עכשיו</button>`,
+      onMount: (el) => {
+        el.querySelector('[data-acc]').onclick = (e) => accept(e.currentTarget);
+        el.querySelector('[data-no]').onclick = () => { dropCode(); UI.closeTop(); };
+      },
+    });
+  }
+  function signedOutSheet(invited) {
+    UI.openSheet({
+      title: invited ? 'הזמנה לתחרות' : 'התחרות עם החברים',
+      cls: 'fr-signin',
+      body: `<div class="fr-empty"><span aria-hidden="true">🤝</span><b>${invited ? 'הוזמנת לתחרות עם חבר!' : 'מי מרוויח יותר?'}</b>
+        <span>מתחברים עם חשבון Google${invited ? ', ואז ההזמנה נפתחת לבד' : ', מזמינים חברים ורואים מי מרוויח הכי הרבה לשעה, החודש והשנה'}.</span></div>
+        <button class="btn big block" data-in>${icon('cloud')} התחברות</button>`,
+      onMount: (el) => { el.querySelector('[data-in]').onclick = signIn; },
+    });
+  }
+
+  /* ---------------- the table ---------------- */
+  let period = 'm';
+  View.open = function () {
+    if (!signedIn()) { signedOutSheet(false); return; }
+    if (!joined()) { profileSheet(() => View.open()); return; }
+    let rows = null, seq = 0;
+    const meRow = () => ({ uid: uid(), n: me().n, e: me().e, hide: !!me().hide, s: me().hide ? null : FR.stats(App.model, Engine, today()), me: true, state: 'ok' });
+    const amount = (r) => {
+      if (r.state === 'pending') return '<span class="fr-wait">ממתין/ה</span>';
+      if (r.v == null) return '<span class="fr-hid" title="מסתיר/ה סכומים">🙈</span>';
+      return period === 'h' ? `${UI.money(r.v, 2)}` : UI.money(r.v, 0);
+    };
+    const row = (r) => `<li><button class="fr-row ${r.me ? 'me' : ''} ${r.state === 'pending' ? 'pending' : ''}" ${r.me ? 'data-fr-me' : `data-fr-uid="${esc(r.uid)}"`}>
+        <span class="lb-r">${r.rank || '–'}</span><span class="lb-e" aria-hidden="true">${esc(r.e || '🙂')}</span>
+        <span class="lb-n">${esc(r.n || '…')}${r.me ? ' <small>(את/ה)</small>' : ''}${r.state === 'pending' ? '<small class="fr-sub">יופיע/תופיע כשיפתח/תפתח את שעתי</small>' : ''}</span>
+        <span class="lb-s">${amount(r)}</span></button></li>`;
+    function paint(el) {
+      const list = el.querySelector('[data-fr-list]');
+      if (!rows) { list.innerHTML = '<li class="fr-loading">' + UI.skeleton(3) + '</li>'; return; }
+      const t = FR.table(rows, period, today());
+      list.innerHTML = t.map(row).join('') + (rows.length < 2 ? `<li class="fr-empty"><span aria-hidden="true">🤝</span><b>עוד אין כאן חברים</b><span>הזמינו חבר בקישור, ותראו מי מרוויח יותר לשעה, החודש והשנה.</span></li>` : '');
+    }
+    async function load(el, fresh) {
+      const my = ++seq;
+      try {
+        await checkInvites().catch(() => {});
+        const f = me().f || [];
+        const got = await Promise.all(f.map(async (x) => {
+          const c = await readCard(x, fresh);
+          return c ? { uid: x, n: c.n, e: c.e, hide: !!c.hide, s: c.hide ? null : c.s || null, state: 'ok' } : Object.assign({ uid: x, state: 'pending', n: '…' }, pendingNames()[x] && typeof pendingNames()[x] === 'object' ? pendingNames()[x] : {});
+        }));
+        if (my !== seq || !el.isConnected) return;
+        rows = [meRow()].concat(got);
+      } catch (e) {
+        if (my !== seq || !el.isConnected) return;
+        rows = [meRow()];
+        UI.toast(navigator.onLine ? 'לא הצלחנו לטעון את החברים' : 'אין חיבור לאינטרנט');
+      }
+      paint(el);
+    }
+    UI.openSheet({
+      title: 'התחרות עם החברים 🤝',
+      full: true,
+      cls: 'fr-sheet lb-sheet',
+      body: `<div class="seg lb-periods fr-periods" role="tablist" aria-label="תקופה">${PERIODS.map(([k, l]) => `<button class="${k === period ? 'on' : ''}" role="tab" aria-selected="${k === period}" data-period="${k}">${l}</button>`).join('')}</div>
+        <ol class="lb-list fr-list" data-fr-list></ol>
+        <button class="btn big block go fr-inv-btn" data-fr-invite>${icon('send', 's')} הזמנת חבר</button>
+        <div class="card fr-opts">${`<label class="switch-row"><span class="body"><span class="t">הסתרת הסכומים שלי</span><span class="s">החברים יראו אותך בטבלה, בלי הסכומים</span></span><input type="checkbox" class="switch" data-fr-hide ${me().hide ? 'checked' : ''}></label>`}
+          <div class="fr-links"><button class="btn text sm" data-fr-profile>${icon('edit', 's')} השם שלי</button><button class="btn text sm danger" data-fr-leave>יציאה מהתחרות</button></div></div>
+        <div class="tiny muted lb-note">לשעה: השכר על העבודה עצמה (כולל שבתות ושעות נוספות, בלי נסיעות) השנה. החודש, השנה וכל הזמנים: ברוטו. רק חברים שהוספתם זה את זה רואים את הכרטיס.</div>`,
+      onMount: (el) => {
+        paint(el);
+        load(el, false);
+        el.addEventListener('change', async (e) => {
+          if (!e.target.matches('[data-fr-hide]')) return;
+          const hide = e.target.checked;
+          await Store.setSettings((s) => { s.fr = Object.assign({}, s.fr, { hide }); });
+          try { await publish(true); } catch (x) { UI.toast('יישלח כשיהיה חיבור'); }
+          rows = rows && rows.map((r) => (r.me ? meRow() : r)); paint(el);
+        });
+        el.addEventListener('click', async (e) => {
+          const b = e.target.closest('button');
+          if (!b) return;
+          if (b.dataset.period) {
+            if (b.dataset.period === period) return;
+            period = b.dataset.period;
+            el.querySelectorAll('[data-period]').forEach((x) => { const on = x.dataset.period === period; x.classList.toggle('on', on); x.setAttribute('aria-selected', on); });
+            paint(el);
+          } else if (b.hasAttribute('data-fr-invite')) View.invite();
+          else if (b.hasAttribute('data-fr-profile')) profileSheet(() => { rows = rows && rows.map((r) => (r.me ? meRow() : r)); paint(el); });
+          else if (b.hasAttribute('data-fr-leave')) {
+            if (!(await UI.confirm('לצאת מהתחרות?', 'הכרטיס שלך יימחק, והחברים לא יראו אותך יותר. אפשר להצטרף שוב בכל רגע.', 'יציאה', true))) return;
+            await View.forget(); UI.closeTop();
+          } else if (b.dataset.frUid) friendMenu(b.dataset.frUid, rows.find((r) => r.uid === b.dataset.frUid), () => { rows = rows.filter((r) => r.uid !== b.dataset.frUid); paint(el); });
+        });
+      },
+    });
+  };
+  // a friend whose card I can't read yet: the name from the invitation, kept on this phone
+  const pendingNames = () => (S.meta.frNames || {});
+
+  function friendMenu(fuid, r, gone) {
+    const name = r && r.n && r.n !== '…' ? r.n : 'החבר/ה';
+    UI.openSheet({
+      title: `${r && r.e ? r.e + ' ' : ''}${name}`,
+      cls: 'fr-menu',
+      body: `<button class="item" data-rm><span class="body"><span class="t">הסרה מהחברים</span><span class="s">לא תראו זה את זה בטבלה. אפשר להזמין שוב</span></span></button>
+        <button class="item danger" data-block><span class="body"><span class="t">חסימה</span><span class="s">הסרה, ובלי הזמנות ממנו/ה בעתיד</span></span></button>`,
+      onMount: (el) => {
+        const drop = async (block) => {
+          await Store.setSettings((s) => {
+            const f = FR.removeFriend((s.fr || {}).f, fuid);
+            const blocked = block ? FR.addFriend((s.fr || {}).blocked || [], fuid, null) : (s.fr || {}).blocked || [];
+            s.fr = Object.assign({}, s.fr, { f, blocked });
+          });
+          cards.delete(fuid);
+          try { await publish(true); } catch (x) { /* sent with the next change */ }
+          UI.closeTop();
+          UI.toast(block ? 'נחסם/ה ✓' : 'הוסר/ה ✓');
+          gone();
+        };
+        el.querySelector('[data-rm]').onclick = () => drop(false);
+        el.querySelector('[data-block]').onclick = async () => { if (await UI.confirm(`לחסום את ${name}?`, 'יוסר/תוסר מהחברים, והזמנות ממנו/ה לא ייפתחו.', 'חסימה', true)) drop(true); };
+      },
+    });
+  }
+
+  /** Leaving (or deleting the account): my card and my invitations go. */
+  View.forget = async function () {
+    try {
+      if (signedIn()) {
+        const { fs, db } = await Cloud().sdk();
+        await fs.deleteDoc(fs.doc(db, 'fr', uid()));
+        const snap = await fs.getDocs(fs.query(fs.collection(db, 'inv'), fs.where('from', '==', uid())));
+        for (const d of snap.docs) await fs.deleteDoc(fs.doc(db, 'inv', d.id)).catch(() => {});
+      }
+    } catch (e) { /* offline: tried again by leaving again */ }
+    cards.clear();
+    if (me().on) await Store.setSettings((s) => { s.fr = Object.assign({}, s.fr, { on: false, f: [] }); });
+    await Store.setMeta({ frPub: null });
+  };
+
+  /** A card for the games list. */
+  const hubSub = () => {
+    const nf = (me().f || []).length;
+    if (!joined()) return 'מי מרוויח יותר לשעה, החודש והשנה?';
+    if (!nf) return 'הזמינו חבר ותראו מי מרוויח יותר';
+    return nf === 1 ? 'חבר/ה אחד/ת בתחרות' : `${nf} חברים בתחרות`;
+  };
+  View.hubCard = () => `<button class="ach-card fr-card" data-fr-hub><span class="ach-card-e" aria-hidden="true">🤝</span><span class="gm-txt"><b>התחרות עם החברים</b><span>${hubSub()}</span></span>${icon('left', 's')}</button>`;
+
+  /** After the app opens: an invitation that came with the address, then accepted ones of mine. */
+  View.boot = function () {
+    const go = (tries) => {
+      if (document.querySelector('.sheet.show, .dialog, #intro') && tries < 60) { setTimeout(() => go(tries + 1), 1000); return; }
+      if (pendingCode()) handleInvite();
+      else if (joined()) checkInvites().then(() => publish()).catch(() => {});
+    };
+    setTimeout(() => go(0), 1500);
+  };
+  App.actions.friends = () => View.open();
+  App.actions['friends-invite'] = () => View.invite();
 })(typeof window !== 'undefined' ? window : globalThis);
 
 /* ---- app/views-analysis.js ---- */

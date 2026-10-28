@@ -4818,7 +4818,8 @@
   "key": "התחרות עם החברים",
   "kind": "lit",
   "where": [
-   "app/views-friends.js:240"
+   "app/views-friends.js:240",
+   "app/views-guide.js:115"
   ]
  },
  {
@@ -6183,126 +6184,119 @@
   ]
  },
  {
-  "key": "מסך הבית כמו שנוח לך",
+  "key": "מזמינים חבר בקישור ורואים מי מרוויח יותר לשעה, החודש והשנה. אפשר להסתיר את הסכומים ולהסיר חברים. במשחקים › התחרות עם החברים.",
   "kind": "lit",
   "where": [
    "app/views-guide.js:115"
+  ]
+ },
+ {
+  "key": "השם שלך, לא כינוי",
+  "kind": "lit",
+  "where": [
+   "app/views-guide.js:116"
+  ]
+ },
+ {
+  "key": "בטבלת האלופים ובתחרות מופיע השם הפרטי שלך (אפשר לשנות), בכל שפה.",
+  "kind": "lit",
+  "where": [
+   "app/views-guide.js:116"
+  ]
+ },
+ {
+  "key": "מסך הבית כמו שנוח לך",
+  "kind": "lit",
+  "where": [
+   "app/views-guide.js:117"
   ]
  },
  {
   "key": "בהגדרות › מראה › מסך הבית: להסתיר קיצורי דרך, שורת עדכון או תאריך עברי, ולבחור כמה משמרות אחרונות יופיעו.",
   "kind": "lit",
   "where": [
-   "app/views-guide.js:115"
+   "app/views-guide.js:117"
   ]
  },
  {
   "key": "הנטו בגדול",
   "kind": "lit",
   "where": [
-   "app/views-guide.js:116"
+   "app/views-guide.js:118"
   ]
  },
  {
   "key": "אפשר לבחור שהמספר הגדול בכרטיס השכר יהיה הנטו המשוער. גם הצפי לסוף החודש יוצג אז בנטו.",
   "kind": "lit",
   "where": [
-   "app/views-guide.js:116"
+   "app/views-guide.js:118"
   ]
  },
  {
   "key": "באייפון? שעתי על מסך הבית",
   "kind": "lit",
   "where": [
-   "app/views-guide.js:117"
+   "app/views-guide.js:119"
   ]
  },
  {
   "key": "הדרכה בשלושה צעדים: כך הנתונים נשמרים ותזכורות מגיעות גם באייפון. בהגדרות › אודות והתקנה.",
   "kind": "lit",
   "where": [
-   "app/views-guide.js:117"
+   "app/views-guide.js:119"
   ]
  },
  {
   "key": "מהאתר ישר לגרסה החדשה",
   "kind": "lit",
   "where": [
-   "app/views-guide.js:118"
+   "app/views-guide.js:120"
   ]
  },
  {
   "key": "כניסה מהאתר או מקישור בדפדפן פותחת תמיד את הגרסה העדכנית, ולא עותק ישן מהביקור הקודם.",
   "kind": "lit",
   "where": [
-   "app/views-guide.js:118"
+   "app/views-guide.js:120"
   ]
  },
  {
   "key": "תזכורות למשמרת בשליטה מלאה",
   "kind": "lit",
   "where": [
-   "app/views-guide.js:119"
+   "app/views-guide.js:121"
   ]
  },
  {
   "key": "כמה תזכורות שרוצים וכמה זמן לפני, גם בערב שלפני, ושאלה אחרי המשמרת אם עבדת בה. בהגדרות › התראות ותובנות.",
   "kind": "lit",
   "where": [
-   "app/views-guide.js:119"
+   "app/views-guide.js:121"
   ]
  },
  {
   "key": "משכורת חודשית ממוצעת",
   "kind": "lit",
   "where": [
-   "app/views-guide.js:120"
+   "app/views-guide.js:122"
   ]
  },
  {
   "key": "בדוחות: הממוצע של 3, 6 או 12 החודשים האחרונים, של השנה או של כל הזמן, עם החודש הגבוה והנמוך.",
   "kind": "lit",
   "where": [
-   "app/views-guide.js:120"
+   "app/views-guide.js:122"
   ]
  },
  {
   "key": "מצב פרטיות",
   "kind": "lit",
   "where": [
-   "app/views-guide.js:121"
-  ]
- },
- {
-  "key": "העין בכרטיס השכר מטשטשת את כל הסכומים, למשל כשמראים למישהו את הטלפון.",
-  "kind": "lit",
-  "where": [
-   "app/views-guide.js:121"
-  ]
- },
- {
-  "key": "שעתי גם בצרפתית ובספרדית",
-  "kind": "lit",
-  "where": [
-   "app/views-guide.js:122"
-  ]
- },
- {
-  "key": "שש שפות: עברית, ערבית, רוסית, אנגלית, צרפתית וספרדית. בהגדרות › מראה ונעילה › שפה.",
-  "kind": "lit",
-  "where": [
-   "app/views-guide.js:122"
-  ]
- },
- {
-  "key": "משמרת שעברה? מאשרים בלחיצה",
-  "kind": "lit",
-  "where": [
    "app/views-guide.js:123"
   ]
  },
  {
-  "key": "משמרת מתוכננת נכנסת לשכר רק אחרי שמאשרים שעבדת בה. עכשיו זה ברור: כרטיס בבית עם כפתור גדול לכל משמרת.",
+  "key": "העין בכרטיס השכר מטשטשת את כל הסכומים, למשל כשמראים למישהו את הטלפון.",
   "kind": "lit",
   "where": [
    "app/views-guide.js:123"
@@ -19836,14 +19830,14 @@
   ]
  },
  {
-  "key": "צריך לפחות אות אחת",
+  "key": "בלי מספרים ארוכים (כמו מספר טלפון)",
   "kind": "lit",
   "where": [
    "core/leaderboard.js:75"
   ]
  },
  {
-  "key": "בלי מספרים ארוכים (כמו מספר טלפון)",
+  "key": "צריך לפחות אות אחת",
   "kind": "lit",
   "where": [
    "core/leaderboard.js:76"
