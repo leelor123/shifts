@@ -62,7 +62,7 @@
           <button class="btn tonal block" data-sc-read>${icon('check', 's')} קריאה</button></details>`}
         ${hasKey() ? `<label class="switch-row sc-ai"><span class="body"><span class="t">קריאה חכמה עם Claude</span><span class="s">לטבלאות מסובכות. התמונה נשלחת ל-⁠Anthropic עם המפתח שלך</span></span><input type="checkbox" class="switch" id="sc-ai" ${S.meta.schedAi ? 'checked' : ''}></label>` : ''}
         <div class="tiny muted imp-privacy">${icon('shield', 's')} ${hasKey() ? 'בלי קריאה חכמה, ' : ''}הסידור נקרא בטלפון בלבד, ולא נשלח לשום מקום.</div>`;
-      if (opts.text) { const t = opts.text; opts.text = null; parse(() => SC().parseText(t, { today: U.todayKey(), named: named() })); }
+      if (opts.text) { const t = opts.text; opts.text = null; parse(() => Object.assign(SC().parseText(t, { today: U.todayKey(), named: named() }), { text: t })); }
     }
     function busy(text) { showSave(false); box.innerHTML = `<div class="imp-busy">${App.mascot ? App.mascot('think', { size: 84 }) : ''}<div class="imp-bar" aria-hidden="true"><i></i></div><div class="small" id="sc-progress" role="status">${esc(text)}</div></div>`; }
     function progress(text) { const p = box.querySelector('#sc-progress'); if (p) p.textContent = text; }
@@ -80,6 +80,12 @@
       try { r = read(); } catch (e) { console.warn('schedule', e); r = null; }
       if (!r || !r.entries.length) { none(r && r.text); return; }
       res = r;
+      // the message names its week ("סידור לשבוע הבא", "השבוע"): that one, whatever day it is today
+      if (r.needsWeek && r.text) {
+        const thisW = U.addDays(U.todayKey(), -U.dow(U.todayKey()));
+        if (/שבוע הבא|next week/i.test(r.text)) week = U.addDays(thisW, 7);
+        else if (/(^|[^א-ת])ה?שבוע הזה|(^|[^א-ת])השבוע($|[^א-ת])|this week/i.test(r.text)) week = thisW;
+      }
       const mine = myNames();
       who = res.personal ? [] : res.names.filter((n) => SC().isMine(n, mine));
       if (root.Fx) root.Fx.play('pick');

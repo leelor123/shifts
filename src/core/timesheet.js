@@ -87,7 +87,23 @@
       if (!date) return;
       const hoursNum = nums.find((v) => v >= 0.5 && v <= 24 && (v % 1 !== 0 || v <= 16));
       let start = null, end = null, hours = null;
-      if (times.length >= 2) {
+      // more times than a pair (a column of standard hours, a total, a second pair): the pair whose length is
+      // printed on the same line is the shift ("8:00 8:55 16:12 7:17" → 08:55-16:12)
+      let sure = null;
+      if (times.length >= 3) {
+        for (let i = 0; i < times.length && !sure; i++) {
+          for (let j = 0; j < times.length && !sure; j++) {
+            if (i === j) continue;
+            const d = (toMin(times[j]) - toMin(times[i]) + 1440) % 1440;
+            if (d < 30 || d > 16 * 60) continue;
+            if (times.some((t, k) => k !== i && k !== j && Math.abs(toMin(t) - d) <= 2)) sure = [times[i], times[j]];
+          }
+        }
+      }
+      if (sure) {
+        start = sure[0]; end = sure[1];
+        hours = ((toMin(end) - toMin(start) + 1440) % 1440 || 1440) / 60;
+      } else if (times.length >= 2) {
         start = times[0]; end = times[1];
         if (exitFirst) { const t = start; start = end; end = t; }
         // the exit printed before the entry, without a header to say so: a "night" of more than 12 hours that
@@ -586,6 +602,19 @@
     };
     const dowOf = (k) => new Date(+k.slice(0, 4), +k.slice(5, 7) - 1, +k.slice(8, 10), 12).getDay();
     const addDays = (k, n) => { const d = new Date(+k.slice(0, 4), +k.slice(5, 7) - 1, +k.slice(8, 10) + n, 12); return key(d.getFullYear(), d.getMonth() + 1, d.getDate()); };
+    // day and month the other way round (a date drawn backwards: "10 /01" for 01/10): when the dates read as
+    // month/day fall in one month (or two that follow) and go one way, while as day/month they scatter over
+    // many months, the report is read the other way
+    const dm = list.filter((r) => r.date && r.date.m);
+    if (dm.length >= 4 && dm.every((r) => r.date.d >= 1 && r.date.d <= 12 && r.date.m >= 1 && r.date.m <= 31)) {
+      const asIs = new Set(dm.map((r) => r.date.m)), swapped = new Set(dm.map((r) => r.date.d));
+      const days = dm.map((r) => r.date.m);
+      const oneWay = days.every((v, i) => !i || v >= days[i - 1]) || days.every((v, i) => !i || v <= days[i - 1]);
+      if (swapped.size <= 2 && asIs.size >= 3 && oneWay) {
+        for (const r of dm) r.date = Object.assign({}, r.date, { d: r.date.m, m: r.date.d });
+        dbg.push('dates read month/day (they were drawn the other way round)');
+      }
+    }
     for (const r of list) r.key = r.date ? keyOf(r.date) : null;
     // the report's order: most reports go forward in time
     const ks = list.filter((r) => r.key);
@@ -677,5 +706,70 @@
     return res;
   }
 
-  root.Timesheet = { parse, times, parseWords, itemsOf };
+  /* ============================================================
+   * A PDF's text (pdf.js items) → words with boxes for parseWords. Some report generators draw every letter on
+   * its own, often in visual order (Hebrew left to right, so reversed), or spread the letters out ("8 : 0 0",
+   * "כ נ י ס ה"): their items are not words. They are put together again: pieces on one line that nearly touch
+   * (closer than about a third of their height) make one word; Hebrew letters in it read right to left, digits
+   * and Latin left to right, and a day letter glued to a date ("ה01/10") becomes a word of its own.
+   * yOffset puts each page below the one before (pages read one after the other).
+   * ============================================================ */
+  const HEB = /[א-ת]/;
+  function wordsFromPdfItems(items, yOffset) {
+    const off = yOffset || 0;
+    const pieces = [];
+    for (const it of items || []) {
+      let s = String(it.str || '').trim();
+      if (!s) continue;
+      // spread out letters ("8 : 0 0") back together
+      const toks = s.split(/\s+/);
+      if (toks.length >= 2 && toks.every((t) => t.length === 1)) s = toks.join('');
+      const x = it.transform[4], y = it.transform[5];
+      const h = it.height || Math.abs(it.transform[3]) || 10;
+      const w = it.width || h * s.length * 0.5;
+      pieces.push({ s, x0: x, x1: x + w, y0: -(y + h) + off, y1: -y + off, h });
+    }
+    // lines: pieces whose middles are within half a height of each other
+    pieces.sort((a, b) => (a.y0 + a.y1) / 2 - (b.y0 + b.y1) / 2);
+    const lines = [];
+    for (const p of pieces) {
+      const cy = (p.y0 + p.y1) / 2;
+      const ln = lines.find((l) => Math.abs(l.cy - cy) < Math.min(l.h, p.h) * 0.5);
+      if (ln) { ln.ps.push(p); ln.h = Math.max(ln.h, p.h); } else lines.push({ cy, h: p.h, ps: [p] });
+    }
+    const words = [];
+    const isHeb = (p) => HEB.test(p.s) && !/\d/.test(p.s);
+    const emit = (run) => {
+      const heb = isHeb(run[0]);
+      const ordered = run.slice().sort((a, b) => (heb ? b.x0 - a.x0 : a.x0 - b.x0));
+      const glyphs = run.every((p) => p.s.length === 1);
+      const text = ordered.map((p) => p.s).join(heb && !glyphs ? ' ' : '');
+      words.push({ text, x0: Math.min(...run.map((p) => p.x0)), x1: Math.max(...run.map((p) => p.x1)), y0: Math.min(...run.map((p) => p.y0)), y1: Math.max(...run.map((p) => p.y1)) });
+    };
+    for (const ln of lines) {
+      const ps = ln.ps.sort((a, b) => a.x0 - b.x0);
+      let word = [ps[0]];
+      const flush = () => {
+        // split by script: Hebrew letters apart from digits and the rest
+        let run = [word[0]];
+        for (let i = 1; i < word.length; i++) {
+          if (isHeb(word[i]) === isHeb(run[0])) run.push(word[i]); else { emit(run); run = [word[i]]; }
+        }
+        emit(run);
+      };
+      for (let i = 1; i < ps.length; i++) {
+        const prev = word[word.length - 1], gap = ps[i].x0 - prev.x1, h = Math.max(ps[i].h, ln.h);
+        // a date printed with a space ("01/ 10", "01 /10") is still one date (the word so far, letter by letter)
+        let k = word.length;
+        while (k > 0 && !isHeb(word[k - 1])) k--;
+        const cur = word.slice(k).map((p) => p.s).join(''); // its digits (a day letter before them is apart)
+        const datePart = (/^\d{1,2}[/.]$/.test(cur) && /^\d{1,4}$/.test(ps[i].s)) || (/^\d{1,2}$/.test(cur) && /^[/.]/.test(ps[i].s));
+        if ((gap < h * 0.35 || (datePart && gap < h * 1.2)) && gap > -ln.h) word.push(ps[i]); else { flush(); word = [ps[i]]; }
+      }
+      flush();
+    }
+    return words;
+  }
+
+  root.Timesheet = { parse, times, parseWords, itemsOf, wordsFromPdfItems };
 })(typeof window !== 'undefined' ? window : globalThis);

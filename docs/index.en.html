@@ -2,7 +2,7 @@
 <html lang="en" dir="ltr">
 <head>
 <meta charset="utf-8">
-<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'sha256-P1vY/EiXw5RkSguavX5FeRFgUvcBGNPUKJiorElIG7g=' 'sha256-0BDxNNxzuT2wrE0AyPW1xgGDW998MeA3jrgWkC7PREM=' https://www.gstatic.com https://apis.google.com https://cdnjs.cloudflare.com https://cdn.jsdelivr.net 'wasm-unsafe-eval'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com data:; img-src 'self' data: blob: https:; connect-src 'self' https: wss:; frame-src https://shiftpay-70ab6.firebaseapp.com https://accounts.google.com https://apis.google.com https://*.google.com; worker-src 'self' blob: https://cdnjs.cloudflare.com https://cdn.jsdelivr.net; media-src 'self' data: blob:; manifest-src 'self'; object-src 'none'; base-uri 'self'; form-action 'self'">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'sha256-P1vY/EiXw5RkSguavX5FeRFgUvcBGNPUKJiorElIG7g=' 'sha256-gd5ZWVFNfXmlzW9yfbpt17JzNZOiir37J44rTtFP1XE=' https://www.gstatic.com https://apis.google.com https://cdnjs.cloudflare.com https://cdn.jsdelivr.net 'wasm-unsafe-eval'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com data:; img-src 'self' data: blob: https:; connect-src 'self' https: wss:; frame-src https://shiftpay-70ab6.firebaseapp.com https://accounts.google.com https://apis.google.com https://*.google.com; worker-src 'self' blob: https://cdnjs.cloudflare.com https://cdn.jsdelivr.net; media-src 'self' data: blob:; manifest-src 'self'; object-src 'none'; base-uri 'self'; form-action 'self'">
 <script>(function(){try{var l=localStorage.getItem('shaati.lang'),h=document.documentElement.lang;if(l&&l!==h&&/^(he|ar|ru|en)$/.test(l)&&!sessionStorage.getItem('langHop')){sessionStorage.setItem('langHop','1');location.replace((l==='he'?'index.html':'index.'+l+'.html')+location.search+location.hash)}else sessionStorage.removeItem('langHop')}catch(e){}})();</script>
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="theme-color" content="#0d2b6b">
@@ -2594,7 +2594,7 @@ html:not([lang="he"]) .lb-games button, html:not([lang="he"]) .lb-periods button
 <noscript><div style="padding:24px;font-family:sans-serif">The app needs JavaScript.</div></noscript>
 <script>
 window.APP_VERSION = '1.22.1';
-window.APP_BUILD = '1.22.1-2d74c9c8';
+window.APP_BUILD = '1.22.1-0d325f78';
 /* ---- core/util.js ---- */
 /* ============================================================
  * util.js — date/time helpers and formatting.
@@ -2964,7 +2964,23 @@ window.APP_BUILD = '1.22.1-2d74c9c8';
       if (!date) return;
       const hoursNum = nums.find((v) => v >= 0.5 && v <= 24 && (v % 1 !== 0 || v <= 16));
       let start = null, end = null, hours = null;
-      if (times.length >= 2) {
+      // more times than a pair (a column of standard hours, a total, a second pair): the pair whose length is
+      // printed on the same line is the shift ("8:00 8:55 16:12 7:17" → 08:55-16:12)
+      let sure = null;
+      if (times.length >= 3) {
+        for (let i = 0; i < times.length && !sure; i++) {
+          for (let j = 0; j < times.length && !sure; j++) {
+            if (i === j) continue;
+            const d = (toMin(times[j]) - toMin(times[i]) + 1440) % 1440;
+            if (d < 30 || d > 16 * 60) continue;
+            if (times.some((t, k) => k !== i && k !== j && Math.abs(toMin(t) - d) <= 2)) sure = [times[i], times[j]];
+          }
+        }
+      }
+      if (sure) {
+        start = sure[0]; end = sure[1];
+        hours = ((toMin(end) - toMin(start) + 1440) % 1440 || 1440) / 60;
+      } else if (times.length >= 2) {
         start = times[0]; end = times[1];
         if (exitFirst) { const t = start; start = end; end = t; }
         // the exit printed before the entry, without a header to say so: a "night" of more than 12 hours that
@@ -3463,6 +3479,19 @@ window.APP_BUILD = '1.22.1-2d74c9c8';
     };
     const dowOf = (k) => new Date(+k.slice(0, 4), +k.slice(5, 7) - 1, +k.slice(8, 10), 12).getDay();
     const addDays = (k, n) => { const d = new Date(+k.slice(0, 4), +k.slice(5, 7) - 1, +k.slice(8, 10) + n, 12); return key(d.getFullYear(), d.getMonth() + 1, d.getDate()); };
+    // day and month the other way round (a date drawn backwards: "10 /01" for 01/10): when the dates read as
+    // month/day fall in one month (or two that follow) and go one way, while as day/month they scatter over
+    // many months, the report is read the other way
+    const dm = list.filter((r) => r.date && r.date.m);
+    if (dm.length >= 4 && dm.every((r) => r.date.d >= 1 && r.date.d <= 12 && r.date.m >= 1 && r.date.m <= 31)) {
+      const asIs = new Set(dm.map((r) => r.date.m)), swapped = new Set(dm.map((r) => r.date.d));
+      const days = dm.map((r) => r.date.m);
+      const oneWay = days.every((v, i) => !i || v >= days[i - 1]) || days.every((v, i) => !i || v <= days[i - 1]);
+      if (swapped.size <= 2 && asIs.size >= 3 && oneWay) {
+        for (const r of dm) r.date = Object.assign({}, r.date, { d: r.date.m, m: r.date.d });
+        dbg.push('dates read month/day (they were drawn the other way round)');
+      }
+    }
     for (const r of list) r.key = r.date ? keyOf(r.date) : null;
     // the report's order: most reports go forward in time
     const ks = list.filter((r) => r.key);
@@ -3554,7 +3583,72 @@ window.APP_BUILD = '1.22.1-2d74c9c8';
     return res;
   }
 
-  root.Timesheet = { parse, times, parseWords, itemsOf };
+  /* ============================================================
+   * A PDF's text (pdf.js items) → words with boxes for parseWords. Some report generators draw every letter on
+   * its own, often in visual order (Hebrew left to right, so reversed), or spread the letters out ("8 : 0 0",
+   * "כ נ י ס ה"): their items are not words. They are put together again: pieces on one line that nearly touch
+   * (closer than about a third of their height) make one word; Hebrew letters in it read right to left, digits
+   * and Latin left to right, and a day letter glued to a date ("ה01/10") becomes a word of its own.
+   * yOffset puts each page below the one before (pages read one after the other).
+   * ============================================================ */
+  const HEB = /[א-ת]/;
+  function wordsFromPdfItems(items, yOffset) {
+    const off = yOffset || 0;
+    const pieces = [];
+    for (const it of items || []) {
+      let s = String(it.str || '').trim();
+      if (!s) continue;
+      // spread out letters ("8 : 0 0") back together
+      const toks = s.split(/\s+/);
+      if (toks.length >= 2 && toks.every((t) => t.length === 1)) s = toks.join('');
+      const x = it.transform[4], y = it.transform[5];
+      const h = it.height || Math.abs(it.transform[3]) || 10;
+      const w = it.width || h * s.length * 0.5;
+      pieces.push({ s, x0: x, x1: x + w, y0: -(y + h) + off, y1: -y + off, h });
+    }
+    // lines: pieces whose middles are within half a height of each other
+    pieces.sort((a, b) => (a.y0 + a.y1) / 2 - (b.y0 + b.y1) / 2);
+    const lines = [];
+    for (const p of pieces) {
+      const cy = (p.y0 + p.y1) / 2;
+      const ln = lines.find((l) => Math.abs(l.cy - cy) < Math.min(l.h, p.h) * 0.5);
+      if (ln) { ln.ps.push(p); ln.h = Math.max(ln.h, p.h); } else lines.push({ cy, h: p.h, ps: [p] });
+    }
+    const words = [];
+    const isHeb = (p) => HEB.test(p.s) && !/\d/.test(p.s);
+    const emit = (run) => {
+      const heb = isHeb(run[0]);
+      const ordered = run.slice().sort((a, b) => (heb ? b.x0 - a.x0 : a.x0 - b.x0));
+      const glyphs = run.every((p) => p.s.length === 1);
+      const text = ordered.map((p) => p.s).join(heb && !glyphs ? ' ' : '');
+      words.push({ text, x0: Math.min(...run.map((p) => p.x0)), x1: Math.max(...run.map((p) => p.x1)), y0: Math.min(...run.map((p) => p.y0)), y1: Math.max(...run.map((p) => p.y1)) });
+    };
+    for (const ln of lines) {
+      const ps = ln.ps.sort((a, b) => a.x0 - b.x0);
+      let word = [ps[0]];
+      const flush = () => {
+        // split by script: Hebrew letters apart from digits and the rest
+        let run = [word[0]];
+        for (let i = 1; i < word.length; i++) {
+          if (isHeb(word[i]) === isHeb(run[0])) run.push(word[i]); else { emit(run); run = [word[i]]; }
+        }
+        emit(run);
+      };
+      for (let i = 1; i < ps.length; i++) {
+        const prev = word[word.length - 1], gap = ps[i].x0 - prev.x1, h = Math.max(ps[i].h, ln.h);
+        // a date printed with a space ("01/ 10", "01 /10") is still one date (the word so far, letter by letter)
+        let k = word.length;
+        while (k > 0 && !isHeb(word[k - 1])) k--;
+        const cur = word.slice(k).map((p) => p.s).join(''); // its digits (a day letter before them is apart)
+        const datePart = (/^\d{1,2}[/.]$/.test(cur) && /^\d{1,4}$/.test(ps[i].s)) || (/^\d{1,2}$/.test(cur) && /^[/.]/.test(ps[i].s));
+        if ((gap < h * 0.35 || (datePart && gap < h * 1.2)) && gap > -ln.h) word.push(ps[i]); else { flush(); word = [ps[i]]; }
+      }
+      flush();
+    }
+    return words;
+  }
+
+  root.Timesheet = { parse, times, parseWords, itemsOf, wordsFromPdfItems };
 })(typeof window !== 'undefined' ? window : globalThis);
 
 /* ---- core/schedule.js ---- */
@@ -14267,16 +14361,20 @@ window.PAY_CONFIG = {
       if (!App.readDocText || !App.readDocWords) throw root.U.oops("Reading isn't available right now");
       // a PDF with text: its lines (all its pages); when they hold no shifts, or it is a picture, it is read as a
       // table: each word where it stands on the page (core/timesheet.js parseWords)
+      let lines = null;
       if (isPdf) {
         const doc = await App.readDocText(file, progress, { noOcr: true });
-        if (doc.source === 'pdf' && root.Timesheet.parse(doc.text, { today: U.todayKey() }).rows.length >= 2) return doc.text;
+        if (doc.source === 'pdf' && root.Timesheet.parse(doc.text, { today: U.todayKey() }).rows.length >= 2) lines = doc.text;
       }
       const got = await App.readDocWords(file, progress);
       progress("Arranging the table…");
       const res = root.Timesheet.parseWords(got.words, { today: U.todayKey() });
+      // a PDF read both ways: the table (it knows the columns, their names and the total — a column of standard
+      // hours never becomes the entry) unless the lines found more shifts
+      if (lines != null && res.rows.length < root.Timesheet.parse(lines, { today: U.todayKey() }).rows.length) return lines;
       // the words read in reading order, for the "what was read" box and as a last try as plain text
       const text = res.text || '';
-      if (!res.rows.length) return text;
+      if (!res.rows.length) return lines != null ? lines : text;
       return { result: res, text };
     }
     throw root.U.oops("A file type we don't know. You can use Excel, CSV, PDF, a picture or text");
@@ -14502,7 +14600,7 @@ window.PAY_CONFIG = {
           <button class="btn tonal block" data-sc-read>${icon('check', 's')} Read</button></details>`}
         ${hasKey() ? `<label class="switch-row sc-ai"><span class="body"><span class="t">Smart reading with Claude</span><span class="s">For complicated tables. The picture is sent to Anthropic with your key</span></span><input type="checkbox" class="switch" id="sc-ai" ${S.meta.schedAi ? 'checked' : ''}></label>` : ''}
         <div class="tiny muted imp-privacy">${icon('shield', 's')} ${hasKey() ? "Without smart reading, " : ''}the schedule is read on the phone only, and isn't sent anywhere.</div>`;
-      if (opts.text) { const t = opts.text; opts.text = null; parse(() => SC().parseText(t, { today: U.todayKey(), named: named() })); }
+      if (opts.text) { const t = opts.text; opts.text = null; parse(() => Object.assign(SC().parseText(t, { today: U.todayKey(), named: named() }), { text: t })); }
     }
     function busy(text) { showSave(false); box.innerHTML = `<div class="imp-busy">${App.mascot ? App.mascot('think', { size: 84 }) : ''}<div class="imp-bar" aria-hidden="true"><i></i></div><div class="small" id="sc-progress" role="status">${esc(text)}</div></div>`; }
     function progress(text) { const p = box.querySelector('#sc-progress'); if (p) p.textContent = text; }
@@ -14520,6 +14618,12 @@ window.PAY_CONFIG = {
       try { r = read(); } catch (e) { console.warn('schedule', e); r = null; }
       if (!r || !r.entries.length) { none(r && r.text); return; }
       res = r;
+      // the message names its week ("סידור לשבוע הבא", "השבוע"): that one, whatever day it is today
+      if (r.needsWeek && r.text) {
+        const thisW = U.addDays(U.todayKey(), -U.dow(U.todayKey()));
+        if (/שבוע הבא|next week/i.test(r.text)) week = U.addDays(thisW, 7);
+        else if (/(^|[^א-ת])ה?שבוע הזה|(^|[^א-ת])השבוע($|[^א-ת])|this week/i.test(r.text)) week = thisW;
+      }
       const mine = myNames();
       who = res.personal ? [] : res.names.filter((n) => SC().isMine(n, mine));
       if (root.Fx) root.Fx.play('pick');
@@ -16738,13 +16842,16 @@ ${name}`.trim();
       const pdfjs = root.pdfjsLib;
       pdfjs.GlobalWorkerOptions.workerSrc = LIBS.pdfWorker;
       const doc = await pdfjs.getDocument({ data: await file.arrayBuffer() }).promise;
-      const page = await doc.getPage(1);
-      const tc = await page.getTextContent();
-      const words = tc.items.filter((it) => it.str && it.str.trim()).map((it) => {
-        const x = it.transform[4], y = it.transform[5], hgt = it.height || Math.abs(it.transform[3]) || 10;
-        return { text: it.str.trim(), x0: x, x1: x + (it.width || hgt * it.str.length * 0.5), y0: -(y + hgt), y1: -y };
-      });
+      // every page (a month's report can run to a second page), each below the one before; letters drawn one by
+      // one or spread out are put back into words (Timesheet.wordsFromPdfItems)
+      let words = [];
+      for (let p = 1; p <= Math.min(doc.numPages, 4); p++) {
+        const pg = await doc.getPage(p);
+        const tc = await pg.getTextContent();
+        words = words.concat(root.Timesheet.wordsFromPdfItems(tc.items, (p - 1) * 5000));
+      }
       if (words.length > 6) return { words, text: words.map((w) => w.text).join(' '), source: 'pdf' };
+      const page = await doc.getPage(1);
       progress("The PDF is scanned — running text recognition…");
       const vp = page.getViewport({ scale: 2.5 });
       const canvas = document.createElement('canvas');

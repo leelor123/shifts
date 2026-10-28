@@ -68,16 +68,20 @@
       if (!App.readDocText || !App.readDocWords) throw root.U.oops('הקריאה לא זמינה כרגע');
       // a PDF with text: its lines (all its pages); when they hold no shifts, or it is a picture, it is read as a
       // table: each word where it stands on the page (core/timesheet.js parseWords)
+      let lines = null;
       if (isPdf) {
         const doc = await App.readDocText(file, progress, { noOcr: true });
-        if (doc.source === 'pdf' && root.Timesheet.parse(doc.text, { today: U.todayKey() }).rows.length >= 2) return doc.text;
+        if (doc.source === 'pdf' && root.Timesheet.parse(doc.text, { today: U.todayKey() }).rows.length >= 2) lines = doc.text;
       }
       const got = await App.readDocWords(file, progress);
       progress('מסדר את הטבלה…');
       const res = root.Timesheet.parseWords(got.words, { today: U.todayKey() });
+      // a PDF read both ways: the table (it knows the columns, their names and the total — a column of standard
+      // hours never becomes the entry) unless the lines found more shifts
+      if (lines != null && res.rows.length < root.Timesheet.parse(lines, { today: U.todayKey() }).rows.length) return lines;
       // the words read in reading order, for the "what was read" box and as a last try as plain text
       const text = res.text || '';
-      if (!res.rows.length) return text;
+      if (!res.rows.length) return lines != null ? lines : text;
       return { result: res, text };
     }
     throw root.U.oops('סוג קובץ שלא מכירים. אפשר Excel, ‏CSV, ‏PDF, תמונה או טקסט');

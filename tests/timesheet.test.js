@@ -130,3 +130,36 @@ T.test('an app\'s cards: one time unreadable, the other from the card\'s hours (
   const p = TS.parseWords(words.concat([{ text: '2026', x0: 500, x1: 560, y0: 10, y1: 40 }]), { today });
   T.eq(shifts(p), ['2026-10-04 08:51-16:37', '2026-10-08 07:03-13:35', '2026-10-12 09:12-18:00', '2026-10-13 16:08-21:30'].join(' | '));
 });
+
+T.section('a PDF report drawn letter by letter (the "HoursAnalysisInfo" report)');
+T.test('a line with a column of standard hours and a total: the pair the total measures', () => {
+  const r = one('01/10 ה 8:00 8:55 16:12 7:17 קרית אונו');
+  T.eq(`${r.start}-${r.end}`, '08:55-16:12');
+  const f = one('02/10 ערב 2:00 9:04 14:08 5:04');
+  T.eq(`${f.start}-${f.end}`, '09:04-14:08');
+});
+// pdf.js items as such a report gives them: each letter on its own, in visual order (left to right), letter spaced
+function glyphItems(text, x, y, h, step) {
+  return [...text].map((c, i) => ({ str: c, transform: [h, 0, 0, h, x + i * step, y], width: step * 0.6, height: h }));
+}
+T.test('letters drawn one by one become words again: times, a date with a space, Hebrew right to left', () => {
+  const items = [].concat(
+    glyphItems('הסינכ', 300, 700, 10, 8), // כניסה drawn in visual order
+    glyphItems('8:55', 300, 680, 10, 8), glyphItems('16:12', 200, 680, 10, 8),
+    glyphItems('ה', 500, 680, 10, 8), glyphItems('01/', 512, 680, 10, 8), glyphItems('10', 540, 680, 10, 8));
+  const words = TS.wordsFromPdfItems(items).map((w) => w.text);
+  T.ok(words.includes('כניסה'), 'Hebrew read right to left: ' + words.join(' '));
+  T.ok(words.includes('8:55') && words.includes('16:12'), 'times whole: ' + words.join(' '));
+  T.ok(words.includes('01/10') && words.includes('ה'), 'the date whole, the day letter apart: ' + words.join(' '));
+  // spread out inside one item ("8 : 0 0")
+  T.eq(TS.wordsFromPdfItems([{ str: '8 : 0 0', transform: [10, 0, 0, 10, 50, 50], width: 40, height: 10 }])[0].text, '8:00');
+});
+T.test('dates drawn the other way round (10/01, 10/02 … in a monthly report) are read as October', () => {
+  const words = [];
+  const add = (text, x, y) => words.push({ text, x0: x, x1: x + 50, y0: y, y1: y + 30 });
+  add('תאריך', 900, 40); add('כניסה', 700, 40); add('יציאה', 500, 40);
+  [['10/01', '08:55', '16:12'], ['10/02', '09:04', '14:08'], ['10/05', '16:51', '23:37'], ['10/08', '15:54', '21:55'], ['10/09', '08:55', '15:01']]
+    .forEach(([d, a, b], i) => { const y = 100 + i * 50; add(d, 900, y); add(a, 700, y); add(b, 500, y); });
+  const p = TS.parseWords(words.concat([{ text: '2026', x0: 300, x1: 360, y0: 10, y1: 30 }]), { today });
+  T.eq(shifts(p), '2026-10-01 08:55-16:12 | 2026-10-02 09:04-14:08 | 2026-10-05 16:51-23:37 | 2026-10-08 15:54-21:55 | 2026-10-09 08:55-15:01');
+});

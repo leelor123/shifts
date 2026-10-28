@@ -86,13 +86,16 @@
       const pdfjs = root.pdfjsLib;
       pdfjs.GlobalWorkerOptions.workerSrc = LIBS.pdfWorker;
       const doc = await pdfjs.getDocument({ data: await file.arrayBuffer() }).promise;
-      const page = await doc.getPage(1);
-      const tc = await page.getTextContent();
-      const words = tc.items.filter((it) => it.str && it.str.trim()).map((it) => {
-        const x = it.transform[4], y = it.transform[5], hgt = it.height || Math.abs(it.transform[3]) || 10;
-        return { text: it.str.trim(), x0: x, x1: x + (it.width || hgt * it.str.length * 0.5), y0: -(y + hgt), y1: -y };
-      });
+      // every page (a month's report can run to a second page), each below the one before; letters drawn one by
+      // one or spread out are put back into words (Timesheet.wordsFromPdfItems)
+      let words = [];
+      for (let p = 1; p <= Math.min(doc.numPages, 4); p++) {
+        const pg = await doc.getPage(p);
+        const tc = await pg.getTextContent();
+        words = words.concat(root.Timesheet.wordsFromPdfItems(tc.items, (p - 1) * 5000));
+      }
       if (words.length > 6) return { words, text: words.map((w) => w.text).join(' '), source: 'pdf' };
+      const page = await doc.getPage(1);
       progress('ה-⁠PDF סרוק — מריץ זיהוי טקסט…');
       const vp = page.getViewport({ scale: 2.5 });
       const canvas = document.createElement('canvas');
