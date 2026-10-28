@@ -60,6 +60,17 @@ T.test('nicknames: public, so checked', () => {
   T.ok(LB.nickProblem('שעתי רשמי'), 'the app name');
   for (let s = 0; s < 300; s++) { const n = LB.randomNick(s); T.eq(LB.nickProblem(n), '', 'random nickname ' + n); }
 });
+T.test('names: a first name in every language of the app; the first name from the full name', () => {
+  for (const n of ['נועה', "ג'ני", 'Léa', 'Lucía', 'Аня', 'نور', "D'Angelo", 'Noa K']) T.eq(LB.nickProblem(n), '', n);
+  T.ok(LB.nickProblem('12'), 'digits only: no letter');
+  T.ok(LB.nickProblem('<i>Léa</i>'), 'markup');
+  T.eq(LB.firstName('נועה כהן'), 'נועה');
+  T.eq(LB.firstName('  Lucía  Pérez '), 'Lucía');
+  T.eq(LB.firstName('Аня Смирнова'), 'Аня');
+  T.eq(LB.firstName('0541234567'), '', 'not a name');
+  T.eq(LB.firstName(''), '');
+  T.eq(LB.firstName('אבגדהוזחטיכלמנסעפצ').length, 16, 'cut to 16 letters');
+});
 T.test('reset texts', () => {
   T.ok(/שעות|דקות/.test(LB.resetText('d', '2026-10-15', new Date(2026, 9, 15, 10, 0).getTime())));
   T.eq(LB.resetText('w', '2026-10-17', 0), 'מתאפס מחר (יום ראשון)');

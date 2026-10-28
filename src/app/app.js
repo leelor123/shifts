@@ -41,6 +41,8 @@
       console.error('recalculation failed', e);
       if (!App.model) App.model = Engine.buildModel({ settings: S.settings, employers: S.employers, roles: S.roles, dayRules: [], shifts: [], entries: [] });
     }
+    // the friends' competition sends my card when its amounts changed (a little later, at most once in 20 s)
+    if (root.FriendsView) root.FriendsView.changed();
   };
 
   /* ---------------- theme ---------------- */
@@ -845,6 +847,7 @@
     if (root.Plus) { const p = root.Plus.init().catch(() => {}); if (Intro && Intro.hold) Intro.hold(p); }
     if (Intro && Intro.hold && document.fonts && document.fonts.ready) requestAnimationFrame(() => Intro.hold(document.fonts.ready));
     if (App.whatsNew) App.whatsNew();
+    if (root.FriendsView) root.FriendsView.boot(); // an invitation that came with the address, accepted ones of mine
   };
   // just before the opening show leaves, the app draws itself once more under it (still), so anything the
   // start-up work changed (the account, the admin check, Google Play) is already in place when it shows

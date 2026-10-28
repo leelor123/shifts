@@ -511,6 +511,7 @@
     if (root.Stats) await root.Stats.forget();
     if (root.Support) await root.Support.forget();
     if (root.Champions) await root.Champions.forget();
+    if (root.FriendsView) await root.FriendsView.forget();
     for (const st of SYNC.concat(['kv'])) {
       const snap = await fs.getDocs(fs.collection(db, 'users', uid, st));
       for (let i = 0; i < snap.docs.length; i += 400) {

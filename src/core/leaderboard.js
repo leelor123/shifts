@@ -26,8 +26,9 @@
     'fuck', 'shit', 'bitch', 'dick', 'cock', 'pussy', 'porn', 'sex', 'nazi', 'hitler', 'nigg', 'cunt', 'whore', 'slut'];
   const STAFF = ['admin', 'moderator', 'support', 'shaati', 'מנהל', 'מנהלת', 'צוות', 'תמיכה', 'שעתי', 'רשמי'];
   // i18n-keep-end
-  // the same letters firestore.rules allows (so in Arabic and Russian the made-up names are in English)
-  const NICK_RE = /^[א-תa-zA-Z0-9 _.-]{2,16}$/;
+  // the same letters firestore.rules allows: a first name in any of the app's languages (Hebrew, Latin with its
+  // accents, Cyrillic, Arabic), digits, and an apostrophe or geresh (ג'ני, D'Angelo)
+  const NICK_RE = /^[א-תa-zA-ZÀ-ÖØ-öø-ÿЀ-ӿ\u0600-\u06FF0-9 _.'׳-]{2,16}$/;
 
   const num = (k) => +k.replace(/-/g, '');
   /** The period keys of a day: { d: 20261015, w: 20261011 (its Sunday), m: 202610, y: 2026 }. */
@@ -72,16 +73,23 @@
     if (t.length > 16) return 'עד 16 תווים';
     if (!NICK_RE.test(t)) return 'רק אותיות, מספרים ורווחים';
     if (/\d{5,}/.test(t)) return 'בלי מספרים ארוכים (כמו מספר טלפון)';
+    if (!/[^\d\s_.'׳-]/.test(t)) return 'צריך לפחות אות אחת';
     // short words only as a whole word (so 'מזין' or 'Essex' pass), longer ones anywhere
     const words = t.toLowerCase().split(/[\s_.-]+/);
     const low = words.join('');
-    if (BAD.some((w) => (w.length <= 3 ? words.includes(w) : low.includes(w)))) return 'הכינוי הזה לא מתאים לטבלה';
-    if (root.Clean && !root.Clean.isClean(t)) return 'הכינוי הזה לא מתאים לטבלה';
+    if (BAD.some((w) => (w.length <= 3 ? words.includes(w) : low.includes(w)))) return 'השם הזה לא מתאים לטבלה';
+    if (root.Clean && !root.Clean.isClean(t)) return 'השם הזה לא מתאים לטבלה';
     // nobody may look like the app's own team
     if (STAFF.some((w) => low.includes(w))) return 'כינוי שנראה כמו צוות האפליקציה שמור';
     return '';
   }
   /** A random fun nickname ("שועל זריז 27"); seed makes it repeatable in tests. */
+  /** The first name from the user's name (the first word, cut to 16 letters), or '' when it would not pass. */
+  function firstName(full) {
+    const w = String(full || '').trim().split(/\s+/)[0] || '';
+    const n = w.slice(0, 16);
+    return n && !nickProblem(n) ? n : '';
+  }
   function randomNick(seed) {
     let x = (seed == null ? Math.floor(Math.random() * 1e9) : seed) >>> 0;
     const next = () => { x = (x * 1664525 + 1013904223) >>> 0; return x; };
@@ -101,5 +109,5 @@
     return 'השיאים של כל הזמנים';
   }
 
-  root.Leaderboard = { P, PERIODS, MAX, EMOJI, keys, pack, scoreOf, keyOf, range, scoreIn, improve, nickProblem, randomNick, resetText };
+  root.Leaderboard = { P, PERIODS, MAX, EMOJI, keys, pack, scoreOf, keyOf, range, scoreIn, improve, nickProblem, firstName, randomNick, resetText };
 })(typeof window !== 'undefined' ? window : globalThis);

@@ -101,8 +101,9 @@ service cloud.firestore {
       allow delete: if request.auth != null && (resource.data.from == request.auth.uid || resource.data.to == request.auth.uid);
     }
 
+    // a name in any of the app's languages (Hebrew, Latin with accents, Cyrillic, Arabic), digits, an apostrophe
     function validNick(n) {
-      return n is string && n.matches('^[א-תa-zA-Z0-9 _.-]{2,16}$') && !n.matches('.*[0-9]{5,}.*');
+      return n is string && n.matches("^[א-תa-zA-ZÀ-ÖØ-öø-ÿЀ-ӿ؀-ۿ0-9 _.'׳-]{2,16}$") && !n.matches('.*[0-9]{5,}.*');
     }
     function validFr(d) {
       return d.keys().hasOnly(['n', 'e', 't', 'hide', 'f', 's']) && d.keys().hasAll(['n', 'e', 't', 'hide', 'f'])
@@ -165,7 +166,7 @@ service cloud.firestore {
 
     function validLb(d) {
       return d.keys().hasOnly(['n', 'e', 'bg', 'p', 't', 'g']) && d.keys().hasAll(['n', 'e', 't', 'g'])
-        && d.n is string && d.n.matches('^[א-תa-zA-Z0-9 _.-]{2,16}$') && !d.n.matches('.*[0-9]{5,}.*')
+        && d.n is string && d.n.matches("^[א-תa-zA-ZÀ-ÖØ-öø-ÿЀ-ӿ؀-ۿ0-9 _.'׳-]{2,16}$") && !d.n.matches('.*[0-9]{5,}.*')
         && d.e in ['🦊', '🐯', '🦉', '🐬', '🐺', '🦅', '🦔', '🐧', '🦜', '🐻', '🐢', '🐳', '🐼', '🦁', '🐸', '🐙', '🦄', '🐝', '⚡', '🔥', '⭐', '🚀', '🎧', '⚽']
         && (!('bg' in d) || d.bg in ['', 'gold', 'midnight', 'sunset', 'ocean', 'forest', 'carbon', 'royal', 'rose', 'lava', 'neon', 'ice', 'galaxy'])
         && (!('p' in d) || d.p is bool)

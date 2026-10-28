@@ -148,11 +148,14 @@
           return `<div class="gm-streak-bar ${st.today ? 'on' : ''}"><span aria-hidden="true">🔥</span><b>${st.n === 1 ? 'יום אחד ברצף' : `${st.n} ימים ברצף`}</b><small>${st.today ? 'שיחקת היום. נתראה מחר!' : 'סיבוב אחד היום שומר על הרצף'}</small></div>`;
         })()}<div class="gm-list">${cards()}</div>
         ${root.Champions ? root.Champions.hubCard() : ''}
+        ${root.FriendsView ? root.FriendsView.hubCard() : ''}
         <button class="ach-card" data-medals>${(() => { const l = achievements(); const got = l.filter((a) => a.on).length; return `<span class="ach-card-e" aria-hidden="true">🏅</span><span class="gm-txt"><b>המדליות שלי</b><span>${got} מתוך ${l.length} · על משמרות, כסף, תלושים ומשחקים</span></span>${icon('left', 's')}`; })()}</button>`,
       onMount: (el) => {
         el.querySelector('[data-medals]').onclick = medalsSheet;
         const hub = el.querySelector('[data-lb-hub]');
         if (hub) hub.onclick = () => root.Champions.open();
+        const fr = el.querySelector('[data-fr-hub]');
+        if (fr) fr.onclick = () => root.FriendsView.open();
         if (root.Champions) root.Champions.warm(el);
         const list = el.querySelector('.gm-list');
         list.addEventListener('click', (e) => {

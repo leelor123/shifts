@@ -13,133 +13,133 @@
   "key": "סגול-ורוד",
   "kind": "lit",
   "where": [
-   "app/app.js:48"
+   "app/app.js:50"
   ]
  },
  {
   "key": "פטרול",
   "kind": "lit",
   "where": [
-   "app/app.js:48"
+   "app/app.js:50"
   ]
  },
  {
   "key": "סגול-כחול",
   "kind": "lit",
   "where": [
-   "app/app.js:48"
+   "app/app.js:50"
   ]
  },
  {
   "key": "כחול",
   "kind": "lit",
   "where": [
-   "app/app.js:48"
+   "app/app.js:50"
   ]
  },
  {
   "key": "טורקיז",
   "kind": "lit",
   "where": [
-   "app/app.js:48"
+   "app/app.js:50"
   ]
  },
  {
   "key": "ירוק",
   "kind": "lit",
   "where": [
-   "app/app.js:48"
+   "app/app.js:50"
   ]
  },
  {
   "key": "כתום",
   "kind": "lit",
   "where": [
-   "app/app.js:49"
+   "app/app.js:51"
   ]
  },
  {
   "key": "ורוד",
   "kind": "lit",
   "where": [
-   "app/app.js:49"
+   "app/app.js:51"
   ]
  },
  {
   "key": "סגול",
   "kind": "lit",
   "where": [
-   "app/app.js:49"
+   "app/app.js:51"
   ]
  },
  {
   "key": "אדום",
   "kind": "lit",
   "where": [
-   "app/app.js:49"
+   "app/app.js:51"
   ]
  },
  {
   "key": "מודרני ורך",
   "kind": "lit",
   "where": [
-   "app/app.js:54"
+   "app/app.js:56"
   ]
  },
  {
   "key": "נקי וחד",
   "kind": "lit",
   "where": [
-   "app/app.js:55"
+   "app/app.js:57"
   ]
  },
  {
   "key": "ניטרלי ומאוזן",
   "kind": "lit",
   "where": [
-   "app/app.js:56"
+   "app/app.js:58"
   ]
  },
  {
   "key": "קליל וצר",
   "kind": "lit",
   "where": [
-   "app/app.js:57"
+   "app/app.js:59"
   ]
  },
  {
   "key": "הקלאסי של הגרסה הראשונה",
   "kind": "lit",
   "where": [
-   "app/app.js:58"
+   "app/app.js:60"
   ]
  },
  {
   "key": "עגול וידידותי",
   "kind": "lit",
   "where": [
-   "app/app.js:59"
+   "app/app.js:61"
   ]
  },
  {
   "key": "בית",
   "kind": "lit",
   "where": [
-   "app/app.js:89"
+   "app/app.js:91"
   ]
  },
  {
   "key": "לוח שנה",
   "kind": "lit",
   "where": [
-   "app/app.js:90"
+   "app/app.js:92"
   ]
  },
  {
   "key": "הוספה",
   "kind": "lit",
   "where": [
-   "app/app.js:91",
+   "app/app.js:93",
    "app/views-shift.js:29",
    "app/views-shift.js:589"
   ]
@@ -148,49 +148,49 @@
   "key": "דוחות",
   "kind": "lit",
   "where": [
-   "app/app.js:92"
+   "app/app.js:94"
   ]
  },
  {
   "key": "הגדרות",
   "kind": "lit",
   "where": [
-   "app/app.js:93"
+   "app/app.js:95"
   ]
  },
  {
   "key": "<div><button class=\"fab\" data-act=\"add-menu\" aria-label=\"הוספה\">{0}</button></div>",
   "kind": "tpl",
   "where": [
-   "app/app.js:111"
+   "app/app.js:113"
   ]
  },
  {
   "key": "לחצו שוב על \"חזרה\" כדי לצאת",
   "kind": "lit",
   "where": [
-   "app/app.js:161"
+   "app/app.js:163"
   ]
  },
  {
   "key": "<div class=\"empty render-err\">{0}<h3>משהו השתבש במסך הזה</h3>\n        <div class=\"small muted\">הנתונים שלך שמורים. אפשר לנסות שוב או לעבור למסך אחר.</div>\n        <div class=\"btn-row\" style=\"margin-top:14px;justify-content:center\"><button class=\"btn\" data-act=\"render-retry\">נסה שוב</button><button class=\"btn tonal\" data-act=\"support\">דיווח על תקלה</button></div></div>",
   "kind": "tpl",
   "where": [
-   "app/app.js:201"
+   "app/app.js:203"
   ]
  },
  {
   "key": "בואו נשמור על שפה נקייה 🙂 יש כאן מילה שלא מתאימה",
   "kind": "lit",
   "where": [
-   "app/app.js:255"
+   "app/app.js:257"
   ]
  },
  {
   "key": "בואו נשמור על שפה נקייה 🙂",
   "kind": "lit",
   "where": [
-   "app/app.js:266",
+   "app/app.js:268",
    "app/views-shift.js:636"
   ]
  },
@@ -198,57 +198,57 @@
   "key": "{0} משמרות!",
   "kind": "tpl",
   "where": [
-   "app/app.js:291"
+   "app/app.js:293"
   ]
  },
  {
   "key": "כל הכבוד על ההתמדה",
   "kind": "lit",
   "where": [
-   "app/app.js:291"
+   "app/app.js:293"
   ]
  },
  {
   "key": "עברת {0}",
   "kind": "tpl",
   "where": [
-   "app/app.js:292"
+   "app/app.js:294"
   ]
  },
  {
   "key": "שהרווחת מאז שהתחלת לרשום",
   "kind": "lit",
   "where": [
-   "app/app.js:292"
+   "app/app.js:294"
   ]
  },
  {
   "key": "השמירה בטלפון לא עובדת כרגע. ",
   "kind": "lit",
   "where": [
-   "app/app.js:312"
+   "app/app.js:314"
   ]
  },
  {
   "key": "הנתונים נשמרים בחשבון שלך ☁️",
   "kind": "lit",
   "where": [
-   "app/app.js:312"
+   "app/app.js:314"
   ]
  },
  {
   "key": "כדאי להתחבר לחשבון כדי לא לאבד נתונים.",
   "kind": "lit",
   "where": [
-   "app/app.js:312"
+   "app/app.js:314"
   ]
  },
  {
   "key": "ביטול",
   "kind": "lit",
   "where": [
-   "app/app.js:328",
-   "app/app.js:493",
+   "app/app.js:330",
+   "app/app.js:495",
    "app/ui.js:318",
    "app/ui.js:325",
    "app/views-login.js:52",
@@ -262,49 +262,49 @@
   "key": "בוטל: ",
   "kind": "lit",
   "where": [
-   "app/app.js:333"
+   "app/app.js:335"
   ]
  },
  {
   "key": "אין מה לבטל",
   "kind": "lit",
   "where": [
-   "app/app.js:333"
+   "app/app.js:335"
   ]
  },
  {
   "key": "הוסף תפקיד בהגדרות",
   "kind": "lit",
   "where": [
-   "app/app.js:456"
+   "app/app.js:458"
   ]
  },
  {
   "key": "המשמרת התחילה — בהצלחה!",
   "kind": "lit",
   "where": [
-   "app/app.js:467"
+   "app/app.js:469"
   ]
  },
  {
   "key": "משמרת קצרה מאוד",
   "kind": "lit",
   "where": [
-   "app/app.js:480"
+   "app/app.js:482"
   ]
  },
  {
   "key": "המשמרת נמשכה פחות מדקה. לשמור בכל זאת?",
   "kind": "lit",
   "where": [
-   "app/app.js:480"
+   "app/app.js:482"
   ]
  },
  {
   "key": "שמור",
   "kind": "lit",
   "where": [
-   "app/app.js:480",
+   "app/app.js:482",
    "app/ui.js:325",
    "app/views-settings.js:392",
    "app/views-settings.js:776",
@@ -316,91 +316,91 @@
   "key": "סיום משמרת",
   "kind": "lit",
   "where": [
-   "app/app.js:486"
+   "app/app.js:488"
   ]
  },
  {
   "key": "המשמרת הראשונה שלך נשמרה! 🎉",
   "kind": "lit",
   "where": [
-   "app/app.js:489"
+   "app/app.js:491"
   ]
  },
  {
   "key": "נשמר: {0} שעות · {1}",
   "kind": "tpl",
   "where": [
-   "app/app.js:493"
+   "app/app.js:495"
   ]
  },
  {
   "key": "שכחת לעצור?",
   "kind": "lit",
   "where": [
-   "app/app.js:500"
+   "app/app.js:502"
   ]
  },
  {
   "key": "הטיימר רץ {0} שעות, מ-{1} ב-{2}{3}. אפשר לתקן עכשיו את שעת הסיום.",
   "kind": "tpl",
   "where": [
-   "app/app.js:500"
+   "app/app.js:502"
   ]
  },
  {
   "key": ", ובדרך כלל המשמרות שלך נמשכות כ-{0}",
   "kind": "tpl",
   "where": [
-   "app/app.js:500"
+   "app/app.js:502"
   ]
  },
  {
   "key": "לתקן",
   "kind": "lit",
   "where": [
-   "app/app.js:500"
+   "app/app.js:502"
   ]
  },
  {
   "key": "חזרת מהפסקה",
   "kind": "lit",
   "where": [
-   "app/app.js:510"
+   "app/app.js:512"
   ]
  },
  {
   "key": "הפסקה — הזמן לא נספר",
   "kind": "lit",
   "where": [
-   "app/app.js:511"
+   "app/app.js:513"
   ]
  },
  {
   "key": "עברת ל",
   "kind": "lit",
   "where": [
-   "app/app.js:518"
+   "app/app.js:520"
   ]
  },
  {
   "key": "הסיכום של {0} מוכן ✨",
   "kind": "tpl",
   "where": [
-   "app/app.js:581"
+   "app/app.js:583"
   ]
  },
  {
   "key": "{0} · {1} שעות · {2} ברוטו. לחצו לסיפור של החודש.",
   "kind": "tpl",
   "where": [
-   "app/app.js:582"
+   "app/app.js:584"
   ]
  },
  {
   "key": "משמרת אחת",
   "kind": "lit",
   "where": [
-   "app/app.js:582",
+   "app/app.js:584",
    "app/import.js:150",
    "app/schedule-import.js:113"
   ]
@@ -409,7 +409,7 @@
   "key": "{0} משמרות",
   "kind": "tpl",
   "where": [
-   "app/app.js:582",
+   "app/app.js:584",
    "app/import.js:150",
    "app/schedule-import.js:113"
   ]
@@ -418,70 +418,70 @@
   "key": "שיא אישי חדש!",
   "kind": "lit",
   "where": [
-   "app/app.js:604"
+   "app/app.js:606"
   ]
  },
  {
   "key": "נעילת Shaati",
   "kind": "lit",
   "where": [
-   "app/app.js:644"
+   "app/app.js:646"
   ]
  },
  {
   "key": "<div class=\"empty\" style=\"padding:0\"><div class=\"art\">{0}</div><h3>האפליקציה נעולה</h3><div>{1}</div></div>\n        <div class=\"pin-dots\">{2}</div>\n        <div class=\"pin-pad\">{3}</div>",
   "kind": "tpl",
   "where": [
-   "app/app.js:673"
+   "app/app.js:675"
   ]
  },
  {
   "key": "יותר מדי ניסיונות. נסה שוב בעוד {0} שניות",
   "kind": "tpl",
   "where": [
-   "app/app.js:673"
+   "app/app.js:675"
   ]
  },
  {
   "key": "הזן קוד",
   "kind": "lit",
   "where": [
-   "app/app.js:673"
+   "app/app.js:675"
   ]
  },
  {
   "key": "<button data-bio aria-label=\"פתח בטביעת אצבע\">{0}</button>",
   "kind": "tpl",
   "where": [
-   "app/app.js:675"
+   "app/app.js:677"
   ]
  },
  {
   "key": "גיבוי אוטומטי נשמר בהורדות",
   "kind": "lit",
   "where": [
-   "app/app.js:725"
+   "app/app.js:727"
   ]
  },
  {
   "key": "קובץ הגיבוי נשמר",
   "kind": "lit",
   "where": [
-   "app/app.js:725"
+   "app/app.js:727"
   ]
  },
  {
   "key": "שתף ל-⁠Drive",
   "kind": "lit",
   "where": [
-   "app/app.js:725"
+   "app/app.js:727"
   ]
  },
  {
   "key": "גיבוי משמרות",
   "kind": "lit",
   "where": [
-   "app/app.js:725",
+   "app/app.js:727",
    "app/views-settings.js:855"
   ]
  },
@@ -489,7 +489,7 @@
   "key": "לא ניתן לפתוח את מסד הנתונים",
   "kind": "lit",
   "where": [
-   "app/app.js:733"
+   "app/app.js:735"
   ]
  },
  {
@@ -1216,7 +1216,7 @@
   "key": "לא מחובר",
   "kind": "lit",
   "where": [
-   "app/cloud.js:529",
+   "app/cloud.js:530",
    "app/views-settings.js:132"
   ]
  },
@@ -1224,35 +1224,35 @@
   "key": "מסונכרן",
   "kind": "lit",
   "where": [
-   "app/cloud.js:530"
+   "app/cloud.js:531"
   ]
  },
  {
   "key": "מסנכרן…",
   "kind": "lit",
   "where": [
-   "app/cloud.js:531"
+   "app/cloud.js:532"
   ]
  },
  {
   "key": "אין חיבור — יסונכרן כשתחזור הרשת",
   "kind": "lit",
   "where": [
-   "app/cloud.js:532"
+   "app/cloud.js:533"
   ]
  },
  {
   "key": "שגיאת סנכרון: ",
   "kind": "lit",
   "where": [
-   "app/cloud.js:533"
+   "app/cloud.js:534"
   ]
  },
  {
   "key": "מחובר",
   "kind": "lit",
   "where": [
-   "app/cloud.js:534"
+   "app/cloud.js:535"
   ]
  },
  {
@@ -1692,7 +1692,7 @@
   "kind": "tpl",
   "where": [
    "app/export.js:71",
-   "app/views-games.js:526",
+   "app/views-games.js:529",
    "app/views-settings.js:634",
    "core/games.js:34",
    "core/games.js:241",
@@ -4402,6 +4402,10 @@
   "kind": "lit",
   "where": [
    "app/views-assistant.js:136",
+   "app/views-friends.js:155",
+   "app/views-friends.js:172",
+   "app/views-friends.js:220",
+   "app/views-friends.js:285",
    "app/views-leaderboard.js:248",
    "app/views-leaderboard.js:434",
    "app/views-login.js:195",
@@ -4601,11 +4605,440 @@
   ]
  },
  {
+  "key": "שכר לשעה",
+  "kind": "lit",
+  "where": [
+   "app/views-friends.js:24"
+  ]
+ },
+ {
+  "key": "החודש",
+  "kind": "lit",
+  "where": [
+   "app/views-friends.js:24",
+   "app/views-leaderboard.js:17",
+   "app/views-leaderboard.js:324",
+   "app/views-onboarding.js:108"
+  ]
+ },
+ {
+  "key": "השנה",
+  "kind": "lit",
+  "where": [
+   "app/views-friends.js:24",
+   "app/views-leaderboard.js:17",
+   "app/views-leaderboard.js:324",
+   "app/views-reports.js:57",
+   "app/views-reports.js:57"
+  ]
+ },
+ {
+  "key": "כל הזמנים",
+  "kind": "lit",
+  "where": [
+   "app/views-friends.js:24",
+   "app/views-leaderboard.js:17"
+  ]
+ },
+ {
+  "key": "חבר/ה חדש/ה הצטרף/ה לתחרות 🤝",
+  "kind": "lit",
+  "where": [
+   "app/views-friends.js:111"
+  ]
+ },
+ {
+  "key": "השם שלי בתחרות",
+  "kind": "lit",
+  "where": [
+   "app/views-friends.js:122"
+  ]
+ },
+ {
+  "key": "הצטרפות לתחרות עם החברים",
+  "kind": "lit",
+  "where": [
+   "app/views-friends.js:122"
+  ]
+ },
+ {
+  "key": "{0}\n        <label class=\"field\"><span class=\"lbl\">השם שלך (החברים יראו אותו)</span>\n          <span class=\"lb-nick\"><input class=\"input\" id=\"fr-n\" maxlength=\"16\" autocomplete=\"given-name\" placeholder=\"השם הפרטי שלך\" value=\"{1}\"></span>\n          <span class=\"tiny lb-err\" id=\"fr-err\" role=\"alert\"></span></label>\n        <div class=\"section-title\">אימוג׳י</div>\n        <div class=\"lb-emoji\" role=\"radiogroup\" aria-label=\"אימוג׳י\">{2}</div>\n        <div class=\"tiny muted lb-note\">רק החברים שהוספת רואים את הכרטיס שלך: השם, האימוג׳י והסכומים (אפשר להסתיר אותם). שום פרט אחר.</div>\n        <button class=\"btn big block\" data-save>{3} {4}</button>",
+  "kind": "tpl",
+  "where": [
+   "app/views-friends.js:124"
+  ]
+ },
+ {
+  "key": "שמירה",
+  "kind": "lit",
+  "where": [
+   "app/views-friends.js:131",
+   "app/views-leaderboard.js:400"
+  ]
+ },
+ {
+  "key": "הצטרפות",
+  "kind": "lit",
+  "where": [
+   "app/views-friends.js:131",
+   "app/views-leaderboard.js:400"
+  ]
+ },
+ {
+  "key": "צריך להתחבר לחשבון",
+  "kind": "lit",
+  "where": [
+   "app/views-friends.js:144",
+   "app/views-leaderboard.js:418"
+  ]
+ },
+ {
+  "key": "השמירה נכשלה. נסו שוב",
+  "kind": "lit",
+  "where": [
+   "app/views-friends.js:155",
+   "app/views-leaderboard.js:434"
+  ]
+ },
+ {
+  "key": "הצטרפות והזמנה",
+  "kind": "lit",
+  "where": [
+   "app/views-friends.js:167"
+  ]
+ },
+ {
+  "key": "לא הצלחנו ליצור הזמנה. נסו שוב",
+  "kind": "lit",
+  "where": [
+   "app/views-friends.js:172"
+  ]
+ },
+ {
+  "key": "{0} {1} מזמין/ה אותך לתחרות בשעתי: מי מרוויח יותר לשעה, החודש והשנה? 💸",
+  "kind": "tpl",
+  "where": [
+   "app/views-friends.js:174"
+  ]
+ },
+ {
+  "key": "הקישור הועתק. אפשר להדביק בוואטסאפ 💚",
+  "kind": "lit",
+  "where": [
+   "app/views-friends.js:177",
+   "app/views-support.js:297"
+  ]
+ },
+ {
+  "key": "ההזמנה כבר לא בתוקף. בקשו קישור חדש",
+  "kind": "lit",
+  "where": [
+   "app/views-friends.js:192"
+  ]
+ },
+ {
+  "key": "זו ההזמנה שלך: שלחו אותה לחבר",
+  "kind": "lit",
+  "where": [
+   "app/views-friends.js:193"
+  ]
+ },
+ {
+  "key": "מישהו כבר הצטרף עם ההזמנה הזו. בקשו קישור חדש",
+  "kind": "lit",
+  "where": [
+   "app/views-friends.js:195"
+  ]
+ },
+ {
+  "key": "לא הצלחנו לפתוח את ההזמנה. ננסה שוב בפתיחה הבאה",
+  "kind": "lit",
+  "where": [
+   "app/views-friends.js:199"
+  ]
+ },
+ {
+  "key": "אין חיבור לאינטרנט. ננסה שוב",
+  "kind": "lit",
+  "where": [
+   "app/views-friends.js:199"
+  ]
+ },
+ {
+  "key": "התחרות עם {0} התחילה! 🤝",
+  "kind": "tpl",
+  "where": [
+   "app/views-friends.js:216"
+  ]
+ },
+ {
+  "key": "ההצטרפות נכשלה. נסו שוב",
+  "kind": "lit",
+  "where": [
+   "app/views-friends.js:220"
+  ]
+ },
+ {
+  "key": "<div class=\"fr-invite\"><span class=\"fr-inv-e\" aria-hidden=\"true\">{0}</span><b>{1}</b><span>מזמין/ה אותך לתחרות: מי מרוויח יותר לשעה, החודש והשנה? 💸</span></div>",
+  "kind": "tpl",
+  "where": [
+   "app/views-friends.js:223"
+  ]
+ },
+ {
+  "key": "מצטרפים לתחרות",
+  "kind": "lit",
+  "where": [
+   "app/views-friends.js:224"
+  ]
+ },
+ {
+  "key": "הזמנה לתחרות",
+  "kind": "lit",
+  "where": [
+   "app/views-friends.js:226",
+   "app/views-friends.js:240"
+  ]
+ },
+ {
+  "key": "{0}\n        <div class=\"tiny muted lb-note\">החברים בתחרות רואים רק את השם, האימוג׳י והסכומים שלך{1}. אפשר להסיר חבר בכל רגע.</div>\n        <button class=\"btn big block go\" data-acc>{2} מצטרפים</button>\n        <button class=\"btn text block\" data-no>לא עכשיו</button>",
+  "kind": "tpl",
+  "where": [
+   "app/views-friends.js:228"
+  ]
+ },
+ {
+  "key": " (שאצלך מוסתרים)",
+  "kind": "lit",
+  "where": [
+   "app/views-friends.js:229"
+  ]
+ },
+ {
+  "key": "התחרות עם החברים",
+  "kind": "lit",
+  "where": [
+   "app/views-friends.js:240"
+  ]
+ },
+ {
+  "key": "<div class=\"fr-empty\"><span aria-hidden=\"true\">🤝</span><b>{0}</b>\n        <span>מתחברים עם חשבון Google{1}.</span></div>\n        <button class=\"btn big block\" data-in>{2} התחברות</button>",
+  "kind": "tpl",
+  "where": [
+   "app/views-friends.js:242"
+  ]
+ },
+ {
+  "key": "הוזמנת לתחרות עם חבר!",
+  "kind": "lit",
+  "where": [
+   "app/views-friends.js:242"
+  ]
+ },
+ {
+  "key": "מי מרוויח יותר?",
+  "kind": "lit",
+  "where": [
+   "app/views-friends.js:242"
+  ]
+ },
+ {
+  "key": ", ואז ההזמנה נפתחת לבד",
+  "kind": "lit",
+  "where": [
+   "app/views-friends.js:243"
+  ]
+ },
+ {
+  "key": ", מזמינים חברים ורואים מי מרוויח הכי הרבה לשעה, החודש והשנה",
+  "kind": "lit",
+  "where": [
+   "app/views-friends.js:243"
+  ]
+ },
+ {
+  "key": "<span class=\"fr-wait\">ממתין/ה</span>",
+  "kind": "lit",
+  "where": [
+   "app/views-friends.js:257"
+  ]
+ },
+ {
+  "key": "<span class=\"fr-hid\" title=\"מסתיר/ה סכומים\">🙈</span>",
+  "kind": "lit",
+  "where": [
+   "app/views-friends.js:258"
+  ]
+ },
+ {
+  "key": " <small>(את/ה)</small>",
+  "kind": "lit",
+  "where": [
+   "app/views-friends.js:263",
+   "app/views-leaderboard.js:172"
+  ]
+ },
+ {
+  "key": "<small class=\"fr-sub\">יופיע/תופיע כשיפתח/תפתח את שעתי</small>",
+  "kind": "lit",
+  "where": [
+   "app/views-friends.js:263"
+  ]
+ },
+ {
+  "key": "<li class=\"fr-empty\"><span aria-hidden=\"true\">🤝</span><b>עוד אין כאן חברים</b><span>הזמינו חבר בקישור, ותראו מי מרוויח יותר לשעה, החודש והשנה.</span></li>",
+  "kind": "tpl",
+  "where": [
+   "app/views-friends.js:269"
+  ]
+ },
+ {
+  "key": "לא הצלחנו לטעון את החברים",
+  "kind": "lit",
+  "where": [
+   "app/views-friends.js:285"
+  ]
+ },
+ {
+  "key": "התחרות עם החברים 🤝",
+  "kind": "lit",
+  "where": [
+   "app/views-friends.js:290"
+  ]
+ },
+ {
+  "key": "<div class=\"seg lb-periods fr-periods\" role=\"tablist\" aria-label=\"תקופה\">{0}</div>\n        <ol class=\"lb-list fr-list\" data-fr-list></ol>\n        <button class=\"btn big block go fr-inv-btn\" data-fr-invite>{1} הזמנת חבר</button>\n        <div class=\"card fr-opts\">{2}\n          <div class=\"fr-links\"><button class=\"btn text sm\" data-fr-profile>{3} השם שלי</button><button class=\"btn text sm danger\" data-fr-leave>יציאה מהתחרות</button></div></div>\n        <div class=\"tiny muted lb-note\">לשעה: השכר על העבודה עצמה (כולל שבתות ושעות נוספות, בלי נסיעות) השנה. החודש, השנה וכל הזמנים: ברוטו. רק חברים שהוספתם זה את זה רואים את הכרטיס.</div>",
+  "kind": "tpl",
+  "where": [
+   "app/views-friends.js:293"
+  ]
+ },
+ {
+  "key": "<label class=\"switch-row\"><span class=\"body\"><span class=\"t\">הסתרת הסכומים שלי</span><span class=\"s\">החברים יראו אותך בטבלה, בלי הסכומים</span></span><input type=\"checkbox\" class=\"switch\" data-fr-hide {0}></label>",
+  "kind": "tpl",
+  "where": [
+   "app/views-friends.js:296"
+  ]
+ },
+ {
+  "key": "יישלח כשיהיה חיבור",
+  "kind": "lit",
+  "where": [
+   "app/views-friends.js:306"
+  ]
+ },
+ {
+  "key": "לצאת מהתחרות?",
+  "kind": "lit",
+  "where": [
+   "app/views-friends.js:320"
+  ]
+ },
+ {
+  "key": "הכרטיס שלך יימחק, והחברים לא יראו אותך יותר. אפשר להצטרף שוב בכל רגע.",
+  "kind": "lit",
+  "where": [
+   "app/views-friends.js:320"
+  ]
+ },
+ {
+  "key": "יציאה",
+  "kind": "lit",
+  "where": [
+   "app/views-friends.js:320",
+   "app/views-leaderboard.js:437"
+  ]
+ },
+ {
+  "key": "החבר/ה",
+  "kind": "lit",
+  "where": [
+   "app/views-friends.js:331"
+  ]
+ },
+ {
+  "key": "<button class=\"item\" data-rm><span class=\"body\"><span class=\"t\">הסרה מהחברים</span><span class=\"s\">לא תראו זה את זה בטבלה. אפשר להזמין שוב</span></span></button>\n        <button class=\"item danger\" data-block><span class=\"body\"><span class=\"t\">חסימה</span><span class=\"s\">הסרה, ובלי הזמנות ממנו/ה בעתיד</span></span></button>",
+  "kind": "tpl",
+  "where": [
+   "app/views-friends.js:335"
+  ]
+ },
+ {
+  "key": "נחסם/ה ✓",
+  "kind": "lit",
+  "where": [
+   "app/views-friends.js:347"
+  ]
+ },
+ {
+  "key": "הוסר/ה ✓",
+  "kind": "lit",
+  "where": [
+   "app/views-friends.js:347"
+  ]
+ },
+ {
+  "key": "לחסום את {0}?",
+  "kind": "tpl",
+  "where": [
+   "app/views-friends.js:351"
+  ]
+ },
+ {
+  "key": "יוסר/תוסר מהחברים, והזמנות ממנו/ה לא ייפתחו.",
+  "kind": "lit",
+  "where": [
+   "app/views-friends.js:351"
+  ]
+ },
+ {
+  "key": "חסימה",
+  "kind": "lit",
+  "where": [
+   "app/views-friends.js:351"
+  ]
+ },
+ {
+  "key": "מי מרוויח יותר לשעה, החודש והשנה?",
+  "kind": "lit",
+  "where": [
+   "app/views-friends.js:374"
+  ]
+ },
+ {
+  "key": "הזמינו חבר ותראו מי מרוויח יותר",
+  "kind": "lit",
+  "where": [
+   "app/views-friends.js:375"
+  ]
+ },
+ {
+  "key": "חבר/ה אחד/ת בתחרות",
+  "kind": "lit",
+  "where": [
+   "app/views-friends.js:376"
+  ]
+ },
+ {
+  "key": "{0} חברים בתחרות",
+  "kind": "tpl",
+  "where": [
+   "app/views-friends.js:376"
+  ]
+ },
+ {
+  "key": "<button class=\"ach-card fr-card\" data-fr-hub><span class=\"ach-card-e\" aria-hidden=\"true\">🤝</span><span class=\"gm-txt\"><b>התחרות עם החברים</b><span>{0}</span></span>{1}</button>",
+  "kind": "tpl",
+  "where": [
+   "app/views-friends.js:378"
+  ]
+ },
+ {
   "key": "תופסים מטבעות",
   "kind": "lit",
   "where": [
    "app/views-games.js:29",
-   "app/views-games.js:233"
+   "app/views-games.js:236"
   ]
  },
  {
@@ -4620,7 +5053,7 @@
   "kind": "lit",
   "where": [
    "app/views-games.js:30",
-   "app/views-games.js:584"
+   "app/views-games.js:587"
   ]
  },
  {
@@ -4636,8 +5069,8 @@
   "where": [
    "app/views-games.js:30",
    "app/views-games.js:32",
-   "app/views-games.js:678",
-   "app/views-games.js:821"
+   "app/views-games.js:681",
+   "app/views-games.js:824"
   ]
  },
  {
@@ -4645,7 +5078,7 @@
   "kind": "lit",
   "where": [
    "app/views-games.js:31",
-   "app/views-games.js:693"
+   "app/views-games.js:696"
   ]
  },
  {
@@ -4660,7 +5093,7 @@
   "kind": "lit",
   "where": [
    "app/views-games.js:32",
-   "app/views-games.js:755",
+   "app/views-games.js:758",
    "app/views-leaderboard.js:18"
   ]
  },
@@ -4676,7 +5109,7 @@
   "kind": "lit",
   "where": [
    "app/views-games.js:33",
-   "app/views-games.js:836"
+   "app/views-games.js:839"
   ]
  },
  {
@@ -4691,7 +5124,7 @@
   "kind": "lit",
   "where": [
    "app/views-games.js:33",
-   "app/views-games.js:894"
+   "app/views-games.js:897"
   ]
  },
  {
@@ -5113,106 +5546,106 @@
   "key": "<span class=\"ach-card-e\" aria-hidden=\"true\">🏅</span><span class=\"gm-txt\"><b>המדליות שלי</b><span>{0} מתוך {1} · על משמרות, כסף, תלושים ומשחקים</span></span>{2}",
   "kind": "tpl",
   "where": [
-   "app/views-games.js:151"
+   "app/views-games.js:152"
   ]
  },
  {
   "key": "מוזיקה פועלת",
   "kind": "lit",
   "where": [
-   "app/views-games.js:180"
+   "app/views-games.js:183"
   ]
  },
  {
   "key": "מוזיקה כבויה",
   "kind": "lit",
   "where": [
-   "app/views-games.js:180"
+   "app/views-games.js:183"
   ]
  },
  {
   "key": "<div class=\"gm-end\"><div class=\"gm-hero\"><span class=\"gm-rays {0}\" aria-hidden=\"true\"></span>{1}</div>\n      <div class=\"gm-end-t\">{2}</div>\n      <div class=\"gm-stars\" role=\"img\" aria-label=\"{3} כוכבים מתוך 3\"><i></i><i></i><i></i></div>\n      <div class=\"gm-end-n\">{4}</div>\n      {5}\n      <div class=\"gm-end-b {6}\">{7}</div>\n      <div class=\"gm-end-a\"><button class=\"btn\" data-again>{8} עוד סיבוב</button><button class=\"btn tonal\" data-quit>סיום</button></div></div>",
   "kind": "tpl",
   "where": [
-   "app/views-games.js:194"
+   "app/views-games.js:197"
   ]
  },
  {
   "key": "{0} שיא חדש!",
   "kind": "tpl",
   "where": [
-   "app/views-games.js:199"
+   "app/views-games.js:202"
   ]
  },
  {
   "key": "השיא שלך: {0}{1}",
   "kind": "tpl",
   "where": [
-   "app/views-games.js:199"
+   "app/views-games.js:202"
   ]
  },
  {
   "key": "<div class=\"gm-streak\">🔥 רצף של {0} ימים!{1}</div>",
   "kind": "tpl",
   "where": [
-   "app/views-games.js:204"
+   "app/views-games.js:207"
   ]
  },
  {
   "key": " מדליה חדשה 🏅",
   "kind": "lit",
   "where": [
-   "app/views-games.js:204"
+   "app/views-games.js:207"
   ]
  },
  {
   "key": "<div class=\"cg\">\n        <div class=\"cg-hud\"><span class=\"cg-score\" data-score>0 ₪</span><span class=\"cg-lives\" data-lives aria-label=\"3 לבבות\">{0}</span><span class=\"cg-time\" data-time>{1}</span></div>\n        <div class=\"cg-stage\" data-no-ptr><canvas aria-label=\"המשחק\"></canvas><div class=\"cg-over\" data-over></div></div></div>",
   "kind": "tpl",
   "where": [
-   "app/views-games.js:236"
+   "app/views-games.js:239"
   ]
  },
  {
   "key": "קנס",
   "kind": "lit",
   "where": [
-   "app/views-games.js:293"
+   "app/views-games.js:296"
   ]
  },
  {
   "key": " לבבות",
   "kind": "lit",
   "where": [
-   "app/views-games.js:318"
+   "app/views-games.js:321"
   ]
  },
  {
   "key": "+5 שנ׳",
   "kind": "lit",
   "where": [
-   "app/views-games.js:392"
+   "app/views-games.js:395"
   ]
  },
  {
   "key": "🔥 {0} ברצף!",
   "kind": "tpl",
   "where": [
-   "app/views-games.js:404",
-   "app/views-games.js:606"
+   "app/views-games.js:407",
+   "app/views-games.js:609"
   ]
  },
  {
   "key": "<div class=\"cg-count go\">יאללה!</div>",
   "kind": "lit",
   "where": [
-   "app/views-games.js:512"
+   "app/views-games.js:515"
   ]
  },
  {
   "key": "שעה",
   "kind": "lit",
   "where": [
-   "app/views-games.js:526",
+   "app/views-games.js:529",
    "app/views-settings.js:634",
    "app/views-settings.js:675",
    "core/games.js:33",
@@ -5223,7 +5656,7 @@
   "key": "שעתיים",
   "kind": "lit",
   "where": [
-   "app/views-games.js:526",
+   "app/views-games.js:529",
    "app/views-settings.js:634",
    "app/views-settings.js:675",
    "core/games.js:33",
@@ -5234,186 +5667,186 @@
   "key": " ו-{0} דקות",
   "kind": "tpl",
   "where": [
-   "app/views-games.js:526"
+   "app/views-games.js:529"
   ]
  },
  {
   "key": "{0} דקות",
   "kind": "tpl",
   "where": [
-   "app/views-games.js:526"
+   "app/views-games.js:529"
   ]
  },
  {
   "key": "אופס, יותר מדי קנסות",
   "kind": "lit",
   "where": [
-   "app/views-games.js:530"
+   "app/views-games.js:533"
   ]
  },
  {
   "key": "נגמר הזמן!",
   "kind": "lit",
   "where": [
-   "app/views-games.js:530"
+   "app/views-games.js:533"
   ]
  },
  {
   "key": "בשכר שלך זה כמו {0} עבודה",
   "kind": "tpl",
   "where": [
-   "app/views-games.js:532"
+   "app/views-games.js:535"
   ]
  },
  {
   "key": "<div class=\"gm-intro\">{0}\n        <div class=\"gm-intro-t\">{1} שניות. כמה כסף אפשר לתפוס?</div>\n        <div class=\"cg-legend\"><span><i class=\"lg-coin\"></i>מטבעות ושטרות</span><span><i class=\"lg-fine\"></i>קנס: מוריד לב</span><span><i class=\"lg-clock\"></i>עוד 5 שניות</span></div>\n        <div class=\"tiny muted\">גוררים את הארנק עם האצבע (או החצים במקלדת)</div>\n        <button class=\"btn big\" data-go>{2} התחלה</button></div>",
   "kind": "tpl",
   "where": [
-   "app/views-games.js:538"
+   "app/views-games.js:541"
   ]
  },
  {
   "key": "<div class=\"gm-intro\"><div class=\"gm-intro-t\">המשחק בהפסקה</div><button class=\"btn big\" data-resume>{0} המשך</button></div>",
   "kind": "tpl",
   "where": [
-   "app/views-games.js:563"
+   "app/views-games.js:566"
   ]
  },
  {
   "key": "<div class=\"qz-top\">{0}<span class=\"qz-score\" data-sc>{1}</span></div>\n        <div class=\"qz-timer\"><b style=\"animation-duration:{2}s\"></b></div>\n        <div class=\"qz-card\"><div class=\"qz-n\">שאלה {3} מתוך {4}{5}</div><div class=\"qz-q\">{6}</div></div>\n        <div class=\"qz-opts\">{7}</div>\n        <div class=\"qz-x\" aria-live=\"polite\"></div>",
   "kind": "tpl",
   "where": [
-   "app/views-games.js:622"
+   "app/views-games.js:625"
   ]
  },
  {
   "key": " · <span class=\"qz-streak\">🔥 {0} ברצף</span>",
   "kind": "tpl",
   "where": [
-   "app/views-games.js:624"
+   "app/views-games.js:627"
   ]
  },
  {
   "key": "נכון!",
   "kind": "lit",
   "where": [
-   "app/views-games.js:668",
-   "app/views-games.js:880"
+   "app/views-games.js:671",
+   "app/views-games.js:883"
   ]
  },
  {
   "key": "נגמר הזמן",
   "kind": "lit",
   "where": [
-   "app/views-games.js:668"
+   "app/views-games.js:671"
   ]
  },
  {
   "key": "לא בדיוק",
   "kind": "lit",
   "where": [
-   "app/views-games.js:668"
+   "app/views-games.js:671"
   ]
  },
  {
   "key": "לשאלה הבאה",
   "kind": "lit",
   "where": [
-   "app/views-games.js:669"
+   "app/views-games.js:672"
   ]
  },
  {
   "key": "לתוצאה",
   "kind": "lit",
   "where": [
-   "app/views-games.js:669",
-   "app/views-games.js:730"
+   "app/views-games.js:672",
+   "app/views-games.js:733"
   ]
  },
  {
   "key": "מושלם! כל התשובות נכונות",
   "kind": "lit",
   "where": [
-   "app/views-games.js:679"
+   "app/views-games.js:682"
   ]
  },
  {
   "key": "יפה מאוד!",
   "kind": "lit",
   "where": [
-   "app/views-games.js:679",
-   "app/views-games.js:822"
+   "app/views-games.js:682",
+   "app/views-games.js:825"
   ]
  },
  {
   "key": "לא רע בכלל",
   "kind": "lit",
   "where": [
-   "app/views-games.js:679"
+   "app/views-games.js:682"
   ]
  },
  {
   "key": "בסיבוב הבא זה יילך טוב יותר",
   "kind": "lit",
   "where": [
-   "app/views-games.js:679"
+   "app/views-games.js:682"
   ]
  },
  {
   "key": "{0} <small>נק׳</small>",
   "kind": "tpl",
   "where": [
-   "app/views-games.js:680",
-   "app/views-games.js:823"
+   "app/views-games.js:683",
+   "app/views-games.js:826"
   ]
  },
  {
   "key": "{0} מתוך {1} תשובות נכונות",
   "kind": "tpl",
   "where": [
-   "app/views-games.js:681"
+   "app/views-games.js:684"
   ]
  },
  {
   "key": "<div class=\"qz-top\">{0}<span class=\"qz-score\">{1}/{2}</span></div>\n        <div class=\"tf-card\" data-card><div class=\"qz-n\">{3} מתוך {4}</div><div class=\"tf-s\">{5}</div></div>\n        <div class=\"tf-btns\"><button class=\"btn big tf-yes\" data-a=\"1\">{6} נכון</button><button class=\"btn big tf-no\" data-a=\"0\">{7} לא נכון</button></div>\n        <div class=\"qz-x\" aria-live=\"polite\"></div>",
   "kind": "tpl",
   "where": [
-   "app/views-games.js:709"
+   "app/views-games.js:712"
   ]
  },
  {
   "key": "נכון",
   "kind": "lit",
   "where": [
-   "app/views-games.js:723"
+   "app/views-games.js:726"
   ]
  },
  {
   "key": "לא נכון",
   "kind": "lit",
   "where": [
-   "app/views-games.js:723"
+   "app/views-games.js:726"
   ]
  },
  {
   "key": "צדקת!",
   "kind": "lit",
   "where": [
-   "app/views-games.js:729"
+   "app/views-games.js:732"
   ]
  },
  {
   "key": "הפעם לא",
   "kind": "lit",
   "where": [
-   "app/views-games.js:729"
+   "app/views-games.js:732"
   ]
  },
  {
   "key": "הבא",
   "kind": "lit",
   "where": [
-   "app/views-games.js:730",
+   "app/views-games.js:733",
    "app/views-onboarding.js:199"
   ]
  },
@@ -5421,133 +5854,133 @@
   "key": "אלופי הזכויות!",
   "kind": "lit",
   "where": [
-   "app/views-games.js:738"
+   "app/views-games.js:741"
   ]
  },
  {
   "key": "ידע לא רע בכלל",
   "kind": "lit",
   "where": [
-   "app/views-games.js:738"
+   "app/views-games.js:741"
   ]
  },
  {
   "key": "שווה להציץ בזכויות שלך",
   "kind": "lit",
   "where": [
-   "app/views-games.js:738"
+   "app/views-games.js:741"
   ]
  },
  {
   "key": "<button class=\"btn text sm\" data-rights>לכל הזכויות שלי</button>",
   "kind": "lit",
   "where": [
-   "app/views-games.js:740"
+   "app/views-games.js:743"
   ]
  },
  {
   "key": "<div class=\"qz-top\"><span class=\"pr-moves\" data-mv>0 ניסיונות</span><span class=\"qz-score\" data-sc>0/{0}</span></div>\n        <div class=\"pr-grid\">{1}</div>\n        <div class=\"qz-x\" aria-live=\"polite\"><div>הופכים שני קלפים ומחפשים מילה מהתלוש ואת מה שהיא אומרת.</div></div>",
   "kind": "tpl",
   "where": [
-   "app/views-games.js:769"
+   "app/views-games.js:772"
   ]
  },
  {
   "key": "<button class=\"pr-card\" data-k=\"{0}\" style=\"--k:{1}\" aria-label=\"קלף {2}, הפוך\"><span class=\"pr-in\"><span class=\"pr-back\" aria-hidden=\"true\"></span><span class=\"pr-face {3}\">{4}</span></span></button>",
   "kind": "tpl",
   "where": [
-   "app/views-games.js:770"
+   "app/views-games.js:773"
   ]
  },
  {
   "key": "{0} ניסיונות",
   "kind": "tpl",
   "where": [
-   "app/views-games.js:785"
+   "app/views-games.js:788"
   ]
  },
  {
   "key": "🔥 {0} זוגות ברצף!",
   "kind": "tpl",
   "where": [
-   "app/views-games.js:800"
+   "app/views-games.js:803"
   ]
  },
  {
   "key": "קלף {0}, הפוך",
   "kind": "tpl",
   "where": [
-   "app/views-games.js:810"
+   "app/views-games.js:813"
   ]
  },
  {
   "key": "זיכרון של פיל!",
   "kind": "lit",
   "where": [
-   "app/views-games.js:822"
+   "app/views-games.js:825"
   ]
  },
  {
   "key": "כל הזוגות נמצאו",
   "kind": "lit",
   "where": [
-   "app/views-games.js:822"
+   "app/views-games.js:825"
   ]
  },
  {
   "key": "{0} ניסיונות · {1} שניות",
   "kind": "tpl",
   "where": [
-   "app/views-games.js:824"
+   "app/views-games.js:827"
   ]
  },
  {
   "key": "<span class=\"hw-q\" aria-label=\"מחיר מוסתר\">?</span>",
   "kind": "lit",
   "where": [
-   "app/views-games.js:851"
+   "app/views-games.js:854"
   ]
  },
  {
   "key": "<div class=\"qz-top\"><span class=\"hw-rate\">{0} {1} לשעה</span><span class=\"qz-score\" data-sc>🔥 {2}</span></div>\n        <div class=\"hw-pair\">{3}<span class=\"hw-vs\" aria-hidden=\"true\">או</span>{4}</div>\n        <div class=\"hw-ask\">{5}: יותר או פחות שעות עבודה?</div>\n        <div class=\"tf-btns\"><button class=\"btn big hw-more\" data-a=\"1\">{6} יותר</button><button class=\"btn big hw-less\" data-a=\"0\">{7} פחות</button></div>\n        <div class=\"qz-x\" aria-live=\"polite\"></div>",
   "kind": "tpl",
   "where": [
-   "app/views-games.js:857"
+   "app/views-games.js:860"
   ]
  },
  {
   "key": "לפי השכר שלך",
   "kind": "lit",
   "where": [
-   "app/views-games.js:857"
+   "app/views-games.js:860"
   ]
  },
  {
   "key": "לפי שכר של",
   "kind": "lit",
   "where": [
-   "app/views-games.js:857"
+   "app/views-games.js:860"
   ]
  },
  {
   "key": "{0} ברצף! 🔥",
   "kind": "tpl",
   "where": [
-   "app/views-games.js:880"
+   "app/views-games.js:883"
   ]
  },
  {
   "key": "<div class=\"qz-xt no\">הפעם לא</div><div>{0} עולה {1}: {2} של עבודה, {3} מ{4}.</div>\n          <button class=\"btn\" data-next>לתוצאה</button>",
   "kind": "tpl",
   "where": [
-   "app/views-games.js:884"
+   "app/views-games.js:887"
   ]
  },
  {
   "key": "יותר",
   "kind": "lit",
   "where": [
-   "app/views-games.js:884",
+   "app/views-games.js:887",
    "core/insights.js:608"
   ]
  },
@@ -5555,7 +5988,7 @@
   "key": "פחות",
   "kind": "lit",
   "where": [
-   "app/views-games.js:884",
+   "app/views-games.js:887",
    "core/insights.js:608"
   ]
  },
@@ -5563,35 +5996,35 @@
   "key": "יודעים בדיוק מה שווה כסף!",
   "kind": "lit",
   "where": [
-   "app/views-games.js:895"
+   "app/views-games.js:898"
   ]
  },
  {
   "key": "יפה!",
   "kind": "lit",
   "where": [
-   "app/views-games.js:895"
+   "app/views-games.js:898"
   ]
  },
  {
   "key": "שווה עוד סיבוב",
   "kind": "lit",
   "where": [
-   "app/views-games.js:895"
+   "app/views-games.js:898"
   ]
  },
  {
   "key": "{0} <small>ברצף</small>",
   "kind": "tpl",
   "where": [
-   "app/views-games.js:896"
+   "app/views-games.js:899"
   ]
  },
  {
   "key": "כל מחיר הוא גם שעות של עבודה",
   "kind": "lit",
   "where": [
-   "app/views-games.js:897"
+   "app/views-games.js:900"
   ]
  },
  {
@@ -6861,32 +7294,6 @@
   ]
  },
  {
-  "key": "החודש",
-  "kind": "lit",
-  "where": [
-   "app/views-leaderboard.js:17",
-   "app/views-leaderboard.js:324",
-   "app/views-onboarding.js:108"
-  ]
- },
- {
-  "key": "השנה",
-  "kind": "lit",
-  "where": [
-   "app/views-leaderboard.js:17",
-   "app/views-leaderboard.js:324",
-   "app/views-reports.js:57",
-   "app/views-reports.js:57"
-  ]
- },
- {
-  "key": "כל הזמנים",
-  "kind": "lit",
-  "where": [
-   "app/views-leaderboard.js:17"
-  ]
- },
- {
   "key": "מטבעות",
   "kind": "lit",
   "where": [
@@ -7017,13 +7424,6 @@
   "kind": "tpl",
   "where": [
    "app/views-leaderboard.js:158"
-  ]
- },
- {
-  "key": " <small>(את/ה)</small>",
-  "kind": "lit",
-  "where": [
-   "app/views-leaderboard.js:172"
   ]
  },
  {
@@ -7329,56 +7729,35 @@
   "key": "הפרופיל שלי בטבלה",
   "kind": "lit",
   "where": [
-   "app/views-leaderboard.js:385"
+   "app/views-leaderboard.js:386"
   ]
  },
  {
   "key": "הצטרפות לטבלת האלופים",
   "kind": "lit",
   "where": [
-   "app/views-leaderboard.js:385"
+   "app/views-leaderboard.js:386"
   ]
  },
  {
-  "key": "<ol class=\"lb-list lb-preview\" aria-hidden=\"true\">{0}</ol>\n        <label class=\"field\"><span class=\"lbl\">כינוי (מופיע לכולם)</span>\n          <span class=\"lb-nick\"><input class=\"input\" id=\"lb-n\" maxlength=\"16\" autocomplete=\"off\" value=\"{1}\"><button class=\"icon-btn\" data-dice aria-label=\"כינוי אקראי\">🎲</button></span>\n          <span class=\"tiny lb-err\" id=\"lb-err\" role=\"alert\"></span></label>\n        <div class=\"section-title\">אימוג׳י</div>\n        <div class=\"lb-emoji\" role=\"radiogroup\" aria-label=\"אימוג׳י\">{2}</div>\n        {3}\n        <div class=\"tiny muted lb-note\">בטבלה מופיעים רק הכינוי, האימוג׳י, הרקע והתוצאות במשחקים. לא שם אמיתי, לא מספר טלפון. אפשר לצאת מהטבלה בכל רגע, והשורה נמחקת.</div>\n        <button class=\"btn big block\" data-save>{4} {5}</button>\n        {6}",
+  "key": "<ol class=\"lb-list lb-preview\" aria-hidden=\"true\">{0}</ol>\n        <label class=\"field\"><span class=\"lbl\">השם שלך בטבלה (מופיע לכולם)</span>\n          <span class=\"lb-nick\"><input class=\"input\" id=\"lb-n\" maxlength=\"16\" autocomplete=\"given-name\" placeholder=\"השם הפרטי שלך\" value=\"{1}\"></span>\n          <span class=\"tiny lb-err\" id=\"lb-err\" role=\"alert\"></span></label>\n        <div class=\"section-title\">אימוג׳י</div>\n        <div class=\"lb-emoji\" role=\"radiogroup\" aria-label=\"אימוג׳י\">{2}</div>\n        {3}\n        <div class=\"tiny muted lb-note\">בטבלה מופיעים רק השם שבחרת, האימוג׳י, הרקע והתוצאות במשחקים. מספיק שם פרטי, בלי שם משפחה ובלי מספר טלפון. אפשר לצאת מהטבלה בכל רגע, והשורה נמחקת.</div>\n        <button class=\"btn big block\" data-save>{4} {5}</button>\n        {6}",
   "kind": "tpl",
   "where": [
-   "app/views-leaderboard.js:387"
+   "app/views-leaderboard.js:388"
   ]
  },
  {
   "key": "<div class=\"section-title\">רקע בטבלה <span class=\"tag plus-tag\">Plus</span></div>\n          <div class=\"skin-pick lb-bgs\">\n            <button class=\"skin-tile {0}\" data-bg=\"\" aria-pressed=\"{1}\"><b>—</b><span>בלי</span></button>\n            {2}\n          </div>",
   "kind": "tpl",
   "where": [
-   "app/views-leaderboard.js:393"
-  ]
- },
- {
-  "key": "שמירה",
-  "kind": "lit",
-  "where": [
-   "app/views-leaderboard.js:399"
-  ]
- },
- {
-  "key": "הצטרפות",
-  "kind": "lit",
-  "where": [
-   "app/views-leaderboard.js:399"
+   "app/views-leaderboard.js:394"
   ]
  },
  {
   "key": "<button class=\"btn text block danger\" data-leave>יציאה מהטבלה</button>",
   "kind": "lit",
   "where": [
-   "app/views-leaderboard.js:400"
-  ]
- },
- {
-  "key": "צריך להתחבר לחשבון",
-  "kind": "lit",
-  "where": [
-   "app/views-leaderboard.js:418"
+   "app/views-leaderboard.js:401"
   ]
  },
  {
@@ -7396,13 +7775,6 @@
   ]
  },
  {
-  "key": "השמירה נכשלה. נסו שוב",
-  "kind": "lit",
-  "where": [
-   "app/views-leaderboard.js:434"
-  ]
- },
- {
   "key": "לצאת מהטבלה?",
   "kind": "lit",
   "where": [
@@ -7411,13 +7783,6 @@
  },
  {
   "key": "השורה שלך והתוצאות שבה יימחקו מהטבלה. השיאים בטלפון נשארים.",
-  "kind": "lit",
-  "where": [
-   "app/views-leaderboard.js:437"
-  ]
- },
- {
-  "key": "יציאה",
   "kind": "lit",
   "where": [
    "app/views-leaderboard.js:437"
@@ -16647,13 +17012,6 @@
   ]
  },
  {
-  "key": "הקישור הועתק. אפשר להדביק בוואטסאפ 💚",
-  "kind": "lit",
-  "where": [
-   "app/views-support.js:297"
-  ]
- },
- {
   "key": "המחיקה נכשלה: ",
   "kind": "lit",
   "where": [
@@ -19460,92 +19818,99 @@
   "key": "לפחות 2 תווים",
   "kind": "lit",
   "where": [
-   "core/leaderboard.js:71"
+   "core/leaderboard.js:72"
   ]
  },
  {
   "key": "עד 16 תווים",
   "kind": "lit",
   "where": [
-   "core/leaderboard.js:72"
+   "core/leaderboard.js:73"
   ]
  },
  {
   "key": "רק אותיות, מספרים ורווחים",
   "kind": "lit",
   "where": [
-   "core/leaderboard.js:73"
+   "core/leaderboard.js:74"
+  ]
+ },
+ {
+  "key": "צריך לפחות אות אחת",
+  "kind": "lit",
+  "where": [
+   "core/leaderboard.js:75"
   ]
  },
  {
   "key": "בלי מספרים ארוכים (כמו מספר טלפון)",
   "kind": "lit",
   "where": [
-   "core/leaderboard.js:74"
+   "core/leaderboard.js:76"
   ]
  },
  {
-  "key": "הכינוי הזה לא מתאים לטבלה",
+  "key": "השם הזה לא מתאים לטבלה",
   "kind": "lit",
   "where": [
-   "core/leaderboard.js:78",
-   "core/leaderboard.js:79"
+   "core/leaderboard.js:80",
+   "core/leaderboard.js:81"
   ]
  },
  {
   "key": "כינוי שנראה כמו צוות האפליקציה שמור",
   "kind": "lit",
   "where": [
-   "core/leaderboard.js:81"
+   "core/leaderboard.js:83"
   ]
  },
  {
   "key": "מתאפס בעוד {0} שעות",
   "kind": "tpl",
   "where": [
-   "core/leaderboard.js:96"
+   "core/leaderboard.js:104"
   ]
  },
  {
   "key": "מתאפס בעוד {0} דקות",
   "kind": "tpl",
   "where": [
-   "core/leaderboard.js:96"
+   "core/leaderboard.js:104"
   ]
  },
  {
   "key": "מתאפס מחר (יום ראשון)",
   "kind": "lit",
   "where": [
-   "core/leaderboard.js:98"
+   "core/leaderboard.js:106"
   ]
  },
  {
   "key": "מתאפס בעוד {0} ימים",
   "kind": "tpl",
   "where": [
-   "core/leaderboard.js:98"
+   "core/leaderboard.js:106"
   ]
  },
  {
   "key": "מתאפס ב-{0}",
   "kind": "tpl",
   "where": [
-   "core/leaderboard.js:99"
+   "core/leaderboard.js:107"
   ]
  },
  {
   "key": "מתאפס ב-{0} {1}",
   "kind": "tpl",
   "where": [
-   "core/leaderboard.js:100"
+   "core/leaderboard.js:108"
   ]
  },
  {
   "key": "השיאים של כל הזמנים",
   "kind": "lit",
   "where": [
-   "core/leaderboard.js:101"
+   "core/leaderboard.js:109"
   ]
  },
  {

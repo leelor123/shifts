@@ -160,6 +160,13 @@ async function main() {
       ['another player cannot remove a row', 'DENY', 'delete', { uid: 'u2' }, '/lb/u1', null, lb()],
       ['an admin removes a bad row', 'ALLOW', 'delete', boss, '/lb/u1', null, lb(), ['boss']],
       // the friends' competition: a card is read only by the friends it lists; an invitation is accepted once
+      // first names in every language of the app
+      ['a first name in Hebrew', 'ALLOW', 'create', me, '/lb/u1', lb({ n: "ג'ני" }), null],
+      ['a first name with accents (French, Spanish)', 'ALLOW', 'create', me, '/lb/u1', lb({ n: 'Lucía' }), null],
+      ['a first name in Russian', 'ALLOW', 'create', me, '/lb/u1', lb({ n: 'Аня' }), null],
+      ['a first name in Arabic', 'ALLOW', 'create', me, '/fr/u1', fr({ n: 'نور' }), null],
+      ['an apostrophe in a name', 'ALLOW', 'create', me, '/fr/u1', fr({ n: "D'Angelo" }), null],
+      ['a name with markup is still refused', 'DENY', 'create', me, '/fr/u1', fr({ n: '<i>Léa</i>' }), null],
       ['a player saves their friends card', 'ALLOW', 'create', me, '/fr/u1', fr(), null],
       ['a card in someone else’s name is refused', 'DENY', 'create', me, '/fr/u2', fr(), null],
       ['a listed friend reads the card', 'ALLOW', 'get', { uid: 'u2' }, '/fr/u1', null, fr()],
