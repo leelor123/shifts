@@ -17,6 +17,8 @@ const GOV = {
   youth: 'https://www.gov.il/he/Departments/Guides/rights-of-working-youth',
   recup: 'https://www.gov.il/he/Departments/Guides/convalescence-pay',
   rest: 'https://www.gov.il/he/Departments/Guides/weekends-and-holidays',
+  sick: 'https://www.gov.il/he/Departments/Guides/paid-sick-leave',
+  travel: 'https://www.gov.il/he/Departments/Guides/travel-allowance',
   hours: 'https://www.gov.il/he/Departments/Guides/overtime-and-extra-hours',
 };
 const esc = (s) => String(s).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
@@ -41,6 +43,11 @@ const OT = [+(D.otTier1Pct || 125), +(D.otTier2Pct || 150)];
 const lawEmp = Object.assign({}, D, { otLaw: true });
 const dayH = (ww, dk, night) => Engine.otDayHours(lawEmp, { leave: { workWeek: ww } }, dk, night);
 const OTL = { five: dayH(5, '2026-11-02'), six: dayH(6, '2026-11-02'), sixFri: dayH(6, '2026-11-06'), night: dayH(5, '2026-11-02', true), week: Engine.WEEK_REG_H, t1h: +(D.otTier1Hours || 2) };
+// sick pay (kolzchut "ימי מחלה"): 1.5 days a month (the app's default, settings.leave.sickPerMonth), at most 90; the
+// first day unpaid, the 2nd and 3rd at 50%, from the 4th in full. Travel (kolzchut "החזר הוצאות נסיעה"): the bus fare
+// up to 22.60 a day (Defaults.LAW_CHECKED.travel), or a monthly pass when cheaper.
+const SICK = { perMonth: +((globalThis.Defaults.defaultSettings().leave || {}).sickPerMonth || 1.5), max: 90 };
+const TRAVEL_CAP = 22.6;
 const Y16 = Engine.youthRules(16, 5), Y15 = Engine.youthRules(15, 5);
 const hm = (h) => { const m = Math.round(h * 60); return `${Math.floor(m / 60)}:${String(m % 60).padStart(2, '0')}`; };
 
@@ -126,6 +133,50 @@ const PAGES = [
       ['מעסיק יכול לא לשלם על שעות נוספות?', 'לא, אי אפשר לוותר על התוספת, אלא אם העובד עבד שעות נוספות בלי אישור המעסיק.'],
     ],
     sources: [['שעות נוספות', GOV.hours]],
+  },
+  {
+    slug: 'sick-pay',
+    title: 'ימי מחלה: כמה צוברים וכמה משלמים?',
+    desc: `כל עובד צובר ${SICK.perMonth} ימי מחלה בכל חודש עבודה מלא, עד ${SICK.max}. על היום הראשון לא משלמים, על השני והשלישי 50%, ומהרביעי שכר מלא.`,
+    answer: `על כל חודש עבודה מלא צוברים <b>${SICK.perMonth} ימי מחלה</b> (עד ${SICK.max}). ביום המחלה הראשון אין תשלום, בשני ובשלישי <b>50%</b>, ומהיום הרביעי <b>שכר מלא</b>.`,
+    body: `
+      <h2>כמה משלמים על יום מחלה?</h2>
+      <div class="tbl"><table><thead><tr><th>יום המחלה</th><th>תשלום</th></tr></thead><tbody>
+        <tr><td>היום הראשון</td><td><b>בלי תשלום</b></td></tr>
+        <tr><td>היום השני והשלישי</td><td><b>50%</b> מהשכר של אותו יום</td></tr>
+        <tr><td>מהיום הרביעי</td><td><b>100%</b></td></tr>
+      </tbody></table></div>
+      <h2>ומי שעובד/ת לפי שעה?</h2>
+      <p>גם עובדים לפי שעה ובמשרה חלקית צוברים ימי מחלה, באופן יחסי לימים שעבדו בחודש. דמי מחלה משולמים על ימים שבהם הייתה לך משמרת ונעדרת בגלל מחלה: מי שלא שובץ/ה למשמרת באותם ימים, לא מקבל/ת עליהם תשלום.</p>
+      <h2>מה צריך?</h2>
+      <p>אישור מחלה מרופא, שמוסרים למעסיק. ימי מחלה שלא השתמשת בהם נשארים צבורים, אבל לא מקבלים עליהם כסף כשעוזבים.</p>`,
+    faq: [
+      ['כמה ימי מחלה צוברים בחודש?', `${SICK.perMonth} ימים על כל חודש עבודה מלא, ועד ${SICK.max} ימים בסך הכול.`],
+      ['משלמים על היום הראשון של מחלה?', 'לא. על היום השני והשלישי משלמים 50%, ומהרביעי שכר מלא.'],
+      ['גם לעובד/ת לפי שעה?', 'כן, באופן יחסי לימים שעבדת, ועל ימים שבהם הייתה לך משמרת.'],
+      ['מקבלים כסף על ימי מחלה שלא ניצלתי?', 'לא. הם נשארים צבורים כל עוד את/ה באותו מקום עבודה.'],
+    ],
+    sources: [['ימי מחלה', GOV.sick]],
+  },
+  {
+    slug: 'travel-expenses',
+    title: 'נסיעות לעבודה: כמה המעסיק צריך להחזיר?',
+    desc: `החזר נסיעות לעבודה: לפי מחיר נסיעה מוזל באוטובוס ועד ${nis(TRAVEL_CAP)} ליום, או חופשי חודשי אם הוא זול יותר. מגיע לכל עובד שצריך תחבורה, בכל היקף משרה.`,
+    answer: `על כל יום שהגעת לעבודה בתחבורה, המעסיק מחזיר את מחיר הנסיעה המוזל באוטובוס, <b>עד ${nis(TRAVEL_CAP)} ליום</b> (או חופשי חודשי, אם הוא זול יותר).`,
+    body: `
+      <h2>מי זכאי/ת?</h2>
+      <p>כל עובד/ת שצריך/ה תחבורה כדי להגיע לעבודה, בכל היקף משרה, גם לפי שעה. לא מגיע על ימים שבהם המעסיק הסיע אותך, ועל ימים שלא הגעת (מחלה, חופשה).</p>
+      <h2>ובשבת או בלילה?</h2>
+      <p>בימים ובשעות שאין בהם תחבורה ציבורית (שבת, חג) המעסיק משלם את עלות הנסיעה בפועל, עד ${nis(TRAVEL_CAP)} ליום, גם אם באותו חודש קיבלת החזר לפי חופשי חודשי.</p>
+      <h2>דוגמה</h2>
+      <p>12 ימי עבודה בחודש, ונסיעה הלוך ושוב של 11 ₪: 12 × 11 = <b>132 ₪</b> (אם חופשי חודשי עולה פחות, המעסיק רשאי לשלם לפיו).</p>`,
+    faq: [
+      ['כמה מקסימום מחזירים על נסיעות ליום?', `עד ${nis(TRAVEL_CAP)} ליום, לפי מחיר נסיעה מוזל באוטובוס.`],
+      ['גם לעובד/ת לפי שעה?', 'כן, בכל היקף משרה, על כל יום שהגעת לעבודה בתחבורה.'],
+      ['ומה אם אני עובד/ת בשבת?', `בימים בלי תחבורה ציבורית המעסיק משלם את עלות הנסיעה בפועל, עד ${nis(TRAVEL_CAP)} ליום.`],
+      ['אפשר לוותר על דמי הנסיעות?', 'לא. אי אפשר לוותר על הזכות או להסכים לפחות מהמינימום.'],
+    ],
+    sources: [['החזר הוצאות נסיעה', GOV.travel]],
   },
   {
     slug: 'shabbat-pay',
