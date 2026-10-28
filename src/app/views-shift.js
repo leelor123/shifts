@@ -195,7 +195,7 @@
     notes.push(`זמן במשמרת: ${U.hm(r.elapsedMin)}` + (r.roundingDeltaMin ? ` · עיגול: ${r.roundingDeltaMin > 0 ? '+' : ''}${r.roundingDeltaMin} דק׳` : ''));
     if (r.breakMin) notes.push(`הפסקה ${r.breakMin} דק׳${r.breakAuto ? ' (אוטומטית לפי החוק)' : ''} ${r.breakPaid ? 'בתשלום' : 'ללא תשלום — נוכתה יחסית מכל השעות'}`);
     notes.push(`שעות נוספות אחרי ${+(+r.thresholdH).toFixed(2)} שעות ביום${r.otByLaw ? ' (לפי החוק)' : ''}` + (r.priorMin ? ` · כבר עבדת ${U.hm(r.priorMin)} באותו יום לפני המשמרת` : '') + (r.isNightShift && (r.otByLaw || emp.nightShiftShortDay) ? ' (משמרת לילה)' : '')
-      + (r.weekOtMin > 0 ? ` · ${U.hm(r.weekOtMin)} מהן נוספות כי עברת 42 שעות רגילות השבוע` : ''));
+      + (r.weekOtMin > 0 ? ` · ${U.hm(r.weekOtMin)} מהן נוספות כי עברת ${r.weekH || 42} שעות רגילות השבוע` : '') + (r.minorOt ? ' · לפי חוק עבודת הנוער' : ''));
     const wins = r.restLabels.length ? r.slices.filter((s) => s.autoRest) : [];
     if (r.autoRestMin > 0) notes.push(`חלון ${esc(r.restLabels.join(', ') || 'שבת/חג')} במשמרת: ⁦${U.epochHM(wins[0].a)}\u2060–\u2060${U.epochHM(wins[wins.length - 1].b)}⁩ (${S.settings.rest.mode === 'city' ? 'לפי ' + esc(S.settings.rest.city === '__custom' ? 'מיקום מותאם' : App.placeLabel(S.settings.rest.city).name).replace(/-/g, '-⁠') : 'שעות קבועות'})`);
     if (r.warnings.length) notes.push('⚠️ ' + r.warnings.join(', '));

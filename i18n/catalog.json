@@ -5,7 +5,7 @@
   "where": [
    "app/app.js:24",
    "app/export.js:22",
-   "core/engine.js:361",
+   "core/engine.js:376",
    "core/insights.js:176"
   ]
  },
@@ -1370,7 +1370,7 @@
    "app/views-reports.js:192",
    "app/views-reports.js:270",
    "app/views-shift.js:200",
-   "core/engine.js:358"
+   "core/engine.js:373"
   ]
  },
  {
@@ -1434,7 +1434,7 @@
    "app/export.js:22",
    "app/views-shift.js:376",
    "app/views-shift.js:553",
-   "core/engine.js:607"
+   "core/engine.js:622"
   ]
  },
  {
@@ -1445,7 +1445,7 @@
    "app/views-onboarding.js:421",
    "app/views-shift.js:376",
    "app/views-shift.js:553",
-   "core/engine.js:607"
+   "core/engine.js:622"
   ]
  },
  {
@@ -6359,7 +6359,7 @@
    "app/views-guide.js:151",
    "app/views-rights.js:64",
    "app/views-shift.js:388",
-   "core/engine.js:358",
+   "core/engine.js:373",
    "core/games.js:187",
    "core/insights.js:19",
    "core/payslip.js:457",
@@ -6578,7 +6578,7 @@
    "app/views-shift.js:35",
    "app/views-shift.js:547",
    "app/views-shift.js:629",
-   "core/engine.js:598"
+   "core/engine.js:613"
   ]
  },
  {
@@ -6589,8 +6589,8 @@
    "app/views-shift.js:36",
    "app/views-shift.js:547",
    "app/views-shift.js:629",
-   "core/engine.js:592",
-   "core/engine.js:602"
+   "core/engine.js:607",
+   "core/engine.js:617"
   ]
  },
  {
@@ -10569,8 +10569,8 @@
    "app/views-reports.js:224",
    "app/views-reports.js:265",
    "app/views-reports.js:271",
-   "core/engine.js:369",
-   "core/engine.js:382",
+   "core/engine.js:384",
+   "core/engine.js:397",
    "core/insights.js:151"
   ]
  },
@@ -13322,7 +13322,7 @@
   "where": [
    "app/views-settings.js:482",
    "app/views-shift.js:393",
-   "core/engine.js:369",
+   "core/engine.js:384",
    "core/payslip.js:38"
   ]
  },
@@ -13374,7 +13374,7 @@
   "kind": "lit",
   "where": [
    "app/views-settings.js:486",
-   "core/engine.js:371",
+   "core/engine.js:386",
    "core/payslip.js:39"
   ]
  },
@@ -13688,7 +13688,7 @@
   "kind": "lit",
   "where": [
    "app/views-settings.js:518",
-   "core/engine.js:415"
+   "core/engine.js:430"
   ]
  },
  {
@@ -15186,7 +15186,7 @@
    "app/views-shift.js:38",
    "app/views-shift.js:376",
    "app/views-shift.js:547",
-   "core/engine.js:607",
+   "core/engine.js:622",
    "core/payslip.js:588"
   ]
  },
@@ -15338,8 +15338,15 @@
   ]
  },
  {
-  "key": " · {0} מהן נוספות כי עברת 42 שעות רגילות השבוע",
+  "key": " · {0} מהן נוספות כי עברת {1} שעות רגילות השבוע",
   "kind": "tpl",
+  "where": [
+   "app/views-shift.js:198"
+  ]
+ },
+ {
+  "key": " · לפי חוק עבודת הנוער",
+  "kind": "lit",
   "where": [
    "app/views-shift.js:198"
   ]
@@ -15672,7 +15679,7 @@
   "kind": "lit",
   "where": [
    "app/views-shift.js:376",
-   "core/engine.js:600"
+   "core/engine.js:615"
   ]
  },
  {
@@ -15848,8 +15855,8 @@
   "kind": "lit",
   "where": [
    "app/views-shift.js:394",
-   "core/engine.js:591",
-   "core/engine.js:597"
+   "core/engine.js:606",
+   "core/engine.js:612"
   ]
  },
  {
@@ -16174,7 +16181,7 @@
   "kind": "lit",
   "where": [
    "app/views-shift.js:553",
-   "core/engine.js:607"
+   "core/engine.js:622"
   ]
  },
  {
@@ -17157,297 +17164,297 @@
   "key": "שעת הסיום לפני שעת ההתחלה או שווה לה",
   "kind": "lit",
   "where": [
-   "core/engine.js:153"
+   "core/engine.js:163"
   ]
  },
  {
   "key": "ההפסקה ארוכה מהמשמרת",
   "kind": "lit",
   "where": [
-   "core/engine.js:228"
+   "core/engine.js:238"
   ]
  },
  {
   "key": "שעות רגילות",
   "kind": "lit",
   "where": [
-   "core/engine.js:358"
+   "core/engine.js:373"
   ]
  },
  {
   "key": " + שעות נוספות",
   "kind": "lit",
   "where": [
-   "core/engine.js:359"
+   "core/engine.js:374"
   ]
  },
  {
   "key": "תוספת ערב שבת/חג",
   "kind": "lit",
   "where": [
-   "core/engine.js:370"
+   "core/engine.js:385"
   ]
  },
  {
   "key": " ש׳ × ",
   "kind": "lit",
   "where": [
-   "core/engine.js:370",
-   "core/engine.js:382"
+   "core/engine.js:385",
+   "core/engine.js:397"
   ]
  },
  {
   "key": "תעריף מיוחד {0}%{1}",
   "kind": "tpl",
   "where": [
-   "core/engine.js:372"
+   "core/engine.js:387"
   ]
  },
  {
   "key": " ש׳, ההפרש מעבר לתעריף הרגיל",
   "kind": "lit",
   "where": [
-   "core/engine.js:372"
+   "core/engine.js:387"
   ]
  },
  {
   "key": "השלמה למינימום ",
   "kind": "lit",
   "where": [
-   "core/engine.js:382"
+   "core/engine.js:397"
   ]
  },
  {
   "key": "ביטול שבת/חג",
   "kind": "lit",
   "where": [
-   "core/engine.js:389"
+   "core/engine.js:404"
   ]
  },
  {
   "key": "שבת/חג לכל המשמרת",
   "kind": "lit",
   "where": [
-   "core/engine.js:389"
+   "core/engine.js:404"
   ]
  },
  {
   "key": "טווח שבת/חג ידני",
   "kind": "lit",
   "where": [
-   "core/engine.js:389"
+   "core/engine.js:404"
   ]
  },
  {
   "key": "אחוז שבת/חג ",
   "kind": "lit",
   "where": [
-   "core/engine.js:390"
+   "core/engine.js:405"
   ]
  },
  {
   "key": "תוספת שבת/חג — סכום ידני",
   "kind": "lit",
   "where": [
-   "core/engine.js:394"
+   "core/engine.js:409"
   ]
  },
  {
   "key": "במקום ",
   "kind": "lit",
   "where": [
-   "core/engine.js:394",
-   "core/engine.js:403",
-   "core/engine.js:411"
+   "core/engine.js:409",
+   "core/engine.js:418",
+   "core/engine.js:426"
   ]
  },
  {
   "key": "סכום שבת/חג ידני",
   "kind": "lit",
   "where": [
-   "core/engine.js:395"
+   "core/engine.js:410"
   ]
  },
  {
   "key": "ביטול שעות נוספות",
   "kind": "lit",
   "where": [
-   "core/engine.js:399"
+   "core/engine.js:414"
   ]
  },
  {
   "key": "סף שעות נוספות ",
   "kind": "lit",
   "where": [
-   "core/engine.js:399"
+   "core/engine.js:414"
   ]
  },
  {
   "key": "אחוז שעות נוספות ",
   "kind": "lit",
   "where": [
-   "core/engine.js:399"
+   "core/engine.js:414"
   ]
  },
  {
   "key": "סכום שעות נוספות ידני",
   "kind": "lit",
   "where": [
-   "core/engine.js:399"
+   "core/engine.js:414"
   ]
  },
  {
   "key": "שעות נוספות — סכום ידני",
   "kind": "lit",
   "where": [
-   "core/engine.js:403"
+   "core/engine.js:418"
   ]
  },
  {
   "key": "ביטול תוספת לילה",
   "kind": "lit",
   "where": [
-   "core/engine.js:407"
+   "core/engine.js:422"
   ]
  },
  {
   "key": "לילה לכל המשמרת",
   "kind": "lit",
   "where": [
-   "core/engine.js:407"
+   "core/engine.js:422"
   ]
  },
  {
   "key": "אחוז לילה ",
   "kind": "lit",
   "where": [
-   "core/engine.js:407"
+   "core/engine.js:422"
   ]
  },
  {
   "key": "סכום לילה ידני",
   "kind": "lit",
   "where": [
-   "core/engine.js:407"
+   "core/engine.js:422"
   ]
  },
  {
   "key": "תוספת לילה — סכום ידני",
   "kind": "lit",
   "where": [
-   "core/engine.js:411"
+   "core/engine.js:426"
   ]
  },
  {
   "key": "תעריף ידני ",
   "kind": "lit",
   "where": [
-   "core/engine.js:414"
+   "core/engine.js:429"
   ]
  },
  {
   "key": "ביטול נסיעות",
   "kind": "lit",
   "where": [
-   "core/engine.js:421"
+   "core/engine.js:436"
   ]
  },
  {
   "key": "נסיעות ידני",
   "kind": "lit",
   "where": [
-   "core/engine.js:422"
+   "core/engine.js:437"
   ]
  },
  {
   "key": "משמרת ארוכה במיוחד (",
   "kind": "lit",
   "where": [
-   "core/engine.js:440"
+   "core/engine.js:455"
   ]
  },
  {
   "key": "סכום קבוע שהוגדר",
   "kind": "lit",
   "where": [
-   "core/engine.js:555"
+   "core/engine.js:570"
   ]
  },
  {
   "key": " ש׳ × התעריף של התפקיד הראשי",
   "kind": "lit",
   "where": [
-   "core/engine.js:558"
+   "core/engine.js:573"
   ]
  },
  {
   "key": "ממוצע שכר יומי רגיל ב-90 הימים הקודמים (",
   "kind": "lit",
   "where": [
-   "core/engine.js:568"
+   "core/engine.js:583"
   ]
  },
  {
   "key": " ימי עבודה)",
   "kind": "lit",
   "where": [
-   "core/engine.js:568"
+   "core/engine.js:583"
   ]
  },
  {
   "key": "אין מספיק נתונים — ",
   "kind": "lit",
   "where": [
-   "core/engine.js:570"
+   "core/engine.js:585"
   ]
  },
  {
   "key": " ש׳ × תעריף בסיס",
   "kind": "lit",
   "where": [
-   "core/engine.js:570"
+   "core/engine.js:585"
   ]
  },
  {
   "key": " · יום ",
   "kind": "lit",
   "where": [
-   "core/engine.js:592"
+   "core/engine.js:607"
   ]
  },
  {
   "key": " למחלה: ",
   "kind": "lit",
   "where": [
-   "core/engine.js:592"
+   "core/engine.js:607"
   ]
  },
  {
   "key": "הוזן ידנית",
   "kind": "lit",
   "where": [
-   "core/engine.js:600"
+   "core/engine.js:615"
   ]
  },
  {
   "key": "מתוכנן",
   "kind": "lit",
   "where": [
-   "core/engine.js:602"
+   "core/engine.js:617"
   ]
  },
  {
   "key": "משמרות חופפות ב-",
   "kind": "lit",
   "where": [
-   "core/engine.js:962"
+   "core/engine.js:977"
   ]
  },
  {
   "key": "משמרת שסומנה \"בוצעה\" אבל עוד לא התחילה — ",
   "kind": "lit",
   "where": [
-   "core/engine.js:963"
+   "core/engine.js:978"
   ]
  },
  {

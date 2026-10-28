@@ -41,6 +41,7 @@ const OT = [+(D.otTier1Pct || 125), +(D.otTier2Pct || 150)];
 const lawEmp = Object.assign({}, D, { otLaw: true });
 const dayH = (ww, dk, night) => Engine.otDayHours(lawEmp, { leave: { workWeek: ww } }, dk, night);
 const OTL = { five: dayH(5, '2026-11-02'), six: dayH(6, '2026-11-02'), sixFri: dayH(6, '2026-11-06'), night: dayH(5, '2026-11-02', true), week: Engine.WEEK_REG_H, t1h: +(D.otTier1Hours || 2) };
+const Y16 = Engine.youthRules(16, 5), Y15 = Engine.youthRules(15, 5);
 const hm = (h) => { const m = Math.round(h * 60); return `${Math.floor(m / 60)}:${String(m % 60).padStart(2, '0')}`; };
 
 /* ---------------- the pages ---------------- */
@@ -108,6 +109,8 @@ const PAGES = [
         <tr><td>בכל שבוע (ראשון עד שבת)</td><td><b>${OTL.week} שעות רגילות</b></td></tr>
       </tbody></table></div>
       <p>קודם בודקים כל יום, ואחר כך את השבוע: שעות רגילות שעברו את ${OTL.week} השעות בשבוע הן שעות נוספות, גם אם באותו יום לא עברתם את השעות של היום.</p>
+      <h2>בני נוער (מתחת לגיל 18)</h2>
+      <p>לפי חוק עבודת הנוער מותר לעבוד עד ${Y15.dayHours} שעות ביום (מגיל 16, במקום עבודה של 5 ימים בשבוע: עד ${Y16.dayHours}), עד ${Y16.eveHours} שעות ביום שלפני שבת או חג, ועד ${Engine.WEEK_REG_H_MINOR} שעות בשבוע. מעבר לזה זו עבודה אסורה, אבל המעסיק <b>חייב לשלם עליה גמול שעות נוספות</b>.</p>
       <h2>כמה משלמים?</h2>
       <div class="tbl"><table><thead><tr><th>שעה נוספת</th><th>ביום חול</th><th>בשבת ובחג</th></tr></thead><tbody>
         <tr><td>${OTL.t1h} הראשונות ביום</td><td><b>${OT[0]}%</b></td><td><b>${REST[1]}%</b></td></tr>
@@ -119,6 +122,7 @@ const PAGES = [
       ['אחרי כמה שעות מתחילות שעות נוספות?', `בשבוע של 5 ימים אחרי ${OTL.five} שעות ביום (${hm(OTL.five)}), בשבוע של 6 ימים אחרי ${OTL.six} (בשישי ${OTL.sixFri}), ובמשמרת לילה אחרי ${OTL.night}.`],
       ['ומה עם השבוע?', `כל שעה רגילה מעל ${OTL.week} שעות בשבוע (ראשון עד שבת) היא שעה נוספת.`],
       ['כמה משלמים על שעה נוספת?', `${OT[0]}% על ${OT[0] === 125 ? 'שתי' : ''} השעות הנוספות הראשונות ביום ו-${OT[1]}% מהשלישית. בשבת ובחג: ${REST[1]}% ו-${REST[2]}%.`],
+      ['ומה לגבי בני נוער?', `מתחת לגיל 18 מותר לעבוד עד ${Y15.dayHours} שעות ביום (מגיל 16 בשבוע של 5 ימים: ${Y16.dayHours}), ${Y16.eveHours} ביום שלפני שבת או חג, ו-${Engine.WEEK_REG_H_MINOR} בשבוע. על שעות מעבר לזה מגיע גמול שעות נוספות.`],
       ['מעסיק יכול לא לשלם על שעות נוספות?', 'לא, אי אפשר לוותר על התוספת, אלא אם העובד עבד שעות נוספות בלי אישור המעסיק.'],
     ],
     sources: [['שעות נוספות', GOV.hours]],

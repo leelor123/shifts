@@ -502,3 +502,47 @@ T.test('shifts of one day share the day\'s overtime tiers (the first two overtim
   const m = lawModel(5, [a, b]);
   T.near(R(m, a).hoursBy.ot1, 1); T.near(R(m, b).hoursBy.ot1, 1); T.near(R(m, b).hoursBy.ot2, 1);
 });
+
+T.section('overtime by the law: minors');
+// the youth law's limits (kolzchut "יום עבודה ושעות עבודה לנוער"): 8 hours a day (9 at 16–18 in a five-day workplace),
+// 7 on the day before Shabbat or a holiday, 40 a week; beyond them overtime is owed
+function youthModel(birth, workWeek, shifts) {
+  const d = setup((x) => { x.settings.birthDate = birth; x.settings.leave.workWeek = workWeek; x.employers[0] = Defaults.defaultEmployer(); x.shifts = shifts; });
+  return Engine.buildModel(d);
+}
+const AGE16 = '2010-05-01', AGE15 = '2011-05-01';
+T.test('a 16-year-old in a five-day week: 9 hours → 8.6 regular (the lower limit) and 0.4 overtime', () => {
+  const s = shift('2026-11-02', '08:00', '17:00');
+  const r = youthModel(AGE16, 5, [s]).results.get(s.id);
+  T.near(r.hoursBy.regular, 8.6); T.near(r.hoursBy.ot1, 0.4); T.ok(r.minorOt);
+});
+T.test('a 15-year-old: 9 hours → 8 regular and 1 overtime', () => {
+  const s = shift('2026-11-02', '08:00', '17:00');
+  const r = youthModel(AGE15, 5, [s]).results.get(s.id);
+  T.near(r.hoursBy.regular, 8); T.near(r.hoursBy.ot1, 1);
+});
+T.test('a minor on Friday (the day before Shabbat): 8 hours → 7 regular and 1 overtime', () => {
+  const s = shift('2026-11-06', '06:00', '14:00');
+  const r = youthModel(AGE16, 5, [s]).results.get(s.id);
+  T.near(r.hoursBy.regular, 7); T.near(r.hoursBy.ot1, 1);
+});
+T.test('a minor\'s week: 40 regular hours; beyond them overtime', () => {
+  const days = ['2026-11-01', '2026-11-02', '2026-11-03', '2026-11-04', '2026-11-05'].map((d) => shift(d, '08:00', '16:00'));
+  const fri = shift('2026-11-06', '06:00', '08:00');
+  const m = youthModel(AGE16, 5, days.concat(fri));
+  T.near(m.results.get(days[4].id).hoursBy.regular, 8, 1e-6, 'Thursday ends at exactly 40');
+  T.near(m.results.get(fri.id).hoursBy.regular, 0); T.near(m.results.get(fri.id).hoursBy.ot1, 2);
+  T.eq(m.results.get(fri.id).weekH, 40);
+});
+T.test('a minor on the day before a holiday: 7 regular hours', () => {
+  const hol = HebCal.holidaysForYear(2027).find((h) => h.rest && U.dow(h.key) !== 6 && U.dow(h.key) !== 0 && U.dow(U.addDays(h.key, -1)) !== 5);
+  const eve = U.addDays(hol.key, -1);
+  const s = shift(eve, '06:00', '14:00');
+  const r = youthModel(AGE16, 5, [s]).results.get(s.id);
+  T.near(r.hoursBy.regular, 7, 1e-6, eve + ' before ' + hol.name);
+});
+T.test('at 18 the adult limits apply again (42 a week, 8.6 a day)', () => {
+  const s = shift('2026-11-06', '06:00', '14:00');
+  const r = youthModel('2008-05-01', 5, [s]).results.get(s.id);
+  T.near(r.hoursBy.regular, 8); T.ok(!r.minorOt); T.eq(r.weekH, 42);
+});

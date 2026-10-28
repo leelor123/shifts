@@ -120,16 +120,26 @@
    * too. (The five-day week's one short day of 7.6 hours comes out the same through the 42.) An employer whose
    * daily limit was set by hand (anything but the old default 8) keeps it; otLaw says which one applies. */
   const WEEK_REG_H = 42;
+  /* A minor (חוק עבודת הנוער; kolzchut "יום עבודה ושעות עבודה לנוער") may work at most 8 hours a day (9 at 16–18 in a
+   * five-day workplace), 7 on the day before Shabbat or a holiday, 40 a week; an employer who goes beyond must pay
+   * overtime — so by the law a minor's regular hours are the lower of the two laws' limits. */
+  const WEEK_REG_H_MINOR = 40;
   const otByLaw = (emp) => (emp.otLaw != null ? !!emp.otLaw : !(+emp.otThreshold > 0) || +emp.otThreshold === 8);
-  /** The day's regular hours before overtime starts. */
-  function otDayHours(emp, settings, dateKey, nightShift) {
+  /** The day's regular hours before overtime starts. youth: { age, eve } for a minor (eve: the day before a rest day). */
+  function otDayHours(emp, settings, dateKey, nightShift, youth) {
     if (otByLaw(emp)) {
-      if (nightShift) return 7;
       const six = +((settings && settings.leave) || {}).workWeek === 6;
-      return six ? (U.dow(dateKey) === 5 ? 7 : 8) : 8.6;
+      let h = nightShift ? 7 : six ? (U.dow(dateKey) === 5 ? 7 : 8) : 8.6;
+      if (youth && youth.age != null && youth.age < 18) {
+        h = Math.min(h, youthRules(youth.age, six ? 6 : 5).dayHours);
+        if (youth.eve) h = Math.min(h, 7);
+      }
+      return h;
     }
     return emp.nightShiftShortDay && nightShift ? +emp.nightShiftThreshold || 7 : +emp.otThreshold || 8;
   }
+  /** The week's regular hours before overtime starts (40 for a minor by the law). */
+  const otWeekHours = (emp, age) => (otByLaw(emp) && age != null && age < 18 ? WEEK_REG_H_MINOR : WEEK_REG_H);
 
   /**
    * Compute pay for one shift.
@@ -233,7 +243,11 @@
     const lawNightMin = overlapMin(start, end, lawNight);
     const lawNightPaidH = (lawNightMin * paidFactor) / 60; // hours between 22:00-06:00, for reports
     const isNightShift = lawNightMin >= 120;
-    let thresholdH = otDayHours(emp, settings, dk, isNightShift);
+    // a minor: the youth law's limits too (the day before Shabbat or a holiday: 7 hours)
+    const ageNow = settings.birthDate ? ageAt(settings.birthDate, dk) : null;
+    const minor = ageNow != null && ageNow < 18;
+    const youth = minor ? { age: ageNow, eve: !!HebCal.restDayInfo(U.addDays(dk, 1), ctx.restCfg) && !HebCal.restDayInfo(dk, ctx.restCfg) } : null;
+    let thresholdH = otDayHours(emp, settings, dk, isNightShift, youth);
     const otOv = ov.ot || null;
     if (otOv && otOv.mode === 'threshold' && +otOv.hours > 0) thresholdH = +otOv.hours;
     const otOff = otOv && otOv.mode === 'off';
@@ -243,7 +257,8 @@
     let cum = daily ? Math.max(0, +opts.priorMin || 0) : 0; // the day's paid minutes so far
     let dayOt = daily ? Math.max(0, +opts.priorOtMin || 0) : 0; // of them, overtime
     let weekReg = Math.max(0, +opts.weekRegMin || 0); // the week's regular minutes so far
-    const weekCap = WEEK_REG_H * 60;
+    const weekH = otWeekHours(emp, ageNow);
+    const weekCap = weekH * 60;
     let regMin = 0, otMin = 0, weekOtMin = 0;
 
     const pieces = [];
@@ -452,7 +467,7 @@
       travel, bonus, tips, additions, deductions,
       total: wage + travel.amount + bonus + additions,
       restLabels, autoRestRange, autoRestMin,
-      thresholdH, priorMin: +opts.priorMin || 0, otByLaw: otByLaw(emp),
+      thresholdH, priorMin: +opts.priorMin || 0, otByLaw: otByLaw(emp), weekH, minorOt: minor && otByLaw(emp),
       regMin, otMin, weekOtMin, weekRegBefore: Math.max(0, +opts.weekRegMin || 0),
       overridden: !opts.ignoreOverrides && hasOverrides(shift), overrideList,
       dayRuleHit,
@@ -1030,7 +1045,7 @@
   }
 
   root.Engine = {
-    LAW_BREAK, validShift, validEntry, otByLaw, otDayHours, WEEK_REG_H, legalMinWage, minWageFor, youthRules, pensionMinAge, MIN_WAGE, BL_YEARS, RECUP_YEARS, blLimits, recuperationRate,
+    LAW_BREAK, validShift, validEntry, otByLaw, otDayHours, otWeekHours, WEEK_REG_H, WEEK_REG_H_MINOR, legalMinWage, minWageFor, youthRules, pensionMinAge, MIN_WAGE, BL_YEARS, RECUP_YEARS, blLimits, recuperationRate,
     makeCtx, roleRate, roundMinutes, monthsBetween, buildSegments, hasOverrides, computeShift, computeAll,
     periodByKey, periodOf, dayValue, computeEntries, travelByDay, incomeTaxRaw, netEstimate, pensionActive,
     buildModel, totals, periodSummary, rangeSummary, pensionBaseOf, leaveBalances, holidayPay, vacationEntitlement, recuperationDays, ageAt, isMinor,
