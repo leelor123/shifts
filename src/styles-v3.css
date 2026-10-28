@@ -1601,6 +1601,11 @@ html:not([lang="he"]) .lb-games button, html:not([lang="he"]) .lb-periods button
 .pending-card .pd-info span { font-size: .82rem; color: var(--on-surface-var); }
 .pending-card .pd-ok { flex: none; min-height: 42px; padding: 0 14px; border-radius: 12px; font-weight: 700; white-space: nowrap; }
 .pending-card .pd-all { margin-top: 12px; }
+/* settings › appearance › home screen: how many recent shifts (a row like the switches above it) */
+.hm-recent { display: flex; align-items: center; flex-wrap: wrap; gap: 8px 12px; padding: 12px 4px; }
+.hm-recent .t { flex: 1 1 130px; font-weight: 600; }
+.hm-recent .seg { flex: 0 1 220px; min-width: 0; }
+.hm-recent .seg button { min-width: 0; }
 /* on an iPhone in a browser: add the app to the home screen */
 .ios-card { padding: 14px; border: 1.5px solid color-mix(in srgb, var(--brand) 35%, transparent); }
 .ios-card .ic-head { display: flex; gap: 12px; align-items: flex-start; margin-bottom: 12px; }

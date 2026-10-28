@@ -159,7 +159,7 @@
     rest: 'שבת חג חגים עיר כניסת שבת יציאת שבת כלל יום', pay: 'נסיעות החזר נסיעות תקרה תקופת שכר יום תשלום משכורת',
     net: 'מס מס הכנסה נקודות זיכוי פנסיה ביטוח לאומי מס בריאות השתלמות נטו', leave: 'חופשה מחלה הבראה ותק תחילת עבודה',
     goal: 'יעד יעדים חיסכון חוסכים', alerts: 'התראות תזכורות פוש הודעות', templates: 'תבנית תבניות משמרת קבועה',
-    lang: 'שפה שפות language english русский русский язык العربية عربي ערבית רוסית אנגלית צרפתית ספרדית français francais español espanol french spanish תרגום', look: 'צבע צבעים ערכת נושא כהה בהיר מצב לילה גופן גופנים מראה צלילים רטט מוזיקה עיצוב כרטיס plus פלוס', security: 'קוד נעילה טביעת אצבע סיסמה',
+    lang: 'שפה שפות language english русский русский язык العربية عربي ערבית רוסית אנגלית צרפתית ספרדית français francais español espanol french spanish תרגום', look: 'צבע צבעים ערכת נושא כהה בהיר מצב לילה גופן גופנים מראה צלילים רטט מוזיקה עיצוב כרטיס plus פלוס מסך הבית קיצורים קיצורי דרך משמרות אחרונות תאריך עברי שורת עדכון home screen accueil inicio', security: 'קוד נעילה טביעת אצבע סיסמה',
     assistant: 'בינה מלאכותית עוזר שאלות ai', ai: 'מפתח api claude ניתוח תלוש', backup: 'גיבוי שחזור קובץ', schedule: 'סידור עבודה סידור משמרות שבוע הבא צילום תמונה צילום מסך וואטסאפ whatsapp הודעה טבלה מתוכננות לוח', import: 'ייבוא דוח שעות נוכחות שעון אקסל excel csv pdf צילום קובץ להעלות משמרות מהעבודה', export: 'ייצוא אקסל excel csv pdf יומן',
     demo: 'דוגמה הדגמה', about: 'גרסה התקנה אודות', rights: 'זכויות שכר מינימום',
   };
@@ -193,6 +193,7 @@
     ['לא מקבל/ת התראות', 'התראות תזכורות פוש לא מקבל הודעות', [['alerts', 'התראות פוש בטלפון']]],
     ['הצלילים מפריעים', 'צלילים להשתיק שקט רעש מוזיקה רטט', [['look', 'צלילים'], ['look', 'רטט']]],
     ['רוצה צבע אחר או מצב כהה', 'צבע כהה בהיר מצב לילה עיצוב', [['look', '']]],
+    ['רוצה לשנות את מסך הבית', 'מסך הבית בית קיצורים להסתיר משמרות אחרונות תאריך עברי שורת עדכון', [['look', 'קיצורי דרך']]],
     ['עברתי לטלפון חדש', 'טלפון חדש העברה מכשיר חדש להעביר נתונים', [['account', ''], ['backup', '']]],
     ['נמחקו לי משמרות', 'נמחק נמחקו שחזור גיבוי איבדתי', [['backup', '']]],
     ['חופשה או מחלה לא נכונות', 'חופשה ימי חופש מחלה הבראה ותק יתרה', [['leave', 'תאריך תחילת עבודה'], ['leave', 'יתרת פתיחה — חופשה']]],
@@ -718,6 +719,11 @@
       <div class="section-title">גופן</div>
       <div class="font-pick">${Object.entries(App.FONTS).map(([k, f]) => `<button data-font="${k}" class="${(S.settings.font || 'rubik') === k ? 'on' : ''}" style="font-family:'${f[0]}', system-ui, sans-serif"><span class="fp-sample">משמרת ערב · ${esc(f[2])}<small>${f[0]}</small></span><span class="fp-num">₪1,240</span></button>`).join('')}</div>
       <div class="section-title">גודל טקסט</div><div class="seg">${[[0.9, 'קטן'], [1, 'רגיל'], [1.1, 'גדול'], [1.2, 'גדול מאוד']].map(([k, l]) => `<button data-fs="${k}" class="${+S.settings.fontScale === k ? 'on' : ''}">${l}</button>`).join('')}</div>
+      <div class="section-title" style="margin-top:16px">מסך הבית</div>
+      <div class="card">${F.sw('קיצורי דרך', 'ארבעה כפתורים גדולים: משמרת חדשה, הזכויות, בדיקת תלוש ומשחקים', 's.home.shortcuts', (S.settings.home || {}).shortcuts !== false)}
+        ${F.sw('שורת עדכון', 'משמרת שמתקרבת, התראה חשובה או משכורת בדרך, מתחת לכפתור המשמרת', 's.home.highlight', (S.settings.home || {}).highlight !== false)}
+        ${F.sw('תאריך עברי וחגים', 'בשורה שמתחת לברכה', 's.home.hebDate', (S.settings.home || {}).hebDate !== false)}
+        <div class="hm-recent"><span class="t">משמרות אחרונות בבית</span><div class="seg">${[[0, 'בלי'], [3, '3'], [5, '5'], [8, '8']].map(([k, l]) => `<button data-home-recent="${k}" class="${((S.settings.home || {}).recent == null ? 3 : +(S.settings.home || {}).recent) === k ? 'on' : ''}">${l}</button>`).join('')}</div></div></div>
       <div class="section-title" style="margin-top:16px">פרטיות</div>
       <div class="card">${F.sw('הסתרת סכומים', 'הסכומים מטושטשים במסך, למשל כשמראים את הטלפון למישהו. העין בכרטיס השכר מציגה אותם', 's.hideMoney', !!S.settings.hideMoney)}</div>
       <div class="section-title" style="margin-top:16px">אפקטים וצלילים</div>
@@ -741,6 +747,7 @@
         if (b.dataset.theme) await root.Fx.reveal(e.clientX, e.clientY, async () => { await Store.setSettings((s) => { s.theme = b.dataset.theme; }); draw(); });
         else if (b.dataset.accent) await root.Fx.reveal(e.clientX, e.clientY, async () => { await Store.setSettings((s) => { s.accent = b.dataset.accent; }); draw(); });
         else if (b.dataset.fs) await Store.setSettings((s) => { s.fontScale = +b.dataset.fs; });
+        else if (b.dataset.homeRecent !== undefined) await Store.setSettings((s) => { s.home = Object.assign({}, s.home, { recent: +b.dataset.homeRecent }); });
         else if (b.dataset.font) await Store.setSettings((s) => { s.font = b.dataset.font; });
         else if (b.hasAttribute('data-fx-try')) { root.Fx.celebrate('big'); return; }
         else if (b.dataset.skin !== undefined && root.Plus) { if (!(await root.Plus.pickSkin(b.dataset.skin))) return; } // a locked one opens Shaati Plus

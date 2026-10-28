@@ -318,12 +318,15 @@
     const now = Date.now();
     // planned shifts whose time has passed wait for a "done" tap, so they come first
     const pending = results.filter((r) => r.status === 'planned' && r.end <= now).sort((a, b) => b.start - a.start);
-    const recent = results.filter((r) => r.status === 'done').sort((a, b) => b.start - a.start).slice(0, 3);
+    // what the user chose to see here (settings › appearance › home screen)
+    const HS = S.settings.home || {};
+    const nRecent = HS.recent == null ? 3 : +HS.recent;
+    const recent = results.filter((r) => r.status === 'done').sort((a, b) => b.start - a.start).slice(0, 8);
     const name = S.settings.userName ? ', ' + esc(String(S.settings.userName).split(' ')[0]) : '';
     const date = U.fmtDate(today, 'long').replace(/\s\d{4}$/, '');
     return `
       <div class="home-top"><div class="titles"><h1>${greeting()}${name} <span class="wave">👋</span></h1>
-        <div class="sub">${root.Plus && root.Plus.owned() ? '<span class="plus-badge">Plus ✨</span>' : ''}${date}${hd.dayStr ? ' · ' + esc(hd.toString().replace(/\s\S+$/, '')) : ''}${hol ? ' · ' + esc(hol) : ''}</div></div>
+        <div class="sub">${root.Plus && root.Plus.owned() ? '<span class="plus-badge">Plus ✨</span>' : ''}${date}${HS.hebDate !== false ? `${hd.dayStr ? ' · ' + esc(hd.toString().replace(/\s\S+$/, '')) : ''}${hol ? ' · ' + esc(hol) : ''}` : ''}</div></div>
         <span id="sync-dot">${App.syncDot ? App.syncDot() : ''}</span>
         <button class="icon-btn" data-act="support" aria-label="עזרה ותמיכה">${icon('help')}</button>
         <button class="icon-btn" data-act="insights" aria-label="התראות ותובנות">${icon('bell')}${unread ? `<span class="dot-badge">${unread > 9 ? '9+' : unread}</span>` : ''}</button></div>
@@ -336,13 +339,13 @@
       ${actionBlock()}
       ${iosCard()}
       ${App.guideCard ? App.guideCard() : ''}
-      ${highlight()}
+      ${HS.highlight !== false ? highlight() : ''}
       ${root.Plus ? root.Plus.nudgeCard() : ''}
       ${savingCard()}
-      ${shortcuts()}
+      ${HS.shortcuts !== false ? shortcuts() : ''}
       ${pendingCard(pending)}
-      ${recent.length ? `<div class="home-list-head"><span>משמרות אחרונות</span><span class="spacer"></span>${App.travelSwitch()}<button class="btn text sm" data-act="go-shifts">הכול</button></div>
-        <div class="list home-list">${recent.slice(0, pending.length ? 2 : 3).map((r) => App.shiftItem(r)).join('')}</div>`
+      ${recent.length ? !nRecent ? '' : `<div class="home-list-head"><span>משמרות אחרונות</span><span class="spacer"></span>${App.travelSwitch()}<button class="btn text sm" data-act="go-shifts">הכול</button></div>
+        <div class="list home-list">${recent.slice(0, nRecent - (pending.length ? 1 : 0)).map((r) => App.shiftItem(r)).join('')}</div>`
         : pending.length ? ''
         : S.meta.guide && !S.meta.guideDone ? '' : `<div class="empty fun">${App.mascot ? App.mascot('sleepy', { size: 92 }) : ''}<h3>עוד אין משמרות</h3><div>בתחילת משמרת לוחצים על "התחל משמרת".<br>משמרת שכבר התקיימה מוסיפים בכפתור <b>+</b>.</div></div>`}
     `;
