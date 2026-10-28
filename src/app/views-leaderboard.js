@@ -259,6 +259,16 @@
         <div class="seg lb-games" role="tablist" aria-label="משחק">${games().map((g) => `<button class="${g.id === game ? 'on' : ''}" role="tab" aria-selected="${g.id === game}" data-game="${g.id}">${esc(SHORT[g.id] || g.t)}</button>`).join('')}</div>
         <div class="seg lb-periods" role="tablist" aria-label="תקופה">${PERIODS.map(([k, l]) => `<button class="${k === period ? 'on' : ''}" role="tab" aria-selected="${k === period}" data-period="${k}">${l}</button>`).join('')}</div>
         ${joined() ? `<button class="lb-mine" data-lb-profile><span class="lb-av sm ${me.bg ? 'sk-' + me.bg : ''}"><span aria-hidden="true">${me.e}</span></span><span>${esc(me.n)}</span>${icon('edit', 's')}<span class="vh">עריכת הכינוי</span></button>` : ''}`);
+      // a name that is one long word in some language (Aujourd'hui on a small phone) cannot wrap: it gets a
+      // slightly smaller font instead of being cut off (measured once, before the sheet is painted)
+      // (the text's own width, to the fraction of a pixel: the ellipsis shows as soon as it is wider at all)
+      const over = (b) => {
+        const cs = getComputedStyle(b), r = document.createRange(); r.selectNodeContents(b);
+        return r.getBoundingClientRect().width > b.clientWidth - parseFloat(cs.paddingLeft) - parseFloat(cs.paddingRight);
+      };
+      el.querySelectorAll('.lb-games button, .lb-periods button').forEach((b) => {
+        for (let f = 0.76; b.clientWidth && over(b) && f >= 0.6; f -= 0.04) b.style.fontSize = f.toFixed(2) + 'rem';
+      });
     }
     /** Only the marks move; the buttons themselves stay. */
     function mark(el) {

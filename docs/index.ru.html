@@ -2,7 +2,7 @@
 <html lang="ru" dir="ltr">
 <head>
 <meta charset="utf-8">
-<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'sha256-FgNk6U022o0tzGprl1MJbN7Uezv3SKotwh8ovG5xA8c=' 'sha256-+o44pXSdrNB7s5lJ5qx2ERdSrMS3RghOQ/ol0SZdw8w=' https://www.gstatic.com https://apis.google.com https://cdnjs.cloudflare.com https://cdn.jsdelivr.net 'wasm-unsafe-eval'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com data:; img-src 'self' data: blob: https:; connect-src 'self' https: wss:; frame-src https://shiftpay-70ab6.firebaseapp.com https://accounts.google.com https://apis.google.com https://*.google.com; worker-src 'self' blob: https://cdnjs.cloudflare.com https://cdn.jsdelivr.net; media-src 'self' data: blob:; manifest-src 'self'; object-src 'none'; base-uri 'self'; form-action 'self'">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'sha256-FgNk6U022o0tzGprl1MJbN7Uezv3SKotwh8ovG5xA8c=' 'sha256-SIKB0f313PSJLPOkmcP6S6gFcr2RrDKmGdtWR+5cG7k=' https://www.gstatic.com https://apis.google.com https://cdnjs.cloudflare.com https://cdn.jsdelivr.net 'wasm-unsafe-eval'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com data:; img-src 'self' data: blob: https:; connect-src 'self' https: wss:; frame-src https://shiftpay-70ab6.firebaseapp.com https://accounts.google.com https://apis.google.com https://*.google.com; worker-src 'self' blob: https://cdnjs.cloudflare.com https://cdn.jsdelivr.net; media-src 'self' data: blob:; manifest-src 'self'; object-src 'none'; base-uri 'self'; form-action 'self'">
 <script>(function(){try{var l=localStorage.getItem('shaati.lang'),h=document.documentElement.lang;if(l&&l!==h&&/^(he|ar|ru|en|fr|es)$/.test(l)&&!sessionStorage.getItem('langHop')){sessionStorage.setItem('langHop','1');location.replace((l==='he'?'index.html':'index.'+l+'.html')+location.search+location.hash)}else sessionStorage.removeItem('langHop')}catch(e){}})();</script>
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="theme-color" content="#0d2b6b">
@@ -441,7 +441,7 @@ textarea.input { min-height: 90px; resize: vertical; }
 .sheet.show { transform: none; }
 .sheet.full { height: 94vh; }
 .sheet .grab { width: 36px; height: 4px; border-radius: 2px; background: var(--outline); margin: 10px auto 2px; flex: none; }
-.sheet .sh-head { display: flex; align-items: center; gap: 4px; padding: 4px 8px 4px 16px; flex: none; }
+.sheet .sh-head { display: flex; align-items: center; gap: 4px; padding-block: 4px; padding-inline: 16px 8px; flex: none; } /* the title on the reading side, in line with the content */
 .sheet .sh-head h2 { flex: 1; font-size: 1.2rem; margin: 0; }
 .sheet .sh-body { overflow-y: auto; padding: 4px 16px 16px; flex: 1; overscroll-behavior: contain; }
 .sheet .sh-foot { padding: 12px 16px calc(12px + var(--safe-b)); border-top: 1px solid var(--outline-var); display: flex; gap: 8px; flex: none; background: var(--surface); }
@@ -2578,6 +2578,29 @@ html:not([lang="he"]) .lb-games button, html:not([lang="he"]) .lb-periods button
 .pending-card .pd-info span { font-size: .82rem; color: var(--on-surface-var); }
 .pending-card .pd-ok { flex: none; min-height: 42px; padding: 0 14px; border-radius: 12px; font-weight: 700; white-space: nowrap; }
 .pending-card .pd-all { margin-top: 12px; }
+/* on an iPhone in a browser: add the app to the home screen */
+.ios-card { padding: 14px; border: 1.5px solid color-mix(in srgb, var(--brand) 35%, transparent); }
+.ios-card .ic-head { display: flex; gap: 12px; align-items: flex-start; margin-bottom: 12px; }
+.ios-card .ic-app { flex: none; width: 44px; height: 44px; border-radius: 12px; display: grid; place-items: center; color: #fff; background: linear-gradient(135deg, var(--brand), var(--brand-strong)); }
+.ios-card .ic-t { flex: 1; min-width: 0; }
+.ios-card .ic-t .small { color: var(--on-surface-var); margin-top: 2px; }
+.ios-card .icon-btn { margin: -6px -6px 0 0; flex: none; }
+.ios-install .ii-first { display: flex; gap: 10px; align-items: flex-start; padding: 12px 14px; margin-bottom: 12px; border-radius: 16px; background: var(--brand-soft); line-height: 1.45; }
+.ios-install .ii-first > svg { flex: none; margin-top: 3px; color: var(--brand); }
+.ios-install .ii-first.warn { background: color-mix(in srgb, var(--warn) 14%, var(--surface-1)); border: 1.5px solid var(--warn); }
+.ios-install .ii-first.warn > svg { color: var(--warn); }
+.ios-install .ii-first .btn { margin-top: 10px; }
+.ios-install .ii-steps { display: grid; gap: 10px; margin-bottom: 6px; }
+.ios-install .ii-step { display: flex; align-items: center; gap: 12px; padding: 12px 14px; border-radius: 16px; background: var(--surface-1); box-shadow: var(--sh-1); }
+.ios-install .ii-n { flex: none; width: 28px; height: 28px; border-radius: 50%; display: grid; place-items: center; font-weight: 800; color: #fff; background: var(--brand); }
+.ios-install .ii-b { flex: 1; min-width: 0; }
+.ios-install .ii-t { font-weight: 700; }
+.ios-install .ii-b .small { color: var(--on-surface-var); margin-top: 2px; }
+.ios-install .ii-ic { flex: none; width: 40px; height: 40px; border-radius: 12px; display: grid; place-items: center; color: #0a84ff; background: var(--surface-2); }
+.ios-install .ii-why { display: grid; gap: 10px; }
+.ios-install .ii-why > div { display: flex; gap: 8px; align-items: flex-start; }
+.ios-install .ii-why svg { flex: none; margin-top: 2px; color: var(--brand); }
+.ios-install .ii-note { margin-top: 10px; text-align: center; }
 .done-cta { border: 1.5px solid var(--warn); }
 .done-cta .dc-t { font-weight: 700; display: flex; gap: 6px; align-items: center; color: var(--warn); }
 .done-cta .dc-s { font-size: .86rem; color: var(--on-surface-var); margin: 4px 0 12px; }
@@ -2629,8 +2652,8 @@ html.hide-money .money { filter: blur(7px); user-select: none; }
 <div id="print-root" aria-hidden="true"></div>
 <noscript><div style="padding:24px;font-family:sans-serif">Для приложения нужен JavaScript.</div></noscript>
 <script>
-window.APP_VERSION = '1.23.0';
-window.APP_BUILD = '1.23.0-28ed7000';
+window.APP_VERSION = '1.24.0';
+window.APP_BUILD = '1.24.0-2afa973f';
 /* ---- core/util.js ---- */
 /* ============================================================
  * util.js — date/time helpers and formatting.
@@ -8841,6 +8864,9 @@ window.APP_BUILD = '1.23.0-28ed7000';
     download: '<path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M7 10l5 5 5-5M12 15V3"/>',
     upload: '<path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M17 8l-5-5-5 5M12 3v12"/>',
     share: '<circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><path d="m8.6 13.5 6.8 4M15.4 6.5l-6.8 4"/>',
+    // the iPhone's share button and "add to home screen", as they look there
+    iosShare: '<path d="M8.5 8H7a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-9a2 2 0 0 0-2-2h-1.5M12 3v11M8.5 6.5 12 3l3.5 3.5"/>',
+    addSq: '<rect x="4" y="4" width="16" height="16" rx="4"/><path d="M12 8.5v7M8.5 12h7"/>',
     finger: '<path d="M12 11v2.5a7 7 0 0 1-1.2 4"/><path d="M9 11a3 3 0 0 1 6 0v1.5a10 10 0 0 1-.8 4"/><path d="M6.2 14.5A8 8 0 0 0 7 11a5 5 0 0 1 8.6-3.5"/><path d="M17.6 9.5A5 5 0 0 1 18 11v1.5c0 1.6-.2 3.1-.6 4.5"/><path d="M4.5 9A8 8 0 0 1 16 4.3"/><path d="M19.4 7a8 8 0 0 1 .6 3"/>',
     hand: '<path d="M18 11V6a2 2 0 0 0-4 0v5M14 10V4a2 2 0 0 0-4 0v6M10 10.5V6a2 2 0 0 0-4 0v8"/><path d="M18 8a2 2 0 1 1 4 0v6a8 8 0 0 1-8 8h-2c-2.8 0-4.5-.9-6-2.3l-3.6-3.6a2 2 0 0 1 2.8-2.8L7 15"/>',
     lock: '<rect x="4" y="11" width="16" height="11" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/>',
@@ -15748,6 +15774,7 @@ ${name}`.trim();
       ${App.recapCard ? App.recapCard() : ''}
       ${hero()}
       ${actionBlock()}
+      ${iosCard()}
       ${App.guideCard ? App.guideCard() : ''}
       ${highlight()}
       ${root.Plus ? root.Plus.nudgeCard() : ''}
@@ -15771,6 +15798,58 @@ ${name}`.trim();
       ${pending.slice(0, 3).map(row).join('')}
       ${pending.length > 1 ? `<button class="btn tonal block pd-all" data-act="mark-done-all">${icon('check', 's')} Я отработал(а) все${pending.length > 3 ? ` (${pending.length})` : ''} · ${money(total, 0)}</button>` : ''}</div>`;
   }
+
+  /* ---------------- on an iPhone: add to the home screen ----------------
+   * In Safari on an iPhone the app is a website: Safari may delete a site's data after 7 days without a visit,
+   * and reminders can only be shown by an app on the home screen. A card shows how to add it from the start
+   * (the app on the home screen keeps its data apart from Safari's, so the sooner the better); closed, it comes
+   * back once after two weeks, then never. */
+  const IOS_REST = 14 * U.DAY;
+  App.iosBrowser = function () {
+    const ua = navigator.userAgent || '';
+    const ios = /iPhone|iPad|iPod/.test(ua) || (/Macintosh/.test(ua) && navigator.maxTouchPoints > 1);
+    const home = navigator.standalone || (root.matchMedia && root.matchMedia('(display-mode: standalone)').matches);
+    return ios && !home;
+  };
+  function iosCard() {
+    if (!App.iosBrowser()) return '';
+    const m = S.meta.iosInstall || {};
+    if ((m.n || 0) >= 2 || (m.x && Date.now() - m.x < IOS_REST)) return '';
+    return `<div class="card ios-card"><div class="ic-head"><span class="ic-app">${icon('addSq')}</span><div class="ic-t"><b>Shaati на экране «Домой»</b>
+        <div class="small">Так ваши данные сохраняются, а напоминания о сменах работают и на iPhone.</div></div>
+        <button class="icon-btn" data-act="ios-install-x" aria-label="Закрыть">${icon('x', 's')}</button></div>
+      <button class="btn go block" data-act="ios-install">${icon('iosShare', 's')} Как добавить? 3 шага</button></div>`;
+  }
+  App.actions['ios-install-x'] = async () => {
+    const m = S.meta.iosInstall || {};
+    await Store.setMeta({ iosInstall: { x: Date.now(), n: (m.n || 0) + 1 } });
+    App.rerender();
+  };
+  App.actions['ios-install'] = () => {
+    const step = (n, ic, t, s) => `<div class="ii-step"><span class="ii-n">${n}</span><div class="ii-b"><div class="ii-t">${t}</div>${s ? `<div class="small">${s}</div>` : ''}</div><span class="ii-ic">${icon(ic)}</span></div>`;
+    // the app on the home screen starts with its own, empty storage: the shifts move over through the account
+    const first = !S.shifts.length
+      ? `<div class="ii-first">${icon('sparkle', 's')}<div>Лучше сделать это сейчас, до того как добавлять смены: приложение на экране «Домой» хранит данные отдельно от Safari.</div></div>`
+      : S.meta.cloudUid
+        ? `<div class="ii-first">${icon('cloud', 's')}<div>После добавления: откройте новое приложение и войдите с тем же аккаунтом Google — смены вернутся.</div></div>`
+        : `<div class="ii-first warn">${icon('alert', 's')}<div><b>Важно, до добавления:</b> на iPhone приложение на экране «Домой» начинается пустым. Чтобы перенести смены, сначала войдите через Google, а потом войдите снова в новом приложении.
+          <button class="btn sm go" data-act="ios-signin">${icon('cloud', 's')} Войти через Google</button></div></div>`;
+    UI.openSheet({
+      title: "На экран «Домой»",
+      cls: 'ios-install',
+      body: `${first}<div class="ii-steps">
+          ${step(1, 'iosShare', "Нажмите кнопку «Поделиться»", "В Safari: на панели внизу экрана (на iPad и в Chrome: вверху)")}
+          ${step(2, 'addSq', "Выберите «На экран „Домой“»", "Не видно? Прокрутите список вниз")}
+          ${step(3, 'check', "Нажмите «Добавить»", "и Shaati на экране, как любое приложение")}
+        </div>
+        <div class="section-title">Зачем это нужно</div>
+        <div class="card small ii-why"><div>${icon('lock', 's')} Safari может удалить данные сайта, который не открывали 7 дней. Приложение на экране «Домой» их сохраняет.</div>
+          <div>${icon('bell', 's')} Напоминания перед сменой (iOS 16.4 и новее).</div>
+          <div>${icon('sparkle', 's')} Открывается на весь экран, быстро, даже без интернета.</div></div>
+        <div class="tiny muted ii-note">Не находите этот пункт? Откройте ссылку в Safari и попробуйте снова.</div>`,
+    });
+  };
+  App.actions['ios-signin'] = () => { UI.closeAll(); App.go('settings'); setTimeout(() => App.sheetsApi.settingsSection('account'), 350); };
 
   /* ---------------- actions ---------------- */
   App.actions['pick-role'] = async (el) => { await Store.setMeta({ lastRole: el.dataset.id }); App.rerender(); };
@@ -16229,7 +16308,7 @@ ${name}`.trim();
             ${trv.mode === 'amount' ? `<label class="field"><span class="lbl">Сумма, ₪</span>${numIn('ov.travel.amount', trv.amount, String(emp.travelPerDay))}</label>` : ''}`)}
           ${ovBlock('special', "Особая ставка в процентах", "Например, день выборов: 200% за каждый час", `<div class="grid2"><label class="field"><span class="lbl">Процент за каждый час</span>${numIn('ov.special.pct', spc.pct, '200')}</label><label class="field"><span class="lbl">За что (необязательно)</span>${inp('ov.special.reason', spc.reason, "maxlength=\"40\" placeholder=\"День выборов\"")}</label></div><div class="tiny muted">Каждый час смены оплачивается не меньше этого процента. Час, который стоит больше (шаббат, сверхурочные), остаётся как есть. Для целого дня для всех смен: в календаре нажмите на день.</div>`)}
           ${ovBlock('rate', "Ставка в час", "Для всей смены вместо ставки должности", `<label class="field"><span class="lbl">₪ в час</span>${numIn('ov.rate.rate', rate.rate, '0')}</label>`)}
-          ${ovCount() ? `<label class="field"><span class="lbl">Причина (необязательно)</span>${inp('reason', d.reason, "placeholder=\"например: работодатель не считает этот час шаббатом\"")}</label>
+          ${ovCount() ? `<label class="field"><span class="lbl">Причина (необязательно)</span>${inp('reason', d.reason, "placeholder=\"например: не считается шаббатом\"")}</label>
           <button class="btn outlined block" data-reset-ov>${icon('refresh', 's')} Вернуть автоматический расчёт</button>` : ''}
         </div></details>
         <div class="section-title">${icon('wallet', 's')} Расчёт</div>
@@ -19240,7 +19319,11 @@ ${name}`.trim();
     render: () => `<div class="card"><div class="kv"><span>Версия приложения</span><b>${root.APP_VERSION}</b></div><div class="kv"><span>Формат данных</span><b>${Store.SCHEMA_VERSION}</b></div>
         <div class="kv"><span>Смены</span><b>${S.shifts.length}</b></div><div class="kv"><span>Расчётные листы</span><b>${S.payslips.length}</b></div><div class="kv"><span>Занято места</span><b id="ab-storage">…</b></div><div class="kv"><span>Постоянное хранилище</span><b id="ab-persist">…</b></div></div>
       <div class="section-title">Установка как приложения</div>
-      <div class="card small">В Chrome: меню ⋮ ← «Добавить на главный экран» ← «Установить». После установки: долгое нажатие на значок ← «Начать смену» / «Добавить смену».</div>
+      ${App.androidApp || navigator.standalone || (root.matchMedia && root.matchMedia('(display-mode: standalone)').matches)
+    ? `<div class="card small ab-installed">${icon('check', 's')} Shaati установлено как приложение на этом устройстве.</div>`
+    : App.iosBrowser && App.iosBrowser()
+      ? `<div class="card small">На iPhone: кнопка «Поделиться» → «На экран „Домой“» → «Добавить».<button class="btn tonal block" style="margin-top:10px" data-act="ios-install">${icon('iosShare', 's')} Пошаговая инструкция</button></div>`
+      : `<div class="card small">В Chrome: меню ⋮ ← «Добавить на главный экран» ← «Установить». После установки: долгое нажатие на значок ← «Начать смену» / «Добавить смену».<br>На iPhone: в Safari кнопка «Поделиться» → «На экран „Домой“».</div>`}
       <div class="section-title">Как это работает</div>
       <div class="card small">Все расчёты выполняются на телефоне, включая время шаббата и праздников (еврейский календарь и закат считаются локально). Приложение работает без интернета. Подключение нужно только при первом чтении PDF / распознавании текста на фото (загрузка компонента) и для AI-анализа, если вы его выбрали.</div>
       <div class="disclaimer">${icon('info', 's')}<div>Приложение — личный помощник. Расчёты (нетто, налог, права) — это оценка, а не юридическая, бухгалтерская или налоговая консультация.</div></div>`,
@@ -19342,12 +19425,12 @@ ${name}`.trim();
       },
       job: () => `${say(jobValid().length ? 'love' : 'think', jobValid().length ? "Отлично! Теперь мы будем знать, сколько вы заработали 💸" : "Где вы работаете? 🤔")}
         <h1>${g("Где вы работаете?", "Где вы работаете?", "Где вы работаете?")}</h1>
-        <label class="field ob-emp"><span class="lbl">Название места работы</span><input class="input" id="ob-emp" value="${esc(A.empName)}" placeholder="Например: супермаркет Йоханаоф, кафе Грег" maxlength="40" autocomplete="organization"></label>
+        <label class="field ob-emp"><span class="lbl">Название места работы</span><input class="input" id="ob-emp" value="${esc(A.empName)}" placeholder="Например: Йохананоф, кафе Грег" maxlength="40" autocomplete="organization"></label>
         <div class="ob-sub">А какая у вас там должность? Выберите из подсказок или напишите:</div>
         <div class="ob-chips small">${JOBS.map((j) => chip('data-jobname', j, j, A.jobs.some((x) => x.name === j))).join('')}</div>
         ${A.jobs.map((j, i) => `<div class="ob-job" style="--c:${j.color}">
           <div class="ob-job-head"><span class="sw"></span>${A.jobs.length > 1 ? "Должность " + (i + 1) : "Ваша должность"}${A.jobs.length > 1 ? `<button class="icon-btn sm" data-rx="${i}" aria-label="Удалить должность">${icon('x', 's')}</button>` : ''}</div>
-          <label class="field"><span class="lbl">Название должности</span><input class="input" data-jn="${i}" value="${esc(j.name)}" placeholder="Например: кассир, официантка, контролёр" maxlength="40" autocomplete="organization-title"></label>
+          <label class="field"><span class="lbl">Название должности</span><input class="input" data-jn="${i}" value="${esc(j.name)}" placeholder="Например: кассир, официантка" maxlength="40" autocomplete="organization-title"></label>
           <label class="field"><span class="lbl">Сколько вам платят в час на этой должности? (₪)</span><input class="input" type="number" step="any" inputmode="decimal" data-jr="${i}" value="${esc(j.rate)}" placeholder="${U.num(minWage(), 2)}">
             <span class="hint">Не уверены? Можно оставить пустым, и мы поставим минимальную зарплату${age() != null && age() < 18 ? " для вашего возраста" : ''}: ${U.money(minWage())} в час</span></label>
         </div>`).join('')}
@@ -20333,8 +20416,10 @@ ${name}`.trim();
 
   /* ---------------- what's new (once per big update, for people who already used the app) ---------------- */
   const WHATS_NEW = {
-    id: '1.23.0',
+    id: '1.24.0',
     items: [
+      ['addSq', 'sky', "iPhone? Shaati на экране «Домой»", "Инструкция в 3 шага: так данные сохраняются, а напоминания приходят и на iPhone. В Настройках › О приложении и установка."],
+      ['refresh', 'mint', "С сайта сразу в новую версию", "Вход с сайта или по ссылке в браузере всегда открывает последнюю версию, а не старую копию с прошлого визита."],
       ['bell', 'sky', "Напоминания о сменах — полностью под вашим контролем", "Сколько угодно напоминаний и за сколько угодно времени, также накануне вечером, и вопрос после смены, отработали ли вы её. В Настройки › Уведомления и подсказки."],
       ['chart', 'mint', "Средняя месячная зарплата", "В отчётах: среднее за последние 3, 6 или 12 месяцев, за этот год или за всё время, с самым высоким и самым низким месяцем."],
       ['eye', 'violet', "Режим конфиденциальности", "Глаз на карточке зарплаты размывает все суммы — например, когда вы показываете кому-то телефон."],
@@ -20342,7 +20427,6 @@ ${name}`.trim();
       ['globe', 'amber', "Shaati теперь и на французском и испанском", "Шесть языков: иврит, арабский, русский, английский, французский и испанский. В Настройки › Внешний вид и блокировка › Язык."],
       ['check', 'mint', "Смена прошла? Подтвердите одним нажатием", "Запланированная смена входит в зарплату только после подтверждения. Теперь это понятно: карточка на главном экране с большой кнопкой для каждой смены."],
       ['file', 'violet', "Отчёты о часах из PDF читаются точно", "Даже отчёты, где каждая буква нарисована отдельно, а столбец «норма часов» больше не путается со временем входа."],
-      ['chart', 'amber', "Более умный прогноз на конец месяца", "Прогноз учитывает запланированные смены и только после них добавляет ваш обычный темп."],
     ],
   };
 
@@ -21901,6 +21985,16 @@ ${name}`.trim();
         <div class="seg lb-games" role="tablist" aria-label="Игра">${games().map((g) => `<button class="${g.id === game ? 'on' : ''}" role="tab" aria-selected="${g.id === game}" data-game="${g.id}">${esc(SHORT[g.id] || g.t)}</button>`).join('')}</div>
         <div class="seg lb-periods" role="tablist" aria-label="Период">${PERIODS.map(([k, l]) => `<button class="${k === period ? 'on' : ''}" role="tab" aria-selected="${k === period}" data-period="${k}">${l}</button>`).join('')}</div>
         ${joined() ? `<button class="lb-mine" data-lb-profile><span class="lb-av sm ${me.bg ? 'sk-' + me.bg : ''}"><span aria-hidden="true">${me.e}</span></span><span>${esc(me.n)}</span>${icon('edit', 's')}<span class="vh">Изменить ник</span></button>` : ''}`);
+      // a name that is one long word in some language (Aujourd'hui on a small phone) cannot wrap: it gets a
+      // slightly smaller font instead of being cut off (measured once, before the sheet is painted)
+      // (the text's own width, to the fraction of a pixel: the ellipsis shows as soon as it is wider at all)
+      const over = (b) => {
+        const cs = getComputedStyle(b), r = document.createRange(); r.selectNodeContents(b);
+        return r.getBoundingClientRect().width > b.clientWidth - parseFloat(cs.paddingLeft) - parseFloat(cs.paddingRight);
+      };
+      el.querySelectorAll('.lb-games button, .lb-periods button').forEach((b) => {
+        for (let f = 0.76; b.clientWidth && over(b) && f >= 0.6; f -= 0.04) b.style.fontSize = f.toFixed(2) + 'rem';
+      });
     }
     /** Only the marks move; the buttons themselves stay. */
     function mark(el) {

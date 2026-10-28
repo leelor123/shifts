@@ -296,6 +296,9 @@ input[type="range"]::-moz-range-thumb { width: 22px; height: 22px; border-radius
 .step::before { content: counter(s); display: grid; place-items: center; width: 40px; height: 40px; border-radius: 50%; background: var(--gold); color: #2b1a00; font: 700 1.2rem var(--display); margin-bottom: 12px; }
 .step h3 { font-size: 1.2rem; margin-bottom: 6px; }
 .step p { margin: 0; color: var(--ink-2); }
+.step .ios-ic { position: absolute; top: 22px; inset-inline-end: 22px; width: 44px; height: 44px; border-radius: 12px; display: grid; place-items: center; background: var(--surface-2); color: #0a84ff; }
+.step .ios-ic .i { width: 24px; height: 24px; }
+.ios-note { max-width: 720px; margin: 22px auto 0; text-align: center; color: var(--ink-2); }
 
 /* the jobs, rolling by */
 .marquee { position: relative; margin-top: 26px; overflow: hidden; direction: ltr; }
@@ -374,6 +377,8 @@ footer a { color: var(--ink-2); }
   <symbol id="i-play" viewBox="0 0 24 24"><path d="M7 4v16l13-8z"/></symbol>
   <symbol id="i-right" viewBox="0 0 24 24"><path d="m9 18 6-6-6-6"/></symbol>
   <symbol id="i-left" viewBox="0 0 24 24"><path d="m15 18-6-6 6-6"/></symbol>
+  <symbol id="i-ios-share" viewBox="0 0 24 24"><path d="M8.5 8H7a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-9a2 2 0 0 0-2-2h-1.5M12 3v11M8.5 6.5 12 3l3.5 3.5"/></symbol>
+  <symbol id="i-add-sq" viewBox="0 0 24 24"><rect x="4" y="4" width="16" height="16" rx="4"/><path d="M12 8.5v7M8.5 12h7"/></symbol>
 </svg>
 
 <header class="top">
@@ -537,6 +542,19 @@ footer a { color: var(--ink-2); }
     </div>
   </section>
 
+  <section id="iphone">
+    <div class="wrap">
+      <div class="sec-head rv"><span class="kicker">באייפון</span><h2>שעתי על מסך הבית, בשלושה צעדים</h2><p>פותחים את שעתי בספארי ומוסיפים אותה למסך הבית. היא נפתחת במסך מלא, עובדת בלי אינטרנט, ותזכורות למשמרות מגיעות גם באייפון.</p></div>
+      <div class="steps">
+        <div class="step"><span class="ios-ic" aria-hidden="true"><svg class="i"><use href="#i-ios-share"/></svg></span><h3>כפתור השיתוף</h3><p>בספארי, בשורה שבתחתית המסך (באייפד: למעלה).</p></div>
+        <div class="step"><span class="ios-ic" aria-hidden="true"><svg class="i"><use href="#i-add-sq"/></svg></span><h3>"הוספה למסך הבית"</h3><p>לא רואים? גוללים מטה ברשימה שנפתחה.</p></div>
+        <div class="step"><span class="ios-ic" aria-hidden="true"><svg class="i"><use href="#i-check"/></svg></span><h3>לוחצים "הוספה"</h3><p>ושעתי על המסך, כמו כל אפליקציה.</p></div>
+      </div>
+      <p class="ios-note">כדאי להוסיף לפני שמתחילים: האפליקציה שעל מסך הבית שומרת נתונים בנפרד מספארי. כבר יש משמרות? מתחברים עם Google, ואחרי ההוספה מתחברים שוב והכול חוזר.</p>
+      <div class="cta" style="justify-content:center;margin-top:22px"><a class="btn btn-main magnet" href="https://leelor123.github.io/shifts/"><svg class="i" aria-hidden="true"><use href="#i-play"/></svg> לפתוח את שעתי</a></div>
+    </div>
+  </section>
+
   <section id="privacy">
     <div class="wrap">
       <div class="priv">
@@ -558,7 +576,7 @@ footer a { color: var(--ink-2); }
         <details><summary>איך שעתי יודעת מתי שבת וחג?</summary><p>לפי העיר שבחרת: כל היישובים בישראל, עם זמני כניסת ויציאת השבת והחגים של אותו מקום. אפשר גם לסמן ידנית יום מיוחד, כמו יום בחירות ב-200%.</p></details>
         <details><summary>אני מתחת לגיל 18. זה מתאים לי?</summary><p>בדיוק בשבילך. שעתי מחשבת שכר מינימום לפי הגיל, מזכירה כמה שעות מותר לעבוד ומתי מגיעה הפסקה, ומסבירה את חוק עבודת הנוער בשפה פשוטה.</p></details>
         <details><summary>זה ייעוץ משפטי?</summary><p>לא. שעתי היא כלי עזר שמחשב לפי החוק והנתונים שהזנת. בהסכם קיבוצי או בחוזה מיוחד ייתכנו הבדלים, ובמקרה של ספק כדאי לפנות למשאבי אנוש, לארגון העובדים או לאתר "כל זכות".</p></details>
-        <details><summary>יש גם לאייפון?</summary><p>כן, דרך הדפדפן: פותחים את שעתי בספארי ומוסיפים למסך הבית. היא עובדת כמו אפליקציה, גם בלי אינטרנט.</p></details>
+        <details><summary>יש גם לאייפון?</summary><p>כן, דרך הדפדפן: פותחים את שעתי בספארי ומוסיפים למסך הבית (<a href="#iphone">שלושה צעדים</a>). היא עובדת כמו אפליקציה, גם בלי אינטרנט.</p></details>
         <details><summary>מה קורה אם מחליפים טלפון?</summary><p>מתחברים עם אותו חשבון Google והכול חוזר. אפשר גם לשמור קובץ גיבוי ולשחזר אותו בטלפון החדש.</p></details>
       </div>
     </div>

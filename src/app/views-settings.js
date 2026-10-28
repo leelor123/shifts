@@ -891,7 +891,11 @@
     render: () => `<div class="card"><div class="kv"><span>גרסת אפליקציה</span><b>${root.APP_VERSION}</b></div><div class="kv"><span>מבנה נתונים</span><b>${Store.SCHEMA_VERSION}</b></div>
         <div class="kv"><span>משמרות</span><b>${S.shifts.length}</b></div><div class="kv"><span>תלושים</span><b>${S.payslips.length}</b></div><div class="kv"><span>אחסון בשימוש</span><b id="ab-storage">…</b></div><div class="kv"><span>אחסון קבוע</span><b id="ab-persist">…</b></div></div>
       <div class="section-title">התקנה כאפליקציה</div>
-      <div class="card small">ב-\u2060Chrome: תפריט ⋮ ← "הוספה למסך הבית" ← "התקנה". אחרי ההתקנה: לחיצה ארוכה על האייקון ← "התחל משמרת" / "הוסף משמרת".</div>
+      ${App.androidApp || navigator.standalone || (root.matchMedia && root.matchMedia('(display-mode: standalone)').matches)
+    ? `<div class="card small ab-installed">${icon('check', 's')} שעתי מותקנת כאפליקציה במכשיר הזה.</div>`
+    : App.iosBrowser && App.iosBrowser()
+      ? `<div class="card small">באייפון: כפתור השיתוף ← "הוספה למסך הבית" ← "הוספה".<button class="btn tonal block" style="margin-top:10px" data-act="ios-install">${icon('iosShare', 's')} הדרכה צעד אחר צעד</button></div>`
+      : `<div class="card small">ב-\u2060Chrome: תפריט ⋮ ← "הוספה למסך הבית" ← "התקנה". אחרי ההתקנה: לחיצה ארוכה על האייקון ← "התחל משמרת" / "הוסף משמרת".<br>באייפון: בספארי, כפתור השיתוף ← "הוספה למסך הבית".</div>`}
       <div class="section-title">איך זה עובד</div>
       <div class="card small">כל החישובים מתבצעים בטלפון, כולל זמני שבת וחגים (לוח עברי וחישוב שקיעה מקומיים). האפליקציה עובדת בלי אינטרנט. חיבור נדרש רק בפעם הראשונה של קריאת PDF / זיהוי טקסט מתמונה (טעינת הרכיב), ולניתוח AI אם בחרת בו.</div>
       <div class="disclaimer">${icon('info', 's')}<div>האפליקציה היא כלי עזר אישי. החישובים (נטו, מס, זכויות) הם הערכה ואינם ייעוץ משפטי, חשבונאי או מס.</div></div>`,

@@ -334,6 +334,7 @@
       ${App.recapCard ? App.recapCard() : ''}
       ${hero()}
       ${actionBlock()}
+      ${iosCard()}
       ${App.guideCard ? App.guideCard() : ''}
       ${highlight()}
       ${root.Plus ? root.Plus.nudgeCard() : ''}
@@ -357,6 +358,58 @@
       ${pending.slice(0, 3).map(row).join('')}
       ${pending.length > 1 ? `<button class="btn tonal block pd-all" data-act="mark-done-all">${icon('check', 's')} עבדתי בכולן${pending.length > 3 ? ` (${pending.length})` : ''} · ${money(total, 0)}</button>` : ''}</div>`;
   }
+
+  /* ---------------- on an iPhone: add to the home screen ----------------
+   * In Safari on an iPhone the app is a website: Safari may delete a site's data after 7 days without a visit,
+   * and reminders can only be shown by an app on the home screen. A card shows how to add it from the start
+   * (the app on the home screen keeps its data apart from Safari's, so the sooner the better); closed, it comes
+   * back once after two weeks, then never. */
+  const IOS_REST = 14 * U.DAY;
+  App.iosBrowser = function () {
+    const ua = navigator.userAgent || '';
+    const ios = /iPhone|iPad|iPod/.test(ua) || (/Macintosh/.test(ua) && navigator.maxTouchPoints > 1);
+    const home = navigator.standalone || (root.matchMedia && root.matchMedia('(display-mode: standalone)').matches);
+    return ios && !home;
+  };
+  function iosCard() {
+    if (!App.iosBrowser()) return '';
+    const m = S.meta.iosInstall || {};
+    if ((m.n || 0) >= 2 || (m.x && Date.now() - m.x < IOS_REST)) return '';
+    return `<div class="card ios-card"><div class="ic-head"><span class="ic-app">${icon('addSq')}</span><div class="ic-t"><b>שעתי על מסך הבית</b>
+        <div class="small">כך הנתונים שלך נשמרים, ותזכורות למשמרות עובדות גם באייפון.</div></div>
+        <button class="icon-btn" data-act="ios-install-x" aria-label="סגירה">${icon('x', 's')}</button></div>
+      <button class="btn go block" data-act="ios-install">${icon('iosShare', 's')} איך מוסיפים? 3 צעדים</button></div>`;
+  }
+  App.actions['ios-install-x'] = async () => {
+    const m = S.meta.iosInstall || {};
+    await Store.setMeta({ iosInstall: { x: Date.now(), n: (m.n || 0) + 1 } });
+    App.rerender();
+  };
+  App.actions['ios-install'] = () => {
+    const step = (n, ic, t, s) => `<div class="ii-step"><span class="ii-n">${n}</span><div class="ii-b"><div class="ii-t">${t}</div>${s ? `<div class="small">${s}</div>` : ''}</div><span class="ii-ic">${icon(ic)}</span></div>`;
+    // the app on the home screen starts with its own, empty storage: the shifts move over through the account
+    const first = !S.shifts.length
+      ? `<div class="ii-first">${icon('sparkle', 's')}<div>הכי טוב עכשיו, לפני שמוסיפים משמרות: האפליקציה שעל מסך הבית שומרת נתונים בנפרד מספארי.</div></div>`
+      : S.meta.cloudUid
+        ? `<div class="ii-first">${icon('cloud', 's')}<div>אחרי ההוספה: פותחים את האפליקציה החדשה ומתחברים עם אותו חשבון Google, והמשמרות חוזרות.</div></div>`
+        : `<div class="ii-first warn">${icon('alert', 's')}<div><b>חשוב, לפני ההוספה:</b> באייפון האפליקציה שעל מסך הבית מתחילה ריקה. כדי שהמשמרות יעברו אליה, קודם מתחברים עם Google, ואחר כך מתחברים שוב באפליקציה החדשה.
+          <button class="btn sm go" data-act="ios-signin">${icon('cloud', 's')} התחברות עם Google</button></div></div>`;
+    UI.openSheet({
+      title: 'הוספה למסך הבית',
+      cls: 'ios-install',
+      body: `${first}<div class="ii-steps">
+          ${step(1, 'iosShare', 'לוחצים על כפתור השיתוף', 'בספארי: בשורה שבתחתית המסך (באייפד ובכרום: למעלה)')}
+          ${step(2, 'addSq', 'בוחרים "הוספה למסך הבית"', 'לא רואים? גוללים מטה ברשימה')}
+          ${step(3, 'check', 'לוחצים "הוספה"', 'ושעתי על המסך, כמו כל אפליקציה')}
+        </div>
+        <div class="section-title">למה כדאי</div>
+        <div class="card small ii-why"><div>${icon('lock', 's')} ספארי עלול למחוק נתונים של אתר שלא נפתח 7 ימים. אפליקציה על מסך הבית שומרת עליהם.</div>
+          <div>${icon('bell', 's')} תזכורות לפני משמרת (באייפון 16.4 ומעלה).</div>
+          <div>${icon('sparkle', 's')} נפתחת במסך מלא, מהר, וגם בלי אינטרנט.</div></div>
+        <div class="tiny muted ii-note">לא מוצאים את האפשרות? פותחים את הקישור בספארי ומנסים שוב.</div>`,
+    });
+  };
+  App.actions['ios-signin'] = () => { UI.closeAll(); App.go('settings'); setTimeout(() => App.sheetsApi.settingsSection('account'), 350); };
 
   /* ---------------- actions ---------------- */
   App.actions['pick-role'] = async (el) => { await Store.setMeta({ lastRole: el.dataset.id }); App.rerender(); };

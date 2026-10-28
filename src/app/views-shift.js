@@ -398,7 +398,7 @@
             ${trv.mode === 'amount' ? `<label class="field"><span class="lbl">סכום ₪</span>${numIn('ov.travel.amount', trv.amount, String(emp.travelPerDay))}</label>` : ''}`)}
           ${ovBlock('special', 'תעריף מיוחד באחוזים', 'למשל יום בחירות: 200% על כל שעה', `<div class="grid2"><label class="field"><span class="lbl">אחוז לכל שעה</span>${numIn('ov.special.pct', spc.pct, '200')}</label><label class="field"><span class="lbl">על מה (לא חובה)</span>${inp('ov.special.reason', spc.reason, 'maxlength="40" placeholder="יום בחירות"')}</label></div><div class="tiny muted">כל שעה במשמרת תשולם לפחות באחוז הזה. שעה ששווה יותר (שבת, שעות נוספות) נשארת כמו שהיא. ליום שלם לכל המשמרות: בלוח השנה, בלחיצה על היום.</div>`)}
           ${ovBlock('rate', 'תעריף לשעה', 'לכל המשמרת, במקום תעריף התפקיד', `<label class="field"><span class="lbl">₪ לשעה</span>${numIn('ov.rate.rate', rate.rate, '0')}</label>`)}
-          ${ovCount() ? `<label class="field"><span class="lbl">סיבה (לא חובה)</span>${inp('reason', d.reason, 'placeholder="למשל: המעסיק לא מחשיב את השעה הזו כשבת"')}</label>
+          ${ovCount() ? `<label class="field"><span class="lbl">סיבה (לא חובה)</span>${inp('reason', d.reason, 'placeholder="למשל: המעסיק לא מחשיב אותה כשבת"')}</label>
           <button class="btn outlined block" data-reset-ov>${icon('refresh', 's')} חזור לחישוב אוטומטי</button>` : ''}
         </div></details>
         <div class="section-title">${icon('wallet', 's')} חישוב</div>

@@ -1601,6 +1601,29 @@ html:not([lang="he"]) .lb-games button, html:not([lang="he"]) .lb-periods button
 .pending-card .pd-info span { font-size: .82rem; color: var(--on-surface-var); }
 .pending-card .pd-ok { flex: none; min-height: 42px; padding: 0 14px; border-radius: 12px; font-weight: 700; white-space: nowrap; }
 .pending-card .pd-all { margin-top: 12px; }
+/* on an iPhone in a browser: add the app to the home screen */
+.ios-card { padding: 14px; border: 1.5px solid color-mix(in srgb, var(--brand) 35%, transparent); }
+.ios-card .ic-head { display: flex; gap: 12px; align-items: flex-start; margin-bottom: 12px; }
+.ios-card .ic-app { flex: none; width: 44px; height: 44px; border-radius: 12px; display: grid; place-items: center; color: #fff; background: linear-gradient(135deg, var(--brand), var(--brand-strong)); }
+.ios-card .ic-t { flex: 1; min-width: 0; }
+.ios-card .ic-t .small { color: var(--on-surface-var); margin-top: 2px; }
+.ios-card .icon-btn { margin: -6px -6px 0 0; flex: none; }
+.ios-install .ii-first { display: flex; gap: 10px; align-items: flex-start; padding: 12px 14px; margin-bottom: 12px; border-radius: 16px; background: var(--brand-soft); line-height: 1.45; }
+.ios-install .ii-first > svg { flex: none; margin-top: 3px; color: var(--brand); }
+.ios-install .ii-first.warn { background: color-mix(in srgb, var(--warn) 14%, var(--surface-1)); border: 1.5px solid var(--warn); }
+.ios-install .ii-first.warn > svg { color: var(--warn); }
+.ios-install .ii-first .btn { margin-top: 10px; }
+.ios-install .ii-steps { display: grid; gap: 10px; margin-bottom: 6px; }
+.ios-install .ii-step { display: flex; align-items: center; gap: 12px; padding: 12px 14px; border-radius: 16px; background: var(--surface-1); box-shadow: var(--sh-1); }
+.ios-install .ii-n { flex: none; width: 28px; height: 28px; border-radius: 50%; display: grid; place-items: center; font-weight: 800; color: #fff; background: var(--brand); }
+.ios-install .ii-b { flex: 1; min-width: 0; }
+.ios-install .ii-t { font-weight: 700; }
+.ios-install .ii-b .small { color: var(--on-surface-var); margin-top: 2px; }
+.ios-install .ii-ic { flex: none; width: 40px; height: 40px; border-radius: 12px; display: grid; place-items: center; color: #0a84ff; background: var(--surface-2); }
+.ios-install .ii-why { display: grid; gap: 10px; }
+.ios-install .ii-why > div { display: flex; gap: 8px; align-items: flex-start; }
+.ios-install .ii-why svg { flex: none; margin-top: 2px; color: var(--brand); }
+.ios-install .ii-note { margin-top: 10px; text-align: center; }
 .done-cta { border: 1.5px solid var(--warn); }
 .done-cta .dc-t { font-weight: 700; display: flex; gap: 6px; align-items: center; color: var(--warn); }
 .done-cta .dc-s { font-size: .86rem; color: var(--on-surface-var); margin: 4px 0 12px; }
