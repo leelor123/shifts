@@ -2,7 +2,7 @@
 <html lang="he" dir="rtl">
 <head>
 <meta charset="utf-8">
-<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'sha256-P1vY/EiXw5RkSguavX5FeRFgUvcBGNPUKJiorElIG7g=' 'sha256-ygIdFAVMKb6q4dUtIzX65gkGYbI4kcn+31eDlKvzUB8=' https://www.gstatic.com https://apis.google.com https://cdnjs.cloudflare.com https://cdn.jsdelivr.net 'wasm-unsafe-eval'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com data:; img-src 'self' data: blob: https:; connect-src 'self' https: wss:; frame-src https://shiftpay-70ab6.firebaseapp.com https://accounts.google.com https://apis.google.com https://*.google.com; worker-src 'self' blob: https://cdnjs.cloudflare.com https://cdn.jsdelivr.net; media-src 'self' data: blob:; manifest-src 'self'; object-src 'none'; base-uri 'self'; form-action 'self'">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'sha256-P1vY/EiXw5RkSguavX5FeRFgUvcBGNPUKJiorElIG7g=' 'sha256-1qEeEwtKGs300Puixjd7yE/ulSCfvMIw/eKwVzQJLP0=' https://www.gstatic.com https://apis.google.com https://cdnjs.cloudflare.com https://cdn.jsdelivr.net 'wasm-unsafe-eval'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com data:; img-src 'self' data: blob: https:; connect-src 'self' https: wss:; frame-src https://shiftpay-70ab6.firebaseapp.com https://accounts.google.com https://apis.google.com https://*.google.com; worker-src 'self' blob: https://cdnjs.cloudflare.com https://cdn.jsdelivr.net; media-src 'self' data: blob:; manifest-src 'self'; object-src 'none'; base-uri 'self'; form-action 'self'">
 <script>(function(){try{var l=localStorage.getItem('shaati.lang'),h=document.documentElement.lang;if(l&&l!==h&&/^(he|ar|ru|en)$/.test(l)&&!sessionStorage.getItem('langHop')){sessionStorage.setItem('langHop','1');location.replace((l==='he'?'index.html':'index.'+l+'.html')+location.search+location.hash)}else sessionStorage.removeItem('langHop')}catch(e){}})();</script>
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="theme-color" content="#0d2b6b">
@@ -928,6 +928,8 @@ body.fx .item:active { transform: scale(.985); }
 .rights .rt-body p { margin: 0 0 8px; }
 .rights a { color: var(--primary); font-weight: 600; }
 .rights .rt-help ol { margin: 0 0 12px; padding-inline-start: 20px; line-height: 1.7; }
+.rights .rt-sources p { margin: 0 0 8px; font-size: .86rem; line-height: 1.6; }
+.rights .rt-sources ul { margin: 0; padding-inline-start: 20px; line-height: 1.9; font-size: .86rem; }
 .highlight.go .hl-ic { background: var(--primary); color: var(--on-primary); }
 
 /* ---- onboarding: friendly questions ---- */
@@ -2592,7 +2594,7 @@ html:not([lang="he"]) .lb-games button, html:not([lang="he"]) .lb-periods button
 <noscript><div style="padding:24px;font-family:sans-serif">האפליקציה דורשת JavaScript.</div></noscript>
 <script>
 window.APP_VERSION = '1.22.1';
-window.APP_BUILD = '1.22.1-6280fc99';
+window.APP_BUILD = '1.22.1-2d74c9c8';
 /* ---- core/util.js ---- */
 /* ============================================================
  * util.js — date/time helpers and formatting.
@@ -19548,23 +19550,44 @@ A cell with only a shift name and no hours: use בוקר 07:00-15:00, צהריי
   // i18n-keep-end
   const KZ = (page) => 'https://www.kolzchut.org.il/he/' + encodeURIComponent(page.replace(/ /g, '_'));
   const link = (href, text) => `<a href="${href}" target="_blank" rel="noopener">${esc(text || 'למידע המלא ב"כל זכות"')} ↗</a>`;
+  // i18n-keep-start the official sources (gov.il guides, found in gov.il's own search on 28 Oct 2026): Google Play asks
+  // that government information point at its official source (tests/links.test.js checks the list)
+  const GOV = {
+    minwage: 'https://www.gov.il/he/Departments/Guides/minimum-wage',
+    hours: 'https://www.gov.il/he/Departments/Guides/overtime-and-extra-hours',
+    rest: 'https://www.gov.il/he/Departments/Guides/weekends-and-holidays',
+    youth: 'https://www.gov.il/he/Departments/Guides/rights-of-working-youth',
+    vacation: 'https://www.gov.il/he/Departments/Guides/annual-vacations',
+    recup: 'https://www.gov.il/he/Departments/Guides/convalescence-pay',
+    sick: 'https://www.gov.il/he/Departments/Guides/paid-sick-leave',
+    travel: 'https://www.gov.il/he/Departments/Guides/travel-allowance',
+    pension: 'https://www.gov.il/he/Departments/Guides/pension-insurance',
+    labor: 'https://www.gov.il/he/departments/labor',
+    tax: 'https://www.gov.il/he/departments/israel_tax_authority/govil-landing-page',
+    btl: 'https://www.btl.gov.il/',
+  };
+  // i18n-keep-end
+  const gov = (key) => (key && GOV[key] ? link(GOV[key], 'המקור הרשמי ב-gov.il') + ' · ' : '');
+  const SOURCES = [['minwage', 'שכר מינימום'], ['hours', 'שעות עבודה ושעות נוספות'], ['rest', 'מנוחה שבועית וחופשת חג'], ['youth', 'זכויות בני נוער עובדים'],
+    ['vacation', 'חופשה שנתית'], ['recup', 'דמי הבראה'], ['sick', 'דמי מחלה'], ['travel', 'החזר הוצאות נסיעה'], ['pension', 'ביטוח פנסיוני חובה'],
+    ['labor', 'משרד העבודה'], ['tax', 'רשות המסים (מס הכנסה)'], ['btl', 'המוסד לביטוח לאומי']];
 
   /* ---------------- the guide (general rules, short and plain) ---------------- */
   const TOPICS = [
-    { id: 'minwage', ic: 'wallet', t: 'שכר מינימום', b: (c) => `<p>מאפריל 2026: <b>35.40 ₪ לשעה</b> לעובד מגיל 18. לנוער: עד גיל 16 – 26.07 ₪, בגיל 16 – 27.94 ₪, בגיל 17 – 30.92 ₪.</p><p>${c.mw.youth ? `לגיל שלך (${c.mw.age}) המינימום הוא <b>${U.money(c.mw.hourly)}</b>.` : c.mw.age != null ? `המינימום שחל עליך: <b>${U.money(c.mw.hourly)}</b>.` : 'הוסף תאריך לידה בהגדרות כדי לראות את המינימום לגילך.'} מעסיק רשאי לשלם יותר, אבל לא פחות.</p>`, l: () => link(KZ(App.isMinorNow() ? PAGES.youthPay : PAGES.minWage)) },
-    { id: 'overtime', ic: 'clock', t: 'שעות נוספות', b: () => '<p>השעתיים הראשונות מעבר ליום עבודה רגיל משולמות ב-<b>125%</b>, ומעבר לכך ב-<b>150%</b>. גם מעבר ל-42 שעות בשבוע מתחילות שעות נוספות.</p><p>באפליקציה: הגדרות › חישוב השכר › חוקי חישוב (מתי מתחילות ובאיזה אחוז).</p>', l: () => link(KZ(PAGES.overtime)) },
-    { id: 'shabbat', ic: 'candle', t: 'שבת וחגים', b: () => '<p>עבודה במנוחה השבועית (לרוב שבת) משולמת לפחות ב-<b>150%</b>. השעות נקבעות לפי כניסת ויציאת השבת, והאפליקציה מחשבת אותן לפי העיר שלך.</p><p>עובד שעתי זכאי בדרך כלל גם ל<b>דמי חגים</b> אחרי 3 חודשי עבודה, על חג שחל ביום חול, בתנאים שבצו ההרחבה.</p>', l: () => link(KZ(PAGES.weeklyRest)) },
-    { id: 'holidays', ic: 'calendar', t: 'דמי חגים', b: (c) => `<p>בשכר לפי שעה מגיע תשלום על <b>9 ימי חג</b> בשנה שבהם לא עבדת בגלל החג: ראש השנה, יום כיפור, סוכות, שמחת תורה, פסח ושביעי של פסח, שבועות ויום העצמאות (מי שאינו יהודי יכול לבחור בחגי הדת שלו). התנאים: <b>3 חודשי עבודה</b> במקום, החג חל ביום שבו ${App.g('היית אמור', 'היית אמורה')} לעבוד, ועבדת ביום שלפניו ושאחריו (או שלא שובצת בהם). התשלום: יום עבודה רגיל, לפי ממוצע השעות היומי שלך כפול השכר לשעה. חג ביום שישי או בשבת משתלם רק למי שעובד בימים האלה.</p>${holidayList(c)}`, l: () => link(KZ(PAGES.holidayPay)) },
+    { id: 'minwage', gov: () => (App.isMinorNow() ? 'youth' : 'minwage'), ic: 'wallet', t: 'שכר מינימום', b: (c) => `<p>מאפריל 2026: <b>35.40 ₪ לשעה</b> לעובד מגיל 18. לנוער: עד גיל 16 – 26.07 ₪, בגיל 16 – 27.94 ₪, בגיל 17 – 30.92 ₪.</p><p>${c.mw.youth ? `לגיל שלך (${c.mw.age}) המינימום הוא <b>${U.money(c.mw.hourly)}</b>.` : c.mw.age != null ? `המינימום שחל עליך: <b>${U.money(c.mw.hourly)}</b>.` : 'הוסף תאריך לידה בהגדרות כדי לראות את המינימום לגילך.'} מעסיק רשאי לשלם יותר, אבל לא פחות.</p>`, l: () => link(KZ(App.isMinorNow() ? PAGES.youthPay : PAGES.minWage)) },
+    { id: 'overtime', gov: 'hours', ic: 'clock', t: 'שעות נוספות', b: () => '<p>השעתיים הראשונות מעבר ליום עבודה רגיל משולמות ב-<b>125%</b>, ומעבר לכך ב-<b>150%</b>. גם מעבר ל-42 שעות בשבוע מתחילות שעות נוספות.</p><p>באפליקציה: הגדרות › חישוב השכר › חוקי חישוב (מתי מתחילות ובאיזה אחוז).</p>', l: () => link(KZ(PAGES.overtime)) },
+    { id: 'shabbat', gov: 'rest', ic: 'candle', t: 'שבת וחגים', b: () => '<p>עבודה במנוחה השבועית (לרוב שבת) משולמת לפחות ב-<b>150%</b>. השעות נקבעות לפי כניסת ויציאת השבת, והאפליקציה מחשבת אותן לפי העיר שלך.</p><p>עובד שעתי זכאי בדרך כלל גם ל<b>דמי חגים</b> אחרי 3 חודשי עבודה, על חג שחל ביום חול, בתנאים שבצו ההרחבה.</p>', l: () => link(KZ(PAGES.weeklyRest)) },
+    { id: 'holidays', gov: 'rest', ic: 'calendar', t: 'דמי חגים', b: (c) => `<p>בשכר לפי שעה מגיע תשלום על <b>9 ימי חג</b> בשנה שבהם לא עבדת בגלל החג: ראש השנה, יום כיפור, סוכות, שמחת תורה, פסח ושביעי של פסח, שבועות ויום העצמאות (מי שאינו יהודי יכול לבחור בחגי הדת שלו). התנאים: <b>3 חודשי עבודה</b> במקום, החג חל ביום שבו ${App.g('היית אמור', 'היית אמורה')} לעבוד, ועבדת ביום שלפניו ושאחריו (או שלא שובצת בהם). התשלום: יום עבודה רגיל, לפי ממוצע השעות היומי שלך כפול השכר לשעה. חג ביום שישי או בשבת משתלם רק למי שעובד בימים האלה.</p>${holidayList(c)}`, l: () => link(KZ(PAGES.holidayPay)) },
     { id: 'tips', ic: 'gift', t: 'טיפים (מלצרים)', b: () => '<p>במסעדה, בית קפה או בר הטיפים הם <b>חלק מהשכר</b>: הם עוברים דרך המעסיק ומופיעים בתלוש, ולכן נחשבים גם בפנסיה, בחופשה, בדמי מחלה ובפיצויים.</p><p>מה שמגיע לך לכל שעה, טיפים בלבד או שכר וטיפים, צריך להיות <b>לפחות שכר המינימום</b>. אסור לממן מהטיפים נסיעות או דמי הבראה, אלא בהסכמה בכתב וכשיש בטיפים יותר מהשכר שסוכם.</p><p>באולמות וגני אירועים הטיפים אינם חלק מהשכר. באפליקציה רושמים טיפים בכל משמרת (או בהוספה › בונוס / טיפים), והבדיקה של שכר המינימום מחשבת אותם.</p>', l: () => link(KZ(PAGES.tips)) },
-    { id: 'breaks', ic: 'coffee', t: 'הפסקות ומנוחה', b: () => '<p>ביום עבודה של <b>6 שעות ומעלה</b> מגיעה הפסקה של <b>45 דקות</b>, מתוכן חצי שעה ברצף. בין שני ימי עבודה, ומנוחה שבועית של 36 שעות רצופות לפחות.</p>', l: () => link(KZ(App.isMinorNow() ? PAGES.youthBreaks : PAGES.breaks)) },
-    { id: 'travel', ic: 'car', t: 'נסיעות', b: (c) => `<p>המעסיק חייב להחזיר את הוצאות הנסיעה לעבודה ובחזרה, לפי מחיר תחבורה ציבורית ועד תקרה יומית שמתעדכנת מדי שנה. ההחזר הוא בנוסף לשכר.</p><p>${c.travel > 0 ? `באפליקציה מוגדר החזר של <b>${U.money(c.travel)}</b> ליום עבודה.` : 'באפליקציה <b>לא מוגדר</b> החזר נסיעות. אפשר להגדיר בהגדרות › העבודה שלי › נסיעות ותקופת שכר.'}</p>`, l: () => link(KZ(PAGES.travel)) },
-    { id: 'sick', ic: 'thermo', t: 'דמי מחלה', b: (c) => `<p>צוברים <b>1.5 ימי מחלה</b> לכל חודש עבודה מלא (עד 90). התשלום: היום הראשון – 0%, השני והשלישי – 50%, מהרביעי – 100%. צריך אישור מחלה.</p>${c.bal ? `<p>הצבירה שלך לפי האפליקציה: <b>${U.num(c.bal.sickAccrued - c.bal.sickUsed, 1)}</b> ימים.</p>` : ''}`, l: () => link(KZ(PAGES.sick)) },
-    { id: 'vacation', ic: 'beach', t: 'חופשה שנתית', b: (c) => `<p>מגיעים ימי חופשה בתשלום לפי הוותק והיקף המשרה. אסור לוותר עליהם, וכשעוזבים את העבודה מקבלים פדיון על הימים שלא נוצלו.</p>${c.bal ? `<p>היתרה שלך לפי האפליקציה: <b>${U.num(c.bal.vacationAccrued - c.bal.vacationUsed, 1)}</b> ימים.</p>` : ''}`, l: () => link(KZ(PAGES.vacation)) },
-    { id: 'recup', ic: 'gift', t: 'דמי הבראה', b: (c) => `<p>אחרי <b>שנת עבודה</b> מגיעים דמי הבראה: מספר ימים לפי הוותק, כפול תעריף יום הבראה, לפי היקף המשרה.</p><p>${c.bal && c.bal.recuperation ? (c.bal.recuperation.eligible ? `לפי האפליקציה מגיעים לך כ-<b>${U.money(c.bal.recuperation.amount, 0)}</b> לשנה.` : `לפי תאריך תחילת העבודה, הזכאות מתחילה ב-${U.fmtDate(c.bal.recuperation.eligibleFrom)}.`) : 'הגדר תאריך תחילת עבודה כדי לחשב.'}</p>`, l: () => link(KZ(PAGES.recuperation)) },
-    { id: 'pension', ic: 'shield', t: 'פנסיה', b: (c) => `<p>חובה מגיל <b>21 לגבר ו-20 לאישה</b>, אחרי 6 חודשי עבודה (3 חודשים אם כבר יש לך קרן פעילה). ההפרשה: 6% ממך, 6.5% מהמעסיק ועוד 6% לפיצויים.</p><p>${c.pension}</p>`, l: () => link(KZ(PAGES.pension)) },
-    { id: 'payslip', ic: 'receipt', t: 'תלוש שכר ומועד תשלום', b: () => '<p>מגיע לך <b>תלוש שכר</b> מפורט כל חודש, והשכר צריך להיות משולם עד <b>ה-9 בחודש</b> שאחרי חודש העבודה. איחור מזכה בפיצוי הלנת שכר.</p><p>האפליקציה בודקת את התלוש מול המשמרות שרשמת (כפתור +, "תלוש שכר").</p>', l: () => link(KZ(PAGES.payslip)) },
-    { id: 'deduct', ic: 'minus', t: 'ניכויים מהשכר', b: () => '<p>מותר לנכות מהשכר רק ניכויי חובה (מס, ביטוח לאומי, פנסיה) וניכויים שהסכמת להם בכתב. <b>קנסות</b>, חוסרים בקופה או ציוד שנשבר – בדרך כלל אסור לנכות בלי הסכמה.</p>', l: () => link(KZ(PAGES.deductions)) },
-    { id: 'leave', ic: 'alert', t: 'פיטורים והתפטרות', b: () => '<p>לפני פיטורים מגיע <b>שימוע</b>, ומגיעה <b>הודעה מוקדמת</b> לפי הוותק (גם כשמתפטרים צריך לתת הודעה מוקדמת). אחרי שנת עבודה, בפיטורים מגיעים גם <b>פיצויים</b>.</p>', l: () => link(KZ(PAGES.notice)) },
+    { id: 'breaks', gov: () => (App.isMinorNow() ? 'youth' : 'hours'), ic: 'coffee', t: 'הפסקות ומנוחה', b: () => '<p>ביום עבודה של <b>6 שעות ומעלה</b> מגיעה הפסקה של <b>45 דקות</b>, מתוכן חצי שעה ברצף. בין שני ימי עבודה, ומנוחה שבועית של 36 שעות רצופות לפחות.</p>', l: () => link(KZ(App.isMinorNow() ? PAGES.youthBreaks : PAGES.breaks)) },
+    { id: 'travel', gov: 'travel', ic: 'car', t: 'נסיעות', b: (c) => `<p>המעסיק חייב להחזיר את הוצאות הנסיעה לעבודה ובחזרה, לפי מחיר תחבורה ציבורית ועד תקרה יומית שמתעדכנת מדי שנה. ההחזר הוא בנוסף לשכר.</p><p>${c.travel > 0 ? `באפליקציה מוגדר החזר של <b>${U.money(c.travel)}</b> ליום עבודה.` : 'באפליקציה <b>לא מוגדר</b> החזר נסיעות. אפשר להגדיר בהגדרות › העבודה שלי › נסיעות ותקופת שכר.'}</p>`, l: () => link(KZ(PAGES.travel)) },
+    { id: 'sick', gov: 'sick', ic: 'thermo', t: 'דמי מחלה', b: (c) => `<p>צוברים <b>1.5 ימי מחלה</b> לכל חודש עבודה מלא (עד 90). התשלום: היום הראשון – 0%, השני והשלישי – 50%, מהרביעי – 100%. צריך אישור מחלה.</p>${c.bal ? `<p>הצבירה שלך לפי האפליקציה: <b>${U.num(c.bal.sickAccrued - c.bal.sickUsed, 1)}</b> ימים.</p>` : ''}`, l: () => link(KZ(PAGES.sick)) },
+    { id: 'vacation', gov: 'vacation', ic: 'beach', t: 'חופשה שנתית', b: (c) => `<p>מגיעים ימי חופשה בתשלום לפי הוותק והיקף המשרה. אסור לוותר עליהם, וכשעוזבים את העבודה מקבלים פדיון על הימים שלא נוצלו.</p>${c.bal ? `<p>היתרה שלך לפי האפליקציה: <b>${U.num(c.bal.vacationAccrued - c.bal.vacationUsed, 1)}</b> ימים.</p>` : ''}`, l: () => link(KZ(PAGES.vacation)) },
+    { id: 'recup', gov: 'recup', ic: 'gift', t: 'דמי הבראה', b: (c) => `<p>אחרי <b>שנת עבודה</b> מגיעים דמי הבראה: מספר ימים לפי הוותק, כפול תעריף יום הבראה, לפי היקף המשרה.</p><p>${c.bal && c.bal.recuperation ? (c.bal.recuperation.eligible ? `לפי האפליקציה מגיעים לך כ-<b>${U.money(c.bal.recuperation.amount, 0)}</b> לשנה.` : `לפי תאריך תחילת העבודה, הזכאות מתחילה ב-${U.fmtDate(c.bal.recuperation.eligibleFrom)}.`) : 'הגדר תאריך תחילת עבודה כדי לחשב.'}</p>`, l: () => link(KZ(PAGES.recuperation)) },
+    { id: 'pension', gov: 'pension', ic: 'shield', t: 'פנסיה', b: (c) => `<p>חובה מגיל <b>21 לגבר ו-20 לאישה</b>, אחרי 6 חודשי עבודה (3 חודשים אם כבר יש לך קרן פעילה). ההפרשה: 6% ממך, 6.5% מהמעסיק ועוד 6% לפיצויים.</p><p>${c.pension}</p>`, l: () => link(KZ(PAGES.pension)) },
+    { id: 'payslip', gov: 'labor', ic: 'receipt', t: 'תלוש שכר ומועד תשלום', b: () => '<p>מגיע לך <b>תלוש שכר</b> מפורט כל חודש, והשכר צריך להיות משולם עד <b>ה-9 בחודש</b> שאחרי חודש העבודה. איחור מזכה בפיצוי הלנת שכר.</p><p>האפליקציה בודקת את התלוש מול המשמרות שרשמת (כפתור +, "תלוש שכר").</p>', l: () => link(KZ(PAGES.payslip)) },
+    { id: 'deduct', gov: 'labor', ic: 'minus', t: 'ניכויים מהשכר', b: () => '<p>מותר לנכות מהשכר רק ניכויי חובה (מס, ביטוח לאומי, פנסיה) וניכויים שהסכמת להם בכתב. <b>קנסות</b>, חוסרים בקופה או ציוד שנשבר – בדרך כלל אסור לנכות בלי הסכמה.</p>', l: () => link(KZ(PAGES.deductions)) },
+    { id: 'leave', gov: 'labor', ic: 'alert', t: 'פיטורים והתפטרות', b: () => '<p>לפני פיטורים מגיע <b>שימוע</b>, ומגיעה <b>הודעה מוקדמת</b> לפי הוותק (גם כשמתפטרים צריך לתת הודעה מוקדמת). אחרי שנת עבודה, בפיטורים מגיעים גם <b>פיצויים</b>.</p>', l: () => link(KZ(PAGES.notice)) },
   ];
   const YOUTH = (R, age) => [
     ['clock', `עד <b>${R.dayHours} שעות ביום</b> ועד <b>40 בשבוע</b>${R.dayHours === 9 ? ' (9 רק במקום עבודה של 5 ימים)' : ''}.`],
@@ -19646,9 +19669,9 @@ A cell with only a shift name and no hours: use בוקר 07:00-15:00, צהריי
       <div class="card rt-checks">${checks(c).map(([k, t, d]) => `<div class="rt-row"><span class="rt-mark" style="color:${MARK[k][1]}">${icon(MARK[k][0], 's')}</span><div><div class="t">${t}</div><div class="d">${esc(d)}</div></div></div>`).join('')}</div>
       ${minor ? `<div class="section-title">${icon('users', 's')} לבני נוער (גיל ${c.age})</div>
         <div class="card rt-youth" data-topic="נוער לילה הפסקה שעות אישור רפואי">${YOUTH(R, c.age).map(([ic, t]) => `<div class="rt-row"><span class="rt-mark">${icon(ic, 's')}</span><div class="t">${t}</div></div>`).join('')}
-        <div class="tiny" style="margin-top:8px">${link(KZ(PAGES.youthGuide), 'המדריך לנוער עובד ב"כל זכות"')}</div></div>` : ''}
+        <div class="tiny" style="margin-top:8px">${gov('youth')}${link(KZ(PAGES.youthGuide), 'המדריך לנוער עובד ב"כל זכות"')}</div></div>` : ''}
       <div class="section-title">${icon('list', 's')} המדריך</div>
-      <div class="card rt-topics">${TOPICS.map((tp) => `<details class="rt-topic" data-topic="${esc(tp.t)}"><summary>${icon(tp.ic, 's')}<span>${tp.t}</span><span class="chev">${icon('left', 's')}</span></summary><div class="rt-body">${tp.b(c)}<div class="tiny">${tp.l()}</div></div></details>`).join('')}</div>
+      <div class="card rt-topics">${TOPICS.map((tp) => `<details class="rt-topic" data-topic="${esc(tp.t)}"><summary>${icon(tp.ic, 's')}<span>${tp.t}</span><span class="chev">${icon('left', 's')}</span></summary><div class="rt-body">${tp.b(c)}<div class="tiny">${gov(typeof tp.gov === 'function' ? tp.gov() : tp.gov)}${tp.l()}</div></div></details>`).join('')}</div>
       <div class="section-title">${icon('alert', 's')} משהו לא בסדר?</div>
       <div class="card rt-help">
         <ol><li><b>תעד</b>: האפליקציה כבר שומרת את המשמרות, והדוח לבירור מרכז הכול (תלושים, דמי חגים, כל המשמרות) עם מכתב מוכן.</li>
@@ -19658,6 +19681,8 @@ A cell with only a shift name and no hours: use בוקר 07:00-15:00, צהריי
         <button class="btn tonal block" data-rt-ai>${icon('sparkle')} שאלה אחרת? שאל את העוזר</button>
       </div>
       </div>
+      <div class="section-title">${icon('shield', 's')} מקורות רשמיים</div>
+      <div class="card rt-sources"><p>שעתי היא אפליקציה פרטית, ו<b>אינה מייצגת</b> את משרד העבודה, רשות המסים, המוסד לביטוח לאומי או כל גוף ממשלתי אחר. המידע כאן מבוסס על המקורות הרשמיים:</p><ul>${SOURCES.map(([k, t]) => '<li>' + link(GOV[k], t) + '</li>').join('')}</ul></div>
       <div class="tiny muted" style="margin:12px 4px 4px">מידע כללי בלבד ואינו ייעוץ משפטי. תנאים בהסכם קיבוצי, בצו הרחבה או בחוזה שלך יכולים להיות טובים יותר.</div>
     </div>`;
   }

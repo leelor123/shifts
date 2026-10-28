@@ -25,19 +25,17 @@ Pay for every shift in Israel: Shabbat, holidays, overtime and payslip checks.
 ```
 Shaati helps hourly workers in Israel know exactly what they earned, and check that the payslip matches the hours they worked. In English, Hebrew, Russian and Arabic.
 
+⚠️ Shaati is a private app. It does not represent, and is not affiliated with, the Ministry of Labor, the Tax Authority, the National Insurance Institute or any other government body. The official sources are listed at the end and in the app.
+
 ⏱ Shifts in one tap
 • A shift timer with breaks, or add past shifts by hand
 • Import your work schedule: a photo of it or the WhatsApp message (or share it straight from WhatsApp), and your shifts land in the calendar
 • Import an hours report from work: Excel, CSV, PDF or a photo, read as a table, and every shift comes in at once
-• "Forgot to end your shift?": a gentle question with your usual end time ready to tap
-• Several roles and rates, with the history of your raises; templates and one-tap copies
 • Travel, bonuses, tips and deductions
-• Home-screen widgets: start a shift, this month, your goal and payday
 
 💰 Pay by Israel's rules
 • Shabbat and holiday premiums by the Shabbat times of your town (every locality in Israel, a built-in Hebrew calendar)
 • Daily overtime tiers, night premium, rounding and a minimum shift
-• The legal break, and a special percent rate for special days (e.g. 200% on election day)
 • Estimated net: income tax, credit points, National Insurance, health tax and pension
 • Workers under 18 see their pay without deductions, as is usual
 
@@ -48,10 +46,7 @@ Shaati helps hourly workers in Israel know exactly what they earned, and check t
 • A report (PDF) and a letter for your employer: every finding, holiday pay and all your shifts in one place
 
 📊 Summaries and alerts
-• Weekly, monthly and yearly summaries compared with the period before
-• Charts, Hebrew and Gregorian calendar, export to CSV and to your calendar (ICS)
 • Smart alerts: unusual weeks, the month's forecast, a payslip reminder
-• Vacation and sick-day balances
 
 ⚖️ Your rights
 • A personal rights guide that works offline: minimum wage, overtime, Shabbat, travel, sick pay, vacation, recuperation pay and pension
@@ -61,22 +56,32 @@ Shaati helps hourly workers in Israel know exactly what they earned, and check t
 
 🎯 Goals and motivation
 • A monthly goal, and a savings goal for something you want, with the work hours still needed
-• Your month as a short story, with an image to share
 • Medals, five short games about pay, rights and reading a payslip, and a champions table (a nickname only)
-• Advanced analysis: which day and hour pay you best, and "what if" questions
 
 🔒 Privacy
 • Sign in with Google; your data is saved in your own account and only you can access it
 • Works offline and syncs when the connection is back
 • No ads, no tracking cookies, no selling of data (only anonymous statistics you can turn off)
 • Export or delete all your data and the account at any time
-• Lock with a code or your fingerprint
 
 ✨ Shaati Plus (optional)
 Designs for the pay card, your own photo as its background, unlimited analysis and exports. A monthly subscription you can cancel any time; everything else stays free.
 
 ✨ AI assistant (optional)
 Ask freely about your rights, your payslip or the app, with your own Anthropic API key.
+
+📚 Official sources (gov.il, in Hebrew)
+• Minimum wage: https://www.gov.il/he/Departments/Guides/minimum-wage
+• Working hours, overtime and nights: https://www.gov.il/he/Departments/Guides/overtime-and-extra-hours
+• Weekly rest and holidays: https://www.gov.il/he/Departments/Guides/weekends-and-holidays
+• Working youth: https://www.gov.il/he/Departments/Guides/rights-of-working-youth
+• Annual leave: https://www.gov.il/he/Departments/Guides/annual-vacations
+• Recuperation pay: https://www.gov.il/he/Departments/Guides/convalescence-pay
+• Sick pay: https://www.gov.il/he/Departments/Guides/paid-sick-leave
+• Travel: https://www.gov.il/he/Departments/Guides/travel-allowance
+• Pension: https://www.gov.il/he/Departments/Guides/pension-insurance
+• Income tax: https://www.gov.il/he/departments/israel_tax_authority/govil-landing-page
+• National Insurance and health tax: https://www.btl.gov.il
 
 Important: the calculations are estimates only, not legal, accounting or tax advice. When in doubt, check with your employer, an accountant or another qualified source.
 ```
@@ -107,21 +112,17 @@ Shaati – учёт смен и зарплаты
 ```
 Shaati помогает почасовым работникам в Израиле точно знать, сколько они заработали, и проверять, что расчётный лист (тлуш) совпадает с отработанными часами. На русском, иврите, английском и арабском.
 
+⚠️ Shaati — частное приложение. Оно не представляет Министерство труда, Налоговое управление, Битуах леуми или любой другой государственный орган и не связано с ними. Официальные источники — в конце описания и в приложении.
+
 ⏱ Смены в одно нажатие
 • Таймер смены с перерывами или ручное добавление прошлых смен
 • Импорт графика работы: фото графика или сообщение из WhatsApp (или «Поделиться» прямо из WhatsApp) — и ваши смены в календаре
 • Импорт отчёта часов с работы: Excel, CSV, PDF или фото читается как таблица, и все смены добавляются сразу
-• «Забыли завершить смену?» — мягкий вопрос с вашим обычным временем окончания
-• Несколько должностей и ставок, с историей повышений; шаблоны и копирование смены
-• Проезд, бонусы, чаевые и вычеты
-• Виджеты на главный экран: начать смену, этот месяц, цель и день зарплаты
 
 💰 Зарплата по правилам Израиля
 • Надбавка за шаббат и праздники по времени шаббата в вашем городе (все населённые пункты Израиля, встроенный еврейский календарь)
 • Сверхурочные по дневным ступеням, ночная надбавка, округление и минимальная смена
-• Перерыв по закону и особая ставка в процентах для особых дней (например, 200% в день выборов)
 • Расчётное нетто: подоходный налог, льготные пункты, Битуах леуми, налог на здоровье и пенсия
-• Работникам младше 18 зарплата показывается без удержаний, как обычно и бывает
 
 📄 Проверка расчётного листа
 • Загрузите лист (PDF или фото) — приложение прочитает его прямо на телефоне
@@ -130,10 +131,7 @@ Shaati помогает почасовым работникам в Израил�
 • Отчёт (PDF) и письмо работодателю: все находки, оплата праздников и все смены в одном месте
 
 📊 Сводки и уведомления
-• Недельные, месячные и годовые сводки в сравнении с прошлым периодом
-• Графики, еврейский и григорианский календарь, экспорт в CSV и в календарь (ICS)
 • Умные уведомления: необычная неделя, прогноз на месяц, напоминание о листе
-• Остатки отпуска и больничных
 
 ⚖️ Ваши права
 • Личный справочник прав, работает без интернета: минимальная зарплата, сверхурочные, шаббат, проезд, больничные, отпуск, дмей авраа и пенсия
@@ -143,22 +141,31 @@ Shaati помогает почасовым работникам в Израил�
 
 🎯 Цели и мотивация
 • Цель на месяц и цель накоплений на покупку — с числом часов работы, которых не хватает
-• Ваш месяц в виде короткой истории с картинкой для отправки
 • Медали, пять коротких игр о зарплате, правах и чтении расчётного листа, и таблица чемпионов (только ник)
-• Расширенный анализ: какие дни и часы выгоднее всего, и вопросы «что если»
 
 🔒 Конфиденциальность
 • Вход через Google; данные хранятся в вашем аккаунте, доступ есть только у вас
-• Работает без интернета и синхронизируется, когда сеть вернётся
 • Без рекламы, без отслеживающих cookie и без продажи данных (только анонимная статистика, которую можно отключить)
 • Экспорт или удаление всех данных и аккаунта в любой момент
-• Блокировка кодом или отпечатком пальца
 
 ✨ Shaati Plus (по желанию)
 Дизайны карточки зарплаты, своё фото на фоне, анализ и экспорт без ограничений. Месячная подписка, которую можно отменить в любой момент; всё остальное бесплатно.
 
 ✨ AI-помощник (по желанию)
 Свободные вопросы о правах, расчётном листе или приложении — с вашим собственным API-ключом Anthropic.
+
+📚 Официальные источники (gov.il, на иврите)
+• Минимальная зарплата: https://www.gov.il/he/Departments/Guides/minimum-wage
+• Рабочее время, сверхурочные и ночь: https://www.gov.il/he/Departments/Guides/overtime-and-extra-hours
+• Еженедельный отдых и праздники: https://www.gov.il/he/Departments/Guides/weekends-and-holidays
+• Работающие подростки: https://www.gov.il/he/Departments/Guides/rights-of-working-youth
+• Ежегодный отпуск: https://www.gov.il/he/Departments/Guides/annual-vacations
+• Оплата оздоровления: https://www.gov.il/he/Departments/Guides/convalescence-pay
+• Больничные: https://www.gov.il/he/Departments/Guides/paid-sick-leave
+• Проезд: https://www.gov.il/he/Departments/Guides/travel-allowance
+• Пенсия: https://www.gov.il/he/Departments/Guides/pension-insurance
+• Подоходный налог: https://www.gov.il/he/departments/israel_tax_authority/govil-landing-page
+• Битуах леуми и налог на здоровье: https://www.btl.gov.il
 
 Важно: расчёты — это оценка, а не юридическая, бухгалтерская или налоговая консультация. Если сомневаетесь, уточните у работодателя, бухгалтера или другого специалиста.
 ```
@@ -188,6 +195,8 @@ Shaati – تتبع الورديات والأجر
 **الوصف الكامل**
 ```
 يساعد Shaati العمال بالساعة في إسرائيل على معرفة كم ربحوا بالضبط، والتأكد من أن قسيمة الراتب تطابق الساعات التي عملوها. بالعربية والعبرية والإنجليزية والروسية.
+
+⚠️ Shaati تطبيق خاص: لا يمثّل وزارة العمل أو سلطة الضرائب أو مؤسسة التأمين الوطني أو أي جهة حكومية أخرى، ولا يرتبط بها. المصادر الرسمية مذكورة في نهاية الوصف وفي التطبيق.
 
 ⏱ الورديات بنقرة واحدة
 • مؤقت وردية مع الاستراحات، أو إضافة ورديات سابقة يدويًا
@@ -241,6 +250,19 @@ Shaati – تتبع الورديات والأجر
 
 ✨ مساعد AI (اختياري)
 أسئلة حرة عن حقوقك أو قسيمتك أو التطبيق، بمفتاح API الخاص بك من Anthropic.
+
+📚 مصادر رسمية (gov.il، بالعبرية)
+• الحد الأدنى للأجور: https://www.gov.il/he/Departments/Guides/minimum-wage
+• ساعات العمل والساعات الإضافية والليل: https://www.gov.il/he/Departments/Guides/overtime-and-extra-hours
+• الراحة الأسبوعية والأعياد: https://www.gov.il/he/Departments/Guides/weekends-and-holidays
+• الشباب العاملون: https://www.gov.il/he/Departments/Guides/rights-of-working-youth
+• الإجازة السنوية: https://www.gov.il/he/Departments/Guides/annual-vacations
+• بدل الاستجمام: https://www.gov.il/he/Departments/Guides/convalescence-pay
+• أجر المرض: https://www.gov.il/he/Departments/Guides/paid-sick-leave
+• السفر: https://www.gov.il/he/Departments/Guides/travel-allowance
+• التقاعد: https://www.gov.il/he/Departments/Guides/pension-insurance
+• ضريبة الدخل: https://www.gov.il/he/departments/israel_tax_authority/govil-landing-page
+• التأمين الوطني وضريبة الصحة: https://www.btl.gov.il
 
 مهم: الحسابات تقديرية فقط وليست استشارة قانونية أو محاسبية أو ضريبية. عند الشك، تحقّق مع صاحب العمل أو محاسب أو جهة مختصة.
 ```

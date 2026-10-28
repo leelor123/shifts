@@ -2,7 +2,7 @@
 <html lang="ar" dir="rtl">
 <head>
 <meta charset="utf-8">
-<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'sha256-P1vY/EiXw5RkSguavX5FeRFgUvcBGNPUKJiorElIG7g=' 'sha256-3yF9AufW4aMNoWl6EL5qVW2uOPKLVgyD0qyjGVIl++U=' https://www.gstatic.com https://apis.google.com https://cdnjs.cloudflare.com https://cdn.jsdelivr.net 'wasm-unsafe-eval'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com data:; img-src 'self' data: blob: https:; connect-src 'self' https: wss:; frame-src https://shiftpay-70ab6.firebaseapp.com https://accounts.google.com https://apis.google.com https://*.google.com; worker-src 'self' blob: https://cdnjs.cloudflare.com https://cdn.jsdelivr.net; media-src 'self' data: blob:; manifest-src 'self'; object-src 'none'; base-uri 'self'; form-action 'self'">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'sha256-P1vY/EiXw5RkSguavX5FeRFgUvcBGNPUKJiorElIG7g=' 'sha256-KgY7DEXcjI5zRuzYmXE42+BKYiN4O65L1pSDYDfQ0Bc=' https://www.gstatic.com https://apis.google.com https://cdnjs.cloudflare.com https://cdn.jsdelivr.net 'wasm-unsafe-eval'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com data:; img-src 'self' data: blob: https:; connect-src 'self' https: wss:; frame-src https://shiftpay-70ab6.firebaseapp.com https://accounts.google.com https://apis.google.com https://*.google.com; worker-src 'self' blob: https://cdnjs.cloudflare.com https://cdn.jsdelivr.net; media-src 'self' data: blob:; manifest-src 'self'; object-src 'none'; base-uri 'self'; form-action 'self'">
 <script>(function(){try{var l=localStorage.getItem('shaati.lang'),h=document.documentElement.lang;if(l&&l!==h&&/^(he|ar|ru|en)$/.test(l)&&!sessionStorage.getItem('langHop')){sessionStorage.setItem('langHop','1');location.replace((l==='he'?'index.html':'index.'+l+'.html')+location.search+location.hash)}else sessionStorage.removeItem('langHop')}catch(e){}})();</script>
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="theme-color" content="#0d2b6b">
@@ -928,6 +928,8 @@ body.fx .item:active { transform: scale(.985); }
 .rights .rt-body p { margin: 0 0 8px; }
 .rights a { color: var(--primary); font-weight: 600; }
 .rights .rt-help ol { margin: 0 0 12px; padding-inline-start: 20px; line-height: 1.7; }
+.rights .rt-sources p { margin: 0 0 8px; font-size: .86rem; line-height: 1.6; }
+.rights .rt-sources ul { margin: 0; padding-inline-start: 20px; line-height: 1.9; font-size: .86rem; }
 .highlight.go .hl-ic { background: var(--primary); color: var(--on-primary); }
 
 /* ---- onboarding: friendly questions ---- */
@@ -2592,7 +2594,7 @@ html:not([lang="he"]) .lb-games button, html:not([lang="he"]) .lb-periods button
 <noscript><div style="padding:24px;font-family:sans-serif">يتطلب التطبيق JavaScript.</div></noscript>
 <script>
 window.APP_VERSION = '1.22.1';
-window.APP_BUILD = '1.22.1-6280fc99';
+window.APP_BUILD = '1.22.1-2d74c9c8';
 /* ---- core/util.js ---- */
 /* ============================================================
  * util.js — date/time helpers and formatting.
@@ -19565,23 +19567,44 @@ ${name}`.trim();
   // i18n-keep-end
   const KZ = (page) => 'https://www.kolzchut.org.il/he/' + encodeURIComponent(page.replace(/ /g, '_'));
   const link = (href, text) => `<a href="${href}" target="_blank" rel="noopener">${esc(text || "التفاصيل الكاملة في موقع \"كل حق\" (بالعبرية)")} ↗</a>`;
+  // i18n-keep-start the official sources (gov.il guides, found in gov.il's own search on 28 Oct 2026): Google Play asks
+  // that government information point at its official source (tests/links.test.js checks the list)
+  const GOV = {
+    minwage: 'https://www.gov.il/he/Departments/Guides/minimum-wage',
+    hours: 'https://www.gov.il/he/Departments/Guides/overtime-and-extra-hours',
+    rest: 'https://www.gov.il/he/Departments/Guides/weekends-and-holidays',
+    youth: 'https://www.gov.il/he/Departments/Guides/rights-of-working-youth',
+    vacation: 'https://www.gov.il/he/Departments/Guides/annual-vacations',
+    recup: 'https://www.gov.il/he/Departments/Guides/convalescence-pay',
+    sick: 'https://www.gov.il/he/Departments/Guides/paid-sick-leave',
+    travel: 'https://www.gov.il/he/Departments/Guides/travel-allowance',
+    pension: 'https://www.gov.il/he/Departments/Guides/pension-insurance',
+    labor: 'https://www.gov.il/he/departments/labor',
+    tax: 'https://www.gov.il/he/departments/israel_tax_authority/govil-landing-page',
+    btl: 'https://www.btl.gov.il/',
+  };
+  // i18n-keep-end
+  const gov = (key) => (key && GOV[key] ? link(GOV[key], "المصدر الرسمي على gov.il") + ' · ' : '');
+  const SOURCES = [['minwage', "الحد الأدنى للأجور"], ['hours', "ساعات العمل والساعات الإضافية"], ['rest', "الراحة الأسبوعية وعطل الأعياد"], ['youth', "حقوق الشباب العاملين"],
+    ['vacation', "الإجازة السنوية"], ['recup', "بدل الاستجمام"], ['sick', "أجر المرض"], ['travel', "استرداد مصاريف السفر"], ['pension', "التأمين التقاعدي الإلزامي"],
+    ['labor', "وزارة العمل"], ['tax', "سلطة الضرائب (ضريبة الدخل)"], ['btl', "مؤسسة التأمين الوطني"]];
 
   /* ---------------- the guide (general rules, short and plain) ---------------- */
   const TOPICS = [
-    { id: 'minwage', ic: 'wallet', t: "الحد الأدنى للأجور", b: (c) => `<p>من نيسان 2026: <b>35.40 ₪ للساعة</b> للعامل من سن 18. للشباب: حتى سن 16 – 26.07 ₪، في سن 16 – 27.94 ₪، في سن 17 – 30.92 ₪.</p><p>${c.mw.youth ? `لعمرك (${c.mw.age}) الحد الأدنى هو <b>${U.money(c.mw.hourly)}</b>.` : c.mw.age != null ? `الحد الأدنى الذي ينطبق عليك: <b>${U.money(c.mw.hourly)}</b>.` : "أضف تاريخ ميلادك في الإعدادات لترى الحد الأدنى لعمرك."} يحق لصاحب العمل أن يدفع أكثر، لكن ليس أقل.</p>`, l: () => link(KZ(App.isMinorNow() ? PAGES.youthPay : PAGES.minWage)) },
-    { id: 'overtime', ic: 'clock', t: "الساعات الإضافية", b: () => "<p>الساعتان الأوليان بعد يوم العمل العادي تُدفعان بنسبة <b>125%</b>، وما بعد ذلك بنسبة <b>150%</b>. وتبدأ الساعات الإضافية أيضًا بعد 42 ساعة في الأسبوع.</p><p>في التطبيق: الإعدادات › حساب الراتب › قواعد الحساب (متى تبدأ وبأي نسبة).</p>", l: () => link(KZ(PAGES.overtime)) },
-    { id: 'shabbat', ic: 'candle', t: "السبت والأعياد", b: () => "<p>العمل في يوم الراحة الأسبوعية (السبت غالبًا) يُدفع بنسبة <b>150%</b> على الأقل. تُحدَّد الساعات بحسب دخول السبت وخروجه، ويحسبها التطبيق بحسب مدينتك.</p><p>يستحق العامل بالساعة عادةً أيضًا <b>بدل الأعياد</b> بعد 3 أشهر عمل، عن عيد يقع في يوم عادي، وفق شروط أمر التوسيع.</p>", l: () => link(KZ(PAGES.weeklyRest)) },
-    { id: 'holidays', ic: 'calendar', t: "بدل الأعياد", b: (c) => `<p>مع الأجر بالساعة يحق لك الدفع عن <b>9 أيام عيد</b> في السنة لم تعمل فيها بسبب العيد: رأس السنة العبرية، يوم الغفران، عيد العُرُش، فرحة التوراة، الفصح واليوم السابع من الفصح، عيد الأسابيع ويوم الاستقلال (يمكن لغير اليهود اختيار أعياد دينهم). الشروط: <b>3 أشهر عمل</b> في مكان العمل، ووقع العيد في يوم ${App.g("كان يُفترض بك", "كان يُفترض بكِ")} أن تعمل فيه، وعملت في اليوم الذي قبله والذي بعده (أو لم تُدرج فيهما). الدفع: يوم عمل عادي، بحسب معدل ساعاتك اليومي مضروبًا في أجرك للساعة. العيد الواقع يوم الجمعة أو السبت يُدفع فقط لمن يعمل في هذين اليومين.</p>${holidayList(c)}`, l: () => link(KZ(PAGES.holidayPay)) },
+    { id: 'minwage', gov: () => (App.isMinorNow() ? 'youth' : 'minwage'), ic: 'wallet', t: "الحد الأدنى للأجور", b: (c) => `<p>من نيسان 2026: <b>35.40 ₪ للساعة</b> للعامل من سن 18. للشباب: حتى سن 16 – 26.07 ₪، في سن 16 – 27.94 ₪، في سن 17 – 30.92 ₪.</p><p>${c.mw.youth ? `لعمرك (${c.mw.age}) الحد الأدنى هو <b>${U.money(c.mw.hourly)}</b>.` : c.mw.age != null ? `الحد الأدنى الذي ينطبق عليك: <b>${U.money(c.mw.hourly)}</b>.` : "أضف تاريخ ميلادك في الإعدادات لترى الحد الأدنى لعمرك."} يحق لصاحب العمل أن يدفع أكثر، لكن ليس أقل.</p>`, l: () => link(KZ(App.isMinorNow() ? PAGES.youthPay : PAGES.minWage)) },
+    { id: 'overtime', gov: 'hours', ic: 'clock', t: "الساعات الإضافية", b: () => "<p>الساعتان الأوليان بعد يوم العمل العادي تُدفعان بنسبة <b>125%</b>، وما بعد ذلك بنسبة <b>150%</b>. وتبدأ الساعات الإضافية أيضًا بعد 42 ساعة في الأسبوع.</p><p>في التطبيق: الإعدادات › حساب الراتب › قواعد الحساب (متى تبدأ وبأي نسبة).</p>", l: () => link(KZ(PAGES.overtime)) },
+    { id: 'shabbat', gov: 'rest', ic: 'candle', t: "السبت والأعياد", b: () => "<p>العمل في يوم الراحة الأسبوعية (السبت غالبًا) يُدفع بنسبة <b>150%</b> على الأقل. تُحدَّد الساعات بحسب دخول السبت وخروجه، ويحسبها التطبيق بحسب مدينتك.</p><p>يستحق العامل بالساعة عادةً أيضًا <b>بدل الأعياد</b> بعد 3 أشهر عمل، عن عيد يقع في يوم عادي، وفق شروط أمر التوسيع.</p>", l: () => link(KZ(PAGES.weeklyRest)) },
+    { id: 'holidays', gov: 'rest', ic: 'calendar', t: "بدل الأعياد", b: (c) => `<p>مع الأجر بالساعة يحق لك الدفع عن <b>9 أيام عيد</b> في السنة لم تعمل فيها بسبب العيد: رأس السنة العبرية، يوم الغفران، عيد العُرُش، فرحة التوراة، الفصح واليوم السابع من الفصح، عيد الأسابيع ويوم الاستقلال (يمكن لغير اليهود اختيار أعياد دينهم). الشروط: <b>3 أشهر عمل</b> في مكان العمل، ووقع العيد في يوم ${App.g("كان يُفترض بك", "كان يُفترض بكِ")} أن تعمل فيه، وعملت في اليوم الذي قبله والذي بعده (أو لم تُدرج فيهما). الدفع: يوم عمل عادي، بحسب معدل ساعاتك اليومي مضروبًا في أجرك للساعة. العيد الواقع يوم الجمعة أو السبت يُدفع فقط لمن يعمل في هذين اليومين.</p>${holidayList(c)}`, l: () => link(KZ(PAGES.holidayPay)) },
     { id: 'tips', ic: 'gift', t: "البقشيش (النُدُل)", b: () => "<p>في المطعم أو المقهى أو البار، البقشيش <b>جزء من الأجر</b>: يمر عبر صاحب العمل ويظهر في قسيمة الراتب، ولذلك يُحتسب أيضًا في التقاعد والإجازة وأجر المرض والتعويضات.</p><p>ما تحصل عليه عن كل ساعة، بقشيش فقط أو أجر وبقشيش، يجب أن يكون <b>على الأقل الحد الأدنى للأجور</b>. لا يجوز تمويل السفر أو بدل الاستجمام من البقشيش، إلا بموافقة خطية وعندما يزيد البقشيش عن الأجر المتفق عليه.</p><p>في قاعات وحدائق المناسبات البقشيش ليس جزءًا من الأجر. في التطبيق تسجّل البقشيش في كل وردية (أو في إضافة › مكافأة / بقشيش)، وفحص الحد الأدنى للأجور يحتسبه.</p>", l: () => link(KZ(PAGES.tips)) },
-    { id: 'breaks', ic: 'coffee', t: "الاستراحات والراحة", b: () => "<p>في يوم عمل من <b>6 ساعات فأكثر</b> تستحق استراحة مدتها <b>45 دقيقة</b>، منها نصف ساعة متواصلة. بين يومي عمل، وراحة أسبوعية لا تقل عن 36 ساعة متواصلة.</p>", l: () => link(KZ(App.isMinorNow() ? PAGES.youthBreaks : PAGES.breaks)) },
-    { id: 'travel', ic: 'car', t: "السفر", b: (c) => `<p>يجب على صاحب العمل استرداد نفقات السفر إلى العمل والعودة، بسعر المواصلات العامة وحتى سقف يومي يُحدَّث سنويًا. الاسترداد إضافة إلى الأجر.</p><p>${c.travel > 0 ? `في التطبيق مُعدّ استرداد بقيمة <b>${U.money(c.travel)}</b> ليوم العمل.` : "في التطبيق استرداد نفقات السفر <b>غير مُعدّ</b>. يمكنك إعداده في الإعدادات › عملي › السفر وفترة الراتب."}</p>`, l: () => link(KZ(PAGES.travel)) },
-    { id: 'sick', ic: 'thermo', t: "أجر المرض", b: (c) => `<p>تجمع <b>1.5 يوم مرض</b> عن كل شهر عمل كامل (حتى 90). الدفع: اليوم الأول – 0%، الثاني والثالث – 50%، من الرابع – 100%. يلزم تقرير طبي.</p>${c.bal ? `<p>رصيدك بحسب التطبيق: <b>${U.num(c.bal.sickAccrued - c.bal.sickUsed, 1)}</b> يوم.</p>` : ''}`, l: () => link(KZ(PAGES.sick)) },
-    { id: 'vacation', ic: 'beach', t: "الإجازة السنوية", b: (c) => `<p>تستحق أيام إجازة مدفوعة بحسب الأقدمية ونطاق الوظيفة. لا يجوز التنازل عنها، وعند ترك العمل تحصل على بدل الأيام التي لم تُستغل.</p>${c.bal ? `<p>رصيدك بحسب التطبيق: <b>${U.num(c.bal.vacationAccrued - c.bal.vacationUsed, 1)}</b> يوم.</p>` : ''}`, l: () => link(KZ(PAGES.vacation)) },
-    { id: 'recup', ic: 'gift', t: "بدل الاستجمام", b: (c) => `<p>بعد <b>سنة عمل</b> تستحق بدل الاستجمام: عدد أيام بحسب الأقدمية، مضروبًا في تعرفة يوم الاستجمام، بحسب نطاق الوظيفة.</p><p>${c.bal && c.bal.recuperation ? (c.bal.recuperation.eligible ? `بحسب التطبيق يحق لك نحو <b>${U.money(c.bal.recuperation.amount, 0)}</b> سنويًا.` : `بحسب تاريخ بدء العمل، يبدأ الاستحقاق في ${U.fmtDate(c.bal.recuperation.eligibleFrom)}.`) : "حدّد تاريخ بدء العمل لحساب ذلك."}</p>`, l: () => link(KZ(PAGES.recuperation)) },
-    { id: 'pension', ic: 'shield', t: "التقاعد", b: (c) => `<p>إلزامي من سن <b>21 للرجل و20 للمرأة</b>، بعد 6 أشهر عمل (3 أشهر إذا كان لديك صندوق فعّال). المساهمات: 6% منك، 6.5% من صاحب العمل و6% إضافية للتعويضات.</p><p>${c.pension}</p>`, l: () => link(KZ(PAGES.pension)) },
-    { id: 'payslip', ic: 'receipt', t: "قسيمة الراتب وموعد الدفع", b: () => "<p>يحق لك <b>قسيمة راتب</b> مفصّلة كل شهر، ويجب دفع الأجر حتى <b>اليوم التاسع من الشهر</b> الذي يلي شهر العمل. التأخير يمنحك تعويضًا عن تأخير الأجر.</p><p>يفحص التطبيق قسيمة الراتب مقابل الورديات التي سجّلتها (زر +، \"قسيمة الراتب\").</p>", l: () => link(KZ(PAGES.payslip)) },
-    { id: 'deduct', ic: 'minus', t: "الاقتطاعات من الأجر", b: () => "<p>يجوز الاقتطاع من الأجر فقط الاقتطاعات الإلزامية (الضريبة، التأمين الوطني، التقاعد) والاقتطاعات التي وافقت عليها كتابةً. <b>الغرامات</b>، أو عجز في الصندوق أو معدات مكسورة – عادةً لا يجوز اقتطاعها دون موافقة.</p>", l: () => link(KZ(PAGES.deductions)) },
-    { id: 'leave', ic: 'alert', t: "الفصل والاستقالة", b: () => "<p>قبل الفصل يحق لك <b>جلسة استماع</b>، و<b>إشعار مسبق</b> بحسب الأقدمية (عند الاستقالة أيضًا يجب تقديم إشعار مسبق). بعد سنة عمل، يحق لك عند الفصل أيضًا <b>تعويضات</b>.</p>", l: () => link(KZ(PAGES.notice)) },
+    { id: 'breaks', gov: () => (App.isMinorNow() ? 'youth' : 'hours'), ic: 'coffee', t: "الاستراحات والراحة", b: () => "<p>في يوم عمل من <b>6 ساعات فأكثر</b> تستحق استراحة مدتها <b>45 دقيقة</b>، منها نصف ساعة متواصلة. بين يومي عمل، وراحة أسبوعية لا تقل عن 36 ساعة متواصلة.</p>", l: () => link(KZ(App.isMinorNow() ? PAGES.youthBreaks : PAGES.breaks)) },
+    { id: 'travel', gov: 'travel', ic: 'car', t: "السفر", b: (c) => `<p>يجب على صاحب العمل استرداد نفقات السفر إلى العمل والعودة، بسعر المواصلات العامة وحتى سقف يومي يُحدَّث سنويًا. الاسترداد إضافة إلى الأجر.</p><p>${c.travel > 0 ? `في التطبيق مُعدّ استرداد بقيمة <b>${U.money(c.travel)}</b> ليوم العمل.` : "في التطبيق استرداد نفقات السفر <b>غير مُعدّ</b>. يمكنك إعداده في الإعدادات › عملي › السفر وفترة الراتب."}</p>`, l: () => link(KZ(PAGES.travel)) },
+    { id: 'sick', gov: 'sick', ic: 'thermo', t: "أجر المرض", b: (c) => `<p>تجمع <b>1.5 يوم مرض</b> عن كل شهر عمل كامل (حتى 90). الدفع: اليوم الأول – 0%، الثاني والثالث – 50%، من الرابع – 100%. يلزم تقرير طبي.</p>${c.bal ? `<p>رصيدك بحسب التطبيق: <b>${U.num(c.bal.sickAccrued - c.bal.sickUsed, 1)}</b> يوم.</p>` : ''}`, l: () => link(KZ(PAGES.sick)) },
+    { id: 'vacation', gov: 'vacation', ic: 'beach', t: "الإجازة السنوية", b: (c) => `<p>تستحق أيام إجازة مدفوعة بحسب الأقدمية ونطاق الوظيفة. لا يجوز التنازل عنها، وعند ترك العمل تحصل على بدل الأيام التي لم تُستغل.</p>${c.bal ? `<p>رصيدك بحسب التطبيق: <b>${U.num(c.bal.vacationAccrued - c.bal.vacationUsed, 1)}</b> يوم.</p>` : ''}`, l: () => link(KZ(PAGES.vacation)) },
+    { id: 'recup', gov: 'recup', ic: 'gift', t: "بدل الاستجمام", b: (c) => `<p>بعد <b>سنة عمل</b> تستحق بدل الاستجمام: عدد أيام بحسب الأقدمية، مضروبًا في تعرفة يوم الاستجمام، بحسب نطاق الوظيفة.</p><p>${c.bal && c.bal.recuperation ? (c.bal.recuperation.eligible ? `بحسب التطبيق يحق لك نحو <b>${U.money(c.bal.recuperation.amount, 0)}</b> سنويًا.` : `بحسب تاريخ بدء العمل، يبدأ الاستحقاق في ${U.fmtDate(c.bal.recuperation.eligibleFrom)}.`) : "حدّد تاريخ بدء العمل لحساب ذلك."}</p>`, l: () => link(KZ(PAGES.recuperation)) },
+    { id: 'pension', gov: 'pension', ic: 'shield', t: "التقاعد", b: (c) => `<p>إلزامي من سن <b>21 للرجل و20 للمرأة</b>، بعد 6 أشهر عمل (3 أشهر إذا كان لديك صندوق فعّال). المساهمات: 6% منك، 6.5% من صاحب العمل و6% إضافية للتعويضات.</p><p>${c.pension}</p>`, l: () => link(KZ(PAGES.pension)) },
+    { id: 'payslip', gov: 'labor', ic: 'receipt', t: "قسيمة الراتب وموعد الدفع", b: () => "<p>يحق لك <b>قسيمة راتب</b> مفصّلة كل شهر، ويجب دفع الأجر حتى <b>اليوم التاسع من الشهر</b> الذي يلي شهر العمل. التأخير يمنحك تعويضًا عن تأخير الأجر.</p><p>يفحص التطبيق قسيمة الراتب مقابل الورديات التي سجّلتها (زر +، \"قسيمة الراتب\").</p>", l: () => link(KZ(PAGES.payslip)) },
+    { id: 'deduct', gov: 'labor', ic: 'minus', t: "الاقتطاعات من الأجر", b: () => "<p>يجوز الاقتطاع من الأجر فقط الاقتطاعات الإلزامية (الضريبة، التأمين الوطني، التقاعد) والاقتطاعات التي وافقت عليها كتابةً. <b>الغرامات</b>، أو عجز في الصندوق أو معدات مكسورة – عادةً لا يجوز اقتطاعها دون موافقة.</p>", l: () => link(KZ(PAGES.deductions)) },
+    { id: 'leave', gov: 'labor', ic: 'alert', t: "الفصل والاستقالة", b: () => "<p>قبل الفصل يحق لك <b>جلسة استماع</b>، و<b>إشعار مسبق</b> بحسب الأقدمية (عند الاستقالة أيضًا يجب تقديم إشعار مسبق). بعد سنة عمل، يحق لك عند الفصل أيضًا <b>تعويضات</b>.</p>", l: () => link(KZ(PAGES.notice)) },
   ];
   const YOUTH = (R, age) => [
     ['clock', `حتى <b>${R.dayHours} ساعات في اليوم</b> وحتى <b>40 في الأسبوع</b>${R.dayHours === 9 ? " (9 فقط في مكان عمل من 5 أيام)" : ''}.`],
@@ -19663,9 +19686,9 @@ ${name}`.trim();
       <div class="card rt-checks">${checks(c).map(([k, t, d]) => `<div class="rt-row"><span class="rt-mark" style="color:${MARK[k][1]}">${icon(MARK[k][0], 's')}</span><div><div class="t">${t}</div><div class="d">${esc(d)}</div></div></div>`).join('')}</div>
       ${minor ? `<div class="section-title">${icon('users', 's')} للشباب (سن ${c.age})</div>
         <div class="card rt-youth" data-topic="شباب ليل استراحة ساعات شهادة طبية">${YOUTH(R, c.age).map(([ic, t]) => `<div class="rt-row"><span class="rt-mark">${icon(ic, 's')}</span><div class="t">${t}</div></div>`).join('')}
-        <div class="tiny" style="margin-top:8px">${link(KZ(PAGES.youthGuide), "دليل \"كل حق\" للشباب العاملين (بالعبرية)")}</div></div>` : ''}
+        <div class="tiny" style="margin-top:8px">${gov('youth')}${link(KZ(PAGES.youthGuide), "دليل \"كل حق\" للشباب العاملين (بالعبرية)")}</div></div>` : ''}
       <div class="section-title">${icon('list', 's')} الدليل</div>
-      <div class="card rt-topics">${TOPICS.map((tp) => `<details class="rt-topic" data-topic="${esc(tp.t)}"><summary>${icon(tp.ic, 's')}<span>${tp.t}</span><span class="chev">${icon('left', 's')}</span></summary><div class="rt-body">${tp.b(c)}<div class="tiny">${tp.l()}</div></div></details>`).join('')}</div>
+      <div class="card rt-topics">${TOPICS.map((tp) => `<details class="rt-topic" data-topic="${esc(tp.t)}"><summary>${icon(tp.ic, 's')}<span>${tp.t}</span><span class="chev">${icon('left', 's')}</span></summary><div class="rt-body">${tp.b(c)}<div class="tiny">${gov(typeof tp.gov === 'function' ? tp.gov() : tp.gov)}${tp.l()}</div></div></details>`).join('')}</div>
       <div class="section-title">${icon('alert', 's')} هل هناك خطأ ما؟</div>
       <div class="card rt-help">
         <ol><li><b>وثّق</b>: التطبيق يحفظ الورديات بالفعل، وتقرير الاستيضاح يجمع كل شيء (القسائم، بدل الأعياد، كل الورديات) مع رسالة جاهزة.</li>
@@ -19675,6 +19698,8 @@ ${name}`.trim();
         <button class="btn tonal block" data-rt-ai>${icon('sparkle')} سؤال آخر؟ اسأل المساعد</button>
       </div>
       </div>
+      <div class="section-title">${icon('shield', 's')} مصادر رسمية</div>
+      <div class="card rt-sources"><p>Shaati تطبيق خاص و<b>لا يمثّل</b> وزارة العمل أو سلطة الضرائب أو مؤسسة التأمين الوطني أو أي جهة حكومية أخرى. المعلومات هنا مبنية على المصادر الرسمية:</p><ul>${SOURCES.map(([k, t]) => '<li>' + link(GOV[k], t) + '</li>').join('')}</ul></div>
       <div class="tiny muted" style="margin:12px 4px 4px">معلومات عامة فقط وليست استشارة قانونية. قد تكون الشروط في اتفاقية جماعية أو أمر توسيع أو عقدك أفضل.</div>
     </div>`;
   }

@@ -29,3 +29,18 @@ T.test('every Kol Zchut link is a checked article, never the search page', () =>
   const used = calls.flatMap((c) => [...c.matchAll(/PAGES\.(\w+)/g)].map((m) => m[1]));
   T.eq(used.filter((k) => !pages[k]).join(', '), '', 'every PAGES key used exists');
 });
+T.section('official sources (gov.il)');
+T.test('every official source is a gov.il guide checked by hand, and every topic of the guide has one', () => {
+  // found in gov.il's own search, 28 Oct 2026 (gov.il blocks automated checks); Google Play asks for them
+  const CHECKED = new Set(['minimum-wage', 'overtime-and-extra-hours', 'weekends-and-holidays', 'rights-of-working-youth', 'annual-vacations',
+    'convalescence-pay', 'paid-sick-leave', 'travel-allowance', 'pension-insurance']);
+  const src = fs.readFileSync(path.join(__dirname, '..', 'src', 'app', 'views-rights.js'), 'utf8');
+  const table = src.slice(src.indexOf('const GOV = {'), src.indexOf('};', src.indexOf('const GOV = {')));
+  const urls = Object.fromEntries([...table.matchAll(/(\w+): '([^']+)'/g)].map((m) => [m[1], m[2]]));
+  T.ok(Object.keys(urls).length >= 12, 'sources: ' + Object.keys(urls).length);
+  const bad = Object.values(urls).filter((u) => { const g = /^https:\/\/www\.gov\.il\/he\/Departments\/Guides\/([\w-]+)$/.exec(u); return g ? !CHECKED.has(g[1]) : !/^https:\/\/www\.(gov|btl\.gov)\.il\//.test(u); });
+  T.eq(bad.join(', '), '', 'only checked gov.il guides and official sites');
+  const topics = [...src.matchAll(/\{ id: '(\w+)', (gov: )?/g)];
+  T.eq(topics.filter((m) => !m[2] && m[1] !== 'tips').map((m) => m[1]).join(', '), '', 'every topic (but tips) names its official source');
+  T.ok(/אינה מייצגת/.test(src), 'the app says it does not represent a government body');
+});

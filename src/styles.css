@@ -908,6 +908,8 @@ body.fx .item:active { transform: scale(.985); }
 .rights .rt-body p { margin: 0 0 8px; }
 .rights a { color: var(--primary); font-weight: 600; }
 .rights .rt-help ol { margin: 0 0 12px; padding-inline-start: 20px; line-height: 1.7; }
+.rights .rt-sources p { margin: 0 0 8px; font-size: .86rem; line-height: 1.6; }
+.rights .rt-sources ul { margin: 0; padding-inline-start: 20px; line-height: 1.9; font-size: .86rem; }
 .highlight.go .hl-ic { background: var(--primary); color: var(--on-primary); }
 
 /* ---- onboarding: friendly questions ---- */

@@ -2,7 +2,7 @@
 <html lang="en" dir="ltr">
 <head>
 <meta charset="utf-8">
-<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'sha256-P1vY/EiXw5RkSguavX5FeRFgUvcBGNPUKJiorElIG7g=' 'sha256-vLILnnCGKbwfuYASSiclFprPM3WomL8uMP+ORnYyDUY=' https://www.gstatic.com https://apis.google.com https://cdnjs.cloudflare.com https://cdn.jsdelivr.net 'wasm-unsafe-eval'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com data:; img-src 'self' data: blob: https:; connect-src 'self' https: wss:; frame-src https://shiftpay-70ab6.firebaseapp.com https://accounts.google.com https://apis.google.com https://*.google.com; worker-src 'self' blob: https://cdnjs.cloudflare.com https://cdn.jsdelivr.net; media-src 'self' data: blob:; manifest-src 'self'; object-src 'none'; base-uri 'self'; form-action 'self'">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'sha256-P1vY/EiXw5RkSguavX5FeRFgUvcBGNPUKJiorElIG7g=' 'sha256-0BDxNNxzuT2wrE0AyPW1xgGDW998MeA3jrgWkC7PREM=' https://www.gstatic.com https://apis.google.com https://cdnjs.cloudflare.com https://cdn.jsdelivr.net 'wasm-unsafe-eval'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com data:; img-src 'self' data: blob: https:; connect-src 'self' https: wss:; frame-src https://shiftpay-70ab6.firebaseapp.com https://accounts.google.com https://apis.google.com https://*.google.com; worker-src 'self' blob: https://cdnjs.cloudflare.com https://cdn.jsdelivr.net; media-src 'self' data: blob:; manifest-src 'self'; object-src 'none'; base-uri 'self'; form-action 'self'">
 <script>(function(){try{var l=localStorage.getItem('shaati.lang'),h=document.documentElement.lang;if(l&&l!==h&&/^(he|ar|ru|en)$/.test(l)&&!sessionStorage.getItem('langHop')){sessionStorage.setItem('langHop','1');location.replace((l==='he'?'index.html':'index.'+l+'.html')+location.search+location.hash)}else sessionStorage.removeItem('langHop')}catch(e){}})();</script>
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="theme-color" content="#0d2b6b">
@@ -928,6 +928,8 @@ body.fx .item:active { transform: scale(.985); }
 .rights .rt-body p { margin: 0 0 8px; }
 .rights a { color: var(--primary); font-weight: 600; }
 .rights .rt-help ol { margin: 0 0 12px; padding-inline-start: 20px; line-height: 1.7; }
+.rights .rt-sources p { margin: 0 0 8px; font-size: .86rem; line-height: 1.6; }
+.rights .rt-sources ul { margin: 0; padding-inline-start: 20px; line-height: 1.9; font-size: .86rem; }
 .highlight.go .hl-ic { background: var(--primary); color: var(--on-primary); }
 
 /* ---- onboarding: friendly questions ---- */
@@ -2592,7 +2594,7 @@ html:not([lang="he"]) .lb-games button, html:not([lang="he"]) .lb-periods button
 <noscript><div style="padding:24px;font-family:sans-serif">The app needs JavaScript.</div></noscript>
 <script>
 window.APP_VERSION = '1.22.1';
-window.APP_BUILD = '1.22.1-6280fc99';
+window.APP_BUILD = '1.22.1-2d74c9c8';
 /* ---- core/util.js ---- */
 /* ============================================================
  * util.js — date/time helpers and formatting.
@@ -19565,23 +19567,44 @@ What the app has (for "how do I" questions): a "Start shift" button with a timer
   // i18n-keep-end
   const KZ = (page) => 'https://www.kolzchut.org.il/he/' + encodeURIComponent(page.replace(/ /g, '_'));
   const link = (href, text) => `<a href="${href}" target="_blank" rel="noopener">${esc(text || "Full details on Kol Zchut (in Hebrew)")} ↗</a>`;
+  // i18n-keep-start the official sources (gov.il guides, found in gov.il's own search on 28 Oct 2026): Google Play asks
+  // that government information point at its official source (tests/links.test.js checks the list)
+  const GOV = {
+    minwage: 'https://www.gov.il/he/Departments/Guides/minimum-wage',
+    hours: 'https://www.gov.il/he/Departments/Guides/overtime-and-extra-hours',
+    rest: 'https://www.gov.il/he/Departments/Guides/weekends-and-holidays',
+    youth: 'https://www.gov.il/he/Departments/Guides/rights-of-working-youth',
+    vacation: 'https://www.gov.il/he/Departments/Guides/annual-vacations',
+    recup: 'https://www.gov.il/he/Departments/Guides/convalescence-pay',
+    sick: 'https://www.gov.il/he/Departments/Guides/paid-sick-leave',
+    travel: 'https://www.gov.il/he/Departments/Guides/travel-allowance',
+    pension: 'https://www.gov.il/he/Departments/Guides/pension-insurance',
+    labor: 'https://www.gov.il/he/departments/labor',
+    tax: 'https://www.gov.il/he/departments/israel_tax_authority/govil-landing-page',
+    btl: 'https://www.btl.gov.il/',
+  };
+  // i18n-keep-end
+  const gov = (key) => (key && GOV[key] ? link(GOV[key], "Official source on gov.il") + ' · ' : '');
+  const SOURCES = [['minwage', "Minimum wage"], ['hours', "Working hours and overtime"], ['rest', "Weekly rest and holidays"], ['youth', "Rights of working youth"],
+    ['vacation', "Annual vacation"], ['recup', "Recuperation pay"], ['sick', "Sick pay"], ['travel', "Travel expenses refund"], ['pension', "Mandatory pension insurance"],
+    ['labor', "Ministry of Labor"], ['tax', "Israel Tax Authority (income tax)"], ['btl', "National Insurance Institute"]];
 
   /* ---------------- the guide (general rules, short and plain) ---------------- */
   const TOPICS = [
-    { id: 'minwage', ic: 'wallet', t: "Minimum wage", b: (c) => `<p>From April 2026: <b>₪35.40 an hour</b> for workers aged 18 and over. For teens: under 16 – ₪26.07, at 16 – ₪27.94, at 17 – ₪30.92.</p><p>${c.mw.youth ? `For your age (${c.mw.age}) the minimum is <b>${U.money(c.mw.hourly)}</b>.` : c.mw.age != null ? `The minimum that applies to you: <b>${U.money(c.mw.hourly)}</b>.` : "Add your date of birth in Settings to see the minimum for your age."} An employer may pay more, but not less.</p>`, l: () => link(KZ(App.isMinorNow() ? PAGES.youthPay : PAGES.minWage)) },
-    { id: 'overtime', ic: 'clock', t: "Overtime", b: () => "<p>The first two hours beyond a regular workday are paid at <b>125%</b>, and beyond that at <b>150%</b>. Overtime also starts beyond 42 hours a week.</p><p>In the app: Settings › Pay calculation › Calculation rules (when it starts and at what rate).</p>", l: () => link(KZ(PAGES.overtime)) },
-    { id: 'shabbat', ic: 'candle', t: "Shabbat and holidays", b: () => "<p>Work on the weekly rest day (usually Shabbat) is paid at least <b>150%</b>. The hours follow Shabbat’s start and end, and the app works them out for your city.</p><p>An hourly worker is usually also entitled to <b>holiday pay</b> after 3 months of work, for a holiday on a weekday, under the extension order’s conditions.</p>", l: () => link(KZ(PAGES.weeklyRest)) },
-    { id: 'holidays', ic: 'calendar', t: "Holiday pay", b: (c) => `<p>With hourly pay you are owed pay for <b>9 holidays</b> a year on which you didn’t work because of the holiday: Rosh Hashanah, Yom Kippur, Sukkot, Simchat Torah, Passover and the seventh day of Passover, Shavuot and Independence Day (non-Jewish workers may choose the holidays of their own religion). The conditions: <b>3 months of work</b> at the workplace, the holiday fell on a day when ${App.g("you were supposed", "you were supposed")} to work, and you worked the day before and the day after (or weren’t scheduled on them). The pay: a regular workday, your average daily hours times your hourly pay. A holiday on a Friday or Saturday is paid only to those who work on those days.</p>${holidayList(c)}`, l: () => link(KZ(PAGES.holidayPay)) },
+    { id: 'minwage', gov: () => (App.isMinorNow() ? 'youth' : 'minwage'), ic: 'wallet', t: "Minimum wage", b: (c) => `<p>From April 2026: <b>₪35.40 an hour</b> for workers aged 18 and over. For teens: under 16 – ₪26.07, at 16 – ₪27.94, at 17 – ₪30.92.</p><p>${c.mw.youth ? `For your age (${c.mw.age}) the minimum is <b>${U.money(c.mw.hourly)}</b>.` : c.mw.age != null ? `The minimum that applies to you: <b>${U.money(c.mw.hourly)}</b>.` : "Add your date of birth in Settings to see the minimum for your age."} An employer may pay more, but not less.</p>`, l: () => link(KZ(App.isMinorNow() ? PAGES.youthPay : PAGES.minWage)) },
+    { id: 'overtime', gov: 'hours', ic: 'clock', t: "Overtime", b: () => "<p>The first two hours beyond a regular workday are paid at <b>125%</b>, and beyond that at <b>150%</b>. Overtime also starts beyond 42 hours a week.</p><p>In the app: Settings › Pay calculation › Calculation rules (when it starts and at what rate).</p>", l: () => link(KZ(PAGES.overtime)) },
+    { id: 'shabbat', gov: 'rest', ic: 'candle', t: "Shabbat and holidays", b: () => "<p>Work on the weekly rest day (usually Shabbat) is paid at least <b>150%</b>. The hours follow Shabbat’s start and end, and the app works them out for your city.</p><p>An hourly worker is usually also entitled to <b>holiday pay</b> after 3 months of work, for a holiday on a weekday, under the extension order’s conditions.</p>", l: () => link(KZ(PAGES.weeklyRest)) },
+    { id: 'holidays', gov: 'rest', ic: 'calendar', t: "Holiday pay", b: (c) => `<p>With hourly pay you are owed pay for <b>9 holidays</b> a year on which you didn’t work because of the holiday: Rosh Hashanah, Yom Kippur, Sukkot, Simchat Torah, Passover and the seventh day of Passover, Shavuot and Independence Day (non-Jewish workers may choose the holidays of their own religion). The conditions: <b>3 months of work</b> at the workplace, the holiday fell on a day when ${App.g("you were supposed", "you were supposed")} to work, and you worked the day before and the day after (or weren’t scheduled on them). The pay: a regular workday, your average daily hours times your hourly pay. A holiday on a Friday or Saturday is paid only to those who work on those days.</p>${holidayList(c)}`, l: () => link(KZ(PAGES.holidayPay)) },
     { id: 'tips', ic: 'gift', t: "Tips (waiters)", b: () => "<p>In a restaurant, café or bar, tips are <b>part of your pay</b>: they go through the employer and appear on the payslip, so they also count for pension, vacation, sick pay and severance.</p><p>What you get for each hour, tips alone or pay plus tips, must be <b>at least the minimum wage</b>. Tips may not pay for travel or recuperation pay, except with written consent and when the tips exceed the agreed pay.</p><p>At event halls and gardens, tips are not part of the pay. In the app you record tips in each shift (or in Add › Bonus / tips), and the minimum-wage check counts them.</p>", l: () => link(KZ(PAGES.tips)) },
-    { id: 'breaks', ic: 'coffee', t: "Breaks and rest", b: () => "<p>On a workday of <b>6 hours or more</b> you get a break of <b>45 minutes</b>, half an hour of it in one go. Between two workdays, and a weekly rest of at least 36 hours in a row.</p>", l: () => link(KZ(App.isMinorNow() ? PAGES.youthBreaks : PAGES.breaks)) },
-    { id: 'travel', ic: 'car', t: "Travel", b: (c) => `<p>Your employer must refund your travel to work and back, at public transport prices and up to a daily cap that is updated every year. The refund is on top of your pay.</p><p>${c.travel > 0 ? `The app is set to a refund of <b>${U.money(c.travel)}</b> per workday.` : "In the app, a travel refund is <b>not set</b>. You can set it in Settings › My work › Travel and pay period."}</p>`, l: () => link(KZ(PAGES.travel)) },
-    { id: 'sick', ic: 'thermo', t: "Sick pay", b: (c) => `<p>You build up <b>1.5 sick days</b> for each full month of work (up to 90). The pay: day one – 0%, days two and three – 50%, from day four – 100%. A sick note is needed.</p>${c.bal ? `<p>Your balance according to the app: <b>${U.num(c.bal.sickAccrued - c.bal.sickUsed, 1)}</b> days.</p>` : ''}`, l: () => link(KZ(PAGES.sick)) },
-    { id: 'vacation', ic: 'beach', t: "Annual vacation", b: (c) => `<p>You’re owed paid vacation days by seniority and job scope. You may not give them up, and when you leave the job you’re paid for the days you didn’t use.</p>${c.bal ? `<p>Your balance according to the app: <b>${U.num(c.bal.vacationAccrued - c.bal.vacationUsed, 1)}</b> days.</p>` : ''}`, l: () => link(KZ(PAGES.vacation)) },
-    { id: 'recup', ic: 'gift', t: "Recuperation pay", b: (c) => `<p>After <b>a year of work</b> you’re owed recuperation pay (dmei havra’a): a number of days by seniority, times the daily recuperation rate, by job scope.</p><p>${c.bal && c.bal.recuperation ? (c.bal.recuperation.eligible ? `According to the app you’re owed about <b>${U.money(c.bal.recuperation.amount, 0)}</b> a year.` : `By your start date, you become entitled on ${U.fmtDate(c.bal.recuperation.eligibleFrom)}.`) : "Set your start date to calculate it."}</p>`, l: () => link(KZ(PAGES.recuperation)) },
-    { id: 'pension', ic: 'shield', t: "Pension", b: (c) => `<p>Required from age <b>21 for men and 20 for women</b>, after 6 months of work (3 months if you already have an active fund). The contributions: 6% from you, 6.5% from the employer and another 6% for severance.</p><p>${c.pension}</p>`, l: () => link(KZ(PAGES.pension)) },
-    { id: 'payslip', ic: 'receipt', t: "Payslip and payday", b: () => "<p>You’re owed a detailed <b>payslip</b> every month, and your pay must be paid by <b>the 9th of the month</b> after the month worked. Late pay entitles you to compensation for delayed wages.</p><p>The app checks your payslip against the shifts you recorded (the + button, \"Payslip\").</p>", l: () => link(KZ(PAGES.payslip)) },
-    { id: 'deduct', ic: 'minus', t: "Deductions from pay", b: () => "<p>Only mandatory deductions (tax, National Insurance, pension) and deductions you agreed to in writing may be taken from your pay. <b>Fines</b>, cash register shortfalls or broken equipment – usually may not be deducted without consent.</p>", l: () => link(KZ(PAGES.deductions)) },
-    { id: 'leave', ic: 'alert', t: "Dismissal and resignation", b: () => "<p>Before a dismissal you’re owed a <b>hearing</b>, and <b>advance notice</b> by seniority (when you resign you also have to give notice). After a year of work, a dismissal also entitles you to <b>severance pay</b>.</p>", l: () => link(KZ(PAGES.notice)) },
+    { id: 'breaks', gov: () => (App.isMinorNow() ? 'youth' : 'hours'), ic: 'coffee', t: "Breaks and rest", b: () => "<p>On a workday of <b>6 hours or more</b> you get a break of <b>45 minutes</b>, half an hour of it in one go. Between two workdays, and a weekly rest of at least 36 hours in a row.</p>", l: () => link(KZ(App.isMinorNow() ? PAGES.youthBreaks : PAGES.breaks)) },
+    { id: 'travel', gov: 'travel', ic: 'car', t: "Travel", b: (c) => `<p>Your employer must refund your travel to work and back, at public transport prices and up to a daily cap that is updated every year. The refund is on top of your pay.</p><p>${c.travel > 0 ? `The app is set to a refund of <b>${U.money(c.travel)}</b> per workday.` : "In the app, a travel refund is <b>not set</b>. You can set it in Settings › My work › Travel and pay period."}</p>`, l: () => link(KZ(PAGES.travel)) },
+    { id: 'sick', gov: 'sick', ic: 'thermo', t: "Sick pay", b: (c) => `<p>You build up <b>1.5 sick days</b> for each full month of work (up to 90). The pay: day one – 0%, days two and three – 50%, from day four – 100%. A sick note is needed.</p>${c.bal ? `<p>Your balance according to the app: <b>${U.num(c.bal.sickAccrued - c.bal.sickUsed, 1)}</b> days.</p>` : ''}`, l: () => link(KZ(PAGES.sick)) },
+    { id: 'vacation', gov: 'vacation', ic: 'beach', t: "Annual vacation", b: (c) => `<p>You’re owed paid vacation days by seniority and job scope. You may not give them up, and when you leave the job you’re paid for the days you didn’t use.</p>${c.bal ? `<p>Your balance according to the app: <b>${U.num(c.bal.vacationAccrued - c.bal.vacationUsed, 1)}</b> days.</p>` : ''}`, l: () => link(KZ(PAGES.vacation)) },
+    { id: 'recup', gov: 'recup', ic: 'gift', t: "Recuperation pay", b: (c) => `<p>After <b>a year of work</b> you’re owed recuperation pay (dmei havra’a): a number of days by seniority, times the daily recuperation rate, by job scope.</p><p>${c.bal && c.bal.recuperation ? (c.bal.recuperation.eligible ? `According to the app you’re owed about <b>${U.money(c.bal.recuperation.amount, 0)}</b> a year.` : `By your start date, you become entitled on ${U.fmtDate(c.bal.recuperation.eligibleFrom)}.`) : "Set your start date to calculate it."}</p>`, l: () => link(KZ(PAGES.recuperation)) },
+    { id: 'pension', gov: 'pension', ic: 'shield', t: "Pension", b: (c) => `<p>Required from age <b>21 for men and 20 for women</b>, after 6 months of work (3 months if you already have an active fund). The contributions: 6% from you, 6.5% from the employer and another 6% for severance.</p><p>${c.pension}</p>`, l: () => link(KZ(PAGES.pension)) },
+    { id: 'payslip', gov: 'labor', ic: 'receipt', t: "Payslip and payday", b: () => "<p>You’re owed a detailed <b>payslip</b> every month, and your pay must be paid by <b>the 9th of the month</b> after the month worked. Late pay entitles you to compensation for delayed wages.</p><p>The app checks your payslip against the shifts you recorded (the + button, \"Payslip\").</p>", l: () => link(KZ(PAGES.payslip)) },
+    { id: 'deduct', gov: 'labor', ic: 'minus', t: "Deductions from pay", b: () => "<p>Only mandatory deductions (tax, National Insurance, pension) and deductions you agreed to in writing may be taken from your pay. <b>Fines</b>, cash register shortfalls or broken equipment – usually may not be deducted without consent.</p>", l: () => link(KZ(PAGES.deductions)) },
+    { id: 'leave', gov: 'labor', ic: 'alert', t: "Dismissal and resignation", b: () => "<p>Before a dismissal you’re owed a <b>hearing</b>, and <b>advance notice</b> by seniority (when you resign you also have to give notice). After a year of work, a dismissal also entitles you to <b>severance pay</b>.</p>", l: () => link(KZ(PAGES.notice)) },
   ];
   const YOUTH = (R, age) => [
     ['clock', `Up to <b>${R.dayHours} hours a day</b> and up to <b>40 a week</b>${R.dayHours === 9 ? " (9 only at a 5-day workplace)" : ''}.`],
@@ -19663,9 +19686,9 @@ What the app has (for "how do I" questions): a "Start shift" button with a timer
       <div class="card rt-checks">${checks(c).map(([k, t, d]) => `<div class="rt-row"><span class="rt-mark" style="color:${MARK[k][1]}">${icon(MARK[k][0], 's')}</span><div><div class="t">${t}</div><div class="d">${esc(d)}</div></div></div>`).join('')}</div>
       ${minor ? `<div class="section-title">${icon('users', 's')} For teens (age ${c.age})</div>
         <div class="card rt-youth" data-topic="teen youth night break hours medical certificate">${YOUTH(R, c.age).map(([ic, t]) => `<div class="rt-row"><span class="rt-mark">${icon(ic, 's')}</span><div class="t">${t}</div></div>`).join('')}
-        <div class="tiny" style="margin-top:8px">${link(KZ(PAGES.youthGuide), "The Kol Zchut guide for working teens (in Hebrew)")}</div></div>` : ''}
+        <div class="tiny" style="margin-top:8px">${gov('youth')}${link(KZ(PAGES.youthGuide), "The Kol Zchut guide for working teens (in Hebrew)")}</div></div>` : ''}
       <div class="section-title">${icon('list', 's')} The guide</div>
-      <div class="card rt-topics">${TOPICS.map((tp) => `<details class="rt-topic" data-topic="${esc(tp.t)}"><summary>${icon(tp.ic, 's')}<span>${tp.t}</span><span class="chev">${icon('left', 's')}</span></summary><div class="rt-body">${tp.b(c)}<div class="tiny">${tp.l()}</div></div></details>`).join('')}</div>
+      <div class="card rt-topics">${TOPICS.map((tp) => `<details class="rt-topic" data-topic="${esc(tp.t)}"><summary>${icon(tp.ic, 's')}<span>${tp.t}</span><span class="chev">${icon('left', 's')}</span></summary><div class="rt-body">${tp.b(c)}<div class="tiny">${gov(typeof tp.gov === 'function' ? tp.gov() : tp.gov)}${tp.l()}</div></div></details>`).join('')}</div>
       <div class="section-title">${icon('alert', 's')} Something wrong?</div>
       <div class="card rt-help">
         <ol><li><b>Keep records</b>: the app already saves your shifts, and the report for your employer gathers everything (payslips, holiday pay, all the shifts) with a ready letter.</li>
@@ -19675,6 +19698,8 @@ What the app has (for "how do I" questions): a "Start shift" button with a timer
         <button class="btn tonal block" data-rt-ai>${icon('sparkle')} Another question? Ask the assistant</button>
       </div>
       </div>
+      <div class="section-title">${icon('shield', 's')} Official sources</div>
+      <div class="card rt-sources"><p>Shaati is a private app and <b>does not represent</b> the Ministry of Labor, the Tax Authority, the National Insurance Institute or any other government body. The information here is based on the official sources:</p><ul>${SOURCES.map(([k, t]) => '<li>' + link(GOV[k], t) + '</li>').join('')}</ul></div>
       <div class="tiny muted" style="margin:12px 4px 4px">General information only, not legal advice. Terms in a collective agreement, an extension order or your contract may be better.</div>
     </div>`;
   }

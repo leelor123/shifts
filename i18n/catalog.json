@@ -861,8 +861,8 @@
   "kind": "lit",
   "where": [
    "app/claim-report.js:116",
-   "app/views-rights.js:102",
-   "app/views-rights.js:119"
+   "app/views-rights.js:123",
+   "app/views-rights.js:140"
   ]
  },
  {
@@ -870,8 +870,8 @@
   "kind": "tpl",
   "where": [
    "app/claim-report.js:116",
-   "app/views-rights.js:102",
-   "app/views-rights.js:119"
+   "app/views-rights.js:123",
+   "app/views-rights.js:140"
   ]
  },
  {
@@ -1418,7 +1418,7 @@
    "app/export.js:43",
    "app/views-guide.js:152",
    "app/views-reports.js:169",
-   "app/views-rights.js:48",
+   "app/views-rights.js:69",
    "app/views-shift.js:394",
    "core/insights.js:32",
    "core/payslip.js:40",
@@ -4856,7 +4856,7 @@
   "where": [
    "app/views-games.js:105",
    "app/views-home.js:283",
-   "app/views-rights.js:181",
+   "app/views-rights.js:204",
    "app/views-settings.js:130"
   ]
  },
@@ -5796,8 +5796,8 @@
   "kind": "lit",
   "where": [
    "app/views-guide.js:119",
-   "app/views-rights.js:45",
-   "app/views-rights.js:102",
+   "app/views-rights.js:66",
+   "app/views-rights.js:123",
    "core/insights.js:44",
    "core/payslip.js:44"
   ]
@@ -5905,7 +5905,7 @@
   "kind": "lit",
   "where": [
    "app/views-guide.js:150",
-   "app/views-rights.js:43",
+   "app/views-rights.js:64",
    "app/views-shift.js:385",
    "core/engine.js:324",
    "core/games.js:187",
@@ -5953,8 +5953,8 @@
   "kind": "lit",
   "where": [
    "app/views-guide.js:153",
-   "app/views-rights.js:52",
-   "app/views-rights.js:103",
+   "app/views-rights.js:73",
+   "app/views-rights.js:124",
    "core/games.js:193",
    "core/payslip.js:498",
    "core/payslip.js:505",
@@ -5982,7 +5982,8 @@
   "kind": "lit",
   "where": [
    "app/views-guide.js:155",
-   "app/views-rights.js:42",
+   "app/views-rights.js:57",
+   "app/views-rights.js:63",
    "core/games.js:195",
    "core/insights.js:43",
    "core/payslip.js:482",
@@ -6049,9 +6050,10 @@
   "kind": "lit",
   "where": [
    "app/views-guide.js:159",
-   "app/views-rights.js:51",
-   "app/views-rights.js:99",
-   "app/views-rights.js:99",
+   "app/views-rights.js:58",
+   "app/views-rights.js:72",
+   "app/views-rights.js:120",
+   "app/views-rights.js:120",
    "core/games.js:191",
    "core/insights.js:41",
    "core/payslip.js:41"
@@ -7959,8 +7961,8 @@
   "kind": "lit",
   "where": [
    "app/views-onboarding.js:89",
-   "app/views-rights.js:93",
-   "app/views-rights.js:93"
+   "app/views-rights.js:114",
+   "app/views-rights.js:114"
   ]
  },
  {
@@ -9921,45 +9923,125 @@
   ]
  },
  {
+  "key": "המקור הרשמי ב-gov.il",
+  "kind": "lit",
+  "where": [
+   "app/views-rights.js:56"
+  ]
+ },
+ {
+  "key": "שעות עבודה ושעות נוספות",
+  "kind": "lit",
+  "where": [
+   "app/views-rights.js:57"
+  ]
+ },
+ {
+  "key": "מנוחה שבועית וחופשת חג",
+  "kind": "lit",
+  "where": [
+   "app/views-rights.js:57"
+  ]
+ },
+ {
+  "key": "זכויות בני נוער עובדים",
+  "kind": "lit",
+  "where": [
+   "app/views-rights.js:57"
+  ]
+ },
+ {
+  "key": "חופשה שנתית",
+  "kind": "lit",
+  "where": [
+   "app/views-rights.js:58",
+   "app/views-rights.js:71"
+  ]
+ },
+ {
+  "key": "דמי מחלה",
+  "kind": "lit",
+  "where": [
+   "app/views-rights.js:58",
+   "app/views-rights.js:70",
+   "core/payslip.js:43"
+  ]
+ },
+ {
+  "key": "החזר הוצאות נסיעה",
+  "kind": "lit",
+  "where": [
+   "app/views-rights.js:58"
+  ]
+ },
+ {
+  "key": "ביטוח פנסיוני חובה",
+  "kind": "lit",
+  "where": [
+   "app/views-rights.js:58"
+  ]
+ },
+ {
+  "key": "משרד העבודה",
+  "kind": "lit",
+  "where": [
+   "app/views-rights.js:59"
+  ]
+ },
+ {
+  "key": "רשות המסים (מס הכנסה)",
+  "kind": "lit",
+  "where": [
+   "app/views-rights.js:59"
+  ]
+ },
+ {
+  "key": "המוסד לביטוח לאומי",
+  "kind": "lit",
+  "where": [
+   "app/views-rights.js:59"
+  ]
+ },
+ {
   "key": "<p>מאפריל 2026: <b>35.40 ₪ לשעה</b> לעובד מגיל 18. לנוער: עד גיל 16 – 26.07 ₪, בגיל 16 – 27.94 ₪, בגיל 17 – 30.92 ₪.</p><p>{0} מעסיק רשאי לשלם יותר, אבל לא פחות.</p>",
   "kind": "tpl",
   "where": [
-   "app/views-rights.js:42"
+   "app/views-rights.js:63"
   ]
  },
  {
   "key": "לגיל שלך ({0}) המינימום הוא <b>{1}</b>.",
   "kind": "tpl",
   "where": [
-   "app/views-rights.js:42"
+   "app/views-rights.js:63"
   ]
  },
  {
   "key": "המינימום שחל עליך: <b>{0}</b>.",
   "kind": "tpl",
   "where": [
-   "app/views-rights.js:42"
+   "app/views-rights.js:63"
   ]
  },
  {
   "key": "הוסף תאריך לידה בהגדרות כדי לראות את המינימום לגילך.",
   "kind": "lit",
   "where": [
-   "app/views-rights.js:42"
+   "app/views-rights.js:63"
   ]
  },
  {
   "key": "<p>השעתיים הראשונות מעבר ליום עבודה רגיל משולמות ב-<b>125%</b>, ומעבר לכך ב-<b>150%</b>. גם מעבר ל-42 שעות בשבוע מתחילות שעות נוספות.</p><p>באפליקציה: הגדרות › חישוב השכר › חוקי חישוב (מתי מתחילות ובאיזה אחוז).</p>",
   "kind": "lit",
   "where": [
-   "app/views-rights.js:43"
+   "app/views-rights.js:64"
   ]
  },
  {
   "key": "שבת וחגים",
   "kind": "lit",
   "where": [
-   "app/views-rights.js:44",
+   "app/views-rights.js:65",
    "app/views-settings.js:135"
   ]
  },
@@ -9967,234 +10049,219 @@
   "key": "<p>עבודה במנוחה השבועית (לרוב שבת) משולמת לפחות ב-<b>150%</b>. השעות נקבעות לפי כניסת ויציאת השבת, והאפליקציה מחשבת אותן לפי העיר שלך.</p><p>עובד שעתי זכאי בדרך כלל גם ל<b>דמי חגים</b> אחרי 3 חודשי עבודה, על חג שחל ביום חול, בתנאים שבצו ההרחבה.</p>",
   "kind": "lit",
   "where": [
-   "app/views-rights.js:44"
+   "app/views-rights.js:65"
   ]
  },
  {
   "key": "<p>בשכר לפי שעה מגיע תשלום על <b>9 ימי חג</b> בשנה שבהם לא עבדת בגלל החג: ראש השנה, יום כיפור, סוכות, שמחת תורה, פסח ושביעי של פסח, שבועות ויום העצמאות (מי שאינו יהודי יכול לבחור בחגי הדת שלו). התנאים: <b>3 חודשי עבודה</b> במקום, החג חל ביום שבו {0} לעבוד, ועבדת ביום שלפניו ושאחריו (או שלא שובצת בהם). התשלום: יום עבודה רגיל, לפי ממוצע השעות היומי שלך כפול השכר לשעה. חג ביום שישי או בשבת משתלם רק למי שעובד בימים האלה.</p>{1}",
   "kind": "tpl",
   "where": [
-   "app/views-rights.js:45"
+   "app/views-rights.js:66"
   ]
  },
  {
   "key": "היית אמור",
   "kind": "lit",
   "where": [
-   "app/views-rights.js:45",
-   "app/views-rights.js:109"
+   "app/views-rights.js:66",
+   "app/views-rights.js:130"
   ]
  },
  {
   "key": "היית אמורה",
   "kind": "lit",
   "where": [
-   "app/views-rights.js:45",
-   "app/views-rights.js:109"
+   "app/views-rights.js:66",
+   "app/views-rights.js:130"
   ]
  },
  {
   "key": "טיפים (מלצרים)",
   "kind": "lit",
   "where": [
-   "app/views-rights.js:46"
+   "app/views-rights.js:67"
   ]
  },
  {
   "key": "<p>במסעדה, בית קפה או בר הטיפים הם <b>חלק מהשכר</b>: הם עוברים דרך המעסיק ומופיעים בתלוש, ולכן נחשבים גם בפנסיה, בחופשה, בדמי מחלה ובפיצויים.</p><p>מה שמגיע לך לכל שעה, טיפים בלבד או שכר וטיפים, צריך להיות <b>לפחות שכר המינימום</b>. אסור לממן מהטיפים נסיעות או דמי הבראה, אלא בהסכמה בכתב וכשיש בטיפים יותר מהשכר שסוכם.</p><p>באולמות וגני אירועים הטיפים אינם חלק מהשכר. באפליקציה רושמים טיפים בכל משמרת (או בהוספה › בונוס / טיפים), והבדיקה של שכר המינימום מחשבת אותם.</p>",
   "kind": "lit",
   "where": [
-   "app/views-rights.js:46"
+   "app/views-rights.js:67"
   ]
  },
  {
   "key": "הפסקות ומנוחה",
   "kind": "lit",
   "where": [
-   "app/views-rights.js:47"
+   "app/views-rights.js:68"
   ]
  },
  {
   "key": "<p>ביום עבודה של <b>6 שעות ומעלה</b> מגיעה הפסקה של <b>45 דקות</b>, מתוכן חצי שעה ברצף. בין שני ימי עבודה, ומנוחה שבועית של 36 שעות רצופות לפחות.</p>",
   "kind": "lit",
   "where": [
-   "app/views-rights.js:47"
+   "app/views-rights.js:68"
   ]
  },
  {
   "key": "<p>המעסיק חייב להחזיר את הוצאות הנסיעה לעבודה ובחזרה, לפי מחיר תחבורה ציבורית ועד תקרה יומית שמתעדכנת מדי שנה. ההחזר הוא בנוסף לשכר.</p><p>{0}</p>",
   "kind": "tpl",
   "where": [
-   "app/views-rights.js:48"
+   "app/views-rights.js:69"
   ]
  },
  {
   "key": "באפליקציה מוגדר החזר של <b>{0}</b> ליום עבודה.",
   "kind": "tpl",
   "where": [
-   "app/views-rights.js:48"
+   "app/views-rights.js:69"
   ]
  },
  {
   "key": "באפליקציה <b>לא מוגדר</b> החזר נסיעות. אפשר להגדיר בהגדרות › העבודה שלי › נסיעות ותקופת שכר.",
   "kind": "lit",
   "where": [
-   "app/views-rights.js:48"
-  ]
- },
- {
-  "key": "דמי מחלה",
-  "kind": "lit",
-  "where": [
-   "app/views-rights.js:49",
-   "core/payslip.js:43"
+   "app/views-rights.js:69"
   ]
  },
  {
   "key": "<p>צוברים <b>1.5 ימי מחלה</b> לכל חודש עבודה מלא (עד 90). התשלום: היום הראשון – 0%, השני והשלישי – 50%, מהרביעי – 100%. צריך אישור מחלה.</p>{0}",
   "kind": "tpl",
   "where": [
-   "app/views-rights.js:49"
+   "app/views-rights.js:70"
   ]
  },
  {
   "key": "<p>הצבירה שלך לפי האפליקציה: <b>{0}</b> ימים.</p>",
   "kind": "tpl",
   "where": [
-   "app/views-rights.js:49"
-  ]
- },
- {
-  "key": "חופשה שנתית",
-  "kind": "lit",
-  "where": [
-   "app/views-rights.js:50"
+   "app/views-rights.js:70"
   ]
  },
  {
   "key": "<p>מגיעים ימי חופשה בתשלום לפי הוותק והיקף המשרה. אסור לוותר עליהם, וכשעוזבים את העבודה מקבלים פדיון על הימים שלא נוצלו.</p>{0}",
   "kind": "tpl",
   "where": [
-   "app/views-rights.js:50"
+   "app/views-rights.js:71"
   ]
  },
  {
   "key": "<p>היתרה שלך לפי האפליקציה: <b>{0}</b> ימים.</p>",
   "kind": "tpl",
   "where": [
-   "app/views-rights.js:50"
+   "app/views-rights.js:71"
   ]
  },
  {
   "key": "<p>אחרי <b>שנת עבודה</b> מגיעים דמי הבראה: מספר ימים לפי הוותק, כפול תעריף יום הבראה, לפי היקף המשרה.</p><p>{0}</p>",
   "kind": "tpl",
   "where": [
-   "app/views-rights.js:51"
+   "app/views-rights.js:72"
   ]
  },
  {
   "key": "לפי האפליקציה מגיעים לך כ-<b>{0}</b> לשנה.",
   "kind": "tpl",
   "where": [
-   "app/views-rights.js:51"
+   "app/views-rights.js:72"
   ]
  },
  {
   "key": "לפי תאריך תחילת העבודה, הזכאות מתחילה ב-{0}.",
   "kind": "tpl",
   "where": [
-   "app/views-rights.js:51"
+   "app/views-rights.js:72"
   ]
  },
  {
   "key": "הגדר תאריך תחילת עבודה כדי לחשב.",
   "kind": "lit",
   "where": [
-   "app/views-rights.js:51"
+   "app/views-rights.js:72"
   ]
  },
  {
   "key": "<p>חובה מגיל <b>21 לגבר ו-20 לאישה</b>, אחרי 6 חודשי עבודה (3 חודשים אם כבר יש לך קרן פעילה). ההפרשה: 6% ממך, 6.5% מהמעסיק ועוד 6% לפיצויים.</p><p>{0}</p>",
   "kind": "tpl",
   "where": [
-   "app/views-rights.js:52"
+   "app/views-rights.js:73"
   ]
  },
  {
   "key": "תלוש שכר ומועד תשלום",
   "kind": "lit",
   "where": [
-   "app/views-rights.js:53"
+   "app/views-rights.js:74"
   ]
  },
  {
   "key": "<p>מגיע לך <b>תלוש שכר</b> מפורט כל חודש, והשכר צריך להיות משולם עד <b>ה-9 בחודש</b> שאחרי חודש העבודה. איחור מזכה בפיצוי הלנת שכר.</p><p>האפליקציה בודקת את התלוש מול המשמרות שרשמת (כפתור +, \"תלוש שכר\").</p>",
   "kind": "lit",
   "where": [
-   "app/views-rights.js:53"
+   "app/views-rights.js:74"
   ]
  },
  {
   "key": "ניכויים מהשכר",
   "kind": "lit",
   "where": [
-   "app/views-rights.js:54"
+   "app/views-rights.js:75"
   ]
  },
  {
   "key": "<p>מותר לנכות מהשכר רק ניכויי חובה (מס, ביטוח לאומי, פנסיה) וניכויים שהסכמת להם בכתב. <b>קנסות</b>, חוסרים בקופה או ציוד שנשבר – בדרך כלל אסור לנכות בלי הסכמה.</p>",
   "kind": "lit",
   "where": [
-   "app/views-rights.js:54"
+   "app/views-rights.js:75"
   ]
  },
  {
   "key": "פיטורים והתפטרות",
   "kind": "lit",
   "where": [
-   "app/views-rights.js:55"
+   "app/views-rights.js:76"
   ]
  },
  {
   "key": "<p>לפני פיטורים מגיע <b>שימוע</b>, ומגיעה <b>הודעה מוקדמת</b> לפי הוותק (גם כשמתפטרים צריך לתת הודעה מוקדמת). אחרי שנת עבודה, בפיטורים מגיעים גם <b>פיצויים</b>.</p>",
   "kind": "lit",
   "where": [
-   "app/views-rights.js:55"
+   "app/views-rights.js:76"
   ]
  },
  {
   "key": "עד <b>{0} שעות ביום</b> ועד <b>40 בשבוע</b>{1}.",
   "kind": "tpl",
   "where": [
-   "app/views-rights.js:58"
+   "app/views-rights.js:79"
   ]
  },
  {
   "key": " (9 רק במקום עבודה של 5 ימים)",
   "kind": "lit",
   "where": [
-   "app/views-rights.js:58"
+   "app/views-rights.js:79"
   ]
  },
  {
   "key": "<b>אסור לעבוד בלילה</b>: {0}, אלא בהיתר מיוחד.",
   "kind": "tpl",
   "where": [
-   "app/views-rights.js:59"
+   "app/views-rights.js:80"
   ]
  },
  {
   "key": "בין 20:00 ל-08:00",
   "kind": "lit",
   "where": [
-   "app/views-rights.js:59"
+   "app/views-rights.js:80"
   ]
  },
  {
   "key": "בין 22:00 ל-06:00",
   "kind": "lit",
   "where": [
-   "app/views-rights.js:59",
+   "app/views-rights.js:80",
    "core/insights.js:300"
   ]
  },
@@ -10202,99 +10269,99 @@
   "key": "ביום של יותר מ-6 שעות: <b>45 דקות הפסקה</b>, חצי שעה ברצף.",
   "kind": "lit",
   "where": [
-   "app/views-rights.js:60"
+   "app/views-rights.js:81"
   ]
  },
  {
   "key": "ביום שישי ובערב חג: עד <b>7 שעות</b>.",
   "kind": "lit",
   "where": [
-   "app/views-rights.js:61"
+   "app/views-rights.js:82"
   ]
  },
  {
   "key": "צריך <b>אישור רפואי</b> לפני תחילת העבודה, ותוך 7 ימים המעסיק צריך לתת לך <b>הודעה בכתב על תנאי העבודה</b> (שכר לשעה, שעות).",
   "kind": "lit",
   "where": [
-   "app/views-rights.js:62"
+   "app/views-rights.js:83"
   ]
  },
  {
   "key": "<b>החזר נסיעות</b> מגיע גם לנוער, בנוסף לשכר.",
   "kind": "lit",
   "where": [
-   "app/views-rights.js:63"
+   "app/views-rights.js:84"
   ]
  },
  {
   "key": "מתחת לגיל 18 בדרך כלל <b>לא מנוכים</b> מס הכנסה, ביטוח לאומי ומס בריאות, כך שהנטו קרוב לברוטו.",
   "kind": "lit",
   "where": [
-   "app/views-rights.js:64"
+   "app/views-rights.js:85"
   ]
  },
  {
   "key": "לפי הגיל שלך, ההפרשה החובה תתחיל בגיל {0}{1}.",
   "kind": "tpl",
   "where": [
-   "app/views-rights.js:78"
+   "app/views-rights.js:99"
   ]
  },
  {
   "key": " (ציין מגדר בהגדרות לדיוק)",
   "kind": "lit",
   "where": [
-   "app/views-rights.js:78"
+   "app/views-rights.js:99"
   ]
  },
  {
   "key": "הגדר תאריך תחילת עבודה כדי לדעת ממתי מגיעה הפרשה.",
   "kind": "lit",
   "where": [
-   "app/views-rights.js:79"
+   "app/views-rights.js:100"
   ]
  },
  {
   "key": "לפי הוותק שלך, אמורה להיות הפרשה לפנסיה בתלוש.",
   "kind": "lit",
   "where": [
-   "app/views-rights.js:82"
+   "app/views-rights.js:103"
   ]
  },
  {
   "key": "לפי הוותק שלך, ההפרשה צריכה להתחיל ב-{0}.",
   "kind": "tpl",
   "where": [
-   "app/views-rights.js:82"
+   "app/views-rights.js:103"
   ]
  },
  {
   "key": "{0}: {1} לשעה",
   "kind": "tpl",
   "where": [
-   "app/views-rights.js:93"
+   "app/views-rights.js:114"
   ]
  },
  {
   "key": "מעל המינימום{0} ({1})",
   "kind": "tpl",
   "where": [
-   "app/views-rights.js:93"
+   "app/views-rights.js:114"
   ]
  },
  {
   "key": "נמוך מהמינימום{0}: {1}",
   "kind": "tpl",
   "where": [
-   "app/views-rights.js:93"
+   "app/views-rights.js:114"
   ]
  },
  {
   "key": "החזר נסיעות",
   "kind": "lit",
   "where": [
-   "app/views-rights.js:95",
-   "app/views-rights.js:95",
+   "app/views-rights.js:116",
+   "app/views-rights.js:116",
    "core/games.js:189"
   ]
  },
@@ -10302,256 +10369,256 @@
   "key": "{0} ליום עבודה",
   "kind": "tpl",
   "where": [
-   "app/views-rights.js:95"
+   "app/views-rights.js:116"
   ]
  },
  {
   "key": "לא הוגדר באפליקציה. רוב העובדים זכאים לו",
   "kind": "lit",
   "where": [
-   "app/views-rights.js:95"
+   "app/views-rights.js:116"
   ]
  },
  {
   "key": "יתרת חופשה",
   "kind": "lit",
   "where": [
-   "app/views-rights.js:97"
+   "app/views-rights.js:118"
   ]
  },
  {
   "key": "{0} ימים",
   "kind": "tpl",
   "where": [
-   "app/views-rights.js:97",
-   "app/views-rights.js:98"
+   "app/views-rights.js:118",
+   "app/views-rights.js:119"
   ]
  },
  {
   "key": "ימי מחלה צבורים",
   "kind": "lit",
   "where": [
-   "app/views-rights.js:98"
+   "app/views-rights.js:119"
   ]
  },
  {
   "key": "כ-{0} לשנה",
   "kind": "tpl",
   "where": [
-   "app/views-rights.js:99"
+   "app/views-rights.js:120"
   ]
  },
  {
   "key": "מ-{0}",
   "kind": "tpl",
   "where": [
-   "app/views-rights.js:99"
+   "app/views-rights.js:120"
   ]
  },
  {
   "key": "ותק, חופשה והבראה",
   "kind": "lit",
   "where": [
-   "app/views-rights.js:100"
+   "app/views-rights.js:121"
   ]
  },
  {
   "key": "הגדר תאריך תחילת עבודה כדי לחשב",
   "kind": "lit",
   "where": [
-   "app/views-rights.js:100"
+   "app/views-rights.js:121"
   ]
  },
  {
   "key": "כ-{0} על {1} בשנה האחרונה (אם לא שולמו)",
   "kind": "tpl",
   "where": [
-   "app/views-rights.js:102"
+   "app/views-rights.js:123"
   ]
  },
  {
   "key": "מגיע כ-{0}",
   "kind": "tpl",
   "where": [
-   "app/views-rights.js:108"
+   "app/views-rights.js:129"
   ]
  },
  {
   "key": "אולי כ-{0}, אם {1} לעבוד ביום הזה",
   "kind": "tpl",
   "where": [
-   "app/views-rights.js:109"
+   "app/views-rights.js:130"
   ]
  },
  {
   "key": "עבדת בחג: מגיע תשלום על העבודה. אם לא {0} לעבוד בו אלא {1}, מגיעים גם דמי חג",
   "kind": "tpl",
   "where": [
-   "app/views-rights.js:110"
+   "app/views-rights.js:131"
   ]
  },
  {
   "key": "בחרת",
   "kind": "lit",
   "where": [
-   "app/views-rights.js:110",
-   "app/views-rights.js:110"
+   "app/views-rights.js:131",
+   "app/views-rights.js:131"
   ]
  },
  {
   "key": "נדרשת",
   "kind": "lit",
   "where": [
-   "app/views-rights.js:110",
-   "app/views-rights.js:110"
+   "app/views-rights.js:131",
+   "app/views-rights.js:131"
   ]
  },
  {
   "key": "חל ביום {0}: משתלם רק למי שעובד ביום הזה",
   "kind": "tpl",
   "where": [
-   "app/views-rights.js:111"
+   "app/views-rights.js:132"
   ]
  },
  {
   "key": "לפני 3 חודשי עבודה",
   "kind": "lit",
   "where": [
-   "app/views-rights.js:112"
+   "app/views-rights.js:133"
   ]
  },
  {
   "key": "לא עבדת בחודשים שלפניו",
   "kind": "lit",
   "where": [
-   "app/views-rights.js:113"
+   "app/views-rights.js:134"
   ]
  },
  {
   "key": "<p class=\"small\">בשנה האחרונה: כ-<b>{0}</b> על {1}. כדאי לבדוק שבתלושים של החודשים האלה יש שורה של \"דמי חג\" או \"חגים\".</p>",
   "kind": "tpl",
   "where": [
-   "app/views-rights.js:119"
+   "app/views-rights.js:140"
   ]
  },
  {
   "key": "גיל ",
   "kind": "lit",
   "where": [
-   "app/views-rights.js:127"
+   "app/views-rights.js:148"
   ]
  },
  {
   "key": "גיל לא הוזן",
   "kind": "lit",
   "where": [
-   "app/views-rights.js:127"
+   "app/views-rights.js:148"
   ]
  },
  {
   "key": "ותק ",
   "kind": "lit",
   "where": [
-   "app/views-rights.js:127"
+   "app/views-rights.js:148"
   ]
  },
  {
   "key": " שנים",
   "kind": "lit",
   "where": [
-   "app/views-rights.js:127"
+   "app/views-rights.js:148"
   ]
  },
  {
-  "key": "<div class=\"rights\">\n      <div class=\"rt-intro\">{0}<div><b>הזכויות שלך בעבודה</b><div class=\"tiny muted\">{1} · מעודכן לאפריל 2026 · עובד גם בלי אינטרנט</div></div></div>\n      <input class=\"input rt-search\" type=\"search\" placeholder=\"חיפוש: שבת, נסיעות, הבראה…\" aria-label=\"חיפוש בזכויות\" enterkeyhint=\"search\">\n      <div class=\"rt-results\" aria-live=\"polite\" hidden></div>\n      <div class=\"rt-main\">\n      <div class=\"section-title\">{2} בדיקה מהירה של הנתונים שלך</div>\n      <div class=\"card rt-checks\">{3}</div>\n      {4}\n      <div class=\"section-title\">{5} המדריך</div>\n      <div class=\"card rt-topics\">{6}</div>\n      <div class=\"section-title\">{7} משהו לא בסדר?</div>\n      <div class=\"card rt-help\">\n        <ol><li><b>תעד</b>: האפליקציה כבר שומרת את המשמרות, והדוח לבירור מרכז הכול (תלושים, דמי חגים, כל המשמרות) עם מכתב מוכן.</li>\n        <li><b>דבר עם המעסיק</b>: בניתוח תלוש יש הודעה מנומסת מוכנה לשליחה.</li>\n        <li><b>קבל עזרה</b>: {8} · {9}</li></ol>\n        <button class=\"btn block\" data-act=\"claim-report\" style=\"margin-bottom:8px\">{10} דוח ומכתב לבירור מול המעסיק</button>\n        <button class=\"btn tonal block\" data-rt-ai>{11} שאלה אחרת? שאל את העוזר</button>\n      </div>\n      </div>\n      <div class=\"tiny muted\" style=\"margin:12px 4px 4px\">מידע כללי בלבד ואינו ייעוץ משפטי. תנאים בהסכם קיבוצי, בצו הרחבה או בחוזה שלך יכולים להיות טובים יותר.</div>\n    </div>",
+  "key": "<div class=\"rights\">\n      <div class=\"rt-intro\">{0}<div><b>הזכויות שלך בעבודה</b><div class=\"tiny muted\">{1} · מעודכן לאפריל 2026 · עובד גם בלי אינטרנט</div></div></div>\n      <input class=\"input rt-search\" type=\"search\" placeholder=\"חיפוש: שבת, נסיעות, הבראה…\" aria-label=\"חיפוש בזכויות\" enterkeyhint=\"search\">\n      <div class=\"rt-results\" aria-live=\"polite\" hidden></div>\n      <div class=\"rt-main\">\n      <div class=\"section-title\">{2} בדיקה מהירה של הנתונים שלך</div>\n      <div class=\"card rt-checks\">{3}</div>\n      {4}\n      <div class=\"section-title\">{5} המדריך</div>\n      <div class=\"card rt-topics\">{6}</div>\n      <div class=\"section-title\">{7} משהו לא בסדר?</div>\n      <div class=\"card rt-help\">\n        <ol><li><b>תעד</b>: האפליקציה כבר שומרת את המשמרות, והדוח לבירור מרכז הכול (תלושים, דמי חגים, כל המשמרות) עם מכתב מוכן.</li>\n        <li><b>דבר עם המעסיק</b>: בניתוח תלוש יש הודעה מנומסת מוכנה לשליחה.</li>\n        <li><b>קבל עזרה</b>: {8} · {9}</li></ol>\n        <button class=\"btn block\" data-act=\"claim-report\" style=\"margin-bottom:8px\">{10} דוח ומכתב לבירור מול המעסיק</button>\n        <button class=\"btn tonal block\" data-rt-ai>{11} שאלה אחרת? שאל את העוזר</button>\n      </div>\n      </div>\n      <div class=\"section-title\">{12} מקורות רשמיים</div>\n      <div class=\"card rt-sources\"><p>שעתי היא אפליקציה פרטית, ו<b>אינה מייצגת</b> את משרד העבודה, רשות המסים, המוסד לביטוח לאומי או כל גוף ממשלתי אחר. המידע כאן מבוסס על המקורות הרשמיים:</p><ul>{13}</ul></div>\n      <div class=\"tiny muted\" style=\"margin:12px 4px 4px\">מידע כללי בלבד ואינו ייעוץ משפטי. תנאים בהסכם קיבוצי, בצו הרחבה או בחוזה שלך יכולים להיות טובים יותר.</div>\n    </div>",
   "kind": "tpl",
   "where": [
-   "app/views-rights.js:128"
+   "app/views-rights.js:149"
   ]
  },
  {
-  "key": "<div class=\"section-title\">{0} לבני נוער (גיל {1})</div>\n        <div class=\"card rt-youth\" data-topic=\"נוער לילה הפסקה שעות אישור רפואי\">{2}\n        <div class=\"tiny\" style=\"margin-top:8px\">{3}</div></div>",
+  "key": "<div class=\"section-title\">{0} לבני נוער (גיל {1})</div>\n        <div class=\"card rt-youth\" data-topic=\"נוער לילה הפסקה שעות אישור רפואי\">{2}\n        <div class=\"tiny\" style=\"margin-top:8px\">{3}{4}</div></div>",
   "kind": "tpl",
   "where": [
-   "app/views-rights.js:135"
+   "app/views-rights.js:156"
   ]
  },
  {
   "key": "המדריך לנוער עובד ב\"כל זכות\"",
   "kind": "lit",
   "where": [
-   "app/views-rights.js:137",
-   "app/views-rights.js:169"
+   "app/views-rights.js:158",
+   "app/views-rights.js:192"
   ]
  },
  {
   "key": "איך מגישים תלונה",
   "kind": "lit",
   "where": [
-   "app/views-rights.js:144"
+   "app/views-rights.js:165"
   ]
  },
  {
   "key": "כל זכות",
   "kind": "lit",
   "where": [
-   "app/views-rights.js:144"
+   "app/views-rights.js:165"
   ]
  },
  {
   "key": "משכורת תעריף כמה מגיע לשעה שכר נוער גיל",
   "kind": "lit",
   "where": [
-   "app/views-rights.js:156"
+   "app/views-rights.js:179"
   ]
  },
  {
   "key": "נוספות ארוכה 125 150 שעות",
   "kind": "lit",
   "where": [
-   "app/views-rights.js:156"
+   "app/views-rights.js:179"
   ]
  },
  {
   "key": "שבת חג חגים מנוחה 150 סופש",
   "kind": "lit",
   "where": [
-   "app/views-rights.js:157"
+   "app/views-rights.js:180"
   ]
  },
  {
   "key": "הפסקה מנוחה אוכל ארוחה",
   "kind": "lit",
   "where": [
-   "app/views-rights.js:157"
+   "app/views-rights.js:180"
   ]
  },
  {
   "key": "נסיעות נסיעה אוטובוס רב קו דלק תחבורה",
   "kind": "lit",
   "where": [
-   "app/views-rights.js:157"
+   "app/views-rights.js:180"
   ]
  },
  {
   "key": "מחלה חולה אישור רופא",
   "kind": "lit",
   "where": [
-   "app/views-rights.js:158"
+   "app/views-rights.js:181"
   ]
  },
  {
   "key": "חופש חופשה ימי חופש",
   "kind": "lit",
   "where": [
-   "app/views-rights.js:158"
+   "app/views-rights.js:181"
   ]
  },
  {
   "key": "הבראה",
   "kind": "lit",
   "where": [
-   "app/views-rights.js:158",
+   "app/views-rights.js:181",
    "core/payslip.js:525",
    "core/payslip.js:526"
   ]
@@ -10560,49 +10627,49 @@
   "key": "פנסיה קרן גמל חיסכון הפרשה",
   "kind": "lit",
   "where": [
-   "app/views-rights.js:158"
+   "app/views-rights.js:181"
   ]
  },
  {
   "key": "תלוש משכורת מתי מקבלים הלנה איחור תשלום",
   "kind": "lit",
   "where": [
-   "app/views-rights.js:159"
+   "app/views-rights.js:182"
   ]
  },
  {
   "key": "ניכוי קנס חוסר קופה ציוד הורדה מהשכר",
   "kind": "lit",
   "where": [
-   "app/views-rights.js:159"
+   "app/views-rights.js:182"
   ]
  },
  {
   "key": "פיטורים פיטרו התפטרות פיצויים שימוע הודעה מוקדמת עזיבה",
   "kind": "lit",
   "where": [
-   "app/views-rights.js:160"
+   "app/views-rights.js:183"
   ]
  },
  {
   "key": "לבני נוער (גיל {0})",
   "kind": "tpl",
   "where": [
-   "app/views-rights.js:169"
+   "app/views-rights.js:192"
   ]
  },
  {
   "key": "נוער לילה הפסקה שעות 18 גיל אישור רפואי",
   "kind": "lit",
   "where": [
-   "app/views-rights.js:169"
+   "app/views-rights.js:192"
   ]
  },
  {
   "key": "<div class=\"card rt-none\"><b>לא מצאנו את זה במדריך.</b><div class=\"small muted\">נסה מילה אחרת, או שאל את העוזר.</div><button class=\"btn tonal block\" data-rt-ai>{0} שאל את העוזר</button></div>",
   "kind": "tpl",
   "where": [
-   "app/views-rights.js:195"
+   "app/views-rights.js:218"
   ]
  },
  {
