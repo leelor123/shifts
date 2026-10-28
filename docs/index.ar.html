@@ -2,7 +2,7 @@
 <html lang="ar" dir="rtl">
 <head>
 <meta charset="utf-8">
-<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'sha256-FgNk6U022o0tzGprl1MJbN7Uezv3SKotwh8ovG5xA8c=' 'sha256-FHtERn7wETJC27asCcQfmkLz3WTyRhoyXEn7HoUBWaA=' https://www.gstatic.com https://apis.google.com https://cdnjs.cloudflare.com https://cdn.jsdelivr.net 'wasm-unsafe-eval'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com data:; img-src 'self' data: blob: https:; connect-src 'self' https: wss:; frame-src https://shiftpay-70ab6.firebaseapp.com https://accounts.google.com https://apis.google.com https://*.google.com; worker-src 'self' blob: https://cdnjs.cloudflare.com https://cdn.jsdelivr.net; media-src 'self' data: blob:; manifest-src 'self'; object-src 'none'; base-uri 'self'; form-action 'self'">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'sha256-FgNk6U022o0tzGprl1MJbN7Uezv3SKotwh8ovG5xA8c=' 'sha256-VEt8bKZb1ibRcymFSXOybLpyb3/8maVkAgATol1Qdq8=' https://www.gstatic.com https://apis.google.com https://cdnjs.cloudflare.com https://cdn.jsdelivr.net 'wasm-unsafe-eval'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com data:; img-src 'self' data: blob: https:; connect-src 'self' https: wss:; frame-src https://shiftpay-70ab6.firebaseapp.com https://accounts.google.com https://apis.google.com https://*.google.com; worker-src 'self' blob: https://cdnjs.cloudflare.com https://cdn.jsdelivr.net; media-src 'self' data: blob:; manifest-src 'self'; object-src 'none'; base-uri 'self'; form-action 'self'">
 <script>(function(){try{var l=localStorage.getItem('shaati.lang'),h=document.documentElement.lang;if(l&&l!==h&&/^(he|ar|ru|en|fr|es)$/.test(l)&&!sessionStorage.getItem('langHop')){sessionStorage.setItem('langHop','1');location.replace((l==='he'?'index.html':'index.'+l+'.html')+location.search+location.hash)}else sessionStorage.removeItem('langHop')}catch(e){}})();</script>
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="theme-color" content="#0d2b6b">
@@ -2578,6 +2578,11 @@ html:not([lang="he"]) .lb-games button, html:not([lang="he"]) .lb-periods button
 .pending-card .pd-info span { font-size: .82rem; color: var(--on-surface-var); }
 .pending-card .pd-ok { flex: none; min-height: 42px; padding: 0 14px; border-radius: 12px; font-weight: 700; white-space: nowrap; }
 .pending-card .pd-all { margin-top: 12px; }
+/* settings › appearance › home screen: how many recent shifts (a row like the switches above it) */
+.hm-recent { display: flex; align-items: center; flex-wrap: wrap; gap: 8px 12px; padding: 12px 4px; }
+.hm-recent .t { flex: 1 1 130px; font-weight: 600; }
+.hm-recent .seg { flex: 0 1 220px; min-width: 0; }
+.hm-recent .seg button { min-width: 0; }
 /* on an iPhone in a browser: add the app to the home screen */
 .ios-card { padding: 14px; border: 1.5px solid color-mix(in srgb, var(--brand) 35%, transparent); }
 .ios-card .ic-head { display: flex; gap: 12px; align-items: flex-start; margin-bottom: 12px; }
@@ -2652,8 +2657,8 @@ html.hide-money .money { filter: blur(7px); user-select: none; }
 <div id="print-root" aria-hidden="true"></div>
 <noscript><div style="padding:24px;font-family:sans-serif">يتطلب التطبيق JavaScript.</div></noscript>
 <script>
-window.APP_VERSION = '1.24.0';
-window.APP_BUILD = '1.24.0-2afa973f';
+window.APP_VERSION = '1.25.0';
+window.APP_BUILD = '1.25.0-0c2ac4e1';
 /* ---- core/util.js ---- */
 /* ============================================================
  * util.js — date/time helpers and formatting.
@@ -15635,22 +15640,29 @@ ${name}`.trim();
     const pct = goal ? Math.min(100, (curVal / goal) * 100) : 0;
     if (goal && pct >= 100) App.celebrateOnce('goal-' + P.key, () => { root.Fx.celebrate('money'); UI.toast("وصلت إلى هدفك الشهري! 🎯"); });
     const fc = proj && proj.forecast != null ? proj.forecast : null; // what was earned + the planned shifts + the pace after them
-    const projPct = goal && fc ? Math.min(100, ((goalNet ? fc * (sum.gross ? sum.net.net / sum.gross : 0.85) : fc) / goal) * 100) : 0;
+    const netShare = sum.gross ? sum.net.net / sum.gross : 0.85;
+    const projPct = goal && fc ? Math.min(100, ((goalNet ? fc * netShare : fc) / goal) * 100) : 0;
     const fcNote = proj && proj.plannedCount ? ` <span class="hh-fc-n">(يشمل ${proj.plannedCount} مخططة)</span>` : '';
     const periodName = emp.periodStartDay > 1 ? "فترة الأجر" : esc(P.label);
     // the whole card opens the summary on a tap; keyboards and screen readers get a real button for it
     // (the card itself holds the "what is gross?" buttons, so it can't be one)
     const P2 = root.Plus;
+    // the big number: gross, or the net estimate if the user chose it (settings › appearance › home screen)
+    const bigNet = (S.settings.home || {}).big === 'net';
+    // the forecast in the kind it stands next to: a net goal, or a net big number
+    const fcShown = (net) => (net ? fc * netShare : fc);
+    const grossT = UI.term ? UI.term('gross', "الإجمالي") : "الإجمالي";
+    const netT = UI.term ? UI.term('net', sum.net.minor ? "الصافي" : "الصافي التقديري") : "الصافي";
     return `<section class="home-hero" data-act="go-summary"><button class="vh" data-act="go-summary">التفاصيل ${periodName}</button>
       ${P2 && P2.visible() ? `<button class="hh-skin" data-act="plus-design" aria-label="تصميم بطاقة الأجر">${icon('palette', 's')}</button>` : ''}
       <button class="hh-eye ${S.settings.hideMoney ? 'off' : ''}" data-act="toggle-money" aria-label="${S.settings.hideMoney ? "إظهار المبالغ" : "إخفاء المبالغ"}" aria-pressed="${!!S.settings.hideMoney}">${icon('eye', 's')}</button>
       <span class="aurora" aria-hidden="true" style="${App.phase()}"><i></i><i></i><i></i></span><span class="hh-dial" aria-hidden="true" style="${App.phase()}"></span>
-      <div class="hh-label">${UI.term ? UI.term('gross', "الإجمالي") : "الإجمالي"} ${emp.periodStartDay > 1 ? "في فترة الأجر" : "في " + periodName} حتى الآن</div>
-      <div class="hero-num">${money(sum.gross, 0)}</div>
-      <div class="hh-stats"><span><b>${money(sum.net.net, 0)}</b><small>${UI.term ? UI.term('net', sum.net.minor ? "الصافي" : "الصافي التقديري") : "الصافي"}</small></span><span><b class="num">${U.hm(sum.hours * 60)}</b><small>ساعات</small></span><span><b>${sum.shifts}</b><small>${sum.shifts === 1 ? "وردية" : "الورديات"}</small></span></div>
+      <div class="hh-label">${bigNet ? netT : grossT} ${emp.periodStartDay > 1 ? "في فترة الأجر" : "في " + periodName} حتى الآن</div>
+      <div class="hero-num">${money(bigNet ? sum.net.net : sum.gross, 0)}</div>
+      <div class="hh-stats"><span><b>${money(bigNet ? sum.gross : sum.net.net, 0)}</b><small>${bigNet ? grossT : netT}</small></span><span><b class="num">${U.hm(sum.hours * 60)}</b><small>ساعات</small></span><span><b>${sum.shifts}</b><small>${sum.shifts === 1 ? "وردية" : "الورديات"}</small></span></div>
       ${goal ? `<div class="hh-goal"><div class="progress thin"><b style="width:${projPct}%"></b><i style="width:${pct}%"></i></div>
-        <div class="hh-goal-l">${U.num(pct, 0)}% من هدف ${money(goal, 0)}${fc ? ` · التوقع ${money(fc, 0)}${fcNote}` : ''}</div></div>`
-        : (fc ? `<div class="hh-goal-l">${emp.periodStartDay > 1 ? "التوقع حتى نهاية الفترة" : "التوقع حتى نهاية الشهر"}: ${money(fc, 0)}${fcNote}</div>` : '')}
+        <div class="hh-goal-l">${U.num(pct, 0)}% من هدف ${money(goal, 0)}${fc ? ` · التوقع ${money(fcShown(goalNet), 0)}${fcNote}` : ''}</div></div>`
+        : (fc ? `<div class="hh-goal-l">${emp.periodStartDay > 1 ? "التوقع حتى نهاية الفترة" : "التوقع حتى نهاية الشهر"}: ${money(fcShown(bigNet), 0)}${fcNote}</div>` : '')}
     </section>`;
   }
 
@@ -15758,12 +15770,15 @@ ${name}`.trim();
     const now = Date.now();
     // planned shifts whose time has passed wait for a "done" tap, so they come first
     const pending = results.filter((r) => r.status === 'planned' && r.end <= now).sort((a, b) => b.start - a.start);
-    const recent = results.filter((r) => r.status === 'done').sort((a, b) => b.start - a.start).slice(0, 3);
+    // what the user chose to see here (settings › appearance › home screen)
+    const HS = S.settings.home || {};
+    const nRecent = HS.recent == null ? 3 : +HS.recent;
+    const recent = results.filter((r) => r.status === 'done').sort((a, b) => b.start - a.start).slice(0, 8);
     const name = S.settings.userName ? ', ' + esc(String(S.settings.userName).split(' ')[0]) : '';
     const date = U.fmtDate(today, 'long').replace(/\s\d{4}$/, '');
     return `
       <div class="home-top"><div class="titles"><h1>${greeting()}${name} <span class="wave">👋</span></h1>
-        <div class="sub">${root.Plus && root.Plus.owned() ? '<span class="plus-badge">Plus ✨</span>' : ''}${date}${hd.dayStr ? ' · ' + esc(hd.toString().replace(/\s\S+$/, '')) : ''}${hol ? ' · ' + esc(hol) : ''}</div></div>
+        <div class="sub">${root.Plus && root.Plus.owned() ? '<span class="plus-badge">Plus ✨</span>' : ''}${date}${HS.hebDate !== false ? `${hd.dayStr ? ' · ' + esc(hd.toString().replace(/\s\S+$/, '')) : ''}${hol ? ' · ' + esc(hol) : ''}` : ''}</div></div>
         <span id="sync-dot">${App.syncDot ? App.syncDot() : ''}</span>
         <button class="icon-btn" data-act="support" aria-label="المساعدة والدعم">${icon('help')}</button>
         <button class="icon-btn" data-act="insights" aria-label="الإشعارات والرؤى">${icon('bell')}${unread ? `<span class="dot-badge">${unread > 9 ? '9+' : unread}</span>` : ''}</button></div>
@@ -15776,13 +15791,13 @@ ${name}`.trim();
       ${actionBlock()}
       ${iosCard()}
       ${App.guideCard ? App.guideCard() : ''}
-      ${highlight()}
+      ${HS.highlight !== false ? highlight() : ''}
       ${root.Plus ? root.Plus.nudgeCard() : ''}
       ${savingCard()}
-      ${shortcuts()}
+      ${HS.shortcuts !== false ? shortcuts() : ''}
       ${pendingCard(pending)}
-      ${recent.length ? `<div class="home-list-head"><span>الورديات الأخيرة</span><span class="spacer"></span>${App.travelSwitch()}<button class="btn text sm" data-act="go-shifts">الكل</button></div>
-        <div class="list home-list">${recent.slice(0, pending.length ? 2 : 3).map((r) => App.shiftItem(r)).join('')}</div>`
+      ${recent.length ? !nRecent ? '' : `<div class="home-list-head"><span>الورديات الأخيرة</span><span class="spacer"></span>${App.travelSwitch()}<button class="btn text sm" data-act="go-shifts">الكل</button></div>
+        <div class="list home-list">${recent.slice(0, nRecent - (pending.length ? 1 : 0)).map((r) => App.shiftItem(r)).join('')}</div>`
         : pending.length ? ''
         : S.meta.guide && !S.meta.guideDone ? '' : `<div class="empty fun">${App.mascot ? App.mascot('sleepy', { size: 92 }) : ''}<h3>لا توجد ورديات بعد</h3><div>في بداية الوردية اضغط "بدء وردية".<br>الوردية التي حدثت تُضاف بزر <b>+</b>.</div></div>`}
     `;
@@ -18587,7 +18602,7 @@ ${name}`.trim();
     rest: "سبت عيد أعياد مدينة دخول السبت خروج السبت قاعدة يوم", pay: "سفر استرداد نفقات السفر سقف فترة الراتب يوم الدفع راتب",
     net: "ضريبة ضريبة الدخل نقاط الاستحقاق تقاعد التأمين الوطني ضريبة الصحة صندوق الاستكمال صافي", leave: "إجازة مرض استجمام أقدمية بدء العمل",
     goal: "هدف أهداف ادخار توفير", alerts: "إشعارات تذكيرات تنبيهات رسائل", templates: "قالب قوالب وردية ثابتة",
-    lang: "لغة لغات language english русский العربية عربي إنجليزي روسي فرنسي إسباني français español عبري ترجمة", look: "لون ألوان سمة داكن فاتح الوضع الليلي خط خطوط مظهر أصوات اهتزاز موسيقى تصميم البطاقة plus بلس", security: "قفل رمز بصمة الإصبع كلمة المرور",
+    lang: "لغة لغات language english русский العربية عربي إنجليزي روسي فرنسي إسباني français español عبري ترجمة", look: "لون ألوان سمة داكن فاتح الوضع الليلي خط خطوط مظهر أصوات اهتزاز موسيقى تصميم البطاقة plus بلس الشاشة الرئيسية اختصارات آخر الورديات التاريخ العبري سطر التحديث home", security: "قفل رمز بصمة الإصبع كلمة المرور",
     assistant: "ذكاء اصطناعي مساعد أسئلة ai", ai: "مفتاح api claude تحليل القسيمة", backup: "نسخ احتياطي استعادة ملف", schedule: "جدول العمل جدول الورديات الأسبوع القادم صورة لقطة شاشة واتساب whatsapp رسالة جدول مخطط تقويم", import: "استيراد تقرير ساعات حضور ساعة excel csv pdf صورة ملف رفع ورديات من العمل", export: "تصدير excel csv pdf تقويم",
     demo: "مثال عرض تجريبي", about: "إصدار تثبيت حول", rights: "حقوق الحد الأدنى للأجور",
   };
@@ -18621,6 +18636,7 @@ ${name}`.trim();
     ["لا تصلني الإشعارات", "إشعارات تذكيرات تنبيهات لا تصلني رسائل", [['alerts', "إشعارات على الهاتف"]]],
     ["الأصوات مزعجة", "أصوات كتم هدوء ضجيج موسيقى اهتزاز", [['look', "الأصوات"], ['look', "الاهتزاز"]]],
     ["أريد لونًا آخر أو الوضع الداكن", "لون داكن فاتح الوضع الليلي تصميم", [['look', '']]],
+    ["أريد تغيير الشاشة الرئيسية", "الشاشة الرئيسية اختصارات إخفاء آخر الورديات التاريخ العبري سطر التحديث", [['look', "اختصارات"]]],
     ["انتقلت إلى هاتف جديد", "هاتف جديد نقل جهاز جديد نقل البيانات", [['account', ''], ['backup', '']]],
     ["حُذفت لي ورديات", "حُذف حُذفت استعادة نسخة احتياطية فقدت", [['backup', '']]],
     ["الإجازة أو أيام المرض غير صحيحة", "إجازة أيام إجازة مرض استجمام أقدمية رصيد", [['leave', "تاريخ بدء العمل"], ['leave', "الرصيد الافتتاحي — الإجازة"]]],
@@ -19146,6 +19162,12 @@ ${name}`.trim();
       <div class="section-title">الخط</div>
       <div class="font-pick">${Object.entries(App.FONTS).map(([k, f]) => `<button data-font="${k}" class="${(S.settings.font || 'rubik') === k ? 'on' : ''}" style="font-family:'${f[0]}', system-ui, sans-serif"><span class="fp-sample">وردية مسائية · ${esc(f[2])}<small>${f[0]}</small></span><span class="fp-num">₪1,240</span></button>`).join('')}</div>
       <div class="section-title">حجم النص</div><div class="seg">${[[0.9, "صغير"], [1, "عادي"], [1.1, "كبير"], [1.2, "كبير جدًا"]].map(([k, l]) => `<button data-fs="${k}" class="${+S.settings.fontScale === k ? 'on' : ''}">${l}</button>`).join('')}</div>
+      <div class="section-title" style="margin-top:16px">الشاشة الرئيسية</div>
+      <div class="card"><div class="hm-recent"><span class="t">الرقم الكبير في بطاقة الراتب</span><div class="seg">${[['gross', "الإجمالي"], ['net', "الصافي"]].map(([k, l]) => `<button data-home-big="${k}" class="${((S.settings.home || {}).big === 'net' ? 'net' : 'gross') === k ? 'on' : ''}">${l}</button>`).join('')}</div></div>
+        ${F.sw("اختصارات", "أربعة أزرار كبيرة: وردية جديدة، الحقوق، فحص قسيمة الراتب والألعاب", 's.home.shortcuts', (S.settings.home || {}).shortcuts !== false)}
+        ${F.sw("سطر التحديث", "وردية قادمة، تنبيه مهم أو راتب في الطريق، تحت زر الوردية", 's.home.highlight', (S.settings.home || {}).highlight !== false)}
+        ${F.sw("التاريخ العبري والأعياد", "في السطر تحت التحية", 's.home.hebDate', (S.settings.home || {}).hebDate !== false)}
+        <div class="hm-recent"><span class="t">آخر الورديات في الرئيسية</span><div class="seg">${[[0, "بدون"], [3, '3'], [5, '5'], [8, '8']].map(([k, l]) => `<button data-home-recent="${k}" class="${((S.settings.home || {}).recent == null ? 3 : +(S.settings.home || {}).recent) === k ? 'on' : ''}">${l}</button>`).join('')}</div></div></div>
       <div class="section-title" style="margin-top:16px">الخصوصية</div>
       <div class="card">${F.sw("إخفاء المبالغ", "تُموَّه المبالغ على الشاشة، مثلًا عندما تُري هاتفك لأحد. العين في بطاقة الأجر تُظهرها", 's.hideMoney', !!S.settings.hideMoney)}</div>
       <div class="section-title" style="margin-top:16px">المؤثرات والأصوات</div>
@@ -19169,6 +19191,8 @@ ${name}`.trim();
         if (b.dataset.theme) await root.Fx.reveal(e.clientX, e.clientY, async () => { await Store.setSettings((s) => { s.theme = b.dataset.theme; }); draw(); });
         else if (b.dataset.accent) await root.Fx.reveal(e.clientX, e.clientY, async () => { await Store.setSettings((s) => { s.accent = b.dataset.accent; }); draw(); });
         else if (b.dataset.fs) await Store.setSettings((s) => { s.fontScale = +b.dataset.fs; });
+        else if (b.dataset.homeBig) await Store.setSettings((s) => { s.home = Object.assign({}, s.home, { big: b.dataset.homeBig }); });
+        else if (b.dataset.homeRecent !== undefined) await Store.setSettings((s) => { s.home = Object.assign({}, s.home, { recent: +b.dataset.homeRecent }); });
         else if (b.dataset.font) await Store.setSettings((s) => { s.font = b.dataset.font; });
         else if (b.hasAttribute('data-fx-try')) { root.Fx.celebrate('big'); return; }
         else if (b.dataset.skin !== undefined && root.Plus) { if (!(await root.Plus.pickSkin(b.dataset.skin))) return; } // a locked one opens Shaati Plus
@@ -20416,17 +20440,17 @@ ${name}`.trim();
 
   /* ---------------- what's new (once per big update, for people who already used the app) ---------------- */
   const WHATS_NEW = {
-    id: '1.24.0',
+    id: '1.25.0',
     items: [
+      ['home', 'violet', "الشاشة الرئيسية كما يناسبك", "في الإعدادات › المظهر › الشاشة الرئيسية: أخفِ الاختصارات أو سطر التحديث أو التاريخ العبري، واختر عدد آخر الورديات المعروضة."],
+      ['wallet', 'mint', "الصافي بخط كبير", "يمكنك اختيار أن يكون الرقم الكبير في بطاقة الراتب هو الصافي التقديري. عندها يظهر توقع نهاية الشهر بالصافي أيضًا."],
       ['addSq', 'sky', "على iPhone؟ Shaati على الشاشة الرئيسية", "دليل من 3 خطوات: هكذا تُحفظ البيانات وتصل التذكيرات على iPhone أيضًا. في الإعدادات › حول التطبيق والتثبيت."],
       ['refresh', 'mint', "من الموقع مباشرة إلى الإصدار الجديد", "الدخول من الموقع أو من رابط في المتصفح يفتح دائمًا أحدث إصدار، لا نسخة قديمة من الزيارة السابقة."],
       ['bell', 'sky', "تذكيرات الورديات بتحكّم كامل", "عدد التذكيرات الذي تريده وقبل الوقت الذي تريده، وأيضًا في المساء السابق، وسؤال بعد الوردية إن كنت عملت فيها. في الإعدادات › الإشعارات والرؤى."],
       ['chart', 'mint', "متوسط الراتب الشهري", "في التقارير: متوسط آخر 3 أو 6 أو 12 شهرًا، أو هذه السنة أو كل الوقت، مع أعلى شهر وأدناه."],
       ['eye', 'violet', "وضع الخصوصية", "العين في بطاقة الراتب تموّه كل المبالغ، مثلًا عندما تُري أحدًا هاتفك."],
-      ['share', 'pink', "Shaati وجدت لك مالًا؟ أخبر أصدقاءك", "الفرق الذي وُجد في القسيمة، أو المال الذي عاد إليك، يصبح صورة للمشاركة، كي يفحص أصدقاؤك قسائمهم أيضًا."],
       ['globe', 'amber', "Shaati بالفرنسية والإسبانية أيضًا", "ست لغات: العبرية والعربية والروسية والإنجليزية والفرنسية والإسبانية. في الإعدادات › المظهر والقفل › اللغة."],
       ['check', 'mint', "وردية انتهت؟ أكّدها بنقرة", "تُحتسب الوردية المخططة في أجرك فقط بعد أن تؤكد أنك عملت فيها. الآن الأمر واضح: بطاقة في الشاشة الرئيسية مع زر كبير لكل وردية."],
-      ['file', 'violet', "تقارير الساعات من PDF تُقرأ بدقة", "حتى التقارير التي تُرسم فيها كل حرف على حدة، ولم يعد عمود \"الساعات المعيارية\" يُخلط بوقت الدخول."],
     ],
   };
 

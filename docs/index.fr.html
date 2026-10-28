@@ -2,7 +2,7 @@
 <html lang="fr" dir="ltr">
 <head>
 <meta charset="utf-8">
-<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'sha256-FgNk6U022o0tzGprl1MJbN7Uezv3SKotwh8ovG5xA8c=' 'sha256-QwN2DpFdU+wP3RAidal91BFU5UYayZs0pIfCPsDUODc=' https://www.gstatic.com https://apis.google.com https://cdnjs.cloudflare.com https://cdn.jsdelivr.net 'wasm-unsafe-eval'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com data:; img-src 'self' data: blob: https:; connect-src 'self' https: wss:; frame-src https://shiftpay-70ab6.firebaseapp.com https://accounts.google.com https://apis.google.com https://*.google.com; worker-src 'self' blob: https://cdnjs.cloudflare.com https://cdn.jsdelivr.net; media-src 'self' data: blob:; manifest-src 'self'; object-src 'none'; base-uri 'self'; form-action 'self'">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'sha256-FgNk6U022o0tzGprl1MJbN7Uezv3SKotwh8ovG5xA8c=' 'sha256-p7tZhUdPTDKZ45yDhuyACnEcIdnbJqgjzRgoMHt6cks=' https://www.gstatic.com https://apis.google.com https://cdnjs.cloudflare.com https://cdn.jsdelivr.net 'wasm-unsafe-eval'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com data:; img-src 'self' data: blob: https:; connect-src 'self' https: wss:; frame-src https://shiftpay-70ab6.firebaseapp.com https://accounts.google.com https://apis.google.com https://*.google.com; worker-src 'self' blob: https://cdnjs.cloudflare.com https://cdn.jsdelivr.net; media-src 'self' data: blob:; manifest-src 'self'; object-src 'none'; base-uri 'self'; form-action 'self'">
 <script>(function(){try{var l=localStorage.getItem('shaati.lang'),h=document.documentElement.lang;if(l&&l!==h&&/^(he|ar|ru|en|fr|es)$/.test(l)&&!sessionStorage.getItem('langHop')){sessionStorage.setItem('langHop','1');location.replace((l==='he'?'index.html':'index.'+l+'.html')+location.search+location.hash)}else sessionStorage.removeItem('langHop')}catch(e){}})();</script>
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="theme-color" content="#0d2b6b">
@@ -2578,6 +2578,11 @@ html:not([lang="he"]) .lb-games button, html:not([lang="he"]) .lb-periods button
 .pending-card .pd-info span { font-size: .82rem; color: var(--on-surface-var); }
 .pending-card .pd-ok { flex: none; min-height: 42px; padding: 0 14px; border-radius: 12px; font-weight: 700; white-space: nowrap; }
 .pending-card .pd-all { margin-top: 12px; }
+/* settings › appearance › home screen: how many recent shifts (a row like the switches above it) */
+.hm-recent { display: flex; align-items: center; flex-wrap: wrap; gap: 8px 12px; padding: 12px 4px; }
+.hm-recent .t { flex: 1 1 130px; font-weight: 600; }
+.hm-recent .seg { flex: 0 1 220px; min-width: 0; }
+.hm-recent .seg button { min-width: 0; }
 /* on an iPhone in a browser: add the app to the home screen */
 .ios-card { padding: 14px; border: 1.5px solid color-mix(in srgb, var(--brand) 35%, transparent); }
 .ios-card .ic-head { display: flex; gap: 12px; align-items: flex-start; margin-bottom: 12px; }
@@ -2652,8 +2657,8 @@ html.hide-money .money { filter: blur(7px); user-select: none; }
 <div id="print-root" aria-hidden="true"></div>
 <noscript><div style="padding:24px;font-family:sans-serif">L'application a besoin de JavaScript.</div></noscript>
 <script>
-window.APP_VERSION = '1.24.0';
-window.APP_BUILD = '1.24.0-2afa973f';
+window.APP_VERSION = '1.25.0';
+window.APP_BUILD = '1.25.0-0c2ac4e1';
 /* ---- core/util.js ---- */
 /* ============================================================
  * util.js — date/time helpers and formatting.
@@ -15635,22 +15640,29 @@ ${name}`.trim();
     const pct = goal ? Math.min(100, (curVal / goal) * 100) : 0;
     if (goal && pct >= 100) App.celebrateOnce('goal-' + P.key, () => { root.Fx.celebrate('money'); UI.toast("Vous avez atteint votre objectif mensuel ! 🎯"); });
     const fc = proj && proj.forecast != null ? proj.forecast : null; // what was earned + the planned shifts + the pace after them
-    const projPct = goal && fc ? Math.min(100, ((goalNet ? fc * (sum.gross ? sum.net.net / sum.gross : 0.85) : fc) / goal) * 100) : 0;
+    const netShare = sum.gross ? sum.net.net / sum.gross : 0.85;
+    const projPct = goal && fc ? Math.min(100, ((goalNet ? fc * netShare : fc) / goal) * 100) : 0;
     const fcNote = proj && proj.plannedCount ? ` <span class="hh-fc-n">(dont ${proj.plannedCount} prévus)</span>` : '';
     const periodName = emp.periodStartDay > 1 ? "la période de paie" : esc(P.label);
     // the whole card opens the summary on a tap; keyboards and screen readers get a real button for it
     // (the card itself holds the "what is gross?" buttons, so it can't be one)
     const P2 = root.Plus;
+    // the big number: gross, or the net estimate if the user chose it (settings › appearance › home screen)
+    const bigNet = (S.settings.home || {}).big === 'net';
+    // the forecast in the kind it stands next to: a net goal, or a net big number
+    const fcShown = (net) => (net ? fc * netShare : fc);
+    const grossT = UI.term ? UI.term('gross', "Brut") : "Brut";
+    const netT = UI.term ? UI.term('net', sum.net.minor ? "Net" : "Net estimé") : "Net";
     return `<section class="home-hero" data-act="go-summary"><button class="vh" data-act="go-summary">Détails ${periodName}</button>
       ${P2 && P2.visible() ? `<button class="hh-skin" data-act="plus-design" aria-label="Design de la carte de salaire">${icon('palette', 's')}</button>` : ''}
       <button class="hh-eye ${S.settings.hideMoney ? 'off' : ''}" data-act="toggle-money" aria-label="${S.settings.hideMoney ? "Afficher les montants" : "Masquer les montants"}" aria-pressed="${!!S.settings.hideMoney}">${icon('eye', 's')}</button>
       <span class="aurora" aria-hidden="true" style="${App.phase()}"><i></i><i></i><i></i></span><span class="hh-dial" aria-hidden="true" style="${App.phase()}"></span>
-      <div class="hh-label">${UI.term ? UI.term('gross', "Brut") : "Brut"} ${emp.periodStartDay > 1 ? "sur la période de paie" : "en " + periodName} jusqu’ici</div>
-      <div class="hero-num">${money(sum.gross, 0)}</div>
-      <div class="hh-stats"><span><b>${money(sum.net.net, 0)}</b><small>${UI.term ? UI.term('net', sum.net.minor ? "Net" : "Net estimé") : "Net"}</small></span><span><b class="num">${U.hm(sum.hours * 60)}</b><small>heures</small></span><span><b>${sum.shifts}</b><small>${sum.shifts === 1 ? "Service" : "Services"}</small></span></div>
+      <div class="hh-label">${bigNet ? netT : grossT} ${emp.periodStartDay > 1 ? "sur la période de paie" : "en " + periodName} jusqu’ici</div>
+      <div class="hero-num">${money(bigNet ? sum.net.net : sum.gross, 0)}</div>
+      <div class="hh-stats"><span><b>${money(bigNet ? sum.gross : sum.net.net, 0)}</b><small>${bigNet ? grossT : netT}</small></span><span><b class="num">${U.hm(sum.hours * 60)}</b><small>heures</small></span><span><b>${sum.shifts}</b><small>${sum.shifts === 1 ? "Service" : "Services"}</small></span></div>
       ${goal ? `<div class="hh-goal"><div class="progress thin"><b style="width:${projPct}%"></b><i style="width:${pct}%"></i></div>
-        <div class="hh-goal-l">${U.num(pct, 0)}% de l'objectif de ${money(goal, 0)} ${fc ? ` · prévision ${money(fc, 0)}${fcNote}` : ''}</div></div>`
-        : (fc ? `<div class="hh-goal-l">${emp.periodStartDay > 1 ? "Prévision pour la fin de la période" : "Prévision pour la fin du mois"}: ${money(fc, 0)}${fcNote}</div>` : '')}
+        <div class="hh-goal-l">${U.num(pct, 0)}% de l'objectif de ${money(goal, 0)} ${fc ? ` · prévision ${money(fcShown(goalNet), 0)}${fcNote}` : ''}</div></div>`
+        : (fc ? `<div class="hh-goal-l">${emp.periodStartDay > 1 ? "Prévision pour la fin de la période" : "Prévision pour la fin du mois"}: ${money(fcShown(bigNet), 0)}${fcNote}</div>` : '')}
     </section>`;
   }
 
@@ -15758,12 +15770,15 @@ ${name}`.trim();
     const now = Date.now();
     // planned shifts whose time has passed wait for a "done" tap, so they come first
     const pending = results.filter((r) => r.status === 'planned' && r.end <= now).sort((a, b) => b.start - a.start);
-    const recent = results.filter((r) => r.status === 'done').sort((a, b) => b.start - a.start).slice(0, 3);
+    // what the user chose to see here (settings › appearance › home screen)
+    const HS = S.settings.home || {};
+    const nRecent = HS.recent == null ? 3 : +HS.recent;
+    const recent = results.filter((r) => r.status === 'done').sort((a, b) => b.start - a.start).slice(0, 8);
     const name = S.settings.userName ? ', ' + esc(String(S.settings.userName).split(' ')[0]) : '';
     const date = U.fmtDate(today, 'long').replace(/\s\d{4}$/, '');
     return `
       <div class="home-top"><div class="titles"><h1>${greeting()}${name} <span class="wave">👋</span></h1>
-        <div class="sub">${root.Plus && root.Plus.owned() ? '<span class="plus-badge">Plus ✨</span>' : ''}${date}${hd.dayStr ? ' · ' + esc(hd.toString().replace(/\s\S+$/, '')) : ''}${hol ? ' · ' + esc(hol) : ''}</div></div>
+        <div class="sub">${root.Plus && root.Plus.owned() ? '<span class="plus-badge">Plus ✨</span>' : ''}${date}${HS.hebDate !== false ? `${hd.dayStr ? ' · ' + esc(hd.toString().replace(/\s\S+$/, '')) : ''}${hol ? ' · ' + esc(hol) : ''}` : ''}</div></div>
         <span id="sync-dot">${App.syncDot ? App.syncDot() : ''}</span>
         <button class="icon-btn" data-act="support" aria-label="Aide et assistance">${icon('help')}</button>
         <button class="icon-btn" data-act="insights" aria-label="Notifications et conseils">${icon('bell')}${unread ? `<span class="dot-badge">${unread > 9 ? '9+' : unread}</span>` : ''}</button></div>
@@ -15776,13 +15791,13 @@ ${name}`.trim();
       ${actionBlock()}
       ${iosCard()}
       ${App.guideCard ? App.guideCard() : ''}
-      ${highlight()}
+      ${HS.highlight !== false ? highlight() : ''}
       ${root.Plus ? root.Plus.nudgeCard() : ''}
       ${savingCard()}
-      ${shortcuts()}
+      ${HS.shortcuts !== false ? shortcuts() : ''}
       ${pendingCard(pending)}
-      ${recent.length ? `<div class="home-list-head"><span>Services récents</span><span class="spacer"></span>${App.travelSwitch()}<button class="btn text sm" data-act="go-shifts">Tout</button></div>
-        <div class="list home-list">${recent.slice(0, pending.length ? 2 : 3).map((r) => App.shiftItem(r)).join('')}</div>`
+      ${recent.length ? !nRecent ? '' : `<div class="home-list-head"><span>Services récents</span><span class="spacer"></span>${App.travelSwitch()}<button class="btn text sm" data-act="go-shifts">Tout</button></div>
+        <div class="list home-list">${recent.slice(0, nRecent - (pending.length ? 1 : 0)).map((r) => App.shiftItem(r)).join('')}</div>`
         : pending.length ? ''
         : S.meta.guide && !S.meta.guideDone ? '' : `<div class="empty fun">${App.mascot ? App.mascot('sleepy', { size: 92 }) : ''}<h3>Pas encore de services</h3><div>Au début d'un service, touchez « Commencer le service ».<br>Un service déjà effectué s'ajoute avec le bouton <b>+</b> .</div></div>`}
     `;
@@ -18587,7 +18602,7 @@ ${name}`.trim();
     rest: "shabbat fête fêtes ville début shabbat fin shabbat règle du jour", pay: "transport remboursement transport plafond période de paie jour de paie salaire",
     net: "impôt impôt sur le revenu points de crédit retraite assurance nationale taxe santé fonds d'études net", leave: "congés maladie convalescence ancienneté date de début",
     goal: "objectif objectifs épargne épargner", alerts: "notifications rappels push messages", templates: "modèle modèles service régulier",
-    lang: "langue langues language english русский العربية arabe anglais russe français francais español espagnol hébreu traduction", look: "couleur couleurs thème sombre clair mode nuit police polices apparence sons vibration musique design carte plus", security: "verrou code empreinte mot de passe",
+    lang: "langue langues language english русский العربية arabe anglais russe français francais español espagnol hébreu traduction", look: "couleur couleurs thème sombre clair mode nuit police polices apparence sons vibration musique design carte plus écran d'accueil accueil raccourcis derniers services date hébraïque ligne d'info home", security: "verrou code empreinte mot de passe",
     assistant: "intelligence artificielle assistant questions ia", ai: "clé api claude analyse fiche de paie", backup: "sauvegarde restauration fichier", schedule: "planning horaires roulement semaine prochaine photo image capture whatsapp message tableau prévu calendrier", import: "importer relevé d'heures présence pointeuse excel csv pdf photo fichier envoyer services du travail", export: "exporter excel csv pdf calendrier",
     demo: "exemple démo", about: "version installer à propos", rights: "droits salaire minimum",
   };
@@ -18621,6 +18636,7 @@ ${name}`.trim();
     ["Je ne reçois pas de notifications", "notifications rappels push messages non reçus", [['alerts', "Notifications push sur le téléphone"]]],
     ["Les sons me dérangent", "sons muet silence bruit musique vibration", [['look', "Sons"], ['look', "Vibration"]]],
     ["Je veux une autre couleur ou le mode sombre", "couleur sombre clair mode nuit design", [['look', '']]],
+    ["Je veux modifier l’écran d’accueil", "écran d'accueil accueil raccourcis masquer derniers services date hébraïque ligne d'info", [['look', "Raccourcis"]]],
     ["J'ai un nouveau téléphone", "nouveau téléphone transférer nouvel appareil déplacer données", [['account', ''], ['backup', '']]],
     ["Mes services ont été supprimés", "supprimé effacé restaurer sauvegarde perdu", [['backup', '']]],
     ["Les congés ou jours de maladie sont faux", "congés jours de repos maladie convalescence ancienneté solde", [['leave', "Date de début"], ['leave', "Solde de départ — congés"]]],
@@ -19146,6 +19162,12 @@ ${name}`.trim();
       <div class="section-title">Police</div>
       <div class="font-pick">${Object.entries(App.FONTS).map(([k, f]) => `<button data-font="${k}" class="${(S.settings.font || 'rubik') === k ? 'on' : ''}" style="font-family:'${f[0]}', system-ui, sans-serif"><span class="fp-sample">Service du soir · ${esc(f[2])}<small>${f[0]}</small></span><span class="fp-num">₪1,240</span></button>`).join('')}</div>
       <div class="section-title">Taille du texte</div><div class="seg">${[[0.9, "Petit"], [1, "Normal"], [1.1, "Grand"], [1.2, "Très grand"]].map(([k, l]) => `<button data-fs="${k}" class="${+S.settings.fontScale === k ? 'on' : ''}">${l}</button>`).join('')}</div>
+      <div class="section-title" style="margin-top:16px">Écran d’accueil</div>
+      <div class="card"><div class="hm-recent"><span class="t">Le grand chiffre de la carte de salaire</span><div class="seg">${[['gross', "Brut"], ['net', "Net"]].map(([k, l]) => `<button data-home-big="${k}" class="${((S.settings.home || {}).big === 'net' ? 'net' : 'gross') === k ? 'on' : ''}">${l}</button>`).join('')}</div></div>
+        ${F.sw("Raccourcis", "Quatre grands boutons : nouveau service, droits, vérification de la fiche de paie et jeux", 's.home.shortcuts', (S.settings.home || {}).shortcuts !== false)}
+        ${F.sw("Ligne d’info", "Un service qui approche, une alerte importante ou un salaire en route, sous le bouton de service", 's.home.highlight', (S.settings.home || {}).highlight !== false)}
+        ${F.sw("Date hébraïque et fêtes", "Dans la ligne sous le message d’accueil", 's.home.hebDate', (S.settings.home || {}).hebDate !== false)}
+        <div class="hm-recent"><span class="t">Derniers services sur l’accueil</span><div class="seg">${[[0, "Aucun"], [3, '3'], [5, '5'], [8, '8']].map(([k, l]) => `<button data-home-recent="${k}" class="${((S.settings.home || {}).recent == null ? 3 : +(S.settings.home || {}).recent) === k ? 'on' : ''}">${l}</button>`).join('')}</div></div></div>
       <div class="section-title" style="margin-top:16px">Confidentialité</div>
       <div class="card">${F.sw("Masquer les montants", "Les montants sont floutés à l'écran, par exemple quand vous montrez votre téléphone à quelqu'un. L'œil sur la carte de salaire les affiche", 's.hideMoney', !!S.settings.hideMoney)}</div>
       <div class="section-title" style="margin-top:16px">Effets et sons</div>
@@ -19169,6 +19191,8 @@ ${name}`.trim();
         if (b.dataset.theme) await root.Fx.reveal(e.clientX, e.clientY, async () => { await Store.setSettings((s) => { s.theme = b.dataset.theme; }); draw(); });
         else if (b.dataset.accent) await root.Fx.reveal(e.clientX, e.clientY, async () => { await Store.setSettings((s) => { s.accent = b.dataset.accent; }); draw(); });
         else if (b.dataset.fs) await Store.setSettings((s) => { s.fontScale = +b.dataset.fs; });
+        else if (b.dataset.homeBig) await Store.setSettings((s) => { s.home = Object.assign({}, s.home, { big: b.dataset.homeBig }); });
+        else if (b.dataset.homeRecent !== undefined) await Store.setSettings((s) => { s.home = Object.assign({}, s.home, { recent: +b.dataset.homeRecent }); });
         else if (b.dataset.font) await Store.setSettings((s) => { s.font = b.dataset.font; });
         else if (b.hasAttribute('data-fx-try')) { root.Fx.celebrate('big'); return; }
         else if (b.dataset.skin !== undefined && root.Plus) { if (!(await root.Plus.pickSkin(b.dataset.skin))) return; } // a locked one opens Shaati Plus
@@ -20416,17 +20440,17 @@ Ce que contient l'application (pour les questions « comment faire ») : un bout
 
   /* ---------------- what's new (once per big update, for people who already used the app) ---------------- */
   const WHATS_NEW = {
-    id: '1.24.0',
+    id: '1.25.0',
     items: [
+      ['home', 'violet', "L’écran d’accueil à votre façon", "Dans Réglages › Apparence › Écran d’accueil : masquez les raccourcis, la ligne d’info ou la date hébraïque, et choisissez combien de derniers services afficher."],
+      ['wallet', 'mint', "Le net en grand", "Vous pouvez choisir que le grand chiffre de la carte de salaire soit le net estimé. La prévision de fin de mois s’affiche alors en net aussi."],
       ['addSq', 'sky', "Sur iPhone ? Shaati sur l’écran d’accueil", "Un guide en 3 étapes : vos données restent en sécurité et les rappels arrivent aussi sur iPhone. Dans Réglages › À propos et installation."],
       ['refresh', 'mint', "Du site directement à la nouvelle version", "Ouvrir depuis le site ou un lien dans le navigateur donne toujours la dernière version, pas une ancienne copie de votre dernière visite."],
       ['bell', 'sky', "Des rappels de service entièrement à votre main", "Autant de rappels que vous voulez, aussi longtemps avant que vous voulez, aussi la veille au soir, et une question après le service pour savoir si vous l'avez effectué. Dans Réglages › Notifications et conseils."],
       ['chart', 'mint', "Salaire mensuel moyen", "Dans Rapports : la moyenne des 3, 6 ou 12 derniers mois, de l'année ou depuis le début, avec le mois le plus haut et le plus bas."],
       ['eye', 'violet', "Mode confidentialité", "L'œil sur la carte de salaire floute tous les montants, par exemple quand vous montrez votre téléphone à quelqu'un."],
-      ['share', 'pink', "Shaati vous a trouvé de l'argent ? Dites-le à vos amis", "Un écart trouvé sur votre fiche de paie, ou de l'argent qui vous est revenu, devient une image à partager, pour que vos amis vérifient aussi la leur."],
       ['globe', 'amber', "Shaati en français et en espagnol aussi", "Six langues : hébreu, arabe, russe, anglais, français et espagnol. Dans Réglages › Apparence et verrou › Langue."],
       ['check', 'mint', "Un service terminé ? Confirmez-le d'une touche", "Un service prévu ne compte dans votre salaire qu'après avoir confirmé que vous l'avez effectué. C'est maintenant clair : une carte sur l'écran d'accueil avec un grand bouton pour chaque service."],
-      ['file', 'violet', "Les relevés d'heures en PDF sont lus avec précision", "Même les relevés où chaque lettre est dessinée séparément, et une colonne « heures standard » n'est plus confondue avec l'heure d'entrée."],
     ],
   };
 
