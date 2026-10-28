@@ -35,3 +35,12 @@ T.test('law: by-year values — 2025 and 2026 National Insurance, the recuperati
   T.eq(Engine.recuperationRate({ recuperationRate: 418 }, '2026-07-01'), 451.5);
   T.eq(Engine.recuperationRate({ recuperationRate: 500 }, '2026-07-01'), 500);
 });
+T.test('law: the website\'s question pages show the same numbers as the app (node tools/site-pages.js after a change)', () => {
+  const fs = require('fs'); const path = require('path');
+  const read = (f) => fs.readFileSync(path.join(__dirname, '..', 'site', f), 'utf8');
+  const nis = (n) => n.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + ' ₪';
+  const mw = Engine.MIN_WAGE[Engine.MIN_WAGE.length - 1];
+  T.ok(read('minimum-wage.html').includes(nis(mw.hourly)), `site/minimum-wage.html does not show ${nis(mw.hourly)}: run node tools/site-pages.js`);
+  const ry = Math.max(...Object.keys(Engine.RECUP_YEARS).map(Number));
+  T.ok(read('recuperation-pay.html').includes(nis(Engine.RECUP_YEARS[ry])), `site/recuperation-pay.html does not show ${nis(Engine.RECUP_YEARS[ry])}: run node tools/site-pages.js`);
+});

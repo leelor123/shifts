@@ -1,0 +1,215 @@
+/* The website's question pages (one page per common question, for people who search for it), made from the app's
+ * own legal tables so the numbers on the site and in the app are the same. Writes site/<page>.html and
+ * site/sitemap.xml.  node tools/site-pages.js
+ * Run again after a legal table changes (the yearly checklist in CLAUDE.md), then deploy the website. */
+process.env.TZ = 'Asia/Jerusalem';
+const fs = require('fs');
+const path = require('path');
+const ROOT = path.join(__dirname, '..');
+for (const f of ['util.js', 'hebcal.js', 'defaults.js', 'engine.js']) require(path.join(ROOT, 'src', 'core', f));
+const { U, Engine } = globalThis;
+
+const SITE = 'https://shaati.web.app';
+const APP = 'https://leelor123.github.io/shifts/';
+// the official sources (as in the app's rights screen, views-rights.js GOV)
+const GOV = {
+  minwage: 'https://www.gov.il/he/Departments/Guides/minimum-wage',
+  youth: 'https://www.gov.il/he/Departments/Guides/rights-of-working-youth',
+  recup: 'https://www.gov.il/he/Departments/Guides/convalescence-pay',
+  rest: 'https://www.gov.il/he/Departments/Guides/weekends-and-holidays',
+  hours: 'https://www.gov.il/he/Departments/Guides/overtime-and-extra-hours',
+};
+const esc = (s) => String(s).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+const nis = (n, d = 2) => n.toLocaleString('en-US', { minimumFractionDigits: d, maximumFractionDigits: d }) + ' ₪';
+const today = U.todayKey();
+const dmy = (k) => `${+k.slice(8, 10)}.${+k.slice(5, 7)}.${k.slice(0, 4)}`;
+
+/* ---------------- the numbers ---------------- */
+const MW = Engine.MIN_WAGE[Engine.MIN_WAGE.length - 1];
+const mwYear = MW.from.slice(0, 4);
+// youth: a birth date that makes the worker that age on the day the rate starts
+const youthAt = (age) => Engine.legalMinWage(MW.from, `${+mwYear - age - 1}-${MW.from.slice(5, 7)}-15`);
+const Y = [[15, 'עד גיל 16'], [16, 'בגיל 16'], [17, 'בגיל 17']].map(([age, label]) => Object.assign({ label }, youthAt(age)));
+const recupYear = Math.max(...Object.keys(Engine.RECUP_YEARS).map(Number));
+const RECUP = Engine.RECUP_YEARS[recupYear];
+const HOURLY_EX = { h: 18, d: Engine.recuperationDays(2) };
+const recupRows = [[1, 'שנה ראשונה'], [2, 'שנה 2–3'], [4, 'שנה 4–10'], [11, 'שנה 11–15'], [16, 'שנה 16–19'], [20, 'משנה 20']].map(([y, l]) => [l, Engine.recuperationDays(y)]);
+const D = globalThis.Defaults.defaultEmployer();
+const REST = [+(D.restPct || 150), +(D.restOt1Pct || 175), +(D.restOt2Pct || 200)];
+const OT = [+(D.otTier1Pct || 125), +(D.otTier2Pct || 150)];
+
+/* ---------------- the pages ---------------- */
+const PAGES = [
+  {
+    slug: 'minimum-wage',
+    title: `שכר מינימום ${mwYear}: כמה מגיע לשעה, גם לנוער`,
+    desc: `שכר המינימום מ-${dmy(MW.from)}: ${nis(MW.hourly)} לשעה ו-${nis(MW.monthly)} לחודש. ובני נוער: ${Y.map((y) => `${y.label} ${nis(y.hourly)}`).join(', ')} לשעה.`,
+    answer: `מ-${dmy(MW.from)} שכר המינימום לשעה הוא <b>${nis(MW.hourly)}</b> (לחודש במשרה מלאה: ${nis(MW.monthly)}). מתחת לגיל 18 יש שכר מינימום לנוער, לפי הגיל.`,
+    body: `
+      <h2>שכר מינימום לבני נוער</h2>
+      <p>לעובד/ת מתחת לגיל 18 שכר המינימום הוא חלק משכר המינימום של מבוגר, לפי הגיל. מגיל 18 מגיע שכר מינימום מלא.</p>
+      <div class="tbl"><table><thead><tr><th>גיל</th><th>אחוז משכר המינימום</th><th>לשעה</th><th>לחודש</th></tr></thead><tbody>
+        ${Y.map((y) => `<tr><td>${y.label}</td><td>${Math.round(y.share * 100)}%</td><td><b>${nis(y.hourly)}</b></td><td>${nis(y.monthly)}</td></tr>`).join('')}
+        <tr><td>מגיל 18</td><td>100%</td><td><b>${nis(MW.hourly)}</b></td><td>${nis(MW.monthly)}</td></tr>
+      </tbody></table></div>
+      <h2>כמה זה בחודש?</h2>
+      <p>במשרה מלאה מבוגר/ת מקבל/ת לפחות ${nis(MW.monthly)} לחודש. מי שעובד/ת לפי שעה מקבל/ת לפחות ${nis(MW.hourly)} על כל שעה, ועל שבת, חג ושעות נוספות יותר מזה.</p>
+      <h2>מתי זה משתנה?</h2>
+      <p>שכר המינימום מתעדכן בדרך כלל ב-1 באפריל. ${Engine.MIN_WAGE.length > 1 ? `לפני ${dmy(MW.from)} הוא היה ${nis(Engine.MIN_WAGE[Engine.MIN_WAGE.length - 2].hourly)} לשעה.` : ''}</p>`,
+    faq: [
+      [`מה שכר המינימום לשעה ב-${mwYear}?`, `${nis(MW.hourly)} לשעה, מ-${dmy(MW.from)}.`],
+      ['כמה מקבל נער בן 16 לשעה?', `${nis(Y[1].hourly)} לשעה (${Math.round(Y[1].share * 100)}% משכר המינימום).`],
+      ['כמה מקבל נער בן 17 לשעה?', `${nis(Y[2].hourly)} לשעה (${Math.round(Y[2].share * 100)}% משכר המינימום).`],
+      ['ומה מתחת לגיל 16?', `${nis(Y[0].hourly)} לשעה (${Math.round(Y[0].share * 100)}% משכר המינימום).`],
+    ],
+    sources: [['שכר מינימום', GOV.minwage], ['זכויות בני נוער בעבודה', GOV.youth]],
+  },
+  {
+    slug: 'recuperation-pay',
+    title: `דמי הבראה ${recupYear}: כמה משלמים ליום, וכמה ימים מגיעים`,
+    desc: `דמי הבראה בשנת ${recupYear}: ${nis(RECUP)} ליום (מגזר פרטי). מגיעים אחרי שנת עבודה, ${recupRows[0][1]} ימים בשנה הראשונה ועד ${recupRows[recupRows.length - 1][1]} ימים.`,
+    answer: `במגזר הפרטי, יום הבראה בשנת ${recupYear} שווה <b>${nis(RECUP)}</b>. מגיעים אחרי שנה שלמה בעבודה, ומספר הימים עולה עם הוותק.`,
+    body: `
+      <h2>כמה ימי הבראה מגיעים?</h2>
+      <div class="tbl"><table><thead><tr><th>ותק בעבודה</th><th>ימי הבראה בשנה</th><th>במשרה מלאה</th></tr></thead><tbody>
+        ${recupRows.map(([l, d]) => `<tr><td>${l}</td><td>${d}</td><td><b>${nis(d * RECUP)}</b></td></tr>`).join('')}
+      </tbody></table></div>
+      <h2>ומי שעובד/ת לפי שעה או בחלקיות משרה?</h2>
+      <p>דמי ההבראה מחושבים לפי היקף המשרה: מי שעובד/ת חצי משרה מקבל/ת חצי מהסכום. לעובד/ת לפי שעה במגזר הפרטי:</p>
+      <div class="answer">שעות עבודה בשבוע × ימי הבראה לפי הוותק × ${nis(RECUP)} ÷ 42</div>
+      <p>לדוגמה: ${HOURLY_EX.h} שעות בשבוע, בשנה השנייה (${HOURLY_EX.d} ימים): <span dir="ltr">${HOURLY_EX.h} × ${HOURLY_EX.d} × ${nis(RECUP)} ÷ 42 = <b>${nis(HOURLY_EX.h * HOURLY_EX.d * RECUP / 42)}</b></span>. מי שהשעות שלו/ה משתנות: לפי ממוצע השעות בחודש ב-12 החודשים האחרונים, חלקי 182.</p>
+      <h2>ואם עזבתי?</h2>
+      <p>מי שעבד/ה שנה לפחות ועזב/ה, זכאי/ת לדמי הבראה גם על השנה האחרונה, באופן יחסי.</p>`,
+    faq: [
+      [`כמה שווה יום הבראה ב-${recupYear}?`, `${nis(RECUP)} ליום במגזר הפרטי.`],
+      ['מתי מגיעים דמי הבראה?', 'אחרי שנת עבודה שלמה במקום העבודה.'],
+      ['כמה ימי הבראה מגיעים בשנה הראשונה?', `${recupRows[0][1]} ימים, כלומר ${nis(recupRows[0][1] * RECUP)} במשרה מלאה.`],
+      ['ובחלקיות משרה?', 'לפי היקף המשרה: חצי משרה, חצי מהסכום.'],
+      ['איך מחשבים לעובד/ת לפי שעה?', `שעות בשבוע × ימי הבראה × ${nis(RECUP)} ÷ 42 (במגזר הפרטי).`],
+    ],
+    sources: [['דמי הבראה', GOV.recup]],
+  },
+  {
+    slug: 'shabbat-pay',
+    title: 'כמה משלמים על עבודה בשבת ובחג?',
+    desc: `על כל שעה בשבת או בחג משלמים לפחות ${REST[0]}% מהשכר הרגיל. שעות נוספות בשבת: ${REST[1]}% ו-${REST[2]}%.`,
+    answer: `על כל שעה שעובדים במנוחה השבועית (שבת) או בחג משלמים לפחות <b>${REST[0]}%</b> מהשכר הרגיל לשעה.`,
+    body: `
+      <h2>וכמה זה בשקלים?</h2>
+      <div class="tbl"><table><thead><tr><th>שכר רגיל לשעה</th><th>שעה בשבת (${REST[0]}%)</th><th>שעה נוספת בשבת (${REST[1]}%)</th></tr></thead><tbody>
+        ${[MW.hourly, 40, 45, 50].map((h) => `<tr><td>${nis(h)}${h === MW.hourly ? ' (מינימום)' : ''}</td><td><b>${nis(h * REST[0] / 100)}</b></td><td>${nis(h * REST[1] / 100)}</td></tr>`).join('')}
+      </tbody></table></div>
+      <h2>שעות נוספות בשבת</h2>
+      <p>שעה נוספת בשבת שווה יותר משעה רגילה בשבת: ${REST[1]}% לשתי השעות הנוספות הראשונות ו-${REST[2]}% מהשעה השלישית (ביום חול: ${OT[0]}% ו-${OT[1]}%).</p>
+      <p>מי שמקבל/ת משכורת חודשית קבועה מקבל/ת על שעה בשבת תוספת של ${REST[0] - 100}% מעל השכר הרגיל.</p>
+      <h2>מאיזו שעה זה נחשב שבת?</h2>
+      <p>בדרך כלל מכניסת השבת ועד צאתה, וזמני השבת משתנים לפי העיר ולפי עונת השנה. המנוחה השבועית נמשכת לפחות 36 שעות רצופות שכוללות את השבת. משמרת שמתחילה ביום שישי אחר הצהריים יכולה להיות חלקה רגילה וחלקה בשבת.</p>`,
+    faq: [
+      ['כמה משלמים על שעה בשבת?', `לפחות ${REST[0]}% מהשכר הרגיל לשעה.`],
+      ['וכמה על שעה נוספת בשבת?', `${REST[1]}% לשתי השעות הנוספות הראשונות ו-${REST[2]}% מהשלישית.`],
+      ['גם בחג משלמים יותר?', `כן, חגים הם ימי מנוחה, ועבודה בהם שווה לפחות ${REST[0]}%.`],
+      ['ממתי מתחילה השבת לעניין השכר?', 'בדרך כלל מכניסת השבת ועד צאתה, לפי העיר. המנוחה השבועית נמשכת לפחות 36 שעות רצופות.'],
+    ],
+    sources: [['מנוחה שבועית וחגים', GOV.rest], ['שעות נוספות', GOV.hours]],
+  },
+];
+
+/* ---------------- the page ---------------- */
+const CSS = `
+:root { --bg: #f7f5ff; --surface: #fff; --surface-2: #f0ecff; --ink: #1b1530; --ink-2: #5d5677; --line: #e5e0f5; --brand: #5a33e6; --brand-2: #7c4dff; --gold: #ffb020; --cta-1: #5a33e6; --cta-2: #7c4dff; color-scheme: light; }
+@media (prefers-color-scheme: dark) { :root { --bg: #0e0b1a; --surface: #17132a; --surface-2: #211b3a; --ink: #f1edff; --ink-2: #b6aed3; --line: #2c2548; --brand: #9b7dff; --brand-2: #b39cff; color-scheme: dark; } }
+* { box-sizing: border-box; }
+body { margin: 0; background: var(--bg); color: var(--ink); font: 400 1.05rem/1.7 Rubik, system-ui, sans-serif; overflow-wrap: break-word; }
+a { color: var(--brand); }
+header { position: sticky; top: 0; z-index: 2; background: color-mix(in srgb, var(--bg) 88%, transparent); backdrop-filter: blur(10px); border-bottom: 1px solid var(--line); }
+.bar { max-width: 760px; margin: 0 auto; display: flex; align-items: center; gap: 12px; padding: 10px max(16px, env(safe-area-inset-right)) 10px max(16px, env(safe-area-inset-left)); }
+.bar a.logo { display: flex; align-items: center; gap: 10px; color: var(--ink); text-decoration: none; font: 700 1.25rem Fredoka, Rubik, sans-serif; margin-inline-end: auto; }
+.bar img { width: 36px; height: 36px; border-radius: 10px; }
+.btn { display: inline-flex; align-items: center; justify-content: center; gap: 8px; border-radius: 999px; background: linear-gradient(135deg, var(--cta-1), var(--cta-2)); color: #fff; font-weight: 700; text-decoration: none; padding: 10px 20px; white-space: nowrap; }
+main { max-width: 760px; margin: 0 auto; padding: 28px max(16px, env(safe-area-inset-right)) 48px max(16px, env(safe-area-inset-left)); }
+nav.crumbs { font-size: .9rem; color: var(--ink-2); margin-bottom: 10px; }
+h1 { font: 700 clamp(1.7rem, 5vw, 2.4rem)/1.25 Fredoka, Rubik, sans-serif; margin: 0 0 16px; text-wrap: balance; }
+h2 { font: 700 1.35rem/1.35 Fredoka, Rubik, sans-serif; margin: 34px 0 10px; text-wrap: balance; }
+.answer { background: var(--surface); border-radius: 20px; padding: 18px 20px; box-shadow: 0 6px 24px rgba(40, 20, 120, .08); border-inline-start: 5px solid var(--gold); font-size: 1.12rem; }
+.tbl { overflow-x: auto; background: var(--surface); border-radius: 18px; box-shadow: 0 6px 24px rgba(40, 20, 120, .06); }
+table { width: 100%; border-collapse: collapse; }
+th, td { padding: 11px 10px; text-align: start; border-bottom: 1px solid var(--line); }
+td { white-space: nowrap; }
+th { line-height: 1.3; }
+@media (max-width: 420px) { th, td { padding: 10px 8px; font-size: .95rem; } }
+th { font-size: .9rem; color: var(--ink-2); font-weight: 600; background: var(--surface-2); }
+tr:last-child td { border-bottom: 0; }
+.cta { margin: 36px 0 8px; background: linear-gradient(135deg, var(--cta-1), var(--cta-2)); color: #fff; border-radius: 24px; padding: 22px; display: grid; gap: 12px; }
+.cta b { font: 700 1.25rem Fredoka, Rubik, sans-serif; }
+.cta .btn { background: #fff; color: #3a1fb0; justify-self: start; }
+details { background: var(--surface); border-radius: 16px; padding: 12px 16px; margin: 10px 0; }
+summary { font-weight: 600; cursor: pointer; }
+details p { margin: 8px 0 0; color: var(--ink-2); }
+.src, .note { font-size: .92rem; color: var(--ink-2); }
+.note { margin-top: 26px; padding: 14px 16px; border: 1px dashed var(--line); border-radius: 14px; }
+.more { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 10px; }
+.more a { background: var(--surface); border-radius: 999px; padding: 8px 14px; text-decoration: none; box-shadow: 0 2px 10px rgba(40, 20, 120, .06); }
+footer { text-align: center; color: var(--ink-2); font-size: .9rem; padding: 0 16px 32px; }`;
+
+function page(p) {
+  const url = `${SITE}/${p.slug}`;
+  const ld = [
+    { '@context': 'https://schema.org', '@type': 'FAQPage', mainEntity: p.faq.map(([q, a]) => ({ '@type': 'Question', name: q, acceptedAnswer: { '@type': 'Answer', text: a } })) },
+    { '@context': 'https://schema.org', '@type': 'BreadcrumbList', itemListElement: [{ '@type': 'ListItem', position: 1, name: 'שעתי', item: SITE + '/' }, { '@type': 'ListItem', position: 2, name: p.title, item: url }] },
+  ];
+  const others = PAGES.filter((x) => x !== p);
+  return `<!doctype html>
+<html lang="he" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>${esc(p.title)} · שעתי</title>
+<meta name="description" content="${esc(p.desc)}">
+<link rel="canonical" href="${url}">
+<meta name="theme-color" content="#5a33e6">
+<meta property="og:type" content="article">
+<meta property="og:locale" content="he_IL">
+<meta property="og:site_name" content="שעתי">
+<meta property="og:title" content="${esc(p.title)}">
+<meta property="og:description" content="${esc(p.desc)}">
+<meta property="og:url" content="${url}">
+<meta property="og:image" content="${SITE}/img/og.png">
+<link rel="icon" href="img/favicon-48.png" sizes="48x48">
+<link rel="apple-touch-icon" href="img/apple-touch-icon.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Rubik:wght@400..800&family=Fredoka:wght@500..700&display=swap">
+<script type="application/ld+json">${JSON.stringify(ld)}</script>
+<style>${CSS}</style>
+</head>
+<body>
+<header><div class="bar"><a class="logo" href="./"><img src="img/apple-touch-icon.png" alt="">שעתי</a><a class="btn" href="${APP}">לפתוח את שעתי</a></div></header>
+<main>
+  <nav class="crumbs" aria-label="ניווט"><a href="./">שעתי</a> › ${esc(p.title)}</nav>
+  <h1>${esc(p.title)}</h1>
+  <div class="answer">${p.answer}</div>
+  ${p.body}
+  <div class="cta"><b>שעתי מחשבת את זה בשבילך</b><span>רושמים משמרות, ושעתי מחשבת את השכר לפי החוק: שבתות וחגים לפי העיר, שעות נוספות, שכר מינימום לפי הגיל והבראה. חינם ובלי פרסומות.</span><a class="btn" href="${APP}">לפתוח את שעתי</a></div>
+  <h2>שאלות נפוצות</h2>
+  ${p.faq.map(([q, a]) => `<details><summary>${esc(q)}</summary><p>${esc(a)}</p></details>`).join('\n  ')}
+  <p class="src">המקור הרשמי: ${p.sources.map(([l, h]) => `<a href="${h}" rel="noopener">${esc(l)} ב-gov.il</a>`).join(' · ')}</p>
+  <div class="note">שעתי אינה גוף ממשלתי ואינה מייצגת גוף ממשלתי. המידע כללי ואינו ייעוץ משפטי; בהסכם קיבוצי, צו הרחבה ענפי או חוזה אישי ייתכנו זכויות נוספות. עודכן ב-${dmy(today)}.</div>
+  <h2>עוד שאלות</h2>
+  <div class="more">${others.map((x) => `<a href="${x.slug}">${esc(x.title)}</a>`).join('')}</div>
+</main>
+<footer>שעתי · <a href="./">לאתר</a> · <a href="https://leelor123.github.io/shifts/privacy.html">פרטיות</a></footer>
+</body>
+</html>
+`;
+}
+
+for (const p of PAGES) fs.writeFileSync(path.join(ROOT, 'site', p.slug + '.html'), page(p));
+fs.writeFileSync(path.join(ROOT, 'site', 'sitemap.xml'), `<?xml version="1.0" encoding="UTF-8"?>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+  <url><loc>${SITE}/</loc><lastmod>${today}</lastmod></url>
+${PAGES.map((p) => `  <url><loc>${SITE}/${p.slug}</loc><lastmod>${today}</lastmod></url>`).join('\n')}
+</urlset>
+`);
+fs.writeFileSync(path.join(ROOT, 'site', 'robots.txt'), `User-agent: *\nAllow: /\nSitemap: ${SITE}/sitemap.xml\n`);
+console.log('wrote', PAGES.map((p) => p.slug + '.html').join(', '), '+ sitemap.xml, robots.txt');
+console.log('minimum wage', MW.from, MW.hourly, '· youth', Y.map((y) => y.hourly).join(' / '), '· recuperation', recupYear, RECUP, '· rest', REST.join('/'));
