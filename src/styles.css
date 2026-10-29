@@ -912,7 +912,9 @@ body.fx .item:active:not(:has(:is(button, a, input, select, label, summary, [dat
 .rights .rt-topic[open] summary .chev { transform: rotate(-90deg); }
 .rights .rt-body { padding: 0 2px 14px; font-size: .92rem; line-height: 1.6; }
 .rights .rt-body p { margin: 0 0 8px; }
-.rights a { color: var(--primary); font-weight: 600; white-space: nowrap; } /* "כל זכות ↗" whole, on the next line if it must */
+/* a link moves whole to the next line ("כל זכות ↗" never split), and only a link longer than a whole line (a longer
+ * language) goes on two lines inside itself — never wider than its sheet (nowrap pushed the Spanish sheet sideways) */
+.rights a { color: var(--primary); font-weight: 600; display: inline-block; max-width: 100%; }
 .rights .rt-help ol { margin: 0 0 12px; padding-inline-start: 20px; line-height: 1.7; }
 .rights .rt-sources p { margin: 0 0 8px; font-size: .86rem; line-height: 1.6; }
 .rights .rt-sources ul { margin: 0; padding-inline-start: 20px; line-height: 1.9; font-size: .86rem; }

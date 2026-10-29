@@ -2,7 +2,7 @@
 <html lang="fr" dir="ltr">
 <head>
 <meta charset="utf-8">
-<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'sha256-FgNk6U022o0tzGprl1MJbN7Uezv3SKotwh8ovG5xA8c=' 'sha256-lc+QpP1FSSfmufKF5Ueo8zTGsVLkWw9MvDlbZ4pORvg=' https://www.gstatic.com https://apis.google.com https://cdnjs.cloudflare.com https://cdn.jsdelivr.net 'wasm-unsafe-eval'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com data:; img-src 'self' data: blob: https:; connect-src 'self' https: wss:; frame-src https://shiftpay-70ab6.firebaseapp.com https://accounts.google.com https://apis.google.com https://*.google.com; worker-src 'self' blob: https://cdnjs.cloudflare.com https://cdn.jsdelivr.net; media-src 'self' data: blob:; manifest-src 'self'; object-src 'none'; base-uri 'self'; form-action 'self'">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'sha256-FgNk6U022o0tzGprl1MJbN7Uezv3SKotwh8ovG5xA8c=' 'sha256-kb5KLNvvtn1o6ul9SnvpDQkbGI0im3o95oDncrXLVYI=' https://www.gstatic.com https://apis.google.com https://cdnjs.cloudflare.com https://cdn.jsdelivr.net 'wasm-unsafe-eval'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com data:; img-src 'self' data: blob: https:; connect-src 'self' https: wss:; frame-src https://shiftpay-70ab6.firebaseapp.com https://accounts.google.com https://apis.google.com https://*.google.com; worker-src 'self' blob: https://cdnjs.cloudflare.com https://cdn.jsdelivr.net; media-src 'self' data: blob:; manifest-src 'self'; object-src 'none'; base-uri 'self'; form-action 'self'">
 <script>(function(){try{var l=localStorage.getItem('shaati.lang'),h=document.documentElement.lang;if(l&&l!==h&&/^(he|ar|ru|en|fr|es)$/.test(l)&&!sessionStorage.getItem('langHop')){sessionStorage.setItem('langHop','1');location.replace((l==='he'?'index.html':'index.'+l+'.html')+location.search+location.hash)}else sessionStorage.removeItem('langHop')}catch(e){}})();</script>
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="theme-color" content="#0d2b6b">
@@ -932,7 +932,9 @@ body.fx .item:active:not(:has(:is(button, a, input, select, label, summary, [dat
 .rights .rt-topic[open] summary .chev { transform: rotate(-90deg); }
 .rights .rt-body { padding: 0 2px 14px; font-size: .92rem; line-height: 1.6; }
 .rights .rt-body p { margin: 0 0 8px; }
-.rights a { color: var(--primary); font-weight: 600; white-space: nowrap; } /* "כל זכות ↗" whole, on the next line if it must */
+/* a link moves whole to the next line ("כל זכות ↗" never split), and only a link longer than a whole line (a longer
+ * language) goes on two lines inside itself — never wider than its sheet (nowrap pushed the Spanish sheet sideways) */
+.rights a { color: var(--primary); font-weight: 600; display: inline-block; max-width: 100%; }
 .rights .rt-help ol { margin: 0 0 12px; padding-inline-start: 20px; line-height: 1.7; }
 .rights .rt-sources p { margin: 0 0 8px; font-size: .86rem; line-height: 1.6; }
 .rights .rt-sources ul { margin: 0; padding-inline-start: 20px; line-height: 1.9; font-size: .86rem; }
@@ -2713,7 +2715,7 @@ body:not(.fx) .money { transition: none; }
 <noscript><div style="padding:24px;font-family:sans-serif">L'application a besoin de JavaScript.</div></noscript>
 <script>
 window.APP_VERSION = '1.28.0';
-window.APP_BUILD = '1.28.0-453e441d';
+window.APP_BUILD = '1.28.0-59b00b9d';
 /* ---- core/util.js ---- */
 /* ============================================================
  * util.js — date/time helpers and formatting.
