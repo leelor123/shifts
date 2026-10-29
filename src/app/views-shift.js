@@ -416,6 +416,7 @@
     }
     function previewHtml(r) {
       if (!r) return '<div class="muted small">מלא תאריך ושעות</div>';
+      const sh = shiftFrom(d);
       return App.timelineHtml(r) + `<div class="row-flex" style="margin:10px 0"><div class="hero-num" style="font-size:1.8rem">${money(r.total)}</div><span class="spacer"></span><div class="small muted"><span class="num">${U.hm(r.paidMin)}</span> ש׳</div></div>` + App.breakdownHtml(r, sh);
     }
     /** Under the break field: the law's break when it is left empty, or a warning when the one typed is short. */

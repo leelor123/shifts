@@ -13,7 +13,7 @@
  * ============================================================ */
 (function (root) {
   'use strict';
-  const { App, Store } = root;
+  const { App, Store, U, Engine } = root;
   const S = Store.S;
   const m0 = (n) => U.money(n || 0, 0);
 
