@@ -268,9 +268,9 @@
       res.hidden = !r;
       res.innerHTML = r ? resultsHtml(r) : '';
     };
-    q.addEventListener('input', run);
-    clear.addEventListener('click', () => { q.value = ''; run(); q.focus(); });
-    v.querySelectorAll('[data-set-chip]').forEach((b) => b.addEventListener('click', () => {
+    UI.on(q, 'input', run);
+    UI.on(clear, 'click', () => { q.value = ''; run(); q.focus(); });
+    v.querySelectorAll('[data-set-chip]').forEach((b) => UI.on(b, 'click', () => {
       q.value = PROBLEMS[+b.dataset.setChip][0];
       run();
       if (root.Fx) root.Fx.play('pick');
@@ -899,7 +899,8 @@
   };
 
   RENDER.about = {
-    render: () => `<div class="card"><div class="kv"><span>גרסת אפליקציה</span><b>${root.APP_VERSION}</b></div><div class="kv"><span>מבנה נתונים</span><b>${Store.SCHEMA_VERSION}</b></div>
+    render: () => `<div class="list cl-open"><button class="item" data-act="changelog"><span class="lead">${icon('sparkle')}</span><span class="body"><span class="t">כל העדכונים</span><span class="s">מה השתנה בכל גרסה, מהראשונה ועד ${root.APP_VERSION}</span></span>${icon('left', 's')}</button></div>
+      <div class="card"><div class="kv"><span>גרסת אפליקציה</span><b>${root.APP_VERSION}</b></div><div class="kv"><span>מבנה נתונים</span><b>${Store.SCHEMA_VERSION}</b></div>
         <div class="kv"><span>משמרות</span><b>${S.shifts.length}</b></div><div class="kv"><span>תלושים</span><b>${S.payslips.length}</b></div><div class="kv"><span>אחסון בשימוש</span><b id="ab-storage">…</b></div><div class="kv"><span>אחסון קבוע</span><b id="ab-persist">…</b></div></div>
       <div class="section-title">התקנה כאפליקציה</div>
       ${App.androidApp || navigator.standalone || (root.matchMedia && root.matchMedia('(display-mode: standalone)').matches)

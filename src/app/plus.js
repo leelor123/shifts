@@ -74,7 +74,12 @@
   /** The pay-card skin in use ('' = the regular card). */
   Plus.skin = () => (!Plus.active() ? '' : SKINS[S.settings.skin] ? S.settings.skin : S.settings.skin === PHOTO && photo() ? PHOTO : '');
   /** The card's own photo (html --sk-photo) while that skin is on. */
-  Plus.paintPhoto = (de, skin) => { if (skin === PHOTO) de.style.setProperty('--sk-photo', `url("${photo()}")`); else de.style.removeProperty('--sk-photo'); };
+  // written only when it changed: the same photo set again was decoded again, and the card showed black meanwhile
+  Plus.paintPhoto = (de, skin) => {
+    const v = skin === PHOTO ? `url("${photo()}")` : '';
+    if (de.style.getPropertyValue('--sk-photo') === v) return;
+    if (v) de.style.setProperty('--sk-photo', v); else de.style.removeProperty('--sk-photo');
+  };
 
   async function setOwned(on, src) {
     const cur = S.meta.plus || {};

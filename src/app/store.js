@@ -340,7 +340,9 @@
     if (label) {
       undoStack.push({ label, ops: [], settings: before });
     }
-    emit({ type: 'settings' });
+    // which settings changed (the screen may need only a new look, not a new calculation)
+    const keys = [...new Set(Object.keys(before).concat(Object.keys(S.settings)))].filter((k) => k !== '_updatedAt' && JSON.stringify(before[k]) !== JSON.stringify(S.settings[k]));
+    emit({ type: 'settings', keys });
   }
   async function setMeta(patch) {
     Object.assign(S.meta, patch);

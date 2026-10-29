@@ -333,7 +333,7 @@
   App.views.reports_mount = function (v) {
     const sw = v.querySelector('#rep-swipe');
     if (sw && st.type !== 'custom') UI.onSwipe(sw, (dir) => App.actions['rep-nav']({ dataset: { dir: dir === 'right' ? '1' : '-1' } }));
-    const on = (id, fn) => { const el = v.querySelector(id); if (el) el.addEventListener('change', fn); };
+    const on = (id, fn) => { const el = v.querySelector(id); if (el) UI.on(el, 'change', fn); };
     on('#rep-from', (e) => { st.from = e.target.value; App.rerender(); });
     on('#rep-to', (e) => { st.to = e.target.value; App.rerender(); });
     on('#flt-from', (e) => { st.f.from = e.target.value; App.rerender(); });
@@ -341,7 +341,7 @@
     const q = v.querySelector('#flt-q');
     if (q) {
       let t = null;
-      q.addEventListener('input', () => { clearTimeout(t); t = setTimeout(() => { st.f.q = q.value; App.rerender(); const nq = document.querySelector('#flt-q'); if (nq) { nq.focus(); nq.setSelectionRange(nq.value.length, nq.value.length); } }, 300); });
+      UI.on(q, 'input', () => { clearTimeout(t); t = setTimeout(() => { st.f.q = q.value; App.rerender(); const nq = document.querySelector('#flt-q'); if (nq) { nq.focus(); nq.setSelectionRange(nq.value.length, nq.value.length); } }, 300); });
     }
     if (App.payslipsTabMount) App.payslipsTabMount(v);
   };

@@ -326,10 +326,18 @@
   }
 
   /* ---------------- swipe helper ---------------- */
+  /** el's listener for type, in place of the one bound before (a screen drawn again keeps its elements, and binding
+   * once more on every draw would run it twice). */
+  function on(el, type, fn, opts) {
+    const k = '__on_' + type;
+    if (el[k]) el.removeEventListener(type, el[k], opts);
+    el[k] = fn;
+    el.addEventListener(type, fn, opts);
+  }
   function onSwipe(el, fn) {
     let x0 = null, y0 = null, t0 = 0;
-    el.addEventListener('touchstart', (e) => { x0 = e.touches[0].clientX; y0 = e.touches[0].clientY; t0 = Date.now(); }, { passive: true });
-    el.addEventListener('touchend', (e) => {
+    on(el, 'touchstart', (e) => { x0 = e.touches[0].clientX; y0 = e.touches[0].clientY; t0 = Date.now(); }, { passive: true });
+    on(el, 'touchend', (e) => {
       if (x0 == null) return;
       const dx = e.changedTouches[0].clientX - x0, dy = e.changedTouches[0].clientY - y0;
       // told as in a right-to-left screen ('right' = forward, toward the next page): turned around in a left-to-right one
@@ -426,5 +434,5 @@
     fit();
   })();
 
-  root.UI = { pushLayer, closeLayer, tile, skeleton, invalid, icon, esc, money, numv, delta, roleDot, emptyState, toast, openSheet, closeTop, closeAll, dialog, confirm, promptText, onSwipe, vibrate, download, shareFile, copyText, numIn, timeAgo, sheets };
+  root.UI = { on, pushLayer, closeLayer, tile, skeleton, invalid, icon, esc, money, numv, delta, roleDot, emptyState, toast, openSheet, closeTop, closeAll, dialog, confirm, promptText, onSwipe, vibrate, download, shareFile, copyText, numIn, timeAgo, sheets };
 })(typeof window !== 'undefined' ? window : globalThis);

@@ -65,18 +65,22 @@
   App.applyTheme = function () {
     const st = S.settings;
     const de = document.documentElement;
-    if (st.theme === 'light' || st.theme === 'dark') de.dataset.theme = st.theme; else delete de.dataset.theme;
+    // only what differs is written: called after every change of settings, and writing the same colour or photo
+    // again made the browser work out the whole page's look again (the pay card blinked)
+    const data = (k, v) => { if (v) { if (de.dataset[k] !== v) de.dataset[k] = v; } else if (k in de.dataset) delete de.dataset[k]; };
+    const prop = (k, v) => { if (de.style.getPropertyValue(k) !== String(v)) de.style.setProperty(k, v); };
+    data('theme', st.theme === 'light' || st.theme === 'dark' ? st.theme : '');
     de.classList.toggle('hide-money', !!st.hideMoney); // privacy: amounts blurred
     const a = ACCENTS[st.accent] || ACCENTS.candy;
-    de.style.setProperty('--h', a[0]);
-    de.style.setProperty('--s', a[1] + '%');
-    de.style.setProperty('--fs', st.fontScale || 1);
+    prop('--h', a[0]);
+    prop('--s', a[1] + '%');
+    prop('--fs', st.fontScale || 1);
     // a Shaati Plus skin for the pay card on home (only while Plus is on)
     const skin = root.Plus ? root.Plus.skin() : '';
-    if (skin) de.dataset.skin = skin; else delete de.dataset.skin;
+    data('skin', skin);
     if (root.Plus && root.Plus.paintPhoto) root.Plus.paintPhoto(de, skin);
     const font = FONTS[st.font] ? st.font : 'rubik';
-    de.style.setProperty('--app-font', "'" + FONTS[font][0] + "'");
+    prop('--app-font', "'" + FONTS[font][0] + "'");
     const link = document.getElementById('font-link');
     if (link && link.dataset.font !== font) { link.href = App.fontCss(font); link.dataset.font = font; }
     const dark = st.theme === 'dark' || (st.theme !== 'light' && matchMedia('(prefers-color-scheme: dark)').matches);
@@ -213,8 +217,14 @@
       App.tickTimer();
       return;
     }
+    // the same screen drawn again (a save, the eye, a new minute, the opening show leaving): only what changed is
+    // touched (Dom.patch) — replacing it all made every card new, so what moved on them began again and a phone
+    // showed the new card's layer black for a frame. Another tab, or a first draw, is new anyway: it slides in.
+    const inner = v.firstElementChild;
+    const same = !fresh && drawn.tab === App.tab && inner && inner.id === 'view-inner' && root.Dom;
     drawn = { tab: App.tab, sig };
-    v.innerHTML = `<div class="view ${cls}" id="view-inner">${html}</div>`;
+    if (same) root.Dom.patch(inner, html);
+    else v.innerHTML = `<div class="view ${cls}" id="view-inner">${html}</div>`;
     try { if (App.views[App.tab + '_mount']) App.views[App.tab + '_mount'](v); } catch (e) { console.error('mount failed', App.tab, e); }
     App.renderNav();
     if (opts && opts.keepScroll) window.scrollTo(0, y);
@@ -309,6 +319,7 @@
 
   /* ---------------- data change pipeline ---------------- */
   let insightTimer = null;
+  const LOOK_KEYS = new Set(['hideMoney', 'theme', 'accent', 'font', 'fontScale', 'skin', 'fx', 'home']);
   Store.on((ev) => {
     if (ev.type === 'storage-lost') {
       UI.toast('השמירה בטלפון לא עובדת כרגע. ' + (root.Cloud && root.Cloud.user ? 'הנתונים נשמרים בחשבון שלך ☁️' : 'כדאי להתחבר לחשבון כדי לא לאבד נתונים.'));
@@ -316,7 +327,10 @@
       return;
     }
     if (ev.type === 'active') { App.rerender(); return; }
-    App.recompute();
+    // a change of look only (the eye, colours, font, effects, home options): no calculation again — it held the
+    // screen for a moment just as the blur or the colour began to change
+    const lookOnly = ev.type === 'settings' && ev.keys && ev.keys.length && ev.keys.every((k) => LOOK_KEYS.has(k));
+    if (!lookOnly) App.recompute();
     if (ev.type === 'settings') App.applyTheme();
     App.rerender();
     clearTimeout(insightTimer);

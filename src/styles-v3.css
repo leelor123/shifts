@@ -1674,8 +1674,26 @@ html:not([lang="he"]) .lb-games button, html:not([lang="he"]) .lb-periods button
 /* a month's name whole, on two lines if it must (never cut) */
 .avg-bars .hbar .nm { width: 96px; white-space: normal; line-height: 1.2; overflow-wrap: normal; }
 .found-share { margin-top: 10px; }
-/* privacy: amounts blurred on screen (Settings › appearance, or the eye on the pay card) */
-html.hide-money .money { filter: blur(7px); user-select: none; }
+/* privacy: amounts blurred on screen (Settings › appearance, or the eye on the pay card). Every amount is marked
+ * .money wherever it is written (dom.js); the blur grows with the text (a fixed 7px left the big number readable)
+ * and fades in and out together everywhere. */
+.money { transition: filter .45s cubic-bezier(.3, .7, .4, 1), opacity .45s cubic-bezier(.3, .7, .4, 1); }
+html.hide-money .money { filter: blur(.3em); opacity: .8; user-select: none; -webkit-user-select: none; }
+@media (prefers-reduced-motion: reduce) { .money { transition: none; } }
+/* a box that cuts a long amount ("…") lets the blur spill a little past its edge (it ended in straight lines) */
+.kpi .v { overflow: clip; overflow-clip-margin: .7em; }
+body:not(.fx) .money { transition: none; }
 .home-hero .hh-eye { position: absolute; top: 10px; inset-inline-start: 10px; z-index: 1; display: grid; place-items: center; width: 40px; height: 40px; padding: 0; border-radius: 50%; border: 1px solid rgba(255, 255, 255, .24); background: rgba(255, 255, 255, .14); color: #fff; cursor: pointer; transition: scale .14s cubic-bezier(.3, .7, .4, 1); }
 .home-hero .hh-eye:active { scale: .9; }
 .home-hero .hh-eye.off::after { content: ''; position: absolute; width: 22px; height: 2px; border-radius: 2px; background: #fff; transform: rotate(-45deg); box-shadow: 0 0 0 1.5px rgba(40, 20, 90, .5); }
+/* every update (settings › about): newest first, the version and its day on the side, the user's own version marked */
+.list.cl-open { margin-bottom: 12px; }
+.cl-list { list-style: none; margin: 0; padding: 0; }
+.cl-row { display: grid; grid-template-columns: auto 1fr; gap: 14px; align-items: start; padding: 12px 2px; border-bottom: 1px solid var(--outline-var); }
+.cl-row:last-child { border-bottom: 0; }
+.cl-v { display: flex; flex-direction: column; align-items: flex-start; gap: 2px; min-width: 70px; }
+.cl-v b { font-family: var(--display); font-weight: 700; font-variant-numeric: tabular-nums; }
+.cl-v span { font-size: .74rem; color: var(--on-surface-var); white-space: nowrap; font-variant-numeric: tabular-nums; }
+.cl-t { font-size: .92rem; line-height: 1.45; min-width: 0; }
+.cl-now .cl-v b { color: var(--primary); }
+.cl-now .tag { margin-inline-end: 4px; vertical-align: 1px; }

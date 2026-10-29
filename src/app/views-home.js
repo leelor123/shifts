@@ -456,10 +456,12 @@
   };
   App.actions['toggle-money'] = async (el, e) => {
     if (e) e.stopPropagation(); // the card under it opens the summary
-    await Store.setSettings((s) => { s.hideMoney = !s.hideMoney; });
-    App.applyTheme();
+    // the blur fades in (or out) at once on every amount; the eye and the saved setting follow (the screen is
+    // patched, not drawn anew: drawing it anew made the card black for a frame on a phone)
+    const on = !S.settings.hideMoney;
+    document.documentElement.classList.toggle('hide-money', on);
     if (root.Fx) root.Fx.play('on');
-    App.rerender();
+    await Store.setSettings((s) => { s.hideMoney = on; });
   };
   App.actions['mark-done-all'] = async () => {
     const now = Date.now();
