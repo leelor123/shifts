@@ -2,7 +2,7 @@
 <html lang="ar" dir="rtl">
 <head>
 <meta charset="utf-8">
-<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'sha256-FgNk6U022o0tzGprl1MJbN7Uezv3SKotwh8ovG5xA8c=' 'sha256-9QZcUOzelGarwBL4ws8InMV6eeUadtLuLb5vGPMFbQU=' https://www.gstatic.com https://apis.google.com https://cdnjs.cloudflare.com https://cdn.jsdelivr.net 'wasm-unsafe-eval'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com data:; img-src 'self' data: blob: https:; connect-src 'self' https: wss:; frame-src https://shiftpay-70ab6.firebaseapp.com https://accounts.google.com https://apis.google.com https://*.google.com; worker-src 'self' blob: https://cdnjs.cloudflare.com https://cdn.jsdelivr.net; media-src 'self' data: blob:; manifest-src 'self'; object-src 'none'; base-uri 'self'; form-action 'self'">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'sha256-FgNk6U022o0tzGprl1MJbN7Uezv3SKotwh8ovG5xA8c=' 'sha256-sSSZC4WQNrGD8s9MKib2IQajNZOue25gGHU6Eki77uc=' https://www.gstatic.com https://apis.google.com https://cdnjs.cloudflare.com https://cdn.jsdelivr.net 'wasm-unsafe-eval'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com data:; img-src 'self' data: blob: https:; connect-src 'self' https: wss:; frame-src https://shiftpay-70ab6.firebaseapp.com https://accounts.google.com https://apis.google.com https://*.google.com; worker-src 'self' blob: https://cdnjs.cloudflare.com https://cdn.jsdelivr.net; media-src 'self' data: blob:; manifest-src 'self'; object-src 'none'; base-uri 'self'; form-action 'self'">
 <script>(function(){try{var l=localStorage.getItem('shaati.lang'),h=document.documentElement.lang;if(l&&l!==h&&/^(he|ar|ru|en|fr|es)$/.test(l)&&!sessionStorage.getItem('langHop')){sessionStorage.setItem('langHop','1');location.replace((l==='he'?'index.html':'index.'+l+'.html')+location.search+location.hash)}else sessionStorage.removeItem('langHop')}catch(e){}})();</script>
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="theme-color" content="#0d2b6b">
@@ -2684,7 +2684,7 @@ html.hide-money .money { filter: blur(7px); user-select: none; }
 <noscript><div style="padding:24px;font-family:sans-serif">يتطلب التطبيق JavaScript.</div></noscript>
 <script>
 window.APP_VERSION = '1.27.0';
-window.APP_BUILD = '1.27.0-ff36e5bc';
+window.APP_BUILD = '1.27.0-52eb4796';
 /* ---- core/util.js ---- */
 /* ============================================================
  * util.js — date/time helpers and formatting.
@@ -6155,16 +6155,26 @@ window.APP_BUILD = '1.27.0-ff36e5bc';
    * too. (The five-day week's one short day of 7.6 hours comes out the same through the 42.) An employer whose
    * daily limit was set by hand (anything but the old default 8) keeps it; otLaw says which one applies. */
   const WEEK_REG_H = 42;
+  /* A minor (חוק עבודת הנוער; kolzchut "יום עבודה ושעות עבודה לנוער") may work at most 8 hours a day (9 at 16–18 in a
+   * five-day workplace), 7 on the day before Shabbat or a holiday, 40 a week; an employer who goes beyond must pay
+   * overtime — so by the law a minor's regular hours are the lower of the two laws' limits. */
+  const WEEK_REG_H_MINOR = 40;
   const otByLaw = (emp) => (emp.otLaw != null ? !!emp.otLaw : !(+emp.otThreshold > 0) || +emp.otThreshold === 8);
-  /** The day's regular hours before overtime starts. */
-  function otDayHours(emp, settings, dateKey, nightShift) {
+  /** The day's regular hours before overtime starts. youth: { age, eve } for a minor (eve: the day before a rest day). */
+  function otDayHours(emp, settings, dateKey, nightShift, youth) {
     if (otByLaw(emp)) {
-      if (nightShift) return 7;
       const six = +((settings && settings.leave) || {}).workWeek === 6;
-      return six ? (U.dow(dateKey) === 5 ? 7 : 8) : 8.6;
+      let h = nightShift ? 7 : six ? (U.dow(dateKey) === 5 ? 7 : 8) : 8.6;
+      if (youth && youth.age != null && youth.age < 18) {
+        h = Math.min(h, youthRules(youth.age, six ? 6 : 5).dayHours);
+        if (youth.eve) h = Math.min(h, 7);
+      }
+      return h;
     }
     return emp.nightShiftShortDay && nightShift ? +emp.nightShiftThreshold || 7 : +emp.otThreshold || 8;
   }
+  /** The week's regular hours before overtime starts (40 for a minor by the law). */
+  const otWeekHours = (emp, age) => (otByLaw(emp) && age != null && age < 18 ? WEEK_REG_H_MINOR : WEEK_REG_H);
 
   /**
    * Compute pay for one shift.
@@ -6268,7 +6278,11 @@ window.APP_BUILD = '1.27.0-ff36e5bc';
     const lawNightMin = overlapMin(start, end, lawNight);
     const lawNightPaidH = (lawNightMin * paidFactor) / 60; // hours between 22:00-06:00, for reports
     const isNightShift = lawNightMin >= 120;
-    let thresholdH = otDayHours(emp, settings, dk, isNightShift);
+    // a minor: the youth law's limits too (the day before Shabbat or a holiday: 7 hours)
+    const ageNow = settings.birthDate ? ageAt(settings.birthDate, dk) : null;
+    const minor = ageNow != null && ageNow < 18;
+    const youth = minor ? { age: ageNow, eve: !!HebCal.restDayInfo(U.addDays(dk, 1), ctx.restCfg) && !HebCal.restDayInfo(dk, ctx.restCfg) } : null;
+    let thresholdH = otDayHours(emp, settings, dk, isNightShift, youth);
     const otOv = ov.ot || null;
     if (otOv && otOv.mode === 'threshold' && +otOv.hours > 0) thresholdH = +otOv.hours;
     const otOff = otOv && otOv.mode === 'off';
@@ -6278,7 +6292,8 @@ window.APP_BUILD = '1.27.0-ff36e5bc';
     let cum = daily ? Math.max(0, +opts.priorMin || 0) : 0; // the day's paid minutes so far
     let dayOt = daily ? Math.max(0, +opts.priorOtMin || 0) : 0; // of them, overtime
     let weekReg = Math.max(0, +opts.weekRegMin || 0); // the week's regular minutes so far
-    const weekCap = WEEK_REG_H * 60;
+    const weekH = otWeekHours(emp, ageNow);
+    const weekCap = weekH * 60;
     let regMin = 0, otMin = 0, weekOtMin = 0;
 
     const pieces = [];
@@ -6487,7 +6502,7 @@ window.APP_BUILD = '1.27.0-ff36e5bc';
       travel, bonus, tips, additions, deductions,
       total: wage + travel.amount + bonus + additions,
       restLabels, autoRestRange, autoRestMin,
-      thresholdH, priorMin: +opts.priorMin || 0, otByLaw: otByLaw(emp),
+      thresholdH, priorMin: +opts.priorMin || 0, otByLaw: otByLaw(emp), weekH, minorOt: minor && otByLaw(emp),
       regMin, otMin, weekOtMin, weekRegBefore: Math.max(0, +opts.weekRegMin || 0),
       overridden: !opts.ignoreOverrides && hasOverrides(shift), overrideList,
       dayRuleHit,
@@ -7065,7 +7080,7 @@ window.APP_BUILD = '1.27.0-ff36e5bc';
   }
 
   root.Engine = {
-    LAW_BREAK, validShift, validEntry, otByLaw, otDayHours, WEEK_REG_H, legalMinWage, minWageFor, youthRules, pensionMinAge, MIN_WAGE, BL_YEARS, RECUP_YEARS, blLimits, recuperationRate,
+    LAW_BREAK, validShift, validEntry, otByLaw, otDayHours, otWeekHours, WEEK_REG_H, WEEK_REG_H_MINOR, legalMinWage, minWageFor, youthRules, pensionMinAge, MIN_WAGE, BL_YEARS, RECUP_YEARS, blLimits, recuperationRate,
     makeCtx, roleRate, roundMinutes, monthsBetween, buildSegments, hasOverrides, computeShift, computeAll,
     periodByKey, periodOf, dayValue, computeEntries, travelByDay, incomeTaxRaw, netEstimate, pensionActive,
     buildModel, totals, periodSummary, rangeSummary, pensionBaseOf, leaveBalances, holidayPay, vacationEntitlement, recuperationDays, ageAt, isMinor,
@@ -7378,6 +7393,19 @@ window.APP_BUILD = '1.27.0-ff36e5bc';
       raise('week', "أسبوع أكثر من 40 ساعة", "يُسمح للشباب بالعمل حتى 40 ساعة أسبوعيًا.");
       raise('breaks', "استراحة أقصر مما ينص القانون", `في يوم أكثر من 6 ساعات يستحق الشاب استراحة 45 دقيقة (نصف ساعة متواصلة). لم تُسجَّل استراحة كهذه في:`);
       raise('eve', "عشية سبت أطول من 7 ساعات", "يوم الجمعة وعشية العيد يُسمح للشباب بالعمل حتى 7 ساعات. سُجّل:");
+    }
+
+    // overtime by the law starts after 8.6 hours in a five-day week but after 8 in a six-day one: someone who works on
+    // Fridays again and again while the work week is still the default (five) is asked once which it is
+    if (on('workweek') && Engine.otByLaw && Engine.otByLaw(emp) && +((S.leave || {}).workWeek || 5) === 5) {
+      const from8 = U.addDays(today, -56);
+      const fridays = new Set(done.filter((r) => r.dateKey >= from8 && U.dow(r.dateKey) === 5).map((r) => r.dateKey));
+      if (fridays.size >= 3) {
+        alerts.push({ key: 'workweek-ask', type: 'workweek', severity: 'info',
+          title: "هل تعمل أيام الجمعة أيضًا؟",
+          body: `عملت ${fridays.size} ${globalThis.U.plural(fridays.size, {"one":"يوم جمعة","two":"يومي جمعة","few":"أيام جمعة","many":"يوم جمعة","other":"يوم جمعة"})} في الشهرين الأخيرين. إذا كان مكان العمل يعمل 6 أيام في الأسبوع، تبدأ الساعات الإضافية بعد 8 ساعات في اليوم لا بعد 8.6. يمكنك الاختيار في الإعدادات › قواعد الحساب.`,
+          explain: "قانون ساعات العمل والراحة: في أسبوع من 5 أيام يوم العمل 8.6 ساعة، وفي أسبوع من 6 أيام 8 ساعات (يوم الجمعة 7)." });
+      }
     }
 
     if (on('long')) {
@@ -16287,7 +16315,7 @@ ${name}`.trim();
     notes.push(`الوقت في الوردية: ${U.hm(r.elapsedMin)}` + (r.roundingDeltaMin ? ` · التقريب: ${r.roundingDeltaMin > 0 ? '+' : ''}${r.roundingDeltaMin} د` : ''));
     if (r.breakMin) notes.push(`استراحة ${r.breakMin} د${r.breakAuto ? " (تلقائيًا حسب القانون)" : ''} ${r.breakPaid ? "مدفوعة" : "غير مدفوعة — خُصمت نسبيًا من كل الساعات"}`);
     notes.push(`الساعات الإضافية بعد ${+(+r.thresholdH).toFixed(2)} ساعات في اليوم${r.otByLaw ? "(حسب القانون)" : ''}` + (r.priorMin ? ` · عملت بالفعل ${U.hm(r.priorMin)} في ذلك اليوم قبل الوردية` : '') + (r.isNightShift && (r.otByLaw || emp.nightShiftShortDay) ? " (وردية ليلية)" : '')
-      + (r.weekOtMin > 0 ? ` · ${U.hm(r.weekOtMin)} منها إضافية لأنك تجاوزت 42 ساعة عادية هذا الأسبوع` : ''));
+      + (r.weekOtMin > 0 ? ` · ${U.hm(r.weekOtMin)} منها إضافية لأنك تجاوزت ${r.weekH || 42} ساعة عادية هذا الأسبوع` : '') + (r.minorOt ? " · حسب قانون عمل الشبيبة" : ''));
     const wins = r.restLabels.length ? r.slices.filter((s) => s.autoRest) : [];
     if (r.autoRestMin > 0) notes.push(`نافذة ${esc(r.restLabels.join(', ') || "سبت/عيد")} في الوردية: ⁦${U.epochHM(wins[0].a)}⁠–⁠${U.epochHM(wins[wins.length - 1].b)}⁩ (${S.settings.rest.mode === 'city' ? "حسب " + esc(S.settings.rest.city === '__custom' ? "موقع مخصص" : App.placeLabel(S.settings.rest.city).name).replace(/-/g, '-⁠') : "ساعات ثابتة"})`);
     if (r.warnings.length) notes.push('⚠️ ' + r.warnings.join(', '));
@@ -17225,7 +17253,7 @@ ${name}`.trim();
       </div>
       <div class="grid2"><label class="field"><span class="lbl">من</span><input class="input" type="date" id="flt-from" value="${f.from}"></label><label class="field"><span class="lbl">إلى</span><input class="input" type="date" id="flt-to" value="${f.to}"></label></div>
       <div class="row-flex small" style="margin:0 4px 10px"><span>${list.length} ${globalThis.U.plural(list.length, {"one":"وردية","two":"ورديتان","few":"ورديات","many":"وردية","other":"وردية"})} · <span data-tr="all">${U.money(list.filter((r) => r.status === 'done').reduce((s, r) => s + App.shiftAmount(r), 0), 0)}</span></span><span class="spacer"></span>${App.travelSwitch()}<button class="btn text sm" data-act="flt-csv">${icon('download', 's')} CSV</button>${f.q || f.role || f.ov || f.from || f.to || f.status !== 'all' ? "<button class=\"btn text sm\" data-act=\"flt-clear\">مسح</button>" : ''}</div>
-      ${list.length ? months.map(([mk, rs, rows]) => `<div class="section-title">${U.fmtMonth(mk)}<span class="spacer"></span><span class="small muted" data-tr="m:${mk}">${U.money(rs.filter((r) => r.status === 'done').reduce((s, r) => s + App.shiftAmount(r), 0), 0)}</span></div><div class="list">${rows.map((r) => App.shiftItem(r)).join('')}</div>`).join('') : UI.emptyState('search', "لم يتم العثور على ورديات", "جرّب تغيير البحث أو عوامل التصفية.")}
+      ${list.length ? months.map(([mk, rs, rows]) => `<div class="section-title">${U.fmtMonth(mk)}<span class="spacer"></span>${rs.some((r) => r.status === 'done') ? `<span class="small muted" data-tr="m:${mk}">${U.money(rs.filter((r) => r.status === 'done').reduce((s, r) => s + App.shiftAmount(r), 0), 0)}</span>` : "<span class=\"small muted\">مخطط له</span>"}</div><div class="list">${rows.map((r) => App.shiftItem(r)).join('')}</div>`).join('') : UI.emptyState('search', "لم يتم العثور على ورديات", "جرّب تغيير البحث أو عوامل التصفية.")}
       ${list.length > shown ? `<button class="btn tonal block list-more" data-act="flt-more">${icon('down', 's')} ${Math.min(PAGE, list.length - shown)} ${globalThis.U.plural(Math.min(PAGE, list.length - shown), {"one":"وردية","two":"ورديتان","few":"ورديات","many":"وردية","other":"وردية"})} أخرى <span class="small muted">(معروض ${shown} من ${list.length})</span></button>` : ''}
       ${entries.length ? `<div class="section-title">الإجازة والمرض والإضافات</div><div class="list">${entries.slice(0, 50).map(App.entryItem).join('')}</div>` : ''}`;
   }
@@ -17937,6 +17965,7 @@ ${name}`.trim();
             if (rec.ref && App.shift(rec.ref)) App.sheetsApi.shiftDetail(rec.ref);
             else if (rec.ref && S.payslips.find((p) => p.id === rec.ref)) App.sheetsApi.payslip(rec.ref);
             else if (rec.type === 'backup') App.doBackup(false);
+            else if (rec.type === 'workweek') { UI.closeTop(); setTimeout(() => App.sheetsApi.settingsSection('calc'), 320); }
             else if (rec.type === 'payslipDue') { UI.closeTop(); setTimeout(() => App.actions['payslip-new'](), 320); }
             else if (rec.type === 'monthly' && App.recap && rec.data && rec.data.pk) { UI.closeTop(); setTimeout(() => App.recap.open(rec.data.pk), 320); }
           }
@@ -20612,7 +20641,7 @@ ${name}`.trim();
   const WHATS_NEW = {
     id: '1.27.0',
     items: [
-      ['clock', 'violet', "الساعات الإضافية حسب القانون بالضبط", "في اليوم: أكثر من 8.6 ساعة في أسبوع من 5 أيام (8 في أسبوع من 6 أيام)، وأكثر من 7 في الوردية الليلية؛ وفي الأسبوع: أكثر من 42 ساعة عادية. أُعيد حساب الورديات المسجّلة أيضًا. في الإعدادات › قواعد الحساب."],
+      ['clock', 'violet', "الساعات الإضافية حسب القانون بالضبط", "في اليوم: أكثر من 8.6 ساعة في أسبوع من 5 أيام (8 في أسبوع من 6 أيام)، وأكثر من 7 في الوردية الليلية؛ وفي الأسبوع: أكثر من 42 ساعة عادية. تحت سن 18 حسب قانون عمل الشبيبة: أكثر من 40 في الأسبوع وأكثر من 7 يوم الجمعة. أُعيد حساب الورديات المسجّلة أيضًا."],
       ['users', 'pink', "المنافسة مع الأصدقاء", "ادعُ صديقًا برابط وشاهد من يكسب أكثر في الساعة وهذا الشهر وهذه السنة. يمكنك إخفاء المبالغ وإزالة الأصدقاء. في الألعاب › المنافسة مع الأصدقاء."],
       ['smile', 'amber', "اسمك، لا لقب", "يظهر اسمك الأول في جدول الأبطال وفي المنافسة (يمكن تغييره)، بأي لغة."],
       ['home', 'violet', "الشاشة الرئيسية كما يناسبك", "في الإعدادات › المظهر › الشاشة الرئيسية: أخفِ الاختصارات أو سطر التحديث أو التاريخ العبري، واختر عدد آخر الورديات المعروضة."],
