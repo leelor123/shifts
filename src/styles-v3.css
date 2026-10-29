@@ -1384,6 +1384,11 @@ body.fx .pp-loc.busy svg { animation: pp-hop .8s ease-in-out infinite; }
 .pp-n mark { background: color-mix(in srgb, var(--amber) 28%, transparent); color: inherit; border-radius: 4px; }
 .pp-ok { position: absolute; bottom: -3px; inset-inline-start: -3px; width: 19px; height: 19px; border-radius: 50%; display: grid; place-items: center; color: #fff; background: var(--brand); box-shadow: 0 0 0 2px var(--surface); opacity: 0; transform: scale(.3) rotate(-25deg); transition: opacity .2s, transform .3s cubic-bezier(.2, .9, .3, 1.5); }
 .pp-ok svg { width: 12px; height: 12px; stroke-width: 3.4; }
+/* every control answers a press, the place list too (qa/press-audit.js found these three without one) */
+.pp-row, .pp-x, .pp-loc { transition: transform .14s cubic-bezier(.3, .7, .4, 1), background-color .14s; }
+.pp-row:active { background: var(--surface-3); }
+body.fx .pp-row:active { transform: scale(.985); }
+.pp-x:active, .pp-loc:active:not(:disabled) { transform: scale(.94); }
 .pp-row[aria-current="true"] { background: color-mix(in srgb, var(--brand) 9%, transparent); }
 .pp-row[aria-current="true"] .pp-ok, .pp-row.picked .pp-ok { opacity: 1; transform: none; }
 .pp-row.picked { background: color-mix(in srgb, var(--brand) 16%, transparent); }

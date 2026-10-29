@@ -878,7 +878,7 @@ body.fx .item:active:not(:has(:is(button, a, input, select, label, summary, [dat
 .highlight .hl-ic { display: grid; place-items: center; width: 30px; height: 30px; border-radius: 10px; background: var(--primary-container); color: var(--on-primary-container); flex: none; }
 .highlight.sev-warn .hl-ic, .highlight.sev-critical .hl-ic { background: var(--warn-bg); color: var(--warn); }
 .highlight.sev-good .hl-ic { background: var(--good-bg); color: var(--good); }
-.highlight .hl-t { flex: 1; min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.highlight .hl-t { flex: 1; min-width: 0; white-space: normal; overflow-wrap: normal; } /* a longer language: two lines, not cut */
 .highlight .hl-more { font-size: .72rem; font-weight: 700; padding: 2px 8px; border-radius: 999px; background: var(--surface-3); color: var(--on-surface-var); }
 .highlight > svg:last-child { width: 16px; height: 16px; opacity: .5; flex: none; }
 .home-list-head { display: flex; align-items: center; justify-content: space-between; font-size: .85rem; font-weight: 700; color: var(--on-surface-var); margin: 0 4px 8px; }
@@ -950,7 +950,8 @@ body.fx .item:active:not(:has(:is(button, a, input, select, label, summary, [dat
 .rights .rt-hit-t { display: flex; align-items: center; gap: 8px; font-weight: 800; margin-bottom: 8px; color: var(--primary); }
 .rights .rt-none { text-align: center; }
 .rights .rt-none .btn { margin-top: 12px; }
-/* a shift row's title: the date and role name are cut with "…", its tags (Shabbat, planned, manual) always show */
-.item .t.shift-title { display: flex; flex-direction: row; align-items: center; gap: 6px; text-overflow: clip; }
-.item .t.shift-title .tt { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+/* a shift row's title: the date and the role name go on a second line when they do not fit (between words, never
+ * cut with "…": a long role, or a longer language, hid the role), its tags (Shabbat, planned, manual) always show */
+.item .t.shift-title { display: flex; flex-direction: row; align-items: center; gap: 6px; text-overflow: clip; white-space: normal; overflow: visible; }
+.item .t.shift-title .tt { min-width: 0; white-space: normal; overflow-wrap: normal; line-height: 1.3; }
 .item .t.shift-title .tag { flex: none; }
