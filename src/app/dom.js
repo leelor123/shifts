@@ -217,6 +217,9 @@
       if (!el || seen.has(el) || !t.nodeValue.trim()) continue;
       seen.add(el);
       if (el.__fitBase || (!el.closest(FIT_SKIP) && shortText(el))) els.push(el);
+      // the box that cuts may hold the text one level down (a big number: <div class="v"><span class="money">…)
+      const up = el.parentElement;
+      if (up && up !== scope.parentElement && !seen.has(up)) { seen.add(up); if (up.__fitBase || (!up.closest(FIT_SKIP) && shortText(up))) els.push(up); }
     }
     if (scope.nodeType === 1 && scope.__fitBase && !seen.has(scope)) els.push(scope);
     if (!els.length) return;
