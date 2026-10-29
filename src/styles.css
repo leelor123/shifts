@@ -221,7 +221,9 @@ svg.i.l { width: 32px; height: 32px; }
 .icon-btn:active { background: var(--surface-3); }
 .icon-btn.tonal { background: var(--surface-2); }
 .btn-row { display: flex; gap: 8px; flex-wrap: wrap; }
-.btn-row > .btn { flex: 1; }
+/* buttons share the row equally; one that would not fit its words goes to a new row (it squeezed and its text
+ * broke: "מסך בקשת / הדירוג"), never wider than the row */
+.btn-row > .btn { flex: 1; min-width: fit-content; max-width: 100%; }
 
 /* ---------- chips & segmented ---------- */
 .chips { display: flex; gap: 8px; overflow-x: auto; padding: 2px 0 6px; scrollbar-width: none; }
@@ -368,7 +370,7 @@ textarea.input { min-height: 90px; resize: vertical; }
 .finding .ft .amt { margin-inline-start: auto; color: var(--bad); white-space: nowrap; }
 .finding .fd { font-size: .9rem; margin-top: 6px; }
 .finding .fb { font-size: .76rem; color: var(--on-surface-var); margin-top: 6px; }
-.conf { font-size: .72rem; font-weight: 700; }
+.conf { font-size: .72rem; font-weight: 700; white-space: nowrap; } /* "ביטחון בינוני" moves whole to the next line, never split */
 .conf.high { color: var(--good); } .conf.medium { color: var(--warn); } .conf.low { color: var(--on-surface-var); }
 .status-summary { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-bottom: 12px; }
 .status-summary div { border-radius: 14px; padding: 10px; text-align: center; font-weight: 700; }
@@ -396,7 +398,7 @@ textarea.input { min-height: 90px; resize: vertical; }
 /* admin dashboard */
 .admin .section-title { margin-top: 18px; }
 .adm-bar { display: flex; align-items: center; gap: 10px; margin: 9px 0; font-size: .85rem; }
-.adm-bar .nm { width: 118px; flex: none; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.adm-bar .nm { width: 118px; flex: none; white-space: normal; overflow-wrap: normal; line-height: 1.2; } /* two lines, never cut */
 .adm-bar .track { flex: 1; height: 12px; border-radius: 6px; background: var(--surface-3); overflow: hidden; }
 .adm-bar .track i { display: block; height: 100%; border-radius: 6px; background: var(--primary); min-width: 2px; transition: width .6s cubic-bezier(.2, .8, .2, 1); }
 .adm-bar .vv { width: 74px; flex: none; text-align: left; direction: ltr; font-weight: 600; font-variant-numeric: tabular-nums; font-size: .8rem; }
@@ -495,7 +497,9 @@ details.collapse > .in { padding: 0 16px 14px; }
 .kv + .kv { border-top: 1px dashed var(--outline-var); }
 .ver { font-size: .75rem; color: var(--on-surface-var); text-align: center; margin: 18px 0; }
 .swipe-area { touch-action: pan-y; }
-.compare-row { display: grid; grid-template-columns: 1fr auto auto auto; gap: 10px; align-items: center; padding: 8px 0; font-size: .86rem; }
+/* the row's name keeps room for itself (it was squeezed to 49px and broke: "ממוצע / לשעה"); a number and its arrow
+ * go one under the other in a narrow column instead */
+.compare-row { display: grid; grid-template-columns: minmax(5.2em, 1fr) auto auto auto; gap: 10px; align-items: center; padding: 8px 0; font-size: .86rem; }
 .compare-row + .compare-row { border-top: 1px solid var(--outline-var); }
 .compare-row .h { font-size: .72rem; color: var(--on-surface-var); }
 
@@ -908,7 +912,7 @@ body.fx .item:active:not(:has(:is(button, a, input, select, label, summary, [dat
 .rights .rt-topic[open] summary .chev { transform: rotate(-90deg); }
 .rights .rt-body { padding: 0 2px 14px; font-size: .92rem; line-height: 1.6; }
 .rights .rt-body p { margin: 0 0 8px; }
-.rights a { color: var(--primary); font-weight: 600; }
+.rights a { color: var(--primary); font-weight: 600; white-space: nowrap; } /* "כל זכות ↗" whole, on the next line if it must */
 .rights .rt-help ol { margin: 0 0 12px; padding-inline-start: 20px; line-height: 1.7; }
 .rights .rt-sources p { margin: 0 0 8px; font-size: .86rem; line-height: 1.6; }
 .rights .rt-sources ul { margin: 0; padding-inline-start: 20px; line-height: 1.9; font-size: .86rem; }

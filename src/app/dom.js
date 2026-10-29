@@ -202,6 +202,8 @@
     }
     return false;
   }
+  // on two lines, or cut (a one-line box that hides what does not fit: "…")
+  const tight = (el) => wraps(el) || (el.scrollWidth > el.clientWidth + 1 && getComputedStyle(el).overflowX !== 'visible');
   Dom.fit = function (node) {
     if (!node || typeof document === 'undefined') return;
     const scope = node.nodeType === 1 || node.nodeType === 9 || node.nodeType === 11 ? node : node.parentElement;
@@ -220,13 +222,13 @@
     if (!els.length) return;
     // a label fitted before starts again from its own size (its text or its room may have changed)
     for (const el of els) if (el.__fitBase) { el.style.fontSize = ''; el.__fitBase = 0; }
-    let todo = els.filter((el) => shortText(el) && el.getClientRects().length && wraps(el));
+    let todo = els.filter((el) => shortText(el) && el.getClientRects().length && tight(el));
     for (const el of todo) el.__fitBase = parseFloat(getComputedStyle(el).fontSize) || 0;
     todo = todo.filter((el) => el.__fitBase);
     for (const k of FIT_STEPS) {
       if (!todo.length) break;
       for (const el of todo) { el.style.fontSize = (el.__fitBase * k).toFixed(2) + 'px'; Dom.keep(el, ['style']); }
-      todo = todo.filter((el) => wraps(el));
+      todo = todo.filter((el) => tight(el));
     }
     // too long even at 80%: its own size, on two lines between words (smaller and still broken helps nobody)
     for (const el of todo) { el.style.fontSize = ''; el.__fitBase = 0; }
