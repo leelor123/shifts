@@ -183,14 +183,70 @@
     for (let t = w.nextNode(); t; t = w.nextNode()) if (t.nodeValue.indexOf('₪') >= 0) found.push(t);
     found.forEach(markText);
   };
+  /* ---------------- short labels stay on one line ----------------
+   * A label of a few words ("תכנן משמרת", "נטו משוער") that does not fit its place broke onto two lines ("תכנן /
+   * משמרת") — it looked broken, in a narrow phone, a bigger text size or a longer language. Dom.fit makes such a label
+   * a little smaller (down to 80%) until it fits one line, before the screen is drawn; a longer text (a sentence)
+   * still goes to a new line between words, and nothing is ever cut. */
+  const FIT_SKIP = '#intro, svg, canvas, input, textarea, select, [contenteditable], .hero-num, .pp-row, .no-fit';
+  const FIT_STEPS = [0.92, 0.86, 0.8];
+  const shortText = (el) => { const t = (el.textContent || '').trim(); return t.length > 1 && t.length <= 32 && t.split(/\s+/).length <= 3; };
+  // the element's own text spans more than one line (a text node's boxes on different rows)
+  function wraps(el) {
+    for (const n of el.childNodes) {
+      if (n.nodeType !== 3 || !n.nodeValue.trim()) continue;
+      const rg = document.createRange(); rg.selectNodeContents(n);
+      const tops = [];
+      for (const r of rg.getClientRects()) { if (r.width < 1) continue; if (!tops.some((t) => Math.abs(t - r.top) < 3)) tops.push(r.top); }
+      if (tops.length > 1) return true;
+    }
+    return false;
+  }
+  Dom.fit = function (node) {
+    if (!node || typeof document === 'undefined') return;
+    const scope = node.nodeType === 1 || node.nodeType === 9 || node.nodeType === 11 ? node : node.parentElement;
+    if (!scope || (scope.nodeType === 1 && scope.closest(FIT_SKIP))) return;
+    // the labels: elements with their own short text, and any fitted before (reads first, then writes, so the page
+    // is laid out only a few times)
+    const seen = new Set(); const els = [];
+    const w = document.createTreeWalker(scope, NodeFilter.SHOW_TEXT);
+    for (let t = w.nextNode(); t; t = w.nextNode()) {
+      const el = t.parentElement;
+      if (!el || seen.has(el) || !t.nodeValue.trim()) continue;
+      seen.add(el);
+      if (el.__fitBase || (!el.closest(FIT_SKIP) && shortText(el))) els.push(el);
+    }
+    if (scope.nodeType === 1 && scope.__fitBase && !seen.has(scope)) els.push(scope);
+    if (!els.length) return;
+    // a label fitted before starts again from its own size (its text or its room may have changed)
+    for (const el of els) if (el.__fitBase) { el.style.fontSize = ''; el.__fitBase = 0; }
+    let todo = els.filter((el) => shortText(el) && el.getClientRects().length && wraps(el));
+    for (const el of todo) el.__fitBase = parseFloat(getComputedStyle(el).fontSize) || 0;
+    todo = todo.filter((el) => el.__fitBase);
+    for (const k of FIT_STEPS) {
+      if (!todo.length) break;
+      for (const el of todo) { el.style.fontSize = (el.__fitBase * k).toFixed(2) + 'px'; Dom.keep(el, ['style']); }
+      todo = todo.filter((el) => wraps(el));
+    }
+    // too long even at 80%: its own size, on two lines between words (smaller and still broken helps nobody)
+    for (const el of todo) { el.style.fontSize = ''; el.__fitBase = 0; }
+  };
   // everything added to the page or changed in it, before it is drawn
   if (typeof MutationObserver !== 'undefined' && typeof document !== 'undefined') {
     new MutationObserver((list) => {
+      const fit = new Set();
       for (const m of list) {
-        if (m.type === 'characterData') markText(m.target);
-        else for (const n of m.addedNodes) Dom.markMoney(n);
+        if (m.type === 'characterData') { markText(m.target); if (m.target.parentElement && !m.target.parentElement.closest('.hero-num')) fit.add(m.target.parentElement); }
+        else for (const n of m.addedNodes) { Dom.markMoney(n); if (n.isConnected) fit.add(n.nodeType === 1 ? n : n.parentElement); }
       }
+      fit.forEach((n) => n && n.isConnected && Dom.fit(n));
     }).observe(document.documentElement, { childList: true, subtree: true, characterData: true });
+    // the room changes: the window, the text size (settings), a sheet that opened, a section that opened
+    const fitAll = () => { if (document.body) Dom.fit(document.body); };
+    Dom.fitAll = fitAll;
+    root.addEventListener('resize', fitAll);
+    document.addEventListener('toggle', (e) => Dom.fit(e.target), true);
+    if (document.fonts && document.fonts.addEventListener) document.fonts.addEventListener('loadingdone', fitAll);
   }
 
   root.Dom = Dom;

@@ -68,7 +68,8 @@
     // only what differs is written: called after every change of settings, and writing the same colour or photo
     // again made the browser work out the whole page's look again (the pay card blinked)
     const data = (k, v) => { if (v) { if (de.dataset[k] !== v) de.dataset[k] = v; } else if (k in de.dataset) delete de.dataset[k]; };
-    const prop = (k, v) => { if (de.style.getPropertyValue(k) !== String(v)) de.style.setProperty(k, v); };
+    let roomChanged = false; // the text size or the font: the short labels are fitted again (Dom.fit)
+    const prop = (k, v) => { if (de.style.getPropertyValue(k) !== String(v)) { de.style.setProperty(k, v); if (k === '--fs' || k === '--app-font') roomChanged = true; } };
     data('theme', st.theme === 'light' || st.theme === 'dark' ? st.theme : '');
     de.classList.toggle('hide-money', !!st.hideMoney); // privacy: amounts blurred
     const a = ACCENTS[st.accent] || ACCENTS.candy;
@@ -87,6 +88,7 @@
     const meta = document.querySelector('meta[name="theme-color"]');
     if (meta) meta.content = document.getElementById('intro') ? '#0d2b6b' : dark ? '#0f1413' : '#f6f4ee';
     if (root.Fx) root.Fx.apply();
+    if (roomChanged && root.Dom && root.Dom.fitAll) root.Dom.fitAll();
   };
   matchMedia('(prefers-color-scheme: dark)').addEventListener('change', () => App.applyTheme());
 

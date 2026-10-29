@@ -247,7 +247,8 @@ svg.i.l { width: 32px; height: 32px; }
 .item .body { flex: 1; min-width: 0; }
 .item .t, .item .s, .switch-row .t, .switch-row .s { display: block; }
 .item .t { font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.item .s { font-size: .82rem; color: var(--on-surface-var); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+/* a row's second line wraps between words, in every language (it was cut with "…" — qa/trunc-audit.js) */
+.item .s { font-size: .82rem; color: var(--on-surface-var); white-space: normal; overflow-wrap: normal; }
 .item .trail { text-align: end; flex: none; }
 .item .trail .a { font-weight: 700; }
 .role-bar { width: 6px; align-self: stretch; border-radius: 3px; flex: none; }
@@ -387,7 +388,8 @@ textarea.input { min-height: 90px; resize: vertical; }
 .chart-legend { display: flex; flex-wrap: wrap; gap: 6px 14px; font-size: .78rem; color: var(--on-surface-var); margin-top: 6px; }
 .chart-legend i { display: inline-block; width: 10px; height: 10px; border-radius: 3px; margin-inline-end: 6px; vertical-align: middle; }
 .hbar { display: flex; align-items: center; gap: 10px; margin: 8px 0; font-size: .85rem; }
-.hbar .nm { width: 70px; flex: none; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+/* a bar's name: two lines rather than cut; a long word widens its column a little rather than stick out */
+.hbar .nm { width: auto; min-width: 70px; max-width: 112px; flex: none; white-space: normal; overflow-wrap: normal; line-height: 1.2; }
 .hbar .track { flex: 1; height: 14px; border-radius: 4px; background: var(--surface-3); overflow: hidden; }
 .hbar .track i { display: block; height: 100%; border-radius: 4px; }
 .hbar .vv { width: 92px; flex: none; text-align: left; direction: ltr; font-weight: 600; font-variant-numeric: tabular-nums; }
