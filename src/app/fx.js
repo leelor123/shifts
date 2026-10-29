@@ -138,10 +138,13 @@
   //    the ring goes at once: even a short fade left it floating over the moving sheet.
   const LAYERS = '.sheet, .dialog, .story, #lock, .coach';
   const hits = (el, x, y) => { const h = document.elementFromPoint(x, y); return !!h && (h === el || el.contains(h)); };
-  // the centre and the middle of each edge are the control's own (a pill's corners are not)
+  // the centre and the middle of the edges are the control's own (a pill's corners are not) — all but one edge: a
+  // control half under a header is not seen, but a row whose end lies under a thin side bar (the place list's
+  // letters) is, and got no ring at all
   const inView = (el, r) => {
     const cx = r.left + r.width / 2, cy = r.top + r.height / 2;
-    return hits(el, cx, cy) && hits(el, r.left + 2, cy) && hits(el, r.right - 2, cy) && hits(el, cx, r.top + 2) && hits(el, cx, r.bottom - 2);
+    if (!hits(el, cx, cy)) return false;
+    return [hits(el, r.left + 2, cy), hits(el, r.right - 2, cy), hits(el, cx, r.top + 2), hits(el, cx, r.bottom - 2)].filter(Boolean).length >= 3;
   };
   Fx.ring = function (el) {
     if (!Fx.motion() || !el || !el.getBoundingClientRect) return;
