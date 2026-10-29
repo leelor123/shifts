@@ -21,7 +21,7 @@
       travelMonthlyCap: 0, // 0 = no cap
       // --- overtime ---
       otMode: 'daily', // daily = all shifts that start on the same date share the day's counter
-      otLaw: true, // by the law: 8.6 h a day in a five-day week, 8 in a six-day week (Friday 7), 7 in a night shift; 42 a week
+      otLaw: false, // on (by the user's choice): by the law: 8.6 h a day in a five-day week, 8 in a six-day week (Friday 7), 7 in a night shift; 42 a week
       otThreshold: 8, // hours/day at 100% when otLaw is off (set by hand)
       otTier1Hours: 2, // first OT hours at tier 1
       otTier1Pct: 125,

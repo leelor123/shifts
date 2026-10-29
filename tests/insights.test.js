@@ -232,10 +232,13 @@ T.test('after it ended: "did you work it?" once its time has come', () => {
 T.section('the work week');
 T.test('Fridays again and again with a five-day week: asked once whether the workplace works six days', () => {
   const fridays = ['2026-09-18', '2026-09-25', '2026-10-02', '2026-10-09'].map((d) => shift(d, '07:00', '12:00'));
-  const ask = (d) => Insights.run(Engine.buildModel(d), { now: NOW }).alerts.filter((a) => a.type === 'workweek');
-  T.eq(ask(data(fridays)).length, 1, 'four Fridays in two months');
-  T.eq(ask(data(fridays.slice(0, 2))).length, 0, 'two are not enough');
-  T.eq(ask(data(fridays, (d) => { d.settings.leave.workWeek = 6; })).length, 0, 'a six-day week already chosen');
-  T.eq(ask(data(fridays, (d) => { d.employers[0].otLaw = false; })).length, 0, 'overtime set by hand: the week does not matter');
-  T.eq(ask(data(fridays, (d) => { d.settings.alerts.types = { workweek: false }; })).length, 0, 'turned off');
+  const all = (d) => Insights.run(Engine.buildModel(d), { now: NOW }).alerts.filter((a) => a.type === 'workweek');
+  const law = (mod) => (d) => { d.employers[0].otLaw = true; if (mod) mod(d); }; // the law turned on (off by default)
+  const ask = (sh, mod) => all(data(sh, law(mod)));
+  T.eq(all(data(fridays)).length, 0, 'the default (the law off): not asked');
+  T.eq(ask(fridays).length, 1, 'four Fridays in two months');
+  T.eq(ask(fridays.slice(0, 2)).length, 0, 'two are not enough');
+  T.eq(ask(fridays, (d) => { d.settings.leave.workWeek = 6; }).length, 0, 'a six-day week already chosen');
+  T.eq(ask(fridays, (d) => { d.employers[0].otLaw = false; }).length, 0, 'overtime set by hand: the week does not matter');
+  T.eq(ask(fridays, (d) => { d.settings.alerts.types = { workweek: false }; }).length, 0, 'turned off');
 });

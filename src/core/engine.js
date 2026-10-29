@@ -118,13 +118,14 @@
    * day — 8.6 hours in a five-day week (8 h 36 min), 8 in a six-day week and 7 on its Friday, 7 in a night shift (at
    * least 2 hours between 22:00 and 06:00) — then the week: regular hours beyond 42 (Sunday to Saturday) are overtime
    * too. (The five-day week's one short day of 7.6 hours comes out the same through the 42.) An employer whose
-   * daily limit was set by hand (anything but the old default 8) keeps it; otLaw says which one applies. */
+   * The law's limits apply only when the user turned them on (otLaw); otherwise the daily limit set by hand (8 by
+   * default) and no weekly limit, as before 1.27. */
   const WEEK_REG_H = 42;
   /* A minor (חוק עבודת הנוער; kolzchut "יום עבודה ושעות עבודה לנוער") may work at most 8 hours a day (9 at 16–18 in a
    * five-day workplace), 7 on the day before Shabbat or a holiday, 40 a week; an employer who goes beyond must pay
    * overtime — so by the law a minor's regular hours are the lower of the two laws' limits. */
   const WEEK_REG_H_MINOR = 40;
-  const otByLaw = (emp) => (emp.otLaw != null ? !!emp.otLaw : !(+emp.otThreshold > 0) || +emp.otThreshold === 8);
+  const otByLaw = (emp) => !!emp.otLaw;
   /** The day's regular hours before overtime starts. youth: { age, eve } for a minor (eve: the day before a rest day). */
   function otDayHours(emp, settings, dateKey, nightShift, youth) {
     if (otByLaw(emp)) {
@@ -138,8 +139,8 @@
     }
     return emp.nightShiftShortDay && nightShift ? +emp.nightShiftThreshold || 7 : +emp.otThreshold || 8;
   }
-  /** The week's regular hours before overtime starts (40 for a minor by the law). */
-  const otWeekHours = (emp, age) => (otByLaw(emp) && age != null && age < 18 ? WEEK_REG_H_MINOR : WEEK_REG_H);
+  /** The week's regular hours before overtime starts (42, 40 for a minor) — by the law only; without it no weekly limit. */
+  const otWeekHours = (emp, age) => (!otByLaw(emp) ? Infinity : age != null && age < 18 ? WEEK_REG_H_MINOR : WEEK_REG_H);
 
   /**
    * Compute pay for one shift.
@@ -467,7 +468,7 @@
       travel, bonus, tips, additions, deductions,
       total: wage + travel.amount + bonus + additions,
       restLabels, autoRestRange, autoRestMin,
-      thresholdH, priorMin: +opts.priorMin || 0, otByLaw: otByLaw(emp), weekH, minorOt: minor && otByLaw(emp),
+      thresholdH, priorMin: +opts.priorMin || 0, otByLaw: otByLaw(emp), weekH: isFinite(weekH) ? weekH : null, minorOt: minor && otByLaw(emp),
       regMin, otMin, weekOtMin, weekRegBefore: Math.max(0, +opts.weekRegMin || 0),
       overridden: !opts.ignoreOverrides && hasOverrides(shift), overrideList,
       dayRuleHit,
