@@ -2,7 +2,7 @@
 <html lang="en" dir="ltr">
 <head>
 <meta charset="utf-8">
-<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'sha256-FgNk6U022o0tzGprl1MJbN7Uezv3SKotwh8ovG5xA8c=' 'sha256-U5rJjDoofvhhY4wwLHTeLPd6WuW7E3fCTgd8+rVL4AY=' https://www.gstatic.com https://apis.google.com https://cdnjs.cloudflare.com https://cdn.jsdelivr.net 'wasm-unsafe-eval'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com data:; img-src 'self' data: blob: https:; connect-src 'self' https: wss:; frame-src https://shiftpay-70ab6.firebaseapp.com https://accounts.google.com https://apis.google.com https://*.google.com; worker-src 'self' blob: https://cdnjs.cloudflare.com https://cdn.jsdelivr.net; media-src 'self' data: blob:; manifest-src 'self'; object-src 'none'; base-uri 'self'; form-action 'self'">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'sha256-FgNk6U022o0tzGprl1MJbN7Uezv3SKotwh8ovG5xA8c=' 'sha256-IvHPmDte2x3YlzG2PAXfAvE+2QZXfTN3bGhKCQM0MsY=' https://www.gstatic.com https://apis.google.com https://cdnjs.cloudflare.com https://cdn.jsdelivr.net 'wasm-unsafe-eval'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com data:; img-src 'self' data: blob: https:; connect-src 'self' https: wss:; frame-src https://shiftpay-70ab6.firebaseapp.com https://accounts.google.com https://apis.google.com https://*.google.com; worker-src 'self' blob: https://cdnjs.cloudflare.com https://cdn.jsdelivr.net; media-src 'self' data: blob:; manifest-src 'self'; object-src 'none'; base-uri 'self'; form-action 'self'">
 <script>(function(){try{var l=localStorage.getItem('shaati.lang'),h=document.documentElement.lang;if(l&&l!==h&&/^(he|ar|ru|en|fr|es)$/.test(l)&&!sessionStorage.getItem('langHop')){sessionStorage.setItem('langHop','1');location.replace((l==='he'?'index.html':'index.'+l+'.html')+location.search+location.hash)}else sessionStorage.removeItem('langHop')}catch(e){}})();</script>
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="theme-color" content="#0d2b6b">
@@ -241,7 +241,9 @@ svg.i.l { width: 32px; height: 32px; }
 .icon-btn:active { background: var(--surface-3); }
 .icon-btn.tonal { background: var(--surface-2); }
 .btn-row { display: flex; gap: 8px; flex-wrap: wrap; }
-.btn-row > .btn { flex: 1; }
+/* buttons share the row equally; one that would not fit its words goes to a new row (it squeezed and its text
+ * broke: "מסך בקשת / הדירוג"), never wider than the row */
+.btn-row > .btn { flex: 1; min-width: fit-content; max-width: 100%; }
 
 /* ---------- chips & segmented ---------- */
 .chips { display: flex; gap: 8px; overflow-x: auto; padding: 2px 0 6px; scrollbar-width: none; }
@@ -266,8 +268,9 @@ svg.i.l { width: 32px; height: 32px; }
 .item .lead { width: 40px; height: 40px; border-radius: 12px; display: grid; place-items: center; flex: none; font-weight: 700; }
 .item .body { flex: 1; min-width: 0; }
 .item .t, .item .s, .switch-row .t, .switch-row .s { display: block; }
-.item .t { font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.item .s { font-size: .82rem; color: var(--on-surface-var); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.item .t { font-weight: 600; white-space: normal; overflow-wrap: normal; } /* a long title goes on two lines (between words), never cut */
+/* a row's second line wraps between words, in every language (it was cut with "…" — qa/trunc-audit.js) */
+.item .s { font-size: .82rem; color: var(--on-surface-var); white-space: normal; overflow-wrap: normal; }
 .item .trail { text-align: end; flex: none; }
 .item .trail .a { font-weight: 700; }
 .role-bar { width: 6px; align-self: stretch; border-radius: 3px; flex: none; }
@@ -387,7 +390,7 @@ textarea.input { min-height: 90px; resize: vertical; }
 .finding .ft .amt { margin-inline-start: auto; color: var(--bad); white-space: nowrap; }
 .finding .fd { font-size: .9rem; margin-top: 6px; }
 .finding .fb { font-size: .76rem; color: var(--on-surface-var); margin-top: 6px; }
-.conf { font-size: .72rem; font-weight: 700; }
+.conf { font-size: .72rem; font-weight: 700; white-space: nowrap; } /* "ביטחון בינוני" moves whole to the next line, never split */
 .conf.high { color: var(--good); } .conf.medium { color: var(--warn); } .conf.low { color: var(--on-surface-var); }
 .status-summary { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-bottom: 12px; }
 .status-summary div { border-radius: 14px; padding: 10px; text-align: center; font-weight: 700; }
@@ -407,14 +410,15 @@ textarea.input { min-height: 90px; resize: vertical; }
 .chart-legend { display: flex; flex-wrap: wrap; gap: 6px 14px; font-size: .78rem; color: var(--on-surface-var); margin-top: 6px; }
 .chart-legend i { display: inline-block; width: 10px; height: 10px; border-radius: 3px; margin-inline-end: 6px; vertical-align: middle; }
 .hbar { display: flex; align-items: center; gap: 10px; margin: 8px 0; font-size: .85rem; }
-.hbar .nm { width: 70px; flex: none; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+/* a bar's name: two lines rather than cut; a long word widens its column a little rather than stick out */
+.hbar .nm { width: auto; min-width: 70px; max-width: 112px; flex: none; white-space: normal; overflow-wrap: normal; line-height: 1.2; }
 .hbar .track { flex: 1; height: 14px; border-radius: 4px; background: var(--surface-3); overflow: hidden; }
 .hbar .track i { display: block; height: 100%; border-radius: 4px; }
 .hbar .vv { width: 92px; flex: none; text-align: left; direction: ltr; font-weight: 600; font-variant-numeric: tabular-nums; }
 /* admin dashboard */
 .admin .section-title { margin-top: 18px; }
 .adm-bar { display: flex; align-items: center; gap: 10px; margin: 9px 0; font-size: .85rem; }
-.adm-bar .nm { width: 118px; flex: none; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.adm-bar .nm { width: 118px; flex: none; white-space: normal; overflow-wrap: normal; line-height: 1.2; } /* two lines, never cut */
 .adm-bar .track { flex: 1; height: 12px; border-radius: 6px; background: var(--surface-3); overflow: hidden; }
 .adm-bar .track i { display: block; height: 100%; border-radius: 6px; background: var(--primary); min-width: 2px; transition: width .6s cubic-bezier(.2, .8, .2, 1); }
 .adm-bar .vv { width: 74px; flex: none; text-align: left; direction: ltr; font-weight: 600; font-variant-numeric: tabular-nums; font-size: .8rem; }
@@ -513,7 +517,9 @@ details.collapse > .in { padding: 0 16px 14px; }
 .kv + .kv { border-top: 1px dashed var(--outline-var); }
 .ver { font-size: .75rem; color: var(--on-surface-var); text-align: center; margin: 18px 0; }
 .swipe-area { touch-action: pan-y; }
-.compare-row { display: grid; grid-template-columns: 1fr auto auto auto; gap: 10px; align-items: center; padding: 8px 0; font-size: .86rem; }
+/* the row's name keeps room for itself (it was squeezed to 49px and broke: "ממוצע / לשעה"); a number and its arrow
+ * go one under the other in a narrow column instead */
+.compare-row { display: grid; grid-template-columns: minmax(5.2em, 1fr) auto auto auto; gap: 10px; align-items: center; padding: 8px 0; font-size: .86rem; }
 .compare-row + .compare-row { border-top: 1px solid var(--outline-var); }
 .compare-row .h { font-size: .72rem; color: var(--on-surface-var); }
 
@@ -898,7 +904,7 @@ body.fx .item:active:not(:has(:is(button, a, input, select, label, summary, [dat
 .highlight .hl-ic { display: grid; place-items: center; width: 30px; height: 30px; border-radius: 10px; background: var(--primary-container); color: var(--on-primary-container); flex: none; }
 .highlight.sev-warn .hl-ic, .highlight.sev-critical .hl-ic { background: var(--warn-bg); color: var(--warn); }
 .highlight.sev-good .hl-ic { background: var(--good-bg); color: var(--good); }
-.highlight .hl-t { flex: 1; min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.highlight .hl-t { flex: 1; min-width: 0; white-space: normal; overflow-wrap: normal; } /* a longer language: two lines, not cut */
 .highlight .hl-more { font-size: .72rem; font-weight: 700; padding: 2px 8px; border-radius: 999px; background: var(--surface-3); color: var(--on-surface-var); }
 .highlight > svg:last-child { width: 16px; height: 16px; opacity: .5; flex: none; }
 .home-list-head { display: flex; align-items: center; justify-content: space-between; font-size: .85rem; font-weight: 700; color: var(--on-surface-var); margin: 0 4px 8px; }
@@ -926,7 +932,7 @@ body.fx .item:active:not(:has(:is(button, a, input, select, label, summary, [dat
 .rights .rt-topic[open] summary .chev { transform: rotate(-90deg); }
 .rights .rt-body { padding: 0 2px 14px; font-size: .92rem; line-height: 1.6; }
 .rights .rt-body p { margin: 0 0 8px; }
-.rights a { color: var(--primary); font-weight: 600; }
+.rights a { color: var(--primary); font-weight: 600; white-space: nowrap; } /* "כל זכות ↗" whole, on the next line if it must */
 .rights .rt-help ol { margin: 0 0 12px; padding-inline-start: 20px; line-height: 1.7; }
 .rights .rt-sources p { margin: 0 0 8px; font-size: .86rem; line-height: 1.6; }
 .rights .rt-sources ul { margin: 0; padding-inline-start: 20px; line-height: 1.9; font-size: .86rem; }
@@ -970,9 +976,10 @@ body.fx .item:active:not(:has(:is(button, a, input, select, label, summary, [dat
 .rights .rt-hit-t { display: flex; align-items: center; gap: 8px; font-weight: 800; margin-bottom: 8px; color: var(--primary); }
 .rights .rt-none { text-align: center; }
 .rights .rt-none .btn { margin-top: 12px; }
-/* a shift row's title: the date and role name are cut with "…", its tags (Shabbat, planned, manual) always show */
-.item .t.shift-title { display: flex; flex-direction: row; align-items: center; gap: 6px; text-overflow: clip; }
-.item .t.shift-title .tt { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+/* a shift row's title: the date and the role name go on a second line when they do not fit (between words, never
+ * cut with "…": a long role, or a longer language, hid the role), its tags (Shabbat, planned, manual) always show */
+.item .t.shift-title { display: flex; flex-direction: row; align-items: center; gap: 6px; text-overflow: clip; white-space: normal; overflow: visible; }
+.item .t.shift-title .tt { min-width: 0; white-space: normal; overflow-wrap: normal; line-height: 1.3; }
 .item .t.shift-title .tag { flex: none; }
 
 /* ============================================================
@@ -2361,6 +2368,11 @@ body.fx .pp-loc.busy svg { animation: pp-hop .8s ease-in-out infinite; }
 .pp-n mark { background: color-mix(in srgb, var(--amber) 28%, transparent); color: inherit; border-radius: 4px; }
 .pp-ok { position: absolute; bottom: -3px; inset-inline-start: -3px; width: 19px; height: 19px; border-radius: 50%; display: grid; place-items: center; color: #fff; background: var(--brand); box-shadow: 0 0 0 2px var(--surface); opacity: 0; transform: scale(.3) rotate(-25deg); transition: opacity .2s, transform .3s cubic-bezier(.2, .9, .3, 1.5); }
 .pp-ok svg { width: 12px; height: 12px; stroke-width: 3.4; }
+/* every control answers a press, the place list too (qa/press-audit.js found these three without one) */
+.pp-row, .pp-x, .pp-loc { transition: transform .14s cubic-bezier(.3, .7, .4, 1), background-color .14s; }
+.pp-row:active { background: var(--surface-3); }
+body.fx .pp-row:active { transform: scale(.985); }
+.pp-x:active, .pp-loc:active:not(:disabled) { transform: scale(.94); }
 .pp-row[aria-current="true"] { background: color-mix(in srgb, var(--brand) 9%, transparent); }
 .pp-row[aria-current="true"] .pp-ok, .pp-row.picked .pp-ok { opacity: 1; transform: none; }
 .pp-row.picked { background: color-mix(in srgb, var(--brand) 16%, transparent); }
@@ -2563,8 +2575,7 @@ html[dir="ltr"] #print-root th, html[dir="ltr"] #print-root td { text-align: lef
 .row-flex:has(> [data-readall]) { flex-wrap: wrap; row-gap: 0; }
 /* longer words in the other languages: a list row's second line, a chart's names and the champions table's tabs
    wrap between words (two lines at most) instead of being cut short; Hebrew fits on one line and keeps its look */
-html:not([lang="he"]) .item .s, html:not([lang="he"]) .hbar .nm { white-space: normal; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; }
-html:not([lang="he"]) .hbar .nm { line-height: 1.2; }
+/* (a row's second line and a bar's name wrap in every language now: styles.css) */
 html:not([lang="he"]) .lb-games button, html:not([lang="he"]) .lb-periods button { white-space: normal; overflow-wrap: normal; line-height: 1.15; text-wrap: balance; padding-block: 3px; }
 
 /* planned shifts whose time has passed: not in the pay until confirmed — a plain question and a button each */
@@ -2702,7 +2713,7 @@ body:not(.fx) .money { transition: none; }
 <noscript><div style="padding:24px;font-family:sans-serif">The app needs JavaScript.</div></noscript>
 <script>
 window.APP_VERSION = '1.28.0';
-window.APP_BUILD = '1.28.0-e58d3903';
+window.APP_BUILD = '1.28.0-453e441d';
 /* ---- core/util.js ---- */
 /* ============================================================
  * util.js — date/time helpers and formatting.
@@ -9670,14 +9681,75 @@ Total estimated difference: ${U.money(tot)}.
     for (let t = w.nextNode(); t; t = w.nextNode()) if (t.nodeValue.indexOf('₪') >= 0) found.push(t);
     found.forEach(markText);
   };
+  /* ---------------- short labels stay on one line ----------------
+   * A label of a few words ("תכנן משמרת", "נטו משוער") that does not fit its place broke onto two lines ("תכנן /
+   * משמרת") — it looked broken, in a narrow phone, a bigger text size or a longer language. Dom.fit makes such a label
+   * a little smaller (down to 80%) until it fits one line, before the screen is drawn; a longer text (a sentence)
+   * still goes to a new line between words, and nothing is ever cut. */
+  const FIT_SKIP = '#intro, svg, canvas, input, textarea, select, [contenteditable], .hero-num, .pp-row, .no-fit';
+  const FIT_STEPS = [0.92, 0.86, 0.8];
+  const shortText = (el) => { const t = (el.textContent || '').trim(); return t.length > 1 && t.length <= 32 && t.split(/\s+/).length <= 3; };
+  // the element's own text spans more than one line (a text node's boxes on different rows)
+  function wraps(el) {
+    for (const n of el.childNodes) {
+      if (n.nodeType !== 3 || !n.nodeValue.trim()) continue;
+      const rg = document.createRange(); rg.selectNodeContents(n);
+      const tops = [];
+      for (const r of rg.getClientRects()) { if (r.width < 1) continue; if (!tops.some((t) => Math.abs(t - r.top) < 3)) tops.push(r.top); }
+      if (tops.length > 1) return true;
+    }
+    return false;
+  }
+  // on two lines, or cut (a one-line box that hides what does not fit: "…")
+  const tight = (el) => wraps(el) || (el.scrollWidth > el.clientWidth + 1 && getComputedStyle(el).overflowX !== 'visible');
+  Dom.fit = function (node) {
+    if (!node || typeof document === 'undefined') return;
+    const scope = node.nodeType === 1 || node.nodeType === 9 || node.nodeType === 11 ? node : node.parentElement;
+    if (!scope || (scope.nodeType === 1 && scope.closest(FIT_SKIP))) return;
+    // the labels: elements with their own short text, and any fitted before (reads first, then writes, so the page
+    // is laid out only a few times)
+    const seen = new Set(); const els = [];
+    const w = document.createTreeWalker(scope, NodeFilter.SHOW_TEXT);
+    for (let t = w.nextNode(); t; t = w.nextNode()) {
+      const el = t.parentElement;
+      if (!el || seen.has(el) || !t.nodeValue.trim()) continue;
+      seen.add(el);
+      if (el.__fitBase || (!el.closest(FIT_SKIP) && shortText(el))) els.push(el);
+      // the box that cuts may hold the text one level down (a big number: <div class="v"><span class="money">…)
+      const up = el.parentElement;
+      if (up && up !== scope.parentElement && !seen.has(up)) { seen.add(up); if (up.__fitBase || (!up.closest(FIT_SKIP) && shortText(up))) els.push(up); }
+    }
+    if (scope.nodeType === 1 && scope.__fitBase && !seen.has(scope)) els.push(scope);
+    if (!els.length) return;
+    // a label fitted before starts again from its own size (its text or its room may have changed)
+    for (const el of els) if (el.__fitBase) { el.style.fontSize = ''; el.__fitBase = 0; }
+    let todo = els.filter((el) => shortText(el) && el.getClientRects().length && tight(el));
+    for (const el of todo) el.__fitBase = parseFloat(getComputedStyle(el).fontSize) || 0;
+    todo = todo.filter((el) => el.__fitBase);
+    for (const k of FIT_STEPS) {
+      if (!todo.length) break;
+      for (const el of todo) { el.style.fontSize = (el.__fitBase * k).toFixed(2) + 'px'; Dom.keep(el, ['style']); }
+      todo = todo.filter((el) => tight(el));
+    }
+    // too long even at 80%: its own size, on two lines between words (smaller and still broken helps nobody)
+    for (const el of todo) { el.style.fontSize = ''; el.__fitBase = 0; }
+  };
   // everything added to the page or changed in it, before it is drawn
   if (typeof MutationObserver !== 'undefined' && typeof document !== 'undefined') {
     new MutationObserver((list) => {
+      const fit = new Set();
       for (const m of list) {
-        if (m.type === 'characterData') markText(m.target);
-        else for (const n of m.addedNodes) Dom.markMoney(n);
+        if (m.type === 'characterData') { markText(m.target); if (m.target.parentElement && !m.target.parentElement.closest('.hero-num')) fit.add(m.target.parentElement); }
+        else for (const n of m.addedNodes) { Dom.markMoney(n); if (n.isConnected) fit.add(n.nodeType === 1 ? n : n.parentElement); }
       }
+      fit.forEach((n) => n && n.isConnected && Dom.fit(n));
     }).observe(document.documentElement, { childList: true, subtree: true, characterData: true });
+    // the room changes: the window, the text size (settings), a sheet that opened, a section that opened
+    const fitAll = () => { if (document.body) Dom.fit(document.body); };
+    Dom.fitAll = fitAll;
+    root.addEventListener('resize', fitAll);
+    document.addEventListener('toggle', (e) => Dom.fit(e.target), true);
+    if (document.fonts && document.fonts.addEventListener) document.fonts.addEventListener('loadingdone', fitAll);
   }
 
   root.Dom = Dom;
@@ -10306,10 +10378,13 @@ Total estimated difference: ${U.money(tot)}.
   //    the ring goes at once: even a short fade left it floating over the moving sheet.
   const LAYERS = '.sheet, .dialog, .story, #lock, .coach';
   const hits = (el, x, y) => { const h = document.elementFromPoint(x, y); return !!h && (h === el || el.contains(h)); };
-  // the centre and the middle of each edge are the control's own (a pill's corners are not)
+  // the centre and the middle of the edges are the control's own (a pill's corners are not) — all but one edge: a
+  // control half under a header is not seen, but a row whose end lies under a thin side bar (the place list's
+  // letters) is, and got no ring at all
   const inView = (el, r) => {
     const cx = r.left + r.width / 2, cy = r.top + r.height / 2;
-    return hits(el, cx, cy) && hits(el, r.left + 2, cy) && hits(el, r.right - 2, cy) && hits(el, cx, r.top + 2) && hits(el, cx, r.bottom - 2);
+    if (!hits(el, cx, cy)) return false;
+    return [hits(el, r.left + 2, cy), hits(el, r.right - 2, cy), hits(el, cx, r.top + 2), hits(el, cx, r.bottom - 2)].filter(Boolean).length >= 3;
   };
   Fx.ring = function (el) {
     if (!Fx.motion() || !el || !el.getBoundingClientRect) return;
@@ -12390,7 +12465,8 @@ Total estimated difference: ${U.money(tot)}.
     // only what differs is written: called after every change of settings, and writing the same colour or photo
     // again made the browser work out the whole page's look again (the pay card blinked)
     const data = (k, v) => { if (v) { if (de.dataset[k] !== v) de.dataset[k] = v; } else if (k in de.dataset) delete de.dataset[k]; };
-    const prop = (k, v) => { if (de.style.getPropertyValue(k) !== String(v)) de.style.setProperty(k, v); };
+    let roomChanged = false; // the text size or the font: the short labels are fitted again (Dom.fit)
+    const prop = (k, v) => { if (de.style.getPropertyValue(k) !== String(v)) { de.style.setProperty(k, v); if (k === '--fs' || k === '--app-font') roomChanged = true; } };
     data('theme', st.theme === 'light' || st.theme === 'dark' ? st.theme : '');
     de.classList.toggle('hide-money', !!st.hideMoney); // privacy: amounts blurred
     const a = ACCENTS[st.accent] || ACCENTS.candy;
@@ -12409,6 +12485,7 @@ Total estimated difference: ${U.money(tot)}.
     const meta = document.querySelector('meta[name="theme-color"]');
     if (meta) meta.content = document.getElementById('intro') ? '#0d2b6b' : dark ? '#0f1413' : '#f6f4ee';
     if (root.Fx) root.Fx.apply();
+    if (roomChanged && root.Dom && root.Dom.fitAll) root.Dom.fitAll();
   };
   matchMedia('(prefers-color-scheme: dark)').addEventListener('change', () => App.applyTheme());
 
@@ -13113,30 +13190,28 @@ Total estimated difference: ${U.money(tot)}.
     if (!root.FIREBASE_CONFIG) { App.localOnly = true; App.afterLogin(); return; } // a copy without sign-in (tests)
     Cloud.onAuthChange = (u) => { if (!u && S.meta.cloudUid) App.showLogin('expired'); };
     if (S.meta.cloudUid) {
-      let user = null, failed = false;
-      try {
-        user = await Promise.race([Cloud.start(), new Promise((_, rej) => setTimeout(() => rej(new Error('timeout')), 4000))]);
-      } catch (e) { failed = true; }
-      if (user) {
-        if (S.meta.cloudUid === user.uid) {
-          App.afterLogin();
-          // the opening show waits for the account to connect and for the admin check (within its limit)
-          const c = Cloud.connect(user).then(() => Cloud.adminCheck).catch((e) => console.warn('sync', e));
-          if (root.Intro && root.Intro.hold) root.Intro.hold(c);
+      // A returning user opens at once with what is on the phone (the app works offline anyway); the account
+      // reconnects behind it, and what it brings lands in place (screens are patched, not drawn anew). Waiting for
+      // it — up to 4 s, then up to 2.5 s more for the sync — kept the opening show turning on a slow network ("the
+      // intro is stuck", 2026-10-29; qa/intro-wait-test.js).
+      App.afterLogin();
+      const reconnect = () => Cloud.start().then(async (user) => {
+        if (!user) { App.showLogin('expired'); return; }
+        if (S.meta.cloudUid !== user.uid) {
+          // another account signed in on this browser: it takes over (Cloud.connect never mixes two accounts)
+          try { await Cloud.connect(user); } catch (e) { console.error(e); App.showLogin(navigator.onLine ? 'error' : 'offline'); return; }
+          App.recompute();
+          App.rerender();
           return;
         }
-        try { await Cloud.connect(user); } catch (e) { console.error(e); App.showLogin(navigator.onLine ? 'error' : 'offline'); return; }
-        App.afterLogin();
-        return;
-      }
-      if (failed) {
-        // slow or no network: the app opens with what's on the phone and connects when it can
-        App.afterLogin();
-        // (the opening show does not wait for it: it already waited for the account as long as is reasonable)
-        Cloud.start().then((u) => { if (u) Cloud.connect(u).catch(() => {}); else App.showLogin('expired'); }).catch(() => {});
-        return;
-      }
-      App.showLogin('expired');
+        await Cloud.connect(user).then(() => Cloud.adminCheck).catch((e) => console.warn('sync', e));
+        if (root.Stats) root.Stats.report(); // the open's statistics wait for the account
+      }).catch((e) => {
+        // no network now: the app goes on with what is on the phone, and connects once it is back
+        console.warn('sign-in', e);
+        root.addEventListener('online', () => reconnect(), { once: true });
+      });
+      reconnect();
       return;
     }
     // nobody has signed in on this phone yet
@@ -13178,10 +13253,11 @@ Total estimated difference: ${U.money(tot)}.
     if (action === 'support' && App.actions.support) setTimeout(() => App.actions.support(), 300); // Play testers' feedback link
     if (action === 'plus' && root.Plus) setTimeout(() => root.Plus.sheet(), 600); // back from the web checkout (?action=plus): straight to the code field
     setTimeout(() => { App.runInsights(); App.autoBackupCheck(); }, 1200);
-    // is Shaati Plus for sale here, and owned? (Google Play, Android app only) The opening show waits for the
-    // answer (it can put a design and the brush on the pay card) and for the fonts, so neither lands after it
+    // is Shaati Plus for sale here, and owned? (Google Play, Android app only) The opening show does not wait for
+    // the answer: the design in use is kept on the phone (meta.plus), so the first screen already has it, and the
+    // answer only confirms it (Google Play can take seconds). It waits for the fonts (kept offline, at once).
     const Intro = root.Intro;
-    if (root.Plus) { const p = root.Plus.init().catch(() => {}); if (Intro && Intro.hold) Intro.hold(p); }
+    if (root.Plus) root.Plus.init().catch(() => {});
     if (Intro && Intro.hold && document.fonts && document.fonts.ready) requestAnimationFrame(() => Intro.hold(document.fonts.ready));
     if (App.whatsNew) App.whatsNew();
     if (root.FriendsView) root.FriendsView.boot(); // an invitation that came with the address, accepted ones of mine
@@ -16724,37 +16800,37 @@ ${name}`.trim();
       const rest = d.ov.rest, ot = d.ov.ot, night = d.ov.night, trv = d.ov.travel, rate = d.ov.rate, spc = d.ov.special;
       const overnight = d.startT && d.endT && d.endT <= d.startT;
       return `
-        <div class="seg" style="margin-bottom:14px"><button data-status="done" class="${d.status === 'done' ? 'on' : ''}">בוצעה</button><button data-status="planned" class="${d.status === 'planned' ? 'on' : ''}">מתוכננת</button></div>
+        <div class="seg" style="margin-bottom:14px"><button data-status="done" class="${d.status === 'done' ? 'on' : ''}">Done</button><button data-status="planned" class="${d.status === 'planned' ? 'on' : ''}">Planned</button></div>
         ${App.multiEmp() ? `<label class="field"><span class="lbl">Employer</span>${sel('employerId', S.employers.map((e) => [e.id, esc(e.name)]), d.employerId)}</label>` : ''}
-        <label class="field"><span class="lbl">תאריך</span>${inp('date', d.date, `type="date" min="2000-01-01" max="${U.addDays(U.todayKey(), 366)}"`)}</label>
+        <label class="field"><span class="lbl">Date</span>${inp('date', d.date, `type="date" min="2000-01-01" max="${U.addDays(U.todayKey(), 366)}"`)}</label>
         <div class="grid2">
-          <label class="field"><span class="lbl">התחלה</span>${inp('startT', d.startT, 'type="time"')}</label>
-          <label class="field"><span class="lbl">סיום ${overnight ? "<span class=\"tag planned\">next day</span>" : ''}</span>${inp('endT', d.endT, 'type="time"')}</label>
+          <label class="field"><span class="lbl">Start</span>${inp('startT', d.startT, 'type="time"')}</label>
+          <label class="field"><span class="lbl">End ${overnight ? "<span class=\"tag planned\">next day</span>" : ''}</span>${inp('endT', d.endT, 'type="time"')}</label>
         </div>
         ${durChips()}
-        <div class="field"><span class="lbl">תפקיד</span><div class="chips">${roleChips(d.roleId, 'data-role')}</div></div>
-        <details class="collapse" ${d.splits.length ? 'open' : ''}><summary>${icon('swap', 's')} פיצול בין תפקידים ${d.splits.length ? `<span class="tag">${d.splits.length}</span>` : ''}</summary><div class="in">
-          <div class="tiny muted" style="margin-bottom:8px">לדוגמה: התחלת כסדרן, ומ-19:00 עברת לאחמ״ש.</div>
+        <div class="field"><span class="lbl">Role</span><div class="chips">${roleChips(d.roleId, 'data-role')}</div></div>
+        <details class="collapse" ${d.splits.length ? 'open' : ''}><summary>${icon('swap', 's')} Split between roles ${d.splits.length ? `<span class="tag">${d.splits.length}</span>` : ''}</summary><div class="in">
+          <div class="tiny muted" style="margin-bottom:8px">For example: you started as an usher and moved to shift manager at 19:00.</div>
           ${d.splits.map((s, i) => `<div class="seg-line" style="margin-bottom:8px"><label class="field" style="margin:0"><span class="lbl">From</span>${inp('splits.' + i + '.t', s.t, 'type="time"')}</label>
             <label class="field" style="margin:0"><span class="lbl">Role</span>${sel('splits.' + i + '.roleId', App.roles(d.employerId).map((r) => [r.id, esc(r.name)]), s.roleId)}</label>
             <button class="icon-btn" data-rm-split="${i}" aria-label="Remove">${icon('x')}</button></div>`).join('')}
-          <button class="btn text sm" data-add-split>${icon('plus', 's')} הוסף מעבר תפקיד</button></div></details>
+          <button class="btn text sm" data-add-split>${icon('plus', 's')} Add a role change</button></div></details>
         <div class="grid2">
-          <label class="field"><span class="lbl">הפסקה (דקות)</span>${numIn('breakMin', d.breakMin == null ? '' : d.breakMin, "Automatic")}</label>
-          <label class="switch-row" style="padding-top:26px"><span class="body"><span class="t small">בתשלום</span></span><input type="checkbox" class="switch" data-f="breakPaid" ${d.breakPaid ? 'checked' : ''}></label>
+          <label class="field"><span class="lbl">Break (minutes)</span>${numIn('breakMin', d.breakMin == null ? '' : d.breakMin, "Automatic")}</label>
+          <label class="switch-row" style="padding-top:26px"><span class="body"><span class="t small">Paid</span></span><input type="checkbox" class="switch" data-f="breakPaid" ${d.breakPaid ? 'checked' : ''}></label>
         </div>
         <div class="brk-note" data-brk aria-live="polite"></div>
-        <label class="switch-row"><span class="body"><span class="t">בלי נסיעות</span><span class="s">המשמרת לא תזכה בנסיעות (${U.money(emp.travelPerDay)} ליום)</span></span><input type="checkbox" class="switch" data-f="noTravel" ${d.noTravel ? 'checked' : ''}></label>
-        <details class="collapse" ${d.items.length ? 'open' : ''}><summary>${icon('gift', 's')} תוספות וניכויים ${d.items.length ? `<span class="tag">${d.items.length}</span>` : ''}</summary><div class="in">
+        <label class="switch-row"><span class="body"><span class="t">No travel</span><span class="s">This shift won’t earn travel (${U.money(emp.travelPerDay)} a day)</span></span><input type="checkbox" class="switch" data-f="noTravel" ${d.noTravel ? 'checked' : ''}></label>
+        <details class="collapse" ${d.items.length ? 'open' : ''}><summary>${icon('gift', 's')} Extras and deductions ${d.items.length ? `<span class="tag">${d.items.length}</span>` : ''}</summary><div class="in">
           ${d.items.map((it, i) => `<div style="display:grid;grid-template-columns:1.1fr 1fr 40px;gap:8px;align-items:end;margin-bottom:8px">
             ${sel('items.' + i + '.type', [['bonus', "Bonus"], ['tips', "Tips"], ['addition', "Extra"], ['deduction', "Deduction"]], it.type)}
             ${numIn('items.' + i + '.amount', it.amount, '₪')}
             <button class="icon-btn" data-rm-item="${i}" aria-label="Remove">${icon('x')}</button>
             <div style="grid-column:1/3">${inp('items.' + i + '.label', it.label || '', "placeholder=\"Description (optional)\"")}</div></div>`).join('')}
-          <button class="btn text sm" data-add-item>${icon('plus', 's')} הוסף שורה</button></div></details>
-        <label class="field"><span class="lbl">הערה</span><textarea class="input" data-f="note" rows="2" maxlength="500" placeholder="לא חובה">${esc(d.note)}</textarea></label>
-        <details class="collapse" ${ovCount() ? 'open' : ''}><summary>${icon('hand', 's')} עקיפות ידניות ${ovCount() ? `<span class="tag override">${ovCount()}</span>` : ''}</summary><div class="in">
-          <div class="tiny muted" style="margin-bottom:10px">כל רכיב מחושב אוטומטית. הפעל "ידני" רק אם המעסיק מחשב אחרת.</div>
+          <button class="btn text sm" data-add-item>${icon('plus', 's')} Add a line</button></div></details>
+        <label class="field"><span class="lbl">Note</span><textarea class="input" data-f="note" rows="2" maxlength="500" placeholder="Optional">${esc(d.note)}</textarea></label>
+        <details class="collapse" ${ovCount() ? 'open' : ''}><summary>${icon('hand', 's')} Manual overrides ${ovCount() ? `<span class="tag override">${ovCount()}</span>` : ''}</summary><div class="in">
+          <div class="tiny muted" style="margin-bottom:10px">Every part is calculated automatically. Turn on "Manual" only if your employer calculates it differently.</div>
           ${ovBlock('rest', "Shabbat/holiday rate", "Turn off, turn on by hand, a range of hours, a percentage or an amount", `
             <div class="field"><span class="lbl">Scope</span>${sel('ov.rest.scope', [['off', "Turn off Shabbat/holiday for the shift"], ['all', "Apply to the whole shift"], ['range', "Only within a range of hours"], ['auto', "Automatic detection, a different percentage/amount"]], rest.scope)}</div>
             ${rest.scope === 'range' ? `<div class="grid2"><label class="field"><span class="lbl">Shabbat/holiday from</span>${inp('ov.rest.fromT', rest.fromT, 'type="time"')}</label><label class="field"><span class="lbl">Until</span>${inp('ov.rest.toT', rest.toT, 'type="time"')}</label></div>` : ''}
@@ -16776,7 +16852,7 @@ ${name}`.trim();
           ${ovCount() ? `<label class="field"><span class="lbl">Reason (optional)</span>${inp('reason', d.reason, "placeholder=\"e.g. not counted as Shabbat at work\"")}</label>
           <button class="btn outlined block" data-reset-ov>${icon('refresh', 's')} Back to automatic calculation</button>` : ''}
         </div></details>
-        <div class="section-title">${icon('wallet', 's')} חישוב</div>
+        <div class="section-title">${icon('wallet', 's')} Calculation</div>
         <div class="card" id="ed-preview">${previewHtml(previewResult())}</div>`;
     }
     // the calculation under the form: drawn with the form, then patched as the hours change (only what changed moves)
@@ -20902,7 +20978,7 @@ What the app has (for "how do I" questions): a "Start shift" button with a timer
     id: '1.28.0',
     items: [
       ['eye', 'violet', "Stronger privacy mode", "Tapping the eye on the pay card blurs every amount, on every screen, with a soft animation. They can't be read until you tap again."],
-      ['sparkle', 'mint', "Smooth and steady", "The pay card and the screens update without flashing: when you press buttons, come back to the app, or change anything."],
+      ['sparkle', 'mint', "Smooth and steady", "The pay card and the screens update without flashing, the intro never gets stuck even on a slow network, and text is never cut or broken mid-word in any language."],
       ['clock', 'violet', "Overtime by the law, if you want", "You can turn it on in Settings › Calculation rules: a day over 8.6 hours in a five-day week (8 in a six-day week), over 7 in a night shift, and a week over 42 regular hours; under 18 by the Youth Employment Law. Without it, as before: over 8 hours a day."],
       ['layers', 'sky', "All updates", "In Settings › AI assistant and about › About: what changed in each version, from the first one until today."],
       ['users', 'pink', "Competition with friends", "Invite a friend with a link and see who earns more per hour, this month and this year. You can hide your amounts and remove friends. In Games › Competition with friends."],
@@ -20933,7 +21009,7 @@ What the app has (for "how do I" questions): a "Start shift" button with a timer
   /* ---------------- every update (settings › about › all the updates) ---------------- */
   // newest first: [version, the day it went out, what changed — said to the user, not to a developer]
   const CHANGELOG = [
-    ['1.28.0', '2026-10-29', "A stronger privacy mode: every amount blurs on every screen, with an animation. The pay card without flashes. Overtime by the law is an option in settings. And a list of all updates."],
+    ['1.28.0', '2026-10-29', "A stronger privacy mode with an animation on every amount, no flashes on the pay card and the screens, an intro that never gets stuck even on a slow network, and text that is never cut or broken in any language. Overtime by the law as an option in settings, and a list of all updates."],
     ['1.27.0', '2026-10-29', "Overtime by the law: by your work week, night shifts and 42 hours a week, for minors too."],
     ['1.26.0', '2026-10-28', "The friends' competition, and your first name instead of a nickname."],
     ['1.25.0', '2026-10-28', "The home screen the way you like it, and net pay as the pay card's big number."],
@@ -23123,7 +23199,8 @@ What the app has (for "how do I" questions): a "Start shift" button with a timer
   /** After the app opens: an invitation that came with the address, then accepted ones of mine. */
   View.boot = function () {
     const go = (tries) => {
-      if (document.querySelector('.sheet.show, .dialog, #intro') && tries < 60) { setTimeout(() => go(tries + 1), 1000); return; }
+      const noAccount = S.meta.cloudUid && !(root.Cloud && root.Cloud.connected);
+      if ((document.querySelector('.sheet.show, .dialog, #intro') || noAccount) && tries < 60) { setTimeout(() => go(tries + 1), 1000); return; }
       if (pendingCode()) handleInvite();
       else if (joined()) checkInvites().then(() => publish()).catch(() => {});
     };
