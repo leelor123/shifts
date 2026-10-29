@@ -402,7 +402,7 @@
       onMount: (el) => {
         const input = el.querySelector('#lb-n');
         const err = el.querySelector('#lb-err');
-        const redraw = () => { el.querySelector('.lb-preview').innerHTML = preview(); };
+        const redraw = () => { root.Dom.patch(el.querySelector('.lb-preview'), preview()); };
         input.addEventListener('input', () => { n = input.value; err.textContent = ''; redraw(); });
         el.addEventListener('click', async (ev) => {
           const b = ev.target.closest('button');

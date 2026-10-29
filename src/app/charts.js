@@ -222,6 +222,7 @@
     scanQueued = false;
     document.querySelectorAll('[data-anim]:not(.in):not(.watched)').forEach((el) => {
       el.classList.add('watched');
+      if (root.Dom) root.Dom.keep(el, [], ['watched', 'in']); // a patched screen keeps them (or its bars grew again)
       if (io) io.observe(el); else el.classList.add('in');
     });
   }

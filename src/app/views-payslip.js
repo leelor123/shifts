@@ -291,7 +291,7 @@
     function redraw(openKey) {
       const b = sheetEl.querySelector('.sh-body');
       const y = b.scrollTop;
-      b.innerHTML = body();
+      root.Dom.patch(b, body());
       b.scrollTop = y;
       if (openKey) openRow(openKey, true);
     }

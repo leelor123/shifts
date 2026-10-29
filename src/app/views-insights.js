@@ -25,7 +25,7 @@
           : UI.emptyState('bell', 'אין התראות', 'כאן יופיעו הסיכום השבועי והחודשי, שיאים ויעדים, ותזכורות חשובות בלבד.')}
         <div class="tiny muted" style="margin:10px 4px">התראות פוש: ${('Notification' in window) ? (Notification.permission === 'granted' ? 'מופעלות' : Notification.permission === 'denied' ? 'חסומות בדפדפן' : 'לא אושרו עדיין') : 'לא נתמכות'} · לכל היותר התראת חריגה אחת ביום; תזכורות קריטיות בנפרד.</div>`;
     };
-    const redraw = () => { sheetEl.querySelector('.sh-body').innerHTML = body(); };
+    const redraw = () => { root.Dom.patch(sheetEl.querySelector('.sh-body'), body()); };
     UI.openSheet({
       title: 'התראות ותובנות', full: true, body: body(),
       onMount: (el) => {

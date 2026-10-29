@@ -403,16 +403,20 @@
           <button class="btn outlined block" data-reset-ov>${icon('refresh', 's')} חזור לחישוב אוטומטי</button>` : ''}
         </div></details>
         <div class="section-title">${icon('wallet', 's')} חישוב</div>
-        <div class="card" id="ed-preview"></div>`;
+        <div class="card" id="ed-preview">${previewHtml(previewResult())}</div>`;
     }
+    // the calculation under the form: drawn with the form, then patched as the hours change (only what changed moves)
+    const previewResult = () => { try { return d.date && d.startT && d.endT ? App.previewShift(shiftFrom(d)) : null; } catch (e) { console.warn('preview', e); return null; } };
     function preview() {
       const el = sheetEl && sheetEl.querySelector('#ed-preview');
       if (!el) return;
-      const sh = shiftFrom(d);
-      if (!d.date || !d.startT || !d.endT) { el.innerHTML = '<div class="muted small">מלא תאריך ושעות</div>'; return; }
-      const r = App.previewShift(sh);
-      breakNote(r);
-      el.innerHTML = App.timelineHtml(r) + `<div class="row-flex" style="margin:10px 0"><div class="hero-num" style="font-size:1.8rem">${money(r.total)}</div><span class="spacer"></span><div class="small muted"><span class="num">${U.hm(r.paidMin)}</span> ש׳</div></div>` + App.breakdownHtml(r, sh);
+      const r = previewResult();
+      if (r) breakNote(r);
+      root.Dom.patch(el, previewHtml(r));
+    }
+    function previewHtml(r) {
+      if (!r) return '<div class="muted small">מלא תאריך ושעות</div>';
+      return App.timelineHtml(r) + `<div class="row-flex" style="margin:10px 0"><div class="hero-num" style="font-size:1.8rem">${money(r.total)}</div><span class="spacer"></span><div class="small muted"><span class="num">${U.hm(r.paidMin)}</span> ש׳</div></div>` + App.breakdownHtml(r, sh);
     }
     /** Under the break field: the law's break when it is left empty, or a warning when the one typed is short. */
     function breakNote(r) {
@@ -426,7 +430,7 @@
     function redraw() {
       const b = sheetEl.querySelector('.sh-body');
       const y = b.scrollTop;
-      b.innerHTML = body();
+      root.Dom.patch(b, body());
       b.scrollTop = y;
       preview();
     }

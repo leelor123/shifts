@@ -241,7 +241,8 @@ svg.i.l { width: 32px; height: 32px; }
 .list { background: var(--surface-1); border-radius: var(--radius); overflow: hidden; margin-bottom: 12px; }
 .item { display: flex; align-items: center; gap: 12px; padding: 12px 16px; min-height: 64px; cursor: pointer; position: relative; border: 0; background: none; width: 100%; text-align: start; }
 .item + .item { border-top: 1px solid var(--outline-var); }
-.item:active { background: var(--surface-3); }
+/* a row's own press, not while a control inside it is pressed (:active is on every ancestor of what is pressed) */
+.item:active:not(:has(:is(button, a, input, select, label, summary, [data-act], [role="switch"]):active)) { background: var(--surface-3); }
 .item .lead { width: 40px; height: 40px; border-radius: 12px; display: grid; place-items: center; flex: none; font-weight: 700; }
 .item .body { flex: 1; min-width: 0; }
 .item .t, .item .s, .switch-row .t, .switch-row .s { display: block; }
@@ -843,7 +844,7 @@ body.fx .nav .fab:active { transform: scale(.88) rotate(-8deg); }
 body.fx .nav .pill { transition: transform .12s ease-out, background-color .15s; }
 body.fx .nav button:active .pill { transform: scale(.9); }
 body.fx .icon-btn:active { transform: scale(.86); }
-body.fx .item:active { transform: scale(.985); }
+body.fx .item:active:not(:has(:is(button, a, input, select, label, summary, [data-act], [role="switch"]):active)) { transform: scale(.985); }
 
 /* ---- home: one number, one action, one highlight ---- */
 .home-top { display: flex; align-items: center; gap: 2px; min-height: 60px; padding: 6px 0 0; }

@@ -266,7 +266,7 @@
       const list = el.querySelector('[data-fr-list]');
       if (!rows) { list.innerHTML = '<li class="fr-loading">' + UI.skeleton(3) + '</li>'; return; }
       const t = FR.table(rows, period, today());
-      list.innerHTML = t.map(row).join('') + (rows.length < 2 ? `<li class="fr-empty"><span aria-hidden="true">🤝</span><b>עוד אין כאן חברים</b><span>הזמינו חבר בקישור, ותראו מי מרוויח יותר לשעה, החודש והשנה.</span></li>` : '');
+      root.Dom.patch(list, t.map(row).join('') + (rows.length < 2 ? `<li class="fr-empty"><span aria-hidden="true">🤝</span><b>עוד אין כאן חברים</b><span>הזמינו חבר בקישור, ותראו מי מרוויח יותר לשעה, החודש והשנה.</span></li>` : ''));
     }
     async function load(el, fresh) {
       const my = ++seq;

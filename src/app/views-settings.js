@@ -112,7 +112,7 @@
     let empId = S.employers[0].id;
     let sheetEl = null;
     const empPicker = () => (opts.perEmployer && App.multiEmp() ? `<div class="chips">${S.employers.map((e) => `<button class="chip ${e.id === empId ? 'on' : ''}" data-emp="${e.id}">${icon('briefcase', 's')} ${esc(e.name)}</button>`).join('')}</div>` : '');
-    const draw = () => { const b = sheetEl.querySelector('.sh-body'); const y = b.scrollTop; b.innerHTML = empPicker() + render(App.employer(empId)); b.scrollTop = y; if (opts.mount) opts.mount(sheetEl, draw); };
+    const draw = () => { const b = sheetEl.querySelector('.sh-body'); const y = b.scrollTop; root.Dom.patch(b, empPicker() + render(App.employer(empId))); b.scrollTop = y; if (opts.mount) opts.mount(sheetEl, draw); };
     UI.openSheet({
       title, full: true, body: empPicker() + render(App.employer(empId)),
       onMount: (el) => {
@@ -266,7 +266,7 @@
       clear.hidden = !q.value;
       home.hidden = !!r;
       res.hidden = !r;
-      res.innerHTML = r ? resultsHtml(r) : '';
+      root.Dom.patch(res, r ? resultsHtml(r) : '');
     };
     UI.on(q, 'input', run);
     UI.on(clear, 'click', () => { q.value = ''; run(); q.focus(); });
@@ -305,7 +305,7 @@
     UI.openSheet({
       title: c.title, cls: 'set-cat-sheet',
       body: `<div class="set-cat-head">${UI.tile(c.icon, c.tint)}<div class="small muted">${esc(c.sub())}</div></div><div class="list set-list" id="set-cat-list">${list()}</div>`,
-      onMount: (sh) => { off = Store.on(() => { const l = sh.querySelector('#set-cat-list'); if (l) l.innerHTML = list(); }); },
+      onMount: (sh) => { off = Store.on(() => { const l = sh.querySelector('#set-cat-list'); if (l) root.Dom.patch(l, list()); }); },
       onClose: () => { if (off) off(); },
     });
   };
@@ -425,7 +425,7 @@
       const em = el.querySelector('#re-emp'); if (em) d.employerId = em.value;
     };
     // the list may just have changed (a rate removed), so the screen is redrawn from d without reading it again
-    const redraw = () => { el.querySelector('.sh-body').innerHTML = body(); };
+    const redraw = () => { root.Dom.patch(el.querySelector('.sh-body'), body()); };
     UI.openSheet({
       title: orig ? 'עריכת תפקיד' : 'תפקיד חדש', body: body(),
       foot: `${orig ? `<button class="btn danger" data-del style="flex:0 0 auto">${icon('trash')}</button>` : ''}<button class="btn" data-save>${icon('check')} שמור</button>`,

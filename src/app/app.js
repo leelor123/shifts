@@ -274,8 +274,9 @@
     if (bad === t.classList.contains('unclean')) return;
     t.classList.toggle('unclean', bad);
     t.setAttribute('aria-invalid', String(bad));
+    if (root.Dom) root.Dom.keep(t, ['aria-invalid'], ['unclean']);
     let hint = t.nextElementSibling && t.nextElementSibling.classList.contains('unclean-hint') ? t.nextElementSibling : null;
-    if (bad && !hint) { hint = document.createElement('div'); hint.className = 'unclean-hint'; hint.setAttribute('role', 'status'); hint.textContent = 'בואו נשמור על שפה נקייה 🙂'; t.after(hint); }
+    if (bad && !hint) { hint = document.createElement('div'); if (root.Dom) root.Dom.own(hint, t); hint.className = 'unclean-hint'; hint.setAttribute('role', 'status'); hint.textContent = 'בואו נשמור על שפה נקייה 🙂'; t.after(hint); }
     if (!bad && hint) hint.remove();
   }, true);
   /* Looping decorations (the glow on the pay card, the dial, the shine on the start button) are

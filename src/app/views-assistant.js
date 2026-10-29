@@ -123,7 +123,7 @@
       return S.settings.ai.apiKey ? `<textarea class="input chat-input" id="as-input" rows="1" placeholder="כתוב שאלה…"></textarea><button class="icon-btn chat-send" data-send aria-label="שלח">${icon('send')}</button>` : '';
     }
     function redraw() {
-      sheetEl.querySelector('.sh-body').innerHTML = body();
+      root.Dom.patch(sheetEl.querySelector('.sh-body'), body()); // the earlier messages stay as they are
       const f = sheetEl.querySelector('.sh-foot');
       if (f) f.innerHTML = foot();
       scrollDown();

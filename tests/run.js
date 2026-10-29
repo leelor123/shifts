@@ -6,7 +6,7 @@ for (const f of ['util.js', 'clean.js', 'timesheet.js', 'schedule.js', 'places-d
   try { require(path.join(src, f)); } catch (e) { if (e.code !== 'MODULE_NOT_FOUND') throw e; }
 }
 const T = require('./t.js');
-for (const f of ['engine.test.js', 'insights.test.js', 'payslip.test.js', 'links.test.js', 'games.test.js', 'recap.test.js', 'leaderboard.test.js', 'friends.test.js', 'places.test.js', 'clean.test.js', 'timesheet.test.js', 'schedule.test.js', 'law.test.js']) {
+for (const f of ['redraw.test.js', 'engine.test.js', 'insights.test.js', 'payslip.test.js', 'links.test.js', 'games.test.js', 'recap.test.js', 'leaderboard.test.js', 'friends.test.js', 'places.test.js', 'clean.test.js', 'timesheet.test.js', 'schedule.test.js', 'law.test.js']) {
   try { require(path.join(__dirname, f)); } catch (e) { if (e.code !== 'MODULE_NOT_FOUND') throw e; }
 }
 T.section('cloud sync (simulated phones)');

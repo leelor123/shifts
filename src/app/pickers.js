@@ -383,6 +383,7 @@
     input.classList.add('pk-native');
     input.tabIndex = -1;
     input.after(btn);
+    if (root.Dom) { root.Dom.keep(input, ['data-pk', 'tabindex'], ['pk-native']); root.Dom.own(btn, input); }
     render();
   }
   /* <select>: a button with the choice that opens the list above (or, with data-ui="chips", the choices as chips
@@ -430,6 +431,7 @@
     sel.classList.add('pk-native');
     sel.tabIndex = -1;
     sel.after(btn);
+    if (root.Dom) { root.Dom.keep(sel, ['data-pk', 'tabindex'], ['pk-native']); root.Dom.own(btn, sel); }
     render();
   }
   // a few short choices, all in sight: chips that light up (an emoji from data-e on each option)
@@ -459,6 +461,7 @@
     sel.classList.add('pk-native');
     sel.tabIndex = -1;
     sel.after(wrap);
+    if (root.Dom) { root.Dom.keep(sel, ['data-pk', 'tabindex'], ['pk-native']); root.Dom.own(wrap, sel); }
     render();
   }
 

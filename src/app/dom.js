@@ -8,6 +8,10 @@
  * one and changes only the attributes, text and children that differ, so an element that is still there stays the
  * very same element. One that changed kind (another tag, id, data-key/data-id or first class) is replaced.
  *
+ * Dom.own(node, anchor) / Dom.keep(el, attrs, classes): what code adds to a drawn element after it is drawn (a
+ * picker's button next to its input, the attributes and classes that hide the native input) is not in the screen's
+ * HTML; a patch leaves it as it is (it removed the pickers' buttons and showed the plain inputs again).
+ *
  * Dom.markMoney(node): every amount in shekels inside node gets the class "money" (its element, or a <span> around
  * it), so the privacy setting blurs it — wherever and however it was written. A watcher marks everything added to
  * the page before it is drawn (a MutationObserver runs before the next frame), so no amount shows for a frame.
@@ -24,9 +28,10 @@
   const firstClass = (n) => { const c = n.getAttribute('class'); return c ? c.trim().split(/\s+/)[0] : ''; };
   const keyOf = (n) => (n.nodeType === 1 ? n.tagName + '|' + strong(n) + '|' + firstClass(n) : '#' + n.nodeType);
 
+  const kept = (a, c) => STICKY.has(c) || (a.__keep && a.__keep.c.has(c));
   function syncClass(a, value) {
-    const want = value.split(/\s+/).filter((c) => c && (!STICKY.has(c) || a.classList.contains(c)));
-    for (const c of a.classList) if (STICKY.has(c) && !want.includes(c)) want.push(c);
+    const want = value.split(/\s+/).filter((c) => c && (!kept(a, c) || a.classList.contains(c)));
+    for (const c of a.classList) if (kept(a, c) && !want.includes(c)) want.push(c);
     const have = a.classList;
     if (want.length === have.length && want.every((c) => have.contains(c))) return;
     a.setAttribute('class', want.join(' '));
@@ -50,7 +55,7 @@
     const aa = a.attributes;
     for (let i = aa.length - 1; i >= 0; i--) {
       const n = aa[i].name;
-      if (b.hasAttribute(n)) continue;
+      if (b.hasAttribute(n) || (a.__keep && a.__keep.a.has(n))) continue;
       if (n === 'class') syncClass(a, ''); else a.removeAttribute(n);
     }
   }
@@ -72,22 +77,25 @@
     }
   }
 
+  const real = (c) => { while (c && c.__ownOf) c = c.nextSibling; return c; }; // past the code's own nodes
   function patchChildren(from, to) {
-    let cur = from.firstChild;
+    let cur = real(from.firstChild);
     let keyed = null; // the live children with an id of their own, to find one that moved
     for (let n = to.firstChild; n;) {
       const next = n.nextSibling;
+      cur = real(cur);
       const k = keyOf(n);
       let match = cur && keyOf(cur) === k ? cur : null;
       const sk = strong(n);
       if (!match && sk) {
-        if (!keyed) { keyed = new Map(); for (let c = cur; c; c = c.nextSibling) { const s = strong(c); if (s && !keyed.has(s)) keyed.set(s, c); } }
+        if (!keyed) { keyed = new Map(); for (let c = cur; c; c = c.nextSibling) { const s = !c.__ownOf && strong(c); if (s && !keyed.has(s)) keyed.set(s, c); } }
         const c = keyed.get(sk);
         if (c && c.parentNode === from && keyOf(c) === k) match = c;
       }
       // one live child left out of the new screen (a card that went away): skip past it instead of redrawing the rest
-      if (!match && cur && !sk && cur.nextSibling && keyOf(cur.nextSibling) === k && (!next || keyOf(cur) !== keyOf(next))) {
-        const gone = cur; cur = cur.nextSibling; from.removeChild(gone); match = cur;
+      const after = cur && real(cur.nextSibling);
+      if (!match && cur && !sk && after && keyOf(after) === k && (!next || keyOf(cur) !== keyOf(next))) {
+        from.removeChild(cur); cur = after; match = cur;
       }
       if (match) {
         if (keyed) keyed.delete(strong(match));
@@ -96,8 +104,27 @@
       } else from.insertBefore(n, cur); // a new element: moved over from the new tree
       n = next;
     }
-    while (cur) { const next = cur.nextSibling; from.removeChild(cur); cur = next; }
+    while (cur) { const next = cur.nextSibling; if (!cur.__ownOf) from.removeChild(cur); cur = next; }
+    // the code's own nodes stay right after what they belong to, and go with it
+    for (let c = from.firstChild; c;) {
+      const next = c.nextSibling;
+      const a = c.__ownOf;
+      if (a) {
+        if (a.parentNode !== from) from.removeChild(c);
+        else if (c.previousSibling !== a && !(c.previousSibling && c.previousSibling.__ownOf === a)) a.after(c);
+      }
+      c = next;
+    }
   }
+
+  /** node was added by code next to anchor (a picker's button): a patch leaves it there. */
+  Dom.own = function (node, anchor) { node.__ownOf = anchor; return node; };
+  /** attributes and classes code put on a drawn element: a patch keeps them. */
+  Dom.keep = function (el, attrs, classes) {
+    const k = el.__keep || (el.__keep = { a: new Set(), c: new Set() });
+    (attrs || []).forEach((x) => k.a.add(x));
+    (classes || []).forEach((x) => k.c.add(x));
+  };
 
   /** el's children become html, touching only what differs. */
   Dom.patch = function (el, html) {
