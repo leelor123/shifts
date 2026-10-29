@@ -791,30 +791,28 @@
     if (!root.FIREBASE_CONFIG) { App.localOnly = true; App.afterLogin(); return; } // a copy without sign-in (tests)
     Cloud.onAuthChange = (u) => { if (!u && S.meta.cloudUid) App.showLogin('expired'); };
     if (S.meta.cloudUid) {
-      let user = null, failed = false;
-      try {
-        user = await Promise.race([Cloud.start(), new Promise((_, rej) => setTimeout(() => rej(new Error('timeout')), 4000))]);
-      } catch (e) { failed = true; }
-      if (user) {
-        if (S.meta.cloudUid === user.uid) {
-          App.afterLogin();
-          // the opening show waits for the account to connect and for the admin check (within its limit)
-          const c = Cloud.connect(user).then(() => Cloud.adminCheck).catch((e) => console.warn('sync', e));
-          if (root.Intro && root.Intro.hold) root.Intro.hold(c);
+      // A returning user opens at once with what is on the phone (the app works offline anyway); the account
+      // reconnects behind it, and what it brings lands in place (screens are patched, not drawn anew). Waiting for
+      // it — up to 4 s, then up to 2.5 s more for the sync — kept the opening show turning on a slow network ("the
+      // intro is stuck", 2026-10-29; qa/intro-wait-test.js).
+      App.afterLogin();
+      const reconnect = () => Cloud.start().then(async (user) => {
+        if (!user) { App.showLogin('expired'); return; }
+        if (S.meta.cloudUid !== user.uid) {
+          // another account signed in on this browser: it takes over (Cloud.connect never mixes two accounts)
+          try { await Cloud.connect(user); } catch (e) { console.error(e); App.showLogin(navigator.onLine ? 'error' : 'offline'); return; }
+          App.recompute();
+          App.rerender();
           return;
         }
-        try { await Cloud.connect(user); } catch (e) { console.error(e); App.showLogin(navigator.onLine ? 'error' : 'offline'); return; }
-        App.afterLogin();
-        return;
-      }
-      if (failed) {
-        // slow or no network: the app opens with what's on the phone and connects when it can
-        App.afterLogin();
-        // (the opening show does not wait for it: it already waited for the account as long as is reasonable)
-        Cloud.start().then((u) => { if (u) Cloud.connect(u).catch(() => {}); else App.showLogin('expired'); }).catch(() => {});
-        return;
-      }
-      App.showLogin('expired');
+        await Cloud.connect(user).then(() => Cloud.adminCheck).catch((e) => console.warn('sync', e));
+        if (root.Stats) root.Stats.report(); // the open's statistics wait for the account
+      }).catch((e) => {
+        // no network now: the app goes on with what is on the phone, and connects once it is back
+        console.warn('sign-in', e);
+        root.addEventListener('online', () => reconnect(), { once: true });
+      });
+      reconnect();
       return;
     }
     // nobody has signed in on this phone yet
@@ -856,10 +854,11 @@
     if (action === 'support' && App.actions.support) setTimeout(() => App.actions.support(), 300); // Play testers' feedback link
     if (action === 'plus' && root.Plus) setTimeout(() => root.Plus.sheet(), 600); // back from the web checkout (?action=plus): straight to the code field
     setTimeout(() => { App.runInsights(); App.autoBackupCheck(); }, 1200);
-    // is Shaati Plus for sale here, and owned? (Google Play, Android app only) The opening show waits for the
-    // answer (it can put a design and the brush on the pay card) and for the fonts, so neither lands after it
+    // is Shaati Plus for sale here, and owned? (Google Play, Android app only) The opening show does not wait for
+    // the answer: the design in use is kept on the phone (meta.plus), so the first screen already has it, and the
+    // answer only confirms it (Google Play can take seconds). It waits for the fonts (kept offline, at once).
     const Intro = root.Intro;
-    if (root.Plus) { const p = root.Plus.init().catch(() => {}); if (Intro && Intro.hold) Intro.hold(p); }
+    if (root.Plus) root.Plus.init().catch(() => {});
     if (Intro && Intro.hold && document.fonts && document.fonts.ready) requestAnimationFrame(() => Intro.hold(document.fonts.ready));
     if (App.whatsNew) App.whatsNew();
     if (root.FriendsView) root.FriendsView.boot(); // an invitation that came with the address, accepted ones of mine

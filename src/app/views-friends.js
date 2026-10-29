@@ -380,7 +380,8 @@
   /** After the app opens: an invitation that came with the address, then accepted ones of mine. */
   View.boot = function () {
     const go = (tries) => {
-      if (document.querySelector('.sheet.show, .dialog, #intro') && tries < 60) { setTimeout(() => go(tries + 1), 1000); return; }
+      const noAccount = S.meta.cloudUid && !(root.Cloud && root.Cloud.connected);
+      if ((document.querySelector('.sheet.show, .dialog, #intro') || noAccount) && tries < 60) { setTimeout(() => go(tries + 1), 1000); return; }
       if (pendingCode()) handleInvite();
       else if (joined()) checkInvites().then(() => publish()).catch(() => {});
     };
