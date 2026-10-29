@@ -2,7 +2,7 @@
 <html lang="ru" dir="ltr">
 <head>
 <meta charset="utf-8">
-<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'sha256-FgNk6U022o0tzGprl1MJbN7Uezv3SKotwh8ovG5xA8c=' 'sha256-wMBsXpoJqcQwjfPfDd7cWgeolLrKRhCwd9CVHDDJSmE=' https://www.gstatic.com https://apis.google.com https://cdnjs.cloudflare.com https://cdn.jsdelivr.net 'wasm-unsafe-eval'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com data:; img-src 'self' data: blob: https:; connect-src 'self' https: wss:; frame-src https://shiftpay-70ab6.firebaseapp.com https://accounts.google.com https://apis.google.com https://*.google.com; worker-src 'self' blob: https://cdnjs.cloudflare.com https://cdn.jsdelivr.net; media-src 'self' data: blob:; manifest-src 'self'; object-src 'none'; base-uri 'self'; form-action 'self'">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'sha256-FgNk6U022o0tzGprl1MJbN7Uezv3SKotwh8ovG5xA8c=' 'sha256-IMytEStGKJNoHdFKJM9apnfuzVkOcMMXLMW/twD6BGQ=' https://www.gstatic.com https://apis.google.com https://cdnjs.cloudflare.com https://cdn.jsdelivr.net 'wasm-unsafe-eval'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com data:; img-src 'self' data: blob: https:; connect-src 'self' https: wss:; frame-src https://shiftpay-70ab6.firebaseapp.com https://accounts.google.com https://apis.google.com https://*.google.com; worker-src 'self' blob: https://cdnjs.cloudflare.com https://cdn.jsdelivr.net; media-src 'self' data: blob:; manifest-src 'self'; object-src 'none'; base-uri 'self'; form-action 'self'">
 <script>(function(){try{var l=localStorage.getItem('shaati.lang'),h=document.documentElement.lang;if(l&&l!==h&&/^(he|ar|ru|en|fr|es)$/.test(l)&&!sessionStorage.getItem('langHop')){sessionStorage.setItem('langHop','1');location.replace((l==='he'?'index.html':'index.'+l+'.html')+location.search+location.hash)}else sessionStorage.removeItem('langHop')}catch(e){}})();</script>
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="theme-color" content="#0d2b6b">
@@ -261,7 +261,8 @@ svg.i.l { width: 32px; height: 32px; }
 .list { background: var(--surface-1); border-radius: var(--radius); overflow: hidden; margin-bottom: 12px; }
 .item { display: flex; align-items: center; gap: 12px; padding: 12px 16px; min-height: 64px; cursor: pointer; position: relative; border: 0; background: none; width: 100%; text-align: start; }
 .item + .item { border-top: 1px solid var(--outline-var); }
-.item:active { background: var(--surface-3); }
+/* a row's own press, not while a control inside it is pressed (:active is on every ancestor of what is pressed) */
+.item:active:not(:has(:is(button, a, input, select, label, summary, [data-act], [role="switch"]):active)) { background: var(--surface-3); }
 .item .lead { width: 40px; height: 40px; border-radius: 12px; display: grid; place-items: center; flex: none; font-weight: 700; }
 .item .body { flex: 1; min-width: 0; }
 .item .t, .item .s, .switch-row .t, .switch-row .s { display: block; }
@@ -863,7 +864,7 @@ body.fx .nav .fab:active { transform: scale(.88) rotate(-8deg); }
 body.fx .nav .pill { transition: transform .12s ease-out, background-color .15s; }
 body.fx .nav button:active .pill { transform: scale(.9); }
 body.fx .icon-btn:active { transform: scale(.86); }
-body.fx .item:active { transform: scale(.985); }
+body.fx .item:active:not(:has(:is(button, a, input, select, label, summary, [data-act], [role="switch"]):active)) { transform: scale(.985); }
 
 /* ---- home: one number, one action, one highlight ---- */
 .home-top { display: flex; align-items: center; gap: 2px; min-height: 60px; padding: 6px 0 0; }
@@ -872,7 +873,6 @@ body.fx .item:active { transform: scale(.985); }
 .home-top .sub { font-size: .8rem; color: var(--on-surface-var); margin-top: 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .home-top .icon-btn { position: relative; }
 .home-hero { text-align: center; padding: 34px 8px 26px; margin: 4px -8px 6px; border-radius: 24px; cursor: pointer; -webkit-tap-highlight-color: transparent; transition: background-color .15s; }
-.home-hero:active { background: var(--surface-2); }
 .home-hero .hh-label { font-size: .85rem; font-weight: 600; color: var(--on-surface-var); }
 .home-hero .hero-num { font-size: 3.4rem; line-height: 1.05; margin: 6px 0 10px; }
 .home-hero .hh-stats { display: flex; justify-content: center; align-items: center; flex-wrap: wrap; gap: 6px 10px; font-size: .88rem; color: var(--on-surface-var); }
@@ -2651,11 +2651,29 @@ html:not([lang="he"]) .lb-games button, html:not([lang="he"]) .lb-periods button
 /* a month's name whole, on two lines if it must (never cut) */
 .avg-bars .hbar .nm { width: 96px; white-space: normal; line-height: 1.2; overflow-wrap: normal; }
 .found-share { margin-top: 10px; }
-/* privacy: amounts blurred on screen (Settings › appearance, or the eye on the pay card) */
-html.hide-money .money { filter: blur(7px); user-select: none; }
+/* privacy: amounts blurred on screen (Settings › appearance, or the eye on the pay card). Every amount is marked
+ * .money wherever it is written (dom.js); the blur grows with the text (a fixed 7px left the big number readable)
+ * and fades in and out together everywhere. */
+.money { transition: filter .45s cubic-bezier(.3, .7, .4, 1), opacity .45s cubic-bezier(.3, .7, .4, 1); }
+html.hide-money .money { filter: blur(.3em); opacity: .8; user-select: none; -webkit-user-select: none; }
+@media (prefers-reduced-motion: reduce) { .money { transition: none; } }
+/* a box that cuts a long amount ("…") lets the blur spill a little past its edge (it ended in straight lines) */
+.kpi .v { overflow: clip; overflow-clip-margin: .7em; }
+body:not(.fx) .money { transition: none; }
 .home-hero .hh-eye { position: absolute; top: 10px; inset-inline-start: 10px; z-index: 1; display: grid; place-items: center; width: 40px; height: 40px; padding: 0; border-radius: 50%; border: 1px solid rgba(255, 255, 255, .24); background: rgba(255, 255, 255, .14); color: #fff; cursor: pointer; transition: scale .14s cubic-bezier(.3, .7, .4, 1); }
 .home-hero .hh-eye:active { scale: .9; }
 .home-hero .hh-eye.off::after { content: ''; position: absolute; width: 22px; height: 2px; border-radius: 2px; background: #fff; transform: rotate(-45deg); box-shadow: 0 0 0 1.5px rgba(40, 20, 90, .5); }
+/* every update (settings › about): newest first, the version and its day on the side, the user's own version marked */
+.list.cl-open { margin-bottom: 12px; }
+.cl-list { list-style: none; margin: 0; padding: 0; }
+.cl-row { display: grid; grid-template-columns: auto 1fr; gap: 14px; align-items: start; padding: 12px 2px; border-bottom: 1px solid var(--outline-var); }
+.cl-row:last-child { border-bottom: 0; }
+.cl-v { display: flex; flex-direction: column; align-items: flex-start; gap: 2px; min-width: 70px; }
+.cl-v b { font-family: var(--display); font-weight: 700; font-variant-numeric: tabular-nums; }
+.cl-v span { font-size: .74rem; color: var(--on-surface-var); white-space: nowrap; font-variant-numeric: tabular-nums; }
+.cl-t { font-size: .92rem; line-height: 1.45; min-width: 0; }
+.cl-now .cl-v b { color: var(--primary); }
+.cl-now .tag { margin-inline-end: 4px; vertical-align: 1px; }
 
 </style>
 </head>
@@ -2683,8 +2701,8 @@ html.hide-money .money { filter: blur(7px); user-select: none; }
 <div id="print-root" aria-hidden="true"></div>
 <noscript><div style="padding:24px;font-family:sans-serif">Для приложения нужен JavaScript.</div></noscript>
 <script>
-window.APP_VERSION = '1.27.0';
-window.APP_BUILD = '1.27.0-52eb4796';
+window.APP_VERSION = '1.28.0';
+window.APP_BUILD = '1.28.0-e45e9cf8';
 /* ---- core/util.js ---- */
 /* ============================================================
  * util.js — date/time helpers and formatting.
@@ -5877,7 +5895,7 @@ window.APP_BUILD = '1.27.0-52eb4796';
       travelMonthlyCap: 0, // 0 = no cap
       // --- overtime ---
       otMode: 'daily', // daily = all shifts that start on the same date share the day's counter
-      otLaw: true, // by the law: 8.6 h a day in a five-day week, 8 in a six-day week (Friday 7), 7 in a night shift; 42 a week
+      otLaw: false, // on (by the user's choice): by the law: 8.6 h a day in a five-day week, 8 in a six-day week (Friday 7), 7 in a night shift; 42 a week
       otThreshold: 8, // hours/day at 100% when otLaw is off (set by hand)
       otTier1Hours: 2, // first OT hours at tier 1
       otTier1Pct: 125,
@@ -6153,13 +6171,14 @@ window.APP_BUILD = '1.27.0-52eb4796';
    * day — 8.6 hours in a five-day week (8 h 36 min), 8 in a six-day week and 7 on its Friday, 7 in a night shift (at
    * least 2 hours between 22:00 and 06:00) — then the week: regular hours beyond 42 (Sunday to Saturday) are overtime
    * too. (The five-day week's one short day of 7.6 hours comes out the same through the 42.) An employer whose
-   * daily limit was set by hand (anything but the old default 8) keeps it; otLaw says which one applies. */
+   * The law's limits apply only when the user turned them on (otLaw); otherwise the daily limit set by hand (8 by
+   * default) and no weekly limit, as before 1.27. */
   const WEEK_REG_H = 42;
   /* A minor (חוק עבודת הנוער; kolzchut "יום עבודה ושעות עבודה לנוער") may work at most 8 hours a day (9 at 16–18 in a
    * five-day workplace), 7 on the day before Shabbat or a holiday, 40 a week; an employer who goes beyond must pay
    * overtime — so by the law a minor's regular hours are the lower of the two laws' limits. */
   const WEEK_REG_H_MINOR = 40;
-  const otByLaw = (emp) => (emp.otLaw != null ? !!emp.otLaw : !(+emp.otThreshold > 0) || +emp.otThreshold === 8);
+  const otByLaw = (emp) => !!emp.otLaw;
   /** The day's regular hours before overtime starts. youth: { age, eve } for a minor (eve: the day before a rest day). */
   function otDayHours(emp, settings, dateKey, nightShift, youth) {
     if (otByLaw(emp)) {
@@ -6173,8 +6192,8 @@ window.APP_BUILD = '1.27.0-52eb4796';
     }
     return emp.nightShiftShortDay && nightShift ? +emp.nightShiftThreshold || 7 : +emp.otThreshold || 8;
   }
-  /** The week's regular hours before overtime starts (40 for a minor by the law). */
-  const otWeekHours = (emp, age) => (otByLaw(emp) && age != null && age < 18 ? WEEK_REG_H_MINOR : WEEK_REG_H);
+  /** The week's regular hours before overtime starts (42, 40 for a minor) — by the law only; without it no weekly limit. */
+  const otWeekHours = (emp, age) => (!otByLaw(emp) ? Infinity : age != null && age < 18 ? WEEK_REG_H_MINOR : WEEK_REG_H);
 
   /**
    * Compute pay for one shift.
@@ -6502,7 +6521,7 @@ window.APP_BUILD = '1.27.0-52eb4796';
       travel, bonus, tips, additions, deductions,
       total: wage + travel.amount + bonus + additions,
       restLabels, autoRestRange, autoRestMin,
-      thresholdH, priorMin: +opts.priorMin || 0, otByLaw: otByLaw(emp), weekH, minorOt: minor && otByLaw(emp),
+      thresholdH, priorMin: +opts.priorMin || 0, otByLaw: otByLaw(emp), weekH: isFinite(weekH) ? weekH : null, minorOt: minor && otByLaw(emp),
       regMin, otMin, weekOtMin, weekRegBefore: Math.max(0, +opts.weekRegMin || 0),
       overridden: !opts.ignoreOverrides && hasOverrides(shift), overrideList,
       dayRuleHit,
@@ -9354,10 +9373,18 @@ window.APP_BUILD = '1.27.0-52eb4796';
   }
 
   /* ---------------- swipe helper ---------------- */
+  /** el's listener for type, in place of the one bound before (a screen drawn again keeps its elements, and binding
+   * once more on every draw would run it twice). */
+  function on(el, type, fn, opts) {
+    const k = '__on_' + type;
+    if (el[k]) el.removeEventListener(type, el[k], opts);
+    el[k] = fn;
+    el.addEventListener(type, fn, opts);
+  }
   function onSwipe(el, fn) {
     let x0 = null, y0 = null, t0 = 0;
-    el.addEventListener('touchstart', (e) => { x0 = e.touches[0].clientX; y0 = e.touches[0].clientY; t0 = Date.now(); }, { passive: true });
-    el.addEventListener('touchend', (e) => {
+    on(el, 'touchstart', (e) => { x0 = e.touches[0].clientX; y0 = e.touches[0].clientY; t0 = Date.now(); }, { passive: true });
+    on(el, 'touchend', (e) => {
       if (x0 == null) return;
       const dx = e.changedTouches[0].clientX - x0, dy = e.changedTouches[0].clientY - y0;
       // told as in a right-to-left screen ('right' = forward, toward the next page): turned around in a left-to-right one
@@ -9454,7 +9481,206 @@ window.APP_BUILD = '1.27.0-52eb4796';
     fit();
   })();
 
-  root.UI = { pushLayer, closeLayer, tile, skeleton, invalid, icon, esc, money, numv, delta, roleDot, emptyState, toast, openSheet, closeTop, closeAll, dialog, confirm, promptText, onSwipe, vibrate, download, shareFile, copyText, numIn, timeAgo, sheets };
+  root.UI = { on, pushLayer, closeLayer, tile, skeleton, invalid, icon, esc, money, numv, delta, roleDot, emptyState, toast, openSheet, closeTop, closeAll, dialog, confirm, promptText, onSwipe, vibrate, download, shareFile, copyText, numIn, timeAgo, sheets };
+})(typeof window !== 'undefined' ? window : globalThis);
+
+/* ---- app/dom.js ---- */
+/*
+ * dom.js — a part of the screen drawn again without replacing what stayed the same, and every amount marked for the
+ * privacy blur.
+ *
+ * Dom.patch(el, html): el's children become html. Setting innerHTML made every element new: whatever was moving on
+ * them began again (the pay card's light, a count, a press), on a phone a newly made layer showed black for a frame
+ * until it was painted, and sideways-scrolled rows went back to the start. patch walks the new tree beside the live
+ * one and changes only the attributes, text and children that differ, so an element that is still there stays the
+ * very same element. One that changed kind (another tag, id, data-key/data-id or first class) is replaced.
+ *
+ * Dom.own(node, anchor) / Dom.keep(el, attrs, classes): what code adds to a drawn element after it is drawn (a
+ * picker's button next to its input, the attributes and classes that hide the native input) is not in the screen's
+ * HTML; a patch leaves it as it is (it removed the pickers' buttons and showed the plain inputs again).
+ *
+ * Dom.markMoney(node): every amount in shekels inside node gets the class "money" (its element, or a <span> around
+ * it), so the privacy setting blurs it — wherever and however it was written. A watcher marks everything added to
+ * the page before it is drawn (a MutationObserver runs before the next frame), so no amount shows for a frame.
+ */
+(function (root) {
+  'use strict';
+  const Dom = {};
+  const SVG = 'http://www.w3.org/2000/svg';
+  // one-time entrance classes: never added to (or taken from) an element already on the screen
+  const STICKY = new Set(['tc-enter', 'ha-enter']);
+  const PH = /--ph:\s*-?[\d.]+ms;?/; // a looping decoration's clock: differs on every draw, the live one is kept
+
+  const strong = (n) => (n.nodeType === 1 ? n.id || n.getAttribute('data-key') || n.getAttribute('data-id') || '' : '');
+  const firstClass = (n) => { const c = n.getAttribute('class'); return c ? c.trim().split(/\s+/)[0] : ''; };
+  const keyOf = (n) => (n.nodeType === 1 ? n.tagName + '|' + strong(n) + '|' + firstClass(n) : '#' + n.nodeType);
+
+  const kept = (a, c) => STICKY.has(c) || (a.__keep && a.__keep.c.has(c));
+  function syncClass(a, value) {
+    const want = value.split(/\s+/).filter((c) => c && (!kept(a, c) || a.classList.contains(c)));
+    for (const c of a.classList) if (kept(a, c) && !want.includes(c)) want.push(c);
+    const have = a.classList;
+    if (want.length === have.length && want.every((c) => have.contains(c))) return;
+    a.setAttribute('class', want.join(' '));
+  }
+  function syncStyle(a, value) {
+    const cur = a.getAttribute('style') || '';
+    if (cur.replace(PH, '') === value.replace(PH, '')) return;
+    const ph = cur.match(PH);
+    a.setAttribute('style', ph && PH.test(value) ? value.replace(PH, ph[0]) : value);
+  }
+  function syncAttrs(a, b) {
+    const ba = b.attributes;
+    for (let i = 0; i < ba.length; i++) {
+      const at = ba[i];
+      if (at.name === 'class') syncClass(a, at.value);
+      else if (at.name === 'style') syncStyle(a, at.value);
+      else if (a.getAttribute(at.name) !== at.value) {
+        if (at.namespaceURI) a.setAttributeNS(at.namespaceURI, at.name, at.value); else a.setAttribute(at.name, at.value);
+      }
+    }
+    const aa = a.attributes;
+    for (let i = aa.length - 1; i >= 0; i--) {
+      const n = aa[i].name;
+      if (b.hasAttribute(n) || (a.__keep && a.__keep.a.has(n))) continue;
+      if (n === 'class') syncClass(a, ''); else a.removeAttribute(n);
+    }
+  }
+
+  function patchNode(a, b) {
+    if (a.nodeType !== 1) { if (a.nodeValue !== b.nodeValue) a.nodeValue = b.nodeValue; return; }
+    if (a.isEqualNode(b)) return;
+    syncAttrs(a, b);
+    const tag = a.tagName;
+    // a field the user is typing in keeps what is typed; any other one shows the new value
+    if (tag === 'TEXTAREA') { if (a !== document.activeElement && a.value !== b.value) a.value = b.value; return; }
+    patchChildren(a, b);
+    if (tag === 'INPUT') {
+      if (a.type === 'checkbox' || a.type === 'radio') { if (a.checked !== b.defaultChecked) a.checked = b.defaultChecked; }
+      else if (a !== document.activeElement && a.value !== b.defaultValue && a.type !== 'file') a.value = b.defaultValue;
+    } else if (tag === 'SELECT') {
+      const o = b.querySelector('option[selected]') || b.querySelector('option');
+      if (o && a.value !== o.value) a.value = o.value;
+    }
+  }
+
+  const real = (c) => { while (c && c.__ownOf) c = c.nextSibling; return c; }; // past the code's own nodes
+  function patchChildren(from, to) {
+    let cur = real(from.firstChild);
+    let keyed = null; // the live children with an id of their own, to find one that moved
+    for (let n = to.firstChild; n;) {
+      const next = n.nextSibling;
+      cur = real(cur);
+      const k = keyOf(n);
+      let match = cur && keyOf(cur) === k ? cur : null;
+      const sk = strong(n);
+      if (!match && sk) {
+        if (!keyed) { keyed = new Map(); for (let c = cur; c; c = c.nextSibling) { const s = !c.__ownOf && strong(c); if (s && !keyed.has(s)) keyed.set(s, c); } }
+        const c = keyed.get(sk);
+        if (c && c.parentNode === from && keyOf(c) === k) match = c;
+      }
+      // one live child left out of the new screen (a card that went away): skip past it instead of redrawing the rest
+      const after = cur && real(cur.nextSibling);
+      if (!match && cur && !sk && after && keyOf(after) === k && (!next || keyOf(cur) !== keyOf(next))) {
+        from.removeChild(cur); cur = after; match = cur;
+      }
+      if (match) {
+        if (keyed) keyed.delete(strong(match));
+        if (match === cur) cur = cur.nextSibling; else from.insertBefore(match, cur);
+        patchNode(match, n);
+      } else from.insertBefore(n, cur); // a new element: moved over from the new tree
+      n = next;
+    }
+    while (cur) { const next = cur.nextSibling; if (!cur.__ownOf) from.removeChild(cur); cur = next; }
+    // the code's own nodes stay right after what they belong to, and go with it
+    for (let c = from.firstChild; c;) {
+      const next = c.nextSibling;
+      const a = c.__ownOf;
+      if (a) {
+        if (a.parentNode !== from) from.removeChild(c);
+        else if (c.previousSibling !== a && !(c.previousSibling && c.previousSibling.__ownOf === a)) a.after(c);
+      }
+      c = next;
+    }
+  }
+
+  /** node was added by code next to anchor (a picker's button): a patch leaves it there. */
+  Dom.own = function (node, anchor) { node.__ownOf = anchor; return node; };
+  /** attributes and classes code put on a drawn element: a patch keeps them. */
+  Dom.keep = function (el, attrs, classes) {
+    const k = el.__keep || (el.__keep = { a: new Set(), c: new Set() });
+    (attrs || []).forEach((x) => k.a.add(x));
+    (classes || []).forEach((x) => k.c.add(x));
+  };
+
+  /** el's children become html, touching only what differs. */
+  Dom.patch = function (el, html) {
+    const t = document.createElement('template');
+    t.innerHTML = html;
+    if (!el.closest(SKIP)) Dom.markMoney(t.content); // marked as the live tree is, so the two compare equal
+    patchChildren(el, t.content);
+  };
+
+  /* ---------------- amounts, marked for the privacy blur ---------------- */
+  // a game's coins and points, and a price, are not the user's money
+  const SKIP = '.money, .pub, .game-sheet, .games-sheet, [data-plus-buy], [data-limit-buy], [data-design-buy], script, style, textarea, [contenteditable]';
+  const GAP = '[\\s\\u200e\\u200f]*';
+  const NUM = '[-−+]?\\d(?:[\\d,.]*\\d)?[kKMm]?';
+  const AMOUNT = new RegExp(`[-−+]?₪${GAP}${NUM}|${NUM}${GAP}₪`, 'g');
+
+  function markText(t) {
+    const v = t.nodeValue;
+    if (!v || v.indexOf('₪') < 0) return;
+    const p = t.parentNode;
+    if (!p || (p.nodeType !== 1 && p.nodeType !== 11)) return;
+    if (p.nodeType === 1 && p.closest(SKIP)) return;
+    AMOUNT.lastIndex = 0;
+    if (!AMOUNT.test(v)) return;
+    // an amount in a chart's text: the whole label
+    if (p.namespaceURI === SVG) { const tx = p.closest('text'); if (tx) tx.classList.add('money'); return; }
+    // an element that holds only the amount: the element itself
+    AMOUNT.lastIndex = 0;
+    const whole = v.replace(/[\s‎‏]/g, '').match(AMOUNT);
+    if (p.nodeType === 1 && p.childNodes.length === 1 && whole && whole[0].replace(/[\s‎‏]/g, '') === v.replace(/[\s‎‏]/g, '')) {
+      p.classList.add('money');
+      return;
+    }
+    const doc = t.ownerDocument;
+    const frag = doc.createDocumentFragment();
+    let m, last = 0;
+    AMOUNT.lastIndex = 0;
+    while ((m = AMOUNT.exec(v))) {
+      if (m.index > last) frag.appendChild(doc.createTextNode(v.slice(last, m.index)));
+      const s = doc.createElement('span');
+      s.className = 'money';
+      s.textContent = m[0];
+      frag.appendChild(s);
+      last = m.index + m[0].length;
+    }
+    if (last < v.length) frag.appendChild(doc.createTextNode(v.slice(last)));
+    p.replaceChild(frag, t);
+  }
+  Dom.markMoney = function (node) {
+    if (!node) return;
+    if (node.nodeType === 3) { markText(node); return; }
+    if (node.nodeType !== 1 && node.nodeType !== 11) return;
+    if (node.nodeType === 1 && (node.closest(SKIP) || (node.textContent || '').indexOf('₪') < 0)) return;
+    const w = (node.ownerDocument || document).createTreeWalker(node, NodeFilter.SHOW_TEXT);
+    const found = [];
+    for (let t = w.nextNode(); t; t = w.nextNode()) if (t.nodeValue.indexOf('₪') >= 0) found.push(t);
+    found.forEach(markText);
+  };
+  // everything added to the page or changed in it, before it is drawn
+  if (typeof MutationObserver !== 'undefined' && typeof document !== 'undefined') {
+    new MutationObserver((list) => {
+      for (const m of list) {
+        if (m.type === 'characterData') markText(m.target);
+        else for (const n of m.addedNodes) Dom.markMoney(n);
+      }
+    }).observe(document.documentElement, { childList: true, subtree: true, characterData: true });
+  }
+
+  root.Dom = Dom;
 })(typeof window !== 'undefined' ? window : globalThis);
 
 /* ---- app/pickers.js ---- */
@@ -9843,6 +10069,7 @@ window.APP_BUILD = '1.27.0-52eb4796';
     input.classList.add('pk-native');
     input.tabIndex = -1;
     input.after(btn);
+    if (root.Dom) { root.Dom.keep(input, ['data-pk', 'tabindex'], ['pk-native']); root.Dom.own(btn, input); }
     render();
   }
   /* <select>: a button with the choice that opens the list above (or, with data-ui="chips", the choices as chips
@@ -9890,6 +10117,7 @@ window.APP_BUILD = '1.27.0-52eb4796';
     sel.classList.add('pk-native');
     sel.tabIndex = -1;
     sel.after(btn);
+    if (root.Dom) { root.Dom.keep(sel, ['data-pk', 'tabindex'], ['pk-native']); root.Dom.own(btn, sel); }
     render();
   }
   // a few short choices, all in sight: chips that light up (an emoji from data-e on each option)
@@ -9919,6 +10147,7 @@ window.APP_BUILD = '1.27.0-52eb4796';
     sel.classList.add('pk-native');
     sel.tabIndex = -1;
     sel.after(wrap);
+    if (root.Dom) { root.Dom.keep(sel, ['data-pk', 'tabindex'], ['pk-native']); root.Dom.own(wrap, sel); }
     render();
   }
 
@@ -11666,7 +11895,9 @@ window.APP_BUILD = '1.27.0-52eb4796';
     if (label) {
       undoStack.push({ label, ops: [], settings: before });
     }
-    emit({ type: 'settings' });
+    // which settings changed (the screen may need only a new look, not a new calculation)
+    const keys = [...new Set(Object.keys(before).concat(Object.keys(S.settings)))].filter((k) => k !== '_updatedAt' && JSON.stringify(before[k]) !== JSON.stringify(S.settings[k]));
+    emit({ type: 'settings', keys });
   }
   async function setMeta(patch) {
     Object.assign(S.meta, patch);
@@ -12074,6 +12305,7 @@ window.APP_BUILD = '1.27.0-52eb4796';
     scanQueued = false;
     document.querySelectorAll('[data-anim]:not(.in):not(.watched)').forEach((el) => {
       el.classList.add('watched');
+      if (root.Dom) root.Dom.keep(el, [], ['watched', 'in']); // a patched screen keeps them (or its bars grew again)
       if (io) io.observe(el); else el.classList.add('in');
     });
   }
@@ -12155,18 +12387,22 @@ window.APP_BUILD = '1.27.0-52eb4796';
   App.applyTheme = function () {
     const st = S.settings;
     const de = document.documentElement;
-    if (st.theme === 'light' || st.theme === 'dark') de.dataset.theme = st.theme; else delete de.dataset.theme;
+    // only what differs is written: called after every change of settings, and writing the same colour or photo
+    // again made the browser work out the whole page's look again (the pay card blinked)
+    const data = (k, v) => { if (v) { if (de.dataset[k] !== v) de.dataset[k] = v; } else if (k in de.dataset) delete de.dataset[k]; };
+    const prop = (k, v) => { if (de.style.getPropertyValue(k) !== String(v)) de.style.setProperty(k, v); };
+    data('theme', st.theme === 'light' || st.theme === 'dark' ? st.theme : '');
     de.classList.toggle('hide-money', !!st.hideMoney); // privacy: amounts blurred
     const a = ACCENTS[st.accent] || ACCENTS.candy;
-    de.style.setProperty('--h', a[0]);
-    de.style.setProperty('--s', a[1] + '%');
-    de.style.setProperty('--fs', st.fontScale || 1);
+    prop('--h', a[0]);
+    prop('--s', a[1] + '%');
+    prop('--fs', st.fontScale || 1);
     // a Shaati Plus skin for the pay card on home (only while Plus is on)
     const skin = root.Plus ? root.Plus.skin() : '';
-    if (skin) de.dataset.skin = skin; else delete de.dataset.skin;
+    data('skin', skin);
     if (root.Plus && root.Plus.paintPhoto) root.Plus.paintPhoto(de, skin);
     const font = FONTS[st.font] ? st.font : 'rubik';
-    de.style.setProperty('--app-font', "'" + FONTS[font][0] + "'");
+    prop('--app-font', "'" + FONTS[font][0] + "'");
     const link = document.getElementById('font-link');
     if (link && link.dataset.font !== font) { link.href = App.fontCss(font); link.dataset.font = font; }
     const dark = st.theme === 'dark' || (st.theme !== 'light' && matchMedia('(prefers-color-scheme: dark)').matches);
@@ -12303,8 +12539,14 @@ window.APP_BUILD = '1.27.0-52eb4796';
       App.tickTimer();
       return;
     }
+    // the same screen drawn again (a save, the eye, a new minute, the opening show leaving): only what changed is
+    // touched (Dom.patch) — replacing it all made every card new, so what moved on them began again and a phone
+    // showed the new card's layer black for a frame. Another tab, or a first draw, is new anyway: it slides in.
+    const inner = v.firstElementChild;
+    const same = !fresh && drawn.tab === App.tab && inner && inner.id === 'view-inner' && root.Dom;
     drawn = { tab: App.tab, sig };
-    v.innerHTML = `<div class="view ${cls}" id="view-inner">${html}</div>`;
+    if (same) root.Dom.patch(inner, html);
+    else v.innerHTML = `<div class="view ${cls}" id="view-inner">${html}</div>`;
     try { if (App.views[App.tab + '_mount']) App.views[App.tab + '_mount'](v); } catch (e) { console.error('mount failed', App.tab, e); }
     App.renderNav();
     if (opts && opts.keepScroll) window.scrollTo(0, y);
@@ -12354,8 +12596,9 @@ window.APP_BUILD = '1.27.0-52eb4796';
     if (bad === t.classList.contains('unclean')) return;
     t.classList.toggle('unclean', bad);
     t.setAttribute('aria-invalid', String(bad));
+    if (root.Dom) root.Dom.keep(t, ['aria-invalid'], ['unclean']);
     let hint = t.nextElementSibling && t.nextElementSibling.classList.contains('unclean-hint') ? t.nextElementSibling : null;
-    if (bad && !hint) { hint = document.createElement('div'); hint.className = 'unclean-hint'; hint.setAttribute('role', 'status'); hint.textContent = "Давайте без грубостей 🙂"; t.after(hint); }
+    if (bad && !hint) { hint = document.createElement('div'); if (root.Dom) root.Dom.own(hint, t); hint.className = 'unclean-hint'; hint.setAttribute('role', 'status'); hint.textContent = "Давайте без грубостей 🙂"; t.after(hint); }
     if (!bad && hint) hint.remove();
   }, true);
   /* Looping decorations (the glow on the pay card, the dial, the shine on the start button) are
@@ -12399,6 +12642,7 @@ window.APP_BUILD = '1.27.0-52eb4796';
 
   /* ---------------- data change pipeline ---------------- */
   let insightTimer = null;
+  const LOOK_KEYS = new Set(['hideMoney', 'theme', 'accent', 'font', 'fontScale', 'skin', 'fx', 'home']);
   Store.on((ev) => {
     if (ev.type === 'storage-lost') {
       UI.toast("Сохранение на телефоне сейчас не работает. " + (root.Cloud && root.Cloud.user ? "Данные сохраняются в вашем аккаунте ☁️" : "Войдите в аккаунт, чтобы не потерять данные."));
@@ -12406,7 +12650,10 @@ window.APP_BUILD = '1.27.0-52eb4796';
       return;
     }
     if (ev.type === 'active') { App.rerender(); return; }
-    App.recompute();
+    // a change of look only (the eye, colours, font, effects, home options): no calculation again — it held the
+    // screen for a moment just as the blur or the colour began to change
+    const lookOnly = ev.type === 'settings' && ev.keys && ev.keys.length && ev.keys.every((k) => LOOK_KEYS.has(k));
+    if (!lookOnly) App.recompute();
     if (ev.type === 'settings') App.applyTheme();
     App.rerender();
     clearTimeout(insightTimer);
@@ -13845,7 +14092,12 @@ window.PAY_CONFIG = {
   /** The pay-card skin in use ('' = the regular card). */
   Plus.skin = () => (!Plus.active() ? '' : SKINS[S.settings.skin] ? S.settings.skin : S.settings.skin === PHOTO && photo() ? PHOTO : '');
   /** The card's own photo (html --sk-photo) while that skin is on. */
-  Plus.paintPhoto = (de, skin) => { if (skin === PHOTO) de.style.setProperty('--sk-photo', `url("${photo()}")`); else de.style.removeProperty('--sk-photo'); };
+  // written only when it changed: the same photo set again was decoded again, and the card showed black meanwhile
+  Plus.paintPhoto = (de, skin) => {
+    const v = skin === PHOTO ? `url("${photo()}")` : '';
+    if (de.style.getPropertyValue('--sk-photo') === v) return;
+    if (v) de.style.setProperty('--sk-photo', v); else de.style.removeProperty('--sk-photo');
+  };
 
   async function setOwned(on, src) {
     const cur = S.meta.plus || {};
@@ -16096,10 +16348,12 @@ ${name}`.trim();
   };
   App.actions['toggle-money'] = async (el, e) => {
     if (e) e.stopPropagation(); // the card under it opens the summary
-    await Store.setSettings((s) => { s.hideMoney = !s.hideMoney; });
-    App.applyTheme();
+    // the blur fades in (or out) at once on every amount; the eye and the saved setting follow (the screen is
+    // patched, not drawn anew: drawing it anew made the card black for a frame on a phone)
+    const on = !S.settings.hideMoney;
+    document.documentElement.classList.toggle('hide-money', on);
     if (root.Fx) root.Fx.play('on');
-    App.rerender();
+    await Store.setSettings((s) => { s.hideMoney = on; });
   };
   App.actions['mark-done-all'] = async () => {
     const now = Date.now();
@@ -16470,37 +16724,37 @@ ${name}`.trim();
       const rest = d.ov.rest, ot = d.ov.ot, night = d.ov.night, trv = d.ov.travel, rate = d.ov.rate, spc = d.ov.special;
       const overnight = d.startT && d.endT && d.endT <= d.startT;
       return `
-        <div class="seg" style="margin-bottom:14px"><button data-status="done" class="${d.status === 'done' ? 'on' : ''}">Выполнена</button><button data-status="planned" class="${d.status === 'planned' ? 'on' : ''}">Запланирована</button></div>
+        <div class="seg" style="margin-bottom:14px"><button data-status="done" class="${d.status === 'done' ? 'on' : ''}">בוצעה</button><button data-status="planned" class="${d.status === 'planned' ? 'on' : ''}">מתוכננת</button></div>
         ${App.multiEmp() ? `<label class="field"><span class="lbl">Работодатель</span>${sel('employerId', S.employers.map((e) => [e.id, esc(e.name)]), d.employerId)}</label>` : ''}
-        <label class="field"><span class="lbl">Дата</span>${inp('date', d.date, `type="date" min="2000-01-01" max="${U.addDays(U.todayKey(), 366)}"`)}</label>
+        <label class="field"><span class="lbl">תאריך</span>${inp('date', d.date, `type="date" min="2000-01-01" max="${U.addDays(U.todayKey(), 366)}"`)}</label>
         <div class="grid2">
-          <label class="field"><span class="lbl">Начало</span>${inp('startT', d.startT, 'type="time"')}</label>
-          <label class="field"><span class="lbl">Конец ${overnight ? "<span class=\"tag planned\">на след. день</span>" : ''}</span>${inp('endT', d.endT, 'type="time"')}</label>
+          <label class="field"><span class="lbl">התחלה</span>${inp('startT', d.startT, 'type="time"')}</label>
+          <label class="field"><span class="lbl">סיום ${overnight ? "<span class=\"tag planned\">на след. день</span>" : ''}</span>${inp('endT', d.endT, 'type="time"')}</label>
         </div>
         ${durChips()}
-        <div class="field"><span class="lbl">Должность</span><div class="chips">${roleChips(d.roleId, 'data-role')}</div></div>
-        <details class="collapse" ${d.splits.length ? 'open' : ''}><summary>${icon('swap', 's')} Разделение между должностями ${d.splits.length ? `<span class="tag">${d.splits.length}</span>` : ''}</summary><div class="in">
-          <div class="tiny muted" style="margin-bottom:8px">Например: вы начали распорядителем, а с 19:00 стали старшим смены.</div>
+        <div class="field"><span class="lbl">תפקיד</span><div class="chips">${roleChips(d.roleId, 'data-role')}</div></div>
+        <details class="collapse" ${d.splits.length ? 'open' : ''}><summary>${icon('swap', 's')} פיצול בין תפקידים ${d.splits.length ? `<span class="tag">${d.splits.length}</span>` : ''}</summary><div class="in">
+          <div class="tiny muted" style="margin-bottom:8px">לדוגמה: התחלת כסדרן, ומ-19:00 עברת לאחמ״ש.</div>
           ${d.splits.map((s, i) => `<div class="seg-line" style="margin-bottom:8px"><label class="field" style="margin:0"><span class="lbl">С</span>${inp('splits.' + i + '.t', s.t, 'type="time"')}</label>
             <label class="field" style="margin:0"><span class="lbl">Должность</span>${sel('splits.' + i + '.roleId', App.roles(d.employerId).map((r) => [r.id, esc(r.name)]), s.roleId)}</label>
             <button class="icon-btn" data-rm-split="${i}" aria-label="Удалить">${icon('x')}</button></div>`).join('')}
-          <button class="btn text sm" data-add-split>${icon('plus', 's')} Добавить смену должности</button></div></details>
+          <button class="btn text sm" data-add-split>${icon('plus', 's')} הוסף מעבר תפקיד</button></div></details>
         <div class="grid2">
-          <label class="field"><span class="lbl">Перерыв (минуты)</span>${numIn('breakMin', d.breakMin == null ? '' : d.breakMin, "Автоматически")}</label>
-          <label class="switch-row" style="padding-top:26px"><span class="body"><span class="t small">Оплачиваемый</span></span><input type="checkbox" class="switch" data-f="breakPaid" ${d.breakPaid ? 'checked' : ''}></label>
+          <label class="field"><span class="lbl">הפסקה (דקות)</span>${numIn('breakMin', d.breakMin == null ? '' : d.breakMin, "Автоматически")}</label>
+          <label class="switch-row" style="padding-top:26px"><span class="body"><span class="t small">בתשלום</span></span><input type="checkbox" class="switch" data-f="breakPaid" ${d.breakPaid ? 'checked' : ''}></label>
         </div>
         <div class="brk-note" data-brk aria-live="polite"></div>
-        <label class="switch-row"><span class="body"><span class="t">Без проезда</span><span class="s">За эту смену не начисляется проезд (${U.money(emp.travelPerDay)} в день)</span></span><input type="checkbox" class="switch" data-f="noTravel" ${d.noTravel ? 'checked' : ''}></label>
-        <details class="collapse" ${d.items.length ? 'open' : ''}><summary>${icon('gift', 's')} Надбавки и вычеты ${d.items.length ? `<span class="tag">${d.items.length}</span>` : ''}</summary><div class="in">
+        <label class="switch-row"><span class="body"><span class="t">בלי נסיעות</span><span class="s">המשמרת לא תזכה בנסיעות (${U.money(emp.travelPerDay)} ליום)</span></span><input type="checkbox" class="switch" data-f="noTravel" ${d.noTravel ? 'checked' : ''}></label>
+        <details class="collapse" ${d.items.length ? 'open' : ''}><summary>${icon('gift', 's')} תוספות וניכויים ${d.items.length ? `<span class="tag">${d.items.length}</span>` : ''}</summary><div class="in">
           ${d.items.map((it, i) => `<div style="display:grid;grid-template-columns:1.1fr 1fr 40px;gap:8px;align-items:end;margin-bottom:8px">
             ${sel('items.' + i + '.type', [['bonus', "Бонус"], ['tips', "Чаевые"], ['addition', "Надбавка"], ['deduction', "Вычет"]], it.type)}
             ${numIn('items.' + i + '.amount', it.amount, '₪')}
             <button class="icon-btn" data-rm-item="${i}" aria-label="Удалить">${icon('x')}</button>
             <div style="grid-column:1/3">${inp('items.' + i + '.label', it.label || '', "placeholder=\"Описание (необязательно)\"")}</div></div>`).join('')}
-          <button class="btn text sm" data-add-item>${icon('plus', 's')} Добавить строку</button></div></details>
-        <label class="field"><span class="lbl">Заметка</span><textarea class="input" data-f="note" rows="2" maxlength="500" placeholder="Необязательно">${esc(d.note)}</textarea></label>
-        <details class="collapse" ${ovCount() ? 'open' : ''}><summary>${icon('hand', 's')} Ручные изменения ${ovCount() ? `<span class="tag override">${ovCount()}</span>` : ''}</summary><div class="in">
-          <div class="tiny muted" style="margin-bottom:10px">Каждая часть рассчитывается автоматически. Включайте «Вручную», только если работодатель считает иначе.</div>
+          <button class="btn text sm" data-add-item>${icon('plus', 's')} הוסף שורה</button></div></details>
+        <label class="field"><span class="lbl">הערה</span><textarea class="input" data-f="note" rows="2" maxlength="500" placeholder="לא חובה">${esc(d.note)}</textarea></label>
+        <details class="collapse" ${ovCount() ? 'open' : ''}><summary>${icon('hand', 's')} עקיפות ידניות ${ovCount() ? `<span class="tag override">${ovCount()}</span>` : ''}</summary><div class="in">
+          <div class="tiny muted" style="margin-bottom:10px">כל רכיב מחושב אוטומטית. הפעל "ידני" רק אם המעסיק מחשב אחרת.</div>
           ${ovBlock('rest', "Ставка шаббата/праздника", "Отменить, включить вручную, диапазон часов, процент или сумма", `
             <div class="field"><span class="lbl">Охват</span>${sel('ov.rest.scope', [['off', "Отменить шаббат/праздник в смене"], ['all', "Применить ко всей смене"], ['range', "Только в диапазоне часов"], ['auto', "Автоопределение, другой процент/сумма"]], rest.scope)}</div>
             ${rest.scope === 'range' ? `<div class="grid2"><label class="field"><span class="lbl">Шаббат/праздник с</span>${inp('ov.rest.fromT', rest.fromT, 'type="time"')}</label><label class="field"><span class="lbl">До</span>${inp('ov.rest.toT', rest.toT, 'type="time"')}</label></div>` : ''}
@@ -16522,17 +16776,21 @@ ${name}`.trim();
           ${ovCount() ? `<label class="field"><span class="lbl">Причина (необязательно)</span>${inp('reason', d.reason, "placeholder=\"например: не считается шаббатом\"")}</label>
           <button class="btn outlined block" data-reset-ov>${icon('refresh', 's')} Вернуть автоматический расчёт</button>` : ''}
         </div></details>
-        <div class="section-title">${icon('wallet', 's')} Расчёт</div>
-        <div class="card" id="ed-preview"></div>`;
+        <div class="section-title">${icon('wallet', 's')} חישוב</div>
+        <div class="card" id="ed-preview">${previewHtml(previewResult())}</div>`;
     }
+    // the calculation under the form: drawn with the form, then patched as the hours change (only what changed moves)
+    const previewResult = () => { try { return d.date && d.startT && d.endT ? App.previewShift(shiftFrom(d)) : null; } catch (e) { console.warn('preview', e); return null; } };
     function preview() {
       const el = sheetEl && sheetEl.querySelector('#ed-preview');
       if (!el) return;
-      const sh = shiftFrom(d);
-      if (!d.date || !d.startT || !d.endT) { el.innerHTML = "<div class=\"muted small\">Укажите дату и часы</div>"; return; }
-      const r = App.previewShift(sh);
-      breakNote(r);
-      el.innerHTML = App.timelineHtml(r) + `<div class="row-flex" style="margin:10px 0"><div class="hero-num" style="font-size:1.8rem">${money(r.total)}</div><span class="spacer"></span><div class="small muted"><span class="num">${U.hm(r.paidMin)}</span> ч</div></div>` + App.breakdownHtml(r, sh);
+      const r = previewResult();
+      if (r) breakNote(r);
+      root.Dom.patch(el, previewHtml(r));
+    }
+    function previewHtml(r) {
+      if (!r) return "<div class=\"muted small\">Укажите дату и часы</div>";
+      return App.timelineHtml(r) + `<div class="row-flex" style="margin:10px 0"><div class="hero-num" style="font-size:1.8rem">${money(r.total)}</div><span class="spacer"></span><div class="small muted"><span class="num">${U.hm(r.paidMin)}</span> ч</div></div>` + App.breakdownHtml(r, sh);
     }
     /** Under the break field: the law's break when it is left empty, or a warning when the one typed is short. */
     function breakNote(r) {
@@ -16546,7 +16804,7 @@ ${name}`.trim();
     function redraw() {
       const b = sheetEl.querySelector('.sh-body');
       const y = b.scrollTop;
-      b.innerHTML = body();
+      root.Dom.patch(b, body());
       b.scrollTop = y;
       preview();
     }
@@ -17268,7 +17526,7 @@ ${name}`.trim();
   App.views.reports_mount = function (v) {
     const sw = v.querySelector('#rep-swipe');
     if (sw && st.type !== 'custom') UI.onSwipe(sw, (dir) => App.actions['rep-nav']({ dataset: { dir: dir === 'right' ? '1' : '-1' } }));
-    const on = (id, fn) => { const el = v.querySelector(id); if (el) el.addEventListener('change', fn); };
+    const on = (id, fn) => { const el = v.querySelector(id); if (el) UI.on(el, 'change', fn); };
     on('#rep-from', (e) => { st.from = e.target.value; App.rerender(); });
     on('#rep-to', (e) => { st.to = e.target.value; App.rerender(); });
     on('#flt-from', (e) => { st.f.from = e.target.value; App.rerender(); });
@@ -17276,7 +17534,7 @@ ${name}`.trim();
     const q = v.querySelector('#flt-q');
     if (q) {
       let t = null;
-      q.addEventListener('input', () => { clearTimeout(t); t = setTimeout(() => { st.f.q = q.value; App.rerender(); const nq = document.querySelector('#flt-q'); if (nq) { nq.focus(); nq.setSelectionRange(nq.value.length, nq.value.length); } }, 300); });
+      UI.on(q, 'input', () => { clearTimeout(t); t = setTimeout(() => { st.f.q = q.value; App.rerender(); const nq = document.querySelector('#flt-q'); if (nq) { nq.focus(); nq.setSelectionRange(nq.value.length, nq.value.length); } }, 300); });
     }
     if (App.payslipsTabMount) App.payslipsTabMount(v);
   };
@@ -17594,7 +17852,7 @@ ${name}`.trim();
     function redraw(openKey) {
       const b = sheetEl.querySelector('.sh-body');
       const y = b.scrollTop;
-      b.innerHTML = body();
+      root.Dom.patch(b, body());
       b.scrollTop = y;
       if (openKey) openRow(openKey, true);
     }
@@ -17944,7 +18202,7 @@ ${name}`.trim();
           : UI.emptyState('bell', "Уведомлений нет", "Здесь появятся недельная и месячная сводки, рекорды и цели, и только важные напоминания.")}
         <div class="tiny muted" style="margin:10px 4px">Push-уведомления: ${('Notification' in window) ? (Notification.permission === 'granted' ? "включены" : Notification.permission === 'denied' ? "заблокированы в браузере" : "ещё не разрешены") : "не поддерживаются"} · не больше одного предупреждения в день; важные напоминания отдельно.</div>`;
     };
-    const redraw = () => { sheetEl.querySelector('.sh-body').innerHTML = body(); };
+    const redraw = () => { root.Dom.patch(sheetEl.querySelector('.sh-body'), body()); };
     UI.openSheet({
       title: "Уведомления и подсказки", full: true, body: body(),
       onMount: (el) => {
@@ -18752,7 +19010,7 @@ ${name}`.trim();
     let empId = S.employers[0].id;
     let sheetEl = null;
     const empPicker = () => (opts.perEmployer && App.multiEmp() ? `<div class="chips">${S.employers.map((e) => `<button class="chip ${e.id === empId ? 'on' : ''}" data-emp="${e.id}">${icon('briefcase', 's')} ${esc(e.name)}</button>`).join('')}</div>` : '');
-    const draw = () => { const b = sheetEl.querySelector('.sh-body'); const y = b.scrollTop; b.innerHTML = empPicker() + render(App.employer(empId)); b.scrollTop = y; if (opts.mount) opts.mount(sheetEl, draw); };
+    const draw = () => { const b = sheetEl.querySelector('.sh-body'); const y = b.scrollTop; root.Dom.patch(b, empPicker() + render(App.employer(empId))); b.scrollTop = y; if (opts.mount) opts.mount(sheetEl, draw); };
     UI.openSheet({
       title, full: true, body: empPicker() + render(App.employer(empId)),
       onMount: (el) => {
@@ -18906,11 +19164,11 @@ ${name}`.trim();
       clear.hidden = !q.value;
       home.hidden = !!r;
       res.hidden = !r;
-      res.innerHTML = r ? resultsHtml(r) : '';
+      root.Dom.patch(res, r ? resultsHtml(r) : '');
     };
-    q.addEventListener('input', run);
-    clear.addEventListener('click', () => { q.value = ''; run(); q.focus(); });
-    v.querySelectorAll('[data-set-chip]').forEach((b) => b.addEventListener('click', () => {
+    UI.on(q, 'input', run);
+    UI.on(clear, 'click', () => { q.value = ''; run(); q.focus(); });
+    v.querySelectorAll('[data-set-chip]').forEach((b) => UI.on(b, 'click', () => {
       q.value = PROBLEMS[+b.dataset.setChip][0];
       run();
       if (root.Fx) root.Fx.play('pick');
@@ -18945,7 +19203,7 @@ ${name}`.trim();
     UI.openSheet({
       title: c.title, cls: 'set-cat-sheet',
       body: `<div class="set-cat-head">${UI.tile(c.icon, c.tint)}<div class="small muted">${esc(c.sub())}</div></div><div class="list set-list" id="set-cat-list">${list()}</div>`,
-      onMount: (sh) => { off = Store.on(() => { const l = sh.querySelector('#set-cat-list'); if (l) l.innerHTML = list(); }); },
+      onMount: (sh) => { off = Store.on(() => { const l = sh.querySelector('#set-cat-list'); if (l) root.Dom.patch(l, list()); }); },
       onClose: () => { if (off) off(); },
     });
   };
@@ -19065,7 +19323,7 @@ ${name}`.trim();
       const em = el.querySelector('#re-emp'); if (em) d.employerId = em.value;
     };
     // the list may just have changed (a rate removed), so the screen is redrawn from d without reading it again
-    const redraw = () => { el.querySelector('.sh-body').innerHTML = body(); };
+    const redraw = () => { root.Dom.patch(el.querySelector('.sh-body'), body()); };
     UI.openSheet({
       title: orig ? "Изменение должности" : "Новая должность", body: body(),
       foot: `${orig ? `<button class="btn danger" data-del style="flex:0 0 auto">${icon('trash')}</button>` : ''}<button class="btn" data-save>${icon('check')} Сохранить</button>`,
@@ -19539,7 +19797,8 @@ ${name}`.trim();
   };
 
   RENDER.about = {
-    render: () => `<div class="card"><div class="kv"><span>Версия приложения</span><b>${root.APP_VERSION}</b></div><div class="kv"><span>Формат данных</span><b>${Store.SCHEMA_VERSION}</b></div>
+    render: () => `<div class="list cl-open"><button class="item" data-act="changelog"><span class="lead">${icon('sparkle')}</span><span class="body"><span class="t">Все обновления</span><span class="s">Что менялось в каждой версии, с первой до ${root.APP_VERSION}</span></span>${icon('left', 's')}</button></div>
+      <div class="card"><div class="kv"><span>Версия приложения</span><b>${root.APP_VERSION}</b></div><div class="kv"><span>Формат данных</span><b>${Store.SCHEMA_VERSION}</b></div>
         <div class="kv"><span>Смены</span><b>${S.shifts.length}</b></div><div class="kv"><span>Расчётные листы</span><b>${S.payslips.length}</b></div><div class="kv"><span>Занято места</span><b id="ab-storage">…</b></div><div class="kv"><span>Постоянное хранилище</span><b id="ab-persist">…</b></div></div>
       <div class="section-title">Установка как приложения</div>
       ${App.androidApp || navigator.standalone || (root.matchMedia && root.matchMedia('(display-mode: standalone)').matches)
@@ -20192,7 +20451,7 @@ ${name}`.trim();
       return S.settings.ai.apiKey ? `<textarea class="input chat-input" id="as-input" rows="1" placeholder="Напишите вопрос…"></textarea><button class="icon-btn chat-send" data-send aria-label="Отправить">${icon('send')}</button>` : '';
     }
     function redraw() {
-      sheetEl.querySelector('.sh-body').innerHTML = body();
+      root.Dom.patch(sheetEl.querySelector('.sh-body'), body()); // the earlier messages stay as they are
       const f = sheetEl.querySelector('.sh-foot');
       if (f) f.innerHTML = foot();
       scrollDown();
@@ -20639,17 +20898,14 @@ ${name}`.trim();
 
   /* ---------------- what's new (once per big update, for people who already used the app) ---------------- */
   const WHATS_NEW = {
-    id: '1.27.0',
+    id: '1.28.0',
     items: [
-      ['clock', 'violet', "Сверхурочные точно по закону", "В день: свыше 8,6 часа при пятидневке (8 при шестидневке), свыше 7 в ночную смену; в неделю: свыше 42 обычных часов. До 18 лет по закону о труде молодёжи: свыше 40 в неделю и свыше 7 в пятницу. Уже записанные смены тоже пересчитаны."],
+      ['eye', 'violet', "Надёжный режим конфиденциальности", "Нажатие на глаз в карточке зарплаты размывает все суммы на всех экранах, с мягкой анимацией. Их не прочитать, пока не нажмёте снова."],
+      ['sparkle', 'mint', "Плавно и стабильно", "Карточка зарплаты и экраны обновляются без мерцания: при нажатии кнопок, возвращении в приложение и любом изменении."],
+      ['clock', 'violet', "Сверхурочные по закону — по желанию", "Можно включить в Настройках › Правила расчёта: в день свыше 8,6 часа при пятидневке (8 при шестидневке), свыше 7 в ночную смену, в неделю свыше 42 обычных часов; до 18 лет по закону о труде молодёжи. Без этого, как раньше: свыше 8 часов в день."],
+      ['layers', 'sky', "Все обновления", "В Настройках › ИИ-помощник и о приложении › О приложении: что менялось в каждой версии, с первой до сегодняшней."],
       ['users', 'pink', "Соревнование с друзьями", "Пригласите друга по ссылке и узнайте, кто зарабатывает больше в час, за месяц и за год. Суммы можно скрыть, а друзей — удалить. В Играх › Соревнование с друзьями."],
-      ['smile', 'amber', "Ваше имя, а не ник", "В таблице чемпионов и в соревновании показывается ваше имя (его можно изменить), на любом языке."],
       ['home', 'violet', "Главный экран как вам удобно", "В Настройках › Вид › Главный экран: скройте ярлыки, строку новостей или еврейскую дату и выберите, сколько последних смен показывать."],
-      ['wallet', 'mint', "Нетто крупно", "Можно выбрать, чтобы большим числом на карточке зарплаты было ориентировочное нетто. Тогда и прогноз на конец месяца — в нетто."],
-      ['addSq', 'sky', "iPhone? Shaati на экране «Домой»", "Инструкция в 3 шага: так данные сохраняются, а напоминания приходят и на iPhone. В Настройках › О приложении и установка."],
-      ['refresh', 'mint', "С сайта сразу в новую версию", "Вход с сайта или по ссылке в браузере всегда открывает последнюю версию, а не старую копию с прошлого визита."],
-      ['bell', 'sky', "Напоминания о сменах — полностью под вашим контролем", "Сколько угодно напоминаний и за сколько угодно времени, также накануне вечером, и вопрос после смены, отработали ли вы её. В Настройки › Уведомления и подсказки."],
-      ['chart', 'mint', "Средняя месячная зарплата", "В отчётах: среднее за последние 3, 6 или 12 месяцев, за этот год или за всё время, с самым высоким и самым низким месяцем."],
     ],
   };
 
@@ -20667,9 +20923,82 @@ ${name}`.trim();
         title: "Что нового? ✨",
         body: `<div class="whats-new">${App.mascotSays('party', "Мы обновили приложение для вас! 🎉", { size: 72 })}
           ${WHATS_NEW.items.map(([ic, tint, t, s], i) => `<div class="wn" style="--d:${i}">${UI.tile(ic, tint)}<div><b>${esc(t)}</b><div class="small muted">${esc(s)}</div></div></div>`).join('')}</div>`,
-        foot: "<button class=\"btn\" data-wn-ok>Понятно, спасибо</button>",
+        foot: "<button class=\"btn tonal\" data-act=\"changelog\" style=\"flex:0 0 auto\">Все обновления</button><button class=\"btn\" data-wn-ok>Понятно, спасибо</button>",
         onMount: (el) => { el.querySelector('[data-wn-ok]').onclick = () => UI.closeTop(); if (Fx()) Fx().celebrate('big'); },
       });
+    });
+  };
+
+  /* ---------------- every update (settings › about › all the updates) ---------------- */
+  // newest first: [version, the day it went out, what changed — said to the user, not to a developer]
+  const CHANGELOG = [
+    ['1.28.0', '2026-10-29', "Надёжный режим конфиденциальности: все суммы размываются на всех экранах, с анимацией. Карточка зарплаты без мерцания. Сверхурочные по закону — опция в настройках. И список всех обновлений."],
+    ['1.27.0', '2026-10-29', "Сверхурочные по закону: по рабочей неделе, ночным сменам и 42 часам в неделю, и для подростков."],
+    ['1.26.0', '2026-10-28', "Соревнование с друзьями и ваше имя вместо прозвища."],
+    ['1.25.0', '2026-10-28', "Главный экран так, как удобно вам, и чистая сумма как крупное число в карточке зарплаты."],
+    ['1.24.0', '2026-10-28', "Инструкция по установке на iPhone, целые тексты на всех языках, а сайт всегда открывает последнюю версию."],
+    ['1.23.0', '2026-10-28', "Французский и испанский, напоминания о сменах под полным контролем, средняя месячная зарплата и законные данные этого года."],
+    ['1.22.2', '2026-10-28', "Подтверждение прошедших смен, отчёт о часах в PDF и прогноз с учётом запланированных смен."],
+    ['1.22.1', '2026-10-23', "Длинные переводы переносятся между словами, а не обрезаются."],
+    ['1.22.0', '2026-10-23', "Shaati на английском, русском и арабском."],
+    ['1.21.1', '2026-10-23', "Отчёт о часах с фото читается как таблица, а карточка зарплаты больше не мерцает в конце заставки."],
+    ['1.21.0', '2026-10-22', "График работы с фото или из WhatsApp, оплата праздников, отчёт и письмо работодателю, и «Забыли закончить?»."],
+    ['1.20.3', '2026-10-22', "Заставка остаётся, пока приложение не готово, а обновления устанавливаются только в фоне."],
+    ['1.20.2', '2026-10-22', "Плавный переход от заставки к главному экрану."],
+    ['1.20.1', '2026-10-21', "Оформление карточки зарплаты своей фотографией."],
+    ['1.20.0', '2026-10-21', "Новая заставка, виджеты для рабочего стола, упорядоченные настройки и особые ставки."],
+    ['1.19.0', '2026-10-17', "Выбор места из всех населённых пунктов Израиля и «Моё местоположение»."],
+    ['1.18.0', '2026-10-17', "Маленькие моменты в начале смены, перерывы по закону, меньше уведомлений и обновление потягиванием, которое не застревает."],
+    ['1.17.0', '2026-10-16', "Игры ожили: цвет, искры, звуки и звёзды."],
+    ['1.16.2', '2026-10-16', "Кольцо касания вернулось на каждую кнопку, а слова не разрываются посередине."],
+    ['1.16.1', '2026-10-16', "Обратный отсчёт до дня зарплаты на главном экране."],
+    ['1.16.0', '2026-10-16', "Каждая кнопка отвечает на нажатие, «нажмите «назад» ещё раз, чтобы выйти», серии в играх и возможность поделиться своим местом."],
+    ['1.15.1', '2026-10-15', "Более плавное обновление потягиванием и переключатель проезда над списками смен."],
+    ['1.15.0', '2026-10-15', "Музыка в играх и обновление потягиванием в стиле Shaati."],
+    ['1.14.2', '2026-10-15', "Предложение Shaati Plus на главном экране возвращается только через день после закрытия."],
+    ['1.14.1', '2026-10-15', "Таблица чемпионов переключается без мерцания."],
+    ['1.14.0', '2026-10-15', "Таблица чемпионов, расширенный анализ и бесплатный пробный период."],
+    ['1.12.0', '2026-10-15', "Shaati Plus: необязательная покупка через Google Play."],
+    ['1.11.5', '2026-10-15', "Без мерцания при переходе между экранами."],
+    ['1.11.4', '2026-10-15', "Поле игры «Пары» подходит и для широкого низкого экрана."],
+    ['1.11.3', '2026-10-15', "В ночь перевода часов редактор смены точно показывает, что оплачивается."],
+    ['1.11.2', '2026-10-15', "Ярлыки на главном экране подходят для маленьких телефонов и крупного текста."],
+    ['1.11.1', '2026-10-15', "Длинная история открывается быстро, а метки смен всегда видны."],
+    ['1.11.0', '2026-10-15', "Две новые игры и новые медали."],
+    ['1.10.7', '2026-10-15', "Нижняя панель больше не прыгает при переходе между экранами."],
+    ['1.10.6', '2026-10-14', "Обновление потягиванием без мерцания."],
+    ['1.10.5', '2026-10-14', "Переходы между экранами и колесо часов без рывков."],
+    ['1.10.4', '2026-10-14', "Кнопка «назад» больше не закрывает приложение по ошибке."],
+    ['1.10.3', '2026-10-14', "Выбор даты и времени открывается без мерцания, а обновления приходят, даже если приложение остаётся открытым."],
+    ['1.10.2', '2026-10-14', "Без мерцания в списках выбора, окнах и на главном экране."],
+    ['1.10.1', '2026-10-14', "Поиск в настройках, более надёжные числа и тихие резервные копии."],
+    ['1.10.0', '2026-10-14', "Накопления на то, что хочется купить."],
+    ['1.9.2', '2026-10-14', "Повреждённые данные не ломают приложение."],
+    ['1.9.1', '2026-10-14', "Доступность на всех экранах, в светлом и тёмном режиме."],
+    ['1.9.0', '2026-10-14', "Итоги месяца в формате сторис и коллекция медалей."],
+    ['1.8.1', '2026-10-14', "Исправления кнопки «назад», обновления потягиванием и безопасности."],
+    ['1.8.0', '2026-10-14', "Игры, обновлённая проверка расчётного листа и живые графики."],
+    ['1.7.2', '2026-10-13', "Живые и мягкие анимации во всём приложении."],
+    ['1.7.1', '2026-10-13', "Шлифовка дизайна."],
+    ['1.7.0', '2026-10-13', "Надёжный первый вход, новый дизайн, обращение в поддержку и новые списки выбора."],
+    ['1.6.0', '2026-10-13', "Вопросы для знакомства до входа и мгновенный поиск прав."],
+    ['1.5.0', '2026-10-13', "Более быстрые и стабильные окна."],
+    ['1.4.1', '2026-10-13', "Спокойный главный экран и стабильные переходы между экранами."],
+    ['1.4.0', '2026-10-12', "Анимация при открытии, обновление потягиванием и маленькие сюрпризы."],
+    ['1.3.1', '2026-10-12', "Обновления устанавливаются тихо."],
+    ['1.3.0', '2026-10-12', "Shaati: новое имя и логотип, эффекты при касании."],
+    ['1.2.0', '2026-10-12', "Удаление аккаунта, юридические документы в открытом доступе и более понятные сравнения."],
+    ['1.1.1', '2026-10-12', "Шрифт Rubik и выбор шрифта в настройках."],
+    ['1.1.0', '2026-10-12', "Вход через Google и облачное резервное копирование, умный помощник и дата рождения."],
+    ['1.0.0', '2026-10-11', "Первая версия: учёт смен и зарплаты."],
+  ];
+  App.CHANGELOG = CHANGELOG;
+  App.actions.changelog = () => {
+    const mine = root.APP_VERSION;
+    UI.openSheet({
+      title: "Все обновления",
+      cls: 'changelog-sheet',
+      body: `<ol class="cl-list">${CHANGELOG.map(([v, d, t]) => `<li class="cl-row${v === mine ? ' cl-now' : ''}"><div class="cl-v"><b dir="ltr">${v}</b><span>${U.fmtDate(d)}</span></div><div class="cl-t">${v === mine ? "<span class=\"tag good\">Ваша версия</span> " : ''}${esc(t)}</div></li>`).join('')}</ol>`,
     });
   };
 
@@ -22354,7 +22683,7 @@ ${name}`.trim();
       onMount: (el) => {
         const input = el.querySelector('#lb-n');
         const err = el.querySelector('#lb-err');
-        const redraw = () => { el.querySelector('.lb-preview').innerHTML = preview(); };
+        const redraw = () => { root.Dom.patch(el.querySelector('.lb-preview'), preview()); };
         input.addEventListener('input', () => { n = input.value; err.textContent = ''; redraw(); });
         el.addEventListener('click', async (ev) => {
           const b = ev.target.closest('button');
@@ -22679,7 +23008,7 @@ ${name}`.trim();
       const list = el.querySelector('[data-fr-list]');
       if (!rows) { list.innerHTML = '<li class="fr-loading">' + UI.skeleton(3) + '</li>'; return; }
       const t = FR.table(rows, period, today());
-      list.innerHTML = t.map(row).join('') + (rows.length < 2 ? `<li class="fr-empty"><span aria-hidden="true">🤝</span><b>Здесь пока нет друзей</b><span>Пригласите друга по ссылке и узнайте, кто зарабатывает больше в час, за месяц и за год.</span></li>` : '');
+      root.Dom.patch(list, t.map(row).join('') + (rows.length < 2 ? `<li class="fr-empty"><span aria-hidden="true">🤝</span><b>Здесь пока нет друзей</b><span>Пригласите друга по ссылке и узнайте, кто зарабатывает больше в час, за месяц и за год.</span></li>` : ''));
     }
     async function load(el, fresh) {
       const my = ++seq;
