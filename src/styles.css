@@ -248,7 +248,7 @@ svg.i.l { width: 32px; height: 32px; }
 .item .lead { width: 40px; height: 40px; border-radius: 12px; display: grid; place-items: center; flex: none; font-weight: 700; }
 .item .body { flex: 1; min-width: 0; }
 .item .t, .item .s, .switch-row .t, .switch-row .s { display: block; }
-.item .t { font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.item .t { font-weight: 600; white-space: normal; overflow-wrap: normal; } /* a long title goes on two lines (between words), never cut */
 /* a row's second line wraps between words, in every language (it was cut with "…" — qa/trunc-audit.js) */
 .item .s { font-size: .82rem; color: var(--on-surface-var); white-space: normal; overflow-wrap: normal; }
 .item .trail { text-align: end; flex: none; }
