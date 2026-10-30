@@ -865,6 +865,7 @@
     if (action === 'share-in' && App.receiveShare) App.receiveShare(); // shared to the app (sw.js)
     if (action === 'support' && App.actions.support) setTimeout(() => App.actions.support(), 300); // Play testers' feedback link
     if (action === 'plus' && root.Plus) setTimeout(() => root.Plus.sheet(), 600); // back from the web checkout (?action=plus): straight to the code field
+    if (action === 'tax-refund' && App.actions['tax-refund']) setTimeout(() => App.actions['tax-refund']({ dataset: {} }), 600); // the website's tax refund page
     setTimeout(() => { App.runInsights(); App.autoBackupCheck(); }, 1200);
     // is Shaati Plus for sale here, and owned? (Google Play, Android app only) The opening show does not wait for
     // the answer: the design in use is kept on the phone (meta.plus), so the first screen already has it, and the

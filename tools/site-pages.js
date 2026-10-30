@@ -6,8 +6,8 @@ process.env.TZ = 'Asia/Jerusalem';
 const fs = require('fs');
 const path = require('path');
 const ROOT = path.join(__dirname, '..');
-for (const f of ['util.js', 'hebcal.js', 'defaults.js', 'engine.js']) require(path.join(ROOT, 'src', 'core', f));
-const { U, Engine } = globalThis;
+for (const f of ['util.js', 'hebcal.js', 'defaults.js', 'engine.js', 'taxrefund.js']) require(path.join(ROOT, 'src', 'core', f));
+const { U, Engine, TaxRefund: TR } = globalThis;
 
 const SITE = 'https://shaati.web.app';
 const APP = 'https://leelor123.github.io/shifts/';
@@ -49,6 +49,22 @@ const OTL = { five: dayH(5, '2026-11-02'), six: dayH(6, '2026-11-02'), sixFri: d
 const SICK = { perMonth: +((globalThis.Defaults.defaultSettings().leave || {}).sickPerMonth || 1.5), max: 90 };
 const TRAVEL_CAP = 22.6;
 const Y16 = Engine.youthRules(16, 5), Y15 = Engine.youthRules(15, 5);
+// the tax refund (core/taxrefund.js, as in the app's refund sheet): three common cases in the last whole tax year, a
+// man with no children, the tax taken each month as the payroll takes it (the year's own brackets and points)
+const TAX_Y = +today.slice(0, 4) - 1;
+const POINT = Engine.taxLaw({}, today).point;
+const taxMonths = (list) => list.map(([m, gross]) => {
+  const s = Object.assign(globalThis.Defaults.defaultSettings(), { birthDate: '1990-01-01' });
+  const mk = `${TAX_Y}-${String(m).padStart(2, '0')}`;
+  return { mk, gross, tax: Engine.netEstimate({ gross, pensionBase: 0, periodTo: mk + '-28', pensionActive: false }, s).incomeTax, pension: 0, src: 'slip' };
+});
+const taxT = globalThis.Defaults.defaultSettings().tax;
+const year12 = (gross) => Array.from({ length: 12 }, (_, i) => [i + 1, gross]);
+const TAXEX = [
+  ['סטודנט שעבד 4 חודשים בקיץ, 9,000 ₪ ברוטו בחודש', TR.estimate(TAX_Y, taxMonths([[6, 9000], [7, 9000], [8, 9000], [9, 9000]]), { gender: 'm', birthDate: `${TAX_Y - 23}-05-01` }, taxT)],
+  [`חייל משוחרר (32 חודשי שירות) שעבד כל השנה ב-10,000 ₪, ולא מסר למעסיק על נקודות השחרור`, TR.estimate(TAX_Y, taxMonths(year12(10000)), { gender: 'm', birthDate: `${TAX_Y - 22}-01-01`, service: { kind: 'army', months: 32, end: `${TAX_Y - 1}-12` } }, taxT)],
+  [`בוגר תואר ראשון (${TAX_Y - 1}) שעבד כל השנה ב-12,000 ₪, בלי נקודת התואר`, TR.estimate(TAX_Y, taxMonths(year12(12000)), { gender: 'm', birthDate: `${TAX_Y - 26}-01-01`, degree: { year: TAX_Y - 1, studyYears: 3 } }, taxT)],
+];
 const hm = (h) => { const m = Math.round(h * 60); return `${Math.floor(m / 60)}:${String(m % 60).padStart(2, '0')}`; };
 
 /* ---------------- the pages ---------------- */
@@ -201,6 +217,46 @@ const PAGES = [
     ],
     sources: [['מנוחה שבועית וחגים', GOV.rest], ['שעות נוספות', GOV.hours]],
   },
+  {
+    slug: 'tax-refund',
+    title: 'מגיע לי החזר מס? מי זכאי, כמה ואיך מגישים',
+    desc: `עבדת רק חלק מהשנה, השתחררת מהצבא או סיימת תואר? כנראה נלקח ממך יותר מדי מס הכנסה. כמה זה יכול להיות, אילו נקודות זיכוי מגיעות לך, ואיך מקבלים את הכסף בחזרה, עד 6 שנים אחורה.`,
+    answer: `מס הכנסה נלקח מהמשכורת כל חודש <b>כאילו תעבוד כך כל השנה</b>. מי שעבד רק חלק מהשנה, השתחרר משירות, סיים תואר, עבד אצל כמה מעסיקים או שנוכה ממנו מס לפני גיל 18, לרוב שילם יותר מדי, ויכול לקבל את ההפרש בחזרה <b>עד 6 שנים אחורה</b>, עם הפרשי הצמדה וריבית.`,
+    body: `
+      <h2>כמה זה יכול להיות?</h2>
+      <div class="tbl"><table><thead><tr><th>מי</th><th>החזר משוער על ${TAX_Y}</th></tr></thead><tbody>
+        ${TAXEX.map(([who, r]) => `<tr><td>${esc(who)}</td><td><b>${nis(Math.round(r.refund), 0)}</b></td></tr>`).join('')}
+      </tbody></table></div>
+      <p class="src">לפי מדרגות המס ונקודות הזיכוי של ${TAX_Y}, לגבר בלי ילדים, כשהמעסיק לקח מס כל חודש כרגיל. כל מקרה שונה.</p>
+      <h2>למה זה קורה?</h2>
+      <p>לכל תושב/ת ישראל יש <b>נקודות זיכוי</b> (2.25 לגבר, 2.75 לאישה), וכל נקודה מורידה ${nis(POINT, 0)} מהמס בכל חודש (${nis(POINT * 12, 0)} בשנה). המעסיק מחשב את המס של כל חודש כאילו המשכורת הזו תימשך כל השנה. מי שעבד רק כמה חודשים, ההכנסה השנתית שלו נמוכה יותר, והנקודות של החודשים בלי עבודה לא נוצלו, עד שמבקשים אותן בחזרה.</p>
+      <p>וכשיש נקודות זיכוי נוספות שהמעסיק לא ידע עליהן (כי לא מסרת עליהן בטופס 101), גם הן לא ירדו מהמס.</p>
+      <h2>נקודות זיכוי שכדאי להכיר</h2>
+      <ul>
+        <li><b>נוער עובד</b>: נקודה נוספת בגיל 16 ו-17.</li>
+        <li><b>חיילים משוחררים</b>: 2 נקודות למשך 36 חודשים מהחודש שאחרי השחרור, אחרי שירות של 23 חודשים לפחות (22 לאישה); נקודה אחת אחרי שירות של 12 חודשים ומעלה. גם בשירות לאומי או אזרחי (24 חודשים לשתי נקודות).</li>
+        <li><b>תואר ראשון</b>: נקודה אחת בשנים שאחרי סיום התואר (מ-2023: כמספר שנות הלימוד, עד 3 שנים; לפני כן: שנה אחת).</li>
+        <li><b>אישה</b>: חצי נקודה נוספת.</li>
+      </ul>
+      <p>יש עוד: ילדים, עולים חדשים, מגורים ביישוב מוטב, הורה יחיד, נכות ותרומות. לבדיקה מלאה: <a href="${TR.SIMULATOR_URL}" rel="noopener">הסימולטור של רשות המסים</a>.</p>
+      <h2>איך מקבלים את הכסף?</h2>
+      <ol>
+        <li><b>מבקשים טופס 106</b> מכל מעסיק, לכל שנה. המעסיק חייב לתת אותו עד סוף מרץ של השנה שאחרי.</li>
+        <li><b>מכינים אישורים</b> לנקודות הזיכוי (תעודת שחרור, אישור זכאות לתואר) ופרטי חשבון בנק.</li>
+        <li><b>מגישים באינטרנט</b> בקשה להחזר מס (טופס 135) <a href="${TR.FILE_URL}" rel="noopener">באתר רשות המסים</a>, בקשה אחת לכל שנה. בלי עמלה ובלי רואה חשבון.</li>
+        <li><b>ההחזר מגיע לחשבון הבנק</b> עם הפרשי הצמדה וריבית, לרוב תוך כמה חודשים.</li>
+      </ol>`,
+    cta: ['שעתי בודקת את זה בשבילך', 'רושמים משמרות או מעלים תלושים, ושעתי מעריכה את ההחזר לכל שנה, עד 6 שנים אחורה, ומסבירה בדיוק מה להגיש. חינם ובלי פרסומות.', 'לבדוק את ההחזר שלי', APP + '?action=tax-refund'],
+    faq: [
+      ['עד כמה שנים אחורה אפשר לבקש החזר מס?', `עד 6 שנים אחורה, בקשה נפרדת לכל שנה. ב-${today.slice(0, 4)} אפשר לבקש על השנים ${+today.slice(0, 4) - 6}–${+today.slice(0, 4) - 1}.`],
+      ['צריך רואה חשבון כדי לקבל החזר מס?', 'לא. אפשר להגיש לבד באתר רשות המסים (טופס 135), בלי עמלה. חברות להחזרי מס גובות לרוב אחוזים מההחזר.'],
+      ['כמה זמן לוקח לקבל את ההחזר?', 'לרוב כמה חודשים מההגשה. הכסף מגיע לחשבון הבנק עם הפרשי הצמדה וריבית.'],
+      ['מה זה טופס 106?', 'סיכום שנתי של המשכורת ושל המס שנוכה, שהמעסיק חייב לתת לכל עובד עד סוף מרץ של השנה שאחרי. צריך טופס 106 מכל מעסיק.'],
+      ['עבדתי כנער/ה וירד לי מס. מגיע לי החזר?', 'כמעט תמיד כן: בשכר של נוער בדרך כלל אין חבות מס, ולכן כל המס שנוכה חוזר.'],
+    ],
+    sources: [['בקשה להחזר מס (טופס 135)', TR.FILE_URL], ['בדיקת זכאות להחזר מס לשכירים', TR.SIMULATOR_URL]],
+    note: 'זו הערכה ואינה ייעוץ מס; הקובע הוא החישוב של רשות המסים.',
+  },
 ];
 
 /* ---------------- the page ---------------- */
@@ -280,11 +336,11 @@ function page(p) {
   <h1>${esc(p.title)}</h1>
   <div class="answer">${p.answer}</div>
   ${p.body}
-  <div class="cta"><b>שעתי מחשבת את זה בשבילך</b><span>רושמים משמרות, ושעתי מחשבת את השכר לפי החוק: שבתות וחגים לפי העיר, שעות נוספות, שכר מינימום לפי הגיל והבראה. חינם ובלי פרסומות.</span><a class="btn" href="${APP}">לפתוח את שעתי</a></div>
+  ${(([b, t, btn, href]) => `<div class="cta"><b>${b}</b><span>${t}</span><a class="btn" href="${href}">${btn}</a></div>`)(p.cta || ['שעתי מחשבת את זה בשבילך', 'רושמים משמרות, ושעתי מחשבת את השכר לפי החוק: שבתות וחגים לפי העיר, שעות נוספות, שכר מינימום לפי הגיל והבראה. חינם ובלי פרסומות.', 'לפתוח את שעתי', APP])}
   <h2>שאלות נפוצות</h2>
   ${p.faq.map(([q, a]) => `<details><summary>${esc(q)}</summary><p>${esc(a)}</p></details>`).join('\n  ')}
   <p class="src">המקור הרשמי: ${p.sources.map(([l, h]) => `<a href="${h}" rel="noopener">${esc(l)} ב-gov.il</a>`).join(' · ')}</p>
-  <div class="note">שעתי אינה גוף ממשלתי ואינה מייצגת גוף ממשלתי. המידע כללי ואינו ייעוץ משפטי; בהסכם קיבוצי, צו הרחבה ענפי או חוזה אישי ייתכנו זכויות נוספות. עודכן ב-${dmy(today)}.</div>
+  <div class="note">שעתי אינה גוף ממשלתי ואינה מייצגת גוף ממשלתי. המידע כללי ואינו ייעוץ משפטי; בהסכם קיבוצי, צו הרחבה ענפי או חוזה אישי ייתכנו זכויות נוספות.${p.note ? ' ' + p.note : ''} עודכן ב-${dmy(today)}.</div>
   <h2>עוד שאלות</h2>
   <div class="more"><a href="check">${esc(CHECK.title)}</a>${others.map((x) => `<a href="${x.slug}">${esc(x.title)}</a>`).join('')}</div>
 </main>
