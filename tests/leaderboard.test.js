@@ -120,3 +120,23 @@ T.test('one lucky shift is not a pattern once there are enough shifts', () => {
   const a = Analysis.analyse(list, '2026-10-15');
   T.ok(a.bestDay.d !== 6 || a.days[6].n >= 2, 'a day with one shift is not "the best day"');
 });
+T.test('a game played before joining the table counts today, this week, month and year too (not only all time)', () => {
+  const LB = globalThis.Leaderboard;
+  const now = Date.UTC(2026, 9, 30, 12);
+  // played on this phone today (not in the table yet), then joined: everything goes up, with its time
+  const local = LB.record(null, 'coins', 420, '2026-10-30', now);
+  const send = LB.pending(local, {}, '2026-10-30');
+  for (const p of ['d', 'w', 'm', 'y', 'a']) T.eq(LB.scoreIn(send, p, '2026-10-30'), 420, p);
+  T.eq(send.t.d, now); T.eq(send.t.a, now);
+  // the table already has more for the year: only what is better goes
+  const remote = { y: LB.pack(2026, 500), a: 500 };
+  const s2 = LB.pending(local, remote, '2026-10-30');
+  T.eq(Object.keys(s2).filter((k) => k !== 't').sort().join(','), 'd,m,w');
+  // a day later, yesterday's copy is nothing for today
+  T.eq(LB.scoreIn(LB.pending(local, {}, '2026-10-31'), 'd', '2026-10-31'), 0);
+  T.eq(LB.scoreIn(LB.pending(local, {}, '2026-10-31'), 'w', '2026-10-31'), 420, 'still this week');
+  // the time of each record
+  const later = LB.record(local, 'coins', 300, '2026-10-31', now + 86400000);
+  T.eq(LB.timeOf(later, 'd'), now + 86400000, 'a new day: its own best and time');
+  T.eq(LB.timeOf(later, 'a'), now, 'all time: still the 420 of the day before');
+});

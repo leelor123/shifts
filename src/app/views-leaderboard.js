@@ -69,6 +69,30 @@
       if (me) Object.assign(me, { n: pr.n, e: pr.e, bg: pr.bg, p: pr.p });
     }
   }
+  /** A finished game into the phone's own copy of my row (meta.lbLocal): kept whether or not I'm in the table. */
+  Champions.record = function (game, score) {
+    if (!LB.MAX[game] || !(score > 0)) return Promise.resolve();
+    const cur = (S.meta.lbLocal || {})[game];
+    const next = LB.record(cur, game, score, today(), Date.now());
+    return next !== cur ? Store.setMeta({ lbLocal: Object.assign({}, S.meta.lbLocal, { [game]: next }) }).catch(() => {}) : Promise.resolve();
+  };
+  /** What my published row is missing of every game, from the phone's copy ({ game: { period: value, t } }). */
+  function missing(row) {
+    const out = {};
+    for (const [game, local] of Object.entries(S.meta.lbLocal || {})) {
+      if (!LB.MAX[game]) continue;
+      const v = LB.pending(local, (row.g || {})[game], today());
+      if (Object.keys(v).length) out[game] = v;
+    }
+    return out;
+  }
+  /** When a record was set, in words: "today at 14:32", "yesterday at 9:05", "28.10 at 20:11" (hidden until a tap). */
+  function whenTag(x) {
+    if (!(x.at > 0)) return '';
+    const k = U.epochKey(x.at), t = U.todayKey(), hm = U.epochHM(x.at);
+    const txt = k === t ? `השיא נקבע היום ב-${hm}` : k === U.addDays(t, -1) ? `השיא נקבע אתמול ב-${hm}` : `השיא נקבע ב-${U.fmtDate(k, 'dm')}, ${hm}`;
+    return `<small class="lb-at">${txt}</small>`;
+  }
   const inflight = new Map();
   // Every board read costs up to 50 reads of the free daily quota: a board is kept 10 minutes (the one on screen is
   // refreshed quietly once it is 2 minutes old), and a score of mine updates my own row in place.
@@ -95,7 +119,7 @@
     const rows = snap.docs.map((d) => {
       const x = d.data() || {};
       const v = x.g && x.g[game] ? x.g[game][period] : 0;
-      return { uid: d.id, n: String(x.n || ''), e: LB.EMOJI.includes(x.e) ? x.e : '🙂', bg: x.p && root.Plus && root.Plus.SKINS[x.bg] ? x.bg : '', p: !!x.p, s: period === 'a' ? +v || 0 : LB.scoreOf(v) };
+      return { uid: d.id, n: String(x.n || ''), e: LB.EMOJI.includes(x.e) ? x.e : '🙂', bg: x.p && root.Plus && root.Plus.SKINS[x.bg] ? x.bg : '', p: !!x.p, s: period === 'a' ? +v || 0 : LB.scoreOf(v), at: x.g ? LB.timeOf(x.g[game], period) : 0 };
     }).filter((x) => x.s > 0).sort((a, b) => b.s - a.s);
     // equal scores share a place
     rows.forEach((x, i) => { x.rank = i && rows[i - 1].s === x.s ? rows[i - 1].rank : i + 1; });
@@ -110,18 +134,22 @@
   Champions.submit = async function (game, score) {
     if (!joined() || !LB.MAX[game]) return null;
     try {
+      await Champions.record(game, score); // (once: a second time with the same score changes nothing)
       const row = await readMine();
       const before = (boards.get(`${game}|d|${today()}`) || { rows: [] }).rows.find((x) => x.uid === uid());
-      const vals = LB.improve((row.g || {})[game], game, score, today());
-      if (Object.keys(vals).length) await writeMine({ [game]: vals });
+      // what the table is missing of every game (this one's new score is in the phone's copy already: afterGame)
+      const patch = missing(row);
+      if (Object.keys(patch).length) await writeMine(patch);
+      const vals = patch[game] || {};
       const rows = await board(game, 'd', true);
       const meRow = rows.find((x) => x.uid === uid());
-      return { rank: meRow ? meRow.rank : null, before: before ? before.rank : null, improved: Object.keys(vals), of: rows.length };
+      return { rank: meRow ? meRow.rank : null, before: before ? before.rank : null, improved: Object.keys(vals).filter((k) => k !== 't'), of: rows.length };
     } catch (e) { return null; }
   };
 
   /** The line under a game's result: the place today, a new record, or an invitation. */
   Champions.afterGame = function (box, game, score) {
+    Champions.record(game, score);
     if (!signedIn()) return;
     const host = box.querySelector('.gm-end-a');
     if (!host) return;
@@ -167,13 +195,13 @@
     let period = 'd';
     let seq = 0;
     const set = (node, html) => { if (node && node.__html !== html) { node.innerHTML = html; node.__html = html; } };
-    const row = (x, meId, admin, unit) => `<li class="lb-row ${x.uid === meId ? 'me' : ''} ${x.bg ? 'plus sk-' + x.bg : ''}">
+    const row = (x, meId, admin, unit) => `<li class="lb-row ${x.uid === meId ? 'me' : ''} ${x.bg ? 'plus sk-' + x.bg : ''}" data-lb-at>
         <span class="lb-r">${x.rank}</span><span class="lb-e" aria-hidden="true">${x.e}</span>
-        <span class="lb-n">${esc(x.n)}${x.p ? '<i class="lb-plus">Plus</i>' : ''}${x.uid === meId ? ' <small>(את/ה)</small>' : ''}</span>
+        <span class="lb-n">${esc(x.n)}${x.p ? '<i class="lb-plus">Plus</i>' : ''}${x.uid === meId ? ' <small>(את/ה)</small>' : ''}${whenTag(x)}</span>
         <b class="lb-s">${x.s}${esc(unit)}</b>${admin && x.uid !== meId ? `<button class="icon-btn lb-rm" data-rm="${esc(x.uid)}" aria-label="הסרת ${esc(x.n)} מהטבלה">${icon('trash', 's')}</button>` : ''}</li>`;
-    const pod = (x, place, meId, unit) => (x ? `<div class="lb-pod p${place} ${x.uid === meId ? 'me' : ''}">
+    const pod = (x, place, meId, unit) => (x ? `<div class="lb-pod p${place} ${x.uid === meId ? 'me' : ''}" data-lb-at>
         <div class="lb-av ${x.bg ? 'sk-' + x.bg : ''}"><span aria-hidden="true">${x.e}</span>${place === 1 ? '<i class="lb-crown" aria-hidden="true">👑</i>' : ''}</div>
-        <b class="lb-n">${esc(x.n)}</b>${x.p ? '<i class="lb-plus">Plus</i>' : ''}<span class="lb-s">${x.s}${esc(unit)}</span><div class="lb-step"><span>${place}</span></div></div>`
+        <b class="lb-n">${esc(x.n)}</b>${x.p ? '<i class="lb-plus">Plus</i>' : ''}<span class="lb-s">${x.s}${esc(unit)}</span>${whenTag(x)}<div class="lb-step"><span>${place}</span></div></div>`
       : `<div class="lb-pod p${place} empty"><div class="lb-av"><span aria-hidden="true">?</span></div><b class="lb-n">פנוי</b><div class="lb-step"><span>${place}</span></div></div>`);
     const periodName = () => PERIODS.find((p) => p[0] === period)[1];
     let lastMe = null;
@@ -286,6 +314,9 @@
         load(el);
         el.addEventListener('click', async (e) => {
           const b = e.target.closest('button');
+          // a tap on a player: when the record was set (another tap hides it)
+          const at = !b && e.target.closest('[data-lb-at]');
+          if (at) { if (at.querySelector('.lb-at')) at.classList.toggle('show-at'); return; }
           if (!b) return;
           if (b.dataset.game) { if (b.dataset.game !== game) { game = b.dataset.game; mark(el); load(el); } }
           else if (b.dataset.period) { if (b.dataset.period !== period) { period = b.dataset.period; mark(el); load(el); } }
@@ -421,9 +452,11 @@
             await Store.setSettings((s) => { s.lb = { on: true, n: nick, e, bg }; });
             try {
               await readMine();
-              // joining: the best scores already on this phone go into "all time"
-              const patch = {};
-              if (!wasOn) for (const [g, best] of Object.entries(S.meta.games || {})) { const v = LB.improve((mine.g || {})[g], g, best, today()); if (v.a) patch[g] = { a: v.a }; }
+              // joining: what this phone played goes in — today's, this week's, this month's and this year's bests
+              // too (they used to go into "all time" only: someone who played and then joined was missing from
+              // today's board), and the best ever of games played before the phone kept its copy
+              const patch = wasOn ? {} : missing(mine);
+              if (!wasOn) for (const [g, best] of Object.entries(S.meta.games || {})) { const v = LB.improve(Object.assign({}, (mine.g || {})[g], patch[g]), g, best, today()); if (v.a) patch[g] = Object.assign({}, patch[g], { a: v.a }); }
               await writeMine(patch);
               UI.toast(wasOn ? 'נשמר ✓' : 'ברוכים הבאים לטבלה! 🏆');
               UI.closeTop();
@@ -453,7 +486,7 @@
     if (S.settings.lb && S.settings.lb.on) await Store.setSettings((s) => { s.lb = Object.assign({}, s.lb, { on: false }); });
   };
   /** A changed profile (or Plus turning on or off) reaches the row at the next game; this sends it now. */
-  Champions.sync = async function () { if (joined()) { try { await writeMine(null); } catch (e) { /* next time */ } } };
+  Champions.sync = async function () { if (joined()) { try { await writeMine(missing(await readMine())); } catch (e) { /* next time */ } } };
   Champions._reset = () => { mine = null; boards.clear(); };
   App.actions.leaderboard = (el) => Champions.open(el && el.dataset && el.dataset.game);
 })(typeof window !== 'undefined' ? window : globalThis);

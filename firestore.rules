@@ -201,10 +201,20 @@ service cloud.firestore {
     }
     // a game's best per period: day, week (its Sunday), month and year as period × 100000 + score; all time as the score
     function lbGame(g, id, max) {
-      return !(id in g) || (g[id] is map && g[id].keys().hasOnly(['d', 'w', 'm', 'y', 'a'])
+      return !(id in g) || (g[id] is map && g[id].keys().hasOnly(['d', 'w', 'm', 'y', 'a', 't'])
+        && (!('t' in g[id]) || lbTimes(g[id].t))
         && lbVal(g[id], 'd', 20260101, 21000101, max) && lbVal(g[id], 'w', 20251228, 21000101, max)
         && lbVal(g[id], 'm', 202601, 210001, max) && lbVal(g[id], 'y', 2026, 2100, max)
         && (!('a' in g[id]) || (g[id].a is int && g[id].a >= 0 && g[id].a <= max)));
+    }
+    // when each period's best was set (ms since 1970): 2026 to 2100
+    function lbTimes(t) {
+      return t is map && t.keys().hasOnly(['d', 'w', 'm', 'y', 'a'])
+        && (!('d' in t) || (t.d is int && t.d > 1760000000000 && t.d < 4100000000000))
+        && (!('w' in t) || (t.w is int && t.w > 1760000000000 && t.w < 4100000000000))
+        && (!('m' in t) || (t.m is int && t.m > 1760000000000 && t.m < 4100000000000))
+        && (!('y' in t) || (t.y is int && t.y > 1760000000000 && t.y < 4100000000000))
+        && (!('a' in t) || (t.a is int && t.a > 1760000000000 && t.a < 4100000000000));
     }
     function lbVal(m, k, lo, hi, max) {
       return !(k in m) || (m[k] is int && m[k] >= lo * 100000 && m[k] < hi * 100000 && m[k] % 100000 <= max);

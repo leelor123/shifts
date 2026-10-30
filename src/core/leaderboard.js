@@ -66,6 +66,38 @@
     }
     return out;
   }
+  /**
+   * The phone's own copy of a game's row ({ d, w, m, y, a, t: { period: when } }) after a game: every period the
+   * score improves, with the time it was set. Kept whether or not the player is in the table, so joining later
+   * (or a game played offline) brings today's, this week's, this month's and this year's bests, not only all time.
+   */
+  function record(local, game, score, dateKey, now) {
+    const v = improve(local, game, score, dateKey);
+    if (!Object.keys(v).length) return local || {};
+    const t = Object.assign({}, (local || {}).t);
+    for (const p of Object.keys(v)) t[p] = now;
+    return Object.assign({}, local, v, { t });
+  }
+  /**
+   * What the published row is missing: the periods where the phone's copy is better now (as values to store, with
+   * their times under t). {} = nothing to send.
+   */
+  function pending(local, remote, dateKey) {
+    const out = {};
+    if (!local) return out;
+    for (const p of PERIODS) {
+      const mine = scoreIn(local, p, dateKey);
+      if (mine > 0 && mine > scoreIn(remote, p, dateKey)) {
+        out[p] = local[p];
+        const at = local.t && +local.t[p];
+        if (at > 0) out.t = Object.assign({}, out.t, { [p]: at });
+      }
+    }
+    return out;
+  }
+  /** When a period's best was set (ms), or 0 when not known (a score from before the times were kept). */
+  const timeOf = (gameRow, period) => +((gameRow && gameRow.t) || {})[period] || 0;
+
   /** A nickname is shown to everyone: '' when fine, otherwise what is wrong with it. */
   function nickProblem(n) {
     const t = String(n || '').trim().replace(/\s+/g, ' ');
@@ -109,5 +141,5 @@
     return 'השיאים של כל הזמנים';
   }
 
-  root.Leaderboard = { P, PERIODS, MAX, EMOJI, keys, pack, scoreOf, keyOf, range, scoreIn, improve, nickProblem, firstName, randomNick, resetText };
+  root.Leaderboard = { P, PERIODS, MAX, EMOJI, keys, pack, scoreOf, keyOf, range, scoreIn, improve, record, pending, timeOf, nickProblem, firstName, randomNick, resetText };
 })(typeof window !== 'undefined' ? window : globalThis);

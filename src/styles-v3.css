@@ -1758,3 +1758,9 @@ body:not(.fx) .money { transition: none; }
 /* the admin funnel: the share of the start, and of the step before */
 .adm-funnel .adm-bar .vv { width: 84px; display: grid; justify-items: start; line-height: 1.25; }
 .adm-drop { font-size: .68rem; font-weight: 500; color: var(--on-surface-var); white-space: nowrap; }
+
+/* the champions table: when a record was set, shown with a tap on its row */
+.lb-at { display: none; font-size: .7rem; font-weight: 500; color: var(--on-surface-var); white-space: nowrap; }
+.lb-row.show-at .lb-at, .lb-pod.show-at .lb-at { display: block; animation: rise .2s var(--pop) both; }
+[data-lb-at] { cursor: pointer; }
+@media (prefers-reduced-motion: reduce) { .lb-row.show-at .lb-at, .lb-pod.show-at .lb-at { animation: none; } }
