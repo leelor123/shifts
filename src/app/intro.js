@@ -112,12 +112,21 @@
     note(0.62, 0.05, 'sine', 0.018, 2637);
     // the glint: a breath of air across the glass
     note(0.7, 0.42, 'noise', 0.014, 6500, 11000, 1.6, true);
-    // and one chime, low and warm under bright (a fifth and its octave), ringing out slowly
-    [[659.25, 0, 0.05], [987.77, 0.035, 0.035], [1318.5, 0.07, 0.016]].forEach(([f, d, v]) => {
-      note(0.8 + d, 1.6, 'sine', v, f);
-      note(0.8 + d, 1.2, 'triangle', v * 0.35, f * 2.001);
-    });
-    note(0.8, 1.3, 'sine', 0.03, 164.81); // a soft floor under it
+    // and one chime: a small bell (frequency modulation at an uneven ratio gives the metal's bright partials, which
+    // fade faster than the tone itself), a fifth and its octave, with a soft floor under it
+    const bell = (at, dur, f, vol) => {
+      const car = c.createOscillator(), mod = c.createOscillator(), idx = c.createGain(), g = c.createGain();
+      car.frequency.value = f; mod.frequency.value = f * 3.5;
+      idx.gain.setValueAtTime(f * 2.2, t0 + at); idx.gain.exponentialRampToValueAtTime(f * 0.04, t0 + at + dur * 0.6);
+      g.gain.setValueAtTime(0.0001, t0 + at); g.gain.exponentialRampToValueAtTime(vol, t0 + at + 0.006);
+      g.gain.exponentialRampToValueAtTime(0.0001, t0 + at + dur);
+      mod.connect(idx).connect(car.frequency); car.connect(g).connect(master);
+      car.start(t0 + at); mod.start(t0 + at); car.stop(t0 + at + dur + 0.05); mod.stop(t0 + at + dur + 0.05);
+    };
+    bell(0.8, 1.9, 659.25, 0.05);
+    bell(0.835, 1.6, 987.77, 0.032);
+    note(0.87, 1.4, 'sine', 0.012, 1318.5);
+    note(0.8, 1.3, 'sine', 0.026, 164.81);
   }
   Intro.score = score; // tests render it offline
 
