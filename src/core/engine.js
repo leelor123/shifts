@@ -707,9 +707,10 @@
     const hActive = H.enabled && (!settings.startDate || monthsBetween(settings.startDate, p.periodTo || U.todayKey()) >= (+H.startAfterMonths || 0));
     const hishtalmut = hActive ? p.pensionBase * (+H.employeePct || 0) / 100 : 0;
     const hishtalmutEmployer = hActive ? p.pensionBase * (+H.employerPct || 0) / 100 : 0;
-    const brackets = T.brackets.map(([u, pct]) => [u === Infinity || u == null ? Infinity : u * months, pct]);
+    const law = taxLaw(T, p.periodTo || U.todayKey()); // the year's brackets and point (or the user's own)
+    const brackets = law.brackets.map(([u, pct]) => [u === Infinity || u == null ? Infinity : u * months, pct]);
     const taxBefore = incomeTaxRaw(gross, brackets);
-    const credits = (+T.creditPoints || 0) * (+T.creditPointValue || 0) * months;
+    const credits = (+T.creditPoints || 0) * law.point * months;
     const pensionCredit = Math.min(pensionEmployee, 0.07 * Math.min(gross, (+T.pensionCreditCap || 9700) * months)) * (+T.pensionCreditPct || 35) / 100;
     const incomeTax = Math.max(0, taxBefore - credits - pensionCredit);
     const lim = blLimits(T, p.periodTo || U.todayKey());
@@ -998,6 +999,32 @@
    *  - recuperation pay: the day rate, private sector (extension order; 2026: 451.50, published 18.8.2026, for the
    *    whole 2026 recuperation year). */
   const BL_YEARS = { 2025: [7522, 50695], 2026: [7703, 51910] };
+  /* Income tax, by tax year: the monthly brackets [up to ₪, %] and the value of one credit point a month (kolzchut
+   * "מדרגות מס הכנסה", "מדרגות מס הכנסה - נתוני עבר" and "נקודת זיכוי", read 2026-10-30). 2025 is 2024's. 2026: the 20%
+   * bracket goes to 19,000 and the 31% to 25,100 (amendment 288, from January 2026); the point is frozen at 242 through
+   * 2027. The top 50% is 47% and the 3% surtax. A refund can be asked for six years back, so six years are kept. */
+  const TAX_YEARS = {
+    2020: { point: 219, brackets: [[6330, 10], [9080, 14], [14580, 20], [20260, 31], [42160, 35], [54300, 47], [Infinity, 50]] },
+    2021: { point: 218, brackets: [[6290, 10], [9030, 14], [14490, 20], [20140, 31], [41910, 35], [53970, 47], [Infinity, 50]] },
+    2022: { point: 223, brackets: [[6450, 10], [9240, 14], [14840, 20], [20620, 31], [42910, 35], [55270, 47], [Infinity, 50]] },
+    2023: { point: 235, brackets: [[6790, 10], [9730, 14], [15620, 20], [21710, 31], [45180, 35], [58190, 47], [Infinity, 50]] },
+    2024: { point: 242, brackets: [[7010, 10], [10060, 14], [16150, 20], [22440, 31], [46690, 35], [60130, 47], [Infinity, 50]] },
+    2026: { point: 242, brackets: [[7010, 10], [10060, 14], [19000, 20], [25100, 31], [46690, 35], [60130, 47], [Infinity, 50]] },
+  };
+  const bracketsKey = (b) => (Array.isArray(b) ? b.map(([u, p]) => (u === Infinity || u == null ? 'inf' : +u) + ':' + +p).join(',') : '');
+  /** The year's income tax brackets and point value for a date, unless the settings name others (a table any version
+   * saved as its default counts as "by the law", so stored copies follow the years too). */
+  function taxLaw(T, k) {
+    T = T || {};
+    const law = byYear(TAX_YEARS, k);
+    const tables = Object.values(TAX_YEARS);
+    const ownBrackets = Array.isArray(T.brackets) && T.brackets.length && !tables.some((t) => bracketsKey(t.brackets) === bracketsKey(T.brackets));
+    return {
+      brackets: ownBrackets ? T.brackets.map(([u, p]) => [u === null || u === 'Infinity' ? Infinity : +u, +p]) : law.brackets,
+      point: lawValue(T.creditPointValue, tables.map((t) => t.point)) ? law.point : +T.creditPointValue,
+      own: { brackets: ownBrackets, point: !lawValue(T.creditPointValue, tables.map((t) => t.point)) },
+    };
+  }
   const RECUP_YEARS = { 2023: 418, 2026: 451.5 };
   function byYear(table, k) {
     const y = +String(k || U.todayKey()).slice(0, 4);
@@ -1046,7 +1073,7 @@
   }
 
   root.Engine = {
-    LAW_BREAK, validShift, validEntry, otByLaw, otDayHours, otWeekHours, WEEK_REG_H, WEEK_REG_H_MINOR, legalMinWage, minWageFor, youthRules, pensionMinAge, MIN_WAGE, BL_YEARS, RECUP_YEARS, blLimits, recuperationRate,
+    LAW_BREAK, validShift, validEntry, otByLaw, otDayHours, otWeekHours, WEEK_REG_H, WEEK_REG_H_MINOR, legalMinWage, minWageFor, youthRules, pensionMinAge, MIN_WAGE, BL_YEARS, RECUP_YEARS, TAX_YEARS, taxLaw, blLimits, recuperationRate,
     makeCtx, roleRate, roundMinutes, monthsBetween, buildSegments, hasOverrides, computeShift, computeAll,
     periodByKey, periodOf, dayValue, computeEntries, travelByDay, incomeTaxRaw, netEstimate, pensionActive,
     buildModel, totals, periodSummary, rangeSummary, pensionBaseOf, leaveBalances, holidayPay, vacationEntitlement, recuperationDays, ageAt, isMinor,

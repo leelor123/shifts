@@ -12,7 +12,7 @@ const DIST = process.env.OUT ? path.resolve(process.env.OUT) : path.join(ROOT, '
 const pkg = JSON.parse(fs.readFileSync(path.join(ROOT, 'package.json'), 'utf8'));
 
 const JS_ORDER = [
-  'core/util.js', 'core/clean.js', 'core/timesheet.js', 'core/schedule.js', 'core/places-data.js', 'core/places.js', 'core/hebcal.js', 'core/defaults.js', 'core/engine.js', 'core/insights.js', 'core/payslip.js', 'core/games.js', 'core/recap.js', 'core/analysis.js', 'core/leaderboard.js', 'core/friends.js',
+  'core/util.js', 'core/clean.js', 'core/timesheet.js', 'core/schedule.js', 'core/places-data.js', 'core/places.js', 'core/hebcal.js', 'core/defaults.js', 'core/engine.js', 'core/taxrefund.js', 'core/insights.js', 'core/payslip.js', 'core/games.js', 'core/recap.js', 'core/analysis.js', 'core/leaderboard.js', 'core/friends.js',
   'app/ui.js', 'app/dom.js', 'app/pickers.js', 'app/fx.js', 'app/gamefx.js', 'app/music.js', 'app/intro.js', 'app/lang.js', 'app/store.js', 'app/charts.js', 'app/app.js', 'app/mascot.js', 'app/firebase-config.js', 'app/cloud.js', 'app/stats.js', 'app/pay-config.js', 'app/plus.js', 'app/review.js', 'app/docread.js', 'app/import.js', 'app/schedule-import.js', 'app/claim-report.js', 'app/views-login.js',
   'app/views-home.js', 'app/views-shift.js', 'app/views-calendar.js', 'app/views-reports.js',
   'app/views-payslip.js', 'app/views-insights.js', 'app/export.js', 'app/placepicker.js', 'app/widgets.js', 'app/views-settings.js', 'app/views-onboarding.js',

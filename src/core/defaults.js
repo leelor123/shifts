@@ -87,12 +87,12 @@
         holidays: { rh1: true, rh2: true, yk: true, sukkot: true, shmini: true, pesach1: true, pesach7: true, shavuot: true, atzmaut: true },
         eveFriday: false, eveHoliday: false, eveFrom: '14:00',
       },
-      // --- net estimate (2025-2026 values; brackets frozen through 2027) ---
+      // --- net estimate: 2026's numbers; the engine follows each tax year (Engine.TAX_YEARS) unless these are changed ---
       tax: {
         creditPoints: 2.25,
         creditPointValue: 242,
         brackets: [ // monthly
-          [7010, 10], [10060, 14], [16150, 20], [22440, 31], [46690, 35], [60130, 47], [Infinity, 50],
+          [7010, 10], [10060, 14], [19000, 20], [25100, 31], [46690, 35], [60130, 47], [Infinity, 50],
         ],
         blReducedThreshold: null, // null = by law for the period's year (Engine.BL_YEARS); a number overrides it
         blReducedPct: 1.04, healthReducedPct: 3.23,

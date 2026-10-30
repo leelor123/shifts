@@ -758,6 +758,12 @@
       if (root.Cloud && root.Cloud.preload) root.Cloud.preload(); // the sign-in's code downloads meanwhile
       await root.Intro.drawn();
     }
+    // the tax brackets follow the law of each tax year: a stored table that is some year's own (a default an earlier
+    // version saved) becomes this year's, so the settings show what is used; a table the user typed stays theirs
+    {
+      const T = S.settings.tax, law = Engine.taxLaw(T, U.todayKey());
+      if (T && !law.own.brackets && JSON.stringify(T.brackets) !== JSON.stringify(law.brackets.map(([u, p]) => [u, p]))) await Store.setSettings((s) => { s.tax.brackets = law.brackets.map(([u, p]) => [u, p]); });
+    }
     // the minimum wage now follows the law (by date and age): stored copies of old defaults are dropped
     if (!S.meta.minWageAuto) {
       if ([32.3, 34.32, 34.33].includes(+S.settings.minWageHourly)) await Store.setSettings((s) => { s.minWageHourly = null; });

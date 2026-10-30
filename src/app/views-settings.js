@@ -553,7 +553,7 @@
       // the law's numbers for this year, shown in empty fields; a number typed in is the user's own
       const bl = Engine.blLimits(T, U.todayKey()), law = Engine.blLimits({}, U.todayKey());
       bl.own = { thr: bl.thr !== law.thr, ceil: bl.ceil !== law.ceil };
-      return `<div class="banner">${icon('info')}<div>הנטו הוא הערכה. ערכי ברירת המחדל לפי 2025\u2060–\u20602026 (מדרגות המס הוקפאו עד 2027). עדכן אם השתנו.</div></div>
+      return `<div class="banner">${icon('info')}<div>הנטו הוא הערכה, לפי מדרגות המס ושווי נקודת הזיכוי של כל שנת מס (הם מתעדכנים לבד). מספר שתשנה כאן יחליף את החוק.</div></div>
         <div class="section-title">מס הכנסה</div><div class="card">
           ${F.num('נקודות זיכוי', 's.tax.creditPoints', T.creditPoints, 'תושב/ת: 2.25 · אישה: 2.75 · נוספות על ילדים, תואר, שחרור מצבא, עולה חדש ועוד.')}
           ${F.num('שווי נקודת זיכוי לחודש ₪', 's.tax.creditPointValue', T.creditPointValue)}
