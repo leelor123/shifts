@@ -15,6 +15,7 @@
     ['rights', 'מדריך הזכויות'], ['planned', 'משמרות מתוכננות'], ['roles', 'יותר מתפקיד אחד'], ['goal', 'יעד חודשי'],
     ['notif', 'התראות מאושרות'], ['lock', 'נעילה בקוד'], ['bio', 'טביעת אצבע'], ['ai', 'מפתח AI'], ['dark', 'מצב כהה'], ['fxOff', 'כיבוי אפקטים'], ['demo', 'מצב הדגמה'],
     ['plusSeen', 'ראו את Shaati Plus'], ['plusWall', 'הגיעו למכסה חינמית'], ['plusTry', 'ניסו את Plus בחינם'],
+    ['tax', 'בדיקת החזר מס'], ['inv', 'הזמינו חבר שהצטרף'], ['gift', 'קיבלו Plus במתנה'], ['tip', 'נתנו טיפ'],
   ];
 
   function kpi(label, value, sub) {
@@ -62,6 +63,28 @@
         <div class="btn-row" style="margin-top:10px"><a class="btn tonal sm" href="https://play.google.com/console" target="_blank" rel="noopener">${icon('chart', 's')} Google Play Console</a><a class="btn tonal sm" href="https://app.lemonsqueezy.com/orders" target="_blank" rel="noopener">${icon('receipt', 's')} מכירות באתר</a></div>
         <div class="tiny muted" style="margin-top:8px">מהסטטיסטיקה האנונימית (מכשירים שלא כיבו אותה), מתעדכן כל כמה שעות. הסכומים המדויקים ותשלומי המס בדוחות של Google Play ושל Lemon Squeezy.</div></div>`;
   }
+  /* The way in: of the devices that started a week ago or more (they had the time; the demo is not counted), how
+   * many got to each step, each step out of the one before it — where people are lost shows at once. */
+  function funnel(rows) {
+    const k = U.todayKey();
+    const days = (a, b) => Math.round((Date.parse(b) - Date.parse(a)) / 86400000);
+    const old = rows.filter((r) => r.first && r.last && r.first <= U.addDays(k, -7) && !(r.f && r.f.demo));
+    const f = (r, x) => !!(r.f && r.f[x]);
+    const steps = [];
+    let cur = old;
+    for (const [label, keep] of [
+      ['התחילו להשתמש', () => true],
+      ['רשמו משמרת', (r) => +r.sh > 0],
+      ['חזרו אחרי שבוע', (r) => days(r.first, r.last) >= 7],
+      ['ראו את Plus', (r) => f(r, 'plusSeen')],
+      ['ניסו את Plus (ניסיון או מתנה)', (r) => f(r, 'plusTry') || f(r, 'gift') || f(r, 'plus')],
+      ['שילמו', (r) => f(r, 'plus')],
+    ]) { const prev = cur.length; cur = cur.filter(keep); steps.push([label, cur.length, prev]); }
+    const start = old.length;
+    return `<div class="section-title">${icon('filter', 's')} המשפך: מהתקנה ועד תשלום</div>
+      <div class="card adm-funnel">${steps.map(([label, n, prev], i) => `<div class="adm-bar"><span class="nm">${esc(label)}</span><span class="track"><i style="width:${pct(n, start)}%"></i></span><span class="vv">${n} · ${pct(n, start)}%${i ? `<small class="adm-drop">${pct(n, prev)}% מהקודם</small>` : ''}</span></div>`).join('')}
+        <div class="tiny muted" style="margin-top:8px">מכשירים שהתחילו לפני שבוע לפחות (${start}), בלי מצב הדגמה. כל שלב מתוך מי שעבר את הקודם.</div></div>`;
+  }
   function render(rows, admins, me) {
     const k = U.todayKey();
     const n = rows.length;
@@ -86,6 +109,7 @@
       <div class="card tonal"><div class="kpis">
         ${kpi('משתמשים (מכשירים)', n, `${new7} חדשים השבוע`)}${kpi('פעילים היום', a1)}${kpi('פעילים ב-7 ימים', a7, pct(a7, n) + '% מהכלל')}${kpi('פעילים ב-30 ימים', a30, pct(a30, n) + '% מהכלל')}
       </div></div>
+      ${funnel(rows)}
       ${plusSection(rows)}
       <div class="section-title">${icon('up', 's')} משתמשים חדשים, 30 ימים אחרונים</div>
       <div class="card">${Charts.bars(days.map((d) => ({ label: d.slice(8), value: byFirst.get(d), tip: `${U.fmtDate(d, 'dm')}: ${byFirst.get(d)} חדשים` })), { label: 'משתמשים חדשים לפי יום', height: 170 })}

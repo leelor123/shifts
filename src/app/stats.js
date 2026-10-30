@@ -53,7 +53,10 @@
         roles: App.roles().length > 1, notif: ('Notification' in root) && Notification.permission === 'granted',
         // Shaati Plus, for the admin dashboard's sales numbers (yes/no only)
         plus: !!(S.meta.plus && S.meta.plus.active), plusWeb: !!(S.meta.plus && S.meta.plus.active && S.meta.plus.src === 'web'), plusSeen: !sim && !!S.meta.plusSeen,
-        plusWall: !sim && !!S.meta.plusWall, plusTry: !sim && !!S.meta.plusTrial, // reached a free allowance / started the free trial (16 keys: the most the rules allow)
+        plusWall: !sim && !!S.meta.plusWall, plusTry: !sim && !!S.meta.plusTrial, // reached a free allowance / started the free trial
+        // opened the tax refund check, got a month of Plus for an invitation (given or taken), a friend joined through
+        // the link, gave a thank-you tip (20 keys: the most the rules allow)
+        tax: !!S.meta.usedTaxRefund, gift: !!(S.meta.plusGift && S.meta.plusGift.months), inv: !!(S.meta.plusGift && S.meta.plusGift.friends), tip: +S.meta.tips > 0,
       }; })(), // an admin's Plus preview is never counted
       t: Date.now(),
     };

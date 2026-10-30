@@ -155,6 +155,7 @@
   }
 
   App.actions['tax-refund'] = (el) => {
+    if (!S.meta.usedTaxRefund) Store.setMeta({ usedTaxRefund: true }).catch(() => {}); // for the anonymous statistics (yes/no)
     let sheetEl = null;
     const cur0 = el && el.dataset && +el.dataset.year;
     const redraw = (cur) => { const b = sheetEl.querySelector('.sh-body'); root.Dom.patch(b, body(cur)); };

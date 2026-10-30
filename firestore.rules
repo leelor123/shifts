@@ -184,7 +184,7 @@ service cloud.firestore {
         && d.s30 is int && d.s30 >= 0 && d.s30 < 100000
         && d.ps is int && d.ps >= 0 && d.ps < 100000
         && d.age in ['u18', '18p', '']
-        && d.f is map && d.f.size() <= 16
+        && d.f is map && d.f.size() <= 20
         && d.t is int;
     }
 

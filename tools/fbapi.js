@@ -107,6 +107,8 @@ async function main() {
       ['profile doc writable by owner', 'ALLOW', 'update', me, `/users/u1`, { email: 'me@example.com', updatedAt: 1 }, { email: 'me@example.com' }],
       ['other paths refused', 'DENY', 'create', me, `/other/x`, { a: 1 }, null],
       ['a device writes its anonymous stats', 'ALLOW', 'create', me, '/stats/abcdef0123456789abcdef', stat(), null],
+      ['stats carry up to 20 yes/no flags', 'ALLOW', 'create', me, '/stats/abcdef0123456789abcdef', Object.assign(stat(), { f: Object.fromEntries(Array.from({ length: 20 }, (_, i) => ['k' + i, true])) }), null],
+      ['...not 21', 'DENY', 'create', me, '/stats/abcdef0123456789abcdef', Object.assign(stat(), { f: Object.fromEntries(Array.from({ length: 21 }, (_, i) => ['k' + i, true])) }), null],
       ['stats need a signed-in user', 'DENY', 'create', null, '/stats/abcdef0123456789abcdef', stat(), null],
       ['stats cannot carry extra fields (e.g. email)', 'DENY', 'create', me, '/stats/abcdef0123456789abcdef', Object.assign(stat(), { email: 'a@b.c' }), null],
       ['stats platform must be known', 'DENY', 'create', me, '/stats/abcdef0123456789abcdef', Object.assign(stat(), { p: '<b>x</b>' }), null],

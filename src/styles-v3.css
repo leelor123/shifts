@@ -1754,3 +1754,7 @@ body:not(.fx) .money { transition: none; }
 .tr-pair .field { min-width: 0; }
 .tr-steps { margin: 0; padding: 14px 14px 14px 14px; padding-inline-start: 34px; display: grid; gap: 10px; font-size: .88rem; line-height: 1.5; }
 @media (prefers-reduced-motion: reduce) { .tr-year > summary > svg:last-child { transition: none; } }
+
+/* the admin funnel: the share of the start, and of the step before */
+.adm-funnel .adm-bar .vv { width: 84px; display: grid; justify-items: start; line-height: 1.25; }
+.adm-drop { font-size: .68rem; font-weight: 500; color: var(--on-surface-var); white-space: nowrap; }
