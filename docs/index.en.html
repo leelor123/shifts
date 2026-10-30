@@ -2,8 +2,12 @@
 <html lang="en" dir="ltr">
 <head>
 <meta charset="utf-8">
-<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'sha256-FgNk6U022o0tzGprl1MJbN7Uezv3SKotwh8ovG5xA8c=' 'sha256-p3kDSU7RiwcIf0pvRwtROeohtUTzN7VlknFBXO+OUcc=' https://www.gstatic.com https://apis.google.com https://cdnjs.cloudflare.com https://cdn.jsdelivr.net 'wasm-unsafe-eval'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com data:; img-src 'self' data: blob: https:; connect-src 'self' https: wss:; frame-src https://shiftpay-70ab6.firebaseapp.com https://accounts.google.com https://apis.google.com https://*.google.com; worker-src 'self' blob: https://cdnjs.cloudflare.com https://cdn.jsdelivr.net; media-src 'self' data: blob:; manifest-src 'self'; object-src 'none'; base-uri 'self'; form-action 'self'">
-<script>(function(){try{var l=localStorage.getItem('shaati.lang'),h=document.documentElement.lang;if(l&&l!==h&&/^(he|ar|ru|en|fr|es)$/.test(l)&&!sessionStorage.getItem('langHop')){sessionStorage.setItem('langHop','1');location.replace((l==='he'?'index.html':'index.'+l+'.html')+location.search+location.hash)}else sessionStorage.removeItem('langHop')}catch(e){}})();</script>
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'sha256-jYt4F4tOyssSs6s3wfjO7/EqSFliVHrCyYTaB6Dd3u0=' 'sha256-KiKbTuhLFeKqzEj4TAXSU6VZG9DnKMyj+DoAJNE/x/w=' https://www.gstatic.com https://apis.google.com https://cdnjs.cloudflare.com https://cdn.jsdelivr.net 'wasm-unsafe-eval'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com data:; img-src 'self' data: blob: https:; connect-src 'self' https: wss:; frame-src https://shiftpay-70ab6.firebaseapp.com https://accounts.google.com https://apis.google.com https://*.google.com; worker-src 'self' blob: https://cdnjs.cloudflare.com https://cdn.jsdelivr.net; media-src 'self' data: blob:; manifest-src 'self'; object-src 'none'; base-uri 'self'; form-action 'self'">
+<script>(function(){try{var l=localStorage.getItem('shaati.lang'),h=document.documentElement.lang;if(l&&l!==h&&/^(he|ar|ru|en|fr|es)$/.test(l)&&!sessionStorage.getItem('langHop')){sessionStorage.setItem('langHop','1');location.replace((l==='he'?'index.html':'index.'+l+'.html')+location.search+location.hash)}else sessionStorage.removeItem('langHop')}catch(e){}})();
+/* the fonts load without holding the first paint: a stylesheet linked in the head kept the screen blank (white,
+   before the opening show) until it came, on every cold start; added by a script it does not block. The show waits for
+   the fonts before it leaves, so nothing changes its look in sight. */
+(function(){var h=document.head;[['font-link','https://fonts.googleapis.com/css2?family=Rubik:wght@300..800&display=swap'],['','https://fonts.googleapis.com/css2?family=Fredoka:wght@500..700&display=swap']].forEach(function(f){var l=document.createElement('link');l.rel='stylesheet';l.href=f[1];if(f[0])l.id=f[0];h.appendChild(l);});})();</script>
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="theme-color" content="#0d2b6b">
 <meta name="description" content="Personal shift tracking and pay calculation: Shabbats, holidays, overtime, travel, estimated net and payslip checks — saved in your account and works offline too.">
@@ -15,8 +19,6 @@
 <link rel="apple-touch-icon" href="apple-touch-icon.png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link id="font-link" rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Rubik:wght@300..800&display=swap">
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fredoka:wght@500..700&display=swap">
 <style>
 /* ============================================================
  * Shift & pay tracker — "pay ledger" identity: warm paper, deep
@@ -710,100 +712,100 @@ textarea.input.chat-input { min-height: 46px; height: 46px; max-height: 140px; r
 .fx-shake { animation: fx-shake .42s cubic-bezier(.36, .07, .19, .97) both; }
 @keyframes fx-shake { 10%, 90% { translate: -2px 0; } 20%, 80% { translate: 4px 0; } 30%, 50%, 70% { translate: -7px 0; } 40%, 60% { translate: 7px 0; } }
 
-/* ---- opening animation (intro.js) ---- */
+/* ---- opening animation (intro.js) ----
+ * A watch dial at night, about 1.2 s: a hairline ring draws itself round, twelve gold marks light up, the logo is drawn
+ * in two precise strokes, a glint crosses it like light on a watch glass, the name gathers from wide spacing into
+ * place, and the night lifts. Quiet, exact, expensive-looking — the first impression of the app (the user,
+ * 2026-10-30: quality, luxury, technology, unique, efficient). Everything that moves is a transform or opacity (the
+ * compositor plays it while the app starts underneath), except the strokes, which are short and drawn first. */
 #intro { position: fixed; inset: 0; z-index: 10000; display: grid; place-items: center; overflow: hidden; color: #fff;
   /* not quite opaque (.996, not to be seen): a fully opaque screen on top tells the phone's browser that nothing under
    * it is seen, so it does not draw the app until the show fades, and then the pay card (a big photo, light, text)
-   * came up half drawn for a frame or two as the show left; this way the first screen is drawn, ready, under it */
-  background: radial-gradient(120% 80% at 50% 32%, rgba(26, 63, 148, .996) 0%, rgba(13, 43, 107, .996) 55%, rgba(8, 28, 74, .996) 100%);
+   * came up half drawn for a frame or two as the show left; this way the first screen is drawn, ready, under it.
+   * The navy is the Android app's own splash colour (#0d2b6b), so the show starts where the splash ends. */
+  background: radial-gradient(95% 62% at 50% 40%, rgba(24, 56, 130, .996) 0%, rgba(13, 43, 107, .996) 46%, rgba(5, 18, 50, .996) 100%);
   will-change: opacity; /* its own layer from the start: the fade-out never has to build (and paint) a full-screen layer as it begins */ }
-#intro .intro-glow { position: absolute; left: 50%; top: 44%; width: 520px; height: 520px; margin: -260px 0 0 -260px; border-radius: 50%;
-  background: radial-gradient(circle, rgba(46, 229, 157, .30) 0%, rgba(80, 120, 255, .16) 38%, transparent 68%); opacity: 0; will-change: transform, opacity; }
-#intro .intro-flash { position: absolute; left: 50%; top: 44%; width: 640px; height: 640px; margin: -320px 0 0 -320px; border-radius: 50%; background: radial-gradient(circle, rgba(255, 250, 225, .9) 0%, rgba(255, 216, 120, .35) 22%, transparent 60%); opacity: 0; will-change: transform, opacity; pointer-events: none; }
-#intro .intro-stage { position: relative; display: flex; flex-direction: column; align-items: center; margin-top: -6vh; will-change: transform; }
-#intro .intro-mark { position: relative; width: 132px; height: 132px; }
-#intro .intro-logo { position: absolute; inset: 0; width: 100%; height: 100%; overflow: visible; will-change: transform; }
+#intro .intro-light { position: absolute; left: 50%; top: 42%; width: 600px; height: 600px; margin: -300px 0 0 -300px; border-radius: 50%;
+  background: radial-gradient(circle, rgba(130, 175, 255, .20) 0%, rgba(46, 229, 157, .07) 34%, transparent 64%); opacity: 0; will-change: transform, opacity; }
+#intro .intro-stage { position: relative; display: flex; flex-direction: column; align-items: center; margin-top: -6vh; will-change: transform, opacity; }
+#intro .intro-mark { position: relative; width: 200px; height: 200px; }
+/* the dial: a hairline ring and twelve marks (the quarters longer), in pale gold */
+#intro .intro-dial { position: absolute; inset: 0; width: 100%; height: 100%; overflow: visible; }
+#intro .intro-dial .ring { fill: none; stroke: url(#i-ringg); stroke-width: 1.3; stroke-dasharray: 1 1; stroke-dashoffset: 1; transform: rotate(-90deg); transform-origin: 120px 120px; }
+#intro .intro-dial .tick { stroke: #e9c987; stroke-width: 1.6; stroke-linecap: round; opacity: 0; }
+#intro .intro-dial .tick.q { stroke-width: 2.6; stroke: #f3d9a0; }
+#intro .intro-dial .mins circle { fill: rgba(255, 255, 255, .36); opacity: 0; }
+/* a soft light behind the logo, green to gold */
+#intro .intro-halo { position: absolute; left: 50%; top: 50%; width: 150px; height: 150px; margin: -75px 0 0 -75px; border-radius: 50%;
+  background: radial-gradient(circle, rgba(46, 229, 157, .22) 0%, rgba(245, 185, 62, .10) 45%, transparent 70%); opacity: 0; will-change: transform, opacity; }
+/* the logo, drawn in two strokes (green, then gold) */
+#intro .intro-logo { position: absolute; left: 46px; top: 46px; width: 108px; height: 108px; overflow: visible; will-change: transform; }
 #intro .intro-logo path { fill: none; stroke-width: 104; stroke-linecap: round; stroke-linejoin: round; }
 #intro .intro-logo .g { stroke: #2ee59d; }
-#intro .intro-logo .y { stroke: #ffb524; }
-#intro .intro-ghost { opacity: 0; }
-/* the clock's 12 marks around the logo */
-#intro .intro-dial { position: absolute; left: 50%; top: 50%; width: 0; height: 0; }
-#intro .intro-dial i { position: absolute; left: -3px; top: -9px; width: 6px; height: 18px; border-radius: 3px; background: rgba(255, 255, 255, .85);
-  transform: rotate(calc(var(--k) * 30deg)) translateY(-104px) scale(0); opacity: 0; will-change: transform, opacity; }
-#intro .intro-dial i:nth-child(3n+1) { height: 24px; top: -12px; background: #ffd77a; }
-#intro .intro-wave { position: absolute; left: 50%; top: 50%; width: 220px; height: 220px; margin: -110px 0 0 -110px; border-radius: 50%;
-  border: 6px solid rgba(255, 216, 100, .9); opacity: 0; transform: scale(.4); will-change: transform, opacity; }
-#intro .intro-wave.w2 { border-color: rgba(46, 229, 157, .8); border-width: 4px; }
-#intro .intro-coins, #intro .intro-sparks { position: absolute; left: 50%; top: 50%; width: 0; height: 0; }
-#intro .intro-coins i { position: absolute; left: -14px; top: -14px; width: 28px; height: 28px; border-radius: 50%; display: grid; place-items: center;
-  font: 800 15px/1 'Rubik', sans-serif; font-style: normal; color: #8a5300; background: radial-gradient(circle at 35% 35%, #fff2b8, #ffb524 62%, #d68a00);
-  box-shadow: 0 0 0 1.5px #c98200 inset, 0 4px 10px rgba(0, 0, 0, .3); opacity: 0; will-change: transform, opacity; }
-#intro .intro-sparks i { position: absolute; left: -4px; top: -4px; width: 8px; height: 8px; border-radius: 50%; background: var(--c, #fff);
-  box-shadow: 0 0 10px 2px var(--c, #fff); opacity: 0; will-change: transform, opacity; }
-#intro .intro-word { direction: ltr; display: flex; font: 800 3.1rem/1 'Rubik', system-ui, sans-serif; letter-spacing: -.03em; margin-top: 30px; }
-#intro .intro-word span { display: inline-block; opacity: 0; will-change: transform, opacity; }
-#intro .intro-sub { font: 600 1rem/1.4 'Rubik', 'Assistant', system-ui, sans-serif; color: rgba(255, 255, 255, .74); margin-top: 10px; opacity: 0; will-change: transform, opacity; }
-#intro .intro-twinkles { position: absolute; inset: -40px -70px; pointer-events: none; }
-#intro .intro-twinkles i { position: absolute; width: 14px; height: 14px; opacity: 0; will-change: transform, opacity; font-style: normal; }
-#intro .intro-twinkles i::before { content: '✦'; position: absolute; inset: 0; display: grid; place-items: center; font-size: 14px; color: #ffe7a3; text-shadow: 0 0 8px #ffd25a; }
-
-/* ---------- the full show ---------- */
-#intro.play .intro-glow { animation: i-glow 1.9s cubic-bezier(.3, .7, .3, 1) forwards; }
-@keyframes i-glow { 0% { opacity: 0; transform: scale(.5); } 30% { opacity: .7; } 60% { opacity: 1; transform: scale(1.05); } 100% { opacity: .85; transform: scale(1); } }
-#intro.play .intro-dial i { animation: i-tick .3s cubic-bezier(.2, .9, .3, 1.6) forwards, i-tick-out .5s cubic-bezier(.4, 0, .2, 1) 1.16s forwards; animation-delay: calc(var(--k) * 30ms), 1.16s; }
-@keyframes i-tick { to { opacity: 1; transform: rotate(calc(var(--k) * 30deg)) translateY(-104px) scale(1); } }
-@keyframes i-tick-out { from { opacity: 1; transform: rotate(calc(var(--k) * 30deg)) translateY(-104px) scale(1); } to { opacity: 0; transform: rotate(calc(var(--k) * 30deg)) translateY(-170px) scale(.4, 1.6); } }
-/* the first frame painted (before the script starts the show) is the show's own first frame: an empty dial, an undrawn logo
-   (drawn at first and hidden a moment later, the logo blinked) */
+#intro .intro-logo .y { stroke: #f5b93e; }
+/* the first frame painted (before the script starts the show) is the show's own first frame: an empty dial, an undrawn
+   logo (drawn at first and hidden a moment later, the logo blinked) */
 #intro .intro-logo.main path { stroke-dasharray: 1 2; stroke-dashoffset: 1; }
-#intro.still .intro-logo.main path { stroke-dashoffset: 0; }
-#intro.play .intro-logo.main path { animation: i-draw .52s cubic-bezier(.65, 0, .35, 1) .12s forwards; }
-#intro.play .intro-logo.main .y { animation-delay: .28s; }
-@keyframes i-draw { from { stroke-dashoffset: 1; } to { stroke-dashoffset: 0; } }
-#intro.play .intro-logo.main { animation: i-spin .46s cubic-bezier(.5, 0, .2, 1) .7s both, i-land .5s cubic-bezier(.2, .9, .3, 1.4) 1.16s both; }
-@keyframes i-spin { from { transform: rotate(-360deg) scale(1); } to { transform: rotate(0deg) scale(1.08); } }
-@keyframes i-land { 0% { transform: scale(1.08); } 18% { transform: scale(1.22, .86); } 45% { transform: scale(.94, 1.06); } 100% { transform: none; } }
-/* two faint copies trail the spin, like motion blur */
-#intro.play .intro-ghost { animation: i-ghost .46s cubic-bezier(.5, 0, .2, 1) both; }
-#intro.play .intro-ghost.g1 { animation-delay: .74s; }
-#intro.play .intro-ghost.g2 { animation-delay: .78s; }
-@keyframes i-ghost { 0% { opacity: 0; transform: rotate(-360deg); } 15% { opacity: .22; } 85% { opacity: .12; } 100% { opacity: 0; transform: rotate(0deg); } }
-#intro.play .intro-flash { animation: i-flash .5s cubic-bezier(.2, .8, .3, 1) 1.15s forwards; }
-@keyframes i-flash { 0% { opacity: 0; transform: scale(.3); } 18% { opacity: .85; transform: scale(.75); } 100% { opacity: 0; transform: scale(1.25); } }
-#intro.play .intro-wave { animation: i-wave .62s cubic-bezier(.1, .7, .3, 1) 1.16s forwards; }
-#intro.play .intro-wave.w2 { animation-delay: 1.24s; }
-@keyframes i-wave { 0% { opacity: .95; transform: scale(.45); } 100% { opacity: 0; transform: scale(2.6); } }
-#intro.play .intro-stage { animation: i-shake .26s linear 1.16s; }
-@keyframes i-shake { 0%, 100% { transform: none; } 20% { transform: translate(3px, 2px); } 40% { transform: translate(-3px, -1px); } 60% { transform: translate(2px, -2px); } 80% { transform: translate(-1px, 1px); } }
-#intro.play .intro-coins i { animation: i-coin 1.05s cubic-bezier(.15, .7, .35, 1) forwards; animation-delay: calc(1.18s + var(--d)); }
-@keyframes i-coin {
-  0% { opacity: 0; transform: translate(0, 0) scale(.3) rotate(0); }
-  12% { opacity: 1; }
-  55% { opacity: 1; transform: translate(var(--dx), var(--dy)) scale(var(--s)) rotate(var(--r)); }
-  100% { opacity: 0; transform: translate(calc(var(--dx) * 1.2), calc(var(--dy) + 90px)) scale(calc(var(--s) * .8)) rotate(calc(var(--r) * 2)); }
-}
-#intro.play .intro-sparks i { animation: i-spark .7s cubic-bezier(.1, .8, .3, 1) forwards; animation-delay: calc(1.16s + var(--d)); }
-@keyframes i-spark { 0% { opacity: 1; transform: translate(0, 0) scale(1.2); } 100% { opacity: 0; transform: translate(var(--dx), var(--dy)) scale(.2); } }
-#intro.play .intro-word span { animation: i-letter .5s cubic-bezier(.2, .9, .3, 1.5) forwards; animation-delay: calc(1.26s + var(--k) * 60ms); }
-@keyframes i-letter { 0% { opacity: 0; transform: translateY(26px) scale(.5) rotate(-12deg); } 60% { opacity: 1; } 100% { opacity: 1; transform: none; } }
-#intro.play .intro-sub { animation: i-up .5s cubic-bezier(.2, .8, .3, 1) 1.72s forwards; }
-@keyframes i-up { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: none; } }
-#intro.play .intro-twinkles i { animation: i-twinkle .8s ease-in-out forwards; animation-delay: calc(1.62s + var(--d)); }
-@keyframes i-twinkle { 0% { opacity: 0; transform: scale(0) rotate(0); } 40% { opacity: 1; transform: scale(1.3) rotate(90deg); } 100% { opacity: 0; transform: scale(.2) rotate(180deg); } }
+/* light passing over the dial's glass */
+#intro .intro-glint { position: absolute; inset: 14px; border-radius: 50%; overflow: hidden; pointer-events: none; }
+#intro .intro-glint::before { content: ''; position: absolute; top: -30%; bottom: -30%; left: -50%; width: 38%;
+  background: linear-gradient(90deg, rgba(255, 255, 255, 0), rgba(255, 255, 255, .34) 50%, rgba(255, 255, 255, 0)); transform: translateX(0) skewX(-20deg); opacity: 0; will-change: transform, opacity; }
+/* the comet: a point of gold light at the head of the ring as it is drawn round */
+#intro .intro-comet { position: absolute; inset: 0; opacity: 0; will-change: transform, opacity; }
+#intro .intro-comet::before { content: ''; position: absolute; left: calc(50% - 3.5px); top: 3px; width: 7px; height: 7px; border-radius: 50%;
+  background: #fff3cf; box-shadow: 0 0 6px 2px rgba(255, 236, 180, .9), 0 0 18px 6px rgba(245, 200, 110, .45); }
+/* while the app is still getting ready: a gold bead goes round the dial, like a second hand */
+#intro .intro-orbit { position: absolute; inset: 0; opacity: 0; will-change: transform, opacity; }
+#intro .intro-orbit::before { content: ''; position: absolute; left: calc(50% - 3px); top: 4px; width: 6px; height: 6px; border-radius: 50%;
+  background: #f6dc9c; box-shadow: 0 0 10px 2px rgba(246, 220, 156, .55); }
+/* the name, from wide spacing into place, and the line under it */
+#intro .intro-word { direction: ltr; display: flex; font: 600 2.55rem/1 'Rubik', system-ui, sans-serif; letter-spacing: .035em; margin-top: 26px; }
+/* white to pale gold, like polished metal */
+#intro .intro-word span { display: inline-block; opacity: 0; will-change: transform, opacity; color: #fff;
+  background: linear-gradient(180deg, #ffffff 35%, #ecd6a4 100%); -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent; }
+#intro .intro-sub { font: 500 .95rem/1.4 'Rubik', 'Assistant', system-ui, sans-serif; color: rgba(233, 214, 170, .78); margin-top: 12px; opacity: 0; will-change: transform, opacity; }
 
-/* still loading after the show: the logo keeps turning, the marks breathe */
-#intro.wait .intro-logo.main { animation: i-turn 1.1s linear infinite; }
-@keyframes i-turn { to { transform: rotate(360deg); } }
-/* the way out: the logo flies at you, the night lifts */
-#intro.out { animation: i-out .5s cubic-bezier(.6, 0, .3, 1) forwards; pointer-events: none; }
-#intro.out .intro-stage { animation: i-stage-out .5s cubic-bezier(.6, 0, .3, 1) forwards; }
-@keyframes i-out { 0% { opacity: 1; } 40% { opacity: 1; } 100% { opacity: 0; } }
-/* a gentle zoom (1.3, was 1.9): a bigger one made the phone redraw the whole show at almost twice its size at the
- * moment it had to draw the first screen too, and parts of the pay card were missing for a frame */
-@keyframes i-stage-out { to { transform: scale(1.3); opacity: 0; } }
-/* short version */
-#intro.still .intro-word span, #intro.still .intro-sub { opacity: 1; }
+/* ---------- the full show (1.15 s) ---------- */
+#intro.play .intro-light { animation: i-light 1.1s cubic-bezier(.3, .7, .3, 1) forwards; }
+@keyframes i-light { from { opacity: 0; transform: scale(.86); } to { opacity: 1; transform: none; } }
+#intro.play .intro-dial .ring { animation: i-ring .62s cubic-bezier(.6, 0, .2, 1) .04s forwards; }
+@keyframes i-ring { to { stroke-dashoffset: 0; } }
+/* each mark lights up as the comet reaches it (the ring's own easing, worked out for each in index.html) */
+#intro.play .intro-dial .tick { animation: i-tick .3s ease-out forwards; animation-delay: var(--d); }
+/* the minute dots light up one after another, right behind the comet (the ring takes .62 s from .04 s) */
+#intro.play .intro-dial .mins circle { animation: i-tick .22s ease-out forwards; animation-delay: var(--d); }
+#intro.play .intro-comet { animation: i-comet .62s cubic-bezier(.6, 0, .2, 1) .04s forwards; }
+@keyframes i-comet { 0% { opacity: 0; transform: rotate(0deg); } 10% { opacity: 1; } 82% { opacity: 1; } 100% { opacity: 0; transform: rotate(360deg); } }
+#intro.play .intro-halo { animation: i-halo .9s cubic-bezier(.3, .7, .3, 1) .35s forwards; }
+@keyframes i-halo { from { opacity: 0; transform: scale(.6); } to { opacity: 1; transform: none; } }
+@keyframes i-tick { to { opacity: 1; } }
+#intro.play .intro-logo.main path { animation: i-draw .44s cubic-bezier(.65, 0, .35, 1) .18s forwards; }
+#intro.play .intro-logo.main .y { animation-delay: .3s; }
+@keyframes i-draw { from { stroke-dashoffset: 1; } to { stroke-dashoffset: 0; } }
+#intro.play .intro-logo.main { animation: i-settle .7s cubic-bezier(.2, .8, .2, 1) .12s both; }
+@keyframes i-settle { from { transform: scale(.9); } to { transform: none; } }
+#intro.play .intro-glint::before { animation: i-glint .5s cubic-bezier(.4, 0, .2, 1) .76s forwards; }
+@keyframes i-glint { 0% { opacity: 0; transform: translateX(0) skewX(-20deg); } 25% { opacity: 1; } 100% { opacity: 0; transform: translateX(430%) skewX(-20deg); } }
+#intro.play .intro-word span { animation: i-gather .58s cubic-bezier(.2, .8, .2, 1) forwards; animation-delay: calc(.5s + var(--k) * var(--k) * 8ms); }
+@keyframes i-gather { from { opacity: 0; transform: translateX(calc(var(--k) * 15px)); } to { opacity: 1; transform: none; } }
+#intro.play .intro-sub { animation: i-up .5s cubic-bezier(.2, .8, .2, 1) .78s forwards; }
+@keyframes i-up { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
+
+/* still getting ready after the show: the bead goes round */
+#intro.wait .intro-orbit { animation: i-orbit-in .3s ease-out forwards, i-turn 1.6s linear infinite; }
+@keyframes i-orbit-in { to { opacity: 1; } }
+@keyframes i-turn { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+/* the way out: a soft flare of the light behind the logo, and a step through the glass as the night lifts (a gentle
+ * zoom: a big one made the phone redraw the whole show at twice its size while it drew the first screen too) */
+#intro.out { animation: i-out .48s cubic-bezier(.4, 0, .2, 1) forwards; pointer-events: none; }
+#intro.out .intro-stage { animation: i-stage-out .48s cubic-bezier(.5, 0, .3, 1) forwards; }
+#intro.out .intro-halo { animation: i-flare .48s cubic-bezier(.3, .7, .3, 1) forwards; }
+@keyframes i-flare { 0% { opacity: 1; transform: none; } 35% { opacity: 1; transform: scale(1.5); } 100% { opacity: 0; transform: scale(2.1); } }
+@keyframes i-out { 0% { opacity: 1; } 30% { opacity: 1; } 100% { opacity: 0; } }
+@keyframes i-stage-out { to { transform: scale(1.1); opacity: 0; } }
+/* short version (later opens in the same session, a shortcut, effects off): the finished dial, at once */
+#intro.still .intro-dial .ring, #intro.still .intro-logo.main path { stroke-dashoffset: 0; }
+#intro.still .intro-dial .tick, #intro.still .intro-dial .mins circle, #intro.still .intro-halo, #intro.still .intro-word span, #intro.still .intro-sub, #intro.still .intro-light { opacity: 1; }
 #intro.still.out { animation-duration: .25s; }
 #intro.still.out .intro-stage { animation: none; }
 
@@ -2692,21 +2694,16 @@ body:not(.fx) .money { transition: none; }
 </head>
 <body>
 <div id="intro" aria-hidden="true">
-  <div class="intro-glow"></div>
-  <div class="intro-flash"></div>
+  <div class="intro-light"></div>
   <div class="intro-stage">
     <div class="intro-mark">
-      <div class="intro-dial"><i style="--k:0"></i><i style="--k:1"></i><i style="--k:2"></i><i style="--k:3"></i><i style="--k:4"></i><i style="--k:5"></i><i style="--k:6"></i><i style="--k:7"></i><i style="--k:8"></i><i style="--k:9"></i><i style="--k:10"></i><i style="--k:11"></i></div>
-      <div class="intro-wave"></div><div class="intro-wave w2"></div>
-      <svg class="intro-logo intro-ghost g2" viewBox="0 0 1024 1024"><path class="g" d="M300 660 A258 258 0 0 1 603 271 L603 600"/><path class="y" d="M420 422 L420 753 A258 258 0 0 0 720 362"/></svg>
-      <svg class="intro-logo intro-ghost g1" viewBox="0 0 1024 1024"><path class="g" d="M300 660 A258 258 0 0 1 603 271 L603 600"/><path class="y" d="M420 422 L420 753 A258 258 0 0 0 720 362"/></svg>
+      <svg class="intro-dial" viewBox="0 0 240 240"><defs><linearGradient id="i-ringg" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#ffffff" stop-opacity=".5"/><stop offset=".55" stop-color="#e9c987" stop-opacity=".38"/><stop offset="1" stop-color="#ffffff" stop-opacity=".22"/></linearGradient></defs><circle class="ring" cx="120" cy="120" r="112" pathLength="1"/><g class="mins"><circle style="--d:115ms" cx="130.5" cy="20.5" r=".9"/><circle style="--d:142ms" cx="140.8" cy="22.2" r=".9"/><circle style="--d:160ms" cx="150.9" cy="24.9" r=".9"/><circle style="--d:175ms" cx="160.7" cy="28.6" r=".9"/><circle style="--d:197ms" cx="178.8" cy="39.1" r=".9"/><circle style="--d:206ms" cx="186.9" cy="45.7" r=".9"/><circle style="--d:214ms" cx="194.3" cy="53.1" r=".9"/><circle style="--d:222ms" cx="200.9" cy="61.2" r=".9"/><circle style="--d:234ms" cx="211.4" cy="79.3" r=".9"/><circle style="--d:239ms" cx="215.1" cy="89.1" r=".9"/><circle style="--d:244ms" cx="217.8" cy="99.2" r=".9"/><circle style="--d:249ms" cx="219.5" cy="109.5" r=".9"/><circle style="--d:258ms" cx="219.5" cy="130.5" r=".9"/><circle style="--d:262ms" cx="217.8" cy="140.8" r=".9"/><circle style="--d:265ms" cx="215.1" cy="150.9" r=".9"/><circle style="--d:269ms" cx="211.4" cy="160.7" r=".9"/><circle style="--d:276ms" cx="200.9" cy="178.8" r=".9"/><circle style="--d:279ms" cx="194.3" cy="186.9" r=".9"/><circle style="--d:282ms" cx="186.9" cy="194.3" r=".9"/><circle style="--d:285ms" cx="178.8" cy="200.9" r=".9"/><circle style="--d:291ms" cx="160.7" cy="211.4" r=".9"/><circle style="--d:294ms" cx="150.9" cy="215.1" r=".9"/><circle style="--d:297ms" cx="140.8" cy="217.8" r=".9"/><circle style="--d:300ms" cx="130.5" cy="219.5" r=".9"/><circle style="--d:307ms" cx="109.5" cy="219.5" r=".9"/><circle style="--d:310ms" cx="99.2" cy="217.8" r=".9"/><circle style="--d:313ms" cx="89.1" cy="215.1" r=".9"/><circle style="--d:316ms" cx="79.3" cy="211.4" r=".9"/><circle style="--d:323ms" cx="61.2" cy="200.9" r=".9"/><circle style="--d:327ms" cx="53.1" cy="194.3" r=".9"/><circle style="--d:331ms" cx="45.7" cy="186.9" r=".9"/><circle style="--d:335ms" cx="39.1" cy="178.8" r=".9"/><circle style="--d:344ms" cx="28.6" cy="160.7" r=".9"/><circle style="--d:349ms" cx="24.9" cy="150.9" r=".9"/><circle style="--d:354ms" cx="22.2" cy="140.8" r=".9"/><circle style="--d:359ms" cx="20.5" cy="130.5" r=".9"/><circle style="--d:371ms" cx="20.5" cy="109.5" r=".9"/><circle style="--d:377ms" cx="22.2" cy="99.2" r=".9"/><circle style="--d:384ms" cx="24.9" cy="89.1" r=".9"/><circle style="--d:392ms" cx="28.6" cy="79.3" r=".9"/><circle style="--d:410ms" cx="39.1" cy="61.2" r=".9"/><circle style="--d:420ms" cx="45.7" cy="53.1" r=".9"/><circle style="--d:431ms" cx="53.1" cy="45.7" r=".9"/><circle style="--d:444ms" cx="61.2" cy="39.1" r=".9"/><circle style="--d:476ms" cx="79.3" cy="28.6" r=".9"/><circle style="--d:496ms" cx="89.1" cy="24.9" r=".9"/><circle style="--d:522ms" cx="99.2" cy="22.2" r=".9"/><circle style="--d:559ms" cx="109.5" cy="20.5" r=".9"/></g><line class="tick q" style="--d:142ms" x1="120.0" y1="28.0" x2="120.0" y2="16.0"/><line class="tick" style="--d:187ms" x1="168.5" y1="36.0" x2="172.0" y2="29.9"/><line class="tick" style="--d:228ms" x1="204.0" y1="71.5" x2="210.1" y2="68.0"/><line class="tick q" style="--d:254ms" x1="212.0" y1="120.0" x2="224.0" y2="120.0"/><line class="tick" style="--d:272ms" x1="204.0" y1="168.5" x2="210.1" y2="172.0"/><line class="tick" style="--d:288ms" x1="168.5" y1="204.0" x2="172.0" y2="210.1"/><line class="tick q" style="--d:303ms" x1="120.0" y1="212.0" x2="120.0" y2="224.0"/><line class="tick" style="--d:320ms" x1="71.5" y1="204.0" x2="68.0" y2="210.1"/><line class="tick" style="--d:339ms" x1="36.0" y1="168.5" x2="29.9" y2="172.0"/><line class="tick q" style="--d:365ms" x1="28.0" y1="120.0" x2="16.0" y2="120.0"/><line class="tick" style="--d:401ms" x1="36.0" y1="71.5" x2="29.9" y2="68.0"/><line class="tick" style="--d:459ms" x1="71.5" y1="36.0" x2="68.0" y2="29.9"/></svg>
+      <div class="intro-halo"></div><div class="intro-comet"></div><div class="intro-orbit"></div>
       <svg class="intro-logo main" viewBox="0 0 1024 1024"><path class="g" pathLength="1" d="M300 660 A258 258 0 0 1 603 271 L603 600"/><path class="y" pathLength="1" d="M420 422 L420 753 A258 258 0 0 0 720 362"/></svg>
-      <div class="intro-sparks"></div>
-      <div class="intro-coins"></div>
+      <div class="intro-glint"></div>
     </div>
-    <div class="intro-word"><span style="--k:0">S</span><span style="--k:1">h</span><span style="--k:2">a</span><span style="--k:3">a</span><span style="--k:4">t</span><span style="--k:5">i</span></div>
+    <div class="intro-word"><span style="--k:-2.5">S</span><span style="--k:-1.5">h</span><span style="--k:-0.5">a</span><span style="--k:0.5">a</span><span style="--k:1.5">t</span><span style="--k:2.5">i</span></div>
     <div class="intro-sub">Shift & pay tracker</div>
-    <div class="intro-twinkles"><i style="left:8%;top:62%;--d:0ms"></i><i style="right:6%;top:58%;--d:90ms"></i><i style="left:22%;top:96%;--d:160ms"></i><i style="right:20%;top:2%;--d:230ms"></i><i style="left:2%;top:10%;--d:300ms"></i></div>
   </div>
 </div>
 <div id="app"><main id="view"><div class="view"></div></main></div>
@@ -2714,8 +2711,8 @@ body:not(.fx) .money { transition: none; }
 <div id="print-root" aria-hidden="true"></div>
 <noscript><div style="padding:24px;font-family:sans-serif">The app needs JavaScript.</div></noscript>
 <script>
-window.APP_VERSION = '1.28.0';
-window.APP_BUILD = '1.28.0-59b00b9d';
+window.APP_VERSION = '1.29.0';
+window.APP_BUILD = '1.29.0-60d11021';
 /* ---- core/util.js ---- */
 /* ============================================================
  * util.js — date/time helpers and formatting.
@@ -11203,17 +11200,17 @@ Total estimated difference: ${U.money(tot)}.
 
 /* ---- app/intro.js ---- */
 /* ============================================================
- * intro.js — the opening show (instead of a "loading" text), about two seconds:
- * the clock's twelve marks tick in, the logo draws itself and spins like a clock hand, it lands with a
- * thump, a flash, two shockwaves, sparks and a burst of coins (cha-ching), the name pops in letter by
- * letter (a note each, up a happy scale), a warm chord, and the logo flies at you as the app appears.
- * It doubles as the loading indicator: if the app needs more time, the logo keeps turning. Tap to skip.
- * Short version on later opens in the same session, after the app was opened from a shortcut, or with
- * effects off / reduced motion. Markup and first frames live in index.html.
+ * intro.js — the opening show (instead of a "loading" text), about 1.2 seconds: a watch dial at night. A
+ * hairline ring draws itself round, twelve gold marks light up, the logo is drawn in two precise strokes, a
+ * glint crosses it like light on a watch glass, the name gathers into place, one soft chime, and the night lifts.
+ * Quiet and exact rather than busy (it was coins, sparks and a thump; the user wanted luxury, technology,
+ * efficiency, 2026-10-30). It doubles as the loading indicator: if the app needs more time, a gold bead goes
+ * round the dial. Tap to skip. Short version on later opens in the same session, after the app was opened from a
+ * shortcut, or with effects off / reduced motion. Markup and first frames live in index.html.
  *
  * Details that matter:
  *  - every moving part is a transform or opacity (the compositor plays them even while the app is busy
- *    starting up underneath); only the logo's own drawing is painted;
+ *    starting up underneath); only the ring and the logo's own strokes are painted, and they come first;
  *  - the whole sound is scheduled at once on the audio clock, in step with the animation's timeline, so a
  *    busy start-up never makes it late or ragged; only if the phone already allows sound (installed apps
  *    usually do), never a late surprise.
@@ -11240,7 +11237,7 @@ Total estimated difference: ${U.money(tot)}.
   try { seen = sessionStorage.getItem('introSeen') === '1'; sessionStorage.setItem('introSeen', '1'); } catch (e) { /* ignore */ }
   const fromShortcut = /[?&]action=/.test(location.search);
   const full = !seen && !fromShortcut && Fx.motion();
-  const SEQUENCE_MS = 1950; // marks → draw → spin → land (1.16s) → name → chord
+  const SEQUENCE_MS = 1150; // ring → marks → strokes → glint (0.76s) → the name → the line under it
 
   function close() {
     if (closed) return;
@@ -11311,62 +11308,42 @@ Total estimated difference: ${U.money(tot)}.
       g.connect(master);
       s.start(t0 + at); s.stop(t0 + at + dur + 0.03);
     };
-    // the clock winds up: twelve ticks, each a little higher
-    for (let k = 0; k < 12; k++) { note(k * 0.03, 0.03, 'square', 0.016, 1900 * Math.pow(2, k / 14)); note(k * 0.03, 0.02, 'noise', 0.028, 6000, null, 3); }
-    // the logo draws itself: a soft rising swish
-    note(0.12, 0.6, 'noise', 0.06, 700, 3600, 0.8, true);
-    note(0.12, 0.6, 'sine', 0.012, 392, 784, 0, true);
-    // the spin: a whoosh that speeds up
-    note(0.70, 0.48, 'noise', 0.08, 900, 4200, 1.4, true);
-    note(0.70, 0.48, 'sine', 0.025, 220, 660, 0, true);
-    // it lands: a deep thump and a click
-    note(1.16, 0.34, 'sine', 0.18, 150, 42);
-    note(1.16, 0.06, 'noise', 0.12, 2400, 600, 0.8);
-    note(1.16, 0.5, 'noise', 0.035, 300, 120, 0.7);
-    // the coins: cha-ching
-    note(1.20, 0.07, 'noise', 0.06, 5200, 3000, 2);
-    note(1.21, 0.10, 'square', 0.022, 1319);
-    note(1.27, 0.38, 'square', 0.02, 1976);
-    note(1.27, 0.38, 'triangle', 0.03, 2637);
-    note(1.34, 0.12, 'noise', 0.03, 7000, 9000, 3);
-    // the name: a pluck for each letter, up a happy scale
-    [1047, 1175, 1319, 1568, 1760, 2093].forEach((f, k) => { note(1.26 + k * 0.06, 0.16, 'triangle', 0.045, f); note(1.26 + k * 0.06, 0.08, 'sine', 0.02, f * 2); });
-    // and a warm, bright chord to finish
-    [[523, 0], [659, 0.025], [784, 0.05], [988, 0.075], [1319, 0.1]].forEach(([f, d]) => { note(1.66 + d, 1.1, 'triangle', 0.035, f); note(1.66 + d, 1.1, 'sine', 0.025, f * 1.002); });
-    note(1.66, 0.9, 'noise', 0.018, 8000, 11000, 2);
+    // the ring closing: a fine, soft tick
+    note(0.62, 0.035, 'noise', 0.022, 5200, null, 4);
+    note(0.62, 0.05, 'sine', 0.018, 2637);
+    // the glint: a breath of air across the glass
+    note(0.7, 0.42, 'noise', 0.014, 6500, 11000, 1.6, true);
+    // and one chime: a small bell (frequency modulation at an uneven ratio gives the metal's bright partials, which
+    // fade faster than the tone itself), a fifth and its octave, with a soft floor under it
+    const bell = (at, dur, f, vol) => {
+      const car = c.createOscillator(), mod = c.createOscillator(), idx = c.createGain(), g = c.createGain();
+      car.frequency.value = f; mod.frequency.value = f * 3.5;
+      idx.gain.setValueAtTime(f * 2.2, t0 + at); idx.gain.exponentialRampToValueAtTime(f * 0.04, t0 + at + dur * 0.6);
+      g.gain.setValueAtTime(0.0001, t0 + at); g.gain.exponentialRampToValueAtTime(vol, t0 + at + 0.006);
+      g.gain.exponentialRampToValueAtTime(0.0001, t0 + at + dur);
+      mod.connect(idx).connect(car.frequency); car.connect(g).connect(master);
+      car.start(t0 + at); mod.start(t0 + at); car.stop(t0 + at + dur + 0.05); mod.stop(t0 + at + dur + 0.05);
+    };
+    bell(0.8, 1.9, 659.25, 0.05);
+    bell(0.835, 1.6, 987.77, 0.032);
+    note(0.87, 1.4, 'sine', 0.012, 1318.5);
+    note(0.8, 1.3, 'sine', 0.026, 164.81);
   }
   Intro.score = score; // tests render it offline
 
-  // The logo drawing itself (0.12–0.8 s) is the one part of the show the main thread paints; the rest runs on
-  // the compositor. The app's heavy start-up (the whole calculation, the first screen) waits for this, so the
-  // drawing never stops halfway on a slow phone (it did: 0.2–0.4 s frozen); the spin and the landing don't mind.
+  // The ring and the logo drawing themselves (0.04–0.75 s) are the part of the show the main thread paints; the rest
+  // runs on the compositor. The app's heavy start-up (the whole calculation, the first screen) waits for this, so the
+  // drawing never stops halfway on a slow phone (it did: 0.2–0.4 s frozen); the glint and the name don't mind.
   let drawnDone = null;
   const drawn = new Promise((r) => { drawnDone = r; });
   /** Resolves once the logo has drawn itself (at once without the full show, or after a tap to skip). */
   Intro.drawn = () => drawn;
 
   if (full) {
-    // the coins and the sparks that fly out when the logo lands
-    const coins = el.querySelector('.intro-coins');
-    for (let i = 0; i < 12; i++) {
-      const c = document.createElement('i');
-      const a = (-90 + (i - 5.5) * 25) * Math.PI / 180, dist = 105 + (i % 3) * 32;
-      c.style.cssText = `--dx:${Math.round(Math.cos(a) * dist)}px;--dy:${Math.round(Math.sin(a) * dist * 0.9)}px;--r:${(i - 5.5) * 34}deg;--s:${(0.8 + (i % 4) * 0.12).toFixed(2)};--d:${i * 18}ms`;
-      c.textContent = '₪';
-      coins.appendChild(c);
-    }
-    const sparks = el.querySelector('.intro-sparks');
-    const COL = ['#2ee59d', '#ffd25a', '#8fb4ff', '#ff7ab6', '#ffffff'];
-    for (let i = 0; i < 18; i++) {
-      const s = document.createElement('i');
-      const a = (i / 18) * Math.PI * 2, dist = 120 + (i % 3) * 40;
-      s.style.cssText = `--dx:${Math.round(Math.cos(a) * dist)}px;--dy:${Math.round(Math.sin(a) * dist)}px;--c:${COL[i % COL.length]};--d:${(i % 4) * 14}ms`;
-      sparks.appendChild(s);
-    }
     el.classList.add('play');
     const y = el.querySelector('.intro-logo.main .y');
     if (y) y.addEventListener('animationend', () => drawnDone(), { once: true });
-    setTimeout(() => drawnDone(), 1100); // never later than this, whatever happens to the animation
+    setTimeout(() => drawnDone(), 850); // never later than this, whatever happens to the animation
     // the sound starts with the show (only if the phone already allows sound)
     const c = Fx.prefs().sound !== false && Fx.audio && Fx.audio();
     if (c && c.state === 'running') { try { score(c, c.currentTime + 0.02); } catch (e) { /* no sound */ } }
@@ -20977,8 +20954,9 @@ What the app has (for "how do I" questions): a "Start shift" button with a timer
 
   /* ---------------- what's new (once per big update, for people who already used the app) ---------------- */
   const WHATS_NEW = {
-    id: '1.28.0',
+    id: '1.29.0',
     items: [
+      ['clock', 'amber', "A new opening", "A luxury watch at night: a fine ring, gold marks, the logo drawn and a glint of light across it. Twice as short, with one soft chime."],
       ['eye', 'violet', "Stronger privacy mode", "Tapping the eye on the pay card blurs every amount, on every screen, with a soft animation. They can't be read until you tap again."],
       ['sparkle', 'mint', "Smooth and steady", "The pay card and the screens update without flashing, the intro never gets stuck even on a slow network, and text is never cut or broken mid-word in any language."],
       ['clock', 'violet', "Overtime by the law, if you want", "You can turn it on in Settings › Calculation rules: a day over 8.6 hours in a five-day week (8 in a six-day week), over 7 in a night shift, and a week over 42 regular hours; under 18 by the Youth Employment Law. Without it, as before: over 8 hours a day."],
@@ -21011,6 +20989,7 @@ What the app has (for "how do I" questions): a "Start shift" button with a timer
   /* ---------------- every update (settings › about › all the updates) ---------------- */
   // newest first: [version, the day it went out, what changed — said to the user, not to a developer]
   const CHANGELOG = [
+    ['1.29.0', '2026-10-30', "A new opening: a luxury watch at night, precise and quiet, with one soft chime. Twice as short, and it never waits for the network."],
     ['1.28.0', '2026-10-29', "A stronger privacy mode with an animation on every amount, no flashes on the pay card and the screens, an intro that never gets stuck even on a slow network, and text that is never cut or broken in any language. Overtime by the law as an option in settings, and a list of all updates."],
     ['1.27.0', '2026-10-29', "Overtime by the law: by your work week, night shifts and 42 hours a week, for minors too."],
     ['1.26.0', '2026-10-28', "The friends' competition, and your first name instead of a nickname."],
