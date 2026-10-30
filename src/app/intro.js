@@ -1,15 +1,15 @@
 /* ============================================================
- * intro.js — the opening show (instead of a "loading" text), about two seconds:
- * the clock's twelve marks tick in, the logo draws itself and spins like a clock hand, it lands with a
- * thump, a flash, two shockwaves, sparks and a burst of coins (cha-ching), the name pops in letter by
- * letter (a note each, up a happy scale), a warm chord, and the logo flies at you as the app appears.
- * It doubles as the loading indicator: if the app needs more time, the logo keeps turning. Tap to skip.
- * Short version on later opens in the same session, after the app was opened from a shortcut, or with
- * effects off / reduced motion. Markup and first frames live in index.html.
+ * intro.js — the opening show (instead of a "loading" text), about 1.2 seconds: a watch dial at night. A
+ * hairline ring draws itself round, twelve gold marks light up, the logo is drawn in two precise strokes, a
+ * glint crosses it like light on a watch glass, the name gathers into place, one soft chime, and the night lifts.
+ * Quiet and exact rather than busy (it was coins, sparks and a thump; the user wanted luxury, technology,
+ * efficiency, 2026-10-30). It doubles as the loading indicator: if the app needs more time, a gold bead goes
+ * round the dial. Tap to skip. Short version on later opens in the same session, after the app was opened from a
+ * shortcut, or with effects off / reduced motion. Markup and first frames live in index.html.
  *
  * Details that matter:
  *  - every moving part is a transform or opacity (the compositor plays them even while the app is busy
- *    starting up underneath); only the logo's own drawing is painted;
+ *    starting up underneath); only the ring and the logo's own strokes are painted, and they come first;
  *  - the whole sound is scheduled at once on the audio clock, in step with the animation's timeline, so a
  *    busy start-up never makes it late or ragged; only if the phone already allows sound (installed apps
  *    usually do), never a late surprise.
@@ -36,7 +36,7 @@
   try { seen = sessionStorage.getItem('introSeen') === '1'; sessionStorage.setItem('introSeen', '1'); } catch (e) { /* ignore */ }
   const fromShortcut = /[?&]action=/.test(location.search);
   const full = !seen && !fromShortcut && Fx.motion();
-  const SEQUENCE_MS = 1950; // marks → draw → spin → land (1.16s) → name → chord
+  const SEQUENCE_MS = 1150; // ring → marks → strokes → glint (0.76s) → the name → the line under it
 
   function close() {
     if (closed) return;
@@ -107,62 +107,33 @@
       g.connect(master);
       s.start(t0 + at); s.stop(t0 + at + dur + 0.03);
     };
-    // the clock winds up: twelve ticks, each a little higher
-    for (let k = 0; k < 12; k++) { note(k * 0.03, 0.03, 'square', 0.016, 1900 * Math.pow(2, k / 14)); note(k * 0.03, 0.02, 'noise', 0.028, 6000, null, 3); }
-    // the logo draws itself: a soft rising swish
-    note(0.12, 0.6, 'noise', 0.06, 700, 3600, 0.8, true);
-    note(0.12, 0.6, 'sine', 0.012, 392, 784, 0, true);
-    // the spin: a whoosh that speeds up
-    note(0.70, 0.48, 'noise', 0.08, 900, 4200, 1.4, true);
-    note(0.70, 0.48, 'sine', 0.025, 220, 660, 0, true);
-    // it lands: a deep thump and a click
-    note(1.16, 0.34, 'sine', 0.18, 150, 42);
-    note(1.16, 0.06, 'noise', 0.12, 2400, 600, 0.8);
-    note(1.16, 0.5, 'noise', 0.035, 300, 120, 0.7);
-    // the coins: cha-ching
-    note(1.20, 0.07, 'noise', 0.06, 5200, 3000, 2);
-    note(1.21, 0.10, 'square', 0.022, 1319);
-    note(1.27, 0.38, 'square', 0.02, 1976);
-    note(1.27, 0.38, 'triangle', 0.03, 2637);
-    note(1.34, 0.12, 'noise', 0.03, 7000, 9000, 3);
-    // the name: a pluck for each letter, up a happy scale
-    [1047, 1175, 1319, 1568, 1760, 2093].forEach((f, k) => { note(1.26 + k * 0.06, 0.16, 'triangle', 0.045, f); note(1.26 + k * 0.06, 0.08, 'sine', 0.02, f * 2); });
-    // and a warm, bright chord to finish
-    [[523, 0], [659, 0.025], [784, 0.05], [988, 0.075], [1319, 0.1]].forEach(([f, d]) => { note(1.66 + d, 1.1, 'triangle', 0.035, f); note(1.66 + d, 1.1, 'sine', 0.025, f * 1.002); });
-    note(1.66, 0.9, 'noise', 0.018, 8000, 11000, 2);
+    // the ring closing: a fine, soft tick
+    note(0.62, 0.035, 'noise', 0.022, 5200, null, 4);
+    note(0.62, 0.05, 'sine', 0.018, 2637);
+    // the glint: a breath of air across the glass
+    note(0.7, 0.42, 'noise', 0.014, 6500, 11000, 1.6, true);
+    // and one chime, low and warm under bright (a fifth and its octave), ringing out slowly
+    [[659.25, 0, 0.05], [987.77, 0.035, 0.035], [1318.5, 0.07, 0.016]].forEach(([f, d, v]) => {
+      note(0.8 + d, 1.6, 'sine', v, f);
+      note(0.8 + d, 1.2, 'triangle', v * 0.35, f * 2.001);
+    });
+    note(0.8, 1.3, 'sine', 0.03, 164.81); // a soft floor under it
   }
   Intro.score = score; // tests render it offline
 
-  // The logo drawing itself (0.12–0.8 s) is the one part of the show the main thread paints; the rest runs on
-  // the compositor. The app's heavy start-up (the whole calculation, the first screen) waits for this, so the
-  // drawing never stops halfway on a slow phone (it did: 0.2–0.4 s frozen); the spin and the landing don't mind.
+  // The ring and the logo drawing themselves (0.04–0.75 s) are the part of the show the main thread paints; the rest
+  // runs on the compositor. The app's heavy start-up (the whole calculation, the first screen) waits for this, so the
+  // drawing never stops halfway on a slow phone (it did: 0.2–0.4 s frozen); the glint and the name don't mind.
   let drawnDone = null;
   const drawn = new Promise((r) => { drawnDone = r; });
   /** Resolves once the logo has drawn itself (at once without the full show, or after a tap to skip). */
   Intro.drawn = () => drawn;
 
   if (full) {
-    // the coins and the sparks that fly out when the logo lands
-    const coins = el.querySelector('.intro-coins');
-    for (let i = 0; i < 12; i++) {
-      const c = document.createElement('i');
-      const a = (-90 + (i - 5.5) * 25) * Math.PI / 180, dist = 105 + (i % 3) * 32;
-      c.style.cssText = `--dx:${Math.round(Math.cos(a) * dist)}px;--dy:${Math.round(Math.sin(a) * dist * 0.9)}px;--r:${(i - 5.5) * 34}deg;--s:${(0.8 + (i % 4) * 0.12).toFixed(2)};--d:${i * 18}ms`;
-      c.textContent = '₪';
-      coins.appendChild(c);
-    }
-    const sparks = el.querySelector('.intro-sparks');
-    const COL = ['#2ee59d', '#ffd25a', '#8fb4ff', '#ff7ab6', '#ffffff'];
-    for (let i = 0; i < 18; i++) {
-      const s = document.createElement('i');
-      const a = (i / 18) * Math.PI * 2, dist = 120 + (i % 3) * 40;
-      s.style.cssText = `--dx:${Math.round(Math.cos(a) * dist)}px;--dy:${Math.round(Math.sin(a) * dist)}px;--c:${COL[i % COL.length]};--d:${(i % 4) * 14}ms`;
-      sparks.appendChild(s);
-    }
     el.classList.add('play');
     const y = el.querySelector('.intro-logo.main .y');
     if (y) y.addEventListener('animationend', () => drawnDone(), { once: true });
-    setTimeout(() => drawnDone(), 1100); // never later than this, whatever happens to the animation
+    setTimeout(() => drawnDone(), 850); // never later than this, whatever happens to the animation
     // the sound starts with the show (only if the phone already allows sound)
     const c = Fx.prefs().sound !== false && Fx.audio && Fx.audio();
     if (c && c.state === 'running') { try { score(c, c.currentTime + 0.02); } catch (e) { /* no sound */ } }
