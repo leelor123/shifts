@@ -43,6 +43,7 @@
     minwage: { cat: 'money', label: 'שכר מינימום' },
     holidayPay: { cat: 'money', label: 'דמי חגים' },
     taxrefund: { cat: 'money', label: 'החזר מס' },
+    plusend: { cat: 'reminder', label: 'סוף Plus במתנה או הניסיון' },
     youth: { cat: 'health', label: 'חוק עבודת הנוער' },
   };
 

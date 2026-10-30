@@ -34,6 +34,10 @@
   const BILLING = 'https://play.google.com/billing';
   const SUB = 'shaati_plus_monthly'; // the subscription's id in Google Play Console (a monthly base plan, ₪6.90)
   const SKU = 'shaati_plus'; // the earlier one-time product: whoever bought it keeps Plus
+  const YEAR = 'shaati_plus_yearly'; // a yearly subscription, offered beside the monthly one once it exists in Play Console
+  // a thank-you tip (one-time products, used up at once so they can be given again): offered after money came back
+  // thanks to the payslip check, only once they exist in Play Console (or on the web: PAY_CONFIG.lemon.tips)
+  const TIPS = ['shaati_tip_small', 'shaati_tip_medium', 'shaati_tip_large'];
   const LS_API = 'https://api.lemonsqueezy.com/v1/licenses/';
   // Pay-card skins (styles-v3.css .sk-<id>): dark enough everywhere for the card's white text
   const SKINS = {
@@ -49,7 +53,8 @@
   const NSFW_MODEL = 'https://cdn.jsdelivr.net/gh/infinitered/nsfwjs@v4.4.0/models/mobilenet_v2/';
   const TRIAL_DAYS = 3; // a free trial, once per phone, wherever Plus can be bought
   const cfg = () => (root.PAY_CONFIG && root.PAY_CONFIG.lemon) || {};
-  const Plus = { SKU, SUB, SKINS, available: false, price: '', monthly: true };
+  const Plus = { SKU, SUB, YEAR, TIPS, SKINS, available: false, price: '', monthly: true, yearly: null, tips: [] };
+  let plan = 'm'; // the plan chosen in the Plus page ('y' once a yearly one is offered and chosen)
   let playSku = SUB; // what Google Play sells here (the subscription; the one-time product only if that is all there is)
   const owned = () => !!(S.meta.plus && S.meta.plus.active);
   Plus.owned = owned;
@@ -67,8 +72,10 @@
    */
   const sim = () => (App.isAdmin ? (S.meta.plusSim === 'free' ? 'free' : S.meta.plusPreview ? 'plus' : '') : '');
   Plus.preview = sim;
-  /** Plus features are on: bought, in the free trial, or an admin previewing them on this phone. */
-  Plus.active = () => owned() || Plus.inTrial() || sim() === 'plus';
+  /** A month of Plus for inviting a friend, or for being invited (invite.js), and not bought. */
+  Plus.gifted = () => !owned() && !!root.Invite && root.Invite.until() > Date.now();
+  /** Plus features are on: bought, in the free trial, a gift, or an admin previewing them on this phone. */
+  Plus.active = () => owned() || Plus.inTrial() || Plus.gifted() || sim() === 'plus';
   /** Anything about Plus is shown only when it can be bought here, or is already on (or an admin previews it). */
   Plus.visible = () => Plus.available || Plus.webShop() || Plus.active() || !!sim();
   /** The pay-card skin in use ('' = the regular card). */
@@ -90,7 +97,7 @@
   }
   function fmtPrice(p) {
     if (!p) return '';
-    try { return new Intl.NumberFormat(root.U.LOCALE, { style: 'currency', currency: p.currency, maximumFractionDigits: 2 }).format(+p.value); } catch (e) { return `${p.value} ${p.currency}`; }
+    try { return new Intl.NumberFormat(root.U.LOCALE, { style: 'currency', currency: p.currency, minimumFractionDigits: +p.value % 1 ? 2 : 0, maximumFractionDigits: 2 }).format(+p.value); } catch (e) { return `${p.value} ${p.currency}`; }
   }
   /** The price as it is said: "₪6.90 לחודש" for the subscription. */
   Plus.priceText = () => { const pr = Plus.price || cfg().price || ''; return pr ? pr + (Plus.monthly ? ' לחודש' : '') : ''; };
@@ -106,7 +113,7 @@
   }
   /** true / false from Google Play; null when it cannot tell (offline). */
   async function playOwns(svc) {
-    try { return ((await svc.listPurchases()) || []).some((p) => p && (p.itemId === SUB || p.itemId === SKU)); } catch (e) { return null; }
+    try { return ((await svc.listPurchases()) || []).some((p) => p && (p.itemId === SUB || p.itemId === YEAR || p.itemId === SKU)); } catch (e) { return null; }
   }
 
   /* ---------------- the web: a purchase code from Lemon Squeezy ---------------- */
@@ -149,7 +156,12 @@
       if (!svc) play = null;
       else {
         let d, failed = false;
-        try { const all = (await svc.getDetails([SUB, SKU])) || []; d = all.find((x) => x && x.itemId === SUB) || all.find((x) => x && x.itemId === SKU); } catch (e) { failed = true; }
+        let all = [];
+        try { all = ((await svc.getDetails([SUB, YEAR, SKU].concat(TIPS))) || []).filter(Boolean); d = all.find((x) => x.itemId === SUB) || all.find((x) => x.itemId === SKU) || all.find((x) => x.itemId === YEAR); } catch (e) { failed = true; }
+        // the yearly plan beside the monthly one, and the tips, only when they exist in Play Console
+        const y = all.find((x) => x.itemId === YEAR);
+        if (y && d && d.itemId !== YEAR) Plus.yearly = { sku: YEAR, price: fmtPrice(y.price), value: +(y.price && y.price.value) || 0 };
+        Plus.tips = all.filter((x) => TIPS.includes(x.itemId)).map((x) => ({ sku: x.itemId, price: fmtPrice(x.price), value: +(x.price && x.price.value) || 0 })).sort((a, b) => a.value - b.value);
         if (failed) play = null;
         else if (d) {
           Plus.available = true;
@@ -162,6 +174,12 @@
       }
     }
     if (!Plus.available && cfg().price) { Plus.price = cfg().price; Plus.monthly = (root.PAY_CONFIG || {}).monthly !== false; }
+    // the web: a yearly checkout and tip links, when they are set up (pay-config.js)
+    if (!Plus.available && Plus.webShop()) {
+      if (cfg().checkoutYearly && cfg().priceYearly) Plus.yearly = { url: cfg().checkoutYearly, price: cfg().priceYearly, value: +cfg().priceYearlyValue || 0 };
+      Plus.tips = (cfg().tips || []).filter((t) => t && t.url && t.price).map((t) => ({ url: t.url, price: t.price, value: +t.value || 0 }));
+    }
+    if (Plus.yearly && plan === 'm' && Plus.saving() >= 15) plan = 'y'; // a real saving: the yearly plan comes first
     const web = S.settings.plusKey ? await webOwns() : 'na';
     if (play === true) await setOwned(true, 'play');
     else if (web === true) await setOwned(true, 'web');
@@ -174,20 +192,21 @@
   /** Buying: Google Play's own sheet in the Android app, Lemon Squeezy's checkout elsewhere. */
   Plus.buy = async function () {
     if (sim() && !Plus.available && !Plus.webShop()) { UI.toast('תצוגה מקדימה: כאן ייפתח התשלום. הוא יעבוד אחרי שחשבון התשלומים יוגדר'); return false; }
-    if (inPlayApp()) return buyPlay();
+    const yearly = plan === 'y' && Plus.yearly;
+    if (inPlayApp()) return buyPlay(yearly ? YEAR : playSku);
     if (Plus.webShop()) {
-      root.open(cfg().checkout, '_blank', 'noopener');
+      root.open(yearly ? Plus.yearly.url : cfg().checkout, '_blank', 'noopener');
       return false; // Plus turns on with the code from the receipt
     }
     UI.toast(sim() ? 'תצוגה מקדימה: כאן ייפתח התשלום. הוא יעבוד אחרי שחשבון התשלומים יוגדר' : 'הרכישה עוד לא זמינה כאן');
     return false;
   };
-  async function buyPlay() {
+  async function buyPlay(sku) {
     const svc = await service();
     if (!svc || !Plus.available) { UI.toast('הרכישה עוד לא זמינה כאן'); return false; }
     let res;
     try {
-      const req = new PaymentRequest([{ supportedMethods: BILLING, data: { sku: playSku } }], { total: { label: 'Total', amount: { currency: 'ILS', value: '0' } } });
+      const req = new PaymentRequest([{ supportedMethods: BILLING, data: { sku } }], { total: { label: 'Total', amount: { currency: 'ILS', value: '0' } } });
       res = await req.show();
     } catch (e) {
       if (!e || e.name !== 'AbortError') UI.toast('הרכישה לא הושלמה. אפשר לנסות שוב');
@@ -234,6 +253,44 @@
     await Plus.init();
     UI.toast(owned() ? (before ? 'Shaati Plus פעיל ✓' : 'Shaati Plus שוחזר ✓') : inPlayApp() ? 'לא נמצאה רכישה בחשבון Google הזה' : 'לא נמצאה רכישה. אפשר להזין את הקוד מהמייל');
   };
+
+  /** The monthly price as a number (Google Play's, else the web's). */
+  const monthValue = () => +Plus.priceValue || +(root.PAY_CONFIG || {}).price || 0;
+  /** How much less the yearly plan is than twelve months, in whole percent (0: no yearly plan, or no saving). */
+  Plus.saving = () => {
+    const y = Plus.yearly && +Plus.yearly.value, m = monthValue();
+    return y > 0 && m > 0 ? Math.max(0, Math.round((1 - y / (m * 12)) * 100)) : 0;
+  };
+
+  /** A thank-you tip (Google Play: a one-time product, used up at once so it can be given again; the web: a link). */
+  Plus.tip = async function (t) {
+    if (!t) return false;
+    if (t.url) { root.open(t.url, '_blank', 'noopener'); return false; }
+    const svc = await service();
+    if (!svc) { UI.toast('אפשר לתת טיפ רק באפליקציה מ-Google Play'); return false; }
+    let res;
+    try {
+      res = await new PaymentRequest([{ supportedMethods: BILLING, data: { sku: t.sku } }], { total: { label: 'Total', amount: { currency: 'ILS', value: '0' } } }).show();
+    } catch (e) {
+      if (!e || e.name !== 'AbortError') UI.toast('התשלום לא הושלם. אפשר לנסות שוב');
+      return false;
+    }
+    try {
+      const token = res.details && res.details.purchaseToken;
+      if (token && typeof svc.consume === 'function') await svc.consume(token).catch(() => {});
+      await res.complete('success');
+    } catch (e) { /* the payment itself went through */ }
+    await Store.setMeta({ tips: (+S.meta.tips || 0) + 1 });
+    if (root.Fx) root.Fx.celebrate('big');
+    UI.toast('תודה ענקית! זה עוזר להשאיר את שעתי חינם ובלי פרסומות 💜');
+    return true;
+  };
+  /** The tip offer, after money came back thanks to the payslip check (nothing when no tip can be given here). */
+  Plus.tipCard = () => (Plus.tips.length && !sim() ? `<div class="card plus-tip"><b>שעתי עזרה לך? 💜</b>
+      <div class="small muted">אפשר לפרגן בטיפ קטן, פעם אחת, בלי מנוי. זה עוזר להשאיר את שעתי חינם ובלי פרסומות.</div>
+      <div class="plus-tip-row">${Plus.tips.map((t, i) => `<button class="btn tonal" data-tip="${i}">${esc(t.price)}</button>`).join('')}</div></div>` : '');
+  /** A tap in a sheet that holds the tip card. */
+  Plus.tipClick = (e) => { const b = e.target.closest('[data-tip]'); if (b) Plus.tip(Plus.tips[+b.dataset.tip]).then((ok) => { if (ok) UI.closeTop(); }); return !!b; };
 
   /** Mini cards of every skin (also used in the settings). */
   Plus.skinTiles = (cur, locked) => `<div class="skin-pick">
@@ -333,7 +390,25 @@
       const web = Plus.webShop();
       const price = Plus.priceText();
       const trial = Plus.inTrial();
-      el.querySelector('[data-plus-body]').innerHTML = `
+      const gift = Plus.gifted();
+      const yr = plan === 'y' && !!Plus.yearly;
+      // the plans, once a yearly one is offered: chosen in place (the page is patched, nothing flashes)
+      const plans = Plus.yearly ? `<div class="plus-plans" role="radiogroup" aria-label="מסלול">
+          <button class="plus-plan ${!yr ? 'on' : ''}" data-plan="m" role="radio" aria-checked="${!yr}"><b>חודשי</b><span>${esc(price)}</span></button>
+          <button class="plus-plan ${yr ? 'on' : ''}" data-plan="y" role="radio" aria-checked="${yr}"><b>שנתי</b><span>${esc(Plus.yearly.price)} לשנה</span>${Plus.saving() ? `<i class="plus-save">חיסכון ${Plus.saving()}%</i>` : ''}</button></div>` : '';
+      // inviting a friend: a month for each of them (not for someone who pays already: the friend's month is still there)
+      const g = root.Invite ? root.Invite.gift() : null;
+      const invite = g && !owned() && !S.settings.demo && root.Cloud && root.Cloud.user ? `<div class="card plus-invite">
+          <div class="pi-t">${icon('gift', 's')}<b>חודש Plus במתנה, לך ולחבר/ה</b></div>
+          <div class="small muted">כל חבר/ה שמצטרף/ת עם הקישור שלך ורושם/ת משמרת: חודש Plus במתנה לכל אחד מכם (עד ${root.Invite.MAX} חודשים).</div>
+          ${g.friends ? `<div class="small pi-n">הצטרפו בזכותך: <b>${g.friends}</b></div>` : ''}
+          <button class="btn tonal block" data-plus-invite>${icon('send', 's')} להזמין חבר/ה</button></div>` : '';
+      const note = yr
+        ? (play ? 'מנוי שנתי דרך Google Play, מתחדש כל שנה. מבטלים בכל רגע ב-⁠Google Play › תשלומים ומינויים, ו-⁠Plus נשאר עד סוף השנה ששולמה.' : 'מנוי שנתי בדף תשלום מאובטח של Lemon Squeezy, מתחדש כל שנה. מבטלים בכל רגע מהקישור שבמייל. אחרי התשלום מגיע במייל קוד הפעלה.')
+        : Plus.monthly
+          ? (play ? 'מנוי חודשי דרך Google Play, מתחדש כל חודש. מבטלים בכל רגע ב-⁠Google Play › תשלומים ומינויים, ו-⁠Plus נשאר עד סוף החודש ששולם.' : 'מנוי חודשי בדף תשלום מאובטח של Lemon Squeezy, מתחדש כל חודש. מבטלים בכל רגע מהקישור שבמייל. אחרי התשלום מגיע במייל קוד הפעלה.')
+          : (play ? 'תשלום אחד דרך Google Play, בלי מנוי ובלי חיובים נוספים.' : 'תשלום אחד בדף תשלום מאובטח של Lemon Squeezy, בלי מנוי. אחרי התשלום מגיע במייל קוד הפעלה.');
+      root.Dom.patch(el.querySelector('[data-plus-body]'), `
         ${App.mascotSays ? App.mascotSays(on ? 'party' : 'happy', on ? 'תודה שאת/ה איתנו! 💜' : 'רוצים לפרגן לשעתי ולקבל עיצובים מיוחדים?', { size: 64 }) : ''}
         ${Plus.skinTiles(Plus.skin(), !on)}
         <div class="card plus-list">
@@ -345,21 +420,22 @@
           <div>${icon('star', 's')}<span><b>תודה ענקית ממני</b><small>עוזר להמשיך לפתח, ולהשאיר את האפליקציה בלי פרסומות</small></span></div>
           <div>${icon('check', 's')}<span><b>כל השאר נשאר חינם</b><small>משמרות, חישוב שכר, זכויות, בדיקת תלוש, דוחות ומשחקים</small></span></div>
         </div>
-        ${on && !trial ? `<div class="plus-done">${icon('check')} ${owned() ? 'Shaati Plus פעיל אצלך' : 'תצוגה מקדימה של מנהל'}</div>
+        ${on && !trial && !gift ? `<div class="plus-done">${icon('check')} ${owned() ? 'Shaati Plus פעיל אצלך' : 'תצוגה מקדימה של מנהל'}</div>
             ${owned() && Plus.monthly ? `<button class="btn text sm block" data-plus-manage>${icon('wallet', 's')} ניהול או ביטול המנוי</button>` : ''}`
           : `${trial ? `<div class="plus-done trial">${icon('sparkle')} תקופת ניסיון · ${trialLeft()}</div>` : ''}
-             ${Plus.canTrial() ? `<button class="btn big block plus-buy" data-plus-trial>${icon('sparkle')} לנסות ${TRIAL_DAYS} ימים בחינם</button>` : ''}
-             <button class="btn ${Plus.canTrial() ? 'tonal plus-buy2' : 'big plus-buy'} block" data-plus-buy ${(play ? Plus.available : web) || sim() ? '' : 'disabled'}>${icon(Plus.canTrial() ? 'star' : 'sparkle', Plus.canTrial() ? 's' : '')} ${trial ? 'להמשיך עם Plus' : buyWord()}${price ? ' · ' + esc(price) : ''}</button>
-             ${Plus.workPrice() ? `<div class="tiny plus-work">${esc(Plus.workPrice())}</div>` : ''}
+             ${gift && !trial ? `<div class="plus-done trial">${icon('gift')} Plus במתנה עד ${root.U.fmtDate(root.U.epochKey(root.Invite.until()))}</div>` : ''}
+             ${plans}
+             ${Plus.canTrial() && !gift ? `<button class="btn big block plus-buy" data-plus-trial>${icon('sparkle')} לנסות ${TRIAL_DAYS} ימים בחינם</button>` : ''}
+             <button class="btn ${Plus.canTrial() && !gift ? 'tonal plus-buy2' : 'big plus-buy'} block" data-plus-buy ${(play ? Plus.available : web) || sim() ? '' : 'disabled'}>${icon(Plus.canTrial() && !gift ? 'star' : 'sparkle', Plus.canTrial() && !gift ? 's' : '')} ${trial || gift ? 'להמשיך עם Plus' : yr ? 'מנוי שנתי' : buyWord()}${yr ? ' · ' + esc(Plus.yearly.price) + ' לשנה' : price ? ' · ' + esc(price) : ''}</button>
+             ${Plus.workPrice() && !yr ? `<div class="tiny plus-work">${esc(Plus.workPrice())}</div>` : ''}
              <div class="plus-pay">${play ? '<span>Google Play</span><span>כרטיס אשראי</span><span>Google Pay</span><span>PayPal</span>' : '<span>כרטיס אשראי</span><span>Apple Pay</span><span>Google Pay</span><span>PayPal</span>'}</div>
-             <div class="tiny muted plus-note">${Plus.monthly
-                ? (play ? 'מנוי חודשי דרך Google Play, מתחדש כל חודש. מבטלים בכל רגע ב-⁠Google Play › תשלומים ומינויים, ו-⁠Plus נשאר עד סוף החודש ששולם.' : 'מנוי חודשי בדף תשלום מאובטח של Lemon Squeezy, מתחדש כל חודש. מבטלים בכל רגע מהקישור שבמייל. אחרי התשלום מגיע במייל קוד הפעלה.')
-                : (play ? 'תשלום אחד דרך Google Play, בלי מנוי ובלי חיובים נוספים.' : 'תשלום אחד בדף תשלום מאובטח של Lemon Squeezy, בלי מנוי. אחרי התשלום מגיע במייל קוד הפעלה.')} מתחת לגיל 18: בהסכמת הורה.</div>`}
-        ${(!on || trial) && !play && web ? `<div class="card plus-code ${opened ? 'hot' : ''}"><label class="field"><span class="lbl">${opened ? 'שילמת? מדביקים כאן את הקוד מהמייל' : 'כבר יש לי קוד מהמייל'}</span>
+             <div class="tiny muted plus-note">${note} מתחת לגיל 18: בהסכמת הורה.</div>`}
+        ${invite}
+        ${(!on || trial || gift) && !play && web ? `<div class="card plus-code ${opened ? 'hot' : ''}"><label class="field"><span class="lbl">${opened ? 'שילמת? מדביקים כאן את הקוד מהמייל' : 'כבר יש לי קוד מהמייל'}</span>
             <input class="input" id="plus-key" dir="ltr" autocomplete="off" spellcheck="false" placeholder="XXXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXXXX"></label>
             <button class="btn tonal block" data-plus-redeem>${icon('key', 's')} הפעלה</button></div>` : ''}
         <div class="plus-links">${on && owned() ? '' : '<button class="btn text sm" data-plus-restore>שחזור רכישה</button>'}
-          ${App.isAdmin ? `<label class="tiny plus-preview"><input type="checkbox" data-plus-preview ${S.meta.plusPreview ? 'checked' : ''}> תצוגה מקדימה (מנהל)</label>` : ''}</div>`;
+          ${App.isAdmin ? `<label class="tiny plus-preview"><input type="checkbox" data-plus-preview ${S.meta.plusPreview ? 'checked' : ''}> תצוגה מקדימה (מנהל)</label>` : ''}</div>`);
       if (opened) { const i = el.querySelector('#plus-key'); if (i) i.focus(); }
     };
     UI.openSheet({
@@ -368,12 +444,16 @@
       body: '<div data-plus-body></div>',
       onMount: (el) => {
         draw(el);
+        // who joined through my link (asked at most every six hours): the page follows
+        if (root.Invite) root.Invite.refresh().then(() => { if (el.isConnected) draw(el); });
         let busy = false;
         const run = async (fn) => { if (busy) return; busy = true; try { if (await fn()) draw(el); } finally { busy = false; } };
         el.addEventListener('click', (e) => {
           const b = e.target.closest('button');
           if (!b) return;
-          if (b.hasAttribute('data-plus-trial')) run(() => Plus.startTrial(Plus.skin() || 'gold'));
+          if (b.dataset.plan) { plan = b.dataset.plan; draw(el); if (root.Fx) root.Fx.play('tick'); }
+          else if (b.hasAttribute('data-plus-invite')) root.Invite.share();
+          else if (b.hasAttribute('data-plus-trial')) run(() => Plus.startTrial(Plus.skin() || 'gold'));
           else if (b.hasAttribute('data-plus-buy')) run(async () => { const ok = await Plus.buy(); if (!ok && !inPlayApp() && Plus.webShop()) { opened = true; return true; } return ok; });
           else if (b.hasAttribute('data-plus-redeem')) run(() => Plus.redeem((el.querySelector('#plus-key') || {}).value));
           else if (b.hasAttribute('data-plus-restore')) run(async () => { await Plus.restore(); return true; });
@@ -404,10 +484,28 @@
   /** At the end of a trial the look goes back, also when the app stays open. */
   function watchTrial() {
     clearTimeout(trialTimer);
-    const until = +((S.meta.plusTrial || {}).until || 0);
-    if (owned() || !(until > Date.now())) return;
+    // the trial's end, or the gift's (inviting a friend), whichever is next
+    const until = [+((S.meta.plusTrial || {}).until || 0), root.Invite ? root.Invite.until() : 0].filter((t) => t > Date.now()).sort((a, b) => a - b)[0] || 0;
+    if (owned() || !until) return;
     trialTimer = setTimeout(() => { App.applyTheme(); if (!App.blocking) App.rerender(); }, Math.min(until - Date.now() + 500, 2 ** 31 - 1));
   }
+  /** The gift changed (a friend joined through my link, or I was invited): the look and its end follow. */
+  Plus.giftChanged = () => { watchTrial(); App.applyTheme(); if (!App.blocking) App.rerender(); };
+  /** A day before the trial or the gift ends: a note and the phone's notification (App.runInsights), once. */
+  Plus.endAlert = () => {
+    if (owned() || sim()) return null;
+    const trialUntil = Plus.inTrial() ? +S.meta.plusTrial.until : 0;
+    const giftUntil = Plus.gifted() ? root.Invite.until() : 0;
+    const until = Math.max(trialUntil, giftUntil);
+    const left = until - Date.now();
+    if (!until || left > DAY || left < 3600000) return null;
+    const gift = giftUntil >= trialUntil;
+    return {
+      key: 'plusend-' + Math.round(until / 60000), type: 'plusend', cat: 'reminder', severity: 'info', push: 'anomaly',
+      title: gift ? 'חודש ה-Plus במתנה נגמר מחר' : 'הניסיון של Shaati Plus נגמר מחר',
+      body: `אחרי זה כרטיס השכר חוזר לעיצוב הרגיל. אפשר להמשיך עם Plus, ${termsWord()}.`,
+    };
+  };
   const trialLeft = () => { const d = Math.max(1, Math.ceil(((S.meta.plusTrial || {}).until - Date.now()) / DAY)); return d === 1 ? 'נשאר יום אחד' : `נשארו ${d} ימים`; };
   Plus.startTrial = async (skin) => {
     if (!Plus.canTrial()) return false;
@@ -595,6 +693,12 @@
     const n = S.meta.plusNudge || {};
     if (n.x && Date.now() - n.x < NUDGE_REST) return '';
     const close = '<button class="icon-btn plus-nudge-x" data-act="plus-nudge-x" aria-label="סגירה ל-24 שעות">' + icon('x', 's') + '</button>';
+    const giftEnd = root.Invite ? root.Invite.until() : 0;
+    if (giftEnd && giftEnd <= Date.now() && S.meta.plusGiftEnd !== giftEnd) {
+      return `<div class="card plus-nudge sk-${SKINS[S.settings.skin] ? S.settings.skin : 'gold'}">${close}
+        <div class="pn-t">חודש ה-Plus במתנה הסתיים 🎁</div><div class="pn-s">להמשיך עם Plus? ${Plus.priceText() ? esc(Plus.priceText()) + ', ' : ''}${termsWord()}. ואפשר גם להזמין עוד חברים: חודש במתנה על כל אחד.</div>
+        <div class="pn-a"><button class="btn sm" data-act="plus-open">${icon('star', 's')} להמשיך</button><button class="btn text sm" data-act="plus-nudge-x">לא, תודה</button></div></div>`;
+    }
     if (S.meta.plusTrial && !S.meta.plusTrialEnd) {
       const name = SKINS[S.settings.skin] || 'המיוחד';
       return `<div class="card plus-nudge sk-${SKINS[S.settings.skin] ? S.settings.skin : 'gold'}">${close}
@@ -613,7 +717,9 @@
   /** ✕, "no, thanks" or "not now": away for 24 hours (the end-of-trial card gives way to the usual one). */
   App.actions['plus-nudge-x'] = async () => {
     const patch = { plusNudge: Object.assign({}, S.meta.plusNudge || {}, { x: Date.now() }) };
-    if (S.meta.plusTrial && !S.meta.plusTrialEnd) patch.plusTrialEnd = true;
+    const giftEnd = root.Invite ? root.Invite.until() : 0;
+    if (giftEnd && giftEnd <= Date.now() && S.meta.plusGiftEnd !== giftEnd) patch.plusGiftEnd = giftEnd;
+    else if (S.meta.plusTrial && !S.meta.plusTrialEnd) patch.plusTrialEnd = true;
     await Store.setMeta(patch);
     App.rerender();
   };

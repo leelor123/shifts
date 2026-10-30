@@ -982,6 +982,23 @@ body.fx .recap-card:active { transform: scale(.98); }
 .plus-done.trial { background: var(--brand-soft); color: var(--brand-strong); }
 .plus-buy2 { margin-top: 8px; }
 .plus-work { text-align: center; margin-top: 8px; font-weight: 600; color: var(--brand-strong); }
+/* the plans (monthly / yearly), chosen in place */
+.plus-plans { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 14px; }
+.plus-plan { position: relative; display: grid; gap: 2px; justify-items: center; padding: 12px 8px; border-radius: 16px; border: 2px solid var(--line); background: var(--surface-1); color: inherit; font: inherit; cursor: pointer; transition: border-color .2s, background-color .2s; }
+.plus-plan b { font-weight: 700; }
+.plus-plan span { font-size: .84rem; color: var(--on-surface-var); font-variant-numeric: tabular-nums; }
+.plus-plan.on { border-color: var(--brand); background: var(--brand-soft); }
+.plus-save { position: absolute; top: -10px; inset-inline-end: 10px; padding: 1px 8px; border-radius: 999px; background: var(--grad-money); color: #2b1a00; font: 700 .7rem var(--font); font-style: normal; white-space: nowrap; }
+/* inviting a friend: a month of Plus for both */
+.plus-invite { margin-top: 14px; display: grid; gap: 8px; }
+.plus-invite .pi-t { display: flex; align-items: center; gap: 8px; }
+.plus-invite .pi-t svg { flex: none; color: var(--brand-strong); }
+.plus-invite .pi-n b { font-variant-numeric: tabular-nums; }
+/* a thank-you tip after money came back */
+.plus-tip { margin-top: 12px; display: grid; gap: 6px; }
+.plus-tip-row { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 4px; }
+.plus-tip-row .btn { flex: 1 1 0; min-width: 72px; font-variant-numeric: tabular-nums; }
+@media (prefers-reduced-motion: reduce) { .plus-plan { transition: none; } }
 .limit-sheet .plus-list { margin-top: 4px; }
 .limit-sheet .btn.text.block { margin-top: 6px; }
 /* "try it on your card": the user's own card, in the chosen skin */

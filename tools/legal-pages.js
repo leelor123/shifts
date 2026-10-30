@@ -30,6 +30,8 @@ const EN = {
 <li><b>Fingerprint unlock</b> is handled entirely by the phone; the app never receives or stores fingerprint or face data.</li>
 <li><b>No ads, no tracking cookies, no third-party analytics.</b> Data is not sold or shared for marketing.</li>
 <li><b>Anonymous usage statistics (can be turned off):</b> once a day each device stores one record under a random ID that is not linked to the account: app version, install type, first/last day of use, number of active days, shift and payslip counts, an age group (under/over 18) and which features are on. No name, email, user ID, shift dates or amounts. Only the app's administrators can read it, as aggregate totals. Turning it off (Settings › Account &amp; sync) deletes the record.</li>
+<li><b>Friends' competition (only if you join):</b> your nickname and emoji, the friends you accepted and, unless you hide them, this month's, this year's and all-time gross and your average pay per hour. The card is visible <b>only to the friends on your list</b>; no real name, email, workplace or shift dates. Leaving (or deleting the account) deletes it.</li>
+<li><b>Inviting friends (only if you invite or were invited):</b> your invitation code and, if you joined through someone's link, a record linking your account ID to theirs with the date, readable only by the two of you, to give each the free month of Plus. The code is deleted with the account; the record of who invited whom (IDs only) is kept so an account is invited only once.</li>
 <li><b>Support requests (only if you send one):</b> the topic, what you wrote, the conversation with us, the first name you entered in the app and, if you choose, the app version and device type; when you write without signing in, also the email you give for the answer. Visible only to you and the app's administrators; deleted with the account.</li>
 <li><b>Third parties:</b> Google (authentication and storage), GitHub (hosting of the app code), Anthropic (only when you use an AI feature with your own API key; payslip text is redacted and shown to you before sending), font/code CDNs.</li>
 <li><b>Your rights:</b> view and edit everything in the app, export it (backup file / CSV), and delete your account and all data at any time (Settings › Account &amp; sync › Delete all data). See <a href="delete-account.html">delete-account.html</a>.</li>
@@ -47,7 +49,7 @@ const DELETE = `<p class="meta">מחיקת חשבון ונתונים · Account 
 <li>היכנסו ל<b>הגדרות › אני והחשבון › חשבון וסנכרון</b>.</li>
 <li>לחצו <b>"מחק את כל הנתונים מהחשבון"</b> ואשרו.</li>
 </ol>
-<p>המחיקה מיידית וסופית: כל הנתונים שנשמרו בחשבון (משמרות, תפקידים ותעריפים, הגדרות, תלושים, פערים, ימי חופשה ומחלה) נמחקים מהענן, החשבון עצמו נמחק ממערכת ההתחברות, והנתונים נמחקים גם מהמכשיר. לא נשמר עותק נוסף. לפני המחיקה אפשר לייצא גיבוי (הגדרות › גיבוי, ייבוא ונתונים).</p>
+<p>המחיקה מיידית וסופית: כל הנתונים שנשמרו בחשבון (משמרות, תפקידים ותעריפים, הגדרות, תלושים, פערים, ימי חופשה ומחלה) נמחקים מהענן, החשבון עצמו נמחק ממערכת ההתחברות, והנתונים נמחקים גם מהמכשיר. גם השורה בטבלת האלופים, הכרטיס בתחרות עם החברים וקוד ההזמנה שלך נמחקים. נשארת רק רשומה של מי הזמין את מי (מזהי חשבון בלבד, בלי שם או אימייל), כדי שכל חשבון יוזמן פעם אחת. לא נשמר עותק נוסף. לפני המחיקה אפשר לייצא גיבוי (הגדרות › גיבוי, ייבוא ונתונים).</p>
 <h2 id="data">מחיקת חלק מהנתונים, בלי למחוק את החשבון</h2>
 <ul>
 <li><b>משמרת או כל רשומה אחרת:</b> פותחים אותה ולוחצים על סמל הפח. המחיקה מגיעה גם לענן.</li>

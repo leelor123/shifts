@@ -89,6 +89,9 @@ async function main() {
     const frNoS = (o) => Object.assign({ n: 'שועל זריז 27', e: '🦊', t: 1790000000000, hide: false, f: ['u2'] }, o || {});
     const fr = (o) => Object.assign(frNoS(), { s: frS() }, o || {});
     const inv = (o) => Object.assign({ from: 'u1', n: 'שועל זריז 27', e: '🦊', t: 1790000000000, to: '' }, o || {});
+    const NOW = Date.parse('2026-10-30T12:00:00Z'); // every request's time (request.time)
+    const refd = (o) => Object.assign({ by: 'u1', c: 'abcdefghjk23', t: NOW - 60000 }, o || {});
+    const refc = (by) => [{ function: 'get', args: [{ exactValue: '/databases/(default)/documents/refc/abcdefghjk23' }], result: { value: { data: { by } } } }];
     const stat = () => ({ v: '1.5.0', p: 'android', first: '2026-10-01', last: '2026-10-13', days: 5, sh: 12, s30: 6, ps: 1, age: 'u18', f: { rights: true }, t: 1790000000000 });
     const cases = [
       ['owner can create a shift', 'ALLOW', 'create', me, `/users/u1/shifts/s1`, rec(5), null],
@@ -209,9 +212,29 @@ async function main() {
       ['the sender deletes an invitation', 'ALLOW', 'delete', me, '/inv/abcdefghijklmnop1', null, inv({ to: 'u2' })],
       ['the friend who accepted deletes it', 'ALLOW', 'delete', { uid: 'u2' }, '/inv/abcdefghijklmnop1', null, inv({ to: 'u2' })],
       ['a third player cannot delete it', 'DENY', 'delete', { uid: 'u3' }, '/inv/abcdefghijklmnop1', null, inv({ to: 'u2' })],
+      // inviting a friend to Shaati: refc/{code} → by; ref/{invitee} = { by, c, t } once (the gift of a Plus month)
+      ['a member makes their invitation code', 'ALLOW', 'create', me, '/refc/abcdefghjk23', { by: 'u1' }, null],
+      ['a code in someone else’s name is refused', 'DENY', 'create', me, '/refc/abcdefghjk23', { by: 'u2' }, null],
+      ['a short (guessable) code is refused', 'DENY', 'create', me, '/refc/abc', { by: 'u1' }, null],
+      ['a code with more in it is refused', 'DENY', 'create', me, '/refc/abcdefghjk23', { by: 'u1', email: 'a@b.c' }, null],
+      ['a code cannot be moved to another member', 'DENY', 'update', { uid: 'u2' }, '/refc/abcdefghjk23', { by: 'u2' }, { by: 'u1' }],
+      ['whoever opens the link reads the code', 'ALLOW', 'get', { uid: 'u2' }, '/refc/abcdefghjk23', null, { by: 'u1' }],
+      ['codes cannot be listed', 'DENY', 'list', { uid: 'u2' }, '/refc/abcdefghjk23', null, { by: 'u1' }],
+      ['the new friend writes who invited them', 'ALLOW', 'create', { uid: 'u2' }, '/ref/u2', refd(), null, null, refc('u1')],
+      ['…only for themselves', 'DENY', 'create', { uid: 'u3' }, '/ref/u2', refd(), null, null, refc('u1')],
+      ['…only with a real code of that member', 'DENY', 'create', { uid: 'u2' }, '/ref/u2', refd({ by: 'u9' }), null, null, refc('u1')],
+      ['inviting oneself is refused', 'DENY', 'create', me, '/ref/u1', refd(), null, null, refc('u1')],
+      ['a date far from now is refused', 'DENY', 'create', { uid: 'u2' }, '/ref/u2', refd({ t: NOW - 10 * 86400000 }), null, null, refc('u1')],
+      ['more fields are refused', 'DENY', 'create', { uid: 'u2' }, '/ref/u2', refd({ months: 99 }), null, null, refc('u1')],
+      ['once written, it never changes', 'DENY', 'update', { uid: 'u2' }, '/ref/u2', refd({ by: 'u3' }), refd(), null, refc('u3')],
+      ['…and is never removed (an account is invited once)', 'DENY', 'delete', { uid: 'u2' }, '/ref/u2', null, refd()],
+      ['the friend reads their own', 'ALLOW', 'get', { uid: 'u2' }, '/ref/u2', null, refd()],
+      ['the inviter reads it', 'ALLOW', 'get', me, '/ref/u2', null, refd()],
+      ['nobody else reads it', 'DENY', 'get', { uid: 'u3' }, '/ref/u2', null, refd()],
+      ['nobody else lists them', 'DENY', 'list', { uid: 'u3' }, '/ref/u2', null, refd()],
     ];
     const testCases = cases.map(([, expect, method, auth, p, data, existing, admins, mocks]) => {
-      const tc = { expectation: expect, request: { auth: auth || null, path: db + p, method } };
+      const tc = { expectation: expect, request: { auth: auth || null, path: db + p, method, time: new Date(NOW).toISOString() } };
       if (data) tc.request.resource = { data };
       // exists(admins/{uid}) is answered by a mock: true for the listed admins, false for everyone else
       tc.functionMocks = (admins || []).map((a) => ({ function: 'exists', args: [{ exactValue: '/databases/(default)/documents/admins/' + a }], result: { value: true } }))

@@ -43,6 +43,7 @@
     }
     // the friends' competition sends my card when its amounts changed (a little later, at most once in 20 s)
     if (root.FriendsView) root.FriendsView.changed();
+    if (root.Invite) root.Invite.changed(); // a friend's link: its gift once the first shift is in
   };
 
   /* ---------------- theme ---------------- */
@@ -583,7 +584,7 @@
    * hours than usual, no shift for a week, overlaps). The engine still finds those; they show where they belong
    * (the payslip check, the rights screen, the shift itself), not as notifications. A reminder before a planned
    * shift only when switched on in Settings. */
-  const NOTIFY = new Set(['taxrefund', 'weekly', 'monthly', 'record', 'goal', 'birthday', 'timer', 'backup', 'payslipDue', 'upcoming', 'confirmDone', 'holidayPay']);
+  const NOTIFY = new Set(['taxrefund', 'plusend', 'weekly', 'monthly', 'record', 'goal', 'birthday', 'timer', 'backup', 'payslipDue', 'upcoming', 'confirmDone', 'holidayPay']);
   const kindSent = (a) => NOTIFY.has(a.type) && !(a.type === 'goal' && a.severity !== 'good');
   // the reminder before a planned shift is off unless switched on
   const notifiable = (a) => kindSent(a) && (a.type === 'upcoming' ? S.settings.alerts.remindPlanned === true : S.settings.alerts.types[a.type] !== false);
@@ -614,10 +615,11 @@
     App.insights = res;
     const month = monthlyAlert();
     const refund = App.taxRefundAlert ? App.taxRefundAlert() : null; // a past year that looks like it holds a refund
+    const plusEnd = root.Plus && root.Plus.endAlert ? root.Plus.endAlert() : null; // the trial or the gift ends tomorrow
     // that year's alert already there: its amount kept current, read or not (it is never sent twice)
     const stale = refund && S.notifications.find((n) => n.key === refund.key && (n.title !== refund.title || n.body !== refund.body));
     if (stale) await Store.apply([{ store: 'notifications', put: Object.assign({}, stale, { title: refund.title, body: refund.body }) }], null);
-    const wanted = res.alerts.filter(notifiable).concat(month && notifiable(month) ? [month] : []).concat(refund && notifiable(refund) ? [refund] : []);
+    const wanted = res.alerts.filter(notifiable).concat(month && notifiable(month) ? [month] : []).concat(refund && notifiable(refund) ? [refund] : []).concat(plusEnd && notifiable(plusEnd) ? [plusEnd] : []);
     // notifications of the kinds that are no longer sent go from the list too (once)
     const gone = S.notifications.filter((n) => !kindSent(n));
     if (gone.length) await Store.apply(gone.map((n) => ({ store: 'notifications', del: n.id })), null);
@@ -875,6 +877,7 @@
     if (Intro && Intro.hold && document.fonts && document.fonts.ready) requestAnimationFrame(() => Intro.hold(document.fonts.ready));
     if (App.whatsNew) App.whatsNew();
     if (root.FriendsView) root.FriendsView.boot(); // an invitation that came with the address, accepted ones of mine
+    if (root.Invite) root.Invite.boot(); // a month of Plus for inviting a friend (or being invited)
   };
   // just before the opening show leaves, the app draws itself once more under it (still), so anything the
   // start-up work changed (the account, the admin check, Google Play) is already in place when it shows

@@ -152,6 +152,7 @@
     'installId', 'statsSentAt', 'activeDays', 'firstActiveDay', 'lastActiveDay',
     // Shaati Plus is checked on each phone (Google Play / the purchase code): never taken from a backup file
     'plus', 'plusInst', 'plusPreview', 'plusSeen', 'plusTrial', 'plusTrialEnd', 'plusNudge', 'plusUse', 'plusWall', 'plusSim',
+    'plusGift', 'plusGiftEnd', // a month of Plus for inviting a friend (or being invited): worked out from the account's documents (invite.js)
     'review', // when this phone was last asked for a rating
     'skinPhoto', // the pay card's own photo (Plus): this phone only
     'adminUid']; // the account this phone last heard is an admin (the server's rules decide what an admin may do)

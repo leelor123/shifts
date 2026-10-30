@@ -481,7 +481,10 @@
       const back = S.gaps.filter((x) => x.status === 'resolved').reduce((sum, x) => sum + x.amount, 0) + (g.status === 'resolved' ? 0 : g.amount);
       UI.openSheet({ title: 'הכסף חזר אליך! 🎉', body: `${App.mascotSays ? App.mascotSays('party', `קיבלת בחזרה ${U.money(g.amount, 0)} שהגיעו לך. כל הכבוד שבדקת!`, { size: 72 }) : ''}
         ${back > g.amount ? `<div class="small muted" style="margin:6px 0 12px">בסך הכול שעתי החזירה לך ${U.money(back, 0)}.</div>` : ''}
-        <button class="btn big block" data-act="found-share" data-amount="${Math.round(g.amount)}" data-k="back">${icon('share')} לשתף ולעזור לחברים לבדוק</button>` });
+        <button class="btn big block" data-act="found-share" data-amount="${Math.round(g.amount)}" data-k="back">${icon('share')} לשתף ולעזור לחברים לבדוק</button>
+        ${root.Plus && root.Plus.tipCard ? root.Plus.tipCard() : ''}`,
+        // a thank-you tip, once, when tips can be given here (plus.js)
+        onMount: (el) => el.addEventListener('click', (e) => { if (root.Plus && root.Plus.tipClick) root.Plus.tipClick(e); }) });
     }
   };
   /** A picture to share: "Shaati found me ₪X" (the slip's check) or "I got back ₪X" — no employer, no name. */

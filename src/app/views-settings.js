@@ -677,6 +677,7 @@
           ${t('confirmDone', 'אחרי משמרת מתוכננת: לשאול אם עבדת').replace('data-s=', 'data-redraw data-s=')}
           ${A.types.confirmDone !== false ? `<div class="grid2">${F.sel('כמה זמן אחרי הסיום', 's.alerts.reminders.confirmAfter', [[15, '15 דקות'], [30, 'חצי שעה'], [60, 'שעה'], [120, 'שעתיים'], [240, '4 שעות'], [480, '8 שעות']], (A.reminders || {}).confirmAfter || 30)}</div>` : ''}
           ${t('payslipDue', 'ביום התשלום: להזין את התלוש')}
+          ${root.Plus && root.Plus.visible() ? t('plusend', 'יום לפני ש-Plus במתנה או הניסיון נגמרים') : ''}
           ${t('backup', 'תזכורת גיבוי')}<div class="grid2">${F.num('כל (ימים)', 's.alerts.backupDays', A.backupDays)}</div></div>`;
     },
     mount: (el, draw) => {
