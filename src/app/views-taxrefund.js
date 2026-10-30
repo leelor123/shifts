@@ -86,10 +86,10 @@
         ${thisYear ? '<div class="small muted">על השנה הזו אפשר לבקש החזר רק אחרי שהיא נגמרת.</div>' : ''}
         <div class="tr-106">
           <div class="small"><b>יש לך טופס 106 לשנה הזו?</b> הקלדת שלושה מספרים ממנו הופכת את ההערכה למדויקת (סכום כל המעסיקים).</div>
-          <div class="grid3">
-            <label class="field"><span class="lbl">ברוטו שנתי ₪</span><input class="input" type="number" inputmode="decimal" step="any" data-tr106="${x.y}.gross" value="${f.gross || ''}"></label>
-            <label class="field"><span class="lbl">מס שנוכה ₪</span><input class="input" type="number" inputmode="decimal" step="any" data-tr106="${x.y}.tax" value="${f.tax || ''}"></label>
-            <label class="field"><span class="lbl">הפקדת עובד לפנסיה ₪</span><input class="input" type="number" inputmode="decimal" step="any" data-tr106="${x.y}.pension" value="${f.pension || ''}"></label>
+          <div class="tr-in">
+            <label><span>ברוטו שנתי ₪</span><input class="input" type="number" inputmode="decimal" step="any" data-tr106="${x.y}.gross" value="${f.gross || ''}"></label>
+            <label><span>מס שנוכה ₪</span><input class="input" type="number" inputmode="decimal" step="any" data-tr106="${x.y}.tax" value="${f.tax || ''}"></label>
+            <label><span>הפקדת עובד לפנסיה ₪</span><input class="input" type="number" inputmode="decimal" step="any" data-tr106="${x.y}.pension" value="${f.pension || ''}"></label>
           </div>
         </div>
       </div>
@@ -109,7 +109,7 @@
           : `<div class="tr-total-none">${all.length ? 'לפי מה שידוע כרגע, לא נראה שנלקח ממך יותר מדי מס' : 'עוד אין כאן הכנסה לחשב לפיה'}</div>`}
         <div class="tiny muted">מס הכנסה נלקח כל חודש כאילו תעבוד כך כל השנה. בשנה עם חודשים בלי עבודה, אחרי שחרור משירות או אחרי תואר, לרוב נלקח יותר מדי, ואפשר לקבל אותו בחזרה עד 6 שנים אחורה.</div>
       </div>
-      <div class="section-title">${icon('user', 's')} עליך (בשביל נקודות הזיכוי)</div>
+      <div class="section-title">${icon('smile', 's')} עליך (בשביל נקודות הזיכוי)</div>
       <div class="card tr-me">
         ${askGender ? `<div class="field"><span class="lbl">מגדר</span><div class="chips"><button class="chip" data-tr-gender="m">זכר</button><button class="chip" data-tr-gender="f">נקבה</button></div></div>` : ''}
         ${askBirth ? `<label class="field"><span class="lbl">תאריך לידה</span><input class="input" type="date" data-tr-birth max="${U.todayKey()}"></label>` : ''}
@@ -117,12 +117,12 @@
           <option value=""${!sv.kind ? ' selected' : ''}>לא שירתתי / לא רלוונטי</option>
           <option value="army"${sv.kind === 'army' ? ' selected' : ''}>שירות צבאי (חובה)</option>
           <option value="national"${sv.kind === 'national' ? ' selected' : ''}>שירות לאומי או אזרחי</option></select></label>
-        ${sv.kind ? `<div class="grid2">
+        ${sv.kind ? `<div class="tr-pair">
           <label class="field"><span class="lbl">כמה חודשים שירתת</span><input class="input" type="number" inputmode="numeric" min="0" max="48" data-tr="service.months" value="${sv.months || ''}"></label>
           <label class="field"><span class="lbl">חודש השחרור</span><input class="input" type="month" data-tr="service.end" value="${sv.end || ''}" max="${U.todayKey().slice(0, 7)}"></label></div>` : ''}
-        <div class="grid2">
+        <div class="tr-pair">
           <label class="field"><span class="lbl">שנת סיום תואר ראשון</span><input class="input" type="number" inputmode="numeric" min="2000" max="${U.todayKey().slice(0, 4)}" placeholder="אין" data-tr="degree.year" value="${dg.year || ''}"></label>
-          ${+dg.year >= 2023 ? `<label class="field"><span class="lbl">כמה שנים למדת</span><input class="input" type="number" inputmode="numeric" min="1" max="5" data-tr="degree.studyYears" value="${dg.studyYears || 3}"></label>` : '<span></span>'}
+          ${+dg.year >= 2023 ? `<label class="field"><span class="lbl">כמה שנים למדת</span><input class="input" type="number" inputmode="numeric" min="1" max="5" data-tr="degree.studyYears" value="${dg.studyYears || 3}"></label>` : ''}
         </div>
         <div class="tiny muted">לא נכללים כאן: מגורים ביישוב מוטב, ילדים, עולה חדש, הורה יחיד, נכות, תרומות ועוד. אם אחד מהם נוגע לך, ההחזר יכול להיות גדול יותר: <a href="${TR.SIMULATOR_URL}" target="_blank" rel="noopener">הבדיקה של רשות המסים ↗</a></div>
       </div>
@@ -133,7 +133,7 @@
         <li><b>לבקש טופס 106</b> מכל מעסיק, לכל שנה. המעסיק חייב לתת אותו עד סוף מרץ של השנה שאחרי.</li>
         <li><b>להכין אישורים</b> לנקודות הזיכוי (תעודת שחרור, אישור זכאות לתואר) ופרטי חשבון בנק.</li>
         <li><b>להגיש באינטרנט</b> בקשה להחזר מס (טופס 135) באתר רשות המסים, בקשה אחת לכל שנה: <a href="${TR.FILE_URL}" target="_blank" rel="noopener">להגשה ↗</a></li>
-        <li><b>ההחזר מגיע לחשבון הבנק</b>, לרוב תוך כמה חודשים. אפשר לבקש עד 6 שנים אחורה.</li>
+        <li><b>ההחזר מגיע לחשבון הבנק</b> עם הפרשי הצמדה וריבית, לרוב תוך כמה חודשים. אפשר לבקש עד 6 שנים אחורה.</li>
       </ol>
       <button class="btn tonal block" data-tr-report>${icon('file', 's')} דוח החזר מס מלא (PDF)</button>
       <div class="disclaimer">${icon('info', 's')}<div>זו הערכה בלבד ואינה ייעוץ מס. החישוב לפי מדרגות המס ונקודות הזיכוי של כל שנה, והקובע הוא החישוב של רשות המסים.</div></div>`;
@@ -190,15 +190,15 @@
     });
   };
 
-  /** An alert once a past year looks like it holds a refund worth asking for (once per year and amount band). */
+  /** An alert once a past year looks like it holds a refund worth asking for: one per year, its amount kept current
+   *  (App.runInsights updates the title in place, never sends it again). */
   App.taxRefundAlert = function () {
     try {
       const y = +U.todayKey().slice(0, 4);
       const best = App.taxRefundAll().filter((x) => x.y < y && x.r.refund > 300).sort((a, b) => b.r.refund - a.r.refund)[0];
       if (!best) return null;
-      const band = Math.floor(best.r.refund / 500);
       return {
-        key: 'taxrefund-' + best.y + '-' + band, type: 'taxrefund', cat: 'money', severity: 'good', push: 'anomaly', data: { year: best.y },
+        key: 'taxrefund-' + best.y, type: 'taxrefund', cat: 'money', severity: 'good', push: 'anomaly', data: { year: best.y },
         title: `ייתכן שמגיע לך החזר מס של כ-${U.money(best.r.refund, 0)} על ${best.y}`,
         body: 'לפי ההכנסה ונקודות הזיכוי שלך. לחצו לפרטים ואיך מגישים.',
       };

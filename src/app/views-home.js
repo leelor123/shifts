@@ -240,11 +240,13 @@
     else if (weekly) item = { act: 'insights', ic: 'sparkle', cls: '', t: 'הסיכום השבועי שלך מוכן' };
     // the week before payday: how many days are left and about how much is coming (before tips and notes)
     else if ((pay = paydaySoon())) item = pay;
+    // a likely tax refund opens its own sheet, at its year
+    else if (unread[0] && unread[0].type === 'taxrefund') item = { act: 'tax-refund', year: unread[0].data && unread[0].data.year, ic: 'calc', cls: 'sev-good', t: unread[0].title };
     else if (unread[0]) item = { act: 'insights', ic: App.severityIcon[unread[0].severity] || 'bulb', cls: 'sev-' + (unread[0].severity || 'info'), t: unread[0].title };
     else if (live[0]) item = { act: 'insights', ic: 'bulb', cls: '', t: live[0].title };
     if (!item) return '';
     const more = item.cls === 'go' ? 0 : Math.max(0, unread.length - (unread.some((n) => n.title === item.t) ? 1 : 0));
-    return `<button class="highlight ${item.cls}" data-act="${item.act}"${item.id ? ` data-id="${item.id}"` : ''}>
+    return `<button class="highlight ${item.cls}" data-act="${item.act}"${item.id ? ` data-id="${item.id}"` : ''}${item.year ? ` data-year="${item.year}"` : ''}>
       <span class="hl-ic">${icon(item.ic, 's')}</span><span class="hl-t">${esc(item.t)}</span>${more ? `<span class="hl-more">+${more}</span>` : ''}${icon('left', 's')}</button>`;
   }
 

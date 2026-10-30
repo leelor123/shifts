@@ -669,6 +669,7 @@
           <div class="grid2">${F.sel('ביום', 's.alerts.weeklyDay', U.DAYS.map((d, i) => [i, d]), A.weeklyDay)}${F.num('בשעה', 's.alerts.weeklyHour', A.weeklyHour)}</div>
           ${t('monthly', 'סיכום חודשי (כשתקופת השכר נגמרת)')}</div>
         <div class="section-title">חדשות טובות</div><div class="card">${t('record', 'שיא אישי')}${t('goal', 'הגעת ליעד החודשי')}${t('birthday', 'יום הולדת')}</div>
+        <div class="section-title">כסף שמגיע לך</div><div class="card">${t('holidayPay', 'דמי חגים שלא שולמו')}${t('taxrefund', 'ייתכן שמגיע לך החזר מס')}</div>
         <div class="section-title">תזכורות</div><div class="card">
           ${t('timer', 'שכחתי לסיים משמרת')}<div class="grid2">${F.num('אחרי (שעות)', 's.alerts.timerHours', A.timerHours)}</div>
           ${F.sw('לפני משמרת מתוכננת', A.remindPlanned === true ? remindSummary(A) : 'כבוי', 's.alerts.remindPlanned', A.remindPlanned === true).replace('data-s=', 'data-redraw data-s=')}

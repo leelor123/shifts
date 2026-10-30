@@ -42,6 +42,7 @@
     birthday: { cat: 'reminder', label: 'יום הולדת' },
     minwage: { cat: 'money', label: 'שכר מינימום' },
     holidayPay: { cat: 'money', label: 'דמי חגים' },
+    taxrefund: { cat: 'money', label: 'החזר מס' },
     youth: { cat: 'health', label: 'חוק עבודת הנוער' },
   };
 
