@@ -2,7 +2,7 @@
 <html lang="he" dir="rtl">
 <head>
 <meta charset="utf-8">
-<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'sha256-jYt4F4tOyssSs6s3wfjO7/EqSFliVHrCyYTaB6Dd3u0=' 'sha256-173IK26q8EnU2ig2cCcd+Uod7OgGdRuDK3cnI+BQjUM=' https://www.gstatic.com https://apis.google.com https://cdnjs.cloudflare.com https://cdn.jsdelivr.net 'wasm-unsafe-eval'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com data:; img-src 'self' data: blob: https:; connect-src 'self' https: wss:; frame-src https://shiftpay-70ab6.firebaseapp.com https://accounts.google.com https://apis.google.com https://*.google.com; worker-src 'self' blob: https://cdnjs.cloudflare.com https://cdn.jsdelivr.net; media-src 'self' data: blob:; manifest-src 'self'; object-src 'none'; base-uri 'self'; form-action 'self'">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'sha256-jYt4F4tOyssSs6s3wfjO7/EqSFliVHrCyYTaB6Dd3u0=' 'sha256-um2093gTAkgqk1pmG+7WhPhq8Rx2ELxqJF+4CarTHYE=' https://www.gstatic.com https://apis.google.com https://cdnjs.cloudflare.com https://cdn.jsdelivr.net 'wasm-unsafe-eval'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com data:; img-src 'self' data: blob: https:; connect-src 'self' https: wss:; frame-src https://shiftpay-70ab6.firebaseapp.com https://accounts.google.com https://apis.google.com https://*.google.com; worker-src 'self' blob: https://cdnjs.cloudflare.com https://cdn.jsdelivr.net; media-src 'self' data: blob:; manifest-src 'self'; object-src 'none'; base-uri 'self'; form-action 'self'">
 <script>(function(){try{var l=localStorage.getItem('shaati.lang'),h=document.documentElement.lang;if(l&&l!==h&&/^(he|ar|ru|en|fr|es)$/.test(l)&&!sessionStorage.getItem('langHop')){sessionStorage.setItem('langHop','1');location.replace((l==='he'?'index.html':'index.'+l+'.html')+location.search+location.hash)}else sessionStorage.removeItem('langHop')}catch(e){}})();
 /* the fonts load without holding the first paint: a stylesheet linked in the head kept the screen blank (white,
    before the opening show) until it came, on every cold start; added by a script it does not block. The show waits for
@@ -1970,6 +1970,23 @@ body.fx .recap-card:active { transform: scale(.98); }
 .plus-done.trial { background: var(--brand-soft); color: var(--brand-strong); }
 .plus-buy2 { margin-top: 8px; }
 .plus-work { text-align: center; margin-top: 8px; font-weight: 600; color: var(--brand-strong); }
+/* the plans (monthly / yearly), chosen in place */
+.plus-plans { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 14px; }
+.plus-plan { position: relative; display: grid; gap: 2px; justify-items: center; padding: 12px 8px; border-radius: 16px; border: 2px solid var(--line); background: var(--surface-1); color: inherit; font: inherit; cursor: pointer; transition: border-color .2s, background-color .2s; }
+.plus-plan b { font-weight: 700; }
+.plus-plan span { font-size: .84rem; color: var(--on-surface-var); font-variant-numeric: tabular-nums; }
+.plus-plan.on { border-color: var(--brand); background: var(--brand-soft); }
+.plus-save { position: absolute; top: -10px; inset-inline-end: 10px; padding: 1px 8px; border-radius: 999px; background: var(--grad-money); color: #2b1a00; font: 700 .7rem var(--font); font-style: normal; white-space: nowrap; }
+/* inviting a friend: a month of Plus for both */
+.plus-invite { margin-top: 14px; display: grid; gap: 8px; }
+.plus-invite .pi-t { display: flex; align-items: center; gap: 8px; }
+.plus-invite .pi-t svg { flex: none; color: var(--brand-strong); }
+.plus-invite .pi-n b { font-variant-numeric: tabular-nums; }
+/* a thank-you tip after money came back */
+.plus-tip { margin-top: 12px; display: grid; gap: 6px; }
+.plus-tip-row { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 4px; }
+.plus-tip-row .btn { flex: 1 1 0; min-width: 72px; font-variant-numeric: tabular-nums; }
+@media (prefers-reduced-motion: reduce) { .plus-plan { transition: none; } }
 .limit-sheet .plus-list { margin-top: 4px; }
 .limit-sheet .btn.text.block { margin-top: 6px; }
 /* "try it on your card": the user's own card, in the chosen skin */
@@ -2690,6 +2707,52 @@ body:not(.fx) .money { transition: none; }
 .cl-now .cl-v b { color: var(--primary); }
 .cl-now .tag { margin-inline-end: 4px; vertical-align: 1px; }
 
+/* ---------- the tax refund sheet ---------- */
+.tr-sheet .sh-body { padding-bottom: calc(16px + var(--safe-b)); }
+.tr-hero { padding: 16px; display: grid; gap: 6px; }
+.tr-hero.good { background: var(--good-bg); color: var(--good); border-color: transparent; }
+.tr-hero.good .muted { color: inherit; opacity: .82; }
+.tr-total { justify-self: start; font: 800 2.1rem/1.1 var(--display); font-variant-numeric: tabular-nums; letter-spacing: -.01em; }
+.tr-total-none { font-weight: 700; font-size: 1rem; line-height: 1.4; }
+.tr-me { padding: 14px; display: grid; gap: 4px; }
+.tr-me .field { margin: 0 0 8px; }
+.tr-me .chips { flex-wrap: wrap; overflow: visible; }
+.tr-year { margin-bottom: 10px; padding: 0; }
+.tr-year.good { border-color: color-mix(in srgb, var(--good-mark) 45%, var(--line)); }
+.tr-year > summary { list-style: none; display: flex; align-items: center; gap: 10px; padding: 12px 14px; cursor: pointer; min-height: 52px; }
+.tr-year > summary::-webkit-details-marker { display: none; }
+.tr-y { font: 700 1.05rem var(--display); font-variant-numeric: tabular-nums; white-space: nowrap; }
+.tr-y small { font: 500 .74rem var(--font); color: var(--on-surface-var); }
+.tr-sum { flex: 1; min-width: 0; display: flex; flex-direction: column; align-items: flex-end; text-align: end; gap: 1px; }
+.tr-sum b { font: 800 1.1rem var(--display); color: var(--good); font-variant-numeric: tabular-nums; white-space: nowrap; }
+.tr-sum small { font-size: .74rem; color: var(--on-surface-var); }
+.tr-year > summary > svg:last-child { flex: none; color: var(--on-surface-var); transform: rotate(0deg); transition: transform .2s; }
+.tr-year[open] > summary > svg:last-child { transform: rotate(-90deg); }
+.tr-body { padding: 0 14px 14px; display: grid; gap: 6px; }
+.tr-body > .tag { justify-self: start; }
+.tr-body .kv { padding: 5px 0; }
+.tr-body .kv b { font-variant-numeric: tabular-nums; white-space: nowrap; }
+.tr-why { margin: 4px 0 0; padding-inline-start: 18px; display: grid; gap: 6px; font-size: .84rem; line-height: 1.5; }
+.tr-106 { margin-top: 6px; padding-top: 10px; border-top: 1px solid var(--line); display: grid; gap: 8px; }
+.tr-in { display: grid; gap: 8px; }
+.tr-in label { display: flex; align-items: center; gap: 10px; }
+.tr-in label span { flex: 1; min-width: 0; font-size: .84rem; color: var(--on-surface-var); }
+.tr-in .input { flex: none; width: 8.5em; max-width: 50%; font-variant-numeric: tabular-nums; }
+.tr-pair { display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 0 10px; }
+.tr-pair .field { min-width: 0; }
+.tr-steps { margin: 0; padding: 14px 14px 14px 14px; padding-inline-start: 34px; display: grid; gap: 10px; font-size: .88rem; line-height: 1.5; }
+@media (prefers-reduced-motion: reduce) { .tr-year > summary > svg:last-child { transition: none; } }
+
+/* the admin funnel: the share of the start, and of the step before */
+.adm-funnel .adm-bar .vv { width: 84px; display: grid; justify-items: start; line-height: 1.25; }
+.adm-drop { font-size: .68rem; font-weight: 500; color: var(--on-surface-var); white-space: nowrap; }
+
+/* the champions table: when a record was set, shown with a tap on its row */
+.lb-at { display: none; font-size: .7rem; font-weight: 500; color: var(--on-surface-var); white-space: nowrap; }
+.lb-row.show-at .lb-at, .lb-pod.show-at .lb-at { display: block; animation: rise .2s var(--pop) both; }
+[data-lb-at] { cursor: pointer; }
+@media (prefers-reduced-motion: reduce) { .lb-row.show-at .lb-at, .lb-pod.show-at .lb-at { animation: none; } }
+
 </style>
 </head>
 <body>
@@ -2712,7 +2775,7 @@ body:not(.fx) .money { transition: none; }
 <noscript><div style="padding:24px;font-family:sans-serif">האפליקציה דורשת JavaScript.</div></noscript>
 <script>
 window.APP_VERSION = '1.29.0';
-window.APP_BUILD = '1.29.0-60d11021';
+window.APP_BUILD = '1.29.0-368fb706';
 /* ---- core/util.js ---- */
 /* ============================================================
  * util.js — date/time helpers and formatting.
@@ -5971,12 +6034,12 @@ window.APP_BUILD = '1.29.0-60d11021';
         holidays: { rh1: true, rh2: true, yk: true, sukkot: true, shmini: true, pesach1: true, pesach7: true, shavuot: true, atzmaut: true },
         eveFriday: false, eveHoliday: false, eveFrom: '14:00',
       },
-      // --- net estimate (2025-2026 values; brackets frozen through 2027) ---
+      // --- net estimate: 2026's numbers; the engine follows each tax year (Engine.TAX_YEARS) unless these are changed ---
       tax: {
         creditPoints: 2.25,
         creditPointValue: 242,
         brackets: [ // monthly
-          [7010, 10], [10060, 14], [16150, 20], [22440, 31], [46690, 35], [60130, 47], [Infinity, 50],
+          [7010, 10], [10060, 14], [19000, 20], [25100, 31], [46690, 35], [60130, 47], [Infinity, 50],
         ],
         blReducedThreshold: null, // null = by law for the period's year (Engine.BL_YEARS); a number overrides it
         blReducedPct: 1.04, healthReducedPct: 3.23,
@@ -6006,7 +6069,10 @@ window.APP_BUILD = '1.29.0-60d11021';
       },
       minWageHourly: null, // null = by law, from the date and age (Engine.legalMinWage); a number overrides it
       shareStats: true, // anonymous usage statistics (stats.js); off deletes this device's record
-      gender: '', // '' | 'm' | 'f': only for the mandatory-pension age
+      gender: '', // '' | 'm' | 'f': the mandatory-pension age, and a woman's credit point in the tax refund
+      // the tax refund (views-taxrefund.js): service { kind: 'army'|'national', months, end: 'YYYY-MM' }, a first degree
+      // { year, studyYears }, and Form 106 numbers by year { gross, tax, pension }
+      taxProfile: { service: {}, degree: {}, y106: {} },
       // --- goals ---
       goal: { amount: 0, type: 'gross' },
       saving: { name: '', price: 0, from: '' }, // something to save up for: what, how much, counting the net earned since when
@@ -6035,7 +6101,7 @@ window.APP_BUILD = '1.29.0-60d11021';
         push: true,
       },
       // --- appearance ---
-      theme: 'system', accent: 'candy', fontScale: 1, font: 'rubik', skin: '', plusKey: '',
+      theme: 'system', accent: 'candy', fontScale: 1, font: 'rubik', skin: '', plusKey: '', refCode: '',
       withTravel: true, // the amount next to a shift includes its travel pay (a switch over the shift lists)
       hideMoney: false, // privacy: amounts blurred on screen (the eye on the pay card shows them)
       lb: { on: false, n: '', e: '', bg: '' }, // the games' champions table: joined, nickname, emoji, background (Plus)
@@ -6770,9 +6836,10 @@ window.APP_BUILD = '1.29.0-60d11021';
     const hActive = H.enabled && (!settings.startDate || monthsBetween(settings.startDate, p.periodTo || U.todayKey()) >= (+H.startAfterMonths || 0));
     const hishtalmut = hActive ? p.pensionBase * (+H.employeePct || 0) / 100 : 0;
     const hishtalmutEmployer = hActive ? p.pensionBase * (+H.employerPct || 0) / 100 : 0;
-    const brackets = T.brackets.map(([u, pct]) => [u === Infinity || u == null ? Infinity : u * months, pct]);
+    const law = taxLaw(T, p.periodTo || U.todayKey()); // the year's brackets and point (or the user's own)
+    const brackets = law.brackets.map(([u, pct]) => [u === Infinity || u == null ? Infinity : u * months, pct]);
     const taxBefore = incomeTaxRaw(gross, brackets);
-    const credits = (+T.creditPoints || 0) * (+T.creditPointValue || 0) * months;
+    const credits = (+T.creditPoints || 0) * law.point * months;
     const pensionCredit = Math.min(pensionEmployee, 0.07 * Math.min(gross, (+T.pensionCreditCap || 9700) * months)) * (+T.pensionCreditPct || 35) / 100;
     const incomeTax = Math.max(0, taxBefore - credits - pensionCredit);
     const lim = blLimits(T, p.periodTo || U.todayKey());
@@ -7061,6 +7128,32 @@ window.APP_BUILD = '1.29.0-60d11021';
    *  - recuperation pay: the day rate, private sector (extension order; 2026: 451.50, published 18.8.2026, for the
    *    whole 2026 recuperation year). */
   const BL_YEARS = { 2025: [7522, 50695], 2026: [7703, 51910] };
+  /* Income tax, by tax year: the monthly brackets [up to ₪, %] and the value of one credit point a month (kolzchut
+   * "מדרגות מס הכנסה", "מדרגות מס הכנסה - נתוני עבר" and "נקודת זיכוי", read 2026-10-30). 2025 is 2024's. 2026: the 20%
+   * bracket goes to 19,000 and the 31% to 25,100 (amendment 288, from January 2026); the point is frozen at 242 through
+   * 2027. The top 50% is 47% and the 3% surtax. A refund can be asked for six years back, so six years are kept. */
+  const TAX_YEARS = {
+    2020: { point: 219, brackets: [[6330, 10], [9080, 14], [14580, 20], [20260, 31], [42160, 35], [54300, 47], [Infinity, 50]] },
+    2021: { point: 218, brackets: [[6290, 10], [9030, 14], [14490, 20], [20140, 31], [41910, 35], [53970, 47], [Infinity, 50]] },
+    2022: { point: 223, brackets: [[6450, 10], [9240, 14], [14840, 20], [20620, 31], [42910, 35], [55270, 47], [Infinity, 50]] },
+    2023: { point: 235, brackets: [[6790, 10], [9730, 14], [15620, 20], [21710, 31], [45180, 35], [58190, 47], [Infinity, 50]] },
+    2024: { point: 242, brackets: [[7010, 10], [10060, 14], [16150, 20], [22440, 31], [46690, 35], [60130, 47], [Infinity, 50]] },
+    2026: { point: 242, brackets: [[7010, 10], [10060, 14], [19000, 20], [25100, 31], [46690, 35], [60130, 47], [Infinity, 50]] },
+  };
+  const bracketsKey = (b) => (Array.isArray(b) ? b.map(([u, p]) => (u === Infinity || u == null ? 'inf' : +u) + ':' + +p).join(',') : '');
+  /** The year's income tax brackets and point value for a date, unless the settings name others (a table any version
+   * saved as its default counts as "by the law", so stored copies follow the years too). */
+  function taxLaw(T, k) {
+    T = T || {};
+    const law = byYear(TAX_YEARS, k);
+    const tables = Object.values(TAX_YEARS);
+    const ownBrackets = Array.isArray(T.brackets) && T.brackets.length && !tables.some((t) => bracketsKey(t.brackets) === bracketsKey(T.brackets));
+    return {
+      brackets: ownBrackets ? T.brackets.map(([u, p]) => [u === null || u === 'Infinity' ? Infinity : +u, +p]) : law.brackets,
+      point: lawValue(T.creditPointValue, tables.map((t) => t.point)) ? law.point : +T.creditPointValue,
+      own: { brackets: ownBrackets, point: !lawValue(T.creditPointValue, tables.map((t) => t.point)) },
+    };
+  }
   const RECUP_YEARS = { 2023: 418, 2026: 451.5 };
   function byYear(table, k) {
     const y = +String(k || U.todayKey()).slice(0, 4);
@@ -7109,12 +7202,134 @@ window.APP_BUILD = '1.29.0-60d11021';
   }
 
   root.Engine = {
-    LAW_BREAK, validShift, validEntry, otByLaw, otDayHours, otWeekHours, WEEK_REG_H, WEEK_REG_H_MINOR, legalMinWage, minWageFor, youthRules, pensionMinAge, MIN_WAGE, BL_YEARS, RECUP_YEARS, blLimits, recuperationRate,
+    LAW_BREAK, validShift, validEntry, otByLaw, otDayHours, otWeekHours, WEEK_REG_H, WEEK_REG_H_MINOR, legalMinWage, minWageFor, youthRules, pensionMinAge, MIN_WAGE, BL_YEARS, RECUP_YEARS, TAX_YEARS, taxLaw, blLimits, recuperationRate,
     makeCtx, roleRate, roundMinutes, monthsBetween, buildSegments, hasOverrides, computeShift, computeAll,
     periodByKey, periodOf, dayValue, computeEntries, travelByDay, incomeTaxRaw, netEstimate, pensionActive,
     buildModel, totals, periodSummary, rangeSummary, pensionBaseOf, leaveBalances, holidayPay, vacationEntitlement, recuperationDays, ageAt, isMinor,
     dataIssues, ADJ_LABELS,
   };
+})(typeof window !== 'undefined' ? window : globalThis);
+
+/* ---- core/taxrefund.js ---- */
+/* ============================================================
+ * taxrefund.js — was too much income tax taken in a year, and how much would come back (an estimate).
+ *
+ * Income tax is taken every month as if the month's pay went on all year, with the credit points the employer
+ * knows of. The year's real tax is worked out on the whole year: its brackets, every credit point of every month
+ * (a resident's points count for the whole year, also months without work), and the credit for pension deposits.
+ * When the months taken add up to more, the difference comes back on request — up to six years back (Form 135,
+ * gov.il/he/service/itc135). Typical for the app's users: a student who worked part of the year, a discharged
+ * soldier or a new graduate whose points the employer never applied, a teenager taxed at all, two jobs at once.
+ *
+ * The credit points (kolzchut "נקודות זיכוי ממס הכנסה" and its pages, read 2026-10-30):
+ *  - a resident 2.25; a woman another 0.5;
+ *  - working youth aged 16–18: 1 (per month of those ages);
+ *  - discharged soldiers / national service, for 36 months from the month after discharge: men 23+ months of
+ *    service 2, 12–23 months 1; women 22+ 2, 12–22 1; national service 24+ 2, 12–23 1;
+ *  - a first degree: finished in 2023 or later, 1 point a year for as many years as it took (3 at most), from the
+ *    year after; finished 2014–2022, 1 point for one year (the year after);
+ *  - a home in a benefit settlement (יישוב מוטב), children, a new immigrant, a single parent, disability, donations
+ *    and more: not counted here (they only make the refund bigger; the sheet says so, and
+ *    the Tax Authority's own simulator counts them).
+ * The brackets and the point's value of each year: Engine.TAX_YEARS.
+ * ============================================================ */
+(function (root) {
+  'use strict';
+  const { U, Engine } = root;
+  const TR = {};
+  TR.YEARS_BACK = 6;
+  TR.FILE_URL = 'https://www.gov.il/he/service/itc135';
+  TR.SIMULATOR_URL = 'https://www.gov.il/he/service/simulator-employee'; // the Tax Authority's own refund check
+
+  const mk = (y, m) => y + '-' + String(m).padStart(2, '0');
+  const monthIndex = (key) => { const [y, m] = String(key).split('-').map(Number); return y * 12 + (m - 1); };
+  /** Age in whole years at the first of a month (null without a birth date). */
+  function ageAtMonth(birth, y, m) {
+    if (!birth) return null;
+    const [by, bm, bd] = String(birth).split('-').map(Number);
+    let a = y - by;
+    if (m < bm || (m === bm && 1 < bd)) a--;
+    return a;
+  }
+
+  /** The credit points of each month of a year: [{ total, parts: { resident, woman, youth, soldier, degree } }] × 12.
+   * p = { gender, birthDate, service: { kind: 'army'|'national', months, end: 'YYYY-MM' }, degree: { year, studyYears } } */
+  TR.pointsByMonth = function (p, year) {
+    p = p || {};
+    const out = [];
+    const sv = p.service || {};
+    const svMonths = +sv.months || 0;
+    let svPts = 0;
+    if (sv.kind && sv.end && svMonths >= 12) {
+      const full = sv.kind === 'national' ? 24 : p.gender === 'f' ? 22 : 23;
+      svPts = svMonths >= full ? 2 : 1;
+    }
+    const svFrom = sv.end ? monthIndex(sv.end) + 1 : null; // the month after discharge, for 36 months
+    const dg = p.degree || {};
+    const dgYear = +dg.year || 0;
+    const dgYears = dgYear >= 2023 ? Math.min(3, Math.max(1, +dg.studyYears || 3)) : dgYear >= 2014 ? 1 : 0;
+    for (let m = 1; m <= 12; m++) {
+      const parts = { resident: 2.25, woman: p.gender === 'f' ? 0.5 : 0, youth: 0, soldier: 0, degree: 0 };
+      const age = ageAtMonth(p.birthDate, year, m);
+      if (age != null && age >= 16 && age < 18) parts.youth = 1;
+      const i = year * 12 + (m - 1);
+      if (svPts && i >= svFrom && i < svFrom + 36) parts.soldier = svPts;
+      if (dgYears && year > dgYear && year <= dgYear + dgYears) parts.degree = 1;
+      out.push({ total: parts.resident + parts.woman + parts.youth + parts.soldier + parts.degree, parts });
+    }
+    return out;
+  };
+
+  /**
+   * One year's estimate.
+   * months: [{ mk: 'YYYY-MM', gross, tax, pension, src: 'slip'|'shifts' }] — the months with income (from payslips
+   *   where there are, otherwise from the shifts); f106: { gross, tax, pension } for the whole year (wins when given);
+   * profile: see pointsByMonth; T: settings.tax (its own brackets / point value, if the user set any).
+   */
+  TR.estimate = function (year, months, profile, T, f106) {
+    const law = Engine.taxLaw(T || {}, year + '-06-01');
+    const brackets = law.brackets.map(([u, pct]) => [u === Infinity ? Infinity : u * 12, pct]);
+    const worked = (months || []).filter((x) => +x.gross > 0);
+    const from106 = !!(f106 && +f106.gross > 0);
+    const gross = from106 ? +f106.gross : worked.reduce((s, x) => s + +x.gross, 0);
+    const withheld = from106 ? +f106.tax || 0 : worked.reduce((s, x) => s + (+x.tax || 0), 0);
+    const pension = from106 ? +f106.pension || 0 : worked.reduce((s, x) => s + (+x.pension || 0), 0);
+    const points = TR.pointsByMonth(profile, year);
+    const pointsSum = points.reduce((s, x) => s + x.total, 0);
+    const taxBefore = Engine.incomeTaxRaw(gross, brackets);
+    const credits = pointsSum * law.point;
+    const capYear = ((T && +T.pensionCreditCap) || 9700) * 12;
+    const pensionCredit = Math.min(pension, 0.07 * Math.min(gross, capYear)) * (((T && +T.pensionCreditPct) || 35) / 100);
+    const liability = Math.max(0, taxBefore - credits - pensionCredit);
+    const refund = withheld - liability;
+    // why (the user reads these): only what fits the numbers
+    const reasons = [];
+    const workedMonths = new Set(worked.map((x) => x.mk)).size;
+    if (refund > 0) {
+      if (!from106 && workedMonths && workedMonths < 12) reasons.push('partYear');
+      const extra = points.reduce((s, x) => s + x.parts.youth + x.parts.soldier + x.parts.degree, 0);
+      if (extra > 0) reasons.push('points');
+      if (profile && profile.minorTaxed) reasons.push('minor');
+      if (profile && profile.employers > 1) reasons.push('twoJobs');
+    }
+    const extraParts = { youth: 0, soldier: 0, degree: 0, woman: 0 };
+    for (const x of points) for (const k of Object.keys(extraParts)) extraParts[k] += x.parts[k];
+    return {
+      year, gross, withheld, pension, taxBefore, credits, pensionCredit, liability, refund, reasons,
+      points: pointsSum / 12, pointParts: extraParts, pointValue: law.point, workedMonths,
+      src: from106 ? '106' : worked.length && worked.every((x) => x.src === 'slip') ? 'slips' : worked.some((x) => x.src === 'slip') ? 'mixed' : 'shifts',
+    };
+  };
+
+  /** The tax years a refund can still be asked for today (the six before this one), newest first, and this one. */
+  TR.years = function (todayKey) {
+    const y = +String(todayKey || U.todayKey()).slice(0, 4);
+    const out = [y];
+    for (let i = 1; i <= TR.YEARS_BACK; i++) out.push(y - i);
+    return out;
+  };
+
+  root.TaxRefund = TR;
 })(typeof window !== 'undefined' ? window : globalThis);
 
 /* ---- core/insights.js ---- */
@@ -7162,6 +7377,8 @@ window.APP_BUILD = '1.29.0-60d11021';
     birthday: { cat: 'reminder', label: 'יום הולדת' },
     minwage: { cat: 'money', label: 'שכר מינימום' },
     holidayPay: { cat: 'money', label: 'דמי חגים' },
+    taxrefund: { cat: 'money', label: 'החזר מס' },
+    plusend: { cat: 'reminder', label: 'סוף Plus במתנה או הניסיון' },
     youth: { cat: 'health', label: 'חוק עבודת הנוער' },
   };
 
@@ -8917,6 +9134,38 @@ window.APP_BUILD = '1.29.0-60d11021';
     }
     return out;
   }
+  /**
+   * The phone's own copy of a game's row ({ d, w, m, y, a, t: { period: when } }) after a game: every period the
+   * score improves, with the time it was set. Kept whether or not the player is in the table, so joining later
+   * (or a game played offline) brings today's, this week's, this month's and this year's bests, not only all time.
+   */
+  function record(local, game, score, dateKey, now) {
+    const v = improve(local, game, score, dateKey);
+    if (!Object.keys(v).length) return local || {};
+    const t = Object.assign({}, (local || {}).t);
+    for (const p of Object.keys(v)) t[p] = now;
+    return Object.assign({}, local, v, { t });
+  }
+  /**
+   * What the published row is missing: the periods where the phone's copy is better now (as values to store, with
+   * their times under t). {} = nothing to send.
+   */
+  function pending(local, remote, dateKey) {
+    const out = {};
+    if (!local) return out;
+    for (const p of PERIODS) {
+      const mine = scoreIn(local, p, dateKey);
+      if (mine > 0 && mine > scoreIn(remote, p, dateKey)) {
+        out[p] = local[p];
+        const at = local.t && +local.t[p];
+        if (at > 0) out.t = Object.assign({}, out.t, { [p]: at });
+      }
+    }
+    return out;
+  }
+  /** When a period's best was set (ms), or 0 when not known (a score from before the times were kept). */
+  const timeOf = (gameRow, period) => +((gameRow && gameRow.t) || {})[period] || 0;
+
   /** A nickname is shown to everyone: '' when fine, otherwise what is wrong with it. */
   function nickProblem(n) {
     const t = String(n || '').trim().replace(/\s+/g, ' ');
@@ -8960,7 +9209,7 @@ window.APP_BUILD = '1.29.0-60d11021';
     return 'השיאים של כל הזמנים';
   }
 
-  root.Leaderboard = { P, PERIODS, MAX, EMOJI, keys, pack, scoreOf, keyOf, range, scoreIn, improve, nickProblem, firstName, randomNick, resetText };
+  root.Leaderboard = { P, PERIODS, MAX, EMOJI, keys, pack, scoreOf, keyOf, range, scoreIn, improve, record, pending, timeOf, nickProblem, firstName, randomNick, resetText };
 })(typeof window !== 'undefined' ? window : globalThis);
 
 /* ---- core/friends.js ---- */
@@ -9046,6 +9295,59 @@ window.APP_BUILD = '1.29.0-60d11021';
 
   root.Friends = { MAX_FRIENDS, PERIODS, INVITE_DAYS, stats, valueOf, table, addFriend, removeFriend, code, codeFrom, monthKey, yearKey };
   if (typeof module !== 'undefined') module.exports = root.Friends;
+})(typeof window !== 'undefined' ? window : globalThis);
+
+/* ---- core/referral.js ---- */
+/* ============================================================
+ * referral.js — "invite a friend, and both get a month of Shaati Plus" (pure, tested).
+ *
+ * A member's invitation code, refc/{code} = { by: their uid }: the link carries only the
+ * code (?ref=CODE), never the uid. A new user who came with it, once they recorded a shift,
+ * writes ref/{their uid} = { by, c: the code, t: when } — once, never changed or removed
+ * (firestore.rules), so an account is invited once. Both sides work out their gift from
+ * these documents: a month each, one after the other, from the day it was given; an
+ * inviter gets at most MAX months (the first ones).
+ * ============================================================ */
+(function (root) {
+  'use strict';
+  const DAY = 86400000;
+  const MONTH = 30 * DAY;
+  const MAX = 6; // months an inviter can get (fake accounts can't turn it into Plus for ever)
+  const LINK_DAYS = 30; // a link opened longer ago than this is not used any more
+
+  /** An invitation code: 12 letters and digits (the rules want 10 to 20). */
+  function code(rand) {
+    const abc = 'abcdefghijkmnpqrstuvwxyz23456789';
+    const bytes = rand ? rand(12) : Array.from({ length: 12 }, () => Math.floor(Math.random() * 256));
+    return Array.from(bytes, (b) => abc[b % abc.length]).join('');
+  }
+  /** The code from an address (?ref=CODE), if it is one. */
+  function codeFrom(search) {
+    const m = /[?&]ref=([a-z0-9]{10,20})(?:&|$)/.exec(String(search || ''));
+    return m ? m[1] : null;
+  }
+
+  /**
+   * The gift: mine = when I was invited (null: I wasn't), invited = when each friend I invited joined.
+   * Every gift is a month, after the one before it ends (or from its own day, if that is later).
+   * → { until (0: none), months, friends (how many joined through me) }
+   */
+  function gift(mine, invited) {
+    const mineOk = typeof mine === 'number' && mine > 0;
+    const friends = (invited || []).filter((t) => typeof t === 'number' && t > 0).sort((a, b) => a - b);
+    const grants = (mineOk ? [mine] : []).concat(friends.slice(0, MAX)).sort((a, b) => a - b);
+    let until = 0;
+    for (const t of grants) until = Math.max(until, t) + MONTH;
+    return { until, months: grants.length, friends: friends.length };
+  }
+
+  /** May this phone's user take the gift of a link? Only someone new (no shift before the link) and a recent link. */
+  function canClaim(o) {
+    return !!o && !o.hadShifts && typeof o.linkAt === 'number' && o.now - o.linkAt >= 0 && o.now - o.linkAt < LINK_DAYS * DAY;
+  }
+
+  root.Referral = { DAY, MONTH, MAX, LINK_DAYS, code, codeFrom, gift, canClaim };
+  if (typeof module !== 'undefined') module.exports = root.Referral;
 })(typeof window !== 'undefined' ? window : globalThis);
 
 /* ---- app/ui.js ---- */
@@ -11755,6 +12057,7 @@ window.APP_BUILD = '1.29.0-60d11021';
     'installId', 'statsSentAt', 'activeDays', 'firstActiveDay', 'lastActiveDay',
     // Shaati Plus is checked on each phone (Google Play / the purchase code): never taken from a backup file
     'plus', 'plusInst', 'plusPreview', 'plusSeen', 'plusTrial', 'plusTrialEnd', 'plusNudge', 'plusUse', 'plusWall', 'plusSim',
+    'plusGift', 'plusGiftEnd', // a month of Plus for inviting a friend (or being invited): worked out from the account's documents (invite.js)
     'review', // when this phone was last asked for a rating
     'skinPhoto', // the pay card's own photo (Plus): this phone only
     'adminUid']; // the account this phone last heard is an admin (the server's rules decide what an admin may do)
@@ -12413,6 +12716,7 @@ window.APP_BUILD = '1.29.0-60d11021';
     }
     // the friends' competition sends my card when its amounts changed (a little later, at most once in 20 s)
     if (root.FriendsView) root.FriendsView.changed();
+    if (root.Invite) root.Invite.changed(); // a friend's link: its gift once the first shift is in
   };
 
   /* ---------------- theme ---------------- */
@@ -12953,7 +13257,7 @@ window.APP_BUILD = '1.29.0-60d11021';
    * hours than usual, no shift for a week, overlaps). The engine still finds those; they show where they belong
    * (the payslip check, the rights screen, the shift itself), not as notifications. A reminder before a planned
    * shift only when switched on in Settings. */
-  const NOTIFY = new Set(['weekly', 'monthly', 'record', 'goal', 'birthday', 'timer', 'backup', 'payslipDue', 'upcoming', 'confirmDone', 'holidayPay']);
+  const NOTIFY = new Set(['taxrefund', 'plusend', 'weekly', 'monthly', 'record', 'goal', 'birthday', 'timer', 'backup', 'payslipDue', 'upcoming', 'confirmDone', 'holidayPay']);
   const kindSent = (a) => NOTIFY.has(a.type) && !(a.type === 'goal' && a.severity !== 'good');
   // the reminder before a planned shift is off unless switched on
   const notifiable = (a) => kindSent(a) && (a.type === 'upcoming' ? S.settings.alerts.remindPlanned === true : S.settings.alerts.types[a.type] !== false);
@@ -12983,7 +13287,12 @@ window.APP_BUILD = '1.29.0-60d11021';
     const res = insightsNow();
     App.insights = res;
     const month = monthlyAlert();
-    const wanted = res.alerts.filter(notifiable).concat(month && notifiable(month) ? [month] : []);
+    const refund = App.taxRefundAlert ? App.taxRefundAlert() : null; // a past year that looks like it holds a refund
+    const plusEnd = root.Plus && root.Plus.endAlert ? root.Plus.endAlert() : null; // the trial or the gift ends tomorrow
+    // that year's alert already there: its amount kept current, read or not (it is never sent twice)
+    const stale = refund && S.notifications.find((n) => n.key === refund.key && (n.title !== refund.title || n.body !== refund.body));
+    if (stale) await Store.apply([{ store: 'notifications', put: Object.assign({}, stale, { title: refund.title, body: refund.body }) }], null);
+    const wanted = res.alerts.filter(notifiable).concat(month && notifiable(month) ? [month] : []).concat(refund && notifiable(refund) ? [refund] : []).concat(plusEnd && notifiable(plusEnd) ? [plusEnd] : []);
     // notifications of the kinds that are no longer sent go from the list too (once)
     const gone = S.notifications.filter((n) => !kindSent(n));
     if (gone.length) await Store.apply(gone.map((n) => ({ store: 'notifications', del: n.id })), null);
@@ -13128,6 +13437,12 @@ window.APP_BUILD = '1.29.0-60d11021';
       if (root.Cloud && root.Cloud.preload) root.Cloud.preload(); // the sign-in's code downloads meanwhile
       await root.Intro.drawn();
     }
+    // the tax brackets follow the law of each tax year: a stored table that is some year's own (a default an earlier
+    // version saved) becomes this year's, so the settings show what is used; a table the user typed stays theirs
+    {
+      const T = S.settings.tax, law = Engine.taxLaw(T, U.todayKey());
+      if (T && !law.own.brackets && JSON.stringify(T.brackets) !== JSON.stringify(law.brackets.map(([u, p]) => [u, p]))) await Store.setSettings((s) => { s.tax.brackets = law.brackets.map(([u, p]) => [u, p]); });
+    }
     // the minimum wage now follows the law (by date and age): stored copies of old defaults are dropped
     if (!S.meta.minWageAuto) {
       if ([32.3, 34.32, 34.33].includes(+S.settings.minWageHourly)) await Store.setSettings((s) => { s.minWageHourly = null; });
@@ -13225,6 +13540,7 @@ window.APP_BUILD = '1.29.0-60d11021';
     if (action === 'share-in' && App.receiveShare) App.receiveShare(); // shared to the app (sw.js)
     if (action === 'support' && App.actions.support) setTimeout(() => App.actions.support(), 300); // Play testers' feedback link
     if (action === 'plus' && root.Plus) setTimeout(() => root.Plus.sheet(), 600); // back from the web checkout (?action=plus): straight to the code field
+    if (action === 'tax-refund' && App.actions['tax-refund']) setTimeout(() => App.actions['tax-refund']({ dataset: {} }), 600); // the website's tax refund page
     setTimeout(() => { App.runInsights(); App.autoBackupCheck(); }, 1200);
     // is Shaati Plus for sale here, and owned? (Google Play, Android app only) The opening show does not wait for
     // the answer: the design in use is kept on the phone (meta.plus), so the first screen already has it, and the
@@ -13234,6 +13550,7 @@ window.APP_BUILD = '1.29.0-60d11021';
     if (Intro && Intro.hold && document.fonts && document.fonts.ready) requestAnimationFrame(() => Intro.hold(document.fonts.ready));
     if (App.whatsNew) App.whatsNew();
     if (root.FriendsView) root.FriendsView.boot(); // an invitation that came with the address, accepted ones of mine
+    if (root.Invite) root.Invite.boot(); // a month of Plus for inviting a friend (or being invited)
   };
   // just before the opening show leaves, the app draws itself once more under it (still), so anything the
   // start-up work changed (the account, the admin check, Google Play) is already in place when it shows
@@ -13907,6 +14224,7 @@ window.FIREBASE_CONFIG = {
     if (root.Support) await root.Support.forget();
     if (root.Champions) await root.Champions.forget();
     if (root.FriendsView) await root.FriendsView.forget();
+    if (root.Invite) await root.Invite.forget();
     for (const st of SYNC.concat(['kv'])) {
       const snap = await fs.getDocs(fs.collection(db, 'users', uid, st));
       for (let i = 0; i < snap.docs.length; i += 400) {
@@ -13987,7 +14305,10 @@ window.FIREBASE_CONFIG = {
         roles: App.roles().length > 1, notif: ('Notification' in root) && Notification.permission === 'granted',
         // Shaati Plus, for the admin dashboard's sales numbers (yes/no only)
         plus: !!(S.meta.plus && S.meta.plus.active), plusWeb: !!(S.meta.plus && S.meta.plus.active && S.meta.plus.src === 'web'), plusSeen: !sim && !!S.meta.plusSeen,
-        plusWall: !sim && !!S.meta.plusWall, plusTry: !sim && !!S.meta.plusTrial, // reached a free allowance / started the free trial (16 keys: the most the rules allow)
+        plusWall: !sim && !!S.meta.plusWall, plusTry: !sim && !!S.meta.plusTrial, // reached a free allowance / started the free trial
+        // opened the tax refund check, got a month of Plus for an invitation (given or taken), a friend joined through
+        // the link, gave a thank-you tip (20 keys: the most the rules allow)
+        tax: !!S.meta.usedTaxRefund, gift: !!(S.meta.plusGift && S.meta.plusGift.months), inv: !!(S.meta.plusGift && S.meta.plusGift.friends), tip: +S.meta.tips > 0,
       }; })(), // an admin's Plus preview is never counted
       t: Date.now(),
     };
@@ -14101,6 +14422,10 @@ window.PAY_CONFIG = {
   const BILLING = 'https://play.google.com/billing';
   const SUB = 'shaati_plus_monthly'; // the subscription's id in Google Play Console (a monthly base plan, ₪6.90)
   const SKU = 'shaati_plus'; // the earlier one-time product: whoever bought it keeps Plus
+  const YEAR = 'shaati_plus_yearly'; // a yearly subscription, offered beside the monthly one once it exists in Play Console
+  // a thank-you tip (one-time products, used up at once so they can be given again): offered after money came back
+  // thanks to the payslip check, only once they exist in Play Console (or on the web: PAY_CONFIG.lemon.tips)
+  const TIPS = ['shaati_tip_small', 'shaati_tip_medium', 'shaati_tip_large'];
   const LS_API = 'https://api.lemonsqueezy.com/v1/licenses/';
   // Pay-card skins (styles-v3.css .sk-<id>): dark enough everywhere for the card's white text
   const SKINS = {
@@ -14116,7 +14441,8 @@ window.PAY_CONFIG = {
   const NSFW_MODEL = 'https://cdn.jsdelivr.net/gh/infinitered/nsfwjs@v4.4.0/models/mobilenet_v2/';
   const TRIAL_DAYS = 3; // a free trial, once per phone, wherever Plus can be bought
   const cfg = () => (root.PAY_CONFIG && root.PAY_CONFIG.lemon) || {};
-  const Plus = { SKU, SUB, SKINS, available: false, price: '', monthly: true };
+  const Plus = { SKU, SUB, YEAR, TIPS, SKINS, available: false, price: '', monthly: true, yearly: null, tips: [] };
+  let plan = 'm'; // the plan chosen in the Plus page ('y' once a yearly one is offered and chosen)
   let playSku = SUB; // what Google Play sells here (the subscription; the one-time product only if that is all there is)
   const owned = () => !!(S.meta.plus && S.meta.plus.active);
   Plus.owned = owned;
@@ -14134,8 +14460,10 @@ window.PAY_CONFIG = {
    */
   const sim = () => (App.isAdmin ? (S.meta.plusSim === 'free' ? 'free' : S.meta.plusPreview ? 'plus' : '') : '');
   Plus.preview = sim;
-  /** Plus features are on: bought, in the free trial, or an admin previewing them on this phone. */
-  Plus.active = () => owned() || Plus.inTrial() || sim() === 'plus';
+  /** A month of Plus for inviting a friend, or for being invited (invite.js), and not bought. */
+  Plus.gifted = () => !owned() && !!root.Invite && root.Invite.until() > Date.now();
+  /** Plus features are on: bought, in the free trial, a gift, or an admin previewing them on this phone. */
+  Plus.active = () => owned() || Plus.inTrial() || Plus.gifted() || sim() === 'plus';
   /** Anything about Plus is shown only when it can be bought here, or is already on (or an admin previews it). */
   Plus.visible = () => Plus.available || Plus.webShop() || Plus.active() || !!sim();
   /** The pay-card skin in use ('' = the regular card). */
@@ -14157,7 +14485,7 @@ window.PAY_CONFIG = {
   }
   function fmtPrice(p) {
     if (!p) return '';
-    try { return new Intl.NumberFormat(root.U.LOCALE, { style: 'currency', currency: p.currency, maximumFractionDigits: 2 }).format(+p.value); } catch (e) { return `${p.value} ${p.currency}`; }
+    try { return new Intl.NumberFormat(root.U.LOCALE, { style: 'currency', currency: p.currency, minimumFractionDigits: +p.value % 1 ? 2 : 0, maximumFractionDigits: 2 }).format(+p.value); } catch (e) { return `${p.value} ${p.currency}`; }
   }
   /** The price as it is said: "₪6.90 לחודש" for the subscription. */
   Plus.priceText = () => { const pr = Plus.price || cfg().price || ''; return pr ? pr + (Plus.monthly ? ' לחודש' : '') : ''; };
@@ -14173,7 +14501,7 @@ window.PAY_CONFIG = {
   }
   /** true / false from Google Play; null when it cannot tell (offline). */
   async function playOwns(svc) {
-    try { return ((await svc.listPurchases()) || []).some((p) => p && (p.itemId === SUB || p.itemId === SKU)); } catch (e) { return null; }
+    try { return ((await svc.listPurchases()) || []).some((p) => p && (p.itemId === SUB || p.itemId === YEAR || p.itemId === SKU)); } catch (e) { return null; }
   }
 
   /* ---------------- the web: a purchase code from Lemon Squeezy ---------------- */
@@ -14216,7 +14544,12 @@ window.PAY_CONFIG = {
       if (!svc) play = null;
       else {
         let d, failed = false;
-        try { const all = (await svc.getDetails([SUB, SKU])) || []; d = all.find((x) => x && x.itemId === SUB) || all.find((x) => x && x.itemId === SKU); } catch (e) { failed = true; }
+        let all = [];
+        try { all = ((await svc.getDetails([SUB, YEAR, SKU].concat(TIPS))) || []).filter(Boolean); d = all.find((x) => x.itemId === SUB) || all.find((x) => x.itemId === SKU) || all.find((x) => x.itemId === YEAR); } catch (e) { failed = true; }
+        // the yearly plan beside the monthly one, and the tips, only when they exist in Play Console
+        const y = all.find((x) => x.itemId === YEAR);
+        if (y && d && d.itemId !== YEAR) Plus.yearly = { sku: YEAR, price: fmtPrice(y.price), value: +(y.price && y.price.value) || 0 };
+        Plus.tips = all.filter((x) => TIPS.includes(x.itemId)).map((x) => ({ sku: x.itemId, price: fmtPrice(x.price), value: +(x.price && x.price.value) || 0 })).sort((a, b) => a.value - b.value);
         if (failed) play = null;
         else if (d) {
           Plus.available = true;
@@ -14229,6 +14562,12 @@ window.PAY_CONFIG = {
       }
     }
     if (!Plus.available && cfg().price) { Plus.price = cfg().price; Plus.monthly = (root.PAY_CONFIG || {}).monthly !== false; }
+    // the web: a yearly checkout and tip links, when they are set up (pay-config.js)
+    if (!Plus.available && Plus.webShop()) {
+      if (cfg().checkoutYearly && cfg().priceYearly) Plus.yearly = { url: cfg().checkoutYearly, price: cfg().priceYearly, value: +cfg().priceYearlyValue || 0 };
+      Plus.tips = (cfg().tips || []).filter((t) => t && t.url && t.price).map((t) => ({ url: t.url, price: t.price, value: +t.value || 0 }));
+    }
+    if (Plus.yearly && plan === 'm' && Plus.saving() >= 15) plan = 'y'; // a real saving: the yearly plan comes first
     const web = S.settings.plusKey ? await webOwns() : 'na';
     if (play === true) await setOwned(true, 'play');
     else if (web === true) await setOwned(true, 'web');
@@ -14241,20 +14580,21 @@ window.PAY_CONFIG = {
   /** Buying: Google Play's own sheet in the Android app, Lemon Squeezy's checkout elsewhere. */
   Plus.buy = async function () {
     if (sim() && !Plus.available && !Plus.webShop()) { UI.toast('תצוגה מקדימה: כאן ייפתח התשלום. הוא יעבוד אחרי שחשבון התשלומים יוגדר'); return false; }
-    if (inPlayApp()) return buyPlay();
+    const yearly = plan === 'y' && Plus.yearly;
+    if (inPlayApp()) return buyPlay(yearly ? YEAR : playSku);
     if (Plus.webShop()) {
-      root.open(cfg().checkout, '_blank', 'noopener');
+      root.open(yearly ? Plus.yearly.url : cfg().checkout, '_blank', 'noopener');
       return false; // Plus turns on with the code from the receipt
     }
     UI.toast(sim() ? 'תצוגה מקדימה: כאן ייפתח התשלום. הוא יעבוד אחרי שחשבון התשלומים יוגדר' : 'הרכישה עוד לא זמינה כאן');
     return false;
   };
-  async function buyPlay() {
+  async function buyPlay(sku) {
     const svc = await service();
     if (!svc || !Plus.available) { UI.toast('הרכישה עוד לא זמינה כאן'); return false; }
     let res;
     try {
-      const req = new PaymentRequest([{ supportedMethods: BILLING, data: { sku: playSku } }], { total: { label: 'Total', amount: { currency: 'ILS', value: '0' } } });
+      const req = new PaymentRequest([{ supportedMethods: BILLING, data: { sku } }], { total: { label: 'Total', amount: { currency: 'ILS', value: '0' } } });
       res = await req.show();
     } catch (e) {
       if (!e || e.name !== 'AbortError') UI.toast('הרכישה לא הושלמה. אפשר לנסות שוב');
@@ -14301,6 +14641,44 @@ window.PAY_CONFIG = {
     await Plus.init();
     UI.toast(owned() ? (before ? 'Shaati Plus פעיל ✓' : 'Shaati Plus שוחזר ✓') : inPlayApp() ? 'לא נמצאה רכישה בחשבון Google הזה' : 'לא נמצאה רכישה. אפשר להזין את הקוד מהמייל');
   };
+
+  /** The monthly price as a number (Google Play's, else the web's). */
+  const monthValue = () => +Plus.priceValue || +(root.PAY_CONFIG || {}).price || 0;
+  /** How much less the yearly plan is than twelve months, in whole percent (0: no yearly plan, or no saving). */
+  Plus.saving = () => {
+    const y = Plus.yearly && +Plus.yearly.value, m = monthValue();
+    return y > 0 && m > 0 ? Math.max(0, Math.round((1 - y / (m * 12)) * 100)) : 0;
+  };
+
+  /** A thank-you tip (Google Play: a one-time product, used up at once so it can be given again; the web: a link). */
+  Plus.tip = async function (t) {
+    if (!t) return false;
+    if (t.url) { root.open(t.url, '_blank', 'noopener'); return false; }
+    const svc = await service();
+    if (!svc) { UI.toast('אפשר לתת טיפ רק באפליקציה מ-Google Play'); return false; }
+    let res;
+    try {
+      res = await new PaymentRequest([{ supportedMethods: BILLING, data: { sku: t.sku } }], { total: { label: 'Total', amount: { currency: 'ILS', value: '0' } } }).show();
+    } catch (e) {
+      if (!e || e.name !== 'AbortError') UI.toast('התשלום לא הושלם. אפשר לנסות שוב');
+      return false;
+    }
+    try {
+      const token = res.details && res.details.purchaseToken;
+      if (token && typeof svc.consume === 'function') await svc.consume(token).catch(() => {});
+      await res.complete('success');
+    } catch (e) { /* the payment itself went through */ }
+    await Store.setMeta({ tips: (+S.meta.tips || 0) + 1 });
+    if (root.Fx) root.Fx.celebrate('big');
+    UI.toast('תודה ענקית! זה עוזר להשאיר את שעתי חינם ובלי פרסומות 💜');
+    return true;
+  };
+  /** The tip offer, after money came back thanks to the payslip check (nothing when no tip can be given here). */
+  Plus.tipCard = () => (Plus.tips.length && !sim() ? `<div class="card plus-tip"><b>שעתי עזרה לך? 💜</b>
+      <div class="small muted">אפשר לפרגן בטיפ קטן, פעם אחת, בלי מנוי. זה עוזר להשאיר את שעתי חינם ובלי פרסומות.</div>
+      <div class="plus-tip-row">${Plus.tips.map((t, i) => `<button class="btn tonal" data-tip="${i}">${esc(t.price)}</button>`).join('')}</div></div>` : '');
+  /** A tap in a sheet that holds the tip card. */
+  Plus.tipClick = (e) => { const b = e.target.closest('[data-tip]'); if (b) Plus.tip(Plus.tips[+b.dataset.tip]).then((ok) => { if (ok) UI.closeTop(); }); return !!b; };
 
   /** Mini cards of every skin (also used in the settings). */
   Plus.skinTiles = (cur, locked) => `<div class="skin-pick">
@@ -14400,32 +14778,52 @@ window.PAY_CONFIG = {
       const web = Plus.webShop();
       const price = Plus.priceText();
       const trial = Plus.inTrial();
-      el.querySelector('[data-plus-body]').innerHTML = `
+      const gift = Plus.gifted();
+      const yr = plan === 'y' && !!Plus.yearly;
+      // the plans, once a yearly one is offered: chosen in place (the page is patched, nothing flashes)
+      const plans = Plus.yearly ? `<div class="plus-plans" role="radiogroup" aria-label="מסלול">
+          <button class="plus-plan ${!yr ? 'on' : ''}" data-plan="m" role="radio" aria-checked="${!yr}"><b>חודשי</b><span>${esc(price)}</span></button>
+          <button class="plus-plan ${yr ? 'on' : ''}" data-plan="y" role="radio" aria-checked="${yr}"><b>שנתי</b><span>${esc(Plus.yearly.price)} לשנה</span>${Plus.saving() ? `<i class="plus-save">חיסכון ${Plus.saving()}%</i>` : ''}</button></div>` : '';
+      // inviting a friend: a month for each of them (not for someone who pays already: the friend's month is still there)
+      const g = root.Invite ? root.Invite.gift() : null;
+      const invite = g && !owned() && !S.settings.demo && root.Cloud && root.Cloud.user ? `<div class="card plus-invite">
+          <div class="pi-t">${icon('gift', 's')}<b>חודש Plus במתנה, לך ולחבר/ה</b></div>
+          <div class="small muted">כל חבר/ה שמצטרף/ת עם הקישור שלך ורושם/ת משמרת: חודש Plus במתנה לכל אחד מכם (עד ${root.Invite.MAX} חודשים).</div>
+          ${g.friends ? `<div class="small pi-n">הצטרפו בזכותך: <b>${g.friends}</b></div>` : ''}
+          <button class="btn tonal block" data-plus-invite>${icon('send', 's')} להזמין חבר/ה</button></div>` : '';
+      const note = yr
+        ? (play ? 'מנוי שנתי דרך Google Play, מתחדש כל שנה. מבטלים בכל רגע ב-⁠Google Play › תשלומים ומינויים, ו-⁠Plus נשאר עד סוף השנה ששולמה.' : 'מנוי שנתי בדף תשלום מאובטח של Lemon Squeezy, מתחדש כל שנה. מבטלים בכל רגע מהקישור שבמייל. אחרי התשלום מגיע במייל קוד הפעלה.')
+        : Plus.monthly
+          ? (play ? 'מנוי חודשי דרך Google Play, מתחדש כל חודש. מבטלים בכל רגע ב-⁠Google Play › תשלומים ומינויים, ו-⁠Plus נשאר עד סוף החודש ששולם.' : 'מנוי חודשי בדף תשלום מאובטח של Lemon Squeezy, מתחדש כל חודש. מבטלים בכל רגע מהקישור שבמייל. אחרי התשלום מגיע במייל קוד הפעלה.')
+          : (play ? 'תשלום אחד דרך Google Play, בלי מנוי ובלי חיובים נוספים.' : 'תשלום אחד בדף תשלום מאובטח של Lemon Squeezy, בלי מנוי. אחרי התשלום מגיע במייל קוד הפעלה.');
+      root.Dom.patch(el.querySelector('[data-plus-body]'), `
         ${App.mascotSays ? App.mascotSays(on ? 'party' : 'happy', on ? 'תודה שאת/ה איתנו! 💜' : 'רוצים לפרגן לשעתי ולקבל עיצובים מיוחדים?', { size: 64 }) : ''}
         ${Plus.skinTiles(Plus.skin(), !on)}
         <div class="card plus-list">
           <div>${icon('palette', 's')}<span><b>${Object.keys(SKINS).length} עיצובים לכרטיס השכר</b><small>זהב, גלקסיה, ניאון, לבה ועוד, בכרטיס שבמסך הבית</small></span></div>
           <div>${icon('chart', 's')}<span><b>ניתוח מתקדם וייצוא דוחות בלי הגבלה</b><small>בחינם: ${QUOTA.analysis.n} ניתוחים ו-${QUOTA.export.n} ייצואים בחודש</small></span></div>
+          <div>${icon('calc', 's')}<span><b>דוח החזר מס מלא (PDF)</b><small>כל השנים, הסיבות, מה לצרף ואיפה מגישים. ההערכה עצמה חינם</small></span></div>
           <div>${icon('trophy', 's')}<span><b>רקע מיוחד בטבלת האלופים</b><small>כולם יראו אותך בעיצוב שבחרת, עם תג Plus</small></span></div>
           <div>${icon('sparkle', 's')}<span><b>תג תומך/ת במסך הבית</b><small>שכולם יידעו מי עוזר/ת לשעתי להישאר בלי פרסומות</small></span></div>
           <div>${icon('star', 's')}<span><b>תודה ענקית ממני</b><small>עוזר להמשיך לפתח, ולהשאיר את האפליקציה בלי פרסומות</small></span></div>
           <div>${icon('check', 's')}<span><b>כל השאר נשאר חינם</b><small>משמרות, חישוב שכר, זכויות, בדיקת תלוש, דוחות ומשחקים</small></span></div>
         </div>
-        ${on && !trial ? `<div class="plus-done">${icon('check')} ${owned() ? 'Shaati Plus פעיל אצלך' : 'תצוגה מקדימה של מנהל'}</div>
+        ${on && !trial && !gift ? `<div class="plus-done">${icon('check')} ${owned() ? 'Shaati Plus פעיל אצלך' : 'תצוגה מקדימה של מנהל'}</div>
             ${owned() && Plus.monthly ? `<button class="btn text sm block" data-plus-manage>${icon('wallet', 's')} ניהול או ביטול המנוי</button>` : ''}`
           : `${trial ? `<div class="plus-done trial">${icon('sparkle')} תקופת ניסיון · ${trialLeft()}</div>` : ''}
-             ${Plus.canTrial() ? `<button class="btn big block plus-buy" data-plus-trial>${icon('sparkle')} לנסות ${TRIAL_DAYS} ימים בחינם</button>` : ''}
-             <button class="btn ${Plus.canTrial() ? 'tonal plus-buy2' : 'big plus-buy'} block" data-plus-buy ${(play ? Plus.available : web) || sim() ? '' : 'disabled'}>${icon(Plus.canTrial() ? 'star' : 'sparkle', Plus.canTrial() ? 's' : '')} ${trial ? 'להמשיך עם Plus' : buyWord()}${price ? ' · ' + esc(price) : ''}</button>
-             ${Plus.workPrice() ? `<div class="tiny plus-work">${esc(Plus.workPrice())}</div>` : ''}
+             ${gift && !trial ? `<div class="plus-done trial">${icon('gift')} Plus במתנה עד ${root.U.fmtDate(root.U.epochKey(root.Invite.until()))}</div>` : ''}
+             ${plans}
+             ${Plus.canTrial() && !gift ? `<button class="btn big block plus-buy" data-plus-trial>${icon('sparkle')} לנסות ${TRIAL_DAYS} ימים בחינם</button>` : ''}
+             <button class="btn ${Plus.canTrial() && !gift ? 'tonal plus-buy2' : 'big plus-buy'} block" data-plus-buy ${(play ? Plus.available : web) || sim() ? '' : 'disabled'}>${icon(Plus.canTrial() && !gift ? 'star' : 'sparkle', Plus.canTrial() && !gift ? 's' : '')} ${trial || gift ? 'להמשיך עם Plus' : yr ? 'מנוי שנתי' : buyWord()}${yr ? ' · ' + esc(Plus.yearly.price) + ' לשנה' : price ? ' · ' + esc(price) : ''}</button>
+             ${Plus.workPrice() && !yr ? `<div class="tiny plus-work">${esc(Plus.workPrice())}</div>` : ''}
              <div class="plus-pay">${play ? '<span>Google Play</span><span>כרטיס אשראי</span><span>Google Pay</span><span>PayPal</span>' : '<span>כרטיס אשראי</span><span>Apple Pay</span><span>Google Pay</span><span>PayPal</span>'}</div>
-             <div class="tiny muted plus-note">${Plus.monthly
-                ? (play ? 'מנוי חודשי דרך Google Play, מתחדש כל חודש. מבטלים בכל רגע ב-⁠Google Play › תשלומים ומינויים, ו-⁠Plus נשאר עד סוף החודש ששולם.' : 'מנוי חודשי בדף תשלום מאובטח של Lemon Squeezy, מתחדש כל חודש. מבטלים בכל רגע מהקישור שבמייל. אחרי התשלום מגיע במייל קוד הפעלה.')
-                : (play ? 'תשלום אחד דרך Google Play, בלי מנוי ובלי חיובים נוספים.' : 'תשלום אחד בדף תשלום מאובטח של Lemon Squeezy, בלי מנוי. אחרי התשלום מגיע במייל קוד הפעלה.')} מתחת לגיל 18: בהסכמת הורה.</div>`}
-        ${(!on || trial) && !play && web ? `<div class="card plus-code ${opened ? 'hot' : ''}"><label class="field"><span class="lbl">${opened ? 'שילמת? מדביקים כאן את הקוד מהמייל' : 'כבר יש לי קוד מהמייל'}</span>
+             <div class="tiny muted plus-note">${note} מתחת לגיל 18: בהסכמת הורה.</div>`}
+        ${invite}
+        ${(!on || trial || gift) && !play && web ? `<div class="card plus-code ${opened ? 'hot' : ''}"><label class="field"><span class="lbl">${opened ? 'שילמת? מדביקים כאן את הקוד מהמייל' : 'כבר יש לי קוד מהמייל'}</span>
             <input class="input" id="plus-key" dir="ltr" autocomplete="off" spellcheck="false" placeholder="XXXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXXXX"></label>
             <button class="btn tonal block" data-plus-redeem>${icon('key', 's')} הפעלה</button></div>` : ''}
         <div class="plus-links">${on && owned() ? '' : '<button class="btn text sm" data-plus-restore>שחזור רכישה</button>'}
-          ${App.isAdmin ? `<label class="tiny plus-preview"><input type="checkbox" data-plus-preview ${S.meta.plusPreview ? 'checked' : ''}> תצוגה מקדימה (מנהל)</label>` : ''}</div>`;
+          ${App.isAdmin ? `<label class="tiny plus-preview"><input type="checkbox" data-plus-preview ${S.meta.plusPreview ? 'checked' : ''}> תצוגה מקדימה (מנהל)</label>` : ''}</div>`);
       if (opened) { const i = el.querySelector('#plus-key'); if (i) i.focus(); }
     };
     UI.openSheet({
@@ -14434,12 +14832,16 @@ window.PAY_CONFIG = {
       body: '<div data-plus-body></div>',
       onMount: (el) => {
         draw(el);
+        // who joined through my link (asked at most every six hours): the page follows
+        if (root.Invite) root.Invite.refresh().then(() => { if (el.isConnected) draw(el); });
         let busy = false;
         const run = async (fn) => { if (busy) return; busy = true; try { if (await fn()) draw(el); } finally { busy = false; } };
         el.addEventListener('click', (e) => {
           const b = e.target.closest('button');
           if (!b) return;
-          if (b.hasAttribute('data-plus-trial')) run(() => Plus.startTrial(Plus.skin() || 'gold'));
+          if (b.dataset.plan) { plan = b.dataset.plan; draw(el); if (root.Fx) root.Fx.play('tick'); }
+          else if (b.hasAttribute('data-plus-invite')) root.Invite.share();
+          else if (b.hasAttribute('data-plus-trial')) run(() => Plus.startTrial(Plus.skin() || 'gold'));
           else if (b.hasAttribute('data-plus-buy')) run(async () => { const ok = await Plus.buy(); if (!ok && !inPlayApp() && Plus.webShop()) { opened = true; return true; } return ok; });
           else if (b.hasAttribute('data-plus-redeem')) run(() => Plus.redeem((el.querySelector('#plus-key') || {}).value));
           else if (b.hasAttribute('data-plus-restore')) run(async () => { await Plus.restore(); return true; });
@@ -14470,10 +14872,28 @@ window.PAY_CONFIG = {
   /** At the end of a trial the look goes back, also when the app stays open. */
   function watchTrial() {
     clearTimeout(trialTimer);
-    const until = +((S.meta.plusTrial || {}).until || 0);
-    if (owned() || !(until > Date.now())) return;
+    // the trial's end, or the gift's (inviting a friend), whichever is next
+    const until = [+((S.meta.plusTrial || {}).until || 0), root.Invite ? root.Invite.until() : 0].filter((t) => t > Date.now()).sort((a, b) => a - b)[0] || 0;
+    if (owned() || !until) return;
     trialTimer = setTimeout(() => { App.applyTheme(); if (!App.blocking) App.rerender(); }, Math.min(until - Date.now() + 500, 2 ** 31 - 1));
   }
+  /** The gift changed (a friend joined through my link, or I was invited): the look and its end follow. */
+  Plus.giftChanged = () => { watchTrial(); App.applyTheme(); if (!App.blocking) App.rerender(); };
+  /** A day before the trial or the gift ends: a note and the phone's notification (App.runInsights), once. */
+  Plus.endAlert = () => {
+    if (owned() || sim()) return null;
+    const trialUntil = Plus.inTrial() ? +S.meta.plusTrial.until : 0;
+    const giftUntil = Plus.gifted() ? root.Invite.until() : 0;
+    const until = Math.max(trialUntil, giftUntil);
+    const left = until - Date.now();
+    if (!until || left > DAY || left < 3600000) return null;
+    const gift = giftUntil >= trialUntil;
+    return {
+      key: 'plusend-' + Math.round(until / 60000), type: 'plusend', cat: 'reminder', severity: 'info', push: 'anomaly',
+      title: gift ? 'חודש ה-Plus במתנה נגמר מחר' : 'הניסיון של Shaati Plus נגמר מחר',
+      body: `אחרי זה כרטיס השכר חוזר לעיצוב הרגיל. אפשר להמשיך עם Plus, ${termsWord()}.`,
+    };
+  };
   const trialLeft = () => { const d = Math.max(1, Math.ceil(((S.meta.plusTrial || {}).until - Date.now()) / DAY)); return d === 1 ? 'נשאר יום אחד' : `נשארו ${d} ימים`; };
   Plus.startTrial = async (skin) => {
     if (!Plus.canTrial()) return false;
@@ -14661,6 +15081,12 @@ window.PAY_CONFIG = {
     const n = S.meta.plusNudge || {};
     if (n.x && Date.now() - n.x < NUDGE_REST) return '';
     const close = '<button class="icon-btn plus-nudge-x" data-act="plus-nudge-x" aria-label="סגירה ל-24 שעות">' + icon('x', 's') + '</button>';
+    const giftEnd = root.Invite ? root.Invite.until() : 0;
+    if (giftEnd && giftEnd <= Date.now() && S.meta.plusGiftEnd !== giftEnd) {
+      return `<div class="card plus-nudge sk-${SKINS[S.settings.skin] ? S.settings.skin : 'gold'}">${close}
+        <div class="pn-t">חודש ה-Plus במתנה הסתיים 🎁</div><div class="pn-s">להמשיך עם Plus? ${Plus.priceText() ? esc(Plus.priceText()) + ', ' : ''}${termsWord()}. ואפשר גם להזמין עוד חברים: חודש במתנה על כל אחד.</div>
+        <div class="pn-a"><button class="btn sm" data-act="plus-open">${icon('star', 's')} להמשיך</button><button class="btn text sm" data-act="plus-nudge-x">לא, תודה</button></div></div>`;
+    }
     if (S.meta.plusTrial && !S.meta.plusTrialEnd) {
       const name = SKINS[S.settings.skin] || 'המיוחד';
       return `<div class="card plus-nudge sk-${SKINS[S.settings.skin] ? S.settings.skin : 'gold'}">${close}
@@ -14679,7 +15105,9 @@ window.PAY_CONFIG = {
   /** ✕, "no, thanks" or "not now": away for 24 hours (the end-of-trial card gives way to the usual one). */
   App.actions['plus-nudge-x'] = async () => {
     const patch = { plusNudge: Object.assign({}, S.meta.plusNudge || {}, { x: Date.now() }) };
-    if (S.meta.plusTrial && !S.meta.plusTrialEnd) patch.plusTrialEnd = true;
+    const giftEnd = root.Invite ? root.Invite.until() : 0;
+    if (giftEnd && giftEnd <= Date.now() && S.meta.plusGiftEnd !== giftEnd) patch.plusGiftEnd = giftEnd;
+    else if (S.meta.plusTrial && !S.meta.plusTrialEnd) patch.plusTrialEnd = true;
     await Store.setMeta(patch);
     App.rerender();
   };
@@ -14710,6 +15138,144 @@ window.PAY_CONFIG = {
   };
 
   root.Plus = Plus;
+})(typeof window !== 'undefined' ? window : globalThis);
+
+/* ---- app/invite.js ---- */
+/* ============================================================
+ * invite.js — "invite a friend, and both of you get a month of Shaati Plus".
+ *
+ * My link carries my invitation code (?ref=CODE, refc/{code} → my uid; the uid itself
+ * is never in a link). Someone new who opens it keeps the code on the phone; once they
+ * have signed in, finished the setup and recorded a shift, their app writes ref/{uid}
+ * (once per account: firestore.rules never lets it change or go). Both apps then work
+ * out the gift from these documents (core/referral.js): a month each, one after the
+ * other, at most six from inviting. The gift is kept on the phone (meta.plusGift) and
+ * asked again at most every six hours. Plus treats it like the trial: plus.js.
+ * ============================================================ */
+(function (root) {
+  'use strict';
+  const { Store, UI, App } = root;
+  const S = Store.S;
+  const R = root.Referral;
+  const APP_URL = 'https://leelor123.github.io/shifts/';
+  const Cloud = () => root.Cloud;
+  const signedIn = () => !!(Cloud() && Cloud().user);
+  const uid = () => Cloud().user.uid;
+  const rand = (k) => { const a = new Uint8Array(k); crypto.getRandomValues(a); return a; };
+  const Invite = { MAX: R.MAX };
+  root.Invite = Invite;
+
+  /* a code that came with the address: kept until it is used (signing in may take a reload), off the address at once */
+  const KEY = 'shaati.ref';
+  try {
+    const c = R.codeFrom(location.search);
+    if (c) {
+      // the first link counts (opening another one later does not move the day it came)
+      if (!localStorage.getItem(KEY)) localStorage.setItem(KEY, JSON.stringify({ c, at: Date.now() }));
+      const u = new URL(location.href); u.searchParams.delete('ref');
+      history.replaceState(history.state, '', u.pathname + (u.search || '') + u.hash);
+    }
+  } catch (e) { /* no storage: the link is not kept */ }
+  const pending = () => { try { const p = JSON.parse(localStorage.getItem(KEY) || 'null'); return p && typeof p.c === 'string' && +p.at > 0 ? p : null; } catch (e) { return null; } };
+  const drop = () => { try { localStorage.removeItem(KEY); } catch (e) { /* none */ } };
+
+  /** The gift as last known: { until (0: none), months, friends, at }. */
+  Invite.gift = () => S.meta.plusGift || { until: 0, months: 0, friends: 0, at: 0 };
+  Invite.until = () => +(Invite.gift().until || 0);
+
+  /** My invitation code (made once, kept in the settings so every phone of the account shares it). */
+  async function myCode() {
+    if (/^[a-z0-9]{10,20}$/.test(S.settings.refCode || '')) return S.settings.refCode;
+    const c = R.code(rand);
+    const { fs, db } = await Cloud().sdk();
+    await fs.setDoc(fs.doc(db, 'refc', c), { by: uid() });
+    await Store.setSettings((s) => { s.refCode = c; });
+    return c;
+  }
+  Invite.link = async () => APP_URL + '?ref=' + (await myCode());
+
+  /** Sends my link (the phone's share sheet, or copied). */
+  Invite.share = async function () {
+    if (!signedIn()) { UI.toast('צריך להתחבר עם חשבון Google'); return; }
+    let url;
+    try { url = await Invite.link(); } catch (e) { UI.toast(navigator.onLine ? 'לא הצלחנו ליצור קישור. נסו שוב' : 'אין חיבור לאינטרנט'); return; }
+    const text = 'שעתי מחשבת לי את השכר לפי החוק: שבתות, שעות נוספות והכול. מצטרפים עם הקישור שלי ומקבלים חודש Shaati Plus במתנה 🎁';
+    try { if (navigator.share) { await navigator.share({ title: 'Shaati', text, url }); return; } } catch (e) { if (e && e.name === 'AbortError') return; }
+    await UI.copyText(text + ' ' + url);
+    UI.toast('הקישור הועתק. אפשר להדביק בוואטסאפ 💚');
+  };
+
+  /** Asks who invited me and whom I invited, and works out the gift (at most every six hours, unless forced). */
+  let asking = null;
+  Invite.refresh = function (force) {
+    if (!signedIn() || S.settings.demo) return Promise.resolve();
+    const g = Invite.gift();
+    if (!force && g.at && Date.now() - g.at < 6 * 3600000) return Promise.resolve();
+    if (asking) return asking;
+    asking = (async () => {
+      try {
+        const { fs, db } = await Cloud().sdk();
+        const mine = await fs.getDoc(fs.doc(db, 'ref', uid()));
+        const theirs = await fs.getDocs(fs.query(fs.collection(db, 'ref'), fs.where('by', '==', uid()), fs.limit(50)));
+        const next = R.gift(mine.exists() ? +mine.data().t : null, theirs.docs.map((d) => +d.data().t));
+        const before = g.at ? +g.friends || 0 : next.friends; // the first answer on a phone is not news
+        await Store.setMeta({ plusGift: Object.assign(next, { at: Date.now() }) });
+        if (next.friends > before) {
+          if (root.Fx) root.Fx.celebrate('big');
+          UI.toast(next.friends - before === 1 ? 'חבר/ה הצטרף/ה בזכותך: עוד חודש Plus במתנה 🎁' : `${next.friends - before} חברים הצטרפו בזכותך: עוד חודשי Plus במתנה 🎁`);
+        }
+        if (root.Plus && root.Plus.giftChanged) root.Plus.giftChanged();
+      } catch (e) { /* offline: asked again next time */ } finally { asking = null; }
+    })();
+    return asking;
+  };
+
+  /**
+   * Takes the gift of the link I came with: once I'm signed in, set up and recorded a shift after it. Someone
+   * who had shifts before the link (not new), or a link older than a month, does not; a code of mine, or an
+   * account invited already (the rules refuse a second one), lets it go.
+   */
+  let claiming = false;
+  Invite.claim = async function () {
+    const p = pending();
+    if (!p || claiming || !signedIn() || !S.settings.onboarded || S.settings.demo) return false;
+    const had = S.shifts.some((s) => (+s.createdAt || 0) < p.at);
+    if (!R.canClaim({ hadShifts: had, linkAt: p.at, now: Date.now() })) { drop(); return false; }
+    if (!S.shifts.some((s) => (+s.createdAt || 0) >= p.at)) return false; // after the first shift
+    claiming = true;
+    try {
+      const { fs, db } = await Cloud().sdk();
+      const rc = await fs.getDoc(fs.doc(db, 'refc', p.c));
+      const by = rc.exists() ? rc.data().by : null;
+      if (!by || by === uid()) { drop(); return false; }
+      await fs.setDoc(fs.doc(db, 'ref', uid()), { by, c: p.c, t: Date.now() });
+      drop();
+      await Invite.refresh(true);
+      if (root.Fx) root.Fx.celebrate('big');
+      UI.toast('קיבלת חודש Shaati Plus במתנה 🎁');
+      // the gift is the designs: straight to choosing one for the card
+      if (root.Plus && root.Plus.design && !App.blocking && !document.querySelector('.sheet, .dialog')) setTimeout(() => root.Plus.design(), 900);
+      return true;
+    } catch (e) {
+      if (e && /permission/i.test(e.code || e.message || '')) drop(); // invited once already, or the code is gone
+      return false;
+    } finally { claiming = false; }
+  };
+
+  /** At start, and after the numbers changed (a shift was saved): the link's gift, then the gift as it stands. */
+  Invite.boot = () => { setTimeout(() => { Invite.claim().then((took) => { if (!took) Invite.refresh(); }); }, 4000); };
+  let later = 0;
+  Invite.changed = () => {
+    if (!pending()) return;
+    clearTimeout(later);
+    later = setTimeout(() => Invite.claim(), 3000);
+  };
+  /** Deleting the account: my code goes (who invited whom stays: an account is invited once), and the gift. */
+  Invite.forget = async () => {
+    const c = S.settings.refCode;
+    if (c && signedIn()) { try { const { fs, db } = await Cloud().sdk(); await fs.deleteDoc(fs.doc(db, 'refc', c)); } catch (e) { /* gone already */ } }
+    await Store.setMeta({ plusGift: null });
+  };
 })(typeof window !== 'undefined' ? window : globalThis);
 
 /* ---- app/review.js ---- */
@@ -16170,11 +16736,13 @@ A cell with only a shift name and no hours: use בוקר 07:00-15:00, צהריי
     else if (weekly) item = { act: 'insights', ic: 'sparkle', cls: '', t: 'הסיכום השבועי שלך מוכן' };
     // the week before payday: how many days are left and about how much is coming (before tips and notes)
     else if ((pay = paydaySoon())) item = pay;
+    // a likely tax refund opens its own sheet, at its year
+    else if (unread[0] && unread[0].type === 'taxrefund') item = { act: 'tax-refund', year: unread[0].data && unread[0].data.year, ic: 'calc', cls: 'sev-good', t: unread[0].title };
     else if (unread[0]) item = { act: 'insights', ic: App.severityIcon[unread[0].severity] || 'bulb', cls: 'sev-' + (unread[0].severity || 'info'), t: unread[0].title };
     else if (live[0]) item = { act: 'insights', ic: 'bulb', cls: '', t: live[0].title };
     if (!item) return '';
     const more = item.cls === 'go' ? 0 : Math.max(0, unread.length - (unread.some((n) => n.title === item.t) ? 1 : 0));
-    return `<button class="highlight ${item.cls}" data-act="${item.act}"${item.id ? ` data-id="${item.id}"` : ''}>
+    return `<button class="highlight ${item.cls}" data-act="${item.act}"${item.id ? ` data-id="${item.id}"` : ''}${item.year ? ` data-year="${item.year}"` : ''}>
       <span class="hl-ic">${icon(item.ic, 's')}</span><span class="hl-t">${esc(item.t)}</span>${more ? `<span class="hl-more">+${more}</span>` : ''}${icon('left', 's')}</button>`;
   }
 
@@ -17388,11 +17956,6 @@ A cell with only a shift name and no hours: use בוקר 07:00-15:00, צהריי
       bl += pick('nationalInsurance', n.bl); health += pick('healthTax', n.health); pension += pick('pensionEmployee', n.pensionEmployee);
       pensionEr += pick('pensionEmployer', n.pensionEmployer); sev += pick('severance', n.severance); hish += pick('hishtalmutEmployee', n.hishtalmut); hishEr += pick('hishtalmutEmployer', n.hishtalmutEmployer);
     }
-    const annual = Engine.netEstimate({ gross: taxable, pensionBase: pension / ((+S.settings.pension.employeePct || 6) / 100) || 0, pensionActive: pension > 0, deductions: 0, months: 12 }, S.settings);
-    const liability = annual.incomeTax;
-    const refund = withheld - liability;
-    const gap12 = 12 - monthsWithIncome.length;
-    const yearDone = y < U.todayKey().slice(0, 4);
     return `
       <div class="section-title">${icon('chart', 's')} לפי חודשים</div>
       <div class="card">${Charts.bars(months.map((m) => ({ label: U.MONTHS_SHORT[+m.mk.slice(5) - 1], value: m.t.gross, tip: `${U.fmtMonth(m.mk)}: ${U.money(m.t.gross, 0)} · ${U.num(m.t.hours, 1)} ש׳` })), { label: 'ברוטו לפי חודש', axisFmt: (v) => '₪' + (v >= 1000 ? +(v / 1000).toFixed(1) + 'K' : v) })}
@@ -17408,10 +17971,15 @@ A cell with only a shift name and no hours: use בוקר 07:00-15:00, צהריי
         <div class="kv"><span>חודשי עבודה</span><b>${monthsWithIncome.length}</b></div>
         <div class="kv"><span>נקודות זיכוי</span><b>${T.creditPoints}</b></div>
         <div class="tiny muted" style="margin-top:8px">${withheldSrc ? 'חלק מהשורות מבוססות על תלושים שהזנת; השאר — הערכה.' : 'כל הנתונים הם הערכה לפי המשמרות. הזנת תלושים תשפר את הדיוק.'} הטופס הרשמי (106) מתקבל מהמעסיק.</div></div>
-      <div class="card ${refund > 150 ? 'tonal' : ''}"><div class="card-head">${icon('wallet')}<h3>החזר מס — הערכה</h3></div>
-        ${refund > 150 ? `<div>ייתכן שמגיע לך <b>החזר של כ-${U.money(refund, 0)}</b>.</div>` : refund < -150 ? `<div>לפי ההערכה, נוכה פחות מס מהחבות השנתית (כ-${U.money(-refund, 0)}). זה קורה לפעמים כשעובדים אצל כמה מעסיקים.</div>` : '<div>לפי ההערכה, המס שנוכה קרוב לחבות השנתית.</div>'}
-        <div class="small" style="margin-top:6px">מס שנוכה: ${U.money(withheld, 0)} · חבות שנתית משוערת: ${U.money(liability, 0)}${gap12 > 0 ? ` · ${gap12} חודשים בלי הכנסה${yearDone ? '' : ' (כולל חודשים שעוד לא הגיעו)'}` : ''}</div>
-        <div class="tiny" style="margin-top:8px;opacity:.85">מס הכנסה מנוכה כל חודש כאילו תעבוד כך כל השנה. בשנה עם חודשים בלי עבודה, או עם שינויים גדולים בהכנסה, לרוב נוכה יותר מדי. זו הערכה בלבד — מומלץ לבדוק בסימולטור של רשות המסים או מול יועץ מס / רו״ח.</div></div>`;
+      ${(() => {
+        // the tax refund, as the refund sheet works it out (one estimate everywhere: core/taxrefund.js)
+        const tr = App.taxRefundYear ? App.taxRefundYear(+y) : null;
+        if (!tr) return '';
+        return `<div class="card ${tr.refund > 150 ? 'tonal' : ''}"><div class="card-head">${icon('wallet')}<h3>החזר מס — הערכה</h3></div>
+          ${tr.refund > 150 ? `<div>ייתכן שמגיע לך <b>החזר של כ-<span class="money">${U.money(tr.refund, 0)}</span></b>.</div>` : '<div>לפי ההערכה, לא נלקח יותר מדי מס בשנה הזו.</div>'}
+          <div class="small" style="margin-top:6px">מס שנלקח: <span class="money">${U.money(tr.withheld, 0)}</span> · המס לפי השנה כולה: <span class="money">${U.money(tr.liability, 0)}</span></div>
+          <button class="btn tonal block" style="margin-top:10px" data-act="tax-refund" data-year="${y}">${icon('check', 's')} לכל הפרטים ואיך מקבלים את הכסף</button></div>`;
+      })()}`;
   }
 
   function summaryView() {
@@ -17595,6 +18163,216 @@ A cell with only a shift name and no hours: use בוקר 07:00-15:00, צהריי
   };
   App.actions['rep-pdf'] = () => { const r = rangeFor(st.type, st.anchor); App.exporter.printReport(r.from, r.to, r.label); };
   App.actions['rep-share-img'] = () => { const { r, t, p } = App.summaryData(st.type, st.anchor); App.exporter.summaryImage(r, t, p); };
+})(typeof window !== 'undefined' ? window : globalThis);
+
+/* ---- app/views-taxrefund.js ---- */
+/* ============================================================
+ * views-taxrefund.js — the tax refund: was too much income tax taken, year by year (six years back), and how to
+ * get it back. A few questions about the user (gender, birth date, army or national service, a first degree) and,
+ * for any year, the numbers of Form 106 for an exact answer; the estimate itself is core/taxrefund.js. The
+ * estimate and the way to file are free; the full report (PDF) is part of Shaati Plus where Plus is sold.
+ * ============================================================ */
+(function (root) {
+  'use strict';
+  const { U, Engine, Store, UI, App } = root;
+  const TR = root.TaxRefund;
+  const S = Store.S;
+  const { icon, esc } = UI;
+  const pad = (n) => String(n).padStart(2, '0');
+
+  const profile = () => {
+    const P = S.settings.taxProfile || {};
+    return { gender: S.settings.gender, birthDate: S.settings.birthDate, service: P.service || {}, degree: P.degree || {}, employers: S.employers.length };
+  };
+  const f106 = (y) => ((S.settings.taxProfile || {}).y106 || {})[y] || null;
+
+  /** One year's months with income: the payslip's numbers where there is one, otherwise the shifts' (all jobs). */
+  function monthsOf(year) {
+    const out = [];
+    let minorTaxed = false;
+    for (let m = 1; m <= 12; m++) {
+      const key = year + '-' + pad(m);
+      const slip = S.payslips.find((x) => x.period === key);
+      const sf = slip ? slip.fields || {} : {};
+      if (slip && sf.gross && +sf.gross.value > 0) {
+        const tax = sf.incomeTax ? +sf.incomeTax.value || 0 : 0;
+        out.push({ mk: key, gross: +sf.gross.value, tax, pension: sf.pensionEmployee ? +sf.pensionEmployee.value || 0 : 0, src: 'slip' });
+        if (tax > 0 && Engine.isMinor(S.settings, key + '-15')) minorTaxed = true;
+        continue;
+      }
+      let gross = 0, pensionBase = 0, to = key + '-28';
+      for (const emp of S.employers) {
+        const ps = Engine.periodSummary(App.model, key, emp.id);
+        if (!ps || !(ps.gross > 0)) continue;
+        gross += ps.gross;
+        pensionBase += Engine.pensionBaseOf(ps, S.settings);
+        to = Engine.periodByKey(key, emp).to;
+      }
+      if (!(gross > 0)) continue;
+      const n = Engine.netEstimate({ gross, pensionBase, deductions: 0, periodTo: to }, S.settings);
+      out.push({ mk: key, gross, tax: n.incomeTax, pension: n.pensionEmployee, src: 'shifts' });
+    }
+    return { months: out, minorTaxed };
+  }
+  /** The estimate of one year (null: no income known that year). */
+  App.taxRefundYear = function (year) {
+    const { months, minorTaxed } = monthsOf(year);
+    const f = f106(year);
+    if (!months.length && !(f && +f.gross > 0)) return null;
+    return TR.estimate(year, months, Object.assign(profile(), { minorTaxed }), S.settings.tax, f);
+  };
+  /** Every year that can still be asked for, with an estimate. */
+  App.taxRefundAll = () => TR.years(U.todayKey()).map((y) => ({ y, r: App.taxRefundYear(y) })).filter((x) => x.r);
+
+  const REASON = {
+    partYear: 'עבדת רק חלק מהשנה: המס נלקח כל חודש כאילו תעבוד כך כל השנה, אבל נקודות הזיכוי שלך שוות שנה שלמה.',
+    points: 'מגיעות לך נקודות זיכוי נוספות (נוער עובד, שחרור משירות או תואר). אם לא מסרת עליהן למעסיק בטופס 101, הן לא נוכו מהמס.',
+    minor: 'נוכה ממך מס הכנסה כשהיית מתחת לגיל 18. בשכר של נוער כמעט תמיד אין חבות מס, והכול חוזר.',
+    twoJobs: 'עבדת אצל יותר ממעסיק אחד: במשרה הנוספת המס נלקח בשיעור גבוה אם לא עשית תיאום מס.',
+  };
+  const SRC = { slips: 'לפי התלושים שלך', mixed: 'לפי התלושים והמשמרות', shifts: 'הערכה לפי המשמרות', '106': 'לפי טופס 106' };
+
+  function yearCard(x, cur) {
+    const r = x.r;
+    const big = r.refund > 150;
+    const open = cur === x.y;
+    const f = f106(x.y) || {};
+    const thisYear = x.y === +U.todayKey().slice(0, 4);
+    const pts = [['woman', 'אישה'], ['youth', 'נוער עובד'], ['soldier', 'שחרור משירות'], ['degree', 'תואר']]
+      .filter(([k]) => r.pointParts[k] > 0).map(([k, l]) => `${l} ${U.num(r.pointParts[k] / 12, 2)}`).join(' · ');
+    return `<details class="tr-year card${big ? ' good' : ''}" data-tr-year="${x.y}"${open ? ' open' : ''}>
+      <summary><b class="tr-y">${x.y}${thisYear ? ' <small>(עד עכשיו)</small>' : ''}</b>
+        <span class="tr-sum">${big ? `<b class="money">${U.money(r.refund, 0)}</b><small>ייתכן שמגיע לך</small>` : r.refund < -150 ? `<small>נוכה פחות מהחבות (כ-<span class="money">${U.money(-r.refund, 0)}</span>)</small>` : '<small>אין החזר משמעותי</small>'}</span>${icon('left', 's')}</summary>
+      <div class="tr-body">
+        <div class="tag ${r.src === '106' || r.src === 'slips' ? 'good' : ''}">${SRC[r.src]}</div>
+        <div class="kv"><span>הכנסה ברוטו בשנה</span><b class="money">${U.money(r.gross, 0)}</b></div>
+        <div class="kv"><span>מס הכנסה שנלקח</span><b class="money">${U.money(r.withheld, 0)}</b></div>
+        <div class="kv"><span>המס לפי השנה כולה</span><b class="money">${U.money(r.liability, 0)}</b></div>
+        <div class="kv"><span>נקודות זיכוי (ממוצע לחודש)</span><b>${U.num(r.points, 2)}</b></div>
+        ${pts ? `<div class="tiny muted">מתוכן: ${esc(pts)} · שווי נקודה ב-${x.y}: <span class="money">${U.money(r.pointValue, 0)}</span> לחודש</div>` : `<div class="tiny muted">שווי נקודה ב-${x.y}: <span class="money">${U.money(r.pointValue, 0)}</span> לחודש</div>`}
+        ${r.reasons.length ? `<ul class="tr-why">${r.reasons.map((k) => `<li>${REASON[k]}</li>`).join('')}</ul>` : ''}
+        ${thisYear ? '<div class="small muted">על השנה הזו אפשר לבקש החזר רק אחרי שהיא נגמרת.</div>' : ''}
+        <div class="tr-106">
+          <div class="small"><b>יש לך טופס 106 לשנה הזו?</b> הקלדת שלושה מספרים ממנו הופכת את ההערכה למדויקת (סכום כל המעסיקים).</div>
+          <div class="tr-in">
+            <label><span>ברוטו שנתי ₪</span><input class="input" type="number" inputmode="decimal" step="any" data-tr106="${x.y}.gross" value="${f.gross || ''}"></label>
+            <label><span>מס שנוכה ₪</span><input class="input" type="number" inputmode="decimal" step="any" data-tr106="${x.y}.tax" value="${f.tax || ''}"></label>
+            <label><span>הפקדת עובד לפנסיה ₪</span><input class="input" type="number" inputmode="decimal" step="any" data-tr106="${x.y}.pension" value="${f.pension || ''}"></label>
+          </div>
+        </div>
+      </div>
+    </details>`;
+  }
+
+  function body(cur) {
+    const P = S.settings.taxProfile || {};
+    const sv = P.service || {}, dg = P.degree || {};
+    const all = App.taxRefundAll();
+    const past = all.filter((x) => x.y < +U.todayKey().slice(0, 4));
+    const total = past.reduce((s, x) => s + Math.max(0, x.r.refund > 150 ? x.r.refund : 0), 0);
+    const askGender = !S.settings.gender, askBirth = !S.settings.birthDate;
+    return `
+      <div class="tr-hero card${total > 0 ? ' good' : ''}">
+        ${total > 0 ? `<div class="small">ייתכן שמגיע לך בסך הכול</div><div class="tr-total money">${U.money(total, 0)}</div><div class="small">החזר מס על ${past.filter((x) => x.r.refund > 150).map((x) => x.y).join(', ')}</div>`
+          : `<div class="tr-total-none">${all.length ? 'לפי מה שידוע כרגע, לא נראה שנלקח ממך יותר מדי מס' : 'עוד אין כאן הכנסה לחשב לפיה'}</div>`}
+        <div class="tiny muted">מס הכנסה נלקח כל חודש כאילו תעבוד כך כל השנה. בשנה עם חודשים בלי עבודה, אחרי שחרור משירות או אחרי תואר, לרוב נלקח יותר מדי, ואפשר לקבל אותו בחזרה עד 6 שנים אחורה.</div>
+      </div>
+      <div class="section-title">${icon('smile', 's')} עליך (בשביל נקודות הזיכוי)</div>
+      <div class="card tr-me">
+        ${askGender ? `<div class="field"><span class="lbl">מגדר</span><div class="chips"><button class="chip" data-tr-gender="m">זכר</button><button class="chip" data-tr-gender="f">נקבה</button></div></div>` : ''}
+        ${askBirth ? `<label class="field"><span class="lbl">תאריך לידה</span><input class="input" type="date" data-tr-birth max="${U.todayKey()}"></label>` : ''}
+        <label class="field"><span class="lbl">שירות צבאי או לאומי</span><select class="input" data-tr="service.kind">
+          <option value=""${!sv.kind ? ' selected' : ''}>לא שירתתי / לא רלוונטי</option>
+          <option value="army"${sv.kind === 'army' ? ' selected' : ''}>שירות צבאי (חובה)</option>
+          <option value="national"${sv.kind === 'national' ? ' selected' : ''}>שירות לאומי או אזרחי</option></select></label>
+        ${sv.kind ? `<div class="tr-pair">
+          <label class="field"><span class="lbl">כמה חודשים שירתת</span><input class="input" type="number" inputmode="numeric" min="0" max="48" data-tr="service.months" value="${sv.months || ''}"></label>
+          <label class="field"><span class="lbl">חודש השחרור</span><input class="input" type="month" data-tr="service.end" value="${sv.end || ''}" max="${U.todayKey().slice(0, 7)}"></label></div>` : ''}
+        <div class="tr-pair">
+          <label class="field"><span class="lbl">שנת סיום תואר ראשון</span><input class="input" type="number" inputmode="numeric" min="2000" max="${U.todayKey().slice(0, 4)}" placeholder="אין" data-tr="degree.year" value="${dg.year || ''}"></label>
+          ${+dg.year >= 2023 ? `<label class="field"><span class="lbl">כמה שנים למדת</span><input class="input" type="number" inputmode="numeric" min="1" max="5" data-tr="degree.studyYears" value="${dg.studyYears || 3}"></label>` : ''}
+        </div>
+        <div class="tiny muted">לא נכללים כאן: מגורים ביישוב מוטב, ילדים, עולה חדש, הורה יחיד, נכות, תרומות ועוד. אם אחד מהם נוגע לך, ההחזר יכול להיות גדול יותר: <a href="${TR.SIMULATOR_URL}" target="_blank" rel="noopener">הבדיקה של רשות המסים ↗</a></div>
+      </div>
+      <div class="section-title">${icon('calendar', 's')} לפי שנים</div>
+      ${all.length ? all.map((x) => yearCard(x, cur)).join('') : '<div class="card small muted">כשיהיו כאן משמרות או תלושים, תופיע הערכה לכל שנה.</div>'}
+      <div class="section-title">${icon('check', 's')} איך מקבלים את הכסף</div>
+      <ol class="card tr-steps">
+        <li><b>לבקש טופס 106</b> מכל מעסיק, לכל שנה. המעסיק חייב לתת אותו עד סוף מרץ של השנה שאחרי.</li>
+        <li><b>להכין אישורים</b> לנקודות הזיכוי (תעודת שחרור, אישור זכאות לתואר) ופרטי חשבון בנק.</li>
+        <li><b>להגיש באינטרנט</b> בקשה להחזר מס (טופס 135) באתר רשות המסים, בקשה אחת לכל שנה: <a href="${TR.FILE_URL}" target="_blank" rel="noopener">להגשה ↗</a></li>
+        <li><b>ההחזר מגיע לחשבון הבנק</b> עם הפרשי הצמדה וריבית, לרוב תוך כמה חודשים. אפשר לבקש עד 6 שנים אחורה.</li>
+      </ol>
+      <button class="btn tonal block" data-tr-report>${icon('file', 's')} דוח החזר מס מלא (PDF)</button>
+      <div class="disclaimer">${icon('info', 's')}<div>זו הערכה בלבד ואינה ייעוץ מס. החישוב לפי מדרגות המס ונקודות הזיכוי של כל שנה, והקובע הוא החישוב של רשות המסים.</div></div>`;
+  }
+
+  /** The full report: every year, the numbers, the reasons, what to attach and where to file — to keep or print. */
+  function report() {
+    const all = App.taxRefundAll().filter((x) => x.y < +U.todayKey().slice(0, 4));
+    const rows = all.map(({ y, r }) => `<tr><td>${y}</td><td>${U.money(r.gross, 0)}</td><td>${U.money(r.withheld, 0)}</td><td>${U.money(r.liability, 0)}</td><td><b>${U.money(Math.max(0, r.refund), 0)}</b></td><td>${SRC[r.src]}</td></tr>`).join('');
+    const total = all.reduce((s, x) => s + Math.max(0, x.r.refund), 0);
+    const name = esc(S.settings.userName || '');
+    return `<h1>החזר מס — הערכה${name ? ' · ' + name : ''}</h1>
+      <p>הופק ב-${U.fmtDate(U.todayKey())} באפליקציית שעתי. סך הכול ייתכן שמגיע: <b>${U.money(total, 0)}</b>.</p>
+      <table><thead><tr><th>שנה</th><th>ברוטו</th><th>מס שנלקח</th><th>מס לפי השנה</th><th>החזר משוער</th><th>מקור</th></tr></thead><tbody>${rows}</tbody></table>
+      ${all.filter((x) => x.r.reasons.length).map(({ y, r }) => `<h3>${y}: למה</h3><ul>${r.reasons.map((k) => `<li>${REASON[k]}</li>`).join('')}</ul>`).join('')}
+      <h3>מה לצרף לבקשה</h3><ul><li>טופס 106 מכל מעסיק, לכל שנה</li><li>אישורים לנקודות הזיכוי (תעודת שחרור, אישור תואר)</li><li>פרטי חשבון בנק</li></ul>
+      <h3>איפה מגישים</h3><p>בקשה להחזר מס (טופס 135), באתר רשות המסים: ${TR.FILE_URL} — בקשה לכל שנה בנפרד, עד 6 שנים אחורה.</p>
+      <p style="font-size:11px">זו הערכה בלבד ואינה ייעוץ מס. הקובע הוא החישוב של רשות המסים.</p>`;
+  }
+
+  App.actions['tax-refund'] = (el) => {
+    if (!S.meta.usedTaxRefund) Store.setMeta({ usedTaxRefund: true }).catch(() => {}); // for the anonymous statistics (yes/no)
+    let sheetEl = null;
+    const cur0 = el && el.dataset && +el.dataset.year;
+    const redraw = (cur) => { const b = sheetEl.querySelector('.sh-body'); root.Dom.patch(b, body(cur)); };
+    const openYear = () => { const d = sheetEl.querySelector('.tr-year[open]'); return d ? +d.dataset.trYear : 0; };
+    const setProfile = async (fn) => { await Store.setSettings((s) => { s.taxProfile = Object.assign({ service: {}, degree: {}, y106: {} }, s.taxProfile); fn(s.taxProfile, s); }); redraw(openYear()); };
+    UI.openSheet({
+      title: 'החזר מס', full: true, cls: 'tr-sheet', body: body(cur0 || 0),
+      onMount: (sh) => {
+        sheetEl = sh;
+        sh.addEventListener('change', async (e) => {
+          const t = e.target;
+          if (t.dataset.tr) {
+            const [a, b] = t.dataset.tr.split('.');
+            const v = t.type === 'number' ? (t.value === '' ? '' : +t.value) : t.value;
+            await setProfile((P) => { P[a] = Object.assign({}, P[a], { [b]: v }); });
+          } else if (t.dataset.tr106) {
+            const [y, k] = t.dataset.tr106.split('.');
+            await setProfile((P) => { const row = Object.assign({}, (P.y106 || {})[y], { [k]: t.value === '' ? '' : +t.value }); P.y106 = Object.assign({}, P.y106, { [y]: row }); });
+          } else if (t.matches('[data-tr-birth]') && t.value) {
+            await setProfile((P, s) => { s.birthDate = t.value; });
+          }
+        });
+        sh.addEventListener('click', async (e) => {
+          const g = e.target.closest('[data-tr-gender]');
+          if (g) { await setProfile((P, s) => { s.gender = g.dataset.trGender; }); return; }
+          if (e.target.closest('[data-tr-report]')) {
+            // the full report is part of Plus where Plus is sold (the estimate and the way to file stay free)
+            if (root.Plus && root.Plus.limited && root.Plus.limited()) { root.Plus.sheet(); return; }
+            if (App.exporter && App.exporter.printHtml) App.exporter.printHtml(report(), 'tax-refund.pdf');
+          }
+        });
+      },
+    });
+  };
+
+  /** An alert once a past year looks like it holds a refund worth asking for: one per year, its amount kept current
+   *  (App.runInsights updates the title in place, never sends it again). */
+  App.taxRefundAlert = function () {
+    try {
+      const y = +U.todayKey().slice(0, 4);
+      const best = App.taxRefundAll().filter((x) => x.y < y && x.r.refund > 300).sort((a, b) => b.r.refund - a.r.refund)[0];
+      if (!best) return null;
+      return {
+        key: 'taxrefund-' + best.y, type: 'taxrefund', cat: 'money', severity: 'good', push: 'anomaly', data: { year: best.y },
+        title: `ייתכן שמגיע לך החזר מס של כ-${U.money(best.r.refund, 0)} על ${best.y}`,
+        body: 'לפי ההכנסה ונקודות הזיכוי שלך. לחצו לפרטים ואיך מגישים.',
+      };
+    } catch (e) { return null; }
+  };
 })(typeof window !== 'undefined' ? window : globalThis);
 
 /* ---- app/views-payslip.js ---- */
@@ -18081,7 +18859,10 @@ A cell with only a shift name and no hours: use בוקר 07:00-15:00, צהריי
       const back = S.gaps.filter((x) => x.status === 'resolved').reduce((sum, x) => sum + x.amount, 0) + (g.status === 'resolved' ? 0 : g.amount);
       UI.openSheet({ title: 'הכסף חזר אליך! 🎉', body: `${App.mascotSays ? App.mascotSays('party', `קיבלת בחזרה ${U.money(g.amount, 0)} שהגיעו לך. כל הכבוד שבדקת!`, { size: 72 }) : ''}
         ${back > g.amount ? `<div class="small muted" style="margin:6px 0 12px">בסך הכול שעתי החזירה לך ${U.money(back, 0)}.</div>` : ''}
-        <button class="btn big block" data-act="found-share" data-amount="${Math.round(g.amount)}" data-k="back">${icon('share')} לשתף ולעזור לחברים לבדוק</button>` });
+        <button class="btn big block" data-act="found-share" data-amount="${Math.round(g.amount)}" data-k="back">${icon('share')} לשתף ולעזור לחברים לבדוק</button>
+        ${root.Plus && root.Plus.tipCard ? root.Plus.tipCard() : ''}`,
+        // a thank-you tip, once, when tips can be given here (plus.js)
+        onMount: (el) => el.addEventListener('click', (e) => { if (root.Plus && root.Plus.tipClick) root.Plus.tipClick(e); }) });
     }
   };
   /** A picture to share: "Shaati found me ₪X" (the slip's check) or "I got back ₪X" — no employer, no name. */
@@ -18122,6 +18903,7 @@ A cell with only a shift name and no hours: use בוקר 07:00-15:00, צהריי
     const gaps = S.gaps.filter((g) => g.status !== 'resolved').sort((a, b) => b.period.localeCompare(a.period));
     const trend = slips.slice(0, 12).reverse();
     return `<button class="btn big" data-act="payslip-new" style="margin-bottom:12px">${icon('upload')} העלה תלוש לניתוח</button>
+      <button class="btn tonal block" data-act="tax-refund" style="margin-bottom:12px">${icon('calc', 's')} בדיקת החזר מס (עד 6 שנים אחורה)</button>
       ${gaps.length ? `<div class="section-title">${icon('alert', 's')} פערים פתוחים<span class="spacer"></span><span class="small">${U.money(gaps.filter((g) => g.status === 'open').reduce((s, g) => s + g.amount, 0), 0)}</span></div>
         <div class="list">${gaps.map((g) => `<div class="item" style="cursor:default"><span class="lead" style="background:${g.status === 'maybe' ? 'var(--warn-bg)' : 'var(--bad-bg)'};color:${g.status === 'maybe' ? 'var(--warn)' : 'var(--bad)'}">${icon(g.status === 'maybe' ? 'refresh' : 'xc')}</span>
           <span class="body"><span class="t">${esc(g.title)} · ${U.fmtMonth(g.period)}</span><span class="s">${g.status === 'maybe' ? esc(g.note || 'ייתכן שהוחזר') : 'עוד לא הוחזר'}</span></span>
@@ -18263,6 +19045,8 @@ A cell with only a shift name and no hours: use בוקר 07:00-15:00, צהריי
             else if (rec.ref && S.payslips.find((p) => p.id === rec.ref)) App.sheetsApi.payslip(rec.ref);
             else if (rec.type === 'backup') App.doBackup(false);
             else if (rec.type === 'workweek') { UI.closeTop(); setTimeout(() => App.sheetsApi.settingsSection('calc'), 320); }
+            else if (rec.type === 'plusend' && root.Plus) { UI.closeTop(); setTimeout(() => root.Plus.sheet(), 320); }
+            else if (rec.type === 'taxrefund') { UI.closeTop(); setTimeout(() => App.actions['tax-refund']({ dataset: { year: rec.data && rec.data.year } }), 320); }
             else if (rec.type === 'payslipDue') { UI.closeTop(); setTimeout(() => App.actions['payslip-new'](), 320); }
             else if (rec.type === 'monthly' && App.recap && rec.data && rec.data.pk) { UI.closeTop(); setTimeout(() => App.recap.open(rec.data.pk), 320); }
           }
@@ -18427,7 +19211,15 @@ A cell with only a shift name and no hours: use בוקר 07:00-15:00, צהריי
     if (line) g.fillText(line, x, y);
   }
 
-  App.exporter = { shiftsCsv, monthlyCsv, ics, gcalLink, printReport, summaryImage, csv };
+  /** Any page of HTML to print or keep as a PDF, as the pay report is. */
+  function printHtml(html) {
+    const el = document.getElementById('print-root');
+    el.innerHTML = '<div dir="rtl">' + html + '</div>';
+    UI.toast('בחלון ההדפסה בחר "שמור כ-⁠PDF"');
+    setTimeout(() => window.print(), 300);
+  }
+
+  App.exporter = { shiftsCsv, monthlyCsv, ics, gcalLink, printReport, printHtml, summaryImage, csv };
 })(typeof window !== 'undefined' ? window : globalThis);
 
 /* ---- app/placepicker.js ---- */
@@ -19490,7 +20282,7 @@ A cell with only a shift name and no hours: use בוקר 07:00-15:00, צהריי
       // the law's numbers for this year, shown in empty fields; a number typed in is the user's own
       const bl = Engine.blLimits(T, U.todayKey()), law = Engine.blLimits({}, U.todayKey());
       bl.own = { thr: bl.thr !== law.thr, ceil: bl.ceil !== law.ceil };
-      return `<div class="banner">${icon('info')}<div>הנטו הוא הערכה. ערכי ברירת המחדל לפי 2025\u2060–\u20602026 (מדרגות המס הוקפאו עד 2027). עדכן אם השתנו.</div></div>
+      return `<div class="banner">${icon('info')}<div>הנטו הוא הערכה, לפי מדרגות המס ושווי נקודת הזיכוי של כל שנת מס (הם מתעדכנים לבד). מספר שתשנה כאן יחליף את החוק.</div></div>
         <div class="section-title">מס הכנסה</div><div class="card">
           ${F.num('נקודות זיכוי', 's.tax.creditPoints', T.creditPoints, 'תושב/ת: 2.25 · אישה: 2.75 · נוספות על ילדים, תואר, שחרור מצבא, עולה חדש ועוד.')}
           ${F.num('שווי נקודת זיכוי לחודש ₪', 's.tax.creditPointValue', T.creditPointValue)}
@@ -19606,6 +20398,7 @@ A cell with only a shift name and no hours: use בוקר 07:00-15:00, צהריי
           <div class="grid2">${F.sel('ביום', 's.alerts.weeklyDay', U.DAYS.map((d, i) => [i, d]), A.weeklyDay)}${F.num('בשעה', 's.alerts.weeklyHour', A.weeklyHour)}</div>
           ${t('monthly', 'סיכום חודשי (כשתקופת השכר נגמרת)')}</div>
         <div class="section-title">חדשות טובות</div><div class="card">${t('record', 'שיא אישי')}${t('goal', 'הגעת ליעד החודשי')}${t('birthday', 'יום הולדת')}</div>
+        <div class="section-title">כסף שמגיע לך</div><div class="card">${t('holidayPay', 'דמי חגים שלא שולמו')}${t('taxrefund', 'ייתכן שמגיע לך החזר מס')}</div>
         <div class="section-title">תזכורות</div><div class="card">
           ${t('timer', 'שכחתי לסיים משמרת')}<div class="grid2">${F.num('אחרי (שעות)', 's.alerts.timerHours', A.timerHours)}</div>
           ${F.sw('לפני משמרת מתוכננת', A.remindPlanned === true ? remindSummary(A) : 'כבוי', 's.alerts.remindPlanned', A.remindPlanned === true).replace('data-s=', 'data-redraw data-s=')}
@@ -19613,6 +20406,7 @@ A cell with only a shift name and no hours: use בוקר 07:00-15:00, צהריי
           ${t('confirmDone', 'אחרי משמרת מתוכננת: לשאול אם עבדת').replace('data-s=', 'data-redraw data-s=')}
           ${A.types.confirmDone !== false ? `<div class="grid2">${F.sel('כמה זמן אחרי הסיום', 's.alerts.reminders.confirmAfter', [[15, '15 דקות'], [30, 'חצי שעה'], [60, 'שעה'], [120, 'שעתיים'], [240, '4 שעות'], [480, '8 שעות']], (A.reminders || {}).confirmAfter || 30)}</div>` : ''}
           ${t('payslipDue', 'ביום התשלום: להזין את התלוש')}
+          ${root.Plus && root.Plus.visible() ? t('plusend', 'יום לפני ש-Plus במתנה או הניסיון נגמרים') : ''}
           ${t('backup', 'תזכורת גיבוי')}<div class="grid2">${F.num('כל (ימים)', 's.alerts.backupDays', A.backupDays)}</div></div>`;
     },
     mount: (el, draw) => {
@@ -20626,6 +21420,7 @@ A cell with only a shift name and no hours: use בוקר 07:00-15:00, צהריי
     notice: 'הודעה מוקדמת לפיטורים או התפטרות',
     youthGuide: 'זכותון נוער עובד',
     enforcement: 'מינהל הסדרה ואכיפת חוקי עבודה',
+    taxRefund: 'החזר מס הכנסה',
   };
   // i18n-keep-end
   const KZ = (page) => 'https://www.kolzchut.org.il/he/' + encodeURIComponent(page.replace(/ /g, '_'));
@@ -20667,6 +21462,7 @@ A cell with only a shift name and no hours: use בוקר 07:00-15:00, צהריי
     { id: 'pension', gov: 'pension', ic: 'shield', t: 'פנסיה', b: (c) => `<p>חובה מגיל <b>21 לגבר ו-20 לאישה</b>, אחרי 6 חודשי עבודה (3 חודשים אם כבר יש לך קרן פעילה). ההפרשה: 6% ממך, 6.5% מהמעסיק ועוד 6% לפיצויים.</p><p>${c.pension}</p>`, l: () => link(KZ(PAGES.pension)) },
     { id: 'payslip', gov: 'labor', ic: 'receipt', t: 'תלוש שכר ומועד תשלום', b: () => '<p>מגיע לך <b>תלוש שכר</b> מפורט כל חודש, והשכר צריך להיות משולם עד <b>ה-9 בחודש</b> שאחרי חודש העבודה. איחור מזכה בפיצוי הלנת שכר.</p><p>האפליקציה בודקת את התלוש מול המשמרות שרשמת (כפתור +, "תלוש שכר").</p>', l: () => link(KZ(PAGES.payslip)) },
     { id: 'deduct', gov: 'labor', ic: 'minus', t: 'ניכויים מהשכר', b: () => '<p>מותר לנכות מהשכר רק ניכויי חובה (מס, ביטוח לאומי, פנסיה) וניכויים שהסכמת להם בכתב. <b>קנסות</b>, חוסרים בקופה או ציוד שנשבר – בדרך כלל אסור לנכות בלי הסכמה.</p>', l: () => link(KZ(PAGES.deductions)) },
+    { id: 'taxrefund', gov: 'tax', ic: 'calc', t: 'החזר מס הכנסה', b: () => `<p>מס הכנסה נלקח כל חודש כאילו תעבוד כך כל השנה. מי שעבד <b>רק חלק מהשנה</b>, השתחרר משירות, סיים תואר או עבד אצל כמה מעסיקים, לרוב שילם יותר מדי, ויכול לקבל את ההפרש בחזרה (עם הפרשי הצמדה וריבית), עד <b>6 שנים אחורה</b>.</p><p>האפליקציה מעריכה את ההחזר לכל שנה לפי המשמרות והתלושים שלך, ומסבירה איך מגישים.</p><button class="btn tonal block" data-act="tax-refund">${icon('calc', 's')} בדיקת החזר מס</button>`, l: () => link(KZ(PAGES.taxRefund)) },
     { id: 'leave', gov: 'labor', ic: 'alert', t: 'פיטורים והתפטרות', b: () => '<p>לפני פיטורים מגיע <b>שימוע</b>, ומגיעה <b>הודעה מוקדמת</b> לפי הוותק (גם כשמתפטרים צריך לתת הודעה מוקדמת). אחרי שנת עבודה, בפיטורים מגיעים גם <b>פיצויים</b>.</p>', l: () => link(KZ(PAGES.notice)) },
   ];
   const YOUTH = (R, age) => [
@@ -20939,6 +21735,7 @@ A cell with only a shift name and no hours: use בוקר 07:00-15:00, צהריי
   const WHATS_NEW = {
     id: '1.29.0',
     items: [
+      ['calc', 'mint', 'אולי מגיע לך החזר מס', 'עבדת רק חלק מהשנה, השתחררת או סיימת תואר? לרוב נלקח ממך יותר מדי מס. שעתי מעריכה כמה מגיע לך על כל שנה, עד 6 שנים אחורה, ומסבירה איך מקבלים את הכסף. בתלושים או בזכויות שלי.'],
       ['clock', 'amber', 'פתיחה חדשה', 'שעון יוקרה בלילה: טבעת עדינה, סימני זהב, הלוגו משורטט ואור עובר עליו. קצרה פי שניים, עם צלצול רך אחד.'],
       ['eye', 'violet', 'מצב פרטיות חזק', 'לחיצה על העין בכרטיס השכר מטשטשת את כל הסכומים, בכל המסכים, באנימציה רכה. אי אפשר לקרוא אותם עד שלוחצים שוב.'],
       ['sparkle', 'mint', 'חלק ויציב', 'כרטיס השכר והמסכים מתעדכנים בלי הבהובים, האינטרו לא נתקע גם ברשת איטית, וטקסט לא נחתך ולא נשבר באמצע בשום שפה.'],
@@ -20972,7 +21769,7 @@ A cell with only a shift name and no hours: use בוקר 07:00-15:00, צהריי
   /* ---------------- every update (settings › about › all the updates) ---------------- */
   // newest first: [version, the day it went out, what changed — said to the user, not to a developer]
   const CHANGELOG = [
-    ['1.29.0', '2026-10-30', 'פתיחה חדשה: שעון יוקרה בלילה, מדויק ושקט, עם צלצול רך אחד. קצרה פי שניים, ואף פעם לא מחכה לרשת.'],
+    ['1.29.0', '2026-10-30', 'בדיקת החזר מס: כמה מס נלקח ממך מיותר בכל שנה, עד 6 שנים אחורה, לפי המשמרות, התלושים או טופס 106, ואיך מקבלים אותו בחזרה. פתיחה חדשה: שעון יוקרה בלילה, מדויק ושקט, עם צלצול רך אחד. קצרה פי שניים, ואף פעם לא מחכה לרשת.'],
     ['1.28.0', '2026-10-29', 'מצב פרטיות חזק עם אנימציה על כל הסכומים, בלי הבהובים בכרטיס השכר ובמסכים, האינטרו לא נתקע גם ברשת איטית, וטקסט שלא נחתך ולא נשבר בשום שפה. שעות נוספות לפי החוק כאפשרות בהגדרות, ורשימת כל העדכונים.'],
     ['1.27.0', '2026-10-29', 'שעות נוספות לפי החוק: לפי שבוע העבודה, משמרת לילה ו-42 שעות בשבוע, גם לנוער.'],
     ['1.26.0', '2026-10-28', 'התחרות עם החברים, והשם הפרטי שלך במקום כינוי.'],
@@ -22391,6 +23188,30 @@ A cell with only a shift name and no hours: use בוקר 07:00-15:00, צהריי
       if (me) Object.assign(me, { n: pr.n, e: pr.e, bg: pr.bg, p: pr.p });
     }
   }
+  /** A finished game into the phone's own copy of my row (meta.lbLocal): kept whether or not I'm in the table. */
+  Champions.record = function (game, score) {
+    if (!LB.MAX[game] || !(score > 0)) return Promise.resolve();
+    const cur = (S.meta.lbLocal || {})[game];
+    const next = LB.record(cur, game, score, today(), Date.now());
+    return next !== cur ? Store.setMeta({ lbLocal: Object.assign({}, S.meta.lbLocal, { [game]: next }) }).catch(() => {}) : Promise.resolve();
+  };
+  /** What my published row is missing of every game, from the phone's copy ({ game: { period: value, t } }). */
+  function missing(row) {
+    const out = {};
+    for (const [game, local] of Object.entries(S.meta.lbLocal || {})) {
+      if (!LB.MAX[game]) continue;
+      const v = LB.pending(local, (row.g || {})[game], today());
+      if (Object.keys(v).length) out[game] = v;
+    }
+    return out;
+  }
+  /** When a record was set, in words: "today at 14:32", "yesterday at 9:05", "28.10 at 20:11" (hidden until a tap). */
+  function whenTag(x) {
+    if (!(x.at > 0)) return '';
+    const k = U.epochKey(x.at), t = U.todayKey(), hm = U.epochHM(x.at);
+    const txt = k === t ? `השיא נקבע היום ב-${hm}` : k === U.addDays(t, -1) ? `השיא נקבע אתמול ב-${hm}` : `השיא נקבע ב-${U.fmtDate(k, 'dm')}, ${hm}`;
+    return `<small class="lb-at">${txt}</small>`;
+  }
   const inflight = new Map();
   // Every board read costs up to 50 reads of the free daily quota: a board is kept 10 minutes (the one on screen is
   // refreshed quietly once it is 2 minutes old), and a score of mine updates my own row in place.
@@ -22417,7 +23238,7 @@ A cell with only a shift name and no hours: use בוקר 07:00-15:00, צהריי
     const rows = snap.docs.map((d) => {
       const x = d.data() || {};
       const v = x.g && x.g[game] ? x.g[game][period] : 0;
-      return { uid: d.id, n: String(x.n || ''), e: LB.EMOJI.includes(x.e) ? x.e : '🙂', bg: x.p && root.Plus && root.Plus.SKINS[x.bg] ? x.bg : '', p: !!x.p, s: period === 'a' ? +v || 0 : LB.scoreOf(v) };
+      return { uid: d.id, n: String(x.n || ''), e: LB.EMOJI.includes(x.e) ? x.e : '🙂', bg: x.p && root.Plus && root.Plus.SKINS[x.bg] ? x.bg : '', p: !!x.p, s: period === 'a' ? +v || 0 : LB.scoreOf(v), at: x.g ? LB.timeOf(x.g[game], period) : 0 };
     }).filter((x) => x.s > 0).sort((a, b) => b.s - a.s);
     // equal scores share a place
     rows.forEach((x, i) => { x.rank = i && rows[i - 1].s === x.s ? rows[i - 1].rank : i + 1; });
@@ -22432,18 +23253,22 @@ A cell with only a shift name and no hours: use בוקר 07:00-15:00, צהריי
   Champions.submit = async function (game, score) {
     if (!joined() || !LB.MAX[game]) return null;
     try {
+      await Champions.record(game, score); // (once: a second time with the same score changes nothing)
       const row = await readMine();
       const before = (boards.get(`${game}|d|${today()}`) || { rows: [] }).rows.find((x) => x.uid === uid());
-      const vals = LB.improve((row.g || {})[game], game, score, today());
-      if (Object.keys(vals).length) await writeMine({ [game]: vals });
+      // what the table is missing of every game (this one's new score is in the phone's copy already: afterGame)
+      const patch = missing(row);
+      if (Object.keys(patch).length) await writeMine(patch);
+      const vals = patch[game] || {};
       const rows = await board(game, 'd', true);
       const meRow = rows.find((x) => x.uid === uid());
-      return { rank: meRow ? meRow.rank : null, before: before ? before.rank : null, improved: Object.keys(vals), of: rows.length };
+      return { rank: meRow ? meRow.rank : null, before: before ? before.rank : null, improved: Object.keys(vals).filter((k) => k !== 't'), of: rows.length };
     } catch (e) { return null; }
   };
 
   /** The line under a game's result: the place today, a new record, or an invitation. */
   Champions.afterGame = function (box, game, score) {
+    Champions.record(game, score);
     if (!signedIn()) return;
     const host = box.querySelector('.gm-end-a');
     if (!host) return;
@@ -22489,13 +23314,13 @@ A cell with only a shift name and no hours: use בוקר 07:00-15:00, צהריי
     let period = 'd';
     let seq = 0;
     const set = (node, html) => { if (node && node.__html !== html) { node.innerHTML = html; node.__html = html; } };
-    const row = (x, meId, admin, unit) => `<li class="lb-row ${x.uid === meId ? 'me' : ''} ${x.bg ? 'plus sk-' + x.bg : ''}">
+    const row = (x, meId, admin, unit) => `<li class="lb-row ${x.uid === meId ? 'me' : ''} ${x.bg ? 'plus sk-' + x.bg : ''}" data-lb-at>
         <span class="lb-r">${x.rank}</span><span class="lb-e" aria-hidden="true">${x.e}</span>
-        <span class="lb-n">${esc(x.n)}${x.p ? '<i class="lb-plus">Plus</i>' : ''}${x.uid === meId ? ' <small>(את/ה)</small>' : ''}</span>
+        <span class="lb-n">${esc(x.n)}${x.p ? '<i class="lb-plus">Plus</i>' : ''}${x.uid === meId ? ' <small>(את/ה)</small>' : ''}${whenTag(x)}</span>
         <b class="lb-s">${x.s}${esc(unit)}</b>${admin && x.uid !== meId ? `<button class="icon-btn lb-rm" data-rm="${esc(x.uid)}" aria-label="הסרת ${esc(x.n)} מהטבלה">${icon('trash', 's')}</button>` : ''}</li>`;
-    const pod = (x, place, meId, unit) => (x ? `<div class="lb-pod p${place} ${x.uid === meId ? 'me' : ''}">
+    const pod = (x, place, meId, unit) => (x ? `<div class="lb-pod p${place} ${x.uid === meId ? 'me' : ''}" data-lb-at>
         <div class="lb-av ${x.bg ? 'sk-' + x.bg : ''}"><span aria-hidden="true">${x.e}</span>${place === 1 ? '<i class="lb-crown" aria-hidden="true">👑</i>' : ''}</div>
-        <b class="lb-n">${esc(x.n)}</b>${x.p ? '<i class="lb-plus">Plus</i>' : ''}<span class="lb-s">${x.s}${esc(unit)}</span><div class="lb-step"><span>${place}</span></div></div>`
+        <b class="lb-n">${esc(x.n)}</b>${x.p ? '<i class="lb-plus">Plus</i>' : ''}<span class="lb-s">${x.s}${esc(unit)}</span>${whenTag(x)}<div class="lb-step"><span>${place}</span></div></div>`
       : `<div class="lb-pod p${place} empty"><div class="lb-av"><span aria-hidden="true">?</span></div><b class="lb-n">פנוי</b><div class="lb-step"><span>${place}</span></div></div>`);
     const periodName = () => PERIODS.find((p) => p[0] === period)[1];
     let lastMe = null;
@@ -22608,6 +23433,9 @@ A cell with only a shift name and no hours: use בוקר 07:00-15:00, צהריי
         load(el);
         el.addEventListener('click', async (e) => {
           const b = e.target.closest('button');
+          // a tap on a player: when the record was set (another tap hides it)
+          const at = !b && e.target.closest('[data-lb-at]');
+          if (at) { if (at.querySelector('.lb-at')) at.classList.toggle('show-at'); return; }
           if (!b) return;
           if (b.dataset.game) { if (b.dataset.game !== game) { game = b.dataset.game; mark(el); load(el); } }
           else if (b.dataset.period) { if (b.dataset.period !== period) { period = b.dataset.period; mark(el); load(el); } }
@@ -22743,9 +23571,11 @@ A cell with only a shift name and no hours: use בוקר 07:00-15:00, צהריי
             await Store.setSettings((s) => { s.lb = { on: true, n: nick, e, bg }; });
             try {
               await readMine();
-              // joining: the best scores already on this phone go into "all time"
-              const patch = {};
-              if (!wasOn) for (const [g, best] of Object.entries(S.meta.games || {})) { const v = LB.improve((mine.g || {})[g], g, best, today()); if (v.a) patch[g] = { a: v.a }; }
+              // joining: what this phone played goes in — today's, this week's, this month's and this year's bests
+              // too (they used to go into "all time" only: someone who played and then joined was missing from
+              // today's board), and the best ever of games played before the phone kept its copy
+              const patch = wasOn ? {} : missing(mine);
+              if (!wasOn) for (const [g, best] of Object.entries(S.meta.games || {})) { const v = LB.improve(Object.assign({}, (mine.g || {})[g], patch[g]), g, best, today()); if (v.a) patch[g] = Object.assign({}, patch[g], { a: v.a }); }
               await writeMine(patch);
               UI.toast(wasOn ? 'נשמר ✓' : 'ברוכים הבאים לטבלה! 🏆');
               UI.closeTop();
@@ -22775,7 +23605,7 @@ A cell with only a shift name and no hours: use בוקר 07:00-15:00, צהריי
     if (S.settings.lb && S.settings.lb.on) await Store.setSettings((s) => { s.lb = Object.assign({}, s.lb, { on: false }); });
   };
   /** A changed profile (or Plus turning on or off) reaches the row at the next game; this sends it now. */
-  Champions.sync = async function () { if (joined()) { try { await writeMine(null); } catch (e) { /* next time */ } } };
+  Champions.sync = async function () { if (joined()) { try { await writeMine(missing(await readMine())); } catch (e) { /* next time */ } } };
   Champions._reset = () => { mine = null; boards.clear(); };
   App.actions.leaderboard = (el) => Champions.open(el && el.dataset && el.dataset.game);
 })(typeof window !== 'undefined' ? window : globalThis);
@@ -23537,6 +24367,7 @@ A cell with only a shift name and no hours: use בוקר 07:00-15:00, צהריי
     ['rights', 'מדריך הזכויות'], ['planned', 'משמרות מתוכננות'], ['roles', 'יותר מתפקיד אחד'], ['goal', 'יעד חודשי'],
     ['notif', 'התראות מאושרות'], ['lock', 'נעילה בקוד'], ['bio', 'טביעת אצבע'], ['ai', 'מפתח AI'], ['dark', 'מצב כהה'], ['fxOff', 'כיבוי אפקטים'], ['demo', 'מצב הדגמה'],
     ['plusSeen', 'ראו את Shaati Plus'], ['plusWall', 'הגיעו למכסה חינמית'], ['plusTry', 'ניסו את Plus בחינם'],
+    ['tax', 'בדיקת החזר מס'], ['inv', 'הזמינו חבר שהצטרף'], ['gift', 'קיבלו Plus במתנה'], ['tip', 'נתנו טיפ'],
   ];
 
   function kpi(label, value, sub) {
@@ -23584,6 +24415,28 @@ A cell with only a shift name and no hours: use בוקר 07:00-15:00, צהריי
         <div class="btn-row" style="margin-top:10px"><a class="btn tonal sm" href="https://play.google.com/console" target="_blank" rel="noopener">${icon('chart', 's')} Google Play Console</a><a class="btn tonal sm" href="https://app.lemonsqueezy.com/orders" target="_blank" rel="noopener">${icon('receipt', 's')} מכירות באתר</a></div>
         <div class="tiny muted" style="margin-top:8px">מהסטטיסטיקה האנונימית (מכשירים שלא כיבו אותה), מתעדכן כל כמה שעות. הסכומים המדויקים ותשלומי המס בדוחות של Google Play ושל Lemon Squeezy.</div></div>`;
   }
+  /* The way in: of the devices that started a week ago or more (they had the time; the demo is not counted), how
+   * many got to each step, each step out of the one before it — where people are lost shows at once. */
+  function funnel(rows) {
+    const k = U.todayKey();
+    const days = (a, b) => Math.round((Date.parse(b) - Date.parse(a)) / 86400000);
+    const old = rows.filter((r) => r.first && r.last && r.first <= U.addDays(k, -7) && !(r.f && r.f.demo));
+    const f = (r, x) => !!(r.f && r.f[x]);
+    const steps = [];
+    let cur = old;
+    for (const [label, keep] of [
+      ['התחילו להשתמש', () => true],
+      ['רשמו משמרת', (r) => +r.sh > 0],
+      ['חזרו אחרי שבוע', (r) => days(r.first, r.last) >= 7],
+      ['ראו את Plus', (r) => f(r, 'plusSeen')],
+      ['ניסו את Plus (ניסיון או מתנה)', (r) => f(r, 'plusTry') || f(r, 'gift') || f(r, 'plus')],
+      ['שילמו', (r) => f(r, 'plus')],
+    ]) { const prev = cur.length; cur = cur.filter(keep); steps.push([label, cur.length, prev]); }
+    const start = old.length;
+    return `<div class="section-title">${icon('filter', 's')} המשפך: מהתקנה ועד תשלום</div>
+      <div class="card adm-funnel">${steps.map(([label, n, prev], i) => `<div class="adm-bar"><span class="nm">${esc(label)}</span><span class="track"><i style="width:${pct(n, start)}%"></i></span><span class="vv">${n} · ${pct(n, start)}%${i ? `<small class="adm-drop">${pct(n, prev)}% מהקודם</small>` : ''}</span></div>`).join('')}
+        <div class="tiny muted" style="margin-top:8px">מכשירים שהתחילו לפני שבוע לפחות (${start}), בלי מצב הדגמה. כל שלב מתוך מי שעבר את הקודם.</div></div>`;
+  }
   function render(rows, admins, me) {
     const k = U.todayKey();
     const n = rows.length;
@@ -23608,6 +24461,7 @@ A cell with only a shift name and no hours: use בוקר 07:00-15:00, צהריי
       <div class="card tonal"><div class="kpis">
         ${kpi('משתמשים (מכשירים)', n, `${new7} חדשים השבוע`)}${kpi('פעילים היום', a1)}${kpi('פעילים ב-7 ימים', a7, pct(a7, n) + '% מהכלל')}${kpi('פעילים ב-30 ימים', a30, pct(a30, n) + '% מהכלל')}
       </div></div>
+      ${funnel(rows)}
       ${plusSection(rows)}
       <div class="section-title">${icon('up', 's')} משתמשים חדשים, 30 ימים אחרונים</div>
       <div class="card">${Charts.bars(days.map((d) => ({ label: d.slice(8), value: byFirst.get(d), tip: `${U.fmtDate(d, 'dm')}: ${byFirst.get(d)} חדשים` })), { label: 'משתמשים חדשים לפי יום', height: 170 })}
@@ -23686,8 +24540,8 @@ A cell with only a shift name and no hours: use בוקר 07:00-15:00, צהריי
   const S = Store.S;
   const { icon, esc } = UI;
 
-  const LEGAL_VERSION = '1.4';
-  const EFFECTIVE = '21 באוקטובר 2026';
+  const LEGAL_VERSION = '1.5';
+  const EFFECTIVE = '30 באוקטובר 2026';
   const CONTACT = 'https://github.com/leelor123/shifts/issues';
   const APP_NAME = 'Shaati';
   App.LEGAL_VERSION = LEGAL_VERSION;
@@ -23714,7 +24568,9 @@ A cell with only a shift name and no hours: use בוקר 07:00-15:00, צהריי
 <h4>8. זמינות, שינויים והפסקת השירות</h4>
 <p>השימוש באפליקציה ובכל יכולותיה הבסיסיות — רישום משמרות, חישוב שכר, זכויות, בדיקת תלוש, דוחות ומשחקים — ניתן ללא תשלום. האפליקציה ניתנת "כמות שהיא" (AS IS) ו"כפי שהיא זמינה", ללא כל התחייבות לזמינות רציפה, לדיוק, להתאמה למטרה מסוימת או להיעדר תקלות. המפעיל רשאי לשנות, להוסיף או להפסיק תכונות או את השירות כולו, ככל האפשר בהודעה מראש באפליקציה. שינוי מהותי בתנאים יוצג באפליקציה ויידרש אישורו מחדש.</p>
 <h4>8א. תוספות בתשלום (Shaati Plus)</h4>
-<p>האפליקציה עשויה להציע תוספות אופציונליות במנוי חודשי ("Shaati Plus"), כגון עיצובים לכרטיס השכר, ושימוש ללא הגבלה בחלק מהתוספות שיש להן מכסה חינמית (למשל ניתוח מתקדם וייצוא דוחות לקובץ). התוספות אינן משנות את החישובים, את מידע הזכויות או את הכלים הבסיסיים (משמרות, חישוב שכר, זכויות, בדיקת תלוש, דוחות במסך, משחקים, גיבוי וסנכרון), שנשארים זמינים לכולם ללא תשלום וללא הגבלה. ניתן לנסות את Shaati Plus פעם אחת בחינם לתקופה קצרה; הניסיון אינו דורש פרטי תשלום ומסתיים מעצמו, בלי חיוב. המנוי מתחדש אוטומטית בכל חודש, במחיר שמוצג לפני הרכישה, עד שמבטלים אותו. אפשר לבטל בכל עת: באפליקציית האנדרואיד דרך Google Play (תשלומים ומינויים), ובאתר ובאייפון דרך הקישור שבמייל של Lemon Squeezy. לאחר ביטול התוספת נשארת פעילה עד סוף התקופה ששולמה, ולא יתבצעו חיובים נוספים. שינוי מחיר יימסר מראש, בהתאם לכללי ספק התשלום. רכישה חד-פעמית של Shaati Plus שבוצעה בעבר נשארת בתוקף. באפליקציית האנדרואיד שהותקנה מ-\u2060Google Play הרכישה מתבצעת דרך Google Play, בכפוף לתנאים ולמדיניות ההחזרים שלה. באתר ובאייפון הרכישה מתבצעת בדף תשלום של Lemon Squeezy, שהיא המוכרת הרשומה (Merchant of Record) של העסקה ומטפלת בתשלום, בקבלה ובמסים, בכפוף לתנאים ולמדיניות ההחזרים שלה; לאחר התשלום נשלח קוד הפעלה, הנשמר בחשבון המשתמש ומפעיל את התוספת בכל מכשיריו. המפעיל אינו מקבל ואינו שומר פרטי תשלום. החזר כספי או סיום המנוי מבטלים את התוספת. רכישה בידי משתמש שטרם מלאו לו 18 טעונה הסכמת הורה או אפוטרופוס.</p>
+<p>האפליקציה עשויה להציע תוספות אופציונליות במנוי חודשי ("Shaati Plus"), כגון עיצובים לכרטיס השכר, ושימוש ללא הגבלה בחלק מהתוספות שיש להן מכסה חינמית (למשל ניתוח מתקדם וייצוא דוחות לקובץ). התוספות אינן משנות את החישובים, את מידע הזכויות או את הכלים הבסיסיים (משמרות, חישוב שכר, זכויות, בדיקת תלוש, דוחות במסך, משחקים, גיבוי וסנכרון), שנשארים זמינים לכולם ללא תשלום וללא הגבלה. ניתן לנסות את Shaati Plus פעם אחת בחינם לתקופה קצרה; הניסיון אינו דורש פרטי תשלום ומסתיים מעצמו, בלי חיוב. המנוי מתחדש אוטומטית בכל חודש (או בכל שנה, במסלול שנתי אם הוא מוצע), במחיר שמוצג לפני הרכישה, עד שמבטלים אותו. אפשר לבטל בכל עת: באפליקציית האנדרואיד דרך Google Play (תשלומים ומינויים), ובאתר ובאייפון דרך הקישור שבמייל של Lemon Squeezy. לאחר ביטול התוספת נשארת פעילה עד סוף התקופה ששולמה, ולא יתבצעו חיובים נוספים. שינוי מחיר יימסר מראש, בהתאם לכללי ספק התשלום. רכישה חד-פעמית של Shaati Plus שבוצעה בעבר נשארת בתוקף. באפליקציית האנדרואיד שהותקנה מ-\u2060Google Play הרכישה מתבצעת דרך Google Play, בכפוף לתנאים ולמדיניות ההחזרים שלה. באתר ובאייפון הרכישה מתבצעת בדף תשלום של Lemon Squeezy, שהיא המוכרת הרשומה (Merchant of Record) של העסקה ומטפלת בתשלום, בקבלה ובמסים, בכפוף לתנאים ולמדיניות ההחזרים שלה; לאחר התשלום נשלח קוד הפעלה, הנשמר בחשבון המשתמש ומפעיל את התוספת בכל מכשיריו. המפעיל אינו מקבל ואינו שומר פרטי תשלום. החזר כספי או סיום המנוי מבטלים את התוספת. רכישה בידי משתמש שטרם מלאו לו 18 טעונה הסכמת הורה או אפוטרופוס.</p>
+<p><b>הזמנת חברים.</b> משתמש מחובר יכול לשתף קישור הזמנה אישי. משתמש חדש שהצטרף עם הקישור, התחבר ורשם משמרת ראשונה מקבל חודש Shaati Plus במתנה, וגם המזמין מקבל חודש על כל משתמש כזה, עד 6 חודשים. כל חשבון יכול להצטרף כמוזמן פעם אחת בלבד. חודש המתנה אינו כרוך בתשלום, אינו ניתן להמרה בכסף ומסתיים מעצמו, בלי חיוב. המפעיל רשאי לשלול מתנה שהושגה בחשבונות מזויפים או בדרך לא הוגנת, ולשנות או להפסיק את מבצע ההזמנות בכל עת (מתנה שכבר ניתנה תכובד עד סופה).</p>
+<p><b>טיפ.</b> אפשר לתת טיפ חד-פעמי מרצון, בסכום שמוצג לפני התשלום, כתודה על האפליקציה. הטיפ אינו מוסיף תכונות, אינו מנוי ואינו מתחדש, ומתבצע דרך Google Play או דרך ספק התשלום באתר, בכפוף לתנאים ולמדיניות ההחזרים שלהם.</p>
 <h4>8ב. טבלת האלופים במשחקים</h4>
 <p>ההשתתפות בטבלת האלופים היא לבחירתך ודורשת התחברות. בטבלה מוצגים לשאר המשתמשים המחוברים הכינוי שבחרת, אימוג׳י, הרקע שבחרת (למנויי Shaati Plus) והתוצאות שלך במשחקים. אין לבחור כינוי שהוא השם המלא שלך, פרטי קשר, או כינוי פוגעני, מטעה או שמתחזה לאחר. המפעיל רשאי להסיר מהטבלה שורה עם כינוי לא מתאים או תוצאה שנראית לא אמיתית. אפשר לצאת מהטבלה בכל עת, והשורה נמחקת.</p>
 <h4>9. נתונים וגיבוי</h4>
@@ -23742,9 +24598,11 @@ A cell with only a shift name and no hours: use בוקר 07:00-15:00, צהריי
 <li><b>מידע טכני:</b> כתובת IP ופרטי דפדפן שנרשמים אוטומטית אצל ספקי התשתית בעת טעינת האפליקציה. אין באפליקציה פרסומות, עוגיות מעקב או כלי ניתוח של צד שלישי.</li>
 <li><b>סטטיסטיקת שימוש אנונימית (אפשר לכבות):</b> פעם ביום נשמרת בענן רשומה אחת לכל מכשיר, תחת מזהה אקראי שאינו קשור לחשבון: גרסת האפליקציה, סוג ההתקנה, היום הראשון והאחרון של השימוש, מספר ימי השימוש, מספר המשמרות והתלושים, קבוצת גיל (מתחת ל-18 או מעל) ואילו תכונות פעילות. הרשומה לא כוללת שם, אימייל, מזהה משתמש, תאריכי משמרות או סכומים, ורק מנהלי האפליקציה רואים אותה, כסיכום מצטבר. אפשר לכבות בהגדרות › אני והחשבון › חשבון וסנכרון, והכיבוי מוחק את הרשומה.</li>
 <li><b>טבלת האלופים (רק אם הצטרפת):</b> הכינוי, האימוג׳י, הרקע ותג Plus שבחרת, והתוצאה הטובה שלך בכל משחק היום, השבוע, החודש, השנה ובכל הזמנים. השורה הזו <b>גלויה לכל המשתמשים המחוברים</b>, בלי שם אמיתי, אימייל או נתוני עבודה. יציאה מהטבלה (או מחיקת החשבון) מוחקת אותה.</li>
+<li><b>התחרות עם החברים (רק אם הצטרפת):</b> הכינוי והאימוג׳י שבחרת, רשימת החברים שאישרת, ואם לא בחרת להסתיר אותם, סכומי הברוטו של החודש, השנה וכל הזמנים והשכר הממוצע לשעה. הכרטיס הזה <b>גלוי רק לחברים שברשימה שלך</b>, ולא כולל שם אמיתי, אימייל, מקום עבודה או תאריכי משמרות. הזמנה לתחרות נשמרת עד שמאשרים אותה (או עד 14 יום). יציאה מהתחרות (או מחיקת החשבון) מוחקת את הכרטיס.</li>
+<li><b>הזמנת חברים לשעתי (רק אם הזמנת או הוזמנת):</b> קוד ההזמנה שלך, ואם הצטרפת עם קישור של מישהו, רשומה שמקשרת את מזהה החשבון שלך למזהה החשבון שלו, עם התאריך. הרשומה גלויה רק לשניכם, כדי לתת לכל אחד את חודש המתנה, ולא כוללת שם, אימייל או נתוני עבודה. קוד ההזמנה נמחק עם החשבון; הרשומה של מי הזמין את מי נשמרת גם אחרי זה (רק עם מזהים), כדי שכל חשבון יוזמן פעם אחת בלבד.</li>
 <li><b>פניות לתמיכה (רק אם פנית):</b> נושא הפנייה, מה שכתבת, ההתכתבות איתנו, השם הפרטי שהזנת באפליקציה, ואם בחרת, גרסת האפליקציה וסוג המכשיר. אם פנית בלי להתחבר, גם האימייל שהזנת כדי שנענה לך. הפניות נשמרות בענן, גלויות רק לך ולמנהלי האפליקציה, ונמחקות יחד עם החשבון.</li></ul>
 <h4>2. איפה המידע נשמר</h4>
-<p>במכשיר שלך (אחסון הדפדפן), ולאחר התחברות — גם בענן Google Cloud Firestore, באזור me-west1 (תל אביב). כללי האבטחה במסד הנתונים מאפשרים גישה לנתונים רק למשתמש המחובר שהם שלו (חוץ משורה בטבלת האלופים, שגלויה למשתמשים המחוברים אם בחרת להצטרף). התעבורה מוצפנת (HTTPS), והאחסון בענן מוצפן על ידי Google.</p>
+<p>במכשיר שלך (אחסון הדפדפן), ולאחר התחברות — גם בענן Google Cloud Firestore, באזור me-west1 (תל אביב). כללי האבטחה במסד הנתונים מאפשרים גישה לנתונים רק למשתמש המחובר שהם שלו (חוץ משורה בטבלת האלופים, שגלויה למשתמשים המחוברים אם בחרת להצטרף, וכרטיס בתחרות עם החברים, שגלוי רק לחברים שאישרת). התעבורה מוצפנת (HTTPS), והאחסון בענן מוצפן על ידי Google.</p>
 <h4>3. מה לא יוצא מהטלפון</h4>
 <p>מפתח ה-\u2060API, קוד הנעילה, קובצי התלושים עצמם (תמונה ו-\u2060PDF) והטקסט הגולמי שזוהה מהם נשמרים רק במכשיר. גם המיקום שלך, אם ביקשת לבחור יישוב לפיו, משמש רק כדי למצוא במכשיר את היישוב הקרוב, ואינו נשמר ואינו נשלח לשום מקום.</p>
 <p><b>פתיחה בטביעת אצבע:</b> הזיהוי מתבצע כולו במנגנון של הטלפון. האפליקציה לא מקבלת, לא שומרת ולא שולחת טביעות אצבע או נתוני פנים; היא שומרת רק מזהה טכני שמאפשר לבקש מהטלפון לאשר את הזהות.</p>
