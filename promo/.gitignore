@@ -1,0 +1,4 @@
+.hyperframes/
+qa-frames/
+*.mp4
+node_modules/
