@@ -583,7 +583,7 @@
    * hours than usual, no shift for a week, overlaps). The engine still finds those; they show where they belong
    * (the payslip check, the rights screen, the shift itself), not as notifications. A reminder before a planned
    * shift only when switched on in Settings. */
-  const NOTIFY = new Set(['weekly', 'monthly', 'record', 'goal', 'birthday', 'timer', 'backup', 'payslipDue', 'upcoming', 'confirmDone', 'holidayPay']);
+  const NOTIFY = new Set(['taxrefund', 'weekly', 'monthly', 'record', 'goal', 'birthday', 'timer', 'backup', 'payslipDue', 'upcoming', 'confirmDone', 'holidayPay']);
   const kindSent = (a) => NOTIFY.has(a.type) && !(a.type === 'goal' && a.severity !== 'good');
   // the reminder before a planned shift is off unless switched on
   const notifiable = (a) => kindSent(a) && (a.type === 'upcoming' ? S.settings.alerts.remindPlanned === true : S.settings.alerts.types[a.type] !== false);
@@ -613,7 +613,8 @@
     const res = insightsNow();
     App.insights = res;
     const month = monthlyAlert();
-    const wanted = res.alerts.filter(notifiable).concat(month && notifiable(month) ? [month] : []);
+    const refund = App.taxRefundAlert ? App.taxRefundAlert() : null; // a past year that looks like it holds a refund
+    const wanted = res.alerts.filter(notifiable).concat(month && notifiable(month) ? [month] : []).concat(refund && notifiable(refund) ? [refund] : []);
     // notifications of the kinds that are no longer sent go from the list too (once)
     const gone = S.notifications.filter((n) => !kindSent(n));
     if (gone.length) await Store.apply(gone.map((n) => ({ store: 'notifications', del: n.id })), null);

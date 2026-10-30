@@ -122,7 +122,10 @@
       },
       minWageHourly: null, // null = by law, from the date and age (Engine.legalMinWage); a number overrides it
       shareStats: true, // anonymous usage statistics (stats.js); off deletes this device's record
-      gender: '', // '' | 'm' | 'f': only for the mandatory-pension age
+      gender: '', // '' | 'm' | 'f': the mandatory-pension age, and a woman's credit point in the tax refund
+      // the tax refund (views-taxrefund.js): service { kind: 'army'|'national', months, end: 'YYYY-MM' }, a first degree
+      // { year, studyYears }, and Form 106 numbers by year { gross, tax, pension }
+      taxProfile: { service: {}, degree: {}, y106: {} },
       // --- goals ---
       goal: { amount: 0, type: 'gross' },
       saving: { name: '', price: 0, from: '' }, // something to save up for: what, how much, counting the net earned since when

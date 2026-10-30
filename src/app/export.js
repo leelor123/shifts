@@ -143,5 +143,13 @@
     if (line) g.fillText(line, x, y);
   }
 
-  App.exporter = { shiftsCsv, monthlyCsv, ics, gcalLink, printReport, summaryImage, csv };
+  /** Any page of HTML to print or keep as a PDF, as the pay report is. */
+  function printHtml(html) {
+    const el = document.getElementById('print-root');
+    el.innerHTML = '<div dir="rtl">' + html + '</div>';
+    UI.toast('בחלון ההדפסה בחר "שמור כ-⁠PDF"');
+    setTimeout(() => window.print(), 300);
+  }
+
+  App.exporter = { shiftsCsv, monthlyCsv, ics, gcalLink, printReport, printHtml, summaryImage, csv };
 })(typeof window !== 'undefined' ? window : globalThis);

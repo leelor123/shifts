@@ -15,7 +15,8 @@
  *    service 2, 12–23 months 1; women 22+ 2, 12–22 1; national service 24+ 2, 12–23 1;
  *  - a first degree: finished in 2023 or later, 1 point a year for as many years as it took (3 at most), from the
  *    year after; finished 2014–2022, 1 point for one year (the year after);
- *  - children, a new immigrant, a single parent, disability and more: not counted here (the result says so, and
+ *  - a home in a benefit settlement (יישוב מוטב), children, a new immigrant, a single parent, disability, donations
+ *    and more: not counted here (they only make the refund bigger; the sheet says so, and
  *    the Tax Authority's own simulator counts them).
  * The brackets and the point's value of each year: Engine.TAX_YEARS.
  * ============================================================ */

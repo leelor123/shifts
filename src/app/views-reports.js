@@ -156,11 +156,6 @@
       bl += pick('nationalInsurance', n.bl); health += pick('healthTax', n.health); pension += pick('pensionEmployee', n.pensionEmployee);
       pensionEr += pick('pensionEmployer', n.pensionEmployer); sev += pick('severance', n.severance); hish += pick('hishtalmutEmployee', n.hishtalmut); hishEr += pick('hishtalmutEmployer', n.hishtalmutEmployer);
     }
-    const annual = Engine.netEstimate({ gross: taxable, pensionBase: pension / ((+S.settings.pension.employeePct || 6) / 100) || 0, pensionActive: pension > 0, deductions: 0, months: 12 }, S.settings);
-    const liability = annual.incomeTax;
-    const refund = withheld - liability;
-    const gap12 = 12 - monthsWithIncome.length;
-    const yearDone = y < U.todayKey().slice(0, 4);
     return `
       <div class="section-title">${icon('chart', 's')} לפי חודשים</div>
       <div class="card">${Charts.bars(months.map((m) => ({ label: U.MONTHS_SHORT[+m.mk.slice(5) - 1], value: m.t.gross, tip: `${U.fmtMonth(m.mk)}: ${U.money(m.t.gross, 0)} · ${U.num(m.t.hours, 1)} ש׳` })), { label: 'ברוטו לפי חודש', axisFmt: (v) => '₪' + (v >= 1000 ? +(v / 1000).toFixed(1) + 'K' : v) })}
@@ -176,10 +171,15 @@
         <div class="kv"><span>חודשי עבודה</span><b>${monthsWithIncome.length}</b></div>
         <div class="kv"><span>נקודות זיכוי</span><b>${T.creditPoints}</b></div>
         <div class="tiny muted" style="margin-top:8px">${withheldSrc ? 'חלק מהשורות מבוססות על תלושים שהזנת; השאר — הערכה.' : 'כל הנתונים הם הערכה לפי המשמרות. הזנת תלושים תשפר את הדיוק.'} הטופס הרשמי (106) מתקבל מהמעסיק.</div></div>
-      <div class="card ${refund > 150 ? 'tonal' : ''}"><div class="card-head">${icon('wallet')}<h3>החזר מס — הערכה</h3></div>
-        ${refund > 150 ? `<div>ייתכן שמגיע לך <b>החזר של כ-${U.money(refund, 0)}</b>.</div>` : refund < -150 ? `<div>לפי ההערכה, נוכה פחות מס מהחבות השנתית (כ-${U.money(-refund, 0)}). זה קורה לפעמים כשעובדים אצל כמה מעסיקים.</div>` : '<div>לפי ההערכה, המס שנוכה קרוב לחבות השנתית.</div>'}
-        <div class="small" style="margin-top:6px">מס שנוכה: ${U.money(withheld, 0)} · חבות שנתית משוערת: ${U.money(liability, 0)}${gap12 > 0 ? ` · ${gap12} חודשים בלי הכנסה${yearDone ? '' : ' (כולל חודשים שעוד לא הגיעו)'}` : ''}</div>
-        <div class="tiny" style="margin-top:8px;opacity:.85">מס הכנסה מנוכה כל חודש כאילו תעבוד כך כל השנה. בשנה עם חודשים בלי עבודה, או עם שינויים גדולים בהכנסה, לרוב נוכה יותר מדי. זו הערכה בלבד — מומלץ לבדוק בסימולטור של רשות המסים או מול יועץ מס / רו״ח.</div></div>`;
+      ${(() => {
+        // the tax refund, as the refund sheet works it out (one estimate everywhere: core/taxrefund.js)
+        const tr = App.taxRefundYear ? App.taxRefundYear(+y) : null;
+        if (!tr) return '';
+        return `<div class="card ${tr.refund > 150 ? 'tonal' : ''}"><div class="card-head">${icon('wallet')}<h3>החזר מס — הערכה</h3></div>
+          ${tr.refund > 150 ? `<div>ייתכן שמגיע לך <b>החזר של כ-<span class="money">${U.money(tr.refund, 0)}</span></b>.</div>` : '<div>לפי ההערכה, לא נלקח יותר מדי מס בשנה הזו.</div>'}
+          <div class="small" style="margin-top:6px">מס שנלקח: <span class="money">${U.money(tr.withheld, 0)}</span> · המס לפי השנה כולה: <span class="money">${U.money(tr.liability, 0)}</span></div>
+          <button class="btn tonal block" style="margin-top:10px" data-act="tax-refund" data-year="${y}">${icon('check', 's')} לכל הפרטים ואיך מקבלים את הכסף</button></div>`;
+      })()}`;
   }
 
   function summaryView() {
