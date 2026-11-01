@@ -357,7 +357,7 @@ ${FONT_HEAD}
   <h2>עוד שאלות</h2>
   <div class="more"><a href="check">${esc(CHECK.title)}</a>${others.map((x) => `<a href="${x.slug}">${esc(x.title)}</a>`).join('')}</div>
 </main>
-<footer>שעתי · <a href="./">לאתר</a> · <a href="https://leelor123.github.io/shifts/privacy.html">פרטיות</a></footer>
+<footer>שעתי · <a href="./">לאתר</a> · <a href="https://leelor123.github.io/shifts/privacy.html">פרטיות</a> · <a href="https://leelor123.github.io/shifts/accessibility.html">הצהרת נגישות</a></footer>
 </body>
 </html>
 `;
@@ -440,7 +440,7 @@ ${FONT_HEAD}
   <h2>עוד שאלות</h2>
   <div class="more">${PAGES.map((x) => `<a href="${x.slug}">${esc(x.title)}</a>`).join('')}</div>
 </main>
-<footer>שעתי · <a href="./">לאתר</a> · <a href="https://leelor123.github.io/shifts/privacy.html">פרטיות</a></footer>
+<footer>שעתי · <a href="./">לאתר</a> · <a href="https://leelor123.github.io/shifts/privacy.html">פרטיות</a> · <a href="https://leelor123.github.io/shifts/accessibility.html">הצהרת נגישות</a></footer>
 <script src="check.js"></script>
 </body>
 </html>

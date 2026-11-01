@@ -2603,7 +2603,7 @@ What the app has (for "how do I" questions): a "Start shift" button with a timer
 <p>Actual rights may vary by the employment contract, a collective agreement, an industry extension order, seniority, job size and legislative updates. Payslip analysis findings are marked with a confidence level, and a "missing" finding is not a determination that the employer broke the law.</p>
 <p>The assistant's answers and other AI output are generated automatically and may contain mistakes.</p>
 <p>None of this should be seen as legal, accounting, tax or financial advice. To check your rights, it's recommended to turn to the "Kol Zchut" website, the Ministry of Labor, a workers' organization or a labor-law lawyer.</p>`},accessibility:{title:"Accessibility statement",html:`<p class="legal-meta">Updated: ${E}</p>
-<p>We want the App to be comfortable for everyone. It was developed aiming to meet the WCAG 2.1 guidelines at level AA and the Israeli standard 5568, as far as possible in a personal app.</p>
+<p>We want the app to be comfortable for everyone. It was built to the Israeli standard IS 5568 (based on WCAG 2.0 level AA), and beyond it to WCAG 2.1, as far as a personal app allows.</p>
 <h4>What was done</h4>
 <ul><li>A full interface in Hebrew, Arabic, Russian and English.</li>
 <li>Larger text (Settings › Look and lock), dark mode and checked color contrast.</li>

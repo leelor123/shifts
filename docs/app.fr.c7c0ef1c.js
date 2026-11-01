@@ -2603,7 +2603,7 @@ Ce que contient l'application (pour les questions « comment faire ») : un bout
 <p>Les droits réels peuvent varier selon le contrat de travail, une convention collective, un arrêté d'extension de branche, l'ancienneté, le temps de travail et les évolutions législatives. Les constats de l'analyse de fiche de paie sont marqués d'un niveau de confiance, et un constat « manquant » n'est pas une décision affirmant que l'employeur a enfreint la loi.</p>
 <p>Les réponses de l'assistant et les autres résultats d'IA sont générés automatiquement et peuvent contenir des erreurs.</p>
 <p>Rien de tout cela ne doit être considéré comme un conseil juridique, comptable, fiscal ou financier. Pour vérifier vos droits, il est recommandé de consulter le site « Kol Zchut », le ministère du Travail, une organisation de salariés ou un avocat en droit du travail.</p>`},accessibility:{title:"Déclaration d'accessibilité",html:`<p class="legal-meta">Mise à jour : ${L}</p>
-<p>Nous voulons que l'Application soit confortable pour tous. Elle a été développée dans l'objectif de respecter les directives WCAG 2.1 au niveau AA et la norme israélienne 5568, autant que possible pour une application personnelle.</p>
+<p>Nous voulons que l’application soit confortable pour tous. Elle a été conçue selon la norme israélienne IS 5568 (fondée sur WCAG 2.0 niveau AA), et au-delà selon WCAG 2.1, dans la mesure où une application personnelle le permet.</p>
 <h4>Ce qui a été fait</h4>
 <ul><li>Une interface complète en hébreu, arabe, russe, anglais, français et espagnol.</li>
 <li>Texte plus grand (Réglages › Apparence et verrou), mode sombre et contraste des couleurs vérifié.</li>

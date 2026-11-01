@@ -281,7 +281,7 @@ textarea.input { min-height: 90px; resize: vertical; }
 .switch-row .t { font-weight: 600; }
 .switch-row .s { font-size: .8rem; color: var(--on-surface-var); }
 .switch { appearance: none; width: 52px; height: 32px; border-radius: 16px; background: var(--surface-3); border: 2px solid var(--outline); position: relative; flex: none; cursor: pointer; transition: background .2s, border-color .2s; margin: 0; }
-.switch::after { content: ''; position: absolute; top: 50%; inset-inline-start: 6px; width: 16px; height: 16px; border-radius: 50%; background: var(--outline); transform: translateY(-50%); transition: all .2s var(--ease); }
+.switch::after { content: ''; position: absolute; top: 50%; inset-inline-start: 6px; width: 16px; height: 16px; border-radius: 50%; background: var(--outline); transform: translateY(-50%); transition: inset-inline-start .2s var(--ease), width .2s var(--ease), height .2s var(--ease), background-color .2s var(--ease); }
 .switch:checked { background: var(--primary); border-color: var(--primary); }
 .switch:checked::after { inset-inline-start: 24px; width: 22px; height: 22px; background: var(--on-primary); }
 .radio-list label { display: flex; align-items: center; gap: 12px; padding: 12px 4px; cursor: pointer; }
@@ -439,7 +439,7 @@ textarea.input { min-height: 90px; resize: vertical; }
 .toast {
   position: fixed; z-index: 70; left: 16px; right: 16px; bottom: calc(var(--nav-h) + var(--safe-b) + 12px); margin: 0 auto; max-width: 560px;
   background: var(--on-surface); color: var(--surface); border-radius: 14px; padding: 12px 16px; display: flex; align-items: center; gap: 12px;
-  box-shadow: var(--shadow); transform: translateY(30px); opacity: 0; transition: all .25s var(--ease);
+  box-shadow: var(--shadow); transform: translateY(30px); opacity: 0; transition: transform .25s var(--ease), opacity .25s var(--ease);
 }
 .toast.show { transform: none; opacity: 1; }
 .toast .act { background: none; border: 0; color: var(--primary-container); font-weight: 800; cursor: pointer; padding: 6px 8px; }
@@ -833,7 +833,7 @@ body.fx .first .wave { display: inline-block; transform-origin: 70% 80%; animati
 body.fx .first .progress i, body.fx .first .progress b { animation: fx-fill .9s cubic-bezier(.2, .8, .3, 1) both; transform-origin: right; }
 @keyframes fx-fill { from { transform: scaleX(0); } }
 body.fx .first .dot-badge { animation: fx-badge .5s cubic-bezier(.34, 1.56, .64, 1) .3s both; }
-@keyframes fx-badge { from { transform: scale(0); } }
+@keyframes fx-badge { from { transform: scale(.4); opacity: 0; } }
 ::view-transition-old(root), ::view-transition-new(root) { animation: none; mix-blend-mode: normal; }
 html.vt-reveal::view-transition-new(root) { animation: fx-reveal .6s cubic-bezier(.4, 0, .2, 1) both; }
 @keyframes fx-reveal { from { clip-path: circle(0 at var(--vt-x, 50%) var(--vt-y, 50%)); } to { clip-path: circle(150vmax at var(--vt-x, 50%) var(--vt-y, 50%)); } }

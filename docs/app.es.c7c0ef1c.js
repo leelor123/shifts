@@ -2603,7 +2603,7 @@ Lo que tiene la app (para preguntas de «cómo hago»): un botón «Iniciar turn
 <p>Los derechos reales pueden variar según el contrato de trabajo, un convenio colectivo, una orden de extensión del sector, la antigüedad, la jornada y los cambios legislativos. Los hallazgos del análisis de nómina se marcan con un nivel de confianza, y un hallazgo de «falta» no es una determinación de que el empleador incumplió la ley.</p>
 <p>Las respuestas del asistente y otros resultados de IA se generan automáticamente y pueden contener errores.</p>
 <p>Nada de esto debe considerarse asesoramiento legal, contable, fiscal ni financiero. Para comprobar tus derechos, se recomienda acudir al sitio «Kol Zchut», al Ministerio de Trabajo, a una organización de trabajadores o a un abogado laboralista.</p>`},accessibility:{title:"Declaración de accesibilidad",html:`<p class="legal-meta">Actualizado: ${j}</p>
-<p>Queremos que la App sea cómoda para todos. Se desarrolló con el objetivo de cumplir las pautas WCAG 2.1 en el nivel AA y la norma israelí 5568, en la medida de lo posible en una app personal.</p>
+<p>Queremos que la aplicación sea cómoda para todos. Se desarrolló según la norma israelí IS 5568 (basada en WCAG 2.0 nivel AA), y más allá según WCAG 2.1, en la medida en que lo permite una aplicación personal.</p>
 <h4>Lo que se hizo</h4>
 <ul><li>Una interfaz completa en hebreo, árabe, ruso, inglés, francés y español.</li>
 <li>Texto más grande (Ajustes › Apariencia y bloqueo), modo oscuro y contraste de colores comprobado.</li>
