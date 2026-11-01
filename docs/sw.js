@@ -5,7 +5,7 @@
  * background and activates when the user taps "עדכן".
  * IndexedDB data is never touched by updates.
  * ============================================================ */
-const VERSION = '1.29.0-a16f811b';
+const VERSION = '1.29.1-29a4b04a';
 const SHELL = 'shiftpay-shell-' + VERSION;
 const RUNTIME = 'shiftpay-runtime-v1';
 const FONTS = ['rubik-hebrew', 'rubik-latin', 'rubik-latin-ext', 'rubik-arabic', 'rubik-cyrillic', 'rubik-cyrillic-ext', 'fredoka-hebrew', 'fredoka-latin', 'fredoka-latin-ext'].map((f) => './fonts/' + f + '.woff2');
@@ -123,7 +123,7 @@ self.addEventListener('fetch', (e) => {
     return;
   }
   // only static libraries & fonts are cached; sign-in and Firestore traffic always goes to the network
-  const STATIC = ['fonts.googleapis.com', 'fonts.gstatic.com', 'cdnjs.cloudflare.com', 'cdn.jsdelivr.net', 'tessdata.projectnaptha.com'];
+  const STATIC = ['fonts.googleapis.com', 'fonts.gstatic.com', 'cdnjs.cloudflare.com', 'cdn.jsdelivr.net', 'cdn.sheetjs.com', 'tessdata.projectnaptha.com'];
   const isSdk = url.hostname === 'www.gstatic.com' && url.pathname.startsWith('/firebasejs/');
   if (!STATIC.includes(url.hostname) && !isSdk) return;
   // Libraries and fonts carry their version in the address, so a copy downloaded once is reused
