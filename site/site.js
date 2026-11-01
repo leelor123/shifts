@@ -1,81 +1,124 @@
-/* Shaati's website: the live shift, the pay calculator, the phone that turns with the pointer, magnetic buttons,
-   the cards' spotlight, the header on scroll and the coins at the end. Everything rests still for reduced motion. */
+/* Shaati's website (2026-11-02): the sky over your city at this hour (the app's own, sky.js), with the cities to
+   switch between; the greeting and the clock; a live shift; the pay calculator; a shift told as the day passing (the
+   sky follows the reading); the screens; the night sky at the end. Everything rests still for reduced motion. */
 (function () {
   'use strict';
   const still = matchMedia('(prefers-reduced-motion: reduce)').matches;
-  const fine = matchMedia('(hover: hover) and (pointer: fine)').matches;
   const $ = (s, r) => (r || document).querySelector(s);
   const $$ = (s, r) => [...(r || document).querySelectorAll(s)];
   const money = (v) => '₪' + v.toLocaleString('he-IL', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
   const pad = (n) => String(n).padStart(2, '0');
+  const Sky = window.Sky;
+  const NS = 'http://www.w3.org/2000/svg';
+  const CITIES = {
+    tlv: { name: 'תל אביב-יפו', lat: 32.0809, lon: 34.7806, at: 'בתל אביב' },
+    jlm: { name: 'ירושלים', lat: 31.769, lon: 35.2163, at: 'בירושלים' },
+    hfa: { name: 'חיפה', lat: 32.794, lon: 34.9896, at: 'בחיפה' },
+    bsh: { name: 'באר שבע', lat: 31.2518, lon: 34.7913, at: 'בבאר שבע' },
+    elt: { name: 'אילת', lat: 29.5581, lon: 34.9482, at: 'באילת' },
+  };
+  const store = { get: (k) => { try { return localStorage.getItem(k); } catch (e) { return null; } }, set: (k, v) => { try { localStorage.setItem(k, v); } catch (e) { /* private mode */ } } };
+  let city = CITIES[store.get('shaati.site.city')] ? store.get('shaati.site.city') : 'tlv';
 
-  /* ---------- the header gets its shadow once the page moves ---------- */
-  const top = $('.top');
-  // watched with a marker 8px tall at the top of the page: reading scrollY as the page opened made the browser lay
-  // the whole page out ahead of time (~120 ms on a phone)
+  /** A scene sized to its box: one drawing unit is a css pixel on a phone, a little more on a big screen, so the land
+   * keeps its size and nothing is stretched (sky.js draws any width and height) */
+  // sizes come from a ResizeObserver where there is one (reading clientWidth as the page opened made the browser lay
+  // it out ahead of time: Lighthouse's forced reflow)
+  const sizes = new WeakMap();
+  const sized = (box) => {
+    const k = sizes.get(box) || { w: box.clientWidth || 390, h: box.clientHeight || 330 };
+    const s = Math.min(1.6, Math.max(1, k.w / 900));
+    return { width: Math.round(k.w / s), height: Math.round(k.h / s) };
+  };
+  const draw = (svg, box, extra) => { if (Sky) Sky.render(svg, Object.assign({ now: Date.now(), place: CITIES[city] }, sized(box), extra || {})); };
+
+  /* ---------- the bar on top: glass once the page moves, paper once the sky is behind ---------- */
+  const top = $('[data-top]'), hero = $('.hero');
   if (top && 'IntersectionObserver' in window) {
+    // watched with markers, not scrollY (reading it as the page opened made the browser lay it out ahead of time)
     const mark = document.createElement('div');
     mark.setAttribute('aria-hidden', 'true');
     mark.style.cssText = 'position:absolute;top:0;inset-inline-start:0;width:1px;height:8px;pointer-events:none';
     document.body.prepend(mark);
     new IntersectionObserver(([e]) => top.classList.toggle('scrolled', !e.isIntersecting)).observe(mark);
+    if (hero) new IntersectionObserver(([e]) => top.classList.toggle('solid', !e.isIntersecting), { rootMargin: '-64px 0px 0px 0px' }).observe(hero);
   }
+
+  /* ---------- the hero: the sky over the city at this hour ---------- */
+  let rz = 0, lastW = -1;
+  const heroSky = $('[data-hero-sky]');
+  const greet = $('[data-greet]'), where = $('[data-where]'), clock = $('[data-clock]');
+  const tell = () => {
+    const d = new Date();
+    if (greet && Sky) greet.textContent = Sky.greeting(d);
+    if (clock) { clock.textContent = `${pad(d.getHours())}:${pad(d.getMinutes())}`; clock.dateTime = clock.textContent; }
+    if (where) where.textContent = CITIES[city].at;
+  };
+  tell();
+  setInterval(tell, 20000);
+  // the first drawing fades in over the page's own night blue; a city change draws the new sky over the old one
+  // and fades it in (a crossfade, the old one is removed after)
+  function showSky(first) {
+    if (!heroSky || !Sky || !hero) return;
+    if (first) {
+      draw(heroSky, hero);
+      requestAnimationFrame(() => requestAnimationFrame(() => heroSky.classList.add('on')));
+      return;
+    }
+    const old = $$('.sky', hero).pop();
+    const next = document.createElementNS(NS, 'svg');
+    next.setAttribute('class', 'sky');
+    next.setAttribute('aria-hidden', 'true');
+    old.after(next);
+    draw(next, hero);
+    requestAnimationFrame(() => requestAnimationFrame(() => {
+      next.classList.add('on');
+      setTimeout(() => { $$('.sky', hero).slice(0, -1).forEach((s) => s.remove()); }, still ? 50 : 950);
+    }));
+  }
+  if (hero && 'ResizeObserver' in window) {
+    let first = true;
+    new ResizeObserver(([e]) => {
+      const w = Math.round(e.contentRect.width), h = Math.round(e.contentRect.height + parseFloat(getComputedStyle(hero).paddingTop || 0));
+      sizes.set(hero, { w: hero.offsetWidth || w, h: hero.offsetHeight || h });
+      if (lastW < 0) lastW = innerWidth; // read here, where the layout is fresh anyway
+      if (first) { first = false; showSky(true); }
+    }).observe(hero);
+  } else showSky(true);
+  // a fresh sky as time goes on (every ten minutes), and on a new size
+  setInterval(() => showSky(false), 600000);
+  addEventListener('resize', () => {
+    if (Math.abs(innerWidth - lastW) < 40) return; // the phone's address bar coming and going changes only the height
+    lastW = innerWidth;
+    clearTimeout(rz);
+    rz = setTimeout(() => { showSky(false); if (stageOn) drawStage(); }, 250);
+  });
+  const radios = $$('[data-cities] input');
+  radios.forEach((r) => {
+    r.checked = r.value === city;
+    r.addEventListener('change', () => {
+      if (!r.checked) return;
+      city = r.value;
+      store.set('shaati.site.city', city);
+      tell();
+      showSky(false);
+      if (stageOn) drawStage();
+    });
+  });
 
   /* ---------- a live shift: the clock runs and the pay goes up, as in the app ---------- */
   const live = $('[data-live]');
   if (live) {
     const RATE = 42.5; // ₪ an hour
     const t0 = Date.now() - (3 * 3600 + 12 * 60 + 5) * 1000;
-    const clock = $('[data-live-clock]', live), pay = $('[data-live-pay]', live);
+    const lc = $('[data-live-clock]', live), pay = $('[data-live-pay]', live);
     const tick = () => {
       const s = Math.floor((Date.now() - t0) / 1000);
-      clock.textContent = `${pad(Math.floor(s / 3600))}:${pad(Math.floor(s / 60) % 60)}:${pad(s % 60)}`;
+      lc.textContent = `${pad(Math.floor(s / 3600))}:${pad(Math.floor(s / 60) % 60)}:${pad(s % 60)}`;
       pay.textContent = money((s / 3600) * RATE);
-      // the bump starts again two frames later, once a frame has been drawn without it (reading offsetWidth to restart
-      // it laid the page out every second)
-      if (!still) { pay.classList.remove('bump'); requestAnimationFrame(() => requestAnimationFrame(() => pay.classList.add('bump'))); }
     };
     tick();
     setInterval(tick, 1000);
-  }
-
-  /* ---------- the phone turns with the pointer; the chips float at their own depth ---------- */
-  const art = $('.hero-art');
-  if (art && fine && !still) {
-    const phone = $('.phone', art), chips = $$('.float', art);
-    let raf = 0, tx = 0, ty = 0;
-    const apply = () => {
-      raf = 0;
-      phone.style.transform = `perspective(1100px) rotateY(${tx * 10}deg) rotateX(${-ty * 8}deg)`;
-      chips.forEach((c, i) => { const d = 10 + i * 8; c.style.translate = `${tx * d}px ${ty * d}px`; });
-    };
-    art.addEventListener('pointermove', (e) => {
-      const r = art.getBoundingClientRect();
-      tx = ((e.clientX - r.left) / r.width - 0.5) * 2;
-      ty = ((e.clientY - r.top) / r.height - 0.5) * 2;
-      if (!raf) raf = requestAnimationFrame(apply);
-    });
-    art.addEventListener('pointerleave', () => { tx = 0; ty = 0; if (!raf) raf = requestAnimationFrame(apply); });
-  }
-
-  /* ---------- buttons drawn a little toward the pointer ---------- */
-  if (fine && !still) {
-    $$('.magnet').forEach((b) => {
-      b.addEventListener('pointermove', (e) => {
-        const r = b.getBoundingClientRect();
-        b.style.translate = `${(e.clientX - r.left - r.width / 2) * 0.18}px ${(e.clientY - r.top - r.height / 2) * 0.3}px`;
-      });
-      b.addEventListener('pointerleave', () => { b.style.translate = ''; });
-    });
-  }
-
-  /* ---------- a soft light follows the pointer over the feature cards ---------- */
-  if (fine) {
-    $$('.feat').forEach((c) => c.addEventListener('pointermove', (e) => {
-      const r = c.getBoundingClientRect();
-      c.style.setProperty('--mx', `${e.clientX - r.left}px`);
-      c.style.setProperty('--my', `${e.clientY - r.top}px`);
-    }));
   }
 
   /* ---------- the calculator: what a shift pays, by the law's rates ---------- */
@@ -89,6 +132,7 @@
     };
     const COLORS = ['var(--c-base)', 'var(--c-ot)', 'var(--c-rest)', 'var(--c-travel)'];
     let shown = 0, anim = 0;
+    const fmtH = (h) => (h === 1 ? 'שעה' : h === 2 ? 'שעתיים' : `${+h.toFixed(1)} שעות`);
     function compute() {
       const reg = st.night ? 7 : 8; // a night shift is a shorter day by law
       const base = Math.min(st.hours, reg), ot1 = Math.min(Math.max(st.hours - reg, 0), 2), ot2 = Math.max(st.hours - reg - 2, 0);
@@ -102,15 +146,20 @@
         ['נסיעות', st.travel, 'ליום עבודה'],
       ];
     }
-    const fmtH = (h) => (h === 1 ? 'שעה' : h === 2 ? 'שעתיים' : `${+h.toFixed(1)} שעות`);
-    function draw() {
+    // the four parts are drawn once; after that only their numbers and widths change (no list rebuilt on every move)
+    el.parts.innerHTML = COLORS.map((c) => `<li style="--c:${c}"><i></i><span><b></b><small></small></span><em></em></li>`).join('');
+    el.bar.innerHTML = COLORS.map((c) => `<span style="--c:${c}"></span>`).join('');
+    const rows = $$('li', el.parts), segs = $$('span', el.bar);
+    function render() {
       const parts = compute();
       const total = parts.reduce((s, p) => s + p[1], 0);
-      el.parts.innerHTML = parts.map(([k, v, why], i) => `<li style="--c:${COLORS[i]}"><i></i><span><b>${k}</b><small>${why}</small></span><em>${money(v)}</em></li>`).join('');
-      el.bar.innerHTML = parts.map(([, v], i) => `<span style="--c:${COLORS[i]};flex-grow:${Math.max(v, 0.0001)}"></span>`).join('');
+      parts.forEach(([k, v, why], i) => {
+        $('b', rows[i]).textContent = k; $('small', rows[i]).textContent = why; $('em', rows[i]).textContent = money(v);
+        segs[i].style.flexGrow = String(Math.max(v, 0.0001));
+      });
       el.min.hidden = !(st.rate < MIN);
       // the total counts to its new value
-      const from = shown, to = total, t0 = performance.now(), dur = still ? 0 : 650;
+      const from = shown, to = total, t0 = performance.now(), dur = still ? 0 : 600;
       cancelAnimationFrame(anim);
       const step = (t) => {
         const k = dur ? Math.min(1, (t - t0) / dur) : 1;
@@ -120,25 +169,61 @@
       };
       anim = requestAnimationFrame(step);
     }
-    el.rate.addEventListener('input', () => { const v = parseFloat(el.rate.value); if (v > 0 && v < 1000) { st.rate = v; draw(); } });
-    el.travel.addEventListener('input', () => { const v = parseFloat(el.travel.value); st.travel = v >= 0 && v < 200 ? v : 0; draw(); });
+    el.rate.addEventListener('input', () => { const v = parseFloat(el.rate.value); if (v > 0 && v < 1000) { st.rate = v; render(); } });
+    el.travel.addEventListener('input', () => { const v = parseFloat(el.travel.value); st.travel = v >= 0 && v < 200 ? v : 0; render(); });
     el.hours.addEventListener('input', () => {
       st.hours = parseFloat(el.hours.value);
       el.hoursOut.textContent = fmtH(st.hours);
       el.hours.style.setProperty('--p', ((st.hours - el.hours.min) / (el.hours.max - el.hours.min)) * 100 + '%');
-      draw();
+      render();
     });
     $$('[data-tog]', calc).forEach((b) => b.addEventListener('click', () => {
       const k = b.dataset.tog;
       st[k] = !st[k];
       b.setAttribute('aria-pressed', String(st[k]));
-      draw();
+      render();
     }));
     el.hours.dispatchEvent(new Event('input'));
   }
 
-  /* ---------- the gallery: the screen in the middle is the big one, the others step back ---------- */
-  const gal = $('.gallery');
+  /* ---------- a shift, from morning to night: the sky follows the reading ---------- */
+  const stage = $('[data-stage]'), chaps = $$('.chap');
+  let stageOn = false, current = -1;
+  const sDay = $('[data-stage-day]'), sClock = $('[data-stage-clock]'), sChip = $('[data-stage-chip]');
+  function drawStage() {
+    // one drawing for each part of the day in the story, stacked; the one being read shows
+    $$('.sky', stage).forEach((s) => s.remove());
+    chaps.forEach((c, i) => {
+      const svg = document.createElementNS(NS, 'svg');
+      svg.setAttribute('class', 'sky' + (i === Math.max(0, current) ? ' on' : ''));
+      svg.setAttribute('aria-hidden', 'true');
+      stage.prepend(svg);
+      draw(svg, stage, { phase: c.dataset.phase });
+      svg.dataset.i = String(i);
+    });
+  }
+  const swap = (node, text) => {
+    if (!node || node.textContent === text) return;
+    node.textContent = text;
+    if (!still && node.animate) node.animate([{ opacity: 0, transform: 'translateY(10px)' }, { opacity: 1, transform: 'none' }], { duration: 260, easing: 'cubic-bezier(.23, 1, .32, 1)' });
+  };
+  function show(i) {
+    if (i === current) return;
+    current = i;
+    const c = chaps[i];
+    $$('.sky', stage).forEach((s) => s.classList.toggle('on', s.dataset.i === String(i)));
+    swap(sDay, c.dataset.day); swap(sClock, c.dataset.time); swap(sChip, c.dataset.chip);
+  }
+  if (stage && chaps.length && 'IntersectionObserver' in window) {
+    // drawn only as the story comes near (the page's first moments are the hero's)
+    new IntersectionObserver(([e], o) => { if (e.isIntersecting) { o.disconnect(); stageOn = true; drawStage(); if (current < 0) show(0); } }, { rootMargin: '600px 0px' }).observe(stage);
+    // the chapter crossing the middle of the screen is the one shown
+    const seen = new IntersectionObserver((es) => { es.forEach((e) => { if (e.isIntersecting) show(chaps.indexOf(e.target)); }); }, { rootMargin: '-45% 0px -45% 0px' });
+    chaps.forEach((c) => seen.observe(c));
+  }
+
+  /* ---------- the screens: the one in the middle is the big one, the others step back ---------- */
+  const gal = $('[data-gallery]');
   if (gal && !still) {
     const figs = $$('figure', gal);
     let raf = 0;
@@ -148,56 +233,23 @@
       figs.forEach((f) => {
         const r = f.getBoundingClientRect();
         const d = Math.min(1, Math.abs(r.left + r.width / 2 - mid) / half);
-        f.style.transform = `scale(${(1 - d * 0.16).toFixed(3)})`;
-        f.style.opacity = (1 - d * 0.5).toFixed(3);
+        f.style.transform = `scale(${(1 - d * 0.12).toFixed(3)})`;
+        f.style.opacity = (1 - d * 0.45).toFixed(3);
       });
     };
     gal.addEventListener('scroll', () => { if (!raf) raf = requestAnimationFrame(depth); }, { passive: true });
     addEventListener('resize', () => { if (!raf) raf = requestAnimationFrame(depth); });
-    // the first look is set as the gallery nears the screen (it opens far below): measured as the page opened, it
-    // made the browser lay the page out ahead of time
     const near = new IntersectionObserver(([e]) => { if (e.isIntersecting) { near.disconnect(); depth(); } }, { rootMargin: '400px 0px' });
     near.observe(gal);
   }
   $$('[data-gal]').forEach((b) => b.addEventListener('click', () => {
-    const w = gal.querySelector('figure').getBoundingClientRect().width + 18;
+    const w = gal.querySelector('figure').getBoundingClientRect().width + 22;
     gal.scrollBy({ left: (b.dataset.gal === 'next' ? -1 : 1) * w, behavior: still ? 'auto' : 'smooth' });
   }));
 
-  /* ---------- coins that float up behind the last call to action ---------- */
-  const cv = $('#coins');
-  if (cv && !still) {
-    const g = cv.getContext('2d');
-    let w = 0, h = 0, dpr = 1, on = false, last = 0;
-    const coins = Array.from({ length: matchMedia('(max-width: 700px)').matches ? 11 : 18 }, () => ({}));
-    const reset = (c, init) => {
-      c.r = 9 + Math.random() * 14; c.x = Math.random() * w; c.y = init ? Math.random() * h : h + c.r * 2;
-      c.v = 18 + Math.random() * 26; c.sw = Math.random() * Math.PI * 2; c.spin = Math.random() * Math.PI * 2; c.a = 0.35 + Math.random() * 0.45;
-    };
-    const size = () => {
-      const r = cv.getBoundingClientRect(); dpr = Math.min(1.5, devicePixelRatio || 1);
-      w = r.width; h = r.height; cv.width = w * dpr; cv.height = h * dpr; g.setTransform(dpr, 0, 0, dpr, 0, 0);
-      coins.forEach((c) => reset(c, true));
-    };
-    const coin = (c) => {
-      const sx = Math.abs(Math.cos(c.spin)) * 0.85 + 0.15;
-      g.save(); g.globalAlpha = c.a; g.translate(c.x + Math.sin(c.sw) * 14, c.y); g.scale(sx, 1);
-      const grd = g.createLinearGradient(-c.r, -c.r, c.r, c.r); grd.addColorStop(0, '#ffd66b'); grd.addColorStop(1, '#f2960f');
-      g.fillStyle = grd; g.beginPath(); g.arc(0, 0, c.r, 0, Math.PI * 2); g.fill();
-      g.strokeStyle = 'rgba(160, 90, 0, .55)'; g.lineWidth = Math.max(1, c.r * 0.12); g.beginPath(); g.arc(0, 0, c.r * 0.78, 0, Math.PI * 2); g.stroke();
-      if (sx > 0.45) { g.fillStyle = 'rgba(120, 66, 0, .8)'; g.font = `700 ${c.r * 1.05}px Rubik, sans-serif`; g.textAlign = 'center'; g.textBaseline = 'middle'; g.fillText('₪', 0, c.r * 0.06); }
-      g.restore();
-    };
-    const frame = (t) => {
-      if (!on) return;
-      const dt = Math.min(0.05, (t - (last || t)) / 1000); last = t;
-      g.clearRect(0, 0, w, h);
-      coins.forEach((c) => { c.y -= c.v * dt; c.sw += dt * 1.2; c.spin += dt * 2.2; if (c.y < -c.r * 2) reset(c); coin(c); });
-      requestAnimationFrame(frame);
-    };
-    new IntersectionObserver(([e]) => {
-      if (e.isIntersecting && !on) { if (!w) size(); on = true; last = 0; requestAnimationFrame(frame); } else if (!e.isIntersecting) on = false;
-    }).observe(cv);
-    addEventListener('resize', () => { if (w) size(); });
+  /* ---------- the last word under the night sky ---------- */
+  const fin = $('[data-final-sky]');
+  if (fin && Sky && 'IntersectionObserver' in window) {
+    new IntersectionObserver(([e], o) => { if (e.isIntersecting) { o.disconnect(); draw(fin, fin.parentNode, { phase: 'night', weather: 'clear' }); } }, { rootMargin: '400px 0px' }).observe(fin);
   }
 })();

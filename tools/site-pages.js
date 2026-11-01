@@ -17,6 +17,8 @@ const FONT_CSS = fs.readFileSync(path.join(ROOT, 'src', 'fonts', 'fonts.css'), '
 const FONT_HEAD = ['rubik-hebrew', 'rubik-latin'].map((f) => `<link rel="preload" href="fonts/${f}.woff2" as="font" type="font/woff2" crossorigin>`).join('\n') + '\n<style id="fonts">' + FONT_CSS + '</style>';
 fs.mkdirSync(path.join(ROOT, 'site', 'fonts'), { recursive: true });
 for (const f of fs.readdirSync(path.join(ROOT, 'src', 'fonts'))) if (f.endsWith('.woff2')) fs.copyFileSync(path.join(ROOT, 'src', 'fonts', f), path.join(ROOT, 'site', 'fonts', f));
+// the living sky of the app's opening (src/app/sky.js) is the website's too: one copy of the code, the site gets it here
+fs.copyFileSync(path.join(ROOT, 'src', 'app', 'sky.js'), path.join(ROOT, 'site', 'sky.js'));
 // the home page is written by hand: its font block is kept the same as the generated pages'
 {
   const home = path.join(ROOT, 'site', 'index.html');
@@ -285,21 +287,23 @@ const PAGES = [
 
 /* ---------------- the page ---------------- */
 const CSS = `
-:root { --bg: #f6f4ee; --surface: #fff; --surface-2: #efece4; --ink: #141821; --ink-2: #5b5f6d; --line: rgba(20, 24, 33, .1); --brand: #0d2b6b; --brand-2: #1b3f8c; --gold: #c99a3b; --cta-1: #1b3f8c; --cta-2: #0d2b6b; color-scheme: light; }
-@media (prefers-color-scheme: dark) { :root { --bg: #0e1118; --surface: #161a24; --surface-2: #1b2030; --ink: #eceef4; --ink-2: #a5a9b8; --line: rgba(255, 255, 255, .09); --brand: #a9c0f2; --brand-2: #c3d3f7; color-scheme: dark; } }
+:root { --bg: #f7f8fb; --surface: #fff; --surface-2: #eef1f8; --ink: #0f1a33; --ink-2: #556078; --line: #e2e6ef; --brand: #0d2b6b; --brand-2: #16398a; --gold: #e9c987; --cta-1: #0d2b6b; --cta-2: #06173d; color-scheme: light; }
+@media (prefers-color-scheme: dark) { :root { --bg: #0a0f1f; --surface: #111a30; --surface-2: #16203a; --ink: #eef1f8; --ink-2: #a4adc4; --line: #222c46; --brand: #a9c0f2; --brand-2: #c3d3f7; color-scheme: dark; } }
 * { box-sizing: border-box; }
 [hidden] { display: none !important; } /* (a rule that sets display would show what is hidden) */
 body { margin: 0; background: var(--bg); color: var(--ink); font: 400 1.05rem/1.7 Rubik, system-ui, sans-serif; overflow-wrap: break-word; }
 a { color: var(--brand); }
-header { position: sticky; top: 0; z-index: 2; background: color-mix(in srgb, var(--bg) 88%, transparent); backdrop-filter: blur(10px); border-bottom: 1px solid var(--line); }
+header { position: sticky; top: 0; z-index: 2; background: rgba(7, 26, 69, .92); backdrop-filter: blur(16px) saturate(150%); -webkit-backdrop-filter: blur(16px) saturate(150%); color: #fff; }
 .bar { max-width: 760px; margin: 0 auto; display: flex; align-items: center; gap: 12px; padding: 10px max(16px, env(safe-area-inset-right)) 10px max(16px, env(safe-area-inset-left)); }
-.bar a.logo { display: flex; align-items: center; gap: 10px; color: var(--ink); text-decoration: none; font: 700 1.25rem Fredoka, Rubik, sans-serif; margin-inline-end: auto; }
+.bar a.logo { display: flex; align-items: center; gap: 10px; color: #fff; text-decoration: none; font: 600 1.2rem Rubik, sans-serif; margin-inline-end: auto; }
 .bar img { width: 36px; height: 36px; border-radius: 10px; }
 .btn { display: inline-flex; align-items: center; justify-content: center; gap: 8px; border-radius: 999px; background: linear-gradient(135deg, var(--cta-1), var(--cta-2)); color: #fff; font-weight: 700; text-decoration: none; padding: 10px 20px; white-space: nowrap; }
+.bar .btn { background: linear-gradient(180deg, #f3dca8, var(--gold)); color: #141821; font-weight: 600; transition: transform .16s cubic-bezier(.23, 1, .32, 1); }
+.btn:active { transform: scale(.97); }
 main { max-width: 760px; margin: 0 auto; padding: 28px max(16px, env(safe-area-inset-right)) 48px max(16px, env(safe-area-inset-left)); }
 nav.crumbs { font-size: .9rem; color: var(--ink-2); margin-bottom: 10px; }
-h1 { font: 700 clamp(1.7rem, 5vw, 2.4rem)/1.25 Fredoka, Rubik, sans-serif; margin: 0 0 16px; text-wrap: balance; }
-h2 { font: 700 1.35rem/1.35 Fredoka, Rubik, sans-serif; margin: 34px 0 10px; text-wrap: balance; }
+h1 { font: 700 clamp(1.7rem, 5vw, 2.4rem)/1.25 Rubik, sans-serif; margin: 0 0 16px; text-wrap: balance; }
+h2 { font: 700 1.35rem/1.35 Rubik, sans-serif; margin: 34px 0 10px; text-wrap: balance; }
 .answer { background: var(--surface); border-radius: 20px; padding: 18px 20px; box-shadow: 0 6px 24px rgba(10, 20, 45, .08); border: 1px solid var(--line); font-size: 1.12rem; }
 .tbl { overflow-x: auto; background: var(--surface); border-radius: 18px; box-shadow: 0 6px 24px rgba(10, 20, 45, .06); }
 table { width: 100%; border-collapse: collapse; }
@@ -310,9 +314,9 @@ th { line-height: 1.3; }
 @media (max-width: 420px) { th, td { padding: 10px 8px; font-size: .95rem; } }
 th { font-size: .9rem; color: var(--ink-2); font-weight: 600; background: var(--surface-2); }
 tr:last-child td { border-bottom: 0; }
-.cta { margin: 36px 0 8px; background: linear-gradient(135deg, var(--cta-1), var(--cta-2)); color: #fff; border-radius: 24px; padding: 22px; display: grid; gap: 12px; }
-.cta b { font: 700 1.25rem Fredoka, Rubik, sans-serif; }
-.cta .btn { background: #fff; color: #3a1fb0; justify-self: start; }
+.cta { margin: 36px 0 8px; background: radial-gradient(110% 120% at 90% 0%, #1b3f8f 0%, transparent 60%), linear-gradient(160deg, var(--cta-1), var(--cta-2)); color: #fff; border-radius: 24px; padding: 22px; display: grid; gap: 12px; }
+.cta b { font: 700 1.25rem Rubik, sans-serif; }
+.cta .btn { background: linear-gradient(180deg, #f3dca8, var(--gold)); color: #141821; justify-self: start; }
 details { background: var(--surface); border-radius: 16px; padding: 12px 16px; margin: 10px 0; }
 summary { font-weight: 600; cursor: pointer; }
 details p { margin: 8px 0 0; color: var(--ink-2); }
@@ -337,8 +341,7 @@ function page(p) {
 <title>${esc(p.title)} · שעתי</title>
 <meta name="description" content="${esc(p.desc)}">
 <link rel="canonical" href="${url}">
-<meta name="theme-color" media="(prefers-color-scheme: light)" content="#f6f4ee">
-<meta name="theme-color" media="(prefers-color-scheme: dark)" content="#0e1118">
+<meta name="theme-color" content="#071a45">
 <meta property="og:type" content="article">
 <meta property="og:locale" content="he_IL">
 <meta property="og:site_name" content="שעתי">
@@ -387,13 +390,13 @@ const CHECK_CSS = `
 .ck .sw input { width: 22px; height: 22px; accent-color: var(--brand); }
 .ck small { color: var(--ink-2); font-weight: 400; }
 #ck-out { border-radius: 22px; padding: 20px; display: grid; gap: 8px; text-align: center; color: #fff; }
-#ck-out.bad { background: linear-gradient(135deg, #4a1fd6, #b02adf); }
+#ck-out.bad { background: linear-gradient(160deg, #8f1d33, #c2334d); }
 #ck-out.good { background: linear-gradient(135deg, #0b7a4b, #14b8a6); }
-#ck-title { font: 700 1.5rem Fredoka, Rubik, sans-serif; }
-#ck-big { font: 800 clamp(1.6rem, 7vw, 2.3rem)/1.2 Fredoka, Rubik, sans-serif; }
+#ck-title { font: 700 1.5rem Rubik, sans-serif; }
+#ck-big { font: 800 clamp(1.6rem, 7vw, 2.3rem)/1.2 Rubik, sans-serif; }
 #ck-why { opacity: .92; }
 .ck-acts { display: flex; flex-wrap: wrap; gap: 10px; justify-content: center; margin-top: 6px; }
-.ck-acts button { font: 700 1rem Rubik, sans-serif; border: 0; border-radius: 999px; padding: 12px 18px; cursor: pointer; background: #fff; color: #3a1fb0; }
+.ck-acts button { font: 700 1rem Rubik, sans-serif; border: 0; border-radius: 999px; padding: 12px 18px; cursor: pointer; background: #fff; color: #0d2b6b; }
 .ck-acts button.wa { background: #25d366; color: #063b1c; }
 .priv { font-size: .92rem; color: var(--ink-2); text-align: center; }`;
 function checkPage() {
@@ -406,8 +409,7 @@ function checkPage() {
 <title>${esc(CHECK.title)} · שעתי</title>
 <meta name="description" content="${esc(CHECK.desc)}">
 <link rel="canonical" href="${url}">
-<meta name="theme-color" media="(prefers-color-scheme: light)" content="#f6f4ee">
-<meta name="theme-color" media="(prefers-color-scheme: dark)" content="#0e1118">
+<meta name="theme-color" content="#071a45">
 <meta property="og:type" content="website">
 <meta property="og:locale" content="he_IL">
 <meta property="og:site_name" content="שעתי">

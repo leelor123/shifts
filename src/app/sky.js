@@ -15,7 +15,10 @@
  * ============================================================ */
 (function (root) {
   'use strict';
-  const W = 390, H = 330, HZ = 262; // the drawing's width, height and horizon
+  // the drawing's height and horizon, and its width: 390 on a phone; a wide screen (the website) draws a wider scene
+  // of the same height (o.width), so nothing is stretched
+  const W0 = 390, H0 = 330;
+  let W = W0, H = H0, HZ = H0 - 68;
   const NS = 'http://www.w3.org/2000/svg';
   const KEY = 'shaati.sky';
   const WX_URL = 'https://api.open-meteo.com/v1/forecast';
@@ -43,7 +46,16 @@
     const HC = root.HebCal, d = new Date(now);
     const key = d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
     let rise = new Date(d).setHours(6, 15, 0, 0), set = new Date(d).setHours(17, 0, 0, 0);
-    try { if (HC && place && place.lat) { rise = HC.sunrise(key, place.lat, place.lon); set = HC.sunset(key, place.lat, place.lon); } } catch (e) { /* the usual hours */ }
+    try {
+      if (HC && place && place.lat) { rise = HC.sunrise(key, place.lat, place.lon); set = HC.sunset(key, place.lat, place.lon); }
+      else {
+        // without it (the website): Israel's sunrise and sunset by the day of the year, on the local clock (about 5:35 and
+        // 19:48 in late June, 6:38 and 16:38 in late December), close enough for a sky
+        const doy = Math.floor((d - new Date(d.getFullYear(), 0, 0)) / 86400000), c = Math.cos((2 * Math.PI * (doy - 172)) / 365.25);
+        const at = (h) => new Date(d).setHours(0, 0, 0, 0) + h * 3600000;
+        rise = at(6.105 - .525 * c); set = at(18.21 + 1.58 * c);
+      }
+    } catch (e) { /* the usual hours */ }
     const m = 60000, t = +d;
     const phase = t < rise - 50 * m ? 'night' : t < rise + 35 * m ? 'dawn' : t < rise + 180 * m ? 'morning'
       : t < set - 80 * m ? 'day' : t < set - 5 * m ? 'golden' : t < set + 55 * m ? 'dusk' : 'night';
@@ -118,6 +130,9 @@
     o = o || {};
     const now = o.now || Date.now();
     const place = o.place && o.place.lat ? o.place : TLV;
+    W = Math.max(W0, Math.round(o.width || W0));
+    H = Math.max(H0, Math.round(o.height || H0)); HZ = H - 68;
+    const X = (v) => (v * W) / W0, more = (n) => Math.round((n * W) / W0);
     const st = state(now, place);
     const phase = o.phase || st.phase, season = o.season || st.season, weather = o.weather || 'clear';
     const P = PHASES[phase], grey = GREY[weather] || 0, night = phase === 'night' || phase === 'dusk';
@@ -131,6 +146,8 @@
     svg.setAttribute('preserveAspectRatio', 'xMidYMax slice');
     // every moving part counts its delay from the clock (see the top of this file)
     svg.style.setProperty('--sk0', (-(now % 86400000) / 1000).toFixed(3) + 's');
+    svg.style.setProperty('--skw', String(W));
+    svg.style.setProperty('--skh', String(H));
     Object.assign(svg.dataset, { phase, weather, kind, season });
     const defs = el('defs');
     defs.appendChild(el('linearGradient', { id: id + 'sky', x1: 0, y1: 0, x2: 0, y2: 1 }, [el('stop', { offset: 0, 'stop-color': sky[0] }), el('stop', { offset: .58, 'stop-color': sky[1] }), el('stop', { offset: 1, 'stop-color': sky[2] })]));
@@ -141,12 +158,14 @@
 
     if (P.stars && grey < .5) {
       const g = el('g', { class: 'sk-stars', fill: '#fff' });
-      for (let i = 0; i < 22; i++) g.appendChild(el('circle', { cx: (r() * W).toFixed(1), cy: (r() * HZ * .72).toFixed(1), r: (.4 + r() * .9).toFixed(2), opacity: (P.stars * (.4 + r() * .6)).toFixed(2), style: `--d:${(r() * 6).toFixed(2)}s;--t:${(2.5 + r() * 4).toFixed(2)}s` }));
+      for (let i = 0; i < more(22); i++) g.appendChild(el('circle', { cx: (r() * W).toFixed(1), cy: (r() * HZ * .72).toFixed(1), r: (.4 + r() * .9).toFixed(2), opacity: (P.stars * (.4 + r() * .6)).toFixed(2), style: `--d:${(r() * 6).toFixed(2)}s;--t:${(2.5 + r() * 4).toFixed(2)}s` }));
       svg.appendChild(g);
     }
     // the sun and the moon keep to the sides (the middle is the logo's and the greeting's): the right half before
     // noon (or midnight), the left half after it
-    const arc = (t) => { t = Math.max(0, Math.min(1, t)); const d = Math.abs(t - .5) * 2, x = 40 + (1 - d) * 50; return [t < .5 ? W - x : x, HZ - 26 - (1 - Math.pow(d, 1.6)) * 186]; };
+    const arc = (t) => { t = Math.max(0, Math.min(1, t)); const d = Math.abs(t - .5) * 2, x = X(40) + (1 - d) * X(50); const y = HZ - 26 - (1 - Math.pow(d, 1.6)) * Math.max(186, H * .56);
+      // a tall sky (a phone's whole screen on the website) keeps the sun and the moon up high, clear of the words
+      return [t < .5 ? W - x : x, H > H0 ? Math.min(y, 40 + H * .2) : y]; };
     if (grey < .7) {
       if (night) {
         const [mx, my] = arc(Math.max(.12, Math.min(.88, st.moonT)));
@@ -174,9 +193,9 @@
     // clouds drift slowly to the left, above or below the greeting; more, and greyer, on a grey day
     const nClouds = { clear: season === 'summer' ? 0 : 1, hot: 0, partly: 2, cloudy: 3, rain: 3, storm: 3, fog: 2, snow: 3 }[weather];
     const cloudFill = grey ? mix(sky[1], phase === 'night' ? '#2a3350' : '#e8edf3', .55) : phase === 'night' ? '#20305e' : night || phase === 'golden' || phase === 'dawn' ? '#ffd9c2' : '#ffffff';
-    for (let i = 0; i < (nClouds == null ? 1 : nClouds); i++) {
+    for (let i = 0; i < (nClouds == null ? 1 : nClouds) * Math.max(1, Math.ceil((W / W0) * .6)); i++) {
       const lay = el('g', { class: 'sk-cloud', style: `--t:${(70 + r() * 70).toFixed(0)}s;--d:${(-r() * 120).toFixed(0)}s` });
-      lay.appendChild(cloud(r, r() < .5 ? 6 + r() * 10 : 226 + r() * 14, .7 + r() * .7, cloudFill, grey ? .85 : .7));
+      lay.appendChild(cloud(r, r() < .5 ? 6 + r() * 10 : HZ - 36 + r() * 14, .7 + r() * .7, cloudFill, grey ? .85 : .7));
       svg.appendChild(lay);
     }
     // cranes crossing Israel in autumn and spring (it is on their way), by day, in dry weather
@@ -197,13 +216,13 @@
     const sea = (y) => {
       land.appendChild(el('rect', { x: 0, y, width: W, height: H - y, fill: `url(#${id}sea)` }));
       const gl = el('g', { class: 'sk-glint', stroke: phase === 'night' ? '#cfe0ff' : '#fff6dc', 'stroke-width': 1, 'stroke-linecap': 'round', opacity: .7 });
-      for (let i = 0; i < 5; i++) { const x = 20 + r() * (W - 60), yy = y + 8 + r() * 30, w = 8 + r() * 14; gl.appendChild(el('line', { x1: x.toFixed(1), y1: yy.toFixed(1), x2: (x + w).toFixed(1), y2: yy.toFixed(1), style: `--d:${(r() * 4).toFixed(2)}s` })); }
+      for (let i = 0; i < more(5); i++) { const x = 20 + r() * (W - 60), yy = y + 8 + r() * 30, w = 8 + r() * 14; gl.appendChild(el('line', { x1: x.toFixed(1), y1: yy.toFixed(1), x2: (x + w).toFixed(1), y2: yy.toFixed(1), style: `--d:${(r() * 4).toFixed(2)}s` })); }
       land.appendChild(gl);
     };
     const sand = (c, t) => mix(c, '#c9925e', phase === 'night' ? t * .2 : t);
     if (kind === 'sea') {
       sea(HZ + 6);
-      skyline(land, r, { x0: 140, x1: W + 10, base: HZ + 7, hMin: 12, hMax: 30, towers: .3, fill: near, lights });
+      skyline(land, r, { x0: X(140), x1: W + 10, base: HZ + 7, hMin: 12, hMax: 30, towers: .3, fill: near, lights });
     } else if (kind === 'carmel') {
       sea(HZ + 6);
       land.appendChild(el('path', { d: `M${W * .2} ${H} C${W * .36} ${HZ + 4} ${W * .46} ${HZ - 34} ${W * .66} ${HZ - 40} S${W * .92} ${HZ - 46} ${W + 20} ${HZ - 44} L${W + 20} ${H} Z`, fill: mix(far, near, .62) }));
@@ -211,18 +230,18 @@
     } else if (kind === 'eilat') {
       land.appendChild(el('path', { d: ridge(rng(5), HZ - 2, 44, 6), fill: mix(far, '#b8603f', phase === 'night' ? .08 : .32) }));
       sea(HZ + 6);
-      skyline(land, r, { x0: 220, x1: W + 10, base: HZ + 7, hMin: 7, hMax: 18, fill: near, lights });
+      skyline(land, r, { x0: X(220), x1: W + 10, base: HZ + 7, hMin: 7, hMax: 18, fill: near, lights });
     } else if (kind === 'lake') {
       land.appendChild(el('path', { d: ridge(rng(9), HZ - 2, 38, 5), fill: far }));
       sea(HZ - 2);
-      skyline(land, r, { x0: 236, x1: W + 10, base: HZ - 1, hMin: 6, hMax: 15, fill: near, lights });
+      skyline(land, r, { x0: X(236), x1: W + 10, base: HZ - 1, hMin: 6, hMax: 15, fill: near, lights });
     } else if (kind === 'hills') {
       land.appendChild(el('path', { d: ridge(r, HZ - 26, 38, 5), fill: far }));
       land.appendChild(el('path', { d: ridge(r, HZ + 10, 20, 4), fill: near }));
-      skyline(land, r, { x0: 60, x1: 320, base: HZ - 2, hMin: 5, hMax: 13, fill: near, lights });
+      skyline(land, r, { x0: X(60), x1: X(320), base: HZ - 2, hMin: 5, hMax: 13, fill: near, lights });
     } else if (kind === 'desert') {
       land.appendChild(el('path', { d: ridge(r, HZ - 4, 14, 3), fill: sand(far, .3) }));
-      skyline(land, r, { x0: 70, x1: 330, base: HZ + 10, hMin: 6, hMax: 16, fill: sand(near, .12), lights });
+      skyline(land, r, { x0: X(70), x1: X(330), base: HZ + 10, hMin: 6, hMax: 16, fill: sand(near, .12), lights });
       land.appendChild(el('path', { d: ridge(r, HZ + 22, 6, 3), fill: sand(near, .12) }));
     } else {
       land.appendChild(el('path', { d: ridge(r, HZ - 10, 24, 4), fill: far }));
@@ -235,13 +254,13 @@
     if (weather === 'rain' || weather === 'storm') {
       const g = el('g', { class: 'sk-fall', stroke: phase === 'night' ? 'rgba(190,210,255,.24)' : 'rgba(255,255,255,.3)', 'stroke-width': 1, 'stroke-linecap': 'round', style: '--t:.75s' });
       // two screens of drops, one above the other: falling by one screen's height loops without a seam
-      for (let k = 0; k < 2; k++) for (let i = 0; i < 22; i++) { const x = r() * (W + 60), y = r() * H - k * H; g.appendChild(el('line', { x1: x.toFixed(1), y1: y.toFixed(1), x2: (x - 4).toFixed(1), y2: (y + 12).toFixed(1) })); }
+      for (let k = 0; k < 2; k++) for (let i = 0; i < more(22); i++) { const x = r() * (W + 60), y = r() * H - k * H; g.appendChild(el('line', { x1: x.toFixed(1), y1: y.toFixed(1), x2: (x - 4).toFixed(1), y2: (y + 12).toFixed(1) })); }
       svg.appendChild(el('g', {}, [g]));
       if (weather === 'storm') svg.appendChild(el('rect', { class: 'sk-flash', width: W, height: H, fill: '#e8eeff' }));
     }
     if (weather === 'snow') {
       const g = el('g', { class: 'sk-fall', fill: '#fff', style: '--t:11s' });
-      for (let k = 0; k < 2; k++) for (let i = 0; i < 22; i++) g.appendChild(el('circle', { cx: (r() * W).toFixed(1), cy: (r() * H - k * H).toFixed(1), r: (.8 + r() * 1.4).toFixed(2), opacity: (.5 + r() * .5).toFixed(2) }));
+      for (let k = 0; k < 2; k++) for (let i = 0; i < more(22); i++) g.appendChild(el('circle', { cx: (r() * W).toFixed(1), cy: (r() * H - k * H).toFixed(1), r: (.8 + r() * 1.4).toFixed(2), opacity: (.5 + r() * .5).toFixed(2) }));
       svg.appendChild(el('g', {}, [g]));
     }
     if (weather === 'fog') svg.appendChild(el('rect', { class: 'sk-fog', y: HZ - 70, width: W * 2, height: 110, fill: `url(#${id}sky)`, opacity: .65 }));
