@@ -84,8 +84,16 @@ h1, h2, .home-top h1, .wizard h1, .sheet .sh-head h2 { font-family: var(--font);
 .sc .itile svg { color: var(--on-brand-soft); }
 
 /* presses answer at once (Emil: 0.97, 160ms ease-out) */
-body.fx .btn:active, body.fx .chip:active, body.fx .sc:active, body.fx .am-tile:active { transform: scale(.97); }
+body.fx .btn:active, body.fx .chip:active, body.fx .sc:active, body.fx .am-tile:active, body.fx .quick button:active { transform: scale(.97); }
 .btn, .sc, .chip, .am-tile { transition-timing-function: var(--ease-out); }
+/* the older layers gave these the overshoot at 220ms with a stronger selector (body.fx …), so the line above lost:
+   the same selectors here, so every press settles with the ease-out in 160ms */
+body.fx .btn, body.fx .nav .fab, body.fx .chip, body.fx .quick button, body.fx .icon-btn, body.fx .nav .pill, body.fx .item,
+body.fx .pk-field, body.fx .ach-card, body.fx .home-hero .hh-skin { transition: transform .16s var(--ease-out), background-color .15s, filter .15s; }
+/* a chart's point and its tip answer often: no overshoot, and the tip comes from 95%, not from far smaller */
+.chart .dot { transition: r .2s var(--ease-out); }
+.chart-tip.pop { animation: tip-in .18s var(--ease-out); }
+@keyframes tip-in { from { opacity: 0; transform: translate(-50%, -90%) scale(.95); } }
 
 /* the tab bar: one frosted material (apple-design), ink for where you are, the add button ink with gold */
 .nav { background: color-mix(in srgb, var(--surface) 84%, transparent); -webkit-backdrop-filter: saturate(1.4) blur(18px); backdrop-filter: saturate(1.4) blur(18px); border-top: 1px solid var(--line); }
