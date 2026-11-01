@@ -114,3 +114,10 @@ body.fx .btn:active, body.fx .chip:active, body.fx .sc:active, body.fx .am-tile:
 .finding.warn .fi, .status-summary .warn svg, .ps-c.warn svg { color: var(--warn-mark); }
 .finding.bad .fi, .status-summary .bad svg, .ps-c.bad svg { color: var(--bad-mark); }
 .ps-c { display: inline-flex; align-items: center; gap: 3px; white-space: nowrap; }
+
+/* the first open: the screen under the language doors is not painted while they cover it (lang.js lp-open) */
+html.lp-open #view, html.lp-open #nav { visibility: hidden; }
+
+/* the language doors written into the page: only on a first open (index.html's first script sets lp-first) */
+#lp-static { display: none; }
+html.lp-first #lp-static { display: block; }

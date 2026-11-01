@@ -39,23 +39,26 @@
 
   /* ---------------- SDK ---------------- */
   let loading = null;
-  /** Starts downloading the SDK without running it (the app opens: the network works while the opening show's
-   *  logo draws itself, and the code runs only after, so it never stalls that drawing). */
+  /** The opening show has left (at once when there is none): the sign-in's three large files download only then, so the
+   *  first screen's paint never waits on them (Lighthouse counted them: the largest paint at 5 s on a phone). Nothing
+   *  can be tapped under the show, so nothing that needs Google is waiting. */
+  const showGone = () => new Promise((r) => (root.Intro && root.Intro.after && document.getElementById('intro') ? root.Intro.after(r, 0) : r()));
   Cloud.preload = function () {
     if (fb || loading || !root.FIREBASE_CONFIG || Cloud.preloaded) return;
     Cloud.preloaded = true;
-    for (const f of ['firebase-app.js', 'firebase-auth.js', 'firebase-firestore.js']) {
+    showGone().then(() => { for (const f of ['firebase-app.js', 'firebase-auth.js', 'firebase-firestore.js']) {
       const l = document.createElement('link');
       l.rel = 'modulepreload';
       l.href = SDK + f;
       document.head.appendChild(l);
-    }
+    } });
   };
   function load() {
     if (fb) return Promise.resolve(fb);
     if (!root.FIREBASE_CONFIG) return Promise.reject(root.U.oops('חסרות הגדרות Firebase'));
     if (!loading) {
       loading = (async () => {
+        await showGone();
         const [a, au, fs] = await Promise.all([import(SDK + 'firebase-app.js'), import(SDK + 'firebase-auth.js'), import(SDK + 'firebase-firestore.js')]);
         const app = a.getApps().length ? a.getApp() : a.initializeApp(root.FIREBASE_CONFIG);
         let auth;

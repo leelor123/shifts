@@ -77,6 +77,7 @@
 
   /* ---------------- the picker ---------------- */
   const LOGO = '<svg viewBox="0 0 1024 1024" aria-hidden="true"><path class="g" d="M300 660 A258 258 0 0 1 603 271 L603 600"/><path class="y" d="M420 422 L420 753 A258 258 0 0 0 720 362"/></svg>';
+  Lang.markup = (sug, inSheet) => markup(sug, inSheet); // also for the build (tools/build.js writes the first doors)
   function markup(sug, inSheet) {
     const order = LANGS;
     const s = byId(sug) || byId(Lang.current);
@@ -113,10 +114,17 @@
    */
   Lang.firstRun = function () {
     return new Promise((resolve) => {
-      const host = document.createElement('div');
-      host.className = 'lp-host';
-      host.innerHTML = markup(Lang.device() || 'he', false);
-      document.body.appendChild(host);
+      // the doors are already in the page (the build writes them, in the page's own language, shown by the first script
+      // when no language is stored): they were drawn with the first frame, under the opening show, without waiting for
+      // this code; they are taken as they are (nothing redrawn in sight), only the suggestion follows the phone
+      const sug = Lang.device() || 'he';
+      let host = document.getElementById('lp-static');
+      if (host) { host.removeAttribute('id'); if (host.dataset.sug !== sug) host.innerHTML = markup(sug, false); }
+      else { host = document.createElement('div'); host.className = 'lp-host'; host.innerHTML = markup(sug, false); document.body.appendChild(host); }
+      document.documentElement.classList.remove('lp-first');
+      // what lies under the doors is not painted while they cover it (it was: the home screen, drawn unseen, made the
+      // page's largest paint seconds late); it shows the moment the doors start to leave, under the colour that fills
+      document.documentElement.classList.add('lp-open');
       // the opening show leaves once this screen is drawn (it watches #view)
       const view = document.getElementById('view');
       if (view) view.innerHTML = '<div class="view lp-under"></div>';
@@ -137,6 +145,7 @@
           }
           await remember(id);
           host.classList.add('out');
+          document.documentElement.classList.remove('lp-open');
           fill.classList.add('fade');
           setTimeout(() => { host.remove(); fill.remove(); }, 560);
           resolve(id);

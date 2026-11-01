@@ -2,7 +2,9 @@
 <html lang="he" dir="rtl">
 <head>
 <meta charset="utf-8">
-<script>(function(){try{var l=localStorage.getItem('shaati.lang'),h=document.documentElement.lang;if(l&&l!==h&&/^(he|ar|ru|en|fr|es)$/.test(l)&&!sessionStorage.getItem('langHop')){sessionStorage.setItem('langHop','1');location.replace((l==='he'?'index.html':'index.'+l+'.html')+location.search+location.hash)}else sessionStorage.removeItem('langHop')}catch(e){}})();
+<script>(function(){try{var l=localStorage.getItem('shaati.lang'),h=document.documentElement.lang;if(l&&l!==h&&/^(he|ar|ru|en|fr|es)$/.test(l)&&!sessionStorage.getItem('langHop')){sessionStorage.setItem('langHop','1');location.replace((l==='he'?'index.html':'index.'+l+'.html')+location.search+location.hash)}else sessionStorage.removeItem('langHop');if(!/^(he|ar|ru|en|fr|es)$/.test(l||''))document.documentElement.classList.add('lp-first','lp-open')}catch(e){document.documentElement.classList.add('lp-first','lp-open')}})();
+/* lp-first: no language chosen yet, so the language doors written into the page (#lp-static) show with the first frame,
+   and lp-open keeps the screen under them unpainted (lang.js takes the doors over; app.js removes them if not needed) */
 /* Rubik and Fredoka come from the app's own address (fonts/, their @font-face rules are in the styles) and the
    language's files are preloaded, so nothing waits for another server. A font chosen in the settings comes from
    Google: App.applyTheme gives this link its address. The show waits for the fonts before it leaves. */
@@ -17,11 +19,8 @@
 <link rel="icon" href="favicon-48.png" type="image/png">
 <link rel="apple-touch-icon" href="apple-touch-icon.png">
 <!--__FONT_PRELOAD__-->
-<!-- the Google sign-in (cloud.js): its code starts downloading with the page and its servers are dialled at once,
-     instead of one after the other once the app's code has run -->
-<link rel="modulepreload" href="https://www.gstatic.com/firebasejs/12.19.0/firebase-app.js" crossorigin>
-<link rel="modulepreload" href="https://www.gstatic.com/firebasejs/12.19.0/firebase-auth.js" crossorigin>
-<link rel="modulepreload" href="https://www.gstatic.com/firebasejs/12.19.0/firebase-firestore.js" crossorigin>
+<!-- the Google sign-in's servers are dialled early; its code (cloud.js) downloads only after the opening show's logo
+     has drawn itself, so the first screen is never waiting on it -->
 <link rel="preconnect" href="https://apis.google.com">
 <link rel="preconnect" href="https://shiftpay-70ab6.firebaseapp.com">
 <link rel="preconnect" href="https://www.googleapis.com">
@@ -43,6 +42,7 @@
     <div class="intro-sub">מעקב משמרות ושכר</div>
   </div>
 </div>
+<!--__LP_STATIC__-->
 <div id="app"><main id="view"><div class="view"></div></main></div>
 <nav class="nav" id="nav" aria-label="ניווט ראשי"></nav>
 <div id="print-root" aria-hidden="true"></div>
@@ -52,6 +52,5 @@ window.APP_VERSION = '__VERSION__';
 window.APP_BUILD = '__BUILD__';
 /*__JS__*/
 </script>
-<!--__APP_JS__-->
 </body>
 </html>

@@ -217,7 +217,7 @@
         if (Fx()) Fx().celebrate('big');
         setTimeout(() => UI.dialog({ title: '', html: `<div class="term-box">${App.mascot('love', { size: 70 })}<div><h3>הפנייה נשלחה! 💌</h3><p>${anon ? 'נענה לך במייל בהקדם.' : 'נענה בהקדם, והתשובה תופיע כאן באפליקציה (עזרה ותמיכה › הפניות שלי).'}</p></div></div>`, buttons: [{ label: 'תודה!', value: true, cls: '' }] }), 350);
       } catch (e) {
-        console.error(e);
+        console.warn('support', e); // handled: the person is told below and can send again
         sending = false;
         send.disabled = false;
         send.innerHTML = `${icon('send', 's')} שליחה`;

@@ -86,6 +86,9 @@ let errors = [];
     await page.waitForFunction(() => !document.getElementById('intro'), { timeout: 15000 });
     await page.click('#lg-ok'); await page.click('#lg-go');
     await page.waitForSelector('[data-next]', { timeout: 5000 });
+    // the language doors written into the page go when they are not opened, and never leave the screen hidden
+    const doors = await ev(() => ({ left: !!document.getElementById('lp-static'), hidden: document.documentElement.classList.contains('lp-open') || document.documentElement.classList.contains('lp-first') }));
+    if (doors.left || doors.hidden) throw new Error('first doors left behind: ' + JSON.stringify(doors));
   });
   await step('setup wizard, all steps with defaults', async () => {
     for (let i = 0; i < 12; i++) {

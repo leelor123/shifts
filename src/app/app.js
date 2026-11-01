@@ -759,15 +759,28 @@
     try {
       await Store.load();
     } catch (e) {
+      // the message must be seen: not under the first doors
+      const lp = document.getElementById('lp-static'); if (lp) lp.remove();
+      document.documentElement.classList.remove('lp-first', 'lp-open');
       document.getElementById('view').innerHTML = `<div class="view">${UI.emptyState('alert', 'לא ניתן לפתוח את מסד הנתונים', esc(e.message || e))}</div>`;
       return;
     }
+    // the first doors (the language) open only on the very first open of a signed-out app with no language chosen. This
+    // one value decides both: whether they open (below) and whether the doors written into the page go now (unseen,
+    // under the opening show); two conditions that could differ left them covering the screen (tests without sign-in)
+    App.needDoors = !!(root.FIREBASE_CONFIG && !S.meta.cloudUid && root.Lang && !root.Lang.stored() && !S.settings.onboarded);
+    if (!App.needDoors) {
+      const lp = document.getElementById('lp-static');
+      if (lp) lp.remove();
+      document.documentElement.classList.remove('lp-first', 'lp-open');
+    }
     // the heavy start-up below waits for the opening show's logo to finish drawing (about 0.8 s): that drawing is
     // the one part of the show the main thread paints, and a busy start-up froze it halfway on slow phones
-    if (root.Intro && root.Intro.drawn) {
-      if (root.Cloud && root.Cloud.preload) root.Cloud.preload(); // the sign-in's code downloads meanwhile
-      await root.Intro.drawn();
-    }
+    if (root.Intro && root.Intro.drawn) await root.Intro.drawn();
+    // the sign-in's code downloads from here on (before, it started with the page and the first screen's paint waited on
+    // three large files; on a first open Google is needed only at the end of the questions, a returning user's account
+    // reconnects behind the screen)
+    if (root.Cloud && root.Cloud.preload) root.Cloud.preload();
     // the tax brackets follow the law of each tax year: a stored table that is some year's own (a default an earlier
     // version saved) becomes this year's, so the settings show what is used; a table the user typed stays theirs
     {
@@ -841,7 +854,7 @@
     // nobody has signed in on this phone yet
     const starting = Cloud.start().catch((e) => { console.warn('sign-in not available yet', e); return null; });
     // the very first open: which language (another one reopens the app in it)
-    if (root.Lang && !root.Lang.stored() && !S.settings.onboarded) await root.Lang.firstRun();
+    if (App.needDoors) await root.Lang.firstRun();
     if (!S.settings.onboarded) App.sheetsApi.onboarding({ preLogin: true });
     else App.showLogin();
     // back from a full-page Google sign-in, or a sign-in that was already in the browser: finish it
@@ -964,5 +977,6 @@
     const r = e.reason;
     if (r && ['UnknownError', 'InvalidStateError', 'QuotaExceededError', 'AbortError', 'TransactionInactiveError'].includes(r.name)) { e.preventDefault(); console.warn('storage', r); }
   });
-  document.addEventListener('DOMContentLoaded', () => App.boot());
+  // the code comes in after the first frame (index.html's loader), so the page may be parsed already
+  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', () => App.boot()); else App.boot();
 })(typeof window !== 'undefined' ? window : globalThis);
