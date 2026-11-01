@@ -123,7 +123,7 @@ self.addEventListener('fetch', (e) => {
     return;
   }
   // only static libraries & fonts are cached; sign-in and Firestore traffic always goes to the network
-  const STATIC = ['fonts.googleapis.com', 'fonts.gstatic.com', 'cdnjs.cloudflare.com', 'cdn.jsdelivr.net', 'tessdata.projectnaptha.com'];
+  const STATIC = ['fonts.googleapis.com', 'fonts.gstatic.com', 'cdnjs.cloudflare.com', 'cdn.jsdelivr.net', 'cdn.sheetjs.com', 'tessdata.projectnaptha.com'];
   const isSdk = url.hostname === 'www.gstatic.com' && url.pathname.startsWith('/firebasejs/');
   if (!STATIC.includes(url.hostname) && !isSdk) return;
   // Libraries and fonts carry their version in the address, so a copy downloaded once is reused

@@ -114,8 +114,7 @@
     S.settings = mergeDeep(root.Defaults.defaultSettings(), kvMap.settings || {});
     S.meta = kvMap.meta || {};
     S.activeShift = kvMap.activeShift || null;
-    for (const s of LIST_STORES) S[s] = await getAll(s);
-    S.roles.forEach((r) => safeRecord('roles', r));
+    for (const s of LIST_STORES) S[s] = safeList(s, await getAll(s));
     // first run: default employer
     if (!S.employers.length) {
       S.employers = [root.Defaults.defaultEmployer()];
@@ -157,11 +156,35 @@
     'skinPhoto', // the pay card's own photo (Plus): this phone only
     'adminUid']; // the account this phone last heard is an admin (the server's rules decide what an admin may do)
   const SYNC_META = ['pendingDeletes', 'settingsDirty', 'activeDirty', 'activeUpdatedAt'];
-  /** Values that end up inside HTML attributes must have a safe shape. */
+  /*
+   * Every record that comes from outside this code (a backup file, the cloud, the phone's own database) passes
+   * here before it is used: the screens put ids, times and counts into HTML, so a record whose fields are not
+   * the plain shapes the app itself writes is repaired or dropped (null). A backup with a shift id that closes
+   * an HTML attribute once could put its own markup into the page (security scan, 1 Nov 2026).
+   */
+  const SAFE_ID = /^[A-Za-z0-9_.:-]{1,120}$/;
+  const HHMM = /^\d{2}:\d{2}$/;
+  const REFS = ['roleId', 'employerId', 'fileId', 'payslipId', 'shiftId', 'templateId'];
   function safeRecord(store, r) {
-    if (store === 'roles' && r && typeof r.color === 'string' && !/^#[0-9a-f]{3,8}$/i.test(r.color)) r.color = '#888888';
+    if (!r || typeof r !== 'object' || Array.isArray(r) || typeof r.id !== 'string' || !SAFE_ID.test(r.id)) return null;
+    for (const k of REFS) if (r[k] != null && r[k] !== '' && !(typeof r[k] === 'string' && SAFE_ID.test(r[k]))) r[k] = null;
+    if (typeof r.color === 'string' && !/^#[0-9a-f]{3,8}$/i.test(r.color)) r.color = '#888888';
+    if (store === 'templates') {
+      if (typeof r.startT !== 'string' || !HHMM.test(r.startT) || typeof r.endT !== 'string' || !HHMM.test(r.endT)) return null;
+      if (r.breakMin != null && !Number.isFinite(+r.breakMin)) r.breakMin = 0; else if (r.breakMin != null) r.breakMin = +r.breakMin;
+    }
+    if (store === 'dayRules' && !(typeof r.date === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(r.date))) return null;
+    if (store === 'payslips') {
+      if (r.period != null && !(typeof r.period === 'string' && /^\d{4}-\d{2}$/.test(r.period))) r.period = null; // kept, shown without a month
+      const c = r.summary && r.summary.counts;
+      if (c && typeof c === 'object') for (const k of Object.keys(c)) c[k] = Number.isFinite(+c[k]) ? Math.max(0, Math.round(+c[k])) : 0;
+      else if (r.summary && typeof r.summary === 'object') r.summary.counts = {};
+    }
     return r;
   }
+  const safeList = (store, list) => list.map((r) => safeRecord(store, r)).filter(Boolean);
+  /** A stored payslip file: only a PDF or a picture is kept, decoded here (never fetched), with that type. */
+  const FILE_TYPES = /^data:(application\/pdf|image\/(?:png|jpeg|webp|gif|heic|heif));base64,([A-Za-z0-9+/=\s]*)$/;
 
   async function rawPut(store, obj) {
     return run([store], 'readwrite', (t) => { if (t) t.objectStore(store).put(obj); });
@@ -253,6 +276,7 @@
       const arr = S[op.store];
       if (op.put) {
         const obj = safeRecord(op.store, Object.assign({}, op.put, { _syncedAt: op.put.updatedAt }));
+        if (!obj) continue; // a cloud record of a shape the app never writes is not taken in
         const i = arr.findIndex((x) => x.id === obj.id);
         if (i >= 0) arr[i] = obj; else arr.push(obj);
         writes.push([op.store, obj]);
@@ -389,9 +413,13 @@
   function blobToDataUrl(blob) {
     return new Promise((res) => { const r = new FileReader(); r.onload = () => res(r.result); r.readAsDataURL(blob); });
   }
-  async function dataUrlToBlob(url) {
-    const r = await fetch(url);
-    return r.blob();
+  function dataUrlToBlob(url) {
+    const m = typeof url === 'string' && FILE_TYPES.exec(url);
+    if (!m) throw new Error('not a pdf or picture');
+    const bin = atob(m[2].replace(/\s/g, ''));
+    const bytes = new Uint8Array(bin.length);
+    for (let i = 0; i < bin.length; i++) bytes[i] = bin.charCodeAt(i);
+    return new Blob([bytes], { type: m[1] });
   }
   async function exportBackup(includeFiles) {
     const out = {
@@ -435,7 +463,7 @@
     inc.settings = isObj(inc.settings) ? inc.settings : {};
     inc.meta = isObj(inc.meta) ? inc.meta : {};
     if (!isObj(inc.activeShift) || !Number.isFinite(inc.activeShift.start) || inc.activeShift.start > Date.now() + 60000) inc.activeShift = null;
-    for (const s of LIST_STORES) inc[s] = cleanList(inc[s]);
+    for (const s of LIST_STORES) inc[s] = safeList(s, cleanList(inc[s]));
     inc.shifts = inc.shifts.filter((x) => E.validShift(x));
     inc.entries = inc.entries.filter((x) => E.validEntry(x));
     const okDay = (k) => typeof k === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(k);
@@ -472,7 +500,6 @@
     const keepKey = S.settings && S.settings.ai ? S.settings.ai.apiKey : '';
     const keepPlus = (S.settings && S.settings.plusKey) || '';
     for (const s of SYNC_STORES) for (const x of incoming[s]) delete x._syncedAt; // that sync state belongs to the device that made the backup
-    for (const r of incoming.roles) safeRecord('roles', r);
     if (mode === 'replace') {
       S.settings = mergeDeep(root.Defaults.defaultSettings(), incoming.settings || {});
       S.settings.ai.apiKey = keepKey;
@@ -503,7 +530,8 @@
     }
     await saveAll();
     for (const f of json.files || []) {
-      try { await putFile(f.id, await dataUrlToBlob(f.data), f.name, f.type); } catch (e) { console.warn('file restore failed', e); }
+      if (!f || typeof f.id !== 'string' || !SAFE_ID.test(f.id)) continue;
+      try { const b = dataUrlToBlob(f.data); await putFile(f.id, b, String(f.name || '').slice(0, 120), b.type); } catch (e) { console.warn('file restore skipped', e); }
     }
     undoStack.length = 0;
     emit({ type: 'restore', mode });

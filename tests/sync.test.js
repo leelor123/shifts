@@ -198,6 +198,32 @@ T.atest('restoring a backup keeps the account link and uploads the restored data
   T.eq(A.S.roles[0].color, '#888888', 'unsafe colour value replaced');
 });
 
+// security scan 1 Nov 2026: a backup's ids, template times, payslip counts and files reached the page as HTML
+T.atest('a crafted backup cannot put markup into the page: unsafe records are dropped or repaired', async () => {
+  const be = fakeBackend();
+  const A = await phone(be); await A.add('s1', 'mine');
+  const bad = '"><iframe srcdoc="x"></iframe>';
+  const backup = JSON.parse(JSON.stringify(await A.Store.exportBackup(false)));
+  backup.shifts.push({ id: 'x' + bad, kind: 'shift', employerId: 'emp1', roleId: 'r1', status: 'done', start: 1, end: 2 });
+  backup.shifts.push({ id: 's8', kind: 'shift', employerId: 'emp1', roleId: bad, status: 'done', start: 1, end: 2 });
+  backup.templates = [{ id: 't1', name: 'a', roleId: 'r1', startT: bad, endT: '16:00' }, { id: 't2', name: 'b', roleId: 'r1', startT: '08:00', endT: '16:00', breakMin: bad }];
+  backup.payslips = [{ id: 'p1', period: bad, fields: {}, summary: { counts: { bad, warn: '2', ok: 1 } } }];
+  backup.dayRules = [{ id: 'd1', date: bad, type: 'cancel' }];
+  backup.files = [{ id: 'f1', name: 'x', type: 'text/html', data: 'data:text/html;base64,PHNjcmlwdD4=' }];
+  await A.Store.importBackup(backup, 'merge'); await wait(50);
+  T.ok(!A.S.shifts.some((s) => /</.test(s.id)), 'a shift with an unsafe id is dropped');
+  T.eq(A.shift('s8').roleId, null, 'an unsafe reference is cleared');
+  T.eq(A.S.templates.map((t) => t.id).join(), 't2', 'a template with unsafe times is dropped');
+  T.eq(A.S.templates[0].breakMin, 0, 'an unsafe break becomes 0');
+  T.eq(A.S.payslips[0].period, null, 'an unsafe period is cleared');
+  T.eq(JSON.stringify(A.S.payslips[0].summary.counts), '{"bad":0,"warn":2,"ok":1}', 'counts are whole numbers');
+  T.eq(A.S.dayRules.length, 0, 'a day rule without a real date is dropped');
+  T.eq(await A.Store.getFile('f1'), undefined, 'an HTML file is not restored');
+  // the same check on what comes from the cloud
+  await A.Store.applyRemote([{ store: 'shifts', put: { id: 'y' + bad, kind: 'shift', start: 1, end: 2, updatedAt: 9 } }]);
+  T.ok(!A.S.shifts.some((s) => /</.test(s.id)), 'a cloud record with an unsafe id is not taken in');
+});
+
 /* ---------------- anonymous statistics ---------------- */
 async function withStats(A, legal) {
   A.ctx.App = { androidApp: false, roles: () => A.S.roles, legalAccepted: () => legal !== false, tab: 'home' };

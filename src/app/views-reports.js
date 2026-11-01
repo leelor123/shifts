@@ -15,7 +15,7 @@
   function rangeFor(type, anchor) {
     const emp = S.employers[0];
     if (type === 'week') { const ws = U.weekStart(anchor, S.settings.weekStart || 0); return { from: ws, to: U.addDays(ws, 6), label: `${U.fmtDate(ws, 'dm')} – ${U.fmtDate(U.addDays(ws, 6), 'dm')}` }; }
-    if (type === 'month') { const P = Engine.periodOf(anchor, emp); return { from: P.from, to: P.to, label: P.label, sub: emp.periodStartDay > 1 ? `⁦${U.fmtDate(P.from, 'short')}\u2060–\u2060${U.fmtDate(P.to, 'short')}⁩` : '' }; }
+    if (type === 'month') { const P = Engine.periodOf(anchor, emp); return { from: P.from, to: P.to, label: P.label, sub: emp.periodStartDay > 1 ? `\u2066${U.fmtDate(P.from, 'short')}\u2060–\u2060${U.fmtDate(P.to, 'short')}\u2069` : '' }; }
     if (type === 'year') { const y = anchor.slice(0, 4); return { from: y + '-01-01', to: y + '-12-31', label: 'שנת ' + y }; }
     return { from: st.from, to: st.to, label: `${U.fmtDate(st.from, 'short')} – ${U.fmtDate(st.to, 'short')}` };
   }
@@ -226,7 +226,7 @@
       <div class="section-title">${icon('clock', 's')} לפי סוג שעה</div>
       <div class="card"><div class="stackbar">${types.filter((x) => x.value > 0).map((x) => `<i style="width:${(x.value / totalH) * 100}%;background:${x.color}" data-tip="${esc(x.name)}: ${U.num(x.value, 2)} ש׳"></i>`).join('')}</div>
         ${types.map((x) => `<div class="kv"><span><i style="display:inline-block;width:10px;height:10px;border-radius:3px;background:${x.color};margin-inline-end:6px"></i>${x.name}</span><span class="num">${U.hours(x.value)} ש׳</span></div>`).join('')}
-        <div class="kv"><span>${icon('moon', 's')} שעות לילה (⁦22:00\u2060–\u206006:00⁩)</span><span class="num">${U.hours(t.nightAll)} ש׳</span></div>
+        <div class="kv"><span>${icon('moon', 's')} שעות לילה (\u206622:00\u2060–\u206006:00\u2069)</span><span class="num">${U.hours(t.nightAll)} ש׳</span></div>
         ${S.employers[0].nightEnabled ? `<div class="kv"><span>מתוכן עם תוספת לילה</span><span class="num">${U.hours(hb.night)} ש׳ · ${U.money(t.nightPremium, 0)}</span></div>` : '<div class="tiny muted">תוספת לילה לא מוגדרת. אפשר להפעיל בהגדרות › חישוב השכר › חוקי חישוב.</div>'}</div>
       <div class="section-title">${icon('calendar', 's')} ימים</div>
       <div class="card"><div class="kpis three">

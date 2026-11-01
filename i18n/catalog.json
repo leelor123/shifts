@@ -323,7 +323,8 @@
   "key": "סיום משמרת",
   "kind": "lit",
   "where": [
-   "app/app.js:510"
+   "app/app.js:510",
+   "app/app.js:896"
   ]
  },
  {
@@ -408,7 +409,7 @@
   "kind": "lit",
   "where": [
    "app/app.js:606",
-   "app/import.js:150",
+   "app/import.js:151",
    "app/schedule-import.js:113"
   ]
  },
@@ -417,7 +418,7 @@
   "kind": "tpl",
   "where": [
    "app/app.js:606",
-   "app/import.js:150",
+   "app/import.js:151",
    "app/schedule-import.js:113"
   ]
  },
@@ -439,56 +440,56 @@
   "key": "<div class=\"empty\" style=\"padding:0\"><div class=\"art\">{0}</div><h3>האפליקציה נעולה</h3><div>{1}</div></div>\n        <div class=\"pin-dots\">{2}</div>\n        <div class=\"pin-pad\">{3}</div>",
   "kind": "tpl",
   "where": [
-   "app/app.js:702"
+   "app/app.js:707"
   ]
  },
  {
   "key": "יותר מדי ניסיונות. נסה שוב בעוד {0} שניות",
   "kind": "tpl",
   "where": [
-   "app/app.js:702"
+   "app/app.js:707"
   ]
  },
  {
   "key": "הזן קוד",
   "kind": "lit",
   "where": [
-   "app/app.js:702"
+   "app/app.js:707"
   ]
  },
  {
   "key": "<button data-bio aria-label=\"פתח בטביעת אצבע\">{0}</button>",
   "kind": "tpl",
   "where": [
-   "app/app.js:704"
+   "app/app.js:709"
   ]
  },
  {
   "key": "גיבוי אוטומטי נשמר בהורדות",
   "kind": "lit",
   "where": [
-   "app/app.js:754"
+   "app/app.js:762"
   ]
  },
  {
   "key": "קובץ הגיבוי נשמר",
   "kind": "lit",
   "where": [
-   "app/app.js:754"
+   "app/app.js:762"
   ]
  },
  {
   "key": "שתף ל-⁠Drive",
   "kind": "lit",
   "where": [
-   "app/app.js:754"
+   "app/app.js:762"
   ]
  },
  {
   "key": "גיבוי משמרות",
   "kind": "lit",
   "where": [
-   "app/app.js:754",
+   "app/app.js:762",
    "app/views-settings.js:859"
   ]
  },
@@ -496,7 +497,33 @@
   "key": "לא ניתן לפתוח את מסד הנתונים",
   "kind": "lit",
   "where": [
-   "app/app.js:762"
+   "app/app.js:773"
+  ]
+ },
+ {
+  "key": "התחל משמרת",
+  "kind": "lit",
+  "where": [
+   "app/app.js:895",
+   "manifest",
+   "manifest"
+  ]
+ },
+ {
+  "key": "התחלה",
+  "kind": "lit",
+  "where": [
+   "app/app.js:895",
+   "app/export.js:22"
+  ]
+ },
+ {
+  "key": "סיום",
+  "kind": "lit",
+  "where": [
+   "app/app.js:896",
+   "app/export.js:22",
+   "app/views-onboarding.js:199"
   ]
  },
  {
@@ -950,154 +977,154 @@
   "key": "חסרות הגדרות Firebase",
   "kind": "lit",
   "where": [
-   "app/cloud.js:56"
+   "app/cloud.js:58"
   ]
  },
  {
   "key": "חלון ההתחברות נסגר לפני שההתחברות הושלמה.",
   "kind": "lit",
   "where": [
-   "app/cloud.js:133"
+   "app/cloud.js:136"
   ]
  },
  {
   "key": "ההתחברות בוטלה.",
   "kind": "lit",
   "where": [
-   "app/cloud.js:134"
+   "app/cloud.js:137"
   ]
  },
  {
   "key": "אין חיבור לאינטרנט. נסה שוב כשיש רשת.",
   "kind": "lit",
   "where": [
-   "app/cloud.js:135"
+   "app/cloud.js:138"
   ]
  },
  {
   "key": "הכתובת של האפליקציה לא מאושרת בהגדרות Firebase (Authorized domains).",
   "kind": "lit",
   "where": [
-   "app/cloud.js:136"
+   "app/cloud.js:139"
   ]
  },
  {
   "key": "סוג ההתחברות הזה עוד לא הופעל. אפשר בינתיים להתחבר עם Google.",
   "kind": "lit",
   "where": [
-   "app/cloud.js:137"
+   "app/cloud.js:140"
   ]
  },
  {
   "key": "כתובת האימייל לא תקינה.",
   "kind": "lit",
   "where": [
-   "app/cloud.js:138"
+   "app/cloud.js:141"
   ]
  },
  {
   "key": "צריך לכתוב כתובת אימייל.",
   "kind": "lit",
   "where": [
-   "app/cloud.js:139"
+   "app/cloud.js:142"
   ]
  },
  {
   "key": "הקישור כבר נוצל או שפג תוקפו. שלחו קישור חדש מהאפליקציה.",
   "kind": "lit",
   "where": [
-   "app/cloud.js:140"
+   "app/cloud.js:143"
   ]
  },
  {
   "key": "פג תוקף הקישור. שלחו קישור חדש מהאפליקציה.",
   "kind": "lit",
   "where": [
-   "app/cloud.js:141"
+   "app/cloud.js:144"
   ]
  },
  {
   "key": "נשלחו יותר מדי קישורים היום. נסו שוב מחר, או התחברו עם Google.",
   "kind": "lit",
   "where": [
-   "app/cloud.js:142"
+   "app/cloud.js:145"
   ]
  },
  {
   "key": "יותר מדי ניסיונות. נסה שוב בעוד כמה דקות.",
   "kind": "lit",
   "where": [
-   "app/cloud.js:143"
+   "app/cloud.js:146"
   ]
  },
  {
   "key": "החשבון חסום.",
   "kind": "lit",
   "where": [
-   "app/cloud.js:144"
+   "app/cloud.js:147"
   ]
  },
  {
   "key": "הדפדפן חסם את חלון האישור של Google. אפשר חלונות קופצים ונסה שוב.",
   "kind": "lit",
   "where": [
-   "app/cloud.js:145"
+   "app/cloud.js:148"
   ]
  },
  {
   "key": "כדי למחוק את החשבון צריך התחברות טרייה: התנתק, התחבר שוב ונסה מיד.",
   "kind": "lit",
   "where": [
-   "app/cloud.js:146"
+   "app/cloud.js:149"
   ]
  },
  {
   "key": "נבחר חשבון Google אחר. בחר את החשבון שמחובר לאפליקציה.",
   "kind": "lit",
   "where": [
-   "app/cloud.js:147"
+   "app/cloud.js:150"
   ]
  },
  {
   "key": "משהו השתבש בהתחברות. נסה שוב.",
   "kind": "lit",
   "where": [
-   "app/cloud.js:148"
+   "app/cloud.js:151"
   ]
  },
  {
   "key": "הדפדפן חוסם שמירת נתונים (אולי גלישה בסתר). פתח את האפליקציה בדפדפן רגיל ונסה שוב.",
   "kind": "lit",
   "where": [
-   "app/cloud.js:149"
+   "app/cloud.js:152"
   ]
  },
  {
   "key": "הדפדפן הזה לא תומך בהתחברות. פתח את הקישור ב-⁠Chrome או ב-⁠Safari.",
   "kind": "lit",
   "where": [
-   "app/cloud.js:150"
+   "app/cloud.js:153"
   ]
  },
  {
   "key": "ההתחברות לקחה יותר מדי זמן. בדוק את החיבור ונסה שוב.",
   "kind": "lit",
   "where": [
-   "app/cloud.js:151"
+   "app/cloud.js:154"
   ]
  },
  {
   "key": "הדפדפן לא הצליח לשמור את הנתונים. נסה שוב, ואם זה חוזר על עצמו רענן את הדף.",
   "kind": "lit",
   "where": [
-   "app/cloud.js:157"
+   "app/cloud.js:160"
   ]
  },
  {
   "key": "משהו השתבש. נסה שוב בעוד רגע.",
   "kind": "lit",
   "where": [
-   "app/cloud.js:161",
+   "app/cloud.js:164",
    "app/views-assistant.js:175"
   ]
  },
@@ -1105,126 +1132,126 @@
   "key": "השלמת ההתחברות",
   "kind": "lit",
   "where": [
-   "app/cloud.js:202"
+   "app/cloud.js:205"
   ]
  },
  {
   "key": "לאיזה אימייל נשלח הקישור?",
   "kind": "lit",
   "where": [
-   "app/cloud.js:202"
+   "app/cloud.js:205"
   ]
  },
  {
   "key": "התחברות",
   "kind": "lit",
   "where": [
-   "app/cloud.js:202"
+   "app/cloud.js:205"
   ]
  },
  {
   "key": "יש נתונים גם בטלפון וגם בחשבון",
   "kind": "lit",
   "where": [
-   "app/cloud.js:251"
+   "app/cloud.js:254"
   ]
  },
  {
   "key": "בטלפון הזה כבר יש משמרות, וגם בחשבון ה-⁠Google שלך שמורים נתונים. מה לעשות?",
   "kind": "lit",
   "where": [
-   "app/cloud.js:252"
+   "app/cloud.js:255"
   ]
  },
  {
   "key": "לאחד את שניהם (מומלץ)",
   "kind": "lit",
   "where": [
-   "app/cloud.js:254"
+   "app/cloud.js:257"
   ]
  },
  {
   "key": "רק מהחשבון",
   "kind": "lit",
   "where": [
-   "app/cloud.js:255"
+   "app/cloud.js:258"
   ]
  },
  {
   "key": "רק מהטלפון",
   "kind": "lit",
   "where": [
-   "app/cloud.js:256"
+   "app/cloud.js:259"
   ]
  },
  {
   "key": "החשבון הקודם",
   "kind": "lit",
   "where": [
-   "app/cloud.js:302"
+   "app/cloud.js:305"
   ]
  },
  {
   "key": "החלפת חשבון",
   "kind": "lit",
   "where": [
-   "app/cloud.js:303"
+   "app/cloud.js:306"
   ]
  },
  {
   "key": "בטלפון יש שינויים של {0} שעוד לא עלו לענן. אם תמשיך עם {1}, הם יימחקו מהטלפון.",
   "kind": "tpl",
   "where": [
-   "app/cloud.js:303"
+   "app/cloud.js:306"
   ]
  },
  {
   "key": "החשבון החדש",
   "kind": "lit",
   "where": [
-   "app/cloud.js:303"
+   "app/cloud.js:306"
   ]
  },
  {
   "key": "המשך בכל זאת",
   "kind": "lit",
   "where": [
-   "app/cloud.js:303"
+   "app/cloud.js:306"
   ]
  },
  {
   "key": "החיבור בוטל. התחבר עם {0} כדי שהשינויים יעלו לחשבון שלו.",
   "kind": "tpl",
   "where": [
-   "app/cloud.js:307"
+   "app/cloud.js:310"
   ]
  },
  {
   "key": "יש שינויים שעוד לא עלו לענן",
   "kind": "lit",
   "where": [
-   "app/cloud.js:482"
+   "app/cloud.js:485"
   ]
  },
  {
   "key": "כנראה אין חיבור לאינטרנט. אם תתנתק עכשיו, השינויים האחרונים מהטלפון הזה יאבדו.",
   "kind": "lit",
   "where": [
-   "app/cloud.js:482"
+   "app/cloud.js:485"
   ]
  },
  {
   "key": "התנתק בכל זאת",
   "kind": "lit",
   "where": [
-   "app/cloud.js:482"
+   "app/cloud.js:485"
   ]
  },
  {
   "key": "לא מחובר",
   "kind": "lit",
   "where": [
-   "app/cloud.js:531",
+   "app/cloud.js:534",
    "app/views-settings.js:132"
   ]
  },
@@ -1232,35 +1259,35 @@
   "key": "מסונכרן",
   "kind": "lit",
   "where": [
-   "app/cloud.js:532"
+   "app/cloud.js:535"
   ]
  },
  {
   "key": "מסנכרן…",
   "kind": "lit",
   "where": [
-   "app/cloud.js:533"
+   "app/cloud.js:536"
   ]
  },
  {
   "key": "אין חיבור. יסונכרן כשתחזור הרשת",
   "kind": "lit",
   "where": [
-   "app/cloud.js:534"
+   "app/cloud.js:537"
   ]
  },
  {
   "key": "שגיאת סנכרון: ",
   "kind": "lit",
   "where": [
-   "app/cloud.js:535"
+   "app/cloud.js:538"
   ]
  },
  {
   "key": "מחובר",
   "kind": "lit",
   "where": [
-   "app/cloud.js:536"
+   "app/cloud.js:539"
   ]
  },
  {
@@ -1305,7 +1332,7 @@
   "kind": "lit",
   "where": [
    "app/docread.js:180",
-   "app/import.js:77"
+   "app/import.js:78"
   ]
  },
  {
@@ -1327,21 +1354,6 @@
   "kind": "lit",
   "where": [
    "app/export.js:22"
-  ]
- },
- {
-  "key": "התחלה",
-  "kind": "lit",
-  "where": [
-   "app/export.js:22"
-  ]
- },
- {
-  "key": "סיום",
-  "kind": "lit",
-  "where": [
-   "app/export.js:22",
-   "app/views-onboarding.js:199"
   ]
  },
  {
@@ -1450,7 +1462,7 @@
   "kind": "lit",
   "where": [
    "app/export.js:22",
-   "app/views-onboarding.js:421",
+   "app/views-onboarding.js:425",
    "app/views-shift.js:376",
    "app/views-shift.js:558",
    "core/engine.js:623"
@@ -1471,7 +1483,7 @@
    "app/export.js:43",
    "app/views-payslip.js:205",
    "app/views-payslip.js:245",
-   "app/views-payslip.js:536",
+   "app/views-payslip.js:538",
    "app/views-reports.js:213",
    "core/payslip.js:588"
   ]
@@ -1757,29 +1769,29 @@
   "key": "קורא את הגיליון…",
   "kind": "lit",
   "where": [
-   "app/import.js:57"
+   "app/import.js:58"
   ]
  },
  {
   "key": "הקריאה לא זמינה כרגע",
   "kind": "lit",
   "where": [
-   "app/import.js:68"
+   "app/import.js:69"
   ]
  },
  {
   "key": "סוג קובץ שלא מכירים. אפשר Excel, ‏CSV, ‏PDF, תמונה או טקסט",
   "kind": "lit",
   "where": [
-   "app/import.js:87"
+   "app/import.js:88"
   ]
  },
  {
   "key": "ייבוא דוח שעות",
   "kind": "lit",
   "where": [
-   "app/import.js:99",
-   "app/import.js:210",
+   "app/import.js:100",
+   "app/import.js:211",
    "app/views-settings.js:148",
    "app/views-shift.js:40"
   ]
@@ -1788,56 +1800,56 @@
   "key": "{0}\n        <label class=\"btn big block imp-pick\">{1} בחירת קובץ<input type=\"file\" id=\"imp-file\" hidden accept=\".xlsx,.xls,.xlsm,.ods,.csv,.tsv,.txt,.pdf,image/*,text/*,application/pdf,application/vnd.ms-excel,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet\"></label>\n        <div class=\"imp-kinds\">{2}</div>\n        <details class=\"imp-paste\"><summary>{3} או להדביק טקסט</summary>\n          <textarea class=\"input\" id=\"imp-text\" rows=\"6\" placeholder=\"למשל:&#10;14/10/2026 08:00 16:30&#10;15/10/2026 16:00 23:00\"></textarea>\n          <button class=\"btn tonal block\" data-imp-read>{4} קריאה</button></details>\n        <div class=\"tiny muted imp-privacy\">{5} הקובץ נקרא בטלפון בלבד, ולא נשלח לשום מקום. צילום נקרא כטבלה: כל דוח, בכל סידור עמודות.</div>",
   "kind": "tpl",
   "where": [
-   "app/import.js:120"
+   "app/import.js:121"
   ]
  },
  {
   "key": "יש לך דוח שעות מהעבודה? אכניס את כל המשמרות בבת אחת 📄",
   "kind": "lit",
   "where": [
-   "app/import.js:120"
+   "app/import.js:121"
   ]
  },
  {
   "key": "צילום או צילום מסך",
   "kind": "lit",
   "where": [
-   "app/import.js:122"
+   "app/import.js:123"
   ]
  },
  {
   "key": "{0}\n        <div class=\"card small imp-tips\"><b>מה עוזר:</b><ul><li>שבכל שורה יהיו תאריך ושעות (למשל 14/10/2026 08:00 16:30)</li><li>קובץ Excel או CSV נקרא הכי טוב</li><li>בצילום: שהדוח ישר, חד ומואר</li></ul></div>\n        {1}\n        <button class=\"btn tonal block\" data-imp-again>{2} לנסות קובץ אחר</button>\n        <button class=\"btn text block\" data-act=\"support\">לשלוח לנו את הדוח ונעזור</button>",
   "kind": "tpl",
   "where": [
-   "app/import.js:132"
+   "app/import.js:133"
   ]
  },
  {
   "key": "לא מצאתי בדוח משמרות שאני יודע לקרוא 🤔",
   "kind": "lit",
   "where": [
-   "app/import.js:132"
+   "app/import.js:133"
   ]
  },
  {
   "key": "<details class=\"imp-paste\"><summary>מה שנקרא מהקובץ</summary><div class=\"code\">{0}</div></details>",
   "kind": "tpl",
   "where": [
-   "app/import.js:134"
+   "app/import.js:135"
   ]
  },
  {
   "key": "{0} שעות · {1}",
   "kind": "tpl",
   "where": [
-   "app/import.js:144"
+   "app/import.js:145"
   ]
  },
  {
   "key": "מ-",
   "kind": "lit",
   "where": [
-   "app/import.js:144",
+   "app/import.js:145",
    "app/views-settings.js:136"
   ]
  },
@@ -1845,28 +1857,28 @@
   "key": "שעה לא ידועה",
   "kind": "lit",
   "where": [
-   "app/import.js:144"
+   "app/import.js:145"
   ]
  },
  {
   "key": "<button class=\"imp-row {0}\" data-i=\"{1}\" aria-pressed=\"{2}\"><span class=\"imp-check\" aria-hidden=\"true\">{3}</span>\n          <span class=\"imp-d\"><b>{4} {5}</b><small>{6}{7}</small></span>\n          <span class=\"imp-h\">{8} ש׳{9}{10}</span></button>",
   "kind": "tpl",
   "where": [
-   "app/import.js:145"
+   "app/import.js:146"
   ]
  },
  {
   "key": " · לילה",
   "kind": "lit",
   "where": [
-   "app/import.js:146"
+   "app/import.js:147"
   ]
  },
  {
   "key": "<i class=\"tag\">כבר קיימת</i>",
   "kind": "lit",
   "where": [
-   "app/import.js:147",
+   "app/import.js:148",
    "app/schedule-import.js:119"
   ]
  },
@@ -1874,21 +1886,21 @@
   "key": "<i class=\"tag planned\">עתידית</i>",
   "kind": "lit",
   "where": [
-   "app/import.js:147"
+   "app/import.js:148"
   ]
  },
  {
   "key": "מצאתי {0}! 🎉 בודקים רגע ומוסיפים",
   "kind": "tpl",
   "where": [
-   "app/import.js:150"
+   "app/import.js:151"
   ]
  },
  {
   "key": "<div class=\"field\"><span class=\"lbl\">לאיזה תפקיד לשייך?</span><div class=\"chips imp-roles\">{0}</div></div>",
   "kind": "tpl",
   "where": [
-   "app/import.js:151",
+   "app/import.js:152",
    "app/schedule-import.js:125"
   ]
  },
@@ -1896,114 +1908,114 @@
   "key": "<label class=\"field\"><span class=\"lbl\">{0} כתוב רק כמה שעות. באיזו שעה הן מתחילות?</span><input class=\"input\" type=\"time\" id=\"imp-start\" value=\"{1}\"></label>",
   "kind": "tpl",
   "where": [
-   "app/import.js:152"
+   "app/import.js:153"
   ]
  },
  {
   "key": "במשמרת אחת",
   "kind": "lit",
   "where": [
-   "app/import.js:152"
+   "app/import.js:153"
   ]
  },
  {
   "key": "ב-{0} משמרות",
   "kind": "tpl",
   "where": [
-   "app/import.js:152"
+   "app/import.js:153"
   ]
  },
  {
   "key": "<div class=\"tiny muted imp-note\">{0} {1} יש כניסה בלי יציאה, ולכן {2}. אפשר להוסיף {3} ידנית.</div>",
   "kind": "tpl",
   "where": [
-   "app/import.js:153"
+   "app/import.js:154"
   ]
  },
  {
   "key": "בשורה אחת",
   "kind": "lit",
   "where": [
-   "app/import.js:153"
+   "app/import.js:154"
   ]
  },
  {
   "key": "ב-{0} שורות",
   "kind": "tpl",
   "where": [
-   "app/import.js:153"
+   "app/import.js:154"
   ]
  },
  {
   "key": "היא לא נכנסה",
   "kind": "lit",
   "where": [
-   "app/import.js:153"
+   "app/import.js:154"
   ]
  },
  {
   "key": "הן לא נכנסו",
   "kind": "lit",
   "where": [
-   "app/import.js:153"
+   "app/import.js:154"
   ]
  },
  {
   "key": "אותה",
   "kind": "lit",
   "where": [
-   "app/import.js:153"
+   "app/import.js:154"
   ]
  },
  {
   "key": "אותן",
   "kind": "lit",
   "where": [
-   "app/import.js:153"
+   "app/import.js:154"
   ]
  },
  {
   "key": "<div class=\"tiny muted imp-note\">{0} בשורות בלי שנה לקחנו את התאריך האחרון שכבר עבר.</div>",
   "kind": "tpl",
   "where": [
-   "app/import.js:154"
+   "app/import.js:155"
   ]
  },
  {
   "key": "לבטל הכול",
   "kind": "lit",
   "where": [
-   "app/import.js:155",
-   "app/import.js:166"
+   "app/import.js:156",
+   "app/import.js:167"
   ]
  },
  {
   "key": "לסמן הכול",
   "kind": "lit",
   "where": [
-   "app/import.js:155",
-   "app/import.js:166"
+   "app/import.js:156",
+   "app/import.js:167"
   ]
  },
  {
   "key": "הוספת משמרת אחת",
   "kind": "lit",
   "where": [
-   "app/import.js:164"
+   "app/import.js:165"
   ]
  },
  {
   "key": "הוספת {0} משמרות",
   "kind": "tpl",
   "where": [
-   "app/import.js:164"
+   "app/import.js:165"
   ]
  },
  {
   "key": "הקובץ גדול מדי (עד 25MB)",
   "kind": "lit",
   "where": [
-   "app/import.js:185",
+   "app/import.js:186",
    "app/schedule-import.js:140"
   ]
  },
@@ -2011,42 +2023,42 @@
   "key": "קורא את הקובץ…",
   "kind": "lit",
   "where": [
-   "app/import.js:186"
+   "app/import.js:187"
   ]
  },
  {
   "key": "לא הצלחנו לקרוא את הקובץ. אפשר לנסות קובץ אחר או להדביק טקסט",
   "kind": "lit",
   "where": [
-   "app/import.js:190"
+   "app/import.js:191"
   ]
  },
  {
   "key": "יובא מדוח שעות",
   "kind": "lit",
   "where": [
-   "app/import.js:204"
+   "app/import.js:205"
   ]
  },
  {
   "key": "נוספה משמרת אחת מהדוח",
   "kind": "lit",
   "where": [
-   "app/import.js:210"
+   "app/import.js:211"
   ]
  },
  {
   "key": "נוספו {0} משמרות מהדוח",
   "kind": "tpl",
   "where": [
-   "app/import.js:210"
+   "app/import.js:211"
   ]
  },
  {
   "key": "מדביקים קודם את הטקסט",
   "kind": "lit",
   "where": [
-   "app/import.js:221"
+   "app/import.js:222"
   ]
  },
  {
@@ -2076,7 +2088,7 @@
    "app/views-leaderboard.js:276",
    "app/views-leaderboard.js:467",
    "app/views-login.js:195",
-   "app/views-payslip.js:586"
+   "app/views-payslip.js:588"
   ]
  },
  {
@@ -3613,7 +3625,7 @@
   "where": [
    "app/schedule-import.js:173",
    "app/views-login.js:206",
-   "app/views-payslip.js:575",
+   "app/views-payslip.js:577",
    "app/views-settings.js:846",
    "app/views-settings.js:870"
   ]
@@ -3661,17 +3673,32 @@
   ]
  },
  {
+  "key": "לפתוח את מה ששיתפת עם שעתי?",
+  "kind": "lit",
+  "where": [
+   "app/schedule-import.js:298"
+  ]
+ },
+ {
+  "key": "אישור",
+  "kind": "lit",
+  "where": [
+   "app/schedule-import.js:298",
+   "app/ui.js:318"
+  ]
+ },
+ {
   "key": "מה שיתפת?",
   "kind": "lit",
   "where": [
-   "app/schedule-import.js:307"
+   "app/schedule-import.js:311"
   ]
  },
  {
   "key": "סידור עבודה",
   "kind": "lit",
   "where": [
-   "app/schedule-import.js:308",
+   "app/schedule-import.js:312",
    "manifest"
   ]
  },
@@ -3679,14 +3706,14 @@
   "key": "למשמרות בלוח",
   "kind": "lit",
   "where": [
-   "app/schedule-import.js:308"
+   "app/schedule-import.js:312"
   ]
  },
  {
   "key": "תלוש שכר",
   "kind": "lit",
   "where": [
-   "app/schedule-import.js:308",
+   "app/schedule-import.js:312",
    "app/views-guide.js:228",
    "app/views-support.js:28",
    "core/games.js:190"
@@ -3696,21 +3723,21 @@
   "key": "לבדיקה",
   "kind": "lit",
   "where": [
-   "app/schedule-import.js:308"
+   "app/schedule-import.js:312"
   ]
  },
  {
   "key": "דוח שעות",
   "kind": "lit",
   "where": [
-   "app/schedule-import.js:308"
+   "app/schedule-import.js:312"
   ]
  },
  {
   "key": "למשמרות שהיו",
   "kind": "lit",
   "where": [
-   "app/schedule-import.js:308"
+   "app/schedule-import.js:312"
   ]
  },
  {
@@ -3724,28 +3751,28 @@
   "key": "הקובץ אינו גיבוי של האפליקציה",
   "kind": "lit",
   "where": [
-   "app/store.js:455"
+   "app/store.js:483"
   ]
  },
  {
   "key": "הגיבוי נוצר בגרסה חדשה יותר של האפליקציה. עדכן קודם את האפליקציה.",
   "kind": "lit",
   "where": [
-   "app/store.js:456"
+   "app/store.js:484"
   ]
  },
  {
   "key": "הקובץ פגום ואי אפשר לשחזר ממנו. הנתונים בטלפון לא השתנו.",
   "kind": "lit",
   "where": [
-   "app/store.js:470"
+   "app/store.js:498"
   ]
  },
  {
   "key": "העבודה שלי",
   "kind": "lit",
   "where": [
-   "app/store.js:502",
+   "app/store.js:529",
    "app/views-onboarding.js:129",
    "app/views-onboarding.js:130",
    "app/views-onboarding.js:158",
@@ -3771,13 +3798,6 @@
   "kind": "tpl",
   "where": [
    "app/ui.js:201"
-  ]
- },
- {
-  "key": "אישור",
-  "kind": "lit",
-  "where": [
-   "app/ui.js:318"
   ]
  },
  {
@@ -4405,7 +4425,7 @@
   "where": [
    "app/views-admin.js:156",
    "app/views-login.js:205",
-   "app/views-payslip.js:433",
+   "app/views-payslip.js:435",
    "app/views-settings.js:392",
    "app/views-settings.js:395",
    "app/views-settings.js:456",
@@ -7001,7 +7021,7 @@
    "app/views-home.js:210",
    "app/views-home.js:210",
    "app/views-payslip.js:245",
-   "app/views-payslip.js:535",
+   "app/views-payslip.js:537",
    "app/views-settings.js:727",
    "core/games.js:186",
    "core/payslip.js:578",
@@ -8376,7 +8396,7 @@
   "kind": "lit",
   "where": [
    "app/views-leaderboard.js:393",
-   "app/views-payslip.js:515",
+   "app/views-payslip.js:517",
    "app/views-recap.js:230"
   ]
  },
@@ -8399,7 +8419,7 @@
   "kind": "lit",
   "where": [
    "app/views-leaderboard.js:402",
-   "app/views-payslip.js:519",
+   "app/views-payslip.js:521",
    "app/views-recap.js:236"
   ]
  },
@@ -9538,42 +9558,42 @@
   "key": "ערב שבת עמוס",
   "kind": "lit",
   "where": [
-   "app/views-onboarding.js:417"
+   "app/views-onboarding.js:421"
   ]
  },
  {
   "key": "המעסיק סופר שבת רק מ-12:00",
   "kind": "lit",
   "where": [
-   "app/views-onboarding.js:431"
+   "app/views-onboarding.js:435"
   ]
  },
  {
   "key": "בונוס אירוע",
   "kind": "lit",
   "where": [
-   "app/views-onboarding.js:432"
+   "app/views-onboarding.js:436"
   ]
  },
  {
   "key": "ארוחה",
   "kind": "lit",
   "where": [
-   "app/views-onboarding.js:433"
+   "app/views-onboarding.js:437"
   ]
  },
  {
   "key": "מענק חג",
   "kind": "lit",
   "where": [
-   "app/views-onboarding.js:440"
+   "app/views-onboarding.js:444"
   ]
  },
  {
   "key": "בוקר סדרן",
   "kind": "lit",
   "where": [
-   "app/views-onboarding.js:443"
+   "app/views-onboarding.js:447"
   ]
  },
  {
@@ -10095,277 +10115,277 @@
   "key": "הקובץ לא נמצא",
   "kind": "lit",
   "where": [
-   "app/views-payslip.js:430"
+   "app/views-payslip.js:432"
   ]
  },
  {
   "key": "למחוק את התלוש מהארכיון?",
   "kind": "lit",
   "where": [
-   "app/views-payslip.js:433"
+   "app/views-payslip.js:435"
   ]
  },
  {
   "key": "מחיקת תלוש",
   "kind": "lit",
   "where": [
-   "app/views-payslip.js:436"
+   "app/views-payslip.js:438"
   ]
  },
  {
   "key": "התלוש נמחק",
   "kind": "lit",
   "where": [
-   "app/views-payslip.js:436"
+   "app/views-payslip.js:438"
   ]
  },
  {
   "key": "בתלוש {0} יש שורת הפרשים של {1}",
   "kind": "tpl",
   "where": [
-   "app/views-payslip.js:463"
+   "app/views-payslip.js:465"
   ]
  },
  {
   "key": "שמירת תלוש",
   "kind": "lit",
   "where": [
-   "app/views-payslip.js:467"
+   "app/views-payslip.js:469"
   ]
  },
  {
   "key": "התלוש נשמר בארכיון",
   "kind": "lit",
   "where": [
-   "app/views-payslip.js:467"
+   "app/views-payslip.js:469"
   ]
  },
  {
   "key": "עדכון פער",
   "kind": "lit",
   "where": [
-   "app/views-payslip.js:477"
+   "app/views-payslip.js:479"
   ]
  },
  {
   "key": "סומן כהוחזר",
   "kind": "lit",
   "where": [
-   "app/views-payslip.js:477"
+   "app/views-payslip.js:479"
   ]
  },
  {
   "key": "עודכן",
   "kind": "lit",
   "where": [
-   "app/views-payslip.js:477"
+   "app/views-payslip.js:479"
   ]
  },
  {
   "key": "הכסף חזר אליך! 🎉",
   "kind": "lit",
   "where": [
-   "app/views-payslip.js:482"
+   "app/views-payslip.js:484"
   ]
  },
  {
   "key": "{0}\n        {1}\n        <button class=\"btn big block\" data-act=\"found-share\" data-amount=\"{2}\" data-k=\"back\">{3} לשתף ולעזור לחברים לבדוק</button>\n        {4}",
   "kind": "tpl",
   "where": [
-   "app/views-payslip.js:482"
+   "app/views-payslip.js:484"
   ]
  },
  {
   "key": "קיבלת בחזרה {0} שהגיעו לך. כל הכבוד שבדקת!",
   "kind": "tpl",
   "where": [
-   "app/views-payslip.js:482"
+   "app/views-payslip.js:484"
   ]
  },
  {
   "key": "<div class=\"small muted\" style=\"margin:6px 0 12px\">בסך הכול שעתי החזירה לך {0}.</div>",
   "kind": "tpl",
   "where": [
-   "app/views-payslip.js:483"
+   "app/views-payslip.js:485"
   ]
  },
  {
   "key": "קיבלתי בחזרה",
   "kind": "lit",
   "where": [
-   "app/views-payslip.js:507",
-   "app/views-payslip.js:518"
+   "app/views-payslip.js:509",
+   "app/views-payslip.js:520"
   ]
  },
  {
   "key": "שעתי מצאה לי",
   "kind": "lit",
   "where": [
-   "app/views-payslip.js:507",
-   "app/views-payslip.js:518"
+   "app/views-payslip.js:509",
+   "app/views-payslip.js:520"
   ]
  },
  {
   "key": "שהגיעו לי מהעבודה",
   "kind": "lit",
   "where": [
-   "app/views-payslip.js:509",
-   "app/views-payslip.js:518"
+   "app/views-payslip.js:511",
+   "app/views-payslip.js:520"
   ]
  },
  {
   "key": "שחסרים לי בתלוש",
   "kind": "lit",
   "where": [
-   "app/views-payslip.js:509",
-   "app/views-payslip.js:518"
+   "app/views-payslip.js:511",
+   "app/views-payslip.js:520"
   ]
  },
  {
   "key": "גם לכם מגיע לבדוק 👇",
   "kind": "lit",
   "where": [
-   "app/views-payslip.js:513"
+   "app/views-payslip.js:515"
   ]
  },
  {
   "key": "קיבלתי בחזרה כסף שהגיע לי",
   "kind": "lit",
   "where": [
-   "app/views-payslip.js:518"
+   "app/views-payslip.js:520"
   ]
  },
  {
   "key": "שעתי מצאה לי כסף שחסר בתלוש",
   "kind": "lit",
   "where": [
-   "app/views-payslip.js:518"
+   "app/views-payslip.js:520"
   ]
  },
  {
   "key": "{0} {1} {2}. גם לכם כדאי לבדוק: https://shaati.web.app",
   "kind": "tpl",
   "where": [
-   "app/views-payslip.js:518"
+   "app/views-payslip.js:520"
   ]
  },
  {
   "key": "<button class=\"btn big\" data-act=\"payslip-new\" style=\"margin-bottom:12px\">{0} העלה תלוש לניתוח</button>\n      <button class=\"btn tonal block\" data-act=\"tax-refund\" style=\"margin-bottom:12px\">{1} בדיקת החזר מס (עד 6 שנים אחורה)</button>\n      {2}\n      {3}\n      <div class=\"section-title\">{4} ארכיון תלושים</div>\n      {5}\n      {6}",
   "kind": "tpl",
   "where": [
-   "app/views-payslip.js:527"
+   "app/views-payslip.js:529"
   ]
  },
  {
   "key": "<div class=\"section-title\">{0} פערים פתוחים<span class=\"spacer\"></span><span class=\"small\">{1}</span></div>\n        <div class=\"list\">{2}</div>\n        <button class=\"btn tonal block\" data-act=\"claim-report\" style=\"margin-top:8px\">{3} דוח ומכתב לבירור מול המעסיק</button>",
   "kind": "tpl",
   "where": [
-   "app/views-payslip.js:529"
+   "app/views-payslip.js:531"
   ]
  },
  {
   "key": "<div class=\"item\" style=\"cursor:default\"><span class=\"lead\" style=\"background:{0};color:{1}\">{2}</span>\n          <span class=\"body\"><span class=\"t\">{3} · {4}</span><span class=\"s\">{5}</span></span>\n          <span class=\"trail\"><span class=\"a\">{6}</span><br><button class=\"btn text sm\" data-act=\"gap-set\" data-id=\"{7}\" data-s=\"resolved\">הוחזר ✓</button></span></div>",
   "kind": "tpl",
   "where": [
-   "app/views-payslip.js:530"
+   "app/views-payslip.js:532"
   ]
  },
  {
   "key": "ייתכן שהוחזר",
   "kind": "lit",
   "where": [
-   "app/views-payslip.js:531"
+   "app/views-payslip.js:533"
   ]
  },
  {
   "key": "עוד לא הוחזר",
   "kind": "lit",
   "where": [
-   "app/views-payslip.js:531"
+   "app/views-payslip.js:533"
   ]
  },
  {
   "key": "<div class=\"section-title\">{0} מגמות</div><div class=\"card\">{1}\n        <div class=\"tiny muted\">גובה העמודה = ברוטו. {2} תלושים אחרונים.</div></div>",
   "kind": "tpl",
   "where": [
-   "app/views-payslip.js:534"
+   "app/views-payslip.js:536"
   ]
  },
  {
   "key": "נטו וניכויים לפי חודש",
   "kind": "lit",
   "where": [
-   "app/views-payslip.js:537"
+   "app/views-payslip.js:539"
   ]
  },
  {
   "key": "<button class=\"item\" data-act=\"payslip-open\" data-id=\"{0}\"><span class=\"lead\" style=\"background:var(--surface-3)\">{1}</span>\n        <span class=\"body\"><span class=\"t\">{2}</span><span class=\"s\">{3}{4}{5}{6}</span></span>\n        <span class=\"trail\"><span class=\"a\">{7}</span><br><span class=\"tiny muted\">נטו</span></span></button>",
   "kind": "tpl",
   "where": [
-   "app/views-payslip.js:540"
+   "app/views-payslip.js:542"
   ]
  },
  {
   "key": "עוד אין תלושים",
   "kind": "lit",
   "where": [
-   "app/views-payslip.js:543"
+   "app/views-payslip.js:545"
   ]
  },
  {
   "key": "העלה תלוש כדי לבדוק שקיבלת את כל מה שמגיע לך: שעות, שבתות, נסיעות, פנסיה ועוד.",
   "kind": "lit",
   "where": [
-   "app/views-payslip.js:543"
+   "app/views-payslip.js:545"
   ]
  },
  {
   "key": "ניתוח חכם דורש מפתח API",
   "kind": "lit",
   "where": [
-   "app/views-payslip.js:551"
+   "app/views-payslip.js:553"
   ]
  },
  {
   "key": "אפשר להזין מפתח של Claude בהגדרות › עוזר AI ואודות › מפתח AI. בלי מפתח, הניתוח המקומי ממשיך לעבוד כרגיל.",
   "kind": "lit",
   "where": [
-   "app/views-payslip.js:551"
+   "app/views-payslip.js:553"
   ]
  },
  {
   "key": "להגדרות",
   "kind": "lit",
   "where": [
-   "app/views-payslip.js:551"
+   "app/views-payslip.js:553"
   ]
  },
  {
   "key": "לפני שליחה ל-⁠Claude",
   "kind": "lit",
   "where": [
-   "app/views-payslip.js:556"
+   "app/views-payslip.js:558"
   ]
  },
  {
   "key": "<div class=\"banner warn\">{0}<div>זה <b>בדיוק</b> הטקסט שיישלח ({1} פרטים אישיים הוסתרו אוטומטית). בדוק וערוך. אפשר למחוק גם שם או כל פרט אחר. הקובץ עצמו לא נשלח.</div></div>\n        <textarea class=\"input\" id=\"ai-text\" rows=\"16\" style=\"font-family:ui-monospace,monospace;font-size:.8rem\">{2}</textarea>\n        <div class=\"small muted\" style=\"margin-top:8px\">יישלח אל Anthropic (מודל {3}) עם המפתח שלך. השימוש מחויב בחשבון ה-⁠API שלך.</div>",
   "kind": "tpl",
   "where": [
-   "app/views-payslip.js:557"
+   "app/views-payslip.js:559"
   ]
  },
  {
   "key": "<button class=\"btn tonal\" data-cancel>ביטול</button><button class=\"btn\" data-send>{0} אני מאשר, שלח</button>",
   "kind": "tpl",
   "where": [
-   "app/views-payslip.js:560"
+   "app/views-payslip.js:562"
   ]
  },
  {
   "key": "שולח…",
   "kind": "lit",
   "where": [
-   "app/views-payslip.js:565",
+   "app/views-payslip.js:567",
    "app/views-support.js:203"
   ]
  },
@@ -10373,91 +10393,91 @@
   "key": "Claude זיהה {0} שדות. בדוק לפני ניתוח",
   "kind": "tpl",
   "where": [
-   "app/views-payslip.js:571"
+   "app/views-payslip.js:573"
   ]
  },
  {
   "key": "נסה שוב",
   "kind": "lit",
   "where": [
-   "app/views-payslip.js:574"
+   "app/views-payslip.js:576"
   ]
  },
  {
   "key": "הניתוח החכם נכשל",
   "kind": "lit",
   "where": [
-   "app/views-payslip.js:575"
+   "app/views-payslip.js:577"
   ]
  },
  {
   "key": "צריך מפתח API של Claude (הגדרות › עוזר AI ואודות › מפתח AI)",
   "kind": "lit",
   "where": [
-   "app/views-payslip.js:587"
+   "app/views-payslip.js:589"
   ]
  },
  {
   "key": "מפתח ה-⁠API לא תקין (401). בדוק אותו בהגדרות.",
   "kind": "lit",
   "where": [
-   "app/views-payslip.js:604"
+   "app/views-payslip.js:606"
   ]
  },
  {
   "key": "למפתח אין הרשאה למודל הזה (403).",
   "kind": "lit",
   "where": [
-   "app/views-payslip.js:605"
+   "app/views-payslip.js:607"
   ]
  },
  {
   "key": "המודל לא נמצא (404). בחר מודל אחר בהגדרות.",
   "kind": "lit",
   "where": [
-   "app/views-payslip.js:606"
+   "app/views-payslip.js:608"
   ]
  },
  {
   "key": "יותר מדי בקשות (429). נסה שוב בעוד דקה.",
   "kind": "lit",
   "where": [
-   "app/views-payslip.js:607"
+   "app/views-payslip.js:609"
   ]
  },
  {
   "key": "בעיית תקשורת עם השרת. בדוק את החיבור.",
   "kind": "lit",
   "where": [
-   "app/views-payslip.js:608"
+   "app/views-payslip.js:610"
   ]
  },
  {
   "key": "שגיאת API {0}: {1}",
   "kind": "tpl",
   "where": [
-   "app/views-payslip.js:609"
+   "app/views-payslip.js:611"
   ]
  },
  {
   "key": "הבקשה נדחתה על ידי המודל",
   "kind": "lit",
   "where": [
-   "app/views-payslip.js:612"
+   "app/views-payslip.js:614"
   ]
  },
  {
   "key": "התשובה נקטעה. נסה לקצר את הטקסט.",
   "kind": "lit",
   "where": [
-   "app/views-payslip.js:613"
+   "app/views-payslip.js:615"
   ]
  },
  {
   "key": "לא התקבלה תשובה",
   "kind": "lit",
   "where": [
-   "app/views-payslip.js:615"
+   "app/views-payslip.js:617"
   ]
  },
  {
@@ -22613,14 +22633,6 @@
   "key": "Shaati: מעקב משמרות, חישוב שכר ובדיקת תלושים. עובד גם בלי אינטרנט",
   "kind": "manifest",
   "where": [
-   "manifest"
-  ]
- },
- {
-  "key": "התחל משמרת",
-  "kind": "manifest",
-  "where": [
-   "manifest",
    "manifest"
   ]
  },

@@ -59,10 +59,10 @@
     const date = opts.noDate ? '' : U.fmtDate(r.dateKey, 'short') + ' · ' + (U.LANG === 'he' ? U.DAYS : U.DAYS_SHORT)[U.dow(r.dateKey)] + ' · '; // ("Thu" in English: the Hebrew name is already short)
     const planned = r.status === 'planned' ? (r.end <= Date.now() ? '<span class="tag warn">ממתינה לאישור</span>' : '<span class="tag planned">מתוכננת</span>') : '';
     const emp = App.multiEmp() ? ' · ' + esc(App.employer(r.employerId).name) : '';
-    return `<button class="item" data-act="shift-open" data-id="${r.id}">
+    return `<button class="item" data-act="shift-open" data-id="${esc(r.id)}">
       <span class="role-bar" style="background:${role ? role.color : '#999'}"></span>
       <span class="body"><span class="t shift-title"><span class="tt">${esc(date)}${esc(title)}</span>${App.restTag(r)}${App.ovTag(r)}${planned}</span>
-      <span class="s"><span class="num">⁦${U.epochHM(r.start)}\u2060–\u2060${U.epochHM(r.rawEnd)}⁩</span> · ${U.hm(r.paidMin)} ש׳${emp}${sh.note ? ' · ' + esc(sh.note) : ''}</span></span>
+      <span class="s"><span class="num">\u2066${U.epochHM(r.start)}\u2060–\u2060${U.epochHM(r.rawEnd)}\u2069</span> · ${U.hm(r.paidMin)} ש׳${emp}${sh.note ? ' · ' + esc(sh.note) : ''}</span></span>
       <span class="trail"><span class="a" data-tr="s:${r.id}">${money(App.shiftAmount(r), 0)}</span></span></button>`;
   };
   App.entryItem = function (e) {

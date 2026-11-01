@@ -63,6 +63,6 @@
     const { from, to } = n.data;
     const t = root.Engine.rangeSummary(App.model, from, to);
     const p = root.Engine.rangeSummary(App.model, U.addDays(from, -7), U.addDays(to, -7));
-    App.exporter.summaryImage({ from, to, label: `השבוע ⁦${U.fmtDate(from, 'dm')}\u2060–\u2060${U.fmtDate(to, 'dm')}⁩` }, t, p, n.body);
+    App.exporter.summaryImage({ from, to, label: `השבוע \u2066${U.fmtDate(from, 'dm')}\u2060–\u2060${U.fmtDate(to, 'dm')}\u2069` }, t, p, n.body);
   };
 })(typeof window !== 'undefined' ? window : globalThis);

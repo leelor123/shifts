@@ -686,8 +686,13 @@
       return !!a;
     },
   };
-  // after 5 wrong codes each further mistake makes you wait longer (30 s, 1 min, 2 min…)
+  // after 5 wrong codes each further mistake makes you wait longer (30 s, 1 min, 2 min…). The count and the wait
+  // are kept on the phone: in memory alone, closing and reopening the app gave 5 fresh guesses each time
+  // (security scan, 1 Nov 2026)
+  const PIN_KEY = 'shaati.pinFails';
   let pinFails = 0, pinWaitUntil = 0;
+  try { const p = JSON.parse(localStorage.getItem(PIN_KEY) || '{}'); pinFails = +p.f || 0; pinWaitUntil = +p.until || 0; } catch (e) { /* none kept */ }
+  const keepPinFails = () => { try { if (pinFails) localStorage.setItem(PIN_KEY, JSON.stringify({ f: pinFails, until: pinWaitUntil })); else localStorage.removeItem(PIN_KEY); } catch (e) { /* private mode */ } };
   App.lock = function () {
     const L = S.settings.lock;
     if (!L.enabled || document.getElementById('lock')) return;
@@ -695,7 +700,7 @@
     el.className = 'lock'; el.id = 'lock';
     let pin = '';
     // unlocking fades the lock screen away (removed at once, it was a hard cut to the app)
-    const unlock = () => { if (el.classList.contains('out')) return; el.classList.add('out'); setTimeout(() => el.remove(), 260); S.meta._unlockedAt = Date.now(); pinFails = 0; };
+    const unlock = () => { if (el.classList.contains('out')) return; el.classList.add('out'); setTimeout(() => el.remove(), 260); S.meta._unlockedAt = Date.now(); pinFails = 0; pinWaitUntil = 0; keepPinFails(); };
     const tryBio = async () => { try { if (await App.bio.verify(L.bioId)) unlock(); } catch (e) { /* cancelled: the code still works */ } };
     const draw = () => {
       const wait = Math.ceil((pinWaitUntil - Date.now()) / 1000);
@@ -715,6 +720,7 @@
           else {
             pin = ''; pinFails++;
             if (pinFails >= 5) pinWaitUntil = Date.now() + 30000 * Math.pow(2, Math.min(pinFails - 5, 5));
+            keepPinFails();
             draw(); el.querySelector('.pin-dots').classList.add('shake'); UI.vibrate(80);
           }
         }
@@ -729,7 +735,9 @@
     if (document.hidden) hiddenAt = Date.now();
     else {
       const L = S.settings && S.settings.lock;
-      if (L && L.enabled && Date.now() - hiddenAt > (+L.timeoutMin || 1) * 60000) App.lock();
+      // "מיד" stores 0, which `|| 1` once turned into a minute; 0 now locks on any return after a few seconds away
+      const t = L && Number.isFinite(+L.timeoutMin) && L.timeoutMin !== '' && L.timeoutMin != null ? +L.timeoutMin : 1;
+      if (L && L.enabled && Date.now() - hiddenAt >= Math.max(t * 60000, 3000)) App.lock();
       if (App.model) { App.tickTimer(); App.runInsights(); }
     }
   });
@@ -882,8 +890,10 @@
     App.pendingAction = null;
     // done once: a reload (or the browser's own restore) must never start or end a shift again
     if (action) { try { const u = new URL(location.href); u.searchParams.delete('action'); history.replaceState(history.state, '', u.pathname + u.search + u.hash); } catch (e) { /* ignore */ } }
-    if (action === 'start' && !S.activeShift) App.actions['timer-start']();
-    if (action === 'stop' && S.activeShift) App.stopShift(); // the widget's "end" button
+    // the widget's start and end buttons open these links, but so could any other site: the shift changes only
+    // after one tap here (a link once ended a running shift with no question; security scan, 1 Nov 2026)
+    if (action === 'start' && !S.activeShift) UI.confirm('התחל משמרת', '', 'התחלה').then((ok) => { if (ok && !S.activeShift) App.actions['timer-start'](); });
+    if (action === 'stop' && S.activeShift) UI.confirm('סיום משמרת', '', 'סיום').then((ok) => { if (ok && S.activeShift) App.stopShift(); });
     if (action === 'add') App.sheetsApi.shiftEditor();
     if (action === 'schedule' && App.importSchedule) App.importSchedule(); // the app icon's shortcut
     if (action === 'share-in' && App.receiveShare) App.receiveShare(); // shared to the app (sw.js)

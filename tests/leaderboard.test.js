@@ -140,3 +140,12 @@ T.test('a game played before joining the table counts today, this week, month an
   T.eq(LB.timeOf(later, 'd'), now + 86400000, 'a new day: its own best and time');
   T.eq(LB.timeOf(later, 'a'), now, 'all time: still the 420 of the day before');
 });
+T.test('the server refuses every team-like name the app refuses (firestore.rules notStaff = leaderboard.js STAFF)', () => {
+  const fs = require('fs'); const path = require('path');
+  const src = fs.readFileSync(path.join(__dirname, '..', 'src', 'core', 'leaderboard.js'), 'utf8');
+  const rules = fs.readFileSync(path.join(__dirname, '..', 'firestore.rules'), 'utf8');
+  const staff = JSON.parse(src.match(/const STAFF = (\[[^\]]+\])/)[1].replace(/'/g, '"'));
+  const words = rules.match(/function notStaff[\s\S]*?\.\*\(([^)]+)\)\.\*/)[1].split('|');
+  T.ok(rules.includes('&& notStaff(n)') && /validLb[\s\S]*?validNick\(d\.n\)/.test(rules), 'nicknames, invitations and the table all check it');
+  for (const w of staff) T.ok(words.some((x) => w.includes(x)), 'the rules cover ' + w);
+});

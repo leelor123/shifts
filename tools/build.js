@@ -82,15 +82,40 @@ function page(lang) {
   // two: the language check at the top (moves to the chosen language's page before anything is drawn) and the app
   if (scripts.length !== 2) throw new Error('expected two inline scripts, found ' + scripts.length);
   const inline = scripts.map((m) => "'sha256-" + crypto.createHash('sha256').update(m[1], 'utf8').digest('base64') + "'");
+  // Scripts from other servers: only the exact library folders the app loads, never a whole CDN. Any file on
+  // cdn.jsdelivr.net (anyone can publish there) once let a page injection become a running script (security
+  // scan, 1 Nov 2026). Each folder ends in '/', so it matches only that library at that version. The libraries'
+  // own extra files are here too: the AI SDK's dependencies, and tesseract's worker and core (its 'v' paths).
+  const LIBS = [
+    'https://www.gstatic.com/firebasejs/12.19.0/', 'https://apis.google.com/js/',
+    'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/', 'https://cdn.sheetjs.com/xlsx-0.20.3/',
+    'https://cdn.jsdelivr.net/npm/tesseract.js@5.1.1/', 'https://cdn.jsdelivr.net/npm/tesseract.js@v5.1.1/', 'https://cdn.jsdelivr.net/npm/tesseract.js-core@v5.1.1/',
+    'https://cdn.jsdelivr.net/npm/nsfwjs@4.4.0/', 'https://cdn.jsdelivr.net/npm/@anthropic-ai/sdk@0.128.0/',
+    'https://cdn.jsdelivr.net/npm/standardwebhooks@1.1.1/', 'https://cdn.jsdelivr.net/npm/@stablelib/base64@1.0.1/', 'https://cdn.jsdelivr.net/npm/fast-sha256@1.3.0/',
+  ];
+  // a script address in the code that no folder above covers would be blocked in the app: refuse to build
+  for (const f of fs.readdirSync(path.join(SRC, 'app')).filter((x) => x.endsWith('.js'))) {
+    const code = fs.readFileSync(path.join(SRC, 'app', f), 'utf8');
+    for (const m of code.matchAll(/'(https:\/\/(?:www\.gstatic\.com|apis\.google\.com|cdnjs\.cloudflare\.com|cdn\.jsdelivr\.net|cdn\.sheetjs\.com)\/[^']*\.m?js[^']*)'/g)) {
+      if (!LIBS.some((l) => m[1].startsWith(l))) throw new Error(`${f}: ${m[1]} is not in the script policy's library list (tools/build.js LIBS)`);
+    }
+  }
+  // text-direction controls are written as escapes (backslash-u and the code, e.g. 2066), never as the invisible
+  // characters themselves: in the source they can make code read differently from what runs (Semgrep, 1 Nov 2026)
+  const BIDI = new RegExp('[' + [0x202A, 0x202B, 0x202C, 0x202D, 0x202E, 0x2066, 0x2067, 0x2068, 0x2069].map((c) => String.fromCharCode(c)).join('') + ']');
+  for (const d of ['app', 'core']) for (const f of fs.readdirSync(path.join(SRC, d)).filter((x) => x.endsWith('.js'))) {
+    const at = fs.readFileSync(path.join(SRC, d, f), 'utf8').search(BIDI);
+    if (at >= 0) throw new Error(`${d}/${f}: an invisible text-direction character at offset ${at}; write it as its \\u escape`);
+  }
   const CSP = [
     "default-src 'self'",
-    `script-src 'self' ${inline.join(' ')} https://www.gstatic.com https://apis.google.com https://cdnjs.cloudflare.com https://cdn.jsdelivr.net 'wasm-unsafe-eval'`,
+    `script-src 'self' ${inline.join(' ')} ${LIBS.join(' ')} 'wasm-unsafe-eval'`,
     "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
     "font-src 'self' https://fonts.gstatic.com data:",
     "img-src 'self' data: blob: https:",
     "connect-src 'self' https: wss:",
     "frame-src https://shiftpay-70ab6.firebaseapp.com https://accounts.google.com https://apis.google.com https://*.google.com",
-    "worker-src 'self' blob: https://cdnjs.cloudflare.com https://cdn.jsdelivr.net",
+    `worker-src 'self' blob: ${LIBS.join(' ')}`,
     "media-src 'self' data: blob:",
     "manifest-src 'self'",
     "object-src 'none'",

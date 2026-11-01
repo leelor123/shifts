@@ -394,7 +394,7 @@
       <div class="status-summary"><div class="ok">${icon('okc', 's')} ${counts.ok}<div class="tiny">תקין</div></div><div class="warn">${icon('alert', 's')} ${counts.warn}<div class="tiny">לבדוק</div></div><div class="bad">${icon('xc', 's')} ${counts.bad}<div class="tiny">חסר/שגוי</div></div></div>
       ${a.totalMissing > 0 ? `<div class="card tonal"><div class="small">הפרש משוער לטובתך</div><div class="hero-num">${money(a.totalMissing)}</div><div class="tiny">סכום הממצאים המסומנים ${icon('xc', 's')}. בדוק את הפירוט לפני פנייה למעסיק.</div><button class="btn tonal sm found-share" data-act="found-share" data-amount="${Math.round(a.totalMissing)}" data-k="found">${icon('share', 's')} שתף: שעתי מצאה לי ${money(a.totalMissing, 0)}</button></div>` : counts.bad === 0 ? `<div class="card tonal"><b>${icon('okc', 's')} לא נמצאו חוסרים</b><div class="small">התלוש תואם למשמרות שרשמת${counts.warn ? ', עם כמה נקודות לבדיקה' : ''}.</div></div>` : ''}
       ${a.overridesInPeriod ? `<div class="banner warn">${icon('hand')}<div>${a.overridesInPeriod} משמרות בתקופה כוללות עקיפה ידנית. ממצאים שנובעים מהן מסומנים.</div></div>` : ''}
-      <div class="small muted" style="margin:0 4px 10px">תקופה: ⁦${U.fmtDate(a.expected.P.from)}\u2060–\u2060${U.fmtDate(a.expected.P.to)}⁩ · ${a.expected.shifts.length} משמרות · ${U.hours(a.expected.t.hours)} ש׳</div>
+      <div class="small muted" style="margin:0 4px 10px">תקופה: \u2066${U.fmtDate(a.expected.P.from)}\u2060–\u2060${U.fmtDate(a.expected.P.to)}\u2069 · ${a.expected.shifts.length} משמרות · ${U.hours(a.expected.t.hours)} ש׳</div>
       ${a.findings.slice().sort((x, y) => order[x.status] - order[y.status]).map((f) => `<div class="finding ${f.status}">
         <div class="ft"><span class="fi">${icon(STATUS[f.status][0], 's')}</span><span>${esc(f.area)} · ${esc(f.title)}</span>${f.amount > 0 && f.status !== 'ok' ? `<span class="amt">${U.money(f.amount)}</span>` : ''}</div>
         <div class="fd">${esc(f.detail)}</div>
@@ -427,7 +427,9 @@
           if (b.hasAttribute('data-edit')) { UI.closeTop(); setTimeout(() => verifySheet(Object.assign({}, slip, { id: slip.isNew ? null : slip.id })), 320); }
           if (b.hasAttribute('data-file')) {
             const f = await Store.getFile(slip.fileId);
-            if (f) window.open(URL.createObjectURL(f.blob), '_blank'); else UI.toast('הקובץ לא נמצא');
+            // only a PDF or a picture is opened, in a window with no way back into the app (never an HTML or SVG of the app's origin)
+            const ft = f && f.blob && /^(application\/pdf|image\/(png|jpeg|webp|gif|heic|heif))$/.test(f.blob.type) ? f.blob.type : '';
+            if (ft) window.open(URL.createObjectURL(new Blob([f.blob], { type: ft })), '_blank', 'noopener'); else UI.toast('הקובץ לא נמצא');
           }
           if (b.hasAttribute('data-del')) {
             if (!(await UI.confirm('למחוק את התלוש מהארכיון?', '', 'מחק', true))) return;
@@ -537,8 +539,8 @@
       ], { label: 'נטו וניכויים לפי חודש', fmt: (v) => U.money(v, 0) })}
         <div class="tiny muted">גובה העמודה = ברוטו. ${trend.length} תלושים אחרונים.</div></div>` : ''}
       <div class="section-title">${icon('receipt', 's')} ארכיון תלושים</div>
-      ${slips.length ? `<div class="list">${slips.map((p) => { const c = (p.summary && p.summary.counts) || {}; return `<button class="item" data-act="payslip-open" data-id="${p.id}"><span class="lead" style="background:var(--surface-3)">${icon('receipt')}</span>
-        <span class="body"><span class="t">${U.fmtMonth(p.period)}</span><span class="s">${c.bad ? `<span class="ps-c bad">${icon('xc', 's')} ${c.bad}</span> ` : ''}${c.warn ? `<span class="ps-c warn">${icon('alert', 's')} ${c.warn}</span> ` : ''}${c.ok ? `<span class="ps-c ok">${icon('okc', 's')} ${c.ok}</span>` : ''}${p.source === 'ai' ? ' · AI' : ''}</span></span>
+      ${slips.length ? `<div class="list">${slips.map((p) => { const c = (p.summary && p.summary.counts) || {}; return `<button class="item" data-act="payslip-open" data-id="${esc(p.id)}"><span class="lead" style="background:var(--surface-3)">${icon('receipt')}</span>
+        <span class="body"><span class="t">${p.period ? U.fmtMonth(p.period) : '—'}</span><span class="s">${c.bad ? `<span class="ps-c bad">${icon('xc', 's')} ${+c.bad}</span> ` : ''}${c.warn ? `<span class="ps-c warn">${icon('alert', 's')} ${+c.warn}</span> ` : ''}${c.ok ? `<span class="ps-c ok">${icon('okc', 's')} ${+c.ok}</span>` : ''}${p.source === 'ai' ? ' · AI' : ''}</span></span>
         <span class="trail"><span class="a">${p.fields.net ? money(p.fields.net.value, 0) : '—'}</span><br><span class="tiny muted">נטו</span></span></button>`; }).join('')}</div>`
         : UI.emptyState('receipt', 'עוד אין תלושים', 'העלה תלוש כדי לבדוק שקיבלת את כל מה שמגיע לך: שעות, שבתות, נסיעות, פנסיה ועוד.')}
       ${DISCLAIMER}`;

@@ -117,12 +117,12 @@
         return `<div class="imp-row sc-row ${r.on ? 'on' : ''}" data-i="${i}">
           <button class="sc-tog" data-sc-tog="${i}" aria-pressed="${r.on}" aria-label="${esc(day + ' ' + U.fmtDate(r.date, 'short'))}"><span class="imp-check" aria-hidden="true">${icon('check', 's')}</span>
             <span class="imp-d"><b>${esc(day)} ${U.fmtDate(r.date, 'short')}</b><small>${r.taken ? '<i class="tag">כבר קיימת</i>' : ''}${r.guess ? '<i class="tag warn">שעה משוערת</i>' : ''}${r.e < Date.now() ? '<i class="tag">עברה</i>' : ''}</small></span></button>
-          <button class="sc-time" data-sc-time="${i}" aria-label="שינוי השעות"><span class="num">⁦${r.start}⁠–⁠${r.end}⁩</span>${icon('edit', 's')}</button></div>`;
+          <button class="sc-time" data-sc-time="${i}" aria-label="שינוי השעות"><span class="num">\u2066${r.start}⁠–⁠${r.end}\u2069</span>${icon('edit', 's')}</button></div>`;
       }).join('');
       box.innerHTML = `${head}
         ${names.length ? `<div class="field"><span class="lbl">${who.length ? 'המשמרות של' : 'מי את/ה בסידור?'}</span><div class="chips sc-names">${names.map((n) => `<button class="chip ${who.includes(n) ? 'on' : ''}" data-sc-who="${esc(n)}" aria-pressed="${who.includes(n)}">${esc(n)}</button>`).join('')}</div></div>` : ''}
         ${res.needsWeek && (who.length || !names.length) ? `<div class="field"><span class="lbl">לאיזה שבוע?</span><div class="chips sc-week">${[[thisWeek, 'השבוע'], [nextWeek, 'שבוע הבא']].map(([k, t]) => `<button class="chip ${week === k ? 'on' : ''}" data-sc-week="${k}" aria-pressed="${week === k}">${t} · מ-${U.fmtDate(k, 'short')}</button>`).join('')}</div></div>` : ''}
-        ${roles.length > 1 && rows.length ? `<div class="field"><span class="lbl">לאיזה תפקיד לשייך?</span><div class="chips imp-roles">${roles.map((r) => `<button class="chip ${r.id === roleId ? 'on' : ''}" data-sc-role="${r.id}"><span class="sw" style="background:${r.color}"></span>${esc(r.name)}${App.multiEmp() ? ' · ' + esc((App.employer(r.employerId) || {}).name || '') : ''}</button>`).join('')}</div></div>` : ''}
+        ${roles.length > 1 && rows.length ? `<div class="field"><span class="lbl">לאיזה תפקיד לשייך?</span><div class="chips imp-roles">${roles.map((r) => `<button class="chip ${r.id === roleId ? 'on' : ''}" data-sc-role="${esc(r.id)}"><span class="sw" style="background:${r.color}"></span>${esc(r.name)}${App.multiEmp() ? ' · ' + esc((App.employer(r.employerId) || {}).name || '') : ''}</button>`).join('')}</div></div>` : ''}
         ${rows.length ? `<div class="imp-list sc-list">${list}</div>
           ${rows.some((r) => r.guess) ? `<div class="tiny muted imp-note">${icon('info', 's')} "שעה משוערת": לפי שם המשמרת או האורך הרגיל שלך. לחיצה על השעות משנה אותן.</div>` : ''}
           ${S.settings.alerts && !S.settings.alerts.remindPlanned ? `<label class="switch-row"><span class="body"><span class="t">להזכיר לי לפני כל משמרת</span><span class="s">שעה לפני, בהתראה</span></span><input type="checkbox" class="switch" id="sc-remind"></label>` : ''}` : ''}`;
@@ -292,6 +292,10 @@ A cell with only a shift name and no hours: use בוקר 07:00-15:00, צהריי
     } catch (e) { console.warn('share', e); }
     if (!meta || Date.now() - (+meta.at || 0) > 10 * 60000) return; // nothing, or an old one
     const text = String(meta.text || '');
+    // the phone's share sheet posts here, but so can any website's form: nothing is read before one tap
+    // (a shared spreadsheet was parsed at once; security scan, 1 Nov 2026)
+    if (!file && !text.trim()) return;
+    if (!(await UI.confirm('לפתוח את מה ששיתפת עם שעתי?', file ? file.name : text.slice(0, 80), 'אישור'))) return;
     if (!file) {
       if (!text.trim()) return;
       const today = U.todayKey();

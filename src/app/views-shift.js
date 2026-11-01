@@ -53,7 +53,7 @@
   App.actions['tpl-pick'] = fromMenu(() => {
     UI.openSheet({
       title: 'בחר תבנית',
-      body: `<div class="list">${S.templates.map((t) => `<button class="item" data-tpl="${t.id}"><span class="role-bar" style="background:${(App.role(t.roleId) || {}).color || '#999'}"></span><span class="body"><span class="t">${esc(t.name)}</span><span class="s">${esc(App.roleName(t.roleId))} · <span class="num">⁦${t.startT}\u2060–\u2060${t.endT}⁩</span></span></span></button>`).join('')}</div>`,
+      body: `<div class="list">${S.templates.map((t) => `<button class="item" data-tpl="${esc(t.id)}"><span class="role-bar" style="background:${(App.role(t.roleId) || {}).color || '#999'}"></span><span class="body"><span class="t">${esc(t.name)}</span><span class="s">${esc(App.roleName(t.roleId))} · <span class="num">\u2066${esc(t.startT)}\u2060–\u2060${esc(t.endT)}\u2069</span></span></span></button>`).join('')}</div>`,
       onMount: (el) => el.querySelectorAll('[data-tpl]').forEach((b) => (b.onclick = () => {
         const t = S.templates.find((x) => x.id === b.dataset.tpl);
         UI.closeTop();
@@ -169,7 +169,7 @@
     }
     h += '</div>';
     const labels = [`<span class="num">${U.epochHM(r.start)}</span>`];
-    if (rests.length) labels.push(`<span class="tag rest">${icon('candle')} ⁦${U.epochHM(rests[0].a)}\u2060–\u2060${U.epochHM(rests[rests.length - 1].b)}⁩</span>`);
+    if (rests.length) labels.push(`<span class="tag rest">${icon('candle')} \u2066${U.epochHM(rests[0].a)}\u2060–\u2060${U.epochHM(rests[rests.length - 1].b)}\u2069</span>`);
     labels.push(`<span class="num">${U.epochHM(r.end)}${U.epochKey(r.end) !== r.dateKey ? ' (+1)' : ''}</span>`);
     return h + `<div class="row-flex tiny muted" style="justify-content:space-between">${labels.join('')}</div>`;
   };
@@ -197,7 +197,7 @@
     notes.push(`שעות נוספות אחרי ${+(+r.thresholdH).toFixed(2)} שעות ביום${r.otByLaw ? ' (לפי החוק)' : ''}` + (r.priorMin ? ` · כבר עבדת ${U.hm(r.priorMin)} באותו יום לפני המשמרת` : '') + (r.isNightShift && (r.otByLaw || emp.nightShiftShortDay) ? ' (משמרת לילה)' : '')
       + (r.weekOtMin > 0 ? ` · ${U.hm(r.weekOtMin)} מהן נוספות כי עברת ${r.weekH || 42} שעות רגילות השבוע` : '') + (r.minorOt ? ' · לפי חוק עבודת הנוער' : ''));
     const wins = r.restLabels.length ? r.slices.filter((s) => s.autoRest) : [];
-    if (r.autoRestMin > 0) notes.push(`חלון ${esc(r.restLabels.join(', ') || 'שבת/חג')} במשמרת: ⁦${U.epochHM(wins[0].a)}\u2060–\u2060${U.epochHM(wins[wins.length - 1].b)}⁩ (${S.settings.rest.mode === 'city' ? 'לפי ' + esc(S.settings.rest.city === '__custom' ? 'מיקום מותאם' : App.placeLabel(S.settings.rest.city).name).replace(/-/g, '-⁠') : 'שעות קבועות'})`);
+    if (r.autoRestMin > 0) notes.push(`חלון ${esc(r.restLabels.join(', ') || 'שבת/חג')} במשמרת: \u2066${U.epochHM(wins[0].a)}\u2060–\u2060${U.epochHM(wins[wins.length - 1].b)}\u2069 (${S.settings.rest.mode === 'city' ? 'לפי ' + esc(S.settings.rest.city === '__custom' ? 'מיקום מותאם' : App.placeLabel(S.settings.rest.city).name).replace(/-/g, '-⁠') : 'שעות קבועות'})`);
     if (r.warnings.length) notes.push(icon('alert', 's') + ' ' + r.warnings.join(', '));
     return `<table class="bd">${rows}</table><div class="tiny muted" style="margin-top:8px">${notes.map((n) => '• ' + n).join('<br>')}</div>`;
   };
@@ -307,7 +307,7 @@
   };
 
   App.saveTemplate = async function (sh) {
-    const name = await UI.promptText('שמירת תבנית', 'שם התבנית', `${App.roleName(sh.roleId)} ⁦${U.epochHM(sh.start)}\u2060–\u2060${U.epochHM(sh.end)}⁩`);
+    const name = await UI.promptText('שמירת תבנית', 'שם התבנית', `${App.roleName(sh.roleId)} \u2066${U.epochHM(sh.start)}\u2060–\u2060${U.epochHM(sh.end)}\u2069`);
     if (!name || !App.ensureClean(name)) return;
     await App.saveOps([{ store: 'templates', put: {
       id: U.uid(), name, roleId: sh.roleId, employerId: sh.employerId, startT: U.epochHM(sh.start), endT: U.epochHM(sh.end),
@@ -535,7 +535,7 @@
       }
       const overlap = S.shifts.find((s) => s.id !== sh.id && s.employerId === sh.employerId && s.status === sh.status && s.start < sh.end && s.end > sh.start);
       if (overlap) {
-        if (!(await UI.confirm('חפיפה עם משמרת אחרת', `קיימת משמרת ב-${U.fmtDate(U.epochKey(overlap.start))} ⁦${U.epochHM(overlap.start)}\u2060–\u2060${U.epochHM(overlap.end)}⁩. לשמור בכל זאת?`, 'שמור'))) return;
+        if (!(await UI.confirm('חפיפה עם משמרת אחרת', `קיימת משמרת ב-${U.fmtDate(U.epochKey(overlap.start))} \u2066${U.epochHM(overlap.start)}\u2060–\u2060${U.epochHM(overlap.end)}\u2069. לשמור בכל זאת?`, 'שמור'))) return;
       }
       await Store.setMeta({ lastRole: d.roleId });
       UI.closeTop();

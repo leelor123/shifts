@@ -85,7 +85,7 @@
     const curM = metrics(model, cur.from, cur.to);
     const prevM = prevs.map((p) => metrics(model, p.from, p.to));
     const worked = prevM.filter((m) => m.shifts > 0);
-    const baseRange = '⁦' + U.fmtDate(prevs[prevs.length - 1].from, 'short') + '\u2060–\u2060' + U.fmtDate(prevs[0].to, 'short') + '⁩';
+    const baseRange = '\u2066' + U.fmtDate(prevs[prevs.length - 1].from, 'short') + '\u2060–\u2060' + U.fmtDate(prevs[0].to, 'short') + '\u2069';
     const label = unit === 'week' ? 'השבוע שהסתיים' : 'בחודש שהסתיים';
     const per = unit === 'week' ? 'לשבוע' : 'לחודש';
     const nPrev = prevs.length + (unit === 'week' ? ' השבועות' : ' החודשים');
@@ -483,13 +483,13 @@
       if (r.status !== 'planned') continue;
       if (on('plannedPast') && r.rawEnd < now) {
         alerts.push({ key: 'planned-' + r.id, type: 'plannedPast', severity: 'warn', push: 'critical', ref: r.id,
-          title: 'משמרת מתוכננת שעברה', body: `המשמרת של ${U.fmtDate(r.dateKey, 'dm')} (⁦${U.epochHM(r.start)}\u2060–\u2060${U.epochHM(r.rawEnd)}⁩) לא סומנה כ"בוצעה".`,
+          title: 'משמרת מתוכננת שעברה', body: `המשמרת של ${U.fmtDate(r.dateKey, 'dm')} (\u2066${U.epochHM(r.start)}\u2060–\u2060${U.epochHM(r.rawEnd)}\u2069) לא סומנה כ"בוצעה".`,
           explain: 'משמרות מתוכננות לא נספרות בשכר עד שמסמנים אותן כבוצעו.' });
       }
       const RM = cfg.reminders || {};
       const offs = (Array.isArray(RM.before) && RM.before.length ? RM.before : [+cfg.upcomingMin || 60]).map(Number).filter((x) => x > 0).sort((a, b) => a - b);
       const mins = (r.start - now) / U.MIN;
-      const what = `${roleName(r.segments[0] ? r.segments[0].roleId : '')} · ⁦${U.epochHM(r.start)}⁠–⁠${U.epochHM(r.rawEnd)}⁩`;
+      const what = `${roleName(r.segments[0] ? r.segments[0].roleId : '')} · \u2066${U.epochHM(r.start)}⁠–⁠${U.epochHM(r.rawEnd)}\u2069`;
       if (on('upcoming') && mins > 0) {
         // the nearest reminder whose time has come (each one fires once: its own key)
         const off = offs.find((o) => mins <= o);
@@ -625,7 +625,7 @@
       sentence += '.';
     } else if (hasHistory) sentence += ' בערך כמו הממוצע שלך.';
     if (t.restHours >= 1) sentence += ` ${U.num(t.restHours, 1)} מהשעות היו בשבת/חג.`;
-    return { from, to, t, avgHours: ah, sentence, explain: `השבוע ⁦${U.fmtDate(from, 'short')}\u2060–\u2060${U.fmtDate(to, 'short')}⁩, בהשוואה לממוצע 4 השבועות שלפניו (${U.num(ah, 1)} ש׳).` };
+    return { from, to, t, avgHours: ah, sentence, explain: `השבוע \u2066${U.fmtDate(from, 'short')}\u2060–\u2060${U.fmtDate(to, 'short')}\u2069, בהשוואה לממוצע 4 השבועות שלפניו (${U.num(ah, 1)} ש׳).` };
   }
 
   root.Insights = { run, metrics, compareSeries, weeklySummary, TYPE_INFO, pctDev };
