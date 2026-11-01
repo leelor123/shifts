@@ -531,7 +531,7 @@
     if (!Cloud.user) return 'לא מחובר';
     if (st === 'synced') return 'מסונכרן' + (S.meta.lastSync ? ' · ' + UI.timeAgo(S.meta.lastSync) : '');
     if (st === 'syncing') return 'מסנכרן…';
-    if (st === 'offline') return 'אין חיבור — יסונכרן כשתחזור הרשת';
+    if (st === 'offline') return 'אין חיבור. יסונכרן כשתחזור הרשת';
     if (st === 'error') return 'שגיאת סנכרון: ' + Cloud.errorText(Cloud.error);
     return 'מחובר';
   };

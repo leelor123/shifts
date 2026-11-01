@@ -29,7 +29,7 @@
     });
     return loaded[src];
   }
-  const DISCLAIMER = `<div class="disclaimer">${icon('info', 's')}<div>הניתוח הוא כלי עזר בלבד ואינו ייעוץ משפטי או חשבונאי. חישובים שתלויים בהסכם קיבוצי, בחוזה או בוותק מסומנים ברמת ביטחון נמוכה. במקרה של ספק — פנה למשאבי אנוש, לרו״ח, לארגון העובדים או לאתר "כל זכות".</div></div>`;
+  const DISCLAIMER = `<div class="disclaimer">${icon('info', 's')}<div>הניתוח הוא כלי עזר בלבד ואינו ייעוץ משפטי או חשבונאי. חישובים שתלויים בהסכם קיבוצי, בחוזה או בוותק מסומנים ברמת ביטחון נמוכה. במקרה של ספק, פנה למשאבי אנוש, לרו״ח, לארגון העובדים או לאתר "כל זכות".</div></div>`;
 
   /* ---------------- extraction ---------------- */
   async function extractPdf(file, progress, opts) {
@@ -48,7 +48,7 @@
     if (text.replace(/\s/g, '').length > 80) return { text, source: 'pdf' };
     if (opts && opts.noOcr) return { text, source: 'scan' }; // the caller reads the picture its own way
     // scanned PDF → render & OCR
-    progress('ה-\u2060PDF סרוק — מריץ זיהוי טקסט…');
+    progress('ה-\u2060PDF סרוק: מריץ זיהוי טקסט…');
     const page = await doc.getPage(1);
     const vp = page.getViewport({ scale: 2.5 });
     const canvas = document.createElement('canvas');
@@ -96,7 +96,7 @@
       }
       if (words.length > 6) return { words, text: words.map((w) => w.text).join(' '), source: 'pdf' };
       const page = await doc.getPage(1);
-      progress('ה-⁠PDF סרוק — מריץ זיהוי טקסט…');
+      progress('ה-⁠PDF סרוק: מריץ זיהוי טקסט…');
       const vp = page.getViewport({ scale: 2.5 });
       const canvas = document.createElement('canvas');
       canvas.width = vp.width; canvas.height = vp.height;
@@ -152,11 +152,11 @@
     if (UI.sheets.length) UI.closeAll();
     UI.openSheet({
       title: 'ניתוח תלוש שכר',
-      body: `<div class="small muted" style="margin-bottom:12px">העלה את התלוש (PDF או צילום). הקריאה מתבצעת בטלפון — התלוש לא נשלח לשום מקום.</div>
+      body: `<div class="small muted" style="margin-bottom:12px">העלה את התלוש (PDF או צילום). הקריאה מתבצעת בטלפון: התלוש לא נשלח לשום מקום.</div>
         <label class="btn big" style="margin-bottom:10px">${icon('upload')} בחר קובץ PDF או תמונה<input type="file" accept="application/pdf,image/*" id="ps-file" hidden></label>
         <label class="btn tonal block" style="margin-bottom:10px">${icon('camera')} צלם את התלוש<input type="file" accept="image/*" capture="environment" id="ps-cam" hidden></label>
         <button class="btn outlined block" data-manual>${icon('edit')} הזנה ידנית (בלי קובץ)</button>
-        <div class="tiny muted" style="margin-top:12px">טיפ: PDF מקורי מדויק יותר מצילום. בצילום — תאורה טובה, ישר מלמעלה, כל התלוש בפריים.</div>${DISCLAIMER}`,
+        <div class="tiny muted" style="margin-top:12px">טיפ: PDF מקורי מדויק יותר מצילום. בצילום: תאורה טובה, ישר מלמעלה, כל התלוש בפריים.</div>${DISCLAIMER}`,
       onMount: (el) => {
         const go = async (file) => {
           if (!file) return;
@@ -548,16 +548,16 @@
   App.aiAnalyze = function (text, onResult) {
     const key = S.settings.ai.apiKey;
     if (!key) {
-      UI.confirm('ניתוח חכם דורש מפתח API', 'אפשר להזין מפתח של Claude בהגדרות › עוזר AI ואודות › מפתח AI. בלי מפתח — הניתוח המקומי ממשיך לעבוד כרגיל.', 'להגדרות').then((ok) => { if (ok) { UI.closeAll(); setTimeout(() => App.sheetsApi.settingsSection('ai'), 400); } });
+      UI.confirm('ניתוח חכם דורש מפתח API', 'אפשר להזין מפתח של Claude בהגדרות › עוזר AI ואודות › מפתח AI. בלי מפתח, הניתוח המקומי ממשיך לעבוד כרגיל.', 'להגדרות').then((ok) => { if (ok) { UI.closeAll(); setTimeout(() => App.sheetsApi.settingsSection('ai'), 400); } });
       return;
     }
     const red = Payslip.redact(text);
     UI.openSheet({
       title: 'לפני שליחה ל-\u2060Claude', full: true,
-      body: `<div class="banner warn">${icon('shield')}<div>זה <b>בדיוק</b> הטקסט שיישלח (${red.count} פרטים אישיים הוסתרו אוטומטית). בדוק וערוך — אפשר למחוק גם שם או כל פרט אחר. הקובץ עצמו לא נשלח.</div></div>
+      body: `<div class="banner warn">${icon('shield')}<div>זה <b>בדיוק</b> הטקסט שיישלח (${red.count} פרטים אישיים הוסתרו אוטומטית). בדוק וערוך. אפשר למחוק גם שם או כל פרט אחר. הקובץ עצמו לא נשלח.</div></div>
         <textarea class="input" id="ai-text" rows="16" style="font-family:ui-monospace,monospace;font-size:.8rem">${esc(red.text)}</textarea>
         <div class="small muted" style="margin-top:8px">יישלח אל Anthropic (מודל ${esc(S.settings.ai.model)}) עם המפתח שלך. השימוש מחויב בחשבון ה-\u2060API שלך.</div>`,
-      foot: `<button class="btn tonal" data-cancel>ביטול</button><button class="btn" data-send>${icon('send')} אני מאשר — שלח</button>`,
+      foot: `<button class="btn tonal" data-cancel>ביטול</button><button class="btn" data-send>${icon('send')} אני מאשר, שלח</button>`,
       onMount: (el) => {
         el.querySelector('[data-cancel]').onclick = () => UI.closeTop();
         el.querySelector('[data-send]').onclick = async (e) => {
@@ -568,7 +568,7 @@
             const res = Payslip.fromAi(json);
             UI.closeTop();
             onResult(res);
-            UI.toast(`Claude זיהה ${Object.keys(res.fields).length} שדות — בדוק לפני ניתוח`);
+            UI.toast(`Claude זיהה ${Object.keys(res.fields).length} שדות. בדוק לפני ניתוח`);
           } catch (err) {
             console.error(err);
             btn.disabled = false; btn.textContent = 'נסה שוב';

@@ -407,7 +407,7 @@
       if (restOv.amount != null && restOv.amount !== '') {
         const d = +restOv.amount - restPremium;
         adjust += d;
-        extras.push({ kind: 'adjust', label: 'תוספת שבת/חג — סכום ידני', detail: 'במקום ' + U.money(restPremium), amount: d });
+        extras.push({ kind: 'adjust', label: 'תוספת שבת/חג (סכום ידני)', detail: 'במקום ' + U.money(restPremium), amount: d });
         overrideList.push('סכום שבת/חג ידני');
       }
     }
@@ -416,7 +416,7 @@
       if (otOv.mode === 'amount') {
         const d = (+otOv.amount || 0) - otPremium;
         adjust += d;
-        extras.push({ kind: 'adjust', label: 'שעות נוספות — סכום ידני', detail: 'במקום ' + U.money(otPremium), amount: d });
+        extras.push({ kind: 'adjust', label: 'שעות נוספות (סכום ידני)', detail: 'במקום ' + U.money(otPremium), amount: d });
       }
     }
     if (nightOv) {
@@ -424,7 +424,7 @@
       if (nightOv.mode === 'amount') {
         const d = (+nightOv.amount || 0) - nightPremium;
         adjust += d;
-        extras.push({ kind: 'adjust', label: 'תוספת לילה — סכום ידני', detail: 'במקום ' + U.money(nightPremium), amount: d });
+        extras.push({ kind: 'adjust', label: 'תוספת לילה (סכום ידני)', detail: 'במקום ' + U.money(nightPremium), amount: d });
       }
     }
     if (ov.rate && +ov.rate.rate > 0) overrideList.push('תעריף ידני ' + U.money(+ov.rate.rate));
@@ -583,7 +583,7 @@
     }
     if (days.size >= 3) return { value: base / days.size, basis: 'ממוצע שכר יומי רגיל ב-90 הימים הקודמים (' + days.size + ' ימי עבודה)' };
     const v = (+L.dayHours || 8) * primaryRate(ctx, k);
-    return { value: v, basis: 'אין מספיק נתונים — ' + (L.dayHours || 8) + ' ש׳ × תעריף בסיס' };
+    return { value: v, basis: 'אין מספיק נתונים: ' + (L.dayHours || 8) + ' ש׳ × תעריף בסיס' };
   }
 
   /** Value of every vacation / sick / adjustment entry. Map(id -> {amount, label, basis, pct, dayIndex}) */
@@ -974,10 +974,10 @@
     const out = [];
     for (let i = 0; i < list.length; i++) {
       const r = list[i];
-      if (r.warnings.length) out.push({ type: 'warn', ids: [r.id], text: r.warnings.join(', ') + ' — ' + U.fmtDate(r.dateKey) });
+      if (r.warnings.length) out.push({ type: 'warn', ids: [r.id], text: r.warnings.join(', ') + ' · ' + U.fmtDate(r.dateKey) });
       const n = list[i + 1];
       if (n && n.start < r.rawEnd && n.employerId === r.employerId) out.push({ type: 'overlap', ids: [r.id, n.id], text: 'משמרות חופפות ב-' + U.fmtDate(r.dateKey) });
-      if (r.start > Date.now() + U.HOUR) out.push({ type: 'future', ids: [r.id], text: 'משמרת שסומנה "בוצעה" אבל עוד לא התחילה — ' + U.fmtDate(r.dateKey) });
+      if (r.start > Date.now() + U.HOUR) out.push({ type: 'future', ids: [r.id], text: 'משמרת שסומנה "בוצעה" אבל עוד לא התחילה: ' + U.fmtDate(r.dateKey) });
     }
     return out;
   }

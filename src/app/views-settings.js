@@ -142,8 +142,8 @@
     lang: { icon: 'globe', title: 'שפה · Language', sub: () => (root.Lang ? root.Lang.LANGS.map((l) => l.name).join(' · ') : '') },
     look: { icon: 'palette', title: 'מראה', sub: () => ({ system: 'לפי המערכת', light: 'בהיר', dark: 'כהה' }[S.settings.theme]) + ' · ' + (App.ACCENTS[S.settings.accent] || [])[2] },
     security: { icon: 'lock', title: 'נעילה בקוד', sub: () => (S.settings.lock.enabled ? 'מופעלת' : 'כבויה') },
-    assistant: { icon: 'sparkle', title: 'עוזר זכויות ושכר (AI)', sub: () => (S.settings.ai.apiKey ? 'מוכן — שאל כל שאלה' : 'דורש מפתח API') },
-    ai: { icon: 'sparkle', title: 'מפתח AI וניתוח תלושים', sub: () => (S.settings.ai.apiKey ? 'מפתח מוגדר · ' + S.settings.ai.model : 'אופציונלי — ללא מפתח הכול מקומי') },
+    assistant: { icon: 'sparkle', title: 'עוזר זכויות ושכר (AI)', sub: () => (S.settings.ai.apiKey ? 'מוכן. שאל כל שאלה' : 'דורש מפתח API') },
+    ai: { icon: 'sparkle', title: 'מפתח AI וניתוח תלושים', sub: () => (S.settings.ai.apiKey ? 'מפתח מוגדר · ' + S.settings.ai.model : 'אופציונלי. ללא מפתח הכול מקומי') },
     backup: { icon: 'cloud', title: 'גיבוי ושחזור', sub: () => (S.settings.backup.lastBackup ? 'גיבוי אחרון: ' + UI.timeAgo(S.settings.backup.lastBackup) : 'עוד לא גובה') },
     import: { icon: 'upload', title: 'ייבוא דוח שעות', sub: () => 'Excel, CSV, PDF או צילום: כל המשמרות בבת אחת' },
     schedule: { icon: 'calendar', title: 'ייבוא סידור עבודה', sub: () => 'צילום של הסידור או ההודעה מוואטסאפ: המשמרות שלך נכנסות ללוח' },
@@ -196,7 +196,7 @@
     ['רוצה לשנות את מסך הבית', 'מסך הבית בית קיצורים להסתיר משמרות אחרונות תאריך עברי שורת עדכון', [['look', 'קיצורי דרך']]],
     ['עברתי לטלפון חדש', 'טלפון חדש העברה מכשיר חדש להעביר נתונים', [['account', ''], ['backup', '']]],
     ['נמחקו לי משמרות', 'נמחק נמחקו שחזור גיבוי איבדתי', [['backup', '']]],
-    ['חופשה או מחלה לא נכונות', 'חופשה ימי חופש מחלה הבראה ותק יתרה', [['leave', 'תאריך תחילת עבודה'], ['leave', 'יתרת פתיחה — חופשה']]],
+    ['חופשה או מחלה לא נכונות', 'חופשה ימי חופש מחלה הבראה ותק יתרה', [['leave', 'תאריך תחילת עבודה'], ['leave', 'יתרת פתיחה: חופשה']]],
     ['שכחתי את קוד הנעילה', 'קוד נעילה שכחתי סיסמה טביעת אצבע', [['security', '']]],
     ['עובד/ת בעוד מקום', 'עוד מקום עבודה מעסיק נוסף שני מקומות', [['roles', '']]],
     ['יום בחירות או יום מיוחד', 'בחירות 200 יום מיוחד אחוז מיוחד', [['rest', 'כללי יום']]],
@@ -391,7 +391,7 @@
           const emp = App.employer(b.dataset.empEdit);
           const r = await UI.dialog({ title: emp.name, html: `<label class="field"><span class="lbl">שם המעסיק</span><input class="input" value="${esc(emp.name)}"></label>`, buttons: [...(S.employers.length > 1 ? [{ label: 'מחק', value: 'del', cls: 'danger' }] : []), { label: 'ביטול', value: null }, { label: 'שמור', value: 'input' }] });
           if (r === 'del') {
-            if (S.shifts.some((x) => x.employerId === emp.id)) { UI.toast('יש משמרות של המעסיק — אי אפשר למחוק'); return; }
+            if (S.shifts.some((x) => x.employerId === emp.id)) { UI.toast('יש משמרות של המעסיק, אי אפשר למחוק'); return; }
             if (!(await UI.confirm('למחוק את המעסיק?', 'התפקידים שלו יימחקו.', 'מחק', true))) return;
             await App.saveOps([{ store: 'employers', del: emp.id }, ...S.roles.filter((x) => x.employerId === emp.id).map((x) => ({ store: 'roles', del: x.id }))], 'מחיקת מעסיק');
           } else if (r && String(r).trim() && App.ensureClean(String(r))) await Store.put('employers', Object.assign(Store.clone(emp), { name: String(r).trim().slice(0, 60) }));
@@ -410,7 +410,7 @@
       return `<label class="field"><span class="lbl">שם התפקיד</span><input class="input" id="re-name" value="${esc(d.name)}" placeholder="למשל: סדרן" maxlength="40"></label>
         <div class="field"><span class="lbl">צבע</span><div class="color-pick">${Defaults.ROLE_COLORS.map((c) => `<button style="background:${c}" class="${d.color === c ? 'on' : ''}" data-color="${c}" aria-label="צבע"></button>`).join('')}</div></div>
         <div class="section-title">${icon('wallet', 's')} תעריפים לפי תאריך</div>
-        <div class="tiny muted" style="margin:-4px 4px 10px">העלאת שכר? הוסף תעריף חדש מתאריך מסוים — משמרות קודמות לא ישתנו.</div>
+        <div class="tiny muted" style="margin:-4px 4px 10px">העלאת שכר? הוסף תעריף חדש מתאריך מסוים. משמרות קודמות לא ישתנו.</div>
         ${rates.map((r, i) => `<div class="grid2" style="align-items:end;margin-bottom:8px;grid-template-columns:1fr 1fr 40px">
           <label class="field" style="margin:0"><span class="lbl">${i === 0 ? 'מההתחלה' : 'החל מ-'}</span>${i === 0 ? '<div class="input" style="display:flex;align-items:center">—</div>' : `<input class="input" type="date" data-rf="${d.rates.indexOf(r)}" value="${r.from}">`}</label>
           <label class="field" style="margin:0"><span class="lbl">₪ לשעה</span><input class="input" type="number" step="any" inputmode="decimal" data-rr="${d.rates.indexOf(r)}" value="${r.rate}"></label>
@@ -501,7 +501,7 @@
         ${R.mode === 'city' ? `<div class="card">
           <div class="field"><span class="lbl">עיר</span>${App.placeField(R.city, 'עיר')}</div>
           ${R.city === '__custom' ? `<div class="grid2">${F.num('קו רוחב', 's.rest.lat', R.lat)}${F.num('קו אורך', 's.rest.lon', R.lon)}</div>` : ''}
-          ${F.num('הדלקת נרות — דקות לפני השקיעה', 's.rest.candleMin', R.candleMin, 'ריק = ברירת המחדל של העיר (ירושלים 40, חיפה 30, אחרות 18)', String(HebCal.locationOf(R).candle))}
+          ${F.num('הדלקת נרות (דקות לפני השקיעה)', 's.rest.candleMin', R.candleMin, 'ריק = ברירת המחדל של העיר (ירושלים 40, חיפה 30, אחרות 18)', String(HebCal.locationOf(R).candle))}
           ${F.sel('יציאת שבת/חג', 's.rest.exitMode', [['tzeit', 'צאת הכוכבים (השמש 8.5° מתחת לאופק)'], ['minutes', 'מספר דקות אחרי השקיעה']], R.exitMode).replace('data-s=', 'data-redraw data-s=')}
           ${R.exitMode === 'minutes' ? F.num('דקות אחרי השקיעה', 's.rest.exitMinutes', R.exitMinutes) : ''}
           <div class="grid2">${F.num('הזזת כניסה (דק׳)', 's.rest.startOffsetMin', R.startOffsetMin, 'שלילי = מוקדם יותר')}${F.num('הזזת יציאה (דק׳)', 's.rest.endOffsetMin', R.endOffsetMin, 'חיובי = מאוחר יותר')}</div></div>`
@@ -510,12 +510,12 @@
         <div class="card">${wins.map((w) => `<div class="kv"><span>${esc(w.label)}</span><span class="num small">${U.fmtDate(U.epochKey(w.start), 'short')} ${U.epochHM(w.start)} → ${U.fmtDate(U.epochKey(w.end), 'short')} ${U.epochHM(w.end)}</span></div>`).join('') || '<div class="muted small">—</div>'}</div>
         <div class="section-title">${icon('flag', 's')} ימים שנחשבים יום מנוחה</div>
         <div class="card">${F.sw('שבת', '', 's.rest.shabbat', R.shabbat !== false)}${HOLS.map((h) => F.sw(h.name, '', 's.rest.holidays.' + h.id, R.holidays[h.id] !== false)).join('')}
-          <div class="tiny muted">חגי ישראל מזוהים אוטומטית לפי הלוח העברי (חישוב מקומי). כל יום מנוחה מתחיל בערבו — כמו יום שישי.</div></div>
+          <div class="tiny muted">חגי ישראל מזוהים אוטומטית לפי הלוח העברי (חישוב מקומי). כל יום מנוחה מתחיל בערבו, כמו יום שישי.</div></div>
         <div class="section-title">${icon('sun', 's')} תוספת ערב שבת/חג</div>
         <div class="card">${F.sw('ביום שישי', '', 's.rest.eveFriday', R.eveFriday)}${F.sw('בערב חג', '', 's.rest.eveHoliday', R.eveHoliday)}${F.time('החל משעה', 's.rest.eveFrom', R.eveFrom)}
           <div class="tiny muted">האחוז מוגדר ב"חוקי חישוב". חל מהשעה הזו ועד כניסת השבת/החג.</div></div>
         <div class="section-title">${icon('hand', 's')} כללי יום ידניים</div>
-        <div class="card">${S.dayRules.length ? S.dayRules.slice().sort((a, b) => b.date.localeCompare(a.date)).map((r) => `<div class="kv"><span>${U.fmtDate(r.date)} · ${r.type === 'cancel' ? 'ביטול 150%' : r.type === 'pct' ? 'תעריף מיוחד ' + (+r.pct) + '%' : 'יום מנוחה ידני'}${r.reason ? ' — ' + esc(r.reason) : ''}</span><button class="btn text sm" data-rule-del="${r.id}">מחק</button></div>`).join('') : '<div class="muted small">אין. אפשר לבטל 150% לתאריך (למשל חג שזוהה בטעות) מתוך לוח השנה ← לחיצה על היום.</div>'}</div>`;
+        <div class="card">${S.dayRules.length ? S.dayRules.slice().sort((a, b) => b.date.localeCompare(a.date)).map((r) => `<div class="kv"><span>${U.fmtDate(r.date)} · ${r.type === 'cancel' ? 'ביטול 150%' : r.type === 'pct' ? 'תעריף מיוחד ' + (+r.pct) + '%' : 'יום מנוחה ידני'}${r.reason ? ': ' + esc(r.reason) : ''}</span><button class="btn text sm" data-rule-del="${r.id}">מחק</button></div>`).join('') : '<div class="muted small">אין. אפשר לבטל 150% לתאריך (למשל חג שזוהה בטעות) מתוך לוח השנה ← לחיצה על היום.</div>'}</div>`;
     },
     mount: (el, draw) => {
       if (el._restBound) return;
@@ -539,12 +539,12 @@
   RENDER.pay = {
     perEmployer: true,
     render: (e) => `<div class="section-title">${icon('car', 's')} נסיעות</div><div class="card">
-        ${F.num('סכום ליום עבודה ₪', 'e.travelPerDay', e.travelPerDay, 'ברירת מחדל: 22.60 ₪ — התקרה היומית לפי צו ההרחבה (2025).')}
+        ${F.num('סכום ליום עבודה ₪', 'e.travelPerDay', e.travelPerDay, 'ברירת מחדל: 22.60 ₪, התקרה היומית לפי צו ההרחבה (2025).')}
         ${F.num('תקרה חודשית ₪', 'e.travelMonthlyCap', e.travelMonthlyCap, '0 = ללא תקרה. למשל מחיר חופשי-חודשי.')}
         <div class="tiny muted">אפשר לסמן משמרת ספציפית "בלי נסיעות" בעריכת המשמרת.</div></div>
       <div class="section-title">${icon('calendar', 's')} תקופת שכר</div><div class="card">
-        ${F.sel('התקופה מתחילה ב-', 'e.periodStartDay', [[1, '1 לחודש (חודש קלנדרי)'], ...Array.from({ length: 27 }, (_, i) => [i + 2, (i + 2) + ' לחודש'])], e.periodStartDay, 'אם המעסיק סופר למשל מ-21 עד 20 — בחר 21.')}
-        ${F.num('יום התשלום (בחודש שאחרי)', 'e.payDay', e.payDay, 'לפי החוק — עד ה-9 לחודש.')}</div>`,
+        ${F.sel('התקופה מתחילה ב-', 'e.periodStartDay', [[1, '1 לחודש (חודש קלנדרי)'], ...Array.from({ length: 27 }, (_, i) => [i + 2, (i + 2) + ' לחודש'])], e.periodStartDay, 'אם המעסיק סופר למשל מ-21 עד 20, בחר 21.')}
+        ${F.num('יום התשלום (בחודש שאחרי)', 'e.payDay', e.payDay, 'לפי החוק: עד ה-9 לחודש.')}</div>`,
   };
 
   RENDER.net = {
@@ -590,11 +590,11 @@
           <div class="tiny" style="opacity:.8;margin-top:6px">הערכה לפי השעות שרשמת. היקף משרה = שעות חודשיות ÷ ${L.fullTimeHours}.</div></div>` : ''}
         <div class="section-title">חופשה</div><div class="card">
           ${F.sel('שבוע עבודה', 's.leave.workWeek', [[5, '5 ימים'], [6, '6 ימים']], L.workWeek, '5 ימים: 12 ימי חופשה בשנים 1\u2060–\u20605; 6 ימים: 14 (לפי היקף משרה).')}
-          <div class="grid2">${F.num('יתרת פתיחה — חופשה', 's.leave.vacationOpening', L.vacationOpening)}${F.num('יתרת פתיחה — מחלה', 's.leave.sickOpening', L.sickOpening)}</div>
-          ${F.date('יתרות הפתיחה נכונות לתאריך', 's.leave.vacationOpeningDate', L.vacationOpeningDate, 'אם הזנת יתרה מתלוש — התאריך של התלוש. הצבירה תחושב מכאן.')}
+          <div class="grid2">${F.num('יתרת פתיחה: חופשה', 's.leave.vacationOpening', L.vacationOpening)}${F.num('יתרת פתיחה: מחלה', 's.leave.sickOpening', L.sickOpening)}</div>
+          ${F.date('יתרות הפתיחה נכונות לתאריך', 's.leave.vacationOpeningDate', L.vacationOpeningDate, 'אם הזנת יתרה מתלוש: התאריך של התלוש. הצבירה תחושב מכאן.')}
           ${F.num('שעות חודשיות למשרה מלאה', 's.leave.fullTimeHours', L.fullTimeHours)}</div>
         <div class="section-title">שווי יום חופשה / מחלה</div><div class="card">
-          ${F.sel('חישוב', 's.leave.dayValueMode', [['auto', 'אוטומטי — ממוצע יומי ב-90 הימים האחרונים'], ['hours', 'מספר שעות × תעריף'], ['fixed', 'סכום קבוע']], L.dayValueMode).replace('data-s=', 'data-redraw data-s=')}
+          ${F.sel('חישוב', 's.leave.dayValueMode', [['auto', 'אוטומטי: ממוצע יומי ב-90 הימים האחרונים'], ['hours', 'מספר שעות × תעריף'], ['fixed', 'סכום קבוע']], L.dayValueMode).replace('data-s=', 'data-redraw data-s=')}
           ${L.dayValueMode === 'hours' ? F.num('שעות ליום', 's.leave.dayHours', L.dayHours) : ''}${L.dayValueMode === 'fixed' ? F.num('סכום ליום ₪', 's.leave.dayFixed', L.dayFixed) : ''}
           <div class="grid2">${[0, 1, 2, 3].map((i) => F.num(['מחלה יום 1 %', 'יום 2 %', 'יום 3 %', 'מהיום ה-4 %'][i], 's.leave.sickPct.' + i, L.sickPct[i])).join('')}</div></div>
         <div class="section-title">הבראה</div><div class="card">
@@ -661,7 +661,7 @@
       const A = S.settings.alerts;
       const perm = 'Notification' in window ? Notification.permission : 'unsupported';
       const t = (k, l) => F.sw(l, '', 's.alerts.types.' + k, A.types[k] !== false);
-      return `<div class="card">${F.sw('התראות פוש בטלפון', perm === 'granted' ? 'מאושר' : perm === 'denied' ? (App.androidApp ? 'חסום — יש לאשר בהגדרות הטלפון › אפליקציות › Shaati › התראות' : 'חסום — יש לאשר בהגדרות האתר ב-\u2060Chrome') : 'דורש אישור', 's.alerts.push', A.push)}
+      return `<div class="card">${F.sw('התראות פוש בטלפון', perm === 'granted' ? 'מאושר' : perm === 'denied' ? (App.androidApp ? 'חסום. יש לאשר בהגדרות הטלפון › אפליקציות › Shaati › התראות' : 'חסום. יש לאשר בהגדרות האתר ב-\u2060Chrome') : 'דורש אישור', 's.alerts.push', A.push)}
           ${perm !== 'granted' && perm !== 'unsupported' ? `<button class="btn tonal block" data-perm>${icon('bell')} אשר התראות</button>` : ''}
           ${perm === 'granted' ? `<button class="btn text sm" data-test>${icon('send', 's')} שלח התראת בדיקה</button>` : ''}
           <div class="tiny muted" style="margin-top:6px">מעט התראות: הסיכום השבועי והחודשי, שיאים ויעדים, ותזכורות חשובות בלבד. בלי התראות על חריגות.</div></div>
@@ -769,8 +769,8 @@
         ${F.sel('נעל אחרי', 's.lock.timeoutMin', [[0, 'מיד'], [1, 'דקה'], [5, '5 דקות'], [15, '15 דקות']], S.settings.lock.timeoutMin)}
         <div data-bio-row></div>
         <div class="btn-row"><button class="btn tonal" data-pin-set>שנה קוד</button><button class="btn danger" data-pin-off>בטל נעילה</button></div>`
-      : `<div class="small" style="margin-bottom:12px">קוד בן 4\u2060–\u20608 ספרות שיידרש בכל פתיחה. הקוד נשמר כגיבוב (hash) — לא כטקסט.</div><button class="btn block" data-pin-set>${icon('lock')} הגדר קוד</button>`}
-      <div class="tiny muted" style="margin-top:10px">הנעילה מגינה מפני הצצה; הנתונים עצמם לא מוצפנים. שכחת את הקוד? אין שחזור — אפשר רק למחוק את נתוני האתר ולשחזר מגיבוי.</div></div>`,
+      : `<div class="small" style="margin-bottom:12px">קוד בן 4\u2060–\u20608 ספרות שיידרש בכל פתיחה. הקוד נשמר כגיבוב (hash), לא כטקסט.</div><button class="btn block" data-pin-set>${icon('lock')} הגדר קוד</button>`}
+      <div class="tiny muted" style="margin-top:10px">הנעילה מגינה מפני הצצה; הנתונים עצמם לא מוצפנים. שכחת את הקוד? אין שחזור. אפשר רק למחוק את נתוני האתר ולשחזר מגיבוי.</div></div>`,
     mount: (el, draw) => {
       const set = el.querySelector('[data-pin-set]');
       if (set) set.onclick = async () => {
@@ -805,7 +805,7 @@
   };
 
   RENDER.ai = {
-    render: () => `<div class="banner">${icon('shield')}<div>אופציונלי. בלי מפתח — קריאת התלוש והניתוח רצים רק בטלפון. עם מפתח — אפשר לבקש ניתוח חכם לתלושים בפורמט מורכב. לפני כל שליחה מוסתרים ת״ז, פרטי בנק וכתובת, ותראה ותאשר בדיוק מה נשלח.</div></div>
+    render: () => `<div class="banner">${icon('shield')}<div>אופציונלי. בלי מפתח, קריאת התלוש והניתוח רצים רק בטלפון. עם מפתח, אפשר לבקש ניתוח חכם לתלושים בפורמט מורכב. לפני כל שליחה מוסתרים ת״ז, פרטי בנק וכתובת, ותראה ותאשר בדיוק מה נשלח.</div></div>
       <div class="card">${F.text('מפתח API של Claude', 's.ai.apiKey', S.settings.ai.apiKey, 'נוצר ב-\u2060console.anthropic.com. נשמר רק בטלפון ולא נכלל בקובצי גיבוי.', 'type="password" autocomplete="off" dir="ltr"')}
         ${F.sel('מודל', 's.ai.model', [['claude-opus-5-5', 'Claude Opus 5.5 (מומלץ)'], ['claude-sonnet-5-5', 'Claude Sonnet 5.5 (זול יותר)'], ['claude-haiku-5-5', 'Claude Haiku 5.5 (הכי זול)']], S.settings.ai.model).replace('data-s=', 'data-keep-str data-s=')}
         ${S.settings.ai.apiKey ? `<button class="btn danger block" data-ai-clear>${icon('trash')} מחק את המפתח</button>` : ''}</div>
@@ -875,10 +875,10 @@
 
   RENDER.export = {
     render: () => `<div class="list">
-      <button class="item" data-x="csv"><span class="lead">${icon('table')}</span><span class="body"><span class="t">כל המשמרות — CSV</span><span class="s">נפתח ב-\u2060Excel ו-\u2060Google Sheets (עברית תקינה)</span></span></button>
-      <button class="item" data-x="mcsv"><span class="lead">${icon('table')}</span><span class="body"><span class="t">סיכום חודשי — CSV</span><span class="s">חודש בכל שורה: שעות, ברוטו, נטו משוער…</span></span></button>
-      <button class="item" data-x="pdf"><span class="lead">${icon('printer')}</span><span class="body"><span class="t">דוח חודשי — PDF</span><span class="s">החודש הנוכחי; לחודשים אחרים: דוחות ← סיכומים</span></span></button>
-      <button class="item" data-x="ics"><span class="lead">${icon('calendar')}</span><span class="body"><span class="t">משמרות ליומן — ‎.ics</span><span class="s">כל המשמרות; מתוכננות עם תזכורת</span></span></button></div>`,
+      <button class="item" data-x="csv"><span class="lead">${icon('table')}</span><span class="body"><span class="t">כל המשמרות (CSV)</span><span class="s">נפתח ב-\u2060Excel ו-\u2060Google Sheets (עברית תקינה)</span></span></button>
+      <button class="item" data-x="mcsv"><span class="lead">${icon('table')}</span><span class="body"><span class="t">סיכום חודשי (CSV)</span><span class="s">חודש בכל שורה: שעות, ברוטו, נטו משוער…</span></span></button>
+      <button class="item" data-x="pdf"><span class="lead">${icon('printer')}</span><span class="body"><span class="t">דוח חודשי (PDF)</span><span class="s">החודש הנוכחי; לחודשים אחרים: דוחות ← סיכומים</span></span></button>
+      <button class="item" data-x="ics"><span class="lead">${icon('calendar')}</span><span class="body"><span class="t">משמרות ליומן (‎.ics)</span><span class="s">כל המשמרות; מתוכננות עם תזכורת</span></span></button></div>`,
     mount: (el) => el.querySelectorAll('[data-x]').forEach((b) => (b.onclick = () => {
       const x = b.dataset.x;
       const all = [...App.model.results.values()].sort((a, c) => a.start - c.start);

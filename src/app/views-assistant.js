@@ -113,7 +113,7 @@
           ${legalNote()}`;
       }
       const msgs = chat();
-      return `<div class="chat-consent">${icon('shield', 's')}<div>השאלות נשלחות ל-\u2060Anthropic לעיבוד. <label class="chat-share"><input type="checkbox" id="as-share" ${shareData() ? 'checked' : ''}> לצרף סיכום מספרי מהאפליקציה (תעריפים, שעות, סכומים, יתרות — בלי שם או פרטים מזהים)</label></div></div>
+      return `<div class="chat-consent">${icon('shield', 's')}<div>השאלות נשלחות ל-\u2060Anthropic לעיבוד. <label class="chat-share"><input type="checkbox" id="as-share" ${shareData() ? 'checked' : ''}> לצרף סיכום מספרי מהאפליקציה (תעריפים, שעות, סכומים, יתרות, בלי שם או פרטים מזהים)</label></div></div>
         ${msgs.length ? '' : `<div class="chat-empty"><div class="chat-hello">שלום! במה אפשר לעזור?</div><div class="chips chat-sugg">${SUGGESTIONS.map((q) => `<button class="chip" data-q="${esc(q)}">${esc(q)}</button>`).join('')}</div></div>`}
         <div class="chat-log" id="as-log">${msgs.map((m) => `<div class="msg ${m.role}">${m.role === 'user' ? esc(m.text) : render(m.text)}</div>`).join('')}</div>
         ${legalNote()}`;

@@ -51,7 +51,7 @@
         resolve(d);
       };
       req.onerror = () => reject(req.error);
-      req.onblocked = () => reject(root.U.oops('מסד הנתונים חסום — סגור לשוניות אחרות של האפליקציה'));
+      req.onblocked = () => reject(root.U.oops('מסד הנתונים חסום. סגור לשוניות אחרות של האפליקציה'));
     });
   }
   function done(t) {

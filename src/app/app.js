@@ -488,7 +488,7 @@
     const start = opts && opts.startAt && opts.startAt < now && now - opts.startAt < 24 * 3600000 ? opts.startAt : now;
     await Store.setActive({ start, roleId: role.id, employerId: role.employerId || S.employers[0].id, splits: [], breaks: [], fromPlanned: planned ? planned.id : null });
     if (App.shiftMoment) App.shiftMoment('start', opts && opts.at); else root.Fx.celebrate('start');
-    UI.toast('המשמרת התחילה — בהצלחה!');
+    UI.toast('המשמרת התחילה. בהצלחה!');
     App.askNotifyPermission();
   };
   /** Ends the running shift now, or at endAt (an earlier moment: "end at 16:10" for a shift left running). */
@@ -532,7 +532,7 @@
     a.breaks = (a.breaks || []).slice();
     const last = a.breaks[a.breaks.length - 1];
     if (last && !last.to) { last.to = Date.now(); UI.toast('חזרת מהפסקה'); if (App.shiftMoment) App.shiftMoment('resume', at); }
-    else { a.breaks.push({ from: Date.now() }); UI.toast('הפסקה — הזמן לא נספר'); if (App.shiftMoment) App.shiftMoment('pause', at); }
+    else { a.breaks.push({ from: Date.now() }); UI.toast('הפסקה: הזמן לא נספר'); if (App.shiftMoment) App.shiftMoment('pause', at); }
     await Store.setActive(a);
   };
   App.switchRole = async function (roleId) {

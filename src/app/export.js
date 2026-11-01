@@ -32,7 +32,7 @@
       ]);
     }
     UI.download(filename || 'shifts.csv', csv(rows), 'text/csv;charset=utf-8');
-    UI.toast('קובץ CSV נשמר — נפתח ב-\u2060Excel / Google Sheets');
+    UI.toast('קובץ CSV נשמר. נפתח ב-\u2060Excel / Google Sheets');
   }
   function monthlyCsv() {
     if (!allowed()) return;
@@ -64,7 +64,7 @@
     }
     lines.push('END:VCALENDAR');
     UI.download(filename || 'shifts.ics', lines.join('\r\n'), 'text/calendar;charset=utf-8');
-    UI.toast('קובץ יומן נשמר — פתח אותו כדי להוסיף ליומן');
+    UI.toast('קובץ יומן נשמר. פתח אותו כדי להוסיף ליומן');
   }
   function gcalLink(sh, r) {
     const roles = [...new Set(r.segments.map((s) => App.roleName(s.roleId)))].join(' → ');
@@ -80,13 +80,13 @@
     const roles = Object.entries(t.byRole).map(([id, v]) => `<tr><td>${esc(App.roleName(id))}</td><td>${U.hours(v.hours)}</td><td>${U.money(v.amount)}</td></tr>`).join('');
     const el = document.getElementById('print-root');
     el.innerHTML = `<div dir="rtl">
-      <h1>דוח שכר — ${esc(label)}</h1><div>${U.fmtDate(from)} – ${U.fmtDate(to)} · הופק ${U.fmtDate(U.todayKey())}</div><br>
+      <h1>דוח שכר: ${esc(label)}</h1><div>${U.fmtDate(from)} – ${U.fmtDate(to)} · הופק ${U.fmtDate(U.todayKey())}</div><br>
       <span class="kp">ברוטו: <b>${U.money(t.gross)}</b></span><span class="kp">נטו משוער: <b>${U.money(t.net.net)}</b></span><span class="kp">שעות: <b>${U.hours(t.hours)}</b></span><span class="kp">משמרות: <b>${t.shifts}</b></span><span class="kp">נסיעות: <b>${U.money(t.travel)}</b></span><span class="kp">ממוצע לשעה: <b>${U.money(t.avgHourly)}</b></span>
       <h3>לפי תפקיד</h3><table><tr><th>תפקיד</th><th>שעות</th><th>סכום</th></tr>${roles}</table>
       <h3>לפי סוג שעה</h3><table><tr><th>רגילות</th><th>125%</th><th>150%</th><th>שבת/חג</th><th>שבת/חג + נוספות</th><th>לילה</th></tr><tr><td>${U.hours(t.hoursBy.regular)}</td><td>${U.hours(t.hoursBy.ot1)}</td><td>${U.hours(t.hoursBy.ot2)}</td><td>${U.hours(t.hoursBy.rest)}</td><td>${U.hours(t.hoursBy.restOt1 + t.hoursBy.restOt2)}</td><td>${U.hours(t.hoursBy.night)}</td></tr></table>
       <h3>משמרות</h3><table><tr><th>תאריך</th><th>תפקיד</th><th>שעות</th><th>זמן</th><th>שבת/חג</th><th>נוספות</th><th>שכר</th><th>נסיעות</th><th>סה״כ</th><th>הערות</th></tr>
       ${list.map((r) => { const sh = App.shift(r.id) || {}; return `<tr><td>${U.fmtDate(r.dateKey, 'short')} ${U.DAYS_SHORT[U.dow(r.dateKey)]}</td><td>${esc([...new Set(r.segments.map((s) => App.roleName(s.roleId)))].join(' → '))}</td><td>⁦${U.epochHM(r.start)}\u2060–\u2060${U.epochHM(r.rawEnd)}⁩</td><td>${U.hours(r.paidHours)}</td><td>${r.restHours ? U.hours(r.restHours) : ''}</td><td>${r.otHours ? U.hours(r.otHours) : ''}</td><td>${U.money(r.wage)}</td><td>${U.money(r.travel.amount)}</td><td>${U.money(r.total)}</td><td>${r.overridden || r.dayRuleHit ? '✋ ' + esc(sh.overrideReason || 'עקיפה ידנית') : ''} ${esc(sh.note || '')}</td></tr>`; }).join('')}</table>
-      <div style="font-size:8pt;color:#555;margin-top:10pt">נטו משוער — הערכה בלבד. נסיעות לפי ${U.money(S.employers[0].travelPerDay)} ליום${+S.employers[0].travelMonthlyCap ? ', תקרה ' + U.money(S.employers[0].travelMonthlyCap) : ''}.</div></div>`;
+      <div style="font-size:8pt;color:#555;margin-top:10pt">נטו משוער: הערכה בלבד. נסיעות לפי ${U.money(S.employers[0].travelPerDay)} ליום${+S.employers[0].travelMonthlyCap ? ', תקרה ' + U.money(S.employers[0].travelMonthlyCap) : ''}.</div></div>`;
     UI.toast('בחלון ההדפסה בחר "שמור כ-\u2060PDF"');
     setTimeout(() => window.print(), 300);
   }

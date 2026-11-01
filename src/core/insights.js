@@ -109,7 +109,7 @@
     const bh = avgOf((m) => m.hours);
     add('hours', curM.hours, bh, 2,
       (d) => (d > 0 ? 'יותר שעות מהרגיל' : 'פחות שעות מהרגיל'),
-      (d) => `${label} עבדת ${U.num(curM.hours, 1)} שעות — ${fmtPct(d)} לעומת הממוצע (${U.num(bh, 1)}).`,
+      (d) => `${label} עבדת ${U.num(curM.hours, 1)} שעות, ${fmtPct(d)} לעומת הממוצע (${U.num(bh, 1)}).`,
       explain('ממוצע שעות', U.num(bh, 1)));
     const bs = avgOf((m) => m.shifts);
     add('shifts', curM.shifts, bs, 1,
@@ -461,7 +461,7 @@
       if (!on('payslipGap')) break;
       const tot = gs.reduce((s, g) => s + (g.amount || 0), 0);
       alerts.push({ key: 'gap-' + pid + '-' + gs.map((g) => g.area).sort().join(','), type: 'payslipGap', severity: 'critical', push: 'critical', ref: pid,
-        title: (gs.length > 1 ? gs.length + ' פערים' : 'פער') + ' בתלוש ' + U.fmtMonth(gs[0].period) + (tot ? ` — ${U.money(tot, 0)}` : ''),
+        title: (gs.length > 1 ? gs.length + ' פערים' : 'פער') + ' בתלוש ' + U.fmtMonth(gs[0].period) + (tot ? `: ${U.money(tot, 0)}` : ''),
         body: gs.map((g) => g.title + (g.amount ? ` (${U.money(g.amount, 0)})` : '')).join(' · '),
         explain: 'נמצא בניתוח התלוש. אפשר לסמן כל פער כ"הוחזר" בדוחות › תלושים.' });
     }
@@ -519,7 +519,7 @@
       const gap = U.diffDays(lastKey, today);
       if (gap >= (+cfg.idleDays || 7)) {
         alerts.push({ key: 'idle-' + lastKey, type: 'idle', severity: 'info', push: 'anomaly',
-          title: `לא נרשמה משמרת כבר ${gap} ימים`, body: 'שכחת לרשום משמרות? אם היית בחופש — תהנה!',
+          title: `לא נרשמה משמרת כבר ${gap} ימים`, body: 'שכחת לרשום משמרות? אם היית בחופש, תהנה!',
           explain: 'המשמרת האחרונה: ' + U.fmtDate(lastKey) + '. הסף: ' + cfg.idleDays + ' ימים.' });
       }
     }
@@ -536,7 +536,7 @@
       const has = (state.payslips || []).some((p) => p.period === lastP.key);
       if (today >= pd && !has && first && first <= lastP.to && U.diffDays(pd, today) <= 20) {
         alerts.push({ key: 'payslip-' + lastP.key, type: 'payslipDue', severity: 'info', push: 'critical',
-          title: 'הגיע יום התשלום — הזן את התלוש', body: `העלה את התלוש של ${lastP.label} כדי לבדוק שקיבלת את כל מה שמגיע לך.`,
+          title: 'הגיע יום התשלום: הזן את התלוש', body: `העלה את התלוש של ${lastP.label} כדי לבדוק שקיבלת את כל מה שמגיע לך.`,
           explain: 'יום התשלום מוגדר: ' + emp.payDay + ' לחודש.' });
       }
     }
@@ -555,7 +555,7 @@
       if (rc && rc.eligible) {
         if (U.diffDays(rc.eligibleFrom, today) <= 45 && U.diffDays(rc.eligibleFrom, today) >= 0) {
           alerts.push({ key: 'recup-eligible', type: 'recuperation', severity: 'good', push: 'critical',
-            title: 'השלמת שנת עבודה — מגיעים לך דמי הבראה', body: `הערכה: ${rc.days} ימים × ${U.money(rc.rate, 0)} × היקף משרה ${U.num(L.jobPct * 100, 0)}% ≈ ${U.money(rc.amount, 0)}.`,
+            title: 'השלמת שנת עבודה: מגיעים לך דמי הבראה', body: `הערכה: ${rc.days} ימים × ${U.money(rc.rate, 0)} × היקף משרה ${U.num(L.jobPct * 100, 0)}% ≈ ${U.money(rc.amount, 0)}.`,
             explain: 'לפי צו ההרחבה: אחרי שנת עבודה, לפי ותק והיקף משרה. ההיקף מחושב מהשעות בפועל.' });
         }
         const rm = +S.leave.recuperationMonth || 0;
@@ -576,7 +576,7 @@
           title: 'מזל טוב! 🎂', body: `יום הולדת ${age} שמח${S.userName ? ', ' + S.userName : ''}! מאחלים שנה של משמרות טובות ומשכורות שמנות.`,
           explain: 'לפי תאריך הלידה שהוזן בהגדרות.' });
         if (age === 18) alerts.push({ key: 'turn18-' + today.slice(0, 4), type: 'birthday', severity: 'info', push: null,
-          title: 'מהיום — ניכויים רגילים', body: 'מגיל 18 מנוכים ביטוח לאומי ומס בריאות, ובהמשך גם פנסיה. הנטו המשוער יחושב מעכשיו בהתאם.',
+          title: 'מהיום: ניכויים רגילים', body: 'מגיל 18 מנוכים ביטוח לאומי ומס בריאות, ובהמשך גם פנסיה. הנטו המשוער יחושב מעכשיו בהתאם.',
           explain: 'לפי תאריך הלידה שהוזן בהגדרות.' });
       }
     }

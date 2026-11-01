@@ -2,7 +2,7 @@
   "id": "./",
   "name": "Shaati",
   "short_name": "Shaati",
-  "description": "Shaati — shift tracking, pay calculation and payslip checks. Works offline too",
+  "description": "Shaati: shift tracking, pay calculation and payslip checks. Works offline too",
   "lang": "en",
   "dir": "ltr",
   "start_url": "./?source=pwa",

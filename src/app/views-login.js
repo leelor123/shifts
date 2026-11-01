@@ -159,7 +159,7 @@
     if (!u && !S.meta.cloudUid) {
       return `<div class="card"><div class="card-head">${icon('cloud')}<h3>שמירה בענן</h3></div>
         <p class="small">ההתחברות עם Google עוד לא הופעלה לאפליקציה. בינתיים כל הנתונים נשמרים בטלפון, כרגיל.</p>
-        <p class="small">כשההתחברות תופעל, מסך הכניסה יופיע אוטומטית. בהתחברות הראשונה כל מה שכבר יש בטלפון יעלה לחשבון שלך — שום דבר לא נמחק.</p>
+        <p class="small">כשההתחברות תופעל, מסך הכניסה יופיע אוטומטית. בהתחברות הראשונה כל מה שכבר יש בטלפון יעלה לחשבון שלך. שום דבר לא נמחק.</p>
         <button class="btn tonal block" data-probe>${icon('refresh')} בדוק שוב</button></div>`;
     }
     const name = (u && u.displayName) || S.meta.cloudName || '';

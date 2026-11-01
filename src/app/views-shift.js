@@ -188,12 +188,12 @@
     }
     for (const it of (sh && sh.items) || []) {
       const neg = it.type === 'deduction';
-      rows += `<tr><td>${esc(it.label || Engine.ADJ_LABELS[it.type])}${it.type === 'tips' ? '<div class="f">טיפים — לא נכללים בברוטו</div>' : ''}${neg ? '<div class="f">ניכוי — יורד מהנטו</div>' : ''}</td><td class="a">${neg ? '−' : ''}${U.money(it.amount)}</td></tr>`;
+      rows += `<tr><td>${esc(it.label || Engine.ADJ_LABELS[it.type])}${it.type === 'tips' ? '<div class="f">טיפים: לא נכללים בברוטו</div>' : ''}${neg ? '<div class="f">ניכוי: יורד מהנטו</div>' : ''}</td><td class="a">${neg ? '−' : ''}${U.money(it.amount)}</td></tr>`;
     }
     rows += `<tr class="tot"><td>סה״כ</td><td class="a">${U.money(r.total)}</td></tr>`;
     const notes = [];
     notes.push(`זמן במשמרת: ${U.hm(r.elapsedMin)}` + (r.roundingDeltaMin ? ` · עיגול: ${r.roundingDeltaMin > 0 ? '+' : ''}${r.roundingDeltaMin} דק׳` : ''));
-    if (r.breakMin) notes.push(`הפסקה ${r.breakMin} דק׳${r.breakAuto ? ' (אוטומטית לפי החוק)' : ''} ${r.breakPaid ? 'בתשלום' : 'ללא תשלום — נוכתה יחסית מכל השעות'}`);
+    if (r.breakMin) notes.push(`הפסקה ${r.breakMin} דק׳${r.breakAuto ? ' (אוטומטית לפי החוק)' : ''} ${r.breakPaid ? 'בתשלום' : 'ללא תשלום, נוכתה יחסית מכל השעות'}`);
     notes.push(`שעות נוספות אחרי ${+(+r.thresholdH).toFixed(2)} שעות ביום${r.otByLaw ? ' (לפי החוק)' : ''}` + (r.priorMin ? ` · כבר עבדת ${U.hm(r.priorMin)} באותו יום לפני המשמרת` : '') + (r.isNightShift && (r.otByLaw || emp.nightShiftShortDay) ? ' (משמרת לילה)' : '')
       + (r.weekOtMin > 0 ? ` · ${U.hm(r.weekOtMin)} מהן נוספות כי עברת ${r.weekH || 42} שעות רגילות השבוע` : '') + (r.minorOt ? ' · לפי חוק עבודת הנוער' : ''));
     const wins = r.restLabels.length ? r.slices.filter((s) => s.autoRest) : [];
@@ -494,7 +494,7 @@
           } else if (t2.dataset.rmSplit != null) { d.splits.splice(+t2.dataset.rmSplit, 1); redraw(); }
           else if (t2.hasAttribute('data-add-item')) { d.items.push({ id: U.uid(), type: 'bonus', amount: '', label: '' }); redraw(); }
           else if (t2.dataset.rmItem != null) { d.items.splice(+t2.dataset.rmItem, 1); redraw(); }
-          else if (t2.hasAttribute('data-reset-ov')) { d.ov = emptyOv(); d.reason = ''; redraw(); UI.toast('חזרה לחישוב אוטומטי — שמור כדי להחיל'); }
+          else if (t2.hasAttribute('data-reset-ov')) { d.ov = emptyOv(); d.reason = ''; redraw(); UI.toast('חזרה לחישוב אוטומטי. שמור כדי להחיל'); }
           else if (t2.hasAttribute('data-save')) save();
           else if (t2.hasAttribute('data-del')) {
             if (!(await UI.confirm('למחוק את המשמרת?', 'אפשר לבטל מיד אחרי.', 'מחק', true))) return;
@@ -617,7 +617,7 @@
       title: U.fmtDate(k, 'long'),
       body: `<div class="small muted" style="margin-bottom:10px">${esc(HebCal.hebrewDate(k).toString())}${hols.length ? ' · ' + esc(hols.map((h) => h.name).join(', ')) : ''}</div>
         ${restLine ? `<div class="banner">${'<div>' + restLine + '</div>'}</div>` : ''}
-        ${rule ? `<div class="banner warn">${icon('hand')}<div style="flex:1">${rule.type === 'cancel' ? 'תעריף שבת/חג בוטל ידנית לתאריך זה' : rule.type === 'pct' ? `תעריף מיוחד ${+rule.pct}% לכל שעה ביום הזה` : 'סומן ידנית כיום מנוחה (150%)'}${rule.reason ? ' — ' + esc(rule.reason) : ''}</div><button class="btn sm" data-rule-del>בטל</button></div>` : ''}
+        ${rule ? `<div class="banner warn">${icon('hand')}<div style="flex:1">${rule.type === 'cancel' ? 'תעריף שבת/חג בוטל ידנית לתאריך זה' : rule.type === 'pct' ? `תעריף מיוחד ${+rule.pct}% לכל שעה ביום הזה` : 'סומן ידנית כיום מנוחה (150%)'}${rule.reason ? ': ' + esc(rule.reason) : ''}</div><button class="btn sm" data-rule-del>בטל</button></div>` : ''}
         ${results.length || entries.length ? `<div class="list">${results.map((r) => App.shiftItem(r, { noDate: true })).join('')}${entries.map(App.entryItem).join('')}</div>${sum ? `<div class="small" style="margin:0 4px 12px">סה״כ ביום: <b>${U.money(sum)}</b></div>` : ''}` : '<div class="muted small" style="margin:6px 4px 14px">אין רישומים ביום זה.</div>'}
         <div class="btn-row"><button class="btn" data-add-shift>${icon('plus')} משמרת</button><button class="btn tonal" data-add-other>${icon('beach')} חופשה / מחלה / תוספת</button></div>
         <div class="divider"></div>

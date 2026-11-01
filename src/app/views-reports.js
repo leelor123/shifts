@@ -117,7 +117,7 @@
       const fa = (a) => (a ? f(Object.assign({}, a, { net: a.net })) : null);
       h += `<div class="compare-row"><span><b>${lab}</b><br><span class="num small">${fmt(cur)}</span></span><span class="small">${cell(f(p))}</span>${a3 ? `<span class="small">${cell(fa(a3))}</span>` : ''}${a12 ? `<span class="small">${cell(fa(a12))}</span>` : ''}</div>`;
     }
-    return h + `<div class="tiny muted" style="margin-top:6px">החיצים: שינוי של התקופה הנוכחית ביחס לכל עמודה. ${type === 'week' ? 'ממוצעים לשבוע' : 'ממוצעים לחודש'}${a3 ? ` (3 ח׳ = ${a3.n} ${type === 'week' ? 'שבועות' : 'תקופות'})` : ''}${a12 ? `, (12 ח׳ = ${a12.n})` : ''} — רק מתקופות שיש בהן נתונים.</div>`;
+    return h + `<div class="tiny muted" style="margin-top:6px">החיצים: שינוי של התקופה הנוכחית ביחס לכל עמודה. ${type === 'week' ? 'ממוצעים לשבוע' : 'ממוצעים לחודש'}${a3 ? ` (3 ח׳ = ${a3.n} ${type === 'week' ? 'שבועות' : 'תקופות'})` : ''}${a12 ? `, (12 ח׳ = ${a12.n})` : ''}, רק מתקופות שיש בהן נתונים.</div>`;
   }
 
   function yearExtras(t, r) {
@@ -166,16 +166,16 @@
       <div class="card">${Charts.hbars(seasons, (v) => U.money(v, 0))}</div>
       <div class="section-title">${icon('file', 's')} סיכום בסגנון טופס 106</div>
       <div class="card">
-        ${[['סה״כ הכנסה ברוטו (משכורת)', taxable], ['מס הכנסה שנוכה', withheld], ['ביטוח לאומי (עובד)', bl], ['מס בריאות', health], ['הפרשת עובד לפנסיה', pension], ['הפרשת מעסיק לתגמולים', pensionEr], ['הפרשת מעסיק לפיצויים', sev], ['קרן השתלמות — עובד', hish], ['קרן השתלמות — מעסיק', hishEr]]
+        ${[['סה״כ הכנסה ברוטו (משכורת)', taxable], ['מס הכנסה שנוכה', withheld], ['ביטוח לאומי (עובד)', bl], ['מס בריאות', health], ['הפרשת עובד לפנסיה', pension], ['הפרשת מעסיק לתגמולים', pensionEr], ['הפרשת מעסיק לפיצויים', sev], ['קרן השתלמות (עובד)', hish], ['קרן השתלמות (מעסיק)', hishEr]]
           .map(([l, v]) => `<div class="kv"><span>${l}</span><b class="money">${U.money(v)}</b></div>`).join('')}
         <div class="kv"><span>חודשי עבודה</span><b>${monthsWithIncome.length}</b></div>
         <div class="kv"><span>נקודות זיכוי</span><b>${T.creditPoints}</b></div>
-        <div class="tiny muted" style="margin-top:8px">${withheldSrc ? 'חלק מהשורות מבוססות על תלושים שהזנת; השאר — הערכה.' : 'כל הנתונים הם הערכה לפי המשמרות. הזנת תלושים תשפר את הדיוק.'} הטופס הרשמי (106) מתקבל מהמעסיק.</div></div>
+        <div class="tiny muted" style="margin-top:8px">${withheldSrc ? 'חלק מהשורות מבוססות על תלושים שהזנת; השאר: הערכה.' : 'כל הנתונים הם הערכה לפי המשמרות. הזנת תלושים תשפר את הדיוק.'} הטופס הרשמי (106) מתקבל מהמעסיק.</div></div>
       ${(() => {
         // the tax refund, as the refund sheet works it out (one estimate everywhere: core/taxrefund.js)
         const tr = App.taxRefundYear ? App.taxRefundYear(+y) : null;
         if (!tr) return '';
-        return `<div class="card ${tr.refund > 150 ? 'tonal' : ''}"><div class="card-head">${icon('wallet')}<h3>החזר מס — הערכה</h3></div>
+        return `<div class="card ${tr.refund > 150 ? 'tonal' : ''}"><div class="card-head">${icon('wallet')}<h3>החזר מס (הערכה)</h3></div>
           ${tr.refund > 150 ? `<div>ייתכן שמגיע לך <b>החזר של כ-<span class="money">${U.money(tr.refund, 0)}</span></b>.</div>` : '<div>לפי ההערכה, לא נלקח יותר מדי מס בשנה הזו.</div>'}
           <div class="small" style="margin-top:6px">מס שנלקח: <span class="money">${U.money(tr.withheld, 0)}</span> · המס לפי השנה כולה: <span class="money">${U.money(tr.liability, 0)}</span></div>
           <button class="btn tonal block" style="margin-top:10px" data-act="tax-refund" data-year="${y}">${icon('check', 's')} לכל הפרטים ואיך מקבלים את הכסף</button></div>`;
@@ -215,7 +215,7 @@
         ${t.tips ? `<div class="small" style="margin-top:8px">טיפים (מחוץ לתלוש): <b>${U.money(t.tips, 0)}</b></div>` : ''}
         ${t.leavePay ? `<div class="small" style="margin-top:4px">כולל ימי חופשה/מחלה: <b>${U.money(t.leavePay, 0)}</b></div>` : ''}
       </div>
-      ${t.overridden ? `<div class="banner warn">${icon('hand')}<div>${t.overridden} משמרות בתקופה כוללות עקיפה ידנית — הן נכללות בסכומים.</div></div>` : ''}
+      ${t.overridden ? `<div class="banner warn">${icon('hand')}<div>${t.overridden} משמרות בתקופה כוללות עקיפה ידנית, הן נכללות בסכומים.</div></div>` : ''}
       <button class="an-entry" data-act="analysis-open">${UI.tile('sparkle', 'violet')}<span class="an-entry-t"><b>ניתוח מתקדם</b><small>איזה יום ושעה הכי משתלמים לך, השיאים שלך ו"מה אם"</small></span>${icon('left', 's')}</button>
       ${st.type !== 'custom' && st.type !== 'year' ? `<div class="section-title">${icon('up', 's')} השוואה</div><div class="card">${compareTable(t, p, a3, a12, st.type)}</div>` : ''}
       ${st.type === 'custom' ? `<div class="section-title">${icon('up', 's')} השוואה לתקופה קודמת באותו אורך</div><div class="card">${compareTable(t, p, null, null, st.type)}</div>` : ''}
@@ -227,7 +227,7 @@
       <div class="card"><div class="stackbar">${types.filter((x) => x.value > 0).map((x) => `<i style="width:${(x.value / totalH) * 100}%;background:${x.color}" data-tip="${esc(x.name)}: ${U.num(x.value, 2)} ש׳"></i>`).join('')}</div>
         ${types.map((x) => `<div class="kv"><span><i style="display:inline-block;width:10px;height:10px;border-radius:3px;background:${x.color};margin-inline-end:6px"></i>${x.name}</span><span class="num">${U.hours(x.value)} ש׳</span></div>`).join('')}
         <div class="kv"><span>${icon('moon', 's')} שעות לילה (⁦22:00\u2060–\u206006:00⁩)</span><span class="num">${U.hours(t.nightAll)} ש׳</span></div>
-        ${S.employers[0].nightEnabled ? `<div class="kv"><span>מתוכן עם תוספת לילה</span><span class="num">${U.hours(hb.night)} ש׳ · ${U.money(t.nightPremium, 0)}</span></div>` : '<div class="tiny muted">תוספת לילה לא מוגדרת — אפשר להפעיל בהגדרות › חישוב השכר › חוקי חישוב.</div>'}</div>
+        ${S.employers[0].nightEnabled ? `<div class="kv"><span>מתוכן עם תוספת לילה</span><span class="num">${U.hours(hb.night)} ש׳ · ${U.money(t.nightPremium, 0)}</span></div>` : '<div class="tiny muted">תוספת לילה לא מוגדרת. אפשר להפעיל בהגדרות › חישוב השכר › חוקי חישוב.</div>'}</div>
       <div class="section-title">${icon('calendar', 's')} ימים</div>
       <div class="card"><div class="kpis three">
         <div class="kpi"><div class="l">ימי עבודה</div><div class="v">${t.workDays}</div></div>
@@ -261,7 +261,7 @@
     const roles = App.roles();
     const money0 = (v) => U.money(v, 0);
     return `
-      <div class="card"><div class="card-head"><h2 class="h3">שכר ברוטו לפי חודש</h2></div>${Charts.bars(data.map((d) => ({ label: lab(d.pk), value: d.s.gross, tip: `${U.fmtMonth(d.pk)}: ${U.money(d.s.gross, 0)} (נטו ~${U.money(d.s.net.net, 0)})`, dim: d.pk === cur })), { label: 'ברוטו לפי חודש', axisFmt: (v) => '₪' + (v >= 1000 ? +(v / 1000).toFixed(1) + 'K' : v) })}<div class="tiny muted">החודש הנוכחי מוצג בהיר — עדיין לא הסתיים.</div></div>
+      <div class="card"><div class="card-head"><h2 class="h3">שכר ברוטו לפי חודש</h2></div>${Charts.bars(data.map((d) => ({ label: lab(d.pk), value: d.s.gross, tip: `${U.fmtMonth(d.pk)}: ${U.money(d.s.gross, 0)} (נטו ~${U.money(d.s.net.net, 0)})`, dim: d.pk === cur })), { label: 'ברוטו לפי חודש', axisFmt: (v) => '₪' + (v >= 1000 ? +(v / 1000).toFixed(1) + 'K' : v) })}<div class="tiny muted">החודש הנוכחי מוצג בהיר: עדיין לא הסתיים.</div></div>
       <div class="card"><div class="card-head"><h2 class="h3">שעות לפי תפקיד</h2></div>${Charts.stacked(data.map((d) => lab(d.pk)), roles.map((r) => ({ name: r.name, color: r.color, values: data.map((d) => (d.s.byRole[r.id] ? d.s.byRole[r.id].hours : 0)) })), { label: 'שעות לפי תפקיד', fmt: (v) => U.num(v, 1) + ' ש׳' })}</div>
       <div class="card"><div class="card-head"><h2 class="h3">שכר ממוצע לשעה</h2></div>${Charts.line(data.map((d) => lab(d.pk)), data.map((d) => (d.s.hours ? d.s.avgHourly : null)), { label: 'ממוצע לשעה', fmt: (v) => U.money(v), zero: false, axisFmt: (v) => '₪' + Math.round(v) })}<div class="tiny muted">כולל תוספות שבת ושעות נוספות, בלי נסיעות.</div></div>
       <div class="card"><div class="card-head"><h2 class="h3">שעות לפי סוג</h2></div>${Charts.stacked(data.map((d) => lab(d.pk)), [

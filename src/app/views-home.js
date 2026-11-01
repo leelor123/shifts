@@ -306,7 +306,7 @@
   function banners() {
     let h = '';
     if (Store.isMemoryOnly && Store.isMemoryOnly()) h += `<div class="banner slim warn">${icon('alert', 's')}<div style="flex:1">${root.Cloud && root.Cloud.user ? 'הדפדפן לא שומר נתונים בטלפון כרגע. הכול נשמר בחשבון שלך.' : 'הדפדפן לא שומר נתונים בטלפון. התחבר לחשבון כדי לא לאבד אותם.'}</div></div>`;
-    if (S.settings.demo) h += `<div class="banner slim">${icon('flask', 's')}<div style="flex:1">מצב הדגמה — נתונים לדוגמה</div><button class="btn text sm" data-act="demo-clear">מחק</button></div>`;
+    if (S.settings.demo) h += `<div class="banner slim">${icon('flask', 's')}<div style="flex:1">מצב הדגמה: נתונים לדוגמה</div><button class="btn text sm" data-act="demo-clear">מחק</button></div>`;
     const B = S.settings.backup;
     const last = Math.max(B.lastBackup || 0);
     if (!S.meta.cloudUid && S.shifts.length > 5 && Date.now() - last > (+S.settings.alerts.backupDays || 30) * U.DAY) {

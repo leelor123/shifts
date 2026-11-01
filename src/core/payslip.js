@@ -22,14 +22,14 @@
     { key: 'net', label: 'נטו לתשלום', kind: 'total', pats: ['נטו לתשלום', 'שכר נטו', 'סה"כ נטו', 'סה״כ נטו', 'נטו'] },
     { key: 'totalDeductions', label: 'סה״כ ניכויים', kind: 'total', pats: ['סה"כ ניכויים', 'סה״כ ניכויים', 'סך הניכויים', 'סך ניכויים', 'סה"כ ניכויי חובה'] },
     { key: 'gross', label: 'ברוטו', kind: 'total', pats: ['סה"כ ברוטו', 'סה״כ ברוטו', 'שכר ברוטו', 'סך כל התשלומים', 'סה"כ תשלומים', 'סה״כ תשלומים', 'ברוטו'] },
-    { key: 'pensionEmployer', label: 'פנסיה — חלק המעסיק', kind: 'emp', pats: ['תגמולי מעביד', 'תגמולי מעסיק', 'פנסיה מעביד', 'פנסיה מעסיק', 'גמל מעביד', 'גמל מעסיק', 'הפרשת מעביד', 'הפרשת מעסיק'] },
+    { key: 'pensionEmployer', label: 'פנסיה (חלק המעסיק)', kind: 'emp', pats: ['תגמולי מעביד', 'תגמולי מעסיק', 'פנסיה מעביד', 'פנסיה מעסיק', 'גמל מעביד', 'גמל מעסיק', 'הפרשת מעביד', 'הפרשת מעסיק'] },
     { key: 'severance', label: 'פיצויים (מעסיק)', kind: 'emp', pats: ['פיצויים'] },
-    { key: 'hishtalmutEmployer', label: 'קרן השתלמות — מעסיק', kind: 'emp', pats: ['השתלמות מעביד', 'השתלמות מעסיק', 'קה"ש מעביד', 'קה"ש מעסיק'] },
+    { key: 'hishtalmutEmployer', label: 'קרן השתלמות (מעסיק)', kind: 'emp', pats: ['השתלמות מעביד', 'השתלמות מעסיק', 'קה"ש מעביד', 'קה"ש מעסיק'] },
     { key: 'incomeTax', label: 'מס הכנסה', kind: 'ded', pats: ['מס הכנסה', 'מ.הכנסה', 'מ. הכנסה', 'מס הכ'] },
     { key: 'nationalInsurance', label: 'ביטוח לאומי', kind: 'ded', pats: ['ביטוח לאומי', 'בטוח לאומי', 'ב.לאומי', 'ב. לאומי', 'ב"ל'] },
     { key: 'healthTax', label: 'מס בריאות', kind: 'ded', pats: ['מס בריאות', 'דמי בריאות', 'ביטוח בריאות', 'בטוח בריאות'] },
-    { key: 'hishtalmutEmployee', label: 'קרן השתלמות — עובד', kind: 'ded', pats: ['קרן השתלמות', 'השתלמות', 'קה"ש'] },
-    { key: 'pensionEmployee', label: 'פנסיה — חלק העובד', kind: 'ded', pats: ['תגמולי עובד', 'פנסיה עובד', 'גמל עובד', 'קופ"ג עובד', 'קרן פנסיה', 'פנסיה', 'תגמולים', 'גמל'] },
+    { key: 'hishtalmutEmployee', label: 'קרן השתלמות (עובד)', kind: 'ded', pats: ['קרן השתלמות', 'השתלמות', 'קה"ש'] },
+    { key: 'pensionEmployee', label: 'פנסיה (חלק העובד)', kind: 'ded', pats: ['תגמולי עובד', 'פנסיה עובד', 'גמל עובד', 'קופ"ג עובד', 'קרן פנסיה', 'פנסיה', 'תגמולים', 'גמל'] },
     { key: 'rest200', label: 'שבת/חג + נוספות 200%', kind: 'pay', hours: true, pats: ['200%', 'שעות 200'] },
     { key: 'rest175', label: 'שבת/חג + נוספות 175%', kind: 'pay', hours: true, pats: ['175%', 'שעות 175'] },
     { key: 'rest150', label: 'שעות שבת/חג 150%', kind: 'pay', hours: true, pats: ['שבת', 'חג 150', 'שעות חג', 'מנוחה'] },
@@ -57,28 +57,28 @@
     ot125: 'שעות נוספות: אחרי ' + '8' + ' שעות ביום, השעתיים הראשונות משולמות ב-125% מהתעריף.',
     ot150: 'שעות נוספות מעבר לשעתיים הראשונות: 150% מהתעריף.',
     rest150: 'שעות בשבת או בחג משולמות ב-150% מהתעריף (לפי חוק שעות עבודה ומנוחה).',
-    rest175: 'שעות נוספות שנעשו בשבת או בחג — השעתיים הראשונות: 175%.',
+    rest175: 'שעות נוספות שנעשו בשבת או בחג, השעתיים הראשונות: 175%.',
     rest200: 'שעות נוספות בשבת או בחג מעבר לשעתיים: 200%.',
-    night: 'תוספת על שעות לילה — לפי ההסכם או הנוהג אצל המעסיק (לא חובה בחוק לכל העובדים).',
-    seniority: 'תוספת לפי ותק — לפי הסכם קיבוצי או חוזה אישי.',
+    night: 'תוספת על שעות לילה, לפי ההסכם או הנוהג אצל המעסיק (לא חובה בחוק לכל העובדים).',
+    seniority: 'תוספת לפי ותק, לפי הסכם קיבוצי או חוזה אישי.',
     travel: 'החזר הוצאות נסיעה לעבודה: לפי מספר ימי העבודה בפועל, עד תקרה יומית (22.60 ₪ לפי צו ההרחבה, 2025). החזר הנסיעות חייב במס.',
     recuperation: 'דמי הבראה: אחרי שנת עבודה. מספר ימים לפי ותק × תעריף יומי (451.50 ₪ במגזר הפרטי, 2026) × היקף המשרה.',
-    vacationPay: 'תשלום על ימי חופשה שנוצלו — לפי השכר היומי הממוצע.',
-    sickPay: 'דמי מחלה לפי חוק: יום ראשון — ללא תשלום, ימים 2\u2060–\u20603 — 50%, מהיום הרביעי — 100%.',
+    vacationPay: 'תשלום על ימי חופשה שנוצלו, לפי השכר היומי הממוצע.',
+    sickPay: 'דמי מחלה לפי חוק: יום ראשון ללא תשלום, ימים 2\u2060–\u20603 ב-50%, מהיום הרביעי 100%.',
     holidayPay: 'דמי חגים: לעובדים שעתיים אחרי 3 חודשי עבודה, על ימי חג שחלו ביום חול ולא עבדו בהם (לפי צו ההרחבה).',
-    bonus: 'בונוס, פרמיה או מענק — לפי מדיניות המעסיק. חייב במס ובביטוח לאומי.',
-    diff: 'הפרשים — תיקון של חודשים קודמים (למשל שעות שלא שולמו). כדאי לבדוק אם זה סוגר פער פתוח.',
+    bonus: 'בונוס, פרמיה או מענק, לפי מדיניות המעסיק. חייב במס ובביטוח לאומי.',
+    diff: 'הפרשים: תיקון של חודשים קודמים (למשל שעות שלא שולמו). כדאי לבדוק אם זה סוגר פער פתוח.',
     gross: 'ברוטו: סך כל התשלומים לפני ניכויים.',
-    net: 'נטו: מה שנכנס לחשבון הבנק — ברוטו פחות כל הניכויים.',
+    net: 'נטו: מה שנכנס לחשבון הבנק, ברוטו פחות כל הניכויים.',
     totalDeductions: 'סך כל הניכויים מהברוטו: מס הכנסה, ביטוח לאומי, מס בריאות, פנסיה וניכויים נוספים.',
-    incomeTax: 'מס הכנסה: מחושב לפי מדרגות מס (10%, 14%, 20%...) על השכר החודשי, פחות זיכוי על כל נקודת זיכוי (242 ₪ לנקודה) ופחות זיכוי על הפקדה לפנסיה. אם הוא עלה — לרוב כי הברוטו עלה ונכנסת למדרגה גבוהה יותר.',
+    incomeTax: 'מס הכנסה: מחושב לפי מדרגות מס (10%, 14%, 20%...) על השכר החודשי, פחות זיכוי על כל נקודת זיכוי (242 ₪ לנקודה) ופחות זיכוי על הפקדה לפנסיה. אם הוא עלה, לרוב כי הברוטו עלה ונכנסת למדרגה גבוהה יותר.',
     nationalInsurance: 'ביטוח לאומי (חלק העובד): 1.04% על השכר עד 7,703 ₪ ו-7% מעל (2026). משתנה ישירות עם הברוטו.',
     healthTax: 'מס בריאות: 3.23% עד 7,703 ₪ ו-5.17% מעל (2026). מממן את קופת החולים.',
     pensionEmployee: 'הפרשת העובד לפנסיה: לרוב 6% מהשכר הקובע. נחסך על שמך ומקטין את מס ההכנסה (זיכוי 35%).',
-    pensionEmployer: 'הפרשת המעסיק לתגמולים: לרוב 6.5%. לא יורד מהנטו — זה כסף נוסף שנחסך בשבילך.',
+    pensionEmployer: 'הפרשת המעסיק לתגמולים: לרוב 6.5%. לא יורד מהנטו. זה כסף נוסף שנחסך בשבילך.',
     severance: 'הפרשת המעסיק לפיצויים: 6% עד 8.33%. נצבר בקרן הפנסיה.',
-    hishtalmutEmployee: 'קרן השתלמות — חלק העובד (לרוב 2.5%). חיסכון שאפשר למשוך אחרי 6 שנים, פטור ממס עד תקרה.',
-    hishtalmutEmployer: 'קרן השתלמות — חלק המעסיק (לרוב 7.5%).',
+    hishtalmutEmployee: 'קרן השתלמות: חלק העובד (לרוב 2.5%). חיסכון שאפשר למשוך אחרי 6 שנים, פטור ממס עד תקרה.',
+    hishtalmutEmployer: 'קרן השתלמות: חלק המעסיק (לרוב 7.5%).',
     creditPoints: 'נקודות זיכוי: מקטינות את מס ההכנסה (כל נקודה 242 ₪ בחודש). תושב/ת: 2.25; אישה: 2.75; ועוד לפי ילדים, תואר, שחרור מצבא וכו׳.',
     vacationBalance: 'כמה ימי חופשה צברת ועדיין לא ניצלת.',
     sickBalance: 'כמה ימי מחלה צברת (1.5 ימים לחודש עבודה מלא, עד 90).',
@@ -86,7 +86,7 @@
     ytdTax: 'סך מס ההכנסה שנוכה מתחילת השנה.',
     taxableGross: 'השכר החייב במס: הברוטו אחרי הפחתות מסוימות.',
     workHours: 'סך השעות שהמעסיק רשם לחודש.',
-    workDays: 'מספר ימי העבודה שהמעסיק רשם — משמש גם לחישוב הנסיעות.',
+    workDays: 'מספר ימי העבודה שהמעסיק רשם, משמש גם לחישוב הנסיעות.',
   };
 
   /* ---------------- text helpers ---------------- */
@@ -343,7 +343,7 @@
     const ovNote = (appVal, autoVal, slipVal, tol) => {
       if (!hasOv || Math.abs(appVal - autoVal) < tol) return null;
       if (slipVal != null && Math.abs(slipVal - autoVal) <= Math.abs(slipVal - appVal)) {
-        return `הפער נובע כנראה מעקיפה ידנית שהזנת ב-${overridesInPeriod.length} משמרות: בלי העקיפה האפליקציה הייתה מחשבת ${U.num(autoVal, 2)} — קרוב למה שבתלוש.`;
+        return `הפער נובע כנראה מעקיפה ידנית שהזנת ב-${overridesInPeriod.length} משמרות: בלי העקיפה האפליקציה הייתה מחשבת ${U.num(autoVal, 2)}, קרוב למה שבתלוש.`;
       }
       return `שים לב: ${overridesInPeriod.length} משמרות בתקופה כוללות עקיפה ידנית (חישוב אוטומטי: ${U.num(autoVal, 2)}).`;
     };
@@ -365,7 +365,7 @@
         for (let i = E.shifts.length - 1; i >= 0 && acc < diff - 0.3; i--) { acc += E.shifts[i].paidHours; tail.unshift(E.shifts[i]); }
         if (tail.length && Math.abs(acc - diff) <= 0.3) {
           suspects = tail; conf = 'high';
-          how = tail.length > 1 ? 'המשמרות האחרונות בתקופה — ייתכן שנכנסו לתלוש הבא' : 'המשמרת האחרונה בתקופה — ייתכן שנכנסה לתלוש הבא';
+          how = tail.length > 1 ? 'המשמרות האחרונות בתקופה, ייתכן שנכנסו לתלוש הבא' : 'המשמרת האחרונה בתקופה, ייתכן שנכנסה לתלוש הבא';
         } else {
           const same = E.shifts.filter((r) => Math.abs(r.paidHours - diff) <= 0.3);
           if (same.length === 1) { suspects = same; how = 'משמרת באורך השעות החסרות'; conf = 'high'; }
@@ -404,7 +404,7 @@
           confidence: mixed ? 'medium' : 'high', fromOverride: ovNote(E.baseRate, A.baseRate, slipRate, 0.01) });
       } else if (mixed && slipRate < E.baseRate - 0.02 && Math.abs(bq - E.hrs.base) <= 0.25) {
         add({ area: 'תעריף', status: 'warn', title: 'תעריף ממוצע נמוך מהצפוי', amount: (E.baseRate - slipRate) * bq,
-          detail: `בתלוש ${U.money(slipRate)} לשעה בממוצע; לפי המשמרות שרשמת הממוצע המשוקלל ${U.money(E.baseRate)} (תעריפים ⁦${U.money(minRate)}\u2060–\u2060${U.money(maxRate)}⁩). ייתכן שחלק מהשעות שולמו בתעריף של תפקיד זול יותר — או שחסרות שעות בתפקיד היקר.`,
+          detail: `בתלוש ${U.money(slipRate)} לשעה בממוצע; לפי המשמרות שרשמת הממוצע המשוקלל ${U.money(E.baseRate)} (תעריפים ⁦${U.money(minRate)}\u2060–\u2060${U.money(maxRate)}⁩). ייתכן שחלק מהשעות שולמו בתעריף של תפקיד זול יותר, או שחסרות שעות בתפקיד היקר.`,
           basis: 'השוואת ממוצע משוקלל; תלוי בתמהיל התפקידים.', confidence: 'low' });
       } else {
         add({ area: 'תעריף', status: 'ok', title: 'התעריף לשעה תקין', detail: `${U.money(slipRate)} לשעה בתלוש (באפליקציה: ${mixed ? '⁦' + U.money(minRate) + '\u2060–\u2060' + U.money(maxRate) + '⁩' : U.money(E.baseRate)}).` + (mixed && Math.abs(bq - E.hrs.base) > 0.25 ? ' הממוצע לא הושווה כי מספר השעות שונה.' : ''), basis: 'שכר יסוד ÷ שעות רגילות.', confidence: mixed ? 'medium' : 'high' });
@@ -440,7 +440,7 @@
           add({ area: 'שבת וחג', status: 'bad', title: 'תעריף שבת/חג נמוך', amount, detail: `בתלוש ${U.money(eff)} לשעת שבת, צפוי ${U.money(expRate)}. ≈ ${U.money(amount)}.`, basis: 'סכום ÷ שעות בשורות השבת/חג.', confidence: 'medium' });
         } else add({ area: 'שבת וחג', status: 'ok', title: 'שעות שבת/חג תקינות', detail: `${U.hours(slipRestH)} שעות בתלוש מול ${U.hours(appRestH)} באפליקציה.`, basis: 'שעות 150%/175%/200%.', confidence: 'medium' });
       } else if (slipRestH > appRestH + 0.25) {
-        add({ area: 'שבת וחג', status: 'warn', title: 'בתלוש יותר שעות שבת/חג', detail: `בתלוש ${U.hours(slipRestH)}, באפליקציה ${U.hours(appRestH)}. ייתכן שהמעסיק מגדיר את חלון השבת אחרת — אפשר לכוון בהגדרות › שבת וחגים.`, basis: 'השוואת שעות.', confidence: 'low' });
+        add({ area: 'שבת וחג', status: 'warn', title: 'בתלוש יותר שעות שבת/חג', detail: `בתלוש ${U.hours(slipRestH)}, באפליקציה ${U.hours(appRestH)}. ייתכן שהמעסיק מגדיר את חלון השבת אחרת. אפשר לכוון בהגדרות › שבת וחגים.`, basis: 'השוואת שעות.', confidence: 'low' });
       } else add({ area: 'שבת וחג', status: 'ok', title: 'שעות שבת/חג תקינות', detail: `${U.hours(slipRestH)} שעות.`, basis: 'השוואת שעות.', confidence: 'medium' });
     }
 
@@ -498,13 +498,13 @@
         add({ area: 'פנסיה', status: 'bad', title: 'לא נמצאה הפרשה לפנסיה', amount,
           detail: `לפי תאריך תחילת העבודה (${S.startDate ? U.fmtDate(S.startDate) : '—'}) ההפרשות היו אמורות להתחיל אחרי ${S.pension.startAfterMonths} חודשים. חלק המעסיק (תגמולים + פיצויים) ≈ ${U.money(amount)} בחודש.`,
           basis: 'צו ההרחבה לפנסיה חובה. הסכום הוא כסף שהמעסיק אמור להפקיד לקרן, לא לנטו.', confidence: S.startDate ? 'medium' : 'low',
-          note: 'אם הייתה לך קרן פנסיה פעילה לפני כן — ההפרשה אמורה להתחיל כבר אחרי 3 חודשים (ולעיתים רטרואקטיבית). כדאי לוודא מול המעסיק.' });
+          note: 'אם הייתה לך קרן פנסיה פעילה לפני כן, ההפרשה אמורה להתחיל כבר אחרי 3 חודשים (ולעיתים רטרואקטיבית). כדאי לוודא מול המעסיק.' });
       } else if (pe) {
         const p = pBase > 0 ? (pe / pBase) * 100 : 0;
         const ok = Math.abs(p - S.pension.employeePct) <= 0.6;
         add({ area: 'פנסיה', status: ok ? 'ok' : 'warn', title: ok ? 'הפרשת עובד לפנסיה תקינה' : 'אחוז הפרשה לפנסיה לא צפוי',
           detail: `${U.money(pe)} = ${U.num(p, 2)}% מ-${U.money(pBase)} (צפוי ~${S.pension.employeePct}%).` + (pr ? ` מעסיק: ${U.money(pr)} (${U.num(pBase ? pr / pBase * 100 : 0, 2)}%).` : ''),
-          basis: (S.pension.base === 'base' ? 'הבסיס המשוער: כל השעות × התעריף הבסיסי (בלי תוספות)' : 'הבסיס המשוער: ברוטו פחות נסיעות והבראה') + '. השכר הקובע לפנסיה עשוי להיות שונה לפי ההסכם — אפשר לשנות בהגדרות › נטו משוער.', confidence: 'low' });
+          basis: (S.pension.base === 'base' ? 'הבסיס המשוער: כל השעות × התעריף הבסיסי (בלי תוספות)' : 'הבסיס המשוער: ברוטו פחות נסיעות והבראה') + '. השכר הקובע לפנסיה עשוי להיות שונה לפי ההסכם. אפשר לשנות בהגדרות › נטו משוער.', confidence: 'low' });
         if (pr != null && pBase > 0 && pr / pBase * 100 < (+S.pension.employerPct || 6.5) - 0.6) {
           add({ area: 'פנסיה', status: 'warn', title: 'הפרשת המעסיק נמוכה', amount: pBase * S.pension.employerPct / 100 - pr, detail: `${U.num(pr / pBase * 100, 2)}% במקום ${S.pension.employerPct}%.`, basis: 'צו ההרחבה: לפחות 6.5% תגמולי מעסיק.', confidence: 'low' });
         }
@@ -522,7 +522,7 @@
       const rec = val(F, 'recuperation');
       if (rm === 0 || rm === month) {
         const exp = rm === 0 ? L.recuperation.amount / 12 : L.recuperation.amount;
-        if (!rec) add({ area: 'הבראה', status: 'warn', title: 'לא נמצאו דמי הבראה', amount: exp, detail: `לפי ותק ${U.num(L.seniorityYears, 1)} שנים והיקף משרה ~${U.num(L.jobPct * 100, 0)}%: ≈ ${U.money(exp)}.`, basis: 'צו ההרחבה לדמי הבראה (מגזר פרטי).', confidence: 'low', note: 'מעסיקים משלמים בחודשים שונים. אם קיבלת בחודש אחר — הכול בסדר.' });
+        if (!rec) add({ area: 'הבראה', status: 'warn', title: 'לא נמצאו דמי הבראה', amount: exp, detail: `לפי ותק ${U.num(L.seniorityYears, 1)} שנים והיקף משרה ~${U.num(L.jobPct * 100, 0)}%: ≈ ${U.money(exp)}.`, basis: 'צו ההרחבה לדמי הבראה (מגזר פרטי).', confidence: 'low', note: 'מעסיקים משלמים בחודשים שונים. אם קיבלת בחודש אחר, הכול בסדר.' });
         else add({ area: 'הבראה', status: 'ok', title: 'שולמו דמי הבראה', detail: `${U.money(rec)} (הערכה: ${U.money(exp)}).`, basis: 'צו ההרחבה לדמי הבראה.', confidence: 'low' });
       }
     }
@@ -545,7 +545,7 @@
     const cp = val(F, 'creditPoints');
     if (cp != null) {
       const ok = Math.abs(cp - S.tax.creditPoints) < 0.01;
-      add({ area: 'נקודות זיכוי', status: ok ? 'ok' : 'warn', title: ok ? 'נקודות הזיכוי תואמות' : 'נקודות זיכוי שונות', detail: `בתלוש ${cp}, בהגדרות ${S.tax.creditPoints}.` + (ok ? '' : ' אם מגיעות לך יותר — מלא טופס 101 מעודכן.'), basis: 'טופס 101 שמילאת אצל המעסיק.', confidence: 'medium' });
+      add({ area: 'נקודות זיכוי', status: ok ? 'ok' : 'warn', title: ok ? 'נקודות הזיכוי תואמות' : 'נקודות זיכוי שונות', detail: `בתלוש ${cp}, בהגדרות ${S.tax.creditPoints}.` + (ok ? '' : ' אם מגיעות לך יותר, מלא טופס 101 מעודכן.'), basis: 'טופס 101 שמילאת אצל המעסיק.', confidence: 'medium' });
     }
 
     /* 11-12. tax & social security */
@@ -553,9 +553,9 @@
     if (minor) {
       const blm = (val(F, 'nationalInsurance') || 0) + (val(F, 'healthTax') || 0);
       const itm = val(F, 'incomeTax') || 0;
-      if (blm > 0) add({ area: 'ביטוח לאומי', status: 'bad', title: 'נוכו ביטוח לאומי / מס בריאות לעובד מתחת לגיל 18', amount: blm, detail: `נוכו ${U.money(blm)}, אבל עובד שטרם מלאו לו 18 פטור מדמי ביטוח לאומי ומס בריאות.`, basis: 'חוק הביטוח הלאומי — פטור לנער עד גיל 18 (לפי תאריך הלידה שהוזן).', confidence: 'medium' });
-      if (itm > 0) add({ area: 'מס הכנסה', status: 'warn', title: 'נוכה מס הכנסה מתחת לגיל 18', amount: itm, detail: `נוכו ${U.money(itm)}. בשכר רגיל של נער/ה, נקודות הזיכוי מאפסות בדרך כלל את המס — כדאי לבדוק שמולא טופס 101.`, basis: 'מדרגות מס ונקודות זיכוי.', confidence: 'low', note: 'מס שנוכה ביתר אפשר לקבל בחזרה בהחזר מס שנתי.' });
-      if (!blm && !itm) add({ area: 'ביטוח לאומי', status: 'ok', title: 'ללא ניכויי חובה — מתחת לגיל 18', detail: 'הנטו אמור להיות שווה לברוטו (פחות ניכויים אישיים, אם יש).', basis: 'פטור לנער עד גיל 18.', confidence: 'medium' });
+      if (blm > 0) add({ area: 'ביטוח לאומי', status: 'bad', title: 'נוכו ביטוח לאומי / מס בריאות לעובד מתחת לגיל 18', amount: blm, detail: `נוכו ${U.money(blm)}, אבל עובד שטרם מלאו לו 18 פטור מדמי ביטוח לאומי ומס בריאות.`, basis: 'חוק הביטוח הלאומי: פטור לנער עד גיל 18 (לפי תאריך הלידה שהוזן).', confidence: 'medium' });
+      if (itm > 0) add({ area: 'מס הכנסה', status: 'warn', title: 'נוכה מס הכנסה מתחת לגיל 18', amount: itm, detail: `נוכו ${U.money(itm)}. בשכר רגיל של נער/ה, נקודות הזיכוי מאפסות בדרך כלל את המס. כדאי לבדוק שמולא טופס 101.`, basis: 'מדרגות מס ונקודות זיכוי.', confidence: 'low', note: 'מס שנוכה ביתר אפשר לקבל בחזרה בהחזר מס שנתי.' });
+      if (!blm && !itm) add({ area: 'ביטוח לאומי', status: 'ok', title: 'ללא ניכויי חובה (מתחת לגיל 18)', detail: 'הנטו אמור להיות שווה לברוטו (פחות ניכויים אישיים, אם יש).', basis: 'פטור לנער עד גיל 18.', confidence: 'medium' });
     }
     if (gross && !minor) {
       const est = Engine.netEstimate({ gross, pensionBase: pe ? pe / (S.pension.employeePct / 100) : pBase, pensionActive: !!pe, deductions: 0, periodTo: E.P.to }, Object.assign({}, S, { tax: Object.assign({}, S.tax, { creditPoints: cp != null ? cp : S.tax.creditPoints }) }));
@@ -619,13 +619,13 @@
       let change = null;
       if (prevF) {
         const pv = val(prevF, f.key);
-        if (pv == null) change = 'שורה חדשה — לא הופיעה בתלוש הקודם.';
+        if (pv == null) change = 'שורה חדשה: לא הופיעה בתלוש הקודם.';
         else if (Math.abs(v - pv) > Math.max(1, Math.abs(pv) * 0.05)) {
           const up = v > pv;
           change = (up ? 'עלה' : 'ירד') + ` ב-${U.money(Math.abs(v - pv))} לעומת התלוש הקודם (${U.money(pv)})`;
           if (['incomeTax', 'nationalInsurance', 'healthTax', 'pensionEmployee'].includes(f.key)) {
             const gNow = val(F, 'gross'), gPrev = val(prevF, 'gross');
-            if (gNow && gPrev) change += gNow > gPrev === up ? ' — בהתאם לשינוי בברוטו.' : ' — למרות שהברוטו השתנה בכיוון ההפוך; כדאי לבדוק.';
+            if (gNow && gPrev) change += gNow > gPrev === up ? ', בהתאם לשינוי בברוטו.' : ', למרות שהברוטו השתנה בכיוון ההפוך; כדאי לבדוק.';
           } else change += '.';
         }
       }
@@ -670,7 +670,7 @@
     });
     const tot = bad.reduce((x, f) => x + Math.max(0, f.amount || 0), 0);
     if (tot > 0) s += `\nסה״כ הפרש משוער: ${U.money(tot)}.\n`;
-    s += '\nאשמח אם תוכלו לבדוק ולעדכן אותי, ואם צריך — לתקן בתלוש הבא. אם פספסתי משהו, אשמח להסבר.\n\nתודה רבה,\n' + (opts.name || '');
+    s += '\nאשמח אם תוכלו לבדוק ולעדכן אותי, ואם צריך, לתקן בתלוש הבא. אם פספסתי משהו, אשמח להסבר.\n\nתודה רבה,\n' + (opts.name || '');
     return s.trim();
   }
 

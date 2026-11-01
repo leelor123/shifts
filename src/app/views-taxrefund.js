@@ -145,12 +145,12 @@
     const rows = all.map(({ y, r }) => `<tr><td>${y}</td><td>${U.money(r.gross, 0)}</td><td>${U.money(r.withheld, 0)}</td><td>${U.money(r.liability, 0)}</td><td><b>${U.money(Math.max(0, r.refund), 0)}</b></td><td>${SRC[r.src]}</td></tr>`).join('');
     const total = all.reduce((s, x) => s + Math.max(0, x.r.refund), 0);
     const name = esc(S.settings.userName || '');
-    return `<h1>החזר מס — הערכה${name ? ' · ' + name : ''}</h1>
+    return `<h1>החזר מס (הערכה)${name ? ' · ' + name : ''}</h1>
       <p>הופק ב-${U.fmtDate(U.todayKey())} באפליקציית שעתי. סך הכול ייתכן שמגיע: <b>${U.money(total, 0)}</b>.</p>
       <table><thead><tr><th>שנה</th><th>ברוטו</th><th>מס שנלקח</th><th>מס לפי השנה</th><th>החזר משוער</th><th>מקור</th></tr></thead><tbody>${rows}</tbody></table>
       ${all.filter((x) => x.r.reasons.length).map(({ y, r }) => `<h3>${y}: למה</h3><ul>${r.reasons.map((k) => `<li>${REASON[k]}</li>`).join('')}</ul>`).join('')}
       <h3>מה לצרף לבקשה</h3><ul><li>טופס 106 מכל מעסיק, לכל שנה</li><li>אישורים לנקודות הזיכוי (תעודת שחרור, אישור תואר)</li><li>פרטי חשבון בנק</li></ul>
-      <h3>איפה מגישים</h3><p>בקשה להחזר מס (טופס 135), באתר רשות המסים: ${TR.FILE_URL} — בקשה לכל שנה בנפרד, עד 6 שנים אחורה.</p>
+      <h3>איפה מגישים</h3><p>בקשה להחזר מס (טופס 135), באתר רשות המסים: ${TR.FILE_URL}. בקשה לכל שנה בנפרד, עד 6 שנים אחורה.</p>
       <p style="font-size:11px">זו הערכה בלבד ואינה ייעוץ מס. הקובע הוא החישוב של רשות המסים.</p>`;
   }
 
