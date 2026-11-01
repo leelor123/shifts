@@ -122,6 +122,19 @@ let errors = [];
     if (!t.includes('תלוש')) throw new Error('opened: ' + t);
   });
   await step('home renders', async () => { await ev(() => App.go('home')); await sleep(400); if (!(await page.$('.home-hero'))) throw new Error('no hero'); });
+  // presses settle with the ease-out, no overshoot (an older, stronger rule once kept the bounce on every button)
+  await step('presses: transform eases out, no overshoot, within 160ms', async () => {
+    const r = await ev(() => { let n = 0; const bad = [...document.querySelectorAll('#view .btn, #view .chip, #view .item, #nav .pill')].slice(0, 30).map((el) => {
+      const c = getComputedStyle(el); const p = c.transitionProperty.split(', '), i = p.indexOf('transform');
+      if (i < 0) return null;
+      n++;
+      const t = c.transitionTimingFunction.split(/,\s*(?![^(]*\))/)[i] || '', d = parseFloat(c.transitionDuration.split(', ')[i]);
+      const y = (t.match(/cubic-bezier\(([^)]+)\)/) || [, '0,0,1,1'])[1].split(',').map(Number);
+      return (y[1] > 1 || y[3] > 1 || d > 0.16) ? el.className + ' ' + t + ' ' + d : null;
+    }).filter(Boolean); return { n, bad, fx: document.body.classList.contains('fx') }; });
+    if (!r.fx || r.n < 5) throw new Error('nothing measured: ' + JSON.stringify(r));
+    if (r.bad.length) throw new Error(r.bad.slice(0, 3).join(' | '));
+  });
   await step('start shift → break → back → stop', async () => {
     await page.click('[data-act="timer-start"]'); await sleep(600);
     if (!(await ev(() => !!Store.S.activeShift))) throw new Error('not started');
