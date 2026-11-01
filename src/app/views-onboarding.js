@@ -67,16 +67,6 @@
     };
 
     const screens = {
-      hi: () => `<div class="ob-welcome">
-        ${App.mascot ? App.mascot('wave', { size: 132, cls: 'hero' }) : '<div class="brand-mark big" aria-hidden="true"></div>'}
-        <div class="bubble big">היי! אני שעתי 👋<br>אני אעזור לך לדעת בדיוק כמה כסף מגיע לך</div>
-        <h1 class="brand-name">Shaati</h1>
-        <div class="ob-points">
-          <div style="--d:0">${UI.tile('clock', 'violet')}<span>לוחצים כשמתחילים לעבוד, ולוחצים כשמסיימים</span></div>
-          <div style="--d:1">${UI.tile('wallet', 'mint')}<span>רואים כמה הרווחת, כולל שבתות ושעות נוספות</span></div>
-          <div style="--d:2">${UI.tile('shield', 'amber')}<span>בודקים שהמשכורת נכונה ושלא מקפחים אותך</span></div>
-        </div>
-        <p class="small muted">6 שאלות קצרות, פחות מדקה</p></div>`,
       me: () => `${say(A.name ? 'love' : 'wave', A.name ? `נעים מאוד, ${esc(A.name.split(' ')[0])}! 😍` : 'בוא/י נכיר 😊')}
         <h1>איך קוראים לך?</h1>
         <label class="field"><input class="input big-in" id="ob-name" value="${esc(A.name)}" placeholder="השם שלך" autocomplete="given-name" maxlength="40" enterkeyhint="next"></label>
@@ -206,17 +196,33 @@
         el.innerHTML = w ? `${icon('candle', 's')} ${esc(w.label)} הקרובה ב${esc(city)}: נכנסת ${U.DAYS[U.dow(U.epochKey(w.start))]} ב-${U.epochHM(w.start)}, יוצאת ב-${U.epochHM(w.end)}` : '';
       }
     }
+    /** the first screen: the sky header and a sheet with the three ways in (an account they already have among them,
+     * so nobody answers every question and then finds the account had it all, the user, 2026-11-02) */
+    function welcome(first) {
+      v.innerHTML = `<div class="wizard ob skyscreen step-hi">${App.skyHead()}<div class="w-sheet">
+        <h2 style="--i:0">ברוכים הבאים</h2>
+        <ul class="w-points" style="--i:1">
+          <li>${UI.tile('clock', 'violet')}<span>לוחצים כשמתחילים לעבוד, ולוחצים כשמסיימים</span></li>
+          <li>${UI.tile('wallet', 'mint')}<span>רואים כמה הרווחת, כולל שבתות ושעות נוספות</span></li>
+          <li>${UI.tile('shield', 'amber')}<span>בודקים שהמשכורת נכונה ושלא מקפחים אותך</span></li>
+        </ul>
+        <div class="w-gap"></div>
+        <button class="btn big ob-go" data-next style="--i:2">אני חדש/ה, בואו נתחיל</button>
+        ${opts.preLogin ? `<button class="btn big tonal w-have" data-have style="--i:3">${App.googleIcon || ''}<span>כבר יש לי חשבון, כניסה</span></button>` : ''}
+        <button class="btn text" data-demo style="--i:4">${icon('flask', 's')} רק להציץ (נתונים לדוגמה)</button>
+        <div class="tiny muted w-legal ob-consent" style="--i:5">בהמשך את/ה מאשר/ת את ${App.legalLinks ? App.legalLinks() : 'תנאי השימוש ומדיניות הפרטיות'}.</div>
+      </div></div>`;
+      App.mountSky(v, first);
+      window.scrollTo(0, 0);
+    }
+    let welcomed = false;
     function draw() {
       const key = STEPS[step];
+      if (key === 'hi') { welcome(!welcomed); welcomed = true; return; }
       const last = key === 'done';
       const qi = step; // questions are steps 1..6
       let foot;
-      if (key === 'hi') {
-        foot = `<button class="btn big ob-go" data-next>בואו נתחיל</button>
-          <button class="btn tonal" data-demo>${icon('flask')} רק להציץ (נתונים לדוגמה)</button>
-          ${opts.preLogin ? '<button class="btn text" data-have>כבר יש לי חשבון? התחברות</button>' : ''}
-          <div class="tiny muted ob-consent">בהמשך את/ה מאשר/ת את ${App.legalLinks ? App.legalLinks() : 'תנאי השימוש ומדיניות הפרטיות'}.</div>`;
-      } else if (last) {
+      if (last) {
         const ready = !needsLogin() || root.Cloud.sdkReady();
         foot = needsLogin()
           ? `<button class="btn big ob-google" data-save ${saving || (!ready && !loadFailed) ? 'disabled' : ''}>${App.googleIcon || ''}<span>${saving ? 'שומר…' : !ready && !loadFailed ? 'רגע, מכינים את Google…' : 'שמירה עם Google'}</span></button>

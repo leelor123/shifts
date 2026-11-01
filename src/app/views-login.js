@@ -42,6 +42,38 @@
     if (b) b.onclick = async () => { await UI.copyText(location.origin + location.pathname); UI.toast('הקישור הועתק. הדבק אותו בדפדפן 👍'); };
   };
 
+  /* ---------------- the header of the first screens: the living sky (sky.js) ----------------
+   * The welcome screen and the sign-in screen open under the opening show, which draws this same header in the same
+   * places (intro.js): the scene is the show's own (the same moment, city and weather), so the hand-over is unseen. */
+  const LOGO = '<svg class="sh-logo" viewBox="0 0 1024 1024" aria-hidden="true"><path class="g" d="M300 660 A258 258 0 0 1 603 271 L603 600"/><path class="y" d="M420 422 L420 753 A258 258 0 0 0 720 362"/></svg>';
+  const scene = () => {
+    const I = root.Intro;
+    if (I && I.covering && I.covering() && I.scene) return I.scene;
+    const Sky = root.Sky, p = Sky ? Sky.prefs() : {};
+    return { now: Date.now(), place: p.place, weather: Sky ? Sky.weatherNow(p) : 'clear' };
+  };
+  /** The header: the sky, the logo and the greeting. o.who: a returning user's own (their first name and the date,
+   * as the opening shows them); otherwise "Shaati" and the app's promise. */
+  App.skyHead = function (o) {
+    const sc = scene(), Sky = root.Sky;
+    const who = o && o.who && Sky;
+    const title = who ? Sky.firstName(S.settings.userName) || 'Shaati' : 'Shaati';
+    const sub = who ? Sky.dateLine(sc.now) : 'כמה מגיע לך, עד השקל';
+    return `<div class="skyhead">${'<svg class="sky" aria-hidden="true"></svg>'}${LOGO}<div class="sh-text"><div class="sh-hello">${esc(Sky ? Sky.greeting(sc.now) : '')}</div><h1 class="sh-title">${esc(title)}</h1><div class="sh-sub">${esc(sub)}</div></div></div>`;
+  };
+  /** Draws the sky into a screen made with App.skyHead, and brings its sheet's content in: as the opening show hands
+   * over (it covers the screen now), or on its own (first: true, a screen opened later); a redraw just stays. */
+  App.mountSky = function (host, first) {
+    const svg = host.querySelector('.skyhead .sky'), scr = host.classList.contains('skyscreen') ? host : host.querySelector('.skyscreen');
+    if (svg && root.Sky) { try { root.Sky.render(svg, scene()); } catch (e) { console.warn('sky', e); } }
+    if (!scr) return;
+    const I = root.Intro;
+    if (I && I.covering && I.covering()) {
+      scr.classList.add('await');
+      I.onLeave(() => { scr.classList.remove('await'); scr.classList.add('enter'); if (!I.full) scr.classList.add('solo'); setTimeout(() => scr.classList.add('entered'), 700); });
+    } else if (first) { scr.classList.add('enter', 'solo'); setTimeout(() => scr.classList.add('entered'), 700); }
+  };
+
   /* ---------------- signing in with an email link ---------------- */
   /** Asks for the email and sends the sign-in link. true when it was sent. */
   App.emailSignIn = async function () {
@@ -62,19 +94,19 @@
 
   /* ---------------- login screen ---------------- */
   App.showLogin = function (reason) {
+    if (App.rememberSky) App.rememberSky(); // the next opening comes to this screen
     const nav = document.getElementById('nav');
     nav.style.display = 'none';
     App.blocking = 'login';
     const v = document.getElementById('view');
-    let busy = false, failedLoad = false, blocked = false;
+    let busy = false, failedLoad = false, blocked = false, firstDraw = true;
     const draw = (msg, isErr) => {
       // the Google window may only open straight from the tap, so the button waits until Google is loaded
       const ready = Cloud.sdkReady();
       const label = busy ? 'מתחבר…' : !ready && !failedLoad ? 'רגע, מכינים את Google…' : 'התחברות עם Google';
-      v.innerHTML = `<div class="wizard login"><div class="content" style="display:flex;flex-direction:column;justify-content:center;text-align:center">
-        <div class="login-mascot">${App.mascot ? App.mascot(isErr ? 'think' : 'wave', { size: 110 }) : '<div class="brand-mark big" aria-hidden="true"></div>'}</div>
-        <h1 class="brand-name">Shaati</h1><div class="brand-sub">מעקב משמרות ושכר</div>
-        <p class="lead">מתחברים עם Google${root.AUTH_EMAIL_LINK ? ' או עם אימייל' : ''}, וכל מה שרשמת נשמר בחשבון שלך ומחכה לך בכל טלפון.</p>
+      v.innerHTML = `<div class="wizard login skyscreen">${App.skyHead()}<div class="w-sheet" style="text-align:center">
+        <h2 style="--i:0">כניסה לחשבון</h2>
+        <p class="lead" style="--i:1">מתחברים עם Google${root.AUTH_EMAIL_LINK ? ' או עם אימייל' : ''}, וכל מה שרשמת נשמר בחשבון שלך ומחכה לך בכל טלפון.</p>
         ${App.inAppBrowser() ? App.openInBrowserCard() : ''}
         ${S.shifts.length ? `<div class="banner" style="text-align:start">${icon('cloud')}<div>הנתונים שכבר יש בטלפון יעלו לחשבון שלך בהתחברות הראשונה.</div></div>` : ''}
         ${msg ? `<div class="banner ${isErr ? 'warn' : ''}" style="text-align:start">${icon(isErr ? 'alert' : 'info')}<div>${esc(msg)}</div></div>` : ''}
@@ -85,6 +117,8 @@
         <div class="tiny muted" style="margin-top:8px">בהתחברות את/ה מאשר/ת את ${App.legalLinks ? App.legalLinks() : 'תנאי השימוש ומדיניות הפרטיות'}.</div>
         <div class="tiny muted" style="margin-top:10px;line-height:1.6">${icon('shield', 's')} רק את/ה יכול/ה לראות את הנתונים שלך. האפליקציה עובדת גם בלי אינטרנט, ומסנכרנת כשהרשת חוזרת.</div>
         </div></div>`;
+      App.mountSky(v, firstDraw);
+      firstDraw = false;
       v.querySelector('[data-google]').onclick = () => go(false);
       const em = v.querySelector('[data-email]');
       if (em) em.onclick = async () => { if (await App.emailSignIn()) show('שלחנו קישור למייל. פותחים אותו בטלפון הזה כדי להתחבר 📬'); };

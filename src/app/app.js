@@ -194,7 +194,24 @@
   // has just sprung in, for nothing)
   let drawn = { tab: '', sig: '' };
   const sigOf = (html) => html.replace(/--ph:-\d+ms/g, '').replace(/ (tc-enter|ha-enter)\b/g, '');
+  /** The opening show runs before the database is open, so it keeps a small copy of what it shows (sky.js): the
+   * city (the sky and the land), the first name and which screen comes first. Written only when it changes. */
+  App.rememberSky = function () {
+    const Sky = root.Sky;
+    if (!Sky) return;
+    const st = S.settings, rest = st.rest || {};
+    let place = null;
+    try { const loc = root.HebCal.locationOf(rest); place = { name: rest.city === '__custom' ? '' : String(rest.city || ''), lat: +(+loc.lat).toFixed(3), lon: +(+loc.lon).toFixed(3) }; } catch (e) { /* the default city */ }
+    const mode = !st.onboarded ? 'welcome' : st.lock && st.lock.enabled ? 'lock' : S.meta.cloudUid || App.localOnly ? 'home' : 'welcome';
+    const next = { place, name: String(st.userName || '').slice(0, 40), mode };
+    const p = Sky.prefs();
+    if (JSON.stringify([p.place, p.name, p.mode]) === JSON.stringify([next.place, next.name, next.mode])) return;
+    Sky.remember(next);
+    // another city: its weather, for the next opening (once things are quiet)
+    if (p.place && next.place && p.place.name !== next.place.name) { clearTimeout(App.rememberSky.t); App.rememberSky.t = setTimeout(() => Sky.refreshWeather(), 1500); }
+  };
   App.render = function (opts) {
+    App.rememberSky();
     if (App.blocking) return; // a full-screen step (login / terms / setup wizard) owns the screen
     const v = document.getElementById('view');
     const fn = App.views[App.tab] || App.views.home;
@@ -696,17 +713,20 @@
   App.lock = function () {
     const L = S.settings.lock;
     if (!L.enabled || document.getElementById('lock')) return;
+    // the lock screen: the sky header greets by name (as the opening does), the keypad is on the sheet
     const el = document.createElement('div');
-    el.className = 'lock'; el.id = 'lock';
+    el.className = 'lock skyscreen'; el.id = 'lock';
+    el.innerHTML = `${App.skyHead({ who: true })}<div class="w-sheet lock-sheet"></div>`;
+    const body = el.querySelector('.lock-sheet');
     let pin = '';
     // unlocking fades the lock screen away (removed at once, it was a hard cut to the app)
     const unlock = () => { if (el.classList.contains('out')) return; el.classList.add('out'); setTimeout(() => el.remove(), 260); S.meta._unlockedAt = Date.now(); pinFails = 0; pinWaitUntil = 0; keepPinFails(); };
     const tryBio = async () => { try { if (await App.bio.verify(L.bioId)) unlock(); } catch (e) { /* cancelled: the code still works */ } };
     const draw = () => {
       const wait = Math.ceil((pinWaitUntil - Date.now()) / 1000);
-      el.innerHTML = `<div class="empty" style="padding:0"><div class="art">${icon('lock')}</div><h3>האפליקציה נעולה</h3><div>${wait > 0 ? `יותר מדי ניסיונות. נסה שוב בעוד ${wait} שניות` : 'הזן קוד'}</div></div>
-        <div class="pin-dots">${[0, 1, 2, 3, 4, 5, 6, 7].slice(0, Math.max(4, (L.len || 4))).map((i) => `<i class="${i < pin.length ? 'f' : ''}"></i>`).join('')}</div>
-        <div class="pin-pad">${[1, 2, 3, 4, 5, 6, 7, 8, 9, L.bioId ? 'bio' : '', 0, '⌫'].map((k) => k === '' ? '<span></span>' : k === 'bio' ? `<button data-bio aria-label="פתח בטביעת אצבע">${icon('finger')}</button>` : `<button data-k="${k}" ${wait > 0 ? 'disabled' : ''}>${k}</button>`).join('')}</div>`;
+      body.innerHTML = `<h2 style="--i:0">${icon('lock', 's')} האפליקציה נעולה</h2><div class="small muted lock-say" style="--i:0">${wait > 0 ? `יותר מדי ניסיונות. נסה שוב בעוד ${wait} שניות` : 'הזן קוד'}</div>
+        <div class="pin-dots" style="--i:1">${[0, 1, 2, 3, 4, 5, 6, 7].slice(0, Math.max(4, (L.len || 4))).map((i) => `<i class="${i < pin.length ? 'f' : ''}"></i>`).join('')}</div>
+        <div class="pin-pad" style="--i:2">${[1, 2, 3, 4, 5, 6, 7, 8, 9, L.bioId ? 'bio' : '', 0, '⌫'].map((k) => k === '' ? '<span></span>' : k === 'bio' ? `<button data-bio aria-label="פתח בטביעת אצבע">${icon('finger')}</button>` : `<button data-k="${k}" ${wait > 0 ? 'disabled' : ''}>${k}</button>`).join('')}</div>`;
       if (wait > 0) setTimeout(() => { if (el.isConnected) draw(); }, 1000);
       const bio = el.querySelector('[data-bio]');
       if (bio) bio.onclick = tryBio;
@@ -728,6 +748,7 @@
     };
     draw();
     document.body.appendChild(el);
+    if (App.mountSky) App.mountSky(el, true);
     if (L.bioId) setTimeout(tryBio, 300);
   };
   let hiddenAt = 0;
@@ -820,6 +841,8 @@
     App.applyTheme();
     App.recompute();
     registerSW(); // offline support from the very first visit, before onboarding
+    // the weather for the next opening's sky, asked once the show has gone (at most once an hour; the city only)
+    if (root.Sky) (root.Intro ? root.Intro.after : (fn, d) => setTimeout(fn, d))(() => root.Sky.refreshWeather(), 2500);
     if (S.settings.lock.enabled) App.lock();
     const params = new URLSearchParams(location.search);
     // opened from the Android app (Trusted Web Activity): remembered for this session

@@ -834,7 +834,7 @@ let errors = [];
     // the very first open asks for the language: Hebrew (this page's) goes on to the questions
     const picker = await p.waitForSelector('.lp-host.in', { timeout: 8000 }).then(() => true).catch(() => false);
     if (picker) { await p.evaluate(() => document.querySelector('.lp-card[data-lang="he"]').click()); await p.waitForFunction(() => !document.querySelector('.lp-host'), { timeout: 8000 }); }
-    await p.waitForSelector('.ob-welcome', { timeout: 8000 });
+    await p.waitForSelector('.skyscreen.step-hi', { timeout: 8000 });
     return { ctx, p, picker, e: (fn, ...a) => p.evaluate(fn, ...a), shot: (n) => p.screenshot({ path: path.join(out, n + '.png') }).catch(() => {}) };
   }
   const N = await newUserPage();
