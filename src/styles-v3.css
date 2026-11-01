@@ -418,6 +418,11 @@ body.fx .nav .fab:active { transform: scale(.9) rotate(90deg); }
 .ob-job-head { display: flex; align-items: center; gap: 8px; font-weight: 700; margin-bottom: 8px; min-height: 32px; }
 .ob-job-head .sw { width: 12px; height: 12px; border-radius: 50%; background: var(--c); }
 .ob-job-head .icon-btn { margin-inline-start: auto; width: 32px; height: 32px; }
+/* another workplace: its own block, with its name and its roles inside */
+.ob-place { border-top: 1px dashed var(--line); margin-top: 14px; padding-top: 14px; }
+.ob-place-head { display: flex; align-items: center; gap: 8px; font-weight: 700; margin-bottom: 8px; min-height: 32px; color: var(--primary); }
+.ob-place-head .icon-btn { margin-inline-start: auto; width: 32px; height: 32px; color: var(--on-surface-var); }
+.ob-add-place { width: 100%; margin-top: 10px; }
 .input.big-in { font-size: 1.25rem; min-height: 58px; text-align: center; border-radius: 16px; font-weight: 600; }
 .ob-q2 { font-weight: 700; margin: 2px 4px 8px; color: var(--on-surface-var); }
 .ob-pop { animation: ob-pop .4s var(--pop) both; }

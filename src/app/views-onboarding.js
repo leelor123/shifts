@@ -28,10 +28,13 @@
     const today = U.todayKey();
     const emp = Store.clone(S.employers[0]);
     const st = Store.clone(S.settings);
-    const existing = S.roles.filter((r) => !r.archived);
+    const existing = S.roles.filter((r) => !r.archived && (!r.employerId || r.employerId === emp.id));
+    const jobOf = (r) => ({ id: r.id, name: r.name, rate: Engine.roleRate(r, today) || '', color: r.color, rates: r.rates });
     const A = {
       name: st.userName || '', gender: st.gender || '', birth: st.birthDate || '', adult: false,
-      jobs: existing.length ? existing.map((r) => ({ id: r.id, name: r.name, rate: Engine.roleRate(r, today) || '', color: r.color, rates: r.rates })) : [{ id: 'r_' + U.uid(), name: '', rate: '', color: Defaults.ROLE_COLORS[0] }],
+      jobs: existing.length ? existing.map(jobOf) : [{ id: 'r_' + U.uid(), name: '', rate: '', color: Defaults.ROLE_COLORS[0] }],
+      // more workplaces, each with its own roles (a person who works in two places sets both up here)
+      more: S.employers.slice(1).map((e) => ({ id: e.id, name: e.name, jobs: S.roles.filter((r) => !r.archived && r.employerId === e.id).map(jobOf) })),
       travel: '', travelAmount: '', city: '', start: st.startDate || '', startPick: '',
       // the workplace's own name (empty while it is still the default one)
       empName: emp.name && emp.name !== Defaults.defaultEmployer().name ? emp.name : '',
@@ -50,6 +53,18 @@
     const why = (html) => `<div class="ob-why">${icon('info', 's')}<div>${html}</div></div>`;
     const chip = (attr, val, label, on) => `<button class="ob-chip ${on ? 'on' : ''}" ${attr}="${esc(val)}">${label}</button>`;
     const jobValid = () => A.jobs.filter((j) => j.name.trim() || +j.rate > 0);
+    const allJobs = () => [...A.jobs, ...A.more.flatMap((p) => p.jobs)];
+    const freeColor = () => { const used = new Set(allJobs().map((j) => j.color)); return Defaults.ROLE_COLORS.find((c) => !used.has(c)) || '#888'; };
+    /** one role: its name and its hourly rate (k: the other workplace's index, '' for the first) */
+    const jobCard = (j, i, n, k) => {
+      const at = (a) => (k === '' ? `data-${a}="${i}"` : `data-m${a}="${k}:${i}"`);
+      return `<div class="ob-job" style="--c:${j.color}">
+          <div class="ob-job-head"><span class="sw"></span>${n > 1 ? 'תפקיד ' + (i + 1) : k === '' ? 'התפקיד שלך' : 'התפקיד שלך שם'}${n > 1 ? `<button class="icon-btn sm" ${at('rx')} aria-label="הסר את התפקיד">${icon('x', 's')}</button>` : ''}</div>
+          <label class="field"><span class="lbl">שם התפקיד</span><input class="input" ${at('jn')} value="${esc(j.name)}" placeholder="למשל: קופאי, מלצרית, סדרן" maxlength="40" autocomplete="organization-title"></label>
+          <label class="field"><span class="lbl">כמה משלמים לך לשעה בתפקיד הזה? (₪)</span><input class="input" type="number" step="any" inputmode="decimal" ${at('jr')} value="${esc(j.rate)}" placeholder="${U.num(minWage(), 2)}">
+            <span class="hint">לא בטוח/ה? אפשר להשאיר ריק ונשים שכר מינימום${age() != null && age() < 18 ? ' לגילך' : ''}: ${U.money(minWage())} לשעה</span></label>
+        </div>`;
+    };
 
     const screens = {
       hi: () => `<div class="ob-welcome">
@@ -82,14 +97,15 @@
         <label class="field ob-emp"><span class="lbl">שם מקום העבודה</span><input class="input" id="ob-emp" value="${esc(A.empName)}" placeholder="למשל: סופר יוחננוף, קפה גרג" maxlength="40" autocomplete="organization"></label>
         <div class="ob-sub">ומה התפקיד שלך שם? אפשר לבחור מהרעיונות או לכתוב:</div>
         <div class="ob-chips small">${JOBS.map((j) => chip('data-jobname', j, j, A.jobs.some((x) => x.name === j))).join('')}</div>
-        ${A.jobs.map((j, i) => `<div class="ob-job" style="--c:${j.color}">
-          <div class="ob-job-head"><span class="sw"></span>${A.jobs.length > 1 ? 'תפקיד ' + (i + 1) : 'התפקיד שלך'}${A.jobs.length > 1 ? `<button class="icon-btn sm" data-rx="${i}" aria-label="הסר את התפקיד">${icon('x', 's')}</button>` : ''}</div>
-          <label class="field"><span class="lbl">שם התפקיד</span><input class="input" data-jn="${i}" value="${esc(j.name)}" placeholder="למשל: קופאי, מלצרית, סדרן" maxlength="40" autocomplete="organization-title"></label>
-          <label class="field"><span class="lbl">כמה משלמים לך לשעה בתפקיד הזה? (₪)</span><input class="input" type="number" step="any" inputmode="decimal" data-jr="${i}" value="${esc(j.rate)}" placeholder="${U.num(minWage(), 2)}">
-            <span class="hint">לא בטוח/ה? אפשר להשאיר ריק ונשים שכר מינימום${age() != null && age() < 18 ? ' לגילך' : ''}: ${U.money(minWage())} לשעה</span></label>
-        </div>`).join('')}
+        ${A.jobs.map((j, i) => jobCard(j, i, A.jobs.length, '')).join('')}
         ${A.jobs.length < 6 ? `<button class="btn text sm" data-jadd>${icon('plus', 's')} הוסף תפקיד באותו מקום עבודה</button>` : ''}
-        <div class="tiny muted ob-more-emp">עובד/ת גם במקום אחר? אפשר להוסיף מקום עבודה נוסף אחר כך, בהגדרות › העבודה שלי.</div>
+        ${A.more.map((p, k) => `<div class="ob-place">
+          <div class="ob-place-head">${icon('briefcase', 's')}<span>מקום עבודה ${k + 2}</span><button class="icon-btn sm" data-mx="${k}" aria-label="הסר את מקום העבודה">${icon('x', 's')}</button></div>
+          <label class="field"><span class="lbl">שם מקום העבודה</span><input class="input" data-mn="${k}" value="${esc(p.name)}" placeholder="למשל: מסעדה, חנות בגדים" maxlength="40" autocomplete="organization"></label>
+          ${p.jobs.map((j, i) => jobCard(j, i, p.jobs.length, k)).join('')}
+          ${p.jobs.length < 4 ? `<button class="btn text sm" data-mjadd="${k}">${icon('plus', 's')} הוסף תפקיד במקום הזה</button>` : ''}
+        </div>`).join('')}
+        ${A.more.length < 3 ? `<button class="btn tonal ob-add-place" data-madd>${icon('briefcase', 's')} ${A.more.length ? 'הוסף עוד מקום עבודה' : 'עובד/ת גם במקום אחר? הוסף מקום עבודה'}</button>` : ''}
         <div class="ob-live" id="ob-live-roles"></div>
         ${why('ככה נחשב כמה הרווחת בכל משמרת. אפשר לשנות ולהוסיף בכל רגע בהגדרות.')}`,
       travel: () => `${say(A.travel === 'yes' ? 'love' : 'happy', 'הרבה שוכחים את זה! 🚌')}
@@ -109,7 +125,7 @@
         <label class="field"><span class="lbl">או תאריך מדויק</span><input class="input" type="date" id="ob-start" value="${esc(A.startPick === 'exact' ? A.start : '')}" min="${A.birth ? U.addDays(A.birth, 365 * 12) : '1960-01-01'}" max="${today}" placeholder="בחירת תאריך"></label>
         ${why('לפי הוותק מגיעים ימי חופשה, דמי הבראה ופנסיה. לא בטוח/ה? אפשר לדלג ולהוסיף אחר כך.')}`,
       done: () => {
-        const jobs = finalJobs();
+        const jobs = [...finalJobs(), ...finalMore().flatMap((p) => p.jobs)];
         return `<div class="ob-done">
           ${App.mascot ? App.mascot(demo ? 'cool' : 'party', { size: 120, cls: 'hero' }) : ''}
           <h1>${demo ? 'הנתונים לדוגמה מוכנים!' : A.name ? `הכול מוכן, ${esc(A.name.split(' ')[0])}! 🎉` : 'הכול מוכן! 🎉'}</h1>
@@ -129,6 +145,15 @@
       const list = A.jobs.filter((j) => j.name.trim() || +j.rate > 0).map((j) => Object.assign({}, j, { name: j.name.trim() || 'העבודה שלי', rate: +j.rate > 0 ? +j.rate : minWage() }));
       return list.length ? list : [{ id: A.jobs[0].id, name: 'העבודה שלי', rate: minWage(), color: A.jobs[0].color }];
     }
+    /** the other workplaces as they will be saved: one with no name and no role is dropped */
+    function finalMore() {
+      return A.more.map((p, k) => {
+        const jobs = p.jobs.filter((j) => j.name.trim() || +j.rate > 0).map((j) => Object.assign({}, j, { name: j.name.trim() || 'העבודה שלי', rate: +j.rate > 0 ? +j.rate : minWage() }));
+        if (!p.name.trim() && !jobs.length) return null;
+        const first = p.jobs[0] || { id: 'r_' + U.uid(), color: freeColor() };
+        return { id: p.id, name: p.name.trim() || 'מקום עבודה ' + (k + 2), jobs: jobs.length ? jobs : [{ id: first.id, name: 'העבודה שלי', rate: minWage(), color: first.color }] };
+      }).filter(Boolean);
+    }
     function finalTravel() {
       if (A.travel === 'no') return 0;
       return +A.travelAmount > 0 ? +A.travelAmount : USUAL_TRAVEL;
@@ -143,6 +168,10 @@
         if (q('#ob-emp')) A.empName = q('#ob-emp').value.trim().slice(0, 40);
         v.querySelectorAll('[data-jn]').forEach((i) => (A.jobs[+i.dataset.jn].name = i.value.slice(0, 40)));
         v.querySelectorAll('[data-jr]').forEach((i) => { const n = UI.numIn(i); A.jobs[+i.dataset.jr].rate = n != null && n > 0 && n < 1000 ? n : ''; });
+        const at = (key) => { const [k, i] = key.split(':').map(Number); return A.more[k] && A.more[k].jobs[i]; };
+        v.querySelectorAll('[data-mn]').forEach((i) => { if (A.more[+i.dataset.mn]) A.more[+i.dataset.mn].name = i.value.slice(0, 40); });
+        v.querySelectorAll('[data-mjn]').forEach((i) => { const j = at(i.dataset.mjn); if (j) j.name = i.value.slice(0, 40); });
+        v.querySelectorAll('[data-mjr]').forEach((i) => { const j = at(i.dataset.mjr), n = UI.numIn(i); if (j) j.rate = n != null && n > 0 && n < 1000 ? n : ''; });
       }
       if (key === 'travel' && q('#ob-travel')) { const n = UI.numIn(q('#ob-travel')); A.travelAmount = n != null && n >= 0 && n < 500 ? n : ''; }
       if (key === 'start' && q('#ob-start') && q('#ob-start').value) { A.start = q('#ob-start').value; A.startPick = 'exact'; }
@@ -212,7 +241,7 @@
     function go(next) {
       read();
       // forward only with clean words (the name, the workplace, the roles)
-      if (next > step && !App.ensureClean(A.name, A.empName, ...A.jobs.map((j) => j.name))) return;
+      if (next > step && !App.ensureClean(A.name, A.empName, ...allJobs().map((j) => j.name), ...A.more.map((p) => p.name))) return;
       dir = next > step ? 'next' : 'prev';
       step = Math.max(0, Math.min(STEPS.length - 1, next));
       draw();
@@ -239,7 +268,20 @@
         rates[rates.length - 1] = Object.assign({}, rates[rates.length - 1], { rate: j.rate });
         ops.push({ store: 'roles', put: { id: j.id || 'r_' + U.uid(), name: j.name, color: j.color || Defaults.ROLE_COLORS[i % Defaults.ROLE_COLORS.length], employerId: emp.id, rates, archived: false } });
       });
-      S.roles.filter((r) => !jobs.some((x) => x.id === r.id)).forEach((r) => ops.push({ store: 'roles', del: r.id }));
+      // the other workplaces: each an employer of its own, with the same travel answer
+      const more = withDemo ? [] : finalMore();
+      more.forEach((p) => {
+        const e = Object.assign(Store.clone(S.employers.find((x) => x.id === p.id) || Defaults.defaultEmployer(p.id)), { name: p.name, travelPerDay: finalTravel() });
+        ops.push({ store: 'employers', put: e });
+        p.jobs.forEach((j) => {
+          const rates = j.rates && j.rates.length ? j.rates.slice().sort((x, y) => x.from.localeCompare(y.from)) : [{ from: '2000-01-01', rate: j.rate }];
+          rates[rates.length - 1] = Object.assign({}, rates[rates.length - 1], { rate: j.rate });
+          ops.push({ store: 'roles', put: { id: j.id || 'r_' + U.uid(), name: j.name, color: j.color, employerId: e.id, rates, archived: false } });
+        });
+      });
+      const kept = [...jobs, ...more.flatMap((p) => p.jobs)];
+      S.roles.filter((r) => !kept.some((x) => x.id === r.id)).forEach((r) => ops.push({ store: 'roles', del: r.id }));
+      S.employers.filter((e) => e.id !== emp.id && !more.some((p) => p.id === e.id)).forEach((e) => ops.push({ store: 'employers', del: e.id }));
       st.userName = A.name;
       st.gender = A.gender === 'm' || A.gender === 'f' ? A.gender : '';
       if (st.gender === 'f') st.tax.creditPoints = 2.75; else if (st.gender === 'm') st.tax.creditPoints = 2.25;
@@ -350,10 +392,18 @@
         if (rate && !rate.value) rate.focus();
       } else if (b.hasAttribute('data-jadd')) {
         read();
-        const used = new Set(A.jobs.map((j) => j.color));
-        A.jobs.push({ id: 'r_' + U.uid(), name: '', rate: '', color: Defaults.ROLE_COLORS.find((c) => !used.has(c)) || '#888' });
+        A.jobs.push({ id: 'r_' + U.uid(), name: '', rate: '', color: freeColor() });
         draw();
       } else if (b.dataset.rx != null) { read(); A.jobs.splice(+b.dataset.rx, 1); draw(); }
+      else if (b.hasAttribute('data-madd')) {
+        read();
+        A.more.push({ id: 'emp_' + U.uid(), name: '', jobs: [{ id: 'r_' + U.uid(), name: '', rate: '', color: freeColor() }] });
+        draw();
+        const n = v.querySelector('[data-mn="' + (A.more.length - 1) + '"]');
+        if (n) { n.scrollIntoView({ block: 'center' }); n.focus({ preventScroll: true }); }
+      } else if (b.dataset.mx != null) { read(); A.more.splice(+b.dataset.mx, 1); draw(); }
+      else if (b.dataset.mjadd != null) { read(); A.more[+b.dataset.mjadd].jobs.push({ id: 'r_' + U.uid(), name: '', rate: '', color: freeColor() }); draw(); }
+      else if (b.dataset.mrx != null) { read(); const [k, i] = b.dataset.mrx.split(':').map(Number); A.more[k].jobs.splice(i, 1); draw(); }
       else if (b.dataset.travel) {
         read(); A.travel = b.dataset.travel; draw(); if (fx) fx.play('on');
         if (A.travel === 'yes') { const t = v.querySelector('#ob-travel'); if (t) t.focus(); } else autoNext();
