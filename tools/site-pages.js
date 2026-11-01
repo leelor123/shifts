@@ -23,7 +23,16 @@ for (const f of fs.readdirSync(path.join(ROOT, 'src', 'fonts'))) if (f.endsWith(
   const h = fs.readFileSync(home, 'utf8');
   const was = h.includes('<style id="fonts">') ? /<link rel="preload" href="fonts\/rubik-hebrew[\s\S]*?<style id="fonts">[\s\S]*?<\/style>/ : /<link rel="preconnect" href="https:\/\/fonts\.googleapis\.com">[\s\S]*?display=swap">/;
   if (!was.test(h)) throw new Error('site/index.html: the font block was not found');
-  fs.writeFileSync(home, h.replace(was, () => FONT_HEAD));
+  let out = h.replace(was, () => FONT_HEAD);
+  // its questions and answers, also as FAQPage data (search engines and AI answers read them; hebrew-seo-geo-toolkit),
+  // taken from the page's own <details> every run so the two never differ
+  const text = (x) => x.replace(/<[^>]+>/g, '').replace(/\s+/g, ' ').trim();
+  const qa = [...out.matchAll(/<details><summary>([\s\S]*?)<\/summary>([\s\S]*?)<\/details>/g)].map((m) => ({ '@type': 'Question', name: text(m[1]), acceptedAnswer: { '@type': 'Answer', text: text(m[2]) } }));
+  if (qa.length < 3) throw new Error('site/index.html: the questions were not found');
+  const ld = `<script type="application/ld+json" id="faq-ld">${JSON.stringify({ '@context': 'https://schema.org', '@type': 'FAQPage', mainEntity: qa })}</script>`;
+  out = out.includes('id="faq-ld"') ? out.replace(/<script type="application\/ld\+json" id="faq-ld">[\s\S]*?<\/script>/, () => ld) : out.replace('<style>\n', () => ld + '\n<style>\n');
+  if (!out.includes('id="faq-ld"')) throw new Error('site/index.html: the FAQ data was not placed');
+  fs.writeFileSync(home, out);
 }
 const APP = 'https://leelor123.github.io/shifts/';
 // the official sources (as in the app's rights screen, views-rights.js GOV)

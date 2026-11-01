@@ -828,8 +828,6 @@ html, body { overscroll-behavior-y: contain; }
 @keyframes ptr-pop { 50% { scale: 1.18; } }
 
 /* ---- small moments ---- */
-body.fx .first .wave { display: inline-block; transform-origin: 70% 80%; animation: fx-wave 1.6s ease-in-out .2s 1; }
-@keyframes fx-wave { 0%, 60%, 100% { transform: rotate(0); } 10%, 30% { transform: rotate(14deg); } 20% { transform: rotate(-8deg); } 40% { transform: rotate(-4deg); } 50% { transform: rotate(10deg); } }
 body.fx .first .progress i, body.fx .first .progress b { animation: fx-fill .9s cubic-bezier(.2, .8, .3, 1) both; transform-origin: right; }
 @keyframes fx-fill { from { transform: scaleX(0); } }
 body.fx .first .dot-badge { animation: fx-badge .5s cubic-bezier(.34, 1.56, .64, 1) .3s both; }

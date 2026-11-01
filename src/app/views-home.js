@@ -334,7 +334,7 @@
     const name = S.settings.userName ? ', ' + esc(String(S.settings.userName).split(' ')[0]) : '';
     const date = U.fmtDate(today, 'long').replace(/\s\d{4}$/, '');
     return `
-      <div class="home-top"><div class="titles"><h1>${greeting()}${name} <span class="wave">👋</span></h1>
+      <div class="home-top"><div class="titles"><h1>${greeting()}${name}</h1>
         <div class="sub">${root.Plus && root.Plus.owned() ? '<span class="plus-badge">Plus ✨</span>' : ''}${date}${HS.hebDate !== false ? `${hd.dayStr ? ' · ' + esc(hd.toString().replace(/\s\S+$/, '')) : ''}${hol ? ' · ' + esc(hol) : ''}` : ''}</div></div>
         <span id="sync-dot">${App.syncDot ? App.syncDot() : ''}</span>
         <button class="icon-btn" data-act="support" aria-label="עזרה ותמיכה">${icon('help')}</button>

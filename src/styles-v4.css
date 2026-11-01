@@ -56,7 +56,6 @@
 /* type: one family, tight headings */
 h1, h2, .home-top h1, .wizard h1, .sheet .sh-head h2 { font-family: var(--font); letter-spacing: -.025em; }
 .home-top h1 { font-weight: 700; }
-.home-top .wave { display: none; }
 
 /* cards: flat and grouped, a hairline instead of a shadow */
 .card, .sc, .home-list, .highlight, .banner.slim, .list .item, .set-cat { box-shadow: none; }
@@ -107,3 +106,11 @@ body.fx .btn:active, body.fx .chip:active, body.fx .sc:active, body.fx .am-tile:
 .hh-dial::before { background: conic-gradient(from 0deg, transparent 0 290deg, rgba(233, 201, 135, .15) 320deg, rgba(233, 201, 135, .95) 359deg, transparent 360deg); }
 /* the empty home: its title is the page's second level (a real h2), drawn as before */
 .empty h2.h3 { font-size: 1.17em; margin: 0 0 6px; color: var(--on-surface); letter-spacing: normal; }
+
+/* the payslip check: the state is told by a drawn icon in its colour, not an emoji or a thick side stripe */
+.finding { border-inline-start: 1px solid var(--line); border: 1px solid var(--line); }
+.finding .fi { display: inline-grid; flex: none; }
+.finding.ok .fi, .status-summary .ok svg, .ps-c.ok svg { color: var(--good-mark); }
+.finding.warn .fi, .status-summary .warn svg, .ps-c.warn svg { color: var(--warn-mark); }
+.finding.bad .fi, .status-summary .bad svg, .ps-c.bad svg { color: var(--bad-mark); }
+.ps-c { display: inline-flex; align-items: center; gap: 3px; white-space: nowrap; }

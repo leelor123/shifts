@@ -198,7 +198,7 @@
       + (r.weekOtMin > 0 ? ` · ${U.hm(r.weekOtMin)} מהן נוספות כי עברת ${r.weekH || 42} שעות רגילות השבוע` : '') + (r.minorOt ? ' · לפי חוק עבודת הנוער' : ''));
     const wins = r.restLabels.length ? r.slices.filter((s) => s.autoRest) : [];
     if (r.autoRestMin > 0) notes.push(`חלון ${esc(r.restLabels.join(', ') || 'שבת/חג')} במשמרת: ⁦${U.epochHM(wins[0].a)}\u2060–\u2060${U.epochHM(wins[wins.length - 1].b)}⁩ (${S.settings.rest.mode === 'city' ? 'לפי ' + esc(S.settings.rest.city === '__custom' ? 'מיקום מותאם' : App.placeLabel(S.settings.rest.city).name).replace(/-/g, '-⁠') : 'שעות קבועות'})`);
-    if (r.warnings.length) notes.push('⚠️ ' + r.warnings.join(', '));
+    if (r.warnings.length) notes.push(icon('alert', 's') + ' ' + r.warnings.join(', '));
     return `<table class="bd">${rows}</table><div class="tiny muted" style="margin-top:8px">${notes.map((n) => '• ' + n).join('<br>')}</div>`;
   };
 

@@ -376,7 +376,7 @@
   App.payslipVerify = verifySheet; // tests open it with a ready draft
 
   /* ---------------- analysis ---------------- */
-  const STATUS = { ok: ['okc', 'תקין', '✅'], warn: ['alert', 'כדאי לבדוק', '⚠️'], bad: ['xc', 'חסר או שגוי', '❌'] };
+  const STATUS = { ok: ['okc', 'תקין'], warn: ['alert', 'כדאי לבדוק'], bad: ['xc', 'חסר או שגוי'] };
   const CONF = { high: 'ביטחון גבוה', medium: 'ביטחון בינוני', low: 'ביטחון נמוך' };
   function prevSlipOf(period, id) {
     return S.payslips.filter((p) => p.period < period && p.id !== id).sort((a, b) => b.period.localeCompare(a.period))[0];
@@ -391,12 +391,12 @@
     const msg = Payslip.employerMessage(a, { name: S.settings.userName || '' });
     const order = { bad: 0, warn: 1, ok: 2 };
     return `
-      <div class="status-summary"><div class="ok">✅ ${counts.ok}<div class="tiny">תקין</div></div><div class="warn">⚠️ ${counts.warn}<div class="tiny">לבדוק</div></div><div class="bad">❌ ${counts.bad}<div class="tiny">חסר/שגוי</div></div></div>
-      ${a.totalMissing > 0 ? `<div class="card tonal"><div class="small">הפרש משוער לטובתך</div><div class="hero-num">${money(a.totalMissing)}</div><div class="tiny">סכום הממצאים המסומנים ❌. בדוק את הפירוט לפני פנייה למעסיק.</div><button class="btn tonal sm found-share" data-act="found-share" data-amount="${Math.round(a.totalMissing)}" data-k="found">${icon('share', 's')} שתף: שעתי מצאה לי ${money(a.totalMissing, 0)}</button></div>` : counts.bad === 0 ? `<div class="card tonal"><b>${icon('okc', 's')} לא נמצאו חוסרים</b><div class="small">התלוש תואם למשמרות שרשמת${counts.warn ? ', עם כמה נקודות לבדיקה' : ''}.</div></div>` : ''}
+      <div class="status-summary"><div class="ok">${icon('okc', 's')} ${counts.ok}<div class="tiny">תקין</div></div><div class="warn">${icon('alert', 's')} ${counts.warn}<div class="tiny">לבדוק</div></div><div class="bad">${icon('xc', 's')} ${counts.bad}<div class="tiny">חסר/שגוי</div></div></div>
+      ${a.totalMissing > 0 ? `<div class="card tonal"><div class="small">הפרש משוער לטובתך</div><div class="hero-num">${money(a.totalMissing)}</div><div class="tiny">סכום הממצאים המסומנים ${icon('xc', 's')}. בדוק את הפירוט לפני פנייה למעסיק.</div><button class="btn tonal sm found-share" data-act="found-share" data-amount="${Math.round(a.totalMissing)}" data-k="found">${icon('share', 's')} שתף: שעתי מצאה לי ${money(a.totalMissing, 0)}</button></div>` : counts.bad === 0 ? `<div class="card tonal"><b>${icon('okc', 's')} לא נמצאו חוסרים</b><div class="small">התלוש תואם למשמרות שרשמת${counts.warn ? ', עם כמה נקודות לבדיקה' : ''}.</div></div>` : ''}
       ${a.overridesInPeriod ? `<div class="banner warn">${icon('hand')}<div>${a.overridesInPeriod} משמרות בתקופה כוללות עקיפה ידנית. ממצאים שנובעים מהן מסומנים.</div></div>` : ''}
       <div class="small muted" style="margin:0 4px 10px">תקופה: ⁦${U.fmtDate(a.expected.P.from)}\u2060–\u2060${U.fmtDate(a.expected.P.to)}⁩ · ${a.expected.shifts.length} משמרות · ${U.hours(a.expected.t.hours)} ש׳</div>
       ${a.findings.slice().sort((x, y) => order[x.status] - order[y.status]).map((f) => `<div class="finding ${f.status}">
-        <div class="ft"><span>${STATUS[f.status][2]}</span><span>${esc(f.area)} · ${esc(f.title)}</span>${f.amount > 0 && f.status !== 'ok' ? `<span class="amt">${U.money(f.amount)}</span>` : ''}</div>
+        <div class="ft"><span class="fi">${icon(STATUS[f.status][0], 's')}</span><span>${esc(f.area)} · ${esc(f.title)}</span>${f.amount > 0 && f.status !== 'ok' ? `<span class="amt">${U.money(f.amount)}</span>` : ''}</div>
         <div class="fd">${esc(f.detail)}</div>
         ${f.fromOverride ? `<div class="fd" style="color:var(--override)">${icon('hand', 's')} ${esc(f.fromOverride)}</div>` : ''}
         ${f.note ? `<div class="fd small">${icon('info', 's')} ${esc(f.note)}</div>` : ''}
@@ -538,7 +538,7 @@
         <div class="tiny muted">גובה העמודה = ברוטו. ${trend.length} תלושים אחרונים.</div></div>` : ''}
       <div class="section-title">${icon('receipt', 's')} ארכיון תלושים</div>
       ${slips.length ? `<div class="list">${slips.map((p) => { const c = (p.summary && p.summary.counts) || {}; return `<button class="item" data-act="payslip-open" data-id="${p.id}"><span class="lead" style="background:var(--surface-3)">${icon('receipt')}</span>
-        <span class="body"><span class="t">${U.fmtMonth(p.period)}</span><span class="s">${c.bad ? `❌ ${c.bad} ` : ''}${c.warn ? `⚠️ ${c.warn} ` : ''}${c.ok ? `✅ ${c.ok}` : ''}${p.source === 'ai' ? ' · AI' : ''}</span></span>
+        <span class="body"><span class="t">${U.fmtMonth(p.period)}</span><span class="s">${c.bad ? `<span class="ps-c bad">${icon('xc', 's')} ${c.bad}</span> ` : ''}${c.warn ? `<span class="ps-c warn">${icon('alert', 's')} ${c.warn}</span> ` : ''}${c.ok ? `<span class="ps-c ok">${icon('okc', 's')} ${c.ok}</span>` : ''}${p.source === 'ai' ? ' · AI' : ''}</span></span>
         <span class="trail"><span class="a">${p.fields.net ? money(p.fields.net.value, 0) : '—'}</span><br><span class="tiny muted">נטו</span></span></button>`; }).join('')}</div>`
         : UI.emptyState('receipt', 'עוד אין תלושים', 'העלה תלוש כדי לבדוק שקיבלת את כל מה שמגיע לך: שעות, שבתות, נסיעות, פנסיה ועוד.')}
       ${DISCLAIMER}`;

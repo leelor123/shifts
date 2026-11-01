@@ -7658,7 +7658,7 @@
   ]
  },
  {
-  "key": "\n      <div class=\"home-top\"><div class=\"titles\"><h1>{0}{1} <span class=\"wave\">👋</span></h1>\n        <div class=\"sub\">{2}{3}{4}</div></div>\n        <span id=\"sync-dot\">{5}</span>\n        <button class=\"icon-btn\" data-act=\"support\" aria-label=\"עזרה ותמיכה\">{6}</button>\n        <button class=\"icon-btn\" data-act=\"insights\" aria-label=\"התראות ותובנות\">{7}{8}</button></div>\n      {9}\n      {10}\n      {11}\n      {12}\n      {13}\n      {14}\n      {15}\n      {16}\n      {17}\n      {18}\n      {19}\n      {20}\n      {21}\n      {22}\n      {23}\n    ",
+  "key": "\n      <div class=\"home-top\"><div class=\"titles\"><h1>{0}{1}</h1>\n        <div class=\"sub\">{2}{3}{4}</div></div>\n        <span id=\"sync-dot\">{5}</span>\n        <button class=\"icon-btn\" data-act=\"support\" aria-label=\"עזרה ותמיכה\">{6}</button>\n        <button class=\"icon-btn\" data-act=\"insights\" aria-label=\"התראות ותובנות\">{7}{8}</button></div>\n      {9}\n      {10}\n      {11}\n      {12}\n      {13}\n      {14}\n      {15}\n      {16}\n      {17}\n      {18}\n      {19}\n      {20}\n      {21}\n      {22}\n      {23}\n    ",
   "kind": "tpl",
   "where": [
    "app/views-home.js:336"
@@ -9980,14 +9980,14 @@
   ]
  },
  {
-  "key": "\n      <div class=\"status-summary\"><div class=\"ok\">✅ {0}<div class=\"tiny\">תקין</div></div><div class=\"warn\">⚠️ {1}<div class=\"tiny\">לבדוק</div></div><div class=\"bad\">❌ {2}<div class=\"tiny\">חסר/שגוי</div></div></div>\n      {3}\n      {4}\n      <div class=\"small muted\" style=\"margin:0 4px 10px\">תקופה: ⁦{5}⁠–⁠{6}⁩ · {7} משמרות · {8} ש׳</div>\n      {9}\n      {10}\n      {11}\n      {12}\n      <div class=\"section-title\">{13} הסבר לכל שורה</div>\n      <div class=\"list\">{14}</div>\n      {15}",
+  "key": "\n      <div class=\"status-summary\"><div class=\"ok\">{0} {1}<div class=\"tiny\">תקין</div></div><div class=\"warn\">{2} {3}<div class=\"tiny\">לבדוק</div></div><div class=\"bad\">{4} {5}<div class=\"tiny\">חסר/שגוי</div></div></div>\n      {6}\n      {7}\n      <div class=\"small muted\" style=\"margin:0 4px 10px\">תקופה: ⁦{8}⁠–⁠{9}⁩ · {10} משמרות · {11} ש׳</div>\n      {12}\n      {13}\n      {14}\n      {15}\n      <div class=\"section-title\">{16} הסבר לכל שורה</div>\n      <div class=\"list\">{17}</div>\n      {18}",
   "kind": "tpl",
   "where": [
    "app/views-payslip.js:393"
   ]
  },
  {
-  "key": "<div class=\"card tonal\"><div class=\"small\">הפרש משוער לטובתך</div><div class=\"hero-num\">{0}</div><div class=\"tiny\">סכום הממצאים המסומנים ❌. בדוק את הפירוט לפני פנייה למעסיק.</div><button class=\"btn tonal sm found-share\" data-act=\"found-share\" data-amount=\"{1}\" data-k=\"found\">{2} שתף: שעתי מצאה לי {3}</button></div>",
+  "key": "<div class=\"card tonal\"><div class=\"small\">הפרש משוער לטובתך</div><div class=\"hero-num\">{0}</div><div class=\"tiny\">סכום הממצאים המסומנים {1}. בדוק את הפירוט לפני פנייה למעסיק.</div><button class=\"btn tonal sm found-share\" data-act=\"found-share\" data-amount=\"{2}\" data-k=\"found\">{3} שתף: שעתי מצאה לי {4}</button></div>",
   "kind": "tpl",
   "where": [
    "app/views-payslip.js:395"
@@ -10015,7 +10015,7 @@
   ]
  },
  {
-  "key": "<div class=\"finding {0}\">\n        <div class=\"ft\"><span>{1}</span><span>{2} · {3}</span>{4}</div>\n        <div class=\"fd\">{5}</div>\n        {6}\n        {7}\n        {8}\n        <div class=\"fb\">על מה זה מבוסס: {9} · <span class=\"conf {10}\">{11}</span></div></div>",
+  "key": "<div class=\"finding {0}\">\n        <div class=\"ft\"><span class=\"fi\">{1}</span><span>{2} · {3}</span>{4}</div>\n        <div class=\"fd\">{5}</div>\n        {6}\n        {7}\n        {8}\n        <div class=\"fb\">על מה זה מבוסס: {9} · <span class=\"conf {10}\">{11}</span></div></div>",
   "kind": "tpl",
   "where": [
    "app/views-payslip.js:398"
