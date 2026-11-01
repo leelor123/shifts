@@ -5,7 +5,7 @@
  * background and activates when the user taps "עדכן".
  * IndexedDB data is never touched by updates.
  * ============================================================ */
-const VERSION = '1.29.0-caea4573';
+const VERSION = '1.29.0-ed7ca892';
 const SHELL = 'shiftpay-shell-' + VERSION;
 const RUNTIME = 'shiftpay-runtime-v1';
 const FONTS = ['rubik-hebrew', 'rubik-latin', 'rubik-latin-ext', 'rubik-arabic', 'rubik-cyrillic', 'rubik-cyrillic-ext', 'fredoka-hebrew', 'fredoka-latin', 'fredoka-latin-ext'].map((f) => './fonts/' + f + '.woff2');
@@ -115,6 +115,9 @@ self.addEventListener('fetch', (e) => {
   if (url.origin === self.location.origin) {
     e.respondWith(caches.match(req, { ignoreSearch: true }).then((c) => c || fetch(req).then((res) => {
       if (res.ok && url.pathname.includes('/fonts/')) { const copy = res.clone(); caches.open(RUNTIME).then((k) => k.put(req, copy)).catch(() => {}); }
+      // a page's code file (app.<lang>.<build>.js) is kept with the version's pages, whatever language it is: a page held here
+      // must always find its own code (a language chosen after the install was not kept, and the server has a newer one)
+      else if (res.ok && /\/app[.][a-z]{2}[.][0-9a-f]+[.]js$/.test(url.pathname)) { const copy = res.clone(); caches.open(SHELL).then((k) => k.put(req, copy)).catch(() => {}); }
       return res;
     })));
     return;

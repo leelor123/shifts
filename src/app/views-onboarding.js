@@ -409,8 +409,12 @@
         if (end <= start) end = U.toEpoch(U.addDays(date, 1), to);
         return Object.assign({ id: 'demo_' + U.uid(), kind: 'shift', employerId: emp.id, roleId, status: 'done', start, end, splits: [], breakMin: 0, breakPaid: true, noTravel: false, items: [], note: '', demo: true }, extra || {});
       };
+      // nobody works on Yom Kippur (the whole country stops): a demo shift on it read as a mistake, and the holiday-pay
+      // check then saw the holiday as worked. Shabbat and the other holidays stay: ushers and waiters work them
+      const yk = new Set([0, 1].flatMap((d) => root.HebCal ? HebCal.holidaysForYear(+today.slice(0, 4) - d) : []).filter((h) => h.id === 'yk').map((h) => h.key));
       for (let i = 125; i >= 1; i--) {
         const k = U.addDays(today, -i);
+        if (yk.has(k)) continue;
         const dw = U.dow(k);
         const p = R();
         if (dw === 6 && p < 0.45) ops.push(mk(k, '10:00', R() < 0.5 ? '19:00' : '17:00', R() < 0.6 ? sadran : miznon));
