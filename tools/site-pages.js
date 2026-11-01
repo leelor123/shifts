@@ -276,8 +276,8 @@ const PAGES = [
 
 /* ---------------- the page ---------------- */
 const CSS = `
-:root { --bg: #f7f5ff; --surface: #fff; --surface-2: #f0ecff; --ink: #1b1530; --ink-2: #5d5677; --line: #e5e0f5; --brand: #5a33e6; --brand-2: #7c4dff; --gold: #ffb020; --cta-1: #5a33e6; --cta-2: #7c4dff; color-scheme: light; }
-@media (prefers-color-scheme: dark) { :root { --bg: #0e0b1a; --surface: #17132a; --surface-2: #211b3a; --ink: #f1edff; --ink-2: #b6aed3; --line: #2c2548; --brand: #9b7dff; --brand-2: #b39cff; color-scheme: dark; } }
+:root { --bg: #f6f4ee; --surface: #fff; --surface-2: #efece4; --ink: #141821; --ink-2: #5b5f6d; --line: rgba(20, 24, 33, .1); --brand: #0d2b6b; --brand-2: #1b3f8c; --gold: #c99a3b; --cta-1: #1b3f8c; --cta-2: #0d2b6b; color-scheme: light; }
+@media (prefers-color-scheme: dark) { :root { --bg: #0e1118; --surface: #161a24; --surface-2: #1b2030; --ink: #eceef4; --ink-2: #a5a9b8; --line: rgba(255, 255, 255, .09); --brand: #a9c0f2; --brand-2: #c3d3f7; color-scheme: dark; } }
 * { box-sizing: border-box; }
 [hidden] { display: none !important; } /* (a rule that sets display would show what is hidden) */
 body { margin: 0; background: var(--bg); color: var(--ink); font: 400 1.05rem/1.7 Rubik, system-ui, sans-serif; overflow-wrap: break-word; }
@@ -291,8 +291,8 @@ main { max-width: 760px; margin: 0 auto; padding: 28px max(16px, env(safe-area-i
 nav.crumbs { font-size: .9rem; color: var(--ink-2); margin-bottom: 10px; }
 h1 { font: 700 clamp(1.7rem, 5vw, 2.4rem)/1.25 Fredoka, Rubik, sans-serif; margin: 0 0 16px; text-wrap: balance; }
 h2 { font: 700 1.35rem/1.35 Fredoka, Rubik, sans-serif; margin: 34px 0 10px; text-wrap: balance; }
-.answer { background: var(--surface); border-radius: 20px; padding: 18px 20px; box-shadow: 0 6px 24px rgba(40, 20, 120, .08); border-inline-start: 5px solid var(--gold); font-size: 1.12rem; }
-.tbl { overflow-x: auto; background: var(--surface); border-radius: 18px; box-shadow: 0 6px 24px rgba(40, 20, 120, .06); }
+.answer { background: var(--surface); border-radius: 20px; padding: 18px 20px; box-shadow: 0 6px 24px rgba(10, 20, 45, .08); border: 1px solid var(--line); font-size: 1.12rem; }
+.tbl { overflow-x: auto; background: var(--surface); border-radius: 18px; box-shadow: 0 6px 24px rgba(10, 20, 45, .06); }
 table { width: 100%; border-collapse: collapse; }
 th, td { padding: 11px 10px; text-align: start; border-bottom: 1px solid var(--line); }
 td { white-space: nowrap; }
@@ -310,7 +310,7 @@ details p { margin: 8px 0 0; color: var(--ink-2); }
 .src, .note { font-size: .92rem; color: var(--ink-2); }
 .note { margin-top: 26px; padding: 14px 16px; border: 1px dashed var(--line); border-radius: 14px; }
 .more { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 10px; }
-.more a { background: var(--surface); border-radius: 999px; padding: 8px 14px; text-decoration: none; box-shadow: 0 2px 10px rgba(40, 20, 120, .06); }
+.more a { background: var(--surface); border-radius: 999px; padding: 8px 14px; text-decoration: none; box-shadow: 0 2px 10px rgba(10, 20, 45, .06); }
 footer { text-align: center; color: var(--ink-2); font-size: .9rem; padding: 0 16px 32px; }`;
 
 function page(p) {
@@ -328,7 +328,8 @@ function page(p) {
 <title>${esc(p.title)} · שעתי</title>
 <meta name="description" content="${esc(p.desc)}">
 <link rel="canonical" href="${url}">
-<meta name="theme-color" content="#5a33e6">
+<meta name="theme-color" media="(prefers-color-scheme: light)" content="#f6f4ee">
+<meta name="theme-color" media="(prefers-color-scheme: dark)" content="#0e1118">
 <meta property="og:type" content="article">
 <meta property="og:locale" content="he_IL">
 <meta property="og:site_name" content="שעתי">
@@ -366,7 +367,7 @@ ${FONT_HEAD}
 /* ---------------- the 10-second check: "are they cheating you?" ---------------- */
 const CHECK = { slug: 'check', title: 'מרמים אותך? בדיקה של 10 שניות', desc: `מכניסים גיל ושכר לשעה, ורואים אם משלמים לך לפי החוק (${mwYear}): שכר מינימום לנוער ולמבוגרים, ושבת ב-${REST[0]}%. בלי הרשמה, שום דבר לא נשלח.` };
 const CHECK_CSS = `
-.ck { background: var(--surface); border-radius: 22px; padding: 18px; box-shadow: 0 6px 24px rgba(40, 20, 120, .08); display: grid; gap: 16px; }
+.ck { background: var(--surface); border-radius: 22px; padding: 18px; box-shadow: 0 6px 24px rgba(10, 20, 45, .08); display: grid; gap: 16px; }
 .ck label, .ck .q { font-weight: 600; display: grid; gap: 8px; }
 .ages { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 8px; }
 .ages button { font: 600 1rem Rubik, sans-serif; border: 1.5px solid var(--line); background: var(--bg); color: var(--ink); border-radius: 14px; padding: 12px 4px; cursor: pointer; }
@@ -396,7 +397,8 @@ function checkPage() {
 <title>${esc(CHECK.title)} · שעתי</title>
 <meta name="description" content="${esc(CHECK.desc)}">
 <link rel="canonical" href="${url}">
-<meta name="theme-color" content="#5a33e6">
+<meta name="theme-color" media="(prefers-color-scheme: light)" content="#f6f4ee">
+<meta name="theme-color" media="(prefers-color-scheme: dark)" content="#0e1118">
 <meta property="og:type" content="website">
 <meta property="og:locale" content="he_IL">
 <meta property="og:site_name" content="שעתי">
