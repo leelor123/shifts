@@ -19,9 +19,17 @@
 <meta name="twitter:card" content="summary_large_image">
 <link rel="icon" href="img/favicon-48.png" sizes="48x48">
 <link rel="apple-touch-icon" href="img/apple-touch-icon.png">
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Rubik:wght@400..800&family=Fredoka:wght@500..700&display=swap">
+<link rel="preload" href="fonts/rubik-hebrew.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="preload" href="fonts/rubik-latin.woff2" as="font" type="font/woff2" crossorigin>
+<style id="fonts">@font-face{font-family: 'Fredoka'; font-style: normal; font-weight: 500 700; font-stretch: 100%; font-display: swap; src: url(fonts/fredoka-hebrew.woff2) format('woff2'); unicode-range: U+0307-0308, U+0590-05FF, U+200C-2010, U+20AA, U+25CC, U+FB1D-FB4F;}
+@font-face{font-family: 'Fredoka'; font-style: normal; font-weight: 500 700; font-stretch: 100%; font-display: swap; src: url(fonts/fredoka-latin-ext.woff2) format('woff2'); unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C4, U+2113, U+2C60-2C7F, U+A720-A7FF;}
+@font-face{font-family: 'Fredoka'; font-style: normal; font-weight: 500 700; font-stretch: 100%; font-display: swap; src: url(fonts/fredoka-latin.woff2) format('woff2'); unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;}
+@font-face{font-family: 'Rubik'; font-style: normal; font-weight: 300 800; font-display: swap; src: url(fonts/rubik-arabic.woff2) format('woff2'); unicode-range: U+0600-06FF, U+0750-077F, U+0870-0891, U+0897-08E1, U+08E3-08FF, U+200C-200E, U+2010-2011, U+204F, U+2E41, U+FB50-FDFF, U+FE70-FE74, U+FE76-FEFC, U+102E0-102FB, U+10E60-10E7E, U+10EC2-10EC7, U+10EC9-10EEE, U+10EF0-10EFF, U+1EE00-1EE03, U+1EE05-1EE1F, U+1EE21-1EE22, U+1EE24, U+1EE27, U+1EE29-1EE32, U+1EE34-1EE37, U+1EE39, U+1EE3B, U+1EE42, U+1EE47, U+1EE49, U+1EE4B, U+1EE4D-1EE4F, U+1EE51-1EE52, U+1EE54, U+1EE57, U+1EE59, U+1EE5B, U+1EE5D, U+1EE5F, U+1EE61-1EE62, U+1EE64, U+1EE67-1EE6A, U+1EE6C-1EE72, U+1EE74-1EE77, U+1EE79-1EE7C, U+1EE7E, U+1EE80-1EE89, U+1EE8B-1EE9B, U+1EEA1-1EEA3, U+1EEA5-1EEA9, U+1EEAB-1EEBB, U+1EEF0-1EEF1;}
+@font-face{font-family: 'Rubik'; font-style: normal; font-weight: 300 800; font-display: swap; src: url(fonts/rubik-cyrillic-ext.woff2) format('woff2'); unicode-range: U+0460-052F, U+1C80-1C8A, U+20B4, U+2DE0-2DFF, U+A640-A69F, U+FE2E-FE2F;}
+@font-face{font-family: 'Rubik'; font-style: normal; font-weight: 300 800; font-display: swap; src: url(fonts/rubik-cyrillic.woff2) format('woff2'); unicode-range: U+0301, U+0400-045F, U+0490-0491, U+04B0-04B1, U+2116;}
+@font-face{font-family: 'Rubik'; font-style: normal; font-weight: 300 800; font-display: swap; src: url(fonts/rubik-hebrew.woff2) format('woff2'); unicode-range: U+0307-0308, U+0590-05FF, U+200C-2010, U+20AA, U+25CC, U+FB1D-FB4F;}
+@font-face{font-family: 'Rubik'; font-style: normal; font-weight: 300 800; font-display: swap; src: url(fonts/rubik-latin-ext.woff2) format('woff2'); unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C4, U+2113, U+2C60-2C7F, U+A720-A7FF;}
+@font-face{font-family: 'Rubik'; font-style: normal; font-weight: 300 800; font-display: swap; src: url(fonts/rubik-latin.woff2) format('woff2'); unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;}</style>
 <script type="application/ld+json">
 {
   "@context": "https://schema.org",
@@ -183,6 +191,9 @@ h1, h2, h3 { font-family: var(--display); line-height: 1.15; margin: 0; letter-s
 
 /* sections */
 section { padding-block: 64px; }
+/* the sections below the first screen are laid out only as they come near (the page took ~1 s of style and layout
+   on a phone before it could answer a tap); auto remembers each one's real height once seen */
+main > section:not(.hero) { content-visibility: auto; contain-intrinsic-size: auto 900px; }
 .sec-head { text-align: center; max-width: 720px; margin: 0 auto 36px; }
 .sec-head h2 { font-size: clamp(1.8rem, 4.2vw, 2.6rem); margin-bottom: 12px; }
 .sec-head p { color: var(--ink-2); margin: 0; font-size: 1.08rem; }
@@ -304,6 +315,7 @@ input[type="range"]::-moz-range-thumb { width: 22px; height: 22px; border-radius
 .ios-note { max-width: 720px; margin: 22px auto 0; text-align: center; color: var(--ink-2); }
 
 /* the jobs, rolling by */
+.sr-only { position: absolute; width: 1px; height: 1px; margin: -1px; padding: 0; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; border: 0; }
 .marquee { position: relative; margin-top: 26px; overflow: hidden; direction: ltr; }
 .marquee::before, .marquee::after { content: ""; position: absolute; top: 0; bottom: 0; width: 12%; z-index: 1; pointer-events: none; }
 .marquee::before { left: 0; background: linear-gradient(90deg, var(--bg), transparent); }
@@ -412,7 +424,7 @@ footer a { color: var(--ink-2); }
         </ul>
       </div>
       <div class="hero-art rise" style="--d:.2s">
-        <div class="phone"><img src="img/home.webp" width="780" height="1688" alt="המסך הראשי של שעתי: ברוטו החודש עד עכשיו, שעות, משמרות, נטו משוער, וכפתור התחלת משמרת" fetchpriority="high"></div>
+        <div class="phone"><img src="img/home.webp" srcset="img/home-600.webp 600w, img/home.webp 780w" sizes="300px" width="780" height="1688" alt="המסך הראשי של שעתי: ברוטו החודש עד עכשיו, שעות, משמרות, נטו משוער, וכפתור התחלת משמרת" fetchpriority="high"></div>
         <div class="float f1"><span class="t t-amber"><svg class="i" aria-hidden="true"><use href="#i-candle"/></svg></span>שבת: 150% לבד</div>
         <div class="live" data-live role="img" aria-label="דוגמה למשמרת פעילה: השעון רץ והשכר עולה בכל שנייה">
           <span class="lbl"><i aria-hidden="true"></i>משמרת פעילה</span>
@@ -538,7 +550,7 @@ footer a { color: var(--ink-2); }
       </div>
       <div class="sec-head" style="margin:44px auto 0"><h2 style="font-size:1.5rem">בשביל כל מי שעובד/ת לפי שעה</h2></div>
     </div>
-    <div class="marquee" aria-label="מתאים למלצרות ומטבח, קופה ומכירות, שליחויות, סדרנות ואבטחה, בייביסיטר, הדרכה וחוגים, מוקד שירות, סטודנטים ונוער, הצגות וקולנוע, מחסנים ולוגיסטיקה">
+    <div class="marquee"><p class="sr-only">מתאים למלצרות ומטבח, קופה ומכירות, שליחויות, סדרנות ואבטחה, בייביסיטר, הדרכה וחוגים, מוקד שירות, סטודנטים ונוער, הצגות וקולנוע, מחסנים ולוגיסטיקה</p>
       <div class="marquee-track" aria-hidden="true">
         <span>מלצרות ומטבח</span><span>קופה ומכירות</span><span>שליחויות</span><span>סדרנות ואבטחה</span><span>בייביסיטר</span><span>הדרכה וחוגים</span><span>מוקד שירות</span><span>סטודנטים ונוער</span><span>קולנוע ואירועים</span><span>מחסנים ולוגיסטיקה</span>
         <span>מלצרות ומטבח</span><span>קופה ומכירות</span><span>שליחויות</span><span>סדרנות ואבטחה</span><span>בייביסיטר</span><span>הדרכה וחוגים</span><span>מוקד שירות</span><span>סטודנטים ונוער</span><span>קולנוע ואירועים</span><span>מחסנים ולוגיסטיקה</span>

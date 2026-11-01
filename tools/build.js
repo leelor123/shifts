@@ -13,7 +13,7 @@ const pkg = JSON.parse(fs.readFileSync(path.join(ROOT, 'package.json'), 'utf8'))
 
 const JS_ORDER = [
   'core/util.js', 'core/clean.js', 'core/timesheet.js', 'core/schedule.js', 'core/places-data.js', 'core/places.js', 'core/hebcal.js', 'core/defaults.js', 'core/engine.js', 'core/taxrefund.js', 'core/insights.js', 'core/payslip.js', 'core/games.js', 'core/recap.js', 'core/analysis.js', 'core/leaderboard.js', 'core/friends.js', 'core/referral.js',
-  'app/ui.js', 'app/dom.js', 'app/pickers.js', 'app/fx.js', 'app/gamefx.js', 'app/music.js', 'app/intro.js', 'app/lang.js', 'app/store.js', 'app/charts.js', 'app/app.js', 'app/mascot.js', 'app/firebase-config.js', 'app/cloud.js', 'app/stats.js', 'app/pay-config.js', 'app/plus.js', 'app/invite.js', 'app/review.js', 'app/docread.js', 'app/import.js', 'app/schedule-import.js', 'app/claim-report.js', 'app/views-login.js',
+  'app/ui.js', 'app/dom.js', 'app/pickers.js', 'app/fx.js', 'app/gamefx.js', 'app/music.js', 'app/intro.js', 'app/lang.js', 'app/store.js', 'app/charts.js', 'app/app.js', 'app/mascot.js', 'app/cloud.js', 'app/stats.js', 'app/pay-config.js', 'app/plus.js', 'app/invite.js', 'app/review.js', 'app/docread.js', 'app/import.js', 'app/schedule-import.js', 'app/claim-report.js', 'app/views-login.js',
   'app/views-home.js', 'app/views-shift.js', 'app/views-calendar.js', 'app/views-reports.js', 'app/views-taxrefund.js',
   'app/views-payslip.js', 'app/views-insights.js', 'app/export.js', 'app/placepicker.js', 'app/widgets.js', 'app/views-settings.js', 'app/views-onboarding.js',
   'app/views-assistant.js', 'app/views-rights.js', 'app/views-guide.js', 'app/views-support.js', 'app/views-games.js', 'app/views-leaderboard.js', 'app/views-friends.js', 'app/views-analysis.js', 'app/views-recap.js', 'app/views-admin.js', 'app/views-legal.js', 'app/ptr.js',
@@ -31,9 +31,22 @@ function jsFor(lang) {
   try { new (require('vm').Script)(js, { filename: 'bundle.' + lang + '.js' }); } catch (e) { throw new Error(lang + ': JS does not compile: ' + e.message + '\n' + String(e.stack || '').split('\n').slice(0, 3).join('\n')); }
   return js;
 }
+// the page preloads the Google sign-in code (index.html): the same version cloud.js imports, or it downloads twice
+{ const sdk = /firebasejs\/([\d.]+)\//.exec(read('app/cloud.js'))[1]; const pre = [...read('index.html').matchAll(/firebasejs\/([\d.]+)\//g)].map((m) => m[1]);
+  if (!pre.length || pre.some((v) => v !== sdk)) throw new Error('index.html preloads Firebase ' + pre.join(',') + ' but cloud.js imports ' + sdk); }
 const js = jsFor('he');
+// the code goes to its own file, minified, read after the first screen is drawn (defer): inlined, the page was ~1.6 MB
+// and nothing showed until all of it arrived. The name carries the build, so a cached copy is never a stale one.
+const esbuild = require('esbuild');
+const minify = (code, lang) => esbuild.transformSync(code, { minify: true, target: 'es2019', charset: 'utf8', legalComments: 'none', sourcefile: 'app.' + lang + '.js' }).code;
+const jsFile = (lang) => 'app.' + lang + '.' + hash + '.js';
 // styles.css is the base design; styles-v3.css the playful layer on top (pickers, mascot, colours)
-const css = read('styles.css') + '\n' + read('styles-v3.css');
+// fonts.css: Rubik and Fredoka served from fonts/ (tools/fonts.js), one file per script, fetched only when used
+const css = read('fonts/fonts.css') + read('styles.css') + '\n' + read('styles-v3.css');
+// the files each language's first screen draws with, asked for at once instead of after the styles are read
+const cssMin = esbuild.transformSync(css, { loader: 'css', minify: true, target: 'chrome90', charset: 'utf8', legalComments: 'none' }).code;
+const FIRST_FONTS = { he: ['rubik-hebrew', 'rubik-latin'], ar: ['rubik-arabic', 'rubik-latin'], ru: ['rubik-cyrillic', 'rubik-latin'], en: ['rubik-latin'], fr: ['rubik-latin'], es: ['rubik-latin'] };
+const preload = (lang) => (FIRST_FONTS[lang] || FIRST_FONTS.he).map((f) => `<link rel="preload" href="fonts/${f}.woff2" as="font" type="font/woff2" crossorigin>`).join('\n');
 const i18nHash = Object.keys(dicts).map((l) => JSON.stringify(dicts[l])).join('');
 const hash = crypto.createHash('sha256').update(js + css + read('index.html') + read('sw.js') + read('manifest.webmanifest') + i18nHash).digest('hex').slice(0, 8);
 const version = pkg.version;
@@ -42,7 +55,7 @@ fs.mkdirSync(DIST, { recursive: true });
 /** The page of one language: its markup, styles and code inlined, under a policy that runs only its own scripts. */
 function page(lang) {
   const tpl = lang === 'he' ? read('index.html') : I18N.applyHtml(read('index.html'), lang, dicts[lang]).replace('href="manifest.webmanifest"', `href="manifest.${lang}.webmanifest"`);
-  let html = tpl.replace('/*__CSS__*/', () => css).replace('/*__JS__*/', () => (lang === 'he' ? js : jsFor(lang))).replace('__VERSION__', version).replace('__BUILD__', `${version}-${hash}`);
+  let html = tpl.replace('/*__CSS__*/', () => cssMin).replace('/*__JS__*/', () => read('app/firebase-config.js')).replace('<!--__APP_JS__-->', () => `<script src="${jsFile(lang)}" defer></script>`).replace('__VERSION__', version).replace('__BUILD__', `${version}-${hash}`).replace('<!--__FONT_PRELOAD__-->', () => preload(lang));
   // Content-Security-Policy: only the app's own inline scripts (by their hashes) and the libraries it loads
   // on demand may run, so injected markup (an <img onerror>, a <script>) can never execute.
   const scripts = [...html.matchAll(/<script>([\s\S]*?)<\/script>/g)];
@@ -68,10 +81,14 @@ function page(lang) {
   ].join('; ');
   return html.replace('<meta charset="utf-8">', () => `<meta charset="utf-8">\n<meta http-equiv="Content-Security-Policy" content="${CSP}">`);
 }
+for (const f of fs.readdirSync(DIST)) if (/^app.[a-z]+.[0-9a-f]+.js$/.test(f)) fs.unlinkSync(path.join(DIST, f));
+const writeJs = (lang, code) => fs.writeFileSync(path.join(DIST, jsFile(lang)), minify(code, lang));
+writeJs('he', js);
 const html = page('he');
 fs.writeFileSync(path.join(DIST, 'index.html'), html);
 const sizes = [`he ${(html.length / 1024).toFixed(0)} KB`];
 for (const lang of Object.keys(dicts)) {
+  writeJs(lang, jsFor(lang));
   const h = page(lang);
   fs.writeFileSync(path.join(DIST, `index.${lang}.html`), h);
   sizes.push(`${lang} ${(h.length / 1024).toFixed(0)} KB`);
@@ -88,6 +105,8 @@ fs.writeFileSync(path.join(DIST, 'sw.js'), read('sw.js').replace('__VERSION__', 
 fs.copyFileSync(path.join(SRC, 'manifest.webmanifest'), path.join(DIST, 'manifest.webmanifest'));
 // icons are generated from the logo once (src/icons); the build only copies them
 for (const f of fs.readdirSync(path.join(SRC, 'icons'))) fs.copyFileSync(path.join(SRC, 'icons', f), path.join(DIST, f));
+fs.mkdirSync(path.join(DIST, 'fonts'), { recursive: true });
+for (const f of fs.readdirSync(path.join(SRC, 'fonts'))) if (f.endsWith('.woff2')) fs.copyFileSync(path.join(SRC, 'fonts', f), path.join(DIST, 'fonts', f));
 if (fs.existsSync(path.join(DIST, 'icon.svg'))) fs.unlinkSync(path.join(DIST, 'icon.svg'));
 fs.writeFileSync(path.join(DIST, '.nojekyll'), '');
 require('./legal-pages').build(SRC, DIST);

@@ -5,9 +5,10 @@
  * background and activates when the user taps "עדכן".
  * IndexedDB data is never touched by updates.
  * ============================================================ */
-const VERSION = '1.29.0-368fb706';
+const VERSION = '1.29.0-58e85437';
 const SHELL = 'shiftpay-shell-' + VERSION;
 const RUNTIME = 'shiftpay-runtime-v1';
+const FONTS = ['rubik-hebrew', 'rubik-latin', 'rubik-latin-ext', 'rubik-arabic', 'rubik-cyrillic', 'rubik-cyrillic-ext', 'fredoka-hebrew', 'fredoka-latin', 'fredoka-latin-ext'].map((f) => './fonts/' + f + '.woff2');
 const ASSETS = ['./', './index.html', './manifest.webmanifest', './icon-192.png', './icon-512.png', './icon-maskable-512.png', './badge-96.png', './favicon-48.png'];
 
 /* ---- the language ----
@@ -23,6 +24,8 @@ async function chosenLang() {
     return LANGS.includes(l) ? l : 'he';
   } catch (err) { return 'he'; }
 }
+// the app's code, a file per language named by the build (VERSION is <version>-<build>)
+const jsOf = (l) => './app.' + l + '.' + VERSION.split('-')[1] + '.js';
 const pageOf = (l) => (l === 'he' ? './index.html' : './index.' + l + '.html');
 const manifestOf = (l) => (l === 'he' ? './manifest.webmanifest' : './manifest.' + l + '.webmanifest');
 // a page that names its file (index.ru.html) is that file; the app's own address (./, ./?source=twa) is the chosen one
@@ -51,9 +54,12 @@ async function livePage(page) {
 self.addEventListener('install', (e) => {
   e.waitUntil((async () => {
     const l = await chosenLang();
-    const list = ASSETS.concat(l === 'he' ? [] : [pageOf(l), manifestOf(l)]);
+    const list = ASSETS.concat([jsOf('he')], l === 'he' ? [] : [pageOf(l), manifestOf(l), jsOf(l)]);
     const c = await caches.open(SHELL);
     await c.addAll(list.map((u) => new Request(u, { cache: 'reload' })));
+    // the fonts (fonts/, served here): kept apart from the version, they are fetched once and work offline
+    const fc = await caches.open(RUNTIME);
+    await Promise.all(FONTS.map(async (f) => { if (!(await fc.match(f))) await fc.add(f).catch(() => {}); }));
   })());
 });
 self.addEventListener('activate', (e) => {
@@ -107,7 +113,10 @@ self.addEventListener('fetch', (e) => {
     return;
   }
   if (url.origin === self.location.origin) {
-    e.respondWith(caches.match(req, { ignoreSearch: true }).then((c) => c || fetch(req)));
+    e.respondWith(caches.match(req, { ignoreSearch: true }).then((c) => c || fetch(req).then((res) => {
+      if (res.ok && url.pathname.includes('/fonts/')) { const copy = res.clone(); caches.open(RUNTIME).then((k) => k.put(req, copy)).catch(() => {}); }
+      return res;
+    })));
     return;
   }
   // only static libraries & fonts are cached; sign-in and Firestore traffic always goes to the network

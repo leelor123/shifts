@@ -84,7 +84,11 @@
     const font = FONTS[st.font] ? st.font : 'rubik';
     prop('--app-font', "'" + FONTS[font][0] + "'");
     const link = document.getElementById('font-link');
-    if (link && link.dataset.font !== font) { link.href = App.fontCss(font); link.dataset.font = font; }
+    // Rubik is the app's own (fonts/); only another font chosen in the settings is fetched from Google
+    if (link && (link.dataset.font || 'rubik') !== font) {
+      if (font === 'rubik') link.removeAttribute('href'); else link.href = App.fontCss(font);
+      link.dataset.font = font;
+    }
     const dark = st.theme === 'dark' || (st.theme !== 'light' && matchMedia('(prefers-color-scheme: dark)').matches);
     const meta = document.querySelector('meta[name="theme-color"]');
     if (meta) meta.content = document.getElementById('intro') ? '#0d2b6b' : dark ? '#0f1413' : '#f6f4ee';

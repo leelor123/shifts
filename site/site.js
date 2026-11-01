@@ -11,9 +11,15 @@
 
   /* ---------- the header gets its shadow once the page moves ---------- */
   const top = $('.top');
-  const onScroll = () => top && top.classList.toggle('scrolled', scrollY > 8);
-  addEventListener('scroll', onScroll, { passive: true });
-  onScroll();
+  // watched with a marker 8px tall at the top of the page: reading scrollY as the page opened made the browser lay
+  // the whole page out ahead of time (~120 ms on a phone)
+  if (top && 'IntersectionObserver' in window) {
+    const mark = document.createElement('div');
+    mark.setAttribute('aria-hidden', 'true');
+    mark.style.cssText = 'position:absolute;top:0;inset-inline-start:0;width:1px;height:8px;pointer-events:none';
+    document.body.prepend(mark);
+    new IntersectionObserver(([e]) => top.classList.toggle('scrolled', !e.isIntersecting)).observe(mark);
+  }
 
   /* ---------- a live shift: the clock runs and the pay goes up, as in the app ---------- */
   const live = $('[data-live]');
@@ -25,7 +31,9 @@
       const s = Math.floor((Date.now() - t0) / 1000);
       clock.textContent = `${pad(Math.floor(s / 3600))}:${pad(Math.floor(s / 60) % 60)}:${pad(s % 60)}`;
       pay.textContent = money((s / 3600) * RATE);
-      if (!still) { pay.classList.remove('bump'); void pay.offsetWidth; pay.classList.add('bump'); }
+      // the bump starts again two frames later, once a frame has been drawn without it (reading offsetWidth to restart
+      // it laid the page out every second)
+      if (!still) { pay.classList.remove('bump'); requestAnimationFrame(() => requestAnimationFrame(() => pay.classList.add('bump'))); }
     };
     tick();
     setInterval(tick, 1000);
@@ -146,7 +154,10 @@
     };
     gal.addEventListener('scroll', () => { if (!raf) raf = requestAnimationFrame(depth); }, { passive: true });
     addEventListener('resize', () => { if (!raf) raf = requestAnimationFrame(depth); });
-    depth();
+    // the first look is set as the gallery nears the screen (it opens far below): measured as the page opened, it
+    // made the browser lay the page out ahead of time
+    const near = new IntersectionObserver(([e]) => { if (e.isIntersecting) { near.disconnect(); depth(); } }, { rootMargin: '400px 0px' });
+    near.observe(gal);
   }
   $$('[data-gal]').forEach((b) => b.addEventListener('click', () => {
     const w = gal.querySelector('figure').getBoundingClientRect().width + 18;

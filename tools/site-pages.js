@@ -10,6 +10,21 @@ for (const f of ['util.js', 'hebcal.js', 'defaults.js', 'engine.js', 'taxrefund.
 const { U, Engine, TaxRefund: TR } = globalThis;
 
 const SITE = 'https://shaati.web.app';
+// the fonts come from the website itself (site/fonts, the app's files from tools/fonts.js): Google's stylesheet held the
+// first paint for a round trip to two more servers. Their rules go into each page; the Hebrew and Latin files are
+// asked for at once.
+const FONT_CSS = fs.readFileSync(path.join(ROOT, 'src', 'fonts', 'fonts.css'), 'utf8').trim();
+const FONT_HEAD = ['rubik-hebrew', 'rubik-latin'].map((f) => `<link rel="preload" href="fonts/${f}.woff2" as="font" type="font/woff2" crossorigin>`).join('\n') + '\n<style id="fonts">' + FONT_CSS + '</style>';
+fs.mkdirSync(path.join(ROOT, 'site', 'fonts'), { recursive: true });
+for (const f of fs.readdirSync(path.join(ROOT, 'src', 'fonts'))) if (f.endsWith('.woff2')) fs.copyFileSync(path.join(ROOT, 'src', 'fonts', f), path.join(ROOT, 'site', 'fonts', f));
+// the home page is written by hand: its font block is kept the same as the generated pages'
+{
+  const home = path.join(ROOT, 'site', 'index.html');
+  const h = fs.readFileSync(home, 'utf8');
+  const was = h.includes('<style id="fonts">') ? /<link rel="preload" href="fonts\/rubik-hebrew[\s\S]*?<style id="fonts">[\s\S]*?<\/style>/ : /<link rel="preconnect" href="https:\/\/fonts\.googleapis\.com">[\s\S]*?display=swap">/;
+  if (!was.test(h)) throw new Error('site/index.html: the font block was not found');
+  fs.writeFileSync(home, h.replace(was, () => FONT_HEAD));
+}
 const APP = 'https://leelor123.github.io/shifts/';
 // the official sources (as in the app's rights screen, views-rights.js GOV)
 const GOV = {
@@ -323,9 +338,7 @@ function page(p) {
 <meta property="og:image" content="${SITE}/img/og.png">
 <link rel="icon" href="img/favicon-48.png" sizes="48x48">
 <link rel="apple-touch-icon" href="img/apple-touch-icon.png">
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Rubik:wght@400..800&family=Fredoka:wght@500..700&display=swap">
+${FONT_HEAD}
 <script type="application/ld+json">${JSON.stringify(ld)}</script>
 <style>${CSS}</style>
 </head>
@@ -393,9 +406,7 @@ function checkPage() {
 <meta property="og:image" content="${SITE}/img/og.png">
 <link rel="icon" href="img/favicon-48.png" sizes="48x48">
 <link rel="apple-touch-icon" href="img/apple-touch-icon.png">
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Rubik:wght@400..800&family=Fredoka:wght@500..700&display=swap">
+${FONT_HEAD}
 <style>${CSS}${CHECK_CSS}</style>
 </head>
 <body>
