@@ -245,7 +245,7 @@
     if (!year || S.meta.wrappedSeen === 'Y' + year) return '';
     const t = Engine.totals(App.model, year + '-01-01', year + '-12-31', {});
     if (!(t.shifts >= 5)) return '';
-    return `<button class="recap-card wrapped-card" style="${App.phase()}" data-act="recap-open" data-pk="Y${year}"><span class="rc-spark" aria-hidden="true">🎁</span>
+    return `<button class="recap-card wrapped-card" style="${App.phase()}" data-act="recap-open" data-pk="Y${year}"><span class="rc-spark" aria-hidden="true">${icon('gift')}</span>
       <span class="rc-t"><b>השנה שלך ב-Shaati: ${year}</b><span>${t.shifts} משמרות · ${money0(t.gross)}. הסיפור של השנה מחכה</span></span>${icon('left', 's')}</button>`;
   };
   /** The home card: during the first two weeks of a new pay period, until it is opened. */
@@ -257,7 +257,7 @@
     if (S.meta.recapSeen === pk) return '';
     const sum = Engine.periodSummary(App.model, pk, S.employers[0].id);
     if (!(sum.shifts > 0)) return '';
-    return `<button class="recap-card" style="${App.phase()}" data-act="recap-open" data-pk="${pk}"><span class="rc-spark" aria-hidden="true">✨</span>
+    return `<button class="recap-card" style="${App.phase()}" data-act="recap-open" data-pk="${pk}"><span class="rc-spark" aria-hidden="true">${icon('star')}</span>
       <span class="rc-t"><b>הסיכום של ${monthName(pk)} מוכן</b><span>${sum.shifts} משמרות · ${money0(sum.gross)}. בואו לראות</span></span>${icon('left', 's')}</button>`;
   };
   App.actions['recap-open'] = (el) => {

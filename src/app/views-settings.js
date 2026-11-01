@@ -540,7 +540,7 @@
     perEmployer: true,
     render: (e) => `<div class="section-title">${icon('car', 's')} נסיעות</div><div class="card">
         ${F.num('סכום ליום עבודה ₪', 'e.travelPerDay', e.travelPerDay, 'ברירת מחדל: 22.60 ₪, התקרה היומית לפי צו ההרחבה (2025).')}
-        ${F.num('תקרה חודשית ₪', 'e.travelMonthlyCap', e.travelMonthlyCap, '0 = ללא תקרה. למשל מחיר חופשי-חודשי.')}
+        ${F.num('תקרה חודשית ₪', 'e.travelMonthlyCap', e.travelMonthlyCap, '0 = ללא תקרה. למשל מחיר חופשי-⁠חודשי.')}
         <div class="tiny muted">אפשר לסמן משמרת ספציפית "בלי נסיעות" בעריכת המשמרת.</div></div>
       <div class="section-title">${icon('calendar', 's')} תקופת שכר</div><div class="card">
         ${F.sel('התקופה מתחילה ב-', 'e.periodStartDay', [[1, '1 לחודש (חודש קלנדרי)'], ...Array.from({ length: 27 }, (_, i) => [i + 2, (i + 2) + ' לחודש'])], e.periodStartDay, 'אם המעסיק סופר למשל מ-21 עד 20, בחר 21.')}

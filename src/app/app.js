@@ -48,7 +48,7 @@
 
   /* ---------------- theme ---------------- */
   const ACCENTS = {
-    candy: [258, 72, 'סגול-ורוד'], petrol: [186, 48, 'פטרול'], indigo: [238, 62, 'סגול-כחול'], blue: [212, 75, 'כחול'], teal: [178, 62, 'טורקיז'], green: [145, 45, 'ירוק'],
+    midnight: [221, 78, 'כחול לילה'], candy: [258, 72, 'סגול-ורוד'], petrol: [186, 48, 'פטרול'], indigo: [238, 62, 'סגול-כחול'], blue: [212, 75, 'כחול'], teal: [178, 62, 'טורקיז'], green: [145, 45, 'ירוק'],
     orange: [24, 80, 'כתום'], pink: [330, 62, 'ורוד'], purple: [275, 52, 'סגול'], red: [2, 68, 'אדום'],
   };
   App.ACCENTS = ACCENTS;
@@ -73,7 +73,7 @@
     const prop = (k, v) => { if (de.style.getPropertyValue(k) !== String(v)) { de.style.setProperty(k, v); if (k === '--fs' || k === '--app-font') roomChanged = true; } };
     data('theme', st.theme === 'light' || st.theme === 'dark' ? st.theme : '');
     de.classList.toggle('hide-money', !!st.hideMoney); // privacy: amounts blurred
-    const a = ACCENTS[st.accent] || ACCENTS.candy;
+    const a = ACCENTS[st.accent] || ACCENTS.midnight;
     prop('--h', a[0]);
     prop('--s', a[1] + '%');
     prop('--fs', st.fontScale || 1);
@@ -788,6 +788,11 @@
     if (!S.meta.designV3) {
       if (S.settings.accent === 'petrol') await Store.setSettings((s) => { s.accent = 'candy'; });
       await Store.setMeta({ designV3: true });
+    }
+    // midnight & gold (v4): the untouched default colour moves to the opening show's navy, once
+    if (!S.meta.designV4) {
+      if (S.settings.accent === 'candy') await Store.setSettings((s) => { s.accent = 'midnight'; });
+      await Store.setMeta({ designV4: true });
     }
     // the admin of this account, as this phone last heard it (checked again once the account connects)
     App.isAdmin = !!S.meta.adminUid && S.meta.adminUid === S.meta.cloudUid;

@@ -239,7 +239,7 @@
       const checks = [];
       if (g == null) checks.push(['need', 'חסר ברוטו: הוסיפו אותו כדי שנוכל לבדוק']);
       if (n == null) checks.push(['need', 'חסר נטו לתשלום']);
-      if (g != null && pays > 0) checks.push(Math.abs(pays - g) <= 2 ? ['ok', 'שורות התשלום מסתכמות לברוטו'] : ['warn', `שורות התשלום מסתכמות ל-${money(pays)}, והברוטו ${money(g)}. אולי חסרה או מיותרת שורה`]);
+      if (g != null && pays > 0) checks.push(Math.abs(pays - g) <= 2 ? ['ok', 'שורות התשלום מסתכמות לברוטו'] : ['warn', `שורות התשלום מסתכמות ל-⁠${money(pays)}, והברוטו ${money(g)}. אולי חסרה או מיותרת שורה`]);
       if (g != null && n != null && val('totalDeductions') != null) checks.push(Math.abs(g - val('totalDeductions') - n) <= 2 ? ['ok', 'ברוטו פחות ניכויים שווה לנטו'] : ['warn', `ברוטו פחות ניכויים יוצא ${money(g - val('totalDeductions'))}, והנטו ${money(n)}`]);
       const cell = (label, v, cls) => `<div class="vf-cell ${cls || ''}"><small>${label}</small><b>${v == null ? '—' : money(v, 0)}</b></div>`;
       return `<div class="vf-flow">${cell('ברוטו', g)}<span class="vf-op">−</span>${cell('ניכויים', ded)}<span class="vf-op">=</span>${cell('נטו', n, 'net')}</div>

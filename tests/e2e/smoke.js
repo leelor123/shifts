@@ -506,11 +506,11 @@ let errors = [];
       (function rec() { frames++; if (document.querySelector('.fx-ring') && document.querySelector('.dialog.pk.out')) n++; if (frames < 25) requestAnimationFrame(rec); else res(n); })();
     }));
     if (ghost > 1) throw new Error('tap ring left floating for ' + ghost + ' frames');
-    // a redraw does not restart the pay card's glow
-    const prog = () => ev(() => { const a = document.querySelector('.home-hero .aurora i').getAnimations()[0]; if (!a) return null; const c = a.effect.getComputedTiming(); return (c.currentIteration || 0) + (c.progress || 0); });
+    // a redraw does not restart the pay card's dial (its second hand, drawn on .hh-dial::before)
+    const prog = () => ev(() => { const a = document.getAnimations().find((x) => x.effect && x.effect.pseudoElement === '::before' && x.effect.target && x.effect.target.closest && x.effect.target.closest('.home-hero .hh-dial')); if (!a) return null; const c = a.effect.getComputedTiming(); return (c.currentIteration || 0) + (c.progress || 0); });
     await sleep(600);
     const p1 = await prog(); await ev(() => App.rerender()); const p2 = await prog();
-    if (p1 != null && p2 != null && Math.abs(p2 - p1) > 0.02) throw new Error('glow restarted: ' + p1 + ' -> ' + p2);
+    if (p1 != null && p2 != null && Math.abs(p2 - p1) > 0.02) throw new Error('dial restarted: ' + p1 + ' -> ' + p2);
   });
   await step('switching tabs: the bottom bar stays put, the page never gets wider than the screen or fades', async () => {
     // On a phone a page wider than the screen, even while the next tab slides in, zooms out a little:

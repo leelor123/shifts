@@ -1,0 +1,109 @@
+/* ============================================================
+ * v4 "midnight & gold" (1.29.0): the opening show's navy and gold carried into the whole app.
+ * Direction: .impeccable/surfaces/src-index-html.md; product: PRODUCT.md. Loaded after styles.css and styles-v3.css.
+ * The accent setting still works: every colour below is built from --h/--s, and the default accent (midnight,
+ * hue 221) gives the navy of the opening. Gold stays gold: it marks value only.
+ * Skills: impeccable (detector findings: no coloured glows, gradient text, ticker loops, bounce easing, sub-11px
+ * labels), emil-design-eng (restraint, press 0.97, strong ease-out), apple-design (one bar material, hierarchy),
+ * israeli-ui-design-system (Rubik, tabular figures), mobile-native.
+ * ============================================================ */
+:root {
+  --gold: #e9c987; --gold-ink: #8a6a23; --gold-line: rgba(233, 201, 135, .45);
+  --go: #0b6b49;
+  /* one family: Rubik for headings, numbers and labels (Fredoka stays only inside the games' canvases) */
+  --display: var(--font);
+  /* calm motion: a strong ease-out instead of the overshoot (impeccable: bounce reads dated; Emil: ease-out) */
+  --pop: cubic-bezier(.23, 1, .32, 1);
+  --ease-out: cubic-bezier(.23, 1, .32, 1);
+  /* the ink: the accent's hue, deep (midnight: #0d2b6b) */
+  --brand: hsl(var(--h) calc(var(--s) * .9) 36%);
+  --brand-strong: hsl(var(--h) var(--s) 26%);
+  --brand-soft: hsl(var(--h) 45% 93%);
+  --on-brand-soft: hsl(var(--h) var(--s) 24%);
+  --grad-brand: linear-gradient(135deg, hsl(var(--h) var(--s) 32%), hsl(var(--h) var(--s) 22%));
+  --grad-hero: radial-gradient(120% 90% at 85% 0%, hsl(var(--h) calc(var(--s) * .7) 32%) 0%, hsl(var(--h) var(--s) 24%) 45%, hsl(var(--h) calc(var(--s) * .9) 16%) 100%);
+  --grad-go: linear-gradient(var(--go), var(--go));
+  /* warm cream ground, white grouped cards on hairlines */
+  --surface: #f6f4ee; --surface-1: #ffffff; --surface-2: #efece4; --surface-3: #e6e2d8; --surface-hi: #ffffff;
+  --on-surface: #141821; --on-surface-var: #5b5f6d;
+  --line: rgba(20, 24, 33, .09); --outline-var: rgba(20, 24, 33, .14);
+  /* shadows: neutral and offset, only where something lifts */
+  --sh-1: none; --sh-2: 0 14px 32px -20px rgba(10, 20, 45, .4); --sh-brand: 0 10px 24px -14px rgba(10, 20, 45, .45);
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --brand: hsl(var(--h) 70% 74%); --brand-strong: hsl(var(--h) 75% 82%);
+    --brand-soft: hsl(var(--h) 30% 18%); --on-brand-soft: hsl(var(--h) 75% 84%);
+    --surface: #0e1118; --surface-1: #161a24; --surface-2: #1b2030; --surface-3: #23293a; --surface-hi: #1b2030;
+    --on-surface: #eceef4; --on-surface-var: #a5a9b8;
+    --line: rgba(255, 255, 255, .08); --outline-var: rgba(255, 255, 255, .14);
+    --sh-2: 0 14px 32px -18px rgba(0, 0, 0, .7); --sh-brand: 0 10px 24px -14px rgba(0, 0, 0, .7);
+  }
+}
+:root[data-theme="dark"] {
+  --brand: hsl(var(--h) 70% 74%); --brand-strong: hsl(var(--h) 75% 82%);
+  --brand-soft: hsl(var(--h) 30% 18%); --on-brand-soft: hsl(var(--h) 75% 84%);
+  --surface: #0e1118; --surface-1: #161a24; --surface-2: #1b2030; --surface-3: #23293a; --surface-hi: #1b2030;
+  --on-surface: #eceef4; --on-surface-var: #a5a9b8;
+  --line: rgba(255, 255, 255, .08); --outline-var: rgba(255, 255, 255, .14);
+  --sh-2: 0 14px 32px -18px rgba(0, 0, 0, .7); --sh-brand: 0 10px 24px -14px rgba(0, 0, 0, .7);
+}
+
+/* browser surfaces from the palette (impeccable craft floor) */
+::selection { background: rgba(233, 201, 135, .45); color: #141821; }
+:focus-visible { outline: 2px solid var(--brand-strong); outline-offset: 2px; }
+
+/* type: one family, tight headings */
+h1, h2, .home-top h1, .wizard h1, .sheet .sh-head h2 { font-family: var(--font); letter-spacing: -.025em; }
+.home-top h1 { font-weight: 700; }
+.home-top .wave { display: none; }
+
+/* cards: flat and grouped, a hairline instead of a shadow */
+.card, .sc, .home-list, .highlight, .banner.slim, .list .item, .set-cat { box-shadow: none; }
+.card, .sc, .home-list, .highlight, .banner.slim { border: 1px solid var(--line); }
+
+/* the pay card: the dial of the opening (the signature) */
+.home-hero { box-shadow: var(--sh-2); }
+.home-hero::before { display: none; }
+.hh-dial::after { border-color: var(--gold-line); }
+.home-hero .hh-label { color: var(--gold); font-weight: 500; letter-spacing: .01em; }
+.home-hero .hero-num { font-family: var(--font); font-weight: 600; letter-spacing: -.045em; font-variant-numeric: tabular-nums; }
+.home-hero .hh-stats { background: transparent; border: 0; border-top: 1px solid rgba(233, 201, 135, .28); border-radius: 0; padding-top: 12px; max-width: none; }
+.home-hero .hh-stats > span + span { border-inline-start: 1px solid rgba(255, 255, 255, .12); }
+.home-hero .hh-stats b { font-family: var(--font); font-variant-numeric: tabular-nums; }
+
+/* the one daily action: solid green (the running glint is gone: impeccable marquee) */
+.home-action .btn.start { background: var(--go); box-shadow: none; }
+/* the month's summary: ink with a gold title and a drawn star */
+.recap-card { background: linear-gradient(120deg, hsl(var(--h) var(--s) 20%), hsl(var(--h) var(--s) 26%)); box-shadow: none; }
+.recap-card .rc-t b { font-family: var(--font); color: var(--gold); }
+.recap-card .rc-spark { animation: none; color: var(--gold); display: grid; place-items: center; }
+.recap-card .rc-spark svg { width: 26px; height: 26px; fill: currentColor; stroke: none; }
+
+/* shortcut tiles: ink icons on a soft ink tint */
+.sc .itile { background: var(--brand-soft); color: var(--on-brand-soft); }
+.sc .itile svg { color: var(--on-brand-soft); }
+
+/* presses answer at once (Emil: 0.97, 160ms ease-out) */
+body.fx .btn:active, body.fx .chip:active, body.fx .sc:active, body.fx .am-tile:active { transform: scale(.97); }
+.btn, .sc, .chip, .am-tile { transition-timing-function: var(--ease-out); }
+
+/* the tab bar: one frosted material (apple-design), ink for where you are, the add button ink with gold */
+.nav { background: color-mix(in srgb, var(--surface) 84%, transparent); -webkit-backdrop-filter: saturate(1.4) blur(18px); backdrop-filter: saturate(1.4) blur(18px); border-top: 1px solid var(--line); }
+.nav button.on { color: var(--brand-strong); }
+.nav button.on .pill { background: var(--brand-soft); color: var(--brand-strong); }
+.nav .nav-add, .nav button.add .pill, .nav .fab { background: hsl(var(--h) var(--s) 24%); color: var(--gold); box-shadow: var(--sh-brand); }
+
+/* the language picker (first open): no coloured glows, no pulsing ring, no gradient text, readable letters */
+.lp-orbs { display: none; }
+.lp-card { box-shadow: none; }
+.lp-card.sug { border-color: var(--gold-line); }
+.lp-card.sug::after { box-shadow: 0 0 0 1.5px var(--gold); animation: none; opacity: 1; }
+.lp-glyph { background: rgba(255, 255, 255, .08); border: 1px solid var(--gold-line); color: var(--gold); box-shadow: none; text-shadow: none; }
+.lp-hello span { background: none; -webkit-background-clip: border-box; background-clip: border-box; -webkit-text-fill-color: currentColor; color: #fff; }
+.lp-sug { font-size: .74rem; background: var(--gold); color: #141821; box-shadow: none; }
+.lp-in-sheet .lp-hello span { color: var(--on-surface); }
+/* the dial's second hand: gold, as in the opening */
+.hh-dial::before { background: conic-gradient(from 0deg, transparent 0 290deg, rgba(233, 201, 135, .15) 320deg, rgba(233, 201, 135, .95) 359deg, transparent 360deg); }
+/* the empty home: its title is the page's second level (a real h2), drawn as before */
+.empty h2.h3 { font-size: 1.17em; margin: 0 0 6px; color: var(--on-surface); letter-spacing: normal; }

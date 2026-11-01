@@ -147,7 +147,7 @@
       const role = App.role(App.currentRole());
       const onBreak = App.onBreak();
       const others = App.roles(a.employerId).filter((r) => r.id !== App.currentRole());
-      return `<div class="card timer-card running${onBreak ? ' on-break' : ''}${once('justStarted') ? ' tc-enter' : ''}"><span class="aurora" aria-hidden="true" style="${App.phase()}"><i></i><i></i><i></i></span>
+      return `<div class="card timer-card running${onBreak ? ' on-break' : ''}${once('justStarted') ? ' tc-enter' : ''}">
         <div class="tc-head"><span class="pulse" style="${App.phase()}"></span>${onBreak ? 'בהפסקה' : 'משמרת פעילה'}${role ? ' · ' + esc(role.name) : ''}<span class="spacer"></span><span class="tiny">מ-${U.epochHM(a.start)}</span></div>
         <div class="clock" data-clock="net">0:00:00</div>
         <div class="meta">עד עכשיו <b data-live-pay></b>${(a.breaks || []).length ? ' · הפסקות לא נספרות' : ''}</div>
@@ -211,7 +211,7 @@
     return `<section class="home-hero" data-act="go-summary"><button class="vh" data-act="go-summary">פירוט ${periodName}</button>
       ${P2 && P2.visible() ? `<button class="hh-skin" data-act="plus-design" aria-label="עיצוב כרטיס השכר">${icon('palette', 's')}</button>` : ''}
       <button class="hh-eye ${S.settings.hideMoney ? 'off' : ''}" data-act="toggle-money" aria-label="${S.settings.hideMoney ? 'הצגת הסכומים' : 'הסתרת הסכומים'}" aria-pressed="${!!S.settings.hideMoney}">${icon('eye', 's')}</button>
-      <span class="aurora" aria-hidden="true" style="${App.phase()}"><i></i><i></i><i></i></span><span class="hh-dial" aria-hidden="true" style="${App.phase()}"></span>
+      <span class="hh-dial" aria-hidden="true" style="${App.phase()}"></span>
       <div class="hh-label">${bigNet ? netT : grossT} ${emp.periodStartDay > 1 ? 'בתקופת השכר' : 'ב' + periodName} עד עכשיו</div>
       <div class="hero-num">${money(bigNet ? sum.net.net : sum.gross, 0)}</div>
       <div class="hh-stats"><span><b>${money(bigNet ? sum.gross : sum.net.net, 0)}</b><small>${bigNet ? grossT : netT}</small></span><span><b class="num">${U.hm(sum.hours * 60)}</b><small>שעות</small></span><span><b>${sum.shifts}</b><small>${sum.shifts === 1 ? 'משמרת' : 'משמרות'}</small></span></div>
@@ -356,7 +356,7 @@
       ${recent.length ? !nRecent ? '' : `<div class="home-list-head"><span>משמרות אחרונות</span><span class="spacer"></span>${App.travelSwitch()}<button class="btn text sm" data-act="go-shifts">הכול</button></div>
         <div class="list home-list">${recent.slice(0, nRecent - (pending.length ? 1 : 0)).map((r) => App.shiftItem(r)).join('')}</div>`
         : pending.length ? ''
-        : S.meta.guide && !S.meta.guideDone ? '' : `<div class="empty fun">${App.mascot ? App.mascot('sleepy', { size: 92 }) : ''}<h3 aria-level="2">עוד אין משמרות</h3><div>בתחילת משמרת לוחצים על "התחל משמרת".<br>משמרת שכבר התקיימה מוסיפים בכפתור <b>+</b>.</div></div>`}
+        : S.meta.guide && !S.meta.guideDone ? '' : `<div class="empty fun">${App.mascot ? App.mascot('sleepy', { size: 92 }) : ''}<h2 class="h3">עוד אין משמרות</h2><div>בתחילת משמרת לוחצים על "התחל משמרת".<br>משמרת שכבר התקיימה מוסיפים בכפתור <b>+</b>.</div></div>`}
     `;
   };
 

@@ -201,6 +201,10 @@ body.fx .nav .fab:active { transform: scale(.9) rotate(90deg); }
 .shortcuts { display: grid; grid-template-columns: repeat(4, minmax(0, auto)); gap: 8px; margin: 0 0 22px; } /* sized by their labels while they fit; on a narrow phone or with big text they shrink and the labels wrap (before, the last tile went off the screen) */
 .sc { display: flex; flex-direction: column; align-items: center; gap: 8px; border: 1px solid var(--line); background: var(--surface-1); box-shadow: var(--sh-1); border-radius: 18px; padding: 12px 4px 10px; font: 600 .76rem/1.25 var(--font); color: var(--on-surface); cursor: pointer; transition: transform .2s var(--pop); text-align: center; }
 .sc > span:last-child { max-width: 100%; overflow-wrap: break-word; } /* a label that does not fit takes a second line (between words) */
+/* four tiles need about 18 times the text size across (rem grows with the text size setting): on a narrower row, a
+   small phone or big text, they stand two by two and every label keeps one line */
+.shortcuts { container-type: inline-size; }
+@container (max-width: 18rem) { .shortcuts > .sc { grid-column: span 2; } }
 
 /* first steps */
 .card.guide { border: 1.5px solid color-mix(in srgb, var(--brand) 30%, var(--line)); padding: 14px; }
@@ -467,25 +471,13 @@ body.fx .nav .fab:active { transform: scale(.9) rotate(90deg); }
 
 /* ---------------- motion that feels alive (and costs the phone nothing: transform/opacity only) ---------------- */
 /* the pay card: soft light drifting behind the amount, and a highlight sweeping round the dial like a second hand */
-.aurora { position: absolute; inset: 0; z-index: -2; overflow: hidden; border-radius: inherit; pointer-events: none; }
-.aurora i { position: absolute; width: 75%; aspect-ratio: 1; border-radius: 50%; will-change: transform; }
-.aurora i:nth-child(1) { top: -35%; right: -20%; background: radial-gradient(circle, hsla(calc(var(--h) + 48), 95%, 70%, .55), transparent 64%); animation: aurora-a 17s ease-in-out infinite alternate; }
-.aurora i:nth-child(2) { bottom: -45%; left: -15%; background: radial-gradient(circle, hsla(calc(var(--h) - 42), 95%, 66%, .5), transparent 64%); animation: aurora-b 21s ease-in-out infinite alternate; }
-.aurora i:nth-child(3) { top: 20%; left: 30%; width: 55%; background: radial-gradient(circle, hsla(168, 90%, 62%, .22), transparent 64%); animation: aurora-c 25s ease-in-out infinite alternate; }
-@keyframes aurora-a { to { transform: translate(-38%, 30%) scale(1.15); } }
-@keyframes aurora-b { to { transform: translate(42%, -26%) scale(1.2); } }
-@keyframes aurora-c { 0% { transform: translate(0, 0) scale(.9); } 50% { transform: translate(-30%, 18%) scale(1.15); } 100% { transform: translate(25%, -12%) scale(1); } }
 /* rounded, clipped cards with moving parts keep one stable layer, so nothing around them gains or loses
  * a layer when a screen slides in (the same fix as the hour picker); the active tab icon likewise */
 .home-hero, .home-action .btn.start, .timer-card, .recap-card, .nav .pill, .nav .pill svg { will-change: transform; }
 .hh-dial::before { content: ''; position: absolute; inset: 0; border-radius: 50%; background: conic-gradient(from 0deg, transparent 0 290deg, rgba(255, 255, 255, .15) 320deg, rgba(255, 255, 255, .95) 359deg, transparent 360deg); animation: dial-sweep 7s linear infinite; }
 @keyframes dial-sweep { to { transform: rotate(360deg); } }
 .timer-card.running { position: relative; overflow: hidden; isolation: isolate; }
-.timer-card.running .aurora i:nth-child(3) { display: none; }
-/* the main action: now and then a glint of light runs across it (right to left, like the reading direction) */
 .home-action .btn.start { position: relative; overflow: hidden; isolation: isolate; }
-.home-action .btn.start::after { content: ''; position: absolute; z-index: -1; top: -20%; bottom: -20%; width: 34%; right: 0; background: linear-gradient(100deg, transparent, rgba(255, 255, 255, .26), transparent); transform: translateX(130%) skewX(-18deg); animation: glint 5.5s cubic-bezier(.4, 0, .2, 1) 1.6s infinite; pointer-events: none; }
-@keyframes glint { 0% { transform: translateX(130%) skewX(-18deg); } 28%, 100% { transform: translateX(-420%) skewX(-18deg); } }
 /* the first look at the home screen: one short, orchestrated entrance */
 .view.first .home-top, .view.first .home-hero, .view.first .home-action, .view.first .timer-card, .view.first .card.guide, .view.first .highlight, .view.first .shortcuts, .view.first .home-list-head, .view.first .home-list, .view.first .empty.fun { animation: rise .55s cubic-bezier(.2, .8, .2, 1) both; }
 .view.first .home-hero { animation-delay: .04s; }
@@ -500,8 +492,10 @@ body.fx .nav .fab:active { transform: scale(.9) rotate(90deg); }
 .ob-bg i { will-change: transform; animation: ob-blob 24s ease-in-out infinite alternate; }
 .ob-bg i:nth-child(2) { animation-duration: 29s; animation-delay: -9s; }
 @keyframes ob-blob { to { transform: translate(28px, 40px) scale(1.12); } }
-@media (prefers-reduced-motion: reduce) { .aurora i, .hh-dial::before, .home-action .btn.start::after, .view.first *, .ob-bg i { animation: none !important; } }
-body:not(.fx) .aurora i, body:not(.fx) .hh-dial::before, body:not(.fx) .home-action .btn.start::after, body:not(.fx) .ob-bg i { animation: none !important; }
+/* each running animation keeps its phase across a redraw (App.phase), so nothing restarts in sight */
+.hh-dial::before, .rc-spark, .pulse { animation-delay: var(--ph, 0ms); }
+@media (prefers-reduced-motion: reduce) { .hh-dial::before, .view.first *, .ob-bg i { animation: none !important; } }
+body:not(.fx) .hh-dial::before, body:not(.fx) .ob-bg i { animation: none !important; }
 
 /* saved: a check mark that draws itself */
 .toast .tk { width: 22px; height: 22px; flex: none; }
@@ -585,7 +579,6 @@ body.fx .chart[data-anim].in .bar, body.fx .chart[data-anim].in .ln, body.fx .ch
 @media (prefers-reduced-motion: reduce) { .medal-pop, .medal-pop .medal-ic, .medal-pop.out { animation: none; } }
 
 /* looping decorations carry on across redraws (App.phase in app.js) */
-.aurora i:nth-child(n), .hh-dial::before, .home-action .btn.start::after, .recap-card::after, .rc-spark, .pulse { animation-delay: var(--ph, 0ms); }
 
 /* ---------- settings search ---------- */
 .set-search { position: relative; display: block; margin: 4px 0 12px; }
@@ -808,7 +801,9 @@ body.fx .qz-opt:active:not(:disabled) { transform: scale(.96); }
 .vf-group > summary::-webkit-details-marker { display: none; }
 .vf-group > summary .itile { width: 32px; height: 32px; border-radius: 10px; }
 .vf-group > summary .itile svg { width: 18px; height: 18px; }
-.vf-group > summary b { flex: 1; min-width: 0; }
+/* the group's name never breaks inside a word: on a very narrow screen with large text the count drops below it */
+.vf-group > summary { flex-wrap: wrap; }
+.vf-group > summary b { flex: 1; min-width: min-content; }
 .vf-gs { font-size: .8rem; color: var(--on-surface-var); font-variant-numeric: tabular-nums; white-space: nowrap; }
 .vf-chev { display: grid; color: var(--on-surface-var); transform: rotate(-90deg); transition: transform .2s; }
 .vf-group[open] > summary .vf-chev { transform: rotate(90deg); }
@@ -856,8 +851,6 @@ body { overflow-wrap: break-word; }
 
 /* ---------- monthly recap (views-recap.js) ---------- */
 .recap-card { display: flex; align-items: center; gap: 12px; width: 100%; margin: 0 0 14px; padding: 14px 16px; border: 0; border-radius: 20px; background: linear-gradient(120deg, #5b21b6, #7c3aed 55%, #db2777); color: #fff; font: inherit; text-align: start; cursor: pointer; box-shadow: var(--sh-brand); position: relative; overflow: hidden; }
-.recap-card::after { content: ''; position: absolute; inset: 0; background: linear-gradient(100deg, transparent 30%, rgba(255,255,255,.22) 50%, transparent 70%); transform: translateX(120%); animation: rc-glint 3.6s ease-in-out 1s infinite; }
-@keyframes rc-glint { 0% { transform: translateX(120%); } 35%, 100% { transform: translateX(-120%); } }
 body.fx .recap-card:active { transform: scale(.98); }
 .rc-spark { font-size: 1.6rem; animation: rc-spark 2.4s ease-in-out infinite; }
 @keyframes rc-spark { 50% { transform: rotate(14deg) scale(1.15); } }
@@ -1004,7 +997,6 @@ body.fx .recap-card:active { transform: scale(.98); }
 /* "try it on your card": the user's own card, in the chosen skin */
 .design-prev { margin: 2px 0 14px; pointer-events: none; }
 .sheet .design-prev .home-hero { --h: inherit; --grad-hero: inherit; margin: 0; will-change: auto; }
-.design-prev .aurora i { animation: none !important; will-change: auto; }
 .design-prev .hh-dial::before { display: none; }
 .home-hero .hh-skin { position: absolute; top: 10px; inset-inline-end: 10px; z-index: 1; display: grid; place-items: center; width: 40px; height: 40px; padding: 0; border-radius: 50%; border: 1px solid rgba(255, 255, 255, .24); background: rgba(255, 255, 255, .14); color: #fff; cursor: pointer; }
 .home-hero .hh-skin:active { transform: scale(.92); }

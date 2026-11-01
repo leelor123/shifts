@@ -10,6 +10,13 @@
   ]
  },
  {
+  "key": "כחול לילה",
+  "kind": "lit",
+  "where": [
+   "app/app.js:51"
+  ]
+ },
+ {
   "key": "סגול-ורוד",
   "kind": "lit",
   "where": [
@@ -7321,7 +7328,7 @@
   ]
  },
  {
-  "key": "<div class=\"card timer-card running{0}{1}\"><span class=\"aurora\" aria-hidden=\"true\" style=\"{2}\"><i></i><i></i><i></i></span>\n        <div class=\"tc-head\"><span class=\"pulse\" style=\"{3}\"></span>{4}{5}<span class=\"spacer\"></span><span class=\"tiny\">מ-{6}</span></div>\n        <div class=\"clock\" data-clock=\"net\">0:00:00</div>\n        <div class=\"meta\">עד עכשיו <b data-live-pay></b>{7}</div>\n        {8}\n        <div class=\"tc-actions\">\n          <button class=\"btn big\" data-act=\"timer-stop\">{9} סיים משמרת</button>\n          <button class=\"icon-btn tonal lg\" data-act=\"timer-break\" aria-label=\"{10}\">{11}</button>\n          {12}\n        </div></div>",
+  "key": "<div class=\"card timer-card running{0}{1}\">\n        <div class=\"tc-head\"><span class=\"pulse\" style=\"{2}\"></span>{3}{4}<span class=\"spacer\"></span><span class=\"tiny\">מ-{5}</span></div>\n        <div class=\"clock\" data-clock=\"net\">0:00:00</div>\n        <div class=\"meta\">עד עכשיו <b data-live-pay></b>{6}</div>\n        {7}\n        <div class=\"tc-actions\">\n          <button class=\"btn big\" data-act=\"timer-stop\">{8} סיים משמרת</button>\n          <button class=\"icon-btn tonal lg\" data-act=\"timer-break\" aria-label=\"{9}\">{10}</button>\n          {11}\n        </div></div>",
   "kind": "tpl",
   "where": [
    "app/views-home.js:150"
@@ -7422,7 +7429,7 @@
   ]
  },
  {
-  "key": "<section class=\"home-hero\" data-act=\"go-summary\"><button class=\"vh\" data-act=\"go-summary\">פירוט {0}</button>\n      {1}\n      <button class=\"hh-eye {2}\" data-act=\"toggle-money\" aria-label=\"{3}\" aria-pressed=\"{4}\">{5}</button>\n      <span class=\"aurora\" aria-hidden=\"true\" style=\"{6}\"><i></i><i></i><i></i></span><span class=\"hh-dial\" aria-hidden=\"true\" style=\"{7}\"></span>\n      <div class=\"hh-label\">{8} {9} עד עכשיו</div>\n      <div class=\"hero-num\">{10}</div>\n      <div class=\"hh-stats\"><span><b>{11}</b><small>{12}</small></span><span><b class=\"num\">{13}</b><small>שעות</small></span><span><b>{14}</b><small>{15}</small></span></div>\n      {16}\n    </section>",
+  "key": "<section class=\"home-hero\" data-act=\"go-summary\"><button class=\"vh\" data-act=\"go-summary\">פירוט {0}</button>\n      {1}\n      <button class=\"hh-eye {2}\" data-act=\"toggle-money\" aria-label=\"{3}\" aria-pressed=\"{4}\">{5}</button>\n      <span class=\"hh-dial\" aria-hidden=\"true\" style=\"{6}\"></span>\n      <div class=\"hh-label\">{7} {8} עד עכשיו</div>\n      <div class=\"hero-num\">{9}</div>\n      <div class=\"hh-stats\"><span><b>{10}</b><small>{11}</small></span><span><b class=\"num\">{12}</b><small>שעות</small></span><span><b>{13}</b><small>{14}</small></span></div>\n      {15}\n    </section>",
   "kind": "tpl",
   "where": [
    "app/views-home.js:211"
@@ -7665,7 +7672,7 @@
   ]
  },
  {
-  "key": "<div class=\"empty fun\">{0}<h3 aria-level=\"2\">עוד אין משמרות</h3><div>בתחילת משמרת לוחצים על \"התחל משמרת\".<br>משמרת שכבר התקיימה מוסיפים בכפתור <b>+</b>.</div></div>",
+  "key": "<div class=\"empty fun\">{0}<h2 class=\"h3\">עוד אין משמרות</h2><div>בתחילת משמרת לוחצים על \"התחל משמרת\".<br>משמרת שכבר התקיימה מוסיפים בכפתור <b>+</b>.</div></div>",
   "kind": "tpl",
   "where": [
    "app/views-home.js:359"
@@ -9791,7 +9798,7 @@
   ]
  },
  {
-  "key": "שורות התשלום מסתכמות ל-{0}, והברוטו {1}. אולי חסרה או מיותרת שורה",
+  "key": "שורות התשלום מסתכמות ל-⁠{0}, והברוטו {1}. אולי חסרה או מיותרת שורה",
   "kind": "tpl",
   "where": [
    "app/views-payslip.js:242"
@@ -10749,14 +10756,14 @@
   ]
  },
  {
-  "key": "<button class=\"recap-card wrapped-card\" style=\"{0}\" data-act=\"recap-open\" data-pk=\"Y{1}\"><span class=\"rc-spark\" aria-hidden=\"true\">🎁</span>\n      <span class=\"rc-t\"><b>השנה שלך ב-Shaati: {2}</b><span>{3} משמרות · {4}. הסיפור של השנה מחכה</span></span>{5}</button>",
+  "key": "<button class=\"recap-card wrapped-card\" style=\"{0}\" data-act=\"recap-open\" data-pk=\"Y{1}\"><span class=\"rc-spark\" aria-hidden=\"true\">{2}</span>\n      <span class=\"rc-t\"><b>השנה שלך ב-Shaati: {3}</b><span>{4} משמרות · {5}. הסיפור של השנה מחכה</span></span>{6}</button>",
   "kind": "tpl",
   "where": [
    "app/views-recap.js:248"
   ]
  },
  {
-  "key": "<button class=\"recap-card\" style=\"{0}\" data-act=\"recap-open\" data-pk=\"{1}\"><span class=\"rc-spark\" aria-hidden=\"true\">✨</span>\n      <span class=\"rc-t\"><b>הסיכום של {2} מוכן</b><span>{3} משמרות · {4}. בואו לראות</span></span>{5}</button>",
+  "key": "<button class=\"recap-card\" style=\"{0}\" data-act=\"recap-open\" data-pk=\"{1}\"><span class=\"rc-spark\" aria-hidden=\"true\">{2}</span>\n      <span class=\"rc-t\"><b>הסיכום של {3} מוכן</b><span>{4} משמרות · {5}. בואו לראות</span></span>{6}</button>",
   "kind": "tpl",
   "where": [
    "app/views-recap.js:260"
@@ -14426,7 +14433,7 @@
   ]
  },
  {
-  "key": "0 = ללא תקרה. למשל מחיר חופשי-חודשי.",
+  "key": "0 = ללא תקרה. למשל מחיר חופשי-⁠חודשי.",
   "kind": "lit",
   "where": [
    "app/views-settings.js:543"
