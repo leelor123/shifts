@@ -27,10 +27,10 @@
   // the sky of each part of the day: top, middle, horizon, and the ink the land is drawn in
   const PHASES = {
     night: { sky: ['#050d26', '#0b1f4d', '#1b3470'], ink: '#030916', lights: 1, stars: 1 },
-    dawn: { sky: ['#1d2f6e', '#7a5a9a', '#f2a477'], ink: '#1a1638', lights: .5, stars: .3 },
-    morning: { sky: ['#2c6fc9', '#69a6e6', '#cfe6f7'], ink: '#1d3d6b', lights: 0, stars: 0 },
-    day: { sky: ['#1859b7', '#3f8ce0', '#a6d2f4'], ink: '#173866', lights: 0, stars: 0 },
-    golden: { sky: ['#2b4f9e', '#d58a5e', '#ffcf86'], ink: '#2a2346', lights: .2, stars: 0 },
+    dawn: { sky: ['#1d2f6e', '#5d4a8a', '#f2a477'], ink: '#1a1638', lights: .5, stars: .3 },
+    morning: { sky: ['#1b58ad', '#336fbd', '#cfe6f7'], ink: '#1d3d6b', lights: 0, stars: 0 },
+    day: { sky: ['#124c9a', '#2c69b8', '#a6d2f4'], ink: '#173866', lights: 0, stars: 0 },
+    golden: { sky: ['#243f86', '#8a5470', '#ffc27a'], ink: '#2a2346', lights: .2, stars: 0 },
     dusk: { sky: ['#14214f', '#5a3b78', '#e07a5f'], ink: '#120f2c', lights: .8, stars: .5 },
   };
   const GREY = { cloudy: .45, rain: .6, storm: .72, fog: .5, snow: .4 }; // a grey day dulls the sky
@@ -121,7 +121,8 @@
     const st = state(now, place);
     const phase = o.phase || st.phase, season = o.season || st.season, weather = o.weather || 'clear';
     const P = PHASES[phase], grey = GREY[weather] || 0, night = phase === 'night' || phase === 'dusk';
-    const sky = P.sky.map((c) => mix(c, night ? '#1c2233' : '#8e9aab', grey)), ink = P.ink;
+    // grey weather: a slate grey, dark enough for the white words on it
+    const sky = P.sky.map((c, i) => mix(c, night ? '#1c2233' : i === 2 ? '#a9b4c2' : '#55647a', grey)), ink = P.ink;
     const r = rng(String(place.name || 'x').split('').reduce((a, c) => (a * 31 + c.charCodeAt(0)) | 0, 7));
     const kind = placeKind(place.name, place.lon);
     const id = 'sk' + (++uid) + '-';
@@ -175,7 +176,7 @@
     const cloudFill = grey ? mix(sky[1], phase === 'night' ? '#2a3350' : '#e8edf3', .55) : phase === 'night' ? '#20305e' : night || phase === 'golden' || phase === 'dawn' ? '#ffd9c2' : '#ffffff';
     for (let i = 0; i < (nClouds == null ? 1 : nClouds); i++) {
       const lay = el('g', { class: 'sk-cloud', style: `--t:${(70 + r() * 70).toFixed(0)}s;--d:${(-r() * 120).toFixed(0)}s` });
-      lay.appendChild(cloud(r, r() < .5 ? 14 + r() * 40 : 198 + r() * 22, .7 + r() * .7, cloudFill, grey ? .85 : .7));
+      lay.appendChild(cloud(r, r() < .5 ? 6 + r() * 10 : 226 + r() * 14, .7 + r() * .7, cloudFill, grey ? .85 : .7));
       svg.appendChild(lay);
     }
     // cranes crossing Israel in autumn and spring (it is on their way), by day, in dry weather
@@ -232,7 +233,7 @@
 
     // the weather in front
     if (weather === 'rain' || weather === 'storm') {
-      const g = el('g', { class: 'sk-fall', stroke: phase === 'night' ? 'rgba(190,210,255,.28)' : 'rgba(255,255,255,.38)', 'stroke-width': 1, 'stroke-linecap': 'round', style: '--t:.75s' });
+      const g = el('g', { class: 'sk-fall', stroke: phase === 'night' ? 'rgba(190,210,255,.24)' : 'rgba(255,255,255,.3)', 'stroke-width': 1, 'stroke-linecap': 'round', style: '--t:.75s' });
       // two screens of drops, one above the other: falling by one screen's height loops without a seam
       for (let k = 0; k < 2; k++) for (let i = 0; i < 22; i++) { const x = r() * (W + 60), y = r() * H - k * H; g.appendChild(el('line', { x1: x.toFixed(1), y1: y.toFixed(1), x2: (x - 4).toFixed(1), y2: (y + 12).toFixed(1) })); }
       svg.appendChild(el('g', {}, [g]));

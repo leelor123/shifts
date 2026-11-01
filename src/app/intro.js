@@ -57,7 +57,7 @@
       if (first) q('.sh-title').textContent = first;
       q('.sh-sub').textContent = Sky ? Sky.dateLine(now) : '';
     } else q('.sh-sub').textContent = 'כמה מגיע לך, עד השקל';
-    if (full && Sky) Sky.render(q('.sky'), Intro.scene);
+    if (full && Sky) q('.skyhead').dataset.phase = Sky.render(q('.sky'), Intro.scene).phase;
   } catch (e) { console.warn('intro', e); }
   el.classList.add(mode);
 

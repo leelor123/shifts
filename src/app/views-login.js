@@ -65,7 +65,7 @@
    * over (it covers the screen now), or on its own (first: true, a screen opened later); a redraw just stays. */
   App.mountSky = function (host, first) {
     const svg = host.querySelector('.skyhead .sky'), scr = host.classList.contains('skyscreen') ? host : host.querySelector('.skyscreen');
-    if (svg && root.Sky) { try { root.Sky.render(svg, scene()); } catch (e) { console.warn('sky', e); } }
+    if (svg && root.Sky) { try { svg.parentNode.dataset.phase = root.Sky.render(svg, scene()).phase; } catch (e) { console.warn('sky', e); } }
     if (!scr) return;
     const I = root.Intro;
     if (I && I.covering && I.covering()) {
