@@ -144,7 +144,7 @@
             if (!signedIn()) { UI.toast('צריך להתחבר לחשבון'); return; }
             b.disabled = true;
             const was = me();
-            await Store.setSettings((s) => { s.fr = Object.assign({ f: [], blocked: [], hide: false }, s.fr, { on: true, n, e }); });
+            await Store.setSettings((s) => { s.fr = Object.assign({ f: [], blocked: [], hide: true }, s.fr, { on: true, n, e }); });
             try {
               await publish(true);
               UI.closeTop();

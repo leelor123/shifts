@@ -100,7 +100,8 @@
     let sheetEl = null;
     let busy = false;
     const chat = () => (S.meta.chat || []);
-    const shareData = () => S.meta.chatShareData !== false;
+    // the summary of the person's pay goes with a question only when they tick it (salary data is sensitive; launch check)
+    const shareData = () => S.meta.chatShareData === true;
 
     function body() {
       if (!S.settings.ai.apiKey) {

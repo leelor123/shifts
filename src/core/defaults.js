@@ -121,7 +121,8 @@
         recuperationMonth: 7, // month the employer pays (0 = paid monthly)
       },
       minWageHourly: null, // null = by law, from the date and age (Engine.legalMinWage); a number overrides it
-      shareStats: true, // anonymous usage statistics (stats.js); off deletes this device's record
+      shareStats: false, // anonymous usage statistics (stats.js); off deletes this device's record
+      statsAsked: false, // the person answered the question (home card or Settings); nothing is sent before a yes
       gender: '', // '' | 'm' | 'f': the mandatory-pension age, and a woman's credit point in the tax refund
       // the tax refund (views-taxrefund.js): service { kind: 'army'|'national', months, end: 'YYYY-MM' }, a first degree
       // { year, studyYears }, and Form 106 numbers by year { gross, tax, pension }

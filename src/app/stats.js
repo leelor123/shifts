@@ -29,7 +29,9 @@
     if (S.meta.lastActiveDay === k) return;
     await Store.setMeta({ lastActiveDay: k, activeDays: (S.meta.activeDays || 0) + 1, firstActiveDay: S.meta.firstActiveDay || k });
   };
-  Stats.enabled = () => S.settings.shareStats !== false;
+  // only after a yes (launch check: an id that is not needed for the app to work needs consent first; the user asked for a
+  // cookie approval). Someone who never answered (it was on by default) sends nothing until they do
+  Stats.enabled = () => S.settings.statsAsked === true && S.settings.shareStats === true;
 
   function record() {
     const k = today();

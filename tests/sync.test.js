@@ -244,13 +244,24 @@ T.atest('a crafted backup cannot put markup in through a colour or a notificatio
 });
 
 /* ---------------- anonymous statistics ---------------- */
-async function withStats(A, legal) {
+async function withStats(A, legal, asked) {
+  // the person said yes to the statistics (home card or Settings); asked === false: never answered
+  if (asked !== false) { A.S.settings.statsAsked = true; A.S.settings.shareStats = true; }
   A.ctx.App = { androidApp: false, roles: () => A.S.roles, legalAccepted: () => legal !== false, tab: 'home' };
   vm.runInContext(fs.readFileSync(path.join(SRC, 'app/stats.js'), 'utf8'), A.ctx, { filename: 'app/stats.js' });
   return A.ctx.Stats;
 }
 const statsDocs = (be) => [...be.docs].filter(([k]) => k.startsWith('stats/'));
 
+// launch check, 2 Nov 2026: an id the app does not need is kept only after a yes (it used to be on by default)
+T.atest('statistics: nothing is sent before the person says yes', async () => {
+  const be = fakeBackend();
+  const A = await phone(be); await A.add('s1');
+  const Stats = await withStats(A, true, false);
+  await A.Cloud.connect(user); await wait(60);
+  T.eq(Stats.enabled(), false, 'off before an answer');
+  T.eq(statsDocs(be).length, 0, 'no record sent');
+});
 T.atest('statistics: one anonymous record per device, nothing personal in it', async () => {
   const be = fakeBackend();
   const A = await phone(be); await A.add('s1'); await A.add('s2');

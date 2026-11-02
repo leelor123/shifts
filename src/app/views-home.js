@@ -389,6 +389,7 @@
       ${actionBlock()}
       ${iosCard()}
       ${App.guideCard ? App.guideCard() : ''}
+      ${consentCard()}
       ${HS.highlight !== false ? highlight() : ''}
       ${root.Plus ? root.Plus.nudgeCard() : ''}
       ${savingCard()}
@@ -423,6 +424,24 @@
     const ios = /iPhone|iPad|iPod/.test(ua) || (/Macintosh/.test(ua) && navigator.maxTouchPoints > 1);
     const home = navigator.standalone || (root.matchMedia && root.matchMedia('(display-mode: standalone)').matches);
     return ios && !home;
+  };
+  /* anonymous statistics: asked once, and off until a yes; the two answers look the same (a consent is not nudged) (the user, 2 Nov: a cookie approval; launch check: an id the
+   * app does not need may be kept only with consent). The answer can be changed in Settings › account and sync. */
+  function consentCard() {
+    if (S.settings.statsAsked || !root.Stats) return '';
+    return `<div class="card ios-card consent-card"><div class="ic-head"><span class="ic-app">${icon('shield')}</span><div class="ic-t"><b>לשתף סטטיסטיקת שימוש?</b>
+        <div class="small">פעם ביום, בלי שם, אימייל או סכומים: כמה ימים השתמשת, כמה משמרות ואילו תכונות. עוזר לנו לדעת מה לשפר. אפשר לשנות בהגדרות.</div></div></div>
+      <div class="btn-row"><button class="btn tonal" data-act="stats-no">לא, תודה</button><button class="btn tonal" data-act="stats-yes">לשתף</button></div></div>`;
+  }
+  App.actions['stats-yes'] = async () => {
+    await Store.setSettings((s) => { s.statsAsked = true; s.shareStats = true; });
+    if (root.Stats) root.Stats.report(true);
+    App.rerender();
+  };
+  App.actions['stats-no'] = async () => {
+    await Store.setSettings((s) => { s.statsAsked = true; s.shareStats = false; });
+    if (root.Stats) root.Stats.forget();
+    App.rerender();
   };
   function iosCard() {
     if (!App.iosBrowser()) return '';

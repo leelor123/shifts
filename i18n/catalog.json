@@ -257,8 +257,8 @@
   "where": [
    "app/app.js:379",
    "app/app.js:544",
-   "app/ui.js:318",
-   "app/ui.js:325",
+   "app/ui.js:356",
+   "app/ui.js:363",
    "app/views-login.js:84",
    "app/views-login.js:108",
    "app/views-settings.js:392",
@@ -314,7 +314,7 @@
   "kind": "lit",
   "where": [
    "app/app.js:531",
-   "app/ui.js:325",
+   "app/ui.js:363",
    "app/views-settings.js:392",
    "app/views-settings.js:783",
    "app/views-shift.js:534",
@@ -1166,7 +1166,7 @@
   "kind": "lit",
   "where": [
    "app/cloud.js:173",
-   "app/views-assistant.js:175"
+   "app/views-assistant.js:176"
   ]
  },
  {
@@ -2137,7 +2137,7 @@
   "kind": "lit",
   "where": [
    "app/invite.js:58",
-   "app/views-assistant.js:136",
+   "app/views-assistant.js:137",
    "app/views-friends.js:155",
    "app/views-friends.js:172",
    "app/views-friends.js:220",
@@ -2218,7 +2218,7 @@
   "kind": "lit",
   "where": [
    "app/pickers.js:95",
-   "app/ui.js:396"
+   "app/ui.js:434"
   ]
  },
  {
@@ -2308,7 +2308,7 @@
   "kind": "lit",
   "where": [
    "app/pickers.js:238",
-   "app/ui.js:392"
+   "app/ui.js:430"
   ]
  },
  {
@@ -3741,7 +3741,7 @@
   "kind": "lit",
   "where": [
    "app/schedule-import.js:298",
-   "app/ui.js:318",
+   "app/ui.js:356",
    "app/views-login.js:321"
   ]
  },
@@ -3891,35 +3891,35 @@
   "key": "<div class=\"grab\"></div><div class=\"sh-head\"><h2 id=\"{0}\">{1}</h2><button class=\"icon-btn\" data-close aria-label=\"סגור\">{2}</button></div><div class=\"sh-body\">{3}</div>{4}",
   "kind": "tpl",
   "where": [
-   "app/ui.js:201"
+   "app/ui.js:231"
   ]
  },
  {
   "key": "לפני {0} דק׳",
   "kind": "tpl",
   "where": [
-   "app/ui.js:393"
+   "app/ui.js:431"
   ]
  },
  {
   "key": "לפני {0} שע׳",
   "kind": "tpl",
   "where": [
-   "app/ui.js:394"
+   "app/ui.js:432"
   ]
  },
  {
   "key": "לפני {0} ימים",
   "kind": "tpl",
   "where": [
-   "app/ui.js:397"
+   "app/ui.js:435"
   ]
  },
  {
   "key": "<div class=\"skel-wrap\" aria-busy=\"true\" aria-label=\"טוען\">{0}</div>",
   "kind": "tpl",
   "where": [
-   "app/ui.js:403"
+   "app/ui.js:441"
   ]
  },
  {
@@ -4752,162 +4752,162 @@
   "key": "<div class=\"card\"><div class=\"card-head\">{0}<h3>עוזר זכויות ושכר</h3></div>\n          <p class=\"small\">שאל כל שאלה על זכויות בעבודה, על התלוש או על האפליקציה, וקבל תשובה מותאמת לנתונים שלך.</p>\n          <p class=\"small\">העוזר פועל עם Claude של Anthropic, דרך מפתח API אישי שלך. השימוש מחויב בחשבון שלך שם (בדרך כלל אגורות בודדות לשאלה). המפתח נשמר רק בטלפון.</p>\n          <label class=\"field\"><span class=\"lbl\">מפתח API (מתחיל ב-⁠sk-ant-)</span><input class=\"input\" id=\"as-key\" type=\"password\" autocomplete=\"off\" dir=\"ltr\"></label>\n          <div class=\"tiny muted\" style=\"margin-bottom:10px\">יוצרים מפתח באתר console.anthropic.com ‹ API Keys.</div>\n          <button class=\"btn block\" data-save-key>{1} שמור והתחל</button></div>\n          {2}",
   "kind": "tpl",
   "where": [
-   "app/views-assistant.js:107"
+   "app/views-assistant.js:108"
   ]
  },
  {
   "key": "<div class=\"chat-consent\">{0}<div>השאלות נשלחות ל-⁠Anthropic לעיבוד. <label class=\"chat-share\"><input type=\"checkbox\" id=\"as-share\" {1}> לצרף סיכום מספרי מהאפליקציה (תעריפים, שעות, סכומים, יתרות, בלי שם או פרטים מזהים)</label></div></div>\n        {2}\n        <div class=\"chat-log\" id=\"as-log\">{3}</div>\n        {4}",
   "kind": "tpl",
   "where": [
-   "app/views-assistant.js:116"
+   "app/views-assistant.js:117"
   ]
  },
  {
   "key": "<div class=\"chat-empty\"><div class=\"chat-hello\">שלום! במה אפשר לעזור?</div><div class=\"chips chat-sugg\">{0}</div></div>",
   "kind": "tpl",
   "where": [
-   "app/views-assistant.js:117"
+   "app/views-assistant.js:118"
   ]
  },
  {
   "key": "<div class=\"tiny muted chat-legal\">התשובות נוצרות אוטומטית, עלולות לכלול טעויות ואינן ייעוץ משפטי, חשבונאי או מס. <a href=\"#\" data-legal=\"disclaimer\">הבהרה משפטית</a></div>",
   "kind": "tpl",
   "where": [
-   "app/views-assistant.js:121"
+   "app/views-assistant.js:122"
   ]
  },
  {
   "key": "<textarea class=\"input chat-input\" id=\"as-input\" rows=\"1\" placeholder=\"כתוב שאלה…\"></textarea><button class=\"icon-btn chat-send\" data-send aria-label=\"שלח\">{0}</button>",
   "kind": "tpl",
   "where": [
-   "app/views-assistant.js:123"
+   "app/views-assistant.js:124"
   ]
  },
  {
   "key": "נתוני המשתמש מהאפליקציה (JSON, סכומים בש\"ח):\n",
   "kind": "lit",
   "where": [
-   "app/views-assistant.js:156"
+   "app/views-assistant.js:157"
   ]
  },
  {
   "key": "לא אוכל לענות על השאלה הזו. אפשר לשאול על זכויות בעבודה, שכר או האפליקציה.",
   "kind": "lit",
   "where": [
-   "app/views-assistant.js:170"
+   "app/views-assistant.js:171"
   ]
  },
  {
   "key": "לא התקבלה תשובה. נסה לנסח מחדש.",
   "kind": "lit",
   "where": [
-   "app/views-assistant.js:171"
+   "app/views-assistant.js:172"
   ]
  },
  {
   "key": "לא ניתן לטעון את רכיב ה-⁠AI. בדוק את החיבור לאינטרנט.",
   "kind": "lit",
   "where": [
-   "app/views-assistant.js:176"
+   "app/views-assistant.js:177"
   ]
  },
  {
   "key": "מפתח ה-⁠API לא תקין. אפשר לעדכן אותו בהגדרות › עוזר AI ואודות › מפתח AI.",
   "kind": "lit",
   "where": [
-   "app/views-assistant.js:177"
+   "app/views-assistant.js:178"
   ]
  },
  {
   "key": "למפתח אין הרשאה למודל שנבחר. אפשר לבחור מודל אחר בהגדרות › עוזר AI ואודות › מפתח AI.",
   "kind": "lit",
   "where": [
-   "app/views-assistant.js:178"
+   "app/views-assistant.js:179"
   ]
  },
  {
   "key": "המודל שנבחר לא זמין. בחר מודל אחר בהגדרות › עוזר AI ואודות › מפתח AI.",
   "kind": "lit",
   "where": [
-   "app/views-assistant.js:179"
+   "app/views-assistant.js:180"
   ]
  },
  {
   "key": "יותר מדי בקשות כרגע. נסה שוב בעוד דקה.",
   "kind": "lit",
   "where": [
-   "app/views-assistant.js:180"
+   "app/views-assistant.js:181"
   ]
  },
  {
   "key": "בעיית תקשורת. בדוק את החיבור לאינטרנט.",
   "kind": "lit",
   "where": [
-   "app/views-assistant.js:181"
+   "app/views-assistant.js:182"
   ]
  },
  {
   "key": "נגמרה היתרה בחשבון ה-⁠API שלך אצל Anthropic.",
   "kind": "lit",
   "where": [
-   "app/views-assistant.js:182"
+   "app/views-assistant.js:183"
   ]
  },
  {
   "key": "שגיאה מהשרת (",
   "kind": "lit",
   "where": [
-   "app/views-assistant.js:183"
+   "app/views-assistant.js:184"
   ]
  },
  {
   "key": "). נסה שוב בעוד רגע.",
   "kind": "lit",
   "where": [
-   "app/views-assistant.js:183"
+   "app/views-assistant.js:184"
   ]
  },
  {
   "key": "\n\n(התשובה נקטעה)",
   "kind": "lit",
   "where": [
-   "app/views-assistant.js:185"
+   "app/views-assistant.js:186"
   ]
  },
  {
   "key": "עוזר זכויות ושכר",
   "kind": "lit",
   "where": [
-   "app/views-assistant.js:195"
+   "app/views-assistant.js:196"
   ]
  },
  {
   "key": "המפתח צריך להתחיל ב-⁠sk-ant-",
   "kind": "lit",
   "where": [
-   "app/views-assistant.js:206"
+   "app/views-assistant.js:207"
   ]
  },
  {
   "key": "שיחה חדשה",
   "kind": "lit",
   "where": [
-   "app/views-assistant.js:219",
-   "app/views-assistant.js:220"
+   "app/views-assistant.js:220",
+   "app/views-assistant.js:221"
   ]
  },
  {
   "key": "להתחיל שיחה חדשה?",
   "kind": "lit",
   "where": [
-   "app/views-assistant.js:220"
+   "app/views-assistant.js:221"
   ]
  },
  {
   "key": "השיחה הנוכחית תימחק מהטלפון.",
   "kind": "lit",
   "where": [
-   "app/views-assistant.js:220"
+   "app/views-assistant.js:221"
   ]
  },
  {
@@ -7749,7 +7749,7 @@
   ]
  },
  {
-  "key": "\n      <div class=\"home-sky\" data-key=\"home-sky\" aria-hidden=\"true\"><i class=\"hs-a\"></i></div>\n      <div class=\"home-top\"><div class=\"titles\"><h1>{0}{1}</h1>\n        <div class=\"sub\">{2}{3}{4}</div></div>\n        <span id=\"sync-dot\">{5}</span>\n        <button class=\"icon-btn\" data-act=\"support\" aria-label=\"עזרה ותמיכה\">{6}</button>\n        <button class=\"icon-btn\" data-act=\"insights\" aria-label=\"התראות ותובנות\">{7}{8}</button></div>\n      {9}\n      {10}\n      {11}\n      {12}\n      {13}\n      {14}\n      {15}\n      {16}\n      {17}\n      {18}\n      {19}\n      {20}\n      {21}\n      {22}\n      {23}\n    ",
+  "key": "\n      <div class=\"home-sky\" data-key=\"home-sky\" aria-hidden=\"true\"><i class=\"hs-a\"></i></div>\n      <div class=\"home-top\"><div class=\"titles\"><h1>{0}{1}</h1>\n        <div class=\"sub\">{2}{3}{4}</div></div>\n        <span id=\"sync-dot\">{5}</span>\n        <button class=\"icon-btn\" data-act=\"support\" aria-label=\"עזרה ותמיכה\">{6}</button>\n        <button class=\"icon-btn\" data-act=\"insights\" aria-label=\"התראות ותובנות\">{7}{8}</button></div>\n      {9}\n      {10}\n      {11}\n      {12}\n      {13}\n      {14}\n      {15}\n      {16}\n      {17}\n      {18}\n      {19}\n      {20}\n      {21}\n      {22}\n      {23}\n      {24}\n    ",
   "kind": "tpl",
   "where": [
    "app/views-home.js:376"
@@ -7759,168 +7759,175 @@
   "key": "<div class=\"home-list-head\"><span>משמרות אחרונות</span><span class=\"spacer\"></span>{0}<button class=\"btn text sm\" data-act=\"go-shifts\">הכול</button></div>\n        <div class=\"list home-list\">{1}</div>",
   "kind": "tpl",
   "where": [
-   "app/views-home.js:397"
+   "app/views-home.js:398"
   ]
  },
  {
   "key": "<div class=\"empty fun\">{0}<h2 class=\"h3\">עוד אין משמרות</h2><div>בתחילת משמרת לוחצים על \"התחל משמרת\".<br>משמרת שכבר התקיימה מוסיפים בכפתור <b>+</b>.</div></div>",
   "kind": "tpl",
   "where": [
-   "app/views-home.js:400"
+   "app/views-home.js:401"
   ]
  },
  {
   "key": "<div class=\"pd-row\"><button class=\"pd-info\" data-act=\"shift-open\" data-id=\"{0}\"><b>{1} · {2}</b><span>{3}–{4} · {5}</span></button>\n      <button class=\"btn go pd-ok\" data-act=\"mark-done\" data-id=\"{6}\">{7} עבדתי · {8}</button></div>",
   "kind": "tpl",
   "where": [
-   "app/views-home.js:408"
+   "app/views-home.js:409"
   ]
  },
  {
   "key": "<div class=\"card pending-card\"><div class=\"pd-head\">{0}<div><b>{1}</b><div class=\"small\">משמרת מתוכננת נכנסת לשכר רק אחרי שמאשרים שעבדת בה.</div></div></div>\n      {2}\n      {3}</div>",
   "kind": "tpl",
   "where": [
-   "app/views-home.js:410"
+   "app/views-home.js:411"
   ]
  },
  {
   "key": "עבדת במשמרת הזאת?",
   "kind": "lit",
   "where": [
-   "app/views-home.js:410"
+   "app/views-home.js:411"
   ]
  },
  {
   "key": "עבדת במשמרות האלה?",
   "kind": "lit",
   "where": [
-   "app/views-home.js:410"
+   "app/views-home.js:411"
   ]
  },
  {
   "key": "<button class=\"btn tonal block pd-all\" data-act=\"mark-done-all\">{0} עבדתי בכולן{1} · {2}</button>",
   "kind": "tpl",
   "where": [
-   "app/views-home.js:412"
+   "app/views-home.js:413"
+  ]
+ },
+ {
+  "key": "<div class=\"card ios-card consent-card\"><div class=\"ic-head\"><span class=\"ic-app\">{0}</span><div class=\"ic-t\"><b>לשתף סטטיסטיקת שימוש?</b>\n        <div class=\"small\">פעם ביום, בלי שם, אימייל או סכומים: כמה ימים השתמשת, כמה משמרות ואילו תכונות. עוזר לנו לדעת מה לשפר. אפשר לשנות בהגדרות.</div></div></div>\n      <div class=\"btn-row\"><button class=\"btn tonal\" data-act=\"stats-no\">לא, תודה</button><button class=\"btn tonal\" data-act=\"stats-yes\">לשתף</button></div></div>",
+  "kind": "tpl",
+  "where": [
+   "app/views-home.js:432"
   ]
  },
  {
   "key": "<div class=\"card ios-card\"><div class=\"ic-head\"><span class=\"ic-app\">{0}</span><div class=\"ic-t\"><b>שעתי על מסך הבית</b>\n        <div class=\"small\">כך הנתונים שלך נשמרים, ותזכורות למשמרות עובדות גם באייפון.</div></div>\n        <button class=\"icon-btn\" data-act=\"ios-install-x\" aria-label=\"סגירה\">{1}</button></div>\n      <button class=\"btn go block\" data-act=\"ios-install\">{2} איך מוסיפים? 3 צעדים</button></div>",
   "kind": "tpl",
   "where": [
-   "app/views-home.js:431"
+   "app/views-home.js:450"
   ]
  },
  {
   "key": "<div class=\"ii-first\">{0}<div>הכי טוב עכשיו, לפני שמוסיפים משמרות: האפליקציה שעל מסך הבית שומרת נתונים בנפרד מספארי.</div></div>",
   "kind": "tpl",
   "where": [
-   "app/views-home.js:445"
+   "app/views-home.js:464"
   ]
  },
  {
   "key": "<div class=\"ii-first\">{0}<div>אחרי ההוספה: פותחים את האפליקציה החדשה ומתחברים עם אותו חשבון Google, והמשמרות חוזרות.</div></div>",
   "kind": "tpl",
   "where": [
-   "app/views-home.js:447"
+   "app/views-home.js:466"
   ]
  },
  {
   "key": "<div class=\"ii-first warn\">{0}<div><b>חשוב, לפני ההוספה:</b> באייפון האפליקציה שעל מסך הבית מתחילה ריקה. כדי שהמשמרות יעברו אליה, קודם מתחברים עם Google, ואחר כך מתחברים שוב באפליקציה החדשה.\n          <button class=\"btn sm go\" data-act=\"ios-signin\">{1} התחברות עם Google</button></div></div>",
   "kind": "tpl",
   "where": [
-   "app/views-home.js:448"
+   "app/views-home.js:467"
   ]
  },
  {
   "key": "הוספה למסך הבית",
   "kind": "lit",
   "where": [
-   "app/views-home.js:451"
+   "app/views-home.js:470"
   ]
  },
  {
   "key": "{0}<div class=\"ii-steps\">\n          {1}\n          {2}\n          {3}\n        </div>\n        <div class=\"section-title\">למה כדאי</div>\n        <div class=\"card small ii-why\"><div>{4} ספארי עלול למחוק נתונים של אתר שלא נפתח 7 ימים. אפליקציה על מסך הבית שומרת עליהם.</div>\n          <div>{5} תזכורות לפני משמרת (באייפון 16.4 ומעלה).</div>\n          <div>{6} נפתחת במסך מלא, מהר, וגם בלי אינטרנט.</div></div>\n        <div class=\"tiny muted ii-note\">לא מוצאים את האפשרות? פותחים את הקישור בספארי ומנסים שוב.</div>",
   "kind": "tpl",
   "where": [
-   "app/views-home.js:453"
+   "app/views-home.js:472"
   ]
  },
  {
   "key": "לוחצים על כפתור השיתוף",
   "kind": "lit",
   "where": [
-   "app/views-home.js:454"
+   "app/views-home.js:473"
   ]
  },
  {
   "key": "בספארי: בשורה שבתחתית המסך (באייפד ובכרום: למעלה)",
   "kind": "lit",
   "where": [
-   "app/views-home.js:454"
+   "app/views-home.js:473"
   ]
  },
  {
   "key": "בוחרים \"הוספה למסך הבית\"",
   "kind": "lit",
   "where": [
-   "app/views-home.js:455"
+   "app/views-home.js:474"
   ]
  },
  {
   "key": "לא רואים? גוללים מטה ברשימה",
   "kind": "lit",
   "where": [
-   "app/views-home.js:455"
+   "app/views-home.js:474"
   ]
  },
  {
   "key": "לוחצים \"הוספה\"",
   "kind": "lit",
   "where": [
-   "app/views-home.js:456"
+   "app/views-home.js:475"
   ]
  },
  {
   "key": "ושעתי על המסך, כמו כל אפליקציה",
   "kind": "lit",
   "where": [
-   "app/views-home.js:456"
+   "app/views-home.js:475"
   ]
  },
  {
   "key": "תפקיד למשמרת",
   "kind": "lit",
   "where": [
-   "app/views-home.js:470"
+   "app/views-home.js:489"
   ]
  },
  {
   "key": "באיזה תפקיד?",
   "kind": "lit",
   "where": [
-   "app/views-home.js:475"
+   "app/views-home.js:494"
   ]
  },
  {
   "key": "בסדר, נשאל שוב בעוד שעתיים",
   "kind": "lit",
   "where": [
-   "app/views-home.js:486"
+   "app/views-home.js:505"
   ]
  },
  {
   "key": "לאיזה תפקיד עברת?",
   "kind": "lit",
   "where": [
-   "app/views-home.js:491"
+   "app/views-home.js:510"
   ]
  },
  {
   "key": "סימון כבוצעה",
   "kind": "lit",
   "where": [
-   "app/views-home.js:514",
+   "app/views-home.js:533",
    "app/views-shift.js:220"
   ]
  },
@@ -7928,7 +7935,7 @@
   "key": "{0} משמרות נכנסו לשכר: +{1}",
   "kind": "tpl",
   "where": [
-   "app/views-home.js:514"
+   "app/views-home.js:533"
   ]
  },
  {
