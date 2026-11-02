@@ -8,6 +8,7 @@
   const $$ = (s, r) => [...(r || document).querySelectorAll(s)];
   const money = (v) => '₪' + v.toLocaleString('he-IL', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
   const pad = (n) => String(n).padStart(2, '0');
+  const idle = (fn) => ('requestIdleCallback' in window ? requestIdleCallback(fn, { timeout: 1500 }) : setTimeout(fn, 80));
   const Sky = window.Sky;
   const NS = 'http://www.w3.org/2000/svg';
   const CITIES = {
@@ -190,17 +191,25 @@
   const stage = $('[data-stage]'), chaps = $$('.chap');
   let stageOn = false, current = -1;
   const sDay = $('[data-stage-day]'), sClock = $('[data-stage-clock]'), sChip = $('[data-stage-chip]');
+  // a part of the day's sky, drawn once into its place in the stack
+  const paint = (svg) => { if (!svg || svg.dataset.drawn) return; svg.dataset.drawn = '1'; draw(svg, stage, { phase: chaps[+svg.dataset.i].dataset.phase }); };
+  let pending = [];
   function drawStage() {
-    // one drawing for each part of the day in the story, stacked; the one being read shows
+    // one drawing for each part of the day in the story, stacked; the one being read shows. That one is drawn now and
+    // the others one at a time when the page is idle (all five in one frame was the longest frame of a fast scroll)
     $$('.sky', stage).forEach((s) => s.remove());
-    chaps.forEach((c, i) => {
+    const svgs = chaps.map((c, i) => {
       const svg = document.createElementNS(NS, 'svg');
       svg.setAttribute('class', 'sky' + (i === Math.max(0, current) ? ' on' : ''));
       svg.setAttribute('aria-hidden', 'true');
-      stage.prepend(svg);
-      draw(svg, stage, { phase: c.dataset.phase });
       svg.dataset.i = String(i);
+      stage.prepend(svg);
+      return svg;
     });
+    paint(svgs[Math.max(0, current)]);
+    pending = svgs.filter((s) => !s.dataset.drawn);
+    const more = () => { paint(pending.shift()); if (pending.length) idle(more); };
+    idle(more);
   }
   const swap = (node, text) => {
     if (!node || node.textContent === text) return;
@@ -211,6 +220,7 @@
     if (i === current) return;
     current = i;
     const c = chaps[i];
+    paint($(`.sky[data-i="${i}"]`, stage)); // read before its turn came: drawn now
     $$('.sky', stage).forEach((s) => s.classList.toggle('on', s.dataset.i === String(i)));
     swap(sDay, c.dataset.day); swap(sClock, c.dataset.time); swap(sChip, c.dataset.chip);
   }
@@ -252,4 +262,11 @@
   if (fin && Sky && 'IntersectionObserver' in window) {
     new IntersectionObserver(([e], o) => { if (e.isIntersecting) { o.disconnect(); draw(fin, fin.parentNode, { phase: 'night', weather: 'clear' }); } }, { rootMargin: '400px 0px' }).observe(fin);
   }
+
+  /* ---------- below the story: laid out one section at a time once the page is idle ---------- */
+  // each in its own short task (the first layout covers the top of the page only), and all of them soon, so their
+  // real heights are known before anyone scrolls back up (Safari keeps no scroll anchor: a late size would jump)
+  const later = $$('main > section:not(.hero):not(.after-hero):not(#story), body > footer');
+  const next = () => { const s = later.shift(); if (!s) return; s.classList.add('shown'); idle(next); };
+  if (document.readyState === 'complete') idle(next); else addEventListener('load', () => idle(next), { once: true });
 })();

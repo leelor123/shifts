@@ -159,6 +159,12 @@ section { position: relative; }
 .sec-head h2 { font-size: clamp(1.9rem, 4vw, 2.9rem); font-weight: 700; }
 .sec-head p { margin-top: 14px; color: var(--mute); font-size: 1.08rem; }
 .after-hero { padding-top: 190px; }
+/* below the story: left out of the page's first layout (it was ~250 ms on a slow phone, the score's blocking time)
+   and laid out one section at a time once the page is idle (site.js adds .shown), or at once when the address points
+   into the page (#faq). The same containment before and after, so nothing moves when one is laid out. Not the story:
+   its sticky sky draws as it comes near, and a fast scroll stuttered there when it was left out too. */
+main > section:where(:not(.hero, .after-hero, #story)), body > footer { contain: layout style paint; content-visibility: auto; contain-intrinsic-size: auto 900px; }
+main > section.shown, body > footer.shown, main:has(:target) > section { content-visibility: visible; }
 @media (max-width: 860px) { .after-hero { padding-top: 210px; } }
 
 /* the calculator: an instrument, the result on night blue */
