@@ -36,7 +36,9 @@
     await loadScript(LIBS.pdf);
     const pdfjs = root.pdfjsLib;
     pdfjs.GlobalWorkerOptions.workerSrc = LIBS.pdfWorker;
-    const doc = await pdfjs.getDocument({ data: await file.arrayBuffer() }).promise;
+    // isEvalSupported: false: a crafted PDF's font cannot run code (CVE-2024-4367 in pdf.js before 4.2.67; the page's
+    // policy already forbids eval, this keeps it closed without leaning on that)
+    const doc = await pdfjs.getDocument({ data: await file.arrayBuffer(), isEvalSupported: false }).promise;
     let lines = [];
     for (let p = 1; p <= Math.min(doc.numPages, 4); p++) {
       progress(`קורא עמוד ${p} מתוך ${doc.numPages}…`);
@@ -85,7 +87,7 @@
       await loadScript(LIBS.pdf);
       const pdfjs = root.pdfjsLib;
       pdfjs.GlobalWorkerOptions.workerSrc = LIBS.pdfWorker;
-      const doc = await pdfjs.getDocument({ data: await file.arrayBuffer() }).promise;
+      const doc = await pdfjs.getDocument({ data: await file.arrayBuffer(), isEvalSupported: false }).promise;
       // every page (a month's report can run to a second page), each below the one before; letters drawn one by
       // one or spread out are put back into words (Timesheet.wordsFromPdfItems)
       let words = [];
