@@ -126,6 +126,19 @@
   function roleDot(role, size) {
     return `<i style="display:inline-block;width:${size || 10}px;height:${size || 10}px;border-radius:50%;background:${esc(role ? role.color : '#999')}"></i>`;
   }
+  // the text colour that reads on a role's colour: white or a dark ink, whichever contrasts more (launch check: white
+  // on the green role was 2.82:1, on the orange 3.2:1); with the letter at large-text size every colour reaches 3:1
+  function ink(hex) {
+    const m = /^#([0-9a-f]{6}|[0-9a-f]{3})/i.exec(hex || ''); if (!m) return '#fff';
+    const h = m[1].length === 3 ? m[1].replace(/./g, '$&$&') : m[1];
+    const lum = [0, 2, 4].map((i) => parseInt(h.slice(i, i + 2), 16) / 255).map((v) => (v <= 0.03928 ? v / 12.92 : ((v + 0.055) / 1.055) ** 2.4));
+    const L = 0.2126 * lum[0] + 0.7152 * lum[1] + 0.0722 * lum[2];
+    return 1.05 / (L + 0.05) >= (L + 0.05) / 0.0597 ? '#fff' : '#141821';
+  }
+  // a role's square with its first letter (an emoji stays whole)
+  function roleLead(role) {
+    return `<span class="lead role-lead" style="background:${esc(role.color)};color:${ink(role.color)}">${esc(Array.from(role.name || '?')[0] || '?')}</span>`;
+  }
   function emptyState(ic, title, text, action) {
     return `<div class="empty"><div class="art">${icon(ic)}</div><h3>${esc(title)}</h3><div>${text || ''}</div>${action ? `<div style="margin-top:16px">${action}</div>` : ''}</div>`;
   }
@@ -472,5 +485,5 @@
     fit();
   })();
 
-  root.UI = { on, pushLayer, closeLayer, tile, skeleton, invalid, icon, esc, money, numv, delta, roleDot, emptyState, toast, openSheet, closeTop, closeAll, dialog, confirm, promptText, onSwipe, vibrate, download, shareFile, copyText, numIn, timeAgo, sheets };
+  root.UI = { on, pushLayer, closeLayer, tile, skeleton, invalid, icon, esc, money, numv, delta, roleDot, roleLead, ink, emptyState, toast, openSheet, closeTop, closeAll, dialog, confirm, promptText, onSwipe, vibrate, download, shareFile, copyText, numIn, timeAgo, sheets };
 })(typeof window !== 'undefined' ? window : globalThis);

@@ -21,7 +21,7 @@
       const last = S.meta.lastRole;
       const list = App.roles().slice().sort((x, y) => (y.id === last) - (x.id === last));
       return `<div class="iq-ask">באיזה תפקיד?</div>
-        <div class="list iq-roles">${list.map((r) => `<button class="item" data-q="role" data-id="${esc(r.id)}"><span class="lead" style="background:${esc(r.color)};color:#fff">${esc(r.name.slice(0, 1))}</span><span class="body"><span class="t">${esc(r.name)}</span><span class="s">${money(Engine.roleRate(r, U.todayKey()))} לשעה${App.multiEmp() ? ' · ' + esc(App.employer(r.employerId).name) : ''}</span></span></button>`).join('')}</div>
+        <div class="list iq-roles">${list.map((r) => `<button class="item" data-q="role" data-id="${esc(r.id)}">${UI.roleLead(r)}<span class="body"><span class="t">${esc(r.name)}</span><span class="s">${money(Engine.roleRate(r, U.todayKey()))} לשעה${App.multiEmp() ? ' · ' + esc(App.employer(r.employerId).name) : ''}</span></span></button>`).join('')}</div>
         <button class="btn text iq-back" data-q="back">ביטול</button>`;
     }
     if (a) {

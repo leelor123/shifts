@@ -1008,3 +1008,11 @@ body.fx .item:active:not(:has(:is(button, a, input, select, label, summary, [dat
 :where(.role-chip, .tr-toggle, .banner .btn.text.sm, .home-list-head .btn.text.sm) { position: relative; }
 :where(.role-chip, .tr-toggle, .banner .btn.text.sm, .home-list-head .btn.text.sm)::after { content: ''; position: absolute; inset: -7px -2px; }
 .banner .btn.text.sm::after { inset: -10px -4px; }
+/* a role's first letter is large text (19 px bold), so its ink (UI.ink: white or dark) reaches 3:1 on any colour */
+.item .lead.role-lead { font-size: 1.2rem; }
+/* "משמרות אחרונות" is the home list's heading for screen readers (launch check); it keeps the row's own look */
+.home-list-head h2 { margin: 0; font: inherit; letter-spacing: inherit; color: inherit; }
+/* the explained words ("נטו משוער", "ברוטו") are text-sized buttons: 8 px more each way vertically, 4 px sideways, so the
+   target is at least 24 px tall (WCAG 2.5.8) with the words where they are */
+.term { position: relative; }
+.term::after { content: ''; position: absolute; inset: -8px -4px; }

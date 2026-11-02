@@ -368,7 +368,7 @@
 
   RENDER.roles = {
     render: () => `${S.employers.map((e) => `<div class="card"><div class="card-head">${icon('briefcase')}<h3>${esc(e.name)}</h3><button class="icon-btn" data-emp-edit="${e.id}" aria-label="ערוך מעסיק">${icon('edit', 's')}</button></div>
-        <div class="list" style="background:var(--surface-2)">${S.roles.filter((r) => r.employerId === e.id && !r.archived).map((r) => `<button class="item" data-role-edit="${r.id}"><span class="lead" style="background:${r.color};color:#fff">${esc(r.name.slice(0, 1))}</span><span class="body"><span class="t">${esc(r.name)}</span><span class="s">${money(Engine.roleRate(r, U.todayKey()))} לשעה${r.rates.length > 1 ? ` · ${r.rates.length} תעריפים בהיסטוריה` : ''}</span></span>${icon('left', 's')}</button>`).join('')}</div>
+        <div class="list" style="background:var(--surface-2)">${S.roles.filter((r) => r.employerId === e.id && !r.archived).map((r) => `<button class="item" data-role-edit="${r.id}">${UI.roleLead(r)}<span class="body"><span class="t">${esc(r.name)}</span><span class="s">${money(Engine.roleRate(r, U.todayKey()))} לשעה${r.rates.length > 1 ? ` · ${r.rates.length} תעריפים בהיסטוריה` : ''}</span></span>${icon('left', 's')}</button>`).join('')}</div>
         <button class="btn text sm" data-role-add="${e.id}">${icon('plus', 's')} הוסף תפקיד</button></div>`).join('')}
       <button class="btn tonal block" data-emp-add>${icon('plus')} הוסף מעסיק נוסף</button>
       <div class="tiny muted" style="margin:10px 4px">כל מעסיק מקבל חוקי חישוב, נסיעות ותקופת שכר משלו. ${S.roles.some((r) => r.archived) ? 'תפקידים בארכיון נשמרים בשביל משמרות עבר.' : ''}</div>`,

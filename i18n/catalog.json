@@ -257,8 +257,8 @@
   "where": [
    "app/app.js:379",
    "app/app.js:544",
-   "app/ui.js:356",
-   "app/ui.js:363",
+   "app/ui.js:369",
+   "app/ui.js:376",
    "app/views-login.js:84",
    "app/views-login.js:108",
    "app/views-settings.js:392",
@@ -314,7 +314,7 @@
   "kind": "lit",
   "where": [
    "app/app.js:531",
-   "app/ui.js:363",
+   "app/ui.js:376",
    "app/views-settings.js:392",
    "app/views-settings.js:783",
    "app/views-shift.js:534",
@@ -2218,7 +2218,7 @@
   "kind": "lit",
   "where": [
    "app/pickers.js:95",
-   "app/ui.js:434"
+   "app/ui.js:447"
   ]
  },
  {
@@ -2308,7 +2308,7 @@
   "kind": "lit",
   "where": [
    "app/pickers.js:238",
-   "app/ui.js:430"
+   "app/ui.js:443"
   ]
  },
  {
@@ -3741,7 +3741,7 @@
   "kind": "lit",
   "where": [
    "app/schedule-import.js:298",
-   "app/ui.js:356",
+   "app/ui.js:369",
    "app/views-login.js:321"
   ]
  },
@@ -3891,35 +3891,35 @@
   "key": "<div class=\"grab\"></div><div class=\"sh-head\"><h2 id=\"{0}\">{1}</h2><button class=\"icon-btn\" data-close aria-label=\"סגור\">{2}</button></div><div class=\"sh-body\">{3}</div>{4}",
   "kind": "tpl",
   "where": [
-   "app/ui.js:231"
+   "app/ui.js:244"
   ]
  },
  {
   "key": "לפני {0} דק׳",
   "kind": "tpl",
   "where": [
-   "app/ui.js:431"
+   "app/ui.js:444"
   ]
  },
  {
   "key": "לפני {0} שע׳",
   "kind": "tpl",
   "where": [
-   "app/ui.js:432"
+   "app/ui.js:445"
   ]
  },
  {
   "key": "לפני {0} ימים",
   "kind": "tpl",
   "where": [
-   "app/ui.js:435"
+   "app/ui.js:448"
   ]
  },
  {
   "key": "<div class=\"skel-wrap\" aria-busy=\"true\" aria-label=\"טוען\">{0}</div>",
   "kind": "tpl",
   "where": [
-   "app/ui.js:441"
+   "app/ui.js:454"
   ]
  },
  {
@@ -7756,7 +7756,7 @@
   ]
  },
  {
-  "key": "<div class=\"home-list-head\"><span>משמרות אחרונות</span><span class=\"spacer\"></span>{0}<button class=\"btn text sm\" data-act=\"go-shifts\">הכול</button></div>\n        <div class=\"list home-list\">{1}</div>",
+  "key": "<div class=\"home-list-head\"><h2>משמרות אחרונות</h2><span class=\"spacer\"></span>{0}<button class=\"btn text sm\" data-act=\"go-shifts\">הכול</button></div>\n        <div class=\"list home-list\">{1}</div>",
   "kind": "tpl",
   "where": [
    "app/views-home.js:398"
@@ -10780,7 +10780,7 @@
   ]
  },
  {
-  "key": "<button class=\"item\" data-q=\"role\" data-id=\"{0}\"><span class=\"lead\" style=\"background:{1};color:#fff\">{2}</span><span class=\"body\"><span class=\"t\">{3}</span><span class=\"s\">{4} לשעה{5}</span></span></button>",
+  "key": "<button class=\"item\" data-q=\"role\" data-id=\"{0}\">{1}<span class=\"body\"><span class=\"t\">{2}</span><span class=\"s\">{3} לשעה{4}</span></span></button>",
   "kind": "tpl",
   "where": [
    "app/views-quick.js:24"
@@ -11705,7 +11705,7 @@
   ]
  },
  {
-  "key": "\n      <div class=\"field\" style=\"position:relative\"><input class=\"input\" id=\"flt-q\" placeholder=\"חיפוש בהערות, תפקיד, תאריך…\" value=\"{0}\" style=\"padding-inline-start:44px\"><span style=\"position:absolute;inset-inline-start:12px;top:14px\" class=\"muted\">{1}</span></div>\n      <div class=\"chips\">\n        <button class=\"chip {2}\" data-act=\"flt-role\" data-id=\"\">כל התפקידים</button>\n        {3}\n      </div>\n      <div class=\"chips\">\n        {4}\n        <button class=\"chip {5}\" data-act=\"flt-ov\">{6} עם עקיפה</button>\n      </div>\n      <div class=\"grid2\"><label class=\"field\"><span class=\"lbl\">מתאריך</span><input class=\"input\" type=\"date\" id=\"flt-from\" value=\"{7}\"></label><label class=\"field\"><span class=\"lbl\">עד</span><input class=\"input\" type=\"date\" id=\"flt-to\" value=\"{8}\"></label></div>\n      <div class=\"row-flex small\" style=\"margin:0 4px 10px\"><span>{9} משמרות · <span data-tr=\"all\">{10}</span></span><span class=\"spacer\"></span>{11}<button class=\"btn text sm\" data-act=\"flt-csv\">{12} CSV</button>{13}</div>\n      {14}\n      {15}\n      {16}",
+  "key": "\n      <div class=\"field\" style=\"position:relative\"><input class=\"input\" id=\"flt-q\" aria-label=\"חיפוש בהערות, תפקיד, תאריך…\" placeholder=\"חיפוש בהערות, תפקיד, תאריך…\" value=\"{0}\" style=\"padding-inline-start:44px\"><span style=\"position:absolute;inset-inline-start:12px;top:14px\" class=\"muted\">{1}</span></div>\n      <div class=\"chips\">\n        <button class=\"chip {2}\" data-act=\"flt-role\" data-id=\"\">כל התפקידים</button>\n        {3}\n      </div>\n      <div class=\"chips\">\n        {4}\n        <button class=\"chip {5}\" data-act=\"flt-ov\">{6} עם עקיפה</button>\n      </div>\n      <div class=\"grid2\"><label class=\"field\"><span class=\"lbl\">מתאריך</span><input class=\"input\" type=\"date\" id=\"flt-from\" value=\"{7}\"></label><label class=\"field\"><span class=\"lbl\">עד</span><input class=\"input\" type=\"date\" id=\"flt-to\" value=\"{8}\"></label></div>\n      <div class=\"row-flex small\" style=\"margin:0 4px 10px\"><span>{9} משמרות · <span data-tr=\"all\">{10}</span></span><span class=\"spacer\"></span>{11}<button class=\"btn text sm\" data-act=\"flt-csv\">{12} CSV</button>{13}</div>\n      {14}\n      {15}\n      {16}",
   "kind": "tpl",
   "where": [
    "app/views-reports.js:309"
@@ -14003,7 +14003,7 @@
   ]
  },
  {
-  "key": "<button class=\"item\" data-role-edit=\"{0}\"><span class=\"lead\" style=\"background:{1};color:#fff\">{2}</span><span class=\"body\"><span class=\"t\">{3}</span><span class=\"s\">{4} לשעה{5}</span></span>{6}</button>",
+  "key": "<button class=\"item\" data-role-edit=\"{0}\">{1}<span class=\"body\"><span class=\"t\">{2}</span><span class=\"s\">{3} לשעה{4}</span></span>{5}</button>",
   "kind": "tpl",
   "where": [
    "app/views-settings.js:371"
@@ -16220,7 +16220,7 @@
   ]
  },
  {
-  "key": "<button class=\"item\" data-pick=\"{0}\"><span class=\"lead\" style=\"background:{1};color:#fff\">{2}</span><span class=\"body\"><span class=\"t\">{3}</span><span class=\"s\">{4} לשעה{5}</span></span></button>",
+  "key": "<button class=\"item\" data-pick=\"{0}\">{1}<span class=\"body\"><span class=\"t\">{2}</span><span class=\"s\">{3} לשעה{4}</span></span></button>",
   "kind": "tpl",
   "where": [
    "app/views-shift.js:17"

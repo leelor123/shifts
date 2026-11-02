@@ -395,7 +395,7 @@
       ${savingCard()}
       ${HS.shortcuts !== false ? shortcuts() : ''}
       ${pendingCard(pending)}
-      ${recent.length ? !nRecent ? '' : `<div class="home-list-head"><span>משמרות אחרונות</span><span class="spacer"></span>${App.travelSwitch()}<button class="btn text sm" data-act="go-shifts">הכול</button></div>
+      ${recent.length ? !nRecent ? '' : `<div class="home-list-head"><h2>משמרות אחרונות</h2><span class="spacer"></span>${App.travelSwitch()}<button class="btn text sm" data-act="go-shifts">הכול</button></div>
         <div class="list home-list">${recent.slice(0, nRecent - (pending.length ? 1 : 0)).map((r) => App.shiftItem(r)).join('')}</div>`
         : pending.length ? ''
         : S.meta.guide && !S.meta.guideDone ? '' : `<div class="empty fun">${App.mascot ? App.mascot('sleepy', { size: 92 }) : ''}<h2 class="h3">עוד אין משמרות</h2><div>בתחילת משמרת לוחצים על "התחל משמרת".<br>משמרת שכבר התקיימה מוסיפים בכפתור <b>+</b>.</div></div>`}

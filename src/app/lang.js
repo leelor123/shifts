@@ -101,6 +101,7 @@
       ${inSheet ? '' : `<div class="lp-orbs" aria-hidden="true"><i></i><i></i><i></i></div><div class="lp-logo">${LOGO}<b>Shaati</b></div>`}
       <div class="lp-hello" aria-hidden="true">${order.map((l, i) => `<span lang="${l.id}" dir="${l.dir}" style="--i:${i};--a:${l.g[0]}">${l.hello}</span>`).join('')}</div>
       <div class="lp-ask" aria-hidden="true">${order.map((l, i) => `<span lang="${l.id}" dir="${l.dir}" style="--i:${i}">${l.ask}</span>`).join('')}</div>
+      <${inSheet ? 'h2' : 'h1'} class="vh" lang="${s.id}" dir="${s.dir}">${s.ask}</${inSheet ? 'h2' : 'h1'}>
       <div class="lp-grid">${order.map((l, i) => `<button class="lp-card${l.id === s.id ? ' sug' : ''}${l.id === Lang.current && inSheet ? ' cur' : ''}" data-lang="${l.id}" lang="${l.id}" dir="${l.dir}" style="--i:${i};--g1:${l.g[0]};--g2:${l.g[1]}">
           <span class="lp-glyph" aria-hidden="true">${l.glyph}</span>
           <span class="lp-name">${l.name}</span>

@@ -14,7 +14,7 @@
     const list = roles || App.roles();
     const sh = UI.openSheet({
       title,
-      body: `<div class="list">${list.map((r) => `<button class="item" data-pick="${r.id}"><span class="lead" style="background:${r.color};color:#fff">${esc(r.name.slice(0, 1))}</span><span class="body"><span class="t">${esc(r.name)}</span><span class="s">${money(Engine.roleRate(r, U.todayKey()))} לשעה${App.multiEmp() ? ' · ' + esc(App.employer(r.employerId).name) : ''}</span></span></button>`).join('')}</div>`,
+      body: `<div class="list">${list.map((r) => `<button class="item" data-pick="${r.id}">${UI.roleLead(r)}<span class="body"><span class="t">${esc(r.name)}</span><span class="s">${money(Engine.roleRate(r, U.todayKey()))} לשעה${App.multiEmp() ? ' · ' + esc(App.employer(r.employerId).name) : ''}</span></span></button>`).join('')}</div>`,
       onMount: (el) => el.querySelectorAll('[data-pick]').forEach((b) => (b.onclick = () => { UI.closeTop(); setTimeout(() => cb(b.dataset.pick), 50); })),
     });
     return sh;
