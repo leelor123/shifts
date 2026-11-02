@@ -257,12 +257,12 @@
   "where": [
    "app/app.js:379",
    "app/app.js:544",
-   "app/ui.js:369",
-   "app/ui.js:376",
+   "app/ui.js:388",
+   "app/ui.js:395",
    "app/views-login.js:84",
    "app/views-login.js:108",
    "app/views-settings.js:392",
-   "app/views-settings.js:844",
+   "app/views-settings.js:937",
    "app/views-shift.js:271",
    "app/views-shift.js:637"
   ]
@@ -314,9 +314,9 @@
   "kind": "lit",
   "where": [
    "app/app.js:531",
-   "app/ui.js:376",
+   "app/ui.js:395",
    "app/views-settings.js:392",
-   "app/views-settings.js:783",
+   "app/views-settings.js:876",
    "app/views-shift.js:534",
    "app/views-shift.js:538"
   ]
@@ -492,7 +492,7 @@
   "kind": "lit",
   "where": [
    "app/app.js:793",
-   "app/views-settings.js:862"
+   "app/views-settings.js:955"
   ]
  },
  {
@@ -1478,7 +1478,7 @@
   "where": [
    "app/export.js:22",
    "app/export.js:43",
-   "app/views-guide.js:228",
+   "app/views-guide.js:229",
    "app/views-reports.js:209",
    "app/views-rights.js:70",
    "app/views-shift.js:397",
@@ -1663,14 +1663,14 @@
   "where": [
    "app/export.js:43",
    "app/export.js:114",
-   "app/views-guide.js:224",
+   "app/views-guide.js:225",
    "app/views-home.js:211",
    "app/views-home.js:211",
    "app/views-payslip.js:247",
    "app/views-recap.js:217",
    "app/views-reports.js:109",
-   "app/views-settings.js:613",
-   "app/views-settings.js:730",
+   "app/views-settings.js:706",
+   "app/views-settings.js:823",
    "core/games.js:185",
    "core/insights.js:402",
    "core/payslip.js:24",
@@ -1687,7 +1687,7 @@
    "app/views-home.js:212",
    "app/views-reports.js:109",
    "app/views-reports.js:206",
-   "app/views-settings.js:613",
+   "app/views-settings.js:706",
    "core/insights.js:402"
   ]
  },
@@ -1755,7 +1755,7 @@
   "where": [
    "app/export.js:71",
    "app/views-games.js:529",
-   "app/views-settings.js:639",
+   "app/views-settings.js:732",
    "core/games.js:34",
    "core/games.js:241",
    "core/games.js:243"
@@ -2218,7 +2218,7 @@
   "kind": "lit",
   "where": [
    "app/pickers.js:95",
-   "app/ui.js:447"
+   "app/ui.js:466"
   ]
  },
  {
@@ -2308,7 +2308,7 @@
   "kind": "lit",
   "where": [
    "app/pickers.js:238",
-   "app/ui.js:443"
+   "app/ui.js:462"
   ]
  },
  {
@@ -2560,7 +2560,7 @@
   "where": [
    "app/plus.js:103",
    "app/views-settings.js:136",
-   "app/views-settings.js:549"
+   "app/views-settings.js:642"
   ]
  },
  {
@@ -2777,14 +2777,16 @@
   "key": "צריך לבחור תמונה",
   "kind": "lit",
   "where": [
-   "app/plus.js:361"
+   "app/plus.js:361",
+   "app/views-settings.js:504"
   ]
  },
  {
   "key": "התמונה גדולה מדי",
   "kind": "lit",
   "where": [
-   "app/plus.js:362"
+   "app/plus.js:362",
+   "app/views-settings.js:505"
   ]
  },
  {
@@ -2798,7 +2800,8 @@
   "key": "לא הצלחנו לפתוח את התמונה. אפשר לנסות אחרת",
   "kind": "lit",
   "where": [
-   "app/plus.js:365"
+   "app/plus.js:365",
+   "app/views-settings.js:507"
   ]
  },
  {
@@ -3683,8 +3686,8 @@
    "app/schedule-import.js:173",
    "app/views-login.js:324",
    "app/views-payslip.js:579",
-   "app/views-settings.js:849",
-   "app/views-settings.js:873"
+   "app/views-settings.js:942",
+   "app/views-settings.js:966"
   ]
  },
  {
@@ -3741,7 +3744,7 @@
   "kind": "lit",
   "where": [
    "app/schedule-import.js:298",
-   "app/ui.js:369",
+   "app/ui.js:388",
    "app/views-login.js:321"
   ]
  },
@@ -3772,7 +3775,7 @@
   "kind": "lit",
   "where": [
    "app/schedule-import.js:312",
-   "app/views-guide.js:230",
+   "app/views-guide.js:231",
    "app/views-support.js:28",
    "core/games.js:190"
   ]
@@ -3843,28 +3846,28 @@
   "key": "הקובץ אינו גיבוי של האפליקציה",
   "kind": "lit",
   "where": [
-   "app/store.js:497"
+   "app/store.js:514"
   ]
  },
  {
   "key": "הגיבוי נוצר בגרסה חדשה יותר של האפליקציה. עדכן קודם את האפליקציה.",
   "kind": "lit",
   "where": [
-   "app/store.js:498"
+   "app/store.js:515"
   ]
  },
  {
   "key": "הקובץ פגום ואי אפשר לשחזר ממנו. הנתונים בטלפון לא השתנו.",
   "kind": "lit",
   "where": [
-   "app/store.js:512"
+   "app/store.js:529"
   ]
  },
  {
   "key": "העבודה שלי",
   "kind": "lit",
   "where": [
-   "app/store.js:543",
+   "app/store.js:560",
    "app/views-onboarding.js:135",
    "app/views-onboarding.js:136",
    "app/views-onboarding.js:141",
@@ -3891,35 +3894,35 @@
   "key": "<div class=\"grab\"></div><div class=\"sh-head\"><h2 id=\"{0}\">{1}</h2><button class=\"icon-btn\" data-close aria-label=\"סגור\">{2}</button></div><div class=\"sh-body\">{3}</div>{4}",
   "kind": "tpl",
   "where": [
-   "app/ui.js:244"
+   "app/ui.js:263"
   ]
  },
  {
   "key": "לפני {0} דק׳",
   "kind": "tpl",
   "where": [
-   "app/ui.js:444"
+   "app/ui.js:463"
   ]
  },
  {
   "key": "לפני {0} שע׳",
   "kind": "tpl",
   "where": [
-   "app/ui.js:445"
+   "app/ui.js:464"
   ]
  },
  {
   "key": "לפני {0} ימים",
   "kind": "tpl",
   "where": [
-   "app/ui.js:448"
+   "app/ui.js:467"
   ]
  },
  {
   "key": "<div class=\"skel-wrap\" aria-busy=\"true\" aria-label=\"טוען\">{0}</div>",
   "kind": "tpl",
   "where": [
-   "app/ui.js:454"
+   "app/ui.js:473"
   ]
  },
  {
@@ -4093,8 +4096,8 @@
   "kind": "lit",
   "where": [
    "app/views-admin.js:50",
-   "app/views-settings.js:678",
-   "app/views-settings.js:826"
+   "app/views-settings.js:771",
+   "app/views-settings.js:919"
   ]
  },
  {
@@ -4522,9 +4525,9 @@
    "app/views-payslip.js:437",
    "app/views-settings.js:392",
    "app/views-settings.js:395",
-   "app/views-settings.js:459",
-   "app/views-settings.js:869",
-   "app/views-settings.js:929",
+   "app/views-settings.js:552",
+   "app/views-settings.js:962",
+   "app/views-settings.js:1022",
    "app/views-shift.js:263",
    "app/views-shift.js:500",
    "app/views-shift.js:574",
@@ -5046,7 +5049,7 @@
   "where": [
    "app/views-friends.js:131",
    "app/views-leaderboard.js:431",
-   "app/views-settings.js:447"
+   "app/views-settings.js:540"
   ]
  },
  {
@@ -6011,8 +6014,8 @@
   "kind": "lit",
   "where": [
    "app/views-games.js:529",
-   "app/views-settings.js:639",
-   "app/views-settings.js:681",
+   "app/views-settings.js:732",
+   "app/views-settings.js:774",
    "core/games.js:33",
    "core/games.js:243"
   ]
@@ -6022,8 +6025,8 @@
   "kind": "lit",
   "where": [
    "app/views-games.js:529",
-   "app/views-settings.js:639",
-   "app/views-settings.js:681",
+   "app/views-settings.js:732",
+   "app/views-settings.js:774",
    "core/games.js:33",
    "core/games.js:243"
   ]
@@ -6563,555 +6566,569 @@
   ]
  },
  {
-  "key": "הפרטיות שלך קודם",
+  "key": "תמונה לכל תפקיד",
   "kind": "lit",
   "where": [
    "app/views-guide.js:117"
+  ]
+ },
+ {
+  "key": "בעריכת תפקיד אפשר לבחור אימוג׳י או תמונה מהטלפון במקום האות הראשונה, והיא מופיעה בכל מקום שהתפקיד מופיע.",
+  "kind": "lit",
+  "where": [
+   "app/views-guide.js:117"
+  ]
+ },
+ {
+  "key": "הפרטיות שלך קודם",
+  "kind": "lit",
+  "where": [
+   "app/views-guide.js:118"
   ]
  },
  {
   "key": "סטטיסטיקת שימוש נשלחת רק אחרי שהסכמת. בתחרות עם החברים הסכומים מוסתרים עד שבוחרים להציג אותם, והעוזר מצרף את סיכום השכר רק כשמסמנים.",
   "kind": "lit",
   "where": [
-   "app/views-guide.js:117"
+   "app/views-guide.js:118"
   ]
  },
  {
   "key": "פתיחה חלקה יותר",
   "kind": "lit",
   "where": [
-   "app/views-guide.js:118"
+   "app/views-guide.js:119"
   ]
  },
  {
   "key": "הפעולות המהירות עולות יחד עם הפתיחה, וכפתור הכניסה הוא עכשיו הכפתור הראשי.",
   "kind": "lit",
   "where": [
-   "app/views-guide.js:118"
+   "app/views-guide.js:119"
   ]
  },
  {
   "key": "נוח יותר לכולם",
   "kind": "lit",
   "where": [
-   "app/views-guide.js:119"
+   "app/views-guide.js:120"
   ]
  },
  {
   "key": "קל יותר ללחוץ על כפתורים קטנים, הטקסט הקטן גדל קצת, וקוראי מסך ומקלדת עובדים טוב יותר בחלונות.",
   "kind": "lit",
   "where": [
-   "app/views-guide.js:119"
+   "app/views-guide.js:120"
   ]
  },
  {
   "key": "כל העדכונים",
   "kind": "lit",
   "where": [
-   "app/views-guide.js:120",
-   "app/views-guide.js:216"
+   "app/views-guide.js:121",
+   "app/views-guide.js:217"
   ]
  },
  {
   "key": "בהגדרות › עוזר AI ואודות › אודות: מה השתנה בכל גרסה, מהראשונה ועד היום.",
   "kind": "lit",
   "where": [
-   "app/views-guide.js:120"
+   "app/views-guide.js:121"
   ]
  },
  {
   "key": "מה חדש? ✨",
   "kind": "lit",
   "where": [
-   "app/views-guide.js:135"
+   "app/views-guide.js:136"
   ]
  },
  {
   "key": "עדכנו את האפליקציה בשבילך! 🎉",
   "kind": "lit",
   "where": [
-   "app/views-guide.js:136"
+   "app/views-guide.js:137"
   ]
  },
  {
   "key": "<button class=\"btn tonal\" data-act=\"changelog\" style=\"flex:0 0 auto\">כל העדכונים</button><button class=\"btn\" data-wn-ok>הבנתי, תודה</button>",
   "kind": "lit",
   "where": [
-   "app/views-guide.js:138"
+   "app/views-guide.js:139"
   ]
  },
  {
-  "key": "כניסה עם אימייל וסיסמה, ומצב אורח: הנתונים נשמרים רק בטלפון עד שמחברים חשבון. סטטיסטיקת שימוש נשלחת רק אחרי הסכמה, ובתחרות עם החברים הסכומים מוסתרים עד שבוחרים להציג אותם. בפתיחה כפתור הכניסה הוא הראשי, והפעולות המהירות עולות יחד איתה. קל יותר ללחוץ על כפתורים קטנים, הטקסט הקטן גדל, וקוראי מסך עובדים טוב יותר בחלונות. מדיניות הפרטיות, תנאי השימוש והצהרת הנגישות עודכנו.",
-  "kind": "lit",
-  "where": [
-   "app/views-guide.js:147"
-  ]
- },
- {
-  "key": "פעולות מהירות בפתיחה: התחלת משמרת עם בחירת תפקיד, רישום משמרת, החודש עד עכשיו ולוח השנה, וכפתור כניסה לאפליקציה. הפתיחה בלי צליל. בכניסה הראשונה מסך השפות מופיע מיד, בלי לחכות שכל האפליקציה תיטען.",
+  "key": "כניסה עם אימייל וסיסמה, ומצב אורח: הנתונים נשמרים רק בטלפון עד שמחברים חשבון. לכל תפקיד אפשר לבחור אימוג׳י או תמונה מהטלפון. סטטיסטיקת שימוש נשלחת רק אחרי הסכמה, ובתחרות עם החברים הסכומים מוסתרים עד שבוחרים להציג אותם. בפתיחה כפתור הכניסה הוא הראשי, והפעולות המהירות עולות יחד איתה. קל יותר ללחוץ על כפתורים קטנים, הטקסט הקטן גדל, וקוראי מסך עובדים טוב יותר בחלונות. מדיניות הפרטיות, תנאי השימוש והצהרת הנגישות עודכנו.",
   "kind": "lit",
   "where": [
    "app/views-guide.js:148"
   ]
  },
  {
-  "key": "פתיחה חדשה עם שמיים חיים לפי השעה, העונה ומזג האוויר בעיר שלך, וברכה בשמך. משתמש חדש יכול להיכנס כבר במסך הראשון לחשבון שכבר יש לו, ובשאלות הפתיחה אפשר להוסיף עוד מקום עבודה. מסך הנעילה וההתחברות בעיצוב החדש.",
+  "key": "פעולות מהירות בפתיחה: התחלת משמרת עם בחירת תפקיד, רישום משמרת, החודש עד עכשיו ולוח השנה, וכפתור כניסה לאפליקציה. הפתיחה בלי צליל. בכניסה הראשונה מסך השפות מופיע מיד, בלי לחכות שכל האפליקציה תיטען.",
   "kind": "lit",
   "where": [
    "app/views-guide.js:149"
   ]
  },
  {
-  "key": "מראה חדש בכחול לילה וזהב, פתיחה מהירה יותר ולחיצות רכות. ואבטחה: קובץ גיבוי ממישהו אחר לא יכול לשנות את האפליקציה, נעילת הקוד חזקה יותר, וקישור או קובץ ששותף לא משנים כלום בלי אישור שלך.",
+  "key": "פתיחה חדשה עם שמיים חיים לפי השעה, העונה ומזג האוויר בעיר שלך, וברכה בשמך. משתמש חדש יכול להיכנס כבר במסך הראשון לחשבון שכבר יש לו, ובשאלות הפתיחה אפשר להוסיף עוד מקום עבודה. מסך הנעילה וההתחברות בעיצוב החדש.",
   "kind": "lit",
   "where": [
    "app/views-guide.js:150"
   ]
  },
  {
-  "key": "בדיקת החזר מס: כמה מס נלקח ממך מיותר בכל שנה, עד 6 שנים אחורה, לפי המשמרות, התלושים או טופס 106, ואיך מקבלים אותו בחזרה. פתיחה חדשה: שעון יוקרה בלילה, מדויק ושקט, עם צלצול רך אחד. קצרה פי שניים, ואף פעם לא מחכה לרשת.",
+  "key": "מראה חדש בכחול לילה וזהב, פתיחה מהירה יותר ולחיצות רכות. ואבטחה: קובץ גיבוי ממישהו אחר לא יכול לשנות את האפליקציה, נעילת הקוד חזקה יותר, וקישור או קובץ ששותף לא משנים כלום בלי אישור שלך.",
   "kind": "lit",
   "where": [
    "app/views-guide.js:151"
   ]
  },
  {
-  "key": "מצב פרטיות חזק עם אנימציה על כל הסכומים, בלי הבהובים בכרטיס השכר ובמסכים, האינטרו לא נתקע גם ברשת איטית, וטקסט שלא נחתך ולא נשבר בשום שפה. שעות נוספות לפי החוק כאפשרות בהגדרות, ורשימת כל העדכונים.",
+  "key": "בדיקת החזר מס: כמה מס נלקח ממך מיותר בכל שנה, עד 6 שנים אחורה, לפי המשמרות, התלושים או טופס 106, ואיך מקבלים אותו בחזרה. פתיחה חדשה: שעון יוקרה בלילה, מדויק ושקט, עם צלצול רך אחד. קצרה פי שניים, ואף פעם לא מחכה לרשת.",
   "kind": "lit",
   "where": [
    "app/views-guide.js:152"
   ]
  },
  {
-  "key": "שעות נוספות לפי החוק: לפי שבוע העבודה, משמרת לילה ו-42 שעות בשבוע, גם לנוער.",
+  "key": "מצב פרטיות חזק עם אנימציה על כל הסכומים, בלי הבהובים בכרטיס השכר ובמסכים, האינטרו לא נתקע גם ברשת איטית, וטקסט שלא נחתך ולא נשבר בשום שפה. שעות נוספות לפי החוק כאפשרות בהגדרות, ורשימת כל העדכונים.",
   "kind": "lit",
   "where": [
    "app/views-guide.js:153"
   ]
  },
  {
-  "key": "התחרות עם החברים, והשם הפרטי שלך במקום כינוי.",
+  "key": "שעות נוספות לפי החוק: לפי שבוע העבודה, משמרת לילה ו-42 שעות בשבוע, גם לנוער.",
   "kind": "lit",
   "where": [
    "app/views-guide.js:154"
   ]
  },
  {
-  "key": "מסך הבית כמו שנוח לך, והנטו כמספר הגדול בכרטיס השכר.",
+  "key": "התחרות עם החברים, והשם הפרטי שלך במקום כינוי.",
   "kind": "lit",
   "where": [
    "app/views-guide.js:155"
   ]
  },
  {
-  "key": "הדרכה להתקנה באייפון, טקסטים שלמים בכל שפה, והאתר פותח תמיד את הגרסה העדכנית.",
+  "key": "מסך הבית כמו שנוח לך, והנטו כמספר הגדול בכרטיס השכר.",
   "kind": "lit",
   "where": [
    "app/views-guide.js:156"
   ]
  },
  {
-  "key": "צרפתית וספרדית, תזכורות למשמרת בשליטה מלאה, משכורת חודשית ממוצעת, ונתוני החוק של השנה.",
+  "key": "הדרכה להתקנה באייפון, טקסטים שלמים בכל שפה, והאתר פותח תמיד את הגרסה העדכנית.",
   "kind": "lit",
   "where": [
    "app/views-guide.js:157"
   ]
  },
  {
-  "key": "אישור משמרות שעברו, דוח שעות כקובץ PDF, וצפי שכולל משמרות מתוכננות.",
+  "key": "צרפתית וספרדית, תזכורות למשמרת בשליטה מלאה, משכורת חודשית ממוצעת, ונתוני החוק של השנה.",
   "kind": "lit",
   "where": [
    "app/views-guide.js:158"
   ]
  },
  {
-  "key": "תרגומים ארוכים יורדים שורה בין מילים במקום להיחתך.",
+  "key": "אישור משמרות שעברו, דוח שעות כקובץ PDF, וצפי שכולל משמרות מתוכננות.",
   "kind": "lit",
   "where": [
    "app/views-guide.js:159"
   ]
  },
  {
-  "key": "שעתי באנגלית, ברוסית ובערבית.",
+  "key": "תרגומים ארוכים יורדים שורה בין מילים במקום להיחתך.",
   "kind": "lit",
   "where": [
    "app/views-guide.js:160"
   ]
  },
  {
-  "key": "דוח שעות מתמונה נקרא כטבלה, וכרטיס השכר לא מהבהב בסוף הפתיחה.",
+  "key": "שעתי באנגלית, ברוסית ובערבית.",
   "kind": "lit",
   "where": [
    "app/views-guide.js:161"
   ]
  },
  {
-  "key": "סידור עבודה מתמונה או מוואטסאפ, תשלום על חגים, דוח ומכתב למעסיק, ו\"שכחת לסיים?\".",
+  "key": "דוח שעות מתמונה נקרא כטבלה, וכרטיס השכר לא מהבהב בסוף הפתיחה.",
   "kind": "lit",
   "where": [
    "app/views-guide.js:162"
   ]
  },
  {
-  "key": "מסך הפתיחה נשאר עד שהאפליקציה מוכנה, ועדכונים נכנסים רק ברקע.",
+  "key": "סידור עבודה מתמונה או מוואטסאפ, תשלום על חגים, דוח ומכתב למעסיק, ו\"שכחת לסיים?\".",
   "kind": "lit",
   "where": [
    "app/views-guide.js:163"
   ]
  },
  {
-  "key": "מעבר חלק ממסך הפתיחה למסך הבית.",
+  "key": "מסך הפתיחה נשאר עד שהאפליקציה מוכנה, ועדכונים נכנסים רק ברקע.",
   "kind": "lit",
   "where": [
    "app/views-guide.js:164"
   ]
  },
  {
-  "key": "עיצוב לכרטיס השכר עם תמונה משלך.",
+  "key": "מעבר חלק ממסך הפתיחה למסך הבית.",
   "kind": "lit",
   "where": [
    "app/views-guide.js:165"
   ]
  },
  {
-  "key": "מסך פתיחה חדש, ווידג'טים למסך הבית, הגדרות מסודרות ותעריפים מיוחדים.",
+  "key": "עיצוב לכרטיס השכר עם תמונה משלך.",
   "kind": "lit",
   "where": [
    "app/views-guide.js:166"
   ]
  },
  {
-  "key": "בחירת מקום מכל היישובים בישראל, ו\"המיקום שלי\".",
+  "key": "מסך פתיחה חדש, ווידג'טים למסך הבית, הגדרות מסודרות ותעריפים מיוחדים.",
   "kind": "lit",
   "where": [
    "app/views-guide.js:167"
   ]
  },
  {
-  "key": "רגעים קטנים בתחילת משמרת, הפסקות לפי החוק, פחות התראות, ומשיכה לרענון שלא נתקעת.",
+  "key": "בחירת מקום מכל היישובים בישראל, ו\"המיקום שלי\".",
   "kind": "lit",
   "where": [
    "app/views-guide.js:168"
   ]
  },
  {
-  "key": "המשחקים התעוררו: צבע, ניצוצות, צלילים וכוכבים.",
+  "key": "רגעים קטנים בתחילת משמרת, הפסקות לפי החוק, פחות התראות, ומשיכה לרענון שלא נתקעת.",
   "kind": "lit",
   "where": [
    "app/views-guide.js:169"
   ]
  },
  {
-  "key": "טבעת המגע חזרה לכל כפתור, ומילים לא נשברות באמצע.",
+  "key": "המשחקים התעוררו: צבע, ניצוצות, צלילים וכוכבים.",
   "kind": "lit",
   "where": [
    "app/views-guide.js:170"
   ]
  },
  {
-  "key": "ספירה לאחור ליום המשכורת במסך הבית.",
+  "key": "טבעת המגע חזרה לכל כפתור, ומילים לא נשברות באמצע.",
   "kind": "lit",
   "where": [
    "app/views-guide.js:171"
   ]
  },
  {
-  "key": "כל כפתור מגיב ללחיצה, \"לחיצה נוספת על חזרה כדי לצאת\", רצפים במשחקים ושיתוף המקום שלך.",
+  "key": "ספירה לאחור ליום המשכורת במסך הבית.",
   "kind": "lit",
   "where": [
    "app/views-guide.js:172"
   ]
  },
  {
-  "key": "משיכה לרענון חלקה יותר, ומתג נסיעות מעל רשימות המשמרות.",
+  "key": "כל כפתור מגיב ללחיצה, \"לחיצה נוספת על חזרה כדי לצאת\", רצפים במשחקים ושיתוף המקום שלך.",
   "kind": "lit",
   "where": [
    "app/views-guide.js:173"
   ]
  },
  {
-  "key": "מוזיקה במשחקים, ומשיכה לרענון בעיצוב של שעתי.",
+  "key": "משיכה לרענון חלקה יותר, ומתג נסיעות מעל רשימות המשמרות.",
   "kind": "lit",
   "where": [
    "app/views-guide.js:174"
   ]
  },
  {
-  "key": "ההצעה של Shaati Plus במסך הבית חוזרת רק יום אחרי שסוגרים אותה.",
+  "key": "מוזיקה במשחקים, ומשיכה לרענון בעיצוב של שעתי.",
   "kind": "lit",
   "where": [
    "app/views-guide.js:175"
   ]
  },
  {
-  "key": "טבלת האלופים מתחלפת בלי הבהוב.",
+  "key": "ההצעה של Shaati Plus במסך הבית חוזרת רק יום אחרי שסוגרים אותה.",
   "kind": "lit",
   "where": [
    "app/views-guide.js:176"
   ]
  },
  {
-  "key": "טבלת האלופים, ניתוח מתקדם וניסיון חינם.",
+  "key": "טבלת האלופים מתחלפת בלי הבהוב.",
   "kind": "lit",
   "where": [
    "app/views-guide.js:177"
   ]
  },
  {
-  "key": "Shaati Plus: רכישה לא חובה דרך Google Play.",
+  "key": "טבלת האלופים, ניתוח מתקדם וניסיון חינם.",
   "kind": "lit",
   "where": [
    "app/views-guide.js:178"
   ]
  },
  {
-  "key": "בלי הבהוב במעבר בין המסכים.",
+  "key": "Shaati Plus: רכישה לא חובה דרך Google Play.",
   "kind": "lit",
   "where": [
    "app/views-guide.js:179"
   ]
  },
  {
-  "key": "לוח משחק הזוגות מתאים גם למסך רחב ונמוך.",
+  "key": "בלי הבהוב במעבר בין המסכים.",
   "kind": "lit",
   "where": [
    "app/views-guide.js:180"
   ]
  },
  {
-  "key": "בלילה שבו מזיזים את השעון, עורך המשמרת מראה בדיוק מה משולם.",
+  "key": "לוח משחק הזוגות מתאים גם למסך רחב ונמוך.",
   "kind": "lit",
   "where": [
    "app/views-guide.js:181"
   ]
  },
  {
-  "key": "קיצורי הדרך במסך הבית מתאימים לטלפונים קטנים ולטקסט גדול.",
+  "key": "בלילה שבו מזיזים את השעון, עורך המשמרת מראה בדיוק מה משולם.",
   "kind": "lit",
   "where": [
    "app/views-guide.js:182"
   ]
  },
  {
-  "key": "היסטוריה ארוכה נפתחת מהר, ותגיות המשמרת תמיד נראות.",
+  "key": "קיצורי הדרך במסך הבית מתאימים לטלפונים קטנים ולטקסט גדול.",
   "kind": "lit",
   "where": [
    "app/views-guide.js:183"
   ]
  },
  {
-  "key": "שני משחקים חדשים ומדליות חדשות.",
+  "key": "היסטוריה ארוכה נפתחת מהר, ותגיות המשמרת תמיד נראות.",
   "kind": "lit",
   "where": [
    "app/views-guide.js:184"
   ]
  },
  {
-  "key": "הסרגל התחתון לא קופץ במעבר בין מסכים.",
+  "key": "שני משחקים חדשים ומדליות חדשות.",
   "kind": "lit",
   "where": [
    "app/views-guide.js:185"
   ]
  },
  {
-  "key": "משיכה לרענון בלי הבהובים.",
+  "key": "הסרגל התחתון לא קופץ במעבר בין מסכים.",
   "kind": "lit",
   "where": [
    "app/views-guide.js:186"
   ]
  },
  {
-  "key": "מעבר בין מסכים וגלגל השעות בלי גמגום.",
+  "key": "משיכה לרענון בלי הבהובים.",
   "kind": "lit",
   "where": [
    "app/views-guide.js:187"
   ]
  },
  {
-  "key": "כפתור החזרה לא סוגר את האפליקציה בטעות.",
+  "key": "מעבר בין מסכים וגלגל השעות בלי גמגום.",
   "kind": "lit",
   "where": [
    "app/views-guide.js:188"
   ]
  },
  {
-  "key": "בוחר התאריך והשעה נפתח בלי הבהוב, ועדכונים מגיעים גם כשהאפליקציה נשארת פתוחה.",
+  "key": "כפתור החזרה לא סוגר את האפליקציה בטעות.",
   "kind": "lit",
   "where": [
    "app/views-guide.js:189"
   ]
  },
  {
-  "key": "בלי ריצודים בבוררים, בחלונות ובמסך הבית.",
+  "key": "בוחר התאריך והשעה נפתח בלי הבהוב, ועדכונים מגיעים גם כשהאפליקציה נשארת פתוחה.",
   "kind": "lit",
   "where": [
    "app/views-guide.js:190"
   ]
  },
  {
-  "key": "חיפוש בהגדרות, מספרים בטוחים יותר וגיבויים שקטים.",
+  "key": "בלי ריצודים בבוררים, בחלונות ובמסך הבית.",
   "kind": "lit",
   "where": [
    "app/views-guide.js:191"
   ]
  },
  {
-  "key": "חיסכון למשהו שרוצים לקנות.",
+  "key": "חיפוש בהגדרות, מספרים בטוחים יותר וגיבויים שקטים.",
   "kind": "lit",
   "where": [
    "app/views-guide.js:192"
   ]
  },
  {
-  "key": "נתונים פגומים לא שוברים את האפליקציה.",
+  "key": "חיסכון למשהו שרוצים לקנות.",
   "kind": "lit",
   "where": [
    "app/views-guide.js:193"
   ]
  },
  {
-  "key": "נגישות בכל המסכים, במצב בהיר ובמצב כהה.",
+  "key": "נתונים פגומים לא שוברים את האפליקציה.",
   "kind": "lit",
   "where": [
    "app/views-guide.js:194"
   ]
  },
  {
-  "key": "סיכום חודשי כמו סטורי, ואוסף מדליות.",
+  "key": "נגישות בכל המסכים, במצב בהיר ובמצב כהה.",
   "kind": "lit",
   "where": [
    "app/views-guide.js:195"
   ]
  },
  {
-  "key": "תיקונים בכפתור החזרה, במשיכה לרענון ובאבטחה.",
+  "key": "סיכום חודשי כמו סטורי, ואוסף מדליות.",
   "kind": "lit",
   "where": [
    "app/views-guide.js:196"
   ]
  },
  {
-  "key": "משחקים, בדיקת תלוש בעיצוב חדש וגרפים חיים.",
+  "key": "תיקונים בכפתור החזרה, במשיכה לרענון ובאבטחה.",
   "kind": "lit",
   "where": [
    "app/views-guide.js:197"
   ]
  },
  {
-  "key": "תנועה חיה ועדינה בכל האפליקציה.",
+  "key": "משחקים, בדיקת תלוש בעיצוב חדש וגרפים חיים.",
   "kind": "lit",
   "where": [
    "app/views-guide.js:198"
   ]
  },
  {
-  "key": "ליטוש של העיצוב.",
+  "key": "תנועה חיה ועדינה בכל האפליקציה.",
   "kind": "lit",
   "where": [
    "app/views-guide.js:199"
   ]
  },
  {
-  "key": "כניסה ראשונה אמינה, עיצוב חדש, פנייה לתמיכה ובוררים חדשים.",
+  "key": "ליטוש של העיצוב.",
   "kind": "lit",
   "where": [
    "app/views-guide.js:200"
   ]
  },
  {
-  "key": "שאלות היכרות לפני ההתחברות, וחיפוש זכויות מיידי.",
+  "key": "כניסה ראשונה אמינה, עיצוב חדש, פנייה לתמיכה ובוררים חדשים.",
   "kind": "lit",
   "where": [
    "app/views-guide.js:201"
   ]
  },
  {
-  "key": "חלונות מהירים ויציבים יותר.",
+  "key": "שאלות היכרות לפני ההתחברות, וחיפוש זכויות מיידי.",
   "kind": "lit",
   "where": [
    "app/views-guide.js:202"
   ]
  },
  {
-  "key": "מסך בית רגוע ומעבר יציב בין המסכים.",
+  "key": "חלונות מהירים ויציבים יותר.",
   "kind": "lit",
   "where": [
    "app/views-guide.js:203"
   ]
  },
  {
-  "key": "אנימציית פתיחה, משיכה לרענון והפתעות קטנות.",
+  "key": "מסך בית רגוע ומעבר יציב בין המסכים.",
   "kind": "lit",
   "where": [
    "app/views-guide.js:204"
   ]
  },
  {
-  "key": "עדכונים מותקנים בשקט.",
+  "key": "אנימציית פתיחה, משיכה לרענון והפתעות קטנות.",
   "kind": "lit",
   "where": [
    "app/views-guide.js:205"
   ]
  },
  {
-  "key": "שעתי: שם ולוגו חדשים, ואפקטים במגע.",
+  "key": "עדכונים מותקנים בשקט.",
   "kind": "lit",
   "where": [
    "app/views-guide.js:206"
   ]
  },
  {
-  "key": "מחיקת חשבון, מסמכים משפטיים פתוחים לכולם והשוואות ברורות יותר.",
+  "key": "שעתי: שם ולוגו חדשים, ואפקטים במגע.",
   "kind": "lit",
   "where": [
    "app/views-guide.js:207"
   ]
  },
  {
-  "key": "גופן Rubik, ובחירת גופן בהגדרות.",
+  "key": "מחיקת חשבון, מסמכים משפטיים פתוחים לכולם והשוואות ברורות יותר.",
   "kind": "lit",
   "where": [
    "app/views-guide.js:208"
   ]
  },
  {
-  "key": "התחברות עם Google וגיבוי בענן, עוזר חכם ותאריך לידה.",
+  "key": "גופן Rubik, ובחירת גופן בהגדרות.",
   "kind": "lit",
   "where": [
    "app/views-guide.js:209"
   ]
  },
  {
-  "key": "הגרסה הראשונה: מעקב משמרות ושכר.",
+  "key": "התחברות עם Google וגיבוי בענן, עוזר חכם ותאריך לידה.",
   "kind": "lit",
   "where": [
    "app/views-guide.js:210"
   ]
  },
  {
+  "key": "הגרסה הראשונה: מעקב משמרות ושכר.",
+  "kind": "lit",
+  "where": [
+   "app/views-guide.js:211"
+  ]
+ },
+ {
   "key": "<span class=\"tag good\">הגרסה שלך</span> ",
   "kind": "lit",
   "where": [
-   "app/views-guide.js:218"
+   "app/views-guide.js:219"
   ]
  },
  {
   "key": "כל הכסף שהרווחת לפני שמורידים ממנו מס, ביטוח לאומי ופנסיה.",
   "kind": "lit",
   "where": [
-   "app/views-guide.js:224"
+   "app/views-guide.js:225"
   ]
  },
  {
   "key": "נטו",
   "kind": "lit",
   "where": [
-   "app/views-guide.js:225",
+   "app/views-guide.js:226",
    "app/views-home.js:212",
    "app/views-home.js:212",
    "app/views-payslip.js:247",
    "app/views-payslip.js:539",
-   "app/views-settings.js:730",
+   "app/views-settings.js:823",
    "core/games.js:186",
    "core/payslip.js:578",
    "core/payslip.js:608"
@@ -7121,14 +7138,14 @@
   "key": "הכסף שבאמת נכנס לחשבון הבנק, אחרי כל ההורדות. מתחת לגיל 18 בדרך כלל אין מס, אז הנטו קרוב לברוטו.",
   "kind": "lit",
   "where": [
-   "app/views-guide.js:225"
+   "app/views-guide.js:226"
   ]
  },
  {
   "key": "שעות נוספות",
   "kind": "lit",
   "where": [
-   "app/views-guide.js:226",
+   "app/views-guide.js:227",
    "app/views-rights.js:65",
    "app/views-shift.js:388",
    "core/engine.js:374",
@@ -7142,14 +7159,14 @@
   "key": "שעות מעבר ליום עבודה רגיל (בדרך כלל אחרי 8 שעות). השעתיים הראשונות שוות 125%, ואחר כך 150%.",
   "kind": "lit",
   "where": [
-   "app/views-guide.js:226"
+   "app/views-guide.js:227"
   ]
  },
  {
   "key": "שבת וחג",
   "kind": "lit",
   "where": [
-   "app/views-guide.js:227",
+   "app/views-guide.js:228",
    "core/payslip.js:423",
    "core/payslip.js:430",
    "core/payslip.js:440",
@@ -7162,21 +7179,21 @@
   "key": "שעה שעבדת בשבת או בחג שווה לפחות 150% מהשכר הרגיל. האפליקציה יודעת לבד מתי שבת נכנסת ויוצאת לפי העיר שלך.",
   "kind": "lit",
   "where": [
-   "app/views-guide.js:227"
+   "app/views-guide.js:228"
   ]
  },
  {
   "key": "כסף שהמעסיק מחזיר לך על הנסיעה לעבודה ובחזרה, לכל יום עבודה, בנוסף לשכר.",
   "kind": "lit",
   "where": [
-   "app/views-guide.js:228"
+   "app/views-guide.js:229"
   ]
  },
  {
   "key": "פנסיה",
   "kind": "lit",
   "where": [
-   "app/views-guide.js:229",
+   "app/views-guide.js:230",
    "app/views-rights.js:74",
    "app/views-rights.js:126",
    "core/games.js:193",
@@ -7191,21 +7208,21 @@
   "key": "חיסכון לגיל מבוגר. מגיל 21 (גברים) או 20 (נשים), אחרי חצי שנה בעבודה, המעסיק חייב להפריש לך כסף לקרן פנסיה.",
   "kind": "lit",
   "where": [
-   "app/views-guide.js:229"
+   "app/views-guide.js:230"
   ]
  },
  {
   "key": "הדף שהמעסיק נותן כל חודש, ובו כמה שעות עבדת וכמה שילמו לך. באפליקציה אפשר לצלם אותו ולבדוק שהכול נכון.",
   "kind": "lit",
   "where": [
-   "app/views-guide.js:230"
+   "app/views-guide.js:231"
   ]
  },
  {
   "key": "שכר מינימום",
   "kind": "lit",
   "where": [
-   "app/views-guide.js:231",
+   "app/views-guide.js:232",
    "app/views-rights.js:58",
    "app/views-rights.js:64",
    "core/games.js:195",
@@ -7218,16 +7235,16 @@
   "key": "הכי מעט שמותר לשלם לשעה. מתחת לגיל 18 הוא קצת נמוך יותר, לפי הגיל. מעסיק שמשלם פחות עובר על החוק.",
   "kind": "lit",
   "where": [
-   "app/views-guide.js:231"
+   "app/views-guide.js:232"
   ]
  },
  {
   "key": "נקודות זיכוי",
   "kind": "lit",
   "where": [
-   "app/views-guide.js:232",
+   "app/views-guide.js:233",
    "app/views-settings.js:189",
-   "app/views-settings.js:561",
+   "app/views-settings.js:654",
    "core/payslip.js:18",
    "core/payslip.js:548"
   ]
@@ -7236,14 +7253,14 @@
   "key": "הנחה במס הכנסה שכל עובד מקבל. לגברים 2.25 נקודות, לנשים 2.75. יש נקודות נוספות (ילדים, תואר, שחרור מצבא) והן מופיעות בתלוש.",
   "kind": "lit",
   "where": [
-   "app/views-guide.js:232"
+   "app/views-guide.js:233"
   ]
  },
  {
   "key": "תקופת שכר",
   "kind": "lit",
   "where": [
-   "app/views-guide.js:233",
+   "app/views-guide.js:234",
    "app/views-reports.js:199"
   ]
  },
@@ -7251,14 +7268,14 @@
   "key": "הימים שעליהם מקבלים משכורת אחת. אצל רוב המעסיקים זה חודש רגיל, מה-1 ועד סוף החודש.",
   "kind": "lit",
   "where": [
-   "app/views-guide.js:233"
+   "app/views-guide.js:234"
   ]
  },
  {
   "key": "משמרת מתוכננת",
   "kind": "lit",
   "where": [
-   "app/views-guide.js:234",
+   "app/views-guide.js:235",
    "app/views-shift.js:446"
   ]
  },
@@ -7266,14 +7283,14 @@
   "key": "משמרת עתידית שרשמת כדי לא לשכוח. היא לא נספרת בשכר עד שמסמנים שהיא בוצעה.",
   "kind": "lit",
   "where": [
-   "app/views-guide.js:234"
+   "app/views-guide.js:235"
   ]
  },
  {
   "key": "דמי הבראה",
   "kind": "lit",
   "where": [
-   "app/views-guide.js:235",
+   "app/views-guide.js:236",
    "app/views-rights.js:59",
    "app/views-rights.js:73",
    "app/views-rights.js:122",
@@ -7287,21 +7304,21 @@
   "key": "תוספת שנתית שמגיעה אחרי שנה בעבודה, לפי הוותק והיקף המשרה.",
   "kind": "lit",
   "where": [
-   "app/views-guide.js:235"
+   "app/views-guide.js:236"
   ]
  },
  {
   "key": "<div class=\"term-box\">{0}<div><h3>מה זה {1}?</h3><p>{2}</p></div></div>",
   "kind": "tpl",
   "where": [
-   "app/views-guide.js:243"
+   "app/views-guide.js:244"
   ]
  },
  {
   "key": "הבנתי",
   "kind": "lit",
   "where": [
-   "app/views-guide.js:243",
+   "app/views-guide.js:244",
    "app/views-login.js:91"
   ]
  },
@@ -7451,7 +7468,7 @@
   "where": [
    "app/views-home.js:159",
    "app/views-quick.js:37",
-   "app/views-settings.js:495",
+   "app/views-settings.js:588",
    "core/games.js:196"
   ]
  },
@@ -7470,7 +7487,7 @@
   ]
  },
  {
-  "key": "<button class=\"role-chip\" data-act=\"choose-role\" aria-label=\"בחר תפקיד\"><span class=\"sw\" style=\"background:{0}\"></span><span class=\"rc-n\">{1}</span><span class=\"chev\">{2}</span></button>",
+  "key": "<button class=\"role-chip\" data-act=\"choose-role\" aria-label=\"בחר תפקיד\">{0}<span class=\"rc-n\">{1}</span><span class=\"chev\">{2}</span></button>",
   "kind": "tpl",
   "where": [
    "app/views-home.js:169"
@@ -9143,7 +9160,7 @@
   "kind": "lit",
   "where": [
    "app/views-login.js:315",
-   "app/views-settings.js:867"
+   "app/views-settings.js:960"
   ]
  },
  {
@@ -9151,7 +9168,7 @@
   "kind": "lit",
   "where": [
    "app/views-login.js:316",
-   "app/views-settings.js:868"
+   "app/views-settings.js:961"
   ]
  },
  {
@@ -9159,7 +9176,7 @@
   "kind": "lit",
   "where": [
    "app/views-login.js:316",
-   "app/views-settings.js:868"
+   "app/views-settings.js:961"
   ]
  },
  {
@@ -9168,8 +9185,8 @@
   "where": [
    "app/views-login.js:317",
    "app/views-login.js:322",
-   "app/views-settings.js:803",
-   "app/views-settings.js:869"
+   "app/views-settings.js:896",
+   "app/views-settings.js:962"
   ]
  },
  {
@@ -9191,7 +9208,7 @@
   "kind": "lit",
   "where": [
    "app/views-login.js:324",
-   "app/views-settings.js:873"
+   "app/views-settings.js:966"
   ]
  },
  {
@@ -10070,8 +10087,8 @@
   "kind": "lit",
   "where": [
    "app/views-payslip.js:231",
-   "app/views-settings.js:487",
-   "app/views-settings.js:491"
+   "app/views-settings.js:580",
+   "app/views-settings.js:584"
   ]
  },
  {
@@ -12282,7 +12299,7 @@
   "where": [
    "app/views-rights.js:120",
    "app/views-rights.js:121",
-   "app/views-settings.js:639"
+   "app/views-settings.js:732"
   ]
  },
  {
@@ -12711,8 +12728,8 @@
   "kind": "lit",
   "where": [
    "app/views-settings.js:134",
-   "app/views-settings.js:491",
-   "app/views-settings.js:493"
+   "app/views-settings.js:584",
+   "app/views-settings.js:586"
   ]
  },
  {
@@ -12904,7 +12921,7 @@
   "kind": "lit",
   "where": [
    "app/views-settings.js:141",
-   "app/views-settings.js:718"
+   "app/views-settings.js:811"
   ]
  },
  {
@@ -12927,7 +12944,7 @@
   "where": [
    "app/views-settings.js:143",
    "app/views-settings.js:173",
-   "app/views-settings.js:723"
+   "app/views-settings.js:816"
   ]
  },
  {
@@ -12936,7 +12953,7 @@
   "where": [
    "app/views-settings.js:143",
    "app/views-settings.js:173",
-   "app/views-settings.js:723"
+   "app/views-settings.js:816"
   ]
  },
  {
@@ -12945,7 +12962,7 @@
   "where": [
    "app/views-settings.js:143",
    "app/views-settings.js:173",
-   "app/views-settings.js:723"
+   "app/views-settings.js:816"
   ]
  },
  {
@@ -13407,7 +13424,7 @@
   "where": [
    "app/views-settings.js:184",
    "app/views-settings.js:186",
-   "app/views-settings.js:476"
+   "app/views-settings.js:569"
   ]
  },
  {
@@ -13416,7 +13433,7 @@
   "where": [
    "app/views-settings.js:184",
    "app/views-settings.js:192",
-   "app/views-settings.js:549"
+   "app/views-settings.js:642"
   ]
  },
  {
@@ -13438,7 +13455,7 @@
   "kind": "lit",
   "where": [
    "app/views-settings.js:185",
-   "app/views-settings.js:482"
+   "app/views-settings.js:575"
   ]
  },
  {
@@ -13460,7 +13477,7 @@
   "kind": "lit",
   "where": [
    "app/views-settings.js:186",
-   "app/views-settings.js:477"
+   "app/views-settings.js:570"
   ]
  },
  {
@@ -13482,7 +13499,7 @@
   "kind": "lit",
   "where": [
    "app/views-settings.js:187",
-   "app/views-settings.js:545"
+   "app/views-settings.js:638"
   ]
  },
  {
@@ -13504,7 +13521,7 @@
   "kind": "lit",
   "where": [
    "app/views-settings.js:188",
-   "app/views-settings.js:495"
+   "app/views-settings.js:588"
   ]
  },
  {
@@ -13526,7 +13543,7 @@
   "kind": "lit",
   "where": [
    "app/views-settings.js:189",
-   "app/views-settings.js:571"
+   "app/views-settings.js:664"
   ]
  },
  {
@@ -13585,7 +13602,7 @@
   "kind": "lit",
   "where": [
    "app/views-settings.js:192",
-   "app/views-settings.js:550"
+   "app/views-settings.js:643"
   ]
  },
  {
@@ -13607,7 +13624,7 @@
   "kind": "lit",
   "where": [
    "app/views-settings.js:193",
-   "app/views-settings.js:667"
+   "app/views-settings.js:760"
   ]
  },
  {
@@ -13629,7 +13646,7 @@
   "kind": "lit",
   "where": [
    "app/views-settings.js:194",
-   "app/views-settings.js:739"
+   "app/views-settings.js:832"
   ]
  },
  {
@@ -13637,7 +13654,7 @@
   "kind": "lit",
   "where": [
    "app/views-settings.js:194",
-   "app/views-settings.js:741"
+   "app/views-settings.js:834"
   ]
  },
  {
@@ -13673,7 +13690,7 @@
   "kind": "lit",
   "where": [
    "app/views-settings.js:196",
-   "app/views-settings.js:731"
+   "app/views-settings.js:824"
   ]
  },
  {
@@ -13723,7 +13740,7 @@
   "kind": "lit",
   "where": [
    "app/views-settings.js:199",
-   "app/views-settings.js:586"
+   "app/views-settings.js:679"
   ]
  },
  {
@@ -13731,7 +13748,7 @@
   "kind": "lit",
   "where": [
    "app/views-settings.js:199",
-   "app/views-settings.js:596"
+   "app/views-settings.js:689"
   ]
  },
  {
@@ -14073,74 +14090,138 @@
   ]
  },
  {
-  "key": "<label class=\"field\"><span class=\"lbl\">שם התפקיד</span><input class=\"input\" id=\"re-name\" value=\"{0}\" placeholder=\"למשל: סדרן\" maxlength=\"40\"></label>\n        <div class=\"field\"><span class=\"lbl\">צבע</span><div class=\"color-pick\">{1}</div></div>\n        <div class=\"section-title\">{2} תעריפים לפי תאריך</div>\n        <div class=\"tiny muted\" style=\"margin:-4px 4px 10px\">העלאת שכר? הוסף תעריף חדש מתאריך מסוים. משמרות קודמות לא ישתנו.</div>\n        {3}\n        <button class=\"btn text sm\" data-radd>{4} העלאת שכר מתאריך</button>\n        {5}",
+  "key": "<div class=\"list role-pic-row\"><button class=\"item\" data-pic>{0}<span class=\"body\"><span class=\"t\">תמונת התפקיד</span><span class=\"s\">{1}</span></span>{2}</button></div>",
   "kind": "tpl",
   "where": [
-   "app/views-settings.js:410"
+   "app/views-settings.js:443"
+  ]
+ },
+ {
+  "key": "תמונה מהטלפון",
+  "kind": "lit",
+  "where": [
+   "app/views-settings.js:443",
+   "app/views-settings.js:482"
+  ]
+ },
+ {
+  "key": "אימוג׳י",
+  "kind": "lit",
+  "where": [
+   "app/views-settings.js:443"
+  ]
+ },
+ {
+  "key": "האות הראשונה בשם",
+  "kind": "lit",
+  "where": [
+   "app/views-settings.js:443"
+  ]
+ },
+ {
+  "key": "<label class=\"field\"><span class=\"lbl\">שם התפקיד</span><input class=\"input\" id=\"re-name\" value=\"{0}\" placeholder=\"למשל: סדרן\" maxlength=\"40\"></label>\n        <div class=\"field\"><span class=\"lbl\">תמונה</span>{1}</div>\n        <div class=\"field\"><span class=\"lbl\">צבע</span><div class=\"color-pick\">{2}</div></div>\n        <div class=\"section-title\">{3} תעריפים לפי תאריך</div>\n        <div class=\"tiny muted\" style=\"margin:-4px 4px 10px\">העלאת שכר? הוסף תעריף חדש מתאריך מסוים. משמרות קודמות לא ישתנו.</div>\n        {4}\n        <button class=\"btn text sm\" data-radd>{5} העלאת שכר מתאריך</button>\n        {6}",
+  "kind": "tpl",
+  "where": [
+   "app/views-settings.js:446"
   ]
  },
  {
   "key": "<button style=\"background:{0}\" class=\"{1}\" data-color=\"{2}\" aria-label=\"צבע\"></button>",
   "kind": "tpl",
   "where": [
-   "app/views-settings.js:411"
+   "app/views-settings.js:448"
   ]
  },
  {
   "key": "<div class=\"grid2\" style=\"align-items:end;margin-bottom:8px;grid-template-columns:1fr 1fr 40px\">\n          <label class=\"field\" style=\"margin:0\"><span class=\"lbl\">{0}</span>{1}</label>\n          <label class=\"field\" style=\"margin:0\"><span class=\"lbl\">₪ לשעה</span><input class=\"input\" type=\"number\" step=\"any\" inputmode=\"decimal\" data-rr=\"{2}\" value=\"{3}\"></label>\n          {4}</div>",
   "kind": "tpl",
   "where": [
-   "app/views-settings.js:414"
+   "app/views-settings.js:451"
   ]
  },
  {
   "key": "מההתחלה",
   "kind": "lit",
   "where": [
-   "app/views-settings.js:415"
+   "app/views-settings.js:452"
   ]
  },
  {
   "key": "החל מ-",
   "kind": "lit",
   "where": [
-   "app/views-settings.js:415"
+   "app/views-settings.js:452"
   ]
  },
  {
   "key": "<button class=\"icon-btn\" data-rdel=\"{0}\" aria-label=\"הסר\">{1}</button>",
   "kind": "tpl",
   "where": [
-   "app/views-settings.js:417"
+   "app/views-settings.js:454"
   ]
  },
  {
   "key": "<label class=\"field\" style=\"margin-top:12px\"><span class=\"lbl\">מעסיק</span><select class=\"input\" id=\"re-emp\">{0}</select></label>",
   "kind": "tpl",
   "where": [
-   "app/views-settings.js:419"
+   "app/views-settings.js:456"
+  ]
+ },
+ {
+  "key": " aria-label=\"האות הראשונה בשם\"",
+  "kind": "lit",
+  "where": [
+   "app/views-settings.js:470"
+  ]
+ },
+ {
+  "key": "תמונת התפקיד",
+  "kind": "lit",
+  "where": [
+   "app/views-settings.js:474"
+  ]
+ },
+ {
+  "key": "<div class=\"ri-grid\" style=\"--c:{0}\">\n            {1}\n            {2}\n            {3}\n          </div>\n          <div class=\"ri-type\"><input class=\"input\" id=\"ri-type\" aria-label=\"אימוג׳י אחר מהמקלדת\" placeholder=\"אימוג׳י אחר מהמקלדת\" autocomplete=\"off\" autocapitalize=\"none\" enterkeyhint=\"done\"><button class=\"btn tonal\" data-ri-typed>בחירה</button></div>\n          <div class=\"tiny err\" id=\"ri-err\" role=\"alert\" hidden>צריך אימוג׳י אחד, בלי אותיות.</div>\n          <button class=\"btn tonal ri-photo\" data-ri-photo>{4} {5}</button>\n          <div class=\"tiny muted ri-note\">תמונה מהטלפון נשמרת רק בטלפון הזה.</div>",
+  "kind": "tpl",
+  "where": [
+   "app/views-settings.js:475"
+  ]
+ },
+ {
+  "key": "<img src=\"{0}\" alt=\"התמונה מהטלפון\">",
+  "kind": "tpl",
+  "where": [
+   "app/views-settings.js:476"
+  ]
+ },
+ {
+  "key": "תמונה אחרת מהטלפון",
+  "kind": "lit",
+  "where": [
+   "app/views-settings.js:482"
   ]
  },
  {
   "key": "עריכת תפקיד",
   "kind": "lit",
   "where": [
-   "app/views-settings.js:430",
-   "app/views-settings.js:449"
+   "app/views-settings.js:517",
+   "app/views-settings.js:542"
   ]
  },
  {
   "key": "תפקיד חדש",
   "kind": "lit",
   "where": [
-   "app/views-settings.js:430"
+   "app/views-settings.js:517"
   ]
  },
  {
   "key": "{0}<button class=\"btn\" data-save>{1} שמור</button>",
   "kind": "tpl",
   "where": [
-   "app/views-settings.js:431",
+   "app/views-settings.js:518",
    "app/views-shift.js:449",
    "app/views-shift.js:567"
   ]
@@ -14149,239 +14230,239 @@
   "key": "הזן שם",
   "kind": "lit",
   "where": [
-   "app/views-settings.js:442"
+   "app/views-settings.js:535"
   ]
  },
  {
   "key": "הזן תעריף לשעה",
   "kind": "lit",
   "where": [
-   "app/views-settings.js:444"
+   "app/views-settings.js:537"
   ]
  },
  {
   "key": "לשמור את התעריף?",
   "kind": "lit",
   "where": [
-   "app/views-settings.js:447"
+   "app/views-settings.js:540"
   ]
  },
  {
   "key": "{0} לשעה זה הרבה מעל הרגיל. אולי נוספה ספרה?",
   "kind": "tpl",
   "where": [
-   "app/views-settings.js:447"
+   "app/views-settings.js:540"
   ]
  },
  {
   "key": "הוספת תפקיד",
   "kind": "lit",
   "where": [
-   "app/views-settings.js:449"
+   "app/views-settings.js:542"
   ]
  },
  {
   "key": "התפקיד נשמר",
   "kind": "lit",
   "where": [
-   "app/views-settings.js:449"
+   "app/views-settings.js:542"
   ]
  },
  {
   "key": "להעביר לארכיון?",
   "kind": "lit",
   "where": [
-   "app/views-settings.js:455"
+   "app/views-settings.js:548"
   ]
  },
  {
   "key": "יש {0} משמרות בתפקיד הזה. הוא יוסתר מהבחירה אבל המשמרות יישמרו.",
   "kind": "tpl",
   "where": [
-   "app/views-settings.js:455"
+   "app/views-settings.js:548"
   ]
  },
  {
   "key": "העבר לארכיון",
   "kind": "lit",
   "where": [
-   "app/views-settings.js:455"
+   "app/views-settings.js:548"
   ]
  },
  {
   "key": "ארכוב תפקיד",
   "kind": "lit",
   "where": [
-   "app/views-settings.js:457"
+   "app/views-settings.js:550"
   ]
  },
  {
   "key": "למחוק את התפקיד?",
   "kind": "lit",
   "where": [
-   "app/views-settings.js:459"
+   "app/views-settings.js:552"
   ]
  },
  {
   "key": "מחיקת תפקיד",
   "kind": "lit",
   "where": [
-   "app/views-settings.js:461"
+   "app/views-settings.js:554"
   ]
  },
  {
   "key": "התפקיד נמחק",
   "kind": "lit",
   "where": [
-   "app/views-settings.js:461"
+   "app/views-settings.js:554"
   ]
  },
  {
   "key": "\n      <div class=\"section-title\">{0} שעות נוספות</div><div class=\"card\">\n        {1}\n        {2}\n        {3}\n        <div class=\"grid3\">{4}{5}{6}</div>\n        {7}\n        {8}</div>\n      <div class=\"section-title\">{9} שבת וחג</div><div class=\"card\">\n        <div class=\"grid3\">{10}{11}{12}</div>\n        {13}</div>\n      <div class=\"section-title\">{14} תוספת לילה</div><div class=\"card\">\n        {15}\n        {16}</div>\n      <div class=\"section-title\">{17} תוספת ותק</div><div class=\"card\">\n        {18}\n        {19}</div>\n      <div class=\"section-title\">{20} עיגול, מינימום והפסקות</div><div class=\"card\">\n        <div class=\"grid2\">{21}{22}</div>\n        {23}\n        <div class=\"grid2\">{24}{25}</div></div>",
   "kind": "tpl",
   "where": [
-   "app/views-settings.js:472"
+   "app/views-settings.js:565"
   ]
  },
  {
   "key": "לפי החוק (מומלץ)",
   "kind": "lit",
   "where": [
-   "app/views-settings.js:474"
+   "app/views-settings.js:567"
   ]
  },
  {
   "key": "ביום מעל 8 שעות (בשישי מעל 7), במשמרת לילה מעל 7, ובשבוע מעל 42 שעות רגילות",
   "kind": "lit",
   "where": [
-   "app/views-settings.js:474"
+   "app/views-settings.js:567"
   ]
  },
  {
   "key": "ביום מעל 8.6 שעות, במשמרת לילה מעל 7, ובשבוע מעל 42 שעות רגילות",
   "kind": "lit",
   "where": [
-   "app/views-settings.js:474"
+   "app/views-settings.js:567"
   ]
  },
  {
   "key": "ימי עבודה בשבוע במקום העבודה",
   "kind": "lit",
   "where": [
-   "app/views-settings.js:475"
+   "app/views-settings.js:568"
   ]
  },
  {
   "key": "5 ימים (ראשון עד חמישי)",
   "kind": "lit",
   "where": [
-   "app/views-settings.js:475"
+   "app/views-settings.js:568"
   ]
  },
  {
   "key": "6 ימים",
   "kind": "lit",
   "where": [
-   "app/views-settings.js:475",
-   "app/views-settings.js:595"
+   "app/views-settings.js:568",
+   "app/views-settings.js:688"
   ]
  },
  {
   "key": "אחריהן מתחילות שעות נוספות (שעות מעל 42 בשבוע הן נוספות תמיד).",
   "kind": "lit",
   "where": [
-   "app/views-settings.js:476"
+   "app/views-settings.js:569"
   ]
  },
  {
   "key": "שעות בדרגה 1",
   "kind": "lit",
   "where": [
-   "app/views-settings.js:477"
+   "app/views-settings.js:570"
   ]
  },
  {
   "key": "אחוז דרגה 2",
   "kind": "lit",
   "where": [
-   "app/views-settings.js:477"
+   "app/views-settings.js:570"
   ]
  },
  {
   "key": "ספירה",
   "kind": "lit",
   "where": [
-   "app/views-settings.js:478"
+   "app/views-settings.js:571"
   ]
  },
  {
   "key": "ליום עבודה (כל המשמרות שמתחילות באותו יום)",
   "kind": "lit",
   "where": [
-   "app/views-settings.js:478"
+   "app/views-settings.js:571"
   ]
  },
  {
   "key": "לכל משמרת בנפרד",
   "kind": "lit",
   "where": [
-   "app/views-settings.js:478"
+   "app/views-settings.js:571"
   ]
  },
  {
   "key": "משמרת לילה = יום קצר",
   "kind": "lit",
   "where": [
-   "app/views-settings.js:479"
+   "app/views-settings.js:572"
   ]
  },
  {
   "key": "משמרת שלפחות שעתיים ממנה בין 22:00 ל-06:00",
   "kind": "lit",
   "where": [
-   "app/views-settings.js:479"
+   "app/views-settings.js:572"
   ]
  },
  {
   "key": "שעות רגילות במשמרת לילה",
   "kind": "lit",
   "where": [
-   "app/views-settings.js:480"
+   "app/views-settings.js:573"
   ]
  },
  {
   "key": "+ נוספות דרגה 1",
   "kind": "lit",
   "where": [
-   "app/views-settings.js:482"
+   "app/views-settings.js:575"
   ]
  },
  {
   "key": "+ נוספות דרגה 2",
   "kind": "lit",
   "where": [
-   "app/views-settings.js:482"
+   "app/views-settings.js:575"
   ]
  },
  {
   "key": "תוספת ערב שבת/חג %",
   "kind": "lit",
   "where": [
-   "app/views-settings.js:483"
+   "app/views-settings.js:576"
   ]
  },
  {
   "key": "0 = ללא. השעות שבהן חלה התוספת מוגדרות במסך \"שבת וחגים\".",
   "kind": "lit",
   "where": [
-   "app/views-settings.js:483"
+   "app/views-settings.js:576"
   ]
  },
  {
   "key": "תוספת לילה",
   "kind": "lit",
   "where": [
-   "app/views-settings.js:485",
+   "app/views-settings.js:578",
    "app/views-shift.js:393",
    "core/engine.js:385",
    "core/payslip.js:38"
@@ -14391,50 +14472,50 @@
   "key": "לפי ההסכם אצל המעסיק",
   "kind": "lit",
   "where": [
-   "app/views-settings.js:485"
+   "app/views-settings.js:578"
   ]
  },
  {
   "key": "משעה",
   "kind": "lit",
   "where": [
-   "app/views-settings.js:486"
+   "app/views-settings.js:579"
   ]
  },
  {
   "key": "עד שעה",
   "kind": "lit",
   "where": [
-   "app/views-settings.js:486"
+   "app/views-settings.js:579"
   ]
  },
  {
   "key": "סוג",
   "kind": "lit",
   "where": [
-   "app/views-settings.js:487",
-   "app/views-settings.js:490"
+   "app/views-settings.js:580",
+   "app/views-settings.js:583"
   ]
  },
  {
   "key": "אחוז מהתעריף",
   "kind": "lit",
   "where": [
-   "app/views-settings.js:487"
+   "app/views-settings.js:580"
   ]
  },
  {
   "key": "₪ לשעה",
   "kind": "lit",
   "where": [
-   "app/views-settings.js:487"
+   "app/views-settings.js:580"
   ]
  },
  {
   "key": "תוספת ותק",
   "kind": "lit",
   "where": [
-   "app/views-settings.js:489",
+   "app/views-settings.js:582",
    "core/engine.js:387",
    "core/payslip.js:39"
   ]
@@ -14443,106 +14524,106 @@
   "key": "מחושבת מתאריך תחילת העבודה",
   "kind": "lit",
   "where": [
-   "app/views-settings.js:489"
+   "app/views-settings.js:582"
   ]
  },
  {
   "key": "% מהתעריף לכל שנת ותק",
   "kind": "lit",
   "where": [
-   "app/views-settings.js:490"
+   "app/views-settings.js:583"
   ]
  },
  {
   "key": "₪ קבוע לשעה",
   "kind": "lit",
   "where": [
-   "app/views-settings.js:490"
+   "app/views-settings.js:583"
   ]
  },
  {
   "key": "החל מחודש",
   "kind": "lit",
   "where": [
-   "app/views-settings.js:491"
+   "app/views-settings.js:584"
   ]
  },
  {
   "key": "תקרה %",
   "kind": "lit",
   "where": [
-   "app/views-settings.js:491"
+   "app/views-settings.js:584"
   ]
  },
  {
   "key": "עיגול זמן משמרת",
   "kind": "lit",
   "where": [
-   "app/views-settings.js:493"
+   "app/views-settings.js:586"
   ]
  },
  {
   "key": "לקרוב",
   "kind": "lit",
   "where": [
-   "app/views-settings.js:493"
+   "app/views-settings.js:586"
   ]
  },
  {
   "key": "למעלה",
   "kind": "lit",
   "where": [
-   "app/views-settings.js:493"
+   "app/views-settings.js:586"
   ]
  },
  {
   "key": "למטה",
   "kind": "lit",
   "where": [
-   "app/views-settings.js:493"
+   "app/views-settings.js:586"
   ]
  },
  {
   "key": "יחידה",
   "kind": "lit",
   "where": [
-   "app/views-settings.js:493"
+   "app/views-settings.js:586"
   ]
  },
  {
   "key": "5 דק׳",
   "kind": "lit",
   "where": [
-   "app/views-settings.js:493"
+   "app/views-settings.js:586"
   ]
  },
  {
   "key": "6 דק׳",
   "kind": "lit",
   "where": [
-   "app/views-settings.js:493"
+   "app/views-settings.js:586"
   ]
  },
  {
   "key": "10 דק׳",
   "kind": "lit",
   "where": [
-   "app/views-settings.js:493"
+   "app/views-settings.js:586"
   ]
  },
  {
   "key": "רבע שעה",
   "kind": "lit",
   "where": [
-   "app/views-settings.js:493"
+   "app/views-settings.js:586"
   ]
  },
  {
   "key": "חצי שעה",
   "kind": "lit",
   "where": [
-   "app/views-settings.js:493",
-   "app/views-settings.js:681",
+   "app/views-settings.js:586",
+   "app/views-settings.js:774",
    "core/games.js:33"
   ]
  },
@@ -14550,21 +14631,21 @@
   "key": "מינימום שעות לתשלום במשמרת",
   "kind": "lit",
   "where": [
-   "app/views-settings.js:494"
+   "app/views-settings.js:587"
   ]
  },
  {
   "key": "0 = ללא. למשל 4: גם אם שוחררת אחרי שעתיים, תקבל 4.",
   "kind": "lit",
   "where": [
-   "app/views-settings.js:494"
+   "app/views-settings.js:587"
   ]
  },
  {
   "key": "בתשלום",
   "kind": "lit",
   "where": [
-   "app/views-settings.js:495",
+   "app/views-settings.js:588",
    "app/views-shift.js:196"
   ]
  },
@@ -14572,140 +14653,140 @@
   "key": "ללא תשלום",
   "kind": "lit",
   "where": [
-   "app/views-settings.js:495"
+   "app/views-settings.js:588"
   ]
  },
  {
   "key": "<div class=\"seg\" style=\"margin-bottom:14px\"><button data-rmode=\"city\" class=\"{0}\">לפי עיר (כניסה/יציאה)</button><button data-rmode=\"fixed\" class=\"{1}\">שעות קבועות</button></div>\n        {2}\n        <div class=\"section-title\">{3} חלונות קרובים</div>\n        <div class=\"card\">{4}</div>\n        <div class=\"section-title\">{5} ימים שנחשבים יום מנוחה</div>\n        <div class=\"card\">{6}{7}\n          <div class=\"tiny muted\">חגי ישראל מזוהים אוטומטית לפי הלוח העברי (חישוב מקומי). כל יום מנוחה מתחיל בערבו, כמו יום שישי.</div></div>\n        <div class=\"section-title\">{8} תוספת ערב שבת/חג</div>\n        <div class=\"card\">{9}{10}{11}\n          <div class=\"tiny muted\">האחוז מוגדר ב\"חוקי חישוב\". חל מהשעה הזו ועד כניסת השבת/החג.</div></div>\n        <div class=\"section-title\">{12} כללי יום ידניים</div>\n        <div class=\"card\">{13}</div>",
   "kind": "tpl",
   "where": [
-   "app/views-settings.js:503"
+   "app/views-settings.js:596"
   ]
  },
  {
   "key": "<div class=\"card\">\n          <div class=\"field\"><span class=\"lbl\">עיר</span>{0}</div>\n          {1}\n          {2}\n          {3}\n          {4}\n          <div class=\"grid2\">{5}{6}</div></div>",
   "kind": "tpl",
   "where": [
-   "app/views-settings.js:504"
+   "app/views-settings.js:597"
   ]
  },
  {
   "key": "עיר",
   "kind": "lit",
   "where": [
-   "app/views-settings.js:505"
+   "app/views-settings.js:598"
   ]
  },
  {
   "key": "קו רוחב",
   "kind": "lit",
   "where": [
-   "app/views-settings.js:506"
+   "app/views-settings.js:599"
   ]
  },
  {
   "key": "קו אורך",
   "kind": "lit",
   "where": [
-   "app/views-settings.js:506"
+   "app/views-settings.js:599"
   ]
  },
  {
   "key": "הדלקת נרות (דקות לפני השקיעה)",
   "kind": "lit",
   "where": [
-   "app/views-settings.js:507"
+   "app/views-settings.js:600"
   ]
  },
  {
   "key": "ריק = ברירת המחדל של העיר (ירושלים 40, חיפה 30, אחרות 18)",
   "kind": "lit",
   "where": [
-   "app/views-settings.js:507"
+   "app/views-settings.js:600"
   ]
  },
  {
   "key": "יציאת שבת/חג",
   "kind": "lit",
   "where": [
-   "app/views-settings.js:508"
+   "app/views-settings.js:601"
   ]
  },
  {
   "key": "צאת הכוכבים (השמש 8.5° מתחת לאופק)",
   "kind": "lit",
   "where": [
-   "app/views-settings.js:508"
+   "app/views-settings.js:601"
   ]
  },
  {
   "key": "מספר דקות אחרי השקיעה",
   "kind": "lit",
   "where": [
-   "app/views-settings.js:508"
+   "app/views-settings.js:601"
   ]
  },
  {
   "key": "דקות אחרי השקיעה",
   "kind": "lit",
   "where": [
-   "app/views-settings.js:509"
+   "app/views-settings.js:602"
   ]
  },
  {
   "key": "הזזת כניסה (דק׳)",
   "kind": "lit",
   "where": [
-   "app/views-settings.js:510"
+   "app/views-settings.js:603"
   ]
  },
  {
   "key": "שלילי = מוקדם יותר",
   "kind": "lit",
   "where": [
-   "app/views-settings.js:510"
+   "app/views-settings.js:603"
   ]
  },
  {
   "key": "הזזת יציאה (דק׳)",
   "kind": "lit",
   "where": [
-   "app/views-settings.js:510"
+   "app/views-settings.js:603"
   ]
  },
  {
   "key": "חיובי = מאוחר יותר",
   "kind": "lit",
   "where": [
-   "app/views-settings.js:510"
+   "app/views-settings.js:603"
   ]
  },
  {
   "key": "<div class=\"card\"><div class=\"grid2\">{0}{1}</div><div class=\"tiny muted\">למשל מעסיק שמגדיר שבת משישי 16:00 עד שבת 20:00.</div></div>",
   "kind": "tpl",
   "where": [
-   "app/views-settings.js:511"
+   "app/views-settings.js:604"
   ]
  },
  {
   "key": "כניסה (בערב שבת/חג)",
   "kind": "lit",
   "where": [
-   "app/views-settings.js:511"
+   "app/views-settings.js:604"
   ]
  },
  {
   "key": "יציאה (ביום המנוחה)",
   "kind": "lit",
   "where": [
-   "app/views-settings.js:511"
+   "app/views-settings.js:604"
   ]
  },
  {
   "key": "שבת",
   "kind": "lit",
   "where": [
-   "app/views-settings.js:515",
+   "app/views-settings.js:608",
    "core/hebcal.js:292"
   ]
  },
@@ -14713,42 +14794,42 @@
   "key": "ביום שישי",
   "kind": "lit",
   "where": [
-   "app/views-settings.js:518"
+   "app/views-settings.js:611"
   ]
  },
  {
   "key": "בערב חג",
   "kind": "lit",
   "where": [
-   "app/views-settings.js:518"
+   "app/views-settings.js:611"
   ]
  },
  {
   "key": "החל משעה",
   "kind": "lit",
   "where": [
-   "app/views-settings.js:518"
+   "app/views-settings.js:611"
   ]
  },
  {
   "key": "<div class=\"kv\"><span>{0} · {1}{2}</span><button class=\"btn text sm\" data-rule-del=\"{3}\">מחק</button></div>",
   "kind": "tpl",
   "where": [
-   "app/views-settings.js:521"
+   "app/views-settings.js:614"
   ]
  },
  {
   "key": "ביטול 150%",
   "kind": "lit",
   "where": [
-   "app/views-settings.js:521"
+   "app/views-settings.js:614"
   ]
  },
  {
   "key": "תעריף מיוחד ",
   "kind": "lit",
   "where": [
-   "app/views-settings.js:521",
+   "app/views-settings.js:614",
    "core/engine.js:431"
   ]
  },
@@ -14756,514 +14837,514 @@
   "key": "יום מנוחה ידני",
   "kind": "lit",
   "where": [
-   "app/views-settings.js:521"
+   "app/views-settings.js:614"
   ]
  },
  {
   "key": "<div class=\"muted small\">אין. אפשר לבטל 150% לתאריך (למשל חג שזוהה בטעות) מתוך לוח השנה ← לחיצה על היום.</div>",
   "kind": "lit",
   "where": [
-   "app/views-settings.js:521"
+   "app/views-settings.js:614"
   ]
  },
  {
   "key": "עיר לזמני שבת וחג",
   "kind": "lit",
   "where": [
-   "app/views-settings.js:531"
+   "app/views-settings.js:624"
   ]
  },
  {
   "key": "מחיקת כלל יום",
   "kind": "lit",
   "where": [
-   "app/views-settings.js:537"
+   "app/views-settings.js:630"
   ]
  },
  {
   "key": "<div class=\"section-title\">{0} נסיעות</div><div class=\"card\">\n        {1}\n        {2}\n        <div class=\"tiny muted\">אפשר לסמן משמרת ספציפית \"בלי נסיעות\" בעריכת המשמרת.</div></div>\n      <div class=\"section-title\">{3} תקופת שכר</div><div class=\"card\">\n        {4}\n        {5}</div>",
   "kind": "tpl",
   "where": [
-   "app/views-settings.js:544"
+   "app/views-settings.js:637"
   ]
  },
  {
   "key": "ברירת מחדל: 22.60 ₪, התקרה היומית לפי צו ההרחבה (2025).",
   "kind": "lit",
   "where": [
-   "app/views-settings.js:545"
+   "app/views-settings.js:638"
   ]
  },
  {
   "key": "תקרה חודשית ₪",
   "kind": "lit",
   "where": [
-   "app/views-settings.js:546"
+   "app/views-settings.js:639"
   ]
  },
  {
   "key": "0 = ללא תקרה. למשל מחיר חופשי-⁠חודשי.",
   "kind": "lit",
   "where": [
-   "app/views-settings.js:546"
+   "app/views-settings.js:639"
   ]
  },
  {
   "key": "1 לחודש (חודש קלנדרי)",
   "kind": "lit",
   "where": [
-   "app/views-settings.js:549"
+   "app/views-settings.js:642"
   ]
  },
  {
   "key": "אם המעסיק סופר למשל מ-21 עד 20, בחר 21.",
   "kind": "lit",
   "where": [
-   "app/views-settings.js:549"
+   "app/views-settings.js:642"
   ]
  },
  {
   "key": "לפי החוק: עד ה-9 לחודש.",
   "kind": "lit",
   "where": [
-   "app/views-settings.js:550"
+   "app/views-settings.js:643"
   ]
  },
  {
   "key": "<div class=\"banner\">{0}<div>הנטו הוא הערכה, לפי מדרגות המס ושווי נקודת הזיכוי של כל שנת מס (הם מתעדכנים לבד). מספר שתשנה כאן יחליף את החוק.</div></div>\n        <div class=\"section-title\">מס הכנסה</div><div class=\"card\">\n          {1}\n          {2}\n          <div class=\"tiny muted\" style=\"margin:6px 4px\">מדרגות מס חודשיות:</div>\n          {3}</div>\n        <div class=\"section-title\">ביטוח לאומי ומס בריאות</div><div class=\"card\">\n          {4}\n          <div class=\"grid2\">{5}{6}</div>\n          <div class=\"grid2\">{7}{8}</div>\n          {9}</div>\n        <div class=\"section-title\">פנסיה</div><div class=\"card\">\n          {10}\n          <div class=\"grid3\">{11}{12}{13}</div>\n          {14}\n          {15}</div>\n        <div class=\"section-title\">קרן השתלמות</div><div class=\"card\">\n          {16}\n          {17}</div>\n        <div class=\"section-title\">שכר מינימום</div><div class=\"card\">{18}\n          {19}</div>",
   "kind": "tpl",
   "where": [
-   "app/views-settings.js:559"
+   "app/views-settings.js:652"
   ]
  },
  {
   "key": "תושב/ת: 2.25 · אישה: 2.75 · נוספות על ילדים, תואר, שחרור מצבא, עולה חדש ועוד.",
   "kind": "lit",
   "where": [
-   "app/views-settings.js:561"
+   "app/views-settings.js:654"
   ]
  },
  {
   "key": "שווי נקודת זיכוי לחודש ₪",
   "kind": "lit",
   "where": [
-   "app/views-settings.js:562"
+   "app/views-settings.js:655"
   ]
  },
  {
   "key": "מעל",
   "kind": "lit",
   "where": [
-   "app/views-settings.js:564"
+   "app/views-settings.js:657"
   ]
  },
  {
   "key": "עד ₪",
   "kind": "lit",
   "where": [
-   "app/views-settings.js:564"
+   "app/views-settings.js:657"
   ]
  },
  {
   "key": "סף שיעור מופחת ₪",
   "kind": "lit",
   "where": [
-   "app/views-settings.js:566"
+   "app/views-settings.js:659"
   ]
  },
  {
   "key": "ריק = לפי החוק בכל שנה",
   "kind": "lit",
   "where": [
-   "app/views-settings.js:566",
-   "app/views-settings.js:569"
+   "app/views-settings.js:659",
+   "app/views-settings.js:662"
   ]
  },
  {
   "key": "ב״ל מופחת %",
   "kind": "lit",
   "where": [
-   "app/views-settings.js:567"
+   "app/views-settings.js:660"
   ]
  },
  {
   "key": "ב״ל מלא %",
   "kind": "lit",
   "where": [
-   "app/views-settings.js:567"
+   "app/views-settings.js:660"
   ]
  },
  {
   "key": "בריאות מופחת %",
   "kind": "lit",
   "where": [
-   "app/views-settings.js:568"
+   "app/views-settings.js:661"
   ]
  },
  {
   "key": "בריאות מלא %",
   "kind": "lit",
   "where": [
-   "app/views-settings.js:568"
+   "app/views-settings.js:661"
   ]
  },
  {
   "key": "תקרה ₪",
   "kind": "lit",
   "where": [
-   "app/views-settings.js:569"
+   "app/views-settings.js:662"
   ]
  },
  {
   "key": "עובד %",
   "kind": "lit",
   "where": [
-   "app/views-settings.js:572",
-   "app/views-settings.js:577"
+   "app/views-settings.js:665",
+   "app/views-settings.js:670"
   ]
  },
  {
   "key": "מעסיק %",
   "kind": "lit",
   "where": [
-   "app/views-settings.js:572",
-   "app/views-settings.js:577"
+   "app/views-settings.js:665",
+   "app/views-settings.js:670"
   ]
  },
  {
   "key": "פיצויים %",
   "kind": "lit",
   "where": [
-   "app/views-settings.js:572"
+   "app/views-settings.js:665"
   ]
  },
  {
   "key": "מתחילה אחרי (חודשים)",
   "kind": "lit",
   "where": [
-   "app/views-settings.js:573"
+   "app/views-settings.js:666"
   ]
  },
  {
   "key": "ללא קרן קודמת: 6 חודשים. עם קרן פעילה: 3 חודשים.",
   "kind": "lit",
   "where": [
-   "app/views-settings.js:573"
+   "app/views-settings.js:666"
   ]
  },
  {
   "key": "בסיס לחישוב",
   "kind": "lit",
   "where": [
-   "app/views-settings.js:574"
+   "app/views-settings.js:667"
   ]
  },
  {
   "key": "שכר יסוד (שעות × תעריף, בלי תוספות)",
   "kind": "lit",
   "where": [
-   "app/views-settings.js:574"
+   "app/views-settings.js:667"
   ]
  },
  {
   "key": "כל השכר חוץ מנסיעות",
   "kind": "lit",
   "where": [
-   "app/views-settings.js:574"
+   "app/views-settings.js:667"
   ]
  },
  {
   "key": "יש קרן השתלמות",
   "kind": "lit",
   "where": [
-   "app/views-settings.js:576"
+   "app/views-settings.js:669"
   ]
  },
  {
   "key": "אחרי חודשים",
   "kind": "lit",
   "where": [
-   "app/views-settings.js:577"
+   "app/views-settings.js:670"
   ]
  },
  {
   "key": "לעקוף ידנית (₪ לשעה)",
   "kind": "lit",
   "where": [
-   "app/views-settings.js:579"
+   "app/views-settings.js:672"
   ]
  },
  {
   "key": "השאר ריק כדי להשתמש בשכר המינימום לפי החוק.",
   "kind": "lit",
   "where": [
-   "app/views-settings.js:579"
+   "app/views-settings.js:672"
   ]
  },
  {
   "key": "<div class=\"card\">{0}</div>\n        {1}\n        <div class=\"section-title\">חופשה</div><div class=\"card\">\n          {2}\n          <div class=\"grid2\">{3}{4}</div>\n          {5}\n          {6}</div>\n        <div class=\"section-title\">שווי יום חופשה / מחלה</div><div class=\"card\">\n          {7}\n          {8}{9}\n          <div class=\"grid2\">{10}</div></div>\n        <div class=\"section-title\">הבראה</div><div class=\"card\">\n          {11}\n          {12}</div>",
   "kind": "tpl",
   "where": [
-   "app/views-settings.js:586"
+   "app/views-settings.js:679"
   ]
  },
  {
   "key": "משמש לוותק, הבראה, ימי חופשה ותחילת הפרשות לפנסיה.",
   "kind": "lit",
   "where": [
-   "app/views-settings.js:586"
+   "app/views-settings.js:679"
   ]
  },
  {
   "key": "<div class=\"card tonal\"><div class=\"kpis\">\n          <div class=\"kpi\"><div class=\"l\">ותק</div><div class=\"v\">{0} שנים</div></div>\n          <div class=\"kpi\"><div class=\"l\">היקף משרה (12 ח׳)</div><div class=\"v\">{1}%</div></div>\n          <div class=\"kpi\"><div class=\"l\">יתרת חופשה</div><div class=\"v\">{2}</div><div class=\"d\">צבירה {3} · ניצול {4}</div></div>\n          <div class=\"kpi\"><div class=\"l\">יתרת מחלה</div><div class=\"v\">{5}</div><div class=\"d\">צבירה {6} · ניצול {7}</div></div></div>\n          <div class=\"small\" style=\"margin-top:10px\">{8}</div>\n          <div class=\"tiny\" style=\"opacity:.8;margin-top:6px\">הערכה לפי השעות שרשמת. היקף משרה = שעות חודשיות ÷ {9}.</div></div>",
   "kind": "tpl",
   "where": [
-   "app/views-settings.js:587"
+   "app/views-settings.js:680"
   ]
  },
  {
   "key": "דמי הבראה לשנה: {0} ימים × {1} × {2}% ≈ <b>{3}</b>",
   "kind": "tpl",
   "where": [
-   "app/views-settings.js:592"
+   "app/views-settings.js:685"
   ]
  },
  {
   "key": "דמי הבראה מגיעים אחרי שנת עבודה (מ-{0}).",
   "kind": "tpl",
   "where": [
-   "app/views-settings.js:592"
+   "app/views-settings.js:685"
   ]
  },
  {
   "key": "שבוע עבודה",
   "kind": "lit",
   "where": [
-   "app/views-settings.js:595"
+   "app/views-settings.js:688"
   ]
  },
  {
   "key": "5 ימים",
   "kind": "lit",
   "where": [
-   "app/views-settings.js:595"
+   "app/views-settings.js:688"
   ]
  },
  {
   "key": "5 ימים: 12 ימי חופשה בשנים 1⁠–⁠5; 6 ימים: 14 (לפי היקף משרה).",
   "kind": "lit",
   "where": [
-   "app/views-settings.js:595"
+   "app/views-settings.js:688"
   ]
  },
  {
   "key": "יתרת פתיחה: מחלה",
   "kind": "lit",
   "where": [
-   "app/views-settings.js:596"
+   "app/views-settings.js:689"
   ]
  },
  {
   "key": "יתרות הפתיחה נכונות לתאריך",
   "kind": "lit",
   "where": [
-   "app/views-settings.js:597"
+   "app/views-settings.js:690"
   ]
  },
  {
   "key": "אם הזנת יתרה מתלוש: התאריך של התלוש. הצבירה תחושב מכאן.",
   "kind": "lit",
   "where": [
-   "app/views-settings.js:597"
+   "app/views-settings.js:690"
   ]
  },
  {
   "key": "שעות חודשיות למשרה מלאה",
   "kind": "lit",
   "where": [
-   "app/views-settings.js:598"
+   "app/views-settings.js:691"
   ]
  },
  {
   "key": "חישוב",
   "kind": "lit",
   "where": [
-   "app/views-settings.js:600"
+   "app/views-settings.js:693"
   ]
  },
  {
   "key": "אוטומטי: ממוצע יומי ב-90 הימים האחרונים",
   "kind": "lit",
   "where": [
-   "app/views-settings.js:600"
+   "app/views-settings.js:693"
   ]
  },
  {
   "key": "מספר שעות × תעריף",
   "kind": "lit",
   "where": [
-   "app/views-settings.js:600"
+   "app/views-settings.js:693"
   ]
  },
  {
   "key": "סכום קבוע",
   "kind": "lit",
   "where": [
-   "app/views-settings.js:600"
+   "app/views-settings.js:693"
   ]
  },
  {
   "key": "שעות ליום",
   "kind": "lit",
   "where": [
-   "app/views-settings.js:601"
+   "app/views-settings.js:694"
   ]
  },
  {
   "key": "סכום ליום ₪",
   "kind": "lit",
   "where": [
-   "app/views-settings.js:601"
+   "app/views-settings.js:694"
   ]
  },
  {
   "key": "מחלה יום 1 %",
   "kind": "lit",
   "where": [
-   "app/views-settings.js:602"
+   "app/views-settings.js:695"
   ]
  },
  {
   "key": "יום 2 %",
   "kind": "lit",
   "where": [
-   "app/views-settings.js:602"
+   "app/views-settings.js:695"
   ]
  },
  {
   "key": "יום 3 %",
   "kind": "lit",
   "where": [
-   "app/views-settings.js:602"
+   "app/views-settings.js:695"
   ]
  },
  {
   "key": "מהיום ה-4 %",
   "kind": "lit",
   "where": [
-   "app/views-settings.js:602"
+   "app/views-settings.js:695"
   ]
  },
  {
   "key": "תעריף ליום הבראה ₪",
   "kind": "lit",
   "where": [
-   "app/views-settings.js:604"
+   "app/views-settings.js:697"
   ]
  },
  {
   "key": "ריק = לפי צו ההרחבה במגזר הפרטי (מ-2026: 451.50 ₪ ליום)",
   "kind": "lit",
   "where": [
-   "app/views-settings.js:604"
+   "app/views-settings.js:697"
   ]
  },
  {
   "key": "חודש תשלום",
   "kind": "lit",
   "where": [
-   "app/views-settings.js:605"
+   "app/views-settings.js:698"
   ]
  },
  {
   "key": "בכל חודש (חלק יחסי)",
   "kind": "lit",
   "where": [
-   "app/views-settings.js:605"
+   "app/views-settings.js:698"
   ]
  },
  {
   "key": "<div class=\"section-title\">{0} יעד חודשי</div>\n      <div class=\"card\">{1}{2}\n      <div class=\"tiny muted\">במסך הבית יופיע פס התקדמות, צפי לפי הקצב, וכמה משמרות חסרות ליעד.</div></div>\n      <div class=\"section-title\">🎯 חוסכים למשהו?</div>\n      <div class=\"card\">{3}\n        {4}\n        {5}\n        <div class=\"tiny muted\">בבית יופיע כמה כבר הרווחת לקראת זה, וכמה שעות עבודה בערך חסרות.</div>\n        {6}</div>",
   "kind": "tpl",
   "where": [
-   "app/views-settings.js:612"
+   "app/views-settings.js:705"
   ]
  },
  {
   "key": "יעד חודשי ₪",
   "kind": "lit",
   "where": [
-   "app/views-settings.js:613"
+   "app/views-settings.js:706"
   ]
  },
  {
   "key": "0 = ללא יעד",
   "kind": "lit",
   "where": [
-   "app/views-settings.js:613"
+   "app/views-settings.js:706"
   ]
  },
  {
   "key": "סוג היעד",
   "kind": "lit",
   "where": [
-   "app/views-settings.js:613"
+   "app/views-settings.js:706"
   ]
  },
  {
   "key": "מה רוצים לקנות",
   "kind": "lit",
   "where": [
-   "app/views-settings.js:616"
+   "app/views-settings.js:709"
   ]
  },
  {
   "key": "maxlength=\"40\" placeholder=\"למשל: אוזניות, טיול, טלפון\"",
   "kind": "lit",
   "where": [
-   "app/views-settings.js:616"
+   "app/views-settings.js:709"
   ]
  },
  {
   "key": "כמה זה עולה (₪)",
   "kind": "lit",
   "where": [
-   "app/views-settings.js:617"
+   "app/views-settings.js:710"
   ]
  },
  {
   "key": "סופרים מתאריך",
   "kind": "lit",
   "where": [
-   "app/views-settings.js:618"
+   "app/views-settings.js:711"
   ]
  },
  {
   "key": "הנטו שהרווחת מהיום הזה נספר ליעד",
   "kind": "lit",
   "where": [
-   "app/views-settings.js:618"
+   "app/views-settings.js:711"
   ]
  },
  {
   "key": "<button class=\"btn text sm\" data-saving-clear>{0} הסרת היעד</button>",
   "kind": "tpl",
   "where": [
-   "app/views-settings.js:620"
+   "app/views-settings.js:713"
   ]
  },
  {
   "key": "היעד הוסר",
   "kind": "lit",
   "where": [
-   "app/views-settings.js:624"
+   "app/views-settings.js:717"
   ]
  },
  {
   "key": "{0} דק׳",
   "kind": "tpl",
   "where": [
-   "app/views-settings.js:639",
+   "app/views-settings.js:732",
    "core/games.js:240"
   ]
  },
@@ -15271,21 +15352,21 @@
   "key": "יום אחד",
   "kind": "lit",
   "where": [
-   "app/views-settings.js:639"
+   "app/views-settings.js:732"
   ]
  },
  {
   "key": "יומיים",
   "kind": "lit",
   "where": [
-   "app/views-settings.js:639"
+   "app/views-settings.js:732"
   ]
  },
  {
   "key": "שעה וחצי",
   "kind": "lit",
   "where": [
-   "app/views-settings.js:639",
+   "app/views-settings.js:732",
    "core/games.js:33"
   ]
  },
@@ -15293,127 +15374,127 @@
   "key": "{0}:{1} ש׳",
   "kind": "tpl",
   "where": [
-   "app/views-settings.js:639"
+   "app/views-settings.js:732"
   ]
  },
  {
   "key": " לפני",
   "kind": "lit",
   "where": [
-   "app/views-settings.js:643"
+   "app/views-settings.js:736"
   ]
  },
  {
   "key": "בערב שלפני ב-",
   "kind": "lit",
   "where": [
-   "app/views-settings.js:644"
+   "app/views-settings.js:737"
   ]
  },
  {
   "key": "<div class=\"rm-box\">\n      <div class=\"lbl\">מתי להזכיר (אפשר לבחור כמה)</div>\n      <div class=\"chips rm-chips\">{0}</div>\n      <div class=\"rm-custom\"><input class=\"input\" type=\"number\" inputmode=\"numeric\" min=\"1\" max=\"999\" id=\"rm-n\" placeholder=\"זמן אחר\"><select class=\"input\" id=\"rm-u\"><option value=\"1\">דקות</option><option value=\"60\" selected>שעות</option><option value=\"1440\">ימים</option></select><button class=\"btn tonal\" data-rm-add>{1} הוסף</button></div>\n      {2}\n      {3}\n      {4}\n      {5}\n    </div>",
   "kind": "tpl",
   "where": [
-   "app/views-settings.js:651"
+   "app/views-settings.js:744"
   ]
  },
  {
   "key": "גם בערב שלפני",
   "kind": "lit",
   "where": [
-   "app/views-settings.js:655"
+   "app/views-settings.js:748"
   ]
  },
  {
   "key": "תזכורת ביום שלפני המשמרת, בשעה שבחרת",
   "kind": "lit",
   "where": [
-   "app/views-settings.js:655"
+   "app/views-settings.js:748"
   ]
  },
  {
   "key": "בשעה",
   "kind": "lit",
   "where": [
-   "app/views-settings.js:656",
-   "app/views-settings.js:672"
+   "app/views-settings.js:749",
+   "app/views-settings.js:765"
   ]
  },
  {
   "key": "ההתראה נשארת עד שסוגרים אותה",
   "kind": "lit",
   "where": [
-   "app/views-settings.js:657"
+   "app/views-settings.js:750"
   ]
  },
  {
   "key": "לא נעלמת לבד מהמסך",
   "kind": "lit",
   "where": [
-   "app/views-settings.js:657"
+   "app/views-settings.js:750"
   ]
  },
  {
   "key": "בלי צליל ורטט",
   "kind": "lit",
   "where": [
-   "app/views-settings.js:658"
+   "app/views-settings.js:751"
   ]
  },
  {
   "key": "<div class=\"card\">{0}\n          {1}\n          {2}\n          <div class=\"tiny muted\" style=\"margin-top:6px\">מעט התראות: הסיכום השבועי והחודשי, שיאים ויעדים, ותזכורות חשובות בלבד. בלי התראות על חריגות.</div></div>\n        <div class=\"section-title\">סיכומים</div><div class=\"card\">{3}\n          <div class=\"grid2\">{4}{5}</div>\n          {6}</div>\n        <div class=\"section-title\">חדשות טובות</div><div class=\"card\">{7}{8}{9}</div>\n        <div class=\"section-title\">כסף שמגיע לך</div><div class=\"card\">{10}{11}</div>\n        <div class=\"section-title\">תזכורות</div><div class=\"card\">\n          {12}<div class=\"grid2\">{13}</div>\n          {14}\n          {15}\n          {16}\n          {17}\n          {18}\n          {19}\n          {20}<div class=\"grid2\">{21}</div></div>",
   "kind": "tpl",
   "where": [
-   "app/views-settings.js:667"
+   "app/views-settings.js:760"
   ]
  },
  {
   "key": "מאושר",
   "kind": "lit",
   "where": [
-   "app/views-settings.js:667"
+   "app/views-settings.js:760"
   ]
  },
  {
   "key": "חסום. יש לאשר בהגדרות הטלפון › אפליקציות › Shaati › התראות",
   "kind": "lit",
   "where": [
-   "app/views-settings.js:667"
+   "app/views-settings.js:760"
   ]
  },
  {
   "key": "חסום. יש לאשר בהגדרות האתר ב-⁠Chrome",
   "kind": "lit",
   "where": [
-   "app/views-settings.js:667"
+   "app/views-settings.js:760"
   ]
  },
  {
   "key": "דורש אישור",
   "kind": "lit",
   "where": [
-   "app/views-settings.js:667"
+   "app/views-settings.js:760"
   ]
  },
  {
   "key": "<button class=\"btn tonal block\" data-perm>{0} אשר התראות</button>",
   "kind": "tpl",
   "where": [
-   "app/views-settings.js:668"
+   "app/views-settings.js:761"
   ]
  },
  {
   "key": "<button class=\"btn text sm\" data-test>{0} שלח התראת בדיקה</button>",
   "kind": "tpl",
   "where": [
-   "app/views-settings.js:669"
+   "app/views-settings.js:762"
   ]
  },
  {
   "key": "סיכום שבועי",
   "kind": "lit",
   "where": [
-   "app/views-settings.js:671",
+   "app/views-settings.js:764",
    "core/insights.js:40"
   ]
  },
@@ -15421,21 +15502,21 @@
   "key": "ביום",
   "kind": "lit",
   "where": [
-   "app/views-settings.js:672"
+   "app/views-settings.js:765"
   ]
  },
  {
   "key": "סיכום חודשי (כשתקופת השכר נגמרת)",
   "kind": "lit",
   "where": [
-   "app/views-settings.js:673"
+   "app/views-settings.js:766"
   ]
  },
  {
   "key": "שיא אישי",
   "kind": "lit",
   "where": [
-   "app/views-settings.js:674",
+   "app/views-settings.js:767",
    "core/insights.js:29"
   ]
  },
@@ -15443,14 +15524,14 @@
   "key": "הגעת ליעד החודשי",
   "kind": "lit",
   "where": [
-   "app/views-settings.js:674"
+   "app/views-settings.js:767"
   ]
  },
  {
   "key": "יום הולדת",
   "kind": "lit",
   "where": [
-   "app/views-settings.js:674",
+   "app/views-settings.js:767",
    "core/insights.js:42"
   ]
  },
@@ -15458,758 +15539,758 @@
   "key": "דמי חגים שלא שולמו",
   "kind": "lit",
   "where": [
-   "app/views-settings.js:675"
+   "app/views-settings.js:768"
   ]
  },
  {
   "key": "ייתכן שמגיע לך החזר מס",
   "kind": "lit",
   "where": [
-   "app/views-settings.js:675"
+   "app/views-settings.js:768"
   ]
  },
  {
   "key": "שכחתי לסיים משמרת",
   "kind": "lit",
   "where": [
-   "app/views-settings.js:677"
+   "app/views-settings.js:770"
   ]
  },
  {
   "key": "אחרי (שעות)",
   "kind": "lit",
   "where": [
-   "app/views-settings.js:677"
+   "app/views-settings.js:770"
   ]
  },
  {
   "key": "לפני משמרת מתוכננת",
   "kind": "lit",
   "where": [
-   "app/views-settings.js:678"
+   "app/views-settings.js:771"
   ]
  },
  {
   "key": "אחרי משמרת מתוכננת: לשאול אם עבדת",
   "kind": "lit",
   "where": [
-   "app/views-settings.js:680"
+   "app/views-settings.js:773"
   ]
  },
  {
   "key": "כמה זמן אחרי הסיום",
   "kind": "lit",
   "where": [
-   "app/views-settings.js:681"
+   "app/views-settings.js:774"
   ]
  },
  {
   "key": "15 דקות",
   "kind": "lit",
   "where": [
-   "app/views-settings.js:681",
-   "app/views-settings.js:772"
+   "app/views-settings.js:774",
+   "app/views-settings.js:865"
   ]
  },
  {
   "key": "4 שעות",
   "kind": "lit",
   "where": [
-   "app/views-settings.js:681"
+   "app/views-settings.js:774"
   ]
  },
  {
   "key": "8 שעות",
   "kind": "lit",
   "where": [
-   "app/views-settings.js:681"
+   "app/views-settings.js:774"
   ]
  },
  {
   "key": "ביום התשלום: להזין את התלוש",
   "kind": "lit",
   "where": [
-   "app/views-settings.js:682"
+   "app/views-settings.js:775"
   ]
  },
  {
   "key": "יום לפני ש-Plus במתנה או הניסיון נגמרים",
   "kind": "lit",
   "where": [
-   "app/views-settings.js:683"
+   "app/views-settings.js:776"
   ]
  },
  {
   "key": "תזכורת גיבוי",
   "kind": "lit",
   "where": [
-   "app/views-settings.js:684"
+   "app/views-settings.js:777"
   ]
  },
  {
   "key": "כל (ימים)",
   "kind": "lit",
   "where": [
-   "app/views-settings.js:684"
+   "app/views-settings.js:777"
   ]
  },
  {
   "key": "צריך לפחות תזכורת אחת. כדי לכבות, מכבים את המתג למעלה",
   "kind": "lit",
   "where": [
-   "app/views-settings.js:700"
+   "app/views-settings.js:793"
   ]
  },
  {
   "key": "מספר בין 1 ל-14 ימים",
   "kind": "lit",
   "where": [
-   "app/views-settings.js:706"
+   "app/views-settings.js:799"
   ]
  },
  {
   "key": "ההתראות עובדות 👍",
   "kind": "lit",
   "where": [
-   "app/views-settings.js:712"
+   "app/views-settings.js:805"
   ]
  },
  {
   "key": "מעקב משמרות",
   "kind": "lit",
   "where": [
-   "app/views-settings.js:712",
-   "app/views-settings.js:712"
+   "app/views-settings.js:805",
+   "app/views-settings.js:805"
   ]
  },
  {
   "key": "<div class=\"item\" style=\"cursor:default\"><span class=\"role-bar\" style=\"background:{0}\"></span><span class=\"body\"><span class=\"t\">{1}</span><span class=\"s\">{2} · <span class=\"num\">⁦{3}⁠–⁠{4}⁩</span>{5}</span></span><button class=\"icon-btn\" data-tdel=\"{6}\" aria-label=\"מחק\">{7}</button></div>",
   "kind": "tpl",
   "where": [
-   "app/views-settings.js:717"
+   "app/views-settings.js:810"
   ]
  },
  {
   "key": " · הפסקה {0}",
   "kind": "tpl",
   "where": [
-   "app/views-settings.js:717"
+   "app/views-settings.js:810"
   ]
  },
  {
   "key": "פתח משמרת ← \"שמור כתבנית\". אחר כך תוכל להוסיף אותה בלחיצה מכפתור ה-+.",
   "kind": "lit",
   "where": [
-   "app/views-settings.js:718"
+   "app/views-settings.js:811"
   ]
  },
  {
   "key": "מחיקת תבנית",
   "kind": "lit",
   "where": [
-   "app/views-settings.js:719"
+   "app/views-settings.js:812"
   ]
  },
  {
   "key": "התבנית נמחקה",
   "kind": "lit",
   "where": [
-   "app/views-settings.js:719"
+   "app/views-settings.js:812"
   ]
  },
  {
   "key": "<div class=\"section-title\">ערכת צבעים</div><div class=\"seg\" style=\"margin-bottom:14px\">{0}</div>\n      <div class=\"section-title\">צבע הדגשה</div><div class=\"color-pick\" style=\"margin-bottom:16px\">{1}</div>\n      {2}\n      <div class=\"section-title\">גופן</div>\n      <div class=\"font-pick\">{3}</div>\n      <div class=\"section-title\">גודל טקסט</div><div class=\"seg\">{4}</div>\n      <div class=\"section-title\" style=\"margin-top:16px\">מסך הבית</div>\n      <div class=\"card\"><div class=\"hm-recent\"><span class=\"t\">המספר הגדול בכרטיס השכר</span><div class=\"seg\">{5}</div></div>\n        {6}\n        {7}\n        {8}\n        <div class=\"hm-recent\"><span class=\"t\">משמרות אחרונות בבית</span><div class=\"seg\">{9}</div></div></div>\n      <div class=\"section-title\" style=\"margin-top:16px\">פרטיות</div>\n      <div class=\"card\">{10}</div>\n      <div class=\"section-title\" style=\"margin-top:16px\">אפקטים וצלילים</div>\n      <div class=\"card\">{11}\n        {12}\n        {13}\n        {14}\n        <button class=\"btn tonal sm\" data-fx-try style=\"margin-top:8px\">{15} נסה</button>\n        <div class=\"tiny muted\" style=\"margin-top:8px\">כשבטלפון מופעלת \"הפחתת אנימציות\", האנימציות כבויות גם כאן. עוצמת הצלילים לפי עוצמת המדיה.</div></div>",
   "kind": "tpl",
   "where": [
-   "app/views-settings.js:723"
+   "app/views-settings.js:816"
   ]
  },
  {
   "key": "<div class=\"section-title\">כרטיס השכר בבית <span class=\"tag plus-tag\">Plus</span></div>{0}",
   "kind": "tpl",
   "where": [
-   "app/views-settings.js:725"
+   "app/views-settings.js:818"
   ]
  },
  {
   "key": "<button data-font=\"{0}\" class=\"{1}\" style=\"font-family:'{2}', system-ui, sans-serif\"><span class=\"fp-sample\">משמרת ערב · {3}<small>{4}</small></span><span class=\"fp-num\">₪1,240</span></button>",
   "kind": "tpl",
   "where": [
-   "app/views-settings.js:727"
+   "app/views-settings.js:820"
   ]
  },
  {
   "key": "קטן",
   "kind": "lit",
   "where": [
-   "app/views-settings.js:728"
+   "app/views-settings.js:821"
   ]
  },
  {
   "key": "רגיל",
   "kind": "lit",
   "where": [
-   "app/views-settings.js:728"
+   "app/views-settings.js:821"
   ]
  },
  {
   "key": "גדול",
   "kind": "lit",
   "where": [
-   "app/views-settings.js:728"
+   "app/views-settings.js:821"
   ]
  },
  {
   "key": "גדול מאוד",
   "kind": "lit",
   "where": [
-   "app/views-settings.js:728"
+   "app/views-settings.js:821"
   ]
  },
  {
   "key": "ארבעה כפתורים גדולים: משמרת חדשה, הזכויות, בדיקת תלוש ומשחקים",
   "kind": "lit",
   "where": [
-   "app/views-settings.js:731"
+   "app/views-settings.js:824"
   ]
  },
  {
   "key": "שורת עדכון",
   "kind": "lit",
   "where": [
-   "app/views-settings.js:732"
+   "app/views-settings.js:825"
   ]
  },
  {
   "key": "משמרת שמתקרבת, התראה חשובה או משכורת בדרך, מתחת לכפתור המשמרת",
   "kind": "lit",
   "where": [
-   "app/views-settings.js:732"
+   "app/views-settings.js:825"
   ]
  },
  {
   "key": "תאריך עברי וחגים",
   "kind": "lit",
   "where": [
-   "app/views-settings.js:733"
+   "app/views-settings.js:826"
   ]
  },
  {
   "key": "בשורה שמתחת לברכה",
   "kind": "lit",
   "where": [
-   "app/views-settings.js:733"
+   "app/views-settings.js:826"
   ]
  },
  {
   "key": "בלי",
   "kind": "lit",
   "where": [
-   "app/views-settings.js:734"
+   "app/views-settings.js:827"
   ]
  },
  {
   "key": "הסתרת סכומים",
   "kind": "lit",
   "where": [
-   "app/views-settings.js:736"
+   "app/views-settings.js:829"
   ]
  },
  {
   "key": "הסכומים מטושטשים במסך, למשל כשמראים את הטלפון למישהו. העין בכרטיס השכר מציגה אותם",
   "kind": "lit",
   "where": [
-   "app/views-settings.js:736"
+   "app/views-settings.js:829"
   ]
  },
  {
   "key": "אנימציות ואפקטים",
   "kind": "lit",
   "where": [
-   "app/views-settings.js:738"
+   "app/views-settings.js:831"
   ]
  },
  {
   "key": "הבזק קטן בכל לחיצה, כפתורים קופצניים וקונפטי כשמסיימים משמרת",
   "kind": "lit",
   "where": [
-   "app/views-settings.js:738"
+   "app/views-settings.js:831"
   ]
  },
  {
   "key": "צליל קצר ועדין בלחיצה, ו\"קופה\" כשנשמרת משמרת",
   "kind": "lit",
   "where": [
-   "app/views-settings.js:739"
+   "app/views-settings.js:832"
   ]
  },
  {
   "key": "מוזיקה במשחקים",
   "kind": "lit",
   "where": [
-   "app/views-settings.js:740"
+   "app/views-settings.js:833"
   ]
  },
  {
   "key": "מנגינה קטנה לכל משחק (אפשר גם בכפתור התו בתוך המשחק)",
   "kind": "lit",
   "where": [
-   "app/views-settings.js:740"
+   "app/views-settings.js:833"
   ]
  },
  {
   "key": "רטט קל בלחיצה",
   "kind": "lit",
   "where": [
-   "app/views-settings.js:741"
+   "app/views-settings.js:834"
   ]
  },
  {
   "key": "<div class=\"card\">{0}\n      <div class=\"tiny muted\" style=\"margin-top:10px\">הנעילה מגינה מפני הצצה; הנתונים עצמם לא מוצפנים. שכחת את הקוד? אין שחזור. אפשר רק למחוק את נתוני האתר ולשחזר מגיבוי.</div></div>",
   "kind": "tpl",
   "where": [
-   "app/views-settings.js:770"
+   "app/views-settings.js:863"
   ]
  },
  {
   "key": "<div class=\"banner\">{0}<div>הנעילה מופעלת. האפליקציה תינעל כשתחזור אליה אחרי {1} דק׳.</div></div>\n        {2}\n        <div data-bio-row></div>\n        <div class=\"btn-row\"><button class=\"btn tonal\" data-pin-set>שנה קוד</button><button class=\"btn danger\" data-pin-off>בטל נעילה</button></div>",
   "kind": "tpl",
   "where": [
-   "app/views-settings.js:771"
+   "app/views-settings.js:864"
   ]
  },
  {
   "key": "נעל אחרי",
   "kind": "lit",
   "where": [
-   "app/views-settings.js:772"
+   "app/views-settings.js:865"
   ]
  },
  {
   "key": "מיד",
   "kind": "lit",
   "where": [
-   "app/views-settings.js:772"
+   "app/views-settings.js:865"
   ]
  },
  {
   "key": "דקה",
   "kind": "lit",
   "where": [
-   "app/views-settings.js:772"
+   "app/views-settings.js:865"
   ]
  },
  {
   "key": "5 דקות",
   "kind": "lit",
   "where": [
-   "app/views-settings.js:772"
+   "app/views-settings.js:865"
   ]
  },
  {
   "key": "<div class=\"small\" style=\"margin-bottom:12px\">קוד בן 4⁠–⁠8 ספרות שיידרש בכל פתיחה. הקוד נשמר כגיבוב (hash), לא כטקסט.</div><button class=\"btn block\" data-pin-set>{0} הגדר קוד</button>",
   "kind": "tpl",
   "where": [
-   "app/views-settings.js:775"
+   "app/views-settings.js:868"
   ]
  },
  {
   "key": "קוד חדש",
   "kind": "lit",
   "where": [
-   "app/views-settings.js:780"
+   "app/views-settings.js:873"
   ]
  },
  {
   "key": "4⁠–⁠8 ספרות",
   "kind": "lit",
   "where": [
-   "app/views-settings.js:780"
+   "app/views-settings.js:873"
   ]
  },
  {
   "key": "המשך",
   "kind": "lit",
   "where": [
-   "app/views-settings.js:780"
+   "app/views-settings.js:873"
   ]
  },
  {
   "key": "הקוד צריך להיות 4⁠–⁠8 ספרות",
   "kind": "lit",
   "where": [
-   "app/views-settings.js:782"
+   "app/views-settings.js:875"
   ]
  },
  {
   "key": "אימות",
   "kind": "lit",
   "where": [
-   "app/views-settings.js:783"
+   "app/views-settings.js:876"
   ]
  },
  {
   "key": "הזן שוב את הקוד",
   "kind": "lit",
   "where": [
-   "app/views-settings.js:783"
+   "app/views-settings.js:876"
   ]
  },
  {
   "key": "הקודים לא תואמים",
   "kind": "lit",
   "where": [
-   "app/views-settings.js:784"
+   "app/views-settings.js:877"
   ]
  },
  {
   "key": "הנעילה הופעלה",
   "kind": "lit",
   "where": [
-   "app/views-settings.js:788"
+   "app/views-settings.js:881"
   ]
  },
  {
   "key": "לבטל את הנעילה?",
   "kind": "lit",
   "where": [
-   "app/views-settings.js:791"
+   "app/views-settings.js:884"
   ]
  },
  {
   "key": "בטל נעילה",
   "kind": "lit",
   "where": [
-   "app/views-settings.js:791"
+   "app/views-settings.js:884"
   ]
  },
  {
   "key": "<div class=\"kv\" style=\"margin:6px 0 10px\"><span>{0} פתיחה בטביעת אצבע / זיהוי פנים</span><button class=\"btn {1} sm\" data-bio-toggle>{2}</button></div>",
   "kind": "tpl",
   "where": [
-   "app/views-settings.js:796"
+   "app/views-settings.js:889"
   ]
  },
  {
   "key": "כבה",
   "kind": "lit",
   "where": [
-   "app/views-settings.js:796"
+   "app/views-settings.js:889"
   ]
  },
  {
   "key": "הפעל",
   "kind": "lit",
   "where": [
-   "app/views-settings.js:796"
+   "app/views-settings.js:889"
   ]
  },
  {
   "key": "מעכשיו אפשר לפתוח בטביעת אצבע",
   "kind": "lit",
   "where": [
-   "app/views-settings.js:802"
+   "app/views-settings.js:895"
   ]
  },
  {
   "key": "הטלפון לא תומך בזה",
   "kind": "lit",
   "where": [
-   "app/views-settings.js:803"
+   "app/views-settings.js:896"
   ]
  },
  {
   "key": "<div class=\"banner\">{0}<div>אופציונלי. בלי מפתח, קריאת התלוש והניתוח רצים רק בטלפון. עם מפתח, אפשר לבקש ניתוח חכם לתלושים בפורמט מורכב. לפני כל שליחה מוסתרים ת״ז, פרטי בנק וכתובת, ותראה ותאשר בדיוק מה נשלח.</div></div>\n      <div class=\"card\">{1}\n        {2}\n        {3}</div>\n      <div class=\"tiny muted\" style=\"margin:6px 4px\">השימוש מחויב בחשבון ה-⁠API שלך אצל Anthropic. הניתוח הוא כלי עזר ואינו ייעוץ משפטי או חשבונאי.</div>",
   "kind": "tpl",
   "where": [
-   "app/views-settings.js:811"
+   "app/views-settings.js:904"
   ]
  },
  {
   "key": "מפתח API של Claude",
   "kind": "lit",
   "where": [
-   "app/views-settings.js:812"
+   "app/views-settings.js:905"
   ]
  },
  {
   "key": "נוצר ב-⁠console.anthropic.com. נשמר רק בטלפון ולא נכלל בקובצי גיבוי.",
   "kind": "lit",
   "where": [
-   "app/views-settings.js:812"
+   "app/views-settings.js:905"
   ]
  },
  {
   "key": "מודל",
   "kind": "lit",
   "where": [
-   "app/views-settings.js:813"
+   "app/views-settings.js:906"
   ]
  },
  {
   "key": "Claude Opus 5.5 (מומלץ)",
   "kind": "lit",
   "where": [
-   "app/views-settings.js:813"
+   "app/views-settings.js:906"
   ]
  },
  {
   "key": "Claude Sonnet 5.5 (זול יותר)",
   "kind": "lit",
   "where": [
-   "app/views-settings.js:813"
+   "app/views-settings.js:906"
   ]
  },
  {
   "key": "Claude Haiku 5.5 (הכי זול)",
   "kind": "lit",
   "where": [
-   "app/views-settings.js:813"
+   "app/views-settings.js:906"
   ]
  },
  {
   "key": "<button class=\"btn danger block\" data-ai-clear>{0} מחק את המפתח</button>",
   "kind": "tpl",
   "where": [
-   "app/views-settings.js:814"
+   "app/views-settings.js:907"
   ]
  },
  {
   "key": "<div class=\"banner warn\">{0}<div>הנתונים שמורים רק בטלפון הזה. שמור גיבוי ב-⁠Google Drive כדי לא לאבד אותם אם הטלפון יוחלף או יאופס.</div></div>\n        <div class=\"card\"><div class=\"small\">גיבוי אחרון: <b>{1}</b></div>\n          <div class=\"btn-row\" style=\"margin-top:12px\"><button class=\"btn\" data-bk=\"share\">{2} גבה ושתף ל-⁠Drive</button></div>\n          <div class=\"btn-row\" style=\"margin-top:8px\"><button class=\"btn tonal\" data-bk=\"dl\">{3} הורד קובץ</button><button class=\"btn tonal\" data-bk=\"files\">{4} כולל קובצי תלושים</button></div></div>\n        <div class=\"card\">{5}</div>\n        <div class=\"section-title\">{6} שחזור</div>\n        <div class=\"card\"><label class=\"btn tonal block\">{7} בחר קובץ גיבוי (.json)<input type=\"file\" accept=\"application/json,.json\" id=\"bk-file\" hidden></label>\n          <div class=\"tiny muted\" style=\"margin-top:8px\">אפשר להחליף את כל הנתונים או למזג (להוסיף רק רשומות חסרות). גיבוי מגרסה ישנה יעבור הגירה אוטומטית.</div></div>\n        <div class=\"section-title\" style=\"color:var(--bad)\">{8} אזור מסוכן</div>\n        <div class=\"card\"><button class=\"btn danger block\" data-wipe>מחק את כל הנתונים</button></div>",
   "kind": "tpl",
   "where": [
-   "app/views-settings.js:822"
+   "app/views-settings.js:915"
   ]
  },
  {
   "key": "אף פעם",
   "kind": "lit",
   "where": [
-   "app/views-settings.js:823"
+   "app/views-settings.js:916"
   ]
  },
  {
   "key": "גיבוי אוטומטי",
   "kind": "lit",
   "where": [
-   "app/views-settings.js:826"
+   "app/views-settings.js:919"
   ]
  },
  {
   "key": "כל שבוע",
   "kind": "lit",
   "where": [
-   "app/views-settings.js:826"
+   "app/views-settings.js:919"
   ]
  },
  {
   "key": "כל חודש",
   "kind": "lit",
   "where": [
-   "app/views-settings.js:826"
+   "app/views-settings.js:919"
   ]
  },
  {
   "key": "החשבון שלך מחובר, והנתונים כבר נשמרים בענן, לכן לא יורדים קבצים אוטומטית. אפשר תמיד להוריד גיבוי ידני.",
   "kind": "lit",
   "where": [
-   "app/views-settings.js:826"
+   "app/views-settings.js:919"
   ]
  },
  {
   "key": "בפתיחת האפליקציה, כשהגיע הזמן, קובץ גיבוי יורד אוטומטית לתיקיית ההורדות.",
   "kind": "lit",
   "where": [
-   "app/views-settings.js:826"
+   "app/views-settings.js:919"
   ]
  },
  {
   "key": "הקובץ גדול מדי בשביל גיבוי של האפליקציה.",
   "kind": "lit",
   "where": [
-   "app/views-settings.js:839"
+   "app/views-settings.js:932"
   ]
  },
  {
   "key": "זה לא קובץ גיבוי של האפליקציה (צריך קובץ ‎.json‎ שנוצר בגיבוי).",
   "kind": "lit",
   "where": [
-   "app/views-settings.js:841"
+   "app/views-settings.js:934"
   ]
  },
  {
   "key": "זה לא קובץ גיבוי של האפליקציה.",
   "kind": "lit",
   "where": [
-   "app/views-settings.js:842"
+   "app/views-settings.js:935"
   ]
  },
  {
   "key": "שחזור גיבוי",
   "kind": "lit",
   "where": [
-   "app/views-settings.js:844"
+   "app/views-settings.js:937"
   ]
  },
  {
   "key": "בקובץ {0} משמרות ({1}). מה לעשות?",
   "kind": "tpl",
   "where": [
-   "app/views-settings.js:844"
+   "app/views-settings.js:937"
   ]
  },
  {
   "key": "נוצר ",
   "kind": "lit",
   "where": [
-   "app/views-settings.js:844"
+   "app/views-settings.js:937"
   ]
  },
  {
   "key": "מיזוג",
   "kind": "lit",
   "where": [
-   "app/views-settings.js:844"
+   "app/views-settings.js:937"
   ]
  },
  {
   "key": "החלפה מלאה",
   "kind": "lit",
   "where": [
-   "app/views-settings.js:844"
+   "app/views-settings.js:937"
   ]
  },
  {
   "key": "השחזור הושלם",
   "kind": "lit",
   "where": [
-   "app/views-settings.js:847"
+   "app/views-settings.js:940"
   ]
  },
  {
   "key": "השחזור נכשל",
   "kind": "lit",
   "where": [
-   "app/views-settings.js:849"
+   "app/views-settings.js:942"
   ]
  },
  {
   "key": "למחוק את כל הנתונים?",
   "kind": "lit",
   "where": [
-   "app/views-settings.js:867"
+   "app/views-settings.js:960"
   ]
  },
  {
   "key": "כל המשמרות, התלושים וההגדרות יימחקו לצמיתות מהטלפון ומהחשבון בענן. מומלץ לגבות קודם.",
   "kind": "lit",
   "where": [
-   "app/views-settings.js:867"
+   "app/views-settings.js:960"
   ]
  },
  {
   "key": "<div class=\"list\">\n      <button class=\"item\" data-x=\"csv\"><span class=\"lead\">{0}</span><span class=\"body\"><span class=\"t\">כל המשמרות (CSV)</span><span class=\"s\">נפתח ב-⁠Excel ו-⁠Google Sheets (עברית תקינה)</span></span></button>\n      <button class=\"item\" data-x=\"mcsv\"><span class=\"lead\">{1}</span><span class=\"body\"><span class=\"t\">סיכום חודשי (CSV)</span><span class=\"s\">חודש בכל שורה: שעות, ברוטו, נטו משוער…</span></span></button>\n      <button class=\"item\" data-x=\"pdf\"><span class=\"lead\">{2}</span><span class=\"body\"><span class=\"t\">דוח חודשי (PDF)</span><span class=\"s\">החודש הנוכחי; לחודשים אחרים: דוחות ← סיכומים</span></span></button>\n      <button class=\"item\" data-x=\"ics\"><span class=\"lead\">{3}</span><span class=\"body\"><span class=\"t\">משמרות ליומן (‎.ics)</span><span class=\"s\">כל המשמרות; מתוכננות עם תזכורת</span></span></button></div>",
   "kind": "tpl",
   "where": [
-   "app/views-settings.js:880"
+   "app/views-settings.js:973"
   ]
  },
  {
   "key": "אין משמרות",
   "kind": "lit",
   "where": [
-   "app/views-settings.js:890"
+   "app/views-settings.js:983"
   ]
  },
  {
   "key": "<div class=\"card\"><div class=\"small\" style=\"margin-bottom:12px\">מצב הדגמה ממלא את האפליקציה בכ-4 חודשים של משמרות לדוגמה (כולל שבתות, חגים, שעות נוספות, פיצולים, עקיפה ידנית ותלוש לדוגמה), כדי לראות איך הכול עובד. אחר כך אפשר למחוק רק את נתוני הדוגמה.</div>\n      {0}</div>",
   "kind": "tpl",
   "where": [
-   "app/views-settings.js:896"
+   "app/views-settings.js:989"
   ]
  },
  {
   "key": "<button class=\"btn danger block\" data-demo-clear>{0} מחק את נתוני הדוגמה</button>",
   "kind": "tpl",
   "where": [
-   "app/views-settings.js:897"
+   "app/views-settings.js:990"
   ]
  },
  {
   "key": "<button class=\"btn block\" data-demo-load>{0} טען נתוני דוגמה</button>",
   "kind": "tpl",
   "where": [
-   "app/views-settings.js:897"
+   "app/views-settings.js:990"
   ]
  },
  {
   "key": "נתוני הדוגמה נטענו",
   "kind": "lit",
   "where": [
-   "app/views-settings.js:900"
+   "app/views-settings.js:993"
   ]
  },
  {
   "key": "<div class=\"list cl-open\"><button class=\"item\" data-act=\"changelog\"><span class=\"lead\">{0}</span><span class=\"body\"><span class=\"t\">כל העדכונים</span><span class=\"s\">מה השתנה בכל גרסה, מהראשונה ועד {1}</span></span>{2}</button></div>\n      <div class=\"card\"><div class=\"kv\"><span>גרסת אפליקציה</span><b>{3}</b></div><div class=\"kv\"><span>מבנה נתונים</span><b>{4}</b></div>\n        <div class=\"kv\"><span>משמרות</span><b>{5}</b></div><div class=\"kv\"><span>תלושים</span><b>{6}</b></div><div class=\"kv\"><span>אחסון בשימוש</span><b id=\"ab-storage\">…</b></div><div class=\"kv\"><span>אחסון קבוע</span><b id=\"ab-persist\">…</b></div></div>\n      <div class=\"section-title\">התקנה כאפליקציה</div>\n      {7}\n      <div class=\"section-title\">איך זה עובד</div>\n      <div class=\"card small\">כל החישובים מתבצעים בטלפון, כולל זמני שבת וחגים (לוח עברי וחישוב שקיעה מקומיים). האפליקציה עובדת בלי אינטרנט. חיבור נדרש רק בפעם הראשונה של קריאת PDF / זיהוי טקסט מתמונה (טעינת הרכיב), ולניתוח AI אם בחרת בו.</div>\n      <div class=\"disclaimer\">{8}<div>האפליקציה היא כלי עזר אישי. החישובים (נטו, מס, זכויות) הם הערכה ואינם ייעוץ משפטי, חשבונאי או מס.</div></div>",
   "kind": "tpl",
   "where": [
-   "app/views-settings.js:907"
+   "app/views-settings.js:1000"
   ]
  },
  {
   "key": "<div class=\"card small ab-installed\">{0} שעתי מותקנת כאפליקציה במכשיר הזה.</div>",
   "kind": "tpl",
   "where": [
-   "app/views-settings.js:912"
+   "app/views-settings.js:1005"
   ]
  },
  {
   "key": "<div class=\"card small\">באייפון: כפתור השיתוף ← \"הוספה למסך הבית\" ← \"הוספה\".<button class=\"btn tonal block\" style=\"margin-top:10px\" data-act=\"ios-install\">{0} הדרכה צעד אחר צעד</button></div>",
   "kind": "tpl",
   "where": [
-   "app/views-settings.js:914"
+   "app/views-settings.js:1007"
   ]
  },
  {
   "key": "<div class=\"card small\">ב-⁠Chrome: תפריט ⋮ ← \"הוספה למסך הבית\" ← \"התקנה\". אחרי ההתקנה: לחיצה ארוכה על האייקון ← \"התחל משמרת\" / \"הוסף משמרת\".<br>באייפון: בספארי, כפתור השיתוף ← \"הוספה למסך הבית\".</div>",
   "kind": "tpl",
   "where": [
-   "app/views-settings.js:915"
+   "app/views-settings.js:1008"
   ]
  },
  {
   "key": "כן ✓",
   "kind": "lit",
   "where": [
-   "app/views-settings.js:923"
+   "app/views-settings.js:1016"
   ]
  },
  {
   "key": "לא (התקן כאפליקציה)",
   "kind": "lit",
   "where": [
-   "app/views-settings.js:923"
+   "app/views-settings.js:1016"
   ]
  },
  {
   "key": "למחוק את נתוני הדוגמה?",
   "kind": "lit",
   "where": [
-   "app/views-settings.js:929"
+   "app/views-settings.js:1022"
   ]
  },
  {
   "key": "רק נתוני הדוגמה יימחקו; מה שהוספת בעצמך יישאר.",
   "kind": "lit",
   "where": [
-   "app/views-settings.js:929"
+   "app/views-settings.js:1022"
   ]
  },
  {
   "key": "נתוני הדוגמה נמחקו",
   "kind": "lit",
   "where": [
-   "app/views-settings.js:931"
+   "app/views-settings.js:1024"
   ]
  },
  {

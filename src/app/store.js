@@ -154,6 +154,7 @@
     'plusGift', 'plusGiftEnd', // a month of Plus for inviting a friend (or being invited): worked out from the account's documents (invite.js)
     'review', // when this phone was last asked for a rating
     'skinPhoto', // the pay card's own photo (Plus): this phone only
+    'rolePhotos', // { roleId: a small square photo } a role's own picture: this phone only, never in a backup file
     'adminUid', // the account this phone last heard is an admin (the server's rules decide what an admin may do)
     'guest']; // this phone is used without an account, by choice (its data lives here only)
   const SYNC_META = ['pendingDeletes', 'settingsDirty', 'activeDirty', 'activeUpdatedAt'];
@@ -168,12 +169,22 @@
   const HEX = /^#[0-9a-f]{3,8}$/i;
   const SEVERITY = ['info', 'warn', 'critical', 'good'];
   const REFS = ['roleId', 'employerId', 'fileId', 'payslipId', 'shiftId', 'templateId'];
+  // a role's emoji: exactly one (a flag, a skin tone, a joined family or a keycap count as one), so nothing but an
+  // emoji ever reaches the page from this field
+  const EMOJI = /^(?:\p{Regional_Indicator}{2}|[#*0-9]️?⃣|\p{Extended_Pictographic}[️\p{Emoji_Modifier}]*(?:‍\p{Extended_Pictographic}[️\p{Emoji_Modifier}]*)*)$/u;
+  function cleanIcon(s) {
+    if (typeof s !== 'string') return '';
+    const t = s.trim(); if (!t || t.length > 32) return '';
+    const first = typeof Intl !== 'undefined' && Intl.Segmenter ? (([...new Intl.Segmenter(undefined, { granularity: 'grapheme' }).segment(t)][0] || {}).segment || '') : Array.from(t)[0];
+    return first.length <= 16 && EMOJI.test(first) ? first : '';
+  }
   function safeRecord(store, r) {
     if (!r || typeof r !== 'object' || Array.isArray(r) || typeof r.id !== 'string' || !SAFE_ID.test(r.id)) return null;
     for (const k of REFS) if (r[k] != null && r[k] !== '' && !(typeof r[k] === 'string' && SAFE_ID.test(r[k]))) r[k] = null;
     // a colour goes into a style attribute: a #hex string only, whatever its type (an array printed its own text there,
     // security review 2 Nov 2026)
     if (r.color != null && !(typeof r.color === 'string' && HEX.test(r.color))) r.color = '#888888';
+    if (store === 'roles' && r.icon != null) r.icon = cleanIcon(r.icon) || null;
     if (store === 'notifications') {
       // the home screen puts these into class and data attributes
       if (!SEVERITY.includes(r.severity)) r.severity = 'info';
@@ -264,9 +275,15 @@
         arr.splice(i, 1);
         writes.push([op.store, null, op.del]);
         if (SYNC_STORES.includes(op.store)) { pend.push({ store: op.store, id: op.del, at: now }); metaChanged = true; }
+      } else if (op.meta) {
+        // a value kept on this phone that changes together with the records (a role's photo): saved and undone with them
+        const k = op.meta.key, was = S.meta[k];
+        inverse.push({ meta: { key: k, value: was === undefined ? undefined : clone(was) } });
+        if (op.meta.value === undefined) delete S.meta[k]; else S.meta[k] = op.meta.value;
+        metaChanged = true;
       }
     }
-    await run([...new Set(ops.map((o) => o.store).concat(['kv']))], 'readwrite', (t) => {
+    await run([...new Set(ops.map((o) => o.store).filter(Boolean).concat(['kv']))], 'readwrite', (t) => {
       if (!t) return;
       for (const [st, rec, id] of writes) { if (rec) t.objectStore(st).put(rec); else t.objectStore(st).delete(id); }
       if (metaChanged) t.objectStore('kv').put({ key: 'meta', value: S.meta });
@@ -275,7 +292,7 @@
       undoStack.push({ label, ops: inverse.reverse() });
       if (undoStack.length > 30) undoStack.shift();
     }
-    emit({ type: 'data', stores: ops.map((o) => o.store) });
+    emit({ type: 'data', stores: ops.map((o) => o.store).filter(Boolean) });
     return label && opts.undo !== false;
   }
 
@@ -440,8 +457,8 @@
       app: 'shiftpay', schemaVersion: SCHEMA_VERSION, appVersion: root.APP_VERSION, exportedAt: new Date().toISOString(),
       // keys stay out of files: the AI key, and the Shaati Plus purchase code (a shared backup would give it away)
       settings: Object.assign({}, S.settings, { ai: Object.assign({}, S.settings.ai, { apiKey: '' }), lock: Object.assign({}, S.settings.lock), plusKey: '' }),
-      // (and not the pay card's own photo: big, and private if the file is shared)
-      meta: Object.fromEntries(Object.entries(S.meta).filter(([k]) => !/^plus/.test(k) && k !== 'skinPhoto' && k !== 'adminUid')), activeShift: S.activeShift,
+      // (and not the pay card's or the roles' own photos: big, and private if the file is shared)
+      meta: Object.fromEntries(Object.entries(S.meta).filter(([k]) => !/^plus/.test(k) && k !== 'skinPhoto' && k !== 'rolePhotos' && k !== 'adminUid')), activeShift: S.activeShift,
     };
     for (const s of LIST_STORES) out[s] = S[s];
     if (includeFiles) {
@@ -563,7 +580,7 @@
 
   root.Store = {
     S, load, on, apply, isMemoryOnly: () => memoryOnly, put, del, undo: undoAny, canUndo, setSettings, setMeta, setActive, find, clone,
-    putFile, getFile, delFile, exportBackup, importBackup, wipe, saveAll, SCHEMA_VERSION, DB_NAME,
+    putFile, getFile, delFile, exportBackup, importBackup, wipe, saveAll, SCHEMA_VERSION, DB_NAME, cleanIcon,
     SYNC_STORES, applyRemote, markSynced, dirtyRecords, touchAll, forgetSyncState, applyRemoteSettings, applyRemoteActive,
   };
 })(typeof window !== 'undefined' ? window : globalThis);

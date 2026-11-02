@@ -1016,3 +1016,26 @@ body.fx .item:active:not(:has(:is(button, a, input, select, label, summary, [dat
    target is at least 24 px tall (WCAG 2.5.8) with the words where they are */
 .term { position: relative; }
 .term::after { content: ''; position: absolute; inset: -8px -4px; }
+
+/* a role's picture: its first letter, an emoji on a wash of its colour, or a photo from the phone (UI.roleLead) */
+.item .lead.role-lead.emo { font-size: 1.45rem; line-height: 1; }
+.item .lead.role-lead.pic { overflow: hidden; padding: 0; }
+.role-lead.pic img, .role-mini img, .ri.pic img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.role-chip .role-mini { width: 20px; height: 20px; margin-block: -2px; border-radius: 6px; overflow: hidden; display: grid; place-items: center; flex: none; font-size: 1rem; line-height: 1; }
+.role-pic-row .item { padding-block: 8px; }
+/* the picker: tiles a finger can hit (46 px), the chosen one ringed like the colour swatches */
+.ri-grid { display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); gap: 8px; }
+.ri { aspect-ratio: 1; min-height: 46px; padding: 0; border: 0; border-radius: 12px; display: grid; place-items: center; cursor: pointer; font: 700 1.2rem/1 var(--font); color: var(--on-surface);
+  background: var(--surface-2); background: color-mix(in srgb, var(--c) 22%, var(--surface)); -webkit-user-select: none; user-select: none; touch-action: manipulation; }
+.ri.emo { font-size: 1.55rem; }
+.ri.pic { overflow: hidden; }
+.ri.on { box-shadow: 0 0 0 2px var(--surface), 0 0 0 4px var(--on-surface); }
+.ri { transition: scale .14s cubic-bezier(.3, .7, .4, 1); }
+body.fx .ri:active { scale: .92; }
+body:not(.fx) .ri:active { filter: brightness(.92); }
+.ri-type { display: flex; gap: 8px; margin-top: 16px; }
+.ri-type .input { flex: 1; min-width: 0; }
+.ri-type .btn { flex: none; }
+#ri-err { margin: 6px 4px 0; color: var(--bad); }
+.ri-photo { width: 100%; margin-top: 16px; }
+.ri-note { margin: 8px 4px 0; text-align: center; }

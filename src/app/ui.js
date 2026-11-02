@@ -135,9 +135,28 @@
     const L = 0.2126 * lum[0] + 0.7152 * lum[1] + 0.0722 * lum[2];
     return 1.05 / (L + 0.05) >= (L + 0.05) / 0.0597 ? '#fff' : '#141821';
   }
-  // a role's square with its first letter (an emoji stays whole)
-  function roleLead(role) {
+  // a role's own picture: a photo kept on this phone (Store meta rolePhotos), checked again here because it goes into src
+  const PHOTO = /^data:image\/jpeg;base64,[A-Za-z0-9+/=]+$/;
+  function rolePhoto(role) {
+    const m = root.Store && root.Store.S && root.Store.S.meta, p = role && m && m.rolePhotos && m.rolePhotos[role.id];
+    return typeof p === 'string' && p.length < 300000 && PHOTO.test(p) ? p : '';
+  }
+  // the emoji sits on a light wash of the role's colour (its colour stays the role's mark in lists and charts)
+  const wash = (c) => `background:${esc(c)};background:color-mix(in srgb, ${esc(c)} 24%, var(--surface))`;
+  // a role's square: its photo, else its emoji, else its first letter (an emoji in the name stays whole);
+  // `pending` is a photo not saved yet (the role editor shows it; '' = none)
+  function roleLead(role, pending) {
+    const photo = pending === undefined ? rolePhoto(role) : (typeof pending === 'string' && PHOTO.test(pending) ? pending : '');
+    if (photo) return `<span class="lead role-lead pic" style="background:${esc(role.color)}"><img src="${photo}" alt=""></span>`;
+    if (role.icon) return `<span class="lead role-lead emo" style="${wash(role.color)}">${esc(role.icon)}</span>`;
     return `<span class="lead role-lead" style="background:${esc(role.color)};color:${ink(role.color)}">${esc(Array.from(role.name || '?')[0] || '?')}</span>`;
+  }
+  // the small mark beside a role's name (the home screen's role chip): its photo or emoji, else its colour dot
+  function roleMini(role) {
+    const photo = rolePhoto(role);
+    if (photo) return `<span class="role-mini" aria-hidden="true"><img src="${photo}" alt=""></span>`;
+    if (role.icon) return `<span class="role-mini emo" aria-hidden="true">${esc(role.icon)}</span>`;
+    return `<span class="sw" style="background:${esc(role.color)}"></span>`;
   }
   function emptyState(ic, title, text, action) {
     return `<div class="empty"><div class="art">${icon(ic)}</div><h3>${esc(title)}</h3><div>${text || ''}</div>${action ? `<div style="margin-top:16px">${action}</div>` : ''}</div>`;
@@ -485,5 +504,5 @@
     fit();
   })();
 
-  root.UI = { on, pushLayer, closeLayer, tile, skeleton, invalid, icon, esc, money, numv, delta, roleDot, roleLead, ink, emptyState, toast, openSheet, closeTop, closeAll, dialog, confirm, promptText, onSwipe, vibrate, download, shareFile, copyText, numIn, timeAgo, sheets };
+  root.UI = { on, pushLayer, closeLayer, tile, skeleton, invalid, icon, esc, money, numv, delta, roleDot, roleLead, roleMini, rolePhoto, ink, emptyState, toast, openSheet, closeTop, closeAll, dialog, confirm, promptText, onSwipe, vibrate, download, shareFile, copyText, numIn, timeAgo, sheets };
 })(typeof window !== 'undefined' ? window : globalThis);

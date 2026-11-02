@@ -166,7 +166,7 @@
     return `<div class="home-action${once('justStopped') ? ' ha-enter' : ''}">
       <span class="start-halo" aria-hidden="true" style="${App.phase()}"></span>
       <button class="btn big start" style="${App.phase()}" data-act="timer-start" data-role="${sel || ''}">${icon('play')} התחל משמרת</button>
-      ${roles.length > 1 && role ? `<button class="role-chip" data-act="choose-role" aria-label="בחר תפקיד"><span class="sw" style="background:${role.color}"></span><span class="rc-n">${esc(role.name)}</span><span class="chev">${icon('left', 's')}</span></button>` : ''}
+      ${roles.length > 1 && role ? `<button class="role-chip" data-act="choose-role" aria-label="בחר תפקיד">${UI.roleMini(role)}<span class="rc-n">${esc(role.name)}</span><span class="chev">${icon('left', 's')}</span></button>` : ''}
     </div>`;
   }
 

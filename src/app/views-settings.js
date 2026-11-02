@@ -400,14 +400,51 @@
       });
     },
   };
+  /* ---------------- a role's picture: its first letter, an emoji, or a photo from the phone ---------------- */
+  // emoji for the jobs people here do most (any other one can be typed from the keyboard)
+  const ROLE_EMOJI = ['☕', '🍔', '🍕', '🍦', '🍹', '🛒', '📦', '🚚', '🛵', '🎬', '🎟️', '🏊', '⚽', '👶', '🐶', '💇', '🧹', '🍳', '💻', '📞', '🎓', '🏥', '🎨'];
+  // the phone's photo picker, opened from the tap (as browsers ask); the input sits in the open sheet, the one layer
+  // that is not inert while a sheet is up
+  const pickImage = (host) => new Promise((resolve) => {
+    const inp = document.createElement('input');
+    inp.type = 'file'; inp.accept = 'image/*'; inp.hidden = true;
+    (host || document.body).appendChild(inp);
+    let done = false;
+    const end = (f) => { if (done) return; done = true; inp.remove(); window.removeEventListener('focus', back); resolve(f); };
+    const back = () => setTimeout(() => { if (!(inp.files && inp.files.length)) end(null); }, 1500);
+    inp.addEventListener('change', () => end((inp.files && inp.files[0]) || null));
+    inp.addEventListener('cancel', () => end(null));
+    window.addEventListener('focus', back);
+    inp.click();
+  });
+  // the middle square of the photo, 160 px (sharp in a 40 px square on any screen, about 10 KB)
+  async function squarePhoto(file) {
+    const bmp = await createImageBitmap(file);
+    const s = Math.min(bmp.width, bmp.height), c = document.createElement('canvas');
+    c.width = c.height = 160;
+    c.getContext('2d').drawImage(bmp, (bmp.width - s) / 2, (bmp.height - s) / 2, s, s, 0, 0, 160, 160);
+    if (bmp.close) bmp.close();
+    return c.toDataURL('image/jpeg', 0.85);
+  }
+  // the save step that keeps (or drops, with '') a role's photo on this phone, saved and undone with the role itself
+  function rolePhotoOp(roleId, pic) {
+    const all = Object.assign({}, S.meta.rolePhotos && typeof S.meta.rolePhotos === 'object' ? S.meta.rolePhotos : {});
+    if (pic) all[roleId] = pic; else if (all[roleId]) delete all[roleId]; else return [];
+    return [{ meta: { key: 'rolePhotos', value: all } }];
+  }
+
   function roleEditor(id, redrawParent, empId) {
     const orig = id ? App.role(id) : null;
     const used = new Set(S.roles.map((r) => r.color));
     const d = orig ? Store.clone(orig) : { id: 'r_' + U.uid(), name: '', color: Defaults.ROLE_COLORS.find((c) => !used.has(c)) || Defaults.ROLE_COLORS[0], employerId: empId || S.employers[0].id, rates: [{ from: '2000-01-01', rate: '' }], archived: false };
+    // the photo is kept on this phone (meta), apart from the role; saved with the role, never before
+    let photo = orig ? UI.rolePhoto(orig) : '', photoChanged = false;
     let el = null;
+    const picRow = () => `<div class="list role-pic-row"><button class="item" data-pic>${UI.roleLead(d, photo)}<span class="body"><span class="t">תמונת התפקיד</span><span class="s">${photo ? 'תמונה מהטלפון' : d.icon ? 'אימוג׳י' : 'האות הראשונה בשם'}</span></span>${icon('left', 's')}</button></div>`;
     const body = () => {
       const rates = d.rates.slice().sort((a, b) => a.from.localeCompare(b.from));
       return `<label class="field"><span class="lbl">שם התפקיד</span><input class="input" id="re-name" value="${esc(d.name)}" placeholder="למשל: סדרן" maxlength="40"></label>
+        <div class="field"><span class="lbl">תמונה</span>${picRow()}</div>
         <div class="field"><span class="lbl">צבע</span><div class="color-pick">${Defaults.ROLE_COLORS.map((c) => `<button style="background:${c}" class="${d.color === c ? 'on' : ''}" data-color="${c}" aria-label="צבע"></button>`).join('')}</div></div>
         <div class="section-title">${icon('wallet', 's')} תעריפים לפי תאריך</div>
         <div class="tiny muted" style="margin:-4px 4px 10px">העלאת שכר? הוסף תעריף חדש מתאריך מסוים. משמרות קודמות לא ישתנו.</div>
@@ -426,15 +463,71 @@
     };
     // the list may just have changed (a rate removed), so the screen is redrawn from d without reading it again
     const redraw = () => { root.Dom.patch(el.querySelector('.sh-body'), body()); };
+    // the picture picker, a sheet over the editor: a tap chooses and closes it
+    const pickPicture = () => {
+      const letter = esc(Array.from(d.name || '?')[0] || '?');
+      const cur = photo ? 'photo' : d.icon || '';
+      const tile = (v, inner, extra, style) => `<button class="ri${extra || ''}${cur === v ? ' on' : ''}" data-ri="${esc(v)}" aria-pressed="${cur === v}"${v === '' ? ' aria-label="האות הראשונה בשם"' : ''}${style ? ` style="${style}"` : ''}>${inner}</button>`;
+      // always 24 squares, four full rows of six: a photo or an emoji typed before takes the place of the last one
+      const list = (d.icon && !ROLE_EMOJI.includes(d.icon) ? [d.icon] : []).concat(ROLE_EMOJI).slice(0, photo ? 22 : 23);
+      UI.openSheet({
+        title: 'תמונת התפקיד',
+        body: `<div class="ri-grid" style="--c:${esc(d.color)}">
+            ${photo ? tile('photo', `<img src="${photo}" alt="התמונה מהטלפון">`, ' pic') : ''}
+            ${tile('', letter, ' letter', `background:${esc(d.color)};color:${UI.ink(d.color)}`)}
+            ${list.map((e) => tile(e, esc(e), ' emo')).join('')}
+          </div>
+          <div class="ri-type"><input class="input" id="ri-type" aria-label="אימוג׳י אחר מהמקלדת" placeholder="אימוג׳י אחר מהמקלדת" autocomplete="off" autocapitalize="none" enterkeyhint="done"><button class="btn tonal" data-ri-typed>בחירה</button></div>
+          <div class="tiny err" id="ri-err" role="alert" hidden>צריך אימוג׳י אחד, בלי אותיות.</div>
+          <button class="btn tonal ri-photo" data-ri-photo>${icon('camera')} ${photo ? 'תמונה אחרת מהטלפון' : 'תמונה מהטלפון'}</button>
+          <div class="tiny muted ri-note">תמונה מהטלפון נשמרת רק בטלפון הזה.</div>`,
+        onMount: (sh) => {
+          const choose = (icon2, pic) => {
+            if (pic !== undefined) { photo = pic; photoChanged = true; }
+            if (icon2 !== undefined) { d.icon = icon2 || null; if (photo) { photo = ''; photoChanged = true; } }
+            UI.closeTop(); redraw();
+          };
+          const typed = () => {
+            const inp = sh.querySelector('#ri-type'), v = Store.cleanIcon(inp.value);
+            sh.querySelector('#ri-err').hidden = !!v; inp.setAttribute('aria-invalid', String(!v));
+            if (v) choose(v);
+          };
+          sh.addEventListener('click', async (e) => {
+            const b = e.target.closest('button');
+            if (!b) return;
+            if (b.dataset.ri === 'photo') { UI.closeTop(); return; } // the photo already chosen: nothing changes
+            if (b.dataset.ri !== undefined) choose(b.dataset.ri);
+            if (b.hasAttribute('data-ri-typed')) typed();
+            if (b.hasAttribute('data-ri-photo')) {
+              const f = await pickImage(sh);
+              if (!f) return;
+              if (!/^image\//.test(f.type)) { UI.invalid('צריך לבחור תמונה'); return; }
+              if (f.size > 30 * 1024 * 1024) { UI.invalid('התמונה גדולה מדי'); return; }
+              let pic;
+              try { pic = await squarePhoto(f); } catch (err) { console.warn('role photo', err); UI.invalid('לא הצלחנו לפתוח את התמונה. אפשר לנסות אחרת'); return; }
+              choose(undefined, pic);
+            }
+          });
+          sh.querySelector('#ri-type').addEventListener('keydown', (e) => { if (e.key === 'Enter') { e.preventDefault(); typed(); } });
+          sh.querySelector('#ri-type').addEventListener('input', () => { sh.querySelector('#ri-err').hidden = true; sh.querySelector('#ri-type').removeAttribute('aria-invalid'); });
+        },
+      });
+    };
     UI.openSheet({
       title: orig ? 'עריכת תפקיד' : 'תפקיד חדש', body: body(),
       foot: `${orig ? `<button class="btn danger" data-del style="flex:0 0 auto">${icon('trash')}</button>` : ''}<button class="btn" data-save>${icon('check')} שמור</button>`,
       onMount: (sh) => {
         el = sh;
+        // the picture's letter follows the name as it is typed
+        sh.querySelector('#re-name').addEventListener('input', (e) => {
+          const l = !photo && !d.icon && sh.querySelector('.role-pic-row .lead');
+          if (l) l.textContent = Array.from(e.target.value.trim() || '?')[0] || '?';
+        });
         sh.addEventListener('click', async (e) => {
           const b = e.target.closest('button');
           if (!b) return;
           if (b.dataset.color) { read(); d.color = b.dataset.color; redraw(); }
+          if (b.hasAttribute('data-pic')) { read(); pickPicture(); }
           if (b.hasAttribute('data-radd')) { read(); d.rates.push({ from: U.todayKey(), rate: d.rates[d.rates.length - 1].rate }); redraw(); }
           if (b.dataset.rdel) { read(); d.rates.splice(+b.dataset.rdel, 1); redraw(); }
           if (b.hasAttribute('data-save')) {
@@ -446,7 +539,7 @@
             const top = Math.max(...d.rates.map((r) => r.rate));
             if (top > 200 && !(await UI.confirm('לשמור את התעריף?', `${money(top)} לשעה זה הרבה מעל הרגיל. אולי נוספה ספרה?`, 'שמירה'))) return;
             UI.closeTop();
-            await App.saveOps([{ store: 'roles', put: d }], orig ? 'עריכת תפקיד' : 'הוספת תפקיד', 'התפקיד נשמר');
+            await App.saveOps([{ store: 'roles', put: d }].concat(photoChanged ? rolePhotoOp(d.id, photo) : []), orig ? 'עריכת תפקיד' : 'הוספת תפקיד', 'התפקיד נשמר');
             redrawParent();
           }
           if (b.hasAttribute('data-del')) {
@@ -458,7 +551,7 @@
             } else {
               if (!(await UI.confirm('למחוק את התפקיד?', '', 'מחק', true))) return;
               UI.closeTop();
-              await App.saveOps([{ store: 'roles', del: d.id }], 'מחיקת תפקיד', 'התפקיד נמחק');
+              await App.saveOps([{ store: 'roles', del: d.id }].concat(rolePhotoOp(d.id, '')), 'מחיקת תפקיד', 'התפקיד נמחק');
             }
             redrawParent();
           }

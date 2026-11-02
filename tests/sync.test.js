@@ -243,6 +243,28 @@ T.atest('a crafted backup cannot put markup in through a colour or a notificatio
   T.eq(n.read, true, 'read is true or false');
 });
 
+// role pictures (1.32.0): a role's emoji goes into the page as text, so only one real emoji is kept from outside;
+// the photos stay on the phone (never in a backup file, never taken from one)
+T.atest('a role keeps one emoji from a backup, and role photos never travel in a backup', async () => {
+  const be = fakeBackend();
+  const A = await phone(be); await A.add('s1', 'mine');
+  await A.Store.setMeta({ rolePhotos: { r1: 'data:image/jpeg;base64,AAAA' } });
+  const backup = JSON.parse(JSON.stringify(await A.Store.exportBackup(false)));
+  T.ok(!('rolePhotos' in (backup.meta || {})), 'the backup file has no role photos');
+  const role = (id, icon) => ({ id, name: 'x', color: '#2a78d6', icon, rates: [{ from: '2020-01-01', rate: 30 }], employerId: 'emp1' });
+  backup.roles = (backup.roles || []).concat([role('ra', '☕'), role('rb', '<img src=x onerror=alert(1)>'), role('rc', '🇮🇱🇮🇱'), role('rd', ['☕']), role('re', 'abc'), role('rf', '👩‍🍳')]);
+  backup.meta = Object.assign({}, backup.meta, { rolePhotos: { ra: 'data:image/jpeg;base64,BBBB' } });
+  await A.Store.importBackup(backup, 'replace'); await wait(50);
+  const icon = (id) => (A.S.roles.find((r) => r.id === id) || {}).icon;
+  T.eq(icon('ra'), '☕', 'an emoji is kept');
+  T.eq(icon('rb'), null, 'markup is dropped');
+  T.eq(icon('rc'), '🇮🇱', 'only the first of two emoji');
+  T.eq(icon('rd'), null, 'a list is dropped');
+  T.eq(icon('re'), null, 'letters are dropped');
+  T.eq(icon('rf'), '👩‍🍳', 'a joined emoji stays one');
+  T.eq(JSON.stringify(A.S.meta.rolePhotos), JSON.stringify({ r1: 'data:image/jpeg;base64,AAAA' }), "the phone's own photos stay, the file's are not taken");
+});
+
 /* ---------------- anonymous statistics ---------------- */
 async function withStats(A, legal, asked) {
   // the person said yes to the statistics (home card or Settings); asked === false: never answered

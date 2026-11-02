@@ -90,6 +90,7 @@ Important: the calculations are estimates only, not legal, accounting or tax adv
 **What's new**
 ```
 • Sign in with an email and a password, or start as a guest: your data stays on the phone until you connect an account
+• A picture for every role: an emoji or a photo from your phone
 • Privacy first: statistics only after you agree, and amounts hidden in the friends competition
 • A smoother opening, with the way in as the main button
 • Small buttons are easier to tap, small text is bigger, and screen readers work better
@@ -174,7 +175,8 @@ AI-помощник (по желанию)
 
 **Что нового**
 ```
-• Вход по почте и паролю или гостевой режим: данные хранятся на телефоне, пока вы не подключите аккаунт
+• Вход по почте и паролю или гостевой режим (данные только на телефоне)
+• Изображение для каждой должности: эмодзи или фото с телефона
 • Приватность прежде всего: статистика только после согласия, суммы скрыты в соревновании с друзьями
 • Более плавное открытие, кнопка входа стала главной
 • По маленьким кнопкам легче попасть, мелкий текст крупнее, программы чтения с экрана работают лучше
@@ -273,6 +275,7 @@ Shaati Plus (اختياري)
 **ما الجديد**
 ```
 • الدخول بالبريد الإلكتروني وكلمة مرور، أو البدء كضيف: تبقى البيانات على الهاتف حتى تربط حسابًا
+• صورة لكل وظيفة: إيموجي أو صورة من الهاتف
 • الخصوصية أولًا: الإحصاءات فقط بعد الموافقة، والمبالغ مخفية في المنافسة مع الأصدقاء
 • افتتاح أكثر سلاسة، وزر الدخول هو الرئيسي
 • الضغط على الأزرار الصغيرة أسهل، والنص الصغير أكبر، وقارئات الشاشة تعمل بشكل أفضل
@@ -354,8 +357,9 @@ Important : les calculs sont des estimations, pas un conseil juridique, comptabl
 
 **What's new**
 ```
-• Connexion par e-mail et mot de passe, ou en invité : vos données restent sur le téléphone tant qu'aucun compte n'est relié
-• Vie privée d'abord : statistiques seulement avec votre accord, montants masqués dans le concours entre amis
+• Connexion par e-mail et mot de passe, ou en invité (données sur le téléphone seulement)
+• Une image par poste : emoji ou photo du téléphone
+• Vie privée d'abord : statistiques seulement avec votre accord, montants masqués entre amis
 • Une ouverture plus fluide, avec le bouton pour entrer en principal
 • Petits boutons plus faciles à toucher, petit texte agrandi, meilleur support des lecteurs d'écran
 • Confidentialité, conditions d'utilisation et déclaration d'accessibilité mises à jour
@@ -436,8 +440,9 @@ Importante: los cálculos son estimaciones, no asesoramiento legal, contable ni 
 
 **What's new**
 ```
-• Entrada con correo y contraseña, o como invitado: tus datos se quedan en el teléfono hasta que conectes una cuenta
-• La privacidad primero: estadísticas solo si aceptas, e importes ocultos en la competencia con amigos
+• Entrada con correo y contraseña, o como invitado (datos solo en el teléfono)
+• Una imagen para cada puesto: emoji o foto del teléfono
+• Privacidad primero: estadísticas solo si aceptas, e importes ocultos entre amigos
 • Una apertura más fluida, con el botón para entrar como principal
 • Botones pequeños más fáciles de tocar, texto pequeño más grande y mejor soporte para lectores de pantalla
 • Política de privacidad, condiciones de uso y declaración de accesibilidad actualizadas
