@@ -20,9 +20,14 @@
   if (!el) return;
   // a first visit (no language chosen and nothing of the app kept in this browser, index.html's lp-bare): the language
   // doors are the first screen, drawn with the first frame and hidden by nothing (the show over them waited for the
-  // whole app's code to arrive: about two seconds of a still logo on a phone). The show plays on the next open, so this
-  // one is not counted as seen; the app knows no show is there (root.Intro stays empty)
-  if (document.documentElement.classList.contains('lp-bare')) { el.remove(); return; }
+  // whole app's code to arrive: about two seconds of a still logo on a phone). It counts as the session's open like any
+  // other (a reload later in this session, say for a new version, gets the short opening, not the quick actions); the
+  // app knows no show is there (root.Intro stays empty)
+  if (document.documentElement.classList.contains('lp-bare')) {
+    try { sessionStorage.setItem('introSeen', '1'); } catch (e) { /* ignore */ }
+    el.remove();
+    return;
+  }
   const Intro = {};
   root.Intro = Intro;
   const started = performance.now();
