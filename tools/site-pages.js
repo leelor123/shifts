@@ -295,13 +295,15 @@ body { margin: 0; background: var(--bg); color: var(--ink); font: 400 1.05rem/1.
 a { color: var(--brand); }
 header { position: sticky; top: 0; z-index: 2; background: rgba(7, 26, 69, .92); backdrop-filter: blur(16px) saturate(150%); -webkit-backdrop-filter: blur(16px) saturate(150%); color: #fff; }
 .bar { max-width: 760px; margin: 0 auto; display: flex; align-items: center; gap: 12px; padding: 10px max(16px, env(safe-area-inset-right)) 10px max(16px, env(safe-area-inset-left)); }
-.bar a.logo { display: flex; align-items: center; gap: 10px; color: #fff; text-decoration: none; font: 600 1.2rem Rubik, sans-serif; margin-inline-end: auto; }
+.bar a.logo { display: flex; align-items: center; gap: 10px; min-height: 44px; color: #fff; text-decoration: none; font: 600 1.2rem Rubik, sans-serif; margin-inline-end: auto; }
 .bar img { width: 36px; height: 36px; border-radius: 10px; }
 .btn { display: inline-flex; align-items: center; justify-content: center; gap: 8px; border-radius: 999px; background: linear-gradient(135deg, var(--cta-1), var(--cta-2)); color: #fff; font-weight: 700; text-decoration: none; padding: 10px 20px; white-space: nowrap; }
 .bar .btn { background: linear-gradient(180deg, #f3dca8, var(--gold)); color: #141821; font-weight: 600; transition: transform .16s cubic-bezier(.23, 1, .32, 1); }
 .btn:active { transform: scale(.97); }
 main { max-width: 760px; margin: 0 auto; padding: 28px max(16px, env(safe-area-inset-right)) 48px max(16px, env(safe-area-inset-left)); }
 nav.crumbs { font-size: .9rem; color: var(--ink-2); margin-bottom: 10px; }
+/* links a finger can hit (launch check 7: 17 px tall) */
+nav.crumbs a, footer a { display: inline-block; padding-block: 10px; }
 h1 { font: 700 clamp(1.7rem, 5vw, 2.4rem)/1.25 Rubik, sans-serif; margin: 0 0 16px; text-wrap: balance; }
 h2 { font: 700 1.35rem/1.35 Rubik, sans-serif; margin: 34px 0 10px; text-wrap: balance; }
 .answer { background: var(--surface); border-radius: 20px; padding: 18px 20px; box-shadow: 0 6px 24px rgba(10, 20, 45, .08); border: 1px solid var(--line); font-size: 1.12rem; }
@@ -318,7 +320,7 @@ tr:last-child td { border-bottom: 0; }
 .cta b { font: 700 1.25rem Rubik, sans-serif; }
 .cta .btn { background: linear-gradient(180deg, #f3dca8, var(--gold)); color: #141821; justify-self: start; }
 details { background: var(--surface); border-radius: 16px; padding: 12px 16px; margin: 10px 0; }
-summary { font-weight: 600; cursor: pointer; }
+summary { font-weight: 600; cursor: pointer; min-height: 44px; display: flex; align-items: center; }
 details p { margin: 8px 0 0; color: var(--ink-2); }
 .src, .note { font-size: .92rem; color: var(--ink-2); }
 .note { margin-top: 26px; padding: 14px 16px; border: 1px dashed var(--line); border-radius: 14px; }
@@ -391,7 +393,7 @@ const CHECK_CSS = `
 .ages button[aria-pressed="true"] { border-color: var(--brand); background: var(--surface-2); color: var(--brand); }
 .ck input:not([type=checkbox]) { font: 600 1.15rem Rubik, sans-serif; padding: 12px 14px; border: 1.5px solid var(--line); border-radius: 14px; background: var(--bg); color: var(--ink); width: 100%; box-sizing: border-box; }
 .ck input:not([type=checkbox]):focus { outline: 2px solid var(--brand); outline-offset: 1px; }
-.ck .sw { display: flex; align-items: center; gap: 10px; font-weight: 500; }
+.ck .sw { display: flex; align-items: center; gap: 10px; font-weight: 500; min-height: 44px; }
 .ck .sw input { width: 22px; height: 22px; accent-color: var(--brand); }
 .ck small { color: var(--ink-2); font-weight: 400; }
 /* a value that cannot be right: said in words, and no result under it */
