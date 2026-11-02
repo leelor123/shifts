@@ -94,7 +94,8 @@
     next();
   };
 
-  App.views.home_mount = function () {
+  App.views.home_mount = function (v) {
+    if (App.homeSky) App.homeSky(v);
     // right after the setup questions: a short tour of the three things that matter
     if (!App.firstRun || S.meta.coachDone) return;
     App.firstRun = false;

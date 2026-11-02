@@ -317,6 +317,34 @@
     return h;
   }
 
+  /* The living sky at the top of the home screen (the user, 2 Nov night: "more life, it looks a little tired"): the
+   * opening's sky (sky.js), for the user's city, hour and weather, from the top of the screen down to the middle of
+   * the pay card, which sits on it like a bank card. It is drawn by code after the screen, kept by every redraw
+   * (Dom.own: a patch never touches it), and drawn again only when its size changes or ten minutes have passed. */
+  App.homeSky = function (v) {
+    const host = v && v.querySelector('.home-sky'), Sky = root.Sky;
+    if (!host || !Sky) return;
+    if (root.Dom) root.Dom.keep(host, ['style', 'data-phase']); // set here, not in the screen's HTML: a redraw keeps them
+    const hero = v.querySelector('.home-hero');
+    // offsetTop and offsetHeight ignore the cards' entrance transforms
+    const h = Math.max(150, Math.round(hero ? hero.offsetTop + hero.offsetHeight * .42 : 190));
+    if (host.style.height !== h + 'px') host.style.height = h + 'px';
+    const w = host.clientWidth || 390;
+    let svg = host.querySelector('svg.sky');
+    if (!svg) {
+      svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+      svg.setAttribute('class', 'sky'); // drawn in the same frame as the screen: no fade (it played again on every tab switch)
+      svg.setAttribute('aria-hidden', 'true');
+      const a = host.querySelector('.hs-a');
+      a.after(svg);
+      if (root.Dom) root.Dom.own(svg, a);
+    }
+    const p = Sky.prefs(), key = [w, Math.round(h / 12), p.place && p.place.name, Sky.weatherNow(p)].join('|');
+    if (svg.dataset.key === key && Date.now() - (+svg.dataset.at || 0) < 600000) return;
+    try { host.dataset.phase = Sky.render(svg, { now: Date.now(), place: p.place, weather: Sky.weatherNow(p), width: w, height: h }).phase; } catch (e) { console.warn('sky', e); return; }
+    svg.dataset.key = key; svg.dataset.at = String(Date.now());
+  };
+
   App.views.home = function () {
     if (!S.meta.ms && App.milestones) App.milestones(); // notes where the user is, so the next medal is a real one
     const unread = S.notifications.filter((n) => !n.read && n.cat !== 'summary').length;
@@ -334,6 +362,7 @@
     const name = S.settings.userName ? ', ' + esc(String(S.settings.userName).split(' ')[0]) : '';
     const date = U.fmtDate(today, 'long').replace(/\s\d{4}$/, '');
     return `
+      <div class="home-sky" data-key="home-sky" aria-hidden="true"><i class="hs-a"></i></div>
       <div class="home-top"><div class="titles"><h1>${greeting()}${name}</h1>
         <div class="sub">${root.Plus && root.Plus.owned() ? '<span class="plus-badge">Plus ✨</span>' : ''}${date}${HS.hebDate !== false ? `${hd.dayStr ? ' · ' + esc(hd.toString().replace(/\s\S+$/, '')) : ''}${hol ? ' · ' + esc(hol) : ''}` : ''}</div></div>
         <span id="sync-dot">${App.syncDot ? App.syncDot() : ''}</span>
