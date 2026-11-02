@@ -6,3 +6,5 @@ firebase-debug.log
 *.log
 .firebase/
 tests/e2e/out/
+.env
+.env.*
