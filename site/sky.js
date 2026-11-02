@@ -269,7 +269,7 @@
       for (let i = 0; i < 3; i++) g.appendChild(el('ellipse', { class: 'sk-leaf', cx: (r() * W).toFixed(1), cy: -10, rx: 3, ry: 1.6, fill: ['#d9822b', '#c4562d', '#e0a43a'][i], style: `--d:${(-r() * 14).toFixed(1)}s;--t:${(10 + r() * 6).toFixed(1)}s;--x:${(-30 - r() * 40).toFixed(0)}px` }));
       svg.appendChild(g);
     }
-    return { phase, season, weather, kind };
+    return { phase, season, weather, kind, top: sky[0] };
   }
 
   // Open-Meteo's weather codes (WMO) to the scene's weather

@@ -6,7 +6,7 @@ for (const f of ['util.js', 'clean.js', 'timesheet.js', 'schedule.js', 'places-d
   try { require(path.join(src, f)); } catch (e) { if (e.code !== 'MODULE_NOT_FOUND') throw e; }
 }
 const T = require('./t.js');
-for (const f of ['taxrefund.test.js', 'undef.test.js', 'icons.test.js', 'redraw.test.js', 'changelog.test.js', 'engine.test.js', 'insights.test.js', 'payslip.test.js', 'links.test.js', 'games.test.js', 'recap.test.js', 'leaderboard.test.js', 'friends.test.js', 'referral.test.js', 'places.test.js', 'clean.test.js', 'timesheet.test.js', 'schedule.test.js', 'law.test.js', 'i18n.test.js']) {
+for (const f of ['taxrefund.test.js', 'undef.test.js', 'icons.test.js', 'redraw.test.js', 'changelog.test.js', 'engine.test.js', 'insights.test.js', 'payslip.test.js', 'links.test.js', 'games.test.js', 'recap.test.js', 'leaderboard.test.js', 'friends.test.js', 'referral.test.js', 'places.test.js', 'clean.test.js', 'timesheet.test.js', 'schedule.test.js', 'law.test.js', 'i18n.test.js', 'fonts.test.js']) {
   try { require(path.join(__dirname, f)); } catch (e) { if (e.code !== 'MODULE_NOT_FOUND') throw e; }
 }
 T.section('cloud sync (simulated phones)');

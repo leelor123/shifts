@@ -25,14 +25,18 @@ const get = (url) => new Promise((resolve, reject) => {
   fs.mkdirSync(OUT, { recursive: true });
   const blocks = [...css.matchAll(/\/\* ([\w-]+) \*\/\s*@font-face \{([\s\S]*?)\}/g)];
   if (!blocks.length) throw new Error('no @font-face in the stylesheet');
-  let out = '';
+  const rules = [];
   for (const [, subset, body] of blocks) {
     const family = /font-family: '([^']+)'/.exec(body)[1];
     const url = /url\((https:[^)]+\.woff2)\)/.exec(body)[1];
     const file = family.toLowerCase() + '-' + subset + '.woff2';
     fs.writeFileSync(path.join(OUT, file), await get(url));
-    out += '@font-face{' + body.replace(/\s+/g, ' ').trim().replace(url, 'fonts/' + file) + '}\n';
+    rules.push({ subset, css: '@font-face{' + body.replace(/\s+/g, ' ').trim().replace(url, 'fonts/' + file) + '}\n' });
     console.log(file);
   }
+  // the Hebrew file last: where two files of a family cover the same character, the browser takes the one written
+  // last, and ₪ (U+20AA) is in latin-ext too. Written in Google's order, every price fetched latin-ext (not preloaded)
+  // after the first paint, and the text holding it moved (website CLS .038). tests/fonts.test.js keeps it so.
+  const out = rules.filter((r) => r.subset !== 'hebrew').concat(rules.filter((r) => r.subset === 'hebrew')).map((r) => r.css).join('');
   fs.writeFileSync(path.join(OUT, 'fonts.css'), out);
 })().catch((e) => { console.error(e.message); process.exit(1); });
