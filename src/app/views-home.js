@@ -349,6 +349,15 @@
       App.skyTop = out.top;
     } catch (e) { console.warn('sky', e); return; }
     svg.dataset.key = key; svg.dataset.at = String(Date.now());
+    // the sky follows the pay card's size whenever it changes, in the same frame: a card that settles a moment after the
+    // first draw (a longer line in English that fits a frame later) left the sky 8 px too tall until the next redraw, and
+    // the eye button's redraw then moved its edge (redraw-guard en, 3 Nov 2026)
+    if (hero && 'ResizeObserver' in window && host.__roHero !== hero) {
+      if (host.__ro) host.__ro.disconnect();
+      host.__roHero = hero;
+      host.__ro = new ResizeObserver(() => { if (hero.isConnected && host.isConnected) App.homeSky(v); });
+      host.__ro.observe(hero);
+    }
     // the status bar follows the sky while it is on the screen (App.statusBar)
     if (!host.__io && 'IntersectionObserver' in window) {
       host.__io = new IntersectionObserver(([e]) => { App.skyInView = e.isIntersecting; App.statusBar(); }, { rootMargin: '-24px 0px 0px 0px' });
