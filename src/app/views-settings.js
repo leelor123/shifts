@@ -442,6 +442,9 @@
             if (!d.name) { UI.invalid('הזן שם'); return; }
             if (!App.ensureClean(d.name)) return;
             if (d.rates.some((r) => !(r.rate > 0))) { UI.invalid('הזן תעריף לשעה'); return; }
+            // a rate far above any hourly job is most likely a typo (99999 was saved silently; launch check, forms)
+            const top = Math.max(...d.rates.map((r) => r.rate));
+            if (top > 200 && !(await UI.confirm('לשמור את התעריף?', `${money(top)} לשעה זה הרבה מעל הרגיל. אולי נוספה ספרה?`, 'שמירה'))) return;
             UI.closeTop();
             await App.saveOps([{ store: 'roles', put: d }], orig ? 'עריכת תפקיד' : 'הוספת תפקיד', 'התפקיד נשמר');
             redrawParent();
