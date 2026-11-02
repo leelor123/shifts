@@ -892,6 +892,20 @@
       reconnect();
       return;
     }
+    // a guest (no account, by choice): the app at once, its data on this phone only. A sign-in they started from the
+    // settings and that came back here (Google's full-page way) finishes now, and their data goes up to the account.
+    if (S.meta.guest && S.settings.onboarded) {
+      App.localOnly = true;
+      App.afterLogin();
+      Cloud.start().then(async (user) => {
+        if (!user || S.meta.cloudUid) return;
+        await Cloud.connect(user);
+        App.localOnly = false;
+        App.recompute();
+        App.rerender();
+      }).catch((e) => console.warn('sign-in', e));
+      return;
+    }
     // nobody has signed in on this phone yet
     const starting = Cloud.start().catch((e) => { console.warn('sign-in not available yet', e); return null; });
     // the very first open: which language (another one reopens the app in it)

@@ -152,6 +152,15 @@
     'auth/web-storage-unsupported': 'הדפדפן חוסם שמירת נתונים (אולי גלישה בסתר). פתח את האפליקציה בדפדפן רגיל ונסה שוב.',
     'auth/operation-not-supported-in-this-environment': 'הדפדפן הזה לא תומך בהתחברות. פתח את הקישור ב-\u2060Chrome או ב-\u2060Safari.',
     'auth/timeout': 'ההתחברות לקחה יותר מדי זמן. בדוק את החיבור ונסה שוב.',
+    // an email and a password
+    'auth/email-already-in-use': 'כבר יש חשבון עם האימייל הזה. התחברו אליו עם הסיסמה שלו.',
+    'auth/weak-password': 'הסיסמה קצרה מדי. בחרו סיסמה של 8 תווים לפחות.',
+    'auth/missing-password': 'צריך להקליד סיסמה.',
+    'auth/invalid-credential': 'האימייל או הסיסמה לא נכונים.',
+    'auth/wrong-password': 'האימייל או הסיסמה לא נכונים.',
+    'auth/user-not-found': 'האימייל או הסיסמה לא נכונים.',
+    'auth/invalid-login-credentials': 'האימייל או הסיסמה לא נכונים.',
+    'auth/account-exists-with-different-credential': 'האימייל הזה כבר מחובר לחשבון בדרך אחרת. התחברו בדרך שבה נרשמתם.',
   };
   const STORAGE_ERRORS = ['UnknownError', 'InvalidStateError', 'QuotaExceededError', 'DataError', 'AbortError'];
   /** A message a person can understand (never raw English from the browser). */
@@ -172,8 +181,10 @@
    */
   Cloud.signIn = function (opts) {
     const go = ({ auth, au }) => {
-      const provider = new au.GoogleAuthProvider();
-      provider.setCustomParameters({ prompt: 'select_account' });
+      // opts.provider: another sign-in service (window.AUTH_PROVIDERS), once it is registered and turned on in Firebase
+      const id = (opts && opts.provider) || 'google.com';
+      const provider = id === 'google.com' ? new au.GoogleAuthProvider() : id === 'github.com' ? new au.GithubAuthProvider() : new au.OAuthProvider(id);
+      if (id === 'google.com' || id === 'microsoft.com') provider.setCustomParameters({ prompt: 'select_account' });
       if (opts && opts.redirect) return au.signInWithRedirect(auth, provider).then(() => null);
       return au.signInWithPopup(auth, provider).then((cred) => { Cloud.user = cred.user; return cred.user; }, (e) => {
         // no windows at all in this browser: the full-page way (it comes back signed in)
@@ -183,6 +194,22 @@
     };
     return fb ? go(fb) : load().then(go);
   };
+
+  /* ---------------- signing in with an email and a password ---------------- */
+  /** Signs in, or (create) opens a new account, with an email and a password (any email, not only Gmail). */
+  Cloud.signInEmail = async function (email, password, create) {
+    const { auth, au } = await load();
+    const cred = create ? await au.createUserWithEmailAndPassword(auth, email, password) : await au.signInWithEmailAndPassword(auth, email, password);
+    Cloud.user = cred.user;
+    return cred.user;
+  };
+  /** Sends a link to choose a new password. */
+  Cloud.resetPassword = async function (email) {
+    const { auth, au } = await load();
+    await au.sendPasswordResetEmail(auth, email);
+  };
+  /** true when this account signs in with a password (deleting it asks for the password again). */
+  Cloud.usesPassword = () => !!(Cloud.user && (Cloud.user.providerData || []).some((p) => p && p.providerId === 'password'));
 
   /* ---------------- signing in with an email link (no password) ---------------- */
   const EMAIL_KEY = 'shaati.emailForSignIn';
@@ -315,7 +342,8 @@
       await Store.forgetSyncState(); // nothing on this phone was ever confirmed by this account
       await initialMerge(user.uid); // needs the network the first time
     }
-    await Store.setMeta({ cloudUid: user.uid, cloudEmail: user.email, cloudName: user.displayName || '', cloudPhoto: user.photoURL || '' });
+    // (a guest who signs in is a guest no more: what was on the phone goes up to the account)
+    await Store.setMeta({ cloudUid: user.uid, cloudEmail: user.email, cloudName: user.displayName || '', cloudPhoto: user.photoURL || '', guest: false });
     attach(user.uid);
     Cloud.connected = true;
     await push();
@@ -499,17 +527,21 @@
   }
   /** Permanently delete everything stored for this user in the cloud, delete the sign-in account
    *  itself (required by Google Play's account-deletion policy), then clear this device. */
-  Cloud.deleteAccountData = async function () {
+  Cloud.deleteAccountData = async function (opts) {
     const { fs, db, au, auth } = await load();
     const user = auth.currentUser || Cloud.user;
     const uid = user.uid;
-    // Google requires a recent sign-in to delete an account. Confirm it now, while the tap that
-    // started the deletion still counts as a user gesture (otherwise the popup gets blocked).
+    // deleting an account needs a recent sign-in. Confirm it now, while the tap that started the deletion still
+    // counts as a user gesture (otherwise the popup gets blocked); a password account confirms with its password
     const last = Date.parse((user.metadata && user.metadata.lastSignInTime) || '') || 0;
     // (an account from before email sign-in has no list here: it signed in with Google)
     const pd = user.providerData || [];
-    const viaGoogle = !pd.length || pd.some((x) => x && x.providerId === 'google.com');
-    if (user.delete && viaGoogle && Date.now() - last > 4 * 60 * 1000) await au.reauthenticateWithPopup(user, new au.GoogleAuthProvider());
+    const via = pd.length ? pd[0].providerId : 'google.com';
+    if (user.delete && Date.now() - last > 4 * 60 * 1000) {
+      if (via === 'password') await au.reauthenticateWithCredential(user, au.EmailAuthProvider.credential(user.email, String((opts && opts.password) || '')));
+      else if (via === 'google.com') await au.reauthenticateWithPopup(user, new au.GoogleAuthProvider());
+      else await au.reauthenticateWithPopup(user, via === 'github.com' ? new au.GithubAuthProvider() : new au.OAuthProvider(via));
+    }
     detach();
     if (root.Stats) await root.Stats.forget();
     if (root.Support) await root.Support.forget();

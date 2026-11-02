@@ -92,6 +92,63 @@
     return true;
   };
 
+  /* ---------------- signing in with an email and a password ---------------- */
+  const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/;
+  let lastEmail = '';
+  /** Asks for an email and a password and signs in (mode 'new': opens a new account; it can switch to signing in).
+   * Resolves with the user, or null when given up. Errors are shown here and the form opens again. */
+  App.emailPassword = async function (mode) {
+    let isNew = mode === 'new', note = '';
+    for (;;) {
+      const v = await UI.dialog({
+        title: isNew ? 'חשבון חדש עם אימייל' : 'התחברות עם אימייל וסיסמה',
+        html: `${note ? `<div class="banner warn" style="margin-top:0">${icon('alert')}<div>${esc(note)}</div></div>` : ''}
+          <label class="field"><span class="lbl">אימייל</span><input class="input ltr" type="email" name="email" autocomplete="email" inputmode="email" placeholder="name@example.com" maxlength="100" value="${esc(lastEmail)}"></label>
+          <label class="field"><span class="lbl">${isNew ? 'סיסמה חדשה (8 תווים לפחות)' : 'סיסמה'}</span><input class="input ltr" type="password" name="password" autocomplete="${isNew ? 'new-password' : 'current-password'}" maxlength="128"></label>`,
+        buttons: [{ label: 'ביטול', value: null }, isNew ? { label: 'כבר יש לי חשבון', value: 'switch' } : { label: 'שכחתי סיסמה', value: 'forgot' }, { label: isNew ? 'יצירת חשבון' : 'התחברות', value: 'form' }],
+      });
+      if (!v) return null;
+      if (v === 'switch') { isNew = false; note = ''; continue; }
+      if (v === 'forgot') {
+        const e = String((await UI.promptText('איפוס סיסמה', 'האימייל של החשבון', lastEmail, { type: 'email', inputmode: 'email', ltr: true, ok: 'שליחת קישור' })) || '').trim();
+        if (!e) continue;
+        if (!EMAIL_RE.test(e)) { note = 'כתובת האימייל לא נראית תקינה'; continue; }
+        lastEmail = e;
+        try { await Cloud.resetPassword(e); note = ''; UI.toast('שלחנו קישור לבחירת סיסמה חדשה ל-' + e); } catch (x) { note = Cloud.errorText(x); }
+        continue;
+      }
+      const email = String(v.email || '').trim(), pass = String(v.password || '');
+      lastEmail = email;
+      if (!EMAIL_RE.test(email)) { note = 'כתובת האימייל לא נראית תקינה'; continue; }
+      if (!pass) { note = 'צריך להקליד סיסמה'; continue; }
+      if (isNew && pass.length < 8) { note = 'הסיסמה קצרה מדי. בחרו סיסמה של 8 תווים לפחות.'; continue; }
+      try { return await Cloud.signInEmail(email, pass, isNew); } catch (x) {
+        console.warn('email sign-in', x);
+        note = Cloud.errorText(x);
+        // an email that already has an account: the form turns to signing in to it
+        if (x && x.code === 'auth/email-already-in-use') isNew = false;
+      }
+    }
+  };
+
+  /* ---------------- using the app as a guest ---------------- */
+  /** No account, by choice: everything stays on this phone (and goes with the app). true when chosen. */
+  App.startGuest = async function () {
+    const ok = await UI.dialog({
+      title: 'להמשיך כאורח?',
+      html: `<p style="margin-top:0">כאורח, כל מה שרושמים נשמר רק בטלפון הזה.</p>
+        <p class="small muted">מחיקת האפליקציה, או ניקוי הנתונים של הדפדפן, מוחקים את הכול. כדי לשמור, מתחברים לחשבון מתי שרוצים, בהגדרות, וכל מה שכבר רשמתם עולה אליו.</p>`,
+      buttons: [{ label: 'חזרה', value: false }, { label: 'להמשיך כאורח', value: true }],
+    });
+    if (!ok) return false;
+    await Store.setMeta({ guest: true });
+    App.localOnly = true;
+    return true;
+  };
+  /** The other sign-in services that are turned on (firebase-config.js), as buttons: data-provider="id". */
+  const PROVIDER_NAMES = { 'microsoft.com': 'Microsoft', 'github.com': 'GitHub', 'apple.com': 'Apple', 'yahoo.com': 'Yahoo' };
+  App.providerButtons = (busy) => (root.AUTH_PROVIDERS || []).filter((id) => PROVIDER_NAMES[id]).map((id) => `<button class="btn tonal" data-provider="${esc(id)}" ${busy ? 'disabled' : ''}>התחברות עם ${PROVIDER_NAMES[id]}</button>`).join('');
+
   /* ---------------- login screen ---------------- */
   App.showLogin = function (reason) {
     if (App.rememberSky) App.rememberSky(); // the next opening comes to this screen
@@ -106,13 +163,16 @@
       const label = busy ? 'מתחבר…' : !ready && !failedLoad ? 'רגע, מכינים את Google…' : 'התחברות עם Google';
       v.innerHTML = `<div class="wizard login skyscreen">${App.skyHead()}<div class="w-sheet" style="text-align:center">
         <h2 style="--i:0">כניסה לחשבון</h2>
-        <p class="lead" style="--i:1">מתחברים עם Google${root.AUTH_EMAIL_LINK ? ' או עם אימייל' : ''}, וכל מה שרשמת נשמר בחשבון שלך ומחכה לך בכל טלפון.</p>
+        <p class="lead" style="--i:1">מתחברים עם Google${root.AUTH_EMAIL_LINK || root.AUTH_EMAIL_PASSWORD ? ' או עם אימייל' : ''}, וכל מה שרשמת נשמר בחשבון שלך ומחכה לך בכל טלפון.</p>
         ${App.inAppBrowser() ? App.openInBrowserCard() : ''}
         ${S.shifts.length ? `<div class="banner" style="text-align:start">${icon('cloud')}<div>הנתונים שכבר יש בטלפון יעלו לחשבון שלך בהתחברות הראשונה.</div></div>` : ''}
         ${msg ? `<div class="banner ${isErr ? 'warn' : ''}" style="text-align:start">${icon(isErr ? 'alert' : 'info')}<div>${esc(msg)}</div></div>` : ''}
         <button class="btn big ob-google" data-google ${busy || (!ready && !failedLoad) ? 'disabled' : ''}>${GOOGLE_G}<span>${label}</span></button>
         ${blocked ? '<button class="btn text sm" data-redirect>לא נפתח חלון? התחברות בדרך אחרת</button>' : ''}
+        ${root.AUTH_EMAIL_PASSWORD ? `<button class="btn tonal login-email" data-email-pass ${busy ? 'disabled' : ''}>${icon('mail', 's')} התחברות עם אימייל וסיסמה</button>` : ''}
+        ${App.providerButtons(busy)}
         ${root.AUTH_EMAIL_LINK ? `<button class="btn tonal login-email" data-email>${icon('mail', 's')} התחברות עם אימייל, בלי סיסמה</button>` : ''}
+        ${S.meta.cloudUid ? '' : `<button class="btn text sm" data-guest ${busy ? 'disabled' : ''}>להמשיך כאורח, בלי חשבון</button>`}
         <button class="btn text sm" data-act="support" style="margin-top:6px">${icon('info', 's')} בעיה בהתחברות? כתבו לנו</button>
         <div class="tiny muted" style="margin-top:8px">בהתחברות את/ה מאשר/ת את ${App.legalLinks ? App.legalLinks() : 'תנאי השימוש ומדיניות הפרטיות'}.</div>
         <div class="tiny muted" style="margin-top:10px;line-height:1.6">${icon('shield', 's')} רק את/ה יכול/ה לראות את הנתונים שלך. האפליקציה עובדת גם בלי אינטרנט, ומסנכרנת כשהרשת חוזרת.</div>
@@ -122,6 +182,18 @@
       v.querySelector('[data-google]').onclick = () => go(false);
       const em = v.querySelector('[data-email]');
       if (em) em.onclick = async () => { if (await App.emailSignIn()) show('שלחנו קישור למייל. פותחים אותו בטלפון הזה כדי להתחבר 📬'); };
+      const ep = v.querySelector('[data-email-pass]');
+      if (ep) ep.onclick = async () => { const user = await App.emailPassword('signin'); if (user) signedIn(Promise.resolve(user)); };
+      v.querySelectorAll('[data-provider]').forEach((b) => { b.onclick = () => { let p; try { p = Cloud.signIn({ provider: b.dataset.provider }); } catch (e) { p = Promise.reject(e); } signedIn(p); }; });
+      const gu = v.querySelector('[data-guest]');
+      if (gu) gu.onclick = async () => {
+        if (!(await App.startGuest())) return;
+        App.blocking = null;
+        // came here before the setup questions ("I already have an account"): the questions first, with no sign-in
+        if (!S.settings.onboarded) { App.sheetsApi.onboarding({ preLogin: true }); return; }
+        nav.style.display = '';
+        App.afterLogin();
+      };
       const rd = v.querySelector('[data-redirect]');
       if (rd) rd.onclick = () => go(true);
       App.bindOpenInBrowser(v);
@@ -133,6 +205,11 @@
       // no awaiting before this call: the browser allows the Google window only straight from the tap
       let p;
       try { p = Cloud.signIn(redirect ? { redirect: true } : null); } catch (e) { p = Promise.reject(e); }
+      signedIn(p);
+    }
+    /** After any way of signing in (Google, an email and a password, another service): connect, then the app. */
+    function signedIn(p) {
+      if (busy) return;
       busy = true; blocked = false; show('');
       p.then(async (user) => {
         if (!user) return; // full-page sign-in: the page comes back signed in
@@ -185,10 +262,11 @@
   App.accountSection = function () {
     const u = Cloud.user;
     if (!u && !S.meta.cloudUid && root.FIREBASE_CONFIG) {
-      // not signed in yet (e.g. continued without an account while offline): one tap to sign in
-      return `<div class="card"><div class="card-head">${icon('cloud')}<h3>שמירה בחשבון Google</h3></div>
-        <p class="small">עוד לא התחברת, אז הנתונים נשמרים רק בטלפון הזה. מתחברים, וכל מה שכבר רשמת עולה לחשבון ומחכה לך בכל טלפון.</p>
-        <button class="btn big ob-google" data-login>${GOOGLE_G}<span>התחברות עם Google</span></button></div>`;
+      // a guest (or someone who went on without an account while offline): one tap to the ways of signing in
+      return `<div class="card"><div class="card-head">${icon('cloud')}<h3>${S.meta.guest ? 'את/ה כאן כאורח' : 'שמירה בחשבון'}</h3></div>
+        <p class="small">הנתונים נשמרים רק בטלפון הזה. מחיקת האפליקציה, או ניקוי הנתונים של הדפדפן, מוחקים אותם.</p>
+        <p class="small">מתחברים עם Google${root.AUTH_EMAIL_PASSWORD ? ' או עם אימייל וסיסמה' : ''}, וכל מה שכבר רשמת עולה לחשבון ומחכה לך בכל טלפון.</p>
+        <button class="btn big ob-go" data-login>${icon('cloud', 's')} שמירה בחשבון</button></div>`;
     }
     if (!u && !S.meta.cloudUid) {
       return `<div class="card"><div class="card-head">${icon('cloud')}<h3>שמירה בענן</h3></div>
@@ -201,7 +279,7 @@
     const photo = (u && u.photoURL) || S.meta.cloudPhoto || '';
     return `<div class="card" style="display:flex;gap:14px;align-items:center">
         ${photo ? `<img src="${esc(photo)}" alt="" referrerpolicy="no-referrer" style="width:56px;height:56px;border-radius:50%">` : `<span class="lead" style="width:56px;height:56px;border-radius:50%;display:grid;place-items:center;background:var(--primary-container)">${icon('users')}</span>`}
-        <div style="min-width:0"><div class="bold">${esc(name || 'משתמש Google')}</div><div class="small muted" style="direction:ltr;text-align:right">${esc(email)}</div></div></div>
+        <div style="min-width:0"><div class="bold">${esc(name || 'החשבון שלך')}</div><div class="small muted" style="direction:ltr;text-align:right">${esc(email)}</div></div></div>
       <div class="card"><div class="kv"><span>מצב</span><b>${esc(Cloud.statusText())}</b></div>
         <div class="kv"><span>שינויים שממתינים להעלאה</span><b>${Store.dirtyRecords().length + (S.meta.pendingDeletes || []).length}</b></div>
         <div class="btn-row" style="margin-top:10px"><button class="btn tonal" data-sync-now>${icon('refresh')} סנכרן עכשיו</button></div></div>
@@ -212,7 +290,7 @@
       <div class="tiny muted" style="margin:6px 4px 16px">ההתנתקות מוחקת את הנתונים מהטלפון הזה בלבד. הם נשארים בחשבון וחוזרים בהתחברות הבאה.</div>
       <div class="section-title" style="color:var(--bad)">${icon('trash', 's')} אזור מסוכן</div>
       <div class="card"><button class="btn danger block" data-delete-cloud>מחק את כל הנתונים מהחשבון</button>
-        <div class="tiny muted" style="margin-top:8px">מוחק לצמיתות את הנתונים מהענן ומהטלפון, ואת החשבון באפליקציה. חשבון Google שלך לא נפגע.</div></div>`;
+        <div class="tiny muted" style="margin-top:8px">מוחק לצמיתות את הנתונים מהענן ומהטלפון, ואת החשבון באפליקציה. חשבון Google שלך, אם התחברת איתו, לא נפגע.</div></div>`;
   };
   App.accountMount = function (el, draw) {
     const q = (s) => el.querySelector(s);
@@ -237,7 +315,13 @@
       if (!(await UI.confirm('למחוק את החשבון ואת כל הנתונים?', 'כל המשמרות, התלושים וההגדרות יימחקו לצמיתות מהענן ומהטלפון, והחשבון באפליקציה יימחק. ייתכן ש-\u2060Google תבקש לאשר את החשבון שוב. מומלץ לגבות קודם.', 'מחק הכול', true))) return;
       const really = await UI.promptText('אישור סופי', 'הקלד "מחק" כדי לאשר', '');
       if (String(really || '').trim().toLowerCase() !== 'מחק'.toLowerCase()) { UI.toast('בוטל'); return; }
-      try { await Cloud.deleteAccountData(); location.reload(); } catch (e) { UI.dialog({ title: 'המחיקה נכשלה', text: Cloud.errorText(e), buttons: [{ label: 'סגור', value: true }] }); }
+      // an account with a password confirms with it (deleting needs a recent sign-in)
+      let password = '';
+      if (Cloud.usesPassword()) {
+        password = String((await UI.promptText('אישור עם הסיסמה', 'הסיסמה של החשבון', '', { type: 'password', ltr: true, ok: 'אישור' })) || '');
+        if (!password) { UI.toast('בוטל'); return; }
+      }
+      try { await Cloud.deleteAccountData({ password }); location.reload(); } catch (e) { UI.dialog({ title: 'המחיקה נכשלה', text: Cloud.errorText(e), buttons: [{ label: 'סגור', value: true }] }); }
     };
   };
 })(typeof window !== 'undefined' ? window : globalThis);

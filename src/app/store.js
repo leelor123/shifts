@@ -154,7 +154,8 @@
     'plusGift', 'plusGiftEnd', // a month of Plus for inviting a friend (or being invited): worked out from the account's documents (invite.js)
     'review', // when this phone was last asked for a rating
     'skinPhoto', // the pay card's own photo (Plus): this phone only
-    'adminUid']; // the account this phone last heard is an admin (the server's rules decide what an admin may do)
+    'adminUid', // the account this phone last heard is an admin (the server's rules decide what an admin may do)
+    'guest']; // this phone is used without an account, by choice (its data lives here only)
   const SYNC_META = ['pendingDeletes', 'settingsDirty', 'activeDirty', 'activeUpdatedAt'];
   /*
    * Every record that comes from outside this code (a backup file, the cloud, the phone's own database) passes

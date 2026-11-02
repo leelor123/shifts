@@ -5,6 +5,11 @@
 // signing in with an email link (no password): on once "Email link" is turned on in Firebase Authentication
 // (node tools/fbapi.js emaillink shiftpay-70ab6); until then the button stays out of sight
 window.AUTH_EMAIL_LINK = false;
+// sign-in with an email and a password (Firebase console › Authentication › Sign-in method › Email/Password on)
+window.AUTH_EMAIL_PASSWORD = true;
+// other sign-in services, each shown once its owner registered the app with it and turned it on in the same place:
+// 'microsoft.com', 'github.com', 'apple.com', 'yahoo.com'
+window.AUTH_PROVIDERS = [];
 window.FIREBASE_CONFIG = {
   apiKey: 'AIzaSyCOJVJ4voa19xGur66xEYOgHwooKl85vzI',
   authDomain: 'shiftpay-70ab6.firebaseapp.com',

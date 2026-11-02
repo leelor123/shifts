@@ -926,6 +926,50 @@ let errors = [];
     if (!redirect) throw new Error('no other way offered');
     if (!inApp) throw new Error('second try did not get in');
   });
+  // 2 Nov 2026 (the user): a guest (no account, data on this phone only) and an email + password, not only Google
+  const tapText = (M, t) => M.e((t) => { const b = [...document.querySelectorAll('button')].find((x) => x.textContent.trim() === t); if (!b) return false; b.click(); return true; }, t);
+  await step('new user as a guest: a warning first, the app opens, still a guest after a reload, Settings offers to save', async () => {
+    const M = await newUserPage();
+    await M.p.click('[data-next]'); await sleep(400);
+    for (let i = 0; i < 6; i++) { await M.p.click('[data-skip]'); await sleep(350); }
+    const both = !!(await M.p.$('[data-guest]')) && !!(await M.p.$('[data-email-pass]'));
+    await M.p.click('[data-guest]'); await sleep(500);
+    const warned = await M.e(() => document.body.innerText.includes('נשמר רק בטלפון הזה'));
+    const tapped = await tapText(M, 'להמשיך כאורח'); await sleep(1600);
+    const st = await M.e(() => ({ guest: Store.S.meta.guest, blocking: App.blocking, hero: !!document.querySelector('.home-hero'), signIn: window.__signIn || 0, onboarded: Store.S.settings.onboarded }));
+    // opened again with sign-in set up: this test server leaves it out of a page asked for without ?cloud=1, and the
+    // offline copy holds such a page (its worker fetched index.html plain), so the copy goes first
+    await M.e(() => Promise.all([navigator.serviceWorker.getRegistrations().then((rs) => Promise.all(rs.map((r) => r.unregister()))), caches.keys().then((ks) => Promise.all(ks.map((k) => caches.delete(k))))]));
+    await M.p.goto('http://localhost:8783/?cloud=1', { waitUntil: 'load' });
+    await M.p.waitForFunction(() => window.App && App.tab && (!document.getElementById('intro') || document.querySelector('#intro.q-on')), { timeout: 15000 });
+    await M.e(() => { if (window.Intro && Intro.enter && document.getElementById('intro')) Intro.enter(null); }); await sleep(1500);
+    const after = await M.e(() => ({ blocking: App.blocking, hero: !!document.querySelector('.home-hero'), login: !!document.querySelector('.wizard.login'), cloud: !!window.FIREBASE_CONFIG, guest: !!Store.S.meta.guest, local: !!App.localOnly, card: App.accountSection() }));
+    await M.ctx.close();
+    if (!both) throw new Error('the last step has no guest or email-and-password button');
+    if (!warned || !tapped) throw new Error('no warning that the data stays on this phone');
+    if (!st.guest || st.blocking || !st.hero || st.signIn || !st.onboarded) throw new Error('not in the app as a guest: ' + JSON.stringify(st));
+    if (!after.cloud || !after.guest || !after.local || after.blocking || !after.hero || after.login) throw new Error('after a reload: ' + JSON.stringify({ cloud: after.cloud, guest: after.guest, local: after.local, blocking: after.blocking, hero: after.hero, login: after.login }));
+    if (!/כאורח/.test(after.card) || !/data-login/.test(after.card)) throw new Error('Settings does not offer to save the guest data');
+  });
+  await step('new user with an email and a password: a short password is refused, then a new account opens the app', async () => {
+    const M = await newUserPage();
+    await M.e(() => { Object.defineProperty(window.Cloud, 'signInEmail', { configurable: true, get: () => (email, pass, create) => { window.__email = [email, pass.length, create]; return Promise.resolve({ uid: 'mailUser0123456789abcd', email }); } }); });
+    await M.p.click('[data-next]'); await sleep(400);
+    for (let i = 0; i < 6; i++) { await M.p.click('[data-skip]'); await sleep(350); }
+    await M.p.click('[data-email-pass]');
+    await M.p.waitForSelector('input[name=password]', { timeout: 4000 });
+    await M.p.type('input[name=email]', 'noa@example.com'); await M.p.type('input[name=password]', 'abc');
+    await tapText(M, 'יצירת חשבון'); await sleep(600);
+    const short = await M.e(() => document.body.innerText.includes('קצרה מדי'));
+    await M.p.waitForSelector('input[name=password]', { timeout: 4000 });
+    await M.p.type('input[name=password]', 'a-long-password');
+    await tapText(M, 'יצירת חשבון'); await sleep(1600);
+    const st = await M.e(() => ({ email: window.__email, connected: window.__connected, blocking: App.blocking, hero: !!document.querySelector('.home-hero'), guest: !!Store.S.meta.guest }));
+    await M.ctx.close();
+    if (!short) throw new Error('a 3-letter password was not refused with a message');
+    if (!st.email || st.email[0] !== 'noa@example.com' || st.email[1] !== 15 || st.email[2] !== true) throw new Error('signInEmail: ' + JSON.stringify(st.email));
+    if (st.connected !== 'mailUser0123456789abcd' || st.blocking || !st.hero || st.guest) throw new Error('not signed in: ' + JSON.stringify(st));
+  });
   await step('the questions keep working when the phone storage fails', async () => {
     const M = await newUserPage();
     // every IndexedDB write from now on fails, like the iPhone "Indexed Database server lost" error

@@ -227,8 +227,10 @@
         foot = needsLogin()
           ? `<button class="btn big ob-google" data-save ${saving || (!ready && !loadFailed) ? 'disabled' : ''}>${App.googleIcon || ''}<span>${saving ? 'שומר…' : !ready && !loadFailed ? 'רגע, מכינים את Google…' : 'שמירה עם Google'}</span></button>
             ${blocked ? '<button class="btn text sm" data-redirect>לא נפתח חלון? התחברות בדרך אחרת</button>' : ''}
+            ${saving || !root.AUTH_EMAIL_PASSWORD ? '' : `<button class="btn tonal" data-email-pass>${icon('mail', 's')} שמירה עם אימייל וסיסמה</button>`}
+            ${saving || !App.providerButtons ? '' : App.providerButtons(false)}
             ${saving || !root.AUTH_EMAIL_LINK ? '' : `<button class="btn text sm" data-email-save>${icon('mail', 's')} או שמירה עם אימייל, בלי סיסמה</button>`}
-            ${loadFailed ? '<button class="btn text sm" data-later>להמשיך בינתיים בלי חשבון</button>' : ''}`
+            ${saving ? '' : '<button class="btn text sm" data-guest>להמשיך כאורח, בלי חשבון</button>'}`
           : `<button class="btn big ob-go" data-save ${saving ? 'disabled' : ''}>${saving ? 'רגע…' : 'כניסה לאפליקציה'}</button>`;
       } else {
         foot = `<button class="btn big ob-go" data-next>${qi === QUESTIONS ? 'סיום' : 'הבא'}</button>`;
@@ -328,21 +330,7 @@
         // open the Google window first, inside this tap (the browser blocks it after any waiting); save meanwhile
         let p;
         try { p = Cloud.signIn(redirect ? { redirect: true } : null); } catch (e) { p = Promise.reject(e); }
-        p.catch(() => {}); // handled below, after the answers are saved
-        saving = true; msg = ''; blocked = false; draw();
-        ensureSaved(false).then(() => p).then(async (user) => {
-          if (!user) return; // full-page sign-in: the page comes back signed in and finishes there
-          await Cloud.connect(user);
-          UI.toast('מחובר כ-' + (user.displayName || user.email));
-          saving = false;
-          enterApp();
-        }).catch((e) => {
-          console.warn('sign-in', e);
-          saving = false;
-          blocked = e && e.code === 'auth/popup-blocked';
-          msg = blocked ? 'הדפדפן חסם את חלון ההתחברות של Google. לחצו שוב על הכפתור 👇' : Cloud.errorText(e);
-          draw();
-        });
+        connectWith(p);
         return;
       }
       saving = true; draw();
@@ -351,6 +339,26 @@
         if (Cloud && Cloud.user && !Cloud.connected && !App.localOnly) { try { await Cloud.connect(Cloud.user); } catch (e) { console.warn(e); } }
         saving = false;
         enterApp();
+      });
+    }
+    /** After any way of signing in (Google, an email and a password, another service): the answers are saved, the
+     * account is connected, then the app. */
+    function connectWith(p) {
+      const Cloud = root.Cloud;
+      p.catch(() => {}); // handled below, after the answers are saved
+      saving = true; msg = ''; blocked = false; draw();
+      ensureSaved(false).then(() => p).then(async (user) => {
+        if (!user) return; // full-page sign-in: the page comes back signed in and finishes there
+        await Cloud.connect(user);
+        UI.toast('מחובר כ-' + (user.displayName || user.email));
+        saving = false;
+        enterApp();
+      }).catch((e) => {
+        console.warn('sign-in', e);
+        saving = false;
+        blocked = e && e.code === 'auth/popup-blocked';
+        msg = blocked ? 'הדפדפן חסם את חלון ההתחברות של Google. לחצו שוב על הכפתור 👇' : Cloud.errorText(e);
+        draw();
       });
     }
     v.onclick = async (e) => {
@@ -381,6 +389,11 @@
       } else if (b.hasAttribute('data-save')) finishStep(false);
       else if (b.hasAttribute('data-redirect')) finishStep(true);
       else if (b.hasAttribute('data-later')) { App.localOnly = true; finishStep(false); }
+      // an email and a password: a new account (the form can switch to an existing one)
+      else if (b.hasAttribute('data-email-pass')) { if (saving) return; const user = await App.emailPassword('new'); if (user && App.blocking === 'onboarding') connectWith(Promise.resolve(user)); }
+      else if (b.dataset.provider) { if (saving) return; let p; try { p = root.Cloud.signIn({ provider: b.dataset.provider }); } catch (x) { p = Promise.reject(x); } connectWith(p); }
+      // a guest: no account, by choice; the answers are kept on this phone and the app opens
+      else if (b.hasAttribute('data-guest')) { if (saving) return; if (await App.startGuest()) finishStep(false); }
       // with an email: the link is sent, and the app opens now; opening the link signs in and the answers go up
       else if (b.hasAttribute('data-email-save')) { App.emailSignIn().then((sent) => { if (sent && App.blocking === 'onboarding') { App.localOnly = true; finishStep(false); } }); }
       else if (b.dataset.gender) {
