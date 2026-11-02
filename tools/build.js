@@ -76,9 +76,32 @@ const version = pkg.version;
 
 fs.mkdirSync(DIST, { recursive: true });
 /** The page of one language: its markup, styles and code inlined, under a policy that runs only its own scripts. */
+// sharing and search (launch check, 2 Nov 2026: a shared app link showed only its title): the page's own address, its
+// other languages, and the card a shared link shows (WhatsApp, Telegram, X) with the page's own title and description
+const APP_URL = 'https://leelor123.github.io/shifts/';
+const pageUrl = (l) => APP_URL + (l === 'he' ? '' : `index.${l}.html`);
+const OG_LOCALE = { he: 'he_IL', en: 'en_US', ru: 'ru_RU', ar: 'ar_AR', fr: 'fr_FR', es: 'es_ES' };
+function shareTags(html, lang) {
+  const attr = (v) => v.replace(/&(?![a-z0-9#]+;)/gi, '&amp;').replace(/"/g, '&quot;');
+  const title = attr((/<title>([^<]*)<\/title>/.exec(html) || [])[1] || 'Shaati');
+  const desc = attr((/<meta name="description" content="([^"]*)">/.exec(html) || [])[1] || '');
+  const langs = ['he'].concat(Object.keys(dicts));
+  const tags = [`<link rel="canonical" href="${pageUrl(lang)}">`]
+    .concat(langs.map((l) => `<link rel="alternate" hreflang="${l}" href="${pageUrl(l)}">`))
+    .concat([`<link rel="alternate" hreflang="x-default" href="${pageUrl('he')}">`,
+      '<meta property="og:type" content="website">', '<meta property="og:site_name" content="Shaati">',
+      `<meta property="og:title" content="${title}">`, `<meta property="og:description" content="${desc}">`,
+      `<meta property="og:url" content="${pageUrl(lang)}">`, `<meta property="og:locale" content="${OG_LOCALE[lang] || 'he_IL'}">`,
+      `<meta property="og:image" content="${APP_URL}og.jpg">`, '<meta property="og:image:type" content="image/jpeg">',
+      '<meta property="og:image:width" content="1200">', '<meta property="og:image:height" content="630">',
+      `<meta property="og:image:alt" content="${title}">`, '<meta name="twitter:card" content="summary_large_image">']);
+  if (!html.includes('<link rel="manifest"')) throw new Error('index.html: no manifest link to put the share tags before');
+  return html.replace('<link rel="manifest"', () => tags.join('\n') + '\n<link rel="manifest"');
+}
 function page(lang) {
   const tpl = lang === 'he' ? read('index.html') : I18N.applyHtml(read('index.html'), lang, dicts[lang]).replace('href="manifest.webmanifest"', `href="manifest.${lang}.webmanifest"`);
   let html = tpl.replace('/*__CSS__*/', () => cssMin).replace('/*__JS__*/', () => read('app/firebase-config.js') + loader(lang)).replace('__VERSION__', version).replace('__BUILD__', `${version}-${hash}`).replace('<!--__FONT_PRELOAD__-->', () => preload(lang)).replace('<!--__LP_STATIC__-->', () => lpStatic(lang));
+  html = shareTags(html, lang);
   // Content-Security-Policy: only the app's own inline scripts (by their hashes) and the libraries it loads
   // on demand may run, so injected markup (an <img onerror>, a <script>) can never execute.
   const scripts = [...html.matchAll(/<script>([\s\S]*?)<\/script>/g)];
