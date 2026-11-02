@@ -221,6 +221,7 @@
   App.render = function (opts) {
     App.rememberSky();
     if (App.blocking) return; // a full-screen step (login / terms / setup wizard) owns the screen
+    if (App.quickOpen) App.quickOpen(); // the opening's quick actions, while it waits on them (views-quick.js)
     const v = document.getElementById('view');
     const fn = App.views[App.tab] || App.views.home;
     const y = opts && opts.keepScroll ? window.scrollY : 0;

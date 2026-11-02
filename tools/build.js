@@ -14,7 +14,7 @@ const pkg = JSON.parse(fs.readFileSync(path.join(ROOT, 'package.json'), 'utf8'))
 const JS_ORDER = [
   'core/util.js', 'core/clean.js', 'core/timesheet.js', 'core/schedule.js', 'core/places-data.js', 'core/places.js', 'core/hebcal.js', 'core/defaults.js', 'core/engine.js', 'core/taxrefund.js', 'core/insights.js', 'core/payslip.js', 'core/games.js', 'core/recap.js', 'core/analysis.js', 'core/leaderboard.js', 'core/friends.js', 'core/referral.js',
   'app/ui.js', 'app/dom.js', 'app/pickers.js', 'app/fx.js', 'app/gamefx.js', 'app/music.js', 'app/sky.js', 'app/intro.js', 'app/lang.js', 'app/store.js', 'app/charts.js', 'app/app.js', 'app/mascot.js', 'app/cloud.js', 'app/stats.js', 'app/pay-config.js', 'app/plus.js', 'app/invite.js', 'app/review.js', 'app/docread.js', 'app/import.js', 'app/schedule-import.js', 'app/claim-report.js', 'app/views-login.js',
-  'app/views-home.js', 'app/views-shift.js', 'app/views-calendar.js', 'app/views-reports.js', 'app/views-taxrefund.js',
+  'app/views-home.js', 'app/views-quick.js', 'app/views-shift.js', 'app/views-calendar.js', 'app/views-reports.js', 'app/views-taxrefund.js',
   'app/views-payslip.js', 'app/views-insights.js', 'app/export.js', 'app/placepicker.js', 'app/widgets.js', 'app/views-settings.js', 'app/views-onboarding.js',
   'app/views-assistant.js', 'app/views-rights.js', 'app/views-guide.js', 'app/views-support.js', 'app/views-games.js', 'app/views-leaderboard.js', 'app/views-friends.js', 'app/views-analysis.js', 'app/views-recap.js', 'app/views-admin.js', 'app/views-legal.js', 'app/ptr.js',
 ];
@@ -146,8 +146,9 @@ keepBuilds.add(gitBuild('HEAD'));
 const liveBuild = gitBuild('origin/main');
 if (liveBuild) keepBuilds.add(liveBuild);
 for (const f of fs.readdirSync(DIST)) { const m = /^app[.][a-z]+[.]([0-9a-f]+)[.]js$/.exec(f); if (m && !keepBuilds.has(m[1])) fs.unlinkSync(path.join(DIST, f)); }
-// the guard: the live version's code must be here (a folder that lost it already is not fixed by keeping it)
-if (liveBuild && liveBuild !== hash && !fs.readdirSync(DIST).some((f) => f.endsWith('.' + liveBuild + '.js'))) {
+// the guard: the live version's code must be here (a folder that lost it already is not fixed by keeping it); only in
+// docs/, the folder that goes live (a test's own folder, OUT, never had it)
+if (!process.env.OUT && liveBuild && liveBuild !== hash && !fs.readdirSync(DIST).some((f) => f.endsWith('.' + liveBuild + '.js'))) {
   console.error('The live version\'s code (app.*.' + liveBuild + '.js) is missing from docs/: phones still on it would get a blank app.\n'
     + 'Restore it: git checkout origin/main -- ' + Object.keys(dicts).concat('he').map((l) => 'docs/app.' + l + '.' + liveBuild + '.js').join(' '));
   process.exit(1);
