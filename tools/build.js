@@ -87,7 +87,10 @@ function page(lang) {
   // scan, 1 Nov 2026). Each folder ends in '/', so it matches only that library at that version. The libraries'
   // own extra files are here too: the AI SDK's dependencies, and tesseract's worker and core (its 'v' paths).
   const LIBS = [
-    'https://www.gstatic.com/firebasejs/12.19.0/', 'https://apis.google.com/js/',
+    // Google's sign-in starts at apis.google.com/js/ and then loads its own modules from other paths there
+    // (/_/scs/...gapi_iframes, which carries the sign-in back to the app): the whole host, as only Google publishes on
+    // it. Narrowed to /js/ on 1 Nov, it blocked that module and Google sign-in (qa/signin-csp-test.js guards it)
+    'https://www.gstatic.com/firebasejs/12.19.0/', 'https://apis.google.com/',
     'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/', 'https://cdn.sheetjs.com/xlsx-0.20.3/',
     'https://cdn.jsdelivr.net/npm/tesseract.js@5.1.1/', 'https://cdn.jsdelivr.net/npm/tesseract.js@v5.1.1/', 'https://cdn.jsdelivr.net/npm/tesseract.js-core@v5.1.1/',
     'https://cdn.jsdelivr.net/npm/nsfwjs@4.4.0/', 'https://cdn.jsdelivr.net/npm/@anthropic-ai/sdk@0.128.0/',
