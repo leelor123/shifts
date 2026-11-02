@@ -384,11 +384,15 @@ const CHECK_CSS = `
 .ages { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 8px; }
 .ages button { font: 600 1rem Rubik, sans-serif; border: 1.5px solid var(--line); background: var(--bg); color: var(--ink); border-radius: 14px; padding: 12px 4px; cursor: pointer; }
 .ages button[aria-pressed="true"] { border-color: var(--brand); background: var(--surface-2); color: var(--brand); }
-.ck input[type="number"] { font: 600 1.15rem Rubik, sans-serif; padding: 12px 14px; border: 1.5px solid var(--line); border-radius: 14px; background: var(--bg); color: var(--ink); width: 100%; box-sizing: border-box; }
-.ck input[type="number"]:focus { outline: 2px solid var(--brand); outline-offset: 1px; }
+.ck input:not([type=checkbox]) { font: 600 1.15rem Rubik, sans-serif; padding: 12px 14px; border: 1.5px solid var(--line); border-radius: 14px; background: var(--bg); color: var(--ink); width: 100%; box-sizing: border-box; }
+.ck input:not([type=checkbox]):focus { outline: 2px solid var(--brand); outline-offset: 1px; }
 .ck .sw { display: flex; align-items: center; gap: 10px; font-weight: 500; }
 .ck .sw input { width: 22px; height: 22px; accent-color: var(--brand); }
 .ck small { color: var(--ink-2); font-weight: 400; }
+/* a value that cannot be right: said in words, and no result under it */
+.ck-err { margin: 0; color: #b42318; font-weight: 500; }
+@media (prefers-color-scheme: dark) { .ck-err { color: #ff9b8f; } }
+.ck input[aria-invalid=true] { border-color: #b42318; }
 #ck-out { border-radius: 22px; padding: 20px; display: grid; gap: 8px; text-align: center; color: #fff; }
 #ck-out.bad { background: linear-gradient(160deg, #8f1d33, #c2334d); }
 #ck-out.good { background: linear-gradient(135deg, #0b7a4b, #14b8a6); }
@@ -436,11 +440,12 @@ ${FONT_HEAD}
         <button type="button" data-age="adult" aria-pressed="false">18 ומעלה</button>
       </div>
     </div>
-    <label for="ck-wage"><span>כמה משלמים לך לשעה (₪)?</span><input id="ck-wage" type="number" inputmode="decimal" min="0" step="0.01" placeholder="למשל 32"></label>
-    <label for="ck-hours"><span>כמה שעות בחודש, בערך? <small>(לא חובה)</small></span><input id="ck-hours" type="number" inputmode="numeric" min="0" step="1" placeholder="למשל 60"></label>
+    <label for="ck-wage"><span>כמה משלמים לך לשעה (₪)?</span><input id="ck-wage" type="text" inputmode="decimal" autocomplete="off" aria-describedby="ck-err" placeholder="למשל 32"></label>
+    <label for="ck-hours"><span>כמה שעות בחודש, בערך? <small>(לא חובה)</small></span><input id="ck-hours" type="text" inputmode="decimal" autocomplete="off" aria-describedby="ck-err" placeholder="למשל 60"></label>
     <label class="sw"><input id="ck-shab" type="checkbox"> בשבת משלמים לי אותו תעריף כמו ביום חול</label>
-    <label id="ck-shab-h" for="ck-shab-hours" hidden><span>כמה מהשעות האלה בשבת?</span><input id="ck-shab-hours" type="number" inputmode="numeric" min="0" step="1" placeholder="למשל 8"></label>
+    <label id="ck-shab-h" for="ck-shab-hours" hidden><span>כמה מהשעות האלה בשבת?</span><input id="ck-shab-hours" type="text" inputmode="decimal" autocomplete="off" aria-describedby="ck-err" placeholder="למשל 8"></label>
   </div>
+  <p id="ck-err" class="ck-err" role="alert" hidden></p>
   <div id="ck-out" hidden aria-live="polite">
     <div id="ck-title"></div>
     <div id="ck-big"></div>

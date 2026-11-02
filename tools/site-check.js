@@ -17,16 +17,31 @@
   shab.addEventListener('change', () => { $('#ck-shab-h').hidden = !shab.checked; update(); });
   ['#ck-wage', '#ck-hours', '#ck-shab-hours'].forEach((s) => $(s).addEventListener('input', update));
 
-  const num = (s) => { const v = parseFloat(String($(s).value).replace(',', '.')); return Number.isFinite(v) && v >= 0 ? v : null; };
+  // a number as people type it, a comma as the decimal point too: '' when empty, NaN when it is not a number
+  const read = (s) => { const t = String($(s).value).trim().replace(',', '.'); return t === '' ? '' : /^\d+(\.\d+)?$/.test(t) ? +t : NaN; };
+  // what cannot be right is said in words, with no result under it (99999 showed "282383% above the minimum", hours
+  // over 400 were cut silently, a wage typed before an age showed nothing)
+  const err = $('#ck-err');
+  const say = (msg, at) => {
+    ['#ck-wage', '#ck-hours', '#ck-shab-hours'].forEach((x) => $(x).setAttribute('aria-invalid', String(x === at)));
+    err.textContent = msg;
+    err.hidden = !msg;
+  };
   let last = null;
   function update() {
     const out = $('#ck-out');
-    const wage = num('#ck-wage');
-    if (!age || wage == null || wage <= 0) { out.hidden = true; last = null; return; }
-    const min = D.min[age];
-    const hours = Math.min(400, num('#ck-hours') || 0);
+    const w = read('#ck-wage'), h = read('#ck-hours'), sh = shab.checked ? read('#ck-shab-hours') : '';
+    let msg = '', at = null;
+    if (w !== '' && !(w >= 1 && w <= 500)) { msg = 'שכר לשעה הוא מספר בין 1 ל-500 ₪, למשל 32'; at = '#ck-wage'; }
+    else if (h !== '' && !(h >= 0 && h <= 400)) { msg = 'שעות בחודש: מספר עד 400'; at = '#ck-hours'; }
     // Shabbat hours are part of the month's hours (so they need the month's hours)
-    const shabH = shab.checked && hours ? Math.min(hours, num('#ck-shab-hours') || 0) : 0;
+    else if (sh !== '' && !(sh >= 0 && sh <= (h || 0))) { msg = h ? `השעות בשבת הן חלק משעות החודש, אז עד ${h}` : 'כדי לחשב את השבתות, כתבו קודם כמה שעות בחודש'; at = '#ck-shab-hours'; }
+    else if (w !== '' && !age) msg = 'בחרו קודם גיל, ונבדוק';
+    say(msg, at);
+    if (msg || !age || w === '') { out.hidden = true; last = null; return; }
+    const wage = w, min = D.min[age];
+    const hours = h || 0;
+    const shabH = shab.checked && hours ? sh || 0 : 0;
     const perHour = Math.max(0, Math.round((min - wage) * 100) / 100);
     // Shabbat hours paid like a weekday: the law says at least 150% of the (legal) rate
     const shabMissing = shabH * Math.max(wage, min) * (D.rest / 100 - 1);
