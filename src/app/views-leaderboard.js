@@ -29,7 +29,9 @@
   const plusOn = () => !!(root.Plus && root.Plus.active());
   const games = () => (App.games ? App.games.LIST : []);
   const gameOf = (id) => games().find((g) => g.id === id) || games()[0];
-  const today = () => U.todayKey();
+  // the table's day is Israel's, the same for every player (a phone set to another time zone filed a game at 01:30
+  // under yesterday)
+  const today = () => LB.israel(Date.now()).day;
   Champions.joined = joined;
 
   /** An admin's Plus preview shows the look on this phone only; the public row stays as it really is. */
@@ -42,10 +44,13 @@
     const p = local ? plusOn() : realPlus();
     return { n: l.n || '', e: LB.EMOJI.includes(l.e) ? l.e : LB.EMOJI[0], bg: p && skins[l.bg] ? l.bg : '', p };
   }
-  async function readMine() {
-    if (mine && mine.uid === uid()) return mine;
+  /** My row (fresh: from the server, not the copy in memory: another phone of mine may have written a better score
+   *  since, and sending against the old copy would lower it; an admin may have removed the row). */
+  async function readMine(fresh) {
+    if (!fresh && mine && mine.uid === uid()) return mine;
     const { fs, db } = await Cloud().sdk();
-    const snap = await fs.getDoc(fs.doc(db, 'lb', uid()));
+    const ref = fs.doc(db, 'lb', uid());
+    const snap = fresh && fs.getDocFromServer ? await fs.getDocFromServer(ref) : await fs.getDoc(ref);
     mine = Object.assign({ uid: uid(), exists: snap.exists(), g: {} }, snap.exists() ? snap.data() : {});
     return mine;
   }
@@ -54,13 +59,18 @@
     const row = await readMine();
     const { fs, db } = await Cloud().sdk();
     const pr = profile();
-    const data = { n: pr.n, e: pr.e, bg: pr.bg, p: pr.p, t: Date.now() };
-    // a merge with an empty map would wipe the scores, so g goes only with something in it (or on a new row)
-    if (gPatch && Object.keys(gPatch).length) data.g = gPatch;
-    else if (!row.exists) data.g = {};
-    await fs.setDoc(fs.doc(db, 'lb', uid()), data, { merge: true });
-    Object.assign(row, data, { exists: true, g: row.g || {} });
-    for (const [game, vals] of Object.entries(gPatch || {})) row.g[game] = Object.assign({}, row.g[game], vals);
+    // one game per write: the rules check the games a write changes and stop at 1000 expressions (three games in one
+    // write were over it; checking the whole row refused every write of a player with two games, 2 Nov 2026)
+    const steps = LB.split(gPatch);
+    for (const gp of steps.length ? steps : [null]) {
+      const data = { n: pr.n, e: pr.e, bg: pr.bg, p: pr.p, t: Date.now() };
+      // a merge with an empty map would wipe the scores, so g goes only with something in it (or on a new row)
+      if (gp) data.g = gp;
+      else if (!row.exists) data.g = {};
+      await fs.setDoc(fs.doc(db, 'lb', uid()), data, { merge: true });
+      Object.assign(row, data, { exists: true, g: row.g || {} });
+      for (const [game, vals] of Object.entries(gp || {})) row.g[game] = LB.mergeGame(row.g[game], vals);
+    }
     // only the boards my new scores change are read again; my name or look changes in the others in place
     for (const key of [...boards.keys()]) {
       const [g, p] = key.split('|');
@@ -76,12 +86,14 @@
     const next = LB.record(cur, game, score, today(), Date.now());
     return next !== cur ? Store.setMeta({ lbLocal: Object.assign({}, S.meta.lbLocal, { [game]: next }) }).catch(() => {}) : Promise.resolve();
   };
-  /** What my published row is missing of every game, from the phone's copy ({ game: { period: value, t } }). */
+  /** What my published row is missing of every game, from the phone's copy ({ game: { period: value, t } }) and the
+   *  phone's best of each game (a best with no date counts for its year: LB.pending). */
   function missing(row) {
     const out = {};
-    for (const [game, local] of Object.entries(S.meta.lbLocal || {})) {
+    const lbLocal = S.meta.lbLocal || {}, bests = S.meta.games || {};
+    for (const game of new Set([...Object.keys(lbLocal), ...Object.keys(bests), ...Object.keys(row.g || {})])) {
       if (!LB.MAX[game]) continue;
-      const v = LB.pending(local, (row.g || {})[game], today());
+      const v = LB.pending(lbLocal[game], (row.g || {})[game], today(), game, bests[game]);
       if (Object.keys(v).length) out[game] = v;
     }
     return out;
@@ -135,8 +147,8 @@
     if (!joined() || !LB.MAX[game]) return null;
     try {
       await Champions.record(game, score); // (once: a second time with the same score changes nothing)
-      const row = await readMine();
-      const before = (boards.get(`${game}|d|${today()}`) || { rows: [] }).rows.find((x) => x.uid === uid());
+      const row = await readMine(true);
+      const before = (cached(game, 'd') || []).find((x) => x.uid === uid());
       // what the table is missing of every game (this one's new score is in the phone's copy already: afterGame)
       const patch = missing(row);
       if (Object.keys(patch).length) await writeMine(patch);
@@ -178,8 +190,9 @@
   /** A small card for the games list: the place today in the last game played. */
   const hubSub = () => {
     const last = (S.meta.lbLast && LB.MAX[S.meta.lbLast]) ? S.meta.lbLast : 'coins';
-    const c = boards.get(`${last}|d|${today()}`);
-    const r = c && signedIn() ? c.rows.find((x) => x.uid === uid()) : null;
+    // a board of any age would say an old place (the card's line is written again when warm() brings a fresh one)
+    const c = signedIn() ? cached(last, 'd') : null;
+    const r = c ? c.find((x) => x.uid === uid()) : null;
     return !signedIn() ? 'מתחברים ומתחרים על המקום הראשון' : !joined() ? 'היום, השבוע, החודש ובכל הזמנים' : r ? `המקום שלך היום ב${SHORT[last]}: ${r.rank}` : 'מי במקום הראשון היום?';
   };
   Champions.hubCard = function () {
@@ -194,16 +207,21 @@
     let game = LB.MAX[startGame] ? startGame : (LB.MAX[S.meta.lbLast] ? S.meta.lbLast : 'coins');
     let period = 'd';
     let seq = 0;
-    const set = (node, html) => { if (node && node.__html !== html) { node.innerHTML = html; node.__html = html; } };
+    // only what differs changes: the rows that stay are the same elements (a switch took 88-128 ms on a 4x slower CPU,
+    // now 56-96) and an empty board's mascot does not wave again
+    const set = (node, html) => { if (node && node.__html !== html) { root.Dom.patch(node, html); node.__html = html; } };
     const row = (x, meId, admin, unit) => `<li class="lb-row ${x.uid === meId ? 'me' : ''} ${x.bg ? 'plus sk-' + x.bg : ''}" data-lb-at>
         <span class="lb-r">${x.rank}</span><span class="lb-e" aria-hidden="true">${x.e}</span>
         <span class="lb-n">${esc(x.n)}${x.p ? '<i class="lb-plus">Plus</i>' : ''}${x.uid === meId ? ' <small>(את/ה)</small>' : ''}${whenTag(x)}</span>
         <b class="lb-s">${x.s}${esc(unit)}</b>${admin && x.uid !== meId ? `<button class="icon-btn lb-rm" data-rm="${esc(x.uid)}" aria-label="הסרת ${esc(x.n)} מהטבלה">${icon('trash', 's')}</button>` : ''}</li>`;
     const pod = (x, place, meId, unit) => (x ? `<div class="lb-pod p${place} ${x.uid === meId ? 'me' : ''}" data-lb-at>
-        <div class="lb-av ${x.bg ? 'sk-' + x.bg : ''}"><span aria-hidden="true">${x.e}</span>${place === 1 ? '<i class="lb-crown" aria-hidden="true">👑</i>' : ''}</div>
-        <b class="lb-n">${esc(x.n)}</b>${x.p ? '<i class="lb-plus">Plus</i>' : ''}<span class="lb-s">${x.s}${esc(unit)}</span>${whenTag(x)}<div class="lb-step"><span>${place}</span></div></div>`
+        <div class="lb-av ${x.bg ? 'sk-' + x.bg : ''}"><span aria-hidden="true">${x.e}</span>${x.rank === 1 ? '<i class="lb-crown" aria-hidden="true">👑</i>' : ''}${x.p ? '<i class="lb-plus">Plus</i>' : ''}</div>
+        <b class="lb-n">${esc(x.n)}</b><span class="lb-s">${x.s}${esc(unit)}</span>${whenTag(x)}<div class="lb-step"><span>${x.rank}</span></div></div>`
       : `<div class="lb-pod p${place} empty"><div class="lb-av"><span aria-hidden="true">?</span></div><b class="lb-n">פנוי</b><div class="lb-step"><span>${place}</span></div></div>`);
-    const periodName = () => PERIODS.find((p) => p[0] === period)[1];
+    // whole sentences per period: a period's name put inside one read wrong in other languages ("You haven't played
+    // Today yet")
+    const notPlayed = () => ({ d: 'עוד לא שיחקת היום', w: 'עוד לא שיחקת השבוע', m: 'עוד לא שיחקת החודש', y: 'עוד לא שיחקת השנה' })[period] || 'עוד לא שיחקת כאן';
+    const nobody = (name) => ({ d: `עוד אף אחד לא שיחק היום ב"${name}".`, w: `עוד אף אחד לא שיחק השבוע ב"${name}".`, m: `עוד אף אחד לא שיחק החודש ב"${name}".`, y: `עוד אף אחד לא שיחק השנה ב"${name}".` })[period] || 'עוד אף אחד לא נכנס לטבלה במשחק הזה.';
     let lastMe = null;
     /** The board and my line under it, from rows (no waiting). */
     function paint(el, rows0) {
@@ -220,7 +238,7 @@
       const head = `<div class="lb-reset tiny muted">${icon('clock', 's')} ${esc(reset)} · ${rows.length ? (rows.length >= LIMIT ? '50 הראשונים' : rows.length + ' שחקנים') : 'עוד אין שחקנים'}</div>`;
       const body = el.querySelector('[data-lb-body]');
       if (!rows.length) {
-        set(body, `${head}<div class="empty fun lb-empty">${App.mascot ? App.mascot('party', { size: 84 }) : ''}<h3>המקום הראשון פנוי!</h3><div>${period === 'a' ? 'עוד אף אחד לא נכנס לטבלה במשחק הזה.' : `עוד אף אחד לא שיחק ${periodName()} ב"${esc(g.t)}".`}</div>
+        set(body, `${head}<div class="empty fun lb-empty">${App.mascot ? App.mascot('party', { size: 84 }) : ''}<h3>המקום הראשון פנוי!</h3><div>${nobody(esc(g.t))}</div>
           <button class="btn" data-lb-play>${icon('play', 's')} לשחק ולתפוס אותו</button></div>`);
       } else {
         const others = rows.slice(0, 3).filter((x) => x.uid !== meId);
@@ -236,7 +254,7 @@
         set(bar, `<div class="lb-me-t"><b>${meRow.rank === 1 ? '👑 את/ה במקום הראשון!' : `המקום שלך: ${meRow.rank}`}</b><small>${ahead ? `עוד ${ahead.s - meRow.s + 1}${esc(unit)} כדי לעקוף את ${esc(ahead.n)}` : 'תשמרו על הכתר 😎'}</small></div><button class="icon-btn lb-share" data-lb-share aria-label="שיתוף המקום שלי">${icon('share', 's')}</button><button class="btn sm" data-lb-play>${icon('play', 's')} לשחק</button>`);
       } else {
         const last = rows[rows.length - 1];
-        set(bar, `<div class="lb-me-t"><b>${rows.length >= LIMIT ? 'עוד לא בטופ 50' : `עוד לא שיחקת ${period === 'a' ? 'כאן' : periodName()}`}</b><small>${rows.length >= LIMIT ? `צריך יותר מ-${last.s}${esc(unit)}` : 'משחק אחד וכבר את/ה בטבלה'}</small></div><button class="btn sm" data-lb-play>${icon('play', 's')} לשחק</button>`);
+        set(bar, `<div class="lb-me-t"><b>${rows.length >= LIMIT ? 'עוד לא בטופ 50' : notPlayed()}</b><small>${rows.length >= LIMIT ? `צריך יותר מ-${last.s}${esc(unit)}` : 'משחק אחד וכבר את/ה בטבלה'}</small></div><button class="btn sm" data-lb-play>${icon('play', 's')} לשחק</button>`);
       }
     }
     /** The other periods of this game and this period of the other games, loaded quietly so that switching is
@@ -260,7 +278,10 @@
       if (now) {
         body.classList.remove('lb-busy'); paint(el, now); prefetch();
         // kept a while: shown at once, and read again quietly if it is no longer fresh
-        if (!cached(game, period, FRESH_MS)) {
+        // ...and also when another period of this game was read later: a player who played in between would be in that
+        // board and missing from this one (in 'all time' and not in 'today')
+        const at = (p) => (boards.get(`${game}|${p}|${today()}`) || { at: 0 }).at;
+        if (!cached(game, period, FRESH_MS) || at(period) < Math.max(...PERIODS.map(([p]) => at(p))) - 5000) {
           const g = game, p = period;
           board(g, p, true).then((rows) => { if (my === seq && el.isConnected && g === game && p === period) paint(el, rows); }).catch(() => {});
         }
@@ -292,7 +313,9 @@
       // (the text's own width, to the fraction of a pixel: the ellipsis shows as soon as it is wider at all)
       const over = (b) => {
         const cs = getComputedStyle(b), r = document.createRange(); r.selectNodeContents(b);
-        return r.getBoundingClientRect().width > b.clientWidth - parseFloat(cs.paddingLeft) - parseFloat(cs.paddingRight);
+        // the button's width to the fraction too: clientWidth is rounded (57 for 56.8), so "כל הזמנים" at 360 px passed
+        // as fitting and was drawn cut ("כל הזמנ…")
+        return r.getBoundingClientRect().width > b.getBoundingClientRect().width - parseFloat(cs.paddingLeft) - parseFloat(cs.paddingRight) - parseFloat(cs.borderLeftWidth) - parseFloat(cs.borderRightWidth);
       };
       el.querySelectorAll('.lb-games button, .lb-periods button').forEach((b) => {
         for (let f = 0.76; b.clientWidth && over(b) && f >= 0.6; f -= 0.04) b.style.fontSize = f.toFixed(2) + 'rem';
@@ -462,7 +485,8 @@
               UI.closeTop();
               if (done) done();
             } catch (x) {
-              if (!wasOn) await Store.setSettings((s) => { s.lb = Object.assign({}, s.lb, { on: false }); });
+              // a row already made (the first of the writes went in) stays joined: the next sync sends the rest
+              if (!wasOn && !(mine && mine.exists)) await Store.setSettings((s) => { s.lb = Object.assign({}, s.lb, { on: false }); });
               b.disabled = false;
               UI.toast(navigator.onLine ? 'השמירה נכשלה. נסו שוב' : 'אין חיבור לאינטרנט');
             }
@@ -486,7 +510,21 @@
     if (S.settings.lb && S.settings.lb.on) await Store.setSettings((s) => { s.lb = Object.assign({}, s.lb, { on: false }); });
   };
   /** A changed profile (or Plus turning on or off) reaches the row at the next game; this sends it now. */
-  Champions.sync = async function () { if (joined()) { try { await writeMine(missing(await readMine())); } catch (e) { /* next time */ } } };
+  let syncing = false;
+  Champions.sync = async function () {
+    if (!joined() || syncing) return;
+    syncing = true;
+    try {
+      const row = await readMine(true);
+      // a row that is gone (an admin removed it) comes back only with a new game, not by itself on every opening
+      if (row.exists) {
+        const p = missing(row), pr = profile();
+        // the scores the table is missing, or a changed name, emoji or look (Plus ended: the background goes)
+        if (Object.keys(p).length || ['n', 'e', 'bg', 'p'].some((k) => (row[k] == null ? (k === 'p' ? false : '') : row[k]) !== pr[k])) await writeMine(p);
+      }
+    } catch (e) { /* next time */ }
+    syncing = false;
+  };
   Champions._reset = () => { mine = null; boards.clear(); };
   App.actions.leaderboard = (el) => Champions.open(el && el.dataset && el.dataset.game);
 })(typeof window !== 'undefined' ? window : globalThis);

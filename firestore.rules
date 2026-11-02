@@ -73,7 +73,11 @@ service cloud.firestore {
     match /lb/{uid} {
       allow get: if request.auth != null;
       allow list: if request.auth != null && request.query.limit <= 100;
-      allow create, update: if request.auth != null && request.auth.uid == uid && validLb(request.resource.data);
+      // only the games a write changes are checked (the others were checked when they were written): Firestore stops a
+      // rule at 1000 evaluated expressions, and checking the whole row (5 games × 5 periods and their times) went over
+      // it, so every write of a player with 2 games or more was refused (2 Nov 2026). The app sends one game per write.
+      allow create: if request.auth != null && request.auth.uid == uid && validLb(request.resource.data, ['coins', 'quiz', 'facts', 'pairs', 'hours']);
+      allow update: if request.auth != null && request.auth.uid == uid && validLb(request.resource.data, request.resource.data.g.diff(resource.data.g).affectedKeys());
       allow delete: if request.auth != null && (request.auth.uid == uid || isAdmin());
     }
 
@@ -193,7 +197,7 @@ service cloud.firestore {
         && d.t is int;
     }
 
-    function validLb(d) {
+    function validLb(d, ch) {
       return d.keys().hasOnly(['n', 'e', 'bg', 'p', 't', 'g']) && d.keys().hasAll(['n', 'e', 't', 'g'])
         && validNick(d.n)
         && d.e in ['🦊', '🐯', '🦉', '🐬', '🐺', '🦅', '🦔', '🐧', '🦜', '🐻', '🐢', '🐳', '🐼', '🦁', '🐸', '🐙', '🦄', '🐝', '⚡', '🔥', '⭐', '🚀', '🎧', '⚽']
@@ -201,28 +205,33 @@ service cloud.firestore {
         && (!('p' in d) || d.p is bool)
         && d.t is int
         && d.g is map && d.g.keys().hasOnly(['coins', 'quiz', 'facts', 'pairs', 'hours'])
-        && lbGame(d.g, 'coins', 5000) && lbGame(d.g, 'quiz', 3000) && lbGame(d.g, 'facts', 10)
-        && lbGame(d.g, 'pairs', 140) && lbGame(d.g, 'hours', 500);
+        && (!('coins' in ch) || lbGame(d.g, 'coins', 5000)) && (!('quiz' in ch) || lbGame(d.g, 'quiz', 3000))
+        && (!('facts' in ch) || lbGame(d.g, 'facts', 10)) && (!('pairs' in ch) || lbGame(d.g, 'pairs', 140))
+        && (!('hours' in ch) || lbGame(d.g, 'hours', 500));
     }
     // a game's best per period: day, week (its Sunday), month and year as period × 100000 + score; all time as the score
+    // (get() with a default that passes stands for a period not stored: cheaper than 'in' and a second look)
     function lbGame(g, id, max) {
       return !(id in g) || (g[id] is map && g[id].keys().hasOnly(['d', 'w', 'm', 'y', 'a', 't'])
-        && (!('t' in g[id]) || lbTimes(g[id].t))
-        && lbVal(g[id], 'd', 20260101, 21000101, max) && lbVal(g[id], 'w', 20251228, 21000101, max)
-        && lbVal(g[id], 'm', 202601, 210001, max) && lbVal(g[id], 'y', 2026, 2100, max)
-        && (!('a' in g[id]) || (g[id].a is int && g[id].a >= 0 && g[id].a <= max)));
+        && lbV(g[id].get('d', 2026010100000), 2026010100000, 2100010100000, max)
+        && lbV(g[id].get('w', 2025122800000), 2025122800000, 2100010100000, max)
+        && lbV(g[id].get('m', 20260100000), 20260100000, 21000100000, max)
+        && lbV(g[id].get('y', 202600000), 202600000, 210000000, max)
+        && lbN(g[id].get('a', 0), 0, max)
+        && (!('t' in g[id]) || lbT(g[id].t)));
     }
     // when each period's best was set (ms since 1970): 2026 to 2100
-    function lbTimes(t) {
+    function lbT(t) {
       return t is map && t.keys().hasOnly(['d', 'w', 'm', 'y', 'a'])
-        && (!('d' in t) || (t.d is int && t.d > 1760000000000 && t.d < 4100000000000))
-        && (!('w' in t) || (t.w is int && t.w > 1760000000000 && t.w < 4100000000000))
-        && (!('m' in t) || (t.m is int && t.m > 1760000000000 && t.m < 4100000000000))
-        && (!('y' in t) || (t.y is int && t.y > 1760000000000 && t.y < 4100000000000))
-        && (!('a' in t) || (t.a is int && t.a > 1760000000000 && t.a < 4100000000000));
+        && lbN(t.get('d', 1760000000001), 1760000000001, 4099999999999) && lbN(t.get('w', 1760000000001), 1760000000001, 4099999999999)
+        && lbN(t.get('m', 1760000000001), 1760000000001, 4099999999999) && lbN(t.get('y', 1760000000001), 1760000000001, 4099999999999)
+        && lbN(t.get('a', 1760000000001), 1760000000001, 4099999999999);
     }
-    function lbVal(m, k, lo, hi, max) {
-      return !(k in m) || (m[k] is int && m[k] >= lo * 100000 && m[k] < hi * 100000 && m[k] % 100000 <= max);
+    function lbV(v, lo, hi, max) {
+      return v is int && v >= lo && v < hi && v % 100000 <= max;
+    }
+    function lbN(v, lo, hi) {
+      return v is int && v >= lo && v <= hi;
     }
 
     function valid(uid, collection) {

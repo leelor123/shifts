@@ -1045,6 +1045,9 @@ body.fx .recap-card:active { transform: scale(.98); }
 .lb-pod.p2 .lb-step { height: 46px; background: linear-gradient(180deg, #d6dce5, #a3adbb); }
 .lb-pod.p3 .lb-step { height: 34px; background: linear-gradient(180deg, #e9ac7a, #d08a4f); }
 .lb-plus { display: inline-block; margin-inline-start: 6px; padding: 0 6px; border-radius: 999px; background: var(--grad-money); color: #2b1a00; font: 700 .75rem/1.6 var(--font); font-style: normal; vertical-align: 2px; }
+/* on the podium the Plus tag sits on the avatar's lower edge (like the crown on its top): as a row of its own it made
+ * the podium 23 px taller whenever first place was a Plus member, and the whole list jumped on a board where it was not */
+.lb-av > .lb-plus { position: absolute; bottom: -3px; left: 50%; translate: -50% 0; margin: 0; vertical-align: 0; }
 .lb-list { list-style: none; margin: 0; padding: 0; display: grid; gap: 6px; }
 .lb-row { display: flex; align-items: center; gap: 10px; min-height: 48px; padding: 8px 12px; border-radius: 14px; background: var(--surface-1); border: 1px solid var(--line); }
 .lb-row .lb-r { width: 24px; flex: none; text-align: center; font: 700 .9rem var(--display); color: var(--on-surface-var); }
@@ -1060,9 +1063,14 @@ body.fx .recap-card:active { transform: scale(.98); }
 .lb-row.plus .lb-rm { color: #fff; }
 .lb-admin { display: flex; flex-wrap: wrap; gap: 4px; align-items: center; margin-top: 8px; }
 .lb-empty .btn { margin-top: 12px; }
-.lb-me { display: flex; align-items: center; gap: 10px; }
+/* the bar under the table keeps one height on every board and from the first frame (it is empty while the first board
+ * loads): it fills the foot (it shrank to its text, which wrapped into one or two lines: 88 or 112 px), its button keeps
+ * its own width (.sh-foot .btn grows) and three lines fit */
+.lb-me { flex: 1; min-width: 0; min-height: calc(3rem + 1px + 1.2rem); display: flex; align-items: center; gap: 10px; }
+.sheet .sh-foot .lb-me .btn { flex: none; }
 .lb-me-t { flex: 1; min-width: 0; display: grid; gap: 1px; }
-.lb-me-t small { color: var(--on-surface-var); font-size: .8rem; }
+.lb-me-t b { line-height: 1.5; }
+.lb-me-t small { color: var(--on-surface-var); font-size: .8rem; line-height: 1.5; text-wrap: pretty; }
 .lb-join .btn { margin-top: 12px; }
 .lb-nick { display: flex; gap: 6px; align-items: center; }
 .lb-nick .input { flex: 1; min-width: 0; }
@@ -1099,10 +1107,14 @@ body.fx .recap-card:active { transform: scale(.98); }
 .adm-preview .seg button { font-size: .8rem; padding-inline: 4px; }
 .adm-preview-l { line-height: 1.5; color: var(--on-surface-var); }
 /* the table switches without blanking: while a new board loads, the current one stays and a thin line moves */
-.lb-body { position: relative; }
-.lb-body.lb-busy::before { content: ''; position: absolute; top: -4px; inset-inline: 0; height: 3px; border-radius: 3px; background: linear-gradient(90deg, transparent, var(--brand), transparent); background-size: 50% 100%; background-repeat: no-repeat; animation: lb-load 1s linear infinite; }
+/* at least the sheet's height: a short board never pulls a sheet scrolled a little (the tabs in sight) back up */
+.lb-body { position: relative; min-height: 100%; }
+/* the line shows only for a wait over .3 s (a board that came 80 ms after the tap blinked it) */
+.lb-body.lb-busy::before { content: ''; position: absolute; top: -4px; inset-inline: 0; height: 3px; border-radius: 3px; background: linear-gradient(90deg, transparent, var(--brand), transparent); background-size: 50% 100%; background-repeat: no-repeat; opacity: 0; animation: lb-load 1s linear infinite, lb-wait .2s ease-out .3s forwards; }
+@keyframes lb-wait { to { opacity: 1; } }
 @keyframes lb-load { from { background-position: -50% 0; } to { background-position: 150% 0; } }
-@media (prefers-reduced-motion: reduce) { .lb-body.lb-busy::before { animation: none; background-size: 100% 100%; opacity: .5; } }
+@keyframes lb-wait-still { to { opacity: .5; } }
+@media (prefers-reduced-motion: reduce) { .lb-body.lb-busy::before { animation: lb-wait-still 0s .3s forwards; background-size: 100% 100%; } }
 
 /* the music button in a game's title bar */
 .sh-head .gm-music { margin-inline-start: auto; }

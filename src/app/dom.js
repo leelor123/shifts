@@ -136,7 +136,7 @@
 
   /* ---------------- amounts, marked for the privacy blur ---------------- */
   // a game's coins and points, and a price, are not the user's money
-  const SKIP = '.money, .pub, .game-sheet, .games-sheet, [data-plus-buy], [data-limit-buy], [data-design-buy], script, style, textarea, [contenteditable]';
+  const SKIP = '.money, .pub, .game-sheet, .games-sheet, .lb-sheet, [data-plus-buy], [data-limit-buy], [data-design-buy], script, style, textarea, [contenteditable]';
   const GAP = '[\\s\\u200e\\u200f]*';
   const NUM = '[-−+]?\\d(?:[\\d,.]*\\d)?[kKMm]?';
   const AMOUNT = new RegExp(`[-−+]?₪${GAP}${NUM}|${NUM}${GAP}₪`, 'g');

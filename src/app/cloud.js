@@ -349,6 +349,8 @@
     await push();
     if (root.Stats) { root.Stats.report(); Cloud.adminCheck = root.Stats.checkAdmin(); } // the opening show waits for this one
     if (root.Support) root.Support.check();
+    // what the champions table is missing (a game played offline, a write that failed), a little after the opening
+    setTimeout(() => { if (root.Champions && Cloud.user === user) root.Champions.sync(); }, 4000);
   };
 
   /* ---------------- live listeners (cloud → phone) ---------------- */
@@ -485,7 +487,11 @@
     if (ev.type === 'restore') { Cloud.afterRestore(ev.mode); return; }
     if (ev.type === 'data' || ev.type === 'settings' || ev.type === 'active') Cloud.schedulePush(ev.type === 'active' ? 200 : 1500);
   });
-  window.addEventListener('online', () => { if (Cloud.user && Cloud.connected) Cloud.schedulePush(300); });
+  window.addEventListener('online', () => {
+    if (!Cloud.user || !Cloud.connected) return;
+    Cloud.schedulePush(300);
+    if (root.Champions) root.Champions.sync(); // a game played offline reaches the table
+  });
   window.addEventListener('offline', () => { if (Cloud.user) setStatus('offline'); });
 
   /** After restoring a backup: make the cloud match this device. */

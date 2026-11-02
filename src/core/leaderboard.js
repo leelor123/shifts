@@ -15,6 +15,7 @@
   const U = root.U;
   const P = 100000;
   const PERIODS = ['d', 'w', 'm', 'y', 'a'];
+  const FIRST_YEAR = 2026; // the games came out in October 2026
   /** the highest score each game can give (rounding up generously); the rules refuse anything above */
   const MAX = { coins: 5000, quiz: 3000, facts: 10, pairs: 140, hours: 500 };
   const EMOJI = ['🦊', '🐯', '🦉', '🐬', '🐺', '🦅', '🦔', '🐧', '🦜', '🐻', '🐢', '🐳', '🐼', '🦁', '🐸', '🐙', '🦄', '🐝', '⚡', '🔥', '⭐', '🚀', '🎧', '⚽'];
@@ -82,10 +83,10 @@
    * What the published row is missing: the periods where the phone's copy is better now (as values to store, with
    * their times under t). {} = nothing to send.
    */
-  function pending(local, remote, dateKey) {
+  function pending(local, remote, dateKey, game, best) {
     const out = {};
-    if (!local) return out;
     for (const p of PERIODS) {
+      if (!local) break;
       const mine = scoreIn(local, p, dateKey);
       if (mine > 0 && mine > scoreIn(remote, p, dateKey)) {
         out[p] = local[p];
@@ -93,7 +94,40 @@
         if (at > 0) out.t = Object.assign({}, out.t, { [p]: at });
       }
     }
+    // the games began in October 2026, so a best with no date (all time, kept before the phone kept its copy, or
+    // read from the table) was set in 2026: that year, the year's best is never below the best of all time (a friend
+    // who joined with such a score showed in 'all time' only, and a row read 466 for all time and 357 for the year)
+    if (keys(dateKey).y === FIRST_YEAR && MAX[game]) {
+      const top = Math.min(MAX[game], Math.max(scoreIn(local, 'a', dateKey), scoreIn(remote, 'a', dateKey), Math.round(+best || 0)));
+      if (top > scoreIn(remote, 'y', dateKey) && top > scoreIn(out, 'y', dateKey)) {
+        out.y = pack(FIRST_YEAR, top);
+        if (out.t) delete out.t.y;
+        if (out.t && !Object.keys(out.t).length) delete out.t;
+      }
+      if (top > scoreIn(remote, 'a', dateKey) && top > scoreIn(out, 'a', dateKey)) out.a = top;
+    }
     return out;
+  }
+  /** A patch of several games as writes of one game each (the rules stop at 1000 expressions: three games in one
+   *  write are over it). */
+  function split(gPatch) {
+    return Object.keys(gPatch || {}).filter((g) => gPatch[g] && Object.keys(gPatch[g]).length).map((g) => ({ [g]: gPatch[g] }));
+  }
+  /** A game's row after a merge write: Firestore merges the times (t) too, so the copy in memory does the same. */
+  function mergeGame(row, vals) {
+    return Object.assign({}, row, vals, vals && vals.t ? { t: Object.assign({}, (row || {}).t, vals.t) } : {});
+  }
+  /** The date and the time in Israel ({ day: 'YYYY-MM-DD', h, min }): the table's day is the same for every player,
+   *  also on a phone set to another time zone (a game at 01:30 was yesterday's there). Falls back to the phone's. */
+  function israel(now) {
+    try {
+      const p = {};
+      new Intl.DateTimeFormat('en-GB', { timeZone: 'Asia/Jerusalem', year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit', hourCycle: 'h23' })
+        .formatToParts(new Date(now)).forEach((x) => { p[x.type] = x.value; });
+      if (p.year && p.month && p.day) return { day: p.year + '-' + p.month + '-' + p.day, h: +p.hour % 24, min: +p.minute };
+    } catch (e) { /* no time zones in this browser */ }
+    const d = new Date(now);
+    return { day: U.epochKey(now), h: d.getHours(), min: d.getMinutes() };
   }
   /** When a period's best was set (ms), or 0 when not known (a score from before the times were kept). */
   const timeOf = (gameRow, period) => +((gameRow && gameRow.t) || {})[period] || 0;
@@ -132,7 +166,7 @@
   /** "until midnight" / "until Sunday" … for each period, from a date and an hour. */
   function resetText(period, dateKey, now) {
     if (period === 'd') {
-      const d = new Date(now); const left = (24 - d.getHours()) * 60 - d.getMinutes();
+      const d = israel(now); const left = (24 - d.h) * 60 - d.min;
       return left > 60 ? `מתאפס בעוד ${Math.floor(left / 60)} שעות` : `מתאפס בעוד ${Math.max(1, left)} דקות`;
     }
     if (period === 'w') { const n = 7 - U.dow(dateKey); return n === 1 ? 'מתאפס מחר (יום ראשון)' : `מתאפס בעוד ${n} ימים`; }
@@ -141,5 +175,5 @@
     return 'השיאים של כל הזמנים';
   }
 
-  root.Leaderboard = { P, PERIODS, MAX, EMOJI, keys, pack, scoreOf, keyOf, range, scoreIn, improve, record, pending, timeOf, nickProblem, firstName, randomNick, resetText };
+  root.Leaderboard = { P, PERIODS, MAX, EMOJI, keys, pack, scoreOf, keyOf, range, scoreIn, improve, record, pending, timeOf, nickProblem, firstName, randomNick, resetText, split, mergeGame, israel, FIRST_YEAR };
 })(typeof window !== 'undefined' ? window : globalThis);

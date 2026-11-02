@@ -149,3 +149,51 @@ T.test('the server refuses every team-like name the app refuses (firestore.rules
   T.ok(rules.includes('&& notStaff(n)') && /validLb[\s\S]*?validNick\(d\.n\)/.test(rules), 'nicknames, invitations and the table all check it');
   for (const w of staff) T.ok(words.some((x) => w.includes(x)), 'the rules cover ' + w);
 });
+T.test('a best with no date counts for 2026 (the games came out then): the year is never below all time', () => {
+  const LB = globalThis.Leaderboard;
+  // a friend joined with a best kept before the phone kept its copy: only all time went up, and they were missing
+  // from "this year"; a row read 466 for all time and 357 for the year
+  const s = LB.pending(null, { a: 471 }, '2026-11-02', 'coins', 471);
+  T.eq(LB.scoreIn(s, 'y', '2026-11-02'), 471, 'the year gets the best of all time');
+  T.eq(s.a, undefined, 'all time is already right');
+  T.eq(s.t, undefined, 'no made-up time');
+  const r = LB.pending(null, { y: LB.pack(2026, 357), a: 466 }, '2026-11-02', 'coins', 0);
+  T.eq(LB.scoreIn(r, 'y', '2026-11-02'), 466);
+  T.eq(Object.keys(LB.pending(null, { y: LB.pack(2026, 500), a: 500 }, '2026-11-02', 'coins', 400)).length, 0, 'nothing when the table has it');
+  const b = LB.pending(null, {}, '2026-11-02', 'facts', 99);
+  T.eq(b.a, 10, 'the phone\'s best goes to all time too, cut to the game\'s highest');
+  T.eq(LB.scoreIn(b, 'y', '2026-11-02'), 10);
+  T.eq(Object.keys(LB.pending(null, { a: 471 }, '2027-01-05', 'coins', 471)).length, 0, 'from 2027 an undated best is not this year\'s');
+  T.eq(Object.keys(LB.pending(null, {}, '2026-11-02', 'nogame', 50)).length, 0, 'an unknown game sends nothing');
+  // a time kept for the year's own record stays with it; the year taken from all time has none
+  const local = LB.record(null, 'coins', 300, '2026-11-02', 1793000000000);
+  const m = LB.pending(local, { a: 900 }, '2026-11-02', 'coins', 900);
+  T.eq(LB.scoreIn(m, 'y', '2026-11-02'), 900); T.eq(m.t.y, undefined); T.eq(m.t.d, 1793000000000);
+});
+T.test('a patch goes as one game per write; a game\'s copy merges its times like Firestore does', () => {
+  const LB = globalThis.Leaderboard;
+  T.eq(JSON.stringify(LB.split({ coins: { a: 1 }, quiz: { a: 2 }, facts: {} })), JSON.stringify([{ coins: { a: 1 } }, { quiz: { a: 2 } }]));
+  T.eq(LB.split({}).length, 0); T.eq(LB.split(null).length, 0);
+  const g = LB.mergeGame({ a: 9, t: { a: 1 } }, { d: 5, t: { d: 2 } });
+  T.eq(JSON.stringify(g.t), JSON.stringify({ a: 1, d: 2 })); T.eq(g.a, 9); T.eq(g.d, 5);
+  T.eq(LB.mergeGame(undefined, { a: 3 }).a, 3);
+});
+T.test('the table\'s day is Israel\'s, on a phone in any time zone', () => {
+  const LB = globalThis.Leaderboard;
+  // 23:30 UTC on 1 Nov is 01:30 on 2 Nov in Israel (winter, UTC+2); 21:00 UTC is 23:00 there
+  T.eq(LB.israel(Date.UTC(2026, 10, 1, 23, 30)).day, '2026-11-02');
+  T.eq(LB.israel(Date.UTC(2026, 10, 1, 21, 0)).day, '2026-11-01');
+  const n = LB.israel(Date.UTC(2026, 6, 1, 20, 59)); // summer, UTC+3
+  T.eq(n.day, '2026-07-01'); T.eq(n.h, 23); T.eq(n.min, 59);
+});
+T.test('guards: the rules check only the games a write changes, the app writes one game at a time and syncs', () => {
+  const fs = require('fs'); const path = require('path');
+  const rd = (p) => fs.readFileSync(path.join(__dirname, '..', p), 'utf8');
+  const rules = rd('firestore.rules'), view = rd('src/app/views-leaderboard.js'), cloud = rd('src/app/cloud.js');
+  // checking the whole row went over Firestore's 1000 expressions: every write of a player with two games was refused
+  T.ok(rules.includes('request.resource.data.g.diff(resource.data.g).affectedKeys()'), 'update checks the changed games only');
+  T.ok(/async function writeMine[\s\S]*?LB\.split\(gPatch\)/.test(view), 'writeMine sends one game per write');
+  T.ok(/Champions\.submit[\s\S]*?readMine\(true\)/.test(view) && /Champions\.sync[\s\S]*?readMine\(true\)/.test(view), 'submit and sync read the row fresh');
+  T.ok((cloud.match(/Champions\.sync\(\)/g) || []).length >= 2, 'the sync runs after connecting and when back online');
+  T.ok(/class="lb-step"><span>\$\{x\.rank\}/.test(view), 'the podium shows the place, not the position (ties)');
+});

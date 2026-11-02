@@ -85,6 +85,10 @@ async function main() {
     const tk = (o) => Object.assign({ uid: 'u1', reason: 'bug', text: 'the button does not work', status: 'open', created: 1, updated: 1, last: 'user', seen: true }, o || {});
     const owner = (uid, status) => [{ function: 'get', args: [{ exactValue: '/databases/(default)/documents/tickets/t1' }], result: { value: { data: { uid, status: status || 'open' } } } }];
     const lb = (o) => Object.assign({ n: 'שועל זריז 27', e: '🦊', bg: '', p: false, t: 1790000000000, g: { coins: { d: 2026101500050, a: 50 } } }, o || {});
+    // a game with every period and its times, and a row with all five games: the rules stop at 1000 expressions, and
+    // checking the whole row went over it (every write of a player with two games was refused, 2 Nov 2026)
+    const full = (s) => ({ d: 2026110200000 + s, w: 2026110100000 + s, m: 20261100000 + s, y: 202600000 + s, a: s, t: { d: 1793000000000, w: 1793000000000, m: 1793000000000, y: 1793000000000, a: 1793000000000 } });
+    const all5 = (o) => Object.assign({ coins: full(30), quiz: full(30), facts: full(8), pairs: full(30), hours: full(30) }, o || {});
     const frS = (o) => Object.assign({ m: { k: 202610, v: 6834 }, y: { k: 2026, v: 40000 }, a: 52000, h: 42.5 }, o || {});
     const frNoS = (o) => Object.assign({ n: 'שועל זריז 27', e: '🦊', t: 1790000000000, hide: false, f: ['u2'] }, o || {});
     const fr = (o) => Object.assign(frNoS(), { s: frS() }, o || {});
@@ -173,6 +177,12 @@ async function main() {
       ['an unknown emoji is refused', 'DENY', 'create', me, '/lb/u1', lb({ e: '💩' }), null],
       ['an unknown background is refused', 'DENY', 'create', me, '/lb/u1', lb({ bg: 'url(x)' }), null],
       ['extra fields (an email) are refused', 'DENY', 'create', me, '/lb/u1', lb({ email: 'a@b.c' }), null],
+      ['five full games: a new score in one', 'ALLOW', 'update', me, '/lb/u1', lb({ g: all5({ coins: full(90) }) }), lb({ g: all5() })],
+      ['five full games: two change at once', 'ALLOW', 'update', me, '/lb/u1', lb({ g: all5({ coins: full(90), quiz: full(90) }) }), lb({ g: all5() })],
+      ['five full games: only the name changes, a long Arabic one', 'ALLOW', 'update', me, '/lb/u1', lb({ n: 'نورنورنورنورنورن', g: all5() }), lb({ g: all5() })],
+      ['five full games: a bad score in the one that changes is refused', 'DENY', 'update', me, '/lb/u1', lb({ g: all5({ facts: full(11) }) }), lb({ g: all5() })],
+      ['joining with one full game and a long Arabic name', 'ALLOW', 'create', me, '/lb/u1', lb({ n: 'نورنورنورنورنورن', g: { coins: full(30) } }), null],
+      ['joining with two full games', 'ALLOW', 'create', me, '/lb/u1', lb({ g: { coins: full(30), quiz: full(30) } }), null],
       ['a signed-in player reads a row', 'ALLOW', 'get', { uid: 'u2' }, '/lb/u1', null, lb()],
       ['signed out: cannot read the table', 'DENY', 'get', null, '/lb/u1', null, lb()],
       ['a player leaves the table', 'ALLOW', 'delete', me, '/lb/u1', null, lb()],
