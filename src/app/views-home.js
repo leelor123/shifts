@@ -389,8 +389,8 @@
       ${actionBlock()}
       ${iosCard()}
       ${App.guideCard ? App.guideCard() : ''}
-      ${consentCard()}
       ${HS.highlight !== false ? highlight() : ''}
+      ${consentCard()}
       ${root.Plus ? root.Plus.nudgeCard() : ''}
       ${savingCard()}
       ${HS.shortcuts !== false ? shortcuts() : ''}

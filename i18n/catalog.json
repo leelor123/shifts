@@ -257,8 +257,8 @@
   "where": [
    "app/app.js:379",
    "app/app.js:544",
-   "app/ui.js:388",
-   "app/ui.js:395",
+   "app/ui.js:398",
+   "app/ui.js:405",
    "app/views-login.js:84",
    "app/views-login.js:108",
    "app/views-settings.js:392",
@@ -314,7 +314,7 @@
   "kind": "lit",
   "where": [
    "app/app.js:531",
-   "app/ui.js:395",
+   "app/ui.js:405",
    "app/views-settings.js:392",
    "app/views-settings.js:876",
    "app/views-shift.js:534",
@@ -2218,7 +2218,7 @@
   "kind": "lit",
   "where": [
    "app/pickers.js:95",
-   "app/ui.js:466"
+   "app/ui.js:476"
   ]
  },
  {
@@ -2308,7 +2308,7 @@
   "kind": "lit",
   "where": [
    "app/pickers.js:238",
-   "app/ui.js:462"
+   "app/ui.js:472"
   ]
  },
  {
@@ -2348,7 +2348,7 @@
   "where": [
    "app/pickers.js:364",
    "app/pickers.js:416",
-   "app/placepicker.js:80"
+   "app/placepicker.js:81"
   ]
  },
  {
@@ -2362,112 +2362,113 @@
   "key": "יישוב",
   "kind": "lit",
   "where": [
-   "app/placepicker.js:80"
+   "app/placepicker.js:81"
   ]
  },
  {
   "key": "{0}<span class=\"pp-fname ph\">בחירת יישוב</span>",
   "kind": "tpl",
   "where": [
-   "app/placepicker.js:81"
+   "app/placepicker.js:82"
   ]
  },
  {
-  "key": "<div class=\"pp\">\n        <div class=\"pp-top\">\n          <label class=\"pp-search\">{0}<input type=\"search\" class=\"pp-q\" placeholder=\"חיפוש יישוב\" autocomplete=\"off\" autocorrect=\"off\" spellcheck=\"false\" enterkeyhint=\"search\" aria-label=\"חיפוש יישוב\"><button type=\"button\" class=\"pp-x\" aria-label=\"ניקוי החיפוש\" hidden>{1}</button></label>\n          <button type=\"button\" class=\"pp-loc\">{2}<span>המיקום שלי</span></button>\n        </div>\n        <div class=\"pp-browse\">\n          {3}\n          <div class=\"section-title\">🔥 הכי נפוצים</div>\n          <div class=\"pp-list pp-pop\">{4}</div>\n          <div class=\"section-title\">כל היישובים, מא׳ ועד ת׳</div>\n          <div class=\"pp-az\"></div>\n          {5}\n        </div>\n        <div class=\"pp-res\" hidden><div class=\"pp-list\"></div><div class=\"pp-more\" aria-live=\"polite\"></div></div>\n      </div>",
+  "key": "<div class=\"pp\">\n      <div class=\"pp-top\">\n        <label class=\"pp-search\">{0}<input type=\"search\" class=\"pp-q\" placeholder=\"חיפוש יישוב\" autocomplete=\"off\" autocorrect=\"off\" spellcheck=\"false\" enterkeyhint=\"search\" aria-label=\"חיפוש יישוב\"><button type=\"button\" class=\"pp-x\" aria-label=\"ניקוי החיפוש\" hidden>{1}</button></label>\n        <button type=\"button\" class=\"pp-loc\">{2}<span>המיקום שלי</span></button>\n      </div>\n      <div class=\"pp-browse\">\n        {3}\n        <div class=\"section-title\">🔥 הכי נפוצים</div>\n        <div class=\"pp-list pp-pop\">{4}</div>\n        <div class=\"section-title\">כל היישובים, מא׳ ועד ת׳</div>\n        <div class=\"pp-az\"></div>\n        {5}\n      </div>\n      <div class=\"pp-res\" hidden><div class=\"pp-list\"></div><div class=\"pp-more\" aria-live=\"polite\"></div></div>\n    </div>",
   "kind": "tpl",
   "where": [
-   "app/placepicker.js:102"
+   "app/placepicker.js:95"
   ]
  },
  {
   "key": "<div class=\"section-title\">הבחירה שלך</div><div class=\"pp-list\">{0}</div>",
   "kind": "tpl",
   "where": [
-   "app/placepicker.js:108"
+   "app/placepicker.js:101"
   ]
  },
  {
   "key": "<div class=\"section-title\">לא ברשימה?</div><div class=\"pp-list\"><button type=\"button\" class=\"pp-row\" data-custom{0}><span class=\"pp-pic pc-y\" aria-hidden=\"true\">📍<span class=\"pp-ok\">{1}</span></span><span class=\"pp-tx\"><span class=\"pp-n\">מיקום מותאם</span><span class=\"pp-f\">לפי קו רוחב וקו אורך</span></span></button></div>",
   "kind": "tpl",
   "where": [
-   "app/placepicker.js:113"
+   "app/placepicker.js:106"
   ]
  },
  {
   "key": "בחירת יישוב",
   "kind": "lit",
   "where": [
-   "app/placepicker.js:117"
+   "app/placepicker.js:140",
+   "app/placepicker.js:143"
   ]
  },
  {
   "key": "<div class=\"pp-empty\"><span class=\"pp-empty-ic\" aria-hidden=\"true\">🧭</span><b>לא מצאנו יישוב כזה</b><span>אפשר לנסות רק את תחילת השם, או באנגלית</span></div>",
   "kind": "tpl",
   "where": [
-   "app/placepicker.js:204"
+   "app/placepicker.js:230"
   ]
  },
  {
   "key": "<div class=\"pp-hint\">ועוד {0} יישובים. כדאי להמשיך לכתוב</div>",
   "kind": "tpl",
   "where": [
-   "app/placepicker.js:205"
+   "app/placepicker.js:231"
   ]
  },
  {
   "key": "המיקום שלי",
   "kind": "lit",
   "where": [
-   "app/placepicker.js:233"
+   "app/placepicker.js:259"
   ]
  },
  {
   "key": "אין כאן איתור מיקום. אפשר לחפש לפי השם",
   "kind": "lit",
   "where": [
-   "app/placepicker.js:236"
+   "app/placepicker.js:262"
   ]
  },
  {
   "key": "מאתרים…",
   "kind": "lit",
   "where": [
-   "app/placepicker.js:238"
+   "app/placepicker.js:264"
   ]
  },
  {
   "key": "המיקום שלך מחוץ לישראל, אז אי אפשר לבחור לפיו. אפשר לחפש לפי השם",
   "kind": "lit",
   "where": [
-   "app/placepicker.js:243"
+   "app/placepicker.js:269"
   ]
  },
  {
   "key": "אין הרשאה למיקום. אפשר לאשר אותה בהגדרות ולנסות שוב",
   "kind": "lit",
   "where": [
-   "app/placepicker.js:248"
+   "app/placepicker.js:274"
   ]
  },
  {
   "key": "לא הצלחנו לאתר את המיקום. אפשר לנסות שוב או לחפש לפי השם",
   "kind": "lit",
   "where": [
-   "app/placepicker.js:248"
+   "app/placepicker.js:274"
   ]
  },
  {
   "key": "<div class=\"pp-near\">{0} הכי קרוב למיקום שלך{1}</div>",
   "kind": "tpl",
   "where": [
-   "app/placepicker.js:261"
+   "app/placepicker.js:287"
   ]
  },
  {
   "key": " · {0} ק״מ",
   "kind": "tpl",
   "where": [
-   "app/placepicker.js:261"
+   "app/placepicker.js:287"
   ]
  },
  {
@@ -3744,7 +3745,7 @@
   "kind": "lit",
   "where": [
    "app/schedule-import.js:298",
-   "app/ui.js:388",
+   "app/ui.js:398",
    "app/views-login.js:321"
   ]
  },
@@ -3894,35 +3895,35 @@
   "key": "<div class=\"grab\"></div><div class=\"sh-head\"><h2 id=\"{0}\">{1}</h2><button class=\"icon-btn\" data-close aria-label=\"סגור\">{2}</button></div><div class=\"sh-body\">{3}</div>{4}",
   "kind": "tpl",
   "where": [
-   "app/ui.js:263"
+   "app/ui.js:273"
   ]
  },
  {
   "key": "לפני {0} דק׳",
   "kind": "tpl",
   "where": [
-   "app/ui.js:463"
+   "app/ui.js:473"
   ]
  },
  {
   "key": "לפני {0} שע׳",
   "kind": "tpl",
   "where": [
-   "app/ui.js:464"
+   "app/ui.js:474"
   ]
  },
  {
   "key": "לפני {0} ימים",
   "kind": "tpl",
   "where": [
-   "app/ui.js:467"
+   "app/ui.js:477"
   ]
  },
  {
   "key": "<div class=\"skel-wrap\" aria-busy=\"true\" aria-label=\"טוען\">{0}</div>",
   "kind": "tpl",
   "where": [
-   "app/ui.js:473"
+   "app/ui.js:483"
   ]
  },
  {

@@ -76,6 +76,7 @@
 
   /** The field that opens the picker (data-pick-city): the place chosen with its picture, or an invitation. */
   App.placeField = function (name, what) {
+    if (!warmed) idle(warm);
     const l = name ? App.placeLabel(name) : null;
     return `<button type="button" class="input pp-field" data-pick-city aria-label="${esc(what || 'יישוב')}: ${l ? esc(l.name) : 'לא נבחר'}">`
       + (l ? `<span class="pp-fpic" aria-hidden="true">${l.pic}</span><span class="pp-fname">${esc(l.name)}</span>` : `${icon('search')}<span class="pp-fname ph">בחירת יישוב</span>`)
@@ -87,6 +88,45 @@
     if (f) f.classList.add('just');
   };
 
+  /** The picker's sheet: the search, the place chosen, the popular places and the room for the A-to-Z list. */
+  function sheetBody(opts, cur) {
+    const pop = Places.popular(POPULAR);
+    const on = (p) => (cur && p === cur ? ' aria-current="true"' : '');
+    return `<div class="pp">
+      <div class="pp-top">
+        <label class="pp-search">${icon('search')}<input type="search" class="pp-q" placeholder="חיפוש יישוב" autocomplete="off" autocorrect="off" spellcheck="false" enterkeyhint="search" aria-label="חיפוש יישוב"><button type="button" class="pp-x" aria-label="ניקוי החיפוש" hidden>${icon('x')}</button></label>
+        <button type="button" class="pp-loc">${icon('pin')}<span>המיקום שלי</span></button>
+      </div>
+      <div class="pp-browse">
+        ${cur ? `<div class="section-title">הבחירה שלך</div><div class="pp-list">${row(cur, '', on(cur))}</div>` : ''}
+        <div class="section-title">🔥 הכי נפוצים</div>
+        <div class="pp-list pp-pop">${pop.map((p, n) => row(p, '', `${on(p)} style="--i:${n}"`)).join('')}</div>
+        <div class="section-title">כל היישובים, מא׳ ועד ת׳</div>
+        <div class="pp-az"></div>
+        ${opts.custom ? `<div class="section-title">לא ברשימה?</div><div class="pp-list"><button type="button" class="pp-row" data-custom${opts.current === '__custom' ? ' aria-current="true"' : ''}><span class="pp-pic pc-y" aria-hidden="true">📍<span class="pp-ok">${icon('check')}</span></span><span class="pp-tx"><span class="pp-n">מיקום מותאם</span><span class="pp-f">לפי קו רוחב וקו אורך</span></span></button></div>` : ''}
+      </div>
+      <div class="pp-res" hidden><div class="pp-list"></div><div class="pp-more" aria-live="polite"></div></div>
+    </div>`;
+  }
+  // The first opening laid the sheet out cold: on a 4x slower phone that was a 120-150 ms task when it opened
+  // (the next openings had none; pp-perf). So the sheet is laid out once beforehand, off screen and hidden, in a
+  // quiet moment after a field that opens it is shown. Not a .sheet, so nothing takes it for an open layer.
+  let warmed = false;
+  function warm() {
+    if (warmed || typeof document === 'undefined' || !document.body) return;
+    warmed = true;
+    const d = document.createElement('div');
+    d.className = 'pp-sheet pp-warm';
+    d.setAttribute('aria-hidden', 'true');
+    d.inert = true;
+    d.style.cssText = 'position:fixed;top:0;left:-300vw;width:100vw;visibility:hidden;pointer-events:none';
+    d.innerHTML = '<div class="sh-body">' + sheetBody({ custom: true }, null) + '</div>';
+    document.body.appendChild(d);
+    void d.offsetHeight;
+    d.remove();
+  }
+  const idle = (fn) => (root.requestIdleCallback ? root.requestIdleCallback(fn, { timeout: 2000 }) : setTimeout(fn, 600));
+
   /**
    * Open the picker. opts: { title, current (a stored name), custom (offer a position typed in) }.
    * Resolves with the chosen name ('__custom' for a typed position), or null when closed.
@@ -97,24 +137,8 @@
       const cur = opts.current === '__custom' ? null : Places.find(opts.current);
       let settled = false, picked = false, entry = null;
       const finish = (v) => { if (!settled) { settled = true; resolve(v); } };
-      const pop = Places.popular(POPULAR);
       const on = (p) => (cur && p === cur ? ' aria-current="true"' : '');
-      const body = `<div class="pp">
-        <div class="pp-top">
-          <label class="pp-search">${icon('search')}<input type="search" class="pp-q" placeholder="חיפוש יישוב" autocomplete="off" autocorrect="off" spellcheck="false" enterkeyhint="search" aria-label="חיפוש יישוב"><button type="button" class="pp-x" aria-label="ניקוי החיפוש" hidden>${icon('x')}</button></label>
-          <button type="button" class="pp-loc">${icon('pin')}<span>המיקום שלי</span></button>
-        </div>
-        <div class="pp-browse">
-          ${cur ? `<div class="section-title">הבחירה שלך</div><div class="pp-list">${row(cur, '', on(cur))}</div>` : ''}
-          <div class="section-title">🔥 הכי נפוצים</div>
-          <div class="pp-list pp-pop">${pop.map((p, n) => row(p, '', `${on(p)} style="--i:${n}"`)).join('')}</div>
-          <div class="section-title">כל היישובים, מא׳ ועד ת׳</div>
-          <div class="pp-az"></div>
-          ${opts.custom ? `<div class="section-title">לא ברשימה?</div><div class="pp-list"><button type="button" class="pp-row" data-custom${opts.current === '__custom' ? ' aria-current="true"' : ''}><span class="pp-pic pc-y" aria-hidden="true">📍<span class="pp-ok">${icon('check')}</span></span><span class="pp-tx"><span class="pp-n">מיקום מותאם</span><span class="pp-f">לפי קו רוחב וקו אורך</span></span></button></div>` : ''}
-        </div>
-        <div class="pp-res" hidden><div class="pp-list"></div><div class="pp-more" aria-live="polite"></div></div>
-      </div>`;
-      entry = UI.openSheet({ title: opts.title || 'בחירת יישוב', body, full: true, cls: 'pp-sheet', onMount, onClose: () => finish(null) });
+      entry = UI.openSheet({ title: opts.title || 'בחירת יישוב', body: sheetBody(opts, cur), full: true, cls: 'pp-sheet', onMount, onClose: () => finish(null) });
 
       function onMount(sh) {
         const bodyEl = sh.querySelector('.sh-body');

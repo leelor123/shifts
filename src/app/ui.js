@@ -237,7 +237,17 @@
     const m = { els, opener: document.activeElement };
     modalStack.push(m);
     syncInert();
-    if (focusEl) { focusEl.setAttribute('tabindex', '-1'); try { focusEl.focus({ preventScroll: true }); } catch (e) { /* an old browser */ } }
+    // the focus moves in once the sheet has been drawn: focus() lays the page out on the spot, and inside the tap
+    // that opened the sheet it was the whole layout of the new sheet, ahead of its frame (the place picker's tap
+    // was a 149 ms task on a 4x slower phone; pp-perf). Not if a newer layer took over or the focus moved meanwhile.
+    if (focusEl) {
+      focusEl.setAttribute('tabindex', '-1');
+      const was = document.activeElement;
+      requestAnimationFrame(() => requestAnimationFrame(() => {
+        if (modalStack[modalStack.length - 1] !== m || !focusEl.isConnected || (document.activeElement !== was && document.activeElement !== document.body)) return;
+        try { focusEl.focus({ preventScroll: true }); } catch (e) { /* an old browser */ }
+      }));
+    }
     return m;
   }
   function modalClose(m) {
