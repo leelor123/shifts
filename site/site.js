@@ -130,6 +130,7 @@
     const el = {
       rate: $('#c-rate', calc), hours: $('#c-hours', calc), hoursOut: $('[data-hours]', calc), travel: $('#c-travel', calc),
       total: $('[data-total]', calc), parts: $('[data-parts]', calc), bar: $('[data-bar]', calc), min: $('[data-min]', calc),
+      rateErr: $('[data-err-rate]', calc), travelErr: $('[data-err-travel]', calc),
     };
     const COLORS = ['var(--c-base)', 'var(--c-ot)', 'var(--c-rest)', 'var(--c-travel)'];
     let shown = 0, anim = 0;
@@ -170,8 +171,27 @@
       };
       anim = requestAnimationFrame(step);
     }
-    el.rate.addEventListener('input', () => { const v = parseFloat(el.rate.value); if (v > 0 && v < 1000) { st.rate = v; render(); } });
-    el.travel.addEventListener('input', () => { const v = parseFloat(el.travel.value); st.travel = v >= 0 && v < 200 ? v : 0; render(); });
+    // a number as people type it, a comma as the decimal point too (35,4); anything else is not a number
+    const num = (s) => { const t = String(s).trim().replace(',', '.'); return /^\d+(\.\d+)?$/.test(t) ? +t : NaN; };
+    // a value that cannot be right is said under its field, and the result dims: it is not this shift's any more (it
+    // kept the last good total, and 99999 or -5 showed a wrong one with no word). An empty field only dims, while typing.
+    const bad = { rate: false, travel: false };
+    const mark = (k, input, msg, ok, empty) => {
+      bad[k] = !ok;
+      input.setAttribute('aria-invalid', String(!ok));
+      msg.hidden = ok || empty;
+      calc.classList.toggle('bad', bad.rate || bad.travel);
+    };
+    el.rate.addEventListener('input', () => {
+      const v = num(el.rate.value), ok = v >= 1 && v < 1000;
+      mark('rate', el.rate, el.rateErr, ok, !el.rate.value.trim());
+      if (ok) { st.rate = v; render(); }
+    });
+    el.travel.addEventListener('input', () => {
+      const empty = !el.travel.value.trim(), v = empty ? 0 : num(el.travel.value), ok = v >= 0 && v < 200;
+      mark('travel', el.travel, el.travelErr, ok, false);
+      if (ok) { st.travel = v; render(); }
+    });
     el.hours.addEventListener('input', () => {
       st.hours = parseFloat(el.hours.value);
       el.hoursOut.textContent = fmtH(st.hours);

@@ -191,6 +191,12 @@ input[type=range]::-moz-range-thumb { width: 26px; height: 26px; border: 0; bord
 .tog[aria-pressed=true] { background: var(--navy); color: #fff; box-shadow: none; }
 .hint { font-size: .9rem; color: #8a4f00; }
 @media (prefers-color-scheme: dark) { .hint { color: #f0c26a; } }
+/* a value that cannot be right: said under its field, and the result dims (it is not this shift's any more) */
+.err { font-size: .9rem; color: #b42318; }
+@media (prefers-color-scheme: dark) { .err { color: #ff9b8f; } }
+.inp:has(input[aria-invalid=true]) { box-shadow: inset 0 0 0 2px #b42318; }
+.calc.bad [data-total], .calc.bad [data-bar], .calc.bad [data-parts] { opacity: .35; }
+.calc [data-total], .calc [data-bar], .calc [data-parts] { transition: opacity .2s var(--ease-out); }
 .calc-out { position: relative; padding: 30px; color: #fff; background: radial-gradient(120% 90% at 85% 0%, #1b3f8f 0%, transparent 60%), linear-gradient(160deg, #0d2b6b, #06173d); display: grid; gap: 18px; align-content: start; }
 .total-lbl { color: var(--gold); font-weight: 500; }
 .total { font-size: clamp(2.6rem, 6vw, 3.6rem); font-weight: 700; line-height: 1.1; font-variant-numeric: tabular-nums; direction: ltr; text-align: end; }
@@ -397,7 +403,8 @@ footer .note { margin-top: 12px; font-size: .85rem; }
       <div class="sec-head"><h2>כמה שווה המשמרת שלך?</h2><p>משנים את השעות ואת התעריף, ורואים מה החוק אומר שמגיע לך. באפליקציה זה קורה לבד בכל משמרת.</p></div>
       <div class="calc" data-calc>
         <div class="calc-in">
-          <label class="field" for="c-rate"><span>שכר לשעה</span><span class="inp"><input id="c-rate" type="number" inputmode="decimal" min="1" max="999" step="0.1" value="42.5" aria-describedby="c-min"><b>₪</b></span></label>
+          <label class="field" for="c-rate"><span>שכר לשעה</span><span class="inp"><input id="c-rate" type="text" inputmode="decimal" autocomplete="off" value="42.5" aria-describedby="c-min c-rate-err"><b>₪</b></span></label>
+          <p class="err" id="c-rate-err" data-err-rate role="alert" hidden>שכר לשעה הוא מספר בין 1 ל-999 ₪</p>
           <p class="hint" id="c-min" data-min hidden>שכר המינימום לבוגרים הוא ‏35.40 ₪ לשעה (מאפריל 2026). לנוער הוא נמוך יותר, והאפליקציה יודעת לפי הגיל.</p>
           <label class="field" for="c-hours"><span>אורך המשמרת <output data-hours for="c-hours">9 שעות</output></span><input id="c-hours" type="range" min="2" max="14" step="0.5" value="9"></label>
           <div class="field"><span>מתי?</span>
@@ -406,7 +413,8 @@ footer .note { margin-top: 12px; font-size: .85rem; }
               <button type="button" class="tog" data-tog="night" aria-pressed="false">משמרת לילה</button>
             </div>
           </div>
-          <label class="field" for="c-travel"><span>נסיעות ליום</span><span class="inp"><input id="c-travel" type="number" inputmode="decimal" min="0" max="199" step="0.5" value="16"><b>₪</b></span></label>
+          <label class="field" for="c-travel"><span>נסיעות ליום</span><span class="inp"><input id="c-travel" type="text" inputmode="decimal" autocomplete="off" value="16" aria-describedby="c-travel-err"><b>₪</b></span></label>
+          <p class="err" id="c-travel-err" data-err-travel role="alert" hidden>נסיעות ליום הן מספר בין 0 ל-199 ₪</p>
         </div>
         <div class="calc-out" aria-live="polite">
           <div><div class="total-lbl">מגיע לך על המשמרת</div><div class="total" data-total>₪0.00</div></div>
