@@ -187,6 +187,36 @@
     pendingTimer = setTimeout(settlePending, 1500); // never stay stuck if the browser drops the event
     if (steps === 1) history.back(); else history.go(-steps);
   }
+  /* ---------------- focus for the layers on top ----------------
+   * A sheet or a dialog is modal: while it is open, what is under it is out of reach (inert: no Tab stop, nothing for a
+   * screen reader), the focus is in it, and when it closes the focus goes back to what opened it (launch check, WCAG
+   * 2.4.3: Tab walked the home screen under an open sheet, and closing it left the focus on <body>). The toast and the
+   * opening stay as they are (the toast is read out; the opening is above everything). */
+  const modalStack = [];
+  const KEEP = '#toast, #intro, script, noscript';
+  function syncInert() {
+    const top = modalStack[modalStack.length - 1];
+    for (const el of document.body.children) {
+      if (el.matches(KEEP)) continue;
+      if (!top || top.els.includes(el)) { if (el.__inertBy) { el.inert = false; el.__inertBy = false; } } else if (!el.inert) { el.inert = true; el.__inertBy = true; }
+    }
+  }
+  function modalOpen(els, focusEl) {
+    const m = { els, opener: document.activeElement };
+    modalStack.push(m);
+    syncInert();
+    if (focusEl) { focusEl.setAttribute('tabindex', '-1'); try { focusEl.focus({ preventScroll: true }); } catch (e) { /* an old browser */ } }
+    return m;
+  }
+  function modalClose(m) {
+    const i = modalStack.indexOf(m);
+    if (i < 0) return;
+    const wasTop = i === modalStack.length - 1;
+    modalStack.splice(i, 1);
+    syncInert();
+    const o = m.opener;
+    if (wasTop && o && o.isConnected && o !== document.body && !o.closest('[inert]')) { try { o.focus({ preventScroll: true }); } catch (e) { /* gone */ } }
+  }
   function openSheet(opts) {
     // opts: { title, body (html), foot (html), full, onMount(el), onClose(), cls }
     const bd = document.createElement('div');
@@ -201,6 +231,7 @@
     sh.innerHTML = `<div class="grab"></div><div class="sh-head"><h2 id="${hid}">${opts.title || ''}</h2><button class="icon-btn" data-close aria-label="סגור">${icon('x')}</button></div><div class="sh-body">${opts.body || ''}</div>${opts.foot ? `<div class="sh-foot">${opts.foot}</div>` : ''}`;
     document.body.append(bd, sh);
     const entry = { bd, sh, opts, closed: false, pushed: false };
+    entry.modal = modalOpen([bd, sh], sh);
     track(entry);
     requestAnimationFrame(() => { bd.classList.add('show'); sh.classList.add('show'); });
     bd.onclick = () => closeTop();
@@ -253,6 +284,7 @@
       return;
     }
     entry.closed = true;
+    modalClose(entry.modal);
     entry.bd.classList.remove('show');
     entry.sh.classList.remove('show');
     setTimeout(() => { entry.bd.remove(); entry.sh.remove(); }, 300);
@@ -286,8 +318,13 @@
     return new Promise((resolve) => {
       const el = document.createElement('div');
       el.className = 'dialog';
-      el.innerHTML = `<div class="backdrop" style="z-index:-1"></div><div class="box" role="alertdialog" aria-modal="true"><h3>${esc(opts.title || '')}</h3><div>${opts.html || esc(opts.text || '')}</div><div class="actions">${(opts.buttons || []).map((b, i) => `<button class="btn ${b.cls || 'text'}" data-i="${i}">${esc(b.label)}</button>`).join('')}</div></div>`;
+      // named by its title; a question to answer is an alertdialog, a form (fields to fill) is a dialog
+      const did = 'dl-t-' + (++sheetSeq);
+      el.innerHTML = `<div class="backdrop" style="z-index:-1"></div><div class="box" role="alertdialog" aria-modal="true" aria-labelledby="${did}"><h3 id="${did}">${esc(opts.title || '')}</h3><div>${opts.html || esc(opts.text || '')}</div><div class="actions">${(opts.buttons || []).map((b, i) => `<button class="btn ${b.cls || 'text'}" data-i="${i}">${esc(b.label)}</button>`).join('')}</div></div>`;
+      const box = el.querySelector('.box');
+      if (box.querySelector('input, textarea, select')) box.setAttribute('role', 'dialog');
       document.body.appendChild(el);
+      const modal = modalOpen([el], box.querySelector('input, textarea') ? null : box);
       void el.offsetWidth; // fade the dimming in (not at once)
       el.querySelector('.backdrop').classList.add('show');
       // closing fades the dimming and the box away; removing them at once made the whole screen flash bright,
@@ -295,6 +332,7 @@
       // The answer is given at once - only the picture lingers for a moment, and it takes no taps.
       const leave = () => {
         if (el.classList.contains('out')) return;
+        modalClose(modal);
         el.classList.add('out');
         setTimeout(() => el.remove(), 190);
       };

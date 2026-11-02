@@ -997,3 +997,6 @@ body.fx .item:active:not(:has(:is(button, a, input, select, label, summary, [dat
 .item .t.shift-title { display: flex; flex-direction: row; align-items: center; gap: 6px; text-overflow: clip; white-space: normal; overflow: visible; }
 .item .t.shift-title .tt { min-width: 0; white-space: normal; overflow-wrap: normal; line-height: 1.3; }
 .item .t.shift-title .tag { flex: none; }
+
+/* a sheet or a dialog takes the focus when it opens (ui.js modalOpen): the layer itself is not a control, so no ring on it */
+.sheet:focus, .dialog .box:focus { outline: none; }
