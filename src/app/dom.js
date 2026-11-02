@@ -189,7 +189,7 @@
    * a little smaller (down to 80%) until it fits one line, before the screen is drawn; a longer text (a sentence)
    * still goes to a new line between words, and nothing is ever cut. */
   const FIT_SKIP = '#intro, svg, canvas, input, textarea, select, [contenteditable], .hero-num, .pp-row, .no-fit';
-  const FIT_STEPS = [0.92, 0.86, 0.8];
+  const FIT_STEPS = [0.92, 0.86, 0.8], FIT_MIN = 12;
   const shortText = (el) => { const t = (el.textContent || '').trim(); return t.length > 1 && t.length <= 32 && t.split(/\s+/).length <= 3; };
   // the element's own text spans more than one line (a text node's boxes on different rows)
   function wraps(el) {
@@ -230,10 +230,11 @@
     todo = todo.filter((el) => el.__fitBase);
     for (const k of FIT_STEPS) {
       if (!todo.length) break;
-      for (const el of todo) { el.style.fontSize = (el.__fitBase * k).toFixed(2) + 'px'; Dom.keep(el, ['style']); }
+      // never under 12 px (launch check: text a phone can read); a label already smaller keeps its own size
+      for (const el of todo) { el.style.fontSize = Math.max(el.__fitBase * k, Math.min(el.__fitBase, FIT_MIN)).toFixed(2) + 'px'; Dom.keep(el, ['style']); }
       todo = todo.filter((el) => tight(el));
     }
-    // too long even at 80%: its own size, on two lines between words (smaller and still broken helps nobody)
+    // too long even at 80% (or at 12 px): its own size, on two lines between words (smaller and still broken helps nobody)
     for (const el of todo) { el.style.fontSize = ''; el.__fitBase = 0; }
   };
   // everything added to the page or changed in it, before it is drawn

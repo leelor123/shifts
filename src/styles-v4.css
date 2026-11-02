@@ -108,7 +108,7 @@ body.fx .pk-field, body.fx .ach-card, body.fx .home-hero .hh-skin { transition: 
 .lp-card.sug::after { box-shadow: 0 0 0 1.5px var(--gold); animation: none; opacity: 1; }
 .lp-glyph { background: rgba(255, 255, 255, .08); border: 1px solid var(--gold-line); color: var(--gold); box-shadow: none; text-shadow: none; }
 .lp-hello span { background: none; -webkit-background-clip: border-box; background-clip: border-box; -webkit-text-fill-color: currentColor; color: #fff; }
-.lp-sug { font-size: .74rem; background: var(--gold); color: #141821; box-shadow: none; }
+.lp-sug { font-size: .75rem; background: var(--gold); color: #141821; box-shadow: none; }
 .lp-in-sheet .lp-hello span { color: var(--on-surface); }
 /* the dial's second hand: gold, as in the opening */
 .hh-dial::before { background: conic-gradient(from 0deg, transparent 0 290deg, rgba(233, 201, 135, .15) 320deg, rgba(233, 201, 135, .95) 359deg, transparent 360deg); }
