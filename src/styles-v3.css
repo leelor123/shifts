@@ -1547,7 +1547,9 @@ body.fx .cal-day.hello, body.fx .week-row.hello { animation: cal-hello .55s cubi
   color: #fff; font: inherit; background: rgba(255, 255, 255, .07); border: 1px solid rgba(255, 255, 255, .14);
   box-shadow: 0 1px 0 rgba(255, 255, 255, .08) inset, 0 10px 30px -18px rgba(0, 0, 0, .6);
   transition: scale .35s var(--pop, cubic-bezier(.34, 1.56, .64, 1)), background-color .25s ease, border-color .25s ease, opacity .35s ease, transform .5s var(--pop, cubic-bezier(.34, 1.56, .64, 1)); }
-.lp-host.in .lp-card { animation: lp-in .7s var(--pop, cubic-bezier(.34, 1.56, .64, 1)) both; animation-delay: calc(240ms + var(--i) * 70ms); }
+/* the cards come in: as lang.js takes the doors over, or on a first visit from the first frame (the same animation, so
+   the hand-over from one rule to the other goes on without a restart; lang.js adds 'in' before lp-bare's rule lets go) */
+.lp-host.in .lp-card, html.lp-bare #lp-static .lp-card { animation: lp-in .7s var(--pop, cubic-bezier(.34, 1.56, .64, 1)) both; animation-delay: calc(240ms + var(--i) * 70ms); }
 @keyframes lp-in { from { opacity: 0; transform: translateY(26px) scale(.94); } }
 .lp-card:active { scale: .95; background: rgba(255, 255, 255, .12); }
 .lp-card.sug { border-color: rgba(255, 255, 255, .42); background: rgba(255, 255, 255, .11); }
@@ -1563,7 +1565,7 @@ body.fx .cal-day.hello, body.fx .week-row.hello { animation: cal-hello .55s cubi
 .lp-later { font-size: .8rem; color: rgba(255, 255, 255, .6); text-align: center; }
 /* chosen: the others step back, the chosen one comes forward, its colour fills the screen from its letter */
 .lp-host.chosen .lp-card:not(.picked) { opacity: 0; transform: scale(.9); }
-.lp-host.chosen .lp-card.picked { scale: 1.06; }
+.lp-host.chosen .lp-card.picked, .lp-card.early { scale: 1.06; } /* early: tapped before the code arrived (index.html) */
 .lp-host.chosen .lp-hello, .lp-host.chosen .lp-ask, .lp-host.chosen .lp-later { opacity: 0; transition: opacity .3s ease; }
 .lp-fill { position: fixed; z-index: 9500; width: 60px; height: 60px; margin: -30px 0 0 -30px; border-radius: 50%; pointer-events: none;
   background: linear-gradient(140deg, var(--g1), var(--g2)); transform: scale(0); will-change: transform, opacity;
@@ -1572,7 +1574,7 @@ body.fx .cal-day.hello, body.fx .week-row.hello { animation: cal-hello .55s cubi
 .lp-fill.to-intro { background: #0d2b6b; }
 .lp-fill.fade { opacity: 0; }
 .lp-host.out { opacity: 0; transition: opacity .45s ease; }
-@media (prefers-reduced-motion: reduce) { .lp-orbs i, .lp-card.sug::after, .lp-host.in .lp-card { animation: none !important; } .lp-fill { transition: none; } }
+@media (prefers-reduced-motion: reduce) { .lp-orbs i, .lp-card.sug::after, .lp-host.in .lp-card, html.lp-bare #lp-static .lp-card { animation: none !important; } .lp-fill { transition: none; } }
 /* in settings: the same doors in a sheet, on the app's own colours */
 .lp-in-sheet { display: flex; flex-direction: column; align-items: center; gap: 12px; padding: 4px 0 8px; }
 .lp-in-sheet .lp-hello span { font-size: 2.1rem; background: linear-gradient(100deg, var(--on-surface) 30%, var(--a) 130%); -webkit-background-clip: text; background-clip: text; }

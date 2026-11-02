@@ -32,16 +32,32 @@
   Lang.stored = function () {
     try { const l = localStorage.getItem(KEY); return byId(l) ? l : null; } catch (e) { return null; }
   };
-  /** The phone's language, if the app speaks it (Hebrew also from the old code "iw"). */
-  Lang.device = function () {
-    const list = (navigator.languages && navigator.languages.length ? navigator.languages : [navigator.language || '']).map((x) => String(x).toLowerCase());
-    for (const x of list) {
-      const p = x.split('-')[0];
-      if (p === 'he' || p === 'iw') return 'he';
-      if (byId(p)) return p;
+  // Both helpers below stand alone (they use only their arguments): the build writes them into the page too, where they
+  // put the suggestion on the first doors before the first frame (tools/build.js lpStatic)
+  /** The phone's language among list's ({id}), if the app speaks it (Hebrew also from the old code "iw"). */
+  function deviceIn(list, nav) {
+    const all = (nav.languages && nav.languages.length ? nav.languages : [nav.language || '']).map((x) => String(x).toLowerCase());
+    for (const x of all) {
+      const p = x.split('-')[0] === 'iw' ? 'he' : x.split('-')[0];
+      if (list.some((l) => l.id === p)) return p;
     }
     return null;
-  };
+  }
+  /** The suggestion moved to another card of doors already drawn (its badge and the "change it later" line in its
+   * language), nothing else redrawn: the doors can be on screen. list: [{id, sug, later, dir}]. */
+  function suggestIn(host, id, list) {
+    const l = list.filter((x) => x.id === id)[0];
+    if (!host || !l) return;
+    host.querySelectorAll('.lp-card.sug').forEach((c) => { c.classList.remove('sug'); const b = c.querySelector('.lp-sug'); if (b) b.remove(); });
+    const card = host.querySelector('.lp-card[data-lang="' + id + '"]');
+    if (card) { card.classList.add('sug'); const b = document.createElement('span'); b.className = 'lp-sug'; b.textContent = l.sug; card.appendChild(b); }
+    const later = host.querySelector('.lp-later');
+    if (later) { later.setAttribute('lang', id); later.setAttribute('dir', l.dir); later.textContent = l.later; }
+    host.dataset.sug = id;
+  }
+  Lang._deviceIn = deviceIn; Lang._suggestIn = suggestIn; // for the build
+  /** The phone's language, if the app speaks it. */
+  Lang.device = () => deviceIn(LANGS, navigator);
   /** Keeps the choice where the page and the service worker look for it. */
   async function remember(id) {
     try { localStorage.setItem(KEY, id); } catch (e) { /* the worker's copy still holds it */ }
@@ -115,11 +131,15 @@
   Lang.firstRun = function () {
     return new Promise((resolve) => {
       // the doors are already in the page (the build writes them, in the page's own language, shown by the first script
-      // when no language is stored): they were drawn with the first frame, under the opening show, without waiting for
-      // this code; they are taken as they are (nothing redrawn in sight), only the suggestion follows the phone
+      // when no language is stored): they were drawn with the first frame, under the opening show (on a first visit with
+      // nothing over them), without waiting for this code; they are taken as they are, nothing redrawn in sight (the
+      // page's own script already put the suggestion where the phone's language is)
       const sug = Lang.device() || 'he';
       let host = document.getElementById('lp-static');
-      if (host) { host.removeAttribute('id'); if (host.dataset.sug !== sug) host.innerHTML = markup(sug, false); }
+      // on a first visit (lp-bare) nothing covers them: their entrance has been playing since the first frame, and 'in'
+      // goes on now, before the rules that started it stop matching, so it carries on instead of starting over
+      const bare = !!host && document.documentElement.classList.contains('lp-bare');
+      if (host) { if (bare) host.classList.add('in'); host.removeAttribute('id'); if (host.dataset.sug !== sug) suggestIn(host, sug, LANGS); }
       else { host = document.createElement('div'); host.className = 'lp-host'; host.innerHTML = markup(sug, false); document.body.appendChild(host); }
       document.documentElement.classList.remove('lp-first');
       // what lies under the doors is not painted while they cover it (it was: the home screen, drawn unseen, made the
@@ -151,6 +171,11 @@
           resolve(id);
         });
       });
+      // a door tapped before this code arrived (bare doors are on screen from the first frame; index.html keeps the
+      // pick): it goes on now, as if tapped
+      const early = root.__lpPick && host.querySelector('.lp-card[data-lang="' + root.__lpPick + '"]');
+      root.__lpPick = null;
+      if (early) early.click();
     });
   };
   // the greeting and the question go round the six languages

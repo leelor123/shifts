@@ -739,6 +739,8 @@ body:not(.fx) .sky * { animation: none !important; }
  * under it is seen, and the first screen then came up half drawn as the show left; this way it is drawn, ready, under
  * it. The navy is the Android app's own splash colour (#0d2b6b), so the show starts where the splash ends. */
 #intro { position: fixed; inset: 0; z-index: 10000; overflow: hidden; background: rgba(13, 43, 107, .996); will-change: opacity; }
+/* a first visit (index.html's lp-bare): the language doors are the first screen, from the first frame; no show over them */
+html.lp-bare #intro { display: none; }
 #intro .skyhead { position: absolute; inset: 0 0 auto 0; background: none; opacity: 0; }
 #intro .sh-text { opacity: 0; transform: translateY(10px); }
 /* the logo starts where the splash leaves it (the middle of the screen, twice the header's size) */

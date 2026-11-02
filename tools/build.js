@@ -48,7 +48,12 @@ const lpStatic = (lang) => {
     .replace(/(<div class="lp-hello"[^>]*>)<span /, '$1<span class="on" ')
     .replace(/(<div class="lp-ask"[^>]*>)<span /, '$1<span class="on" ');
   if (!/class="on"[\s\S]*class="on"/.test(html)) throw new Error('lpStatic: the greeting was not found');
-  return `<div class="lp-host" id="lp-static" data-sug="${lang}">${html}</div>`;
+  // the suggestion goes where the phone's language is before the first frame, by lang.js's own two functions (on a first
+  // visit nothing covers the doors, and lang.js moving it later was seen); the same answer as lang.js's ('he' when the
+  // phone's language is none of the six)
+  const list = JSON.stringify(ctx.Lang.LANGS.map((l) => ({ id: l.id, sug: l.sug, later: l.later, dir: l.dir })));
+  const sug = `(function(){try{var h=document.getElementById('lp-static'),list=${list};var s=(${ctx.Lang._deviceIn})(list,navigator)||'he';if(h&&s!==h.dataset.sug)(${ctx.Lang._suggestIn})(h,s,list)}catch(e){}})();`;
+  return `<div class="lp-host" id="lp-static" data-sug="${lang}">${html}</div><script>${sug}</script>`;
 };
 // the code is asked for right after the first frame (the doors and the opening show are already painted): before, its
 // 345 KB downloaded during the page's first paint and the phone's largest paint waited on it (Lighthouse LCP ~3.7 s);
@@ -79,8 +84,9 @@ function page(lang) {
   const scripts = [...html.matchAll(/<script>([\s\S]*?)<\/script>/g)];
   // characters the HTML parser changes before hashing (CR, NUL) would make the hash above wrong in the browser
   if (scripts.some((m) => /[\r\0]/.test(m[1]))) throw new Error('an inline script has CR or NUL characters: the policy hash would not match');
-  // two: the language check at the top (moves to the chosen language's page before anything is drawn) and the app
-  if (scripts.length !== 2) throw new Error('expected two inline scripts, found ' + scripts.length);
+  // three: the language check at the top (moves to the chosen language's page before anything is drawn), the first
+  // doors' suggestion (right after them, lpStatic) and the app
+  if (scripts.length !== 3) throw new Error('expected three inline scripts, found ' + scripts.length);
   const inline = scripts.map((m) => "'sha256-" + crypto.createHash('sha256').update(m[1], 'utf8').digest('base64') + "'");
   // Scripts from other servers: only the exact library folders the app loads, never a whole CDN. Any file on
   // cdn.jsdelivr.net (anyone can publish there) once let a page injection become a running script (security
