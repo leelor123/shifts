@@ -104,5 +104,6 @@
     const I = root.Intro;
     if (!I || !I.quick || !I.covering || !I.covering()) return;
     draw(false);
+    if (I.quickDrawn) I.quickDrawn(); // on the sheet as it rises, not after the show
   };
 })(typeof window !== 'undefined' ? window : globalThis);

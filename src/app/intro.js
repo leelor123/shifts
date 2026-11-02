@@ -84,7 +84,7 @@
     setTimeout(() => { el.remove(); if (root.App && root.App.applyTheme) root.App.applyTheme(); }, mode === 'home' && full ? 620 : 320);
   }
   function maybeClose() {
-    if (closed || leaving || !ready || !played) return;
+    if (closed || leaving || !ready || !played || quickOn) return;
     const t = performance.now();
     let wait = drawnAt + (skipped ? SKIP_CALM_MS : CALM_MS) - t;
     if (wait <= 0 && holds.size) {
@@ -114,6 +114,17 @@
     sh.setAttribute('aria-modal', 'true');
     sh.setAttribute('aria-label', 'פעולות מהירות');
   }
+  // the quick actions ride up with the sheet: on as the sheet starts to rise (or the moment they are drawn, if later),
+  // not after the show's end and the calm a home screen under it needs. Waiting left the sheet still and empty for a
+  // third of a second (the user, 2 Nov: "a stuck frame"). The fonts first, so no word changes as they come.
+  let rising = false, fontsIn = !document.fonts || document.fonts.status === 'loaded';
+  if (!fontsIn) document.fonts.ready.then(() => { fontsIn = true; maybeQuick(); });
+  function maybeQuick() {
+    const iq = q('.intro-sheet .iq');
+    if (quick && rising && fontsIn && iq && iq.childElementCount && !closed && !leaving) showQuick();
+  }
+  /** views-quick.js has drawn the actions on the sheet. */
+  Intro.quickDrawn = maybeQuick;
   /** From the quick actions into the app: the sheet goes up over the header (as the show leaves), then fn runs. */
   Intro.enter = function (fn) {
     if (!closed && !leaving) { el.classList.add('q-go'); leave(); }
@@ -152,10 +163,16 @@
     el.classList.add('play');
     afterFrames();
     setTimeout(() => drawnDone(), 400); // never later than this, whatever happens to the frames
-    setTimeout(() => { played = true; if (!ready) el.classList.add('wait'); maybeClose(); }, SEQUENCE_MS);
+    setTimeout(() => { played = true; if (!ready && !quickOn) el.classList.add('wait'); maybeClose(); }, SEQUENCE_MS);
+    // the sheet's rise begins (its animation's delay is over; the timer if no event comes)
+    const sheetGoes = () => { if (rising) return; rising = true; maybeQuick(); };
+    const sheet = q('.intro-sheet');
+    if (sheet) sheet.addEventListener('animationstart', (e) => { if (e.target === sheet) sheetGoes(); });
+    setTimeout(sheetGoes, 450);
   } else {
     el.classList.add('still');
     drawnDone();
+    rising = true; // the sheet is already in place
     setTimeout(() => { played = true; maybeClose(); }, 200);
   }
 
