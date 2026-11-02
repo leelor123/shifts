@@ -92,7 +92,8 @@ function htmlRuns(html) {
   return [...runs].filter(Boolean);
 }
 
-function extract() {
+/** Every text to translate, read from the source as it is now (nothing written). */
+function collect() {
   const catalog = new Map(); // key → { key, kind, where: [file:line] }
   for (const f of jsFiles()) {
     if (KEEP_FILES.has(f)) continue;
@@ -115,8 +116,11 @@ function extract() {
     const e = catalog.get(t) || { key: t, kind: 'manifest', where: [] };
     e.where.push('manifest'); catalog.set(t, e);
   }
+  return [...catalog.values()];
+}
+function extract() {
+  const list = collect();
   fs.mkdirSync(DIR, { recursive: true });
-  const list = [...catalog.values()];
   fs.writeFileSync(path.join(DIR, 'catalog.json'), JSON.stringify(list, null, 1) + '\n');
   for (const lang of Object.keys(LANGS)) {
     if (lang === 'he') continue;
@@ -205,7 +209,7 @@ function dictOf(lang) {
   return fs.existsSync(file) ? JSON.parse(fs.readFileSync(file, 'utf8')) : {};
 }
 
-module.exports = { LANGS, KEEP_FILES, nodesOf, applyCode, applyHtml, dictOf, extract, check };
+module.exports = { LANGS, KEEP_FILES, nodesOf, applyCode, applyHtml, dictOf, collect, extract, check };
 
 if (require.main === module) {
   const cmd = process.argv[2];
