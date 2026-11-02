@@ -1000,3 +1000,11 @@ body.fx .item:active:not(:has(:is(button, a, input, select, label, summary, [dat
 
 /* a sheet or a dialog takes the focus when it opens (ui.js modalOpen): the layer itself is not a control, so no ring on it */
 .sheet:focus, .dialog .box:focus { outline: none; }
+
+/* a finger needs about 44 px (launch check 7, the owner's phone): the small controls keep their look and get a bigger
+   target around them, a little above and below (chips in rows: 4 px, rows have 8 px between them, so targets never meet) */
+:where(.chip, .set-chip, .seg > button) { position: relative; }
+:where(.chip, .set-chip, .seg > button)::after { content: ''; position: absolute; inset: -4px 0; }
+:where(.role-chip, .tr-toggle, .banner .btn.text.sm, .home-list-head .btn.text.sm) { position: relative; }
+:where(.role-chip, .tr-toggle, .banner .btn.text.sm, .home-list-head .btn.text.sm)::after { content: ''; position: absolute; inset: -7px -2px; }
+.banner .btn.text.sm::after { inset: -10px -4px; }
