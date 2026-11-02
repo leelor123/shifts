@@ -136,7 +136,9 @@ html.lp-first #lp-static { display: block; }
 .home-sky { position: absolute; inset: 0 0 auto 0; height: 200px; z-index: 0; overflow: hidden; pointer-events: none; border-radius: 0 0 26px 26px;
   background: linear-gradient(180deg, #071a45, #0d2b6b 60%, #1b3470); }
 .home-sky .sky { position: absolute; inset: 0; width: 100%; height: 100%; display: block; }
-.home-sky ~ * { position: relative; z-index: 1; }
+/* above the sky: what lies over it (the header down to the pay card); the cards after it stay as they were, not each
+   its own stacking context (a card far below got a layer while the timer card moved, and lost it after) */
+.home-sky ~ *:not(.home-hero ~ *) { position: relative; z-index: 1; }
 .home-sky + .home-top h1 { color: #fff; text-shadow: 0 1px 12px rgba(5, 15, 45, .5); }
 .home-sky + .home-top .sub { color: rgba(255, 255, 255, .88); text-shadow: 0 1px 10px rgba(5, 15, 45, .5); }
 .home-sky + .home-top .icon-btn { background: rgba(255, 255, 255, .14); border-color: rgba(255, 255, 255, .24); color: #fff; box-shadow: none; -webkit-backdrop-filter: blur(10px); backdrop-filter: blur(10px); }
