@@ -103,7 +103,7 @@ p { margin: 0; text-wrap: pretty; }
 .top nav { display: flex; gap: 4px; margin-inline-start: auto; }
 .top nav a { padding: 8px 12px; border-radius: 10px; font-size: .95rem; text-decoration: none; opacity: .9; }
 @media (hover: hover) and (pointer: fine) { .top nav a:hover { opacity: 1; background: rgba(127, 140, 170, .16); } }
-.top .btn { min-height: 40px; padding: 0 16px; font-size: .92rem; border-radius: 12px; }
+.top .btn { min-height: 44px; padding: 0 16px; font-size: .92rem; border-radius: 12px; }
 @media (max-width: 860px) { .top nav { display: none; } .top .btn { margin-inline-start: auto; } }
 
 /* ---- the hero: the sky over your city, now ---- */
@@ -271,6 +271,17 @@ input[type=range]::-moz-range-thumb { width: 26px; height: 26px; border: 0; bord
 .steps p { margin-top: 8px; color: var(--mute); }
 .ios-note { margin-top: 22px; color: var(--mute); font-size: .95rem; max-width: 46em; }
 @media (max-width: 860px) { .steps { grid-template-columns: 1fr; } }
+
+/* the storage notice, once on a first visit: what the site keeps on this device (the city), and that it keeps nothing
+   else (the user, 2 Nov: a cookie approval). Fixed at the bottom, so nothing on the page moves when it comes */
+.cookie { position: fixed; z-index: 45; inset-inline: 16px; bottom: calc(16px + env(safe-area-inset-bottom)); max-width: 560px; margin-inline: auto; display: flex; align-items: center; gap: 14px; padding: 14px 16px; border-radius: 18px; background: rgba(6, 23, 61, .95); color: #fff; box-shadow: 0 14px 40px rgba(3, 10, 30, .35); font-size: .92rem; line-height: 1.5; }
+.cookie[hidden] { display: none; }
+.cookie p { margin: 0; flex: 1; }
+.cookie a { color: var(--gold); }
+.cookie .btn { min-height: 44px; padding: 0 18px; border-radius: 12px; flex-shrink: 0; }
+.cookie:not([hidden]) { animation: cookie-in .24s var(--ease-out) both; }
+@keyframes cookie-in { from { opacity: 0; transform: translateY(12px); } }
+@media (prefers-reduced-motion: reduce) { .cookie:not([hidden]) { animation: none; } }
 
 /* ---- privacy, said plainly on night blue ---- */
 .priv { border-radius: 30px; padding: clamp(28px, 5vw, 56px); color: #fff; background: radial-gradient(90% 120% at 10% 0%, #1b3f8f 0%, transparent 55%), linear-gradient(160deg, #0d2b6b, #06173d); display: grid; grid-template-columns: minmax(0, 1.2fr) minmax(0, 1fr); gap: 36px; align-items: center; }
@@ -565,6 +576,7 @@ footer .note { margin-top: 12px; font-size: .85rem; }
   </div>
   <div class="wrap note">שעתי היא כלי עזר לחישוב שכר ואינה ייעוץ משפטי או חשבונאי.</div>
 </footer>
+<div class="cookie" data-cookie role="region" aria-label="שמירה בדפדפן" hidden><p>האתר שומר בדפדפן רק את העיר שבחרת, כדי להראות את השמיים שלה. אין כאן עוגיות פרסום או מעקב. <a href="https://leelor123.github.io/shifts/privacy.html">מדיניות הפרטיות</a></p><button type="button" class="btn btn-gold" data-cookie-ok>הבנתי</button></div>
 <script src="sky.js" defer></script>
 <script src="site.js" defer></script>
 </body>

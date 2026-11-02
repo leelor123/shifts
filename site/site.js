@@ -283,6 +283,13 @@
     new IntersectionObserver(([e], o) => { if (e.isIntersecting) { o.disconnect(); draw(fin, fin.parentNode, { phase: 'night', weather: 'clear' }); } }, { rootMargin: '400px 0px' }).observe(fin);
   }
 
+  /* ---------- the storage notice: once, until it is acknowledged ---------- */
+  const note = $('[data-cookie]');
+  if (note && !store.get('shaati.site.cookies')) {
+    idle(() => { note.hidden = false; });
+    $('[data-cookie-ok]', note).addEventListener('click', () => { store.set('shaati.site.cookies', '1'); note.hidden = true; });
+  }
+
   /* ---------- below the story: laid out one section at a time once the page is idle ---------- */
   // each in its own short task (the first layout covers the top of the page only), and all of them soon, so their
   // real heights are known before anyone scrolls back up (Safari keeps no scroll anchor: a late size would jump)
