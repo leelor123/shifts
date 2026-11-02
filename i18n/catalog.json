@@ -10787,7 +10787,7 @@
   ]
  },
  {
-  "key": "<div class=\"home-action\"><button class=\"btn big start\" data-q=\"start\">{0} התחל משמרת</button></div>",
+  "key": "<button class=\"btn big iq-start\" data-q=\"start\">{0} התחל משמרת</button>",
   "kind": "tpl",
   "where": [
    "app/views-quick.js:40"
@@ -10809,10 +10809,10 @@
   ]
  },
  {
-  "key": "<button class=\"btn big tonal iq-enter\" data-q=\"enter\">כניסה</button>",
+  "key": "<button class=\"btn big iq-enter\" data-q=\"enter\">כניסה</button>",
   "kind": "lit",
   "where": [
-   "app/views-quick.js:55"
+   "app/views-quick.js:57"
   ]
  },
  {

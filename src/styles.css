@@ -786,7 +786,11 @@ html.lp-bare #intro { display: none; }
 #intro .iq .am-tile { min-height: 96px; }
 #intro .iq .iq-ask { font: 600 1.15rem/1.3 var(--font); letter-spacing: -.01em; color: var(--on-surface); }
 #intro .iq .iq-back { align-self: center; }
-#intro .iq .iq-enter { width: 100%; }
+/* the way in is the main button: filled, first and a little taller; starting a shift is the first quick action under
+   it, its own green but soft (the user, 2 Nov: the big green start looked like the way in) */
+#intro .iq .iq-enter { width: 100%; min-height: 60px; font-size: 1.1rem; }
+#intro .iq .iq-start { width: 100%; background: var(--good-bg); color: var(--good); box-shadow: none; }
+#intro .iq .iq-start svg { color: var(--good-mark); }
 /* reduced motion or effects off: the same screen, still, and it goes with a fade */
 #intro.q-mode.still .skyhead, #intro.q-mode.still .sh-text { opacity: 1; transform: none; }
 #intro.q-mode.still .intro-logo, #intro.q-mode.still .intro-sheet { transform: none; }

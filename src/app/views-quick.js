@@ -37,7 +37,7 @@
           <button class="icon-btn tonal lg" data-q="break" aria-label="${onBreak ? 'חזור מהפסקה' : 'הפסקה'}">${icon(onBreak ? 'play' : 'coffee')}</button>
         </div></div>`;
     }
-    return `<div class="home-action"><button class="btn big start" data-q="start">${icon('play')} התחל משמרת</button></div>`;
+    return `<button class="btn big iq-start" data-q="start">${icon('play')} התחל משמרת</button>`;
   }
   function tiles() {
     const tile = (q, ic, tint, t, sub) => `<button class="am-tile" data-q="${q}">${UI.tile(ic, tint)}<span class="am-t">${t}</span>${sub ? `<span class="am-s">${sub}</span>` : ''}</button>`;
@@ -52,7 +52,9 @@
       ${next ? tile('cal', 'calendar', 'sky', 'המשמרת הבאה', U.fmtDate(U.epochKey(next.start), 'short') + ' ' + U.epochHM(next.start)) : tile('cal', 'calendar', 'sky', 'לוח שנה')}
     </div>`;
   }
-  const panel = () => top() + (picking ? '' : tiles()) + '<button class="btn big tonal iq-enter" data-q="enter">כניסה</button>';
+  // the way in is the main button, first and filled (the user, 2 Nov: a big green start-a-shift looked like the way in);
+  // the quick actions come after it, start a shift first among them. The role question has the sheet to itself.
+  const panel = () => (picking ? '' : '<button class="btn big iq-enter" data-q="enter">כניסה</button>') + top() + (picking ? '' : tiles());
 
   /** Leaves for the app; fn (the action) runs once the show has gone. */
   const go = (fn) => { const I = root.Intro; if (I && I.enter) I.enter(fn); else if (fn) fn(); };
