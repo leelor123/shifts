@@ -89,11 +89,11 @@ Important: the calculations are estimates only, not legal, accounting or tax adv
 
 **What's new**
 ```
-• A new opening: a living sky for the hour, the season and the weather in your city
-• Quick actions at the opening: start or record a shift and see this month, before the app even opens
-• Already have an account? Sign in right from the first screen
-• The setup questions let you add another workplace, not only another role
-• A new lock screen, with fingerprint unlock
+• Sign in with an email and a password, or start as a guest: your data stays on the phone until you connect an account
+• Privacy first: statistics only after you agree, and amounts hidden in the friends competition
+• A smoother opening, with the way in as the main button
+• Small buttons are easier to tap, small text is bigger, and screen readers work better
+• Updated privacy policy, terms of use and accessibility statement
 ```
 
 ---
@@ -174,11 +174,11 @@ AI-помощник (по желанию)
 
 **Что нового**
 ```
-• Новое начало: живое небо по времени суток, сезону и погоде в вашем городе
-• Быстрые действия при запуске: начать или записать смену и увидеть этот месяц ещё до открытия приложения
-• Уже есть аккаунт? Войти можно прямо с первого экрана
-• В начальных вопросах можно добавить ещё одно место работы, а не только должность
-• Новый экран блокировки, с отпечатком пальца
+• Вход по почте и паролю или гостевой режим: данные хранятся на телефоне, пока вы не подключите аккаунт
+• Приватность прежде всего: статистика только после согласия, суммы скрыты в соревновании с друзьями
+• Более плавное открытие, кнопка входа стала главной
+• По маленьким кнопкам легче попасть, мелкий текст крупнее, программы чтения с экрана работают лучше
+• Обновлены политика конфиденциальности, условия использования и заявление о доступности
 ```
 
 ---
@@ -272,11 +272,11 @@ Shaati Plus (اختياري)
 
 **ما الجديد**
 ```
-• افتتاحية جديدة: سماء حيّة حسب الساعة والموسم والطقس في مدينتك
-• إجراءات سريعة عند الفتح: بدء وردية أو تسجيلها ورؤية هذا الشهر قبل فتح التطبيق
-• لديك حساب؟ ادخل إليه مباشرة من الشاشة الأولى
-• في أسئلة البداية يمكنك إضافة مكان عمل آخر، لا دور آخر فقط
-• شاشة قفل جديدة، مع بصمة الإصبع
+• الدخول بالبريد الإلكتروني وكلمة مرور، أو البدء كضيف: تبقى البيانات على الهاتف حتى تربط حسابًا
+• الخصوصية أولًا: الإحصاءات فقط بعد الموافقة، والمبالغ مخفية في المنافسة مع الأصدقاء
+• افتتاح أكثر سلاسة، وزر الدخول هو الرئيسي
+• الضغط على الأزرار الصغيرة أسهل، والنص الصغير أكبر، وقارئات الشاشة تعمل بشكل أفضل
+• تحديث سياسة الخصوصية وشروط الاستخدام وبيان إتاحة الوصول
 ```
 
 ---
@@ -354,11 +354,11 @@ Important : les calculs sont des estimations, pas un conseil juridique, comptabl
 
 **What's new**
 ```
-• Une nouvelle ouverture : un ciel vivant selon l'heure, la saison et la météo de votre ville
-• Actions rapides à l'ouverture : commencer ou enregistrer un service et voir le mois, avant même d'ouvrir l'app
-• Déjà un compte ? Connectez-vous dès le premier écran
-• Les questions de départ permettent d'ajouter un autre lieu de travail, pas seulement un autre poste
-• Un nouvel écran de verrouillage, avec l'empreinte digitale
+• Connexion par e-mail et mot de passe, ou en invité : vos données restent sur le téléphone tant qu'aucun compte n'est relié
+• Vie privée d'abord : statistiques seulement avec votre accord, montants masqués dans le concours entre amis
+• Une ouverture plus fluide, avec le bouton pour entrer en principal
+• Petits boutons plus faciles à toucher, petit texte agrandi, meilleur support des lecteurs d'écran
+• Confidentialité, conditions d'utilisation et déclaration d'accessibilité mises à jour
 ```
 
 ---
@@ -436,9 +436,9 @@ Importante: los cálculos son estimaciones, no asesoramiento legal, contable ni 
 
 **What's new**
 ```
-• Un inicio nuevo: un cielo vivo según la hora, la estación y el tiempo en tu ciudad
-• Acciones rápidas al abrir: iniciar o registrar un turno y ver el mes, antes de abrir la app
-• ¿Ya tienes cuenta? Entra directamente desde la primera pantalla
-• En las preguntas iniciales puedes añadir otro lugar de trabajo, no solo otro puesto
-• Una nueva pantalla de bloqueo, con huella dactilar
+• Entrada con correo y contraseña, o como invitado: tus datos se quedan en el teléfono hasta que conectes una cuenta
+• La privacidad primero: estadísticas solo si aceptas, e importes ocultos en la competencia con amigos
+• Una apertura más fluida, con el botón para entrar como principal
+• Botones pequeños más fáciles de tocar, texto pequeño más grande y mejor soporte para lectores de pantalla
+• Política de privacidad, condiciones de uso y declaración de accesibilidad actualizadas
 ```
