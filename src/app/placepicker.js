@@ -199,23 +199,30 @@
           }
           if (rail) rail.classList.toggle('show', !s);
         }
-        function results(q) {
+        // the keystroke makes only the rows that fill the screen; the rest come in the next frame, out of sight (all
+        // 40 in one go were an 85 ms frame on a 4x slower phone, 570 objects laid out where 14 rows show)
+        let tail = 0;
+        function results(q, all) {
+          cancelAnimationFrame(tail); tail = 0;
           const { list, total } = Places.search(q, SHOW);
+          const head = all ? list : list.slice(0, Math.ceil(root.innerHeight / 56) + 1);
+          // two frames: a frame asked for in the keystroke still comes before the head is drawn
+          if (head.length < list.length) tail = requestAnimationFrame(() => { tail = requestAnimationFrame(() => { tail = 0; if (searching && input.value === q) results(q, true); }); });
           const keep = new Set(list.map((p) => p.i));
           for (const [i, el] of resEls) if (!keep.has(i)) { el.remove(); resEls.delete(i); }
           // the new rows are made in one go; only those that come in on screen (the first dozen) slide in
-          const fresh = list.filter((p) => !resEls.has(p.i));
+          const fresh = head.filter((p) => !resEls.has(p.i));
           if (fresh.length) {
             tmp.innerHTML = fresh.map((p) => row(p, q, on(p))).join('');
-            fresh.forEach((p, n) => resEls.set(p.i, tmp.children[n]));
+            fresh.forEach((p, n) => { const el = tmp.children[n]; el.dataset.q = q; resEls.set(p.i, el); });
           }
           const anim = motion() && !!tmp.animate;
           let prev = null, shown = 0;
-          for (const p of list) {
+          for (const p of head) {
             const el = resEls.get(p.i);
             if (fresh.includes(p)) {
               if (anim && shown < 12) el.animate([{ opacity: 0, transform: 'translateY(8px)' }, { opacity: 1, transform: 'none' }], { duration: 200, delay: shown * 16, easing: 'cubic-bezier(.2,.9,.3,1)', fill: 'backwards' });
-            } else el.querySelector('.pp-n').innerHTML = mark(p.name, q);
+            } else if (el.dataset.q !== q) { el.querySelector('.pp-n').innerHTML = mark(p.name, q); el.dataset.q = q; }
             shown++;
             const want = prev ? prev.nextSibling : resList.firstChild;
             if (el !== want) resList.insertBefore(el, want);
@@ -224,9 +231,12 @@
           const was = more.dataset.k || '';
           const k = !total ? 'none' : total > list.length ? 'more' : '';
           more.dataset.k = k;
-          more.innerHTML = k === 'none'
+          // written only when it changes: it is read out (aria-live), and the frame that adds the rest of the rows
+          // must not read it again
+          const hint = k === 'none'
             ? `<div class="pp-empty"><span class="pp-empty-ic" aria-hidden="true">🧭</span><b>לא מצאנו יישוב כזה</b><span>אפשר לנסות רק את תחילת השם, או באנגלית</span></div>`
             : k === 'more' ? `<div class="pp-hint">ועוד ${total - list.length} יישובים. כדאי להמשיך לכתוב</div>` : '';
+          if (more.innerHTML !== hint) more.innerHTML = hint;
           if (k === 'none' && was !== 'none' && motion()) {
             const e = more.firstChild;
             if (e && e.animate) e.animate([{ opacity: 0, transform: 'scale(.94)' }, { opacity: 1, transform: 'none' }], { duration: 240, easing: 'cubic-bezier(.2,.9,.3,1.2)' });
