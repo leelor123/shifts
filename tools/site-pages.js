@@ -147,7 +147,7 @@ const PAGES = [
   {
     slug: 'overtime',
     title: 'שעות נוספות: מתי מתחילות וכמה משלמים?',
-    desc: `בשבוע עבודה של 5 ימים שעות נוספות מתחילות אחרי ${OTL.five} שעות ביום (${hm(OTL.five)}), בשבוע של 6 ימים אחרי ${OTL.six}, במשמרת לילה אחרי ${OTL.night}, ובכל שבוע מעל ${OTL.week} שעות רגילות. ${OTL.t1h} השעות הנוספות הראשונות ב-${OT[0]}%, ומהשלישית ${OT[1]}%.`,
+    desc: `שעות נוספות מתחילות אחרי ${OTL.five} שעות ביום בשבוע של 5 ימים, אחרי ${OTL.six} בשבוע של 6, ואחרי ${OTL.night} בלילה. ${OTL.t1h} השעות הראשונות ב-${OT[0]}%, ומהשלישית ${OT[1]}%.`,
     answer: `בשבוע עבודה של 5 ימים, כל שעה אחרי <b>${OTL.five} שעות ביום</b> (${hm(OTL.five)}) היא שעה נוספת, וגם כל שעה רגילה מעל <b>${OTL.week} שעות בשבוע</b>. על ${OTL.t1h} השעות הנוספות הראשונות ביום משלמים ${OT[0]}%, ומהשלישית ${OT[1]}%.`,
     body: `
       <h2>מתי מתחילות שעות נוספות?</h2>
@@ -246,7 +246,7 @@ const PAGES = [
   {
     slug: 'tax-refund',
     title: 'מגיע לי החזר מס? מי זכאי, כמה ואיך מגישים',
-    desc: `עבדת רק חלק מהשנה, השתחררת מהצבא או סיימת תואר? כנראה נלקח ממך יותר מדי מס הכנסה. כמה זה יכול להיות, אילו נקודות זיכוי מגיעות לך, ואיך מקבלים את הכסף בחזרה, עד 6 שנים אחורה.`,
+    desc: `עבדת רק חלק מהשנה, השתחררת מהצבא או סיימת תואר? כנראה נלקח ממך יותר מדי מס. כמה זה, אילו נקודות זיכוי מגיעות לך ואיך מקבלים את הכסף, עד 6 שנים אחורה.`,
     answer: `מס הכנסה נלקח מהמשכורת כל חודש <b>כאילו תעבוד כך כל השנה</b>. מי שעבד רק חלק מהשנה, השתחרר משירות, סיים תואר, עבד אצל כמה מעסיקים או שנוכה ממנו מס לפני גיל 18, לרוב שילם יותר מדי, ויכול לקבל את ההפרש בחזרה <b>עד 6 שנים אחורה</b>, עם הפרשי הצמדה וריבית.`,
     body: `
       <h2>כמה זה יכול להיות?</h2>
@@ -326,7 +326,7 @@ details p { margin: 8px 0 0; color: var(--ink-2); }
 .more a { background: var(--surface); border-radius: 999px; padding: 8px 14px; text-decoration: none; box-shadow: 0 2px 10px rgba(10, 20, 45, .06); }
 footer { text-align: center; color: var(--ink-2); font-size: .9rem; padding: 0 16px 32px; }`;
 
-function page(p) {
+function page(p, date) {
   const url = `${SITE}/${p.slug}`;
   const ld = [
     { '@context': 'https://schema.org', '@type': 'FAQPage', mainEntity: p.faq.map(([q, a]) => ({ '@type': 'Question', name: q, acceptedAnswer: { '@type': 'Answer', text: a } })) },
@@ -348,7 +348,12 @@ function page(p) {
 <meta property="og:title" content="${esc(p.title)}">
 <meta property="og:description" content="${esc(p.desc)}">
 <meta property="og:url" content="${url}">
-<meta property="og:image" content="${SITE}/img/og.png">
+<meta property="og:image" content="${SITE}/img/og.jpg">
+<meta property="og:image:type" content="image/jpeg">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:image:alt" content="שעתי: כמה באמת מגיע לך על כל שעה. האפליקציה בטלפון, עם השכר של החודש">
+<meta name="twitter:card" content="summary_large_image">
 <link rel="icon" href="img/favicon-48.png" sizes="48x48">
 <link rel="apple-touch-icon" href="img/apple-touch-icon.png">
 ${FONT_HEAD}
@@ -366,7 +371,7 @@ ${FONT_HEAD}
   <h2>שאלות נפוצות</h2>
   ${p.faq.map(([q, a]) => `<details><summary>${esc(q)}</summary><p>${esc(a)}</p></details>`).join('\n  ')}
   <p class="src">המקור הרשמי: ${p.sources.map(([l, h]) => `<a href="${h}" rel="noopener">${esc(l)} ב-gov.il</a>`).join(' · ')}</p>
-  <div class="note">שעתי אינה גוף ממשלתי ואינה מייצגת גוף ממשלתי. המידע כללי ואינו ייעוץ משפטי; בהסכם קיבוצי, צו הרחבה ענפי או חוזה אישי ייתכנו זכויות נוספות.${p.note ? ' ' + p.note : ''} עודכן ב-${dmy(today)}.</div>
+  <div class="note">שעתי אינה גוף ממשלתי ואינה מייצגת גוף ממשלתי. המידע כללי ואינו ייעוץ משפטי; בהסכם קיבוצי, צו הרחבה ענפי או חוזה אישי ייתכנו זכויות נוספות.${p.note ? ' ' + p.note : ''} עודכן ב-${dmy(date)}.</div>
   <h2>עוד שאלות</h2>
   <div class="more"><a href="check">${esc(CHECK.title)}</a>${others.map((x) => `<a href="${x.slug}">${esc(x.title)}</a>`).join('')}</div>
 </main>
@@ -403,7 +408,7 @@ const CHECK_CSS = `
 .ck-acts button { font: 700 1rem Rubik, sans-serif; border: 0; border-radius: 999px; padding: 12px 18px; cursor: pointer; background: #fff; color: #0d2b6b; }
 .ck-acts button.wa { background: #25d366; color: #063b1c; }
 .priv { font-size: .92rem; color: var(--ink-2); text-align: center; }`;
-function checkPage() {
+function checkPage(date) {
   const url = `${SITE}/check`;
   return `<!doctype html>
 <html lang="he" dir="rtl">
@@ -420,7 +425,12 @@ function checkPage() {
 <meta property="og:title" content="${esc(CHECK.title)}">
 <meta property="og:description" content="${esc(CHECK.desc)}">
 <meta property="og:url" content="${url}">
-<meta property="og:image" content="${SITE}/img/og.png">
+<meta property="og:image" content="${SITE}/img/og.jpg">
+<meta property="og:image:type" content="image/jpeg">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:image:alt" content="שעתי: כמה באמת מגיע לך על כל שעה. האפליקציה בטלפון, עם השכר של החודש">
+<meta name="twitter:card" content="summary_large_image">
 <link rel="icon" href="img/favicon-48.png" sizes="48x48">
 <link rel="apple-touch-icon" href="img/apple-touch-icon.png">
 ${FONT_HEAD}
@@ -454,7 +464,7 @@ ${FONT_HEAD}
   </div>
   <div class="cta"><b>זה רק שכר המינימום</b><span>שעתי בודקת את כל השאר: שבתות וחגים לפי העיר, שעות נוספות, נסיעות, הבראה, ואת התלוש עד השקל. חינם ובלי פרסומות.</span><a class="btn" href="${APP}">לבדוק את התלוש בשעתי</a></div>
   <p class="src">המקור הרשמי: ${[['שכר מינימום', GOV.minwage], ['זכויות בני נוער בעבודה', GOV.youth], ['מנוחה שבועית וחגים', GOV.rest]].map(([l, h]) => `<a href="${h}" rel="noopener">${esc(l)} ב-gov.il</a>`).join(' · ')}</p>
-  <div class="note">שעתי אינה גוף ממשלתי ואינה מייצגת גוף ממשלתי. הבדיקה כללית ואינה ייעוץ משפטי: לפי שכר המינימום מ-${dmy(MW.from)} ולפי הגיל; לחניכים, לבעלי מוגבלות ובהסכמים מיוחדים יש כללים אחרים. עודכן ב-${dmy(today)}.</div>
+  <div class="note">שעתי אינה גוף ממשלתי ואינה מייצגת גוף ממשלתי. הבדיקה כללית ואינה ייעוץ משפטי: לפי שכר המינימום מ-${dmy(MW.from)} ולפי הגיל; לחניכים, לבעלי מוגבלות ובהסכמים מיוחדים יש כללים אחרים. עודכן ב-${dmy(date)}.</div>
   <h2>עוד שאלות</h2>
   <div class="more">${PAGES.map((x) => `<a href="${x.slug}">${esc(x.title)}</a>`).join('')}</div>
 </main>
@@ -469,15 +479,29 @@ const CHECK_DATA = {
   label: { u16: 'מתחת לגיל 16', a16: 'בגיל 16', a17: 'בגיל 17', adult: 'מגיל 18' },
   rest: REST[0], from: MW.from,
 };
-fs.writeFileSync(path.join(ROOT, 'site', 'check.html'), checkPage());
+// a page's date (its note, "updated on", and the sitemap's lastmod) moves only when the page changed: every run gave
+// every page today's date, and search engines stop trusting a lastmod that is always today (launch check)
+const headOf = (rel) => { try { return require('child_process').execSync('git show HEAD:' + rel, { cwd: ROOT, stdio: ['ignore', 'pipe', 'ignore'] }).toString(); } catch (e) { return ''; } };
+const NOTE_DATE = /עודכן ב-(\d{1,2})\.(\d{1,2})\.(\d{4})\./;
+const dated = {};
+function writeDated(file, make) {
+  const rel = 'site/' + file, now = make(today), head = headOf(rel), m = head.match(NOTE_DATE);
+  const same = m && head.replace(NOTE_DATE, '') === now.replace(NOTE_DATE, '');
+  const date = same ? `${m[3]}-${m[2].padStart(2, '0')}-${m[1].padStart(2, '0')}` : today;
+  fs.writeFileSync(path.join(ROOT, rel), same ? make(date) : now);
+  dated[file] = date;
+}
+// the home page is written by hand: its date is its last commit's, or today when it has changes not committed yet
+const homeDate = (() => { try { const cp = require('child_process'); if (cp.execSync('git status --porcelain -- site/index.html', { cwd: ROOT }).toString().trim()) return today; return cp.execSync('git log -1 --format=%cs -- site/index.html', { cwd: ROOT }).toString().trim() || today; } catch (e) { return today; } })();
+writeDated('check.html', checkPage);
 fs.writeFileSync(path.join(ROOT, 'site', 'check.js'), fs.readFileSync(path.join(__dirname, 'site-check.js'), 'utf8').replace('const D = __DATA__;', 'const D = ' + JSON.stringify(CHECK_DATA) + ';'));
 
-for (const p of PAGES) fs.writeFileSync(path.join(ROOT, 'site', p.slug + '.html'), page(p));
+for (const p of PAGES) writeDated(p.slug + '.html', (d) => page(p, d));
 fs.writeFileSync(path.join(ROOT, 'site', 'sitemap.xml'), `<?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
-  <url><loc>${SITE}/</loc><lastmod>${today}</lastmod></url>
-  <url><loc>${SITE}/check</loc><lastmod>${today}</lastmod></url>
-${PAGES.map((p) => `  <url><loc>${SITE}/${p.slug}</loc><lastmod>${today}</lastmod></url>`).join('\n')}
+  <url><loc>${SITE}/</loc><lastmod>${homeDate}</lastmod></url>
+  <url><loc>${SITE}/check</loc><lastmod>${dated['check.html']}</lastmod></url>
+${PAGES.map((p) => `  <url><loc>${SITE}/${p.slug}</loc><lastmod>${dated[p.slug + '.html']}</lastmod></url>`).join('\n')}
 </urlset>
 `);
 fs.writeFileSync(path.join(ROOT, 'site', 'robots.txt'), `User-agent: *\nAllow: /\nSitemap: ${SITE}/sitemap.xml\n`);
