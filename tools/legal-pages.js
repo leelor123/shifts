@@ -74,6 +74,8 @@ const DELETE = `<p class="meta">מחיקת חשבון ונתונים · Account 
 <li><b>Data on the phone:</b> <b>Sign out</b> (התנתק, same place) clears the device and keeps the data in the account. The pay-card photo and imported timesheets stay on the phone only.</li>
 </ul></div>`;
 
+// the documents' section titles are h4 inside the app's sheet; on a page of their own they follow the h1, so h2
+// (launch check: h1 straight to h4 broke the heading order, Lighthouse 97 on these pages)
 function page(title, body) {
   return `<!doctype html>
 <html lang="he" dir="rtl"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
@@ -93,7 +95,7 @@ h1{font-size:1.7rem;margin:8px 0 4px} h2{font-size:1.15rem;margin:22px 0 6px} h4
 .en{font-family:system-ui,Arial,sans-serif} footer{margin-top:28px;color:var(--muted);font-size:.85rem}
 </style></head><body><main>
 <header><img src="icon-192.png" alt=""><a href="${APP_URL}">Shaati</a></header>
-<h1>${title}</h1><div class="card">${body}</div>
+<h1>${title}</h1><div class="card">${body.replace(/<(\/?)h4>/g, '<$1h2>')}</div>
 <footer><a href="privacy.html">מדיניות פרטיות</a> · <a href="terms.html">תנאי שימוש</a> · <a href="accessibility.html">נגישות</a> · <a href="delete-account.html">מחיקת חשבון</a> · <a href="${CONTACT}">יצירת קשר</a></footer>
 </main></body></html>
 `;
