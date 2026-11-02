@@ -76,7 +76,9 @@
       <span class="trail"><span class="a">${sign}${money(v.amount, 0)}</span></span></button>`;
   };
   App.severityIcon = { info: 'info', warn: 'alert', critical: 'alert', good: 'okc' };
-  App.insightRow = (a, opts) => `<div class="insight sev-${a.severity || 'info'} ${opts && opts.notif ? 'notif' + (a.read ? '' : ' unread') : ''}" ${a.id ? `data-nid="${esc(a.id)}"` : ''}>
+  // a severity goes into a class name: one of the known four only (store.js checks too)
+  const sev = (s) => (App.severityIcon[s] ? s : 'info');
+  App.insightRow = (a, opts) => `<div class="insight sev-${sev(a.severity)}${opts && opts.notif ? 'notif' + (a.read ? '' : ' unread') : ''}" ${a.id ? `data-nid="${esc(a.id)}"` : ''}>
     <span class="ic">${icon(App.severityIcon[a.severity] || 'bulb', 's')}</span>
     <div style="flex:1;min-width:0"><div class="t">${esc(a.title)}</div><div class="b">${esc(a.body)}</div>${a.explain ? `<div class="x">${icon('info', 's')} ${esc(a.explain)}</div>` : ''}${opts && opts.notif ? `<div class="when">${UI.timeAgo(a.createdAt)}</div>` : ''}</div></div>`;
 
@@ -235,18 +237,18 @@
     let item = null, pay = null;
     const soon = !S.activeShift && [...App.model.results.values()].filter((r) => r.status === 'planned' && r.start > now - 60 * 60000 && r.start < now + 30 * 60000).sort((a, b) => a.start - b.start)[0];
     if (soon) item = { act: 'start-planned', id: soon.id, ic: 'play', cls: 'go', t: `התחל את המשמרת של ${U.epochHM(soon.start)}` };
-    else if (urgent[0]) item = { act: 'insights', ic: 'alert', cls: 'sev-' + urgent[0].severity, t: urgent[0].title };
+    else if (urgent[0]) item = { act: 'insights', ic: 'alert', cls: 'sev-' + sev(urgent[0].severity), t: urgent[0].title };
     else if (next) item = { act: 'shift-open', id: next.id, ic: 'calendar', cls: '', t: `משמרת ${U.epochKey(next.start) === U.todayKey() ? 'היום' : 'מחר'} ב-${U.epochHM(next.start)} · ${App.roleName(next.segments[0].roleId)}` };
     else if (weekly) item = { act: 'insights', ic: 'sparkle', cls: '', t: 'הסיכום השבועי שלך מוכן' };
     // the week before payday: how many days are left and about how much is coming (before tips and notes)
     else if ((pay = paydaySoon())) item = pay;
     // a likely tax refund opens its own sheet, at its year
     else if (unread[0] && unread[0].type === 'taxrefund') item = { act: 'tax-refund', year: unread[0].data && unread[0].data.year, ic: 'calc', cls: 'sev-good', t: unread[0].title };
-    else if (unread[0]) item = { act: 'insights', ic: App.severityIcon[unread[0].severity] || 'bulb', cls: 'sev-' + (unread[0].severity || 'info'), t: unread[0].title };
+    else if (unread[0]) item = { act: 'insights', ic: App.severityIcon[unread[0].severity] || 'bulb', cls: 'sev-' + sev(unread[0].severity), t: unread[0].title };
     else if (live[0]) item = { act: 'insights', ic: 'bulb', cls: '', t: live[0].title };
     if (!item) return '';
     const more = item.cls === 'go' ? 0 : Math.max(0, unread.length - (unread.some((n) => n.title === item.t) ? 1 : 0));
-    return `<button class="highlight ${item.cls}" data-act="${item.act}"${item.id ? ` data-id="${item.id}"` : ''}${item.year ? ` data-year="${item.year}"` : ''}>
+    return `<button class="highlight ${item.cls}" data-act="${item.act}"${item.id ? ` data-id="${esc(item.id)}"` : ''}${item.year ? ` data-year="${esc(item.year)}"` : ''}>
       <span class="hl-ic">${icon(item.ic, 's')}</span><span class="hl-t">${esc(item.t)}</span>${more ? `<span class="hl-more">+${more}</span>` : ''}${icon('left', 's')}</button>`;
   }
 

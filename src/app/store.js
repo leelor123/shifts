@@ -164,11 +164,24 @@
    */
   const SAFE_ID = /^[A-Za-z0-9_.:-]{1,120}$/;
   const HHMM = /^\d{2}:\d{2}$/;
+  const HEX = /^#[0-9a-f]{3,8}$/i;
+  const SEVERITY = ['info', 'warn', 'critical', 'good'];
   const REFS = ['roleId', 'employerId', 'fileId', 'payslipId', 'shiftId', 'templateId'];
   function safeRecord(store, r) {
     if (!r || typeof r !== 'object' || Array.isArray(r) || typeof r.id !== 'string' || !SAFE_ID.test(r.id)) return null;
     for (const k of REFS) if (r[k] != null && r[k] !== '' && !(typeof r[k] === 'string' && SAFE_ID.test(r[k]))) r[k] = null;
-    if (typeof r.color === 'string' && !/^#[0-9a-f]{3,8}$/i.test(r.color)) r.color = '#888888';
+    // a colour goes into a style attribute: a #hex string only, whatever its type (an array printed its own text there,
+    // security review 2 Nov 2026)
+    if (r.color != null && !(typeof r.color === 'string' && HEX.test(r.color))) r.color = '#888888';
+    if (store === 'notifications') {
+      // the home screen puts these into class and data attributes
+      if (!SEVERITY.includes(r.severity)) r.severity = 'info';
+      for (const k of ['type', 'cat']) if (r[k] != null && !(typeof r[k] === 'string' && SAFE_ID.test(r[k]))) r[k] = null;
+      r.createdAt = Number.isFinite(+r.createdAt) ? +r.createdAt : 0;
+      if (r.data != null && (typeof r.data !== 'object' || Array.isArray(r.data))) r.data = null;
+      if (r.data && r.data.year != null) r.data.year = Number.isInteger(+r.data.year) ? +r.data.year : null;
+      r.read = !!r.read;
+    }
     if (store === 'templates') {
       if (typeof r.startT !== 'string' || !HHMM.test(r.startT) || typeof r.endT !== 'string' || !HHMM.test(r.endT)) return null;
       if (r.breakMin != null && !Number.isFinite(+r.breakMin)) r.breakMin = 0; else if (r.breakMin != null) r.breakMin = +r.breakMin;

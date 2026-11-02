@@ -223,6 +223,25 @@ T.atest('a crafted backup cannot put markup into the page: unsafe records are dr
   await A.Store.applyRemote([{ store: 'shifts', put: { id: 'y' + bad, kind: 'shift', start: 1, end: 2, updatedAt: 9 } }]);
   T.ok(!A.S.shifts.some((s) => /</.test(s.id)), 'a cloud record with an unsafe id is not taken in');
 });
+// security review 2 Nov 2026: a colour that is not a string (an array prints its own text into the style) and the
+// notifications' fields (severity into a class, the year into a data attribute)
+T.atest('a crafted backup cannot put markup in through a colour or a notification', async () => {
+  const be = fakeBackend();
+  const A = await phone(be); await A.add('s1', 'mine');
+  const bad = '"><meta http-equiv="refresh" content="0;url=https://evil.example/">';
+  const backup = JSON.parse(JSON.stringify(await A.Store.exportBackup(false)));
+  backup.roles = (backup.roles || []).concat([{ id: 'r9', name: 'x', color: [bad], rates: [{ from: '2020-01-01', rate: 30 }], employerId: 'emp1' }]);
+  backup.notifications = [{ id: 'n1', severity: bad, type: bad, cat: 'money', read: 'yes', createdAt: bad, title: 't', body: 'b', data: { year: bad } }];
+  await A.Store.importBackup(backup, 'merge'); await wait(50);
+  T.ok(A.S.roles.every((r) => r.color == null || /^#[0-9a-f]{3,8}$/i.test(r.color)), 'every colour is a #hex string: ' + A.S.roles.map((r) => JSON.stringify(r.color)).join());
+  const n = A.S.notifications.find((x) => x.id === 'n1');
+  T.ok(n, 'the notification itself is kept');
+  T.eq(n.severity, 'info', 'an unknown severity becomes info');
+  T.eq(n.type, null, 'an unsafe type is cleared');
+  T.eq(n.createdAt, 0, 'a time that is not a number becomes 0');
+  T.eq(n.data.year, null, 'a year that is not a whole number is cleared');
+  T.eq(n.read, true, 'read is true or false');
+});
 
 /* ---------------- anonymous statistics ---------------- */
 async function withStats(A, legal) {
