@@ -177,6 +177,8 @@ main > section.shown, body > footer.shown, main:has(:target) > section { content
 .field output { color: var(--mute); font-weight: 400; font-variant-numeric: tabular-nums; }
 .inp { display: flex; align-items: center; border-radius: 14px; background: var(--soft); box-shadow: inset 0 0 0 1px var(--line); }
 .inp:focus-within { box-shadow: inset 0 0 0 2px var(--navy-2); }
+/* in the dark the navy ring was 1.5:1 on the field (launch check, WCAG 1.4.11): the site's gold */
+@media (prefers-color-scheme: dark) { .inp:focus-within { box-shadow: inset 0 0 0 2px var(--gold); } }
 .inp input { flex: 1; min-width: 0; border: 0; background: none; font: 500 1.15rem Rubik, sans-serif; color: var(--ink); padding: 13px 16px; direction: ltr; text-align: end; font-variant-numeric: tabular-nums; }
 .inp input:focus { outline: none; }
 .inp b { padding-inline-end: 16px; color: var(--mute); font-weight: 500; }
@@ -276,6 +278,14 @@ input[type=range]::-moz-range-thumb { width: 26px; height: 26px; border: 0; bord
    else (the user, 2 Nov: a cookie approval). Fixed at the bottom, so nothing on the page moves when it comes */
 .cookie { position: fixed; z-index: 45; inset-inline: 16px; bottom: calc(16px + env(safe-area-inset-bottom)); max-width: 560px; margin-inline: auto; display: flex; align-items: center; gap: 14px; padding: 14px 16px; border-radius: 18px; background: rgba(6, 23, 61, .95); color: #fff; box-shadow: 0 14px 40px rgba(3, 10, 30, .35); font-size: .92rem; line-height: 1.5; }
 .cookie[hidden] { display: none; }
+/* the sky moves on its own and never stops: a way to stop it (WCAG 2.2.2), kept for the next visit */
+.sky-pause { margin-top: 14px; display: inline-flex; align-items: center; gap: 8px; min-height: 44px; padding: 0 14px; border: 0; border-radius: 12px; background: rgba(6, 23, 61, .36); color: rgba(255, 255, 255, .9); box-shadow: inset 0 0 0 1px rgba(255, 255, 255, .16); font: 500 .88rem Rubik, sans-serif; cursor: pointer; backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px); }
+.sky-pause svg { width: 14px; height: 14px; flex: none; }
+.sky-pause .i-play, .sky-pause[aria-pressed=true] .i-pause { display: none; }
+.sky-pause[aria-pressed=true] .i-play { display: block; }
+.sky-pause:focus-visible { outline: 2.5px solid var(--gold); outline-offset: 2px; }
+html.sky-still .sky, html.sky-still .sky * { animation-play-state: paused !important; }
+@media (prefers-reduced-motion: reduce) { .sky-pause { display: none; } }
 .cookie p { margin: 0; flex: 1; }
 .cookie a { color: var(--gold); }
 .cookie .btn { min-height: 44px; padding: 0 18px; border-radius: 12px; flex-shrink: 0; }
@@ -398,6 +408,7 @@ footer .note { margin-top: 12px; font-size: .85rem; }
             <label><input type="radio" name="city" value="elt"><span>אילת</span></label>
           </div>
         </fieldset>
+        <button type="button" class="sky-pause" data-sky-pause aria-pressed="false"><svg class="i-pause" viewBox="0 0 16 16" aria-hidden="true"><rect x="3.5" y="2.5" width="3" height="11" rx="1" fill="currentColor"/><rect x="9.5" y="2.5" width="3" height="11" rx="1" fill="currentColor"/></svg><svg class="i-play" viewBox="0 0 16 16" aria-hidden="true"><path d="M4 2.6v10.8a.8.8 0 0 0 1.2.7l8.6-5.4a.8.8 0 0 0 0-1.4L5.2 1.9a.8.8 0 0 0-1.2.7z" fill="currentColor"/></svg><span>עצירת התנועה בשמיים</span></button>
       </div>
       <div class="hero-phone">
         <div class="phone"><img src="img/home.webp" srcset="img/home-600.webp 600w, img/home.webp 780w" sizes="(max-width: 860px) 270px, 330px" width="780" height="1688" fetchpriority="high" alt="המסך הראשי של שעתי: ברוטו החודש עד עכשיו, שעות, משמרות ונטו משוער, וכפתור התחלת משמרת"></div>
@@ -498,7 +509,7 @@ footer .note { margin-top: 12px; font-size: .85rem; }
 
   <section class="sec flush" id="screens">
     <div class="wrap"><div class="sec-head"><h2>ככה זה נראה</h2><p>כחול לילה וזהב, אותיות ברורות, וכל מספר עם הסבר. גם במצב כהה.</p></div></div>
-    <div class="gallery" data-gallery tabindex="0" aria-label="צילומי מסך של שעתי (גלילה הצידה)">
+    <div class="gallery" data-gallery tabindex="0" role="region" aria-label="צילומי מסך של שעתי (גלילה הצידה)">
       <figure><div class="phone"><img src="img/calendar-s.webp" width="540" height="1169" decoding="async" loading="lazy" alt="לוח השנה של שעתי עם המשמרות והשכר לכל יום"></div><figcaption>לוח שנה<small>כל יום עם השכר שלו</small></figcaption></figure>
       <figure><div class="phone"><img src="img/shift-s.webp" width="540" height="1169" decoding="async" loading="lazy" alt="מסך משמרת בשעתי: פירוק השכר של המשמרת לפי סוגי השעות"></div><figcaption>משמרת<small>כל שקל מפורק</small></figcaption></figure>
       <figure><div class="phone"><img src="img/rights-s.webp" width="540" height="1169" decoding="async" loading="lazy" alt="מסך הזכויות שלי בשעתי"></div><figcaption>הזכויות שלי<small>לפי הגיל והנתונים שלך</small></figcaption></figure>
@@ -576,7 +587,7 @@ footer .note { margin-top: 12px; font-size: .85rem; }
   </div>
   <div class="wrap note">שעתי היא כלי עזר לחישוב שכר ואינה ייעוץ משפטי או חשבונאי.</div>
 </footer>
-<div class="cookie" data-cookie role="region" aria-label="שמירה בדפדפן" hidden><p>האתר שומר בדפדפן רק את העיר שבחרת, כדי להראות את השמיים שלה. אין כאן עוגיות פרסום או מעקב. <a href="https://leelor123.github.io/shifts/privacy.html">מדיניות הפרטיות</a></p><button type="button" class="btn btn-gold" data-cookie-ok>הבנתי</button></div>
+<div class="cookie" data-cookie role="region" aria-label="שמירה בדפדפן" hidden><p>האתר שומר בדפדפן רק את מה שבחרת כאן: העיר של השמיים, ואם עצרת את התנועה בהם. אין כאן עוגיות פרסום או מעקב. <a href="https://leelor123.github.io/shifts/privacy.html">מדיניות הפרטיות</a></p><button type="button" class="btn btn-gold" data-cookie-ok>הבנתי</button></div>
 <script src="sky.js" defer></script>
 <script src="site.js" defer></script>
 </body>

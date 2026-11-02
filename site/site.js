@@ -283,6 +283,14 @@
     new IntersectionObserver(([e], o) => { if (e.isIntersecting) { o.disconnect(); draw(fin, fin.parentNode, { phase: 'night', weather: 'clear' }); } }, { rootMargin: '400px 0px' }).observe(fin);
   }
 
+  /* ---------- the sky's motion: stopped on request (it never ends by itself, WCAG 2.2.2), kept for the next visit ---------- */
+  const pause = $('[data-sky-pause]');
+  if (pause) {
+    const setStill = (on) => { document.documentElement.classList.toggle('sky-still', on); pause.setAttribute('aria-pressed', String(on)); };
+    setStill(store.get('shaati.site.still') === '1');
+    pause.addEventListener('click', () => { const on = pause.getAttribute('aria-pressed') !== 'true'; setStill(on); store.set('shaati.site.still', on ? '1' : '0'); });
+  }
+
   /* ---------- the storage notice: once, until it is acknowledged ---------- */
   const note = $('[data-cookie]');
   if (note && !store.get('shaati.site.cookies')) {
