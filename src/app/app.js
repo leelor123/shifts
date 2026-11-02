@@ -89,11 +89,19 @@
       if (font === 'rubik') link.removeAttribute('href'); else link.href = App.fontCss(font);
       link.dataset.font = font;
     }
-    const dark = st.theme === 'dark' || (st.theme !== 'light' && matchMedia('(prefers-color-scheme: dark)').matches);
-    const meta = document.querySelector('meta[name="theme-color"]');
-    if (meta) meta.content = document.getElementById('intro') ? '#0d2b6b' : dark ? '#0f1413' : '#f6f4ee';
+    App.statusBar();
     if (root.Fx) root.Fx.apply();
     if (roomChanged && root.Dom && root.Dom.fitAll) root.Dom.fitAll();
+  };
+  /** The phone's status bar takes the colour of what is under it: the opening's navy, the home screen's sky while it is
+   * in view (its top colour, set by App.homeSky), otherwise the page (a beige bar sat above the night sky). */
+  App.statusBar = function () {
+    const meta = document.querySelector('meta[name="theme-color"]');
+    if (!meta) return;
+    const st = S.settings || {};
+    const dark = st.theme === 'dark' || (st.theme !== 'light' && matchMedia('(prefers-color-scheme: dark)').matches);
+    const c = document.getElementById('intro') ? '#0d2b6b' : App.tab === 'home' && !App.blocking && App.skyTop && App.skyInView !== false ? App.skyTop : dark ? '#0e1118' : '#f6f4ee';
+    if (meta.content !== c) meta.content = c;
   };
   matchMedia('(prefers-color-scheme: dark)').addEventListener('change', () => App.applyTheme());
 
@@ -250,6 +258,7 @@
     if (same) root.Dom.patch(inner, html);
     else v.innerHTML = `<div class="view ${cls}" id="view-inner">${html}</div>`;
     try { if (App.views[App.tab + '_mount']) App.views[App.tab + '_mount'](v); } catch (e) { console.error('mount failed', App.tab, e); }
+    App.statusBar();
     App.renderNav();
     if (opts && opts.keepScroll) window.scrollTo(0, y);
     App.tickTimer();

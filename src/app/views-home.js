@@ -341,8 +341,18 @@
     }
     const p = Sky.prefs(), key = [w, Math.round(h / 12), p.place && p.place.name, Sky.weatherNow(p)].join('|');
     if (svg.dataset.key === key && Date.now() - (+svg.dataset.at || 0) < 600000) return;
-    try { host.dataset.phase = Sky.render(svg, { now: Date.now(), place: p.place, weather: Sky.weatherNow(p), width: w, height: h }).phase; } catch (e) { console.warn('sky', e); return; }
+    try {
+      const out = Sky.render(svg, { now: Date.now(), place: p.place, weather: Sky.weatherNow(p), width: w, height: h });
+      host.dataset.phase = out.phase;
+      App.skyTop = out.top;
+    } catch (e) { console.warn('sky', e); return; }
     svg.dataset.key = key; svg.dataset.at = String(Date.now());
+    // the status bar follows the sky while it is on the screen (App.statusBar)
+    if (!host.__io && 'IntersectionObserver' in window) {
+      host.__io = new IntersectionObserver(([e]) => { App.skyInView = e.isIntersecting; App.statusBar(); }, { rootMargin: '-24px 0px 0px 0px' });
+      host.__io.observe(host);
+    }
+    App.statusBar();
   };
 
   App.views.home = function () {
