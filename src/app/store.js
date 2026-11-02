@@ -112,7 +112,7 @@
     const kv = await getAll('kv');
     const kvMap = Object.fromEntries(kv.map((x) => [x.key, x.value]));
     S.settings = mergeDeep(root.Defaults.defaultSettings(), kvMap.settings || {});
-    S.meta = kvMap.meta || {};
+    S.meta = cleanMeta(kvMap.meta || {});
     S.activeShift = kvMap.activeShift || null;
     for (const s of LIST_STORES) S[s] = safeList(s, await getAll(s));
     // first run: default employer
@@ -165,6 +165,10 @@
    * an HTML attribute once could put its own markup into the page (security scan, 1 Nov 2026).
    */
   const SAFE_ID = /^[A-Za-z0-9_.:-]{1,120}$/;
+  // an id is also a key of the engine's maps (per role, per payslip): never one of an object's own built-in names (a
+  // backup with a role id __proto__ turned every pay sum into NaN, security scan 2 Nov 2026)
+  const RESERVED = ['__proto__', 'constructor', 'prototype', 'hasOwnProperty', 'toString', 'valueOf'];
+  const safeId = (v) => typeof v === 'string' && SAFE_ID.test(v) && !RESERVED.includes(v);
   const HHMM = /^\d{2}:\d{2}$/;
   const HEX = /^#[0-9a-f]{3,8}$/i;
   const SEVERITY = ['info', 'warn', 'critical', 'good'];
@@ -179,16 +183,30 @@
     return first.length <= 16 && EMOJI.test(first) ? first : '';
   }
   function safeRecord(store, r) {
-    if (!r || typeof r !== 'object' || Array.isArray(r) || typeof r.id !== 'string' || !SAFE_ID.test(r.id)) return null;
-    for (const k of REFS) if (r[k] != null && r[k] !== '' && !(typeof r[k] === 'string' && SAFE_ID.test(r[k]))) r[k] = null;
+    if (!r || typeof r !== 'object' || Array.isArray(r) || !safeId(r.id)) return null;
+    for (const k of REFS) if (r[k] != null && r[k] !== '' && !safeId(r[k])) r[k] = null;
+    // a role switch in a shift names a role too: kept only with a safe role id and a time
+    if (r.splits != null) r.splits = Array.isArray(r.splits) ? r.splits.filter((x) => x && typeof x === 'object' && safeId(x.roleId) && Number.isFinite(+x.at)).map((x) => ({ ...x, at: +x.at })) : [];
     // a colour goes into a style attribute: a #hex string only, whatever its type (an array printed its own text there,
     // security review 2 Nov 2026)
     if (r.color != null && !(typeof r.color === 'string' && HEX.test(r.color))) r.color = '#888888';
     if (store === 'roles' && r.icon != null) r.icon = cleanIcon(r.icon) || null;
+    // an employer's settings keep the types the app writes: numbers, switches, and short codes (a time, a mode). The
+    // shift editor shows them, so a backup's markup in one never reaches the page (security scan, 2 Nov 2026)
+    if (store === 'employers' && root.Defaults) {
+      const def = root.Defaults.defaultEmployer(r.id);
+      for (const k of Object.keys(def)) {
+        if (k === 'id' || k === 'name' || r[k] == null) continue;
+        const t = typeof def[k];
+        if (t === 'number') r[k] = Number.isFinite(+r[k]) && typeof r[k] !== 'object' ? +r[k] : def[k];
+        else if (t === 'boolean') r[k] = !!r[k];
+        else if (t === 'string' && !(typeof r[k] === 'string' && /^[A-Za-z0-9:]{1,20}$/.test(r[k]))) r[k] = def[k];
+      }
+    }
     if (store === 'notifications') {
       // the home screen puts these into class and data attributes
       if (!SEVERITY.includes(r.severity)) r.severity = 'info';
-      for (const k of ['type', 'cat']) if (r[k] != null && !(typeof r[k] === 'string' && SAFE_ID.test(r[k]))) r[k] = null;
+      for (const k of ['type', 'cat']) if (r[k] != null && !safeId(r[k])) r[k] = null;
       r.createdAt = Number.isFinite(+r.createdAt) ? +r.createdAt : 0;
       if (r.data != null && (typeof r.data !== 'object' || Array.isArray(r.data))) r.data = null;
       if (r.data && r.data.year != null) r.data.year = Number.isInteger(+r.data.year) ? +r.data.year : null;
@@ -208,6 +226,22 @@
     return r;
   }
   const safeList = (store, list) => list.map((r) => safeRecord(store, r)).filter(Boolean);
+  /** The phone's own notes (meta) from its database or a backup: the counts the screens print are numbers and the days
+   *  are dates (a backup's games streak once put its own markup into the games sheet, security scan 2 Nov 2026). */
+  function cleanMeta(m) {
+    if (!m || typeof m !== 'object' || Array.isArray(m)) return {};
+    const int = (v) => (Number.isFinite(+v) && typeof v !== 'object' ? Math.max(0, Math.floor(+v)) : 0);
+    if (m.gameDays != null) {
+      const g = m.gameDays && typeof m.gameDays === 'object' ? m.gameDays : {};
+      m.gameDays = { last: typeof g.last === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(g.last) ? g.last : '', n: int(g.n), best: int(g.best) };
+    }
+    if (m.games != null) {
+      const g = m.games && typeof m.games === 'object' && !Array.isArray(m.games) ? m.games : {};
+      m.games = {};
+      for (const k of Object.keys(g)) if (/^[a-z]{1,20}$/.test(k)) m.games[k] = int(g[k]);
+    }
+    return m;
+  }
   /** A stored payslip file: only a PDF or a picture is kept, decoded here (never fetched), with that type. */
   const FILE_TYPES = /^data:(application\/pdf|image\/(?:png|jpeg|webp|gif|heic|heif));base64,([A-Za-z0-9+/=\s]*)$/;
 
@@ -455,8 +489,9 @@
   async function exportBackup(includeFiles) {
     const out = {
       app: 'shiftpay', schemaVersion: SCHEMA_VERSION, appVersion: root.APP_VERSION, exportedAt: new Date().toISOString(),
-      // keys stay out of files: the AI key, and the Shaati Plus purchase code (a shared backup would give it away)
-      settings: Object.assign({}, S.settings, { ai: Object.assign({}, S.settings.ai, { apiKey: '' }), lock: Object.assign({}, S.settings.lock), plusKey: '' }),
+      // keys stay out of files: the AI key, the Shaati Plus purchase code (a shared backup would give it away), and the
+      // code lock: its hash over a 4-8 digit code is found in seconds by trying them all (security scan, 2 Nov 2026)
+      settings: Object.assign({}, S.settings, { ai: Object.assign({}, S.settings.ai, { apiKey: '' }), lock: { enabled: false, hash: null, salt: null, bioId: null, timeoutMin: (S.settings.lock || {}).timeoutMin || 1 }, plusKey: '' }),
       // (and not the pay card's or the roles' own photos: big, and private if the file is shared)
       meta: Object.fromEntries(Object.entries(S.meta).filter(([k]) => !/^plus/.test(k) && k !== 'skinPhoto' && k !== 'rolePhotos' && k !== 'adminUid')), activeShift: S.activeShift,
     };
@@ -492,7 +527,7 @@
   function cleanIncoming(inc) {
     const E = root.Engine;
     inc.settings = isObj(inc.settings) ? inc.settings : {};
-    inc.meta = isObj(inc.meta) ? inc.meta : {};
+    inc.meta = cleanMeta(isObj(inc.meta) ? inc.meta : {});
     if (!isObj(inc.activeShift) || !Number.isFinite(inc.activeShift.start) || inc.activeShift.start > Date.now() + 60000) inc.activeShift = null;
     for (const s of LIST_STORES) inc[s] = safeList(s, cleanList(inc[s]));
     inc.shifts = inc.shifts.filter((x) => E.validShift(x));
@@ -530,10 +565,13 @@
     }
     const keepKey = S.settings && S.settings.ai ? S.settings.ai.apiKey : '';
     const keepPlus = (S.settings && S.settings.plusKey) || '';
+    // the code lock is this phone's: a backup never turns it off, changes the code or brings another phone's
+    const keepLock = Object.assign({}, root.Defaults.defaultSettings().lock, S.settings && S.settings.lock);
     for (const s of SYNC_STORES) for (const x of incoming[s]) delete x._syncedAt; // that sync state belongs to the device that made the backup
     if (mode === 'replace') {
       S.settings = mergeDeep(root.Defaults.defaultSettings(), incoming.settings || {});
       S.settings.ai.apiKey = keepKey;
+      S.settings.lock = keepLock;
       S.settings.plusKey = keepPlus;
       // keep this phone's account link and sync bookkeeping; take everything else from the backup
       const device = {};
@@ -561,7 +599,7 @@
     }
     await saveAll();
     for (const f of json.files || []) {
-      if (!f || typeof f.id !== 'string' || !SAFE_ID.test(f.id)) continue;
+      if (!f || !safeId(f.id)) continue;
       try { const b = dataUrlToBlob(f.data); await putFile(f.id, b, String(f.name || '').slice(0, 120), b.type); } catch (e) { console.warn('file restore skipped', e); }
     }
     undoStack.length = 0;

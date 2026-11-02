@@ -870,6 +870,8 @@
     mount: (el, draw) => {
       const set = el.querySelector('[data-pin-set]');
       if (set) set.onclick = async () => {
+        // changing a code that is set asks for it first (App.checkPin; true at once when there is none)
+        if (!(await App.checkPin())) return;
         const p1 = await UI.promptText('קוד חדש', '4\u2060–\u20608 ספרות', '', { type: 'password', inputmode: 'numeric', ltr: true, ok: 'המשך' });
         if (!p1) return;
         if (!/^\d{4,8}$/.test(p1)) { UI.invalid('הקוד צריך להיות 4\u2060–\u20608 ספרות'); return; }
@@ -881,13 +883,14 @@
         UI.toast('הנעילה הופעלה'); draw();
       };
       const off = el.querySelector('[data-pin-off]');
-      if (off) off.onclick = async () => { if (await UI.confirm('לבטל את הנעילה?', '', 'בטל נעילה')) { await Store.setSettings((s) => { s.lock.enabled = false; s.lock.hash = null; s.lock.bioId = null; }); draw(); } };
+      if (off) off.onclick = async () => { if (await App.checkPin() && await UI.confirm('לבטל את הנעילה?', '', 'בטל נעילה')) { await Store.setSettings((s) => { s.lock.enabled = false; s.lock.hash = null; s.lock.bioId = null; }); draw(); } };
       const row = el.querySelector('[data-bio-row]');
       if (row) App.bio.available().then((ok) => {
         if (!ok) return;
         const on = !!S.settings.lock.bioId;
         row.innerHTML = `<div class="kv" style="margin:6px 0 10px"><span>${icon('finger', 's')} פתיחה בטביעת אצבע / זיהוי פנים</span><button class="btn ${on ? 'text' : 'tonal'} sm" data-bio-toggle>${on ? 'כבה' : 'הפעל'}</button></div>`;
         row.querySelector('[data-bio-toggle]').onclick = async () => {
+          if (!(await App.checkPin())) return;
           if (on) { await Store.setSettings((s) => { s.lock.bioId = null; }); draw(); return; }
           try {
             const id = await App.bio.enroll();

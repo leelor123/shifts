@@ -228,8 +228,18 @@
   const KEEP = '#toast, #intro, script, noscript';
   function syncInert() {
     const top = modalStack[modalStack.length - 1];
+    // the code lock is above every layer: while it is up, nothing else can be reached, by touch, a keyboard or a screen
+    // reader, and a sheet that opens under it never takes the lock's place (TalkBack read the pay card under the
+    // lock, and a dialog opened there made the lock itself inert; security scan, 2 Nov 2026)
+    const lock = document.getElementById('lock');
+    const locked = !!lock && !lock.classList.contains('out');
     for (const el of document.body.children) {
-      if (el.matches(KEEP)) continue;
+      if (locked) {
+        if (el === lock || el.matches('#intro, script, noscript')) { if (el.__inertBy) { el.inert = false; el.__inertBy = false; } }
+        else if (!el.inert) { el.inert = true; el.__inertBy = true; }
+        continue;
+      }
+      if (el.matches(KEEP)) { if (el.__inertBy) { el.inert = false; el.__inertBy = false; } continue; }
       if (!top || top.els.includes(el)) { if (el.__inertBy) { el.inert = false; el.__inertBy = false; } } else if (!el.inert) { el.inert = true; el.__inertBy = true; }
     }
   }
@@ -514,5 +524,5 @@
     fit();
   })();
 
-  root.UI = { on, pushLayer, closeLayer, tile, skeleton, invalid, icon, esc, money, numv, delta, roleDot, roleLead, roleMini, rolePhoto, ink, emptyState, toast, openSheet, closeTop, closeAll, dialog, confirm, promptText, onSwipe, vibrate, download, shareFile, copyText, numIn, timeAgo, sheets };
+  root.UI = { on, syncInert, pushLayer, closeLayer, tile, skeleton, invalid, icon, esc, money, numv, delta, roleDot, roleLead, roleMini, rolePhoto, ink, emptyState, toast, openSheet, closeTop, closeAll, dialog, confirm, promptText, onSwipe, vibrate, download, shareFile, copyText, numIn, timeAgo, sheets };
 })(typeof window !== 'undefined' ? window : globalThis);

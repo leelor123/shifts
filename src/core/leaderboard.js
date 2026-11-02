@@ -30,6 +30,12 @@
   // the same letters firestore.rules allows: a first name in any of the app's languages (Hebrew, Latin with its
   // accents, Cyrillic, Arabic), digits, and an apostrophe or geresh (ג'ני, D'Angelo)
   const NICK_RE = /^[א-תa-zA-ZÀ-ÖØ-öø-ÿЀ-ӿ\u0600-\u06FF0-9 _.'׳-]{2,16}$/;
+  // the letters of one language in a name, and the name read without separators and with look-alike letters and digits
+  // as the Latin ones, as firestore.rules reads it ("Sha.ati Supp.ort", a Cyrillic "ЅНААТІ"; security scan, 2 Nov 2026)
+  const ONE_SCRIPT = [/^[א-ת0-9 _.'׳-]+$/, /^[a-zA-ZÀ-ÖØ-öø-ÿ0-9 _.'׳-]+$/, /^[Ѐ-ӿ0-9 _.'׳-]+$/, /^[؀-ۿ0-9 _.'׳-]+$/];
+  const FOLD = [[/[ _.'׳-]/g, ''], [/[ѕ5]/g, 's'], [/[һн]/g, 'h'], [/[а4]/g, 'a'], [/[т7]/g, 't'], [/[іl1]/g, 'i'], [/р/g, 'p'], [/[о0]/g, 'o'], [/[е3]/g, 'e'],
+    [/с/g, 'c'], [/у/g, 'y'], [/к/g, 'k'], [/м/g, 'm'], [/х/g, 'x'], [/в/g, 'b'], [/ј/g, 'j']];
+  const fold = (n) => FOLD.reduce((x, [re, to]) => x.replace(re, to), String(n).toLowerCase());
 
   const num = (k) => +k.replace(/-/g, '');
   /** The period keys of a day: { d: 20261015, w: 20261011 (its Sunday), m: 202610, y: 2026 }. */
@@ -138,6 +144,7 @@
     if (t.length < 2) return 'לפחות 2 תווים';
     if (t.length > 16) return 'עד 16 תווים';
     if (!NICK_RE.test(t)) return 'רק אותיות, מספרים ורווחים';
+    if (!ONE_SCRIPT.some((re) => re.test(t))) return 'כל האותיות מאותה שפה';
     if (/\d{5,}/.test(t)) return 'בלי מספרים ארוכים (כמו מספר טלפון)';
     if (!/[^\d\s_.'׳-]/.test(t)) return 'צריך לפחות אות אחת';
     // short words only as a whole word (so 'מזין' or 'Essex' pass), longer ones anywhere
@@ -146,7 +153,7 @@
     if (BAD.some((w) => (w.length <= 3 ? words.includes(w) : low.includes(w)))) return 'השם הזה לא מתאים לטבלה';
     if (root.Clean && !root.Clean.isClean(t)) return 'השם הזה לא מתאים לטבלה';
     // nobody may look like the app's own team
-    if (STAFF.some((w) => low.includes(w))) return 'כינוי שנראה כמו צוות האפליקציה שמור';
+    if (STAFF.some((w) => low.includes(w) || fold(t).includes(w))) return 'כינוי שנראה כמו צוות האפליקציה שמור';
     return '';
   }
   /** A random fun nickname ("שועל זריז 27"); seed makes it repeatable in tests. */

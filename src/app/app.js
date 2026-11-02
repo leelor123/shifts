@@ -730,7 +730,12 @@
     const body = el.querySelector('.lock-sheet');
     let pin = '';
     // unlocking fades the lock screen away (removed at once, it was a hard cut to the app)
-    const unlock = () => { if (el.classList.contains('out')) return; el.classList.add('out'); setTimeout(() => el.remove(), 260); S.meta._unlockedAt = Date.now(); pinFails = 0; pinWaitUntil = 0; keepPinFails(); };
+    const unlock = () => {
+      if (el.classList.contains('out')) return;
+      el.classList.add('out'); setTimeout(() => el.remove(), 260); S.meta._unlockedAt = Date.now(); pinFails = 0; pinWaitUntil = 0; keepPinFails();
+      UI.syncInert();
+      for (const fn of unlockWaits.splice(0)) { try { fn(); } catch (e) { console.warn('after unlock', e); } }
+    };
     const tryBio = async () => { try { if (await App.bio.verify(L.bioId)) unlock(); } catch (e) { /* cancelled: the code still works */ } };
     const draw = () => {
       const wait = Math.ceil((pinWaitUntil - Date.now()) / 1000);
@@ -758,8 +763,31 @@
     };
     draw();
     document.body.appendChild(el);
+    UI.syncInert();
     if (App.mountSky) App.mountSky(el, true);
     if (L.bioId) setTimeout(tryBio, 300);
+  };
+  /** Runs fn now, or once the code lock is opened (a shortcut such as ?action=add waits for the code). */
+  const unlockWaits = [];
+  App.locked = () => { const l = document.getElementById('lock'); return !!l && !l.classList.contains('out'); };
+  App.afterUnlock = (fn) => { if (App.locked()) unlockWaits.push(fn); else fn(); };
+  /** Before the lock is turned off, its code changed or the fingerprint switched on or off: the current code (or the
+   *  fingerprint), with the lock screen's count of wrong codes and its wait. An open phone in someone else's hand could
+   *  turn the lock off or set a code of their own (security scan, 2 Nov 2026). true = go on. */
+  App.checkPin = async function () {
+    const L = S.settings.lock;
+    if (!L || !L.enabled || !L.hash) return true;
+    if (L.bioId) { try { if (await App.bio.verify(L.bioId)) return true; } catch (e) { /* cancelled: the code still works */ } }
+    const wait = Math.ceil((pinWaitUntil - Date.now()) / 1000);
+    if (wait > 0) { UI.invalid(`יותר מדי ניסיונות. נסה שוב בעוד ${wait} שניות`); return false; }
+    const pin = await UI.promptText('הקוד הנוכחי', 'כדי לשנות את הנעילה', '', { type: 'password', inputmode: 'numeric', ltr: true, ok: 'המשך' });
+    if (!pin) return false;
+    if ((await App.hashPin(pin, L.salt)) === L.hash) { pinFails = 0; pinWaitUntil = 0; keepPinFails(); return true; }
+    pinFails++;
+    if (pinFails >= 5) pinWaitUntil = Date.now() + 30000 * Math.pow(2, Math.min(pinFails - 5, 5));
+    keepPinFails();
+    UI.invalid('הקוד שגוי');
+    return false;
   };
   let hiddenAt = 0;
   document.addEventListener('visibilitychange', () => {
@@ -939,14 +967,17 @@
     if (action) { try { const u = new URL(location.href); u.searchParams.delete('action'); history.replaceState(history.state, '', u.pathname + u.search + u.hash); } catch (e) { /* ignore */ } }
     // the widget's start and end buttons open these links, but so could any other site: the shift changes only
     // after one tap here (a link once ended a running shift with no question; security scan, 1 Nov 2026)
-    if (action === 'start' && !S.activeShift) UI.confirm('התחל משמרת', '', 'התחלה').then((ok) => { if (ok && !S.activeShift) App.actions['timer-start'](); });
-    if (action === 'stop' && S.activeShift) UI.confirm('סיום משמרת', '', 'סיום').then((ok) => { if (ok && S.activeShift) App.stopShift(); });
-    if (action === 'add') App.sheetsApi.shiftEditor();
-    if (action === 'schedule' && App.importSchedule) App.importSchedule(); // the app icon's shortcut
-    if (action === 'share-in' && App.receiveShare) App.receiveShare(); // shared to the app (sw.js)
-    if (action === 'support' && App.actions.support) setTimeout(() => App.actions.support(), 300); // Play testers' feedback link
-    if (action === 'plus' && root.Plus) setTimeout(() => root.Plus.sheet(), 600); // back from the web checkout (?action=plus): straight to the code field
-    if (action === 'tax-refund' && App.actions['tax-refund']) setTimeout(() => App.actions['tax-refund']({ dataset: {} }), 600); // the website's tax refund page
+    // with the code lock up, the shortcut waits for the code (the shift editor once opened under the lock)
+    if (action) App.afterUnlock(() => {
+      if (action === 'start' && !S.activeShift) UI.confirm('התחל משמרת', '', 'התחלה').then((ok) => { if (ok && !S.activeShift) App.actions['timer-start'](); });
+      if (action === 'stop' && S.activeShift) UI.confirm('סיום משמרת', '', 'סיום').then((ok) => { if (ok && S.activeShift) App.stopShift(); });
+      if (action === 'add') App.sheetsApi.shiftEditor();
+      if (action === 'schedule' && App.importSchedule) App.importSchedule(); // the app icon's shortcut
+      if (action === 'share-in' && App.receiveShare) App.receiveShare(); // shared to the app (sw.js)
+      if (action === 'support' && App.actions.support) setTimeout(() => App.actions.support(), 300); // Play testers' feedback link
+      if (action === 'plus' && root.Plus) setTimeout(() => root.Plus.sheet(), 600); // back from the web checkout (?action=plus): straight to the code field
+      if (action === 'tax-refund' && App.actions['tax-refund']) setTimeout(() => App.actions['tax-refund']({ dataset: {} }), 600); // the website's tax refund page
+    });
     setTimeout(() => { App.runInsights(); App.autoBackupCheck(); }, 1200);
     // is Shaati Plus for sale here, and owned? (Google Play, Android app only) The opening show does not wait for
     // the answer: the design in use is kept on the phone (meta.plus), so the first screen already has it, and the

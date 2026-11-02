@@ -57,9 +57,11 @@
   /* ---------------- a daily streak of playing ----------------
    * A round finished on a day counts that day; a day missed starts again from 1. Kept on the phone
    * (meta.gameDays: the last day, the streak, the best streak). */
+  // the streak's numbers as numbers, whatever was stored (Store.cleanMeta cleans it too)
+  const playDays = () => { const d = S.meta.gameDays || {}; return { last: d.last, n: Math.max(0, Math.floor(+d.n) || 0), best: Math.max(0, Math.floor(+d.best) || 0) }; };
   function markPlayDay() {
     const today = U.todayKey();
-    const d = S.meta.gameDays || {};
+    const d = playDays();
     if (d.last === today) return { n: d.n || 1, grew: false };
     const n = d.last === U.addDays(today, -1) ? (d.n || 0) + 1 : 1;
     Store.setMeta({ gameDays: { last: today, n, best: Math.max(n, d.best || 0) } }).catch(() => {});
@@ -67,7 +69,7 @@
   }
   /** The streak as it stands: alive if the last day played is today or yesterday. */
   function playStreak() {
-    const d = S.meta.gameDays || {};
+    const d = playDays();
     const t = U.todayKey();
     return { n: d.last === t || d.last === U.addDays(t, -1) ? d.n || 0 : 0, today: d.last === t, best: d.best || 0 };
   }

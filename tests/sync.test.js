@@ -243,6 +243,44 @@ T.atest('a crafted backup cannot put markup in through a colour or a notificatio
   T.eq(n.read, true, 'read is true or false');
 });
 
+// security scan 2 Nov 2026: an employer's settings and the games streak reached the page as HTML; a role id
+// __proto__ turned every pay sum into NaN; a backup carried the code lock's hash (a 4-8 digit code is found in seconds)
+T.atest('a crafted backup: employer fields, the games streak, reserved ids and the code lock', async () => {
+  const be = fakeBackend();
+  const A = await phone(be); await A.add('s1', 'mine');
+  await A.Store.setSettings((s) => { s.lock = Object.assign(s.lock, { enabled: true, hash: 'h'.repeat(64), salt: 'salt1', bioId: 'bio1' }); });
+  const backup = JSON.parse(JSON.stringify(await A.Store.exportBackup(false)));
+  T.eq(backup.settings.lock.hash, null, 'the backup has no code hash');
+  T.eq(backup.settings.lock.salt, null, '...no salt');
+  T.eq(backup.settings.lock.bioId, null, '...no fingerprint id');
+  T.eq(backup.settings.lock.enabled, false, '...and no lock');
+  const bad = '<a href=https://evil.example style=position:fixed;inset:0>sign in</a>';
+  backup.employers[0] = Object.assign({}, backup.employers[0], { nightEnabled: 'yes', nightValue: bad, nightFrom: bad, travelPerDay: [5], otMode: 'daily' });
+  backup.settings.lock = { enabled: false, hash: null, salt: null };
+  backup.meta = Object.assign({}, backup.meta, { gameDays: { last: '2026-11-02', n: bad, best: '7' }, games: { coins: bad, quiz: 120, '<x>': 5 } });
+  backup.shifts.push({ id: 's7', kind: 'shift', employerId: 'emp1', roleId: '__proto__', status: 'done', start: 1, end: 3600001 });
+  backup.shifts.push({ id: 's6', kind: 'shift', employerId: 'emp1', roleId: 'r1', status: 'done', start: 1, end: 7200001, splits: [{ at: 3600001, roleId: '__proto__' }, { at: 'x', roleId: 'r1' }] });
+  await A.Store.importBackup(backup, 'replace'); await wait(50);
+  const e = A.S.employers[0];
+  T.eq(e.nightValue, 0, 'a night premium that is not a number becomes the default');
+  T.eq(e.nightEnabled, true, 'a switch is true or false');
+  T.eq(e.nightFrom, '22:00', 'a time with markup becomes the default');
+  T.eq(e.travelPerDay, 16, 'a list where a number belongs becomes the default');
+  T.eq(e.otMode, 'daily', 'a plain code is kept');
+  T.eq(JSON.stringify(A.S.meta.gameDays), '{"last":"2026-11-02","n":0,"best":7}', 'the streak is numbers and a date');
+  T.eq(JSON.stringify(A.S.meta.games), '{"coins":0,"quiz":120}', 'the games bests are numbers');
+  T.eq(A.shift('s7').roleId, null, 'a reserved role id is cleared');
+  T.eq(JSON.stringify(A.shift('s6').splits), '[]', 'a role switch with a reserved role or no time is dropped');
+  T.eq(A.S.settings.lock.hash, 'h'.repeat(64), "restoring keeps this phone's code lock");
+  T.eq(A.S.settings.lock.enabled, true, '...switched on');
+  // the engine itself never writes into a shared prototype, whatever role id it gets
+  const r = A.ctx.Engine.buildModel({ settings: A.ctx.Defaults.defaultSettings(), employers: [A.ctx.Defaults.defaultEmployer()], roles: A.S.roles, dayRules: [], entries: [],
+    shifts: [{ id: 'z', kind: 'shift', employerId: 'emp1', roleId: '__proto__', status: 'done', start: Date.UTC(2026, 9, 5, 6), end: Date.UTC(2026, 9, 5, 14) }] });
+  A.ctx.Engine.totals(r, '2026-10-01', '2026-10-31');
+  T.eq(vm.runInContext('({}).amount', A.ctx), undefined, 'no amount inherited by every object');
+  T.eq(vm.runInContext('({}).hours', A.ctx), undefined, '...nor hours');
+});
+
 // role pictures (1.32.0): a role's emoji goes into the page as text, so only one real emoji is kept from outside;
 // the photos stay on the phone (never in a backup file, never taken from one)
 T.atest('a role keeps one emoji from a backup, and role photos never travel in a backup', async () => {

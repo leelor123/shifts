@@ -455,7 +455,7 @@
       }
     }
     // one alert per payslip with open gaps
-    const bySlip = {};
+    const bySlip = Object.create(null);
     for (const g of state.gaps || []) if (g.status === 'open') (bySlip[g.payslipId] = bySlip[g.payslipId] || []).push(g);
     for (const [pid, gs] of Object.entries(bySlip)) {
       if (!on('payslipGap')) break;

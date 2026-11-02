@@ -326,7 +326,7 @@
     const ovCount = () => ['rest', 'ot', 'night', 'travel', 'rate', 'special'].filter((k) => d.ov[k].on).length;
     const sel = (f, options, v) => `<select class="input" data-f="${f}">${options.map(([val, lab]) => `<option value="${val}" ${String(v) === String(val) ? 'selected' : ''}>${lab}</option>`).join('')}</select>`;
     const inp = (f, v, extra) => `<input class="input" data-f="${f}" value="${esc(v == null ? '' : v)}" ${extra || ''}>`;
-    const numIn = (f, v, ph) => inp(f, v, `type="number" inputmode="decimal" step="any" placeholder="${ph || ''}"`);
+    const numIn = (f, v, ph) => inp(f, v, `type="number" inputmode="decimal" step="any" placeholder="${esc(ph || '')}"`);
     // shift length in minutes from the two times (an end before the start means the next day)
     const toMin = (t) => +t.slice(0, 2) * 60 + +t.slice(3, 5);
     // The real length, worked out the way the shift is saved: the night the clocks change, 22:00 → 06:00
@@ -390,7 +390,7 @@
             ${ot.mode === 'threshold' ? `<label class="field"><span class="lbl">שעות נוספות אחרי (שעות)</span>${numIn('ov.ot.hours', ot.hours, String(Engine.otDayHours(emp, S.settings, U.todayKey(), false)))}</label>` : ''}
             ${ot.mode === 'pct' ? `<label class="field"><span class="lbl">אחוז</span>${numIn('ov.ot.pct', ot.pct, '125')}</label>` : ''}
             ${ot.mode === 'amount' ? `<label class="field"><span class="lbl">סכום התוספת ₪ (מעבר ל-100%)</span>${numIn('ov.ot.amount', ot.amount, '0')}</label>` : ''}`)}
-          ${ovBlock('night', 'תוספת לילה', emp.nightEnabled ? 'מוגדרת: ' + emp.nightValue + (emp.nightType === 'fixed' ? ' ₪ לשעה' : '%') : 'לא מוגדרת אצל המעסיק', `
+          ${ovBlock('night', 'תוספת לילה', emp.nightEnabled ? 'מוגדרת: ' + esc(String(emp.nightValue)) + (emp.nightType === 'fixed' ? ' ₪ לשעה' : '%') : 'לא מוגדרת אצל המעסיק', `
             <div class="field">${sel('ov.night.mode', [['off', 'בטל תוספת לילה'], ['all', 'כל המשמרת נחשבת לילה'], ['pct', 'אחוז אחר'], ['amount', 'סכום ידני']], night.mode)}</div>
             ${night.mode === 'pct' ? `<label class="field"><span class="lbl">אחוז תוספת</span>${numIn('ov.night.pct', night.pct, '20')}</label>` : ''}
             ${night.mode === 'amount' ? `<label class="field"><span class="lbl">סכום ₪</span>${numIn('ov.night.amount', night.amount, '0')}</label>` : ''}`)}

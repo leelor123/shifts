@@ -320,7 +320,7 @@
     const groups = new Map();
     let base = 0, restPremium = 0, otPremium = 0, nightPremium = 0, evePremium = 0, seniority = 0;
     const hoursBy = { regular: 0, ot1: 0, ot2: 0, rest: 0, restOt1: 0, restOt2: 0, night: 0, eve: 0 };
-    const byRole = {};
+    const byRole = Object.create(null); // keyed by role id: no inherited keys
     for (const p of pieces) {
       const h = p.pm / 60;
       const rate = rateOf(p.roleId);
@@ -482,7 +482,7 @@
       start: shift.start, end: shift.end, rawEnd: shift.end, elapsedMin: 0, roundedMin: 0, roundingDeltaMin: 0, breakMin: 0, breakPaid: true, breakAuto: false, breakShort: false,
       paidMin: 0, paidHours: 0, segments: [], slices: [], pieces: [], lines: [], extras: [],
       base: 0, restPremium: 0, otPremium: 0, nightPremium: 0, evePremium: 0, seniority: 0, minTopUp: 0, adjust: 0, specialPremium: 0, specialHours: 0, wage: 0,
-      hoursBy: { regular: 0, ot1: 0, ot2: 0, rest: 0, restOt1: 0, restOt2: 0, night: 0, eve: 0 }, byRole: {},
+      hoursBy: { regular: 0, ot1: 0, ot2: 0, rest: 0, restOt1: 0, restOt2: 0, night: 0, eve: 0 }, byRole: Object.create(null),
       restHours: 0, otHours: 0, nightHours: 0, lawNightHours: 0, isNightShift: false, travel: { mode: 'none', amount: 0 },
       bonus: 0, tips: 0, additions: 0, deductions: 0, total: 0, restLabels: [], autoRestRange: null, autoRestMin: 0,
       thresholdH: 8, priorMin: 0, overridden: false, overrideList: [], dayRuleHit: false, warnings,
@@ -745,7 +745,7 @@
       hours: 0, shifts: 0, wage: 0, base: 0, restPremium: 0, otPremium: 0, nightPremium: 0, evePremium: 0, seniority: 0, minTopUp: 0, adjust: 0, specialPremium: 0,
       travel: 0, travelRaw: 0, bonus: 0, tips: 0, additions: 0, deductions: 0, leavePay: 0, vacationDays: 0, sickDays: 0,
       hoursBy: { regular: 0, ot1: 0, ot2: 0, rest: 0, restOt1: 0, restOt2: 0, night: 0, eve: 0 },
-      byRole: {}, workDays: 0, days: 0, dayTotals: {}, longest: null, bestDay: null, overridden: 0, nightShifts: 0, nightAll: 0,
+      byRole: Object.create(null), workDays: 0, days: 0, dayTotals: {}, longest: null, bestDay: null, overridden: 0, nightShifts: 0, nightAll: 0,
       startHours: [],
     };
   }

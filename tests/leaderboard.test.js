@@ -197,3 +197,23 @@ T.test('guards: the rules check only the games a write changes, the app writes o
   T.ok((cloud.match(/Champions\.sync\(\)/g) || []).length >= 2, 'the sync runs after connecting and when back online');
   T.ok(/class="lb-step"><span>\$\{x\.rank\}/.test(view), 'the podium shows the place, not the position (ties)');
 });
+
+// security scan 2 Nov 2026: a staff name with separators, look-alike letters or digits, or two languages in one name
+T.test('nicknames: staff names read as read, one language per name', () => {
+  const LB = globalThis.Leaderboard;
+  for (const n of ['Sha.ati Supp.ort', 'ЅНААТІ', '5upp0rt', 'ש.עתי', 'Admln']) T.ok(LB.nickProblem(n), n + ' is refused');
+  T.ok(LB.nickProblem('Lee לי'), 'two languages in one name are refused');
+  for (const n of ['לי', 'זינגה המלךךך', 'באקה12', "D'Angelo", 'ג׳ני', 'Иван', 'محمد', 'Swift Fox 27', 'Lilia', 'Ali']) T.eq(LB.nickProblem(n), '', n + ' passes');
+  const rules = require('fs').readFileSync(require('path').join(__dirname, '..', 'firestore.rules'), 'utf8');
+  T.ok(rules.includes('function foldNick') && rules.includes('foldNick(n).matches('), 'the rules read the name the same way');
+});
+// security scan 2 Nov 2026: the code lock can be turned off or changed only with the code; while it is up nothing under it
+// can be reached, and a shortcut waits for it
+T.test('the code lock: guards in the code', () => {
+  const fs = require('fs'), path = require('path'), src = (f) => fs.readFileSync(path.join(__dirname, '..', 'src', 'app', f), 'utf8');
+  const set = src('views-settings.js'), app = src('app.js'), ui = src('ui.js');
+  T.ok(set.split('App.checkPin()').length - 1 >= 3, 'turning the lock off, changing the code and the fingerprint ask for the code');
+  T.ok(app.includes('App.checkPin = async function') && app.slice(app.indexOf('App.checkPin = async')).includes('pinWaitUntil'), 'the check counts wrong codes like the lock screen');
+  T.ok(ui.includes("const locked = !!lock && !lock.classList.contains('out')"), 'while locked, every other layer is inert');
+  T.ok(app.includes('if (action) App.afterUnlock('), 'a shortcut waits for the code');
+});

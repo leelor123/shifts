@@ -132,11 +132,21 @@ service cloud.firestore {
     // a name in any of the app's languages (Hebrew, Latin with accents, Cyrillic, Arabic), digits, an apostrophe
     // a name that looks like the app's own team is the client's rule (leaderboard.js STAFF) and the server's too:
     // a write straight to the database once put "Shaati Support" on the public table (security scan, 1 Nov 2026)
-    function notStaff(n) {
-      return !n.lower().matches('.*(admin|moderator|support|shaati|מנהל|צוות|תמיכה|שעתי|רשמי).*');
+    // checked as read, not as typed (the rules' lower() leaves Cyrillic capitals as they are, so both cases are listed): without the separators, and with the letters and digits that look like Latin ones
+    // read as those ("Sha.ati Supp.ort", "ЅНААТІ" in Cyrillic and "5upp0rt" passed; security scan, 2 Nov 2026)
+    function foldNick(n) {
+      return n.lower().replace("[ _.'׳-]", '').replace('[ѕЅ5]', 's').replace('[һнҺН]', 'h').replace('[аА4]', 'a').replace('[тТ7]', 't')
+        .replace('[іІl1]', 'i').replace('[рР]', 'p').replace('[оО0]', 'o').replace('[еЕ3]', 'e').replace('[сС]', 'c').replace('[уУ]', 'y')
+        .replace('[кК]', 'k').replace('[мМ]', 'm').replace('[хХ]', 'x').replace('[вВ]', 'b').replace('[јЈ]', 'j');
     }
+    function notStaff(n) {
+      return !foldNick(n).matches('.*(admin|moderator|support|shaati|מנהל|צוות|תמיכה|שעתי|רשמי).*');
+    }
+    // the letters of one language in a name (Hebrew, Latin, Cyrillic or Arabic), so a name cannot borrow look-alikes
     function validNick(n) {
-      return n is string && n.matches("^[א-תa-zA-ZÀ-ÖØ-öø-ÿЀ-ӿ؀-ۿ0-9 _.'׳-]{2,16}$") && !n.matches('.*[0-9]{5,}.*') && notStaff(n);
+      return n is string && n.matches("^[א-תa-zA-ZÀ-ÖØ-öø-ÿЀ-ӿ؀-ۿ0-9 _.'׳-]{2,16}$") && !n.matches('.*[0-9]{5,}.*')
+        && (n.matches("^[א-ת0-9 _.'׳-]+$") || n.matches("^[a-zA-ZÀ-ÖØ-öø-ÿ0-9 _.'׳-]+$") || n.matches("^[Ѐ-ӿ0-9 _.'׳-]+$") || n.matches("^[؀-ۿ0-9 _.'׳-]+$"))
+        && notStaff(n);
     }
     function validFr(d) {
       return d.keys().hasOnly(['n', 'e', 't', 'hide', 'f', 's']) && d.keys().hasAll(['n', 'e', 't', 'hide', 'f'])
