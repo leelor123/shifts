@@ -90,6 +90,7 @@ Important: the calculations are estimates only, not legal, accounting or tax adv
 **What's new**
 ```
 • A new opening: a living sky for the hour, the season and the weather in your city
+• Quick actions at the opening: start or record a shift and see this month, before the app even opens
 • Already have an account? Sign in right from the first screen
 • The setup questions let you add another workplace, not only another role
 • A new lock screen, with fingerprint unlock
@@ -174,6 +175,7 @@ AI-помощник (по желанию)
 **Что нового**
 ```
 • Новое начало: живое небо по времени суток, сезону и погоде в вашем городе
+• Быстрые действия при запуске: начать или записать смену и увидеть этот месяц ещё до открытия приложения
 • Уже есть аккаунт? Войти можно прямо с первого экрана
 • В начальных вопросах можно добавить ещё одно место работы, а не только должность
 • Новый экран блокировки, с отпечатком пальца
@@ -271,6 +273,7 @@ Shaati Plus (اختياري)
 **ما الجديد**
 ```
 • افتتاحية جديدة: سماء حيّة حسب الساعة والموسم والطقس في مدينتك
+• إجراءات سريعة عند الفتح: بدء وردية أو تسجيلها ورؤية هذا الشهر قبل فتح التطبيق
 • لديك حساب؟ ادخل إليه مباشرة من الشاشة الأولى
 • في أسئلة البداية يمكنك إضافة مكان عمل آخر، لا دور آخر فقط
 • شاشة قفل جديدة، مع بصمة الإصبع
@@ -352,6 +355,7 @@ Important : les calculs sont des estimations, pas un conseil juridique, comptabl
 **What's new**
 ```
 • Une nouvelle ouverture : un ciel vivant selon l'heure, la saison et la météo de votre ville
+• Actions rapides à l'ouverture : commencer ou enregistrer un service et voir le mois, avant même d'ouvrir l'app
 • Déjà un compte ? Connectez-vous dès le premier écran
 • Les questions de départ permettent d'ajouter un autre lieu de travail, pas seulement un autre poste
 • Un nouvel écran de verrouillage, avec l'empreinte digitale
@@ -433,6 +437,7 @@ Importante: los cálculos son estimaciones, no asesoramiento legal, contable ni 
 **What's new**
 ```
 • Un inicio nuevo: un cielo vivo según la hora, la estación y el tiempo en tu ciudad
+• Acciones rápidas al abrir: iniciar o registrar un turno y ver el mes, antes de abrir la app
 • ¿Ya tienes cuenta? Entra directamente desde la primera pantalla
 • En las preguntas iniciales puedes añadir otro lugar de trabajo, no solo otro puesto
 • Una nueva pantalla de bloqueo, con huella dactilar
