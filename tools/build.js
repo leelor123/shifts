@@ -129,12 +129,23 @@ function page(lang) {
 }
 // the code of the version before stays next to the new one: a page a browser still holds (its own cache, ~10 minutes on
 // GitHub Pages, or a phone that has not updated yet) asks for its own code file, which must still be there (it was deleted:
-// a blank app until the update). Kept: this build, the one in this folder, and the one in git (the live one).
+// a blank app until the update). Kept: this build, the one in this folder, the last commit's, and the live one, which is
+// the one on GitHub (origin/main): a build committed but not pushed yet is not live (2 Nov 2026: the night's commits made
+// the last commit 1.30.0, and the live 1.29.1's code was deleted before the push)
 const keepBuilds = new Set([hash]);
 const buildOf = (html) => { const m = /APP_BUILD = '[^']*-([0-9a-f]+)'/.exec(html || ''); return m && m[1]; };
+const gitBuild = (ref) => { try { return buildOf(require('child_process').execSync('git show ' + ref + ':docs/index.html', { cwd: ROOT, stdio: ['ignore', 'pipe', 'ignore'], maxBuffer: 1 << 26 }).toString()); } catch (e) { return null; /* no git, or no such branch */ } };
 try { keepBuilds.add(buildOf(fs.readFileSync(path.join(DIST, 'index.html'), 'utf8'))); } catch (e) { /* a new folder */ }
-try { keepBuilds.add(buildOf(require('child_process').execSync('git show HEAD:docs/index.html', { cwd: ROOT, stdio: ['ignore', 'pipe', 'ignore'], maxBuffer: 1 << 26 }).toString())); } catch (e) { /* no git */ }
+keepBuilds.add(gitBuild('HEAD'));
+const liveBuild = gitBuild('origin/main');
+if (liveBuild) keepBuilds.add(liveBuild);
 for (const f of fs.readdirSync(DIST)) { const m = /^app[.][a-z]+[.]([0-9a-f]+)[.]js$/.exec(f); if (m && !keepBuilds.has(m[1])) fs.unlinkSync(path.join(DIST, f)); }
+// the guard: the live version's code must be here (a folder that lost it already is not fixed by keeping it)
+if (liveBuild && liveBuild !== hash && !fs.readdirSync(DIST).some((f) => f.endsWith('.' + liveBuild + '.js'))) {
+  console.error('The live version\'s code (app.*.' + liveBuild + '.js) is missing from docs/: phones still on it would get a blank app.\n'
+    + 'Restore it: git checkout origin/main -- ' + Object.keys(dicts).concat('he').map((l) => 'docs/app.' + l + '.' + liveBuild + '.js').join(' '));
+  process.exit(1);
+}
 const writeJs = (lang, code) => fs.writeFileSync(path.join(DIST, jsFile(lang)), minify(code, lang));
 writeJs('he', js);
 const html = page('he');
