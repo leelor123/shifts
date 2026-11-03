@@ -10,8 +10,12 @@
  *    part's delay is counted from the clock, not from when it was drawn, so the hand-over between them is unseen.
  *  - The opening runs before the database is open, so what it needs (the city, the first name, which screen comes
  *    first, the last weather) is kept in a small copy in localStorage (Sky.prefs / Sky.remember).
- *  - The weather is asked of Open-Meteo for the city's coordinates only (no name, no account, no location
- *    permission), at most once an hour, and used on the next open (the scene never changes while it is seen).
+ *  - The weather is asked of MET Norway (api.met.no, free for any use under CC BY 4.0; Open-Meteo's free plan is
+ *    non-commercial only) for the city's coordinates only, rounded to 2 decimals (no name, no account, no location
+ *    permission), at most once an hour and never before the answer's Expires time, and used on the next open (the
+ *    scene never changes while it is seen). A plain GET with no custom header: MET does not allow a CORS preflight,
+ *    so no If-Modified-Since from here (the browser's own cache revalidates with it), and the page's Origin header is
+ *    how a browser app identifies itself to MET (a browser cannot set the User-Agent).
  * ============================================================ */
 (function (root) {
   'use strict';
@@ -21,7 +25,12 @@
   let W = W0, H = H0, HZ = H0 - 68;
   const NS = 'http://www.w3.org/2000/svg';
   const KEY = 'shaati.sky';
-  const WX_URL = 'https://api.open-meteo.com/v1/forecast';
+  const WX_URL = 'https://api.met.no/weatherapi/locationforecast/2.0/compact';
+  // the credit MET Norway's licence asks for (CC BY 4.0: credit, a link to the licence, and a note that the data was
+  // changed: the forecast becomes a drawing), for the legal texts
+  const CREDIT = 'Based on data from MET Norway (CC BY 4.0)';
+  const CREDIT_URL = 'https://api.met.no/';
+  const LICENSE_URL = 'https://creativecommons.org/licenses/by/4.0/';
   const WX_MAX_AGE = 60 * 60000;
   const rng = (seed) => () => { seed |= 0; seed = (seed + 0x6D2B79F5) | 0; let t = Math.imul(seed ^ (seed >>> 15), 1 | seed); t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t; return ((t ^ (t >>> 14)) >>> 0) / 4294967296; };
   const hex = (c) => [1, 3, 5].map((i) => parseInt(c.slice(i, i + 2), 16));
@@ -272,15 +281,28 @@
     return { phase, season, weather, kind, top: sky[0] };
   }
 
-  // Open-Meteo's weather codes (WMO) to the scene's weather
-  function fromWmo(code, temp) {
-    if (code >= 95) return 'storm';
-    if ((code >= 71 && code <= 77) || code === 85 || code === 86) return 'snow';
-    if ((code >= 51 && code <= 67) || (code >= 80 && code <= 82)) return 'rain';
-    if (code === 45 || code === 48) return 'fog';
-    if (code === 3) return 'cloudy';
-    if (code === 1 || code === 2) return 'partly';
+  // MET Norway's symbol codes (clearsky_day, fair_night, lightrainshowersandthunder_day, heavysleet...) to the scene's
+  // weather: thunder is a storm, snow is snow, rain and sleet are rain, fair is a few clouds
+  function fromSymbol(code, temp) {
+    const s = typeof code === 'string' ? code.replace(/_(day|night|polartwilight)$/, '') : '';
+    if (s.includes('thunder')) return 'storm';
+    if (s.includes('snow')) return 'snow';
+    if (s.includes('rain') || s.includes('sleet')) return 'rain';
+    if (s === 'fog') return 'fog';
+    if (s === 'cloudy') return 'cloudy';
+    if (s === 'partlycloudy' || s === 'fair') return 'partly';
     return temp >= 32 ? 'hot' : 'clear';
+  }
+  /** The weather of the hour now from a Locationforecast answer (its hourly series): the scene's weather, or null */
+  function fromForecast(j, now) {
+    const ts = j && j.properties && Array.isArray(j.properties.timeseries) ? j.properties.timeseries : [];
+    let cur = null;
+    for (const e of ts) { const t = e && Date.parse(e.time); if (!cur || t <= now) cur = e; if (t > now) break; }
+    const d = cur && cur.data;
+    const sum = d && ((d.next_1_hours && d.next_1_hours.summary) || (d.next_6_hours && d.next_6_hours.summary));
+    if (!sum || typeof sum.symbol_code !== 'string') return null;
+    const temp = d.instant && d.instant.details ? +d.instant.details.air_temperature : NaN;
+    return fromSymbol(sum.symbol_code, temp);
   }
 
   /** What the opening needs before the database is open: { place: {name, lat, lon}, name, mode, wx: {w, at, city} } */
@@ -301,17 +323,24 @@
   /** Asks the weather for the city, for the next open (at most once an hour). */
   function refreshWeather() {
     const p = prefs(), place = p.place && p.place.lat ? p.place : TLV;
-    if (p.wx && p.wx.city === place.name && Date.now() - p.wx.at < WX_MAX_AGE) return Promise.resolve(p.wx.w);
+    // this city's answer is fresh: an hour, and MET's Expires time if that is later (their terms: never ask again before it)
+    if (p.wx && p.wx.city === place.name && (Date.now() - p.wx.at < WX_MAX_AGE || Date.now() < (+p.wx.until || 0))) return Promise.resolve(p.wx.w);
     if (typeof fetch !== 'function' || (typeof navigator !== 'undefined' && navigator.onLine === false)) return Promise.resolve(null);
     const ctl = typeof AbortController === 'function' ? new AbortController() : null;
     const t = setTimeout(() => ctl && ctl.abort(), 6000);
-    const url = `${WX_URL}?latitude=${(+place.lat).toFixed(2)}&longitude=${(+place.lon).toFixed(2)}&current=weather_code,temperature_2m`;
-    return fetch(url, ctl ? { signal: ctl.signal, credentials: 'omit', referrerPolicy: 'no-referrer' } : { credentials: 'omit' }).then((r) => (r.ok ? r.json() : null)).then((j) => {
+    const url = `${WX_URL}?lat=${(+place.lat).toFixed(2)}&lon=${(+place.lon).toFixed(2)}`;
+    let until = 0;
+    return fetch(url, ctl ? { signal: ctl.signal, credentials: 'omit', referrerPolicy: 'no-referrer' } : { credentials: 'omit' }).then((r) => {
+      if (!r.ok) return null;
+      // Expires is one of the headers a cross-origin answer always shows (a wrong one far ahead counts as a day at most)
+      const ex = Date.parse(r.headers && r.headers.get ? r.headers.get('Expires') || '' : '');
+      if (ex > Date.now()) until = Math.min(ex, Date.now() + 24 * WX_MAX_AGE);
+      return r.json();
+    }).then((j) => {
       clearTimeout(t);
-      const c = j && j.current;
-      if (!c || typeof c.weather_code !== 'number') return null;
-      const w = fromWmo(c.weather_code, +c.temperature_2m);
-      remember({ wx: { w, at: Date.now(), city: place.name } });
+      const w = fromForecast(j, Date.now());
+      if (!w) return null;
+      remember({ wx: { w, at: Date.now(), city: place.name, until } });
       return w;
     }).catch(() => { clearTimeout(t); return null; });
   }
@@ -323,5 +352,5 @@
     try { return new Intl.DateTimeFormat(document.documentElement.lang || 'he', { weekday: 'long', day: 'numeric', month: 'long' }).format(now || Date.now()); } catch (e) { return ''; }
   }
 
-  root.Sky = { render, state, greeting, firstName, dateLine, placeKind, fromWmo, prefs, remember, weatherNow, refreshWeather, PHASES, TLV };
+  root.Sky = { render, state, greeting, firstName, dateLine, placeKind, fromSymbol, fromForecast, prefs, remember, weatherNow, refreshWeather, PHASES, TLV, CREDIT, CREDIT_URL, LICENSE_URL };
 })(typeof window !== 'undefined' ? window : globalThis);
