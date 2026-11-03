@@ -24,7 +24,7 @@ Hourly pay in Israel: a shift clock, Shabbat and overtime pay, payslip checks
 
 **Full description**
 ```
-Shaati helps hourly workers in Israel know exactly what they earned, and check that the payslip matches the hours they worked. In English, Hebrew, Arabic, Russian, French and Spanish.
+Shaati helps hourly workers in Israel work out what they earned, and check that the payslip matches the hours they worked. In English, Hebrew, Arabic, Russian, French and Spanish.
 
 Shaati is a private app. It does not represent, and is not affiliated with, the Ministry of Labor, the Tax Authority, the National Insurance Institute or any other government body. The official sources are listed at the end and in the app.
 
@@ -52,7 +52,7 @@ Summaries and alerts
 Your rights
 • A personal rights guide that works offline: minimum wage, overtime, Shabbat, travel, sick pay, vacation, recuperation pay and pension
 • The minimum wage by age and date, and an alert if your rate is below it (for waiters: tips included)
-• Holiday pay: which holidays you're owed pay for, and how much
+• Holiday pay: which holidays you may be owed pay for, and how much
 • For teens: automatic checks of night hours, day and week length and breaks under the Youth Employment Law
 
 Goals and motivation
@@ -60,9 +60,9 @@ Goals and motivation
 • Medals, five short games about pay, rights and reading a payslip, and a champions table (a nickname only)
 
 Privacy
-• Sign in with Google; your data is saved in your own account and only you can access it
+• Sign in with Google; your data is saved in your own account and no other user can see it
 • Works offline and syncs when the connection is back
-• No ads, no tracking cookies, no selling of data (only anonymous statistics you can turn off)
+• No ads, no tracking cookies, no selling of data (usage statistics without your name, email or amounts, only if you agree)
 • Export or delete all your data and the account at any time
 
 Shaati Plus (optional)
@@ -113,7 +113,7 @@ Shaati – учёт смен и зарплаты
 
 **Полное описание**
 ```
-Shaati помогает почасовым работникам в Израиле точно знать, сколько они заработали, и проверять, что расчётный лист (тлуш) совпадает с отработанными часами. На русском, иврите, арабском, английском, французском и испанском.
+Shaati помогает почасовым работникам в Израиле рассчитать, сколько они заработали, и проверять, что расчётный лист (тлуш) совпадает с отработанными часами. На русском, иврите, арабском, английском, французском и испанском.
 
 Shaati — частное приложение. Оно не представляет Министерство труда, Налоговое управление, Битуах леуми или любой другой государственный орган и не связано с ними. Официальные источники — в конце описания и в приложении.
 
@@ -139,7 +139,7 @@ Shaati — частное приложение. Оно не представля
 Ваши права
 • Личный справочник прав, работает без интернета: минимальная зарплата, сверхурочные, шаббат, проезд, больничные, отпуск, дмей авраа и пенсия
 • Минимальная зарплата по возрасту и дате и предупреждение, если ваша ставка ниже (для официантов — с учётом чаевых)
-• Оплата праздников: за какие праздники и сколько вам положено
+• Оплата праздников: за какие праздники вам может быть положена оплата и сколько
 • Для подростков: автоматическая проверка ночных часов, длины дня и недели и перерывов по закону о труде подростков
 
 Цели и мотивация
@@ -147,8 +147,8 @@ Shaati — частное приложение. Оно не представля
 • Медали, пять коротких игр о зарплате, правах и чтении расчётного листа, и таблица чемпионов (только ник)
 
 Конфиденциальность
-• Вход через Google; данные хранятся в вашем аккаунте, доступ есть только у вас
-• Без рекламы, без отслеживающих cookie и без продажи данных (только анонимная статистика, которую можно отключить)
+• Вход через Google; данные хранятся в вашем аккаунте, другие пользователи их не видят
+• Без рекламы, без отслеживающих cookie и без продажи данных (статистика использования без имени, почты и сумм, только с вашего согласия)
 • Экспорт или удаление всех данных и аккаунта в любой момент
 
 Shaati Plus (по желанию)
@@ -199,7 +199,7 @@ Shaati – تتبع الورديات والأجر
 
 **الوصف الكامل**
 ```
-يساعد Shaati العمال بالساعة في إسرائيل على معرفة كم ربحوا بالضبط، والتأكد من أن قسيمة الراتب تطابق الساعات التي عملوها. بست لغات، منها العربية.
+يساعد Shaati العمال بالساعة في إسرائيل على حساب كم ربحوا، والتأكد من أن قسيمة الراتب تطابق الساعات التي عملوها. بست لغات، منها العربية.
 
 Shaati تطبيق خاص: لا يمثّل وزارة العمل أو سلطة الضرائب أو مؤسسة التأمين الوطني أو أي جهة حكومية أخرى، ولا يرتبط بها. المصادر الرسمية مذكورة في نهاية الوصف وفي التطبيق.
 
@@ -234,7 +234,7 @@ Shaati تطبيق خاص: لا يمثّل وزارة العمل أو سلطة ا
 حقوقك
 • دليل حقوق شخصي يعمل دون إنترنت: الحد الأدنى للأجور، الساعات الإضافية، السبت، السفر، المرض، الإجازة، الاستجمام والتقاعد
 • الحد الأدنى للأجور بحسب العمر والتاريخ، وتنبيه إذا كانت تعرفتك أقل منه (للنُدُل: مع البقشيش)
-• بدل الأعياد: عن أي أعياد يحق لك أجر، وكم
+• بدل الأعياد: عن أي أعياد قد يحق لك أجر، وكم
 • للشباب: فحص تلقائي لساعات الليل وطول اليوم والأسبوع والاستراحات بحسب قانون عمل الشباب
 
 الأهداف والتحفيز
@@ -244,9 +244,9 @@ Shaati تطبيق خاص: لا يمثّل وزارة العمل أو سلطة ا
 • تحليل متقدم: أي يوم وساعة الأكثر ربحًا لك، وأسئلة "ماذا لو"
 
 الخصوصية
-• تسجيل الدخول بحساب Google؛ بياناتك محفوظة في حسابك ولك وحدك الوصول إليها
+• تسجيل الدخول بحساب Google؛ بياناتك محفوظة في حسابك ولا يراها أي مستخدم آخر
 • يعمل دون إنترنت ويتزامن عند عودة الاتصال
-• بلا إعلانات وبلا ملفات تتبّع وبلا بيع للبيانات (إحصاءات مجهولة فقط يمكن إيقافها)
+• بلا إعلانات وبلا ملفات تتبّع وبلا بيع للبيانات (إحصاءات استخدام بلا اسم أو بريد أو مبالغ، فقط بموافقتك)
 • تصدير أو حذف كل البيانات والحساب في أي وقت
 • قفل برمز أو ببصمة الإصبع
 
@@ -298,7 +298,7 @@ Votre salaire en Israël : shabbat, fêtes, heures sup. et fiche de paie vérifi
 
 **Full description**
 ```
-Shaati aide les travailleurs payés à l'heure en Israël à savoir exactement ce qu'ils ont gagné, et à vérifier que la fiche de paie correspond aux heures travaillées. En français, hébreu, arabe, russe, anglais et espagnol.
+Shaati aide les travailleurs payés à l'heure en Israël à calculer ce qu'ils ont gagné, et à vérifier que la fiche de paie correspond aux heures travaillées. En français, hébreu, arabe, russe, anglais et espagnol.
 
 Shaati est une application privée. Elle ne représente pas le ministère du Travail, l'Autorité fiscale, l'Institut national d'assurance ni aucun autre organisme public, et n'y est pas affiliée. Les sources officielles sont listées à la fin et dans l'application.
 
@@ -330,7 +330,7 @@ Vos droits
 • Pour les jeunes : vérification automatique des heures de nuit, de la durée du jour et de la semaine et des pauses
 
 Confidentialité
-• Connexion avec Google ; vos données sont enregistrées dans votre propre compte et vous seul(e) y avez accès
+• Connexion avec Google ; vos données sont enregistrées dans votre propre compte et aucun autre utilisateur ne les voit
 • Mode confidentialité : les montants floutés d'une touche
 • Fonctionne hors ligne et se synchronise au retour de la connexion
 • Pas de publicité, pas de cookies de suivi, pas de vente de données
@@ -381,7 +381,7 @@ Tu salario en Israel: shabat, festivos, horas extra y revisión de la nómina
 
 **Full description**
 ```
-Shaati ayuda a quienes trabajan por horas en Israel a saber exactamente cuánto ganaron y a comprobar que la nómina coincide con las horas trabajadas. En español, hebreo, árabe, ruso, inglés y francés.
+Shaati ayuda a quienes trabajan por horas en Israel a calcular cuánto ganaron y a comprobar que la nómina coincide con las horas trabajadas. En español, hebreo, árabe, ruso, inglés y francés.
 
 Shaati es una app privada. No representa al Ministerio de Trabajo, a la Autoridad Tributaria, al Instituto Nacional de Seguros ni a ningún otro organismo público, ni está afiliada a ellos. Las fuentes oficiales aparecen al final y en la app.
 
@@ -413,7 +413,7 @@ Tus derechos
 • Para jóvenes: comprobación automática de horas nocturnas, duración del día y de la semana y descansos
 
 Privacidad
-• Inicio de sesión con Google; tus datos se guardan en tu propia cuenta y solo tú tienes acceso
+• Inicio de sesión con Google; tus datos se guardan en tu propia cuenta y ningún otro usuario los ve
 • Modo privacidad: los importes difuminados con un toque
 • Funciona sin conexión y se sincroniza cuando vuelve la conexión
 • Sin anuncios, sin cookies de seguimiento, sin venta de datos
