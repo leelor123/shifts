@@ -127,6 +127,9 @@ body {
 }
 button, input, select, textarea { font: inherit; color: inherit; }
 a { color: var(--primary); }
+/* a link to a legal page inside a sentence is a name of two or three words: never split across lines (wrap-audit, 412 px
+   with bigger text split "מדיניות הפרטיות" in the statistics card, 3 Nov 2026) */
+a[data-legal] { white-space: nowrap; }
 .num, .money { font-variant-numeric: tabular-nums; direction: ltr; unicode-bidi: isolate; display: inline-block; }
 .muted { color: var(--on-surface-var); }
 .small { font-size: .82rem; }
