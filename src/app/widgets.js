@@ -111,7 +111,7 @@
     // this Android app has widgets: say so once
     if (!Store.S.meta.widgetsTip) {
       Store.setMeta({ widgetsTip: Date.now() }).catch(() => {});
-      setTimeout(() => { if (!App.blocking) root.UI.toast('חדש: ווידג׳טים למסך הבית! 🧩 לחיצה ארוכה על מסך הבית › ווידג׳טים › שעתי'); }, 2500);
+      setTimeout(() => { if (!App.blocking) root.UI.toast('חדש: ווידג׳טים למסך הבית, בשישה סגנונות. לחיצה ארוכה על מסך הבית › ווידג׳טים › שעתי'); }, 2500);
     }
     try { port.onmessage = (m) => { if (m.data === 'refresh' || m.data === 'shaati:widgets') send(true); }; } catch (err) { /* ignore */ }
     send(true);
