@@ -10,7 +10,7 @@ public class ComboWidget extends ShaatiWidget {
     @Override
     RemoteViews build(Context c, JSONObject d, WidgetLook l) {
         RemoteViews v = new RemoteViews(c.getPackageName(), R.layout.w_combo);
-        l.background(v, R.id.w_root, l.bg);
+        l.frame(v);
         l.background(v, R.id.w_chip, l.chip);
         v.setOnClickPendingIntent(R.id.w_root, open(c, null, 500));
         shiftBlock(c, v, d, l, false, 510);

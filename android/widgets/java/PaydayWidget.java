@@ -10,7 +10,7 @@ public class PaydayWidget extends ShaatiWidget {
     @Override
     RemoteViews build(Context c, JSONObject d, WidgetLook l) {
         RemoteViews v = new RemoteViews(c.getPackageName(), R.layout.w_payday);
-        l.background(v, R.id.w_root, l.bg);
+        l.frame(v);
         l.textColor(c, v, R.id.w_title, l.text);
         l.textColor(c, v, R.id.w_sub, l.label);
         v.setOnClickPendingIntent(R.id.w_root, open(c, null, 400));

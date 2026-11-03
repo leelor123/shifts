@@ -1,0 +1,48 @@
+<?xml version="1.0" encoding="utf-8"?>
+<vector xmlns:android="http://schemas.android.com/apk/res/android" xmlns:aapt="http://schemas.android.com/aapt" android:width="360dp" android:height="260dp" android:viewportWidth="360" android:viewportHeight="260">
+    <group android:name="drop0">
+        <group android:name="spin0" android:pivotX="9" android:pivotY="-10">
+            <path android:pathData="M3,-10a6,6 0,1 0,12,0a6,6 0,1 0,-12,0z" android:fillColor="#E6FFC53D" android:strokeColor="#E6E8990C" android:strokeWidth="1.6" />
+        </group>
+    </group>
+    <group android:name="drop1">
+        <group android:name="spin1" android:pivotX="63" android:pivotY="-10">
+            <path android:pathData="M59.5,-13.5h7v7h-7z" android:fillColor="#CC2EE59D" />
+        </group>
+    </group>
+    <group android:name="drop2">
+        <group android:name="spin2" android:pivotX="94" android:pivotY="-10">
+            <path android:pathData="M90.5,-13.5h7v7h-7z" android:fillColor="#CCFF8FAB" />
+        </group>
+    </group>
+    <group android:name="drop3">
+        <group android:name="spin3" android:pivotX="148" android:pivotY="-10">
+            <path android:pathData="M142,-10a6,6 0,1 0,12,0a6,6 0,1 0,-12,0z" android:fillColor="#E6FFC53D" android:strokeColor="#E6E8990C" android:strokeWidth="1.6" />
+        </group>
+    </group>
+    <group android:name="drop4">
+        <group android:name="spin4" android:pivotX="179" android:pivotY="-10">
+            <path android:pathData="M175.5,-13.5h7v7h-7z" android:fillColor="#CC2EE59D" />
+        </group>
+    </group>
+    <group android:name="drop5">
+        <group android:name="spin5" android:pivotX="210" android:pivotY="-10">
+            <path android:pathData="M206.5,-13.5h7v7h-7z" android:fillColor="#CCFF8FAB" />
+        </group>
+    </group>
+    <group android:name="drop6">
+        <group android:name="spin6" android:pivotX="264" android:pivotY="-10">
+            <path android:pathData="M258,-10a6,6 0,1 0,12,0a6,6 0,1 0,-12,0z" android:fillColor="#E6FFC53D" android:strokeColor="#E6E8990C" android:strokeWidth="1.6" />
+        </group>
+    </group>
+    <group android:name="drop7">
+        <group android:name="spin7" android:pivotX="295" android:pivotY="-10">
+            <path android:pathData="M291.5,-13.5h7v7h-7z" android:fillColor="#CC2EE59D" />
+        </group>
+    </group>
+    <group android:name="drop8">
+        <group android:name="spin8" android:pivotX="349" android:pivotY="-10">
+            <path android:pathData="M345.5,-13.5h7v7h-7z" android:fillColor="#CCFF8FAB" />
+        </group>
+    </group>
+</vector>

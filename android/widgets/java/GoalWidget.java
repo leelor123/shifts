@@ -11,7 +11,7 @@ public class GoalWidget extends ShaatiWidget {
     @Override
     RemoteViews build(Context c, JSONObject d, WidgetLook l) {
         RemoteViews v = new RemoteViews(c.getPackageName(), R.layout.w_goal);
-        l.background(v, R.id.w_root, l.bg);
+        l.frame(v);
         l.background(v, R.id.w_icon_box, l.dot);
         l.iconColor(c, v, R.id.w_icon);
         l.textColor(c, v, R.id.w_title, l.text);

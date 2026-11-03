@@ -2,7 +2,10 @@
 <!-- Shaati widget (android/widgets; copied into the Android project by tools/android.js). Colours: WidgetLook. -->
 <FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:id="@+id/w_root" android:layout_width="match_parent" android:layout_height="match_parent"
-    android:layoutDirection="rtl" android:clipToOutline="true" android:background="@drawable/w_bg_m" android:padding="12dp">
+    android:layoutDirection="rtl" android:clipToOutline="true" android:background="@drawable/w_bg_m">
+    <ProgressBar android:id="@+id/w_scene_sea" android:layout_width="match_parent" android:layout_height="match_parent" android:indeterminate="true" android:indeterminateOnly="true" android:indeterminateDrawable="@drawable/w_scene_sea_row_live" android:minWidth="8dp" android:minHeight="8dp" android:importantForAccessibility="no" android:maxWidth="2000dp" android:maxHeight="2000dp" android:visibility="gone" />
+    <ProgressBar android:id="@+id/w_scene_rain" android:layout_width="match_parent" android:layout_height="match_parent" android:indeterminate="true" android:indeterminateOnly="true" android:indeterminateDrawable="@drawable/w_scene_rain_row_live" android:minWidth="8dp" android:minHeight="8dp" android:importantForAccessibility="no" android:maxWidth="2000dp" android:maxHeight="2000dp" android:visibility="gone" />
+    <FrameLayout android:layout_width="match_parent" android:layout_height="match_parent" android:padding="12dp">
     <LinearLayout android:layout_width="match_parent" android:layout_height="match_parent" android:orientation="horizontal" android:gravity="center_vertical">
         <FrameLayout android:id="@+id/w_coin" android:layout_width="52dp" android:layout_height="56dp" android:visibility="gone">
             <ProgressBar android:id="@+id/w_face_happy" android:layout_width="match_parent" android:layout_height="match_parent" android:indeterminate="true" android:indeterminateOnly="true" android:indeterminateDrawable="@drawable/w_coin_happy_live" android:minWidth="8dp" android:minHeight="8dp" android:maxWidth="240dp" android:maxHeight="240dp" android:importantForAccessibility="no" android:visibility="gone" />
@@ -24,4 +27,5 @@
         </FrameLayout>
         <TextView android:id="@+id/w_stop" android:layout_width="wrap_content" android:layout_height="44dp" android:layout_marginStart="8dp" android:gravity="center" android:paddingStart="16dp" android:paddingEnd="16dp" android:background="@drawable/w_stop" android:singleLine="true" android:text="סיום" android:textColor="@color/w_on_stop" android:textSize="16sp" android:fontFamily="@font/w_rubik_medium" android:visibility="gone" />
     </LinearLayout>
+    </FrameLayout>
 </FrameLayout>

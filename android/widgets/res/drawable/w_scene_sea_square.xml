@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<vector xmlns:android="http://schemas.android.com/apk/res/android" xmlns:aapt="http://schemas.android.com/aapt" android:width="200dp" android:height="220dp" android:viewportWidth="200" android:viewportHeight="220">
+    <path android:pathData="M4,34a34,34 0,1 0,68,0a34,34 0,1 0,-68,0z">
+        <aapt:attr name="android:fillColor">
+            <gradient android:type="radial" android:centerX="38" android:centerY="34" android:gradientRadius="34" android:startColor="#80FFC960" android:endColor="#00FFC960" />
+        </aapt:attr>
+    </path>
+    <path android:pathData="M26,34a12,12 0,1 0,24,0a12,12 0,1 0,-24,0z" android:fillColor="#FFFFD36B" />
+    <group android:name="waves_far">
+        <path android:pathData="M0,158.4q12.5,-6 25,0t25,0q12.5,-6 25,0t25,0q12.5,-6 25,0t25,0q12.5,-6 25,0t25,0q12.5,-6 25,0t25,0q12.5,-6 25,0t25,0q12.5,-6 25,0t25,0q12.5,-6 25,0t25,0V220H0z" android:fillColor="#14FFFFFF" />
+    </group>
+    <group android:name="waves_near">
+        <path android:pathData="M0,184.79999999999998q12.5,-8 25,0t25,0q12.5,-8 25,0t25,0q12.5,-8 25,0t25,0q12.5,-8 25,0t25,0q12.5,-8 25,0t25,0q12.5,-8 25,0t25,0q12.5,-8 25,0t25,0q12.5,-8 25,0t25,0V220H0z" android:fillColor="#1CFFFFFF" />
+    </group>
+</vector>

@@ -11,7 +11,7 @@ public class MonthWidget extends ShaatiWidget {
     @Override
     RemoteViews build(Context c, JSONObject d, WidgetLook l) {
         RemoteViews v = new RemoteViews(c.getPackageName(), R.layout.w_month);
-        l.background(v, R.id.w_root, l.bg);
+        l.frame(v);
         month(c, v, d, l);
         l.coin(v, face(d));
         l.dial(v);
