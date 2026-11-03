@@ -223,6 +223,7 @@
     const notPlayed = () => ({ d: 'עוד לא שיחקת היום', w: 'עוד לא שיחקת השבוע', m: 'עוד לא שיחקת החודש', y: 'עוד לא שיחקת השנה' })[period] || 'עוד לא שיחקת כאן';
     const nobody = (name) => ({ d: `עוד אף אחד לא שיחק היום ב"${name}".`, w: `עוד אף אחד לא שיחק השבוע ב"${name}".`, m: `עוד אף אחד לא שיחק החודש ב"${name}".`, y: `עוד אף אחד לא שיחק השנה ב"${name}".` })[period] || 'עוד אף אחד לא נכנס לטבלה במשחק הזה.';
     let lastMe = null;
+    let lastOthers = []; // the other players on the board, for reporting a nickname
     /** The board and my line under it, from rows (no waiting). */
     function paint(el, rows0) {
       const g = gameOf(game);
@@ -232,6 +233,7 @@
       const rows = rows0.map((x) => (x.uid === meId ? Object.assign({}, x, { e: mineLook.e, bg: mineLook.bg, p: mineLook.p }) : x));
       const meRow = rows.find((x) => x.uid === meId);
       lastMe = meRow ? { game, period, row: meRow } : null;
+      lastOthers = rows.filter((x) => x.uid !== meId);
       const admin = !!App.isAdmin;
       const unit = g.unit || '';
       const reset = LB.resetText(period, today(), Date.now());
@@ -244,7 +246,8 @@
         const others = rows.slice(0, 3).filter((x) => x.uid !== meId);
         set(body, `${head}<div class="lb-podium">${pod(rows[1], 2, meId, unit)}${pod(rows[0], 1, meId, unit)}${pod(rows[2], 3, meId, unit)}</div>
           ${rows.length > 3 ? `<ol class="lb-list">${rows.slice(3).map((x) => row(x, meId, admin, unit)).join('')}</ol>` : ''}
-          ${admin && others.length ? `<div class="lb-admin tiny muted">מנהל: ${others.map((x) => `<button class="btn text sm" data-rm="${esc(x.uid)}">הסרת ${esc(x.n)}</button>`).join('')}</div>` : ''}`);
+          ${admin && others.length ? `<div class="lb-admin tiny muted">מנהל: ${others.map((x) => `<button class="btn text sm" data-rm="${esc(x.uid)}">הסרת ${esc(x.n)}</button>`).join('')}</div>` : ''}
+          ${lastOthers.length ? `<div class="lb-report-row"><button class="btn text sm" data-lb-report>${icon('flag', 's')} דיווח על כינוי לא מתאים</button></div>` : ''}`);
       }
       const bar = el.querySelector('[data-lb-me]');
       if (!joined()) {
@@ -344,6 +347,16 @@
           if (b.dataset.game) { if (b.dataset.game !== game) { game = b.dataset.game; mark(el); load(el); } }
           else if (b.dataset.period) { if (b.dataset.period !== period) { period = b.dataset.period; mark(el); load(el); } }
           else if (b.hasAttribute('data-lb-retry')) load(el);
+          else if (b.hasAttribute('data-lb-report')) {
+            const who = lastOthers;
+            if (!who.length || !root.Support) return;
+            const pick = await UI.dialog({ title: 'דיווח על כינוי', html: `<label class="field"><span class="lbl">על איזה שחקן?</span><select class="input" name="who">${who.map((x, i) => `<option value="${i}">${esc(x.e + ' ' + x.n)}</option>`).join('')}</select></label><div class="tiny muted">הדיווח מגיע לצוות האפליקציה, והשחקן לא יודע מי דיווח.</div>`, buttons: [{ label: 'ביטול', value: null }, { label: 'המשך', value: 'form', cls: '' }] });
+            const x = pick && who[+pick.who];
+            if (!x) return;
+            UI.closeTop();
+            setTimeout(() => root.Support.report(`דיווח על כינוי בטבלת האלופים: "${x.n}" (${x.uid}).
+מה לא מתאים בו: `), 320);
+          }
           else if (b.hasAttribute('data-lb-share')) { if (lastMe) Champions.shareRank(lastMe.game, lastMe.period, lastMe.row); }
           else if (b.hasAttribute('data-lb-profile')) Champions.profile(() => { if (el.isConnected) { tabs(el); load(el); } });
           else if (b.hasAttribute('data-lb-signin')) { UI.closeAll(); App.go('settings'); setTimeout(() => App.sheetsApi.settingsSection('account'), 350); }

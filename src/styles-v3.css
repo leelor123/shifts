@@ -1062,6 +1062,12 @@ body.fx .recap-card:active { transform: scale(.98); }
 .lb-rm { width: 36px; height: 36px; flex: none; }
 .lb-row.plus .lb-rm { color: #fff; }
 .lb-admin { display: flex; flex-wrap: wrap; gap: 4px; align-items: center; margin-top: 8px; }
+.lb-report-row { display: flex; justify-content: center; margin-top: 6px; }
+.lb-report-row .btn { color: var(--on-surface-var); }
+/* reporting an AI reply: a quiet line under the reply, on its side of the chat */
+.msg-report { align-self: flex-end; display: inline-flex; align-items: center; gap: 4px; min-height: 32px; margin-top: -6px; padding: 4px 8px; border: 0; border-radius: 10px; background: none; color: var(--on-surface-var); font: inherit; font-size: .78rem; cursor: pointer; transition: transform 160ms var(--ease-out, ease-out), background-color 160ms ease; }
+.msg-report svg { width: 14px; height: 14px; }
+.msg-report:active { transform: scale(.97); background: var(--surface-2, rgba(0,0,0,.05)); }
 .lb-empty .btn { margin-top: 12px; }
 /* the bar under the table keeps one height on every board and from the first frame (it is empty while the first board
  * loads): it fills the foot (it shrank to its text, which wrapped into one or two lines: 88 or 112 px), its button keeps

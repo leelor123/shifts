@@ -143,7 +143,7 @@
   }
 
   /* ---------------- a new request ---------------- */
-  Support.newTicket = function (preReason) {
+  Support.newTicket = function (preReason, preText) {
     let reason = preReason || '';
     const anon = !signedIn();
     const entry = UI.openSheet({
@@ -228,7 +228,13 @@
       }
     };
     draw();
+    // a report starts with what is reported already written; the person adds why
+    if (preText) { const t = box.querySelector('#sp-text'); if (t) { t.value = preText; check(); setTimeout(() => { t.focus(); t.setSelectionRange(t.value.length, t.value.length); }, 80); } }
   };
+
+  /** Reporting something another user or the AI wrote (Google Play's rules for user and AI content): a request to
+   *  the team with the reported text in it. An admin removes a nickname from the champions table there. */
+  Support.report = function (text) { Support.newTicket('other', text); };
 
   /* ---------------- one conversation (user or admin) ---------------- */
   Support.thread = async function (tid, asAdmin, onChange) {

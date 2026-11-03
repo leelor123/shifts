@@ -116,7 +116,7 @@
       const msgs = chat();
       return `<div class="chat-consent">${icon('shield', 's')}<div>השאלות נשלחות ל-\u2060Anthropic לעיבוד. <label class="chat-share"><input type="checkbox" id="as-share" ${shareData() ? 'checked' : ''}> לצרף סיכום מספרי מהאפליקציה (תעריפים, שעות, סכומים, יתרות, בלי שם או פרטים מזהים)</label></div></div>
         ${msgs.length ? '' : `<div class="chat-empty"><div class="chat-hello">שלום! במה אפשר לעזור?</div><div class="chips chat-sugg">${SUGGESTIONS.map((q) => `<button class="chip" data-q="${esc(q)}">${esc(q)}</button>`).join('')}</div></div>`}
-        <div class="chat-log" id="as-log">${msgs.map((m) => `<div class="msg ${m.role}">${m.role === 'user' ? esc(m.text) : render(m.text)}</div>`).join('')}</div>
+        <div class="chat-log" id="as-log">${msgs.map((m, i) => `<div class="msg ${m.role}">${m.role === 'user' ? esc(m.text) : render(m.text)}</div>${m.role === 'assistant' && !m.error && root.Support ? `<button class="msg-report" data-report="${i}">${icon('flag', 's')} דיווח על התשובה</button>` : ''}`).join('')}</div>
         ${legalNote()}`;
     }
     const legalNote = () => `<div class="tiny muted chat-legal">התשובות נוצרות אוטומטית, עלולות לכלול טעויות ואינן ייעוץ משפטי, חשבונאי או מס. <a href="#" data-legal="disclaimer">הבהרה משפטית</a></div>`;
@@ -201,6 +201,15 @@
           const b = e.target.closest('button,a,input');
           if (!b) return;
           if (b.dataset.q) send(b.dataset.q);
+          // a reply that is offensive or harmful goes to the team (Google Play's rules for AI-made content)
+          if (b.dataset.report) {
+            const m = chat()[+b.dataset.report];
+            if (!m) return;
+            UI.closeTop();
+            setTimeout(() => root.Support.report(`דיווח על תשובה של עוזר ה-⁠AI:
+"${m.text.slice(0, 1400)}"
+מה לא תקין בה: `), 320);
+          }
           if (b.hasAttribute('data-send')) { const i = el.querySelector('#as-input'); const v = i.value; i.value = ''; send(v); }
           if (b.hasAttribute('data-save-key')) {
             const k = el.querySelector('#as-key').value.trim();
