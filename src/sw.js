@@ -25,7 +25,8 @@ async function chosenLang() {
   } catch (err) { return 'he'; }
 }
 // the app's code, a file per language named by the build (VERSION is <version>-<build>)
-const jsOf = (l) => './app.' + l + '.' + VERSION.split('-')[1] + '.js';
+const jsOfBuild = (l, build) => './app.' + l + '.' + String(build).split('-')[1] + '.js';
+const jsOf = (l) => jsOfBuild(l, VERSION);
 const pageOf = (l) => (l === 'he' ? './index.html' : './index.' + l + '.html');
 const manifestOf = (l) => (l === 'he' ? './manifest.webmanifest' : './manifest.' + l + '.webmanifest');
 // a page that names its file (index.ru.html) is that file; the app's own address (./, ./?source=twa) is the chosen one
@@ -35,20 +36,46 @@ const PAGE_FILE = /\/index(?:\.(ar|ru|en|fr|es))?\.html$/;
  * The installed app (its address carries ?source=) opens from the copy kept here at once and switches to a new
  * version when it goes to the background. A visit in a browser (from the website, a shared link) asks the server
  * for the page first, for a moment: a copy kept from an earlier visit was an old version. The question is cheap
- * (the browser asks "changed since?" and gets "no" when it hasn't); offline it fails at once and the copy opens. */
+ * (the browser asks "changed since?" and gets "no" when it hasn't); offline it fails at once and the copy opens.
+ * A slow answer still counts: see keepLive below (the user, 24 Oct: the website's button opened an old version). */
 const FRESH_WAIT = 800;
 const verOf = (build) => String(build).split('-')[0].split('.').map(Number);
 const olderThan = (a, b) => { const x = verOf(a), y = verOf(b); for (let i = 0; i < 3; i++) if ((x[i] || 0) !== (y[i] || 0)) return (x[i] || 0) < (y[i] || 0); return false; };
-async function livePage(page) {
-  const net = fetch(page, { cache: 'no-cache' }).then(async (res) => {
+const newer = (build) => !!build && build !== VERSION && !olderThan(build, VERSION);
+const pageRes = (html, build) => new Response(html, { headers: { 'Content-Type': 'text/html; charset=utf-8', 'X-Build': build } });
+// the page that is live now, when it is a newer version than the copy here ({ html, build }), else null
+function askLive(page) {
+  return fetch(page, { cache: 'no-cache' }).then(async (res) => {
     if (!res.ok) return null;
     const html = await res.text();
     const m = /APP_BUILD = '([^']+)'/.exec(html);
     // the same version as the copy here, or older (a server still catching up after a release): the copy
-    if (!m || m[1] === VERSION || olderThan(m[1], VERSION)) return null;
-    return new Response(html, { headers: { 'Content-Type': 'text/html; charset=utf-8' } });
+    return m && newer(m[1]) ? { html, build: m[1] } : null;
   }).catch(() => null);
-  return Promise.race([net, new Promise((r) => setTimeout(() => r(null), FRESH_WAIT))]);
+}
+/* An answer that came after the wait (a slow network): the newer page is kept with its code, ready for the next look,
+ * and the page that opened from the copy is told. Its opening show waits on its first frame for that word for a moment
+ * (intro.js), and opens the newer page in its place: the same first frame, so nothing is seen to change. */
+const FRESH = 'shiftpay-fresh';
+// the page (its client id) → { found: a newer page is live (its code still on its way), kept: its build once kept, or null }
+const asking = new Map();
+async function keepLive(page, lang, live) {
+  try {
+    const code = await fetch(jsOfBuild(lang, live.build));
+    if (!code.ok) return false;
+    await caches.delete(FRESH);
+    const c = await caches.open(FRESH);
+    await c.put(jsOfBuild(lang, live.build), code);
+    await c.put(page, pageRes(live.html, live.build));
+    return true;
+  } catch (err) { return false; }
+}
+async function keptLive(page) {
+  if (!(await caches.has(FRESH))) return null;
+  const r = await (await caches.open(FRESH)).match(page);
+  if (r && newer(r.headers.get('X-Build'))) return r;
+  if (r) await caches.delete(FRESH); // this version has caught up with it
+  return null;
 }
 
 self.addEventListener('install', (e) => {
@@ -65,11 +92,23 @@ self.addEventListener('install', (e) => {
 self.addEventListener('activate', (e) => {
   e.waitUntil((async () => {
     const keys = await caches.keys();
-    await Promise.all(keys.filter((k) => k.startsWith('shiftpay-shell-') && k !== SHELL).map((k) => caches.delete(k)));
+    await Promise.all(keys.filter((k) => (k.startsWith('shiftpay-shell-') && k !== SHELL) || k === FRESH).map((k) => caches.delete(k)));
     await self.clients.claim();
   })());
 });
-self.addEventListener('message', (e) => { if (e.data === 'skipWaiting') self.skipWaiting(); });
+self.addEventListener('message', (e) => {
+  if (e.data === 'skipWaiting') self.skipWaiting();
+  // the opening show asks whether the server's answer is still on its way: 'asking', 'found' (a newer page, its code
+  // on its way), then { live: build } or 'none'
+  else if (e.data === 'asking?' && e.ports && e.ports[0]) {
+    const port = e.ports[0], a = e.source && asking.get(e.source.id);
+    port.postMessage(a ? 'asking' : 'none');
+    if (a) {
+      a.found.then((f) => { if (f) port.postMessage('found'); });
+      e.waitUntil(a.kept.then((build) => port.postMessage(build ? { live: build } : 'none')));
+    }
+  }
+});
 
 /* ---- shared to the app (Android's share sheet: a work schedule from WhatsApp, a payslip, a report) ----
  * The share arrives as a form; what was shared is kept for a moment in its own cache, and the app opens on
@@ -105,7 +144,23 @@ self.addEventListener('fetch', (e) => {
       const lang = named ? named[1] || 'he' : await chosenLang();
       const page = pageOf(lang);
       const cached = await caches.match(page, { ignoreSearch: true });
-      if (cached && !url.searchParams.has('source') && !url.searchParams.has('action')) return (await livePage(page)) || cached;
+      // a browser visit: no ?source= (the installed app) and no ?action= (its shortcuts), unless the website sent it
+      // (its buttons add ?from=site, also to a shortcut like ?action=tax-refund)
+      const p = url.searchParams;
+      if (cached && !p.has('source') && (!p.has('action') || p.get('from') === 'site')) {
+        const kept = await keptLive(page);
+        if (kept) return kept;
+        const ask = askLive(page);
+        const live = await Promise.race([ask, new Promise((r) => setTimeout(() => r(undefined), FRESH_WAIT))]);
+        if (live) return pageRes(live.html, live.build);
+        if (live === undefined && e.resultingClientId) {
+          const id = e.resultingClientId;
+          const kept = ask.then(async (got) => (got && (await keepLive(page, lang, got)) ? got.build : null));
+          asking.set(id, { found: ask.then((got) => !!got), kept });
+          e.waitUntil(kept.then(() => new Promise((r) => setTimeout(r, 3000))).then(() => asking.delete(id)));
+        }
+        return cached;
+      }
       if (cached) return cached;
       try {
         const res = await fetch(named ? req : page);
