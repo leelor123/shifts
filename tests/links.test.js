@@ -45,3 +45,21 @@ T.test('every official source is a gov.il guide checked by hand, and every topic
   T.eq(topics.filter((m) => !m[2] && m[1] !== 'tips').map((m) => m[1]).join(', '), '', 'every topic (but tips) names its official source');
   T.ok(/אינה מייצגת/.test(src), 'the app says it does not represent a government body');
 });
+
+// The app's offline copy answers only the app's own pages: the privacy policy, the terms and the other public pages at
+// the same address come from the server (every page load used to get the app, so the website's links to the policy
+// opened the app; the owner, 3 Nov 2026). Run here on the worker's real code with a fake service-worker scope.
+T.test('the service worker leaves the public legal pages to the server', () => {
+  const vm = require('vm');
+  const src = fs.readFileSync(path.join(__dirname, '..', 'src', 'sw.js'), 'utf8');
+  let onFetch = null;
+  const ctx = { self: { location: { origin: 'https://x.io' }, registration: { scope: 'https://x.io/shifts/' }, addEventListener: (t, fn) => { if (t === 'fetch') onFetch = fn; } },
+    caches: { match: async () => null, open: async () => ({ put() {}, addAll: async () => {}, match: async () => null }), keys: async () => [], delete: async () => true },
+    fetch: async () => ({ ok: true, clone() { return this; } }), URL, Response: class { constructor(b, o) { this.b = b; this.o = o; } static redirect() {} }, console, setTimeout, clearTimeout, indexedDB: undefined };
+  ctx.addEventListener = ctx.self.addEventListener;
+  vm.createContext(ctx);
+  vm.runInContext(src.replace(/\bself\.addEventListener\b/g, 'addEventListener'), ctx, { filename: 'sw.js' });
+  const handled = (p) => { let took = false; onFetch({ request: { method: 'GET', mode: 'navigate', url: 'https://x.io' + p }, respondWith() { took = true; } }); return took; };
+  for (const p of ['/shifts/privacy.html', '/shifts/terms.html', '/shifts/accessibility.html', '/shifts/delete-account.html']) T.eq(handled(p), false, p + ' comes from the server');
+  for (const p of ['/shifts/', '/shifts/index.html', '/shifts/index.en.html']) T.eq(handled(p), true, p + ' is the app');
+});
