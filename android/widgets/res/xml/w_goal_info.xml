@@ -8,4 +8,6 @@
     android:initialLayout="@layout/w_goal"
     android:previewLayout="@layout/w_goal"
     android:description="@string/w_goal_desc"
+    android:configure="io.github.leelor123.shifts.WidgetStyleActivity"
+    android:widgetFeatures="reconfigurable"
     android:widgetCategory="home_screen" />

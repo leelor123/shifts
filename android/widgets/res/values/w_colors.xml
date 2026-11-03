@@ -1,13 +1,51 @@
 <?xml version="1.0" encoding="utf-8"?>
+<!-- The widgets' four looks (WidgetLook): m = midnight and gold, c = clean (follows light and dark),
+     w = wallpaper colours (Android 12+ in values-v31; the clean colours below 12), k = with the Shaati coin. -->
 <resources>
-    <color name="w_bg1">#5B3DF5</color>
-    <color name="w_bg2">#9257FF</color>
-    <color name="w_text">#FFFFFF</color>
-    <color name="w_sub">#E9E1FF</color>
-    <color name="w_gold">#FFD25A</color>
-    <color name="w_go">#15B67A</color>
-    <color name="w_amber">#FFC13D</color>
-    <color name="w_stop_text">#3A2600</color>
-    <color name="w_chip">#29FFFFFF</color>
-    <color name="w_track">#40FFFFFF</color>
+    <color name="w_go">#0B6B49</color>
+    <color name="w_on_go">#FFFFFF</color>
+    <color name="w_stop">#FFC13D</color>
+    <color name="w_on_stop">#3A2600</color>
+    <color name="w_m_bg">#0D2B6B</color>
+    <color name="w_m_line">#33E9C987</color>
+    <color name="w_m_text">#FFFFFF</color>
+    <color name="w_m_sub">#C9D3EA</color>
+    <color name="w_m_label">#E9C987</color>
+    <color name="w_m_chip">#17FFFFFF</color>
+    <color name="w_m_track">#29FFFFFF</color>
+    <color name="w_m_fill">#E9C987</color>
+    <color name="w_m_icon">#E9C987</color>
+    <color name="w_c_bg">#FFFFFF</color>
+    <color name="w_c_line">#E6E2D6</color>
+    <color name="w_c_text">#0D2B6B</color>
+    <color name="w_c_sub">#5B6478</color>
+    <color name="w_c_label">#8A6A23</color>
+    <color name="w_c_chip">#F6F4EE</color>
+    <color name="w_c_track">#EBE7DC</color>
+    <color name="w_c_fill">#0D2B6B</color>
+    <color name="w_c_icon">#0D2B6B</color>
+    <color name="w_w_bg">@color/w_c_bg</color>
+    <color name="w_w_line">@color/w_c_line</color>
+    <color name="w_w_text">@color/w_c_text</color>
+    <color name="w_w_sub">@color/w_c_sub</color>
+    <color name="w_w_label">@color/w_c_label</color>
+    <color name="w_w_chip">@color/w_c_chip</color>
+    <color name="w_w_track">@color/w_c_track</color>
+    <color name="w_w_fill">@color/w_c_fill</color>
+    <color name="w_w_icon">@color/w_c_icon</color>
+    <color name="w_k_bg">#FFF6E0</color>
+    <color name="w_k_line">#F3E3B8</color>
+    <color name="w_k_text">#3A2600</color>
+    <color name="w_k_sub">#6E5220</color>
+    <color name="w_k_label">#8A5A00</color>
+    <color name="w_k_chip">#FBE9BF</color>
+    <color name="w_k_track">#F5E2B3</color>
+    <color name="w_k_fill">#E8990C</color>
+    <color name="w_k_icon">#A86400</color>
+    <!-- the style picker (WidgetStyleActivity) -->
+    <color name="w_pick_bg">#F6F4EE</color>
+    <color name="w_pick_text">#0D2B6B</color>
+    <color name="w_pick_sub">#5B6478</color>
+    <color name="w_pick_card">#FFFFFF</color>
+    <color name="w_pick_ring">#0D2B6B</color>
 </resources>

@@ -98,10 +98,14 @@
     get connected() { return !!port; },
   };
 
-  // the Android app says hello with a port (only the app this page runs in can: the message comes from
-  // the site's own origin, which Chrome grants only to the app the site's Digital Asset Links name)
+  // The channel to the Android app: when the app asks for it, Chrome hands this page its end with an empty message
+  // and a port, from the origin "android-app://" + this host (only the app the site's Digital Asset Links name can
+  // ask); the app's hello ("shaati:widgets") and "refresh" then come through that port. Measured on the phone on
+  // 3 Nov 2026: the listener used to wait for the hello on the window, from this page's own origin, so the widgets
+  // never got a number.
+  const fromApp = (e) => e.origin === 'android-app://' + location.host || e.origin === location.origin;
   root.addEventListener('message', (e) => {
-    if (e.origin !== location.origin || e.data !== 'shaati:widgets' || !e.ports || !e.ports[0]) return;
+    if (!fromApp(e) || (e.data !== '' && e.data !== 'shaati:widgets') || !e.ports || !e.ports[0]) return;
     port = e.ports[0];
     last = '';
     // this Android app has widgets: say so once
@@ -109,7 +113,7 @@
       Store.setMeta({ widgetsTip: Date.now() }).catch(() => {});
       setTimeout(() => { if (!App.blocking) root.UI.toast('חדש: ווידג׳טים למסך הבית! 🧩 לחיצה ארוכה על מסך הבית › ווידג׳טים › שעתי'); }, 2500);
     }
-    try { port.onmessage = (m) => { if (m.data === 'refresh') send(true); }; } catch (err) { /* ignore */ }
+    try { port.onmessage = (m) => { if (m.data === 'refresh' || m.data === 'shaati:widgets') send(true); }; } catch (err) { /* ignore */ }
     send(true);
   });
   // the phone was wiped (signing out, deleting the account): the page reloads right after, so the widgets hear it

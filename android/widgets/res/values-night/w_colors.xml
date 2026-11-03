@@ -1,6 +1,26 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <color name="w_bg1">#241A55</color>
-    <color name="w_bg2">#3D2B8C</color>
-    <color name="w_sub">#D3C8F5</color>
+    <color name="w_c_bg">#161A24</color>
+    <color name="w_c_line">#262C3A</color>
+    <color name="w_c_text">#F2F4F8</color>
+    <color name="w_c_sub">#AAB3C5</color>
+    <color name="w_c_label">#E9C987</color>
+    <color name="w_c_chip">#1F2431</color>
+    <color name="w_c_track">#2A3040</color>
+    <color name="w_c_fill">#E9C987</color>
+    <color name="w_c_icon">#B4C6F3</color>
+    <color name="w_k_bg">#101A3A</color>
+    <color name="w_k_line">#1E2A52</color>
+    <color name="w_k_text">#FFFFFF</color>
+    <color name="w_k_sub">#B9C3DD</color>
+    <color name="w_k_label">#E9C987</color>
+    <color name="w_k_chip">#1B2852</color>
+    <color name="w_k_track">#24315C</color>
+    <color name="w_k_fill">#FFC53D</color>
+    <color name="w_k_icon">#FFC53D</color>
+    <color name="w_pick_bg">#0E1118</color>
+    <color name="w_pick_text">#F2F4F8</color>
+    <color name="w_pick_sub">#AAB3C5</color>
+    <color name="w_pick_card">#161A24</color>
+    <color name="w_pick_ring">#E9C987</color>
 </resources>

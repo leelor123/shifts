@@ -9,35 +9,45 @@ import org.json.JSONObject;
 /** This month so far: the gross, the net and the hours, the way to the goal and where the month is heading. */
 public class MonthWidget extends ShaatiWidget {
     @Override
-    RemoteViews build(Context c, JSONObject d) {
+    RemoteViews build(Context c, JSONObject d, WidgetLook l) {
         RemoteViews v = new RemoteViews(c.getPackageName(), R.layout.w_month);
-        month(v, d, R.id.w_label, R.id.w_amount, R.id.w_line, R.id.w_bar, R.id.w_goal);
+        l.background(v, R.id.w_root, l.bg);
+        month(c, v, d, l);
+        l.coin(v, face(d));
+        l.dial(v);
+        // the coin sits in the top corner on the end side (left in Hebrew): keep the label out from under it
+        if (l.coin()) v.setViewPadding(R.id.w_label, Math.round(44 * c.getResources().getDisplayMetrics().density), 0, 0, 0);
         v.setOnClickPendingIntent(R.id.w_root, open(c, null, 200));
         return v;
     }
 
-    /** The month block (shared with ComboWidget). */
-    static void month(RemoteViews v, JSONObject d, int label, int amount, int line, int bar, int goal) {
+    /** The month block (shared with ComboWidget): w_label, w_amount, w_line, w_bar, w_goal. */
+    static void month(Context c, RemoteViews v, JSONObject d, WidgetLook l) {
+        l.textColor(c, v, R.id.w_label, l.label);
+        l.textColor(c, v, R.id.w_amount, l.text);
+        l.textColor(c, v, R.id.w_line, l.sub);
+        l.textColor(c, v, R.id.w_goal, l.sub);
+        l.bar(v, R.id.w_bar);
         if (d == null || stale(d)) {
-            v.setTextViewText(label, d == null ? "החודש שלי" : "חודש חדש התחיל");
-            v.setTextViewText(amount, "₪—");
-            text(v, line, "פתחו את שעתי לעדכון");
-            v.setViewVisibility(bar, View.GONE);
-            text(v, goal, "");
+            v.setTextViewText(R.id.w_label, d == null ? "החודש שלי" : "חודש חדש התחיל");
+            v.setTextViewText(R.id.w_amount, "₪—");
+            text(v, R.id.w_line, "פתחו את שעתי לעדכון");
+            v.setViewVisibility(R.id.w_bar, View.GONE);
+            text(v, R.id.w_goal, "");
             return;
         }
-        v.setTextViewText(label, s(d, "period") + " עד עכשיו");
-        v.setTextViewText(amount, s(d, "gross"));
-        text(v, line, "נטו " + s(d, "net") + " · " + s(d, "hours") + " שעות");
+        v.setTextViewText(R.id.w_label, s(d, "period") + " עד עכשיו");
+        v.setTextViewText(R.id.w_amount, s(d, "gross"));
+        text(v, R.id.w_line, "נטו " + s(d, "net") + " · " + s(d, "hours") + " שעות");
         JSONObject g = d.optJSONObject("goal");
         String pace = s(d, "pace");
         if (g != null) {
-            v.setViewVisibility(bar, View.VISIBLE);
-            v.setProgressBar(bar, 100, Math.max(0, Math.min(100, g.optInt("pct", 0))), false);
-            text(v, goal, g.optInt("pct", 0) + "% מיעד " + s(g, "of") + (pace.isEmpty() ? "" : " · צפי " + pace));
+            v.setViewVisibility(R.id.w_bar, View.VISIBLE);
+            v.setProgressBar(R.id.w_bar, 100, pct(g), false);
+            text(v, R.id.w_goal, g.optInt("pct", 0) + "% מיעד " + s(g, "of") + (pace.isEmpty() ? "" : " · צפי " + pace));
         } else {
-            v.setViewVisibility(bar, View.GONE);
-            text(v, goal, pace.isEmpty() ? "" : "צפי לסוף החודש: " + pace);
+            v.setViewVisibility(R.id.w_bar, View.GONE);
+            text(v, R.id.w_goal, pace.isEmpty() ? "" : "צפי לסוף החודש: " + pace);
         }
     }
 }

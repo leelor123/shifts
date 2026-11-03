@@ -329,6 +329,40 @@ T.atest('the Android widgets are told the phone holds no data, at once, when it 
   T.eq(got.length, 1); T.eq(got[0].empty, true);
 });
 
+// on the phone, 3 Nov 2026: Chrome hands the page its end of the channel with an empty message from
+// "android-app://" + host, and the app's hello then comes on that port; the widgets had never received a number
+T.atest('the widgets channel takes the port Chrome hands over (android-app origin, empty message)', async () => {
+  const be = fakeBackend();
+  const A = await phone(be);
+  const c = A.ctx;
+  let hello = null;
+  c.addEventListener = (t, fn) => { if (t === 'message') hello = fn; };
+  c.document = { addEventListener() {}, visibilityState: 'visible' };
+  c.location = { origin: 'https://site', host: 'site' };
+  c.App = Object.assign(c.App || {}, { blocking: 'x' });
+  c.UI.toast = () => {};
+  c.localStorage = { getItem: () => null, setItem() {} };
+  vm.runInContext(fs.readFileSync(path.join(SRC, 'app/widgets.js'), 'utf8'), c, { filename: 'app/widgets.js' });
+  await A.Store.setSettings((s) => { s.onboarded = true; });
+  c.App.widgetSnapshot = () => ({ v: 1, at: 1, gross: '₪499', period: 'נובמבר', periodTo: '2099-12-31' });
+  const got = [], other = [];
+  const port = { postMessage: (m) => got.push(JSON.parse(m)) };
+  const stranger = { postMessage: (m) => other.push(m) };
+  hello({ origin: 'https://elsewhere', data: '', ports: [stranger] });
+  hello({ origin: 'android-app://other.host', data: '', ports: [stranger] });
+  hello({ origin: 'android-app://site', data: 'something else', ports: [stranger] });
+  T.eq(other.length, 0, 'only this site\'s own app, and only the channel hand-over');
+  T.eq(c.App.widgets.connected, false);
+  hello({ origin: 'android-app://site', data: '', ports: [port] });
+  T.eq(c.App.widgets.connected, true, 'the port is kept');
+  T.eq(got.length, 1); T.eq(got[0].gross, '₪499', 'the numbers go out at once');
+  got.length = 0;
+  port.onmessage({ data: 'shaati:widgets' });
+  T.eq(got.length, 1, 'the app\'s hello on the port sends them again');
+  port.onmessage({ data: 'refresh' });
+  T.eq(got.length, 2, 'and so does "refresh"');
+});
+
 T.atest('each strict forget throws when its delete fails (requests, friends card, statistics)', async () => {
   const be = fakeBackend(); seedOutside(be);
   const A = await phone(be);
