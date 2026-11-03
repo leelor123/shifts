@@ -220,6 +220,7 @@
         <li>הכלים של האפליקציה והמשחקים חינמיים. לחלק מהתוספות (ניתוח מתקדם, ייצוא דוחות) יש מכסה חינמית, ו-⁠Shaati Plus האופציונלי (מנוי חודשי שאפשר לבטל בכל רגע, דרך Google Play או בדף תשלום מאובטח של Lemon Squeezy) פותח אותן בלי הגבלה ומוסיף עיצובים ורקע בטבלה. תוך 14 יום מהרכישה אפשר לבקש החזר מלא. אנחנו לא רואים פרטי אשראי.</li>
         <li>אפשר לייצא או למחוק את כל הנתונים בכל רגע.</li></ul></div>
       <div class="btn-row"><button class="btn tonal" data-legal="terms">${icon('file')} תנאי שימוש</button><button class="btn tonal" data-legal="privacy">${icon('shield')} פרטיות</button></div>
+      <div class="tiny muted" style="margin-top:10px;text-align:center"><a href="#" data-legal="accessibility">הצהרת נגישות</a></div>
       </div><div class="foot col">
       <label class="switch-row"><span class="body"><span class="t">קראתי ואני מסכים/ה לתנאי השימוש ולמדיניות הפרטיות</span></span><input type="checkbox" class="switch" id="lg-ok"></label>
       <button class="btn" id="lg-go" disabled>${icon('check')} אישור והמשך</button></div></div>`;

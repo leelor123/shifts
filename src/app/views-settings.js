@@ -26,7 +26,8 @@
     const today = U.todayKey();
     const birth = S.settings.birthDate;
     return {
-      's.birthDate': { min: '1940-01-01', max: U.addDays(today, -365 * 12), pick: 'birth', msg: 'תאריך לידה לא הגיוני' },
+      's.birthDate': { min: '1940-01-01', max: U.addDays(today, -365 * 13), // the terms: 13 and over (Google accounts too)
+      pick: 'birth', msg: 'תאריך לידה לא הגיוני' },
       's.startDate': { min: birth ? U.addDays(birth, 365 * 12) : '1960-01-01', max: today, msg: 'תאריך תחילת העבודה לא יכול להיות בעתיד או לפני גיל 12' },
       's.leave.vacationOpeningDate': { min: '2000-01-01', max: today, msg: 'התאריך לא יכול להיות בעתיד' },
       's.saving.from': { min: '2000-01-01', max: today, msg: 'התאריך לא יכול להיות בעתיד' },

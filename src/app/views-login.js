@@ -174,7 +174,7 @@
         ${root.AUTH_EMAIL_LINK ? `<button class="btn tonal login-email" data-email>${icon('mail', 's')} התחברות עם אימייל, בלי סיסמה</button>` : ''}
         ${S.meta.cloudUid ? '' : `<button class="btn text sm" data-guest ${busy ? 'disabled' : ''}>להמשיך כאורח, בלי חשבון</button>`}
         <button class="btn text sm" data-act="support" style="margin-top:6px">${icon('info', 's')} בעיה בהתחברות? כתבו לנו</button>
-        <div class="tiny muted" style="margin-top:8px">בהתחברות את/ה מאשר/ת את ${App.legalLinks ? App.legalLinks() : 'תנאי השימוש ומדיניות הפרטיות'}.</div>
+        <div class="tiny muted" style="margin-top:8px">בהתחברות את/ה מאשר/ת את ${App.legalLinks ? App.legalLinks() : 'תנאי השימוש ומדיניות הפרטיות'}. <a href="#" data-legal="accessibility">הצהרת נגישות</a></div>
         <div class="tiny muted" style="margin-top:10px;line-height:1.6">${icon('shield', 's')} הנתונים שלך נשמרים בחשבון שלך באפליקציה, ומשתמשים אחרים לא רואים אותם. האפליקציה עובדת גם בלי אינטרנט, ומסנכרנת כשהרשת חוזרת.</div>
         </div></div>`;
       App.mountSky(v, firstDraw);
