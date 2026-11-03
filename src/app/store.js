@@ -155,6 +155,7 @@
     'review', // when this phone was last asked for a rating
     'skinPhoto', // the pay card's own photo (Plus): this phone only
     'rolePhotos', // { roleId: a small square photo } a role's own picture: this phone only, never in a backup file
+    'heard', // { uid, at, full }: when this phone last heard everything from the account (cloud.js: openings read only what changed)
     'adminUid', // the account this phone last heard is an admin (the server's rules decide what an admin may do)
     'guest']; // this phone is used without an account, by choice (its data lives here only)
   const SYNC_META = ['pendingDeletes', 'settingsDirty', 'activeDirty', 'activeUpdatedAt'];

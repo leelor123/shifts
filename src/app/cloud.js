@@ -355,7 +355,10 @@
     }
     if (S.meta.cloudUid !== user.uid) {
       await Store.forgetSyncState(); // nothing on this phone was ever confirmed by this account
+      const t0 = Date.now();
       await initialMerge(user.uid); // needs the network the first time
+      // the whole account was just read: the listeners need only what changes from here
+      await Store.setMeta({ heard: { uid: user.uid, at: t0, full: t0 } });
     }
     // (a guest who signs in is a guest no more: what was on the phone goes up to the account)
     await Store.setMeta({ cloudUid: user.uid, cloudEmail: user.email, cloudName: user.displayName || '', cloudPhoto: user.photoURL || '', guest: false });
@@ -376,11 +379,30 @@
     clearTimeout(flushTimer);
     flushTimer = setTimeout(async () => { const o = incoming; incoming = []; await Store.applyRemote(o); }, 120);
   }
+  // Listening to a whole folder again reads every document in it: Firestore bills a listener that was away for more
+  // than 30 minutes as a new query, so every opening read the whole account (300 shifts = 300 of the free plan's 50,000
+  // reads a day). Now an opening listens only to what changed since this phone last heard from the server (S.meta.heard,
+  // this phone's clock), two days back for a phone whose clock is off; once a week the whole folder, to be sure.
+  const HEARD_BACK = 2 * 86400000, HEARD_FULL = 7 * 86400000;
+  function heardSince(uid) {
+    const h = S.meta.heard;
+    if (!h || h.uid !== uid || !(h.at > 0) || !(Date.now() - (h.full || 0) < HEARD_FULL)) return 0;
+    return h.at - HEARD_BACK;
+  }
+  /** Every folder has answered from the server: this phone has heard everything up to now (saved once a minute). */
+  function heardAll(uid, full) {
+    const prev = S.meta.heard && S.meta.heard.uid === uid ? S.meta.heard : null;
+    if (prev && !full && Date.now() - prev.at < 60000) return;
+    Store.setMeta({ heard: { uid, at: Date.now(), full: full ? Date.now() : (prev && prev.full) || 0 } }).catch(() => {});
+  }
   function attach(uid) {
     const { fs, db } = fb;
     const onErr = (e) => setStatus('error', e);
+    const since = fs.query && fs.where ? heardSince(uid) : 0;
+    const heard = new Set();
     for (const st of SYNC) {
-      unsubs.push(fs.onSnapshot(fs.collection(db, 'users', uid, st), (snap) => {
+      const folder = fs.collection(db, 'users', uid, st);
+      unsubs.push(fs.onSnapshot(since ? fs.query(folder, fs.where('u', '>', since)) : folder, (snap) => {
         const ops = [];
         for (const ch of snap.docChanges()) {
           if (ch.type === 'removed' || ch.doc.metadata.hasPendingWrites) continue;
@@ -393,6 +415,7 @@
         }
         if (ops.length) queueRemote(ops);
         if (!snap.metadata.fromCache && Cloud.status === 'syncing') setStatus('synced');
+        if (!snap.metadata.fromCache) { const was = heard.size; heard.add(st); if (heard.size === SYNC.length) heardAll(uid, !since && was < SYNC.length); }
       }, onErr));
     }
     unsubs.push(fs.onSnapshot(fs.doc(db, 'users', uid, 'kv', 'settings'), (d) => {

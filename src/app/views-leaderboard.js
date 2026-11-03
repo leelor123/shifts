@@ -16,7 +16,7 @@
   const LB = root.Leaderboard;
   const PERIODS = [['d', 'היום'], ['w', 'השבוע'], ['m', 'החודש'], ['y', 'השנה'], ['a', 'כל הזמנים']];
   const SHORT = { coins: 'מטבעות', quiz: 'חשבון', facts: 'נכון/לא', pairs: 'זוגות', hours: 'שעות' };
-  const LIMIT = 50;
+  const LIMIT = 20; // each row on a board is a read of the free plan's 50,000 a day (it was 50)
   const Champions = {};
   root.Champions = Champions;
 
@@ -71,14 +71,33 @@
       Object.assign(row, data, { exists: true, g: row.g || {} });
       for (const [game, vals] of Object.entries(gp || {})) row.g[game] = LB.mergeGame(row.g[game], vals);
     }
-    // only the boards my new scores change are read again; my name or look changes in the others in place
-    for (const key of [...boards.keys()]) {
-      const [g, p] = key.split('|');
-      if (gPatch && gPatch[g] && p in gPatch[g]) { boards.delete(key); continue; }
-      const me = boards.get(key).rows.find((x) => x.uid === uid());
-      if (me) Object.assign(me, { n: pr.n, e: pr.e, bg: pr.bg, p: pr.p });
-    }
+    placeMe(row, gPatch, pr);
   }
+  /** My new scores, name and look go into the boards kept on the phone, in place (reading a board again after every
+   *  game cost 50 reads a game): my row moves to its new place, joins a board it now belongs to, and pushes out the last. */
+  function placeMe(row, gPatch, pr) {
+    for (const [key, c] of boards) {
+      const [g, p, day] = key.split('|');
+      let me = c.rows.find((x) => x.uid === uid());
+      if (me) Object.assign(me, { n: pr.n, e: pr.e, bg: pr.bg, p: pr.p });
+      const v = gPatch && gPatch[g] ? gPatch[g][p] : null;
+      if (v == null || day !== today()) continue;
+      const s = p === 'a' ? +v || 0 : LB.scoreOf(v);
+      if (!(s > 0) || (me && me.s >= s)) continue;
+      if (!me) {
+        if (c.rows.length >= LIMIT && s <= c.rows[c.rows.length - 1].s) continue;
+        me = { uid: uid(), n: pr.n, e: pr.e, bg: pr.bg, p: pr.p };
+        c.rows.push(me);
+      }
+      Object.assign(me, { s, at: row.g ? LB.timeOf(row.g[g], p) : 0 });
+      c.rows.sort((a, b) => b.s - a.s);
+      c.rows.length = Math.min(c.rows.length, LIMIT);
+      rank(c.rows);
+    }
+    keep();
+  }
+  /** Equal scores share a place. */
+  const rank = (rows) => rows.forEach((x, i) => { x.rank = i && rows[i - 1].s === x.s ? rows[i - 1].rank : i + 1; });
   /** A finished game into the phone's own copy of my row (meta.lbLocal): kept whether or not I'm in the table. */
   Champions.record = function (game, score) {
     if (!LB.MAX[game] || !(score > 0)) return Promise.resolve();
@@ -106,10 +125,31 @@
     return `<small class="lb-at">${txt}</small>`;
   }
   const inflight = new Map();
-  // Every board read costs up to 50 reads of the free daily quota: a board is kept 10 minutes (the one on screen is
-  // refreshed quietly once it is 2 minutes old), and a score of mine updates my own row in place.
-  const KEEP_MS = 10 * 60000, FRESH_MS = 2 * 60000;
-  const cached = (game, period, maxAge) => { const c = boards.get(`${game}|${period}|${today()}`); return c && Date.now() - c.at < (maxAge || KEEP_MS) ? c.rows : null; };
+  // Every board read costs up to 20 reads of the free daily quota: a board is kept an hour, on the phone too (opening
+  // the app again does not read it again), the one on screen is refreshed quietly once it is 10 minutes old, and a score
+  // of mine updates my own row in place. The key holds the day (Israel's), so a new day, week or month reads anew.
+  const KEEP_MS = 60 * 60000, FRESH_MS = 10 * 60000;
+  const SAVED = 'shaati.lb';
+  let loadedFor = null;
+  /** The boards kept on this phone for this account (once per account). */
+  function restore() {
+    if (!signedIn() || loadedFor === uid()) return;
+    loadedFor = uid();
+    try {
+      const o = JSON.parse(root.localStorage.getItem(SAVED) || 'null');
+      if (o && o.uid === uid()) for (const [k, c] of Object.entries(o.b || {})) if (!boards.has(k) && c && Array.isArray(c.rows) && Date.now() - c.at < KEEP_MS) boards.set(k, c);
+    } catch (e) { /* no storage: from memory only */ }
+  }
+  /** Today's boards onto the phone (the older ones are dropped). */
+  function keep() {
+    if (!signedIn()) return;
+    try {
+      const b = {};
+      for (const [k, c] of boards) if (k.endsWith('|' + today()) && Date.now() - c.at < KEEP_MS) b[k] = c;
+      root.localStorage.setItem(SAVED, JSON.stringify({ uid: uid(), b }));
+    } catch (e) { /* full or blocked: from memory only */ }
+  }
+  const cached = (game, period, maxAge) => { restore(); const c = boards.get(`${game}|${period}|${today()}`); return c && Date.now() - c.at < (maxAge || KEEP_MS) ? c.rows : null; };
   /** The top of a board, from Firestore (kept 10 minutes; one request per board at a time). */
   function board(game, period, fresh) {
     const key = `${game}|${period}|${today()}`;
@@ -133,10 +173,22 @@
       const v = x.g && x.g[game] ? x.g[game][period] : 0;
       return { uid: d.id, n: String(x.n || ''), e: LB.EMOJI.includes(x.e) ? x.e : '🙂', bg: x.p && root.Plus && root.Plus.SKINS[x.bg] ? x.bg : '', p: !!x.p, s: period === 'a' ? +v || 0 : LB.scoreOf(v), at: x.g ? LB.timeOf(x.g[game], period) : 0 };
     }).filter((x) => x.s > 0).sort((a, b) => b.s - a.s);
-    // equal scores share a place
-    rows.forEach((x, i) => { x.rank = i && rows[i - 1].s === x.s ? rows[i - 1].rank : i + 1; });
+    rank(rows);
     boards.set(key, { at: Date.now(), rows });
+    keep();
     return rows;
+  }
+  /** My place today in a game, by counting who is above me (one read, not the board). null: not in the top. */
+  async function placeToday(game, row) {
+    const v = row.g && row.g[game] ? row.g[game].d : null;
+    if (!LB.scoreIn(row.g && row.g[game], 'd', today())) return null;
+    const { fs, db } = await Cloud().sdk();
+    const field = `g.${game}.d`, r = LB.range('d', today());
+    if (!fs.getCountFromServer) { const meRow = (await board(game, 'd', true)).find((x) => x.uid === uid()); return meRow ? meRow.rank : null; }
+    // (the limit: the rules let a player list at most 100 rows of the table)
+    const snap = await fs.getCountFromServer(fs.query(fs.collection(db, 'lb'), fs.where(field, '>', v), fs.where(field, '<', r[1]), fs.limit(LIMIT)));
+    const above = snap.data().count;
+    return above < LIMIT ? above + 1 : null;
   }
 
   /**
@@ -153,9 +205,9 @@
       const patch = missing(row);
       if (Object.keys(patch).length) await writeMine(patch);
       const vals = patch[game] || {};
-      const rows = await board(game, 'd', true);
-      const meRow = rows.find((x) => x.uid === uid());
-      return { rank: meRow ? meRow.rank : null, before: before ? before.rank : null, improved: Object.keys(vals).filter((k) => k !== 't'), of: rows.length };
+      // a count that the server refuses (an older rule) or fails: the board itself, as before
+      const rank = await placeToday(game, row).catch(async () => { const meRow = (await board(game, 'd', true)).find((x) => x.uid === uid()); return meRow ? meRow.rank : null; });
+      return { rank, before: before ? before.rank : null, improved: Object.keys(vals).filter((k) => k !== 't') };
     } catch (e) { return null; }
   };
 
@@ -179,7 +231,7 @@
       if (!r) { line.remove(); return; }
       const rec = r.improved.includes('a') ? 'שיא של כל הזמנים!' : r.improved.includes('y') ? 'שיא שנתי חדש!' : r.improved.includes('m') ? 'שיא חודשי חדש!' : r.improved.includes('w') ? 'שיא שבועי חדש!' : '';
       const up = r.rank && r.before && r.rank < r.before;
-      const txt = !r.rank ? 'עוד לא בטופ 50 של היום. עוד סיבוב?'
+      const txt = !r.rank ? 'עוד לא בטופ 20 של היום. עוד סיבוב?'
         : r.rank === 1 ? '👑 מקום ראשון היום!' : up ? `🚀 עלית למקום ${r.rank} היום!` : `🏆 מקום ${r.rank} היום`;
       line.innerHTML = `<span><b>${txt}</b>${rec ? ` · ${rec}` : ''}</span><button class="btn text sm" data-lb-open>לטבלה</button>`;
       line.querySelector('[data-lb-open]').onclick = () => Champions.open(game);
@@ -200,9 +252,9 @@
   };
 
   /* ---------------- the table ----------------
-   * Switching a game or a period never blanks the table: a board already loaded is drawn at once,
-   * the other periods of the game are loaded quietly in the background, and while a new board
-   * loads the current one stays on screen (a thin line shows the wait). Tabs only change their mark. */
+   * Switching a game or a period never blanks the table: a board already loaded is drawn at once, and while a new
+   * board loads the current one stays on screen (a thin line shows the wait). Tabs only change their mark. Only the
+   * board on screen is read: loading the other periods and games ahead cost up to 400 reads an opening. */
   Champions.open = function (startGame) {
     let game = LB.MAX[startGame] ? startGame : (LB.MAX[S.meta.lbLast] ? S.meta.lbLast : 'coins');
     let period = 'd';
@@ -237,7 +289,7 @@
       const admin = !!App.isAdmin;
       const unit = g.unit || '';
       const reset = LB.resetText(period, today(), Date.now());
-      const head = `<div class="lb-reset tiny muted">${icon('clock', 's')} ${esc(reset)} · ${rows.length ? (rows.length >= LIMIT ? '50 הראשונים' : rows.length + ' שחקנים') : 'עוד אין שחקנים'}</div>`;
+      const head = `<div class="lb-reset tiny muted">${icon('clock', 's')} ${esc(reset)} · ${rows.length ? (rows.length >= LIMIT ? '20 הראשונים' : rows.length + ' שחקנים') : 'עוד אין שחקנים'}</div>`;
       const body = el.querySelector('[data-lb-body]');
       if (!rows.length) {
         set(body, `${head}<div class="empty fun lb-empty">${App.mascot ? App.mascot('party', { size: 84 }) : ''}<h3>המקום הראשון פנוי!</h3><div>${nobody(esc(g.t))}</div>
@@ -257,17 +309,8 @@
         set(bar, `<div class="lb-me-t"><b>${meRow.rank === 1 ? '👑 את/ה במקום הראשון!' : `המקום שלך: ${meRow.rank}`}</b><small>${ahead ? `עוד ${ahead.s - meRow.s + 1}${esc(unit)} כדי לעקוף את ${esc(ahead.n)}` : 'תשמרו על הכתר 😎'}</small></div><button class="icon-btn lb-share" data-lb-share aria-label="שיתוף המקום שלי">${icon('share', 's')}</button><button class="btn sm" data-lb-play>${icon('play', 's')} לשחק</button>`);
       } else {
         const last = rows[rows.length - 1];
-        set(bar, `<div class="lb-me-t"><b>${rows.length >= LIMIT ? 'עוד לא בטופ 50' : notPlayed()}</b><small>${rows.length >= LIMIT ? `צריך יותר מ-${last.s}${esc(unit)}` : 'משחק אחד וכבר את/ה בטבלה'}</small></div><button class="btn sm" data-lb-play>${icon('play', 's')} לשחק</button>`);
+        set(bar, `<div class="lb-me-t"><b>${rows.length >= LIMIT ? 'עוד לא בטופ 20' : notPlayed()}</b><small>${rows.length >= LIMIT ? `צריך יותר מ-${last.s}${esc(unit)}` : 'משחק אחד וכבר את/ה בטבלה'}</small></div><button class="btn sm" data-lb-play>${icon('play', 's')} לשחק</button>`);
       }
-    }
-    /** The other periods of this game and this period of the other games, loaded quietly so that switching is
-     *  instant (kept 10 minutes, so opening the table again soon reads nothing). */
-    function prefetch() {
-      const g = game, per = period;
-      setTimeout(() => {
-        for (const [p] of PERIODS) if (!cached(g, p)) board(g, p).catch(() => {});
-        for (const x of games()) if (!cached(x.id, per)) board(x.id, per).catch(() => {});
-      }, 250);
     }
     async function load(el) {
       const my = ++seq;
@@ -279,12 +322,9 @@
       }
       const now = cached(game, period);
       if (now) {
-        body.classList.remove('lb-busy'); paint(el, now); prefetch();
+        body.classList.remove('lb-busy'); paint(el, now);
         // kept a while: shown at once, and read again quietly if it is no longer fresh
-        // ...and also when another period of this game was read later: a player who played in between would be in that
-        // board and missing from this one (in 'all time' and not in 'today')
-        const at = (p) => (boards.get(`${game}|${p}|${today()}`) || { at: 0 }).at;
-        if (!cached(game, period, FRESH_MS) || at(period) < Math.max(...PERIODS.map(([p]) => at(p))) - 5000) {
+        if (!cached(game, period, FRESH_MS)) {
           const g = game, p = period;
           board(g, p, true).then((rows) => { if (my === seq && el.isConnected && g === game && p === period) paint(el, rows); }).catch(() => {});
         }
@@ -303,7 +343,6 @@
       if (my !== seq || !el.isConnected) return;
       body.classList.remove('lb-busy');
       paint(el, rows);
-      prefetch();
     }
     function tabs(el) {
       const me = profile(true);
@@ -365,7 +404,7 @@
             setTimeout(() => { if (App.games && App.games.play) App.games.play(game); }, 320);
           } else if (b.dataset.rm) {
             if (!(await UI.confirm('להסיר מהטבלה?', 'השורה של השחקן תימחק (למשל כינוי לא מתאים). הוא יוכל להצטרף שוב.', 'הסרה', true))) return;
-            try { const { fs, db } = await Cloud().sdk(); await fs.deleteDoc(fs.doc(db, 'lb', b.dataset.rm)); boards.clear(); load(el); } catch (err) { UI.toast('ההסרה נכשלה'); }
+            try { const { fs, db } = await Cloud().sdk(); await fs.deleteDoc(fs.doc(db, 'lb', b.dataset.rm)); boards.clear(); keep(); load(el); } catch (err) { UI.toast('ההסרה נכשלה'); }
           }
         });
       },
@@ -521,7 +560,7 @@
       if (signedIn()) { const { fs, db } = await Cloud().sdk(); await fs.deleteDoc(fs.doc(db, 'lb', uid())); }
       else if (opts && opts.strict) throw root.U.oops('אין חשבון מחובר');
     } catch (e) { if (opts && opts.strict) throw e; /* offline: the row stays until the next try */ }
-    mine = null; boards.clear();
+    mine = null; boards.clear(); keep();
     if (S.settings.lb && S.settings.lb.on) await Store.setSettings((s) => { s.lb = Object.assign({}, s.lb, { on: false }); });
   };
   /** A changed profile (or Plus turning on or off) reaches the row at the next game; this sends it now. */
@@ -540,6 +579,7 @@
     } catch (e) { /* next time */ }
     syncing = false;
   };
-  Champions._reset = () => { mine = null; boards.clear(); };
+  // (tests: as if this phone had never read a board)
+  Champions._reset = () => { mine = null; boards.clear(); loadedFor = null; try { root.localStorage.removeItem(SAVED); } catch (e) { /* none */ } };
   App.actions.leaderboard = (el) => Champions.open(el && el.dataset && el.dataset.game);
 })(typeof window !== 'undefined' ? window : globalThis);

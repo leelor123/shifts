@@ -11,6 +11,8 @@ for (const f of ['taxrefund.test.js', 'undef.test.js', 'icons.test.js', 'redraw.
 }
 T.section('cloud sync (simulated phones)');
 require('./sync.test.js');
+T.section('Firestore reads');
+require('./reads.test.js');
 (async () => {
   await T.runAsync();
   console.log(`\n${T.results.pass} passed, ${T.results.fail} failed`);
