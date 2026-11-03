@@ -15,13 +15,10 @@
             <ImageView android:id="@+id/w_go_icon" android:layout_width="26dp" android:layout_height="26dp" android:layout_gravity="center" android:src="@drawable/w_ic_play" android:tint="@color/w_on_go" android:importantForAccessibility="no" />
         </FrameLayout>
         <LinearLayout android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:layout_marginStart="14dp" android:orientation="vertical">
-            <TextView android:id="@+id/w_title" android:layout_width="wrap_content" android:layout_height="wrap_content" android:singleLine="true" android:ellipsize="end" android:textDirection="rtl" android:text="התחל משמרת" android:textColor="@color/w_m_text" android:textSize="19sp" android:fontFamily="@font/w_rubik_medium" />
+            <TextView android:id="@+id/w_title" android:layout_width="match_parent" android:layout_height="26dp" android:maxLines="1" android:textDirection="rtl" android:autoSizeTextType="uniform" android:autoSizeMinTextSize="13sp" android:autoSizeMaxTextSize="19sp" android:autoSizeStepGranularity="1sp" android:gravity="center_vertical|start" android:text="התחל משמרת" android:textColor="@color/w_m_text" android:fontFamily="@font/w_rubik_medium" />
             <Chronometer android:id="@+id/w_clock" android:layout_width="wrap_content" android:layout_height="wrap_content" android:textColor="@color/w_m_text" android:textSize="26sp" android:fontFamily="@font/w_rubik_medium" android:visibility="gone" />
             <TextView android:id="@+id/w_sub" android:layout_width="wrap_content" android:layout_height="wrap_content" android:layout_marginTop="2dp" android:singleLine="true" android:ellipsize="end" android:textDirection="rtl" android:text="החודש ₪2,840" android:textColor="@color/w_m_sub" android:textSize="14sp" />
         </LinearLayout>
-        <FrameLayout android:id="@+id/w_clock_box" android:layout_width="48dp" android:layout_height="48dp" android:background="@drawable/w_dot_m" android:layout_marginStart="8dp">
-            <ProgressBar android:id="@+id/w_dial" android:layout_width="34dp" android:layout_height="34dp" android:layout_gravity="center" android:indeterminate="true" android:indeterminateOnly="true" android:indeterminateDrawable="@drawable/w_dial_live" android:minWidth="8dp" android:minHeight="8dp" android:maxWidth="240dp" android:maxHeight="240dp" android:importantForAccessibility="no" />
-        </FrameLayout>
         <FrameLayout android:id="@+id/w_play" android:layout_width="48dp" android:layout_height="48dp" android:background="@drawable/w_go" android:contentDescription="התחל משמרת" android:layout_marginStart="8dp" android:visibility="gone">
             <ImageView android:layout_width="24dp" android:layout_height="24dp" android:layout_gravity="center" android:src="@drawable/w_ic_play" android:tint="@color/w_on_go" android:importantForAccessibility="no" />
         </FrameLayout>
