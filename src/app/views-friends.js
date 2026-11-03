@@ -208,7 +208,7 @@
         await fs.setDoc(fs.doc(db, 'inv', code), { to: uid() }, { merge: true });
         await Store.setSettings((s) => { s.fr = Object.assign({}, s.fr, { f: FR.addFriend((s.fr || {}).f || [], v.from, uid()) }); });
         // until the sender's app lists me back, the table shows them as waiting, by the name in the invitation
-        await Store.setMeta({ frNames: Object.assign({}, S.meta.frNames, { [v.from]: { n: v.n, e: v.e } }) });
+        await Store.setMeta({ frNames: Object.assign({}, S.meta.frNames, { [v.from]: { n: v.n, e: v.e } }), frAccepted: (S.meta.frAccepted || []).concat(code).slice(-50) });
         await publish(true);
         dropCode();
         UI.closeAll();
@@ -364,11 +364,17 @@
         await fs.deleteDoc(fs.doc(db, 'fr', uid()));
         const snap = await fs.getDocs(fs.query(fs.collection(db, 'inv'), fs.where('from', '==', uid())));
         for (const d of snap.docs) await fs.deleteDoc(fs.doc(db, 'inv', d.id)).catch((e) => { if (strict) throw e; });
+        // invitations I accepted hold my id until the sender's app opens: they go now (one the sender already
+        // cleared is gone, and deleting a missing one is refused by the rules, so it is read first)
+        for (const code of S.meta.frAccepted || []) {
+          const s = await fs.getDoc(fs.doc(db, 'inv', code));
+          if (s.exists() && s.data().to === uid()) await fs.deleteDoc(fs.doc(db, 'inv', code));
+        }
       } else if (strict) throw root.U.oops('אין חשבון מחובר');
     } catch (e) { if (strict) throw e; /* offline: tried again by leaving again */ }
     cards.clear();
     if (me().on) await Store.setSettings((s) => { s.fr = Object.assign({}, s.fr, { on: false, f: [] }); });
-    await Store.setMeta({ frPub: null });
+    await Store.setMeta({ frPub: null, frAccepted: [] });
   };
 
   /** A card for the games list. */

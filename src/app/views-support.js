@@ -56,6 +56,21 @@
   const Cloud = () => root.Cloud;
   const signedIn = () => !!(Cloud() && Cloud().user);
   const platform = () => (App.androidApp ? 'android' : (root.matchMedia && root.matchMedia('(display-mode: standalone)').matches) ? 'pwa' : 'web');
+  /** The system and the browser with their main versions ("Android 15 · Chrome 140"), never the whole User-Agent: it
+   *  can carry the phone's model and build, and the privacy policy promises only these details. */
+  const device = (ua = navigator.userAgent || '') => {
+    const m = (re) => { const r = re.exec(ua); return r ? r[1] : ''; };
+    const os = /Android/.test(ua) ? `Android ${m(/Android (\d+)/)}`
+      : /iPhone|iPad|iPod/.test(ua) ? `iOS ${m(/OS (\d+)/)}`
+      : /Windows/.test(ua) ? 'Windows' : /Mac OS X/.test(ua) ? 'macOS' : /CrOS/.test(ua) ? 'ChromeOS' : /Linux/.test(ua) ? 'Linux' : 'other';
+    const br = /EdgA?\/\d/.test(ua) ? `Edge ${m(/EdgA?\/(\d+)/)}`
+      : /SamsungBrowser\/\d/.test(ua) ? `Samsung Internet ${m(/SamsungBrowser\/(\d+)/)}`
+      : /(?:Firefox|FxiOS)\/\d/.test(ua) ? `Firefox ${m(/(?:Firefox|FxiOS)\/(\d+)/)}`
+      : /(?:Chrome|CriOS)\/\d/.test(ua) ? `Chrome ${m(/(?:Chrome|CriOS)\/(\d+)/)}`
+      : /Version\/\d+.*Safari/.test(ua) ? `Safari ${m(/Version\/(\d+)/)}` : 'other';
+    return `${os.trim()} · ${br}`;
+  };
+  Support.device = device;
 
   /* ---------------- reading my requests ---------------- */
   async function myTickets() {
@@ -213,7 +228,7 @@
           name: String(S.settings.userName || '').slice(0, 60),
         };
         if (anon) doc.email = v.mail.slice(0, 100);
-        if (tech) Object.assign(doc, { v: String(root.APP_VERSION || '').slice(0, 20), p: platform(), dev: String(navigator.userAgent || '').slice(0, 200) });
+        if (tech) Object.assign(doc, { v: String(root.APP_VERSION || '').slice(0, 20), p: platform(), dev: device() });
         await fs.addDoc(fs.collection(db, 'tickets'), doc);
         Store.setMeta({ ticketTimes: recent.concat([now]) }).catch(() => {});
         UI.closeTop();

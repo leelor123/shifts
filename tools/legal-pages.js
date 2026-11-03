@@ -46,7 +46,7 @@ const EN = (L) => ({
   privacy: `<h2 lang="en" dir="ltr">Summary in English</h2>
 <div lang="en" dir="ltr" class="en">
 <p>The full policy in English: <a href="${L('privacy.en')}">Privacy policy (English translation)</a>.</p>
-<p><b>Shaati</b> is a shift and pay tracker for hourly workers in Israel. Operator and data controller: <bdi lang="he">לי בטאן</bdi>, ${MAIL}. The Hebrew policy above is the binding text.</p>
+<p><b>Shaati</b> is a shift and pay tracker for hourly workers in Israel. Operator and data controller: <bdi lang="he">לי בטאן</bdi> (Lee Batan), ${MAIL}. The Hebrew policy above is the binding text.</p>
 <ul>
 <li><b>Data you enter:</b> shifts, roles and hourly rates, leave, additions and deductions, settings, payslip fields you verified, the town you chose (for Shabbat and holiday times and the sky picture), and optionally a name, date of birth and gender (for age-based rules: minimum wage, youth employment, tax and pension). It is stored on your phone and, once you sign in, in Google Cloud Firestore (region me-west1, Tel Aviv), linked to your account. Security rules block other users. The operator, as the owner of the database, has technical access and uses it only to handle your request or a fault, or when the law requires it. Pay data counts as especially sensitive information under the Privacy Protection Law.</li>
 <li><b>Account:</b> a user ID and email address; with Google sign-in also your name and photo. With email and password, Firebase Authentication keeps the password and the app never sees it. As a guest, nothing leaves the phone.</li>
@@ -74,7 +74,7 @@ const DELETE = (L) => `<p class="meta">מחיקת חשבון ונתונים · A
 <li>היכנסו ל<b>הגדרות › אני והחשבון › חשבון וסנכרון</b>.</li>
 <li>לחצו <b>"מחק את כל הנתונים מהחשבון"</b> ואשרו.</li>
 </ol>
-<p>המחיקה מיידית וסופית: כל הנתונים שנשמרו בחשבון (משמרות, תפקידים ותעריפים, הגדרות, תלושים, פערים, ימי חופשה ומחלה) נמחקים מהענן, החשבון עצמו נמחק ממערכת ההתחברות, והנתונים נמחקים גם מהמכשיר. גם השורה בטבלת האלופים, הכרטיס בתחרות עם החברים וקוד ההזמנה שלך נמחקים. נשארת רק רשומה של מי הזמין את מי (מזהי חשבון בלבד, בלי שם או אימייל), כדי שכל חשבון יוזמן פעם אחת. לא נשמר עותק נוסף. לפני המחיקה אפשר לייצא גיבוי (הגדרות › גיבוי, ייבוא ונתונים).</p>
+<p>המחיקה מיידית וסופית: כל הנתונים שנשמרו בחשבון (משמרות, תפקידים ותעריפים, הגדרות, תלושים, פערים, ימי חופשה ומחלה) נמחקים מהענן, החשבון עצמו נמחק ממערכת ההתחברות, והנתונים נמחקים גם מהמכשיר. גם השורה בטבלת האלופים, הכרטיס בתחרות עם החברים, הזמנות לתחרות ששלחת או אישרת, הפניות לתמיכה וקוד ההזמנה שלך נמחקים. נשארים רק מזהי חשבון, בלי שם, אימייל או נתונים: הרשומה של מי הזמין את מי, כדי שכל חשבון יוזמן פעם אחת, והמזהה שלך ברשימת החברים של מי שהיו חברים שלך בתחרות, עד שהם מסירים אותו. אם השתמשת בטלפון אחר, רשומת סטטיסטיקת השימוש האנונימית שלו (בלי מזהה החשבון) נמחקת עד 13 חודשים אחרי השימוש האחרון בו. לפני המחיקה אפשר לייצא גיבוי (הגדרות › גיבוי, ייבוא ונתונים).</p>
 <h2 id="data">מחיקת חלק מהנתונים, בלי למחוק את החשבון</h2>
 <ul>
 <li><b>משמרת או כל רשומה אחרת:</b> פותחים אותה ולוחצים על סמל הפח. המחיקה מגיעה גם לענן.</li>
@@ -89,7 +89,7 @@ const DELETE = (L) => `<p class="meta">מחיקת חשבון ונתונים · A
 <li>Open the app (or <a href="${APP_URL}">${APP_URL}</a> in any browser) and sign in with the same account.</li>
 <li>Go to <b>Settings › Me &amp; my account › Account &amp; sync</b> (הגדרות › אני והחשבון › חשבון וסנכרון).</li>
 <li>Tap <b>Delete all data</b> (מחק את כל הנתונים מהחשבון) and confirm.</li></ol>
-<p>Deletion is immediate and permanent: all data stored for the account in the cloud is deleted, the sign-in account is deleted, and local data on the device is cleared. No copy is retained, except a record of who invited whom (account IDs only), kept so an account is invited only once. If you cannot access the app, email ${MAIL} from the account's address and we will contact you to verify it is yours.</p>
+<p>Deletion is immediate and permanent: all data stored for the account in the cloud is deleted, the sign-in account is deleted, and local data on the device is cleared. Your champions-table row, your card in the friends' competition, competition invitations you sent or accepted, support requests and your invite code are deleted too. Only account IDs remain, with no name, email or data: the record of who invited whom (so an account is invited only once), and your ID in the friend lists of people who were your friends in the competition, until they remove it. If you used another phone, its anonymous usage-statistics record (not linked to the account) is deleted within 13 months of its last use. If you cannot access the app, email ${MAIL} from the account's address and we will contact you to verify it is yours.</p>
 <h2 id="data-en">Deleting some data without deleting the account</h2>
 <ul>
 <li><b>A shift or any other record:</b> open it and tap the trash icon. The deletion reaches the cloud too.</li>

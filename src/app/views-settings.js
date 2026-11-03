@@ -964,10 +964,8 @@
           if (!(await UI.confirm('למחוק את כל הנתונים?', 'כל המשמרות, התלושים וההגדרות יימחקו לצמיתות מהטלפון ומהחשבון בענן. מומלץ לגבות קודם.', 'מחק הכול', true))) return;
           const really = await UI.promptText('אישור סופי', 'הקלד "מחק" כדי לאשר', '');
           if (String(really || '').trim().toLowerCase() !== 'מחק'.toLowerCase()) { UI.toast('בוטל'); return; }
-          try {
-            if (root.Cloud.user) await root.Cloud.deleteAccountData(); else await Store.wipe();
-            location.reload();
-          } catch (err) { UI.dialog({ title: 'המחיקה נכשלה', text: root.Cloud.errorText(err), buttons: [{ label: 'סגור', value: true }] }); }
+          if (root.Cloud.user) { await App.deleteAccount(); return; }
+          try { await Store.wipe(); location.reload(); } catch (err) { UI.dialog({ title: 'המחיקה נכשלה', text: root.Cloud.errorText(err), buttons: [{ label: 'סגור', value: true }] }); }
         }
       });
     },

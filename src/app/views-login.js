@@ -12,6 +12,17 @@
 
   App.googleIcon = GOOGLE_G;
 
+  /** Deletes the account and everything in it, after the caller's own "are you sure" steps. Every delete button comes
+   *  here: an account with a password confirms with it (deleting needs a recent sign-in), so no button can skip it. */
+  App.deleteAccount = async function () {
+    let password = '';
+    if (Cloud.usesPassword()) {
+      password = String((await UI.promptText('אישור עם הסיסמה', 'הסיסמה של החשבון', '', { type: 'password', ltr: true, ok: 'אישור' })) || '');
+      if (!password) { UI.toast('בוטל'); return; }
+    }
+    try { await Cloud.deleteAccountData({ password }); location.reload(); } catch (e) { UI.dialog({ title: 'המחיקה נכשלה', text: Cloud.errorText(e), buttons: [{ label: 'סגור', value: true }] }); }
+  };
+
   /* ---------------- browsers inside other apps ----------------
    * Instagram, Facebook, TikTok, Snapchat, Telegram and similar apps open links in their own
    * built-in browser, and Google does not allow signing in there. Those visitors get a clear
@@ -315,13 +326,7 @@
       if (!(await UI.confirm('למחוק את החשבון ואת כל הנתונים?', 'כל המשמרות, התלושים וההגדרות יימחקו לצמיתות מהענן ומהטלפון, והחשבון באפליקציה יימחק. ייתכן ש-\u2060Google תבקש לאשר את החשבון שוב. מומלץ לגבות קודם.', 'מחק הכול', true))) return;
       const really = await UI.promptText('אישור סופי', 'הקלד "מחק" כדי לאשר', '');
       if (String(really || '').trim().toLowerCase() !== 'מחק'.toLowerCase()) { UI.toast('בוטל'); return; }
-      // an account with a password confirms with it (deleting needs a recent sign-in)
-      let password = '';
-      if (Cloud.usesPassword()) {
-        password = String((await UI.promptText('אישור עם הסיסמה', 'הסיסמה של החשבון', '', { type: 'password', ltr: true, ok: 'אישור' })) || '');
-        if (!password) { UI.toast('בוטל'); return; }
-      }
-      try { await Cloud.deleteAccountData({ password }); location.reload(); } catch (e) { UI.dialog({ title: 'המחיקה נכשלה', text: Cloud.errorText(e), buttons: [{ label: 'סגור', value: true }] }); }
+      await App.deleteAccount();
     };
   };
 })(typeof window !== 'undefined' ? window : globalThis);

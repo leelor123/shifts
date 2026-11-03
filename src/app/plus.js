@@ -55,7 +55,7 @@
   // the seller, named under the buy button before paying (Consumer Protection Law s.14ג): the operator and the email
   // of the terms (views-legal.js OPERATOR, EMAIL; tests/sync.test.js fails if they differ)
   // i18n-keep-start
-  const SELLER = 'לי בטאן'; // a person's name, the same in every language
+  const SELLER = 'לי בטאן (Lee Batan)'; // a person's name, the same in every language
   // i18n-keep-end
   const SELLER_EMAIL = 'lybtn48@gmail.com';
   const cfg = () => (root.PAY_CONFIG && root.PAY_CONFIG.lemon) || {};
