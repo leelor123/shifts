@@ -17,7 +17,7 @@ Shaati: Shift & Pay Tracker
 Hourly pay in Israel: a shift clock, Shabbat and overtime pay, payslip checks
 ```
 
-**Full description** (max 4000 characters: 3989)
+**Full description** (max 4000 characters: 3697)
 ```
 Shaati helps hourly and shift workers in Israel log their shifts, see an estimate of their pay and check that the payslip matches the hours they worked.
 
@@ -60,9 +60,6 @@ Privacy
 • Your data is saved on your phone and in your account. Other users cannot see it, except what you share with friends, and we do not sell it
 • No ads. Usage statistics without your name, email or amounts, only if you agree
 • Code or fingerprint lock; export or delete your data and account at any time
-
-Shaati Plus (optional)
-12 pay card designs, your own photo as the background, a full tax refund report, and unlimited analysis and exports (without Plus: 3 analyses and 5 exports a month). A monthly Google Play subscription you can cancel any time. Everything else is included without Plus.
 
 AI assistant (optional)
 Questions about rights, your payslip or the app, with your own Anthropic API key. Only what you choose to send goes to Anthropic.

@@ -15,7 +15,7 @@
 שעון נוכחות אישי וחישוב שכר: משמרות, שבתות, שעות נוספות ובדיקת תלוש שכר
 ```
 
-**תיאור מלא** (עד 4000 תווים: 3761)
+**תיאור מלא** (עד 4000 תווים: 3492)
 ```
 שעתי (Shaati) עוזרת לעובדים ולעובדות לפי שעה בישראל לרשום משמרות, לראות הערכה של השכר ולבדוק שתלוש השכר תואם את השעות שעבדו.
 
@@ -62,9 +62,6 @@
 • בלי פרסומות. סטטיסטיקת שימוש בלי שם, אימייל או סכומים, רק אם הסכמת
 • נעילה בקוד או בטביעת אצבע, וייצוא או מחיקה של הנתונים והחשבון בכל רגע
 • בעברית, באנגלית, בערבית, ברוסית, בצרפתית ובספרדית
-
-Shaati Plus (לבחירתך)
-12 עיצובים לכרטיס השכר, תמונה משלך כרקע, דוח החזר מס מלא, וניתוח מתקדם וייצוא בלי הגבלה (בלי Plus: 3 ניתוחים ו-5 ייצואים בחודש). מנוי חודשי דרך Google Play, מבטלים בכל רגע. משמרות, חישוב שכר, זכויות, בדיקת תלוש, דוחות ומשחקים כלולים גם בלי Plus.
 
 עוזר AI (לבחירתך)
 שאלות על זכויות, על התלוש או על האפליקציה, עם מפתח API אישי של Anthropic. רק מה שבחרת לשלוח עובר ל-Anthropic.
@@ -118,3 +115,6 @@ Shaati Plus (לבחירתך)
   שיתוף מוואטסאפ (share_target ב-manifest), עוזר AI עם מפתח אישי (views-assistant.js, views-payslip.js).
 - הקישורים במסך הזכויות באפליקציה (src/app/views-rights.js) עדיין בצורה הישנה `/Departments/Guides/...`. הם עובדים
   (gov.il מפנה ל-`/he/pages/...`), אבל כדאי לעדכן אותם לכתובות הסופיות בגרסה הבאה. לא שיניתי קוד.
+
+## Note (3 Nov)
+The Shaati Plus paragraph was taken out of both listings: Play Console has no Google Payments merchant account yet, so the subscription does not exist and the Android app does not offer Plus (plus.js hides it until Play sells it). Put the paragraph back when the subscription is live.
