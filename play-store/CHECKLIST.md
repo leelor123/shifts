@@ -1,4 +1,4 @@
-# Google Play Console checklist: Shaati 1.32.1 (versionCode 13201)
+# Google Play Console checklist: Shaati 1.32.1 (versionCode 13201), web 1.32.2
 
 App: io.github.leelor123.shifts · Play app id 4975962257211357892 · developer 9008976356462415230.
 State as of 3 Nov 2026. "Saved" = saved in Console, waiting in Publishing overview until "Send for review".
@@ -39,6 +39,7 @@ State as of 3 Nov 2026. "Saved" = saved in Console, waiting in Publishing overvi
 | Closed testing (Alpha) | 13201 with notes, sent for review 3 Nov (replaces the rejected 12100) |
 | Publishing overview | 16 changes sent for review 3 Nov ~15:40 (status "בבדיקה") |
 | Subscriptions (Plus) | Blocked: no Google Payments merchant account. The owner (18+) sets it up; then create `shaati_plus_monthly` ₪6.90 and put the Plus paragraph back in the listings |
+| UGC + AI content reporting | Web 1.32.2 live: report a champions nickname, report an AI reply (no new AAB needed) |
 | Pre-launch report | Runs after the first review/rollout of 13201; check then |
 
 ## Left for the owner
