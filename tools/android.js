@@ -68,6 +68,7 @@ async function generate() {
   await new core.TwaGenerator().createTwaProject(TWA, tm, new core.ConsoleLog('generate'));
   patchLauncher();
   patchWidgets();
+  patchNames();
   await shared.generateManifestChecksumFile(file, TWA);
   fs.mkdirSync(path.join(ROOT, 'android'), { recursive: true });
   // keep a copy in the repo (no secrets in it: only the keystore's location)
@@ -239,6 +240,16 @@ ${receiver('ShiftWidget', 'shift')}${receiver('MonthWidget', 'month')}${receiver
   g = g.replace('            minifyEnabled true\n', "            minifyEnabled true\n            proguardFiles 'shaati-rules.pro'\n");
   fs.writeFileSync(gf, g);
   fs.writeFileSync(path.join(TWA, 'app', 'shaati-rules.pro'), '# Shaati: the widgets bridge reads the launcher\'s session (LauncherActivity.widgetSession)\n-keepclassmembers class com.google.androidbrowserhelper.trusted.TwaLauncher { androidx.browser.customtabs.CustomTabsSession *; }\n');
+}
+
+/** The app is called "שעתי" on phones set to Hebrew (android/res/values-iw); the default name stays "Shaati". */
+function patchNames() {
+  const SRC = path.join(ROOT, 'android', 'res');
+  const res = path.join(TWA, 'app', 'src', 'main', 'res');
+  for (const d of fs.readdirSync(SRC)) {
+    fs.mkdirSync(path.join(res, d), { recursive: true });
+    for (const f of fs.readdirSync(path.join(SRC, d))) fs.copyFileSync(path.join(SRC, d, f), path.join(res, d, f));
+  }
 }
 
 function build() {

@@ -1,3 +1,4 @@
 [
-  { "name": "upload key (keys/shiftpay-upload.jks)", "sha256": "47:7A:E3:29:FB:50:79:DB:B1:BC:2B:79:6B:F3:60:59:16:3D:2C:70:08:A8:0D:51:4D:3D:0B:31:99:E8:3A:84" }
+  { "name": "upload key (keys/shiftpay-upload.jks)", "sha256": "47:7A:E3:29:FB:50:79:DB:B1:BC:2B:79:6B:F3:60:59:16:3D:2C:70:08:A8:0D:51:4D:3D:0B:31:99:E8:3A:84" },
+  { "name": "Play app signing key (Play Console › App integrity)", "sha256": "3E:E2:CE:71:7D:5F:82:C0:3E:5E:8C:1C:C0:24:0F:6C:C4:53:CC:01:31:FD:16:39:21:AF:8C:3D:E8:C1:23:8E" }
 ]

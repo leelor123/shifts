@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Shaati: the app's name on phones set to Hebrew (other languages keep "Shaati") -->
+<resources>
+    <string name="appName">שעתי</string>
+    <string name="launcherName">שעתי</string>
+</resources>
