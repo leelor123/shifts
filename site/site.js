@@ -10,6 +10,16 @@
   const pad = (n) => String(n).padStart(2, '0');
   const idle = (fn) => ('requestIdleCallback' in window ? requestIdleCallback(fn, { timeout: 1500 }) : setTimeout(fn, 80));
   const Sky = window.Sky;
+  /* on an iPhone that has not added Shaati to the home screen yet: a line under the buttons to the three steps. In an
+     app's own browser (Instagram, WhatsApp) there is no "add to home screen": it says to open the page in Safari. */
+  (function iosTip() {
+    const tip = $('[data-ios]');
+    const ua = navigator.userAgent || '';
+    const iphone = /iPhone|iPad|iPod/.test(ua) || (/Macintosh/.test(ua) && navigator.maxTouchPoints > 1);
+    if (!tip || !iphone || navigator.standalone || matchMedia('(display-mode: standalone)').matches) return;
+    if (!/Safari\//.test(ua) || /FBAN|FBAV|Instagram|Line\/|WhatsApp/.test(ua)) tip.textContent = 'באייפון, פותחים את הדף הזה בספארי, ומשם מוסיפים את שעתי למסך הבית.';
+    tip.hidden = false;
+  })();
   const NS = 'http://www.w3.org/2000/svg';
   const CITIES = {
     tlv: { name: 'תל אביב-יפו', lat: 32.0809, lon: 34.7806, at: 'בתל אביב' },

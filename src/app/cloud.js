@@ -44,8 +44,30 @@
    *  first screen's paint never waits on them (Lighthouse counted them: the largest paint at 5 s on a phone). Nothing
    *  can be tapped under the show, so nothing that needs Google is waiting. */
   const showGone = () => new Promise((r) => (root.Intro && root.Intro.after && document.getElementById('intro') ? root.Intro.after(r, 0) : r()));
+  /* Safari (every iPhone browser) remembers a module that failed to download for the rest of the page's life: a second
+   * import() of it fails at once, so after one cut-off download (the app opened offline, a weak signal) Google sign-in
+   * and sync never worked until the app was closed. So nothing is downloaded while offline, and if a download does
+   * fail there, the page starts over the next time it is hidden with nothing open (as the version updater does). */
+  const safari = (function () {
+    const ua = navigator.userAgent || '';
+    const iphone = /iPhone|iPad|iPod/.test(ua) || (/Macintosh/.test(ua) && navigator.maxTouchPoints > 1);
+    return iphone || (/AppleWebKit/.test(ua) && /Safari\//.test(ua) && !/Chrome\/|Chromium|Android|Edg\//.test(ua));
+  })();
+  let stuck = false;
+  const offline = () => navigator.onLine === false;
+  const failure = (code) => Object.assign(new Error(code), { code });
+  function stuckNow() {
+    if (stuck) return;
+    stuck = true;
+    document.addEventListener('visibilitychange', () => {
+      const open = document.querySelector('.sheet, .dialog') || (root.App && root.App.blocking && root.App.blocking !== 'login');
+      if (document.visibilityState === 'hidden' && !open) location.reload();
+    });
+  }
   Cloud.preload = function () {
     if (fb || loading || !root.FIREBASE_CONFIG || Cloud.preloaded) return;
+    // offline: a failed preload would be remembered by Safari (above); it starts once the network is back
+    if (offline()) { root.addEventListener('online', () => Cloud.preload(), { once: true }); return; }
     Cloud.preloaded = true;
     showGone().then(() => { for (const f of ['firebase-app.js', 'firebase-auth.js', 'firebase-firestore.js']) {
       const l = document.createElement('link');
@@ -57,10 +79,14 @@
   function load() {
     if (fb) return Promise.resolve(fb);
     if (!root.FIREBASE_CONFIG) return Promise.reject(root.U.oops('חסרות הגדרות Firebase'));
+    if (stuck) return Promise.reject(failure('shaati/sdk-stuck'));
+    if (!loading && offline()) return Promise.reject(failure('auth/network-request-failed'));
     if (!loading) {
       loading = (async () => {
         await showGone();
-        const [a, au, fs] = await Promise.all([import(SDK + 'firebase-app.js'), import(SDK + 'firebase-auth.js'), import(SDK + 'firebase-firestore.js')]);
+        let a, au, fs;
+        try { [a, au, fs] = await Promise.all([import(SDK + 'firebase-app.js'), import(SDK + 'firebase-auth.js'), import(SDK + 'firebase-firestore.js')]); }
+        catch (e) { if (safari) { stuckNow(); throw failure('shaati/sdk-stuck'); } throw e; }
         const app = a.getApps().length ? a.getApp() : a.initializeApp(root.FIREBASE_CONFIG);
         let auth;
         try {
@@ -153,6 +179,7 @@
     'auth/web-storage-unsupported': 'הדפדפן חוסם שמירת נתונים (אולי גלישה בסתר). פתח את האפליקציה בדפדפן רגיל ונסה שוב.',
     'auth/operation-not-supported-in-this-environment': 'הדפדפן הזה לא תומך בהתחברות. פתח את הקישור ב-\u2060Chrome או ב-\u2060Safari.',
     'auth/timeout': 'ההתחברות לקחה יותר מדי זמן. בדוק את החיבור ונסה שוב.',
+    'shaati/sdk-stuck': 'החיבור נקטע בזמן שההתחברות נטענה. סגרו את שעתי, פתחו אותה שוב ונסו שוב.',
     // an email and a password
     'auth/email-already-in-use': 'כבר יש חשבון עם האימייל הזה. התחברו אליו עם הסיסמה שלו.',
     'auth/weak-password': 'הסיסמה קצרה מדי. בחרו סיסמה של 8 תווים לפחות.',
@@ -180,16 +207,20 @@
    * opts.redirect: the full-page way instead of a window (for browsers that block windows entirely).
    * Resolves with the user, or null when the page is about to navigate away (redirect).
    */
+  /** The full-page way comes back through the sign-in address (firebaseapp.com), another site than the app's. Safari
+   *  (every iPhone browser, and Safari on a Mac) keeps another site's storage apart, so there it comes back signed
+   *  out with no error: on Safari the Google window is the only way, and a second tap opens it. */
+  Cloud.redirectOk = !safari;
   Cloud.signIn = function (opts) {
     const go = ({ auth, au }) => {
       // opts.provider: another sign-in service (window.AUTH_PROVIDERS), once it is registered and turned on in Firebase
       const id = (opts && opts.provider) || 'google.com';
       const provider = id === 'google.com' ? new au.GoogleAuthProvider() : id === 'github.com' ? new au.GithubAuthProvider() : new au.OAuthProvider(id);
       if (id === 'google.com' || id === 'microsoft.com') provider.setCustomParameters({ prompt: 'select_account' });
-      if (opts && opts.redirect) return au.signInWithRedirect(auth, provider).then(() => null);
+      if (opts && opts.redirect && Cloud.redirectOk) return au.signInWithRedirect(auth, provider).then(() => null);
       return au.signInWithPopup(auth, provider).then((cred) => { Cloud.user = cred.user; return cred.user; }, (e) => {
         // no windows at all in this browser: the full-page way (it comes back signed in)
-        if (['auth/operation-not-supported-in-this-environment', 'auth/web-storage-unsupported'].includes(e.code)) return au.signInWithRedirect(auth, provider).then(() => null);
+        if (Cloud.redirectOk && ['auth/operation-not-supported-in-this-environment', 'auth/web-storage-unsupported'].includes(e.code)) return au.signInWithRedirect(auth, provider).then(() => null);
         throw e;
       });
     };

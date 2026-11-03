@@ -42,17 +42,20 @@
   // words around a name that are not the name
   const NOISE = new Set(['משמרת', 'משמרות', 'בין', 'השעות', 'שעות', 'עד', 'מ', 'מה', 'יום', 'ביום', 'שבוע', 'הבא', 'השבוע', 'סידור', 'עבודה', 'סידור', 'לשבוע', 'עובד', 'עובדת', 'shift', 'from', 'to', 'week', 'and', 'ו', 'את', 'של', 'גם', 'אצל']);
 
-  const DATE_FULL = /(?<![\d:])(\d{1,2})[./-](\d{1,2})[./-](\d{4}|\d{2})(?![\d:])/g;
-  const DATE_ISO = /(?<!\d)(\d{4})-(\d{1,2})-(\d{1,2})(?!\d)/g;
-  const DATE_SHORT = /(?<![\d:./-])(\d{1,2})[./](\d{1,2})(?![\d:./-])/g;
-  const DAY_NAME_RE = new RegExp(`(?<![${HE}])(?:ב?יום\\s+)?(?:ה|ב|ל)?(ראשון|שני|שלישי|רביעי|חמישי|שישי|שבת)(?![${HE}])`, 'g');
-  const DAY_LETTER_RE = new RegExp(`(?<![${HE}])(?:(?:ב?יום\\s+)([אבגדהוש])['׳"״]?|([אבגדהוש])['׳](?:["״])?)(?![${HE}])`, 'g');
+  // lookbehinds: built on first use (U.lazyRx: Safari before iOS 16.4 cannot read them)
+  const R = root.U.lazyRx({
+    DATE_FULL: () => /(?<![\d:])(\d{1,2})[./-](\d{1,2})[./-](\d{4}|\d{2})(?![\d:])/g,
+    DATE_ISO: () => /(?<!\d)(\d{4})-(\d{1,2})-(\d{1,2})(?!\d)/g,
+    DATE_SHORT: () => /(?<![\d:./-])(\d{1,2})[./](\d{1,2})(?![\d:./-])/g,
+    DAY_NAME_RE: () => new RegExp(`(?<![${HE}])(?:ב?יום\\s+)?(?:ה|ב|ל)?(ראשון|שני|שלישי|רביעי|חמישי|שישי|שבת)(?![${HE}])`, 'g'),
+    DAY_LETTER_RE: () => new RegExp(`(?<![${HE}])(?:(?:ב?יום\\s+)([אבגדהוש])['׳"״]?|([אבגדהוש])['׳](?:["״])?)(?![${HE}])`, 'g'),
+    DATE_HE_RE: () => new RegExp(`(?<!\\d)(\\d{1,2})\\s*ב?(${MONTHS_HE.join('|')})[${HE}'׳]*(?:\\s+(\\d{4}))?`, 'g'),
+    RANGE_RE: () => /(?<![\d:./])(\d{1,2})(?:[:.](\d{2}))?\s*(?:-|–|—|עד|to)\s*(\d{1,2})(?:[:.](\d{2}))?(?![\d:./])/g,
+    TIME_RE: () => /(?<![\d:./])(\d{1,2}):(\d{2})(?![\d:./])/g,
+  });
   const DAY_EN_RE = /\b(sun|mon|tue|wed|thu|fri|sat)[a-z]*\.?(?![a-z])/gi;
   // a date with the month's Hebrew name: "25 באוקטובר", "26 אוק׳", "3 בנובמבר 2026"
   const MONTHS_HE = ['ינו', 'פבר', 'מרץ', 'אפר', 'מאי', 'יונ', 'יול', 'אוג', 'ספט', 'אוק', 'נוב', 'דצמ'];
-  const DATE_HE_RE = new RegExp(`(?<!\\d)(\\d{1,2})\\s*ב?(${MONTHS_HE.join('|')})[${HE}'׳]*(?:\\s+(\\d{4}))?`, 'g');
-  const RANGE_RE = /(?<![\d:./])(\d{1,2})(?:[:.](\d{2}))?\s*(?:-|–|—|עד|to)\s*(\d{1,2})(?:[:.](\d{2}))?(?![\d:./])/g;
-  const TIME_RE = /(?<![\d:./])(\d{1,2}):(\d{2})(?![\d:./])/g;
 
   /** The date of a day/month without a year: the nearest one from two months back. */
   function nearYear(d, m, today) {
@@ -69,23 +72,23 @@
   function daysIn(text, today) {
     const found = [];
     const add = (m, dow, date) => found.push({ at: m.index, len: m[0].length, dow: date ? dowOf(date) : dow, date: date || null });
-    for (const m of text.matchAll(DATE_ISO)) if (validDate(+m[1], +m[2], +m[3])) add(m, null, keyOf(+m[1], +m[2], +m[3]));
-    for (const m of text.matchAll(DATE_FULL)) {
+    for (const m of text.matchAll(R.DATE_ISO)) if (validDate(+m[1], +m[2], +m[3])) add(m, null, keyOf(+m[1], +m[2], +m[3]));
+    for (const m of text.matchAll(R.DATE_FULL)) {
       const y = m[3].length === 2 ? 2000 + +m[3] : +m[3];
       if (validDate(y, +m[2], +m[1]) && !found.some((f) => m.index >= f.at && m.index < f.at + f.len)) add(m, null, keyOf(y, +m[2], +m[1]));
     }
-    for (const m of text.matchAll(DATE_HE_RE)) {
+    for (const m of text.matchAll(R.DATE_HE_RE)) {
       const mo = MONTHS_HE.indexOf(m[2]) + 1, d = +m[1];
       const k = m[3] ? (validDate(+m[3], mo, d) ? keyOf(+m[3], mo, d) : null) : nearYear(d, mo, today);
       if (k && !found.some((f) => m.index >= f.at && m.index < f.at + f.len)) add(m, null, k);
     }
-    for (const m of text.matchAll(DATE_SHORT)) {
+    for (const m of text.matchAll(R.DATE_SHORT)) {
       if (found.some((f) => m.index >= f.at && m.index < f.at + f.len)) continue;
       const k = nearYear(+m[1], +m[2], today);
       if (k) add(m, null, k);
     }
-    for (const m of text.matchAll(DAY_NAME_RE)) add(m, DAY_NAMES[m[1]], null);
-    for (const m of text.matchAll(DAY_LETTER_RE)) add(m, DAY_LETTERS[m[1] || m[2]], null);
+    for (const m of text.matchAll(R.DAY_NAME_RE)) add(m, DAY_NAMES[m[1]], null);
+    for (const m of text.matchAll(R.DAY_LETTER_RE)) add(m, DAY_LETTERS[m[1] || m[2]], null);
     for (const m of text.matchAll(DAY_EN_RE)) add(m, DAY_EN[m[1].toLowerCase()], null);
     found.sort((a, b) => a.at - b.at);
     // a name next to its date ("ראשון 25/10", "25.10 יום א׳") is one day: the date (when they disagree, the date)
@@ -105,7 +108,7 @@
   function shiftsIn(text, named) {
     const out = [];
     const taken = (i) => out.some((s) => i >= s.at && i < s.at + s.len);
-    for (const m of text.matchAll(RANGE_RE)) {
+    for (const m of text.matchAll(R.RANGE_RE)) {
       const a = hhmm(m[1], m[2]), b = hhmm(m[3], m[4]);
       if (!a || !b) continue;
       let len = toMin(b) - toMin(a); if (len <= 0) len += 1440;
@@ -122,7 +125,7 @@
         out.push({ at: w.index, len: w[0].length, off: true, label: w[0] });
       }
     }
-    for (const m of text.matchAll(TIME_RE)) {
+    for (const m of text.matchAll(R.TIME_RE)) {
       if (taken(m.index)) continue;
       const a = hhmm(m[1], m[2]);
       if (a) out.push({ at: m.index, len: m[0].length, start: a, end: null, guess: 'single', label: m[0] });

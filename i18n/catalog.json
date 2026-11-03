@@ -1011,154 +1011,161 @@
   "key": "חסרות הגדרות Firebase",
   "kind": "lit",
   "where": [
-   "app/cloud.js:59"
+   "app/cloud.js:81"
   ]
  },
  {
   "key": "חלון ההתחברות נסגר לפני שההתחברות הושלמה.",
   "kind": "lit",
   "where": [
-   "app/cloud.js:137"
+   "app/cloud.js:163"
   ]
  },
  {
   "key": "ההתחברות בוטלה.",
   "kind": "lit",
   "where": [
-   "app/cloud.js:138"
+   "app/cloud.js:164"
   ]
  },
  {
   "key": "אין חיבור לאינטרנט. נסה שוב כשיש רשת.",
   "kind": "lit",
   "where": [
-   "app/cloud.js:139"
+   "app/cloud.js:165"
   ]
  },
  {
   "key": "הכתובת של האפליקציה לא מאושרת בהגדרות Firebase (Authorized domains).",
   "kind": "lit",
   "where": [
-   "app/cloud.js:140"
+   "app/cloud.js:166"
   ]
  },
  {
   "key": "סוג ההתחברות הזה עוד לא הופעל. אפשר בינתיים להתחבר עם Google.",
   "kind": "lit",
   "where": [
-   "app/cloud.js:141"
+   "app/cloud.js:167"
   ]
  },
  {
   "key": "כתובת האימייל לא תקינה.",
   "kind": "lit",
   "where": [
-   "app/cloud.js:142"
+   "app/cloud.js:168"
   ]
  },
  {
   "key": "צריך לכתוב כתובת אימייל.",
   "kind": "lit",
   "where": [
-   "app/cloud.js:143"
+   "app/cloud.js:169"
   ]
  },
  {
   "key": "הקישור כבר נוצל או שפג תוקפו. שלחו קישור חדש מהאפליקציה.",
   "kind": "lit",
   "where": [
-   "app/cloud.js:144"
+   "app/cloud.js:170"
   ]
  },
  {
   "key": "פג תוקף הקישור. שלחו קישור חדש מהאפליקציה.",
   "kind": "lit",
   "where": [
-   "app/cloud.js:145"
+   "app/cloud.js:171"
   ]
  },
  {
   "key": "נשלחו יותר מדי קישורים היום. נסו שוב מחר, או התחברו עם Google.",
   "kind": "lit",
   "where": [
-   "app/cloud.js:146"
+   "app/cloud.js:172"
   ]
  },
  {
   "key": "יותר מדי ניסיונות. נסה שוב בעוד כמה דקות.",
   "kind": "lit",
   "where": [
-   "app/cloud.js:147"
+   "app/cloud.js:173"
   ]
  },
  {
   "key": "החשבון חסום.",
   "kind": "lit",
   "where": [
-   "app/cloud.js:148"
+   "app/cloud.js:174"
   ]
  },
  {
   "key": "הדפדפן חסם את חלון האישור של Google. אפשר חלונות קופצים ונסה שוב.",
   "kind": "lit",
   "where": [
-   "app/cloud.js:149"
+   "app/cloud.js:175"
   ]
  },
  {
   "key": "כדי למחוק את החשבון צריך התחברות טרייה: התנתק, התחבר שוב ונסה מיד.",
   "kind": "lit",
   "where": [
-   "app/cloud.js:150"
+   "app/cloud.js:176"
   ]
  },
  {
   "key": "נבחר חשבון Google אחר. בחר את החשבון שמחובר לאפליקציה.",
   "kind": "lit",
   "where": [
-   "app/cloud.js:151"
+   "app/cloud.js:177"
   ]
  },
  {
   "key": "משהו השתבש בהתחברות. נסה שוב.",
   "kind": "lit",
   "where": [
-   "app/cloud.js:152"
+   "app/cloud.js:178"
   ]
  },
  {
   "key": "הדפדפן חוסם שמירת נתונים (אולי גלישה בסתר). פתח את האפליקציה בדפדפן רגיל ונסה שוב.",
   "kind": "lit",
   "where": [
-   "app/cloud.js:153"
+   "app/cloud.js:179"
   ]
  },
  {
   "key": "הדפדפן הזה לא תומך בהתחברות. פתח את הקישור ב-⁠Chrome או ב-⁠Safari.",
   "kind": "lit",
   "where": [
-   "app/cloud.js:154"
+   "app/cloud.js:180"
   ]
  },
  {
   "key": "ההתחברות לקחה יותר מדי זמן. בדוק את החיבור ונסה שוב.",
   "kind": "lit",
   "where": [
-   "app/cloud.js:155"
+   "app/cloud.js:181"
+  ]
+ },
+ {
+  "key": "החיבור נקטע בזמן שההתחברות נטענה. סגרו את שעתי, פתחו אותה שוב ונסו שוב.",
+  "kind": "lit",
+  "where": [
+   "app/cloud.js:182"
   ]
  },
  {
   "key": "כבר יש חשבון עם האימייל הזה. התחברו אליו עם הסיסמה שלו.",
   "kind": "lit",
   "where": [
-   "app/cloud.js:157"
+   "app/cloud.js:184"
   ]
  },
  {
   "key": "הסיסמה קצרה מדי. בחרו סיסמה של 8 תווים לפחות.",
   "kind": "lit",
   "where": [
-   "app/cloud.js:158",
+   "app/cloud.js:185",
    "app/views-login.js:124"
   ]
  },
@@ -1166,38 +1173,38 @@
   "key": "צריך להקליד סיסמה.",
   "kind": "lit",
   "where": [
-   "app/cloud.js:159"
+   "app/cloud.js:186"
   ]
  },
  {
   "key": "האימייל או הסיסמה לא נכונים.",
   "kind": "lit",
   "where": [
-   "app/cloud.js:160",
-   "app/cloud.js:161",
-   "app/cloud.js:162",
-   "app/cloud.js:163"
+   "app/cloud.js:187",
+   "app/cloud.js:188",
+   "app/cloud.js:189",
+   "app/cloud.js:190"
   ]
  },
  {
   "key": "האימייל הזה כבר מחובר לחשבון בדרך אחרת. התחברו בדרך שבה נרשמתם.",
   "kind": "lit",
   "where": [
-   "app/cloud.js:164"
+   "app/cloud.js:191"
   ]
  },
  {
   "key": "הדפדפן לא הצליח לשמור את הנתונים. נסה שוב, ואם זה חוזר על עצמו רענן את הדף.",
   "kind": "lit",
   "where": [
-   "app/cloud.js:170"
+   "app/cloud.js:197"
   ]
  },
  {
   "key": "משהו השתבש. נסה שוב בעוד רגע.",
   "kind": "lit",
   "where": [
-   "app/cloud.js:174",
+   "app/cloud.js:201",
    "app/views-assistant.js:176"
   ]
  },
@@ -1205,21 +1212,21 @@
   "key": "השלמת ההתחברות",
   "kind": "lit",
   "where": [
-   "app/cloud.js:233"
+   "app/cloud.js:264"
   ]
  },
  {
   "key": "לאיזה אימייל נשלח הקישור?",
   "kind": "lit",
   "where": [
-   "app/cloud.js:233"
+   "app/cloud.js:264"
   ]
  },
  {
   "key": "התחברות",
   "kind": "lit",
   "where": [
-   "app/cloud.js:233",
+   "app/cloud.js:264",
    "app/views-login.js:108"
   ]
  },
@@ -1227,105 +1234,105 @@
   "key": "יש נתונים גם בטלפון וגם בחשבון",
   "kind": "lit",
   "where": [
-   "app/cloud.js:296"
+   "app/cloud.js:327"
   ]
  },
  {
   "key": "בטלפון הזה כבר יש משמרות, וגם בחשבון ה-⁠Google שלך שמורים נתונים. מה לעשות?",
   "kind": "lit",
   "where": [
-   "app/cloud.js:297"
+   "app/cloud.js:328"
   ]
  },
  {
   "key": "לאחד את שניהם (מומלץ)",
   "kind": "lit",
   "where": [
-   "app/cloud.js:299"
+   "app/cloud.js:330"
   ]
  },
  {
   "key": "רק מהחשבון",
   "kind": "lit",
   "where": [
-   "app/cloud.js:300"
+   "app/cloud.js:331"
   ]
  },
  {
   "key": "רק מהטלפון",
   "kind": "lit",
   "where": [
-   "app/cloud.js:301"
+   "app/cloud.js:332"
   ]
  },
  {
   "key": "החשבון הקודם",
   "kind": "lit",
   "where": [
-   "app/cloud.js:347"
+   "app/cloud.js:378"
   ]
  },
  {
   "key": "החלפת חשבון",
   "kind": "lit",
   "where": [
-   "app/cloud.js:348"
+   "app/cloud.js:379"
   ]
  },
  {
   "key": "בטלפון יש שינויים של {0} שעוד לא עלו לענן. אם תמשיך עם {1}, הם יימחקו מהטלפון.",
   "kind": "tpl",
   "where": [
-   "app/cloud.js:348"
+   "app/cloud.js:379"
   ]
  },
  {
   "key": "החשבון החדש",
   "kind": "lit",
   "where": [
-   "app/cloud.js:348"
+   "app/cloud.js:379"
   ]
  },
  {
   "key": "המשך בכל זאת",
   "kind": "lit",
   "where": [
-   "app/cloud.js:348"
+   "app/cloud.js:379"
   ]
  },
  {
   "key": "החיבור בוטל. התחבר עם {0} כדי שהשינויים יעלו לחשבון שלו.",
   "kind": "tpl",
   "where": [
-   "app/cloud.js:352"
+   "app/cloud.js:383"
   ]
  },
  {
   "key": "יש שינויים שעוד לא עלו לענן",
   "kind": "lit",
   "where": [
-   "app/cloud.js:536"
+   "app/cloud.js:567"
   ]
  },
  {
   "key": "כנראה אין חיבור לאינטרנט. אם תתנתק עכשיו, השינויים האחרונים מהטלפון הזה יאבדו.",
   "kind": "lit",
   "where": [
-   "app/cloud.js:536"
+   "app/cloud.js:567"
   ]
  },
  {
   "key": "התנתק בכל זאת",
   "kind": "lit",
   "where": [
-   "app/cloud.js:536"
+   "app/cloud.js:567"
   ]
  },
  {
   "key": "לא מחובר",
   "kind": "lit",
   "where": [
-   "app/cloud.js:600",
+   "app/cloud.js:631",
    "app/views-settings.js:133"
   ]
  },
@@ -1333,35 +1340,35 @@
   "key": "מסונכרן",
   "kind": "lit",
   "where": [
-   "app/cloud.js:601"
+   "app/cloud.js:632"
   ]
  },
  {
   "key": "מסנכרן…",
   "kind": "lit",
   "where": [
-   "app/cloud.js:602"
+   "app/cloud.js:633"
   ]
  },
  {
   "key": "אין חיבור. יסונכרן כשתחזור הרשת",
   "kind": "lit",
   "where": [
-   "app/cloud.js:603"
+   "app/cloud.js:634"
   ]
  },
  {
   "key": "שגיאת סנכרון: ",
   "kind": "lit",
   "where": [
-   "app/cloud.js:604"
+   "app/cloud.js:635"
   ]
  },
  {
   "key": "מחובר",
   "kind": "lit",
   "where": [
-   "app/cloud.js:605"
+   "app/cloud.js:636"
   ]
  },
  {
