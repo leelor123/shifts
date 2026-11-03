@@ -97,13 +97,14 @@ const DELETE = (L) => `<p class="meta">מחיקת חשבון ונתונים · A
 
 // the documents' section titles are h4 inside the app's sheet; on a page of their own they follow the h1, so h2
 // (launch check: h1 straight to h4 broke the heading order, Lighthouse 97 on these pages)
-function page(title, body, site) {
+// desc: the page's description for search engines (Lighthouse SEO 92 without it on /privacy, 3 Nov 2026)
+function page(title, body, site, desc) {
   const L = linker(site);
   const img = site ? 'img/' : '';
   // the header, the main content and the footer are siblings, so each is a landmark (accessibility audit C)
   return `<!doctype html>
 <html lang="he" dir="rtl"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
-<title>${title} · ${site ? 'שעתי' : 'Shaati'}</title><link rel="icon" href="${img}favicon-48.png" type="image/png">
+<title>${title} · ${site ? 'שעתי' : 'Shaati'}</title><meta name="description" content="${desc}"><link rel="icon" href="${img}favicon-48.png" type="image/png">
 <link rel="preload" href="fonts/rubik-hebrew.woff2" as="font" type="font/woff2" crossorigin>
 <style>${FONT_CSS}
 :root{--ink:#1b2220;--muted:#5b625e;--line:#e3dfd4;--bg:#f6f4ee;--card:#fdfcf8;--primary:#1d4a4f;--gold:#e9c987;color-scheme:light}
@@ -140,11 +141,11 @@ function build(src, out, site = false) {
   const L = linker(site);
   const en = EN(L);
   const files = {
-    'privacy.html': page(docs.privacy.title, docs.privacy.html + en.privacy, site),
-    'terms.html': page(docs.terms.title, docs.terms.html + en.terms, site),
-    'accessibility.html': page(docs.accessibility.title, docs.accessibility.html, site),
-    'delete-account.html': page('מחיקת חשבון ונתונים', DELETE(L), site),
-    'licenses.html': page(docs.licenses.title, docs.licenses.html, site),
+    'privacy.html': page(docs.privacy.title, docs.privacy.html + en.privacy, site, 'מדיניות הפרטיות של שעתי: איזה מידע נשמר, מי ניגש אליו, לכמה זמן, ואיך מעיינים בו, מתקנים אותו או מוחקים אותו.'),
+    'terms.html': page(docs.terms.title, docs.terms.html + en.terms, site, 'תנאי השימוש של שעתי: השימוש באפליקציה, המנוי Shaati Plus, ביטול והחזר תוך 14 יום, ואחריות.'),
+    'accessibility.html': page(docs.accessibility.title, docs.accessibility.html, site, 'הצהרת הנגישות של שעתי: מה נבדק, מגבלות ידועות, ואיך מדווחים על בעיית נגישות או מבקשים התאמה.'),
+    'delete-account.html': page('מחיקת חשבון ונתונים', DELETE(L), site, 'איך מוחקים את החשבון ואת כל הנתונים בשעתי, מתוך האפליקציה או באימייל.'),
+    'licenses.html': page(docs.licenses.title, docs.licenses.html, site, 'רישיונות הקוד הפתוח, הגופנים ומקורות הנתונים שבהם שעתי משתמשת.'),
   };
   for (const [f, html] of Object.entries(files)) fs.writeFileSync(path.join(out, f), html);
   return Object.keys(files);
