@@ -8,3 +8,9 @@ firebase-debug.log
 tests/e2e/out/
 .env
 .env.*
+
+# signed builds copied here only to upload them to Play Console
+play-store/upload/
+*.jks
+*.keystore
+KEYSTORE-PASSWORDS.txt
