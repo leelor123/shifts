@@ -1,6 +1,6 @@
 /* Generates the public legal pages (required by Google Play: privacy policy URL and
  * account-deletion URL) from the same documents shown inside the app.
- *   docs/privacy.html, docs/terms.html, docs/accessibility.html, docs/delete-account.html, docs/licenses.html
+ *   docs/privacy.html (+ privacy.en.html, the full English translation), docs/terms.html, docs/accessibility.html, docs/delete-account.html, docs/licenses.html
  * The website (shaati.web.app) keeps its own copies in site/ (privacy.html ... served as /privacy): on a phone with the
  * Android app installed, a link to leelor123.github.io/shifts/... opens in the app (the TWA owns that address), so the
  * site's footer links never leave the site (the owner, 3 Nov 2026).
@@ -20,14 +20,17 @@ const MAIL = `<a href="mailto:${EMAIL}" dir="ltr">${EMAIL}</a>`;
 const FONT_CSS = fs.readFileSync(path.join(__dirname, '..', 'src', 'fonts', 'fonts.css'), 'utf8')
   .split('\n').filter((l) => l.includes("'Rubik'")).join('\n');
 
-function loadDocs(src) {
+// lang: the documents in another language, by the same translations the app's own pages use (i18n/<lang>.json)
+function loadDocs(src, lang) {
   const ctx = { document: { addEventListener() {} } };
   ctx.window = ctx;
   ctx.App = { sheetsApi: {}, actions: {} };
   ctx.Store = { S: { settings: {} } };
   ctx.UI = { icon: () => '', esc: (s) => String(s) };
   vm.createContext(ctx);
-  vm.runInContext(fs.readFileSync(path.join(src, 'app/views-legal.js'), 'utf8'), ctx);
+  let code = fs.readFileSync(path.join(src, 'app/views-legal.js'), 'utf8');
+  if (lang && lang !== 'he') { const I18N = require('./i18n'); code = I18N.applyCode(code, 'app/views-legal.js', I18N.dictOf(lang)); }
+  vm.runInContext(code, ctx);
   return ctx.App.LEGAL_DOCS;
 }
 
@@ -42,6 +45,7 @@ const linker = (site) => (name) => (site ? name : name + '.html');
 const EN = (L) => ({
   privacy: `<h2 lang="en" dir="ltr">Summary in English</h2>
 <div lang="en" dir="ltr" class="en">
+<p>The full policy in English: <a href="${L('privacy.en')}">Privacy policy (English translation)</a>.</p>
 <p><b>Shaati</b> is a shift and pay tracker for hourly workers in Israel. Operator and data controller: <bdi lang="he">לי בטאן</bdi>, ${MAIL}. The Hebrew policy above is the binding text.</p>
 <ul>
 <li><b>Data you enter:</b> shifts, roles and hourly rates, leave, additions and deductions, settings, payslip fields you verified, the town you chose (for Shabbat and holiday times and the sky picture), and optionally a name, date of birth and gender (for age-based rules: minimum wage, youth employment, tax and pension). It is stored on your phone and, once you sign in, in Google Cloud Firestore (region me-west1, Tel Aviv), linked to your account. Security rules block other users. The operator, as the owner of the database, has technical access and uses it only to handle your request or a fault, or when the law requires it. Pay data counts as especially sensitive information under the Privacy Protection Law.</li>
@@ -98,13 +102,20 @@ const DELETE = (L) => `<p class="meta">מחיקת חשבון ונתונים · A
 // the documents' section titles are h4 inside the app's sheet; on a page of their own they follow the h1, so h2
 // (launch check: h1 straight to h4 broke the heading order, Lighthouse 97 on these pages)
 // desc: the page's description for search engines (Lighthouse SEO 92 without it on /privacy, 3 Nov 2026)
-function page(title, body, site, desc) {
+// the page's own words (the documents come in already in their language): Hebrew, or English for privacy.en.html
+const CHROME = {
+  he: { dir: 'rtl', skip: 'דילוג לתוכן', nav: 'מסמכים ויצירת קשר', links: ['מדיניות פרטיות', 'תנאי שימוש', 'הצהרת נגישות', 'מחיקת חשבון', 'רישיונות', 'יצירת קשר', 'דיווח על תקלה'] },
+  en: { dir: 'ltr', skip: 'Skip to content', nav: 'Documents and contact', links: ['Privacy policy (Hebrew)', 'Terms of use', 'Accessibility statement', 'Delete your account', 'Licences', 'Contact', 'Report a bug'] },
+};
+function page(title, body, site, desc, lang = 'he') {
   const L = linker(site);
   const img = site ? 'img/' : '';
+  const C = CHROME[lang] || CHROME.he;
+  const [lPrivacy, lTerms, lA11y, lDelete, lLicenses, lContact, lBug] = C.links;
   // the header, the main content and the footer are siblings, so each is a landmark (accessibility audit C)
   return `<!doctype html>
-<html lang="he" dir="rtl"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
-<title>${title} · ${site ? 'שעתי' : 'Shaati'}</title><meta name="description" content="${desc}"><link rel="icon" href="${img}favicon-48.png" type="image/png">
+<html lang="${lang}" dir="${C.dir}"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>${title} · ${site && lang === 'he' ? 'שעתי' : 'Shaati'}</title><meta name="description" content="${desc}"><link rel="icon" href="${img}favicon-48.png" type="image/png">
 <link rel="preload" href="fonts/rubik-hebrew.woff2" as="font" type="font/woff2" crossorigin>
 <style>${FONT_CSS}
 :root{--ink:#1b2220;--muted:#5b625e;--line:#e3dfd4;--bg:#f6f4ee;--card:#fdfcf8;--primary:#1d4a4f;--gold:#e9c987;color-scheme:light}
@@ -123,14 +134,14 @@ footer.wrap{margin-top:20px;padding-bottom:40px;color:var(--muted);font-size:.85
 footer nav{display:flex;flex-wrap:wrap;gap:0 16px} footer a{display:inline-block;padding-block:10px}
 .skip{position:absolute;inset-inline-start:12px;top:-60px;z-index:5;background:var(--gold);color:#141821;padding:10px 16px;border-radius:12px;font-weight:600;text-decoration:none}
 .skip:focus{top:12px}
-:focus-visible{outline:2px solid var(--primary);outline-offset:2px}
+:focus-visible{outline:2px solid var(--primary);outline-offset:2px}${lang === 'he' ? '' : '\nbody{font-family:system-ui,Rubik,Arial,sans-serif}'}
 </style></head><body>
-<a class="skip" href="#main">דילוג לתוכן</a>
-<header class="wrap"><img src="${img}icon-192.png" alt=""><a href="${site ? './' : APP_URL}">${site ? 'שעתי' : 'Shaati'}</a></header>
+<a class="skip" href="#main">${C.skip}</a>
+<header class="wrap"><img src="${img}icon-192.png" alt=""><a href="${site ? './' : APP_URL}">${site && lang === 'he' ? 'שעתי' : 'Shaati'}</a></header>
 <main id="main" class="wrap">
 <h1>${title}</h1><div class="card">${keepWhole(body.replace(/<(\/?)h4>/g, '<$1h2>'))}</div>
 </main>
-<footer class="wrap"><nav aria-label="מסמכים ויצירת קשר"><a href="${L('privacy')}">מדיניות פרטיות</a><a href="${L('terms')}">תנאי שימוש</a><a href="${L('accessibility')}">הצהרת נגישות</a><a href="${L('delete-account')}">מחיקת חשבון</a><a href="${L('licenses')}">רישיונות</a><a href="mailto:${EMAIL}">יצירת קשר</a><a href="${ISSUES}">דיווח על תקלה</a></nav></footer>
+<footer class="wrap"><nav aria-label="${C.nav}"><a href="${L('privacy')}">${lPrivacy}</a><a href="${L('terms')}">${lTerms}</a><a href="${L('accessibility')}">${lA11y}</a><a href="${L('delete-account')}">${lDelete}</a><a href="${L('licenses')}">${lLicenses}</a><a href="mailto:${EMAIL}">${lContact}</a><a href="${ISSUES}">${lBug}</a></nav></footer>
 </body></html>
 `;
 }
@@ -138,10 +149,13 @@ footer nav{display:flex;flex-wrap:wrap;gap:0 16px} footer a{display:inline-block
 /** Writes the pages into `out`. site: true = the website's copies (its image folder, links without .html). */
 function build(src, out, site = false) {
   const docs = loadDocs(src);
+  // the full policy in English (Google Play reviewers, and the app's English users): the app's own English text
+  const enDocs = loadDocs(src, 'en');
   const L = linker(site);
   const en = EN(L);
   const files = {
     'privacy.html': page(docs.privacy.title, docs.privacy.html + en.privacy, site, 'מדיניות הפרטיות של שעתי: איזה מידע נשמר, מי ניגש אליו, לכמה זמן, ואיך מעיינים בו, מתקנים אותו או מוחקים אותו.'),
+    'privacy.en.html': page(enDocs.privacy.title, enDocs.privacy.html.replace(/(לי בטאן)/, '<bdi lang="he">$1</bdi>') + `<p class="legal-meta">The Hebrew original: <a href="${L('privacy')}">${docs.privacy.title}</a>.</p>`, site, 'Shaati privacy policy in English: what is kept, who can access it, for how long, and how to view, correct or delete it.', 'en'),
     'terms.html': page(docs.terms.title, docs.terms.html + en.terms, site, 'תנאי השימוש של שעתי: השימוש באפליקציה, המנוי Shaati Plus, ביטול והחזר תוך 14 יום, ואחריות.'),
     'accessibility.html': page(docs.accessibility.title, docs.accessibility.html, site, 'הצהרת הנגישות של שעתי: מה נבדק, מגבלות ידועות, ואיך מדווחים על בעיית נגישות או מבקשים התאמה.'),
     'delete-account.html': page('מחיקת חשבון ונתונים', DELETE(L), site, 'איך מוחקים את החשבון ואת כל הנתונים בשעתי, מתוך האפליקציה או באימייל.'),
