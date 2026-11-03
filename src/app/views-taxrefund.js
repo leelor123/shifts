@@ -85,7 +85,7 @@
         ${r.reasons.length ? `<ul class="tr-why">${r.reasons.map((k) => `<li>${REASON[k]}</li>`).join('')}</ul>` : ''}
         ${thisYear ? '<div class="small muted">על השנה הזו אפשר לבקש החזר רק אחרי שהיא נגמרת.</div>' : ''}
         <div class="tr-106">
-          <div class="small"><b>יש לך טופס 106 לשנה הזו?</b> הקלדת שלושה מספרים ממנו הופכת את ההערכה למדויקת (סכום כל המעסיקים).</div>
+          <div class="small"><b>יש לך טופס 106 לשנה הזו?</b> הקלדת שלושה מספרים ממנו הופכת את ההערכה למדויקת יותר (סכום כל המעסיקים).</div>
           <div class="tr-in">
             <label><span>ברוטו שנתי ₪</span><input class="input" type="number" inputmode="decimal" step="any" data-tr106="${x.y}.gross" value="${f.gross || ''}"></label>
             <label><span>מס שנוכה ₪</span><input class="input" type="number" inputmode="decimal" step="any" data-tr106="${x.y}.tax" value="${f.tax || ''}"></label>

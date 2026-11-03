@@ -70,7 +70,7 @@
     if (mode === 'home' || mode === 'lock') {
       if (first) q('.sh-title').textContent = first;
       q('.sh-sub').textContent = Sky ? Sky.dateLine(now) : '';
-    } else q('.sh-sub').textContent = 'כמה מגיע לך, עד השקל';
+    } else q('.sh-sub').textContent = 'כמה מגיע לך על כל שעה';
     if ((full || quick) && Sky) q('.skyhead').dataset.phase = Sky.render(q('.sky'), Intro.scene).phase;
   } catch (e) { console.warn('intro', e); }
   el.classList.add(mode);

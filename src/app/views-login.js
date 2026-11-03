@@ -58,7 +58,7 @@
     const sc = scene(), Sky = root.Sky;
     const who = o && o.who && Sky;
     const title = who ? Sky.firstName(S.settings.userName) || 'Shaati' : 'Shaati';
-    const sub = who ? Sky.dateLine(sc.now) : 'כמה מגיע לך, עד השקל';
+    const sub = who ? Sky.dateLine(sc.now) : 'כמה מגיע לך על כל שעה';
     return `<div class="skyhead">${'<svg class="sky" aria-hidden="true"></svg>'}${LOGO}<div class="sh-text"><div class="sh-hello">${esc(Sky ? Sky.greeting(sc.now) : '')}</div><h1 class="sh-title">${esc(title)}</h1><div class="sh-sub">${esc(sub)}</div></div></div>`;
   };
   /** Draws the sky into a screen made with App.skyHead, and brings its sheet's content in: as the opening show hands
@@ -175,7 +175,7 @@
         ${S.meta.cloudUid ? '' : `<button class="btn text sm" data-guest ${busy ? 'disabled' : ''}>להמשיך כאורח, בלי חשבון</button>`}
         <button class="btn text sm" data-act="support" style="margin-top:6px">${icon('info', 's')} בעיה בהתחברות? כתבו לנו</button>
         <div class="tiny muted" style="margin-top:8px">בהתחברות את/ה מאשר/ת את ${App.legalLinks ? App.legalLinks() : 'תנאי השימוש ומדיניות הפרטיות'}.</div>
-        <div class="tiny muted" style="margin-top:10px;line-height:1.6">${icon('shield', 's')} רק את/ה יכול/ה לראות את הנתונים שלך. האפליקציה עובדת גם בלי אינטרנט, ומסנכרנת כשהרשת חוזרת.</div>
+        <div class="tiny muted" style="margin-top:10px;line-height:1.6">${icon('shield', 's')} הנתונים שלך נשמרים בחשבון שלך באפליקציה, ומשתמשים אחרים לא רואים אותם. האפליקציה עובדת גם בלי אינטרנט, ומסנכרנת כשהרשת חוזרת.</div>
         </div></div>`;
       App.mountSky(v, firstDraw);
       firstDraw = false;
@@ -284,7 +284,7 @@
         <div class="kv"><span>שינויים שממתינים להעלאה</span><b>${Store.dirtyRecords().length + (S.meta.pendingDeletes || []).length}</b></div>
         <div class="btn-row" style="margin-top:10px"><button class="btn tonal" data-sync-now>${icon('refresh')} סנכרן עכשיו</button></div></div>
       <div class="card small"><b>מה נשמר בענן:</b> משמרות, חופשה ומחלה, תוספות, תפקידים ותעריפים, הגדרות, תבניות, תלושים (הנתונים שהוזנו) ופערים פתוחים.<br><b>מה נשאר רק בטלפון:</b> מפתח ה-\u2060API של Claude, קוד הנעילה, קובצי התלושים עצמם (תמונה/PDF) והטקסט הגולמי שזוהה מהם.</div>
-      <div class="card"><label class="switch-row"><span class="body"><span class="t">שיתוף סטטיסטיקה אנונימית</span><span class="s">מספר משמרות, ימי שימוש ותכונות פעילות, בלי שם, אימייל או סכומים. עוזר לשפר את האפליקציה.</span></span><input type="checkbox" class="switch" data-share-stats ${root.Stats && root.Stats.enabled() ? 'checked' : ''}></label>
+      <div class="card"><label class="switch-row"><span class="body"><span class="t">שיתוף סטטיסטיקת שימוש</span><span class="s">מספר משמרות, ימי שימוש ותכונות פעילות, בלי פרטים מזהים (שם, אימייל או סכומים). רק מנהלי האפליקציה רואים אותה, כדי לדעת מה לשפר.</span></span><input type="checkbox" class="switch" data-share-stats ${root.Stats && root.Stats.enabled() ? 'checked' : ''}></label>
         ${u ? `<div class="kv" style="margin-top:6px"><span class="small">מזהה משתמש (למנהלים)</span><button class="btn text sm" data-copy-uid dir="ltr">${esc(u.uid.slice(0, 8))}… העתק</button></div>` : ''}</div>
       <button class="btn outlined block" data-signout>${icon('lock')} התנתק</button>
       <div class="tiny muted" style="margin:6px 4px 16px">ההתנתקות מוחקת את הנתונים מהטלפון הזה בלבד. הם נשארים בחשבון וחוזרים בהתחברות הבאה.</div>

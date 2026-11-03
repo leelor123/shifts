@@ -439,7 +439,7 @@
   function consentCard() {
     if (S.settings.statsAsked || !root.Stats) return '';
     return `<div class="card ios-card consent-card"><div class="ic-head"><span class="ic-app">${icon('shield')}</span><div class="ic-t"><b>לשתף סטטיסטיקת שימוש?</b>
-        <div class="small">פעם ביום, בלי שם, אימייל או סכומים: כמה ימים השתמשת, כמה משמרות ואילו תכונות. עוזר לנו לדעת מה לשפר. אפשר לשנות בהגדרות.</div></div></div>
+        <div class="small">פעם ביום, בלי שם, אימייל או סכומים: כמה ימים השתמשת, כמה משמרות ואילו תכונות. רק מנהלי האפליקציה רואים את זה, כדי לדעת מה לשפר. אפשר לשנות בהגדרות. <a href="#" data-legal="privacy">מדיניות הפרטיות</a></div></div></div>
       <div class="btn-row"><button class="btn tonal" data-act="stats-no">לא, תודה</button><button class="btn tonal" data-act="stats-yes">לשתף</button></div></div>`;
   }
   App.actions['stats-yes'] = async () => {

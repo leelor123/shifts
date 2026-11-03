@@ -66,7 +66,7 @@
     el.innerHTML = `<div dir="rtl" class="claim">
       <h1>דוח לבירור שכר וזכויות</h1>
       <div>${esc(S.settings.userName || '')}${emp.name ? ' · ' + esc(emp.name) : ''} · ${U.fmtDate(d.from)} – ${U.fmtDate(d.to)} · הופק ${U.fmtDate(U.todayKey())}</div><br>
-      <span class="kp">משמרות: <b>${sum.shifts}</b></span><span class="kp">שעות: <b>${U.hours(sum.hours)}</b></span><span class="kp">שכר לפי החוק (ברוטו): <b>${U.money(sum.gross)}</b></span>${t > 0 ? `<span class="kp">הפרש משוער: <b>${U.money(t)}</b></span>` : ''}
+      <span class="kp">משמרות: <b>${sum.shifts}</b></span><span class="kp">שעות: <b>${U.hours(sum.hours)}</b></span><span class="kp">שכר מחושב (ברוטו): <b>${U.money(sum.gross)}</b></span>${t > 0 ? `<span class="kp">הפרש משוער: <b>${U.money(t)}</b></span>` : ''}
       <h3>מה נמצא</h3>
       ${d.findings.length || d.holidays.length || d.lowRoles.length ? `<table><tr><th>תקופה</th><th>נושא</th><th>פירוט</th><th>הפרש משוער</th></tr>
         ${d.findings.map((f) => row([U.fmtMonth(f.period), esc(f.title), esc(f.detail || ''), f.amount > 0 ? U.money(f.amount) : '—'])).join('')}
@@ -75,7 +75,7 @@
         : '<div>לא נמצאו פערים בתלושים שהוזנו או זכויות שנראות חסרות לתקופה הזאת.</div>'}
       ${d.slips.length ? `<div style="font-size:9pt">תלושים שנבדקו: ${d.slips.map((p) => U.fmtMonth(p.period)).join(', ')}.</div>` : '<div style="font-size:9pt">לא הוזנו תלושים לתקופה הזאת. בדיקת תלוש (בהוספה +) משווה כל תלוש לרישום המשמרות.</div>'}
       <h3>לפי סוג שעה</h3><table><tr><th>רגילות</th><th>125%</th><th>150%</th><th>שבת/חג</th><th>שבת/חג + נוספות</th><th>לילה</th></tr>${row([U.hours(sum.hoursBy.regular), U.hours(sum.hoursBy.ot1), U.hours(sum.hoursBy.ot2), U.hours(sum.hoursBy.rest), U.hours(sum.hoursBy.restOt1 + sum.hoursBy.restOt2), U.hours(sum.hoursBy.night)])}</table>
-      <h3>המשמרות</h3><table><tr><th>תאריך</th><th>תפקיד</th><th>שעות</th><th>זמן</th><th>נוספות</th><th>שבת/חג</th><th>שכר לפי החוק</th></tr>
+      <h3>המשמרות</h3><table><tr><th>תאריך</th><th>תפקיד</th><th>שעות</th><th>זמן</th><th>נוספות</th><th>שבת/חג</th><th>שכר מחושב</th></tr>
         ${d.shifts.map((r) => row([`${U.fmtDate(r.dateKey, 'short')} ${U.DAYS_SHORT[U.dow(r.dateKey)]}`, esc([...new Set(r.segments.map((s) => App.roleName(s.roleId)))].join(' → ')), `\u2066${U.epochHM(r.start)}–${U.epochHM(r.end)}\u2069`, U.hours(r.paidHours), r.otHours ? U.hours(r.otHours) : '', r.restHours ? U.hours(r.restHours) : '', U.money(r.wage)])).join('')}</table>
       <h3>על מה זה נשען</h3><table>${LAWS.map(([a, b]) => row([`<b>${a}</b>`, b])).join('')}</table>
       <div style="font-size:8pt;color:#555;margin-top:10pt">חושב באפליקציית Shaati לפי המשמרות והתלושים שהוזנו בה, וההגדרות (תעריף, שעות נוספות, שבת וחגים לפי ${esc((S.settings.rest && S.settings.rest.city) || 'העיר שנבחרה')}). זה כלי עזר ואינו ייעוץ משפטי: הסכם קיבוצי, צו הרחבה ענפי או החוזה שלך יכולים לקבוע אחרת. מומלץ לצרף את התלושים ודוחות הנוכחות. מידע נוסף: kolzchut.org.il</div>
@@ -115,7 +115,7 @@
           <div class="rt-row"><span class="rt-mark">${icon('receipt', 's')}</span><div><div class="t">${d.slips.length ? `${d.slips.length === 1 ? 'תלוש אחד נבדק' : `${d.slips.length} תלושים נבדקו`}` : 'לא הוזנו תלושים לתקופה'}</div><div class="d">${d.findings.length ? `${d.findings.length === 1 ? 'ממצא אחד' : `${d.findings.length} ממצאים`} מהבדיקה` : d.slips.length ? 'לא נמצאו פערים בתלושים' : 'בדיקת תלוש (בהוספה +) מוסיפה את ההשוואה לדוח'}</div></div></div>
           <div class="rt-row"><span class="rt-mark">${icon('calendar', 's')}</span><div><div class="t">דמי חגים</div><div class="d">${d.holidays.length ? `כ-${U.money(d.holidays.reduce((a, h) => a + h.amount, 0), 0)} על ${d.holidays.length === 1 ? 'יום חג אחד' : `${d.holidays.length} ימי חג`}` : 'לא נראה שחסר'}</div></div></div>
           <div class="rt-row"><span class="rt-mark">${icon('wallet', 's')}</span><div><div class="t">שכר מינימום</div><div class="d">${d.lowRoles.length ? d.lowRoles.map((r) => esc(r.name)).join(', ') + ': נמוך מהמינימום' : 'התעריפים מעל המינימום'}</div></div></div>
-          <div class="rt-row"><span class="rt-mark">${icon('clock', 's')}</span><div><div class="t">${d.sum.shifts} משמרות · ${U.hours(d.sum.hours)} שעות</div><div class="d">כל משמרת עם השעות והשכר לפי החוק</div></div></div>
+          <div class="rt-row"><span class="rt-mark">${icon('clock', 's')}</span><div><div class="t">${d.sum.shifts} משמרות · ${U.hours(d.sum.hours)} שעות</div><div class="d">כל משמרת עם השעות והשכר המחושב</div></div></div>
         </div>
         <div class="tiny muted">${icon('shield', 's')} הדוח נוצר בטלפון. הוא כלי עזר ולא ייעוץ משפטי; הסכם קיבוצי או צו הרחבה ענפי יכולים לקבוע אחרת.</div>`;
     }
