@@ -9,6 +9,7 @@
     <group android:name="waves_far">
         <path android:pathData="M0,187.2q12.5,-6 25,0t25,0q12.5,-6 25,0t25,0q12.5,-6 25,0t25,0q12.5,-6 25,0t25,0q12.5,-6 25,0t25,0q12.5,-6 25,0t25,0q12.5,-6 25,0t25,0q12.5,-6 25,0t25,0q12.5,-6 25,0t25,0q12.5,-6 25,0t25,0q12.5,-6 25,0t25,0q12.5,-6 25,0t25,0q12.5,-6 25,0t25,0q12.5,-6 25,0t25,0q12.5,-6 25,0t25,0V260H0z" android:fillColor="#14FFFFFF" />
     </group>
+    <path android:pathData="M0,234H360V264H0z" android:fillColor="#1CFFFFFF" />
     <group android:name="waves_near">
         <path android:pathData="M0,218.4q12.5,-8 25,0t25,0q12.5,-8 25,0t25,0q12.5,-8 25,0t25,0q12.5,-8 25,0t25,0q12.5,-8 25,0t25,0q12.5,-8 25,0t25,0q12.5,-8 25,0t25,0q12.5,-8 25,0t25,0q12.5,-8 25,0t25,0q12.5,-8 25,0t25,0q12.5,-8 25,0t25,0q12.5,-8 25,0t25,0q12.5,-8 25,0t25,0q12.5,-8 25,0t25,0q12.5,-8 25,0t25,0V260H0z" android:fillColor="#1CFFFFFF" />
     </group>

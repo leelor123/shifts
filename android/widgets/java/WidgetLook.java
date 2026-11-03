@@ -108,9 +108,10 @@ final class WidgetLook {
         for (int f : FACES) v.setViewVisibility(f, coin() && f == face ? View.VISIBLE : View.GONE);
     }
 
-    /** The little clock with its turning second hand (w_clock_box), in this look's icon colour; the coin look has the coin instead. */
+    /** The little clock with its turning second hand (w_clock_box), in this look's icon colour; the coin look has the coin, the sea its sun. */
     void dial(RemoteViews v) {
-        v.setViewVisibility(R.id.w_clock_box, coin() ? View.GONE : View.VISIBLE);
+        // the sea has its sun in that corner, the coin look its coin
+        v.setViewVisibility(R.id.w_clock_box, coin() || style == SEA ? View.GONE : View.VISIBLE);
         background(v, R.id.w_clock_box, dot);
         if (Build.VERSION.SDK_INT >= 31) v.setColorStateList(R.id.w_dial, "setIndeterminateTintList", icon);
     }
