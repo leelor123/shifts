@@ -2,7 +2,7 @@
  * views-admin.js — the admin dashboard (app owner and managers).
  * Shown only when admins/{uid} exists for the signed-in user; the
  * Firestore rules enforce the same on the server, so the data never
- * reaches anyone else. It reads the anonymous stats/* records only:
+ * reaches anyone else. It reads the stats/* records only (no identifying details):
  * no user's shifts, payslips, name or email are ever visible here.
  * ============================================================ */
 (function (root) {
@@ -24,7 +24,7 @@
   function barList(entries, total) {
     return entries.map(([label, n]) => `<div class="adm-bar"><span class="nm">${esc(label)}</span><span class="track"><i style="width:${pct(n, total)}%"></i></span><span class="vv">${n} · ${pct(n, total)}%</span></div>`).join('');
   }
-  /* Shaati Plus and income: from the same anonymous records (a device says only whether Plus is on and
+  /* Shaati Plus and income: from the same records (a device says only whether Plus is on and
    * where it was bought). Exact amounts live in Google Play Console and Lemon Squeezy. */
   function plusSection(rows) {
     const P = root.Plus;
@@ -134,6 +134,13 @@
     </div>`;
   }
 
+  /** Statistics records of devices not used for 13 months (the privacy policy's retention), from the records the
+   *  dashboard already read: no extra reading, at most 50 at a time. */
+  App.oldStats = (docs, today) => {
+    const cut = U.addMonths(today || U.todayKey(), -13);
+    return docs.filter((d) => { const r = d.data(); return r && typeof r.last === 'string' && r.last < cut; }).slice(0, 50);
+  };
+  let purged = false; // once per opening of the app is enough
   App.adminView = render; // the page from given records (tests)
   App.actions['admin-dashboard'] = async function () {
     if (!App.isAdmin || !root.Cloud || !root.Cloud.user) return;
@@ -142,11 +149,16 @@
     const load = async () => { try {
       const { fs, db } = await root.Cloud.sdk();
       const snap = await fs.getDocsFromServer(fs.collection(db, 'stats'));
-      const rows = snap.docs.map((d) => d.data()).filter((r) => r && typeof r.last === 'string');
+      const purge = !purged;
+      purged = true;
+      // records past the policy's retention are deleted quietly and not counted (a failure waits for the next opening)
+      const old = purge ? App.oldStats(snap.docs) : [];
+      if (old.length) Promise.all(old.map((d) => fs.deleteDoc(d.ref))).catch((e) => console.warn('old statistics', e));
+      const rows = snap.docs.filter((d) => !old.includes(d)).map((d) => d.data()).filter((r) => r && typeof r.last === 'string');
       let admins = [];
       try { admins = (await fs.getDocsFromServer(fs.collection(db, 'admins'))).docs.map((d) => d.id); } catch (e) { /* only the list is optional */ }
       // support requests come first: they are the part that needs an answer
-      const inbox = root.Support ? await root.Support.adminInbox().catch((e) => ({ count: 0, html: `<div class="small muted">לא ניתן לטעון פניות (${esc(e.code || e.message || '')})</div>` })) : null;
+      const inbox = root.Support ? await root.Support.adminInbox({ purge }).catch((e) => ({ count: 0, html: `<div class="small muted">לא ניתן לטעון פניות (${esc(e.code || e.message || '')})</div>` })) : null;
       if (entry.closed) return;
       body.innerHTML = (inbox ? `<div class="admin"><div class="section-title">${icon('chat', 's')} פניות ${inbox.count ? `<span class="tag warn">${inbox.count} מחכות לתשובה</span>` : ''}</div>${inbox.html}</div>` : '') + render(rows, admins, root.Cloud.user.uid);
       body.querySelectorAll('[data-adm-ticket]').forEach((b) => (b.onclick = () => root.Support.thread(b.dataset.admTicket, true, load)));

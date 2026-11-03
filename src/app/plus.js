@@ -52,6 +52,12 @@
   const NSFW_LIB = 'https://cdn.jsdelivr.net/npm/nsfwjs@4.4.0/dist/browser/nsfwjs.min.js';
   const NSFW_MODEL = 'https://cdn.jsdelivr.net/gh/infinitered/nsfwjs@v4.4.0/models/mobilenet_v2/';
   const TRIAL_DAYS = 3; // a free trial, once per phone, wherever Plus can be bought
+  // the seller, named under the buy button before paying (Consumer Protection Law s.14ג): the operator and the email
+  // of the terms (views-legal.js OPERATOR, EMAIL; tests/sync.test.js fails if they differ)
+  // i18n-keep-start
+  const SELLER = 'לי בטאן'; // a person's name, the same in every language
+  // i18n-keep-end
+  const SELLER_EMAIL = 'lybtn48@gmail.com';
   const cfg = () => (root.PAY_CONFIG && root.PAY_CONFIG.lemon) || {};
   const Plus = { SKU, SUB, YEAR, TIPS, SKINS, available: false, price: '', monthly: true, yearly: null, tips: [] };
   let plan = 'm'; // the plan chosen in the Plus page ('y' once a yearly one is offered and chosen)
@@ -381,6 +387,9 @@
   };
 
   /* ---------------- the Plus page ---------------- */
+  /** Under the buy button, before paying: who sells, how to cancel and get the money back, and the terms (the
+   *  links open over the page: views-legal.js handles every [data-legal]). Drawn with the button, so nothing moves. */
+  const sellerNote = () => `<div class="tiny muted plus-note plus-seller">המוכר: ${SELLER}. אפשר לבטל תוך 14 יום ולקבל את כל הכסף, או בכל עת <a href="mailto:${SELLER_EMAIL}">באימייל</a>. <a href="#" data-legal="terms">תנאי השימוש</a></div>`;
   Plus.sheet = function () {
     if (!S.meta.plusSeen) Store.setMeta({ plusSeen: true }).catch(() => {});
     let opened = false; // the web checkout was opened: the code field comes first
@@ -429,7 +438,7 @@
              <button class="btn ${Plus.canTrial() && !gift ? 'tonal plus-buy2' : 'big plus-buy'} block" data-plus-buy ${(play ? Plus.available : web) || sim() ? '' : 'disabled'}>${icon(Plus.canTrial() && !gift ? 'star' : 'sparkle', Plus.canTrial() && !gift ? 's' : '')} ${trial || gift ? 'להמשיך עם Plus' : yr ? 'מנוי שנתי' : buyWord()}${yr ? ' · ' + esc(Plus.yearly.price) + ' לשנה' : price ? ' · ' + esc(price) : ''}</button>
              ${Plus.workPrice() && !yr ? `<div class="tiny plus-work">${esc(Plus.workPrice())}</div>` : ''}
              <div class="plus-pay">${play ? '<span>Google Play</span><span>כרטיס אשראי</span><span>Google Pay</span><span>PayPal</span>' : '<span>כרטיס אשראי</span><span>Apple Pay</span><span>Google Pay</span><span>PayPal</span>'}</div>
-             <div class="tiny muted plus-note">${note} מתחת לגיל 18: בהסכמת הורה.</div>`}
+             <div class="tiny muted plus-note">${note} מתחת לגיל 18: בהסכמת הורה.</div>${sellerNote()}`}
         ${invite}
         ${(!on || trial || gift) && !play && web ? `<div class="card plus-code ${opened ? 'hot' : ''}"><label class="field"><span class="lbl">${opened ? 'שילמת? מדביקים כאן את הקוד מהמייל' : 'כבר יש לי קוד מהמייל'}</span>
             <input class="input" id="plus-key" dir="ltr" autocomplete="off" spellcheck="false" placeholder="XXXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXXXX"></label>
@@ -503,7 +512,8 @@
     return {
       key: 'plusend-' + Math.round(until / 60000), type: 'plusend', cat: 'reminder', severity: 'info', push: 'anomaly',
       title: gift ? 'חודש ה-Plus במתנה נגמר מחר' : 'הניסיון של Shaati Plus נגמר מחר',
-      body: `אחרי זה כרטיס השכר חוזר לעיצוב הרגיל. אפשר להמשיך עם Plus, ${termsWord()}.`,
+      // a notice, not an offer (privacy audit, 3 Nov 2026): what changes, and that nothing is charged
+      body: 'כרטיס השכר יחזור לעיצוב הרגיל, ולא יהיה שום חיוב.',
     };
   };
   const trialLeft = () => { const d = Math.max(1, Math.ceil(((S.meta.plusTrial || {}).until - Date.now()) / DAY)); return d === 1 ? 'נשאר יום אחד' : `נשארו ${d} ימים`; };
@@ -681,8 +691,10 @@
   /**
    * A card on home for someone who uses the app (4 active days and 5 shifts; not a new user, not in the
    * first-steps guide, not during a trial). Closing it (✕ or "no, thanks") hides it for 24 hours, then
-   * it comes back; there is no "never again". When a trial ends, the card asks whether to keep the skin.
-   * Nothing at all until Plus can be bought here (or an admin previews it, which skips the use check).
+   * it comes back; "don't show again" ends it on this phone. When a trial ends, the card asks whether to
+   * keep the skin. Never for someone under 18 (the law protects minors from sales pressure, privacy audit
+   * 3 Nov 2026; the Plus page stays open to them). Nothing at all until Plus can be bought here (or an
+   * admin previews it, which skips the use and age checks).
    */
   const NUDGE_REST = DAY; // how long a closed card stays away
   Plus.nudgeCard = function () {
@@ -691,6 +703,7 @@
     if ((document.documentElement.dataset.skin || '') !== want) App.applyTheme();
     if (!buyable() || Plus.active() || (S.meta.guide && !S.meta.guideDone)) return '';
     const n = S.meta.plusNudge || {};
+    if (!sim() && (n.never || root.Engine.isMinor(S.settings))) return '';
     if (n.x && Date.now() - n.x < NUDGE_REST) return '';
     const close = '<button class="icon-btn plus-nudge-x" data-act="plus-nudge-x" aria-label="סגירה ל-24 שעות">' + icon('x', 's') + '</button>';
     const giftEnd = root.Invite ? root.Invite.until() : 0;
@@ -712,7 +725,12 @@
     }
     return `<div class="card plus-nudge sk-galaxy">${close}
       <div class="pn-t">✨ כרטיס השכר שלך יכול להיראות ככה</div><div class="pn-s">${Object.keys(SKINS).length} עיצובים, רקע בטבלת האלופים, ניתוח וייצוא בלי הגבלה. ${Plus.canTrial() ? `אפשר לנסות ${TRIAL_DAYS} ימים בחינם.` : (Plus.priceText() ? esc(Plus.priceText()) + ', ' : '') + termsWord() + '.'}</div>
-      <div class="pn-a"><button class="btn sm" data-act="plus-design">${icon('palette', 's')} ${Plus.canTrial() ? 'לנסות על הכרטיס שלי' : 'לראות'}</button><button class="btn text sm" data-act="plus-nudge-x">לא עכשיו</button></div></div>`;
+      <div class="pn-a"><button class="btn sm" data-act="plus-design">${icon('palette', 's')} ${Plus.canTrial() ? 'לנסות על הכרטיס שלי' : 'לראות'}</button><button class="btn text sm" data-act="plus-nudge-x">לא עכשיו</button><button class="btn text sm" data-act="plus-nudge-never">לא להציג שוב</button></div></div>`;
+  };
+  /** "Don't show again": the offer on home ends for good on this phone (the Plus page in Settings stays). */
+  App.actions['plus-nudge-never'] = async () => {
+    await Store.setMeta({ plusNudge: Object.assign({}, S.meta.plusNudge || {}, { x: Date.now(), never: true }) });
+    App.rerender();
   };
   /** ✕, "no, thanks" or "not now": away for 24 hours (the end-of-trial card gives way to the usual one). */
   App.actions['plus-nudge-x'] = async () => {

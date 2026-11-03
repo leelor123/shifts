@@ -10,7 +10,8 @@
  * Firestore type limits (nested arrays, undefined, Infinity).
  *
  * Never leaves the phone: the Claude API key, the PIN lock, backup
- * timestamps, raw payslip text and payslip image/PDF files.
+ * timestamps, raw payslip text and payslip image/PDF files. A payslip's
+ * recognised lines go up redacted (no ID, bank account, address, phone).
  * ============================================================ */
 (function (root) {
   'use strict';
@@ -243,10 +244,24 @@
   };
 
   /* ---------------- encoding ---------------- */
+  /** A payslip keeps the line each number was read from (shown under the number when it is checked). The raw text
+   *  stays on the phone, so these lines go to the cloud the way the AI gets the text: without the ID number, bank
+   *  account, address, phone or email (Payslip.redact). Without the redaction code at hand, the lines stay home. */
+  function redactLines(o) {
+    const P = root.Payslip;
+    const red = (l) => (typeof l !== 'string' || !l || l === 'AI' ? l : P && P.redact ? P.redact(l).text : '');
+    if (o.fields && typeof o.fields === 'object') {
+      const f = {};
+      for (const k of Object.keys(o.fields)) { const v = o.fields[k]; f[k] = v && typeof v === 'object' && 'line' in v ? Object.assign({}, v, { line: red(v.line) }) : v; }
+      o.fields = f;
+    }
+    if (Array.isArray(o.other)) o.other = o.other.map((x) => (x && typeof x === 'object' && 'line' in x ? Object.assign({}, x, { line: red(x.line) }) : x));
+  }
   function encode(store, rec) {
     const o = Object.assign({}, rec);
     delete o._syncedAt;
     for (const f of LOCAL_ONLY_FIELDS[store] || []) delete o[f];
+    if (store === 'payslips') redactLines(o);
     return { u: rec.updatedAt || 0, d: false, j: JSON.stringify(o) };
   }
   function decode(store, v, local) {
@@ -424,7 +439,9 @@
       if (S.meta.activeDirty) { const u = S.meta.activeUpdatedAt; writes.push(['kv/active', u, userDoc('kv', 'active'), encodeActive(), () => { acked.activeU = u; }]); }
       const fresh = writes.filter(([key, ver]) => inflight.get(key) !== ver);
       if (fresh.length) {
-        fs.setDoc(fs.doc(db, 'users', Cloud.user.uid), { email: Cloud.user.email || '', updatedAt: Date.now(), schema: Store.SCHEMA_VERSION, app: root.APP_VERSION }).catch(() => {});
+        // the account's marker (no email: nothing reads it, and the sign-in service already knows it); a full write,
+        // so an email that an older version put here goes with the next change
+        fs.setDoc(fs.doc(db, 'users', Cloud.user.uid), { updatedAt: Date.now(), schema: Store.SCHEMA_VERSION, app: root.APP_VERSION }).catch(() => {});
         // One write per document: Firestore also keeps them in its own IndexedDB until the server confirms.
         // The security rules refuse a write that is older than what the server has (a phone that was
         // offline must not overwrite a newer change from another phone); onRejected settles it.
@@ -549,11 +566,22 @@
       else await au.reauthenticateWithPopup(user, via === 'github.com' ? new au.GithubAuthProvider() : new au.OAuthProvider(via));
     }
     detach();
-    if (root.Stats) await root.Stats.forget();
-    if (root.Support) await root.Support.forget();
-    if (root.Champions) await root.Champions.forget();
-    if (root.FriendsView) await root.FriendsView.forget();
-    if (root.Invite) await root.Invite.forget();
+    // what the account left outside its own folder goes first, and strictly: a request, a row on the champions
+    // table or a card in the friends' competition that could not be deleted (offline, refused) stops the deletion
+    // here, while the account still exists to delete them with. The person sees "the deletion failed" and tries
+    // again; deleting the sign-in account first would leave them on the server with no way back to them.
+    const strict = { strict: true };
+    try {
+      if (root.Stats) await root.Stats.forget(strict);
+      if (root.Support) await root.Support.forget(strict);
+      if (root.Champions) await root.Champions.forget(strict);
+      if (root.FriendsView) await root.FriendsView.forget(strict);
+      if (root.Invite) await root.Invite.forget(strict);
+    } catch (e) {
+      // the account stays: sync goes on as before
+      if (Cloud.user && Cloud.user.uid === uid) { attach(uid); Cloud.connected = true; }
+      throw e;
+    }
     for (const st of SYNC.concat(['kv'])) {
       const snap = await fs.getDocs(fs.collection(db, 'users', uid, st));
       for (let i = 0; i < snap.docs.length; i += 400) {

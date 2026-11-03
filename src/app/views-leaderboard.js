@@ -501,11 +501,13 @@
     });
   };
 
-  /** Leaving the table (or deleting the account): my row goes. */
-  Champions.forget = async function () {
+  /** Leaving the table (or deleting the account): my row goes. opts.strict (deleting the account): a row that could
+   *  not be deleted throws, before anything on the phone changes, so the account is not deleted with its row left. */
+  Champions.forget = async function (opts) {
     try {
       if (signedIn()) { const { fs, db } = await Cloud().sdk(); await fs.deleteDoc(fs.doc(db, 'lb', uid())); }
-    } catch (e) { /* offline: the row stays until the next try */ }
+      else if (opts && opts.strict) throw root.U.oops('אין חשבון מחובר');
+    } catch (e) { if (opts && opts.strict) throw e; /* offline: the row stays until the next try */ }
     mine = null; boards.clear();
     if (S.settings.lb && S.settings.lb.on) await Store.setSettings((s) => { s.lb = Object.assign({}, s.lb, { on: false }); });
   };

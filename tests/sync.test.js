@@ -130,6 +130,34 @@ T.atest('raw payslip text and file stay on the phone', async () => {
   T.eq(B.S.payslips[0].text, undefined);
 });
 
+// privacy audit, 3 Nov 2026 (B6): the line each number was read from went up as it was on the payslip
+T.atest("a payslip's recognised lines reach the cloud without the ID, bank account, address or phone", async () => {
+  const be = fakeBackend();
+  const A = await phone(be);
+  vm.runInContext(fs.readFileSync(path.join(SRC, 'core/payslip.js'), 'utf8'), A.ctx, { filename: 'core/payslip.js' });
+  await A.Cloud.connect(user); await wait(30);
+  const fields = { net: { value: 5000, line: 'נטו לתשלום 5,000.00 ת.ז 012345678' }, bank: { value: 1, line: 'בנק 12 סניף 345 חשבון 123456' }, gross: { value: 6000, line: 'AI' } };
+  const other = [{ line: 'רחוב הרצל 5 תל אביב 4.00', value: 4, guess: null }, { line: 'טלפון 052-1234567 שעות 10.00', value: 10 }];
+  await A.Store.apply([{ store: 'payslips', put: { id: 'p2', period: '2026-09', fields, other } }], 'x');
+  await A.sync();
+  const j = be.docs.get('users/u1/payslips/p2').j;
+  for (const s of ['012345678', '123456', 'הרצל', '1234567']) T.ok(!j.includes(s), 'not uploaded: ' + s);
+  const up = JSON.parse(j);
+  T.ok(up.fields.net.line.includes('נטו לתשלום'), 'the rest of the line stays (it shows where the number came from)');
+  T.eq(up.fields.net.value, 5000, 'the numbers are untouched');
+  T.eq(up.fields.gross.line, 'AI', 'a number read by the AI says so');
+  T.eq(up.other.length, 2);
+  T.ok(A.S.payslips[0].fields.net.line.includes('012345678'), "this phone's own copy is not changed");
+});
+
+T.atest('the account marker holds no email', async () => {
+  const be = fakeBackend();
+  const A = await phone(be); await A.add('s1');
+  await A.Cloud.connect(user); await wait(30);
+  const m = be.docs.get('users/u1');
+  T.ok(m && !('email' in m) && !JSON.stringify(m).includes('me@example.com'), JSON.stringify(m));
+});
+
 T.atest('the running shift timer follows you between phones', async () => {
   const be = fakeBackend();
   const A = await phone(be); await A.Cloud.connect(user); await wait(30);
@@ -157,6 +185,165 @@ T.atest('deleting the account removes all cloud data and the sign-in account', a
   T.eq([...be.docs.keys()].filter((k) => k.startsWith('users/u1')).length, 0, 'nothing left in the cloud');
   T.eq(calls.join(','), 'reauth:u1,delete:u1,signout', 'old sign-in is confirmed again, then the account is deleted');
   T.eq(A.S.shifts.length, 0, 'phone cleared');
+});
+
+/* Privacy audit, 3 Nov 2026 (B3): the requests, the champions table row and the friends' card used to be deleted
+ * with every error swallowed, and the sign-in account was deleted anyway: a failure left them on the server for
+ * good, with no account to reach them. The real modules run here against the fake server. */
+async function withOutside(A) {
+  const c = A.ctx;
+  c.App = Object.assign(c.App || {}, { actions: {}, games: { LIST: [] } });
+  c.UI.icon = () => ''; c.UI.esc = (s) => String(s);
+  // the queries the modules make (where field == value), on top of the fake server's collections
+  A.ffs.where = (f, op, v) => ({ f, v });
+  A.ffs.query = (coll, w) => ({ path: coll.path, w });
+  const getDocs = A.ffs.getDocs;
+  A.ffs.getDocs = async (q) => { const r = await getDocs(q); return q.w ? { docs: r.docs.filter((d) => d.data()[q.w.f] === q.w.v) } : r; };
+  for (const f of ['app/views-support.js', 'app/views-leaderboard.js', 'app/views-friends.js']) vm.runInContext(fs.readFileSync(path.join(SRC, f), 'utf8'), c, { filename: f });
+}
+function seedOutside(be) {
+  be.docs.set('tickets/t1', { uid: 'u1', reason: 'calc', text: 'my question', status: 'open', created: 1, updated: 1, last: 'user', seen: true });
+  be.docs.set('tickets/t1/msgs/m1', { from: 'admin', text: 'an answer', t: 2 });
+  be.docs.set('tickets/t2', { uid: 'u2', reason: 'bug', text: 'someone else', status: 'open', created: 1, updated: 1, last: 'user', seen: true });
+  be.docs.set('lb/u1', { n: 'Me', e: '🙂', g: {} });
+  be.docs.set('fr/u1', { n: 'Me', f: [] });
+  be.docs.set('inv/abcdefghijklmnop', { from: 'u1', to: '' });
+  be.docs.set('inv/qrstuvwxyzabcdef', { from: 'u2', to: '' });
+}
+const outside = (be) => ['tickets/t1', 'tickets/t1/msgs/m1', 'lb/u1', 'fr/u1', 'inv/abcdefghijklmnop'].filter((k) => be.docs.has(k));
+
+T.atest('deleting the account: the requests, the table row, the friends card and the invitations go first', async () => {
+  const be = fakeBackend(); seedOutside(be);
+  const A = await phone(be); await A.add('s1');
+  await A.Cloud.connect(user); await wait(30);
+  await withOutside(A);
+  const calls = [];
+  const signedIn = Object.assign({}, user, { metadata: { lastSignInTime: new Date().toUTCString() }, delete() {} });
+  A.Cloud._useSdk({ app: {}, auth: { currentUser: signedIn }, db: {}, fs: A.ffs, au: { deleteUser: async () => { calls.push('delete'); }, signOut: async () => {} } });
+  await A.Cloud.deleteAccountData();
+  T.eq(outside(be).join(','), '', 'nothing of the account is left outside its folder');
+  T.ok(be.docs.has('tickets/t2') && be.docs.has('inv/qrstuvwxyzabcdef'), "another user's request and invitation stay");
+  T.eq(calls.join(), 'delete', 'then the sign-in account');
+});
+
+T.atest('deleting the account stops before the sign-in account when something outside could not be deleted', async () => {
+  const be = fakeBackend(); seedOutside(be);
+  const A = await phone(be); await A.add('s1');
+  await A.Cloud.connect(user); await wait(30);
+  await withOutside(A);
+  // the server refuses to delete the table row (offline, a rule, a timeout)
+  const del = A.ffs.deleteDoc;
+  let refuse = true;
+  A.ffs.deleteDoc = (ref) => (refuse && ref.path === 'lb/u1' ? Promise.reject(Object.assign(new Error('refused'), { code: 'unavailable' })) : del(ref));
+  const calls = [];
+  const signedIn = Object.assign({}, user, { metadata: { lastSignInTime: new Date().toUTCString() }, delete() {} });
+  A.Cloud._useSdk({ app: {}, auth: { currentUser: signedIn }, db: {}, fs: A.ffs, au: { deleteUser: async () => { calls.push('delete'); }, signOut: async () => { calls.push('signout'); } } });
+  let failed = null;
+  try { await A.Cloud.deleteAccountData(); } catch (e) { failed = e; }
+  T.ok(failed && failed.code === 'unavailable', 'the person is told the deletion failed');
+  T.eq(calls.join(), '', 'the sign-in account was not deleted, nor the phone signed out');
+  T.ok(be.docs.has('lb/u1'), 'the row is still there, with an account to delete it with');
+  T.ok(be.docs.has('users/u1/shifts/s1'), "the account's own data is untouched");
+  T.eq(A.S.shifts.length, 1, 'the phone keeps its data');
+  T.eq(A.Cloud.connected, true, 'sync goes on');
+  // each module on its own: strict throws, the everyday call (leaving the table) does not
+  await A.ctx.Champions.forget(); // no throw
+  let strictThrew = false;
+  try { await A.ctx.Champions.forget({ strict: true }); } catch (e) { strictThrew = true; }
+  T.ok(strictThrew, 'Champions.forget strict throws');
+  // tried again once the server answers: everything goes, then the account
+  refuse = false;
+  await A.Cloud.deleteAccountData();
+  T.eq(outside(be).join(','), '', 'all gone on the second try');
+  T.eq(calls.join(), 'delete,signout', 'and the account with it');
+});
+
+// privacy audit, 3 Nov 2026 (B11/A12): requests without an account and unused statistics records were kept forever
+T.atest('retention: the dashboard deletes closed requests without an account after 12 months, statistics after 13', async () => {
+  const be = fakeBackend();
+  const A = await phone(be);
+  await A.Cloud.connect(user); await wait(30);
+  await withOutside(A);
+  A.ctx.UI.tile = () => ''; A.ctx.App.isAdmin = true;
+  vm.runInContext(fs.readFileSync(path.join(SRC, 'app/views-admin.js'), 'utf8'), A.ctx, { filename: 'app/views-admin.js' });
+  const U = A.ctx.U, now = Date.now(), DAY = 86400000;
+  const tk = (uid, status, daysAgo) => ({ uid, email: uid ? undefined : 'x@example.com', reason: 'other', text: 'hi', status, created: now - daysAgo * DAY, updated: now - daysAgo * DAY, last: 'admin', seen: true });
+  be.docs.set('tickets/old', tk('', 'closed', 400)); be.docs.set('tickets/old/msgs/m1', { from: 'admin', text: 'answer', t: 1 });
+  be.docs.set('tickets/recent', tk('', 'closed', 200));
+  be.docs.set('tickets/open', tk('', 'answered', 400)); // not closed: an admin may still be on it
+  be.docs.set('tickets/mine', tk('u9', 'closed', 400)); // a signed-in user's: goes with their account
+  const kept = await A.ctx.Support.adminInbox();
+  T.eq(kept.total, 4, 'the plain inbox (the badge at sign-in) deletes nothing');
+  const res = await A.ctx.Support.adminInbox({ purge: true }); await wait(30);
+  T.eq(res.total, 3, 'the old one is not listed');
+  T.ok(!be.docs.has('tickets/old') && !be.docs.has('tickets/old/msgs/m1'), 'deleted with its messages');
+  T.ok(['recent', 'open', 'mine'].every((k) => be.docs.has('tickets/' + k)), 'the others stay');
+  const today = '2026-11-03';
+  const doc = (last) => ({ data: () => ({ last }) });
+  const docs = [doc('2025-10-02'), doc('2025-10-03'), doc('2026-11-01'), { data: () => null }];
+  T.eq(A.ctx.App.oldStats(docs, today).length, 1, 'only a record last used over 13 months ago');
+  T.eq(A.ctx.App.oldStats(docs, today)[0], docs[0]);
+  T.eq(A.ctx.App.oldStats(Array.from({ length: 80 }, () => doc('2020-01-01')), today).length, 50, 'at most 50 at a time');
+  T.eq(U.addMonths(today, -13), '2025-10-03');
+});
+
+// privacy audit, 3 Nov 2026 (B5): after signing out or deleting the account the home-screen widgets kept the numbers
+T.atest('the Android widgets are told the phone holds no data, at once, when it is wiped', async () => {
+  const be = fakeBackend();
+  const A = await phone(be);
+  const c = A.ctx;
+  let hello = null;
+  c.addEventListener = (t, fn) => { if (t === 'message') hello = fn; };
+  c.document = { addEventListener() {}, visibilityState: 'visible' };
+  c.location = { origin: 'https://site' };
+  c.App = Object.assign(c.App || {}, { blocking: 'x' });
+  c.UI.toast = () => {};
+  const ls = new Map();
+  c.localStorage = { getItem: (k) => (ls.has(k) ? ls.get(k) : null), setItem: (k, v) => ls.set(k, String(v)) };
+  vm.runInContext(fs.readFileSync(path.join(SRC, 'app/widgets.js'), 'utf8'), c, { filename: 'app/widgets.js' });
+  const got = [];
+  const port = { postMessage: (m) => got.push(JSON.parse(m)) };
+  // a phone with numbers (the real snapshot needs the whole app: stood in for here)
+  await A.Store.setSettings((s) => { s.onboarded = true; });
+  const real = { v: 1, at: 1, gross: '₪1,234', period: 'נובמבר', periodTo: '2099-12-31' };
+  c.App.widgetSnapshot = () => (A.S.settings.onboarded ? real : null);
+  hello({ origin: 'https://site', data: 'shaati:widgets', ports: [port] });
+  T.eq(got.length, 1); T.eq(got[0].gross, '₪1,234', 'the numbers go to the widgets');
+  await A.Store.wipe(); // signing out / deleting the account
+  T.eq(got.length, 2, 'sent at once, before the page reloads');
+  const e = got[1];
+  T.ok(e.v >= 1, 'a snapshot the Android app keeps (WidgetData.save takes v >= 1)');
+  T.ok(e.empty === true && !('gross' in e) && !('active' in e) && !('payday' in e) && !('goal' in e) && !('saving' in e), 'no numbers: ' + JSON.stringify(e));
+  T.ok(e.periodTo < '2001-01-01', 'a period that ended: every widget draws "open Shaati to update"');
+  // the reload: the widgets were told already, nothing more on every opening
+  got.length = 0;
+  hello({ origin: 'https://site', data: 'shaati:widgets', ports: [port] });
+  T.eq(got.length, 0, 'told once');
+  // the wipe happened where no widget was listening (the same site in the browser): the app tells them when it says hello
+  ls.set('shaati.widgetsFed', '1');
+  hello({ origin: 'https://site', data: 'shaati:widgets', ports: [port] });
+  T.eq(got.length, 1); T.eq(got[0].empty, true);
+  // an install from before this version, signed out already (the widgets may hold old numbers): told too
+  ls.clear(); got.length = 0;
+  hello({ origin: 'https://site', data: 'shaati:widgets', ports: [port] });
+  T.eq(got.length, 1); T.eq(got[0].empty, true);
+});
+
+T.atest('each strict forget throws when its delete fails (requests, friends card, statistics)', async () => {
+  const be = fakeBackend(); seedOutside(be);
+  const A = await phone(be);
+  await withStats(A);
+  await A.Cloud.connect(user); await wait(60);
+  await withOutside(A);
+  const del = A.ffs.deleteDoc;
+  A.ffs.deleteDoc = () => Promise.reject(Object.assign(new Error('offline'), { code: 'unavailable' }));
+  for (const [name, mod] of [['Support', A.ctx.Support], ['FriendsView', A.ctx.FriendsView], ['Stats', A.ctx.Stats]]) {
+    await mod.forget(); // the everyday call never throws
+    let threw = false;
+    try { await mod.forget({ strict: true }); } catch (e) { threw = true; }
+    T.ok(threw, name + '.forget strict throws');
+  }
+  A.ffs.deleteDoc = del;
 });
 
 T.atest('signing in with a different account never mixes the two accounts', async () => {
@@ -453,4 +640,43 @@ T.atest('storage: a browser without a database still works from memory', async (
   await ctx.Store.setSettings((s) => { s.onboarded = true; });
   T.eq(ctx.Store.S.shifts.length, 1, 'saving works');
   T.ok(ctx.Store.S.settings.onboarded, 'settings work');
+});
+
+/* ---------------- Shaati Plus: what the person sees before paying, and the offer on home ---------------- */
+// privacy audit, 3 Nov 2026 (A6): the seller under the buy button is the operator of the terms, with the same email
+T.test('the Plus page names the same seller and email as the terms', () => {
+  const plus = fs.readFileSync(path.join(SRC, 'app/plus.js'), 'utf8');
+  const legal = fs.readFileSync(path.join(SRC, 'app/views-legal.js'), 'utf8');
+  const val = (src, name) => { const m = src.match(new RegExp('const ' + name + " = '([^']+)'")); return m && m[1]; };
+  T.ok(val(plus, 'SELLER') && val(plus, 'SELLER') === val(legal, 'OPERATOR'), 'seller: ' + val(plus, 'SELLER') + ' / ' + val(legal, 'OPERATOR'));
+  T.ok(val(plus, 'SELLER_EMAIL') && val(plus, 'SELLER_EMAIL') === val(legal, 'EMAIL'), 'email: ' + val(plus, 'SELLER_EMAIL') + ' / ' + val(legal, 'EMAIL'));
+  T.ok(/sellerNote\(\)[^\n]*`\}/.test(plus) && plus.includes('data-legal="terms"') && plus.includes('14 יום'), 'the note is drawn under the buy button with the terms and the 14 days');
+});
+
+// privacy audit, 3 Nov 2026 (A22): the offer on home came back every 24 hours, also to children
+T.atest('the Plus offer on home: never under 18, and "don\'t show again" ends it', async () => {
+  const be = fakeBackend();
+  const A = await phone(be);
+  const c = A.ctx;
+  c.UI.icon = () => ''; c.UI.esc = (s) => String(s);
+  c.document = { documentElement: { dataset: {} } };
+  c.PAY_CONFIG = { price: '₪6.90', lemon: { checkout: 'https://example.com/buy', productId: 1 } };
+  c.App = { actions: {}, applyTheme() {}, rerender() {}, isAdmin: false, model: { results: new Map([1, 2, 3, 4, 5].map((i) => [i, { status: 'done' }])) } };
+  vm.runInContext(fs.readFileSync(path.join(SRC, 'app/plus.js'), 'utf8'), c, { filename: 'app/plus.js' });
+  await A.Store.setMeta({ activeDays: 9 });
+  const year = +c.U.todayKey().slice(0, 4);
+  await A.Store.setSettings((s) => { s.birthDate = (year - 30) + '-01-01'; });
+  const card = c.Plus.nudgeCard();
+  T.ok(card.includes('plus-nudge') && card.includes('data-act="plus-nudge-never"'), 'an adult who uses the app sees it, with "don\'t show again"');
+  await A.Store.setSettings((s) => { s.birthDate = (year - 15) + '-01-01'; });
+  T.eq(c.Plus.nudgeCard(), '', 'not under 18');
+  await A.Store.setSettings((s) => { s.birthDate = (year - 30) + '-01-01'; });
+  await c.App.actions['plus-nudge-never']();
+  T.eq(c.Plus.nudgeCard(), '', 'gone after "don\'t show again"');
+  await A.Store.setMeta({ plusNudge: Object.assign({}, A.S.meta.plusNudge, { x: Date.now() - 3 * 86400000 }) });
+  T.eq(c.Plus.nudgeCard(), '', 'and it does not come back after the 24 hours');
+  // the notice a day before a trial ends offers nothing
+  await A.Store.setMeta({ plusTrial: { from: Date.now() - 2 * 86400000, until: Date.now() + 20 * 3600000 } });
+  const end = c.Plus.endAlert();
+  T.ok(end && !/להמשיך|מבטלים|₪/.test(end.body), 'a notice, not an offer: ' + (end && end.body));
 });

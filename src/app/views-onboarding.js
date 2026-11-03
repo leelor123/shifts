@@ -124,7 +124,7 @@
             ${jobs.map((r) => `<span><i style="background:${r.color}"></i>${esc(r.name)} · ${money(r.rate)}</span>`).join('')}
             <span>${icon('bus', 's')} ${finalTravel() ? money(finalTravel()) + ' ליום' : 'בלי נסיעות'}</span><span>${icon('candle', 's')} ${esc(A.city || st.rest.city)}</span>${age() != null ? `<span>${icon('users', 's')} גיל ${age()}</span>` : ''}
           </div>`}
-          ${needsLogin() ? `${root.App.inAppBrowser && App.inAppBrowser() ? App.openInBrowserCard() : ''}<div class="ob-save">${UI.tile('cloud', 'sky')}<div><b>שמירה בחשבון Google</b><div class="small muted">כדי שכלום לא ילך לאיבוד, ויחכה לך בכל טלפון. רק לך יש גישה.</div></div></div>` : ''}
+          ${needsLogin() ? `${root.App.inAppBrowser && App.inAppBrowser() ? App.openInBrowserCard() : ''}<div class="ob-save">${UI.tile('cloud', 'sky')}<div><b>שמירה בחשבון</b><div class="small muted">כדי שכלום לא ילך לאיבוד, ויחכה לך בכל טלפון. אף משתמש אחר לא רואה את הנתונים שלך.</div></div></div>` : ''}
           ${msg ? `<div class="banner warn" style="text-align:start">${icon('alert')}<div>${esc(msg)}</div></div>` : ''}
         </div>`;
       },
@@ -207,10 +207,10 @@
           <li>${UI.tile('shield', 'amber')}<span>בודקים שהמשכורת נכונה ושלא מקפחים אותך</span></li>
         </ul>
         <div class="w-gap"></div>
-        <button class="btn big ob-go" data-next style="--i:2">אני חדש/ה, בואו נתחיל</button>
+        <button class="btn big ob-go" data-next style="--i:2">מסכים/ה לתנאים, בואו נתחיל</button>
         ${opts.preLogin ? `<button class="btn big tonal w-have" data-have style="--i:3">${App.googleIcon || ''}<span>כבר יש לי חשבון, כניסה</span></button>` : ''}
         <button class="btn text" data-demo style="--i:4">${icon('flask', 's')} רק להציץ (נתונים לדוגמה)</button>
-        <div class="tiny muted w-legal ob-consent" style="--i:5">בהמשך את/ה מאשר/ת את ${App.legalLinks ? App.legalLinks() : 'תנאי השימוש ומדיניות הפרטיות'}.</div>
+        <div class="tiny muted w-legal ob-consent" style="--i:5">בלחיצה על "מסכים/ה" את/ה מאשר/ת את ${App.legalLinks ? App.legalLinks() : 'תנאי השימוש ומדיניות הפרטיות'}. <a href="#" data-legal="accessibility">הצהרת נגישות</a></div>
       </div></div>`;
       App.mountSky(v, first);
       window.scrollTo(0, 0);
@@ -366,7 +366,9 @@
       if (!b || b.disabled) return;
       if (b.dataset.legal) return; // the terms links open their own sheet
       if (b.hasAttribute('data-next')) {
-        if (step === 0 && App.acceptLegal) App.acceptLegal().catch((x) => console.warn(x)); // never waits: the next screen comes first
+        // the first screen's button says "I agree to the terms" with the links beside it: that tap is the agreement
+        // (privacy audit, 3 Nov 2026: it used to be taken without one). Never waits: the next screen comes first.
+        if (step === 0 && App.acceptLegal) App.acceptLegal().catch((x) => console.warn(x));
         go(step + 1);
       } else if (b.hasAttribute('data-back')) go(step - 1);
       else if (b.hasAttribute('data-skip')) {
@@ -376,13 +378,13 @@
         if (key === 'travel' && !A.travel) A.travel = 'idk';
         go(step + 1);
       } else if (b.hasAttribute('data-demo')) {
-        if (App.acceptLegal) App.acceptLegal().catch((x) => console.warn(x));
+        // "just a look" and "I have an account" are not an agreement: the app asks with the terms' own screen
+        // (App.ensureLegal, a checkbox) before it opens, unless the account already agreed
         demo = true;
         go(STEPS.length - 1);
         await ensureSaved(true);
         draw();
       } else if (b.hasAttribute('data-have')) {
-        if (App.acceptLegal) App.acceptLegal().catch((x) => console.warn(x));
         v.onclick = null; v.oninput = null; App.go = prevGo;
         App.blocking = null;
         App.showLogin();

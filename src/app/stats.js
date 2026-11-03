@@ -1,14 +1,16 @@
 /* ============================================================
- * stats.js — anonymous usage statistics for the admin dashboard.
+ * stats.js — usage statistics without identifying details, for the
+ * admin dashboard.
  *
- * Once a day, a signed-in device writes one small record to
- * stats/{random install id}: app version, platform, first/last day
- * of use, number of active days, shift and payslip counts, an age
- * group (under / over 18) and which features are on. No name, email,
- * user id, dates of shifts or amounts: the record cannot be linked
- * to a person, and only admins can read the collection
- * (firestore.rules). The user can turn it off in Settings; turning
- * it off deletes the record.
+ * Once a day, a signed-in device whose user said yes writes one small
+ * record to stats/{random install id}: app version, platform,
+ * first/last day of use, number of active days, shift and payslip
+ * counts, an age group (under / over 18) and which features are on.
+ * No name, email, user id, dates of shifts or amounts; the random id
+ * is the only link between a device's records, and only admins can
+ * read the collection (firestore.rules). The answer can be changed in
+ * Settings; "no" deletes the record. A record unused for 13 months is
+ * deleted when an admin opens the dashboard (views-admin.js).
  * ============================================================ */
 (function (root) {
   'use strict';
@@ -79,15 +81,16 @@
       await Store.setMeta({ statsSentAt: Date.now() });
     } catch (e) { /* statistics never get in the way */ }
   };
-  /** Turning statistics off removes this device's record. */
-  Stats.forget = async function () {
+  /** Turning statistics off removes this device's record. opts.strict (deleting the account): a failure throws, so
+   *  the account is not deleted while the record is still there. */
+  Stats.forget = async function (opts) {
     try {
       const Cloud = root.Cloud;
       if (!Cloud || !Cloud.user || !S.meta.installId) return;
       const { fs, db } = await Cloud.sdk();
       await fs.deleteDoc(fs.doc(db, 'stats', S.meta.installId));
       await Store.setMeta({ statsSentAt: null });
-    } catch (e) { /* ignore */ }
+    } catch (e) { if (opts && opts.strict) throw e; }
   };
   /** Is the signed-in user an admin? (the rules let a user read only their own admin entry) */
   Stats.checkAdmin = async function () {

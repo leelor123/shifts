@@ -46,7 +46,7 @@
     ['איך מתקנים או מוחקים משמרת?', 'לוחצים על המשמרת (בבית, בלוח השנה או בדוחות), ושם אפשר לערוך או למחוק. טעית? מיד אחרי יש כפתור "ביטול".'],
     ['מה זה ברוטו ונטו?', 'ברוטו: כל מה שהרווחת לפני הורדות. נטו: מה שנכנס לבנק אחרי מס, ביטוח לאומי ופנסיה. מתחת לגיל 18 בדרך כלל אין מס, אז הם כמעט שווים.'],
     ['איך מחושבת שבת?', 'לפי העיר שבחרת האפליקציה יודעת מתי שבת נכנסת ויוצאת, וכל דקה בתוכה מחושבת ב-150% לפחות. אפשר לשנות עיר בהגדרות › חישוב השכר › שבת וחגים.'],
-    ['הנתונים שלי שמורים?', 'כן. בטלפון ובחשבון ה-\u2060Google שלך, ורק לך יש גישה אליהם. מחליפים טלפון? מתחברים ומוצאים הכול.'],
+    ['הנתונים שלי שמורים?', 'כן. הנתונים נשמרים בטלפון ובחשבון שלך באפליקציה. אף משתמש אחר לא רואה אותם, ואנחנו לא מוכרים אותם ולא משתמשים בהם לפרסום. מחליפים טלפון? מתחברים ומוצאים הכול.'],
     ['איך מקבלים תזכורות?', 'כשמתחילים משמרת הטלפון שואל אם לאשר התראות. אפשר גם בהגדרות › יעדים ותזכורות › התראות ותובנות.'],
     ['אני מתחת לגיל 18. מה שונה?', 'שכר מינימום לפי הגיל, בדרך כלל בלי מס, ויש כללים מיוחדים: עד 8 שעות ביום, 40 בשבוע, הפסקות ואיסור עבודה מאוחרת בלילה. "מה מגיע לי" בבית מסביר הכול.'],
     ['איך מוחקים את החשבון?', 'הגדרות › אני והחשבון › חשבון וסנכרון › "מחק את כל הנתונים מהחשבון". זה מוחק הכול מהענן ומהטלפון.'],
@@ -79,17 +79,20 @@
       if (unread.length && !App.blocking) App.rerender();
     } catch (e) { /* support never gets in the way */ }
   };
-  /** Account deletion: the user's requests go too. */
-  Support.forget = async function () {
+  /** Account deletion: the user's requests go too. opts.strict: a request that could not be deleted (or no account
+   *  to delete them with) throws, so the account is not deleted with its requests still on the server. */
+  Support.forget = async function (opts) {
+    const strict = !!(opts && opts.strict);
     try {
-      if (!signedIn()) return;
+      if (!signedIn()) { if (strict) throw U.oops('אין חשבון מחובר'); return; }
       const { fs, db } = await Cloud().sdk();
       for (const t of await myTickets()) {
+        // the messages first: the rules read the request to allow deleting them
         const msgs = await fs.getDocs(fs.collection(db, 'tickets', t.id, 'msgs'));
         for (const m of msgs.docs) await fs.deleteDoc(m.ref);
         await fs.deleteDoc(fs.doc(db, 'tickets', t.id));
       }
-    } catch (e) { console.warn('support data', e); }
+    } catch (e) { console.warn('support data', e); if (strict) throw e; }
   };
 
   /* ---------------- help centre ---------------- */
@@ -157,7 +160,7 @@
         ${reason ? `<label class="field"><span class="lbl">מה קרה? (${esc(reasonOf(reason)[3])})</span><textarea class="input" id="sp-text" rows="5" maxlength="2000" placeholder="${esc(HINTS[reason] || 'פרטו כמה שיותר, ככה נוכל לעזור מהר')}"></textarea></label>
           ${anon ? `<label class="field"><span class="lbl">אימייל לתשובה</span><input class="input ltr" type="email" id="sp-mail" maxlength="100" placeholder="name@example.com" autocomplete="email"><span class="hint">כי עוד לא התחברת, נענה לך במייל.</span></label>` : ''}
           <label class="switch-row"><span class="body"><span class="t">לצרף פרטים טכניים</span><span class="s">גרסת האפליקציה וסוג המכשיר, כדי לעזור מהר יותר</span></span><input type="checkbox" class="switch" id="sp-tech" checked></label>
-          <div class="tiny muted" style="margin:8px 4px">הפנייה נשמרת בענן וגלויה רק לך ולצוות האפליקציה, כדי לענות לך. היא נמחקת יחד עם החשבון.</div>` : ''}`;
+          <div class="tiny muted" style="margin:8px 4px">הפנייה נשמרת בענן וגלויה רק לך ולצוות האפליקציה, כדי לענות לך. ${anon ? 'פנייה בלי חשבון נמחקת 12 חודשים אחרי שהיא נסגרת.' : 'היא נמחקת יחד עם החשבון.'}</div>` : ''}`;
       check();
     }
     const val = () => {
@@ -319,10 +322,31 @@
   };
 
   /* ---------------- admin: the inbox ---------------- */
-  /** HTML for the admin dashboard: open requests first. */
-  Support.adminInbox = async function () {
+  /** A request written without an account (only an email to answer to) is deleted 12 months after it was closed (the
+   *  privacy policy's retention). From the list an admin already read: no extra reading, at most 20 at a time. */
+  Support.oldGuestTickets = (list, today) => {
+    const cut = U.addMonths(today || U.todayKey(), -12);
+    return list.filter((t) => !t.uid && t.status === 'closed' && U.epochKey(+t.updated || +t.created || 0) < cut).slice(0, 20);
+  };
+  /** HTML for the admin dashboard: open requests first. opts.purge (the dashboard opened): old requests without an
+   *  account are deleted quietly on the way (a failure waits for the next opening). */
+  Support.adminInbox = async function (opts) {
     const { fs, db } = await Cloud().sdk();
-    const list = (await fs.getDocsFromServer(fs.collection(db, 'tickets'))).docs.map((d) => Object.assign({ id: d.id }, d.data()));
+    let list = (await fs.getDocsFromServer(fs.collection(db, 'tickets'))).docs.map((d) => Object.assign({ id: d.id }, d.data()));
+    if (opts && opts.purge) {
+      const old = Support.oldGuestTickets(list);
+      if (old.length) {
+        list = list.filter((t) => !old.includes(t));
+        (async () => {
+          for (const t of old) {
+            // the messages first: the rules read the request (closed) to allow deleting them
+            const msgs = await fs.getDocs(fs.collection(db, 'tickets', t.id, 'msgs'));
+            for (const m of msgs.docs) await fs.deleteDoc(m.ref);
+            await fs.deleteDoc(fs.doc(db, 'tickets', t.id));
+          }
+        })().catch((e) => console.warn('old requests', e));
+      }
+    }
     const order = { open: 0, answered: 1, closed: 2 };
     list.sort((a, b) => (order[a.status] - order[b.status]) || ((a.last === 'user' ? 0 : 1) - (b.last === 'user' ? 0 : 1)) || b.updated - a.updated);
     App.adminOpenTickets = list.filter((t) => t.status === 'open' && t.last === 'user').length;

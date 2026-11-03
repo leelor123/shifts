@@ -353,16 +353,19 @@
     });
   }
 
-  /** Leaving (or deleting the account): my card and my invitations go. */
-  View.forget = async function () {
+  /** Leaving (or deleting the account): my card and my invitations go. opts.strict (deleting the account): a card or
+   *  an invitation that could not be deleted throws, before anything on the phone changes, so the account is not
+   *  deleted with them left on the server. */
+  View.forget = async function (opts) {
+    const strict = !!(opts && opts.strict);
     try {
       if (signedIn()) {
         const { fs, db } = await Cloud().sdk();
         await fs.deleteDoc(fs.doc(db, 'fr', uid()));
         const snap = await fs.getDocs(fs.query(fs.collection(db, 'inv'), fs.where('from', '==', uid())));
-        for (const d of snap.docs) await fs.deleteDoc(fs.doc(db, 'inv', d.id)).catch(() => {});
-      }
-    } catch (e) { /* offline: tried again by leaving again */ }
+        for (const d of snap.docs) await fs.deleteDoc(fs.doc(db, 'inv', d.id)).catch((e) => { if (strict) throw e; });
+      } else if (strict) throw root.U.oops('אין חשבון מחובר');
+    } catch (e) { if (strict) throw e; /* offline: tried again by leaving again */ }
     cards.clear();
     if (me().on) await Store.setSettings((s) => { s.fr = Object.assign({}, s.fr, { on: false, f: [] }); });
     await Store.setMeta({ frPub: null });
