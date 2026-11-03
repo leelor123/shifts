@@ -26,7 +26,7 @@ State as of 3 Nov 2026. "Saved" = saved in Console, waiting in Publishing overvi
 | Policy status | Rejected 25 Oct 2026 (Misleading Claims: no link to the source of government information). Fixed in the listing: official gov.il / btl.gov.il links + "private app, not a government body" in the first lines. Needs a new review |
 | Store listing he (default) | Saved: name "שעתי: משמרות, שכר ותלוש", short, full (3492), new icon, feature graphic, 8 screenshots in order |
 | Store listing en-US | Saved: "Shaati: Shift & Pay Tracker", short, full (3697), 8 English screenshots (feature graphic inherited, Hebrew) |
-| Store settings | Productivity, contact lybtn48@gmail.com. Website empty: add https://shaati.web.app (the dialog's button is "Save and publish": waits for the owner's OK) |
+| Store settings | Productivity, contact lybtn48@gmail.com. website https://shaati.web.app (saved) |
 | Privacy policy | https://leelor123.github.io/shifts/privacy.html (+ privacy.en.html, live) |
 | App access | Saved: guest-mode steps for reviewers (4 steps, exact button texts) |
 | Ads | No |
@@ -35,15 +35,13 @@ State as of 3 Nov 2026. "Saved" = saved in Console, waiting in Publishing overvi
 | Data safety | Saved: + username/password accounts, Photos, Other actions, Diagnostics; approximate location now also Shared (MET Norway weather). See APP-CONTENT.md |
 | Government / Financial features / Health / News / Advertising ID | Done (No / none / none / No / No) |
 | Account deletion | delete-account.html (+ #data for partial deletion) |
-| Internal testing | Draft release 13201 with notes: ready, waits for the owner's OK ("Save and publish" makes it live for the internal list at once) |
-| Closed testing (Alpha) | New draft release 13201 with notes (replaces the rejected 12100); goes out with "Send for review" |
-| Publishing overview | All of the above waits for "Send N changes for review": owner's OK |
+| Internal testing | 13201 LIVE for the internal testers (3 Nov 15:28) |
+| Closed testing (Alpha) | 13201 with notes, sent for review 3 Nov (replaces the rejected 12100) |
+| Publishing overview | 16 changes sent for review 3 Nov ~15:40 (status "בבדיקה") |
 | Subscriptions (Plus) | Blocked: no Google Payments merchant account. The owner (18+) sets it up; then create `shaati_plus_monthly` ₪6.90 and put the Plus paragraph back in the listings |
 | Pre-launch report | Runs after the first review/rollout of 13201; check then |
 
-## Waiting for the owner
-1. OK to publish the internal test release 13201.
-2. OK to "Send changes for review" (closed test release, listing, data safety, app access and the old October changes).
-3. OK for the website field in Store settings.
-4. Merchant account (identity, bank, tax: only the owner types these).
-5. 12 testers opted in to the closed test for 14 days, then Apply for production (owner fills the form).
+## Left for the owner
+1. Merchant account (identity, bank, tax: only the owner, 18+, types these); then the subscription and the Plus paragraph come back.
+2. 12 testers opted in to the closed test for 14 days, then Apply for production (owner fills the form).
+3. Read the pre-launch report once Google finishes the review.
