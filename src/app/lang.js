@@ -6,8 +6,8 @@
  * localStorage, where a page looks first thing (and moves to the right page before anything is drawn), and in
  * a cache the service worker reads, so the app opens straight in its language, also offline.
  *
- * The first open: the opening show gives way to a screen that greets in all six languages at once
- * (שלום · مرحبا · Привет · Hello), with the phone's own language suggested; one tap and the app goes on in it.
+ * The first open: the opening show gives way to a screen that greets in all seven languages at once
+ * (שלום · مرحبا · Привет · Hello · Bonjour · Hola · ሰላም), with the phone's own language suggested; one tap and the app goes on in it.
  * Someone already using the app (in Hebrew) whose phone speaks another language is offered the switch once.
  *
  * Everything here is written in each language itself, so this file is never translated (tools/i18n.js).
@@ -23,6 +23,7 @@
     { id: 'en', name: 'English', glyph: 'A', hello: 'Hello', ask: 'Which language suits you?', sug: 'Suggested', later: 'You can change it any time in Settings', dir: 'ltr', g: ['#ff7ab6', '#ff5a6e'] },
     { id: 'fr', name: 'Français', glyph: 'É', hello: 'Bonjour', ask: 'Quelle langue vous convient ?', sug: 'Recommandé', later: 'Modifiable à tout moment dans les Réglages', dir: 'ltr', g: ['#6fd3ff', '#3a6dff'] },
     { id: 'es', name: 'Español', glyph: 'Ñ', hello: 'Hola', ask: '¿Qué idioma prefieres?', sug: 'Recomendado', later: 'Puedes cambiarlo cuando quieras en Ajustes', dir: 'ltr', g: ['#d4f25a', '#62c43f'] },
+    { id: 'am', name: 'አማርኛ', glyph: 'አ', hello: 'ሰላም', ask: 'የትኛው ቋንቋ ይመችዎታል?', sug: 'የሚመከር', later: 'በቅንብሮች ውስጥ በማንኛውም ጊዜ መቀየር ይቻላል', dir: 'ltr', g: ['#ffc46b', '#d0662e'] },
   ];
   const byId = (id) => LANGS.find((l) => l.id === id);
   const Lang = { LANGS };
@@ -179,7 +180,7 @@
       if (early) early.click();
     });
   };
-  // the greeting and the question go round the six languages
+  // the greeting and the question go round the seven languages
   function cycle(box) {
     const hello = box.querySelectorAll('.lp-hello span'), ask = box.querySelectorAll('.lp-ask span');
     let k = 0;
@@ -199,7 +200,7 @@
   Lang.sheet = function () {
     const UI = root.UI;
     UI.openSheet({
-      title: { he: 'שפה · Language', ar: 'اللغة · Language', ru: 'Язык · Language', en: 'Language', fr: 'Langue · Language', es: 'Idioma · Language' }[Lang.current] || 'Language',
+      title: { he: 'שפה · Language', ar: 'اللغة · Language', ru: 'Язык · Language', en: 'Language', fr: 'Langue · Language', es: 'Idioma · Language', am: 'ቋንቋ · Language' }[Lang.current] || 'Language',
       body: markup(Lang.current, true),
       onMount: (el) => {
         cycle(el);
@@ -231,6 +232,7 @@
       en: ['Shaati now speaks English', 'The whole app in English: shifts, pay, your rights.', 'Switch to English', 'Keep Hebrew'],
       fr: ['Shaati parle maintenant français', 'Toute l’application en français : services, salaire, droits.', 'Passer au français', 'Garder l’hébreu'],
       es: ['Shaati ya habla español', 'Toda la app en español: turnos, salario, derechos.', 'Cambiar a español', 'Seguir en hebreo'],
+      am: ['Shaati አሁን በአማርኛ', 'መተግበሪያው በሙሉ በአማርኛ፣ ፈረቃዎች፣ ደመወዝ፣ መብቶች።', 'ወደ አማርኛ ቀይር', 'በዕብራይስጥ ቀጥል'],
     }[d];
     if (!T) return;
     const go = () => {

@@ -1549,7 +1549,7 @@ body.fx .cal-day.hello, body.fx .week-row.hello { animation: cal-hello .55s cubi
 .lp-orbs i:nth-child(2) { --c: #ffb524; right: -32vmax; top: 18vh; animation-duration: 17s; animation-delay: -6s; }
 .lp-orbs i:nth-child(3) { --c: #a98bff; left: -10vmax; bottom: -38vmax; animation-duration: 19s; animation-delay: -11s; }
 @keyframes lp-drift { to { transform: translate3d(6vmax, 5vmax, 0) scale(1.12); } }
-.lp-logo { position: relative; display: flex; align-items: center; gap: 10px; direction: ltr; font: 800 1.35rem/1 'Rubik', system-ui, sans-serif; letter-spacing: -.02em; opacity: .95; }
+.lp-logo { position: relative; display: flex; align-items: center; gap: 10px; direction: ltr; font: 800 1.35rem/1 'Rubik', 'Shaati Ethiopic', system-ui, sans-serif; letter-spacing: -.02em; opacity: .95; }
 .lp-logo svg { width: 38px; height: 38px; overflow: visible; }
 .lp-logo path { fill: none; stroke-width: 104; stroke-linecap: round; stroke-linejoin: round; }
 .lp-logo .g { stroke: #2ee59d; } .lp-logo .y { stroke: #ffb524; }
@@ -1557,12 +1557,14 @@ body.fx .cal-day.hello, body.fx .week-row.hello { animation: cal-hello .55s cubi
 .lp-hello, .lp-ask { position: relative; display: grid; width: 100%; text-align: center; }
 .lp-hello span, .lp-ask span { grid-area: 1 / 1; opacity: 0; transform: translateY(14px) scale(.98); transition: opacity .45s ease, transform .55s var(--pop, cubic-bezier(.34, 1.56, .64, 1)); }
 .lp-hello span.on, .lp-ask span.on { opacity: 1; transform: none; }
-.lp-hello span { font: 800 clamp(2.6rem, 12vw, 3.6rem)/1.1 'Rubik', system-ui, sans-serif; letter-spacing: -.02em;
+.lp-hello span { font: 800 clamp(2.6rem, 12vw, 3.6rem)/1.1 'Rubik', 'Shaati Ethiopic', system-ui, sans-serif; letter-spacing: -.02em;
   background: linear-gradient(100deg, #fff 20%, var(--a) 120%); -webkit-background-clip: text; background-clip: text; color: transparent; }
-.lp-ask span { font: 500 1.05rem/1.4 'Rubik', system-ui, sans-serif; color: rgba(255, 255, 255, .78); }
+.lp-ask span { font: 500 1.05rem/1.4 'Rubik', 'Shaati Ethiopic', system-ui, sans-serif; color: rgba(255, 255, 255, .78); }
 .static .lp-hello span, .static .lp-ask span { transition: none; }
 /* the doors: six, three to a row */
 .lp-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; width: min(100%, 440px); margin-top: 6px; }
+/* a last card alone on its row stands in the middle (seven languages: 3 + 3 + 1) */
+.lp-grid > .lp-card:last-child:nth-child(3n + 1) { grid-column: 2; }
 .lp-card { position: relative; display: flex; flex-direction: column; align-items: center; gap: 6px; padding: 16px 4px 12px; border-radius: 22px; cursor: pointer; min-width: 0;
   color: #fff; font: inherit; background: rgba(255, 255, 255, .07); border: 1px solid rgba(255, 255, 255, .14);
   box-shadow: 0 1px 0 rgba(255, 255, 255, .08) inset, 0 10px 30px -18px rgba(0, 0, 0, .6);
@@ -1576,7 +1578,7 @@ body.fx .cal-day.hello, body.fx .week-row.hello { animation: cal-hello .55s cubi
 .lp-card.sug::after { content: ''; position: absolute; inset: -1px; border-radius: inherit; pointer-events: none;
   box-shadow: 0 0 0 2px var(--g1), 0 0 28px -4px var(--g1); opacity: .9; animation: lp-glow 2.4s ease-in-out infinite; }
 @keyframes lp-glow { 50% { opacity: .35; } }
-.lp-glyph { display: grid; place-items: center; width: 54px; height: 54px; border-radius: 50%; font: 800 1.75rem/1 'Rubik', system-ui, sans-serif; color: #fff;
+.lp-glyph { display: grid; place-items: center; width: 54px; height: 54px; border-radius: 50%; font: 800 1.75rem/1 'Rubik', 'Shaati Ethiopic', system-ui, sans-serif; color: #fff;
   background: linear-gradient(140deg, var(--g1), var(--g2)); box-shadow: 0 8px 22px -8px var(--g2); text-shadow: 0 1px 2px rgba(0, 0, 0, .18); }
 .lp-name { font-weight: 700; font-size: 1rem; max-width: 100%; }
 .lp-hi { font-size: .78rem; opacity: .7; }
