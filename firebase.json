@@ -29,7 +29,7 @@
         ]
       },
       {
-        "source": "/",
+        "source": "**",
         "headers": [
           {
             "key": "Content-Security-Policy",

@@ -1,12 +1,24 @@
 /* Generates the public legal pages (required by Google Play: privacy policy URL and
  * account-deletion URL) from the same documents shown inside the app.
- *   docs/privacy.html, docs/terms.html, docs/accessibility.html, docs/delete-account.html */
+ *   docs/privacy.html, docs/terms.html, docs/accessibility.html, docs/delete-account.html, docs/licenses.html
+ * The website (shaati.web.app) keeps its own copies in site/ (privacy.html ... served as /privacy): on a phone with the
+ * Android app installed, a link to leelor123.github.io/shifts/... opens in the app (the TWA owns that address), so the
+ * site's footer links never leave the site (the owner, 3 Nov 2026).
+ *   node tools/legal-pages.js          -> docs/ (tools/build.js does this on every build)
+ *   node tools/legal-pages.js --site   -> site/ only (tools/site-pages.js does this too) */
 const fs = require('fs');
 const path = require('path');
 const vm = require('vm');
 
 const APP_URL = 'https://leelor123.github.io/shifts/';
-const CONTACT = 'https://github.com/leelor123/shifts/issues';
+// the project's issues page is public: bug reports only, never privacy or deletion requests (legal audit A8)
+const ISSUES = 'https://github.com/leelor123/shifts/issues';
+const EMAIL = 'lybtn48@gmail.com';
+const MAIL = `<a href="mailto:${EMAIL}" dir="ltr">${EMAIL}</a>`;
+// the app's own font files (docs/fonts and site/fonts are copies of src/fonts): Google's stylesheet sent every visitor's
+// IP address to Google (legal audit B13). Only Rubik is used here.
+const FONT_CSS = fs.readFileSync(path.join(__dirname, '..', 'src', 'fonts', 'fonts.css'), 'utf8')
+  .split('\n').filter((l) => l.includes("'Rubik'")).join('\n');
 
 function loadDocs(src) {
   const ctx = { document: { addEventListener() {} } };
@@ -19,33 +31,42 @@ function loadDocs(src) {
   return ctx.App.LEGAL_DOCS;
 }
 
-const EN = {
+// a word joined by a hyphen or a dash (me-west1, Reingold–Dershowitz, 2020–2025) never breaks at the end of a line (the
+// browser may break after a hyphen). Only the text between tags is touched, never an attribute.
+const keepWhole = (html) => html.split(/(<[^>]*>)/).map((part, i) => (i % 2 ? part
+  : part.replace(/[^\s<>]*[\p{L}\p{N}][-–‑][\p{L}\p{N}][^\s<>]*/gu, (w) => `<span class="nw">${w}</span>`))).join('');
+
+// a link to another legal page: privacy.html on GitHub Pages, /privacy on the website (cleanUrls)
+const linker = (site) => (name) => (site ? name : name + '.html');
+
+const EN = (L) => ({
   privacy: `<h2 lang="en" dir="ltr">Summary in English</h2>
 <div lang="en" dir="ltr" class="en">
-<p><b>Shaati — shift &amp; pay tracker</b> is a personal tool for Israeli hourly workers.</p>
+<p><b>Shaati</b> is a shift and pay tracker for hourly workers in Israel. Operator and data controller: <bdi lang="he">לי בטאן</bdi>, ${MAIL}. The Hebrew policy above is the binding text.</p>
 <ul>
-<li><b>Data you enter</b> (shifts, roles and hourly rates, leave days, settings, verified payslip fields, optional name, date of birth and gender, used for the age-based minimum wage, youth-employment checks and the pension age) is stored on your device and — after you sign in with Google — in Google Cloud Firestore (region me-west1, Tel Aviv). Security rules allow each signed-in user to access only their own data.</li>
-<li><b>Account data:</b> Google user ID, email, display name and photo, used only for sign-in and display.</li>
-<li><b>Never uploaded:</b> your Anthropic API key, the PIN lock, payslip image/PDF files and their raw OCR text.</li>
-<li><b>Fingerprint unlock</b> is handled entirely by the phone; the app never receives or stores fingerprint or face data.</li>
-<li><b>No ads, no tracking cookies, no third-party analytics.</b> Data is not sold or shared for marketing.</li>
-<li><b>Anonymous usage statistics (can be turned off):</b> once a day each device stores one record under a random ID that is not linked to the account: app version, install type, first/last day of use, number of active days, shift and payslip counts, an age group (under/over 18) and which features are on. No name, email, user ID, shift dates or amounts. Only the app's administrators can read it, as aggregate totals. Turning it off (Settings › Account &amp; sync) deletes the record.</li>
-<li><b>Friends' competition (only if you join):</b> your nickname and emoji, the friends you accepted and, unless you hide them, this month's, this year's and all-time gross and your average pay per hour. The card is visible <b>only to the friends on your list</b>; no real name, email, workplace or shift dates. Leaving (or deleting the account) deletes it.</li>
-<li><b>Inviting friends (only if you invite or were invited):</b> your invitation code and, if you joined through someone's link, a record linking your account ID to theirs with the date, readable only by the two of you, to give each the free month of Plus. The code is deleted with the account; the record of who invited whom (IDs only) is kept so an account is invited only once.</li>
-<li><b>Support requests (only if you send one):</b> the topic, what you wrote, the conversation with us, the first name you entered in the app and, if you choose, the app version and device type; when you write without signing in, also the email you give for the answer. Visible only to you and the app's administrators; deleted with the account.</li>
-<li><b>Third parties:</b> Google (authentication and storage), GitHub (hosting of the app code), Anthropic (only when you use an AI feature with your own API key; payslip text is redacted and shown to you before sending), font/code CDNs.</li>
-<li><b>Your rights:</b> view and edit everything in the app, export it (backup file / CSV), and delete your account and all data at any time (Settings › Account &amp; sync › Delete all data). See <a href="delete-account.html">delete-account.html</a>.</li>
-<li><b>Children:</b> users under 18 should use the app with a parent's or guardian's consent.</li>
-<li><b>Contact:</b> <a href="${CONTACT}">${CONTACT}</a></li>
+<li><b>Data you enter:</b> shifts, roles and hourly rates, leave, additions and deductions, settings, payslip fields you verified, the town you chose (for Shabbat and holiday times and the sky picture), and optionally a name, date of birth and gender (for age-based rules: minimum wage, youth employment, tax and pension). It is stored on your phone and, once you sign in, in Google Cloud Firestore (region me-west1, Tel Aviv), linked to your account. Security rules block other users. The operator, as the owner of the database, has technical access and uses it only to handle your request or a fault, or when the law requires it. Pay data counts as especially sensitive information under the Privacy Protection Law.</li>
+<li><b>Account:</b> a user ID and email address; with Google sign-in also your name and photo. With email and password, Firebase Authentication keeps the password and the app never sees it. As a guest, nothing leaves the phone.</li>
+<li><b>Stays on the phone:</b> your Anthropic API key, the PIN lock, payslip files and their full recognised text (except text you approve for AI analysis), and your location when you use it to find the nearest town.</li>
+<li><b>Usage statistics (off until you agree):</b> once a day, one record per device under a random ID not linked to your account: app version, install type, first and last day of use, number of active days, shift and payslip counts, an age group (under or over 18) and which features are on. No name, email, user ID, shift dates or amounts. Turning it off deletes this device's record; records not updated for 13 months are deleted.</li>
+<li><b>Champions table (only if you join):</b> your nickname, emoji, background and Plus badge, and your best game scores. Every signed-in user can see this row. Leaving the table deletes it.</li>
+<li><b>Friends' competition (only if you join):</b> your nickname and emoji, the friends you accepted and, only if you choose to show them, your gross totals and average pay per hour. Only your friends can see the card.</li>
+<li><b>Invitations:</b> your invitation code and, if you joined through a link, a record of who invited whom (account IDs only). The code is deleted with the account; the record is kept so an account is invited only once.</li>
+<li><b>Support requests (only if you send one):</b> what you wrote and our replies, the first name you entered and, if you choose, the app version and device type. Without an account, also the email you give for the answer; such a request is deleted within 12 months after it is closed, or at once if you ask.</li>
+<li><b>Service providers:</b> Google (signing in, storage and hosting this website; signing in runs on servers in the USA); GitHub (hosting the app's code, USA); Anthropic (USA, only when you use an AI feature with your own key: the payslip text you approved with ID, bank, address, phone and email hidden, your question, or a work schedule photo you send, including the names in it); MET Norway (Norway, the weather behind the opening screen: your chosen town's coordinates rounded to about 1 km, at most once an hour, never the phone's location); Google Play (purchases in the Android app); Lemon Squeezy (USA, purchases on the web or iPhone: payment, receipt and receipt email go to them directly, and the app keeps only the licence key); code and font servers (jsDelivr, cdnjs, cdn.sheetjs.com, Google Fonts, tessdata.projectnaptha.com) when a feature needs them.</li>
+<li><b>No ads, no tracking cookies, no third-party analytics.</b> We do not sell your data or use it for advertising.</li>
+<li><b>Your rights:</b> you do not have to give us any data. You may view, correct and delete your data, in the app or by email; we answer within 30 days. See <a href="${L('delete-account')}">how to delete your account</a>.</li>
+<li><b>Children:</b> the minimum age is 13. Users under 18 use the app with a parent's or guardian's consent, and a parent may write to us to view or delete a child's data or cancel the subscription.</li>
+<li><b>This website (shaati.web.app):</b> no cookies, ads or tracking. The hosting service (Firebase Hosting) logs each visit's IP address and browser details.</li>
+<li><b>Contact:</b> ${MAIL}. The project's GitHub issues page is public, so please do not send privacy requests there.</li>
 </ul></div>`,
   terms: `<h2 lang="en" dir="ltr">Summary in English</h2>
-<div lang="en" dir="ltr" class="en"><p>The app is provided free of charge, "as is". Calculations are estimates and are not legal, accounting, tax or financial advice. AI answers are generated automatically and may be wrong. Israeli law applies. Contact: <a href="${CONTACT}">${CONTACT}</a></p></div>`,
-};
+<div lang="en" dir="ltr" class="en"><p>Shifts, pay calculation, rights, the payslip check, reports on screen and the games are free. Shaati Plus is an optional paid subscription. Calculations are estimates and are not legal, accounting, tax or financial advice. AI answers are generated automatically and may be wrong. Israeli law applies; the Hebrew terms above are the binding text. Contact: ${MAIL}</p></div>`,
+});
 
-const DELETE = `<p class="meta">מחיקת חשבון ונתונים · Account &amp; data deletion</p>
+const DELETE = (L) => `<p class="meta">מחיקת חשבון ונתונים · Account &amp; data deletion</p>
 <h2>איך מוחקים את החשבון ואת כל הנתונים</h2>
 <ol>
-<li>פתחו את האפליקציה בטלפון, או בדפדפן בכתובת <a href="${APP_URL}">${APP_URL}</a>, והתחברו עם אותו חשבון Google.</li>
+<li>פתחו את האפליקציה בטלפון, או בדפדפן בכתובת <a href="${APP_URL}">${APP_URL}</a>, והתחברו עם אותו חשבון.</li>
 <li>היכנסו ל<b>הגדרות › אני והחשבון › חשבון וסנכרון</b>.</li>
 <li>לחצו <b>"מחק את כל הנתונים מהחשבון"</b> ואשרו.</li>
 </ol>
@@ -54,63 +75,83 @@ const DELETE = `<p class="meta">מחיקת חשבון ונתונים · Account 
 <ul>
 <li><b>משמרת או כל רשומה אחרת:</b> פותחים אותה ולוחצים על סמל הפח. המחיקה מגיעה גם לענן.</li>
 <li><b>טבלת האלופים:</b> בטבלת האלופים לוחצים על הכינוי שלכם › <b>יציאה מהטבלה</b>. השורה והתוצאות נמחקות מהענן.</li>
-<li><b>סטטיסטיקת שימוש אנונימית:</b> <b>הגדרות › אני והחשבון › חשבון וסנכרון</b> › מכבים את <b>שיתוף סטטיסטיקה אנונימית</b>. הרשומה נמחקת מהענן.</li>
+<li><b>סטטיסטיקת שימוש:</b> <b>הגדרות › אני והחשבון › חשבון וסנכרון</b> › מכבים את <b>שיתוף סטטיסטיקת שימוש</b>. הרשומה נמחקת מהענן.</li>
 <li><b>פניות לתמיכה:</b> אפשר לבקש בפנייה שנמחק אותן.</li>
 <li><b>הנתונים בטלפון:</b> <b>התנתק</b> (באותו מקום בהגדרות) מוחק את הנתונים מהמכשיר ומשאיר אותם בחשבון. תמונת הרקע של כרטיס השכר ודוחות שעות שמייבאים נשמרים בטלפון בלבד.</li>
 </ul>
-<p>אם אין לכם גישה לאפליקציה, אפשר לפנות דרך <a href="${CONTACT}">עמוד הפניות</a> (בלי לפרסם פרטים אישיים — נחזור אליכם לאימות).</p>
+<p>אין לכם גישה לאפליקציה? כתבו לנו באימייל ${MAIL} מהכתובת של החשבון, ונחזור אליכם כדי לוודא שהחשבון שלכם.</p>
 <h2 lang="en" dir="ltr">How to delete your account and data</h2>
 <div lang="en" dir="ltr" class="en"><ol>
-<li>Open the app (or <a href="${APP_URL}">${APP_URL}</a> in any browser) and sign in with the same Google account.</li>
+<li>Open the app (or <a href="${APP_URL}">${APP_URL}</a> in any browser) and sign in with the same account.</li>
 <li>Go to <b>Settings › Me &amp; my account › Account &amp; sync</b> (הגדרות › אני והחשבון › חשבון וסנכרון).</li>
 <li>Tap <b>Delete all data</b> (מחק את כל הנתונים מהחשבון) and confirm.</li></ol>
-<p>Deletion is immediate and permanent: all data stored for the account in the cloud is deleted, the sign-in account is deleted, and local data on the device is cleared. No copy is retained. If you cannot access the app, open a request at <a href="${CONTACT}">${CONTACT}</a> (do not post personal details publicly; we will contact you to verify).</p>
+<p>Deletion is immediate and permanent: all data stored for the account in the cloud is deleted, the sign-in account is deleted, and local data on the device is cleared. No copy is retained, except a record of who invited whom (account IDs only), kept so an account is invited only once. If you cannot access the app, email ${MAIL} from the account's address and we will contact you to verify it is yours.</p>
 <h2 id="data-en">Deleting some data without deleting the account</h2>
 <ul>
 <li><b>A shift or any other record:</b> open it and tap the trash icon. The deletion reaches the cloud too.</li>
 <li><b>Champions table:</b> tap your nickname › <b>Leave the table</b> (יציאה מהטבלה). Your row and scores are deleted from the cloud.</li>
-<li><b>Anonymous usage statistics:</b> Settings › Me &amp; my account › Account &amp; sync › turn off <b>Share anonymous statistics</b> (שיתוף סטטיסטיקה אנונימית). The record is deleted.</li>
+<li><b>Usage statistics:</b> Settings › Me &amp; my account › Account &amp; sync › turn off <b>usage statistics</b> (שיתוף סטטיסטיקת שימוש). The record is deleted.</li>
 <li><b>Support requests:</b> ask in a request and we delete them.</li>
 <li><b>Data on the phone:</b> <b>Sign out</b> (התנתק, same place) clears the device and keeps the data in the account. The pay-card photo and imported timesheets stay on the phone only.</li>
 </ul></div>`;
 
 // the documents' section titles are h4 inside the app's sheet; on a page of their own they follow the h1, so h2
 // (launch check: h1 straight to h4 broke the heading order, Lighthouse 97 on these pages)
-function page(title, body) {
+function page(title, body, site) {
+  const L = linker(site);
+  const img = site ? 'img/' : '';
+  // the header, the main content and the footer are siblings, so each is a landmark (accessibility audit C)
   return `<!doctype html>
 <html lang="he" dir="rtl"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
-<title>${title} · Shaati</title><link rel="icon" href="favicon-48.png" type="image/png">
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Rubik:wght@400;500;700&display=swap">
-<style>
-:root{--ink:#1b2220;--muted:#5b625e;--line:#e3dfd4;--bg:#f6f4ee;--card:#fdfcf8;--primary:#1d4a4f}
-@media(prefers-color-scheme:dark){:root{--ink:#e8ede9;--muted:#a5aea9;--line:#26302e;--bg:#0f1413;--card:#151c1b;--primary:#7cc3c9}}
-body{margin:0;background:var(--bg);color:var(--ink);font-family:Rubik,Assistant,system-ui,Arial,sans-serif;line-height:1.7}
-main{max-width:760px;margin:0 auto;padding:24px 16px 48px}
-header{display:flex;align-items:center;gap:12px;margin-bottom:12px}
+<title>${title} · ${site ? 'שעתי' : 'Shaati'}</title><link rel="icon" href="${img}favicon-48.png" type="image/png">
+<link rel="preload" href="fonts/rubik-hebrew.woff2" as="font" type="font/woff2" crossorigin>
+<style>${FONT_CSS}
+:root{--ink:#1b2220;--muted:#5b625e;--line:#e3dfd4;--bg:#f6f4ee;--card:#fdfcf8;--primary:#1d4a4f;--gold:#e9c987;color-scheme:light}
+@media(prefers-color-scheme:dark){:root{--ink:#e8ede9;--muted:#a5aea9;--line:#26302e;--bg:#0f1413;--card:#151c1b;--primary:#7cc3c9;color-scheme:dark}}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:Rubik,Assistant,system-ui,Arial,sans-serif;line-height:1.7;overflow-wrap:break-word}
+.wrap{max-width:760px;margin:0 auto;padding-inline:16px}
+header.wrap{display:flex;align-items:center;gap:12px;padding-top:24px}
 header img{width:44px;height:44px;border-radius:12px}
-header a{color:var(--ink);text-decoration:none;font-weight:700}
+header a{color:var(--ink);text-decoration:none;font-weight:700;display:inline-block;padding-block:10px}
+main.wrap{padding-bottom:8px}
 h1{font-size:1.7rem;margin:8px 0 4px} h2{font-size:1.15rem;margin:22px 0 6px} h4{font-size:1.02rem;margin:18px 0 4px}
 .card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:16px 18px}
 .meta,.legal-meta{color:var(--muted);font-size:.85rem} a{color:var(--primary)} ul,ol{padding-inline-start:22px}
-.en{font-family:system-ui,Arial,sans-serif} footer{margin-top:28px;color:var(--muted);font-size:.85rem}
-</style></head><body><main>
-<header><img src="icon-192.png" alt=""><a href="${APP_URL}">Shaati</a></header>
-<h1>${title}</h1><div class="card">${body.replace(/<(\/?)h4>/g, '<$1h2>')}</div>
-<footer><a href="privacy.html">מדיניות פרטיות</a> · <a href="terms.html">תנאי שימוש</a> · <a href="accessibility.html">נגישות</a> · <a href="delete-account.html">מחיקת חשבון</a> · <a href="${CONTACT}">יצירת קשר</a></footer>
-</main></body></html>
+.en{font-family:system-ui,Arial,sans-serif} .nw{white-space:nowrap}
+footer.wrap{margin-top:20px;padding-bottom:40px;color:var(--muted);font-size:.85rem}
+footer nav{display:flex;flex-wrap:wrap;gap:0 16px} footer a{display:inline-block;padding-block:10px}
+.skip{position:absolute;inset-inline-start:12px;top:-60px;z-index:5;background:var(--gold);color:#141821;padding:10px 16px;border-radius:12px;font-weight:600;text-decoration:none}
+.skip:focus{top:12px}
+:focus-visible{outline:2px solid var(--primary);outline-offset:2px}
+</style></head><body>
+<a class="skip" href="#main">דילוג לתוכן</a>
+<header class="wrap"><img src="${img}icon-192.png" alt=""><a href="${site ? './' : APP_URL}">${site ? 'שעתי' : 'Shaati'}</a></header>
+<main id="main" class="wrap">
+<h1>${title}</h1><div class="card">${keepWhole(body.replace(/<(\/?)h4>/g, '<$1h2>'))}</div>
+</main>
+<footer class="wrap"><nav aria-label="מסמכים ויצירת קשר"><a href="${L('privacy')}">מדיניות פרטיות</a><a href="${L('terms')}">תנאי שימוש</a><a href="${L('accessibility')}">הצהרת נגישות</a><a href="${L('delete-account')}">מחיקת חשבון</a><a href="${L('licenses')}">רישיונות</a><a href="mailto:${EMAIL}">יצירת קשר</a><a href="${ISSUES}">דיווח על תקלה</a></nav></footer>
+</body></html>
 `;
 }
 
-function build(src, out) {
+/** Writes the pages into `out`. site: true = the website's copies (its image folder, links without .html). */
+function build(src, out, site = false) {
   const docs = loadDocs(src);
+  const L = linker(site);
+  const en = EN(L);
   const files = {
-    'privacy.html': page(docs.privacy.title, docs.privacy.html + EN.privacy),
-    'terms.html': page(docs.terms.title, docs.terms.html + EN.terms),
-    'accessibility.html': page(docs.accessibility.title, docs.accessibility.html),
-    'delete-account.html': page('מחיקת חשבון ונתונים', DELETE),
+    'privacy.html': page(docs.privacy.title, docs.privacy.html + en.privacy, site),
+    'terms.html': page(docs.terms.title, docs.terms.html + en.terms, site),
+    'accessibility.html': page(docs.accessibility.title, docs.accessibility.html, site),
+    'delete-account.html': page('מחיקת חשבון ונתונים', DELETE(L), site),
+    'licenses.html': page(docs.licenses.title, docs.licenses.html, site),
   };
   for (const [f, html] of Object.entries(files)) fs.writeFileSync(path.join(out, f), html);
   return Object.keys(files);
 }
 module.exports = { build };
-if (require.main === module) console.log(build(path.join(__dirname, '..', 'src'), path.join(__dirname, '..', 'docs')));
+if (require.main === module) {
+  const root = path.join(__dirname, '..');
+  const site = process.argv.includes('--site');
+  console.log(build(path.join(root, 'src'), path.join(root, site ? 'site' : 'docs'), site));
+}

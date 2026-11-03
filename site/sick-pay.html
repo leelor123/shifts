@@ -73,11 +73,19 @@ details p { margin: 8px 0 0; color: var(--ink-2); }
 .note { margin-top: 26px; padding: 14px 16px; border: 1px dashed var(--line); border-radius: 14px; }
 .more { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 10px; }
 .more a { background: var(--surface); border-radius: 999px; padding: 8px 14px; text-decoration: none; box-shadow: 0 2px 10px rgba(10, 20, 45, .06); }
-footer { text-align: center; color: var(--ink-2); font-size: .9rem; padding: 0 16px 32px; }</style>
+footer { text-align: center; color: var(--ink-2); font-size: .9rem; padding: 0 16px 32px; }
+/* a keyboard user skips the header, and sees where the focus is: the home page's skip link and a 2 px ring (accessibility
+ * audit C); on the dark header and the dark boxes the ring is gold or white */
+.skip { position: absolute; inset-inline-start: 12px; top: -60px; z-index: 50; background: var(--gold); color: #141821; padding: 10px 16px; border-radius: 12px; font-weight: 600; text-decoration: none; }
+.skip:focus { top: 12px; }
+:focus-visible { outline: 2px solid var(--brand); outline-offset: 2px; }
+header :focus-visible, .cta :focus-visible { outline-color: var(--gold); }
+.nw { white-space: nowrap; }</style>
 </head>
 <body>
+<a class="skip" href="#main">דילוג לתוכן</a>
 <header><div class="bar"><a class="logo" href="./"><img src="img/apple-touch-icon.png" alt="">שעתי</a><a class="btn" href="https://leelor123.github.io/shifts/">לפתוח את שעתי</a></div></header>
-<main>
+<main id="main">
   <nav class="crumbs" aria-label="ניווט"><a href="./">שעתי</a> › ימי מחלה: כמה צוברים וכמה משלמים?</nav>
   <h1>ימי מחלה: כמה צוברים וכמה משלמים?</h1>
   <div class="answer">על כל חודש עבודה מלא צוברים <b>1.5 ימי מחלה</b> (עד 90). ביום המחלה הראשון אין תשלום, בשני ובשלישי <b>50%</b>, ומהיום הרביעי <b>שכר מלא</b>.</div>
@@ -92,17 +100,17 @@ footer { text-align: center; color: var(--ink-2); font-size: .9rem; padding: 0 1
       <p>גם עובדים לפי שעה ובמשרה חלקית צוברים ימי מחלה, באופן יחסי לימים שעבדו בחודש. דמי מחלה משולמים על ימים שבהם הייתה לך משמרת ונעדרת בגלל מחלה: מי שלא שובץ/ה למשמרת באותם ימים, לא מקבל/ת עליהם תשלום.</p>
       <h2>מה צריך?</h2>
       <p>אישור מחלה מרופא, שמוסרים למעסיק. ימי מחלה שלא השתמשת בהם נשארים צבורים, אבל לא מקבלים עליהם כסף כשעוזבים.</p>
-  <div class="cta"><b>שעתי מחשבת את זה בשבילך</b><span>רושמים משמרות, ושעתי מחשבת את השכר לפי החוק: שבתות וחגים לפי העיר, שעות נוספות, שכר מינימום לפי הגיל והבראה. חינם ובלי פרסומות.</span><a class="btn" href="https://leelor123.github.io/shifts/">לפתוח את שעתי</a></div>
+  <div class="cta"><b>שעתי מחשבת את זה בשבילך</b><span>רושמים משמרות, ושעתי מעריכה את השכר לפי חוקי העבודה: שבתות וחגים לפי העיר, שעות נוספות, שכר מינימום לפי הגיל והבראה. חינם ובלי פרסומות, ומנוי Plus לבחירה.</span><a class="btn" href="https://leelor123.github.io/shifts/">לפתוח את שעתי</a></div>
   <h2>שאלות נפוצות</h2>
   <details><summary>כמה ימי מחלה צוברים בחודש?</summary><p>1.5 ימים על כל חודש עבודה מלא, ועד 90 ימים בסך הכול.</p></details>
   <details><summary>משלמים על היום הראשון של מחלה?</summary><p>לא. על היום השני והשלישי משלמים 50%, ומהרביעי שכר מלא.</p></details>
   <details><summary>גם לעובד/ת לפי שעה?</summary><p>כן, באופן יחסי לימים שעבדת, ועל ימים שבהם הייתה לך משמרת.</p></details>
   <details><summary>מקבלים כסף על ימי מחלה שלא ניצלתי?</summary><p>לא. הם נשארים צבורים כל עוד את/ה באותו מקום עבודה.</p></details>
   <p class="src">המקור הרשמי: <a href="https://www.gov.il/he/Departments/Guides/paid-sick-leave" rel="noopener">ימי מחלה ב-gov.il</a></p>
-  <div class="note">שעתי אינה גוף ממשלתי ואינה מייצגת גוף ממשלתי. המידע כללי ואינו ייעוץ משפטי; בהסכם קיבוצי, צו הרחבה ענפי או חוזה אישי ייתכנו זכויות נוספות. עודכן ב-2.11.2026.</div>
+  <div class="note">שעתי אינה גוף ממשלתי ואינה מייצגת גוף ממשלתי. המידע כללי ואינו ייעוץ משפטי; בהסכם קיבוצי, צו הרחבה ענפי או חוזה אישי ייתכנו זכויות נוספות. עודכן ב-3.11.2026.</div>
   <h2>עוד שאלות</h2>
   <div class="more"><a href="check">מרמים אותך? בדיקה של 10 שניות</a><a href="minimum-wage">שכר מינימום 2026: כמה מגיע לשעה, גם לנוער</a><a href="recuperation-pay">דמי הבראה 2026: כמה משלמים ליום, וכמה ימים מגיעים</a><a href="overtime">שעות נוספות: מתי מתחילות וכמה משלמים?</a><a href="travel-expenses">נסיעות לעבודה: כמה המעסיק צריך להחזיר?</a><a href="shabbat-pay">כמה משלמים על עבודה בשבת ובחג?</a><a href="tax-refund">מגיע לי החזר מס? מי זכאי, כמה ואיך מגישים</a></div>
 </main>
-<footer>שעתי · <a href="./">לאתר</a> · <a href="https://leelor123.github.io/shifts/privacy.html">פרטיות</a> · <a href="https://leelor123.github.io/shifts/accessibility.html">הצהרת נגישות</a></footer>
+<footer>שעתי · <a href="./">לאתר</a> · <a href="privacy">פרטיות</a> · <a href="accessibility">הצהרת נגישות</a> · <a href="mailto:lybtn48@gmail.com">יצירת קשר</a></footer>
 </body>
 </html>

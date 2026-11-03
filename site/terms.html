@@ -1,0 +1,74 @@
+<!doctype html>
+<html lang="he" dir="rtl"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>תנאי שימוש · שעתי</title><link rel="icon" href="img/favicon-48.png" type="image/png">
+<link rel="preload" href="fonts/rubik-hebrew.woff2" as="font" type="font/woff2" crossorigin>
+<style>@font-face{font-family: 'Rubik'; font-style: normal; font-weight: 300 800; font-display: swap; src: url(fonts/rubik-arabic.woff2) format('woff2'); unicode-range: U+0600-06FF, U+0750-077F, U+0870-0891, U+0897-08E1, U+08E3-08FF, U+200C-200E, U+2010-2011, U+204F, U+2E41, U+FB50-FDFF, U+FE70-FE74, U+FE76-FEFC, U+102E0-102FB, U+10E60-10E7E, U+10EC2-10EC7, U+10EC9-10EEE, U+10EF0-10EFF, U+1EE00-1EE03, U+1EE05-1EE1F, U+1EE21-1EE22, U+1EE24, U+1EE27, U+1EE29-1EE32, U+1EE34-1EE37, U+1EE39, U+1EE3B, U+1EE42, U+1EE47, U+1EE49, U+1EE4B, U+1EE4D-1EE4F, U+1EE51-1EE52, U+1EE54, U+1EE57, U+1EE59, U+1EE5B, U+1EE5D, U+1EE5F, U+1EE61-1EE62, U+1EE64, U+1EE67-1EE6A, U+1EE6C-1EE72, U+1EE74-1EE77, U+1EE79-1EE7C, U+1EE7E, U+1EE80-1EE89, U+1EE8B-1EE9B, U+1EEA1-1EEA3, U+1EEA5-1EEA9, U+1EEAB-1EEBB, U+1EEF0-1EEF1;}
+@font-face{font-family: 'Rubik'; font-style: normal; font-weight: 300 800; font-display: swap; src: url(fonts/rubik-cyrillic-ext.woff2) format('woff2'); unicode-range: U+0460-052F, U+1C80-1C8A, U+20B4, U+2DE0-2DFF, U+A640-A69F, U+FE2E-FE2F;}
+@font-face{font-family: 'Rubik'; font-style: normal; font-weight: 300 800; font-display: swap; src: url(fonts/rubik-cyrillic.woff2) format('woff2'); unicode-range: U+0301, U+0400-045F, U+0490-0491, U+04B0-04B1, U+2116;}
+@font-face{font-family: 'Rubik'; font-style: normal; font-weight: 300 800; font-display: swap; src: url(fonts/rubik-latin-ext.woff2) format('woff2'); unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C4, U+2113, U+2C60-2C7F, U+A720-A7FF;}
+@font-face{font-family: 'Rubik'; font-style: normal; font-weight: 300 800; font-display: swap; src: url(fonts/rubik-latin.woff2) format('woff2'); unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;}
+@font-face{font-family: 'Rubik'; font-style: normal; font-weight: 300 800; font-display: swap; src: url(fonts/rubik-hebrew.woff2) format('woff2'); unicode-range: U+0307-0308, U+0590-05FF, U+200C-2010, U+20AA, U+25CC, U+FB1D-FB4F;}
+:root{--ink:#1b2220;--muted:#5b625e;--line:#e3dfd4;--bg:#f6f4ee;--card:#fdfcf8;--primary:#1d4a4f;--gold:#e9c987;color-scheme:light}
+@media(prefers-color-scheme:dark){:root{--ink:#e8ede9;--muted:#a5aea9;--line:#26302e;--bg:#0f1413;--card:#151c1b;--primary:#7cc3c9;color-scheme:dark}}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:Rubik,Assistant,system-ui,Arial,sans-serif;line-height:1.7;overflow-wrap:break-word}
+.wrap{max-width:760px;margin:0 auto;padding-inline:16px}
+header.wrap{display:flex;align-items:center;gap:12px;padding-top:24px}
+header img{width:44px;height:44px;border-radius:12px}
+header a{color:var(--ink);text-decoration:none;font-weight:700;display:inline-block;padding-block:10px}
+main.wrap{padding-bottom:8px}
+h1{font-size:1.7rem;margin:8px 0 4px} h2{font-size:1.15rem;margin:22px 0 6px} h4{font-size:1.02rem;margin:18px 0 4px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:16px 18px}
+.meta,.legal-meta{color:var(--muted);font-size:.85rem} a{color:var(--primary)} ul,ol{padding-inline-start:22px}
+.en{font-family:system-ui,Arial,sans-serif} .nw{white-space:nowrap}
+footer.wrap{margin-top:20px;padding-bottom:40px;color:var(--muted);font-size:.85rem}
+footer nav{display:flex;flex-wrap:wrap;gap:0 16px} footer a{display:inline-block;padding-block:10px}
+.skip{position:absolute;inset-inline-start:12px;top:-60px;z-index:5;background:var(--gold);color:#141821;padding:10px 16px;border-radius:12px;font-weight:600;text-decoration:none}
+.skip:focus{top:12px}
+:focus-visible{outline:2px solid var(--primary);outline-offset:2px}
+</style></head><body>
+<a class="skip" href="#main">דילוג לתוכן</a>
+<header class="wrap"><img src="img/icon-192.png" alt=""><a href="./">שעתי</a></header>
+<main id="main" class="wrap">
+<h1>תנאי שימוש</h1><div class="card"><p class="legal-meta">גרסה 1.7 · בתוקף <span class="nw">מ-3</span> בנובמבר 2026</p>
+<h2>1. כללי</h2>
+<p>תנאים אלה חלים על השימוש באפליקציה "Shaati" (להלן: "האפליקציה"), המופעלת על ידי לי בטאן, מפתח עצמאי (להלן: "המפעיל"). השימוש באפליקציה, לרבות התחברות אליה, מהווה הסכמה לתנאים אלה ולמדיניות הפרטיות. מי שאינו מסכים, אינו רשאי להשתמש באפליקציה. התנאים מנוסחים בלשון זכר מטעמי נוחות בלבד ומתייחסים לכל המגדרים.</p>
+<h2>2. מהות השירות</h2>
+<p>האפליקציה היא כלי עזר אישי לרישום משמרות ולהערכת שכר וזכויות. החישובים מבוססים על הנתונים שהמשתמש מזין, על ההגדרות שבחר ועל כללים כלליים מהדין הישראלי, ועשויים להיות חלקיים, לא מעודכנים או שגויים. האפליקציה אינה מחליפה תלוש שכר רשמי, חוזה עבודה, הסכם קיבוצי, צו הרחבה, הנחיות רשות המסים או המוסד לביטוח לאומי.</p>
+<h2>3. אין ייעוץ מקצועי</h2>
+<p>שום דבר באפליקציה (לרבות חישובים, ממצאי ניתוח תלוש, תובנות, תשובות העוזר והודעות מוכנות למעסיק) אינו ייעוץ משפטי, חשבונאי, מיסויי, פנסיוני או פיננסי, ואין להסתמך עליו ככזה. לפני כל פעולה (פנייה למעסיק, הליך משפטי, הגשת דוח או בקשת החזר) יש להיוועץ באיש מקצוע מוסמך.</p>
+<h2>4. תכונות בינה מלאכותית</h2>
+<p>ניתוח תלוש חכם ועוזר הזכויות מופעלים רק ביוזמת המשתמש, באמצעות מפתח API אישי שלו מול Anthropic. התוכן נוצר אוטומטית, עלול להיות שגוי או לא מדויק, ואינו מבטא עמדה של המפעיל. עלויות השימוש בשירות ה-⁠AI חלות על המשתמש בלבד, בהתאם להסכם בינו לבין ספק השירות. אין להזין באמצעותן מידע אישי של אנשים אחרים, חוץ ממקרה אחד: בקריאת סידור עבודה מתמונה נשלחים לספק גם שמות העמיתים שמופיעים בה. שולחים רק סידור שקיבלת מהעבודה, ורק כדי לקרוא אותו.</p>
+<h2>5. חשבון ואבטחה</h2>
+<p>הכניסה לאפליקציה נעשית באמצעות חשבון Google, אימייל וסיסמה, או כאורח בלי חשבון, שאז הנתונים נשמרים רק במכשיר. המשתמש אחראי לשמור על הגישה למכשיר ולחשבון, ולהתנתק או לנעול את האפליקציה במכשיר משותף. נעילה בקוד היא שכבת הגנה בסיסית בלבד.</p>
+<h2>6. שימוש מותר</h2>
+<p>מותר להשתמש באפליקציה לשימוש אישי וחוקי בלבד. אסור לנסות לגשת לנתונים של משתמשים אחרים, לעקוף מנגנוני אבטחה, להעמיס על השירות, להפעיל אותו באופן אוטומטי מסיבי או לעשות בו שימוש הפוגע בזכויות של אחרים.</p>
+<h2>7. קטינים</h2>
+<p>הגיל המינימלי לשימוש באפליקציה הוא 13. משתמש שטרם מלאו לו 18 רשאי להשתמש באפליקציה בהסכמת הורה או אפוטרופוס. הורה או אפוטרופוס רשאי לפנות באימייל <a href="mailto:lybtn48@gmail.com" dir="ltr">lybtn48@gmail.com</a> כדי לעיין בנתונים של ילדו, למחוק אותם או לבטל את המנוי שלו.</p>
+<h2>8. זמינות, שינויים והפסקת השירות</h2>
+<p>השימוש באפליקציה ובכל יכולותיה הבסיסיות (רישום משמרות, חישוב שכר, זכויות, בדיקת תלוש, דוחות ומשחקים) ניתן ללא תשלום. האפליקציה ניתנת "כמות שהיא" (AS IS) ו"כפי שהיא זמינה", ללא כל התחייבות לזמינות רציפה, לדיוק, להתאמה למטרה מסוימת או להיעדר תקלות. המפעיל רשאי לשנות, להוסיף או להפסיק תכונות או את השירות כולו, ככל האפשר בהודעה מראש באפליקציה. אם תוספת בתשלום תופסק לפני סוף תקופה ששילמת עליה, יוחזר לך החלק היחסי ששילמת. שינוי מהותי בתנאים יוצג באפליקציה ויידרש אישורו מחדש.</p>
+<h2>8א. תוספות בתשלום (Shaati Plus)</h2>
+<p>האפליקציה עשויה להציע תוספות אופציונליות במנוי חודשי ("Shaati Plus"), כגון עיצובים לכרטיס השכר, ושימוש ללא הגבלה בחלק מהתוספות שיש להן מכסה חינמית (למשל ניתוח מתקדם וייצוא דוחות לקובץ). התוספות אינן משנות את החישובים, את מידע הזכויות או את הכלים הבסיסיים (משמרות, חישוב שכר, זכויות, בדיקת תלוש, דוחות במסך, משחקים, גיבוי וסנכרון), שנשארים זמינים לכולם ללא תשלום וללא הגבלה. ניתן לנסות את Shaati Plus פעם אחת בחינם לתקופה קצרה; הניסיון אינו דורש פרטי תשלום ומסתיים מעצמו, בלי חיוב. המנוי מתחדש אוטומטית בכל חודש (או בכל שנה, במסלול שנתי אם הוא מוצע), במחיר שמוצג לפני הרכישה, עד שמבטלים אותו.</p>
+<p><b>ביטול והחזר.</b> אפשר לבטל בכל עת: באפליקציית האנדרואיד דרך Google Play (תשלומים ומינויים), באתר ובאייפון דרך הקישור שבמייל של Lemon Squeezy, או בבקשה באימייל <a href="mailto:lybtn48@gmail.com" dir="ltr">lybtn48@gmail.com</a>. ביטול באימייל נכנס לתוקף תוך 3 ימי עסקים. לאחר ביטול התוספת נשארת פעילה עד סוף התקופה ששולמה, ולא יתבצעו חיובים נוספים. תוך 14 יום מהרכישה אפשר לבקש החזר מלא, באימייל או דרך ספק התשלום. שינוי מחיר יימסר בהודעה לפחות 30 יום מראש, ואפשר לבטל את המנוי לפני שהמחיר החדש חל. אין בתנאים אלה, או בתנאים של ספקי התשלום, כדי לגרוע מזכויותיך לפי חוק הגנת הצרכן, <span class="nw">התשמ"א-1981.</span></p>
+<p>רכישה <span class="nw">חד-פעמית</span> של Shaati Plus שבוצעה בעבר נשארת בתוקף. באפליקציית האנדרואיד שהותקנה מ-⁠Google Play הרכישה מתבצעת דרך Google Play, בכפוף גם לתנאים שלה. באתר ובאייפון הרכישה מתבצעת בדף תשלום של Lemon Squeezy, שהיא המוכרת הרשומה (Merchant of Record) של העסקה ומטפלת בתשלום, בקבלה ובמסים, בכפוף גם לתנאים שלה; לאחר התשלום נשלח קוד הפעלה, הנשמר בחשבון המשתמש ומפעיל את התוספת בכל מכשיריו. המפעיל אינו מקבל ואינו שומר פרטי תשלום. החזר כספי או סיום המנוי מבטלים את התוספת. רכישה בידי משתמש שטרם מלאו לו 18 טעונה הסכמת הורה או אפוטרופוס.</p>
+<p><b>הזמנת חברים.</b> משתמש מחובר יכול לשתף קישור הזמנה אישי. משתמש חדש שהצטרף עם הקישור, התחבר ורשם משמרת ראשונה מקבל חודש Shaati Plus במתנה, וגם המזמין מקבל חודש על כל משתמש כזה, עד 6 חודשים. כל חשבון יכול להצטרף כמוזמן פעם אחת בלבד. חודש המתנה אינו כרוך בתשלום, אינו ניתן להמרה בכסף ומסתיים מעצמו, בלי חיוב. המפעיל רשאי לשלול מתנה שהושגה בחשבונות מזויפים או בדרך לא הוגנת, ולשנות או להפסיק את מבצע ההזמנות בכל עת (מתנה שכבר ניתנה תכובד עד סופה).</p>
+<p><b>טיפ.</b> אפשר לתת טיפ <span class="nw">חד-פעמי</span> מרצון, בסכום שמוצג לפני התשלום, כתודה על האפליקציה. הטיפ אינו מוסיף תכונות, אינו מנוי ואינו מתחדש, ומתבצע דרך Google Play או דרך ספק התשלום באתר. תוך 14 יום מהתשלום אפשר לבקש החזר מלא באימייל.</p>
+<h2>8ב. טבלת האלופים במשחקים</h2>
+<p>ההשתתפות בטבלת האלופים היא לבחירתך ודורשת התחברות. בטבלה מוצגים לשאר המשתמשים המחוברים הכינוי שבחרת, אימוג׳י, הרקע שבחרת (למנויי Shaati Plus) והתוצאות שלך במשחקים. אין לבחור כינוי שהוא השם המלא שלך, פרטי קשר, או כינוי פוגעני, מטעה או שמתחזה לאחר. המפעיל רשאי להסיר מהטבלה שורה עם כינוי לא מתאים או תוצאה שנראית לא אמיתית. אפשר לצאת מהטבלה בכל עת, והשורה נמחקת.</p>
+<h2>9. נתונים וגיבוי</h2>
+<p>המשתמש אחראי לנכונות הנתונים שהזין ולשמירת גיבויים. האפליקציה מציעה סנכרון לחשבון וייצוא לקובץ, אך אינה מתחייבת שנתונים לא יאבדו (למשל בשל תקלה, מחיקה ביוזמת המשתמש או שינוי בשירותי צד שלישי).</p>
+<h2>10. הגבלת אחריות</h2>
+<p>המפעיל לא יישא באחריות לנזק עקיף, כמו אובדן הכנסה, שכר או זכויות בעקבות החלטה שהתקבלה על סמך האפליקציה, אובדן נתונים או תקלה בשירות של צד שלישי. האחריות של המפעיל לנזק ישיר מוגבלת לסכום ששילמת לו <span class="nw">ב-12</span> החודשים האחרונים, חוץ מנזק שנגרם בכוונה או ברשלנות חמורה. אין באמור כדי להגביל אחריות שאינה ניתנת להגבלה על פי דין.</p>
+<h2>11. שיפוי</h2>
+<p>משתמש שהפר בכוונה את התנאים האלה או את הדין ישפה את המפעיל על נזק או הוצאה שנגרמו לו בשל ההפרה.</p>
+<h2>12. קניין רוחני</h2>
+<p>הזכויות בעיצוב, בקוד ובתכני האפליקציה שמורות למפעיל, למעט רכיבי קוד פתוח וגופנים המשמשים בה בהתאם לרישיונות שלהם (ראו "רישיונות וצד שלישי").</p>
+<h2>13. שירותי צד שלישי</h2>
+<p>האפליקציה נשענת על שירותים של Google (Firebase, Google Fonts, Google Play), GitHub (אירוח), Anthropic (תכונות AI, לפי בחירה), Lemon Squeezy (תשלום באתר ובאייפון), MET Norway (מזג אוויר לרקע) ושרתי הפצת קוד (jsDelivr, cdnjs, SheetJS). השימוש בהם כפוף גם לתנאים של אותם ספקים.</p>
+<h2>14. דין וסמכות שיפוט</h2>
+<p>על תנאים אלה יחולו דיני מדינת ישראל. סמכות השיפוט נתונה לבתי המשפט המוסמכים בישראל.</p>
+<h2>15. יצירת קשר</h2>
+<p>שאלות, בקשות וביטול מנוי: באימייל <a href="mailto:lybtn48@gmail.com" dir="ltr">lybtn48@gmail.com</a> או דרך "עזרה ותמיכה" באפליקציה. על תקלות אפשר לדווח גם ב<a href="https://github.com/leelor123/shifts/issues" target="_blank" rel="noopener">עמוד הפניות של הפרויקט</a>. העמוד הזה פומבי, ולכן לא כותבים בו פרטים אישיים.</p><h2 lang="en" dir="ltr">Summary in English</h2>
+<div lang="en" dir="ltr" class="en"><p>Shifts, pay calculation, rights, the payslip check, reports on screen and the games are free. Shaati Plus is an optional paid subscription. Calculations are estimates and are not legal, accounting, tax or financial advice. AI answers are generated automatically and may be wrong. Israeli law applies; the Hebrew terms above are the binding text. Contact: <a href="mailto:lybtn48@gmail.com" dir="ltr">lybtn48@gmail.com</a></p></div></div>
+</main>
+<footer class="wrap"><nav aria-label="מסמכים ויצירת קשר"><a href="privacy">מדיניות פרטיות</a><a href="terms">תנאי שימוש</a><a href="accessibility">הצהרת נגישות</a><a href="delete-account">מחיקת חשבון</a><a href="licenses">רישיונות</a><a href="mailto:lybtn48@gmail.com">יצירת קשר</a><a href="https://github.com/leelor123/shifts/issues">דיווח על תקלה</a></nav></footer>
+</body></html>

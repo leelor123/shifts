@@ -48,6 +48,8 @@ const GOV = {
   hours: 'https://www.gov.il/he/Departments/Guides/overtime-and-extra-hours',
 };
 const esc = (s) => String(s).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+// plain text with a range or a joined word (2020–2025, ב-14) kept on one line: the browser may break after a dash
+const escWhole = (s) => esc(s).replace(/[^\s<>]*[\p{L}\p{N}][-–‑][\p{L}\p{N}][^\s<>]*/gu, (w) => `<span class="nw">${w}</span>`);
 const nis = (n, d = 2) => n.toLocaleString('en-US', { minimumFractionDigits: d, maximumFractionDigits: d }) + ' ₪';
 const today = U.todayKey();
 const dmy = (k) => `${+k.slice(8, 10)}.${+k.slice(5, 7)}.${k.slice(0, 4)}`;
@@ -272,7 +274,7 @@ const PAGES = [
         <li><b>מגישים באינטרנט</b> בקשה להחזר מס (טופס 135) <a href="${TR.FILE_URL}" rel="noopener">באתר רשות המסים</a>, בקשה אחת לכל שנה. בלי עמלה ובלי רואה חשבון.</li>
         <li><b>ההחזר מגיע לחשבון הבנק</b> עם הפרשי הצמדה וריבית, לרוב תוך כמה חודשים.</li>
       </ol>`,
-    cta: ['שעתי בודקת את זה בשבילך', 'רושמים משמרות או מעלים תלושים, ושעתי מעריכה את ההחזר לכל שנה, עד 6 שנים אחורה, ומסבירה בדיוק מה להגיש. חינם ובלי פרסומות.', 'לבדוק את ההחזר שלי', APP + '?action=tax-refund'],
+    cta: ['שעתי בודקת את זה בשבילך', 'רושמים משמרות או מעלים תלושים, ושעתי מעריכה את ההחזר לכל שנה, עד 6 שנים אחורה, ומסבירה בדיוק מה להגיש. חינם ובלי פרסומות, ומנוי Plus לבחירה.','לבדוק את ההחזר שלי', APP + '?action=tax-refund'],
     faq: [
       ['עד כמה שנים אחורה אפשר לבקש החזר מס?', `עד 6 שנים אחורה, בקשה נפרדת לכל שנה. ב-${today.slice(0, 4)} אפשר לבקש על השנים ${+today.slice(0, 4) - 6}–${+today.slice(0, 4) - 1}.`],
       ['צריך רואה חשבון כדי לקבל החזר מס?', 'לא. אפשר להגיש לבד באתר רשות המסים (טופס 135), בלי עמלה. חברות להחזרי מס גובות לרוב אחוזים מההחזר.'],
@@ -326,7 +328,14 @@ details p { margin: 8px 0 0; color: var(--ink-2); }
 .note { margin-top: 26px; padding: 14px 16px; border: 1px dashed var(--line); border-radius: 14px; }
 .more { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 10px; }
 .more a { background: var(--surface); border-radius: 999px; padding: 8px 14px; text-decoration: none; box-shadow: 0 2px 10px rgba(10, 20, 45, .06); }
-footer { text-align: center; color: var(--ink-2); font-size: .9rem; padding: 0 16px 32px; }`;
+footer { text-align: center; color: var(--ink-2); font-size: .9rem; padding: 0 16px 32px; }
+/* a keyboard user skips the header, and sees where the focus is: the home page's skip link and a 2 px ring (accessibility
+ * audit C); on the dark header and the dark boxes the ring is gold or white */
+.skip { position: absolute; inset-inline-start: 12px; top: -60px; z-index: 50; background: var(--gold); color: #141821; padding: 10px 16px; border-radius: 12px; font-weight: 600; text-decoration: none; }
+.skip:focus { top: 12px; }
+:focus-visible { outline: 2px solid var(--brand); outline-offset: 2px; }
+header :focus-visible, .cta :focus-visible { outline-color: var(--gold); }
+.nw { white-space: nowrap; }`;
 
 function page(p, date) {
   const url = `${SITE}/${p.slug}`;
@@ -363,21 +372,22 @@ ${FONT_HEAD}
 <style>${CSS}</style>
 </head>
 <body>
+<a class="skip" href="#main">דילוג לתוכן</a>
 <header><div class="bar"><a class="logo" href="./"><img src="img/apple-touch-icon.png" alt="">שעתי</a><a class="btn" href="${APP}">לפתוח את שעתי</a></div></header>
-<main>
+<main id="main">
   <nav class="crumbs" aria-label="ניווט"><a href="./">שעתי</a> › ${esc(p.title)}</nav>
   <h1>${esc(p.title)}</h1>
   <div class="answer">${p.answer}</div>
   ${p.body}
-  ${(([b, t, btn, href]) => `<div class="cta"><b>${b}</b><span>${t}</span><a class="btn" href="${href}">${btn}</a></div>`)(p.cta || ['שעתי מחשבת את זה בשבילך', 'רושמים משמרות, ושעתי מחשבת את השכר לפי החוק: שבתות וחגים לפי העיר, שעות נוספות, שכר מינימום לפי הגיל והבראה. חינם ובלי פרסומות.', 'לפתוח את שעתי', APP])}
+  ${(([b, t, btn, href]) => `<div class="cta"><b>${b}</b><span>${t}</span><a class="btn" href="${href}">${btn}</a></div>`)(p.cta || ['שעתי מחשבת את זה בשבילך', 'רושמים משמרות, ושעתי מעריכה את השכר לפי חוקי העבודה: שבתות וחגים לפי העיר, שעות נוספות, שכר מינימום לפי הגיל והבראה. חינם ובלי פרסומות, ומנוי Plus לבחירה.', 'לפתוח את שעתי', APP])}
   <h2>שאלות נפוצות</h2>
-  ${p.faq.map(([q, a]) => `<details><summary>${esc(q)}</summary><p>${esc(a)}</p></details>`).join('\n  ')}
+  ${p.faq.map(([q, a]) => `<details><summary>${esc(q)}</summary><p>${escWhole(a)}</p></details>`).join('\n  ')}
   <p class="src">המקור הרשמי: ${p.sources.map(([l, h]) => `<a href="${h}" rel="noopener">${esc(l)} ב-gov.il</a>`).join(' · ')}</p>
   <div class="note">שעתי אינה גוף ממשלתי ואינה מייצגת גוף ממשלתי. המידע כללי ואינו ייעוץ משפטי; בהסכם קיבוצי, צו הרחבה ענפי או חוזה אישי ייתכנו זכויות נוספות.${p.note ? ' ' + p.note : ''} עודכן ב-${dmy(date)}.</div>
   <h2>עוד שאלות</h2>
   <div class="more"><a href="check">${esc(CHECK.title)}</a>${others.map((x) => `<a href="${x.slug}">${esc(x.title)}</a>`).join('')}</div>
 </main>
-<footer>שעתי · <a href="./">לאתר</a> · <a href="https://leelor123.github.io/shifts/privacy.html">פרטיות</a> · <a href="https://leelor123.github.io/shifts/accessibility.html">הצהרת נגישות</a></footer>
+<footer>שעתי · <a href="./">לאתר</a> · <a href="privacy">פרטיות</a> · <a href="accessibility">הצהרת נגישות</a> · <a href="mailto:lybtn48@gmail.com">יצירת קשר</a></footer>
 </body>
 </html>
 `;
@@ -409,7 +419,8 @@ const CHECK_CSS = `
 .ck-acts { display: flex; flex-wrap: wrap; gap: 10px; justify-content: center; margin-top: 6px; }
 .ck-acts button { font: 700 1rem Rubik, sans-serif; border: 0; border-radius: 999px; padding: 12px 18px; cursor: pointer; background: #fff; color: #0d2b6b; }
 .ck-acts button.wa { background: #25d366; color: #063b1c; }
-.priv { font-size: .92rem; color: var(--ink-2); text-align: center; }`;
+.priv { font-size: .92rem; color: var(--ink-2); text-align: center; }
+#ck-out :focus-visible { outline-color: #fff; }`;
 function checkPage(date) {
   const url = `${SITE}/check`;
   return `<!doctype html>
@@ -439,8 +450,9 @@ ${FONT_HEAD}
 <style>${CSS}${CHECK_CSS}</style>
 </head>
 <body>
+<a class="skip" href="#main">דילוג לתוכן</a>
 <header><div class="bar"><a class="logo" href="./"><img src="img/apple-touch-icon.png" alt="">שעתי</a><a class="btn" href="${APP}">לפתוח את שעתי</a></div></header>
-<main>
+<main id="main">
   <h1>${esc(CHECK.title)}</h1>
   <p>שתי שאלות, ורואים אם משלמים לך לפחות שכר מינימום לפי החוק. בלי הרשמה, ושום דבר לא נשלח.</p>
   <div class="ck">
@@ -464,13 +476,13 @@ ${FONT_HEAD}
     <div id="ck-why"></div>
     <div class="ck-acts"><button type="button" id="ck-share">📸 תמונה לסטורי</button><button type="button" class="wa" id="ck-wa">שליחה בוואטסאפ</button></div>
   </div>
-  <div class="cta"><b>זה רק שכר המינימום</b><span>שעתי בודקת את כל השאר: שבתות וחגים לפי העיר, שעות נוספות, נסיעות, הבראה, ואת התלוש עד השקל. חינם ובלי פרסומות.</span><a class="btn" href="${APP}">לבדוק את התלוש בשעתי</a></div>
+  <div class="cta"><b>זה רק שכר המינימום</b><span>שעתי בודקת את כל השאר: שבתות וחגים לפי העיר, שעות נוספות, נסיעות והבראה, ומשווה את התלוש לשעות שרשמת. חינם ובלי פרסומות, ומנוי Plus לבחירה.</span><a class="btn" href="${APP}">לבדוק את התלוש בשעתי</a></div>
   <p class="src">המקור הרשמי: ${[['שכר מינימום', GOV.minwage], ['זכויות בני נוער בעבודה', GOV.youth], ['מנוחה שבועית וחגים', GOV.rest]].map(([l, h]) => `<a href="${h}" rel="noopener">${esc(l)} ב-gov.il</a>`).join(' · ')}</p>
   <div class="note">שעתי אינה גוף ממשלתי ואינה מייצגת גוף ממשלתי. הבדיקה כללית ואינה ייעוץ משפטי: לפי שכר המינימום מ-${dmy(MW.from)} ולפי הגיל; לחניכים, לבעלי מוגבלות ובהסכמים מיוחדים יש כללים אחרים. עודכן ב-${dmy(date)}.</div>
   <h2>עוד שאלות</h2>
   <div class="more">${PAGES.map((x) => `<a href="${x.slug}">${esc(x.title)}</a>`).join('')}</div>
 </main>
-<footer>שעתי · <a href="./">לאתר</a> · <a href="https://leelor123.github.io/shifts/privacy.html">פרטיות</a> · <a href="https://leelor123.github.io/shifts/accessibility.html">הצהרת נגישות</a></footer>
+<footer>שעתי · <a href="./">לאתר</a> · <a href="privacy">פרטיות</a> · <a href="accessibility">הצהרת נגישות</a> · <a href="mailto:lybtn48@gmail.com">יצירת קשר</a></footer>
 <script src="check.js"></script>
 </body>
 </html>
@@ -506,6 +518,8 @@ fs.writeFileSync(path.join(ROOT, 'site', 'sitemap.xml'), `<?xml version="1.0" en
 ${PAGES.map((p) => `  <url><loc>${SITE}/${p.slug}</loc><lastmod>${dated[p.slug + '.html']}</lastmod></url>`).join('\n')}
 </urlset>
 `);
+// the legal pages, the website's own copies (a link to the app's address opens the app on a phone that has it)
+const legal = require('./legal-pages').build(path.join(ROOT, 'src'), path.join(ROOT, 'site'), true);
 fs.writeFileSync(path.join(ROOT, 'site', 'robots.txt'), `User-agent: *\nAllow: /\nSitemap: ${SITE}/sitemap.xml\n`);
-console.log('wrote', PAGES.map((p) => p.slug + '.html').join(', '), '+ sitemap.xml, robots.txt');
+console.log('wrote', PAGES.map((p) => p.slug + '.html').join(', '), '+', legal.join(', '), '+ sitemap.xml, robots.txt');
 console.log('minimum wage', MW.from, MW.hourly, '· youth', Y.map((y) => y.hourly).join(' / '), '· recuperation', recupYear, RECUP, '· rest', REST.join('/'));

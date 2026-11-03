@@ -60,6 +60,6 @@ T.test('the service worker leaves the public legal pages to the server', () => {
   vm.createContext(ctx);
   vm.runInContext(src.replace(/\bself\.addEventListener\b/g, 'addEventListener'), ctx, { filename: 'sw.js' });
   const handled = (p) => { let took = false; onFetch({ request: { method: 'GET', mode: 'navigate', url: 'https://x.io' + p }, respondWith() { took = true; } }); return took; };
-  for (const p of ['/shifts/privacy.html', '/shifts/terms.html', '/shifts/accessibility.html', '/shifts/delete-account.html']) T.eq(handled(p), false, p + ' comes from the server');
+  for (const p of ['/shifts/privacy.html', '/shifts/terms.html', '/shifts/accessibility.html', '/shifts/delete-account.html', '/shifts/licenses.html']) T.eq(handled(p), false, p + ' comes from the server');
   for (const p of ['/shifts/', '/shifts/index.html', '/shifts/index.en.html']) T.eq(handled(p), true, p + ' is the app');
 });

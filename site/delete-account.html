@@ -1,0 +1,65 @@
+<!doctype html>
+<html lang="he" dir="rtl"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>מחיקת חשבון ונתונים · שעתי</title><link rel="icon" href="img/favicon-48.png" type="image/png">
+<link rel="preload" href="fonts/rubik-hebrew.woff2" as="font" type="font/woff2" crossorigin>
+<style>@font-face{font-family: 'Rubik'; font-style: normal; font-weight: 300 800; font-display: swap; src: url(fonts/rubik-arabic.woff2) format('woff2'); unicode-range: U+0600-06FF, U+0750-077F, U+0870-0891, U+0897-08E1, U+08E3-08FF, U+200C-200E, U+2010-2011, U+204F, U+2E41, U+FB50-FDFF, U+FE70-FE74, U+FE76-FEFC, U+102E0-102FB, U+10E60-10E7E, U+10EC2-10EC7, U+10EC9-10EEE, U+10EF0-10EFF, U+1EE00-1EE03, U+1EE05-1EE1F, U+1EE21-1EE22, U+1EE24, U+1EE27, U+1EE29-1EE32, U+1EE34-1EE37, U+1EE39, U+1EE3B, U+1EE42, U+1EE47, U+1EE49, U+1EE4B, U+1EE4D-1EE4F, U+1EE51-1EE52, U+1EE54, U+1EE57, U+1EE59, U+1EE5B, U+1EE5D, U+1EE5F, U+1EE61-1EE62, U+1EE64, U+1EE67-1EE6A, U+1EE6C-1EE72, U+1EE74-1EE77, U+1EE79-1EE7C, U+1EE7E, U+1EE80-1EE89, U+1EE8B-1EE9B, U+1EEA1-1EEA3, U+1EEA5-1EEA9, U+1EEAB-1EEBB, U+1EEF0-1EEF1;}
+@font-face{font-family: 'Rubik'; font-style: normal; font-weight: 300 800; font-display: swap; src: url(fonts/rubik-cyrillic-ext.woff2) format('woff2'); unicode-range: U+0460-052F, U+1C80-1C8A, U+20B4, U+2DE0-2DFF, U+A640-A69F, U+FE2E-FE2F;}
+@font-face{font-family: 'Rubik'; font-style: normal; font-weight: 300 800; font-display: swap; src: url(fonts/rubik-cyrillic.woff2) format('woff2'); unicode-range: U+0301, U+0400-045F, U+0490-0491, U+04B0-04B1, U+2116;}
+@font-face{font-family: 'Rubik'; font-style: normal; font-weight: 300 800; font-display: swap; src: url(fonts/rubik-latin-ext.woff2) format('woff2'); unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C4, U+2113, U+2C60-2C7F, U+A720-A7FF;}
+@font-face{font-family: 'Rubik'; font-style: normal; font-weight: 300 800; font-display: swap; src: url(fonts/rubik-latin.woff2) format('woff2'); unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;}
+@font-face{font-family: 'Rubik'; font-style: normal; font-weight: 300 800; font-display: swap; src: url(fonts/rubik-hebrew.woff2) format('woff2'); unicode-range: U+0307-0308, U+0590-05FF, U+200C-2010, U+20AA, U+25CC, U+FB1D-FB4F;}
+:root{--ink:#1b2220;--muted:#5b625e;--line:#e3dfd4;--bg:#f6f4ee;--card:#fdfcf8;--primary:#1d4a4f;--gold:#e9c987;color-scheme:light}
+@media(prefers-color-scheme:dark){:root{--ink:#e8ede9;--muted:#a5aea9;--line:#26302e;--bg:#0f1413;--card:#151c1b;--primary:#7cc3c9;color-scheme:dark}}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:Rubik,Assistant,system-ui,Arial,sans-serif;line-height:1.7;overflow-wrap:break-word}
+.wrap{max-width:760px;margin:0 auto;padding-inline:16px}
+header.wrap{display:flex;align-items:center;gap:12px;padding-top:24px}
+header img{width:44px;height:44px;border-radius:12px}
+header a{color:var(--ink);text-decoration:none;font-weight:700;display:inline-block;padding-block:10px}
+main.wrap{padding-bottom:8px}
+h1{font-size:1.7rem;margin:8px 0 4px} h2{font-size:1.15rem;margin:22px 0 6px} h4{font-size:1.02rem;margin:18px 0 4px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:16px 18px}
+.meta,.legal-meta{color:var(--muted);font-size:.85rem} a{color:var(--primary)} ul,ol{padding-inline-start:22px}
+.en{font-family:system-ui,Arial,sans-serif} .nw{white-space:nowrap}
+footer.wrap{margin-top:20px;padding-bottom:40px;color:var(--muted);font-size:.85rem}
+footer nav{display:flex;flex-wrap:wrap;gap:0 16px} footer a{display:inline-block;padding-block:10px}
+.skip{position:absolute;inset-inline-start:12px;top:-60px;z-index:5;background:var(--gold);color:#141821;padding:10px 16px;border-radius:12px;font-weight:600;text-decoration:none}
+.skip:focus{top:12px}
+:focus-visible{outline:2px solid var(--primary);outline-offset:2px}
+</style></head><body>
+<a class="skip" href="#main">דילוג לתוכן</a>
+<header class="wrap"><img src="img/icon-192.png" alt=""><a href="./">שעתי</a></header>
+<main id="main" class="wrap">
+<h1>מחיקת חשבון ונתונים</h1><div class="card"><p class="meta">מחיקת חשבון ונתונים · Account &amp; data deletion</p>
+<h2>איך מוחקים את החשבון ואת כל הנתונים</h2>
+<ol>
+<li>פתחו את האפליקציה בטלפון, או בדפדפן בכתובת <a href="https://leelor123.github.io/shifts/">https://leelor123.github.io/shifts/</a>, והתחברו עם אותו חשבון.</li>
+<li>היכנסו ל<b>הגדרות › אני והחשבון › חשבון וסנכרון</b>.</li>
+<li>לחצו <b>"מחק את כל הנתונים מהחשבון"</b> ואשרו.</li>
+</ol>
+<p>המחיקה מיידית וסופית: כל הנתונים שנשמרו בחשבון (משמרות, תפקידים ותעריפים, הגדרות, תלושים, פערים, ימי חופשה ומחלה) נמחקים מהענן, החשבון עצמו נמחק ממערכת ההתחברות, והנתונים נמחקים גם מהמכשיר. גם השורה בטבלת האלופים, הכרטיס בתחרות עם החברים וקוד ההזמנה שלך נמחקים. נשארת רק רשומה של מי הזמין את מי (מזהי חשבון בלבד, בלי שם או אימייל), כדי שכל חשבון יוזמן פעם אחת. לא נשמר עותק נוסף. לפני המחיקה אפשר לייצא גיבוי (הגדרות › גיבוי, ייבוא ונתונים).</p>
+<h2 id="data">מחיקת חלק מהנתונים, בלי למחוק את החשבון</h2>
+<ul>
+<li><b>משמרת או כל רשומה אחרת:</b> פותחים אותה ולוחצים על סמל הפח. המחיקה מגיעה גם לענן.</li>
+<li><b>טבלת האלופים:</b> בטבלת האלופים לוחצים על הכינוי שלכם › <b>יציאה מהטבלה</b>. השורה והתוצאות נמחקות מהענן.</li>
+<li><b>סטטיסטיקת שימוש:</b> <b>הגדרות › אני והחשבון › חשבון וסנכרון</b> › מכבים את <b>שיתוף סטטיסטיקת שימוש</b>. הרשומה נמחקת מהענן.</li>
+<li><b>פניות לתמיכה:</b> אפשר לבקש בפנייה שנמחק אותן.</li>
+<li><b>הנתונים בטלפון:</b> <b>התנתק</b> (באותו מקום בהגדרות) מוחק את הנתונים מהמכשיר ומשאיר אותם בחשבון. תמונת הרקע של כרטיס השכר ודוחות שעות שמייבאים נשמרים בטלפון בלבד.</li>
+</ul>
+<p>אין לכם גישה לאפליקציה? כתבו לנו באימייל <a href="mailto:lybtn48@gmail.com" dir="ltr">lybtn48@gmail.com</a> מהכתובת של החשבון, ונחזור אליכם כדי לוודא שהחשבון שלכם.</p>
+<h2 lang="en" dir="ltr">How to delete your account and data</h2>
+<div lang="en" dir="ltr" class="en"><ol>
+<li>Open the app (or <a href="https://leelor123.github.io/shifts/">https://leelor123.github.io/shifts/</a> in any browser) and sign in with the same account.</li>
+<li>Go to <b>Settings › Me &amp; my account › Account &amp; sync</b> (הגדרות › אני והחשבון › חשבון וסנכרון).</li>
+<li>Tap <b>Delete all data</b> (מחק את כל הנתונים מהחשבון) and confirm.</li></ol>
+<p>Deletion is immediate and permanent: all data stored for the account in the cloud is deleted, the <span class="nw">sign-in</span> account is deleted, and local data on the device is cleared. No copy is retained, except a record of who invited whom (account IDs only), kept so an account is invited only once. If you cannot access the app, email <a href="mailto:lybtn48@gmail.com" dir="ltr">lybtn48@gmail.com</a> from the account's address and we will contact you to verify it is yours.</p>
+<h2 id="data-en">Deleting some data without deleting the account</h2>
+<ul>
+<li><b>A shift or any other record:</b> open it and tap the trash icon. The deletion reaches the cloud too.</li>
+<li><b>Champions table:</b> tap your nickname › <b>Leave the table</b> (יציאה מהטבלה). Your row and scores are deleted from the cloud.</li>
+<li><b>Usage statistics:</b> Settings › Me &amp; my account › Account &amp; sync › turn off <b>usage statistics</b> (שיתוף סטטיסטיקת שימוש). The record is deleted.</li>
+<li><b>Support requests:</b> ask in a request and we delete them.</li>
+<li><b>Data on the phone:</b> <b>Sign out</b> (התנתק, same place) clears the device and keeps the data in the account. The <span class="nw">pay-card</span> photo and imported timesheets stay on the phone only.</li>
+</ul></div></div>
+</main>
+<footer class="wrap"><nav aria-label="מסמכים ויצירת קשר"><a href="privacy">מדיניות פרטיות</a><a href="terms">תנאי שימוש</a><a href="accessibility">הצהרת נגישות</a><a href="delete-account">מחיקת חשבון</a><a href="licenses">רישיונות</a><a href="mailto:lybtn48@gmail.com">יצירת קשר</a><a href="https://github.com/leelor123/shifts/issues">דיווח על תקלה</a></nav></footer>
+</body></html>

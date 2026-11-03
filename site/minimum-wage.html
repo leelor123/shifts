@@ -73,11 +73,19 @@ details p { margin: 8px 0 0; color: var(--ink-2); }
 .note { margin-top: 26px; padding: 14px 16px; border: 1px dashed var(--line); border-radius: 14px; }
 .more { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 10px; }
 .more a { background: var(--surface); border-radius: 999px; padding: 8px 14px; text-decoration: none; box-shadow: 0 2px 10px rgba(10, 20, 45, .06); }
-footer { text-align: center; color: var(--ink-2); font-size: .9rem; padding: 0 16px 32px; }</style>
+footer { text-align: center; color: var(--ink-2); font-size: .9rem; padding: 0 16px 32px; }
+/* a keyboard user skips the header, and sees where the focus is: the home page's skip link and a 2 px ring (accessibility
+ * audit C); on the dark header and the dark boxes the ring is gold or white */
+.skip { position: absolute; inset-inline-start: 12px; top: -60px; z-index: 50; background: var(--gold); color: #141821; padding: 10px 16px; border-radius: 12px; font-weight: 600; text-decoration: none; }
+.skip:focus { top: 12px; }
+:focus-visible { outline: 2px solid var(--brand); outline-offset: 2px; }
+header :focus-visible, .cta :focus-visible { outline-color: var(--gold); }
+.nw { white-space: nowrap; }</style>
 </head>
 <body>
+<a class="skip" href="#main">דילוג לתוכן</a>
 <header><div class="bar"><a class="logo" href="./"><img src="img/apple-touch-icon.png" alt="">שעתי</a><a class="btn" href="https://leelor123.github.io/shifts/">לפתוח את שעתי</a></div></header>
-<main>
+<main id="main">
   <nav class="crumbs" aria-label="ניווט"><a href="./">שעתי</a> › שכר מינימום 2026: כמה מגיע לשעה, גם לנוער</nav>
   <h1>שכר מינימום 2026: כמה מגיע לשעה, גם לנוער</h1>
   <div class="answer">מ-1.4.2026 שכר המינימום לשעה הוא <b>35.40 ₪</b> (לחודש במשרה מלאה: 6,443.85 ₪). מתחת לגיל 18 יש שכר מינימום לנוער, לפי הגיל.</div>
@@ -92,17 +100,17 @@ footer { text-align: center; color: var(--ink-2); font-size: .9rem; padding: 0 1
       <p>במשרה מלאה מבוגר/ת מקבל/ת לפחות 6,443.85 ₪ לחודש. מי שעובד/ת לפי שעה מקבל/ת לפחות 35.40 ₪ על כל שעה, ועל שבת, חג ושעות נוספות יותר מזה.</p>
       <h2>מתי זה משתנה?</h2>
       <p>שכר המינימום מתעדכן בדרך כלל ב-1 באפריל. לפני 1.4.2026 הוא היה 34.32 ₪ לשעה.</p>
-  <div class="cta"><b>שעתי מחשבת את זה בשבילך</b><span>רושמים משמרות, ושעתי מחשבת את השכר לפי החוק: שבתות וחגים לפי העיר, שעות נוספות, שכר מינימום לפי הגיל והבראה. חינם ובלי פרסומות.</span><a class="btn" href="https://leelor123.github.io/shifts/">לפתוח את שעתי</a></div>
+  <div class="cta"><b>שעתי מחשבת את זה בשבילך</b><span>רושמים משמרות, ושעתי מעריכה את השכר לפי חוקי העבודה: שבתות וחגים לפי העיר, שעות נוספות, שכר מינימום לפי הגיל והבראה. חינם ובלי פרסומות, ומנוי Plus לבחירה.</span><a class="btn" href="https://leelor123.github.io/shifts/">לפתוח את שעתי</a></div>
   <h2>שאלות נפוצות</h2>
-  <details><summary>מה שכר המינימום לשעה ב-2026?</summary><p>35.40 ₪ לשעה, מ-1.4.2026.</p></details>
+  <details><summary>מה שכר המינימום לשעה ב-2026?</summary><p>35.40 ₪ לשעה, <span class="nw">מ-1.4.2026.</span></p></details>
   <details><summary>כמה מקבל נער בן 16 לשעה?</summary><p>27.94 ₪ לשעה (75% משכר המינימום).</p></details>
   <details><summary>כמה מקבל נער בן 17 לשעה?</summary><p>30.92 ₪ לשעה (83% משכר המינימום).</p></details>
   <details><summary>ומה מתחת לגיל 16?</summary><p>26.07 ₪ לשעה (70% משכר המינימום).</p></details>
   <p class="src">המקור הרשמי: <a href="https://www.gov.il/he/Departments/Guides/minimum-wage" rel="noopener">שכר מינימום ב-gov.il</a> · <a href="https://www.gov.il/he/Departments/Guides/rights-of-working-youth" rel="noopener">זכויות בני נוער בעבודה ב-gov.il</a></p>
-  <div class="note">שעתי אינה גוף ממשלתי ואינה מייצגת גוף ממשלתי. המידע כללי ואינו ייעוץ משפטי; בהסכם קיבוצי, צו הרחבה ענפי או חוזה אישי ייתכנו זכויות נוספות. עודכן ב-2.11.2026.</div>
+  <div class="note">שעתי אינה גוף ממשלתי ואינה מייצגת גוף ממשלתי. המידע כללי ואינו ייעוץ משפטי; בהסכם קיבוצי, צו הרחבה ענפי או חוזה אישי ייתכנו זכויות נוספות. עודכן ב-3.11.2026.</div>
   <h2>עוד שאלות</h2>
   <div class="more"><a href="check">מרמים אותך? בדיקה של 10 שניות</a><a href="recuperation-pay">דמי הבראה 2026: כמה משלמים ליום, וכמה ימים מגיעים</a><a href="overtime">שעות נוספות: מתי מתחילות וכמה משלמים?</a><a href="sick-pay">ימי מחלה: כמה צוברים וכמה משלמים?</a><a href="travel-expenses">נסיעות לעבודה: כמה המעסיק צריך להחזיר?</a><a href="shabbat-pay">כמה משלמים על עבודה בשבת ובחג?</a><a href="tax-refund">מגיע לי החזר מס? מי זכאי, כמה ואיך מגישים</a></div>
 </main>
-<footer>שעתי · <a href="./">לאתר</a> · <a href="https://leelor123.github.io/shifts/privacy.html">פרטיות</a> · <a href="https://leelor123.github.io/shifts/accessibility.html">הצהרת נגישות</a></footer>
+<footer>שעתי · <a href="./">לאתר</a> · <a href="privacy">פרטיות</a> · <a href="accessibility">הצהרת נגישות</a> · <a href="mailto:lybtn48@gmail.com">יצירת קשר</a></footer>
 </body>
 </html>
