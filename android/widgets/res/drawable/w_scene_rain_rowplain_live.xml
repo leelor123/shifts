@@ -1,0 +1,93 @@
+<?xml version="1.0" encoding="utf-8"?>
+<animated-vector xmlns:android="http://schemas.android.com/apk/res/android" xmlns:aapt="http://schemas.android.com/aapt" android:drawable="@drawable/w_scene_rain_rowplain">
+    <target android:name="drop0">
+        <aapt:attr name="android:animation">
+            <objectAnimator android:propertyName="translateY" android:valueFrom="0" android:valueTo="124" android:duration="5200" android:repeatCount="infinite" android:interpolator="@android:interpolator/linear" android:startOffset="0" />
+        </aapt:attr>
+    </target>
+    <target android:name="spin0">
+        <aapt:attr name="android:animation">
+            <objectAnimator android:propertyName="rotation" android:valueFrom="0" android:valueTo="-360" android:duration="5200" android:repeatCount="infinite" android:interpolator="@android:interpolator/linear" />
+        </aapt:attr>
+    </target>
+    <target android:name="drop1">
+        <aapt:attr name="android:animation">
+            <objectAnimator android:propertyName="translateY" android:valueFrom="0" android:valueTo="124" android:duration="6500" android:repeatCount="infinite" android:interpolator="@android:interpolator/linear" android:startOffset="900" />
+        </aapt:attr>
+    </target>
+    <target android:name="spin1">
+        <aapt:attr name="android:animation">
+            <objectAnimator android:propertyName="rotation" android:valueFrom="0" android:valueTo="360" android:duration="6500" android:repeatCount="infinite" android:interpolator="@android:interpolator/linear" />
+        </aapt:attr>
+    </target>
+    <target android:name="drop2">
+        <aapt:attr name="android:animation">
+            <objectAnimator android:propertyName="translateY" android:valueFrom="0" android:valueTo="124" android:duration="7800" android:repeatCount="infinite" android:interpolator="@android:interpolator/linear" android:startOffset="1800" />
+        </aapt:attr>
+    </target>
+    <target android:name="spin2">
+        <aapt:attr name="android:animation">
+            <objectAnimator android:propertyName="rotation" android:valueFrom="0" android:valueTo="-360" android:duration="7800" android:repeatCount="infinite" android:interpolator="@android:interpolator/linear" />
+        </aapt:attr>
+    </target>
+    <target android:name="drop3">
+        <aapt:attr name="android:animation">
+            <objectAnimator android:propertyName="translateY" android:valueFrom="0" android:valueTo="124" android:duration="9100" android:repeatCount="infinite" android:interpolator="@android:interpolator/linear" android:startOffset="2700" />
+        </aapt:attr>
+    </target>
+    <target android:name="spin3">
+        <aapt:attr name="android:animation">
+            <objectAnimator android:propertyName="rotation" android:valueFrom="0" android:valueTo="360" android:duration="9100" android:repeatCount="infinite" android:interpolator="@android:interpolator/linear" />
+        </aapt:attr>
+    </target>
+    <target android:name="drop4">
+        <aapt:attr name="android:animation">
+            <objectAnimator android:propertyName="translateY" android:valueFrom="0" android:valueTo="124" android:duration="6200" android:repeatCount="infinite" android:interpolator="@android:interpolator/linear" android:startOffset="3600" />
+        </aapt:attr>
+    </target>
+    <target android:name="spin4">
+        <aapt:attr name="android:animation">
+            <objectAnimator android:propertyName="rotation" android:valueFrom="0" android:valueTo="-360" android:duration="6200" android:repeatCount="infinite" android:interpolator="@android:interpolator/linear" />
+        </aapt:attr>
+    </target>
+    <target android:name="drop5">
+        <aapt:attr name="android:animation">
+            <objectAnimator android:propertyName="translateY" android:valueFrom="0" android:valueTo="124" android:duration="7500" android:repeatCount="infinite" android:interpolator="@android:interpolator/linear" android:startOffset="4500" />
+        </aapt:attr>
+    </target>
+    <target android:name="spin5">
+        <aapt:attr name="android:animation">
+            <objectAnimator android:propertyName="rotation" android:valueFrom="0" android:valueTo="360" android:duration="7500" android:repeatCount="infinite" android:interpolator="@android:interpolator/linear" />
+        </aapt:attr>
+    </target>
+    <target android:name="drop6">
+        <aapt:attr name="android:animation">
+            <objectAnimator android:propertyName="translateY" android:valueFrom="0" android:valueTo="124" android:duration="8800" android:repeatCount="infinite" android:interpolator="@android:interpolator/linear" android:startOffset="400" />
+        </aapt:attr>
+    </target>
+    <target android:name="spin6">
+        <aapt:attr name="android:animation">
+            <objectAnimator android:propertyName="rotation" android:valueFrom="0" android:valueTo="-360" android:duration="8800" android:repeatCount="infinite" android:interpolator="@android:interpolator/linear" />
+        </aapt:attr>
+    </target>
+    <target android:name="drop7">
+        <aapt:attr name="android:animation">
+            <objectAnimator android:propertyName="translateY" android:valueFrom="0" android:valueTo="124" android:duration="5900" android:repeatCount="infinite" android:interpolator="@android:interpolator/linear" android:startOffset="1300" />
+        </aapt:attr>
+    </target>
+    <target android:name="spin7">
+        <aapt:attr name="android:animation">
+            <objectAnimator android:propertyName="rotation" android:valueFrom="0" android:valueTo="360" android:duration="5900" android:repeatCount="infinite" android:interpolator="@android:interpolator/linear" />
+        </aapt:attr>
+    </target>
+    <target android:name="drop8">
+        <aapt:attr name="android:animation">
+            <objectAnimator android:propertyName="translateY" android:valueFrom="0" android:valueTo="124" android:duration="7200" android:repeatCount="infinite" android:interpolator="@android:interpolator/linear" android:startOffset="2200" />
+        </aapt:attr>
+    </target>
+    <target android:name="spin8">
+        <aapt:attr name="android:animation">
+            <objectAnimator android:propertyName="rotation" android:valueFrom="0" android:valueTo="-360" android:duration="7200" android:repeatCount="infinite" android:interpolator="@android:interpolator/linear" />
+        </aapt:attr>
+    </target>
+</animated-vector>
