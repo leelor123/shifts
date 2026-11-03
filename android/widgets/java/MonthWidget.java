@@ -15,8 +15,6 @@ public class MonthWidget extends ShaatiWidget {
         month(c, v, d, l);
         l.coin(v, face(d));
         l.dial(v);
-        // the coin sits in the top corner on the end side (left in Hebrew): keep the label out from under it
-        if (l.coin()) v.setViewPadding(R.id.w_label, Math.round(44 * c.getResources().getDisplayMetrics().density), 0, 0, 0);
         v.setOnClickPendingIntent(R.id.w_root, open(c, null, 200));
         return v;
     }
@@ -44,7 +42,7 @@ public class MonthWidget extends ShaatiWidget {
         if (g != null) {
             v.setViewVisibility(R.id.w_bar, View.VISIBLE);
             v.setProgressBar(R.id.w_bar, 100, pct(g), false);
-            text(v, R.id.w_goal, g.optInt("pct", 0) + "% מיעד " + s(g, "of") + (pace.isEmpty() ? "" : " · צפי " + pace));
+            text(v, R.id.w_goal, g.optInt("pct", 0) + "% מיעד " + s(g, "of"));
         } else {
             v.setViewVisibility(R.id.w_bar, View.GONE);
             text(v, R.id.w_goal, pace.isEmpty() ? "" : "צפי לסוף החודש: " + pace);

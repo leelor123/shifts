@@ -19,9 +19,6 @@ public class ComboWidget extends ShaatiWidget {
         text(v, R.id.w_pay, paydayText(d == null ? null : d.optJSONObject("payday")));
         l.coin(v, face(d));
         l.dial(v);
-        // the coin stands in the bottom corner on the end side (left in Hebrew): keep the month lines clear of it
-        float dp = c.getResources().getDisplayMetrics().density;
-        v.setViewPadding(R.id.w_body, Math.round((l.coin() ? 58 : 0) * dp), 0, Math.round(2 * dp), 0);
         return v;
     }
 }

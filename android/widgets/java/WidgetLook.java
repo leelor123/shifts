@@ -93,11 +93,10 @@ final class WidgetLook {
         for (int f : FACES) v.setViewVisibility(f, coin() && f == face ? View.VISIBLE : View.GONE);
     }
 
-    /** The turning dial behind the numbers, in this look's gold or accent; the coin look has the coin instead. */
+    /** The little clock with its turning second hand (w_clock_box), in this look's icon colour; the coin look has the coin instead. */
     void dial(RemoteViews v) {
-        v.setViewVisibility(R.id.w_dial, coin() ? View.GONE : View.VISIBLE);
-        // gold on navy needs more strength than ink on white to read as gold, not grey
-        v.setFloat(R.id.w_dial, "setAlpha", style == MIDNIGHT ? 0.6f : style == WALLPAPER ? 0.45f : 0.4f);
-        if (Build.VERSION.SDK_INT >= 31) v.setColorStateList(R.id.w_dial, "setIndeterminateTintList", label);
+        v.setViewVisibility(R.id.w_clock_box, coin() ? View.GONE : View.VISIBLE);
+        background(v, R.id.w_clock_box, dot);
+        if (Build.VERSION.SDK_INT >= 31) v.setColorStateList(R.id.w_dial, "setIndeterminateTintList", icon);
     }
 }

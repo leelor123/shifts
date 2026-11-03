@@ -67,8 +67,14 @@ public class WidgetStyleActivity extends Activity {
 
         int current = WidgetLook.forWidget(this, widgetId).style;
         String kind = info.provider.getClassName();
-        int h = kind.endsWith("ComboWidget") ? 176 : kind.endsWith("MonthWidget") ? 156 : 80;
+        int h = kind.endsWith("ComboWidget") ? 196 : kind.endsWith("MonthWidget") ? 156 : 84;
         int w = kind.endsWith("MonthWidget") ? dp(156) : ViewGroup.LayoutParams.MATCH_PARENT;
+        // the widget's real size on this home screen (portrait: the narrow width and the tall height), so each look is
+        // drawn exactly as it will stand there
+        Bundle size = AppWidgetManager.getInstance(this).getAppWidgetOptions(widgetId);
+        int realW = size.getInt(AppWidgetManager.OPTION_APPWIDGET_MIN_WIDTH), realH = size.getInt(AppWidgetManager.OPTION_APPWIDGET_MAX_HEIGHT);
+        if (realH > 0) h = realH;
+        if (realW > 0) w = Math.min(dp(realW), getResources().getDisplayMetrics().widthPixels - dp(64));
         for (int style : WidgetLook.available()) col.addView(option(style, style == current, w, dp(h)));
         return scroll;
     }

@@ -19,7 +19,6 @@ public class GoalWidget extends ShaatiWidget {
         l.textColor(c, v, R.id.w_sub, l.sub);
         l.bar(v, R.id.w_bar);
         l.coin(v, face(d));
-        l.dial(v);
         v.setViewVisibility(R.id.w_icon_box, l.coin() ? View.GONE : View.VISIBLE);
         v.setOnClickPendingIntent(R.id.w_root, open(c, null, 300));
         JSONObject sv = d == null ? null : d.optJSONObject("saving");
