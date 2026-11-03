@@ -77,7 +77,7 @@
         const a = age();
         return `${say(a != null && a < 18 ? 'wow' : 'happy', a != null ? (a < 18 ? `גיל ${a}! יש לך זכויות מיוחדות, נדאג להן 🛡️` : `גיל ${a}, מעולה 👍`) : 'שאלה קטנה על הגיל 🎂')}
         <h1>מתי נולדת?</h1>
-        <label class="field"><input class="input" type="date" id="ob-birth" data-pick="birth" value="${esc(A.birth)}" min="1940-01-01" max="${U.addDays(today, -365 * 12)}" placeholder="בחירת תאריך לידה"></label>
+        <label class="field"><input class="input" type="date" id="ob-birth" data-pick="birth" value="${esc(A.birth)}" min="1940-01-01" max="${U.addDays(today, -365 * 13)}" placeholder="בחירת תאריך לידה"></label>
         <div class="ob-live" id="ob-live-age"></div>
         <div class="ob-chips">${chip('data-adult', '1', 'אני מעל 18, מעדיף/ה לא לפרט', A.adult)}</div>
         ${why('מתחת לגיל 18 יש שכר מינימום אחר, לא משלמים מס, ויש חוקים מיוחדים (כמה שעות מותר לעבוד, הפסקות ועוד). נבדוק הכול בשבילך.')}`;

@@ -128,9 +128,18 @@
     later = setTimeout(() => Invite.claim(), 3000);
   };
   /** Deleting the account: my code goes (who invited whom stays: an account is invited once), and the gift. */
-  Invite.forget = async () => {
+  /*  Strict (deleting the account): a code that could not be deleted throws, so the sign-in account stays to delete it
+   *  with. The rule reads the code's owner, so a code already gone is refused: it is looked up first, and gone is done. */
+  Invite.forget = async (opts) => {
     const c = S.settings.refCode;
-    if (c && signedIn()) { try { const { fs, db } = await Cloud().sdk(); await fs.deleteDoc(fs.doc(db, 'refc', c)); } catch (e) { /* gone already */ } }
+    if (c && signedIn()) {
+      try {
+        const { fs, db } = await Cloud().sdk();
+        const ref = fs.doc(db, 'refc', c);
+        const snap = await fs.getDoc(ref);
+        if (snap.exists()) await fs.deleteDoc(ref);
+      } catch (e) { if (opts && opts.strict) throw e; }
+    }
     await Store.setMeta({ plusGift: null });
   };
 })(typeof window !== 'undefined' ? window : globalThis);
