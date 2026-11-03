@@ -5,7 +5,7 @@
  * background and activates when the user taps "עדכן".
  * IndexedDB data is never touched by updates.
  * ============================================================ */
-const VERSION = '1.32.1-c2104f7a';
+const VERSION = '1.32.1-597979c5';
 const SHELL = 'shiftpay-shell-' + VERSION;
 const RUNTIME = 'shiftpay-runtime-v1';
 const FONTS = ['rubik-hebrew', 'rubik-latin', 'rubik-latin-ext', 'rubik-arabic', 'rubik-cyrillic', 'rubik-cyrillic-ext', 'fredoka-hebrew', 'fredoka-latin', 'fredoka-latin-ext'].map((f) => './fonts/' + f + '.woff2');
@@ -95,6 +95,10 @@ self.addEventListener('fetch', (e) => {
   if (req.method === 'POST' && url.origin === self.location.origin && url.pathname.endsWith('/share-in')) { e.respondWith(receiveShare(req)); return; }
   if (req.method !== 'GET') return;
   if (url.hostname === 'api.anthropic.com') return; // never cache API calls
+  // only the app's own pages are the app: any other page at this address (the privacy policy, the terms, the
+  // accessibility statement, deleting an account) is that page from the server. Every page load used to get the app,
+  // so the website's links to the policy opened the app for anyone who had used it (the owner, 3 Nov 2026)
+  if (req.mode === 'navigate' && url.origin === self.location.origin && url.pathname !== new URL(self.registration.scope).pathname && !PAGE_FILE.test(url.pathname)) return;
   if (req.mode === 'navigate') {
     e.respondWith((async () => {
       const named = PAGE_FILE.exec(url.pathname);
