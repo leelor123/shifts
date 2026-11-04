@@ -8,9 +8,10 @@ import org.json.JSONObject;
 /** "Start a shift" in one tap; while a shift runs, its clock and an "end" button. */
 public class ShiftWidget extends ShaatiWidget {
     @Override
-    RemoteViews build(Context c, JSONObject d) {
+    RemoteViews build(Context c, JSONObject d, WidgetLook l) {
         RemoteViews v = new RemoteViews(c.getPackageName(), R.layout.w_shift);
-        shiftBlock(c, v, d, R.id.w_icon, R.id.w_title, R.id.w_clock, R.id.w_sub, R.id.w_stop, 100);
+        l.frame(v);
+        shiftBlock(c, v, d, l, true, 100);
         v.setOnClickPendingIntent(R.id.w_root, open(c, null, 109));
         return v;
     }

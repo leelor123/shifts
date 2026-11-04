@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Android 12+: the launcher's own widget corners, so Shaati's widgets match the others on the home screen -->
+<resources>
+    <dimen name="w_radius">@android:dimen/system_app_widget_background_radius</dimen>
+    <dimen name="w_inner_radius">@android:dimen/system_app_widget_inner_radius</dimen>
+</resources>

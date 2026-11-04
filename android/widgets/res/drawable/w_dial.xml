@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- The clock icon: the gold dial of the app's pay card as a small whole icon, its second hand going round once a
+     minute (w_dial_live). Each look tints it (WidgetLook.dial); below Android 12 it stays this gold. -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android" android:width="48dp" android:height="48dp" android:viewportWidth="48" android:viewportHeight="48">
+    <path android:pathData="M3,24a21,21 0,1 0,42 0a21,21 0,1 0,-42 0z" android:strokeColor="#FFC9A24D" android:strokeWidth="3" />
+    <path android:pathData="M24,6.5v4M41.5,24h-4M24,41.5v-4M6.5,24h4M32.75,8.84l-1,1.73M39.16,15.25l-1.73,1M39.16,32.75l-1.73,-1M32.75,39.16l-1,-1.73M15.25,39.16l1,-1.73M8.84,32.75l1.73,-1M8.84,15.25l1.73,1M15.25,8.84l1,1.73" android:strokeColor="#FFC9A24D" android:strokeWidth="2.2" android:strokeLineCap="round" />
+    <group android:name="hand" android:pivotX="24" android:pivotY="24">
+        <path android:pathData="M24,28L24,9" android:strokeColor="#FFC9A24D" android:strokeWidth="2.4" android:strokeLineCap="round" />
+    </group>
+    <path android:pathData="M21.4,24a2.6,2.6 0,1 0,5.2 0a2.6,2.6 0,1 0,-5.2 0z" android:fillColor="#FFC9A24D" />
+</vector>

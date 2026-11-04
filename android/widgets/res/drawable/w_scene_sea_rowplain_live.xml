@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<animated-vector xmlns:android="http://schemas.android.com/apk/res/android" xmlns:aapt="http://schemas.android.com/aapt" android:drawable="@drawable/w_scene_sea_rowplain">
+    <target android:name="waves_far">
+        <aapt:attr name="android:animation">
+            <objectAnimator android:propertyName="translateX" android:valueFrom="0" android:valueTo="-100" android:duration="14000" android:repeatCount="infinite" android:interpolator="@android:interpolator/linear" />
+        </aapt:attr>
+    </target>
+    <target android:name="waves_near">
+        <aapt:attr name="android:animation">
+            <objectAnimator android:propertyName="translateX" android:valueFrom="-100" android:valueTo="0" android:duration="9000" android:repeatCount="infinite" android:interpolator="@android:interpolator/linear" />
+        </aapt:attr>
+    </target>
+</animated-vector>

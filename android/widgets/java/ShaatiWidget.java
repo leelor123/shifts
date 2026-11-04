@@ -15,9 +15,10 @@ import org.json.JSONObject;
 import java.util.Calendar;
 
 /**
- * What every Shaati widget shares: drawing from the last snapshot (WidgetData), opening the app (straight
- * into starting or ending a shift), the running shift's clock (counted by the phone itself, so it ticks
- * without the app), and the days left until payday (counted on the phone, so it is right every morning).
+ * What every Shaati widget shares: drawing from the last snapshot (WidgetData) in the look chosen for that
+ * widget (WidgetLook), opening the app (straight into starting or ending a shift), the running shift's clock
+ * (counted by the phone itself, so it ticks without the app), and the days left until payday (counted on the
+ * phone, so it is right every morning).
  *
  * The snapshot (JSON, all money already written out by the app):
  *   v, at, period, periodTo (yyyy-mm-dd), gross, net, hours, shifts, today, pace,
@@ -27,13 +28,18 @@ import java.util.Calendar;
 abstract class ShaatiWidget extends AppWidgetProvider {
     static final String SITE = "https://leelor123.github.io/shifts/?source=twa";
 
-    /** The widget's picture for this snapshot (null = the app was never opened since the widget was added). */
-    abstract RemoteViews build(Context c, JSONObject d);
+    /** The widget's picture for this snapshot (d null = the app was never opened since the widget was added). */
+    abstract RemoteViews build(Context c, JSONObject d, WidgetLook l);
 
     @Override
     public void onUpdate(Context c, AppWidgetManager m, int[] ids) {
-        RemoteViews v = build(c, WidgetData.load(c));
-        m.updateAppWidget(ids, v);
+        JSONObject d = WidgetData.load(c);
+        for (int id : ids) m.updateAppWidget(id, build(c, d, WidgetLook.forWidget(c, id)));
+    }
+
+    @Override
+    public void onDeleted(Context c, int[] ids) {
+        for (int id : ids) WidgetLook.forget(c, id);
     }
 
     /** Opens Shaati; with an action ("start", "stop") the app does it as it opens. */
@@ -51,6 +57,10 @@ abstract class ShaatiWidget extends AppWidgetProvider {
     static void text(RemoteViews v, int id, String t) {
         v.setTextViewText(id, t);
         v.setViewVisibility(id, t == null || t.isEmpty() ? View.GONE : View.VISIBLE);
+    }
+
+    static int pct(JSONObject o) {
+        return o == null ? 0 : Math.max(0, Math.min(100, o.optInt("pct", 0)));
     }
 
     /** True when the snapshot belongs to a pay period that has already ended (the app was not opened since). */
@@ -78,14 +88,31 @@ abstract class ShaatiWidget extends AppWidgetProvider {
         }
     }
 
-    /** "עוד 5 ימים למשכורת", "מחר משכורת", "היום משכורת! 🎉", or "" once it passed. */
+    static int daysToPayday(JSONObject d) {
+        JSONObject p = d == null ? null : d.optJSONObject("payday");
+        return p == null ? Integer.MIN_VALUE : daysUntil(p.optString("date", ""));
+    }
+
+    /** "עוד 5 ימים למשכורת", "מחר משכורת", "היום משכורת", or "" once it passed. */
     static String paydayText(JSONObject pay) {
         if (pay == null) return "";
         int n = daysUntil(pay.optString("date", ""));
         if (n == Integer.MIN_VALUE || n < 0) return "";
-        if (n == 0) return "היום משכורת! 🎉";
+        if (n == 0) return "היום משכורת";
         if (n == 1) return "מחר משכורת";
         return "עוד " + n + " ימים למשכורת";
+    }
+
+    /**
+     * The coin's face for this snapshot: wide eyes before the first numbers, asleep when the numbers are old,
+     * sunglasses during a shift, a party hat on payday or when a goal is reached, otherwise a big smile.
+     */
+    static int face(JSONObject d) {
+        if (d == null) return R.id.w_face_wow;
+        if (stale(d)) return R.id.w_face_sleepy;
+        if (d.optJSONObject("active") != null) return R.id.w_face_cool;
+        if (daysToPayday(d) == 0 || pct(d.optJSONObject("goal")) >= 100 || pct(d.optJSONObject("saving")) >= 100) return R.id.w_face_party;
+        return R.id.w_face_happy;
     }
 
     /**
@@ -98,28 +125,46 @@ abstract class ShaatiWidget extends AppWidgetProvider {
         v.setChronometer(id, SystemClock.elapsedRealtime() - Math.max(0, worked), null, breakAt <= 0);
     }
 
-    /** The start / end button and the clock of a widget that has one (ShiftWidget, ComboWidget). */
-    static void shiftBlock(Context c, RemoteViews v, JSONObject d, int icon, int title, int clockId, int sub, int stop, int request) {
+    /**
+     * The start / end row (ShiftWidget, ComboWidget): a round go button with the start, clock or coffee icon, the
+     * title or the running clock, a line under it, and the end button while a shift runs. With coinRow (the
+     * shift widget in the coin look) the coin takes the round button's place and the button moves to the end.
+     */
+    static void shiftBlock(Context c, RemoteViews v, JSONObject d, WidgetLook l, boolean coinRow, int request) {
+        boolean coin = coinRow && l.coin();
+        l.textColor(c, v, R.id.w_title, l.text);
+        l.textColor(c, v, R.id.w_clock, l.text);
+        l.textColor(c, v, R.id.w_sub, l.sub);
+        if (coinRow) l.coin(v, face(d));
+        v.setViewVisibility(R.id.w_go, coin ? View.GONE : View.VISIBLE);
         JSONObject a = d == null ? null : d.optJSONObject("active");
         if (a != null) {
             boolean onBreak = a.optLong("breakAt", 0) > 0;
-            v.setTextViewText(icon, onBreak ? "☕" : "⏱");
-            v.setViewVisibility(title, View.GONE);
-            v.setViewVisibility(clockId, View.VISIBLE);
-            clock(v, clockId, a);
-            text(v, sub, (onBreak ? "בהפסקה · " : "") + s(a, "role") + (s(a, "rate").isEmpty() ? "" : " · " + s(a, "rate")));
-            v.setViewVisibility(stop, View.VISIBLE);
-            v.setOnClickPendingIntent(stop, open(c, "stop", request + 1));
-            v.setOnClickPendingIntent(icon, open(c, null, request + 2));
+            v.setImageViewResource(R.id.w_go_icon, onBreak ? R.drawable.w_ic_coffee : R.drawable.w_ic_clock);
+            v.setContentDescription(R.id.w_go, "פתיחת שעתי");
+            v.setViewVisibility(R.id.w_title, View.GONE);
+            v.setViewVisibility(R.id.w_clock, View.VISIBLE);
+            clock(v, R.id.w_clock, a);
+            text(v, R.id.w_sub, (onBreak ? "בהפסקה · " : "") + s(a, "role") + (s(a, "rate").isEmpty() ? "" : " · " + s(a, "rate")));
+            v.setViewVisibility(R.id.w_play, View.GONE);
+            v.setViewVisibility(R.id.w_stop, View.VISIBLE);
+            v.setOnClickPendingIntent(R.id.w_stop, open(c, "stop", request + 1));
+            v.setOnClickPendingIntent(R.id.w_go, open(c, null, request + 2));
         } else {
-            v.setTextViewText(icon, "▶");
-            v.setViewVisibility(clockId, View.GONE);
-            v.setViewVisibility(title, View.VISIBLE);
-            v.setTextViewText(title, "התחל משמרת");
-            text(v, sub, d == null ? "" : stale(d) ? "" : "היום " + s(d, "today") + " · החודש " + s(d, "gross"));
-            v.setViewVisibility(stop, View.GONE);
-            v.setOnClickPendingIntent(icon, open(c, "start", request + 3));
-            v.setOnClickPendingIntent(title, open(c, "start", request + 3));
+            v.setImageViewResource(R.id.w_go_icon, R.drawable.w_ic_play);
+            v.setContentDescription(R.id.w_go, "התחל משמרת");
+            v.setViewVisibility(R.id.w_clock, View.GONE);
+            v.setViewVisibility(R.id.w_title, View.VISIBLE);
+            v.setTextViewText(R.id.w_title, l.coin() ? "נתחיל משמרת?" : "התחל משמרת");
+            // today only once it has earned something: the line stays short enough for the month to fit whole
+            String today = s(d, "today").matches(".*[1-9].*") ? "היום " + s(d, "today") + " · " : "";
+            text(v, R.id.w_sub, d == null || stale(d) ? "" : today + "החודש " + s(d, "gross"));
+            v.setViewVisibility(R.id.w_stop, View.GONE);
+            v.setViewVisibility(R.id.w_play, coin ? View.VISIBLE : View.GONE);
+            PendingIntent start = open(c, "start", request + 3);
+            v.setOnClickPendingIntent(R.id.w_go, start);
+            v.setOnClickPendingIntent(R.id.w_title, start);
+            v.setOnClickPendingIntent(R.id.w_play, start);
         }
     }
 }

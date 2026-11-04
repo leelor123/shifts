@@ -38,7 +38,9 @@ final class WidgetData {
         String s = c.getSharedPreferences(PREFS, Context.MODE_PRIVATE).getString(KEY, null);
         if (s == null) return null;
         try {
-            return new JSONObject(s);
+            JSONObject o = new JSONObject(s);
+            // the app no longer holds any data (signed out, everything deleted): the widgets go back to their first look
+            return o.optBoolean("empty", false) ? null : o;
         } catch (Exception e) {
             return null;
         }

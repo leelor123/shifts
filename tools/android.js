@@ -123,14 +123,27 @@ function patchLauncher() {
     protected com.google.androidbrowserhelper.trusted.TwaLauncher createTwaLauncher() {
         try {
             if (getPackageManager().getApplicationInfo(CHROME, 0).enabled) {
-                return mShaatiLauncher = new com.google.androidbrowserhelper.trusted.TwaLauncher(this, CHROME,
+                mShaatiLauncher = new com.google.androidbrowserhelper.trusted.TwaLauncher(this, CHROME,
                         com.google.androidbrowserhelper.trusted.SessionStore.makeSessionId(getTaskId()),
                         new com.google.androidbrowserhelper.trusted.SharedPreferencesTokenStore(this));
+                warmUpForWidgets();
+                return mShaatiLauncher;
             }
         } catch (PackageManager.NameNotFoundException e) {
             // not installed: fall back to the default browser
         }
-        return mShaatiLauncher = super.createTwaLauncher();
+        mShaatiLauncher = super.createTwaLauncher();
+        warmUpForWidgets();
+        return mShaatiLauncher;
+    }
+
+    // Chrome opens a message channel only after some app has warmed it up (CustomTabsConnection refuses the
+    // request until then), and the browser helper never does: warm it up now, while the page is still loading.
+    // Without this the widgets never received their numbers (found on the phone, 3 Nov 2026).
+    private void warmUpForWidgets() {
+        String browser = mShaatiLauncher == null ? null : mShaatiLauncher.getProviderPackage();
+        boolean bound = browser != null && androidx.browser.customtabs.CustomTabsClient.connectAndInitialize(getApplicationContext(), browser);
+        android.util.Log.i("ShaatiWidgets", "warm-up " + browser + ": " + bound);
     }
 
     // Shaati: the home-screen widgets (WidgetData) get their numbers from the web app over a message channel.
@@ -148,10 +161,7 @@ function patchLauncher() {
             @Override
             public void onNavigationEvent(int navigationEvent, Bundle extras) {
                 if (inner != null) inner.onNavigationEvent(navigationEvent, extras);
-                if (navigationEvent == NAVIGATION_FINISHED && !mChannelRequested) {
-                    androidx.browser.customtabs.CustomTabsSession s = widgetSession();
-                    if (s != null) mChannelRequested = s.requestPostMessageChannel(SHAATI_ORIGIN, SHAATI_ORIGIN, new Bundle());
-                }
+                if (navigationEvent == NAVIGATION_FINISHED) requestChannel(0);
             }
 
             @Override
@@ -173,15 +183,28 @@ function patchLauncher() {
             public void onMessageChannelReady(Bundle extras) {
                 if (inner != null) inner.onMessageChannelReady(extras);
                 androidx.browser.customtabs.CustomTabsSession s = widgetSession();
-                if (s != null) s.postMessage("shaati:widgets", null);
+                int sent = s == null ? -1 : s.postMessage("shaati:widgets", null);
+                android.util.Log.i("ShaatiWidgets", "channel ready; hello sent: " + sent);
             }
 
             @Override
             public void onPostMessage(String message, Bundle extras) {
                 if (inner != null) inner.onPostMessage(message, extras);
+                android.util.Log.i("ShaatiWidgets", "numbers received (" + (message == null ? 0 : message.length()) + " chars)");
                 WidgetData.save(getApplicationContext(), message);
             }
         };
+    }
+
+    // asks Chrome for the channel; Chrome may still be warming up, so a refusal is tried again a few times
+    private void requestChannel(final int attempt) {
+        if (mChannelRequested) return;
+        androidx.browser.customtabs.CustomTabsSession s = widgetSession();
+        if (s != null) mChannelRequested = s.requestPostMessageChannel(SHAATI_ORIGIN, SHAATI_ORIGIN, new Bundle());
+        android.util.Log.i("ShaatiWidgets", "channel request " + attempt + ": session " + (s != null) + ", accepted " + mChannelRequested);
+        if (!mChannelRequested && attempt < 4) {
+            new android.os.Handler(android.os.Looper.getMainLooper()).postDelayed(() -> requestChannel(attempt + 1), 1500);
+        }
     }
 
     // the launcher's session (it keeps it private): found by its type, which survives code shrinking
@@ -232,6 +255,10 @@ function patchWidgets() {
         </receiver>\n`;
   m = m.replace('</application>', `        <!-- Shaati: the message channel the widgets' numbers come through, and the widgets -->
         <service android:name="androidx.browser.customtabs.PostMessageService" android:exported="true" />
+        <!-- choosing a widget's look: the launcher opens it when a widget is added, and from the widget's settings -->
+        <activity android:name=".WidgetStyleActivity" android:exported="true" android:theme="@style/WidgetPickTheme" android:excludeFromRecents="true" android:taskAffinity="">
+            <intent-filter><action android:name="android.appwidget.action.APPWIDGET_CONFIGURE" /></intent-filter>
+        </activity>
 ${receiver('ShiftWidget', 'shift')}${receiver('MonthWidget', 'month')}${receiver('GoalWidget', 'goal')}${receiver('PaydayWidget', 'payday')}${receiver('ComboWidget', 'combo')}    </application>`);
   fs.writeFileSync(mf, m);
   const gf = path.join(TWA, 'app', 'build.gradle');

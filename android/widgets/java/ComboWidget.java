@@ -8,13 +8,17 @@ import org.json.JSONObject;
 /** All together: start / end a shift with its clock, this month with the goal, and the next payday. */
 public class ComboWidget extends ShaatiWidget {
     @Override
-    RemoteViews build(Context c, JSONObject d) {
+    RemoteViews build(Context c, JSONObject d, WidgetLook l) {
         RemoteViews v = new RemoteViews(c.getPackageName(), R.layout.w_combo);
+        l.frame(v);
+        l.background(v, R.id.w_chip, l.chip);
         v.setOnClickPendingIntent(R.id.w_root, open(c, null, 500));
-        shiftBlock(c, v, d, R.id.w_icon, R.id.w_title, R.id.w_clock, R.id.w_sub, R.id.w_stop, 510);
-        MonthWidget.month(v, d, R.id.w_label, R.id.w_amount, R.id.w_line, R.id.w_bar, R.id.w_goal);
-        String pay = paydayText(d == null ? null : d.optJSONObject("payday"));
-        text(v, R.id.w_pay, pay.isEmpty() ? "" : "💸 " + pay);
+        shiftBlock(c, v, d, l, false, 510);
+        MonthWidget.month(c, v, d, l);
+        l.textColor(c, v, R.id.w_pay, l.label);
+        text(v, R.id.w_pay, paydayText(d == null ? null : d.optJSONObject("payday")));
+        l.coin(v, face(d));
+        l.dial(v);
         return v;
     }
 }

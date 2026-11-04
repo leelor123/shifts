@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="utf-8"?>
+<vector xmlns:android="http://schemas.android.com/apk/res/android" xmlns:aapt="http://schemas.android.com/aapt" android:width="360dp" android:height="100dp" android:viewportWidth="360" android:viewportHeight="100">
+    <group android:name="drop0">
+        <group android:name="spin0" android:pivotX="15" android:pivotY="-10">
+            <path android:pathData="M9,-10a6,6 0,1 0,12,0a6,6 0,1 0,-12,0z" android:fillColor="#E6FFC53D" android:strokeColor="#E6E8990C" android:strokeWidth="1.6" />
+        </group>
+    </group>
+    <group android:name="drop1">
+        <group android:name="spin1" android:pivotX="80" android:pivotY="-10">
+            <path android:pathData="M76.5,-13.5h7v7h-7z" android:fillColor="#CC2EE59D" />
+        </group>
+    </group>
+    <group android:name="drop2">
+        <group android:name="spin2" android:pivotX="123" android:pivotY="-10">
+            <path android:pathData="M119.5,-13.5h7v7h-7z" android:fillColor="#CCFF8FAB" />
+        </group>
+    </group>
+    <group android:name="drop3">
+        <group android:name="spin3" android:pivotX="188" android:pivotY="-10">
+            <path android:pathData="M182,-10a6,6 0,1 0,12,0a6,6 0,1 0,-12,0z" android:fillColor="#E6FFC53D" android:strokeColor="#E6E8990C" android:strokeWidth="1.6" />
+        </group>
+    </group>
+    <group android:name="drop4">
+        <group android:name="spin4" android:pivotX="230" android:pivotY="-10">
+            <path android:pathData="M226.5,-13.5h7v7h-7z" android:fillColor="#CC2EE59D" />
+        </group>
+    </group>
+    <group android:name="drop5">
+        <group android:name="spin5" android:pivotX="273" android:pivotY="-10">
+            <path android:pathData="M269.5,-13.5h7v7h-7z" android:fillColor="#CCFF8FAB" />
+        </group>
+    </group>
+    <group android:name="drop6">
+        <group android:name="spin6" android:pivotX="338" android:pivotY="-10">
+            <path android:pathData="M332,-10a6,6 0,1 0,12,0a6,6 0,1 0,-12,0z" android:fillColor="#E6FFC53D" android:strokeColor="#E6E8990C" android:strokeWidth="1.6" />
+        </group>
+    </group>
+</vector>

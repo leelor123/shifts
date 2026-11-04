@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- the widget look picker (WidgetStyleActivity) -->
+    <style name="WidgetPickTheme" parent="@android:style/Theme.DeviceDefault.Light.NoActionBar">
+        <item name="android:windowBackground">@color/w_pick_bg</item>
+        <item name="android:statusBarColor">@color/w_pick_bg</item>
+        <item name="android:navigationBarColor">@color/w_pick_bg</item>
+        <item name="android:windowLightStatusBar">true</item>
+    </style>
+</resources>
