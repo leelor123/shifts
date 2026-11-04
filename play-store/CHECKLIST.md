@@ -1,4 +1,4 @@
-# Google Play Console checklist: Shaati 1.32.1 (versionCode 13201), web 1.32.2
+# Google Play Console checklist: Shaati 1.32.1 (versionCode 13201), web 1.32.3
 
 App: io.github.leelor123.shifts · Play app id 4975962257211357892 · developer 9008976356462415230.
 State as of 3 Nov 2026. "Saved" = saved in Console, waiting in Publishing overview until "Send for review".
