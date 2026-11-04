@@ -159,26 +159,66 @@
   Intro.drawn = () => drawn;
   const afterFrames = () => requestAnimationFrame(() => requestAnimationFrame(() => setTimeout(drawnDone, 0)));
 
-  if (full) {
-    el.classList.add('play');
-    afterFrames();
-    setTimeout(() => drawnDone(), 400); // never later than this, whatever happens to the frames
-    setTimeout(() => { played = true; if (!ready && !quickOn) el.classList.add('wait'); maybeClose(); }, SEQUENCE_MS);
-    // the sheet's rise begins (its animation's delay is over; the timer if no event comes)
-    const sheetGoes = () => { if (rising) return; rising = true; maybeQuick(); };
-    const sheet = q('.intro-sheet');
-    if (sheet) sheet.addEventListener('animationstart', (e) => { if (e.target === sheet) sheetGoes(); });
-    setTimeout(sheetGoes, 450);
-  } else {
-    el.classList.add('still');
-    drawnDone();
-    rising = true; // the sheet is already in place
-    setTimeout(() => { played = true; maybeClose(); }, 200);
+  let begun = false;
+  function begin() {
+    if (begun) return;
+    begun = true;
+    if (full) {
+      el.classList.add('play');
+      afterFrames();
+      setTimeout(() => drawnDone(), 400); // never later than this, whatever happens to the frames
+      setTimeout(() => { played = true; if (!ready && !quickOn) el.classList.add('wait'); maybeClose(); }, SEQUENCE_MS);
+      // the sheet's rise begins (its animation's delay is over; the timer if no event comes)
+      const sheetGoes = () => { if (rising) return; rising = true; maybeQuick(); };
+      const sheet = q('.intro-sheet');
+      if (sheet) sheet.addEventListener('animationstart', (e) => { if (e.target === sheet) sheetGoes(); });
+      setTimeout(sheetGoes, 450);
+    } else {
+      el.classList.add('still');
+      drawnDone();
+      rising = true; // the sheet is already in place
+      setTimeout(() => { played = true; maybeClose(); }, 200);
+    }
   }
+
+  /* A browser visit on a slow network (the user, 24 Oct: the website's button opened an old version): the service
+   * worker opened the copy kept here while the server's answer was still on its way (sw.js keepLive). The show stays
+   * on its first frame (the splash, the phone's own) until that answer, a second at most (often it is in already: this
+   * code arrives after the first frame), and once the server has said a newer version is live, a moment more for its
+   * code. The newer version opens in this page's place with the very same first frame, so nothing is seen to change;
+   * else the show plays on. The installed app (?source=) and offline (answered at once) never wait. The start-up work
+   * waits too (Intro.drawn). */
+  const ASK_MAX = 1000;
+  const ASK_CODE = 1500; // after 'found': the new version's code on its way
+  const ASK_REPLY = 150; // a worker that does not know the question (an older one) is not waited for
+  function askFirst() {
+    const sw = navigator.serviceWorker;
+    if (!sw || !sw.controller || /[?&]source=/.test(location.search) || typeof MessageChannel === 'undefined') { begin(); return; }
+    const ch = new MessageChannel();
+    let timer = 0;
+    const go = () => { clearTimeout(timer); ch.port1.onmessage = null; begin(); };
+    ch.port1.onmessage = (e) => {
+      const d = e.data;
+      if (begun) return;
+      if (d === 'asking' || d === 'found') { clearTimeout(timer); timer = setTimeout(go, d === 'found' ? ASK_CODE : ASK_MAX); return; }
+      if (d && d.live) {
+        // the next load is this session's open again: the full show, with the quick actions
+        try { if (!seen) sessionStorage.removeItem('introSeen'); } catch (err) { /* ignore */ }
+        clearTimeout(timer);
+        location.reload();
+        return;
+      }
+      go();
+    };
+    timer = setTimeout(go, ASK_REPLY);
+    try { sw.controller.postMessage('asking?', [ch.port2]); } catch (err) { go(); }
+  }
+  askFirst();
 
   // tap to skip: the show jumps to its end (the sky keeps its slow life); not once the quick actions are on
   el.addEventListener('click', (e) => {
     if (quickOn || (e.target.closest && e.target.closest('.iq'))) return;
+    begin(); // a tap while it waits for the server: no more waiting
     played = true; skipped = true;
     drawnDone();
     try { el.getAnimations({ subtree: true }).forEach((a) => { const t = a.effect && a.effect.getComputedTiming(); if (t && t.iterations !== Infinity && a.playState !== 'finished') a.finish(); }); } catch (e) { /* older browsers: it plays on */ }
