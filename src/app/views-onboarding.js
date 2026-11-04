@@ -226,7 +226,7 @@
         const ready = !needsLogin() || root.Cloud.sdkReady();
         foot = needsLogin()
           ? `<button class="btn big ob-google" data-save ${saving || (!ready && !loadFailed) ? 'disabled' : ''}>${App.googleIcon || ''}<span>${saving ? 'שומר…' : !ready && !loadFailed ? 'רגע, מכינים את Google…' : 'שמירה עם Google'}</span></button>
-            ${blocked ? '<button class="btn text sm" data-redirect>לא נפתח חלון? התחברות בדרך אחרת</button>' : ''}
+            ${blocked && root.Cloud && root.Cloud.redirectOk ? '<button class="btn text sm" data-redirect>לא נפתח חלון? התחברות בדרך אחרת</button>' : ''}
             ${saving || !root.AUTH_EMAIL_PASSWORD ? '' : `<button class="btn tonal" data-email-pass>${icon('mail', 's')} שמירה עם אימייל וסיסמה</button>`}
             ${saving || !App.providerButtons ? '' : App.providerButtons(false)}
             ${saving || !root.AUTH_EMAIL_LINK ? '' : `<button class="btn text sm" data-email-save>${icon('mail', 's')} או שמירה עם אימייל, בלי סיסמה</button>`}
@@ -257,7 +257,7 @@
       if (STEPS[step] === 'done' && fx) setTimeout(() => fx.celebrate('big'), 250);
       if (STEPS[step] === 'done' && needsLogin() && !root.Cloud.sdkReady()) {
         // Google normally finished loading long ago; on a slow network the button waits for it
-        root.Cloud.sdk().then(() => { if (App.blocking === 'onboarding') draw(); }, () => { loadFailed = true; if (App.blocking === 'onboarding') { msg = navigator.onLine ? 'לא הצלחנו לטעון את Google. נסה שוב בעוד רגע.' : 'אין חיבור לאינטרנט. אפשר להמשיך בינתיים, ונשמור בחשבון כשהרשת תחזור.'; draw(); } });
+        root.Cloud.sdk().then(() => { if (App.blocking === 'onboarding') draw(); }, (e) => { loadFailed = true; if (App.blocking === 'onboarding') { msg = e && e.code === 'shaati/sdk-stuck' ? root.Cloud.errorText(e) : navigator.onLine ? 'לא הצלחנו לטעון את Google. נסה שוב בעוד רגע.' : 'אין חיבור לאינטרנט. אפשר להמשיך בינתיים, ונשמור בחשבון כשהרשת תחזור.'; draw(); } });
       }
     }
     // answering a one-tap question moves on by itself

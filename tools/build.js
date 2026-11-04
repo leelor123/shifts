@@ -38,7 +38,16 @@ const js = jsFor('he');
 // the code goes to its own file, minified, read after the first screen is drawn (defer): inlined, the page was ~1.6 MB
 // and nothing showed until all of it arrived. The name carries the build, so a cached copy is never a stale one.
 const esbuild = require('esbuild');
-const minify = (code, lang) => esbuild.transformSync(code, { minify: true, target: 'es2019', charset: 'utf8', legalComments: 'none', sourcefile: 'app.' + lang + '.js' }).code;
+// safari15: every iPhone browser is Safari's engine, kept at its iOS version. A regex lookbehind is a syntax error
+// before iOS 16.4 and one in the file stopped the whole app there: esbuild writes each as new RegExp(...), and the
+// source builds them through U.lazyRx (tests/webkit.test.js). The build refuses a lookbehind left as a literal.
+const minify = (code, lang) => {
+  const out = esbuild.transformSync(code, { minify: true, target: ['es2019', 'safari15'], charset: 'utf8', legalComments: 'none', sourcefile: 'app.' + lang + '.js' }).code;
+  const acorn = require('acorn'); let lit = null;
+  require('acorn-walk').simple(acorn.parse(out, { ecmaVersion: 'latest' }), { Literal(n) { if (n.regex && /\(\?<[=!]/.test(n.regex.pattern)) lit = lit || n.raw; } });
+  if (lit) throw new Error(lang + ': a regex lookbehind left as a literal (Safari before iOS 16.4 cannot load the file): ' + lit.slice(0, 80));
+  return out;
+};
 // the first open's language doors, written into each page (lang.js takes them over): drawn with the first frame instead of
 // after the 345 KB of code (the phone's largest paint went from ~3.8 s to the first frame); made by lang.js itself
 const lpStatic = (lang) => {

@@ -194,10 +194,23 @@
     return num(n, d == null ? 0 : d) + '%';
   }
 
+  /** Regular expressions a browser may not know, built on first use: a lookbehind is a syntax error in Safari before
+   *  iOS 16.4 (every iPhone browser is Safari), and one built while a file loads stopped the whole app there. The build
+   *  turns each into new RegExp(...); where it cannot be built it matches nothing, so only that reader misses.
+   *  defs: { NAME: () => /…/g }, read as R.NAME (the same object each time, lastIndex included). */
+  function lazyRx(defs) {
+    const out = {};
+    for (const k of Object.keys(defs)) {
+      let r = null;
+      Object.defineProperty(out, k, { enumerable: true, get() { if (!r) { try { r = defs[k](); } catch (e) { r = /(?!)/g; } } return r; } });
+    }
+    return out;
+  }
+
   root.U = {
     pad, MIN, HOUR, DAY, uid, dateKey, parseKey, keyToDate, addDays, addMonths, dow, diffDays,
     toEpoch, dayStart, epochKey, epochHM, todayKey, monthKey, monthStart, monthEnd, addMonthKey,
-    weekStart, rangeKeys, inRange, clamp, round2, sum, money, num, hours, hm, fmtDate, fmtMonth, pct, oops, ours, plural,
+    weekStart, rangeKeys, inRange, clamp, round2, sum, money, num, hours, hm, fmtDate, fmtMonth, pct, oops, ours, plural, lazyRx,
     LANG, RTL, LOCALE, MONTHS, MONTHS_SHORT, DAYS, DAYS_SHORT,
   };
 })(typeof window !== 'undefined' ? window : globalThis);

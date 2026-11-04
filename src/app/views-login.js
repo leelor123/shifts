@@ -179,7 +179,7 @@
         ${S.shifts.length ? `<div class="banner" style="text-align:start">${icon('cloud')}<div>הנתונים שכבר יש בטלפון יעלו לחשבון שלך בהתחברות הראשונה.</div></div>` : ''}
         ${msg ? `<div class="banner ${isErr ? 'warn' : ''}" style="text-align:start">${icon(isErr ? 'alert' : 'info')}<div>${esc(msg)}</div></div>` : ''}
         <button class="btn big ob-google" data-google ${busy || (!ready && !failedLoad) ? 'disabled' : ''}>${GOOGLE_G}<span>${label}</span></button>
-        ${blocked ? '<button class="btn text sm" data-redirect>לא נפתח חלון? התחברות בדרך אחרת</button>' : ''}
+        ${blocked && root.Cloud && root.Cloud.redirectOk ? '<button class="btn text sm" data-redirect>לא נפתח חלון? התחברות בדרך אחרת</button>' : ''}
         ${root.AUTH_EMAIL_PASSWORD ? `<button class="btn tonal login-email" data-email-pass ${busy ? 'disabled' : ''}>${icon('mail', 's')} התחברות עם אימייל וסיסמה</button>` : ''}
         ${App.providerButtons(busy)}
         ${root.AUTH_EMAIL_LINK ? `<button class="btn tonal login-email" data-email>${icon('mail', 's')} התחברות עם אימייל, בלי סיסמה</button>` : ''}
@@ -244,9 +244,9 @@
     };
     show(MSG[reason] || (Cloud.redirectError ? Cloud.errorText(Cloud.redirectError) : ''), !!MSG[reason] && reason !== 'expired' || !!Cloud.redirectError);
     if (!Cloud.sdkReady()) {
-      Cloud.sdk().then(() => { if (App.blocking === 'login') draw(lastMsg, lastErr); }, () => {
+      Cloud.sdk().then(() => { if (App.blocking === 'login') draw(lastMsg, lastErr); }, (e) => {
         failedLoad = true;
-        if (App.blocking === 'login') show(navigator.onLine ? MSG.error : MSG.offline, true);
+        if (App.blocking === 'login') show(e && e.code === 'shaati/sdk-stuck' ? Cloud.errorText(e) : navigator.onLine ? MSG.error : MSG.offline, true);
       });
     }
   };

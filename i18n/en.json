@@ -156,6 +156,7 @@
  "הדפדפן חוסם שמירת נתונים (אולי גלישה בסתר). פתח את האפליקציה בדפדפן רגיל ונסה שוב.": "The browser blocks saving data (maybe incognito mode). Open the app in a regular browser and try again.",
  "הדפדפן הזה לא תומך בהתחברות. פתח את הקישור ב-⁠Chrome או ב-⁠Safari.": "This browser doesn't support sign-in. Open the link in Chrome or Safari.",
  "ההתחברות לקחה יותר מדי זמן. בדוק את החיבור ונסה שוב.": "Sign-in took too long. Check your connection and try again.",
+ "החיבור נקטע בזמן שההתחברות נטענה. סגרו את שעתי, פתחו אותה שוב ונסו שוב.": "The connection dropped while sign-in was loading. Close Shaati, open it again and try once more.",
  "כבר יש חשבון עם האימייל הזה. התחברו אליו עם הסיסמה שלו.": "There is already an account with this email. Sign in to it with its password.",
  "הסיסמה קצרה מדי. בחרו סיסמה של 8 תווים לפחות.": "The password is too short. Choose one with at least 8 characters.",
  "צריך להקליד סיסמה.": "Type a password.",

@@ -156,6 +156,7 @@
  "הדפדפן חוסם שמירת נתונים (אולי גלישה בסתר). פתח את האפליקציה בדפדפן רגיל ונסה שוב.": "El navegador bloquea el guardado de datos (quizá en modo incógnito). Abre la app en un navegador normal e inténtalo de nuevo.",
  "הדפדפן הזה לא תומך בהתחברות. פתח את הקישור ב-⁠Chrome או ב-⁠Safari.": "Este navegador no admite el inicio de sesión. Abre el enlace en Chrome o Safari.",
  "ההתחברות לקחה יותר מדי זמן. בדוק את החיבור ונסה שוב.": "El inicio de sesión tardó demasiado. Revisa tu conexión e inténtalo de nuevo.",
+ "החיבור נקטע בזמן שההתחברות נטענה. סגרו את שעתי, פתחו אותה שוב ונסו שוב.": "La conexión se cortó mientras se cargaba el inicio de sesión. Cierra Shaati, ábrela de nuevo y vuelve a intentarlo.",
  "כבר יש חשבון עם האימייל הזה. התחברו אליו עם הסיסמה שלו.": "Ya hay una cuenta con este correo. Inicia sesión en ella con su contraseña.",
  "הסיסמה קצרה מדי. בחרו סיסמה של 8 תווים לפחות.": "La contraseña es demasiado corta. Elige una de al menos 8 caracteres.",
  "צריך להקליד סיסמה.": "Escribe una contraseña.",

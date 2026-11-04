@@ -271,6 +271,8 @@ input[type=range]::-moz-range-thumb { width: 26px; height: 26px; border: 0; bord
 .steps li::before { content: counter(s); display: grid; place-items: center; width: 36px; height: 36px; border-radius: 50%; background: var(--navy); color: #fff; font-weight: 600; margin-bottom: 16px; }
 .steps h3 { font-size: 1.15rem; }
 .steps p { margin-top: 8px; color: var(--mute); }
+.ios-tip { margin-top: 16px; font-size: .98rem; color: rgba(255, 255, 255, .9); text-shadow: 0 1px 12px rgba(5, 15, 45, .5); }
+.ios-tip a { color: #fff; text-decoration: underline; text-underline-offset: 3px; }
 .ios-note { margin-top: 22px; color: var(--mute); font-size: .95rem; max-width: 46em; }
 @media (max-width: 860px) { .steps { grid-template-columns: 1fr; } }
 
@@ -398,6 +400,7 @@ footer .note { margin-top: 12px; font-size: .85rem; }
           <a class="btn btn-gold" href="https://leelor123.github.io/shifts/">לפתוח את שעתי</a>
           <a class="btn btn-glass" href="#calc">לחשב משמרת</a>
         </div>
+        <p class="ios-tip" data-ios hidden>באייפון? <a href="#iphone">כך שמים את שעתי על מסך הבית</a>, בשלושה צעדים.</p>
         <fieldset class="cities" data-cities>
           <legend>השמיים מעל העיר שלך, עכשיו. ככה נפתחת האפליקציה:</legend>
           <div class="seg">
@@ -533,7 +536,7 @@ footer .note { margin-top: 12px; font-size: .85rem; }
     <div class="wrap">
       <div class="sec-head"><h2>באייפון: שעתי על מסך הבית, בשלושה צעדים</h2><p>פותחים את שעתי בספארי ומוסיפים אותה למסך הבית. היא נפתחת במסך מלא ועובדת גם בלי אינטרנט.</p></div>
       <ol class="steps">
-        <li><h3>כפתור השיתוף</h3><p>בספארי, בשורה שבתחתית המסך (באייפד: למעלה).</p></li>
+        <li><h3>פותחים את שעתי ולוחצים "שיתוף"</h3><p>לוחצים <a href="https://leelor123.github.io/shifts/">"לפתוח את שעתי"</a>, ובאפליקציה שנפתחה לוחצים על כפתור השיתוף בשורה שבתחתית המסך (באייפד: למעלה).</p></li>
         <li><h3>"הוספה למסך הבית"</h3><p>לא רואים? גוללים מטה ברשימה שנפתחה.</p></li>
         <li><h3>לוחצים "הוספה"</h3><p>ושעתי על המסך, כמו כל אפליקציה.</p></li>
       </ol>

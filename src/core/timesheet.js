@@ -25,12 +25,15 @@
 
   const TOTAL = /סה["״']?כ|סיכום|total|sum\b/i;
   // a time: 8:00, 08:00:00, 8:00 PM; a range may also use dots (08.30-16.00)
-  const TIME = /(?<![\d:.])(\d{1,2}):(\d{2})(?::\d{2})?(?:\s*([AaPp])\.?[Mm]\.?)?(?![\d])/g;
-  const RANGE_DOT = /(?<![\d.:])(\d{1,2})\.(\d{2})\s*[-–—]\s*(\d{1,2})\.(\d{2})(?![\d.])/;
-  const DATE_FULL = /(?<!\d)(\d{1,2})[./-](\d{1,2})[./-](\d{2}|\d{4})(?!\d)/;
-  const DATE_ISO = /(?<!\d)(\d{4})-(\d{1,2})-(\d{1,2})(?!\d)/;
-  const DATE_SHORT = /(?<![\d.:])(\d{1,2})[./](\d{1,2})(?![\d.:/])/;
-  const HOURS = /(?<![\d:./-])(\d{1,2}(?:\.\d{1,2})?)(?![\d:./-])/g;
+  // lookbehinds: built on first use (U.lazyRx: Safari before iOS 16.4 cannot read them)
+  const R = root.U.lazyRx({
+    TIME: () => /(?<![\d:.])(\d{1,2}):(\d{2})(?::\d{2})?(?:\s*([AaPp])\.?[Mm]\.?)?(?![\d])/g,
+    RANGE_DOT: () => /(?<![\d.:])(\d{1,2})\.(\d{2})\s*[-–—]\s*(\d{1,2})\.(\d{2})(?![\d.])/,
+    DATE_FULL: () => /(?<!\d)(\d{1,2})[./-](\d{1,2})[./-](\d{2}|\d{4})(?!\d)/,
+    DATE_ISO: () => /(?<!\d)(\d{4})-(\d{1,2})-(\d{1,2})(?!\d)/,
+    DATE_SHORT: () => /(?<![\d.:])(\d{1,2})[./](\d{1,2})(?![\d.:/])/,
+    HOURS: () => /(?<![\d:./-])(\d{1,2}(?:\.\d{1,2})?)(?![\d:./-])/g,
+  });
 
   function hm(h, m, ap) {
     h = +h; m = +m;
@@ -62,27 +65,27 @@
       // the times first (so a time is never read as a date)
       let rest = line;
       const times = [];
-      const dot = rest.match(RANGE_DOT);
+      const dot = rest.match(R.RANGE_DOT);
       if (dot) {
         const a = hm(dot[1], dot[2]), b = hm(dot[3], dot[4]);
         if (a && b) { times.push(a, b); rest = rest.replace(dot[0], ' '); }
       }
-      rest = rest.replace(TIME, (all, h, m, ap) => { const t = hm(h, m, ap); if (t) times.push(t); return ' '; });
+      rest = rest.replace(R.TIME, (all, h, m, ap) => { const t = hm(h, m, ap); if (t) times.push(t); return ' '; });
       // the date
       let date = null, ym = null;
-      let mm = rest.match(DATE_ISO);
+      let mm = rest.match(R.DATE_ISO);
       if (mm && validDate(+mm[1], +mm[2], +mm[3])) { date = key(+mm[1], +mm[2], +mm[3]); rest = rest.replace(mm[0], ' '); }
-      if (!date && (mm = rest.match(DATE_FULL))) {
+      if (!date && (mm = rest.match(R.DATE_FULL))) {
         let y = +mm[3]; if (y < 100) y += 2000;
         if (validDate(y, +mm[2], +mm[1])) { date = key(y, +mm[2], +mm[1]); rest = rest.replace(mm[0], ' '); }
       }
       // hours as a number ("8.5", "8"), not part of anything else
       const nums = [];
-      rest.replace(HOURS, (all, v) => { nums.push(+v); return all; });
-      if (!date && (mm = rest.match(DATE_SHORT)) && (times.length || nums.length)) {
+      rest.replace(R.HOURS, (all, v) => { nums.push(+v); return all; });
+      if (!date && (mm = rest.match(R.DATE_SHORT)) && (times.length || nums.length)) {
         const d = +mm[1], m = +mm[2];
         const y = yearFor(m, d, today);
-        if (validDate(y, m, d)) { date = key(y, m, d); ym = true; rest = rest.replace(mm[0], ' '); nums.length = 0; rest.replace(HOURS, (all, v) => { nums.push(+v); return all; }); }
+        if (validDate(y, m, d)) { date = key(y, m, d); ym = true; rest = rest.replace(mm[0], ' '); nums.length = 0; rest.replace(R.HOURS, (all, v) => { nums.push(+v); return all; }); }
       }
       if (!date) return;
       const hoursNum = nums.find((v) => v >= 0.5 && v <= 24 && (v % 1 !== 0 || v <= 16));
