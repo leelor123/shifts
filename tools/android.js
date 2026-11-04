@@ -241,6 +241,15 @@ function patchWidgets() {
   const SRC = path.join(ROOT, 'android', 'widgets');
   const main = path.join(TWA, 'app', 'src', 'main');
   const javaDir = path.join(main, 'java', ...APP.packageId.split('.'));
+  // generate keeps the twa/ folder, so the files of an older widgets build stay there: an old w_bg.xml asked for
+  // colours the new w_colors.xml no longer has and failed the 1.32.4 build. Every w_* resource and widget class is
+  // removed first, so the project holds exactly what android/widgets holds.
+  const resDir = path.join(main, 'res');
+  for (const d of fs.readdirSync(resDir)) {
+    const dir = path.join(resDir, d);
+    if (fs.statSync(dir).isDirectory()) for (const f of fs.readdirSync(dir)) if (f.startsWith('w_')) fs.rmSync(path.join(dir, f));
+  }
+  for (const f of fs.readdirSync(javaDir)) if (/Widget\w*\.java$/.test(f)) fs.rmSync(path.join(javaDir, f));
   for (const f of fs.readdirSync(path.join(SRC, 'java'))) fs.copyFileSync(path.join(SRC, 'java', f), path.join(javaDir, f));
   for (const d of fs.readdirSync(path.join(SRC, 'res'))) {
     fs.mkdirSync(path.join(main, 'res', d), { recursive: true });
