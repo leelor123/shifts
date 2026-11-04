@@ -8832,7 +8832,7 @@
   ]
  },
  {
-  "key": "<p>האפליקציה משתמשת ברכיבים הבאים, כל אחד לפי הרישיון שלו:</p>\n<ul><li><b>Firebase JS SDK</b> (Google): Apache License 2.0.</li>\n<li><b>pdf.js</b> (Mozilla): Apache License 2.0. לקריאת קובצי PDF.</li>\n<li><b>Tesseract.js</b> ונתוני השפה של Tesseract: Apache License 2.0. לזיהוי טקסט מתמונה.</li>\n<li><b>SheetJS Community Edition</b>: Apache License 2.0. לקריאת קובצי Excel בייבוא.</li>\n<li><b>NSFWJS</b>: MIT License, עם <b>TensorFlow.js</b> (Google): Apache License 2.0, ומודל MobileNet. לבדיקה בטלפון של תמונה שבוחרים לכרטיס השכר.</li>\n<li><b>Anthropic TypeScript SDK</b>: MIT License. לתכונות AI לפי בחירה.</li>\n<li><b>גופנים</b>: Rubik ו-⁠Fredoka, ברישיון SIL Open Font License 1.1, נשמרים באפליקציה עצמה. Miriam Libre, Noto Sans Hebrew, Assistant, Heebo ו-⁠Varela Round, באותו רישיון, נטענים מ-⁠Google Fonts רק אם בוחרים אחד מהם.</li>\n<li>רשימת היישובים מבוססת על רשימת היישובים של הלשכה המרכזית לסטטיסטיקה.</li>\n<li>חישובי זמני השקיעה מבוססים על אלגוריתם ה-⁠NOAA (נחלת הכלל). לוח השנה העברי מחושב בשיטת Reingold–Dershowitz.</li>\n<li>{0}, מ-{1} ({2}). האפליקציה מציגה את התחזית כציור של השמיים.</li></ul>\n<p>Google, Google Play, Google Pay, Firebase, GitHub, Anthropic, Claude, Apple, iPhone, Safari, Apple Pay, PayPal, WhatsApp, Excel ו-⁠Lemon Squeezy הם סימנים מסחריים של בעליהם. אין לשעתי קשר עסקי אליהם, והם אינם אחראים לה.</p>",
+  "key": "<p>האפליקציה משתמשת ברכיבים הבאים, כל אחד לפי הרישיון שלו:</p>\n<ul><li><b>Firebase JS SDK</b> (Google): Apache License 2.0.</li>\n<li><b>pdf.js</b> (Mozilla): Apache License 2.0. לקריאת קובצי PDF.</li>\n<li><b>Tesseract.js</b> ונתוני השפה של Tesseract: Apache License 2.0. לזיהוי טקסט מתמונה.</li>\n<li><b>SheetJS Community Edition</b>: Apache License 2.0. לקריאת קובצי Excel בייבוא.</li>\n<li><b>NSFWJS</b>: MIT License, עם <b>TensorFlow.js</b> (Google): Apache License 2.0, ומודל MobileNet. לבדיקה בטלפון של תמונה שבוחרים לכרטיס השכר.</li>\n<li><b>Anthropic TypeScript SDK</b>: MIT License. לתכונות AI לפי בחירה.</li>\n<li><b>גופנים</b>: Rubik, Fredoka ו-⁠Noto Sans Ethiopic, ברישיון SIL Open Font License 1.1, נשמרים באפליקציה עצמה. Miriam Libre, Noto Sans Hebrew, Assistant, Heebo ו-⁠Varela Round, באותו רישיון, נטענים מ-⁠Google Fonts רק אם בוחרים אחד מהם.</li>\n<li>רשימת היישובים מבוססת על רשימת היישובים של הלשכה המרכזית לסטטיסטיקה.</li>\n<li>חישובי זמני השקיעה מבוססים על אלגוריתם ה-⁠NOAA (נחלת הכלל). לוח השנה העברי מחושב בשיטת Reingold–Dershowitz.</li>\n<li>{0}, מ-{1} ({2}). האפליקציה מציגה את התחזית כציור של השמיים.</li></ul>\n<p>Google, Google Play, Google Pay, Firebase, GitHub, Anthropic, Claude, Apple, iPhone, Safari, Apple Pay, PayPal, WhatsApp, Excel ו-⁠Lemon Squeezy הם סימנים מסחריים של בעליהם. אין לשעתי קשר עסקי אליהם, והם אינם אחראים לה.</p>",
   "kind": "tpl",
   "where": [
    "app/views-legal.js:161"
@@ -13373,7 +13373,7 @@
   ]
  },
  {
-  "key": "שפה שפות language english русский русский язык العربية عربي ערבית רוסית אנגלית צרפתית ספרדית français francais español espanol french spanish תרגום",
+  "key": "שפה שפות language english русский русский язык العربية عربي ערבית רוסית אנגלית צרפתית ספרדית français francais español espanol french spanish תרגום אמהרית amharic አማርኛ",
   "kind": "lit",
   "where": [
    "app/views-settings.js:163"

@@ -1,4 +1,4 @@
-/* Fonts served from the app's own address (Rubik + Fredoka, SIL Open Font License): Google's stylesheet held the first
+/* Fonts served from the app's own address (Rubik + Fredoka + Noto Sans Ethiopic, SIL Open Font License): Google's stylesheet held the first
  * paint for a round trip to two more servers. Run once (or to update them): node tools/fonts.js
  * Writes src/fonts/<family>-<subset>.woff2 and src/fonts/fonts.css (the @font-face rules with local addresses);
  * the build copies them next to the app (docs/fonts) and the website (site/fonts). */
@@ -7,7 +7,10 @@ const path = require('path');
 const https = require('https');
 
 const OUT = path.join(__dirname, '..', 'src', 'fonts');
-const CSS_URL = 'https://fonts.googleapis.com/css2?family=Rubik:wght@300..800&family=Fredoka:wght@500..700&display=swap';
+const CSS_URL = 'https://fonts.googleapis.com/css2?family=Rubik:wght@300..800&family=Fredoka:wght@500..700&family=Noto+Sans+Ethiopic:wght@100..900&display=swap';
+// Amharic letters: only Noto's Ethiopic file, as a family of its own ('Shaati Ethiopic', next in --font after the
+// chosen font), so it is fetched only where Ethiopic text is drawn, whatever font is chosen in the settings
+const ETHIOPIC = 'Noto Sans Ethiopic';
 // a desktop Chrome gets woff2 with one file per script (unicode-range)
 const UA = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/130.0 Safari/537.36';
 
@@ -28,10 +31,12 @@ const get = (url) => new Promise((resolve, reject) => {
   const rules = [];
   for (const [, subset, body] of blocks) {
     const family = /font-family: '([^']+)'/.exec(body)[1];
+    if (family === ETHIOPIC && subset !== 'ethiopic') continue;
     const url = /url\((https:[^)]+\.woff2)\)/.exec(body)[1];
-    const file = family.toLowerCase() + '-' + subset + '.woff2';
+    const file = family === ETHIOPIC ? 'noto-ethiopic.woff2' : family.toLowerCase() + '-' + subset + '.woff2';
     fs.writeFileSync(path.join(OUT, file), await get(url));
-    rules.push({ subset, css: '@font-face{' + body.replace(/\s+/g, ' ').trim().replace(url, 'fonts/' + file) + '}\n' });
+    const face = body.replace(/\s+/g, ' ').trim().replace(url, 'fonts/' + file).replace(`'${ETHIOPIC}'`, "'Shaati Ethiopic'");
+    rules.push({ subset, css: '@font-face{' + face + '}\n' });
     console.log(file);
   }
   // the Hebrew file last: where two files of a family cover the same character, the browser takes the one written

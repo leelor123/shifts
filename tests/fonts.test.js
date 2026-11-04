@@ -26,3 +26,11 @@ for (const family of ['Rubik', 'Fredoka']) {
 T.test('digits, spaces and Latin letters still come from the Latin file', () => {
   for (const c of [0x20, 0x30, 0x41, 0x61]) T.eq(fileFor('Rubik', c), 'rubik-latin.woff2', `U+${c.toString(16)}`);
 });
+// Amharic (3 Nov 2026): its letters come from the app's own Ethiopic file, whatever font is chosen in the settings
+T.test('Amharic letters come from the Ethiopic file, which stands right after the chosen font', () => {
+  for (const c of [0x1200, 0x12a0, 0x1361, 0x1362]) T.eq(fileFor('Shaati Ethiopic', c), 'noto-ethiopic.woff2', `U+${c.toString(16)}`);
+  T.ok(fs.existsSync(path.join(__dirname, '..', 'src', 'fonts', 'noto-ethiopic.woff2')), 'the file is there');
+  const styles = fs.readFileSync(path.join(__dirname, '..', 'src', 'styles.css'), 'utf8');
+  T.ok(/--font: var\(--app-font\), 'Shaati Ethiopic',/.test(styles), '--font has the Ethiopic family after the chosen font');
+  T.ok(fileFor('Shaati Ethiopic', 0x41) === undefined, 'nothing else is taken from it (Latin stays Rubik)');
+});

@@ -165,7 +165,7 @@
 <li><b>SheetJS Community Edition</b>: Apache License 2.0. לקריאת קובצי Excel בייבוא.</li>
 <li><b>NSFWJS</b>: MIT License, עם <b>TensorFlow.js</b> (Google): Apache License 2.0, ומודל MobileNet. לבדיקה בטלפון של תמונה שבוחרים לכרטיס השכר.</li>
 <li><b>Anthropic TypeScript SDK</b>: MIT License. לתכונות AI לפי בחירה.</li>
-<li><b>גופנים</b>: Rubik ו-⁠Fredoka, ברישיון SIL Open Font License 1.1, נשמרים באפליקציה עצמה. Miriam Libre, Noto Sans Hebrew, Assistant, Heebo ו-⁠Varela Round, באותו רישיון, נטענים מ-⁠Google Fonts רק אם בוחרים אחד מהם.</li>
+<li><b>גופנים</b>: Rubik, Fredoka ו-⁠Noto Sans Ethiopic, ברישיון SIL Open Font License 1.1, נשמרים באפליקציה עצמה. Miriam Libre, Noto Sans Hebrew, Assistant, Heebo ו-⁠Varela Round, באותו רישיון, נטענים מ-⁠Google Fonts רק אם בוחרים אחד מהם.</li>
 <li>רשימת היישובים מבוססת על רשימת היישובים של הלשכה המרכזית לסטטיסטיקה.</li>
 <li>חישובי זמני השקיעה מבוססים על אלגוריתם ה-⁠NOAA (נחלת הכלל). לוח השנה העברי מחושב בשיטת Reingold–Dershowitz.</li>
 <li>${WEATHER_CREDIT}, מ-${ext('https://api.met.no/', 'api.met.no')} (${ext('https://creativecommons.org/licenses/by/4.0/', 'נוסח הרישיון')}). האפליקציה מציגה את התחזית כציור של השמיים.</li></ul>

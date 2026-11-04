@@ -15,7 +15,7 @@ const ASSETS = ['./', './index.html', './manifest.webmanifest', './icon-192.png'
  * Each language is its own page (index.html is Hebrew, index.ar.html, index.ru.html, index.en.html: the build
  * writes them). The language chosen in the app is kept here, in a cache of its own (a worker cannot read the
  * page's localStorage), so opening the app serves that page at once, also offline. */
-const LANGS = ['he', 'ar', 'ru', 'en', 'fr', 'es'];
+const LANGS = ['he', 'ar', 'ru', 'en', 'fr', 'es', 'am'];
 const LANG_CACHE = 'shiftpay-lang';
 async function chosenLang() {
   try {
@@ -30,7 +30,7 @@ const jsOf = (l) => jsOfBuild(l, VERSION);
 const pageOf = (l) => (l === 'he' ? './index.html' : './index.' + l + '.html');
 const manifestOf = (l) => (l === 'he' ? './manifest.webmanifest' : './manifest.' + l + '.webmanifest');
 // a page that names its file (index.ru.html) is that file; the app's own address (./, ./?source=twa) is the chosen one
-const PAGE_FILE = /\/index(?:\.(ar|ru|en|fr|es))?\.html$/;
+const PAGE_FILE = /\/index(?:\.(ar|ru|en|fr|es|am))?\.html$/;
 
 /* ---- a visit in a browser gets the version that is live now ----
  * The installed app (its address carries ?source=) opens from the copy kept here at once and switches to a new
@@ -220,6 +220,7 @@ const WORDS = {
   en: { offline: 'No connection', timerT: 'Forgot to end your shift?', timerB: 'The timer is still running. Tap to end or fix it.', upT: 'Shift coming up', upB: 'Starts at {0}', eveB: 'Shift tomorrow at {0}', cdT: 'Did you work the shift?', cdB: 'Tap "I worked" so the pay comes in.' },
   fr: { offline: 'Pas de connexion', timerT: 'Oublié de terminer le service ?', timerB: 'Le chrono tourne toujours. Touchez pour le terminer ou le corriger.', upT: 'Service bientôt', upB: 'Commence à {0}', eveB: 'Service demain à {0}', cdT: 'Avez-vous effectué le service ?', cdB: 'Touchez « J’ai travaillé » pour que le salaire soit compté.' },
   es: { offline: 'Sin conexión', timerT: '¿Olvidaste terminar el turno?', timerB: 'El reloj sigue en marcha. Toca para terminarlo o corregirlo.', upT: 'Turno pronto', upB: 'Empieza a las {0}', eveB: 'Turno mañana a las {0}', cdT: '¿Trabajaste el turno?', cdB: 'Toca «Trabajé» para que entre el salario.' },
+  am: { offline: 'ግንኙነት የለም', timerT: 'ፈረቃውን መጨረስ ረሱ?', timerB: 'ሰዓት ቆጣሪው አሁንም እየሠራ ነው። ለመጨረስ ወይም ለማስተካከል ይጫኑ።', upT: 'ፈረቃ እየቀረበ ነው', upB: 'በ{0} ይጀምራል', eveB: 'ነገ ፈረቃ በ{0}', cdT: 'ፈረቃውን ሠርተዋል?', cdB: 'ክፍያው እንዲገባ «ሠርቻለሁ» የሚለውን ይጫኑ።' },
 };
 const T = (l) => WORDS[l] || WORDS.he;
 function readDb() {

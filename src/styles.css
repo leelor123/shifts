@@ -14,7 +14,7 @@
   --safe-t: env(safe-area-inset-top, 0px);
   --ease: cubic-bezier(.32, .72, 0, 1);
   --app-font: 'Rubik';
-  --font: var(--app-font), 'Assistant', system-ui, 'Segoe UI', Arial, sans-serif;
+  --font: var(--app-font), 'Shaati Ethiopic', 'Assistant', system-ui, 'Segoe UI', Arial, sans-serif;
   --display: var(--font);
   --amber: #e2a224; --on-amber: #231a05; --amber-soft: #f6e6c1;
 

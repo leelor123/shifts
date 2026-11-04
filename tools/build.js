@@ -75,7 +75,7 @@ const jsFile = (lang) => 'app.' + lang + '.' + hash + '.js';
 const css = read('fonts/fonts.css') + read('styles.css') + '\n' + read('styles-v3.css') + '\n' + read('styles-v4.css');
 // the files each language's first screen draws with, asked for at once instead of after the styles are read
 const cssMin = esbuild.transformSync(css, { loader: 'css', minify: true, target: 'chrome90', charset: 'utf8', legalComments: 'none' }).code;
-const FIRST_FONTS = { he: ['rubik-hebrew', 'rubik-latin'], ar: ['rubik-arabic', 'rubik-latin'], ru: ['rubik-cyrillic', 'rubik-latin'], en: ['rubik-latin'], fr: ['rubik-latin'], es: ['rubik-latin'] };
+const FIRST_FONTS = { he: ['rubik-hebrew', 'rubik-latin'], ar: ['rubik-arabic', 'rubik-latin'], ru: ['rubik-cyrillic', 'rubik-latin'], en: ['rubik-latin'], fr: ['rubik-latin'], es: ['rubik-latin'], am: ['noto-ethiopic', 'rubik-latin'] };
 const preload = (lang) => (FIRST_FONTS[lang] || FIRST_FONTS.he).map((f) => `<link rel="preload" href="fonts/${f}.woff2" as="font" type="font/woff2" crossorigin>`).join('\n');
 const i18nHash = Object.keys(dicts).map((l) => JSON.stringify(dicts[l])).join('');
 // the build itself is part of the version: what it writes into the page (the loader, the doors) changes the page too,
@@ -89,7 +89,7 @@ fs.mkdirSync(DIST, { recursive: true });
 // other languages, and the card a shared link shows (WhatsApp, Telegram, X) with the page's own title and description
 const APP_URL = 'https://leelor123.github.io/shifts/';
 const pageUrl = (l) => APP_URL + (l === 'he' ? '' : `index.${l}.html`);
-const OG_LOCALE = { he: 'he_IL', en: 'en_US', ru: 'ru_RU', ar: 'ar_AR', fr: 'fr_FR', es: 'es_ES' };
+const OG_LOCALE = { he: 'he_IL', en: 'en_US', ru: 'ru_RU', ar: 'ar_AR', fr: 'fr_FR', es: 'es_ES', am: 'am_ET' };
 function shareTags(html, lang) {
   const attr = (v) => v.replace(/&(?![a-z0-9#]+;)/gi, '&amp;').replace(/"/g, '&quot;');
   const title = attr((/<title>([^<]*)<\/title>/.exec(html) || [])[1] || 'Shaati');
