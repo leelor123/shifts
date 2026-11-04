@@ -306,7 +306,14 @@ Files changed for this:
   with `git checkout -- docs/app.*.597979c5.js docs/app.*.75da1c17.js` if they should stay.
 - Tests: `npm test` 283 passed, 0 failed; `node tools/i18n.js check` 0 problems. Nothing committed, pushed or deployed.
 
-### Mismatches between the policy/pages and the code (not changed; proposed fixes)
+### Mismatches between the policy/pages and the code
+
+**All eight fixed in 1.32.3 (3 Nov 2026, commit a471d8d).** M1: tickets send `Support.device()` ("Android 15 · Chrome 140"),
+and the policy names exactly that. M2: invitations I accepted are deleted on leaving/deletion (`meta.frAccepted`); the
+page names what stays (IDs in former friends' lists, the who-invited-whom record, other phones' anonymous stats up to 13
+months). Friends still keep a deleted ID until they remove it: telling "gone" from "not accepted yet" needs a rules
+change. M3: every delete button uses `App.deleteAccount` (asks the password). M4-M8: texts as proposed below; the Plus
+seller line also reads "לי בטאן (Lee Batan)". Checked by qa/report-test.js. The table below is the original finding.
 
 | # | Mismatch | Evidence | Proposed fix |
 |---|---|---|---|
