@@ -185,15 +185,25 @@ function patchLauncher() {
                 androidx.browser.customtabs.CustomTabsSession s = widgetSession();
                 int sent = s == null ? -1 : s.postMessage("shaati:widgets", null);
                 android.util.Log.i("ShaatiWidgets", "channel ready; hello sent: " + sent);
+                sendTaps(s);
             }
 
             @Override
             public void onPostMessage(String message, Bundle extras) {
                 if (inner != null) inner.onPostMessage(message, extras);
+                // back to the front, the page asks for the starts and ends tapped on a widget meanwhile
+                if ("ask".equals(message)) { sendTaps(widgetSession()); return; }
                 android.util.Log.i("ShaatiWidgets", "numbers received (" + (message == null ? 0 : message.length()) + " chars)");
                 WidgetData.save(getApplicationContext(), message);
             }
         };
+    }
+
+    // the starts and ends tapped on a widget (WidgetData) go to the page, which saves them as shifts
+    private void sendTaps(androidx.browser.customtabs.CustomTabsSession s) {
+        String taps = WidgetData.tapsMessage(getApplicationContext());
+        if (s == null || taps == null) return;
+        android.util.Log.i("ShaatiWidgets", "taps sent: " + s.postMessage(taps, null));
     }
 
     // asks Chrome for the channel; Chrome may still be warming up, so a refusal is tried again a few times
@@ -234,7 +244,7 @@ function patchLauncher() {
 /**
  * The home-screen widgets (android/widgets): their Java classes and resources go into the project, each is
  * registered as an app-widget receiver, PostMessageService lets Chrome open the message channel the
- * widgets' numbers come through (LauncherActivity, above), and code shrinking keeps the launcher's session
+ * widgets' numbers (and the starts and ends tapped on them) come through (LauncherActivity, above), and code shrinking keeps the launcher's session
  * field the bridge reads.
  */
 function patchWidgets() {
