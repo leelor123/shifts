@@ -118,3 +118,14 @@
 
 ## Note (3 Nov)
 The Shaati Plus paragraph was taken out of both listings: Play Console has no Google Payments merchant account yet, so the subscription does not exist and the Android app does not offer Plus (plus.js hides it until Play sells it). Put the paragraph back when the subscription is live.
+
+## Proposed update (6 Nov 2026, not applied: the Hebrew text above is the one saved in Console)
+The Hebrew listing is behind the app in four places; listing-en.md and the new translations already carry them.
+Swapping these lines adds about 120 characters (3492 to about 3610, under 4000):
+- `• ייבוא דוח שעות מהעבודה: Excel, CSV, PDF או צילום` becomes
+  `• ייבוא דוח שעות מהעבודה (Excel, CSV, PDF או צילום) והשוואה למשמרות לפני יום המשכורת` (1.33.0)
+- `• ווידג'טים למסך הבית: התחלת משמרת, החודש, היעד והימים עד המשכורת` becomes
+  `• ווידג'טים למסך הבית: התחלה וסיום של משמרת בלי לפתוח את האפליקציה, החודש, היעד והימים עד המשכורת` (1.32.5)
+- a new line after it: `• התראה לבחירתך בזמן משמרת, עם הסכום עד עכשיו וכפתור סיום` (1.34.0)
+- `• בעברית, באנגלית, בערבית, ברוסית, בצרפתית ובספרדית` becomes
+  `• בעברית, באנגלית, בערבית, ברוסית, בצרפתית, בספרדית ובאמהרית` (Amharic since 1.32.4)
