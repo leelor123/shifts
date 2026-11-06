@@ -161,6 +161,16 @@
       <div class="tiny muted" style="margin-top:8px">${rows.length} דיווחים מ-7 הימים האחרונים (עד 50 החדשים).</div>`;
   }
   App.adminErrorsView = errorsList; // the list from given records (tests)
+  /** Error reports are kept 30 days (the privacy policy): reports older than this time are deleted. */
+  const ERR_KEEP_DAYS = 30;
+  App.errorsCutoff = (now) => now - ERR_KEEP_DAYS * 86400000;
+  /** Deletes up to 50 error reports older than 30 days. Runs when an admin opens the list; silent on failure. */
+  async function purgeOldErrors(fs, db) {
+    try {
+      const snap = await fs.getDocsFromServer(fs.query(fs.collection(db, 'errors'), fs.where('t', '<', App.errorsCutoff(Date.now())), fs.limit(50)));
+      await Promise.all(snap.docs.map((d) => fs.deleteDoc(d.ref)));
+    } catch (e) { /* the next opening tries again */ }
+  }
   // the card the list opens in (nothing is read until its button is pressed)
   const errorsCard = () => `<div class="admin"><div class="section-title">${icon('alert', 's')} תקלות השבוע</div>
       <div class="card" data-adm-errors-box><div class="tiny muted">דיווחים ממכשירים שהסכימו לסטטיסטיקה, בלי פרטים מזהים. הרשימה נטענת רק כשלוחצים.</div>
@@ -205,6 +215,7 @@
           const since = Date.now() - 7 * 86400000;
           const snap = await fs.getDocsFromServer(fs.query(fs.collection(db, 'errors'), fs.where('t', '>=', since), fs.orderBy('t', 'desc'), fs.limit(50)));
           if (!entry.closed) box.innerHTML = errorsList(snap.docs.map((d) => d.data()));
+          purgeOldErrors(fs, db);
         } catch (e) {
           errBtn.disabled = false;
           if (!entry.closed) UI.toast(`לא ניתן לטעון את התקלות (${e.code || e.message || ''})`);

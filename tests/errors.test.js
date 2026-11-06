@@ -198,5 +198,12 @@ T.atest('the admin list: this week\'s errors grouped, the most frequent first', 
   T.eq(top.map((g) => g.h + ':' + g.n + ':' + g.v).join(), 'aaaaaaaa:5:1.32.5,bbbbbbbb:1:1.32.4');
   const html = c.App.adminErrorsView([{ h: 'cccccccc', msg: '<img onerror=x>', n: 1, v: '1', t: 1, st: '' }]);
   T.ok(!html.includes('<img') && html.includes('&#60;img'), 'the message is escaped');
+  // reports are kept 30 days (the privacy policy): the cutoff and the one query that deletes older ones
+  const now = Date.UTC(2026, 10, 6, 12);
+  T.eq(c.App.errorsCutoff(now), Date.UTC(2026, 9, 7, 12), '30 days before now');
+  const view = rd('src/app/views-admin.js');
+  T.ok(/fs\.where\('t', '<', App\.errorsCutoff\(Date\.now\(\)\)\), fs\.limit\(50\)/.test(view) && /fs\.deleteDoc\(d\.ref\)/.test(view), 'older reports deleted, 50 at a time');
+  T.ok(/allow delete: if isAdmin\(\);/.test(rules.match(/match \/errors\/\{id\} \{([\s\S]*?)\n    \}/)[1]), 'the rules let admins delete reports');
+  T.ok(/דיווחי תקלות נמחקים אחרי 30 יום\./.test(rd('src/app/views-legal.js')), 'the privacy policy says 30 days');
   void P;
 });
