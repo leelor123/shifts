@@ -35,7 +35,7 @@ function phone(o = {}) {
   vm.runInContext(rd('src/app/errors.js'), ctx, { filename: 'app/errors.js' });
   return { ctx, E: ctx.Errors, store, writes };
 }
-const boom = (msg, line = 10) => { const e = new TypeError(msg); e.stack = `TypeError: ${msg}\n    at render (https://leelor123.github.io/shifts/app.abc123.js?v=2:${line}:345)\n    at https://leelor123.github.io/shifts/app.abc123.js:20:7`; return e; };
+const boom = (msg, line = 10) => { const e = new TypeError(msg); e.stack = `TypeError: ${msg}\n    at render (https://leelor123.github.io/shifts/app.he.abc123.js?v=2:${line}:345)\n    at https://leelor123.github.io/shifts/app.he.abc123.js:20:7`; return e; };
 
 // the rules' list of keys and limits, read from firestore.rules
 const rules = rd('firestore.rules');
@@ -59,6 +59,28 @@ function validErr(d, now) {
 }
 
 T.section('error reports');
+T.test('not app bugs are not reported: no connection, other scripts, no stack', () => {
+  const { E } = phone();
+  const err = (msg, stack, code) => { const e = new Error(msg); e.stack = stack == null ? `Error: ${msg}\n    at f (https://leelor123.github.io/shifts/app.he.83f64a8b.js:1:254)` : stack; if (code) e.code = code; return e; };
+  const skip = (e, kind = 'error', extra) => E._noise(E._build(e, kind, extra), e);
+  T.ok(!skip(err("Cannot read properties of null (reading 'x')")), 'a bug in the app is reported');
+  T.ok(!skip(err('x', 'Error: x\n    at https://leelor123.github.io/shifts/:12:3')), 'code in the page itself counts as the app');
+  T.ok(!skip(err('x', 'f@https://leelor123.github.io/shifts/index.en.html:12:3')), 'a language page too');
+  T.ok(skip(err('Failed to get document because the client is offline.', null, 'unavailable')), 'Firebase offline');
+  T.ok(skip(err('[code=unavailable]: Connection failed.')), 'Firebase unavailable');
+  T.ok(skip(err('x', null, 'auth/network-request-failed')), 'sign-in with no network');
+  T.ok(skip(new TypeError('Failed to fetch')) && skip(new TypeError('Load failed')) && skip(new TypeError('NetworkError when attempting to fetch resource.')), 'a failed fetch (Chrome, Safari, Firefox)');
+  T.ok(skip(new TypeError('Failed to fetch dynamically imported module: https://www.gstatic.com/firebasejs/x/firebase-app.js')), 'a CDN script that did not load');
+  T.ok(skip(err('x', 'Error: x\n    at chrome-extension://abcdefghijklmnop/content.js:1:2')), 'a browser extension');
+  T.ok(skip(err('x', 'Error: x\n    at https://www.gstatic.com/firebasejs/10.0.0/firebase-firestore.js:1:2')), 'a top frame outside the app');
+  T.ok(skip('Script error.', 'error', { message: 'Script error.' }), 'a muted error with no stack');
+  T.ok(skip({ reason: 'x' }, 'promise'), 'a rejection with no stack');
+  T.ok(!skip('x', 'error', { message: 'x', filename: 'https://leelor123.github.io/shifts/app.he.83f64a8b.js', lineno: 1, colno: 2 }), 'no error object but an app file and line');
+  const P = phone();
+  P.E.capture(new TypeError('Failed to fetch'), 'promise');
+  P.E.capture(err('x', 'Error: x\n    at chrome-extension://abc/x.js:1:2'), 'error');
+  T.eq(P.E._state(), null, 'nothing queued');
+});
 T.test('a message keeps the error and loses anything that could be the user\'s', () => {
   const { E } = phone();
   T.eq(E._clean("Cannot read properties of undefined (reading 'amount')"), "Cannot read properties of undefined (reading 'amount')", 'a property name stays');

@@ -12,6 +12,11 @@
  * quoted text, long numbers, email addresses, long tokens and letters
  * outside Latin are taken out of the message before it is kept.
  *
+ * Not reported (they are not app bugs, and would use up the day's 5): no
+ * connection (Firebase offline or unavailable, a failed fetch or script
+ * download; the app shows its own message), and errors whose top frame is
+ * not in the app's own files (extensions, injected scripts, no stack).
+ *
  * The same error (message + top frame, hashed) is counted, not sent again:
  * one report per error a day, with how many times it happened. At most 5
  * reports a day per device. Reports wait in localStorage while the phone
@@ -33,6 +38,7 @@
   /** An address cut to its file name, with no query or hash ("https://x/shifts/app.123.js?v=2" → "app.123.js"). */
   function fileOf(u) {
     const s = String(u || '').split(/[?#]/)[0];
+    if (/^[a-z][a-z0-9+.-]*:\/\/.*\/$/i.test(s)) return 'page'; // the page itself ("https://x/shifts/")
     const parts = s.split('/').filter(Boolean);
     const last = parts.length ? parts[parts.length - 1] : '';
     return (/^[a-z][a-z0-9+.-]*:$/i.test(last) || !last ? 'page' : last).slice(0, 60);
@@ -100,6 +106,22 @@
     }, device());
   }
 
+  /* ---------------- what is not an app bug ---------------- */
+  // the app's own files: the code (app.<lang>.<build>.js), the pages, the service worker
+  const OWN = /^(app\.[a-z]{2}\.[0-9a-f]+\.js|index(\.[a-z]{2})?\.html|sw\.js|page)$/;
+  // no connection: the app already says so on screen (Firebase offline, a fetch or a downloaded script that failed)
+  const NET = /client is offline|code=unavailable|\bunavailable\b|network-request-failed|Failed to fetch|Load failed|NetworkError|network error|Importing a module script failed|dynamically imported module|ChunkLoadError|Loading chunk/i;
+  /** true for a report that is not an app bug: a network failure, or an error whose top frame is not in the app's own
+   *  files (a browser extension, an injected script, a muted "Script error." with no stack). */
+  function noise(r, err) {
+    const code = err && typeof err === 'object' && typeof err.code === 'string' ? err.code : '';
+    if (NET.test(r.msg) || /(^|\/)(unavailable|network-request-failed)$/.test(code)) return true;
+    const top = r.st.split('\n')[0] || '';
+    if (!top) return true;
+    const file = top.replace(/^[^@]*@/, '').replace(/:\d+:\d+$/, '');
+    return !OWN.test(file);
+  }
+
   /* ---------------- consent and the queue ---------------- */
   const S = () => (root.Store && root.Store.S) || {};
   /** yes: the user agreed to statistics; no: they answered no; null: not known yet (the settings are not loaded). */
@@ -154,7 +176,7 @@
     try {
       if (consent() === false) { mem = null; save(); return; }
       const r = build(err, kind, extra);
-      if (/^(Script error\.?|ResizeObserver loop.*)$/.test(r.msg)) return; // another site's script; a browser notice
+      if (/^(Script error\.?|ResizeObserver loop.*)$/.test(r.msg) || noise(r, err)) return; // not an app bug
       load();
       add(r);
       save();
@@ -203,6 +225,7 @@
   Errors._frames = frames;
   Errors._hash = hash;
   Errors._build = build;
+  Errors._noise = noise;
   Errors._state = () => mem;
   Errors._reset = () => { mem = null; busy = false; clearTimeout(timer); };
 
