@@ -139,6 +139,7 @@
     leave: { icon: 'beach', title: 'ותק, חופשה, מחלה והבראה', sub: () => (S.settings.startDate ? 'התחלת עבודה: ' + U.fmtDate(S.settings.startDate) : 'הגדר תאריך תחילת עבודה') },
     goal: { icon: 'target', title: 'יעדים', sub: () => [+S.settings.goal.amount ? 'חודשי: ' + U.money(S.settings.goal.amount, 0) + (S.settings.goal.type === 'net' ? ' נטו' : ' ברוטו') : '', S.settings.saving && +S.settings.saving.price && S.settings.saving.name ? 'חוסכים ל' + S.settings.saving.name : ''].filter(Boolean).join(' · ') || 'יעד חודשי וחיסכון למשהו' },
     alerts: { icon: 'bell', title: 'התראות ותובנות', sub: () => (('Notification' in window) && Notification.permission === 'granted' ? 'פוש מופעל' : 'פוש כבוי') + ' · סיכומים ותזכורות' },
+    nfc: { icon: 'nfc', title: 'מדבקת NFC', sub: () => { const n = App.nfcTags ? App.nfcTags().length : 0; return n === 1 ? 'מדבקה אחת' : n ? `${n} מדבקות` : 'נגיעה במדבקה מתחילה ומסיימת משמרת'; } },
     templates: { icon: 'layers', title: 'תבניות משמרת', sub: () => (S.templates.length === 1 ? 'תבנית אחת' : S.templates.length ? `${S.templates.length} תבניות` : 'אין תבניות') },
     lang: { icon: 'globe', title: 'שפה · Language', sub: () => (root.Lang ? root.Lang.LANGS.map((l) => l.name).join(' · ') : '') },
     look: { icon: 'palette', title: 'מראה', sub: () => ({ system: 'לפי המערכת', light: 'בהיר', dark: 'כהה' }[S.settings.theme]) + ' · ' + (App.ACCENTS[S.settings.accent] || [])[2] },
@@ -159,7 +160,7 @@
     roles: 'עבודה מקום עבודה תפקיד מעסיק שכר לשעה תעריף העלאה העלאת שכר קוד מקום עבודה שיתוף חוקים חברים לעבודה', calc: 'שעות נוספות 125 150 עיגול לילה הפסקה ותק',
     rest: 'שבת חג חגים עיר כניסת שבת יציאת שבת כלל יום', pay: 'נסיעות החזר נסיעות תקרה תקופת שכר יום תשלום משכורת',
     net: 'מס מס הכנסה נקודות זיכוי פנסיה ביטוח לאומי מס בריאות השתלמות נטו', leave: 'חופשה מחלה הבראה ותק תחילת עבודה',
-    goal: 'יעד יעדים חיסכון חוסכים', alerts: 'התראות תזכורות פוש הודעות', templates: 'תבנית תבניות משמרת קבועה',
+    goal: 'יעד יעדים חיסכון חוסכים', alerts: 'התראות תזכורות פוש הודעות', nfc: 'nfc מדבקה מדבקות תג נגיעה כניסה יציאה החתמה שעון נוכחות אוטומטי', templates: 'תבנית תבניות משמרת קבועה',
     lang: 'שפה שפות language english русский русский язык العربية عربي ערבית רוסית אנגלית צרפתית ספרדית français francais español espanol french spanish תרגום אמהרית amharic አማርኛ', look: 'צבע צבעים ערכת נושא כהה בהיר מצב לילה גופן גופנים מראה צלילים רטט מוזיקה עיצוב כרטיס plus פלוס מסך הבית קיצורים קיצורי דרך משמרות אחרונות תאריך עברי שורת עדכון home screen accueil inicio', security: 'קוד נעילה טביעת אצבע סיסמה',
     assistant: 'בינה מלאכותית עוזר שאלות ai', ai: 'מפתח api claude ניתוח תלוש', backup: 'גיבוי שחזור קובץ', schedule: 'סידור עבודה סידור משמרות שבוע הבא צילום תמונה צילום מסך וואטסאפ whatsapp הודעה טבלה מתוכננות לוח', import: 'ייבוא דוח שעות נוכחות שעון אקסל excel csv pdf צילום קובץ להעלות משמרות מהעבודה', export: 'ייצוא אקסל excel csv pdf יומן',
     demo: 'דוגמה הדגמה', about: 'גרסה התקנה אודות', rights: 'זכויות שכר מינימום',
@@ -167,7 +168,7 @@
   // the page is a few colourful doors; each opens its own small page with the sections behind it
   const CATS = [
     { id: 'me', icon: 'users', tint: 'violet', title: 'אני והחשבון', keys: ['personal', 'account'], sub: () => [S.settings.userName, S.meta.cloudEmail ? 'מחובר/ת ☁️' : 'לא מחובר/ת'].filter(Boolean).join(' · ') },
-    { id: 'work', icon: 'briefcase', tint: 'mint', title: 'העבודה שלי', keys: ['roles', 'pay', 'templates'], sub: () => { const r = App.roles(); return r.length === 1 ? `${r[0].name} · ${U.money(Engine.roleRate(r[0], U.todayKey()), 0)} לשעה` : `${r.length} תפקידים` + (S.employers.length > 1 ? ' · ' + `${S.employers.length} מקומות עבודה` : ''); } },
+    { id: 'work', icon: 'briefcase', tint: 'mint', title: 'העבודה שלי', keys: ['roles', 'pay', 'templates', 'nfc'], sub: () => { const r = App.roles(); return r.length === 1 ? `${r[0].name} · ${U.money(Engine.roleRate(r[0], U.todayKey()), 0)} לשעה` : `${r.length} תפקידים` + (S.employers.length > 1 ? ' · ' + `${S.employers.length} מקומות עבודה` : ''); } },
     { id: 'calc', icon: 'flask', tint: 'amber', title: 'חישוב השכר', keys: ['calc', 'rest'], sub: () => 'שעות נוספות, לילה, שבת וחגים' },
     { id: 'money', icon: 'wallet', tint: 'sky', title: 'נטו, מס וזכויות', keys: ['net', 'leave', 'rights'], sub: () => `${S.settings.tax.creditPoints} נק׳ זיכוי · פנסיה ${S.settings.pension.employeePct}%` },
     { id: 'goals', icon: 'target', tint: 'pink', title: 'יעדים ותזכורות', keys: ['goal', 'alerts'], sub: () => (+S.settings.goal.amount ? 'יעד ' + U.money(S.settings.goal.amount, 0) : 'יעד, חיסכון והתראות') },
@@ -830,6 +831,7 @@
     },
   };
 
+  RENDER.nfc = { render: () => App.nfcSection(), mount: (el, draw) => App.nfcMount(el, draw) };
   RENDER.templates = {
     render: () => `${S.templates.length ? `<div class="list">${S.templates.map((t) => `<div class="item" style="cursor:default"><span class="role-bar" style="background:${(App.role(t.roleId) || {}).color || '#999'}"></span><span class="body"><span class="t">${esc(t.name)}</span><span class="s">${esc(App.roleName(t.roleId))} · <span class="num">\u2066${esc(t.startT)}\u2060–\u2060${esc(t.endT)}\u2069</span>${t.breakMin ? ` · הפסקה ${esc(t.breakMin)}` : ''}</span></span><button class="icon-btn" data-tdel="${esc(t.id)}" aria-label="מחק">${icon('trash', 's')}</button></div>`).join('')}</div>`
       : UI.emptyState('layers', 'אין תבניות', 'פתח משמרת ← "שמור כתבנית". אחר כך תוכל להוסיף אותה בלחיצה מכפתור ה-+.')}`,

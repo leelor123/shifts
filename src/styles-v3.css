@@ -1734,6 +1734,25 @@ html:not([lang="he"]) .lb-games button, html:not([lang="he"]) .lb-periods button
 .ios-install .ii-why > div { display: flex; gap: 8px; align-items: flex-start; }
 .ios-install .ii-why svg { flex: none; margin-top: 2px; color: var(--brand); }
 .ios-install .ii-note { margin-top: 10px; text-align: center; }
+/* the NFC sticker at work (app/nfc.js): the section in Settings and the sheet that writes one */
+.nfc-card .nfc-intro { display: flex; gap: 12px; align-items: flex-start; margin-bottom: 14px; }
+.nfc-card .nfc-intro p { margin: 0; flex: 1; min-width: 0; line-height: 1.5; }
+.nfc-note { margin: 10px 4px 0; line-height: 1.5; }
+.nfc-item { cursor: default; }
+.nfc-sheet .sh-foot [hidden] { display: none; }
+/* the same height in every state, so the sheet never jumps when the words change */
+.nfc-sheet .nfc-w { min-height: 15.5rem; display: flex; flex-direction: column; align-items: center; text-align: center; padding: 10px 4px 4px; }
+.nfc-sheet .nfc-art { position: relative; width: 96px; height: 96px; border-radius: 50%; display: grid; place-items: center; margin-bottom: 16px; background: var(--brand-soft); color: var(--brand); }
+.nfc-sheet .nfc-art > svg { width: 44px; height: 44px; position: relative; }
+.nfc-sheet .nfc-art.ok { background: var(--good-bg); color: var(--good-mark); }
+.nfc-sheet .nfc-art.bad { background: var(--warn-bg); color: var(--warn-mark); }
+/* waiting for the sticker: a soft ring goes out from the phone, the way the sticker is read */
+.nfc-sheet .nfc-ring { position: absolute; inset: 0; border-radius: 50%; border: 2px solid var(--brand); opacity: 0; animation: nfcRing 1.8s cubic-bezier(.23, 1, .32, 1) infinite; }
+@keyframes nfcRing { 0% { transform: scale(.92); opacity: .55; } 100% { transform: scale(1.5); opacity: 0; } }
+.nfc-sheet .nfc-t { margin: 0 0 6px; font-size: 1.12rem; line-height: 1.35; text-wrap: balance; }
+.nfc-sheet .nfc-s { margin: 0; color: var(--on-surface-var); line-height: 1.5; max-width: 30ch; text-wrap: pretty; }
+.nfc-sheet .nfc-role { display: flex; gap: 8px; align-items: center; justify-content: center; margin-top: 8px; color: var(--on-surface-var); font-size: .88rem; }
+@media (prefers-reduced-motion: reduce) { .nfc-sheet .nfc-ring { animation: none; } }
 .done-cta { border: 1.5px solid var(--warn); }
 .done-cta .dc-t { font-weight: 700; display: flex; gap: 6px; align-items: center; color: var(--warn); }
 .done-cta .dc-s { font-size: .86rem; color: var(--on-surface-var); margin: 4px 0 12px; }
