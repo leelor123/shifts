@@ -9,7 +9,7 @@ import org.json.JSONObject;
 public class ComboWidget extends ShaatiWidget {
     @Override
     RemoteViews build(Context c, JSONObject d, WidgetLook l) {
-        RemoteViews v = new RemoteViews(c.getPackageName(), R.layout.w_combo);
+        RemoteViews v = new RemoteViews(c.getPackageName(), WidgetLang.layout(c, R.layout.w_combo_rtl, R.layout.w_combo_ltr));
         l.frame(v);
         l.background(v, R.id.w_chip, l.chip);
         v.setOnClickPendingIntent(R.id.w_root, open(c, null, 500));

@@ -30,13 +30,17 @@ import java.util.Calendar;
 abstract class ShaatiWidget extends AppWidgetProvider {
     static final String SITE = "https://leelor123.github.io/shifts/?source=twa";
 
-    /** The widget's picture for this snapshot (d null = the app was never opened since the widget was added). */
+    /**
+     * The widget's picture for this snapshot (d null = the app was never opened since the widget was added). c is the
+     * Context in the app's language (WidgetLang.context): the texts and the layout's direction come from it.
+     */
     abstract RemoteViews build(Context c, JSONObject d, WidgetLook l);
 
     @Override
     public void onUpdate(Context c, AppWidgetManager m, int[] ids) {
         JSONObject d = WidgetData.load(c);
-        for (int id : ids) m.updateAppWidget(id, build(c, d, WidgetLook.forWidget(c, id)));
+        Context lc = WidgetLang.context(c);
+        for (int id : ids) m.updateAppWidget(id, build(lc, d, WidgetLook.forWidget(c, id)));
     }
 
     /** A start or end button was tapped (tap(), below): done on the home screen, the app saves it when it opens. */
@@ -50,13 +54,13 @@ abstract class ShaatiWidget extends AppWidgetProvider {
         JSONObject a = d == null ? null : d.optJSONObject("active");
         if ("start".equals(type) && direct(d) && a == null && d.optJSONObject("next") != null) {
             WidgetData.tap(c, "start");
-            Toast.makeText(c.getApplicationContext(), c.getString(R.string.w_started), Toast.LENGTH_SHORT).show();
+            Toast.makeText(c.getApplicationContext(), WidgetLang.context(c).getString(R.string.w_started), Toast.LENGTH_SHORT).show();
         } else if ("stop".equals(type) && direct(d) && a != null) {
             long breakAt = a.optLong("breakAt", 0);
             long min = Math.max(0, ((breakAt > 0 ? breakAt : System.currentTimeMillis()) - a.optLong("start", 0) - a.optLong("breakMs", 0)) / 60000);
             WidgetData.tap(c, "stop");
             String hm = String.format(java.util.Locale.ROOT, "%d:%02d", min / 60, min % 60);
-            Toast.makeText(c.getApplicationContext(), c.getString(R.string.w_ended, hm), Toast.LENGTH_LONG).show();
+            Toast.makeText(c.getApplicationContext(), WidgetLang.context(c).getString(R.string.w_ended, hm), Toast.LENGTH_LONG).show();
         } else {
             WidgetData.updateAll(c); // a tap the picture no longer matched (an old widget picture): draw it fresh
         }
@@ -107,10 +111,10 @@ abstract class ShaatiWidget extends AppWidgetProvider {
     }
 
     /** The first letter in capitals (the app's "the pay period" opens a label in English); scripts without case keep it. */
-    static String cap(String t) {
+    static String cap(Context c, String t) {
         if (t == null || t.isEmpty()) return "";
         int n = Character.charCount(t.codePointAt(0));
-        return t.substring(0, n).toUpperCase(java.util.Locale.getDefault()) + t.substring(n);
+        return t.substring(0, n).toUpperCase(WidgetLang.locale(c)) + t.substring(n);
     }
 
     static int pct(JSONObject o) {
@@ -192,6 +196,9 @@ abstract class ShaatiWidget extends AppWidgetProvider {
         l.textColor(c, v, R.id.w_sub, l.sub);
         if (coinRow) l.coin(v, face(d));
         v.setViewVisibility(R.id.w_go, coin ? View.GONE : View.VISIBLE);
+        // written here, not left to the layout: the launcher would read the layout's texts in the phone's language
+        v.setTextViewText(R.id.w_stop, c.getString(R.string.w_end));
+        v.setContentDescription(R.id.w_play, c.getString(R.string.w_start));
         JSONObject a = d == null ? null : d.optJSONObject("active");
         if (a != null) {
             boolean onBreak = a.optLong("breakAt", 0) > 0;

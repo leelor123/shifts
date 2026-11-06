@@ -10,7 +10,7 @@ import org.json.JSONObject;
 public class MonthWidget extends ShaatiWidget {
     @Override
     RemoteViews build(Context c, JSONObject d, WidgetLook l) {
-        RemoteViews v = new RemoteViews(c.getPackageName(), R.layout.w_month);
+        RemoteViews v = new RemoteViews(c.getPackageName(), WidgetLang.layout(c, R.layout.w_month_rtl, R.layout.w_month_ltr));
         l.frame(v);
         month(c, v, d, l);
         l.coin(v, face(d));
@@ -34,7 +34,7 @@ public class MonthWidget extends ShaatiWidget {
             text(v, R.id.w_goal, "");
             return;
         }
-        v.setTextViewText(R.id.w_label, cap(c.getString(R.string.w_so_far, s(d, "period"))));
+        v.setTextViewText(R.id.w_label, cap(c, c.getString(R.string.w_so_far, s(d, "period"))));
         v.setTextViewText(R.id.w_amount, s(d, "gross"));
         text(v, R.id.w_line, c.getString(R.string.w_net_hours, s(d, "net"), s(d, "hours")));
         JSONObject g = d.optJSONObject("goal");

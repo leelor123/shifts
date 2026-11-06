@@ -5,7 +5,12 @@
  *   - every R.string / R.plurals the Java sources use and every @string/ the layouts, widget infos and the manifest
  *     lines in tools/android.js use is defined.
  *   - no text is left in the Java code or in a layout: a Hebrew letter in Java outside a comment, or in a layout
- *     attribute, fails (every user-visible text comes from the string resources, so it follows the phone's language).
+ *     attribute, fails (every user-visible text comes from the string resources, in the app's language).
+ *   - the app's language: every language src/app/lang.js has is in WidgetLang.LANGS and has its values-xx folder, a
+ *     snapshot without lang falls back to Hebrew (the default folder), and src/app/widgets.js sends lang.
+ *   - the direction: each layout's _rtl/_ltr copy matches tools/android-layouts.js, the Java code uses only those, and
+ *     every text or description a layout holds is also written by the code (the launcher would read the layout's own
+ *     in the phone's language).
  * Exit code 1 with the list of problems, 0 when all is well. */
 const fs = require('fs');
 const path = require('path');
@@ -120,6 +125,45 @@ function check() {
   for (const m of tool.matchAll(/@string\/(w_\w+)/g)) { used.add(m[1]); if (!base.strings[m[1]]) problems.push(`tools/android.js: @string/${m[1]} is not defined`); }
   // receiver('ShiftWidget', 'shift') → @string/w_shift_name
   for (const m of tool.matchAll(/receiver\('\w+', '(\w+)'\)/g)) { used.add(`w_${m[1]}_name`); if (!base.strings[`w_${m[1]}_name`]) problems.push(`tools/android.js: w_${m[1]}_name is not defined`); }
+
+  // the app's language: every language the app speaks (src/app/lang.js) is one WidgetLang knows and has its texts here;
+  // a snapshot without one (an app from before) means Hebrew, the default folder
+  const appLangs = [...fs.readFileSync(path.join(ROOT, 'src', 'app', 'lang.js'), 'utf8').matchAll(/\{ id: '(\w+)', name:/g)].map((m) => m[1]);
+  const wl = fs.readFileSync(path.join(W, 'java', 'WidgetLang.java'), 'utf8');
+  const javaLangs = ((wl.match(/LANGS = \{([^}]*)\}/) || [])[1] || '').match(/\w+/g) || [];
+  if (appLangs.length < 7) problems.push(`src/app/lang.js: found only ${appLangs.length} languages`);
+  for (const l of appLangs) {
+    if (!javaLangs.includes(l)) problems.push(`WidgetLang.LANGS has no "${l}" (the app speaks it)`);
+    if (l !== 'he' && !folders.includes('values-' + l)) problems.push(`the app speaks "${l}" but android/widgets/res/values-${l}/w_strings.xml is missing`);
+  }
+  for (const l of javaLangs) if (!appLangs.includes(l)) problems.push(`WidgetLang.LANGS has "${l}", which the app does not speak`);
+  if (!/static final String DEFAULT = "he";/.test(wl)) problems.push('WidgetLang.DEFAULT must be "he" (a snapshot without lang is Hebrew)');
+  if (!HEBREW.test(base.strings.w_start || '')) problems.push('values/w_strings.xml (the default, used for "he" and a snapshot without lang) must be Hebrew');
+  const wd = fs.readFileSync(path.join(W, 'java', 'WidgetData.java'), 'utf8');
+  if (!/optString\("lang", WidgetLang\.DEFAULT\)/.test(wd)) problems.push('WidgetData.lang must read "lang" with Hebrew as the fallback');
+  const web = fs.readFileSync(path.join(ROOT, 'src', 'app', 'widgets.js'), 'utf8');
+  if ((web.match(/lang: LANG,/g) || []).length < 2) problems.push('src/app/widgets.js: the snapshot and the empty snapshot must carry lang: LANG');
+
+  // the direction: each layout has its _rtl and _ltr made by tools/android-layouts.js, and the Java code uses those
+  const { variants, DIR } = require('./android-layouts.js');
+  for (const v of variants()) {
+    const p = path.join(DIR, v.file);
+    if (!fs.existsSync(p)) problems.push(`layout/${v.file} is missing (run node tools/android-layouts.js)`);
+    else if (fs.readFileSync(p, 'utf8') !== v.text) problems.push(`layout/${v.file} differs from ${v.base} (run node tools/android-layouts.js)`);
+  }
+  const javaAll = fs.readdirSync(path.join(W, 'java')).map((f) => code(fs.readFileSync(path.join(W, 'java', f), 'utf8'))).join('\n');
+  for (const m of javaAll.matchAll(/R\.layout\.(w_\w+)/g)) if (!/_(rtl|ltr)$/.test(m[1])) problems.push(`java: R.layout.${m[1]} draws in the phone's direction; use WidgetLang.layout(c, R.layout.${m[1]}_rtl, R.layout.${m[1]}_ltr)`);
+  // a text the layout holds is read by the launcher in the phone's language: the code must write each one itself
+  const setText = new Set([...javaAll.matchAll(/(?:setTextViewText\(|\btext\(v, )R\.id\.(\w+)/g)].map((m) => m[1]));
+  const setDesc = new Set([...javaAll.matchAll(/setContentDescription\(R\.id\.(\w+)/g)].map((m) => m[1]));
+  for (const f of fs.readdirSync(DIR).filter((f) => /_(rtl|ltr)\.xml$/.test(f))) {
+    const x = fs.readFileSync(path.join(DIR, f), 'utf8');
+    for (const el of x.matchAll(/<\w+\s[^>]*>/g)) {
+      const id = (el[0].match(/android:id="@\+id\/(\w+)"/) || [])[1];
+      if (/android:text="@string\//.test(el[0]) && !setText.has(id)) problems.push(`layout/${f}: ${id || 'a view without id'} takes its text from the layout; the code must write it (setTextViewText)`);
+      if (/android:contentDescription="@string\//.test(el[0]) && !setDesc.has(id)) problems.push(`layout/${f}: ${id || 'a view without id'} takes its description from the layout; the code must write it (setContentDescription)`);
+    }
+  }
 
   const unused = [...names].filter((k) => !used.has(k));
   return { problems, unused, strings: Object.keys(base.strings).length, plurals: Object.keys(base.plurals).length, languages: folders.length + 1 };

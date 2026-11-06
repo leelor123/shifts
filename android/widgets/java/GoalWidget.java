@@ -10,7 +10,7 @@ import org.json.JSONObject;
 public class GoalWidget extends ShaatiWidget {
     @Override
     RemoteViews build(Context c, JSONObject d, WidgetLook l) {
-        RemoteViews v = new RemoteViews(c.getPackageName(), R.layout.w_goal);
+        RemoteViews v = new RemoteViews(c.getPackageName(), WidgetLang.layout(c, R.layout.w_goal_rtl, R.layout.w_goal_ltr));
         l.frame(v);
         l.background(v, R.id.w_icon_box, l.dot);
         l.iconColor(c, v, R.id.w_icon);

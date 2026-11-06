@@ -63,6 +63,17 @@ final class WidgetData {
         }
     }
 
+    /** The app's language as the last snapshot says it (also an empty one); none (an older app, or nothing yet): Hebrew. */
+    static String lang(Context c) {
+        String s = c.getSharedPreferences(PREFS, Context.MODE_PRIVATE).getString(KEY, null);
+        if (s == null) return WidgetLang.DEFAULT;
+        try {
+            return WidgetLang.of(new JSONObject(s).optString("lang", WidgetLang.DEFAULT));
+        } catch (Exception e) {
+            return WidgetLang.DEFAULT;
+        }
+    }
+
     /** What the widgets show: the last snapshot, with the starts and ends tapped since then. */
     static JSONObject load(Context c) {
         JSONObject o = raw(c);

@@ -9,7 +9,7 @@ import org.json.JSONObject;
 public class PaydayWidget extends ShaatiWidget {
     @Override
     RemoteViews build(Context c, JSONObject d, WidgetLook l) {
-        RemoteViews v = new RemoteViews(c.getPackageName(), R.layout.w_payday);
+        RemoteViews v = new RemoteViews(c.getPackageName(), WidgetLang.layout(c, R.layout.w_payday_rtl, R.layout.w_payday_ltr));
         l.frame(v);
         l.textColor(c, v, R.id.w_title, l.text);
         l.textColor(c, v, R.id.w_sub, l.label);
