@@ -489,11 +489,19 @@ let errors = [];
   });
   await step('saving up for something: set it, see it on home, remove it', async () => {
     await ev(() => Store.setSettings((s) => { s.saving = { name: 'אוזניות', price: 900, from: U.addDays(U.todayKey(), -30) }; }));
+    // home shows two cards at most, the most urgent first: answer the ones the demo puts above the saving card
+    await ev(async () => {
+      await Store.setSettings((s) => { s.statsAsked = true; s.backup.lastBackup = Date.now(); s.home = Object.assign({}, s.home, { highlight: false }); });
+      App.go('home');
+      for (const c of document.querySelectorAll('#view .recap-card')) await Store.setMeta(/^Y/.test(c.dataset.pk) ? { wrappedSeen: c.dataset.pk } : { recapSeen: c.dataset.pk });
+    });
     await ev(() => { App.go('home'); App.render(); }); await sleep(400);
+    if (!(await ev(() => App.homeCardKeys.includes('saving')))) throw new Error('no place for the saving card: ' + (await ev(() => App.homeCardKeys.join())));
     const c = await ev(() => { const x = document.querySelector('.save-card'); return x ? x.innerText : ''; });
     if (!/אוזניות/.test(c) || !/%/.test(c)) throw new Error('card: ' + c);
     if (/NaN|undefined/.test(c)) throw new Error('broken numbers: ' + c);
     await ev(() => Store.setSettings((s) => { s.saving = { name: '', price: 0, from: '' }; }));
+    await ev(() => Store.setSettings((s) => { s.home = Object.assign({}, s.home, { highlight: true }); }));
     await ev(() => App.render()); await sleep(200);
     if (await ev(() => !!document.querySelector('.save-card'))) throw new Error('still shown after removing');
   });
@@ -869,6 +877,13 @@ let errors = [];
     await e2(() => { const i = document.querySelector('[data-jr="0"]'); i.value = '50'; i.dispatchEvent(new Event('input', { bubbles: true })); });
     if (!(await e2(() => document.getElementById('ob-live-roles').textContent.includes('400')))) throw new Error('pay preview did not react');
     await p2.click('[data-next]'); await sleep(450);
+    // the break and the work week: one screen, two taps, then it moves on by itself
+    if (!(await p2.$('[data-brk]')) || !(await p2.$('[data-week]'))) throw new Error('no break / work week question');
+    if (await p2.$('.step-rules input')) throw new Error('the break / work week screen has a field to type in');
+    await p2.click('[data-brk="no"]'); await sleep(200);
+    if (await p2.$('[data-travel]')) throw new Error('moved on after one answer of two');
+    await p2.click('[data-week="6"]'); await sleep(800);
+    if (!(await p2.$('[data-travel]'))) throw new Error('two answers did not move on to travel');
     await p2.click('[data-travel="yes"]'); await sleep(300);
     if (!(await e2(() => document.getElementById('ob-travel').placeholder === '16'))) throw new Error('travel suggestion is not 16');
     if (!(await e2(() => document.getElementById('ob-live-travel').textContent.includes('240')))) throw new Error('no travel preview');
@@ -886,7 +901,8 @@ let errors = [];
   });
   await step('new user: save with Google signs in and opens the app', async () => {
     await p2.click('.ob-google'); await sleep(1500);
-    const st = await e2(() => ({ signIn: window.__signIn, connected: window.__connected, onboarded: Store.S.settings.onboarded, blocking: App.blocking, roles: App.roles().map((r) => r.name + ':' + Engine.roleRate(r, U.todayKey())), birth: Store.S.settings.birthDate, city: Store.S.settings.rest.city, travel: Store.S.employers[0].travelPerDay, cp: Store.S.settings.tax.creditPoints, name: Store.S.settings.userName, start: Store.S.settings.startDate, hero: !!document.querySelector('.home-hero') }));
+    const st = await e2(() => ({ signIn: window.__signIn, connected: window.__connected, onboarded: Store.S.settings.onboarded, blocking: App.blocking, roles: App.roles().map((r) => r.name + ':' + Engine.roleRate(r, U.todayKey())), birth: Store.S.settings.birthDate, city: Store.S.settings.rest.city, travel: Store.S.employers[0].travelPerDay, cp: Store.S.settings.tax.creditPoints, name: Store.S.settings.userName, start: Store.S.settings.startDate, hero: !!document.querySelector('.home-hero'), brkPaid: Store.S.employers[0].defaultBreakPaid, otLaw: Store.S.employers[0].otLaw, week: Store.S.settings.leave.workWeek }));
+    if (st.brkPaid !== false || st.otLaw !== true || st.week !== 6) throw new Error('break / work week not saved ' + JSON.stringify(st));
     if (st.signIn !== 1 || st.connected !== 'newUser0123456789abcdef') throw new Error('sign-in not done ' + JSON.stringify(st));
     if (!st.onboarded || st.blocking || !st.hero) throw new Error('not in the app ' + JSON.stringify(st));
     if (st.roles.join() !== 'מלצרות:50' || !st.birth || st.city !== 'חיפה' || st.travel !== 16 || st.cp !== 2.75 || st.name !== 'נועה' || !st.start) throw new Error('answers not saved ' + JSON.stringify(st));
@@ -904,18 +920,20 @@ let errors = [];
   await step('new user who skips every question gets the usual answers', async () => {
     const M = await newUserPage();
     await M.p.click('[data-next]'); await sleep(400);
-    for (let i = 0; i < 6; i++) { await M.p.click('[data-skip]'); await sleep(350); }
+    for (let i = 0; i < 7; i++) { await M.p.click('[data-skip]'); await sleep(350); }
     if (!(await M.p.$('.ob-google'))) throw new Error('skipping did not reach the end');
     await M.p.click('.ob-google'); await sleep(1400);
-    const st = await M.e(() => ({ roles: App.roles().map((r) => r.name + ':' + Engine.roleRate(r, U.todayKey())), travel: Store.S.employers[0].travelPerDay, city: Store.S.settings.rest.city, birth: Store.S.settings.birthDate, start: Store.S.settings.startDate, onboarded: Store.S.settings.onboarded }));
+    const st = await M.e(() => ({ roles: App.roles().map((r) => r.name + ':' + Engine.roleRate(r, U.todayKey())), travel: Store.S.employers[0].travelPerDay, city: Store.S.settings.rest.city, birth: Store.S.settings.birthDate, start: Store.S.settings.startDate, onboarded: Store.S.settings.onboarded, brkPaid: Store.S.employers[0].defaultBreakPaid, otLaw: Store.S.employers[0].otLaw, week: Store.S.settings.leave.workWeek }));
     await M.ctx.close();
     if (st.roles.join() !== 'העבודה שלי:35.4' || st.travel !== 16 || st.city !== 'תל אביב-יפו' || st.birth !== null || st.start !== null || !st.onboarded) throw new Error('defaults: ' + JSON.stringify(st));
+    // a skipped break question is "not sure": unpaid; a skipped work week leaves the flat 8 hours as before
+    if (st.brkPaid !== false || st.otLaw !== false || st.week !== 5) throw new Error('break / work week defaults: ' + JSON.stringify(st));
   });
   await step('Google popup blocked: a clear message and a second try works', async () => {
     const M = await newUserPage();
     await M.e(() => { let n = 0; Object.defineProperty(window.Cloud, 'signIn', { configurable: true, get: () => () => (++n === 1 ? Promise.reject(Object.assign(new Error('blocked'), { code: 'auth/popup-blocked' })) : Promise.resolve({ uid: 'u9', email: 'x@example.com' })) }); });
     await M.p.click('[data-next]'); await sleep(400);
-    for (let i = 0; i < 6; i++) { await M.p.click('[data-skip]'); await sleep(350); }
+    for (let i = 0; i < 7; i++) { await M.p.click('[data-skip]'); await sleep(350); }
     await M.p.click('.ob-google'); await sleep(600);
     const msg = await M.e(() => (document.querySelector('.ob-done .banner') || {}).textContent || '');
     const redirect = !!(await M.p.$('[data-redirect]'));
@@ -931,7 +949,7 @@ let errors = [];
   await step('new user as a guest: a warning first, the app opens, still a guest after a reload, Settings offers to save', async () => {
     const M = await newUserPage();
     await M.p.click('[data-next]'); await sleep(400);
-    for (let i = 0; i < 6; i++) { await M.p.click('[data-skip]'); await sleep(350); }
+    for (let i = 0; i < 7; i++) { await M.p.click('[data-skip]'); await sleep(350); }
     const both = !!(await M.p.$('[data-guest]')) && !!(await M.p.$('[data-email-pass]'));
     await M.p.click('[data-guest]'); await sleep(500);
     const warned = await M.e(() => document.body.innerText.includes('נשמר רק בטלפון הזה'));
@@ -955,7 +973,7 @@ let errors = [];
     const M = await newUserPage();
     await M.e(() => { Object.defineProperty(window.Cloud, 'signInEmail', { configurable: true, get: () => (email, pass, create) => { window.__email = [email, pass.length, create]; return Promise.resolve({ uid: 'mailUser0123456789abcd', email }); } }); });
     await M.p.click('[data-next]'); await sleep(400);
-    for (let i = 0; i < 6; i++) { await M.p.click('[data-skip]'); await sleep(350); }
+    for (let i = 0; i < 7; i++) { await M.p.click('[data-skip]'); await sleep(350); }
     await M.p.click('[data-email-pass]');
     await M.p.waitForSelector('input[name=password]', { timeout: 4000 });
     await M.p.type('input[name=email]', 'noa@example.com'); await M.p.type('input[name=password]', 'abc');
@@ -976,7 +994,7 @@ let errors = [];
     await M.e(() => { const orig = IDBDatabase.prototype.transaction; IDBDatabase.prototype.transaction = function (s, m) { if (m === 'readwrite') throw new DOMException('Connection to Indexed Database server lost', 'UnknownError'); return orig.call(this, s, m); }; });
     await M.p.click('[data-next]'); await sleep(450);
     const moved = await M.e(() => !!document.getElementById('ob-name'));
-    for (let i = 0; i < 6; i++) { await M.p.click('[data-skip]'); await sleep(350); }
+    for (let i = 0; i < 7; i++) { await M.p.click('[data-skip]'); await sleep(350); }
     await M.p.click('.ob-google'); await sleep(2500);
     const st = await M.e(() => ({ blocking: App.blocking, hero: !!document.querySelector('.home-hero'), onboarded: Store.S.settings.onboarded, banner: (document.querySelector('.banner') || {}).textContent || '' }));
     await M.ctx.close();

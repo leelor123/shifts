@@ -348,6 +348,13 @@
       foot: `<button class="btn" data-go>${icon('check')} המשך לבדיקה</button>`,
       onMount: (el) => {
         sheetEl = el;
+        // opened from a reason in the check ("the reader misread a number"): that line opens, or the unplaced lines
+        if (draft.openKey != null) {
+          setTimeout(() => {
+            if (draft.openKey && d.fields[draft.openKey]) openRow(draft.openKey, true);
+            else { const o = el.querySelector('.vf-other'); if (o) { o.open = true; o.scrollIntoView({ block: 'nearest', behavior: 'smooth' }); } }
+          }, 380);
+        }
         el.addEventListener('input', (e) => { const k = e.target.dataset.v || e.target.dataset.q; if (k) live(k); });
         el.addEventListener('change', (e) => { if (e.target.id === 'vf-period') d.period = e.target.value || d.period; });
         el.addEventListener('click', async (e) => {
@@ -383,29 +390,82 @@
   function prevSlipOf(period, id) {
     return S.payslips.filter((p) => p.period < period && p.id !== id).sort((a, b) => b.period.localeCompare(a.period))[0];
   }
-  function analysisHtml(slip, a) {
+  /* ---------------- before writing to the employer ----------------
+   * When money looks missing, the likely innocent reasons come first (Payslip.checkGap), each checked on the
+   * person's own data, with what it explains and a way to fix it; then the gap that is left. The letter and the
+   * report stay where they were, never hidden: the letter asks only for what is left. */
+  const FOUND_TAG = { yes: ['okc', 'נמצא בנתונים שלך'], maybe: ['help', 'אולי'], no: ['check', 'לא נמצא'] };
+  function fixHtml(r) {
+    const chips = r.shifts && r.shifts.length ? `<div class="gc-chips">${r.shifts.slice(0, 6).map((id) => { const x = App.result(id); return x ? `<button class="chip" data-act="shift-open" data-id="${esc(id)}">${U.fmtDate(x.dateKey, 'short')} · ${U.hm(x.paidMin)}</button>` : ''; }).join('')}</div>` : '';
+    const f = r.fix;
+    const btn = !f ? '' : f.kind === 'set' ? `<button class="btn text sm" data-gc-set="${esc(f.k)}" data-f="${esc(f.f || '')}">${icon('settings', 's')} לבדוק בהגדרות</button>`
+      : f.kind === 'verify' ? `<button class="btn text sm" data-gc-verify="${esc(f.key || '')}">${icon('edit', 's')} לתקן את נתוני התלוש</button>` : '';
+    return chips + (btn ? `<div class="gc-fix">${btn}</div>` : '');
+  }
+  function checkHtml(c) {
+    if (!c || !c.items.length) return '';
+    const reason = (r) => `<div class="gc-r ${r.found}">
+        <div class="gc-rh"><span class="gc-tag ${r.found}">${icon(FOUND_TAG[r.found][0], 's')}${FOUND_TAG[r.found][1]}</span>${r.amount >= 0.5 ? `<span class="gc-amt">${r.found === 'yes' ? 'מסביר' : 'עד'} ${money(r.amount)}</span>` : ''}</div>
+        <b class="gc-rt">${esc(r.title)}</b>
+        <div class="gc-t">${esc(r.text)}</div>
+        ${r.line ? `<div class="vf-src gc-line">${icon('file', 's')}<span>${esc(r.line)}</span></div>` : ''}
+        ${fixHtml(r)}</div>`;
+    return `<div class="section-title" id="ps-check-t">${icon('search', 's')} לפני שכותבים למעסיק</div>
+      <div class="card gc" id="ps-check">
+        <div class="small gc-intro">לפער יכולה להיות סיבה תמימה. בדקנו את הסיבות האפשריות מול הנתונים שלך, מהסבירה ביותר.</div>
+        ${c.items.map((it) => {
+          const shown = it.reasons.filter((r) => r.found !== 'no');
+          const no = it.reasons.filter((r) => r.found === 'no');
+          return `<div class="gc-f${it.left < 1 ? ' expl' : ''}" data-key="gc-${esc(it.id)}">
+            <div class="gc-fh"><span class="fi">${icon(it.left < 1 ? 'alert' : 'xc', 's')}</span><b>${esc(it.area)} · ${esc(it.title)}</b><span class="amt">${money(it.amount)}</span></div>
+            ${shown.map(reason).join('')}
+            ${no.length ? `<div class="gc-no">${icon('check', 's')}<span>בדקנו ולא מצאנו: ${no.map((r) => esc(r.title)).join(' · ')}</span></div>` : ''}
+          </div>`;
+        }).join('')}
+        <div class="gc-left${c.all ? ' all' : ''}"><small>הפער שנשאר אחרי הבדיקות</small><b>${money(c.left)}</b></div>
+        <div class="small gc-sum">${c.all ? 'הסיבות שמצאנו מסבירות את כל הפער, כך שכנראה לא חסר לך כסף. כדאי לבדוק אותן, ואם משהו עדיין לא מסתדר, המכתב מחכה למטה.'
+          : c.explained >= 1 ? 'אם בדקת ועדיין חסר, המכתב למטה מבקש רק את הפער שנשאר.' : 'לא מצאנו סיבה תמימה שמסבירה את הפער. המכתב למטה מוכן.'}</div>
+        ${c.all ? `${c.nextSlip ? `<button class="btn block" data-gc-remind>${icon('bell', 's')} תזכיר לי לבדוק בתלוש הבא</button>` : ''}
+          <button class="btn text sm block gc-letter-anyway" data-go-letter>${icon('send', 's')} להמשיך למכתב בכל זאת</button>`
+          : `<button class="btn block" data-go-letter>${icon('send', 's')} בדקתי, להמשיך למכתב</button>`}
+      </div>`;
+  }
+  function analysisHtml(slip, a, c) {
+    // a finding a reason in the person's data explains in full is shown as explained (amber), not as missing money,
+    // and the counts and the total on top follow it
+    const explainedBy = (f) => { const it = c && c.items.find((x) => x.id === f.id); return it && it.left < 1 ? it.by : ''; };
+    const statusOf = (f) => (f.status === 'bad' && explainedBy(f) ? 'warn' : f.status);
     const counts = { ok: 0, warn: 0, bad: 0 };
-    a.findings.forEach((f) => counts[f.status]++);
+    a.findings.forEach((f) => counts[statusOf(f)]++);
     const prev = prevSlipOf(slip.period, slip.id);
     const wf = Payslip.waterfall(slip.fields);
     const lines = Payslip.explainLines(slip.fields, prev && prev.fields);
     const changes = Payslip.compareSlips(prev && prev.fields, slip.fields);
-    const msg = Payslip.employerMessage(a, { name: S.settings.userName || '' });
+    const msg = Payslip.employerMessage(a, { name: S.settings.userName || '', check: c });
+    const left = c && c.items.length ? c.left : a.totalMissing;
     const order = { bad: 0, warn: 1, ok: 2 };
+    const hero = a.totalMissing <= 0 ? (counts.bad === 0 ? `<div class="card tonal"><b>${icon('okc', 's')} לא נמצאו חוסרים</b><div class="small">התלוש תואם למשמרות שרשמת${counts.warn ? ', עם כמה נקודות לבדיקה' : ''}.</div></div>` : '')
+      : left < 1 ? `<div class="card tonal"><b>${icon('okc', 's')} כנראה לא חסר לך כסף</b><div class="small">ההפרש של ${money(a.totalMissing)} שנמצא בתלוש מוסבר כולו בסיבות שמצאנו בנתונים שלך.</div></div>`
+        : `<div class="card tonal"><div class="small">הפרש משוער לטובתך</div><div class="hero-num">${money(left)}</div><div class="tiny">${left < a.totalMissing - 0.5 ? `מתוך ${money(a.totalMissing)} שנמצאו, ${money(a.totalMissing - left)} מוסברים בסיבות שמצאנו.` : `סכום הממצאים שמסומנים בסימן ${icon('xc', 's')} בפירוט למטה.`}</div></div>`;
     return `
+      ${carryHtml(slip)}
       <div class="status-summary"><div class="ok">${icon('okc', 's')} ${counts.ok}<div class="tiny">תקין</div></div><div class="warn">${icon('alert', 's')} ${counts.warn}<div class="tiny">לבדוק</div></div><div class="bad">${icon('xc', 's')} ${counts.bad}<div class="tiny">חסר/שגוי</div></div></div>
-      ${a.totalMissing > 0 ? `<div class="card tonal"><div class="small">הפרש משוער לטובתך</div><div class="hero-num">${money(a.totalMissing)}</div><div class="tiny">סכום הממצאים המסומנים ${icon('xc', 's')}. בדוק את הפירוט לפני פנייה למעסיק.</div><button class="btn tonal sm found-share" data-act="found-share" data-amount="${Math.round(a.totalMissing)}" data-k="found">${icon('share', 's')} שתף: שעתי מצאה לי ${money(a.totalMissing, 0)}</button></div>` : counts.bad === 0 ? `<div class="card tonal"><b>${icon('okc', 's')} לא נמצאו חוסרים</b><div class="small">התלוש תואם למשמרות שרשמת${counts.warn ? ', עם כמה נקודות לבדיקה' : ''}.</div></div>` : ''}
+      ${hero}
+      ${checkHtml(c)}
       ${a.overridesInPeriod ? `<div class="banner warn">${icon('hand')}<div>${a.overridesInPeriod} משמרות בתקופה כוללות עקיפה ידנית. ממצאים שנובעים מהן מסומנים.</div></div>` : ''}
       <div class="small muted" style="margin:0 4px 10px">תקופה: \u2066${U.fmtDate(a.expected.P.from)}\u2060–\u2060${U.fmtDate(a.expected.P.to)}\u2069 · ${a.expected.shifts.length} משמרות · ${U.hours(a.expected.t.hours)} ש׳</div>
-      ${a.findings.slice().sort((x, y) => order[x.status] - order[y.status]).map((f) => `<div class="finding ${f.status}">
-        <div class="ft"><span class="fi">${icon(STATUS[f.status][0], 's')}</span><span>${esc(f.area)} · ${esc(f.title)}</span>${f.amount > 0 && f.status !== 'ok' ? `<span class="amt">${U.money(f.amount)}</span>` : ''}</div>
+      ${a.findings.slice().sort((x, y) => order[statusOf(x)] - order[statusOf(y)]).map((f) => { const by = f.status === 'bad' ? explainedBy(f) : ''; const st = statusOf(f); return `<div class="finding ${st}">
+        <div class="ft"><span class="fi">${icon(STATUS[st][0], 's')}</span><span>${esc(f.area)} · ${esc(f.title)}</span>${!by && f.amount > 0 && f.status !== 'ok' ? `<span class="amt">${U.money(f.amount)}</span>` : ''}</div>
+        ${by ? `<div class="gc-expl">מוסבר: ${esc(by)} · ${money(f.amount)}</div>` : ''}
         <div class="fd">${esc(f.detail)}</div>
         ${f.fromOverride ? `<div class="fd" style="color:var(--override)">${icon('hand', 's')} ${esc(f.fromOverride)}</div>` : ''}
         ${f.note ? `<div class="fd small">${icon('info', 's')} ${esc(f.note)}</div>` : ''}
         ${f.shifts && f.shifts.length ? `<div style="margin-top:6px">${f.shifts.slice(0, 6).map((id) => { const r = App.result(id); return r ? `<button class="chip" data-act="shift-open" data-id="${id}">${U.fmtDate(r.dateKey, 'short')} · ${U.hm(r.paidMin)}</button>` : ''; }).join(' ')}</div>` : ''}
-        <div class="fb">על מה זה מבוסס: ${esc(f.basis)} · <span class="conf ${f.confidence}">${CONF[f.confidence]}</span></div></div>`).join('')}
-      ${msg ? `<div class="section-title">${icon('send', 's')} מה לעשות</div><div class="card"><div class="small" style="margin-bottom:8px">הודעה מוכנה למעסיק / משאבי אנוש (אפשר לערוך):</div><textarea class="input" id="ps-msg" rows="10" aria-label="הודעה למעסיק">${esc(msg)}</textarea>
-        <div class="btn-row" style="margin-top:8px"><button class="btn tonal" data-copy-msg>${icon('copy')} העתק</button><button class="btn tonal" data-share-msg>${icon('share')} שתף</button></div></div>` : ''}
+        <div class="fb">על מה זה מבוסס: ${esc(f.basis)} · <span class="conf ${f.confidence}">${CONF[f.confidence]}</span></div></div>`; }).join('')}
+      ${msg ? `<div class="section-title" id="ps-letter">${icon('send', 's')} מה לעשות</div><div class="card"><div class="small" style="margin-bottom:8px">הודעה מוכנה למעסיק / משאבי אנוש (אפשר לערוך):</div><textarea class="input" id="ps-msg" rows="10" aria-label="הודעה למעסיק">${esc(msg)}</textarea>
+        <div class="btn-row" style="margin-top:8px"><button class="btn tonal" data-copy-msg>${icon('copy')} העתק</button><button class="btn tonal" data-share-msg>${icon('share')} שתף</button></div>
+        <button class="btn text sm gc-report" data-gc-report>${icon('file', 's')} דוח ומכתב לבירור מול המעסיק</button>
+        ${left >= 1 ? `<button class="btn tonal sm found-share" data-act="found-share" data-amount="${Math.round(left)}" data-k="found">${icon('share', 's')} שתף: שעתי מצאה לי ${money(left, 0)}</button>` : ''}</div>` : ''}
       ${changes.length ? `<div class="section-title">${icon('alert', 's')} שינויים מהתלוש הקודם</div><div class="card">${changes.map((c) => `<div class="kv"><span>${esc(c.text)}</span></div>`).join('')}</div>` : ''}
       ${wf ? `<div class="section-title">${icon('chart', 's')} מברוטו לנטו</div><div class="card">${Charts.waterfall(wf, { fmt: (v) => U.money(v), axisFmt: (v) => '₪' + (v >= 1000 ? (v / 1000).toFixed(1).replace('.0', '') + 'K' : Math.round(v)) })}
         <div class="tiny muted">כחול = ברוטו, אדום = ניכויים, ירוק = נטו. לחץ על עמודה לפרטים.</div></div>` : ''}
@@ -413,17 +473,55 @@
       <div class="list">${lines.map((l) => `<details class="collapse" style="margin:0;border-radius:0"><summary><span style="flex:1">${esc(l.label)}${l.change ? ' <span class="tag warn">שינוי</span>' : ''}</span><span class="money">${l.kind === 'info' ? U.num(l.value, 2) : U.money(l.value)}</span></summary><div class="in small">${esc(l.explain)}${l.qty ? `<br>כמות: ${U.num(l.qty, 2)}` : ''}${l.change ? `<br><b>${esc(l.change)}</b>` : ''}</div></details>`).join('')}</div>
       ${DISCLAIMER}`;
   }
+  function gapCheck(slip, a) {
+    try { return Payslip.checkGap(a, slip, App.model); } catch (e) { console.warn('gap check', e); return null; }
+  }
   function analysisSheet(slip) {
-    const a = Payslip.analyze(slip, App.model);
+    let a = Payslip.analyze(slip, App.model);
+    let c = gapCheck(slip, a);
+    let off = null, msgEdited = false;
     UI.openSheet({
       title: 'ניתוח תלוש · ' + U.fmtMonth(slip.period), full: true,
-      body: analysisHtml(slip, a),
+      body: analysisHtml(slip, a, c),
+      // a reason's fix changes a setting or a shift in a sheet above this one: the check runs again on the new
+      // numbers and only what changed is drawn again (a letter the person edited keeps its text)
+      onClose: () => { if (off) off(); },
       foot: slip.isNew ? `<button class="btn tonal" data-edit>${icon('edit')} תקן נתונים</button><button class="btn" data-save>${icon('check')} שמור בארכיון</button>`
         : `<button class="btn danger" data-del style="flex:0 0 auto" aria-label="מחיקת התלוש">${icon('trash')}</button><button class="btn tonal" data-edit>${icon('edit')} תקן נתונים</button>${slip.fileId ? `<button class="btn tonal" data-file style="flex:0 0 auto">${icon('file')}</button>` : ''}`,
       onMount: (el) => {
+        el.addEventListener('input', (e) => { if (e.target.id === 'ps-msg') msgEdited = true; });
+        off = Store.on((ev) => {
+          if (ev && ev.type === 'active') return;
+          const body = el.querySelector('.sh-body');
+          if (!body || !el.isConnected) return;
+          a = Payslip.analyze(slip, App.model);
+          c = gapCheck(slip, a);
+          const ta = el.querySelector('#ps-msg');
+          const typed = msgEdited && ta ? ta.value : null;
+          const y = body.scrollTop;
+          root.Dom.patch(body, analysisHtml(slip, a, c));
+          body.scrollTop = y;
+          const ta2 = el.querySelector('#ps-msg');
+          if (ta2) ta2.value = typed != null ? typed : ta2.textContent;
+        });
         el.addEventListener('click', async (e) => {
           const b = e.target.closest('button');
           if (!b) return;
+          if (b.hasAttribute('data-gc-remind')) {
+            // the payslip is kept with these findings as "check on the next payslip": the payday reminder brings the
+            // next payslip, and its check asks about them (carryHtml)
+            const t = `נזכיר לך: ביום התשלום הבא תופיע תזכורת להעלות את התלוש של ${U.fmtMonth(U.addMonthKey(slip.period, 1))}, ובבדיקה שלו נשאל אם זה שולם.`;
+            if (slip.isNew) { UI.closeTop(); await saveSlip(slip, a, c, t); } else await saveSlip(slip, a, c, t);
+            return;
+          }
+          if (b.hasAttribute('data-go-letter')) { const t = el.querySelector('#ps-letter'); if (t) t.scrollIntoView({ block: 'start', behavior: 'smooth' }); return; }
+          if (b.dataset.gcSet) { App.sheetsApi.settingsSection(b.dataset.gcSet, b.dataset.f || ''); return; }
+          if (b.hasAttribute('data-gc-verify')) { const key = b.dataset.gcVerify; UI.closeTop(); setTimeout(() => verifySheet(Object.assign({}, slip, { id: slip.isNew ? null : slip.id, openKey: key })), 320); return; }
+          if (b.hasAttribute('data-gc-report')) {
+            // an unsaved payslip goes into the archive first, so the report has it
+            if (slip.isNew) { UI.closeTop(); await saveSlip(slip, a, c); setTimeout(() => App.claimReport(), 360); } else App.actions['claim-report']();
+            return;
+          }
           if (b.hasAttribute('data-copy-msg')) { await UI.copyText(el.querySelector('#ps-msg').value); UI.toast('ההודעה הועתקה'); }
           if (b.hasAttribute('data-share-msg')) { const t = el.querySelector('#ps-msg').value; if (navigator.share) navigator.share({ text: t }).catch(() => {}); else { await UI.copyText(t); UI.toast('הועתק'); } }
           if (b.hasAttribute('data-edit')) { UI.closeTop(); setTimeout(() => verifySheet(Object.assign({}, slip, { id: slip.isNew ? null : slip.id })), 320); }
@@ -439,24 +537,32 @@
             const ops = [{ store: 'payslips', del: slip.id }, ...S.gaps.filter((g) => g.payslipId === slip.id).map((g) => ({ store: 'gaps', del: g.id }))];
             await App.saveOps(ops, 'מחיקת תלוש', 'התלוש נמחק');
           }
-          if (b.hasAttribute('data-save')) { UI.closeTop(); await saveSlip(slip, a); }
+          if (b.hasAttribute('data-save')) { UI.closeTop(); await saveSlip(slip, a, c); }
         });
       },
     });
   }
-  async function saveSlip(slip, a) {
+  async function saveSlip(slip, a, c, toastText) {
+    const itemOf = (f) => (c ? c.items.find((x) => x.id === f.id) : null);
     const counts = { ok: 0, warn: 0, bad: 0 };
-    a.findings.forEach((f) => counts[f.status]++);
+    // a finding the innocent reasons explain in full counts as "to check", as on the screen
+    a.findings.forEach((f) => { const it = itemOf(f); counts[f.status === 'bad' && it && it.left < 1 ? 'warn' : f.status]++; });
     const rec = {
       id: slip.id, period: slip.period, employerId: S.employers[0].id, fields: slip.fields, other: slip.other,
       text: slip.text, source: slip.source, fileId: slip.fileId || null, fileName: slip.fileName || '',
-      summary: { counts, totalMissing: a.totalMissing, gross: slip.fields.gross ? slip.fields.gross.value : null, net: slip.fields.net ? slip.fields.net.value : null },
+      summary: { counts, totalMissing: a.totalMissing, left: c ? Math.round(c.left * 100) / 100 : a.totalMissing, gross: slip.fields.gross ? slip.fields.gross.value : null, net: slip.fields.net ? slip.fields.net.value : null },
     };
     const ops = [{ store: 'payslips', put: rec }];
     // open gaps from this slip (replace previous gaps of the same slip)
     S.gaps.filter((g) => g.payslipId === slip.id && g.status === 'open').forEach((g) => ops.push({ store: 'gaps', del: g.id }));
+    const next = U.addMonthKey(slip.period, 1);
     for (const f of a.findings.filter((x) => x.status === 'bad' && x.amount > 0)) {
-      ops.push({ store: 'gaps', put: { id: slip.id + '_' + f.area, payslipId: slip.id, period: slip.period, area: f.area, title: f.title, amount: Math.round(f.amount * 100) / 100, status: 'open' } });
+      const it = itemOf(f);
+      const gap = { id: slip.id + '_' + f.area, payslipId: slip.id, period: slip.period, area: f.area, title: f.title, amount: Math.round(f.amount * 100) / 100, status: 'open' };
+      // explained in full: kept as "maybe", and when the next payslip may pay it, that payslip's check asks about it
+      if (it && it.left < 1) Object.assign(gap, it.nextSlip ? { status: 'maybe', checkIn: next, note: `לבדוק בתלוש של ${U.fmtMonth(next)}: ${it.by}` } : { status: 'maybe', note: `ייתכן שמוסבר: ${it.by}` });
+      else if (it && it.explained >= 1) gap.amount = Math.round(it.left * 100) / 100;
+      ops.push({ store: 'gaps', put: gap });
     }
     // did this slip pay back earlier gaps? (a "differences" line close to an open gap)
     const diff = slip.fields.diff ? Math.abs(+slip.fields.diff.value) : 0;
@@ -468,7 +574,15 @@
       }
     }
     // changes vs the previous slip show in the slip's own check, not as notifications (few notifications)
-    await App.saveOps(ops, 'שמירת תלוש', 'התלוש נשמר בארכיון');
+    await App.saveOps(ops, 'שמירת תלוש', toastText || 'התלוש נשמר בארכיון');
+  }
+  /** Last month's findings that this payslip may pay (saved with "remind me to check on the next payslip"). */
+  function carryHtml(slip) {
+    const gs = S.gaps.filter((g) => g.status === 'maybe' && g.checkIn === slip.period && g.payslipId !== slip.id);
+    if (!gs.length) return '';
+    return `<div class="card gc gc-carry"><div class="gc-fh"><span class="fi">${icon('bell', 's')}</span><b>מהתלוש הקודם: לבדוק כאן</b></div>
+      ${gs.map((g) => `<div class="gc-r"><b class="gc-rt">${esc(g.title)} · ${U.fmtMonth(g.period)}</b><div class="gc-t">ההפרש הוסבר אז במשמרות שאולי ישולמו בתלוש הזה (${money(g.amount)}). אם הן מופיעות בו, הכול בסדר.</div>
+        <div class="gc-fix"><button class="btn text sm" data-act="gap-set" data-id="${esc(g.id)}" data-s="resolved">${icon('check', 's')} שולם בתלוש הזה</button><button class="btn text sm" data-act="gap-set" data-id="${esc(g.id)}" data-s="open">${icon('xc', 's')} לא שולם</button></div></div>`).join('')}</div>`;
   }
   App.sheetsApi.payslip = (id) => {
     const p = S.payslips.find((x) => x.id === id);

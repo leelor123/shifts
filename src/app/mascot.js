@@ -5,6 +5,8 @@
  * sleepy) to react to what the user does: in the setup questions,
  * on empty screens, in celebrations and in the help centre.
  * Pure SVG + CSS (styles-v3.css); motion stops with reduced motion.
+ * mascot-voice.js gives it a voice (it reads the setup questions aloud, its mouth moving with the
+ * words) and small reactions tied to what the user does (a nod, a hop, a head shake...).
  * ============================================================ */
 (function (root) {
   'use strict';
@@ -18,6 +20,8 @@
     up: '<ellipse cx="48" cy="57" rx="5" ry="6.4" class="m-eye"/><ellipse cx="76" cy="57" rx="5" ry="6.4" class="m-eye"/><circle cx="50" cy="54" r="1.8" fill="#fff"/><circle cx="78" cy="54" r="1.8" fill="#fff"/>',
     cool: '<path d="M34 55 h52 v5 c0 8 -6 11 -12 11 s-10 -4 -10 -10 h-4 c0 6 -4 10 -10 10 s-12 -3 -12 -11 z" fill="#1d1d2b"/><path d="M40 58 l6 0" stroke="#fff" stroke-width="2" stroke-linecap="round" opacity=".6"/>',
     sleepy: '<path d="M40 61 q6 4 12 0" class="m-line"/><path d="M68 61 q6 4 12 0" class="m-line"/>',
+    // heavy lids: the lower half of each eye under a flat lid (late at night)
+    drowsy: '<path d="M40.8 59.5 a5.2 5.4 0 0 0 10.4 0 z" class="m-eye"/><path d="M68.8 59.5 a5.2 5.4 0 0 0 10.4 0 z" class="m-eye"/><path d="M39.5 59.5 h13" class="m-line"/><path d="M67.5 59.5 h13" class="m-line"/>',
   };
   const MOUTH = {
     smile: '<path d="M50 73 q10 9 20 0" class="m-line"/>',
@@ -26,6 +30,15 @@
     flat: '<path d="M53 76 h13" class="m-line"/>',
     small: '<path d="M54 74 q6 5 12 0" class="m-line"/>',
   };
+  // the mouth while it speaks, from closed to wide open (mascot-voice.js picks one by data-mouth)
+  const TALK = '<g class="m-talk">'
+    + '<path class="t0" d="M53 75.5 q7 2.4 14 0" stroke="#2a1b0f" stroke-width="3.4" stroke-linecap="round" fill="none"/>'
+    + '<ellipse class="t1" cx="60" cy="76" rx="5" ry="2.8" fill="#7a2d12"/>'
+    + '<ellipse class="t2" cx="60" cy="77" rx="4.6" ry="5.6" fill="#7a2d12"/>'
+    + '<g class="t3"><path d="M49 72 q11 15 22 0 q-11 2.5 -22 0 z" fill="#7a2d12"/><path d="M54.5 80 q5.5 3.6 11 0 q-5.5 -3 -11 0" fill="#ff7a8a"/></g></g>';
+  // calm faces turn drowsy late at night (23:00 to 06:00); a party or a surprise stays awake
+  const DROWSY = new Set(['happy', 'think', 'wave', 'wink']);
+  const night = () => { const h = new Date().getHours(); return h >= 23 || h < 6; };
   const MOODS = {
     happy: ['open', 'smile'], wave: ['happy', 'grin'], wow: ['open', 'o'], love: ['love', 'grin'], party: ['happy', 'grin'],
     think: ['up', 'flat'], cool: ['cool', 'smile'], wink: ['wink', 'grin'], sleepy: ['sleepy', 'small'],
@@ -34,13 +47,15 @@
   /** The mascot as an HTML string. mood: one of MOODS; opts: { size (px), cls } */
   App.mascot = function (mood, opts) {
     opts = opts || {};
-    const [eyes, mouth] = MOODS[mood] || MOODS.happy;
+    let [eyes, mouth] = MOODS[mood] || MOODS.happy;
+    const late = DROWSY.has(mood || 'happy') && night();
+    if (late) { eyes = 'drowsy'; mouth = 'small'; }
     const hat = mood === 'party'
       ? '<g class="m-hat"><path d="M48 24 l12 -22 l12 22 z" fill="#8b6cff"/><path d="M52 17 l16 0 M55 11 l10 0" stroke="#ffd23f" stroke-width="2.4"/><circle cx="60" cy="2" r="3.4" fill="#ff5c8a"/></g>' : '';
     const zz = mood === 'sleepy' ? '<text x="88" y="30" class="m-z">z</text><text x="98" y="18" class="m-z m-z2">z</text>' : '';
-    return `<span class="mascot m-${mood || 'happy'} ${opts.cls || ''}" style="--sz:${opts.size || 96}px" aria-hidden="true"><svg viewBox="0 0 120 124">
+    return `<span class="mascot m-${mood || 'happy'}${late ? ' m-night' : ''} ${opts.cls || ''}" style="--sz:${opts.size || 96}px" aria-hidden="true"><svg viewBox="0 0 120 124">
       <ellipse class="m-shadow" cx="60" cy="116" rx="30" ry="5"/>
-      <g class="m-body">
+      <g class="m-talkb"><g class="m-act"><g class="m-body">
         <path class="m-arm m-arm-l" d="M24 70 q-12 -2 -14 -14"/>
         <path class="m-arm m-arm-r" d="M96 70 q12 -2 14 -14"/>
         <g class="m-sprout"><path d="M60 24 v-9" stroke="#1f9d52" stroke-width="4" stroke-linecap="round"/><path d="M60 16 q9 -9 16 -3 q-8 8 -16 3" fill="#2ee59d"/></g>
@@ -48,11 +63,11 @@
         <circle cx="60" cy="64" r="40" class="m-coin"/>
         <circle cx="60" cy="64" r="32.5" class="m-rim"/>
         <ellipse cx="42" cy="42" rx="11" ry="6" transform="rotate(-35 42 42)" class="m-shine"/>
-        <g class="m-face"><g class="m-eyes">${EYES[eyes]}</g>
+        <g class="m-face"><g class="m-eyes"><g class="m-look">${EYES[eyes]}</g></g>
           <circle cx="37" cy="72" r="5.4" class="m-cheek"/><circle cx="83" cy="72" r="5.4" class="m-cheek"/>
-          ${MOUTH[mouth]}</g>
+          <g class="m-mouth">${MOUTH[mouth]}</g>${TALK}</g>
         ${zz}
-      </g></svg></span>`;
+      </g></g></g></svg></span>`;
   };
   /** The mascot with a speech bubble next to it. */
   App.mascotSays = (mood, html, opts) => `<div class="m-say ${(opts && opts.cls) || ''}">${App.mascot(mood, opts)}<div class="bubble">${html}</div></div>`;

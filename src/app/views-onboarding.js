@@ -10,8 +10,11 @@
   /* ---------------- the setup questions ----------------
    * One friendly question per screen, with שעתי (the mascot) cheering along. Nothing is filled in
    * in advance: the grey text in a field is the usual answer, and a question that's skipped or left
-   * empty simply gets that usual answer. Hard things (tax credit points, 5/6-day week, pension %,
-   * pay period) are not asked here at all; they have sensible values and live in Settings.
+   * empty simply gets that usual answer. Hard things (tax credit points, pension %, pay period) are not asked here
+   * at all; they have sensible values and live in Settings. One screen with two taps asks what changes the hours
+   * the most (a review, Nov 2026: a paid break and overtime after a flat 8 hours made the app report pay as missing
+   * when it was not): is the break paid (not sure = unpaid, the law's rule when you may leave), and a five or six
+   * day week (either turns on overtime by the law with that week; not sure leaves the flat 8 hours).
    * opts.preLogin: the user hasn't signed in yet; the last step saves to their Google account.
    * Moving between screens never waits for storage, so a slow or broken phone database can't
    * freeze the buttons; the answers are saved once, at the end. */
@@ -35,12 +38,12 @@
       jobs: existing.length ? existing.map(jobOf) : [{ id: 'r_' + U.uid(), name: '', rate: '', color: Defaults.ROLE_COLORS[0] }],
       // more workplaces, each with its own roles (a person who works in two places sets both up here)
       more: S.employers.slice(1).map((e) => ({ id: e.id, name: e.name, jobs: S.roles.filter((r) => !r.archived && r.employerId === e.id).map(jobOf) })),
-      travel: '', travelAmount: '', city: '', start: st.startDate || '', startPick: '',
+      travel: '', travelAmount: '', city: '', brk: '', week: '', start: st.startDate || '', startPick: '',
       // the workplace's own name (empty while it is still the default one)
       empName: emp.name && emp.name !== Defaults.defaultEmployer().name ? emp.name : '',
     };
     const needsLogin = () => !!opts.preLogin && !App.localOnly && !(root.Cloud && root.Cloud.user);
-    const STEPS = ['hi', 'me', 'age', 'job', 'travel', 'city', 'start', 'done'];
+    const STEPS = ['hi', 'me', 'age', 'job', 'rules', 'travel', 'city', 'start', 'done'];
     const QUESTIONS = STEPS.length - 2;
     let step = 0, dir = 'next', saving = false, msg = '', saved = false, demo = false, blocked = false, loadFailed = false;
     // he / she / both, for the questions' wording
@@ -80,7 +83,7 @@
         <label class="field"><input class="input" type="date" id="ob-birth" data-pick="birth" value="${esc(A.birth)}" min="1940-01-01" max="${U.addDays(today, -365 * 13)}" placeholder="בחירת תאריך לידה"></label>
         <div class="ob-live" id="ob-live-age"></div>
         <div class="ob-chips">${chip('data-adult', '1', 'אני מעל 18, מעדיף/ה לא לפרט', A.adult)}</div>
-        ${why('מתחת לגיל 18 יש שכר מינימום אחר, לא משלמים מס, ויש חוקים מיוחדים (כמה שעות מותר לעבוד, הפסקות ועוד). נבדוק הכול בשבילך.')}`;
+        ${why('מתחת לגיל 18 יש שכר מינימום אחר, לא מנכים ביטוח לאומי ופנסיה, מס הכנסה יורד רק בחודש של משכורת גבוהה, ויש חוקים מיוחדים (כמה שעות מותר לעבוד, הפסקות ועוד). נבדוק הכול בשבילך.')}`;
       },
       job: () => `${say(jobValid().length ? 'love' : 'think', jobValid().length ? 'אחלה! עכשיו נדע כמה הרווחת 💸' : 'איפה עובדים? 🤔')}
         <h1>${g('איפה אתה עובד?', 'איפה את עובדת?', 'איפה את/ה עובד/ת?')}</h1>
@@ -98,6 +101,12 @@
         ${A.more.length < 3 ? `<button class="btn tonal ob-add-place" data-madd>${icon('briefcase', 's')} ${A.more.length ? 'הוסף עוד מקום עבודה' : 'עובד/ת גם במקום אחר? הוסף מקום עבודה'}</button>` : ''}
         <div class="ob-live" id="ob-live-roles"></div>
         ${why('ככה נחשב כמה הרווחת בכל משמרת. אפשר לשנות ולהוסיף בכל רגע בהגדרות.')}`,
+      rules: () => `${say('think', 'שתי שאלות קצרות על העבודה ⏱️')}
+        <h1>משלמים לך על ההפסקה?</h1>
+        <div class="ob-chips">${chip('data-brk', 'yes', 'כן', A.brk === 'yes')}${chip('data-brk', 'no', 'לא', A.brk === 'no')}${chip('data-brk', 'idk', 'לא בטוח/ה', A.brk === 'idk')}</div>
+        <div class="ob-q2">כמה ימים בשבוע עובדים שם?</div>
+        <div class="ob-chips">${chip('data-week', '5', '5 ימים', A.week === '5')}${chip('data-week', '6', '6 ימים', A.week === '6')}${chip('data-week', 'idk', 'לא בטוח/ה', A.week === 'idk')}</div>
+        ${why('הפסקה בלי תשלום לא נספרת בשכר. לפי מספר הימים נדע מתי מתחילות שעות נוספות. אפשר לשנות בהגדרות.')}`,
       travel: () => `${say(A.travel === 'yes' ? 'love' : 'happy', 'הרבה שוכחים את זה! 🚌')}
         <h1>${g('מקבל', 'מקבלת')} כסף על נסיעות?</h1>
         <div class="ob-chips big">${chip('data-travel', 'yes', icon('bus') + '<span>כן</span>', A.travel === 'yes')}${chip('data-travel', 'no', icon('walk') + '<span>לא</span>', A.travel === 'no')}${chip('data-travel', 'idk', icon('help') + '<span>לא בטוח/ה</span>', A.travel === 'idk')}</div>
@@ -184,7 +193,7 @@
         const el = q('#ob-live-age');
         const a = age();
         if (!el) return;
-        el.innerHTML = a == null ? '' : `${icon('shield', 's')} ${a < 18 ? `שכר המינימום שלך: <b>${U.money(minWage())}</b> לשעה, ובלי מס בכלל` : `שכר המינימום: <b>${U.money(minWage())}</b> לשעה`}`;
+        el.innerHTML = a == null ? '' : `${icon('shield', 's')} ${a < 18 ? `שכר המינימום שלך: <b>${U.money(minWage())}</b> לשעה` : `שכר המינימום: <b>${U.money(minWage())}</b> לשעה`}`;
       }
       if (key === 'city') {
         const el = q('#ob-preview');
@@ -220,7 +229,7 @@
       const key = STEPS[step];
       if (key === 'hi') { welcome(!welcomed); welcomed = true; return; }
       const last = key === 'done';
-      const qi = step; // questions are steps 1..6
+      const qi = step; // questions are steps 1..QUESTIONS
       let foot;
       if (last) {
         const ready = !needsLogin() || root.Cloud.sdkReady();
@@ -243,6 +252,7 @@
         <div class="content ob-${dir}">${screens[key]()}</div>
         <div class="foot col">${foot}</div></div>`;
       live();
+      if (App.mascotStep) App.mascotStep(v, key, dir); // שעתי reads the question aloud and reacts (mascot-voice.js)
       if (App.bindOpenInBrowser) App.bindOpenInBrowser(v);
       window.scrollTo(0, 0);
     }
@@ -269,6 +279,9 @@
     async function save(withDemo) {
       const jobs = withDemo && !jobValid().length ? Defaults.defaultRoles(emp.id).map((r) => Object.assign(r, { rate: r.rates[0].rate })) : finalJobs();
       emp.travelPerDay = finalTravel();
+      // the break and the work week: only what was answered (the demo answers nothing and changes nothing)
+      if (A.brk) emp.defaultBreakPaid = A.brk === 'yes';
+      if (A.week === '5' || A.week === '6') { emp.otLaw = true; st.leave = Object.assign({}, st.leave, { workWeek: +A.week }); }
       if (A.empName) emp.name = A.empName;
       const ops = [{ store: 'employers', put: emp }];
       jobs.forEach((j, i) => {
@@ -300,11 +313,12 @@
       // the answers are in memory either way; a storage hiccup is reported but never blocks the way in
       try {
         await Store.apply(ops, null);
-        await Store.setSettings((s) => Object.assign(s, st));
+        // the effects choices (the speaker button sets one during the setup) are not the setup's to overwrite
+        await Store.setSettings((s) => Object.assign(s, st, { fx: s.fx || st.fx }));
         if (withDemo) await App.demo.load();
       } catch (e) {
         console.warn('saving the setup answers', e);
-        Object.assign(S.settings, st);
+        Object.assign(S.settings, st, { fx: S.settings.fx || st.fx });
         UI.toast('לא הצלחנו לשמור בטלפון. התשובות יישמרו בחשבון שלך.');
       }
       saved = true;
@@ -376,6 +390,7 @@
         const key = STEPS[step];
         if (key === 'job') { A.empName = ''; A.jobs.forEach((j) => { j.name = ''; j.rate = ''; }); v.querySelectorAll('[data-jn], [data-jr]').forEach((i) => { i.value = ''; }); }
         if (key === 'travel' && !A.travel) A.travel = 'idk';
+        if (key === 'rules' && !A.brk) A.brk = 'idk';
         go(step + 1);
       } else if (b.hasAttribute('data-demo')) {
         // "just a look" and "I have an account" are not an agreement: the app asks with the terms' own screen
@@ -425,7 +440,13 @@
       } else if (b.dataset.mx != null) { read(); A.more.splice(+b.dataset.mx, 1); draw(); }
       else if (b.dataset.mjadd != null) { read(); A.more[+b.dataset.mjadd].jobs.push({ id: 'r_' + U.uid(), name: '', rate: '', color: freeColor() }); draw(); }
       else if (b.dataset.mrx != null) { read(); const [k, i] = b.dataset.mrx.split(':').map(Number); A.more[k].jobs.splice(i, 1); draw(); }
-      else if (b.dataset.travel) {
+      else if (b.dataset.brk || b.dataset.week) {
+        if (b.dataset.brk) A.brk = b.dataset.brk; else A.week = b.dataset.week;
+        const attr = b.dataset.brk ? 'data-brk' : 'data-week';
+        v.querySelectorAll('[' + attr + ']').forEach((x) => x.classList.toggle('on', x === b));
+        if (fx) fx.play('on');
+        if (A.brk && A.week) autoNext();
+      } else if (b.dataset.travel) {
         read(); A.travel = b.dataset.travel; draw(); if (fx) fx.play('on');
         if (A.travel === 'yes') { const t = v.querySelector('#ob-travel'); if (t) t.focus(); } else autoNext();
       } else if (b.hasAttribute('data-pick-city')) {

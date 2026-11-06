@@ -281,7 +281,29 @@ T.test('the day you turn 18 normal deductions apply', () => {
   s.birthDate = '2008-09-15';
   const before = Engine.netEstimate({ gross: 9000, pensionBase: 9000, deductions: 0, periodTo: '2026-09-14', pensionActive: false }, s);
   const after = Engine.netEstimate({ gross: 9000, pensionBase: 9000, deductions: 0, periodTo: '2026-09-30', pensionActive: false }, s);
-  T.near(before.net, 9000); T.ok(after.net < 9000 && !after.minor);
+  // at 17 a 9,000 month already pays a little income tax (979.60 by the brackets, less 3.25 points × 242), never NI
+  T.near(before.bl + before.health + before.pensionEmployee, 0); T.near(before.incomeTax, 193.1); T.near(before.net, 9000 - 193.1);
+  T.ok(after.net < before.net && !after.minor);
+});
+T.test('under 18: income tax by the brackets and credit points, one more point at 16 and 17', () => {
+  const s = Defaults.defaultSettings();
+  s.birthDate = '2009-03-01'; // 17 in the summer of 2026
+  s.gender = 'm';
+  // a big summer month: 10,000 → 701 + 2,990 × 14% = 1,119.60, less (2.25 + 1) × 242 = 786.50
+  const big = Engine.netEstimate({ gross: 10000, pensionBase: 10000, deductions: 0, periodTo: '2026-07-31' }, s);
+  T.eq(big.minor, true); T.near(big.taxBefore, 1119.6); T.near(big.credits, 786.5); T.near(big.incomeTax, 333.1);
+  T.near(big.bl + big.health + big.pensionEmployee + big.hishtalmut, 0); T.near(big.net, 10000 - 333.1);
+  // a girl of 17: 2.75 + 1 points
+  const girl = Engine.netEstimate({ gross: 10000, pensionBase: 10000, deductions: 0, periodTo: '2026-07-31' }, Object.assign({}, s, { gender: 'f', tax: Object.assign({}, s.tax, { creditPoints: 2.75 }) }));
+  T.near(girl.incomeTax, 1119.6 - 3.75 * 242);
+  // a typical teen month stays under the points: no tax at all
+  for (const g of [2500, 4000, 6000, 7500]) {
+    const n = Engine.netEstimate({ gross: g, pensionBase: g, deductions: 0, periodTo: '2026-07-31' }, s);
+    T.near(n.incomeTax, 0); T.near(n.net, g);
+  }
+  // 15: no youth point yet (2.25 × 242 = 544.50)
+  const young = Engine.netEstimate({ gross: 9000, pensionBase: 9000, deductions: 0, periodTo: '2026-07-31' }, Object.assign({}, s, { birthDate: '2011-01-01' }));
+  T.near(young.incomeTax, 979.6 - 544.5);
 });
 
 T.section('the law: minimum wage, youth, pension age');

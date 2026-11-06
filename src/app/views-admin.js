@@ -140,6 +140,41 @@
     const cut = U.addMonths(today || U.todayKey(), -13);
     return docs.filter((d) => { const r = d.data(); return r && typeof r.last === 'string' && r.last < cut; }).slice(0, 50);
   };
+  /** This week's error reports (errors.js), grouped by error: how many times in all, the newest version, the
+   *  message. From the records given (the dashboard reads at most 50), the 10 most frequent. */
+  App.topErrors = (rows) => {
+    const by = new Map();
+    for (const r of rows) {
+      if (!r || typeof r.h !== 'string' || typeof r.msg !== 'string') continue;
+      const g = by.get(r.h) || { h: r.h, n: 0, v: '', msg: r.msg, k: r.k, st: r.st || '', t: 0 };
+      g.n += Math.max(1, +r.n || 1);
+      if ((+r.t || 0) > g.t) { g.t = +r.t || 0; g.v = String(r.v || ''); }
+      by.set(r.h, g);
+    }
+    return [...by.values()].sort((a, b) => b.n - a.n || b.t - a.t).slice(0, 10);
+  };
+  function errorsList(rows) {
+    const top = App.topErrors(rows);
+    if (!top.length) return '<div class="small muted">לא היו תקלות השבוע.</div>';
+    return `<div class="adm-errs">${top.map((g) => `<details class="adm-err"><summary><b class="n">${g.n}</b><span class="v" dir="ltr">${esc(g.v)}</span><span class="m" dir="ltr">${esc(g.msg)}</span></summary>
+        <pre class="tiny" dir="ltr">${esc(g.k || '')}\n${esc(g.st)}</pre></details>`).join('')}</div>
+      <div class="tiny muted" style="margin-top:8px">${rows.length} דיווחים מ-7 הימים האחרונים (עד 50 החדשים).</div>`;
+  }
+  App.adminErrorsView = errorsList; // the list from given records (tests)
+  /** Error reports are kept 30 days (the privacy policy): reports older than this time are deleted. */
+  const ERR_KEEP_DAYS = 30;
+  App.errorsCutoff = (now) => now - ERR_KEEP_DAYS * 86400000;
+  /** Deletes up to 50 error reports older than 30 days. Runs when an admin opens the list; silent on failure. */
+  async function purgeOldErrors(fs, db) {
+    try {
+      const snap = await fs.getDocsFromServer(fs.query(fs.collection(db, 'errors'), fs.where('t', '<', App.errorsCutoff(Date.now())), fs.limit(50)));
+      await Promise.all(snap.docs.map((d) => fs.deleteDoc(d.ref)));
+    } catch (e) { /* the next opening tries again */ }
+  }
+  // the card the list opens in (nothing is read until its button is pressed)
+  const errorsCard = () => `<div class="admin"><div class="section-title">${icon('alert', 's')} תקלות השבוע</div>
+      <div class="card" data-adm-errors-box><div class="tiny muted">דיווחים ממכשירים שהסכימו לסטטיסטיקה, בלי פרטים מזהים. הרשימה נטענת רק כשלוחצים.</div>
+        <div class="btn-row" style="margin-top:8px"><button class="btn tonal sm" data-adm-errors>${icon('alert', 's')} הצג את התקלות</button></div></div></div>`;
   let purged = false; // once per opening of the app is enough
   App.adminView = render; // the page from given records (tests)
   App.actions['admin-dashboard'] = async function () {
@@ -160,7 +195,7 @@
       // support requests come first: they are the part that needs an answer
       const inbox = root.Support ? await root.Support.adminInbox({ purge }).catch((e) => ({ count: 0, html: `<div class="small muted">לא ניתן לטעון פניות (${esc(e.code || e.message || '')})</div>` })) : null;
       if (entry.closed) return;
-      body.innerHTML = (inbox ? `<div class="admin"><div class="section-title">${icon('chat', 's')} פניות ${inbox.count ? `<span class="tag warn">${inbox.count} מחכות לתשובה</span>` : ''}</div>${inbox.html}</div>` : '') + render(rows, admins, root.Cloud.user.uid);
+      body.innerHTML = (inbox ? `<div class="admin"><div class="section-title">${icon('chat', 's')} פניות ${inbox.count ? `<span class="tag warn">${inbox.count} מחכות לתשובה</span>` : ''}</div>${inbox.html}</div>` : '') + errorsCard() + render(rows, admins, root.Cloud.user.uid);
       body.querySelectorAll('[data-adm-ticket]').forEach((b) => (b.onclick = () => root.Support.thread(b.dataset.admTicket, true, load)));
       const delClosed = body.querySelector('[data-adm-del-closed]');
       if (delClosed) delClosed.onclick = async () => {
@@ -170,6 +205,21 @@
         const done = await root.Support.removeClosed(inbox.closed);
         if (done) UI.toast(done === 1 ? 'פנייה אחת נמחקה' : `${done} פניות נמחקו`);
         load();
+      };
+      // read only when the admin asks: at most 50 reports of the last 7 days
+      const errBtn = body.querySelector('[data-adm-errors]');
+      if (errBtn) errBtn.onclick = async () => {
+        const box = body.querySelector('[data-adm-errors-box]');
+        errBtn.disabled = true;
+        try {
+          const since = Date.now() - 7 * 86400000;
+          const snap = await fs.getDocsFromServer(fs.query(fs.collection(db, 'errors'), fs.where('t', '>=', since), fs.orderBy('t', 'desc'), fs.limit(50)));
+          if (!entry.closed) box.innerHTML = errorsList(snap.docs.map((d) => d.data()));
+          purgeOldErrors(fs, db);
+        } catch (e) {
+          errBtn.disabled = false;
+          if (!entry.closed) UI.toast(`לא ניתן לטעון את התקלות (${e.code || e.message || ''})`);
+        }
       };
       body.querySelector('[data-adm-refresh]').onclick = () => { body.innerHTML = UI.skeleton(4, 'card'); load(); };
       body.querySelector('[data-adm-add]').onclick = async () => {

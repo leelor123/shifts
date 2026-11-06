@@ -694,10 +694,21 @@
     const T = settings.tax;
     const months = p.months || 1;
     const gross = Math.max(0, p.gross);
-    // under 18: no income tax, no National Insurance / health tax, no pension — net equals gross
+    // under 18: no National Insurance / health tax (exempt until 18) and no pension (the order starts at 20/21), but
+    // income tax by the brackets and the credit points like anyone else: a big summer month does pay some. At 16
+    // and 17 a working youth has one more credit point (kolzchut "נקודות זיכוי ממס הכנסה"; taxrefund.js counts the
+    // same point). A typical teen month stays under the points and pays nothing.
     if (isMinor(settings, p.periodTo)) {
       const deductions = +p.deductions || 0;
-      return { gross, taxBefore: 0, credits: 0, pensionCredit: 0, incomeTax: 0, bl: 0, health: 0, pensionEmployee: 0, pensionEmployer: 0, severance: 0, hishtalmut: 0, hishtalmutEmployer: 0, deductions, net: gross - deductions, pensionActive: false, minor: true };
+      const k = p.periodTo || U.todayKey();
+      const age = ageAt(settings.birthDate, k);
+      const law = taxLaw(T, k);
+      const brackets = law.brackets.map(([u, pct]) => [u === Infinity || u == null ? Infinity : u * months, pct]);
+      const taxBefore = incomeTaxRaw(gross, brackets);
+      const points = (+T.creditPoints || 0) + (age != null && age >= 16 ? 1 : 0);
+      const credits = points * law.point * months;
+      const incomeTax = Math.max(0, taxBefore - credits);
+      return { gross, taxBefore, credits, pensionCredit: 0, incomeTax, bl: 0, health: 0, pensionEmployee: 0, pensionEmployer: 0, severance: 0, hishtalmut: 0, hishtalmutEmployer: 0, deductions, net: gross - incomeTax - deductions, pensionActive: false, minor: true };
     }
     const pActive = p.pensionActive != null ? p.pensionActive : pensionActive(settings, p.periodTo || U.todayKey());
     const pensionEmployee = pActive ? p.pensionBase * (+settings.pension.employeePct || 0) / 100 : 0;

@@ -113,6 +113,8 @@
   const WHATS_NEW = {
     id: '1.32.5',
     seen: [],
+    // true only when the items hold a real feature: a release of fixes alone opens no sheet (the user, 6 Nov 2026)
+    features: true,
     items: [
       ['play', 'mint', 'משמרת ישר מהווידג׳ט', 'באפליקציית האנדרואיד, לחיצה על הווידג׳ט במסך הבית מתחילה משמרת ולחיצה על סיום מסיימת אותה, בלי לפתוח את שעתי.'],
       ['globe', 'sky', 'שעתי מדברת אמהרית', 'אמהרית היא השפה השביעית של האפליקציה. בוחרים אותה בהגדרות › שפה.'],
@@ -125,9 +127,15 @@
 
 
 
+  // 23:00 to 06:00: no sheet; it waits for the next open in the day (nothing is marked as seen)
+  const quietHours = () => { const h = new Date().getHours(); return h >= 23 || h < 6; };
+  let wnArmed = false; // the app is in (afterLogin asked once): only then may a return from the background ask again
   App.whatsNew = function () {
+    wnArmed = true;
     if (!S.settings.onboarded || S.settings.demo || S.meta.whatsNew === WHATS_NEW.id || WHATS_NEW.seen.includes(S.meta.whatsNew)) return;
+    if (WHATS_NEW.features && quietHours()) return;
     Store.setMeta({ whatsNew: WHATS_NEW.id }).catch(() => {});
+    if (!WHATS_NEW.features) return; // fixes only: nothing to show
     if (S.meta.guide && Date.now() - S.meta.guide < 3 * U.DAY) return; // a brand-new user already got the tour
     // a moment after the opening show has gone (it never slides up under the leaving show)
     const later = (fn) => (root.Intro && root.Intro.after ? root.Intro.after(fn, 900) : setTimeout(fn, 1400));
@@ -138,10 +146,14 @@
         body: `<div class="whats-new">${App.mascotSays('party', 'עדכנו את האפליקציה בשבילך! 🎉', { size: 72 })}
           ${WHATS_NEW.items.map(([ic, tint, t, s], i) => `<div class="wn" style="--d:${i}">${UI.tile(ic, tint)}<div><b>${esc(t)}</b><div class="small muted">${esc(s)}</div></div></div>`).join('')}</div>`,
         foot: '<button class="btn tonal" data-act="changelog" style="flex:0 0 auto">כל העדכונים</button><button class="btn" data-wn-ok>הבנתי, תודה</button>',
-        onMount: (el) => { el.querySelector('[data-wn-ok]').onclick = () => UI.closeTop(); if (Fx()) Fx().celebrate('big'); },
+        onMount: (el) => { el.querySelector('[data-wn-ok]').onclick = () => UI.closeTop(); },
       });
     });
   };
+
+  // a phone often brings the app back from the background instead of starting it again: a sheet held back at night
+  // shows on that return too
+  if (typeof document !== 'undefined') document.addEventListener('visibilitychange', () => { if (!document.hidden && wnArmed && !App.blocking) App.whatsNew(); });
 
   /* ---------------- every update (settings › about › all the updates) ---------------- */
   // newest first: [version, the day it went out, what changed — said to the user, not to a developer]

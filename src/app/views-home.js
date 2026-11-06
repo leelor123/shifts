@@ -132,7 +132,8 @@
 
   /* ---------------- "did you forget to end it?" on the running shift ---------------- */
   // the likely end ready to tap: the planned end, or the usual length of this person's shifts (App.overdue)
-  function overdueBlock() {
+  const overdueBlock = () => (App.youthLine ? App.youthLine() : '') + overdueQuestion(); // with the youth law's line (youth-guard.js)
+  function overdueQuestion() {
     const od = App.overdue && App.overdue();
     if (!od) return '';
     const k = U.epochKey(od.end);
@@ -209,7 +210,8 @@
     // the forecast in the kind it stands next to: a net goal, or a net big number
     const fcShown = (net) => (net ? fc * netShare : fc);
     const grossT = UI.term ? UI.term('gross', 'ברוטו') : 'ברוטו';
-    const netT = UI.term ? UI.term('net', sum.net.minor ? 'נטו' : 'נטו משוער') : 'נטו';
+    // an estimate for everyone: a minor may pay a little income tax too, so the net is not promised to equal the gross
+    const netT = UI.term ? UI.term('net', 'נטו משוער') : 'נטו משוער';
     return `<section class="home-hero" data-act="go-summary"><button class="vh" data-act="go-summary">פירוט ${periodName}</button>
       ${P2 && P2.visible() ? `<button class="hh-skin" data-act="plus-design" aria-label="עיצוב כרטיס השכר">${icon('palette', 's')}</button>` : ''}
       <button class="hh-eye ${S.settings.hideMoney ? 'off' : ''}" data-act="toggle-money" aria-label="${S.settings.hideMoney ? 'הצגת הסכומים' : 'הסתרת הסכומים'}" aria-pressed="${!!S.settings.hideMoney}">${icon('eye', 's')}</button>
@@ -305,19 +307,85 @@
     return `<div class="card bday"><div class="bday-confetti" aria-hidden="true"></div><div class="bday-title">מזל טוב${S.settings.userName ? ', ' + esc(S.settings.userName) : ''}!</div>
       <div>יום הולדת ${age} שמח 🎂 שתהיה שנה של משמרות טובות, בוסים הוגנים ותלושים בלי הפתעות.</div>${age === 18 ? '<div class="small" style="margin-top:6px">מהיום החישוב כולל ניכויי חובה רגילים.</div>' : ''}</div>`;
   }
-  function banners() {
-    let h = '';
-    if (Store.isMemoryOnly && Store.isMemoryOnly()) h += `<div class="banner slim warn">${icon('alert', 's')}<div style="flex:1">${root.Cloud && root.Cloud.user ? 'הדפדפן לא שומר נתונים בטלפון כרגע. הכול נשמר בחשבון שלך.' : 'הדפדפן לא שומר נתונים בטלפון. התחבר לחשבון כדי לא לאבד אותם.'}</div></div>`;
-    if (S.settings.demo) h += `<div class="banner slim">${icon('flask', 's')}<div style="flex:1">מצב הדגמה: נתונים לדוגמה</div><button class="btn text sm" data-act="demo-clear">מחק</button></div>`;
+  /* the slim lines: each one is its own card in the queue below (homeCards) */
+  function memoryBanner() {
+    if (!(Store.isMemoryOnly && Store.isMemoryOnly())) return '';
+    return `<div class="banner slim warn">${icon('alert', 's')}<div style="flex:1">${root.Cloud && root.Cloud.user ? 'הדפדפן לא שומר נתונים בטלפון כרגע. הכול נשמר בחשבון שלך.' : 'הדפדפן לא שומר נתונים בטלפון. התחבר לחשבון כדי לא לאבד אותם.'}</div></div>`;
+  }
+  function demoBanner() {
+    return S.settings.demo ? `<div class="banner slim">${icon('flask', 's')}<div style="flex:1">מצב הדגמה: נתונים לדוגמה</div><button class="btn text sm" data-act="demo-clear">מחק</button></div>` : '';
+  }
+  function backupBanner() {
     const B = S.settings.backup;
     const last = Math.max(B.lastBackup || 0);
-    if (!S.meta.cloudUid && S.shifts.length > 5 && Date.now() - last > (+S.settings.alerts.backupDays || 30) * U.DAY) {
-      h += `<div class="banner slim warn">${icon('cloud', 's')}<div style="flex:1">${last ? 'עבר זמן מאז הגיבוי האחרון' : 'עוד לא גיבית'}</div><button class="btn text sm" data-act="backup-now">גבה</button></div>`;
-    }
-    const issues = Engine.dataIssues(App.model).filter((i) => i.type === 'overlap');
-    if (issues.length) h += `<div class="banner slim warn">${icon('alert', 's')}<div style="flex:1">${esc(issues[0].text)}</div><button class="btn text sm" data-act="shift-open" data-id="${issues[0].ids[1]}">בדוק</button></div>`;
-    return h;
+    if (S.meta.cloudUid || !(S.shifts.length > 5) || !(Date.now() - last > (+S.settings.alerts.backupDays || 30) * U.DAY)) return '';
+    return `<div class="banner slim warn">${icon('cloud', 's')}<div style="flex:1">${last ? 'עבר זמן מאז הגיבוי האחרון' : 'עוד לא גיבית'}</div><button class="btn text sm" data-act="backup-now">גבה</button></div>`;
   }
+  function overlapBanner() {
+    const issues = Engine.dataIssues(App.model).filter((i) => i.type === 'overlap');
+    return issues.length ? `<div class="banner slim warn">${icon('alert', 's')}<div style="flex:1">${esc(issues[0].text)}</div><button class="btn text sm" data-act="shift-open" data-id="${issues[0].ids[1]}">בדוק</button></div>` : '';
+  }
+
+  /* ---------------- the cards above the shifts: two at most, the most urgent first ----------------
+   * Up to 17 blocks could stack on the home screen. The pay card, start/stop, the shifts waiting for a "done" and
+   * the recent shifts always show; every other card waits in this queue, and only the first two that have
+   * something to say are drawn. A card that did not fit is not lost: it comes back when one above it is answered
+   * or gone, or on a later open. Each card's function runs only when its turn comes, so a hidden birthday or
+   * payday does not celebrate unseen. The order alone decides (no memory of what was shown): the first screen is
+   * drawn with the insights already in (afterLogin), so a card rarely changes places under the user's eyes, and a
+   * card that comes back (the iPhone card after its two weeks) takes its place by its rank.
+   * The demo line is not a card: a slim note that the numbers are samples, drawn above the queue outside its count. */
+  const HOME_CARDS_MAX = 2;
+  const HOME_QUEUE = [
+    // [key, the card], most urgent first: data warnings, then the user's priorities (6 Nov 2026)
+    ['memory', memoryBanner],
+    ['backup', backupBanner],
+    ['overlap', overlapBanner],
+    ['ios', () => iosCard()],
+    ['guide', () => (App.guideCard ? App.guideCard() : '')],
+    ['payday', () => paydayCard()],
+    ['salary', () => (App.salaryCard ? App.salaryCard() : '')],
+    ['consent', () => consentCard()],
+    ['wrapped', () => (App.wrappedCard ? App.wrappedCard() : '')],
+    ['recap', () => (App.recapCard ? App.recapCard() : '')],
+    ['bday', () => birthdayCard()],
+    ['highlight', () => ((S.settings.home || {}).highlight !== false ? highlight() : '')],
+    ['saving', () => savingCard()],
+    ['plus', () => (root.Plus ? root.Plus.nudgeCard() : '')],
+  ];
+  function homeCards() {
+    // a Plus trial that ended while the app was open: the card goes back to the regular look. Plus.nudgeCard does this
+    // too, but it runs only when the offer gets a place, and the look must change either way
+    const P = root.Plus;
+    if (P && P.skin && (document.documentElement.dataset.skin || '') !== P.skin()) App.applyTheme();
+    const keys = [], html = [];
+    for (const [k, fn] of HOME_QUEUE) {
+      if (keys.length >= HOME_CARDS_MAX) break;
+      const h = fn();
+      if (h) { keys.push(k); html.push(h); }
+    }
+    App.homeCardKeys = keys; // for the tests
+    return html.join('');
+  }
+
+  /* ---------------- what the pay card's number assumes ----------------
+   * One line under the card: the first employer's two rules that move the number most (is the break paid, where
+   * overtime starts); a screen reader also hears the travel pay (three parts took two or three lines on a phone).
+   * A tap opens settings › calculation rules. It sits outside the card, so the card's height, and the living sky
+   * that follows it, do not change. */
+  function assumptions() {
+    const e = S.employers[0];
+    if (!e) return '';
+    const th = +e.otThreshold || 8;
+    const tr = +e.travelPerDay || 0;
+    const parts = [
+      String(e.defaultBreakPaid) === 'false' ? 'הפסקה ללא תשלום' : 'הפסקה בתשלום',
+      Engine.otByLaw(e) ? 'נוספות לפי החוק' : `נוספות אחרי ${U.num(th, 1)} שעות ביום`,
+    ];
+    const heard = parts.concat(tr > 0 ? `נסיעות ${U.money(tr, 0)} ליום` : 'בלי נסיעות');
+    return `<button class="hh-assume" data-act="calc-rules" aria-label="חוקי החישוב: ${esc(heard.join(', '))}">${icon('settings', 's')}${parts.map((p) => `<span>${esc(p)}</span>`).join('<i aria-hidden="true">·</i>')}</button>`;
+  }
+  App.actions['calc-rules'] = () => App.sheetsApi.settingsSection('calc');
 
   /* The living sky at the top of the home screen (the user, 2 Nov night: "more life, it looks a little tired"): the
    * opening's sky (sky.js), for the user's city, hour and weather, from the top of the screen down to the middle of
@@ -389,19 +457,11 @@
         <span id="sync-dot">${App.syncDot ? App.syncDot() : ''}</span>
         <button class="icon-btn" data-act="support" aria-label="עזרה ותמיכה">${icon('help')}</button>
         <button class="icon-btn" data-act="insights" aria-label="התראות ותובנות">${icon('bell')}${unread ? `<span class="dot-badge">${unread > 9 ? '9+' : unread}</span>` : ''}</button></div>
-      ${birthdayCard()}
-      ${paydayCard()}
-      ${banners()}
-      ${App.wrappedCard ? App.wrappedCard() : ''}
-      ${App.recapCard ? App.recapCard() : ''}
       ${hero()}
+      ${assumptions()}
       ${actionBlock()}
-      ${iosCard()}
-      ${App.guideCard ? App.guideCard() : ''}
-      ${HS.highlight !== false ? highlight() : ''}
-      ${consentCard()}
-      ${root.Plus ? root.Plus.nudgeCard() : ''}
-      ${savingCard()}
+      ${demoBanner()}
+      ${homeCards()}
       ${HS.shortcuts !== false ? shortcuts() : ''}
       ${pendingCard(pending)}
       ${recent.length ? !nRecent ? '' : `<div class="home-list-head"><h2>משמרות אחרונות</h2><span class="spacer"></span>${App.travelSwitch()}<button class="btn text sm" data-act="go-shifts">הכול</button></div>

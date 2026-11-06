@@ -236,7 +236,7 @@
     // a screen that fails to draw shows a friendly card instead of a blank page
     let html;
     try { html = fn(); } catch (e) {
-      console.error('render failed', App.tab, e);
+      console.error('render failed', App.tab, e); if (root.Errors) root.Errors.capture(e, 'render');
       html = `<div class="empty render-err">${App.mascot ? App.mascot('think', { size: 96 }) : ''}<h3>משהו השתבש במסך הזה</h3>
         <div class="small muted">הנתונים שלך שמורים. אפשר לנסות שוב או לעבור למסך אחר.</div>
         <div class="btn-row" style="margin-top:14px;justify-content:center"><button class="btn" data-act="render-retry">נסה שוב</button><button class="btn tonal" data-act="support">דיווח על תקלה</button></div></div>`;
@@ -258,7 +258,7 @@
     drawn = { tab: App.tab, sig };
     if (same) root.Dom.patch(inner, html);
     else v.innerHTML = `<div class="view ${cls}" id="view-inner">${html}</div>`;
-    try { if (App.views[App.tab + '_mount']) App.views[App.tab + '_mount'](v); } catch (e) { console.error('mount failed', App.tab, e); }
+    try { if (App.views[App.tab + '_mount']) App.views[App.tab + '_mount'](v); } catch (e) { console.error('mount failed', App.tab, e); if (root.Errors) root.Errors.capture(e, 'mount'); }
     App.statusBar();
     App.renderNav();
     if (opts && opts.keepScroll) window.scrollTo(0, y);
@@ -347,7 +347,7 @@
     el.setAttribute('role', 'status');
     el.innerHTML = `${App.mascot ? App.mascot('party', { size: 46 }) : ''}<div><b>${UI.esc(title)}</b><small>${UI.esc(sub)}</small></div><span class="medal-ic" aria-hidden="true">🏅</span>`;
     document.body.appendChild(el);
-    if (root.Fx) root.Fx.celebrate('big');
+    if (root.Fx && !(App.quietUntil > Date.now())) root.Fx.celebrate('big');
     setTimeout(() => el.classList.add('out'), 3600);
     setTimeout(() => el.remove(), 4100);
   };
@@ -537,17 +537,31 @@
     await Store.apply(ops, 'סיום משמרת');
     App.justStopped = Date.now(); // the start button springs back in
     await Store.setActive(null);
-    if (S.shifts.filter((x) => x.status === 'done').length === 1) App.celebrateOnce('first-shift', () => UI.toast('המשמרת הראשונה שלך נשמרה! 🎉'));
-    if (App.shiftMoment) App.shiftMoment('stop', at); else root.Fx.celebrate('big');
-    App.milestones();
-    const r = App.result(sh.id);
-    UI.toast(`נשמר: ${U.hm(r ? r.paidMin : 0)} שעות · ${U.money(r ? r.wage : 0)}`, { label: 'ביטול', fn: App.undo }, { ok: true });
     // a timer that kept running (the phone in a pocket, a forgotten stop): it is saved, so nothing is
-    // lost, and the end time can be fixed right away
+    // lost, and the end time can be fixed right away (no moment for its wage then: it may be wrong)
     const hours = (sh.end - sh.start) / U.HOUR;
     const usual = App.usualShiftMs(a.roleId);
     const muchLonger = usual && sh.end - sh.start > Math.max(usual * 1.6, usual + 3 * U.HOUR);
-    if (!endAt && (hours > (+S.settings.alerts.suspiciousHours || 20) || muchLonger)) {
+    const forgot = !endAt && (hours > (+S.settings.alerts.suspiciousHours || 20) || muchLonger);
+    const first = S.shifts.filter((x) => x.status === 'done').length === 1 && !(S.meta.celebrated || {})['first-shift'];
+    // 23:00 to 06:00: no ka-ching, no coins, no medal's confetti (people around may be asleep). With the moment's card
+    // (shift-end.js) the ka-ching and a buzz only: coins and confetti flew over its text and it is meant to be calm
+    const quiet = !!(root.Moments && root.Moments.quietHour(Date.now()));
+    const calm = !forgot && !!App.endMoment;
+    if (quiet || calm) App.quietUntil = Date.now() + 5000;
+    if (quiet) { /* nothing */ } else if (calm && root.Fx) { root.Fx.play('cash'); setTimeout(() => root.Fx.play('success'), 280); root.Fx.haptic([10, 40, 10, 40, 20]); }
+    else if (App.shiftMoment) App.shiftMoment('stop', at); else root.Fx.celebrate('big');
+    App.milestones();
+    const r = App.result(sh.id);
+    if (!forgot && App.endMoment) {
+      if (first) App.celebrateOnce('first-shift', () => {}); // said on the moment itself
+      const how = await App.endMoment(r, { first });
+      if (how !== 'done') { if (how === 'gone' && App.reviewAfterShift) App.reviewAfterShift(); return; }
+    } else {
+      if (S.shifts.filter((x) => x.status === 'done').length === 1) App.celebrateOnce('first-shift', () => UI.toast('המשמרת הראשונה שלך נשמרה! 🎉'));
+      UI.toast(`נשמר: ${U.hm(r ? r.paidMin : 0)} שעות · ${U.money(r ? r.wage : 0)}`, { label: 'ביטול', fn: App.undo }, { ok: true });
+    }
+    if (forgot) {
       const fix = await UI.confirm('שכחת לעצור?', `הטיימר רץ ${U.num(hours, 1)} שעות, מ-${U.fmtDate(U.epochKey(sh.start), 'short')} ב-${U.epochHM(sh.start)}${usual ? `, ובדרך כלל המשמרות שלך נמשכות כ-${U.hm(Math.round(usual / 60000))}` : ''}. אפשר לתקן עכשיו את שעת הסיום.`, 'לתקן');
       if (fix && App.sheetsApi.shiftEditor) { App.sheetsApi.shiftEditor(sh.id); return; }
     }
@@ -576,6 +590,7 @@
     if (!('Notification' in window) || Notification.permission !== 'default' || !S.settings.alerts.push) return;
     try { await Notification.requestPermission(); } catch (e) { /* ignore */ }
   };
+  App.pushNote = (n) => push(n); // youth-guard.js: a reminder while a shift runs
   async function push(n) {
     if (!S.settings.alerts.push || !('Notification' in window) || Notification.permission !== 'granted') return;
     try {

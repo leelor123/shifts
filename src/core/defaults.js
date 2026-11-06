@@ -52,7 +52,9 @@
       // --- minimum per shift ---
       minShiftHours: 0, // 0 = disabled
       // --- breaks --- (0 = the law's break: 45 minutes in a day of 6 hours or more, added on its own when a
-      // shift's break is left empty; paid unless switched off, in the job or in the shift)
+      // shift's break is left empty; paid unless switched off, in the job or in the shift). A new user's first
+      // workplace takes the setup question's answer instead (views-onboarding.js: "not sure" = unpaid); this default
+      // stays true so a workplace saved before the question keeps what it computed.
       defaultBreakMin: 0,
       defaultBreakPaid: true,
     };
@@ -72,7 +74,7 @@
     return {
       // --- personal / employment ---
       startDate: null, // employment start (YYYY-MM-DD)
-      birthDate: null, // optional: birthday greeting; under 18 = no tax / social security / pension
+      birthDate: null, // optional: birthday greeting; under 18 = no social security / health tax / pension, income tax by the brackets (16-17: one more credit point)
       userName: '', // optional: signature for messages to the employer
       // --- Shabbat & holidays window ---
       rest: {
@@ -109,7 +111,7 @@
       hishtalmut: { enabled: false, employeePct: 2.5, employerPct: 7.5, startAfterMonths: 0 },
       // --- leave ---
       leave: {
-        workWeek: 5, // 5 or 6 — affects the statutory vacation table
+        workWeek: 5, // 5 or 6: the statutory vacation table, and the day's overtime start when the employer's otLaw is on (8.6 / 8); the setup question sets it
         vacationOpening: 0, sickOpening: 0,
         vacationOpeningDate: null,
         fullTimeHours: 182, // monthly hours treated as 100% job

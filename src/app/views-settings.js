@@ -129,7 +129,7 @@
   /* ---------------- sections ---------------- */
   const SECTIONS = {
     rights: { icon: 'shield', title: 'הזכויות שלי', sub: () => 'מדריך אישי לפי הגיל והנתונים שלך · גם בלי אינטרנט' },
-    personal: { icon: 'users', title: 'פרטים אישיים', sub: () => { const a = Engine.ageAt(S.settings.birthDate, U.todayKey()); return (S.settings.userName || 'שם לא הוזן') + (a != null ? ' · גיל ' + a + (a < 18 ? ' (פטור ממסים)' : '') : ''); } },
+    personal: { icon: 'users', title: 'פרטים אישיים', sub: () => { const a = Engine.ageAt(S.settings.birthDate, U.todayKey()); return (S.settings.userName || 'שם לא הוזן') + (a != null ? ' · גיל ' + a + (a < 18 ? ' (בלי ביטוח לאומי ופנסיה)' : '') : ''); } },
     account: { icon: 'cloud', title: 'חשבון וסנכרון', sub: () => (S.meta.cloudEmail || 'לא מחובר') + ' · ' + root.Cloud.statusText() },
     roles: { icon: 'users', title: 'מעסיקים, תפקידים ותעריפים', sub: () => App.roles().map((r) => r.name + ' ' + U.money(Engine.roleRate(r, U.todayKey()), 0)).join(' · ') },
     calc: { icon: 'flask', title: 'חוקי חישוב', sub: () => { const e = S.employers[0]; return `${Engine.otByLaw(e) ? 'ש״נ לפי החוק' : `ש״נ אחרי ${e.otThreshold} ש׳`} · שבת ${e.restPct}% · עיגול: ${e.roundingMode === 'none' ? 'ללא' : e.roundingUnit + ' דק׳'}`; } },
@@ -362,7 +362,7 @@
         ${F.date('תאריך לידה (לא חובה)', 's.birthDate', S.settings.birthDate, 'לברכה ביום ההולדת, לשכר המינימום לפי גיל, לבדיקות חוק עבודת הנוער ולגיל הפנסיה.').replace('data-s=', 'data-redraw data-s=')}
         ${F.chips('מגדר (לא חובה)', 's.gender', [['m', 'גבר', '👨'], ['f', 'אישה', '👩'], ['', 'לא צוין', '🙂']], S.settings.gender || '', 'רק לחישוב הפנסיה: חובת הפרשה מגיל 21 לגבר ומגיל 20 לאישה.')}</div>
         ${age != null ? `<div class="card ${age < 18 ? 'tonal' : ''}"><div class="kv"><span>גיל</span><b>${age}</b></div>
-          ${age < 18 ? `<div class="small" style="margin-top:8px">${icon('info', 's')} מתחת לגיל 18 לא מנוכים מס הכנסה, ביטוח לאומי, מס בריאות ופנסיה, ולכן <b>הנטו שווה לברוטו</b> (פחות ניכויים אישיים כמו ארוחות, אם יש). מגיל 18 החישוב עובר אוטומטית לניכויים הרגילים.</div>` : ''}</div>` : ''}
+          ${age < 18 ? `<div class="small" style="margin-top:8px">${icon('info', 's')} מתחת לגיל 18 לא מנוכים ביטוח לאומי, מס בריאות ופנסיה. מס הכנסה יורד רק בחודש של משכורת גבוהה, ולכן <b>הנטו קרוב לברוטו</b> (פחות ניכויים אישיים כמו ארוחות, אם יש). מגיל 18 החישוב עובר אוטומטית לניכויים הרגילים.</div>` : ''}</div>` : ''}
         <div class="tiny muted" style="margin:6px 4px">תאריך הלידה נשמר בחשבון שלך ולא משותף עם אף אחד.</div>`;
     },
   };
@@ -833,6 +833,7 @@
         ${F.sw('צלילים', 'צליל קצר ועדין בלחיצה, ו"קופה" כשנשמרת משמרת', 's.fx.sound', (S.settings.fx || {}).sound !== false)}
         ${F.sw('מוזיקה במשחקים', 'מנגינה קטנה לכל משחק (אפשר גם בכפתור התו בתוך המשחק)', 's.fx.music', (S.settings.fx || {}).music !== false)}
         ${F.sw('רטט', 'רטט קל בלחיצה', 's.fx.haptic', (S.settings.fx || {}).haptic !== false)}
+        ${F.sw('הקראה בקול', 'שעתי מקריא בקול את השאלות בהתחלה, ומקריא שוב כשנוגעים בו', 's.fx.voice', (S.settings.fx || {}).voice !== false)}
         <button class="btn tonal sm" data-fx-try style="margin-top:8px">${icon('sparkle', 's')} נסה</button>
         <div class="tiny muted" style="margin-top:8px">כשבטלפון מופעלת "הפחתת אנימציות", האנימציות כבויות גם כאן. עוצמת הצלילים לפי עוצמת המדיה.</div></div>`,
     mount: (el, draw) => {

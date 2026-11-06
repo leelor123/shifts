@@ -27,6 +27,16 @@ service cloud.firestore {
       allow delete: if request.auth != null;
       allow read: if isAdmin();
     }
+    // error reports (app/errors.js): part of the usage statistics, sent only with the same yes. Written once by a signed-in
+    // device under a random id, never changed; a fixed shape with no personal data (validErr); read by admins only,
+    // at most 50 at a time (the dashboard's list of this week's errors)
+    match /errors/{id} {
+      allow create: if request.auth != null && id.matches('^[0-9a-f]{16,40}$') && validErr(request.resource.data);
+      allow get: if isAdmin();
+      allow list: if isAdmin() && request.query.limit <= 50;
+      allow delete: if isAdmin();
+      allow update: if false;
+    }
     // admins: a user may check whether they are one; only an admin can add or remove admins
     match /admins/{uid} {
       allow get: if request.auth != null && (request.auth.uid == uid || isAdmin());
@@ -205,6 +215,22 @@ service cloud.firestore {
         && d.age in ['u18', '18p', '']
         && d.f is map && d.f.size() <= 20
         && d.t is int;
+    }
+
+    function validErr(d) {
+      return d.keys().hasOnly(['v', 'l', 'os', 'br', 'tab', 'k', 'msg', 'st', 'h', 'n', 't'])
+        && d.keys().hasAll(['v', 'l', 'os', 'br', 'tab', 'k', 'msg', 'st', 'h', 'n', 't'])
+        && d.v is string && d.v.size() <= 20
+        && d.l in ['he', 'en', 'ru', 'ar', 'fr', 'es', 'am']
+        && d.os is string && d.os.size() >= 1 && d.os.size() <= 24
+        && d.br is string && d.br.size() >= 1 && d.br.size() <= 32
+        && d.tab is string && d.tab.matches('^[a-z_]{0,24}$')
+        && d.k in ['error', 'promise', 'render', 'mount']
+        && d.msg is string && d.msg.size() >= 1 && d.msg.size() <= 200
+        && d.st is string && d.st.size() <= 600
+        && d.h is string && d.h.matches('^[0-9a-f]{8}$')
+        && d.n is int && d.n >= 1 && d.n <= 1000
+        && d.t is int && d.t > request.time.toMillis() - 86400000 && d.t < request.time.toMillis() + 86400000;
     }
 
     function validLb(d, ch) {
