@@ -293,6 +293,8 @@
     delete o._syncedAt;
     for (const f of LOCAL_ONLY_FIELDS[store] || []) delete o[f];
     if (store === 'payslips') redactLines(o);
+    // a signed log record's text never changes (the server refuses a change to it): its versions travel in u only
+    if (Store.APPEND_ONLY.includes(store)) { delete o.updatedAt; delete o.createdAt; }
     return { u: rec.updatedAt || 0, d: false, j: JSON.stringify(o) };
   }
   function decode(store, v, local) {
@@ -345,7 +347,9 @@
         await Store.touchAll();
         const pend = S.meta.pendingDeletes || (S.meta.pendingDeletes = []);
         const now = Date.now();
-        for (const st of SYNC) for (const [id, v] of R.stores[st]) if (!v.d && !S[st].some((x) => x.id === id)) pend.push({ store: st, id, at: now });
+        const keep = []; // the signed shift log is never deleted: the account's records join this phone's
+        for (const st of SYNC) for (const [id, v] of R.stores[st]) if (!v.d && !S[st].some((x) => x.id === id)) { if (Store.APPEND_ONLY.includes(st)) keep.push({ store: st, put: decode(st, v) }); else pend.push({ store: st, id, at: now }); }
+        if (keep.length) await Store.applyRemote(keep);
       }
     } else {
       for (const st of SYNC) {
@@ -573,8 +577,10 @@
         const R = await fetchAll(Cloud.user.uid);
         const pend = S.meta.pendingDeletes || (S.meta.pendingDeletes = []);
         const now = Date.now();
-        for (const st of SYNC) for (const [id, v] of R.stores[st]) if (!v.d && !S[st].some((x) => x.id === id)) pend.push({ store: st, id, at: now });
+        const keep = []; // (the signed shift log keeps the account's records: a restore never deletes them)
+        for (const st of SYNC) for (const [id, v] of R.stores[st]) if (!v.d && !S[st].some((x) => x.id === id)) { if (Store.APPEND_ONLY.includes(st)) keep.push({ store: st, put: decode(st, v) }); else pend.push({ store: st, id, at: now }); }
         await Store.setMeta({ pendingDeletes: pend });
+        if (keep.length) await Store.applyRemote(keep);
       } catch (e) { /* offline: the restored records still win by timestamp */ }
     }
     await push();

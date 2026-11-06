@@ -107,8 +107,8 @@
       for (const t of todo) {
         if (!noData()) {
           const a = S.activeShift;
-          if (t.type === 'start' && !a) { const r = widgetRole() || App.roles()[0]; await App.startShift(r && r.id, { startAt: +t.at }); }
-          if (t.type === 'stop' && a && +t.at > a.start) await App.stopShift(null, +t.at);
+          if (t.type === 'start' && !a) { const r = widgetRole() || App.roles()[0]; await App.startShift(r && r.id, { startAt: +t.at, widget: true }); }
+          if (t.type === 'stop' && a && +t.at > a.start) await App.stopShift(null, +t.at, { widget: true });
         }
         await Store.setMeta({ widgetDone: +t.id });
       }

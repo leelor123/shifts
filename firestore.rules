@@ -16,7 +16,9 @@ service cloud.firestore {
         // records are stored as {u: updatedAt, d: deleted?, j: json}; cap each document at ~900KB
         allow create: if valid(uid, collection);
         // never replace a newer version with an older one (a phone that was offline for a while)
-        allow update: if valid(uid, collection) && request.resource.data.u >= resource.data.u;
+        allow update: if valid(uid, collection) && request.resource.data.u >= resource.data.u
+          // the signed shift log only grows: a record's text stays as written and never becomes a tombstone
+          && (collection != 'ledger' || (resource.data.d == false && request.resource.data.d == false && request.resource.data.j == resource.data.j));
       }
     }
 
@@ -246,7 +248,7 @@ service cloud.firestore {
 
     function valid(uid, collection) {
       return request.auth != null && request.auth.uid == uid
-        && collection in ['employers', 'roles', 'shifts', 'entries', 'templates', 'dayRules', 'payslips', 'gaps', 'kv']
+        && collection in ['employers', 'roles', 'shifts', 'entries', 'templates', 'dayRules', 'payslips', 'gaps', 'ledger', 'kv']
         && request.resource.data.keys().hasOnly(['u', 'd', 'j'])
         && request.resource.data.u is number
         && (request.resource.data.j == null || request.resource.data.j.size() < 900000);

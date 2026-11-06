@@ -10,12 +10,15 @@
   const U = root.U;
 
   const DB_NAME = 'shiftpay';
-  const DB_VERSION = 1; // bump only to add object stores / indexes
+  const DB_VERSION = 2; // bump only to add object stores / indexes (2: ledger, the signed shift log)
   const SCHEMA_VERSION = 1; // bump when the shape of saved records changes (see MIGRATIONS)
-  const STORES = ['kv', 'employers', 'roles', 'shifts', 'entries', 'templates', 'dayRules', 'payslips', 'files', 'notifications', 'gaps'];
+  const STORES = ['kv', 'employers', 'roles', 'shifts', 'entries', 'templates', 'dayRules', 'payslips', 'files', 'notifications', 'gaps', 'ledger'];
   const LIST_STORES = STORES.filter((s) => s !== 'kv' && s !== 'files');
   // stores mirrored to the cloud (notifications are derived per device; files stay on the phone)
-  const SYNC_STORES = ['employers', 'roles', 'shifts', 'entries', 'templates', 'dayRules', 'payslips', 'gaps'];
+  const SYNC_STORES = ['employers', 'roles', 'shifts', 'entries', 'templates', 'dayRules', 'payslips', 'gaps', 'ledger'];
+  // the signed shift log (core/ledger.js, app/shift-log.js) only grows: its records are never deleted or replaced,
+  // here, by the cloud or by a merge (a removed record would break the chain)
+  const APPEND_ONLY = ['ledger'];
 
   /* ---------------- migrations ----------------
    * MIGRATIONS[n] upgrades data from schema n-1 to n. They run on load
@@ -157,7 +160,8 @@
     'rolePhotos', // { roleId: a small square photo } a role's own picture: this phone only, never in a backup file
     'heard', // { uid, at, full }: when this phone last heard everything from the account (cloud.js: openings read only what changed)
     'adminUid', // the account this phone last heard is an admin (the server's rules decide what an admin may do)
-    'guest']; // this phone is used without an account, by choice (its data lives here only)
+    'guest', // this phone is used without an account, by choice (its data lives here only)
+    'ledgerChain']; // this phone's own chain in the signed shift log (another phone, or a restored backup, starts its own)
   const SYNC_META = ['pendingDeletes', 'settingsDirty', 'activeDirty', 'activeUpdatedAt'];
   /*
    * Every record that comes from outside this code (a backup file, the cloud, the phone's own database) passes
@@ -217,6 +221,7 @@
       if (typeof r.startT !== 'string' || !HHMM.test(r.startT) || typeof r.endT !== 'string' || !HHMM.test(r.endT)) return null;
       if (r.breakMin != null && !Number.isFinite(+r.breakMin)) r.breakMin = 0; else if (r.breakMin != null) r.breakMin = +r.breakMin;
     }
+    if (store === 'ledger' && !(root.Ledger && root.Ledger.clean(r))) return null; // signed shift log: its own shapes only
     if (store === 'dayRules' && !(typeof r.date === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(r.date))) return null;
     if (store === 'payslips') {
       if (r.period != null && !(typeof r.period === 'string' && /^\d{4}-\d{2}$/.test(r.period))) r.period = null; // kept, shown without a month
@@ -290,8 +295,10 @@
     const writes = []; // [store, record] or [store, null, id] for a delete
     const pend = S.meta.pendingDeletes || (S.meta.pendingDeletes = []);
     let metaChanged = false;
+    const shiftChanges = []; // [before, after] of each shift, for the signed shift log (shift-log.js)
     for (const op of ops) {
       const arr = S[op.store];
+      if (op.store && APPEND_ONLY.includes(op.store) && (op.del || (op.put && arr.some((x) => x.id === op.put.id)))) continue;
       if (op.put) {
         const obj = op.put;
         if (!obj.id) obj.id = U.uid();
@@ -299,6 +306,7 @@
         obj.updatedAt = now;
         const i = arr.findIndex((x) => x.id === obj.id);
         inverse.push(i >= 0 ? { store: op.store, put: clone(arr[i]) } : { store: op.store, del: obj.id });
+        if (op.store === 'shifts') shiftChanges.push([i >= 0 ? clone(arr[i]) : null, obj]);
         if (i >= 0) arr[i] = obj; else arr.push(obj);
         writes.push([op.store, obj]);
         const pi = pend.findIndex((d) => d.store === op.store && d.id === obj.id);
@@ -307,6 +315,7 @@
         const i = arr.findIndex((x) => x.id === op.del);
         if (i < 0) continue;
         inverse.push({ store: op.store, put: clone(arr[i]) });
+        if (op.store === 'shifts') shiftChanges.push([clone(arr[i]), null]);
         arr.splice(i, 1);
         writes.push([op.store, null, op.del]);
         if (SYNC_STORES.includes(op.store)) { pend.push({ store: op.store, id: op.del, at: now }); metaChanged = true; }
@@ -327,6 +336,8 @@
       undoStack.push({ label, ops: inverse.reverse() });
       if (undoStack.length > 30) undoStack.shift();
     }
+    // every change to a worked shift (the timer, the editor, an undo, an import) gets its record in the signed log
+    if (shiftChanges.length && root.ShiftLog) root.ShiftLog.onShifts(shiftChanges, opts.via);
     emit({ type: 'data', stores: ops.map((o) => o.store).filter(Boolean) });
     return label && opts.undo !== false;
   }
@@ -340,6 +351,7 @@
     const writes = [];
     for (const op of ops) {
       const arr = S[op.store];
+      if (APPEND_ONLY.includes(op.store) && (op.del || (op.put && arr.some((x) => x.id === op.put.id)))) continue; // never removed or replaced
       if (op.put) {
         const obj = safeRecord(op.store, Object.assign({}, op.put, { _syncedAt: op.put.updatedAt }));
         if (!obj) continue; // a cloud record of a shape the app never writes is not taken in
@@ -620,6 +632,6 @@
   root.Store = {
     S, load, on, apply, isMemoryOnly: () => memoryOnly, put, del, undo: undoAny, canUndo, setSettings, setMeta, setActive, find, clone,
     putFile, getFile, delFile, exportBackup, importBackup, wipe, saveAll, SCHEMA_VERSION, DB_NAME, cleanIcon,
-    SYNC_STORES, applyRemote, markSynced, dirtyRecords, touchAll, forgetSyncState, applyRemoteSettings, applyRemoteActive,
+    SYNC_STORES, APPEND_ONLY, applyRemote, markSynced, dirtyRecords, touchAll, forgetSyncState, applyRemoteSettings, applyRemoteActive,
   };
 })(typeof window !== 'undefined' ? window : globalThis);

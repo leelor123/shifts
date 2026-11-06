@@ -57,7 +57,9 @@
   }
 
   /** The printable report (#print-root, then the print window: "save as PDF"). */
-  function print(d) {
+  async function print(d) {
+    // the signed shift log of the period: how each shift was recorded, and the chain's last hash
+    const log = root.ShiftLog ? await root.ShiftLog.appendixHtml(d.shifts, d.from, d.to) : '';
     const emp = S.employers[0] || {};
     const sum = d.sum;
     const t = total(d);
@@ -80,6 +82,7 @@
       <h3>על מה זה נשען</h3><table>${LAWS.map(([a, b]) => row([`<b>${a}</b>`, b])).join('')}</table>
       <div style="font-size:8pt;color:#555;margin-top:10pt">חושב באפליקציית Shaati לפי המשמרות והתלושים שהוזנו בה, וההגדרות (תעריף, שעות נוספות, שבת וחגים לפי ${esc((S.settings.rest && S.settings.rest.city) || 'העיר שנבחרה')}). זה כלי עזר ואינו ייעוץ משפטי: הסכם קיבוצי, צו הרחבה ענפי או החוזה שלך יכולים לקבוע אחרת. מומלץ לצרף את התלושים ודוחות הנוכחות. מידע נוסף: kolzchut.org.il</div>
     </div>`;
+    if (log) el.firstElementChild.insertAdjacentHTML('beforeend', log); // the appendix, at the end
     UI.toast('בחלון ההדפסה בחר "שמור כ-⁠PDF"');
     setTimeout(() => window.print(), 300);
   }
@@ -118,6 +121,13 @@
           <div class="rt-row"><span class="rt-mark">${icon('clock', 's')}</span><div><div class="t">${d.sum.shifts} משמרות · ${U.hours(d.sum.hours)} שעות</div><div class="d">כל משמרת עם השעות והשכר המחושב</div></div></div>
         </div>
         <div class="tiny muted">${icon('shield', 's')} הדוח נוצר בטלפון. הוא כלי עזר ולא ייעוץ משפטי; הסכם קיבוצי או צו הרחבה ענפי יכולים לקבוע אחרת.</div>`;
+      // the signed shift log: how many of the period's shifts were recorded in real time (the report has the full list)
+      const what = box.querySelector('.cl-what');
+      if (root.ShiftLog && d.shifts.length && what) {
+        const live = d.shifts.filter((r) => { const st = root.ShiftLog.status(App.shift(r.id)); return st && st.mode === 'live'; }).length;
+        const line = live === d.shifts.length ? 'כל המשמרות נרשמו בזמן אמת' : `${live} מתוך ${d.shifts.length} נרשמו בזמן אמת`;
+        what.insertAdjacentHTML('beforeend', `<div class="rt-row"><span class="rt-mark">${icon('shield', 's')}</span><div><div class="t">יומן המשמרות</div><div class="d">${line}. הפירוט בסוף הדוח</div></div></div>`);
+      }
     }
     entry.sh.addEventListener('click', async (e) => {
       const b = e.target.closest('button');

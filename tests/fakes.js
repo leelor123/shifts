@@ -81,7 +81,9 @@ function fakeClient(backend) {
   function serverApply(path, data) {
     // emulate the security rule: refuse an update that is older than the stored version
     const cur = backend.docs.get(path);
-    if (data && cur && typeof cur.u === 'number' && typeof data.u === 'number' && data.u < cur.u) {
+    // and the signed shift log's rule: a record's text never changes and never becomes a tombstone
+    const ledgerChange = data && cur && /\/ledger\/[^/]+$/.test(path) && (cur.d || data.d || data.j !== cur.j);
+    if (ledgerChange || (data && cur && typeof cur.u === 'number' && typeof data.u === 'number' && data.u < cur.u)) {
       backend.rejected++;
       const e = new Error('Missing or insufficient permissions.'); e.code = 'permission-denied';
       throw e;
