@@ -74,7 +74,7 @@
  "התחל משמרת": "Commencer le service",
  "התחלה": "Début",
  "סיום": "Fin",
- "<svg class=\"chart\" data-anim viewBox=\"0 0 {0} {1}\" role=\"img\" aria-label=\"מברוטו לנטו\">": "<svg class=\"chart\" data-anim viewBox=\"0 0 {0} {1}\" role=\"img\" aria-label=\"Du brut au net\">",
+ "מברוטו לנטו": "Du brut au net",
  "חוק שעות עבודה ומנוחה": "Loi sur les heures de travail et de repos",
  "שעות נוספות (125%, 150%), עבודה במנוחה השבועית ובחגים (150% לפחות), הפסקות.": "Heures supplémentaires (125 %, 150 %), travail le jour de repos hebdomadaire et les fêtes (au moins 150 %), pauses.",
  "חוק שכר מינימום": "Loi sur le salaire minimum",

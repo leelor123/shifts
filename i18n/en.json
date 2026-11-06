@@ -74,7 +74,7 @@
  "התחל משמרת": "Start shift",
  "התחלה": "Start",
  "סיום": "End",
- "<svg class=\"chart\" data-anim viewBox=\"0 0 {0} {1}\" role=\"img\" aria-label=\"מברוטו לנטו\">": "<svg class=\"chart\" data-anim viewBox=\"0 0 {0} {1}\" role=\"img\" aria-label=\"From gross to net\">",
+ "מברוטו לנטו": "From gross to net",
  "חוק שעות עבודה ומנוחה": "Hours of Work and Rest Law",
  "שעות נוספות (125%, 150%), עבודה במנוחה השבועית ובחגים (150% לפחות), הפסקות.": "Overtime (125%, 150%), work on the weekly rest day and holidays (at least 150%), breaks.",
  "חוק שכר מינימום": "Minimum Wage Law",

@@ -1,7 +1,8 @@
 /* ============================================================
  * charts.js — small dependency-free SVG charts.
  * Thin marks, rounded data ends, recessive grid, one axis,
- * tap/hover tooltip on every mark (data-tip).
+ * tap/hover tooltip on every mark (data-tip). The marks that move
+ * are HTML layers around their own drawings (see frame()).
  *
  * They come alive when they scroll into view: bars grow from the
  * baseline one after another, lines draw themselves over a soft
@@ -33,6 +34,19 @@
     if (h <= 0) return '';
     return `M${x},${y + h}V${y + r}Q${x},${y} ${x + r},${y}H${x + w - r}Q${x + w},${y} ${x + w},${y + r}V${y + h}Z`;
   }
+  /** A chart in layers. Chrome never moves an SVG element on the compositor, so a busy phone froze the bars growing
+   *  in. Every mark that moves is an HTML layer (div.ch-l) around its own drawing; all drawings share the chart's
+   *  viewBox and fill its box, so they line up exactly as one drawing did. Painted in order: the base (the grid),
+   *  the layers, then the top (axis, labels and the hit areas that carry the tooltips). */
+  function frame(H, label) {
+    const vb = `viewBox="0 0 ${W} ${H}"`;
+    return {
+      layer: (cls, attrs, inner) => `<div class="ch-l${cls ? ' ' + cls : ''}"${attrs ? ' ' + attrs : ''}><svg ${vb}>${inner}</svg></div>`,
+      /** a point's height as a share of the chart's, for a layer's transform-origin */
+      at: (y) => +((y / H) * 100).toFixed(4) + '%',
+      done: (base, layers, top) => `<div class="chart" data-anim role="img" aria-label="${esc(label || '')}"><svg ${vb}>${base}</svg>${layers}<svg class="ch-top" ${vb}>${top}</svg></div>`,
+    };
+  }
   function grid(maxV, top, bottom, left, right, fmt) {
     let g = '<g class="grid">';
     for (let i = 0; i <= 4; i++) {
@@ -52,18 +66,18 @@
     const n = data.length || 1;
     const slot = (right - left) / n;
     const bw = Math.max(4, Math.min(28, slot - 6));
-    let s = `<svg class="chart" data-anim viewBox="0 0 ${W} ${H}" role="img" aria-label="${esc(opts.label || '')}">`;
-    s += grid(maxV, top, bottom, left, right, opts.axisFmt);
+    const f = frame(H, opts.label);
+    let L = '', s = '';
     data.forEach((d, i) => {
       const h = ((bottom - top) * Math.max(0, d.value)) / maxV;
       const x = left + slot * i + (slot - bw) / 2;
       const col = d.color || opts.color || SERIES[0];
-      s += `<path class="bar" data-i="${i}" style="--d:${delay(i, n)}ms" d="${barPath(x, bottom - h, bw, h, 4)}" fill="${col}" opacity="${d.dim ? 0.45 : 1}"/>`;
+      L += f.layer('bar', `data-i="${i}" style="--d:${delay(i, n)}ms;--oy:${f.at(bottom)}${d.dim ? ';--op:.45' : ''}"`, `<path d="${barPath(x, bottom - h, bw, h, 4)}" fill="${col}"/>`);
       s += `<rect class="hit" data-i="${i}" x="${left + slot * i}" y="${top}" width="${slot}" height="${bottom - top}" data-tip="${esc(d.tip || d.label + ': ' + d.value)}"/>`;
       if (n <= 14 || i % Math.ceil(n / 12) === 0) s += `<text x="${x + bw / 2}" y="${H - 8}" text-anchor="middle">${esc(d.label)}</text>`;
     });
     s += `<line class="axis" x1="${left}" x2="${right}" y1="${bottom}" y2="${bottom}"/>`;
-    return s + '</svg>';
+    return f.done(grid(maxV, top, bottom, left, right, opts.axisFmt), L, s);
   }
 
   /** labels: [], series: [{name, color, values:[]}] — stacked, 2px surface gap between segments */
@@ -75,30 +89,28 @@
     const n = labels.length || 1;
     const slot = (right - left) / n;
     const bw = Math.max(4, Math.min(28, slot - 6));
-    let s = `<svg class="chart" data-anim viewBox="0 0 ${W} ${H}" role="img" aria-label="${esc(opts.label || '')}">`;
-    s += grid(maxV, top, bottom, left, right, opts.axisFmt);
+    const f = frame(H, opts.label);
+    let L = '', s = '';
     labels.forEach((lab, i) => {
       const x = left + slot * i + (slot - bw) / 2;
-      let y = bottom;
+      let y = bottom, g = '';
       const segs = series.filter((se) => (se.values[i] || 0) > 0);
-      s += `<g class="bar" data-i="${i}" style="--d:${delay(i, n)}ms">`;
       segs.forEach((se, j) => {
         const h = ((bottom - top) * se.values[i]) / maxV;
         const isTop = j === segs.length - 1;
         const gap = j > 0 ? 2 : 0;
-        if (isTop) s += `<path d="${barPath(x, y - h + gap, bw, Math.max(0, h - gap), 4)}" fill="${se.color}"/>`;
-        else s += `<rect x="${x}" y="${y - h + gap}" width="${bw}" height="${Math.max(0, h - gap)}" fill="${se.color}"/>`;
+        if (isTop) g += `<path d="${barPath(x, y - h + gap, bw, Math.max(0, h - gap), 4)}" fill="${se.color}"/>`;
+        else g += `<rect x="${x}" y="${y - h + gap}" width="${bw}" height="${Math.max(0, h - gap)}" fill="${se.color}"/>`;
         y -= h;
       });
-      s += '</g>';
+      L += f.layer('bar', `data-i="${i}" style="--d:${delay(i, n)}ms;--oy:${f.at(bottom)}"`, g);
       const tip = lab + ' · ' + series.filter((se) => se.values[i]).map((se) => se.name + ' ' + (opts.fmt ? opts.fmt(se.values[i]) : se.values[i])).join(' · ');
       s += `<rect class="hit" data-i="${i}" x="${left + slot * i}" y="${top}" width="${slot}" height="${bottom - top}" data-tip="${esc(tip)}"/>`;
       if (n <= 14 || i % Math.ceil(n / 12) === 0) s += `<text x="${x + bw / 2}" y="${H - 8}" text-anchor="middle">${esc(lab)}</text>`;
     });
     s += `<line class="axis" x1="${left}" x2="${right}" y1="${bottom}" y2="${bottom}"/>`;
-    s += '</svg>';
-    s += `<div class="chart-legend">${series.map((se) => `<span><i style="background:${se.color}"></i>${esc(se.name)}</span>`).join('')}</div>`;
-    return s;
+    return f.done(grid(maxV, top, bottom, left, right, opts.axisFmt), L, s)
+      + `<div class="chart-legend">${series.map((se) => `<span><i style="background:${se.color}"></i>${esc(se.name)}</span>`).join('')}</div>`;
   }
 
   /** Single series line with markers. */
@@ -113,32 +125,33 @@
     const n = labels.length;
     const xAt = (i) => left + (n <= 1 ? (right - left) / 2 : ((right - left) * i) / (n - 1));
     const yAt = (v) => bottom - ((bottom - top) * (v - minV)) / (maxV - minV || 1);
-    let s = `<svg class="chart" data-anim viewBox="0 0 ${W} ${H}" role="img" aria-label="${esc(opts.label || '')}">`;
+    const f = frame(H, opts.label);
     let g = '<g class="grid">';
     for (let i = 0; i <= 4; i++) {
       const v = minV + ((maxV - minV) / 4) * i;
       const y = yAt(v);
       g += `<line x1="${left}" x2="${right}" y1="${y}" y2="${y}"/><text x="${left - 4}" y="${y + 4}" text-anchor="end">${esc((opts.axisFmt || short)(v))}</text>`;
     }
-    s += g + '</g>';
+    g += '</g>';
     const col = opts.color || SERIES[0];
-    let d = '';
+    let d = '', L = '', s = '';
     const pts = [];
     vals.forEach((v, i) => { if (v == null) return; d += (d ? 'L' : 'M') + xAt(i) + ',' + yAt(v); pts.push(xAt(i)); });
     // a soft area under the line, fading down to the axis
     if (pts.length > 1) {
       const id = 'lg' + ++uid;
-      s += `<defs><linearGradient id="${id}" x1="0" x2="0" y1="0" y2="1"><stop offset="0" stop-color="${col}" stop-opacity=".22"/><stop offset="1" stop-color="${col}" stop-opacity="0"/></linearGradient></defs>`;
-      s += `<path class="area" d="${d}L${pts[pts.length - 1]},${bottom}L${pts[0]},${bottom}Z" fill="url(#${id})"/>`;
+      L += f.layer('area', '', `<defs><linearGradient id="${id}" x1="0" x2="0" y1="0" y2="1"><stop offset="0" stop-color="${col}" stop-opacity=".22"/><stop offset="1" stop-color="${col}" stop-opacity="0"/></linearGradient></defs>`
+        + `<path d="${d}L${pts[pts.length - 1]},${bottom}L${pts[0]},${bottom}Z" fill="url(#${id})"/>`);
     }
-    s += `<path class="ln" pathLength="1" d="${d}" fill="none" stroke="${col}" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>`;
+    // the line draws itself by its stroke (a paint, no move), so it stays a plain drawing between the area and the markers
+    L += f.layer('', '', `<path class="ln" pathLength="1" d="${d}" fill="none" stroke="${col}" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>`);
     vals.forEach((v, i) => {
-      if (v != null) s += `<circle class="dot" data-i="${i}" style="--d:${300 + delay(i, n, 700)}ms" cx="${xAt(i)}" cy="${yAt(v)}" r="4" fill="${col}" stroke="var(--surface-1)" stroke-width="2"/>`;
+      if (v != null) L += f.layer('ch-dot', `style="--d:${300 + delay(i, n, 700)}ms;--ox:${+((xAt(i) / W) * 100).toFixed(4)}%;--oy:${f.at(yAt(v))}"`, `<circle class="dot" data-i="${i}" cx="${xAt(i)}" cy="${yAt(v)}" r="4" fill="${col}" stroke="var(--surface-1)" stroke-width="2"/>`);
       const slot = (right - left) / Math.max(1, n - 1);
       s += `<rect class="hit" data-i="${i}" x="${xAt(i) - slot / 2}" y="${top}" width="${slot}" height="${bottom - top}" data-tip="${esc(labels[i] + ': ' + (v == null ? '—' : opts.fmt ? opts.fmt(v) : v))}"/>`;
       if (n <= 14 || i % Math.ceil(n / 12) === 0) s += `<text x="${xAt(i)}" y="${H - 8}" text-anchor="middle">${esc(labels[i])}</text>`;
     });
-    return s + '</svg>';
+    return f.done(g, L, s);
   }
 
   /** steps: [{label, value, type:'total'|'neg'}] — gross → deductions → net */
@@ -150,8 +163,8 @@
     const slot = (right - left) / n;
     const bw = Math.min(34, slot - 8);
     const yAt = (v) => bottom - ((bottom - top) * v) / maxV;
-    let s = `<svg class="chart" data-anim viewBox="0 0 ${W} ${H}" role="img" aria-label="מברוטו לנטו">`;
-    s += grid(maxV, top, bottom, left, right, opts.axisFmt);
+    const f = frame(H, 'מברוטו לנטו');
+    let L = '', s = '';
     let run = 0;
     steps.forEach((st, i) => {
       const x = left + slot * i + (slot - bw) / 2;
@@ -159,8 +172,10 @@
       if (st.type === 'total') { y0 = 0; y1 = st.value; run = st.value; col = i === 0 ? '#2a78d6' : '#1baf7a'; }
       else { y1 = run; y0 = run + st.value; run = y0; col = '#e34948'; }
       const yt = yAt(Math.max(y0, y1)), yb = yAt(Math.min(y0, y1));
-      const a = `data-i="${i}" style="--d:${i * 130}ms"`;
-      s += st.type === 'total' ? `<path class="bar" ${a} d="${barPath(x, yt, bw, yb - yt, 4)}" fill="${col}"/>` : `<rect class="bar neg" ${a} x="${x}" y="${yt}" width="${bw}" height="${Math.max(1, yb - yt)}" rx="2" fill="${col}" opacity=".85"/>`;
+      // a total grows up from its foot; a deduction hangs from its top
+      L += st.type === 'total'
+        ? f.layer('bar', `data-i="${i}" style="--d:${i * 130}ms;--oy:${f.at(yb)}"`, `<path d="${barPath(x, yt, bw, yb - yt, 4)}" fill="${col}"/>`)
+        : f.layer('bar neg', `data-i="${i}" style="--d:${i * 130}ms;--oy:${f.at(yt)};--op:.85"`, `<rect x="${x}" y="${yt}" width="${bw}" height="${Math.max(1, yb - yt)}" rx="2" fill="${col}"/>`);
       if (i < n - 1) {
         const yl = yAt(run);
         s += `<line x1="${x + bw}" x2="${x + slot}" y1="${yl}" y2="${yl}" stroke="var(--outline)" stroke-dasharray="3 3"/>`;
@@ -171,7 +186,7 @@
       if (words[1]) s += `<text x="${x + bw / 2}" y="${bottom + 26}" text-anchor="middle">${esc(words.slice(1).join(' '))}</text>`;
     });
     s += `<line class="axis" x1="${left}" x2="${right}" y1="${bottom}" y2="${bottom}"/>`;
-    return s + '</svg>';
+    return f.done(grid(maxV, top, bottom, left, right, opts.axisFmt), L, s);
   }
 
   /** Horizontal bars (HTML) for role/category splits. rows: [{name, value, color, text}] */
@@ -198,12 +213,12 @@
   }
   /** Tapped mark: it (and its marker) stays bright, the rest step back. */
   function focusMark(t) {
-    const svg = t.closest('svg.chart');
-    if (!svg || t.dataset.i == null) return;
-    document.querySelectorAll('.chart.focus').forEach((c) => { if (c !== svg) c.classList.remove('focus'); });
-    svg.querySelectorAll('.on').forEach((x) => x.classList.remove('on'));
-    svg.querySelectorAll(`[data-i="${t.dataset.i}"]:not(.hit)`).forEach((x) => x.classList.add('on'));
-    svg.classList.add('focus');
+    const chart = t.closest('.chart');
+    if (!chart || t.dataset.i == null) return;
+    document.querySelectorAll('.chart.focus').forEach((c) => { if (c !== chart) c.classList.remove('focus'); });
+    chart.querySelectorAll('.on').forEach((x) => x.classList.remove('on'));
+    chart.querySelectorAll(`[data-i="${t.dataset.i}"]:not(.hit)`).forEach((x) => x.classList.add('on'));
+    chart.classList.add('focus');
   }
   document.addEventListener('pointerover', (e) => { const t = e.target.closest && e.target.closest('[data-tip]'); if (t && e.pointerType === 'mouse') showTip(e, t.dataset.tip); });
   document.addEventListener('pointerout', (e) => { if (e.target.closest && e.target.closest('[data-tip]')) hideTip(); });
