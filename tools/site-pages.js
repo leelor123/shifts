@@ -6,7 +6,7 @@ process.env.TZ = 'Asia/Jerusalem';
 const fs = require('fs');
 const path = require('path');
 const ROOT = path.join(__dirname, '..');
-for (const f of ['util.js', 'hebcal.js', 'defaults.js', 'engine.js', 'taxrefund.js']) require(path.join(ROOT, 'src', 'core', f));
+for (const f of ['util.js', 'places-data.js', 'places.js', 'hebcal.js', 'defaults.js', 'engine.js', 'taxrefund.js']) require(path.join(ROOT, 'src', 'core', f));
 const { U, Engine, TaxRefund: TR } = globalThis;
 
 const SITE = 'https://shaati.web.app';
@@ -385,7 +385,7 @@ ${FONT_HEAD}
   <p class="src">המקור הרשמי: ${p.sources.map(([l, h]) => `<a href="${h}" rel="noopener">${esc(l)} ב-gov.il</a>`).join(' · ')}</p>
   <div class="note">שעתי אינה גוף ממשלתי ואינה מייצגת גוף ממשלתי. המידע כללי ואינו ייעוץ משפטי; בהסכם קיבוצי, צו הרחבה ענפי או חוזה אישי ייתכנו זכויות נוספות.${p.note ? ' ' + p.note : ''} עודכן ב-${dmy(date)}.</div>
   <h2>עוד שאלות</h2>
-  <div class="more"><a href="check">${esc(CHECK.title)}</a>${others.map((x) => `<a href="${x.slug}">${esc(x.title)}</a>`).join('')}</div>
+  <div class="more"><a href="shift-calculator">${esc(CALC.title)}</a><a href="check">${esc(CHECK.title)}</a>${others.map((x) => `<a href="${x.slug}">${esc(x.title)}</a>`).join('')}</div>
 </main>
 <footer>שעתי · <a href="./">לאתר</a> · <a href="privacy">פרטיות</a> · <a href="accessibility">הצהרת נגישות</a> · <a href="mailto:lybtn48@gmail.com">יצירת קשר</a></footer>
 </body>
@@ -480,13 +480,155 @@ ${FONT_HEAD}
   <p class="src">המקור הרשמי: ${[['שכר מינימום', GOV.minwage], ['זכויות בני נוער בעבודה', GOV.youth], ['מנוחה שבועית וחגים', GOV.rest]].map(([l, h]) => `<a href="${h}" rel="noopener">${esc(l)} ב-gov.il</a>`).join(' · ')}</p>
   <div class="note">שעתי אינה גוף ממשלתי ואינה מייצגת גוף ממשלתי. הבדיקה כללית ואינה ייעוץ משפטי: לפי שכר המינימום מ-${dmy(MW.from)} ולפי הגיל; לחניכים, לבעלי מוגבלות ובהסכמים מיוחדים יש כללים אחרים. עודכן ב-${dmy(date)}.</div>
   <h2>עוד שאלות</h2>
-  <div class="more">${PAGES.map((x) => `<a href="${x.slug}">${esc(x.title)}</a>`).join('')}</div>
+  <div class="more"><a href="shift-calculator">${esc(CALC.title)}</a>${PAGES.map((x) => `<a href="${x.slug}">${esc(x.title)}</a>`).join('')}</div>
 </main>
 <footer>שעתי · <a href="./">לאתר</a> · <a href="privacy">פרטיות</a> · <a href="accessibility">הצהרת נגישות</a> · <a href="mailto:lybtn48@gmail.com">יצירת קשר</a></footer>
 <script src="check.js"></script>
 </body>
 </html>
 `;
+}
+/* ---------------- the shift calculator: "how much is this shift worth?" ----------------
+ * The app's own engine runs in the page (site/calc.js: src/core's util, hebcal, defaults and engine, then
+ * tools/site-calc.js), so a shift here and the same shift in the app pay the same (tests/sitecalc.test.js). */
+const CALC = { slug: 'shift-calculator', title: 'כמה שווה המשמרת? מחשבון שכר למשמרת', desc: `תאריך, שעות, שכר לשעה, גיל ועיר, ורואים כמה המשמרת שווה לפי חוק העבודה: שבת וחג ב-${REST[0]}% לפי זמני השבת בעיר, שעות נוספות, משמרת לילה ושכר מינימום לפי הגיל. בלי הרשמה.` };
+// the cities: the app's localities of 20,000 people and more (and the three with their own candle-lighting time), at
+// the app's coordinates; a smaller place takes the nearest big one (its Shabbat times differ by a minute or two)
+const CALC_PLACES = globalThis.Places.ALL.filter((p) => !p.kind && (p.pop >= 20000 || p.candle !== 18))
+  .sort((a, b) => a.name.localeCompare(b.name, 'he')).map((p) => [p.name, p.lat, p.lon, p.candle]);
+const CALC_SOURCES = ['src/core/util.js', 'src/core/hebcal.js', 'src/core/defaults.js', 'src/core/engine.js', 'tools/site-calc.js'];
+// (the same in tests/sitecalc.test.js: sha1 of the sources, line ends as LF)
+const calcFingerprint = (text) => require('crypto').createHash('sha1').update(text.replace(/\r\n/g, '\n')).digest('hex').slice(0, 16);
+const CALC_CITY = 'תל אביב-יפו';
+const hWords = (h) => { const m = Math.round(h * 60); return m % 60 ? `${Math.floor(m / 60)} שעות ו-${m % 60} דקות` : `${m / 60} שעות`; };
+if (!CALC_PLACES.some((p) => p[0] === CALC_CITY)) throw new Error('the calculator: ' + CALC_CITY + ' is not in the city list');
+const CALC_CSS = `
+.sc-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+.ck select { font: 600 1.1rem Rubik, sans-serif; padding: 12px 14px; border: 1.5px solid var(--line); border-radius: 14px; background: var(--bg); color: var(--ink); width: 100%; min-height: 50px; }
+.ck select:focus { outline: 2px solid var(--brand); outline-offset: 1px; }
+.ck input[type=date], .ck input[type=time] { min-height: 50px; font-variant-numeric: tabular-nums; }
+#sc-out { display: grid; gap: 14px; margin-top: 18px; }
+.sc-total { background: radial-gradient(110% 120% at 90% 0%, #1b3f8f 0%, transparent 60%), linear-gradient(160deg, var(--cta-1), var(--cta-2)); color: #fff; border-radius: 24px; padding: 20px 22px; display: grid; gap: 4px; }
+.sc-total .lbl { color: #dfe6f5; font-weight: 500; }
+#sc-total { font: 700 clamp(2.2rem, 10vw, 3rem)/1.15 Rubik, sans-serif; color: var(--gold); letter-spacing: -0.03em; font-variant-numeric: tabular-nums; }
+#sc-when { color: #dfe6f5; font-size: .95rem; }
+.sc-total button { justify-self: start; margin-top: 10px; font: 700 1rem Rubik, sans-serif; border: 0; border-radius: 999px; padding: 12px 20px; min-height: 44px; cursor: pointer; background: #fff; color: #0d2b6b; transition: transform .16s cubic-bezier(.23, 1, .32, 1); }
+.sc-total button:active { transform: scale(.97); }
+.sc-total :focus-visible { outline-color: var(--gold); }
+#sc-share-ok { margin: 0; color: #dfe6f5; font-size: .95rem; }
+.tbl td:nth-child(n+2), .tbl th:nth-child(n+2) { text-align: end; font-variant-numeric: tabular-nums; }
+.tbl .pct { color: var(--ink-2); font-size: .9rem; }
+.tbl tr.sum td { background: var(--surface-2); font-weight: 600; }
+.sc-warn { margin: 0; background: #fff4e5; color: #6b3a00; border: 1px solid #f3c98b; border-radius: 16px; padding: 14px 16px; }
+@media (prefers-color-scheme: dark) { .sc-warn { background: #2b1d08; color: #ffd9a3; border-color: #6b4a1a; } }
+#sc-notes { margin: 0; padding: 0; padding-inline-start: 18px; display: grid; gap: 8px; color: var(--ink-2); }
+#sc-notes b { color: var(--ink); }
+.sc-app { margin: 4px 0 0; }`;
+function calcPage(date) {
+  const url = `${SITE}/${CALC.slug}`;
+  const faq = [
+    ['כמה משלמים על שעה בשבת או בחג?', `לפחות ${REST[0]}% מהשכר הרגיל לשעה. שעה נוספת בשבת: ${REST[1]}% לשתי הראשונות ו-${REST[2]}% מהשלישית. השבת נמדדת מכניסת השבת ועד צאתה בעיר שבה עובדים.`],
+    ['מתי מתחילות שעות נוספות במשמרת?', `בשבוע עבודה של 5 ימים אחרי ${hWords(OTL.five)} ביום, ובמשמרת לילה אחרי ${hWords(OTL.night)}. השעתיים הנוספות הראשונות שוות ${OT[0]}%, ומהשלישית ${OT[1]}%. גם שעות מעל ${OTL.week} בשבוע הן שעות נוספות. המחשבון מחשב שבוע של 5 ימים.`],
+    ['יש תוספת על משמרת לילה?', `החוק לא קובע תוספת לילה בשקלים. משמרת לילה (שעתיים לפחות בין 22:00 ל-06:00) קצרה יותר: אחרי ${hWords(OTL.night)} מתחילות שעות נוספות. תוספת לילה מגיעה רק אם היא בהסכם או בחוזה.`],
+    ['ההפסקה משולמת?', 'במשמרת של 6 שעות ומעלה מגיעה הפסקה של 45 דקות. אם מותר לך לצאת בה ממקום העבודה, המעסיק לא חייב לשלם עליה. אם צריך להישאר זמין/ה, היא נחשבת שעות עבודה. במחשבון מסמנים אם ההפסקה לא משולמת.'],
+    ['אילו חגים משולמים כמו שבת?', 'ראש השנה (שני הימים), יום כיפור, סוכות, שמיני עצרת, פסח (היום הראשון והשביעי), שבועות ויום העצמאות. המחשבון מכיר את התאריכים בלוח העברי ואת זמני הכניסה והיציאה בעיר.'],
+  ];
+  const ld = [
+    { '@context': 'https://schema.org', '@type': 'WebApplication', name: CALC.title, url, applicationCategory: 'FinanceApplication', operatingSystem: 'Any', inLanguage: 'he-IL', isAccessibleForFree: true, offers: { '@type': 'Offer', price: 0, priceCurrency: 'ILS' }, description: CALC.desc },
+    { '@context': 'https://schema.org', '@type': 'FAQPage', mainEntity: faq.map(([q, a]) => ({ '@type': 'Question', name: q, acceptedAnswer: { '@type': 'Answer', text: a } })) },
+    { '@context': 'https://schema.org', '@type': 'BreadcrumbList', itemListElement: [{ '@type': 'ListItem', position: 1, name: 'שעתי', item: SITE + '/' }, { '@type': 'ListItem', position: 2, name: CALC.title, item: url }] },
+  ];
+  return `<!doctype html>
+<html lang="he" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>${esc(CALC.title)} · שעתי</title>
+<meta name="description" content="${esc(CALC.desc)}">
+<link rel="canonical" href="${url}">
+<meta name="theme-color" content="#071a45">
+<meta property="og:type" content="website">
+<meta property="og:locale" content="he_IL">
+<meta property="og:site_name" content="שעתי">
+<meta property="og:title" content="${esc(CALC.title)}">
+<meta property="og:description" content="${esc(CALC.desc)}">
+<meta property="og:url" content="${url}">
+<meta property="og:image" content="${SITE}/img/og.jpg">
+<meta property="og:image:type" content="image/jpeg">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:image:alt" content="שעתי: כמה באמת מגיע לך על כל שעה. האפליקציה בטלפון, עם השכר של החודש">
+<meta name="twitter:card" content="summary_large_image">
+<link rel="icon" href="img/favicon-48.png" sizes="48x48">
+<link rel="apple-touch-icon" href="img/apple-touch-icon.png">
+${FONT_HEAD}
+<script type="application/ld+json">${JSON.stringify(ld)}</script>
+<style>${CSS}${CHECK_CSS}${CALC_CSS}</style>
+</head>
+<body>
+<a class="skip" href="#main">דילוג לתוכן</a>
+<header><div class="bar"><a class="logo" href="./"><img src="img/apple-touch-icon.png" alt="">שעתי</a><a class="btn" href="${APP}?from=site">לפתוח את שעתי</a></div></header>
+<main id="main">
+  <nav class="crumbs" aria-label="ניווט"><a href="./">שעתי</a> › כמה שווה המשמרת?</nav>
+  <h1>כמה שווה המשמרת?</h1>
+  <p>ממלאים את פרטי המשמרת ורואים כמה היא שווה לפי חוק העבודה: שבת וחג לפי הזמנים בעיר, שעות נוספות, משמרת לילה ושכר מינימום לפי הגיל. החישוב רץ בטלפון שלך, באותו מנוע שמחשב משמרות באפליקציה שעתי. בלי הרשמה, ושום דבר לא נשלח.</p>
+  <div class="ck" data-sc>
+    <label for="sc-date"><span>תאריך</span><input id="sc-date" type="date" required aria-describedby="sc-err"></label>
+    <div class="sc-row">
+      <label for="sc-start"><span>התחלה</span><input id="sc-start" type="time" value="16:00" required aria-describedby="sc-err"></label>
+      <label for="sc-end"><span>סיום</span><input id="sc-end" type="time" value="23:00" required aria-describedby="sc-err"></label>
+    </div>
+    <label for="sc-rate"><span>שכר לשעה (₪)</span><input id="sc-rate" type="text" inputmode="decimal" autocomplete="off" value="40" aria-describedby="sc-err"></label>
+    <div class="q">גיל
+      <div class="ages" role="group" aria-label="גיל">
+        <button type="button" data-age="u16" aria-pressed="false">מתחת ל-16</button>
+        <button type="button" data-age="a16" aria-pressed="false">16</button>
+        <button type="button" data-age="a17" aria-pressed="false">17</button>
+        <button type="button" data-age="adult" aria-pressed="true">18 ומעלה</button>
+      </div>
+    </div>
+    <label for="sc-city"><span>עיר <small>(לזמני השבת והחג)</small></span><select id="sc-city">${CALC_PLACES.map(([n]) => `<option${n === CALC_CITY ? ' selected' : ''}>${esc(n)}</option>`).join('')}</select></label>
+    <label class="sw"><input id="sc-unpaid" type="checkbox"> ההפסקה לא משולמת</label>
+  </div>
+  <p id="sc-err" class="ck-err" role="alert" hidden></p>
+  <div id="sc-out" hidden>
+    <div class="sc-total">
+      <span class="lbl">המשמרת שווה</span>
+      <span id="sc-total" aria-live="polite"></span>
+      <span id="sc-when"></span>
+      <button type="button" id="sc-share">שיתוף התוצאה</button>
+      <p id="sc-share-ok" role="status" hidden></p>
+    </div>
+    <p id="sc-min" class="sc-warn" hidden></p>
+    <div class="tbl"><table aria-label="פירוט השכר של המשמרת"><thead><tr><th>סוג השעות</th><th>שעות</th><th>סכום</th></tr></thead><tbody id="sc-rows"></tbody></table></div>
+    <ul id="sc-notes" hidden></ul>
+    <p id="sc-tz" class="sc-warn" hidden>השעון בטלפון שלך לא על שעון ישראל, ולכן זמני השבת והלילה בחישוב זזים לפי השעון שלך.</p>
+  </div>
+  <div class="cta"><b>כל משמרת, מחושבת לבד</b><span>באפליקציה רושמים משמרת בלחיצה, ושעתי מחשבת כל אחת כמו כאן, מסכמת את החודש ומשווה לתלוש. חינם ובלי פרסומות, ומנוי Plus לבחירה.</span><a class="btn" href="${APP}?from=site">לחשב כל משמרת אוטומטית באפליקציה</a></div>
+  <h2>שאלות נפוצות</h2>
+  ${faq.map(([q, a]) => `<details><summary>${esc(q)}</summary><p>${escWhole(a)}</p></details>`).join('\n  ')}
+  <p class="src">המקור הרשמי: ${[['מנוחה שבועית וחגים', GOV.rest], ['שעות נוספות', GOV.hours], ['שכר מינימום', GOV.minwage], ['זכויות בני נוער בעבודה', GOV.youth]].map(([l, h]) => `<a href="${h}" rel="noopener">${esc(l)} ב-gov.il</a>`).join(' · ')}</p>
+  <div class="note">שעתי אינה גוף ממשלתי ואינה מייצגת גוף ממשלתי. החישוב כללי ואינו ייעוץ משפטי: לפי חוק שעות עבודה ומנוחה, שבוע עבודה של 5 ימים ושכר המינימום מ-${dmy(MW.from)}, בלי נסיעות, תוספות והסכמים. בהסכם קיבוצי, צו הרחבה ענפי או חוזה אישי ייתכנו זכויות נוספות. עודכן ב-${dmy(date)}.</div>
+  <h2>עוד שאלות</h2>
+  <div class="more"><a href="check">${esc(CHECK.title)}</a>${PAGES.map((x) => `<a href="${x.slug}">${esc(x.title)}</a>`).join('')}</div>
+</main>
+<footer>שעתי · <a href="./">לאתר</a> · <a href="privacy">פרטיות</a> · <a href="accessibility">הצהרת נגישות</a> · <a href="mailto:lybtn48@gmail.com">יצירת קשר</a></footer>
+<script src="calc.js"></script>
+</body>
+</html>
+`;
+}
+// site/calc.js: the app's engine files as they are, then the page's own code, minified as the app's build does. It
+// carries a fingerprint of those sources (SiteCalc.src), so tests/sitecalc.test.js fails when the engine changed and
+// the website's copy did not follow (run node tools/site-pages.js again)
+function calcJs() {
+  const core = CALC_SOURCES.map((f) => fs.readFileSync(path.join(ROOT, f), 'utf8'));
+  const src = calcFingerprint(core.join('\n'));
+  const own = fs.readFileSync(path.join(__dirname, 'site-calc.js'), 'utf8').replace('const D = __DATA__;', () => 'const D = ' + JSON.stringify({ places: CALC_PLACES, src }) + ';');
+  core.pop();
+  if (own.includes('const D = __DATA__')) throw new Error('tools/site-calc.js: the data was not placed');
+  const code = core.concat(own).join(';\n');
+  return require('esbuild').transformSync(code, { minify: true, target: ['es2019', 'safari15'], charset: 'utf8', legalComments: 'none', sourcefile: 'calc.js' }).code;
 }
 const CHECK_DATA = {
   min: { u16: Y[0].hourly, a16: Y[1].hourly, a17: Y[2].hourly, adult: MW.hourly },
@@ -508,12 +650,15 @@ function writeDated(file, make) {
 // the home page is written by hand: its date is its last commit's, or today when it has changes not committed yet
 const homeDate = (() => { try { const cp = require('child_process'); if (cp.execSync('git status --porcelain -- site/index.html', { cwd: ROOT }).toString().trim()) return today; return cp.execSync('git log -1 --format=%cs -- site/index.html', { cwd: ROOT }).toString().trim() || today; } catch (e) { return today; } })();
 writeDated('check.html', checkPage);
+writeDated('shift-calculator.html', calcPage);
+fs.writeFileSync(path.join(ROOT, 'site', 'calc.js'), calcJs());
 fs.writeFileSync(path.join(ROOT, 'site', 'check.js'), fs.readFileSync(path.join(__dirname, 'site-check.js'), 'utf8').replace('const D = __DATA__;', 'const D = ' + JSON.stringify(CHECK_DATA) + ';'));
 
 for (const p of PAGES) writeDated(p.slug + '.html', (d) => page(p, d));
 fs.writeFileSync(path.join(ROOT, 'site', 'sitemap.xml'), `<?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
   <url><loc>${SITE}/</loc><lastmod>${homeDate}</lastmod></url>
+  <url><loc>${SITE}/shift-calculator</loc><lastmod>${dated['shift-calculator.html']}</lastmod></url>
   <url><loc>${SITE}/check</loc><lastmod>${dated['check.html']}</lastmod></url>
 ${PAGES.map((p) => `  <url><loc>${SITE}/${p.slug}</loc><lastmod>${dated[p.slug + '.html']}</lastmod></url>`).join('\n')}
 </urlset>
