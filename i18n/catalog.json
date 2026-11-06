@@ -1277,7 +1277,7 @@
   "where": [
    "app/cloud.js:264",
    "app/views-login.js:119",
-   "app/workplace.js:56"
+   "app/workplace.js:62"
   ]
  },
  {
@@ -1574,7 +1574,7 @@
    "app/views-reports.js:213",
    "app/views-rights.js:70",
    "app/views-shift.js:404",
-   "app/workplace.js:68",
+   "app/workplace.js:74",
    "core/insights.js:32",
    "core/payslip.js:40",
    "core/payslip.js:584",
@@ -2529,7 +2529,7 @@
    "app/views-leaderboard.js:543",
    "app/views-login.js:318",
    "app/views-payslip.js:779",
-   "app/workplace.js:43"
+   "app/workplace.js:45"
   ]
  },
  {
@@ -3579,7 +3579,7 @@
   "kind": "lit",
   "where": [
    "app/plus.js:548",
-   "app/workplace.js:68"
+   "app/workplace.js:74"
   ]
  },
  {
@@ -8083,7 +8083,7 @@
    "app/views-guide.js:245",
    "app/views-rights.js:65",
    "app/views-shift.js:395",
-   "app/workplace.js:70",
+   "app/workplace.js:76",
    "core/engine.js:375",
    "core/games.js:187",
    "core/insights.js:19",
@@ -8105,7 +8105,7 @@
   "kind": "lit",
   "where": [
    "app/views-guide.js:246",
-   "app/workplace.js:72",
+   "app/workplace.js:78",
    "core/payslip.js:537",
    "core/payslip.js:544",
    "core/payslip.js:554",
@@ -8204,7 +8204,7 @@
   "where": [
    "app/views-guide.js:252",
    "app/views-reports.js:203",
-   "app/workplace.js:66"
+   "app/workplace.js:72"
   ]
  },
  {
@@ -8412,7 +8412,7 @@
    "app/views-home.js:160",
    "app/views-quick.js:37",
    "app/views-settings.js:592",
-   "app/workplace.js:69",
+   "app/workplace.js:75",
    "core/games.js:196",
    "core/payslip.js:859"
   ]
@@ -10654,7 +10654,7 @@
   "where": [
    "app/views-onboarding.js:109",
    "app/views-settings.js:692",
-   "app/workplace.js:71"
+   "app/workplace.js:77"
   ]
  },
  {
@@ -10664,7 +10664,7 @@
    "app/views-onboarding.js:109",
    "app/views-settings.js:572",
    "app/views-settings.js:692",
-   "app/workplace.js:71"
+   "app/workplace.js:77"
   ]
  },
  {
@@ -11230,7 +11230,7 @@
   "where": [
    "app/views-payslip.js:221",
    "app/widgets.js:24",
-   "app/workplace.js:73"
+   "app/workplace.js:79"
   ]
  },
  {
@@ -14210,7 +14210,7 @@
   "kind": "lit",
   "where": [
    "app/views-settings.js:137",
-   "app/workplace.js:66"
+   "app/workplace.js:72"
   ]
  },
  {
@@ -15900,7 +15900,7 @@
   "where": [
    "app/views-settings.js:582",
    "app/views-shift.js:400",
-   "app/workplace.js:73",
+   "app/workplace.js:79",
    "core/engine.js:386",
    "core/payslip.js:38"
   ]
@@ -16005,7 +16005,7 @@
   "kind": "lit",
   "where": [
    "app/views-settings.js:590",
-   "app/workplace.js:75"
+   "app/workplace.js:81"
   ]
  },
  {
@@ -16086,7 +16086,7 @@
   "where": [
    "app/views-settings.js:592",
    "app/views-shift.js:197",
-   "app/workplace.js:69"
+   "app/workplace.js:75"
   ]
  },
  {
@@ -18871,7 +18871,7 @@
   "kind": "lit",
   "where": [
    "app/views-shift.js:583",
-   "app/workplace.js:191"
+   "app/workplace.js:206"
   ]
  },
  {
@@ -19995,169 +19995,176 @@
   "key": "הקוד כבר נמחק. אפשר ליצור קוד חדש",
   "kind": "lit",
   "where": [
-   "app/workplace.js:43"
+   "app/workplace.js:45"
+  ]
+ },
+ {
+  "key": "לא הצלחנו לשמור את הקוד. נסו שוב בעוד רגע",
+  "kind": "lit",
+  "where": [
+   "app/workplace.js:46"
   ]
  },
  {
   "key": "אין הרשאה לקוד הזה",
   "kind": "lit",
   "where": [
-   "app/workplace.js:43"
+   "app/workplace.js:47"
   ]
  },
  {
   "key": "משהו השתבש. נסו שוב בעוד רגע",
   "kind": "lit",
   "where": [
-   "app/workplace.js:43"
+   "app/workplace.js:47"
   ]
  },
  {
   "key": "כדי לשתף קוד צריך חשבון",
   "kind": "lit",
   "where": [
-   "app/workplace.js:54"
+   "app/workplace.js:60"
   ]
  },
  {
   "key": "כדי להשתמש בקוד צריך חשבון",
   "kind": "lit",
   "where": [
-   "app/workplace.js:54"
+   "app/workplace.js:60"
   ]
  },
  {
   "key": "הקוד נשמר בחשבון שלך, כדי שתוכלו לעדכן או למחוק אותו מכל טלפון.",
   "kind": "lit",
   "where": [
-   "app/workplace.js:55"
+   "app/workplace.js:61"
   ]
  },
  {
   "key": "רק מי שמחובר/ת לחשבון יכול/ה לקרוא את החוקים שבקוד. הנתונים שלך עוברים לחשבון יחד איתך.",
   "kind": "lit",
   "where": [
-   "app/workplace.js:55"
+   "app/workplace.js:61"
   ]
  },
  {
   "key": "לא עכשיו",
   "kind": "lit",
   "where": [
-   "app/workplace.js:56"
+   "app/workplace.js:62"
   ]
  },
  {
   "key": "שם מקום העבודה",
   "kind": "lit",
   "where": [
-   "app/workplace.js:65"
+   "app/workplace.js:71"
   ]
  },
  {
   "key": "מה-{0} בחודש עד ה-{1} בחודש הבא",
   "kind": "tpl",
   "where": [
-   "app/workplace.js:66"
+   "app/workplace.js:72"
   ]
  },
  {
   "key": "יום התשלום",
   "kind": "lit",
   "where": [
-   "app/workplace.js:67"
+   "app/workplace.js:73"
   ]
  },
  {
   "key": "ב-{0} בחודש הבא",
   "kind": "tpl",
   "where": [
-   "app/workplace.js:67"
+   "app/workplace.js:73"
   ]
  },
  {
   "key": "{0} ליום{1}",
   "kind": "tpl",
   "where": [
-   "app/workplace.js:68"
+   "app/workplace.js:74"
   ]
  },
  {
   "key": ", עד ",
   "kind": "lit",
   "where": [
-   "app/workplace.js:68"
+   "app/workplace.js:74"
   ]
  },
  {
   "key": "בלי החזר נסיעות",
   "kind": "lit",
   "where": [
-   "app/workplace.js:68"
+   "app/workplace.js:74"
   ]
  },
  {
   "key": "לא בתשלום",
   "kind": "lit",
   "where": [
-   "app/workplace.js:69"
+   "app/workplace.js:75"
   ]
  },
  {
   "key": "לפי החוק",
   "kind": "lit",
   "where": [
-   "app/workplace.js:70"
+   "app/workplace.js:76"
   ]
  },
  {
   "key": "אחרי {0} שעות ביום: {1} ל-{2} השעות הראשונות, ואחר כך {3}",
   "kind": "tpl",
   "where": [
-   "app/workplace.js:70"
+   "app/workplace.js:76"
   ]
  },
  {
   "key": "ימי עבודה בשבוע",
   "kind": "lit",
   "where": [
-   "app/workplace.js:71"
+   "app/workplace.js:77"
   ]
  },
  {
   "key": ", בשעות נוספות {0} ואחר כך {1}",
   "kind": "tpl",
   "where": [
-   "app/workplace.js:72"
+   "app/workplace.js:78"
   ]
  },
  {
   "key": "{0} בין {1} ל-{2}",
   "kind": "tpl",
   "where": [
-   "app/workplace.js:73"
+   "app/workplace.js:79"
   ]
  },
  {
   "key": "אין",
   "kind": "lit",
   "where": [
-   "app/workplace.js:73",
-   "app/workplace.js:74"
+   "app/workplace.js:79",
+   "app/workplace.js:80"
   ]
  },
  {
   "key": "ערב שבת וחג",
   "kind": "lit",
   "where": [
-   "app/workplace.js:74"
+   "app/workplace.js:80"
   ]
  },
  {
   "key": "עיגול שעות",
   "kind": "lit",
   "where": [
-   "app/workplace.js:75",
+   "app/workplace.js:81",
    "core/payslip.js:878",
    "core/payslip.js:884"
   ]
@@ -20166,309 +20173,309 @@
   "key": "בלי עיגול",
   "kind": "lit",
   "where": [
-   "app/workplace.js:75"
+   "app/workplace.js:81"
   ]
  },
  {
   "key": "ל-{0} דקות, {1}",
   "kind": "tpl",
   "where": [
-   "app/workplace.js:75"
+   "app/workplace.js:81"
   ]
  },
  {
   "key": "כלפי מעלה",
   "kind": "lit",
   "where": [
-   "app/workplace.js:75"
+   "app/workplace.js:81"
   ]
  },
  {
   "key": "כלפי מטה",
   "kind": "lit",
   "where": [
-   "app/workplace.js:75"
+   "app/workplace.js:81"
   ]
  },
  {
   "key": "תפקידים",
   "kind": "lit",
   "where": [
-   "app/workplace.js:76"
+   "app/workplace.js:82"
   ]
  },
  {
   "key": ": {0} לשעה",
   "kind": "tpl",
   "where": [
-   "app/workplace.js:76"
+   "app/workplace.js:82"
   ]
  },
  {
   "key": " <span class=\"tag wp-chg\">משתנה</span>",
   "kind": "lit",
   "where": [
-   "app/workplace.js:80"
+   "app/workplace.js:86"
   ]
  },
  {
   "key": "<div class=\"wp-share\">\n        {0}\n        {1}\n        <div class=\"section-title\">{2} מה נכנס לקוד</div>\n        <div class=\"card\">{3}</div>\n        <div class=\"tiny muted wp-note\">{4} לא נכנסים לקוד משמרות, סכומים, השם שלך או פרטי החשבון.</div>\n        {5}\n        {6}\n      </div>",
   "kind": "tpl",
   "where": [
-   "app/workplace.js:129"
+   "app/workplace.js:144"
   ]
  },
  {
   "key": "<label class=\"field wp-name\"><span class=\"lbl\">איך קוראים למקום העבודה?</span><input class=\"input\" id=\"wp-name\" value=\"{0}\" placeholder=\"למשל: קפה גרג רמת אביב\" maxlength=\"40\" autocomplete=\"organization\"><span class=\"hint\">השם נשמר גם אצלך, וזה מה שחברים לעבודה יראו.</span></label>",
   "kind": "tpl",
   "where": [
-   "app/workplace.js:130"
+   "app/workplace.js:145"
   ]
  },
  {
   "key": "<div class=\"card wp-code-card\"><div class=\"small muted\">הקוד של {0}</div>{1}<div class=\"tiny muted\">גרסה {2}{3}</div>\n          <div class=\"wp-acts\"><button class=\"btn\" data-wp-send {4}>{5} שליחת הקישור</button><button class=\"btn tonal\" data-wp-copy>{6} העתקת הקוד</button></div></div>",
   "kind": "tpl",
   "where": [
-   "app/workplace.js:131"
+   "app/workplace.js:146"
   ]
  },
  {
   "key": " · כולל שכר לשעה",
   "kind": "lit",
   "where": [
-   "app/workplace.js:131"
+   "app/workplace.js:146"
   ]
  },
  {
   "key": "חברים לעבודה מקבלים את החוקים בלחיצה אחת, ולא צריכים להגדיר הכול לבד.",
   "kind": "lit",
   "where": [
-   "app/workplace.js:133"
+   "app/workplace.js:148"
   ]
  },
  {
   "key": "חברים לעבודה מקבלים את החוקים של {0} בלחיצה אחת, ולא צריכים להגדיר הכול לבד.",
   "kind": "tpl",
   "where": [
-   "app/workplace.js:133"
+   "app/workplace.js:148"
   ]
  },
  {
   "key": "לכלול את השכר לשעה",
   "kind": "lit",
   "where": [
-   "app/workplace.js:137"
+   "app/workplace.js:152"
   ]
  },
  {
   "key": "כבוי: רק שמות התפקידים. אצל כל אחד השכר יכול להיות שונה.",
   "kind": "lit",
   "where": [
-   "app/workplace.js:137"
+   "app/workplace.js:152"
   ]
  },
  {
   "key": "<div class=\"list wp-manage\">\n          <button class=\"item\" data-wp-update {0}><span class=\"lead\">{1}</span><span class=\"body\"><span class=\"t\">עדכון הקוד לחוקים של היום</span><span class=\"s\">גרסה {2}: מי שישתמש בקוד יקבל את החוקים כמו שהם אצלך עכשיו</span></span></button>\n          <button class=\"item\" data-wp-del {3}><span class=\"lead\" style=\"color:var(--bad)\">{4}</span><span class=\"body\"><span class=\"t\">מחיקת הקוד</span><span class=\"s\">הקוד והקישור יפסיקו לעבוד. מי שכבר החיל את החוקים ישמור אותם</span></span></button>\n        </div>",
   "kind": "tpl",
   "where": [
-   "app/workplace.js:138"
+   "app/workplace.js:153"
   ]
  },
  {
   "key": "יוצרים קוד…",
   "kind": "lit",
   "where": [
-   "app/workplace.js:144"
+   "app/workplace.js:159"
   ]
  },
  {
   "key": "יצירת קוד",
   "kind": "lit",
   "where": [
-   "app/workplace.js:144"
+   "app/workplace.js:159"
   ]
  },
  {
   "key": "שיתוף החוקים של מקום העבודה",
   "kind": "lit",
   "where": [
-   "app/workplace.js:146"
+   "app/workplace.js:161"
   ]
  },
  {
   "key": "הקוד מוכן. אפשר לשלוח אותו לחברים לעבודה",
   "kind": "lit",
   "where": [
-   "app/workplace.js:175"
+   "app/workplace.js:190"
   ]
  },
  {
   "key": "החוקים של {0} בשעתי: תקופת שכר, נסיעות, שעות נוספות ותוספות. פותחים את הקישור, או מקלידים את הקוד {1}",
   "kind": "tpl",
   "where": [
-   "app/workplace.js:179"
+   "app/workplace.js:194"
   ]
  },
  {
   "key": "הקישור הועתק. אפשר להדביק בוואטסאפ",
   "kind": "lit",
   "where": [
-   "app/workplace.js:182"
+   "app/workplace.js:197"
   ]
  },
  {
   "key": "הקוד הועתק",
   "kind": "lit",
   "where": [
-   "app/workplace.js:185"
+   "app/workplace.js:200"
   ]
  },
  {
   "key": "הקוד עודכן לחוקים של היום",
   "kind": "lit",
   "where": [
-   "app/workplace.js:188"
+   "app/workplace.js:203"
   ]
  },
  {
   "key": "למחוק את הקוד?",
   "kind": "lit",
   "where": [
-   "app/workplace.js:191"
+   "app/workplace.js:206"
   ]
  },
  {
   "key": "הקוד והקישור יפסיקו לעבוד. מי שכבר החיל את החוקים ישמור אותם.",
   "kind": "lit",
   "where": [
-   "app/workplace.js:191"
+   "app/workplace.js:206"
   ]
  },
  {
   "key": "הקוד נמחק",
   "kind": "lit",
   "where": [
-   "app/workplace.js:193"
+   "app/workplace.js:208"
   ]
  },
  {
   "key": "מקום עבודה חדש",
   "kind": "lit",
   "where": [
-   "app/workplace.js:215"
+   "app/workplace.js:230"
   ]
  },
  {
   "key": "חוקי מקום העבודה",
   "kind": "lit",
   "where": [
-   "app/workplace.js:227",
-   "app/workplace.js:259"
+   "app/workplace.js:242",
+   "app/workplace.js:274"
   ]
  },
  {
   "key": "החוקים נכנסו ל{0}",
   "kind": "tpl",
   "where": [
-   "app/workplace.js:227"
+   "app/workplace.js:242"
   ]
  },
  {
   "key": "הקוד לא נמצא. אולי הוא נמחק, או שהוקלד אחרת",
   "kind": "lit",
   "where": [
-   "app/workplace.js:241"
+   "app/workplace.js:256"
   ]
  },
  {
   "key": "<div class=\"banner warn wp-warn\">{0}<div>החוקים האלה הגיעו מחבר/ה לעבודה. כדאי לבדוק אותם מול החוזה או התלוש שלך.</div></div>\n      <div class=\"card\"><div class=\"card-head\">{1}<h3>{2}</h3><span class=\"tag\">גרסה {3}</span></div>{4}</div>\n      <div class=\"tiny muted wp-note\">{5}</div>\n      {6}",
   "kind": "tpl",
   "where": [
-   "app/workplace.js:253"
+   "app/workplace.js:268"
   ]
  },
  {
   "key": "מקום העבודה",
   "kind": "lit",
   "where": [
-   "app/workplace.js:254"
+   "app/workplace.js:269"
   ]
  },
  {
   "key": "כולל שכר לשעה. שכר חדש נכנס מהיום, ומשמרות קודמות נשארות כמו שהן.",
   "kind": "lit",
   "where": [
-   "app/workplace.js:255"
+   "app/workplace.js:270"
   ]
  },
  {
   "key": "בלי שכר לשעה: תפקיד חדש מקבל שכר מינימום, ואפשר לשנות אותו בהגדרות.",
   "kind": "lit",
   "where": [
-   "app/workplace.js:255"
+   "app/workplace.js:270"
   ]
  },
  {
   "key": "<div class=\"section-title\">{0} לאיזה מקום עבודה?</div>\n      <div class=\"chips wp-target\">{1}<button class=\"chip {2}\" data-wp-to=\"{3}\">{4} מקום עבודה חדש</button></div>",
   "kind": "tpl",
   "where": [
-   "app/workplace.js:256"
+   "app/workplace.js:271"
   ]
  },
  {
   "key": "להשתמש בחוקים האלה",
   "kind": "lit",
   "where": [
-   "app/workplace.js:260"
+   "app/workplace.js:275"
   ]
  },
  {
   "key": "החלת החוקים",
   "kind": "lit",
   "where": [
-   "app/workplace.js:260"
+   "app/workplace.js:275"
   ]
  },
  {
   "key": "לא הצלחנו לשמור. נסו שוב",
   "kind": "lit",
   "where": [
-   "app/workplace.js:272"
+   "app/workplace.js:287"
   ]
  },
  {
   "key": "קוד ממקום העבודה",
   "kind": "lit",
   "where": [
-   "app/workplace.js:286"
+   "app/workplace.js:301"
   ]
  },
  {
   "key": "הקוד שקיבלת מחבר/ה לעבודה",
   "kind": "lit",
   "where": [
-   "app/workplace.js:286"
+   "app/workplace.js:301"
   ]
  },
  {
   "key": "הצגת החוקים",
   "kind": "lit",
   "where": [
-   "app/workplace.js:286"
+   "app/workplace.js:301"
   ]
  },
  {
   "key": "זה לא נראה כמו קוד. קוד הוא 8 אותיות ומספרים, למשל ABCD-EFGH",
   "kind": "lit",
   "where": [
-   "app/workplace.js:289"
+   "app/workplace.js:304"
   ]
  },
  {
   "key": "שמרנו את הקוד. נציג את החוקים אחרי השמירה בחשבון",
   "kind": "lit",
   "where": [
-   "app/workplace.js:290"
+   "app/workplace.js:305"
   ]
  },
  {

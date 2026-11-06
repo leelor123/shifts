@@ -151,9 +151,9 @@ service cloud.firestore {
       allow list: if false;
       allow create: if request.auth != null && code.matches('^[a-km-np-z2-9]{8}$')
         && getAfter(/databases/$(database)/documents/wpo/$(code)).data.o == request.auth.uid
-        && validWp(request.resource.data) && request.resource.data.v == 1;
+        && validWp(request.resource.data) && wpRoles(request.resource.data.r.get('ro', [])) && request.resource.data.v == 1;
       allow update: if request.auth != null && wpOwner(code) == request.auth.uid
-        && validWp(request.resource.data) && request.resource.data.v == resource.data.v + 1;
+        && validWp(request.resource.data) && wpRoles(request.resource.data.r.get('ro', [])) && request.resource.data.v == resource.data.v + 1;
       allow delete: if request.auth != null && wpOwner(code) == request.auth.uid;
     }
     match /wpo/{code} {
@@ -169,47 +169,55 @@ service cloud.firestore {
       return get(/databases/$(database)/documents/wpo/$(code)).data.o;
     }
     // the record: a version, when it was written (within two days of now), and the rules (the same fields and ranges as
-    // core/workplace.js FIELDS)
+    // core/workplace.js FIELDS). Firestore stops a rule at 1000 evaluated expressions, and a function's argument is
+    // evaluated again at every use inside it, all the way up from request.resource.data: the first version (wpNum(r, 'k')
+    // reading r[k] three times, wpRole(r.ro, i) reading r.ro[i] eight times) went over it as soon as the record had a
+    // role, so every new code was refused (6 Nov 2026). Now each value is read once, with get() and a default that
+    // passes, and checked by a function of that value alone; the roles are checked from the allow line itself (the
+    // shortest path), each with as few uses as it takes (a value of the wrong type is an error, and an error refuses).
+    // tools/fbapi.js ruletest writes the largest record the app can make (every field, 8 roles of 40 letters with rates).
     function validWp(d) {
+      let now = request.time.toMillis();
       return d.keys().hasOnly(['v', 't', 'r']) && d.keys().hasAll(['v', 't', 'r'])
-        && d.v is int && d.v >= 1 && d.v <= 100000
-        && d.t is int && d.t > request.time.toMillis() - 172800000 && d.t < request.time.toMillis() + 172800000
-        && d.r is map && validWpRules(d.r);
+        && wpI(d.v, 1, 100000) && wpI(d.t, now - 172800000, now + 172800000)
+        && validWpRules(d.r);
     }
     function validWpRules(r) {
-      return r.keys().hasOnly(['n', 'ww', 'ro', 'periodStartDay', 'payDay', 'travelPerDay', 'travelMonthlyCap', 'defaultBreakPaid', 'otLaw', 'otThreshold', 'otTier1Hours', 'otTier1Pct', 'otTier2Pct', 'restPct', 'restOt1Pct', 'restOt2Pct', 'nightEnabled', 'nightFrom', 'nightTo', 'nightType', 'nightValue', 'evePct', 'roundingMode', 'roundingUnit'])
-        && (!('n' in r) || (r.n is string && r.n.size() >= 1 && r.n.size() <= 40))
-        && (!('ww' in r) || r.ww in [5, 6])
-        && wpInt(r, 'periodStartDay', 1, 28) && wpInt(r, 'payDay', 1, 31)
-        && wpNum(r, 'travelPerDay', 0, 500) && wpNum(r, 'travelMonthlyCap', 0, 20000)
-        && wpBool(r, 'defaultBreakPaid') && wpBool(r, 'otLaw')
-        && wpNum(r, 'otThreshold', 1, 24) && wpNum(r, 'otTier1Hours', 0, 24) && wpNum(r, 'otTier1Pct', 100, 400) && wpNum(r, 'otTier2Pct', 100, 400)
-        && wpNum(r, 'restPct', 100, 500) && wpNum(r, 'restOt1Pct', 100, 500) && wpNum(r, 'restOt2Pct', 100, 500)
-        && wpBool(r, 'nightEnabled') && wpHm(r, 'nightFrom') && wpHm(r, 'nightTo')
-        && (!('nightType' in r) || r.nightType in ['pct', 'fixed']) && wpNum(r, 'nightValue', 0, 500)
-        && wpNum(r, 'evePct', 0, 200)
-        && (!('roundingMode' in r) || r.roundingMode in ['none', 'nearest', 'up', 'down']) && wpInt(r, 'roundingUnit', 1, 60)
-        && (!('ro' in r) || (r.ro is list && r.ro.size() <= 8
-          && wpRole(r.ro, 0) && wpRole(r.ro, 1) && wpRole(r.ro, 2) && wpRole(r.ro, 3)
-          && wpRole(r.ro, 4) && wpRole(r.ro, 5) && wpRole(r.ro, 6) && wpRole(r.ro, 7)));
+      return r is map && r.keys().hasOnly(['n', 'ww', 'ro', 'periodStartDay', 'payDay', 'travelPerDay', 'travelMonthlyCap', 'defaultBreakPaid', 'otLaw', 'otThreshold', 'otTier1Hours', 'otTier1Pct', 'otTier2Pct', 'restPct', 'restOt1Pct', 'restOt2Pct', 'nightEnabled', 'nightFrom', 'nightTo', 'nightType', 'nightValue', 'evePct', 'roundingMode', 'roundingUnit'])
+        && wpS(r.get('n', 'x'), 40) && r.get('ww', 5) in [5, 6]
+        && wpI(r.get('periodStartDay', 1), 1, 28) && wpI(r.get('payDay', 1), 1, 31)
+        && wpN(r.get('travelPerDay', 0), 0, 500) && wpN(r.get('travelMonthlyCap', 0), 0, 20000)
+        && r.get('defaultBreakPaid', true) is bool && r.get('otLaw', true) is bool
+        && wpN(r.get('otThreshold', 1), 1, 24) && wpN(r.get('otTier1Hours', 0), 0, 24) && wpN(r.get('otTier1Pct', 100), 100, 400) && wpN(r.get('otTier2Pct', 100), 100, 400)
+        && wpN(r.get('restPct', 100), 100, 500) && wpN(r.get('restOt1Pct', 100), 100, 500) && wpN(r.get('restOt2Pct', 100), 100, 500)
+        && r.get('nightEnabled', true) is bool && wpHm(r.get('nightFrom', '00:00')) && wpHm(r.get('nightTo', '00:00'))
+        && r.get('nightType', 'pct') in ['pct', 'fixed'] && wpN(r.get('nightValue', 0), 0, 500)
+        && wpN(r.get('evePct', 0), 0, 200)
+        && r.get('roundingMode', 'none') in ['none', 'nearest', 'up', 'down'] && wpI(r.get('roundingUnit', 1), 1, 60);
     }
-    function wpInt(r, k, lo, hi) {
-      return !(k in r) || (r[k] is int && r[k] >= lo && r[k] <= hi);
+    function wpI(v, lo, hi) {
+      return v is int && v >= lo && v <= hi;
     }
-    function wpNum(r, k, lo, hi) {
-      return !(k in r) || (r[k] is number && r[k] >= lo && r[k] <= hi);
+    function wpN(v, lo, hi) {
+      return v is number && v >= lo && v <= hi;
     }
-    function wpBool(r, k) {
-      return !(k in r) || r[k] is bool;
+    function wpS(v, max) {
+      return v is string && v.size() >= 1 && v.size() <= max;
     }
-    function wpHm(r, k) {
-      return !(k in r) || (r[k] is string && r[k].matches('^([01][0-9]|2[0-3]):[0-5][0-9]$'));
+    function wpHm(v) {
+      return v is string && v.matches('^([01][0-9]|2[0-3]):[0-5][0-9]$');
     }
-    // a role: its name, and its hourly rate only when the sharer chose to include rates
-    function wpRole(l, i) {
-      return l.size() <= i || (l[i] is map && l[i].keys().hasOnly(['n', 'r']) && l[i].keys().hasAll(['n'])
-        && l[i].n is string && l[i].n.size() >= 1 && l[i].n.size() <= 40
-        && (!('r' in l[i]) || (l[i].r is number && l[i].r > 0 && l[i].r < 1000)));
+    // the roles: at most 8, each its name, and its hourly rate only when the sharer chose to include rates
+    function wpRoles(l) {
+      return l is list && l.size() <= 8
+        && (l.size() < 1 || wpRole(l[0])) && (l.size() < 2 || wpRole(l[1])) && (l.size() < 3 || wpRole(l[2])) && (l.size() < 4 || wpRole(l[3]))
+        && (l.size() < 5 || wpRole(l[4])) && (l.size() < 6 || wpRole(l[5])) && (l.size() < 7 || wpRole(l[6])) && (l.size() < 8 || wpRole(l[7]));
+    }
+    function wpRole(x) {
+      return x.keys().hasOnly(['n', 'r']) && x.get('n', '').matches('^.{1,40}$') && wpRate(x.get('r', 1));
+    }
+    function wpRate(v) {
+      return v > 0 && v < 1000;
     }
 
     // a name in any of the app's languages (Hebrew, Latin with accents, Cyrillic, Arabic), digits, an apostrophe

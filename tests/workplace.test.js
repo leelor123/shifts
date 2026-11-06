@@ -53,22 +53,99 @@ T.test('a value out of range is left out of the record, and of what is read back
 });
 
 T.test('firestore.rules: the same fields and ranges as the app (core FIELDS)', () => {
-  const only = /validWpRules\(r\) \{\s*return r\.keys\(\)\.hasOnly\(\[([^\]]+)\]\)/.exec(rules);
+  const only = /validWpRules\(r\) \{\s*return r is map && r\.keys\(\)\.hasOnly\(\[([^\]]+)\]\)/.exec(rules);
   T.ok(only, 'validWpRules lists its keys');
   const keys = only[1].split(',').map((s) => s.trim().replace(/'/g, ''));
   T.eq(keys.slice().sort().join(), ['n', 'ww', 'ro', ...W.KEYS].sort().join());
+  // each value read once, with a default that passes (see the rules: 1000 expressions at most)
   for (const [k, kind, lo, hi] of W.FIELDS) {
-    if (kind === 'int') T.ok(rules.includes(`wpInt(r, '${k}', ${lo}, ${hi})`), k);
-    else if (kind === 'num') T.ok(rules.includes(`wpNum(r, '${k}', ${lo}, ${hi})`), k);
-    else if (kind === 'bool') T.ok(rules.includes(`wpBool(r, '${k}')`), k);
-    else if (kind === 'hhmm') T.ok(rules.includes(`wpHm(r, '${k}')`), k);
-    else T.ok(rules.includes(`r.${k} in [${kind.map((x) => `'${x}'`).join(', ')}]`), k);
+    if (kind === 'int') T.ok(rules.includes(`wpI(r.get('${k}', ${lo}), ${lo}, ${hi})`), k);
+    else if (kind === 'num') T.ok(rules.includes(`wpN(r.get('${k}', ${lo}), ${lo}, ${hi})`), k);
+    else if (kind === 'bool') T.ok(rules.includes(`r.get('${k}', true) is bool`), k);
+    else if (kind === 'hhmm') T.ok(rules.includes(`wpHm(r.get('${k}', '00:00'))`), k);
+    else T.ok(rules.includes(`r.get('${k}', '${kind[0]}') in [${kind.map((x) => `'${x}'`).join(', ')}]`), k);
   }
-  T.ok(rules.includes('r.ro.size() <= ' + W.MAX_ROLES), 'at most 8 roles');
-  for (let i = 0; i < W.MAX_ROLES; i++) T.ok(rules.includes(`wpRole(r.ro, ${i})`), 'role ' + i + ' checked');
-  T.ok(/wpRole\(l, i\)[\s\S]*?l\[i\]\.n\.size\(\) <= 40/.test(rules), 'a role name is short');
+  T.ok(rules.includes("wpS(r.get('n', 'x'), 40) && r.get('ww', 5) in [5, 6]"), 'the name and the work week');
+  T.ok(rules.includes('l is list && l.size() <= ' + W.MAX_ROLES), 'at most 8 roles');
+  for (let i = 0; i < W.MAX_ROLES; i++) T.ok(rules.includes(`(l.size() < ${i + 1} || wpRole(l[${i}]))`), 'role ' + i + ' checked');
+  T.ok(rules.includes("x.keys().hasOnly(['n', 'r']) && x.get('n', '').matches('^.{1,40}$') && wpRate(x.get('r', 1))"), 'a role: a short name, a rate');
+  for (const b of ['allow create', 'allow update']) T.ok(new RegExp(b + ":[^;]*validWp\\(request\\.resource\\.data\\) && wpRoles\\(request\\.resource\\.data\\.r\\.get\\('ro', \\[\\]\\)\\)").test(block('wpc')), b + ' checks the roles');
   T.ok(/validWp\(d\)[\s\S]*?hasOnly\(\['v', 't', 'r'\]\)/.test(rules), 'the document: a version, a time, the rules');
+  // the way that went over the limit (a helper given the map and a key, reading it again and again) stays out
+  const wpFns = rules.slice(rules.indexOf('function validWp('), rules.indexOf('function wpRate('));
+  T.ok(!/wp\w*\(r, '/.test(wpFns) && !/wpRole\(l, i\)/.test(wpFns), 'no helper reads r[k] or l[i] itself');
   T.ok(!/match \/wpc[\s\S]*?keys\(\)\.hasOnly\(\[[^\]]*'o'/.test(block('wpc')), 'the readable record has no owner');
+});
+
+// validWpRules and wpRoles as the rules read them (types as Firestore stores them: a whole JS number is an int)
+const ruleOk = (r) => {
+  const keys = new Set(['n', 'ww', 'ro', ...W.KEYS]);
+  if (!r || typeof r !== 'object' || Array.isArray(r) || Object.keys(r).some((k) => !keys.has(k))) return 'keys';
+  const g = (k, d) => (k in r ? r[k] : d);
+  const num = (v) => typeof v === 'number' && Number.isFinite(v);
+  const str = (v, max) => typeof v === 'string' && [...v].length >= 1 && [...v].length <= max;
+  if (!str(g('n', 'x'), 40)) return 'n';
+  if (![5, 6].includes(g('ww', 5))) return 'ww';
+  for (const [k, kind, lo, hi] of W.FIELDS) {
+    const v = g(k, Array.isArray(kind) ? kind[0] : kind === 'bool' ? true : kind === 'hhmm' ? '00:00' : lo);
+    const ok = Array.isArray(kind) ? kind.includes(v) : kind === 'bool' ? typeof v === 'boolean'
+      : kind === 'hhmm' ? typeof v === 'string' && /^([01][0-9]|2[0-3]):[0-5][0-9]$/.test(v)
+        : num(v) && (kind !== 'int' || Number.isInteger(v)) && v >= lo && v <= hi;
+    if (!ok) return k;
+  }
+  const l = g('ro', []);
+  if (!Array.isArray(l) || l.length > 8) return 'ro';
+  for (const x of l) {
+    if (!x || typeof x !== 'object' || Array.isArray(x) || Object.keys(x).some((k) => k !== 'n' && k !== 'r')) return 'ro.keys';
+    if (!str(x.n === undefined ? '' : x.n, 40) || /\n/.test(x.n)) return 'ro.n';
+    const v = 'r' in x ? x.r : 1;
+    if (!num(v) || !(v > 0 && v < 1000)) return 'ro.r';
+  }
+  return '';
+};
+
+T.test('pack() makes only records the rules take: every field at, inside and past its edges, any type', () => {
+  const odd = [null, undefined, '', 'x', '15', '9.5', NaN, Infinity, -1, 0, 0.5, 1e9, true, false, {}, [], '25:00', '7:00', '22:00'];
+  const tries = [];
+  for (const [k, kind, lo, hi] of W.FIELDS) {
+    const vals = Array.isArray(kind) ? kind.concat(['other', 1])
+      : kind === 'bool' ? [true, false, 'true', 1]
+        : kind === 'hhmm' ? ['00:00', '23:59', '24:00', '9:30', 2200]
+          : [lo, hi, lo - 1, hi + 1, lo + 0.5, hi - 0.25, hi + 0.5, String(lo), String(hi), (lo + hi) / 3];
+    for (const v of vals.concat(odd)) tries.push({ [k]: v });
+  }
+  // the real workplaces: the default one, the user's phone (6 Nov 2026), a cafe, and every field at once at its highest
+  tries.push({}, { name: 'עבודה', payDay: 9, travelPerDay: 16, roundingUnit: 15 });
+  tries.push(Object.assign({}, emp));
+  tries.push(W.FIELDS.reduce((o, [k, kind, lo, hi]) => Object.assign(o, { [k]: Array.isArray(kind) ? kind[kind.length - 1] : kind === 'bool' ? true : kind === 'hhmm' ? '23:59' : hi }), { name: 'א'.repeat(60) }));
+  const names = ['', ' ', '<>', 'x', 'א'.repeat(40), 'א'.repeat(41), '🦊'.repeat(30), 'a\nb', 'שם\u0000עם\u001fתווים', '  רווחים   כפולים  '];
+  const rates = [0, -5, null, '40', 'x', 0.001, 0.004, 0.005, 32.3, 44.22, 999.99, 999.995, 1000, 5000, NaN];
+  const roleSets = [[], roles,
+    names.map((n, i) => ({ id: 'n' + i, name: n, employerId: 'emp1', rates: [{ from: '2000-01-01', rate: rates[i % rates.length] }], archived: false })),
+    rates.map((r, i) => ({ id: 'q' + i, name: 'תפקיד ' + i, employerId: 'emp1', rates: [{ from: '2000-01-01', rate: r }], archived: false })),
+    [{ id: 'z', name: 'בלי שכר', employerId: 'emp1' }, { id: 'y', name: 'עתידי', employerId: 'emp1', rates: [{ from: '2099-01-01', rate: 50 }] }, null]];
+  let n = 0;
+  for (const e of tries) for (const ro of roleSets) for (const ww of [5, 6, '6', 7, null]) for (const withRates of [false, true]) {
+    for (const name of [undefined, ...names]) {
+      const employer = Object.assign(Defaults.defaultEmployer('emp1'), name === undefined ? {} : { name }, e);
+      const r = W.pack({ employer, roles: ro, workWeek: ww, rates: withRates, today });
+      const bad = ruleOk(r);
+      if (bad) T.ok(false, `refused at ${bad}: ${JSON.stringify(e)} roles ${ro.length} → ${JSON.stringify(r).slice(0, 300)}`);
+      if (W.check(r)) T.ok(false, 'the app check refuses what the rules take: ' + W.check(r));
+      n++;
+    }
+  }
+  T.ok(n > 10000, n + ' records checked');
+  // what clean() keeps from anything read back is also a record the rules take (an update writes it back)
+  for (const e of tries) { const c = W.clean(Object.assign({ ro: [{ n: 'x', r: 1e9 }, { n: 'y', r: '5' }] }, e)); if (c) T.eq(ruleOk(c), '', JSON.stringify(e)); }
+  // and the port refuses what the rules refuse
+  T.eq(ruleOk({ payDay: 9.5 }), 'payDay'); T.eq(ruleOk({ restPct: '150' }), 'restPct'); T.eq(ruleOk({ n: '' }), 'n');
+  T.eq(ruleOk({ ro: Array.from({ length: 9 }, () => ({ n: 'x' })) }), 'ro'); T.eq(ruleOk({ ro: [{ n: 'x', r: 0 }] }), 'ro.r'); T.eq(ruleOk({ x: 1 }), 'keys');
+  // W.check (what the app checks before it writes) says the same as the rules, on what they refuse too
+  const refused = [{ payDay: 9.5 }, { restPct: '150' }, { n: '' }, { n: 'א'.repeat(41) }, { ww: 7 }, { nightFrom: '24:00' }, { nightType: 'x' }, { x: 1 },
+    { ro: Array.from({ length: 9 }, () => ({ n: 'x' })) }, { ro: [{ n: 'x', r: 0 }] }, { ro: [{ n: 'x', r: '5' }] }, { ro: [{ r: 5 }] }, { ro: ['x'] }, { ro: 'x' }, { ro: [{ n: 'x', who: 'y' }] }];
+  for (const r of refused) T.eq(W.check(r), ruleOk(r), JSON.stringify(r));
+  T.eq(W.check({ n: '🦊'.repeat(40) }), '', 'the rules count letters: 40 foxes are a name of 40');
 });
 
 T.test('firestore.rules: owner only for create, update and delete; get by any signed-in user; list never', () => {

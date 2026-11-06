@@ -117,6 +117,30 @@
     return Object.keys(out).length > 1 || out.ro.length ? out : null;
   }
 
+  /**
+   * The first part of a record that firestore.rules would refuse ('' = none): 'keys', 'n', 'ww', a key of FIELDS,
+   * 'ro', 'ro.keys', 'ro.n' or 'ro.r'. pack() never makes one (tests/workplace.test.js checks it at every edge); the
+   * app checks before it writes, so a mismatch that comes back says where, not only "permission denied".
+   */
+  function check(r) {
+    const keys = new Set(['n', 'ww', 'ro', ...KEYS]);
+    if (!r || typeof r !== 'object' || Array.isArray(r)) return 'keys';
+    if (Object.keys(r).some((k) => !keys.has(k))) return 'keys';
+    const len = (s) => [...s].length; // the rules count letters, not UTF-16 units
+    const name = (s) => typeof s === 'string' && len(s) >= 1 && len(s) <= 40 && !/[\n\r]/.test(s);
+    if ('n' in r && !name(r.n)) return 'n';
+    if ('ww' in r && r.ww !== 5 && r.ww !== 6) return 'ww';
+    for (const f of FIELDS) if (f[0] in r && !fieldOk(f, r[f[0]])) return f[0];
+    if (!('ro' in r)) return '';
+    if (!Array.isArray(r.ro) || r.ro.length > MAX_ROLES) return 'ro';
+    for (const x of r.ro) {
+      if (!x || typeof x !== 'object' || Array.isArray(x) || Object.keys(x).some((k) => k !== 'n' && k !== 'r')) return 'ro.keys';
+      if (!name(x.n)) return 'ro.n';
+      if ('r' in x && !(typeof x.r === 'number' && x.r > 0 && x.r < 1000)) return 'ro.r';
+    }
+    return '';
+  }
+
   /** Does the record carry hourly rates? */
   const hasRates = (r) => !!(r && r.ro && r.ro.some((x) => x.r > 0));
 
@@ -177,6 +201,6 @@
     return list;
   }
 
-  root.Workplace = { ABC, LEN, CODE_RE, MAX_ROLES, FIELDS, KEYS, code, codeFrom, parse, pretty, pack, clean, hasRates, changes, apply, ops };
+  root.Workplace = { ABC, LEN, CODE_RE, MAX_ROLES, FIELDS, KEYS, code, codeFrom, parse, pretty, pack, clean, check, hasRates, changes, apply, ops };
   if (typeof module !== 'undefined') module.exports = root.Workplace;
 })(typeof window !== 'undefined' ? window : globalThis);
