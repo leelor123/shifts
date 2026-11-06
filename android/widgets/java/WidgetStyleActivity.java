@@ -45,7 +45,7 @@ public class WidgetStyleActivity extends Activity {
             return;
         }
         data = WidgetData.load(this);
-        if (data == null) data = sample();
+        if (data == null) data = sample(getString(R.string.w_sample_period));
         setContentView(page(info));
     }
 
@@ -55,13 +55,13 @@ public class WidgetStyleActivity extends Activity {
         scroll.setBackgroundColor(getColor(R.color.w_pick_bg));
         LinearLayout col = new LinearLayout(this);
         col.setOrientation(LinearLayout.VERTICAL);
-        col.setLayoutDirection(View.LAYOUT_DIRECTION_RTL);
+        col.setLayoutDirection(View.LAYOUT_DIRECTION_LOCALE); // right to left in Hebrew and Arabic, left to right in the others
         col.setPadding(dp(20), dp(24), dp(20), dp(24));
         scroll.addView(col);
 
-        TextView title = label("איך הווידג׳ט ייראה?", 24, R.color.w_pick_text, true);
+        TextView title = label(getString(R.string.w_pick_title), 24, R.color.w_pick_text, true);
         col.addView(title);
-        TextView sub = label("אפשר לשנות אחר כך בלחיצה ארוכה על הווידג׳ט.", 15, R.color.w_pick_sub, false);
+        TextView sub = label(getString(R.string.w_pick_sub), 15, R.color.w_pick_sub, false);
         sub.setPadding(0, dp(6), 0, dp(12));
         col.addView(sub);
 
@@ -103,12 +103,12 @@ public class WidgetStyleActivity extends Activity {
         frame.addView(cover, new FrameLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT));
         card.addView(frame, new LinearLayout.LayoutParams(w, h));
 
-        TextView name = label(WidgetLook.NAMES[style], 16, R.color.w_pick_text, true);
+        TextView name = label(getString(WidgetLook.NAMES[style]), 16, R.color.w_pick_text, true);
         name.setGravity(Gravity.CENTER);
         name.setPadding(0, dp(10), 0, 0);
         card.addView(name);
 
-        card.setContentDescription(WidgetLook.NAMES[style]);
+        card.setContentDescription(getString(WidgetLook.NAMES[style]));
         View.OnClickListener pick = v -> choose(style);
         card.setOnClickListener(pick);
         cover.setOnClickListener(pick);
@@ -127,7 +127,7 @@ public class WidgetStyleActivity extends Activity {
         t.setText(text);
         t.setTextSize(TypedValue.COMPLEX_UNIT_SP, sp);
         t.setTextColor(getColor(color));
-        t.setTextDirection(View.TEXT_DIRECTION_RTL);
+        t.setTextDirection(View.TEXT_DIRECTION_LOCALE);
         if (strong) t.setTypeface(Build.VERSION.SDK_INT >= 26 ? getResources().getFont(R.font.w_rubik_medium) : Typeface.DEFAULT_BOLD);
         return t;
     }
@@ -143,10 +143,11 @@ public class WidgetStyleActivity extends Activity {
     }
 
     /** A month to show the looks on before the app has sent its first numbers (the widget itself keeps showing "₪—"). */
-    private static JSONObject sample() {
+    private static JSONObject sample(String period) {
         try {
-            return new JSONObject("{\"v\":1,\"period\":\"החודש\",\"gross\":\"₪2,840\",\"net\":\"₪2,310\",\"hours\":\"41\",\"today\":\"₪0\",\"pace\":\"₪4,100\","
+            return new JSONObject("{\"v\":1,\"gross\":\"₪2,840\",\"net\":\"₪2,310\",\"hours\":\"41\",\"today\":\"₪0\",\"pace\":\"₪4,100\","
                     + "\"goal\":{\"pct\":64,\"of\":\"₪4,400\",\"left\":\"₪1,560\"}}")
+                    .put("period", period)
                     .put("payday", new JSONObject().put("date", inDays(9)).put("amount", "₪2,310"));
         } catch (Exception e) {
             return null;

@@ -16,7 +16,7 @@ public class ComboWidget extends ShaatiWidget {
         shiftBlock(c, v, d, l, false, 510);
         MonthWidget.month(c, v, d, l);
         l.textColor(c, v, R.id.w_pay, l.label);
-        text(v, R.id.w_pay, paydayText(d == null ? null : d.optJSONObject("payday")));
+        text(v, R.id.w_pay, paydayText(c, d == null ? null : d.optJSONObject("payday")));
         l.coin(v, face(d));
         l.dial(v);
         return v;

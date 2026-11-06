@@ -52,11 +52,11 @@ public class ShiftTile extends TileService {
         JSONObject d = WidgetData.load(this);
         JSONObject a = d == null ? null : d.optJSONObject("active");
         t.setState(a != null ? Tile.STATE_ACTIVE : Tile.STATE_INACTIVE);
-        t.setLabel(a != null ? "סיום משמרת" : "התחל משמרת");
+        t.setLabel(getString(a != null ? R.string.w_end_shift : R.string.w_start));
         t.setIcon(Icon.createWithResource(this, a != null ? R.drawable.w_ic_clock : R.drawable.w_ic_play));
         if (Build.VERSION.SDK_INT >= 29) {
             String role = a != null ? a.optString("role", "") : "";
-            t.setSubtitle(a != null ? (role.isEmpty() ? "משמרת רצה" : role) : "שעתי");
+            t.setSubtitle(a != null ? (role.isEmpty() ? getString(R.string.w_running) : role) : getString(R.string.w_app));
         }
         t.updateTile();
     }

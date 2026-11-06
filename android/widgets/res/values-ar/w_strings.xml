@@ -1,0 +1,73 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Shaati widgets and quick-settings tile: the ar texts (the default, Hebrew, is in values/w_strings.xml). -->
+<resources>
+    <string name="w_shift_name">Shaati · وردية</string>
+    <string name="w_shift_desc">ابدأ وردية بلمسة واحدة، مع ساعة تعمل أثناء الوردية</string>
+    <string name="w_month_name">Shaati · شهري</string>
+    <string name="w_month_desc">كم ربحت هذا الشهر، والهدف والتوقع</string>
+    <string name="w_goal_name">Shaati · الهدف</string>
+    <string name="w_goal_desc">التقدم نحو هدف الادخار أو الهدف الشهري</string>
+    <string name="w_payday_name">Shaati · الراتب</string>
+    <string name="w_payday_desc">كم يومًا بقي حتى الراتب وكم ستحصل تقريبًا</string>
+    <string name="w_combo_name">Shaati · الكل معًا</string>
+    <string name="w_combo_desc">الوردية وهذا الشهر والهدف والراتب في أداة واحدة</string>
+    <string name="w_tile_name">وردية</string>
+    <string name="w_app">Shaati</string>
+    <string name="w_start">ابدأ وردية</string>
+    <string name="w_start_coin">نبدأ وردية؟</string>
+    <string name="w_end">إنهاء</string>
+    <string name="w_end_shift">إنهاء الوردية</string>
+    <string name="w_running">وردية جارية</string>
+    <string name="w_open">فتح Shaati</string>
+    <string name="w_started">بدأت الوردية. بالتوفيق!</string>
+    <string name="w_ended">انتهت الوردية بعد %1$s ساعات. ستُحفظ عندما تفتح Shaati</string>
+    <string name="w_on_break">في استراحة</string>
+    <string name="w_today">اليوم %1$s</string>
+    <string name="w_this_month">هذا الشهر %1$s</string>
+    <string name="w_payday_today">الراتب اليوم</string>
+    <string name="w_payday_tomorrow">الراتب غدًا</string>
+    <string name="w_month_mine">شهري</string>
+    <string name="w_month_new">بدأ شهر جديد</string>
+    <string name="w_open_update">افتح Shaati للتحديث</string>
+    <string name="w_so_far">%1$s حتى الآن</string>
+    <string name="w_net_hours">الصافي %1$s · %2$s ساعات</string>
+    <string name="w_goal_pct">%1$s%% من هدف %2$s</string>
+    <string name="w_forecast">التوقع حتى نهاية الشهر</string>
+    <string name="w_forecast_is">التوقع حتى نهاية الشهر: %1$s</string>
+    <string name="w_enough">لديك ما يكفي</string>
+    <string name="w_more">بقي %1$s</string>
+    <string name="w_goal_of">الهدف %1$s</string>
+    <string name="w_goal_passed">تجاوزت الهدف</string>
+    <string name="w_goal_left">بقي %1$s للهدف</string>
+    <string name="w_goal_mine">هدفي</string>
+    <string name="w_goal_hint">يمكنك تحديد هدف في الإعدادات › الأهداف</string>
+    <string name="w_payday_next">الراتب القادم</string>
+    <string name="w_no_shifts">لا توجد ورديات في هذه الفترة بعد</string>
+    <string name="w_about_net">نحو %1$s صافيًا</string>
+    <string name="w_pick_title">كيف ستبدو الأداة؟</string>
+    <string name="w_pick_sub">يمكنك تغييرها لاحقًا بالضغط المطوّل على الأداة.</string>
+    <string name="w_sample_period">هذا الشهر</string>
+    <string name="w_look_midnight">ليل وذهب</string>
+    <string name="w_look_clean">نظيف</string>
+    <string name="w_look_wallpaper">ألوان الخلفية</string>
+    <string name="w_look_coin">مع Shaati</string>
+    <string name="w_look_sea">بحر عند الغروب</string>
+    <string name="w_look_rain">مطر عملات</string>
+    <!-- the widget picker's previews (the layouts' sample texts) -->
+    <string name="w_pv_month" formatted="false">هذا الشهر ₪2,840</string>
+    <string name="w_pv_so_far" formatted="false">هذا الشهر حتى الآن</string>
+    <string name="w_pv_line" formatted="false">الصافي ₪2,310 · 41 ساعات</string>
+    <string name="w_pv_goal" formatted="false">64% من هدف ₪4,400</string>
+    <string name="w_pv_pay" formatted="false">9 أيام حتى الراتب</string>
+    <string name="w_pv_goal_title" formatted="false">الهدف ₪4,400</string>
+    <string name="w_pv_goal_left" formatted="false">بقي ₪1,560 للهدف</string>
+    <string name="w_pv_about" formatted="false">نحو ₪2,310 صافيًا</string>
+    <plurals name="w_payday_days">
+        <item quantity="zero">%1$s يوم حتى الراتب</item>
+        <item quantity="one">%1$s يوم حتى الراتب</item>
+        <item quantity="two">%1$s يومان حتى الراتب</item>
+        <item quantity="few">%1$s أيام حتى الراتب</item>
+        <item quantity="many">%1$s يومًا حتى الراتب</item>
+        <item quantity="other">%1$s يوم حتى الراتب</item>
+    </plurals>
+</resources>

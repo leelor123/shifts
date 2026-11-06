@@ -1,0 +1,71 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Shaati widgets and quick-settings tile: the ru texts (the default, Hebrew, is in values/w_strings.xml). -->
+<resources>
+    <string name="w_shift_name">Shaati · Смена</string>
+    <string name="w_shift_desc">Начать смену одним нажатием и часы, которые идут во время смены</string>
+    <string name="w_month_name">Shaati · Мой месяц</string>
+    <string name="w_month_desc">Сколько вы заработали в этом месяце, цель и прогноз</string>
+    <string name="w_goal_name">Shaati · Цель</string>
+    <string name="w_goal_desc">Прогресс к цели накоплений или к цели на месяц</string>
+    <string name="w_payday_name">Shaati · Зарплата</string>
+    <string name="w_payday_desc">Сколько дней осталось до зарплаты и примерно сколько придёт</string>
+    <string name="w_combo_name">Shaati · Всё вместе</string>
+    <string name="w_combo_desc">Смена, этот месяц, цель и зарплата в одном виджете</string>
+    <string name="w_tile_name">Смена</string>
+    <string name="w_app">Shaati</string>
+    <string name="w_start">Начать смену</string>
+    <string name="w_start_coin">Начнём смену?</string>
+    <string name="w_end">Завершить</string>
+    <string name="w_end_shift">Завершить смену</string>
+    <string name="w_running">Смена идёт</string>
+    <string name="w_open">Открыть Shaati</string>
+    <string name="w_started">Смена началась. Удачи!</string>
+    <string name="w_ended">Смена завершена: %1$s ч. Она сохранится, когда вы откроете Shaati</string>
+    <string name="w_on_break">На перерыве</string>
+    <string name="w_today">Сегодня %1$s</string>
+    <string name="w_this_month">Этот месяц %1$s</string>
+    <string name="w_payday_today">Сегодня зарплата</string>
+    <string name="w_payday_tomorrow">Завтра зарплата</string>
+    <string name="w_month_mine">Мой месяц</string>
+    <string name="w_month_new">Начался новый месяц</string>
+    <string name="w_open_update">Откройте Shaati, чтобы обновить</string>
+    <string name="w_so_far">%1$s на сегодня</string>
+    <string name="w_net_hours">Нетто %1$s · %2$s ч</string>
+    <string name="w_goal_pct">%1$s%% от цели %2$s</string>
+    <string name="w_forecast">Прогноз на конец месяца</string>
+    <string name="w_forecast_is">Прогноз на конец месяца: %1$s</string>
+    <string name="w_enough">Вам хватает</string>
+    <string name="w_more">Ещё %1$s</string>
+    <string name="w_goal_of">Цель %1$s</string>
+    <string name="w_goal_passed">Цель превышена</string>
+    <string name="w_goal_left">Ещё %1$s до цели</string>
+    <string name="w_goal_mine">Моя цель</string>
+    <string name="w_goal_hint">Цель можно задать в Настройки › Цели</string>
+    <string name="w_payday_next">Следующая зарплата</string>
+    <string name="w_no_shifts">В этом периоде пока нет смен</string>
+    <string name="w_about_net">Около %1$s нетто</string>
+    <string name="w_pick_title">Как будет выглядеть виджет?</string>
+    <string name="w_pick_sub">Это можно изменить позже долгим нажатием на виджет.</string>
+    <string name="w_sample_period">Этот месяц</string>
+    <string name="w_look_midnight">Ночь и золото</string>
+    <string name="w_look_clean">Чистый</string>
+    <string name="w_look_wallpaper">Цвета обоев</string>
+    <string name="w_look_coin">С Shaati</string>
+    <string name="w_look_sea">Море на закате</string>
+    <string name="w_look_rain">Дождь из монет</string>
+    <!-- the widget picker's previews (the layouts' sample texts) -->
+    <string name="w_pv_month" formatted="false">Этот месяц ₪2,840</string>
+    <string name="w_pv_so_far" formatted="false">Этот месяц на сегодня</string>
+    <string name="w_pv_line" formatted="false">Нетто ₪2,310 · 41 ч</string>
+    <string name="w_pv_goal" formatted="false">64% от цели ₪4,400</string>
+    <string name="w_pv_pay" formatted="false">До зарплаты 9 дней</string>
+    <string name="w_pv_goal_title" formatted="false">Цель ₪4,400</string>
+    <string name="w_pv_goal_left" formatted="false">Ещё ₪1,560 до цели</string>
+    <string name="w_pv_about" formatted="false">Около ₪2,310 нетто</string>
+    <plurals name="w_payday_days">
+        <item quantity="one">До зарплаты %1$s день</item>
+        <item quantity="few">До зарплаты %1$s дня</item>
+        <item quantity="many">До зарплаты %1$s дней</item>
+        <item quantity="other">До зарплаты %1$s дня</item>
+    </plurals>
+</resources>
