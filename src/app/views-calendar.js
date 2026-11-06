@@ -12,13 +12,14 @@
   function dayData() {
     const map = {};
     for (const r of App.model.results.values()) {
-      const d = (map[r.dateKey] = map[r.dateKey] || { shifts: [], entries: [], total: 0, ov: false });
+      const d = (map[r.dateKey] = map[r.dateKey] || { shifts: [], entries: [], total: 0, plan: 0, ov: false });
       d.shifts.push(r);
       if (r.status === 'done') d.total += r.total;
+      else d.plan += r.wage; // what a planned shift is expected to pay (shown apart: it is not earned yet)
       if (r.overridden || r.dayRuleHit) d.ov = true;
     }
     for (const e of S.entries) {
-      const d = (map[e.date] = map[e.date] || { shifts: [], entries: [], total: 0, ov: false });
+      const d = (map[e.date] = map[e.date] || { shifts: [], entries: [], total: 0, plan: 0, ov: false });
       d.entries.push(e);
       const v = App.model.entryVals.get(e.id);
       if (v && e.status !== 'planned') d.total += e.type === 'deduction' ? 0 : v.amount;
@@ -35,6 +36,8 @@
     const cfg = App.model.ctx.restCfg;
     let cells = '';
     let monthTotal = 0, monthHours = 0;
+    // the one planned shift of the month that pays clearly more than the others (core/planner.js)
+    const best = App.planner ? App.planner.best([...App.model.results.values()].filter((r) => r.dateKey.slice(0, 7) === mk)) : null;
     for (let i = 0; i < 42; i++) {
       const k = U.addDays(start, i);
       if (i >= 35 && k.slice(0, 7) !== mk) break;
@@ -45,16 +48,17 @@
       const hol = HebCal.holidaysOn(k);
       const hd = HebCal.hebrewDate(k);
       const dots = d ? d.shifts.slice(0, 4).map((r) => { const role = App.role(r.segments[0] ? r.segments[0].roleId : null); return `<i class="${r.status === 'planned' ? 'pl' : ''}" style="background:${role ? role.color : '#999'};color:${role ? role.color : '#999'}"></i>`; }).join('') + d.entries.slice(0, 2).map((e) => `<i style="background:var(--outline)"></i>`).join('') : '';
-      cells += `<button class="cal-day ${inMonth ? '' : 'other'} ${rest ? 'rest' : ''} ${k === today ? 'today' : ''}" data-act="cal-day" data-k="${k}" aria-label="${U.fmtDate(k, 'long')}">
+      const isBest = !!best && inMonth && best.r.dateKey === k;
+      cells += `<button class="cal-day ${inMonth ? '' : 'other'} ${rest ? 'rest' : ''} ${k === today ? 'today' : ''} ${isBest ? 'best' : ''}" data-act="cal-day" data-k="${k}" aria-label="${U.fmtDate(k, 'long')}">
         ${d && d.ov ? '<span class="ovr" title="עקיפה ידנית"></span>' : ''}${hol.some((h) => h.rest) ? '<span class="hol">🕯</span>' : hol.length ? '<span class="hol">•</span>' : ''}
-        <span class="dn">${+k.slice(8)}</span><span class="hd">${hd.dayStr}</span><span class="dots">${dots}</span>${d && d.total ? `<span class="amt">${shortMoney(d.total)}</span>` : ''}</button>`;
+        <span class="dn">${+k.slice(8)}</span><span class="hd">${hd.dayStr}</span><span class="dots">${dots}</span>${d && d.total ? `<span class="amt">${shortMoney(d.total)}</span>` : d && d.plan && inMonth ? `<span class="amt pl">${shortMoney(d.plan)}</span>` : ''}</button>`;
     }
     const dows = [...Array(7)].map((_, i) => U.DAYS_SHORT[(i + (S.settings.weekStart || 0)) % 7]);
     const hm = HebCal.hebrewDate(first), hm2 = HebCal.hebrewDate(U.monthEnd(mk));
     const hebLabel = hm.monthStr === hm2.monthStr ? hm.monthStr + ' ' + hm.yearStr : hm.monthStr + '\u2060–\u2060' + hm2.monthStr + ' ' + hm2.yearStr;
     return `<div class="cal-nav"><button class="icon-btn" data-act="cal-nav" data-dir="-1" aria-label="הקודם">${icon('right')}</button><h2>${U.fmtMonth(mk)}${hm.monthStr ? `<div class="tiny muted" style="font-weight:400">${esc(hebLabel)}</div>` : ''}</h2><button class="icon-btn" data-act="cal-nav" data-dir="1" aria-label="הבא">${icon('left')}</button></div>
       <div class="cal-dow">${dows.map((x) => `<span>${x}</span>`).join('')}</div>
-      <div class="cal-grid swipe-area" id="cal-swipe">${cells}</div>
+      <div class="cal-grid swipe-area" id="cal-swipe">${cells}</div>${best ? App.planner.bestLine(best, 'המשמרת הכי משתלמת החודש', { open: true, date: true }) : ''}
       <div class="row-flex small" style="margin:10px 4px"><span>סה״כ בחודש: <b>${UI.money(monthTotal, 0)}</b></span><span class="spacer"></span><span class="muted"><span class="num">${U.hm(monthHours * 60)}</span> ש׳</span></div>`;
   }
 
@@ -63,6 +67,8 @@
     const cfg = App.model.ctx.restCfg;
     const today = U.todayKey();
     let rows = '', tot = 0, hrs = 0;
+    const wEnd = U.addDays(ws, 6);
+    const best = App.planner ? App.planner.best([...App.model.results.values()].filter((r) => r.dateKey >= ws && r.dateKey <= wEnd)) : null;
     for (let i = 0; i < 7; i++) {
       const k = U.addDays(ws, i);
       const d = map[k];
@@ -82,13 +88,13 @@
       }
       if (d) { tot += d.total; hrs += d.shifts.filter((r) => r.status === 'done').reduce((s, r) => s + r.paidHours, 0); }
       const label = d ? d.shifts.map((r) => `${App.roleName(r.segments[0] && r.segments[0].roleId)} \u2066${U.epochHM(r.start)}\u2060–\u2060${U.epochHM(r.rawEnd)}\u2069${r.status === 'planned' ? ' (מתוכננת)' : ''}`).concat(d.entries.map((e) => (e.kind === 'vacation' ? 'חופשה' : e.kind === 'sick' ? 'מחלה' : (App.model.entryVals.get(e.id) || {}).label))).join(' · ') : '';
-      rows += `<div class="week-row ${rest ? 'rest' : ''} card-link" data-act="cal-day" data-k="${k}" ${k === today ? 'style="box-shadow:inset 3px 0 0 var(--primary)"' : ''}>
-        <div class="wd"><div class="tiny muted">${U.DAYS[U.dow(k)]}</div><div class="n">${+k.slice(8)}</div>${U.LANG === 'he' ? `<div class="tiny muted">${HebCal.hebrewDate(k).dayStr}</div>` : ''}</div>
-        <div class="tl"><div class="row-flex small"><span style="flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${esc(hol.map((h) => h.name).join(', ') || label || '—')}</span>${d && d.total ? `<b>${UI.money(d.total, 0)}</b>` : ''}${d && d.ov ? ` <span class="tag override">${icon('hand')}</span>` : ''}</div>
+      rows += `<div class="week-row ${rest ? 'rest' : ''} ${best && best.r.dateKey === k ? 'best' : ''} card-link" data-act="cal-day" data-k="${k}" ${k === today ? 'style="box-shadow:inset 3px 0 0 var(--primary)"' : ''}>
+        <div class="wd"><div class="tiny muted">${(U.LANG === 'he' ? U.DAYS : U.DAYS_SHORT)[U.dow(k)]}</div><div class="n">${+k.slice(8)}</div>${U.LANG === 'he' ? `<div class="tiny muted">${HebCal.hebrewDate(k).dayStr}</div>` : ''}</div>
+        <div class="tl"><div class="row-flex small"><span style="flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${esc(hol.map((h) => h.name).join(', ') || label || '—')}</span>${d && d.total ? `<b>${UI.money(d.total, 0)}</b>` : d && d.plan ? `<span class="wk-pl">${UI.money(d.plan, 0)}</span>` : ''}${d && d.ov ? ` <span class="tag override">${icon('hand')}</span>` : ''}</div>
         <div class="timeline">${bars}</div>${hol.length && label ? `<div class="tiny muted">${esc(label)}</div>` : ''}</div></div>`;
     }
     return `<div class="cal-nav"><button class="icon-btn" data-act="cal-nav" data-dir="-1" aria-label="הקודם">${icon('right')}</button><h2>${U.fmtDate(ws, 'dm')} – ${U.fmtDate(U.addDays(ws, 6), 'dm')}</h2><button class="icon-btn" data-act="cal-nav" data-dir="1" aria-label="הבא">${icon('left')}</button></div>
-      <div class="list swipe-area" id="cal-swipe">${rows}</div>
+      <div class="list swipe-area" id="cal-swipe">${rows}</div>${best ? App.planner.bestLine(best, 'המשמרת הכי משתלמת השבוע', { open: true, date: true }) : ''}
       <div class="row-flex small" style="margin:0 4px 10px"><span>סה״כ בשבוע: <b>${UI.money(tot, 0)}</b></span><span class="spacer"></span><span class="muted"><span class="num">${U.hm(hrs * 60)}</span> ש׳</span></div>
       <div class="tiny muted" style="margin:0 4px">ציר הזמן: 00:00 ← 24:00 · אזור צהוב = שבת/חג</div>`;
   }

@@ -144,3 +144,37 @@ html.lp-first #lp-static { display: block; }
 .home-sky + .home-top .icon-btn { background: rgba(255, 255, 255, .14); border-color: rgba(255, 255, 255, .24); color: #fff; box-shadow: none; -webkit-backdrop-filter: blur(10px); backdrop-filter: blur(10px); }
 .home-sky ~ .home-hero { box-shadow: 0 0 0 1px rgba(255, 255, 255, .12), 0 24px 48px rgba(3, 10, 30, .32); }
 @media (prefers-reduced-transparency: reduce) { .home-sky + .home-top .icon-btn { -webkit-backdrop-filter: none; backdrop-filter: none; background: #16398a; } }
+
+/* planner (app/planner.js): what planned shifts pay. One calm line for the best of them, its day's amount in green,
+   every other planned amount quiet (not earned yet); "what if I swap" with the gain or loss and its reasons */
+.cal-day .amt.pl { font-weight: 600; color: var(--on-surface-var); }
+.cal-day.best .amt.pl { color: var(--good); font-weight: 800; }
+.wk-pl { flex: none; color: var(--on-surface-var); font-weight: 600; font-variant-numeric: tabular-nums; white-space: nowrap; }
+.week-row.best .wk-pl { color: var(--good); font-weight: 800; }
+.pl-best { display: flex; align-items: flex-start; gap: 10px; box-sizing: border-box; width: 100%; margin: 10px 0 12px; padding: 10px 12px; border: 1px solid var(--line); border-radius: var(--radius); background: var(--surface-hi); color: var(--on-surface); font: inherit; text-align: start; -webkit-tap-highlight-color: transparent; }
+button.pl-best { cursor: pointer; transition: scale .14s cubic-bezier(.3, .7, .4, 1); }
+button.pl-best:active { scale: .98; }
+.plb-ic { flex: none; display: grid; place-items: center; width: 28px; height: 28px; border-radius: 50%; background: var(--good-bg); color: var(--good); }
+.plb-ic svg { width: 15px; height: 15px; }
+.plb-b { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+.plb-t { font-size: .9rem; line-height: 1.4; }
+.plb-t b { white-space: nowrap; }
+.plb-s { font-size: .8rem; line-height: 1.35; color: var(--on-surface-var); }
+.sc-row .sc-pay { flex: none; display: inline-flex; align-items: center; gap: 4px; font-size: .9rem; font-weight: 700; color: var(--on-surface-var); font-variant-numeric: tabular-nums; white-space: nowrap; }
+.sc-row.best .sc-pay { color: var(--good); }
+.sc-row .sc-star svg { width: 14px; height: 14px; display: block; }
+.pl-why { display: flex; align-items: center; gap: 6px; margin-top: 10px; color: var(--good); }
+.pl-why svg { flex: none; width: 14px; height: 14px; }
+.sw-from { margin-bottom: 4px; }
+.sw-res { min-height: 104px; }
+.sw-hint { line-height: 1.5; }
+.sw-head { font-size: 1.3rem; font-weight: 800; line-height: 1.25; }
+.sw-head.up { color: var(--good); }
+.sw-head.down { color: var(--bad); }
+.sw-vs { margin-top: 4px; }
+.sw-why { list-style: none; margin: 12px 0 0; padding: 10px 0 0; border-top: 1px solid var(--line); display: grid; gap: 6px; }
+.sw-why li { display: flex; justify-content: space-between; align-items: baseline; gap: 12px; font-size: .9rem; }
+.sw-why b { white-space: nowrap; font-variant-numeric: tabular-nums; }
+.sw-note { margin-top: 8px; }
+.sw-clash { margin: 12px 0 0; }
+.sw-clash svg { flex: none; }

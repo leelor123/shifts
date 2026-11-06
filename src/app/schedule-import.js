@@ -60,7 +60,7 @@
         ${opts.text ? '' : `<details class="imp-paste"${opts.paste ? ' open' : ''}><summary>${icon('chat', 's')} או להדביק את ההודעה מוואטסאפ</summary>
           <textarea class="input" id="sc-text" rows="6" placeholder="למשל:&#10;ראשון: דני 8-16, לי 16-24&#10;שני: לי 8-16"></textarea>
           <button class="btn tonal block" data-sc-read>${icon('check', 's')} קריאה</button></details>`}
-        ${hasKey() ? `<label class="switch-row sc-ai"><span class="body"><span class="t">קריאה חכמה עם Claude</span><span class="s">לטבלאות מסובכות. התמונה נשלחת ל-⁠Anthropic עם המפתח שלך</span></span><input type="checkbox" class="switch" id="sc-ai" ${S.meta.schedAi ? 'checked' : ''}></label>` : ''}
+        ${hasKey() ? `<label class="switch-row sc-ai"><span class="body"><span class="t">קריאה חכמה עם Claude</span><span class="s">לטבלאות מסובכות. התמונה נשלחת ל-\u2060Anthropic עם המפתח שלך</span></span><input type="checkbox" class="switch" id="sc-ai" ${S.meta.schedAi ? 'checked' : ''}></label>` : ''}
         <div class="tiny muted imp-privacy">${icon('shield', 's')} ${hasKey() ? 'בלי קריאה חכמה, ' : ''}הסידור נקרא בטלפון בלבד, ולא נשלח לשום מקום.</div>`;
       if (opts.text) { const t = opts.text; opts.text = null; parse(() => Object.assign(SC().parseText(t, { today: U.todayKey(), named: named() }), { text: t })); }
     }
@@ -112,22 +112,39 @@
         ? `${App.mascotSays ? App.mascotSays('think', `מצאתי בסידור ${names.length} שמות. מי את/ה?`, { size: 64 }) : ''}`
         : `${App.mascotSays ? App.mascotSays('love', rows.length ? `מצאתי ${rows.length === 1 ? 'משמרת אחת' : `${rows.length} משמרות`} שלך! 🎉 בודקים רגע ומוסיפים` : 'לא מצאתי משמרות בשם הזה', { size: 64 }) : ''}`;
       const thisWeek = U.addDays(U.todayKey(), -U.dow(U.todayKey())), nextWeek = U.addDays(thisWeek, 7);
+      const { pay, best, scope } = payOf(thisWeek, nextWeek);
       const list = rows.map((r, i) => {
+        const p = pay.get('sc' + i);
         const day = U.DAYS ? U.DAYS[U.dow(r.date)] : '';
-        return `<div class="imp-row sc-row ${r.on ? 'on' : ''}" data-i="${i}">
+        return `<div class="imp-row sc-row ${r.on ? 'on' : ''} ${best && best.id === 'sc' + i ? 'best' : ''}" data-i="${i}">
           <button class="sc-tog" data-sc-tog="${i}" aria-pressed="${r.on}" aria-label="${esc(day + ' ' + U.fmtDate(r.date, 'short'))}"><span class="imp-check" aria-hidden="true">${icon('check', 's')}</span>
-            <span class="imp-d"><b>${esc(day)} ${U.fmtDate(r.date, 'short')}</b><small>${r.taken ? '<i class="tag">כבר קיימת</i>' : ''}${r.guess ? '<i class="tag warn">שעה משוערת</i>' : ''}${r.e < Date.now() ? '<i class="tag">עברה</i>' : ''}</small></span></button>
-          <button class="sc-time" data-sc-time="${i}" aria-label="שינוי השעות"><span class="num">\u2066${r.start}⁠–⁠${r.end}\u2069</span>${icon('edit', 's')}</button></div>`;
+            <span class="imp-d"><b>${esc(day)} ${U.fmtDate(r.date, 'short')}</b><small>${r.taken ? '<i class="tag">כבר קיימת</i>' : ''}${r.guess ? '<i class="tag warn">שעה משוערת</i>' : ''}${r.e < Date.now() ? '<i class="tag">עברה</i>' : ''}</small></span>${p && p.wage > 0 ? `<span class="sc-pay">${best && best.id === 'sc' + i ? `<span class="sc-star" aria-hidden="true">${icon('star', 's')}</span>` : ''}<span class="num">${UI.money(p.wage, 0)}</span></span>` : ''}</button>
+          <button class="sc-time" data-sc-time="${i}" aria-label="שינוי השעות"><span class="num">\u2066${r.start}\u2060–\u2060${r.end}\u2069</span>${icon('edit', 's')}</button></div>`;
       }).join('');
       box.innerHTML = `${head}
         ${names.length ? `<div class="field"><span class="lbl">${who.length ? 'המשמרות של' : 'מי את/ה בסידור?'}</span><div class="chips sc-names">${names.map((n) => `<button class="chip ${who.includes(n) ? 'on' : ''}" data-sc-who="${esc(n)}" aria-pressed="${who.includes(n)}">${esc(n)}</button>`).join('')}</div></div>` : ''}
         ${res.needsWeek && (who.length || !names.length) ? `<div class="field"><span class="lbl">לאיזה שבוע?</span><div class="chips sc-week">${[[thisWeek, 'השבוע'], [nextWeek, 'שבוע הבא']].map(([k, t]) => `<button class="chip ${week === k ? 'on' : ''}" data-sc-week="${k}" aria-pressed="${week === k}">${t} · מ-${U.fmtDate(k, 'short')}</button>`).join('')}</div></div>` : ''}
         ${roles.length > 1 && rows.length ? `<div class="field"><span class="lbl">לאיזה תפקיד לשייך?</span><div class="chips imp-roles">${roles.map((r) => `<button class="chip ${r.id === roleId ? 'on' : ''}" data-sc-role="${esc(r.id)}"><span class="sw" style="background:${r.color}"></span>${esc(r.name)}${App.multiEmp() ? ' · ' + esc((App.employer(r.employerId) || {}).name || '') : ''}</button>`).join('')}</div></div>` : ''}
+        ${rows.length && best && App.planner ? App.planner.bestLine(best, scope) : ''}
         ${rows.length ? `<div class="imp-list sc-list">${list}</div>
           ${rows.some((r) => r.guess) ? `<div class="tiny muted imp-note">${icon('info', 's')} "שעה משוערת": לפי שם המשמרת או האורך הרגיל שלך. לחיצה על השעות משנה אותן.</div>` : ''}
           ${S.settings.alerts && !S.settings.alerts.remindPlanned ? `<label class="switch-row"><span class="body"><span class="t">להזכיר לי לפני כל משמרת</span><span class="s">שעה לפני, בהתראה</span></span><input type="checkbox" class="switch" id="sc-remind"></label>` : ''}` : ''}`;
       showSave(rows.length > 0);
       count();
+    }
+    // what each shift of the schedule would pay (the engine, with the week already in the app), and the best of them
+    function payOf(thisWeek, nextWeek) {
+      const r0 = role();
+      const none = { pay: new Map(), best: null, scope: '' };
+      if (!r0 || !root.Planner || !App.model) return none;
+      const emp = App.employer(r0.employerId) || S.employers[0] || {};
+      const cands = rows.map((r, i) => (r.taken ? null : { id: 'sc' + i, kind: 'shift', employerId: r0.employerId, roleId: r0.id, status: 'planned', start: r.s, end: r.e, breakMin: null, breakPaid: emp.defaultBreakPaid !== false, splits: [], items: [] })).filter(Boolean);
+      let pay;
+      try { pay = root.Planner.expected(S.shifts, App.model.ctx, cands); } catch (e) { console.warn('schedule pay', e); return none; }
+      const best = App.planner.best(pay.values());
+      const weeks = new Set(rows.map((r) => root.Planner.weekOf(r.s)));
+      const w = weeks.size === 1 ? [...weeks][0] : null;
+      return { pay, best, scope: w === thisWeek ? 'המשמרת הכי משתלמת השבוע' : w === nextWeek ? 'המשמרת הכי משתלמת בשבוע הבא' : 'המשמרת הכי משתלמת בסידור' };
     }
     function count() {
       const n = rows.filter((r) => r.on).length;
@@ -157,7 +174,7 @@
     }
     // the picture, read by Claude (the person's own key; asked first, since it goes to Anthropic)
     async function viaClaude(file) {
-      const ok = await UI.confirm('קריאה חכמה עם Claude', 'התמונה של הסידור, עם השמות שבה, תישלח ל-⁠Anthropic עם המפתח שלך, רק כדי לקרוא אותה. השימוש מחויב בחשבון ה-⁠API שלך.', 'לשלוח');
+      const ok = await UI.confirm('קריאה חכמה עם Claude', 'התמונה של הסידור, עם השמות שבה, תישלח ל-\u2060Anthropic עם המפתח שלך, רק כדי לקרוא אותה. השימוש מחויב בחשבון ה-\u2060API שלך.', 'לשלוח');
       if (!ok) { start(); return; }
       busy('Claude קורא את הסידור…');
       try {

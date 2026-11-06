@@ -197,7 +197,7 @@
     notes.push(`שעות נוספות אחרי ${+(+r.thresholdH).toFixed(2)} שעות ביום${r.otByLaw ? ' (לפי החוק)' : ''}` + (r.priorMin ? ` · כבר עבדת ${U.hm(r.priorMin)} באותו יום לפני המשמרת` : '') + (r.isNightShift && (r.otByLaw || emp.nightShiftShortDay) ? ' (משמרת לילה)' : '')
       + (r.weekOtMin > 0 ? ` · ${U.hm(r.weekOtMin)} מהן נוספות כי עברת ${r.weekH || 42} שעות רגילות השבוע` : '') + (r.minorOt ? ' · לפי חוק עבודת הנוער' : ''));
     const wins = r.restLabels.length ? r.slices.filter((s) => s.autoRest) : [];
-    if (r.autoRestMin > 0) notes.push(`חלון ${esc(r.restLabels.join(', ') || 'שבת/חג')} במשמרת: \u2066${U.epochHM(wins[0].a)}\u2060–\u2060${U.epochHM(wins[wins.length - 1].b)}\u2069 (${S.settings.rest.mode === 'city' ? 'לפי ' + esc(S.settings.rest.city === '__custom' ? 'מיקום מותאם' : App.placeLabel(S.settings.rest.city).name).replace(/-/g, '-⁠') : 'שעות קבועות'})`);
+    if (r.autoRestMin > 0) notes.push(`חלון ${esc(r.restLabels.join(', ') || 'שבת/חג')} במשמרת: \u2066${U.epochHM(wins[0].a)}\u2060–\u2060${U.epochHM(wins[wins.length - 1].b)}\u2069 (${S.settings.rest.mode === 'city' ? 'לפי ' + esc(S.settings.rest.city === '__custom' ? 'מיקום מותאם' : App.placeLabel(S.settings.rest.city).name).replace(/-/g, '-\u2060') : 'שעות קבועות'})`);
     if (r.warnings.length) notes.push(icon('alert', 's') + ' ' + r.warnings.join(', '));
     return `<table class="bd">${rows}</table><div class="tiny muted" style="margin-top:8px">${notes.map((n) => '• ' + n).join('<br>')}</div>`;
   };
@@ -229,6 +229,8 @@
     const hd = HebCal.hebrewDate(r.dateKey);
     const ovBox = r.overridden || r.dayRuleHit ? `<div class="banner warn">${icon('hand')}<div style="flex:1"><b>עקיפה ידנית:</b> ${esc([...r.overrideList, r.dayRuleHit ? 'כלל יום (ביטול/הוספה גורפת של שבת/חג)' : ''].filter(Boolean).join(' · '))}${sh.overrideReason ? `<br>סיבה: ${esc(sh.overrideReason)}` : ''}</div></div>` : '';
     const autoDiff = r.overridden && App.model.autoResults.get(id) ? App.model.autoResults.get(id).wage - r.wage : 0;
+    // a planned shift that pays above an ordinary one says why (core/planner.js)
+    const why = r.status === 'planned' && root.Planner ? root.Planner.reasons(r)[0] : null;
     UI.openSheet({
       title: U.fmtDate(r.dateKey, 'long'),
       body: `<div class="small muted" style="margin-bottom:8px">${esc(hd.toString())} ${App.restTag(r)} ${r.status === 'planned' ? (r.end <= Date.now() ? '<span class="tag warn">ממתינה לאישור</span>' : '<span class="tag planned">מתוכננת</span>') : ''}</div>
@@ -240,12 +242,13 @@
             <div class="kpi"><div class="l">שעות לתשלום</div><div class="v"><span class="num">${U.hm(r.paidMin)}</span></div></div>
             <div class="kpi"><div class="l">שכר</div><div class="v">${money(r.wage, 0)}</div></div>
             <div class="kpi"><div class="l">לשעה</div><div class="v">${money(r.paidHours ? r.wage / r.paidHours : 0)}</div></div>
-          </div></div>
+          </div>${why && why.amount >= 10 ? `<div class="small pl-why">${icon('star', 's')} ${esc(root.Planner.reasonText(why))}</div>` : ''}</div>
         <div class="section-title">${icon('list', 's')} איך הגענו לסכום</div>
         <div class="card">${App.breakdownHtml(r, sh)}</div>
         ${r.overridden ? `<div class="small muted" style="margin:-4px 4px 12px">בלי העקיפה החישוב היה ${U.money(r.wage + autoDiff)} (${autoDiff >= 0 ? '+' : ''}${U.money(autoDiff)}).</div>` : ''}
         ${sh.note ? `<div class="card outlined small">${icon('edit', 's')} ${esc(sh.note)}</div>` : ''}
         <div class="list">
+          ${r.status === 'planned' && r.start > Date.now() && App.sheetsApi.swapSheet ? `<button class="item" data-x="swap"><span class="lead">${icon('swap')}</span><span class="body"><span class="t">מה אם אחליף?</span><span class="s">משמרת אחרת במקומה: כמה זה משנה בשכר</span></span></button>` : ''}
           <button class="item" data-x="dup"><span class="lead">${icon('copy')}</span><span class="body"><span class="t">שכפל</span><span class="s">אותן שעות בתאריך אחר</span></span></button>
           <button class="item" data-x="repeat"><span class="lead">${icon('refresh')}</span><span class="body"><span class="t">חזרה שבועית</span><span class="s">אותה משמרת בשבועות הבאים, כמתוכננת</span></span></button>
           <button class="item" data-x="tpl"><span class="lead">${icon('layers')}</span><span class="body"><span class="t">שמור כתבנית</span></span></button>
@@ -265,6 +268,7 @@
             await App.saveOps([{ store: 'shifts', del: id }], 'מחיקת משמרת', 'המשמרת נמחקה');
           }
           if (x === 'done') { UI.closeTop(); await App.markDone(sh); }
+          if (x === 'swap') { UI.closeTop(); setTimeout(() => App.sheetsApi.swapSheet(id), 320); }
           if (x === 'dup') { UI.closeTop(); setTimeout(() => App.sheetsApi.shiftEditor(null, { copyFrom: sh, date: U.addDays(r.dateKey, 1) }), 320); }
           if (x === 'tpl') App.saveTemplate(sh);
           if (x === 'repeat') {
