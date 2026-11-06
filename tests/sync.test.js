@@ -837,3 +837,18 @@ T.atest('shift log: records reach the other phone, and the server keeps them as 
   T.eq(C.S.ledger.length, 3, 'the account\'s records joined');
   T.ok(![...be.docs.entries()].some(([k, x]) => k.includes('/ledger/') && x.d), 'no log record became a tombstone');
 });
+
+// the privacy policy says the shift log is deleted with the account: the log only grows on the server
+// (no tombstones, no changed text), so check that deleting the account still takes all of its records
+T.atest('shift log: deleting the account deletes its records in the cloud', async () => {
+  const be = fakeBackend();
+  const A = await phone(be, { ledger: true });
+  await A.add('s1'); await A.add('s2'); await A.ctx.ShiftLog.done();
+  await A.Cloud.connect(user); await wait(30);
+  T.ok(live(be, 'ledger') >= 2, 'the log reached the cloud');
+  const signedIn = Object.assign({}, user, { metadata: { lastSignInTime: new Date().toUTCString() }, delete() {} });
+  A.Cloud._useSdk({ app: {}, auth: { currentUser: signedIn }, db: {}, fs: A.ffs, au: { deleteUser: async () => {}, signOut: async () => {} } });
+  await A.Cloud.deleteAccountData();
+  T.eq([...be.docs.keys()].filter((k) => k.startsWith('users/u1/ledger/')).length, 0, 'no log record is left');
+  T.eq(A.S.ledger.length, 0, 'and the phone\'s copy is gone');
+});

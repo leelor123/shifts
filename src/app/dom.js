@@ -140,6 +140,8 @@
   const GAP = '[\\s\\u200e\\u200f]*';
   const NUM = '[-−+]?\\d(?:[\\d,.]*\\d)?[kKMm]?';
   const AMOUNT = new RegExp(`[-−+]?₪${GAP}${NUM}|${NUM}${GAP}₪`, 'g');
+  // elements whose own display a .money class would break (it makes an element an inline-block)
+  const BOX_TAGS = /^(TD|TH|CAPTION|TR|LI|DT|DD)$/i;
 
   function markText(t) {
     const v = t.nodeValue;
@@ -151,10 +153,12 @@
     if (!AMOUNT.test(v)) return;
     // an amount in a chart's text: the whole label
     if (p.namespaceURI === SVG) { const tx = p.closest('text'); if (tx) tx.classList.add('money'); return; }
-    // an element that holds only the amount: the element itself
+    // an element that holds only the amount: the element itself. Not a table cell or a list item: .money is an
+    // inline-block, so a cell given it left the row and stacked its amounts in one column (the hours report, 6 Nov 2026);
+    // their amount goes into a span of its own, as in a longer text
     AMOUNT.lastIndex = 0;
     const whole = v.replace(/[\s‎‏]/g, '').match(AMOUNT);
-    if (p.nodeType === 1 && p.childNodes.length === 1 && whole && whole[0].replace(/[\s‎‏]/g, '') === v.replace(/[\s‎‏]/g, '')) {
+    if (p.nodeType === 1 && !BOX_TAGS.test(p.tagName) && p.childNodes.length === 1 && whole && whole[0].replace(/[\s‎‏]/g, '') === v.replace(/[\s‎‏]/g, '')) {
       p.classList.add('money');
       return;
     }

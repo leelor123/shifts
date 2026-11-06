@@ -72,3 +72,50 @@ T.test('the privacy blur grows with the text and fades in and out', () => {
   T.ok(blur && +blur[1] >= 0.25, 'an em-based blur, at least .25em: ' + (m && m[1]));
   T.ok(/\.money \{ transition: filter/.test(css), 'a transition on the blur');
 });
+
+/* The hours report, 6 Nov 2026: a table cell that held only an amount got the class "money" itself, and .money is an
+ * inline-block, so the wage, travel and total cells left their row and stacked in one column. An amount in a cell or
+ * a list item is marked with a span of its own; any other element that holds only an amount still takes the class. */
+T.test('an amount in a table cell or a list item is wrapped, the cell itself stays a cell', () => {
+  const vm = require('vm');
+  // a small DOM: enough for Dom.markMoney (text nodes, elements, classList, closest, a tree walker)
+  const doc = {};
+  const el = (tag, kids) => {
+    const n = { nodeType: 1, tagName: tag.toUpperCase(), ownerDocument: doc, childNodes: [], parentNode: null, cls: new Set(),
+      get className() { return [...this.cls].join(' '); }, set className(v) { this.cls = new Set(String(v).split(/\s+/).filter(Boolean)); },
+      get textContent() { return this.childNodes.map((c) => (c.nodeType === 3 ? c.nodeValue : c.textContent)).join(''); },
+      set textContent(v) { this.childNodes = []; this.appendChild(text(v)); },
+      appendChild(c) { if (c.nodeType === 11) { c.childNodes.slice().forEach((k) => this.appendChild(k)); c.childNodes = []; return c; } c.parentNode = this; this.childNodes.push(c); return c; },
+      replaceChild(nu, old) { const i = this.childNodes.indexOf(old); const add = nu.nodeType === 11 ? nu.childNodes.splice(0) : [nu]; add.forEach((k) => { k.parentNode = this; }); this.childNodes.splice(i, 1, ...add); return old; },
+      closest(sel) { for (let p = this; p && p.nodeType === 1; p = p.parentNode) if (sel.split(',').some((x) => /^\.[\w-]+$/.test(x.trim()) && p.cls.has(x.trim().slice(1)))) return p; return null; },
+    };
+    n.classList = { add: (c) => n.cls.add(c), contains: (c) => n.cls.has(c) };
+    (kids || []).forEach((k) => n.appendChild(typeof k === 'string' ? text(k) : k));
+    return n;
+  };
+  const text = (v) => ({ nodeType: 3, nodeValue: v, parentNode: null, ownerDocument: doc });
+  Object.assign(doc, {
+    createTextNode: text,
+    createElement: (t) => el(t),
+    createDocumentFragment: () => { const f = el('#frag'); f.nodeType = 11; return f; },
+    createTreeWalker: (root) => {
+      const all = []; const walk = (n) => n.childNodes.forEach((c) => { if (c.nodeType === 3) all.push(c); else walk(c); }); walk(root);
+      let i = 0; return { nextNode: () => all[i++] || null };
+    },
+  });
+  const ctx = { NodeFilter: { SHOW_TEXT: 4 } };
+  ctx.globalThis = ctx;
+  vm.createContext(ctx);
+  vm.runInContext(fs.readFileSync(path.join(SRC, 'app/dom.js'), 'utf8'), ctx);
+  const amount = '‏576.00 ‏₪';
+  const row = el('tr', [el('td', ['3/11']), el('td', [amount]), el('td', ['16.00 ₪'])]);
+  const list = el('ul', [el('li', [amount])]);
+  const plain = el('div', [el('span', [amount]), el('b', [amount])]);
+  for (const n of [row, list, plain]) ctx.Dom.markMoney(n);
+  for (const c of row.childNodes.concat(list.childNodes)) T.ok(!c.cls.has('money'), c.tagName + ' itself is not marked');
+  const span = (c) => c.childNodes.find((k) => k.nodeType === 1);
+  T.ok(span(row.childNodes[1]).cls.has('money') && span(row.childNodes[2]).cls.has('money'), 'its amount is, in a span');
+  T.ok(span(list.childNodes[0]).cls.has('money'), 'the list item\'s amount too');
+  T.ok(plain.childNodes.every((c) => c.cls.has('money') && c.childNodes.length === 1), 'a span or a b that holds only the amount is marked itself');
+  T.eq(row.childNodes[0].cls.has('money'), false, 'a cell without an amount stays as it was');
+});
