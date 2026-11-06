@@ -358,6 +358,10 @@
     if (document.body) document.body.classList.toggle('fx', Fx.motion());
     try { localStorage.setItem('fxPrefs', JSON.stringify(prefs())); } catch (e) { /* private mode */ }
   };
+  /** The same class from the kept copy, before the data loads (app.js, with the rest of the kept look): before the
+   * opening show's first frame, so its sky lives from the start. Set later, in the middle of the start-up, the sky's
+   * clouds, birds and leaves stood still and then jumped into place half a second into the show (6 Nov 2026). */
+  Fx.applyKept = () => { if (document.body && document.body.classList.contains('fx') !== Fx.motion()) document.body.classList.toggle('fx', Fx.motion()); };
 
   /* ---------------- every tap ---------------- */
   const TAPPABLE = 'button, a[href], [data-act], .item, .chip, [role="button"], [role="tab"], label.switch-row, summary';
