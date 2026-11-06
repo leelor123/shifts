@@ -54,7 +54,7 @@
   /* ---------------- explanations (plain Hebrew) ---------------- */
   const EXPLAIN = {
     base: 'השכר על השעות הרגילות (100%): מספר השעות × התעריף לשעה. זה הבסיס לחישוב פנסיה, חופשה ומחלה.',
-    ot125: 'שעות נוספות: אחרי ' + '8' + ' שעות ביום, השעתיים הראשונות משולמות ב-125% מהתעריף.',
+    ot125: 'שעות נוספות: אחרי יום עבודה מלא (8.6 שעות בשבוע של 5 ימים, 8 בשבוע של 6 ימים, 7 במשמרת לילה), השעתיים הראשונות משולמות ב-125% מהתעריף.',
     ot150: 'שעות נוספות מעבר לשעתיים הראשונות: 150% מהתעריף.',
     rest150: 'שעות בשבת או בחג משולמות ב-150% מהתעריף (לפי חוק שעות עבודה ומנוחה).',
     rest175: 'שעות נוספות שנעשו בשבת או בחג, השעתיים הראשונות: 175%.',
@@ -88,6 +88,115 @@
     workHours: 'סך השעות שהמעסיק רשם לחודש.',
     workDays: 'מספר ימי העבודה שהמעסיק רשם, משמש גם לחישוב הנסיעות.',
   };
+
+  /* ---------------- the line-by-line translator ----------------
+   * MEANING: one plain sentence per line, in the app's language (translated like every string).
+   * MEANING_HE and HE_TERM stay Hebrew in every language: a worker who reads Russian or Amharic can show the
+   * employer the Hebrew term and its Hebrew sentence. MEANING_HE must say exactly what MEANING says in Hebrew
+   * (tests/payslip.test.js compares them). */
+  const MEANING = {
+    vacationBalance: 'ימי החופשה שצברת ועוד לא לקחת.',
+    sickBalance: 'ימי המחלה שצברת ועוד לא ניצלת.',
+    creditPoints: 'נקודות שמורידות לך את מס ההכנסה, לפי טופס 101 שמילאת.',
+    ytdGross: 'כל הברוטו שהרווחת מתחילת השנה.',
+    ytdTax: 'כל מס ההכנסה שירד לך מתחילת השנה.',
+    taxableGross: 'החלק מהשכר שעליו מחשבים את מס ההכנסה.',
+    net: 'הסכום שנכנס לחשבון הבנק שלך.',
+    totalDeductions: 'כל מה שירד מהברוטו: מיסים, פנסיה וניכויים אחרים.',
+    gross: 'כל הכסף שהרווחת החודש, לפני מיסים וניכויים.',
+    pensionEmployer: 'כסף שהמעסיק מפקיד לפנסיה שלך, מעבר לשכר.',
+    severance: 'כסף שהמעסיק חוסך בשבילך לפיצויים, בקרן הפנסיה שלך.',
+    hishtalmutEmployer: 'כסף שהמעסיק מפקיד לקרן ההשתלמות שלך, מעבר לשכר.',
+    incomeTax: 'מס למדינה על השכר שלך, לפי גובה השכר ונקודות הזיכוי.',
+    nationalInsurance: 'דמי ביטוח לאומי, שמממנים קצבאות כמו אבטלה, לידה ופגיעה בעבודה.',
+    healthTax: 'מס שמממן את קופת החולים שלך.',
+    hishtalmutEmployee: 'החלק שלך בקרן השתלמות, חיסכון שאפשר למשוך אחרי 6 שנים.',
+    pensionEmployee: 'החלק שלך בחיסכון לפנסיה: יורד מהשכר ונשמר על שמך.',
+    rest200: 'שעות נוספות בשבת או בחג מהשעה השלישית והלאה, ב-⁠200% מהתעריף.',
+    rest175: 'השעתיים הנוספות הראשונות בשבת או בחג, ב-⁠175% מהתעריף.',
+    rest150: 'שעות שעבדת בשבת או בחג, ב-⁠150% מהתעריף לפחות.',
+    ot150: 'שעות נוספות מהשעה השלישית והלאה באותו יום, ב-⁠150% מהתעריף.',
+    ot125: 'השעתיים הנוספות הראשונות אחרי יום עבודה מלא, ב-⁠125% מהתעריף.',
+    night: 'תוספת על שעות לילה, אם ההסכם או המעסיק נותנים אותה.',
+    seniority: 'תוספת לפי שנות הוותק שלך אצל המעסיק.',
+    travel: 'החזר על הנסיעות לעבודה, לפי מספר ימי העבודה.',
+    recuperation: 'דמי הבראה: תשלום שנתי שמגיע אחרי שנת עבודה.',
+    vacationPay: 'התשלום על ימי החופשה שלקחת.',
+    sickPay: 'התשלום על ימי מחלה עם אישור רופא.',
+    holidayPay: 'התשלום על ימי חג שחלו ביום חול ולא עבדת בהם.',
+    bonus: 'כסף נוסף מעבר לשכר, כמו בונוס, פרמיה או מענק.',
+    diff: 'תיקון של שכר מחודשים קודמים, למשל שעות שלא שולמו.',
+    base: 'השכר על השעות הרגילות שעבדת, לפי התעריף שלך לשעה.',
+    workHours: 'סך השעות שהמעסיק רשם לך החודש.',
+    workDays: 'מספר ימי העבודה שהמעסיק רשם לך החודש.',
+  };
+  // i18n-keep-start (Hebrew on purpose: the words printed on an Israeli payslip, to show the employer)
+  const MEANING_HE = {
+    vacationBalance: 'ימי החופשה שצברת ועוד לא לקחת.',
+    sickBalance: 'ימי המחלה שצברת ועוד לא ניצלת.',
+    creditPoints: 'נקודות שמורידות לך את מס ההכנסה, לפי טופס 101 שמילאת.',
+    ytdGross: 'כל הברוטו שהרווחת מתחילת השנה.',
+    ytdTax: 'כל מס ההכנסה שירד לך מתחילת השנה.',
+    taxableGross: 'החלק מהשכר שעליו מחשבים את מס ההכנסה.',
+    net: 'הסכום שנכנס לחשבון הבנק שלך.',
+    totalDeductions: 'כל מה שירד מהברוטו: מיסים, פנסיה וניכויים אחרים.',
+    gross: 'כל הכסף שהרווחת החודש, לפני מיסים וניכויים.',
+    pensionEmployer: 'כסף שהמעסיק מפקיד לפנסיה שלך, מעבר לשכר.',
+    severance: 'כסף שהמעסיק חוסך בשבילך לפיצויים, בקרן הפנסיה שלך.',
+    hishtalmutEmployer: 'כסף שהמעסיק מפקיד לקרן ההשתלמות שלך, מעבר לשכר.',
+    incomeTax: 'מס למדינה על השכר שלך, לפי גובה השכר ונקודות הזיכוי.',
+    nationalInsurance: 'דמי ביטוח לאומי, שמממנים קצבאות כמו אבטלה, לידה ופגיעה בעבודה.',
+    healthTax: 'מס שמממן את קופת החולים שלך.',
+    hishtalmutEmployee: 'החלק שלך בקרן השתלמות, חיסכון שאפשר למשוך אחרי 6 שנים.',
+    pensionEmployee: 'החלק שלך בחיסכון לפנסיה: יורד מהשכר ונשמר על שמך.',
+    rest200: 'שעות נוספות בשבת או בחג מהשעה השלישית והלאה, ב-⁠200% מהתעריף.',
+    rest175: 'השעתיים הנוספות הראשונות בשבת או בחג, ב-⁠175% מהתעריף.',
+    rest150: 'שעות שעבדת בשבת או בחג, ב-⁠150% מהתעריף לפחות.',
+    ot150: 'שעות נוספות מהשעה השלישית והלאה באותו יום, ב-⁠150% מהתעריף.',
+    ot125: 'השעתיים הנוספות הראשונות אחרי יום עבודה מלא, ב-⁠125% מהתעריף.',
+    night: 'תוספת על שעות לילה, אם ההסכם או המעסיק נותנים אותה.',
+    seniority: 'תוספת לפי שנות הוותק שלך אצל המעסיק.',
+    travel: 'החזר על הנסיעות לעבודה, לפי מספר ימי העבודה.',
+    recuperation: 'דמי הבראה: תשלום שנתי שמגיע אחרי שנת עבודה.',
+    vacationPay: 'התשלום על ימי החופשה שלקחת.',
+    sickPay: 'התשלום על ימי מחלה עם אישור רופא.',
+    holidayPay: 'התשלום על ימי חג שחלו ביום חול ולא עבדת בהם.',
+    bonus: 'כסף נוסף מעבר לשכר, כמו בונוס, פרמיה או מענק.',
+    diff: 'תיקון של שכר מחודשים קודמים, למשל שעות שלא שולמו.',
+    base: 'השכר על השעות הרגילות שעבדת, לפי התעריף שלך לשעה.',
+    workHours: 'סך השעות שהמעסיק רשם לך החודש.',
+    workDays: 'מספר ימי העבודה שהמעסיק רשם לך החודש.',
+  };
+  /** The usual wording of each line on an Israeli payslip. */
+  const HE_TERM = {
+    vacationBalance: 'יתרת חופשה', sickBalance: 'יתרת מחלה', creditPoints: 'נקודות זיכוי', ytdGross: 'ברוטו מצטבר',
+    ytdTax: 'מס הכנסה מצטבר', taxableGross: 'ברוטו למס', net: 'נטו לתשלום', totalDeductions: 'סה״כ ניכויים',
+    gross: 'סה״כ ברוטו', pensionEmployer: 'פנסיה מעסיק', severance: 'פיצויים', hishtalmutEmployer: 'קרן השתלמות מעסיק',
+    incomeTax: 'מס הכנסה', nationalInsurance: 'ביטוח לאומי', healthTax: 'מס בריאות', hishtalmutEmployee: 'קרן השתלמות עובד',
+    pensionEmployee: 'פנסיה עובד', rest200: 'שבת נוספות 200%', rest175: 'שבת נוספות 175%', rest150: 'שעות שבת 150%',
+    ot150: 'שעות נוספות 150%', ot125: 'שעות נוספות 125%', night: 'תוספת לילה', seniority: 'תוספת ותק', travel: 'נסיעות',
+    recuperation: 'דמי הבראה', vacationPay: 'דמי חופשה', sickPay: 'דמי מחלה', holidayPay: 'דמי חגים', bonus: 'בונוס / פרמיה',
+    diff: 'הפרשי שכר', base: 'שכר יסוד', workHours: 'סה״כ שעות', workDays: 'ימי עבודה',
+    otherPay: 'תשלום אחר', otherDed: 'ניכוי אחר',
+  };
+  // i18n-keep-end
+  /** The order a worker reads the money in (the translator's list): money in, deductions, the employer's money,
+   *  the totals (net last), then information. FIELDS keeps its own order: it is the matching order. */
+  const READ_ORDER = ['base', 'ot125', 'ot150', 'rest150', 'rest175', 'rest200', 'night', 'seniority', 'travel', 'recuperation',
+    'vacationPay', 'sickPay', 'holidayPay', 'bonus', 'diff',
+    'incomeTax', 'nationalInsurance', 'healthTax', 'pensionEmployee', 'hishtalmutEmployee',
+    'pensionEmployer', 'severance', 'hishtalmutEmployer',
+    'gross', 'totalDeductions', 'net',
+    'workHours', 'workDays', 'vacationBalance', 'sickBalance', 'creditPoints', 'taxableGross', 'ytdGross', 'ytdTax'];
+  /** What a line does to the worker's money, by its kind. */
+  const KIND_LABEL = { pay: 'תשלום לך', ded: 'ניכוי מהשכר', emp: 'כסף מהמעסיק', total: 'סיכום', info: 'מידע' };
+  /** The Hebrew words of a line as it was read from the payslip (no numbers), or '' when it was typed or read by AI. */
+  function printedTerm(line) {
+    if (!line || line === 'AI') return '';
+    const first = String(line).split(' | ')[0];
+    const t = first.replace(/[\d.,%₪\-+:/()*×]+/g, ' ').replace(/\s+/g, ' ').trim();
+    return HEB.test(t) ? t : '';
+  }
 
   /* ---------------- text helpers ---------------- */
   const HEB = /[֐-׿]/;
@@ -216,6 +325,11 @@
           if (pv.qty != null) cur.qty = (cur.qty || 0) + pv.qty;
           cur.line += ' | ' + line;
           cur.rate = cur.qty ? cur.value / cur.qty : cur.rate;
+        } else if ((f.kind === 'ded' || f.kind === 'emp') && nums.some((x) => !x.pct && x.dec)) {
+          // a second deduction or employer line of the same kind (two pension funds): never dropped silently,
+          // it waits among the lines to name (the translator and the check screen show it)
+          const vals = nums.filter((x) => !x.pct && x.dec);
+          other.push({ line, value: vals[vals.length - 1].v, guess: null });
         }
         continue;
       }
@@ -970,9 +1084,45 @@
           } else change += '.';
         }
       }
-      out.push({ key: f.key, label: f.label, kind: f.kind, value: v, qty: qty(F, f.key), explain: EXPLAIN[f.key] || '', change });
+      const printed = printedTerm(F[f.key] && F[f.key].line);
+      out.push({ key: f.key, label: f.label, kind: f.kind, kindLabel: KIND_LABEL[f.kind], value: v, qty: qty(F, f.key),
+        explain: EXPLAIN[f.key] || '', meaning: MEANING[f.key] || '', meaningHe: MEANING_HE[f.key] || '', heTerm: HE_TERM[f.key] || '',
+        printed: printed && printed !== HE_TERM[f.key] ? printed : '', change });
     }
     return out;
+  }
+  /**
+   * The payslip lines the reader could not name (slip.other), for the translator: each with its original text, its
+   * amount, its index in slip.other and what the person said it is (guess: 'otherPay' / 'otherDed', or null).
+   * A line already turned into a known field (guess = a field key present in F) is left out: it shows as that field.
+   */
+  function unknownLines(other, F) {
+    F = F || {};
+    const out = [];
+    (other || []).forEach((o, i) => {
+      if (!o || FIELD[o.guess] && F[o.guess]) return;
+      const g = o.guess === 'otherPay' || o.guess === 'otherDed' ? o.guess : null;
+      out.push({ index: i, line: String(o.line || ''), value: +o.value || 0, guess: g,
+        kind: g === 'otherPay' ? 'pay' : g === 'otherDed' ? 'ded' : null, kindLabel: g === 'otherPay' ? KIND_LABEL.pay : g === 'otherDed' ? KIND_LABEL.ded : '',
+        heTerm: g ? HE_TERM[g] : '' });
+    });
+    return out;
+  }
+  /**
+   * The person names an unrecognised line (slip.other[index]) from the translator. key: a field key, or
+   * 'otherPay' / 'otherDed'. Returns a new slip (fields and other copied, never the stored record's own objects):
+   * a field key the slip does not have yet takes the line's amount and text.
+   */
+  function labelOther(slip, index, key) {
+    const s = Object.assign({}, slip, { fields: Object.assign({}, slip.fields), other: (slip.other || []).map((o) => Object.assign({}, o)) });
+    const o = s.other[index];
+    if (!o) return s;
+    if (FIELD[key]) {
+      if (s.fields[key]) return s; // already on the slip: keep what was verified
+      s.fields[key] = { value: Math.abs(+o.value || 0), line: o.line };
+      o.guess = key;
+    } else if (key === 'otherPay' || key === 'otherDed') o.guess = key;
+    return s;
   }
 
   /** Notable changes between consecutive slips (for alerts). */
@@ -1027,5 +1177,5 @@
     return s.trim();
   }
 
-  root.Payslip = { FIELDS, FIELD, HOUR_FIELDS, EXPLAIN, normalize, fixVisual, numbersIn, matchField, pickValues, linesFromPdfItems, detectPeriod, parseText, redact, aiSchema, aiPrompt, fromAi, expected, analyze, checkGap, waterfall, explainLines, compareSlips, employerMessage };
+  root.Payslip = { FIELDS, FIELD, HOUR_FIELDS, EXPLAIN, READ_ORDER, MEANING, MEANING_HE, HE_TERM, KIND_LABEL, printedTerm, unknownLines, labelOther, normalize, fixVisual, numbersIn, matchField, pickValues, linesFromPdfItems, detectPeriod, parseText, redact, aiSchema, aiPrompt, fromAi, expected, analyze, checkGap, waterfall, explainLines, compareSlips, employerMessage };
 })(typeof window !== 'undefined' ? window : globalThis);

@@ -469,12 +469,68 @@
       ${changes.length ? `<div class="section-title">${icon('alert', 's')} שינויים מהתלוש הקודם</div><div class="card">${changes.map((c) => `<div class="kv"><span>${esc(c.text)}</span></div>`).join('')}</div>` : ''}
       ${wf ? `<div class="section-title">${icon('chart', 's')} מברוטו לנטו</div><div class="card">${Charts.waterfall(wf, { fmt: (v) => U.money(v), axisFmt: (v) => '₪' + (v >= 1000 ? (v / 1000).toFixed(1).replace('.0', '') + 'K' : Math.round(v)) })}
         <div class="tiny muted">כחול = ברוטו, אדום = ניכויים, ירוק = נטו. לחץ על עמודה לפרטים.</div></div>` : ''}
-      <div class="section-title">${icon('info', 's')} הסבר לכל שורה</div>
-      <div class="list">${lines.map((l) => `<details class="collapse" style="margin:0;border-radius:0"><summary><span style="flex:1">${esc(l.label)}${l.change ? ' <span class="tag warn">שינוי</span>' : ''}</span><span class="money">${l.kind === 'info' ? U.num(l.value, 2) : U.money(l.value)}</span></summary><div class="in small">${esc(l.explain)}${l.qty ? `<br>כמות: ${U.num(l.qty, 2)}` : ''}${l.change ? `<br><b>${esc(l.change)}</b>` : ''}</div></details>`).join('')}</div>
+      ${translatorHtml(slip, lines)}
       ${DISCLAIMER}`;
   }
   function gapCheck(slip, a) {
     try { return Payslip.checkGap(a, slip, App.model); } catch (e) { console.warn('gap check', e); return null; }
+  }
+
+  /* ---------------- the line-by-line translator ----------------
+   * Every line the check knows: its name in the app's language, the Hebrew term as payslips print it (outside
+   * Hebrew), what it is in one plain sentence, the amount, and whether it is money to you, a deduction or the
+   * employer's money. Lines the reader could not name follow, with their original text and a button to name them.
+   * Outside Hebrew a switch adds the Hebrew sentence to each line, to show the employer. */
+  const HE_UI = U.LANG === 'he';
+  const HE_KEY = 'shaati.payslipHe';
+  let heOn = false;
+  try { heOn = localStorage.getItem(HE_KEY) === '1'; } catch (e) { /* private window: off */ }
+  const heBdi = (t, cls) => `<bdi class="${cls}" lang="he" dir="rtl">${esc(t)}</bdi>`;
+  function translatorHtml(slip, lines) {
+    const unknown = Payslip.unknownLines(slip.other, slip.fields);
+    if (!lines.length && !unknown.length) return '';
+    // the order a worker reads the money in: pay, deductions, employer, totals (net last), then information. A line
+    // the person named "other payment" / "other deduction" closes its group; one not named yet follows the totals.
+    const rank = (k) => { const i = Payslip.READ_ORDER.indexOf(k); return i < 0 ? 999 : i; };
+    const known = lines.slice().sort((x, y) => rank(x.key) - rank(y.key));
+    const ordered = [];
+    for (const kind of ['pay', 'ded', 'emp', 'total']) {
+      ordered.push(...known.filter((l) => l.kind === kind));
+      ordered.push(...unknown.filter((u) => u.kind === kind));
+    }
+    ordered.push(...unknown.filter((u) => !u.kind), ...known.filter((l) => !['pay', 'ded', 'emp', 'total'].includes(l.kind)));
+    const amount = (l) => (l.kind === 'info' ? esc(U.num(l.value, 2)) : U.money(l.value));
+    const row = (l) => `<details class="collapse ps-tr-row${l.key === 'net' ? ' ps-tr-net' : ''}" data-k="${l.key}"><summary><span class="ps-tr-h"><span class="ps-tr-l">${esc(l.label)}${l.change ? ' <span class="tag warn">שינוי</span>' : ''}</span>${HE_UI ? '' : heBdi(l.heTerm, 'ps-tr-he')}<span class="ps-k k-${l.kind}">${esc(l.kindLabel)}</span></span><span class="money">${amount(l)}</span></summary>
+      <div class="in small"><div class="ps-tr-m">${esc(l.meaning)}</div>${HE_UI ? '' : `<div class="ps-tr-mhe" lang="he" dir="rtl">${esc(l.meaningHe)}</div>`}
+        ${l.printed ? `<div class="ps-tr-p">בתלוש שלך כתוב: ${heBdi(l.printed, 'ps-tr-pt')}</div>` : ''}
+        <div class="ps-tr-x">${esc(l.explain)}${l.qty ? `<br>כמות: ${U.num(l.qty, 2)}` : ''}</div>${l.change ? `<div class="ps-tr-c"><b>${esc(l.change)}</b></div>` : ''}</div></details>`;
+    const unk = (u) => `<div class="ps-tr-row ps-tr-unk"><div class="ps-tr-uh"><span class="ps-tr-h"><span class="ps-tr-l">${u.guess === 'otherPay' ? 'תשלום אחר' : u.guess === 'otherDed' ? 'ניכוי אחר' : 'שורה שלא זיהינו'}</span>${u.kind ? `<span class="ps-k k-${u.kind}">${esc(u.kindLabel)}</span>` : ''}</span><span class="money">${U.money(Math.abs(u.value))}</span></div>
+      ${heBdi(u.line, 'ps-tr-orig')}
+      <button class="btn tonal sm" data-ps-label="${u.index}">${icon('edit', 's')} ${u.guess ? 'לשנות' : 'מה זה? לסמן'}</button></div>`;
+    return `<div class="section-title">${icon('info', 's')} הסבר לכל שורה</div>
+      <div class="small muted ps-tr-intro">מה כל שורה בתלוש אומרת ומה היא עושה לכסף שלך. לחצו על שורה לפרטים.</div>
+      ${HE_UI ? '' : `<div class="card ps-tr-sw"><label class="switch-row"><span class="body"><span class="t">הצג גם בעברית</span><span class="s">המשפט בעברית ליד כל שורה, כדי להראות למעסיק</span></span><input type="checkbox" class="switch" data-ps-he ${heOn ? 'checked' : ''}></label></div>`}
+      <div class="list ps-tr${heOn ? ' he-on' : ''}" data-ps-tr>${ordered.map((x) => (x.index != null ? unk(x) : row(x))).join('')}</div>`;
+  }
+  /** Name an unrecognised line: a sheet with the line's text and every kind of line the slip does not have yet. */
+  function labelSheet(slip, index, onPick) {
+    const o = (slip.other || [])[index];
+    if (!o) return;
+    const missing = Payslip.FIELDS.filter((f) => !slip.fields[f.key]);
+    const chip = (key, label) => `<button class="chip ps-lb" data-pick="${key}"><span>${esc(label)}</span>${HE_UI || !Payslip.HE_TERM[key] ? '' : heBdi(Payslip.HE_TERM[key], 'ps-lb-he')}</button>`;
+    UI.openSheet({
+      title: 'מה השורה הזאת?',
+      body: `<div class="card ps-lb-line">${heBdi(o.line, 'ps-tr-orig')}<span class="money">${U.money(Math.abs(+o.value || 0))}</span></div>
+        <div class="small muted" style="margin:0 4px 10px">בחרו מה כתוב בשורה. אם לא בטוחים, אפשר לבחור תשלום אחר או ניכוי אחר.</div>
+        <div class="chips wrap">${chip('otherPay', 'תשלום אחר')}${chip('otherDed', 'ניכוי אחר')}</div>
+        ${GROUPS.map(([kind, label]) => { const fs = missing.filter((f) => f.kind === kind); return fs.length ? `<div class="section-title">${label}</div><div class="chips wrap">${fs.map((f) => chip(f.key, f.label)).join('')}</div>` : ''; }).join('')}`,
+      onMount: (el) => el.addEventListener('click', (e) => {
+        const b = e.target.closest('[data-pick]');
+        if (!b) return;
+        UI.closeTop();
+        onPick(b.dataset.pick);
+      }),
+    });
   }
   function analysisSheet(slip) {
     let a = Payslip.analyze(slip, App.model);
@@ -490,8 +546,8 @@
         : `<button class="btn danger" data-del style="flex:0 0 auto" aria-label="מחיקת התלוש">${icon('trash')}</button><button class="btn tonal" data-edit>${icon('edit')} תקן נתונים</button>${slip.fileId ? `<button class="btn tonal" data-file style="flex:0 0 auto">${icon('file')}</button>` : ''}`,
       onMount: (el) => {
         el.addEventListener('input', (e) => { if (e.target.id === 'ps-msg') msgEdited = true; });
-        off = Store.on((ev) => {
-          if (ev && ev.type === 'active') return;
+        // the check runs again on the current numbers and only what changed is drawn again (an edited letter keeps its text)
+        const redraw = () => {
           const body = el.querySelector('.sh-body');
           if (!body || !el.isConnected) return;
           a = Payslip.analyze(slip, App.model);
@@ -503,6 +559,15 @@
           body.scrollTop = y;
           const ta2 = el.querySelector('#ps-msg');
           if (ta2) ta2.value = typed != null ? typed : ta2.textContent;
+        };
+        off = Store.on((ev) => { if (ev && ev.type === 'active') return; redraw(); });
+        // "show in Hebrew too": a class on the list, no redraw (remembered on this phone)
+        el.addEventListener('change', (e) => {
+          if (!e.target.matches('[data-ps-he]')) return;
+          heOn = e.target.checked;
+          try { localStorage.setItem(HE_KEY, heOn ? '1' : '0'); } catch (err) { /* private window */ }
+          const list = el.querySelector('[data-ps-tr]');
+          if (list) list.classList.toggle('he-on', heOn);
         });
         el.addEventListener('click', async (e) => {
           const b = e.target.closest('button');
@@ -520,6 +585,16 @@
           if (b.hasAttribute('data-gc-report')) {
             // an unsaved payslip goes into the archive first, so the report has it
             if (slip.isNew) { UI.closeTop(); await saveSlip(slip, a, c); setTimeout(() => App.claimReport(), 360); } else App.actions['claim-report']();
+            return;
+          }
+          if (b.dataset.psLabel != null) {
+            const index = +b.dataset.psLabel;
+            labelSheet(slip, index, async (key) => {
+              // the named line joins the check: analyze and the gap check run again, then only what changed is drawn
+              slip = Payslip.labelOther(slip, index, key);
+              redraw();
+              if (!slip.isNew) await saveSlip(slip, a, c); // a slip from the archive keeps the name it was given
+            });
             return;
           }
           if (b.hasAttribute('data-copy-msg')) { await UI.copyText(el.querySelector('#ps-msg').value); UI.toast('ההודעה הועתקה'); }

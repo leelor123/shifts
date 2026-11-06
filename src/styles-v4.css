@@ -261,3 +261,38 @@ button.pl-best:active { scale: .98; }
 .sw-note { margin-top: 8px; }
 .sw-clash { margin: 12px 0 0; }
 .sw-clash svg { flex: none; }
+/* the payslip's line-by-line translator (views-payslip.js translatorHtml): name, Hebrew term, kind chip, amount */
+.ps-tr-intro { margin: -4px 4px 10px; }
+.ps-tr-sw { padding: 0; margin-bottom: 10px; }
+.ps-tr .ps-tr-row { margin: 0; border-radius: 0; border: 0; box-shadow: none; }
+.ps-tr .ps-tr-row + .ps-tr-row { border-top: 1px solid var(--line); }
+details.collapse.ps-tr-row > summary { align-items: flex-start; }
+details.collapse.ps-tr-row > summary > .money { flex: none; padding-top: 1px; }
+.ps-tr-h { flex: 1; min-width: 0; display: flex; flex-wrap: wrap; align-items: center; gap: 4px 8px; }
+.ps-tr-l { min-width: 0; }
+/* net to pay: the line the worker looks for, a touch stronger (ink tint, ink amount) */
+.ps-tr .ps-tr-net { background: color-mix(in srgb, var(--brand-strong) 6%, var(--surface-1)); }
+.ps-tr-net .ps-tr-l { font-size: 1.0625rem; }
+.ps-tr-net > summary > .money { color: var(--brand-strong); font-size: 1.0625rem; }
+.ps-tr-he, .ps-tr-orig, .ps-tr-pt, .ps-lb-he { font-family: var(--font); unicode-bidi: isolate; }
+/* a Hebrew run inside a left-to-right page lines up with the words around it */
+html[dir="ltr"] .ps-tr-he, html[dir="ltr"] .ps-tr-orig { text-align: left; }
+.ps-tr-he { flex-basis: 100%; order: 3; font-weight: 500; font-size: .8125rem; color: var(--on-surface-var); }
+.ps-tr.he-on .ps-tr-he { font-size: .9375rem; font-weight: 700; color: var(--brand-strong); }
+.ps-k { flex: none; font-size: .6875rem; font-weight: 700; line-height: 1.5; padding: 1px 8px; border-radius: 999px; background: var(--surface-3); color: var(--on-surface-var); white-space: nowrap; }
+.ps-k.k-pay { background: var(--mint-soft); color: var(--mint); }
+.ps-k.k-ded { background: var(--orange-soft); color: var(--orange); }
+.ps-k.k-emp { background: var(--sky-soft); color: var(--sky); }
+.ps-tr-row .in > div + div { margin-top: 8px; }
+.ps-tr-m { font-size: .9375rem; color: var(--on-surface); }
+.ps-tr-mhe { display: none; padding: 8px 12px; border-radius: 12px; background: var(--surface-2, var(--surface-3)); color: var(--on-surface); font-size: .9375rem; text-align: start; }
+.ps-tr.he-on .ps-tr-mhe { display: block; }
+.ps-tr-p, .ps-tr-x { color: var(--on-surface-var); }
+.ps-tr-unk { padding: 14px 16px; display: grid; gap: 8px; justify-items: start; }
+.ps-tr-uh { display: flex; align-items: flex-start; gap: 8px; width: 100%; font-weight: 700; }
+.ps-tr-uh > .money { flex: none; }
+.ps-tr-orig { display: block; width: 100%; font-size: .875rem; color: var(--on-surface-var); overflow-wrap: break-word; }
+.ps-lb-line { display: flex; align-items: center; gap: 10px; }
+.ps-lb-line .ps-tr-orig { flex: 1; min-width: 0; }
+.ps-lb { flex-direction: column; align-items: flex-start; gap: 0; height: auto; min-height: 36px; padding-block: 6px; }
+.ps-lb-he { font-size: .75rem; font-weight: 500; opacity: .75; }
