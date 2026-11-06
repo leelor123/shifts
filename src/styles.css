@@ -539,8 +539,9 @@ details.collapse > .in { padding: 0 16px 14px; }
 }
 .compare-row + .compare-row { border-top: 1px solid var(--outline-var); }
 .compare-row .h { font-size: .75rem; color: var(--on-surface-var); }
-/* a column title is a short label ("ממוצע 12 ח׳"): one line, and its column as wide as the whole title */
-.compare-row.h > span { white-space: nowrap; }
+/* a column title is two set lines ("ממוצע" over "12 ח׳", a <br> in every language), never a break between its words:
+   all on one line made the table wider than a 360px screen in ru and squeezed the row names */
+.compare-row.h > span { line-height: 1.25; }
 
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { animation: none !important; transition: none !important; }

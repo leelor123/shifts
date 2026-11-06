@@ -1,0 +1,59 @@
+<!doctype html><html lang="he" dir="rtl"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>שעתי 1.35.0: מה אני עושה</title>
+<style>
+body{margin:0;font:16px/1.55 system-ui,Rubik,Arial,sans-serif;background:#f6f4ee;color:#1b1b1b}
+.wrap{max-width:1100px;margin:0 auto;padding:20px 16px 60px}
+h1{font-size:28px;margin:4px 0}.sub{color:#666}
+.row{background:#fff;border-radius:14px;padding:12px 16px;margin:8px 0;display:flex;gap:12px;align-items:flex-start}
+.s{font-size:22px;flex:none;width:30px}.t{font-weight:700}.d{color:#444}
+h2{margin:28px 0 8px;font-size:22px}
+img{max-width:100%;border-radius:12px;box-shadow:0 1px 6px #0002;display:block;margin:8px 0 18px;background:#fff}
+.steps li{margin:6px 0}
+</style></head><body><div class="wrap">
+<h1>שעתי 1.35.0: מה אני עושה עכשיו</h1>
+<div class="sub">הדף מתעדכן כל דקה. עודכן: <span id="t"></span></div>
+
+<h2>עכשיו</h2>
+<div class="row"><div class="s">⏳</div><div><div class="t">סשן נפרד: "הקופסה הכהה" שקצוותיה נראים</div><div class="d">מתקן את המנגנון המשותף בכל המקומות, ומוסיף בדיקה שלא יחזור.</div></div></div>
+<div class="row"><div class="s">⏳</div><div><div class="t">סוכן: הודעות שגיאה ומסכים מבלבלים</div><div class="d">בבדיקות האחרונות.</div></div></div>
+<div class="row"><div class="s">✅</div><div><div class="t">מהירות ונגישות: גמור ומוזג</div><div class="d">ציון המהירות של Google עלה מ-90 ל-98. הפתיחה הראשונה מציגה תוכן אחרי 1.1 שנייה במקום 2.6. אפס בעיות נגישות לפי התקן הישראלי ב-53 מסכים.</div></div></div>
+<div class="row"><div class="s">✅</div><div><div class="t">פעולות שלא עושות כלום: גמור ומוזג</div><div class="d">9 תיקונים: שמירה בלי שינוי לא שומרת, לחיצה כפולה עושה פעם אחת, כל משמרת עולה כתיבה אחת לענן במקום שתיים.</div></div></div>
+<h2>מה נשאר עד שהעדכון באוויר</h2>
+<ol class="steps">
+<li>למזג את שלושת הסוכנים לעדכון</li>
+<li>מספר גרסה 1.35.0, רשימת העדכונים וחלון "מה חדש" ב-7 שפות</li>
+<li>סדרת הבדיקות המלאה (כשעה, לבד)</li>
+<li>לבנות את קובץ האנדרואיד 1.35.0</li>
+<li>בדיקה בטלפון שלך (כ-20 דקות)</li>
+<li>פרסום: האפליקציה, האתר, Google Play ודף החנות ב-6 שפות</li>
+</ol>
+
+<h2>כבר גמור ומשולב בעדכון</h2>
+<div class="row"><div class="s">✅</div><div><div class="t">הפתיחה בלי תקיעות</div><div class="d">נבדק בטלפון שלך, פריים אחרי פריים.</div></div></div>
+<div class="row"><div class="s">✅</div><div><div class="t">הקמע והגרפים בלי תקיעות</div></div></div>
+<div class="row"><div class="s">✅</div><div><div class="t">מדבקת NFC למשמרת</div></div></div>
+<div class="row"><div class="s">✅</div><div><div class="t">כפתור "התחל משמרת" בתפריט המהיר של אנדרואיד</div></div></div>
+<div class="row"><div class="s">✅</div><div><div class="t">ווידג׳טים ותפריט מהיר בשפת האפליקציה (7 שפות)</div></div></div>
+<div class="row"><div class="s">✅</div><div><div class="t">בלי הקו הלבן בתחתית: נראה כמו אפליקציה אמיתית</div></div></div>
+<div class="row"><div class="s">✅</div><div><div class="t">קוד מקום עבודה: "אין הרשאה" תוקן בשרת, וגרסה חדשה רק כשיש שינוי</div></div></div>
+<div class="row"><div class="s">✅</div><div><div class="t">דף החנות ב-6 שפות עם צילומי מסך</div></div></div>
+<div class="row"><div class="s">✅</div><div><div class="t">התאריך במסך הבית נכון בכל שפה</div></div></div>
+<div class="row"><div class="s">✅</div><div><div class="t">שקט: הקמע לא מדבר יותר מהמחשב בזמן בדיקות</div></div></div>
+
+<h2>התמונות עם ההסברים</h2>
+<img src="audit/2-first-visit-same-moment.png" alt="">
+<img src="audit/1-doors-fonts-same-look.png" alt="">
+<img src="audit/3-contrast-payslip-net.png" alt="">
+<img src="audit/4-payslip-check-markup.png" alt="">
+<img src="audit/5-calendar-day-names.png" alt="">
+<img src="audit-noop/3-double-tap.png" alt="">
+<img src="audit-noop/1-shift-save.png" alt="">
+<img src="audit-noop/2-workplace-badge.png" alt="">
+<img src="audit-noop/4-profile-save.png" alt="">
+<img src="07-widgets-workplace.png" alt="">
+<img src="06-nfc.png" alt="">
+<img src="04-mascot-charts.png" alt="">
+<img src="03-store-pages.png" alt="">
+<img src="01-opening-before-after.png" alt="">
+</div>
+<script>document.getElementById('t').textContent=new Date().toLocaleTimeString('he-IL');setTimeout(()=>location.reload(),60000);</script>
+</body></html>

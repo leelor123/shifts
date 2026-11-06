@@ -110,7 +110,7 @@
       ['שעות', (x) => x.hours, (v) => U.num(v, 1)], ['משמרות', (x) => x.shifts, (v) => U.num(v, 1)],
       ['ממוצע לשעה', (x) => x.avgHourly, (v) => U.money(v)], ['שעות למשמרת', (x) => x.avgShift, (v) => U.num(v, 1)],
     ];
-    let h = `<div class="compare" style="--cols:${1 + (a3 ? 1 : 0) + (a12 ? 1 : 0)}"><div class="compare-row h"><span></span><span>קודמת</span>${a3 ? `<span>ממוצע 3 ח׳</span>` : ''}${a12 ? `<span>ממוצע 12 ח׳</span>` : ''}</div>`;
+    let h = `<div class="compare" style="--cols:${1 + (a3 ? 1 : 0) + (a12 ? 1 : 0)}"><div class="compare-row h"><span></span><span>קודמת</span>${a3 ? `<span>ממוצע<br>3 ח׳</span>` : ''}${a12 ? `<span>ממוצע<br>12 ח׳</span>` : ''}</div>`;
     for (const [lab, f, fmt] of rows) {
       const cur = f(t);
       const cell = (v) => `<span class="num">${fmt(v)}</span> ${UI.delta(cur, v, { compact: true })}`;
