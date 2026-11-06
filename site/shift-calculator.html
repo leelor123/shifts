@@ -1,0 +1,186 @@
+<!doctype html>
+<html lang="he" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>כמה שווה המשמרת? מחשבון שכר למשמרת · שעתי</title>
+<meta name="description" content="תאריך, שעות, שכר לשעה, גיל ועיר, ורואים כמה המשמרת שווה לפי חוק העבודה: שבת וחג ב-150% לפי זמני השבת בעיר, שעות נוספות, משמרת לילה ושכר מינימום לפי הגיל. בלי הרשמה.">
+<link rel="canonical" href="https://shaati.web.app/shift-calculator">
+<meta name="theme-color" content="#071a45">
+<meta property="og:type" content="website">
+<meta property="og:locale" content="he_IL">
+<meta property="og:site_name" content="שעתי">
+<meta property="og:title" content="כמה שווה המשמרת? מחשבון שכר למשמרת">
+<meta property="og:description" content="תאריך, שעות, שכר לשעה, גיל ועיר, ורואים כמה המשמרת שווה לפי חוק העבודה: שבת וחג ב-150% לפי זמני השבת בעיר, שעות נוספות, משמרת לילה ושכר מינימום לפי הגיל. בלי הרשמה.">
+<meta property="og:url" content="https://shaati.web.app/shift-calculator">
+<meta property="og:image" content="https://shaati.web.app/img/og.jpg">
+<meta property="og:image:type" content="image/jpeg">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:image:alt" content="שעתי: כמה באמת מגיע לך על כל שעה. האפליקציה בטלפון, עם השכר של החודש">
+<meta name="twitter:card" content="summary_large_image">
+<link rel="icon" href="img/favicon-48.png" sizes="48x48">
+<link rel="apple-touch-icon" href="img/apple-touch-icon.png">
+<link rel="preload" href="fonts/rubik-hebrew.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="preload" href="fonts/rubik-latin.woff2" as="font" type="font/woff2" crossorigin>
+<style id="fonts">@font-face{font-family: 'Shaati Ethiopic'; font-style: normal; font-weight: 100 900; font-display: swap; src: url(fonts/noto-ethiopic.woff2) format('woff2'); unicode-range: U+030E, U+1200-1399, U+2D80-2DDE, U+AB01-AB2E, U+1E7E0-1E7E6, U+1E7E8-1E7EB, U+1E7ED-1E7EE, U+1E7F0-1E7FE;}
+@font-face{font-family: 'Fredoka'; font-style: normal; font-weight: 500 700; font-stretch: 100%; font-display: swap; src: url(fonts/fredoka-latin-ext.woff2) format('woff2'); unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C4, U+2113, U+2C60-2C7F, U+A720-A7FF;}
+@font-face{font-family: 'Fredoka'; font-style: normal; font-weight: 500 700; font-stretch: 100%; font-display: swap; src: url(fonts/fredoka-latin.woff2) format('woff2'); unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;}
+@font-face{font-family: 'Rubik'; font-style: normal; font-weight: 300 800; font-display: swap; src: url(fonts/rubik-arabic.woff2) format('woff2'); unicode-range: U+0600-06FF, U+0750-077F, U+0870-0891, U+0897-08E1, U+08E3-08FF, U+200C-200E, U+2010-2011, U+204F, U+2E41, U+FB50-FDFF, U+FE70-FE74, U+FE76-FEFC, U+102E0-102FB, U+10E60-10E7E, U+10EC2-10EC7, U+10EC9-10EEE, U+10EF0-10EFF, U+1EE00-1EE03, U+1EE05-1EE1F, U+1EE21-1EE22, U+1EE24, U+1EE27, U+1EE29-1EE32, U+1EE34-1EE37, U+1EE39, U+1EE3B, U+1EE42, U+1EE47, U+1EE49, U+1EE4B, U+1EE4D-1EE4F, U+1EE51-1EE52, U+1EE54, U+1EE57, U+1EE59, U+1EE5B, U+1EE5D, U+1EE5F, U+1EE61-1EE62, U+1EE64, U+1EE67-1EE6A, U+1EE6C-1EE72, U+1EE74-1EE77, U+1EE79-1EE7C, U+1EE7E, U+1EE80-1EE89, U+1EE8B-1EE9B, U+1EEA1-1EEA3, U+1EEA5-1EEA9, U+1EEAB-1EEBB, U+1EEF0-1EEF1;}
+@font-face{font-family: 'Rubik'; font-style: normal; font-weight: 300 800; font-display: swap; src: url(fonts/rubik-cyrillic-ext.woff2) format('woff2'); unicode-range: U+0460-052F, U+1C80-1C8A, U+20B4, U+2DE0-2DFF, U+A640-A69F, U+FE2E-FE2F;}
+@font-face{font-family: 'Rubik'; font-style: normal; font-weight: 300 800; font-display: swap; src: url(fonts/rubik-cyrillic.woff2) format('woff2'); unicode-range: U+0301, U+0400-045F, U+0490-0491, U+04B0-04B1, U+2116;}
+@font-face{font-family: 'Rubik'; font-style: normal; font-weight: 300 800; font-display: swap; src: url(fonts/rubik-latin-ext.woff2) format('woff2'); unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C4, U+2113, U+2C60-2C7F, U+A720-A7FF;}
+@font-face{font-family: 'Rubik'; font-style: normal; font-weight: 300 800; font-display: swap; src: url(fonts/rubik-latin.woff2) format('woff2'); unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;}
+@font-face{font-family: 'Fredoka'; font-style: normal; font-weight: 500 700; font-stretch: 100%; font-display: swap; src: url(fonts/fredoka-hebrew.woff2) format('woff2'); unicode-range: U+0307-0308, U+0590-05FF, U+200C-2010, U+20AA, U+25CC, U+FB1D-FB4F;}
+@font-face{font-family: 'Rubik'; font-style: normal; font-weight: 300 800; font-display: swap; src: url(fonts/rubik-hebrew.woff2) format('woff2'); unicode-range: U+0307-0308, U+0590-05FF, U+200C-2010, U+20AA, U+25CC, U+FB1D-FB4F;}</style>
+<script type="application/ld+json">[{"@context":"https://schema.org","@type":"WebApplication","name":"כמה שווה המשמרת? מחשבון שכר למשמרת","url":"https://shaati.web.app/shift-calculator","applicationCategory":"FinanceApplication","operatingSystem":"Any","inLanguage":"he-IL","isAccessibleForFree":true,"offers":{"@type":"Offer","price":0,"priceCurrency":"ILS"},"description":"תאריך, שעות, שכר לשעה, גיל ועיר, ורואים כמה המשמרת שווה לפי חוק העבודה: שבת וחג ב-150% לפי זמני השבת בעיר, שעות נוספות, משמרת לילה ושכר מינימום לפי הגיל. בלי הרשמה."},{"@context":"https://schema.org","@type":"FAQPage","mainEntity":[{"@type":"Question","name":"כמה משלמים על שעה בשבת או בחג?","acceptedAnswer":{"@type":"Answer","text":"לפחות 150% מהשכר הרגיל לשעה. שעה נוספת בשבת: 175% לשתי הראשונות ו-200% מהשלישית. השבת נמדדת מכניסת השבת ועד צאתה בעיר שבה עובדים."}},{"@type":"Question","name":"מתי מתחילות שעות נוספות במשמרת?","acceptedAnswer":{"@type":"Answer","text":"בשבוע עבודה של 5 ימים אחרי 8 שעות ו-36 דקות ביום, ובמשמרת לילה אחרי 7 שעות. השעתיים הנוספות הראשונות שוות 125%, ומהשלישית 150%. גם שעות מעל 42 בשבוע הן שעות נוספות. המחשבון מחשב שבוע של 5 ימים."}},{"@type":"Question","name":"יש תוספת על משמרת לילה?","acceptedAnswer":{"@type":"Answer","text":"החוק לא קובע תוספת לילה בשקלים. משמרת לילה (שעתיים לפחות בין 22:00 ל-06:00) קצרה יותר: אחרי 7 שעות מתחילות שעות נוספות. תוספת לילה מגיעה רק אם היא בהסכם או בחוזה."}},{"@type":"Question","name":"ההפסקה משולמת?","acceptedAnswer":{"@type":"Answer","text":"במשמרת של 6 שעות ומעלה מגיעה הפסקה של 45 דקות. אם מותר לך לצאת בה ממקום העבודה, המעסיק לא חייב לשלם עליה. אם צריך להישאר זמין/ה, היא נחשבת שעות עבודה. במחשבון מסמנים אם ההפסקה לא משולמת."}},{"@type":"Question","name":"אילו חגים משולמים כמו שבת?","acceptedAnswer":{"@type":"Answer","text":"ראש השנה (שני הימים), יום כיפור, סוכות, שמיני עצרת, פסח (היום הראשון והשביעי), שבועות ויום העצמאות. המחשבון מכיר את התאריכים בלוח העברי ואת זמני הכניסה והיציאה בעיר."}}]},{"@context":"https://schema.org","@type":"BreadcrumbList","itemListElement":[{"@type":"ListItem","position":1,"name":"שעתי","item":"https://shaati.web.app/"},{"@type":"ListItem","position":2,"name":"כמה שווה המשמרת? מחשבון שכר למשמרת","item":"https://shaati.web.app/shift-calculator"}]}]</script>
+<style>
+:root { --bg: #f7f8fb; --surface: #fff; --surface-2: #eef1f8; --ink: #0f1a33; --ink-2: #556078; --line: #e2e6ef; --brand: #0d2b6b; --brand-2: #16398a; --gold: #e9c987; --cta-1: #0d2b6b; --cta-2: #06173d; color-scheme: light; }
+@media (prefers-color-scheme: dark) { :root { --bg: #0a0f1f; --surface: #111a30; --surface-2: #16203a; --ink: #eef1f8; --ink-2: #a4adc4; --line: #222c46; --brand: #a9c0f2; --brand-2: #c3d3f7; color-scheme: dark; } }
+* { box-sizing: border-box; }
+[hidden] { display: none !important; } /* (a rule that sets display would show what is hidden) */
+body { margin: 0; background: var(--bg); color: var(--ink); font: 400 1.05rem/1.7 Rubik, system-ui, sans-serif; overflow-wrap: break-word; }
+a { color: var(--brand); }
+header { position: sticky; top: 0; z-index: 2; background: rgba(7, 26, 69, .92); backdrop-filter: blur(16px) saturate(150%); -webkit-backdrop-filter: blur(16px) saturate(150%); color: #fff; }
+.bar { max-width: 760px; margin: 0 auto; display: flex; align-items: center; gap: 12px; padding: 10px max(16px, env(safe-area-inset-right)) 10px max(16px, env(safe-area-inset-left)); }
+.bar a.logo { display: flex; align-items: center; gap: 10px; min-height: 44px; color: #fff; text-decoration: none; font: 600 1.2rem Rubik, sans-serif; margin-inline-end: auto; }
+.bar img { width: 36px; height: 36px; border-radius: 10px; }
+.btn { display: inline-flex; align-items: center; justify-content: center; gap: 8px; border-radius: 999px; background: linear-gradient(135deg, var(--cta-1), var(--cta-2)); color: #fff; font-weight: 700; text-decoration: none; padding: 10px 20px; white-space: nowrap; }
+.bar .btn { background: linear-gradient(180deg, #f3dca8, var(--gold)); color: #141821; font-weight: 600; transition: transform .16s cubic-bezier(.23, 1, .32, 1); }
+.btn:active { transform: scale(.97); }
+main { max-width: 760px; margin: 0 auto; padding: 28px max(16px, env(safe-area-inset-right)) 48px max(16px, env(safe-area-inset-left)); }
+nav.crumbs { font-size: .9rem; color: var(--ink-2); margin-bottom: 10px; }
+/* links a finger can hit (launch check 7: 17 px tall) */
+nav.crumbs a, footer a { display: inline-block; padding-block: 10px; }
+h1 { font: 700 clamp(1.7rem, 5vw, 2.4rem)/1.25 Rubik, sans-serif; margin: 0 0 16px; text-wrap: balance; }
+h2 { font: 700 1.35rem/1.35 Rubik, sans-serif; margin: 34px 0 10px; text-wrap: balance; }
+.answer { background: var(--surface); border-radius: 20px; padding: 18px 20px; box-shadow: 0 6px 24px rgba(10, 20, 45, .08); border: 1px solid var(--line); font-size: 1.12rem; }
+.tbl { overflow-x: auto; background: var(--surface); border-radius: 18px; box-shadow: 0 6px 24px rgba(10, 20, 45, .06); }
+table { width: 100%; border-collapse: collapse; }
+th, td { padding: 11px 10px; text-align: start; border-bottom: 1px solid var(--line); }
+td { white-space: nowrap; }
+td:first-child { white-space: normal; } /* the label wraps between words; the numbers stay on one line */
+th { line-height: 1.3; }
+@media (max-width: 420px) { th, td { padding: 10px 8px; font-size: .95rem; } }
+th { font-size: .9rem; color: var(--ink-2); font-weight: 600; background: var(--surface-2); }
+tr:last-child td { border-bottom: 0; }
+.cta { margin: 36px 0 8px; background: radial-gradient(110% 120% at 90% 0%, #1b3f8f 0%, transparent 60%), linear-gradient(160deg, var(--cta-1), var(--cta-2)); color: #fff; border-radius: 24px; padding: 22px; display: grid; gap: 12px; }
+.cta b { font: 700 1.25rem Rubik, sans-serif; }
+.cta .btn { background: linear-gradient(180deg, #f3dca8, var(--gold)); color: #141821; justify-self: start; }
+details { background: var(--surface); border-radius: 16px; padding: 12px 16px; margin: 10px 0; }
+summary { font-weight: 600; cursor: pointer; min-height: 44px; display: flex; align-items: center; }
+details p { margin: 8px 0 0; color: var(--ink-2); }
+.src, .note { font-size: .92rem; color: var(--ink-2); }
+.note { margin-top: 26px; padding: 14px 16px; border: 1px dashed var(--line); border-radius: 14px; }
+.more { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 10px; }
+.more a { background: var(--surface); border-radius: 999px; padding: 8px 14px; text-decoration: none; box-shadow: 0 2px 10px rgba(10, 20, 45, .06); }
+footer { text-align: center; color: var(--ink-2); font-size: .9rem; padding: 0 16px 32px; }
+/* a keyboard user skips the header, and sees where the focus is: the home page's skip link and a 2 px ring (accessibility
+ * audit C); on the dark header and the dark boxes the ring is gold or white */
+.skip { position: absolute; inset-inline-start: 12px; top: -60px; z-index: 50; background: var(--gold); color: #141821; padding: 10px 16px; border-radius: 12px; font-weight: 600; text-decoration: none; }
+.skip:focus { top: 12px; }
+:focus-visible { outline: 2px solid var(--brand); outline-offset: 2px; }
+header :focus-visible, .cta :focus-visible { outline-color: var(--gold); }
+.nw { white-space: nowrap; }
+.ck { background: var(--surface); border-radius: 22px; padding: 18px; box-shadow: 0 6px 24px rgba(10, 20, 45, .08); display: grid; gap: 16px; }
+.ck label, .ck .q { font-weight: 600; display: grid; gap: 8px; }
+.ages { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 8px; }
+.ages button { font: 600 1rem Rubik, sans-serif; border: 1.5px solid var(--line); background: var(--bg); color: var(--ink); border-radius: 14px; padding: 12px 4px; cursor: pointer; }
+.ages button[aria-pressed="true"] { border-color: var(--brand); background: var(--surface-2); color: var(--brand); }
+.ck input:not([type=checkbox]) { font: 600 1.15rem Rubik, sans-serif; padding: 12px 14px; border: 1.5px solid var(--line); border-radius: 14px; background: var(--bg); color: var(--ink); width: 100%; box-sizing: border-box; }
+.ck input:not([type=checkbox]):focus { outline: 2px solid var(--brand); outline-offset: 1px; }
+.ck .sw { display: flex; align-items: center; gap: 10px; font-weight: 500; min-height: 44px; }
+.ck .sw input { width: 22px; height: 22px; accent-color: var(--brand); }
+.ck small { color: var(--ink-2); font-weight: 400; }
+/* a value that cannot be right: said in words, and no result under it */
+.ck-err { margin: 0; color: #b42318; font-weight: 500; }
+@media (prefers-color-scheme: dark) { .ck-err { color: #ff9b8f; } }
+.ck input[aria-invalid=true] { border-color: #b42318; }
+#ck-out { border-radius: 22px; padding: 20px; display: grid; gap: 8px; text-align: center; color: #fff; }
+#ck-out.bad { background: linear-gradient(160deg, #8f1d33, #c2334d); }
+#ck-out.good { background: linear-gradient(135deg, #0b7a4b, #14b8a6); }
+#ck-title { font: 700 1.5rem Rubik, sans-serif; }
+#ck-big { font: 800 clamp(1.6rem, 7vw, 2.3rem)/1.2 Rubik, sans-serif; }
+#ck-why { opacity: .92; }
+.ck-acts { display: flex; flex-wrap: wrap; gap: 10px; justify-content: center; margin-top: 6px; }
+.ck-acts button { font: 700 1rem Rubik, sans-serif; border: 0; border-radius: 999px; padding: 12px 18px; cursor: pointer; background: #fff; color: #0d2b6b; }
+.ck-acts button.wa { background: #25d366; color: #063b1c; }
+.priv { font-size: .92rem; color: var(--ink-2); text-align: center; }
+#ck-out :focus-visible { outline-color: #fff; }
+.sc-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+.ck select { font: 600 1.1rem Rubik, sans-serif; padding: 12px 14px; border: 1.5px solid var(--line); border-radius: 14px; background: var(--bg); color: var(--ink); width: 100%; min-height: 50px; }
+.ck select:focus { outline: 2px solid var(--brand); outline-offset: 1px; }
+.ck input[type=date], .ck input[type=time] { min-height: 50px; font-variant-numeric: tabular-nums; }
+#sc-out { display: grid; gap: 14px; margin-top: 18px; }
+.sc-total { background: radial-gradient(110% 120% at 90% 0%, #1b3f8f 0%, transparent 60%), linear-gradient(160deg, var(--cta-1), var(--cta-2)); color: #fff; border-radius: 24px; padding: 20px 22px; display: grid; gap: 4px; }
+.sc-total .lbl { color: #dfe6f5; font-weight: 500; }
+#sc-total { font: 700 clamp(2.2rem, 10vw, 3rem)/1.15 Rubik, sans-serif; color: var(--gold); letter-spacing: -0.03em; font-variant-numeric: tabular-nums; }
+#sc-when { color: #dfe6f5; font-size: .95rem; }
+.sc-total button { justify-self: start; margin-top: 10px; font: 700 1rem Rubik, sans-serif; border: 0; border-radius: 999px; padding: 12px 20px; min-height: 44px; cursor: pointer; background: #fff; color: #0d2b6b; transition: transform .16s cubic-bezier(.23, 1, .32, 1); }
+.sc-total button:active { transform: scale(.97); }
+.sc-total :focus-visible { outline-color: var(--gold); }
+#sc-share-ok { margin: 0; color: #dfe6f5; font-size: .95rem; }
+.tbl td:nth-child(n+2), .tbl th:nth-child(n+2) { text-align: end; font-variant-numeric: tabular-nums; }
+.tbl .pct { color: var(--ink-2); font-size: .9rem; }
+.tbl tr.sum td { background: var(--surface-2); font-weight: 600; }
+.sc-warn { margin: 0; background: #fff4e5; color: #6b3a00; border: 1px solid #f3c98b; border-radius: 16px; padding: 14px 16px; }
+@media (prefers-color-scheme: dark) { .sc-warn { background: #2b1d08; color: #ffd9a3; border-color: #6b4a1a; } }
+#sc-notes { margin: 0; padding: 0; padding-inline-start: 18px; display: grid; gap: 8px; color: var(--ink-2); }
+#sc-notes b { color: var(--ink); }
+.sc-app { margin: 4px 0 0; }</style>
+</head>
+<body>
+<a class="skip" href="#main">דילוג לתוכן</a>
+<header><div class="bar"><a class="logo" href="./"><img src="img/apple-touch-icon.png" alt="">שעתי</a><a class="btn" href="https://leelor123.github.io/shifts/?from=site">לפתוח את שעתי</a></div></header>
+<main id="main">
+  <nav class="crumbs" aria-label="ניווט"><a href="./">שעתי</a> › כמה שווה המשמרת?</nav>
+  <h1>כמה שווה המשמרת?</h1>
+  <p>ממלאים את פרטי המשמרת ורואים כמה היא שווה לפי חוק העבודה: שבת וחג לפי הזמנים בעיר, שעות נוספות, משמרת לילה ושכר מינימום לפי הגיל. החישוב רץ בטלפון שלך, באותו מנוע שמחשב משמרות באפליקציה שעתי. בלי הרשמה, ושום דבר לא נשלח.</p>
+  <div class="ck" data-sc>
+    <label for="sc-date"><span>תאריך</span><input id="sc-date" type="date" required aria-describedby="sc-err"></label>
+    <div class="sc-row">
+      <label for="sc-start"><span>התחלה</span><input id="sc-start" type="time" value="16:00" required aria-describedby="sc-err"></label>
+      <label for="sc-end"><span>סיום</span><input id="sc-end" type="time" value="23:00" required aria-describedby="sc-err"></label>
+    </div>
+    <label for="sc-rate"><span>שכר לשעה (₪)</span><input id="sc-rate" type="text" inputmode="decimal" autocomplete="off" value="40" aria-describedby="sc-err"></label>
+    <div class="q">גיל
+      <div class="ages" role="group" aria-label="גיל">
+        <button type="button" data-age="u16" aria-pressed="false">מתחת ל-16</button>
+        <button type="button" data-age="a16" aria-pressed="false">16</button>
+        <button type="button" data-age="a17" aria-pressed="false">17</button>
+        <button type="button" data-age="adult" aria-pressed="true">18 ומעלה</button>
+      </div>
+    </div>
+    <label for="sc-city"><span>עיר <small>(לזמני השבת והחג)</small></span><select id="sc-city"><option>אום אל-פחם</option><option>אופקים</option><option>אור יהודה</option><option>אור עקיבא</option><option>אילת</option><option>אלעד</option><option>אריאל</option><option>אשדוד</option><option>אשקלון</option><option>באקה אל-גרביה</option><option>באר יעקב</option><option>באר שבע</option><option>בית שאן</option><option>בית שמש</option><option>ביתר עילית</option><option>בני ברק</option><option>בת ים</option><option>ג׳דיידה-מכר</option><option>גבעת זאב</option><option>גבעת שמואל</option><option>גבעתיים</option><option>גדרה</option><option>גן יבנה</option><option>גני תקווה</option><option>דימונה</option><option>הוד השרון</option><option>הרצלייה</option><option>זכרון יעקב</option><option>חדרה</option><option>חולון</option><option>חורה</option><option>חיפה</option><option>חריש</option><option>טבריה</option><option>טייבה</option><option>טירה</option><option>טירת כרמל</option><option>טמרה</option><option>יבנה</option><option>יהוד-מונוסון</option><option>יקנעם עילית</option><option>ירושלים</option><option>כסיפה</option><option>כפר יונה</option><option>כפר כנא</option><option>כפר מנדא</option><option>כפר סבא</option><option>כפר קאסם</option><option>כפר קרע</option><option>כרמיאל</option><option>לוד</option><option>מבשרת ציון</option><option>מגאר</option><option>מגדל העמק</option><option>מודיעין עילית</option><option>מודיעין-מכבים-רעות</option><option>מעלה אדומים</option><option>מעלות-תרשיחא</option><option>נהרייה</option><option>נוף הגליל</option><option>נס ציונה</option><option>נצרת</option><option>נשר</option><option>נתיבות</option><option>נתניה</option><option>סח׳נין</option><option>עכו</option><option>עפולה</option><option>עראבה</option><option>ערד</option><option>ערערה</option><option>ערערה-בנגב</option><option>פרדס חנה-כרכור</option><option>פתח תקווה</option><option>צפת</option><option>קדימה-צורן</option><option>קלנסווה</option><option>קריית אונו</option><option>קריית אתא</option><option>קריית ביאליק</option><option>קריית גת</option><option>קריית ים</option><option>קריית מוצקין</option><option>קריית מלאכי</option><option>קריית שמונה</option><option>ראש העין</option><option>ראשון לציון</option><option>רהט</option><option>רחובות</option><option>ריינה</option><option>רמלה</option><option>רמת גן</option><option>רמת השרון</option><option>רעננה</option><option>שדרות</option><option>שוהם</option><option>שפרעם</option><option selected>תל אביב-יפו</option><option>תל שבע</option></select></label>
+    <label class="sw"><input id="sc-unpaid" type="checkbox"> ההפסקה לא משולמת</label>
+  </div>
+  <p id="sc-err" class="ck-err" role="alert" hidden></p>
+  <div id="sc-out" hidden>
+    <div class="sc-total">
+      <span class="lbl">המשמרת שווה</span>
+      <span id="sc-total" aria-live="polite"></span>
+      <span id="sc-when"></span>
+      <button type="button" id="sc-share">שיתוף התוצאה</button>
+      <p id="sc-share-ok" role="status" hidden></p>
+    </div>
+    <p id="sc-min" class="sc-warn" hidden></p>
+    <div class="tbl"><table aria-label="פירוט השכר של המשמרת"><thead><tr><th>סוג השעות</th><th>שעות</th><th>סכום</th></tr></thead><tbody id="sc-rows"></tbody></table></div>
+    <ul id="sc-notes" hidden></ul>
+    <p id="sc-tz" class="sc-warn" hidden>השעון בטלפון שלך לא על שעון ישראל, ולכן זמני השבת והלילה בחישוב זזים לפי השעון שלך.</p>
+  </div>
+  <div class="cta"><b>כל משמרת, מחושבת לבד</b><span>באפליקציה רושמים משמרת בלחיצה, ושעתי מחשבת כל אחת כמו כאן, מסכמת את החודש ומשווה לתלוש. חינם ובלי פרסומות, ומנוי Plus לבחירה.</span><a class="btn" href="https://leelor123.github.io/shifts/?from=site">לחשב כל משמרת אוטומטית באפליקציה</a></div>
+  <h2>שאלות נפוצות</h2>
+  <details><summary>כמה משלמים על שעה בשבת או בחג?</summary><p>לפחות 150% מהשכר הרגיל לשעה. שעה נוספת בשבת: 175% לשתי הראשונות <span class="nw">ו-200%</span> מהשלישית. השבת נמדדת מכניסת השבת ועד צאתה בעיר שבה עובדים.</p></details>
+  <details><summary>מתי מתחילות שעות נוספות במשמרת?</summary><p>בשבוע עבודה של 5 ימים אחרי 8 שעות <span class="nw">ו-36</span> דקות ביום, ובמשמרת לילה אחרי 7 שעות. השעתיים הנוספות הראשונות שוות 125%, ומהשלישית 150%. גם שעות מעל 42 בשבוע הן שעות נוספות. המחשבון מחשב שבוע של 5 ימים.</p></details>
+  <details><summary>יש תוספת על משמרת לילה?</summary><p>החוק לא קובע תוספת לילה בשקלים. משמרת לילה (שעתיים לפחות בין 22:00 <span class="nw">ל-06:00)</span> קצרה יותר: אחרי 7 שעות מתחילות שעות נוספות. תוספת לילה מגיעה רק אם היא בהסכם או בחוזה.</p></details>
+  <details><summary>ההפסקה משולמת?</summary><p>במשמרת של 6 שעות ומעלה מגיעה הפסקה של 45 דקות. אם מותר לך לצאת בה ממקום העבודה, המעסיק לא חייב לשלם עליה. אם צריך להישאר זמין/ה, היא נחשבת שעות עבודה. במחשבון מסמנים אם ההפסקה לא משולמת.</p></details>
+  <details><summary>אילו חגים משולמים כמו שבת?</summary><p>ראש השנה (שני הימים), יום כיפור, סוכות, שמיני עצרת, פסח (היום הראשון והשביעי), שבועות ויום העצמאות. המחשבון מכיר את התאריכים בלוח העברי ואת זמני הכניסה והיציאה בעיר.</p></details>
+  <p class="src">המקור הרשמי: <a href="https://www.gov.il/he/Departments/Guides/weekends-and-holidays" rel="noopener">מנוחה שבועית וחגים ב-gov.il</a> · <a href="https://www.gov.il/he/Departments/Guides/overtime-and-extra-hours" rel="noopener">שעות נוספות ב-gov.il</a> · <a href="https://www.gov.il/he/Departments/Guides/minimum-wage" rel="noopener">שכר מינימום ב-gov.il</a> · <a href="https://www.gov.il/he/Departments/Guides/rights-of-working-youth" rel="noopener">זכויות בני נוער בעבודה ב-gov.il</a></p>
+  <div class="note">שעתי אינה גוף ממשלתי ואינה מייצגת גוף ממשלתי. החישוב כללי ואינו ייעוץ משפטי: לפי חוק שעות עבודה ומנוחה, שבוע עבודה של 5 ימים ושכר המינימום מ-1.4.2026, בלי נסיעות, תוספות והסכמים. בהסכם קיבוצי, צו הרחבה ענפי או חוזה אישי ייתכנו זכויות נוספות. עודכן ב-6.11.2026.</div>
+  <h2>עוד שאלות</h2>
+  <div class="more"><a href="check">מרמים אותך? בדיקה של 10 שניות</a><a href="minimum-wage">שכר מינימום 2026: כמה מגיע לשעה, גם לנוער</a><a href="recuperation-pay">דמי הבראה 2026: כמה משלמים ליום, וכמה ימים מגיעים</a><a href="overtime">שעות נוספות: מתי מתחילות וכמה משלמים?</a><a href="sick-pay">ימי מחלה: כמה צוברים וכמה משלמים?</a><a href="travel-expenses">נסיעות לעבודה: כמה המעסיק צריך להחזיר?</a><a href="shabbat-pay">כמה משלמים על עבודה בשבת ובחג?</a><a href="tax-refund">מגיע לי החזר מס? מי זכאי, כמה ואיך מגישים</a></div>
+</main>
+<footer>שעתי · <a href="./">לאתר</a> · <a href="privacy">פרטיות</a> · <a href="accessibility">הצהרת נגישות</a> · <a href="mailto:lybtn48@gmail.com">יצירת קשר</a></footer>
+<script src="calc.js"></script>
+</body>
+</html>
