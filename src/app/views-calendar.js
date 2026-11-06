@@ -49,7 +49,7 @@
       const hd = HebCal.hebrewDate(k);
       const dots = d ? d.shifts.slice(0, 4).map((r) => { const role = App.role(r.segments[0] ? r.segments[0].roleId : null); return `<i class="${r.status === 'planned' ? 'pl' : ''}" style="background:${role ? role.color : '#999'};color:${role ? role.color : '#999'}"></i>`; }).join('') + d.entries.slice(0, 2).map((e) => `<i style="background:var(--outline)"></i>`).join('') : '';
       const isBest = !!best && inMonth && best.r.dateKey === k;
-      cells += `<button class="cal-day ${inMonth ? '' : 'other'} ${rest ? 'rest' : ''} ${k === today ? 'today' : ''} ${isBest ? 'best' : ''}" data-act="cal-day" data-k="${k}" aria-label="${U.fmtDate(k, 'long')}">
+      cells += `<button class="cal-day ${inMonth ? '' : 'other'} ${rest ? 'rest' : ''} ${k === today ? 'today' : ''} ${isBest ? 'best' : ''}" data-act="cal-day" data-k="${k}" aria-label="${U.fmtDate(k, 'long')}${d && d.total ? ', ' + shortMoney(d.total) : d && d.plan && inMonth ? ', ' + shortMoney(d.plan) : ''}">
         ${d && d.ov ? '<span class="ovr" title="עקיפה ידנית"></span>' : ''}${hol.some((h) => h.rest) ? '<span class="hol">🕯</span>' : hol.length ? '<span class="hol">•</span>' : ''}
         <span class="dn">${+k.slice(8)}</span><span class="hd">${hd.dayStr}</span><span class="dots">${dots}</span>${d && d.total ? `<span class="amt">${shortMoney(d.total)}</span>` : d && d.plan && inMonth ? `<span class="amt pl">${shortMoney(d.plan)}</span>` : ''}</button>`;
     }

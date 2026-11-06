@@ -878,6 +878,11 @@
     // one value decides both: whether they open (below) and whether the doors written into the page go now (unseen,
     // under the opening show); two conditions that could differ left them covering the screen (tests without sign-in)
     App.needDoors = !!(root.FIREBASE_CONFIG && !S.meta.cloudUid && root.Lang && !root.Lang.stored() && !S.settings.onboarded);
+    // a first visit (nothing of the app ever kept here, index.html lp-bare): the doors are the whole screen and nothing on
+    // them needs Google, so the sign-in's code (three files, ~250 KB, and Google's own scripts after them) waits until
+    // they are left. It downloaded and ran while the doors were the only thing to draw: Lighthouse counted its work as
+    // the doors' blocking time (6 Nov 2026). A sign-in link from an e-mail still finishes at once.
+    App.bareDoors = App.needDoors && document.documentElement.classList.contains('lp-bare') && !/[?&]oobCode=/.test(location.search);
     if (!App.needDoors) {
       const lp = document.getElementById('lp-static');
       if (lp) lp.remove();
@@ -889,7 +894,7 @@
     // the sign-in's code downloads from here on (before, it started with the page and the first screen's paint waited on
     // three large files; on a first open Google is needed only at the end of the questions, a returning user's account
     // reconnects behind the screen)
-    if (root.Cloud && root.Cloud.preload) root.Cloud.preload();
+    if (root.Cloud && root.Cloud.preload && !App.bareDoors) root.Cloud.preload();
     // the tax brackets follow the law of each tax year: a stored table that is some year's own (a default an earlier
     // version saved) becomes this year's, so the settings show what is used; a table the user typed stays theirs
     {
@@ -977,13 +982,16 @@
       return;
     }
     // nobody has signed in on this phone yet
-    const starting = Cloud.start().catch((e) => { console.warn('sign-in not available yet', e); return null; });
+    const start = () => Cloud.start().catch((e) => { console.warn('sign-in not available yet', e); return null; });
+    // a first visit: after the doors (App.bareDoors), once their exit (~0.6 s) is over and the phone is idle
+    const starting = App.bareDoors ? null : start();
     // the very first open: which language (another one reopens the app in it)
     if (App.needDoors) await root.Lang.firstRun();
     if (!S.settings.onboarded) App.sheetsApi.onboarding({ preLogin: true });
     else App.showLogin();
+    const later = () => new Promise((r) => setTimeout(() => (root.requestIdleCallback ? root.requestIdleCallback(r, { timeout: 2000 }) : r()), 900)).then(start);
     // back from a full-page Google sign-in, or a sign-in that was already in the browser: finish it
-    starting.then(async (user) => {
+    (starting || later()).then(async (user) => {
       if (!user || S.meta.cloudUid || App.blocking === 'onboarding') return; // the questions connect at their last step
       try { await Cloud.connect(user); } catch (e) { console.error(e); App.showLogin(navigator.onLine ? 'error' : 'offline'); return; }
       App.blocking = null;
