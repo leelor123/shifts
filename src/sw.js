@@ -201,8 +201,40 @@ self.addEventListener('fetch', (e) => {
   })());
 });
 
+/* ---- the notification that stays while a shift runs (app/run-note.js, core/runnote.js) ----
+ * Its "end shift" button: the tap is kept here with its time and the shift it was on, and the app is opened (or
+ * told, when it is open); the app ends that shift at the tapped time and opens its screen. Its body opens the app on
+ * the home screen. Swiped away by hand: the app does not show it again for that shift. */
+const RUN_TAG = 'shaati-running';
+async function runKept(fn) {
+  const c = await caches.open('shiftpay-shown');
+  const r = await c.match('./__runnote');
+  const o = r ? await r.json().catch(() => ({})) : {};
+  fn(o);
+  await c.put('./__runnote', new Response(JSON.stringify(o), { headers: { 'Content-Type': 'application/json' } }));
+}
+async function closeRunning() {
+  try { (await self.registration.getNotifications({ tag: RUN_TAG })).forEach((n) => n.close()); } catch (err) { /* ignore */ }
+}
+async function runClick(e) {
+  const d = e.notification.data || {};
+  const stop = e.action === 'stop';
+  if (stop && d.run) await runKept((o) => { o.stop = { at: Date.now(), start: d.run }; }).catch(() => {});
+  const msg = { type: stop ? 'shaati-run-stop' : 'shaati-go-home' };
+  const all = await self.clients.matchAll({ type: 'window', includeUncontrolled: true });
+  for (const c of all) {
+    if ('focus' in c) { try { await c.focus(); } catch (err) { /* ignore */ } c.postMessage(msg); return; }
+  }
+  if (self.clients.openWindow) await self.clients.openWindow('./#home');
+}
+self.addEventListener('notificationclose', (e) => {
+  const d = e.notification.data || {};
+  if (e.notification.tag === RUN_TAG && d.run) e.waitUntil(runKept((o) => { o.closed = d.run; }).catch(() => {}));
+});
+
 self.addEventListener('notificationclick', (e) => {
   e.notification.close();
+  if (e.notification.tag === RUN_TAG) { e.waitUntil(runClick(e)); return; }
   const url = (e.notification.data && e.notification.data.url) || './';
   e.waitUntil((async () => {
     const all = await self.clients.matchAll({ type: 'window', includeUncontrolled: true });
@@ -243,6 +275,10 @@ function readDb() {
 }
 async function backgroundCheck() {
   const d = await readDb();
+  // the running-shift notification: closed when the phone's data has no running shift (or the switch is off) and it
+  // was left behind (the app was closed before it could close it). A stop on another phone or on a widget reaches
+  // this data only when the app opens, so until then it stays
+  if (d) { const A0 = (d.settings && d.settings.alerts) || {}; if (!d.activeShift || A0.runNote !== true || A0.push === false) await closeRunning(); }
   if (!d || !d.settings || !d.settings.alerts || d.settings.alerts.push === false) return;
   const A = d.settings.alerts;
   const types = A.types || {};

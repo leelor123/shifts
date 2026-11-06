@@ -756,6 +756,15 @@
     </div>`;
   }
 
+  /** The notification that stays while a shift runs (app/run-note.js): a switch of its own, since turning it on asks
+   *  the phone for permission first (mount below), and it stays off when the answer is no. */
+  function runNoteRow(A, perm) {
+    const on = A.runNote === true;
+    const sub = !on ? 'מתי התחלת, בערך כמה הרווחת וכפתור לסיום. בלי צליל'
+      : perm === 'granted' ? 'בלי צליל. הסכום מתעדכן כשהאפליקציה פתוחה'
+        : 'ההתראות חסומות בטלפון, ולכן היא לא מופיעה';
+    return `<label class="switch-row"><span class="body"><span class="t">התראה קבועה בזמן משמרת</span><span class="s">${sub}</span></span><input type="checkbox" class="switch" data-runnote ${on ? 'checked' : ''}></label>`;
+  }
   RENDER.alerts = {
     render: () => {
       const A = S.settings.alerts;
@@ -771,6 +780,7 @@
         <div class="section-title">חדשות טובות</div><div class="card">${t('record', 'שיא אישי')}${t('goal', 'הגעת ליעד החודשי')}${t('birthday', 'יום הולדת')}</div>
         <div class="section-title">כסף שמגיע לך</div><div class="card">${t('holidayPay', 'דמי חגים שלא שולמו')}${t('taxrefund', 'ייתכן שמגיע לך החזר מס')}</div>
         <div class="section-title">תזכורות</div><div class="card">
+          ${runNoteRow(A, perm)}
           ${t('timer', 'שכחתי לסיים משמרת')}<div class="grid2">${F.num('אחרי (שעות)', 's.alerts.timerHours', A.timerHours)}</div>
           ${F.sw('לפני משמרת מתוכננת', A.remindPlanned === true ? remindSummary(A) : 'כבוי', 's.alerts.remindPlanned', A.remindPlanned === true).replace('data-s=', 'data-redraw data-s=')}
           ${A.remindPlanned === true ? remindBox(A) : ''}
@@ -802,6 +812,16 @@
         const n = +el.querySelector('#rm-n').value, u = +el.querySelector('#rm-u').value;
         if (!(n > 0) || n * u > 14 * 1440) { UI.invalid('מספר בין 1 ל-14 ימים'); return; }
         setList((l) => l.concat([Math.round(n * u)]));
+      };
+      const rn = el.querySelector('[data-runnote]');
+      if (rn && App.runNote) rn.onchange = async () => {
+        const t0 = performance.now();
+        const want = rn.checked;
+        const on = want ? await App.runNote.turnOn() : (await App.runNote.turnOff(), false);
+        rn.checked = on;
+        if (on === want) UI.toast('נשמר', null, { ok: true });
+        // the switch slides over first (.2s), then the line under it changes (as bind does)
+        setTimeout(draw, Math.max(0, 220 - (performance.now() - t0)));
       };
       const p = el.querySelector('[data-perm]');
       if (p) p.onclick = async () => { await Notification.requestPermission(); draw(); };
