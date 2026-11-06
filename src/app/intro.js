@@ -117,11 +117,30 @@
   // the quick actions ride up with the sheet: on as the sheet starts to rise (or the moment they are drawn, if later),
   // not after the show's end and the calm a home screen under it needs. Waiting left the sheet still and empty for a
   // third of a second (the user, 2 Nov: "a stuck frame"). The fonts first, so no word changes as they come.
-  let rising = false, fontsIn = !document.fonts || document.fonts.status === 'loaded';
+  // Drawn before the rise (the app draws them before the home screen, app.js afterLogin), their entrance is set at once
+  // (q-in), delayed to the rise (--iq-wait): the compositor plays it on time while the home screen is drawn under the
+  // show. Set only once the sheet's 'animationstart' event came, it waited for that drawing to end (half a second on a
+  // phone, a second on a slow one): the sheet rose empty and stood still before they came (6 Nov 2026,
+  // tests/e2e/opening.js). They come in reach (q-on) with the rise, as before.
+  let rising = false, playAt = 0, fontsIn = !document.fonts || document.fonts.status === 'loaded';
   if (!fontsIn) document.fonts.ready.then(() => { fontsIn = true; maybeQuick(); });
   function maybeQuick() {
     const iq = q('.intro-sheet .iq');
-    if (quick && rising && fontsIn && iq && iq.childElementCount && !closed && !leaving) showQuick();
+    if (!(quick && fontsIn && iq && iq.childElementCount && !closed && !leaving)) return;
+    if (!rising && playAt && !el.classList.contains('q-in')) {
+      // the rise's own clock (its animation's start and delay, styles.css #intro.play .intro-sheet): it started with
+      // the frame after 'play' was set, a moment after playAt (the rest of the code ran first)
+      const sheet = q('.intro-sheet');
+      // (both on performance.now()'s clock; the timeline's currentTime is the last frame's, stale after a long task)
+      let riseAt = playAt + (parseFloat(getComputedStyle(sheet).animationDelay) * 1000 || 0);
+      try {
+        const a = sheet.getAnimations().find((x) => x.animationName === 'i-sheet');
+        if (a && a.startTime != null) riseAt = a.startTime + a.effect.getTiming().delay;
+      } catch (e) { /* older browsers: from playAt */ }
+      iq.style.setProperty('--iq-wait', Math.max(0, Math.round(riseAt - performance.now())) + 'ms');
+      el.classList.add('q-in');
+    }
+    if (rising) showQuick();
   }
   /** views-quick.js has drawn the actions on the sheet. */
   Intro.quickDrawn = maybeQuick;
@@ -165,6 +184,7 @@
     begun = true;
     if (full) {
       el.classList.add('play');
+      playAt = performance.now();
       afterFrames();
       setTimeout(() => drawnDone(), 400); // never later than this, whatever happens to the frames
       setTimeout(() => { played = true; if (!ready && !quickOn) el.classList.add('wait'); maybeClose(); }, SEQUENCE_MS);
@@ -221,6 +241,10 @@
     begin(); // a tap while it waits for the server: no more waiting
     played = true; skipped = true;
     drawnDone();
+    // the sheet jumps up with the rest: quick actions already put on come at once, not when the rise would have begun
+    rising = true;
+    const iqs = q('.intro-sheet .iq');
+    if (iqs) iqs.style.setProperty('--iq-wait', '0ms');
     try { el.getAnimations({ subtree: true }).forEach((a) => { const t = a.effect && a.effect.getComputedTiming(); if (t && t.iterations !== Infinity && a.playState !== 'finished') a.finish(); }); } catch (e) { /* older browsers: it plays on */ }
     if (ready) maybeClose(); else el.classList.add('wait');
   });

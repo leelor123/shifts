@@ -799,7 +799,9 @@ html.lp-bare #intro { display: none; }
 #intro .iq { display: flex; flex-direction: column; gap: 14px; max-width: 600px; margin: 0 auto; padding: 30px 20px calc(20px + var(--safe-b));
   max-height: calc(100dvh - var(--sky-top) + 28px); overflow-y: auto; overscroll-behavior: contain; box-sizing: border-box;
   opacity: 0; transform: translateY(10px); }
-#intro.q-on .iq { opacity: 1; transform: none; transition: opacity .24s var(--ease-out), transform .24s var(--ease-out); }
+/* q-in, --iq-wait: drawn before the sheet starts to rise, they come in as it does (intro.js maybeQuick), on the
+   compositor, whatever the main thread is doing then; q-on (in reach) follows with the rise */
+#intro.q-in .iq, #intro.q-on .iq { opacity: 1; transform: none; transition: opacity .24s var(--ease-out), transform .24s var(--ease-out); transition-delay: var(--iq-wait, 0s); }
 #intro.q-go .iq { opacity: 0; pointer-events: none; transition: opacity .14s ease; }
 #intro .iq .home-action, #intro .iq .timer-card { margin: 0; }
 #intro .iq .am-tile { min-height: 96px; }

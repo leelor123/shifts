@@ -65,32 +65,56 @@
   };
   App.FONTS = FONTS;
   App.fontCss = (key) => 'https://fonts.googleapis.com/css2?family=' + (FONTS[key] || FONTS.rubik)[1] + '&display=swap';
-  App.applyTheme = function () {
-    const st = S.settings;
+  /* The look (theme, colour, text size, font, hidden amounts, the Plus skin) is painted by one function: from the
+   * settings once they are loaded, and from a copy kept on the phone (localStorage 'shaati.look') the moment the code
+   * runs, before the opening show's first frame. Painted only from the settings, it came in the middle of the start-up
+   * that runs under the show, half a second into the logo's glide on a phone: the effects (body.fx) came on there, so
+   * the sky's clouds, birds and leaves stood still and then jumped into place, and a text size or font of one's own,
+   * or a theme other than the phone's, changed the show's header and sheet as it moved (the user, 6 Nov 2026: "a small
+   * stutter in the opening"; tests/e2e/opening.js). The start-up now writes the very same values, and nothing changes. */
+  const LOOK_KEY = 'shaati.look';
+  /** Writes the look, only what differs: called after every change of settings, and writing the same colour or photo
+   * again made the browser work out the whole page's look again (the pay card blinked). True when the text size or
+   * the font changed. */
+  function paintLook(L) {
     const de = document.documentElement;
-    // only what differs is written: called after every change of settings, and writing the same colour or photo
-    // again made the browser work out the whole page's look again (the pay card blinked)
     const data = (k, v) => { if (v) { if (de.dataset[k] !== v) de.dataset[k] = v; } else if (k in de.dataset) delete de.dataset[k]; };
     let roomChanged = false; // the text size or the font: the short labels are fitted again (Dom.fit)
     const prop = (k, v) => { if (de.style.getPropertyValue(k) !== String(v)) { de.style.setProperty(k, v); if (k === '--fs' || k === '--app-font') roomChanged = true; } };
-    data('theme', st.theme === 'light' || st.theme === 'dark' ? st.theme : '');
-    de.classList.toggle('hide-money', !!st.hideMoney); // privacy: amounts blurred
-    const a = ACCENTS[st.accent] || ACCENTS.midnight;
-    prop('--h', a[0]);
-    prop('--s', a[1] + '%');
-    prop('--fs', st.fontScale || 1);
-    // a Shaati Plus skin for the pay card on home (only while Plus is on)
-    const skin = root.Plus ? root.Plus.skin() : '';
-    data('skin', skin);
-    if (root.Plus && root.Plus.paintPhoto) root.Plus.paintPhoto(de, skin);
-    const font = FONTS[st.font] ? st.font : 'rubik';
-    prop('--app-font', "'" + FONTS[font][0] + "'");
+    data('theme', L.theme);
+    if (de.classList.contains('hide-money') !== !!L.money) de.classList.toggle('hide-money', !!L.money); // privacy: amounts blurred
+    prop('--h', L.h);
+    prop('--s', L.s);
+    prop('--fs', L.fs);
+    data('skin', L.skin);
+    prop('--app-font', "'" + FONTS[L.font][0] + "'");
     const link = document.getElementById('font-link');
     // Rubik is the app's own (fonts/); only another font chosen in the settings is fetched from Google
-    if (link && (link.dataset.font || 'rubik') !== font) {
-      if (font === 'rubik') link.removeAttribute('href'); else link.href = App.fontCss(font);
-      link.dataset.font = font;
+    if (link && (link.dataset.font || 'rubik') !== L.font) {
+      if (L.font === 'rubik') link.removeAttribute('href'); else link.href = App.fontCss(L.font);
+      link.dataset.font = L.font;
     }
+    return roomChanged;
+  }
+  // the kept look at once (the settings are not loaded yet), and the effects from their own kept copy (fx.js)
+  try {
+    const kept = JSON.parse(localStorage.getItem(LOOK_KEY) || 'null');
+    if (kept && typeof kept === 'object' && FONTS[kept.font]) paintLook(kept);
+  } catch (e) { /* none kept yet, or private mode */ }
+  if (root.Fx && root.Fx.applyKept) root.Fx.applyKept();
+  App.applyTheme = function () {
+    const st = S.settings;
+    const a = ACCENTS[st.accent] || ACCENTS.midnight;
+    const L = {
+      theme: st.theme === 'light' || st.theme === 'dark' ? st.theme : '',
+      money: !!st.hideMoney,
+      h: String(a[0]), s: a[1] + '%', fs: String(st.fontScale || 1),
+      skin: root.Plus ? root.Plus.skin() : '', // a Shaati Plus skin for the pay card on home (only while Plus is on)
+      font: FONTS[st.font] ? st.font : 'rubik',
+    };
+    const roomChanged = paintLook(L);
+    if (root.Plus && root.Plus.paintPhoto) root.Plus.paintPhoto(document.documentElement, L.skin);
+    try { const k = JSON.stringify(L); if (localStorage.getItem(LOOK_KEY) !== k) localStorage.setItem(LOOK_KEY, k); } catch (e) { /* private mode */ }
     App.statusBar();
     if (root.Fx) root.Fx.apply();
     if (roomChanged && root.Dom && root.Dom.fitAll) root.Dom.fitAll();
@@ -975,6 +999,22 @@
     if (!S.settings.onboarded) { App.sheetsApi.onboarding(); return; }
     const hash = (location.hash || '').replace('#', '');
     if (['home', 'calendar', 'reports', 'settings'].includes(hash)) App.tab = hash;
+    // a returning user's first open in a session: the opening's quick actions are drawn first, in a frame of their own,
+    // and the home screen under the show after it. Drawn together, in one long piece of work (half a second on a
+    // phone), the actions could come only once the home screen was done too, and the sheet rose empty and stood still
+    // before they came (6 Nov 2026, tests/e2e/opening.js). Now intro.js puts them on with the sheet's rise.
+    const I = root.Intro;
+    if (!quickFirst && I && I.quick && I.covering && I.covering() && App.quickOpen) {
+      quickFirst = true;
+      App.quickOpen();
+      requestAnimationFrame(() => setTimeout(firstScreen, 0));
+      return;
+    }
+    firstScreen();
+  };
+  let quickFirst = false;
+  /** The first screen of a signed-in user, and what starts with it. */
+  function firstScreen() {
     // the first screen is drawn whole: what the insights add to it (the month's forecast on the pay card) used
     // to come a second later with a redraw, and the card grew a line just after the opening show
     if (!App.insights && App.model) { try { App.insights = insightsNow(); } catch (e) { console.warn('insights', e); } }
@@ -1007,7 +1047,7 @@
     if (root.FriendsView) root.FriendsView.boot(); // an invitation that came with the address, accepted ones of mine
     if (root.Invite) root.Invite.boot(); // a month of Plus for inviting a friend (or being invited)
     if (root.WorkplaceCode) root.WorkplaceCode.boot(); // a workplace code that came with the address (its rules, to check and apply)
-  };
+  }
   // just before the opening show leaves, the app draws itself once more under it (still), so anything the
   // start-up work changed (the account, the admin check, Google Play) is already in place when it shows
   if (root.Intro) root.Intro.beforeLeave = () => { App.applyTheme(); if (!App.blocking) App.rerender(); };
