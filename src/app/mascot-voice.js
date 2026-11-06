@@ -51,7 +51,9 @@
   const motion = () => (root.Fx && root.Fx.motion ? root.Fx.motion() : !reduced());
   /** reading aloud: on unless turned off, and never while the app's effects are off */
   V.enabled = () => prefs().voice !== false && prefs().effects !== false;
-  V.supported = () => !!(root.speechSynthesis && root.SpeechSynthesisUtterance);
+  // a browser run by a test (navigator.webdriver: puppeteer, Lighthouse) never speaks: on Windows its speech played on
+  // the computer's speakers while the test suites ran (6 Nov 2026)
+  V.supported = () => !!(root.speechSynthesis && root.SpeechSynthesisUtterance) && !(root.navigator && root.navigator.webdriver);
   const synth = () => (V.supported() ? root.speechSynthesis : null);
 
   const LANG = (root.U && root.U.LANG) || doc.documentElement.lang || 'he';
@@ -80,6 +82,11 @@
   const later = (run, fn, ms, set) => { const id = setTimeout(() => { (set || run.timers).delete(id); if (cur === run) fn(); }, ms); (set || run.timers).add(id); return id; };
   const clearAll = (set) => { set.forEach(clearTimeout); set.clear(); };
   function elOf(run) { const e = run.getEl(); return e && e.isConnected ? e : null; }
+  /** One unit of the coin's drawing in px (its box is 124 units high). The coin's parts move as HTML layers
+   *  (mascot.js), so a length written in the drawing's units becomes px before it moves them. */
+  function unit(e) { const h = parseFloat(root.getComputedStyle(e).height); return h > 0 ? h / 124 : 1; }
+  const inPx = (t, u) => t.replace(/(-?\d*\.?\d+)px/g, (m, n) => +(n * u).toFixed(3) + 'px');
+  const framesIn = (f, u) => f.map((k) => Object.assign({}, k, { transform: inPx(k.transform, u) }));
   function mouth(run, n) {
     const e = elOf(run);
     if (!e) { if (n != null) V.stop(); return; } // the coin left the screen: so does its voice
@@ -94,7 +101,7 @@
     const g = e && e.querySelector('.m-talkb');
     if (!g || !g.animate || !motion()) return;
     run.flip = !run.flip;
-    try { g.animate([{ transform: 'none' }, { transform: `translateY(-2.5px) rotate(${run.flip ? 1.4 : -1.4}deg)` }, { transform: 'none' }], { duration: 260, easing: 'cubic-bezier(.37, 0, .63, 1)' }); } catch (x) { /* old browser */ }
+    try { g.animate([{ transform: 'none' }, { transform: `translateY(${inPx('-2.5px', unit(e))}) rotate(${run.flip ? 1.4 : -1.4}deg)` }, { transform: 'none' }], { duration: 260, easing: 'cubic-bezier(.37, 0, .63, 1)' }); } catch (x) { /* old browser */ }
   }
   /** one spoken word: its syllables open and close the mouth, then it closes */
   function word(run, len) {
@@ -217,7 +224,7 @@
     const m = MOVES[kind];
     if (!g || !g.animate || !m) return;
     if (g._mv) g._mv.cancel();
-    try { g._mv = g.animate(m.f, { duration: m.d }); } catch (x) { /* old browser */ }
+    try { g._mv = g.animate(framesIn(m.f, unit(e)), { duration: m.d }); } catch (x) { /* old browser */ }
   };
   /** the eyes turn toward a field (no field: straight ahead) */
   /** instant: a coin drawn again on the same screen takes the look it had at once, without gliding there anew */
@@ -229,7 +236,8 @@
       const a = e.getBoundingClientRect(), b = field.getBoundingClientRect();
       const dx = b.left + b.width / 2 - (a.left + a.width / 2), dy = b.top + Math.min(b.height, 56) / 2 - (a.top + a.height * 0.5);
       const len = Math.hypot(dx, dy) || 1;
-      to = `translate(${(dx / len * 3.2).toFixed(2)}px, ${(dy / len * 2.6).toFixed(2)}px)`;
+      const u = unit(e);
+      to = `translate(${(dx / len * 3.2 * u).toFixed(2)}px, ${(dy / len * 2.6 * u).toFixed(2)}px)`;
     }
     if (instant) { lk.style.transition = 'none'; lk.style.transform = to; lk.getBoundingClientRect(); lk.style.transition = ''; } else lk.style.transform = to;
   }

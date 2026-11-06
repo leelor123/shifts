@@ -148,7 +148,9 @@ body.fx .btn:active, body.fx .chip:active, body.fx .sc:active, body.fx .am-tile:
 .nav button.on .pill { background: var(--brand-soft); color: var(--brand-strong); }
 .nav button.on .pill::before { display: none; }
 .nav button.on { color: var(--brand-strong); font-weight: 700; }
-body.fx .nav button.on .pill svg { animation: nav-pop .35s var(--pop); }
+/* the icon pops as its span (the compositor runs no animation whose target is an SVG element) */
+.nav .pill .ic { display: grid; place-items: center; }
+body.fx .nav button.on .pill .ic { animation: nav-pop .35s var(--pop); }
 .nav .fab { border-radius: 50%; width: 58px; height: 58px; background: var(--grad-money); color: #2b1a00; box-shadow: 0 10px 22px -8px rgba(245, 155, 22, .7); border: 4px solid var(--surface); margin-top: -22px; }
 body.fx .nav .fab:active { transform: scale(.9) rotate(90deg); }
 @keyframes nav-pop { 0% { transform: scale(.7); } 60% { transform: scale(1.12); } 100% { transform: scale(1); } }
@@ -259,7 +261,13 @@ body.fx .nav .fab:active { transform: scale(.9) rotate(90deg); }
 .am-tile.g1 { background: var(--grad-brand); color: #fff; border: 0; box-shadow: var(--sh-brand); }
 
 /* ---------------- mascot ---------------- */
-.mascot { display: inline-block; width: var(--sz, 96px); height: calc(var(--sz, 96px) * 1.03); flex: none; vertical-align: middle; }
+.mascot { display: inline-block; position: relative; width: var(--sz, 96px); height: calc(var(--sz, 96px) * 1.03); flex: none; vertical-align: middle;
+  --mu: calc(var(--sz, 96px) * 1.03 / 124); }
+/* Each moving part is an HTML layer around its own drawing (mascot.js): Chrome never moves an SVG element on the
+   compositor, so a busy phone froze them. Every layer and drawing fills the coin's box with the viewBox 0 0 120 124,
+   which the box (1 : 1.03) fits by its height: one viewBox unit is --mu px, and the drawing sits .2 units in from each
+   side. A point (x, y) in the drawing is at ((.2 + 1.03x) / 124, y / 124) of the box; the origins below are those. */
+.mascot .m-l, .mascot svg { position: absolute; inset: 0; }
 .mascot svg { width: 100%; height: 100%; overflow: visible; display: block; }
 .mascot .m-coin { fill: #ffc53d; stroke: #e8990c; stroke-width: 4; }
 .mascot .m-rim { fill: none; stroke: #ffe08a; stroke-width: 2.5; stroke-dasharray: 3 5; }
@@ -268,34 +276,33 @@ body.fx .nav .fab:active { transform: scale(.9) rotate(90deg); }
 .mascot .m-line { fill: none; stroke: #2a1b0f; stroke-width: 3.6; stroke-linecap: round; stroke-linejoin: round; }
 .mascot .m-cheek { fill: #ff8fab; opacity: .5; }
 .mascot .m-arm { fill: none; stroke: #e8990c; stroke-width: 7; stroke-linecap: round; }
-.mascot .m-shadow { fill: rgba(30, 20, 70, .14); }
-.mascot .m-z { font: 800 15px var(--font); fill: var(--brand); }
-.mascot .m-body, .mascot .m-shadow, .mascot .m-eyes, .mascot .m-arm, .mascot .m-sprout { transform-box: view-box; }
+.mascot .m-shd { fill: rgba(30, 20, 70, .14); }
+.mascot .m-zt { font: 800 15px var(--font); fill: var(--brand); }
 /* the mascot only floats where it is the star (welcome, done, sign-in); elsewhere it just blinks */
-.mascot .m-body { transform-origin: 60px 110px; }
+.mascot .m-body { transform-origin: 50% calc(100% * 110 / 124); }
 .mascot.hero .m-body, .login-mascot .mascot .m-body { animation: m-bob 3.2s ease-in-out infinite; }
-.mascot .m-shadow { transform-origin: 60px 116px; }
+.mascot .m-shadow { transform-origin: 50% calc(100% * 116 / 124); }
 .mascot.hero .m-shadow, .login-mascot .mascot .m-shadow { animation: m-shadow 3.2s ease-in-out infinite; }
-.mascot .m-eyes { transform-origin: 60px 60px; animation: m-blink 5s infinite; }
-.mascot .m-sprout { transform-origin: 60px 24px; animation: m-sprout 3.6s ease-in-out infinite; }
-.mascot.m-wave .m-arm-r, .mascot.m-party .m-arm-r { transform-origin: 96px 70px; animation: m-wave .7s ease-in-out 4 alternate; }
-.mascot.m-party .m-arm-l { transform-origin: 24px 70px; animation: m-wave-l .7s ease-in-out 4 alternate; }
+.mascot .m-eyes { transform-origin: 50% calc(100% * 60 / 124); animation: m-blink 5s infinite; }
+.mascot .m-sprout { transform-origin: 50% calc(100% * 24 / 124); animation: m-sprout 3.6s ease-in-out infinite; }
+.mascot.m-wave .m-arm-r, .mascot.m-party .m-arm-r { transform-origin: calc(100% * (.2 + 1.03 * 96) / 124) calc(100% * 70 / 124); animation: m-wave .7s ease-in-out 4 alternate; }
+.mascot.m-party .m-arm-l { transform-origin: calc(100% * (.2 + 1.03 * 24) / 124) calc(100% * 70 / 124); animation: m-wave-l .7s ease-in-out 4 alternate; }
 .mascot.m-wow .m-body, .mascot.m-love .m-body { animation: m-jump .8s var(--pop) 1; }
 .mascot.m-love .m-eyes { animation: m-heart .8s ease-in-out 3 alternate; }
 .mascot .m-z { animation: m-z 2.2s ease-in-out infinite; } .mascot .m-z2 { animation-delay: .7s; }
-@keyframes m-bob { 50% { transform: translateY(-5px); } }
+/* a length in the drawing's units is n x --mu px */
+@keyframes m-bob { 50% { transform: translateY(calc(-5 * var(--mu))); } }
 @keyframes m-shadow { 50% { transform: scaleX(.82); opacity: .6; } }
 @keyframes m-blink { 0%, 93%, 100% { transform: scaleY(1); } 96% { transform: scaleY(.1); } }
 @keyframes m-sprout { 50% { transform: rotate(10deg); } }
 @keyframes m-wave { from { transform: rotate(-12deg); } to { transform: rotate(18deg); } }
 @keyframes m-wave-l { from { transform: rotate(12deg); } to { transform: rotate(-18deg); } }
-@keyframes m-jump { 30% { transform: translateY(-14px) scale(1.04, .96); } 60% { transform: translateY(0) scale(.97, 1.03); } }
+@keyframes m-jump { 30% { transform: translateY(calc(-14 * var(--mu))) scale(1.04, .96); } 60% { transform: translateY(0) scale(.97, 1.03); } }
 @keyframes m-heart { to { transform: scale(1.1); } }
-@keyframes m-z { 0% { opacity: 0; transform: translateY(6px); } 50% { opacity: 1; } 100% { opacity: 0; transform: translateY(-8px); } }
+@keyframes m-z { 0% { opacity: 0; transform: translateY(calc(6 * var(--mu))); } 50% { opacity: 1; } 100% { opacity: 0; transform: translateY(calc(-8 * var(--mu))); } }
 /* its voice and reactions (mascot-voice.js): two wrapper layers so a reaction and the speech bob never fight the
    bob and jump the body already has; each reaction is one short WAAPI run on .m-act, never a loop */
-.mascot .m-talkb, .mascot .m-act, .mascot .m-look { transform-box: view-box; }
-.mascot .m-talkb, .mascot .m-act { transform-origin: 60px 104px; }
+.mascot .m-talkb, .mascot .m-act { transform-origin: 50% calc(100% * 104 / 124); }
 .mascot .m-act { transition: transform .26s cubic-bezier(.23, 1, .32, 1); }
 .mascot .m-look { transition: transform .3s cubic-bezier(.23, 1, .32, 1); }
 .mascot .m-talk > * { opacity: 0; }
@@ -304,7 +311,7 @@ body.fx .nav .fab:active { transform: scale(.9) rotate(90deg); }
 .mascot.talking[data-mouth="2"] .m-talk .t2, .mascot.talking[data-mouth="3"] .m-talk .t3 { opacity: 1; }
 /* thinking while the user types: the head tilts, the eyes look up */
 .mascot.m-thinking .m-act { transform: rotate(-7deg); }
-.mascot.m-thinking .m-look { transform: translate(1.5px, -3px) !important; }
+.mascot.m-thinking .m-look { transform: translate(calc(1.5 * var(--mu)), calc(-3 * var(--mu))) !important; }
 /* a closed, thoughtful mouth while thinking, and for a moment on wrong input with reduced motion (no head shake) */
 .mascot.m-hmm:not(.talking) .m-mouth, .mascot.m-thinking:not(.talking) .m-mouth { opacity: 0; }
 .mascot.m-hmm:not(.talking) .m-talk .t0, .mascot.m-thinking:not(.talking) .m-talk .t0 { opacity: 1; }
@@ -516,7 +523,7 @@ body.fx .nav .fab:active { transform: scale(.9) rotate(90deg); }
 /* the pay card: soft light drifting behind the amount, and a highlight sweeping round the dial like a second hand */
 /* rounded, clipped cards with moving parts keep one stable layer, so nothing around them gains or loses
  * a layer when a screen slides in (the same fix as the hour picker); the active tab icon likewise */
-.home-hero, .home-action .btn.start, .timer-card, .recap-card, .nav .pill, .nav .pill svg { will-change: transform; }
+.home-hero, .home-action .btn.start, .timer-card, .recap-card, .nav .pill, .nav .pill .ic { will-change: transform; }
 .hh-dial::before { content: ''; position: absolute; inset: 0; border-radius: 50%; background: conic-gradient(from 0deg, transparent 0 290deg, rgba(255, 255, 255, .15) 320deg, rgba(255, 255, 255, .95) 359deg, transparent 360deg); animation: dial-sweep 7s linear infinite; }
 @keyframes dial-sweep { to { transform: rotate(360deg); } }
 .timer-card.running { position: relative; overflow: hidden; isolation: isolate; }
@@ -541,8 +548,9 @@ body.fx .nav .fab:active { transform: scale(.9) rotate(90deg); }
 body:not(.fx) .hh-dial::before, body:not(.fx) .ob-bg i { animation: none !important; }
 
 /* saved: a check mark that draws itself */
-.toast .tk { width: 22px; height: 22px; flex: none; }
-.toast .tk circle { fill: #22c98e; transform-origin: center; transform-box: fill-box; animation: tk-pop .35s var(--pop) both; }
+.toast .tk { width: 22px; height: 22px; flex: none; display: block; animation: tk-pop .35s var(--pop) both; }
+.toast .tk svg { display: block; width: 100%; height: 100%; }
+.toast .tk circle { fill: #22c98e; }
 .toast .tk path { fill: none; stroke: #fff; stroke-width: 2.6; stroke-linecap: round; stroke-linejoin: round; stroke-dasharray: 16; stroke-dashoffset: 16; animation: tk-draw .35s ease-out .18s forwards; }
 @keyframes tk-pop { from { transform: scale(.3); } }
 @keyframes tk-draw { to { stroke-dashoffset: 0; } }
@@ -555,7 +563,7 @@ body:not(.fx) .hh-dial::before, body:not(.fx) .ob-bg i { animation: none !import
 .skel-lines { flex: 1; display: grid; gap: 8px; }
 .skel-line { height: 12px; } .skel-line.short { width: 40%; height: 10px; }
 @keyframes skel { from { background-position: 100% 0; } to { background-position: -100% 0; } }
-@media (prefers-reduced-motion: reduce) { .skel, .toast .tk * { animation: none !important; } .toast .tk path { stroke-dashoffset: 0; } }
+@media (prefers-reduced-motion: reduce) { .skel, .toast .tk, .toast .tk * { animation: none !important; } .toast .tk path { stroke-dashoffset: 0; } }
 
 /* keyboard users always see where they are */
 :where(button, a, input, select, textarea, summary, [tabindex]):focus-visible { outline: 3px solid hsla(var(--h), 85%, 60%, .55); outline-offset: 2px; }
@@ -581,14 +589,20 @@ html, body { overscroll-behavior-y: none; }
 @media (prefers-reduced-motion: reduce) { .mascot *, .ob-bg i, .coach-hole { animation: none !important; } }
 
 /* ---------- charts come alive (see charts.js) ---------- */
-.chart .bar { transform-box: fill-box; transform-origin: 50% 100%; transition: opacity .2s; }
-.chart .bar.neg { transform-origin: 50% 0%; }
+/* a chart is layers (charts.js frame()): the base drawing sets the size, and every layer and the top drawing cover it
+   with the same viewBox. A bar grows from its baseline: --oy is that line's height as a share of the chart's. */
+.chart { position: relative; }
+.chart svg { display: block; width: 100%; overflow: visible; }
+.chart .ch-l, .chart .ch-top { position: absolute; inset: 0; }
+.chart .ch-l { pointer-events: none; }
+.chart .ch-l svg, .chart .ch-top { height: 100%; }
+.chart .bar { transform-origin: 50% var(--oy, 100%); opacity: var(--op, 1); transition: opacity .2s; }
 body.fx .chart[data-anim] .bar { animation: ch-grow .75s cubic-bezier(.2, .9, .3, 1.12) var(--d, 0ms) both paused; }
 body.fx .chart[data-anim] .ln { stroke-dasharray: 1; stroke-dashoffset: 1; animation: ch-draw 1.1s cubic-bezier(.4, 0, .2, 1) .1s forwards paused; }
 body.fx .chart[data-anim] .area { animation: ch-fade .9s ease .55s both paused; }
-body.fx .chart[data-anim] .dot { transform-box: fill-box; transform-origin: center; animation: ch-pop .45s cubic-bezier(.34, 1.56, .64, 1) var(--d, 0ms) both paused; }
+body.fx .chart[data-anim] .ch-dot { transform-origin: var(--ox) var(--oy); animation: ch-pop .45s cubic-bezier(.34, 1.56, .64, 1) var(--d, 0ms) both paused; }
 body.fx .hbar[data-anim] .track i { transform-origin: right; animation: ch-fill .85s cubic-bezier(.2, .9, .3, 1) var(--d, 0ms) both paused; }
-body.fx .chart[data-anim].in .bar, body.fx .chart[data-anim].in .ln, body.fx .chart[data-anim].in .area, body.fx .chart[data-anim].in .dot, body.fx .hbar[data-anim].in .track i { animation-play-state: running; }
+body.fx .chart[data-anim].in .bar, body.fx .chart[data-anim].in .ln, body.fx .chart[data-anim].in .area, body.fx .chart[data-anim].in .ch-dot, body.fx .hbar[data-anim].in .track i { animation-play-state: running; }
 @keyframes ch-grow { from { transform: scaleY(0); } }
 @keyframes ch-draw { to { stroke-dashoffset: 0; } }
 @keyframes ch-fade { from { opacity: 0; } }
@@ -1438,7 +1452,8 @@ body:not(.fx) .tr-up, body:not(.fx) .tr-down { animation: none; }
 .pp-loc { flex: none; display: inline-flex; align-items: center; gap: 6px; height: 48px; padding: 0 14px; border: 0; border-radius: 16px; background: var(--brand-soft); color: var(--on-brand-soft); font: inherit; font-weight: 700; font-size: .9rem; white-space: nowrap; }
 .pp-loc svg { width: 20px; height: 20px; flex: none; }
 .pp-loc:disabled { opacity: 1; }
-body.fx .pp-loc.busy svg { animation: pp-hop .8s ease-in-out infinite; }
+.pp-loc .pp-pin { display: grid; flex: none; }
+body.fx .pp-loc.busy .pp-pin { animation: pp-hop .8s ease-in-out infinite; }
 @keyframes pp-hop { 0%, 100% { transform: translateY(0); } 45% { transform: translateY(-5px); } }
 .pp .section-title { margin-inline-end: 30px; }
 .pp-list { display: flex; flex-direction: column; }
@@ -1742,6 +1757,25 @@ html:not([lang="he"]) .lb-games button, html:not([lang="he"]) .lb-periods button
 .ios-install .ii-why > div { display: flex; gap: 8px; align-items: flex-start; }
 .ios-install .ii-why svg { flex: none; margin-top: 2px; color: var(--brand); }
 .ios-install .ii-note { margin-top: 10px; text-align: center; }
+/* the NFC sticker at work (app/nfc.js): the section in Settings and the sheet that writes one */
+.nfc-card .nfc-intro { display: flex; gap: 12px; align-items: flex-start; margin-bottom: 14px; }
+.nfc-card .nfc-intro p { margin: 0; flex: 1; min-width: 0; line-height: 1.5; }
+.nfc-note { margin: 10px 4px 0; line-height: 1.5; }
+.nfc-item { cursor: default; }
+.nfc-sheet .sh-foot [hidden] { display: none; }
+/* the same height in every state, so the sheet never jumps when the words change */
+.nfc-sheet .nfc-w { min-height: 15.5rem; display: flex; flex-direction: column; align-items: center; text-align: center; padding: 10px 4px 4px; }
+.nfc-sheet .nfc-art { position: relative; width: 96px; height: 96px; border-radius: 50%; display: grid; place-items: center; margin-bottom: 16px; background: var(--brand-soft); color: var(--brand); }
+.nfc-sheet .nfc-art > svg { width: 44px; height: 44px; position: relative; }
+.nfc-sheet .nfc-art.ok { background: var(--good-bg); color: var(--good-mark); }
+.nfc-sheet .nfc-art.bad { background: var(--warn-bg); color: var(--warn-mark); }
+/* waiting for the sticker: a soft ring goes out from the phone, the way the sticker is read */
+.nfc-sheet .nfc-ring { position: absolute; inset: 0; border-radius: 50%; border: 2px solid var(--brand); opacity: 0; animation: nfcRing 1.8s cubic-bezier(.23, 1, .32, 1) infinite; }
+@keyframes nfcRing { 0% { transform: scale(.92); opacity: .55; } 100% { transform: scale(1.5); opacity: 0; } }
+.nfc-sheet .nfc-t { margin: 0 0 6px; font-size: 1.12rem; line-height: 1.35; text-wrap: balance; }
+.nfc-sheet .nfc-s { margin: 0; color: var(--on-surface-var); line-height: 1.5; max-width: 30ch; text-wrap: pretty; }
+.nfc-sheet .nfc-role { display: flex; gap: 8px; align-items: center; justify-content: center; margin-top: 8px; color: var(--on-surface-var); font-size: .88rem; }
+@media (prefers-reduced-motion: reduce) { .nfc-sheet .nfc-ring { animation: none; } }
 .done-cta { border: 1.5px solid var(--warn); }
 .done-cta .dc-t { font-weight: 700; display: flex; gap: 6px; align-items: center; color: var(--warn); }
 .done-cta .dc-s { font-size: .86rem; color: var(--on-surface-var); margin: 4px 0 12px; }

@@ -97,6 +97,58 @@ async function main() {
     const refd = (o) => Object.assign({ by: 'u1', c: 'abcdefghjk23', t: NOW - 60000 }, o || {});
     const refc = (by) => [{ function: 'get', args: [{ exactValue: '/databases/(default)/documents/refc/abcdefghjk23' }], result: { value: { data: { by } } } }];
     const stat = () => ({ v: '1.5.0', p: 'android', first: '2026-10-01', last: '2026-10-13', days: 5, sh: 12, s30: 6, ps: 1, age: 'u18', f: { rights: true }, t: 1790000000000 });
+    // workplace codes: the record pack() makes from real workplaces (core/workplace.js), written in one batch with its
+    // owner record (getAfter and existsAfter are answered by mocks)
+    require(path.join(__dirname, '..', 'src', 'core', 'defaults.js'));
+    const W = require(path.join(__dirname, '..', 'src', 'core', 'workplace.js'));
+    const D = globalThis.Defaults;
+    const WPC = 'abcd2345';
+    const wpGet = (fn, uid) => [{ function: fn, args: [{ exactValue: db + '/wpo/' + WPC }], result: { value: { data: { o: uid } } } }];
+    const wpcAfter = (yes) => [{ function: 'existsAfter', args: [{ exactValue: db + '/wpc/' + WPC }], result: { value: yes } }];
+    const wpRec = (r, o) => Object.assign({ v: 1, t: NOW - 1000, r }, o || {});
+    const wpPack = (emp, roles, rates, ww) => W.pack({ employer: Object.assign(D.defaultEmployer('e1'), emp), roles: roles || D.defaultRoles('e1'), workWeek: ww || 5, rates, today: '2026-11-06' });
+    const edge = (hiSide) => W.FIELDS.reduce((o, [k, kind, lo, hi]) => Object.assign(o, { [k]: Array.isArray(kind) ? kind[hiSide ? kind.length - 1 : 0] : kind === 'bool' ? hiSide : kind === 'hhmm' ? (hiSide ? '23:59' : '00:00') : hiSide ? hi : lo }), {});
+    const roles8 = Array.from({ length: 8 }, (_, i) => ({ id: 'r' + i, name: 'תפקיד ארוך מאוד מאוד מאוד מאוד מספר ' + i + ' xxxxxxxxxx', color: '#2a78d6', employerId: 'e1', rates: [{ from: '2000-01-01', rate: 999.99 }], archived: false }));
+    const wpCases = [
+      ['workplace code: the default workplace', 'ALLOW', 'create', me, '/wpc/' + WPC, wpRec(wpPack({})), null, null, wpGet('getAfter', 'u1')],
+      ['workplace code: the default workplace with its rates', 'ALLOW', 'create', me, '/wpc/' + WPC, wpRec(wpPack({}, null, true)), null, null, wpGet('getAfter', 'u1')],
+      ['workplace code: a real cafe (travel 22.6, night, rounding, six days, rates)', 'ALLOW', 'create', me, '/wpc/' + WPC, wpRec(wpPack({ name: 'קפה גרג רמת אביב', periodStartDay: 21, payDay: 10, travelPerDay: 22.6, travelMonthlyCap: 300, otLaw: true, restPct: 175, nightEnabled: true, nightValue: 25, evePct: 10, roundingMode: 'nearest', roundingUnit: 15, defaultBreakPaid: false }, null, true, 6)), null, null, wpGet('getAfter', 'u1')],
+      ['workplace code: every field at its highest, 8 long roles with rates', 'ALLOW', 'create', me, '/wpc/' + WPC, wpRec(wpPack(Object.assign({ name: 'א'.repeat(40) }, edge(true)), roles8, true, 6)), null, null, wpGet('getAfter', 'u1')],
+      ['workplace code: every field at its lowest, no roles', 'ALLOW', 'create', me, '/wpc/' + WPC, wpRec(wpPack(edge(false), [], false)), null, null, wpGet('getAfter', 'u1')],
+      // the record the user's phone made (6 Nov 2026, read in DevTools): refused by the first rules, over 1000 expressions
+      ['workplace code: the record from the user’s phone (3 roles with rates, six days)', 'ALLOW', 'create', me, '/wpc/' + WPC, wpRec({ n: 'עבודה', ww: 6, periodStartDay: 1, payDay: 9, travelPerDay: 16, travelMonthlyCap: 0, defaultBreakPaid: true, otLaw: false, otThreshold: 8, otTier1Hours: 2, otTier1Pct: 125, otTier2Pct: 150, restPct: 150, restOt1Pct: 175, restOt2Pct: 200, nightEnabled: false, nightFrom: '22:00', nightTo: '06:00', nightType: 'pct', nightValue: 0, evePct: 0, roundingMode: 'none', roundingUnit: 15, ro: [{ n: 'סדרן', r: 44.22 }, { n: 'מזנון', r: 40.22 }, { n: 'אחמ״ש', r: 37.22 }] }), null, null, wpGet('getAfter', 'u1')],
+      ['workplace code: a pay day that is not a whole number is refused', 'DENY', 'create', me, '/wpc/' + WPC, wpRec(Object.assign(wpPack({}), { payDay: 9.5 })), null, null, wpGet('getAfter', 'u1')],
+      ['workplace code: a percentage out of range is refused', 'DENY', 'create', me, '/wpc/' + WPC, wpRec(Object.assign(wpPack({}), { restPct: 501 })), null, null, wpGet('getAfter', 'u1')],
+      ['workplace code: a night time that is not a time is refused', 'DENY', 'create', me, '/wpc/' + WPC, wpRec(Object.assign(wpPack({}), { nightFrom: '24:00' })), null, null, wpGet('getAfter', 'u1')],
+      ['workplace code: an empty name is refused', 'DENY', 'create', me, '/wpc/' + WPC, wpRec(Object.assign(wpPack({}), { n: '' })), null, null, wpGet('getAfter', 'u1')],
+      ['workplace code: nine roles are refused', 'DENY', 'create', me, '/wpc/' + WPC, wpRec(Object.assign(wpPack({}), { ro: Array.from({ length: 9 }, (_, i) => ({ n: 'ת' + i })) })), null, null, wpGet('getAfter', 'u1')],
+      ['workplace code: a role without a name is refused', 'DENY', 'create', me, '/wpc/' + WPC, wpRec(Object.assign(wpPack({}), { ro: [{ n: 'סדרן' }, { r: 40 }] })), null, null, wpGet('getAfter', 'u1')],
+      ['workplace code: a role with a rate of 0 is refused', 'DENY', 'create', me, '/wpc/' + WPC, wpRec(Object.assign(wpPack({}), { ro: [{ n: 'סדרן', r: 0 }] })), null, null, wpGet('getAfter', 'u1')],
+      ['workplace code: a role with a person in it is refused', 'DENY', 'create', me, '/wpc/' + WPC, wpRec(Object.assign(wpPack({}), { ro: [{ n: 'סדרן', who: 'דנה' }] })), null, null, wpGet('getAfter', 'u1')],
+      ['workplace code: the eighth role is checked too', 'DENY', 'create', me, '/wpc/' + WPC, wpRec(Object.assign(wpPack({}), { ro: Array.from({ length: 8 }, (_, i) => (i === 7 ? { n: 'x'.repeat(41) } : { n: 'ת' + i })) })), null, null, wpGet('getAfter', 'u1')],
+      ['workplace code: 8 roles, the default workplace, an update', 'ALLOW', 'update', me, '/wpc/' + WPC, wpRec(wpPack(edge(true), roles8, true, 6), { v: 2 }), wpRec(wpPack({})), null, wpGet('get', 'u1')],
+      ['workplace code: a rate as text is refused', 'DENY', 'create', me, '/wpc/' + WPC, wpRec(Object.assign(wpPack({}), { ro: [{ n: 'סדרן', r: '40' }] })), null, null, wpGet('getAfter', 'u1')],
+      ['workplace code: a rate of 1000 is refused', 'DENY', 'create', me, '/wpc/' + WPC, wpRec(Object.assign(wpPack({}), { ro: [{ n: 'סדרן', r: 1000 }] })), null, null, wpGet('getAfter', 'u1')],
+      ['workplace code: a role name that is not text is refused', 'DENY', 'create', me, '/wpc/' + WPC, wpRec(Object.assign(wpPack({}), { ro: [{ n: 5 }] })), null, null, wpGet('getAfter', 'u1')],
+      ['workplace code: a role that is not a map is refused', 'DENY', 'create', me, '/wpc/' + WPC, wpRec(Object.assign(wpPack({}), { ro: ['סדרן'] })), null, null, wpGet('getAfter', 'u1')],
+      ['workplace code: roles that are not a list are refused', 'DENY', 'create', me, '/wpc/' + WPC, wpRec(Object.assign(wpPack({}), { ro: { n: 'סדרן' } })), null, null, wpGet('getAfter', 'u1')],
+      ['workplace code: roles as text are refused', 'DENY', 'create', me, '/wpc/' + WPC, wpRec(Object.assign(wpPack({}), { ro: 'סדרן' })), null, null, wpGet('getAfter', 'u1')],
+      ['workplace code: a percentage as text is refused', 'DENY', 'create', me, '/wpc/' + WPC, wpRec(Object.assign(wpPack({}), { restPct: '150' })), null, null, wpGet('getAfter', 'u1')],
+      ['workplace code: a name of 41 letters is refused', 'DENY', 'create', me, '/wpc/' + WPC, wpRec(Object.assign(wpPack({}), { n: 'א'.repeat(41) })), null, null, wpGet('getAfter', 'u1')],
+      ['workplace code: a time far from now is refused', 'DENY', 'create', me, '/wpc/' + WPC, wpRec(wpPack({}), { t: NOW - 3 * 86400000 }), null, null, wpGet('getAfter', 'u1')],
+      ['workplace code: a record that is not a map is refused', 'DENY', 'create', me, '/wpc/' + WPC, wpRec('x'), null, null, wpGet('getAfter', 'u1')],
+      ['workplace code: the owner record that goes with it', 'ALLOW', 'create', me, '/wpo/' + WPC, { o: 'u1' }, null, null, wpcAfter(true)],
+      ['workplace code: a code in someone else’s name is refused', 'DENY', 'create', me, '/wpc/' + WPC, wpRec(wpPack({})), null, null, wpGet('getAfter', 'u2')],
+      ['workplace code: an owner record in someone else’s name is refused', 'DENY', 'create', me, '/wpo/' + WPC, { o: 'u2' }, null, null, wpcAfter(true)],
+      ['workplace code: an owner record without the code is refused', 'DENY', 'create', me, '/wpo/' + WPC, { o: 'u1' }, null, null, wpcAfter(false)],
+      ['workplace code: a code of another shape is refused', 'DENY', 'create', me, '/wpo/abcd2341', { o: 'u1' }, null, null, wpcAfter(true)],
+      ['workplace code: a record with a shift in it is refused', 'DENY', 'create', me, '/wpc/' + WPC, wpRec(Object.assign(wpPack({}), { shifts: 3 })), null, null, wpGet('getAfter', 'u1')],
+      ['workplace code: version 2 on create is refused', 'DENY', 'create', me, '/wpc/' + WPC, wpRec(wpPack({}), { v: 2 }), null, null, wpGet('getAfter', 'u1')],
+      ['workplace code: the owner puts a new version in', 'ALLOW', 'update', me, '/wpc/' + WPC, wpRec(wpPack({}), { v: 2 }), wpRec(wpPack({})), null, wpGet('get', 'u1')],
+      ['workplace code: another user cannot change it', 'DENY', 'update', { uid: 'u2' }, '/wpc/' + WPC, wpRec(wpPack({}), { v: 2 }), wpRec(wpPack({})), null, wpGet('get', 'u1')],
+      ['workplace code: a coworker reads a code', 'ALLOW', 'get', { uid: 'u2' }, '/wpc/' + WPC, null, wpRec(wpPack({}))],
+      ['workplace code: nobody lists the codes', 'DENY', 'list', { uid: 'u2' }, '/wpc/' + WPC, null, wpRec(wpPack({}))],
+    ];
     const cases = [
       ['owner can create a shift', 'ALLOW', 'create', me, `/users/u1/shifts/s1`, rec(5), null],
       ['owner can update with a newer version', 'ALLOW', 'update', me, `/users/u1/shifts/s1`, rec(9), rec(5)],
@@ -260,7 +312,7 @@ async function main() {
       ['the inviter reads it', 'ALLOW', 'get', me, '/ref/u2', null, refd()],
       ['nobody else reads it', 'DENY', 'get', { uid: 'u3' }, '/ref/u2', null, refd()],
       ['nobody else lists them', 'DENY', 'list', { uid: 'u3' }, '/ref/u2', null, refd()],
-    ];
+    ].concat(wpCases).filter((c) => !arg || c[0].includes(arg)); // ruletest <project> "workplace": only those
     const testCases = cases.map(([, expect, method, auth, p, data, existing, admins, mocks]) => {
       const tc = { expectation: expect, request: { auth: auth || null, path: db + p, method, time: new Date(NOW).toISOString() } };
       if (data) tc.request.resource = { data };

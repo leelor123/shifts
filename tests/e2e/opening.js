@@ -20,6 +20,7 @@ const fs = require('fs');
 const path = require('path');
 const crypto = require('crypto');
 const puppeteer = require('puppeteer-core');
+const SvgMoves = require('./svg-moves.js');
 const docs = process.argv[2] || 'docs';
 // NEXT_DOCS=<dir>: the measured opens are served from another build (a newer version): the app opens its kept copy and
 // the service worker installs the new one behind the show, as on a phone the day after a release
@@ -51,6 +52,7 @@ const check = (name, ok, info) => { results.push(!!ok); console.log((ok ? 'ok ' 
   await new Promise((r) => server.listen(8786, r));
   const browser = await puppeteer.launch({ executablePath: process.env.CHROME_PATH || 'C:/Program Files/Google/Chrome/Application/chrome.exe', headless: true });
   const page = await browser.newPage();
+  await require('./quiet.js').quiet(page);
   const errs = [];
   page.on('pageerror', (e) => errs.push(e.message));
   await page.setViewport({ width: 390, height: 844, isMobile: true, hasTouch: true, deviceScaleFactor: 2 });
@@ -68,6 +70,7 @@ const check = (name, ok, info) => { results.push(!!ok); console.log((ok ? 'ok ' 
   await page.evaluate(() => { document.querySelectorAll('.coach').forEach((x) => x.remove()); UI.closeAll(); });
   await sleep(700);
 
+  const svgSeen = await SvgMoves.attach(page);
   // what the page sees from its first moment: frames, long tasks, the show's classes, and every change to the look of
   // <html> and <body>
   await page.evaluateOnNewDocument(() => {
@@ -183,6 +186,8 @@ const check = (name, ok, info) => { results.push(!!ok); console.log((ok ? 'ok ' 
   check('nothing of the look changes under the moving show (no class, theme, colour, size or font set mid-way)', runs.every((r) => r.changed.length === 0), per((r) => r.changed.length));
   // the sheet rises in 0.56 s; the actions on it within the first part of that, not after it stopped
   check('the quick actions ride up with the sheet (in at most 150ms after it starts to rise)', runs.every((r) => r.late <= 150), per((r) => r.late + 'ms'));
+  const svgMoves = svgSeen();
+  check('nothing in the show or on home moves as an SVG element (on the phone those stop while the app starts: no compositor runs them)', svgMoves.length === 0, svgMoves.join(', ') || 'none');
   check('the show keeps moving while the app starts under it (compositor frames, worst gap under 100ms)', runs.every((r) => r.frames > 30 && r.fgap < 100), per((r) => r.fgap + 'ms'));
   console.log(results.every(Boolean) ? '\nall good' : '\nPROBLEMS', 'errors:', errs.length ? errs.slice(0, 6) : 'none');
   await browser.close(); server.close();

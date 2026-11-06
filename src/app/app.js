@@ -156,7 +156,7 @@
     nav.dataset.built = '1';
     nav.innerHTML = `<div class="nav-inner">${TABS.map((t) => t.id === 'add'
       ? `<div><button class="fab" data-act="add-menu" aria-label="הוספה">${icon('plus')}</button></div>`
-      : `<button class="${App.tab === t.id ? 'on' : ''}" data-act="tab" data-tab="${t.id}" aria-label="${t.label}"><span class="pill">${icon(t.icon)}${t.id === 'home' && unread && App.tab !== 'home' ? `<span class="dot-badge">${unread > 9 ? '9+' : unread}</span>` : ''}</span>${t.label}</button>`).join('')}</div>`;
+      : `<button class="${App.tab === t.id ? 'on' : ''}" data-act="tab" data-tab="${t.id}" aria-label="${t.label}"><span class="pill"><span class="ic">${icon(t.icon)}</span>${t.id === 'home' && unread && App.tab !== 'home' ? `<span class="dot-badge">${unread > 9 ? '9+' : unread}</span>` : ''}</span>${t.label}</button>`).join('')}</div>`;
   };
   const TAB_ORDER = ['home', 'calendar', 'reports', 'settings'];
   App.go = function (tab, opts) {
@@ -934,6 +934,7 @@
     try { if (params.get('source') === 'twa' || document.referrer.startsWith('android-app://')) sessionStorage.setItem('androidApp', '1'); } catch (e) { /* ignore */ }
     try { App.androidApp = sessionStorage.getItem('androidApp') === '1'; } catch (e) { App.androidApp = false; }
     App.pendingAction = params.get('action');
+    App.pendingTag = root.Nfc ? root.Nfc.readOpen(location.search) : null; // ?action=nfc&tag=… (a touch on an NFC sticker)
     if (App.pendingAction) history.replaceState(null, '', location.pathname + location.hash);
 
     // Google sign-in is required. Nothing on screen waits for Google to load: a returning user goes
@@ -1037,6 +1038,7 @@
     if (action) App.afterUnlock(() => {
       if (action === 'start' && !S.activeShift) UI.confirm('התחל משמרת', '', 'התחלה').then((ok) => { if (ok && !S.activeShift) App.actions['timer-start'](); });
       if (action === 'stop' && S.activeShift) UI.confirm('סיום משמרת', '', 'סיום').then((ok) => { if (ok && S.activeShift) App.stopShift(); });
+      if (action === 'nfc' && App.nfcOpen) App.nfcOpen(App.pendingTag || ''); // a touch on the NFC sticker at work (app/nfc.js): starts or ends a shift
       if (action === 'add') App.sheetsApi.shiftEditor();
       if (action === 'schedule' && App.importSchedule) App.importSchedule(); // the app icon's shortcut
       if (action === 'share-in' && App.receiveShare) App.receiveShare(); // shared to the app (sw.js)

@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Shaati (Android 12+): the widgets' pay snapshot stays out of the cloud backup and of a move to a new phone; the app
+     sends a new one when it opens -->
+<data-extraction-rules>
+    <cloud-backup>
+        <exclude domain="sharedpref" path="shaati_widgets.xml" />
+    </cloud-backup>
+    <device-transfer>
+        <exclude domain="sharedpref" path="shaati_widgets.xml" />
+    </device-transfer>
+</data-extraction-rules>

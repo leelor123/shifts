@@ -4,7 +4,7 @@
  * and changes its face (happy, wave, wow, love, party, think, cool,
  * sleepy) to react to what the user does: in the setup questions,
  * on empty screens, in celebrations and in the help centre.
- * Pure SVG + CSS (styles-v3.css); motion stops with reduced motion.
+ * SVG drawings in HTML layers + CSS (styles-v3.css); motion stops with reduced motion.
  * mascot-voice.js gives it a voice (it reads the setup questions aloud, its mouth moving with the
  * words) and small reactions tied to what the user does (a nod, a hop, a head shake...).
  * ============================================================ */
@@ -44,6 +44,12 @@
     think: ['up', 'flat'], cool: ['cool', 'smile'], wink: ['wink', 'grin'], sleepy: ['sleepy', 'small'],
   };
 
+  // Chrome never runs a motion of an SVG element on the compositor, so a busy phone froze the coin's bob, blink and
+  // wave. Every part that moves is an HTML layer around its own drawing; all drawings share one viewBox and fill the
+  // coin's box, so they line up exactly as one drawing did. The CSS moves the layers (styles-v3.css, mascot).
+  const draw = (inner, cls) => `<svg viewBox="0 0 120 124"${cls ? ` class="${cls}"` : ''}>${inner}</svg>`;
+  const part = (cls, inner) => `<span class="m-l ${cls}">${draw(inner)}</span>`;
+
   /** The mascot as an HTML string. mood: one of MOODS; opts: { size (px), cls } */
   App.mascot = function (mood, opts) {
     opts = opts || {};
@@ -52,22 +58,17 @@
     if (late) { eyes = 'drowsy'; mouth = 'small'; }
     const hat = mood === 'party'
       ? '<g class="m-hat"><path d="M48 24 l12 -22 l12 22 z" fill="#8b6cff"/><path d="M52 17 l16 0 M55 11 l10 0" stroke="#ffd23f" stroke-width="2.4"/><circle cx="60" cy="2" r="3.4" fill="#ff5c8a"/></g>' : '';
-    const zz = mood === 'sleepy' ? '<text x="88" y="30" class="m-z">z</text><text x="98" y="18" class="m-z m-z2">z</text>' : '';
-    return `<span class="mascot m-${mood || 'happy'}${late ? ' m-night' : ''} ${opts.cls || ''}" style="--sz:${opts.size || 96}px" aria-hidden="true"><svg viewBox="0 0 120 124">
-      <ellipse class="m-shadow" cx="60" cy="116" rx="30" ry="5"/>
-      <g class="m-talkb"><g class="m-act"><g class="m-body">
-        <path class="m-arm m-arm-l" d="M24 70 q-12 -2 -14 -14"/>
-        <path class="m-arm m-arm-r" d="M96 70 q12 -2 14 -14"/>
-        <g class="m-sprout"><path d="M60 24 v-9" stroke="#1f9d52" stroke-width="4" stroke-linecap="round"/><path d="M60 16 q9 -9 16 -3 q-8 8 -16 3" fill="#2ee59d"/></g>
-        ${hat}
-        <circle cx="60" cy="64" r="40" class="m-coin"/>
-        <circle cx="60" cy="64" r="32.5" class="m-rim"/>
-        <ellipse cx="42" cy="42" rx="11" ry="6" transform="rotate(-35 42 42)" class="m-shine"/>
-        <g class="m-face"><g class="m-eyes"><g class="m-look">${EYES[eyes]}</g></g>
-          <circle cx="37" cy="72" r="5.4" class="m-cheek"/><circle cx="83" cy="72" r="5.4" class="m-cheek"/>
-          <g class="m-mouth">${MOUTH[mouth]}</g>${TALK}</g>
-        ${zz}
-      </g></g></g></svg></span>`;
+    const zz = mood === 'sleepy' ? part('m-z', '<text x="88" y="30" class="m-zt">z</text>') + part('m-z m-z2', '<text x="98" y="18" class="m-zt">z</text>') : '';
+    return `<span class="mascot m-${mood || 'happy'}${late ? ' m-night' : ''} ${opts.cls || ''}" style="--sz:${opts.size || 96}px" aria-hidden="true">`
+      + part('m-shadow', '<ellipse class="m-shd" cx="60" cy="116" rx="30" ry="5"/>')
+      + '<span class="m-l m-talkb"><span class="m-l m-act"><span class="m-l m-body">'
+      + part('m-arm-l', '<path class="m-arm" d="M24 70 q-12 -2 -14 -14"/>')
+      + part('m-arm-r', '<path class="m-arm" d="M96 70 q12 -2 14 -14"/>')
+      + part('m-sprout', '<path d="M60 24 v-9" stroke="#1f9d52" stroke-width="4" stroke-linecap="round"/><path d="M60 16 q9 -9 16 -3 q-8 8 -16 3" fill="#2ee59d"/>')
+      + draw(hat + '<circle cx="60" cy="64" r="40" class="m-coin"/><circle cx="60" cy="64" r="32.5" class="m-rim"/><ellipse cx="42" cy="42" rx="11" ry="6" transform="rotate(-35 42 42)" class="m-shine"/>')
+      + `<span class="m-l m-eyes">${part('m-look', EYES[eyes])}</span>`
+      + draw(`<circle cx="37" cy="72" r="5.4" class="m-cheek"/><circle cx="83" cy="72" r="5.4" class="m-cheek"/><g class="m-mouth">${MOUTH[mouth]}</g>${TALK}`, 'm-face')
+      + zz + '</span></span></span></span>';
   };
   /** The mascot with a speech bubble next to it. */
   App.mascotSays = (mood, html, opts) => `<div class="m-say ${(opts && opts.cls) || ''}">${App.mascot(mood, opts)}<div class="bubble">${html}</div></div>`;

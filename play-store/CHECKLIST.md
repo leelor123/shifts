@@ -46,3 +46,11 @@ State as of 3 Nov 2026. "Saved" = saved in Console, waiting in Publishing overvi
 1. Merchant account (identity, bank, tax: only the owner, 18+, types these); then the subscription and the Plus paragraph come back.
 2. 12 testers opted in to the closed test for 14 days, then Apply for production (owner fills the form).
 3. Read the pre-launch report once Google finishes the review.
+
+## Store listing translations (prepared 6 Nov 2026, not in Console yet)
+Main store listing › Manage translations › Add: Russian – ru-RU, Arabic – ar, French – fr-FR, Spanish (Latin
+America) – es-419, Spanish (Spain) – es-ES, Amharic – am. For each: paste name, short and full description from
+listing-<lang>.md (es-419 and es-ES both from listing-es.md), then Phone screenshots › remove the copied Hebrew ones
+› upload graphics/screenshots-<lang>/01…08 in order. en-US: replace the full description with the refreshed one in
+listing-en.md. The feature graphic stays the Hebrew one in every language (no translated one exists yet).
+Before going live: a native reader for am (required) and ar, ru, fr, es (recommended); see each file's notes.

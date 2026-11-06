@@ -51,7 +51,7 @@
   const REST = 62; // where the logo waits while refreshing
   const SLOP = 10; // finger movement that still counts as a tap
   // the hands are HTML elements, so their spin runs on the GPU even while the refresh keeps the page busy
-  const CLOCK = '<svg class="ptr-ring" viewBox="0 0 48 48"><circle class="ptr-track" cx="24" cy="24" r="21"/><circle class="ptr-arc" cx="24" cy="24" r="21" pathLength="1"/></svg>'
+  const CLOCK = '<span class="ptr-ring"><svg viewBox="0 0 48 48"><circle class="ptr-track" cx="24" cy="24" r="21"/><circle class="ptr-arc" cx="24" cy="24" r="21" pathLength="1"/></svg></span>'
     + '<span class="ptr-face"><i class="ptr-tk t12"></i><i class="ptr-tk t3"></i><i class="ptr-tk t6"></i><i class="ptr-tk t9"></i><i class="ptr-h"></i><i class="ptr-m"></i><b class="ptr-dot"></b></span>';
   const ind = document.createElement('div');
   ind.className = 'ptr';

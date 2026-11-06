@@ -15,7 +15,8 @@ import android.widget.RemoteViews;
  */
 final class WidgetLook {
     static final int MIDNIGHT = 0, CLEAN = 1, WALLPAPER = 2, COIN = 3, SEA = 4, RAIN = 5;
-    static final String[] NAMES = { "לילה וזהב", "נקי", "צבעי הטפט", "עם שעתי", "ים בשקיעה", "גשם מטבעות" };
+    /** Each look's name (res/values/w_strings.xml and its translations), in the order of the numbers above. */
+    static final int[] NAMES = { R.string.w_look_midnight, R.string.w_look_clean, R.string.w_look_wallpaper, R.string.w_look_coin, R.string.w_look_sea, R.string.w_look_rain };
     private static final String PREFS = "shaati_widget_looks";
 
     final int style;

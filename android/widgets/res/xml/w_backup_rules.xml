@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Shaati (Android 11 and older): the widgets' pay snapshot stays out of the phone's backup; the app sends a new one
+     when it opens -->
+<full-backup-content>
+    <exclude domain="sharedpref" path="shaati_widgets.xml" />
+</full-backup-content>

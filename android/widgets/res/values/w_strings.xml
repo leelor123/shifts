@@ -1,5 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
-<resources>
+<!-- Shaati widgets and quick-settings tile: the default texts (Hebrew, as most users and the app). One file per language
+     (values-en, -ru, -ar, -fr, -es, -am) holds the same names; tools/android-strings-check.js checks they match. -->
+<resources xmlns:tools="http://schemas.android.com/tools" tools:locale="iw">
     <string name="w_shift_name">שעתי · משמרת</string>
     <string name="w_shift_desc">התחלת משמרת בלחיצה, ושעון רץ בזמן משמרת</string>
     <string name="w_month_name">שעתי · החודש שלי</string>
@@ -10,4 +12,61 @@
     <string name="w_payday_desc">כמה ימים נשארו למשכורת וכמה בערך תקבלו</string>
     <string name="w_combo_name">שעתי · הכול ביחד</string>
     <string name="w_combo_desc">משמרת, החודש, היעד והמשכורת בווידג׳ט אחד</string>
+    <string name="w_tile_name">משמרת</string>
+    <string name="w_app">שעתי</string>
+    <string name="w_start">התחל משמרת</string>
+    <string name="w_start_coin">נתחיל משמרת?</string>
+    <string name="w_end">סיום</string>
+    <string name="w_end_shift">סיום משמרת</string>
+    <string name="w_running">משמרת רצה</string>
+    <string name="w_open">פתיחת שעתי</string>
+    <string name="w_started">המשמרת התחילה. בהצלחה!</string>
+    <string name="w_ended">המשמרת נגמרה אחרי %1$s שעות. היא תישמר כשתפתחו את שעתי</string>
+    <string name="w_on_break">בהפסקה</string>
+    <string name="w_today">היום %1$s</string>
+    <string name="w_this_month">החודש %1$s</string>
+    <string name="w_payday_today">היום משכורת</string>
+    <string name="w_payday_tomorrow">מחר משכורת</string>
+    <string name="w_month_mine">החודש שלי</string>
+    <string name="w_month_new">חודש חדש התחיל</string>
+    <string name="w_open_update">פתחו את שעתי לעדכון</string>
+    <string name="w_so_far">%1$s עד עכשיו</string>
+    <string name="w_net_hours">נטו %1$s · %2$s שעות</string>
+    <string name="w_goal_pct">%1$s%% מיעד %2$s</string>
+    <string name="w_forecast">צפי לסוף החודש</string>
+    <string name="w_forecast_is">צפי לסוף החודש: %1$s</string>
+    <string name="w_enough">יש לך מספיק</string>
+    <string name="w_more">עוד %1$s</string>
+    <string name="w_goal_of">יעד %1$s</string>
+    <string name="w_goal_passed">עברת את היעד</string>
+    <string name="w_goal_left">עוד %1$s ליעד</string>
+    <string name="w_goal_mine">היעד שלי</string>
+    <string name="w_goal_hint">אפשר להגדיר יעד בהגדרות › יעדים</string>
+    <string name="w_payday_next">המשכורת הבאה</string>
+    <string name="w_no_shifts">אין עדיין משמרות בתקופה הזו</string>
+    <string name="w_about_net">כ-%1$s נטו</string>
+    <string name="w_pick_title">איך הווידג׳ט ייראה?</string>
+    <string name="w_pick_sub">אפשר לשנות אחר כך בלחיצה ארוכה על הווידג׳ט.</string>
+    <string name="w_sample_period">החודש</string>
+    <string name="w_look_midnight">לילה וזהב</string>
+    <string name="w_look_clean">נקי</string>
+    <string name="w_look_wallpaper">צבעי הטפט</string>
+    <string name="w_look_coin">עם שעתי</string>
+    <string name="w_look_sea">ים בשקיעה</string>
+    <string name="w_look_rain">גשם מטבעות</string>
+    <!-- the widget picker's previews (the layouts' sample texts) -->
+    <string name="w_pv_month" formatted="false">החודש ₪2,840</string>
+    <string name="w_pv_so_far" formatted="false">החודש עד עכשיו</string>
+    <string name="w_pv_line" formatted="false">נטו ₪2,310 · 41 שעות</string>
+    <string name="w_pv_goal" formatted="false">64% מיעד ₪4,400</string>
+    <string name="w_pv_pay" formatted="false">עוד 9 ימים למשכורת</string>
+    <string name="w_pv_goal_title" formatted="false">יעד ₪4,400</string>
+    <string name="w_pv_goal_left" formatted="false">עוד ₪1,560 ליעד</string>
+    <string name="w_pv_about" formatted="false">כ-₪2,310 נטו</string>
+    <plurals name="w_payday_days">
+        <item quantity="one">עוד יום אחד למשכורת</item>
+        <item quantity="two">עוד יומיים למשכורת</item>
+        <item quantity="many">עוד %1$s ימים למשכורת</item>
+        <item quantity="other">עוד %1$s ימים למשכורת</item>
+    </plurals>
 </resources>

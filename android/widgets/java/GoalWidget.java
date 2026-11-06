@@ -10,7 +10,7 @@ import org.json.JSONObject;
 public class GoalWidget extends ShaatiWidget {
     @Override
     RemoteViews build(Context c, JSONObject d, WidgetLook l) {
-        RemoteViews v = new RemoteViews(c.getPackageName(), R.layout.w_goal);
+        RemoteViews v = new RemoteViews(c.getPackageName(), WidgetLang.layout(c, R.layout.w_goal_rtl, R.layout.w_goal_ltr));
         l.frame(v);
         l.background(v, R.id.w_icon_box, l.dot);
         l.iconColor(c, v, R.id.w_icon);
@@ -30,22 +30,22 @@ public class GoalWidget extends ShaatiWidget {
             v.setTextViewText(R.id.w_pct, pct + "%");
             v.setViewVisibility(R.id.w_bar, View.VISIBLE);
             v.setProgressBar(R.id.w_bar, 100, pct, false);
-            text(v, R.id.w_sub, pct >= 100 ? "יש לך מספיק" : "עוד " + s(sv, "left"));
+            text(v, R.id.w_sub, pct >= 100 ? c.getString(R.string.w_enough) : c.getString(R.string.w_more, s(sv, "left")));
         } else if (g != null) {
             int pct = pct(g);
             v.setImageViewResource(R.id.w_icon, pct >= 100 ? R.drawable.w_ic_trophy : R.drawable.w_ic_target);
-            v.setTextViewText(R.id.w_title, "יעד " + s(g, "of"));
+            v.setTextViewText(R.id.w_title, c.getString(R.string.w_goal_of, s(g, "of")));
             v.setTextViewText(R.id.w_pct, pct + "%");
             v.setViewVisibility(R.id.w_bar, View.VISIBLE);
             v.setProgressBar(R.id.w_bar, 100, pct, false);
-            text(v, R.id.w_sub, pct >= 100 ? "עברת את היעד" : "עוד " + s(g, "left") + " ליעד");
+            text(v, R.id.w_sub, pct >= 100 ? c.getString(R.string.w_goal_passed) : c.getString(R.string.w_goal_left, s(g, "left")));
         } else {
             boolean old = d == null || stale(d);
             v.setImageViewResource(R.id.w_icon, R.drawable.w_ic_trend);
-            v.setTextViewText(R.id.w_title, old ? "היעד שלי" : "צפי לסוף החודש");
+            v.setTextViewText(R.id.w_title, c.getString(old ? R.string.w_goal_mine : R.string.w_forecast));
             v.setTextViewText(R.id.w_pct, old ? "" : s(d, "pace"));
             v.setViewVisibility(R.id.w_bar, View.GONE);
-            text(v, R.id.w_sub, old ? "פתחו את שעתי לעדכון" : "אפשר להגדיר יעד בהגדרות › יעדים");
+            text(v, R.id.w_sub, c.getString(old ? R.string.w_open_update : R.string.w_goal_hint));
         }
         return v;
     }

@@ -400,9 +400,9 @@
     const h = Math.max(150, Math.round(hero ? hero.offsetTop + hero.offsetHeight * .42 : 190));
     if (host.style.height !== h + 'px') host.style.height = h + 'px';
     const w = host.clientWidth || 390;
-    let svg = host.querySelector('svg.sky');
+    let svg = host.querySelector('.sky');
     if (!svg) {
-      svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+      svg = document.createElement('div'); // sky.js draws into a div: its moving parts are divs the compositor moves
       svg.setAttribute('class', 'sky'); // drawn in the same frame as the screen: no fade (it played again on every tab switch)
       svg.setAttribute('aria-hidden', 'true');
       const a = host.querySelector('.hs-a');
@@ -449,7 +449,7 @@
     const nRecent = HS.recent == null ? 3 : +HS.recent;
     const recent = results.filter((r) => r.status === 'done').sort((a, b) => b.start - a.start).slice(0, 8);
     const name = S.settings.userName ? ', ' + esc(String(S.settings.userName).split(' ')[0]) : '';
-    const date = U.fmtDate(today, 'long').replace(/\s\d{4}$/, '');
+    const date = U.fmtDate(today, 'wdm');
     return `
       <div class="home-sky" data-key="home-sky" aria-hidden="true"><i class="hs-a"></i></div>
       <div class="home-top"><div class="titles"><h1>${greeting()}${name}</h1>

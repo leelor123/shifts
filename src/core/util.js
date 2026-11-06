@@ -168,17 +168,20 @@
   const dateFmts = {};
   const intl = (k, opts) => (dateFmts[JSON.stringify(opts)] || (dateFmts[JSON.stringify(opts)] = new Intl.DateTimeFormat(LOCALE, opts))).format(new Date(+k.slice(0, 4), +k.slice(5, 7) - 1, +k.slice(8, 10) || 1, 12));
   /** A date key as text: 'short' 5/1, 'long' with the day of the week, 'dmy' the same without the word "day",
-   *  'dm' 5 in January, otherwise 05/01/2026. */
+   *  'wdm' 'long' without the year, 'dm' 5 in January, otherwise 05/01/2026. */
   function fmtDate(k, opts) {
     const { y, m, d } = parseKey(k);
     if (opts === 'short') return d + '/' + m;
     if (LANG !== 'he') {
       if (opts === 'long' || opts === 'dmy') return intl(k, { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });
+      // the year left out by the language's own format: cutting it off the text left "de" in Spanish and "г." in Russian
+      if (opts === 'wdm') return intl(k, { weekday: 'long', day: 'numeric', month: 'long' });
       if (opts === 'dm') return intl(k, { day: 'numeric', month: 'long' });
       return pad(d) + '/' + pad(m) + '/' + y;
     }
     // i18n-keep-start
     if (opts === 'long') return 'יום ' + DAYS[dow(k)] + ', ' + d + ' ב' + MONTHS[m - 1] + ' ' + y;
+    if (opts === 'wdm') return 'יום ' + DAYS[dow(k)] + ', ' + d + ' ב' + MONTHS[m - 1];
     if (opts === 'dmy') return DAYS[dow(k)] + ', ' + d + ' ב' + MONTHS[m - 1] + ' ' + y;
     if (opts === 'dm') return d + ' ב' + MONTHS[m - 1];
     // i18n-keep-end

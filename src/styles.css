@@ -720,6 +720,8 @@ textarea.input.chat-input { min-height: 46px; height: 46px; max-height: 140px; r
 .skyhead { position: relative; height: var(--sky-top); overflow: hidden; color: #fff; background: #0d2b6b; }
 .skyhead .sky { position: absolute; inset: 0; width: 100%; height: 100%; display: block; }
 .sh-logo, #intro .intro-logo { position: absolute; left: 50%; top: calc(var(--safe-t) + 46px); width: 58px; height: 58px; margin-left: -29px; overflow: visible; }
+/* the show's logo moves as a div around its drawing: the compositor runs no animation whose target is an SVG element */
+#intro .intro-logo > svg { display: block; width: 100%; height: 100%; overflow: visible; }
 .sh-logo path, #intro .intro-logo path { fill: none; stroke-width: 104; stroke-linecap: round; stroke-linejoin: round; }
 .sh-logo .g, #intro .intro-logo .g { stroke: #2ee59d; }
 .sh-logo .y, #intro .intro-logo .y { stroke: #f5b93e; }
@@ -732,24 +734,29 @@ textarea.input.chat-input { min-height: 46px; height: 46px; max-height: 140px; r
 .skyhead .sh-text .sh-title { font: 600 1.9rem/1.2 var(--font); letter-spacing: -.02em; margin: 4px 0 0; color: #fff; }
 .skyhead .sh-text .sh-sub { font: 500 .95rem/1.4 var(--font); color: rgba(255, 255, 255, .94); margin-top: 4px; }
 /* the sky's slow life: every delay counted from the clock (--sk0, set when it is drawn), so two drawings move as one */
+/* sky.js: the still drawings, and the moving parts as divs around drawings of their own (the compositor moves a div,
+ * not an SVG element); a move of n drawing units is n × --sku pixels */
+.sky { overflow: hidden; pointer-events: none; }
+.sky > svg, .sky .sk-lay > svg { position: absolute; inset: 0; width: 100%; height: 100%; display: block; overflow: visible; }
+.sky .sk-lay { position: absolute; inset: 0; }
 .sky .sk-stars circle { animation: sk-tw var(--t) ease-in-out infinite alternate; animation-delay: calc(var(--sk0, 0s) + var(--d, 0s)); }
 .sky .sk-glint line { animation: sk-tw 2.6s ease-in-out infinite alternate; animation-delay: calc(var(--sk0, 0s) + var(--d, 0s)); }
 @keyframes sk-tw { to { opacity: .12; } }
 .sky .sk-cloud { animation: sk-drift var(--t) linear infinite; animation-delay: calc(var(--sk0, 0s) + var(--d, 0s)); }
-@keyframes sk-drift { from { transform: translateX(470px); } to { transform: translateX(-90px); } }
+@keyframes sk-drift { from { transform: translateX(calc(470px * var(--sku, 1))); } to { transform: translateX(calc(-90px * var(--sku, 1))); } }
 .sky .sk-flock { animation: sk-fly 34s linear infinite; animation-delay: var(--sk0, 0s); }
-@keyframes sk-fly { from { transform: translate(430px, 80px); } to { transform: translate(-130px, 46px); } }
+@keyframes sk-fly { from { transform: translate(calc(430px * var(--sku, 1)), calc(80px * var(--sku, 1))); } to { transform: translate(calc(-130px * var(--sku, 1)), calc(46px * var(--sku, 1))); } }
 .sky .sk-wing { transform-box: fill-box; transform-origin: center; animation: sk-flap .8s ease-in-out infinite alternate; animation-delay: calc(var(--sk0, 0s) + var(--d, 0s)); }
 @keyframes sk-flap { to { transform: scaleY(.35); } }
 .sky .sk-halo { transform-box: fill-box; transform-origin: center; animation: sk-breathe 5s ease-in-out infinite alternate; animation-delay: var(--sk0, 0s); }
 @keyframes sk-breathe { to { transform: scale(1.1); opacity: .75; } }
 .sky .sk-win rect { fill: #ffd98a; }
 .sky .sk-fall { animation: sk-fall var(--t) linear infinite; animation-delay: var(--sk0, 0s); }
-@keyframes sk-fall { to { transform: translateY(330px); } }
+@keyframes sk-fall { to { transform: translateY(calc(var(--skh, 330) * var(--sku, 1) * 1px)); } }
 .sky .sk-flash { opacity: 0; animation: sk-flash 8s linear infinite; animation-delay: var(--sk0, 0s); }
 @keyframes sk-flash { 0%, 86% { opacity: 0; } 87% { opacity: .5; } 88% { opacity: 0; } 90% { opacity: .3; } 92%, 100% { opacity: 0; } }
 .sky .sk-fog { animation: sk-fog 26s ease-in-out infinite alternate; animation-delay: var(--sk0, 0s); }
-@keyframes sk-fog { to { transform: translateX(-390px); } }
+@keyframes sk-fog { to { transform: translateX(calc(-390px * var(--sku, 1))); } }
 .sky .sk-leaf { transform-box: fill-box; transform-origin: center; animation: sk-leaf var(--t) linear infinite; animation-delay: calc(var(--sk0, 0s) + var(--d, 0s)); }
 @keyframes sk-leaf { to { transform: translate(var(--x), 300px) rotate(560deg); } }
 body:not(.fx) .sky * { animation: none !important; }
@@ -850,7 +857,10 @@ html, body { overscroll-behavior-y: contain; }
 .ptr.settle { transition: transform .35s var(--ease), opacity .35s var(--ease); }
 /* the clock coin: a face with four ticks and two hands, a ring that fills as you pull */
 .ptr-disc { position: relative; width: 46px; height: 46px; border-radius: 50%; background: var(--surface-hi); box-shadow: 0 6px 16px rgba(0, 0, 0, .16), 0 0 0 1px var(--line); transition: background-color .2s; --ink: var(--brand-strong); }
-.ptr-ring { position: absolute; inset: -3px; width: 52px; height: 52px; transform: rotate(-90deg); overflow: visible; }
+/* the ring turns as its span (the compositor runs no animation whose target is an SVG element: it stood still while
+ * the refresh kept the page busy) */
+.ptr-ring { position: absolute; inset: -3px; width: 52px; height: 52px; transform: rotate(-90deg); }
+.ptr-ring svg { display: block; width: 100%; height: 100%; overflow: visible; }
 .ptr-ring circle { fill: none; stroke-width: 3; }
 .ptr-track { stroke: var(--line); }
 .ptr-arc { stroke: #ffb524; stroke-linecap: round; stroke-dasharray: 1 1; stroke-dashoffset: calc(1 - var(--p, 0)); }

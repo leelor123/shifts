@@ -38,14 +38,19 @@ async function generate() {
   if (!res.ok) throw new Error(`web manifest: HTTP ${res.status}`);
   const web = await res.json();
   const base = core.TwaManifest.fromWebManifestJson(manifestUrl, web).toJson();
+  // the launcher shortcuts open the app as the app, not as a website: without source=twa the page knew it only from
+  // the referrer or the Digital Goods API, and the Play app must never show the website's checkout (Review Ready scan)
+  base.shortcuts = (base.shortcuts || []).map((sc) => Object.assign({}, sc, { url: sc.url + (sc.url.includes('?') ? '&' : '?') + 'source=twa' }));
   const tm = new core.TwaManifest(Object.assign(base, {
     packageId: APP.packageId,
     host: APP.host,
     launcherName: APP.launcherName,
     startUrl: APP.startUrl,
     themeColor: '#1D4A4F', themeColorDark: '#0F1413',
-    navigationColor: '#F6F4EE', navigationColorDark: '#0F1413',
-    navigationDividerColor: '#E3DFD4', navigationDividerColorDark: '#26302E',
+    // the phone's own bar under the app is the app's bottom bar colour (styles-v4.css --surface, light and dark), and
+    // its divider the same colour: no line between them, so the app does not look like a page in a browser
+    navigationColor: '#F6F4EE', navigationColorDark: '#0E1118',
+    navigationDividerColor: '#F6F4EE', navigationDividerColorDark: '#0E1118',
     backgroundColor: '#0D2B6B', // same navy as the opening animation: no flash between them
     monochromeIconUrl: `https://${APP.host}${APP.scope}icon-mono-512.png`, // notification icon
     enableNotifications: true,
@@ -254,7 +259,11 @@ function patchWidgets() {
   // generate keeps the twa/ folder, so the files of an older widgets build stay there: an old w_bg.xml asked for
   // colours the new w_colors.xml no longer has and failed the 1.32.4 build. Every w_* resource and widget class is
   // removed first, so the project holds exactly what android/widgets holds.
+  // the texts: every language holds every string, nothing is left written in the code (tools/android-strings-check.js)
+  const texts = require('./android-strings-check').check();
+  if (texts.problems.length) throw new Error('android/widgets texts:\n' + texts.problems.join('\n'));
   const resDir = path.join(main, 'res');
+  // the translations (values-en, values-ru, ...) are w_strings.xml in their own folders: removed and copied like the rest
   for (const d of fs.readdirSync(resDir)) {
     const dir = path.join(resDir, d);
     if (fs.statSync(dir).isDirectory()) for (const f of fs.readdirSync(dir)) if (f.startsWith('w_')) fs.rmSync(path.join(dir, f));
@@ -278,7 +287,14 @@ function patchWidgets() {
         <activity android:name=".WidgetStyleActivity" android:exported="true" android:theme="@style/WidgetPickTheme" android:excludeFromRecents="true" android:taskAffinity="">
             <intent-filter><action android:name="android.appwidget.action.APPWIDGET_CONFIGURE" /></intent-filter>
         </activity>
-${receiver('ShiftWidget', 'shift')}${receiver('MonthWidget', 'month')}${receiver('GoalWidget', 'goal')}${receiver('PaydayWidget', 'payday')}${receiver('ComboWidget', 'combo')}    </application>`);
+${receiver('ShiftWidget', 'shift')}${receiver('MonthWidget', 'month')}${receiver('GoalWidget', 'goal')}${receiver('PaydayWidget', 'payday')}${receiver('ComboWidget', 'combo')}        <!-- the quick-settings tile: start or end a shift from the panel at the top of the screen (ShiftTile) -->
+        <service android:name=".ShiftTile" android:exported="true" android:label="@string/w_tile_name" android:icon="@drawable/w_ic_play" android:permission="android.permission.BIND_QUICK_SETTINGS_TILE">
+            <intent-filter><action android:name="android.service.quicksettings.action.QS_TILE" /></intent-filter>
+        </service>
+    </application>`);
+  // the widgets' pay snapshot stays out of the phone's backups (res/xml/w_backup_rules.xml, w_data_extraction.xml)
+  if (!m.includes('android:allowBackup="true"')) throw new Error('AndroidManifest.xml template changed: allowBackup');
+  m = m.replace('android:allowBackup="true"', 'android:allowBackup="true"\n        android:fullBackupContent="@xml/w_backup_rules"\n        android:dataExtractionRules="@xml/w_data_extraction"');
   fs.writeFileSync(mf, m);
   const gf = path.join(TWA, 'app', 'build.gradle');
   let g = fs.readFileSync(gf, 'utf8');
@@ -288,7 +304,8 @@ ${receiver('ShiftWidget', 'shift')}${receiver('MonthWidget', 'month')}${receiver
   fs.writeFileSync(path.join(TWA, 'app', 'shaati-rules.pro'), '# Shaati: the widgets bridge reads the launcher\'s session (LauncherActivity.widgetSession)\n-keepclassmembers class com.google.androidbrowserhelper.trusted.TwaLauncher { androidx.browser.customtabs.CustomTabsSession *; }\n');
 }
 
-/** The app is called "שעתי" on phones set to Hebrew (android/res/values-iw); the default name stays "Shaati". */
+/** The app is called "שעתי" on phones set to Hebrew (android/res/values-iw); the default name stays "Shaati", as the
+ *  app calls itself in every other language (Arabic included). */
 function patchNames() {
   const SRC = path.join(ROOT, 'android', 'res');
   const res = path.join(TWA, 'app', 'src', 'main', 'res');

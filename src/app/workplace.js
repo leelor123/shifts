@@ -40,7 +40,13 @@
 
   const mine = (empId) => { const all = S.settings.wpShare; const x = all && typeof all === 'object' ? all[empId] : null; return x && W.CODE_RE.test(x.c || '') ? x : null; };
   const setMine = (empId, v) => Store.setSettings((s) => { s.wpShare = Object.assign({}, s.wpShare && typeof s.wpShare === 'object' ? s.wpShare : {}, { [empId]: v }); });
-  const errText = (e) => (!navigator.onLine ? 'אין חיבור לאינטרנט' : e && e.code === 'shaati/wp-gone' ? 'הקוד כבר נמחק. אפשר ליצור קוד חדש' :e && /permission/i.test(e.code || e.message || '') ? 'אין הרשאה לקוד הזה' : 'משהו השתבש. נסו שוב בעוד רגע');
+  const denied = (e) => !!e && /permission/i.test(e.code || e.message || '');
+  // writing: a refusal is about the record (the rules check every field), not about who may use the code
+  const errText = (e, writing) => (!navigator.onLine ? 'אין חיבור לאינטרנט' : e && e.code === 'shaati/wp-gone' ? 'הקוד כבר נמחק. אפשר ליצור קוד חדש'
+    : writing && (denied(e) || (e && e.code === 'shaati/wp-record')) ? 'לא הצלחנו לשמור את הקוד. נסו שוב בעוד רגע'
+      : denied(e) ? 'אין הרשאה לקוד הזה' : 'משהו השתבש. נסו שוב בעוד רגע');
+  /** A write the rules refused goes to the error reports with the part of the record they would refuse (no values). */
+  const report = (step, part) => { try { if (root.Errors) root.Errors.capture(new Error('workplace code ' + step + ' refused at ' + (part || 'unknown')), 'error'); } catch (x) { /* none */ } };
   const linkOf = (c) => APP_URL + '?wp=' + c;
   const codeHtml = (c) => `<bdi dir="ltr" class="wp-code-t">${esc(W.pretty(c))}</bdi>`;
   const hm = (t) => `<bdi dir="ltr">${esc(t)}</bdi>`;
@@ -83,26 +89,39 @@
   /* ---------------- sharing ---------------- */
   const packFor = (e, rates) => W.pack({ employer: e, roles: S.roles.filter((r) => r.employerId === e.id), workWeek: S.settings.leave && S.settings.leave.workWeek, rates, today: U.todayKey() });
 
+  /** Writes the workplace's rules under code c. An update (v > 1) whose rules are the same as the cloud's writes
+   *  nothing and returns 'same': a new version is only for new rules (the user, 6 Nov 2026). */
   async function write(e, c, v, rates) {
     const { fs, db } = await Cloud().sdk();
     if (v > 1) {
       // one version up from the one in the cloud (another phone of mine may have put one in since)
       const now = await fs.getDoc(fs.doc(db, 'wpc', c));
       if (!now.exists()) { await setMine(e.id, null); throw Object.assign(new Error('gone'), { code: 'shaati/wp-gone' }); }
-      v = (Number.isInteger(now.data().v) ? now.data().v : 0) + 1;
+      const cv = Number.isInteger(now.data().v) ? now.data().v : 0;
+      if (W.same(now.data().r, packFor(e, rates))) { if (cv && cv !== v - 1) await setMine(e.id, { c, v: cv, rates: !!rates }); return 'same'; }
+      v = cv + 1;
     }
     const b = fs.writeBatch(db);
     const rec = { v, t: Date.now(), r: packFor(e, rates) };
+    // the same check as firestore.rules, before the network: a record they would refuse is never sent
+    const bad = W.check(rec.r);
+    if (bad) { report(v === 1 ? 'create' : 'update', bad); throw Object.assign(new Error('record'), { code: 'shaati/wp-record' }); }
     if (v === 1) b.set(fs.doc(db, 'wpo', c), { o: uid() });
     b.set(fs.doc(db, 'wpc', c), rec);
-    await b.commit();
+    try { await b.commit(); } catch (x) {
+      // a new code is retried under another one (a taken code is refused too); the last refusal is reported
+      if (denied(x) && v > 1) report('update', 'rules');
+      throw x;
+    }
     await setMine(e.id, { c, v, rates: !!rates });
   }
   async function create(e, rates) {
     // a new code is random; a taken one (nearly never) is refused by the rules, and another is tried
     for (let i = 0; i < 3; i++) {
       const c = W.code((k) => { const a = new Uint8Array(k); crypto.getRandomValues(a); return a; });
-      try { await write(e, c, 1, rates); return c; } catch (x) { if (!/permission/i.test(x.code || x.message || '') || i === 2) throw x; }
+      try { await write(e, c, 1, rates); return c; } catch (x) {
+        if (!denied(x) || i === 2) { if (denied(x)) report('create', 'rules'); throw x; }
+      }
     }
     return null;
   }
@@ -173,7 +192,7 @@
             try {
               if (needName()) await Store.put('employers', Object.assign(Store.clone(e), { name }));
               await create(cur(), rates); UI.toast('הקוד מוכן. אפשר לשלוח אותו לחברים לעבודה', null, { ok: true });
-            } catch (x) { UI.toast(errText(x)); }
+            } catch (x) { UI.toast(errText(x, true)); }
             busy = false; draw();
           } else if (b.hasAttribute('data-wp-send') && m) {
             const text = `החוקים של ${e.name} בשעתי: תקופת שכר, נסיעות, שעות נוספות ותוספות. פותחים את הקישור, או מקלידים את הקוד ${W.pretty(m.c)}`;
@@ -185,7 +204,7 @@
             UI.toast('הקוד הועתק');
           } else if (b.hasAttribute('data-wp-update') && m) {
             busy = true; draw();
-            try { await write(e, m.c, m.v + 1, m.rates); UI.toast('הקוד עודכן לחוקים של היום', null, { ok: true }); } catch (x) { UI.toast(errText(x)); }
+            try { UI.toast(await write(e, m.c, m.v + 1, m.rates) === 'same' ? 'אין שינוי בחוקים, הקוד כבר מעודכן' : 'הקוד עודכן לחוקים של היום', null, { ok: true }); } catch (x) { UI.toast(errText(x, true)); }
             busy = false; draw();
           } else if (b.hasAttribute('data-wp-del') && m) {
             if (!(await UI.confirm('למחוק את הקוד?', 'הקוד והקישור יפסיקו לעבוד. מי שכבר החיל את החוקים ישמור אותם.', 'מחיקה', true))) return;

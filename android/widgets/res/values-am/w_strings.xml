@@ -1,0 +1,69 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Shaati widgets and quick-settings tile: the am texts (the default, Hebrew, is in values/w_strings.xml). -->
+<resources>
+    <string name="w_shift_name">Shaati · ፈረቃ</string>
+    <string name="w_shift_desc">ፈረቃን በአንድ ንክኪ ይጀምሩ፣ በፈረቃው ጊዜ የሚሄድ ሰዓት</string>
+    <string name="w_month_name">Shaati · የእኔ ወር</string>
+    <string name="w_month_desc">በዚህ ወር ያገኙት፣ ግቡ እና ትንበያው</string>
+    <string name="w_goal_name">Shaati · ግብ</string>
+    <string name="w_goal_desc">ወደ ቁጠባ ግቡ ወይም ወደ ወርሃዊ ግቡ ያለዎት ሂደት</string>
+    <string name="w_payday_name">Shaati · ደመወዝ</string>
+    <string name="w_payday_desc">እስከ ደመወዝ ቀን ስንት ቀናት እንደቀሩ እና በግምት ምን ያህል እንደሚያገኙ</string>
+    <string name="w_combo_name">Shaati · ሁሉም በአንድ</string>
+    <string name="w_combo_desc">ፈረቃ፣ ይህ ወር፣ ግቡ እና ደመወዝ በአንድ ዊጀት</string>
+    <string name="w_tile_name">ፈረቃ</string>
+    <string name="w_app">Shaati</string>
+    <string name="w_start">ፈረቃ ጀምር</string>
+    <string name="w_start_coin">ፈረቃ እንጀምር?</string>
+    <string name="w_end">ጨርስ</string>
+    <string name="w_end_shift">ፈረቃ ጨርስ</string>
+    <string name="w_running">ፈረቃ እየሄደ ነው</string>
+    <string name="w_open">Shaatiን ክፈት</string>
+    <string name="w_started">ፈረቃው ተጀምሯል። መልካም ዕድል!</string>
+    <string name="w_ended">ፈረቃው ከ%1$s ሰዓታት በኋላ አልቋል። Shaatiን ሲከፍቱ ይቀመጣል</string>
+    <string name="w_on_break">እረፍት ላይ</string>
+    <string name="w_today">ዛሬ %1$s</string>
+    <string name="w_this_month">ይህ ወር %1$s</string>
+    <string name="w_payday_today">ዛሬ የደመወዝ ቀን ነው</string>
+    <string name="w_payday_tomorrow">ነገ የደመወዝ ቀን ነው</string>
+    <string name="w_month_mine">የእኔ ወር</string>
+    <string name="w_month_new">አዲስ ወር ጀምሯል</string>
+    <string name="w_open_update">ለማዘመን Shaatiን ይክፈቱ</string>
+    <string name="w_so_far">%1$s እስካሁን</string>
+    <string name="w_net_hours">የተጣራ %1$s · %2$s ሰዓታት</string>
+    <string name="w_goal_pct">ከ%2$s ግብ %1$s%%</string>
+    <string name="w_forecast">ለወሩ መጨረሻ ትንበያ</string>
+    <string name="w_forecast_is">ለወሩ መጨረሻ ትንበያ፦ %1$s</string>
+    <string name="w_enough">በቂ አለዎት</string>
+    <string name="w_more">%1$s ቀርቷል</string>
+    <string name="w_goal_of">ግብ %1$s</string>
+    <string name="w_goal_passed">ግቡን አልፈዋል</string>
+    <string name="w_goal_left">ለግቡ %1$s ቀርቷል</string>
+    <string name="w_goal_mine">የእኔ ግብ</string>
+    <string name="w_goal_hint">ግብ በቅንብሮች › ግቦች ውስጥ ማቀናበር ይችላሉ</string>
+    <string name="w_payday_next">ቀጣዩ ደመወዝ</string>
+    <string name="w_no_shifts">በዚህ ጊዜ ውስጥ እስካሁን ፈረቃዎች የሉም</string>
+    <string name="w_about_net">በግምት %1$s የተጣራ</string>
+    <string name="w_pick_title">ዊጀቱ እንዴት ይታይ?</string>
+    <string name="w_pick_sub">በኋላ ዊጀቱን ረጅም በመጫን መቀየር ይችላሉ።</string>
+    <string name="w_sample_period">ይህ ወር</string>
+    <string name="w_look_midnight">ሌሊት እና ወርቅ</string>
+    <string name="w_look_clean">ንጹህ</string>
+    <string name="w_look_wallpaper">የግድግዳ ወረቀት ቀለሞች</string>
+    <string name="w_look_coin">ከShaati ጋር</string>
+    <string name="w_look_sea">ባሕር በጀምበር መጥለቂያ</string>
+    <string name="w_look_rain">የሳንቲም ዝናብ</string>
+    <!-- the widget picker's previews (the layouts' sample texts) -->
+    <string name="w_pv_month" formatted="false">ይህ ወር ₪2,840</string>
+    <string name="w_pv_so_far" formatted="false">ይህ ወር እስካሁን</string>
+    <string name="w_pv_line" formatted="false">የተጣራ ₪2,310 · 41 ሰዓታት</string>
+    <string name="w_pv_goal" formatted="false">ከ₪4,400 ግብ 64%</string>
+    <string name="w_pv_pay" formatted="false">9 ቀናት እስከ ደመወዝ ቀን</string>
+    <string name="w_pv_goal_title" formatted="false">ግብ ₪4,400</string>
+    <string name="w_pv_goal_left" formatted="false">ለግቡ ₪1,560 ቀርቷል</string>
+    <string name="w_pv_about" formatted="false">በግምት ₪2,310 የተጣራ</string>
+    <plurals name="w_payday_days">
+        <item quantity="one">%1$s ቀን እስከ ደመወዝ ቀን</item>
+        <item quantity="other">%1$s ቀናት እስከ ደመወዝ ቀን</item>
+    </plurals>
+</resources>
