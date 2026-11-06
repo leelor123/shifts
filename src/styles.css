@@ -498,8 +498,10 @@ textarea.input { min-height: 90px; resize: vertical; }
 details.collapse { background: var(--surface-1); border-radius: 16px; margin-bottom: 12px; }
 details.collapse > summary { list-style: none; padding: 14px 16px; font-weight: 700; cursor: pointer; display: flex; align-items: center; gap: 8px; }
 details.collapse > summary::-webkit-details-marker { display: none; }
-details.collapse > summary::after { content: '‹'; margin-inline-start: auto; transform: rotate(-90deg); transition: transform .2s; font-size: 1.3rem; }
-details.collapse[open] > summary::after { transform: rotate(90deg); }
+/* the chevron is drawn with two physical borders, not the '‹' character: on a right-to-left page the browser mirrored
+   that character, so a closed row pointed up and an open one down in Hebrew and Arabic (6 Nov 2026) */
+details.collapse > summary::after { content: ''; flex: none; width: .5em; height: .5em; margin-inline-start: auto; border-right: 2px solid currentColor; border-bottom: 2px solid currentColor; transform: translateY(-25%) rotate(45deg); transition: transform .2s; }
+details.collapse[open] > summary::after { transform: translateY(25%) rotate(-135deg); }
 details.collapse > .in { padding: 0 16px 14px; }
 .ov-block { border: 1px dashed var(--outline-var); border-radius: 14px; padding: 10px 12px; margin-bottom: 10px; }
 .ov-block.on { border-style: solid; border-color: var(--override); background: var(--override-bg); }
