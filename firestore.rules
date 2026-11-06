@@ -5,6 +5,7 @@ rules_version = '2';
 // The games' champions table is public to signed-in users: a nickname, an emoji and scores, by choice.
 // The friends' competition: a player's card is read only by the friends they chose (and only with amounts if they show them).
 // Inviting a friend: who invited whom is read only by the two of them.
+// A workplace code: a workplace's rules (never a shift, an amount or a person), read by signed-in coworkers who have the code.
 // Nothing else is reachable.
 service cloud.firestore {
   match /databases/{database}/documents {
@@ -137,6 +138,76 @@ service cloud.firestore {
         && request.resource.data.t is int
         && request.resource.data.t > request.time.toMillis() - 172800000 && request.resource.data.t < request.time.toMillis() + 172800000;
       allow update, delete: if false;
+    }
+
+    // a workplace code (app/workplace.js, core/workplace.js): one worker shares the workplace's rules under a short
+    // code, and a coworker who has the code reads them. wpc/{code} holds only the rules (no shift, no amount, no name of
+    // a person, no account); who owns a code is in wpo/{code}, read only by its owner. Both are written together in one
+    // batch: a code is made, changed (one version up) and deleted by its owner only; nobody can list the codes.
+    match /wpc/{code} {
+      allow get: if request.auth != null;
+      allow list: if false;
+      allow create: if request.auth != null && code.matches('^[a-km-np-z2-9]{8}$')
+        && getAfter(/databases/$(database)/documents/wpo/$(code)).data.o == request.auth.uid
+        && validWp(request.resource.data) && request.resource.data.v == 1;
+      allow update: if request.auth != null && wpOwner(code) == request.auth.uid
+        && validWp(request.resource.data) && request.resource.data.v == resource.data.v + 1;
+      allow delete: if request.auth != null && wpOwner(code) == request.auth.uid;
+    }
+    match /wpo/{code} {
+      allow get: if request.auth != null && resource.data.o == request.auth.uid;
+      allow list, update: if false;
+      allow create: if request.auth != null && code.matches('^[a-km-np-z2-9]{8}$')
+        && request.resource.data.keys().hasOnly(['o']) && request.resource.data.o == request.auth.uid
+        && existsAfter(/databases/$(database)/documents/wpc/$(code));
+      allow delete: if request.auth != null && resource.data.o == request.auth.uid
+        && !existsAfter(/databases/$(database)/documents/wpc/$(code));
+    }
+    function wpOwner(code) {
+      return get(/databases/$(database)/documents/wpo/$(code)).data.o;
+    }
+    // the record: a version, when it was written (within two days of now), and the rules (the same fields and ranges as
+    // core/workplace.js FIELDS)
+    function validWp(d) {
+      return d.keys().hasOnly(['v', 't', 'r']) && d.keys().hasAll(['v', 't', 'r'])
+        && d.v is int && d.v >= 1 && d.v <= 100000
+        && d.t is int && d.t > request.time.toMillis() - 172800000 && d.t < request.time.toMillis() + 172800000
+        && d.r is map && validWpRules(d.r);
+    }
+    function validWpRules(r) {
+      return r.keys().hasOnly(['n', 'ww', 'ro', 'periodStartDay', 'payDay', 'travelPerDay', 'travelMonthlyCap', 'defaultBreakPaid', 'otLaw', 'otThreshold', 'otTier1Hours', 'otTier1Pct', 'otTier2Pct', 'restPct', 'restOt1Pct', 'restOt2Pct', 'nightEnabled', 'nightFrom', 'nightTo', 'nightType', 'nightValue', 'evePct', 'roundingMode', 'roundingUnit'])
+        && (!('n' in r) || (r.n is string && r.n.size() >= 1 && r.n.size() <= 40))
+        && (!('ww' in r) || r.ww in [5, 6])
+        && wpInt(r, 'periodStartDay', 1, 28) && wpInt(r, 'payDay', 1, 31)
+        && wpNum(r, 'travelPerDay', 0, 500) && wpNum(r, 'travelMonthlyCap', 0, 20000)
+        && wpBool(r, 'defaultBreakPaid') && wpBool(r, 'otLaw')
+        && wpNum(r, 'otThreshold', 1, 24) && wpNum(r, 'otTier1Hours', 0, 24) && wpNum(r, 'otTier1Pct', 100, 400) && wpNum(r, 'otTier2Pct', 100, 400)
+        && wpNum(r, 'restPct', 100, 500) && wpNum(r, 'restOt1Pct', 100, 500) && wpNum(r, 'restOt2Pct', 100, 500)
+        && wpBool(r, 'nightEnabled') && wpHm(r, 'nightFrom') && wpHm(r, 'nightTo')
+        && (!('nightType' in r) || r.nightType in ['pct', 'fixed']) && wpNum(r, 'nightValue', 0, 500)
+        && wpNum(r, 'evePct', 0, 200)
+        && (!('roundingMode' in r) || r.roundingMode in ['none', 'nearest', 'up', 'down']) && wpInt(r, 'roundingUnit', 1, 60)
+        && (!('ro' in r) || (r.ro is list && r.ro.size() <= 8
+          && wpRole(r.ro, 0) && wpRole(r.ro, 1) && wpRole(r.ro, 2) && wpRole(r.ro, 3)
+          && wpRole(r.ro, 4) && wpRole(r.ro, 5) && wpRole(r.ro, 6) && wpRole(r.ro, 7)));
+    }
+    function wpInt(r, k, lo, hi) {
+      return !(k in r) || (r[k] is int && r[k] >= lo && r[k] <= hi);
+    }
+    function wpNum(r, k, lo, hi) {
+      return !(k in r) || (r[k] is number && r[k] >= lo && r[k] <= hi);
+    }
+    function wpBool(r, k) {
+      return !(k in r) || r[k] is bool;
+    }
+    function wpHm(r, k) {
+      return !(k in r) || (r[k] is string && r[k].matches('^([01][0-9]|2[0-3]):[0-5][0-9]$'));
+    }
+    // a role: its name, and its hourly rate only when the sharer chose to include rates
+    function wpRole(l, i) {
+      return l.size() <= i || (l[i] is map && l[i].keys().hasOnly(['n', 'r']) && l[i].keys().hasAll(['n'])
+        && l[i].n is string && l[i].n.size() >= 1 && l[i].n.size() <= 40
+        && (!('r' in l[i]) || (l[i].r is number && l[i].r > 0 && l[i].r < 1000)));
     }
 
     // a name in any of the app's languages (Hebrew, Latin with accents, Cyrillic, Arabic), digits, an apostrophe

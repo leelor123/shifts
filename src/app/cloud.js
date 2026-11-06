@@ -631,6 +631,7 @@
       if (root.Champions) await root.Champions.forget(strict);
       if (root.FriendsView) await root.FriendsView.forget(strict);
       if (root.Invite) await root.Invite.forget(strict);
+      if (root.WorkplaceCode) await root.WorkplaceCode.forget(strict);
     } catch (e) {
       // the account stays: sync goes on as before
       if (Cloud.user && Cloud.user.uid === uid) { attach(uid); Cloud.connected = true; }

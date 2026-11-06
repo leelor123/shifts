@@ -296,3 +296,19 @@ html[dir="ltr"] .ps-tr-he, html[dir="ltr"] .ps-tr-orig { text-align: left; }
 .ps-lb-line .ps-tr-orig { flex: 1; min-width: 0; }
 .ps-lb { flex-direction: column; align-items: flex-start; gap: 0; height: auto; min-height: 36px; padding-block: 6px; }
 .ps-lb-he { font-size: .75rem; font-weight: 500; opacity: .75; }
+/* a workplace code (app/workplace.js): the code, big and spaced; a rule that would change is marked; long names wrap at word ends */
+.wp-code-card { text-align: center; }
+.wp-code-t { display: block; margin: 6px 0 2px; font-size: 2rem; font-weight: 800; letter-spacing: .12em; font-variant-numeric: tabular-nums; color: var(--brand); user-select: all; -webkit-user-select: all; }
+.wp-acts { display: flex; gap: 8px; justify-content: center; flex-wrap: wrap; margin-top: 12px; }
+.wp-line { align-items: baseline; }
+.wp-line > span { flex: none; max-width: 45%; overflow-wrap: normal; word-break: keep-all; }
+.wp-line > b { text-align: end; overflow-wrap: break-word; word-break: normal; hyphens: none; min-width: 0; }
+.wp-chg { font-size: .7rem; padding: 1px 6px; background: var(--warn-bg); color: var(--warn); }
+.wp-note { margin: 6px 4px 12px; display: flex; gap: 6px; align-items: flex-start; }
+.wp-intro { margin: 0 4px 12px; }
+.wp-target { flex-wrap: wrap; overflow: visible; }
+.wp-manage { margin-top: 12px; }
+.ob-wp { margin: -4px 0 8px; }
+.ob-wp-after { margin-top: 14px; justify-content: center; }
+.wp-role { display: block; }
+.ob-wp-ok { margin: 0 0 14px; }

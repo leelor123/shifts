@@ -2,11 +2,11 @@
 process.env.TZ = 'Asia/Jerusalem';
 const path = require('path');
 const src = path.join(__dirname, '..', 'src', 'core');
-for (const f of ['util.js', 'clean.js', 'timesheet.js', 'schedule.js', 'places-data.js', 'places.js', 'hebcal.js', 'defaults.js', 'netlearn.js', 'engine.js', 'planner.js', 'taxrefund.js', 'insights.js', 'payslip.js', 'games.js', 'recap.js', 'analysis.js', 'leaderboard.js', 'friends.js', 'referral.js', 'moments.js', 'hourscheck.js']) {
+for (const f of ['util.js', 'clean.js', 'timesheet.js', 'schedule.js', 'places-data.js', 'places.js', 'hebcal.js', 'defaults.js', 'netlearn.js', 'engine.js', 'planner.js', 'taxrefund.js', 'insights.js', 'payslip.js', 'games.js', 'recap.js', 'analysis.js', 'leaderboard.js', 'friends.js', 'referral.js', 'workplace.js', 'moments.js', 'hourscheck.js']) {
   try { require(path.join(src, f)); } catch (e) { if (e.code !== 'MODULE_NOT_FOUND') throw e; }
 }
 const T = require('./t.js');
-for (const f of ['taxrefund.test.js', 'undef.test.js', 'icons.test.js', 'redraw.test.js', 'changelog.test.js', 'engine.test.js', 'planner.test.js', 'insights.test.js', 'payslip.test.js', 'links.test.js', 'games.test.js', 'recap.test.js', 'leaderboard.test.js', 'friends.test.js', 'referral.test.js', 'places.test.js', 'clean.test.js', 'timesheet.test.js', 'schedule.test.js', 'law.test.js', 'i18n.test.js', 'fonts.test.js', 'webkit.test.js', 'sitecalc.test.js', 'moments.test.js', 'hourscheck.test.js', 'netlearn.test.js', 'errors.test.js', 'mascot-voice.test.js']) {
+for (const f of ['taxrefund.test.js', 'undef.test.js', 'icons.test.js', 'redraw.test.js', 'changelog.test.js', 'engine.test.js', 'planner.test.js', 'insights.test.js', 'payslip.test.js', 'links.test.js', 'games.test.js', 'recap.test.js', 'leaderboard.test.js', 'friends.test.js', 'referral.test.js', 'workplace.test.js', 'places.test.js', 'clean.test.js', 'timesheet.test.js', 'schedule.test.js', 'law.test.js', 'i18n.test.js', 'fonts.test.js', 'webkit.test.js', 'sitecalc.test.js', 'moments.test.js', 'hourscheck.test.js', 'netlearn.test.js', 'errors.test.js', 'mascot-voice.test.js']) {
   try { require(path.join(__dirname, f)); } catch (e) { if (e.code !== 'MODULE_NOT_FOUND') throw e; }
 }
 T.section('cloud sync (simulated phones)');
