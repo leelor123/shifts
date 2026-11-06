@@ -21,25 +21,25 @@
     "path": "C:\\Users\\User\\ShiftPay-Android\\keys\\shiftpay-upload.jks",
     "alias": "shiftpay"
   },
-  "appVersionName": "1.32.1",
-  "appVersionCode": 13201,
+  "appVersionName": "1.34.1",
+  "appVersionCode": 13401,
   "shortcuts": [
     {
       "name": "התחל משמרת",
       "shortName": "התחל משמרת",
-      "url": "https://leelor123.github.io/shifts/?action=start",
+      "url": "https://leelor123.github.io/shifts/?action=start&source=twa",
       "chosenIconUrl": "https://leelor123.github.io/shifts/icon-192.png"
     },
     {
       "name": "הוסף משמרת",
       "shortName": "הוסף משמרת",
-      "url": "https://leelor123.github.io/shifts/?action=add",
+      "url": "https://leelor123.github.io/shifts/?action=add&source=twa",
       "chosenIconUrl": "https://leelor123.github.io/shifts/icon-192.png"
     },
     {
       "name": "ייבוא סידור עבודה",
       "shortName": "סידור עבודה",
-      "url": "https://leelor123.github.io/shifts/?action=schedule",
+      "url": "https://leelor123.github.io/shifts/?action=schedule&source=twa",
       "chosenIconUrl": "https://leelor123.github.io/shifts/icon-192.png"
     }
   ],
@@ -91,5 +91,5 @@
   "fileHandlers": [],
   "launchHandlerClientMode": "",
   "displayOverride": [],
-  "appVersion": "1.32.1"
+  "appVersion": "1.34.1"
 }

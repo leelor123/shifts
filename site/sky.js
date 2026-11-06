@@ -133,9 +133,21 @@
     return el('g', { transform: `translate(0 ${y.toFixed(1)})` }, [c]);
   }
   let uid = 0;
+  /** --sku: screen pixels per drawing unit (the drawings slice into the box: the larger of the two ratios), kept as the
+   *  box changes size */
+  function scale(host) {
+    const set = () => { const b = host.getBoundingClientRect(), w = +host.style.getPropertyValue('--skw'), h = +host.style.getPropertyValue('--skh'); if (!b.width || !b.height || !w || !h) return; const k = Math.max(b.width / w, b.height / h).toFixed(4); if (host.style.getPropertyValue('--sku') !== k) host.style.setProperty('--sku', k); };
+    set();
+    if (!host.__skRO && typeof ResizeObserver === 'function') { host.__skRO = new ResizeObserver(set); host.__skRO.observe(host); }
+  }
 
-  /** Draws the scene into an <svg>. o: { now, place: {name, lat, lon}, weather: 'clear'|'partly'|'cloudy'|'rain'|'storm'|'fog'|'snow'|'hot' } */
-  function render(svg, o) {
+  /** Draws the scene into an HTML element (a div.sky). o: { now, place: {name, lat, lon}, weather: 'clear'|'partly'|'cloudy'|'rain'|'storm'|'fog'|'snow'|'hot' }
+   *  The still parts are <svg> drawings; every part that moves (a cloud, the cranes, the rain or snow, the storm's
+   *  flash, the fog) is its own <div> around its own <svg>, and the div is what moves: the phone's compositor does not
+   *  run an animation whose target is an SVG element (Chrome on the user's phone, 6 Nov 2026: compositeFailed), so it
+   *  stood still whenever the app was busy, as during the opening. The drawings share one viewBox and slice, so a
+   *  move of n units is n × --sku pixels (set here and kept by a ResizeObserver). */
+  function render(host, o) {
     o = o || {};
     const now = o.now || Date.now();
     const place = o.place && o.place.lat ? o.place : TLV;
@@ -150,14 +162,17 @@
     const r = rng(String(place.name || 'x').split('').reduce((a, c) => (a * 31 + c.charCodeAt(0)) | 0, 7));
     const kind = placeKind(place.name, place.lon);
     const id = 'sk' + (++uid) + '-';
-    while (svg.firstChild) svg.removeChild(svg.firstChild);
-    svg.setAttribute('viewBox', `0 0 ${W} ${H}`);
-    svg.setAttribute('preserveAspectRatio', 'xMidYMax slice');
+    while (host.firstChild) host.removeChild(host.firstChild);
+    const drawing = () => el('svg', { viewBox: `0 0 ${W} ${H}`, preserveAspectRatio: 'xMidYMax slice', 'aria-hidden': 'true' });
+    // a moving part: a div that moves, around a drawing of its own
+    const moving = (cls, style, kids) => { const d = document.createElement('div'); d.className = 'sk-lay ' + cls; if (style) d.setAttribute('style', style); d.appendChild(el('svg', { viewBox: `0 0 ${W} ${H}`, preserveAspectRatio: 'xMidYMax slice', 'aria-hidden': 'true' }, kids)); host.appendChild(d); };
+    const svg = drawing(); host.appendChild(svg);
     // every moving part counts its delay from the clock (see the top of this file)
-    svg.style.setProperty('--sk0', (-(now % 86400000) / 1000).toFixed(3) + 's');
-    svg.style.setProperty('--skw', String(W));
-    svg.style.setProperty('--skh', String(H));
-    Object.assign(svg.dataset, { phase, weather, kind, season });
+    host.style.setProperty('--sk0', (-(now % 86400000) / 1000).toFixed(3) + 's');
+    host.style.setProperty('--skw', String(W));
+    host.style.setProperty('--skh', String(H));
+    scale(host);
+    Object.assign(host.dataset, { phase, weather, kind, season });
     const defs = el('defs');
     defs.appendChild(el('linearGradient', { id: id + 'sky', x1: 0, y1: 0, x2: 0, y2: 1 }, [el('stop', { offset: 0, 'stop-color': sky[0] }), el('stop', { offset: .58, 'stop-color': sky[1] }), el('stop', { offset: 1, 'stop-color': sky[2] })]));
     defs.appendChild(el('radialGradient', { id: id + 'glow' }, [el('stop', { offset: 0, 'stop-color': phase === 'night' ? '#cfe0ff' : '#fff4d6', 'stop-opacity': .55 }), el('stop', { offset: 1, 'stop-color': '#fff4d6', 'stop-opacity': 0 })]));
@@ -203,9 +218,8 @@
     const nClouds = { clear: season === 'summer' ? 0 : 1, hot: 0, partly: 2, cloudy: 3, rain: 3, storm: 3, fog: 2, snow: 3 }[weather];
     const cloudFill = grey ? mix(sky[1], phase === 'night' ? '#2a3350' : '#e8edf3', .55) : phase === 'night' ? '#20305e' : night || phase === 'golden' || phase === 'dawn' ? '#ffd9c2' : '#ffffff';
     for (let i = 0; i < (nClouds == null ? 1 : nClouds) * Math.max(1, Math.ceil((W / W0) * .6)); i++) {
-      const lay = el('g', { class: 'sk-cloud', style: `--t:${(70 + r() * 70).toFixed(0)}s;--d:${(-r() * 120).toFixed(0)}s` });
-      lay.appendChild(cloud(r, r() < .5 ? 6 + r() * 10 : HZ - 36 + r() * 14, .7 + r() * .7, cloudFill, grey ? .85 : .7));
-      svg.appendChild(lay);
+      const style = `--t:${(70 + r() * 70).toFixed(0)}s;--d:${(-r() * 120).toFixed(0)}s`;
+      moving('sk-cloud', style, [cloud(r, r() < .5 ? 6 + r() * 10 : HZ - 36 + r() * 14, .7 + r() * .7, cloudFill, grey ? .85 : .7)]);
     }
     // cranes crossing Israel in autumn and spring (it is on their way), by day, in dry weather
     if ((season === 'autumn' || season === 'spring') && !night && !['rain', 'storm', 'snow'].includes(weather)) {
@@ -215,12 +229,12 @@
         b.appendChild(el('path', { class: 'sk-wing', d: 'M-5 0 Q-2.5 -3 0 0 Q2.5 -3 5 0', style: `--d:${(i * .13).toFixed(2)}s` }));
         g.appendChild(b);
       }
-      svg.appendChild(el('g', { class: 'sk-flock' }, [g]));
+      moving('sk-flock', '', [g]);
     }
 
     // ---- the land: one or two clean silhouettes ----
     const far = mix(sky[2], ink, .32), near = mix(sky[2], ink, .78);
-    const land = el('g');
+    const land = drawing();
     const lights = P.lights * (grey ? 1.2 : 1);
     const sea = (y) => {
       land.appendChild(el('rect', { x: 0, y, width: W, height: H - y, fill: `url(#${id}sea)` }));
@@ -257,26 +271,26 @@
       skyline(land, r, { x0: 20, x1: W - 20, base: HZ + 10, hMin: 7, hMax: 22, towers: .15, fill: near, lights });
       land.appendChild(el('path', { d: ridge(r, HZ + 22, 6, 4), fill: near }));
     }
-    svg.appendChild(land);
+    host.appendChild(land);
 
     // the weather in front
     if (weather === 'rain' || weather === 'storm') {
-      const g = el('g', { class: 'sk-fall', stroke: phase === 'night' ? 'rgba(190,210,255,.24)' : 'rgba(255,255,255,.3)', 'stroke-width': 1, 'stroke-linecap': 'round', style: '--t:.75s' });
+      const g = el('g', { stroke: phase === 'night' ? 'rgba(190,210,255,.24)' : 'rgba(255,255,255,.3)', 'stroke-width': 1, 'stroke-linecap': 'round' });
       // two screens of drops, one above the other: falling by one screen's height loops without a seam
       for (let k = 0; k < 2; k++) for (let i = 0; i < more(22); i++) { const x = r() * (W + 60), y = r() * H - k * H; g.appendChild(el('line', { x1: x.toFixed(1), y1: y.toFixed(1), x2: (x - 4).toFixed(1), y2: (y + 12).toFixed(1) })); }
-      svg.appendChild(el('g', {}, [g]));
-      if (weather === 'storm') svg.appendChild(el('rect', { class: 'sk-flash', width: W, height: H, fill: '#e8eeff' }));
+      moving('sk-fall', '--t:.75s', [g]);
+      if (weather === 'storm') moving('sk-flash', '', [el('rect', { width: W, height: H, fill: '#e8eeff' })]);
     }
     if (weather === 'snow') {
-      const g = el('g', { class: 'sk-fall', fill: '#fff', style: '--t:11s' });
+      const g = el('g', { fill: '#fff' });
       for (let k = 0; k < 2; k++) for (let i = 0; i < more(22); i++) g.appendChild(el('circle', { cx: (r() * W).toFixed(1), cy: (r() * H - k * H).toFixed(1), r: (.8 + r() * 1.4).toFixed(2), opacity: (.5 + r() * .5).toFixed(2) }));
-      svg.appendChild(el('g', {}, [g]));
+      moving('sk-fall', '--t:11s', [g]);
     }
-    if (weather === 'fog') svg.appendChild(el('rect', { class: 'sk-fog', y: HZ - 70, width: W * 2, height: 110, fill: `url(#${id}sky)`, opacity: .65 }));
+    if (weather === 'fog') moving('sk-fog', '', [el('rect', { y: HZ - 70, width: W * 2, height: 110, fill: `url(#${id}sky)`, opacity: .65 })]);
     if (season === 'autumn' && !night && !['rain', 'storm', 'snow'].includes(weather)) {
       const g = el('g');
       for (let i = 0; i < 3; i++) g.appendChild(el('ellipse', { class: 'sk-leaf', cx: (r() * W).toFixed(1), cy: -10, rx: 3, ry: 1.6, fill: ['#d9822b', '#c4562d', '#e0a43a'][i], style: `--d:${(-r() * 14).toFixed(1)}s;--t:${(10 + r() * 6).toFixed(1)}s;--x:${(-30 - r() * 40).toFixed(0)}px` }));
-      svg.appendChild(g);
+      const top = drawing(); top.appendChild(g); host.appendChild(top);
     }
     return { phase, season, weather, kind, top: sky[0] };
   }

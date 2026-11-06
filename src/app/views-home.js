@@ -449,7 +449,7 @@
     const nRecent = HS.recent == null ? 3 : +HS.recent;
     const recent = results.filter((r) => r.status === 'done').sort((a, b) => b.start - a.start).slice(0, 8);
     const name = S.settings.userName ? ', ' + esc(String(S.settings.userName).split(' ')[0]) : '';
-    const date = U.fmtDate(today, 'long').replace(/\s\d{4}$/, '');
+    const date = U.fmtDate(today, 'wdm');
     return `
       <div class="home-sky" data-key="home-sky" aria-hidden="true"><i class="hs-a"></i></div>
       <div class="home-top"><div class="titles"><h1>${greeting()}${name}</h1>
