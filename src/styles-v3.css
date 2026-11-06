@@ -179,6 +179,13 @@ body.fx .nav .fab:active { transform: scale(.9) rotate(90deg); }
 .home-hero .progress { background: rgba(255, 255, 255, .22); }
 .home-hero .progress i { background: #fff; } .home-hero .progress b { background: rgba(255, 255, 255, .4); }
 .home-hero .term { color: inherit; text-decoration-color: rgba(255, 255, 255, .55); }
+/* what the number assumes: one quiet line just under the pay card, outside it (the card's height and the sky stay as they
+   were); the parts wrap between them, never inside one */
+.hh-assume { display: flex; flex-wrap: wrap; align-items: center; justify-content: center; gap: 2px 6px; width: 100%; min-height: 36px; margin: -10px 0 8px; padding: 6px 4px; border: 0; border-radius: 12px; background: none; color: var(--on-surface-var); font: 500 .8rem/1.35 var(--font); text-align: center; cursor: pointer; -webkit-tap-highlight-color: transparent; transition: background-color .15s; }
+.hh-assume > span { white-space: nowrap; }
+.hh-assume > i { font-style: normal; opacity: .6; }
+.hh-assume > svg { width: 14px; height: 14px; opacity: .75; flex: none; }
+.hh-assume:active { background: var(--surface-2, rgba(0, 0, 0, .05)); }
 .home-action .btn.start { background: var(--grad-go); color: #fff; min-height: 66px; border-radius: 20px; font-size: 1.15rem; font-weight: 700; box-shadow: 0 12px 24px -12px rgba(5, 92, 61, .8); }
 .home-action .btn.start svg { background: rgba(255, 255, 255, .22); border-radius: 50%; padding: 6px; width: 32px; height: 32px; }
 .timer-card.running { background: linear-gradient(140deg, hsl(calc(var(--h) - 4) 45% 20%) 0%, hsl(var(--h) 50% 28%) 100%); border-radius: 24px; box-shadow: var(--sh-2); }
@@ -486,8 +493,8 @@ body.fx .nav .fab:active { transform: scale(.9) rotate(90deg); }
 .timer-card.running { position: relative; overflow: hidden; isolation: isolate; }
 .home-action .btn.start { position: relative; overflow: hidden; isolation: isolate; }
 /* the first look at the home screen: one short, orchestrated entrance */
-.view.first .home-top, .view.first .home-hero, .view.first .home-action, .view.first .timer-card, .view.first .card.guide, .view.first .highlight, .view.first .shortcuts, .view.first .home-list-head, .view.first .home-list, .view.first .empty.fun { animation: rise .55s cubic-bezier(.2, .8, .2, 1) both; }
-.view.first .home-hero { animation-delay: .04s; }
+.view.first .home-top, .view.first .home-hero, .view.first .hh-assume, .view.first .home-action, .view.first .timer-card, .view.first .card.guide, .view.first .highlight, .view.first .shortcuts, .view.first .home-list-head, .view.first .home-list, .view.first .empty.fun { animation: rise .55s cubic-bezier(.2, .8, .2, 1) both; }
+.view.first .home-hero, .view.first .hh-assume { animation-delay: .04s; }
 .view.first .home-action, .view.first .timer-card { animation-delay: .1s; }
 .view.first .card.guide, .view.first .highlight { animation-delay: .16s; }
 .view.first .shortcuts { animation-delay: .22s; }
