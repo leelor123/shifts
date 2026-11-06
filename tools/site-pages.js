@@ -588,7 +588,7 @@ ${FONT_HEAD}
       </div>
     </div>
     <label for="sc-city"><span>עיר <small>(לזמני השבת והחג)</small></span><select id="sc-city">${CALC_PLACES.map(([n]) => `<option${n === CALC_CITY ? ' selected' : ''}>${esc(n)}</option>`).join('')}</select></label>
-    <label class="sw"><input id="sc-unpaid" type="checkbox"> ההפסקה לא משולמת</label>
+    <label class="sw"><input id="sc-unpaid" type="checkbox" checked> ההפסקה לא משולמת</label>
   </div>
   <p id="sc-err" class="ck-err" role="alert" hidden></p>
   <div id="sc-out" hidden>
