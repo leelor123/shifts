@@ -109,8 +109,10 @@
   Plus.priceText = () => { const pr = Plus.price || cfg().price || ''; return pr ? pr + (Plus.monthly ? ' לחודש' : '') : ''; };
   const buyWord = () => (Plus.monthly ? 'מנוי חודשי' : 'קנייה חד-פעמית');
   const termsWord = () => (Plus.monthly ? 'בלי התחייבות, מבטלים בכל רגע' : 'תשלום אחד, בלי מנוי');
-  // where a subscriber stops it: Google Play's subscriptions page, or Lemon Squeezy's orders page (from the email)
-  const manageUrl = () => (Plus.source() === 'web' ? 'https://app.lemonsqueezy.com/my-orders' : `https://play.google.com/store/account/subscriptions?sku=${SUB}&package=io.github.leelor123.shifts`);
+  // where a subscriber stops it: Google Play's subscriptions page, or Lemon Squeezy's orders page (from the email).
+  // Inside the Play app a web subscription gets no link at all: Play's payments policy allows honouring it, not
+  // sending the user to another payment provider's pages (manageWebText says where to cancel instead)
+  const manageUrl = () => (Plus.source() === 'web' ? (inPlayApp() ? '' : 'https://app.lemonsqueezy.com/my-orders') : `https://play.google.com/store/account/subscriptions?sku=${SUB}&package=io.github.leelor123.shifts`);
 
   /* ---------------- Google Play (the Android app) ---------------- */
   async function service() {
@@ -430,11 +432,11 @@
           <div>${icon('check', 's')}<span><b>כל השאר נשאר חינם</b><small>משמרות, חישוב שכר, זכויות, בדיקת תלוש, דוחות ומשחקים</small></span></div>
         </div>
         ${on && !trial && !gift ? `<div class="plus-done">${icon('check')} ${owned() ? 'Shaati Plus פעיל אצלך' : 'תצוגה מקדימה של מנהל'}</div>
-            ${owned() && Plus.monthly ? `<button class="btn text sm block" data-plus-manage>${icon('wallet', 's')} ניהול או ביטול המנוי</button>` : ''}`
+            ${owned() && Plus.monthly ? (manageUrl() ? `<button class="btn text sm block" data-plus-manage>${icon('wallet', 's')} ניהול או ביטול המנוי</button>` : '<div class="tiny muted plus-note">המנוי נקנה באתר. מבטלים אותו מהקישור שבמייל של הקבלה.</div>') : ''}`
           : `${trial ? `<div class="plus-done trial">${icon('sparkle')} תקופת ניסיון · ${trialLeft()}</div>` : ''}
              ${gift && !trial ? `<div class="plus-done trial">${icon('gift')} Plus במתנה עד ${root.U.fmtDate(root.U.epochKey(root.Invite.until()))}</div>` : ''}
              ${plans}
-             ${Plus.canTrial() && !gift ? `<button class="btn big block plus-buy" data-plus-trial>${icon('sparkle')} לנסות ${TRIAL_DAYS} ימים בחינם</button>` : ''}
+             ${Plus.canTrial() && !gift ? `<button class="btn big block plus-buy" data-plus-trial>${icon('sparkle')} לנסות ${TRIAL_DAYS} ימים בחינם</button><div class="tiny muted plus-trial-note">בלי פרטי תשלום. בסוף הניסיון הכול חוזר לרגיל, בלי חיוב.</div>` : ''}
              <button class="btn ${Plus.canTrial() && !gift ? 'tonal plus-buy2' : 'big plus-buy'} block" data-plus-buy ${(play ? Plus.available : web) || sim() ? '' : 'disabled'}>${icon(Plus.canTrial() && !gift ? 'star' : 'sparkle', Plus.canTrial() && !gift ? 's' : '')} ${trial || gift ? 'להמשיך עם Plus' : yr ? 'מנוי שנתי' : buyWord()}${yr ? ' · ' + esc(Plus.yearly.price) + ' לשנה' : price ? ' · ' + esc(price) : ''}</button>
              ${Plus.workPrice() && !yr ? `<div class="tiny plus-work">${esc(Plus.workPrice())}</div>` : ''}
              <div class="plus-pay">${play ? '<span>Google Play</span><span>כרטיס אשראי</span><span>Google Pay</span><span>PayPal</span>' : '<span>כרטיס אשראי</span><span>Apple Pay</span><span>Google Pay</span><span>PayPal</span>'}</div>
@@ -466,7 +468,7 @@
           else if (b.hasAttribute('data-plus-buy')) run(async () => { const ok = await Plus.buy(); if (!ok && !inPlayApp() && Plus.webShop()) { opened = true; return true; } return ok; });
           else if (b.hasAttribute('data-plus-redeem')) run(() => Plus.redeem((el.querySelector('#plus-key') || {}).value));
           else if (b.hasAttribute('data-plus-restore')) run(async () => { await Plus.restore(); return true; });
-          else if (b.hasAttribute('data-plus-manage')) root.open(manageUrl(), '_blank', 'noopener');
+          else if (b.hasAttribute('data-plus-manage') && manageUrl()) root.open(manageUrl(), '_blank', 'noopener');
           else if (b.dataset.skin !== undefined) {
             if (b.dataset.skin && !Plus.active()) { UI.closeTop(); setTimeout(() => Plus.design(b.dataset.skin), 320); return; }
             run(() => Plus.pickSkin(b.dataset.skin));

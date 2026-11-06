@@ -690,7 +690,8 @@ let errors = [];
   await step('anonymous stats: record has only the allowed fields', async () => {
     const r = await ev(() => Stats._record());
     const keys = Object.keys(r).sort().join(',');
-    if (keys !== 'age,days,f,first,last,p,ps,s30,sh,t,v') throw new Error('keys: ' + keys);
+    if (keys !== 'age,days,f,first,ios,last,p,ps,s30,sh,t,v') throw new Error('keys: ' + keys);
+    if (typeof r.ios !== 'boolean') throw new Error('ios');
     if (!/^\d{4}-\d{2}-\d{2}$/.test(r.first) || !/^\d{4}-\d{2}-\d{2}$/.test(r.last)) throw new Error('dates');
     if (!['android', 'pwa', 'web'].includes(r.p) || !['u18', '18p', ''].includes(r.age)) throw new Error('enums');
     if (Object.keys(r.f).length > 20 || Object.values(r.f).some((x) => typeof x !== 'boolean')) throw new Error('features');

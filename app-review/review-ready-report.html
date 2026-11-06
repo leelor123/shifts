@@ -1,0 +1,257 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Review Ready — Shaati (io.github.leelor123.shifts)</title>
+<style>
+  :root { color-scheme: light; }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    background: #f4f6fb;
+    color: #0f172a;
+    line-height: 1.5;
+  }
+  .wrap { max-width: 920px; margin: 0 auto; padding: 32px 20px 64px; }
+
+  header.top { display: flex; justify-content: space-between; align-items: flex-start; gap: 16px; flex-wrap: wrap; }
+  .brand { font-size: 13px; font-weight: 700; letter-spacing: .5px; text-transform: uppercase; color: #6366f1; }
+  h1 { font-size: 26px; margin: 4px 0 2px; }
+  .sub { color: #64748b; font-size: 13px; }
+
+  .badge { border-radius: 999px; padding: 10px 18px; text-align: right; }
+  .badge .b-text { font-size: 15px; font-weight: 800; }
+  .badge .b-sub { font-size: 11px; opacity: .85; }
+
+  .stats { display: grid; grid-template-columns: repeat(4, 1fr); gap: 14px; margin: 24px 0; }
+  .stat { background: var(--c); color: #fff; border-radius: 16px; padding: 18px; box-shadow: 0 6px 18px rgba(15,23,42,.10); }
+  .stat .n { font-size: 34px; font-weight: 800; line-height: 1; }
+  .stat .l { font-size: 11px; text-transform: uppercase; letter-spacing: .6px; opacity: .92; margin-top: 6px; }
+
+  .sev-section, .passed, .manual { margin-top: 28px; }
+  h2 { font-size: 16px; margin: 0 0 12px; padding-left: 12px; border-left: 4px solid var(--c); }
+  h2 .count { color: #94a3b8; font-weight: 600; font-size: 13px; }
+
+  .card { background: #fff; border-radius: 14px; padding: 16px 18px; margin-bottom: 12px;
+          border-left: 5px solid var(--c); box-shadow: 0 1px 3px rgba(15,23,42,.07); }
+  .card-top { display: flex; justify-content: space-between; align-items: center; gap: 10px; }
+  .gl { font-size: 12px; font-weight: 700; color: var(--c); }
+  .fix-pill { font-size: 11px; font-weight: 700; background: #eef2ff; color: #4338ca; padding: 3px 9px; border-radius: 999px; white-space: nowrap; }
+  .card h4 { margin: 8px 0 4px; font-size: 15px; }
+  .loc { font-size: 12px; color: #64748b; margin-bottom: 6px; }
+  code { background: #f1f5f9; padding: 1px 6px; border-radius: 5px; font-size: 12px; font-family: ui-monospace, SFMono-Regular, Menlo, monospace; }
+  .desc { margin: 6px 0; color: #334155; font-size: 13px; }
+  .fix { margin-top: 8px; font-size: 13px; background: #f0fdf4; border-radius: 8px; padding: 8px 12px; color: #166534; }
+  .fix-label { font-weight: 700; text-transform: uppercase; font-size: 10px; letter-spacing: .5px; color: #15803d; margin-right: 4px; }
+
+  .passed-grid { display: flex; flex-wrap: wrap; gap: 8px; }
+  .passed-item { background: #dcfce7; color: #166534; font-size: 12px; font-weight: 600; padding: 5px 11px; border-radius: 999px; }
+
+  .manual { background: #fff; border-radius: 14px; padding: 18px; box-shadow: 0 1px 3px rgba(15,23,42,.07); }
+  .manual-cols { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; }
+  .manual-head { font-weight: 700; font-size: 13px; margin-bottom: 6px; }
+  .manual ul { margin: 0; padding-left: 18px; color: #475569; font-size: 13px; }
+  .manual li { margin: 4px 0; }
+
+  .empty { background: #dcfce7; color: #166534; border-radius: 14px; padding: 18px; font-weight: 600; margin-top: 24px; }
+
+  footer { margin-top: 40px; text-align: center; color: #94a3b8; font-size: 12px; }
+
+  @media (max-width: 640px) {
+    .stats { grid-template-columns: repeat(2, 1fr); }
+    .manual-cols { grid-template-columns: 1fr; }
+  }
+</style>
+</head>
+<body>
+  <div class="wrap">
+    <header class="top">
+      <div>
+        <div class="brand">🛡️ Review Ready — Audit Report</div>
+        <h1>Shaati (io.github.leelor123.shifts)</h1>
+        <div class="sub">Android TWA (Bubblewrap) + PWA · scanned 6.11.2026, 16:34:29</div>
+      </div>
+      <div class="badge" style="background:#dcfce7;color:#15803d">
+        <div class="b-text">READY</div>
+        <div class="b-sub">No blockers found — good to submit</div>
+      </div>
+    </header>
+
+    <div class="stats"><div class="stat" style="--c:#ef4444">
+        <div class="n">0</div>
+        <div class="l">Blockers</div>
+      </div><div class="stat" style="--c:#f59e0b">
+        <div class="n">0</div>
+        <div class="l">High</div>
+      </div><div class="stat" style="--c:#3b82f6">
+        <div class="n">2</div>
+        <div class="l">Medium</div>
+      </div><div class="stat" style="--c:#22c55e">
+        <div class="n">19</div>
+        <div class="l">Passed</div>
+      </div></div>
+
+    
+    <section class="sev-section">
+        <h2 style="--c:#3b82f6">📋 Medium Risk — often flagged in review <span class="count">2</span></h2>
+        <div class="card" style="--c:#3b82f6">
+            <div class="card-top">
+              <span class="gl">📋 Play Payments policy</span>
+              <span class="fix-pill">🔧 auto-fixable</span>
+            </div>
+            <h4>1. FIXED: manage button opened Lemon Squeezy inside the Play app</h4>
+            <div class="loc"><code>src/app/plus.js:115</code> · 🤖 Google</div>
+            <p class="desc">A web subscriber in the Android app could tap &quot;manage or cancel&quot; and land on Lemon Squeezy&#39;s orders page.</p>
+            <div class="fix"><span class="fix-label">Fix</span> Gated on inPlayApp(); shows a plain line instead. Guard test tests/playpay.test.js.</div>
+          </div><div class="card" style="--c:#3b82f6">
+            <div class="card-top">
+              <span class="gl">📋 Data safety accuracy</span>
+              <span class="fix-pill">🔧 auto-fixable</span>
+            </div>
+            <h4>2. FIXED: MET Norway location sharing and guest support email missing from the draft</h4>
+            <div class="loc"><code>app-review/play-submission.md</code> · 🤖 Google</div>
+            <p class="desc">The weather request sends the chosen city (rounded) to MET Norway for every user; guests can send a support email.</p>
+            <div class="fix"><span class="fix-label">Fix</span> Draft now marks Approximate location as shared and lists the guest email.</div>
+          </div>
+      </section><section class="sev-section">
+        <h2 style="--c:#8b5cf6">💡 Low Risk <span class="count">8</span></h2>
+        <div class="card" style="--c:#8b5cf6">
+            <div class="card-top">
+              <span class="gl">💡 Play Subscriptions policy (free trial)</span>
+              <span class="fix-pill">🔧 auto-fixable</span>
+            </div>
+            <h4>1. FIXED: free-trial button did not say there is no charge</h4>
+            <div class="loc"><code>src/app/plus.js:439</code> · 🤖 Google</div>
+            <p class="desc">The local 3-day trial needs no payment details and does not convert.</p>
+            <div class="fix"><span class="fix-label">Fix</span> Added a note under the trial button in 7 languages.</div>
+          </div><div class="card" style="--c:#8b5cf6">
+            <div class="card-top">
+              <span class="gl">💡 Data safety accuracy</span>
+              <span class="fix-pill">🔧 auto-fixable</span>
+            </div>
+            <h4>2. FIXED: AI assistant questions and summary not listed</h4>
+            <div class="loc"><code>app-review/play-submission.md</code> · 🤖 Google</div>
+            <p class="desc">Questions and the optional numeric summary go to Anthropic with the user&#39;s key.</p>
+            <div class="fix"><span class="fix-label">Fix</span> Added to the draft rows.</div>
+          </div><div class="card" style="--c:#8b5cf6">
+            <div class="card-top">
+              <span class="gl">💡 Play Payments policy</span>
+              
+            </div>
+            <h4>3. Launcher shortcuts lack source=twa</h4>
+            <div class="loc"><code>C:/Users/User/ShiftPay-Android/twa/twa-manifest.json</code> · 🤖 Google</div>
+            <p class="desc">Play-app detection for shortcuts relies on the referrer or the Digital Goods API. Harmless while the web checkout is off.</p>
+            <div class="fix"><span class="fix-label">Fix</span> Add &amp;source=twa to the three shortcut URLs in the next AAB.</div>
+          </div><div class="card" style="--c:#8b5cf6">
+            <div class="card-top">
+              <span class="gl">💡 User Data policy (secure handling)</span>
+              
+            </div>
+            <h4>4. allowBackup copies the widget pay snapshot</h4>
+            <div class="loc"><code>C:/Users/User/ShiftPay-Android/twa/app/src/main/AndroidManifest.xml:37</code> · 🤖 Google</div>
+            <p class="desc">WidgetData SharedPreferences go to Android Auto Backup.</p>
+            <div class="fix"><span class="fix-label">Fix</span> Add data extraction rules excluding shaati_widgets in the next AAB.</div>
+          </div><div class="card" style="--c:#8b5cf6">
+            <div class="card-top">
+              <span class="gl">💡 Core app quality</span>
+              <span class="fix-pill">🔧 auto-fixable</span>
+            </div>
+            <h4>5. Missing null check in save() and tap()</h4>
+            <div class="loc"><code>C:/Users/User/ShiftPay-Android/twa/app/src/main/java/io/github/leelor123/shifts/WidgetData.java:45</code> · 🤖 Google</div>
+            <p class="desc">A corrupted taps entry would crash the process.</p>
+            <div class="fix"><span class="fix-label">Fix</span> Copy the guard from pending().</div>
+          </div><div class="card" style="--c:#8b5cf6">
+            <div class="card-top">
+              <span class="gl">💡 Payments policy (mentions)</span>
+              
+            </div>
+            <h4>6. Terms mention website purchase inside the Android app</h4>
+            <div class="loc"><code>src/app/views-legal.js:53</code> · 🤖 Google</div>
+            <p class="desc">Plain text, no link. Kept by decision: the Terms must read the same everywhere.</p>
+            <div class="fix"><span class="fix-label">Fix</span> None.</div>
+          </div><div class="card" style="--c:#8b5cf6">
+            <div class="card-top">
+              <span class="gl">💡 Store listing graphics</span>
+              
+            </div>
+            <h4>7. Play icon has pre-rounded transparent corners</h4>
+            <div class="loc"><code>C:/Users/User/ShiftPay-Android/play-upload/icon-512.png</code> · 🤖 Google</div>
+            <p class="desc">Play applies its own mask.</p>
+            <div class="fix"><span class="fix-label">Fix</span> Upload a full-square opaque 512x512 icon.</div>
+          </div><div class="card" style="--c:#8b5cf6">
+            <div class="card-top">
+              <span class="gl">💡 Themed icons</span>
+              
+            </div>
+            <h4>8. No monochrome launcher layer</h4>
+            <div class="loc"><code>C:/Users/User/ShiftPay-Android/twa/app/src/main/res/mipmap-anydpi-v26/ic_launcher.xml</code> · 🤖 Google</div>
+            <p class="desc">No themed icon on Android 13+.</p>
+            <div class="fix"><span class="fix-label">Fix</span> Optional.</div>
+          </div>
+      </section><section class="sev-section">
+        <h2 style="--c:#64748b">ℹ️ Info <span class="count">3</span></h2>
+        <div class="card" style="--c:#64748b">
+            <div class="card-top">
+              <span class="gl">ℹ️ Digital Asset Links</span>
+              
+            </div>
+            <h4>1. Confirm the Play App Signing SHA-256</h4>
+            <div class="loc"><code>https://leelor123.github.io/.well-known/assetlinks.json</code> · 🤖 Google</div>
+            <p class="desc">Second fingerprint must match Play Console App integrity.</p>
+            <div class="fix"><span class="fix-label">Fix</span> Compare in Play Console.</div>
+          </div><div class="card" style="--c:#64748b">
+            <div class="card-top">
+              <span class="gl">ℹ️ Play upload</span>
+              
+            </div>
+            <h4>2. Confirm versionCode 13205 is the highest so far</h4>
+            <div class="loc"><code>C:/Users/User/ShiftPay-Android/twa/app/build.gradle:60</code> · 🤖 Google</div>
+            
+            <div class="fix"><span class="fix-label">Fix</span> Check App bundle explorer.</div>
+          </div><div class="card" style="--c:#64748b">
+            <div class="card-top">
+              <span class="gl">ℹ️ Closed testing</span>
+              
+            </div>
+            <h4>3. 12 testers for 14 days in a row</h4>
+            <div class="loc"><code>Play Console</code> · 🤖 Google</div>
+            <p class="desc">Applies to personal accounts created after 13 Nov 2023.</p>
+            <div class="fix"><span class="fix-label">Fix</span> Keep 12 testers opted in.</div>
+          </div>
+      </section>
+    <section class="passed">
+        <h2 style="--c:#22c55e">✅ Passed checks <span class="count">19</span></h2>
+        <div class="passed-grid">
+          <span class="passed-item">✓ targetSdk 36 (current Play rule)</span><span class="passed-item">✓ Only POST_NOTIFICATIONS declared; no restricted permissions</span><span class="passed-item">✓ No READ_MEDIA_* / storage / camera permissions</span><span class="passed-item">✓ No foreground services</span><span class="passed-item">✓ Play Billing for all digital purchases in the Android app</span><span class="passed-item">✓ No web checkout or code field in the Play app</span><span class="passed-item">✓ Subscription price, renewal, cancellation and refund disclosed</span><span class="passed-item">✓ Restore purchases present</span><span class="passed-item">✓ In-app account deletion</span><span class="passed-item">✓ Web deletion page live</span><span class="passed-item">✓ AI answer reporting</span><span class="passed-item">✓ Leaderboard nickname reporting</span><span class="passed-item">✓ No ads, no ad ID, no analytics SDK</span><span class="passed-item">✓ HTTPS only</span><span class="passed-item">✓ No native libs (16 KB / 64-bit N/A)</span><span class="passed-item">✓ assetlinks.json live at domain root</span><span class="passed-item">✓ Not a thin webview wrapper (widgets, shortcuts, notifications, share target, offline)</span><span class="passed-item">✓ PendingIntents immutable with explicit components</span><span class="passed-item">✓ No localhost or test keys in production</span>
+        </div>
+      </section>
+    <section class="manual">
+    <h2 style="--c:#64748b">📝 Manual steps — can't be auto-checked</h2>
+    <div class="manual-cols">
+      <div>
+        <div class="manual-head">🍎 App Store Connect</div>
+        <ul>
+          <li>Privacy Nutrition Labels filled</li>
+          <li>Demo account credentials provided</li>
+          <li>Age rating questionnaire completed</li>
+          <li>Encryption Export Compliance answered</li>
+        </ul>
+      </div>
+      <div>
+        <div class="manual-head">🤖 Play Console</div>
+        <ul>
+          <li>Data Safety form completed</li>
+          <li>Account deletion URL set</li>
+          <li>Privacy policy URL set</li>
+          <li>Required declarations submitted (FGS, sensitive permissions)</li>
+        </ul>
+      </div>
+    </div>
+  </section>
+
+    <footer>Generated by Review Ready · guidelines current as of May 2026</footer>
+  </div>
+</body>
+</html>

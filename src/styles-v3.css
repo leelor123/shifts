@@ -1007,6 +1007,7 @@ body.fx .recap-card:active { transform: scale(.98); }
 .plus-buy { margin-top: 14px; background: var(--grad-money); color: #2b1a00; }
 .plus-buy:disabled { opacity: .5; }
 .plus-note { text-align: center; margin-top: 8px; }
+.plus-trial-note { text-align: center; margin: 6px 0 10px; }
 .plus-done { display: flex; align-items: center; justify-content: center; gap: 8px; margin-top: 14px; padding: 12px; border-radius: 14px; background: var(--good-bg); color: var(--good); font-weight: 700; }
 .plus-links { display: flex; flex-wrap: wrap; align-items: center; justify-content: center; gap: 12px; margin-top: 10px; }
 .plus-preview { display: inline-flex; align-items: center; gap: 6px; color: var(--on-surface-var); }
@@ -1817,10 +1818,10 @@ body:not(.fx) .money { transition: none; }
 .adm-drop { font-size: .75rem; font-weight: 500; color: var(--on-surface-var); white-space: nowrap; }
 /* the funnel by period and platform: a step per row, a platform per column */
 .adm-fp .seg { margin-bottom: 8px; }
-.adm-ftable { width: 100%; border-collapse: collapse; table-layout: fixed; font-size: .8rem; font-variant-numeric: tabular-nums; }
+.adm-ftable { width: 100%; border-collapse: collapse; font-size: .8rem; font-variant-numeric: tabular-nums; }
 .adm-ftable th, .adm-ftable td { padding: 7px 2px; text-align: center; vertical-align: top; }
-.adm-ftable thead th { font-size: .75rem; font-weight: 600; color: var(--on-surface-var); }
-.adm-ftable thead td { width: 38%; } /* a fixed table takes its widths from the first row */
+/* a platform's name stays whole (a column as wide as its name); the step names take what is left and wrap there */
+.adm-ftable thead th { font-size: .75rem; font-weight: 600; color: var(--on-surface-var); white-space: nowrap; }
 .adm-ftable tbody th { text-align: start; font-weight: 500; line-height: 1.25; overflow-wrap: normal; }
 .adm-ftable tbody tr > * { border-top: 1px solid var(--line); }
 .adm-ftable td b { display: block; font-weight: 700; }
