@@ -51,7 +51,9 @@
   const motion = () => (root.Fx && root.Fx.motion ? root.Fx.motion() : !reduced());
   /** reading aloud: on unless turned off, and never while the app's effects are off */
   V.enabled = () => prefs().voice !== false && prefs().effects !== false;
-  V.supported = () => !!(root.speechSynthesis && root.SpeechSynthesisUtterance);
+  // a browser run by a test (navigator.webdriver: puppeteer, Lighthouse) never speaks: on Windows its speech played on
+  // the computer's speakers while the test suites ran (6 Nov 2026)
+  V.supported = () => !!(root.speechSynthesis && root.SpeechSynthesisUtterance) && !(root.navigator && root.navigator.webdriver);
   const synth = () => (V.supported() ? root.speechSynthesis : null);
 
   const LANG = (root.U && root.U.LANG) || doc.documentElement.lang || 'he';
