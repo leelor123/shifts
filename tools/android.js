@@ -47,8 +47,10 @@ async function generate() {
     launcherName: APP.launcherName,
     startUrl: APP.startUrl,
     themeColor: '#1D4A4F', themeColorDark: '#0F1413',
-    navigationColor: '#F6F4EE', navigationColorDark: '#0F1413',
-    navigationDividerColor: '#E3DFD4', navigationDividerColorDark: '#26302E',
+    // the phone's own bar under the app is the app's bottom bar colour (styles-v4.css --surface, light and dark), and
+    // its divider the same colour: no line between them, so the app does not look like a page in a browser
+    navigationColor: '#F6F4EE', navigationColorDark: '#0E1118',
+    navigationDividerColor: '#F6F4EE', navigationDividerColorDark: '#0E1118',
     backgroundColor: '#0D2B6B', // same navy as the opening animation: no flash between them
     monochromeIconUrl: `https://${APP.host}${APP.scope}icon-mono-512.png`, // notification icon
     enableNotifications: true,
