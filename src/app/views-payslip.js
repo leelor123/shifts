@@ -426,8 +426,18 @@
   function translatorHtml(slip, lines) {
     const unknown = Payslip.unknownLines(slip.other, slip.fields);
     if (!lines.length && !unknown.length) return '';
+    // the order a worker reads the money in: pay, deductions, employer, totals (net last), then information. A line
+    // the person named "other payment" / "other deduction" closes its group; one not named yet follows the totals.
+    const rank = (k) => { const i = Payslip.READ_ORDER.indexOf(k); return i < 0 ? 999 : i; };
+    const known = lines.slice().sort((x, y) => rank(x.key) - rank(y.key));
+    const ordered = [];
+    for (const kind of ['pay', 'ded', 'emp', 'total']) {
+      ordered.push(...known.filter((l) => l.kind === kind));
+      ordered.push(...unknown.filter((u) => u.kind === kind));
+    }
+    ordered.push(...unknown.filter((u) => !u.kind), ...known.filter((l) => !['pay', 'ded', 'emp', 'total'].includes(l.kind)));
     const amount = (l) => (l.kind === 'info' ? esc(U.num(l.value, 2)) : U.money(l.value));
-    const row = (l) => `<details class="collapse ps-tr-row" data-k="${l.key}"><summary><span class="ps-tr-h"><span class="ps-tr-l">${esc(l.label)}${l.change ? ' <span class="tag warn">שינוי</span>' : ''}</span>${HE_UI ? '' : heBdi(l.heTerm, 'ps-tr-he')}<span class="ps-k k-${l.kind}">${esc(l.kindLabel)}</span></span><span class="money">${amount(l)}</span></summary>
+    const row = (l) => `<details class="collapse ps-tr-row${l.key === 'net' ? ' ps-tr-net' : ''}" data-k="${l.key}"><summary><span class="ps-tr-h"><span class="ps-tr-l">${esc(l.label)}${l.change ? ' <span class="tag warn">שינוי</span>' : ''}</span>${HE_UI ? '' : heBdi(l.heTerm, 'ps-tr-he')}<span class="ps-k k-${l.kind}">${esc(l.kindLabel)}</span></span><span class="money">${amount(l)}</span></summary>
       <div class="in small"><div class="ps-tr-m">${esc(l.meaning)}</div>${HE_UI ? '' : `<div class="ps-tr-mhe" lang="he" dir="rtl">${esc(l.meaningHe)}</div>`}
         ${l.printed ? `<div class="ps-tr-p">בתלוש שלך כתוב: ${heBdi(l.printed, 'ps-tr-pt')}</div>` : ''}
         <div class="ps-tr-x">${esc(l.explain)}${l.qty ? `<br>כמות: ${U.num(l.qty, 2)}` : ''}</div>${l.change ? `<div class="ps-tr-c"><b>${esc(l.change)}</b></div>` : ''}</div></details>`;
@@ -437,7 +447,7 @@
     return `<div class="section-title">${icon('info', 's')} הסבר לכל שורה</div>
       <div class="small muted ps-tr-intro">מה כל שורה בתלוש אומרת ומה היא עושה לכסף שלך. לחצו על שורה לפרטים.</div>
       ${HE_UI ? '' : `<div class="card ps-tr-sw"><label class="switch-row"><span class="body"><span class="t">הצג גם בעברית</span><span class="s">המשפט בעברית ליד כל שורה, כדי להראות למעסיק</span></span><input type="checkbox" class="switch" data-ps-he ${heOn ? 'checked' : ''}></label></div>`}
-      <div class="list ps-tr${heOn ? ' he-on' : ''}" data-ps-tr>${lines.map(row).join('')}${unknown.map(unk).join('')}</div>`;
+      <div class="list ps-tr${heOn ? ' he-on' : ''}" data-ps-tr>${ordered.map((x) => (x.index != null ? unk(x) : row(x))).join('')}</div>`;
   }
   /** Name an unrecognised line: a sheet with the line's text and every kind of line the slip does not have yet. */
   function labelSheet(slip, index, onPick) {

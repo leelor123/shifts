@@ -160,6 +160,11 @@ T.test('every field has a meaning, a Hebrew meaning, a Hebrew term and an explan
     T.eq(Payslip.MEANING_HE[f.key], Payslip.MEANING[f.key], 'MEANING_HE ' + f.key);
     T.ok(Payslip.KIND_LABEL[f.kind], 'KIND_LABEL ' + f.kind);
   }
+  // the reading order names every field once: pay, deductions, employer, totals with net last, then information
+  T.eq(Payslip.READ_ORDER.slice().sort().join(), Payslip.FIELDS.map((f) => f.key).sort().join());
+  const kinds = Payslip.READ_ORDER.map((k) => Payslip.FIELD[k].kind);
+  T.eq(kinds.filter((k, i) => k !== kinds[i - 1]).join(), 'pay,ded,emp,total,info');
+  T.eq(Payslip.READ_ORDER[kinds.lastIndexOf('total')], 'net');
   T.eq(Object.keys(Payslip.MEANING).length, Payslip.FIELDS.length);
   T.eq(Object.keys(Payslip.MEANING_HE).length, Payslip.FIELDS.length);
 });

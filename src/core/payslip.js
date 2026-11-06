@@ -180,6 +180,14 @@
     otherPay: 'תשלום אחר', otherDed: 'ניכוי אחר',
   };
   // i18n-keep-end
+  /** The order a worker reads the money in (the translator's list): money in, deductions, the employer's money,
+   *  the totals (net last), then information. FIELDS keeps its own order: it is the matching order. */
+  const READ_ORDER = ['base', 'ot125', 'ot150', 'rest150', 'rest175', 'rest200', 'night', 'seniority', 'travel', 'recuperation',
+    'vacationPay', 'sickPay', 'holidayPay', 'bonus', 'diff',
+    'incomeTax', 'nationalInsurance', 'healthTax', 'pensionEmployee', 'hishtalmutEmployee',
+    'pensionEmployer', 'severance', 'hishtalmutEmployer',
+    'gross', 'totalDeductions', 'net',
+    'workHours', 'workDays', 'vacationBalance', 'sickBalance', 'creditPoints', 'taxableGross', 'ytdGross', 'ytdTax'];
   /** What a line does to the worker's money, by its kind. */
   const KIND_LABEL = { pay: 'תשלום לך', ded: 'ניכוי מהשכר', emp: 'כסף מהמעסיק', total: 'סיכום', info: 'מידע' };
   /** The Hebrew words of a line as it was read from the payslip (no numbers), or '' when it was typed or read by AI. */
@@ -816,5 +824,5 @@
     return s.trim();
   }
 
-  root.Payslip = { FIELDS, FIELD, HOUR_FIELDS, EXPLAIN, MEANING, MEANING_HE, HE_TERM, KIND_LABEL, printedTerm, unknownLines, labelOther, normalize, fixVisual, numbersIn, matchField, pickValues, linesFromPdfItems, detectPeriod, parseText, redact, aiSchema, aiPrompt, fromAi, expected, analyze, waterfall, explainLines, compareSlips, employerMessage };
+  root.Payslip = { FIELDS, FIELD, HOUR_FIELDS, EXPLAIN, READ_ORDER, MEANING, MEANING_HE, HE_TERM, KIND_LABEL, printedTerm, unknownLines, labelOther, normalize, fixVisual, numbersIn, matchField, pickValues, linesFromPdfItems, detectPeriod, parseText, redact, aiSchema, aiPrompt, fromAi, expected, analyze, waterfall, explainLines, compareSlips, employerMessage };
 })(typeof window !== 'undefined' ? window : globalThis);

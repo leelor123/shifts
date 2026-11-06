@@ -154,6 +154,10 @@ details.collapse.ps-tr-row > summary { align-items: flex-start; }
 details.collapse.ps-tr-row > summary > .money { flex: none; padding-top: 1px; }
 .ps-tr-h { flex: 1; min-width: 0; display: flex; flex-wrap: wrap; align-items: center; gap: 4px 8px; }
 .ps-tr-l { min-width: 0; }
+/* net to pay: the line the worker looks for, a touch stronger (ink tint, ink amount) */
+.ps-tr .ps-tr-net { background: color-mix(in srgb, var(--brand-strong) 6%, var(--surface-1)); }
+.ps-tr-net .ps-tr-l { font-size: 1.0625rem; }
+.ps-tr-net > summary > .money { color: var(--brand-strong); font-size: 1.0625rem; }
 .ps-tr-he, .ps-tr-orig, .ps-tr-pt, .ps-lb-he { font-family: var(--font); unicode-bidi: isolate; }
 /* a Hebrew run inside a left-to-right page lines up with the words around it */
 html[dir="ltr"] .ps-tr-he, html[dir="ltr"] .ps-tr-orig { text-align: left; }
