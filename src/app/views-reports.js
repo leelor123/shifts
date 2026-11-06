@@ -110,14 +110,14 @@
       ['שעות', (x) => x.hours, (v) => U.num(v, 1)], ['משמרות', (x) => x.shifts, (v) => U.num(v, 1)],
       ['ממוצע לשעה', (x) => x.avgHourly, (v) => U.money(v)], ['שעות למשמרת', (x) => x.avgShift, (v) => U.num(v, 1)],
     ];
-    let h = `<div class="compare-row h"><span></span><span>קודמת</span>${a3 ? `<span>ממוצע 3 ח׳</span>` : ''}${a12 ? `<span>ממוצע 12 ח׳</span>` : ''}</div>`;
+    let h = `<div class="compare" style="--cols:${1 + (a3 ? 1 : 0) + (a12 ? 1 : 0)}"><div class="compare-row h"><span></span><span>קודמת</span>${a3 ? `<span>ממוצע 3 ח׳</span>` : ''}${a12 ? `<span>ממוצע 12 ח׳</span>` : ''}</div>`;
     for (const [lab, f, fmt] of rows) {
       const cur = f(t);
       const cell = (v) => `<span class="num">${fmt(v)}</span> ${UI.delta(cur, v, { compact: true })}`;
       const fa = (a) => (a ? f(Object.assign({}, a, { net: a.net })) : null);
       h += `<div class="compare-row"><span><b>${lab}</b><br><span class="num small">${fmt(cur)}</span></span><span class="small">${cell(f(p))}</span>${a3 ? `<span class="small">${cell(fa(a3))}</span>` : ''}${a12 ? `<span class="small">${cell(fa(a12))}</span>` : ''}</div>`;
     }
-    return h + `<div class="tiny muted" style="margin-top:6px">החיצים: שינוי של התקופה הנוכחית ביחס לכל עמודה. ${type === 'week' ? 'ממוצעים לשבוע' : 'ממוצעים לחודש'}${a3 ? ` (3 ח׳ = ${a3.n} ${type === 'week' ? 'שבועות' : 'תקופות'})` : ''}${a12 ? `, (12 ח׳ = ${a12.n})` : ''}, רק מתקופות שיש בהן נתונים.</div>`;
+    return h + `</div><div class="tiny muted" style="margin-top:6px">החיצים: שינוי של התקופה הנוכחית ביחס לכל עמודה. ${type === 'week' ? 'ממוצעים לשבוע' : 'ממוצעים לחודש'}${a3 ? ` (3 ח׳ = ${a3.n} ${type === 'week' ? 'שבועות' : 'תקופות'})` : ''}${a12 ? `, (12 ח׳ = ${a12.n})` : ''}, רק מתקופות שיש בהן נתונים.</div>`;
   }
 
   function yearExtras(t, r) {

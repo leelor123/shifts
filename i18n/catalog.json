@@ -2623,7 +2623,7 @@
   "key": "הקראה בקול",
   "kind": "lit",
   "where": [
-   "app/mascot-voice.js:267",
+   "app/mascot-voice.js:269",
    "app/views-settings.js:861"
   ]
  },
@@ -12930,7 +12930,7 @@
   ]
  },
  {
-  "key": "<div class=\"compare-row h\"><span></span><span>קודמת</span>{0}{1}</div>",
+  "key": "<div class=\"compare\" style=\"--cols:{0}\"><div class=\"compare-row h\"><span></span><span>קודמת</span>{1}{2}</div>",
   "kind": "tpl",
   "where": [
    "app/views-reports.js:113"
@@ -12951,7 +12951,7 @@
   ]
  },
  {
-  "key": "<div class=\"tiny muted\" style=\"margin-top:6px\">החיצים: שינוי של התקופה הנוכחית ביחס לכל עמודה. {0}{1}{2}, רק מתקופות שיש בהן נתונים.</div>",
+  "key": "</div><div class=\"tiny muted\" style=\"margin-top:6px\">החיצים: שינוי של התקופה הנוכחית ביחס לכל עמודה. {0}{1}{2}, רק מתקופות שיש בהן נתונים.</div>",
   "kind": "tpl",
   "where": [
    "app/views-reports.js:120"

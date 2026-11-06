@@ -221,7 +221,7 @@
    * משמרת") — it looked broken, in a narrow phone, a bigger text size or a longer language. Dom.fit makes such a label
    * a little smaller (down to 80%) until it fits one line, before the screen is drawn; a longer text (a sentence)
    * still goes to a new line between words, and nothing is ever cut. */
-  const FIT_SKIP = '#intro, svg, canvas, input, textarea, select, [contenteditable], .hero-num, .pp-row, .no-fit';
+  const FIT_SKIP = '#intro, svg, canvas, input, textarea, select, [contenteditable], .hero-num, .pp-row, .compare-row.h, .no-fit'; // (the comparison's column titles: one shrunk and its neighbour not looked like a mistake)
   const FIT_STEPS = [0.92, 0.86, 0.8];
   const shortText = (el) => { const t = (el.textContent || '').trim(); return t.length > 1 && t.length <= 32 && t.split(/\s+/).length <= 3; };
   // the element's own text spans more than one line (a text node's boxes on different rows)
