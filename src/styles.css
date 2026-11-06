@@ -153,7 +153,10 @@ svg.i.l { width: 32px; height: 32px; }
 .topbar { display: flex; align-items: center; gap: 8px; min-height: 64px; padding: 8px 0 4px; }
 .topbar h1 { font-size: 1.5rem; font-weight: 700; margin: 0; letter-spacing: -.01em; }
 .topbar .sub { font-size: .85rem; color: var(--on-surface-var); }
-.topbar .titles { flex: 1; min-width: 0; }
+/* the title never breaks inside a word ("Calend/rier" at 320px): it keeps its longest word, and the buttons beside it
+   go under it only when a long translated title leaves them no room */
+.topbar { flex-wrap: wrap; }
+.topbar .titles { flex: 1; min-width: min-content; }
 .section-title { font-size: .95rem; font-weight: 700; margin: 22px 4px 10px; display: flex; align-items: center; gap: 8px; }
 .section-title .spacer + * { font-weight: 500; }
 
@@ -191,6 +194,12 @@ svg.i.l { width: 32px; height: 32px; }
 
 .kpis { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; }
 .kpis.three { grid-template-columns: repeat(3, 1fr); }
+/* a tile is never narrower than the longest word of its label: three tiles on a 320px phone left ~60px, and a
+   translated word (Estimated, больничный, Vacaciones) broke inside it. The value adds nothing to that width (it has
+   its own ellipsis), so the columns stay even unless a word needs more. */
+.kpis { grid-template-columns: repeat(2, minmax(min-content, 1fr)); }
+.kpis.three { grid-template-columns: repeat(3, minmax(min-content, 1fr)); }
+.kpi .v { contain: inline-size; }
 .kpi { background: var(--surface-2); border-radius: 16px; padding: 12px; min-width: 0; }
 .card.tonal .kpi { background: hsla(0, 0%, 100%, .45); }
 :root[data-theme="dark"] .card.tonal .kpi { background: hsla(0, 0%, 0%, .2); }
@@ -518,6 +527,12 @@ details.collapse > .in { padding: 0 16px 14px; }
 /* the row's name keeps room for itself (it was squeezed to 49px and broke: "ממוצע / לשעה"); a number and its arrow
  * go one under the other in a narrow column instead */
 .compare-row { display: grid; grid-template-columns: minmax(5.2em, 1fr) auto auto auto; gap: 10px; align-items: center; padding: 8px 0; font-size: .86rem; }
+/* one grid for the whole table (the rows share its columns), and the label column is never narrower than its longest
+   word: at 320px "Estimated" broke inside at 5.2em, and a column per row would have put the rows out of line */
+@supports (grid-template-columns: subgrid) {
+  .compare { display: grid; grid-template-columns: minmax(min-content, 1.15fr) repeat(var(--cols, 3), minmax(min-content, 1fr)); column-gap: 10px; }
+  .compare > .compare-row { grid-column: 1 / -1; grid-template-columns: subgrid; }
+}
 .compare-row + .compare-row { border-top: 1px solid var(--outline-var); }
 .compare-row .h { font-size: .75rem; color: var(--on-surface-var); }
 

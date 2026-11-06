@@ -194,7 +194,7 @@
       setTimeout(() => verifySheet({ fields: parsed.fields, other: parsed.other, period: parsed.period || defaultPeriod(), text, source, fileId, fileName: file.name }), 320);
     } catch (e) {
       console.error(e);
-      progress('שגיאה: ' + (e.message || e));
+      progress(root.U.ours(e) ? e.message : 'לא הצלחנו לקרוא את התלוש מהקובץ');
       UI.toast('הקריאה נכשלה. אפשר להזין ידנית.');
     }
   }
@@ -599,8 +599,8 @@
             });
             return;
           }
-          if (b.hasAttribute('data-copy-msg')) { await UI.copyText(el.querySelector('#ps-msg').value); UI.toast('ההודעה הועתקה'); }
-          if (b.hasAttribute('data-share-msg')) { const t = el.querySelector('#ps-msg').value; if (navigator.share) navigator.share({ text: t }).catch(() => {}); else { await UI.copyText(t); UI.toast('הועתק'); } }
+          if (b.hasAttribute('data-copy-msg')) { await UI.copied(el.querySelector('#ps-msg').value, 'ההודעה הועתקה'); }
+          if (b.hasAttribute('data-share-msg')) { const t = el.querySelector('#ps-msg').value; await UI.shareText(t, { okText: 'הועתק' }); }
           if (b.hasAttribute('data-edit')) { UI.closeTop(); setTimeout(() => verifySheet(Object.assign({}, slip, { id: slip.isNew ? null : slip.id })), 320); }
           if (b.hasAttribute('data-file')) {
             const f = await Store.getFile(slip.fileId);
@@ -771,7 +771,7 @@
           } catch (err) {
             console.error(err);
             btn.disabled = false; btn.textContent = 'נסה שוב';
-            UI.dialog({ title: 'הניתוח החכם נכשל', text: String(err.message || err), buttons: [{ label: 'סגור', value: true }] });
+            UI.dialog({ title: 'הניתוח החכם נכשל', text: root.U.ours(err) ? err.message : 'לא הצלחנו לקרוא את התשובה של Claude. נסו שוב, או הזינו את התלוש ידנית.', buttons: [{ label: 'סגור', value: true }] });
           }
         };
       },
@@ -805,7 +805,7 @@
       if (err instanceof Anthropic.NotFoundError) throw root.U.oops('המודל לא נמצא (404). בחר מודל אחר בהגדרות.');
       if (err instanceof Anthropic.RateLimitError) throw root.U.oops('יותר מדי בקשות (429). נסה שוב בעוד דקה.');
       if (err instanceof Anthropic.APIConnectionError) throw root.U.oops('בעיית תקשורת עם השרת. בדוק את החיבור.');
-      if (err instanceof Anthropic.APIError) throw root.U.oops(`שגיאת API ${err.status || ''}: ${err.message}`);
+      if (err instanceof Anthropic.APIError) throw root.U.oops('השירות של Claude לא הצליח לענות כרגע. נסו שוב בעוד רגע, או הזינו את התלוש ידנית.');
       throw err;
     }
     if (res.stop_reason === 'refusal') throw root.U.oops('הבקשה נדחתה על ידי המודל' + (res.stop_details && res.stop_details.explanation ? ': ' + res.stop_details.explanation : '.'));

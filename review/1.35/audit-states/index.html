@@ -1,0 +1,28 @@
+<!doctype html><html lang="he" dir="rtl"><head><meta charset="utf-8"><title>בדיקת מצבי שגיאה, ריקים וקצה (1.35)</title>
+<style>
+body{margin:0;background:#f3f1ec;font:16px/1.6 Rubik,'Segoe UI',Arial,sans-serif;color:#1d1a2b}
+.wrap{padding:28px 32px;width:autopx}
+h1{font-size:24px;margin:0 0 6px} p{margin:0 0 18px;max-width:1100px;font-size:17px}
+.pair{display:flex;gap:28px;align-items:flex-start}
+figure{margin:0;background:#fff;border-radius:18px;padding:14px;box-shadow:0 2px 10px rgba(0,0,0,.08)}
+figcaption{font-weight:700;margin-bottom:10px} .b figcaption{color:#b3261e} .a figcaption{color:#146c43}
+img{display:block;width:390px;border-radius:10px;border:1px solid #ddd}
+.n{display:inline-block;background:#1d3a8a;color:#fff;border-radius:999px;padding:0 10px;margin-inline-end:8px;font-size:15px}
+section{margin-bottom:40px}
+</style></head><body><div class="wrap"><h1 style="font-size:28px">מצבי שגיאה, ריקים וקצה: לפני ואחרי</h1><p>כל הודעה אומרת מה קרה ומה לעשות, בלי קודים ובלי אנגלית. רשימה מלאה של הממצאים בדוח של הסוכן.</p><section><h1><span class="n">1</span>קוד מקום עבודה שהשרת דחה</h1><p>ב-1.34 ההודעה הייתה "אין הרשאה לקוד הזה", כאילו המשתמש עשה משהו לא בסדר. בענף השחרור היא הפכה ל"נסו שוב בעוד רגע", וזה לא עוזר כשהשרת דוחה. עכשיו ההודעה אומרת שהשרת לא אישר, מתי לנסות שוב ולאן לכתוב, ונשארת על המסך מספיק זמן לקרוא אותה.</p>
+<div class="pair"><figure class="b"><figcaption>לפני</figcaption><img src="shots/wp-refused-before.png" alt="לפני: קוד מקום עבודה שהשרת דחה"></figure>
+<figure class="a"><figcaption>אחרי</figcaption><img src="shots/wp-refused-after.png" alt="אחרי: קוד מקום עבודה שהשרת דחה"></figure></div></section><section><h1><span class="n">2</span>טבלת האלופים כשמכסת השרת נגמרה</h1><p>קודם: "נסו שוב בעוד רגע", ושום ניסיון לא יעזור עד שהמכסה מתאפסת. עכשיו: השרת עמוס, לנסות בעוד כמה שעות, ומה ששמרתם נשאר בטלפון.</p>
+<div class="pair"><figure class="b"><figcaption>לפני</figcaption><img src="shots/table-quota-before.png" alt="לפני: טבלת האלופים כשמכסת השרת נגמרה"></figure>
+<figure class="a"><figcaption>אחרי</figcaption><img src="shots/table-quota-after.png" alt="אחרי: טבלת האלופים כשמכסת השרת נגמרה"></figure></div></section><section><h1><span class="n">3</span>הטלפון לא נתן להעתיק</h1><p>קודם הופיע "הקוד הועתק" גם כשלא הועתק כלום, והמשתמש הדביק ריק. עכשיו נפתח חלון עם הטקסט כבר מסומן, להעתקה ידנית.</p>
+<div class="pair"><figure class="b"><figcaption>לפני</figcaption><img src="shots/copy-refused-before.png" alt="לפני: הטלפון לא נתן להעתיק"></figure>
+<figure class="a"><figcaption>אחרי</figcaption><img src="shots/copy-refused-after.png" alt="אחרי: הטלפון לא נתן להעתיק"></figure></div></section><section><h1><span class="n">4</span>רשימת המשמרות של משתמש חדש</h1><p>קודם: "לא נמצאו משמרות, נסה לשנות את החיפוש" כשאין שום חיפוש. מבוי סתום. עכשיו: "עוד אין משמרות" וכפתור שפותח הוספת משמרת.</p>
+<div class="pair"><figure class="b"><figcaption>לפני</figcaption><img src="shots/no-shifts-list-before.png" alt="לפני: רשימת המשמרות של משתמש חדש"></figure>
+<figure class="a"><figcaption>אחרי</figcaption><img src="shots/no-shifts-list-after.png" alt="אחרי: רשימת המשמרות של משתמש חדש"></figure></div></section><section><h1><span class="n">5</span>חיפוש בלי תוצאות</h1><p>עכשיו יש כפתור אחד שמנקה את החיפוש ואת המסננים, במקום הוראה לשנות אותם לבד.</p>
+<div class="pair"><figure class="b"><figcaption>לפני</figcaption><img src="shots/search-none-before.png" alt="לפני: חיפוש בלי תוצאות"></figure>
+<figure class="a"><figcaption>אחרי</figcaption><img src="shots/search-none-after.png" alt="אחרי: חיפוש בלי תוצאות"></figure></div></section><section><h1><span class="n">6</span>כותרת בצרפתית, רוחב 320</h1><p>קודם המילה Calendrier נשברה באמצע שורה. עכשיו הכותרת שלמה, וכפתור ההורדה עובר לשורה הבאה רק כשאין מקום.</p>
+<div class="pair"><figure class="b"><figcaption>לפני</figcaption><img src="shots/fr-calendar-320-before.png" alt="לפני: כותרת בצרפתית, רוחב 320"></figure>
+<figure class="a"><figcaption>אחרי</figcaption><img src="shots/fr-calendar-320-after.png" alt="אחרי: כותרת בצרפתית, רוחב 320"></figure></div></section><section><h1><span class="n">7</span>טבלת ההשוואה באנגלית, רוחב 320</h1><p>קודם Estimated נשברה ל-Estimate ו-d. עכשיו עמודת השמות רחבה לפחות כמו המילה הארוכה, וכל השורות חולקות את אותן עמודות.</p>
+<div class="pair"><figure class="b"><figcaption>לפני</figcaption><img src="shots/en-compare-320-before.png" alt="לפני: טבלת ההשוואה באנגלית, רוחב 320"></figure>
+<figure class="a"><figcaption>אחרי</figcaption><img src="shots/en-compare-320-after.png" alt="אחרי: טבלת ההשוואה באנגלית, רוחב 320"></figure></div></section><section><h1><span class="n">8</span>אריחי הימים ברוסית, רוחב 320</h1><p>קודם больничный נשברה באמצע. עכשיו אריח לא צר יותר מהמילה הארוכה שבו.</p>
+<div class="pair"><figure class="b"><figcaption>לפני</figcaption><img src="shots/ru-days-320-before.png" alt="לפני: אריחי הימים ברוסית, רוחב 320"></figure>
+<figure class="a"><figcaption>אחרי</figcaption><img src="shots/ru-days-320-after.png" alt="אחרי: אריחי הימים ברוסית, רוחב 320"></figure></div></section></div></body></html>

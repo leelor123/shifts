@@ -337,7 +337,7 @@
       try { rows = await board(game, period); } catch (e) {
         if (my !== seq || !el.isConnected) return;
         body.classList.remove('lb-busy');
-        set(body, `<div class="empty"><h3>הטבלה לא נטענה</h3><div class="small muted">${navigator.onLine ? 'נסו שוב בעוד רגע' : 'אין חיבור לאינטרנט'}</div><button class="btn tonal" data-lb-retry>נסו שוב</button></div>`);
+        set(body, `<div class="empty"><h3>הטבלה לא נטענה</h3><div class="small muted">${esc(Cloud().errorText(e))}</div><button class="btn tonal" data-lb-retry>נסו שוב</button></div>`);
         return;
       }
       if (my !== seq || !el.isConnected) return;
@@ -404,7 +404,7 @@
             setTimeout(() => { if (App.games && App.games.play) App.games.play(game); }, 320);
           } else if (b.dataset.rm) {
             if (!(await UI.confirm('להסיר מהטבלה?', 'השורה של השחקן תימחק (למשל כינוי לא מתאים). הוא יוכל להצטרף שוב.', 'הסרה', true))) return;
-            try { const { fs, db } = await Cloud().sdk(); await fs.deleteDoc(fs.doc(db, 'lb', b.dataset.rm)); boards.clear(); keep(); load(el); } catch (err) { UI.toast('ההסרה נכשלה'); }
+            try { const { fs, db } = await Cloud().sdk(); await fs.deleteDoc(fs.doc(db, 'lb', b.dataset.rm)); boards.clear(); keep(); load(el); } catch (err) { UI.toast(Cloud().errorText(err, 'ההסרה נכשלה')); }
           }
         });
       },
@@ -543,7 +543,7 @@
               // a row already made (the first of the writes went in) stays joined: the next sync sends the rest
               if (!wasOn && !(mine && mine.exists)) await Store.setSettings((s) => { s.lb = Object.assign({}, s.lb, { on: false }); });
               b.disabled = false;
-              UI.toast(navigator.onLine ? 'השמירה נכשלה. נסו שוב' : 'אין חיבור לאינטרנט');
+              UI.toast(Cloud().errorText(x, 'השמירה נכשלה'));
             }
           } else if (b.hasAttribute('data-leave')) {
             if (!(await UI.confirm('לצאת מהטבלה?', 'השורה שלך והתוצאות שבה יימחקו מהטבלה. השיאים בטלפון נשארים.', 'יציאה', true))) return;

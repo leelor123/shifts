@@ -204,12 +204,13 @@
       ind.classList.add('spin');
       await springTo(REST, 380);
       const t0 = Date.now();
-      try { await App.refresh(); } catch (e) { console.warn('refresh', e); }
+      let res = null;
+      try { res = await App.refresh(); } catch (e) { console.warn('refresh', e); res = { syncFailed: true }; }
       const left = 650 - (Date.now() - t0);
       if (left > 0) await Fx.sleep(left);
       ind.classList.remove('spin');
       ind.classList.add('done');
-      tip(navigator.onLine === false ? 'אין חיבור · מוצג מה שבטלפון' : 'הכל מעודכן ✓');
+      tip(navigator.onLine === false ? 'אין חיבור · מוצג מה שבטלפון' : res && res.syncFailed ? 'לא סונכרן · מוצג מה שבטלפון' : 'הכל מעודכן ✓');
       Fx.play('pop'); Fx.haptic(10);
       await Fx.sleep(700);
       await springTo(0, 420);

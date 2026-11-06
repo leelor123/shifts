@@ -110,14 +110,14 @@
       ['שעות', (x) => x.hours, (v) => U.num(v, 1)], ['משמרות', (x) => x.shifts, (v) => U.num(v, 1)],
       ['ממוצע לשעה', (x) => x.avgHourly, (v) => U.money(v)], ['שעות למשמרת', (x) => x.avgShift, (v) => U.num(v, 1)],
     ];
-    let h = `<div class="compare-row h"><span></span><span>קודמת</span>${a3 ? `<span>ממוצע 3 ח׳</span>` : ''}${a12 ? `<span>ממוצע 12 ח׳</span>` : ''}</div>`;
+    let h = `<div class="compare" style="--cols:${1 + (a3 ? 1 : 0) + (a12 ? 1 : 0)}"><div class="compare-row h"><span></span><span>קודמת</span>${a3 ? `<span>ממוצע 3 ח׳</span>` : ''}${a12 ? `<span>ממוצע 12 ח׳</span>` : ''}</div>`;
     for (const [lab, f, fmt] of rows) {
       const cur = f(t);
       const cell = (v) => `<span class="num">${fmt(v)}</span> ${UI.delta(cur, v, { compact: true })}`;
       const fa = (a) => (a ? f(Object.assign({}, a, { net: a.net })) : null);
       h += `<div class="compare-row"><span><b>${lab}</b><br><span class="num small">${fmt(cur)}</span></span><span class="small">${cell(f(p))}</span>${a3 ? `<span class="small">${cell(fa(a3))}</span>` : ''}${a12 ? `<span class="small">${cell(fa(a12))}</span>` : ''}</div>`;
     }
-    return h + `<div class="tiny muted" style="margin-top:6px">החיצים: שינוי של התקופה הנוכחית ביחס לכל עמודה. ${type === 'week' ? 'ממוצעים לשבוע' : 'ממוצעים לחודש'}${a3 ? ` (3 ח׳ = ${a3.n} ${type === 'week' ? 'שבועות' : 'תקופות'})` : ''}${a12 ? `, (12 ח׳ = ${a12.n})` : ''}, רק מתקופות שיש בהן נתונים.</div>`;
+    return h + `</div><div class="tiny muted" style="margin-top:6px">החיצים: שינוי של התקופה הנוכחית ביחס לכל עמודה. ${type === 'week' ? 'ממוצעים לשבוע' : 'ממוצעים לחודש'}${a3 ? ` (3 ח׳ = ${a3.n} ${type === 'week' ? 'שבועות' : 'תקופות'})` : ''}${a12 ? `, (12 ח׳ = ${a12.n})` : ''}, רק מתקופות שיש בהן נתונים.</div>`;
   }
 
   function yearExtras(t, r) {
@@ -298,6 +298,12 @@
   // A long history (a few years: 1,000+ shifts) drawn all at once took seconds on a slow phone. The
   // newest PAGE are drawn and "show more" adds the next PAGE; any change of the filters starts over.
   const PAGE = 100;
+  /** No shift to list: a new person has none at all (a search hint there was a dead end), otherwise the filters hid them. */
+  function noneView(f) {
+    if (!S.shifts.length) return UI.emptyState('calendar', 'עוד אין משמרות', 'משמרת שכבר התקיימה מוסיפים כאן. בתחילת משמרת לוחצים על "התחל משמרת" במסך הבית.', `<button class="btn" data-act="shift-new">${icon('plus', 's')} הוספת משמרת</button>`);
+    const any = f.q || f.role || f.ov || f.from || f.to || f.status !== 'all';
+    return UI.emptyState('search', 'לא נמצאו משמרות', any ? 'אף משמרת לא מתאימה לחיפוש ולמסננים.' : 'אין משמרות בתקופה הזאת.', any ? '<button class="btn tonal" data-act="flt-clear">ניקוי החיפוש והמסננים</button>' : '');
+  }
   function listView() {
     const f = st.f;
     const list = filtered();
@@ -322,7 +328,7 @@
       </div>
       <div class="grid2"><label class="field"><span class="lbl">מתאריך</span><input class="input" type="date" id="flt-from" value="${f.from}"></label><label class="field"><span class="lbl">עד</span><input class="input" type="date" id="flt-to" value="${f.to}"></label></div>
       <div class="row-flex small" style="margin:0 4px 10px"><span>${list.length} משמרות · <span data-tr="all">${U.money(list.filter((r) => r.status === 'done').reduce((s, r) => s + App.shiftAmount(r), 0), 0)}</span></span><span class="spacer"></span>${App.travelSwitch()}<button class="btn text sm" data-act="flt-csv">${icon('download', 's')} CSV</button>${f.q || f.role || f.ov || f.from || f.to || f.status !== 'all' ? '<button class="btn text sm" data-act="flt-clear">נקה</button>' : ''}</div>
-      ${list.length ? months.map(([mk, rs, rows]) => `<div class="section-title">${U.fmtMonth(mk)}<span class="spacer"></span>${rs.some((r) => r.status === 'done') ? `<span class="small muted" data-tr="m:${mk}">${U.money(rs.filter((r) => r.status === 'done').reduce((s, r) => s + App.shiftAmount(r), 0), 0)}</span>` : '<span class="small muted">מתוכנן</span>'}</div><div class="list">${rows.map((r) => App.shiftItem(r)).join('')}</div>`).join('') : UI.emptyState('search', 'לא נמצאו משמרות', 'נסה לשנות את החיפוש או המסננים.')}
+      ${list.length ? months.map(([mk, rs, rows]) => `<div class="section-title">${U.fmtMonth(mk)}<span class="spacer"></span>${rs.some((r) => r.status === 'done') ? `<span class="small muted" data-tr="m:${mk}">${U.money(rs.filter((r) => r.status === 'done').reduce((s, r) => s + App.shiftAmount(r), 0), 0)}</span>` : '<span class="small muted">מתוכנן</span>'}</div><div class="list">${rows.map((r) => App.shiftItem(r)).join('')}</div>`).join('') : noneView(f)}
       ${list.length > shown ? `<button class="btn tonal block list-more" data-act="flt-more">${icon('down', 's')} עוד ${Math.min(PAGE, list.length - shown)} משמרות <span class="small muted">(מוצגות ${shown} מתוך ${list.length})</span></button>` : ''}
       ${entries.length ? `<div class="section-title">חופשה, מחלה ותוספות</div><div class="list">${entries.slice(0, 50).map(App.entryItem).join('')}</div>` : ''}`;
   }

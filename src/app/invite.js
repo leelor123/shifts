@@ -56,11 +56,9 @@
   Invite.share = root.U.single(async function () {
     if (!signedIn()) { UI.toast('צריך להתחבר עם חשבון Google'); return; }
     let url;
-    try { url = await Invite.link(); } catch (e) { UI.toast(navigator.onLine ? 'לא הצלחנו ליצור קישור. נסו שוב' : 'אין חיבור לאינטרנט'); return; }
+    try { url = await Invite.link(); } catch (e) { UI.toast(Cloud().errorText(e, 'לא הצלחנו ליצור קישור')); return; }
     const text = 'שעתי מחשבת לי את השכר לפי החוק: שבתות, שעות נוספות והכול. מצטרפים עם הקישור שלי ומקבלים חודש Shaati Plus במתנה 🎁';
-    try { if (navigator.share) { await navigator.share({ title: 'Shaati', text, url }); return; } } catch (e) { if (e && e.name === 'AbortError') return; }
-    await UI.copyText(text + ' ' + url);
-    UI.toast('הקישור הועתק. אפשר להדביק בוואטסאפ 💚');
+    await UI.shareText(text, { title: 'Shaati', url, okText: 'הקישור הועתק. אפשר להדביק בוואטסאפ 💚' });
   });
 
   /** Asks who invited me and whom I invited, and works out the gift (at most every six hours, unless forced). */

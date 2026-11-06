@@ -187,7 +187,7 @@
       } catch (e) {
         console.warn('schedule ai', e);
         start();
-        UI.dialog({ title: 'הקריאה החכמה נכשלה', text: String((e && e.message) || e), buttons: [{ label: 'סגור', value: true }] });
+        UI.dialog({ title: 'הקריאה החכמה נכשלה', text: root.U.ours(e) ? e.message : 'לא הצלחנו לקרוא את התשובה של Claude. נסו שוב, או הוסיפו את המשמרות ידנית.', buttons: [{ label: 'סגור', value: true }] });
       }
     }
     async function add() {
