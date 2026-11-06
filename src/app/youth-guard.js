@@ -2,8 +2,9 @@
  * youth-guard.js — the youth law while a minor's shift runs (Engine.youthRules, the rule picked by Moments.youthNow).
  * One line on the running-shift card at the right time: an hour before the night hours begin ("finish by 22:00"),
  * inside them, half an hour before the day's limit and after it. App.youthLine() is the card's hook (views-home.js).
- * A check every 20 seconds redraws the home screen only when the line changes, and sends a local notification
- * once per shift for each rule, when notifications and the youth-law alerts are on (Settings › notifications).
+ * A check every 20 seconds redraws the home screen only when the line changes. No notification: the owner's rule
+ * since 1.18 is never a notification that something is "not legal", the youth law included (app.js, NOTIFY), so
+ * NOTIFY_YOUTH stays false and the line on the card is the only place this shows (6 Nov 2026).
  * ============================================================ */
 (function (root) {
   'use strict';
@@ -11,6 +12,7 @@
   const S = Store.S;
   const { icon, esc } = UI;
   const sent = new Set(); // this session's notes, before the shared list has answered
+  const NOTIFY_YOUTH = false; // see the header: the owner's 1.18 rule
 
   /** The rule that matters now for the running shift, or null (no shift, no birth date, 18 or more). */
   App.youthNow = function () {
@@ -50,7 +52,7 @@
   function check() {
     if (!S.settings || !S.activeShift) return;
     const y = App.youthNow();
-    if (y) notify(y).catch(() => {});
+    if (y && NOTIFY_YOUTH) notify(y).catch(() => {});
     // the line comes and goes (and changes) on the card by itself
     const card = App.tab === 'home' && !App.blocking && document.querySelector('#view .timer-card');
     if (!card) return;
