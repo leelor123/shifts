@@ -149,3 +149,179 @@ T.test('missing shift with overtime is not double counted', () => {
   T.eq(h.status, 'bad'); T.near(h.amount, 8 * 40 + 2 * 50, 0.01); T.eq(h.confidence, 'high');
   T.eq(a.findings.find((x) => x.area === 'שעות נוספות').status, 'ok');
 });
+
+T.section('payslip: before writing to the employer (innocent reasons)');
+// a payslip given line by line: { key: value } or { key: [hours, amount] }
+const slipOf = (o, extra) => Object.assign({ period: '2026-09', other: [], source: 'manual', fields: Object.fromEntries(Object.entries(o).map(([k, v]) => [k, Array.isArray(v) ? { qty: v[0], value: v[1], rate: v[1] / v[0], line: k + ' ' + v.join(' ') } : { value: v, line: k + ' ' + v }])) }, extra || {});
+const check = (slip, m, area) => {
+  const a = Payslip.analyze(slip, m);
+  const c = Payslip.checkGap(a, slip, m);
+  const it = c.items.find((x) => x.area === area);
+  return { a, c, it, r: (id) => (it ? it.reasons.find((x) => x.id === id) : undefined) };
+};
+// n shifts of the given hours from Sunday 6 Sept 2026 (no break: breakMin 0 entered)
+const week = (n, from, to, extra) => Array.from({ length: n }, (_, i) => shift(U.addDays('2026-09-06', i), from, to, Object.assign({ breakMin: 0 }, extra || {})));
+
+T.test('the last shift of the period, paid on the next payslip: found, explains all, the letter keeps everything', () => {
+  const shifts = septShifts();
+  shifts.push(shift('2026-09-29', '08:00', '14:00'));
+  const m = model(shifts);
+  const slip = Payslip.parseText(SAMPLE);
+  const { a, c, it, r } = check(slip, m, 'שעות');
+  T.eq(r('edge').found, 'yes'); T.near(r('edge').amount, it.amount, 0.01); T.eq(r('edge').nextSlip, true);
+  T.near(it.left, 0, 0.01); T.ok(c.all && c.nextSlip, 'all explained, next slip');
+  T.eq(c.items.find((x) => x.area === 'נסיעות').reasons[0].id, 'edge', 'travel of that day explained by it too');
+  // everything explained: the letter is still there, whole (never blocked)
+  const msg = Payslip.employerMessage(a, { check: c });
+  T.ok(msg.includes('שעות שלא שולמו') && msg.includes('החזר נסיעות חסר'), msg);
+});
+T.test('a shift missing in the middle of the month: not at the edge, nothing explains it', () => {
+  const shifts = septShifts();
+  shifts.push(shift('2026-09-10', '08:00', '14:00'));
+  const { it, r } = check(Payslip.parseText(SAMPLE), model(shifts), 'שעות');
+  T.eq(r('edge').found, 'no'); T.eq(r('period').found, 'no'); T.eq(r('long').found, 'no'); T.eq(r('entered').found, 'no');
+  T.ok(it.left > 200, 'left ' + it.left);
+});
+T.test('the letter asks only for what is left: an explained finding stays out, the total is what is left', () => {
+  const shifts = septShifts();
+  shifts.push(shift('2026-09-10', '08:00', '14:00'));
+  const m = model(shifts);
+  const slip = Payslip.parseText(SAMPLE + '\nימי עבודה 6');
+  const { a, c } = check(slip, m, 'שעות');
+  const tr = c.items.find((x) => x.area === 'נסיעות');
+  T.eq(tr.reasons.find((x) => x.id === 'travelDays').found, 'yes', 'the employer counted one day less');
+  T.near(tr.left, 0, 0.01);
+  const msg = Payslip.employerMessage(a, { check: c });
+  T.ok(!msg.includes('החזר נסיעות חסר') && msg.includes('שעות שלא שולמו'), msg);
+  const hours = c.items.find((x) => x.area === 'שעות');
+  T.ok(msg.includes('סה״כ הפרש משוער: ' + U.money(hours.left)), msg);
+  T.ok(!Payslip.employerMessage(a, {}).includes('אחרי מה שבדקתי'), 'without the check: the old letter');
+});
+T.test('the break: counted as paid in the app and not by the employer', () => {
+  const m = model(week(5, '08:00', '16:30', { breakMin: 30, breakPaid: true }));
+  const slip = slipOf({ base: [40, 1600], travel: 113 });
+  const h = check(slip, m, 'שעות');
+  T.eq(h.r('break').found, 'yes', JSON.stringify(h.r('break'))); T.near(h.it.left, 0, 0.01);
+  T.eq(check(slip, m, 'שעות נוספות').r('break').found, 'yes', 'the overtime it made goes too');
+  const m2 = model(week(5, '08:00', '16:30', { breakMin: 30, breakPaid: false }).concat(week(1, '08:00', '10:30').map((s) => Object.assign(s, { start: s.start + 7 * U.DAY, end: s.end + 7 * U.DAY }))));
+  const h2 = check(slipOf({ base: [40, 1600], travel: 135.6 }), m2, 'שעות');
+  T.ok(h2.it, 'a gap without a paid break'); T.eq(h2.r('break').found, 'no');
+});
+T.test('overtime after 8 hours in the app, by the law (8.6) at the employer', () => {
+  const m = model(week(4, '08:00', '16:36'));
+  const f = check(slipOf({ base: [34.4, 1376], travel: 90.4 }), m, 'שעות נוספות');
+  T.eq(f.r('otLaw').found, 'yes'); T.near(f.it.left, 0, 0.01);
+  // a long day: the law leaves overtime too, so it explains a part at most
+  const m2 = model([shift('2026-09-10', '08:00', '19:00', { breakMin: 0 })]);
+  const f2 = check(slipOf({ base: [11, 440], travel: 22.6 }), m2, 'שעות נוספות');
+  T.ok(f2.r('otLaw').found !== 'yes', f2.r('otLaw').found);
+  const m3 = model(week(4, '08:00', '16:36'), (d) => { d.employers[0].otLaw = true; });
+  T.eq(check(slipOf({ base: [34.4, 1376], travel: 90.4 }), m3, 'שעות נוספות').it, undefined, 'by the law in the app: no gap at all');
+});
+T.test('rounding: the app rounds up, the employer pays the exact minutes', () => {
+  const up = model(week(5, '08:00', '15:50'), (d) => { Object.assign(d.employers[0], { roundingMode: 'up', roundingUnit: 15 }); });
+  const slip = slipOf({ base: [39.17, 1566.8], travel: 113 });
+  T.eq(check(slip, up, 'שעות').r('rounding').found, 'yes');
+  // the app does not round: rounding down by the employer is still worked time, so never more than "maybe"
+  const none = model(week(5, '08:00', '15:50'));
+  const r = check(slipOf({ base: [38.75, 1550], travel: 113 }), none, 'שעות').r('rounding');
+  T.eq(r.found, 'maybe');
+});
+T.test('the pay period: the employer counts from the 21st', () => {
+  const sh = ['2026-08-24', '2026-09-01', '2026-09-02', '2026-09-21', '2026-09-22', '2026-09-23'].map((k) => shift(k, '08:00', '16:00', { breakMin: 0 }));
+  const m = model(sh);
+  const f = check(slipOf({ base: [24, 960], travel: 113 }), m, 'שעות');
+  T.eq(f.r('period').found, 'yes'); T.ok(/21/.test(f.r('period').text), f.r('period').text); T.eq(f.r('period').fix.k, 'pay');
+  T.eq(f.r('edge').found, 'no', 'the 21st-23rd are not the last days');
+  T.eq(check(slipOf({ base: [30, 1200], travel: 113 }), m, 'שעות').r('period').found, 'no');
+});
+T.test('a shift much longer than the others (a clock left running)', () => {
+  const sh = week(4, '08:00', '16:00').concat([shift('2026-09-10', '08:00', '23:30', { breakMin: 0 })]);
+  const f = check(slipOf({ base: [40, 1600], travel: 113 }), model(sh), 'שעות');
+  T.eq(f.r('long').found, 'yes'); T.eq(f.r('long').shifts.length, 1);
+  T.eq(check(slipOf({ base: [36, 1440], travel: 113 }), model(week(5, '08:00', '16:00')), 'שעות').r('long').found, 'no');
+});
+T.test('shifts written before they began, or changed after they ended', () => {
+  const sh = week(5, '08:00', '16:00');
+  sh[2].createdAt = sh[2].start - 2 * U.DAY; // from the schedule
+  const f = check(slipOf({ base: [36, 1440], travel: 113 }), model(sh), 'שעות');
+  T.eq(f.r('entered').found, 'maybe'); T.eq(f.r('entered').shifts[0], sh[2].id);
+  const sh2 = week(5, '08:00', '16:00');
+  sh2.forEach((s) => { s.createdAt = s.end + 60000; s.updatedAt = s.end + 120000; });
+  T.eq(check(slipOf({ base: [36, 1440], travel: 113 }), model(sh2), 'שעות').r('entered').found, 'no');
+});
+T.test('the hourly rate: a raise the employer starts later', () => {
+  const raise = (d) => { d.roles[0].rates = [{ from: '2000-01-01', rate: 40 }, { from: '2026-09-01', rate: 45 }]; };
+  const f = check(slipOf({ base: [40, 1600], travel: 113 }), model(week(5, '08:00', '16:00'), raise), 'תעריף');
+  T.eq(f.r('rate').found, 'yes'); T.ok(f.r('rate').text.includes('01/09/2026'), f.r('rate').text);
+  const g = check(slipOf({ base: [40, 1520], travel: 113 }), model(week(5, '08:00', '16:00')), 'תעריף');
+  T.eq(g.r('rate').found, 'maybe'); T.eq(g.r('rate').fix.k, 'roles');
+});
+T.test('travel: fewer days at the employer, a lower fare, or another month', () => {
+  const m = model(week(5, '08:00', '16:00'));
+  const days = check(slipOf({ base: [40, 1600], travel: 90.4, workDays: 4 }), m, 'נסיעות');
+  T.eq(days.r('travelDays').found, 'yes');
+  const fare = check(slipOf({ base: [40, 1600], travel: 90.4, workDays: 5 }), m, 'נסיעות');
+  T.eq(fare.r('travelDays'), undefined); T.eq(fare.r('travelRate').found, 'yes'); T.ok(fare.r('travelRate').text.includes(U.money(18.08)), fare.r('travelRate').text);
+  const none = check(slipOf({ base: [40, 1600] }), m, 'נסיעות');
+  T.eq(none.r('travelMonth').found, 'maybe'); T.eq(none.r('travelCap'), undefined);
+});
+T.test('Shabbat: hours in the last hour of the window', () => {
+  const late = check(slipOf({ base: [2, 80], travel: 22.6 }), model([shift('2026-09-19', '18:30', '20:30', { breakMin: 0 })]), 'שבת וחג');
+  T.ok(late.it, 'a rest finding'); T.eq(late.r('restWindow').found, 'yes'); T.eq(late.r('restWindow').fix.k, 'rest');
+  const mid = check(slipOf({ base: [4, 160], travel: 22.6 }), model([shift('2026-09-19', '10:00', '14:00', { breakMin: 0 })]), 'שבת וחג');
+  T.eq(mid.r('restWindow').found, 'no');
+});
+T.test('the minimum wage: a minor\'s is lower when no birth date was given', () => {
+  const m = model(week(5, '08:00', '16:00'));
+  T.eq(check(slipOf({ base: [40, 1280], travel: 113 }), m, 'שכר מינימום').r('minAge').found, 'maybe');
+  T.eq(check(slipOf({ base: [40, 800], travel: 113 }), m, 'שכר מינימום').r('minAge').found, 'no');
+});
+T.test('pension: the duty began only lately, by the start date', () => {
+  const recent = check(slipOf({ base: [40, 1600], travel: 113, gross: 1713 }), model(week(5, '08:00', '16:00'), (d) => { d.settings.startDate = '2026-02-01'; }), 'פנסיה');
+  T.ok(recent.it, 'pension missing'); T.eq(recent.r('pensionStart').found, 'maybe');
+  const old = check(slipOf({ base: [40, 1600], travel: 113, gross: 1713 }), model(week(5, '08:00', '16:00'), (d) => { d.settings.startDate = '2024-01-01'; }), 'פנסיה');
+  T.eq(old.r('pensionStart').found, 'no');
+});
+T.test('a minor: the 18th birthday close to the payslip, and the estimates', () => {
+  const at = (birth) => check(slipOf({ base: [40, 1600], travel: 113, gross: 1713, nationalInsurance: 30 }), model(week(5, '08:00', '16:00'), (d) => { d.settings.birthDate = birth; }), 'ביטוח לאומי');
+  const soon = at('2008-10-15');
+  T.eq(soon.r('birth18').found, 'yes'); T.eq(soon.r('estimate').found, 'maybe');
+  T.eq(at('2009-03-01').r('birth18').found, 'maybe');
+});
+T.test('a minor\'s income tax: flagged only when clearly above the estimate', () => {
+  const m = model(week(5, '08:00', '16:00'), (d) => { d.settings.birthDate = '2009-03-01'; });
+  const tax = (v) => Payslip.analyze(slipOf({ base: [40, 1600], travel: 113, gross: 1713, incomeTax: v }), m).findings.find((f) => f.area === 'מס הכנסה');
+  const est = Engine.netEstimate({ gross: 1713, pensionBase: 1600, pensionActive: false, deductions: 0, periodTo: '2026-09-30' }, m.ctx.settings).incomeTax || 0;
+  T.eq(tax(est + 10).status, 'ok', 'about the estimate');
+  T.eq(tax(est + 250).status, 'warn'); T.near(tax(est + 250).amount, 250, 0.01);
+});
+T.test('a payslip line the reader did not place, of the same amount', () => {
+  const shifts = septShifts();
+  shifts.push(shift('2026-09-10', '08:00', '14:00'));
+  const slip = Payslip.parseText(SAMPLE);
+  const h0 = check(slip, model(shifts), 'שעות');
+  slip.other = [{ line: 'תשלום משמרת נוספת', value: Math.round(h0.it.amount * 100) / 100, guess: 'ignore' }];
+  const h = check(slip, model(shifts), 'שעות');
+  T.eq(h.r('unplaced').found, 'yes'); T.eq(h.r('unplaced').line, 'תשלום משמרת נוספת'); T.near(h.it.left, 0, 0.01);
+  slip.other = [{ line: 'ארוחות', value: 20, guess: 'otherDed' }];
+  T.eq(check(slip, model(shifts), 'שעות').r('unplaced'), undefined);
+});
+T.test('the reader misread a number: the line it read is shown', () => {
+  const m = model(week(5, '08:00', '16:00'));
+  const photo = check(slipOf({ base: [36, 1440], travel: 113 }, { source: 'ocr' }), m, 'שעות');
+  T.eq(photo.r('ocr').found, 'maybe'); T.ok(photo.r('ocr').line.includes('base'), photo.r('ocr').line); T.eq(photo.r('ocr').fix.kind, 'verify');
+  const odd = slipOf({ base: [36, 1440], travel: 113 }, { source: 'ocr' });
+  odd.fields.base.value = 1340; // 36 × 40 ≠ 1340
+  T.eq(check(odd, m, 'שעות').r('ocr').found, 'yes');
+  T.eq(check(slipOf({ base: [36, 1440], travel: 113 }, { source: 'pdf' }), m, 'שעות').r('ocr').found, 'no');
+  T.eq(check(slipOf({ base: [36, 1440], travel: 113 }), m, 'שעות').r('ocr'), undefined, 'typed by hand: no reading to doubt');
+});
+T.test('reasons: found first, then by amount; only "yes" lowers the gap', () => {
+  const sh = week(5, '08:00', '16:30', { breakMin: 30, breakPaid: true });
+  const f = check(slipOf({ base: [39, 1560], travel: 113 }, { source: 'ocr' }), model(sh), 'שעות');
+  const order = f.it.reasons.map((r) => ({ yes: 0, maybe: 1, no: 2 }[r.found]));
+  T.ok(order.every((x, i) => !i || x >= order[i - 1]), JSON.stringify(f.it.reasons.map((r) => r.id + ':' + r.found)));
+  const yes = f.it.reasons.filter((r) => r.found === 'yes' && r.amount != null);
+  T.near(f.it.explained, yes.length ? Math.min(f.it.amount, Math.max(...yes.map((r) => r.amount))) : 0, 0.01);
+});
