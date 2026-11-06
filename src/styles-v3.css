@@ -844,6 +844,8 @@ body.fx .qz-opt:active:not(:disabled) { transform: scale(.96); }
 .vf-cell small { display: block; font-size: .75rem; color: var(--on-surface-var); }
 .vf-cell b { display: block; font: 700 1.04rem var(--display); font-variant-numeric: tabular-nums; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .vf-cell.net { background: color-mix(in srgb, var(--good) 14%, var(--surface-2)); }
+/* its label on the green: 4.4:1 in grey; a touch of the text colour gives 4.5+ in light and dark (axe, 6 Nov 2026) */
+.vf-cell.net small { color: color-mix(in srgb, var(--on-surface-var) 82%, var(--on-surface)); }
 .vf-op { color: var(--on-surface-var); font-weight: 700; }
 .vf-checks { display: grid; gap: 6px; margin-top: 12px; }
 .vf-chk { display: flex; gap: 8px; align-items: flex-start; font-size: .84rem; line-height: 1.45; }
@@ -1613,6 +1615,12 @@ body.fx .cal-day.hello, body.fx .week-row.hello { animation: cal-hello .55s cubi
   background: linear-gradient(100deg, #fff 20%, var(--a) 120%); -webkit-background-clip: text; background-clip: text; color: transparent; }
 .lp-ask span { font: 500 1.05rem/1.4 'Rubik', 'Shaati Ethiopic', system-ui, sans-serif; color: rgba(255, 255, 255, .78); }
 .static .lp-hello span, .static .lp-ask span { transition: none; }
+/* a first visit's doors draw their Arabic, Russian and Amharic letters from 'Shaati Doors': the same fonts cut down to
+   the doors' own letters (tools/doors-font.js, 27 KB instead of 245 KB that the first paint waited on). It covers no
+   space and no Hebrew or Latin, so everything else, and the line heights, still come from Rubik. Only where nothing of
+   the app was ever kept (lp-bare): no font of one's own can be chosen there. */
+html.lp-bare .lp-host { font-family: 'Shaati Doors', var(--font); }
+html.lp-bare .lp-logo, html.lp-bare .lp-hello span, html.lp-bare .lp-ask span, html.lp-bare .lp-glyph { font-family: 'Shaati Doors', 'Rubik', 'Shaati Ethiopic', system-ui, sans-serif; }
 /* the doors: six, three to a row */
 .lp-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; width: min(100%, 440px); margin-top: 6px; }
 /* a last card alone on its row stands in the middle (seven languages: 3 + 3 + 1) */

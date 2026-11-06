@@ -368,3 +368,13 @@ T.test('unrecognised lines: listed, named, and the stored slip is never changed'
   const s4 = Payslip.labelOther(slip, un[0].index, 'travel');
   T.near(s4.fields.travel.value, 135.6, 0.001); T.eq(Payslip.unknownLines(s4.other, s4.fields).length, 1);
 });
+
+// The payslip check's lines are the app's own markup: money() returns <span class="money">, and escaping the line again
+// showed that tag as text in every "the lines add up to ..." warning (axe pass, 6 Nov 2026)
+T.test('payslip check: its lines are not escaped a second time', () => {
+  const src = require('fs').readFileSync(require('path').join(__dirname, '..', 'src', 'app', 'views-payslip.js'), 'utf8');
+  const render = /checks\.map\(\(\[s, t\]\) => `([^`]*)`\)/.exec(src);
+  T.ok(render, 'the renderer of the checks');
+  T.ok(!/esc\(t\)/.test(render[1]), 'a check line is escaped again: its money() shows as <span> text');
+  T.ok(/\$\{money\(pays\)\}/.test(src), 'the warning still puts the amounts in with money()');
+});
