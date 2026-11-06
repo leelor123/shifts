@@ -165,7 +165,7 @@
             if (!x) return;
             const v = el.querySelector('#cl-text').value;
             if (x.hasAttribute('data-cl-copy')) { try { await navigator.clipboard.writeText(v); UI.toast('הועתק ✓'); } catch (err) { el.querySelector('#cl-text').select(); UI.toast('מסמנים ומעתיקים'); } }
-            if (x.hasAttribute('data-cl-share')) { if (navigator.share) navigator.share({ text: v }).catch(() => {}); else { try { await navigator.clipboard.writeText(v); UI.toast('הועתק ✓'); } catch (err) { /* ignore */ } } }
+            if (x.hasAttribute('data-cl-share')) { await UI.shareText(v, { okText: 'הועתק ✓' }); }
           }),
         });
       }

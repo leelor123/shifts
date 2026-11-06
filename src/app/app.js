@@ -292,15 +292,18 @@
     if (root.Fx) root.Fx.countUps(v, App.tab, fresh && !covered);
   };
 
-  /** Pull-to-refresh: sync with the cloud, look for a new version, recalculate. */
+  /** Pull-to-refresh: sync with the cloud, look for a new version, recalculate. Resolves with { syncFailed }: a sync
+   *  that failed (it throws, or the cloud's state turns to error) must not end in "everything is up to date". */
   App.refresh = async function () {
     const jobs = [];
-    if (root.Cloud && root.Cloud.user) jobs.push(root.Cloud.syncNow().catch(() => {}));
+    let syncErr = null;
+    if (root.Cloud && root.Cloud.user) jobs.push(root.Cloud.syncNow().catch((e) => { syncErr = e || true; }));
     if ('serviceWorker' in navigator) jobs.push(navigator.serviceWorker.getRegistration().then((r) => r && r.update()).catch(() => {}));
     await Promise.race([Promise.all(jobs), new Promise((r) => setTimeout(r, 5000))]);
     App.recompute();
     await App.runInsights();
     App.rerender();
+    return { syncFailed: !!syncErr || !!(root.Cloud && root.Cloud.user && root.Cloud.status === 'error') };
   };
 
   /** A celebration that happens once per key on this phone (goal reached, payday, birthday). */
@@ -871,7 +874,12 @@
       // the message must be seen: not under the first doors
       const lp = document.getElementById('lp-static'); if (lp) lp.remove();
       document.documentElement.classList.remove('lp-first', 'lp-open');
-      document.getElementById('view').innerHTML = `<div class="view">${UI.emptyState('alert', 'לא ניתן לפתוח את מסד הנתונים', esc(e.message || e))}</div>`;
+      // the browser's own words ("UnknownError: Internal error opening backing store") tell a person nothing: say what
+      // happened and what to try, with a button that tries again
+      const why = U.ours(e) ? e.message : 'הדפדפן לא נתן לשעתי לפתוח את הנתונים שבטלפון. סגרו את שעתי בלשוניות אחרות ונסו שוב. בגלישה בסתר, פתחו את שעתי בחלון רגיל.';
+      document.getElementById('view').innerHTML = `<div class="view">${UI.emptyState('alert', 'לא הצלחנו לפתוח את הנתונים', esc(why), '<button class="btn" data-boot-retry>נסו שוב</button>')}</div>`;
+      const again = document.querySelector('[data-boot-retry]');
+      if (again) again.addEventListener('click', () => location.reload());
       return;
     }
     // the first doors (the language) open only on the very first open of a signed-out app with no language chosen. This

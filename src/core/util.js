@@ -120,8 +120,16 @@
   // i18n-keep-end
 
   let moneyFmt, moneyFmt0;
+  /** A number fit to show: never NaN or Infinity (shown as 0), and never a minus sign on a value that rounds to 0 at the
+   *  digits shown (Intl writes -0.2 at 0 digits, and -0 itself, as "-0"). */
+  function showable(n, d) {
+    n = Number(n);
+    if (n == null || !isFinite(n)) return 0;
+    const k = Math.pow(10, d);
+    return Math.round(Math.abs(n) * k) === 0 ? 0 : n;
+  }
   function money(n, decimals) {
-    if (n == null || isNaN(n)) n = 0;
+    n = showable(n, decimals === 0 ? 0 : 2);
     if (!moneyFmt) {
       const make = (d) => {
         if (LANG === 'ru' || LANG === 'fr' || LANG === 'es' || LANG === 'am') { const f = new Intl.NumberFormat('en-US', { minimumFractionDigits: d, maximumFractionDigits: d }); return { format: (v) => f.format(v) + ' ₪' }; }
@@ -133,8 +141,8 @@
     return (decimals === 0 ? moneyFmt0 : moneyFmt).format(n);
   }
   function num(n, d) {
-    if (n == null || isNaN(n)) n = 0;
     const dd = d == null ? 2 : d;
+    n = showable(n, dd);
     return new Intl.NumberFormat(NUM_LOCALE, { minimumFractionDigits: 0, maximumFractionDigits: dd }).format(n);
   }
   /** The form of a count's noun in the language: forms by plural category (one, two, few, many, other; Intl.PluralRules),

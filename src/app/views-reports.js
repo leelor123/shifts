@@ -298,6 +298,12 @@
   // A long history (a few years: 1,000+ shifts) drawn all at once took seconds on a slow phone. The
   // newest PAGE are drawn and "show more" adds the next PAGE; any change of the filters starts over.
   const PAGE = 100;
+  /** No shift to list: a new person has none at all (a search hint there was a dead end), otherwise the filters hid them. */
+  function noneView(f) {
+    if (!S.shifts.length) return UI.emptyState('calendar', 'עוד אין משמרות', 'משמרת שכבר התקיימה מוסיפים כאן. בתחילת משמרת לוחצים על "התחל משמרת" במסך הבית.', `<button class="btn" data-act="shift-new">${icon('plus', 's')} הוספת משמרת</button>`);
+    const any = f.q || f.role || f.ov || f.from || f.to || f.status !== 'all';
+    return UI.emptyState('search', 'לא נמצאו משמרות', any ? 'אף משמרת לא מתאימה לחיפוש ולמסננים.' : 'אין משמרות בתקופה הזאת.', any ? '<button class="btn tonal" data-act="flt-clear">ניקוי החיפוש והמסננים</button>' : '');
+  }
   function listView() {
     const f = st.f;
     const list = filtered();
@@ -322,7 +328,7 @@
       </div>
       <div class="grid2"><label class="field"><span class="lbl">מתאריך</span><input class="input" type="date" id="flt-from" value="${f.from}"></label><label class="field"><span class="lbl">עד</span><input class="input" type="date" id="flt-to" value="${f.to}"></label></div>
       <div class="row-flex small" style="margin:0 4px 10px"><span>${list.length} משמרות · <span data-tr="all">${U.money(list.filter((r) => r.status === 'done').reduce((s, r) => s + App.shiftAmount(r), 0), 0)}</span></span><span class="spacer"></span>${App.travelSwitch()}<button class="btn text sm" data-act="flt-csv">${icon('download', 's')} CSV</button>${f.q || f.role || f.ov || f.from || f.to || f.status !== 'all' ? '<button class="btn text sm" data-act="flt-clear">נקה</button>' : ''}</div>
-      ${list.length ? months.map(([mk, rs, rows]) => `<div class="section-title">${U.fmtMonth(mk)}<span class="spacer"></span>${rs.some((r) => r.status === 'done') ? `<span class="small muted" data-tr="m:${mk}">${U.money(rs.filter((r) => r.status === 'done').reduce((s, r) => s + App.shiftAmount(r), 0), 0)}</span>` : '<span class="small muted">מתוכנן</span>'}</div><div class="list">${rows.map((r) => App.shiftItem(r)).join('')}</div>`).join('') : UI.emptyState('search', 'לא נמצאו משמרות', 'נסה לשנות את החיפוש או המסננים.')}
+      ${list.length ? months.map(([mk, rs, rows]) => `<div class="section-title">${U.fmtMonth(mk)}<span class="spacer"></span>${rs.some((r) => r.status === 'done') ? `<span class="small muted" data-tr="m:${mk}">${U.money(rs.filter((r) => r.status === 'done').reduce((s, r) => s + App.shiftAmount(r), 0), 0)}</span>` : '<span class="small muted">מתוכנן</span>'}</div><div class="list">${rows.map((r) => App.shiftItem(r)).join('')}</div>`).join('') : noneView(f)}
       ${list.length > shown ? `<button class="btn tonal block list-more" data-act="flt-more">${icon('down', 's')} עוד ${Math.min(PAGE, list.length - shown)} משמרות <span class="small muted">(מוצגות ${shown} מתוך ${list.length})</span></button>` : ''}
       ${entries.length ? `<div class="section-title">חופשה, מחלה ותוספות</div><div class="list">${entries.slice(0, 50).map(App.entryItem).join('')}</div>` : ''}`;
   }

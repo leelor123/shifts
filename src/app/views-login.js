@@ -50,7 +50,7 @@
   };
   App.bindOpenInBrowser = function (el) {
     const b = el.querySelector('[data-copy-link]');
-    if (b) b.onclick = async () => { await UI.copyText(location.origin + location.pathname); UI.toast('הקישור הועתק. הדבק אותו בדפדפן 👍'); };
+    if (b) b.onclick = async () => { await UI.copied(location.origin + location.pathname, 'הקישור הועתק. הדבק אותו בדפדפן 👍'); };
   };
 
   /* ---------------- the header of the first screens: the living sky (sky.js) ----------------
@@ -310,7 +310,7 @@
       await Store.setSettings((s) => { s.shareStats = on; s.statsAsked = true; });
       if (on) root.Stats.report(true); else root.Stats.forget();
     };
-    if (q('[data-copy-uid]')) q('[data-copy-uid]').onclick = () => UI.copyText(Cloud.user.uid);
+    if (q('[data-copy-uid]')) q('[data-copy-uid]').onclick = () => UI.copied(Cloud.user.uid, 'הועתק');
     if (q('[data-login]')) q('[data-login]').onclick = () => { UI.closeAll(); setTimeout(() => { App.localOnly = false; App.showLogin(); }, 350); };
     if (q('[data-probe]')) q('[data-probe]').onclick = async () => {
       const ok = await Cloud.probe();

@@ -187,7 +187,7 @@
           const ta = el.querySelector('#hc-letter'), v = ta.value;
           const copy = async () => { try { await navigator.clipboard.writeText(v); UI.toast('הועתק ✓'); } catch (err) { ta.select(); UI.toast('מסמנים ומעתיקים'); } };
           if (x.hasAttribute('data-hc-copy')) copy();
-          if (x.hasAttribute('data-hc-share')) { if (navigator.share) navigator.share({ text: v }).catch(() => {}); else copy(); }
+          if (x.hasAttribute('data-hc-share')) { if (navigator.share) navigator.share({ text: v }).catch((err) => { if (!err || err.name !== 'AbortError') copy(); }); else copy(); }
         }),
       });
     }

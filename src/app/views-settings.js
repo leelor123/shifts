@@ -964,12 +964,12 @@
           try { json = JSON.parse(await file.text()); } catch (e) { throw root.U.oops('זה לא קובץ גיבוי של האפליקציה (צריך קובץ ‎.json‎ שנוצר בגיבוי).'); }
           if (!json || typeof json !== 'object' || json.app !== 'shiftpay') throw root.U.oops('זה לא קובץ גיבוי של האפליקציה.');
           const n = Array.isArray(json.shifts) ? json.shifts.length : 0;
-          const mode = await UI.dialog({ title: 'שחזור גיבוי', text: `בקובץ ${n} משמרות (${json.exportedAt ? 'נוצר ' + U.fmtDate(json.exportedAt.slice(0, 10)) : ''}). מה לעשות?`, buttons: [{ label: 'ביטול', value: null }, { label: 'מיזוג', value: 'merge' }, { label: 'החלפה מלאה', value: 'replace', cls: 'danger' }] });
+          const mode = await UI.dialog({ title: 'שחזור גיבוי', text: `${n === 1 ? 'בקובץ משמרת אחת' : `בקובץ ${n} משמרות`}${/^\d{4}-\d{2}-\d{2}/.test(String(json.exportedAt || '')) ? ` (נוצר ${U.fmtDate(json.exportedAt.slice(0, 10))})` : ''}. מה לעשות?`, buttons: [{ label: 'ביטול', value: null }, { label: 'מיזוג', value: 'merge' }, { label: 'החלפה מלאה', value: 'replace', cls: 'danger' }] });
           if (!mode) return;
           await Store.importBackup(json, mode);
           UI.toast('השחזור הושלם');
           UI.closeAll();
-        } catch (err) { UI.dialog({ title: 'השחזור נכשל', text: err.message || String(err), buttons: [{ label: 'סגור', value: true }] }); }
+        } catch (err) { UI.dialog({ title: 'השחזור נכשל', text: root.Cloud.errorText(err), buttons: [{ label: 'סגור', value: true }] }); }
       };
       if (el._bkBound) return;
       el._bkBound = true;

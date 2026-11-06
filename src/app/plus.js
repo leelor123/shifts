@@ -239,7 +239,7 @@
     if (!/^[A-Za-z0-9-]{16,64}$/.test(key)) { UI.invalid('הקוד לא נראה תקין. מעתיקים אותו במלואו מהמייל של הקבלה'); return false; }
     if (!+cfg().productId) { UI.toast('הפעלת קוד עוד לא זמינה'); return false; }
     let a;
-    try { a = await lemon('activate', { license_key: key, instance_name: deviceName() }); } catch (e) { UI.toast('אין חיבור כרגע. נסו שוב בעוד רגע'); return false; }
+    try { a = await lemon('activate', { license_key: key, instance_name: deviceName() }); } catch (e) { UI.toast(navigator.onLine === false ? 'אין חיבור לאינטרנט. נסו שוב כשתחזור הרשת.' : 'השירות לא זמין כרגע. נסו שוב בעוד רגע'); return false; }
     if (a.j.activated && ourProduct(a.j) && a.j.instance) {
       await Store.setSettings((s) => { s.plusKey = key; });
       await Store.setMeta({ plusInst: { key, id: a.j.instance.id } });
