@@ -38,6 +38,7 @@
           ${tile('entry-new', 'minus', 'orange', 'ניכוי', '', 'data-kind="adjustment" data-type="deduction"')}
           ${tile('payslip-new', 'receipt', 'mint', 'בדיקת תלוש', '')}
           ${tile('import-hours', 'upload', 'violet', 'ייבוא דוח שעות', '')}
+          ${tile('hours-check', 'table', 'mint', 'בדיקת דוח נוכחות', '')}
           ${tile('import-schedule', 'calendar', 'sky', 'ייבוא סידור עבודה', '')}
         </div>`,
     });
@@ -197,7 +198,7 @@
     notes.push(`שעות נוספות אחרי ${+(+r.thresholdH).toFixed(2)} שעות ביום${r.otByLaw ? ' (לפי החוק)' : ''}` + (r.priorMin ? ` · כבר עבדת ${U.hm(r.priorMin)} באותו יום לפני המשמרת` : '') + (r.isNightShift && (r.otByLaw || emp.nightShiftShortDay) ? ' (משמרת לילה)' : '')
       + (r.weekOtMin > 0 ? ` · ${U.hm(r.weekOtMin)} מהן נוספות כי עברת ${r.weekH || 42} שעות רגילות השבוע` : '') + (r.minorOt ? ' · לפי חוק עבודת הנוער' : ''));
     const wins = r.restLabels.length ? r.slices.filter((s) => s.autoRest) : [];
-    if (r.autoRestMin > 0) notes.push(`חלון ${esc(r.restLabels.join(', ') || 'שבת/חג')} במשמרת: \u2066${U.epochHM(wins[0].a)}\u2060–\u2060${U.epochHM(wins[wins.length - 1].b)}\u2069 (${S.settings.rest.mode === 'city' ? 'לפי ' + esc(S.settings.rest.city === '__custom' ? 'מיקום מותאם' : App.placeLabel(S.settings.rest.city).name).replace(/-/g, '-⁠') : 'שעות קבועות'})`);
+    if (r.autoRestMin > 0) notes.push(`חלון ${esc(r.restLabels.join(', ') || 'שבת/חג')} במשמרת: \u2066${U.epochHM(wins[0].a)}\u2060–\u2060${U.epochHM(wins[wins.length - 1].b)}\u2069 (${S.settings.rest.mode === 'city' ? 'לפי ' + esc(S.settings.rest.city === '__custom' ? 'מיקום מותאם' : App.placeLabel(S.settings.rest.city).name).replace(/-/g, '-\u2060') : 'שעות קבועות'})`);
     if (r.warnings.length) notes.push(icon('alert', 's') + ' ' + r.warnings.join(', '));
     return `<table class="bd">${rows}</table><div class="tiny muted" style="margin-top:8px">${notes.map((n) => '• ' + n).join('<br>')}</div>`;
   };

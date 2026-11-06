@@ -206,3 +206,25 @@ html.lp-first #lp-static { display: block; }
 .salary-card .sc-in { display: flex; gap: 8px; margin-top: 12px; }
 .salary-card .sc-in input { flex: 1; min-width: 0; font-size: 16px; }
 .salary-card .sc-gap { margin-top: 6px; }
+
+/* the hours report check (app/hours-check.js) */
+.hc-period { margin: 2px 2px 8px; }
+.hc-kpis { margin-bottom: 12px; }
+.hc-list { display: flex; flex-direction: column; gap: 8px; margin-bottom: 12px; }
+.hc-item { padding: 10px 12px; border-radius: 16px; border: 1px solid var(--line); background: var(--surface-1); display: flex; flex-direction: column; gap: 6px; }
+.hc-item .hc-top { display: flex; align-items: center; gap: 8px; }
+.hc-tag { flex: none; padding: 2px 8px; border-radius: 8px; font-size: .75rem; font-weight: 700; white-space: nowrap; background: var(--warn-bg); color: var(--warn); }
+.hc-item.missingEmp .hc-tag { background: var(--bad-bg); color: var(--bad); }
+.hc-item.missingMine .hc-tag { background: var(--surface-3); color: var(--on-surface-var); }
+.hc-body { display: flex; align-items: flex-start; gap: 10px; }
+.hc-lines { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px; font-size: .9rem; }
+.hc-val { flex: none; display: flex; flex-direction: column; align-items: flex-end; gap: 1px; font-variant-numeric: tabular-nums; }
+.hc-val small { color: var(--on-surface-var); font-size: .75rem; white-space: nowrap; }
+.hc-item .btn.sm { align-self: flex-start; }
+.hc-ok .kv { font-size: .9rem; }
+.net-learned { margin-top: 8px; line-height: 1.5; }
+.net-learned svg { width: 16px; height: 16px; vertical-align: -3px; margin-inline-end: 4px; }
+.net-learned .btn { min-height: 32px; padding-inline: 8px; }
+.card.tonal .net-learned .btn { color: inherit; text-decoration: underline; }
+/* a last tile alone on its row takes the whole row (the add menu holds 8 to 11 tiles) */
+.am-grid > .am-tile:last-child:nth-child(3n+1) { grid-column: 1 / -1; }

@@ -182,6 +182,10 @@
       })()}`;
   }
 
+  // the net that learned from the salaries that arrived (app/salary-check.js), with its reset
+  const learnedLine = (t) => (t.net.learned && App.netLearnText ? `<div class="small net-learned">${icon('sparkle', 's')} <span>${esc(App.netLearnText())}</span> <button class="btn text sm" data-act="net-learn-reset">איפוס</button></div>` : '');
+  // the employer's hours report against the shifts, before the payslip (app/hours-check.js)
+  const hoursCheckBtn = () => `<button class="btn tonal block hc-entry" data-act="hours-check">${icon('table', 's')} בדיקת דוח הנוכחות לפני התלוש</button>`;
   function summaryView() {
     const { r, t, p } = App.summaryData(st.type, st.anchor);
     const a3 = averages(st.type, r, 3), a12 = averages(st.type, r, 12);
@@ -212,7 +216,7 @@
           ${kpi('בונוסים ותוספות', t.bonus + t.additions, p.bonus + p.additions, (v) => money(v, 0))}
           ${kpi('ניכויים', t.deductions, p.deductions, (v) => money(v, 0), true)}
         </div>
-        ${t.tips ? `<div class="small" style="margin-top:8px">טיפים (מחוץ לתלוש): <b>${U.money(t.tips, 0)}</b></div>` : ''}
+        ${learnedLine(t) + (t.tips ? `<div class="small" style="margin-top:8px">טיפים (מחוץ לתלוש): <b>${U.money(t.tips, 0)}</b></div>` : '')}
         ${t.leavePay ? `<div class="small" style="margin-top:4px">כולל ימי חופשה/מחלה: <b>${U.money(t.leavePay, 0)}</b></div>` : ''}
       </div>
       ${t.overridden ? `<div class="banner warn">${icon('hand')}<div>${t.overridden} משמרות בתקופה כוללות עקיפה ידנית, הן נכללות בסכומים.</div></div>` : ''}
@@ -238,7 +242,7 @@
       ${st.type === 'year' ? yearExtras(t, r) : ''}
       </div>
       ${st.type === 'month' && t.shifts > 0 && App.recap ? `<button class="btn recap-btn block" data-act="recap-open" data-pk="${Engine.periodOf(r.from, S.employers[0]).key}">✨ הסיכום של החודש כסיפור</button>` : ''}
-      ${st.type === 'year' && t.shifts > 0 && App.recap ? `<button class="btn recap-btn block" data-act="recap-open" data-pk="Y${r.from.slice(0, 4)}">🎁 השנה שלך כסיפור (Wrapped)</button>` : ''}
+      ${(st.type === 'year' && t.shifts > 0 && App.recap ? `<button class="btn recap-btn block" data-act="recap-open" data-pk="Y${r.from.slice(0, 4)}">🎁 השנה שלך כסיפור (Wrapped)</button>` : '') + hoursCheckBtn()}
       <div class="btn-row" style="margin-top:8px">
         <button class="btn tonal" data-act="rep-share-img">${icon('image')} תמונה</button>
         <button class="btn tonal" data-act="rep-pdf">${icon('printer')} PDF</button>

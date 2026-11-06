@@ -28,13 +28,15 @@
   App.shift = (id) => S.shifts.find((s) => s.id === id);
 
   /* ---------------- model ---------------- */
+  /** What the salaries that arrived taught about the net (core/netlearn.js): { adj, n } or null. */
+  App.netLearned = () => (root.NetLearn ? root.NetLearn.learn(S.meta.salaryAns, S.meta.netLearnReset) : null);
   App.recompute = function () {
     // Shabbat/holiday windows are cached under a key made of every rest setting (city, holidays,
     // day rules…), so they stay valid across recalculations: only the shifts are recomputed
     try {
       App.model = Engine.buildModel({
         settings: S.settings, employers: S.employers, roles: S.roles, dayRules: S.dayRules,
-        shifts: S.shifts, entries: S.entries,
+        shifts: S.shifts, entries: S.entries, netAdj: App.netLearned() ? App.netLearned().adj : 0,
       });
     } catch (e) {
       // never leave the app without numbers: keep the last good calculation (or an empty one)

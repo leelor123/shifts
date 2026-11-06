@@ -183,7 +183,7 @@
     App.celebrateOnce('payday-' + today, () => root.Fx.celebrate('money'));
     return `<div class="card payday"><div class="pd-title"><span class="pd-emoji" aria-hidden="true">💸</span> היום יום משכורת!</div>
       <div style="margin-top:6px;opacity:.92">על ${esc(due.label)} מגיעים לך כ-<b>${money(sum.net.net, 0)}</b> ${sum.net.minor ? '' : 'נטו '}(${money(sum.gross, 0)} ברוטו). כשהתלוש מגיע, כדאי לבדוק שהוא תואם.</div>
-      <button class="btn" data-act="payslip-new">${icon('file')} בדיקת תלוש</button></div>`;
+      <button class="btn" data-act="payslip-new">${icon('file')} בדיקת תלוש</button><button class="btn text" data-act="hours-check">${icon('table', 's')} בדיקת דוח נוכחות</button></div>`;
   }
 
   /* ---------------- the month, in one number ---------------- */

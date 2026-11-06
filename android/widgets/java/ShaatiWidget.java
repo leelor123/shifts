@@ -9,6 +9,7 @@ import android.net.Uri;
 import android.os.SystemClock;
 import android.view.View;
 import android.widget.RemoteViews;
+import android.widget.Toast;
 
 import org.json.JSONObject;
 
@@ -16,7 +17,8 @@ import java.util.Calendar;
 
 /**
  * What every Shaati widget shares: drawing from the last snapshot (WidgetData) in the look chosen for that
- * widget (WidgetLook), opening the app (straight into starting or ending a shift), the running shift's clock
+ * widget (WidgetLook), starting and ending a shift right on the home screen (WidgetData keeps the tap for the
+ * app), opening the app, the running shift's clock
  * (counted by the phone itself, so it ticks without the app), and the days left until payday (counted on the
  * phone, so it is right every morning).
  *
@@ -35,6 +37,40 @@ abstract class ShaatiWidget extends AppWidgetProvider {
     public void onUpdate(Context c, AppWidgetManager m, int[] ids) {
         JSONObject d = WidgetData.load(c);
         for (int id : ids) m.updateAppWidget(id, build(c, d, WidgetLook.forWidget(c, id)));
+    }
+
+    /** A start or end button was tapped (tap(), below): done on the home screen, the app saves it when it opens. */
+    static final String TAP = "io.github.leelor123.shifts.WIDGET_TAP";
+
+    @Override
+    public void onReceive(Context c, Intent i) {
+        if (!TAP.equals(i.getAction())) { super.onReceive(c, i); return; }
+        String type = i.getData() == null ? "" : i.getData().getLastPathSegment();
+        JSONObject d = WidgetData.load(c);
+        JSONObject a = d == null ? null : d.optJSONObject("active");
+        if ("start".equals(type) && direct(d) && a == null && d.optJSONObject("next") != null) {
+            WidgetData.tap(c, "start");
+            Toast.makeText(c.getApplicationContext(), "המשמרת התחילה. בהצלחה!", Toast.LENGTH_SHORT).show();
+        } else if ("stop".equals(type) && direct(d) && a != null) {
+            long breakAt = a.optLong("breakAt", 0);
+            long min = Math.max(0, ((breakAt > 0 ? breakAt : System.currentTimeMillis()) - a.optLong("start", 0) - a.optLong("breakMs", 0)) / 60000);
+            WidgetData.tap(c, "stop");
+            String hm = String.format(java.util.Locale.ROOT, "%d:%02d", min / 60, min % 60);
+            Toast.makeText(c.getApplicationContext(), "המשמרת נגמרה אחרי " + hm + " שעות. היא תישמר כשתפתח את שעתי", Toast.LENGTH_LONG).show();
+        } else {
+            WidgetData.updateAll(c); // a tap the picture no longer matched (an old widget picture): draw it fresh
+        }
+    }
+
+    /** The app that sent this snapshot saves the taps (snapshot "taps"); an older one never would, so it opens. */
+    static boolean direct(JSONObject d) {
+        return d != null && d.optInt("taps", 0) >= 1;
+    }
+
+    /** The start / end button: done right here, without opening the app. */
+    static PendingIntent tap(Context c, String type, int request) {
+        Intent i = new Intent(TAP, Uri.parse("shaati://widget/" + type), c, ShiftWidget.class);
+        return PendingIntent.getBroadcast(c, request, i, PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE);
     }
 
     @Override
@@ -148,7 +184,7 @@ abstract class ShaatiWidget extends AppWidgetProvider {
             text(v, R.id.w_sub, (onBreak ? "בהפסקה · " : "") + s(a, "role") + (s(a, "rate").isEmpty() ? "" : " · " + s(a, "rate")));
             v.setViewVisibility(R.id.w_play, View.GONE);
             v.setViewVisibility(R.id.w_stop, View.VISIBLE);
-            v.setOnClickPendingIntent(R.id.w_stop, open(c, "stop", request + 1));
+            v.setOnClickPendingIntent(R.id.w_stop, direct(d) ? tap(c, "stop", request + 1) : open(c, "stop", request + 1));
             v.setOnClickPendingIntent(R.id.w_go, open(c, null, request + 2));
         } else {
             v.setImageViewResource(R.id.w_go_icon, R.drawable.w_ic_play);
@@ -161,7 +197,9 @@ abstract class ShaatiWidget extends AppWidgetProvider {
             text(v, R.id.w_sub, d == null || stale(d) ? "" : today + "החודש " + s(d, "gross"));
             v.setViewVisibility(R.id.w_stop, View.GONE);
             v.setViewVisibility(R.id.w_play, coin ? View.VISIBLE : View.GONE);
-            PendingIntent start = open(c, "start", request + 3);
+            // the role is known (the last one chosen, or the only one): started right here; otherwise (several roles,
+            // none chosen yet, or an app from before this version) the app opens to ask
+            PendingIntent start = direct(d) && d.optJSONObject("next") != null ? tap(c, "start", request + 3) : open(c, "start", request + 3);
             v.setOnClickPendingIntent(R.id.w_go, start);
             v.setOnClickPendingIntent(R.id.w_title, start);
             v.setOnClickPendingIntent(R.id.w_play, start);

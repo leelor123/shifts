@@ -85,8 +85,10 @@
       if (!res.rows.length) return lines != null ? lines : text;
       return { result: res, text };
     }
-    throw root.U.oops('סוג קובץ שלא מכירים. אפשר Excel, ‏CSV, ‏PDF, תמונה או טקסט');
+    throw root.U.oops('סוג קובץ שלא מכירים. אפשר Excel, \u200fCSV, \u200fPDF, תמונה או טקסט');
   }
+
+  App.readHoursFile = readFile; // the hours report check reads the same files (app/hours-check.js)
 
   /* ---------------- the screen ---------------- */
   // from the add menu the menu goes; from a settings page it stays under (back returns there)
@@ -142,7 +144,7 @@
         const t = place(r);
         if (r.on == null) r.on = !(t && t.taken);
         const day = U.DAYS ? U.DAYS[U.dow(r.date)] : '';
-        const when = r.start ? `\u2066${r.start}⁠–⁠${r.end}\u2069` : `${U.num(r.hours, 2)} שעות · ${startFor ? 'מ-' + startFor : 'שעה לא ידועה'}`;
+        const when = r.start ? `\u2066${r.start}\u2060–\u2060${r.end}\u2069` : `${U.num(r.hours, 2)} שעות · ${startFor ? 'מ-' + startFor : 'שעה לא ידועה'}`;
         return `<button class="imp-row ${r.on ? 'on' : ''}" data-i="${i}" aria-pressed="${r.on}"><span class="imp-check" aria-hidden="true">${icon('check', 's')}</span>
           <span class="imp-d"><b>${esc(day)} ${U.fmtDate(r.date, 'short')}</b><small>${when}${r.overnight ? ' · לילה' : ''}</small></span>
           <span class="imp-h">${U.num(r.hours, 2)} ש׳${t && t.taken ? '<i class="tag">כבר קיימת</i>' : ''}${t && t.end > Date.now() ? '<i class="tag planned">עתידית</i>' : ''}</span></button>`;
@@ -153,7 +155,7 @@
         ${noStart ? `<label class="field"><span class="lbl">${noStart === 1 ? 'במשמרת אחת' : `ב-${noStart} משמרות`} כתוב רק כמה שעות. באיזו שעה הן מתחילות?</span><input class="input" type="time" id="imp-start" value="${startFor}"></label>` : ''}
         ${noExit ? `<div class="tiny muted imp-note">${icon('info', 's')} ${noExit === 1 ? 'בשורה אחת' : `ב-${noExit} שורות`} יש כניסה בלי יציאה, ולכן ${noExit === 1 ? 'היא לא נכנסה' : 'הן לא נכנסו'}. אפשר להוסיף ${noExit === 1 ? 'אותה' : 'אותן'} ידנית.</div>` : ''}
         ${guessedYear ? `<div class="tiny muted imp-note">${icon('info', 's')} בשורות בלי שנה לקחנו את התאריך האחרון שכבר עבר.</div>` : ''}
-        <div class="imp-head"><b>${first === last ? U.fmtDate(first, 'short') : `\u2066${U.fmtDate(first, 'short')}⁠–⁠${U.fmtDate(last, 'short')}\u2069`}</b><button class="btn text sm" data-imp-all>${rows.every((r) => r.on) ? 'לבטל הכול' : 'לסמן הכול'}</button></div>
+        <div class="imp-head"><b>${first === last ? U.fmtDate(first, 'short') : `\u2066${U.fmtDate(first, 'short')}\u2060–\u2060${U.fmtDate(last, 'short')}\u2069`}</b><button class="btn text sm" data-imp-all>${rows.every((r) => r.on) ? 'לבטל הכול' : 'לסמן הכול'}</button></div>
         <div class="imp-list">${list}</div>`;
       showSave(true);
       count();

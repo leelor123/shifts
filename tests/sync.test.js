@@ -714,3 +714,58 @@ T.atest('the Plus offer on home: never under 18, and "don\'t show again" ends it
   const end = c.Plus.endAlert();
   T.ok(end && !/להמשיך|מבטלים|₪/.test(end.body), 'a notice, not an offer: ' + (end && end.body));
 });
+
+// widgets 1.32.5: the start and end buttons work on the home screen without opening the app; the phone keeps each
+// tap and hands it to the page over the channel when the app opens or comes back to the front
+T.atest('starts and ends tapped on a widget become the shift, at the tapped times, each once', async () => {
+  const be = fakeBackend();
+  const A = await phone(be);
+  const c = A.ctx;
+  let hello = null, visible = null;
+  c.addEventListener = (t, fn) => { if (t === 'message') hello = fn; };
+  c.document = { addEventListener(t, fn) { if (t === 'visibilitychange') visible = fn; }, visibilityState: 'visible' };
+  c.location = { origin: 'https://site', host: 'site' };
+  c.UI.toast = () => {};
+  c.localStorage = { getItem: () => '1', setItem() {} };
+  await A.Store.setSettings((s) => { s.onboarded = true; });
+  const done = [];
+  c.App = Object.assign(c.App || {}, {
+    blocking: 'x', model: {}, afterUnlock: (fn) => fn(),
+    roles: () => [{ id: 'r1', name: 'קופאי' }],
+    startShift: async (rid, o) => { done.push(['start', rid, o.startAt]); await A.Store.setActive({ start: o.startAt, roleId: rid, breaks: [] }); },
+    stopShift: async (at, end) => { done.push(['stop', end]); await A.Store.setActive(null); },
+  });
+  vm.runInContext(fs.readFileSync(path.join(SRC, 'app/widgets.js'), 'utf8'), c, { filename: 'app/widgets.js' });
+  c.App.widgetSnapshot = () => ({ v: 1, at: 1, wid: +A.S.meta.widgetDone || 0 }); // the real one needs the whole app
+  const got = [];
+  const port = { postMessage: (m) => got.push(m) };
+  hello({ origin: 'android-app://site', data: '', ports: [port] });
+  const t0 = Date.now() - 4 * 3600000, t1 = Date.now() - 60000;
+  const taps = JSON.stringify({ taps: [{ id: 11, type: 'stop', at: t1 }, { id: 10, type: 'start', at: t0 }] });
+  port.onmessage({ data: taps });
+  await wait(30);
+  T.eq(JSON.stringify(done), JSON.stringify([['start', 'r1', t0], ['stop', t1]]), 'in order, at the tapped times');
+  T.eq(A.S.meta.widgetDone, 11);
+  T.eq(JSON.parse(got[got.length - 1]).wid, 11, 'the snapshot tells the phone which taps are done');
+  // the same taps again (the hello and the "ask" both bring them): nothing twice
+  port.onmessage({ data: taps });
+  await wait(30);
+  T.eq(done.length, 2, 'each tap once');
+  // an end with no shift running, a start while one runs: skipped, but marked done
+  port.onmessage({ data: JSON.stringify({ taps: [{ id: 12, type: 'stop', at: t1 }] }) });
+  await wait(30);
+  T.eq(done.length, 2); T.eq(A.S.meta.widgetDone, 12);
+  await A.Store.setActive({ start: t0, roleId: 'r1', breaks: [] });
+  port.onmessage({ data: JSON.stringify({ taps: [{ id: 13, type: 'start', at: t1 }] }) });
+  await wait(30);
+  T.eq(done.length, 2, 'a start while a shift runs does nothing');
+  // back to the front: the page asks the phone for the taps made meanwhile
+  got.length = 0;
+  visible();
+  T.ok(got.includes('ask'), 'asks for the taps: ' + JSON.stringify(got));
+  // anything else on the channel is ignored
+  port.onmessage({ data: '{not json' });
+  port.onmessage({ data: JSON.stringify({ taps: [{ id: 99, type: 'delete-everything', at: t1 }] }) });
+  await wait(30);
+  T.eq(done.length, 2);
+});

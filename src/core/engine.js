@@ -29,6 +29,7 @@
       employers: new Map((data.employers || []).map((e) => [e.id, e])),
       roles: new Map((data.roles || []).map((r) => [r.id, r])),
       dayRules: data.dayRules || [],
+      netAdj: +data.netAdj || 0, // the learned correction of the net (core/netlearn.js), shekels a month
     };
     ctx.restCfg = Object.assign({}, data.settings.rest, { dayRules: ctx.dayRules });
     ctx.employer = (id) => ctx.employers.get(id) || ctx.employers.values().next().value || root.Defaults.defaultEmployer();
@@ -831,12 +832,15 @@
     return t.base + t.leavePay;
   }
 
+  /** The net with the learned correction of the person's deductions, when the model has one (core/netlearn.js). */
+  const learned = (n, model) => (model.ctx.netAdj && root.NetLearn ? root.NetLearn.apply(n, model.ctx.netAdj) : n);
+
   /** Totals + net estimate for a pay period. */
   function periodSummary(model, pk, empId) {
     const emp = model.ctx.employer(empId);
     const P = periodByKey(pk, emp);
     const t = totals(model, P.from, P.to, { employerId: model.ctx.employers.size > 1 ? empId : null });
-    const net = netEstimate({ gross: t.gross, pensionBase: pensionBaseOf(t, model.ctx.settings), deductions: t.deductions, periodTo: P.to }, model.ctx.settings);
+    const net = learned(netEstimate({ gross: t.gross, pensionBase: pensionBaseOf(t, model.ctx.settings), deductions: t.deductions, periodTo: P.to }, model.ctx.settings), model);
     return Object.assign(t, { period: P, net });
   }
 
@@ -844,7 +848,7 @@
   function rangeSummary(model, from, to) {
     const t = totals(model, from, to);
     const emp = model.ctx.primaryEmployer();
-    let net = 0, tax = 0, bl = 0, health = 0, pension = 0, hish = 0, pensionEmployer = 0;
+    let net = 0, tax = 0, bl = 0, health = 0, pension = 0, hish = 0, pensionEmployer = 0, learnedSum = 0;
     let pk = periodOf(from, emp).key;
     const lastPk = periodOf(to, emp).key;
     for (let guard = 0; pk <= lastPk && guard < 400; guard++, pk = U.addMonthKey(pk, 1)) {
@@ -852,12 +856,14 @@
       const full = totals(model, P.from, P.to);
       if (full.gross <= 0) continue;
       const part = totals(model, P.from < from ? from : P.from, P.to > to ? to : P.to);
-      const n = netEstimate({ gross: full.gross, pensionBase: pensionBaseOf(full, model.ctx.settings), deductions: full.deductions, periodTo: P.to }, model.ctx.settings);
+      const n = learned(netEstimate({ gross: full.gross, pensionBase: pensionBaseOf(full, model.ctx.settings), deductions: full.deductions, periodTo: P.to }, model.ctx.settings), model);
       const f = part.gross / full.gross;
+      learnedSum += (n.learned || 0) * f;
       net += n.net * f; tax += n.incomeTax * f; bl += n.bl * f; health += n.health * f; pension += n.pensionEmployee * f;
       hish += n.hishtalmut * f; pensionEmployer += n.pensionEmployer * f;
     }
     t.net = { net, incomeTax: tax, bl, health, pensionEmployee: pension, hishtalmut: hish, pensionEmployer, gross: t.gross };
+    if (learnedSum) t.net.learned = learnedSum;
     return t;
   }
 
