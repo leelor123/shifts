@@ -954,6 +954,7 @@
     try { if (params.get('source') === 'twa' || document.referrer.startsWith('android-app://')) sessionStorage.setItem('androidApp', '1'); } catch (e) { /* ignore */ }
     try { App.androidApp = sessionStorage.getItem('androidApp') === '1'; } catch (e) { App.androidApp = false; }
     App.pendingAction = params.get('action');
+    App.pendingTag = root.Nfc ? root.Nfc.readOpen(location.search) : null; // ?action=nfc&tag=… (a touch on an NFC sticker)
     if (App.pendingAction) history.replaceState(null, '', location.pathname + location.hash);
 
     // Google sign-in is required. Nothing on screen waits for Google to load: a returning user goes
@@ -1054,6 +1055,7 @@
     if (action) App.afterUnlock(() => {
       if (action === 'start' && !S.activeShift) UI.confirm('התחל משמרת', '', 'התחלה').then((ok) => { if (ok && !S.activeShift) App.actions['timer-start'](); });
       if (action === 'stop' && S.activeShift) UI.confirm('סיום משמרת', '', 'סיום').then((ok) => { if (ok && S.activeShift) App.stopShift(); });
+      if (action === 'nfc' && App.nfcOpen) App.nfcOpen(App.pendingTag || ''); // a touch on the NFC sticker at work (app/nfc.js): starts or ends a shift
       if (action === 'add') App.sheetsApi.shiftEditor();
       if (action === 'schedule' && App.importSchedule) App.importSchedule(); // the app icon's shortcut
       if (action === 'share-in' && App.receiveShare) App.receiveShare(); // shared to the app (sw.js)
