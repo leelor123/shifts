@@ -30,13 +30,17 @@ import java.util.Calendar;
 abstract class ShaatiWidget extends AppWidgetProvider {
     static final String SITE = "https://leelor123.github.io/shifts/?source=twa";
 
-    /** The widget's picture for this snapshot (d null = the app was never opened since the widget was added). */
+    /**
+     * The widget's picture for this snapshot (d null = the app was never opened since the widget was added). c is the
+     * Context in the app's language (WidgetLang.context): the texts and the layout's direction come from it.
+     */
     abstract RemoteViews build(Context c, JSONObject d, WidgetLook l);
 
     @Override
     public void onUpdate(Context c, AppWidgetManager m, int[] ids) {
         JSONObject d = WidgetData.load(c);
-        for (int id : ids) m.updateAppWidget(id, build(c, d, WidgetLook.forWidget(c, id)));
+        Context lc = WidgetLang.context(c);
+        for (int id : ids) m.updateAppWidget(id, build(lc, d, WidgetLook.forWidget(c, id)));
     }
 
     /** A start or end button was tapped (tap(), below): done on the home screen, the app saves it when it opens. */
@@ -50,13 +54,13 @@ abstract class ShaatiWidget extends AppWidgetProvider {
         JSONObject a = d == null ? null : d.optJSONObject("active");
         if ("start".equals(type) && direct(d) && a == null && d.optJSONObject("next") != null) {
             WidgetData.tap(c, "start");
-            Toast.makeText(c.getApplicationContext(), "המשמרת התחילה. בהצלחה!", Toast.LENGTH_SHORT).show();
+            Toast.makeText(c.getApplicationContext(), WidgetLang.context(c).getString(R.string.w_started), Toast.LENGTH_SHORT).show();
         } else if ("stop".equals(type) && direct(d) && a != null) {
             long breakAt = a.optLong("breakAt", 0);
             long min = Math.max(0, ((breakAt > 0 ? breakAt : System.currentTimeMillis()) - a.optLong("start", 0) - a.optLong("breakMs", 0)) / 60000);
             WidgetData.tap(c, "stop");
             String hm = String.format(java.util.Locale.ROOT, "%d:%02d", min / 60, min % 60);
-            Toast.makeText(c.getApplicationContext(), "המשמרת נגמרה אחרי " + hm + " שעות. היא תישמר כשתפתח את שעתי", Toast.LENGTH_LONG).show();
+            Toast.makeText(c.getApplicationContext(), WidgetLang.context(c).getString(R.string.w_ended, hm), Toast.LENGTH_LONG).show();
         } else {
             WidgetData.updateAll(c); // a tap the picture no longer matched (an old widget picture): draw it fresh
         }
@@ -95,6 +99,24 @@ abstract class ShaatiWidget extends AppWidgetProvider {
         v.setViewVisibility(id, t == null || t.isEmpty() ? View.GONE : View.VISIBLE);
     }
 
+    /** The parts that are not empty, with " · " between them. */
+    static String join(String... parts) {
+        StringBuilder b = new StringBuilder();
+        for (String p : parts) {
+            if (p == null || p.isEmpty()) continue;
+            if (b.length() > 0) b.append(" · ");
+            b.append(p);
+        }
+        return b.toString();
+    }
+
+    /** The first letter in capitals (the app's "the pay period" opens a label in English); scripts without case keep it. */
+    static String cap(Context c, String t) {
+        if (t == null || t.isEmpty()) return "";
+        int n = Character.charCount(t.codePointAt(0));
+        return t.substring(0, n).toUpperCase(WidgetLang.locale(c)) + t.substring(n);
+    }
+
     static int pct(JSONObject o) {
         return o == null ? 0 : Math.max(0, Math.min(100, o.optInt("pct", 0)));
     }
@@ -129,14 +151,15 @@ abstract class ShaatiWidget extends AppWidgetProvider {
         return p == null ? Integer.MIN_VALUE : daysUntil(p.optString("date", ""));
     }
 
-    /** "עוד 5 ימים למשכורת", "מחר משכורת", "היום משכורת", or "" once it passed. */
-    static String paydayText(JSONObject pay) {
+    /** "5 days to payday", "payday tomorrow", "payday today" (res/values/w_strings.xml and its translations), or "" once it passed. */
+    static String paydayText(Context c, JSONObject pay) {
         if (pay == null) return "";
         int n = daysUntil(pay.optString("date", ""));
         if (n == Integer.MIN_VALUE || n < 0) return "";
-        if (n == 0) return "היום משכורת";
-        if (n == 1) return "מחר משכורת";
-        return "עוד " + n + " ימים למשכורת";
+        if (n == 0) return c.getString(R.string.w_payday_today);
+        if (n == 1) return c.getString(R.string.w_payday_tomorrow);
+        // the number goes in as text, so its digits match the ones the app writes the amounts in
+        return c.getResources().getQuantityString(R.plurals.w_payday_days, n, String.valueOf(n));
     }
 
     /**
@@ -173,28 +196,31 @@ abstract class ShaatiWidget extends AppWidgetProvider {
         l.textColor(c, v, R.id.w_sub, l.sub);
         if (coinRow) l.coin(v, face(d));
         v.setViewVisibility(R.id.w_go, coin ? View.GONE : View.VISIBLE);
+        // written here, not left to the layout: the launcher would read the layout's texts in the phone's language
+        v.setTextViewText(R.id.w_stop, c.getString(R.string.w_end));
+        v.setContentDescription(R.id.w_play, c.getString(R.string.w_start));
         JSONObject a = d == null ? null : d.optJSONObject("active");
         if (a != null) {
             boolean onBreak = a.optLong("breakAt", 0) > 0;
             v.setImageViewResource(R.id.w_go_icon, onBreak ? R.drawable.w_ic_coffee : R.drawable.w_ic_clock);
-            v.setContentDescription(R.id.w_go, "פתיחת שעתי");
+            v.setContentDescription(R.id.w_go, c.getString(R.string.w_open));
             v.setViewVisibility(R.id.w_title, View.GONE);
             v.setViewVisibility(R.id.w_clock, View.VISIBLE);
             clock(v, R.id.w_clock, a);
-            text(v, R.id.w_sub, (onBreak ? "בהפסקה · " : "") + s(a, "role") + (s(a, "rate").isEmpty() ? "" : " · " + s(a, "rate")));
+            text(v, R.id.w_sub, join(onBreak ? c.getString(R.string.w_on_break) : "", s(a, "role"), s(a, "rate")));
             v.setViewVisibility(R.id.w_play, View.GONE);
             v.setViewVisibility(R.id.w_stop, View.VISIBLE);
             v.setOnClickPendingIntent(R.id.w_stop, direct(d) ? tap(c, "stop", request + 1) : open(c, "stop", request + 1));
             v.setOnClickPendingIntent(R.id.w_go, open(c, null, request + 2));
         } else {
             v.setImageViewResource(R.id.w_go_icon, R.drawable.w_ic_play);
-            v.setContentDescription(R.id.w_go, "התחל משמרת");
+            v.setContentDescription(R.id.w_go, c.getString(R.string.w_start));
             v.setViewVisibility(R.id.w_clock, View.GONE);
             v.setViewVisibility(R.id.w_title, View.VISIBLE);
-            v.setTextViewText(R.id.w_title, l.coin() ? "נתחיל משמרת?" : "התחל משמרת");
+            v.setTextViewText(R.id.w_title, c.getString(l.coin() ? R.string.w_start_coin : R.string.w_start));
             // today only once it has earned something: the line stays short enough for the month to fit whole
-            String today = s(d, "today").matches(".*[1-9].*") ? "היום " + s(d, "today") + " · " : "";
-            text(v, R.id.w_sub, d == null || stale(d) ? "" : today + "החודש " + s(d, "gross"));
+            String today = s(d, "today").matches(".*[1-9].*") ? c.getString(R.string.w_today, s(d, "today")) : "";
+            text(v, R.id.w_sub, d == null || stale(d) ? "" : join(today, c.getString(R.string.w_this_month, s(d, "gross"))));
             v.setViewVisibility(R.id.w_stop, View.GONE);
             v.setViewVisibility(R.id.w_play, coin ? View.VISIBLE : View.GONE);
             // the role is known (the last one chosen, or the only one): started right here; otherwise (several roles,

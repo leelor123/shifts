@@ -10,7 +10,7 @@ import org.json.JSONObject;
 public class MonthWidget extends ShaatiWidget {
     @Override
     RemoteViews build(Context c, JSONObject d, WidgetLook l) {
-        RemoteViews v = new RemoteViews(c.getPackageName(), R.layout.w_month);
+        RemoteViews v = new RemoteViews(c.getPackageName(), WidgetLang.layout(c, R.layout.w_month_rtl, R.layout.w_month_ltr));
         l.frame(v);
         month(c, v, d, l);
         l.coin(v, face(d));
@@ -27,25 +27,25 @@ public class MonthWidget extends ShaatiWidget {
         l.textColor(c, v, R.id.w_goal, l.sub);
         l.bar(v, R.id.w_bar);
         if (d == null || stale(d)) {
-            v.setTextViewText(R.id.w_label, d == null ? "החודש שלי" : "חודש חדש התחיל");
+            v.setTextViewText(R.id.w_label, c.getString(d == null ? R.string.w_month_mine : R.string.w_month_new));
             v.setTextViewText(R.id.w_amount, "₪—");
-            text(v, R.id.w_line, "פתחו את שעתי לעדכון");
+            text(v, R.id.w_line, c.getString(R.string.w_open_update));
             v.setViewVisibility(R.id.w_bar, View.GONE);
             text(v, R.id.w_goal, "");
             return;
         }
-        v.setTextViewText(R.id.w_label, s(d, "period") + " עד עכשיו");
+        v.setTextViewText(R.id.w_label, cap(c, c.getString(R.string.w_so_far, s(d, "period"))));
         v.setTextViewText(R.id.w_amount, s(d, "gross"));
-        text(v, R.id.w_line, "נטו " + s(d, "net") + " · " + s(d, "hours") + " שעות");
+        text(v, R.id.w_line, c.getString(R.string.w_net_hours, s(d, "net"), s(d, "hours")));
         JSONObject g = d.optJSONObject("goal");
         String pace = s(d, "pace");
         if (g != null) {
             v.setViewVisibility(R.id.w_bar, View.VISIBLE);
             v.setProgressBar(R.id.w_bar, 100, pct(g), false);
-            text(v, R.id.w_goal, g.optInt("pct", 0) + "% מיעד " + s(g, "of"));
+            text(v, R.id.w_goal, c.getString(R.string.w_goal_pct, String.valueOf(g.optInt("pct", 0)), s(g, "of")));
         } else {
             v.setViewVisibility(R.id.w_bar, View.GONE);
-            text(v, R.id.w_goal, pace.isEmpty() ? "" : "צפי לסוף החודש: " + pace);
+            text(v, R.id.w_goal, pace.isEmpty() ? "" : c.getString(R.string.w_forecast_is, pace));
         }
     }
 }

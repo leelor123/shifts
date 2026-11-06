@@ -1,0 +1,70 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Shaati widgets and quick-settings tile: the es texts (the default, Hebrew, is in values/w_strings.xml). -->
+<resources>
+    <string name="w_shift_name">Shaati · Turno</string>
+    <string name="w_shift_desc">Inicia un turno con un toque, con un reloj en marcha durante el turno</string>
+    <string name="w_month_name">Shaati · Mi mes</string>
+    <string name="w_month_desc">Cuánto ganaste este mes, el objetivo y la previsión</string>
+    <string name="w_goal_name">Shaati · Objetivo</string>
+    <string name="w_goal_desc">El avance hacia el objetivo de ahorro o el objetivo mensual</string>
+    <string name="w_payday_name">Shaati · Día de pago</string>
+    <string name="w_payday_desc">Cuántos días faltan para el día de pago y cuánto recibirás más o menos</string>
+    <string name="w_combo_name">Shaati · Todo junto</string>
+    <string name="w_combo_desc">El turno, este mes, el objetivo y el día de pago en un solo widget</string>
+    <string name="w_tile_name">Turno</string>
+    <string name="w_app">Shaati</string>
+    <string name="w_start">Iniciar turno</string>
+    <string name="w_start_coin">¿Empezamos un turno?</string>
+    <string name="w_end">Terminar</string>
+    <string name="w_end_shift">Terminar turno</string>
+    <string name="w_running">Turno en curso</string>
+    <string name="w_open">Abrir Shaati</string>
+    <string name="w_started">Turno iniciado. ¡Suerte!</string>
+    <string name="w_ended">El turno terminó tras %1$s horas. Se guardará cuando abras Shaati</string>
+    <string name="w_on_break">En descanso</string>
+    <string name="w_today">Hoy %1$s</string>
+    <string name="w_this_month">Este mes %1$s</string>
+    <string name="w_payday_today">Hoy es día de pago</string>
+    <string name="w_payday_tomorrow">Mañana es día de pago</string>
+    <string name="w_month_mine">Mi mes</string>
+    <string name="w_month_new">Empezó un mes nuevo</string>
+    <string name="w_open_update">Abre Shaati para actualizar</string>
+    <string name="w_so_far">%1$s hasta ahora</string>
+    <string name="w_net_hours">Neto %1$s · %2$s horas</string>
+    <string name="w_goal_pct">%1$s%% del objetivo de %2$s</string>
+    <string name="w_forecast">Previsión a fin de mes</string>
+    <string name="w_forecast_is">Previsión a fin de mes: %1$s</string>
+    <string name="w_enough">Te alcanza</string>
+    <string name="w_more">Faltan %1$s</string>
+    <string name="w_goal_of">Objetivo %1$s</string>
+    <string name="w_goal_passed">Superaste el objetivo</string>
+    <string name="w_goal_left">Faltan %1$s para el objetivo</string>
+    <string name="w_goal_mine">Mi objetivo</string>
+    <string name="w_goal_hint">Puedes definir un objetivo en Ajustes › Objetivos</string>
+    <string name="w_payday_next">Próximo día de pago</string>
+    <string name="w_no_shifts">Aún no hay turnos en este período</string>
+    <string name="w_about_net">Unos %1$s netos</string>
+    <string name="w_pick_title">¿Cómo se verá el widget?</string>
+    <string name="w_pick_sub">Puedes cambiarlo después con una pulsación larga en el widget.</string>
+    <string name="w_sample_period">Este mes</string>
+    <string name="w_look_midnight">Noche y oro</string>
+    <string name="w_look_clean">Limpio</string>
+    <string name="w_look_wallpaper">Colores del fondo</string>
+    <string name="w_look_coin">Con Shaati</string>
+    <string name="w_look_sea">Mar al atardecer</string>
+    <string name="w_look_rain">Lluvia de monedas</string>
+    <!-- the widget picker's previews (the layouts' sample texts) -->
+    <string name="w_pv_month" formatted="false">Este mes ₪2,840</string>
+    <string name="w_pv_so_far" formatted="false">Este mes hasta ahora</string>
+    <string name="w_pv_line" formatted="false">Neto ₪2,310 · 41 horas</string>
+    <string name="w_pv_goal" formatted="false">64% del objetivo de ₪4,400</string>
+    <string name="w_pv_pay" formatted="false">9 días para el día de pago</string>
+    <string name="w_pv_goal_title" formatted="false">Objetivo ₪4,400</string>
+    <string name="w_pv_goal_left" formatted="false">Faltan ₪1,560 para el objetivo</string>
+    <string name="w_pv_about" formatted="false">Unos ₪2,310 netos</string>
+    <plurals name="w_payday_days">
+        <item quantity="one">%1$s día para el día de pago</item>
+        <item quantity="many">%1$s días para el día de pago</item>
+        <item quantity="other">%1$s días para el día de pago</item>
+    </plurals>
+</resources>

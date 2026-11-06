@@ -21,6 +21,9 @@
   const { App, Store, U, Engine } = root;
   const S = Store.S;
   const m0 = (n) => U.money(n || 0, 0);
+  // the app's language: the widgets and the quick-settings tile speak it (their own texts and direction), whatever
+  // language the phone is set to. An older snapshot has none and the phone shows it in Hebrew, as before.
+  const LANG = U.LANG || 'he';
   const rateText = (role, at) => { const r = role ? Engine.roleRate(role, U.epochKey(at)) : 0; return r ? U.money(r) + ' לשעה' : ''; };
   /** The role a shift started from the widget gets: the last one chosen, or the only one. None (several roles and
    *  none chosen yet): the widget opens the app to ask, as the home screen does. */
@@ -67,7 +70,7 @@
     const nr = a ? null : widgetRole();
     const go = nr ? { role: nr.name || '', rate: rateText(nr, Date.now()) } : null;
     return {
-      v: 1, at: Date.now(),
+      v: 1, at: Date.now(), lang: LANG,
       // "אוקטובר" (this year's months without the year: a small widget has little room)
       period: emp.periodStartDay > 1 ? 'תקופת השכר' : P.label.replace(' ' + today.slice(0, 4), ''), periodTo: P.to,
       gross: m0(sum.gross), net: m0(sum.net.net), hours: U.hm(sum.hours * 60), shifts: sum.shifts,
@@ -84,7 +87,7 @@
    *  takes any snapshot with v >= 1, and every widget draws one whose pay period has ended as "open Shaati to update"
    *  with no amounts, no goal, no payday and no running shift; `empty` is there for a later app build to show its
    *  first-run look instead. */
-  App.widgetEmpty = () => ({ v: 1, at: Date.now(), empty: true, periodTo: '2000-01-01' });
+  App.widgetEmpty = () => ({ v: 1, at: Date.now(), lang: LANG, empty: true, periodTo: '2000-01-01' });
   const noData = () => !S.settings.onboarded;
   // whether the widgets hold numbers, kept outside the app's database (which a wipe empties): the empty snapshot is
   // sent once, not on every opening of a phone with nothing on it. Unknown (an install from before this version, or

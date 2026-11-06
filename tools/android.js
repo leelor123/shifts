@@ -259,7 +259,11 @@ function patchWidgets() {
   // generate keeps the twa/ folder, so the files of an older widgets build stay there: an old w_bg.xml asked for
   // colours the new w_colors.xml no longer has and failed the 1.32.4 build. Every w_* resource and widget class is
   // removed first, so the project holds exactly what android/widgets holds.
+  // the texts: every language holds every string, nothing is left written in the code (tools/android-strings-check.js)
+  const texts = require('./android-strings-check').check();
+  if (texts.problems.length) throw new Error('android/widgets texts:\n' + texts.problems.join('\n'));
   const resDir = path.join(main, 'res');
+  // the translations (values-en, values-ru, ...) are w_strings.xml in their own folders: removed and copied like the rest
   for (const d of fs.readdirSync(resDir)) {
     const dir = path.join(resDir, d);
     if (fs.statSync(dir).isDirectory()) for (const f of fs.readdirSync(dir)) if (f.startsWith('w_')) fs.rmSync(path.join(dir, f));
@@ -300,7 +304,8 @@ ${receiver('ShiftWidget', 'shift')}${receiver('MonthWidget', 'month')}${receiver
   fs.writeFileSync(path.join(TWA, 'app', 'shaati-rules.pro'), '# Shaati: the widgets bridge reads the launcher\'s session (LauncherActivity.widgetSession)\n-keepclassmembers class com.google.androidbrowserhelper.trusted.TwaLauncher { androidx.browser.customtabs.CustomTabsSession *; }\n');
 }
 
-/** The app is called "שעתי" on phones set to Hebrew (android/res/values-iw); the default name stays "Shaati". */
+/** The app is called "שעתי" on phones set to Hebrew (android/res/values-iw); the default name stays "Shaati", as the
+ *  app calls itself in every other language (Arabic included). */
 function patchNames() {
   const SRC = path.join(ROOT, 'android', 'res');
   const res = path.join(TWA, 'app', 'src', 'main', 'res');

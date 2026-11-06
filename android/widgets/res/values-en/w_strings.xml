@@ -1,0 +1,69 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Shaati widgets and quick-settings tile: the en texts (the default, Hebrew, is in values/w_strings.xml). -->
+<resources>
+    <string name="w_shift_name">Shaati · Shift</string>
+    <string name="w_shift_desc">Start a shift in one tap, with a running clock during the shift</string>
+    <string name="w_month_name">Shaati · My month</string>
+    <string name="w_month_desc">What you earned this month, the goal and the forecast</string>
+    <string name="w_goal_name">Shaati · Goal</string>
+    <string name="w_goal_desc">Your progress to the savings goal or the monthly goal</string>
+    <string name="w_payday_name">Shaati · Payday</string>
+    <string name="w_payday_desc">How many days are left to payday and about how much you will get</string>
+    <string name="w_combo_name">Shaati · All in one</string>
+    <string name="w_combo_desc">Shift, this month, the goal and payday in one widget</string>
+    <string name="w_tile_name">Shift</string>
+    <string name="w_app">Shaati</string>
+    <string name="w_start">Start shift</string>
+    <string name="w_start_coin">Start a shift?</string>
+    <string name="w_end">End</string>
+    <string name="w_end_shift">End shift</string>
+    <string name="w_running">Shift running</string>
+    <string name="w_open">Open Shaati</string>
+    <string name="w_started">Shift started. Good luck!</string>
+    <string name="w_ended">The shift ended after %1$s hours. It will be saved when you open Shaati</string>
+    <string name="w_on_break">On a break</string>
+    <string name="w_today">Today %1$s</string>
+    <string name="w_this_month">This month %1$s</string>
+    <string name="w_payday_today">Payday today</string>
+    <string name="w_payday_tomorrow">Payday tomorrow</string>
+    <string name="w_month_mine">My month</string>
+    <string name="w_month_new">A new month has started</string>
+    <string name="w_open_update">Open Shaati to update</string>
+    <string name="w_so_far">%1$s so far</string>
+    <string name="w_net_hours">Net %1$s · %2$s hours</string>
+    <string name="w_goal_pct">%1$s%% of the %2$s goal</string>
+    <string name="w_forecast">Month-end forecast</string>
+    <string name="w_forecast_is">Month-end forecast: %1$s</string>
+    <string name="w_enough">You have enough</string>
+    <string name="w_more">%1$s to go</string>
+    <string name="w_goal_of">Goal %1$s</string>
+    <string name="w_goal_passed">You passed the goal</string>
+    <string name="w_goal_left">%1$s to the goal</string>
+    <string name="w_goal_mine">My goal</string>
+    <string name="w_goal_hint">You can set a goal in Settings › Goals</string>
+    <string name="w_payday_next">Next payday</string>
+    <string name="w_no_shifts">No shifts in this period yet</string>
+    <string name="w_about_net">About %1$s net</string>
+    <string name="w_pick_title">How should the widget look?</string>
+    <string name="w_pick_sub">You can change it later with a long press on the widget.</string>
+    <string name="w_sample_period">This month</string>
+    <string name="w_look_midnight">Night and gold</string>
+    <string name="w_look_clean">Clean</string>
+    <string name="w_look_wallpaper">Wallpaper colours</string>
+    <string name="w_look_coin">With Shaati</string>
+    <string name="w_look_sea">Sea at sunset</string>
+    <string name="w_look_rain">Coin rain</string>
+    <!-- the widget picker's previews (the layouts' sample texts) -->
+    <string name="w_pv_month" formatted="false">This month ₪2,840</string>
+    <string name="w_pv_so_far" formatted="false">This month so far</string>
+    <string name="w_pv_line" formatted="false">Net ₪2,310 · 41 hours</string>
+    <string name="w_pv_goal" formatted="false">64% of the ₪4,400 goal</string>
+    <string name="w_pv_pay" formatted="false">9 days to payday</string>
+    <string name="w_pv_goal_title" formatted="false">Goal ₪4,400</string>
+    <string name="w_pv_goal_left" formatted="false">₪1,560 to the goal</string>
+    <string name="w_pv_about" formatted="false">About ₪2,310 net</string>
+    <plurals name="w_payday_days">
+        <item quantity="one">%1$s day to payday</item>
+        <item quantity="other">%1$s days to payday</item>
+    </plurals>
+</resources>

@@ -1,0 +1,70 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Shaati widgets and quick-settings tile: the fr texts (the default, Hebrew, is in values/w_strings.xml). -->
+<resources>
+    <string name="w_shift_name">Shaati · Service</string>
+    <string name="w_shift_desc">Commencer un service d\'un seul geste, avec un chrono pendant le service</string>
+    <string name="w_month_name">Shaati · Mon mois</string>
+    <string name="w_month_desc">Ce que vous avez gagné ce mois-ci, l\'objectif et la prévision</string>
+    <string name="w_goal_name">Shaati · Objectif</string>
+    <string name="w_goal_desc">La progression vers l\'objectif d\'épargne ou l\'objectif mensuel</string>
+    <string name="w_payday_name">Shaati · Paie</string>
+    <string name="w_payday_desc">Combien de jours avant la paie et environ combien vous recevrez</string>
+    <string name="w_combo_name">Shaati · Tout en un</string>
+    <string name="w_combo_desc">Le service, ce mois-ci, l\'objectif et la paie dans un seul widget</string>
+    <string name="w_tile_name">Service</string>
+    <string name="w_app">Shaati</string>
+    <string name="w_start">Commencer le service</string>
+    <string name="w_start_coin">On commence un service ?</string>
+    <string name="w_end">Terminer</string>
+    <string name="w_end_shift">Terminer le service</string>
+    <string name="w_running">Service en cours</string>
+    <string name="w_open">Ouvrir Shaati</string>
+    <string name="w_started">Service commencé. Bon courage !</string>
+    <string name="w_ended">Le service s\'est terminé après %1$s heures. Il sera enregistré à l\'ouverture de Shaati</string>
+    <string name="w_on_break">En pause</string>
+    <string name="w_today">Aujourd\'hui %1$s</string>
+    <string name="w_this_month">Ce mois-ci %1$s</string>
+    <string name="w_payday_today">Jour de paie aujourd\'hui</string>
+    <string name="w_payday_tomorrow">Jour de paie demain</string>
+    <string name="w_month_mine">Mon mois</string>
+    <string name="w_month_new">Un nouveau mois a commencé</string>
+    <string name="w_open_update">Ouvrez Shaati pour mettre à jour</string>
+    <string name="w_so_far">%1$s jusqu\'ici</string>
+    <string name="w_net_hours">Net %1$s · %2$s heures</string>
+    <string name="w_goal_pct">%1$s%% de l\'objectif de %2$s</string>
+    <string name="w_forecast">Prévision fin de mois</string>
+    <string name="w_forecast_is">Prévision fin de mois : %1$s</string>
+    <string name="w_enough">Vous avez assez</string>
+    <string name="w_more">Encore %1$s</string>
+    <string name="w_goal_of">Objectif %1$s</string>
+    <string name="w_goal_passed">Objectif dépassé</string>
+    <string name="w_goal_left">Encore %1$s pour l\'objectif</string>
+    <string name="w_goal_mine">Mon objectif</string>
+    <string name="w_goal_hint">Vous pouvez fixer un objectif dans Réglages › Objectifs</string>
+    <string name="w_payday_next">Prochaine paie</string>
+    <string name="w_no_shifts">Pas encore de service sur cette période</string>
+    <string name="w_about_net">Environ %1$s net</string>
+    <string name="w_pick_title">À quoi ressemblera le widget ?</string>
+    <string name="w_pick_sub">Vous pourrez le changer plus tard d\'un appui long sur le widget.</string>
+    <string name="w_sample_period">Ce mois-ci</string>
+    <string name="w_look_midnight">Nuit et or</string>
+    <string name="w_look_clean">Épuré</string>
+    <string name="w_look_wallpaper">Couleurs du fond d\'écran</string>
+    <string name="w_look_coin">Avec Shaati</string>
+    <string name="w_look_sea">Mer au coucher du soleil</string>
+    <string name="w_look_rain">Pluie de pièces</string>
+    <!-- the widget picker's previews (the layouts' sample texts) -->
+    <string name="w_pv_month" formatted="false">Ce mois-ci ₪2,840</string>
+    <string name="w_pv_so_far" formatted="false">Ce mois-ci jusqu\'ici</string>
+    <string name="w_pv_line" formatted="false">Net ₪2,310 · 41 heures</string>
+    <string name="w_pv_goal" formatted="false">64% de l\'objectif de ₪4,400</string>
+    <string name="w_pv_pay" formatted="false">9 jours avant la paie</string>
+    <string name="w_pv_goal_title" formatted="false">Objectif ₪4,400</string>
+    <string name="w_pv_goal_left" formatted="false">Encore ₪1,560 pour l\'objectif</string>
+    <string name="w_pv_about" formatted="false">Environ ₪2,310 net</string>
+    <plurals name="w_payday_days">
+        <item quantity="one">%1$s jour avant la paie</item>
+        <item quantity="many">%1$s jours avant la paie</item>
+        <item quantity="other">%1$s jours avant la paie</item>
+    </plurals>
+</resources>
