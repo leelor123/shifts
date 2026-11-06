@@ -516,12 +516,13 @@
     // a planned shift that has already begun can be measured from its planned start (App.markDone)
     const start = opts && opts.startAt && opts.startAt < now && now - opts.startAt < 24 * 3600000 ? opts.startAt : now;
     await Store.setActive({ start, roleId: role.id, employerId: role.employerId || S.employers[0].id, splits: [], breaks: [], fromPlanned: planned ? planned.id : null });
+    if (root.ShiftLog) root.ShiftLog.started(start, opts && opts.widget ? 'widget' : 'timer'); // the signed shift log: the press, with the phone's time
     if (App.shiftMoment) App.shiftMoment('start', opts && opts.at); else root.Fx.celebrate('start');
     UI.toast('המשמרת התחילה. בהצלחה!');
     App.askNotifyPermission();
   };
   /** Ends the running shift now, or at endAt (an earlier moment: "end at 16:10" for a shift left running). */
-  App.stopShift = async function (at, endAt) {
+  App.stopShift = async function (at, endAt, opts) {
     const a = S.activeShift;
     if (!a) return;
     const end = endAt && endAt > a.start && endAt < Date.now() ? endAt : Date.now();
@@ -536,7 +537,7 @@
     const ops = [{ store: 'shifts', put: sh }];
     const planned = a.fromPlanned && App.shift(a.fromPlanned);
     if (planned && planned.status === 'planned') ops.push({ store: 'shifts', del: planned.id });
-    await Store.apply(ops, 'סיום משמרת');
+    await Store.apply(ops, 'סיום משמרת', { via: opts && opts.widget ? 'widget' : 'timer' }); // (via: for the signed shift log)
     App.justStopped = Date.now(); // the start button springs back in
     await Store.setActive(null);
     // a timer that kept running (the phone in a pocket, a forgotten stop): it is saved, so nothing is

@@ -680,7 +680,8 @@ textarea.input.chat-input { min-height: 46px; height: 46px; max-height: 140px; r
   #print-root table { width: 100%; border-collapse: collapse; margin: 8pt 0; }
   #print-root th, #print-root td { border: 1px solid #bbb; padding: 4pt 6pt; text-align: right; font-size: 9.5pt; }
   #print-root th { background: #eee; }
-  #print-root .kp { display: inline-block; border: 1px solid #ccc; border-radius: 6pt; padding: 6pt 10pt; margin: 0 0 6pt 6pt; }
+  /* the summary items: each one its own box, kept whole and isolated, so a label never runs into the next value */
+  #print-root .kp { display: inline-block; unicode-bidi: isolate; white-space: nowrap; border: 1px solid #ccc; border-radius: 6pt; padding: 6pt 10pt; margin-block: 0 6pt; margin-inline: 0 6pt; }
   @page { size: A4; margin: 14mm; }
 }
 

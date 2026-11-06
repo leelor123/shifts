@@ -228,7 +228,9 @@
     const r = App.result(id);
     if (!sh || !r) return;
     const hd = HebCal.hebrewDate(r.dateKey);
-    const ovBox = r.overridden || r.dayRuleHit ? `<div class="banner warn">${icon('hand')}<div style="flex:1"><b>עקיפה ידנית:</b> ${esc([...r.overrideList, r.dayRuleHit ? 'כלל יום (ביטול/הוספה גורפת של שבת/חג)' : ''].filter(Boolean).join(' · '))}${sh.overrideReason ? `<br>סיבה: ${esc(sh.overrideReason)}` : ''}</div></div>` : '';
+    // the signed shift log's line (recorded in real time, or when it was added or edited) goes above the override box
+    const logLine = r.status !== 'planned' && root.ShiftLog ? root.ShiftLog.lineHtml(sh) : '';
+    const ovBox = logLine + (r.overridden || r.dayRuleHit ? `<div class="banner warn">${icon('hand')}<div style="flex:1"><b>עקיפה ידנית:</b> ${esc([...r.overrideList, r.dayRuleHit ? 'כלל יום (ביטול/הוספה גורפת של שבת/חג)' : ''].filter(Boolean).join(' · '))}${sh.overrideReason ? `<br>סיבה: ${esc(sh.overrideReason)}` : ''}</div></div>` : '');
     const autoDiff = r.overridden && App.model.autoResults.get(id) ? App.model.autoResults.get(id).wage - r.wage : 0;
     // a planned shift that pays above an ordinary one says why (core/planner.js)
     const why = r.status === 'planned' && root.Planner ? root.Planner.reasons(r)[0] : null;

@@ -15,8 +15,12 @@ async function phone(backend, opts) {
   ctx.window = ctx;
   ctx.addEventListener = () => {};
   ctx.UI = { dialog: async () => opts.answer || 'merge', confirm: async () => true, timeAgo: () => '', toast() {} };
+  if (opts.ledger) Object.assign(ctx, { crypto: require('crypto').webcrypto, TextEncoder });
   vm.createContext(ctx);
-  for (const f of ['core/util.js', 'core/hebcal.js', 'core/defaults.js', 'core/engine.js', 'app/store.js', 'app/cloud.js']) {
+  // (opts.ledger: with the signed shift log, as the app has it)
+  const files = opts.ledger ? ['core/util.js', 'core/hebcal.js', 'core/defaults.js', 'core/engine.js', 'core/ledger.js', 'app/store.js', 'app/shift-log.js', 'app/cloud.js']
+    : ['core/util.js', 'core/hebcal.js', 'core/defaults.js', 'core/engine.js', 'app/store.js', 'app/cloud.js'];
+  for (const f of files) {
     vm.runInContext(fs.readFileSync(path.join(SRC, f), 'utf8'), ctx, { filename: f });
   }
   const { client, fs: ffs } = fakeClient(backend);
@@ -768,4 +772,68 @@ T.atest('starts and ends tapped on a widget become the shift, at the tapped time
   port.onmessage({ data: JSON.stringify({ taps: [{ id: 99, type: 'delete-everything', at: t1 }] }) });
   await wait(30);
   T.eq(done.length, 2);
+});
+
+/* ---------------- the signed shift log (core/ledger.js, app/shift-log.js) ---------------- */
+const ledgerOf = (P) => P.S.ledger.slice().sort((a, b) => a.c.localeCompare(b.c) || a.n - b.n);
+T.atest('shift log: adding, editing and deleting a shift each write a signed record', async () => {
+  const be = fakeBackend();
+  const A = await phone(be, { ledger: true });
+  const done = () => A.ctx.ShiftLog.done();
+  await A.add('s1'); await done();
+  await A.Store.apply([{ store: 'shifts', put: Object.assign({}, A.shift('s1'), { end: 3 }) }], 'edit'); await done();
+  await A.Store.apply([{ store: 'shifts', put: Object.assign({}, A.shift('s1'), { note: 'only a note' }) }], 'note'); await done();
+  await A.Store.apply([{ store: 'shifts', del: 's1' }], 'del'); await done();
+  T.eq(ledgerOf(A).map((x) => x.k).join(','), 'create,edit,delete', 'a note alone writes nothing');
+  T.eq(ledgerOf(A)[1].oe, 2, 'the edit keeps the old end');
+  await A.Store.undo(); await done(); // the deletion undone: the shift is back, and that is written too
+  T.eq(ledgerOf(A).map((x) => x.k).join(','), 'create,edit,delete,create');
+  T.ok((await A.ctx.ShiftLog.verify()).ok, 'the chain is whole');
+  // the log only grows: a delete or a replacement of one of its records is ignored
+  const first = ledgerOf(A)[0];
+  await A.Store.apply([{ store: 'ledger', del: first.id }, { store: 'ledger', put: Object.assign({}, first, { s: 999 }) }], null);
+  T.eq(A.S.ledger.length, 4); T.eq(A.S.ledger.find((x) => x.id === first.id).s, 1);
+  // the timer's save is a "stop"; a planned shift is not logged; the first tour's sample shifts neither
+  await A.Store.apply([{ store: 'shifts', put: { id: 't1', kind: 'shift', employerId: 'emp1', roleId: 'r1', status: 'done', start: 10, end: 20 } }], 'stop', { via: 'timer' });
+  await A.Store.apply([{ store: 'shifts', put: { id: 'p1', kind: 'shift', employerId: 'emp1', roleId: 'r1', status: 'planned', start: 30, end: 40 } }], 'plan');
+  await A.Store.apply([{ store: 'shifts', put: { id: 'd1', kind: 'shift', employerId: 'emp1', roleId: 'r1', status: 'done', start: 30, end: 40, demo: true } }], 'demo');
+  await done();
+  T.eq(ledgerOf(A).map((x) => x.k).join(','), 'create,edit,delete,create,stop');
+  // a backup restored over the phone: the phone goes on in a new chain (the old one never forks)
+  const c0 = A.S.meta.ledgerChain;
+  await A.Store.importBackup(JSON.parse(JSON.stringify(await A.Store.exportBackup(false))), 'replace'); await wait(10);
+  T.eq(A.S.ledger.length, 5, 'the backup carries the log');
+  await A.add('s5'); await done();
+  T.ok(A.S.meta.ledgerChain && A.S.meta.ledgerChain !== c0, 'a new chain after the restore');
+  T.ok((await A.ctx.ShiftLog.verify()).ok, 'still whole');
+});
+
+T.atest('shift log: records reach the other phone, and the server keeps them as written', async () => {
+  const be = fakeBackend();
+  const A = await phone(be, { ledger: true });
+  await A.add('s1'); await A.ctx.ShiftLog.done();
+  await A.Cloud.connect(user); await wait(30);
+  const B = await phone(be, { ledger: true });
+  await B.Cloud.connect(user); await wait(200);
+  T.eq(B.S.ledger.length, 1, 'the record arrived');
+  await B.add('s2'); await B.ctx.ShiftLog.done(); await B.sync(); await wait(200);
+  T.eq(A.S.ledger.length, 2);
+  const v = await A.ctx.ShiftLog.verify();
+  T.ok(v.ok, 'both chains whole'); T.eq(v.chains.length, 2, 'one chain per phone');
+  // a tombstone for a record, or a changed text: refused by the rules
+  const key = [...be.docs.keys()].find((k) => k.includes('/ledger/'));
+  const was = be.rejected;
+  await A.ffs.setDoc({ path: key }, { u: Date.now() + 9999, d: true, j: null }).catch(() => {});
+  await A.ffs.setDoc({ path: key }, { u: Date.now() + 9999, d: false, j: '{"k":"edit"}' }).catch(() => {});
+  await wait(10);
+  T.eq(be.rejected, was + 2, 'both refused');
+  T.ok(!be.docs.get(key).d, 'still there');
+  // all records sent again with new versions (a restore makes the cloud match the phone): the same text, allowed
+  await A.Store.touchAll(); await A.sync(); await wait(50);
+  T.eq(be.rejected, was + 2, 'a re-send of the same record is fine');
+  // a phone that chose "only from the phone" still takes the account's log records
+  const C = await phone(be, { ledger: true, answer: 'local' }); await C.add('c1'); await C.ctx.ShiftLog.done();
+  await C.Cloud.connect(user); await wait(200);
+  T.eq(C.S.ledger.length, 3, 'the account\'s records joined');
+  T.ok(![...be.docs.entries()].some(([k, x]) => k.includes('/ledger/') && x.d), 'no log record became a tombstone');
 });
