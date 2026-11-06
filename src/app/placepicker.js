@@ -95,7 +95,7 @@
     return `<div class="pp">
       <div class="pp-top">
         <label class="pp-search">${icon('search')}<input type="search" class="pp-q" placeholder="חיפוש יישוב" autocomplete="off" autocorrect="off" spellcheck="false" enterkeyhint="search" aria-label="חיפוש יישוב"><button type="button" class="pp-x" aria-label="ניקוי החיפוש" hidden>${icon('x')}</button></label>
-        <button type="button" class="pp-loc">${icon('pin')}<span>המיקום שלי</span></button>
+        <button type="button" class="pp-loc"><span class="pp-pin">${icon('pin')}</span><span>המיקום שלי</span></button>
       </div>
       <div class="pp-browse">
         ${cur ? `<div class="section-title">הבחירה שלך</div><div class="pp-list">${row(cur, '', on(cur))}</div>` : ''}

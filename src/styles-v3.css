@@ -148,7 +148,9 @@ body.fx .btn:active, body.fx .chip:active, body.fx .sc:active, body.fx .am-tile:
 .nav button.on .pill { background: var(--brand-soft); color: var(--brand-strong); }
 .nav button.on .pill::before { display: none; }
 .nav button.on { color: var(--brand-strong); font-weight: 700; }
-body.fx .nav button.on .pill svg { animation: nav-pop .35s var(--pop); }
+/* the icon pops as its span (the compositor runs no animation whose target is an SVG element) */
+.nav .pill .ic { display: grid; place-items: center; }
+body.fx .nav button.on .pill .ic { animation: nav-pop .35s var(--pop); }
 .nav .fab { border-radius: 50%; width: 58px; height: 58px; background: var(--grad-money); color: #2b1a00; box-shadow: 0 10px 22px -8px rgba(245, 155, 22, .7); border: 4px solid var(--surface); margin-top: -22px; }
 body.fx .nav .fab:active { transform: scale(.9) rotate(90deg); }
 @keyframes nav-pop { 0% { transform: scale(.7); } 60% { transform: scale(1.12); } 100% { transform: scale(1); } }
@@ -516,7 +518,7 @@ body.fx .nav .fab:active { transform: scale(.9) rotate(90deg); }
 /* the pay card: soft light drifting behind the amount, and a highlight sweeping round the dial like a second hand */
 /* rounded, clipped cards with moving parts keep one stable layer, so nothing around them gains or loses
  * a layer when a screen slides in (the same fix as the hour picker); the active tab icon likewise */
-.home-hero, .home-action .btn.start, .timer-card, .recap-card, .nav .pill, .nav .pill svg { will-change: transform; }
+.home-hero, .home-action .btn.start, .timer-card, .recap-card, .nav .pill, .nav .pill .ic { will-change: transform; }
 .hh-dial::before { content: ''; position: absolute; inset: 0; border-radius: 50%; background: conic-gradient(from 0deg, transparent 0 290deg, rgba(255, 255, 255, .15) 320deg, rgba(255, 255, 255, .95) 359deg, transparent 360deg); animation: dial-sweep 7s linear infinite; }
 @keyframes dial-sweep { to { transform: rotate(360deg); } }
 .timer-card.running { position: relative; overflow: hidden; isolation: isolate; }
@@ -541,8 +543,9 @@ body.fx .nav .fab:active { transform: scale(.9) rotate(90deg); }
 body:not(.fx) .hh-dial::before, body:not(.fx) .ob-bg i { animation: none !important; }
 
 /* saved: a check mark that draws itself */
-.toast .tk { width: 22px; height: 22px; flex: none; }
-.toast .tk circle { fill: #22c98e; transform-origin: center; transform-box: fill-box; animation: tk-pop .35s var(--pop) both; }
+.toast .tk { width: 22px; height: 22px; flex: none; display: block; animation: tk-pop .35s var(--pop) both; }
+.toast .tk svg { display: block; width: 100%; height: 100%; }
+.toast .tk circle { fill: #22c98e; }
 .toast .tk path { fill: none; stroke: #fff; stroke-width: 2.6; stroke-linecap: round; stroke-linejoin: round; stroke-dasharray: 16; stroke-dashoffset: 16; animation: tk-draw .35s ease-out .18s forwards; }
 @keyframes tk-pop { from { transform: scale(.3); } }
 @keyframes tk-draw { to { stroke-dashoffset: 0; } }
@@ -555,7 +558,7 @@ body:not(.fx) .hh-dial::before, body:not(.fx) .ob-bg i { animation: none !import
 .skel-lines { flex: 1; display: grid; gap: 8px; }
 .skel-line { height: 12px; } .skel-line.short { width: 40%; height: 10px; }
 @keyframes skel { from { background-position: 100% 0; } to { background-position: -100% 0; } }
-@media (prefers-reduced-motion: reduce) { .skel, .toast .tk * { animation: none !important; } .toast .tk path { stroke-dashoffset: 0; } }
+@media (prefers-reduced-motion: reduce) { .skel, .toast .tk, .toast .tk * { animation: none !important; } .toast .tk path { stroke-dashoffset: 0; } }
 
 /* keyboard users always see where they are */
 :where(button, a, input, select, textarea, summary, [tabindex]):focus-visible { outline: 3px solid hsla(var(--h), 85%, 60%, .55); outline-offset: 2px; }
@@ -1436,7 +1439,8 @@ body:not(.fx) .tr-up, body:not(.fx) .tr-down { animation: none; }
 .pp-loc { flex: none; display: inline-flex; align-items: center; gap: 6px; height: 48px; padding: 0 14px; border: 0; border-radius: 16px; background: var(--brand-soft); color: var(--on-brand-soft); font: inherit; font-weight: 700; font-size: .9rem; white-space: nowrap; }
 .pp-loc svg { width: 20px; height: 20px; flex: none; }
 .pp-loc:disabled { opacity: 1; }
-body.fx .pp-loc.busy svg { animation: pp-hop .8s ease-in-out infinite; }
+.pp-loc .pp-pin { display: grid; flex: none; }
+body.fx .pp-loc.busy .pp-pin { animation: pp-hop .8s ease-in-out infinite; }
 @keyframes pp-hop { 0%, 100% { transform: translateY(0); } 45% { transform: translateY(-5px); } }
 .pp .section-title { margin-inline-end: 30px; }
 .pp-list { display: flex; flex-direction: column; }

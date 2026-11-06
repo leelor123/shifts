@@ -20,7 +20,6 @@
     if (!/Safari\//.test(ua) || /FBAN|FBAV|Instagram|Line\/|WhatsApp/.test(ua)) tip.textContent = 'באייפון, פותחים את הדף הזה בספארי, ומשם מוסיפים את שעתי למסך הבית.';
     tip.hidden = false;
   })();
-  const NS = 'http://www.w3.org/2000/svg';
   const CITIES = {
     tlv: { name: 'תל אביב-יפו', lat: 32.0809, lon: 34.7806, at: 'בתל אביב' },
     jlm: { name: 'ירושלים', lat: 31.769, lon: 35.2163, at: 'בירושלים' },
@@ -77,7 +76,7 @@
       return;
     }
     const old = $$('.sky', hero).pop();
-    const next = document.createElementNS(NS, 'svg');
+    const next = document.createElement('div');
     next.setAttribute('class', 'sky');
     next.setAttribute('aria-hidden', 'true');
     old.after(next);
@@ -229,7 +228,7 @@
     // the others one at a time when the page is idle (all five in one frame was the longest frame of a fast scroll)
     $$('.sky', stage).forEach((s) => s.remove());
     const svgs = chaps.map((c, i) => {
-      const svg = document.createElementNS(NS, 'svg');
+      const svg = document.createElement('div');
       svg.setAttribute('class', 'sky' + (i === Math.max(0, current) ? ' on' : ''));
       svg.setAttribute('aria-hidden', 'true');
       svg.dataset.i = String(i);

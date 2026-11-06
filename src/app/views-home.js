@@ -400,9 +400,9 @@
     const h = Math.max(150, Math.round(hero ? hero.offsetTop + hero.offsetHeight * .42 : 190));
     if (host.style.height !== h + 'px') host.style.height = h + 'px';
     const w = host.clientWidth || 390;
-    let svg = host.querySelector('svg.sky');
+    let svg = host.querySelector('.sky');
     if (!svg) {
-      svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+      svg = document.createElement('div'); // sky.js draws into a div: its moving parts are divs the compositor moves
       svg.setAttribute('class', 'sky'); // drawn in the same frame as the screen: no fade (it played again on every tab switch)
       svg.setAttribute('aria-hidden', 'true');
       const a = host.querySelector('.hs-a');

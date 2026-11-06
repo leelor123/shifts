@@ -52,6 +52,7 @@ let errors = [];
   page.on('dialog', async (d) => { errors.push('native dialog: ' + d.message()); await d.dismiss(); });
   await page.setViewport({ width: 412, height: 860, deviceScaleFactor: 1, isMobile: true, hasTouch: true });
   await page.emulateMediaFeatures([{ name: 'prefers-reduced-motion', value: 'no-preference' }]);
+  const svgSeen = await require('./svg-moves.js').attach(page);
   const ev = (fn, ...a) => page.evaluate(fn, ...a);
   // the Android back button: on Chrome a close request (Esc on a computer), handled by the top layer's CloseWatcher
   const back = () => page.keyboard.press('Escape');
@@ -989,6 +990,11 @@ let errors = [];
     if (!st.email || st.email[0] !== 'noa@example.com' || st.email[1] !== 15 || st.email[2] !== true) throw new Error('signInEmail: ' + JSON.stringify(st.email));
     if (st.connected !== 'mailUser0123456789abcd' || st.blocking || !st.hero || st.guest) throw new Error('not signed in: ' + JSON.stringify(st));
   });
+  await step('nothing moved as an SVG element on any screen (on the phone those stop when the page is busy: no compositor runs them)', async () => {
+    const seen = svgSeen();
+    if (seen.length) throw new Error(seen.join(', '));
+  });
+
   await step('the questions keep working when the phone storage fails', async () => {
     const M = await newUserPage();
     // every IndexedDB write from now on fails, like the iPhone "Indexed Database server lost" error

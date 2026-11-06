@@ -70,7 +70,7 @@
     const who = o && o.who && Sky;
     const title = who ? Sky.firstName(S.settings.userName) || 'Shaati' : 'Shaati';
     const sub = who ? Sky.dateLine(sc.now) : 'כמה מגיע לך על כל שעה';
-    return `<div class="skyhead">${'<svg class="sky" aria-hidden="true"></svg>'}${LOGO}<div class="sh-text"><div class="sh-hello">${esc(Sky ? Sky.greeting(sc.now) : '')}</div><h1 class="sh-title">${esc(title)}</h1><div class="sh-sub">${esc(sub)}</div></div></div>`;
+    return `<div class="skyhead"><div class="sky" aria-hidden="true"></div>${LOGO}<div class="sh-text"><div class="sh-hello">${esc(Sky ? Sky.greeting(sc.now) : '')}</div><h1 class="sh-title">${esc(title)}</h1><div class="sh-sub">${esc(sub)}</div></div></div>`;
   };
   /** Draws the sky into a screen made with App.skyHead, and brings its sheet's content in: as the opening show hands
    * over (it covers the screen now), or on its own (first: true, a screen opened later); a redraw just stays. */

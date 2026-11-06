@@ -167,7 +167,7 @@
   /* ---------------- toast ---------------- */
   let toastTimer = null;
   // opts.ok: something was saved: a little check mark draws itself next to the message
-  const TICK = '<svg class="tk" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="11"/><path d="m7 12.5 3.2 3.2L17 9"/></svg>';
+  const TICK = '<span class="tk" aria-hidden="true"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="11"/><path d="m7 12.5 3.2 3.2L17 9"/></svg></span>';
   function toast(text, action, opts) {
     let el = document.getElementById('toast');
     if (!el) { el = document.createElement('div'); el.id = 'toast'; el.className = 'toast'; el.setAttribute('role', 'status'); document.body.appendChild(el); }

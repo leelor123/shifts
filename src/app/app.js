@@ -156,7 +156,7 @@
     nav.dataset.built = '1';
     nav.innerHTML = `<div class="nav-inner">${TABS.map((t) => t.id === 'add'
       ? `<div><button class="fab" data-act="add-menu" aria-label="הוספה">${icon('plus')}</button></div>`
-      : `<button class="${App.tab === t.id ? 'on' : ''}" data-act="tab" data-tab="${t.id}" aria-label="${t.label}"><span class="pill">${icon(t.icon)}${t.id === 'home' && unread && App.tab !== 'home' ? `<span class="dot-badge">${unread > 9 ? '9+' : unread}</span>` : ''}</span>${t.label}</button>`).join('')}</div>`;
+      : `<button class="${App.tab === t.id ? 'on' : ''}" data-act="tab" data-tab="${t.id}" aria-label="${t.label}"><span class="pill"><span class="ic">${icon(t.icon)}</span>${t.id === 'home' && unread && App.tab !== 'home' ? `<span class="dot-badge">${unread > 9 ? '9+' : unread}</span>` : ''}</span>${t.label}</button>`).join('')}</div>`;
   };
   const TAB_ORDER = ['home', 'calendar', 'reports', 'settings'];
   App.go = function (tab, opts) {
