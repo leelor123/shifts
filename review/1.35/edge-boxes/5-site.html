@@ -1,0 +1,29 @@
+<!doctype html><html lang="he" dir="rtl"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>האתר: מחשבון המשמרת</title>
+<style>
+:root { --bg: #f6f4ee; --ink: #1d2230; --mute: #5b6274; --bad: #b3261e; --good: #1b7a4a; --card: #fff; }
+* { box-sizing: border-box; }
+body { margin: 0; background: var(--bg); color: var(--ink); font: 17px/1.55 Rubik, "Segoe UI", Arial, sans-serif; }
+.wrap { padding: 28px 32px; width: 1200px; }
+h1 { font-size: 28px; margin: 0 0 16px; }
+.pair { display: flex; flex-wrap: wrap; gap: 28px; align-items: flex-start; }
+.col { flex: none; }
+.col h2 { font-size: 18px; margin: 0 0 8px; }
+.was h2 { color: var(--bad); } .now h2 { color: var(--good); }
+.shot { position: relative; width: 300px; height: 633px; border-radius: 18px; overflow: hidden; box-shadow: 0 10px 30px rgba(0,0,0,.18); background: #000; }
+.shot img { display: block; width: 300px; }
+.mk { position: absolute; left: 0; top: 0; width: 26px; height: 64px; border: 3px solid #ff3b30; border-radius: 8px; box-shadow: 0 0 0 2px #fff; }
+.cta { width: 288px; border-radius: 14px; box-shadow: 0 4px 14px rgba(0,0,0,.2); margin-top: 12px; display: block; }
+.zl { font-size: 13px; color: var(--mute); margin-top: 4px; }
+.notes { flex: 1 1 360px; min-width: 0; }
+.box { background: var(--card); border-radius: 16px; padding: 14px 16px; margin-bottom: 12px; box-shadow: 0 1px 3px rgba(0,0,0,.08); }
+.box b { display: block; margin-bottom: 4px; font-size: 15px; }
+.bwas b { color: var(--bad); } .bnow b { color: var(--good); }
+.how { color: var(--mute); font-size: 15px; }
+.ltr { direction: ltr; unicode-bidi: isolate; font-family: Consolas, monospace; font-size: 14px; }
+</style></head><body><div class="wrap"><h1>האתר: מחשבון המשמרת</h1><div class="pair">
+<div class="col was"><h2>לפני</h2><div class="shot"><img src="shots/5-site-before.png" alt=""><i class="mk"></i></div></div>
+<div class="col now"><h2>אחרי</h2><div class="shot"><img src="shots/5-site-after.png" alt=""></div><img class="cta" src="shots/5-site-cta-320.png" alt=""><div class="zl">הכפתור בטלפון ברוחב 320</div></div>
+<div class="notes"><div class="box bwas"><b>מה היה לא בסדר</b>בטלפון צר (320 או 360 פיקסלים) הדף היה רחב מהמסך. הכפתור "לחשב כל משמרת אוטומטית באפליקציה" בתחתית הדף לא ירד שורה, ולכן הדף זז הצידה והפס הכחול למעלה נעצר לפני צד המסך, עם פס בהיר לידו.</div>
+<div class="box bnow"><b>מה השתנה</b>בטלפון צר הכיתוב של הכפתור יורד לשורה שנייה (רק בין מילים), והדף ברוחב המסך בדיוק. מרוחב 412 הכפתור נראה כמו קודם. התיקון נמצא בכלל אחד שמשותף לכל דפי האתר.</div>
+<div class="box how"><b>איך זה לא יחזור</b>אותה בדיקה, <bdi class="ltr">tests/e2e/edge-boxes.js</bdi>, עוברת גם על כל 17 דפי האתר בחמישה רוחבי מסך, בבהיר ובכהה.</div></div>
+</div></div></body></html>

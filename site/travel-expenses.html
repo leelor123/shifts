@@ -66,7 +66,7 @@ th { font-size: .9rem; color: var(--ink-2); font-weight: 600; background: var(--
 tr:last-child td { border-bottom: 0; }
 .cta { margin: 36px 0 8px; background: radial-gradient(110% 120% at 90% 0%, #1b3f8f 0%, transparent 60%), linear-gradient(160deg, var(--cta-1), var(--cta-2)); color: #fff; border-radius: 24px; padding: 22px; display: grid; gap: 12px; }
 .cta b { font: 700 1.25rem Rubik, sans-serif; }
-.cta .btn { background: linear-gradient(180deg, #f3dca8, var(--gold)); color: #141821; justify-self: start; }
+.cta .btn { background: linear-gradient(180deg, #f3dca8, var(--gold)); color: #141821; justify-self: start; white-space: normal; text-align: center; } /* a long label wraps between words on a narrow phone: on one line it made the page wider than a 320/360 screen (tests/e2e/edge-boxes.js) */
 details { background: var(--surface); border-radius: 16px; padding: 12px 16px; margin: 10px 0; }
 summary { font-weight: 600; cursor: pointer; min-height: 44px; display: flex; align-items: center; }
 details p { margin: 8px 0 0; color: var(--ink-2); }
