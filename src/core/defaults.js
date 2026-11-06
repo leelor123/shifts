@@ -150,6 +150,7 @@
         timerHours: 12, idleDays: 7, suspiciousHours: 20, backupDays: 30, upcomingMin: 60,
         weeklyDay: 6, weeklyHour: 21,
         remindPlanned: false, // a reminder before a planned shift: off unless switched on (few notifications)
+        runNote: false, // a notification that stays while a shift runs, with an end button (app/run-note.js): off unless switched on
         // the reminders around a planned shift, all the user's to choose: minutes before (any number of them), the
         // evening before at a set hour, a question after it ends (did you work it? so the pay comes in), and how
         // the notification behaves (stays until closed, silent)
