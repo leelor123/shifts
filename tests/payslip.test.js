@@ -149,3 +149,41 @@ T.test('missing shift with overtime is not double counted', () => {
   T.eq(h.status, 'bad'); T.near(h.amount, 8 * 40 + 2 * 50, 0.01); T.eq(h.confidence, 'high');
   T.eq(a.findings.find((x) => x.area === 'שעות נוספות').status, 'ok');
 });
+
+T.section('payslip translator');
+T.test('every field has a meaning, a Hebrew meaning, a Hebrew term and an explanation', () => {
+  for (const f of Payslip.FIELDS) {
+    T.ok(Payslip.EXPLAIN[f.key], 'EXPLAIN ' + f.key);
+    T.ok(Payslip.MEANING[f.key], 'MEANING ' + f.key);
+    T.ok(Payslip.HE_TERM[f.key], 'HE_TERM ' + f.key);
+    // the kept Hebrew copy says exactly what the translated one says in Hebrew
+    T.eq(Payslip.MEANING_HE[f.key], Payslip.MEANING[f.key], 'MEANING_HE ' + f.key);
+    T.ok(Payslip.KIND_LABEL[f.kind], 'KIND_LABEL ' + f.kind);
+  }
+  T.eq(Object.keys(Payslip.MEANING).length, Payslip.FIELDS.length);
+  T.eq(Object.keys(Payslip.MEANING_HE).length, Payslip.FIELDS.length);
+});
+T.test('explain lines carry the Hebrew term, the printed words and the kind', () => {
+  const p = Payslip.parseText(SAMPLE);
+  const lines = Payslip.explainLines(p.fields, null);
+  const base = lines.find((l) => l.key === 'base');
+  T.eq(base.heTerm, 'שכר יסוד'); T.eq(base.printed, ''); // printed as the usual term: not repeated
+  T.eq(base.kindLabel, Payslip.KIND_LABEL.pay);
+  const pe = lines.find((l) => l.key === 'pensionEmployee');
+  T.eq(pe.kind, 'ded'); T.ok(pe.meaning.length > 0 && pe.meaningHe === pe.meaning);
+  T.eq(Payslip.printedTerm('ש"נ 125 2.00 50.00 100.00'), 'ש"נ'); T.eq(Payslip.printedTerm('AI'), ''); T.eq(Payslip.printedTerm('12.5'), '');
+});
+T.test('unrecognised lines: listed, named, and the stored slip is never changed', () => {
+  const p = Payslip.parseText(SAMPLE);
+  const slip = { fields: p.fields, other: p.other.map((o) => Object.assign({}, o, { guess: o.guess || 'ignore' })) }; // as the check screen keeps them
+  const un = Payslip.unknownLines(slip.other, slip.fields);
+  T.eq(un.length, 1); T.ok(/ארוחות/.test(un[0].line)); T.eq(un[0].guess, null); T.near(un[0].value, 50, 0.001);
+  const s2 = Payslip.labelOther(slip, un[0].index, 'otherDed');
+  T.eq(s2.other[0].guess, 'otherDed'); T.eq(slip.other[0].guess, 'ignore');
+  T.eq(Payslip.unknownLines(s2.other, s2.fields)[0].kind, 'ded');
+  const s3 = Payslip.labelOther(slip, un[0].index, 'bonus');
+  T.near(s3.fields.bonus.value, 50, 0.001); T.ok(!slip.fields.bonus); T.eq(Payslip.unknownLines(s3.other, s3.fields).length, 0);
+  // a field the slip already has keeps its verified value
+  const s4 = Payslip.labelOther(slip, un[0].index, 'travel');
+  T.near(s4.fields.travel.value, 135.6, 0.001); T.eq(Payslip.unknownLines(s4.other, s4.fields).length, 1);
+});
