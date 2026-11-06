@@ -833,6 +833,7 @@
         ${F.sw('צלילים', 'צליל קצר ועדין בלחיצה, ו"קופה" כשנשמרת משמרת', 's.fx.sound', (S.settings.fx || {}).sound !== false)}
         ${F.sw('מוזיקה במשחקים', 'מנגינה קטנה לכל משחק (אפשר גם בכפתור התו בתוך המשחק)', 's.fx.music', (S.settings.fx || {}).music !== false)}
         ${F.sw('רטט', 'רטט קל בלחיצה', 's.fx.haptic', (S.settings.fx || {}).haptic !== false)}
+        ${F.sw('הקראה בקול', 'שעתי מקריא בקול את השאלות בהתחלה, ומקריא שוב כשנוגעים בו', 's.fx.voice', (S.settings.fx || {}).voice !== false)}
         <button class="btn tonal sm" data-fx-try style="margin-top:8px">${icon('sparkle', 's')} נסה</button>
         <div class="tiny muted" style="margin-top:8px">כשבטלפון מופעלת "הפחתת אנימציות", האנימציות כבויות גם כאן. עוצמת הצלילים לפי עוצמת המדיה.</div></div>`,
     mount: (el, draw) => {

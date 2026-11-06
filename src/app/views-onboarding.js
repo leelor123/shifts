@@ -252,6 +252,7 @@
         <div class="content ob-${dir}">${screens[key]()}</div>
         <div class="foot col">${foot}</div></div>`;
       live();
+      if (App.mascotStep) App.mascotStep(v, key, dir); // שעתי reads the question aloud and reacts (mascot-voice.js)
       if (App.bindOpenInBrowser) App.bindOpenInBrowser(v);
       window.scrollTo(0, 0);
     }
@@ -312,11 +313,12 @@
       // the answers are in memory either way; a storage hiccup is reported but never blocks the way in
       try {
         await Store.apply(ops, null);
-        await Store.setSettings((s) => Object.assign(s, st));
+        // the effects choices (the speaker button sets one during the setup) are not the setup's to overwrite
+        await Store.setSettings((s) => Object.assign(s, st, { fx: s.fx || st.fx }));
         if (withDemo) await App.demo.load();
       } catch (e) {
         console.warn('saving the setup answers', e);
-        Object.assign(S.settings, st);
+        Object.assign(S.settings, st, { fx: S.settings.fx || st.fx });
         UI.toast('לא הצלחנו לשמור בטלפון. התשובות יישמרו בחשבון שלך.');
       }
       saved = true;
