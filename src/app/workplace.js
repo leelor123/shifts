@@ -89,13 +89,17 @@
   /* ---------------- sharing ---------------- */
   const packFor = (e, rates) => W.pack({ employer: e, roles: S.roles.filter((r) => r.employerId === e.id), workWeek: S.settings.leave && S.settings.leave.workWeek, rates, today: U.todayKey() });
 
+  /** Writes the workplace's rules under code c. An update (v > 1) whose rules are the same as the cloud's writes
+   *  nothing and returns 'same': a new version is only for new rules (the user, 6 Nov 2026). */
   async function write(e, c, v, rates) {
     const { fs, db } = await Cloud().sdk();
     if (v > 1) {
       // one version up from the one in the cloud (another phone of mine may have put one in since)
       const now = await fs.getDoc(fs.doc(db, 'wpc', c));
       if (!now.exists()) { await setMine(e.id, null); throw Object.assign(new Error('gone'), { code: 'shaati/wp-gone' }); }
-      v = (Number.isInteger(now.data().v) ? now.data().v : 0) + 1;
+      const cv = Number.isInteger(now.data().v) ? now.data().v : 0;
+      if (W.same(now.data().r, packFor(e, rates))) { if (cv && cv !== v - 1) await setMine(e.id, { c, v: cv, rates: !!rates }); return 'same'; }
+      v = cv + 1;
     }
     const b = fs.writeBatch(db);
     const rec = { v, t: Date.now(), r: packFor(e, rates) };
@@ -200,7 +204,7 @@
             UI.toast('הקוד הועתק');
           } else if (b.hasAttribute('data-wp-update') && m) {
             busy = true; draw();
-            try { await write(e, m.c, m.v + 1, m.rates); UI.toast('הקוד עודכן לחוקים של היום', null, { ok: true }); } catch (x) { UI.toast(errText(x, true)); }
+            try { UI.toast(await write(e, m.c, m.v + 1, m.rates) === 'same' ? 'אין שינוי בחוקים, הקוד כבר מעודכן' : 'הקוד עודכן לחוקים של היום', null, { ok: true }); } catch (x) { UI.toast(errText(x, true)); }
             busy = false; draw();
           } else if (b.hasAttribute('data-wp-del') && m) {
             if (!(await UI.confirm('למחוק את הקוד?', 'הקוד והקישור יפסיקו לעבוד. מי שכבר החיל את החוקים ישמור אותם.', 'מחיקה', true))) return;

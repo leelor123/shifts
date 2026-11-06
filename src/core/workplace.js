@@ -201,6 +201,13 @@
     return list;
   }
 
-  root.Workplace = { ABC, LEN, CODE_RE, MAX_ROLES, FIELDS, KEYS, code, codeFrom, parse, pretty, pack, clean, check, hasRates, changes, apply, ops };
+  /** Two records' rules are the same, whatever the order of their keys (the cloud gives a map back in its own order):
+   *  an update with the same rules is not a new version. */
+  function same(a, b) {
+    const k = (x) => (x && typeof x === 'object' ? (Array.isArray(x) ? x.map(k) : Object.keys(x).sort().reduce((o, n) => ((o[n] = k(x[n])), o), {})) : x);
+    return JSON.stringify(k(a)) === JSON.stringify(k(b));
+  }
+
+  root.Workplace = { same, ABC, LEN, CODE_RE, MAX_ROLES, FIELDS, KEYS, code, codeFrom, parse, pretty, pack, clean, check, hasRates, changes, apply, ops };
   if (typeof module !== 'undefined') module.exports = root.Workplace;
 })(typeof window !== 'undefined' ? window : globalThis);

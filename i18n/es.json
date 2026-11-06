@@ -2815,6 +2815,7 @@
  "החוקים של {0} בשעתי: תקופת שכר, נסיעות, שעות נוספות ותוספות. פותחים את הקישור, או מקלידים את הקוד {1}": "Las reglas de {0} en Shaati: período de pago, transporte, horas extra y pluses. Abre el enlace o escribe el código {1}",
  "הקישור הועתק. אפשר להדביק בוואטסאפ": "Enlace copiado. Pégalo en WhatsApp",
  "הקוד הועתק": "Código copiado",
+ "אין שינוי בחוקים, הקוד כבר מעודכן": "Las reglas no cambiaron, el código ya está al día",
  "הקוד עודכן לחוקים של היום": "El código ya tiene las reglas de hoy",
  "למחוק את הקוד?": "¿Borrar el código?",
  "הקוד והקישור יפסיקו לעבוד. מי שכבר החיל את החוקים ישמור אותם.": "El código y el enlace dejarán de funcionar. Quien ya aplicó las reglas las conserva.",

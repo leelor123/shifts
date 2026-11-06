@@ -226,3 +226,13 @@ T.atest('undo after applying a code: the earlier work week comes back with the w
   const same = (x) => JSON.stringify(Object.assign({}, x, { updatedAt: 0, createdAt: 0 }));
   T.eq(same(S.employers[0]), same(JSON.parse(before)), 'the workplace as it was');
 });
+
+T.test('an update with the same rules is not a new version: the same rules in another key order are the same', () => {
+  const W = globalThis.Workplace;
+  const a = { n: 'קפה', ww: 6, payDay: 9, ro: [{ n: 'מלצר', r: 40.5 }, { n: 'ברמן' }] };
+  const b = { ro: [{ r: 40.5, n: 'מלצר' }, { n: 'ברמן' }], payDay: 9, ww: 6, n: 'קפה' };
+  T.ok(W.same(a, b));
+  T.ok(!W.same(a, Object.assign({}, b, { payDay: 10 })));
+  T.ok(!W.same(a, Object.assign({}, b, { ro: [{ n: 'ברמן' }, { n: 'מלצר', r: 40.5 }] }))); // the roles' order is theirs
+  T.ok(!W.same(a, Object.assign({}, b, { evePct: 0 })));
+});
