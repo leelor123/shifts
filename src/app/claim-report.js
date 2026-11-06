@@ -32,7 +32,16 @@
       let a = null;
       try { a = root.Payslip.analyze(slip, App.model); } catch (e) { console.warn('claim', e); }
       if (!a) continue;
-      for (const f of a.findings) if (f.status === 'bad' || (f.status === 'warn' && f.amount > 0)) findings.push(Object.assign({ period: slip.period }, f));
+      // the innocent reasons the payslip check found in this person's data (Payslip.checkGap): what they explain in
+      // full is not asked for, and a finding they explain in part asks for what is left
+      let c = null;
+      try { c = root.Payslip.checkGap(a, slip, App.model); } catch (e) { console.warn('claim check', e); }
+      for (const f of a.findings) {
+        if (!(f.status === 'bad' || (f.status === 'warn' && f.amount > 0))) continue;
+        const it = c && c.items.find((x) => x.id === f.id);
+        const why = it ? it.reasons.filter((r) => r.found === 'yes' && r.amount != null).map((r) => r.title) : [];
+        findings.push(Object.assign({ period: slip.period, left: it ? it.left : Math.max(0, f.amount || 0), explained: it ? it.explained : 0, why }, f));
+      }
     }
     const gaps = S.gaps.filter((g) => g.status !== 'resolved' && g.period >= from.slice(0, 7) && g.period <= to.slice(0, 7));
     const holidays = Engine.holidayPay ? Engine.holidayPay(App.model, from, to, today).filter((h) => h.status === 'due') : [];
@@ -42,12 +51,14 @@
     const sum = Engine.rangeSummary(App.model, from, to);
     return { from, to, slips, findings, gaps, holidays, mw, lowRoles, shifts, sum };
   }
-  const total = (d) => d.findings.filter((f) => f.status === 'bad').reduce((a, f) => a + Math.max(0, f.amount || 0), 0) + d.holidays.reduce((a, h) => a + h.amount, 0);
+  const total = (d) => d.findings.filter((f) => f.status === 'bad').reduce((a, f) => a + f.left, 0) + d.holidays.reduce((a, h) => a + h.amount, 0);
+  /** The findings to ask about: those the innocent reasons leave open; when they explain them all, all of them (never blocked). */
+  const asked = (d) => { const bad = d.findings.filter((x) => x.status === 'bad'); const open = bad.filter((x) => x.left >= 1 || !(x.amount > 0)); return open.length || d.holidays.length || d.lowRoles.length ? open : bad; };
 
   /** The letter (first person, polite), from what was found. */
   function letter(d) {
     const items = [];
-    for (const f of d.findings.filter((x) => x.status === 'bad')) items.push(`${U.fmtMonth(f.period)}: ${f.title}${f.amount > 0 ? ` (הפרש משוער ${U.money(f.amount)})` : ''}.`);
+    for (const f of asked(d)) { const amt = f.left >= 1 ? f.left : f.amount; items.push(`${U.fmtMonth(f.period)}: ${f.title}${amt > 0 ? ` (הפרש משוער ${U.money(amt)})` : ''}.`); }
     for (const h of d.holidays) items.push(`דמי חג על ${h.name} (${U.fmtDate(h.key, 'short')}): לפי ממוצע השעות שלי, כ-${U.money(h.amount)}.`);
     for (const r of d.lowRoles) items.push(`התעריף ב${r.name} (${U.money(Engine.roleRate(r, U.todayKey()))} לשעה) נמוך משכר המינימום (${U.money(d.mw.hourly)}).`);
     if (!items.length) return '';
@@ -69,7 +80,7 @@
       <span class="kp">משמרות: <b>${sum.shifts}</b></span><span class="kp">שעות: <b>${U.hours(sum.hours)}</b></span><span class="kp">שכר מחושב (ברוטו): <b>${U.money(sum.gross)}</b></span>${t > 0 ? `<span class="kp">הפרש משוער: <b>${U.money(t)}</b></span>` : ''}
       <h3>מה נמצא</h3>
       ${d.findings.length || d.holidays.length || d.lowRoles.length ? `<table><tr><th>תקופה</th><th>נושא</th><th>פירוט</th><th>הפרש משוער</th></tr>
-        ${d.findings.map((f) => row([U.fmtMonth(f.period), esc(f.title), esc(f.detail || ''), f.amount > 0 ? U.money(f.amount) : '—'])).join('')}
+        ${d.findings.map((f) => row([U.fmtMonth(f.period), esc(f.title), esc(f.detail || '') + (f.explained >= 1 && f.why.length ? ` · ייתכן שמוסבר: ${esc(f.why.join(', '))} (${U.money(f.explained)})` : ''), f.status === 'bad' && f.explained >= 1 ? U.money(f.left) : f.amount > 0 ? U.money(f.amount) : '—'])).join('')}
         ${d.holidays.map((h) => row([U.fmtDate(h.key, 'short'), 'דמי חג: ' + esc(h.name), `לא היה יום עבודה בגלל החג. ממוצע ${U.num(h.avgHours, 1)} שעות ביום × ${U.money(h.rate)} (3 חודשים לפני החג)`, U.money(h.amount)])).join('')}
         ${d.lowRoles.map((r) => row(['היום', 'שכר מינימום: ' + esc(r.name), `${U.money(Engine.roleRate(r, U.todayKey()))} לשעה, המינימום ${U.money(d.mw.hourly)}`, '—'])).join('')}</table>`
         : '<div>לא נמצאו פערים בתלושים שהוזנו או זכויות שנראות חסרות לתקופה הזאת.</div>'}
@@ -108,7 +119,7 @@
       const r = RANGES.find((x) => x[0] === pick);
       d = gather(r[2], r[3]);
       const t = total(d);
-      const n = d.findings.filter((f) => f.status === 'bad').length + d.holidays.length + d.lowRoles.length;
+      const n = d.findings.filter((f) => f.status === 'bad' && (f.left >= 1 || !(f.amount > 0))).length + d.holidays.length + d.lowRoles.length;
       box.innerHTML = `${App.mascotSays ? App.mascotSays(n ? 'think' : 'happy', n ? `מצאתי ${n === 1 ? 'דבר אחד' : `${n} דברים`} שכדאי לבדוק עם המעסיק${t > 0 ? `, בסך כ-${U.money(t, 0)}` : ''}.` : 'לא מצאתי פערים לתקופה הזאת. אפשר עדיין להפיק דוח מסודר של המשמרות והשכר.', { size: 64 }) : ''}
         <div class="field"><span class="lbl">לאיזו תקופה?</span><div class="chips">${RANGES.map(([k, l, a, b]) => `<button class="chip ${pick === k ? 'on' : ''}" data-cl-range="${k}" aria-pressed="${pick === k}">${l}</button>`).join('')}</div></div>
         <div class="card cl-what">

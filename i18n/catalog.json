@@ -655,78 +655,85 @@
   "key": " (הפרש משוער {0})",
   "kind": "tpl",
   "where": [
-   "app/claim-report.js:50"
+   "app/claim-report.js:61"
   ]
  },
  {
   "key": "דמי חג על {0} ({1}): לפי ממוצע השעות שלי, כ-{2}.",
   "kind": "tpl",
   "where": [
-   "app/claim-report.js:51"
+   "app/claim-report.js:62"
   ]
  },
  {
   "key": "התעריף ב{0} ({1} לשעה) נמוך משכר המינימום ({2}).",
   "kind": "tpl",
   "where": [
-   "app/claim-report.js:52"
+   "app/claim-report.js:63"
   ]
  },
  {
   "key": "שלום,\n\nבדקתי את השכר שלי לתקופה {0} עד {1} מול רישום המשמרות שלי ומול הזכויות לפי החוק, ויש כמה דברים שאשמח שנבדוק יחד:\n\n{2}\n{3}\nמצורף דוח מפורט עם כל המשמרות והחישוב. אשמח שתבדקו ותעדכנו אותי, ואם צריך, שיתוקן בתלוש הבא. אם פספסתי משהו, אשמח להסבר.\n\nתודה רבה,\n{4}",
   "kind": "tpl",
   "where": [
-   "app/claim-report.js:56"
+   "app/claim-report.js:67"
   ]
  },
  {
   "key": "\nסה״כ הפרש משוער: {0}.\n",
   "kind": "tpl",
   "where": [
-   "app/claim-report.js:56",
-   "core/payslip.js:672"
+   "app/claim-report.js:67",
+   "core/payslip.js:1023"
   ]
  },
  {
   "key": "<div dir=\"rtl\" class=\"claim\">\n      <h1>דוח לבירור שכר וזכויות</h1>\n      <div>{0}{1} · {2} – {3} · הופק {4}</div><br>\n      <span class=\"kp\">משמרות: <b>{5}</b></span><span class=\"kp\">שעות: <b>{6}</b></span><span class=\"kp\">שכר מחושב (ברוטו): <b>{7}</b></span>{8}\n      <h3>מה נמצא</h3>\n      {9}\n      {10}\n      <h3>לפי סוג שעה</h3><table><tr><th>רגילות</th><th>125%</th><th>150%</th><th>שבת/חג</th><th>שבת/חג + נוספות</th><th>לילה</th></tr>{11}</table>\n      <h3>המשמרות</h3><table><tr><th>תאריך</th><th>תפקיד</th><th>שעות</th><th>זמן</th><th>נוספות</th><th>שבת/חג</th><th>שכר מחושב</th></tr>\n        {12}</table>\n      <h3>על מה זה נשען</h3><table>{13}</table>\n      <div style=\"font-size:8pt;color:#555;margin-top:10pt\">חושב באפליקציית Shaati לפי המשמרות והתלושים שהוזנו בה, וההגדרות (תעריף, שעות נוספות, שבת וחגים לפי {14}). זה כלי עזר ואינו ייעוץ משפטי: הסכם קיבוצי, צו הרחבה ענפי או החוזה שלך יכולים לקבוע אחרת. מומלץ לצרף את התלושים ודוחות הנוכחות. מידע נוסף: kolzchut.org.il</div>\n    </div>",
   "kind": "tpl",
   "where": [
-   "app/claim-report.js:66"
+   "app/claim-report.js:77"
   ]
  },
  {
   "key": "<span class=\"kp\">הפרש משוער: <b>{0}</b></span>",
   "kind": "tpl",
   "where": [
-   "app/claim-report.js:69"
+   "app/claim-report.js:80"
   ]
  },
  {
   "key": "<table><tr><th>תקופה</th><th>נושא</th><th>פירוט</th><th>הפרש משוער</th></tr>\n        {0}\n        {1}\n        {2}</table>",
   "kind": "tpl",
   "where": [
-   "app/claim-report.js:71"
+   "app/claim-report.js:82"
+  ]
+ },
+ {
+  "key": " · ייתכן שמוסבר: {0} ({1})",
+  "kind": "tpl",
+  "where": [
+   "app/claim-report.js:83"
   ]
  },
  {
   "key": "דמי חג: ",
   "kind": "lit",
   "where": [
-   "app/claim-report.js:73"
+   "app/claim-report.js:84"
   ]
  },
  {
   "key": "לא היה יום עבודה בגלל החג. ממוצע {0} שעות ביום × {1} (3 חודשים לפני החג)",
   "kind": "tpl",
   "where": [
-   "app/claim-report.js:73"
+   "app/claim-report.js:84"
   ]
  },
  {
   "key": "היום",
   "kind": "lit",
   "where": [
-   "app/claim-report.js:74",
+   "app/claim-report.js:85",
    "app/pickers.js:95",
    "app/views-home.js:241",
    "app/views-leaderboard.js:17",
@@ -737,49 +744,49 @@
   "key": "שכר מינימום: ",
   "kind": "lit",
   "where": [
-   "app/claim-report.js:74"
+   "app/claim-report.js:85"
   ]
  },
  {
   "key": "{0} לשעה, המינימום {1}",
   "kind": "tpl",
   "where": [
-   "app/claim-report.js:74"
+   "app/claim-report.js:85"
   ]
  },
  {
   "key": "<div>לא נמצאו פערים בתלושים שהוזנו או זכויות שנראות חסרות לתקופה הזאת.</div>",
   "kind": "lit",
   "where": [
-   "app/claim-report.js:75"
+   "app/claim-report.js:86"
   ]
  },
  {
   "key": "<div style=\"font-size:9pt\">תלושים שנבדקו: {0}.</div>",
   "kind": "tpl",
   "where": [
-   "app/claim-report.js:76"
+   "app/claim-report.js:87"
   ]
  },
  {
   "key": "<div style=\"font-size:9pt\">לא הוזנו תלושים לתקופה הזאת. בדיקת תלוש (בהוספה +) משווה כל תלוש לרישום המשמרות.</div>",
   "kind": "lit",
   "where": [
-   "app/claim-report.js:76"
+   "app/claim-report.js:87"
   ]
  },
  {
   "key": "העיר שנבחרה",
   "kind": "lit",
   "where": [
-   "app/claim-report.js:81"
+   "app/claim-report.js:92"
   ]
  },
  {
   "key": "בחלון ההדפסה בחר \"שמור כ-⁠PDF\"",
   "kind": "lit",
   "where": [
-   "app/claim-report.js:83",
+   "app/claim-report.js:94",
    "app/export.js:90",
    "app/export.js:150"
   ]
@@ -788,21 +795,21 @@
   "key": "התקופה הקודמת",
   "kind": "lit",
   "where": [
-   "app/claim-report.js:95"
+   "app/claim-report.js:106"
   ]
  },
  {
   "key": "3 חודשים",
   "kind": "lit",
   "where": [
-   "app/claim-report.js:96"
+   "app/claim-report.js:107"
   ]
  },
  {
   "key": "שנה",
   "kind": "lit",
   "where": [
-   "app/claim-report.js:97",
+   "app/claim-report.js:108",
    "app/views-reports.js:199"
   ]
  },
@@ -810,126 +817,126 @@
   "key": "דוח לבירור שכר וזכויות",
   "kind": "lit",
   "where": [
-   "app/claim-report.js:102"
+   "app/claim-report.js:113"
   ]
  },
  {
   "key": "<button class=\"btn tonal\" data-cl-letter>{0} מכתב למעסיק</button><button class=\"btn\" data-cl-pdf>{1} הפקת PDF</button>",
   "kind": "tpl",
   "where": [
-   "app/claim-report.js:104"
+   "app/claim-report.js:115"
   ]
  },
  {
   "key": "{0}\n        <div class=\"field\"><span class=\"lbl\">לאיזו תקופה?</span><div class=\"chips\">{1}</div></div>\n        <div class=\"card cl-what\">\n          <div class=\"rt-row\"><span class=\"rt-mark\">{2}</span><div><div class=\"t\">{3}</div><div class=\"d\">{4}</div></div></div>\n          <div class=\"rt-row\"><span class=\"rt-mark\">{5}</span><div><div class=\"t\">דמי חגים</div><div class=\"d\">{6}</div></div></div>\n          <div class=\"rt-row\"><span class=\"rt-mark\">{7}</span><div><div class=\"t\">שכר מינימום</div><div class=\"d\">{8}</div></div></div>\n          <div class=\"rt-row\"><span class=\"rt-mark\">{9}</span><div><div class=\"t\">{10} משמרות · {11} שעות</div><div class=\"d\">כל משמרת עם השעות והשכר המחושב</div></div></div>\n        </div>\n        <div class=\"tiny muted\">{12} הדוח נוצר בטלפון. הוא כלי עזר ולא ייעוץ משפטי; הסכם קיבוצי או צו הרחבה ענפי יכולים לקבוע אחרת.</div>",
   "kind": "tpl",
   "where": [
-   "app/claim-report.js:112"
+   "app/claim-report.js:123"
   ]
  },
  {
   "key": "מצאתי {0} שכדאי לבדוק עם המעסיק{1}.",
   "kind": "tpl",
   "where": [
-   "app/claim-report.js:112"
+   "app/claim-report.js:123"
   ]
  },
  {
   "key": "דבר אחד",
   "kind": "lit",
   "where": [
-   "app/claim-report.js:112"
+   "app/claim-report.js:123"
   ]
  },
  {
   "key": "{0} דברים",
   "kind": "tpl",
   "where": [
-   "app/claim-report.js:112"
+   "app/claim-report.js:123"
   ]
  },
  {
   "key": ", בסך כ-{0}",
   "kind": "tpl",
   "where": [
-   "app/claim-report.js:112"
+   "app/claim-report.js:123"
   ]
  },
  {
   "key": "לא מצאתי פערים לתקופה הזאת. אפשר עדיין להפיק דוח מסודר של המשמרות והשכר.",
   "kind": "lit",
   "where": [
-   "app/claim-report.js:112"
+   "app/claim-report.js:123"
   ]
  },
  {
   "key": "תלוש אחד נבדק",
   "kind": "lit",
   "where": [
-   "app/claim-report.js:115"
+   "app/claim-report.js:126"
   ]
  },
  {
   "key": "{0} תלושים נבדקו",
   "kind": "tpl",
   "where": [
-   "app/claim-report.js:115"
+   "app/claim-report.js:126"
   ]
  },
  {
   "key": "לא הוזנו תלושים לתקופה",
   "kind": "lit",
   "where": [
-   "app/claim-report.js:115"
+   "app/claim-report.js:126"
   ]
  },
  {
   "key": "{0} מהבדיקה",
   "kind": "tpl",
   "where": [
-   "app/claim-report.js:115"
+   "app/claim-report.js:126"
   ]
  },
  {
   "key": "ממצא אחד",
   "kind": "lit",
   "where": [
-   "app/claim-report.js:115"
+   "app/claim-report.js:126"
   ]
  },
  {
   "key": "{0} ממצאים",
   "kind": "tpl",
   "where": [
-   "app/claim-report.js:115"
+   "app/claim-report.js:126"
   ]
  },
  {
   "key": "לא נמצאו פערים בתלושים",
   "kind": "lit",
   "where": [
-   "app/claim-report.js:115"
+   "app/claim-report.js:126"
   ]
  },
  {
   "key": "בדיקת תלוש (בהוספה +) מוסיפה את ההשוואה לדוח",
   "kind": "lit",
   "where": [
-   "app/claim-report.js:115"
+   "app/claim-report.js:126"
   ]
  },
  {
   "key": "כ-{0} על {1}",
   "kind": "tpl",
   "where": [
-   "app/claim-report.js:116"
+   "app/claim-report.js:127"
   ]
  },
  {
   "key": "יום חג אחד",
   "kind": "lit",
   "where": [
-   "app/claim-report.js:116",
+   "app/claim-report.js:127",
    "app/views-rights.js:125",
    "app/views-rights.js:142"
   ]
@@ -938,7 +945,7 @@
   "key": "{0} ימי חג",
   "kind": "tpl",
   "where": [
-   "app/claim-report.js:116",
+   "app/claim-report.js:127",
    "app/views-rights.js:125",
    "app/views-rights.js:142"
   ]
@@ -947,64 +954,64 @@
   "key": "לא נראה שחסר",
   "kind": "lit",
   "where": [
-   "app/claim-report.js:116"
+   "app/claim-report.js:127"
   ]
  },
  {
   "key": ": נמוך מהמינימום",
   "kind": "lit",
   "where": [
-   "app/claim-report.js:117"
+   "app/claim-report.js:128"
   ]
  },
  {
   "key": "התעריפים מעל המינימום",
   "kind": "lit",
   "where": [
-   "app/claim-report.js:117"
+   "app/claim-report.js:128"
   ]
  },
  {
   "key": "לא נמצא מה לבקש לתקופה הזאת",
   "kind": "lit",
   "where": [
-   "app/claim-report.js:129"
+   "app/claim-report.js:140"
   ]
  },
  {
   "key": "מכתב למעסיק",
   "kind": "lit",
   "where": [
-   "app/claim-report.js:131"
+   "app/claim-report.js:142"
   ]
  },
  {
   "key": "<div class=\"small muted\" style=\"margin-bottom:8px\">אפשר לערוך לפני ששולחים. כדאי לצרף את הדוח (PDF).</div><textarea class=\"input\" id=\"cl-text\" rows=\"14\">{0}</textarea>",
   "kind": "tpl",
   "where": [
-   "app/claim-report.js:132"
+   "app/claim-report.js:143"
   ]
  },
  {
   "key": "<button class=\"btn tonal\" data-cl-copy>{0} העתקה</button><button class=\"btn\" data-cl-share>{1} שיתוף</button>",
   "kind": "tpl",
   "where": [
-   "app/claim-report.js:133"
+   "app/claim-report.js:144"
   ]
  },
  {
   "key": "הועתק ✓",
   "kind": "lit",
   "where": [
-   "app/claim-report.js:138",
-   "app/claim-report.js:139"
+   "app/claim-report.js:149",
+   "app/claim-report.js:150"
   ]
  },
  {
   "key": "מסמנים ומעתיקים",
   "kind": "lit",
   "where": [
-   "app/claim-report.js:138"
+   "app/claim-report.js:149"
   ]
  },
  {
@@ -1525,7 +1532,8 @@
    "core/payslip.js:40",
    "core/payslip.js:470",
    "core/payslip.js:471",
-   "core/payslip.js:472"
+   "core/payslip.js:472",
+   "core/payslip.js:639"
   ]
  },
  {
@@ -1564,9 +1572,9 @@
    "app/export.js:43",
    "app/views-payslip.js:207",
    "app/views-payslip.js:247",
-   "app/views-payslip.js:540",
+   "app/views-payslip.js:654",
    "app/views-reports.js:213",
-   "core/payslip.js:588"
+   "core/payslip.js:599"
   ]
  },
  {
@@ -1670,7 +1678,8 @@
    "core/payslip.js:357",
    "core/payslip.js:377",
    "core/payslip.js:382",
-   "core/payslip.js:384"
+   "core/payslip.js:384",
+   "core/payslip.js:639"
   ]
  },
  {
@@ -1713,8 +1722,8 @@
    "core/games.js:185",
    "core/insights.js:402",
    "core/payslip.js:24",
-   "core/payslip.js:582",
-   "core/payslip.js:600"
+   "core/payslip.js:593",
+   "core/payslip.js:939"
   ]
  },
  {
@@ -2184,7 +2193,7 @@
    "app/views-leaderboard.js:340",
    "app/views-leaderboard.js:543",
    "app/views-login.js:318",
-   "app/views-payslip.js:590"
+   "app/views-payslip.js:704"
   ]
  },
  {
@@ -3731,7 +3740,7 @@
   "where": [
    "app/schedule-import.js:173",
    "app/views-login.js:23",
-   "app/views-payslip.js:579",
+   "app/views-payslip.js:693",
    "app/views-settings.js:946",
    "app/views-settings.js:968"
   ]
@@ -4568,7 +4577,7 @@
   "where": [
    "app/views-admin.js:168",
    "app/views-login.js:328",
-   "app/views-payslip.js:437",
+   "app/views-payslip.js:535",
    "app/views-settings.js:393",
    "app/views-settings.js:396",
    "app/views-settings.js:553",
@@ -7210,11 +7219,11 @@
    "app/views-home.js:212",
    "app/views-home.js:212",
    "app/views-payslip.js:247",
-   "app/views-payslip.js:539",
+   "app/views-payslip.js:653",
    "app/views-settings.js:824",
    "core/games.js:186",
-   "core/payslip.js:578",
-   "core/payslip.js:608"
+   "core/payslip.js:589",
+   "core/payslip.js:947"
   ]
  },
  {
@@ -7235,7 +7244,8 @@
    "core/games.js:187",
    "core/insights.js:19",
    "core/payslip.js:457",
-   "core/payslip.js:461"
+   "core/payslip.js:461",
+   "core/payslip.js:639"
   ]
  },
  {
@@ -7255,7 +7265,8 @@
    "core/payslip.js:440",
    "core/payslip.js:441",
    "core/payslip.js:443",
-   "core/payslip.js:444"
+   "core/payslip.js:444",
+   "core/payslip.js:639"
   ]
  },
  {
@@ -7284,7 +7295,8 @@
    "core/payslip.js:505",
    "core/payslip.js:509",
    "core/payslip.js:513",
-   "core/payslip.js:601"
+   "core/payslip.js:639",
+   "core/payslip.js:940"
   ]
  },
  {
@@ -7311,7 +7323,8 @@
    "core/games.js:195",
    "core/insights.js:43",
    "core/payslip.js:482",
-   "core/payslip.js:483"
+   "core/payslip.js:483",
+   "core/payslip.js:639"
   ]
  },
  {
@@ -7552,7 +7565,8 @@
    "app/views-home.js:159",
    "app/views-quick.js:37",
    "app/views-settings.js:589",
-   "core/games.js:196"
+   "core/games.js:196",
+   "core/payslip.js:743"
   ]
  },
  {
@@ -7609,7 +7623,8 @@
   "kind": "lit",
   "where": [
    "app/views-home.js:203",
-   "app/widgets.js:59"
+   "app/widgets.js:59",
+   "core/payslip.js:708"
   ]
  },
  {
@@ -8637,7 +8652,7 @@
   "kind": "lit",
   "where": [
    "app/views-leaderboard.js:468",
-   "app/views-payslip.js:519",
+   "app/views-payslip.js:633",
    "app/views-recap.js:230"
   ]
  },
@@ -8660,7 +8675,7 @@
   "kind": "lit",
   "where": [
    "app/views-leaderboard.js:477",
-   "app/views-payslip.js:523",
+   "app/views-payslip.js:637",
    "app/views-recap.js:236"
   ]
  },
@@ -10431,445 +10446,620 @@
   "key": "בחרו את חודש התלוש",
   "kind": "lit",
   "where": [
-   "app/views-payslip.js:364"
+   "app/views-payslip.js:371"
   ]
  },
  {
   "key": "הוסיפו לפחות שורה אחת מהתלוש",
   "kind": "lit",
   "where": [
-   "app/views-payslip.js:370"
+   "app/views-payslip.js:377"
   ]
  },
  {
   "key": "תקין",
   "kind": "lit",
   "where": [
-   "app/views-payslip.js:381"
+   "app/views-payslip.js:388"
   ]
  },
  {
   "key": "כדאי לבדוק",
   "kind": "lit",
   "where": [
-   "app/views-payslip.js:381"
+   "app/views-payslip.js:388"
   ]
  },
  {
   "key": "חסר או שגוי",
   "kind": "lit",
   "where": [
-   "app/views-payslip.js:381"
+   "app/views-payslip.js:388"
   ]
  },
  {
   "key": "ביטחון גבוה",
   "kind": "lit",
   "where": [
-   "app/views-payslip.js:382"
+   "app/views-payslip.js:389"
   ]
  },
  {
   "key": "ביטחון בינוני",
   "kind": "lit",
   "where": [
-   "app/views-payslip.js:382"
+   "app/views-payslip.js:389"
   ]
  },
  {
   "key": "ביטחון נמוך",
   "kind": "lit",
   "where": [
-   "app/views-payslip.js:382"
+   "app/views-payslip.js:389"
   ]
  },
  {
-  "key": "\n      <div class=\"status-summary\"><div class=\"ok\">{0} {1}<div class=\"tiny\">תקין</div></div><div class=\"warn\">{2} {3}<div class=\"tiny\">לבדוק</div></div><div class=\"bad\">{4} {5}<div class=\"tiny\">חסר/שגוי</div></div></div>\n      {6}\n      {7}\n      <div class=\"small muted\" style=\"margin:0 4px 10px\">תקופה: ⁦{8}⁠–⁠{9}⁩ · {10} משמרות · {11} ש׳</div>\n      {12}\n      {13}\n      {14}\n      {15}\n      <div class=\"section-title\">{16} הסבר לכל שורה</div>\n      <div class=\"list\">{17}</div>\n      {18}",
-  "kind": "tpl",
-  "where": [
-   "app/views-payslip.js:395"
-  ]
- },
- {
-  "key": "<div class=\"card tonal\"><div class=\"small\">הפרש משוער לטובתך</div><div class=\"hero-num\">{0}</div><div class=\"tiny\">סכום הממצאים המסומנים {1}. בדוק את הפירוט לפני פנייה למעסיק.</div><button class=\"btn tonal sm found-share\" data-act=\"found-share\" data-amount=\"{2}\" data-k=\"found\">{3} שתף: שעתי מצאה לי {4}</button></div>",
-  "kind": "tpl",
-  "where": [
-   "app/views-payslip.js:397"
-  ]
- },
- {
-  "key": "<div class=\"card tonal\"><b>{0} לא נמצאו חוסרים</b><div class=\"small\">התלוש תואם למשמרות שרשמת{1}.</div></div>",
-  "kind": "tpl",
-  "where": [
-   "app/views-payslip.js:397"
-  ]
- },
- {
-  "key": ", עם כמה נקודות לבדיקה",
+  "key": "נמצא בנתונים שלך",
   "kind": "lit",
   "where": [
    "app/views-payslip.js:397"
   ]
  },
  {
-  "key": "<div class=\"banner warn\">{0}<div>{1} משמרות בתקופה כוללות עקיפה ידנית. ממצאים שנובעים מהן מסומנים.</div></div>",
-  "kind": "tpl",
-  "where": [
-   "app/views-payslip.js:398"
-  ]
- },
- {
-  "key": "<div class=\"finding {0}\">\n        <div class=\"ft\"><span class=\"fi\">{1}</span><span>{2} · {3}</span>{4}</div>\n        <div class=\"fd\">{5}</div>\n        {6}\n        {7}\n        {8}\n        <div class=\"fb\">על מה זה מבוסס: {9} · <span class=\"conf {10}\">{11}</span></div></div>",
-  "kind": "tpl",
-  "where": [
-   "app/views-payslip.js:400"
-  ]
- },
- {
-  "key": "<div class=\"section-title\">{0} מה לעשות</div><div class=\"card\"><div class=\"small\" style=\"margin-bottom:8px\">הודעה מוכנה למעסיק / משאבי אנוש (אפשר לערוך):</div><textarea class=\"input\" id=\"ps-msg\" rows=\"10\" aria-label=\"הודעה למעסיק\">{1}</textarea>\n        <div class=\"btn-row\" style=\"margin-top:8px\"><button class=\"btn tonal\" data-copy-msg>{2} העתק</button><button class=\"btn tonal\" data-share-msg>{3} שתף</button></div></div>",
-  "kind": "tpl",
-  "where": [
-   "app/views-payslip.js:407"
-  ]
- },
- {
-  "key": "<div class=\"section-title\">{0} שינויים מהתלוש הקודם</div><div class=\"card\">{1}</div>",
-  "kind": "tpl",
-  "where": [
-   "app/views-payslip.js:409"
-  ]
- },
- {
-  "key": "<div class=\"section-title\">{0} מברוטו לנטו</div><div class=\"card\">{1}\n        <div class=\"tiny muted\">כחול = ברוטו, אדום = ניכויים, ירוק = נטו. לחץ על עמודה לפרטים.</div></div>",
-  "kind": "tpl",
-  "where": [
-   "app/views-payslip.js:410"
-  ]
- },
- {
-  "key": " <span class=\"tag warn\">שינוי</span>",
+  "key": "אולי",
   "kind": "lit",
   "where": [
-   "app/views-payslip.js:413"
+   "app/views-payslip.js:397"
   ]
  },
  {
-  "key": "<br>כמות: {0}",
+  "key": "לא נמצא",
+  "kind": "lit",
+  "where": [
+   "app/views-payslip.js:397"
+  ]
+ },
+ {
+  "key": "<button class=\"btn text sm\" data-gc-set=\"{0}\" data-f=\"{1}\">{2} לבדוק בהגדרות</button>",
+  "kind": "tpl",
+  "where": [
+   "app/views-payslip.js:401"
+  ]
+ },
+ {
+  "key": "<button class=\"btn text sm\" data-gc-verify=\"{0}\">{1} לתקן את נתוני התלוש</button>",
+  "kind": "tpl",
+  "where": [
+   "app/views-payslip.js:402"
+  ]
+ },
+ {
+  "key": "מסביר",
+  "kind": "lit",
+  "where": [
+   "app/views-payslip.js:408"
+  ]
+ },
+ {
+  "key": "עד",
+  "kind": "lit",
+  "where": [
+   "app/views-payslip.js:408"
+  ]
+ },
+ {
+  "key": "<div class=\"section-title\" id=\"ps-check-t\">{0} לפני שכותבים למעסיק</div>\n      <div class=\"card gc\" id=\"ps-check\">\n        <div class=\"small gc-intro\">לפער יכולה להיות סיבה תמימה. בדקנו את הסיבות האפשריות מול הנתונים שלך, מהסבירה ביותר.</div>\n        {1}\n        <div class=\"gc-left{2}\"><small>הפער שנשאר אחרי הבדיקות</small><b>{3}</b></div>\n        <div class=\"small gc-sum\">{4}</div>\n        {5}\n      </div>",
   "kind": "tpl",
   "where": [
    "app/views-payslip.js:413"
   ]
  },
  {
-  "key": "ניתוח תלוש · ",
-  "kind": "lit",
-  "where": [
-   "app/views-payslip.js:419"
-  ]
- },
- {
-  "key": "<button class=\"btn tonal\" data-edit>{0} תקן נתונים</button><button class=\"btn\" data-save>{1} שמור בארכיון</button>",
-  "kind": "tpl",
-  "where": [
-   "app/views-payslip.js:421"
-  ]
- },
- {
-  "key": "<button class=\"btn danger\" data-del style=\"flex:0 0 auto\" aria-label=\"מחיקת התלוש\">{0}</button><button class=\"btn tonal\" data-edit>{1} תקן נתונים</button>{2}",
+  "key": "<div class=\"gc-no\">{0}<span>בדקנו ולא מצאנו: {1}</span></div>",
   "kind": "tpl",
   "where": [
    "app/views-payslip.js:422"
   ]
  },
  {
-  "key": "ההודעה הועתקה",
+  "key": "הסיבות שמצאנו מסבירות את כל הפער, כך שכנראה לא חסר לך כסף. כדאי לבדוק אותן, ואם משהו עדיין לא מסתדר, המכתב מחכה למטה.",
+  "kind": "lit",
+  "where": [
+   "app/views-payslip.js:426"
+  ]
+ },
+ {
+  "key": "אם בדקת ועדיין חסר, המכתב למטה מבקש רק את הפער שנשאר.",
   "kind": "lit",
   "where": [
    "app/views-payslip.js:427"
   ]
  },
  {
+  "key": "לא מצאנו סיבה תמימה שמסבירה את הפער. המכתב למטה מוכן.",
+  "kind": "lit",
+  "where": [
+   "app/views-payslip.js:427"
+  ]
+ },
+ {
+  "key": "{0}\n          <button class=\"btn text sm block gc-letter-anyway\" data-go-letter>{1} להמשיך למכתב בכל זאת</button>",
+  "kind": "tpl",
+  "where": [
+   "app/views-payslip.js:428"
+  ]
+ },
+ {
+  "key": "<button class=\"btn block\" data-gc-remind>{0} תזכיר לי לבדוק בתלוש הבא</button>",
+  "kind": "tpl",
+  "where": [
+   "app/views-payslip.js:428"
+  ]
+ },
+ {
+  "key": "<button class=\"btn block\" data-go-letter>{0} בדקתי, להמשיך למכתב</button>",
+  "kind": "tpl",
+  "where": [
+   "app/views-payslip.js:430"
+  ]
+ },
+ {
+  "key": "<div class=\"card tonal\"><b>{0} לא נמצאו חוסרים</b><div class=\"small\">התלוש תואם למשמרות שרשמת{1}.</div></div>",
+  "kind": "tpl",
+  "where": [
+   "app/views-payslip.js:447"
+  ]
+ },
+ {
+  "key": ", עם כמה נקודות לבדיקה",
+  "kind": "lit",
+  "where": [
+   "app/views-payslip.js:447"
+  ]
+ },
+ {
+  "key": "<div class=\"card tonal\"><b>{0} כנראה לא חסר לך כסף</b><div class=\"small\">ההפרש של {1} שנמצא בתלוש מוסבר כולו בסיבות שמצאנו בנתונים שלך.</div></div>",
+  "kind": "tpl",
+  "where": [
+   "app/views-payslip.js:448"
+  ]
+ },
+ {
+  "key": "<div class=\"card tonal\"><div class=\"small\">הפרש משוער לטובתך</div><div class=\"hero-num\">{0}</div><div class=\"tiny\">{1}</div></div>",
+  "kind": "tpl",
+  "where": [
+   "app/views-payslip.js:449"
+  ]
+ },
+ {
+  "key": "מתוך {0} שנמצאו, {1} מוסברים בסיבות שמצאנו.",
+  "kind": "tpl",
+  "where": [
+   "app/views-payslip.js:449"
+  ]
+ },
+ {
+  "key": "סכום הממצאים שמסומנים בסימן {0} בפירוט למטה.",
+  "kind": "tpl",
+  "where": [
+   "app/views-payslip.js:449"
+  ]
+ },
+ {
+  "key": "\n      {0}\n      <div class=\"status-summary\"><div class=\"ok\">{1} {2}<div class=\"tiny\">תקין</div></div><div class=\"warn\">{3} {4}<div class=\"tiny\">לבדוק</div></div><div class=\"bad\">{5} {6}<div class=\"tiny\">חסר/שגוי</div></div></div>\n      {7}\n      {8}\n      {9}\n      <div class=\"small muted\" style=\"margin:0 4px 10px\">תקופה: ⁦{10}⁠–⁠{11}⁩ · {12} משמרות · {13} ש׳</div>\n      {14}\n      {15}\n      {16}\n      {17}\n      <div class=\"section-title\">{18} הסבר לכל שורה</div>\n      <div class=\"list\">{19}</div>\n      {20}",
+  "kind": "tpl",
+  "where": [
+   "app/views-payslip.js:450"
+  ]
+ },
+ {
+  "key": "<div class=\"banner warn\">{0}<div>{1} משמרות בתקופה כוללות עקיפה ידנית. ממצאים שנובעים מהן מסומנים.</div></div>",
+  "kind": "tpl",
+  "where": [
+   "app/views-payslip.js:455"
+  ]
+ },
+ {
+  "key": "<div class=\"finding {0}\">\n        <div class=\"ft\"><span class=\"fi\">{1}</span><span>{2} · {3}</span>{4}</div>\n        {5}\n        <div class=\"fd\">{6}</div>\n        {7}\n        {8}\n        {9}\n        <div class=\"fb\">על מה זה מבוסס: {10} · <span class=\"conf {11}\">{12}</span></div></div>",
+  "kind": "tpl",
+  "where": [
+   "app/views-payslip.js:457"
+  ]
+ },
+ {
+  "key": "<div class=\"gc-expl\">מוסבר: {0} · {1}</div>",
+  "kind": "tpl",
+  "where": [
+   "app/views-payslip.js:459"
+  ]
+ },
+ {
+  "key": "<div class=\"section-title\" id=\"ps-letter\">{0} מה לעשות</div><div class=\"card\"><div class=\"small\" style=\"margin-bottom:8px\">הודעה מוכנה למעסיק / משאבי אנוש (אפשר לערוך):</div><textarea class=\"input\" id=\"ps-msg\" rows=\"10\" aria-label=\"הודעה למעסיק\">{1}</textarea>\n        <div class=\"btn-row\" style=\"margin-top:8px\"><button class=\"btn tonal\" data-copy-msg>{2} העתק</button><button class=\"btn tonal\" data-share-msg>{3} שתף</button></div>\n        <button class=\"btn text sm gc-report\" data-gc-report>{4} דוח ומכתב לבירור מול המעסיק</button>\n        {5}</div>",
+  "kind": "tpl",
+  "where": [
+   "app/views-payslip.js:465"
+  ]
+ },
+ {
+  "key": "<button class=\"btn tonal sm found-share\" data-act=\"found-share\" data-amount=\"{0}\" data-k=\"found\">{1} שתף: שעתי מצאה לי {2}</button>",
+  "kind": "tpl",
+  "where": [
+   "app/views-payslip.js:468"
+  ]
+ },
+ {
+  "key": "<div class=\"section-title\">{0} שינויים מהתלוש הקודם</div><div class=\"card\">{1}</div>",
+  "kind": "tpl",
+  "where": [
+   "app/views-payslip.js:469"
+  ]
+ },
+ {
+  "key": "<div class=\"section-title\">{0} מברוטו לנטו</div><div class=\"card\">{1}\n        <div class=\"tiny muted\">כחול = ברוטו, אדום = ניכויים, ירוק = נטו. לחץ על עמודה לפרטים.</div></div>",
+  "kind": "tpl",
+  "where": [
+   "app/views-payslip.js:470"
+  ]
+ },
+ {
+  "key": " <span class=\"tag warn\">שינוי</span>",
+  "kind": "lit",
+  "where": [
+   "app/views-payslip.js:473"
+  ]
+ },
+ {
+  "key": "<br>כמות: {0}",
+  "kind": "tpl",
+  "where": [
+   "app/views-payslip.js:473"
+  ]
+ },
+ {
+  "key": "ניתוח תלוש · ",
+  "kind": "lit",
+  "where": [
+   "app/views-payslip.js:484"
+  ]
+ },
+ {
+  "key": "<button class=\"btn tonal\" data-edit>{0} תקן נתונים</button><button class=\"btn\" data-save>{1} שמור בארכיון</button>",
+  "kind": "tpl",
+  "where": [
+   "app/views-payslip.js:489"
+  ]
+ },
+ {
+  "key": "<button class=\"btn danger\" data-del style=\"flex:0 0 auto\" aria-label=\"מחיקת התלוש\">{0}</button><button class=\"btn tonal\" data-edit>{1} תקן נתונים</button>{2}",
+  "kind": "tpl",
+  "where": [
+   "app/views-payslip.js:490"
+  ]
+ },
+ {
+  "key": "נזכיר לך: ביום התשלום הבא תופיע תזכורת להעלות את התלוש של {0}, ובבדיקה שלו נשאל אם זה שולם.",
+  "kind": "tpl",
+  "where": [
+   "app/views-payslip.js:513"
+  ]
+ },
+ {
+  "key": "ההודעה הועתקה",
+  "kind": "lit",
+  "where": [
+   "app/views-payslip.js:525"
+  ]
+ },
+ {
   "key": "הועתק",
   "kind": "lit",
   "where": [
-   "app/views-payslip.js:428"
+   "app/views-payslip.js:526"
   ]
  },
  {
   "key": "הקובץ לא נמצא",
   "kind": "lit",
   "where": [
-   "app/views-payslip.js:434"
+   "app/views-payslip.js:532"
   ]
  },
  {
   "key": "למחוק את התלוש מהארכיון?",
   "kind": "lit",
   "where": [
-   "app/views-payslip.js:437"
+   "app/views-payslip.js:535"
   ]
  },
  {
   "key": "מחיקת תלוש",
   "kind": "lit",
   "where": [
-   "app/views-payslip.js:440"
+   "app/views-payslip.js:538"
   ]
  },
  {
   "key": "התלוש נמחק",
   "kind": "lit",
   "where": [
-   "app/views-payslip.js:440"
+   "app/views-payslip.js:538"
+  ]
+ },
+ {
+  "key": "לבדוק בתלוש של {0}: {1}",
+  "kind": "tpl",
+  "where": [
+   "app/views-payslip.js:563"
+  ]
+ },
+ {
+  "key": "ייתכן שמוסבר: {0}",
+  "kind": "tpl",
+  "where": [
+   "app/views-payslip.js:563"
   ]
  },
  {
   "key": "בתלוש {0} יש שורת הפרשים של {1}",
   "kind": "tpl",
   "where": [
-   "app/views-payslip.js:467"
+   "app/views-payslip.js:573"
   ]
  },
  {
   "key": "שמירת תלוש",
   "kind": "lit",
   "where": [
-   "app/views-payslip.js:471"
+   "app/views-payslip.js:577"
   ]
  },
  {
   "key": "התלוש נשמר בארכיון",
   "kind": "lit",
   "where": [
-   "app/views-payslip.js:471"
+   "app/views-payslip.js:577"
+  ]
+ },
+ {
+  "key": "<div class=\"card gc gc-carry\"><div class=\"gc-fh\"><span class=\"fi\">{0}</span><b>מהתלוש הקודם: לבדוק כאן</b></div>\n      {1}</div>",
+  "kind": "tpl",
+  "where": [
+   "app/views-payslip.js:583"
+  ]
+ },
+ {
+  "key": "<div class=\"gc-r\"><b class=\"gc-rt\">{0} · {1}</b><div class=\"gc-t\">ההפרש הוסבר אז במשמרות שאולי ישולמו בתלוש הזה ({2}). אם הן מופיעות בו, הכול בסדר.</div>\n        <div class=\"gc-fix\"><button class=\"btn text sm\" data-act=\"gap-set\" data-id=\"{3}\" data-s=\"resolved\">{4} שולם בתלוש הזה</button><button class=\"btn text sm\" data-act=\"gap-set\" data-id=\"{5}\" data-s=\"open\">{6} לא שולם</button></div></div>",
+  "kind": "tpl",
+  "where": [
+   "app/views-payslip.js:584"
   ]
  },
  {
   "key": "עדכון פער",
   "kind": "lit",
   "where": [
-   "app/views-payslip.js:481"
+   "app/views-payslip.js:595"
   ]
  },
  {
   "key": "סומן כהוחזר",
   "kind": "lit",
   "where": [
-   "app/views-payslip.js:481"
+   "app/views-payslip.js:595"
   ]
  },
  {
   "key": "עודכן",
   "kind": "lit",
   "where": [
-   "app/views-payslip.js:481"
+   "app/views-payslip.js:595"
   ]
  },
  {
   "key": "הכסף חזר אליך! 🎉",
   "kind": "lit",
   "where": [
-   "app/views-payslip.js:486"
+   "app/views-payslip.js:600"
   ]
  },
  {
   "key": "{0}\n        {1}\n        <button class=\"btn big block\" data-act=\"found-share\" data-amount=\"{2}\" data-k=\"back\">{3} לשתף ולעזור לחברים לבדוק</button>\n        {4}",
   "kind": "tpl",
   "where": [
-   "app/views-payslip.js:486"
+   "app/views-payslip.js:600"
   ]
  },
  {
   "key": "קיבלת בחזרה {0} שהגיעו לך. כל הכבוד שבדקת!",
   "kind": "tpl",
   "where": [
-   "app/views-payslip.js:486"
+   "app/views-payslip.js:600"
   ]
  },
  {
   "key": "<div class=\"small muted\" style=\"margin:6px 0 12px\">בסך הכול שעתי החזירה לך {0}.</div>",
   "kind": "tpl",
   "where": [
-   "app/views-payslip.js:487"
+   "app/views-payslip.js:601"
   ]
  },
  {
   "key": "קיבלתי בחזרה",
   "kind": "lit",
   "where": [
-   "app/views-payslip.js:511",
-   "app/views-payslip.js:522"
+   "app/views-payslip.js:625",
+   "app/views-payslip.js:636"
   ]
  },
  {
   "key": "שעתי מצאה לי",
   "kind": "lit",
   "where": [
-   "app/views-payslip.js:511",
-   "app/views-payslip.js:522"
+   "app/views-payslip.js:625",
+   "app/views-payslip.js:636"
   ]
  },
  {
   "key": "שהגיעו לי מהעבודה",
   "kind": "lit",
   "where": [
-   "app/views-payslip.js:513",
-   "app/views-payslip.js:522"
+   "app/views-payslip.js:627",
+   "app/views-payslip.js:636"
   ]
  },
  {
   "key": "שחסרים לי בתלוש",
   "kind": "lit",
   "where": [
-   "app/views-payslip.js:513",
-   "app/views-payslip.js:522"
+   "app/views-payslip.js:627",
+   "app/views-payslip.js:636"
   ]
  },
  {
   "key": "גם לכם מגיע לבדוק 👇",
   "kind": "lit",
   "where": [
-   "app/views-payslip.js:517"
+   "app/views-payslip.js:631"
   ]
  },
  {
   "key": "קיבלתי בחזרה כסף שהגיע לי",
   "kind": "lit",
   "where": [
-   "app/views-payslip.js:522"
+   "app/views-payslip.js:636"
   ]
  },
  {
   "key": "שעתי מצאה לי כסף שחסר בתלוש",
   "kind": "lit",
   "where": [
-   "app/views-payslip.js:522"
+   "app/views-payslip.js:636"
   ]
  },
  {
   "key": "{0} {1} {2}. גם לכם כדאי לבדוק: https://shaati.web.app",
   "kind": "tpl",
   "where": [
-   "app/views-payslip.js:522"
+   "app/views-payslip.js:636"
   ]
  },
  {
   "key": "<button class=\"btn big\" data-act=\"payslip-new\" style=\"margin-bottom:12px\">{0} העלה תלוש לניתוח</button>\n      <button class=\"btn tonal block\" data-act=\"tax-refund\" style=\"margin-bottom:12px\">{1} בדיקת החזר מס (עד 6 שנים אחורה)</button>\n      {2}\n      {3}\n      <div class=\"section-title\">{4} ארכיון תלושים</div>\n      {5}\n      {6}",
   "kind": "tpl",
   "where": [
-   "app/views-payslip.js:531"
+   "app/views-payslip.js:645"
   ]
  },
  {
   "key": "<div class=\"section-title\">{0} פערים פתוחים<span class=\"spacer\"></span><span class=\"small\">{1}</span></div>\n        <div class=\"list\">{2}</div>\n        <button class=\"btn tonal block\" data-act=\"claim-report\" style=\"margin-top:8px\">{3} דוח ומכתב לבירור מול המעסיק</button>",
   "kind": "tpl",
   "where": [
-   "app/views-payslip.js:533"
+   "app/views-payslip.js:647"
   ]
  },
  {
   "key": "<div class=\"item\" style=\"cursor:default\"><span class=\"lead\" style=\"background:{0};color:{1}\">{2}</span>\n          <span class=\"body\"><span class=\"t\">{3} · {4}</span><span class=\"s\">{5}</span></span>\n          <span class=\"trail\"><span class=\"a\">{6}</span><br><button class=\"btn text sm\" data-act=\"gap-set\" data-id=\"{7}\" data-s=\"resolved\">הוחזר ✓</button></span></div>",
   "kind": "tpl",
   "where": [
-   "app/views-payslip.js:534"
+   "app/views-payslip.js:648"
   ]
  },
  {
   "key": "ייתכן שהוחזר",
   "kind": "lit",
   "where": [
-   "app/views-payslip.js:535"
+   "app/views-payslip.js:649"
   ]
  },
  {
   "key": "עוד לא הוחזר",
   "kind": "lit",
   "where": [
-   "app/views-payslip.js:535"
+   "app/views-payslip.js:649"
   ]
  },
  {
   "key": "<div class=\"section-title\">{0} מגמות</div><div class=\"card\">{1}\n        <div class=\"tiny muted\">גובה העמודה = ברוטו. {2} תלושים אחרונים.</div></div>",
   "kind": "tpl",
   "where": [
-   "app/views-payslip.js:538"
+   "app/views-payslip.js:652"
   ]
  },
  {
   "key": "נטו וניכויים לפי חודש",
   "kind": "lit",
   "where": [
-   "app/views-payslip.js:541"
+   "app/views-payslip.js:655"
   ]
  },
  {
   "key": "<button class=\"item\" data-act=\"payslip-open\" data-id=\"{0}\"><span class=\"lead\" style=\"background:var(--surface-3)\">{1}</span>\n        <span class=\"body\"><span class=\"t\">{2}</span><span class=\"s\">{3}{4}{5}{6}</span></span>\n        <span class=\"trail\"><span class=\"a\">{7}</span><br><span class=\"tiny muted\">נטו</span></span></button>",
   "kind": "tpl",
   "where": [
-   "app/views-payslip.js:544"
+   "app/views-payslip.js:658"
   ]
  },
  {
   "key": "עוד אין תלושים",
   "kind": "lit",
   "where": [
-   "app/views-payslip.js:547"
+   "app/views-payslip.js:661"
   ]
  },
  {
   "key": "העלה תלוש כדי לבדוק שקיבלת את כל מה שמגיע לך: שעות, שבתות, נסיעות, פנסיה ועוד.",
   "kind": "lit",
   "where": [
-   "app/views-payslip.js:547"
+   "app/views-payslip.js:661"
   ]
  },
  {
   "key": "ניתוח חכם דורש מפתח API",
   "kind": "lit",
   "where": [
-   "app/views-payslip.js:555"
+   "app/views-payslip.js:669"
   ]
  },
  {
   "key": "אפשר להזין מפתח של Claude בהגדרות › עוזר AI ואודות › מפתח AI. בלי מפתח, הניתוח המקומי ממשיך לעבוד כרגיל.",
   "kind": "lit",
   "where": [
-   "app/views-payslip.js:555"
+   "app/views-payslip.js:669"
   ]
  },
  {
   "key": "להגדרות",
   "kind": "lit",
   "where": [
-   "app/views-payslip.js:555"
+   "app/views-payslip.js:669"
   ]
  },
  {
   "key": "לפני שליחה ל-⁠Claude",
   "kind": "lit",
   "where": [
-   "app/views-payslip.js:560"
+   "app/views-payslip.js:674"
   ]
  },
  {
   "key": "<div class=\"banner warn\">{0}<div>זה <b>בדיוק</b> הטקסט שיישלח ({1} פרטים אישיים הוסתרו אוטומטית). בדוק וערוך. אפשר למחוק גם שם או כל פרט אחר. הקובץ עצמו לא נשלח.</div></div>\n        <textarea class=\"input\" id=\"ai-text\" rows=\"16\" style=\"font-family:ui-monospace,monospace;font-size:.8rem\">{2}</textarea>\n        <div class=\"small muted\" style=\"margin-top:8px\">יישלח אל Anthropic (מודל {3}) עם המפתח שלך. השימוש מחויב בחשבון ה-⁠API שלך.</div>",
   "kind": "tpl",
   "where": [
-   "app/views-payslip.js:561"
+   "app/views-payslip.js:675"
   ]
  },
  {
   "key": "<button class=\"btn tonal\" data-cancel>ביטול</button><button class=\"btn\" data-send>{0} אני מאשר, שלח</button>",
   "kind": "tpl",
   "where": [
-   "app/views-payslip.js:564"
+   "app/views-payslip.js:678"
   ]
  },
  {
   "key": "שולח…",
   "kind": "lit",
   "where": [
-   "app/views-payslip.js:569",
+   "app/views-payslip.js:683",
    "app/views-support.js:221"
   ]
  },
@@ -10877,91 +11067,91 @@
   "key": "Claude זיהה {0} שדות. בדוק לפני ניתוח",
   "kind": "tpl",
   "where": [
-   "app/views-payslip.js:575"
+   "app/views-payslip.js:689"
   ]
  },
  {
   "key": "נסה שוב",
   "kind": "lit",
   "where": [
-   "app/views-payslip.js:578"
+   "app/views-payslip.js:692"
   ]
  },
  {
   "key": "הניתוח החכם נכשל",
   "kind": "lit",
   "where": [
-   "app/views-payslip.js:579"
+   "app/views-payslip.js:693"
   ]
  },
  {
   "key": "צריך מפתח API של Claude (הגדרות › עוזר AI ואודות › מפתח AI)",
   "kind": "lit",
   "where": [
-   "app/views-payslip.js:591"
+   "app/views-payslip.js:705"
   ]
  },
  {
   "key": "מפתח ה-⁠API לא תקין (401). בדוק אותו בהגדרות.",
   "kind": "lit",
   "where": [
-   "app/views-payslip.js:608"
+   "app/views-payslip.js:722"
   ]
  },
  {
   "key": "למפתח אין הרשאה למודל הזה (403).",
   "kind": "lit",
   "where": [
-   "app/views-payslip.js:609"
+   "app/views-payslip.js:723"
   ]
  },
  {
   "key": "המודל לא נמצא (404). בחר מודל אחר בהגדרות.",
   "kind": "lit",
   "where": [
-   "app/views-payslip.js:610"
+   "app/views-payslip.js:724"
   ]
  },
  {
   "key": "יותר מדי בקשות (429). נסה שוב בעוד דקה.",
   "kind": "lit",
   "where": [
-   "app/views-payslip.js:611"
+   "app/views-payslip.js:725"
   ]
  },
  {
   "key": "בעיית תקשורת עם השרת. בדוק את החיבור.",
   "kind": "lit",
   "where": [
-   "app/views-payslip.js:612"
+   "app/views-payslip.js:726"
   ]
  },
  {
   "key": "שגיאת API {0}: {1}",
   "kind": "tpl",
   "where": [
-   "app/views-payslip.js:613"
+   "app/views-payslip.js:727"
   ]
  },
  {
   "key": "הבקשה נדחתה על ידי המודל",
   "kind": "lit",
   "where": [
-   "app/views-payslip.js:616"
+   "app/views-payslip.js:730"
   ]
  },
  {
   "key": "התשובה נקטעה. נסה לקצר את הטקסט.",
   "kind": "lit",
   "where": [
-   "app/views-payslip.js:617"
+   "app/views-payslip.js:731"
   ]
  },
  {
   "key": "לא התקבלה תשובה",
   "kind": "lit",
   "where": [
-   "app/views-payslip.js:619"
+   "app/views-payslip.js:733"
   ]
  },
  {
@@ -11627,7 +11817,7 @@
   "where": [
    "app/views-reports.js:169",
    "core/payslip.js:30",
-   "core/payslip.js:601"
+   "core/payslip.js:940"
   ]
  },
  {
@@ -13597,7 +13787,8 @@
    "app/views-settings.js:192",
    "core/payslip.js:401",
    "core/payslip.js:406",
-   "core/payslip.js:410"
+   "core/payslip.js:410",
+   "core/payslip.js:639"
   ]
  },
  {
@@ -13615,7 +13806,8 @@
   "where": [
    "app/views-settings.js:185",
    "app/views-settings.js:193",
-   "app/views-settings.js:643"
+   "app/views-settings.js:643",
+   "core/payslip.js:712"
   ]
  },
  {
@@ -13681,7 +13873,8 @@
   "kind": "lit",
   "where": [
    "app/views-settings.js:188",
-   "app/views-settings.js:639"
+   "app/views-settings.js:639",
+   "core/payslip.js:844"
   ]
  },
  {
@@ -13734,7 +13927,9 @@
   "where": [
    "app/views-settings.js:190",
    "app/views-settings.js:191",
-   "app/views-settings.js:362"
+   "app/views-settings.js:362",
+   "core/payslip.js:865",
+   "core/payslip.js:887"
   ]
  },
  {
@@ -13922,7 +14117,8 @@
   "kind": "lit",
   "where": [
    "app/views-settings.js:200",
-   "app/views-settings.js:680"
+   "app/views-settings.js:680",
+   "core/payslip.js:876"
   ]
  },
  {
@@ -14510,7 +14706,8 @@
   "key": "לפי החוק (מומלץ)",
   "kind": "lit",
   "where": [
-   "app/views-settings.js:568"
+   "app/views-settings.js:568",
+   "core/payslip.js:754"
   ]
  },
  {
@@ -14741,7 +14938,8 @@
   "key": "עיגול זמן משמרת",
   "kind": "lit",
   "where": [
-   "app/views-settings.js:587"
+   "app/views-settings.js:587",
+   "core/payslip.js:764"
   ]
  },
  {
@@ -15061,7 +15259,8 @@
   "key": "תקרה חודשית ₪",
   "kind": "lit",
   "where": [
-   "app/views-settings.js:640"
+   "app/views-settings.js:640",
+   "core/payslip.js:852"
   ]
  },
  {
@@ -16518,7 +16717,7 @@
    "app/views-shift.js:376",
    "app/views-shift.js:552",
    "core/engine.js:623",
-   "core/payslip.js:588"
+   "core/payslip.js:599"
   ]
  },
  {
@@ -21658,10 +21857,12 @@
   "kind": "lit",
   "where": [
    "core/payslip.js:28",
-   "core/payslip.js:557",
-   "core/payslip.js:565",
    "core/payslip.js:566",
-   "core/payslip.js:601"
+   "core/payslip.js:567",
+   "core/payslip.js:576",
+   "core/payslip.js:577",
+   "core/payslip.js:639",
+   "core/payslip.js:940"
   ]
  },
  {
@@ -21670,9 +21871,10 @@
   "where": [
    "core/payslip.js:29",
    "core/payslip.js:556",
-   "core/payslip.js:558",
-   "core/payslip.js:573",
-   "core/payslip.js:601"
+   "core/payslip.js:569",
+   "core/payslip.js:584",
+   "core/payslip.js:639",
+   "core/payslip.js:940"
   ]
  },
  {
@@ -22748,7 +22950,8 @@
   "kind": "tpl",
   "where": [
    "core/payslip.js:526",
-   "core/payslip.js:566"
+   "core/payslip.js:567",
+   "core/payslip.js:577"
   ]
  },
  {
@@ -22871,290 +23074,741 @@
   ]
  },
  {
-  "key": "נוכה מס הכנסה מתחת לגיל 18",
+  "key": "נוכה מס הכנסה גבוה מההערכה (מתחת לגיל 18)",
   "kind": "lit",
   "where": [
-   "core/payslip.js:557"
+   "core/payslip.js:566"
   ]
  },
  {
-  "key": "נוכו {0}. בשכר רגיל של נער/ה, נקודות הזיכוי מאפסות בדרך כלל את המס. כדאי לבדוק שמולא טופס 101.",
+  "key": "נוכו {0}, הערכה {1}. בשכר רגיל של נער/ה, נקודות הזיכוי מקטינות את המס, לרוב עד אפס. כדאי לבדוק שמולא טופס 101.",
   "kind": "tpl",
   "where": [
-   "core/payslip.js:557"
+   "core/payslip.js:566"
   ]
  },
  {
   "key": "מדרגות מס ונקודות זיכוי.",
   "kind": "lit",
   "where": [
-   "core/payslip.js:557"
+   "core/payslip.js:566"
   ]
  },
  {
   "key": "מס שנוכה ביתר אפשר לקבל בחזרה בהחזר מס שנתי.",
   "kind": "lit",
   "where": [
-   "core/payslip.js:557"
-  ]
- },
- {
-  "key": "ללא ניכויי חובה (מתחת לגיל 18)",
-  "kind": "lit",
-  "where": [
-   "core/payslip.js:558"
-  ]
- },
- {
-  "key": "הנטו אמור להיות שווה לברוטו (פחות ניכויים אישיים, אם יש).",
-  "kind": "lit",
-  "where": [
-   "core/payslip.js:558"
-  ]
- },
- {
-  "key": "פטור לנער עד גיל 18.",
-  "kind": "lit",
-  "where": [
-   "core/payslip.js:558"
-  ]
- },
- {
-  "key": "מס הכנסה גבוה מההערכה",
-  "kind": "lit",
-  "where": [
-   "core/payslip.js:565"
-  ]
- },
- {
-  "key": "נוכו {0}, הערכה {1}. סיבות אפשריות: עבודה אצל יותר ממעסיק אחד בלי תיאום מס, טופס 101 חסר (מס מקסימלי), או רכיבים שלא ידועים לאפליקציה.",
-  "kind": "tpl",
-  "where": [
-   "core/payslip.js:565"
-  ]
- },
- {
-  "key": "מדרגות מס חודשיות ונקודות זיכוי (מההגדרות).",
-  "kind": "lit",
-  "where": [
-   "core/payslip.js:565"
-  ]
- },
- {
-  "key": "אם נוכה מס ביתר, אפשר לקבל אותו בהחזר מס שנתי.",
-  "kind": "lit",
-  "where": [
-   "core/payslip.js:565"
+   "core/payslip.js:566"
   ]
  },
  {
   "key": "מס הכנסה סביר",
   "kind": "lit",
   "where": [
-   "core/payslip.js:566"
+   "core/payslip.js:567",
+   "core/payslip.js:577"
+  ]
+ },
+ {
+  "key": "מדרגות מס חודשיות ונקודות זיכוי.",
+  "kind": "lit",
+  "where": [
+   "core/payslip.js:567"
+  ]
+ },
+ {
+  "key": "ללא ניכויי חובה (מתחת לגיל 18)",
+  "kind": "lit",
+  "where": [
+   "core/payslip.js:569"
+  ]
+ },
+ {
+  "key": "הנטו אמור להיות שווה לברוטו (פחות ניכויים אישיים, אם יש).",
+  "kind": "lit",
+  "where": [
+   "core/payslip.js:569"
+  ]
+ },
+ {
+  "key": "פטור לנער עד גיל 18.",
+  "kind": "lit",
+  "where": [
+   "core/payslip.js:569"
+  ]
+ },
+ {
+  "key": "מס הכנסה גבוה מההערכה",
+  "kind": "lit",
+  "where": [
+   "core/payslip.js:576"
+  ]
+ },
+ {
+  "key": "נוכו {0}, הערכה {1}. סיבות אפשריות: עבודה אצל יותר ממעסיק אחד בלי תיאום מס, טופס 101 חסר (מס מקסימלי), או רכיבים שלא ידועים לאפליקציה.",
+  "kind": "tpl",
+  "where": [
+   "core/payslip.js:576"
+  ]
+ },
+ {
+  "key": "מדרגות מס חודשיות ונקודות זיכוי (מההגדרות).",
+  "kind": "lit",
+  "where": [
+   "core/payslip.js:576"
+  ]
+ },
+ {
+  "key": "אם נוכה מס ביתר, אפשר לקבל אותו בהחזר מס שנתי.",
+  "kind": "lit",
+  "where": [
+   "core/payslip.js:576"
   ]
  },
  {
   "key": "מדרגות מס חודשיות.",
   "kind": "lit",
   "where": [
-   "core/payslip.js:566"
+   "core/payslip.js:577"
   ]
  },
  {
   "key": "ביטוח לאומי ומס בריאות סבירים",
   "kind": "lit",
   "where": [
-   "core/payslip.js:573"
+   "core/payslip.js:584"
   ]
  },
  {
   "key": "ביטוח לאומי / בריאות שונים מההערכה",
   "kind": "lit",
   "where": [
-   "core/payslip.js:573"
+   "core/payslip.js:584"
   ]
  },
  {
   "key": "נוכו {0}, הערכה {1}.",
   "kind": "tpl",
   "where": [
-   "core/payslip.js:573"
+   "core/payslip.js:584"
   ]
  },
  {
   "key": "שיעורים מופחתים עד 60% מהשכר הממוצע, מלאים מעל.",
   "kind": "lit",
   "where": [
-   "core/payslip.js:573"
+   "core/payslip.js:584"
   ]
  },
  {
   "key": "החשבון ברוטו → נטו נסגר",
   "kind": "lit",
   "where": [
-   "core/payslip.js:578"
+   "core/payslip.js:589"
   ]
  },
  {
   "key": "ברוטו פחות ניכויים ≠ נטו",
   "kind": "lit",
   "where": [
-   "core/payslip.js:578"
+   "core/payslip.js:589"
   ]
  },
  {
   "key": "{0} − {1} = {2}; בתלוש נטו {3}.",
   "kind": "tpl",
   "where": [
-   "core/payslip.js:578"
+   "core/payslip.js:589"
   ]
  },
  {
   "key": "בדיקה אריתמטית.",
   "kind": "lit",
   "where": [
-   "core/payslip.js:578"
+   "core/payslip.js:589"
   ]
  },
  {
   "key": "ברוטו: תלוש מול אפליקציה",
   "kind": "lit",
   "where": [
-   "core/payslip.js:582"
+   "core/payslip.js:593"
   ]
  },
  {
   "key": "בתלוש {0}, לפי המשמרות {1} (הפרש {2}).",
   "kind": "tpl",
   "where": [
-   "core/payslip.js:582"
+   "core/payslip.js:593"
   ]
  },
  {
   "key": "כולל שכר, נסיעות, בונוסים וימי חופשה/מחלה שרשמת.",
   "kind": "lit",
   "where": [
-   "core/payslip.js:582"
+   "core/payslip.js:593"
   ]
  },
  {
   "key": "ניכויים שלא מוסברים",
   "kind": "lit",
   "where": [
-   "core/payslip.js:588"
+   "core/payslip.js:599"
   ]
  },
  {
   "key": "שורות ניכוי שלא שייכות לניכויי החובה המוכרים. ניכוי מהשכר מותר רק לפי חוק או בהסכמה בכתב.",
   "kind": "lit",
   "where": [
-   "core/payslip.js:588"
+   "core/payslip.js:599"
+  ]
+ },
+ {
+  "key": "משמרות בסוף התקופה",
+  "kind": "lit",
+  "where": [
+   "core/payslip.js:687",
+   "core/payslip.js:691"
+  ]
+ },
+ {
+  "key": "כנראה בתלוש הבא",
+  "kind": "lit",
+  "where": [
+   "core/payslip.js:687"
+  ]
+ },
+ {
+  "key": "המשמרות האחרונות בתקופה ({0}) מסבירות את כל ההפרש. יש מעסיקים שמשלמים עליהן בתלוש של החודש הבא. אם הן מופיעות שם, לא חסר כסף.",
+  "kind": "tpl",
+  "where": [
+   "core/payslip.js:688"
+  ]
+ },
+ {
+  "key": "הנסיעות של הימים האחרונים בתקופה ({0}) מסבירות את כל ההפרש. יש מעסיקים שמשלמים עליהן בתלוש של החודש הבא.",
+  "kind": "tpl",
+  "where": [
+   "core/payslip.js:689"
+  ]
+ },
+ {
+  "key": "יש משמרות ביומיים האחרונים של התקופה ({0}). ייתכן שהן ייכנסו לתלוש הבא.",
+  "kind": "tpl",
+  "where": [
+   "core/payslip.js:692"
+  ]
+ },
+ {
+  "key": "אין משמרות בסוף התקופה שמסבירות את ההפרש.",
+  "kind": "lit",
+  "where": [
+   "core/payslip.js:692"
+  ]
+ },
+ {
+  "key": "בדקנו תקופות שמתחילות בימים אחרים בחודש, ואף אחת לא תואמת לשעות בתלוש.",
+  "kind": "lit",
+  "where": [
+   "core/payslip.js:709"
+  ]
+ },
+ {
+  "key": "אם המעסיק סופר את השעות לפי חודש קלנדרי, השעות בתלוש תואמות בדיוק. אפשר לשנות את תחילת התקופה בהגדרות.",
+  "kind": "lit",
+  "where": [
+   "core/payslip.js:710"
+  ]
+ },
+ {
+  "key": "אם המעסיק סופר את החודש מה-{0} בחודש, השעות בתלוש תואמות בדיוק. אפשר לשנות את תחילת התקופה בהגדרות.",
+  "kind": "tpl",
+  "where": [
+   "core/payslip.js:711"
+  ]
+ },
+ {
+  "key": "משמרת ארוכה במיוחד",
+  "kind": "lit",
+  "where": [
+   "core/payslip.js:721"
+  ]
+ },
+ {
+  "key": "משמרת של {0} שעות ב-{1}. אם שכחת לעצור את השעון, נרשמו יותר שעות ממה שעבדת.",
+  "kind": "tpl",
+  "where": [
+   "core/payslip.js:722"
+  ]
+ },
+ {
+  "key": "אין בתקופה משמרות ארוכות במיוחד.",
+  "kind": "lit",
+  "where": [
+   "core/payslip.js:722"
+  ]
+ },
+ {
+  "key": "משמרות שנרשמו מראש או תוקנו",
+  "kind": "lit",
+  "where": [
+   "core/payslip.js:731"
+  ]
+ },
+ {
+  "key": "חלק מהמשמרות נרשמו לפני שהתחילו, או תוקנו אחרי שנגמרו. כדאי לוודא שהשעות בהן הן השעות שעבדת בפועל.",
+  "kind": "lit",
+  "where": [
+   "core/payslip.js:732"
+  ]
+ },
+ {
+  "key": "אין בתקופה משמרות שנרשמו מראש או תוקנו אחר כך.",
+  "kind": "lit",
+  "where": [
+   "core/payslip.js:732"
+  ]
+ },
+ {
+  "key": "ההפסקה",
+  "kind": "lit",
+  "where": [
+   "core/payslip.js:741"
+  ]
+ },
+ {
+  "key": "באפליקציה ההפסקות נספרות כזמן עבודה בתשלום, {0} שעות בתקופה. אם יכולת לצאת בזמן ההפסקה, מותר למעסיק לא לשלם עליה.",
+  "kind": "tpl",
+  "where": [
+   "core/payslip.js:742"
+  ]
+ },
+ {
+  "key": "אין בתקופה הפסקות שנספרות בתשלום.",
+  "kind": "lit",
+  "where": [
+   "core/payslip.js:742"
+  ]
+ },
+ {
+  "key": "מתי מתחילות שעות נוספות",
+  "kind": "lit",
+  "where": [
+   "core/payslip.js:750"
+  ]
+ },
+ {
+  "key": "באפליקציה שעות נוספות כבר מחושבות לפי החוק.",
+  "kind": "lit",
+  "where": [
+   "core/payslip.js:751"
+  ]
+ },
+ {
+  "key": "באפליקציה שעות נוספות מתחילות אחרי {0} שעות ביום. לפי החוק, בשבוע של 5 ימים הן מתחילות רק מעל 8.6 שעות ביום או מעל 42 שעות בשבוע, ולכן המעסיק סופר פחות שעות נוספות.",
+  "kind": "tpl",
+  "where": [
+   "core/payslip.js:752"
+  ]
+ },
+ {
+  "key": "חישוב לפי החוק לא משנה את השעות הנוספות בתקופה הזו.",
+  "kind": "lit",
+  "where": [
+   "core/payslip.js:753"
+  ]
+ },
+ {
+  "key": "עיגול שעות",
+  "kind": "lit",
+  "where": [
+   "core/payslip.js:762",
+   "core/payslip.js:768"
+  ]
+ },
+ {
+  "key": "באפליקציה זמני המשמרות מעוגלים ל-{0} דקות. אם המעסיק לא מעגל, הוא משלם לפי הדקות המדויקות.",
+  "kind": "tpl",
+  "where": [
+   "core/payslip.js:763"
+  ]
+ },
+ {
+  "key": "אם המעסיק מעגל את שעות הכניסה והיציאה כלפי מטה לרבע שעה, יוצא פער כזה. גם דקות שעוגלו הן זמן שעבדת, אז כדאי לשאול על זה.",
+  "kind": "lit",
+  "where": [
+   "core/payslip.js:769"
+  ]
+ },
+ {
+  "key": "עיגול השעות לא מסביר את ההפרש.",
+  "kind": "lit",
+  "where": [
+   "core/payslip.js:769"
+  ]
+ },
+ {
+  "key": "שעת כניסת השבת או החג",
+  "kind": "lit",
+  "where": [
+   "core/payslip.js:796"
+  ]
+ },
+ {
+  "key": "{0} שעות שבת/חג שלך נמצאות בשעה הראשונה או האחרונה של החלון. האפליקציה מחשבת לפי זמני השבת בעיר שבחרת, ומעסיק יכול לספור משעה קבועה. כדאי לבדוק שהעיר נכונה.",
+  "kind": "tpl",
+  "where": [
+   "core/payslip.js:797"
+  ]
+ },
+ {
+  "key": "{0} שעות שבת/חג שלך נמצאות בשעה הראשונה או האחרונה של החלון, לפי השעות הקבועות שהגדרת. אם המעסיק סופר משעה אחרת, יוצא פער כזה.",
+  "kind": "tpl",
+  "where": [
+   "core/payslip.js:798"
+  ]
+ },
+ {
+  "key": "שעות השבת/חג שלך לא קרובות לכניסה או ליציאה.",
+  "kind": "lit",
+  "where": [
+   "core/payslip.js:799"
+  ]
+ },
+ {
+  "key": "התעריף לשעה",
+  "kind": "lit",
+  "where": [
+   "core/payslip.js:820"
+  ]
+ },
+ {
+  "key": "הגדרת העלאה ל-{0} מ-{1}, ובתלוש מופיע התעריף הקודם ({2}). אם ההעלאה מתחילה אצל המעסיק מאוחר יותר, כדאי לבדוק את התאריך בתפקיד.",
+  "kind": "tpl",
+  "where": [
+   "core/payslip.js:821"
+  ]
+ },
+ {
+  "key": "בתקופה יש משמרות בכמה תפקידים בתעריפים שונים. אם משמרת נרשמה בתפקיד הלא נכון, התעריף יוצא שונה.",
+  "kind": "lit",
+  "where": [
+   "core/payslip.js:822"
+  ]
+ },
+ {
+  "key": "בתלוש {0} לשעה, ובאפליקציה {1}. כדאי לבדוק שהתעריף שהגדרת הוא התעריף שסוכם.",
+  "kind": "tpl",
+  "where": [
+   "core/payslip.js:823"
+  ]
+ },
+ {
+  "key": "מספר ימי העבודה",
+  "kind": "lit",
+  "where": [
+   "core/payslip.js:835"
+  ]
+ },
+ {
+  "key": "המעסיק רשם {0} ימי עבודה, ובאפליקציה {1}. ייתכן שהנסיעות על שאר הימים ישולמו בתלוש אחר.",
+  "kind": "tpl",
+  "where": [
+   "core/payslip.js:836"
+  ]
+ },
+ {
+  "key": "סכום הנסיעות ליום",
+  "kind": "lit",
+  "where": [
+   "core/payslip.js:842"
+  ]
+ },
+ {
+  "key": "בתלוש יוצא {0} ליום, ובאפליקציה {1}. המעסיק משלם את מחיר הנסיעה בפועל עד התקרה, אז ייתכן שזה מחיר הנסיעה שלך.",
+  "kind": "tpl",
+  "where": [
+   "core/payslip.js:843"
+  ]
+ },
+ {
+  "key": "נסיעות בחודש אחר",
+  "kind": "lit",
+  "where": [
+   "core/payslip.js:847"
+  ]
+ },
+ {
+  "key": "בתלוש לא זוהתה שורת נסיעות. יש מעסיקים שמשלמים נסיעות חודש אחרי, או בשורה בשם אחר.",
+  "kind": "lit",
+  "where": [
+   "core/payslip.js:848"
+  ]
+ },
+ {
+  "key": "חופשי חודשי",
+  "kind": "lit",
+  "where": [
+   "core/payslip.js:850"
+  ]
+ },
+ {
+  "key": "אם חופשי חודשי זול יותר מהנסיעות של כל הימים, המעסיק יכול לשלם רק את מחירו. אפשר להגדיר תקרה חודשית.",
+  "kind": "lit",
+  "where": [
+   "core/payslip.js:851"
+  ]
+ },
+ {
+  "key": "גיל ושכר מינימום",
+  "kind": "lit",
+  "where": [
+   "core/payslip.js:862"
+  ]
+ },
+ {
+  "key": "לא הזנת תאריך לידה. מתחת לגיל 18 שכר המינימום נמוך יותר, ואז התעריף בתלוש עשוי להיות תקין.",
+  "kind": "lit",
+  "where": [
+   "core/payslip.js:863"
+  ]
+ },
+ {
+  "key": "שכר המינימום חושב לפי הגיל שלך מתאריך הלידה שהזנת.",
+  "kind": "lit",
+  "where": [
+   "core/payslip.js:864"
+  ]
+ },
+ {
+  "key": "גם שכר המינימום לנוער גבוה מהתעריף בתלוש.",
+  "kind": "lit",
+  "where": [
+   "core/payslip.js:864"
+  ]
+ },
+ {
+  "key": "מתי מתחילה הפנסיה",
+  "kind": "lit",
+  "where": [
+   "core/payslip.js:872"
+  ]
+ },
+ {
+  "key": "לא הזנת תאריך תחילת עבודה, ולכן האפליקציה לא יודעת מתי חובת ההפרשה מתחילה.",
+  "kind": "lit",
+  "where": [
+   "core/payslip.js:873"
+  ]
+ },
+ {
+  "key": "לפי תאריך תחילת העבודה שהזנת, חובת ההפרשה התחילה רק לאחרונה. אם התאריך לא מדויק, גם הבדיקה לא מדויקת.",
+  "kind": "lit",
+  "where": [
+   "core/payslip.js:874"
+  ]
+ },
+ {
+  "key": "לפי תאריך תחילת העבודה, ההפרשה הייתה אמורה להתחיל כבר.",
+  "kind": "lit",
+  "where": [
+   "core/payslip.js:875"
+  ]
+ },
+ {
+  "key": "הגיל לפי תאריך הלידה",
+  "kind": "lit",
+  "where": [
+   "core/payslip.js:884"
+  ]
+ },
+ {
+  "key": "יום ההולדת ה-18 שלך ב-{0}, קרוב לחודש של התלוש. מהגיל הזה מנכים ביטוח לאומי, ומעסיקים סופרים אותו לפי החודש.",
+  "kind": "tpl",
+  "where": [
+   "core/payslip.js:885"
+  ]
+ },
+ {
+  "key": "האפליקציה יודעת את הגיל רק מתאריך הלידה שהזנת ({0}). אם הוא לא מדויק, גם הבדיקה לא מדויקת.",
+  "kind": "tpl",
+  "where": [
+   "core/payslip.js:886"
+  ]
+ },
+ {
+  "key": "הערכה של ניכויים",
+  "kind": "lit",
+  "where": [
+   "core/payslip.js:889"
+  ]
+ },
+ {
+  "key": "מס הכנסה, ביטוח לאומי ופנסיה באפליקציה הם הערכה לפי ההגדרות שלך. הם משנים רק את הנטו, לא את הברוטו.",
+  "kind": "lit",
+  "where": [
+   "core/payslip.js:890"
+  ]
+ },
+ {
+  "key": "שורה שלא זוהתה",
+  "kind": "lit",
+  "where": [
+   "core/payslip.js:899"
+  ]
+ },
+ {
+  "key": "בתלוש יש שורה שהאפליקציה לא שייכה, על {0}. ייתכן שזה התשלום הזה בשם אחר.",
+  "kind": "tpl",
+  "where": [
+   "core/payslip.js:900"
+  ]
+ },
+ {
+  "key": "קריאת התלוש",
+  "kind": "lit",
+  "where": [
+   "core/payslip.js:912"
+  ]
+ },
+ {
+  "key": "בשורה שנקראה המספרים לא מסתדרים: שעות כפול תעריף לא שווה לסכום. כנראה ספרה נקראה לא נכון.",
+  "kind": "lit",
+  "where": [
+   "core/payslip.js:913"
+  ]
+ },
+ {
+  "key": "התלוש נקרא מצילום, וזיהוי מצילום טועה לפעמים בספרות. כדאי להשוות את השורה לתלוש.",
+  "kind": "lit",
+  "where": [
+   "core/payslip.js:914"
+  ]
+ },
+ {
+  "key": "הקריאה נעשתה בעזרת AI, והוא יכול לטעות. כדאי להשוות את השורה לתלוש.",
+  "kind": "lit",
+  "where": [
+   "core/payslip.js:915"
+  ]
+ },
+ {
+  "key": "המספרים נקראו מקובץ ה-⁠PDF עצמו, כך שטעות קריאה פחות סבירה.",
+  "kind": "lit",
+  "where": [
+   "core/payslip.js:916"
   ]
  },
  {
   "key": "השתלמות",
   "kind": "lit",
   "where": [
-   "core/payslip.js:601"
+   "core/payslip.js:940"
   ]
  },
  {
   "key": "ניכויים אחרים",
   "kind": "lit",
   "where": [
-   "core/payslip.js:607"
+   "core/payslip.js:946"
   ]
  },
  {
   "key": "שורה חדשה: לא הופיעה בתלוש הקודם.",
   "kind": "lit",
   "where": [
-   "core/payslip.js:622"
+   "core/payslip.js:961"
   ]
  },
  {
   "key": "עלה",
   "kind": "lit",
   "where": [
-   "core/payslip.js:625"
+   "core/payslip.js:964"
   ]
  },
  {
   "key": "ירד",
   "kind": "lit",
   "where": [
-   "core/payslip.js:625"
+   "core/payslip.js:964"
   ]
  },
  {
   "key": " ב-{0} לעומת התלוש הקודם ({1})",
   "kind": "tpl",
   "where": [
-   "core/payslip.js:625"
+   "core/payslip.js:964"
   ]
  },
  {
   "key": ", בהתאם לשינוי בברוטו.",
   "kind": "lit",
   "where": [
-   "core/payslip.js:628"
+   "core/payslip.js:967"
   ]
  },
  {
   "key": ", למרות שהברוטו השתנה בכיוון ההפוך; כדאי לבדוק.",
   "kind": "lit",
   "where": [
-   "core/payslip.js:628"
+   "core/payslip.js:967"
   ]
  },
  {
   "key": "ניכוי חדש: {0} ({1})",
   "kind": "tpl",
   "where": [
-   "core/payslip.js:644"
+   "core/payslip.js:983"
   ]
  },
  {
   "key": "הפרשת הפנסיה ירדה מ-{0} ל-{1} למרות שהברוטו כמעט לא ירד.",
   "kind": "tpl",
   "where": [
-   "core/payslip.js:647"
+   "core/payslip.js:986"
   ]
  },
  {
   "key": "נקודות הזיכוי השתנו מ-{0} ל-{1}.",
   "kind": "tpl",
   "where": [
-   "core/payslip.js:649"
+   "core/payslip.js:988"
   ]
  },
  {
   "key": "מס ההכנסה קפץ מ-{0} ל-{1} בלי עלייה דומה בברוטו.",
   "kind": "tpl",
   "where": [
-   "core/payslip.js:651"
+   "core/payslip.js:990"
   ]
  },
  {
   "key": "שלום{0},\n\nבדקתי את תלוש השכר של {1} מול רישום המשמרות שלי (⁦{2}⁠–⁠{3}⁩), ונראה לי שיש כמה נקודות שכדאי לבדוק:\n\n",
   "kind": "tpl",
   "where": [
-   "core/payslip.js:661"
+   "core/payslip.js:1010"
+  ]
+ },
+ {
+  "key": " (אחרי מה שבדקתי, נשאר הפרש משוער של {0})",
+  "kind": "tpl",
+  "where": [
+   "core/payslip.js:1018"
   ]
  },
  {
   "key": " (הפרש משוער: {0})",
   "kind": "tpl",
   "where": [
-   "core/payslip.js:668"
+   "core/payslip.js:1019"
   ]
  },
  {
   "key": "\nאשמח אם תוכלו לבדוק ולעדכן אותי, ואם צריך, לתקן בתלוש הבא. אם פספסתי משהו, אשמח להסבר.\n\nתודה רבה,\n",
   "kind": "lit",
   "where": [
-   "core/payslip.js:673"
+   "core/payslip.js:1024"
   ]
  },
  {

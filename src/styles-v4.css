@@ -122,6 +122,42 @@ body.fx .pk-field, body.fx .ach-card, body.fx .home-hero .hh-skin { transition: 
 .finding.warn .fi, .status-summary .warn svg, .ps-c.warn svg { color: var(--warn-mark); }
 .finding.bad .fi, .status-summary .bad svg, .ps-c.bad svg { color: var(--bad-mark); }
 .ps-c { display: inline-flex; align-items: center; gap: 3px; white-space: nowrap; }
+/* "before you write to the employer": each missing amount with its likely innocent reasons, then the gap left */
+.gc { padding: 14px; }
+.gc-intro { color: var(--on-surface-var); margin: 0 2px 12px; }
+.gc-f { border-top: 1px solid var(--line); padding-top: 12px; margin-top: 12px; }
+.gc-intro + .gc-f { border-top: 0; padding-top: 0; margin-top: 0; }
+.gc-fh { display: flex; gap: 8px; align-items: flex-start; }
+.gc-fh .fi { display: inline-grid; flex: none; color: var(--bad-mark); padding-top: 2px; }
+.gc-fh b { flex: 1; min-width: 0; }
+.gc-fh .amt { flex: none; white-space: nowrap; font-weight: 700; color: var(--bad); font-variant-numeric: tabular-nums; }
+.gc-r { background: var(--surface-2); border-radius: 14px; padding: 10px 12px; margin-top: 8px; }
+.gc-rh { display: flex; flex-wrap: wrap; gap: 6px 10px; align-items: center; justify-content: space-between; }
+.gc-tag { display: inline-flex; align-items: center; gap: 4px; font-size: .75rem; font-weight: 700; white-space: nowrap; border-radius: 999px; padding: 2px 9px 2px 8px; }
+.gc-tag svg { flex: none; }
+.gc-tag.yes { background: var(--good-bg); color: var(--good); }
+.gc-tag.maybe { background: var(--warn-bg); color: var(--warn); }
+.gc-amt { font-size: .8rem; font-weight: 700; white-space: nowrap; font-variant-numeric: tabular-nums; color: var(--on-surface-var); }
+.gc-r.yes .gc-amt { color: var(--good); }
+.gc-rt { display: block; margin-top: 6px; }
+.gc-t { font-size: .88rem; margin-top: 2px; }
+.gc-line { margin: 8px 0 0; }
+.gc-chips { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; }
+.gc-fix { margin-top: 4px; margin-inline-start: -8px; }
+.gc-no { display: flex; gap: 6px; align-items: flex-start; font-size: .78rem; color: var(--on-surface-var); margin: 8px 2px 0; }
+.gc-no svg { flex: none; margin-top: 2px; color: var(--good-mark); }
+.gc-left { display: flex; align-items: baseline; justify-content: space-between; gap: 10px; border-top: 1px solid var(--line); margin-top: 14px; padding-top: 12px; }
+.gc-left small { color: var(--on-surface-var); }
+.gc-left b { font-size: 1.35rem; font-variant-numeric: tabular-nums; white-space: nowrap; letter-spacing: -0.02em; }
+.gc-left.all b { color: var(--good); }
+.gc-sum { margin: 6px 2px 12px; }
+.gc-report { margin-top: 6px; }
+.gc-letter-anyway { margin-top: 6px; }
+.gc-expl { display: inline-block; margin-top: 8px; padding: 3px 10px; border-radius: 999px; background: var(--warn-bg); color: var(--warn); font-size: .8rem; font-weight: 700; }
+.gc-f.expl .gc-fh .fi { color: var(--warn-mark); }
+.gc-f.expl .gc-fh .amt { color: var(--warn); }
+.gc-carry { margin-bottom: 12px; }
+.gc-carry .gc-fh .fi { color: var(--warn-mark); }
 
 /* the first open: the screen under the language doors is not painted while they cover it (lang.js lp-open) */
 html.lp-open #view, html.lp-open #nav { visibility: hidden; }

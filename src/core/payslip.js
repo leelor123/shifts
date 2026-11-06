@@ -554,7 +554,18 @@
       const blm = (val(F, 'nationalInsurance') || 0) + (val(F, 'healthTax') || 0);
       const itm = val(F, 'incomeTax') || 0;
       if (blm > 0) add({ area: 'ביטוח לאומי', status: 'bad', title: 'נוכו ביטוח לאומי / מס בריאות לעובד מתחת לגיל 18', amount: blm, detail: `נוכו ${U.money(blm)}, אבל עובד שטרם מלאו לו 18 פטור מדמי ביטוח לאומי ומס בריאות.`, basis: 'חוק הביטוח הלאומי: פטור לנער עד גיל 18 (לפי תאריך הלידה שהוזן).', confidence: 'medium' });
-      if (itm > 0) add({ area: 'מס הכנסה', status: 'warn', title: 'נוכה מס הכנסה מתחת לגיל 18', amount: itm, detail: `נוכו ${U.money(itm)}. בשכר רגיל של נער/ה, נקודות הזיכוי מאפסות בדרך כלל את המס. כדאי לבדוק שמולא טופס 101.`, basis: 'מדרגות מס ונקודות זיכוי.', confidence: 'low', note: 'מס שנוכה ביתר אפשר לקבל בחזרה בהחזר מס שנתי.' });
+      if (itm > 0) {
+        // a minor pays income tax by the same brackets, with the credit points (one more at 16-17): the deduction is
+        // compared with the engine's estimate for the period, and only one clearly above it is flagged
+        let estT = 0;
+        try {
+          const est = Engine.netEstimate({ gross: gross || E.t.gross, pensionBase: pBase, pensionActive: !!pe, deductions: 0, periodTo: E.P.to }, Object.assign({}, S, { tax: Object.assign({}, S.tax, { creditPoints: cp != null ? cp : S.tax.creditPoints }) }));
+          estT = Math.max(0, +est.incomeTax || 0);
+        } catch (e) { estT = 0; }
+        const over = itm - estT;
+        if (over > Math.max(40, estT * 0.15)) add({ area: 'מס הכנסה', status: 'warn', title: 'נוכה מס הכנסה גבוה מההערכה (מתחת לגיל 18)', amount: over, detail: `נוכו ${U.money(itm)}, הערכה ${U.money(estT)}. בשכר רגיל של נער/ה, נקודות הזיכוי מקטינות את המס, לרוב עד אפס. כדאי לבדוק שמולא טופס 101.`, basis: 'מדרגות מס ונקודות זיכוי.', confidence: 'low', note: 'מס שנוכה ביתר אפשר לקבל בחזרה בהחזר מס שנתי.' });
+        else add({ area: 'מס הכנסה', status: 'ok', title: 'מס הכנסה סביר', detail: `${U.money(itm)} (הערכה: ${U.money(estT)}).`, basis: 'מדרגות מס חודשיות ונקודות זיכוי.', confidence: 'low' });
+      }
       if (!blm && !itm) add({ area: 'ביטוח לאומי', status: 'ok', title: 'ללא ניכויי חובה (מתחת לגיל 18)', detail: 'הנטו אמור להיות שווה לברוטו (פחות ניכויים אישיים, אם יש).', basis: 'פטור לנער עד גיל 18.', confidence: 'medium' });
     }
     if (gross && !minor) {
@@ -591,6 +602,334 @@
     const bad = findings.filter((f) => f.status === 'bad');
     const totalMissing = bad.reduce((s, f) => s + Math.max(0, f.amount || 0), 0);
     return { findings, expected: E, auto: A, totalMissing, overridesInPeriod: overridesInPeriod.length, period: slip.period };
+  }
+
+  /* ---------------- before writing to the employer: innocent reasons for a gap ----------------
+   * For every finding with money missing, the likely innocent reasons, each checked on the person's own data where
+   * it can be: found 'yes' (the data fits: the reason closes this gap), 'maybe' (the condition is there, it explains
+   * part or cannot be measured), 'no' (checked, not this). A setting's effect is measured by running the same check
+   * on a copy of the data with that setting the employer's likely way (the break unpaid, overtime by the law, no
+   * rounding): what is left of the finding there is what the setting does not explain. Only 'yes' reasons lower the
+   * gap that is left for the letter; of several, the largest counts (they may describe the same hours). */
+  const altCache = new WeakMap(); // model -> { key: the model rebuilt with one setting changed }
+  function altModel(model, key, change) {
+    if (!model.data) return null;
+    let c = altCache.get(model);
+    if (!c) { c = {}; altCache.set(model, c); }
+    if (!(key in c)) {
+      try { c[key] = Engine.buildModel(Object.assign({}, model.data, change(model.data))); } catch (e) { c[key] = null; }
+    }
+    return c[key];
+  }
+  const badIn = (a, area) => a.findings.find((f) => f.area === area && f.status === 'bad');
+  /** How much of a finding a changed setting explains (0 when it changes nothing). */
+  function whatIf(slip, model, key, change, f) {
+    const m = altModel(model, key, change);
+    if (!m) return null;
+    let a2;
+    try { a2 = analyze(slip, m); } catch (e) { return null; }
+    const f2 = badIn(a2, f.area);
+    return Math.max(0, f.amount - (f2 ? Math.max(0, f2.amount || 0) : 0));
+  }
+  /** yes when it closes the finding, maybe when it explains a part of it. */
+  const closes = (x, amount) => x >= amount - Math.max(2, amount * 0.1);
+  const grade = (x, amount) => (x == null || x < 0.5 ? 'no' : closes(x, amount) ? 'yes' : 'maybe');
+  const slipHoursOf = (F) => HOUR_FIELDS.reduce((s, k) => s + (qty(F, k) || 0), 0) || val(F, 'workHours') || 0;
+  // the finding's area (its Hebrew name in this build) → a code
+  const AREAS = [['שעות', 'hours'], ['תעריף', 'rate'], ['שבת וחג', 'rest'], ['שעות נוספות', 'ot'], ['נסיעות', 'travel'], ['שכר מינימום', 'minwage'], ['פנסיה', 'pension'], ['ביטוח לאומי', 'ni'], ['מס הכנסה', 'tax']];
+  const codeOf = (area) => { const x = AREAS.find((p) => p[0] === area); return x ? x[1] : ''; };
+  const AREA_FIELDS = { hours: HOUR_FIELDS.concat('workHours'), rate: ['base'], rest: ['rest150', 'rest175', 'rest200'], ot: ['ot125', 'ot150'], travel: ['travel', 'workDays'], minwage: ['base'], pension: ['pensionEmployee', 'pensionEmployer'], ni: ['nationalInsurance', 'healthTax'], tax: ['incomeTax'] };
+  const RANK = { edge: 1, period: 2, travelDays: 2, minAge: 2, pensionStart: 2, birth18: 2, break: 3, otLaw: 3, restWindow: 3, rate: 3, travelRate: 3, unplaced: 4, travelMonth: 4, estimate: 4, long: 5, travelCap: 5, entered: 6, rounding: 6, ocr: 7 };
+  const FOUND = { yes: 0, maybe: 1, no: 2 };
+
+  /**
+   * checkGap(analysis, slip, model) → { items: [{ id, area, title, amount, reasons, explained, left }], total,
+   * explained, left, all }. A reason: { id, title, text, found: 'yes'|'maybe'|'no', amount (₪ it explains, or null),
+   * line (what the payslip reader read, for a misread), shifts: [ids], fix: { kind: 'set', k, f } | { kind: 'verify',
+   * key } | null }.
+   */
+  function checkGap(a, slip, model) {
+    const S = model.ctx.settings;
+    const F = slip.fields || {};
+    const E = a.expected;
+    const P = E.P;
+    const emp = model.ctx.primaryEmployer();
+    const raw = new Map(((model.data && model.data.shifts) || []).map((s) => [s.id, s]));
+    const dates = (rs) => rs.map((r) => U.fmtDate(r.dateKey, 'short')).join(', ');
+    const slipHours = slipHoursOf(F);
+    const items = [];
+    for (const f of a.findings) {
+      if (f.status !== 'bad' || !(f.amount > 0)) continue;
+      const code = codeOf(f.area);
+      const R = [];
+      const add = (o) => R.push(Object.assign({ amount: null, line: null, shifts: [], fix: null }, o, { amount: o.amount != null ? Math.min(f.amount, Math.max(0, o.amount)) : null }));
+
+      /* the last shifts of the period: paid on the next payslip */
+      if (code === 'hours' || code === 'travel') {
+        const diffH = code === 'hours' ? E.t.hours - slipHours : 0;
+        const edgeFrom = U.addDays(P.to, -3);
+        let tail = [], acc = 0;
+        if (code === 'hours') {
+          for (let i = E.shifts.length - 1; i >= 0 && acc < diffH - 0.3; i--) { acc += E.shifts[i].paidHours; tail.unshift(E.shifts[i]); }
+          if (!(tail.length && Math.abs(acc - diffH) <= 0.3 && tail[0].dateKey >= edgeFrom)) tail = [];
+        } else {
+          // travel: the days at the end of the period whose travel adds up to what is missing
+          const per = +emp.travelPerDay || 0;
+          const days = [...new Set(E.shifts.map((r) => r.dateKey))].sort().reverse();
+          for (let k = 1; k <= Math.min(3, days.length) && per > 0; k++) {
+            if (days[k - 1] < edgeFrom) break;
+            if (Math.abs(k * per - f.amount) <= 0.5) { tail = E.shifts.filter((r) => days.slice(0, k).includes(r.dateKey)); break; }
+          }
+        }
+        const last = E.shifts.filter((r) => r.dateKey >= U.addDays(P.to, -1));
+        if (tail.length) {
+          add({ id: 'edge', found: 'yes', amount: code === 'hours' ? tail.reduce((x, r) => x + r.wage, 0) : f.amount, shifts: tail.map((r) => r.id),
+            title: 'משמרות בסוף התקופה', short: 'כנראה בתלוש הבא', nextSlip: true,
+            text: code === 'hours' ? `המשמרות האחרונות בתקופה (${dates(tail)}) מסבירות את כל ההפרש. יש מעסיקים שמשלמים עליהן בתלוש של החודש הבא. אם הן מופיעות שם, לא חסר כסף.`
+              : `הנסיעות של הימים האחרונים בתקופה (${dates(tail)}) מסבירות את כל ההפרש. יש מעסיקים שמשלמים עליהן בתלוש של החודש הבא.` });
+        } else {
+          add({ id: 'edge', found: last.length ? 'maybe' : 'no', shifts: last.map((r) => r.id), title: 'משמרות בסוף התקופה',
+            text: last.length ? `יש משמרות ביומיים האחרונים של התקופה (${dates(last)}). ייתכן שהן ייכנסו לתלוש הבא.` : 'אין משמרות בסוף התקופה שמסבירות את ההפרש.' });
+        }
+      }
+
+      if (code === 'hours') {
+        const diffH = E.t.hours - slipHours;
+        /* the pay period: the employer counts the month from another day */
+        const cur = +emp.periodStartDay || 1;
+        let best = null;
+        for (const d of [1, 21, 26, 25, 20, 16, 15, 24, 11, 10]) { // the common ones first: an even match keeps the first
+          if (d === cur) continue;
+          const P2 = Engine.periodByKey(slip.period, Object.assign({}, emp, { periodStartDay: d }));
+          const h = Engine.totals(model, P2.from, P2.to).hours;
+          if (!best || Math.abs(h - slipHours) < Math.abs(best.h - slipHours)) best = { d, h };
+        }
+        const match = best && Math.abs(best.h - slipHours) <= 0.25;
+        add({ id: 'period', found: match ? 'yes' : 'no', amount: match ? f.amount : null, title: 'תקופת השכר',
+          text: !match ? 'בדקנו תקופות שמתחילות בימים אחרים בחודש, ואף אחת לא תואמת לשעות בתלוש.'
+            : best.d === 1 ? 'אם המעסיק סופר את השעות לפי חודש קלנדרי, השעות בתלוש תואמות בדיוק. אפשר לשנות את תחילת התקופה בהגדרות.'
+              : `אם המעסיק סופר את החודש מה-${best.d} בחודש, השעות בתלוש תואמות בדיוק. אפשר לשנות את תחילת התקופה בהגדרות.`,
+          fix: { kind: 'set', k: 'pay', f: 'התקופה מתחילה ב-' } });
+
+        /* a shift much longer than the rest: a clock left running */
+        const lens = E.shifts.map((r) => r.paidHours).sort((x, y) => x - y);
+        const typical = lens.length >= 3 ? lens[Math.floor(lens.length / 2)] : 8;
+        const longs = E.shifts.filter((r) => r.paidHours >= 12 && r.paidHours >= typical + 3);
+        const fit = longs.find((r) => Math.abs(r.paidHours - typical - diffH) <= 0.5);
+        const lg = fit || longs[0];
+        add({ id: 'long', found: fit ? 'yes' : longs.length ? 'maybe' : 'no', amount: lg ? (lg.paidHours - typical) * E.avgRate : null, shifts: longs.map((r) => r.id),
+          title: 'משמרת ארוכה במיוחד',
+          text: lg ? `משמרת של ${U.hm(lg.paidMin)} שעות ב-${U.fmtDate(lg.dateKey, 'short')}. אם שכחת לעצור את השעון, נרשמו יותר שעות ממה שעבדת.` : 'אין בתקופה משמרות ארוכות במיוחד.' });
+
+        /* shifts written before they began (from the plan) or changed after they ended */
+        const entered = E.shifts.filter((r) => {
+          const s = raw.get(r.id);
+          if (!s || s.demo) return false;
+          const c = +s.createdAt || 0, u = +s.updatedAt || 0;
+          return (c && c < s.start - 5 * 60000) || (u && c && u - c > 10 * 60000 && u > s.end);
+        });
+        add({ id: 'entered', found: entered.length ? 'maybe' : 'no', shifts: entered.map((r) => r.id), title: 'משמרות שנרשמו מראש או תוקנו',
+          text: entered.length ? 'חלק מהמשמרות נרשמו לפני שהתחילו, או תוקנו אחרי שנגמרו. כדאי לוודא שהשעות בהן הן השעות שעבדת בפועל.' : 'אין בתקופה משמרות שנרשמו מראש או תוקנו אחר כך.' });
+      }
+
+      /* the break: paid in the app, maybe not by the employer */
+      if (code === 'hours' || code === 'ot') {
+        const withBreak = E.shifts.filter((r) => r.breakPaid && r.breakMin > 0);
+        const x = withBreak.length ? whatIf(slip, model, 'break', (d) => ({ shifts: (d.shifts || []).map((s) => (s.breakPaid === false ? s : Object.assign({}, s, { breakPaid: false }))) }), f) : 0;
+        const bh = withBreak.reduce((s, r) => s + r.breakMin / 60, 0);
+        add({ id: 'break', found: withBreak.length ? (grade(x, f.amount) === 'no' ? 'maybe' : grade(x, f.amount)) : 'no', amount: withBreak.length ? x : null, shifts: withBreak.map((r) => r.id),
+          title: 'ההפסקה',
+          text: withBreak.length ? `באפליקציה ההפסקות נספרות כזמן עבודה בתשלום, ${U.hours(bh)} שעות בתקופה. אם יכולת לצאת בזמן ההפסקה, מותר למעסיק לא לשלם עליה.` : 'אין בתקופה הפסקות שנספרות בתשלום.',
+          fix: { kind: 'set', k: 'calc', f: 'הפסקה' } });
+      }
+
+      /* overtime: after a flat number of hours in the app, by the law at the employer */
+      if (code === 'ot') {
+        const byLaw = Engine.otByLaw(emp);
+        const x = byLaw ? 0 : whatIf(slip, model, 'otLaw', (d) => ({ employers: (d.employers || []).map((e) => Object.assign({}, e, { otLaw: true })) }), f);
+        add({ id: 'otLaw', found: grade(x, f.amount), amount: x || null, title: 'מתי מתחילות שעות נוספות',
+          text: byLaw ? 'באפליקציה שעות נוספות כבר מחושבות לפי החוק.'
+            : x >= 0.5 ? `באפליקציה שעות נוספות מתחילות אחרי ${+emp.otThreshold || 8} שעות ביום. לפי החוק, בשבוע של 5 ימים הן מתחילות רק מעל 8.6 שעות ביום או מעל 42 שעות בשבוע, ולכן המעסיק סופר פחות שעות נוספות.`
+              : 'חישוב לפי החוק לא משנה את השעות הנוספות בתקופה הזו.',
+          fix: byLaw ? null : { kind: 'set', k: 'calc', f: 'לפי החוק (מומלץ)' } });
+      }
+
+      /* rounding of clock times */
+      if (code === 'hours' || code === 'ot') {
+        const mode = emp.roundingMode || 'none';
+        if (mode === 'up' || mode === 'nearest') {
+          const x = whatIf(slip, model, 'round-none', (d) => ({ employers: (d.employers || []).map((e) => Object.assign({}, e, { roundingMode: 'none' })) }), f);
+          add({ id: 'rounding', found: grade(x, f.amount), amount: x || null, title: 'עיגול שעות',
+            text: `באפליקציה זמני המשמרות מעוגלים ל-${+emp.roundingUnit || 15} דקות. אם המעסיק לא מעגל, הוא משלם לפי הדקות המדויקות.`,
+            fix: { kind: 'set', k: 'calc', f: 'עיגול זמן משמרת' } });
+        } else if (mode === 'none') {
+          const x = whatIf(slip, model, 'round-down', (d) => ({ employers: (d.employers || []).map((e) => Object.assign({}, e, { roundingMode: 'down', roundingUnit: 15 })) }), f);
+          // rounding down time that was worked is not a reason to let it go: at most 'maybe'
+          add({ id: 'rounding', found: x >= 0.5 ? 'maybe' : 'no', amount: x || null, title: 'עיגול שעות',
+            text: x >= 0.5 ? 'אם המעסיק מעגל את שעות הכניסה והיציאה כלפי מטה לרבע שעה, יוצא פער כזה. גם דקות שעוגלו הן זמן שעבדת, אז כדאי לשאול על זה.' : 'עיגול השעות לא מסביר את ההפרש.' });
+        }
+      }
+
+      /* Shabbat and holidays: hours close to the start or end of the window */
+      if (code === 'rest' && root.HebCal) {
+        const H = 3600000;
+        const restShifts = E.shifts.filter((r) => r.restHours > 0);
+        let edgeH = 0;
+        for (const r of restShifts) {
+          const wins = root.HebCal.restWindows(U.addDays(r.dateKey, -1), U.addDays(r.dateKey, 2), model.ctx.restCfg);
+          const pf = r.roundedMin ? r.paidMin / r.roundedMin : 1;
+          for (const sl of r.slices || []) {
+            if (!sl.rest) continue;
+            const w = wins.find((x) => (sl.a + sl.b) / 2 >= x.start && (sl.a + sl.b) / 2 < x.end);
+            if (!w) continue;
+            const ov = (s0, e0) => Math.max(0, Math.min(sl.b, e0) - Math.max(sl.a, s0));
+            edgeH += (ov(w.start, w.start + H) + ov(w.end - H, w.end)) / H * pf;
+          }
+        }
+        const pct = ((emp.restPct || 150) - 100) / 100;
+        const slipRestH = (qty(F, 'rest150') || 0) + (qty(F, 'rest175') || 0) + (qty(F, 'rest200') || 0);
+        const missingH = Math.max(0, E.t.restHours - slipRestH);
+        const x = edgeH * E.avgRate * pct;
+        const fits = edgeH > 0.05 && edgeH >= missingH - 0.25;
+        const city = S.rest.mode === 'city';
+        add({ id: 'restWindow', found: fits ? 'yes' : edgeH > 0.05 ? 'maybe' : 'no', amount: edgeH > 0.05 ? (fits ? f.amount : x) : null, shifts: restShifts.map((r) => r.id),
+          title: 'שעת כניסת השבת או החג',
+          text: edgeH > 0.05 ? (city ? `${U.hours(edgeH)} שעות שבת/חג שלך נמצאות בשעה הראשונה או האחרונה של החלון. האפליקציה מחשבת לפי זמני השבת בעיר שבחרת, ומעסיק יכול לספור משעה קבועה. כדאי לבדוק שהעיר נכונה.`
+            : `${U.hours(edgeH)} שעות שבת/חג שלך נמצאות בשעה הראשונה או האחרונה של החלון, לפי השעות הקבועות שהגדרת. אם המעסיק סופר משעה אחרת, יוצא פער כזה.`)
+            : 'שעות השבת/חג שלך לא קרובות לכניסה או ליציאה.',
+          fix: { kind: 'set', k: 'rest' } });
+      }
+
+      /* the hourly rate */
+      if (code === 'rate') {
+        const bq = qty(F, 'base'), bv = val(F, 'base');
+        const slipRate = bq && bv ? (F.base.rate || bv / bq) : 0;
+        let raise = null;
+        const roleIds = new Set();
+        for (const r of E.shifts) for (const id of Object.keys(r.byRole || {})) roleIds.add(id);
+        for (const id of roleIds) {
+          const role = model.ctx.roles.get ? model.ctx.roles.get(id) : null;
+          const rates = role && (role.rates || []).slice().sort((x, y) => String(x.from).localeCompare(String(y.from)));
+          if (!rates) continue;
+          for (let i = 1; i < rates.length; i++) {
+            if (rates[i].from > U.addDays(P.from, -45) && rates[i].from <= P.to && Math.abs(+rates[i - 1].rate - slipRate) <= 0.03) raise = { from: rates[i].from, old: +rates[i - 1].rate, rate: +rates[i].rate };
+          }
+        }
+        const baseRates = new Set();
+        for (const r of E.shifts) for (const l of r.lines) if (!l.rest && l.tier === 0) baseRates.add(Math.round(l.rate * 100));
+        add({ id: 'rate', found: raise ? 'yes' : 'maybe', amount: raise ? f.amount : null, title: 'התעריף לשעה',
+          text: raise ? `הגדרת העלאה ל-${U.money(raise.rate)} מ-${U.fmtDate(raise.from)}, ובתלוש מופיע התעריף הקודם (${U.money(raise.old)}). אם ההעלאה מתחילה אצל המעסיק מאוחר יותר, כדאי לבדוק את התאריך בתפקיד.`
+            : baseRates.size > 1 ? 'בתקופה יש משמרות בכמה תפקידים בתעריפים שונים. אם משמרת נרשמה בתפקיד הלא נכון, התעריף יוצא שונה.'
+              : `בתלוש ${U.money(slipRate)} לשעה, ובאפליקציה ${U.money(E.baseRate)}. כדאי לבדוק שהתעריף שהגדרת הוא התעריף שסוכם.`,
+          fix: { kind: 'set', k: 'roles' } });
+      }
+
+      /* travel */
+      if (code === 'travel') {
+        const per = +emp.travelPerDay || 0;
+        const slipT = val(F, 'travel') || 0;
+        const wd = val(F, 'workDays');
+        const appDays = E.t.workDays;
+        if (wd != null && wd < appDays) {
+          const x = (appDays - wd) * per;
+          add({ id: 'travelDays', found: grade(Math.min(x, f.amount), f.amount), amount: x, title: 'מספר ימי העבודה',
+            text: `המעסיק רשם ${U.num(wd, 0)} ימי עבודה, ובאפליקציה ${appDays}. ייתכן שהנסיעות על שאר הימים ישולמו בתלוש אחר.` });
+        }
+        const days = wd || appDays;
+        const perSlip = slipT && days ? slipT / days : 0;
+        const clean = perSlip > 0 && Math.abs(perSlip * 100 - Math.round(perSlip * 100)) < 0.01;
+        if (perSlip > 0 && perSlip < per - 0.05 && (wd != null || clean)) {
+          add({ id: 'travelRate', found: wd != null && Math.abs(wd - appDays) < 0.5 ? 'yes' : 'maybe', amount: (per - perSlip) * days, title: 'סכום הנסיעות ליום',
+            text: `בתלוש יוצא ${U.money(perSlip)} ליום, ובאפליקציה ${U.money(per)}. המעסיק משלם את מחיר הנסיעה בפועל עד התקרה, אז ייתכן שזה מחיר הנסיעה שלך.`,
+            fix: { kind: 'set', k: 'pay', f: 'סכום ליום עבודה ₪' } });
+        }
+        if (!slipT) {
+          add({ id: 'travelMonth', found: 'maybe', amount: f.amount, title: 'נסיעות בחודש אחר',
+            text: 'בתלוש לא זוהתה שורת נסיעות. יש מעסיקים שמשלמים נסיעות חודש אחרי, או בשורה בשם אחר.' });
+        } else if (!+emp.travelMonthlyCap) {
+          add({ id: 'travelCap', found: 'maybe', title: 'חופשי חודשי',
+            text: 'אם חופשי חודשי זול יותר מהנסיעות של כל הימים, המעסיק יכול לשלם רק את מחירו. אפשר להגדיר תקרה חודשית.',
+            fix: { kind: 'set', k: 'pay', f: 'תקרה חודשית ₪' } });
+        }
+      }
+
+      /* the minimum wage: a minor's is lower */
+      if (code === 'minwage') {
+        const bq = qty(F, 'base'), bv = val(F, 'base');
+        const rate = bq && bv ? (F.base.rate || bv / bq) : E.baseRate;
+        const youth = Engine.legalMinWage(P.to, U.addMonths(P.to, -(17 * 12 + 1)));
+        const may = !S.birthDate && youth && rate + 0.005 >= youth.hourly;
+        add({ id: 'minAge', found: may ? 'maybe' : 'no', amount: may ? f.amount : null, title: 'גיל ושכר מינימום',
+          text: may ? 'לא הזנת תאריך לידה. מתחת לגיל 18 שכר המינימום נמוך יותר, ואז התעריף בתלוש עשוי להיות תקין.'
+            : S.birthDate ? 'שכר המינימום חושב לפי הגיל שלך מתאריך הלידה שהזנת.' : 'גם שכר המינימום לנוער גבוה מהתעריף בתלוש.',
+          fix: { kind: 'set', k: 'personal', f: 'תאריך לידה (לא חובה)' } });
+      }
+
+      /* pension: when the duty begins */
+      if (code === 'pension') {
+        const months = S.startDate ? Engine.monthsBetween(S.startDate, P.to) : null;
+        const recent = months != null && months <= (+S.pension.startAfterMonths || 6) + 2;
+        add({ id: 'pensionStart', found: !S.startDate || recent ? 'maybe' : 'no', amount: !S.startDate || recent ? f.amount : null, title: 'מתי מתחילה הפנסיה',
+          text: !S.startDate ? 'לא הזנת תאריך תחילת עבודה, ולכן האפליקציה לא יודעת מתי חובת ההפרשה מתחילה.'
+            : recent ? 'לפי תאריך תחילת העבודה שהזנת, חובת ההפרשה התחילה רק לאחרונה. אם התאריך לא מדויק, גם הבדיקה לא מדויקת.'
+              : 'לפי תאריך תחילת העבודה, ההפרשה הייתה אמורה להתחיל כבר.',
+          fix: { kind: 'set', k: 'leave', f: 'תאריך תחילת עבודה' } });
+      }
+
+      /* National Insurance and tax: the age, and the estimates */
+      if (code === 'ni' || code === 'tax') {
+        if (S.birthDate) {
+          const b18 = U.addMonths(S.birthDate, 12 * 18);
+          const near = b18 > P.from && b18 <= U.addDays(P.to, 31);
+          add({ id: 'birth18', found: near ? 'yes' : 'maybe', amount: near ? f.amount : null, title: 'הגיל לפי תאריך הלידה',
+            text: near ? `יום ההולדת ה-18 שלך ב-${U.fmtDate(b18)}, קרוב לחודש של התלוש. מהגיל הזה מנכים ביטוח לאומי, ומעסיקים סופרים אותו לפי החודש.`
+              : `האפליקציה יודעת את הגיל רק מתאריך הלידה שהזנת (${U.fmtDate(S.birthDate)}). אם הוא לא מדויק, גם הבדיקה לא מדויקת.`,
+            fix: { kind: 'set', k: 'personal', f: 'תאריך לידה (לא חובה)' } });
+        }
+        add({ id: 'estimate', found: 'maybe', title: 'הערכה של ניכויים',
+          text: 'מס הכנסה, ביטוח לאומי ופנסיה באפליקציה הם הערכה לפי ההגדרות שלך. הם משנים רק את הנטו, לא את הברוטו.' });
+      }
+
+      /* a payslip line the reader could not place: maybe this payment under another name */
+      if (code !== 'ni' && code !== 'tax') {
+        const lines = (slip.other || []).filter((o) => o.guess !== 'otherDed' && !FIELD[o.guess] && +o.value > 0);
+        const near = lines.slice().sort((x, y) => Math.abs(+x.value - f.amount) - Math.abs(+y.value - f.amount))[0];
+        if (near && +near.value >= f.amount * 0.3) {
+          add({ id: 'unplaced', found: Math.abs(+near.value - f.amount) <= Math.max(2, f.amount * 0.1) ? 'yes' : 'maybe', amount: +near.value, line: near.line,
+            title: 'שורה שלא זוהתה',
+            text: `בתלוש יש שורה שהאפליקציה לא שייכה, על ${U.money(+near.value)}. ייתכן שזה התשלום הזה בשם אחר.`,
+            fix: { kind: 'verify', key: '' } });
+        }
+      }
+
+      /* the reader misread a number */
+      const keys = (AREA_FIELDS[code] || []).filter((k) => F[k]);
+      const src = slip.source || 'manual';
+      if (keys.length && src !== 'manual') {
+        const odd = keys.find((k) => { const v = F[k]; return v.qty && v.rate && v.value && Math.abs(v.qty * v.rate - v.value) > Math.max(1, Math.abs(v.value) * 0.015); });
+        const k0 = odd || keys[0];
+        const ln = F[k0].line && F[k0].line !== 'AI' ? String(F[k0].line).slice(0, 140) : null;
+        add({ id: 'ocr', found: odd ? 'yes' : src === 'pdf' ? 'no' : 'maybe', line: ln, title: 'קריאת התלוש',
+          text: odd ? 'בשורה שנקראה המספרים לא מסתדרים: שעות כפול תעריף לא שווה לסכום. כנראה ספרה נקראה לא נכון.'
+            : src === 'ocr' ? 'התלוש נקרא מצילום, וזיהוי מצילום טועה לפעמים בספרות. כדאי להשוות את השורה לתלוש.'
+              : src === 'ai' ? 'הקריאה נעשתה בעזרת AI, והוא יכול לטעות. כדאי להשוות את השורה לתלוש.'
+                : 'המספרים נקראו מקובץ ה-⁠PDF עצמו, כך שטעות קריאה פחות סבירה.',
+          fix: { kind: 'verify', key: k0 } });
+      }
+
+      R.sort((x, y) => (FOUND[x.found] - FOUND[y.found]) || ((y.amount || 0) - (x.amount || 0)) || ((RANK[x.id] || 9) - (RANK[y.id] || 9)));
+      // a 'yes' without a measured amount (a misread) explains nothing in shekels
+      const yes = R.filter((r) => r.found === 'yes' && r.amount != null).sort((x, y) => y.amount - x.amount);
+      const explained = yes.length ? Math.min(f.amount, yes[0].amount) : 0;
+      // by: the reason that explains the most (its short name for the findings list)
+      items.push({ id: f.id, area: f.area, title: f.title, amount: f.amount, reasons: R, explained, left: Math.max(0, f.amount - explained),
+        by: yes.length ? (yes[0].short || yes[0].title) : '', nextSlip: yes.some((r) => r.nextSlip && closes(r.amount, f.amount)) });
+    }
+    const total = items.reduce((s, x) => s + x.amount, 0);
+    const explained = items.reduce((s, x) => s + x.explained, 0);
+    const left = Math.max(0, total - explained);
+    // nextSlip: a finding is explained by shifts the next payslip may pay (worth looking for there)
+    return { items, total, explained, left, all: total > 0 && left < 1, nextSlip: items.some((x) => x.nextSlip) };
   }
 
   /** Waterfall steps gross → net. */
@@ -655,9 +994,19 @@
   /** Polite message to the employer / HR. */
   function employerMessage(analysis, opts) {
     opts = opts || {};
-    const bad = analysis.findings.filter((f) => f.status === 'bad' || (opts.includeWarn && f.status === 'warn' && f.amount > 0));
+    let bad = analysis.findings.filter((f) => f.status === 'bad' || (opts.includeWarn && f.status === 'warn' && f.amount > 0));
     const P = analysis.expected.P;
     if (!bad.length) return '';
+    // after the check (checkGap): what the innocent reasons explain in full stays out of the letter, and a finding
+    // they explain in part asks for what is left. When they explain everything, the letter is still there, whole.
+    const chk = opts.check || null;
+    const itemOf = (f) => (chk ? chk.items.find((x) => x.id === f.id) : null);
+    const leftOf = (f) => { const it = itemOf(f); return it ? it.left : Math.max(0, f.amount || 0); };
+    if (chk) {
+      const kept = bad.filter((f) => { const it = itemOf(f); return !it || it.left >= 1; });
+      if (kept.length) bad = kept;
+    }
+    const useLeft = !!chk && bad.some((f) => itemOf(f) && itemOf(f).left >= 1);
     let s = `שלום${opts.to ? ' ' + opts.to : ''},\n\nבדקתי את תלוש השכר של ${U.fmtMonth(analysis.period)} מול רישום המשמרות שלי (\u2066${U.fmtDate(P.from)}\u2060–\u2060${U.fmtDate(P.to)}\u2069), ונראה לי שיש כמה נקודות שכדאי לבדוק:\n\n`;
     // findings are written to the user ("רשמת"); the message speaks in first person
     // i18n-keep-start
@@ -665,14 +1014,16 @@
     // i18n-keep-end
     bad.forEach((f, i) => {
       s += `${i + 1}. ${f.title}: ${firstPerson(f.detail)}`;
-      if (f.amount > 0 && !/≈|לפי החישוב/.test(f.detail)) s += ` (הפרש משוער: ${U.money(f.amount)})`;
+      const it = useLeft ? itemOf(f) : null;
+      if (it && it.explained >= 1 && it.left >= 1) s += ` (אחרי מה שבדקתי, נשאר הפרש משוער של ${U.money(it.left)})`;
+      else if (f.amount > 0 && !/≈|לפי החישוב/.test(f.detail)) s += ` (הפרש משוער: ${U.money(f.amount)})`;
       s += '\n';
     });
-    const tot = bad.reduce((x, f) => x + Math.max(0, f.amount || 0), 0);
+    const tot = bad.reduce((x, f) => x + (useLeft ? leftOf(f) : Math.max(0, f.amount || 0)), 0);
     if (tot > 0) s += `\nסה״כ הפרש משוער: ${U.money(tot)}.\n`;
     s += '\nאשמח אם תוכלו לבדוק ולעדכן אותי, ואם צריך, לתקן בתלוש הבא. אם פספסתי משהו, אשמח להסבר.\n\nתודה רבה,\n' + (opts.name || '');
     return s.trim();
   }
 
-  root.Payslip = { FIELDS, FIELD, HOUR_FIELDS, EXPLAIN, normalize, fixVisual, numbersIn, matchField, pickValues, linesFromPdfItems, detectPeriod, parseText, redact, aiSchema, aiPrompt, fromAi, expected, analyze, waterfall, explainLines, compareSlips, employerMessage };
+  root.Payslip = { FIELDS, FIELD, HOUR_FIELDS, EXPLAIN, normalize, fixVisual, numbersIn, matchField, pickValues, linesFromPdfItems, detectPeriod, parseText, redact, aiSchema, aiPrompt, fromAi, expected, analyze, checkGap, waterfall, explainLines, compareSlips, employerMessage };
 })(typeof window !== 'undefined' ? window : globalThis);
