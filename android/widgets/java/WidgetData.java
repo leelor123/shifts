@@ -42,7 +42,10 @@ final class WidgetData {
         JSONObject o = raw(c);
         long done = o == null ? Long.MAX_VALUE : o.optLong("wid", 0);
         JSONArray left = new JSONArray(), all = taps(p);
-        for (int i = 0; i < all.length(); i++) if (all.optJSONObject(i).optLong("id", 0) > done) left.put(all.optJSONObject(i));
+        for (int i = 0; i < all.length(); i++) {
+            JSONObject t = all.optJSONObject(i); // a broken entry (never written by this code) is dropped, not a crash
+            if (t != null && t.optLong("id", 0) > done) left.put(t);
+        }
         if (left.length() != all.length()) p.edit().putString(TAPS, left.toString()).commit();
         updateAll(c);
     }
@@ -114,7 +117,10 @@ final class WidgetData {
         SharedPreferences p = c.getSharedPreferences(PREFS, Context.MODE_PRIVATE);
         JSONArray all = taps(p);
         long now = System.currentTimeMillis(), id = now;
-        for (int i = 0; i < all.length(); i++) id = Math.max(id, all.optJSONObject(i).optLong("id", 0) + 1);
+        for (int i = 0; i < all.length(); i++) {
+            JSONObject t = all.optJSONObject(i);
+            if (t != null) id = Math.max(id, t.optLong("id", 0) + 1);
+        }
         try {
             all.put(new JSONObject().put("id", id).put("type", type).put("at", now));
         } catch (Exception e) {
@@ -132,6 +138,14 @@ final class WidgetData {
             Intent i = new Intent(c, k).setAction(AppWidgetManager.ACTION_APPWIDGET_UPDATE)
                     .putExtra(AppWidgetManager.EXTRA_APPWIDGET_IDS, ids);
             c.sendBroadcast(i);
+        }
+        // the quick-settings tile shows the same shift: it is asked to look again
+        if (android.os.Build.VERSION.SDK_INT >= 24) {
+            try {
+                android.service.quicksettings.TileService.requestListeningState(c, new ComponentName(c, ShiftTile.class));
+            } catch (Exception e) {
+                // no tile added, or the system refused: it reads the shift the next time it is shown
+            }
         }
     }
 }

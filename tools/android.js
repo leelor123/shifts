@@ -38,6 +38,9 @@ async function generate() {
   if (!res.ok) throw new Error(`web manifest: HTTP ${res.status}`);
   const web = await res.json();
   const base = core.TwaManifest.fromWebManifestJson(manifestUrl, web).toJson();
+  // the launcher shortcuts open the app as the app, not as a website: without source=twa the page knew it only from
+  // the referrer or the Digital Goods API, and the Play app must never show the website's checkout (Review Ready scan)
+  base.shortcuts = (base.shortcuts || []).map((sc) => Object.assign({}, sc, { url: sc.url + (sc.url.includes('?') ? '&' : '?') + 'source=twa' }));
   const tm = new core.TwaManifest(Object.assign(base, {
     packageId: APP.packageId,
     host: APP.host,
@@ -278,7 +281,14 @@ function patchWidgets() {
         <activity android:name=".WidgetStyleActivity" android:exported="true" android:theme="@style/WidgetPickTheme" android:excludeFromRecents="true" android:taskAffinity="">
             <intent-filter><action android:name="android.appwidget.action.APPWIDGET_CONFIGURE" /></intent-filter>
         </activity>
-${receiver('ShiftWidget', 'shift')}${receiver('MonthWidget', 'month')}${receiver('GoalWidget', 'goal')}${receiver('PaydayWidget', 'payday')}${receiver('ComboWidget', 'combo')}    </application>`);
+${receiver('ShiftWidget', 'shift')}${receiver('MonthWidget', 'month')}${receiver('GoalWidget', 'goal')}${receiver('PaydayWidget', 'payday')}${receiver('ComboWidget', 'combo')}        <!-- the quick-settings tile: start or end a shift from the panel at the top of the screen (ShiftTile) -->
+        <service android:name=".ShiftTile" android:exported="true" android:label="@string/w_tile_name" android:icon="@drawable/w_ic_play" android:permission="android.permission.BIND_QUICK_SETTINGS_TILE">
+            <intent-filter><action android:name="android.service.quicksettings.action.QS_TILE" /></intent-filter>
+        </service>
+    </application>`);
+  // the widgets' pay snapshot stays out of the phone's backups (res/xml/w_backup_rules.xml, w_data_extraction.xml)
+  if (!m.includes('android:allowBackup="true"')) throw new Error('AndroidManifest.xml template changed: allowBackup');
+  m = m.replace('android:allowBackup="true"', 'android:allowBackup="true"\n        android:fullBackupContent="@xml/w_backup_rules"\n        android:dataExtractionRules="@xml/w_data_extraction"');
   fs.writeFileSync(mf, m);
   const gf = path.join(TWA, 'app', 'build.gradle');
   let g = fs.readFileSync(gf, 'utf8');
