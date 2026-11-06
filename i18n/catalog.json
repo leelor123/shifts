@@ -557,7 +557,7 @@
   "where": [
    "app/app.js:973",
    "app/export.js:22",
-   "app/views-onboarding.js:236"
+   "app/views-onboarding.js:245"
   ]
  },
  {
@@ -1543,7 +1543,7 @@
   "kind": "lit",
   "where": [
    "app/export.js:22",
-   "app/views-onboarding.js:496",
+   "app/views-onboarding.js:515",
    "app/views-shift.js:376",
    "app/views-shift.js:558",
    "core/engine.js:623"
@@ -3914,11 +3914,11 @@
   "kind": "lit",
   "where": [
    "app/store.js:599",
-   "app/views-onboarding.js:135",
-   "app/views-onboarding.js:136",
-   "app/views-onboarding.js:141",
    "app/views-onboarding.js:144",
-   "app/views-onboarding.js:177",
+   "app/views-onboarding.js:145",
+   "app/views-onboarding.js:150",
+   "app/views-onboarding.js:153",
+   "app/views-onboarding.js:186",
    "app/views-settings.js:170"
   ]
  },
@@ -5052,7 +5052,7 @@
    "app/views-friends.js:24",
    "app/views-leaderboard.js:17",
    "app/views-leaderboard.js:430",
-   "app/views-onboarding.js:114",
+   "app/views-onboarding.js:123",
    "app/views-quick.js:51"
   ]
  },
@@ -6284,7 +6284,7 @@
   "kind": "lit",
   "where": [
    "app/views-games.js:735",
-   "app/views-onboarding.js:236"
+   "app/views-onboarding.js:245"
   ]
  },
  {
@@ -9138,7 +9138,7 @@
   "kind": "lit",
   "where": [
    "app/views-login.js:174",
-   "app/views-onboarding.js:228"
+   "app/views-onboarding.js:237"
   ]
  },
  {
@@ -9174,7 +9174,7 @@
   "kind": "lit",
   "where": [
    "app/views-login.js:182",
-   "app/views-onboarding.js:229"
+   "app/views-onboarding.js:238"
   ]
  },
  {
@@ -9203,7 +9203,7 @@
   "kind": "lit",
   "where": [
    "app/views-login.js:188",
-   "app/views-onboarding.js:213"
+   "app/views-onboarding.js:222"
   ]
  },
  {
@@ -9225,7 +9225,7 @@
   "kind": "lit",
   "where": [
    "app/views-login.js:232",
-   "app/views-onboarding.js:353"
+   "app/views-onboarding.js:365"
   ]
  },
  {
@@ -9233,7 +9233,7 @@
   "kind": "lit",
   "where": [
    "app/views-login.js:237",
-   "app/views-onboarding.js:360"
+   "app/views-onboarding.js:372"
   ]
  },
  {
@@ -9397,112 +9397,112 @@
   "key": "מלצרות",
   "kind": "lit",
   "where": [
-   "app/views-onboarding.js:18"
+   "app/views-onboarding.js:21"
   ]
  },
  {
   "key": "קופה",
   "kind": "lit",
   "where": [
-   "app/views-onboarding.js:18"
+   "app/views-onboarding.js:21"
   ]
  },
  {
   "key": "שליחויות",
   "kind": "lit",
   "where": [
-   "app/views-onboarding.js:18"
+   "app/views-onboarding.js:21"
   ]
  },
  {
   "key": "מכירות",
   "kind": "lit",
   "where": [
-   "app/views-onboarding.js:18"
+   "app/views-onboarding.js:21"
   ]
  },
  {
   "key": "מטבח",
   "kind": "lit",
   "where": [
-   "app/views-onboarding.js:18"
+   "app/views-onboarding.js:21"
   ]
  },
  {
   "key": "בייביסיטר",
   "kind": "lit",
   "where": [
-   "app/views-onboarding.js:18"
+   "app/views-onboarding.js:21"
   ]
  },
  {
   "key": "סדרנות",
   "kind": "lit",
   "where": [
-   "app/views-onboarding.js:18"
+   "app/views-onboarding.js:21"
   ]
  },
  {
   "key": "מוקד שירות",
   "kind": "lit",
   "where": [
-   "app/views-onboarding.js:18"
+   "app/views-onboarding.js:21"
   ]
  },
  {
   "key": "הדרכה",
   "kind": "lit",
   "where": [
-   "app/views-onboarding.js:18"
+   "app/views-onboarding.js:21"
   ]
  },
  {
   "key": "אבטחה",
   "kind": "lit",
   "where": [
-   "app/views-onboarding.js:18"
+   "app/views-onboarding.js:21"
   ]
  },
  {
   "key": "<div class=\"ob-job\" style=\"--c:{0}\">\n          <div class=\"ob-job-head\"><span class=\"sw\"></span>{1}{2}</div>\n          <label class=\"field\"><span class=\"lbl\">שם התפקיד</span><input class=\"input\" {3} value=\"{4}\" placeholder=\"למשל: קופאי, מלצרית, סדרן\" maxlength=\"40\" autocomplete=\"organization-title\"></label>\n          <label class=\"field\"><span class=\"lbl\">כמה משלמים לך לשעה בתפקיד הזה? (₪)</span><input class=\"input\" type=\"number\" step=\"any\" inputmode=\"decimal\" {5} value=\"{6}\" placeholder=\"{7}\">\n            <span class=\"hint\">לא בטוח/ה? אפשר להשאיר ריק ונשים שכר מינימום{8}: {9} לשעה</span></label>\n        </div>",
   "kind": "tpl",
   "where": [
-   "app/views-onboarding.js:61"
+   "app/views-onboarding.js:64"
   ]
  },
  {
   "key": "תפקיד ",
   "kind": "lit",
   "where": [
-   "app/views-onboarding.js:62"
+   "app/views-onboarding.js:65"
   ]
  },
  {
   "key": "התפקיד שלך",
   "kind": "lit",
   "where": [
-   "app/views-onboarding.js:62"
+   "app/views-onboarding.js:65"
   ]
  },
  {
   "key": "התפקיד שלך שם",
   "kind": "lit",
   "where": [
-   "app/views-onboarding.js:62"
+   "app/views-onboarding.js:65"
   ]
  },
  {
   "key": "<button class=\"icon-btn sm\" {0} aria-label=\"הסר את התפקיד\">{1}</button>",
   "kind": "tpl",
   "where": [
-   "app/views-onboarding.js:62"
+   "app/views-onboarding.js:65"
   ]
  },
  {
   "key": " לגילך",
   "kind": "lit",
   "where": [
-   "app/views-onboarding.js:65",
+   "app/views-onboarding.js:68",
    "app/views-rights.js:116",
    "app/views-rights.js:116"
   ]
@@ -9511,352 +9511,412 @@
   "key": "{0}\n        <h1>איך קוראים לך?</h1>\n        <label class=\"field\"><input class=\"input big-in\" id=\"ob-name\" value=\"{1}\" placeholder=\"השם שלך\" autocomplete=\"given-name\" maxlength=\"40\" enterkeyhint=\"next\"></label>\n        <div class=\"ob-q2\">ואת/ה...</div>\n        <div class=\"ob-chips\">{2}{3}{4}</div>\n        {5}",
   "kind": "tpl",
   "where": [
-   "app/views-onboarding.js:70"
+   "app/views-onboarding.js:73"
   ]
  },
  {
   "key": "נעים מאוד, {0}! 😍",
   "kind": "tpl",
   "where": [
-   "app/views-onboarding.js:70",
-   "app/views-onboarding.js:452"
+   "app/views-onboarding.js:73",
+   "app/views-onboarding.js:471"
   ]
  },
  {
   "key": "בוא/י נכיר 😊",
   "kind": "lit",
   "where": [
-   "app/views-onboarding.js:70",
-   "app/views-onboarding.js:452"
+   "app/views-onboarding.js:73",
+   "app/views-onboarding.js:471"
   ]
  },
  {
   "key": "בן",
   "kind": "lit",
   "where": [
-   "app/views-onboarding.js:74"
+   "app/views-onboarding.js:77"
   ]
  },
  {
   "key": "בת",
   "kind": "lit",
   "where": [
-   "app/views-onboarding.js:74"
+   "app/views-onboarding.js:77"
   ]
  },
  {
   "key": "מעדיף/ה לא לומר",
   "kind": "lit",
   "where": [
-   "app/views-onboarding.js:74"
+   "app/views-onboarding.js:77"
   ]
  },
  {
   "key": "השם רק כדי שנדבר אליך יפה. בן/בת עוזר לנו לחשב נכון: לבנות מגיע קצת פחות מס.",
   "kind": "lit",
   "where": [
-   "app/views-onboarding.js:75"
+   "app/views-onboarding.js:78"
   ]
  },
  {
   "key": "{0}\n        <h1>מתי נולדת?</h1>\n        <label class=\"field\"><input class=\"input\" type=\"date\" id=\"ob-birth\" data-pick=\"birth\" value=\"{1}\" min=\"1940-01-01\" max=\"{2}\" placeholder=\"בחירת תאריך לידה\"></label>\n        <div class=\"ob-live\" id=\"ob-live-age\"></div>\n        <div class=\"ob-chips\">{3}</div>\n        {4}",
   "kind": "tpl",
   "where": [
-   "app/views-onboarding.js:78"
+   "app/views-onboarding.js:81"
   ]
  },
  {
   "key": "גיל {0}! יש לך זכויות מיוחדות, נדאג להן 🛡️",
   "kind": "tpl",
   "where": [
-   "app/views-onboarding.js:78"
+   "app/views-onboarding.js:81"
   ]
  },
  {
   "key": "גיל {0}, מעולה 👍",
   "kind": "tpl",
   "where": [
-   "app/views-onboarding.js:78"
+   "app/views-onboarding.js:81"
   ]
  },
  {
   "key": "שאלה קטנה על הגיל 🎂",
   "kind": "lit",
   "where": [
-   "app/views-onboarding.js:78"
+   "app/views-onboarding.js:81"
   ]
  },
  {
   "key": "אני מעל 18, מעדיף/ה לא לפרט",
   "kind": "lit",
   "where": [
-   "app/views-onboarding.js:82"
+   "app/views-onboarding.js:85"
   ]
  },
  {
-  "key": "מתחת לגיל 18 יש שכר מינימום אחר, לא משלמים מס, ויש חוקים מיוחדים (כמה שעות מותר לעבוד, הפסקות ועוד). נבדוק הכול בשבילך.",
+  "key": "מתחת לגיל 18 יש שכר מינימום אחר, לא מנכים ביטוח לאומי ופנסיה, מס הכנסה יורד רק בחודש של משכורת גבוהה, ויש חוקים מיוחדים (כמה שעות מותר לעבוד, הפסקות ועוד). נבדוק הכול בשבילך.",
   "kind": "lit",
   "where": [
-   "app/views-onboarding.js:83"
+   "app/views-onboarding.js:86"
   ]
  },
  {
   "key": "{0}\n        <h1>{1}</h1>\n        <label class=\"field ob-emp\"><span class=\"lbl\">שם מקום העבודה</span><input class=\"input\" id=\"ob-emp\" value=\"{2}\" placeholder=\"למשל: סופר יוחננוף, קפה גרג\" maxlength=\"40\" autocomplete=\"organization\"></label>\n        <div class=\"ob-sub\">ומה התפקיד שלך שם? אפשר לבחור מהרעיונות או לכתוב:</div>\n        <div class=\"ob-chips small\">{3}</div>\n        {4}\n        {5}\n        {6}\n        {7}\n        <div class=\"ob-live\" id=\"ob-live-roles\"></div>\n        {8}",
   "kind": "tpl",
   "where": [
-   "app/views-onboarding.js:85"
+   "app/views-onboarding.js:88"
   ]
  },
  {
   "key": "אחלה! עכשיו נדע כמה הרווחת 💸",
   "kind": "lit",
   "where": [
-   "app/views-onboarding.js:85"
+   "app/views-onboarding.js:88"
   ]
  },
  {
   "key": "איפה עובדים? 🤔",
   "kind": "lit",
   "where": [
-   "app/views-onboarding.js:85"
+   "app/views-onboarding.js:88"
   ]
  },
  {
   "key": "איפה אתה עובד?",
   "kind": "lit",
   "where": [
-   "app/views-onboarding.js:86"
+   "app/views-onboarding.js:89"
   ]
  },
  {
   "key": "איפה את עובדת?",
   "kind": "lit",
   "where": [
-   "app/views-onboarding.js:86"
+   "app/views-onboarding.js:89"
   ]
  },
  {
   "key": "איפה את/ה עובד/ת?",
   "kind": "lit",
   "where": [
-   "app/views-onboarding.js:86"
+   "app/views-onboarding.js:89"
   ]
  },
  {
   "key": "<button class=\"btn text sm\" data-jadd>{0} הוסף תפקיד באותו מקום עבודה</button>",
   "kind": "tpl",
   "where": [
-   "app/views-onboarding.js:91"
+   "app/views-onboarding.js:94"
   ]
  },
  {
   "key": "<div class=\"ob-place\">\n          <div class=\"ob-place-head\">{0}<span>מקום עבודה {1}</span><button class=\"icon-btn sm\" data-mx=\"{2}\" aria-label=\"הסר את מקום העבודה\">{3}</button></div>\n          <label class=\"field\"><span class=\"lbl\">שם מקום העבודה</span><input class=\"input\" data-mn=\"{4}\" value=\"{5}\" placeholder=\"למשל: מסעדה, חנות בגדים\" maxlength=\"40\" autocomplete=\"organization\"></label>\n          {6}\n          {7}\n        </div>",
   "kind": "tpl",
   "where": [
-   "app/views-onboarding.js:92"
+   "app/views-onboarding.js:95"
   ]
  },
  {
   "key": "<button class=\"btn text sm\" data-mjadd=\"{0}\">{1} הוסף תפקיד במקום הזה</button>",
   "kind": "tpl",
   "where": [
-   "app/views-onboarding.js:96"
+   "app/views-onboarding.js:99"
   ]
  },
  {
   "key": "הוסף עוד מקום עבודה",
   "kind": "lit",
   "where": [
-   "app/views-onboarding.js:98"
+   "app/views-onboarding.js:101"
   ]
  },
  {
   "key": "עובד/ת גם במקום אחר? הוסף מקום עבודה",
   "kind": "lit",
   "where": [
-   "app/views-onboarding.js:98"
+   "app/views-onboarding.js:101"
   ]
  },
  {
   "key": "ככה נחשב כמה הרווחת בכל משמרת. אפשר לשנות ולהוסיף בכל רגע בהגדרות.",
   "kind": "lit",
   "where": [
-   "app/views-onboarding.js:100"
-  ]
- },
- {
-  "key": "{0}\n        <h1>{1} כסף על נסיעות?</h1>\n        <div class=\"ob-chips big\">{2}{3}{4}</div>\n        {5}\n        <div class=\"ob-live\" id=\"ob-live-travel\"></div>\n        {6}",
-  "kind": "tpl",
-  "where": [
-   "app/views-onboarding.js:101"
-  ]
- },
- {
-  "key": "הרבה שוכחים את זה! 🚌",
-  "kind": "lit",
-  "where": [
-   "app/views-onboarding.js:101"
-  ]
- },
- {
-  "key": "מקבל",
-  "kind": "lit",
-  "where": [
-   "app/views-onboarding.js:102"
-  ]
- },
- {
-  "key": "מקבלת",
-  "kind": "lit",
-  "where": [
-   "app/views-onboarding.js:102"
-  ]
- },
- {
-  "key": "<span>כן</span>",
-  "kind": "lit",
-  "where": [
    "app/views-onboarding.js:103"
   ]
  },
  {
-  "key": "<span>לא</span>",
-  "kind": "lit",
-  "where": [
-   "app/views-onboarding.js:103"
-  ]
- },
- {
-  "key": "<span>לא בטוח/ה</span>",
-  "kind": "lit",
-  "where": [
-   "app/views-onboarding.js:103"
-  ]
- },
- {
-  "key": "<label class=\"field ob-pop\"><span class=\"lbl\">כמה ליום עבודה? (₪)</span><input class=\"input\" type=\"number\" step=\"any\" inputmode=\"decimal\" id=\"ob-travel\" value=\"{0}\" placeholder=\"{1}\"><span class=\"hint\">רוב העובדים מקבלים בערך {2} ₪ ליום. אפשר להשאיר ריק ונשים {3} ₪.</span></label>",
+  "key": "{0}\n        <h1>משלמים לך על ההפסקה?</h1>\n        <div class=\"ob-chips\">{1}{2}{3}</div>\n        <div class=\"ob-q2\">כמה ימים בשבוע עובדים שם?</div>\n        <div class=\"ob-chips\">{4}{5}{6}</div>\n        {7}",
   "kind": "tpl",
   "where": [
    "app/views-onboarding.js:104"
   ]
  },
  {
-  "key": "המעסיק צריך להחזיר לך את דמי הנסיעה לעבודה ובחזרה, בנוסף לשכר. זה כסף שמגיע לך!",
+  "key": "שתי שאלות קצרות על העבודה ⏱️",
+  "kind": "lit",
+  "where": [
+   "app/views-onboarding.js:104"
+  ]
+ },
+ {
+  "key": "כן",
   "kind": "lit",
   "where": [
    "app/views-onboarding.js:106"
   ]
  },
  {
-  "key": "{0}\n        <h1>באיזו עיר העבודה?</h1>\n        <div class=\"field ob-city\">{1}</div>\n        <div class=\"ob-live\" id=\"ob-preview\"></div>\n        {2}",
-  "kind": "tpl",
-  "where": [
-   "app/views-onboarding.js:107"
-  ]
- },
- {
-  "key": "בשבת מרוויחים לפחות 150%! 🤑",
+  "key": "לא",
   "kind": "lit",
   "where": [
-   "app/views-onboarding.js:107"
+   "app/views-onboarding.js:106"
   ]
  },
  {
-  "key": "עיר העבודה",
+  "key": "לא בטוח/ה",
+  "kind": "lit",
+  "where": [
+   "app/views-onboarding.js:106",
+   "app/views-onboarding.js:108"
+  ]
+ },
+ {
+  "key": "5 ימים",
+  "kind": "lit",
+  "where": [
+   "app/views-onboarding.js:108",
+   "app/views-settings.js:689"
+  ]
+ },
+ {
+  "key": "6 ימים",
+  "kind": "lit",
+  "where": [
+   "app/views-onboarding.js:108",
+   "app/views-settings.js:569",
+   "app/views-settings.js:689"
+  ]
+ },
+ {
+  "key": "הפסקה בלי תשלום לא נספרת בשכר. לפי מספר הימים נדע מתי מתחילות שעות נוספות. אפשר לשנות בהגדרות.",
   "kind": "lit",
   "where": [
    "app/views-onboarding.js:109"
   ]
  },
  {
-  "key": "לפי העיר נדע בדיוק מתי שבת וחג נכנסים ויוצאים, וכך כל שעה שעבדת בהם תחושב ב-150% לפחות.",
+  "key": "{0}\n        <h1>{1} כסף על נסיעות?</h1>\n        <div class=\"ob-chips big\">{2}{3}{4}</div>\n        {5}\n        <div class=\"ob-live\" id=\"ob-live-travel\"></div>\n        {6}",
+  "kind": "tpl",
+  "where": [
+   "app/views-onboarding.js:110"
+  ]
+ },
+ {
+  "key": "הרבה שוכחים את זה! 🚌",
+  "kind": "lit",
+  "where": [
+   "app/views-onboarding.js:110"
+  ]
+ },
+ {
+  "key": "מקבל",
   "kind": "lit",
   "where": [
    "app/views-onboarding.js:111"
   ]
  },
  {
-  "key": "{0}\n        <h1>מתי התחלת לעבוד שם?</h1>\n        <div class=\"ob-chips\">{1}{2}{3}</div>\n        <label class=\"field\"><span class=\"lbl\">או תאריך מדויק</span><input class=\"input\" type=\"date\" id=\"ob-start\" value=\"{4}\" min=\"{5}\" max=\"{6}\" placeholder=\"בחירת תאריך\"></label>\n        {7}",
+  "key": "מקבלת",
+  "kind": "lit",
+  "where": [
+   "app/views-onboarding.js:111"
+  ]
+ },
+ {
+  "key": "<span>כן</span>",
+  "kind": "lit",
+  "where": [
+   "app/views-onboarding.js:112"
+  ]
+ },
+ {
+  "key": "<span>לא</span>",
+  "kind": "lit",
+  "where": [
+   "app/views-onboarding.js:112"
+  ]
+ },
+ {
+  "key": "<span>לא בטוח/ה</span>",
+  "kind": "lit",
+  "where": [
+   "app/views-onboarding.js:112"
+  ]
+ },
+ {
+  "key": "<label class=\"field ob-pop\"><span class=\"lbl\">כמה ליום עבודה? (₪)</span><input class=\"input\" type=\"number\" step=\"any\" inputmode=\"decimal\" id=\"ob-travel\" value=\"{0}\" placeholder=\"{1}\"><span class=\"hint\">רוב העובדים מקבלים בערך {2} ₪ ליום. אפשר להשאיר ריק ונשים {3} ₪.</span></label>",
   "kind": "tpl",
   "where": [
-   "app/views-onboarding.js:112"
+   "app/views-onboarding.js:113"
   ]
  },
  {
-  "key": "אחרונה! 🏁",
+  "key": "המעסיק צריך להחזיר לך את דמי הנסיעה לעבודה ובחזרה, בנוסף לשכר. זה כסף שמגיע לך!",
   "kind": "lit",
   "where": [
-   "app/views-onboarding.js:112"
+   "app/views-onboarding.js:115"
   ]
  },
  {
-  "key": "לפני כמה חודשים",
-  "kind": "lit",
+  "key": "{0}\n        <h1>באיזו עיר העבודה?</h1>\n        <div class=\"field ob-city\">{1}</div>\n        <div class=\"ob-live\" id=\"ob-preview\"></div>\n        {2}",
+  "kind": "tpl",
   "where": [
-   "app/views-onboarding.js:114"
+   "app/views-onboarding.js:116"
   ]
  },
  {
-  "key": "לפני יותר משנה",
-  "kind": "lit",
-  "where": [
-   "app/views-onboarding.js:114"
-  ]
- },
- {
-  "key": "לפי הוותק מגיעים ימי חופשה, דמי הבראה ופנסיה. לא בטוח/ה? אפשר לדלג ולהוסיף אחר כך.",
+  "key": "בשבת מרוויחים לפחות 150%! 🤑",
   "kind": "lit",
   "where": [
    "app/views-onboarding.js:116"
   ]
  },
  {
-  "key": "הנתונים לדוגמה מוכנים!",
+  "key": "עיר העבודה",
   "kind": "lit",
   "where": [
-   "app/views-onboarding.js:121"
+   "app/views-onboarding.js:118"
   ]
  },
  {
-  "key": "הכול מוכן, {0}! 🎉",
+  "key": "לפי העיר נדע בדיוק מתי שבת וחג נכנסים ויוצאים, וכך כל שעה שעבדת בהם תחושב ב-150% לפחות.",
+  "kind": "lit",
+  "where": [
+   "app/views-onboarding.js:120"
+  ]
+ },
+ {
+  "key": "{0}\n        <h1>מתי התחלת לעבוד שם?</h1>\n        <div class=\"ob-chips\">{1}{2}{3}</div>\n        <label class=\"field\"><span class=\"lbl\">או תאריך מדויק</span><input class=\"input\" type=\"date\" id=\"ob-start\" value=\"{4}\" min=\"{5}\" max=\"{6}\" placeholder=\"בחירת תאריך\"></label>\n        {7}",
   "kind": "tpl",
   "where": [
    "app/views-onboarding.js:121"
   ]
  },
  {
-  "key": "הכול מוכן! 🎉",
+  "key": "אחרונה! 🏁",
   "kind": "lit",
   "where": [
    "app/views-onboarding.js:121"
   ]
  },
  {
-  "key": "אפשר להסתכל על הכול ולמחוק את הדוגמה בכל רגע.",
+  "key": "לפני כמה חודשים",
   "kind": "lit",
   "where": [
-   "app/views-onboarding.js:122"
+   "app/views-onboarding.js:123"
   ]
  },
  {
-  "key": "מעכשיו כל משמרת מחושבת לבד.",
+  "key": "לפני יותר משנה",
   "kind": "lit",
   "where": [
-   "app/views-onboarding.js:122"
+   "app/views-onboarding.js:123"
   ]
  },
  {
-  "key": " ליום",
+  "key": "לפי הוותק מגיעים ימי חופשה, דמי הבראה ופנסיה. לא בטוח/ה? אפשר לדלג ולהוסיף אחר כך.",
   "kind": "lit",
   "where": [
    "app/views-onboarding.js:125"
   ]
  },
  {
+  "key": "הנתונים לדוגמה מוכנים!",
+  "kind": "lit",
+  "where": [
+   "app/views-onboarding.js:130"
+  ]
+ },
+ {
+  "key": "הכול מוכן, {0}! 🎉",
+  "kind": "tpl",
+  "where": [
+   "app/views-onboarding.js:130"
+  ]
+ },
+ {
+  "key": "הכול מוכן! 🎉",
+  "kind": "lit",
+  "where": [
+   "app/views-onboarding.js:130"
+  ]
+ },
+ {
+  "key": "אפשר להסתכל על הכול ולמחוק את הדוגמה בכל רגע.",
+  "kind": "lit",
+  "where": [
+   "app/views-onboarding.js:131"
+  ]
+ },
+ {
+  "key": "מעכשיו כל משמרת מחושבת לבד.",
+  "kind": "lit",
+  "where": [
+   "app/views-onboarding.js:131"
+  ]
+ },
+ {
+  "key": " ליום",
+  "kind": "lit",
+  "where": [
+   "app/views-onboarding.js:134"
+  ]
+ },
+ {
   "key": "בלי נסיעות",
   "kind": "lit",
   "where": [
-   "app/views-onboarding.js:125",
+   "app/views-onboarding.js:134",
    "app/views-shift.js:398"
   ]
  },
@@ -9864,220 +9924,220 @@
   "key": "<span>{0} גיל {1}</span>",
   "kind": "tpl",
   "where": [
-   "app/views-onboarding.js:125"
+   "app/views-onboarding.js:134"
   ]
  },
  {
   "key": "{0}<div class=\"ob-save\">{1}<div><b>שמירה בחשבון</b><div class=\"small muted\">כדי שכלום לא ילך לאיבוד, ויחכה לך בכל טלפון. אף משתמש אחר לא רואה את הנתונים שלך.</div></div></div>",
   "kind": "tpl",
   "where": [
-   "app/views-onboarding.js:127"
+   "app/views-onboarding.js:136"
   ]
  },
  {
   "key": "מקום עבודה ",
   "kind": "lit",
   "where": [
-   "app/views-onboarding.js:144"
+   "app/views-onboarding.js:153"
   ]
  },
  {
   "key": "{0} משמרת של 8 שעות{1} = <b>{2}</b>",
   "kind": "tpl",
   "where": [
-   "app/views-onboarding.js:177"
+   "app/views-onboarding.js:186"
   ]
  },
  {
   "key": "{0} בחודש של 15 ימי עבודה זה עוד <b>{1}</b>",
   "kind": "tpl",
   "where": [
-   "app/views-onboarding.js:181"
+   "app/views-onboarding.js:190"
   ]
  },
  {
-  "key": "שכר המינימום שלך: <b>{0}</b> לשעה, ובלי מס בכלל",
-  "kind": "tpl",
-  "where": [
-   "app/views-onboarding.js:187"
-  ]
- },
- {
-  "key": "שכר המינימום: <b>{0}</b> לשעה",
-  "kind": "tpl",
-  "where": [
-   "app/views-onboarding.js:187"
-  ]
- },
- {
-  "key": "{0} {1} הקרובה ב{2}: נכנסת {3} ב-{4}, יוצאת ב-{5}",
+  "key": "שכר המינימום שלך: <b>{0}</b> לשעה",
   "kind": "tpl",
   "where": [
    "app/views-onboarding.js:196"
   ]
  },
  {
-  "key": "<div class=\"wizard ob skyscreen step-hi\">{0}<div class=\"w-sheet\">\n        <h2 style=\"--i:0\">ברוכים הבאים</h2>\n        <ul class=\"w-points\" style=\"--i:1\">\n          <li>{1}<span>לוחצים כשמתחילים לעבוד, ולוחצים כשמסיימים</span></li>\n          <li>{2}<span>רואים כמה הרווחת, כולל שבתות ושעות נוספות</span></li>\n          <li>{3}<span>בודקים שהמשכורת נכונה ושלא מקפחים אותך</span></li>\n        </ul>\n        <div class=\"w-gap\"></div>\n        <button class=\"btn big ob-go\" data-next style=\"--i:2\">מסכים/ה לתנאים, בואו נתחיל</button>\n        {4}\n        <button class=\"btn text\" data-demo style=\"--i:4\">{5} רק להציץ (נתונים לדוגמה)</button>\n        <div class=\"tiny muted w-legal ob-consent\" style=\"--i:5\">בלחיצה על \"מסכים/ה\" את/ה מאשר/ת את {6}. <a href=\"#\" data-legal=\"accessibility\">הצהרת נגישות</a></div>\n      </div></div>",
+  "key": "שכר המינימום: <b>{0}</b> לשעה",
   "kind": "tpl",
   "where": [
-   "app/views-onboarding.js:202"
+   "app/views-onboarding.js:196"
   ]
  },
  {
-  "key": "<button class=\"btn big tonal w-have\" data-have style=\"--i:3\">{0}<span>כבר יש לי חשבון, כניסה</span></button>",
+  "key": "{0} {1} הקרובה ב{2}: נכנסת {3} ב-{4}, יוצאת ב-{5}",
+  "kind": "tpl",
+  "where": [
+   "app/views-onboarding.js:205"
+  ]
+ },
+ {
+  "key": "<div class=\"wizard ob skyscreen step-hi\">{0}<div class=\"w-sheet\">\n        <h2 style=\"--i:0\">ברוכים הבאים</h2>\n        <ul class=\"w-points\" style=\"--i:1\">\n          <li>{1}<span>לוחצים כשמתחילים לעבוד, ולוחצים כשמסיימים</span></li>\n          <li>{2}<span>רואים כמה הרווחת, כולל שבתות ושעות נוספות</span></li>\n          <li>{3}<span>בודקים שהמשכורת נכונה ושלא מקפחים אותך</span></li>\n        </ul>\n        <div class=\"w-gap\"></div>\n        <button class=\"btn big ob-go\" data-next style=\"--i:2\">מסכים/ה לתנאים, בואו נתחיל</button>\n        {4}\n        <button class=\"btn text\" data-demo style=\"--i:4\">{5} רק להציץ (נתונים לדוגמה)</button>\n        <div class=\"tiny muted w-legal ob-consent\" style=\"--i:5\">בלחיצה על \"מסכים/ה\" את/ה מאשר/ת את {6}. <a href=\"#\" data-legal=\"accessibility\">הצהרת נגישות</a></div>\n      </div></div>",
   "kind": "tpl",
   "where": [
    "app/views-onboarding.js:211"
   ]
  },
  {
+  "key": "<button class=\"btn big tonal w-have\" data-have style=\"--i:3\">{0}<span>כבר יש לי חשבון, כניסה</span></button>",
+  "kind": "tpl",
+  "where": [
+   "app/views-onboarding.js:220"
+  ]
+ },
+ {
   "key": "שומר…",
   "kind": "lit",
   "where": [
-   "app/views-onboarding.js:228"
+   "app/views-onboarding.js:237"
   ]
  },
  {
   "key": "שמירה עם Google",
   "kind": "lit",
   "where": [
-   "app/views-onboarding.js:228"
+   "app/views-onboarding.js:237"
   ]
  },
  {
   "key": "<button class=\"btn tonal\" data-email-pass>{0} שמירה עם אימייל וסיסמה</button>",
   "kind": "tpl",
   "where": [
-   "app/views-onboarding.js:230"
+   "app/views-onboarding.js:239"
   ]
  },
  {
   "key": "<button class=\"btn text sm\" data-email-save>{0} או שמירה עם אימייל, בלי סיסמה</button>",
   "kind": "tpl",
   "where": [
-   "app/views-onboarding.js:232"
+   "app/views-onboarding.js:241"
   ]
  },
  {
   "key": "<button class=\"btn text sm\" data-guest>להמשיך כאורח, בלי חשבון</button>",
   "kind": "lit",
   "where": [
-   "app/views-onboarding.js:233"
+   "app/views-onboarding.js:242"
   ]
  },
  {
   "key": "רגע…",
   "kind": "lit",
   "where": [
-   "app/views-onboarding.js:234"
+   "app/views-onboarding.js:243"
   ]
  },
  {
   "key": "כניסה לאפליקציה",
   "kind": "lit",
   "where": [
-   "app/views-onboarding.js:234"
+   "app/views-onboarding.js:243"
   ]
  },
  {
   "key": "<div class=\"ob-top\">\n        <button class=\"icon-btn\" data-back aria-label=\"הקודם\">{0}</button>\n        <div class=\"ob-dots\" role=\"progressbar\" aria-valuemin=\"1\" aria-valuemax=\"{1}\" aria-valuenow=\"{2}\" aria-label=\"שאלה {3} מתוך {4}\">{5}</div>\n        <button class=\"btn text sm ob-skip\" data-skip>דלג</button></div>",
   "kind": "tpl",
   "where": [
-   "app/views-onboarding.js:238"
+   "app/views-onboarding.js:247"
   ]
  },
  {
   "key": "לא הצלחנו לטעון את Google. נסה שוב בעוד רגע.",
   "kind": "lit",
   "where": [
-   "app/views-onboarding.js:260"
+   "app/views-onboarding.js:269"
   ]
  },
  {
   "key": "אין חיבור לאינטרנט. אפשר להמשיך בינתיים, ונשמור בחשבון כשהרשת תחזור.",
   "kind": "lit",
   "where": [
-   "app/views-onboarding.js:260"
+   "app/views-onboarding.js:269"
   ]
  },
  {
   "key": "לא הצלחנו לשמור בטלפון. התשובות יישמרו בחשבון שלך.",
   "kind": "lit",
   "where": [
-   "app/views-onboarding.js:308"
+   "app/views-onboarding.js:320"
   ]
  },
  {
   "key": "באיזו עיר העבודה?",
   "kind": "lit",
   "where": [
-   "app/views-onboarding.js:432"
+   "app/views-onboarding.js:451"
   ]
  },
  {
   "key": "סדרן",
   "kind": "lit",
   "where": [
-   "app/views-onboarding.js:473",
-   "core/defaults.js:65"
+   "app/views-onboarding.js:492",
+   "core/defaults.js:67"
   ]
  },
  {
   "key": "מזנון",
   "kind": "lit",
   "where": [
-   "app/views-onboarding.js:473",
-   "core/defaults.js:66"
+   "app/views-onboarding.js:492",
+   "core/defaults.js:68"
   ]
  },
  {
   "key": "אחמ״ש",
   "kind": "lit",
   "where": [
-   "app/views-onboarding.js:473",
-   "core/defaults.js:67"
+   "app/views-onboarding.js:492",
+   "core/defaults.js:69"
   ]
  },
  {
   "key": "ערב שבת עמוס",
   "kind": "lit",
   "where": [
-   "app/views-onboarding.js:492"
+   "app/views-onboarding.js:511"
   ]
  },
  {
   "key": "המעסיק סופר שבת רק מ-12:00",
   "kind": "lit",
   "where": [
-   "app/views-onboarding.js:506"
+   "app/views-onboarding.js:525"
   ]
  },
  {
   "key": "בונוס אירוע",
   "kind": "lit",
   "where": [
-   "app/views-onboarding.js:507"
+   "app/views-onboarding.js:526"
   ]
  },
  {
   "key": "ארוחה",
   "kind": "lit",
   "where": [
-   "app/views-onboarding.js:508"
+   "app/views-onboarding.js:527"
   ]
  },
  {
   "key": "מענק חג",
   "kind": "lit",
   "where": [
-   "app/views-onboarding.js:515"
+   "app/views-onboarding.js:534"
   ]
  },
  {
   "key": "בוקר סדרן",
   "kind": "lit",
   "where": [
-   "app/views-onboarding.js:518"
+   "app/views-onboarding.js:537"
   ]
  },
  {
@@ -14542,14 +14602,6 @@
   ]
  },
  {
-  "key": "6 ימים",
-  "kind": "lit",
-  "where": [
-   "app/views-settings.js:569",
-   "app/views-settings.js:689"
-  ]
- },
- {
   "key": "אחריהן מתחילות שעות נוספות (שעות מעל 42 בשבוע הן נוספות תמיד).",
   "kind": "lit",
   "where": [
@@ -15300,13 +15352,6 @@
  },
  {
   "key": "שבוע עבודה",
-  "kind": "lit",
-  "where": [
-   "app/views-settings.js:689"
-  ]
- },
- {
-  "key": "5 ימים",
   "kind": "lit",
   "where": [
    "app/views-settings.js:689"
@@ -19024,14 +19069,14 @@
   "key": "משמרות חופפות ב-",
   "kind": "lit",
   "where": [
-   "core/engine.js:979"
+   "core/engine.js:990"
   ]
  },
  {
   "key": "משמרת שסומנה \"בוצעה\" אבל עוד לא התחילה: ",
   "kind": "lit",
   "where": [
-   "core/engine.js:980"
+   "core/engine.js:991"
   ]
  },
  {
