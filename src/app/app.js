@@ -236,7 +236,7 @@
     // a screen that fails to draw shows a friendly card instead of a blank page
     let html;
     try { html = fn(); } catch (e) {
-      console.error('render failed', App.tab, e);
+      console.error('render failed', App.tab, e); if (root.Errors) root.Errors.capture(e, 'render');
       html = `<div class="empty render-err">${App.mascot ? App.mascot('think', { size: 96 }) : ''}<h3>משהו השתבש במסך הזה</h3>
         <div class="small muted">הנתונים שלך שמורים. אפשר לנסות שוב או לעבור למסך אחר.</div>
         <div class="btn-row" style="margin-top:14px;justify-content:center"><button class="btn" data-act="render-retry">נסה שוב</button><button class="btn tonal" data-act="support">דיווח על תקלה</button></div></div>`;
@@ -258,7 +258,7 @@
     drawn = { tab: App.tab, sig };
     if (same) root.Dom.patch(inner, html);
     else v.innerHTML = `<div class="view ${cls}" id="view-inner">${html}</div>`;
-    try { if (App.views[App.tab + '_mount']) App.views[App.tab + '_mount'](v); } catch (e) { console.error('mount failed', App.tab, e); }
+    try { if (App.views[App.tab + '_mount']) App.views[App.tab + '_mount'](v); } catch (e) { console.error('mount failed', App.tab, e); if (root.Errors) root.Errors.capture(e, 'mount'); }
     App.statusBar();
     App.renderNav();
     if (opts && opts.keepScroll) window.scrollTo(0, y);

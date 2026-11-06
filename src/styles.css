@@ -410,6 +410,15 @@ textarea.input { min-height: 90px; resize: vertical; }
 .adm-add .btn { flex: none; }
 .admin .kpi .v { font-variant-numeric: tabular-nums; }
 .adm-foot { display: flex; align-items: center; justify-content: space-between; margin: 14px 4px 4px; }
+/* this week's errors: count, version, message; the stack opens under it */
+.adm-err { border-bottom: 1px solid var(--surface-3); }
+.adm-err:last-child { border-bottom: 0; }
+.adm-err summary { display: flex; align-items: baseline; gap: 8px; padding: 8px 0; cursor: pointer; font-size: .82rem; list-style: none; }
+.adm-err summary::-webkit-details-marker { display: none; }
+.adm-err .n { flex: none; min-width: 2.2em; font-variant-numeric: tabular-nums; }
+.adm-err .v { flex: none; color: var(--on-surface-var); font-size: .75rem; }
+.adm-err .m { flex: 1; min-width: 0; text-align: left; overflow-wrap: break-word; }
+.adm-err pre { margin: 0 0 8px; padding: 8px; border-radius: 8px; background: var(--surface-3); white-space: pre-wrap; overflow-wrap: break-word; text-align: left; }
 @media (max-width: 380px) {
   .adm-bar { gap: 8px; }
   .adm-bar .nm { width: 92px; font-size: .8rem; }
