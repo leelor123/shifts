@@ -38,7 +38,7 @@
     + '<g class="t3"><path d="M49 72 q11 15 22 0 q-11 2.5 -22 0 z" fill="#7a2d12"/><path d="M54.5 80 q5.5 3.6 11 0 q-5.5 -3 -11 0" fill="#ff7a8a"/></g></g>';
   // calm faces turn drowsy late at night (23:00 to 06:00); a party or a surprise stays awake
   const DROWSY = new Set(['happy', 'think', 'wave', 'wink']);
-  const night = () => { const h = new Date().getHours(); return h >= 23 || h < 6; };
+  const night = () => !!(root.Moments && root.Moments.quietHour(Date.now())); // the app's one night rule (core/moments.js)
   const MOODS = {
     happy: ['open', 'smile'], wave: ['happy', 'grin'], wow: ['open', 'o'], love: ['love', 'grin'], party: ['happy', 'grin'],
     think: ['up', 'flat'], cool: ['cool', 'smile'], wink: ['wink', 'grin'], sleepy: ['sleepy', 'small'],

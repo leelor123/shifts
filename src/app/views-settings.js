@@ -179,6 +179,7 @@
   const catOf = (k) => CATS.find((c) => c.keys.includes(k));
   App.settingsKeys = () => CATS.flatMap((c) => c.keys); // every section, door by door
   App.settingsCats = () => CATS.map((c) => c.id);
+  App.settingsSections = () => Object.keys(SECTIONS); // every section there is (a door must show each one once)
   const sectionRow = (k) => { const s = SECTIONS[k]; return `<button class="item" data-act="settings-open" data-k="${k}"><span class="lead">${icon(s.icon)}</span><span class="body"><span class="t">${s.title}</span><span class="s">${esc(s.sub())}</span></span>${icon('left', 's')}</button>`; };
 
   /* problems people come here with, and where the answer is: each is [what it says, the words that find it, [[section, field label]]] */

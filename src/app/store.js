@@ -120,6 +120,8 @@
     S.meta = cleanMeta(kvMap.meta || {});
     S.activeShift = kvMap.activeShift || null;
     for (const s of LIST_STORES) S[s] = safeList(s, await getAll(s));
+    for (const s of LIST_STORES) S[s].forEach(markRec);
+    markActive(); markSettings();
     // first run: default employer
     if (!S.employers.length) {
       S.employers = [root.Defaults.defaultEmployer()];
@@ -292,6 +294,16 @@
   const STAMPS = ['updatedAt', 'createdAt', '_syncedAt'];
   const bare = (r) => { const o = Object.assign({}, r); for (const k of STAMPS) delete o[k]; for (const k of Object.keys(o)) if (o[k] === null || o[k] === '') delete o[k]; return o; };
   const sameRecord = (a, b) => U.same(bare(a), bare(b));
+  /* What was last saved, kept apart from the live objects: a caller that changes a saved object in place (a shallow
+   * copy whose nested break was then edited) changed the very thing "the same as saved?" compared with, so a real
+   * change was taken for no change and never saved (back from a break, 7 Nov 2026). Each record's saved form is kept
+   * as text the moment it is loaded, saved or received; the running shift's and the settings' too. */
+  const canon = (x) => { const k = (v) => (v && typeof v === 'object' ? (Array.isArray(v) ? v.map(k) : Object.keys(v).sort().reduce((o, n) => ((o[n] = k(v[n])), o), {})) : v); return JSON.stringify(k(x === undefined ? null : x)); };
+  const savedRec = new WeakMap();
+  const markRec = (r) => { if (r && typeof r === 'object') savedRec.set(r, canon(bare(r))); return r; };
+  let savedActive = 'null', savedSettings = null;
+  const markActive = () => { savedActive = canon(S.activeShift); };
+  const markSettings = () => { savedSettings = clone(S.settings); };
   const find =(store, id) => S[store].find((x) => x.id === id);
 
   /**
@@ -313,7 +325,7 @@
         const obj = op.put;
         // the record as it is already (a save with nothing changed): no new version, no upload, no undo step
         const had = obj.id ? arr.find((x) => x.id === obj.id) : null;
-        if (had && had !== obj && sameRecord(had, obj)) continue;
+        if (had && had !== obj && (savedRec.has(had) ? savedRec.get(had) === canon(bare(obj)) : sameRecord(had, obj))) continue;
         if (!obj.id) obj.id = U.uid();
         if (!obj.createdAt) obj.createdAt = now;
         obj.updatedAt = now;
@@ -321,6 +333,7 @@
         inverse.push(i >= 0 ? { store: op.store, put: clone(arr[i]) } : { store: op.store, del: obj.id });
         if (op.store === 'shifts') shiftChanges.push([i >= 0 ? clone(arr[i]) : null, obj]);
         if (i >= 0) arr[i] = obj; else arr.push(obj);
+        markRec(obj);
         writes.push([op.store, obj]);
         const pi = pend.findIndex((d) => d.store === op.store && d.id === obj.id);
         if (pi >= 0) { pend.splice(pi, 1); metaChanged = true; }
@@ -385,6 +398,7 @@
         if (!obj) continue; // a cloud record of a shape the app never writes is not taken in
         const i = arr.findIndex((x) => x.id === obj.id);
         if (i >= 0) arr[i] = obj; else arr.push(obj);
+        markRec(obj);
         writes.push([op.store, obj]);
       } else if (op.del) {
         const i = arr.findIndex((x) => x.id === op.del);
@@ -438,6 +452,7 @@
     for (const k of localOnlyKeys) keep[k] = S.settings[k];
     S.settings = mergeDeep(root.Defaults.defaultSettings(), remote);
     for (const k of localOnlyKeys) if (keep[k] !== undefined) S.settings[k] = keep[k];
+    markSettings();
     S.meta.settingsDirty = false;
     await rawKv('settings', S.settings);
     await rawKv('meta', S.meta);
@@ -445,6 +460,7 @@
   }
   async function applyRemoteActive(a, u) {
     S.activeShift = a;
+    markActive();
     S.meta.activeUpdatedAt = u;
     S.meta.activeDirty = false;
     await rawKv('activeShift', a);
@@ -465,7 +481,8 @@
     const before = clone(S.settings);
     patchFn(S.settings);
     // which settings changed (the screen may need only a new look, not a new calculation)
-    const keys = [...new Set(Object.keys(before).concat(Object.keys(S.settings)))].filter((k) => k !== '_updatedAt' && !U.same(before[k], S.settings[k]));
+    const was = savedSettings || before; // as last saved: a setting changed in place before this call still counts
+    const keys = [...new Set(Object.keys(was).concat(Object.keys(S.settings)))].filter((k) => k !== '_updatedAt' && !U.same(was[k], S.settings[k]));
     // the same settings again (a tap on the choice already made, a save with nothing new): nothing is written or sent,
     // and the screens are not calculated again
     if (!keys.length) return;
@@ -477,6 +494,7 @@
       await rawKv('meta', S.meta);
     }
     await rawKv('settings', S.settings);
+    markSettings();
     if (label) {
       undoStack.push({ label, ops: [], settings: before });
     }
@@ -487,8 +505,9 @@
     await rawKv('meta', S.meta);
   }
   async function setActive(a) {
-    if (U.same(S.activeShift, a)) return; // the running shift as it is: no new version for the other phones
+    if (canon(a) === savedActive) return; // the running shift as last saved: no new version for the other phones
     S.activeShift = a;
+    markActive();
     S.meta.activeUpdatedAt = Date.now();
     S.meta.activeDirty = true;
     await rawKv('meta', S.meta);
@@ -503,6 +522,7 @@
       undoStack.pop();
       S.settings = step.settings;
       S.settings._updatedAt = Date.now();
+      markSettings();
       S.meta.settingsDirty = true;
       await rawKv('meta', S.meta);
       await rawKv('settings', S.settings);
@@ -646,6 +666,8 @@
       try { rate = root.Engine.minWageFor(S.settings, root.U.todayKey()).hourly || 0; } catch (e) { /* keep 0 */ }
       S.roles.push({ id: 'r_' + root.U.uid(), name: 'העבודה שלי', color: root.Defaults.ROLE_COLORS[0], employerId: S.employers[0].id, rates: [{ from: '2000-01-01', rate }], archived: false });
     }
+    for (const s of LIST_STORES) S[s].forEach(markRec);
+    markActive(); markSettings();
     await saveAll();
     for (const f of json.files || []) {
       if (!f || !safeId(f.id)) continue;
@@ -660,6 +682,8 @@
     S.meta = {}; S.activeShift = null;
     for (const s of LIST_STORES) S[s] = [];
     S.employers = [root.Defaults.defaultEmployer()];
+    for (const s of LIST_STORES) S[s].forEach(markRec);
+    markActive(); markSettings();
     await saveAll();
     undoStack.length = 0;
     emit({ type: 'restore' });

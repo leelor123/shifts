@@ -100,3 +100,14 @@ T.test('the gap: less or more, and a few shekels count as the same', () => {
   T.ok(M.salaryGap(3200, 3190).small);
   T.ok(!M.salaryGap(800, 770).small);
 });
+
+T.section('one night rule (23:00 to 06:00)');
+T.test('the night is said once: every quiet-at-night choice asks Moments.quietHour', () => {
+  const fs = require('fs'), path = require('path');
+  const dir = (d) => fs.readdirSync(d).filter((f) => f.endsWith('.js')).map((f) => path.join(d, f));
+  const files = [...dir(path.join(__dirname, '..', 'src', 'core')), ...dir(path.join(__dirname, '..', 'src', 'app'))];
+  const own = files.filter((f) => !f.endsWith('moments.js') && fs.readFileSync(f, 'utf8').split('\n').some((l) => /getHours\(\)/.test(l) && /(>=?\s*2[0-3]\b|<\s*[5-7]\b)/.test(l)));
+  T.eq(own.map((f) => path.basename(f)).join(','), '');
+  T.ok(M.quietHour(new Date(2026, 0, 1, 23, 30).getTime()) && M.quietHour(new Date(2026, 0, 1, 5, 59).getTime()));
+  T.ok(!M.quietHour(new Date(2026, 0, 1, 6, 0).getTime()) && !M.quietHour(new Date(2026, 0, 1, 22, 59).getTime()));
+});

@@ -127,7 +127,7 @@
 
 
   // 23:00 to 06:00: no sheet; it waits for the next open in the day (nothing is marked as seen)
-  const quietHours = () => { const h = new Date().getHours(); return h >= 23 || h < 6; };
+  const quietHours = () => root.Moments.quietHour(Date.now()); // one night rule for the whole app (core/moments.js)
   let wnArmed = false; // the app is in (afterLogin asked once): only then may a return from the background ask again
   App.whatsNew = function () {
     wnArmed = true;

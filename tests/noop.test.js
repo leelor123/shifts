@@ -201,3 +201,33 @@ T.test('a workplace code: a value no shift uses on either side shows no "משת�
   T.eq(W.changes(emp, 5, Object.assign({}, rec, { travelPerDay: 12 })).sort().join(','), 'travelMonthlyCap,travelPerDay');
   T.eq(W.changes(emp, 5, Object.assign({}, rec, { payDay: 10 })).join(','), 'payDay');
 });
+
+T.atest('a change made in place on a saved object still counts: the running shift, a record and a setting are saved', async () => {
+  // back from a break (7 Nov 2026): App.toggleBreak copied the shift shallowly and set the last break's end on the
+  // break object the saved shift held too, so "the same as saved?" compared the shift with itself and nothing was saved
+  const p = await phone(fakeBackend());
+  await p.Store.setActive({ start: 1700000000000, roleId: 'r1', breaks: [{ from: 1700000600000 }] });
+  const a = Object.assign({}, p.S.activeShift);
+  a.breaks = a.breaks.slice();
+  a.breaks[a.breaks.length - 1].to = 1700000900000; // the same object the saved shift holds
+  const before = p.S.meta.activeUpdatedAt;
+  await wait(5);
+  await p.Store.setActive(a);
+  T.ok(p.S.meta.activeUpdatedAt > before, 'the running shift was saved');
+  // a record changed in place through a shallow copy
+  await p.add('s1', 'first');
+  const rec = p.S.shifts.find((x) => x.id === 's1');
+  const copy = Object.assign({}, rec, { extras: rec.extras || [] });
+  rec.note = 'changed in place';
+  copy.note = 'changed in place';
+  const v = rec.updatedAt;
+  await wait(5);
+  await p.Store.apply([{ store: 'shifts', put: copy }]);
+  T.ok(p.S.shifts.find((x) => x.id === 's1').updatedAt > v, 'the record was saved');
+  // a setting changed in place before Store.setSettings
+  p.S.settings.goal = Object.assign({}, p.S.settings.goal, { amount: 4321 });
+  const keys = [];
+  p.Store.on((ev) => { if (ev.type === 'settings') keys.push(ev.keys); });
+  await p.Store.setSettings(() => {});
+  T.ok(keys.length === 1 && keys[0].includes('goal'), 'the setting was saved: ' + JSON.stringify(keys));
+});
