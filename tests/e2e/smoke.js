@@ -489,11 +489,19 @@ let errors = [];
   });
   await step('saving up for something: set it, see it on home, remove it', async () => {
     await ev(() => Store.setSettings((s) => { s.saving = { name: 'אוזניות', price: 900, from: U.addDays(U.todayKey(), -30) }; }));
+    // home shows two cards at most, the most urgent first: answer the ones the demo puts above the saving card
+    await ev(async () => {
+      await Store.setSettings((s) => { s.statsAsked = true; s.backup.lastBackup = Date.now(); s.home = Object.assign({}, s.home, { highlight: false }); });
+      App.go('home');
+      for (const c of document.querySelectorAll('#view .recap-card')) await Store.setMeta(/^Y/.test(c.dataset.pk) ? { wrappedSeen: c.dataset.pk } : { recapSeen: c.dataset.pk });
+    });
     await ev(() => { App.go('home'); App.render(); }); await sleep(400);
+    if (!(await ev(() => App.homeCardKeys.includes('saving')))) throw new Error('no place for the saving card: ' + (await ev(() => App.homeCardKeys.join())));
     const c = await ev(() => { const x = document.querySelector('.save-card'); return x ? x.innerText : ''; });
     if (!/אוזניות/.test(c) || !/%/.test(c)) throw new Error('card: ' + c);
     if (/NaN|undefined/.test(c)) throw new Error('broken numbers: ' + c);
     await ev(() => Store.setSettings((s) => { s.saving = { name: '', price: 0, from: '' }; }));
+    await ev(() => Store.setSettings((s) => { s.home = Object.assign({}, s.home, { highlight: true }); }));
     await ev(() => App.render()); await sleep(200);
     if (await ev(() => !!document.querySelector('.save-card'))) throw new Error('still shown after removing');
   });
