@@ -144,3 +144,29 @@ html.lp-first #lp-static { display: block; }
 .home-sky + .home-top .icon-btn { background: rgba(255, 255, 255, .14); border-color: rgba(255, 255, 255, .24); color: #fff; box-shadow: none; -webkit-backdrop-filter: blur(10px); backdrop-filter: blur(10px); }
 .home-sky ~ .home-hero { box-shadow: 0 0 0 1px rgba(255, 255, 255, .12), 0 24px 48px rgba(3, 10, 30, .32); }
 @media (prefers-reduced-transparency: reduce) { .home-sky + .home-top .icon-btn { -webkit-backdrop-filter: none; backdrop-filter: none; background: #16398a; } }
+
+/* the end of a shift (shift-end.js): a calm card across the bottom, the wage big; it rises 12px and fades in, fades out
+   (only fades with reduced motion or effects off); above every effects layer, so nothing ever covers its text */
+.end-moment { position: fixed; z-index: 9999; left: 12px; right: 12px; bottom: calc(var(--nav-h) + var(--safe-b) + 12px); margin: 0 auto; max-width: 560px;
+  box-sizing: border-box; padding: 16px 18px 12px; border-radius: 22px; background: #1d1a2b; color: #f3f1fa; box-shadow: var(--sh-2); text-align: center; cursor: pointer;
+  opacity: 0; transform: translateY(12px); transition: opacity .2s var(--ease-out), transform .26s var(--ease-out); }
+.end-moment.show { opacity: 1; transform: none; }
+.end-moment.em-still { transform: none; transition: opacity .15s ease; }
+.end-moment .em-k { font-size: .88rem; opacity: .82; }
+.end-moment .em-wage { margin-top: 2px; font-size: 2.6rem; font-weight: 800; line-height: 1.1; letter-spacing: -.01em; font-variant-numeric: tabular-nums; }
+.end-moment .em-why { margin-top: 4px; font-size: .95rem; color: #ffe08a; text-wrap: balance; }
+.end-moment .em-undo { margin-top: 6px; min-height: 40px; padding: 6px 16px; border: 0; border-radius: 12px; background: none; color: hsl(var(--h) 90% 82%); font: inherit; font-weight: 800; cursor: pointer; }
+@media (prefers-reduced-motion: reduce) { .end-moment { transform: none; transition: opacity .15s ease; } }
+
+/* the youth law on the running shift (youth-guard.js) */
+.timer-card .tc-youth { display: flex; gap: 8px; align-items: flex-start; margin: -4px 0 14px; padding: 10px 12px; border-radius: 14px; background: rgba(255, 214, 77, .14); border: 1px solid rgba(255, 214, 77, .32); font-size: .9rem; line-height: 1.35; text-align: start; }
+.timer-card .tc-youth .icon { flex: none; margin-top: 1px; }
+
+/* "did the salary arrive?" (salary-check.js) */
+.salary-card .sc-q { font-weight: 700; }
+.salary-card .sc-exp { margin-top: 2px; color: var(--on-surface-var); font-size: .9rem; }
+.salary-card .btn-row { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 12px; }
+.salary-card .btn-row .btn { flex: 1 1 auto; }
+.salary-card .sc-in { display: flex; gap: 8px; margin-top: 12px; }
+.salary-card .sc-in input { flex: 1; min-width: 0; font-size: 16px; }
+.salary-card .sc-gap { margin-top: 6px; }

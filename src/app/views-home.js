@@ -132,7 +132,8 @@
 
   /* ---------------- "did you forget to end it?" on the running shift ---------------- */
   // the likely end ready to tap: the planned end, or the usual length of this person's shifts (App.overdue)
-  function overdueBlock() {
+  const overdueBlock = () => (App.youthLine ? App.youthLine() : '') + overdueQuestion(); // with the youth law's line (youth-guard.js)
+  function overdueQuestion() {
     const od = App.overdue && App.overdue();
     if (!od) return '';
     const k = U.epochKey(od.end);
