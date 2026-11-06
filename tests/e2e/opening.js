@@ -52,6 +52,7 @@ const check = (name, ok, info) => { results.push(!!ok); console.log((ok ? 'ok ' 
   await new Promise((r) => server.listen(8786, r));
   const browser = await puppeteer.launch({ executablePath: process.env.CHROME_PATH || 'C:/Program Files/Google/Chrome/Application/chrome.exe', headless: true });
   const page = await browser.newPage();
+  await require('./quiet.js').quiet(page);
   const errs = [];
   page.on('pageerror', (e) => errs.push(e.message));
   await page.setViewport({ width: 390, height: 844, isMobile: true, hasTouch: true, deviceScaleFactor: 2 });
