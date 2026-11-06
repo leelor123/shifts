@@ -97,7 +97,7 @@
     return line.split(/\s+/).reverse().map((t) => (HEB.test(t) ? revStr(t) : t)).join(' ');
   }
   function normalize(s) {
-    return s.replace(/[‎‏\u202A-\u202E]/g, '').replace(/[״“”]/g, '"').replace(/[׳‘’`]/g, "'").replace(/\s+/g, ' ').trim();
+    return s.replace(/[\u200e\u200f\u202A-\u202E]/g, '').replace(/[״“”]/g, '"').replace(/[׳‘’`]/g, "'").replace(/\s+/g, ' ').trim();
   }
   /** Numbers in a line, in reading order. Handles 1,234.56 / trailing minus / percents. */
   function numbersIn(line) {
@@ -655,7 +655,9 @@
     const P = E.P;
     const emp = model.ctx.primaryEmployer();
     const raw = new Map(((model.data && model.data.shifts) || []).map((s) => [s.id, s]));
-    const dates = (rs) => rs.map((r) => U.fmtDate(r.dateKey, 'short')).join(', ');
+    // a list of dates in a Hebrew sentence: isolated left to right (its brackets and commas stay in order) and on one
+    // line (no-break spaces between the dates)
+    const dates = (rs) => '\u2066' + rs.map((r) => U.fmtDate(r.dateKey, 'short')).join(',\u00a0') + '\u2069';
     const slipHours = slipHoursOf(F);
     const items = [];
     for (const f of a.findings) {
