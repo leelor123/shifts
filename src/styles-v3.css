@@ -285,6 +285,35 @@ body.fx .nav .fab:active { transform: scale(.9) rotate(90deg); }
 @keyframes m-jump { 30% { transform: translateY(-14px) scale(1.04, .96); } 60% { transform: translateY(0) scale(.97, 1.03); } }
 @keyframes m-heart { to { transform: scale(1.1); } }
 @keyframes m-z { 0% { opacity: 0; transform: translateY(6px); } 50% { opacity: 1; } 100% { opacity: 0; transform: translateY(-8px); } }
+/* its voice and reactions (mascot-voice.js): two wrapper layers so a reaction and the speech bob never fight the
+   bob and jump the body already has; each reaction is one short WAAPI run on .m-act, never a loop */
+.mascot .m-talkb, .mascot .m-act, .mascot .m-look { transform-box: view-box; }
+.mascot .m-talkb, .mascot .m-act { transform-origin: 60px 104px; }
+.mascot .m-act { transition: transform .26s cubic-bezier(.23, 1, .32, 1); }
+.mascot .m-look { transition: transform .3s cubic-bezier(.23, 1, .32, 1); }
+.mascot .m-talk > * { opacity: 0; }
+.mascot.talking .m-mouth { opacity: 0; }
+.mascot.talking[data-mouth="0"] .m-talk .t0, .mascot.talking[data-mouth="1"] .m-talk .t1,
+.mascot.talking[data-mouth="2"] .m-talk .t2, .mascot.talking[data-mouth="3"] .m-talk .t3 { opacity: 1; }
+/* thinking while the user types: the head tilts, the eyes look up */
+.mascot.m-thinking .m-act { transform: rotate(-7deg); }
+.mascot.m-thinking .m-look { transform: translate(1.5px, -3px) !important; }
+/* a closed, thoughtful mouth while thinking, and for a moment on wrong input with reduced motion (no head shake) */
+.mascot.m-hmm:not(.talking) .m-mouth, .mascot.m-thinking:not(.talking) .m-mouth { opacity: 0; }
+.mascot.m-hmm:not(.talking) .m-talk .t0, .mascot.m-thinking:not(.talking) .m-talk .t0 { opacity: 1; }
+/* the speaker button beside the bubble: reading aloud on or off */
+.m-say .m-spk { position: relative; align-self: flex-end; margin: 0 0 24px; width: 40px; height: 40px; border-radius: 20px; flex: none; display: grid; place-items: center; padding: 0; cursor: pointer;
+  border: 1px solid var(--line); background: var(--surface-1); color: var(--on-surface-var); box-shadow: var(--sh-1); touch-action: manipulation; -webkit-user-select: none; user-select: none;
+  transition: transform .12s cubic-bezier(.23, 1, .32, 1), color .15s ease, background-color .15s ease; animation: bubble-in .4s var(--pop) .06s both; }
+.m-say .m-spk::before { content: ''; position: absolute; inset: -4px; }
+.m-say .m-spk:active { transform: scale(.94); }
+.m-say .m-spk[aria-pressed="true"] { color: var(--brand); }
+.m-say .m-spk .i { width: 20px; height: 20px; }
+@media (prefers-reduced-motion: reduce) {
+  /* the mouth still moves with the words; the coin itself stays put */
+  .mascot .m-talkb, .mascot .m-act { transform: none !important; transition: none; }
+  .mascot .m-look, .m-say .m-spk { transition: none; }
+}
 
 .m-say { display: flex; align-items: flex-end; gap: 8px; margin: 2px 0 12px; }
 .bubble { position: relative; background: var(--surface-1); color: var(--on-surface); border-radius: 18px; padding: 10px 14px; font-weight: 600; font-size: .95rem; line-height: 1.45; box-shadow: var(--sh-2); border: 1px solid var(--line); animation: bubble-in .4s var(--pop) both; }
