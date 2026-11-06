@@ -53,7 +53,14 @@
     }
   };
   /** The whole log checked (cached until it changes). */
-  ShiftLog.verify = () => verified || (verified = queue.then(() => L.verify(S.ledger)));
+  // (kept per number of records too: the phone's database fills S.ledger at the start without a change event)
+  let verifiedN = -1;
+  ShiftLog.verify = () => {
+    if (!verified || verifiedN !== S.ledger.length) { verifiedN = S.ledger.length; verified = queue.then(() => L.verify(S.ledger)); }
+    return verified;
+  };
+  /** A hash as printed in a report: its first 16 hex digits (the whole one is on the claim screen, to compare). */
+  ShiftLog.short = (h) => (h ? String(h).slice(0, 16) + '…' : '');
   ShiftLog.status = (sh) => (L ? L.status(sh, S.ledger) : null);
   Store.on((ev) => {
     if (ev.type === 'restore') {
@@ -61,7 +68,12 @@
       // the restored records may end before this phone's last one: a new chain, so the old one never forks
       if (S.meta.ledgerChain) Store.setMeta({ ledgerChain: '' }).catch(() => {});
     } else if (ev.type === 'data' && (ev.stores || []).includes('ledger')) verified = null;
+    warm();
   });
+  // the check is kept ready, so a screen that shows the hash has it at once (no line appearing a frame later)
+  let warmT = null;
+  function warm() { clearTimeout(warmT); warmT = setTimeout(() => { if (!verified && S.ledger) ShiftLog.verify().catch(() => {}); }, 600); }
+  warm();
 
   const when = (at) => `${U.fmtDate(U.epochKey(at))}, ${U.epochHM(at)}`;
   const span = (a, b) => `\u2066${U.epochHM(a)}\u2060–\u2060${U.epochHM(b)}\u2069`;
@@ -98,7 +110,7 @@
     for (const x of [...gone.values()].sort((a, b) => a.os - b.os)) rows.push(row([`${U.fmtDate(U.epochKey(x.os), 'short')} ${U.DAYS_SHORT[U.dow(U.epochKey(x.os))]}`, span(x.os, x.oe), 'נמחקה', when(x.at)]));
     if (!rows.length) return '';
     let chain = 'אין עדיין רישומים ביומן.';
-    if (v && v.count && v.ok) chain = `השרשרת שלמה: ${v.count} רישומים${v.chains.length > 1 ? ` מ-${v.chains.length} מכשירים` : ''}. הטביעה האחרונה (SHA-256): <span dir="ltr" style="font-family:monospace;word-break:break-all">${esc(v.head)}</span>`;
+    if (v && v.count && v.ok) chain = `השרשרת שלמה: ${v.count} רישומים${v.chains.length > 1 ? ` מ-${v.chains.length} מכשירים` : ''}. הטביעה האחרונה (SHA-256): <span dir="ltr" style="font-family:monospace;white-space:nowrap">${esc(ShiftLog.short(v.head))}</span> (הטביעה המלאה מופיעה באפליקציה, במסך הדוח לבירור שכר).`;
     else if (v && v.count) chain = `<b>השרשרת לא שלמה</b> (ברישום ${esc(String((v.chains.find((x) => !x.ok) || {}).badAt || ''))}): רישום ביומן השתנה או חסר מאז שנכתב.`;
     return `<h3>יומן המשמרות</h3>
       <div style="font-size:9pt">הטלפון כותב ביומן רישום בכל לחיצה על התחלה וסיום, ובכל הוספה, עריכה או מחיקה של משמרת, לפי השעון שלו. היומן עוזר להראות מה נרשם ומתי. הוא לא מוכיח לבד שהשעות נכונות.</div>

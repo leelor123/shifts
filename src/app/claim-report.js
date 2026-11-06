@@ -127,6 +127,14 @@
         const live = d.shifts.filter((r) => { const st = root.ShiftLog.status(App.shift(r.id)); return st && st.mode === 'live'; }).length;
         const line = live === d.shifts.length ? 'כל המשמרות נרשמו בזמן אמת' : `${live} מתוך ${d.shifts.length} נרשמו בזמן אמת`;
         what.insertAdjacentHTML('beforeend', `<div class="rt-row"><span class="rt-mark">${icon('shield', 's')}</span><div><div class="t">יומן המשמרות</div><div class="d">${line}. הפירוט בסוף הדוח</div></div></div>`);
+        // the chain's whole last hash (the report prints its first 16 digits): here to compare or copy
+        const row = what.lastElementChild;
+        root.ShiftLog.verify().then((v) => {
+          if (!row.isConnected || !v || !v.count) return;
+          row.querySelector('.d').insertAdjacentHTML('beforeend', v.ok
+            ? `<div class="sl-hash">הטביעה המלאה: <span dir="ltr" style="font-family:monospace;word-break:break-all;user-select:all">${esc(v.head)}</span></div>`
+            : '<div class="sl-hash">השרשרת לא שלמה: רישום ביומן השתנה או חסר.</div>');
+        }).catch(() => {});
       }
     }
     entry.sh.addEventListener('click', async (e) => {

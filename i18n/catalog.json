@@ -986,46 +986,60 @@
   ]
  },
  {
+  "key": "<div class=\"sl-hash\">הטביעה המלאה: <span dir=\"ltr\" style=\"font-family:monospace;word-break:break-all;user-select:all\">{0}</span></div>",
+  "kind": "tpl",
+  "where": [
+   "app/claim-report.js:135"
+  ]
+ },
+ {
+  "key": "<div class=\"sl-hash\">השרשרת לא שלמה: רישום ביומן השתנה או חסר.</div>",
+  "kind": "lit",
+  "where": [
+   "app/claim-report.js:136"
+  ]
+ },
+ {
   "key": "לא נמצא מה לבקש לתקופה הזאת",
   "kind": "lit",
   "where": [
-   "app/claim-report.js:139"
+   "app/claim-report.js:147"
   ]
  },
  {
   "key": "מכתב למעסיק",
   "kind": "lit",
   "where": [
-   "app/claim-report.js:141"
+   "app/claim-report.js:149"
   ]
  },
  {
   "key": "<div class=\"small muted\" style=\"margin-bottom:8px\">אפשר לערוך לפני ששולחים. כדאי לצרף את הדוח (PDF).</div><textarea class=\"input\" id=\"cl-text\" rows=\"14\">{0}</textarea>",
   "kind": "tpl",
   "where": [
-   "app/claim-report.js:142"
+   "app/claim-report.js:150"
   ]
  },
  {
   "key": "<button class=\"btn tonal\" data-cl-copy>{0} העתקה</button><button class=\"btn\" data-cl-share>{1} שיתוף</button>",
   "kind": "tpl",
   "where": [
-   "app/claim-report.js:143"
+   "app/claim-report.js:151"
   ]
  },
  {
   "key": "הועתק ✓",
   "kind": "lit",
   "where": [
-   "app/claim-report.js:148",
-   "app/claim-report.js:149"
+   "app/claim-report.js:156",
+   "app/claim-report.js:157"
   ]
  },
  {
   "key": "מסמנים ומעתיקים",
   "kind": "lit",
   "where": [
-   "app/claim-report.js:148"
+   "app/claim-report.js:156"
   ]
  },
  {
@@ -3872,105 +3886,105 @@
   "key": "נרשם בזמן אמת ✓",
   "kind": "lit",
   "where": [
-   "app/shift-log.js:73"
+   "app/shift-log.js:85"
   ]
  },
  {
   "key": "נרשם ידנית ב-{0}",
   "kind": "tpl",
   "where": [
-   "app/shift-log.js:73"
+   "app/shift-log.js:85"
   ]
  },
  {
   "key": "נערך ב-{0}",
   "kind": "tpl",
   "where": [
-   "app/shift-log.js:73"
+   "app/shift-log.js:85"
   ]
  },
  {
   "key": "נרשם לפני שהיומן נוסף",
   "kind": "lit",
   "where": [
-   "app/shift-log.js:90"
+   "app/shift-log.js:102"
   ]
  },
  {
   "key": "<b>נרשם בזמן אמת</b>",
   "kind": "lit",
   "where": [
-   "app/shift-log.js:91"
+   "app/shift-log.js:103"
   ]
  },
  {
   "key": "התחלה {0} · סיום {1}",
   "kind": "tpl",
   "where": [
-   "app/shift-log.js:91"
+   "app/shift-log.js:103"
   ]
  },
  {
   "key": "נרשם ידנית",
   "kind": "lit",
   "where": [
-   "app/shift-log.js:92"
+   "app/shift-log.js:104"
   ]
  },
  {
   "key": "נערך",
   "kind": "lit",
   "where": [
-   "app/shift-log.js:93"
+   "app/shift-log.js:105"
   ]
  },
  {
   "key": " · לפני כן {0}",
   "kind": "tpl",
   "where": [
-   "app/shift-log.js:93"
+   "app/shift-log.js:105"
   ]
  },
  {
   "key": "נמחקה",
   "kind": "lit",
   "where": [
-   "app/shift-log.js:98"
+   "app/shift-log.js:110"
   ]
  },
  {
   "key": "אין עדיין רישומים ביומן.",
   "kind": "lit",
   "where": [
-   "app/shift-log.js:100"
+   "app/shift-log.js:112"
   ]
  },
  {
-  "key": "השרשרת שלמה: {0} רישומים{1}. הטביעה האחרונה (SHA-256): <span dir=\"ltr\" style=\"font-family:monospace;word-break:break-all\">{2}</span>",
+  "key": "השרשרת שלמה: {0} רישומים{1}. הטביעה האחרונה (SHA-256): <span dir=\"ltr\" style=\"font-family:monospace;white-space:nowrap\">{2}</span> (הטביעה המלאה מופיעה באפליקציה, במסך הדוח לבירור שכר).",
   "kind": "tpl",
   "where": [
-   "app/shift-log.js:101"
+   "app/shift-log.js:113"
   ]
  },
  {
   "key": " מ-{0} מכשירים",
   "kind": "tpl",
   "where": [
-   "app/shift-log.js:101"
+   "app/shift-log.js:113"
   ]
  },
  {
   "key": "<b>השרשרת לא שלמה</b> (ברישום {0}): רישום ביומן השתנה או חסר מאז שנכתב.",
   "kind": "tpl",
   "where": [
-   "app/shift-log.js:102"
+   "app/shift-log.js:114"
   ]
  },
  {
   "key": "<h3>יומן המשמרות</h3>\n      <div style=\"font-size:9pt\">הטלפון כותב ביומן רישום בכל לחיצה על התחלה וסיום, ובכל הוספה, עריכה או מחיקה של משמרת, לפי השעון שלו. היומן עוזר להראות מה נרשם ומתי. הוא לא מוכיח לבד שהשעות נכונות.</div>\n      <table><tr><th>תאריך</th><th>שעות</th><th>איך נרשם</th><th>מתי</th></tr>{0}</table>\n      <div style=\"font-size:9pt;margin-top:6pt\">{1}</div>\n      <div style=\"font-size:8pt;color:#555\">כל רישום חתום בטביעה שמחושבת גם מהטביעה של הרישום שלפניו, כך ששינוי או מחיקה של רישום אחד שוברים את השרשרת מאותו מקום.</div>",
   "kind": "tpl",
   "where": [
-   "app/shift-log.js:103"
+   "app/shift-log.js:115"
   ]
  },
  {
