@@ -47,6 +47,8 @@ const GOV = {
   travel: 'https://www.gov.il/he/Departments/Guides/travel-allowance',
   hours: 'https://www.gov.il/he/Departments/Guides/overtime-and-extra-hours',
 };
+// the generated pages' footer (the home page and the legal pages have their own)
+const FOOTER = '<footer>שעתי · <a href="./">לאתר</a> · <a href="embed">לארגונים ולבתי ספר</a> · <a href="privacy">פרטיות</a> · <a href="accessibility">הצהרת נגישות</a> · <a href="mailto:lybtn48@gmail.com">יצירת קשר</a></footer>';
 const esc = (s) => String(s).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
 // plain text with a range or a joined word (2020–2025, ב-14) kept on one line: the browser may break after a dash
 const escWhole = (s) => esc(s).replace(/[^\s<>]*[\p{L}\p{N}][-–‑][\p{L}\p{N}][^\s<>]*/gu, (w) => `<span class="nw">${w}</span>`);
@@ -387,7 +389,7 @@ ${FONT_HEAD}
   <h2>עוד שאלות</h2>
   <div class="more"><a href="shift-calculator">${esc(CALC.title)}</a><a href="check">${esc(CHECK.title)}</a>${others.map((x) => `<a href="${x.slug}">${esc(x.title)}</a>`).join('')}</div>
 </main>
-<footer>שעתי · <a href="./">לאתר</a> · <a href="privacy">פרטיות</a> · <a href="accessibility">הצהרת נגישות</a> · <a href="mailto:lybtn48@gmail.com">יצירת קשר</a></footer>
+${FOOTER}
 </body>
 </html>
 `;
@@ -482,7 +484,7 @@ ${FONT_HEAD}
   <h2>עוד שאלות</h2>
   <div class="more"><a href="shift-calculator">${esc(CALC.title)}</a>${PAGES.map((x) => `<a href="${x.slug}">${esc(x.title)}</a>`).join('')}</div>
 </main>
-<footer>שעתי · <a href="./">לאתר</a> · <a href="privacy">פרטיות</a> · <a href="accessibility">הצהרת נגישות</a> · <a href="mailto:lybtn48@gmail.com">יצירת קשר</a></footer>
+${FOOTER}
 <script src="check.js"></script>
 </body>
 </html>
@@ -524,6 +526,39 @@ const CALC_CSS = `
 #sc-notes { margin: 0; padding: 0; padding-inline-start: 18px; display: grid; gap: 8px; color: var(--ink-2); }
 #sc-notes b { color: var(--ink); }
 .sc-app { margin: 4px 0 0; }`;
+// the calculator itself (the form and the result), one copy for the full page and the embedded one
+const calcForm = () => `  <div class="ck" data-sc>
+    <label for="sc-date"><span>תאריך</span><input id="sc-date" type="date" required aria-describedby="sc-err"></label>
+    <div class="sc-row">
+      <label for="sc-start"><span>התחלה</span><input id="sc-start" type="time" value="16:00" required aria-describedby="sc-err"></label>
+      <label for="sc-end"><span>סיום</span><input id="sc-end" type="time" value="23:00" required aria-describedby="sc-err"></label>
+    </div>
+    <label for="sc-rate"><span>שכר לשעה (₪)</span><input id="sc-rate" type="text" inputmode="decimal" autocomplete="off" value="40" aria-describedby="sc-err"></label>
+    <div class="q">גיל
+      <div class="ages" role="group" aria-label="גיל">
+        <button type="button" data-age="u16" aria-pressed="false">מתחת ל-16</button>
+        <button type="button" data-age="a16" aria-pressed="false">16</button>
+        <button type="button" data-age="a17" aria-pressed="false">17</button>
+        <button type="button" data-age="adult" aria-pressed="true">18 ומעלה</button>
+      </div>
+    </div>
+    <label for="sc-city"><span>עיר <small>(לזמני השבת והחג)</small></span><select id="sc-city">${CALC_PLACES.map(([n]) => `<option${n === CALC_CITY ? ' selected' : ''}>${esc(n)}</option>`).join('')}</select></label>
+    <label class="sw"><input id="sc-unpaid" type="checkbox" checked> ההפסקה לא משולמת</label>
+  </div>
+  <p id="sc-err" class="ck-err" role="alert" hidden></p>
+  <div id="sc-out" hidden>
+    <div class="sc-total">
+      <span class="lbl">המשמרת שווה</span>
+      <span id="sc-total" aria-live="polite"></span>
+      <span id="sc-when"></span>
+      <button type="button" id="sc-share">שיתוף התוצאה</button>
+      <p id="sc-share-ok" role="status" hidden></p>
+    </div>
+    <p id="sc-min" class="sc-warn" hidden></p>
+    <div class="tbl"><table aria-label="פירוט השכר של המשמרת"><thead><tr><th>סוג השעות</th><th>שעות</th><th>סכום</th></tr></thead><tbody id="sc-rows"></tbody></table></div>
+    <ul id="sc-notes" hidden></ul>
+    <p id="sc-tz" class="sc-warn" hidden>השעון בטלפון שלך לא על שעון ישראל, ולכן זמני השבת והלילה בחישוב זזים לפי השעון שלך.</p>
+  </div>`;
 function calcPage(date) {
   const url = `${SITE}/${CALC.slug}`;
   const faq = [
@@ -572,39 +607,9 @@ ${FONT_HEAD}
   <nav class="crumbs" aria-label="ניווט"><a href="./">שעתי</a> › כמה שווה המשמרת?</nav>
   <h1>כמה שווה המשמרת?</h1>
   <p>ממלאים את פרטי המשמרת ורואים כמה היא שווה לפי חוק העבודה: שבת וחג לפי הזמנים בעיר, שעות נוספות, משמרת לילה ושכר מינימום לפי הגיל. החישוב רץ בטלפון שלך, באותו מנוע שמחשב משמרות באפליקציה שעתי. בלי הרשמה, ושום דבר לא נשלח.</p>
-  <div class="ck" data-sc>
-    <label for="sc-date"><span>תאריך</span><input id="sc-date" type="date" required aria-describedby="sc-err"></label>
-    <div class="sc-row">
-      <label for="sc-start"><span>התחלה</span><input id="sc-start" type="time" value="16:00" required aria-describedby="sc-err"></label>
-      <label for="sc-end"><span>סיום</span><input id="sc-end" type="time" value="23:00" required aria-describedby="sc-err"></label>
-    </div>
-    <label for="sc-rate"><span>שכר לשעה (₪)</span><input id="sc-rate" type="text" inputmode="decimal" autocomplete="off" value="40" aria-describedby="sc-err"></label>
-    <div class="q">גיל
-      <div class="ages" role="group" aria-label="גיל">
-        <button type="button" data-age="u16" aria-pressed="false">מתחת ל-16</button>
-        <button type="button" data-age="a16" aria-pressed="false">16</button>
-        <button type="button" data-age="a17" aria-pressed="false">17</button>
-        <button type="button" data-age="adult" aria-pressed="true">18 ומעלה</button>
-      </div>
-    </div>
-    <label for="sc-city"><span>עיר <small>(לזמני השבת והחג)</small></span><select id="sc-city">${CALC_PLACES.map(([n]) => `<option${n === CALC_CITY ? ' selected' : ''}>${esc(n)}</option>`).join('')}</select></label>
-    <label class="sw"><input id="sc-unpaid" type="checkbox" checked> ההפסקה לא משולמת</label>
-  </div>
-  <p id="sc-err" class="ck-err" role="alert" hidden></p>
-  <div id="sc-out" hidden>
-    <div class="sc-total">
-      <span class="lbl">המשמרת שווה</span>
-      <span id="sc-total" aria-live="polite"></span>
-      <span id="sc-when"></span>
-      <button type="button" id="sc-share">שיתוף התוצאה</button>
-      <p id="sc-share-ok" role="status" hidden></p>
-    </div>
-    <p id="sc-min" class="sc-warn" hidden></p>
-    <div class="tbl"><table aria-label="פירוט השכר של המשמרת"><thead><tr><th>סוג השעות</th><th>שעות</th><th>סכום</th></tr></thead><tbody id="sc-rows"></tbody></table></div>
-    <ul id="sc-notes" hidden></ul>
-    <p id="sc-tz" class="sc-warn" hidden>השעון בטלפון שלך לא על שעון ישראל, ולכן זמני השבת והלילה בחישוב זזים לפי השעון שלך.</p>
-  </div>
+${calcForm()}
   <div class="cta"><b>כל משמרת, מחושבת לבד</b><span>באפליקציה רושמים משמרת בלחיצה, ושעתי מחשבת כל אחת כמו כאן, מסכמת את החודש ומשווה לתלוש. חינם ובלי פרסומות, ומנוי Plus לבחירה.</span><a class="btn" href="${APP}?from=site">לחשב כל משמרת אוטומטית באפליקציה</a></div>
+  <p class="sc-app">יש לכם אתר של ארגון נוער או בית ספר? <a href="embed">אפשר לשים את המחשבון אצלכם</a>.</p>
   <h2>שאלות נפוצות</h2>
   ${faq.map(([q, a]) => `<details><summary>${esc(q)}</summary><p>${escWhole(a)}</p></details>`).join('\n  ')}
   <p class="src">המקור הרשמי: ${[['מנוחה שבועית וחגים', GOV.rest], ['שעות נוספות', GOV.hours], ['שכר מינימום', GOV.minwage], ['זכויות בני נוער בעבודה', GOV.youth]].map(([l, h]) => `<a href="${h}" rel="noopener">${esc(l)} ב-gov.il</a>`).join(' · ')}</p>
@@ -612,8 +617,131 @@ ${FONT_HEAD}
   <h2>עוד שאלות</h2>
   <div class="more"><a href="check">${esc(CHECK.title)}</a>${PAGES.map((x) => `<a href="${x.slug}">${esc(x.title)}</a>`).join('')}</div>
 </main>
-<footer>שעתי · <a href="./">לאתר</a> · <a href="privacy">פרטיות</a> · <a href="accessibility">הצהרת נגישות</a> · <a href="mailto:lybtn48@gmail.com">יצירת קשר</a></footer>
+${FOOTER}
 <script src="calc.js"></script>
+</body>
+</html>
+`;
+}
+/* ---------------- the calculator on other websites (youth organizations, schools) ----------------
+ * site/embed/shift-calculator.html: the same calculator (calcForm, site/calc.js) with no header, footer or questions,
+ * for an <iframe> on any site (firebase.json lets /embed/** be framed anywhere; every other page says
+ * frame-ancestors 'none'). site/calc.js sees data-embed on <html> and posts the page's height to the parent window
+ * as { type: 'shaati-calc-height', height } whenever it changes, so a host page can grow the frame (RESIZE_JS below).
+ * site/embed.html: the page for organizations, with a live preview and the code to copy. */
+const EMBED_URL = `${SITE}/embed/shift-calculator`;
+const EMBED_MSG = 'shaati-calc-height';
+// tall enough for the form and the first result (measured: 1235 px on a computer, 1359 on a phone); the script below fits it exactly
+const EMBED_H = 1400;
+const IFRAME = `<iframe src="${EMBED_URL}" title="מחשבון שכר למשמרת של שעתי" width="100%" height="${EMBED_H}" style="border:0;max-width:640px" loading="lazy" allow="clipboard-write; web-share"></iframe>`;
+const RESIZE_JS = `<script>addEventListener('message',function(e){if(e.origin!=='${SITE}'||!e.data||e.data.type!=='${EMBED_MSG}')return;document.querySelectorAll('iframe').forEach(function(f){if(f.contentWindow===e.source)f.style.height=e.data.height+'px'})})</script>`;
+// the page lives one folder down: its fonts, icon and code are one level up
+const up = (html) => html.replace(/(href="|url\()(fonts|img)\//g, '$1../$2/');
+const EMBED_CSS = `
+html, body { overflow-x: hidden; }
+.embed main { max-width: 640px; padding: 14px 12px 4px; }
+.embed h1 { font-size: 1.3rem; margin: 0 0 12px; }
+.embed .ck { box-shadow: none; border: 1px solid var(--line); padding: 14px; gap: 12px; }
+.embed .ck label, .embed .ck .q { gap: 6px; }
+.embed #sc-out { margin-top: 14px; gap: 12px; }
+.by { margin: 12px 0 0; font-size: .88rem; color: var(--ink-2); text-align: center; }
+.by a { display: inline-block; padding-block: 10px; font-weight: 600; }`;
+function embedCalcPage() {
+  return `<!doctype html>
+<html lang="he" dir="rtl" data-embed>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>${esc(CALC.title)} · שעתי</title>
+<meta name="description" content="${esc(CALC.desc)}">
+<meta name="robots" content="noindex">
+<link rel="canonical" href="${SITE}/${CALC.slug}">
+<link rel="icon" href="../img/favicon-48.png" sizes="48x48">
+${up(FONT_HEAD)}
+<style>${CSS}${CHECK_CSS}${CALC_CSS}${EMBED_CSS}</style>
+</head>
+<body class="embed">
+<main>
+  <h1>כמה שווה המשמרת?</h1>
+${calcForm()}
+  <p class="by"><a href="${SITE}/${CALC.slug}?from=embed" target="_blank" rel="noopener">מחושב עם שעתי</a> · לפי חוק העבודה. החישוב רץ בדפדפן שלך, ושום דבר לא נשלח. אינו ייעוץ משפטי.</p>
+</main>
+<script src="../calc.js"></script>
+</body>
+</html>
+`;
+}
+const ORG = { slug: 'embed', title: 'מחשבון משמרת לאתר שלכם: לארגונים ולבתי ספר', desc: 'ארגוני נוער, בתי ספר ומועצות שמים את מחשבון המשמרת של שעתי באתר שלהם בשורת קוד אחת. חינם, בלי פרסומות, ושום פרט לא נשמר או נשלח.' };
+const ORG_CSS = `
+.preview { border: 1px solid var(--line); border-radius: 20px; overflow: hidden; background: var(--bg); }
+.preview iframe { display: block; width: 100%; border: 0; }
+.code { background: var(--surface); border: 1px solid var(--line); border-radius: 16px; padding: 14px; display: grid; gap: 10px; }
+.code pre { margin: 0; overflow-x: auto; font: 500 .85rem/1.6 ui-monospace, Consolas, monospace; white-space: pre-wrap; word-break: break-all; text-align: left; }
+.code button { justify-self: start; font: 700 1rem Rubik, sans-serif; border: 0; border-radius: 999px; padding: 12px 20px; min-height: 44px; cursor: pointer; background: linear-gradient(135deg, var(--cta-1), var(--cta-2)); color: #fff; transition: transform .16s cubic-bezier(.23, 1, .32, 1); }
+.code button:active { transform: scale(.97); }
+.code p { margin: 0; color: var(--ink-2); font-size: .95rem; }
+ul.facts { padding-inline-start: 20px; display: grid; gap: 8px; }`;
+function orgPage(date) {
+  const url = `${SITE}/${ORG.slug}`;
+  const ld = [{ '@context': 'https://schema.org', '@type': 'BreadcrumbList', itemListElement: [{ '@type': 'ListItem', position: 1, name: 'שעתי', item: SITE + '/' }, { '@type': 'ListItem', position: 2, name: ORG.title, item: url }] }];
+  const code = (id, text, label) => `<div class="code"><pre dir="ltr" id="${id}">${esc(text)}</pre><button type="button" data-copy="${id}">${label}</button><p id="${id}-ok" role="status" hidden></p></div>`;
+  return `<!doctype html>
+<html lang="he" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>${esc(ORG.title)} · שעתי</title>
+<meta name="description" content="${esc(ORG.desc)}">
+<link rel="canonical" href="${url}">
+<meta name="theme-color" content="#071a45">
+<meta property="og:type" content="website">
+<meta property="og:locale" content="he_IL">
+<meta property="og:site_name" content="שעתי">
+<meta property="og:title" content="${esc(ORG.title)}">
+<meta property="og:description" content="${esc(ORG.desc)}">
+<meta property="og:url" content="${url}">
+<meta property="og:image" content="${SITE}/img/og.jpg">
+<meta property="og:image:type" content="image/jpeg">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:image:alt" content="שעתי: כמה באמת מגיע לך על כל שעה. האפליקציה בטלפון, עם השכר של החודש">
+<meta name="twitter:card" content="summary_large_image">
+<link rel="icon" href="img/favicon-48.png" sizes="48x48">
+<link rel="apple-touch-icon" href="img/apple-touch-icon.png">
+${FONT_HEAD}
+<script type="application/ld+json">${JSON.stringify(ld)}</script>
+<style>${CSS}${ORG_CSS}</style>
+<script src="embed.js"></script>
+</head>
+<body>
+<a class="skip" href="#main">דילוג לתוכן</a>
+<header><div class="bar"><a class="logo" href="./"><img src="img/apple-touch-icon.png" alt="">שעתי</a><a class="btn" href="${APP}?from=site">לפתוח את שעתי</a></div></header>
+<main id="main">
+  <nav class="crumbs" aria-label="ניווט"><a href="./">שעתי</a> › לארגונים ולבתי ספר</nav>
+  <h1>${esc(ORG.title)}</h1>
+  <div class="answer">מדריכים, יועצות ורכזי נוער שומעים מבני נוער את השאלה &quot;משלמים לי נכון?&quot;. עם המחשבון של שעתי באתר שלכם, נער או נערה ממלאים תאריך, שעות, שכר לשעה וגיל, ורואים כמה המשמרת שווה לפי חוק העבודה.</div>
+  <h2>ככה זה נראה</h2>
+  <div class="preview"><iframe id="em-preview" src="embed/shift-calculator" title="תצוגה של המחשבון כמו שהוא יופיע אצלכם" height="${EMBED_H}"></iframe></div>
+  <h2>הקוד להדבקה</h2>
+  <p>מעתיקים את השורה ומדביקים אותה בעמוד באתר שלכם, במקום שבו המחשבון צריך להופיע (בוויקס, בוורדפרס ובגוגל סייטס: רכיב &quot;הטמעה&quot; או &quot;HTML&quot;).</p>
+  ${code('em-code', IFRAME, 'העתקת הקוד')}
+  <h2>גובה שמתאים את עצמו (לא חובה)</h2>
+  <p>המחשבון מודיע לעמוד שלכם מה הגובה שלו בכל רגע. אם אפשר להוסיף באתר שלכם גם סקריפט, השורה הזו מגדילה ומקטינה את המסגרת לפי התוכן, בלי פס גלילה בתוכה:</p>
+  ${code('em-js', RESIZE_JS, 'העתקת הסקריפט')}
+  <h2>מה חשוב לדעת</h2>
+  <ul class="facts">
+    <li><b>חינם</b>, בלי פרסומות ובלי הרשמה. אין צורך לבקש אישור.</li>
+    <li><b>שום פרט לא נשמר ולא נשלח.</b> החישוב רץ בדפדפן של מי שממלא, בלי עוגיות ובלי מעקב.</li>
+    <li><b>המספרים לפי טבלאות החוק של שעתי</b>, באותו מנוע שמחשב משמרות באפליקציה: שכר המינימום מ-${dmy(MW.from)} לפי הגיל, שבת וחג ב-${REST[0]}% לפי זמני השבת בעיר, שעות נוספות, משמרת לילה וחוק עבודת הנוער. כשהחוק משתנה אנחנו מעדכנים את המחשבון, והקוד אצלכם נשאר אותו קוד.</li>
+    <li>עברית מימין לשמאל, מותאם לטלפון, ובהיר או כהה לפי ההגדרה במכשיר של מי שממלא.</li>
+    <li>בתחתית המחשבון יש קישור קטן &quot;מחושב עם שעתי&quot;, שנפתח בלשונית חדשה.</li>
+  </ul>
+  <p>שאלה או בקשה? <a href="mailto:lybtn48@gmail.com">כתבו לנו</a>.</p>
+  <div class="note">שעתי אינה גוף ממשלתי ואינה מייצגת גוף ממשלתי. החישוב כללי ואינו ייעוץ משפטי: לפי חוק שעות עבודה ומנוחה ושבוע עבודה של 5 ימים, בלי נסיעות, תוספות והסכמים. עודכן ב-${dmy(date)}.</div>
+  <h2>עוד באתר</h2>
+  <div class="more"><a href="shift-calculator">${esc(CALC.title)}</a><a href="check">${esc(CHECK.title)}</a></div>
+</main>
+${FOOTER}
 </body>
 </html>
 `;
@@ -651,6 +779,11 @@ function writeDated(file, make) {
 const homeDate = (() => { try { const cp = require('child_process'); if (cp.execSync('git status --porcelain -- site/index.html', { cwd: ROOT }).toString().trim()) return today; return cp.execSync('git log -1 --format=%cs -- site/index.html', { cwd: ROOT }).toString().trim() || today; } catch (e) { return today; } })();
 writeDated('check.html', checkPage);
 writeDated('shift-calculator.html', calcPage);
+writeDated('embed.html', orgPage);
+fs.mkdirSync(path.join(ROOT, 'site', 'embed'), { recursive: true });
+fs.writeFileSync(path.join(ROOT, 'site', 'embed', 'shift-calculator.html'), embedCalcPage());
+fs.writeFileSync(path.join(ROOT, 'site', 'embed.js'), fs.readFileSync(path.join(__dirname, 'site-embed.js'), 'utf8').replace(/__MSG__/g, EMBED_MSG));
+if (fs.readFileSync(path.join(ROOT, 'site', 'embed.js'), 'utf8').includes('__MSG__')) throw new Error('site/embed.js: the message type was not placed');
 fs.writeFileSync(path.join(ROOT, 'site', 'calc.js'), calcJs());
 fs.writeFileSync(path.join(ROOT, 'site', 'check.js'), fs.readFileSync(path.join(__dirname, 'site-check.js'), 'utf8').replace('const D = __DATA__;', 'const D = ' + JSON.stringify(CHECK_DATA) + ';'));
 
@@ -660,6 +793,7 @@ fs.writeFileSync(path.join(ROOT, 'site', 'sitemap.xml'), `<?xml version="1.0" en
   <url><loc>${SITE}/</loc><lastmod>${homeDate}</lastmod></url>
   <url><loc>${SITE}/shift-calculator</loc><lastmod>${dated['shift-calculator.html']}</lastmod></url>
   <url><loc>${SITE}/check</loc><lastmod>${dated['check.html']}</lastmod></url>
+  <url><loc>${SITE}/embed</loc><lastmod>${dated['embed.html']}</lastmod></url>
 ${PAGES.map((p) => `  <url><loc>${SITE}/${p.slug}</loc><lastmod>${dated[p.slug + '.html']}</lastmod></url>`).join('\n')}
 </urlset>
 `);

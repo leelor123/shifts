@@ -133,4 +133,29 @@
   try { if (Intl.DateTimeFormat().resolvedOptions().timeZone !== 'Asia/Jerusalem') $('#sc-tz').hidden = false; } catch (e) { /* no Intl: say nothing */ }
   update();
   root.__calc = { update, text, state: () => last };
+
+  /* ---------------- on another website (site/embed/shift-calculator.html, in an iframe) ----------------
+   * The page tells the site around it how tall it is, at load and whenever a result, a note or a font changes it, so
+   * the frame can fit it (the script on site/embed.html). Only a number goes out: nothing the visitor typed. */
+  // the message goes to the host page's own origin only: Chrome and Safari name it in location.ancestorOrigins, and every
+  // browser sends it as the frame's referrer (at least the origin, by default). A host with no referrer at all gets no
+  // message, and the fixed height in the iframe code applies.
+  let target = '';
+  try { const a = root.location.ancestorOrigins; target = a && a.length ? a[0] : new URL(document.referrer).origin; } catch (e) { target = ''; }
+  if (target === 'null') target = '';
+  if (document.documentElement.hasAttribute('data-embed') && root.parent && root.parent !== root && target) {
+    let sent = 0;
+    const post = () => {
+      const h = Math.ceil(document.body.getBoundingClientRect().height);
+      if (!h || h === sent) return;
+      sent = h;
+      root.parent.postMessage({ type: 'shaati-calc-height', height: h }, target);
+    };
+    if (root.ResizeObserver) new ResizeObserver(post).observe(document.body);
+    post();
+    // the host's listener may start after this frame loaded (its script below the iframe, still downloading): the same
+    // height again at load and twice after it, so a late listener still gets it
+    const again = () => { sent = 0; post(); };
+    root.addEventListener('load', () => { again(); setTimeout(again, 1000); setTimeout(again, 3000); });
+  }
 })(typeof window !== 'undefined' ? window : globalThis);
