@@ -155,7 +155,7 @@
         return `<button class="item" data-tid="${esc(t.id)}">${reasonTile(t.reason)}<span class="body"><span class="t">${esc(label)} ${unread ? '<span class="tag good">תשובה חדשה</span>' : ''}</span><span class="s">${esc(t.text.slice(0, 60))}</span></span><span class="trail"><span class="sp-st ${STATUS[t.status] ? STATUS[t.status][1] : ''}">${STATUS[t.status] ? STATUS[t.status][0] : ''}</span><br><span class="tiny muted">${UI.timeAgo(t.updated)}</span></span></button>`;
       }).join('')}</div>`;
       box.querySelectorAll('[data-tid]').forEach((b) => (b.onclick = () => { UI.closeTop(); setTimeout(() => Support.thread(b.dataset.tid, false), 320); }));
-    } catch (e) { box.innerHTML = `<div class="small muted" style="margin:14px 4px">לא הצלחנו לטעון את הפניות (${esc(e.code || 'אין חיבור')}).</div>`; }
+    } catch (e) { box.innerHTML = `<div class="small muted" style="margin:14px 4px">${esc(Cloud().errorText(e, 'לא הצלחנו לטעון את הפניות'))}</div>`; }
   }
 
   /* ---------------- a new request ---------------- */
@@ -312,20 +312,18 @@
         ta.value = '';
         if (Fx()) Fx().play('pop');
         load();
-      } catch (e) { UI.invalid('השליחה נכשלה: ' + Cloud().errorText(e)); }
+      } catch (e) { UI.invalid(Cloud().errorText(e, 'ההודעה לא נשלחה')); }
       replying = false;
       replyBtn.disabled = false;
     };
-    try { await load(); } catch (e) { body.innerHTML = `<div class="banner warn">${icon('alert')}<div>לא הצלחנו לטעון (${esc(e.code || e.message || '')}).</div></div>`; }
+    try { await load(); } catch (e) { body.innerHTML = `<div class="banner warn">${icon('alert')}<div>${esc(Cloud().errorText(e, 'לא הצלחנו לטעון את השיחה'))}</div></div>`; }
   };
 
   /* ---------------- tell a friend ---------------- */
   App.actions['share-app'] = async function () {
     const url = 'https://leelor123.github.io/shifts/';
     const text = 'מצאתי אפליקציה שמחשבת כמה מגיע לך על כל משמרת: שבתות, נסיעות, שעות נוספות ושכר מינימום לנוער 💰';
-    try { if (navigator.share) { await navigator.share({ title: 'Shaati', text, url }); return; } } catch (e) { if (e && e.name === 'AbortError') return; }
-    await UI.copyText(text + ' ' + url);
-    UI.toast('הקישור הועתק. אפשר להדביק בוואטסאפ 💚');
+    await UI.shareText(text, { title: 'Shaati', url, okText: 'הקישור הועתק. אפשר להדביק בוואטסאפ 💚' });
   };
 
   /** Admin: delete a closed request with its messages (the rules allow it only once it is closed). */

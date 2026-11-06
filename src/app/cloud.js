@@ -191,14 +191,46 @@
     'auth/account-exists-with-different-credential': 'האימייל הזה כבר מחובר לחשבון בדרך אחרת. התחברו בדרך שבה נרשמתם.',
   };
   const STORAGE_ERRORS = ['UnknownError', 'InvalidStateError', 'QuotaExceededError', 'DataError', 'AbortError'];
-  /** A message a person can understand (never raw English from the browser). */
-  Cloud.errorText = function (e) {
-    if (e && AUTH_ERRORS[e.code]) return AUTH_ERRORS[e.code];
-    if (e && STORAGE_ERRORS.includes(e.name)) return 'הדפדפן לא הצליח לשמור את הנתונים. נסה שוב, ואם זה חוזר על עצמו רענן את הדף.';
-    if (!navigator.onLine) return AUTH_ERRORS['auth/network-request-failed'];
-    const msg = (e && e.message) || String(e || '');
-    if ((e && e.ours) || /[\u0590-\u05FF]/.test(msg)) return msg; // already ours
-    return 'משהו השתבש. נסה שוב בעוד רגע.' + (e && (e.code || e.name) ? ` (${e.code || e.name})` : '');
+  /** What kind of failure an error is, so the message names the real cause: 'offline' (no network on this phone),
+   *  'denied' (the server refused: its rules or a limit in them, never something the user typed), 'down' (the server
+   *  did not answer in time), 'busy' (the server's daily quota or a rate limit), 'auth' (the sign-in ran out), 'gone'
+   *  (not found), 'cut' (cancelled midway), 'storage' (this phone's storage), 'ours' (a message written for the person)
+   *  or 'other'. Firestore's codes come bare ('permission-denied') or prefixed ('firestore/permission-denied'). */
+  Cloud.errorKind = function (e) {
+    if (e && STORAGE_ERRORS.includes(e.name)) return 'storage';
+    if (root.U && root.U.ours && root.U.ours(e)) return 'ours';
+    if (typeof navigator !== 'undefined' && navigator.onLine === false) return 'offline';
+    const code = String((e && e.code) || '').replace(/^(firestore|functions|storage)\//, '');
+    if (code === 'auth/network-request-failed' || code === 'shaati/sdk-stuck') return 'offline';
+    if (code === 'permission-denied') return 'denied';
+    if (code === 'unavailable' || code === 'deadline-exceeded' || code === 'auth/timeout') return 'down';
+    if (code === 'resource-exhausted' || code === 'auth/quota-exceeded' || code === 'auth/too-many-requests') return 'busy';
+    if (code === 'unauthenticated' || code === 'auth/requires-recent-login' || code === 'auth/user-token-expired') return 'auth';
+    if (code === 'not-found') return 'gone';
+    if (code === 'cancelled' || code === 'aborted') return 'cut';
+    if (e && e.name === 'TypeError' && /fetch|network|load failed/i.test(e.message || '')) return 'down';
+    return 'other';
+  };
+  const KIND_TEXT = {
+    offline: 'אין חיבור לאינטרנט. נסו שוב כשתחזור הרשת.',
+    denied: 'השרת לא אישר את הפעולה. נסו שוב מאוחר יותר, ואם זה חוזר כתבו לנו בעזרה ותמיכה.',
+    down: 'השרת לא ענה בזמן. בדקו את החיבור ונסו שוב בעוד רגע.',
+    busy: 'השרת עמוס כרגע. נסו שוב בעוד כמה שעות. מה ששמרתם נשאר בטלפון.',
+    auth: 'צריך להתחבר שוב לחשבון. התנתקו, התחברו ונסו שוב.',
+    gone: 'זה כבר לא נמצא בשרת. אולי זה נמחק.',
+    cut: 'הפעולה נקטעה באמצע. נסו שוב.',
+    storage: 'הדפדפן לא הצליח לשמור את הנתונים. נסו שוב, ואם זה חוזר רעננו את הדף.',
+    other: 'משהו השתבש. נסו שוב בעוד רגע.',
+  };
+  /** A message a person can understand, never raw English from the browser and never a code: what went wrong and what
+   *  to do next. what: the action that failed as a full sentence ('לא הצלחנו ליצור הזמנה'); it opens the message. */
+  Cloud.errorText = function (e, what) {
+    const kind = Cloud.errorKind(e);
+    let text;
+    if (kind === 'ours') text = e.message;
+    else if (e && AUTH_ERRORS[e.code] && !(typeof navigator !== 'undefined' && navigator.onLine === false)) text = AUTH_ERRORS[e.code];
+    else text = KIND_TEXT[kind] || KIND_TEXT.other;
+    return what ? what + '. ' + text : text;
   };
 
   /**

@@ -935,8 +935,58 @@ let errors = [];
     if (n !== before + 1) throw new Error('stickers listed: ' + n);
     await ev(() => { delete window.NDEFReader; });
   });
+  // the 1.35 audit of error and empty states: a server refusal says so (never "no permission"), stays long enough to
+  // read, a refused copy opens the text to copy by hand, and an empty search offers to clear it
+  await step('errors: a server refusal names the cause and the next step, and stays on screen to be read', async () => {
+    const t = await ev(() => Cloud.errorText({ code: 'permission-denied' }, 'לא הצלחנו לשמור את הקוד'));
+    if (/הרשאה|permission/i.test(t) || !t.startsWith('לא הצלחנו לשמור את הקוד. ') || !/עזרה ותמיכה/.test(t)) throw new Error('refusal text: ' + t);
+    const t2 = await ev(() => Cloud.errorText({ code: 'resource-exhausted' }));
+    if (t2 === t || /resource|exhausted/i.test(t2)) throw new Error('quota text: ' + t2);
+    await ev((x) => UI.toast(x), t);
+    await sleep(4500);
+    const still = await ev(() => document.getElementById('toast').classList.contains('show'));
+    if (!still) throw new Error('a two-sentence error left the screen after 4.5 s');
+    await ev(() => document.getElementById('toast').classList.remove('show'));
+    // a pull-to-refresh whose sync failed must not end in "everything is up to date"
+    const r = await ev(async () => {
+      const keep = [Cloud.user, Cloud.syncNow];
+      Cloud.user = { uid: 'u-test' }; Cloud.syncNow = () => Promise.reject(Object.assign(new Error('x'), { code: 'permission-denied' }));
+      try { return await App.refresh(); } finally { Cloud.user = keep[0]; Cloud.syncNow = keep[1]; }
+    });
+    if (!r || r.syncFailed !== true) throw new Error('a failed sync was reported as ' + JSON.stringify(r));
+  });
+  await step('a copy the phone refuses opens the text, selected, to copy by hand', async () => {
+    const ok = await ev(async () => {
+      const keep = [navigator.clipboard && navigator.clipboard.writeText, document.execCommand];
+      if (navigator.clipboard) navigator.clipboard.writeText = () => Promise.reject(new Error('NotAllowedError'));
+      document.execCommand = () => false;
+      try { return await UI.copied('ABCD-2345', 'הקוד הועתק'); } finally { if (navigator.clipboard) navigator.clipboard.writeText = keep[0]; document.execCommand = keep[1]; }
+    });
+    await sleep(500);
+    const box = await ev(() => { const ta = document.querySelector('.dialog [data-copy-by-hand]'); return ta ? { v: ta.value, sel: ta.selectionEnd - ta.selectionStart } : null; });
+    await ev(() => document.querySelectorAll('.dialog').forEach((d) => { if (d._resolve) d._resolve(null); }));
+    await sleep(300);
+    if (ok !== false || !box || box.v !== 'ABCD-2345') throw new Error('copy by hand: ' + JSON.stringify({ ok, box }));
+  });
+  await step('a search that finds nothing offers to clear it', async () => {
+    await ev(() => { App.reportsState.sub = 'list'; App.go('reports'); }); await sleep(500);
+    await page.type('#flt-q', 'zzzz-nothing'); await sleep(700);
+    const t = await ev(() => { const e = document.querySelector('#view .empty'); return e ? e.innerText : ''; });
+    if (!/לא נמצאו משמרות/.test(t) || !(await page.$('#view .empty [data-act="flt-clear"]'))) throw new Error('empty search: ' + t);
+    await page.click('#view .empty [data-act="flt-clear"]'); await sleep(600);
+    if (await page.$('#view .empty')) throw new Error('clearing the search left the list empty');
+  });
   await step('demo data clears', async () => { await ev(() => App.demo.clear()); await sleep(800); });
   await step('delete-all (local) wipes', async () => { await ev(() => Store.wipe()); await sleep(300); if (await ev(() => Store.S.shifts.length)) throw new Error('not wiped'); });
+  await step('no shifts at all: the shift list offers to add one, not to change a search', async () => {
+    await ev(() => { App.recompute(); App.reportsState.sub = 'list'; App.go('reports'); }); await sleep(600);
+    const t = await ev(() => { const e = document.querySelector('#view .empty'); return e ? e.innerText : ''; });
+    if (!/עוד אין משמרות/.test(t) || /לשנות את החיפוש/.test(t)) throw new Error('no-shift list: ' + t);
+    await page.click('#view .empty [data-act="shift-new"]'); await sleep(800);
+    const opened = await ev(() => UI.sheets.length);
+    await closeAll();
+    if (!opened) throw new Error('the add button opened nothing');
+  });
 
   // brand-new users (sign-in set up, Google stubbed): the questions come first, sign-in at the end
   async function newUserPage() {

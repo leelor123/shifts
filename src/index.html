@@ -2,13 +2,16 @@
 <html lang="he" dir="rtl">
 <head>
 <meta charset="utf-8">
-<script>(function(){try{var l=localStorage.getItem('shaati.lang'),h=document.documentElement.lang;if(l&&l!==h&&/^(he|ar|ru|en|fr|es|am)$/.test(l)&&!sessionStorage.getItem('langHop')){sessionStorage.setItem('langHop','1');location.replace((l==='he'?'index.html':'index.'+l+'.html')+location.search+location.hash)}else sessionStorage.removeItem('langHop');if(!/^(he|ar|ru|en|fr|es|am)$/.test(l||'')){var d=document.documentElement;d.classList.add('lp-first','lp-open');if(localStorage.getItem('fxPrefs')==null&&localStorage.getItem('shaati.sky')==null){d.classList.add('lp-bare');document.addEventListener('click',function(e){var c=e.target&&e.target.closest&&e.target.closest('#lp-static .lp-card');if(c&&!window.__lpPick){window.__lpPick=c.getAttribute('data-lang');c.classList.add('early')}},true)}}}catch(e){document.documentElement.classList.add('lp-first','lp-open')}})();
+<script>(function(){try{var l=localStorage.getItem('shaati.lang'),h=document.documentElement.lang;if(l&&l!==h&&/^(he|ar|ru|en|fr|es|am)$/.test(l)&&!sessionStorage.getItem('langHop')){sessionStorage.setItem('langHop','1');location.replace((l==='he'?'index.html':'index.'+l+'.html')+location.search+location.hash)}else sessionStorage.removeItem('langHop');if(!/^(he|ar|ru|en|fr|es|am)$/.test(l||'')){var d=document.documentElement;d.classList.add('lp-first','lp-open');if(localStorage.getItem('fxPrefs')==null&&localStorage.getItem('shaati.sky')==null){d.classList.add('lp-bare');['arabic','cyrillic','ethiopic'].forEach(function(s){var k=document.createElement('link');k.rel='preload';k.as='font';k.type='font/woff2';k.crossOrigin='';k.href='fonts/doors-'+s+'.woff2';document.head.appendChild(k)});document.addEventListener('click',function(e){var c=e.target&&e.target.closest&&e.target.closest('#lp-static .lp-card');if(c&&!window.__lpPick){window.__lpPick=c.getAttribute('data-lang');c.classList.add('early')}},true)}}}catch(e){document.documentElement.classList.add('lp-first','lp-open')}})();
 /* lp-first: no language chosen yet, so the language doors written into the page (#lp-static) show with the first frame,
    and lp-open keeps the screen under them unpainted (lang.js takes the doors over; app.js removes them if not needed).
    lp-bare: and nothing of the app was ever kept in this browser (fxPrefs is written on every open since 1.4, the sky's
    copy since 1.30), so the doors are surely needed: no opening show covers them (intro.js), and a door tapped before the
    app's code arrives is kept (window.__lpPick) for lang.js to carry out. Anyone who used the app here keeps the show
-   over the doors, which app.js may still remove unseen (an old user whose language was never stored). */
+   over the doors, which app.js may still remove unseen (an old user whose language was never stored).
+   With lp-bare the doors' own small fonts (styles-v3.css 'Shaati Doors', tools/doors-font.js) are asked for at once: found
+   only while the first screen was being laid out, they were not there yet, and laying the Arabic, Russian and Amharic
+   words out with the phone's fallback fonts first tripled the first layout (Lighthouse, 6 Nov 2026). */
 /* Rubik and Fredoka come from the app's own address (fonts/, their @font-face rules are in the styles) and the
    language's files are preloaded, so nothing waits for another server. A font chosen in the settings comes from
    Google: App.applyTheme gives this link its address. The show waits for the fonts before it leaves. */

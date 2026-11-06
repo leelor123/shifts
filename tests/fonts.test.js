@@ -34,3 +34,28 @@ T.test('Amharic letters come from the Ethiopic file, which stands right after th
   T.ok(/--font: var\(--app-font\), 'Shaati Ethiopic',/.test(styles), '--font has the Ethiopic family after the chosen font');
   T.ok(fileFor('Shaati Ethiopic', 0x41) === undefined, 'nothing else is taken from it (Latin stays Rubik)');
 });
+// The first doors' own fonts (6 Nov 2026): 'Shaati Doors' (tools/doors-font.js) is the Arabic, Cyrillic and Ethiopic files
+// cut down to the doors' letters, so a first visit's first paint waits on 27 KB instead of 245 KB
+T.test('the first doors: every Arabic, Russian and Amharic letter they show is in their own small font', () => {
+  const D = require('../tools/doors-font.js');
+  const SRC = path.join(__dirname, '..', 'src');
+  const doors = fs.readFileSync(path.join(SRC, 'fonts', 'doors.css'), 'utf8');
+  const faces = [...doors.matchAll(/@font-face\{([^}]*)\}/g)].map((m) => ({
+    family: /font-family: '([^']+)'/.exec(m[1])[1], weight: /font-weight: ([^;]+);/.exec(m[1])[1],
+    file: /url\(fonts\/([^)]+)\)/.exec(m[1])[1], range: /unicode-range: ([^;]+)/.exec(m[1])[1],
+  }));
+  const text = D.doorsText();
+  for (const s of D.SCRIPTS) {
+    const f = faces.find((x) => x.file === 'doors-' + s.id + '.woff2');
+    T.ok(f && f.family === 'Shaati Doors', 'a face for ' + s.id);
+    T.eq(f.range, D.charsOf(s, text).map(D.hex).join(', '), s.id + ': a door text changed; run node tools/doors-font.js');
+    T.ok(fs.existsSync(path.join(SRC, 'fonts', f.file)), f.file);
+  }
+  // Chrome picks a family's faces by weight before unicode-range: a face with another weight range is never used
+  T.eq(new Set(faces.map((x) => x.weight)).size, 1, 'one weight range for all the doors faces');
+  T.ok(!/U\+0020|U\+05|U\+00[4-7]/.test(doors), 'no space, Hebrew or Latin: the line heights and the rest stay Rubik');
+  const html = fs.readFileSync(path.join(SRC, 'index.html'), 'utf8');
+  T.ok(D.SCRIPTS.every((s) => html.includes("'" + s.id + "'")) && html.includes("'fonts/doors-'"), 'index.html asks for each doors file at once on a first visit');
+  T.ok(/read\('fonts\/doors\.css'\)/.test(fs.readFileSync(path.join(__dirname, '..', 'tools', 'build.js'), 'utf8')), 'the build puts doors.css in the page');
+  T.ok(/html\.lp-bare \.lp-host \{ font-family: 'Shaati Doors'/.test(fs.readFileSync(path.join(SRC, 'styles-v3.css'), 'utf8')), 'only the first visit\'s doors use it');
+});

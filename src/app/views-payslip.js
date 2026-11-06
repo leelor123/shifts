@@ -194,7 +194,7 @@
       setTimeout(() => verifySheet({ fields: parsed.fields, other: parsed.other, period: parsed.period || defaultPeriod(), text, source, fileId, fileName: file.name }), 320);
     } catch (e) {
       console.error(e);
-      progress('שגיאה: ' + (e.message || e));
+      progress(root.U.ours(e) ? e.message : 'לא הצלחנו לקרוא את התלוש מהקובץ');
       UI.toast('הקריאה נכשלה. אפשר להזין ידנית.');
     }
   }
@@ -238,6 +238,8 @@
       const dedLines = Payslip.FIELDS.filter((f) => f.kind === 'ded' && val(f.key) != null).reduce((s, f) => s + val(f.key), 0);
       const ded = val('totalDeductions') != null ? val('totalDeductions') : dedLines || (g != null && n != null ? g - n : null);
       const pays = Payslip.FIELDS.filter((f) => f.kind === 'pay' && val(f.key) != null).reduce((s, f) => s + val(f.key), 0);
+      // each check is markup the app writes itself (fixed text and money(), which is already markup): escaped again,
+      // the warnings showed <span class="money"> as text (6 Nov 2026)
       const checks = [];
       if (g == null) checks.push(['need', 'חסר ברוטו: הוסיפו אותו כדי שנוכל לבדוק']);
       if (n == null) checks.push(['need', 'חסר נטו לתשלום']);
@@ -245,7 +247,7 @@
       if (g != null && n != null && val('totalDeductions') != null) checks.push(Math.abs(g - val('totalDeductions') - n) <= 2 ? ['ok', 'ברוטו פחות ניכויים שווה לנטו'] : ['warn', `ברוטו פחות ניכויים יוצא ${money(g - val('totalDeductions'))}, והנטו ${money(n)}`]);
       const cell = (label, v, cls) => `<div class="vf-cell ${cls || ''}"><small>${label}</small><b>${v == null ? '—' : money(v, 0)}</b></div>`;
       return `<div class="vf-flow">${cell('ברוטו', g)}<span class="vf-op">−</span>${cell('ניכויים', ded)}<span class="vf-op">=</span>${cell('נטו', n, 'net')}</div>
-        ${checks.length ? `<div class="vf-checks">${checks.map(([s, t]) => `<div class="vf-chk ${s}">${icon(s === 'ok' ? 'okc' : 'alert', 's')}<span>${esc(t)}</span></div>`).join('')}</div>` : ''}`;
+        ${checks.length ? `<div class="vf-checks">${checks.map(([s, t]) => `<div class="vf-chk ${s}">${icon(s === 'ok' ? 'okc' : 'alert', 's')}<span>${t}</span></div>`).join('')}</div>` : ''}`;
     }
     function groupHead(kind) {
       const g = GROUPS.find((x) => x[0] === kind);
@@ -597,8 +599,8 @@
             });
             return;
           }
-          if (b.hasAttribute('data-copy-msg')) { await UI.copyText(el.querySelector('#ps-msg').value); UI.toast('ההודעה הועתקה'); }
-          if (b.hasAttribute('data-share-msg')) { const t = el.querySelector('#ps-msg').value; if (navigator.share) navigator.share({ text: t }).catch(() => {}); else { await UI.copyText(t); UI.toast('הועתק'); } }
+          if (b.hasAttribute('data-copy-msg')) { await UI.copied(el.querySelector('#ps-msg').value, 'ההודעה הועתקה'); }
+          if (b.hasAttribute('data-share-msg')) { const t = el.querySelector('#ps-msg').value; await UI.shareText(t, { okText: 'הועתק' }); }
           if (b.hasAttribute('data-edit')) { UI.closeTop(); setTimeout(() => verifySheet(Object.assign({}, slip, { id: slip.isNew ? null : slip.id })), 320); }
           if (b.hasAttribute('data-file')) {
             const f = await Store.getFile(slip.fileId);
@@ -769,7 +771,7 @@
           } catch (err) {
             console.error(err);
             btn.disabled = false; btn.textContent = 'נסה שוב';
-            UI.dialog({ title: 'הניתוח החכם נכשל', text: String(err.message || err), buttons: [{ label: 'סגור', value: true }] });
+            UI.dialog({ title: 'הניתוח החכם נכשל', text: root.U.ours(err) ? err.message : 'לא הצלחנו לקרוא את התשובה של Claude. נסו שוב, או הזינו את התלוש ידנית.', buttons: [{ label: 'סגור', value: true }] });
           }
         };
       },
@@ -803,7 +805,7 @@
       if (err instanceof Anthropic.NotFoundError) throw root.U.oops('המודל לא נמצא (404). בחר מודל אחר בהגדרות.');
       if (err instanceof Anthropic.RateLimitError) throw root.U.oops('יותר מדי בקשות (429). נסה שוב בעוד דקה.');
       if (err instanceof Anthropic.APIConnectionError) throw root.U.oops('בעיית תקשורת עם השרת. בדוק את החיבור.');
-      if (err instanceof Anthropic.APIError) throw root.U.oops(`שגיאת API ${err.status || ''}: ${err.message}`);
+      if (err instanceof Anthropic.APIError) throw root.U.oops('השירות של Claude לא הצליח לענות כרגע. נסו שוב בעוד רגע, או הזינו את התלוש ידנית.');
       throw err;
     }
     if (res.stop_reason === 'refusal') throw root.U.oops('הבקשה נדחתה על ידי המודל' + (res.stop_details && res.stop_details.explanation ? ': ' + res.stop_details.explanation : '.'));

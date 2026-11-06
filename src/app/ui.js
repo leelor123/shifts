@@ -180,7 +180,13 @@
     if (action) el.querySelector('.act').onclick = () => { hideToast(); action.fn(); };
     requestAnimationFrame(() => el.classList.add('show'));
     clearTimeout(toastTimer);
-    toastTimer = setTimeout(hideToast, (opts && opts.ms) || (action ? 6000 : 3200));
+    toastTimer = setTimeout(hideToast, (opts && opts.ms) || toastMs(text, action));
+  }
+  /** How long a note stays: long enough to read it (an error that says why and what to do is two sentences; at 3.2 s
+   *  it left before the second one was read). About 60 ms a character on top of a second, from 3.2 s up to 10 s. */
+  function toastMs(text, action) {
+    const read = Math.min(10000, 1000 + 60 * String(text == null ? '' : text).length);
+    return Math.max(action ? 6000 : 3200, read);
   }
   function hideToast() { const el = document.getElementById('toast'); if (el) el.classList.remove('show'); }
 
@@ -478,6 +484,23 @@
       ta.remove(); return ok;
     }
   }
+  /** Copy, then say so; when the phone refuses (no clipboard permission, an old WebView) the text opens in a box,
+   *  selected, to copy by hand. A "copied" note after a copy that failed left the person pasting nothing. */
+  async function copied(t, okText) {
+    if (await copyText(t)) { toast(okText || 'הועתק'); return true; }
+    dialog({ title: 'הטלפון לא נתן להעתיק', html: `<p class="small muted">סמנו את הטקסט ובחרו "העתקה".</p><textarea class="input" readonly rows="4" dir="auto" data-copy-by-hand>${esc(t)}</textarea>`, buttons: [{ label: 'סגירה', value: true }] });
+    setTimeout(() => { const ta = document.querySelector('[data-copy-by-hand]'); if (ta) { ta.focus(); ta.select(); } }, 60);
+    return false;
+  }
+  /** The phone's share sheet, or a copy when there is none or it fails for any reason but the person closing it.
+   *  opts: { title, url, okText }. A failed share used to end in silence. */
+  async function shareText(text, opts) {
+    const o = opts || {};
+    try {
+      if (navigator.share) { await navigator.share(Object.assign({ text }, o.title ? { title: o.title } : {}, o.url ? { url: o.url } : {})); return true; }
+    } catch (e) { if (e && e.name === 'AbortError') return true; }
+    return copied(o.url ? text + ' ' + o.url : text, o.okText);
+  }
   /** Read numeric input value ('' -> null). */
   function numIn(el) {
     if (!el) return null;
@@ -533,5 +556,5 @@
     fit();
   })();
 
-  root.UI = { on, syncInert, pushLayer, closeLayer, tile, skeleton, invalid, icon, esc, money, numv, delta, roleDot, roleLead, roleMini, rolePhoto, ink, emptyState, toast, openSheet, closeTop, closeAll, dialog, confirm, promptText, onSwipe, vibrate, download, shareFile, copyText, numIn, timeAgo, sheets };
+  root.UI = { on, syncInert, pushLayer, closeLayer, tile, skeleton, invalid, icon, esc, money, numv, delta, roleDot, roleLead, roleMini, rolePhoto, ink, emptyState, toast, toastMs, openSheet, closeTop, closeAll, dialog, confirm, promptText, onSwipe, vibrate, download, shareFile, copyText, copied, shareText, numIn, timeAgo, sheets };
 })(typeof window !== 'undefined' ? window : globalThis);

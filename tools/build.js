@@ -72,7 +72,8 @@ const loader = (lang) => `\n;(function(){var done=false;function go(){if(done)re
 const jsFile = (lang) => 'app.' + lang + '.' + hash + '.js';
 // styles.css is the base design; styles-v3.css the playful layer on top (pickers, mascot, colours)
 // fonts.css: Rubik and Fredoka served from fonts/ (tools/fonts.js), one file per script, fetched only when used
-const css = read('fonts/fonts.css') + read('styles.css') + '\n' + read('styles-v3.css') + '\n' + read('styles-v4.css');
+// doors.css: the first doors' small cut of the Arabic, Cyrillic and Ethiopic files (tools/doors-font.js)
+const css = read('fonts/fonts.css') + read('fonts/doors.css') + read('styles.css') + '\n' + read('styles-v3.css') + '\n' + read('styles-v4.css');
 // the files each language's first screen draws with, asked for at once instead of after the styles are read
 const cssMin = esbuild.transformSync(css, { loader: 'css', minify: true, target: 'chrome90', charset: 'utf8', legalComments: 'none' }).code;
 const FIRST_FONTS = { he: ['rubik-hebrew', 'rubik-latin'], ar: ['rubik-arabic', 'rubik-latin'], ru: ['rubik-cyrillic', 'rubik-latin'], en: ['rubik-latin'], fr: ['rubik-latin'], es: ['rubik-latin'], am: ['noto-ethiopic', 'rubik-latin'] };

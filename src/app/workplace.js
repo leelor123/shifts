@@ -41,10 +41,11 @@
   const mine = (empId) => { const all = S.settings.wpShare; const x = all && typeof all === 'object' ? all[empId] : null; return x && W.CODE_RE.test(x.c || '') ? x : null; };
   const setMine = (empId, v) => Store.setSettings((s) => { s.wpShare = Object.assign({}, s.wpShare && typeof s.wpShare === 'object' ? s.wpShare : {}, { [empId]: v }); });
   const denied = (e) => !!e && /permission/i.test(e.code || e.message || '');
-  // writing: a refusal is about the record (the rules check every field), not about who may use the code
-  const errText = (e, writing) => (!navigator.onLine ? 'אין חיבור לאינטרנט' : e && e.code === 'shaati/wp-gone' ? 'הקוד כבר נמחק. אפשר ליצור קוד חדש'
-    : writing && (denied(e) || (e && e.code === 'shaati/wp-record')) ? 'לא הצלחנו לשמור את הקוד. נסו שוב בעוד רגע'
-      : denied(e) ? 'אין הרשאה לקוד הזה' : 'משהו השתבש. נסו שוב בעוד רגע');
+  // what failed (save, read or delete) opens the message, and Cloud.errorText says why and what to do: a refusal is the
+  // server's rules (a limit in them, 6 Nov 2026), never the person's fault, so it is never "no permission"
+  const errText = (e, step) => (e && e.code === 'shaati/wp-gone' ? 'הקוד כבר נמחק. אפשר ליצור קוד חדש'
+    : e && e.code === 'shaati/wp-record' ? 'לא הצלחנו לשמור את הקוד. אחד החוקים של מקום העבודה לא נכנס לקוד. כתבו לנו בעזרה ותמיכה ונתקן'
+      : Cloud().errorText(e, step === 'del' ? 'לא הצלחנו למחוק את הקוד' : step === 'read' ? 'לא הצלחנו לקרוא את הקוד' : 'לא הצלחנו לשמור את הקוד'));
   /** A write the rules refused goes to the error reports with the part of the record they would refuse (no values). */
   const report = (step, part) => { try { if (root.Errors) root.Errors.capture(new Error('workplace code ' + step + ' refused at ' + (part || 'unknown')), 'error'); } catch (x) { /* none */ } };
   const linkOf = (c) => APP_URL + '?wp=' + c;
@@ -192,24 +193,21 @@
             try {
               if (needName()) await Store.put('employers', Object.assign(Store.clone(e), { name }));
               await create(cur(), rates); UI.toast('הקוד מוכן. אפשר לשלוח אותו לחברים לעבודה', null, { ok: true });
-            } catch (x) { UI.toast(errText(x, true)); }
+            } catch (x) { UI.toast(errText(x, 'save')); }
             busy = false; draw();
           } else if (b.hasAttribute('data-wp-send') && m) {
             const text = `החוקים של ${e.name} בשעתי: תקופת שכר, נסיעות, שעות נוספות ותוספות. פותחים את הקישור, או מקלידים את הקוד ${W.pretty(m.c)}`;
-            try { if (navigator.share) { await navigator.share({ title: 'Shaati', text, url: linkOf(m.c) }); return; } } catch (x) { if (x && x.name === 'AbortError') return; }
-            await UI.copyText(text + ' ' + linkOf(m.c));
-            UI.toast('הקישור הועתק. אפשר להדביק בוואטסאפ');
+            await UI.shareText(text, { title: 'Shaati', url: linkOf(m.c), okText: 'הקישור הועתק. אפשר להדביק בוואטסאפ' });
           } else if (b.hasAttribute('data-wp-copy') && m) {
-            await UI.copyText(W.pretty(m.c));
-            UI.toast('הקוד הועתק');
+            await UI.copied(W.pretty(m.c), 'הקוד הועתק');
           } else if (b.hasAttribute('data-wp-update') && m) {
             busy = true; draw();
-            try { UI.toast(await write(e, m.c, m.v + 1, m.rates) === 'same' ? 'אין שינוי בחוקים, הקוד כבר מעודכן' : 'הקוד עודכן לחוקים של היום', null, { ok: true }); } catch (x) { UI.toast(errText(x, true)); }
+            try { UI.toast(await write(e, m.c, m.v + 1, m.rates) === 'same' ? 'אין שינוי בחוקים, הקוד כבר מעודכן' : 'הקוד עודכן לחוקים של היום', null, { ok: true }); } catch (x) { UI.toast(errText(x, 'save')); }
             busy = false; draw();
           } else if (b.hasAttribute('data-wp-del') && m) {
             if (!(await UI.confirm('למחוק את הקוד?', 'הקוד והקישור יפסיקו לעבוד. מי שכבר החיל את החוקים ישמור אותם.', 'מחיקה', true))) return;
             busy = true; draw();
-            try { await remove(m.c); await setMine(e.id, null); UI.toast('הקוד נמחק'); } catch (x) { UI.toast(errText(x)); }
+            try { await remove(m.c); await setMine(e.id, null); UI.toast('הקוד נמחק'); } catch (x) { UI.toast(errText(x, 'del')); }
             busy = false; draw();
           }
         });
@@ -256,7 +254,7 @@
     opts = opts || {};
     if (!signedIn()) { needAccount(false); return; }
     let got;
-    try { got = await fetchCode(c); } catch (x) { UI.toast(errText(x)); return; }
+    try { got = await fetchCode(c); } catch (x) { UI.toast(errText(x, 'read')); return; }
     if (!got) { UI.toast('הקוד לא נמצא. אולי הוא נמחק, או שהוקלד אחרת'); drop(); return; }
     drop();
     const r = got.r;

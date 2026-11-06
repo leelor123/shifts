@@ -154,7 +154,7 @@
             } catch (x) {
               await Store.setSettings((s) => { s.fr = was.on ? was : Object.assign({}, s.fr, { on: false }); });
               b.disabled = false;
-              UI.toast(navigator.onLine ? 'השמירה נכשלה. נסו שוב' : 'אין חיבור לאינטרנט');
+              UI.toast(Cloud().errorText(x, 'השמירה נכשלה'));
             }
           }
         });
@@ -172,12 +172,10 @@
     try {
       const { fs, db } = await Cloud().sdk();
       await fs.setDoc(fs.doc(db, 'inv', code), { from: uid(), n: me().n, e: me().e, t: Date.now(), to: '' });
-    } catch (e) { UI.toast(navigator.onLine ? 'לא הצלחנו ליצור הזמנה. נסו שוב' : 'אין חיבור לאינטרנט'); return; }
+    } catch (e) { UI.toast(Cloud().errorText(e, 'לא הצלחנו ליצור הזמנה')); return; }
     const url = `${APP_URL}?friend=${code}`;
     const text = `${me().e} ${me().n} מזמין/ה אותך לתחרות בשעתי: מי מרוויח יותר לשעה, החודש והשנה? 💸`;
-    try { if (navigator.share) { await navigator.share({ title: 'Shaati', text, url }); return; } } catch (e) { if (e && e.name === 'AbortError') return; }
-    await UI.copyText(text + ' ' + url);
-    UI.toast('הקישור הועתק. אפשר להדביק בוואטסאפ 💚');
+    await UI.shareText(text, { title: 'Shaati', url, okText: 'הקישור הועתק. אפשר להדביק בוואטסאפ 💚' });
   });
 
   /* ---------------- accepting ---------------- */
@@ -199,7 +197,7 @@
       if ((me().f || []).includes(v.from) && v.to === uid()) { dropCode(); View.open(); return; }
       acceptSheet(code, v);
     } catch (e) {
-      UI.toast(navigator.onLine ? 'לא הצלחנו לפתוח את ההזמנה. ננסה שוב בפתיחה הבאה' : 'אין חיבור לאינטרנט. ננסה שוב');
+      UI.toast(Cloud().errorText(e, 'לא הצלחנו לפתוח את ההזמנה'));
     } finally { handling = false; }
   }
   View.handleInvite = handleInvite;
@@ -220,7 +218,7 @@
         setTimeout(() => View.open(), 450);
       } catch (e) {
         if (btn) btn.disabled = false;
-        UI.toast(navigator.onLine ? 'ההצטרפות נכשלה. נסו שוב' : 'אין חיבור לאינטרנט');
+        UI.toast(Cloud().errorText(e, 'ההצטרפות נכשלה'));
       }
     };
     const intro = `<div class="fr-invite"><span class="fr-inv-e" aria-hidden="true">${esc(v.e)}</span><b>${esc(v.n)}</b><span>מזמין/ה אותך לתחרות: מי מרוויח יותר לשעה, החודש והשנה? 💸</span></div>`;
@@ -285,7 +283,7 @@
       } catch (e) {
         if (my !== seq || !el.isConnected) return;
         rows = [meRow()];
-        UI.toast(navigator.onLine ? 'לא הצלחנו לטעון את החברים' : 'אין חיבור לאינטרנט');
+        UI.toast(Cloud().errorText(e, 'לא הצלחנו לטעון את החברים'));
       }
       paint(el);
     }

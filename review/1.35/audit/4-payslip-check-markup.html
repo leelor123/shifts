@@ -1,0 +1,11 @@
+<!doctype html><html lang="he" dir="rtl"><head><meta charset="utf-8"><title>בדיקת תלוש: תגית HTML שהופיעה כטקסט</title><style>
+body{margin:0;padding:28px;font:16px/1.55 'Segoe UI',Arial,sans-serif;background:#f4f6fb;color:#0f1a33;width:820px}
+h1{font-size:22px;margin:0 0 8px}p.note{margin:0 0 18px;max-width:70ch}
+.pics{display:flex;gap:20px;align-items:flex-start;margin-bottom:18px}figure{margin:0;background:#fff;border:1px solid #dfe4ef;border-radius:12px;padding:10px}
+figure img{display:block;max-width:360px;max-height:700px;border-radius:6px}figcaption{font-size:14px;color:#4a5570;margin-top:6px}
+table{border-collapse:collapse;background:#fff;border:1px solid #dfe4ef;border-radius:12px;overflow:hidden}th,td{padding:8px 14px;border-bottom:1px solid #eef1f7;text-align:right}
+thead th{background:#0d2b6b;color:#fff}td.new{font-weight:700;color:#0a6b3d}</style></head><body>
+<h1>בדיקת תלוש: תגית HTML שהופיעה כטקסט</h1><p class="note">כשסכום שורות התשלום לא שווה לברוטו, האזהרה הציגה את הקוד <b>&lt;span class="money"&gt;</b> במקום הסכום. הסכומים כבר עטופים כקוד של האפליקציה, והשורה עברה הסתרת תווים פעם שנייה. עכשיו מופיעים הסכומים עצמם. בדיקה ב-tests/payslip.test.js שומרת שזה לא יחזור.</p>
+<div class="pics"><figure><img src="img/4-payslip-check-markup-before-vf.png" alt="לפני: קוד במקום סכום"><figcaption>לפני: קוד במקום סכום</figcaption></figure><figure><img src="img/4-payslip-check-markup-after-vf.png" alt="אחרי: ₪1,600.00 ו-₪1,735.00"><figcaption>אחרי: ₪1,600.00 ו-₪1,735.00</figcaption></figure></div>
+
+</body></html>
