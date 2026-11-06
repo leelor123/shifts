@@ -41,18 +41,19 @@
   Invite.until = () => +(Invite.gift().until || 0);
 
   /** My invitation code (made once, kept in the settings so every phone of the account shares it). */
-  async function myCode() {
+  // (one at a time: two taps at once made two codes, and the first one's link pointed nowhere the account kept)
+  const myCode = root.U.single(async function () {
     if (/^[a-z0-9]{10,20}$/.test(S.settings.refCode || '')) return S.settings.refCode;
     const c = R.code(rand);
     const { fs, db } = await Cloud().sdk();
     await fs.setDoc(fs.doc(db, 'refc', c), { by: uid() });
     await Store.setSettings((s) => { s.refCode = c; });
     return c;
-  }
+  });
   Invite.link = async () => APP_URL + '?ref=' + (await myCode());
 
   /** Sends my link (the phone's share sheet, or copied). */
-  Invite.share = async function () {
+  Invite.share = root.U.single(async function () {
     if (!signedIn()) { UI.toast('צריך להתחבר עם חשבון Google'); return; }
     let url;
     try { url = await Invite.link(); } catch (e) { UI.toast(navigator.onLine ? 'לא הצלחנו ליצור קישור. נסו שוב' : 'אין חיבור לאינטרנט'); return; }
@@ -60,7 +61,7 @@
     try { if (navigator.share) { await navigator.share({ title: 'Shaati', text, url }); return; } } catch (e) { if (e && e.name === 'AbortError') return; }
     await UI.copyText(text + ' ' + url);
     UI.toast('הקישור הועתק. אפשר להדביק בוואטסאפ 💚');
-  };
+  });
 
   /** Asks who invited me and whom I invited, and works out the gift (at most every six hours, unless forced). */
   let asking = null;

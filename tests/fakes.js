@@ -92,6 +92,8 @@ function fakeClient(backend) {
     notify(path, data, false);
   }
   function write(path, data) {
+    // every write a phone sends, in order (tests/noop.test.js: a save with nothing new sends nothing)
+    (backend.writes || (backend.writes = [])).push(path);
     notify(path, data, true);
     return new Promise((resolve, reject) => {
       const job = () => { try { serverApply(path, data); resolve(); } catch (e) { reject(e); } };

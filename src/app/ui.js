@@ -285,6 +285,9 @@
     sh.innerHTML = `<div class="grab"></div><div class="sh-head"><h2 id="${hid}">${opts.title || ''}</h2><button class="icon-btn" data-close aria-label="סגור">${icon('x')}</button></div><div class="sh-body">${opts.body || ''}</div>${opts.foot ? `<div class="sh-foot">${opts.foot}</div>` : ''}`;
     document.body.append(bd, sh);
     const entry = { bd, sh, opts, closed: false, pushed: false };
+    // a sheet on its way out takes no more taps: "save" pressed twice (the second while the sheet was closing) saved a
+    // new shift, a bonus or a day off twice. Every sheet that saves and closes is covered here.
+    sh.addEventListener('click', (e) => { if (entry.closed || entry.leaving) { e.stopPropagation(); e.preventDefault(); } }, true);
     entry.modal = modalOpen([bd, sh], sh);
     track(entry);
     requestAnimationFrame(() => { bd.classList.add('show'); sh.classList.add('show'); });
@@ -353,6 +356,9 @@
     if (!top.pushed) { removeSheet(top); return; } // not in history yet
     const cur = pendingDepth === null ? committed().length : pendingDepth;
     if (cur <= 0) return;
+    // closing: taps on it are ignored from now (the back step lands a moment later); should it not land, the sheet
+    // takes taps again after a second
+    if (!top.layer) { top.leaving = true; setTimeout(() => { if (!top.closed) top.leaving = false; }, 1000); }
     navigateBack(1, cur - 1); // popstate closes it
   }
   function closeAll() {

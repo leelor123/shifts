@@ -142,8 +142,10 @@
             const bad = LB.nickProblem(n);
             if (bad) { err.textContent = bad; input.focus(); return; }
             if (!signedIn()) { UI.toast('צריך להתחבר לחשבון'); return; }
-            b.disabled = true;
             const was = me();
+            // in the competition already, with the same name and emoji: the card is not sent again
+            if (was.on && was.n === n && was.e === e) { UI.toast('לא היו שינויים לשמור'); UI.closeTop(); if (done) setTimeout(done, 280); return; }
+            b.disabled = true;
             await Store.setSettings((s) => { s.fr = Object.assign({ f: [], blocked: [], hide: true }, s.fr, { on: true, n, e }); });
             try {
               await publish(true);
@@ -162,7 +164,8 @@
   const signIn = () => { UI.closeAll(); App.go('settings'); setTimeout(() => App.sheetsApi.settingsSection('account'), 350); };
 
   /* ---------------- inviting ---------------- */
-  View.invite = async function () {
+  // (one at a time: a double tap made two invitations in the cloud and opened the share sheet twice)
+  View.invite = U.single(async function () {
     if (!signedIn()) { signedOutSheet(); return; }
     if (!joined()) { profileSheet(() => View.invite(), { cta: 'הצטרפות והזמנה' }); return; }
     const code = FR.code((k) => { const a = new Uint8Array(k); crypto.getRandomValues(a); return a; });
@@ -175,7 +178,7 @@
     try { if (navigator.share) { await navigator.share({ title: 'Shaati', text, url }); return; } } catch (e) { if (e && e.name === 'AbortError') return; }
     await UI.copyText(text + ' ' + url);
     UI.toast('הקישור הועתק. אפשר להדביק בוואטסאפ 💚');
-  };
+  });
 
   /* ---------------- accepting ---------------- */
   let handling = false;

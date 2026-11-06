@@ -19,7 +19,7 @@
   const S = Store.S;
 
   const SDK = 'https://www.gstatic.com/firebasejs/12.19.0/';
-  const LOCAL_ONLY_SETTINGS = ['ai', 'lock', 'backup'];
+  const LOCAL_ONLY_SETTINGS = Store.LOCAL_SETTINGS; // (one list: Store.setSettings sends nothing when only these change)
   const LOCAL_ONLY_FIELDS = { payslips: ['text', 'fileId', 'fileName'] };
   const SYNC = Store.SYNC_STORES;
 
@@ -498,8 +498,11 @@
       const fresh = writes.filter(([key, ver]) => inflight.get(key) !== ver);
       if (fresh.length) {
         // the account's marker (no email: nothing reads it, and the sign-in service already knows it); a full write,
-        // so an email that an older version put here goes with the next change
-        fs.setDoc(fs.doc(db, 'users', Cloud.user.uid), { updatedAt: Date.now(), schema: Store.SCHEMA_VERSION, app: root.APP_VERSION }).catch(() => {});
+        // so an email that an older version put here goes with the next change. Once a day, or when the version
+        // changes: it was a second write with every upload (a shift saved = 2 writes of the free plan's 20,000 a day)
+        const mark = Cloud.markDue(Cloud.user.uid);
+        if (mark) fs.setDoc(fs.doc(db, 'users', Cloud.user.uid), { updatedAt: Date.now(), schema: Store.SCHEMA_VERSION, app: root.APP_VERSION })
+          .then(() => Store.setMeta({ userMark: mark }), () => {}).catch(() => {});
         // One write per document: Firestore also keeps them in its own IndexedDB until the server confirms.
         // The security rules refuse a write that is older than what the server has (a phone that was
         // offline must not overwrite a newer change from another phone); onRejected settles it.
@@ -523,6 +526,11 @@
       if (pushAgain) { pushAgain = false; Cloud.schedulePush(); }
     }
   }
+  /** The account marker this phone should write now ({ uid, app, schema, day }), or null when today's is there. */
+  Cloud.markDue = function (uid) {
+    const m = { uid, app: String(root.APP_VERSION || ''), schema: Store.SCHEMA_VERSION, day: U.todayKey() };
+    return U.same(S.meta.userMark, m) ? null : m;
+  };
   /** The server refused a write. If the cloud holds a newer version, take it; otherwise keep ours dirty. */
   async function onRejected(ref, e) {
     const { fs } = fb;

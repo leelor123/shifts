@@ -399,7 +399,8 @@
   });
   /** Save with an Undo snackbar. */
   App.saveOps = async function (ops, label, toastText) {
-    await Store.apply(ops, label);
+    // nothing differs from what is saved (a save with no edit): no "updated", no coin, no undo (Store.apply)
+    if (await Store.apply(ops, label) === null) { UI.toast('לא היו שינויים לשמור'); return; }
     const doneShift = ops.some((o) => o.store === 'shifts' && o.put && o.put.status !== 'planned');
     if (doneShift) root.Fx.celebrate('coin');
     UI.toast(toastText || label, { label: 'ביטול', fn: App.undo }, { ok: true });
@@ -528,7 +529,10 @@
     return m;
   }
 
-  App.startShift = async function (roleId, opts) {
+  // (U.single: a double tap, the opening's quick start and the home button at once, start one shift and log one start)
+  App.startShift = U.single(async function (roleId, opts) {
+    // a shift already running (another phone started it, a stale button): it is never replaced by a new start
+    if (S.activeShift) return;
     const role = App.role(roleId) || App.roles()[0];
     if (!role) { UI.toast('הוסף תפקיד בהגדרות'); return; }
     // a planned shift around now becomes this shift (no leftover duplicate when it is saved)
@@ -544,11 +548,20 @@
     if (App.shiftMoment) App.shiftMoment('start', opts && opts.at); else root.Fx.celebrate('start');
     UI.toast('המשמרת התחילה. בהצלחה!');
     App.askNotifyPermission();
-  };
-  /** Ends the running shift now, or at endAt (an earlier moment: "end at 16:10" for a shift left running). */
+  });
+  /** Ends the running shift now, or at endAt (an earlier moment: "end at 16:10" for a shift left running). One end at
+   *  a time: a second tap while the first is saving saved the same shift twice. */
+  let stopping = false;
   App.stopShift = async function (at, endAt, opts) {
     const a = S.activeShift;
-    if (!a) return;
+    if (!a || stopping) return;
+    stopping = true;
+    let sh = null;
+    try { sh = await saveStop(a, endAt, opts); } finally { stopping = false; }
+    if (sh) return afterStop(a, sh, at, endAt);
+  };
+  /** The end itself: the shift saved and the timer off. Returns the saved shift (null: one under a minute, not kept). */
+  async function saveStop(a, endAt, opts) {
     const end = endAt && endAt > a.start && endAt < Date.now() ? endAt : Date.now();
     // breaks after the end are dropped, one still open closes at the end
     if (a.breaks && a.breaks.length) a.breaks = a.breaks.filter((b) => b.from < end).map((b) => ({ from: b.from, to: Math.min(b.to || end, end) }));
@@ -556,7 +569,7 @@
     sh.id = U.uid();
     if ((sh.end - sh.start) < 60000) {
       const ok = await UI.confirm('משמרת קצרה מאוד', 'המשמרת נמשכה פחות מדקה. לשמור בכל זאת?', 'שמור');
-      if (!ok) { await Store.setActive(null); return; }
+      if (!ok) { await Store.setActive(null); return null; }
     }
     const ops = [{ store: 'shifts', put: sh }];
     const planned = a.fromPlanned && App.shift(a.fromPlanned);
@@ -564,6 +577,10 @@
     await Store.apply(ops, 'סיום משמרת', { via: opts && opts.widget ? 'widget' : 'timer' }); // (via: for the signed shift log)
     App.justStopped = Date.now(); // the start button springs back in
     await Store.setActive(null);
+    return sh;
+  }
+  /** What follows an end: the moment, the toast, a forgotten timer's question, the shift's screen. */
+  async function afterStop(a, sh, at, endAt) {
     // a timer that kept running (the phone in a pocket, a forgotten stop): it is saved, so nothing is
     // lost, and the end time can be fixed right away (no moment for its wage then: it may be wrong)
     const hours = (sh.end - sh.start) / U.HOUR;
@@ -594,7 +611,7 @@
     }
     App.sheetsApi.shiftDetail && App.sheetsApi.shiftDetail(sh.id);
     if (App.reviewAfterShift) App.reviewAfterShift(); // a good moment, once that screen is closed
-  };
+  }
   App.toggleBreak = async function (at) {
     const a = Object.assign({}, S.activeShift);
     a.breaks = (a.breaks || []).slice();
@@ -682,7 +699,15 @@
     // how long this person's shifts usually last: the "forgot to end it?" reminder comes sooner for short shifts
     usualShiftMs: S.activeShift ? App.usualShiftMs(S.activeShift.roleId) : 0,
   });
-  App.runInsights = async function () {
+  // one run at a time (a timer, the 5-minute check and a pull-to-refresh at once): two runs both found the same new
+  // alert and showed the phone's notification for it twice. A call during a run runs once more after it.
+  let insightsRun = null, insightsAgain = false;
+  App.runInsights = function () {
+    if (insightsRun) { insightsAgain = true; return insightsRun; }
+    insightsRun = runInsights().finally(() => { insightsRun = null; if (insightsAgain) { insightsAgain = false; App.runInsights(); } });
+    return insightsRun;
+  };
+  async function runInsights() {
     if (!App.model || !S.settings.onboarded) return;
     const res = insightsNow();
     App.insights = res;
@@ -717,7 +742,7 @@
     }
     if (App.tab === 'home') App.rerender();
     if (App.widgets) App.widgets.push(); // the forecast may have moved
-  };
+  }
   setInterval(() => App.runInsights(), 5 * 60 * 1000);
 
   /* ---------------- PIN lock ---------------- */

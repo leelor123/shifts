@@ -210,7 +210,30 @@
     return out;
   }
 
+  /** Two values hold the same data, whatever the order of their keys (the cloud and a merge give maps back in their own
+   *  order), the way JSON keeps them: a key holding undefined is no key. A save, a sync or a version is for a change,
+   *  so the places that write ask this first (Store.apply, Store.setSettings, the workplace code, 6 Nov 2026). */
+  function same(a, b) {
+    const k = (x) => (x && typeof x === 'object' ? (Array.isArray(x) ? x.map(k) : Object.keys(x).sort().reduce((o, n) => ((o[n] = k(x[n])), o), {})) : x);
+    return JSON.stringify(k(a)) === JSON.stringify(k(b));
+  }
+  /** fn, run once at a time: a call while one is still running gets that run's promise and starts nothing (a double
+   *  tap, a quick reopen, two screens asking at once). A start, an end, an invitation is made once per press. */
+  function single(fn) {
+    let running = null;
+    return function (...args) {
+      if (running) return running;
+      // fn starts at once, inside the tap (a window or a permission the browser allows only from a tap stays allowed)
+      let out;
+      try { out = fn.apply(this, args); } catch (e) { return Promise.reject(e); }
+      const p = Promise.resolve(out).finally(() => { if (running === p) running = null; });
+      running = p;
+      return p;
+    };
+  }
+
   root.U = {
+    same, single,
     pad, MIN, HOUR, DAY, uid, dateKey, parseKey, keyToDate, addDays, addMonths, dow, diffDays,
     toEpoch, dayStart, epochKey, epochHM, todayKey, monthKey, monthStart, monthEnd, addMonthKey,
     weekStart, rangeKeys, inRange, clamp, round2, sum, money, num, hours, hm, fmtDate, fmtMonth, pct, oops, ours, plural, lazyRx,

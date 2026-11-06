@@ -208,7 +208,14 @@
    * Mark a planned shift as done, only once it has ended: one still running can be measured on the timer from its
    * planned start instead, and one in the future waits (every path that marks a shift done comes here).
    */
+  const marking = new Set(); // shifts being marked now: a double tap marks once (one toast, one coin)
   App.markDone = async function (sh) {
+    if (!sh || marking.has(sh.id)) return false;
+    if ((App.shift(sh.id) || sh).status === 'done') return true; // marked already (the second tap of a double tap)
+    marking.add(sh.id);
+    try { return await markDone(sh); } finally { marking.delete(sh.id); }
+  };
+  async function markDone(sh) {
     const now = Date.now();
     if (sh.end > now + 60000) {
       if (sh.start <= now && !S.activeShift) {
@@ -221,7 +228,7 @@
     await App.saveOps([{ store: 'shifts', put: Object.assign(Store.clone(sh), { status: 'done' }) }], 'סימון כבוצעה', r && r.wage > 0 ? `המשמרת נכנסה לשכר: +${U.money(r.wage, 0)}` : 'המשמרת סומנה כבוצעה');
     if (root.Fx) root.Fx.play('coin');
     return true;
-  };
+  }
 
   App.sheetsApi.shiftDetail = function (id) {
     const sh = App.shift(id);
@@ -544,8 +551,9 @@
       if (overlap) {
         if (!(await UI.confirm('חפיפה עם משמרת אחרת', `קיימת משמרת ב-${U.fmtDate(U.epochKey(overlap.start))} \u2066${U.epochHM(overlap.start)}\u2060–\u2060${U.epochHM(overlap.end)}\u2069. לשמור בכל זאת?`, 'שמור'))) return;
       }
-      await Store.setMeta({ lastRole: d.roleId });
+      // the sheet starts closing first: from here it takes no second tap on "save" (a second shift, UI.closeTop)
       UI.closeTop();
+      await Store.setMeta({ lastRole: d.roleId });
       await App.saveOps([{ store: 'shifts', put: sh }], orig ? 'עריכת משמרת' : 'הוספת משמרת', orig ? 'המשמרת עודכנה' : 'המשמרת נשמרה');
     }
     return entry;

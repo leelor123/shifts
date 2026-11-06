@@ -522,8 +522,11 @@
             const bad = LB.nickProblem(nick);
             if (bad) { err.textContent = bad; input.focus(); return; }
             if (!signedIn()) { UI.toast('צריך להתחבר לחשבון'); return; }
-            b.disabled = true;
             const wasOn = !!(S.settings.lb && S.settings.lb.on);
+            // in the table already, with the same name, emoji and background: nothing to send (it wrote the row and
+            // the settings again and said "saved")
+            if (wasOn && U.same({ n: l.n, e: l.e, bg: l.bg || '' }, { n: nick, e, bg })) { UI.toast('לא היו שינויים לשמור'); UI.closeTop(); if (done) done(); return; }
+            b.disabled = true;
             await Store.setSettings((s) => { s.lb = { on: true, n: nick, e, bg }; });
             try {
               await readMine();

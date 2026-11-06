@@ -150,7 +150,16 @@
     if (!r) return out;
     if (r.n && r.n !== employer.name) out.push('n');
     if (r.ww && r.ww !== (+workWeek === 6 ? 6 : 5)) out.push('ww');
-    for (const k of KEYS) if (k in r && r[k] !== employer[k]) out.push(k);
+    // a value no shift uses on either side is no change: the hand-set daily limit when both count overtime by the law,
+    // the rounding unit when neither rounds, the monthly travel cap when neither pays travel (they showed "משתנה" next
+    // to a line that read the same on both sides)
+    const both = (f) => f(r) && f(employer);
+    const unused = {
+      otThreshold: both((x) => !!x.otLaw),
+      roundingUnit: both((x) => !x.roundingMode || x.roundingMode === 'none'),
+      travelMonthlyCap: both((x) => !(+x.travelPerDay > 0)),
+    };
+    for (const k of KEYS) if (k in r && r[k] !== employer[k] && !unused[k]) out.push(k);
     const mine = (roles || []).filter((x) => !x.archived && x.employerId === employer.id);
     if ((r.ro || []).some((x) => { const m = mine.find((y) => y.name.trim() === x.n); return !m || (x.r > 0 && rateOf(m, today || '2100-01-01') !== x.r); })) out.push('ro');
     return out;
@@ -204,6 +213,7 @@
   /** Two records' rules are the same, whatever the order of their keys (the cloud gives a map back in its own order):
    *  an update with the same rules is not a new version. */
   function same(a, b) {
+    if (root.U && root.U.same) return root.U.same(a, b); // the one comparison every write uses (core/util.js)
     const k = (x) => (x && typeof x === 'object' ? (Array.isArray(x) ? x.map(k) : Object.keys(x).sort().reduce((o, n) => ((o[n] = k(x[n])), o), {})) : x);
     return JSON.stringify(k(a)) === JSON.stringify(k(b));
   }

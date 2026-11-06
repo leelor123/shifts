@@ -1,0 +1,21 @@
+<!doctype html><html lang="he" dir="rtl"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>לחיצה כפולה על התחלה, סיום ושמירה</title>
+<style>
+:root { --bg: #f6f4ee; --ink: #1d2230; --mute: #5b6274; --bad: #b3261e; --good: #1b7a4a; --card: #fff; }
+* { box-sizing: border-box; }
+body { margin: 0; background: var(--bg); color: var(--ink); font: 17px/1.55 Rubik, "Segoe UI", Arial, sans-serif; }
+.wrap { display: flex; gap: 32px; padding: 32px; align-items: flex-start; width: 1100px; }
+.shot { flex: none; width: 412px; border-radius: 22px; overflow: hidden; box-shadow: 0 10px 30px rgba(0,0,0,.18); background: #000; }
+.shot img { display: block; width: 412px; }
+.note { flex: 1; }
+h1 { font-size: 28px; margin: 0 0 18px; }
+.box { background: var(--card); border-radius: 16px; padding: 16px 18px; margin-bottom: 14px; box-shadow: 0 1px 3px rgba(0,0,0,.08); }
+.box b { display: block; margin-bottom: 6px; font-size: 15px; letter-spacing: .02em; }
+.was b { color: var(--bad); } .now b { color: var(--good); }
+.how { color: var(--mute); font-size: 15px; }
+code, .ltr { direction: ltr; unicode-bidi: isolate; font-family: Consolas, monospace; font-size: 14px; }
+</style></head><body><div class="wrap"><div class="shot"><img src="shots/3-double-tap.png" alt=""></div><div class="note">
+<h1>לחיצה כפולה על התחלה, סיום ושמירה</h1>
+<div class="box was"><b>מה היה לא בסדר</b>לחיצה כפולה על "סיים משמרת" שמרה את אותה משמרת פעמיים. לחיצה כפולה על "שמור" במשמרת חדשה הקפיצה שאלה על חפיפה, ובתוספת או ביום חופשה שמרה שניים. הזמנת חבר יצרה שתי הזמנות.</div>
+<div class="box now"><b>מה השתנה</b>כל לחיצה כפולה עושה את הפעולה פעם אחת: משמרת אחת, רישום אחד ביומן, הזמנה אחת. התחלה כשמשמרת כבר רצה לא מחליפה אותה.</div>
+<div class="box how"><b>איך</b><bdi class="ltr">U.single</bdi> מריץ פעולה אחת בכל רגע: בהתחלה, בסיום, בהזמנות ובקוד ההזמנה. גיליון שנסגר כבר לא מקבל לחיצות (<bdi class="ltr">ui.js</bdi>).</div>
+</div></div></body></html>

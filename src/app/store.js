@@ -19,6 +19,8 @@
   // the signed shift log (core/ledger.js, app/shift-log.js) only grows: its records are never deleted or replaced,
   // here, by the cloud or by a merge (a removed record would break the chain)
   const APPEND_ONLY = ['ledger'];
+  // settings that never leave the phone (cloud.js leaves them out): the AI key, the code lock, the backup dates
+  const LOCAL_SETTINGS = ['ai', 'lock', 'backup'];
 
   /* ---------------- migrations ----------------
    * MIGRATIONS[n] upgrades data from schema n-1 to n. They run on load
@@ -158,6 +160,8 @@
     'review', // when this phone was last asked for a rating
     'skinPhoto', // the pay card's own photo (Plus): this phone only
     'rolePhotos', // { roleId: a small square photo } a role's own picture: this phone only, never in a backup file
+    'userMark', // { uid, app, schema, day }: the account marker this phone last wrote (cloud.js: once a day)
+    'statsSig', // what the last statistics record held (stats.js: the same record is not sent again)
     'heard', // { uid, at, full }: when this phone last heard everything from the account (cloud.js: openings read only what changed)
     'adminUid', // the account this phone last heard is an admin (the server's rules decide what an admin may do)
     'guest', // this phone is used without an account, by choice (its data lives here only)
@@ -282,7 +286,13 @@
   function on(fn) { listeners.add(fn); return () => listeners.delete(fn); }
 
   const clone = (o) => (o == null ? o : JSON.parse(JSON.stringify(o)));
-  const find = (store, id) => S[store].find((x) => x.id === id);
+  /** The same record, apart from its version stamps (updatedAt, createdAt, _syncedAt). A field left empty (null or '')
+   *  is the same as no field: the editor writes overrides: null and overrideReason: '' into a shift that came from the
+   *  timer or the sample data without them. (false is kept: a missing breakPaid means a paid break.) */
+  const STAMPS = ['updatedAt', 'createdAt', '_syncedAt'];
+  const bare = (r) => { const o = Object.assign({}, r); for (const k of STAMPS) delete o[k]; for (const k of Object.keys(o)) if (o[k] === null || o[k] === '') delete o[k]; return o; };
+  const sameRecord = (a, b) => U.same(bare(a), bare(b));
+  const find =(store, id) => S[store].find((x) => x.id === id);
 
   /**
    * Apply a group of operations as one undoable step.
@@ -301,6 +311,9 @@
       if (op.store && APPEND_ONLY.includes(op.store) && (op.del || (op.put && arr.some((x) => x.id === op.put.id)))) continue;
       if (op.put) {
         const obj = op.put;
+        // the record as it is already (a save with nothing changed): no new version, no upload, no undo step
+        const had = obj.id ? arr.find((x) => x.id === obj.id) : null;
+        if (had && had !== obj && sameRecord(had, obj)) continue;
         if (!obj.id) obj.id = U.uid();
         if (!obj.createdAt) obj.createdAt = now;
         obj.updatedAt = now;
@@ -322,6 +335,7 @@
       } else if (op.meta) {
         // a value kept on this phone that changes together with the records (a role's photo): saved and undone with them
         const k = op.meta.key, was = S.meta[k];
+        if (U.same(was, op.meta.value)) continue;
         inverse.push({ meta: { key: k, value: was === undefined ? undefined : clone(was) } });
         if (op.meta.value === undefined) delete S.meta[k]; else S.meta[k] = op.meta.value;
         metaChanged = true;
@@ -330,11 +344,14 @@
         const p = op.setting.path, last = p[p.length - 1];
         let o = S.settings;
         for (const k of p.slice(0, -1)) o = o[k] && typeof o[k] === 'object' ? o[k] : (o[k] = {});
+        if (U.same(o[last], op.setting.value)) continue;
         inverse.push({ setting: { path: p.slice(), value: o[last] === undefined ? undefined : clone(o[last]) } });
         if (op.setting.value === undefined) delete o[last]; else o[last] = op.setting.value;
         settingsChanged = true;
       }
     }
+    // nothing differs from what is saved: nothing is written, sent, logged or offered to undo (null: the caller says so)
+    if (!writes.length && !metaChanged && !settingsChanged) return null;
     if (settingsChanged) { S.settings._updatedAt = now; S.meta.settingsDirty = true; metaChanged = true; }
     await run([...new Set(ops.map((o) => o.store).filter(Boolean).concat(['kv']))], 'readwrite', (t) => {
       if (!t) return;
@@ -350,7 +367,7 @@
     // every change to a worked shift (the timer, the editor, an undo, an import) gets its record in the signed log
     if (shiftChanges.length && root.ShiftLog) root.ShiftLog.onShifts(shiftChanges, opts.via);
     emit({ type: 'data', stores: ops.map((o) => o.store).filter(Boolean) });
-    return label && opts.undo !== false;
+    return !!(label && opts.undo !== false); // (null is kept for "nothing changed")
   }
 
   /* ---------------- cloud sync hooks ----------------
@@ -447,15 +464,22 @@
   async function setSettings(patchFn, label) {
     const before = clone(S.settings);
     patchFn(S.settings);
-    S.settings._updatedAt = Date.now();
-    S.meta.settingsDirty = true;
-    await rawKv('meta', S.meta);
+    // which settings changed (the screen may need only a new look, not a new calculation)
+    const keys = [...new Set(Object.keys(before).concat(Object.keys(S.settings)))].filter((k) => k !== '_updatedAt' && !U.same(before[k], S.settings[k]));
+    // the same settings again (a tap on the choice already made, a save with nothing new): nothing is written or sent,
+    // and the screens are not calculated again
+    if (!keys.length) return;
+    // only what stays on this phone (the code lock, the AI key, the backup dates): saved here, not a new version for the
+    // account (each automatic backup sent the whole settings to the cloud)
+    if (keys.some((k) => !LOCAL_SETTINGS.includes(k))) {
+      S.settings._updatedAt = Date.now();
+      S.meta.settingsDirty = true;
+      await rawKv('meta', S.meta);
+    }
     await rawKv('settings', S.settings);
     if (label) {
       undoStack.push({ label, ops: [], settings: before });
     }
-    // which settings changed (the screen may need only a new look, not a new calculation)
-    const keys = [...new Set(Object.keys(before).concat(Object.keys(S.settings)))].filter((k) => k !== '_updatedAt' && JSON.stringify(before[k]) !== JSON.stringify(S.settings[k]));
     emit({ type: 'settings', keys });
   }
   async function setMeta(patch) {
@@ -463,6 +487,7 @@
     await rawKv('meta', S.meta);
   }
   async function setActive(a) {
+    if (U.same(S.activeShift, a)) return; // the running shift as it is: no new version for the other phones
     S.activeShift = a;
     S.meta.activeUpdatedAt = Date.now();
     S.meta.activeDirty = true;
@@ -643,6 +668,6 @@
   root.Store = {
     S, load, on, apply, isMemoryOnly: () => memoryOnly, put, del, undo: undoAny, canUndo, setSettings, setMeta, setActive, find, clone,
     putFile, getFile, delFile, exportBackup, importBackup, wipe, saveAll, SCHEMA_VERSION, DB_NAME, cleanIcon,
-    SYNC_STORES, APPEND_ONLY, applyRemote, markSynced, dirtyRecords, touchAll, forgetSyncState, applyRemoteSettings, applyRemoteActive,
+    SYNC_STORES, APPEND_ONLY, LOCAL_SETTINGS, sameRecord, applyRemote, markSynced, dirtyRecords, touchAll, forgetSyncState, applyRemoteSettings, applyRemoteActive,
   };
 })(typeof window !== 'undefined' ? window : globalThis);

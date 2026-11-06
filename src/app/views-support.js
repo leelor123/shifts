@@ -276,7 +276,13 @@
         App.supportUnread = Math.max(0, (App.supportUnread || 1) - 1);
       }
       const c = body.querySelector('[data-sp-close]');
-      if (c) c.onclick = async () => { await fs.updateDoc(ref, { status: 'closed', updated: Date.now() }); UI.toast('הפנייה נסגרה'); load(); if (onChange) onChange(); };
+      // (one write: a second tap while it was saving closed it twice, with two toasts)
+      if (c) c.onclick = async () => {
+        if (c.disabled) return;
+        c.disabled = true;
+        try { await fs.updateDoc(ref, { status: 'closed', updated: Date.now() }); } catch (e) { c.disabled = false; UI.invalid('השליחה נכשלה: ' + Cloud().errorText(e)); return; }
+        UI.toast('הפנייה נסגרה'); load(); if (onChange) onChange();
+      };
       const del = body.querySelector('[data-sp-del]');
       if (del) del.onclick = async () => {
         if (!(await UI.confirm('למחוק את הפנייה?', 'הפנייה וכל ההודעות בה יימחקו לתמיד, גם אצל מי ששלח אותה.', 'מחק', true))) return;

@@ -181,6 +181,41 @@ let errors = [];
     const planned = await ev(() => Store.S.shifts.filter((s) => s.status === 'planned').length);
     if (planned !== 0) throw new Error('undo left ' + planned);
   });
+  // (the user, 6 Nov 2026: nothing is saved, versioned or said to be updated without a change; a double tap does a thing once)
+  await step('a double tap starts one shift and ends it once; "save" twice saves one shift; a save with no change says so', async () => {
+    const count = () => ev(() => ({ n: Store.S.shifts.length, starts: Store.S.ledger.filter((x) => x.k === 'start').length, stops: Store.S.ledger.filter((x) => x.k === 'stop').length }));
+    const b = await count();
+    await ev(() => { App.startShift(); App.startShift(); }); await sleep(700);
+    let c = await count();
+    if (c.starts !== b.starts + 1) throw new Error('starts logged: ' + (c.starts - b.starts));
+    await ev(() => { Store.S.activeShift.start -= 2 * 3600000; });
+    await ev(() => { App.stopShift(); App.stopShift(); }); await sleep(1500);
+    c = await count();
+    if (await ev(() => !!Store.S.activeShift)) throw new Error('not stopped');
+    if (c.n !== b.n + 1) throw new Error('shifts saved by a double end: ' + (c.n - b.n));
+    if (c.stops !== b.stops + 1) throw new Error('ends logged: ' + (c.stops - b.stops));
+    await closeAll();
+    await ev(() => App.sheetsApi.shiftEditor()); await sleep(800);
+    await ev(() => {
+      const set = (f, v) => { const el = document.querySelector(`.sheet [data-f="${f}"]`); el.value = v; el.dispatchEvent(new Event('input', { bubbles: true })); };
+      set('date', U.addDays(U.todayKey(), -5)); set('startT', '08:00'); set('endT', '12:00');
+    });
+    await sleep(300);
+    const at = await ev(() => { const r = document.querySelector('.sheet [data-save]').getBoundingClientRect(); return [r.left + r.width / 2, r.top + r.height / 2]; });
+    await page.mouse.click(at[0], at[1]); await sleep(110); await page.mouse.click(at[0], at[1]); await sleep(1000);
+    const d = await count();
+    if (d.n !== c.n + 1) throw new Error('shifts saved by a double "save": ' + (d.n - c.n));
+    if (await ev(() => !!document.querySelector('.dialog'))) throw new Error('a question came up for the second tap');
+    await closeAll();
+    const id = await ev(() => Store.S.shifts.find((s) => U.epochKey(s.start) === U.addDays(U.todayKey(), -5) && U.epochHM(s.start) === '08:00').id);
+    const v0 = await ev((i) => App.shift(i).updatedAt, id);
+    await ev((i) => App.sheetsApi.shiftEditor(i), id); await sleep(800);
+    await page.click('.sheet [data-save]'); await sleep(700);
+    const toast = await ev(() => (document.getElementById('toast') || {}).textContent || '');
+    if (!toast.includes('לא היו שינויים לשמור')) throw new Error('the toast said: ' + toast);
+    if ((await ev((i) => App.shift(i).updatedAt, id)) !== v0) throw new Error('a new version with nothing changed');
+    await closeAll();
+  });
   await step('demo data loads', async () => { await ev(() => App.demo.load()); await sleep(1500); if (!(await ev(() => Store.S.shifts.length > 20))) throw new Error('no demo'); });
   for (const tab of ['home', 'calendar', 'reports', 'settings']) await step('tab ' + tab, async () => { await ev((t) => App.go(t), tab); await sleep(500); });
   await step('calendar: week view, next/prev month, a day sheet', async () => {

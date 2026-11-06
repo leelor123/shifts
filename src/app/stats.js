@@ -87,15 +87,18 @@
       if (App.legalAccepted && !App.legalAccepted()) return; // only after the privacy policy that describes it was accepted
       if (!force && S.meta.statsSentAt && Date.now() - S.meta.statsSentAt < 6 * 3600000) return;
       if (!S.meta.installId) await Store.setMeta({ installId: (root.crypto && crypto.randomUUID ? crypto.randomUUID() : U.uid() + U.uid()).replace(/-/g, '') });
-      const { fs, db } = await Cloud.sdk();
       const rec = record();
+      // the same record as the last one sent (the same day, the same counts): nothing new for the dashboard
+      const sig = JSON.stringify(Object.assign({}, rec, { t: 0, id: S.meta.installId }));
+      if (!force && S.meta.statsSig === sig) { await Store.setMeta({ statsSentAt: Date.now() }); return; }
+      const { fs, db } = await Cloud.sdk();
       try { await fs.setDoc(fs.doc(db, 'stats', S.meta.installId), rec); } catch (e) {
         // rules from before the ios field (1.33) refuse it: the record still goes, without it
         if (!(e && e.code === 'permission-denied')) throw e;
         delete rec.ios;
         await fs.setDoc(fs.doc(db, 'stats', S.meta.installId), rec);
       }
-      await Store.setMeta({ statsSentAt: Date.now() });
+      await Store.setMeta({ statsSentAt: Date.now(), statsSig: sig });
     } catch (e) { /* statistics never get in the way */ }
   };
   /** Turning statistics off removes this device's record. opts.strict (deleting the account): a failure throws, so
@@ -106,7 +109,7 @@
       if (!Cloud || !Cloud.user || !S.meta.installId) return;
       const { fs, db } = await Cloud.sdk();
       await fs.deleteDoc(fs.doc(db, 'stats', S.meta.installId));
-      await Store.setMeta({ statsSentAt: null });
+      await Store.setMeta({ statsSentAt: null, statsSig: null });
     } catch (e) { if (opts && opts.strict) throw e; }
   };
   /** Is the signed-in user an admin? (the rules let a user read only their own admin entry) */

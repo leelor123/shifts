@@ -1,0 +1,21 @@
+<!doctype html><html lang="he" dir="rtl"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>שמירת פרופיל בטבלת האלופים בלי שינוי</title>
+<style>
+:root { --bg: #f6f4ee; --ink: #1d2230; --mute: #5b6274; --bad: #b3261e; --good: #1b7a4a; --card: #fff; }
+* { box-sizing: border-box; }
+body { margin: 0; background: var(--bg); color: var(--ink); font: 17px/1.55 Rubik, "Segoe UI", Arial, sans-serif; }
+.wrap { display: flex; gap: 32px; padding: 32px; align-items: flex-start; width: 1100px; }
+.shot { flex: none; width: 412px; border-radius: 22px; overflow: hidden; box-shadow: 0 10px 30px rgba(0,0,0,.18); background: #000; }
+.shot img { display: block; width: 412px; }
+.note { flex: 1; }
+h1 { font-size: 28px; margin: 0 0 18px; }
+.box { background: var(--card); border-radius: 16px; padding: 16px 18px; margin-bottom: 14px; box-shadow: 0 1px 3px rgba(0,0,0,.08); }
+.box b { display: block; margin-bottom: 6px; font-size: 15px; letter-spacing: .02em; }
+.was b { color: var(--bad); } .now b { color: var(--good); }
+.how { color: var(--mute); font-size: 15px; }
+code, .ltr { direction: ltr; unicode-bidi: isolate; font-family: Consolas, monospace; font-size: 14px; }
+</style></head><body><div class="wrap"><div class="shot"><img src="shots/4-profile-save.png" alt=""></div><div class="note">
+<h1>שמירת פרופיל בטבלת האלופים בלי שינוי</h1>
+<div class="box was"><b>מה היה לא בסדר</b>לחיצה על "שמירה" בלי לשנות שם, אימוג׳י או רקע כתבה שוב את השורה בטבלה ואת ההגדרות, ושלחה אותן לענן. ההודעה אמרה "נשמר ✓".</div>
+<div class="box now"><b>מה השתנה</b>בלי שינוי לא נכתב כלום והגיליון נסגר עם "לא היו שינויים לשמור". כך גם בכרטיס של תחרות החברים.</div>
+<div class="box how"><b>איך</b>האפליקציה משווה את השם, האימוג׳י והרקע לפני הכתיבה: <bdi class="ltr">views-leaderboard.js</bdi> ו-<bdi class="ltr">views-friends.js</bdi>.</div>
+</div></div></body></html>

@@ -648,8 +648,12 @@
         if (Math.abs(g.amount - diff) <= g.amount * 0.2 || (open.length > 1 && Math.abs(total - diff) <= total * 0.2)) ops.push({ store: 'gaps', put: Object.assign({}, g, { status: 'maybe', note: `בתלוש ${U.fmtMonth(slip.period)} יש שורת הפרשים של ${U.money(diff)}` }) });
       }
     }
+    // a gap this save puts back is not deleted first: deleted and written again, the same gap went up as a new version
+    // (and as a tombstone before it) on every save of the same payslip; put as it was, Store.apply writes nothing
+    const reput = new Set(ops.filter((o) => o.store === 'gaps' && o.put).map((o) => o.put.id));
+    const final = ops.filter((o) => !(o.store === 'gaps' && o.del && reput.has(o.del)));
     // changes vs the previous slip show in the slip's own check, not as notifications (few notifications)
-    await App.saveOps(ops, 'שמירת תלוש', toastText || 'התלוש נשמר בארכיון');
+    await App.saveOps(final, 'שמירת תלוש', toastText || 'התלוש נשמר בארכיון');
   }
   /** Last month's findings that this payslip may pay (saved with "remind me to check on the next payslip"). */
   function carryHtml(slip) {
