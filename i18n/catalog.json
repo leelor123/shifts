@@ -8024,42 +8024,42 @@
   "key": "הפסקה ללא תשלום",
   "kind": "lit",
   "where": [
-   "app/views-home.js:381"
+   "app/views-home.js:382"
   ]
  },
  {
   "key": "הפסקה בתשלום",
   "kind": "lit",
   "where": [
-   "app/views-home.js:381"
+   "app/views-home.js:382"
   ]
  },
  {
   "key": "נוספות לפי החוק",
   "kind": "lit",
   "where": [
-   "app/views-home.js:382"
+   "app/views-home.js:383"
   ]
  },
  {
   "key": "נוספות אחרי {0} שעות ביום",
   "kind": "tpl",
   "where": [
-   "app/views-home.js:382"
+   "app/views-home.js:383"
   ]
  },
  {
   "key": "נסיעות {0} ליום",
   "kind": "tpl",
   "where": [
-   "app/views-home.js:384"
+   "app/views-home.js:385"
   ]
  },
  {
   "key": "בלי נסיעות",
   "kind": "lit",
   "where": [
-   "app/views-home.js:384",
+   "app/views-home.js:385",
    "app/views-onboarding.js:134",
    "app/views-shift.js:398"
   ]
@@ -8068,189 +8068,189 @@
   "key": "<button class=\"hh-assume\" data-act=\"calc-rules\" aria-label=\"חוקי החישוב: {0}\">{1}{2}</button>",
   "kind": "tpl",
   "where": [
-   "app/views-home.js:385"
+   "app/views-home.js:386"
   ]
  },
  {
   "key": "\n      <div class=\"home-sky\" data-key=\"home-sky\" aria-hidden=\"true\"><i class=\"hs-a\"></i></div>\n      <div class=\"home-top\"><div class=\"titles\"><h1>{0}{1}</h1>\n        <div class=\"sub\">{2}{3}{4}</div></div>\n        <span id=\"sync-dot\">{5}</span>\n        <button class=\"icon-btn\" data-act=\"support\" aria-label=\"עזרה ותמיכה\">{6}</button>\n        <button class=\"icon-btn\" data-act=\"insights\" aria-label=\"התראות ותובנות\">{7}{8}</button></div>\n      {9}\n      {10}\n      {11}\n      {12}\n      {13}\n      {14}\n      {15}\n      {16}\n    ",
   "kind": "tpl",
   "where": [
-   "app/views-home.js:452"
+   "app/views-home.js:453"
   ]
  },
  {
   "key": "<div class=\"home-list-head\"><h2>משמרות אחרונות</h2><span class=\"spacer\"></span>{0}<button class=\"btn text sm\" data-act=\"go-shifts\">הכול</button></div>\n        <div class=\"list home-list\">{1}</div>",
   "kind": "tpl",
   "where": [
-   "app/views-home.js:466"
+   "app/views-home.js:467"
   ]
  },
  {
   "key": "<div class=\"empty fun\">{0}<h2 class=\"h3\">עוד אין משמרות</h2><div>בתחילת משמרת לוחצים על \"התחל משמרת\".<br>משמרת שכבר התקיימה מוסיפים בכפתור <b>+</b>.</div></div>",
   "kind": "tpl",
   "where": [
-   "app/views-home.js:469"
+   "app/views-home.js:470"
   ]
  },
  {
   "key": "<div class=\"pd-row\"><button class=\"pd-info\" data-act=\"shift-open\" data-id=\"{0}\"><b>{1} · {2}</b><span>{3}–{4} · {5}</span></button>\n      <button class=\"btn go pd-ok\" data-act=\"mark-done\" data-id=\"{6}\">{7} עבדתי · {8}</button></div>",
   "kind": "tpl",
   "where": [
-   "app/views-home.js:477"
+   "app/views-home.js:478"
   ]
  },
  {
   "key": "<div class=\"card pending-card\"><div class=\"pd-head\">{0}<div><b>{1}</b><div class=\"small\">משמרת מתוכננת נכנסת לשכר רק אחרי שמאשרים שעבדת בה.</div></div></div>\n      {2}\n      {3}</div>",
   "kind": "tpl",
   "where": [
-   "app/views-home.js:479"
+   "app/views-home.js:480"
   ]
  },
  {
   "key": "עבדת במשמרת הזאת?",
   "kind": "lit",
   "where": [
-   "app/views-home.js:479"
+   "app/views-home.js:480"
   ]
  },
  {
   "key": "עבדת במשמרות האלה?",
   "kind": "lit",
   "where": [
-   "app/views-home.js:479"
+   "app/views-home.js:480"
   ]
  },
  {
   "key": "<button class=\"btn tonal block pd-all\" data-act=\"mark-done-all\">{0} עבדתי בכולן{1} · {2}</button>",
   "kind": "tpl",
   "where": [
-   "app/views-home.js:481"
+   "app/views-home.js:482"
   ]
  },
  {
   "key": "<div class=\"card ios-card consent-card\"><div class=\"ic-head\"><span class=\"ic-app\">{0}</span><div class=\"ic-t\"><b>לשתף סטטיסטיקת שימוש?</b>\n        <div class=\"small\">פעם ביום, בלי שם, אימייל או סכומים: כמה ימים השתמשת, כמה משמרות ואילו תכונות. רק מנהלי האפליקציה רואים את זה, כדי לדעת מה לשפר. אפשר לשנות בהגדרות. <a href=\"#\" data-legal=\"privacy\">מדיניות הפרטיות</a></div></div></div>\n      <div class=\"btn-row\"><button class=\"btn tonal\" data-act=\"stats-no\">לא, תודה</button><button class=\"btn tonal\" data-act=\"stats-yes\">לשתף</button></div></div>",
   "kind": "tpl",
   "where": [
-   "app/views-home.js:500"
+   "app/views-home.js:501"
   ]
  },
  {
   "key": "<div class=\"card ios-card\"><div class=\"ic-head\"><span class=\"ic-app\">{0}</span><div class=\"ic-t\"><b>שעתי על מסך הבית</b>\n        <div class=\"small\">כך הנתונים שלך נשמרים, ותזכורות למשמרות עובדות גם באייפון.</div></div>\n        <button class=\"icon-btn\" data-act=\"ios-install-x\" aria-label=\"סגירה\">{1}</button></div>\n      <button class=\"btn go block\" data-act=\"ios-install\">{2} איך מוסיפים? 3 צעדים</button></div>",
   "kind": "tpl",
   "where": [
-   "app/views-home.js:518"
+   "app/views-home.js:519"
   ]
  },
  {
   "key": "<div class=\"ii-first\">{0}<div>הכי טוב עכשיו, לפני שמוסיפים משמרות: האפליקציה שעל מסך הבית שומרת נתונים בנפרד מספארי.</div></div>",
   "kind": "tpl",
   "where": [
-   "app/views-home.js:532"
+   "app/views-home.js:533"
   ]
  },
  {
   "key": "<div class=\"ii-first\">{0}<div>אחרי ההוספה: פותחים את האפליקציה החדשה ומתחברים עם אותו חשבון Google, והמשמרות חוזרות.</div></div>",
   "kind": "tpl",
   "where": [
-   "app/views-home.js:534"
+   "app/views-home.js:535"
   ]
  },
  {
   "key": "<div class=\"ii-first warn\">{0}<div><b>חשוב, לפני ההוספה:</b> באייפון האפליקציה שעל מסך הבית מתחילה ריקה. כדי שהמשמרות יעברו אליה, קודם מתחברים עם Google, ואחר כך מתחברים שוב באפליקציה החדשה.\n          <button class=\"btn sm go\" data-act=\"ios-signin\">{1} התחברות עם Google</button></div></div>",
   "kind": "tpl",
   "where": [
-   "app/views-home.js:535"
+   "app/views-home.js:536"
   ]
  },
  {
   "key": "הוספה למסך הבית",
   "kind": "lit",
   "where": [
-   "app/views-home.js:538"
+   "app/views-home.js:539"
   ]
  },
  {
   "key": "{0}<div class=\"ii-steps\">\n          {1}\n          {2}\n          {3}\n        </div>\n        <div class=\"section-title\">למה כדאי</div>\n        <div class=\"card small ii-why\"><div>{4} ספארי עלול למחוק נתונים של אתר שלא נפתח 7 ימים. אפליקציה על מסך הבית שומרת עליהם.</div>\n          <div>{5} תזכורות לפני משמרת (באייפון 16.4 ומעלה).</div>\n          <div>{6} נפתחת במסך מלא, מהר, וגם בלי אינטרנט.</div></div>\n        <div class=\"tiny muted ii-note\">לא מוצאים את האפשרות? פותחים את הקישור בספארי ומנסים שוב.</div>",
   "kind": "tpl",
   "where": [
-   "app/views-home.js:540"
+   "app/views-home.js:541"
   ]
  },
  {
   "key": "לוחצים על כפתור השיתוף",
   "kind": "lit",
   "where": [
-   "app/views-home.js:541"
+   "app/views-home.js:542"
   ]
  },
  {
   "key": "בספארי: בשורה שבתחתית המסך (באייפד ובכרום: למעלה)",
   "kind": "lit",
   "where": [
-   "app/views-home.js:541"
+   "app/views-home.js:542"
   ]
  },
  {
   "key": "בוחרים \"הוספה למסך הבית\"",
   "kind": "lit",
   "where": [
-   "app/views-home.js:542"
+   "app/views-home.js:543"
   ]
  },
  {
   "key": "לא רואים? גוללים מטה ברשימה",
   "kind": "lit",
   "where": [
-   "app/views-home.js:542"
+   "app/views-home.js:543"
   ]
  },
  {
   "key": "לוחצים \"הוספה\"",
   "kind": "lit",
   "where": [
-   "app/views-home.js:543"
+   "app/views-home.js:544"
   ]
  },
  {
   "key": "ושעתי על המסך, כמו כל אפליקציה",
   "kind": "lit",
   "where": [
-   "app/views-home.js:543"
+   "app/views-home.js:544"
   ]
  },
  {
   "key": "תפקיד למשמרת",
   "kind": "lit",
   "where": [
-   "app/views-home.js:557"
+   "app/views-home.js:558"
   ]
  },
  {
   "key": "באיזה תפקיד?",
   "kind": "lit",
   "where": [
-   "app/views-home.js:562"
+   "app/views-home.js:563"
   ]
  },
  {
   "key": "בסדר, נשאל שוב בעוד שעתיים",
   "kind": "lit",
   "where": [
-   "app/views-home.js:573"
+   "app/views-home.js:574"
   ]
  },
  {
   "key": "לאיזה תפקיד עברת?",
   "kind": "lit",
   "where": [
-   "app/views-home.js:578"
+   "app/views-home.js:579"
   ]
  },
  {
   "key": "סימון כבוצעה",
   "kind": "lit",
   "where": [
-   "app/views-home.js:601",
+   "app/views-home.js:602",
    "app/views-shift.js:220"
   ]
  },
@@ -8258,7 +8258,7 @@
   "key": "{0} משמרות נכנסו לשכר: +{1}",
   "kind": "tpl",
   "where": [
-   "app/views-home.js:601"
+   "app/views-home.js:602"
   ]
  },
  {
@@ -13314,7 +13314,7 @@
   ]
  },
  {
-  "key": " (פטור ממסים)",
+  "key": " (בלי ביטוח לאומי ופנסיה)",
   "kind": "lit",
   "where": [
    "app/views-settings.js:132"
@@ -14637,7 +14637,7 @@
   ]
  },
  {
-  "key": "<div class=\"small\" style=\"margin-top:8px\">{0} מתחת לגיל 18 לא מנוכים מס הכנסה, ביטוח לאומי, מס בריאות ופנסיה, ולכן <b>הנטו שווה לברוטו</b> (פחות ניכויים אישיים כמו ארוחות, אם יש). מגיל 18 החישוב עובר אוטומטית לניכויים הרגילים.</div>",
+  "key": "<div class=\"small\" style=\"margin-top:8px\">{0} מתחת לגיל 18 לא מנוכים ביטוח לאומי, מס בריאות ופנסיה. מס הכנסה יורד רק בחודש של משכורת גבוהה, ולכן <b>הנטו קרוב לברוטו</b> (פחות ניכויים אישיים כמו ארוחות, אם יש). מגיל 18 החישוב עובר אוטומטית לניכויים הרגילים.</div>",
   "kind": "tpl",
   "where": [
    "app/views-settings.js:365"
