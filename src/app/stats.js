@@ -5,7 +5,9 @@
  * Once a day, a signed-in device whose user said yes writes one small
  * record to stats/{random install id}: app version, platform,
  * first/last day of use, number of active days, shift and payslip
- * counts, an age group (under / over 18) and which features are on.
+ * counts, an age group (under / over 18), whether it is an iPhone
+ * (yes/no, for the dashboard's funnel per platform, core/funnel.js)
+ * and which features are on.
  * No name, email, user id, dates of shifts or amounts; the random id
  * is the only link between a device's records, and only admins can
  * read the collection (firestore.rules). The answer can be changed in
@@ -25,6 +27,14 @@
     try { if (root.matchMedia('(display-mode: standalone)').matches) return 'pwa'; } catch (e) { /* ignore */ }
     return 'web';
   }
+  /** An iPhone or iPad (Safari or the home-screen app; iPadOS calls itself a Mac with a touch screen). */
+  function ios() {
+    if (App.androidApp) return false;
+    try {
+      const ua = navigator.userAgent || '';
+      return /iPhone|iPad|iPod/.test(ua) || (/Macintosh/.test(ua) && navigator.maxTouchPoints > 1);
+    } catch (e) { return false; }
+  }
   /** Count active days on this device (local only). */
   Stats.markActive = async function () {
     const k = today();
@@ -43,6 +53,7 @@
     return {
       v: String(root.APP_VERSION || '').slice(0, 20),
       p: platform(),
+      ios: ios(),
       first: S.meta.firstActiveDay || k,
       last: k,
       days: Math.min(99999, S.meta.activeDays || 1),
@@ -77,7 +88,13 @@
       if (!force && S.meta.statsSentAt && Date.now() - S.meta.statsSentAt < 6 * 3600000) return;
       if (!S.meta.installId) await Store.setMeta({ installId: (root.crypto && crypto.randomUUID ? crypto.randomUUID() : U.uid() + U.uid()).replace(/-/g, '') });
       const { fs, db } = await Cloud.sdk();
-      await fs.setDoc(fs.doc(db, 'stats', S.meta.installId), record());
+      const rec = record();
+      try { await fs.setDoc(fs.doc(db, 'stats', S.meta.installId), rec); } catch (e) {
+        // rules from before the ios field (1.33) refuse it: the record still goes, without it
+        if (!(e && e.code === 'permission-denied')) throw e;
+        delete rec.ios;
+        await fs.setDoc(fs.doc(db, 'stats', S.meta.installId), rec);
+      }
       await Store.setMeta({ statsSentAt: Date.now() });
     } catch (e) { /* statistics never get in the way */ }
   };
@@ -115,5 +132,6 @@
     return App.isAdmin;
   };
   record.platform = platform;
+  record.ios = ios;
   Stats._record = record;
 })(typeof window !== 'undefined' ? window : globalThis);

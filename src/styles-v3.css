@@ -1815,6 +1815,16 @@ body:not(.fx) .money { transition: none; }
 /* the admin funnel: the share of the start, and of the step before */
 .adm-funnel .adm-bar .vv { width: 84px; display: grid; justify-items: start; line-height: 1.25; }
 .adm-drop { font-size: .75rem; font-weight: 500; color: var(--on-surface-var); white-space: nowrap; }
+/* the funnel by period and platform: a step per row, a platform per column */
+.adm-fp .seg { margin-bottom: 8px; }
+.adm-ftable { width: 100%; border-collapse: collapse; table-layout: fixed; font-size: .8rem; font-variant-numeric: tabular-nums; }
+.adm-ftable th, .adm-ftable td { padding: 7px 2px; text-align: center; vertical-align: top; }
+.adm-ftable thead th { font-size: .75rem; font-weight: 600; color: var(--on-surface-var); }
+.adm-ftable thead td { width: 38%; } /* a fixed table takes its widths from the first row */
+.adm-ftable tbody th { text-align: start; font-weight: 500; line-height: 1.25; overflow-wrap: normal; }
+.adm-ftable tbody tr > * { border-top: 1px solid var(--line); }
+.adm-ftable td b { display: block; font-weight: 700; }
+.adm-ftable td small { display: block; font-size: .72rem; font-weight: 500; color: var(--on-surface-var); white-space: nowrap; }
 
 /* the champions table: when a record was set, shown with a tap on its row */
 .lb-at { display: none; font-size: .75rem; font-weight: 500; color: var(--on-surface-var); white-space: nowrap; }

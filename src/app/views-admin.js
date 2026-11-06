@@ -83,7 +83,27 @@
     const start = old.length;
     return `<div class="section-title">${icon('filter', 's')} המשפך: מהתקנה ועד תשלום</div>
       <div class="card adm-funnel">${steps.map(([label, n, prev], i) => `<div class="adm-bar"><span class="nm">${esc(label)}</span><span class="track"><i style="width:${pct(n, start)}%"></i></span><span class="vv">${n} · ${pct(n, start)}%${i ? `<small class="adm-drop">${pct(n, prev)}% מהקודם</small>` : ''}</span></div>`).join('')}
-        <div class="tiny muted" style="margin-top:8px">מכשירים שהתחילו לפני שבוע לפחות (${start}), בלי מצב הדגמה. כל שלב מתוך מי שעבר את הקודם.</div></div>`;
+        <div class="tiny muted" style="margin-top:8px">מכשירים שהתחילו לפני שבוע לפחות (${start}), בלי מצב הדגמה. כל שלב מתוך מי שעבר את הקודם.</div></div>` + funnelByPlatform(rows);
+  }
+  /* The same way in, by when devices started (the last 30 or 90 days) and by platform (core/funnel.js), from the
+   * records already read. Both periods are drawn at once and a tap shows one: no new reading, no redraw. */
+  const FP_STEPS = { installed: 'התקינו', shift: 'רשמו משמרת', week: 'חזרו בשבוע אחר', active: 'פעילים ב-14 הימים האחרונים', plus: 'Shaati Plus' };
+  const FP_COLS = [['', 'הכל'], ['android', 'אנדרואיד'], ['web', 'דפדפן'], ['ios', 'iPhone']];
+  function funnelTable(rows, days) {
+    const k = U.todayKey();
+    const cols = FP_COLS.map(([p]) => root.Funnel.compute(rows, { today: k, days, platform: p }));
+    const head = FP_COLS.map(([, label]) => `<th scope="col">${esc(label)}</th>`).join('');
+    const body = cols[0].steps.map((st, i) => `<tr><th scope="row">${esc(FP_STEPS[st.key])}</th>${cols.map((c) => { const s = c.steps[i]; return `<td><b>${s.n}</b>${i ? `<small>${s.pct}%</small>` : ''}</td>`; }).join('')}</tr>`).join('');
+    const { from, to } = cols[0];
+    return `<table class="adm-ftable"><thead><tr><td></td>${head}</tr></thead><tbody>${body}</tbody></table>
+        <div class="tiny muted" style="margin-top:8px">מכשירים שהתחילו בין ${U.fmtDate(from, 'dm')} ל-⁠${U.fmtDate(to, 'dm')} (${cols[0].steps[0].n}), בלי מצב הדגמה. מי שהתחיל בשבוע האחרון עוד לא יכול היה לחזור, ולכן לא נספר.</div>`;
+  }
+  function funnelByPlatform(rows) {
+    const btn = (d) => `<button class="${d === 30 ? 'on' : ''}" aria-pressed="${d === 30}" data-adm-fw="${d}">${d} ימים</button>`;
+    return `<div class="section-title">${icon('filter', 's')} המשפך לפי תקופה ומכשיר</div>
+      <div class="card adm-fp"><div class="seg" role="group" aria-label="מתי התחילו להשתמש">${btn(30)}${btn(90)}</div>
+        ${[30, 90].map((d) => `<div data-adm-fp="${d}"${d === 30 ? '' : ' hidden'}>${funnelTable(rows, d)}</div>`).join('')}
+        <div class="tiny muted" style="margin-top:6px">כל אחוז הוא מתוך השלב שמעליו. אנדרואיד היא האפליקציה מ-⁠Google Play. דפדפן הוא כל דפדפן אחר, גם באנדרואיד. מכשיר iPhone שלא נפתח מאז העדכון נספר עדיין כדפדפן.</div></div>`;
   }
   function render(rows, admins, me) {
     const k = U.todayKey();
@@ -221,7 +241,13 @@
           if (!entry.closed) UI.toast(`לא ניתן לטעון את התקלות (${e.code || e.message || ''})`);
         }
       };
-      body.querySelector('[data-adm-refresh]').onclick = () => { body.innerHTML = UI.skeleton(4, 'card'); load(); };
+      // the funnel's period: both are drawn, a tap shows the other one
+      const fw = body.querySelectorAll('[data-adm-fw]');
+      fw.forEach((b) => (b.onclick = () => {
+        fw.forEach((x) => { const on = x === b; x.classList.toggle('on', on); x.setAttribute('aria-pressed', String(on)); });
+        body.querySelectorAll('[data-adm-fp]').forEach((p) => (p.hidden = p.dataset.admFp !== b.dataset.admFw));
+      }));
+      body.querySelector('[data-adm-refresh]').onclick =() => { body.innerHTML = UI.skeleton(4, 'card'); load(); };
       body.querySelector('[data-adm-add]').onclick = async () => {
         const uid = body.querySelector('#adm-uid').value.trim();
         if (!/^[A-Za-z0-9]{20,40}$/.test(uid)) { UI.invalid('מזהה משתמש לא תקין'); return; }

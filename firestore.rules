@@ -276,9 +276,10 @@ service cloud.firestore {
       return request.auth != null && exists(/databases/$(database)/documents/admins/$(request.auth.uid));
     }
     function validStats(d) {
-      return d.keys().hasOnly(['v', 'p', 'first', 'last', 'days', 'sh', 's30', 'ps', 'age', 'f', 't'])
+      return d.keys().hasOnly(['v', 'p', 'ios', 'first', 'last', 'days', 'sh', 's30', 'ps', 'age', 'f', 't'])
         && d.v is string && d.v.size() <= 20
         && d.p in ['android', 'pwa', 'web']
+        && (!('ios' in d) || d.ios is bool)
         && d.first is string && d.first.matches('^[0-9]{4}-[0-9]{2}-[0-9]{2}$')
         && d.last is string && d.last.matches('^[0-9]{4}-[0-9]{2}-[0-9]{2}$')
         && d.days is int && d.days >= 0 && d.days < 100000

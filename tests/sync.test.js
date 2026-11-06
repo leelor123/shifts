@@ -556,11 +556,25 @@ T.atest('statistics: one anonymous record per device, nothing personal in it', a
   T.eq(docs.length, 1, 'one record');
   const [key, rec] = docs[0];
   T.ok(key.length - 6 >= 16 && key.length - 6 <= 40, 'random id within the rule limits');
-  T.eq(Object.keys(rec).sort().join(','), 'age,days,f,first,last,p,ps,s30,sh,t,v');
+  T.eq(Object.keys(rec).sort().join(','), 'age,days,f,first,ios,last,p,ps,s30,sh,t,v');
+  T.eq(typeof rec.ios, 'boolean', 'iPhone: yes or no only');
   T.eq(rec.sh, 2);
   const json = JSON.stringify(rec);
   T.ok(!json.includes('me@example.com') && !json.includes('"u1"') && !json.includes('"Me"'), 'no email, user id or name');
   T.ok(!key.includes('u1/') && key === 'stats/' + A.S.meta.installId, 'stored under the random device id only');
+});
+
+T.atest('statistics: rules from before the iPhone field refuse it, and the record still goes without it', async () => {
+  const be = fakeBackend();
+  const A = await phone(be); await A.add('s1');
+  const set = A.ffs.setDoc;
+  A.ffs.setDoc = (ref, d) => (d && 'ios' in d && ref.path.startsWith('stats/') ? Promise.reject(Object.assign(new Error('Missing or insufficient permissions.'), { code: 'permission-denied' })) : set(ref, d));
+  await withStats(A);
+  await A.Cloud.connect(user); await wait(60);
+  const docs = statsDocs(be);
+  T.eq(docs.length, 1, 'one record');
+  T.ok(!('ios' in docs[0][1]) && docs[0][1].sh === 1, 'sent without the new field');
+  T.ok(A.S.meta.statsSentAt > 0, 'counted as sent');
 });
 
 T.atest('statistics: off deletes the record and stops sending; never before the policy is accepted', async () => {
