@@ -155,7 +155,7 @@
         push: true,
       },
       // --- appearance ---
-      theme: 'system', accent: 'midnight', fontScale: 1, font: 'rubik', skin: '', plusKey: '', refCode: '',
+      theme: 'system', accent: 'midnight', fontScale: 1, font: 'rubik', skin: '', plusKey: '', refCode: '', wpShare: {},
       withTravel: true, // the amount next to a shift includes its travel pay (a switch over the shift lists)
       hideMoney: false, // privacy: amounts blurred on screen (the eye on the pay card shows them)
       lb: { on: false, n: '', e: '', bg: '' }, // the games' champions table: joined, nickname, emoji, background (Plus)

@@ -156,7 +156,7 @@
   // extra words people may search for, per section
   const FIND = {
     personal: 'שם גיל יום הולדת תאריך לידה מגדר נוער', account: 'התחברות גוגל google סנכרון ענן חשבון התנתקות מחיקת חשבון טלפון חדש',
-    roles: 'עבודה מקום עבודה תפקיד מעסיק שכר לשעה תעריף העלאה העלאת שכר', calc: 'שעות נוספות 125 150 עיגול לילה הפסקה ותק',
+    roles: 'עבודה מקום עבודה תפקיד מעסיק שכר לשעה תעריף העלאה העלאת שכר קוד מקום עבודה שיתוף חוקים חברים לעבודה', calc: 'שעות נוספות 125 150 עיגול לילה הפסקה ותק',
     rest: 'שבת חג חגים עיר כניסת שבת יציאת שבת כלל יום', pay: 'נסיעות החזר נסיעות תקרה תקופת שכר יום תשלום משכורת',
     net: 'מס מס הכנסה נקודות זיכוי פנסיה ביטוח לאומי מס בריאות השתלמות נטו', leave: 'חופשה מחלה הבראה ותק תחילת עבודה',
     goal: 'יעד יעדים חיסכון חוסכים', alerts: 'התראות תזכורות פוש הודעות', templates: 'תבנית תבניות משמרת קבועה',
@@ -370,8 +370,9 @@
   RENDER.roles = {
     render: () => `${S.employers.map((e) => `<div class="card"><div class="card-head">${icon('briefcase')}<h3>${esc(e.name)}</h3><button class="icon-btn" data-emp-edit="${e.id}" aria-label="ערוך מעסיק">${icon('edit', 's')}</button></div>
         <div class="list" style="background:var(--surface-2)">${S.roles.filter((r) => r.employerId === e.id && !r.archived).map((r) => `<button class="item" data-role-edit="${r.id}">${UI.roleLead(r)}<span class="body"><span class="t">${esc(r.name)}</span><span class="s">${money(Engine.roleRate(r, U.todayKey()))} לשעה${r.rates.length > 1 ? ` · ${r.rates.length} תעריפים בהיסטוריה` : ''}</span></span>${icon('left', 's')}</button>`).join('')}</div>
-        <button class="btn text sm" data-role-add="${e.id}">${icon('plus', 's')} הוסף תפקיד</button></div>`).join('')}
+        <button class="btn text sm" data-role-add="${e.id}">${icon('plus', 's')} הוסף תפקיד</button>${root.WorkplaceCode ? `<button class="btn text sm" data-wp-share="${e.id}">${icon('share', 's')} שיתוף החוקים עם חברים לעבודה</button>` : ''}</div>`).join('')}
       <button class="btn tonal block" data-emp-add>${icon('plus')} הוסף מעסיק נוסף</button>
+      ${root.WorkplaceCode ? `<button class="btn text block" data-wp-enter>${icon('key', 's')} יש לך קוד ממקום העבודה?</button>` : ''}
       <div class="tiny muted" style="margin:10px 4px">כל מעסיק מקבל חוקי חישוב, נסיעות ותקופת שכר משלו. ${S.roles.some((r) => r.archived) ? 'תפקידים בארכיון נשמרים בשביל משמרות עבר.' : ''}</div>`,
     mount: (el, draw) => {
       if (el._rolesBound) return;
@@ -381,6 +382,8 @@
         if (!b) return;
         if (b.dataset.roleEdit) roleEditor(b.dataset.roleEdit, draw);
         if (b.dataset.roleAdd) roleEditor(null, draw, b.dataset.roleAdd);
+        if (b.dataset.wpShare) root.WorkplaceCode.share(b.dataset.wpShare); // a workplace code (app/workplace.js)
+        if (b.hasAttribute('data-wp-enter')) root.WorkplaceCode.enter();
         if (b.hasAttribute('data-emp-add')) {
           const name = String((await UI.promptText('מעסיק חדש', 'שם המעסיק', '')) || '').trim().slice(0, 60);
           if (!name || !App.ensureClean(name)) return;

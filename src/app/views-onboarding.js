@@ -85,6 +85,7 @@
       job: () => `${say(jobValid().length ? 'love' : 'think', jobValid().length ? 'אחלה! עכשיו נדע כמה הרווחת 💸' : 'איפה עובדים? 🤔')}
         <h1>${g('איפה אתה עובד?', 'איפה את עובדת?', 'איפה את/ה עובד/ת?')}</h1>
         <label class="field ob-emp"><span class="lbl">שם מקום העבודה</span><input class="input" id="ob-emp" value="${esc(A.empName)}" placeholder="למשל: סופר יוחננוף, קפה גרג" maxlength="40" autocomplete="organization"></label>
+        ${root.WorkplaceCode ? (A.wpUsed ? `<div class="ob-live ob-wp-ok">${icon('check', 's')} החוקים מהקוד נכנסו. אפשר לשנות אותם אחר כך בהגדרות</div>` : `<button class="btn text sm ob-wp" data-wp-code>${icon('key', 's')} יש לך קוד ממקום העבודה?</button>`) : ''}
         <div class="ob-sub">ומה התפקיד שלך שם? אפשר לבחור מהרעיונות או לכתוב:</div>
         <div class="ob-chips small">${JOBS.map((j) => chip('data-jobname', j, j, A.jobs.some((x) => x.name === j))).join('')}</div>
         ${A.jobs.map((j, i) => jobCard(j, i, A.jobs.length, '')).join('')}
@@ -124,6 +125,7 @@
             ${jobs.map((r) => `<span><i style="background:${r.color}"></i>${esc(r.name)} · ${money(r.rate)}</span>`).join('')}
             <span>${icon('bus', 's')} ${finalTravel() ? money(finalTravel()) + ' ליום' : 'בלי נסיעות'}</span><span>${icon('candle', 's')} ${esc(A.city || st.rest.city)}</span>${age() != null ? `<span>${icon('users', 's')} גיל ${age()}</span>` : ''}
           </div>`}
+          ${!demo && !A.wpUsed && root.WorkplaceCode ? `<div class="ob-chips ob-wp-after">${chip('data-wp-after', '1', icon('share', 's') + '<span>אחר כך: לשתף את החוקים של מקום העבודה עם חברים לעבודה</span>', A.shareAfter)}</div>` : ''}
           ${needsLogin() ? `${root.App.inAppBrowser && App.inAppBrowser() ? App.openInBrowserCard() : ''}<div class="ob-save">${UI.tile('cloud', 'sky')}<div><b>שמירה בחשבון</b><div class="small muted">כדי שכלום לא ילך לאיבוד, ויחכה לך בכל טלפון. אף משתמש אחר לא רואה את הנתונים שלך.</div></div></div>` : ''}
           ${msg ? `<div class="banner warn" style="text-align:start">${icon('alert')}<div>${esc(msg)}</div></div>` : ''}
         </div>`;
@@ -143,6 +145,21 @@
         const first = p.jobs[0] || { id: 'r_' + U.uid(), color: freeColor() };
         return { id: p.id, name: p.name.trim() || 'מקום עבודה ' + (k + 2), jobs: jobs.length ? jobs : [{ id: first.id, name: 'העבודה שלי', rate: minWage(), color: first.color }] };
       }).filter(Boolean);
+    }
+    /** a workplace code's rules (app/workplace.js), taken into the answers: saved with them at the end */
+    function takeCode(r) {
+      read();
+      for (const k of root.Workplace.KEYS) if (k in r) emp[k] = r[k];
+      if (r.n && !A.empName && App.cleanText(r.n)) A.empName = r.n;
+      if (r.ww) st.leave = Object.assign({}, st.leave, { workWeek: r.ww });
+      if ('travelPerDay' in r) { A.travel = r.travelPerDay > 0 ? 'yes' : 'no'; A.travelAmount = r.travelPerDay > 0 ? r.travelPerDay : ''; }
+      for (const x of r.ro || []) {
+        if (!App.cleanText(x.n)) continue;
+        const j = A.jobs.find((y) => y.name.trim() === x.n) || A.jobs.find((y) => !y.name.trim());
+        if (j) { j.name = x.n; if (x.r > 0) j.rate = x.r; } else if (A.jobs.length < 6) A.jobs.push({ id: 'r_' + U.uid(), name: x.n, rate: x.r > 0 ? x.r : '', color: freeColor() });
+      }
+      A.wpUsed = true;
+      if (App.blocking === 'onboarding') draw();
     }
     function finalTravel() {
       if (A.travel === 'no') return 0;
@@ -322,6 +339,7 @@
       if (!demo && !S.meta.guide) Store.setMeta({ guide: Date.now() }).catch(() => {});
       App.afterLogin();
       setTimeout(() => App.runInsights(), 500);
+      if (A.shareAfter && !demo && root.WorkplaceCode) setTimeout(() => root.WorkplaceCode.share(emp.id), 1200);
     }
     function finishStep(redirect) {
       if (saving) return;
@@ -425,6 +443,8 @@
       } else if (b.dataset.mx != null) { read(); A.more.splice(+b.dataset.mx, 1); draw(); }
       else if (b.dataset.mjadd != null) { read(); A.more[+b.dataset.mjadd].jobs.push({ id: 'r_' + U.uid(), name: '', rate: '', color: freeColor() }); draw(); }
       else if (b.dataset.mrx != null) { read(); const [k, i] = b.dataset.mrx.split(':').map(Number); A.more[k].jobs.splice(i, 1); draw(); }
+      else if (b.hasAttribute('data-wp-code')) { read(); root.WorkplaceCode.enter({ later: needsLogin(), pick: takeCode }); }
+      else if (b.dataset.wpAfter) { A.shareAfter = !A.shareAfter; b.classList.toggle('on', A.shareAfter); if (fx) fx.play('on'); }
       else if (b.dataset.travel) {
         read(); A.travel = b.dataset.travel; draw(); if (fx) fx.play('on');
         if (A.travel === 'yes') { const t = v.querySelector('#ob-travel'); if (t) t.focus(); } else autoNext();

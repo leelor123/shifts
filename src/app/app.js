@@ -988,6 +988,7 @@
     if (App.whatsNew) App.whatsNew();
     if (root.FriendsView) root.FriendsView.boot(); // an invitation that came with the address, accepted ones of mine
     if (root.Invite) root.Invite.boot(); // a month of Plus for inviting a friend (or being invited)
+    if (root.WorkplaceCode) root.WorkplaceCode.boot(); // a workplace code that came with the address (its rules, to check and apply)
   };
   // just before the opening show leaves, the app draws itself once more under it (still), so anything the
   // start-up work changed (the account, the admin check, Google Play) is already in place when it shows
