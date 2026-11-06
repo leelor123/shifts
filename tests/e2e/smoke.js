@@ -816,6 +816,84 @@ let errors = [];
     const d = t[0] && t[0][1];
     if (!d || t[0][0] !== 'tickets' || d.uid !== '' || d.email !== 'kid@example.com' || d.reason !== 'login' || d.status !== 'open' || d.last !== 'user') throw new Error('request: ' + JSON.stringify(t));
   });
+  // the NFC sticker at work (app/nfc.js): the app opened at the sticker's address starts or ends the shift
+  const openAt = async (q) => {
+    await page.goto('http://localhost:8783/' + q, { waitUntil: 'load' });
+    await page.waitForFunction(() => window.App && App.model && !document.getElementById('intro'), { timeout: 15000 });
+    await sleep(1500);
+  };
+  await step('NFC sticker: a touch starts the shift, a repeat or a reload does nothing, the next touch ends it', async () => {
+    await ev(async () => {
+      await UI.closeAll();
+      if (Store.S.settings.lock.enabled) await Store.setSettings((s) => { s.lock.enabled = false; });
+      await Store.setActive(null);
+      await Store.setSettings((s) => { s.nfcTags = [{ id: 'e2etag0001', roleId: App.roles()[0].id, at: Date.now() }]; });
+      localStorage.removeItem('shaati.nfcLast');
+    });
+    await openAt('?action=nfc&tag=e2etag0001');
+    const a = await ev(() => ({ on: !!Store.S.activeShift, role: Store.S.activeShift && Store.S.activeShift.roleId, want: App.roles()[0].id, q: location.search, full: window.Intro ? Intro.full : null, dlg: !!document.querySelector('.dialog') }));
+    if (!a.on || a.role !== a.want) throw new Error('not started: ' + JSON.stringify(a));
+    if (a.q) throw new Error('the address still holds the action: ' + a.q);
+    if (a.full) throw new Error('the full opening show played for a sticker');
+    if (a.dlg) throw new Error('a known sticker asked first');
+    const start = await ev(() => Store.S.activeShift.start);
+    await page.reload({ waitUntil: 'load' }); await sleep(1500);
+    await openAt('?action=nfc&tag=e2etag0001'); // the same touch read again a moment later
+    const b = await ev(() => ({ on: !!Store.S.activeShift, start: Store.S.activeShift && Store.S.activeShift.start }));
+    if (!b.on || b.start !== start) throw new Error('a repeat toggled the shift: ' + JSON.stringify(b));
+    // the next touch, later: half an hour of work, then the end
+    await ev(async () => { await Store.setActive(Object.assign({}, Store.S.activeShift, { start: Date.now() - 30 * 60000 })); localStorage.setItem('shaati.nfcLast', String(Date.now() - 60000)); });
+    const before = await ev(() => Store.S.shifts.filter((x) => x.status === 'done').length);
+    await openAt('?action=nfc&tag=e2etag0001');
+    const c = await ev(() => ({ on: !!Store.S.activeShift, done: Store.S.shifts.filter((x) => x.status === 'done').length }));
+    await closeAll();
+    if (c.on || c.done !== before + 1) throw new Error('not ended: ' + JSON.stringify(c));
+  });
+  await step('NFC sticker: an address with an id this account never wrote asks first', async () => {
+    await ev(() => localStorage.removeItem('shaati.nfcLast'));
+    await openAt('?action=nfc&tag=zzzzzz9999');
+    const d = await ev(() => ({ dlg: (document.querySelector('.dialog h3') || {}).textContent || '', on: !!Store.S.activeShift }));
+    await closeAll();
+    if (d.dlg !== 'התחל משמרת' || d.on) throw new Error('did not ask: ' + JSON.stringify(d));
+    if (await ev(() => !!Store.S.activeShift)) throw new Error('started after "cancel"');
+  });
+  await step('NFC sticker: writing one (Web NFC mocked), its errors, and the message where it cannot', async () => {
+    await ev(() => { delete window.NDEFReader; App.actions['nfc-write'](); }); await sleep(500);
+    const no = await ev(() => (document.querySelector('.dialog h3') || {}).textContent || '');
+    await closeAll();
+    if (no !== 'כאן אי אפשר לכתוב מדבקה') throw new Error('no "not here" message: ' + no);
+    // a phone with NFC: the sticker takes the address, the account keeps the id
+    await ev(() => { window.NDEFReader = class { async write(m, o) { window.__nfcW = { m, o }; await new Promise((r) => setTimeout(r, 2500)); } }; });
+    const before = await ev(() => (Store.S.settings.nfcTags || []).length);
+    await ev(() => App.actions['nfc-write']()); await sleep(450);
+    if (await page.$('.sheet.show [data-pick]')) { await page.tap('.sheet.show [data-pick]'); await sleep(500); }
+    const wait = await ev(() => (document.querySelector('.nfc-w') || {}).textContent || '');
+    if (!wait.includes('הצמידו את המדבקה לגב הטלפון')) throw new Error('no guide while waiting: ' + wait);
+    const blocked = await ev(HIT); if (blocked.length) throw new Error('covered buttons: ' + blocked.join(' | '));
+    await page.screenshot({ path: path.join(out, 'nfc-wait.png') });
+    const hWait = await ev(() => document.querySelector('.nfc-sheet').getBoundingClientRect().height);
+    await sleep(2700);
+    const w = await ev(() => ({ state: document.querySelector('.nfc-w').dataset.state, url: window.__nfcW && window.__nfcW.m.records[0].data, type: window.__nfcW && window.__nfcW.m.records[0].recordType, tags: Store.S.settings.nfcTags, h: document.querySelector('.nfc-sheet').getBoundingClientRect().height }));
+    await page.screenshot({ path: path.join(out, 'nfc-ok.png') });
+    const last = w.tags[w.tags.length - 1];
+    if (w.state !== 'ok' || w.type !== 'url' || w.tags.length !== before + 1 || w.url !== 'https://leelor123.github.io/shifts/?action=nfc&tag=' + last.id) throw new Error('write: ' + JSON.stringify(w));
+    if (Math.abs(w.h - hWait) > 1) throw new Error('the sheet changed height: ' + hWait + ' → ' + w.h);
+    await closeAll();
+    // NFC off in the phone's settings: says so, with a second try
+    await ev(() => { window.NDEFReader = class { async write() { throw new DOMException('NFC setting is disabled.', 'NotReadableError'); } }; App.actions['nfc-write'](); }); await sleep(600);
+    if (await page.$('.sheet.show [data-pick]')) { await page.tap('.sheet.show [data-pick]'); await sleep(500); }
+    const f = await ev(() => ({ t: (document.querySelector('.nfc-w') || {}).textContent || '', again: !document.querySelector('[data-nfc-again]').hidden }));
+    await page.screenshot({ path: path.join(out, 'nfc-off.png') });
+    await closeAll();
+    if (!f.t.includes('NFC כבוי בטלפון') || !f.again) throw new Error('NFC off: ' + JSON.stringify(f));
+    // the section in Settings lists the sticker
+    await ev(() => App.sheetsApi.settingsSection('nfc')); await sleep(600);
+    const n = await ev(() => document.querySelectorAll('.sheet.show .nfc-item').length);
+    await page.screenshot({ path: path.join(out, 'nfc-settings.png') });
+    await closeAll();
+    if (n !== before + 1) throw new Error('stickers listed: ' + n);
+    await ev(() => { delete window.NDEFReader; });
+  });
   await step('demo data clears', async () => { await ev(() => App.demo.clear()); await sleep(800); });
   await step('delete-all (local) wipes', async () => { await ev(() => Store.wipe()); await sleep(300); if (await ev(() => Store.S.shifts.length)) throw new Error('not wiped'); });
 
