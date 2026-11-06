@@ -115,3 +115,37 @@ T.test('a code without rates: new roles get the fallback rate, my rates stay, ke
   T.eq(out.raised, 0); T.eq(out.added, 1);
   T.eq(out.roles[0].rates[0].rate, 32.3);
 });
+
+T.test('the save step: the work week rides along only when it changes', () => {
+  const out = { employer: { id: 'e1' }, roles: [{ id: 'r9' }], workWeek: 6 };
+  T.eq(W.ops(out, 5).length, 3);
+  T.eq(JSON.stringify(W.ops(out, 5)[2]), JSON.stringify({ setting: { path: ['leave', 'workWeek'], value: 6 } }));
+  T.eq(W.ops(out, 6).length, 2, 'the same week: no setting');
+  T.eq(W.ops(Object.assign({}, out, { workWeek: null }), 5).length, 2, 'a code without a week');
+});
+
+// one undo after applying a code brings back the workplace, its roles and the earlier work week (a phone's Store)
+T.atest('undo after applying a code: the earlier work week comes back with the workplace', async () => {
+  const vm = require('vm');
+  const { fakeIndexedDB } = require('./fakes.js');
+  const ctx = { console, setTimeout, clearTimeout, setInterval: () => 0, clearInterval() {}, indexedDB: fakeIndexedDB(), navigator: { onLine: true } };
+  ctx.window = ctx; ctx.addEventListener = () => {};
+  ctx.UI = { toast() {} };
+  vm.createContext(ctx);
+  for (const f of ['core/util.js', 'core/hebcal.js', 'core/defaults.js', 'core/engine.js', 'core/workplace.js', 'app/store.js']) vm.runInContext(fs.readFileSync(path.join(__dirname, '..', 'src', f), 'utf8'), ctx, { filename: f });
+  const { Store, Workplace: WP } = ctx;
+  await Store.load();
+  const S = Store.S;
+  T.eq(+S.settings.leave.workWeek, 5);
+  const before = JSON.stringify(S.employers[0]);
+  const rec = WP.clean({ payDay: 10, ww: 6, ro: [{ n: 'בריסטה', r: 40 }] });
+  const out = WP.apply({ employer: S.employers[0], roles: S.roles, record: rec, today, fallbackRate: 30, newId: () => 'rnew', colors: ['#111111'] });
+  await Store.apply(WP.ops(out, S.settings.leave.workWeek), 'code');
+  T.eq(S.settings.leave.workWeek, 6); T.eq(S.employers[0].payDay, 10); T.ok(S.roles.some((r) => r.id === 'rnew'));
+  T.ok(S.meta.settingsDirty, 'the setting goes up to the account');
+  await Store.undo();
+  T.eq(+S.settings.leave.workWeek, 5, 'the work week is back');
+  T.eq(S.employers[0].payDay, 9); T.ok(!S.roles.some((r) => r.id === 'rnew'), 'the new role is gone');
+  const same = (x) => JSON.stringify(Object.assign({}, x, { updatedAt: 0, createdAt: 0 }));
+  T.eq(same(S.employers[0]), same(JSON.parse(before)), 'the workplace as it was');
+});

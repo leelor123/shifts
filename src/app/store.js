@@ -289,7 +289,7 @@
     const now = Date.now();
     const writes = []; // [store, record] or [store, null, id] for a delete
     const pend = S.meta.pendingDeletes || (S.meta.pendingDeletes = []);
-    let metaChanged = false;
+    let metaChanged = false, settingsChanged = false;
     for (const op of ops) {
       const arr = S[op.store];
       if (op.put) {
@@ -316,13 +316,24 @@
         inverse.push({ meta: { key: k, value: was === undefined ? undefined : clone(was) } });
         if (op.meta.value === undefined) delete S.meta[k]; else S.meta[k] = op.meta.value;
         metaChanged = true;
+      } else if (op.setting) {
+        // a setting that changes together with the records (a workplace code's work week): saved and undone with them
+        const p = op.setting.path, last = p[p.length - 1];
+        let o = S.settings;
+        for (const k of p.slice(0, -1)) o = o[k] && typeof o[k] === 'object' ? o[k] : (o[k] = {});
+        inverse.push({ setting: { path: p.slice(), value: o[last] === undefined ? undefined : clone(o[last]) } });
+        if (op.setting.value === undefined) delete o[last]; else o[last] = op.setting.value;
+        settingsChanged = true;
       }
     }
+    if (settingsChanged) { S.settings._updatedAt = now; S.meta.settingsDirty = true; metaChanged = true; }
     await run([...new Set(ops.map((o) => o.store).filter(Boolean).concat(['kv']))], 'readwrite', (t) => {
       if (!t) return;
       for (const [st, rec, id] of writes) { if (rec) t.objectStore(st).put(rec); else t.objectStore(st).delete(id); }
       if (metaChanged) t.objectStore('kv').put({ key: 'meta', value: S.meta });
+      if (settingsChanged) t.objectStore('kv').put({ key: 'settings', value: S.settings });
     });
+    if (settingsChanged) emit({ type: 'settings', keys: [...new Set(ops.filter((o) => o.setting).map((o) => o.setting.path[0]))] });
     if (label && opts.undo !== false) {
       undoStack.push({ label, ops: inverse.reverse() });
       if (undoStack.length > 30) undoStack.shift();

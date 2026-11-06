@@ -117,17 +117,22 @@
   /** The sharing sheet of a workplace: what is shared, the code and its link, a new version, deleting it. */
   View.share = function (empId) {
     if (!signedIn()) { needAccount(true); return; }
-    const e = App.employer(empId);
-    let rates = false, busy = false;
+    const id = App.employer(empId).id;
+    const cur = () => App.employer(id);
+    let rates = false, busy = false, typed = '';
+    // a workplace still called by the default name tells a coworker nothing: its real name is asked first (and kept)
+    const needName = () => !mine(id) && cur().name === Defaults.defaultEmployer().name;
     const body = () => {
+      const e = cur();
       const m = mine(e.id);
       const r = packFor(e, m ? m.rates : rates);
       return `<div class="wp-share">
+        ${needName() ? `<label class="field wp-name"><span class="lbl">איך קוראים למקום העבודה?</span><input class="input" id="wp-name" value="${esc(typed)}" placeholder="למשל: קפה גרג רמת אביב" maxlength="40" autocomplete="organization"><span class="hint">השם נשמר גם אצלך, וזה מה שחברים לעבודה יראו.</span></label>` : ''}
         ${m ? `<div class="card wp-code-card"><div class="small muted">הקוד של ${esc(e.name)}</div>${codeHtml(m.c)}<div class="tiny muted">גרסה ${m.v}${m.rates ? ' · כולל שכר לשעה' : ''}</div>
           <div class="wp-acts"><button class="btn" data-wp-send ${busy ? 'disabled' : ''}>${icon('share', 's')} שליחת הקישור</button><button class="btn tonal" data-wp-copy>${icon('copy', 's')} העתקת הקוד</button></div></div>`
-        : `<p class="small wp-intro">חברים לעבודה מקבלים את החוקים של ${esc(e.name)} בלחיצה אחת, ולא צריכים להגדיר הכול לבד.</p>`}
+        : `<p class="small wp-intro">${needName() ? 'חברים לעבודה מקבלים את החוקים בלחיצה אחת, ולא צריכים להגדיר הכול לבד.' : `חברים לעבודה מקבלים את החוקים של ${esc(e.name)} בלחיצה אחת, ולא צריכים להגדיר הכול לבד.`}</p>`}
         <div class="section-title">${icon('eye', 's')} מה נכנס לקוד</div>
-        <div class="card">${lines(r)}</div>
+        <div class="card">${lines(r, null, needName())}</div>
         <div class="tiny muted wp-note">${icon('lock', 's')} לא נכנסים לקוד משמרות, סכומים, השם שלך או פרטי החשבון.</div>
         ${m ? '' : `<div class="card">${App.F ? App.F.sw('לכלול את השכר לשעה', 'כבוי: רק שמות התפקידים. אצל כל אחד השכר יכול להיות שונה.', 'wp.rates', rates).replace('data-s=', 'data-wp-rates data-x=') : ''}</div>`}
         ${m ? `<div class="list wp-manage">
@@ -136,7 +141,7 @@
         </div>` : ''}
       </div>`;
     };
-    const foot = () => (mine(e.id) ? '' : `<button class="btn big block" data-wp-make ${busy ? 'disabled' : ''}>${busy ? 'יוצרים קוד…' : 'יצירת קוד'}</button>`);
+    const foot = () => (mine(id) ? '' : `<button class="btn big block" data-wp-make ${busy || (needName() && !typed.trim()) ? 'disabled' : ''}>${busy ? 'יוצרים קוד…' : 'יצירת קוד'}</button>`);
     UI.openSheet({
       title: 'שיתוף החוקים של מקום העבודה', body: body(), foot: foot(),
       onMount: (el) => {
@@ -148,14 +153,27 @@
           if (!f) { f = document.createElement('div'); f.className = 'sh-foot'; el.appendChild(f); }
           root.Dom.patch(f, foot());
         };
+        // the name field: the button waits for a name (set at once, without drawing the field again)
+        el.addEventListener('input', (ev) => {
+          if (ev.target.id !== 'wp-name') return;
+          typed = ev.target.value.slice(0, 40);
+          const mk = el.querySelector('[data-wp-make]');
+          if (mk && !busy) mk.disabled = !typed.trim();
+        });
         el.addEventListener('change', (ev) => { if (ev.target.matches('[data-wp-rates]')) { rates = ev.target.checked; setTimeout(draw, 220); } });
         el.addEventListener('click', async (ev) => {
           const b = ev.target.closest('button');
           if (!b || b.disabled) return;
+          const e = cur();
           const m = mine(e.id);
           if (b.hasAttribute('data-wp-make')) {
+            const name = typed.replace(/\s+/g, ' ').trim();
+            if (needName() && (!name || !App.ensureClean(name))) return;
             busy = true; draw();
-            try { await create(e, rates); UI.toast('הקוד מוכן. אפשר לשלוח אותו לחברים לעבודה', null, { ok: true }); } catch (x) { UI.toast(errText(x)); }
+            try {
+              if (needName()) await Store.put('employers', Object.assign(Store.clone(e), { name }));
+              await create(cur(), rates); UI.toast('הקוד מוכן. אפשר לשלוח אותו לחברים לעבודה', null, { ok: true });
+            } catch (x) { UI.toast(errText(x)); }
             busy = false; draw();
           } else if (b.hasAttribute('data-wp-send') && m) {
             const text = `החוקים של ${e.name} בשעתי: תקופת שכר, נסיעות, שעות נוספות ותוספות. פותחים את הקישור, או מקלידים את הקוד ${W.pretty(m.c)}`;
@@ -204,9 +222,9 @@
       newId: () => 'r_' + U.uid(), colors: Defaults.ROLE_COLORS,
       keepName: !isNew && base.name !== Defaults.defaultEmployer().name,
     });
-    const ops = [{ store: 'employers', put: out.employer }, ...out.roles.map((x) => ({ store: 'roles', put: x }))];
+    // the work week is a setting of its own: it goes in the same step, so one undo brings the earlier one back too
+    const ops = W.ops(out, S.settings.leave && S.settings.leave.workWeek);
     await App.saveOps(ops, 'חוקי מקום העבודה', `החוקים נכנסו ל${out.employer.name}`);
-    if (out.workWeek && S.settings.leave && +S.settings.leave.workWeek !== out.workWeek) await Store.setSettings((s) => { s.leave.workWeek = out.workWeek; });
     if (App.rerender) App.rerender();
     return out;
   }

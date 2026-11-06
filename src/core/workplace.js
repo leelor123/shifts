@@ -167,6 +167,16 @@
     return { employer: emp, roles: out, workWeek: r.ww || null, added, raised };
   }
 
-  root.Workplace = { ABC, LEN, CODE_RE, MAX_ROLES, FIELDS, KEYS, code, codeFrom, parse, pretty, pack, clean, hasRates, changes, apply };
+  /**
+   * apply()'s result as one save step (Store.apply ops): the workplace, its roles, and the work week when it changes
+   * (a setting op, so the same undo brings the earlier work week back).
+   */
+  function ops(out, workWeek) {
+    const list = [{ store: 'employers', put: out.employer }, ...out.roles.map((x) => ({ store: 'roles', put: x }))];
+    if (out.workWeek && +workWeek !== out.workWeek) list.push({ setting: { path: ['leave', 'workWeek'], value: out.workWeek } });
+    return list;
+  }
+
+  root.Workplace = { ABC, LEN, CODE_RE, MAX_ROLES, FIELDS, KEYS, code, codeFrom, parse, pretty, pack, clean, hasRates, changes, apply, ops };
   if (typeof module !== 'undefined') module.exports = root.Workplace;
 })(typeof window !== 'undefined' ? window : globalThis);
