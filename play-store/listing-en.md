@@ -1,8 +1,12 @@
 # Google Play listing: English (en-US)
 
-Version 1.32.1. For English-speaking workers in Israel (Play shows this page to anyone whose phone is set to
-English, and many Israelis keep their phone in English). Every claim was checked against src/. Counts printed by
-node on the exact strings inside the blocks (`[...s].length`). Paste in Play Console › Main store listing ›
+App 1.34.0. Refreshed on 6 Nov 2026 to match the Hebrew listing (it had fallen behind: no Shabbat in the rights guide,
+no alerts line, no language line, no usual-end-time hint) and to add what shipped since 1.32.1: start and end a shift
+from the Android widget (1.32.5), comparing an hours report with your shifts and payslip lines explained in your
+language (1.33.0), the running-shift notification (1.34.0) and Amharic (1.32.4).
+For English-speaking workers in Israel (Play shows this page to anyone whose phone is set to English, and many
+Israelis keep their phone in English). Every claim was checked against src/. Counts printed by node on the exact
+strings inside the blocks (`[...s].length`, characters, not bytes). Paste in Play Console › Main store listing ›
 Manage translations › English (United States).
 
 ---
@@ -17,7 +21,7 @@ Shaati: Shift & Pay Tracker
 Hourly pay in Israel: a shift clock, Shabbat and overtime pay, payslip checks
 ```
 
-**Full description** (max 4000 characters: 3697)
+**Full description** (max 4000 characters: 3922)
 ```
 Shaati helps hourly and shift workers in Israel log their shifts, see an estimate of their pay and check that the payslip matches the hours they worked.
 
@@ -26,11 +30,10 @@ Important: Shaati is a private app. It is not affiliated with and does not repre
 Time clock and shifts
 • Tap to start and tap to finish, breaks included, or add a past shift
 • Import your schedule from a photo or a WhatsApp message
-• Import an hours report: Excel, CSV, PDF or a photo
-• Forgot to end a shift? The app asks
-• Several workplaces and roles, each with its own rate
-• Travel, tips, bonuses and shift reminders
-• Home-screen widgets: start a shift, this month, your goal, days to payday
+• Import an hours report (Excel, CSV, PDF or a photo) and compare it with your shifts before payday
+• Forgot to end a shift? The app asks and suggests your usual finishing time
+• Several workplaces and roles, each with its own rate; travel, tips, bonuses and shift reminders
+• On Android: start and end a shift from a home-screen widget, and an optional notification with the pay so far while a shift runs
 
 Pay estimates by Israel's labour law rules
 • Shabbat and holiday premiums by your town's Shabbat times
@@ -41,25 +44,25 @@ Pay estimates by Israel's labour law rules
 Payslip check
 • Upload a payslip (PDF or photo) and the app reads it on your phone
 • Compared with your shifts: missing hours, premiums not paid, travel and more
-• The estimated gap and an explanation for each finding, with a report (PDF) and a polite letter for your employer
+• The estimated gap and an explanation of each line, with a report (PDF) and a polite letter for your employer
 
 Workers' rights
-• An offline rights guide: minimum wage, overtime, sick pay, vacation, recuperation pay, pension
+• An offline rights guide: minimum wage, overtime, Shabbat, travel, sick pay, vacation, recuperation pay, pension
 • Holiday pay: which holidays you may be owed pay for, and how much
 • Working teens: night hours, day and week length and breaks under the Youth Employment Law
-• Tax refund check for employees: an estimate from your shifts, payslips or Form 106
+• Tax refund check for employees: an estimate for up to 6 years back, from your shifts, payslips or Form 106
 
 Reports and goals
-• Weekly, monthly and yearly summaries, charts and a Hebrew calendar
+• Weekly, monthly and yearly summaries, charts, a Hebrew and Gregorian calendar
 • Export hours to PDF, Excel and your calendar
-• A monthly goal and a savings goal, in work hours still needed
-• Your month as a short story, medals, five short games, a champions table and a contest with friends
+• A monthly goal and a savings goal, medals, five short games, a champions table and a contest with friends
 
 Privacy
-• Sign in with Google or email, or start as a guest; works offline
+• Sign in with Google or email, or start as a guest with your data on the phone; works offline
 • Your data is saved on your phone and in your account. Other users cannot see it, except what you share with friends, and we do not sell it
 • No ads. Usage statistics without your name, email or amounts, only if you agree
 • Code or fingerprint lock; export or delete your data and account at any time
+• In English, Hebrew, Russian, Arabic, French, Spanish and Amharic
 
 AI assistant (optional)
 Questions about rights, your payslip or the app, with your own Anthropic API key. Only what you choose to send goes to Anthropic.
@@ -91,11 +94,19 @@ The calculations are estimates, not legal, accounting or tax advice. When in dou
    Ministry of Labor and the Israel Tax Authority, btl.gov.il of the National Insurance Institute), the same pages as
    the Hebrew listing. Each one opened in a browser on 3 Nov 2026 and showed the right page.
 2. Disclaimer high up: the second paragraph, "Important: Shaati is a private app. It is not affiliated with and does
-   not represent any government body..."
-3. No precision promise: "see an estimate of their pay" replaces the old "know exactly".
+   not represent any government body...", which also points to the links.
+3. No precision promise: "see an estimate of their pay"; no "exactly", "to the shekel" or "by law" as a promise.
 
 ## Notes
 - Search words placed for English-language searches from Israel: shift tracker, pay tracker, time clock, hourly pay,
   overtime, Shabbat, payslip, minimum wage, tax refund, Israel.
-- No price, "free", "best", "#1", emoji or "download now" (Google Play rules). The Plus free trial is left out for
-  the same reason.
+- No price, "free", "best", "#1", emoji or "download now" (Google Play rules). The Plus paragraph stays out until
+  the subscription exists (see the note in listing-he.md).
+- New claims checked in src/ and the in-app changelog (src/app/views-guide.js): widget start/end (1.32.5,
+  android/widgets), hours report against shifts and per-line payslip explanations (1.33.0), the running-shift
+  notification under Settings › Notifications (1.34.0, run-note.js), seven languages (i18n/).
+- The Hebrew listing (listing-he.md) does not yet carry these four additions and still lists six languages
+  (Amharic is missing). Proposed lines are at the end of listing-he.md; its text was left unchanged on purpose.
+- Fitting under 4000: this refresh dropped "Your month as a short story" and the alerts line from the full text
+  (both still true, both in the Hebrew listing). The other new translations also leave out the AI assistant
+  paragraph for room.
