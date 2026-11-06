@@ -74,7 +74,7 @@
  "התחל משמרת": "Iniciar turno",
  "התחלה": "Inicio",
  "סיום": "Fin",
- "<svg class=\"chart\" data-anim viewBox=\"0 0 {0} {1}\" role=\"img\" aria-label=\"מברוטו לנטו\">": "<svg class=\"chart\" data-anim viewBox=\"0 0 {0} {1}\" role=\"img\" aria-label=\"Del bruto al neto\">",
+ "מברוטו לנטו": "Del bruto al neto",
  "חוק שעות עבודה ומנוחה": "Ley de Horas de Trabajo y Descanso",
  "שעות נוספות (125%, 150%), עבודה במנוחה השבועית ובחגים (150% לפחות), הפסקות.": "Horas extra (125 %, 150 %), trabajo en el día de descanso semanal y en festivos (al menos 150 %), descansos.",
  "חוק שכר מינימום": "Ley de Salario Mínimo",
