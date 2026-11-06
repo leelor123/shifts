@@ -118,4 +118,37 @@ T.test('an amount in a table cell or a list item is wrapped, the cell itself sta
   T.ok(span(list.childNodes[0]).cls.has('money'), 'the list item\'s amount too');
   T.ok(plain.childNodes.every((c) => c.cls.has('money') && c.childNodes.length === 1), 'a span or a b that holds only the amount is marked itself');
   T.eq(row.childNodes[0].cls.has('money'), false, 'a cell without an amount stays as it was');
+
+  /* The claim report, 6 Nov 2026: "(" ended a line and the amount began the next one. The amount is an inline-block and
+   * a line may break between it and the text that touches it; what touches it goes into one no-wrap span with it. */
+  const RLM = '‏';
+  const amt = RLM + '408.67 ' + RLM + '₪';
+  const cell = el('td', ['8 שעות (' + amt + ').']);
+  const kids = (n) => n.childNodes.map((c) => (c.nodeType === 3 ? JSON.stringify(c.nodeValue) : c.tagName + '.' + c.className));
+  ctx.Dom.markMoney(cell);
+  const glue = cell.childNodes.find((c) => c.nodeType === 1);
+  T.ok(glue && glue.cls.has('money-glue'), 'the amount and its brackets are in one glue span: ' + kids(cell));
+  T.ok(glue && glue.textContent === '(' + amt + ').', 'the glue holds "(", the amount, ")" and the period: ' + (glue && JSON.stringify(glue.textContent)));
+  const inner = glue && glue.childNodes.find((c) => c.nodeType === 1);
+  T.ok(inner && inner.cls.has('money') && inner.textContent === '408.67 ' + RLM + '₪', 'only the amount is .money (blurred), not the brackets');
+  T.eq(cell.cls.has('money'), false, 'the cell itself stays a cell');
+  T.eq(cell.childNodes[0].nodeValue, '8 שעות ', 'the words before it stay outside');
+  // a range of two amounts joined without a space: one glue
+  const range = el('span', ['בין ' + amt + '–' + amt + ' לשעה']);
+  ctx.Dom.markMoney(range);
+  const g2 = range.childNodes.filter((c) => c.nodeType === 1);
+  T.ok(g2.length === 1 && g2[0].cls.has('money-glue') && g2[0].childNodes.filter((c) => c.nodeType === 1 && c.cls.has('money')).length === 2, 'two joined amounts share one glue: ' + kids(range));
+  // an amount between spaces (only a direction mark touches it): no glue, as before
+  const free = el('span', ['בסך ' + amt + ' בחודש']);
+  ctx.Dom.markMoney(free);
+  T.ok(free.childNodes.filter((c) => c.nodeType === 1).every((c) => c.cls.has('money')), 'an amount between spaces gets only its .money span: ' + kids(free));
+  // marked again (a redraw marks the new tree and the watcher marks what is added): nothing changes
+  const before = JSON.stringify(kids(cell)) + JSON.stringify(kids(glue));
+  ctx.Dom.markMoney(cell);
+  T.eq(JSON.stringify(kids(cell)) + JSON.stringify(kids(glue)), before, 'marking twice changes nothing');
+});
+
+T.test('the glue span keeps an amount and its brackets on one line', () => {
+  const css = fs.readFileSync(path.join(SRC, 'styles.css'), 'utf8');
+  T.ok(/\.money-glue \{ white-space: nowrap; \}/.test(css), '.money-glue is nowrap');
 });

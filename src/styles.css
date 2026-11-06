@@ -131,6 +131,8 @@ a { color: var(--primary); }
    with bigger text split "מדיניות הפרטיות" in the statistics card, 3 Nov 2026) */
 a[data-legal] { white-space: nowrap; }
 .num, .money { font-variant-numeric: tabular-nums; direction: ltr; unicode-bidi: isolate; display: inline-block; }
+/* an amount and what touches it ("(", ")", "כ-", a closing period) stay on one line: dom.js markText */
+.money-glue { white-space: nowrap; }
 .muted { color: var(--on-surface-var); }
 .small { font-size: .82rem; }
 .tiny { font-size: .75rem; }

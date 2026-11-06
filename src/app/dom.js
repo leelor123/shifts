@@ -142,6 +142,8 @@
   const AMOUNT = new RegExp(`[-−+]?₪${GAP}${NUM}|${NUM}${GAP}₪`, 'g');
   // elements whose own display a .money class would break (it makes an element an inline-block)
   const BOX_TAGS = /^(TD|TH|CAPTION|TR|LI|DT|DD)$/i;
+  // marks that take no room (direction marks and isolates, joiners): touching an amount with only these needs no glue
+  const INVISIBLE = /^[\u200b-\u200f\u2060\u2066-\u2069]*$/;
 
   function markText(t) {
     const v = t.nodeValue;
@@ -157,22 +159,49 @@
     // inline-block, so a cell given it left the row and stacked its amounts in one column (the hours report, 6 Nov 2026);
     // their amount goes into a span of its own, as in a longer text
     AMOUNT.lastIndex = 0;
-    const whole = v.replace(/[\s‎‏]/g, '').match(AMOUNT);
-    if (p.nodeType === 1 && !BOX_TAGS.test(p.tagName) && p.childNodes.length === 1 && whole && whole[0].replace(/[\s‎‏]/g, '') === v.replace(/[\s‎‏]/g, '')) {
+    const whole = v.replace(/[\s\u200e\u200f]/g, '').match(AMOUNT);
+    if (p.nodeType === 1 && !BOX_TAGS.test(p.tagName) && p.childNodes.length === 1 && whole && whole[0].replace(/[\s\u200e\u200f]/g, '') === v.replace(/[\s\u200e\u200f]/g, '')) {
       p.classList.add('money');
       return;
     }
     const doc = t.ownerDocument;
     const frag = doc.createDocumentFragment();
-    let m, last = 0;
+    const ms = [];
+    let m;
     AMOUNT.lastIndex = 0;
-    while ((m = AMOUNT.exec(v))) {
-      if (m.index > last) frag.appendChild(doc.createTextNode(v.slice(last, m.index)));
-      const s = doc.createElement('span');
-      s.className = 'money';
-      s.textContent = m[0];
-      frag.appendChild(s);
-      last = m.index + m[0].length;
+    while ((m = AMOUNT.exec(v))) ms.push([m.index, m.index + m[0].length]);
+    const money = (a, b) => { const s = doc.createElement('span'); s.className = 'money'; s.textContent = v.slice(a, b); return s; };
+    // What touches an amount with no space between ("(", ")", "כ-", a closing "." or "،") goes into one no-wrap span
+    // with it. The amount is an inline-block, and a line could break between it and the text beside it: "(" was left
+    // at the end of a line and the amount began the next one (the claim report's details, 6 Nov 2026). Two amounts
+    // joined that way ("38 ₪–48 ₪") share the span. Only the amount itself is .money, so only it is blurred.
+    let last = 0;
+    for (let i = 0; i < ms.length;) {
+      let j = i;
+      while (j + 1 < ms.length && ms[j + 1][0] > ms[j][1] && !/\s/.test(v.slice(ms[j][1], ms[j + 1][0]))) j++;
+      let s = ms[i][0], e = ms[j][1];
+      const lim = j + 1 < ms.length ? ms[j + 1][0] : v.length;
+      while (s > last && !/\s/.test(v[s - 1])) s--;
+      while (e < lim && !/\s/.test(v[e])) e++;
+      if (s > last) frag.appendChild(doc.createTextNode(v.slice(last, s)));
+      const before = v.slice(s, ms[i][0]), after = v.slice(ms[j][1], e);
+      if (i === j && INVISIBLE.test(before + after)) {
+        if (before) frag.appendChild(doc.createTextNode(before));
+        frag.appendChild(money(ms[i][0], ms[i][1]));
+        if (after) frag.appendChild(doc.createTextNode(after));
+      } else {
+        const g = doc.createElement('span');
+        g.className = 'money-glue';
+        if (before) g.appendChild(doc.createTextNode(before));
+        for (let k = i; k <= j; k++) {
+          g.appendChild(money(ms[k][0], ms[k][1]));
+          if (k < j) g.appendChild(doc.createTextNode(v.slice(ms[k][1], ms[k + 1][0])));
+        }
+        if (after) g.appendChild(doc.createTextNode(after));
+        frag.appendChild(g);
+      }
+      last = e;
+      i = j + 1;
     }
     if (last < v.length) frag.appendChild(doc.createTextNode(v.slice(last)));
     p.replaceChild(frag, t);
