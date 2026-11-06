@@ -431,7 +431,11 @@ body.fx .nav .fab:active { transform: scale(.9) rotate(90deg); }
 
 /* ---------------- setup questions ---------------- */
 .wizard.ob3 { position: relative; isolation: isolate; }
-.ob-bg { position: fixed; inset: 0; z-index: -1; pointer-events: none; overflow: hidden; }
+/* the blobs live in the column, like the bars over them: on a screen wider than the column (a tablet, a computer) they
+   fade out before its sides, so a bar that spans the column meets the same plain page on both sides of its edge.
+   The 601px is #app's --col + 1 (a media query cannot read it). */
+.ob-bg { position: fixed; inset: 0; margin-inline: auto; max-width: var(--col); z-index: -1; pointer-events: none; overflow: hidden; }
+@media (min-width: 601px) { .ob-bg { -webkit-mask-image: linear-gradient(90deg, transparent, #000 64px, #000 calc(100% - 64px), transparent); mask-image: linear-gradient(90deg, transparent, #000 64px, #000 calc(100% - 64px), transparent); } }
 .ob-bg i { position: absolute; border-radius: 50%; filter: blur(60px); opacity: .3; }
 .ob-bg i:nth-child(1) { width: 300px; height: 300px; background: hsl(var(--h) 90% 75%); top: -110px; right: -110px; }
 .ob-bg i:nth-child(2) { width: 260px; height: 260px; background: #8fe8c6; bottom: 4%; left: -130px; animation-delay: -8s; }

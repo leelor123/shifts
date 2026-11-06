@@ -218,7 +218,12 @@ let errors = [];
     await closeAll();
   });
   await step('demo data loads', async () => { await ev(() => App.demo.load()); await sleep(1500); if (!(await ev(() => Store.S.shifts.length > 20))) throw new Error('no demo'); });
-  for (const tab of ['home', 'calendar', 'reports', 'settings']) await step('tab ' + tab, async () => { await ev((t) => App.go(t), tab); await sleep(500); });
+  for (const tab of ['home', 'calendar', 'reports', 'settings']) await step('tab ' + tab, async () => {
+    await ev((t) => App.go(t), tab); await sleep(500);
+    // no opaque bar or fade ends inside the column (tests/e2e/edge-boxes.js)
+    const bad = await require('./edge-boxes.js').check(page, 'tab ' + tab);
+    if (bad.length) throw new Error('edge box: ' + bad.map((b) => `${b.name} ${b.side} edge at ${b.edge}px: ${b.why}`).join(' | '));
+  });
   await step('calendar: week view, next/prev month, a day sheet', async () => {
     await ev(() => App.go('calendar')); await sleep(300);
     const btns = await page.$$('#view button');
@@ -1014,6 +1019,15 @@ let errors = [];
     if (!(await p2.$('.ob-google'))) throw new Error('no "save with Google" on the last step');
     const blocked = await e2(HIT); if (blocked.length) throw new Error('covered buttons: ' + blocked.join(' | '));
     await shot('ob-done');
+  });
+  // the full walk (5 widths, light and dark, he/en/ar, the website): node tests/e2e/edge-boxes.js docs
+  await step('no edge boxes: the bar under the last question spans the screen, side to side', async () => {
+    for (const y of [0, 1e5]) {
+      await e2((t) => scrollTo(0, t), y); await sleep(150);
+      const bad = await require('./edge-boxes.js').check(p2, 'last question');
+      if (bad.length) throw new Error(bad.map((b) => `${b.name} ${b.side} edge at ${b.edge}px (column ${b.column.join('-')}): ${b.why}`).join(' | '));
+    }
+    await e2(() => scrollTo(0, 0));
   });
   await step('new user: save with Google signs in and opens the app', async () => {
     await p2.click('.ob-google'); await sleep(1500);

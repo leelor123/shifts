@@ -147,7 +147,7 @@ svg.i.s { width: 18px; height: 18px; }
 svg.i.l { width: 32px; height: 32px; }
 
 /* ---------- app shell ---------- */
-#app { max-width: 600px; margin: 0 auto; min-height: 100%; position: relative; overflow-x: clip; } /* nothing may stick out sideways: on a phone a page wider than the screen (even for a moment, as the next tab slides in) zooms out a little, and the bottom bar dropped and flickered */
+#app { --col: 600px; max-width: var(--col); margin: 0 auto; min-height: 100%; position: relative; overflow-x: clip; } /* nothing may stick out sideways: on a phone a page wider than the screen (even for a moment, as the next tab slides in) zooms out a little, and the bottom bar dropped and flickered */
 .view { padding: calc(8px + var(--safe-t)) 16px calc(var(--nav-h) + var(--safe-b) + 28px); animation: viewIn .28s var(--ease); }
 @keyframes viewIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
 .topbar { display: flex; align-items: center; gap: 8px; min-height: 64px; padding: 8px 0 4px; }
@@ -470,14 +470,18 @@ textarea.input { min-height: 90px; resize: vertical; }
 .empty h3 { color: var(--on-surface); margin: 0 0 6px; }
 
 /* ---------- onboarding & lock ---------- */
-.wizard { min-height: 100vh; min-height: 100dvh; display: flex; flex-direction: column; padding: calc(16px + var(--safe-t)) 16px calc(16px + var(--safe-b)); max-width: 600px; margin: 0 auto; }
+.wizard { --gutter: 16px; min-height: 100vh; min-height: 100dvh; display: flex; flex-direction: column; padding: calc(16px + var(--safe-t)) var(--gutter) calc(16px + var(--safe-b)); max-width: var(--col); margin: 0 auto; }
 .wizard .steps { display: flex; gap: 6px; margin: 8px 0 20px; }
 .wizard .steps i { flex: 1; height: 4px; border-radius: 2px; background: var(--surface-3); }
 .wizard .steps i.on { background: var(--primary); }
 .wizard h1 { font-size: 1.7rem; margin: 0 0 6px; }
 .wizard .lead { color: var(--on-surface-var); margin: 0 0 18px; }
 .wizard .content { flex: 1; animation: viewIn .3s var(--ease); }
-.wizard .foot { display: flex; gap: 10px; padding-top: 12px; position: sticky; bottom: 0; background: var(--surface); padding-bottom: 4px; }
+/* A bar pinned to the screen's edge, and the fade it paints above itself, spans the whole column side to side: its
+   buttons keep the page's margins as padding. A bar that stopped at the margins (16px in) left two strips of whatever
+   lies behind it (the colour blobs, the sky) and read as a dark box with lighter sides (6 Nov 2026, the last setup
+   screen). tests/e2e/edge-boxes.js fails on any opaque bar or fade whose sides are not the column's or the screen's. */
+.wizard .foot { display: flex; gap: 10px; padding-top: 12px; position: sticky; bottom: 0; background: var(--surface); padding-bottom: 4px; margin-inline: calc(-1 * var(--gutter)); padding-inline: var(--gutter); }
 .wizard .foot .btn { flex: 1; }
 .wizard .foot.col { flex-direction: column; }
 .wizard .foot.col .btn { flex: none; width: 100%; }

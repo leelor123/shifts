@@ -8,7 +8,8 @@
     "build": "node tests/run.js && node tools/build.js",
     "serve": "node tools/serve.js",
     "e2e": "node tests/e2e/smoke.js docs tests/e2e/out",
-    "perf": "node tests/e2e/perf.js docs"
+    "perf": "node tests/e2e/perf.js docs",
+    "edges": "node tests/e2e/edge-boxes.js docs tests/e2e/out/edge-boxes"
   },
   "devDependencies": {
     "acorn": "^8.12.1",
