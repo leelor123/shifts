@@ -534,6 +534,8 @@ let errors = [];
     // home shows two cards at most, the most urgent first: answer the ones the demo puts above the saving card
     await ev(async () => {
       await Store.setSettings((s) => { s.statsAsked = true; s.backup.lastBackup = Date.now(); s.home = Object.assign({}, s.home, { highlight: false }); });
+      // (and the pay day is not today: on it the payday card comes first; this step failed on 9 Nov, a 9th)
+      const e = Store.S.employers[0]; await Store.apply([{ store: 'employers', put: Object.assign({}, e, { payDay: (new Date().getDate() % 27) + 1 }) }], 'x');
       App.go('home');
       for (const c of document.querySelectorAll('#view .recap-card')) await Store.setMeta(/^Y/.test(c.dataset.pk) ? { wrappedSeen: c.dataset.pk } : { recapSeen: c.dataset.pk });
     });

@@ -654,7 +654,7 @@ details.collapse { background: var(--surface-1); border: 1px solid var(--line); 
 .empty .art { border-radius: 18px; background: var(--surface-2); color: var(--primary); }
 
 /* birthday */
-.bday { position: relative; overflow: hidden; background: var(--amber-soft); border-color: transparent; }
+.card.bday { position: relative; overflow: hidden; background: var(--amber-soft); border-color: transparent; } /* (.card.bday: the later .card rule painted it plain) */
 .bday-title { font-size: 1.5rem; font-weight: 800; margin-bottom: 4px; }
 .bday-confetti { position: absolute; inset: 0; pointer-events: none; background-image: radial-gradient(circle, var(--amber) 2px, transparent 2.5px), radial-gradient(circle, var(--primary) 1.6px, transparent 2px), radial-gradient(circle, var(--bad-mark) 1.6px, transparent 2px); background-size: 46px 46px, 38px 38px, 58px 58px; background-position: 0 0, 18px 12px, 30px 26px; opacity: .35; animation: confetti 6s linear infinite; }
 @keyframes confetti { to { background-position: 0 92px, 18px 88px, 30px 142px; } }
@@ -924,10 +924,18 @@ body.fx .first .dot-badge { animation: fx-badge .5s cubic-bezier(.34, 1.56, .64,
 ::view-transition-old(root), ::view-transition-new(root) { animation: none; mix-blend-mode: normal; }
 html.vt-reveal::view-transition-new(root) { animation: fx-reveal .6s cubic-bezier(.4, 0, .2, 1) both; }
 @keyframes fx-reveal { from { clip-path: circle(0 at var(--vt-x, 50%) var(--vt-y, 50%)); } to { clip-path: circle(150vmax at var(--vt-x, 50%) var(--vt-y, 50%)); } }
-.payday { background: linear-gradient(135deg, #0d2b6b, #1d4a8f); color: #fff; border: 0; }
-.payday .pd-title { font: 800 1.35rem/1.2 var(--display); display: flex; align-items: center; gap: 8px; }
+/* (.card.payday, not .payday: the later .card rule in styles-v3.css painted it white, and its white text vanished) */
+.card.payday { background: linear-gradient(135deg, #0d2b6b, #1d4a8f); color: #fff; border: 0; padding: 18px; }
+.payday .pd-title { font: 800 1.35rem/1.25 var(--display); display: flex; align-items: center; gap: 8px; }
 .payday .pd-emoji { font-size: 1.6rem; display: inline-block; animation: fx-float 2.4s ease-in-out infinite; }
-.payday .btn { background: #ffb524; color: #231a05; margin-top: 12px; }
+.payday .pd-text { margin-top: 6px; line-height: 1.6; opacity: .92; }
+.payday .pd-text b { color: #ffd166; font-weight: 800; }
+/* the two next steps side by side, one height: the payslip first (amber), the attendance report quiet beside it */
+.payday .pd-acts { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 14px; }
+.payday .pd-acts .btn { flex: 1 1 auto; min-height: 44px; margin: 0; justify-content: center; transition: transform 160ms ease-out; }
+.payday .pd-acts .btn:active { transform: scale(.97); }
+.payday .pd-acts .btn.go { background: #ffb524; color: #231a05; }
+.payday .pd-acts .btn.quiet { background: hsla(0, 0%, 100%, .14); color: #fff; box-shadow: inset 0 0 0 1px hsla(0, 0%, 100%, .28); }
 @keyframes fx-float { 50% { transform: translateY(-4px) rotate(-6deg); } }
 @media (prefers-reduced-motion: reduce) { #intro *, .ptr *, .sky *, .skyscreen * { animation: none !important; } }
 .fx-canvas { position: fixed; inset: 0; width: 100vw; height: 100vh; height: 100dvh; pointer-events: none; z-index: 9998; }
