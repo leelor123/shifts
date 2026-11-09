@@ -57,6 +57,8 @@ final class NoteCenter {
         if (o.optInt("notes", 0) < 1) return;
         JSONArray plan = o.optJSONArray("plan");
         if (plan != null) prefs(c).edit().putString(PLAN, plan.toString()).apply();
+        JSONArray keep = o.optJSONArray("keep");
+        if (keep != null) closeGone(c, keep);
         JSONArray show = o.optJSONArray("show");
         if (show != null) for (int i = 0; i < show.length(); i++) {
             JSONObject n = show.optJSONObject(i);
@@ -210,6 +212,26 @@ final class NoteCenter {
         } catch (Exception e) {
             android.util.Log.w("ShaatiNotes", "post " + tag, e);
         }
+    }
+
+    /**
+     * Closes each of ours on the screen whose reason is gone: the web app sends the tags still true now ("keep") whenever
+     * it checks (the payslip came in, the shift was confirmed, the timer stopped: 9 Nov 2026, the payslip notification
+     * stayed after the payslip was uploaded). Only ours (the "shaati" group); what Chrome shows for the web app stays.
+     */
+    private static void closeGone(Context c, JSONArray keep) {
+        NotificationManager nm = (NotificationManager) c.getSystemService(Context.NOTIFICATION_SERVICE);
+        if (nm == null || Build.VERSION.SDK_INT < 23) return;
+        java.util.HashSet<String> stay = new java.util.HashSet<>();
+        for (int i = 0; i < keep.length(); i++) stay.add(keep.optString(i));
+        int left = 0;
+        for (StatusBarNotification s : nm.getActiveNotifications()) {
+            String tag = s.getTag();
+            if (tag == null || SUMMARY.equals(tag) || !GROUP.equals(s.getNotification().getGroup())) continue;
+            if (stay.contains(tag)) left++;
+            else nm.cancel(tag, s.getId());
+        }
+        if (left < 2) nm.cancel(SUMMARY, 1);
     }
 
     /** Two or more of ours on the screen: one group under Shaati's name, not a row of loose ones. */

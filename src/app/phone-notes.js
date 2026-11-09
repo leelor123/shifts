@@ -94,6 +94,21 @@
       });
     },
     /** Show this one now (the Android app shows it in its own look, once per tag). */
+    /** Closes every Shaati notification on the phone whose reason is gone: only the tags given (the alerts true now)
+     *  stay. The Android app closes its own (NoteCenter "keep"); in a browser the worker's are closed here. The
+     *  running-shift notification has a life of its own (app/run-note.js) and is never touched. */
+    async keepOnly(keys) {
+      const keep = new Set(keys || []);
+      if (native && App.widgets) App.widgets.post(JSON.stringify({ notes: 1, keep: [...keep] }));
+      try {
+        const reg = 'serviceWorker' in navigator ? await navigator.serviceWorker.getRegistration() : null;
+        if (!reg || !reg.getNotifications) return;
+        for (const n of await reg.getNotifications()) {
+          const ours = n.data && typeof n.data.url === 'string' && n.data.url.indexOf('action=note') >= 0;
+          if (ours && n.tag && !keep.has(n.tag)) n.close();
+        }
+      } catch (e) { /* none to close */ }
+    },
     show(a, n) { if (native && App.widgets) App.widgets.post(JSON.stringify({ notes: 1, show: [item(a, n, Date.now())] })); },
     send: () => soon(0),
     build,

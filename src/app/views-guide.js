@@ -111,10 +111,10 @@
 
   /* ---------------- what's new (once per big update, for people who already used the app) ---------------- */
   const WHATS_NEW = {
-    id: '1.36.1',
+    id: '1.36.2',
     // the notifications that come while the app is closed: news for everyone, also whoever saw 1.35's sheet.
     // 1.36.1 only makes the Android app's channel work from the first moment: whoever saw 1.36.0's sheet is not shown it again
-    seen: ['1.36.0'],
+    seen: ['1.36.0', '1.36.1'],
     // true only when the items hold a real feature: a release of fixes alone opens no sheet (the user, 6 Nov 2026)
     features: true,
     items: [
@@ -156,6 +156,7 @@
   /* ---------------- every update (settings › about › all the updates) ---------------- */
   // newest first: [version, the day it went out, what changed — said to the user, not to a developer]
   const CHANGELOG = [
+    ['1.36.2', '2026-11-09', 'התראה נעלמת מהטלפון כשהסיבה שלה נגמרת: העלית את התלוש, אישרת את המשמרת או עצרת את הטיימר.'],
     ['1.36.1', '2026-11-09', 'באנדרואיד הווידג׳טים וההתראות מקבלים את הנתונים מהרגע שהאפליקציה נפתחת.'],
     ['1.36.0', '2026-11-09', 'באנדרואיד ההתראות מגיעות בזמן גם כשהאפליקציה סגורה: תזכורת לפני משמרת, "עבדת במשמרת?", טיימר שנשאר פועל, יום המשכורת והסיכומים. ההתראות קיבלו עיצוב חדש, עם המטבע של שעתי, השורה החשובה בראש וכפתור לפעולה עצמה. לחיצה על התראה פותחת את המקום שלה.'],
     ['1.35.1', '2026-11-09', 'כרטיס יום המשכורת במסך הבית מראה שוב את הכותרת ואת הסכום (הוא הופיע ריק), ושני הכפתורים שלו באותו גודל, אחד מתחת לשני. גם כרטיס יום ההולדת קיבל בחזרה את הצבע שלו.'],

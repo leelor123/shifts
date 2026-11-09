@@ -745,6 +745,9 @@
     const stale = refund && S.notifications.find((n) => n.key === refund.key && (n.title !== refund.title || n.body !== refund.body));
     if (stale) await Store.apply([{ store: 'notifications', put: Object.assign({}, stale, { title: refund.title, body: refund.body }) }], null);
     const wanted = wantedAt(0, res).concat(refund && notifiable(refund) ? [refund] : []);
+    // a notification whose reason is gone (the payslip came in, the shift was confirmed, the timer stopped) leaves the
+    // phone: only the ones still true now stay (the user, 9 Nov 2026: "I uploaded a payslip and the notification stayed")
+    if (App.phoneNotes) App.phoneNotes.keepOnly(wanted.map((a) => a.key));
     // notifications of the kinds that are no longer sent go from the list too (once)
     const gone = S.notifications.filter((n) => !kindSent(n));
     if (gone.length) await Store.apply(gone.map((n) => ({ store: 'notifications', del: n.id })), null);
