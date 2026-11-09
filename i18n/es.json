@@ -3259,6 +3259,7 @@
  "מהיום: ניכויים רגילים": "Desde hoy: las deducciones habituales",
  "מגיל 18 מנוכים ביטוח לאומי ומס בריאות, ובהמשך גם פנסיה. הנטו המשוער יחושב מעכשיו בהתאם.": "Desde los 18 se descuentan el Seguro Nacional y el impuesto de salud, y más adelante también la pensión. El neto estimado se calcula así a partir de ahora.",
  "הסיכום השבועי שלך": "Tu resumen semanal",
+ "השבוע עבדת {0} שעות במשמרת אחת והרווחת {1} ברוטו.": "Esta semana trabajaste {0} horas en un turno y ganaste {1} bruto.",
  "השבוע עבדת {0} שעות ב-{1} משמרות והרווחת {2} ברוטו.": "Esta semana trabajaste {0} horas en {1} {1#one:turno;other:turnos} y ganaste {2} brutos.",
  " זה {0} שעות {1} מהממוצע": " Son {0} horas {1} que la media",
  ", בעיקר ב{0}": ", sobre todo el {0}",

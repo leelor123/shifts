@@ -32,7 +32,9 @@
   }
   /** One notification as the phone keeps it. */
   function item(a, n, at) {
-    return { at, tag: a.key, type: a.type, title: n.title, body: n.body, sub: n.sub, ch: n.ch, url: n.url, when: n.when || 0,
+    // no sub-line on the phone: Samsung puts it on the title's row and cut the title ("השבוע שלך: ...", seen on the
+    // phone, 9 Nov 2026); the title says the kind already
+    return { at, tag: a.key, type: a.type, title: n.title, body: n.body, sub: '', ch: n.ch, url: n.url, when: n.when || 0,
       until: until(a, at, App.model), acts: n.acts.slice(0, 2).map((x) => ({ id: x.id, title: x.title, url: x.url })) };
   }
   const idle = () => new Promise((res) => (root.requestIdleCallback ? root.requestIdleCallback(() => res(), { timeout: 400 }) : setTimeout(res, 16)));

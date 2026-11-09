@@ -242,3 +242,11 @@ T.test('Fridays again and again with a five-day week: asked once whether the wor
   T.eq(ask(fridays, (d) => { d.employers[0].otLaw = false; }).length, 0, 'overtime set by hand: the week does not matter');
   T.eq(ask(fridays, (d) => { d.settings.alerts.types = { workweek: false }; }).length, 0, 'turned off');
 });
+
+T.test('the weekly sentence says "one shift" in words, never "ב-1 משמרות"', () => {
+  const shifts = [shift('2026-10-05', '09:00', '15:00')];
+  const d = data(shifts, (x) => { x.settings.alerts.weeklyDay = 6; x.settings.alerts.weeklyHour = 21; });
+  const r = Insights.run(Engine.buildModel(d), { now: U.toEpoch('2026-10-10', '22:00') });
+  const w = r.alerts.find((a) => a.type === 'weekly');
+  T.ok(w && w.body.includes('במשמרת אחת') && !w.body.includes('ב-1 משמרות'), w && w.body);
+});

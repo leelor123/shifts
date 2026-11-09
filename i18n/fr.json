@@ -3259,6 +3259,7 @@
  "מהיום: ניכויים רגילים": "À partir d'aujourd'hui: les retenues habituelles",
  "מגיל 18 מנוכים ביטוח לאומי ומס בריאות, ובהמשך גם פנסיה. הנטו המשוער יחושב מעכשיו בהתאם.": "Dès 18 ans, l'Assurance nationale et la taxe santé sont retenues, puis plus tard la retraite aussi. Le net estimé est calculé en conséquence à partir de maintenant.",
  "הסיכום השבועי שלך": "Votre résumé de la semaine",
+ "השבוע עבדת {0} שעות במשמרת אחת והרווחת {1} ברוטו.": "Cette semaine, vous avez travaillé {0} heures en un service et gagné {1} brut.",
  "השבוע עבדת {0} שעות ב-{1} משמרות והרווחת {2} ברוטו.": "Cette semaine, vous avez travaillé {0} heures en {1} {1#one:service;other:services} et gagné {2} brut.",
  " זה {0} שעות {1} מהממוצע": " C'est {0} heures {1} que la moyenne",
  ", בעיקר ב{0}": ", surtout le {0}",

@@ -7548,7 +7548,7 @@
   "kind": "lit",
   "where": [
    "app/views-games.js:889",
-   "core/insights.js:623"
+   "core/insights.js:625"
   ]
  },
  {
@@ -7556,7 +7556,7 @@
   "kind": "lit",
   "where": [
    "app/views-games.js:889",
-   "core/insights.js:623"
+   "core/insights.js:625"
   ]
  },
  {
@@ -23480,45 +23480,52 @@
   ]
  },
  {
+  "key": "השבוע עבדת {0} שעות במשמרת אחת והרווחת {1} ברוטו.",
+  "kind": "tpl",
+  "where": [
+   "core/insights.js:614"
+  ]
+ },
+ {
   "key": "השבוע עבדת {0} שעות ב-{1} משמרות והרווחת {2} ברוטו.",
   "kind": "tpl",
   "where": [
-   "core/insights.js:613"
+   "core/insights.js:615"
   ]
  },
  {
   "key": " זה {0} שעות {1} מהממוצע",
   "kind": "tpl",
   "where": [
-   "core/insights.js:623"
+   "core/insights.js:625"
   ]
  },
  {
   "key": ", בעיקר ב{0}",
   "kind": "tpl",
   "where": [
-   "core/insights.js:624"
+   "core/insights.js:626"
   ]
  },
  {
   "key": " בערך כמו הממוצע שלך.",
   "kind": "lit",
   "where": [
-   "core/insights.js:626"
+   "core/insights.js:628"
   ]
  },
  {
   "key": " {0} מהשעות היו בשבת/חג.",
   "kind": "tpl",
   "where": [
-   "core/insights.js:627"
+   "core/insights.js:629"
   ]
  },
  {
   "key": "השבוע ⁦{0}⁠–⁠{1}⁩, בהשוואה לממוצע 4 השבועות שלפניו ({2} ש׳).",
   "kind": "tpl",
   "where": [
-   "core/insights.js:628"
+   "core/insights.js:630"
   ]
  },
  {

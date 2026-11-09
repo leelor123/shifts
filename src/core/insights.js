@@ -610,7 +610,9 @@
     for (let i = 1; i <= 4; i++) prev.push(Engine.totals(model, U.addDays(from, -7 * i), U.addDays(to, -7 * i)));
     const ah = avg(prev.map((p) => p.hours));
     const diff = t.hours - ah;
-    let sentence = `השבוע עבדת ${U.num(t.hours, 1)} שעות ב-${t.shifts} משמרות והרווחת ${U.money(t.gross, 0)} ברוטו.`;
+    // one shift: "במשמרת אחת", never "ב-1 משמרות" (seen on the phone's notification, 9 Nov 2026)
+    let sentence = t.shifts === 1 ? `השבוע עבדת ${U.num(t.hours, 1)} שעות במשמרת אחת והרווחת ${U.money(t.gross, 0)} ברוטו.`
+      : `השבוע עבדת ${U.num(t.hours, 1)} שעות ב-${t.shifts} משמרות והרווחת ${U.money(t.gross, 0)} ברוטו.`;
     const hasHistory = prev.some((p) => p.shifts > 0);
     if (hasHistory && Math.abs(diff) >= 1) {
       // which role drove the change?

@@ -3259,6 +3259,7 @@
  "מהיום: ניכויים רגילים": "From today: the usual deductions",
  "מגיל 18 מנוכים ביטוח לאומי ומס בריאות, ובהמשך גם פנסיה. הנטו המשוער יחושב מעכשיו בהתאם.": "From 18, National Insurance and health tax are deducted, and later pension too. The estimated net is worked out accordingly from now on.",
  "הסיכום השבועי שלך": "Your weekly summary",
+ "השבוע עבדת {0} שעות במשמרת אחת והרווחת {1} ברוטו.": "This week you worked {0} hours in one shift and earned {1} gross.",
  "השבוע עבדת {0} שעות ב-{1} משמרות והרווחת {2} ברוטו.": "This week you worked {0} hours in {1} {1#one:shift;other:shifts} and earned {2} gross.",
  " זה {0} שעות {1} מהממוצע": " That’s {0} hours {1} than average",
  ", בעיקר ב{0}": ", mostly in {0}",
