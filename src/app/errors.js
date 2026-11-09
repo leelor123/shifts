@@ -23,6 +23,11 @@
  * is offline or signed out, and only when the answer is yes; with no yes
  * they are never written anywhere. Rules: errors/{id}, create only, read
  * by admins only (firestore.rules validErr).
+ *
+ * The same report (and only it) also goes to Sentry, EU region, from the
+ * live app, without an SDK and without the phone's IP address (below,
+ * "Sentry"): grouping, email alerts and the owner's debugging tools. The
+ * privacy policy (views-legal.js) names it.
  * ============================================================ */
 (function (root) {
   'use strict';
@@ -83,8 +88,8 @@
     const [os, br] = String(d).split(' · ');
     return { os: (os || 'other').slice(0, 24), br: (br || 'other').slice(0, 32) };
   }
-  function randomId() {
-    const b = new Uint8Array(12);
+  function randomId(n) {
+    const b = new Uint8Array(n || 12);
     if (root.crypto && root.crypto.getRandomValues) root.crypto.getRandomValues(b);
     else for (let i = 0; i < b.length; i++) b[i] = Math.floor(Math.random() * 256);
     return Array.from(b, (x) => ('0' + x.toString(16)).slice(-2)).join('');
@@ -184,7 +189,63 @@
       timer = setTimeout(() => Errors.flush(), 4000); // a burst of the same error is counted before it goes out
     } catch (e) { /* reporting never breaks the app */ }
   };
-  /** Send what waits, within today's 5, when the answer is yes and the user is signed in and online. */
+  /* ---------------- Sentry: the same cleaned report, for grouping, alerts and the owner's tools ---------------- */
+  // Sentry's EU region (Frankfurt). The report above and nothing else goes, written by hand as one envelope: no SDK
+  // (nothing more to download, no automatic breadcrumbs, page addresses, cookies or user details). infer_ip 'never'
+  // keeps Sentry from storing the phone's IP address; no referrer, no credentials. Only the live app sends: local
+  // runs and the QA suites never do (Errors._sentryForce turns it on for a test).
+  const SENTRY = { host: 'o4512402257608704.ingest.de.sentry.io', project: '4512402298765392', key: 'd620d3f70e1cbf643edaadf3cd7859f6' };
+  function sentryOn() {
+    if (Errors._sentryForce) return true;
+    const h = String((root.location && root.location.hostname) || '');
+    return /(^|\.)(github\.io|web\.app|firebaseapp\.com)$/.test(h);
+  }
+  /** The Sentry event for one report: the error as type and message, its frames (oldest first, as Sentry wants), the
+   *  report's hash as the fingerprint (the same grouping as the admin screen), and the version as the release. */
+  function sentryEvent(r, id) {
+    const m = /^([A-Za-z_$][\w$]*):\s*([\s\S]*)$/.exec(r.msg || '');
+    const frames = String(r.st || '').split('\n').filter(Boolean).map((f) => {
+      const x = /^(?:([^@]*)@)?(.*?):(\d+):(\d+)$/.exec(f);
+      return x ? { function: x[1] || '?', filename: x[2], lineno: +x[3], colno: +x[4], in_app: true } : { filename: f, in_app: true };
+    }).reverse();
+    const ex = { type: m ? m[1] : 'Error', value: m ? m[2] : (r.msg || 'unknown') };
+    if (frames.length) ex.stacktrace = { frames };
+    return {
+      event_id: id, timestamp: Date.now() / 1000, platform: 'javascript', level: 'error',
+      release: 'shaati@' + (r.v || 'unknown'), environment: 'production',
+      tags: { lang: r.l, tab: r.tab || 'none', kind: r.k, os: r.os, browser: r.br },
+      extra: { times_today: r.n },
+      fingerprint: [r.h],
+      // an empty place: without it Sentry looks up a city from the connection (tested 9 Nov 2026: "Tel Aviv" with no
+      // user at all); with it, no place and no user are kept
+      user: { geo: {} },
+      exception: { values: [ex] },
+      sdk: { name: 'shaati.errors', version: '1.0.0', settings: { infer_ip: 'never' } },
+    };
+  }
+  function sentryBody(r, id) {
+    return JSON.stringify({ event_id: id, sent_at: new Date().toISOString() }) + '\n'
+      + JSON.stringify({ type: 'event' }) + '\n' + JSON.stringify(sentryEvent(r, id)) + '\n';
+  }
+  /** true when Sentry has the report (or said no for good, or sending is off here); false: try again later. */
+  async function toSentry(r) {
+    if (!sentryOn() || typeof root.fetch !== 'function') return true;
+    let t = null;
+    try {
+      const id = randomId(16);
+      const url = 'https://' + SENTRY.host + '/api/' + SENTRY.project + '/envelope/?sentry_version=7&sentry_key=' + SENTRY.key + '&sentry_client=shaati.errors%2F1.0.0';
+      const ctl = typeof AbortController === 'function' ? new AbortController() : null;
+      t = setTimeout(() => { if (ctl) ctl.abort(); }, 10000);
+      // text/plain: a simple request, with no CORS preflight
+      const res = await root.fetch(url, { method: 'POST', body: sentryBody(r, id), headers: { 'Content-Type': 'text/plain;charset=UTF-8' }, keepalive: true, credentials: 'omit', referrerPolicy: 'no-referrer', signal: ctl ? ctl.signal : undefined });
+      return res.ok || (res.status >= 400 && res.status < 500); // a refusal or a full quota is final, never retried
+    } catch (e) { return false; } // offline: the report waits in the queue
+    finally { clearTimeout(t); }
+  }
+
+  /** Send what waits, within today's 5, when the answer is yes and the phone is online: to Sentry (live app), and to
+   *  the admin screen (Firestore) when the user is signed in. A report goes to Sentry once (r.sz), even when it then
+   *  waits for Firestore. */
   Errors.flush = async function () {
     if (busy) return 0;
     const c = consent();
@@ -193,22 +254,32 @@
     const App = root.App || {};
     if (App.legalAccepted && !App.legalAccepted()) return 0;
     const Cloud = root.Cloud;
-    if (!Cloud || !Cloud.user || (root.navigator && root.navigator.onLine === false)) return 0;
+    if (root.navigator && root.navigator.onLine === false) return 0;
+    const signed = !!(Cloud && Cloud.user);
+    if (!signed && !sentryOn()) return 0;
     busy = true;
     let sent = 0;
     try {
       const m = load();
       if (!m.q.length || m.c >= PER_DAY) return 0;
-      const { fs, db } = await Cloud.sdk();
+      const sdk = signed ? await Cloud.sdk() : null;
       while (m.q.length && m.c < PER_DAY) {
         const r = m.q[0];
-        const doc = { v: r.v, l: r.l, os: r.os, br: r.br, tab: r.tab, k: r.k, msg: r.msg, st: r.st, h: r.h, n: r.n, t: Date.now() };
-        try {
-          await Promise.race([fs.setDoc(fs.doc(db, 'errors', r.id), doc), new Promise((res, rej) => setTimeout(() => rej(new Error('timeout')), 15000))]);
-        } catch (e) {
-          // refused (a report the rules do not take, or one that already went): dropped; anything else waits
-          if (e && e.code === 'permission-denied') { m.q.shift(); save(); continue; }
-          break;
+        if (!r.sz && sentryOn()) {
+          if (!(await toSentry(r))) break;
+          r.sz = 1;
+          save();
+        }
+        if (sdk) {
+          const { fs, db } = sdk;
+          const doc = { v: r.v, l: r.l, os: r.os, br: r.br, tab: r.tab, k: r.k, msg: r.msg, st: r.st, h: r.h, n: r.n, t: Date.now() };
+          try {
+            await Promise.race([fs.setDoc(fs.doc(db, 'errors', r.id), doc), new Promise((res, rej) => setTimeout(() => rej(new Error('timeout')), 15000))]);
+          } catch (e) {
+            // refused (a report the rules do not take, or one that already went): dropped; anything else waits
+            if (e && e.code === 'permission-denied') { m.q.shift(); save(); continue; }
+            break;
+          }
         }
         m.q.shift();
         m.c++;
@@ -226,6 +297,9 @@
   Errors._hash = hash;
   Errors._build = build;
   Errors._noise = noise;
+  Errors._sentryEvent = sentryEvent;
+  Errors._sentryBody = sentryBody;
+  Errors._sentryOn = sentryOn;
   Errors._state = () => mem;
   Errors._reset = () => { mem = null; busy = false; clearTimeout(timer); };
 

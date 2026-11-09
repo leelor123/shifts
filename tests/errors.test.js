@@ -126,6 +126,91 @@ T.test('guards: the rules for errors/ are create-only for signed-in users and re
   T.ok(/fs\.limit\(50\)/.test(view) && /data-adm-errors/.test(view), 'the dashboard reads at most 50, on a press');
 });
 
+/** A phone that sends to Sentry: fetch records each envelope; mode 'ok' (200), 'down' (throws: offline), 'no' (403). */
+function sentryPhone(o = {}, mode = 'ok') {
+  const P = phone(o);
+  P.posts = [];
+  P.ctx.fetch = async (url, init) => {
+    P.posts.push({ url, init });
+    if (mode === 'down') throw new TypeError('Failed to fetch');
+    return { ok: mode === 'ok', status: mode === 'ok' ? 200 : 403 };
+  };
+  P.E._sentryForce = true;
+  return P;
+}
+const envelope = (post) => post.init.body.trim().split('\n').map((l) => JSON.parse(l));
+
+T.test('Sentry: only the live app sends (GitHub Pages, Firebase Hosting), never a local run or a test', () => {
+  const P = phone();
+  T.eq(P.E._sentryOn(), false, 'no address: off');
+  P.ctx.location = { hostname: 'localhost' }; T.eq(P.E._sentryOn(), false, 'localhost: off');
+  P.ctx.location = { hostname: '127.0.0.1' }; T.eq(P.E._sentryOn(), false);
+  P.ctx.location = { hostname: 'leelor123.github.io' }; T.eq(P.E._sentryOn(), true, 'the app');
+  P.ctx.location = { hostname: 'shaati.web.app' }; T.eq(P.E._sentryOn(), true, 'the website');
+  P.ctx.location = { hostname: 'github.io.evil.com' }; T.eq(P.E._sentryOn(), false, 'only those hosts');
+});
+T.test('Sentry: the event is the cleaned report and nothing more (no user, no address, no IP)', () => {
+  const P = phone();
+  const r = P.E._build(boom("Cannot read properties of null (reading 'x')"), 'render');
+  const ev = P.E._sentryEvent(r, 'f'.repeat(32));
+  T.eq(ev.exception.values[0].type, 'TypeError');
+  T.eq(ev.exception.values[0].value, "Cannot read properties of null (reading 'x')");
+  const fr = ev.exception.values[0].stacktrace.frames;
+  T.eq(fr.length, 2); T.eq(fr[1].function, 'render', 'the top frame is last, as Sentry wants'); T.eq(fr[1].filename, 'app.he.abc123.js'); T.eq(fr[1].lineno, 10);
+  T.eq(ev.fingerprint.join(), r.h, 'grouped like the admin screen');
+  T.eq(ev.release, 'shaati@1.32.5');
+  T.eq(ev.sdk.settings.infer_ip, 'never', 'Sentry does not store the IP address');
+  T.eq(Object.keys(ev).sort().join(), 'environment,event_id,exception,extra,fingerprint,level,platform,release,sdk,tags,timestamp,user', 'no request, breadcrumbs or contexts');
+  T.eq(JSON.stringify(ev.user), '{"geo":{}}', 'no user, and an empty place so Sentry does not look up a city');
+  T.eq(Object.keys(ev.tags).sort().join(), 'browser,kind,lang,os,tab');
+  const lines = P.E._sentryBody(r, 'a'.repeat(32)).trim().split('\n').map((l) => JSON.parse(l));
+  T.eq(lines.length, 3, 'envelope header, item header, event'); T.eq(lines[1].type, 'event'); T.eq(lines[0].event_id, 'a'.repeat(32));
+  T.ok(!JSON.stringify(lines).includes('github.io'), 'no page address');
+});
+T.atest('Sentry: signed out, a report goes to Sentry once and counts as sent', async () => {
+  const P = sentryPhone({ signedIn: false });
+  for (let i = 0; i < 2; i++) P.E.capture(boom('a'), 'error');
+  T.eq(await P.E.flush(), 1);
+  T.eq(P.posts.length, 1, 'one envelope'); T.eq(P.writes.length, 0, 'no Firestore when signed out');
+  const p = P.posts[0];
+  T.ok(p.url.startsWith('https://o4512402257608704.ingest.de.sentry.io/api/4512402298765392/envelope/?'), 'the EU region');
+  T.eq(p.init.credentials, 'omit'); T.eq(p.init.referrerPolicy, 'no-referrer'); T.eq(p.init.headers['Content-Type'], 'text/plain;charset=UTF-8');
+  T.eq(envelope(p)[2].extra.times_today, 2, 'counted');
+  T.eq(await P.E.flush(), 0, 'not again');
+});
+T.atest('Sentry: signed in, Sentry and the admin screen both get it; a Firestore retry does not resend to Sentry', async () => {
+  const P = sentryPhone({ fail: 'unavailable' });
+  P.E.capture(boom('a'), 'error');
+  T.eq(await P.E.flush(), 0, 'Firestore failed: waits');
+  T.eq(P.posts.length, 1, 'Sentry got it');
+  T.eq(P.E._state().q[0].sz, 1, 'marked');
+  const Q = sentryPhone();
+  Q.E.capture(boom('b'), 'error');
+  T.eq(await Q.E.flush(), 1); T.eq(Q.posts.length, 1); T.eq(Q.writes.length, 1);
+  T.ok(!('sz' in Q.writes[0].data), 'the mark stays on the phone');
+});
+T.atest('Sentry: offline it waits; a refusal is final; with statistics off nothing goes', async () => {
+  const D = sentryPhone({ signedIn: false }, 'down');
+  D.E.capture(boom('a'), 'error');
+  T.eq(await D.E.flush(), 0); T.eq(D.E._state().q.length, 1, 'still waiting');
+  const N = sentryPhone({ signedIn: false }, 'no');
+  N.E.capture(boom('a'), 'error');
+  T.eq(await N.E.flush(), 1, 'dropped, not retried forever');
+  const O = sentryPhone({ consent: false, signedIn: false });
+  O.E.capture(boom('a'), 'error');
+  T.eq(await O.E.flush(), 0); T.eq(O.posts.length, 0, 'nothing sent');
+  const L = sentryPhone({ signedIn: false });
+  L.ctx.App.legalAccepted = () => false;
+  L.E.capture(boom('a'), 'error');
+  T.eq(await L.E.flush(), 0); T.eq(L.posts.length, 0, 'not before the policy that names Sentry is accepted');
+});
+T.test('Sentry: the privacy policy names it, where it is and that the IP is not kept', () => {
+  const legal = rd('src/app/views-legal.js');
+  T.ok(/<li><b>Sentry<\/b>/.test(legal), 'in the list of third parties');
+  T.ok(/Sentry בגרמניה/.test(legal), 'in the transfer abroad');
+  T.ok(/לא לשמור את כתובת ה-⁠IP/.test(legal), 'no IP');
+});
+
 T.atest('with statistics off nothing is kept or sent', async () => {
   const P = phone({ consent: false });
   P.E.capture(boom('a'), 'error');
