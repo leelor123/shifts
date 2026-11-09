@@ -182,6 +182,30 @@ let errors = [];
     const planned = await ev(() => Store.S.shifts.filter((s) => s.status === 'planned').length);
     if (planned !== 0) throw new Error('undo left ' + planned);
   });
+  // (the user, 9 Nov 2026: notifications came only when the app was opened) the Android app shows them while closed:
+  // the page hands it the coming week's list over the widgets' channel once it hears "shaati:notes" (app/phone-notes.js)
+  await step('the Android app gets the coming notifications, in words and with buttons, over the widgets\' channel', async () => {
+    const got = await ev(async () => {
+      await Store.setSettings((st) => { st.alerts.push = true; st.alerts.remindPlanned = true; st.alerts.reminders.before = [60]; });
+      const k = U.addDays(U.todayKey(), 2);
+      await Store.apply([{ store: 'shifts', put: { id: 'e2e-plan', kind: 'shift', employerId: Store.S.employers[0].id, roleId: App.roles()[0].id, status: 'planned', start: U.toEpoch(k, '16:00'), end: U.toEpoch(k, '22:00'), breakMin: 0, breakPaid: true, items: [], splits: [] } }], null);
+      const ch = new MessageChannel();
+      const msgs = [];
+      ch.port1.onmessage = (e) => msgs.push(e.data);
+      window.postMessage('', location.origin, [ch.port2]); // as Chrome hands the page its end of the channel
+      await new Promise((r) => setTimeout(r, 300));
+      ch.port1.postMessage('shaati:notes');
+      for (let i = 0; i < 40 && !msgs.some((m) => typeof m === 'string' && m.startsWith('{"notes"')); i++) await new Promise((r) => setTimeout(r, 250));
+      const m = msgs.find((x) => typeof x === 'string' && x.startsWith('{"notes"'));
+      await Store.apply([{ store: 'shifts', del: 'e2e-plan' }], null);
+      await Store.setSettings((st) => { st.alerts.remindPlanned = false; });
+      return m ? JSON.parse(m) : null;
+    });
+    if (!got || !Array.isArray(got.plan)) throw new Error('no list sent');
+    const up = got.plan.find((n) => n.tag === 'up-e2e-plan-60');
+    if (!up) throw new Error('the reminder before the planned shift is not in the list: ' + got.plan.map((n) => n.tag).join(','));
+    if (!up.title || !up.body || up.ch !== 'shifts' || !up.acts.length || !(up.at > Date.now()) || !up.url.includes('action=note')) throw new Error('its look: ' + JSON.stringify(up));
+  });
   // (the user, 6 Nov 2026: nothing is saved, versioned or said to be updated without a change; a double tap does a thing once)
   await step('a double tap starts one shift and ends it once; "save" twice saves one shift; a save with no change says so', async () => {
     const count = () => ev(() => ({ n: Store.S.shifts.length, starts: Store.S.ledger.filter((x) => x.k === 'start').length, stops: Store.S.ledger.filter((x) => x.k === 'stop').length }));
