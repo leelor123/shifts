@@ -194,6 +194,9 @@
   // (nothing more to download, no automatic breadcrumbs, page addresses, cookies or user details). infer_ip 'never'
   // keeps Sentry from storing the phone's IP address; no referrer, no credentials. Only the live app sends: local
   // runs and the QA suites never do (Errors._sentryForce turns it on for a test).
+  // key: the DSN's public client key. Sentry made it public by design (it can only send events to this project, it
+  // reads nothing), so it lives in the page like every browser SDK's DSN; not a secret.
+  // nosemgrep: generic-api-key
   const SENTRY = { host: 'o4512402257608704.ingest.de.sentry.io', project: '4512402298765392', key: 'd620d3f70e1cbf643edaadf3cd7859f6' };
   function sentryOn() {
     if (Errors._sentryForce) return true;
