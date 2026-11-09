@@ -68,4 +68,9 @@
         <item quantity="many">До зарплаты %1$s дней</item>
         <item quantity="other">До зарплаты %1$s дня</item>
     </plurals>
+    <!-- the phone's notification channels (NoteCenter): their names and lines in Settings › Notifications -->
+    <string name="w_ch_shifts">Напоминания о сменах</string>
+    <string name="w_ch_money">Зарплата, итоги и рекорды</string>
+    <string name="w_ch_shifts_d">До смены, после неё и забытый таймер</string>
+    <string name="w_ch_money_d">День зарплаты, итоги недели и месяца, рекорды и цели</string>
 </resources>

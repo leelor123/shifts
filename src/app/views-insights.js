@@ -43,18 +43,31 @@
             const rec = S.notifications.find((x) => x.id === n.dataset.n);
             if (!rec) return;
             if (!rec.read) { await Store.put('notifications', Object.assign({}, rec, { read: true })); redraw(); }
-            if (rec.ref && App.shift(rec.ref)) App.sheetsApi.shiftDetail(rec.ref);
-            else if (rec.ref && S.payslips.find((p) => p.id === rec.ref)) App.sheetsApi.payslip(rec.ref);
-            else if (rec.type === 'backup') App.doBackup(false);
-            else if (rec.type === 'workweek') { UI.closeTop(); setTimeout(() => App.sheetsApi.settingsSection('calc'), 320); }
-            else if (rec.type === 'plusend' && root.Plus) { UI.closeTop(); setTimeout(() => root.Plus.sheet(), 320); }
-            else if (rec.type === 'taxrefund') { UI.closeTop(); setTimeout(() => App.actions['tax-refund']({ dataset: { year: rec.data && rec.data.year } }), 320); }
-            else if (rec.type === 'payslipDue') { UI.closeTop(); setTimeout(() => App.actions['payslip-new'](), 320); }
-            else if (rec.type === 'monthly' && App.recap && rec.data && rec.data.pk) { UI.closeTop(); setTimeout(() => App.recap.open(rec.data.pk), 320); }
+            App.openNote(rec, true);
           }
         });
       },
     });
+  };
+
+  /** Where a notification leads: its shift, its payslip, the month's story, the backup... The same from the list of
+   *  notifications (inList: that list is open and closes first) and from a tap on the phone's notification, which opens
+   *  the app with ?action=note and what the record holds (core/noteplan.js noteUrl), maybe before the app has it. */
+  App.openNote = function (rec, inList) {
+    const later = (fn) => { if (inList) { UI.closeTop(); setTimeout(fn, 320); } else setTimeout(fn, 300); };
+    const data = rec.data || {};
+    if (rec.ref && App.shift(rec.ref)) App.sheetsApi.shiftDetail(rec.ref);
+    else if (rec.ref && S.payslips.find((p) => p.id === rec.ref)) App.sheetsApi.payslip(rec.ref);
+    else if (rec.type === 'backup') App.doBackup(false);
+    else if (rec.type === 'workweek') later(() => App.sheetsApi.settingsSection('calc'));
+    else if (rec.type === 'plusend' && root.Plus) later(() => root.Plus.sheet());
+    else if (rec.type === 'taxrefund') later(() => App.actions['tax-refund']({ dataset: { year: data.year } }));
+    else if (rec.type === 'payslipDue') later(() => App.actions['payslip-new']());
+    else if (rec.type === 'monthly' && App.recap && data.pk) later(() => App.recap.open(data.pk));
+    else if (!inList) later(() => App.actions.insights()); // a summary, a record, a goal: the list, where it is explained
+    // read: the record (when the app has it already) is marked as such
+    const known = S.notifications.find((x) => x.key === rec.key || x.id === rec.key);
+    if (!inList && known && !known.read) Store.put('notifications', Object.assign({}, known, { read: true })).catch(() => {});
   };
 
   App.actions['weekly-share'] = (el) => {

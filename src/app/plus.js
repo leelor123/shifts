@@ -503,12 +503,12 @@
   /** The gift changed (a friend joined through my link, or I was invited): the look and its end follow. */
   Plus.giftChanged = () => { watchTrial(); App.applyTheme(); if (!App.blocking) App.rerender(); };
   /** A day before the trial or the gift ends: a note and the phone's notification (App.runInsights), once. */
-  Plus.endAlert = () => {
+  Plus.endAlert = (at) => {
     if (owned() || sim()) return null;
     const trialUntil = Plus.inTrial() ? +S.meta.plusTrial.until : 0;
     const giftUntil = Plus.gifted() ? root.Invite.until() : 0;
     const until = Math.max(trialUntil, giftUntil);
-    const left = until - Date.now();
+    const left = until - (at || Date.now());
     if (!until || left > DAY || left < 3600000) return null;
     const gift = giftUntil >= trialUntil;
     return {

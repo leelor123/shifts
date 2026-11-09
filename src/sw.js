@@ -235,24 +235,25 @@ self.addEventListener('notificationclose', (e) => {
 self.addEventListener('notificationclick', (e) => {
   e.notification.close();
   if (e.notification.tag === RUN_TAG) { e.waitUntil(runClick(e)); return; }
-  const url = (e.notification.data && e.notification.data.url) || './';
+  // the notification's own place (its shift, its payslip, the month's story...) or the button's (core/noteplan.js look)
+  const d = e.notification.data || {};
+  const url = (e.action && d.acts && d.acts[e.action]) || d.url || './';
   e.waitUntil((async () => {
     const all = await self.clients.matchAll({ type: 'window', includeUncontrolled: true });
-    for (const c of all) { if ('focus' in c) { await c.focus(); return; } }
+    // the app is open: it goes there itself, without loading again (app/phone-notes.js)
+    for (const c of all) { if ('focus' in c) { try { await c.focus(); } catch (err) { /* ignore */ } c.postMessage({ type: 'shaati-open', url }); return; } }
     if (self.clients.openWindow) await self.clients.openWindow(url);
   })());
 });
 
-/* ---- background check (Chrome periodic background sync, installed PWA only) ---- */
+/* ---- background check (Chrome periodic background sync, an installed web app only) ----
+ * The app keeps the notifications of the coming days, already in words (app/phone-notes.js, core/noteplan.js), in the
+ * cache 'shiftpay-shown' (./__plan); this shows the ones whose time has come, each once (the list of shown ones is
+ * shared with the app: ./__shown). Inside the Android app the phone's own alarms show them (NoteCenter.java). */
 // what the worker says itself, in each language
 const WORDS = {
-  he: { offline: 'אין חיבור', timerT: 'שכחת לסיים משמרת?', timerB: 'הטיימר עדיין רץ. לחץ כדי לסיים או לתקן.', upT: 'משמרת מתקרבת', upB: 'מתחילה ב-{0}', eveB: 'מחר משמרת ב-{0}', cdT: 'עבדת במשמרת?', cdB: 'לחץ "עבדתי" כדי שהשכר ייכנס.' },
-  ar: { offline: 'لا يوجد اتصال', timerT: 'هل نسيت إنهاء الوردية؟', timerB: 'المؤقت ما زال يعمل. اضغط لإنهائه أو تصحيحه.', upT: 'وردية قريبة', upB: 'تبدأ الساعة {0}', eveB: 'غدًا وردية الساعة {0}', cdT: 'هل عملت في الوردية؟', cdB: 'اضغط "عملت" ليُحتسب الأجر.' },
-  ru: { offline: 'Нет подключения', timerT: 'Забыли закончить смену?', timerB: 'Таймер всё ещё идёт. Нажмите, чтобы завершить или исправить.', upT: 'Скоро смена', upB: 'Начало в {0}', eveB: 'Завтра смена в {0}', cdT: 'Вы отработали смену?', cdB: 'Нажмите «Я работал(а)», чтобы зарплата учлась.' },
-  en: { offline: 'No connection', timerT: 'Forgot to end your shift?', timerB: 'The timer is still running. Tap to end or fix it.', upT: 'Shift coming up', upB: 'Starts at {0}', eveB: 'Shift tomorrow at {0}', cdT: 'Did you work the shift?', cdB: 'Tap "I worked" so the pay comes in.' },
-  fr: { offline: 'Pas de connexion', timerT: 'Oublié de terminer le service ?', timerB: 'Le chrono tourne toujours. Touchez pour le terminer ou le corriger.', upT: 'Service bientôt', upB: 'Commence à {0}', eveB: 'Service demain à {0}', cdT: 'Avez-vous effectué le service ?', cdB: 'Touchez « J’ai travaillé » pour que le salaire soit compté.' },
-  es: { offline: 'Sin conexión', timerT: '¿Olvidaste terminar el turno?', timerB: 'El reloj sigue en marcha. Toca para terminarlo o corregirlo.', upT: 'Turno pronto', upB: 'Empieza a las {0}', eveB: 'Turno mañana a las {0}', cdT: '¿Trabajaste el turno?', cdB: 'Toca «Trabajé» para que entre el salario.' },
-  am: { offline: 'ግንኙነት የለም', timerT: 'ፈረቃውን መጨረስ ረሱ?', timerB: 'ሰዓት ቆጣሪው አሁንም እየሠራ ነው። ለመጨረስ ወይም ለማስተካከል ይጫኑ።', upT: 'ፈረቃ እየቀረበ ነው', upB: 'በ{0} ይጀምራል', eveB: 'ነገ ፈረቃ በ{0}', cdT: 'ፈረቃውን ሠርተዋል?', cdB: 'ክፍያው እንዲገባ «ሠርቻለሁ» የሚለውን ይጫኑ።' },
+  he: { offline: 'אין חיבור' }, ar: { offline: 'لا يوجد اتصال' }, ru: { offline: 'Нет подключения' }, en: { offline: 'No connection' },
+  fr: { offline: 'Pas de connexion' }, es: { offline: 'Sin conexión' }, am: { offline: 'ግንኙነት የለም' },
 };
 const T = (l) => WORDS[l] || WORDS.he;
 function readDb() {
@@ -263,10 +264,9 @@ function readDb() {
     req.onsuccess = () => {
       const db = req.result;
       try {
-        const t = db.transaction(['kv', 'shifts'], 'readonly');
+        const t = db.transaction(['kv'], 'readonly');
         const out = {};
         t.objectStore('kv').getAll().onsuccess = (ev) => { for (const x of ev.target.result) out[x.key] = x.value; };
-        t.objectStore('shifts').getAll().onsuccess = (ev) => { out.shifts = ev.target.result; };
         t.oncomplete = () => { db.close(); resolve(out); };
         t.onerror = () => { db.close(); resolve(null); };
       } catch (err) { db.close(); resolve(null); }
@@ -280,51 +280,29 @@ async function backgroundCheck() {
   // this data only when the app opens, so until then it stays
   if (d) { const A0 = (d.settings && d.settings.alerts) || {}; if (!d.activeShift || A0.runNote !== true || A0.push === false) await closeRunning(); }
   if (!d || !d.settings || !d.settings.alerts || d.settings.alerts.push === false) return;
-  const A = d.settings.alerts;
-  const types = A.types || {};
+  const R = d.settings.alerts.reminders || {};
   const now = Date.now();
-  const lang = await chosenLang(), w = T(lang);
-  const opt = (body, tag) => ({ body, tag, icon: 'icon-192.png', badge: 'badge-96.png', lang, dir: lang === 'he' || lang === 'ar' ? 'rtl' : 'ltr', data: { url: './#home' } });
-  const a = d.activeShift;
-  if (types.timer !== false && a && a.start && now - a.start > (A.timerHours || 12) * 3600000) {
-    await self.registration.showNotification(w.timerT, opt(w.timerB, 'timer-' + a.start));
-  }
-  // the reminders around a planned shift, as set in the app (the same tags as the app's, each shown once: the
-  // list of shown ones is shared with the app in the cache 'shiftpay-shown')
-  const R = A.reminders || {};
-  const shownC = await caches.open('shiftpay-shown');
-  const shownR = await shownC.match('./__shown');
+  const lang = await chosenLang();
+  const c = await caches.open('shiftpay-shown');
+  const planR = await c.match('./__plan');
+  const plan = planR ? await planR.json().catch(() => null) : null;
+  if (!plan || !Array.isArray(plan.notes)) return;
+  const shownR = await c.match('./__shown');
   const shown = shownR ? await shownR.json().catch(() => ({})) : {};
   let changed = false;
-  const show = async (title, body, tag) => {
-    if (shown[tag]) return;
-    const o = opt(body, tag);
-    if (R.sticky) o.requireInteraction = true;
-    if (R.silent) o.silent = true;
-    await self.registration.showNotification(title, o);
-    shown[tag] = now; changed = true;
-  };
-  const hm = (ms) => { const t = new Date(ms); return String(t.getHours()).padStart(2, '0') + ':' + String(t.getMinutes()).padStart(2, '0'); };
-  const offs = (Array.isArray(R.before) && R.before.length ? R.before : [A.upcomingMin || 60]).map(Number).filter((x) => x > 0).sort((x, y) => x - y);
-  for (const s of d.shifts || []) {
-    if (s.status !== 'planned' || s.deleted) continue;
-    const mins = (s.start - now) / 60000;
-    if (A.remindPlanned === true && types.upcoming !== false && mins > 0) { // off unless switched on (few notifications)
-      const off = offs.find((o) => mins <= o);
-      if (off != null) await show(w.upT, w.upB.replace('{0}', hm(s.start)), 'up-' + s.id + '-' + off);
-      if (R.eveOn && /^\d{1,2}:\d{2}$/.test(R.eve || '')) {
-        const e0 = new Date(s.start); e0.setDate(e0.getDate() - 1);
-        const [h, m] = R.eve.split(':').map(Number); e0.setHours(h, m, 0, 0);
-        if (now >= e0.getTime() && mins > 60 && s.start - e0.getTime() > 2 * 3600000) await show(w.upT, w.eveB.replace('{0}', hm(s.start)), 'eve-' + s.id);
-      }
-    }
-    // after it: did you work it? (it is not in the pay until confirmed)
-    const ca = +R.confirmAfter || 0;
-    if (types.confirmDone !== false && ca > 0 && s.end + ca * 60000 <= now && now - s.end < 3 * 86400000) await show(w.cdT, w.cdB, 'cd-' + s.id);
+  for (const n of plan.notes) {
+    if (!n || !n.tag || shown[n.tag] || !(n.at <= now) || (n.until && n.until < now)) continue;
+    const acts = {};
+    for (const x of n.acts || []) acts[x.id] = x.url;
+    const o = { body: n.body, tag: n.tag, icon: 'icon-192.png', badge: 'badge-96.png', lang, dir: lang === 'he' || lang === 'ar' ? 'rtl' : 'ltr',
+      timestamp: n.when || n.at, data: { url: n.url || './#home', acts }, actions: (n.acts || []).slice(0, 2).map((x) => ({ action: x.id, title: x.title })) };
+    if (n.ch === 'shifts') { if (R.sticky) o.requireInteraction = true; if (R.silent) o.silent = true; }
+    await self.registration.showNotification(n.title, o);
+    shown[n.tag] = now; changed = true;
   }
   if (changed) {
     for (const k of Object.keys(shown)) if (now - shown[k] > 7 * 86400000) delete shown[k];
-    await shownC.put('./__shown', new Response(JSON.stringify(shown), { headers: { 'Content-Type': 'application/json' } }));
+    await c.put('./__shown', new Response(JSON.stringify(shown), { headers: { 'Content-Type': 'application/json' } }));
   }
 }
 self.addEventListener('periodicsync', (e) => { if (e.tag === 'shiftpay-check') e.waitUntil(backgroundCheck()); });

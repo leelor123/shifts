@@ -69,4 +69,9 @@
         <item quantity="many">עוד %1$s ימים למשכורת</item>
         <item quantity="other">עוד %1$s ימים למשכורת</item>
     </plurals>
+    <!-- the phone's notification channels (NoteCenter): their names and lines in Settings › Notifications -->
+    <string name="w_ch_shifts">תזכורות משמרת</string>
+    <string name="w_ch_money">כסף, סיכומים ושיאים</string>
+    <string name="w_ch_shifts_d">לפני משמרת, אחריה, וטיימר שנשאר פועל</string>
+    <string name="w_ch_money_d">יום המשכורת, הסיכום השבועי והחודשי, שיאים ויעדים</string>
 </resources>

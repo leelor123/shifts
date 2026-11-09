@@ -70,4 +70,9 @@
         <item quantity="many">%1$s يومًا حتى الراتب</item>
         <item quantity="other">%1$s يوم حتى الراتب</item>
     </plurals>
+    <!-- the phone's notification channels (NoteCenter): their names and lines in Settings › Notifications -->
+    <string name="w_ch_shifts">تذكيرات الورديات</string>
+    <string name="w_ch_money">الأجر والملخصات والأرقام القياسية</string>
+    <string name="w_ch_shifts_d">قبل الوردية وبعدها، ومؤقت ما زال يعمل</string>
+    <string name="w_ch_money_d">يوم الراتب، الملخص الأسبوعي والشهري، الأرقام القياسية والأهداف</string>
 </resources>

@@ -215,5 +215,5 @@ T.test('the code lock: guards in the code', () => {
   T.ok(set.split('App.checkPin()').length - 1 >= 3, 'turning the lock off, changing the code and the fingerprint ask for the code');
   T.ok(app.includes('App.checkPin = async function') && app.slice(app.indexOf('App.checkPin = async')).includes('pinWaitUntil'), 'the check counts wrong codes like the lock screen');
   T.ok(ui.includes("const locked = !!lock && !lock.classList.contains('out')"), 'while locked, every other layer is inert');
-  T.ok(app.includes('if (action) App.afterUnlock('), 'a shortcut waits for the code');
+  T.ok(app.includes('if (action) App.doAction(action);') && /App\.doAction = function \(action\) \{\s*App\.afterUnlock\(/.test(app), 'a shortcut (and a tap on a notification) waits for the code');
 });

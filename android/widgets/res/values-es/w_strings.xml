@@ -67,4 +67,9 @@
         <item quantity="many">%1$s días para el día de pago</item>
         <item quantity="other">%1$s días para el día de pago</item>
     </plurals>
+    <!-- the phone's notification channels (NoteCenter): their names and lines in Settings › Notifications -->
+    <string name="w_ch_shifts">Recordatorios de turno</string>
+    <string name="w_ch_money">Sueldo, resúmenes y récords</string>
+    <string name="w_ch_shifts_d">Antes de un turno, después, y un reloj que sigue en marcha</string>
+    <string name="w_ch_money_d">Día de pago, el resumen semanal y mensual, récords y metas</string>
 </resources>

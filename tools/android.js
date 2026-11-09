@@ -190,6 +190,9 @@ function patchLauncher() {
                 androidx.browser.customtabs.CustomTabsSession s = widgetSession();
                 int sent = s == null ? -1 : s.postMessage("shaati:widgets", null);
                 android.util.Log.i("ShaatiWidgets", "channel ready; hello sent: " + sent);
+                // this app shows the notifications itself, at their time, also while closed (NoteCenter): the page
+                // sends it the list of the coming days and the ones of now (src/app/phone-notes.js)
+                if (s != null) s.postMessage("shaati:notes", null);
                 sendTaps(s);
             }
 
@@ -198,6 +201,7 @@ function patchLauncher() {
                 if (inner != null) inner.onPostMessage(message, extras);
                 // back to the front, the page asks for the starts and ends tapped on a widget meanwhile
                 if ("ask".equals(message)) { sendTaps(widgetSession()); return; }
+                if (NoteCenter.isNotes(message)) { NoteCenter.receive(getApplicationContext(), message); return; }
                 android.util.Log.i("ShaatiWidgets", "numbers received (" + (message == null ? 0 : message.length()) + " chars)");
                 WidgetData.save(getApplicationContext(), message);
             }
@@ -281,13 +285,25 @@ function patchWidgets() {
             <intent-filter><action android:name="android.appwidget.action.APPWIDGET_UPDATE" /></intent-filter>
             <meta-data android:name="android.appwidget.provider" android:resource="@xml/w_${key}_info" />
         </receiver>\n`;
+  if (!m.includes('<application')) throw new Error('AndroidManifest.xml template changed: application');
+  m = m.replace('<application', '<uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />\n    <application');
   m = m.replace('</application>', `        <!-- Shaati: the message channel the widgets' numbers come through, and the widgets -->
         <service android:name="androidx.browser.customtabs.PostMessageService" android:exported="true" />
         <!-- choosing a widget's look: the launcher opens it when a widget is added, and from the widget's settings -->
         <activity android:name=".WidgetStyleActivity" android:exported="true" android:theme="@style/WidgetPickTheme" android:excludeFromRecents="true" android:taskAffinity="">
             <intent-filter><action android:name="android.appwidget.action.APPWIDGET_CONFIGURE" /></intent-filter>
         </activity>
-${receiver('ShiftWidget', 'shift')}${receiver('MonthWidget', 'month')}${receiver('GoalWidget', 'goal')}${receiver('PaydayWidget', 'payday')}${receiver('ComboWidget', 'combo')}        <!-- the quick-settings tile: start or end a shift from the panel at the top of the screen (ShiftTile) -->
+${receiver('ShiftWidget', 'shift')}${receiver('MonthWidget', 'month')}${receiver('GoalWidget', 'goal')}${receiver('PaydayWidget', 'payday')}${receiver('ComboWidget', 'combo')}        <!-- the notifications at their time, also while the app is closed (NoteCenter): the alarm, and after a restart,
+             an update or a new clock the alarms are set again -->
+        <receiver android:name=".NoteAlarm" android:exported="true">
+            <intent-filter>
+                <action android:name="android.intent.action.BOOT_COMPLETED" />
+                <action android:name="android.intent.action.MY_PACKAGE_REPLACED" />
+                <action android:name="android.intent.action.TIME_SET" />
+                <action android:name="android.intent.action.TIMEZONE_CHANGED" />
+            </intent-filter>
+        </receiver>
+        <!-- the quick-settings tile: start or end a shift from the panel at the top of the screen (ShiftTile) -->
         <service android:name=".ShiftTile" android:exported="true" android:label="@string/w_tile_name" android:icon="@drawable/w_ic_play" android:permission="android.permission.BIND_QUICK_SETTINGS_TILE">
             <intent-filter><action android:name="android.service.quicksettings.action.QS_TILE" /></intent-filter>
         </service>

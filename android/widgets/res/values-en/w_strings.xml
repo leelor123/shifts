@@ -66,4 +66,9 @@
         <item quantity="one">%1$s day to payday</item>
         <item quantity="other">%1$s days to payday</item>
     </plurals>
+    <!-- the phone's notification channels (NoteCenter): their names and lines in Settings › Notifications -->
+    <string name="w_ch_shifts">Shift reminders</string>
+    <string name="w_ch_money">Pay, summaries and records</string>
+    <string name="w_ch_shifts_d">Before a shift, after it, and a timer left running</string>
+    <string name="w_ch_money_d">Payday, the weekly and monthly summary, records and goals</string>
 </resources>

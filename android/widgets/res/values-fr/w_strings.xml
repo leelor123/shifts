@@ -67,4 +67,9 @@
         <item quantity="many">%1$s jours avant la paie</item>
         <item quantity="other">%1$s jours avant la paie</item>
     </plurals>
+    <!-- the phone's notification channels (NoteCenter): their names and lines in Settings › Notifications -->
+    <string name="w_ch_shifts">Rappels de service</string>
+    <string name="w_ch_money">Salaire, bilans et records</string>
+    <string name="w_ch_shifts_d">Avant un service, après, et un chrono resté allumé</string>
+    <string name="w_ch_money_d">Jour de paie, bilan de la semaine et du mois, records et objectifs</string>
 </resources>

@@ -66,4 +66,9 @@
         <item quantity="one">%1$s ቀን እስከ ደመወዝ ቀን</item>
         <item quantity="other">%1$s ቀናት እስከ ደመወዝ ቀን</item>
     </plurals>
+    <!-- the phone's notification channels (NoteCenter): their names and lines in Settings › Notifications -->
+    <string name="w_ch_shifts">የፈረቃ ማስታወሻዎች</string>
+    <string name="w_ch_money">ክፍያ፣ ማጠቃለያዎች እና ሪከርዶች</string>
+    <string name="w_ch_shifts_d">ከፈረቃ በፊት፣ በኋላ፣ እና የቀረ ሰዓት ቆጣሪ</string>
+    <string name="w_ch_money_d">የደመወዝ ቀን፣ ሳምንታዊና ወርሃዊ ማጠቃለያ፣ ሪከርዶችና ግቦች</string>
 </resources>

@@ -128,6 +128,8 @@
   }
   function fromPhone(data) {
     if (data === 'refresh' || data === 'shaati:widgets') { send(true); return; }
+    // this Android app shows the notifications itself, at their time, also while the app is closed (app/phone-notes.js)
+    if (data === 'shaati:notes') { if (App.phoneNotes) App.phoneNotes.hello(); return; }
     if (typeof data !== 'string' || data.charAt(0) !== '{') return;
     let m = null;
     try { m = JSON.parse(data); } catch (e) { return; }
@@ -151,6 +153,8 @@
     push() { if (!port) return; clearTimeout(timer); timer = setTimeout(() => send(false), 700); },
     send,
     applyTaps,
+    /** A message of its own for the Android app (the notifications' list, app/phone-notes.js). */
+    post(text) { if (!port) return false; try { port.postMessage(text); return true; } catch (e) { port = null; return false; } },
     get connected() { return !!port; },
   };
 

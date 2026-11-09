@@ -638,25 +638,42 @@
     try { await Notification.requestPermission(); } catch (e) { /* ignore */ }
   };
   App.pushNote = (n) => push(n); // youth-guard.js: a reminder while a shift runs
+  /** How a notification looks on the phone (core/noteplan.js look): the same here, in the worker and in the Android app. */
+  App.noteLook = (n, at) => (root.NotePlan ? root.NotePlan.look(n, App.model, { now: at || Date.now(), roleName: App.roleName, hideMoney: !!S.settings.hideMoney })
+    : { title: n.title, body: n.body, sub: '', ch: 'money', url: './#home', acts: [], when: 0 });
   async function push(n) {
-    if (!S.settings.alerts.push || !('Notification' in window) || Notification.permission !== 'granted') return;
+    if (!S.settings.alerts.push) return;
     try {
-      const reg = await navigator.serviceWorker.getRegistration();
-      const opt = { body: n.body, tag: n.key, icon: 'icon-192.png', badge: 'badge-96.png', lang: U.LANG, dir: U.RTL ? 'rtl' : 'ltr', data: { url: './#home' } };
       // the shift reminders as the user set them: staying until closed, or silent
       const R = S.settings.alerts.reminders || {};
       const shiftNote = n.type === 'upcoming' || n.type === 'confirmDone';
+      // the offline worker may have shown this one already from the plan, while the app was closed: once is enough
+      if (await App.shownNote(n.key)) return;
+      const look = App.noteLook(n);
+      // inside the Android app, the app shows it itself (NoteCenter), as it shows the ones planned ahead while closed:
+      // one look for all of them, and it never shows one twice
+      if (App.phoneNotes && await App.phoneNotes.ready()) {
+        App.phoneNotes.show(n, look);
+        App.shownNote(n.key, true);
+        return;
+      }
+      if (!('Notification' in window) || Notification.permission !== 'granted') return;
+      const reg = await navigator.serviceWorker.getRegistration();
+      const acts = {};
+      for (const x of look.acts) acts[x.id] = x.url;
+      const opt = { body: look.body, tag: n.key, icon: 'icon-192.png', badge: 'badge-96.png', lang: U.LANG, dir: U.RTL ? 'rtl' : 'ltr',
+        timestamp: look.when || Date.now(), data: { url: look.url, acts },
+        // the buttons (two at most on a phone): starting the timer, confirming the shift, the payslip...
+        actions: look.acts.slice(0, 2).map((x) => ({ action: x.id, title: x.title })) };
       if (shiftNote) {
         if (R.sticky) opt.requireInteraction = true;
         if (R.silent) opt.silent = true;
-        // the offline worker may have shown this one already, while the app was closed: once is enough
-        if (await App.shownNote(n.key)) return;
       }
-      if (reg) await reg.showNotification(n.title, opt); else new Notification(n.title, opt);
-      if (shiftNote) App.shownNote(n.key, true);
+      if (reg) await reg.showNotification(look.title, opt); else { delete opt.actions; new Notification(look.title, opt); }
+      App.shownNote(n.key, true);
     } catch (e) { console.warn(e); }
   }
-  /** The shift reminders shown, shared with the offline worker (sw.js reads and writes the same list). */
+  /** The notifications shown, shared with the offline worker (sw.js reads and writes the same list). */
   App.shownNote = async function (tag, mark) {
     try {
       const c = await caches.open('shiftpay-shown');
@@ -682,10 +699,10 @@
   // the reminder before a planned shift is off unless switched on
   const notifiable = (a) => kindSent(a) && (a.type === 'upcoming' ? S.settings.alerts.remindPlanned === true : S.settings.alerts.types[a.type] !== false);
   /** The monthly summary: once a pay period is over, its story is ready (it opens the month's recap). */
-  function monthlyAlert() {
+  function monthlyAlert(now) {
     const emp = S.employers[0];
     if (!emp) return null;
-    const cur = Engine.periodOf(U.todayKey(), emp);
+    const cur = Engine.periodOf(now ? U.epochKey(now) : U.todayKey(), emp);
     const last = Engine.periodOf(U.addDays(cur.from, -1), emp);
     const t = Engine.rangeSummary(App.model, last.from, last.to);
     if (!t || !t.shifts) return null;
@@ -695,13 +712,22 @@
       body: `${t.shifts === 1 ? 'משמרת אחת' : `${t.shifts} משמרות`} · ${U.num(t.hours, 1)} שעות · ${U.money(t.gross, 0)} ברוטו. לחצו לסיפור של החודש.`,
     };
   }
-  const insightsNow = () => Insights.run(App.model, {
-    now: Date.now(), activeShift: S.activeShift, payslips: S.payslips, gaps: S.gaps,
+  const insightsNow = (at) => Insights.run(App.model, {
+    now: at || Date.now(), activeShift: S.activeShift, payslips: S.payslips, gaps: S.gaps,
     // with cloud sync the data is already safe; the backup reminder only applies to local-only use
     lastBackup: S.meta.cloudUid ? Date.now() : S.settings.backup.lastBackup, roleName: App.roleName,
     // how long this person's shifts usually last: the "forgot to end it?" reminder comes sooner for short shifts
     usualShiftMs: S.activeShift ? App.usualShiftMs(S.activeShift.roleId) : 0,
   });
+  /** The alerts the app sends at a moment (0: now), as runInsights sends them; the plan of the days ahead
+   *  (app/phone-notes.js, core/noteplan.js) asks the same at the moments to come, so both say the same. */
+  function wantedAt(at, res) {
+    res = res || insightsNow(at);
+    const month = monthlyAlert(at);
+    const plusEnd = root.Plus && root.Plus.endAlert ? root.Plus.endAlert(at) : null; // the trial or the gift ends tomorrow
+    return res.alerts.filter(notifiable).concat(month && notifiable(month) ? [month] : []).concat(plusEnd && notifiable(plusEnd) ? [plusEnd] : []);
+  }
+  App.alertsAt = (at) => (App.model && S.settings.onboarded && S.settings.alerts.push ? wantedAt(at) : []);
   // one run at a time (a timer, the 5-minute check and a pull-to-refresh at once): two runs both found the same new
   // alert and showed the phone's notification for it twice. A call during a run runs once more after it.
   let insightsRun = null, insightsAgain = false;
@@ -714,13 +740,11 @@
     if (!App.model || !S.settings.onboarded) return;
     const res = insightsNow();
     App.insights = res;
-    const month = monthlyAlert();
     const refund = App.taxRefundAlert ? App.taxRefundAlert() : null; // a past year that looks like it holds a refund
-    const plusEnd = root.Plus && root.Plus.endAlert ? root.Plus.endAlert() : null; // the trial or the gift ends tomorrow
     // that year's alert already there: its amount kept current, read or not (it is never sent twice)
     const stale = refund && S.notifications.find((n) => n.key === refund.key && (n.title !== refund.title || n.body !== refund.body));
     if (stale) await Store.apply([{ store: 'notifications', put: Object.assign({}, stale, { title: refund.title, body: refund.body }) }], null);
-    const wanted = res.alerts.filter(notifiable).concat(month && notifiable(month) ? [month] : []).concat(refund && notifiable(refund) ? [refund] : []).concat(plusEnd && notifiable(plusEnd) ? [plusEnd] : []);
+    const wanted = wantedAt(0, res).concat(refund && notifiable(refund) ? [refund] : []);
     // notifications of the kinds that are no longer sent go from the list too (once)
     const gone = S.notifications.filter((n) => !kindSent(n));
     if (gone.length) await Store.apply(gone.map((n) => ({ store: 'notifications', del: n.id })), null);
@@ -967,6 +991,8 @@
     try { if (params.get('source') === 'twa' || document.referrer.startsWith('android-app://')) sessionStorage.setItem('androidApp', '1'); } catch (e) { /* ignore */ }
     try { App.androidApp = sessionStorage.getItem('androidApp') === '1'; } catch (e) { App.androidApp = false; }
     App.pendingAction = params.get('action');
+    // a tap on the phone's notification: what it is about (core/noteplan.js noteUrl)
+    App.pendingNote = App.pendingAction === 'note' ? { type: params.get('type') || '', key: params.get('key') || '', ref: params.get('ref') || '', data: { pk: params.get('pk') || '', year: params.get('year') || '' } } : null;
     App.pendingTag = root.Nfc ? root.Nfc.readOpen(location.search) : null; // ?action=nfc&tag=… (a touch on an NFC sticker)
     if (App.pendingAction) history.replaceState(null, '', location.pathname + location.hash);
 
@@ -1054,6 +1080,22 @@
     }
     firstScreen();
   };
+  /** What an address's ?action= asks (a shortcut, a widget, the NFC sticker, a tap on a notification): done once the
+   *  code lock is open. Also from a tap on a notification while the app is open (app/phone-notes.js). */
+  App.doAction = function (action) {
+    App.afterUnlock(() => {
+      if (action === 'start' && !S.activeShift) UI.confirm('התחל משמרת', '', 'התחלה').then((ok) => { if (ok && !S.activeShift) App.actions['timer-start'](); });
+      if (action === 'stop' && S.activeShift) UI.confirm('סיום משמרת', '', 'סיום').then((ok) => { if (ok && S.activeShift) App.stopShift(); });
+      if (action === 'note' && App.openNote) App.openNote(App.pendingNote || {}); // a tap on the phone's notification (core/noteplan.js noteUrl)
+      if (action === 'nfc' && App.nfcOpen) App.nfcOpen(App.pendingTag || ''); // a touch on the NFC sticker at work (app/nfc.js): starts or ends a shift
+      if (action === 'add') App.sheetsApi.shiftEditor();
+      if (action === 'schedule' && App.importSchedule) App.importSchedule(); // the app icon's shortcut
+      if (action === 'share-in' && App.receiveShare) App.receiveShare(); // shared to the app (sw.js)
+      if (action === 'support' && App.actions.support) setTimeout(() => App.actions.support(), 300); // Play testers' feedback link
+      if (action === 'plus' && root.Plus) setTimeout(() => root.Plus.sheet(), 600); // back from the web checkout (?action=plus): straight to the code field
+      if (action === 'tax-refund' && App.actions['tax-refund']) setTimeout(() => App.actions['tax-refund']({ dataset: {} }), 600); // the website's tax refund page
+    });
+  };
   let quickFirst = false;
   /** The first screen of a signed-in user, and what starts with it. */
   function firstScreen() {
@@ -1068,17 +1110,7 @@
     // the widget's start and end buttons open these links, but so could any other site: the shift changes only
     // after one tap here (a link once ended a running shift with no question; security scan, 1 Nov 2026)
     // with the code lock up, the shortcut waits for the code (the shift editor once opened under the lock)
-    if (action) App.afterUnlock(() => {
-      if (action === 'start' && !S.activeShift) UI.confirm('התחל משמרת', '', 'התחלה').then((ok) => { if (ok && !S.activeShift) App.actions['timer-start'](); });
-      if (action === 'stop' && S.activeShift) UI.confirm('סיום משמרת', '', 'סיום').then((ok) => { if (ok && S.activeShift) App.stopShift(); });
-      if (action === 'nfc' && App.nfcOpen) App.nfcOpen(App.pendingTag || ''); // a touch on the NFC sticker at work (app/nfc.js): starts or ends a shift
-      if (action === 'add') App.sheetsApi.shiftEditor();
-      if (action === 'schedule' && App.importSchedule) App.importSchedule(); // the app icon's shortcut
-      if (action === 'share-in' && App.receiveShare) App.receiveShare(); // shared to the app (sw.js)
-      if (action === 'support' && App.actions.support) setTimeout(() => App.actions.support(), 300); // Play testers' feedback link
-      if (action === 'plus' && root.Plus) setTimeout(() => root.Plus.sheet(), 600); // back from the web checkout (?action=plus): straight to the code field
-      if (action === 'tax-refund' && App.actions['tax-refund']) setTimeout(() => App.actions['tax-refund']({ dataset: {} }), 600); // the website's tax refund page
-    });
+    if (action) App.doAction(action);
     setTimeout(() => { App.runInsights(); App.autoBackupCheck(); }, 1200);
     // is Shaati Plus for sale here, and owned? (Google Play, Android app only) The opening show does not wait for
     // the answer: the design in use is kept on the phone (meta.plus), so the first screen already has it, and the
