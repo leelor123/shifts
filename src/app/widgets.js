@@ -166,7 +166,13 @@
   const fromApp = (e) => e.origin === 'android-app://' + location.host || e.origin === location.origin;
   root.addEventListener('message', (e) => {
     if (!fromApp(e) || (e.data !== '' && e.data !== 'shaati:widgets') || !e.ports || !e.ports[0]) return;
-    port = e.ports[0];
+    take(e.ports[0]);
+  });
+  // the port came before this code ran (index.html keeps it): a port's messages wait until onmessage is set, so the
+  // Android app's hello is still there
+  function take(p) {
+    if (root.__appPort === p) root.__appPort = null;
+    port = p;
     last = '';
     // this Android app has widgets: say so once
     if (!Store.S.meta.widgetsTip) {
@@ -175,7 +181,8 @@
     }
     try { port.onmessage = (m) => fromPhone(m.data); } catch (err) { /* ignore */ }
     send(true);
-  });
+  }
+  if (root.__appPort) whenReady(() => { if (root.__appPort) take(root.__appPort); });
   // the phone was wiped (signing out, deleting the account): the page reloads right after, so the widgets hear it
   // now, not in 0.7 s
   Store.on((ev) => { if (ev && ev.type === 'restore' && noData()) send(true); else App.widgets.push(); });

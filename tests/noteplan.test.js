@@ -126,6 +126,13 @@ T.test('the Android app shows them itself: hello, the list and each one now, ove
   const app = read('src/app/app.js');
   T.ok(/App\.phoneNotes && await App\.phoneNotes\.ready\(\)/.test(app), 'push(): inside the Android app the app shows it, not Chrome');
 });
+T.test('the channel\'s port is kept from the first moment: Chrome hands it over before the app\'s code file runs', () => {
+  const html = read('src/index.html');
+  const w = read('src/app/widgets.js');
+  const head = html.slice(0, html.indexOf('</head>'));
+  T.ok(head.includes("addEventListener('message'") && head.includes('window.__appPort=e.ports[0]'), 'index.html keeps the port in its head');
+  T.ok(w.includes('if (root.__appPort) whenReady(') && w.includes('function take(p)'), 'widgets.js takes a port that came early');
+});
 T.test('in a browser the worker shows the kept list (no second set of words in sw.js)', () => {
   const sw = read('src/sw.js');
   T.ok(sw.includes("c.match('./__plan')") && sw.includes("self.addEventListener('periodicsync'"));
