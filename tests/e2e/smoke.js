@@ -195,8 +195,8 @@ let errors = [];
       window.postMessage('', location.origin, [ch.port2]); // as Chrome hands the page its end of the channel
       await new Promise((r) => setTimeout(r, 300));
       ch.port1.postMessage('shaati:notes');
-      for (let i = 0; i < 40 && !msgs.some((m) => typeof m === 'string' && m.startsWith('{"notes"')); i++) await new Promise((r) => setTimeout(r, 250));
-      const m = msgs.find((x) => typeof x === 'string' && x.startsWith('{"notes"'));
+      for (let i = 0; i < 40 && !msgs.some((m) => typeof m === 'string' && m.startsWith('{"notes"') && m.includes('"plan"')); i++) await new Promise((r) => setTimeout(r, 250));
+      const m = msgs.find((x) => typeof x === 'string' && x.startsWith('{"notes"') && x.includes('"plan"'));
       await Store.apply([{ store: 'shifts', del: 'e2e-plan' }], null);
       await Store.setSettings((st) => { st.alerts.remindPlanned = false; });
       return m ? JSON.parse(m) : null;
