@@ -398,6 +398,7 @@
       await Store.applyRemote(ops);
       if (R.settings && (mode === 'cloud' || R.settings.u > (S.settings._updatedAt || 0))) await Store.applyRemoteSettings(JSON.parse(R.settings.j), LOCAL_ONLY_SETTINGS);
       else await Store.setMeta({ settingsDirty: true });
+      await Store.flushMem(); // what this phone remembered from before 1.36.4 (answers, "seen"), now with the account's
       if (R.active && (mode === 'cloud' || R.active.u > (S.meta.activeUpdatedAt || 0))) await Store.applyRemoteActive(R.active.j ? JSON.parse(R.active.j) : null, R.active.u);
     }
     return mode;
@@ -488,7 +489,10 @@
     unsubs.push(fs.onSnapshot(fs.doc(db, 'users', uid, 'kv', 'settings'), (d) => {
       if (!d.exists() || d.metadata.hasPendingWrites) return;
       const v = d.data();
-      if (v.u > (S.settings._updatedAt || 0)) Store.applyRemoteSettings(JSON.parse(v.j), LOCAL_ONLY_SETTINGS);
+      // the account's settings heard from the server: what this phone alone remembered goes up after them (Store.flushMem)
+      const after = () => (d.metadata.fromCache ? null : Store.flushMem().then((up) => { if (up) Cloud.schedulePush(1500); }));
+      if (v.u > (S.settings._updatedAt || 0)) Store.applyRemoteSettings(JSON.parse(v.j), LOCAL_ONLY_SETTINGS).then(after).catch(() => {});
+      else after();
     }, onErr));
     unsubs.push(fs.onSnapshot(fs.doc(db, 'users', uid, 'kv', 'active'), (d) => {
       if (!d.exists() || d.metadata.hasPendingWrites) return;
@@ -600,7 +604,7 @@
     if (!Cloud.user || !Cloud.connected) return;
     if (ev.remote) return;
     if (ev.type === 'restore') { Cloud.afterRestore(ev.mode); return; }
-    if (ev.type === 'data' || ev.type === 'settings' || ev.type === 'active') Cloud.schedulePush(ev.type === 'active' ? 200 : 1500);
+    if (ev.type === 'data' || ev.type === 'settings' || ev.type === 'mem' || ev.type === 'active') Cloud.schedulePush(ev.type === 'active' ? 200 : 1500);
   });
   window.addEventListener('online', () => {
     if (!Cloud.user || !Cloud.connected) return;

@@ -181,8 +181,16 @@
     const sum = Engine.periodSummary(App.model, due.key, emp.id);
     if (!(sum.gross > 0)) return '';
     App.celebrateOnce('payday-' + today, () => root.Fx.celebrate('money'));
+    // the payslip already in (here or on another phone): the card no longer asks for it, it opens its check
+    const slip = root.Insights.slipFor(S.payslips, due.key, emp);
+    const amounts = `על ${esc(due.label)} מגיעים לך <span class="money-glue">כ-<b>${money(sum.net.net, 0)}</b></span> ${sum.net.minor ? '' : 'נטו '}<span class="money-glue">(${money(sum.gross, 0)} ברוטו)</span>.`;
+    if (slip) {
+      return `<div class="card payday"><div class="pd-title"><span class="pd-emoji" aria-hidden="true">💸</span> היום יום משכורת!</div>
+      <div class="pd-text">${amounts} התלוש כבר שמור אצלך.</div>
+      <div class="pd-acts"><button class="btn quiet" data-act="payslip-open" data-id="${esc(slip.id)}">${icon('file', 's')} לבדיקת התלוש</button></div></div>`;
+    }
     return `<div class="card payday"><div class="pd-title"><span class="pd-emoji" aria-hidden="true">💸</span> היום יום משכורת!</div>
-      <div class="pd-text">על ${esc(due.label)} מגיעים לך <span class="money-glue">כ-<b>${money(sum.net.net, 0)}</b></span> ${sum.net.minor ? '' : 'נטו '}<span class="money-glue">(${money(sum.gross, 0)} ברוטו)</span>. כשהתלוש מגיע, כדאי לבדוק שהוא תואם.</div>
+      <div class="pd-text">${amounts} כשהתלוש מגיע, כדאי לבדוק שהוא תואם.</div>
       <div class="pd-acts"><button class="btn go" data-act="payslip-new">${icon('file', 's')} בדיקת תלוש</button><button class="btn quiet" data-act="hours-check">${icon('table', 's')} בדיקת דוח נוכחות</button></div></div>`;
   }
 

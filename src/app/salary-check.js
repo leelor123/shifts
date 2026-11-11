@@ -3,8 +3,10 @@
  * From pay day at noon (the first employer's payDay, Engine.periodOf), once: "המשכורת של <month> נכנסה? צפי: ₪X נטו",
  * with "כן, בדיוק", "סכום אחר" (a number) and "עוד לא" (asked again the next day, for a week at most;
  * Moments.salaryState). A different amount shows the gap and a way to the payslip check, until it is closed.
- * The answers stay on this phone, in meta.salaryAns by pay period ({ a, d, amt, exp, raw, closed }; raw: the estimate before the
- * learned correction). From two answers on, the net estimate learns from them (core/netlearn.js, App.netLearned).
+ * The answers are kept in meta.salaryAns by pay period ({ a, d, amt, exp, raw, closed, at, pd, nots }; raw: the estimate before
+ * the learned correction) and go with the account to its other phones (store.js ACCOUNT_META), so no phone asks again.
+ * From two answers on, the net estimate learns from them (core/netlearn.js, App.netLearned), and the card comes on the day
+ * the salary usually arrives (Moments.salaryLag). With the period's payslip in, nothing is asked: the salary came.
  * ============================================================ */
 (function (root) {
   'use strict';
@@ -18,13 +20,17 @@
     const emp = S.employers && S.employers[0], M = root.Moments;
     if (!emp || !M || !App.model || S.settings.demo) return null;
     const today = U.todayKey(), hour = new Date().getHours();
-    const cur = Engine.periodOf(today, emp);
-    const P = [Engine.periodOf(U.addDays(cur.from, -1), emp), cur].find((x) => x.payDate <= today && today <= U.addDays(x.payDate, M.ASK_DAYS));
-    if (!P) return null;
     const all = S.meta.salaryAns && typeof S.meta.salaryAns === 'object' ? S.meta.salaryAns : {};
+    // the day this salary usually arrives, learned from the answers ("not yet" on pay day, "yes" three days later)
+    const lag = M.salaryLag ? M.salaryLag(all) : 0;
+    const cur = Engine.periodOf(today, emp);
+    const P = [Engine.periodOf(U.addDays(cur.from, -1), emp), cur].find((x) => x.payDate <= today && today <= U.addDays(x.payDate, M.ASK_DAYS + lag));
+    if (!P) return null;
     const raw = all[P.key];
-    const ans = raw && typeof raw === 'object' ? { a: String(raw.a), d: String(raw.d || ''), amt: +raw.amt || 0, exp: +raw.exp || 0, closed: !!raw.closed } : null;
-    const state = M.salaryState(ans, P.payDate, today, hour);
+    const ans = raw && typeof raw === 'object' ? { a: String(raw.a), d: String(raw.d || ''), amt: +raw.amt || 0, exp: +raw.exp || 0, closed: !!raw.closed, nots: +raw.nots || 0 } : null;
+    // the period's payslip is in (here or on another phone): the salary came, nothing to ask
+    const hasSlip = !!(root.Insights && root.Insights.slipFor(S.payslips, P.key, emp));
+    const state = M.salaryState(ans, P.payDate, today, hour, { lag, hasSlip });
     if (!state) return null;
     const sum = Engine.periodSummary(App.model, P.key, emp.id);
     if (!(sum.gross > 0)) return null;
@@ -33,7 +39,10 @@
   }
   async function save(key, patch) {
     const all = Object.assign({}, S.meta.salaryAns);
-    all[key] = Object.assign({}, all[key], patch);
+    // at: when it was answered (two phones' answers join by it, store.js mergeMem); pd: the pay date, so the usual day
+    // the salary arrives can be learned (Moments.salaryLag)
+    const P = Engine.periodByKey(key, S.employers[0]);
+    all[key] = Object.assign({}, all[key], patch, { at: Date.now(), pd: P.payDate });
     const keys = Object.keys(all).sort();
     while (keys.length > 12) delete all[keys.shift()]; // a year of answers is enough
     await Store.setMeta({ salaryAns: all });
@@ -74,7 +83,7 @@
   };
   App.actions['salary-not'] = async () => {
     const d = due(); if (!d) return;
-    await save(d.P.key, { a: 'not', d: U.todayKey(), exp: d.exp, raw: d.raw });
+    await save(d.P.key, { a: 'not', d: U.todayKey(), exp: d.exp, raw: d.raw, nots: (d.ans ? d.ans.nots : 0) + 1 });
     UI.toast('בסדר, נשאל שוב מחר');
     App.rerender();
   };

@@ -71,6 +71,45 @@
     };
   }
 
+  /* ---------------- the payslip of a pay period ----------------
+   * The payday reminder, the payday card and the "did the salary arrive?" card all ask one thing: is this period's
+   * payslip in? A payslip saved before its own period ended cannot be that period's: its month was read from another
+   * date printed on it (the day it was made, the pay date), one month late. It counts for the month before.
+   */
+  function slipPeriod(p, emp) {
+    if (!p || !/^\d{4}-\d{2}$/.test(p.period || '')) return null;
+    const saved = +p.createdAt > 0 ? U.epochKey(+p.createdAt) : '';
+    if (saved && emp && saved <= Engine.periodByKey(p.period, emp).to) return U.addMonthKey(p.period, -1);
+    return p.period;
+  }
+  /** The saved payslip of pay period pk (by slipPeriod), or null. */
+  function slipFor(payslips, pk, emp) {
+    return (payslips || []).find((p) => slipPeriod(p, emp) === pk) || null;
+  }
+  /**
+   * How many days after the pay date this person usually saves the payslip: the middle one of the last six (0 to 10),
+   * from two payslips on; 0 before. The payday reminder comes on that day, not before it (the payslip arrives later for
+   * some employers, and the reminder was early every month).
+   */
+  function slipLag(payslips, emp) {
+    const lags = [];
+    for (const p of payslips || []) {
+      const pk = slipPeriod(p, emp);
+      if (!pk || !(+p.createdAt > 0) || String(p.id || '').startsWith('demo')) continue;
+      const d = U.diffDays(Engine.periodByKey(pk, emp).payDate, U.epochKey(+p.createdAt));
+      if (d >= -10 && d <= 20) lags.push([pk, d]);
+    }
+    if (lags.length < 2) return 0;
+    const last = lags.sort((a, b) => a[0].localeCompare(b[0])).slice(-6).map((x) => x[1]).sort((a, b) => a - b);
+    return Math.max(0, Math.min(10, last[Math.floor((last.length - 1) / 2)]));
+  }
+  /** Reminders hold only while their reason does (the payslip not in, the timer running, the shift not confirmed). */
+  const RESOLVES = new Set(['payslipDue', 'timer', 'confirmDone', 'backup', 'upcoming']);
+  /** The unread reminders among notes whose alert is no longer raised (wantedKeys: the keys raised now). News stays. */
+  function resolvedNotes(notes, wantedKeys) {
+    return (notes || []).filter((n) => n && !n.read && RESOLVES.has(n.type) && !wantedKeys.has(n.key));
+  }
+
   function firstShiftKey(model) {
     let first = null;
     for (const r of model.results.values()) if (r.status === 'done' && (!first || r.dateKey < first)) first = r.dateKey;
@@ -533,11 +572,14 @@
     }
     if (on('payslipDue')) {
       const pd = lastP.payDate;
-      const has = (state.payslips || []).some((p) => p.period === lastP.key);
-      if (today >= pd && !has && first && first <= lastP.to && U.diffDays(pd, today) <= 20) {
-        alerts.push({ key: 'payslip-' + lastP.key, type: 'payslipDue', severity: 'info', push: 'critical',
+      const has = !!slipFor(state.payslips, lastP.key, emp);
+      // on the day this person usually saves the payslip (learned from the last ones), never before the pay date
+      const lag = slipLag(state.payslips, emp);
+      const at = U.addDays(pd, lag);
+      if (today >= at && !has && first && first <= lastP.to && U.diffDays(pd, today) <= 20 + lag) {
+        alerts.push({ key: 'payslip-' + lastP.key, type: 'payslipDue', severity: 'info', push: 'critical', data: { pk: lastP.key },
           title: 'הגיע יום התשלום: הזן את התלוש', body: `העלה את התלוש של ${lastP.label} כדי לבדוק שקיבלת את כל מה שמגיע לך.`,
-          explain: 'יום התשלום מוגדר: ' + emp.payDay + ' לחודש.' });
+          explain: lag ? `בדרך כלל התלוש שלך נשמר כ-${lag} ימים אחרי יום התשלום (${emp.payDay} לחודש), ולכן התזכורת באה אז.` : 'יום התשלום מוגדר: ' + emp.payDay + ' לחודש.' });
       }
     }
     if (on('backup') && first) {
@@ -630,5 +672,5 @@
     return { from, to, t, avgHours: ah, sentence, explain: `השבוע \u2066${U.fmtDate(from, 'short')}\u2060–\u2060${U.fmtDate(to, 'short')}\u2069, בהשוואה לממוצע 4 השבועות שלפניו (${U.num(ah, 1)} ש׳).` };
   }
 
-  root.Insights = { run, metrics, compareSeries, weeklySummary, TYPE_INFO, pctDev };
+  root.Insights = { run, metrics, compareSeries, weeklySummary, TYPE_INFO, pctDev, slipPeriod, slipFor, slipLag, resolvedNotes };
 })(typeof window !== 'undefined' ? window : globalThis);

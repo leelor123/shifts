@@ -84,15 +84,37 @@
   /**
    * What the salary card shows today for one pay period: 'ask', 'gap' (a different amount was typed and the gap is not
    * closed yet) or null. ans: the saved answer { a: 'yes'|'other'|'not', d: the day it was given, closed }.
+   * o: { lag: the days after the pay date this salary usually arrives (salaryLag), hasSlip: the period's payslip is in }.
+   * A payslip in means the salary came: nothing is asked (the payslip's own check compares the amounts).
    */
-  function salaryState(ans, payDate, today, hour) {
+  function salaryState(ans, payDate, today, hour, o) {
     if (!payDate || !today) return null;
-    if (today < payDate || today > U.addDays(payDate, ASK_DAYS)) return null;
+    const lag = Math.max(0, Math.min(ASK_DAYS - 1, Math.round(+(o && o.lag) || 0)));
+    const from = U.addDays(payDate, lag);
+    if (today < from || today > U.addDays(from, ASK_DAYS)) return null;
     if (today === payDate && hour < 12) return null;
+    if (o && o.hasSlip && (!ans || ans.a === 'not')) return null;
     if (!ans) return 'ask';
     if (ans.a === 'other') return ans.closed ? null : 'gap';
     if (ans.a === 'not') return today > ans.d ? 'ask' : null; // "not yet": asked again the next day
     return null;
+  }
+  /**
+   * How many days after the pay date the salary usually arrives, learned from the answers: an answer that came after a
+   * "not yet" counts its day (the salary came by then), one given at the first ask counts 0. The middle of the last six,
+   * from two answers on; 0 before. answers: { periodKey: { a, d, pd: that period's pay date, nots: "not yet"s before } }.
+   */
+  const DAY_RE = /^\d{4}-\d{2}-\d{2}$/;
+  function salaryLag(answers) {
+    if (!answers || typeof answers !== 'object') return 0;
+    const out = [];
+    for (const k of Object.keys(answers).sort()) {
+      const x = answers[k];
+      if (!x || (x.a !== 'yes' && x.a !== 'other') || !DAY_RE.test(x.pd || '') || !DAY_RE.test(x.d || '')) continue;
+      out.push(+x.nots > 0 ? Math.max(0, Math.min(ASK_DAYS - 1, U.diffDays(x.pd, x.d))) : 0);
+    }
+    const last = out.slice(-6).sort((a, b) => a - b);
+    return last.length >= 2 ? last[Math.floor((last.length - 1) / 2)] : 0;
   }
   /** The gap between what arrived and what was expected; small (under 2%, or 20 shekels) counts as the same. */
   function salaryGap(expected, got) {
@@ -101,6 +123,6 @@
     return { diff, less: diff < 0, small: Math.abs(diff) < Math.max(20, e * 0.02) };
   }
 
-  root.Moments = { quietHour, wageParts, wageLine, youthNow, salaryState, salaryGap, ASK_DAYS };
+  root.Moments = { quietHour, wageParts, wageLine, youthNow, salaryState, salaryLag, salaryGap, ASK_DAYS };
   if (typeof module !== 'undefined') module.exports = root.Moments;
 })(typeof window !== 'undefined' ? window : globalThis);
