@@ -157,6 +157,54 @@ body.fx .pk-field, body.fx .ach-card, body.fx .home-hero .hh-skin { transition: 
 .gc-f.expl .gc-fh .fi { color: var(--warn-mark); }
 .gc-f.expl .gc-fh .amt { color: var(--warn); }
 .gc-carry { margin-bottom: 12px; }
+
+/* the payslip against the app's own calculation: totals, then each line's part of the gap */
+.rc { padding: 14px; }
+.rc-top { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; }
+.rc-top > div { background: var(--surface-2); border-radius: 14px; padding: 8px 10px; min-width: 0; }
+.rc-top small { display: block; font-size: .72rem; color: var(--on-surface-var); }
+.rc-top b { font-size: 1rem; font-variant-numeric: tabular-nums; white-space: nowrap; }
+.rc-top .gap b { color: var(--warn); }
+.rc-top .gap.zero b { color: var(--good); }
+.rc-sum { margin: 10px 2px 4px; }
+.rc-side { margin: 16px 2px 2px; font-weight: 700; }
+.rc-row { border-top: 1px solid var(--line); }
+.rc-row > summary { display: flex; align-items: center; gap: 8px; padding: 10px 2px; cursor: pointer; list-style: none; }
+.rc-row > summary::-webkit-details-marker { display: none; }
+.rc-row .rc-l { flex: 1; min-width: 0; }
+.rc-row .rc-l small { display: block; color: var(--on-surface-var); font-size: .76rem; }
+.rc-row .rc-d { flex: none; white-space: nowrap; font-weight: 700; font-variant-numeric: tabular-nums; }
+.rc-row .rc-d small { display: block; font-weight: 500; font-size: .7rem; color: var(--on-surface-var); text-align: end; }
+.rc-tag { flex: none; display: inline-grid; color: var(--good-mark); }
+.rc-row.ask .rc-tag { color: var(--warn-mark); }
+.rc-row.ask .rc-d { color: var(--warn); }
+.rc-row.unexplained > summary { font-weight: 700; }
+.rc-in { padding: 0 2px 12px; font-size: .88rem; }
+.rc-vals { display: flex; flex-wrap: wrap; gap: 4px 16px; color: var(--on-surface-var); font-size: .8rem; margin-bottom: 6px; }
+.rc-vals b { color: var(--on-surface); font-variant-numeric: tabular-nums; }
+.rc-parts { margin: 8px 0 0; padding: 0; list-style: none; }
+.rc-parts li { display: flex; justify-content: space-between; gap: 10px; font-size: .8rem; padding: 2px 0; }
+.rc-parts li.unk { color: var(--warn); font-weight: 700; }
+.rc-ask { display: flex; gap: 6px; align-items: flex-start; margin-top: 8px; padding: 8px 10px; border-radius: 12px; background: var(--warn-bg); color: var(--on-surface); font-weight: 600; }
+.rc-ask svg { flex: none; margin-top: 2px; color: var(--warn-mark); }
+.rc-match { display: flex; gap: 6px; align-items: flex-start; border-top: 1px solid var(--line); padding: 10px 2px 0; font-size: .8rem; color: var(--on-surface-var); }
+.rc-match svg { flex: none; margin-top: 2px; color: var(--good-mark); }
+.rc-ov { margin-top: 8px; font-size: .82rem; color: var(--override); }
+.sc-row { border-top: 1px solid var(--line); padding: 12px 2px; }
+.sc-row:first-child { border-top: 0; padding-top: 2px; }
+.sc-vals { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; margin: 8px 0 6px; }
+.sc-vals > span { background: var(--surface-2); border-radius: 12px; padding: 6px 10px; font-size: .76rem; color: var(--on-surface-var); min-width: 0; }
+.sc-vals b { display: block; font-size: .95rem; color: var(--on-surface); font-variant-numeric: tabular-nums; }
+.sc-vals .slip { box-shadow: inset 0 0 0 1.5px var(--primary); }
+.sc-acts { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; }
+.lv-row { display: flex; align-items: center; gap: 10px; border-top: 1px solid var(--line); padding: 10px 2px; }
+.lv-row:first-child { border-top: 0; padding-top: 2px; }
+.lv-row .lv-l { flex: 1; min-width: 0; }
+.lv-row .lv-l small { display: block; font-size: .8rem; color: var(--on-surface-var); }
+.lv-d { flex: none; white-space: nowrap; font-weight: 700; font-variant-numeric: tabular-nums; border-radius: 999px; padding: 3px 10px; background: var(--surface-2); }
+.lv-d.up { background: var(--good-bg); color: var(--good); }
+.lv-d.down { background: var(--warn-bg); color: var(--warn); }
+@media (max-width: 360px) { .rc-top { grid-template-columns: 1fr 1fr; } .rc-top .gap { grid-column: 1 / -1; } }
 .gc-carry .gc-fh .fi { color: var(--warn-mark); }
 
 /* the first open: the screen under the language doors is not painted while they cover it (lang.js lp-open) */

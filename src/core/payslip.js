@@ -641,26 +641,9 @@
       }
     }
 
-    /* 9. leave balances */
-    const vb = val(F, 'vacationBalance');
-    if (vb != null) {
-      const appV = L.vacationAccrued - L.vacationUsed;
-      const ok = Math.abs(appV - vb) <= 1.5;
-      add({ area: 'חופשה', status: ok ? 'ok' : 'warn', title: ok ? 'יתרת חופשה סבירה' : 'יתרת חופשה שונה מההערכה', detail: `בתלוש ${U.num(vb, 2)} ימים, הערכה באפליקציה ${U.num(appV, 2)}.`, basis: 'חוק חופשה שנתית, לפי היקף המשרה בפועל. תלוי בהסכם ובצבירה מלפני השימוש באפליקציה.', confidence: 'low' });
-    }
-    const sb = val(F, 'sickBalance');
-    if (sb != null) {
-      const appS = L.sickAccrued - L.sickUsed;
-      const ok = Math.abs(appS - sb) <= 2;
-      add({ area: 'מחלה', status: ok ? 'ok' : 'warn', title: ok ? 'יתרת מחלה סבירה' : 'יתרת מחלה שונה מההערכה', detail: `בתלוש ${U.num(sb, 2)} ימים, הערכה ${U.num(appS, 2)}.`, basis: '1.5 ימים לחודש מלא, יחסית להיקף המשרה.', confidence: 'low' });
-    }
-
-    /* 10. credit points */
+    /* 9-10. the leave balances and the credit points are settings the payslip can correct: settingsCheck() lists
+     * them with what the payslip says, what the settings say and a way to take the payslip's value */
     const cp = val(F, 'creditPoints');
-    if (cp != null) {
-      const ok = Math.abs(cp - S.tax.creditPoints) < 0.01;
-      add({ area: 'נקודות זיכוי', status: ok ? 'ok' : 'warn', title: ok ? 'נקודות הזיכוי תואמות' : 'נקודות זיכוי שונות', detail: `בתלוש ${cp}, בהגדרות ${S.tax.creditPoints}.` + (ok ? '' : ' אם מגיעות לך יותר, מלא טופס 101 מעודכן.'), basis: 'טופס 101 שמילאת אצל המעסיק.', confidence: 'medium' });
-    }
 
     /* 11-12. tax & social security */
     const minor = Engine.isMinor(S, E.P.to);
@@ -702,9 +685,7 @@
         const ok = Math.abs(gross - td - net) <= 2;
         add({ area: 'נטו', status: ok ? 'ok' : 'warn', title: ok ? 'החשבון ברוטו → נטו נסגר' : 'ברוטו פחות ניכויים ≠ נטו', detail: `${U.money(gross)} − ${U.money(td)} = ${U.money(gross - td)}; בתלוש נטו ${U.money(net)}.`, basis: 'בדיקה אריתמטית.', confidence: 'high' });
       }
-      // gross vs app
-      const dg = E.t.gross - gross;
-      add({ area: 'ברוטו', status: Math.abs(dg) <= Math.max(20, gross * 0.02) ? 'ok' : dg > 0 ? 'warn' : 'ok', title: 'ברוטו: תלוש מול אפליקציה', detail: `בתלוש ${U.money(gross)}, לפי המשמרות ${U.money(E.t.gross)} (הפרש ${U.money(dg)}).`, basis: 'כולל שכר, נסיעות, בונוסים וימי חופשה/מחלה שרשמת.', confidence: 'medium', fromOverride: ovNote(E.t.gross, A.t.gross, gross, 1) });
+      // the gross against the app's own calculation: reconcile() takes it apart line by line
     }
 
     /* 13. unexplained deductions */
@@ -1048,6 +1029,585 @@
     return { items, total, explained, left, all: total > 0 && left < 1, nextSlip: items.some((x) => x.nextSlip) };
   }
 
+  /* ---------------- the payslip against the app's own calculation ----------------
+   * reconcile() takes the gap between the payslip and the app apart, line by line, so that the lines add up to the
+   * whole gap exactly: what no line explains is its own line ('rest'), never left out. Each line says where its part
+   * comes from when the data shows it (state 'clear', with the fix), or asks the one question that would settle it
+   * (state 'ask'). settingsCheck() lists the settings the payslip says otherwise (credit points, the rate, travel,
+   * seniority, pension, the leave balances...), each with a one-tap update when the payslip is the better source. */
+  const r2 = (x) => Math.round(x * 100) / 100;
+  // a premium line paid as the supplement only (25%, 50%...), with its hours already at 100% in the base line, is
+  // turned into the app's own way (the whole 125%, 150%...): the total stays the same, only the split moves
+  const SUPP = { ot125: 0.25, ot150: 0.5, rest150: 0.5, rest175: 0.75, rest200: 1 };
+  function slipWork(F) {
+    const bq = qty(F, 'base'), bv = val(F, 'base');
+    const rate = bq && bv ? (+F.base.rate || bv / bq) : 0;
+    const lines = {};
+    let moved = 0;
+    for (const k of Object.keys(SUPP)) {
+      const v = val(F, k), q = qty(F, k);
+      if (v == null) continue;
+      let supp = false;
+      if (rate && q) {
+        const per = v / q, s = SUPP[k] * rate, f = (1 + SUPP[k]) * rate;
+        supp = Math.abs(per - s) < Math.abs(per - f) && Math.abs(per - s) <= Math.max(0.05, s * 0.08);
+      }
+      lines[k] = { value: v, qty: q, supp };
+      if (supp) moved += q;
+    }
+    const out = { base: bv, baseQ: bq, rate, lines, supp: false };
+    if (moved > 0 && bq && moved <= bq + 0.25) {
+      out.supp = true;
+      out.base = bv - moved * rate; out.baseQ = bq - moved;
+      for (const k of Object.keys(lines)) if (lines[k].supp) lines[k].value += lines[k].qty * rate;
+    }
+    return out;
+  }
+  const sumOf = (o, ks, f) => ks.reduce((s, k) => s + ((o[k] && o[k][f || 'value']) || 0), 0);
+  const OT_KEYS = ['ot125', 'ot150'], REST_KEYS = ['rest150', 'rest175', 'rest200'];
+  /** The payslip's own pension base, the way the settings count it (all hours × the base rate, or the gross). */
+  function slipPensionBase(F, S, E) {
+    const W = slipWork(F);
+    const hrs = slipHoursOf(F);
+    if (S.pension.base === 'base' && W.rate && hrs) return hrs * W.rate;
+    const g = val(F, 'gross');
+    return (g != null ? g : E.t.gross) - (val(F, 'travel') || 0) - (val(F, 'recuperation') || 0);
+  }
+  const otherSum = (slip, guess) => (slip.other || []).filter((o) => o && o.guess === guess).reduce((s, o) => s + Math.abs(+o.value || 0), 0);
+  const unnamedOf = (slip) => unknownLines(slip.other, slip.fields).filter((u) => !u.guess && u.value);
+
+  /**
+   * settingsCheck(slip, model, a?) → [{ id, label, slip, app, text, recommend: 'slip'|'ask', apply, set }]: a setting
+   * the payslip says otherwise. slip / app: the two values as text. apply: a one-tap change to the payslip's value
+   * ({ kind: 'settings', path, value } | { kind: 'employer', patch } | { kind: 'role', id, from, rate }), set: the
+   * settings screen to look at ({ kind: 'set', k, f }).
+   */
+  function settingsCheck(slip, model, a) {
+    a = a || analyze(slip, model);
+    const S = model.ctx.settings, F = slip.fields || {}, E = a.expected, P = E.P;
+    const emp = model.ctx.primaryEmployer();
+    const out = [];
+    const add = (o) => out.push(Object.assign({ recommend: 'slip', apply: null, set: null }, o));
+    const W = slipWork(F);
+    const slipHours = slipHoursOf(F);
+
+    /* credit points: the employer applies form 101, and the app's net follows the settings */
+    const cp = val(F, 'creditPoints');
+    if (cp != null && Math.abs(cp - (+S.tax.creditPoints || 0)) >= 0.01) {
+      add({ id: 'creditPoints', label: 'נקודות זיכוי', slip: U.num(cp, 2), app: U.num(+S.tax.creditPoints || 0, 2),
+        text: cp < +S.tax.creditPoints ? `המעסיק מחשב את המס לפי ${U.num(cp, 2)} נקודות. אם מגיעות לך יותר (ילדים, תואר, שחרור מצבא), צריך למסור לו טופס 101 מעודכן. עד אז, הנטו באפליקציה יתאים לתלוש רק עם המספר שבתלוש.`
+          : `המעסיק מחשב את המס לפי ${U.num(cp, 2)} נקודות, לפי טופס 101 שמסרת. עם המספר הזה הנטו באפליקציה יתאים לתלוש.`,
+        apply: { kind: 'settings', path: 'tax.creditPoints', value: cp }, set: { kind: 'set', k: 'net', f: 'נקודות זיכוי' } });
+    }
+
+    /* the hourly rate: one job in the period, the payslip's rate for its regular hours */
+    const roleIds = new Set();
+    for (const r of E.shifts) for (const id of Object.keys(r.byRole || {})) roleIds.add(id);
+    const aRate = E.hrs.base ? E.pay.base / E.hrs.base : 0;
+    if (W.rate && aRate && roleIds.size === 1 && Math.abs(W.rate - aRate) > 0.02) {
+      const id = [...roleIds][0];
+      const role = model.ctx.roles && model.ctx.roles.get ? model.ctx.roles.get(id) : null;
+      const higher = W.rate > aRate;
+      add({ id: 'rate', label: 'תעריף לשעה' + (role && role.name ? ' · ' + role.name : ''), slip: U.money(W.rate), app: U.money(aRate), recommend: higher ? 'slip' : 'ask',
+        text: higher ? `בתלוש התעריף גבוה מזה שבאפליקציה. אם קיבלת העלאה, אפשר לעדכן את התעריף מ-${U.fmtDate(P.from)}.`
+          : `בתלוש התעריף נמוך מזה שהגדרת. אם התעריף שסוכם הוא ${U.money(aRate)}, חסר לך כסף על כל שעה. אם הוא ${U.money(W.rate)}, כדאי לעדכן.`,
+        apply: role ? { kind: 'role', id, from: P.from, rate: r2(W.rate) } : null, set: { kind: 'set', k: 'roles', f: 'תעריף' } });
+    }
+
+    /* travel: the payslip's sum for a day, when the days are known */
+    const sTravel = val(F, 'travel');
+    const wd = val(F, 'workDays');
+    const days = wd || (Math.abs(slipHours - E.t.hours) <= 0.25 ? E.t.workDays : 0);
+    const per = +emp.travelPerDay || 0;
+    if (sTravel > 0 && days > 0) {
+      const sPer = sTravel / days;
+      const capped = +emp.travelMonthlyCap && Math.abs(sTravel - +emp.travelMonthlyCap) <= 0.5;
+      if (!capped && Math.abs(sPer - per) > 0.05 && sPer <= 60) {
+        add({ id: 'travel', label: 'נסיעות ליום עבודה', slip: U.money(sPer), app: U.money(per),
+          text: `בתלוש ${U.money(sTravel)} על ${U.num(days, 0)} ימי עבודה, כלומר ${U.money(sPer)} ליום. המעסיק משלם את מחיר הנסיעה בפועל עד התקרה, ולכן הסכום בתלוש הוא המדויק.`,
+          apply: { kind: 'employer', patch: { travelPerDay: r2(sPer) } }, set: { kind: 'set', k: 'pay', f: 'סכום ליום עבודה ₪' } });
+      }
+    } else if (!sTravel && E.t.travel > 0) {
+      add({ id: 'travelNone', label: 'נסיעות', slip: 'אין שורה', app: U.money(E.t.travel), recommend: 'ask',
+        text: 'בתלוש לא זוהתה שורת נסיעות. אם המעסיק לא משלם נסיעות כי אין צורך בתחבורה (מגיעים ברגל, או שהמעסיק מסיע), אפשר לאפס אותן בהגדרות. אחרת, החזר נסיעות מגיע לפי צו ההרחבה.',
+        set: { kind: 'set', k: 'pay', f: 'סכום ליום עבודה ₪' } });
+    }
+
+    /* seniority: a bonus the employer pays and the app does not count, or the other way round */
+    const sSen = val(F, 'seniority') || 0;
+    if (sSen > 0 && !emp.seniorityEnabled) {
+      // the app pays seniority on every paid hour at its percent (an overtime hour at 125%...): the sum for an hour
+      // is the one that gives the payslip's amount on this period's hours
+      let weighted = 0;
+      for (const r of E.shifts) for (const l of r.lines) weighted += l.hours * (+l.pct || 100) / 100;
+      const perH = (weighted || slipHours) ? r2(sSen / (weighted || slipHours)) : 0;
+      add({ id: 'seniority', label: 'תוספת ותק', slip: U.money(sSen), app: 'לא מוגדרת',
+        text: perH ? `המעסיק משלם תוספת ותק, ${U.money(perH)} לשעה בממוצע. אפשר להוסיף אותה לחישוב כסכום קבוע לשעה.` : 'המעסיק משלם תוספת ותק, והיא לא מוגדרת באפליקציה.',
+        apply: perH ? { kind: 'employer', patch: { seniorityEnabled: true, seniorityType: 'fixedPerHour', seniorityValue: perH, seniorityAfterMonths: 0 } } : null,
+        set: { kind: 'set', k: 'calc', f: 'תוספת ותק' } });
+    } else if (emp.seniorityEnabled && E.t.seniority > 0.5 && Math.abs(sSen - E.t.seniority) > 1) {
+      add({ id: 'seniority', label: 'תוספת ותק', slip: sSen ? U.money(sSen) : 'אין שורה', app: U.money(E.t.seniority), recommend: 'ask',
+        text: sSen ? 'תוספת הוותק בתלוש שונה מהחישוב. כדאי לבדוק בהגדרות את סוג התוספת, הסכום והחודש שממנו היא מתחילה.'
+          : 'באפליקציה מוגדרת תוספת ותק, ובתלוש אין שורה כזו. האם ההסכם שלך כולל תוספת ותק?',
+        set: { kind: 'set', k: 'calc', f: 'תוספת ותק' } });
+    }
+    if (!S.startDate) {
+      add({ id: 'startDate', label: 'תאריך תחילת עבודה', slip: '—', app: 'לא הוזן', recommend: 'ask',
+        text: 'הוותק נספר מתאריך תחילת העבודה, וממנו גם ימי החופשה, דמי ההבראה ומועד הפנסיה. בלי התאריך הבדיקות האלה לא מדויקות.',
+        set: { kind: 'set', k: 'leave', f: 'תאריך תחילת עבודה' } });
+    }
+
+    /* pension: deposits the app does not expect yet, or a different rate or base */
+    const pe = val(F, 'pensionEmployee');
+    const minor = Engine.isMinor(S, P.to);
+    if (S.pension.enabled && pe > 0 && !minor) {
+      const active = Engine.pensionActive(S, P.to);
+      if (!active) {
+        add({ id: 'pensionStart', label: 'מועד תחילת הפנסיה', slip: U.money(pe), app: `אחרי ${S.pension.startAfterMonths} חודשים`,
+          text: 'המעסיק כבר מפקיד לפנסיה, ובאפליקציה ההפרשה עוד לא התחילה. זה קורה כשהייתה לך קרן פנסיה פעילה לפני העבודה הזו: אז ההפקדות מגיעות מהיום הראשון.',
+          apply: { kind: 'settings', path: 'pension.startAfterMonths', value: 0 }, set: { kind: 'set', k: 'leave', f: 'תאריך תחילת עבודה' } });
+      } else {
+        const pBase = slipPensionBase(F, S, E);
+        const pct = pBase > 0 ? pe / pBase * 100 : 0;
+        const setPct = +S.pension.employeePct || 0;
+        if (pct > 0 && Math.abs(pct - setPct) > 0.3) {
+          // the other way of counting the base may be the one the employer uses
+          const other = S.pension.base === 'base' ? 'all' : 'base';
+          const oBase = slipPensionBase(F, Object.assign({}, S, { pension: Object.assign({}, S.pension, { base: other }) }), E);
+          const oPct = oBase > 0 ? pe / oBase * 100 : 0;
+          const half = Math.round(pct * 2) / 2;
+          if (oPct && Math.abs(oPct - setPct) <= 0.15) {
+            add({ id: 'pensionPct', label: 'השכר לפנסיה', slip: `${U.num(oPct, 2)}%`, app: `${U.num(pct, 2)}%`,
+              text: other === 'all' ? `המעסיק מפריש ${U.num(setPct, 2)}% מכל השכר (בלי נסיעות והבראה), לא רק מהשעות × התעריף.` : `המעסיק מפריש ${U.num(setPct, 2)}% מהשעות × התעריף, בלי התוספות.`,
+              apply: { kind: 'settings', path: 'pension.base', value: other }, set: { kind: 'set', k: 'net', f: 'פנסיה חובה' } });
+          } else if (Math.abs(pct - half) <= 0.15 && half >= 4 && half <= 8) {
+            add({ id: 'pensionPct', label: 'אחוז הפרשת העובד לפנסיה', slip: `${U.num(half, 2)}%`, app: `${U.num(setPct, 2)}%`,
+              text: `בתלוש ירדו ${U.money(pe)}, כלומר ${U.num(half, 2)}% מהשכר לפנסיה.`,
+              apply: { kind: 'settings', path: 'pension.employeePct', value: half }, set: { kind: 'set', k: 'net', f: 'פנסיה חובה' } });
+          } else {
+            add({ id: 'pensionPct', label: 'אחוז הפרשת העובד לפנסיה', slip: `${U.num(pct, 2)}%`, app: `${U.num(setPct, 2)}%`, recommend: 'ask',
+              text: `בתלוש ירדו ${U.money(pe)}, כלומר ${U.num(pct, 2)}% מהשכר שהאפליקציה מעריכה לפנסיה (${U.money(pBase)}). האחוז לא עגול, אז כנראה המעסיק מחשב את השכר לפנסיה אחרת. מה אחוז ההפרשה שלך לפי הקרן או ההסכם?`,
+              set: { kind: 'set', k: 'net', f: 'פנסיה חובה' } });
+          }
+        }
+      }
+    }
+
+    /* study fund */
+    const he = val(F, 'hishtalmutEmployee');
+    if (he > 0 && !(S.hishtalmut && S.hishtalmut.enabled)) {
+      const pBase = slipPensionBase(F, S, E);
+      const pct = pBase > 0 ? Math.round(he / pBase * 100 * 2) / 2 : 0;
+      add({ id: 'hishtalmut', label: 'קרן השתלמות', slip: U.money(he), app: 'לא מוגדרת',
+        text: 'בתלוש יורד חלק העובד לקרן השתלמות, והוא לא מוגדר באפליקציה, ולכן הנטו באפליקציה גבוה מהתלוש.',
+        apply: { kind: 'settings', path: 'hishtalmut', value: Object.assign({}, S.hishtalmut, { enabled: true, employeePct: pct >= 1 && pct <= 5 ? pct : 2.5, startAfterMonths: 0 }) },
+        set: { kind: 'set', k: 'net', f: 'קרן השתלמות' } });
+    } else if (!he && S.hishtalmut && S.hishtalmut.enabled && E.net.hishtalmut > 0.5) {
+      add({ id: 'hishtalmut', label: 'קרן השתלמות', slip: 'אין שורה', app: U.money(E.net.hishtalmut), recommend: 'ask',
+        text: 'באפליקציה מוגדרת קרן השתלמות, ובתלוש לא זוהה ניכוי כזה. יש לך קרן השתלמות דרך העבודה?',
+        set: { kind: 'set', k: 'net', f: 'קרן השתלמות' } });
+    }
+
+    /* the pay period: another first day makes the hours match exactly */
+    if (slipHours > 0 && Math.abs(slipHours - E.t.hours) > 0.25) {
+      const cur = +emp.periodStartDay || 1;
+      for (const d of [1, 21, 26, 25, 20, 16, 15, 24, 11, 10]) {
+        if (d === cur) continue;
+        const P2 = Engine.periodByKey(slip.period, Object.assign({}, emp, { periodStartDay: d }));
+        if (Math.abs(Engine.totals(model, P2.from, P2.to).hours - slipHours) <= 0.25) {
+          add({ id: 'period', label: 'תחילת תקופת השכר', slip: d === 1 ? 'חודש קלנדרי' : `מה-${d} בחודש`, app: cur === 1 ? 'חודש קלנדרי' : `מה-${cur} בחודש`,
+            text: 'עם תקופה שמתחילה ביום הזה, השעות בתלוש תואמות בדיוק לשעות שרשמת.',
+            apply: { kind: 'employer', patch: { periodStartDay: d } }, set: { kind: 'set', k: 'pay', f: 'התקופה מתחילה ב-' } });
+          break;
+        }
+      }
+    }
+
+    /* the leave balances: the employer's books are the official ones, the app can start from them */
+    const L = Engine.leaveBalances(model, P.to);
+    for (const [key, opening, label, entity] of [['vacationBalance', 'vacationOpening', 'יתרת ימי חופשה', 'vacation'], ['sickBalance', 'sickOpening', 'יתרת ימי מחלה', 'sick']]) {
+      const v = val(F, key);
+      if (v == null) continue;
+      const appV = entity === 'vacation' ? L.vacationAccrued - L.vacationUsed : L.sickAccrued - L.sickUsed;
+      if (Math.abs(v - appV) < 0.5) continue;
+      const can = !!S.startDate;
+      add({ id: key, label, slip: U.num(v, 2), app: U.num(appV, 2), recommend: can ? 'slip' : 'ask',
+        text: can ? 'היתרה של המעסיק היא היתרה הרשמית. אפשר לעדכן את יתרת הפתיחה באפליקציה כך שהיתרה תהיה כמו בתלוש, והצבירה תמשיך ממנה.'
+          : 'כדי שהאפליקציה תספור את הצבירה, צריך להזין קודם תאריך תחילת עבודה.',
+        apply: can ? { kind: 'settings', path: 'leave.' + opening, value: r2((+S.leave[opening] || 0) + v - appV) } : null,
+        set: { kind: 'set', k: 'leave', f: entity === 'vacation' ? 'יתרת פתיחה: חופשה' : 'תאריך תחילת עבודה' } });
+    }
+    return out;
+  }
+
+  /**
+   * reconcile(slip, model, a?, c?) → { gross: { app, slip, total, items, rest }, net: { ... } | null, open, asks }.
+   * Every item: { id, label, app, slip, diff (₪ the payslip is above the app: + more, − less), hours: { app, slip }
+   * | null, state: 'match'|'clear'|'ask', text, ask (the question that would settle it, or ''), fixes: [fix],
+   * parts: [{ label, amount, known }] | null }. The items of each side add up to its total exactly; 'rest' is the
+   * part no line explains (an item of its own when it is not zero). c: the gap check (checkGap), whose reasons found
+   * in the person's data say where a part comes from.
+   */
+  function reconcile(slip, model, a, c) {
+    a = a || analyze(slip, model);
+    const S = model.ctx.settings, F = slip.fields || {}, E = a.expected, t = E.t, P = E.P;
+    const emp = model.ctx.primaryEmployer();
+    const W = slipWork(F);
+    const sc = settingsCheck(slip, model, a);
+    const scFix = (id) => (sc.some((x) => x.id === id) ? [{ kind: 'sc', id }] : []);
+    // the reason the gap check found in the person's data for a finding of this area ('yes'), and its fix
+    const yesOf = (code) => {
+      const it = c && c.items.find((x) => codeOf(x.area) === code);
+      return (it && it.reasons.find((y) => y.found === 'yes')) || null;
+    };
+    const fixOfReason = (r) => (r.fix ? [r.fix] : []).concat(r.shifts && r.shifts.length ? [{ kind: 'shifts', ids: r.shifts }] : []);
+    const items = [];
+    const add = (o) => {
+      const it = Object.assign({ app: 0, slip: 0, hours: null, state: 'clear', text: '', ask: '', fixes: [], parts: null }, o);
+      it.diff = o.diff != null ? o.diff : (it.slip || 0) - (it.app || 0);
+      // tol: a sum per hour rounded to agorot (a seniority bonus taken from the payslip) leaves a few agorot over
+      if (Math.abs(it.diff) < (o.tol || 0.5) && it.state !== 'info') { it.state = 'match'; it.ask = ''; }
+      delete it.tol;
+      items.push(it);
+      return it;
+    };
+
+    /* 1-2. regular hours and the rate: (hours on the slip − in the app) × the app's rate, then the rate on the
+     * payslip's hours. The two add up to the base line's gap exactly. */
+    const aRate = E.hrs.base ? E.pay.base / E.hrs.base : 0;
+    const slipHours = slipHoursOf(F);
+    const totalSame = slipHours > 0 && Math.abs(slipHours - t.hours) <= 0.25;
+    if (W.base != null && W.baseQ) {
+      const rate = aRate || W.rate;
+      const hoursAmt = (W.baseQ - E.hrs.base) * rate;
+      const h = add({ id: 'hours', label: 'שעות רגילות', app: E.pay.base, slip: E.pay.base + hoursAmt, diff: hoursAmt, hours: { app: E.hrs.base, slip: W.baseQ } });
+      const dh = W.baseQ - E.hrs.base;
+      if (h.state !== 'match') {
+        const r = yesOf('hours') || (totalSame ? yesOf('ot') : null);
+        if (totalSame) {
+          h.text = `סך השעות זהה (${U.hours(slipHours)}), אבל המעסיק מחלק אחרת בין שעות רגילות לשעות נוספות.` + (r ? ' ' + r.text : '');
+          h.fixes = r ? fixOfReason(r) : [{ kind: 'set', k: 'calc', f: 'שעות רגילות ביום' }];
+          if (!r) { h.state = 'ask'; h.ask = 'המעסיק סופר שעות נוספות רק מעל 8.6 שעות ביום, או מעל מספר אחר?'; }
+        } else if (r) {
+          h.text = r.title + ': ' + r.text;
+          h.fixes = fixOfReason(r).concat(scFix('period'));
+        } else if (dh < 0) {
+          h.state = 'ask';
+          h.text = `בתלוש ${U.hours(W.baseQ)} שעות רגילות, ובאפליקציה ${U.hours(E.hrs.base)}. לא מצאנו בנתונים שלך סיבה לזה.`;
+          h.ask = 'עבדת בכל המשמרות שרשמת בתקופה, בשעות שרשמת? אם כן, זה כסף שחסר, והוא מופיע במכתב למעסיק.';
+          h.fixes = scFix('period');
+        } else {
+          h.state = 'ask';
+          h.text = `בתלוש ${U.hours(W.baseQ)} שעות רגילות, יותר מ-${U.hours(E.hrs.base)} שרשמת.`;
+          h.ask = 'עבדת בתקופה משמרת שלא רשמת, או קיבלת על ימי חופשה או מחלה תשלום בשעות?';
+          h.fixes = [{ kind: 'shift' }].concat(scFix('period'));
+        }
+      }
+      const rateAmt = W.base - E.pay.base - hoursAmt;
+      const rt = add({ id: 'rate', label: 'התעריף לשעה', app: aRate, slip: W.rate, diff: rateAmt });
+      if (rt.state !== 'match') {
+        const r = yesOf('rate');
+        rt.text = `בתלוש ${U.money(W.rate)} לשעה, ובאפליקציה ${U.money(aRate)}, על ${U.hours(W.baseQ)} שעות רגילות.` + (r ? ' ' + r.text : '');
+        rt.fixes = (r ? fixOfReason(r) : []).concat(scFix('rate'));
+        if (!r) { rt.state = 'ask'; rt.ask = `מה התעריף שסוכם איתך: ${U.money(W.rate)} או ${U.money(aRate)}?`; }
+      }
+    } else {
+      const b = add({ id: 'base', label: 'שכר על שעות רגילות', app: E.pay.base, slip: W.base || 0, hours: { app: E.hrs.base, slip: null } });
+      if (b.state !== 'match') {
+        b.state = 'ask';
+        b.text = W.base == null ? 'לא נקראה מהתלוש שורת שכר יסוד או שעות רגילות.' : 'ליד שכר היסוד בתלוש אין מספר שעות, ולכן אי אפשר להפריד בין השעות לתעריף.';
+        b.ask = W.base == null ? 'יש בתלוש שורת שכר יסוד? אם כן, כדאי להוסיף אותה בנתוני התלוש.' : 'כמה שעות רגילות כתובות בתלוש?';
+        b.fixes = [{ kind: 'verify', key: 'base' }];
+      }
+    }
+
+    /* 3. overtime, 4. Shabbat and holidays */
+    for (const [id, keys, label, code, appPay, appHrs, setF] of [
+      ['ot', OT_KEYS, 'שעות נוספות', 'ot', E.pay.ot125 + E.pay.ot150, E.hrs.ot125 + E.hrs.ot150, 'שעות רגילות ביום'],
+      ['rest', REST_KEYS, 'שבת וחג', 'rest', E.pay.rest150 + E.pay.rest175 + E.pay.rest200, E.hrs.rest150 + E.hrs.rest175 + E.hrs.rest200, ''],
+    ]) {
+      const sv = sumOf(W.lines, keys), sq = sumOf(W.lines, keys, 'qty');
+      if (!sv && !appPay) continue;
+      const it = add({ id, label, app: appPay, slip: sv, hours: { app: appHrs, slip: sq } });
+      if (it.state === 'match') continue;
+      // the reason of this area, or the hours' reason when its shifts (say the last ones of the period, paid on the
+      // next payslip) hold exactly the hours of this kind that are missing
+      let r = yesOf(code);
+      const rh = r ? null : yesOf('hours');
+      if (rh && rh.shifts && rh.shifts.length) {
+        const ids = new Set(rh.shifts);
+        const inThem = E.shifts.filter((x) => ids.has(x.id)).reduce((s, x) => s + (id === 'ot' ? x.hoursBy.ot1 + x.hoursBy.ot2 : x.restHours), 0);
+        if (inThem > 0 && Math.abs(inThem - (appHrs - sq)) <= 0.25) r = rh;
+      }
+      if (r) { it.text = r.title + ': ' + r.text; it.fixes = fixOfReason(r); continue; }
+      it.state = 'ask';
+      if (Math.abs(sq - appHrs) <= 0.25 && sq > 0) {
+        it.text = `אותן ${U.hours(sq)} שעות, סכום אחר: בתלוש ${U.money(sv / sq)} לשעה, ובאפליקציה ${U.money(appPay / appHrs)}.`;
+        it.ask = id === 'ot' ? 'באיזה אחוז המעסיק משלם על שעות נוספות: 125% ו-150%, או אחר?' : 'באיזה אחוז המעסיק משלם על שעות בשבת ובחג?';
+        it.fixes = [{ kind: 'set', k: 'calc', f: id === 'ot' ? 'אחוז דרגה 1' : 'שבת/חג %' }];
+      } else {
+        it.text = `בתלוש ${U.hours(sq)} שעות, ובאפליקציה ${U.hours(appHrs)}.`;
+        it.ask = id === 'ot' ? 'המעסיק סופר שעות נוספות לפי החוק (מעל 8.6 שעות ביום או 42 בשבוע) או לפי מספר אחר?'
+          : (S.rest.mode === 'city' ? 'המעסיק סופר את השבת לפי זמני כניסת השבת בעיר, או משעה קבועה?' : 'מאיזו שעה המעסיק סופר את השבת והחג?');
+        it.fixes = [{ kind: 'set', k: id === 'ot' ? 'calc' : 'rest', f: setF }];
+      }
+    }
+
+    /* 5. night */
+    const sNight = val(F, 'night') || 0;
+    if (sNight || t.nightPremium) {
+      const it = add({ id: 'night', label: 'תוספת לילה', app: t.nightPremium, slip: sNight });
+      if (it.state !== 'match') {
+        it.state = 'ask';
+        it.text = !emp.nightEnabled ? 'המעסיק משלם תוספת לילה, והיא לא מוגדרת באפליקציה.'
+          : !sNight ? 'באפליקציה מוגדרת תוספת לילה, ובתלוש אין שורה כזו. תוספת לילה לא חובה בחוק לכל העובדים, היא לפי ההסכם.'
+            : 'תוספת הלילה בתלוש שונה מהחישוב.';
+        it.ask = !emp.nightEnabled ? 'מה תוספת הלילה אצלך: אחוז מהתעריף או סכום לשעה, ומאיזו שעה?' : 'ההסכם שלך כולל תוספת לילה? באיזה גובה?';
+        it.fixes = [{ kind: 'set', k: 'calc', f: 'תוספת לילה' }];
+      }
+    }
+
+    /* 6. seniority */
+    const sSen = val(F, 'seniority') || 0;
+    if (sSen || t.seniority) {
+      const it = add({ id: 'seniority', label: 'תוספת ותק', app: t.seniority, slip: sSen, tol: Math.max(0.5, t.hours * 0.01) });
+      if (it.state !== 'match') {
+        const s = sc.find((x) => x.id === 'seniority');
+        it.text = s ? s.text : 'תוספת הוותק בתלוש שונה מהחישוב.';
+        it.fixes = scFix('seniority');
+        if (!s || s.recommend === 'ask') { it.state = 'ask'; it.ask = 'מה תוספת הוותק לפי ההסכם שלך, וממתי היא משולמת?'; }
+        if (!it.fixes.length) it.fixes = [{ kind: 'set', k: 'calc', f: 'תוספת ותק' }];
+      }
+    }
+
+    /* 7. what only the app adds: eve premium, the minimum shift, amounts set by hand, a special rate */
+    const appExtra = t.evePremium + t.minTopUp + t.adjust + t.specialPremium;
+    if (appExtra) { // even a few agorot: the items add up to the whole gap
+      const what = [[t.evePremium, 'תוספת ערב שבת/חג'], [t.minTopUp, 'השלמה למינימום שעות במשמרת'], [t.adjust, 'סכומים שהזנת ידנית'], [t.specialPremium, 'תעריף מיוחד']]
+        .filter((x) => Math.abs(x[0]) >= 0.5).map((x) => `${x[1]} ${U.money(x[0])}`).join(', ');
+      add({ id: 'extras', label: 'תוספות שרק באפליקציה', app: appExtra, slip: 0, state: 'ask',
+        text: `באפליקציה: ${what}. בתלוש לא זוהתה שורה בשבילן.`, ask: 'המעסיק משלם את התוספות האלה? אם לא, כדאי לכבות אותן בהגדרות או במשמרת.',
+        fixes: [{ kind: 'set', k: 'calc', f: '' }] });
+    }
+
+    /* 8. travel */
+    const sTravel = val(F, 'travel') || 0;
+    if (sTravel || t.travel) {
+      const it = add({ id: 'travel', label: 'נסיעות', app: t.travel, slip: sTravel });
+      if (it.state !== 'match') {
+        const r = yesOf('travel');
+        const s = sc.find((x) => x.id === 'travel' || x.id === 'travelNone');
+        if (r) { it.text = r.title + ': ' + r.text; it.fixes = fixOfReason(r).concat(scFix('travel')); }
+        else if (s && s.recommend === 'slip') { it.text = s.text; it.fixes = scFix(s.id); }
+        else {
+          it.state = 'ask';
+          it.text = `באפליקציה ${t.workDays} ימי עבודה × ${U.money(+emp.travelPerDay || 0)}` + (val(F, 'workDays') ? `, ובתלוש ${U.num(val(F, 'workDays'), 0)} ימים.` : '.');
+          it.ask = sTravel ? 'כמה עולה לך הנסיעה לעבודה ביום, הלוך וחזור?' : 'המעסיק משלם לך נסיעות? אם כן, באיזו שורה בתלוש?';
+          it.fixes = s ? scFix(s.id) : [{ kind: 'set', k: 'pay', f: 'סכום ליום עבודה ₪' }];
+        }
+      }
+    }
+
+    /* 9. vacation and sick pay */
+    const sLeave = (val(F, 'vacationPay') || 0) + (val(F, 'sickPay') || 0);
+    if (sLeave || t.leavePay) {
+      const it = add({ id: 'leave', label: 'דמי חופשה ומחלה', app: t.leavePay, slip: sLeave });
+      if (it.state !== 'match') {
+        it.state = 'ask';
+        const daysTxt = `באפליקציה רשומים בתקופה ${t.vacationDays} ימי חופשה ו-${t.sickDays} ימי מחלה.`;
+        if (sLeave && !t.leavePay) {
+          it.text = 'בתלוש יש תשלום על חופשה או מחלה. ' + daysTxt;
+          it.ask = 'לקחת בתקופה ימי חופשה או מחלה? אם כן, אפשר לרשום אותם, והחישוב יכלול אותם.';
+          it.fixes = [{ kind: 'entry', entry: 'vacation', date: P.from }, { kind: 'entry', entry: 'sick', date: P.from }];
+        } else if (!sLeave) {
+          it.text = daysTxt + ' בתלוש לא זוהה עליהם תשלום.';
+          it.ask = 'ימי מחלה: היום הראשון לא משולם, הימים 2 ו-3 ב-50%. האם המעסיק שילם עליהם בשורה אחרת?';
+          it.fixes = [{ kind: 'verify', key: 'vacationPay' }];
+        } else {
+          it.text = daysTxt + ' הסכום ליום אצל המעסיק שונה מההערכה.';
+          it.ask = 'כמה ימים המעסיק רשם בתלוש, ומה השכר היומי?';
+          it.fixes = [{ kind: 'set', k: 'leave', f: '' }];
+        }
+      }
+    }
+
+    /* 10-13. lines the app does not count in a month's pay: holiday pay, recuperation, past corrections, bonuses */
+    const sHol = val(F, 'holidayPay') || 0;
+    if (sHol) add({ id: 'holiday', label: 'דמי חגים', app: 0, slip: sHol, text: 'האפליקציה לא מחשבת דמי חגים בברוטו. זה תשלום על חג שחל ביום חול ולא עבדת בו, לעובד שעתי אחרי 3 חודשי עבודה.' });
+    const sRec = val(F, 'recuperation') || 0;
+    if (sRec) {
+      const L = Engine.leaveBalances(model, P.to);
+      add({ id: 'recuperation', label: 'דמי הבראה', app: 0, slip: sRec,
+        text: 'דמי הבראה לא נכללים בחישוב החודשי של האפליקציה.' + (L.recuperation && L.recuperation.eligible ? ` לפי הוותק והיקף המשרה מגיעים לך בערך ${U.money(L.recuperation.amount)} לשנה.` : '') });
+    }
+    const sDiff = val(F, 'diff') || 0;
+    if (sDiff) add({ id: 'diff', label: 'הפרשים ותיקונים', app: 0, slip: sDiff, text: 'תיקון על חודש קודם. הוא לא חלק מהמשמרות של התקופה הזו, ולכן אינו באפליקציה.' });
+    const sBonus = val(F, 'bonus') || 0;
+    const aBonus = t.bonus + t.additions;
+    if (sBonus || aBonus) {
+      const it = add({ id: 'bonus', label: 'בונוסים ותוספות', app: aBonus, slip: sBonus });
+      if (it.state !== 'match') {
+        it.state = 'ask';
+        it.text = !aBonus ? `בתלוש ${U.money(sBonus)} בונוס או מענק, ובאפליקציה לא רשום בונוס בתקופה.` : !sBonus ? `רשמת בתקופה בונוסים ותוספות של ${U.money(aBonus)}, ובתלוש לא זוהתה שורה כזו.` : 'הבונוס בתלוש שונה ממה שרשמת.';
+        it.ask = !aBonus ? 'אפשר לרשום את הבונוס כתוספת באפליקציה. לרשום אותו?' : 'המעסיק שילם את התוספות האלה בתלוש הזה, או ישלם בתלוש אחר?';
+        it.fixes = !aBonus ? [{ kind: 'entry', entry: 'adjustment', date: P.to }] : [];
+      }
+    }
+    const sOther = otherSum(slip, 'otherPay');
+    if (sOther) add({ id: 'otherPay', label: 'תשלומים אחרים', app: 0, slip: sOther, text: 'שורות שסימנת בתלוש כתשלום אחר. האפליקציה לא יודעת מה הן, ולכן אינן בחישוב.' });
+
+    /* what is left: the payslip's gross against the lines that were read */
+    const appGross = items.reduce((s, x) => s + (x.id === 'rate' ? 0 : +x.app || 0), 0);
+    const slipLines = appGross + items.reduce((s, x) => s + x.diff, 0);
+    const sGross = val(F, 'gross') != null ? val(F, 'gross') : slipLines;
+    const restG = sGross - slipLines;
+    const unnamed = unnamedOf(slip);
+    if (Math.abs(restG) >= 0.5) {
+      // lines the app has and the payslip shows no line for, whose sum is this amount: the gross probably holds them
+      const lone = items.filter((x) => x.app > 0 && !x.slip && x.id !== 'rate').slice(0, 8);
+      let twins = null;
+      for (let mask = 1; mask < (1 << lone.length) && !twins; mask++) {
+        const pick = lone.filter((_, i) => mask & (1 << i));
+        const s = pick.reduce((t, x) => t + x.app, 0);
+        if (Math.abs(s - restG) <= Math.max(1, s * 0.01)) twins = pick;
+      }
+      const names = twins ? twins.map((x) => '"' + x.label + '"').join(', ') : '';
+      // one answer settles them together with this line: their sum is not counted twice in what is still open
+      if (twins) for (const x of twins) x.twin = true;
+      const m = U.money(Math.abs(restG));
+      add({ id: 'unexplained', label: 'לא מוסבר', app: 0, slip: restG, state: 'ask',
+        text: (unnamed.length ? `הברוטו בתלוש שונה בעוד ${m} מסכום השורות שזיהינו.` + ' ' + (unnamed.length === 1 ? 'יש בתלוש שורה אחת שלא זיהינו, וייתכן שהיא ההפרש.' : `יש בתלוש ${unnamed.length} שורות שלא זיהינו, וייתכן שהן ההפרש.`)
+          : `הברוטו בתלוש שונה בעוד ${m} מסכום השורות שנקראו. ייתכן ששורה לא נקראה או נקראה לא נכון.`)
+          + (!twins ? '' : ' ' + (twins.length === 1 ? `הסכום הזה שווה לשורה "${twins[0].label}" למעלה, שלא זוהתה בתלוש. ייתכן שהיא כלולה בברוטו בשם אחר.`
+            : `הסכום הזה שווה לשורות ${names} למעלה, שלא זוהו בתלוש. ייתכן שהן כלולות בברוטו בשמות אחרים.`)),
+        ask: unnamed.length ? 'מה השורות שלא זיהינו? אפשר לסמן כל אחת, והפער יוסבר.' : 'הברוטו ושורות התשלום בנתוני התלוש כתובים כמו בתלוש?',
+        fixes: unnamed.length ? [{ kind: 'label' }] : [{ kind: 'verify', key: 'gross' }] });
+    }
+    const gross = { app: appGross, slip: sGross, total: sGross - appGross, items, rest: restG, override: '' };
+    // shifts with a manual override in the period: the app's gross without them, when it is closer to the payslip
+    if (a.overridesInPeriod && a.auto && Math.abs(a.auto.t.gross - t.gross) >= 1) {
+      const n = a.overridesInPeriod, autoG = a.auto.t.gross;
+      gross.override = Math.abs(sGross - autoG) <= Math.abs(sGross - t.gross)
+        ? `${n} משמרות בתקופה כוללות עקיפה ידנית. בלי העקיפות האפליקציה הייתה מחשבת ${U.money(autoG)} ברוטו, קרוב יותר לתלוש, כך שהפער נובע כנראה מהעקיפה.`
+        : `${n} משמרות בתקופה כוללות עקיפה ידנית. בלי העקיפות האפליקציה הייתה מחשבת ${U.money(autoG)} ברוטו.`;
+    }
+
+    /* the net: the gross gap, then each deduction (its part on the net), then what is left */
+    let net = null;
+    const sNet = val(F, 'net');
+    if (sNet != null) {
+      const N = E.net;
+      const nItems = [];
+      const nAdd = (o) => {
+        const it = Object.assign({ hours: null, state: 'clear', text: '', ask: '', fixes: [], parts: null }, o);
+        if (Math.abs(it.diff) < 0.5 && it.state !== 'info') { it.state = 'match'; it.ask = ''; }
+        nItems.push(it);
+        return it;
+      };
+      nAdd({ id: 'gross', label: 'הפרש בברוטו', app: N.gross, slip: sGross, diff: gross.total, text: 'הפירוט בשורות הברוטו למעלה.', state: 'info' });
+      // the employer's deductions estimated on the payslip's own gross, then with its credit points: what is left
+      // of each deduction after that is what the settings cannot explain
+      const pe = val(F, 'pensionEmployee');
+      const pBase = pe > 0 && +S.pension.employeePct ? pe / (+S.pension.employeePct / 100) : (appGross > 0 ? Engine.pensionBaseOf(t, S) * sGross / appGross : sGross);
+      const est = (cpts) => Engine.netEstimate({ gross: sGross, pensionBase: pBase, pensionActive: pe > 0 ? true : undefined, deductions: 0, periodTo: P.to },
+        cpts == null ? S : Object.assign({}, S, { tax: Object.assign({}, S.tax, { creditPoints: cpts }) }));
+      const T1 = est(null);
+      const cp = val(F, 'creditPoints');
+      const T2 = cp != null && Math.abs(cp - (+S.tax.creditPoints || 0)) >= 0.01 ? est(cp) : T1;
+      // a deduction's line: its part on the net is minus what the payslip deducts more
+      const ded = (o) => {
+        const parts = o.parts.filter((p) => Math.abs(p.amount) >= 0.5);
+        return nAdd(Object.assign(o, { diff: -((o.slip || 0) - (o.app || 0)), parts: parts.length > 1 ? parts : null }));
+      };
+      const sTax = val(F, 'incomeTax') || 0;
+      const tax = ded({ id: 'tax', label: 'מס הכנסה', app: N.incomeTax, slip: sTax, parts: [
+        { label: 'בגלל הברוטו', amount: -(T1.incomeTax - N.incomeTax), known: true },
+        { label: 'בגלל נקודות הזיכוי', amount: -(T2.incomeTax - T1.incomeTax), known: true },
+        { label: 'לא מוסבר', amount: -(sTax - T2.incomeTax), known: false }] });
+      const taxLeft = sTax - T2.incomeTax;
+      if (tax.state !== 'match') {
+        if (Math.abs(taxLeft) < Math.max(5, T2.incomeTax * 0.03)) {
+          tax.text = Math.abs(T2.incomeTax - T1.incomeTax) >= 0.5 ? 'ההפרש נובע מהברוטו ומנקודות הזיכוי בתלוש.' : 'ההפרש נובע מההפרש בברוטו: המס עולה ויורד עם השכר.';
+          tax.fixes = scFix('creditPoints');
+        } else if (taxLeft > 0) {
+          tax.state = 'ask';
+          tax.text = `המעסיק ניכה ${U.money(taxLeft)} יותר ממה שהמדרגות ונקודות הזיכוי נותנות. זה קורה בעבודה אצל יותר ממעסיק אחד בלי תיאום מס, כשלא נמסר טופס 101, או בתיקון מס שנתי.`;
+          tax.ask = 'עבדת בתקופה גם אצל מעסיק אחר, או שלא מסרת למעסיק טופס 101?';
+          tax.fixes = [{ kind: 'set', k: 'net', f: 'נקודות זיכוי' }];
+        } else {
+          tax.state = 'ask';
+          tax.text = `המעסיק ניכה ${U.money(-taxLeft)} פחות ממה שהמדרגות ונקודות הזיכוי שבהגדרות נותנות. ייתכן שיש לך זיכויים נוספים, למשל על ילדים, תואר, שחרור מצבא או יישוב מזכה.`;
+          tax.ask = 'יש לך נקודות זיכוי או הקלות מס שלא מופיעות בהגדרות?';
+          tax.fixes = scFix('creditPoints').length ? scFix('creditPoints') : [{ kind: 'set', k: 'net', f: 'נקודות זיכוי' }];
+        }
+      }
+      const sNi = (val(F, 'nationalInsurance') || 0) + (val(F, 'healthTax') || 0);
+      const aNi = N.bl + N.health, eNi = T1.bl + T1.health;
+      const ni = ded({ id: 'ni', label: 'ביטוח לאומי ומס בריאות', app: aNi, slip: sNi, parts: [
+        { label: 'בגלל הברוטו', amount: -(eNi - aNi), known: true },
+        { label: 'לא מוסבר', amount: -(sNi - eNi), known: false }] });
+      if (ni.state !== 'match') {
+        if (Math.abs(sNi - eNi) < Math.max(5, eNi * 0.05)) ni.text = 'ההפרש נובע מההפרש בברוטו.';
+        else {
+          ni.state = 'ask';
+          ni.text = `אחרי ההפרש בברוטו נשארו ${U.money(Math.abs(sNi - eNi))} שהשיעורים הרגילים לא מסבירים. השיעור תלוי בגיל ובמעמד (למשל מתחת לגיל 18, או מגיל פרישה), ולפעמים המעסיק מחשב על רכיבים שלא בברוטו, כמו שווי.`;
+          ni.ask = S.birthDate ? 'יש בתלוש רכיב של שווי (רכב, טלפון, ארוחות) שנוסף לשכר לצורך מס?' : 'מה תאריך הלידה שלך? השיעור תלוי בגיל.';
+          ni.fixes = S.birthDate ? [{ kind: 'verify', key: 'nationalInsurance' }] : [{ kind: 'set', k: 'personal', f: 'תאריך לידה (לא חובה)' }];
+        }
+      }
+      const sPe = pe || 0;
+      const pen = ded({ id: 'pension', label: 'פנסיה (חלק העובד)', app: N.pensionEmployee, slip: sPe, parts: [
+        { label: 'בגלל השכר לפנסיה', amount: -(T1.pensionEmployee - N.pensionEmployee), known: true },
+        { label: 'לא מוסבר', amount: -(sPe - T1.pensionEmployee), known: false }] });
+      if (pen.state !== 'match') {
+        const s = sc.find((x) => x.id === 'pensionStart' || x.id === 'pensionPct');
+        if (!sPe) {
+          pen.state = 'ask';
+          pen.text = 'בתלוש לא זוהה ניכוי לפנסיה, ובאפליקציה ההפרשה כבר התחילה.';
+          pen.ask = 'מתי התחלת לעבוד אצל המעסיק, והייתה לך קרן פנסיה פעילה לפני כן?';
+          pen.fixes = [{ kind: 'set', k: 'leave', f: 'תאריך תחילת עבודה' }];
+        } else if (s) { pen.text = s.text; pen.fixes = scFix(s.id); if (s.recommend === 'ask') { pen.state = 'ask'; pen.ask = 'מה אחוז ההפרשה שלך לפי הקרן או ההסכם?'; } }
+        else pen.text = 'ההפרש נובע מההפרש בשכר שממנו מפרישים לפנסיה.';
+      }
+      const sHe = val(F, 'hishtalmutEmployee') || 0;
+      if (sHe || N.hishtalmut) {
+        const h = ded({ id: 'hishtalmut', label: 'קרן השתלמות', app: N.hishtalmut, slip: sHe, parts: [{ label: '', amount: -(sHe - N.hishtalmut), known: false }] });
+        if (h.state !== 'match') {
+          const s = sc.find((x) => x.id === 'hishtalmut');
+          h.text = s ? s.text : 'ההפרשה לקרן ההשתלמות בתלוש שונה מההגדרות.';
+          h.fixes = s ? scFix('hishtalmut') : [{ kind: 'set', k: 'net', f: 'קרן השתלמות' }];
+          if (!s || s.recommend === 'ask') { h.state = 'ask'; h.ask = 'מה אחוז ההפרשה שלך לקרן ההשתלמות?'; }
+        }
+      }
+      const sOd = otherSum(slip, 'otherDed');
+      if (sOd || t.deductions) {
+        const o = ded({ id: 'otherDed', label: 'ניכויים אחרים', app: t.deductions, slip: sOd, parts: [{ label: '', amount: -(sOd - t.deductions), known: false }] });
+        if (o.state !== 'match') {
+          o.state = 'ask';
+          o.text = sOd > t.deductions ? 'בתלוש יש ניכויים שלא רשמת באפליקציה, למשל ארוחות, ועד עובדים או הלוואה. ניכוי מהשכר מותר לפי חוק או בהסכמה שלך בכתב.' : 'רשמת ניכויים שלא זוהו בתלוש.';
+          o.ask = sOd > t.deductions ? 'הסכמת בכתב לניכויים האלה? אם כן, אפשר לרשום אותם כניכוי באפליקציה.' : 'המעסיק ניכה אותם בתלוש הזה, בשורה אחרת?';
+          o.fixes = sOd > t.deductions ? [{ kind: 'entry', entry: 'deduction', date: P.to }] : [];
+        }
+      }
+      // what is left: the payslip's net against its gross minus the deductions that were read
+      const readDed = sTax + sNi + sPe + sHe + sOd;
+      const restN = sNet - (sGross - readDed);
+      if (Math.abs(restN) >= 0.5) {
+        const td = val(F, 'totalDeductions');
+        const unread = td != null && Math.abs(td - readDed) >= 0.5;
+        nAdd({ id: 'unexplained', label: 'לא מוסבר', app: 0, slip: restN, diff: restN, state: 'ask',
+          text: unread ? `סך הניכויים בתלוש ${U.money(td)}, והניכויים שנקראו ${U.money(readDed)}. יש ניכוי שלא זוהה.` : `הנטו בתלוש שונה ב-${U.money(Math.abs(restN))} מהברוטו פחות הניכויים שנקראו.`,
+          ask: unnamed.length ? 'מה השורות שלא זיהינו בתלוש? אפשר לסמן כל אחת.' : 'הנטו והניכויים בנתוני התלוש כתובים כמו בתלוש?',
+          fixes: unnamed.length ? [{ kind: 'label' }] : [{ kind: 'verify', key: 'net' }] });
+      }
+      const appNet = N.net;
+      net = { app: appNet, slip: sNet, total: sNet - appNet, items: nItems, rest: restN };
+    }
+    const all = gross.items.concat(net ? net.items : []);
+    const open = all.filter((x) => x.state === 'ask' && !x.twin).reduce((s, x) => s + Math.abs(x.diff), 0);
+    return { gross, net, settings: sc, open, asks: all.filter((x) => x.state === 'ask').length, exact: all.every((x) => x.state !== 'ask') };
+  }
+
   /** Waterfall steps gross → net. */
   function waterfall(F) {
     const g = val(F, 'gross');
@@ -1065,25 +1625,15 @@
     return steps;
   }
 
-  /** Line-by-line plain explanations, with change vs previous slip. */
+  /** Line-by-line plain explanations. The only change against the previous payslip is a leave balance's (compareSlips). */
   function explainLines(F, prevF) {
     const out = [];
+    const deltas = compareSlips(prevF, F);
     for (const f of FIELDS) {
       const v = val(F, f.key);
       if (v == null) continue;
-      let change = null;
-      if (prevF) {
-        const pv = val(prevF, f.key);
-        if (pv == null) change = 'שורה חדשה: לא הופיעה בתלוש הקודם.';
-        else if (Math.abs(v - pv) > Math.max(1, Math.abs(pv) * 0.05)) {
-          const up = v > pv;
-          change = (up ? 'עלה' : 'ירד') + ` ב-${U.money(Math.abs(v - pv))} לעומת התלוש הקודם (${U.money(pv)})`;
-          if (['incomeTax', 'nationalInsurance', 'healthTax', 'pensionEmployee'].includes(f.key)) {
-            const gNow = val(F, 'gross'), gPrev = val(prevF, 'gross');
-            if (gNow && gPrev) change += gNow > gPrev === up ? ', בהתאם לשינוי בברוטו.' : ', למרות שהברוטו השתנה בכיוון ההפוך; כדאי לבדוק.';
-          } else change += '.';
-        }
-      }
+      const d = deltas.find((x) => x.key === f.key);
+      const change = d && Math.abs(d.delta) >= 0.005 ? d.text : null;
       const printed = printedTerm(F[f.key] && F[f.key].line);
       out.push({ key: f.key, label: f.label, kind: f.kind, kindLabel: KIND_LABEL[f.kind], value: v, qty: qty(F, f.key),
         explain: EXPLAIN[f.key] || '', meaning: MEANING[f.key] || '', meaningHe: MEANING_HE[f.key] || '', heTerm: HE_TERM[f.key] || '',
@@ -1125,21 +1675,27 @@
     return s;
   }
 
-  /** Notable changes between consecutive slips (for alerts). */
-  function compareSlips(prevF, F) {
+  /**
+   * The one thing a payslip is compared with the payslip before it on: the vacation and sick-day balances, up or
+   * down. Every other line is checked against the app's own calculation (reconcile), never against another payslip.
+   * → [{ type: 'vacation'|'sick', key, label, prev, now, delta, used, text }]. a (optional): the analysis, for the
+   * days recorded in the period.
+   */
+  function compareSlips(prevF, F, a) {
     const out = [];
-    if (!prevF) return out;
-    const g1 = val(prevF, 'gross'), g2 = val(F, 'gross');
-    const gChange = g1 && g2 ? (g2 - g1) / g1 : 0;
-    for (const f of FIELDS.filter((x) => x.kind === 'ded')) {
-      if (val(F, f.key) && !val(prevF, f.key)) out.push({ type: 'newDeduction', text: `ניכוי חדש: ${f.label} (${U.money(val(F, f.key))})` });
+    if (!prevF || !F) return out;
+    for (const [key, type] of [['vacationBalance', 'vacation'], ['sickBalance', 'sick']]) {
+      const now = val(F, key), prev = val(prevF, key);
+      if (now == null || prev == null) continue;
+      const delta = now - prev;
+      const used = a && a.expected ? (type === 'vacation' ? a.expected.t.vacationDays : a.expected.t.sickDays) : null;
+      const n = U.num(Math.abs(delta), 2), from = U.num(prev, 2), to = U.num(now, 2);
+      let text = Math.abs(delta) < 0.005 ? `לא השתנתה מהתלוש הקודם: ${to} ימים.`
+        : delta > 0 ? `עלתה ב-${n} ימים מהתלוש הקודם, מ-${from} ל-${to}.` : `ירדה ב-${n} ימים מהתלוש הקודם, מ-${from} ל-${to}.`;
+      if (used === 1) text += type === 'vacation' ? ' בתקופה רשמת יום חופשה אחד.' : ' בתקופה רשמת יום מחלה אחד.';
+      else if (used) text += type === 'vacation' ? ` בתקופה רשמת ${used} ימי חופשה.` : ` בתקופה רשמת ${used} ימי מחלה.`;
+      out.push({ type, key, label: FIELD[key].label, prev, now, delta, used, text });
     }
-    const p1 = val(prevF, 'pensionEmployee'), p2 = val(F, 'pensionEmployee');
-    if (p1 && (!p2 || (p2 - p1) / p1 < -0.15) && gChange > -0.1) out.push({ type: 'pensionDrop', text: `הפרשת הפנסיה ירדה מ-${U.money(p1)} ל-${U.money(p2 || 0)} למרות שהברוטו כמעט לא ירד.` });
-    const c1 = val(prevF, 'creditPoints'), c2 = val(F, 'creditPoints');
-    if (c1 != null && c2 != null && c1 !== c2) out.push({ type: 'credit', text: `נקודות הזיכוי השתנו מ-${c1} ל-${c2}.` });
-    const t1 = val(prevF, 'incomeTax'), t2 = val(F, 'incomeTax');
-    if (t1 && t2 && (t2 - t1) / t1 > 0.3 && gChange < 0.1) out.push({ type: 'taxJump', text: `מס ההכנסה קפץ מ-${U.money(t1)} ל-${U.money(t2)} בלי עלייה דומה בברוטו.` });
     return out;
   }
 
@@ -1177,5 +1733,5 @@
     return s.trim();
   }
 
-  root.Payslip = { FIELDS, FIELD, HOUR_FIELDS, EXPLAIN, READ_ORDER, MEANING, MEANING_HE, HE_TERM, KIND_LABEL, printedTerm, unknownLines, labelOther, normalize, fixVisual, numbersIn, matchField, pickValues, linesFromPdfItems, detectPeriod, parseText, redact, aiSchema, aiPrompt, fromAi, expected, analyze, checkGap, waterfall, explainLines, compareSlips, employerMessage };
+  root.Payslip = { FIELDS, FIELD, HOUR_FIELDS, EXPLAIN, READ_ORDER, MEANING, MEANING_HE, HE_TERM, KIND_LABEL, printedTerm, unknownLines, labelOther, normalize, fixVisual, numbersIn, matchField, pickValues, linesFromPdfItems, detectPeriod, parseText, redact, aiSchema, aiPrompt, fromAi, expected, analyze, checkGap, reconcile, settingsCheck, waterfall, explainLines, compareSlips, employerMessage };
 })(typeof window !== 'undefined' ? window : globalThis);
