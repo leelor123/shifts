@@ -48,8 +48,12 @@
     const at = new Map([[now, App.alertsAt(now)]]);
     for (const t of ts) { await idle(); at.set(t, App.alertsAt(t)); }
     const known = new Set(S.notifications.map((n) => n.key));
-    return NP.plan((t) => at.get(t) || [], ts, { now, sent: (k) => known.has(k) })
-      .map((x) => item(x.alert, App.noteLook(x.alert, x.at), x.at));
+    const list = NP.plan((t) => at.get(t) || [], ts, { now, sent: (k) => known.has(k) });
+    // not opened for some days: "forgot to log a shift?" (moved on by every open, since the list is made again)
+    const A = S.settings.alerts;
+    const off = NP.away(now, { on: (A.types || {}).away !== false, days: A.awayDays, hasShifts: S.shifts.some((s) => s.status === 'done' && !s.deleted), active: !!a });
+    if (off) list.push(off);
+    return list.map((x) => item(x.alert, App.noteLook(x.alert, x.at), x.at));
   }
 
   let last = '', timer = 0, busy = false, again = false;

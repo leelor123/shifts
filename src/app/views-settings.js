@@ -59,7 +59,7 @@
   const RANGES = {
     's.alerts.compareWeeks': [1, 26], 's.alerts.compareMonths': [1, 12], 's.alerts.minWeeksData': [1, 52], 's.alerts.deviationPct': [1, 500],
     's.alerts.streakDays': [2, 60], 's.alerts.weekHoursMax': [1, 168], 's.alerts.longShiftHours': [1, 48], 's.alerts.minRestHours': [0, 48],
-    's.alerts.timerHours': [1, 72], 's.alerts.idleDays': [1, 365], 's.alerts.suspiciousHours': [1, 72], 's.alerts.backupDays': [1, 365],
+    's.alerts.timerHours': [1, 72], 's.alerts.awayDays': [1, 30], 's.alerts.idleDays': [1, 365], 's.alerts.suspiciousHours': [1, 72], 's.alerts.backupDays': [1, 365],
     's.alerts.upcomingMin': [0, 1440], 's.alerts.weeklyHour': [0, 23], 'e.payDay': [1, 31], 'e.otThreshold': [1, 24], 'e.otTier1Hours': [0, 24],
     'e.minShiftHours': [0, 24], 'e.nightShiftThreshold': [1, 24], 'e.defaultBreakMin': [0, 600], 's.leave.dayHours': [0, 24],
     's.rest.lat': [-90, 90], 's.rest.lon': [-180, 180], 's.rest.startOffsetMin': [-180, 180], 's.rest.endOffsetMin': [-180, 180],
@@ -788,6 +788,8 @@
           ${A.remindPlanned === true ? remindBox(A) : ''}
           ${t('confirmDone', 'אחרי משמרת מתוכננת: לשאול אם עבדת').replace('data-s=', 'data-redraw data-s=')}
           ${A.types.confirmDone !== false ? `<div class="grid2">${F.sel('כמה זמן אחרי הסיום', 's.alerts.reminders.confirmAfter', [[15, '15 דקות'], [30, 'חצי שעה'], [60, 'שעה'], [120, 'שעתיים'], [240, '4 שעות'], [480, '8 שעות']], (A.reminders || {}).confirmAfter || 30)}</div>` : ''}
+          ${t('away', 'לא נכנסתי לאפליקציה כמה ימים: לשאול אם שכחתי לרשום משמרת').replace('data-s=', 'data-redraw data-s=')}
+          ${A.types.away !== false ? `<div class="grid2">${F.num('אחרי (ימים)', 's.alerts.awayDays', A.awayDays || 3)}</div>` : ''}
           ${t('payslipDue', 'ביום התשלום: להזין את התלוש')}
           ${root.Plus && root.Plus.visible() ? t('plusend', 'יום לפני ש-Plus במתנה או הניסיון נגמרים') : ''}
           ${t('backup', 'תזכורת גיבוי')}<div class="grid2">${F.num('כל (ימים)', 's.alerts.backupDays', A.backupDays)}</div></div>`;

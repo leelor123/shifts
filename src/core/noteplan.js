@@ -85,9 +85,27 @@
     return out.slice(0, max);
   }
 
+  /**
+   * "Forgot to log a shift?" when the app was not opened for some days (the user, 11 Nov 2026: "a notification after
+   * three days without opening the app, in case I forgot to log a shift"). Planned at every open, so an open moves it
+   * on; at a daytime hour (09:00 to 21:00). o: { days (default 3), on, hasShifts, active }. Null when it does not apply:
+   * switched off, nothing logged yet (a new user gets no nagging), or a shift running (the timer reminder speaks then).
+   */
+  function away(now, o) {
+    o = o || {};
+    if (o.on === false || !o.hasShifts || o.active) return null;
+    const days = Math.max(1, Math.min(30, Math.round(+o.days) || 3));
+    let at = now + days * DAY;
+    const h = new Date(at).getHours();
+    if (h >= 21) at = U.toEpoch(U.addDays(U.epochKey(at), 1), '10:00');
+    else if (h < 9) at = U.toEpoch(U.epochKey(at), '10:00');
+    return { at, alert: { key: 'away-' + U.epochKey(at), type: 'away', push: 'critical', severity: 'info', data: { days },
+      title: 'שכחת לרשום משמרת?', body: '' } };
+  }
+
   /* ---- how each one looks ---- */
   // the phone's notification channels (Android): reminders about a shift ring; pay, summaries and good news are quiet
-  const CH = { upcoming: 'shifts', confirmDone: 'shifts', timer: 'shifts' };
+  const CH = { upcoming: 'shifts', confirmDone: 'shifts', timer: 'shifts', away: 'shifts' };
   const span = (r) => `\u2066${U.epochHM(r.start)}\u2060–\u2060${U.epochHM(r.rawEnd)}\u2069`;
   const pay = (r) => (r && r.wage >= 1 ? U.money(r.wage + ((r.travel && r.travel.amount) || 0), 0) : '');
   /** The address a tap opens: the app does there what a tap on the notification in its own list does (App.openNote),
@@ -146,6 +164,12 @@
       }
       n.sub = 'טיימר פעיל';
       n.acts.push({ id: 'stop', title: 'לסיים ולתקן', url: './?action=stop#home' });
+    } else if (t === 'away') {
+      const d = (a.data && a.data.days) || 3;
+      n.title = 'שכחת לרשום משמרת?';
+      n.body = `לא נכנסת לשעתי כבר ${d} ימים. אם עבדת בהם, רישום של דקה שומר את השכר שלך מדויק.`;
+      n.sub = 'תזכורת';
+      n.acts.push({ id: 'add', title: 'להוסיף משמרת', url: './?action=add#home' });
     } else if (t === 'weekly' && a.data && a.data.from && model) {
       const tt = Engine.totals(model, a.data.from, a.data.to);
       if (!o.hideMoney && tt.gross > 0) n.title = `השבוע שלך: ${U.money(tt.gross, 0)} ברוטו`;
@@ -178,6 +202,6 @@
     return n;
   }
 
-  root.NotePlan = { DAYS, MAX, MORNING, times, plan, look, dayWord, noteUrl };
+  root.NotePlan = { DAYS, MAX, MORNING, times, plan, away, look, dayWord, noteUrl };
   if (typeof module !== 'undefined') module.exports = root.NotePlan;
 })(typeof window !== 'undefined' ? window : globalThis);

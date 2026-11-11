@@ -145,9 +145,10 @@
           projection: true, goal: true, record: true, goalShifts: true, payslipGap: true, travel: true,
           timer: true, plannedPast: true, idle: true, suspicious: true, payslipDue: true, backup: true, upcoming: true, weekly: true, confirmDone: true,
           recuperation: true, birthday: true, minwage: true, youth: true,
+          away: true, // "forgot to log a shift?" after some days without opening the app (app/phone-notes.js)
         },
         longShiftHours: 12, minRestHours: 8, streakDays: 6, weekHoursMax: 50,
-        timerHours: 12, idleDays: 7, suspiciousHours: 20, backupDays: 30, upcomingMin: 60,
+        awayDays: 3, timerHours: 12, idleDays: 7, suspiciousHours: 20, backupDays: 30, upcomingMin: 60,
         weeklyDay: 6, weeklyHour: 21,
         remindPlanned: false, // a reminder before a planned shift: off unless switched on (few notifications)
         runNote: false, // a notification that stays while a shift runs, with an end button (app/run-note.js): off unless switched on

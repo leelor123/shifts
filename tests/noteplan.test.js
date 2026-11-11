@@ -83,6 +83,24 @@ T.test('the moments: within the coming week, sorted, each once, the mornings and
   T.ok(ts.some((t) => new Date(t).getHours() === d.settings.alerts.weeklyHour), 'the weekly summary');
 });
 
+T.test('not opened for three days: "forgot to log a shift?", at a daytime hour, moved on by every open', () => {
+  const at22 = U.toEpoch('2026-11-09', '22:00');
+  const a = NP.away(at22, { hasShifts: true });
+  T.ok(a && a.alert.type === 'away', 'planned');
+  T.eq(new Date(a.at).getHours(), 10, 'not at night: the next morning');
+  T.ok(a.at >= at22 + 3 * 864e5, 'three days at least');
+  const mid = NP.away(NOW, { hasShifts: true });
+  T.near(mid.at, NOW + 3 * 864e5, 1000);
+  T.eq(NP.away(NOW, { hasShifts: false }), null, 'nothing logged yet: no nagging');
+  T.eq(NP.away(NOW, { hasShifts: true, active: true }), null, 'a shift running: the timer reminder speaks');
+  T.eq(NP.away(NOW, { hasShifts: true, on: false }), null, 'switched off');
+  T.near(NP.away(NOW, { hasShifts: true, days: 5 }).at, NOW + 5 * 864e5, 1000);
+  const l = NP.look(a.alert, Engine.buildModel(data([])), { now: a.at });
+  T.eq(l.title, 'שכחת לרשום משמרת?');
+  T.ok(l.body.includes('3') && l.acts[0].url.includes('action=add') && l.ch === 'shifts', l.body);
+  T.ok(read('src/app/phone-notes.js').includes('NP.away(now,'), 'the phone gets it with the list');
+});
+
 T.section('how they look');
 T.test('a reminder before a shift: the time and the role first, the expected pay, a button that starts the timer', () => {
   const p = shift('2026-11-09', '16:00', '23:00');
