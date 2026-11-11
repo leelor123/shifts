@@ -378,3 +378,61 @@ T.test('payslip check: its lines are not escaped a second time', () => {
   T.ok(!/esc\(t\)/.test(render[1]), 'a check line is escaped again: its money() shows as <span> text');
   T.ok(/\$\{money\(pays\)\}/.test(src), 'the warning still puts the amounts in with money()');
 });
+
+// User report, Nov 2026: the reader added the sick-day balance as sick pay, and the seniority years as a seniority
+// payment the person does not get. A count line (balance, accrual, usage, days, years, a date) is never money.
+T.section('payslip reading: counts are not money');
+T.test('sick and vacation day balance, accrual and usage lines are not a payment', () => {
+  const p = Payslip.parseText(SAMPLE + '\nמחלה 18.00 1.50 0.00 19.50\nניצול מחלה 0.00\nימי מחלה 12.50\nמחלה 12.00\nצבירת מחלה 1.50\nחופשה 10.00 1.25 0.00 11.25\nניצול חופשה 0.00');
+  T.ok(!p.fields.sickPay, 'no sick pay read from a count: ' + JSON.stringify(p.fields.sickPay));
+  T.ok(!p.fields.vacationPay, 'no vacation pay read from a count: ' + JSON.stringify(p.fields.vacationPay));
+  T.near(p.fields.sickBalance.value, 19.5); // the closing balance of the row, not the previous one
+  T.ok(!p.other.some((o) => /מחלה|חופשה/.test(o.line)), 'and not left as an unnamed payment either');
+});
+T.test('a sick-day balance row gives its closing balance', () => {
+  T.near(Payslip.parseText('מחלה יתרה 18.00 1.50 0.00 19.50').fields.sickBalance.value, 19.5);
+  T.near(Payslip.parseText('יתרת ימי מחלה 7.50').fields.sickBalance.value, 7.5);
+});
+T.test('seniority years and the start date are not a seniority payment', () => {
+  const p = Payslip.parseText(SAMPLE + '\nותק 3.04\nתאריך תחילת עבודה 01/03/2023 ותק 3 שנים 8 חודשים\nשנות ותק 5\nותק לחופשה 2.00');
+  T.ok(!p.fields.seniority, 'no seniority payment: ' + JSON.stringify(p.fields.seniority));
+});
+T.test('a real seniority payment and a real sick pay line are still read', () => {
+  T.near(Payslip.parseText('תוספת ותק 150.00').fields.seniority.value, 150);
+  const h = Payslip.parseText('ותק 160.00 1.50 240.00').fields.seniority;
+  T.near(h.value, 240); T.near(h.qty, 160);
+  const s = Payslip.parseText('דמי מחלה 2.00 350.00').fields.sickPay;
+  T.near(s.value, 350); T.near(s.qty, 2);
+  T.near(Payslip.parseText('מחלה 2.00 175.00 350.00').fields.sickPay.value, 350);
+  T.near(Payslip.parseText('דמי חופשה 1,200.00').fields.vacationPay.value, 1200);
+  T.near(Payslip.parseText('פדיון ימי חופשה 3.00 1,050.00').fields.vacationPay.value, 1050);
+  T.near(Payslip.parseText('דמי הבראה 2,709.00').fields.recuperation.value, 2709);
+  T.ok(!Payslip.parseText('ימי הבראה 6.00').fields.recuperation, 'the recuperation days are not the payment');
+  // the other payments keep their days and hours (travel by days)
+  T.near(Payslip.parseText('נסיעות 20 ימים 452.00').fields.travel.value, 452);
+});
+T.test('AI reading: a count put in a money field is left out, a real payment stays', () => {
+  const r = Payslip.fromAi({ period: '2026-09', fields: [
+    { key: 'sickBalance', value: 19.5, qty: 0, rate: 0 }, { key: 'sickPay', value: 19.5, qty: 0, rate: 0 },
+    { key: 'seniority', value: 3.04, qty: 0, rate: 0 }, { key: 'vacationPay', value: 4, qty: 4, rate: 0 },
+    { key: 'gross', value: 6000, qty: 0, rate: 0 }], otherLines: [], notes: '' });
+  T.ok(!r.fields.sickPay && !r.fields.seniority && !r.fields.vacationPay, 'counts dropped: ' + Object.keys(r.fields).join(','));
+  T.near(r.fields.sickBalance.value, 19.5); T.near(r.fields.gross.value, 6000);
+  const ok = Payslip.fromAi({ fields: [{ key: 'seniority', value: 150, qty: 0, rate: 0 }, { key: 'sickPay', value: 350, qty: 2, rate: 175 }], otherLines: [] });
+  T.near(ok.fields.seniority.value, 150); T.near(ok.fields.sickPay.value, 350);
+  T.ok(/never a count of days, hours or years/.test(Payslip.aiPrompt()) && /תוספת ותק/.test(Payslip.aiPrompt()), 'the AI is told');
+});
+T.test('no seniority in the settings: the expected pay has none, and a seniority-years line adds none', () => {
+  const m = model([shift('2026-09-07', '08:00', '16:00')]);
+  const ex = Payslip.expected(m, '2026-09', false);
+  T.ok(!(ex && ex.t && ex.t.seniority > 0), 'nothing expected from the settings');
+  T.ok(!Payslip.parseText(SAMPLE + '\nותק 2.05').fields.seniority, 'nothing read from the years');
+});
+
+// User report, Nov 2026: a payslip from the archive, corrected and checked again, lost the corrections. The footer of an
+// archived payslip has no save button, so the corrected copy lived only in the open sheet.
+T.test('payslip editor: a corrected archived payslip is saved when it is checked again', () => {
+  const src = require('fs').readFileSync(require('path').join(__dirname, '..', 'src', 'app', 'views-payslip.js'), 'utf8');
+  T.ok(/isNew: !d\.id, edited: !!d\.id/.test(src), 'the verify sheet marks an archived payslip it corrected');
+  T.ok(/if \(slip\.edited && !slip\.isNew\) \{ delete slip\.edited; saveSlip\(slip, a, c/.test(src), 'the check saves the corrected archived payslip');
+});

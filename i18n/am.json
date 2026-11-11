@@ -1655,6 +1655,7 @@
  "ניתוח תלוש · ": "የደመወዝ ወረቀት ትንተና · ",
  "<button class=\"btn tonal\" data-edit>{0} תקן נתונים</button><button class=\"btn\" data-save>{1} שמור בארכיון</button>": "<button class=\"btn tonal\" data-edit>{0} ውሂቡን አስተካክል</button><button class=\"btn\" data-save>{1} በማህደር አስቀምጥ</button>",
  "<button class=\"btn danger\" data-del style=\"flex:0 0 auto\" aria-label=\"מחיקת התלוש\">{0}</button><button class=\"btn tonal\" data-edit>{1} תקן נתונים</button>{2}": "<button class=\"btn danger\" data-del style=\"flex:0 0 auto\" aria-label=\"የደመወዝ ወረቀቱን ሰርዝ\">{0}</button><button class=\"btn tonal\" data-edit>{1} ውሂቡን አስተካክል</button>{2}",
+ "השינויים בתלוש נשמרו": "በደመወዝ ወረቀቱ ላይ ያደረጉት ለውጦች ተቀምጠዋል",
  "נזכיר לך: ביום התשלום הבא תופיע תזכורת להעלות את התלוש של {0}, ובבדיקה שלו נשאל אם זה שולם.": "እናስታውስዎታለን፦ በሚቀጥለው የክፍያ ቀን የ{0}ን የደመወዝ ወረቀት እንዲጭኑ ማስታወሻ ይመጣል፣ በፍተሻው ይህ ተከፍሏል ወይ ብለን እንጠይቃለን።",
  "ההודעה הועתקה": "መልእክቱ ተቀድቷል",
  "הקובץ לא נמצא": "ፋይሉ አልተገኘም",

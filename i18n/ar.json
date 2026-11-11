@@ -1655,6 +1655,7 @@
  "ניתוח תלוש · ": "تحليل القسيمة · ",
  "<button class=\"btn tonal\" data-edit>{0} תקן נתונים</button><button class=\"btn\" data-save>{1} שמור בארכיון</button>": "<button class=\"btn tonal\" data-edit>{0} تصحيح البيانات</button><button class=\"btn\" data-save>{1} حفظ في الأرشيف</button>",
  "<button class=\"btn danger\" data-del style=\"flex:0 0 auto\" aria-label=\"מחיקת התלוש\">{0}</button><button class=\"btn tonal\" data-edit>{1} תקן נתונים</button>{2}": "<button class=\"btn danger\" data-del style=\"flex:0 0 auto\" aria-label=\"حذف القسيمة\">{0}</button><button class=\"btn tonal\" data-edit>{1} تصحيح البيانات</button>{2}",
+ "השינויים בתלוש נשמרו": "تم حفظ التغييرات في قسيمة الراتب",
  "נזכיר לך: ביום התשלום הבא תופיע תזכורת להעלות את התלוש של {0}, ובבדיקה שלו נשאל אם זה שולם.": "سنذكّرك: في يوم الدفع القادم سيظهر تذكير برفع قسيمة {0}، وفي فحصها سنسأل إن كان هذا قد دُفع.",
  "ההודעה הועתקה": "تم نسخ الرسالة",
  "הקובץ לא נמצא": "لم يتم العثور على الملف",

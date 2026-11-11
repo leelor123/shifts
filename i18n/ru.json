@@ -1655,6 +1655,7 @@
  "ניתוח תלוש · ": "Анализ расчётного листа · ",
  "<button class=\"btn tonal\" data-edit>{0} תקן נתונים</button><button class=\"btn\" data-save>{1} שמור בארכיון</button>": "<button class=\"btn tonal\" data-edit>{0} Исправить данные</button><button class=\"btn\" data-save>{1} Сохранить в архив</button>",
  "<button class=\"btn danger\" data-del style=\"flex:0 0 auto\" aria-label=\"מחיקת התלוש\">{0}</button><button class=\"btn tonal\" data-edit>{1} תקן נתונים</button>{2}": "<button class=\"btn danger\" data-del style=\"flex:0 0 auto\" aria-label=\"Удалить расчётный лист\">{0}</button><button class=\"btn tonal\" data-edit>{1} Исправить данные</button>{2}",
+ "השינויים בתלוש נשמרו": "Изменения в расчётном листе сохранены",
  "נזכיר לך: ביום התשלום הבא תופיע תזכורת להעלות את התלוש של {0}, ובבדיקה שלו נשאל אם זה שולם.": "Мы напомним: в следующий день выплаты появится напоминание загрузить расчётный лист за {0}, а его проверка спросит, было ли это оплачено.",
  "ההודעה הועתקה": "Сообщение скопировано",
  "הקובץ לא נמצא": "Файл не найден",

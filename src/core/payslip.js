@@ -239,22 +239,89 @@
     }
     return null;
   }
+  /* ---------------- money or a count? ----------------
+   * A payslip prints counts next to the money: the sick and vacation days (balance, accrued, used), the years of
+   * seniority, the start date. Such a line names the same thing as a payment ("מחלה", "חופשה", "ותק") but holds no
+   * money, and read as a payment it added the sick-day balance or the seniority years to the pay (user report, Nov
+   * 2026). The rule: a balance, accrual or usage line is never a payment, and a payment named by a word that also
+   * names a count ("מחלה" alone, "ותק" alone) needs an amount column. */
+  // i18n-keep-start (the words printed on an Israeli payslip)
+  const BALANCE_WORD = /יתר[הת]|צביר|נצבר|ניצול|נוצל|זכאות|קודמת/;
+  const QTY_WORD = /ימי|ימים|שנים|שנות|שנה|חודשים|חודש|תאריך|שעות/;
+  /** Lines named by a word that also names a count: the words that make them a payment for sure. */
+  const WEAK_PAY = {
+    sickPay: /דמי מחלה|תשלום מחלה|תשלום ימי מחלה/,
+    vacationPay: /דמי חופשה|תשלום חופשה|פדיון חופשה/,
+    recuperation: /דמי הבראה|תשלום הבראה/,
+    seniority: /תוספת ותק|תוס['.]? ?ותק|דמי ותק|פרמיית ותק|גמול ותק/,
+  };
+  // i18n-keep-end
+  /** A count line of these kinds is the balance (information), never the payment. */
+  const BALANCE_OF = { sickPay: 'sickBalance', vacationPay: 'vacationBalance' };
+  const close = (a, b) => Math.abs(a - b) <= Math.max(0.011, Math.abs(b) * 0.002);
+  /** qty × rate = amount among the values (the shape of a real payment line), or null. */
+  function productOf(vals) {
+    if (vals.length < 3) return null;
+    for (let i = 0; i < vals.length; i++) for (let j = i + 1; j < vals.length; j++) for (let k = 0; k < vals.length; k++) {
+      if (k === i || k === j) continue;
+      const prod = vals[i] * vals[j];
+      if (vals[k] !== 0 && Math.abs(prod - vals[k]) / Math.abs(vals[k]) < 0.015) return { value: vals[k], qty: vals[i], rate: vals[j] };
+    }
+    return null;
+  }
+  /** A balance row (previous + accrued − used = balance, in either reading direction): its closing balance, or null. */
+  function balanceRow(vals) {
+    if (vals.some((v) => v < 0)) return null;
+    for (const v of [vals, vals.slice().reverse()]) {
+      if (v.length === 4 && close(v[0] + v[1] - v[2], v[3])) return v[3];
+      if (v.length === 3 && close(v[0] + v[1], v[2]) && !productOf(v)) return v[2];
+    }
+    return null;
+  }
+  /** Days and the money for them ("ימי מחלה 2.00 350.00"): two values, a day count and an amount far above it. */
+  function daysAndAmount(vals) {
+    if (vals.length !== 2) return false;
+    const [a, b] = vals[0] <= vals[1] ? vals : [vals[1], vals[0]];
+    return a > 0 && a <= 31 && b >= 50 && b >= a * 20;
+  }
+  /**
+   * Is this line, matched to a payment field, really a payment? Returns the field to file it under: the payment
+   * field, the balance it shows (sick and vacation days), or null when it is a count with no money in it.
+   */
+  function payOrCount(f, line, nums) {
+    // only the payments whose name also names a count (the hour lines carry hours by design, travel its days)
+    if (!f || f.kind !== 'pay' || !WEAK_PAY[f.key]) return f;
+    const vals = nums.filter((x) => !x.pct).map((x) => x.v);
+    const prod = productOf(vals);
+    const named = WEAK_PAY[f.key].test(line);
+    const row = !prod && vals.length >= 3 ? balanceRow(vals) : null;
+    // the balance it shows, when the line is the balance (a usage or accrual line alone is not the balance)
+    const asBalance = () => (BALANCE_OF[f.key] && (row != null || /יתר[הת]/.test(line)) ? FIELD[BALANCE_OF[f.key]] : null);
+    // a balance, accrual or usage line: information (a named payment with qty × rate = amount stays a payment)
+    if (BALANCE_WORD.test(line) && !(named && prod)) return asBalance();
+    if (row != null) return asBalance();
+    if (prod) return f;
+    if (QTY_WORD.test(line)) return daysAndAmount(vals) ? f : null;
+    if (named) return f;
+    // the bare word ("מחלה", "ותק"): a payment only with an amount column (a sum in shekels, with agorot)
+    return nums.some((x) => !x.pct && x.dec && Math.abs(x.v) >= 50) ? f : null;
+  }
+
   /** Choose amount / qty / rate from a line's numbers. */
   function pickValues(f, nums) {
     const vals = nums.filter((x) => !x.pct).map((x) => x.v);
     const pcts = nums.filter((x) => x.pct).map((x) => x.v);
     if (!vals.length) return null;
-    if (f.kind === 'info') return { value: vals[0] };
-    if (vals.length >= 3) {
-      for (let i = 0; i < vals.length; i++) for (let j = i + 1; j < vals.length; j++) for (let k = 0; k < vals.length; k++) {
-        if (k === i || k === j) continue;
-        const prod = vals[i] * vals[j];
-        if (vals[k] !== 0 && Math.abs(prod - vals[k]) / Math.abs(vals[k]) < 0.015) {
-          return { value: vals[k], qty: vals[i], rate: vals[j], pct: pcts[0] };
-        }
-      }
+    if (f.kind === 'info') {
+      // a balance row's closing balance (not the previous balance it starts with)
+      const b = (f.key === 'sickBalance' || f.key === 'vacationBalance') && vals.length >= 3 ? balanceRow(vals) : null;
+      return { value: b != null ? b : vals[0] };
     }
-    if (vals.length === 2 && f.hours) {
+    const prod = productOf(vals);
+    if (prod) return Object.assign(prod, { pct: pcts[0] });
+    if (vals.length === 2 && (f.hours || (WEAK_PAY[f.key] && daysAndAmount(vals)))) {
+      // qty + amount (rate missing): hours, or the days of a day-based payment ("ימי מחלה 2.00 350.00")
+      if (!f.hours) { const [q, v] = vals[0] <= vals[1] ? vals : [vals[1], vals[0]]; return { value: v, qty: q, pct: pcts[0] }; }
       // qty + amount (rate missing)
       return { value: vals[1], qty: vals[0], pct: pcts[0] };
     }
@@ -310,6 +377,10 @@
         if (f) line = alt;
       }
       const nums = numbersIn(line);
+      if (f && f.kind === 'pay') {
+        f = payOrCount(f, line, nums);
+        if (!f) continue; // a count (sick days, seniority years) with no money in it: not a payment, not a line to name
+      }
       if (!f) {
         const vals = nums.filter((x) => !x.pct && x.dec);
         if (vals.length && HEB.test(line)) other.push({ line, value: vals[vals.length - 1].v, guess: null });
@@ -397,16 +468,32 @@
       'Return the monthly amounts in ILS for every field key below that appears in the payslip (omit keys that do not appear). ' +
       'For hour-based lines also return qty (hours) and rate (ILS per hour); use 0 when a line has no quantity or rate. ' +
       'Deductions are positive numbers. Do not invent values. Year-to-date (מצטבר) columns go only to the ytd* keys.\n' +
+      'Money keys hold shekels only, never a count of days, hours or years. Sick and vacation day balances, accruals and usage (יתרה, צבירה, ניצול, ימי מחלה, ימי חופשה) are not payments: ' +
+      'the closing balance goes to sickBalance / vacationBalance, the rest is left out. sickPay and vacationPay are only payment lines with a shekel amount for days taken. ' +
+      'seniority is only a payment line such as תוספת ותק with a shekel amount; the years of seniority (ותק, שנות ותק) and the start date are not a payment and are left out.\n' +
       'Field keys: ' + FIELDS.map((f) => `${f.key} = ${f.label}`).join('; ') + '.\n' +
       'Put every other payment, deduction or employer-contribution line in otherLines. ' +
       'period is the pay month (YYYY-MM) if visible, otherwise an empty string. notes: one short Hebrew sentence about anything unclear, or an empty string.';
     // i18n-keep-end
   }
+  /** An AI value in a count-named payment field (sickPay, seniority...) that looks like money, not a count. */
+  function countFree(x, balances) {
+    const v = +x.value, q = +x.qty || 0, r = +x.rate || 0;
+    if (!(v > 0)) return false;
+    if (q && r && close(q * r, v)) return true;
+    if (q && close(q, v)) return false; // the count copied as the amount
+    if (balances.some((b) => close(b, v))) return false; // the balance (or the days) copied as the amount
+    return v >= 50;
+  }
   /** Convert AI JSON to the same {fields, other, period} shape as parseText. */
   function fromAi(json) {
     const fields = {};
-    for (const x of json.fields || []) {
-      if (!FIELD[x.key] || x.value == null) continue;
+    const list = (json.fields || []).filter((x) => x && FIELD[x.key] && x.value != null && Number.isFinite(+x.value));
+    const balances = list.filter((x) => FIELD[x.key].kind === 'info').map((x) => +x.value);
+    for (const x of list) {
+      // a count the AI put in a money field (the sick-day balance as sick pay, the seniority years as a seniority
+      // payment): left out, as the text reader does (payOrCount)
+      if (WEAK_PAY[x.key] && !countFree(x, balances)) continue;
       fields[x.key] = { value: +x.value, qty: x.qty ? +x.qty : undefined, rate: x.rate ? +x.rate : undefined, line: 'AI' };
     }
     const other = (json.otherLines || []).map((o) => ({ line: o.label, value: o.amount, guess: o.type === 'deduction' ? 'otherDed' : o.type === 'payment' ? 'otherPay' : 'ignore' }));

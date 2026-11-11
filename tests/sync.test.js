@@ -134,6 +134,27 @@ T.atest('raw payslip text and file stay on the phone', async () => {
   T.eq(B.S.payslips[0].text, undefined);
 });
 
+// User report, Nov 2026: a corrected payslip came back with the numbers it was read with
+T.atest('a corrected payslip keeps the corrections on this phone, after a reload and on the other phone', async () => {
+  const be = fakeBackend();
+  const A = await phone(be); await A.Cloud.connect(user); await wait(30);
+  const read = { id: 'p1', period: '2026-09', fields: { gross: { value: 6000, line: 'ברוטו 6,000.00' }, sickPay: { value: 19.5, line: 'מחלה 19.50' } }, other: [], text: 'ברוטו 6,000.00\nמחלה 19.50', fileId: 'file_1' };
+  await A.Store.apply([{ store: 'payslips', put: read }], 'x');
+  await A.sync();
+  // corrected: the sick line removed, the gross fixed
+  const fixed = Object.assign({}, read, { fields: { gross: { value: 6100, line: 'ברוטו 6,000.00' } } });
+  await A.Store.apply([{ store: 'payslips', put: fixed }], 'x');
+  await A.sync(); await A.sync();
+  const mine = A.S.payslips.find((p) => p.id === 'p1');
+  T.near(mine.fields.gross.value, 6100); T.ok(!mine.fields.sickPay, 'the removed line stays removed here');
+  T.eq(mine.text, read.text, 'the text stays on the phone');
+  await A.Store.load();
+  const again = A.Store.S.payslips.find((p) => p.id === 'p1');
+  T.near(again.fields.gross.value, 6100); T.ok(!again.fields.sickPay, 'and after a reload');
+  const B = await phone(be); await B.Cloud.connect(user); await wait(200);
+  T.near(B.S.payslips[0].fields.gross.value, 6100); T.ok(!B.S.payslips[0].fields.sickPay, 'and on the other phone');
+});
+
 // privacy audit, 3 Nov 2026 (B6): the line each number was read from went up as it was on the payslip
 T.atest("a payslip's recognised lines reach the cloud without the ID, bank account, address or phone", async () => {
   const be = fakeBackend();

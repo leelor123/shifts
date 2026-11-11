@@ -378,7 +378,7 @@
             for (const k of Object.keys(d.fields)) if (d.fields[k].value == null && d.fields[k].qty == null) delete d.fields[k];
             if (!Object.keys(d.fields).length) { UI.invalid('הוסיפו לפחות שורה אחת מהתלוש'); return; }
             UI.closeTop();
-            setTimeout(() => analysisSheet({ id: d.id || 'ps_' + U.uid(), period: d.period, fields: d.fields, other: d.other, text: d.text, source: d.source, fileId: d.fileId, fileName: d.fileName, isNew: !d.id }), 320);
+            setTimeout(() => analysisSheet({ id: d.id || 'ps_' + U.uid(), period: d.period, fields: d.fields, other: d.other, text: d.text, source: d.source, fileId: d.fileId, fileName: d.fileName, isNew: !d.id, edited: !!d.id }), 320);
           }
         });
       },
@@ -563,6 +563,9 @@
           if (ta2) ta2.value = typed != null ? typed : ta2.textContent;
         };
         off = Store.on((ev) => { if (ev && ev.type === 'active') return; redraw(); });
+        // a payslip from the archive, corrected and checked again, is saved right away: the footer of an archived
+        // slip has no save button, and the corrections were lost when the sheet closed (user report, Nov 2026)
+        if (slip.edited && !slip.isNew) { delete slip.edited; saveSlip(slip, a, c, 'השינויים בתלוש נשמרו').catch((e) => console.warn('payslip save', e)); }
         // "show in Hebrew too": a class on the list, no redraw (remembered on this phone)
         el.addEventListener('change', (e) => {
           if (!e.target.matches('[data-ps-he]')) return;

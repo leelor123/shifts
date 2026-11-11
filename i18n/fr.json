@@ -1655,6 +1655,7 @@
  "ניתוח תלוש · ": "Analyse de fiche de paie · ",
  "<button class=\"btn tonal\" data-edit>{0} תקן נתונים</button><button class=\"btn\" data-save>{1} שמור בארכיון</button>": "<button class=\"btn tonal\" data-edit>{0} Corriger les données</button><button class=\"btn\" data-save>{1} Enregistrer dans l'archive</button>",
  "<button class=\"btn danger\" data-del style=\"flex:0 0 auto\" aria-label=\"מחיקת התלוש\">{0}</button><button class=\"btn tonal\" data-edit>{1} תקן נתונים</button>{2}": "<button class=\"btn danger\" data-del style=\"flex:0 0 auto\" aria-label=\"Supprimer la fiche de paie\">{0}</button><button class=\"btn tonal\" data-edit>{1} Corriger les données</button>{2}",
+ "השינויים בתלוש נשמרו": "Les modifications de la fiche de paie sont enregistrées",
  "נזכיר לך: ביום התשלום הבא תופיע תזכורת להעלות את התלוש של {0}, ובבדיקה שלו נשאל אם זה שולם.": "Nous vous le rappellerons : au prochain jour de paie, un rappel vous demandera d’ajouter la fiche de paie de {0}, et sa vérification demandera si cela a été payé.",
  "ההודעה הועתקה": "Message copié",
  "הקובץ לא נמצא": "Le fichier est introuvable",

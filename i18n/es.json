@@ -1655,6 +1655,7 @@
  "ניתוח תלוש · ": "Análisis de nómina · ",
  "<button class=\"btn tonal\" data-edit>{0} תקן נתונים</button><button class=\"btn\" data-save>{1} שמור בארכיון</button>": "<button class=\"btn tonal\" data-edit>{0} Corregir datos</button><button class=\"btn\" data-save>{1} Guardar en el archivo</button>",
  "<button class=\"btn danger\" data-del style=\"flex:0 0 auto\" aria-label=\"מחיקת התלוש\">{0}</button><button class=\"btn tonal\" data-edit>{1} תקן נתונים</button>{2}": "<button class=\"btn danger\" data-del style=\"flex:0 0 auto\" aria-label=\"Borrar la nómina\">{0}</button><button class=\"btn tonal\" data-edit>{1} Corregir datos</button>{2}",
+ "השינויים בתלוש נשמרו": "Se guardaron los cambios de la nómina",
  "נזכיר לך: ביום התשלום הבא תופיע תזכורת להעלות את התלוש של {0}, ובבדיקה שלו נשאל אם זה שולם.": "Te lo recordaremos: el próximo día de pago aparecerá un recordatorio para subir la nómina de {0}, y su revisión preguntará si esto se pagó.",
  "ההודעה הועתקה": "Mensaje copiado",
  "הקובץ לא נמצא": "No se encontró el archivo",

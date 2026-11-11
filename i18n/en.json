@@ -1655,6 +1655,7 @@
  "ניתוח תלוש · ": "Payslip analysis · ",
  "<button class=\"btn tonal\" data-edit>{0} תקן נתונים</button><button class=\"btn\" data-save>{1} שמור בארכיון</button>": "<button class=\"btn tonal\" data-edit>{0} Fix data</button><button class=\"btn\" data-save>{1} Save to archive</button>",
  "<button class=\"btn danger\" data-del style=\"flex:0 0 auto\" aria-label=\"מחיקת התלוש\">{0}</button><button class=\"btn tonal\" data-edit>{1} תקן נתונים</button>{2}": "<button class=\"btn danger\" data-del style=\"flex:0 0 auto\" aria-label=\"Delete the payslip\">{0}</button><button class=\"btn tonal\" data-edit>{1} Fix data</button>{2}",
+ "השינויים בתלוש נשמרו": "Your payslip changes were saved",
  "נזכיר לך: ביום התשלום הבא תופיע תזכורת להעלות את התלוש של {0}, ובבדיקה שלו נשאל אם זה שולם.": "We’ll remind you: on the next payday a reminder will ask you to upload the {0} payslip, and its check will ask whether this was paid.",
  "ההודעה הועתקה": "Message copied",
  "הקובץ לא נמצא": "The file wasn't found",
