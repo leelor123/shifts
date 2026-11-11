@@ -782,7 +782,8 @@ T.atest('starts and ends tapped on a widget become the shift, at the tapped time
   const t0 = Date.now() - 4 * 3600000, t1 = Date.now() - 60000;
   const taps = JSON.stringify({ taps: [{ id: 11, type: 'stop', at: t1 }, { id: 10, type: 'start', at: t0 }] });
   port.onmessage({ data: taps });
-  await wait(30);
+  // until the taps are done and the phone was told (a fixed 30 ms failed on a busy machine)
+  for (let i = 0; i < 200 && !(A.S.meta.widgetDone === 11 && got.length && JSON.parse(got[got.length - 1]).wid === 11); i++) await wait(10);
   T.eq(JSON.stringify(done), JSON.stringify([['start', 'r1', t0], ['stop', t1]]), 'in order, at the tapped times');
   T.eq(A.S.meta.widgetDone, 11);
   T.eq(JSON.parse(got[got.length - 1]).wid, 11, 'the snapshot tells the phone which taps are done');
@@ -792,11 +793,11 @@ T.atest('starts and ends tapped on a widget become the shift, at the tapped time
   T.eq(done.length, 2, 'each tap once');
   // an end with no shift running, a start while one runs: skipped, but marked done
   port.onmessage({ data: JSON.stringify({ taps: [{ id: 12, type: 'stop', at: t1 }] }) });
-  await wait(30);
+  for (let i = 0; i < 200 && A.S.meta.widgetDone !== 12; i++) await wait(10);
   T.eq(done.length, 2); T.eq(A.S.meta.widgetDone, 12);
   await A.Store.setActive({ start: t0, roleId: 'r1', breaks: [] });
   port.onmessage({ data: JSON.stringify({ taps: [{ id: 13, type: 'start', at: t1 }] }) });
-  await wait(30);
+  for (let i = 0; i < 200 && A.S.meta.widgetDone !== 13; i++) await wait(10);
   T.eq(done.length, 2, 'a start while a shift runs does nothing');
   // back to the front: the page asks the phone for the taps made meanwhile
   got.length = 0;

@@ -82,6 +82,17 @@
     const start = Math.round((now - 7 * 3600000) / HALF) * HALF;
     return { date: U.epochKey(start), startT: U.epochHM(start), endT: U.epochHM(now) };
   };
+  /** The hours of a shift on another day: the middle start and the middle length of the last eight shifts worked
+   *  (08:00-16:00 before there are any). */
+  App.usualHours = function () {
+    const done = S.shifts.filter((x) => x.status === 'done' && !x.deleted && x.start && x.end > x.start).sort((x, y) => y.start - x.start).slice(0, 8);
+    if (!done.length) return { startT: '08:00', endT: '16:00' };
+    const mid = (arr) => { const a = arr.slice().sort((x, y) => x - y); return a[Math.floor(a.length / 2)]; };
+    const startMin = Math.round(mid(done.map((x) => { const d = new Date(x.start); return d.getHours() * 60 + d.getMinutes(); })) / 30) * 30;
+    const lenMin = Math.round(mid(done.map((x) => (x.end - x.start) / 60000)) / 30) * 30;
+    const hm = (m) => U.pad(Math.floor(((m % 1440) + 1440) % 1440 / 60)) + ':' + U.pad(((m % 60) + 60) % 60);
+    return { startT: hm(startMin), endT: hm(startMin + lenMin) };
+  };
   function draftFrom(sh, opts) {
     opts = opts || {};
     const emp = S.employers[0];
@@ -92,7 +103,9 @@
       // a new shift with nothing to copy: it ends now (the minute the editor opened) and began seven hours before,
       // on the nearest whole or half hour (the user, 11 Nov 2026: not 08:00-16:00 every time). One that crosses
       // midnight belongs to the day it began.
-      const guess = !src && !t ? App.shiftGuess(Date.now()) : null;
+      // another day (a day picked on the calendar, a planned one): the hours this person usually works, not "now"
+      const other = opts.date && opts.date !== U.todayKey();
+      const guess = !src && !t ? (other ? App.usualHours() : App.shiftGuess(Date.now())) : null;
       const date = opts.date || (guess ? guess.date : U.todayKey());
       const d = {
         id: null, status: opts.status || (date > U.todayKey() ? 'planned' : 'done'), statusTouched: !!opts.status,

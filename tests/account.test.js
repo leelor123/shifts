@@ -47,5 +47,20 @@ T.test('the end is the minute the editor opened, the start seven hours before on
   T.eq(App.shiftGuess(U.toEpoch('2026-11-11', '17:14')).startT, '10:00');
   const night = App.shiftGuess(U.toEpoch('2026-11-11', '03:05'));
   T.eq(night.startT, '20:00'); T.eq(night.date, '2026-11-10', 'a night shift belongs to the day it began');
-  T.ok(!src.includes(": '08:00', endT:"), 'no fixed 08:00-16:00 any more');
+  T.ok(!src.includes("t ? t.startT : '08:00'"), 'no fixed 08:00-16:00 for today any more');
+});
+
+T.test('a shift added on another day (the calendar, a planned one) gets the usual hours, not "now"', () => {
+  const src = read('src/app/views-shift.js');
+  T.ok(src.includes("const other = opts.date && opts.date !== U.todayKey();") && src.includes('App.usualHours() : App.shiftGuess(Date.now())'));
+  const body = src.slice(src.indexOf('App.usualHours = function () {'), src.indexOf('App.shiftGuess = function') > src.indexOf('App.usualHours') ? src.indexOf('  function draftFrom(sh, opts) {') : src.indexOf('  function draftFrom(sh, opts) {'));
+  const U = globalThis.U;
+  const mk = (d, a, b) => ({ status: 'done', start: U.toEpoch(d, a), end: U.toEpoch(d, b) });
+  const S = { shifts: [mk('2026-11-01', '17:00', '23:00'), mk('2026-11-02', '17:10', '23:00'), mk('2026-11-03', '16:50', '22:40')] };
+  const App = {};
+  new Function('App', 'U', 'S', body)(App, U, S);
+  const h = App.usualHours();
+  T.eq(h.startT, '17:00'); T.eq(h.endT, '23:00');
+  S.shifts = [];
+  T.eq(App.usualHours().startT, '08:00', 'nothing yet: 08:00-16:00');
 });
