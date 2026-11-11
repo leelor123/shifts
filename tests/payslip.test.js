@@ -117,8 +117,9 @@ T.test('gap explained by a manual override is flagged as such', () => {
   const a = Payslip.analyze(p, m);
   const f = a.findings.find((x) => x.area === 'שבת וחג');
   T.ok(f, 'rest finding exists');
-  const g = a.findings.find((x) => x.area === 'ברוטו');
-  T.ok(g.fromOverride && g.fromOverride.includes('עקיפה'), JSON.stringify(g));
+  // the gross against the app (reconcile) says the override is where the gap comes from
+  const g = Payslip.reconcile(p, m, a).gross;
+  T.ok(g.override && g.override.includes('עקיפה') && g.override.includes('קרוב'), JSON.stringify(g.override));
   T.eq(a.overridesInPeriod, 1);
 });
 T.test('missing pension after 6 months', () => {
@@ -135,11 +136,23 @@ T.test('waterfall gross → net', () => {
   const sum = w.slice(1, -1).reduce((s, x) => s + x.value, 0);
   T.near(w[0].value + sum, w[w.length - 1].value, 0.01);
 });
-T.test('slip-to-slip changes', () => {
-  const a = Payslip.parseText(SAMPLE).fields;
-  const b = Payslip.parseText(SAMPLE.replace('פנסיה עובד 116.40', 'פנסיה עובד 50.00').replace('נקודות זיכוי 2.25', 'נקודות זיכוי 2.75') + '\nמס הכנסה 100.00').fields;
+T.test('guard: a payslip is compared with the one before it only on the leave balances', () => {
+  const a = Payslip.parseText(SAMPLE + '\nיתרת מחלה 10.00').fields;
+  const b = Payslip.parseText(SAMPLE.replace('פנסיה עובד 116.40', 'פנסיה עובד 50.00').replace('נקודות זיכוי 2.25', 'נקודות זיכוי 2.75')
+    .replace('יתרת חופשה 3.50', 'יתרת חופשה 4.75').replace('סה"כ ברוטו 2,075.60', 'סה"כ ברוטו 3,075.60') + '\nמס הכנסה 100.00\nיתרת מחלה 9.00').fields;
   const ch = Payslip.compareSlips(a, b);
-  T.ok(ch.some((c) => c.type === 'pensionDrop')); T.ok(ch.some((c) => c.type === 'credit')); T.ok(ch.some((c) => c.type === 'newDeduction'));
+  T.eq(ch.length, 2, 'only the two balances');
+  T.ok(ch.every((c) => c.type === 'vacation' || c.type === 'sick'), JSON.stringify(ch.map((c) => c.type)));
+  const v = ch.find((c) => c.type === 'vacation'), s = ch.find((c) => c.type === 'sick');
+  T.near(v.delta, 1.25, 0.001); T.ok(/עלתה/.test(v.text), v.text);
+  T.near(s.delta, -1, 0.001); T.ok(/ירדה/.test(s.text), s.text);
+  // the line translator marks a change only on the balances
+  const lines = Payslip.explainLines(b, a);
+  const changed = lines.filter((l) => l.change).map((l) => l.key).sort();
+  T.eq(JSON.stringify(changed), JSON.stringify(['sickBalance', 'vacationBalance']));
+  // and the screen draws no other cross-payslip section
+  const src = require('fs').readFileSync(require('path').join(__dirname, '..', 'src', 'app', 'views-payslip.js'), 'utf8');
+  T.ok(!/שינויים מהתלוש הקודם/.test(src), 'the old "changes from the previous payslip" section is back');
 });
 T.test('missing shift with overtime is not double counted', () => {
   const shifts = septShifts();
@@ -435,4 +448,88 @@ T.test('payslip editor: a corrected archived payslip is saved when it is checked
   const src = require('fs').readFileSync(require('path').join(__dirname, '..', 'src', 'app', 'views-payslip.js'), 'utf8');
   T.ok(/isNew: !d\.id, edited: !!d\.id/.test(src), 'the verify sheet marks an archived payslip it corrected');
   T.ok(/if \(slip\.edited && !slip\.isNew\) \{ delete slip\.edited; saveSlip\(slip, a, c/.test(src), 'the check saves the corrected archived payslip');
+});
+T.section('payslip against the app (reconcile, settingsCheck)');
+const sumDiff = (side) => side.items.reduce((s, x) => s + x.diff, 0);
+T.test('guard: a matching payslip reconciles line by line, every line a match', () => {
+  const m = model(septShifts());
+  const p = Payslip.parseText(SAMPLE);
+  const rc = Payslip.reconcile(p, m);
+  T.near(rc.gross.total, 0, 0.02, 'gross gap');
+  T.near(sumDiff(rc.gross), rc.gross.total, 0.01, 'the gross items add up to the gross gap');
+  T.ok(rc.gross.items.every((x) => x.state === 'match'), JSON.stringify(rc.gross.items.filter((x) => x.state !== 'match').map((x) => [x.id, x.diff])));
+  T.ok(!rc.gross.items.some((x) => x.id === 'unexplained'), 'no unexplained line when nothing is left');
+  T.near(sumDiff(rc.net), rc.net.total, 0.01, 'the net items add up to the net gap');
+});
+T.test('guard: the app-vs-payslip gap is fully itemized, with the unexplained part shown on its own', () => {
+  const shifts = septShifts();
+  shifts.push(shift('2026-09-15', '08:00', '14:00')); // a shift the payslip does not pay
+  const m = model(shifts);
+  // a lower rate, travel at 20 a day, a seniority line, credit points 2.75, and a gross 30 above its own lines
+  const text = SAMPLE.replace('שכר יסוד 40.00 40.00 1,600.00', 'שכר יסוד 40.00 39.00 1,560.00').replace('נסיעות 135.60', 'נסיעות 120.00')
+    .replace('סה"כ ברוטו 2,075.60', 'סה"כ ברוטו 2,130.00').replace('נקודות זיכוי 2.25', 'נקודות זיכוי 2.75') + '\nתוספת ותק 80.00';
+  const p = Payslip.parseText(text);
+  T.near(p.fields.seniority.value, 80); T.near(p.fields.gross.value, 2130);
+  const a = Payslip.analyze(p, m);
+  const rc = Payslip.reconcile(p, m, a, Payslip.checkGap(a, p, m));
+  T.near(sumDiff(rc.gross), rc.gross.total, 0.01, 'gross items sum to the gap');
+  T.near(sumDiff(rc.net), rc.net.total, 0.01, 'net items sum to the gap');
+  const g = (id) => rc.gross.items.find((x) => x.id === id);
+  T.ok(g('hours').diff < -200, 'the missing 6 hours: ' + g('hours').diff);
+  T.near(g('rate').diff, -40, 0.01, 'the rate: 1 less on 40 hours');
+  T.near(g('travel').diff, 120 - 7 * 22.6, 0.01);
+  T.near(g('seniority').diff, 80, 0.01);
+  // 1560+100+240+120+80 = 2100: 30 that no read line explains
+  const u = g('unexplained'); T.ok(u, 'the unexplained remainder is its own line'); T.near(u.diff, 30, 0.01); T.eq(u.state, 'ask'); T.ok(u.ask, 'it asks');
+  T.ok(rc.asks > 0 && !rc.exact);
+  // every item that is not a match says where it comes from, and one that is not clear asks
+  for (const x of rc.gross.items.concat(rc.net.items)) if (x.state !== 'match') T.ok(x.text, x.id + ' has no text');
+  for (const x of rc.gross.items.concat(rc.net.items)) if (x.state === 'ask') T.ok(x.ask, x.id + ' asks nothing');
+  // a deduction's parts add up to it
+  for (const x of rc.net.items) if (x.parts) T.near(x.parts.reduce((s, q) => s + q.amount, 0), x.diff, 0.01, x.id + ' parts');
+});
+T.test('guard: settings the payslip says otherwise are listed, each with the payslip\'s value to take', () => {
+  const m = model(septShifts());
+  const text = SAMPLE.replace('נסיעות 135.60', 'נסיעות 120.00').replace('סה"כ ברוטו 2,075.60', 'סה"כ ברוטו 2,040.00')
+    .replace('נקודות זיכוי 2.25', 'נקודות זיכוי 2.75') + '\nתוספת ותק 80.00\nימי עבודה 6';
+  const p = Payslip.parseText(text);
+  const sc = Payslip.settingsCheck(p, m);
+  const by = (id) => sc.find((x) => x.id === id);
+  T.ok(by('creditPoints'), 'credit points'); T.eq(by('creditPoints').apply.path, 'tax.creditPoints'); T.near(by('creditPoints').apply.value, 2.75);
+  T.ok(by('travel'), 'travel'); T.near(by('travel').apply.patch.travelPerDay, 20, 0.001);
+  T.ok(by('seniority'), 'seniority'); T.eq(by('seniority').apply.patch.seniorityEnabled, true);
+  T.ok(by('vacationBalance'), 'the vacation balance'); T.eq(by('vacationBalance').apply.path, 'leave.vacationOpening');
+  for (const x of sc) T.ok(x.slip != null && x.app != null && x.text, x.id + ' says both values and why');
+  // the payslip's credit points and seniority taken: those two lines are gone
+  const m2 = model(septShifts(), (d) => { d.settings.tax.creditPoints = 2.75; Object.assign(d.employers[0], { seniorityEnabled: true, seniorityType: 'fixedPerHour', seniorityValue: by('seniority').apply.patch.seniorityValue, seniorityAfterMonths: 0 }); });
+  const sc2 = Payslip.settingsCheck(p, m2);
+  T.ok(!sc2.some((x) => x.id === 'creditPoints'), 'credit points still listed');
+  T.ok(!sc2.some((x) => x.id === 'seniority' && x.recommend === 'slip'), 'seniority still listed');
+  const sen = Payslip.reconcile(p, m2).gross.items.find((x) => x.id === 'seniority');
+  T.near(sen.diff, 0, 0.6, 'seniority reconciles after the update');
+});
+T.test('the unexplained part names the app lines of the same sum the payslip shows no line for', () => {
+  const m = model(septShifts());
+  const p = Payslip.parseText(SAMPLE.replace('נסיעות 135.60\n', '')); // the gross still holds the travel
+  const rc = Payslip.reconcile(p, m);
+  const u = rc.gross.items.find((x) => x.id === 'unexplained');
+  T.ok(u, 'unexplained line'); T.near(u.diff, 135.6, 0.01); T.ok(/נסיעות/.test(u.text), u.text);
+  T.near(sumDiff(rc.gross), rc.gross.total, 0.01);
+});
+T.test('a payslip that pays only the overtime supplement reads the same as the app', () => {
+  const m = model(septShifts());
+  // the base line holds all 46 hours at 100%, the premium lines only the 25% and 50%
+  const text = SAMPLE.replace('שכר יסוד 40.00 40.00 1,600.00', 'שכר יסוד 46.00 40.00 1,840.00').replace('שעות נוספות 125% 2.00 50.00 100.00', 'שעות נוספות 125% 2.00 10.00 20.00')
+    .replace('שעות שבת 150% 4.00 60.00 240.00', 'שעות שבת 150% 4.00 20.00 80.00');
+  const p = Payslip.parseText(text);
+  const rc = Payslip.reconcile(p, m);
+  T.ok(rc.gross.items.every((x) => x.state === 'match'), JSON.stringify(rc.gross.items.filter((x) => x.state !== 'match').map((x) => [x.id, x.diff])));
+});
+T.test('guard: income tax above the estimate is asked about, apart from the credit points', () => {
+  const m = model(septShifts(), (d) => { d.settings.startDate = '2020-01-01'; });
+  const p = Payslip.parseText(SAMPLE.replace('נקודות זיכוי 2.25', 'נקודות זיכוי 2.75') + '\nמס הכנסה 300.00');
+  const rc = Payslip.reconcile(p, m);
+  const tax = rc.net.items.find((x) => x.id === 'tax');
+  T.eq(tax.state, 'ask'); T.ok(/מעסיק אחר|101/.test(tax.ask), tax.ask);
+  T.near(tax.diff, -(300 - tax.app), 0.01);
 });

@@ -432,6 +432,105 @@
           : `<button class="btn block" data-go-letter>${icon('send', 's')} בדקתי, להמשיך למכתב</button>`}
       </div>`;
   }
+  /* ---------------- the payslip against the app's own calculation ----------------
+   * Payslip.reconcile: each line's part of the gap between the payslip and the app, adding up to the whole gap, with
+   * what no line explains on a line of its own. A line whose cause the data shows says it and offers the fix; one
+   * whose cause is not known asks the question that would settle it. Payslip.settingsCheck: the settings the payslip
+   * says otherwise, each with "update to the payslip" when the payslip is the better source. */
+  function reconcileOf(slip, a, c) {
+    try { return Payslip.reconcile(slip, App.model, a, c); } catch (e) { console.warn('reconcile', e); return null; }
+  }
+  // a gap amount as words: "₪X less on the payslip" / "₪X more on the payslip"
+  const gapWord = (d) => (d < 0 ? 'פחות בתלוש' : 'יותר בתלוש');
+  function rcFixes(fixes, rc) {
+    const out = [];
+    for (const f of fixes || []) {
+      if (f.kind === 'sc') {
+        const s = rc.settings.find((x) => x.id === f.id);
+        if (s && s.apply) out.push(`<button class="btn tonal sm" data-rc-apply="${esc(s.id)}">${icon('check', 's')} לעדכן לפי התלוש</button>`);
+        if (s && s.set) out.push(`<button class="btn text sm" data-gc-set="${esc(s.set.k)}" data-f="${esc(s.set.f || '')}">${icon('settings', 's')} לבדוק בהגדרות</button>`);
+      } else if (f.kind === 'set') out.push(`<button class="btn text sm" data-gc-set="${esc(f.k)}" data-f="${esc(f.f || '')}">${icon('settings', 's')} לבדוק בהגדרות</button>`);
+      else if (f.kind === 'verify') out.push(`<button class="btn text sm" data-gc-verify="${esc(f.key || '')}">${icon('edit', 's')} לתקן את נתוני התלוש</button>`);
+      else if (f.kind === 'shift') out.push(`<button class="btn text sm" data-act="shift-new">${icon('plus', 's')} להוסיף משמרת</button>`);
+      else if (f.kind === 'entry') out.push(`<button class="btn text sm" data-rc-entry="${esc(f.entry)}" data-date="${esc(f.date || '')}">${icon('plus', 's')} ${f.entry === 'vacation' ? 'לרשום יום חופשה' : f.entry === 'sick' ? 'לרשום יום מחלה' : f.entry === 'deduction' ? 'לרשום ניכוי' : 'לרשום בונוס'}</button>`);
+      else if (f.kind === 'label') out.push(`<button class="btn text sm" data-rc-label>${icon('edit', 's')} לסמן את השורות</button>`);
+      else if (f.kind === 'shifts') out.push(`<span class="gc-chips">${f.ids.slice(0, 6).map((id) => { const x = App.result(id); return x ? `<button class="chip" data-act="shift-open" data-id="${esc(id)}">${U.fmtDate(x.dateKey, 'short')} · ${U.hm(x.paidMin)}</button>` : ''; }).join('')}</span>`);
+    }
+    // the same button twice (two reasons pointing at one setting) is drawn once
+    const seen = new Set();
+    const uniq = out.filter((h) => (seen.has(h) ? false : seen.add(h)));
+    return uniq.length ? `<div class="sc-acts">${uniq.join('')}</div>` : '';
+  }
+  function rcRow(it, rc, side) {
+    const ask = it.state === 'ask';
+    const vals = it.id === 'rate' ? `<span>שעתי: <b>${money(it.app)}</b></span><span>בתלוש: <b>${money(it.slip)}</b></span>`
+      : it.hours && it.hours.slip != null ? `<span>שעתי: <b>${U.hours(it.hours.app)} ש׳</b></span><span>בתלוש: <b>${U.hours(it.hours.slip)} ש׳</b></span>`
+        : it.id === 'unexplained' || it.id === 'gross' ? '' : `<span>שעתי: <b>${money(it.app)}</b></span><span>בתלוש: <b>${money(it.slip)}</b></span>`;
+    const parts = it.parts ? `<ul class="rc-parts">${it.parts.map((p) => `<li class="${p.known ? '' : 'unk'}"><span>${esc(p.label || 'לא מוסבר')}</span><span>${money(Math.abs(p.amount))} ${p.amount < 0 ? (side === 'net' ? 'פחות בנטו' : gapWord(p.amount)) : (side === 'net' ? 'יותר בנטו' : gapWord(p.amount))}</span></li>`).join('')}</ul>` : '';
+    const word = side === 'net' ? (it.diff < 0 ? 'פחות בנטו' : 'יותר בנטו') : gapWord(it.diff);
+    return `<details class="rc-row ${it.state} ${it.id === 'unexplained' ? 'unexplained' : ''}" data-key="rc-${side}-${esc(it.id)}"${ask ? ' open' : ''}>
+      <summary><span class="rc-tag">${icon(ask ? 'help' : 'okc', 's')}</span><span class="rc-l">${esc(it.label)}<small>${ask ? 'צריך תשובה' : 'הסיבה ידועה'}</small></span><span class="rc-d">${money(Math.abs(it.diff))}<small>${word}</small></span></summary>
+      <div class="rc-in">${vals ? `<div class="rc-vals">${vals}</div>` : ''}<div>${esc(it.text)}</div>${parts}
+        ${it.ask ? `<div class="rc-ask">${icon('help', 's')}<span>${esc(it.ask)}</span></div>` : ''}${rcFixes(it.fixes, rc)}</div></details>`;
+  }
+  function rcSide(sd, rc, side) {
+    const shown = sd.items.filter((x) => x.state !== 'match' && !(side === 'net' && x.id === 'gross' && Math.abs(x.diff) < 0.5));
+    const same = sd.items.filter((x) => x.state === 'match' && x.id !== 'rate' && x.id !== 'gross');
+    return `${shown.map((x) => rcRow(x, rc, side)).join('')}
+      ${same.length ? `<div class="rc-match">${icon('okc', 's')}<span>תואם לחישוב: ${same.map((x) => esc(x.label)).join(' · ')}</span></div>` : ''}`;
+  }
+  function reconcileHtml(rc) {
+    if (!rc) return '';
+    const g = rc.gross, n = rc.net;
+    const zero = Math.abs(g.total) < 1 && (!n || Math.abs(n.total) < 1);
+    const cell = (label, v, cls) => `<div class="${cls || ''}"><small>${label}</small><b>${money(v, 0)}</b></div>`;
+    const sum = zero ? 'התלוש והחישוב של שעתי זהים.'
+      : rc.exact ? 'לכל הפער יש סיבה ידועה, בשורות למטה. איפה שיש תיקון, אפשר לעדכן בלחיצה.'
+        : rc.asks === 1 ? `נשארה שאלה אחת. התשובה תסביר עד ${U.money(rc.open)} מהפער, ואז החישוב יתאים לתלוש.`
+          : `נשארו ${rc.asks} שאלות. התשובות יסבירו עד ${U.money(rc.open)} מהפער, ואז החישוב יתאים לתלוש.`;
+    return `<div class="section-title" id="ps-rc-t">${icon('calc', 's')} התלוש מול החישוב של שעתי</div>
+      <div class="card rc" id="ps-rc">
+        <div class="rc-side" style="margin-top:0">ברוטו</div>
+        <div class="rc-top">${cell('שעתי', g.app)}${cell('בתלוש', g.slip)}<div class="gap${Math.abs(g.total) < 1 ? ' zero' : ''}"><small>${Math.abs(g.total) < 1 ? 'הפרש' : gapWord(g.total)}</small><b>${money(Math.abs(g.total), 0)}</b></div></div>
+        ${g.override ? `<div class="rc-ov">${icon('hand', 's')} ${esc(g.override)}</div>` : ''}
+        ${rcSide(g, rc, 'gross')}
+        ${n ? `<div class="rc-side">נטו</div>
+          <div class="rc-top">${cell('שעתי', n.app)}${cell('בתלוש', n.slip)}<div class="gap${Math.abs(n.total) < 1 ? ' zero' : ''}"><small>${Math.abs(n.total) < 1 ? 'הפרש' : (n.total < 0 ? 'פחות בנטו' : 'יותר בנטו')}</small><b>${money(Math.abs(n.total), 0)}</b></div></div>
+          ${rcSide(n, rc, 'net')}` : ''}
+        <div class="small rc-sum">${sum}</div>
+      </div>`;
+  }
+  function settingsHtml(rc) {
+    if (!rc || !rc.settings.length) return '';
+    return `<div class="section-title">${icon('settings', 's')} ההגדרות שלך מול התלוש</div>
+      <div class="card" id="ps-sc">${rc.settings.map((s) => `<div class="sc-row" data-key="sc-${esc(s.id)}"><b>${esc(s.label)}</b>
+        <div class="sc-vals"><span class="${s.recommend === 'slip' ? 'slip' : ''}">בתלוש<b>${esc(s.slip)}</b></span><span>בהגדרות<b>${esc(s.app)}</b></span></div>
+        <div class="small">${esc(s.text)}</div>
+        <div class="sc-acts">${s.apply ? `<button class="btn ${s.recommend === 'slip' ? '' : 'tonal'} sm" data-rc-apply="${esc(s.id)}">${icon('check', 's')} ${s.recommend === 'slip' ? 'לעדכן לפי התלוש' : 'התלוש נכון, לעדכן'}</button>` : ''}${s.set ? `<button class="btn text sm" data-gc-set="${esc(s.set.k)}" data-f="${esc(s.set.f || '')}">${icon('settings', 's')} לבדוק בהגדרות</button>` : ''}</div></div>`).join('')}</div>`;
+  }
+  function leaveHtml(deltas) {
+    if (!deltas.length) return '';
+    return `<div class="section-title">${icon('beach', 's')} ימי חופשה ומחלה מאז התלוש הקודם</div>
+      <div class="card">${deltas.map((d) => `<div class="lv-row"><span class="lv-l"><b>${esc(d.label)}: ${esc(U.num(d.now, 2))}</b><small>${esc(d.text)}</small></span>
+        <span class="lv-d ${d.delta > 0.005 ? 'up' : d.delta < -0.005 ? 'down' : ''}" dir="ltr">${d.delta > 0.005 ? '+' : d.delta < -0.005 ? '−' : ''}${esc(U.num(Math.abs(d.delta), 2))}</span></div>`).join('')}</div>`;
+  }
+  /** A fix from the check: the payslip's value written to the settings, the workplace or the job (with undo). */
+  async function applyFix(fx) {
+    if (!fx) return;
+    if (fx.kind === 'settings') {
+      const path = fx.path.split('.');
+      await Store.setSettings((s) => { let o = s; for (const k of path.slice(0, -1)) o = o[k] = o[k] || {}; o[path[path.length - 1]] = Store.clone(fx.value); }, 'עדכון לפי התלוש');
+      UI.toast('עודכן לפי התלוש', { label: 'ביטול', fn: App.undo }, { ok: true });
+    } else if (fx.kind === 'employer') {
+      // the workplace the check ran on (the model's primary one)
+      const pid = App.model && App.model.ctx.primaryEmployer ? App.model.ctx.primaryEmployer().id : null;
+      const emp = S.employers.find((e) => e.id === pid) || S.employers[0];
+      if (emp) await App.saveOps([{ store: 'employers', put: Object.assign({}, emp, fx.patch) }], 'עדכון לפי התלוש', 'עודכן לפי התלוש');
+    } else if (fx.kind === 'role') {
+      const role = S.roles.find((r) => r.id === fx.id);
+      if (role) await App.saveOps([{ store: 'roles', put: Object.assign({}, role, { rates: (role.rates || []).filter((r) => r.from !== fx.from).concat([{ from: fx.from, rate: fx.rate }]) }) }], 'עדכון לפי התלוש', 'התעריף עודכן');
+    }
+  }
   function analysisHtml(slip, a, c) {
     // a finding a reason in the person's data explains in full is shown as explained (amber), not as missing money,
     // and the counts and the total on top follow it
@@ -441,8 +540,10 @@
     a.findings.forEach((f) => counts[statusOf(f)]++);
     const prev = prevSlipOf(slip.period, slip.id);
     const wf = Payslip.waterfall(slip.fields);
+    // the only comparison with another payslip: the leave balances, up or down since the one before
     const lines = Payslip.explainLines(slip.fields, prev && prev.fields);
-    const changes = Payslip.compareSlips(prev && prev.fields, slip.fields);
+    const deltas = Payslip.compareSlips(prev && prev.fields, slip.fields, a);
+    const rc = reconcileOf(slip, a, c);
     const msg = Payslip.employerMessage(a, { name: S.settings.userName || '', check: c });
     const left = c && c.items.length ? c.left : a.totalMissing;
     const order = { bad: 0, warn: 1, ok: 2 };
@@ -453,6 +554,9 @@
       ${carryHtml(slip)}
       <div class="status-summary"><div class="ok">${icon('okc', 's')} ${counts.ok}<div class="tiny">תקין</div></div><div class="warn">${icon('alert', 's')} ${counts.warn}<div class="tiny">לבדוק</div></div><div class="bad">${icon('xc', 's')} ${counts.bad}<div class="tiny">חסר/שגוי</div></div></div>
       ${hero}
+      ${reconcileHtml(rc)}
+      ${settingsHtml(rc)}
+      ${leaveHtml(deltas)}
       ${checkHtml(c)}
       ${a.overridesInPeriod ? `<div class="banner warn">${icon('hand')}<div>${a.overridesInPeriod} משמרות בתקופה כוללות עקיפה ידנית. ממצאים שנובעים מהן מסומנים.</div></div>` : ''}
       <div class="small muted" style="margin:0 4px 10px">תקופה: \u2066${U.fmtDate(a.expected.P.from)}\u2060–\u2060${U.fmtDate(a.expected.P.to)}\u2069 · ${a.expected.shifts.length} משמרות · ${U.hours(a.expected.t.hours)} ש׳</div>
@@ -468,7 +572,6 @@
         <div class="btn-row" style="margin-top:8px"><button class="btn tonal" data-copy-msg>${icon('copy')} העתק</button><button class="btn tonal" data-share-msg>${icon('share')} שתף</button></div>
         <button class="btn text sm gc-report" data-gc-report>${icon('file', 's')} דוח ומכתב לבירור מול המעסיק</button>
         ${left >= 1 ? `<button class="btn tonal sm found-share" data-act="found-share" data-amount="${Math.round(left)}" data-k="found">${icon('share', 's')} שתף: שעתי מצאה לי ${money(left, 0)}</button>` : ''}</div>` : ''}
-      ${changes.length ? `<div class="section-title">${icon('alert', 's')} שינויים מהתלוש הקודם</div><div class="card">${changes.map((c) => `<div class="kv"><span>${esc(c.text)}</span></div>`).join('')}</div>` : ''}
       ${wf ? `<div class="section-title">${icon('chart', 's')} מברוטו לנטו</div><div class="card">${Charts.waterfall(wf, { fmt: (v) => U.money(v), axisFmt: (v) => '₪' + (v >= 1000 ? (v / 1000).toFixed(1).replace('.0', '') + 'K' : Math.round(v)) })}
         <div class="tiny muted">כחול = ברוטו, אדום = ניכויים, ירוק = נטו. לחץ על עמודה לפרטים.</div></div>` : ''}
       ${translatorHtml(slip, lines)}
@@ -584,6 +687,20 @@
             if (slip.isNew) { UI.closeTop(); await saveSlip(slip, a, c, t); } else await saveSlip(slip, a, c, t);
             return;
           }
+          // the payslip's value taken into the settings: the check runs again on it (Store.on → redraw)
+          if (b.dataset.rcApply) {
+            const rc = reconcileOf(slip, a, c);
+            const s = rc && rc.settings.find((x) => x.id === b.dataset.rcApply);
+            if (s) await applyFix(s.apply);
+            return;
+          }
+          if (b.dataset.rcEntry) {
+            const k = b.dataset.rcEntry;
+            const opts = k === 'vacation' || k === 'sick' ? { kind: k } : { kind: 'adjustment', type: k === 'deduction' ? 'deduction' : 'bonus' };
+            App.sheetsApi.entryEditor(null, Object.assign(opts, { date: b.dataset.date || undefined }));
+            return;
+          }
+          if (b.hasAttribute('data-rc-label')) { const t = el.querySelector('[data-ps-tr]'); if (t) t.scrollIntoView({ block: 'start', behavior: 'smooth' }); return; }
           if (b.hasAttribute('data-go-letter')) { const t = el.querySelector('#ps-letter'); if (t) t.scrollIntoView({ block: 'start', behavior: 'smooth' }); return; }
           if (b.dataset.gcSet) { App.sheetsApi.settingsSection(b.dataset.gcSet, b.dataset.f || ''); return; }
           if (b.hasAttribute('data-gc-verify')) { const key = b.dataset.gcVerify; UI.closeTop(); setTimeout(() => verifySheet(Object.assign({}, slip, { id: slip.isNew ? null : slip.id, openKey: key })), 320); return; }
