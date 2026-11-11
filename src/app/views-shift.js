@@ -75,6 +75,13 @@
       special: { on: false, pct: '', reason: '' },
     };
   }
+  /** The times a new shift starts with: { date, startT, endT }. The end is now, to the minute; the start seven hours
+   *  earlier, rounded to the nearest :00 or :30; the date is the start's day (a night shift crosses midnight). */
+  App.shiftGuess = function (now) {
+    const HALF = 30 * 60000;
+    const start = Math.round((now - 7 * 3600000) / HALF) * HALF;
+    return { date: U.epochKey(start), startT: U.epochHM(start), endT: U.epochHM(now) };
+  };
   function draftFrom(sh, opts) {
     opts = opts || {};
     const emp = S.employers[0];
@@ -82,11 +89,15 @@
     if (!sh) {
       const src = opts.copyFrom || null;
       const t = opts.template || null;
-      const date = opts.date || U.todayKey();
+      // a new shift with nothing to copy: it ends now (the minute the editor opened) and began seven hours before,
+      // on the nearest whole or half hour (the user, 11 Nov 2026: not 08:00-16:00 every time). One that crosses
+      // midnight belongs to the day it began.
+      const guess = !src && !t ? App.shiftGuess(Date.now()) : null;
+      const date = opts.date || (guess ? guess.date : U.todayKey());
       const d = {
         id: null, status: opts.status || (date > U.todayKey() ? 'planned' : 'done'), statusTouched: !!opts.status,
         employerId: (src && src.employerId) || (t && t.employerId) || emp.id, date,
-        startT: src ? U.epochHM(src.start) : t ? t.startT : '08:00', endT: src ? U.epochHM(src.end) : t ? t.endT : '16:00',
+        startT: src ? U.epochHM(src.start) : t ? t.startT : guess.startT, endT: src ? U.epochHM(src.end) : t ? t.endT : guess.endT,
         roleId: (src && src.roleId) || (t && t.roleId) || S.meta.lastRole || (roles[0] && roles[0].id),
         splits: src ? (src.splits || []).map((x) => ({ t: U.epochHM(x.at), roleId: x.roleId })) : t && t.splits ? t.splits.slice() : [],
         // empty = the law's break (null); a copy keeps its own, a job's default is used when one is set

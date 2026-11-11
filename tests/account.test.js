@@ -34,3 +34,18 @@ T.test('the widgets channel waits for the data (Sentry SHAATI-4: settings null)'
   T.ok(w.includes('if (S.settings) take(p); else whenReady(() => take(p));'));
   T.ok(w.includes('const noData = () => !!S.settings && !S.settings.onboarded;'));
 });
+
+T.section('a new shift starts with the times it most likely had');
+T.test('the end is the minute the editor opened, the start seven hours before on a whole or half hour', () => {
+  const src = read('src/app/views-shift.js');
+  const body = src.slice(src.indexOf('App.shiftGuess = function (now) {'), src.indexOf('  function draftFrom(sh, opts) {'));
+  const App = {};
+  new Function('App', 'U', body)(App, globalThis.U);
+  const U = globalThis.U;
+  const g = App.shiftGuess(U.toEpoch('2026-11-11', '17:43'));
+  T.eq(g.endT, '17:43'); T.eq(g.startT, '10:30'); T.eq(g.date, '2026-11-11');
+  T.eq(App.shiftGuess(U.toEpoch('2026-11-11', '17:14')).startT, '10:00');
+  const night = App.shiftGuess(U.toEpoch('2026-11-11', '03:05'));
+  T.eq(night.startT, '20:00'); T.eq(night.date, '2026-11-10', 'a night shift belongs to the day it began');
+  T.ok(!src.includes(": '08:00', endT:"), 'no fixed 08:00-16:00 any more');
+});
