@@ -729,7 +729,7 @@
       <div class="pn-t">✨ כרטיס השכר שלך יכול להיראות ככה</div><div class="pn-s">${Object.keys(SKINS).length} עיצובים, רקע בטבלת האלופים, ניתוח וייצוא בלי הגבלה. ${Plus.canTrial() ? `אפשר לנסות ${TRIAL_DAYS} ימים בחינם.` : (Plus.priceText() ? esc(Plus.priceText()) + ', ' : '') + termsWord() + '.'}</div>
       <div class="pn-a"><button class="btn sm" data-act="plus-design">${icon('palette', 's')} ${Plus.canTrial() ? 'לנסות על הכרטיס שלי' : 'לראות'}</button><button class="btn text sm" data-act="plus-nudge-x">לא עכשיו</button><button class="btn text sm" data-act="plus-nudge-never">לא להציג שוב</button></div></div>`;
   };
-  /** "Don't show again": the offer on home ends for good on this phone (the Plus page in Settings stays). */
+  /** "Don't show again": the offer on home ends for good, on every phone of the account (store.js ACCOUNT_META; the Plus page in Settings stays). */
   App.actions['plus-nudge-never'] = async () => {
     await Store.setMeta({ plusNudge: Object.assign({}, S.meta.plusNudge || {}, { x: Date.now(), never: true }) });
     App.rerender();

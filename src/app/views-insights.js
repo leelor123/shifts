@@ -62,7 +62,12 @@
     else if (rec.type === 'workweek') later(() => App.sheetsApi.settingsSection('calc'));
     else if (rec.type === 'plusend' && root.Plus) later(() => root.Plus.sheet());
     else if (rec.type === 'taxrefund') later(() => App.actions['tax-refund']({ dataset: { year: data.year } }));
-    else if (rec.type === 'payslipDue') later(() => App.actions['payslip-new']());
+    else if (rec.type === 'payslipDue') {
+      // the payslip came in since (here or on another phone): its check opens, never a request to upload it again
+      const pk = data.pk || String(rec.key || '').replace(/^payslip-/, '');
+      const slip = root.Insights.slipFor(S.payslips, pk, S.employers[0]);
+      if (slip) later(() => App.sheetsApi.payslip(slip.id)); else later(() => App.actions['payslip-new']());
+    }
     else if (rec.type === 'monthly' && App.recap && data.pk) later(() => App.recap.open(data.pk));
     else if (!inList) later(() => App.actions.insights()); // a summary, a record, a goal: the list, where it is explained
     // read: the record (when the app has it already) is marked as such

@@ -392,6 +392,8 @@
       return;
     }
     if (ev.type === 'active') { App.rerender(); return; }
+    // something remembered (an answer, a "seen"): the screen that saved it draws itself again; no new calculation
+    if (ev.type === 'mem') return;
     // a change of look only (the eye, colours, font, effects, home options): no calculation again — it held the
     // screen for a moment just as the blur or the colour began to change
     const lookOnly = ev.type === 'settings' && ev.keys && ev.keys.length && ev.keys.every((k) => LOOK_KEYS.has(k));
@@ -749,6 +751,12 @@
     // a notification whose reason is gone (the payslip came in, the shift was confirmed, the timer stopped) leaves the
     // phone: only the ones still true now stay (the user, 9 Nov 2026: "I uploaded a payslip and the notification stayed")
     if (App.phoneNotes) App.phoneNotes.keepOnly(wanted.map((a) => a.key));
+    // the same in the app: a reminder whose reason is gone stops waiting as "new" (on the home screen's line, in the
+    // list): it is marked read and stays in the history. Only the 9 Nov fix closed the phone's notification; the
+    // app's own record of "payday: upload the payslip" stayed unread on the home screen after the payslip came in.
+    const wantedKeys = new Set(wanted.map((a) => a.key));
+    const done = Insights.resolvedNotes(S.notifications, wantedKeys);
+    if (done.length) await Store.apply(done.map((n) => ({ store: 'notifications', put: Object.assign({}, n, { read: true, resolved: true }) })), null);
     // notifications of the kinds that are no longer sent go from the list too (once)
     const gone = S.notifications.filter((n) => !kindSent(n));
     if (gone.length) await Store.apply(gone.map((n) => ({ store: 'notifications', del: n.id })), null);

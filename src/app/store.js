@@ -144,6 +144,8 @@
     const kvMap = Object.fromEntries(kv.map((x) => [x.key, x.value]));
     S.settings = mergeDeep(root.Defaults.defaultSettings(), kvMap.settings || {});
     S.meta = cleanMeta(kvMap.meta || {});
+    // the account's memory and this phone's made one (a phone from before 1.36.4 sends up what it remembers)
+    if (joinMem(true)) { await rawKv('settings', S.settings); await rawKv('meta', S.meta); }
     S.activeShift = kvMap.activeShift || null;
     for (const s of LIST_STORES) S[s] = safeList(s, await getAll(s));
     for (const s of LIST_STORES) S[s].forEach(markRec);
@@ -196,6 +198,103 @@
     'guest', // this phone is used without an account, by choice (its data lives here only)
     'ledgerChain']; // this phone's own chain in the signed shift log (another phone, or a restored backup, starts its own)
   const SYNC_META = ['pendingDeletes', 'settingsDirty', 'activeDirty', 'activeUpdatedAt'];
+  /*
+   * What the app remembers about the person, for the account and not for one phone: the answers they gave (did the
+   * salary arrive, how much), what they already saw or finished (the guide, the month's story, what's new, a rating
+   * request) and what it learned (the last role). Each is kept in meta, where the screens read it, and also in
+   * settings.mem, which goes to the cloud with the settings, so another phone (or this one after a reinstall) does not
+   * ask again (the user, 11 Nov 2026: "the app keeps asking about the payslip... and does not remember me").
+   * How two phones' copies join (mergeMem): a map joins entry by entry (the later answer, by its `at`), a flag that was
+   * ever set stays set, a "seen up to" keeps the latest, the guide's start the earliest, and the last role the newest copy.
+   */
+  const ACCOUNT_META = {
+    salaryAns: { kind: 'map', cap: 12 }, celebrated: { kind: 'map', cap: 40 }, netLearnReset: { kind: 'max' },
+    recapSeen: { kind: 'max' }, wrappedSeen: { kind: 'max' }, whatsNew: { kind: 'version' }, guide: { kind: 'min' },
+    guideDone: { kind: 'or' }, coachDone: { kind: 'or' }, usedRights: { kind: 'or' }, usedTaxRefund: { kind: 'or' },
+    ms: { kind: 'maxEach' }, plusNudge: { kind: 'maxEach' }, review: { kind: 'latest' }, lastRole: { kind: 'last' },
+  };
+  const isMap = (v) => !!v && typeof v === 'object' && !Array.isArray(v);
+  const verNum = (v) => String(v || '').split('.').map((x) => +x || 0);
+  function verCmp(a, b) {
+    const x = verNum(a), y = verNum(b);
+    for (let i = 0; i < Math.max(x.length, y.length); i++) if ((x[i] || 0) !== (y[i] || 0)) return (x[i] || 0) - (y[i] || 0);
+    return 0;
+  }
+  /** One remembered value from two copies (local: this phone's, remote: the account's). */
+  function mergeOne(key, local, remote) {
+    const spec = ACCOUNT_META[key];
+    if (local === undefined || local === null) return remote;
+    if (remote === undefined || remote === null) return local;
+    switch (spec.kind) {
+      case 'map': {
+        if (!isMap(local)) return remote;
+        if (!isMap(remote)) return local;
+        const out = Object.assign({}, local);
+        const when = (v) => (isMap(v) ? +v.at || 0 : +v || 0);
+        for (const k of Object.keys(remote)) if (!(k in out) || when(remote[k]) >= when(out[k])) out[k] = remote[k];
+        const keys = Object.keys(out);
+        if (keys.length > spec.cap) {
+          // the oldest go: answers by their pay period, celebrations by their time
+          const order = key === 'salaryAns' ? keys.sort() : keys.sort((a, b) => when(out[a]) - when(out[b]));
+          order.slice(0, keys.length - spec.cap).forEach((k) => delete out[k]);
+        }
+        return out;
+      }
+      case 'max': return String(remote) > String(local) ? remote : local;
+      case 'version': return verCmp(remote, local) > 0 ? remote : local;
+      case 'min': return +remote > 0 && (!(+local > 0) || +remote < +local) ? remote : local;
+      case 'or': return !!(local || remote);
+      case 'maxEach': {
+        if (!isMap(local) || !isMap(remote)) return isMap(remote) ? remote : local;
+        const out = Object.assign({}, local);
+        for (const k of Object.keys(remote)) out[k] = Math.max(+out[k] || 0, +remote[k] || 0);
+        return out;
+      }
+      case 'latest': return isMap(remote) && isMap(local) ? ((+remote.at || 0) >= (+local.at || 0) ? Object.assign({}, remote, { n: Math.max(+remote.n || 0, +local.n || 0) }) : Object.assign({}, local, { n: Math.max(+remote.n || 0, +local.n || 0) })) : remote;
+      default: return remote; // 'last': the account's copy is the newest
+    }
+  }
+  /** Both copies joined: { key: value } of every remembered key either one holds. */
+  function mergeMem(local, remote) {
+    const out = {};
+    for (const k of Object.keys(ACCOUNT_META)) {
+      const v = mergeOne(k, local ? local[k] : undefined, remote ? remote[k] : undefined);
+      if (v !== undefined && v !== null) out[k] = v;
+    }
+    return out;
+  }
+  const memOfMeta = () => { const o = {}; for (const k of Object.keys(ACCOUNT_META)) if (S.meta[k] !== undefined && S.meta[k] !== null) o[k] = S.meta[k]; return o; };
+  /**
+   * The account's memory (settings.mem) and this phone's (meta) made one. Both sides get what they lack; when the
+   * account's copy lacks something this phone knows, the settings are marked to go up again. Returns true then.
+   * later: on opening, before the account was heard: the new version waits (meta.memUp) for flushMem after the first
+   * pull, so a phone left closed for a while never sends its older settings over newer ones with a newer stamp.
+   */
+  function joinMem(later) {
+    if (!isMap(S.settings.mem)) S.settings.mem = {};
+    const remote = S.settings.mem;
+    const merged = mergeMem(memOfMeta(), remote);
+    Object.assign(S.meta, merged);
+    if (U.same(merged, remote)) { if (!later) delete S.meta.memUp; return false; } // the account has it all already
+    S.settings.mem = merged;
+    if (later) { S.meta.memUp = true; return true; }
+    S.settings._updatedAt = Date.now();
+    S.meta.settingsDirty = true;
+    return true;
+  }
+  /** After the account was heard (cloud.js): what only this phone remembered goes up as a new version of the settings. */
+  async function flushMem() {
+    if (!S.meta.memUp) return false;
+    delete S.meta.memUp;
+    joinMem();
+    S.settings._updatedAt = Date.now();
+    S.meta.settingsDirty = true;
+    markSettings();
+    await rawKv('settings', S.settings);
+    await rawKv('meta', S.meta);
+    emit({ type: 'mem', keys: [] });
+    return true;
+  }
   /*
    * Every record that comes from outside this code (a backup file, the cloud, the phone's own database) passes
    * here before it is used: the screens put ids, times and counts into HTML, so a record whose fields are not
@@ -479,8 +578,9 @@
     for (const k of localOnlyKeys) keep[k] = S.settings[k];
     S.settings = mergeDeep(root.Defaults.defaultSettings(), remote);
     for (const k of localOnlyKeys) if (keep[k] !== undefined) S.settings[k] = keep[k];
-    markSettings();
     S.meta.settingsDirty = false;
+    joinMem(); // what the account remembers comes to this phone; what only this phone knew goes up again
+    markSettings();
     await rawKv('settings', S.settings);
     await rawKv('meta', S.meta);
     emit({ type: 'settings', remote: true });
@@ -530,7 +630,21 @@
   async function setMeta(patch) {
     Object.assign(S.meta, patch);
     if ('cloudUid' in patch) keepHint();
+    // an answer, a "seen" or something learned: also in the account's memory (settings.mem), for the other phones
+    const mem = Object.keys(patch).filter((k) => ACCOUNT_META[k]);
+    if (mem.length) {
+      const m = Object.assign({}, isMap(S.settings.mem) ? S.settings.mem : {});
+      for (const k of mem) { if (patch[k] === undefined || patch[k] === null) delete m[k]; else m[k] = clone(patch[k]); }
+      if (!U.same(m, S.settings.mem)) {
+        S.settings.mem = m;
+        S.settings._updatedAt = Date.now();
+        S.meta.settingsDirty = true;
+        await rawKv('settings', S.settings);
+        markSettings();
+      }
+    }
     await rawKv('meta', S.meta);
+    if (mem.length) emit({ type: 'mem', keys: mem });
   }
   async function setActive(a) {
     if (canon(a) === savedActive) return; // the running shift as last saved: no new version for the other phones
@@ -548,7 +662,7 @@
     const step = undoStack[undoStack.length - 1];
     if (step && step.settings) {
       undoStack.pop();
-      S.settings = step.settings;
+      S.settings = Object.assign(step.settings, { mem: S.settings.mem }); // an undone setting never takes back an answer given since
       S.settings._updatedAt = Date.now();
       markSettings();
       S.meta.settingsDirty = true;
@@ -722,6 +836,6 @@
   root.Store = {
     S, load, on, apply, isMemoryOnly: () => memoryOnly, accountHint, keepHint, put, del, undo: undoAny, canUndo, setSettings, setMeta, setActive, find, clone,
     putFile, getFile, delFile, exportBackup, importBackup, wipe, saveAll, SCHEMA_VERSION, DB_NAME, cleanIcon,
-    SYNC_STORES, APPEND_ONLY, LOCAL_SETTINGS, sameRecord, applyRemote, markSynced, dirtyRecords, touchAll, forgetSyncState, applyRemoteSettings, applyRemoteActive,
+    SYNC_STORES, APPEND_ONLY, LOCAL_SETTINGS, ACCOUNT_META, mergeMem, flushMem, sameRecord, applyRemote, markSynced, dirtyRecords, touchAll, forgetSyncState, applyRemoteSettings, applyRemoteActive,
   };
 })(typeof window !== 'undefined' ? window : globalThis);
