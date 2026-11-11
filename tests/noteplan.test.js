@@ -131,7 +131,7 @@ T.test('the channel\'s port is kept from the first moment: Chrome hands it over 
   const w = read('src/app/widgets.js');
   const head = html.slice(0, html.indexOf('</head>'));
   T.ok(head.includes("addEventListener('message'") && head.includes('window.__appPort=e.ports[0]'), 'index.html keeps the port in its head');
-  T.ok(w.includes('if (root.__appPort) whenReady(') && w.includes('function take(p)'), 'widgets.js takes a port that came early');
+  T.ok(w.includes('if (root.__appPort) {') && w.includes('function take(p)'), 'widgets.js takes a port that came early');
 });
 T.test('a notification whose reason is gone leaves the phone (the payslip came in, the shift was confirmed)', () => {
   const app = read('src/app/app.js');

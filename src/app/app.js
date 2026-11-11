@@ -1030,6 +1030,25 @@
       reconnect();
       return;
     }
+    // The phone's own copy came up empty or broken, but this phone was signed in (Store.accountHint, kept outside the
+    // database): Google still keeps the sign-in here, so the account comes back by itself with everything in it. No
+    // sign-in screen and no questions from the start (the user, 11 Nov 2026: "every so often the app signs me out").
+    const hint = Store.accountHint ? Store.accountHint() : null;
+    if (hint && !S.meta.guest) {
+      App.showLogin('reconnect');
+      const back = async () => {
+        let user = null;
+        try { user = await Cloud.start(); } catch (e) { root.addEventListener('online', back, { once: true }); return; }
+        if (!user) { App.showLogin('expired'); return; } // signed out of Google too: a real sign-in
+        if (App.blocking !== 'login' || S.meta.cloudUid) return; // the person signed in themselves meanwhile
+        try { await Cloud.connect(user); } catch (e) { console.error(e); App.showLogin(navigator.onLine ? 'error' : 'offline'); return; }
+        App.blocking = null;
+        App.recompute();
+        App.afterLogin();
+      };
+      back();
+      return;
+    }
     // a guest (no account, by choice): the app at once, its data on this phone only. A sign-in they started from the
     // settings and that came back here (Google's full-page way) finishes now, and their data goes up to the account.
     if (S.meta.guest && S.settings.onboarded) {

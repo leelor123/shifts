@@ -88,7 +88,7 @@
    *  with no amounts, no goal, no payday and no running shift; `empty` is there for a later app build to show its
    *  first-run look instead. */
   App.widgetEmpty = () => ({ v: 1, at: Date.now(), lang: LANG, empty: true, periodTo: '2000-01-01' });
-  const noData = () => !S.settings.onboarded;
+  const noData = () => !!S.settings && !S.settings.onboarded; // not loaded yet is not "no data"
   // whether the widgets hold numbers, kept outside the app's database (which a wipe empties): the empty snapshot is
   // sent once, not on every opening of a phone with nothing on it. Unknown (an install from before this version, or
   // no storage): assume they do.
@@ -166,7 +166,10 @@
   const fromApp = (e) => e.origin === 'android-app://' + location.host || e.origin === location.origin;
   root.addEventListener('message', (e) => {
     if (!fromApp(e) || (e.data !== '' && e.data !== 'shaati:widgets') || !e.ports || !e.ports[0]) return;
-    take(e.ports[0]);
+    // the data may still be loading (Chrome hands the port over right after the page loads): taken once it is there
+    // (Sentry SHAATI-4, 10 Nov 2026: settings were still null and the snapshot crashed)
+    const p = e.ports[0];
+    if (S.settings) take(p); else whenReady(() => take(p));
   });
   // the port came before this code ran (index.html keeps it): a port's messages wait until onmessage is set, so the
   // Android app's hello is still there
@@ -182,7 +185,7 @@
     try { port.onmessage = (m) => fromPhone(m.data); } catch (err) { /* ignore */ }
     send(true);
   }
-  if (root.__appPort) whenReady(() => { if (root.__appPort) take(root.__appPort); });
+  if (root.__appPort) { if (S.settings) take(root.__appPort); else whenReady(() => { if (root.__appPort) take(root.__appPort); }); }
   // the phone was wiped (signing out, deleting the account): the page reloads right after, so the widgets hear it
   // now, not in 0.7 s
   Store.on((ev) => { if (ev && ev.type === 'restore' && noData()) send(true); else App.widgets.push(); });

@@ -56,8 +56,34 @@
         resolve(d);
       };
       req.onerror = () => reject(req.error);
-      req.onblocked = () => reject(root.U.oops('מסד הנתונים חסום. סגור לשוניות אחרות של האפליקציה'));
+      // another page of the app still holds the older version: it closes on versionchange, so wait a little for it
+      // (rejecting at once ran the app from memory: no data, no account, "signed out", 11 Nov 2026)
+      req.onblocked = () => setTimeout(() => reject(root.U.oops('מסד הנתונים חסום. סגור לשוניות אחרות של האפליקציה')), 4000);
     });
+  }
+  /** Opening the database fails now and then on Android Chrome for a moment ("Internal error opening backing store");
+   *  run from memory after one failure, the app opened with no data and no account, as if signed out (the user,
+   *  11 Nov 2026). Tried again a few times first. */
+  async function openDbRetry() {
+    let last = null;
+    for (const wait of [0, 250, 700, 1500]) {
+      if (wait) await new Promise((r) => setTimeout(r, wait));
+      try { return await openDb(); } catch (e) { last = e; }
+    }
+    throw last;
+  }
+  /** The account this phone is signed in to, kept outside the database too (localStorage): when the database comes up
+   *  empty or broken, the app knows whose phone this is and reconnects to the account instead of asking to sign in or
+   *  starting the questions again. Only the account id and email: the data stays in the account. */
+  const HINT = 'shaati.account';
+  function keepHint() {
+    try {
+      if (S.meta.cloudUid) localStorage.setItem(HINT, JSON.stringify({ uid: S.meta.cloudUid, email: S.meta.cloudEmail || '' }));
+      else if (S.settings && S.settings.onboarded && !memoryOnly) localStorage.removeItem(HINT); // signed out on purpose, or a guest
+    } catch (e) { /* private mode */ }
+  }
+  function accountHint() {
+    try { const h = JSON.parse(localStorage.getItem(HINT) || 'null'); return h && h.uid ? h : null; } catch (e) { return null; }
   }
   function done(t) {
     return new Promise((res, rej) => { t.oncomplete = () => res(); t.onerror = () => rej(t.error); t.onabort = () => rej(t.error || new Error('transaction aborted')); });
@@ -106,7 +132,7 @@
 
   async function load() {
     try {
-      db = await openDb();
+      db = await openDbRetry();
     } catch (e) {
       // no local database in this browser: keep going from memory (the cloud account keeps the data)
       console.warn('local database unavailable, running from memory', e);
@@ -122,6 +148,7 @@
     for (const s of LIST_STORES) S[s] = safeList(s, await getAll(s));
     for (const s of LIST_STORES) S[s].forEach(markRec);
     markActive(); markSettings();
+    if (S.meta.cloudUid) keepHint(); // a phone signed in before this version gets its hint now
     // first run: default employer
     if (!S.employers.length) {
       S.employers = [root.Defaults.defaultEmployer()];
@@ -502,6 +529,7 @@
   }
   async function setMeta(patch) {
     Object.assign(S.meta, patch);
+    if ('cloudUid' in patch) keepHint();
     await rawKv('meta', S.meta);
   }
   async function setActive(a) {
@@ -677,6 +705,8 @@
     emit({ type: 'restore', mode });
   }
   async function wipe() {
+    // the phone no longer belongs to the account (signed out, deleted, another account): no reconnecting by itself
+    try { localStorage.removeItem(HINT); } catch (e) { /* private mode */ }
     await run(STORES, 'readwrite', (t) => { if (t) for (const s of STORES) t.objectStore(s).clear(); });
     S.settings = root.Defaults.defaultSettings();
     S.meta = {}; S.activeShift = null;
@@ -690,7 +720,7 @@
   }
 
   root.Store = {
-    S, load, on, apply, isMemoryOnly: () => memoryOnly, put, del, undo: undoAny, canUndo, setSettings, setMeta, setActive, find, clone,
+    S, load, on, apply, isMemoryOnly: () => memoryOnly, accountHint, keepHint, put, del, undo: undoAny, canUndo, setSettings, setMeta, setActive, find, clone,
     putFile, getFile, delFile, exportBackup, importBackup, wipe, saveAll, SCHEMA_VERSION, DB_NAME, cleanIcon,
     SYNC_STORES, APPEND_ONLY, LOCAL_SETTINGS, sameRecord, applyRemote, markSynced, dirtyRecords, touchAll, forgetSyncState, applyRemoteSettings, applyRemoteActive,
   };

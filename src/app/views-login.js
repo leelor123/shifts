@@ -241,8 +241,10 @@
       offline: 'כדי להתחבר בפעם הראשונה צריך חיבור לאינטרנט. התחבר לרשת ונסה שוב.',
       error: 'לא ניתן לטעון את רכיב ההתחברות. בדוק את החיבור ונסה שוב.',
       expired: 'החיבור לחשבון הסתיים. התחבר שוב כדי להמשיך לסנכרן.',
+      // the phone's own copy came up empty, the account is being brought back by itself (app.js)
+      reconnect: 'מחזירים את החשבון שלך לטלפון. כל המשמרות שמורות בחשבון ויחזרו בעוד רגע.',
     };
-    show(MSG[reason] || (Cloud.redirectError ? Cloud.errorText(Cloud.redirectError) : ''), !!MSG[reason] && reason !== 'expired' || !!Cloud.redirectError);
+    show(MSG[reason] || (Cloud.redirectError ? Cloud.errorText(Cloud.redirectError) : ''), !!MSG[reason] && reason !== 'expired' && reason !== 'reconnect' || !!Cloud.redirectError);
     if (!Cloud.sdkReady()) {
       Cloud.sdk().then(() => { if (App.blocking === 'login') draw(lastMsg, lastErr); }, (e) => {
         failedLoad = true;
