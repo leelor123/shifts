@@ -848,6 +848,7 @@
       <div class="section-title">גודל טקסט</div><div class="seg">${[[0.9, 'קטן'], [1, 'רגיל'], [1.1, 'גדול'], [1.2, 'גדול מאוד']].map(([k, l]) => `<button data-fs="${k}" class="${+S.settings.fontScale === k ? 'on' : ''}">${l}</button>`).join('')}</div>
       <div class="section-title" style="margin-top:16px">מסך הבית</div>
       <div class="card"><div class="hm-recent"><span class="t">המספר הגדול בכרטיס השכר</span><div class="seg">${[['gross', 'ברוטו'], ['net', 'נטו']].map(([k, l]) => `<button data-home-big="${k}" class="${((S.settings.home || {}).big === 'net' ? 'net' : 'gross') === k ? 'on' : ''}">${l}</button>`).join('')}</div></div>
+        ${F.sw('פעולות מהירות בפתיחה', 'כשנכנסים לאפליקציה מופיעים קודם כפתורים להתחלת משמרת ולהוספת משמרת, ורק אחר כך מסך הבית', 's.quickActions', S.settings.quickActions === true)}
         ${F.sw('קיצורי דרך', 'ארבעה כפתורים גדולים: משמרת חדשה, הזכויות, בדיקת תלוש ומשחקים', 's.home.shortcuts', (S.settings.home || {}).shortcuts !== false)}
         ${F.sw('שורת עדכון', 'משמרת שמתקרבת, התראה חשובה או משכורת בדרך, מתחת לכפתור המשמרת', 's.home.highlight', (S.settings.home || {}).highlight !== false)}
         ${F.sw('תאריך עברי וחגים', 'בשורה שמתחת לברכה', 's.home.hebDate', (S.settings.home || {}).hebDate !== false)}

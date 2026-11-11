@@ -237,9 +237,10 @@
     let place = null;
     try { const loc = root.HebCal.locationOf(rest); place = { name: rest.city === '__custom' ? '' : String(rest.city || ''), lat: +(+loc.lat).toFixed(3), lon: +(+loc.lon).toFixed(3) }; } catch (e) { /* the default city */ }
     const mode = !st.onboarded ? 'welcome' : st.lock && st.lock.enabled ? 'lock' : S.meta.cloudUid || App.localOnly ? 'home' : 'welcome';
-    const next = { place, name: String(st.userName || '').slice(0, 40), mode };
+    // the quick actions on the opening: off unless switched on in Settings (views-quick.js)
+    const next = { place, name: String(st.userName || '').slice(0, 40), mode, quick: st.quickActions === true };
     const p = Sky.prefs();
-    if (JSON.stringify([p.place, p.name, p.mode]) === JSON.stringify([next.place, next.name, next.mode])) return;
+    if (JSON.stringify([p.place, p.name, p.mode, p.quick === true]) === JSON.stringify([next.place, next.name, next.mode, next.quick])) return;
     Sky.remember(next);
     // another city: its weather, for the next opening (once things are quiet)
     if (p.place && next.place && p.place.name !== next.place.name) { clearTimeout(App.rememberSky.t); App.rememberSky.t = setTimeout(() => Sky.refreshWeather(), 1500); }

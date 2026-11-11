@@ -161,6 +161,7 @@
       theme: 'system', accent: 'midnight', fontScale: 1, font: 'rubik', skin: '', plusKey: '', refCode: '', wpShare: {},
       withTravel: true, // the amount next to a shift includes its travel pay (a switch over the shift lists)
       hideMoney: false, // privacy: amounts blurred on screen (the eye on the pay card shows them)
+      quickActions: false, // the quick actions on the opening (views-quick.js): off, the app opens on the home screen (the user, 11 Nov 2026)
       lb: { on: false, n: '', e: '', bg: '' }, // the games' champions table: joined, nickname, emoji, background (Plus)
       fx: { effects: true, sound: true, haptic: true, music: true }, // tap pulse / confetti, click sounds, vibration, music in the games
       // --- security ---

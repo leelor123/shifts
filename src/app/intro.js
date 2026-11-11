@@ -57,7 +57,8 @@
   Intro.full = full; // false: the splash only (the screen under it brings its own sky and sheet in)
   // a returning user's first open in a session (not from a shortcut): the show waits on its sheet with the quick
   // actions, with or without its motion (reduced motion: the same screen, still)
-  const quick = mode === 'home' && !seen && !fromShortcut;
+  // only when switched on in Settings (off by default: the app opens straight on the home screen; the user, 11 Nov 2026)
+  const quick = mode === 'home' && !seen && !fromShortcut && P.quick === true;
   Intro.quick = quick;
   // the scene: the screen under the show draws the very same one
   const now = Date.now();
