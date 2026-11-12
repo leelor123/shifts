@@ -37,6 +37,8 @@
   // admin check, Google Play, the fonts) is waited for, within a limit.
   const CALM_MS = 450; // the first screen sits under the show at least this long
   const SKIP_CALM_MS = 250; // ... or this long after a tap to skip
+  // the short splash (no show to cover the first screen's last changes, like the pay card's forecast): a little longer
+  const STILL_CALM_MS = 700;
   const HOLD_MAX = 2500; // the most the show waits for start-up work after it could have left
   let drawnAt = 0, holdUntil = 0, recheck = 0;
   const holds = new Set();
@@ -45,7 +47,6 @@
   let seen = false;
   try { seen = sessionStorage.getItem('introSeen') === '1'; sessionStorage.setItem('introSeen', '1'); } catch (e) { /* ignore */ }
   const fromShortcut = /[?&]action=/.test(location.search);
-  const full = !seen && !fromShortcut && Fx.motion();
   const SEQUENCE_MS = 980; // the logo up (.32–.94 s), the sheet up (.40–.96 s)
 
   // which screen comes first (kept by the app in a small copy, the database is not open yet): the language doors on
@@ -54,6 +55,10 @@
   const doors = document.documentElement.classList.contains('lp-first');
   const mode = doors ? 'doors' : P.mode === 'home' || P.mode === 'lock' ? P.mode : 'welcome';
   Intro.mode = mode;
+  // the long show only where it leads somewhere: a new user's welcome, the lock, or the quick actions when switched on.
+  // A returning user without them gets the short splash and is in the app at once (the user, 12 Nov 2026: "if the
+  // quick actions are off, no long animation: a short loading screen and straight into the app")
+  const full = !seen && !fromShortcut && Fx.motion() && (mode !== 'home' || P.quick === true);
   Intro.full = full; // false: the splash only (the screen under it brings its own sky and sheet in)
   // a returning user's first open in a session (not from a shortcut): the show waits on its sheet with the quick
   // actions, with or without its motion (reduced motion: the same screen, still)
@@ -87,7 +92,7 @@
   function maybeClose() {
     if (closed || leaving || !ready || !played || quickOn) return;
     const t = performance.now();
-    let wait = drawnAt + (skipped ? SKIP_CALM_MS : CALM_MS) - t;
+    let wait = drawnAt + (skipped ? SKIP_CALM_MS : full ? CALM_MS : STILL_CALM_MS) - t;
     if (wait <= 0 && holds.size) {
       if (!holdUntil) holdUntil = t + HOLD_MAX;
       wait = holdUntil - t;

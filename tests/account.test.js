@@ -64,3 +64,9 @@ T.test('a shift added on another day (the calendar, a planned one) gets the usua
   S.shifts = [];
   T.eq(App.usualHours().startT, '08:00', 'nothing yet: 08:00-16:00');
 });
+
+T.test('quick actions off: a returning user gets the short splash, not the long show', () => {
+  const s = read('src/app/intro.js');
+  T.ok(s.includes("const full = !seen && !fromShortcut && Fx.motion() && (mode !== 'home' || P.quick === true);"));
+  T.ok(s.indexOf('const full =') > s.indexOf('const mode ='), 'decided once the mode is known');
+});
