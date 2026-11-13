@@ -5,7 +5,7 @@
  * background and activates when the user taps "עדכן".
  * IndexedDB data is never touched by updates.
  * ============================================================ */
-const VERSION = '1.37.2-c7f6804e';
+const VERSION = '1.37.3-399c3329';
 const SHELL = 'shiftpay-shell-' + VERSION;
 const RUNTIME = 'shiftpay-runtime-v1';
 const FONTS = ['rubik-hebrew', 'rubik-latin', 'rubik-latin-ext', 'rubik-arabic', 'rubik-cyrillic', 'rubik-cyrillic-ext', 'fredoka-hebrew', 'fredoka-latin', 'fredoka-latin-ext'].map((f) => './fonts/' + f + '.woff2');
@@ -190,7 +190,9 @@ self.addEventListener('fetch', (e) => {
   e.respondWith((async () => {
     const cache = await caches.open(RUNTIME);
     const cached = await cache.match(req);
-    if (cached) return cached;
+    // an opaque copy (kept from a request without CORS) can never pass a script's integrity check: a library asked for
+    // with CORS and a fingerprint (views-payslip.js SRI) is downloaded again instead (security audit 13 Nov 2026)
+    if (cached && !(cached.type === 'opaque' && req.mode === 'cors')) return cached;
     try {
       const res = await fetch(req);
       if (res && (res.ok || res.type === 'opaque')) cache.put(req, res.clone());
