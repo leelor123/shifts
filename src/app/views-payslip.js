@@ -192,7 +192,23 @@
     const emp = S.employers[0];
     return U.addMonthKey(Engine.periodOf(U.todayKey(), emp).key, -1);
   }
+  // Every way a payslip comes in passes startExtraction: the file picker, the camera, and a file shared from another
+  // app (App.payslipFromFile). A payslip is a PDF or a photo of up to 25MB, as the other imports: the picker's
+  // accept= is only a hint, and a shared file can be of any kind and size (security audit, 13 Nov 2026).
+  const PAYSLIP_MAX = 25 * 1024 * 1024;
+  function payslipFileProblem(file) {
+    if (!file) return 'לא נבחר קובץ';
+    const type = String(file.type || '').toLowerCase();
+    const name = String(file.name || '').toLowerCase();
+    const ok = type === 'application/pdf' || type.startsWith('image/') || (!type && /\.(pdf|jpe?g|png|webp|heic|heif|gif|bmp)$/.test(name));
+    if (!ok) return 'אפשר לקרוא תלוש רק מקובץ PDF או מתמונה';
+    if (!(file.size <= PAYSLIP_MAX)) return 'הקובץ גדול מדי (עד 25MB)';
+    return '';
+  }
+  App.payslipFileProblem = payslipFileProblem;
   async function startExtraction(file) {
+    const bad = payslipFileProblem(file);
+    if (bad) { UI.invalid(bad); return; }
     let statusEl = null;
     UI.openSheet({
       title: 'קורא את התלוש…',

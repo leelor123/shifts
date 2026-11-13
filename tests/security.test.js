@@ -60,6 +60,34 @@ T.test('the offline copy never hands back an opaque library, which would fail th
   T.ok(read('src/sw.js').includes("if (cached && !(cached.type === 'opaque' && req.mode === 'cors')) return cached;"));
 });
 
+T.section('security: a payslip file is a PDF or an image of up to 25MB, whichever way it comes in');
+T.test('the check runs first in startExtraction, the one door of the picker, the camera and a shared file', () => {
+  const p = read('src/app/views-payslip.js');
+  T.ok(/async function startExtraction\(file\) \{\n    const bad = payslipFileProblem\(file\);\n    if \(bad\) \{ UI\.invalid\(bad\); return; \}/.test(p), 'first thing');
+  T.ok(/App\.payslipFromFile = \(file\) => \{[^}]*startExtraction\(file\); \};/.test(p), 'a shared file goes the same way');
+  T.eq((p.match(/startExtraction\(/g) || []).length, 3, 'no other way in: the definition, the picker and camera, a shared file');
+});
+T.test('PDFs and photos pass; too big, other kinds and nothing are refused', () => {
+  const p = read('src/app/views-payslip.js');
+  const src = /const PAYSLIP_MAX = [^\n]*\n  function payslipFileProblem\(file\) \{[\s\S]*?\n  \}\n/.exec(p);
+  T.ok(src, 'found');
+  const ctx = {};
+  vm.runInNewContext(src[0] + 'this.check = payslipFileProblem;', ctx);
+  const MB = 1024 * 1024;
+  const f = (type, name, size) => ctx.check({ type, name, size });
+  T.eq(f('application/pdf', 'tlush.pdf', 2 * MB), '', 'a PDF');
+  T.eq(f('image/jpeg', 'IMG_1.jpg', 6 * MB), '', 'a photo');
+  T.eq(f('image/heic', 'IMG_2.HEIC', 3 * MB), '', 'an iPhone photo');
+  T.eq(f('', 'from-whatsapp.pdf', MB), '', 'no type given, a .pdf name');
+  T.eq(f('application/pdf', 'big.pdf', 25 * MB), '', 'exactly 25MB');
+  T.ok(f('application/pdf', 'huge.pdf', 25 * MB + 1), 'over 25MB');
+  T.ok(f('application/x-msdownload', 'run.exe', MB), 'a program');
+  T.ok(f('text/html', 'page.html', 1000), 'a web page');
+  T.ok(f('', 'noname', 1000), 'no type and no known name');
+  T.ok(f('application/pdf', 'x.pdf', NaN), 'an unknown size');
+  T.ok(ctx.check(null), 'nothing');
+});
+
 T.section('security: website headers');
 T.test('every website page turns off camera, microphone, location, payment and USB', () => {
   const h = JSON.parse(read('firebase.json')).hosting.headers.find((r) => r.source === '**').headers;
