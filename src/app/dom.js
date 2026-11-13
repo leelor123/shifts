@@ -144,6 +144,10 @@
   const BOX_TAGS = /^(TD|TH|CAPTION|TR|LI|DT|DD)$/i;
   // marks that take no room (direction marks and isolates, joiners): touching an amount with only these needs no glue
   const INVISIBLE = /^[\u200b-\u200f\u2060\u2066-\u2069]*$/;
+  // a clause's opening label right before an amount: after ";", ":", "," or "." and a space, one to three words
+  // (letters only, not "=" or "\u2212"), at most LEAD_MAX letters. It goes with the amount into one .money-phrase.
+  const LEAD = /[;:,.\u060c\u061b][\s\u200e\u200f]+((?:[\p{L}\p{M}\u05f3\u05f4'-]+[\s\u200e\u200f]+){1,3})$/u;
+  const LEAD_MAX = 24;
 
   function markText(t) {
     const v = t.nodeValue;
@@ -183,12 +187,25 @@
       const lim = j + 1 < ms.length ? ms[j + 1][0] : v.length;
       while (s > last && !/\s/.test(v[s - 1])) s--;
       while (e < lim && !/\s/.test(v[e])) e++;
-      if (s > last) frag.appendChild(doc.createTextNode(v.slice(last, s)));
+      // A short label that opens a clause and names the amount ("; בתלוש נטו 5,352.91 ₪."): the label and the
+      // amount go into one inline-block, so the line breaks before the label and not inside it. The payslip check
+      // read "...; בתלוש" at the end of one line and "נטו 5,352.91 ₪." on the next (13 Nov 2026). An inline-block,
+      // not nowrap: when the phrase alone is wider than the line it still wraps inside, so nothing is cut.
+      const lead = LEAD.exec(v.slice(0, s));
+      const ls = lead && lead[1].trim().length <= LEAD_MAX ? s - lead[1].length : -1;
+      let out = frag;
+      if (ls >= last) {
+        if (ls > last) frag.appendChild(doc.createTextNode(v.slice(last, ls)));
+        out = doc.createElement('span');
+        out.className = 'money-phrase';
+        out.appendChild(doc.createTextNode(v.slice(ls, s)));
+        frag.appendChild(out);
+      } else if (s > last) frag.appendChild(doc.createTextNode(v.slice(last, s)));
       const before = v.slice(s, ms[i][0]), after = v.slice(ms[j][1], e);
       if (i === j && INVISIBLE.test(before + after)) {
-        if (before) frag.appendChild(doc.createTextNode(before));
-        frag.appendChild(money(ms[i][0], ms[i][1]));
-        if (after) frag.appendChild(doc.createTextNode(after));
+        if (before) out.appendChild(doc.createTextNode(before));
+        out.appendChild(money(ms[i][0], ms[i][1]));
+        if (after) out.appendChild(doc.createTextNode(after));
       } else {
         const g = doc.createElement('span');
         g.className = 'money-glue';
@@ -198,7 +215,7 @@
           if (k < j) g.appendChild(doc.createTextNode(v.slice(ms[k][1], ms[k + 1][0])));
         }
         if (after) g.appendChild(doc.createTextNode(after));
-        frag.appendChild(g);
+        out.appendChild(g);
       }
       last = e;
       i = j + 1;

@@ -146,9 +146,33 @@ T.test('an amount in a table cell or a list item is wrapped, the cell itself sta
   const before = JSON.stringify(kids(cell)) + JSON.stringify(kids(glue));
   ctx.Dom.markMoney(cell);
   T.eq(JSON.stringify(kids(cell)) + JSON.stringify(kids(glue)), before, 'marking twice changes nothing');
+
+  /* The payslip check, 13 Nov 2026: "...; בתלוש" ended one line and "נטו 5,352.91 ₪." began the next. The label that
+   * opens a clause and names an amount goes into one inline-block (.money-phrase) with it, so the line breaks before
+   * the label. */
+  const calc = el('div', [RLM + '5,894.53 ' + RLM + '₪ − ' + RLM + '541.62 ' + RLM + '₪ = ' + amt + '; בתלוש נטו ' + amt + '.']);
+  ctx.Dom.markMoney(calc);
+  const phrases = calc.childNodes.filter((c) => c.nodeType === 1 && c.cls.has('money-phrase'));
+  T.eq(phrases.length, 1, 'one phrase: ' + kids(calc));
+  T.ok(phrases[0] && phrases[0].textContent === 'בתלוש נטו ' + amt + '.', 'it holds the label, the amount and the period: ' + (phrases[0] && JSON.stringify(phrases[0].textContent)));
+  T.ok(phrases[0] && phrases[0].childNodes.some((c) => c.nodeType === 1 && c.cls.has('money-glue')), 'the amount keeps its glue inside the phrase');
+  T.ok(!calc.childNodes.some((c) => c.nodeType === 3 && /נטו/.test(c.nodeValue)), 'no part of the label is left outside');
+  const phraseBefore = JSON.stringify(kids(calc));
+  ctx.Dom.markMoney(calc);
+  T.eq(JSON.stringify(kids(calc)), phraseBefore, 'marking twice changes nothing');
+  // not a phrase: a sign before an amount ("= 5 ₪"), more than three words, or words with no clause mark before them
+  for (const s of ['סך הכול = ' + amt, 'ומה, אם בכל זאת קיבלת ' + amt, 'קיבלת בסך הכול ' + amt]) {
+    const n = el('div', [s]);
+    ctx.Dom.markMoney(n);
+    T.ok(!n.childNodes.some((c) => c.nodeType === 1 && c.cls.has('money-phrase')), 'no phrase in ' + JSON.stringify(s) + ': ' + kids(n));
+  }
 });
 
 T.test('the glue span keeps an amount and its brackets on one line', () => {
   const css = fs.readFileSync(path.join(SRC, 'styles.css'), 'utf8');
   T.ok(/\.money-glue \{ white-space: nowrap; \}/.test(css), '.money-glue is nowrap');
+  // the label + amount phrase is an inline-block that may still wrap inside: nowrap could push it past the edge
+  const rule = /\.money-phrase \{([^}]*)\}/.exec(css);
+  T.ok(rule && /display: inline-block/.test(rule[1]), '.money-phrase is an inline-block');
+  T.ok(rule && !/nowrap/.test(rule[1]), '.money-phrase is not nowrap (a phrase wider than the line wraps, it is never cut)');
 });

@@ -133,6 +133,9 @@ a[data-legal] { white-space: nowrap; }
 .num, .money { font-variant-numeric: tabular-nums; direction: ltr; unicode-bidi: isolate; display: inline-block; }
 /* an amount and what touches it ("(", ")", "כ-", a closing period) stay on one line: dom.js markText */
 .money-glue { white-space: nowrap; }
+/* a clause's short opening label and its amount ("; בתלוש נטו 5,352.91 ₪.") move to the next line together: dom.js
+   markText. An inline-block and not nowrap, so a phrase wider than the line still wraps inside and is never cut */
+.money-phrase { display: inline-block; }
 .muted { color: var(--on-surface-var); }
 .small { font-size: .82rem; }
 .tiny { font-size: .75rem; }
