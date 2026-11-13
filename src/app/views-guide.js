@@ -111,10 +111,11 @@
 
   /* ---------------- what's new (once per big update, for people who already used the app) ---------------- */
   const WHATS_NEW = {
-    id: '1.37.2',
+    id: '1.37.3',
     // the payslip checked against the app, an app that remembers, the "forgot a shift?" reminder: news for everyone.
-    // 1.37.1 only shortens the opening, 1.37.2 only drops the 4-9 hour row: whoever saw 1.37.0's sheet is not shown it again
-    seen: ['1.37.0', '1.37.1'],
+    // 1.37.1 only shortens the opening, 1.37.2 only drops the 4-9 hour row, 1.37.3 only brings security fixes: whoever
+    // saw 1.37.0's sheet is not shown it again
+    seen: ['1.37.0', '1.37.1', '1.37.2'],
     // true only when the items hold a real feature: a release of fixes alone opens no sheet (the user, 6 Nov 2026)
     features: true,
     items: [
@@ -158,6 +159,7 @@
   /* ---------------- every update (settings › about › all the updates) ---------------- */
   // newest first: [version, the day it went out, what changed — said to the user, not to a developer]
   const CHANGELOG = [
+    ['1.37.3', '2026-11-13', 'תיקוני אבטחה: שעתי לא נפתחת בתוך אתר אחר, והרכיבים שקוראים תלושים וקבצים נבדקים לפני שהם רצים.'],
     ['1.37.2', '2026-11-13', 'הורדנו את שורת משך המשמרת (הכפתורים של 4 עד 9 שעות) ממסך המשמרת. את השעות כותבים בשדות ההתחלה והסיום.'],
     ['1.37.1', '2026-11-12', 'בלי הפעולות המהירות, האפליקציה נפתחת עם מסך טעינה קצר ונכנסת ישר למסך הבית.'],
     ['1.37.0', '2026-11-11', 'התלוש נבדק מול החישוב של שעתי, שורה אחרי שורה, עם הסיבה לכל הפרש ושאלה כשהסיבה לא ברורה. ההבדלים בין התלוש להגדרות (נקודות זיכוי, ותק, נסיעות, פנסיה) מתעדכנים בלחיצה, ובין תלוש לתלוש מוצג רק השינוי בימי החופשה והמחלה. קורא התלוש לא סופר יתרת ימי מחלה או שנות ותק ככסף, ותיקון בתלוש נשמר. אחרי שהעלית תלוש השאלות עליו נפסקות, והתשובות שלך מגיעות לכל טלפון. אחרי שלושה ימים בלי כניסה מגיעה תזכורת "שכחת לרשום משמרת?". משמרת חדשה מתחילה עם שעת הסיום של עכשיו. האפליקציה נפתחת ישר במסך הבית (את הפעולות המהירות אפשר להדליק בהגדרות), ולא מתנתקת מהחשבון כשהטלפון מתקשה לפתוח את הנתונים שלו.'],

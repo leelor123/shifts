@@ -38,6 +38,28 @@ T.test('a cross-origin top that cannot be read or moved still counts as framed',
   T.eq(framedIn(inner), true);
 });
 
+T.section('security: every CDN library is checked by its fingerprint');
+T.test('each library the app loads is listed with a sha384, the loader sets it, and an unlisted one is refused', () => {
+  const p = read('src/app/views-payslip.js');
+  const sri = {};
+  for (const [, u, h] of (/const SRI = \{([\s\S]*?)\n  \};/.exec(p) || ['', ''])[1].matchAll(/'(https:[^']+)': '(sha384-[A-Za-z0-9+/]{64})'/g)) sri[u] = h;
+  const urls = [
+    ...[...p.matchAll(/^\s+(?:pdf|tesseract): '(https:[^']+)'/gm)].map((x) => x[1]),
+    /const TESSERACT = '([^']+)'/.exec(read('src/app/docread.js'))[1],
+    /const XLSX_SRC = '([^']+)'/.exec(read('src/app/import.js'))[1],
+    /const NSFW_LIB = '([^']+)'/.exec(read('src/app/plus.js'))[1],
+  ];
+  T.eq(urls.length, 5, 'the five places');
+  for (const u of urls) T.ok(sri[u], 'fingerprint for ' + u);
+  T.ok(/if \(!SRI\[src\]\) return Promise\.reject/.test(p), 'unlisted: refused');
+  T.ok(/s\.crossOrigin = 'anonymous'; s\.integrity = SRI\[src\];/.test(p), 'the script tag carries it');
+  const callers = ['src/app/docread.js', 'src/app/import.js', 'src/app/plus.js'].map(read).join('\n');
+  T.ok(!/createElement\('script'\)/.test(callers), 'no other script loader');
+});
+T.test('the offline copy never hands back an opaque library, which would fail the fingerprint', () => {
+  T.ok(read('src/sw.js').includes("if (cached && !(cached.type === 'opaque' && req.mode === 'cors')) return cached;"));
+});
+
 T.section('security: website headers');
 T.test('every website page turns off camera, microphone, location, payment and USB', () => {
   const h = JSON.parse(read('firebase.json')).hosting.headers.find((r) => r.source === '**').headers;

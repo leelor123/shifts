@@ -18,12 +18,24 @@
     tesseract: 'https://cdn.jsdelivr.net/npm/tesseract.js@5.1.1/dist/tesseract.min.js',
     anthropic: 'https://cdn.jsdelivr.net/npm/@anthropic-ai/sdk@0.128.0/+esm',
   };
+  // every library the app loads from a CDN, with its fingerprint (subresource integrity): the browser runs the file only
+  // when it is byte for byte the one checked here, so a hacked CDN cannot run its own code beside the user's data
+  // (security audit 13 Nov 2026; the hashes match the ones cdnjs and jsDelivr publish). A library not listed is refused.
+  // A new version of one: its sha384 (curl -fsSL <url> | openssl dgst -sha384 -binary | openssl base64 -A) goes here.
+  const SRI = {
+    'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js': 'sha384-/1qUCSGwTur9vjf/z9lmu/eCUYbpOTgSjmpbMQZ1/CtX2v/WcAIKqRv+U1DUCG6e',
+    'https://cdn.jsdelivr.net/npm/tesseract.js@5.1.1/dist/tesseract.min.js': 'sha384-GJqSu7vueQ9qN0E9yLPb3Wtpd7OrgK8KmYzC8T1IysG1bcvxvIO4qtYR/D3A991F',
+    'https://cdn.sheetjs.com/xlsx-0.20.3/package/dist/xlsx.full.min.js': 'sha384-EnyY0/GSHQGSxSgMwaIPzSESbqoOLSexfnSMN2AP+39Ckmn92stwABZynq1JyzdT',
+    'https://cdn.jsdelivr.net/npm/nsfwjs@4.4.0/dist/browser/nsfwjs.min.js': 'sha384-AgEYUP1dk2mGxhfUGZ4muudxnzuhFD4HFvGAOgeRu1a/78Ls+Jmx/TWEF4qU3aOF',
+  };
+  App.SRI = SRI;
   const loaded = {};
   function loadScript(src) {
     if (loaded[src]) return loaded[src];
+    if (!SRI[src]) return Promise.reject(root.U.oops('לא ניתן לטעון רכיב'));
     loaded[src] = new Promise((res, rej) => {
       const s = document.createElement('script');
-      s.src = src; s.async = true; s.crossOrigin = 'anonymous';
+      s.src = src; s.async = true; s.crossOrigin = 'anonymous'; s.integrity = SRI[src];
       s.onload = res; s.onerror = () => { delete loaded[src]; rej(root.U.oops('לא ניתן לטעון רכיב (נדרש אינטרנט בשימוש הראשון)')); };
       document.head.appendChild(s);
     });
