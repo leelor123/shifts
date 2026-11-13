@@ -365,19 +365,6 @@
     const sel = (f, options, v) => `<select class="input" data-f="${f}">${options.map(([val, lab]) => `<option value="${val}" ${String(v) === String(val) ? 'selected' : ''}>${lab}</option>`).join('')}</select>`;
     const inp = (f, v, extra) => `<input class="input" data-f="${f}" value="${esc(v == null ? '' : v)}" ${extra || ''}>`;
     const numIn = (f, v, ph) => inp(f, v, `type="number" inputmode="decimal" step="any" placeholder="${esc(ph || '')}"`);
-    // shift length in minutes from the two times (an end before the start means the next day)
-    const toMin = (t) => +t.slice(0, 2) * 60 + +t.slice(3, 5);
-    // The real length, worked out the way the shift is saved: the night the clocks change, 22:00 → 06:00
-    // is 9 hours (October) or 7 (March), and that is what is paid.
-    const lengthMin = () => {
-      if (!d.startT || !d.endT) return null;
-      if (!d.date) { const m = toMin(d.endT) - toMin(d.startT); return m <= 0 ? m + 1440 : m; }
-      const start = U.toEpoch(d.date, d.startT);
-      let end = U.toEpoch(d.date, d.endT);
-      if (end <= start) end = U.toEpoch(U.addDays(d.date, 1), d.endT);
-      return Math.round((end - start) / 60000);
-    };
-    const durChips = () => `<div class="dur-row"><span class="dur-l">${lengthMin() ? `משך המשמרת: <b class="num">${U.hm(lengthMin())}</b> שעות` : 'משך המשמרת (בחירה מהירה)'}</span><div class="chips">${[4, 5, 6, 7, 8, 9].map((h) => `<button class="chip ${lengthMin() === h * 60 ? 'on' : ''}" data-dur="${h}">${h} ש׳</button>`).join('')}</div></div>`;
 
     function ovBlock(key, title, sub, inner) {
       const o = d.ov[key];
@@ -395,7 +382,6 @@
           <label class="field"><span class="lbl">התחלה</span>${inp('startT', d.startT, 'type="time"')}</label>
           <label class="field"><span class="lbl">סיום ${overnight ? '<span class="tag planned">למחרת</span>' : ''}</span>${inp('endT', d.endT, 'type="time"')}</label>
         </div>
-        ${durChips()}
         <div class="field"><span class="lbl">תפקיד</span><div class="chips">${roleChips(d.roleId, 'data-role')}</div></div>
         <details class="collapse" ${d.splits.length ? 'open' : ''}><summary>${icon('swap', 's')} פיצול בין תפקידים ${d.splits.length ? `<span class="tag">${d.splits.length}</span>` : ''}</summary><div class="in">
           <div class="tiny muted" style="margin-bottom:8px">לדוגמה: התחלת כסדרן, ומ-19:00 עברת לאחמ״ש.</div>
@@ -499,7 +485,7 @@
             const ns = d.date > U.todayKey() ? 'planned' : 'done';
             if (ns !== d.status) { d.status = ns; redraw(); return; }
           }
-          // the times come from the picker in one go: redraw so "the next day" and the length chips follow.
+          // the times come from the picker in one go: redraw so "the next day" follows.
           // Of the switches only the "change by hand" ones open fields; "paid break" and "no travel" only
           // change the pay, so their switch is left to slide (a redraw put a new one in its place at once)
           const isSwitch = e.target.type === 'checkbox';
@@ -519,13 +505,6 @@
           if (!t2) return;
           if (t2.dataset.status) { d.status = t2.dataset.status; d.statusTouched = true; redraw(); }
           else if (t2.dataset.role) { d.roleId = t2.dataset.role; redraw(); }
-          else if (t2.dataset.dur) {
-            if (!d.startT) { UI.invalid('קודם בוחרים שעת התחלה'); return; }
-            if (d.date) d.endT = U.epochHM(U.toEpoch(d.date, d.startT) + +t2.dataset.dur * 3600000); // real hours, also the night the clocks change
-            else { const m = (toMin(d.startT) + +t2.dataset.dur * 60) % 1440; d.endT = `${String(Math.floor(m / 60)).padStart(2, '0')}:${String(m % 60).padStart(2, '0')}`; }
-            redraw();
-            if (root.Fx) root.Fx.play('tick');
-          }
           else if (t2.hasAttribute('data-add-split')) {
             const others = App.roles(d.employerId).filter((r) => r.id !== d.roleId);
             d.splits.push({ t: '', roleId: (others[0] || App.roles()[0]).id }); redraw();

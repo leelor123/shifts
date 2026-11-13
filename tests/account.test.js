@@ -70,3 +70,14 @@ T.test('quick actions off: a returning user gets the short splash, not the long 
   T.ok(s.includes("const full = !seen && !fromShortcut && Fx.motion() && (mode !== 'home' || P.quick === true);"));
   T.ok(s.indexOf('const full =') > s.indexOf('const mode ='), 'decided once the mode is known');
 });
+
+T.section('no quick shift length row (4-9 hours) when a shift is added');
+T.test('the user asked on 13 Nov 2026 to remove it from every place a shift is added', () => {
+  const walk = (d) => fs.readdirSync(path.join(__dirname, '..', d), { withFileTypes: true })
+    .flatMap((e) => (e.isDirectory() ? walk(d + '/' + e.name) : /\.(js|css|html)$/.test(e.name) ? [d + '/' + e.name] : []));
+  for (const f of walk('src')) {
+    const s = read(f);
+    T.ok(!/data-dur\b|dataset\.dur\b|dur-row|dur-l\b|durChips/.test(s), f + ' has no length chips');
+    T.ok(!s.includes('משך המשמרת (בחירה מהירה)') && !s.includes('משך המשמרת: <b'), f + ' has no "shift length" row');
+  }
+});

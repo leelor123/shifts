@@ -623,12 +623,7 @@ body.fx .chart[data-anim].in .bar, body.fx .chart[data-anim].in .ln, body.fx .ch
 .chart-tip.pop { animation: tip-pop .22s cubic-bezier(.34, 1.56, .64, 1); }
 @keyframes tip-pop { from { opacity: 0; transform: translate(-50%, -90%) scale(.85); } }
 
-/* ---------- shift length chips, milestone medal ---------- */
-.dur-row { margin: -4px 0 14px; }
-.dur-l { display: block; margin: 0 4px 6px; font-size: .8rem; color: var(--on-surface-var); }
-.dur-l b { color: var(--on-surface); }
-.dur-row .chips { display: grid; grid-template-columns: repeat(6, 1fr); gap: 6px; padding: 0; overflow: visible; }
-.dur-row .chip { justify-content: center; padding-inline: 4px; min-width: 0; font-variant-numeric: tabular-nums; }
+/* ---------- milestone medal ---------- */
 .medal-pop { position: fixed; top: calc(12px + var(--safe-t, 0px)); left: 16px; right: 16px; margin-inline: auto; width: fit-content; z-index: 70; display: flex; align-items: center; gap: 10px; padding: 8px 16px 8px 10px; border-radius: 22px; background: var(--surface-1); color: var(--on-surface); border: 1px solid var(--line); box-shadow: var(--sh-2); pointer-events: none; animation: medal-in .55s cubic-bezier(.34, 1.56, .64, 1) both; max-width: calc(100vw - 32px); }
 .medal-pop b { display: block; font: 700 1.05rem var(--display); }
 .medal-pop small { display: block; font-size: .78rem; color: var(--on-surface-var); }

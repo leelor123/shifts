@@ -627,17 +627,18 @@ let errors = [];
     const cdp = await page.createCDPSession();
     await cdp.send('Emulation.setTimezoneOverride', { timezoneId: 'Asia/Jerusalem' });
     try {
-      for (const [date, want, end8] of [['2026-10-24', '9:00', '05:00'], ['2026-03-26', '7:00', '07:00']]) {
+      for (const [date, want] of [['2026-10-24', '9:00'], ['2026-03-26', '7:00']]) {
         await closeAll(); await ev(() => App.sheetsApi.shiftEditor()); await sleep(600);
-        const r = await ev((date) => {
+        const r = await ev(async (date) => {
           const set = (f, v) => { const i = document.querySelector(`.sheet [data-f="${f}"]`); i.value = v; i.dispatchEvent(new Event('input', { bubbles: true })); i.dispatchEvent(new Event('change', { bubbles: true })); };
-          set('date', date); set('startT', '22:00'); set('endT', '06:00');
-          const shown = document.querySelector('.sheet .dur-l').textContent;
-          document.querySelector('.sheet [data-dur="8"]').click();
-          return { shown, end8: document.querySelector('.sheet [data-f="endT"]').value };
+          set('date', date); set('startT', '22:00'); set('endT', '06:00'); set('breakMin', '0');
+          await new Promise((res) => setTimeout(res, 400));
+          // the user asked (13 Nov 2026) to remove the quick 4-9 hour row from the editor
+          const chips = !!document.querySelector('.sheet [data-dur], .sheet .dur-row');
+          return { shown: document.querySelector('.sheet #ed-preview').textContent, chips };
         }, date);
-        if (!r.shown.includes(want)) throw new Error(`${date}: editor shows "${r.shown}", paid ${want}`);
-        if (r.end8 !== end8) throw new Error(`${date}: 8 hours from 22:00 should end at ${end8}, not ${r.end8}`);
+        if (r.chips) throw new Error('the quick 4-9 hour row is back in the shift editor');
+        if (!r.shown.includes(want)) throw new Error(`${date}: editor shows "${r.shown.slice(0, 120)}", paid ${want}`);
       }
     } finally { await cdp.send('Emulation.setTimezoneOverride', { timezoneId: '' }).catch(() => {}); await closeAll(); }
   });
