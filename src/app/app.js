@@ -928,7 +928,20 @@
   };
 
   /* ---------------- boot ---------------- */
+  /** true inside another page's frame. GitHub Pages cannot send frame-ancestors (a CSP meta tag cannot carry it), so
+   *  any site could show the app in a hidden frame and trick a tap on "delete" or "sign out" (clickjacking; security
+   *  audit 13 Nov 2026). The app never runs framed: it asks the browser to open itself as the top page, and when the
+   *  browser refuses, it does not start. */
+  App.framed = function () {
+    let framed = true;
+    try { framed = root.top !== root.self; } catch (e) { /* a cross-origin top: framed */ }
+    // the app's own address, the page that is running now: never an address from outside
+    // nosemgrep: tainted-redirect
+    if (framed) { try { root.top.location.replace(root.location.href); } catch (e) { /* refused: stay stopped */ } }
+    return framed;
+  };
   App.boot = async function () {
+    if (App.framed()) return;
     try {
       await Store.load();
     } catch (e) {
