@@ -65,5 +65,7 @@ T.test('every website page turns off camera, microphone, location, payment and U
   const h = JSON.parse(read('firebase.json')).hosting.headers.find((r) => r.source === '**').headers;
   const pp = (h.find((x) => x.key === 'Permissions-Policy') || {}).value || '';
   for (const f of ['camera', 'microphone', 'geolocation', 'payment', 'usb']) T.ok(pp.includes(f + '=()'), f);
-  T.ok(!/geolocation|getUserMedia|PaymentRequest|navigator\.usb/.test(fs.readdirSync(path.join(__dirname, '..', 'site')).filter((f) => /\.(js|html)$/.test(f)).map((f) => read('site/' + f)).join('\n')), 'no website page needs them');
+  const pages = fs.readdirSync(path.join(__dirname, '..', 'site'), { recursive: true }).map((f) => String(f).replace(/\\/g, '/')).filter((f) => /\.(js|html)$/.test(f));
+  T.ok(pages.some((f) => f.startsWith('embed/')), 'subfolders are read too (embed/)');
+  T.ok(!/geolocation|getUserMedia|PaymentRequest|navigator\.usb/.test(pages.map((f) => read('site/' + f)).join('\n')), 'no website page needs them');
 });

@@ -18,9 +18,12 @@
     tesseract: 'https://cdn.jsdelivr.net/npm/tesseract.js@5.1.1/dist/tesseract.min.js',
     anthropic: 'https://cdn.jsdelivr.net/npm/@anthropic-ai/sdk@0.128.0/+esm',
   };
-  // every library the app loads from a CDN, with its fingerprint (subresource integrity): the browser runs the file only
-  // when it is byte for byte the one checked here, so a hacked CDN cannot run its own code beside the user's data
-  // (security audit 13 Nov 2026; the hashes match the ones cdnjs and jsDelivr publish). A library not listed is refused.
+  // every library script the app adds from a CDN, with its fingerprint (subresource integrity): the browser runs the file
+  // only when it is byte for byte the one checked here, so a hacked CDN cannot swap it (security audit 13 Nov 2026; the
+  // hashes match the ones cdnjs and jsDelivr publish). A script not listed is refused. Not covered, because the browser
+  // gives them no integrity check: what the libraries load themselves (the pdf.js worker, tesseract's worker, core and
+  // language data through importScripts) and module imports (the Anthropic SDK, Firebase). Covering those means hosting
+  // them in docs/ and pointing workerSrc / workerPath / corePath there.
   // A new version of one: its sha384 (curl -fsSL <url> | openssl dgst -sha384 -binary | openssl base64 -A) goes here.
   const SRI = {
     'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js': 'sha384-/1qUCSGwTur9vjf/z9lmu/eCUYbpOTgSjmpbMQZ1/CtX2v/WcAIKqRv+U1DUCG6e',
