@@ -337,20 +337,30 @@ footer a { text-decoration: none; display: inline-block; padding-block: 10px; } 
 footer .note { margin-top: 12px; font-size: .85rem; }
 
 /* ---- the sky's slow life (every delay counted from the clock, sky.js) ---- */
+/* sky.js draws still <svg> drawings and wraps every moving part in a div.sk-lay of its own (as the app's styles.css):
+ * all of them lie on top of each other inside the sky, and the sky clips them, so a drifting cloud never makes the
+ * page wider than the screen (Safari, RTL). A move of n drawing units is n x --sku pixels; --skw is the drawing's width. */
+.sky { overflow: hidden; pointer-events: none; }
+.sky > svg, .sky .sk-lay > svg { position: absolute; inset: 0; width: 100%; height: 100%; display: block; overflow: visible; }
+.sky .sk-lay { position: absolute; inset: 0; }
 .sky .sk-stars circle { animation: sk-tw var(--t) ease-in-out infinite alternate; animation-delay: calc(var(--sk0, 0s) + var(--d, 0s)); }
 .sky .sk-glint line { animation: sk-tw 2.6s ease-in-out infinite alternate; animation-delay: calc(var(--sk0, 0s) + var(--d, 0s)); }
 @keyframes sk-tw { to { opacity: .12; } }
 .sky .sk-cloud { animation: sk-drift var(--t) linear infinite; animation-delay: calc(var(--sk0, 0s) + var(--d, 0s)); }
-@keyframes sk-drift { from { transform: translateX(calc(var(--skw, 390) * 1px + 80px)); } to { transform: translateX(-90px); } }
+@keyframes sk-drift { from { transform: translateX(calc((var(--skw, 390) + 80) * var(--sku, 1) * 1px)); } to { transform: translateX(calc(-90px * var(--sku, 1))); } }
 .sky .sk-flock { animation: sk-fly 34s linear infinite; animation-delay: var(--sk0, 0s); }
-@keyframes sk-fly { from { transform: translate(calc(var(--skw, 390) * 1px + 40px), 80px); } to { transform: translate(-130px, 46px); } }
+@keyframes sk-fly { from { transform: translate(calc((var(--skw, 390) + 40) * var(--sku, 1) * 1px), calc(80px * var(--sku, 1))); } to { transform: translate(calc(-130px * var(--sku, 1)), calc(46px * var(--sku, 1))); } }
 .sky .sk-wing { transform-box: fill-box; transform-origin: center; animation: sk-flap .8s ease-in-out infinite alternate; animation-delay: calc(var(--sk0, 0s) + var(--d, 0s)); }
 @keyframes sk-flap { to { transform: scaleY(.35); } }
 .sky .sk-halo { transform-box: fill-box; transform-origin: center; animation: sk-breathe 5s ease-in-out infinite alternate; animation-delay: var(--sk0, 0s); }
 @keyframes sk-breathe { to { transform: scale(1.1); opacity: .75; } }
 .sky .sk-win rect { fill: #ffd98a; }
 .sky .sk-fall { animation: sk-fall var(--t) linear infinite; animation-delay: var(--sk0, 0s); }
-@keyframes sk-fall { to { transform: translateY(calc(var(--skh, 330) * 1px)); } }
+@keyframes sk-fall { to { transform: translateY(calc(var(--skh, 330) * var(--sku, 1) * 1px)); } }
+.sky .sk-flash { opacity: 0; animation: sk-flash 8s linear infinite; animation-delay: var(--sk0, 0s); }
+@keyframes sk-flash { 0%, 86% { opacity: 0; } 87% { opacity: .5; } 88% { opacity: 0; } 90% { opacity: .3; } 92%, 100% { opacity: 0; } }
+.sky .sk-fog { animation: sk-fog 26s ease-in-out infinite alternate; animation-delay: var(--sk0, 0s); }
+@keyframes sk-fog { to { transform: translateX(calc(var(--skw, 390) * var(--sku, 1) * -1px)); } }
 .sky .sk-leaf { transform-box: fill-box; transform-origin: center; animation: sk-leaf var(--t) linear infinite; animation-delay: calc(var(--sk0, 0s) + var(--d, 0s)); }
 @keyframes sk-leaf { to { transform: translate(var(--x), 300px) rotate(560deg); } }
 
