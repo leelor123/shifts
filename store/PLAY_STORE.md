@@ -64,7 +64,7 @@ https://leelor123.github.io/shifts/privacy.html
 - שם: `Guest mode (sample data, no login)`, ולסמן שזה נותן גישה לכל התכונות (העיצובים של Plus מוצגים בתצוגה המקדימה בחינם)
 - הוראות (באנגלית, בשביל הבודקים של Google):
 ```
-No login is needed to review the app. On the first screen tap the second button, "רק להציץ (נתונים לדוגמה)" (Just look - sample data). The app opens in guest mode with a full sample month, and every feature works: shifts, pay calculation, payslip check, rights, reports, games and settings. Google Sign-In only backs up and syncs a user's own data. Shaati Plus (optional) only adds pay-card designs, all shown on your card via the brush button on home.
+No login is needed to review the app. On the first screen tap the second button, "רק להציץ (נתונים לדוגמה)" (Just look - sample data). The app opens in guest mode with a full sample month, and every feature works: shifts, pay calculation, payslip check, rights, reports, games and settings. Google Sign-In only backs up and syncs a user's own data. Shaati Plus (optional) adds payslip tracking over time (a comparison between months, a combined check of all payslips and a detailed payslip report) and pay-card designs, shown on your card via the brush button on home. The payslip check itself stays free.
 ```
 
 ### מודעות (Ads)

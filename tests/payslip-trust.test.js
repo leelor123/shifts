@@ -63,9 +63,10 @@ T.section('the payslip check: careful words');
 const ps = read('src/app/views-payslip.js');
 T.test('a gap is a possible gap, never money the employer owes', () => {
   T.ok(/bad: \['xc', 'ייתכן שיש פער'\]/.test(ps), 'the status of a gap');
-  for (const f of ['src/app/views-payslip.js', 'src/core/payslip.js', 'src/app/views-home.js', 'src/app/salary-check.js']) {
+  // review.js too: the rating card after a payslip gap said "found money you are owed" (14 Nov 2026)
+  for (const f of ['src/app/views-payslip.js', 'src/core/payslip.js', 'src/app/views-home.js', 'src/app/salary-check.js', 'src/app/review.js']) {
     const s = read(f);
-    for (const w of ['לטובתך', 'חסר לך כסף', 'חסרים לי', 'חסר/שגוי', 'חסר או שגוי', 'לא נמצאו חוסרים', 'המעסיק חייב לך', 'הפר את החוק', 'בניגוד לחוק']) T.ok(!s.includes(w), `${f}: "${w}"`);
+    for (const w of ['כסף שמגיע לך', 'לטובתך', 'חסר לך כסף', 'חסרים לי', 'חסר/שגוי', 'חסר או שגוי', 'לא נמצאו חוסרים', 'המעסיק חייב לך', 'הפר את החוק', 'בניגוד לחוק']) T.ok(!s.includes(w), `${f}: "${w}"`);
   }
 });
 T.test('every result carries the calm note, with sources the rights guide already links', () => {

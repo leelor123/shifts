@@ -118,17 +118,22 @@ function collect() {
   }
   return [...catalog.values()];
 }
+// the invisible direction marks (LRM, RLM, the embeddings and overrides, the isolates) are written as \uXXXX escapes:
+// JSON.parse reads them back the same, and a reviewer sees them in the file instead of an invisible character that
+// can reorder the text around it (14 Nov 2026)
+const BIDI = /[‎‏‪-‮⁦-⁩]/g;
+const toJson = (v) => JSON.stringify(v, null, 1).replace(BIDI, (c) => '\\u' + c.charCodeAt(0).toString(16).toUpperCase().padStart(4, '0')) + '\n';
 function extract() {
   const list = collect();
   fs.mkdirSync(DIR, { recursive: true });
-  fs.writeFileSync(path.join(DIR, 'catalog.json'), JSON.stringify(list, null, 1) + '\n');
+  fs.writeFileSync(path.join(DIR, 'catalog.json'), toJson(list));
   for (const lang of Object.keys(LANGS)) {
     if (lang === 'he') continue;
     const file = path.join(DIR, lang + '.json');
     const old = fs.existsSync(file) ? JSON.parse(fs.readFileSync(file, 'utf8')) : {};
     const next = {};
     for (const e of list) next[e.key] = old[e.key] !== undefined ? old[e.key] : null;
-    fs.writeFileSync(file, JSON.stringify(next, null, 1) + '\n');
+    fs.writeFileSync(file, toJson(next));
   }
   console.log(`catalog: ${list.length} entries (${list.filter((e) => e.kind === 'tpl').length} templates, ${list.filter((e) => e.kind === 'html').length} in the page)`);
   return list;
@@ -209,7 +214,7 @@ function dictOf(lang) {
   return fs.existsSync(file) ? JSON.parse(fs.readFileSync(file, 'utf8')) : {};
 }
 
-module.exports = { LANGS, KEEP_FILES, nodesOf, applyCode, applyHtml, dictOf, collect, extract, check };
+module.exports = { LANGS, KEEP_FILES, nodesOf, applyCode, applyHtml, dictOf, collect, extract, check, toJson, BIDI };
 
 if (require.main === module) {
   const cmd = process.argv[2];

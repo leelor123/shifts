@@ -6,6 +6,8 @@ const fs = require('fs');
 const path = require('path');
 const puppeteer = require('puppeteer-core');
 const [docs, out] = process.argv.slice(2);
+// PORT=… runs it next to another smoke run (several sessions build and test at once); 8783 by default
+const PORT = +process.env.PORT || 8783;
 fs.mkdirSync(out, { recursive: true });
 const TYPES = { '.html': 'text/html; charset=utf-8', '.js': 'text/javascript', '.png': 'image/png', '.webmanifest': 'application/manifest+json' };
 const server = http.createServer((req, res) => {
@@ -44,7 +46,7 @@ const HIT = () => {
 const results = [];
 let errors = [];
 (async () => {
-  await new Promise((r) => server.listen(8783, r));
+  await new Promise((r) => server.listen(PORT, r));
   const browser = await puppeteer.launch({ executablePath: process.env.CHROME_PATH || 'C:/Program Files/Google/Chrome/Application/chrome.exe', headless: true, args: ['--hide-scrollbars'] });
   const page = await browser.newPage();
   await require('./quiet.js').quiet(page);
@@ -62,7 +64,7 @@ let errors = [];
     await sleep(500);
     const left = await ev(() => UI.sheets.length);
     if (left) throw new Error(left + ' sheet(s) still open after closeAll');
-    const inApp = await ev(() => location.host === 'localhost:8783');
+    const inApp = await ev((p) => location.host === 'localhost:' + p, PORT);
     if (!inApp) throw new Error('left the app');
   };
   async function step(name, fn) {
@@ -83,7 +85,7 @@ let errors = [];
   }
 
   await step('first open: intro, terms', async () => {
-    await page.goto('http://localhost:8783/', { waitUntil: 'networkidle0' });
+    await page.goto(`http://localhost:${PORT}/`, { waitUntil: 'networkidle0' });
     await page.waitForSelector('#lg-ok', { timeout: 15000 });
     await page.waitForFunction(() => !document.getElementById('intro'), { timeout: 15000 });
     await page.click('#lg-ok'); await page.click('#lg-go');
@@ -907,7 +909,7 @@ let errors = [];
   });
   // the NFC sticker at work (app/nfc.js): the app opened at the sticker's address starts or ends the shift
   const openAt = async (q) => {
-    await page.goto('http://localhost:8783/' + q, { waitUntil: 'load' });
+    await page.goto(`http://localhost:${PORT}/` + q, { waitUntil: 'load' });
     await page.waitForFunction(() => window.App && App.model && !document.getElementById('intro'), { timeout: 15000 });
     await sleep(1500);
   };
@@ -1076,7 +1078,7 @@ let errors = [];
     p.on('console', (m) => { if (m.type() === 'error' && !/vibrate|favicon|ERR_|net::|Failed to fetch|dynamically imported/.test(m.text())) errors.push('console: ' + m.text()); });
     await p.setViewport({ width: 412, height: 860, deviceScaleFactor: 1, isMobile: true, hasTouch: true });
     await p.setRequestInterception(true);
-    p.on('request', (r) => (r.url().startsWith('http://localhost:8783/') ? r.continue() : r.abort()));
+    p.on('request', (r) => (r.url().startsWith(`http://localhost:${PORT}/`) ? r.continue() : r.abort()));
     await p.evaluateOnNewDocument(() => {
       const stubs = {
         probe: async () => true,
@@ -1088,7 +1090,7 @@ let errors = [];
       let C;
       Object.defineProperty(window, 'Cloud', { configurable: true, get: () => C, set: (v) => { C = v; for (const k of Object.keys(stubs)) Object.defineProperty(v, k, { configurable: true, get: () => stubs[k], set: () => {} }); } });
     });
-    await p.goto('http://localhost:8783/?cloud=1', { waitUntil: 'load' });
+    await p.goto(`http://localhost:${PORT}/?cloud=1`, { waitUntil: 'load' });
     await p.waitForFunction(() => !document.getElementById('intro'), { timeout: 15000 });
     // the very first open asks for the language: Hebrew (this page's) goes on to the questions
     const picker = await p.waitForSelector('.lp-host.in', { timeout: 8000 }).then(() => true).catch(() => false);
@@ -1218,7 +1220,7 @@ let errors = [];
     // opened again with sign-in set up: this test server leaves it out of a page asked for without ?cloud=1, and the
     // offline copy holds such a page (its worker fetched index.html plain), so the copy goes first
     await M.e(() => Promise.all([navigator.serviceWorker.getRegistrations().then((rs) => Promise.all(rs.map((r) => r.unregister()))), caches.keys().then((ks) => Promise.all(ks.map((k) => caches.delete(k))))]));
-    await M.p.goto('http://localhost:8783/?cloud=1', { waitUntil: 'load' });
+    await M.p.goto(`http://localhost:${PORT}/?cloud=1`, { waitUntil: 'load' });
     await M.p.waitForFunction(() => window.App && App.tab && (!document.getElementById('intro') || document.querySelector('#intro.q-on')), { timeout: 15000 });
     await M.e(() => { if (window.Intro && Intro.enter && document.getElementById('intro')) Intro.enter(null); }); await sleep(1500);
     const after = await M.e(() => ({ blocking: App.blocking, hero: !!document.querySelector('.home-hero'), login: !!document.querySelector('.wizard.login'), cloud: !!window.FIREBASE_CONFIG, guest: !!Store.S.meta.guest, local: !!App.localOnly, card: App.accountSection() }));

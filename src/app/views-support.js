@@ -176,6 +176,7 @@
         ${reason ? `<label class="field"><span class="lbl">מה קרה? (${esc(reasonOf(reason)[3])})</span><textarea class="input" id="sp-text" rows="5" maxlength="2000" placeholder="${esc(HINTS[reason] || 'פרטו כמה שיותר, ככה נוכל לעזור מהר')}"></textarea></label>
           ${anon ? `<label class="field"><span class="lbl">אימייל לתשובה</span><input class="input ltr" type="email" id="sp-mail" maxlength="100" placeholder="name@example.com" autocomplete="email"><span class="hint">כי עוד לא התחברת, נענה לך במייל.</span></label>` : ''}
           <label class="switch-row"><span class="body"><span class="t">לצרף פרטים טכניים</span><span class="s">גרסת האפליקציה וסוג המכשיר, כדי לעזור מהר יותר</span></span><input type="checkbox" class="switch" id="sp-tech" checked></label>
+          ${String(S.settings.userName || '').trim() ? `<div class="small sp-sendname" style="margin:8px 4px">יישלח גם: השם שלך, <b><bdi>${esc(String(S.settings.userName).slice(0, 60))}</bdi></b></div>` : ''}
           <div class="tiny muted" style="margin:8px 4px">הפנייה נשמרת בענן וגלויה רק לך ולצוות האפליקציה, כדי לענות לך. ${anon ? 'פנייה בלי חשבון נמחקת 12 חודשים אחרי שהיא נסגרת.' : 'היא נמחקת יחד עם החשבון.'}</div>` : ''}`;
       check();
     }
