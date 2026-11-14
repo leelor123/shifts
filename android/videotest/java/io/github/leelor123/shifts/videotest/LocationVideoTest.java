@@ -64,6 +64,37 @@ public class LocationVideoTest {
     private volatile double lat = WORK_LAT, lng = WORK_LNG;
     private volatile boolean mocking;
 
+    // the video itself: Android's own screen recorder (full size, smooth), in parts of 3 minutes, which Test Lab
+    // brings back from this folder (directoriesToPull); its own video is lower in size and frame rate
+    private static final String REC = "/sdcard/Download/shaati-video";
+    private volatile boolean recording;
+    private Thread recorder;
+
+    private void recStart() {
+        if (recording) return;
+        recording = true;
+        recorder = new Thread(() -> {
+            int n = 0;
+            while (recording) {
+                String file = REC + "/part-" + System.currentTimeMillis() + ".mp4";
+                Log.i(TAG, "recording " + file);
+                sh("screenrecord --bit-rate 8000000 --time-limit 180 " + file);
+                n++;
+            }
+        }, "screenrecord");
+        recorder.setDaemon(true);
+        recorder.start();
+        pause(800);
+    }
+
+    private void recStop() {
+        if (!recording) return;
+        recording = false;
+        sh("pkill -INT screenrecord");
+        try { recorder.join(8000); } catch (InterruptedException ignored) { }
+        pause(500);
+    }
+
     @Test
     public void locationDeclarationVideo() throws Exception {
         inst = InstrumentationRegistry.getInstrumentation();
@@ -71,9 +102,13 @@ public class LocationVideoTest {
         d = UiDevice.getInstance(inst);
         prepare();
         startMock();
+        sh("rm -rf " + REC);
+        sh("mkdir -p " + REC);
+        recStart();
         try {
             flow();
         } finally {
+            recStop();
             mocking = false;
             try { Tasks.await(flp.setMockMode(false), 10, TimeUnit.SECONDS); } catch (Exception ignored) { }
         }
@@ -149,63 +184,105 @@ public class LocationVideoTest {
         // Android 13+: the app asks for notifications on its first open (LauncherActivity)
         UiObject2 allow = d.wait(Until.findObject(By.res("com.android.permissioncontroller:id/permission_allow_button")), 20000);
         if (allow != null) { pause(STEP); allow.click(); }
-        // the first open: the languages screen (after the opening show); Chrome's own first-run screen if it has one
-        long end = SystemClock.uptimeMillis() + 90000;
-        UiObject2 english = null;
-        while (SystemClock.uptimeMillis() < end && (english = find("English")) == null) {
-            for (String b : new String[] { "Use without an account", "No thanks", "No, thanks", "Accept & continue", "Continue", "Got it" }) {
-                UiObject2 o = findIn("com.android.chrome", b);
-                if (o != null) { o.click(); pause(1500); }
+        int h = d.getDisplayHeight(), w = d.getDisplayWidth();
+        // geoOnly (a dry run of the Android half on a test phone whose old Chrome cannot open the app's channel): the
+        // app's own screen is opened by its link, as the page's button does; never used for the video
+        boolean geo = "true".equals(InstrumentationRegistry.getArguments().getString("geoOnly"));
+        if (!geo) {
+            // the first open: the languages screen (after the opening show); Chrome's own first-run screen if it has one
+            long end = SystemClock.uptimeMillis() + 90000;
+            UiObject2 english = null;
+            while (SystemClock.uptimeMillis() < end && (english = find("English")) == null) {
+                for (String b : new String[] { "Use without an account", "No thanks", "No, thanks", "Accept & continue", "Continue", "Got it" }) {
+                    UiObject2 o = findIn("com.android.chrome", b);
+                    if (o != null) { o.click(); pause(1500); }
+                }
+                pause(1000);
             }
-            pause(1000);
+            if (english == null) fail("the languages screen did not appear");
+            tap("English", 5000);
+            // a test phone's Chrome sometimes stalls on the opening after the language moves the page: opened again
+            for (int i = 0; i < 3 && waitQuiet("Just look around (sample data)", 40000) == null; i++) {
+                Log.i(TAG, "the welcome screen did not come: Chrome and the app opened again");
+                sh("am force-stop com.android.chrome");
+                pause(1500);
+                ctx.startActivity(open);
+            }
+            tap("Just look around (sample data)", 45000);
+            tap("Continue as a guest, without an account", 30000);
+            // the dialog's button, by its exact name (the link above starts with the same words)
+            waitFor("Continue as a guest?", 15000);
+            pause(STEP);
+            press(() -> { UiObject2 g = d.findObject(By.text("Continue as a guest")); return g != null ? g : d.findObject(By.desc("Continue as a guest")); }, "the guest dialog's button");
+            tap("I have read and agree to the terms of use and the privacy policy", 20000);
+            tap("Agree and continue", 10000);
+            waitFor("Start shift", 30000);
+            pause(STEP);
+            // the first open moved to the English page after the channel to the app was made: the app is closed and opened
+            // again from the launcher, as on the next day, so the page and the app talk (LauncherActivity's hello)
+            boolean ready = false;
+            for (int take = 1; take <= 4 && !ready; take++) {
+                closeApp(w, h);
+                // and Chrome stopped too, as after a night or a restart: the app's page then loads afresh (the English page,
+                // straight from the app's worker) and takes the app's channel; a page kept in memory may not get it again
+                sh("am force-stop com.android.chrome");
+                pause(1500);
+                Log.i(TAG, "take " + take + ": the launcher opens Shaati");
+                ctx.startActivity(open);
+                waitFor("Start shift", 60000);
+                pause(STEP + 1000);
+                // 2. Settings › My work › Suggestion when you arrive at work: Off (the app answered the page)
+                press(() -> bottom("Settings"), "Settings");
+                pause(STEP);
+                tap("My work", 15000);
+                waitFor("Suggestion when you arrive at work", 15000);
+                pause(1500);
+                // the row reads "Suggestion when you arrive at work Off" (the page's sub-line joins the title in Chrome)
+                ready = d.findObject(By.textEndsWith("arrive at work Off")) != null || d.findObject(By.descEndsWith("arrive at work Off")) != null
+                        || d.findObject(By.text("Off")) != null;
+                Log.i(TAG, "take " + take + ": the app answered the page: " + ready);
+            }
+            if (!ready) fail("the page never heard from the app (no Off under the suggestion)");
+            pause(STEP);
+            tap("Suggestion when you arrive at work", 15000);
+            scrollTo("Save where I am now as my workplace");
+            pause(STEP + 1000);
+        } else {
+            pause(8000);
         }
-        if (english == null) fail("the languages screen did not appear");
-        pause(STEP);
-        english.click();
-        tap("Just look around (sample data)", 45000);
-        tap("Continue as a guest, without an account", 30000);
-        tap("Continue as a guest", 15000);
-        tap("I have read and agree to the terms of use and the privacy policy", 20000);
-        tap("Agree and continue", 10000);
-        waitFor("Start shift", 30000);
-        pause(STEP + 1000);
 
-        // 2. Settings › My work › Suggestion when you arrive at work: Off
-        bottom("Settings").click();
-        tap("My work", 15000);
-        UiObject2 row = waitFor("Suggestion when you arrive at work", 15000);
-        pause(STEP);
-        row.click();
-        UiObject2 save = scrollTo("Save where I am now as my workplace");
-        pause(STEP + 1000);
-
+        Log.i(TAG, "step: disclosure");
         // 3-4. the disclosure, then "Not now": nothing is asked, the app keeps working
-        save.click();
+        save(geo);
         UiObject2 notNow = waitDialog("android:id/button2");
         pause(STEP + 3000); // time to read the disclosure
         notNow.click();
         pause(STEP);
-        int h = d.getDisplayHeight(), w = d.getDisplayWidth();
         d.swipe(w / 2, h * 3 / 5, w / 2, h * 2 / 5, 40);
         pause(1500);
         d.swipe(w / 2, h * 2 / 5, w / 2, h * 3 / 5, 40);
         pause(STEP);
 
+        Log.i(TAG, "step: again");
         // 5. again: the disclosure, then "Continue"
-        save = scrollTo("Save where I am now as my workplace");
-        save.click();
+        if (!geo) scrollTo("Save where I am now as my workplace");
+        pause(1200);
+        save(geo);
         UiObject2 go = waitDialog("android:id/button1");
         pause(STEP + 1500);
         go.click();
 
+        Log.i(TAG, "step: precise prompt");
         // 6. Android's prompt: Precise, While using the app
         UiObject2 fine = d.wait(Until.findObject(By.res("com.android.permissioncontroller:id/permission_location_accuracy_radio_fine")), 15000);
         if (fine != null && !fine.isChecked()) { pause(1200); fine.click(); }
         UiObject2 whileUsing = d.wait(Until.findObject(By.res("com.android.permissioncontroller:id/permission_allow_foreground_only_button")), 15000);
+        if (whileUsing == null) whileUsing = d.wait(Until.findObject(By.textContains("While using the app")), 5000);
         if (whileUsing == null) fail("Android's location prompt did not appear");
         pause(STEP);
         whileUsing.click();
 
+        Log.i(TAG, "step: one more step");
         // 7. "One more step" › Continue › Android's settings: Allow all the time › back
         UiObject2 more = waitDialog("android:id/button1");
         pause(STEP + 1500);
@@ -218,21 +295,19 @@ public class LocationVideoTest {
         pause(STEP);
         d.pressBack();
 
+        Log.i(TAG, "step: saved");
         // 8. the toast and "On"
         UiObject2 on = d.wait(Until.findObject(By.text("On")), 20000);
-        if (on == null) on = d.wait(Until.findObject(By.desc("On")), 3000);
-        Log.i(TAG, "section shows On: " + (on != null));
+        if (on == null) on = d.wait(Until.findObject(By.textStartsWith("On ")), 3000);
+        Log.i(TAG, "section shows On: " + (on != null)); // the notification below is the proof either way
         pause(STEP + 3000);
-        if (on == null) fail("the section never showed On");
 
+        Log.i(TAG, "step: closed");
         // 9. the app is closed (swiped away from the recent apps)
-        d.pressRecentApps();
-        pause(STEP);
-        d.swipe(w / 2, h / 2, w / 2, h / 12, 25);
-        pause(1500);
-        d.pressHome();
-        pause(STEP);
+        closeApp(w, h);
 
+        pause(4000);
+        recStop(); // the home screen while the phone travels: the recorder rests (Test Lab's own video keeps it all)
         // the phone leaves the workplace, and comes back and stays: Android's geofence sees both
         lat = AWAY_LAT;
         Log.i(TAG, "away");
@@ -248,7 +323,10 @@ public class LocationVideoTest {
         Log.i(TAG, "arrival notification: " + seen);
         if (!seen) fail("no arrival notification within 14 minutes");
 
+        Log.i(TAG, "step: notification");
         // 11. the notification, on the screen
+        recStart();
+        pause(2500); // the notification arrived on the home screen
         d.openNotification();
         UiObject2 note = d.wait(Until.findObject(By.text("Arrived at work?")), 10000);
         pause(STEP);
@@ -261,10 +339,89 @@ public class LocationVideoTest {
 
     // ---- helpers
 
-    private void tap(String text, long timeout) {
-        UiObject2 o = waitFor(text, timeout);
+    /** The section's "Save where I am now as my workplace" (geoOnly: the same link the button opens). */
+    private void save(boolean geo) {
+        if (!geo) { press(() -> find("Save where I am now as my workplace"), "Save"); return; }
+        ctx.startActivity(new Intent(Intent.ACTION_VIEW, android.net.Uri.parse("shaati-geo://save?r=300")).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK));
+    }
+
+    /** Swiped away from the recent apps, then the home screen. */
+    private void closeApp(int w, int h) throws Exception {
+        d.pressRecentApps();
         pause(STEP);
-        o.click();
+        // Shaati's card (another app's card may be in the middle): swiped up from where it is
+        UiObject2 card = d.findObject(By.desc("Shaati"));
+        if (card == null) card = d.findObject(By.descStartsWith("Shaati"));
+        if (card == null) card = d.findObject(By.text("Shaati"));
+        Rect r = card != null ? card.getVisibleBounds() : null;
+        int x = r != null ? r.centerX() : w / 2;
+        if (r != null && (r.width() < w / 4 || r.centerY() < h / 6)) {
+            // the label above the card: the card is below it
+            d.swipe(x, Math.min(h * 3 / 4, r.bottom + h / 4), x, h / 12, 25);
+        } else {
+            d.swipe(x, h / 2, x, h / 12, 25);
+        }
+        pause(1500);
+        d.pressHome();
+        pause(STEP);
+    }
+
+    private void tap(String text, long timeout) {
+        waitFor(text, timeout);
+        noTranslate();
+        pause(STEP);
+        // the page may redraw during the pause: found again just before the tap, and tapped where it is
+        for (int i = 0; i < 4; i++) {
+            UiObject2 o = find(text);
+            if (o == null) { SystemClock.sleep(700); continue; }
+            try {
+                Rect r = o.getVisibleBounds();
+                d.click(r.centerX(), r.centerY());
+                return;
+            } catch (androidx.test.uiautomator.StaleObjectException e) {
+                SystemClock.sleep(500);
+            }
+        }
+        fail("could not tap: " + text);
+    }
+
+    /** Taps what finder finds, found again on each try (the page may redraw), where it is on the screen. */
+    private void press(java.util.concurrent.Callable<UiObject2> finder, String what) {
+        for (int i = 0; i < 5; i++) {
+            try {
+                UiObject2 o = finder.call();
+                if (o != null) {
+                    Rect r = o.getVisibleBounds();
+                    d.click(r.centerX(), r.centerY());
+                    return;
+                }
+            } catch (Exception e) {
+                Log.w(TAG, "press " + what, e);
+            }
+            SystemClock.sleep(700);
+        }
+        fail("could not tap: " + what);
+    }
+
+    private UiObject2 waitQuiet(String text, long timeout) {
+        long end = SystemClock.uptimeMillis() + timeout;
+        while (SystemClock.uptimeMillis() < end) {
+            UiObject2 o = find(text);
+            if (o != null && o.getVisibleBounds().height() > 0) return o;
+            SystemClock.sleep(500);
+        }
+        return null;
+    }
+
+    /** Chrome's "Translate page?" offer (it takes the page for Arabic): swiped off the top of the screen. */
+    private void noTranslate() {
+        try {
+            UiObject2 t = d.findObject(By.pkg("com.android.chrome").textContains("Translate page"));
+            if (t == null) return;
+            Rect r = t.getVisibleBounds();
+            d.swipe(r.centerX(), r.centerY(), r.centerX(), 0, 10);
+            pause(600);
+        } catch (Exception ignored) { }
     }
 
     private UiObject2 waitFor(String text, long timeout) {
@@ -303,7 +460,6 @@ public class LocationVideoTest {
             Rect r = o.getVisibleBounds();
             if (best == null || r.centerY() > best.getVisibleBounds().centerY()) best = o;
         }
-        pause(STEP);
         return best;
     }
 
