@@ -1,8 +1,11 @@
 /* ============================================================
  * plus.js — "Shaati Plus": an optional monthly subscription (₪6.90).
  *
- * Everything the app does stays free. Plus adds skins for the pay card on
- * home and says thank you; no ads, no reminders that interrupt. Nothing about
+ * Everything the app does stays free, the payslip check and every gap it finds
+ * first. Plus adds payslip value on top (payslip-plus.js: a comparison between
+ * months, every payslip checked again together, a detailed payslip report to
+ * keep), skins for the pay card on home, and says thank you; no ads, no
+ * reminders that interrupt. Nothing about
  * Plus shows until a way of buying it is set up (or for an admin who
  * previews it), so without it the app looks exactly the same.
  *
@@ -420,16 +423,20 @@
           ? (play ? 'מנוי חודשי דרך Google Play, מתחדש כל חודש. מבטלים בכל רגע ב-⁠Google Play › תשלומים ומינויים, ו-⁠Plus נשאר עד סוף החודש ששולם.' : 'מנוי חודשי בדף תשלום מאובטח של Lemon Squeezy, מתחדש כל חודש. מבטלים בכל רגע מהקישור שבמייל. אחרי התשלום מגיע במייל קוד הפעלה.')
           : (play ? 'תשלום אחד דרך Google Play, בלי מנוי ובלי חיובים נוספים.' : 'תשלום אחד בדף תשלום מאובטח של Lemon Squeezy, בלי מנוי. אחרי התשלום מגיע במייל קוד הפעלה.');
       root.Dom.patch(el.querySelector('[data-plus-body]'), `
-        ${App.mascotSays ? App.mascotSays(on ? 'party' : 'happy', on ? 'תודה שאת/ה איתנו! 💜' : 'רוצים לפרגן לשעתי ולקבל עיצובים מיוחדים?', { size: 64 }) : ''}
+        ${App.mascotSays ? App.mascotSays(on ? 'party' : 'happy', on ? 'תודה שאת/ה איתנו! 💜' : 'רוצים לעקוב אחרי התלושים מחודש לחודש?', { size: 64 }) : ''}
+        <div class="card plus-list">
+          <div>${icon('receipt', 's')}<span><b>מעקב תלושים לאורך זמן</b><small>השוואה בין חודשים, ובדיקה של כל התלושים יחד מול המשמרות</small></span></div>
+          <div>${icon('file', 's')}<span><b>דוח תלושים מפורט (PDF)</b><small>כל השורות והממצאים של כל תלוש, לשמירה או להדפסה</small></span></div>
+          <div>${icon('chart', 's')}<span><b>ניתוח מתקדם וייצוא דוחות בלי הגבלה</b><small>בחינם: ${QUOTA.analysis.n} ניתוחים ו-${QUOTA.export.n} ייצואים בחודש</small></span></div>
+          <div>${icon('calc', 's')}<span><b>דוח החזר מס מלא (PDF)</b><small>כל השנים, הסיבות, מה לצרף ואיפה מגישים. ההערכה עצמה חינם</small></span></div>
+        </div>
         ${Plus.skinTiles(Plus.skin(), !on)}
         <div class="card plus-list">
           <div>${icon('palette', 's')}<span><b>${Object.keys(SKINS).length} עיצובים לכרטיס השכר</b><small>זהב, גלקסיה, ניאון, לבה ועוד, בכרטיס שבמסך הבית</small></span></div>
-          <div>${icon('chart', 's')}<span><b>ניתוח מתקדם וייצוא דוחות בלי הגבלה</b><small>בחינם: ${QUOTA.analysis.n} ניתוחים ו-${QUOTA.export.n} ייצואים בחודש</small></span></div>
-          <div>${icon('calc', 's')}<span><b>דוח החזר מס מלא (PDF)</b><small>כל השנים, הסיבות, מה לצרף ואיפה מגישים. ההערכה עצמה חינם</small></span></div>
           <div>${icon('trophy', 's')}<span><b>רקע מיוחד בטבלת האלופים</b><small>כולם יראו אותך בעיצוב שבחרת, עם תג Plus</small></span></div>
           <div>${icon('sparkle', 's')}<span><b>תג תומך/ת במסך הבית</b><small>שכולם יידעו מי עוזר/ת לשעתי להישאר בלי פרסומות</small></span></div>
           <div>${icon('star', 's')}<span><b>תודה ענקית ממני</b><small>עוזר להמשיך לפתח, ולהשאיר את האפליקציה בלי פרסומות</small></span></div>
-          <div>${icon('check', 's')}<span><b>כל השאר נשאר חינם</b><small>משמרות, חישוב שכר, זכויות, בדיקת תלוש, דוחות ומשחקים</small></span></div>
+          <div>${icon('check', 's')}<span><b>בדיקת התלוש נשארת חינם</b><small>כל פער שהבדיקה מוצאת, המכתב למעסיק, משמרות, חישוב שכר, זכויות, דוחות ומשחקים</small></span></div>
         </div>
         ${on && !trial && !gift ? `<div class="plus-done">${icon('check')} ${owned() ? 'Shaati Plus פעיל אצלך' : 'תצוגה מקדימה של מנהל'}</div>
             ${owned() && Plus.monthly ? (manageUrl() ? `<button class="btn text sm block" data-plus-manage>${icon('wallet', 's')} ניהול או ביטול המנוי</button>` : '<div class="tiny muted plus-note">המנוי נקנה באתר. מבטלים אותו מהקישור שבמייל של הקבלה.</div>') : ''}`
@@ -587,8 +594,8 @@
       cls: 'plus-sheet limit-sheet',
       body: `${App.mascotSays ? App.mascotSays('think', `השתמשת ב-${q.n} ה${q.what} החינמיים ${q.per === 'day' ? 'של היום' : 'של החודש'}. ${back} יש עוד ${q.n}.`, { size: 64 }) : ''}
         <div class="card plus-list">
-          <div>${icon('sparkle', 's')}<span><b>עם Shaati Plus: בלי הגבלה</b><small>ניתוח מתקדם וייצוא דוחות בלי הגבלה, ${Object.keys(SKINS).length} עיצובים, רקע מיוחד בטבלת האלופים ותג תומך/ת</small></span></div>
-          <div>${icon('check', 's')}<span><b>כל השאר נשאר חינם</b><small>משמרות, חישוב שכר, זכויות, בדיקת תלוש, דוחות במסך, משחקים, גיבוי וסנכרון</small></span></div>
+          <div>${icon('sparkle', 's')}<span><b>עם Shaati Plus: בלי הגבלה</b><small>ניתוח מתקדם וייצוא דוחות בלי הגבלה, השוואת תלושים בין חודשים, דוח תלושים מפורט ו-${Object.keys(SKINS).length} עיצובים</small></span></div>
+          <div>${icon('check', 's')}<span><b>כל השאר נשאר חינם</b><small>בדיקת תלוש, משמרות, חישוב שכר, זכויות, דוחות במסך, משחקים, גיבוי וסנכרון</small></span></div>
         </div>
         ${Plus.canTrial() ? `<button class="btn big block plus-buy" data-limit-trial>${icon('sparkle')} לנסות ${TRIAL_DAYS} ימים בחינם</button>` : `<button class="btn big block plus-buy" data-limit-buy>${icon('sparkle')} Shaati Plus${price ? ' · ' + esc(price) : ''}</button>`}
         ${Plus.workPrice() ? `<div class="tiny plus-work">${esc(Plus.workPrice())} · ${termsWord()}</div>` : ''}
@@ -726,7 +733,7 @@
       if ((S.meta.activeDays || 0) < 4 || done < 5 || S.settings.demo) return '';
     }
     return `<div class="card plus-nudge sk-galaxy">${close}
-      <div class="pn-t">✨ כרטיס השכר שלך יכול להיראות ככה</div><div class="pn-s">${Object.keys(SKINS).length} עיצובים, רקע בטבלת האלופים, ניתוח וייצוא בלי הגבלה. ${Plus.canTrial() ? `אפשר לנסות ${TRIAL_DAYS} ימים בחינם.` : (Plus.priceText() ? esc(Plus.priceText()) + ', ' : '') + termsWord() + '.'}</div>
+      <div class="pn-t">✨ כרטיס השכר שלך יכול להיראות ככה</div><div class="pn-s">השוואת תלושים בין חודשים, דוח תלושים מפורט ו-${Object.keys(SKINS).length} עיצובים לכרטיס. ${Plus.canTrial() ? `אפשר לנסות ${TRIAL_DAYS} ימים בחינם.` : (Plus.priceText() ? esc(Plus.priceText()) + ', ' : '') + termsWord() + '.'}</div>
       <div class="pn-a"><button class="btn sm" data-act="plus-design">${icon('palette', 's')} ${Plus.canTrial() ? 'לנסות על הכרטיס שלי' : 'לראות'}</button><button class="btn text sm" data-act="plus-nudge-x">לא עכשיו</button><button class="btn text sm" data-act="plus-nudge-never">לא להציג שוב</button></div></div>`;
   };
   /** "Don't show again": the offer on home ends for good, on every phone of the account (store.js ACCOUNT_META; the Plus page in Settings stays). */
