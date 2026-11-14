@@ -18,6 +18,11 @@
   const hasNotif = () => 'Notification' in root;
   const STEPS = [
     { id: 'setup', t: 'ההגדרה הושלמה', done: () => true },
+    // the payslip check before the first shift: it needs no shifts, and no other app does it (14 Nov 2026)
+    {
+      id: 'slip', t: 'בדיקת התלוש האחרון', s: 'מעלים PDF או צילום, והאפליקציה בודקת שכר מינימום, פנסיה וניכויים. התלוש נקרא בטלפון ונשאר בו.',
+      done: () => S.payslips.some((p) => !p.demo), acts: [['payslip-new', 'receipt', 'בדיקת תלוש']],
+    },
     {
       id: 'shift', t: 'רישום המשמרת הראשונה', s: 'בתחילת משמרת לוחצים "התחל משמרת". אפשר גם לרשום משמרת שכבר התקיימה.',
       done: () => !!S.activeShift || S.shifts.some((x) => x.status === 'done' && !x.demo),

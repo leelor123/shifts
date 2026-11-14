@@ -45,7 +45,7 @@
     const needsLogin = () => !!opts.preLogin && !App.localOnly && !(root.Cloud && root.Cloud.user);
     const STEPS = ['hi', 'me', 'age', 'job', 'rules', 'travel', 'city', 'start', 'done'];
     const QUESTIONS = STEPS.length - 2;
-    let step = 0, dir = 'next', saving = false, msg = '', saved = false, demo = false, blocked = false, loadFailed = false;
+    let step = 0, dir = 'next', saving = false, msg = '', saved = false, demo = false, slip = false, blocked = false, loadFailed = false;
     // he / she / both, for the questions' wording
     // he / she wording; not chosen: the neutral form given, or "מקבל/ת" when the feminine word only adds letters
     const g = (m, f, x) => (A.gender === 'f' ? f : A.gender === 'm' || m === f ? m : x || (f.startsWith(m) ? m + '/' + f.slice(m.length) : m + '/' + f));
@@ -225,21 +225,24 @@
         el.innerHTML = w ? `${icon('candle', 's')} ${esc(w.label)} הקרובה ב${esc(city)}: נכנסת ${U.DAYS[U.dow(U.epochKey(w.start))]} ב-${U.epochHM(w.start)}, יוצאת ב-${U.epochHM(w.end)}` : '';
       }
     }
-    /** the first screen: the sky header and a sheet with the three ways in (an account they already have among them,
-     * so nobody answers every question and then finds the account had it all, the user, 2026-11-02) */
+    /** the first screen: the sky header and a sheet with the ways in (an account they already have among them,
+     * so nobody answers every question and then finds the account had it all, the user, 2026-11-02).
+     * The payslip check comes first (an advisory council, 14 Nov 2026: what no other app does was the last line of
+     * three). Its tap (data-slip) skips the questions and the account: see the handler below. */
     function welcome(first) {
       v.innerHTML = `<div class="wizard ob skyscreen step-hi">${App.skyHead()}<div class="w-sheet">
         <h2 style="--i:0">ברוכים הבאים</h2>
-        <ul class="w-points" style="--i:1">
+        <button class="w-slip" data-slip style="--i:1">${UI.tile('receipt', 'amber')}<span class="w-slip-t"><b>יש לך תלוש? אפשר לבדוק אותו עכשיו</b>
+          <span class="small">בלי משמרות ובלי חשבון. התלוש נשאר בטלפון.</span></span>${icon('left', 's')}</button>
+        <ul class="w-points" style="--i:2">
           <li>${UI.tile('clock', 'violet')}<span>לוחצים כשמתחילים לעבוד, ולוחצים כשמסיימים</span></li>
           <li>${UI.tile('wallet', 'mint')}<span>רואים כמה הרווחת, כולל שבתות ושעות נוספות</span></li>
-          <li>${UI.tile('shield', 'amber')}<span>בודקים שהמשכורת נכונה ושלא מקפחים אותך</span></li>
         </ul>
         <div class="w-gap"></div>
-        <button class="btn big ob-go" data-next style="--i:2">מסכים/ה לתנאים, בואו נתחיל</button>
-        ${opts.preLogin ? `<button class="btn big tonal w-have" data-have style="--i:3">${App.googleIcon || ''}<span>כבר יש לי חשבון, כניסה</span></button>` : ''}
-        <button class="btn text" data-demo style="--i:4">${icon('flask', 's')} רק להציץ (נתונים לדוגמה)</button>
-        <div class="tiny muted w-legal ob-consent" style="--i:5">בלחיצה על "מסכים/ה" את/ה מאשר/ת את ${App.legalLinks ? App.legalLinks() : 'תנאי השימוש ומדיניות הפרטיות'}. <a href="#" data-legal="accessibility">הצהרת נגישות</a></div>
+        <button class="btn big ob-go" data-next style="--i:3">מסכים/ה לתנאים, בואו נתחיל</button>
+        ${opts.preLogin ? `<button class="btn big tonal w-have" data-have style="--i:4">${App.googleIcon || ''}<span>כבר יש לי חשבון, כניסה</span></button>` : ''}
+        <button class="btn text" data-demo style="--i:5">${icon('flask', 's')} רק להציץ (נתונים לדוגמה)</button>
+        <div class="tiny muted w-legal ob-consent" style="--i:6">בלחיצה על "מסכים/ה" את/ה מאשר/ת את ${App.legalLinks ? App.legalLinks() : 'תנאי השימוש ומדיניות הפרטיות'}. <a href="#" data-legal="accessibility">הצהרת נגישות</a></div>
       </div></div>`;
       App.mountSky(v, first);
       window.scrollTo(0, 0);
@@ -352,7 +355,7 @@
       nav.style.display = '';
       App.go = prevGo;
       if (needsLogin()) return; // still on the save step
-      App.firstRun = !demo; // the home screen walks a new user through the first steps
+      App.firstRun = !demo && !slip; // the home screen walks a new user through the first steps (not over the payslip sheet)
       if (!demo && !S.meta.guide) Store.setMeta({ guide: Date.now() }).catch(() => {});
       App.afterLogin();
       setTimeout(() => App.runInsights(), 500);
@@ -413,6 +416,18 @@
         if (key === 'travel' && !A.travel) A.travel = 'idk';
         if (key === 'rules' && !A.brk) A.brk = 'idk';
         go(step + 1);
+      } else if (b.hasAttribute('data-slip')) {
+        // the payslip first: no questions and no account before it (the usual answers are saved, as a skip gives).
+        // Not signed in: a guest for now, its data on this phone, and an account can be saved later in Settings.
+        // The tap is not an agreement: the terms' own screen asks first (App.ensureLegal from App.afterLogin, as the
+        // demo), and the payslip sheet opens once nothing blocks the screen any more (App.slipFirst).
+        if (saving) return;
+        slip = true; saving = true;
+        if (needsLogin()) { App.localOnly = true; await Store.setMeta({ guest: true }).catch((x) => console.warn(x)); }
+        await ensureSaved(false);
+        saving = false;
+        enterApp();
+        App.slipFirst();
       } else if (b.hasAttribute('data-demo')) {
         // "just a look" and "I have an account" are not an agreement: the app asks with the terms' own screen
         // (App.ensureLegal, a checkbox) before it opens, unless the account already agreed
@@ -506,6 +521,18 @@
     // leaving the wizard any other way detaches its handlers
     const prevGo = App.go;
     App.go = function (tab, o) { v.onclick = null; v.oninput = null; v.onkeydown = null; App.go = prevGo; return prevGo(tab, o); };
+  };
+
+  /** The welcome screen's payslip offer, once the app is in: the payslip sheet opens on the home screen as soon as
+   *  nothing blocks it (the terms' screen, the code lock, a sheet), for up to ten minutes. */
+  App.slipFirst = function () {
+    const until = Date.now() + 10 * 60 * 1000;
+    const tryOpen = () => {
+      if (Date.now() > until) return;
+      if (App.blocking || !App.actions['payslip-new'] || document.querySelector('.sheet.show, .dialog')) { setTimeout(tryOpen, 300); return; }
+      App.actions['payslip-new']();
+    };
+    setTimeout(tryOpen, 450);
   };
 
   /* ---------------- demo data ---------------- */

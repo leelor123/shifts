@@ -18,10 +18,10 @@ itself uses on its screens. No paid ASO tool, no scraping of the stores. The rea
 | Shaati | full (line 1) | The Latin name, used in links and on the website. |
 | משמרות | name, short, full | The most common word in competing app names ("ניהול משמרות", "משמרות"); what a shift worker types first. |
 | שכר / חישוב שכר / מחשבון שכר | name, short, full | "מחשבון שכר" is a competitor's subtitle; "חישוב שכר" is the everyday phrase. Both forms appear. |
-| תלוש / תלוש שכר / תלוש משכורת | name, short, full | Payslip checking is what sets the app apart; both "תלוש שכר" and "תלוש משכורת" are said. |
-| שעון נוכחות | short (first words), full | A very large search, mostly for employer systems (Timewatch and others). Placed first in the short description, as "שעון נוכחות אישי", so a worker looking for a personal clock sees it is one. Kept out of the name: much of that traffic wants their employer's app. |
-| שבת / שבתות / חג | short, full | Shabbat pay is a top question of hourly workers, and the app counts it by the town's Shabbat times. |
-| שעות נוספות | short, full | A high-intent pay question; competitors list it too. |
+| תלוש / תלוש שכר / תלוש משכורת / בדיקת תלוש | name ("בדיקת תלוש", first after the brand), short (first words), full (first section) | Payslip checking is what sets the app apart (14 Nov 2026: it leads the listing); both "תלוש שכר" and "תלוש משכורת" are said. |
+| שעון נוכחות | full (a section heading) | A very large search, mostly for employer systems (Timewatch and others). It opened the short description until 14 Nov 2026, when the payslip check took that place; it stays as the heading "שעון נוכחות ומשמרות". Kept out of the name: much of that traffic wants their employer's app. |
+| שבת / שבתות / חג | full | Shabbat pay is a top question of hourly workers, and the app counts it by the town's Shabbat times. |
+| שעות נוספות | full | A high-intent pay question; competitors list it too. |
 | דוח שעות | full | What workers get from work and import; jobcalc ranks for "מחשבון שעות עבודה". |
 | סידור עבודה | full | The weekly schedule people photograph or get on WhatsApp; the import feature. |
 | שכר מינימום / נוער עובד / חוק עבודת הנוער | full | Teen workers (a big share of hourly workers) search their rights. |
@@ -37,7 +37,7 @@ itself uses on its screens. No paid ASO tool, no scraping of the stores. The rea
 | Word | Where | Why |
 |---|---|---|
 | Shaati | name | The brand. |
-| shift tracker, pay tracker | name ("Shift & Pay Tracker") | The standard English app-category phrases (ShiftPal, WageFlow, Work Hours Tracker and many others use them). |
+| payslip check, shift | name ("Payslip & Shift Check"), short, full | Since 14 Nov 2026 the name leads with the payslip check. "shift tracker" and "pay tracker", the category phrases of ShiftPal, WageFlow and others, left the name; watch the search terms report and bring one back if traffic drops. |
 | hourly pay, Israel | short | Separates the app from the many US and global trackers: Israeli rules. |
 | shift clock, time clock | short, full | The English for שעון נוכחות. |
 | Shabbat, overtime | short, full | The Israeli pay premiums the app counts. |
