@@ -24,6 +24,7 @@ Path in Play Console: **Policy and programs › App content** (Hebrew UI: מדי
 | Support requests: reason, text, messages, first name, optional app version + platform + **full browser User-Agent**; guests also an email | Firestore `tickets/{id}` + `msgs` | Yes, when the user writes one | `src/app/views-support.js:161-162, 210-216, 84-96`; `firestore.rules:42-69, 176-190` |
 | Weather for the opening sky: chosen town's coordinates rounded to 2 decimals (default Tel Aviv), no ID, no cookies, no referrer, at most hourly | MET Norway `api.met.no` (Norway) | Yes, automatically (guest too) | `src/app/sky.js:12-17, 28, 320-345` |
 | Device location ("המיקום שלי" in the town picker) | Used on the phone to find the nearest town, then dropped | No | `src/app/placepicker.js:268-284` |
+| Suggestion at work (opt-in, off by default, Android app only): the saved workplace spot (lat/lng) + radius; background geofence crossings | Phone only: SharedPreferences `shaati_geo.xml`, excluded from backups; the geofence is watched by Google Play services on the device | No (never sent to Firebase, the page, statistics or anyone) | `android/widgets/java/WorkGeo.java`, `WorkGeoActivity.java`; `src/app/arrive.js`; `w_backup_rules.xml`, `w_data_extraction.xml` |
 | AI features (payslip check, rights assistant, schedule photo reading) with the user's **own** Anthropic API key: redacted payslip text, question (+ optional numeric summary), schedule **photo** incl. colleagues' names | Anthropic API (USA), under the user's own key | Yes, only on the user's explicit action | `src/app/views-payslip.js:19, 585-620`; `src/app/views-assistant.js:5-7, 103`; `src/app/schedule-import.js:141, 165-166, 274`; `src/sw.js:97` |
 | Plus purchase in the Android app | Google Play Billing (Digital Goods API + Payment Request) | Handled by Google Play | `src/app/plus.js:33-37, 115-123, 210-232` |
 | Plus bought on the web: licence key + instance name "Shaati · Android/web · date" | Lemon Squeezy licence API (USA) | Yes, when the account holds a web key | `src/app/plus.js:41, 125-148, 133` |
@@ -103,7 +104,7 @@ NOT ticked (and why):
 - Web browsing / in-app search history: none.
 - Installed apps: none.
 - Crash logs, Other app performance data: no crash reporting (`app.js:1063-1067` only silences storage errors).
-- Precise location: on-device only (see above).
+- Precise location: on-device only (see above). The suggestion at work (Android app, opt-in) also keeps its precise spot on the phone only and never transmits it (`WorkGeo.java`: the status the page gets has no coordinates; `tests/arrive.test.js` guards it), so it is still **not collected**.
 
 ### 1.3 Notes the reviewer may ask about
 - **Firebase (Google)** is a service provider (exception a). Firestore region me-west1 (Tel Aviv); Auth in the USA.
@@ -199,7 +200,8 @@ sponsor: none); privacy §1 and §3א say no ads. The Plus offer on home is the 
 has only `POST_NOTIFICATIONS`, `com.android.vending.BILLING`, `DYNAMIC_RECEIVER_NOT_EXPORTED_PERMISSION`,
 `ACCESS_NETWORK_STATE`, `INTERNET`; no `com.google.android.gms.permission.AD_ID`. Dependencies are only
 `androidbrowserhelper:2.7.4` and `androidbrowserhelper:billing:1.2.0` (`twa\app\build.gradle:215-217`); no Play
-services ads/identifier library. Target SDK 36, min SDK 24.
+services ads/identifier library. From the build with the suggestion at work, `play-services-location:21.3.0` is
+added too (geofencing and one location reading; it declares no advertising ID). Target SDK 36, min SDK 24.
 
 ### Target audience and content
 - Age groups: **13-15, 16-17, 18 and over**. Do not tick anything under 13. Matches the terms (§7: minimum age 13,
@@ -264,8 +266,27 @@ Expected result: **IARC 3+ / PEGI 3 / ESRB Everyone / USK 0**, with interactive 
 **"In-App Purchases"**.
 
 ### Other cards that may appear
-- Sensitive permissions, photo/video permissions, foreground service, full-screen intent, exact alarms: **none used**
-  (manifest above).
+- Photo/video permissions, foreground service, full-screen intent, exact alarms: **none used** (manifest above).
+- **Location permissions (from the build with the suggestion at work):** the manifest gets `ACCESS_COARSE_LOCATION`,
+  `ACCESS_FINE_LOCATION` and `ACCESS_BACKGROUND_LOCATION` (`tools/android.js`, switch `SHAATI_GEOFENCE`). Play asks
+  for the **location permissions declaration** before it accepts that build. Answers below (section 4.1).
+
+### 4.1 Location permissions declaration (Policy › App content › Sensitive permissions)
+- Feature that uses background location: **"Suggestion at work"** (Settings › My work › "הצעה כשמגיעים לעבודה").
+  When the user arrives at the workplace they saved, the app shows a notification that suggests starting a shift;
+  when they leave while a shift runs, one that suggests ending it. It never starts or ends a shift by itself.
+- Why background: the user arrives at work with the app closed, so only a geofence can notice the arrival. The
+  geofence is the Google Play services Geofencing API (`WorkGeo.watch`, dwell 5 minutes + exit), no continuous tracking,
+  no location updates kept.
+- Opt-in: off by default. The prominent disclosure is the app's own dialog (`WorkGeoActivity`, strings `w_geo_disc*`),
+  shown before any permission request; "לא עכשיו" (Not now) asks nothing. Then precise location, then "Allow all the
+  time" after a second short dialog.
+- Data: the spot stays on the phone, is not sent anywhere and is not backed up. Turning it off (Settings, or the
+  notification's "כיבוי ההצעות") deletes it.
+- Video for the form (30 seconds, record on a phone): Settings › My work › הצעה כשמגיעים לעבודה › "שמירת המקום הנוכחי
+  כמקום העבודה" › the disclosure dialog › "המשך" › Android's location prompt › the "Allow all the time" step › the
+  toast "מקום העבודה נשמר". Then, if possible, the arrival notification with its two buttons.
+- To ship a build without it (and without the declaration): `SHAATI_GEOFENCE=0 node tools/android.js generate`.
 - Financial features / Health / Government: as above.
 
 ---

@@ -128,7 +128,7 @@ final class NoteCenter {
         return r.buildUpon().appendQueryParameter("source", "twa").build();
     }
 
-    private static PendingIntent open(Context c, String url, int code) {
+    static PendingIntent open(Context c, String url, int code) {
         Intent i = new Intent(Intent.ACTION_VIEW, address(url), c, LauncherActivity.class)
                 .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
         return PendingIntent.getActivity(c, code, i, PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE);
@@ -162,7 +162,7 @@ final class NoteCenter {
         }
     }
 
-    private static void channels(Context c, NotificationManager nm) {
+    static void channels(Context c, NotificationManager nm) {
         if (Build.VERSION.SDK_INT < 26) return;
         Context lc = WidgetLang.context(c);
         NotificationChannel s = new NotificationChannel("shaati_shifts", lc.getString(R.string.w_ch_shifts), NotificationManager.IMPORTANCE_HIGH);

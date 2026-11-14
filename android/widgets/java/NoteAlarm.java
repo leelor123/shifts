@@ -20,6 +20,8 @@ public class NoteAlarm extends BroadcastReceiver {
             new Thread(() -> {
                 try {
                     NoteCenter.run(app);
+                    // Android forgets geofences on a restart and an update: the workplace circle is watched again (WorkGeo)
+                    if (!NoteCenter.ACTION.equals(a)) WorkGeo.restore(app);
                 } finally {
                     r.finish();
                 }

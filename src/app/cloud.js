@@ -10,7 +10,8 @@
  * Firestore type limits (nested arrays, undefined, Infinity).
  *
  * Never leaves the phone: the Claude API key, the PIN lock, backup
- * timestamps, raw payslip text and payslip image/PDF files. A payslip's
+ * timestamps, the workplace spot and radius of the suggestion at work
+ * (workGeo), raw payslip text and payslip image/PDF files. A payslip's
  * recognised lines go up redacted (no ID, bank account, address, phone).
  * ============================================================ */
 (function (root) {

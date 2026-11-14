@@ -19,6 +19,7 @@ State as of 3 Nov 2026. "Saved" = saved in Console, waiting in Publishing overvi
 | bundletool 1.18.1 validate | Passed |
 | Installed on the Galaxy (Android 17), opens full-screen without an address bar (assetlinks OK for both keys), 5 widgets registered | Done |
 | Permissions: INTERNET, ACCESS_NETWORK_STATE, POST_NOTIFICATIONS, BILLING (+ system receiver permission) | All used, none removed |
+| Location permissions (FINE, COARSE, BACKGROUND) for the opt-in suggestion at work | Fill the location permissions declaration + video before uploading that build (APP-CONTENT.md 4.1) |
 
 ## Dashboard sections
 | Console section | Status |

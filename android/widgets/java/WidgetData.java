@@ -48,6 +48,7 @@ final class WidgetData {
         }
         if (left.length() != all.length()) p.edit().putString(TAPS, left.toString()).commit();
         updateAll(c);
+        WorkGeo.sync(c); // a shift started or ended: the suggestion at work it answers is closed
     }
 
     /** The last snapshot as the app sent it, or null (none yet, or the app holds no data). */
@@ -139,6 +140,7 @@ final class WidgetData {
         }
         p.edit().putString(TAPS, all.toString()).commit();
         updateAll(c);
+        WorkGeo.sync(c); // a start on a widget or the tile answers "start a shift?" too
     }
 
     static void updateAll(Context c) {

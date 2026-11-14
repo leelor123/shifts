@@ -3,4 +3,6 @@
      when it opens -->
 <full-backup-content>
     <exclude domain="sharedpref" path="shaati_widgets.xml" />
+    <!-- the workplace spot (WorkGeo) never leaves the phone, not even in a backup -->
+    <exclude domain="sharedpref" path="shaati_geo.xml" />
 </full-backup-content>

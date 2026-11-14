@@ -49,6 +49,30 @@ T.atest('first sign-in uploads the phone\'s data to an empty account', async () 
   T.eq(A.Store.dirtyRecords().length, 0, 'nothing left to upload');
 });
 
+T.atest('the workplace spot and radius (suggestion at work) never reach the account, either way', async () => {
+  const be = fakeBackend();
+  const A = await phone(be);
+  T.ok(A.Store.LOCAL_SETTINGS.includes('workGeo'), 'on the never-synced list');
+  await A.Store.setSettings((s) => { s.onboarded = true; s.goal.amount = 4000; s.workGeo = { lat: 32.0853, lng: 34.7818, r: 300 }; });
+  await A.Cloud.connect(user); await wait(30);
+  const up = be.docs.get('users/u1/kv/settings').j;
+  T.ok(up.includes('4000'), 'the other settings went up');
+  T.ok(!/workGeo|32\.0853|34\.7818/.test(up), 'no spot, no radius in the synced settings');
+  // a change of the spot alone sends nothing at all
+  const before = be.docs.get('users/u1/kv/settings').u;
+  await A.Store.setSettings((s) => { s.workGeo = { lat: 31.7683, lng: 35.2137, r: 150 }; });
+  await A.sync();
+  T.eq(be.docs.get('users/u1/kv/settings').u, before, 'nothing uploaded for it');
+  T.ok(!/31\.7683|35\.2137/.test(JSON.stringify([...be.docs.values()])), 'not in any document of the account');
+  // an account that holds one anyway (an old or broken copy): another phone does not take it
+  be.docs.get('users/u1/kv/settings').j = JSON.stringify(Object.assign(JSON.parse(up), { workGeo: { lat: 1, lng: 2, r: 500 } }));
+  const B = await phone(be);
+  await B.Cloud.connect(user); await wait(200);
+  T.eq(B.S.settings.goal.amount, 4000, 'B has the account');
+  T.eq(B.S.settings.workGeo, undefined, 'B has no spot from the account');
+  T.eq(A.S.settings.workGeo.r, 150, 'A keeps its own');
+});
+
 T.atest('a new phone signing in gets everything from the account', async () => {
   const be = fakeBackend();
   const A = await phone(be);
