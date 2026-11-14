@@ -1815,7 +1815,7 @@
  "נטו וניכויים לפי חודש": "Net and deductions by month",
  "<button class=\"item\" data-act=\"payslip-open\" data-id=\"{0}\"><span class=\"lead\" style=\"background:var(--surface-3)\">{1}</span>\n        <span class=\"body\"><span class=\"t\">{2}</span><span class=\"s\">{3}{4}{5}{6}</span></span>\n        <span class=\"trail\"><span class=\"a\">{7}</span><br><span class=\"tiny muted\">נטו</span></span></button>": "<button class=\"item\" data-act=\"payslip-open\" data-id=\"{0}\"><span class=\"lead\" style=\"background:var(--surface-3)\">{1}</span>\n        <span class=\"body\"><span class=\"t\">{2}</span><span class=\"s\">{3}{4}{5}{6}</span></span>\n        <span class=\"trail\"><span class=\"a\">{7}</span><br><span class=\"tiny muted\">Net</span></span></button>",
  "עוד אין תלושים": "No payslips yet",
- "העלה תלוש כדי לבדוק שקיבלת את כל מה שמגיע לך: שעות, שבתות, נסיעות, פנסיה ועוד.": "Upload a payslip to check you got everything you're owed: hours, Shabbats, travel, pension and more.",
+ "אפשר להעלות תלוש ולבדוק שקיבלת את כל מה שמגיע לך: שעות, שבתות, נסיעות, פנסיה ועוד.": "Upload a payslip to check you got everything you're owed: hours, Shabbats, travel, pension and more.",
  "ניתוח חכם דורש מפתח API": "Smart analysis needs an API key",
  "אפשר להזין מפתח של Claude בהגדרות › עוזר AI ואודות › מפתח AI. בלי מפתח, הניתוח המקומי ממשיך לעבוד כרגיל.": "You can enter a Claude key in Settings › AI assistant and about › AI key. Without a key, the on-device analysis keeps working as usual.",
  "להגדרות": "To Settings",

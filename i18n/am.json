@@ -1815,7 +1815,7 @@
  "נטו וניכויים לפי חודש": "የተጣራ ደመወዝ እና ተቀናሾች በወር",
  "<button class=\"item\" data-act=\"payslip-open\" data-id=\"{0}\"><span class=\"lead\" style=\"background:var(--surface-3)\">{1}</span>\n        <span class=\"body\"><span class=\"t\">{2}</span><span class=\"s\">{3}{4}{5}{6}</span></span>\n        <span class=\"trail\"><span class=\"a\">{7}</span><br><span class=\"tiny muted\">נטו</span></span></button>": "<button class=\"item\" data-act=\"payslip-open\" data-id=\"{0}\"><span class=\"lead\" style=\"background:var(--surface-3)\">{1}</span>\n        <span class=\"body\"><span class=\"t\">{2}</span><span class=\"s\">{3}{4}{5}{6}</span></span>\n        <span class=\"trail\"><span class=\"a\">{7}</span><br><span class=\"tiny muted\">የተጣራ</span></span></button>",
  "עוד אין תלושים": "ገና የደመወዝ ወረቀት የለም",
- "העלה תלוש כדי לבדוק שקיבלת את כל מה שמגיע לך: שעות, שבתות, נסיעות, פנסיה ועוד.": "የሚገባዎትን ሁሉ ማግኘትዎን ለማረጋገጥ የደመወዝ ወረቀት ይጫኑ: ሰዓቶች፣ ሻባቶች፣ ጉዞ፣ ጡረታ እና ሌሎችም።",
+ "אפשר להעלות תלוש ולבדוק שקיבלת את כל מה שמגיע לך: שעות, שבתות, נסיעות, פנסיה ועוד.": "የሚገባዎትን ሁሉ ማግኘትዎን ለማረጋገጥ የደመወዝ ወረቀት ይጫኑ: ሰዓቶች፣ ሻባቶች፣ ጉዞ፣ ጡረታ እና ሌሎችም።",
  "ניתוח חכם דורש מפתח API": "ብልህ ትንተና የAPI ቁልፍ ይፈልጋል",
  "אפשר להזין מפתח של Claude בהגדרות › עוזר AI ואודות › מפתח AI. בלי מפתח, הניתוח המקומי ממשיך לעבוד כרגיל.": "የClaude ቁልፍን በቅንብሮች › የAI ረዳት እና ስለ › የAI ቁልፍ ውስጥ ማስገባት ይችላሉ። ያለ ቁልፍ፣ በመሣሪያው ላይ ያለው ትንተና እንደተለመደው መሥራቱን ይቀጥላል።",
  "להגדרות": "ወደ ቅንብሮች",

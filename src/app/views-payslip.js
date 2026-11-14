@@ -928,7 +928,7 @@
       ${slips.length ? `<div class="list">${slips.map((p) => { const c = (p.summary && p.summary.counts) || {}; return `<button class="item" data-act="payslip-open" data-id="${esc(p.id)}"><span class="lead" style="background:var(--surface-3)">${icon('receipt')}</span>
         <span class="body"><span class="t">${p.period ? U.fmtMonth(p.period) : '—'}</span><span class="s">${c.bad ? `<span class="ps-c bad">${icon('xc', 's')} ${+c.bad}</span> ` : ''}${c.warn ? `<span class="ps-c warn">${icon('alert', 's')} ${+c.warn}</span> ` : ''}${c.ok ? `<span class="ps-c ok">${icon('okc', 's')} ${+c.ok}</span>` : ''}${p.source === 'ai' ? ' · AI' : ''}</span></span>
         <span class="trail"><span class="a">${p.fields.net ? money(p.fields.net.value, 0) : '—'}</span><br><span class="tiny muted">נטו</span></span></button>`; }).join('')}</div>`
-        : UI.emptyState('receipt', 'עוד אין תלושים', 'העלה תלוש כדי לבדוק שקיבלת את כל מה שמגיע לך: שעות, שבתות, נסיעות, פנסיה ועוד.')}
+        : UI.emptyState('receipt', 'עוד אין תלושים', 'אפשר להעלות תלוש ולבדוק שקיבלת את כל מה שמגיע לך: שעות, שבתות, נסיעות, פנסיה ועוד.')}
       ${DISCLAIMER}`;
   };
 

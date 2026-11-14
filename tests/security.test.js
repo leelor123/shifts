@@ -88,6 +88,13 @@ T.test('PDFs and photos pass; too big, other kinds and nothing are refused', () 
   T.ok(ctx.check(null), 'nothing');
 });
 
+T.section('privacy: a help request sends the name only as the person sees it');
+T.test('the name is trimmed before sending, and shown whenever it is not blank', () => {
+  const s = read('src/app/views-support.js');
+  T.ok(s.includes("name: String(S.settings.userName || '').trim().slice(0, 60),"), 'sent trimmed: a name of spaces sends nothing');
+  T.ok(s.includes("${String(S.settings.userName || '').trim() ? `<div class=\"small sp-sendname\""), 'shown when not blank');
+});
+
 T.section('security: website headers');
 T.test('every website page turns off camera, microphone, location, payment and USB', () => {
   const h = JSON.parse(read('firebase.json')).hosting.headers.find((r) => r.source === '**').headers;

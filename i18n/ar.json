@@ -1815,7 +1815,7 @@
  "נטו וניכויים לפי חודש": "الصافي والخصومات حسب الشهر",
  "<button class=\"item\" data-act=\"payslip-open\" data-id=\"{0}\"><span class=\"lead\" style=\"background:var(--surface-3)\">{1}</span>\n        <span class=\"body\"><span class=\"t\">{2}</span><span class=\"s\">{3}{4}{5}{6}</span></span>\n        <span class=\"trail\"><span class=\"a\">{7}</span><br><span class=\"tiny muted\">נטו</span></span></button>": "<button class=\"item\" data-act=\"payslip-open\" data-id=\"{0}\"><span class=\"lead\" style=\"background:var(--surface-3)\">{1}</span>\n        <span class=\"body\"><span class=\"t\">{2}</span><span class=\"s\">{3}{4}{5}{6}</span></span>\n        <span class=\"trail\"><span class=\"a\">{7}</span><br><span class=\"tiny muted\">الصافي</span></span></button>",
  "עוד אין תלושים": "لا توجد قسائم بعد",
- "העלה תלוש כדי לבדוק שקיבלת את כל מה שמגיע לך: שעות, שבתות, נסיעות, פנסיה ועוד.": "ارفع قسيمة للتحقق من أنك حصلت على كل ما يحق لك: الساعات، أيام السبت، السفر، التقاعد والمزيد.",
+ "אפשר להעלות תלוש ולבדוק שקיבלת את כל מה שמגיע לך: שעות, שבתות, נסיעות, פנסיה ועוד.": "ارفع قسيمة للتحقق من أنك حصلت على كل ما يحق لك: الساعات، أيام السبت، السفر، التقاعد والمزيد.",
  "ניתוח חכם דורש מפתח API": "التحليل الذكي يتطلب مفتاح API",
  "אפשר להזין מפתח של Claude בהגדרות › עוזר AI ואודות › מפתח AI. בלי מפתח, הניתוח המקומי ממשיך לעבוד כרגיל.": "يمكنك إدخال مفتاح Claude في الإعدادات › مساعد AI وحول › مفتاح AI. بدون مفتاح، يستمر التحليل على الجهاز كالمعتاد.",
  "להגדרות": "إلى الإعدادات",

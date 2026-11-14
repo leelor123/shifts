@@ -1815,7 +1815,7 @@
  "נטו וניכויים לפי חודש": "Neto y deducciones por mes",
  "<button class=\"item\" data-act=\"payslip-open\" data-id=\"{0}\"><span class=\"lead\" style=\"background:var(--surface-3)\">{1}</span>\n        <span class=\"body\"><span class=\"t\">{2}</span><span class=\"s\">{3}{4}{5}{6}</span></span>\n        <span class=\"trail\"><span class=\"a\">{7}</span><br><span class=\"tiny muted\">נטו</span></span></button>": "<button class=\"item\" data-act=\"payslip-open\" data-id=\"{0}\"><span class=\"lead\" style=\"background:var(--surface-3)\">{1}</span>\n        <span class=\"body\"><span class=\"t\">{2}</span><span class=\"s\">{3}{4}{5}{6}</span></span>\n        <span class=\"trail\"><span class=\"a\">{7}</span><br><span class=\"tiny muted\">Neto</span></span></button>",
  "עוד אין תלושים": "Aún no hay nóminas",
- "העלה תלוש כדי לבדוק שקיבלת את כל מה שמגיע לך: שעות, שבתות, נסיעות, פנסיה ועוד.": "Sube una nómina para comprobar que recibiste todo lo que te corresponde: horas, shabats, transporte, pensión y más.",
+ "אפשר להעלות תלוש ולבדוק שקיבלת את כל מה שמגיע לך: שעות, שבתות, נסיעות, פנסיה ועוד.": "Sube una nómina para comprobar que recibiste todo lo que te corresponde: horas, shabats, transporte, pensión y más.",
  "ניתוח חכם דורש מפתח API": "El análisis inteligente necesita una clave de API",
  "אפשר להזין מפתח של Claude בהגדרות › עוזר AI ואודות › מפתח AI. בלי מפתח, הניתוח המקומי ממשיך לעבוד כרגיל.": "Puedes introducir una clave de Claude en Ajustes › Asistente de IA y acerca de › Clave de IA. Sin clave, el análisis en el dispositivo sigue funcionando como siempre.",
  "להגדרות": "A los Ajustes",

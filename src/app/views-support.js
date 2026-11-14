@@ -227,7 +227,7 @@
         const tech = box.querySelector('#sp-tech').checked;
         const doc = {
           uid: anon ? '' : Cloud().user.uid, reason, text: v.text.slice(0, 2000), status: 'open', created: now, updated: now, last: 'user', seen: true,
-          name: String(S.settings.userName || '').slice(0, 60),
+          name: String(S.settings.userName || '').trim().slice(0, 60),
         };
         if (anon) doc.email = v.mail.slice(0, 100);
         if (tech) Object.assign(doc, { v: String(root.APP_VERSION || '').slice(0, 20), p: platform(), dev: device() });
