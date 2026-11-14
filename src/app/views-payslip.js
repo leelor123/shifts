@@ -807,6 +807,8 @@
     const final = ops.filter((o) => !(o.store === 'gaps' && o.del && reput.has(o.del)));
     // changes vs the previous slip show in the slip's own check, not as notifications (few notifications)
     await App.saveOps(final, 'שמירת תלוש', toastText || 'התלוש נשמר בארכיון');
+    // a new payslip that matched, or in which the check found money owed: a good moment to ask for a rating (review.js)
+    if (slip.isNew && App.reviewMoment) App.reviewMoment(counts.bad > 0 && a.totalMissing > 0 ? 'payslip-owed' : !counts.bad && !counts.warn && counts.ok > 0 ? 'payslip-match' : null);
   }
   /** Last month's findings that this payslip may pay (saved with "remind me to check on the next payslip"). */
   function carryHtml(slip) {
@@ -835,6 +837,7 @@
         ${root.Plus && root.Plus.tipCard ? root.Plus.tipCard() : ''}`,
         // a thank-you tip, once, when tips can be given here (plus.js)
         onMount: (el) => el.addEventListener('click', (e) => { if (root.Plus && root.Plus.tipClick) root.Plus.tipClick(e); }) });
+      if (App.reviewMoment) App.reviewMoment('money-back'); // once that screen is closed (review.js)
     }
   };
   /** A picture to share: "Shaati found me ₪X" (the slip's check) or "I got back ₪X" — no employer, no name. */

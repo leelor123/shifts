@@ -193,6 +193,8 @@ function patchLauncher() {
                 // this app shows the notifications itself, at their time, also while closed (NoteCenter): the page
                 // sends it the list of the coming days and the ones of now (src/app/phone-notes.js)
                 if (s != null) s.postMessage("shaati:notes", null);
+                // this app can ask for Google Play's In-App Review (PlayReview): the page asks right after a good moment
+                if (s != null) s.postMessage("shaati:review", null);
                 sendTaps(s);
             }
 
@@ -202,6 +204,8 @@ function patchLauncher() {
                 // back to the front, the page asks for the starts and ends tapped on a widget meanwhile
                 if ("ask".equals(message)) { sendTaps(widgetSession()); return; }
                 if (NoteCenter.isNotes(message)) { NoteCenter.receive(getApplicationContext(), message); return; }
+                // Google's review window (src/app/review.js), started on the main thread from this activity
+                if ("shaati:review".equals(message)) { runOnUiThread(() -> PlayReview.ask(LauncherActivity.this, widgetSession())); return; }
                 android.util.Log.i("ShaatiWidgets", "numbers received (" + (message == null ? 0 : message.length()) + " chars)");
                 WidgetData.save(getApplicationContext(), message);
             }
@@ -316,6 +320,9 @@ ${receiver('ShiftWidget', 'shift')}${receiver('MonthWidget', 'month')}${receiver
   let g = fs.readFileSync(gf, 'utf8');
   if (!g.includes('            minifyEnabled true\n')) throw new Error('build.gradle template changed');
   g = g.replace('            minifyEnabled true\n', "            minifyEnabled true\n            proguardFiles 'shaati-rules.pro'\n");
+  // Google Play's In-App Review (PlayReview.java, asked for by src/app/review.js)
+  if (!g.includes('dependencies {\n')) throw new Error('build.gradle template changed: dependencies');
+  g = g.replace('dependencies {\n', "dependencies {\n    implementation 'com.google.android.play:review:2.0.2'\n");
   fs.writeFileSync(gf, g);
   fs.writeFileSync(path.join(TWA, 'app', 'shaati-rules.pro'), '# Shaati: the widgets bridge reads the launcher\'s session (LauncherActivity.widgetSession)\n-keepclassmembers class com.google.androidbrowserhelper.trusted.TwaLauncher { androidx.browser.customtabs.CustomTabsSession *; }\n');
 }

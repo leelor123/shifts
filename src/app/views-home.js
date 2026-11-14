@@ -357,6 +357,8 @@
     ['wrapped', () => (App.wrappedCard ? App.wrappedCard() : '')],
     ['recap', () => (App.recapCard ? App.recapCard() : '')],
     ['bday', () => birthdayCard()],
+    // a rating or a share, only in the day after a good moment (review.js)
+    ['review', () => (App.reviewCard ? App.reviewCard() : '')],
     ['highlight', () => ((S.settings.home || {}).highlight !== false ? highlight() : '')],
     ['saving', () => savingCard()],
     ['plus', () => (root.Plus ? root.Plus.nudgeCard() : '')],

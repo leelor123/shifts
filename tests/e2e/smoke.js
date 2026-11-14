@@ -573,6 +573,27 @@ let errors = [];
     await ev(() => App.render()); await sleep(200);
     if (await ev(() => !!document.querySelector('.save-card'))) throw new Error('still shown after removing');
   });
+  await step('rating ask: a light card in the home queue after a good moment, never a screen; "not now" puts it away', async () => {
+    await ev(async () => {
+      await Store.setSettings((s) => { s.home = Object.assign({}, s.home, { highlight: false }); });
+      // the card never shows at night (Moments.quietHour): this step runs as if it were midday
+      window.__quietHour = Moments.quietHour; Moments.quietHour = () => false;
+      App._review.pending = { why: 'milestone', n: 25, until: Date.now() + 60000, counted: false };
+      App.go('home'); App.render();
+    });
+    await sleep(400);
+    const got = await ev(() => ({ keys: App.homeCardKeys.join(), sheets: UI.sheets.length, text: (document.querySelector('#view .rv-card') || {}).innerText || '', wide: document.documentElement.scrollWidth > innerWidth }));
+    if (!got.keys.includes('review') || got.keys.split(',').length > 2) throw new Error('home queue: ' + got.keys);
+    if (got.sheets) throw new Error('a screen opened');
+    if (!/25/.test(got.text) || !/לא עכשיו/.test(got.text) || !/לא לשאול שוב/.test(got.text)) throw new Error('card: ' + got.text);
+    if (got.wide) throw new Error('the page got wider than the screen');
+    const blocked = (await ev(HIT)).filter((x) => /^rv-/.test(x));
+    if (blocked.length) throw new Error('buttons covered: ' + blocked.join(', '));
+    await ev(() => document.querySelector('[data-act="rv-later"]').click()); await sleep(400);
+    const after = await ev(() => ({ card: !!document.querySelector('.rv-card'), at: (Store.S.meta.review || {}).at || 0, n: (Store.S.meta.review || {}).n || 0 }));
+    if (after.card || !after.at || after.n !== 1) throw new Error('after "not now": ' + JSON.stringify(after));
+    await ev(async () => { Moments.quietHour = window.__quietHour; await Store.setMeta({ review: null }); await Store.setSettings((s) => { s.home = Object.assign({}, s.home, { highlight: true }); }); App.render(); });
+  });
   await step('settings search finds sections by everyday words', async () => {
     await ev(() => App.go('settings')); await sleep(400);
     const find = (q) => ev((q) => { const i = document.getElementById('set-q'); i.value = q; i.dispatchEvent(new Event('input', { bubbles: true })); return [...new Set([...document.querySelectorAll('#set-res [data-act="settings-go"]:not(.prob)')].map((x) => x.dataset.k))].join(','); }, q);
