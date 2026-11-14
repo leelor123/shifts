@@ -533,3 +533,68 @@ T.test('guard: income tax above the estimate is asked about, apart from the cred
   T.eq(tax.state, 'ask'); T.ok(/מעסיק אחר|101/.test(tax.ask), tax.ask);
   T.near(tax.diff, -(300 - tax.app), 0.01);
 });
+
+/* A payslip with symbol codes before each name, a bank amount instead of "נטו לתשלום", the employer's NI provision,
+ * a block of the year's running totals and a summary table of column names over numbers (the layout of a real
+ * payslip read in Nov 2026; every name and number here is made up). */
+T.section('payslip: coded lines, running totals, summary table');
+const CODED = `אוגוסט 2026 תלוש: 3
+90 שעות רגילות 100.00 40.00 א קופה 4,000.00
+91 שבת/חג 150% 10.00 60.00 א קופה 600.00
+300 125% נ.ש 4.00 50.00 א קופה 200.00
+302 175% נ.ש 2.00 70.00 א קופה 140.00
+60 נסיעות 15.00 10.00 150.00
+ברוטו שוטף 5,090.00
+סה"כ ניכויים 120.00
+הפרשות מעסיק
+92042 הפרשת ב.ל 50.00 0.50
+נתונים אינפורמטיבים סכום בבנק בש"ח 4,970.00
+9268 שעות בפועל 116.00
+1801 ימים בפועל 15.00
+94010 ברוטו ב.ל. 5,150.00
+- סכומים מצטברים -
+חודשי
+עבודה 8 7 6 5 4 3 2 1
+ברוטו למס הכנסה 40,000.00
+מס הכנסה 900.00`;
+T.test('a symbol code before the name is not the value (hours, days, overtime)', () => {
+  const f = Payslip.parseText(CODED).fields;
+  T.near(f.workHours.value, 116); T.near(f.workDays.value, 15);
+  T.near(f.ot125.qty, 4); T.near(f.ot125.value, 200); T.near(f.rest175.value, 140); T.near(f.base.qty, 100);
+  T.near(Payslip.parseText('9268 שעות בפועל 147.00').fields.workHours.value, 147);
+  T.near(Payslip.parseText('182 שעות עבודה').fields.workHours.value, 182, 0.001, 'a lone number stays the value');
+});
+T.test('the employer\'s provision ("הפרשת") is not a pay difference, the NI gross is not the gross', () => {
+  const p = Payslip.parseText(CODED);
+  T.ok(!p.fields.diff, 'no diff'); T.ok(!p.fields.nationalInsurance, 'not the worker\'s NI');
+  T.near(p.fields.gross.value, 5090);
+  T.near(Payslip.parseText('ברוטו ב.ל. 5,150.00\nברוטו שוטף 5,090.00').fields.gross.value, 5090);
+  T.near(Payslip.parseText('הפרשי שכר 120.00').fields.diff.value, 120);
+  T.near(Payslip.parseText('הפרשים 80.00').fields.diff.value, 80);
+});
+T.test('the bank amount is the net', () => {
+  T.near(Payslip.parseText(CODED).fields.net.value, 4970);
+});
+T.test('the year\'s running totals do not fill the month\'s lines', () => {
+  const f = Payslip.parseText(CODED).fields;
+  T.ok(!f.taxableGross, 'no monthly taxable gross'); T.ok(!f.incomeTax, 'no monthly income tax');
+  T.near(f.ytdTax.value, 900);
+  // after the block ends (a row of column names) the month's lines are read again
+  T.near(Payslip.parseText('- סכומים מצטברים -\nמס הכנסה 900.00\nשכר בסיס תוספות שכר נטו\nביטוח לאומי 30.00').fields.nationalInsurance.value, 30);
+  // the guard: running totals without a heading
+  T.ok(!Payslip.parseText('ברוטו שוטף 5,090.00\nברוטו למס הכנסה 40,000.00').fields.taxableGross);
+  T.near(Payslip.parseText('ברוטו שוטף 5,090.00\nברוטו למס הכנסה 5,000.00').fields.taxableGross.value, 5000);
+});
+T.test('a summary table: each total is paired with the column name above it', () => {
+  const it = (s, x, y, w) => ({ str: s, transform: [1, 0, 0, 1, x, y], width: w });
+  const items = [
+    it('שכר בסיס', 560, 60, 30), it('ברוטו שוטף', 450, 60, 32), it('ניכויי חובה', 340, 60, 30), it('שכר נטו', 230, 60, 22), it('סכום בבנק', 100, 60, 28),
+    it('4,000.00', 562, 37, 27), it(' ', 530, 37, 10), it('5,090.00', 450, 37, 31), it('120.00', 345, 37, 20), it('4,970.00', 229, 37, 26), it('4,970.00', 98, 37, 31),
+  ];
+  const lines = Payslip.linesFromPdfItems(items);
+  T.ok(lines.includes('שכר נטו 4,970.00'), lines.join(' / '));
+  T.ok(lines.includes('ברוטו שוטף 5,090.00'), lines.join(' / '));
+  T.ok(!lines.some((l) => l.startsWith('שכר בסיס 4,000')), 'a payment column is not read twice');
+  const f = Payslip.parseText(lines.join('\n')).fields;
+  T.near(f.net.value, 4970); T.near(f.gross.value, 5090); T.ok(!f.base, 'base not taken from the summary');
+});

@@ -19,7 +19,7 @@
     { key: 'ytdGross', label: 'ברוטו מצטבר (שנתי)', kind: 'info', pats: ['ברוטו מצטבר', 'מצטבר ברוטו', 'ברוטו שנתי'] },
     { key: 'ytdTax', label: 'מס הכנסה מצטבר', kind: 'info', pats: ['מס הכנסה מצטבר', 'מס מצטבר'] },
     { key: 'taxableGross', label: 'ברוטו למס', kind: 'info', pats: ['ברוטו למס', 'הכנסה חייבת', 'שכר חייב'] },
-    { key: 'net', label: 'נטו לתשלום', kind: 'total', pats: ['נטו לתשלום', 'שכר נטו', 'סה"כ נטו', 'סה״כ נטו', 'נטו'] },
+    { key: 'net', label: 'נטו לתשלום', kind: 'total', pats: ['נטו לתשלום', 'שכר נטו', 'סה"כ נטו', 'סה״כ נטו', 'נטו', 'סכום בבנק', 'סכום לבנק', 'העברה לבנק'] },
     { key: 'totalDeductions', label: 'סה״כ ניכויים', kind: 'total', pats: ['סה"כ ניכויים', 'סה״כ ניכויים', 'סך הניכויים', 'סך ניכויים', 'סה"כ ניכויי חובה'] },
     { key: 'gross', label: 'ברוטו', kind: 'total', pats: ['סה"כ ברוטו', 'סה״כ ברוטו', 'שכר ברוטו', 'סך כל התשלומים', 'סה"כ תשלומים', 'סה״כ תשלומים', 'ברוטו'] },
     { key: 'pensionEmployer', label: 'פנסיה (חלק המעסיק)', kind: 'emp', pats: ['תגמולי מעביד', 'תגמולי מעסיק', 'פנסיה מעביד', 'פנסיה מעסיק', 'גמל מעביד', 'גמל מעסיק', 'הפרשת מעביד', 'הפרשת מעסיק'] },
@@ -231,8 +231,14 @@
           // 150% lines that mention Shabbat/holiday belong to rest150
           if (f.key === 'ot150' && /שבת|חג|מנוחה/.test(n)) return FIELD.rest150;
           if (f.key === 'ot125' && /שבת|חג|מנוחה/.test(n) && /150/.test(n)) return FIELD.rest150;
-          if (f.key === 'gross' && /למס|מצטבר/.test(n)) continue;
+          // the gross for National Insurance ("ברוטו ב.ל.") is a base, not the gross: it adds imputed benefits
+          if (f.key === 'gross' && (/למס|מצטבר/.test(n) || /ברוטו (?:ל)?(?:ב\.ל|ב"ל|ביטוח לאומי)/.test(n))) continue;
           if (f.key === 'net' && /מצטבר/.test(n)) continue;
+          // "הפרשת" / "הפרשות" is the employer's provision (pension, National Insurance), not a pay difference
+          // ("הפרשי", "הפרש", "הפרשים"): the employer's NI provision was read as a pay difference (real payslip, Nov 2026)
+          if (f.key === 'diff' && p.startsWith('הפרש') && !/הפרש(?:י|ים)?(?![א-ת])/.test(n)) continue;
+          // the employee's NI deduction, not the NI gross or the employer's NI provision
+          if (f.key === 'nationalInsurance' && /ברוטו|הפרש[תו]|מעסיק|מעביד/.test(n)) continue;
           return f;
         }
       }
@@ -339,7 +345,38 @@
       row.items.push({ x, s: it.str, w: it.width || 0 });
     }
     rows.sort((a, b) => b.y - a.y);
-    return rows.map((r) => r.items.sort((a, b) => b.x - a.x).map((i) => i.s).join(' '));
+    const out = [];
+    rows.forEach((r, i) => {
+      r.items.sort((a, b) => b.x - a.x);
+      out.push(r.items.map((it) => it.s).join(' '));
+      out.push(...tableColumns(rows[i - 1], r));
+    });
+    return out;
+  }
+  /**
+   * A summary table printed as a row of column names over a row of numbers ("ברוטו שוטף … שכר נטו … סכום בבנק"
+   * above "10,000.00 … 8,500.00 … 8,500.00"): joined row by row, the numbers lost their names and the net was
+   * missed (real payslip, Nov 2026). Each number is paired with the name above it (the nearest by the middle of
+   * the box), and the totals and information columns come out as their own "name value" lines. The columns that
+   * repeat a payment (the base, the overtime) stay as printed: read again they would be added to the lines above.
+   */
+  const NUM_CELL = /^-?(?:\d{1,3}(?:,\d{3})+|\d+)(?:\.\d+)?-?$/;
+  function tableColumns(head, row) {
+    if (!head || !row) return [];
+    const nums = row.items.map((it) => ({ s: it.s.trim(), x: it.x, w: it.w })).filter((it) => it.s);
+    const names = head.items.map((it) => ({ s: normalize(it.s), x: it.x, w: it.w })).filter((it) => it.s);
+    if (nums.length < 3 || names.length < 3 || !nums.every((it) => NUM_CELL.test(it.s))) return [];
+    if (!names.every((it) => HEB.test(it.s) && !/\d/.test(it.s))) return [];
+    const mid = (it) => it.x + it.w / 2;
+    const lines = [];
+    for (const nm of names) {
+      let best = null;
+      for (const nu of nums) { const d = Math.abs(mid(nu) - mid(nm)); if (!best || d < best.d) best = { d, nu }; }
+      if (!best || best.d > Math.max(nm.w, best.nu.w) * 0.75 + 4) continue;
+      const f = matchField(nm.s);
+      if (f && (f.kind === 'total' || f.kind === 'info')) lines.push(nm.s + ' ' + best.nu.s);
+    }
+    return lines;
   }
 
   // i18n-keep
@@ -368,7 +405,16 @@
     const rawLines = text.split(/\r?\n/).map(normalize).filter(Boolean);
     const fields = {};
     const other = [];
+    let cumulative = false;
     for (const raw of rawLines) {
+      // a block of the year's running totals ("- סכומים מצטברים -", "נתונים מצטברים"): its gross and tax are the
+      // year's, not the month's (the year's taxable gross was read as the month's, real payslip, Nov 2026). It
+      // starts at its heading (a line with no numbers) and ends at the next heading: a "- name -" line or a row
+      // of three or more column names.
+      if (!/\d/.test(raw) && HEB.test(raw)) {
+        if (/מצטבר/.test(raw) && raw.split(' ').length <= 5) { cumulative = true; continue; }
+        if (cumulative && (/^[-–*].*[-–*]$/.test(raw) || raw.split(' ').length >= 3)) cumulative = false;
+      }
       let f = matchField(raw);
       let line = raw;
       if (!f && HEB.test(raw)) {
@@ -376,7 +422,17 @@
         f = matchField(alt);
         if (f) line = alt;
       }
-      const nums = numbersIn(line);
+      if (cumulative && f) {
+        // only the year's own lines: the gross and the income tax become the running totals, the rest is skipped
+        f = f.key === 'gross' ? FIELD.ytdGross : f.key === 'incomeTax' ? FIELD.ytdTax : f.key === 'ytdGross' || f.key === 'ytdTax' ? f : null;
+        if (!f) continue;
+      }
+      // a payroll system's symbol code before the name ("9268 שעות בפועל 147.33", "300 125% …") is not a value:
+      // the hours and days were read as the code (real payslip, Nov 2026). A whole number at the start, right before
+      // the Hebrew name, with a value after it.
+      let nums = numbersIn(line);
+      const code = /^\d{2,6}\s+(?=(?:\d{2,3}%\s+)?[֐-׿])/.exec(line);
+      if (code) { const rest = numbersIn(line.slice(code[0].length)); if (rest.length) nums = rest; }
       if (f && f.kind === 'pay') {
         f = payOrCount(f, line, nums);
         if (!f) continue; // a count (sick days, seniority years) with no money in it: not a payment, not a line to name
@@ -406,6 +462,8 @@
       }
       fields[f.key] = Object.assign({ line }, pv);
     }
+    // a guard for running totals printed without a heading: a taxable gross far above the gross is the year's
+    if (fields.taxableGross && fields.gross && fields.taxableGross.value > fields.gross.value * 2) delete fields.taxableGross;
     return { fields, other, period: detectPeriod(text), lineCount: rawLines.length };
   }
 
