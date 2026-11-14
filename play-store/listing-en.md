@@ -18,7 +18,7 @@ Shaati: Payslip & Shift Check
 Payslip check by Israeli labour law and your shifts. No ads, files stay on phone
 ```
 
-**Full description** (max 4000 characters: 3983)
+**Full description** (max 4000 characters: 3985)
 ```
 Shaati checks your payslip. Upload it, and the app reads it on your phone, compares it with the shifts you logged and with Israel's labour law rules, and explains every line that does not add up.
 
@@ -40,14 +40,13 @@ Israel's labour law math
 Time clock and shifts
 • Tap to start and tap to finish, breaks included, or add a past shift
 • Import your schedule from a photo or a WhatsApp message
-• Import an hours report (Excel, CSV, PDF or a photo) and compare it with your shifts before payday
+• Import an hours report (Excel, CSV, PDF or photo) and compare it with your shifts
 • Forgot to end a shift? The app asks and suggests your usual finishing time
 • Several workplaces and roles, each with its own rate; travel, tips, bonuses and shift reminders
-• On Android: start and end a shift from a home-screen widget, and an optional notification with the pay so far
+• On Android: start and end a shift from a widget, an optional pay-so-far notification, and an optional location-based suggestion to start a shift when you arrive at work, even with the app closed
 
 Workers' rights
-• An offline rights guide: minimum wage, overtime, Shabbat, travel, sick pay, vacation, recuperation pay, pension
-• Holiday pay: which holidays you may be owed pay for, and how much
+• An offline rights guide: minimum wage, overtime, Shabbat, holiday pay, travel, sick pay, vacation, recuperation pay, pension
 • Working teens: night hours, day and week length and breaks under the Youth Employment Law
 • Tax refund check for employees: an estimate from your shifts, payslips or Form 106
 
@@ -60,7 +59,7 @@ Privacy, no ads
 • No ads. Usage statistics without your name, email or amounts, only if you agree
 • Payslip files stay on your phone. Use it as a guest and all your data stays on the phone
 • With an account (Google or email), your data is also saved in your account. Other users cannot see it, except what you share with friends, and we do not sell it
-• Works offline; code or fingerprint lock; export or delete your data and account at any time
+• Works offline; code or fingerprint lock; export or delete your data and account
 • In English, Hebrew, Russian, Arabic, French, Spanish and Amharic
 
 Official sources (in Hebrew)
@@ -105,3 +104,6 @@ The calculations are estimates, not legal, accounting or tax advice. When in dou
 - The Hebrew listing (listing-he.md) now carries the same additions (14 Nov 2026).
 - Fitting under 4000: the 14 Nov rewrite leaves out "Your month as a short story", the alerts line, the champions table
   and the AI assistant paragraph (all still true, the Hebrew listing keeps the AI paragraph).
+- 15 Nov 2026 (background-location audit): the Android line names the location-based suggestion when you arrive at
+  work, even with the app closed. To fit, the hours report line lost "a" and "before payday", the privacy line lost
+  "at any time", and holiday pay joined the rights guide line. Count: 3985.

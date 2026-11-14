@@ -79,8 +79,8 @@
     <string name="w_geo_start">Start shift</string>
     <string name="w_geo_stop">End shift</string>
     <string name="w_geo_off">Turn off suggestions</string>
-    <string name="w_geo_disc_t">A shift suggestion when you get to work</string>
-    <string name="w_geo_disc">Shaati uses your location in the background, even when the app is closed, only to suggest starting a shift when you arrive at your workplace and ending it when you leave. Your location stays on this phone and is never sent anywhere. A shift never starts or ends without your tap. Turn it off any time in Shaati settings or from the notification.</string>
+    <string name="w_geo_disc_t">Suggestion when you arrive at work</string>
+    <string name="w_geo_disc">Shaati collects location data to enable the suggestion when you arrive at work, even when the app is closed or not in use. When you reach the workplace you saved, a notification offers to start a shift. When you leave during a shift, one offers to end it. Your location is checked on this phone and is never sent anywhere. A shift never starts or ends without your tap. Turn it off any time in Shaati settings or from the notification.</string>
     <string name="w_geo_go">Continue</string>
     <string name="w_geo_not_now">Not now</string>
     <string name="w_geo_always_t">One more step</string>
@@ -89,4 +89,8 @@
     <string name="w_geo_need_always">Without “Allow all the time” location, no suggestions will come. You can try again from Shaati settings.</string>
     <string name="w_geo_no_fix">Location not found. Turn on location on the phone and try again.</string>
     <string name="w_geo_saved">Workplace saved. When you get here, Shaati will suggest starting a shift.</string>
+    <string name="w_geo_always_x">On the next screen, choose “%1$s”. Without it, the phone cannot suggest a shift while the app is closed.</string>
+    <string name="w_geo_notes_t">The suggestion comes as a notification</string>
+    <string name="w_geo_notes">Notifications from Shaati are off, so the suggestion cannot reach you. On the next screen, allow notifications.</string>
+    <string name="w_geo_need_notes">Workplace saved, but notifications are off, so no suggestion will come. Turn them on in phone settings.</string>
 </resources>

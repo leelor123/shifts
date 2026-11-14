@@ -27,10 +27,10 @@ From `twa/app/src/main/AndroidManifest.xml`:
 | Permission | Sensitive? | Needed? | Why |
 |---|---|---|---|
 | `android.permission.POST_NOTIFICATIONS` | Runtime permission, not a restricted one | Yes | Weekly and monthly summaries, reminders, and the running-shift notification (1.34.0). It is asked for only when the user turns notifications on. |
-| `ACCESS_FINE_LOCATION`, `ACCESS_COARSE_LOCATION` | Runtime | Only for the opt-in "suggestion at work" | One reading of the spot the user saves as the workplace (`WorkGeoActivity`), after the in-app disclosure. |
-| `ACCESS_BACKGROUND_LOCATION` | **Restricted: needs the location permissions declaration in Play Console** | Only for the opt-in "suggestion at work" | The geofence notices arriving at and leaving the saved workplace while the app is closed, to show a notification that suggests starting or ending a shift. It never starts or ends one itself. Asked last, after the disclosure. See `play-store/APP-CONTENT.md` section 4.1. |
+| `ACCESS_FINE_LOCATION`, `ACCESS_COARSE_LOCATION` | Runtime | Only for the opt-in "Suggestion when you arrive at work" | One reading of the spot the user saves as the workplace (`WorkGeoActivity`), after the in-app disclosure. |
+| `ACCESS_BACKGROUND_LOCATION` | **Restricted: needs the location permissions declaration in Play Console** | Only for the opt-in "Suggestion when you arrive at work" | The geofence notices arriving at and leaving the saved workplace while the app is closed, to show a notification that suggests starting or ending a shift. It never starts or ends one itself. Asked last, after the disclosure. See `play-store/APP-CONTENT.md` section 4.1. |
 
-Before the suggestion at work, POST_NOTIFICATIONS was the only permission. The location permissions come in with it; `SHAATI_GEOFENCE=0` builds without them (and without the feature).
+Before the suggestion when you arrive at work, POST_NOTIFICATIONS was the only permission. The location permissions come in with it; `SHAATI_GEOFENCE=0` builds without them (and without the feature).
 
 Other manifest notes:
 

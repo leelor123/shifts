@@ -80,8 +80,8 @@
     <string name="w_geo_start">Empezar turno</string>
     <string name="w_geo_stop">Terminar turno</string>
     <string name="w_geo_off">Desactivar sugerencias</string>
-    <string name="w_geo_disc_t">Una sugerencia de turno al llegar al trabajo</string>
-    <string name="w_geo_disc">Shaati usa tu ubicación en segundo plano, incluso con la app cerrada, solo para sugerirte empezar un turno cuando llegas al trabajo y terminarlo cuando te vas. La ubicación se queda en este teléfono y no se envía a ningún sitio. Ningún turno empieza ni termina sin tu toque. Desactívalo cuando quieras en los ajustes de Shaati o desde la notificación.</string>
+    <string name="w_geo_disc_t">Sugerencia al llegar al trabajo</string>
+    <string name="w_geo_disc">Shaati recopila datos de ubicación para activar la sugerencia al llegar al trabajo, incluso cuando la app está cerrada o no se está usando. Cuando llegas al lugar de trabajo que guardaste, una notificación te propone empezar un turno. Si te vas durante un turno, otra te propone terminarlo. La ubicación se comprueba en este teléfono y nunca se envía a ningún sitio. Ningún turno empieza ni termina sin tu toque. Desactívalo cuando quieras en los ajustes de Shaati o desde la notificación.</string>
     <string name="w_geo_go">Continuar</string>
     <string name="w_geo_not_now">Ahora no</string>
     <string name="w_geo_always_t">Un paso más</string>
@@ -90,4 +90,8 @@
     <string name="w_geo_need_always">Sin el permiso de ubicación «todo el tiempo» no llegarán sugerencias. Puedes intentarlo de nuevo en los ajustes de Shaati.</string>
     <string name="w_geo_no_fix">No se encontró la ubicación. Activa la ubicación del teléfono e inténtalo de nuevo.</string>
     <string name="w_geo_saved">Lugar de trabajo guardado. Cuando llegues aquí, Shaati te sugerirá empezar un turno.</string>
+    <string name="w_geo_always_x">En la siguiente pantalla, elige «%1$s». Sin eso, el teléfono no puede sugerir un turno con la app cerrada.</string>
+    <string name="w_geo_notes_t">La sugerencia llega en una notificación</string>
+    <string name="w_geo_notes">Las notificaciones de Shaati están desactivadas, así que la sugerencia no te llegará. En la siguiente pantalla, permite las notificaciones.</string>
+    <string name="w_geo_need_notes">Lugar de trabajo guardado, pero las notificaciones están desactivadas y no llegará ninguna sugerencia. Actívalas en los ajustes del teléfono.</string>
 </resources>

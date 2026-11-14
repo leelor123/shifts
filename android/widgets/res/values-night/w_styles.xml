@@ -6,11 +6,21 @@
         <item name="android:navigationBarColor">@color/w_pick_bg</item>
         <item name="android:windowLightStatusBar">false</item>
     </style>
-    <!-- saving the workplace spot (WorkGeoActivity): nothing of its own on the screen, only the phone's dialogs over the app -->
+    <!-- saving the workplace spot (WorkGeoActivity): nothing of its own on the screen, only its windows over the app -->
     <style name="WorkGeoTheme" parent="@android:style/Theme.Translucent.NoTitleBar">
         <item name="android:windowIsTranslucent">true</item>
         <item name="android:windowBackground">@android:color/transparent</item>
         <item name="android:backgroundDimEnabled">false</item>
-        <item name="android:alertDialogTheme">@android:style/Theme.DeviceDefault.Dialog.Alert</item>
+        <item name="android:alertDialogTheme">@style/WorkGeoDialog</item>
+    </style>
+    <!-- its windows: Shaati's cream (navy at night) card with a gold edge, the app icon, navy (gold) buttons; they do
+         not look like Android's own permission windows that come after them -->
+    <style name="WorkGeoDialog" parent="@android:style/Theme.Material.Dialog.Alert">
+        <item name="android:windowBackground">@drawable/w_geo_dialog</item>
+        <item name="android:colorBackground">@color/w_geo_bg</item>
+        <item name="android:textColorPrimary">@color/w_geo_title</item>
+        <item name="android:textColorSecondary">@color/w_geo_text</item>
+        <item name="android:textColorAlertDialogListItem">@color/w_geo_title</item>
+        <item name="android:colorAccent">@color/w_geo_button</item>
     </style>
 </resources>

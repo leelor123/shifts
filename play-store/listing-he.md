@@ -16,7 +16,7 @@
 בדיקת תלוש שכר מול המשמרות שלך ולפי חוקי העבודה, בלי פרסומות. התלוש נשאר בטלפון
 ```
 
-**תיאור מלא** (עד 4000 תווים: 3665)
+**תיאור מלא** (עד 4000 תווים: 3807)
 ```
 שעתי (Shaati) בודקת את תלוש השכר שלך. מעלים את התלוש, והאפליקציה קוראת אותו בטלפון, משווה אותו למשמרות שרשמת ולכללי חוקי העבודה בישראל, ומסבירה כל שורה שלא מסתדרת.
 
@@ -42,6 +42,7 @@
 • שכחת לסיים משמרת? האפליקציה שואלת ומציעה את שעת הסיום הרגילה שלך
 • כמה מקומות עבודה ותפקידים, לכל אחד תעריף משלו, עם נסיעות, בונוסים, טיפים ותזכורות
 • ווידג'טים למסך הבית: התחלה וסיום של משמרת בלי לפתוח את האפליקציה, החודש והימים עד המשכורת
+• באנדרואיד, לבחירתך: הצעה להתחיל משמרת כשמגיעים למקום העבודה ששמרת, גם כשהאפליקציה סגורה או לא בשימוש. המיקום נבדק בטלפון ולא נשלח לשום מקום
 • התראה לבחירתך בזמן משמרת, עם הסכום עד עכשיו וכפתור סיום
 
 זכויות עובדים
@@ -136,3 +137,8 @@ An advisory council found the pitch buried: the payslip check, which no competin
   text stay on the phone; the fields of a saved payslip go to the account only when signed in; nothing goes to
   Anthropic unless the user sends it with their own key.
 - Still no price, "חינם", "הכי", "#1", emoji or call to download. "בלי פרסומות" describes the app, not a promotion.
+
+## 15 Nov 2026: the suggestion when you arrive at work
+A background-location audit for Google Play: the listing has to name the feature that uses location in the background.
+The new bullet after the widgets says what it does, that it works with the app closed or not in use, that it is the
+user's choice and that the location is checked on the phone (android/widgets/java/WorkGeo*.java). Count: 3807.

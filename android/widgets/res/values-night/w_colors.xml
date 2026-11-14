@@ -33,4 +33,9 @@
     <color name="w_pick_sub">#AAB3C5</color>
     <color name="w_pick_card">#161A24</color>
     <color name="w_pick_ring">#E9C987</color>
+    <color name="w_geo_bg">#0D2B6B</color>
+    <color name="w_geo_edge">#E9C987</color>
+    <color name="w_geo_title">#FFFFFF</color>
+    <color name="w_geo_text">#C9D3EA</color>
+    <color name="w_geo_button">#E9C987</color>
 </resources>

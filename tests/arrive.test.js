@@ -109,13 +109,12 @@ T.test('the disclosure comes first, then precise location, then "all the time"; 
   T.ok(disc > 0 && fine > disc && bg > fine, 'order in the code');
   T.ok(/setPositiveButton\([^;]*askFine\(\)\)/.test(c), 'precise location only from the disclosure button');
   T.ok(/w_geo_not_now\), \(d, w\) -> finish\(\)\)/.test(c), 'not now: finish');
-  T.eq((c.match(/requestPermissions\(/g) || []).length, 2, 'two requests, nothing else');
+  T.eq((c.match(/requestPermissions\(/g) || []).length, 3, 'three requests: location, all the time, notifications');
   // the disclosure says background, the purpose and that it stays on the phone, in every language
   for (const d of ['values', 'values-en', 'values-ru', 'values-ar', 'values-fr', 'values-es', 'values-am']) {
     T.ok(/name="w_geo_disc">[^<]{120,}</.test(read(`android/widgets/res/${d}/w_strings.xml`)), d + ' disclosure');
   }
-  T.ok(/w_geo_disc">[^<]*ברקע[^<]*סגורה[^<]*בטלפון/.test(read('android/widgets/res/values/w_strings.xml')), 'Hebrew: background, closed, on the phone');
-  T.ok(/w_geo_disc">[^<]*background[^<]*closed[^<]*stays on this phone/.test(read('android/widgets/res/values-en/w_strings.xml')), 'English: background, closed, on the phone');
+  // each language's own words for "collects", "closed or not in use" and "on this phone": tests/geo-audit.test.js
 });
 T.test('the Android build: the permissions, the screen and the receiver go in together; the hello only with them', () => {
   const t = read('tools/android.js');

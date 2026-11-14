@@ -69,4 +69,10 @@
     <color name="w_pick_sub">#5B6478</color>
     <color name="w_pick_card">#FFFFFF</color>
     <color name="w_pick_ring">#0D2B6B</color>
+    <!-- the workplace spot's windows (WorkGeoTheme): the app's cream, navy and gold -->
+    <color name="w_geo_bg">#F6F4EE</color>
+    <color name="w_geo_edge">#E9C987</color>
+    <color name="w_geo_title">#0D2B6B</color>
+    <color name="w_geo_text">#3E4760</color>
+    <color name="w_geo_button">#0D2B6B</color>
 </resources>

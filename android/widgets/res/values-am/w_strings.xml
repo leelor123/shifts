@@ -79,8 +79,8 @@
     <string name="w_geo_start">ፈረቃ ጀምር</string>
     <string name="w_geo_stop">ፈረቃ ጨርስ</string>
     <string name="w_geo_off">ጥቆማዎችን አጥፋ</string>
-    <string name="w_geo_disc_t">ሥራ ሲደርሱ የፈረቃ ጥቆማ</string>
-    <string name="w_geo_disc">Shaati መተግበሪያው ተዘግቶ ቢሆንም አካባቢዎን ከበስተጀርባ ይጠቀማል፣ ይህም ሥራ ቦታ ሲደርሱ ፈረቃ እንዲጀምሩ እና ሲወጡ እንዲያጠናቅቁ ለመጠቆም ብቻ ነው። አካባቢዎ በዚህ ስልክ ላይ ይቀራል እና ወደ የትም አይላክም። ያለ እርስዎ መንካት ምንም ፈረቃ አይጀምርም አያልቅምም። በማንኛውም ጊዜ በShaati ቅንብሮች ወይም ከማሳወቂያው ማጥፋት ይችላሉ።</string>
+    <string name="w_geo_disc_t">ሥራ ሲደርሱ ጥቆማ</string>
+    <string name="w_geo_disc">Shaati ሥራ ሲደርሱ ጥቆማውን ለማንቃት የአካባቢ ውሂብ ይሰበስባል፣ መተግበሪያው ተዘግቶ ወይም ጥቅም ላይ ባይውልም እንኳ። ያስቀመጡት የሥራ ቦታ ሲደርሱ፣ ፈረቃ እንዲጀምሩ የሚጠቁም ማሳወቂያ ይመጣል። ፈረቃ እየሄደ ሲወጡ፣ እንዲያጠናቅቁት የሚጠቁም ማሳወቂያ ይመጣል። አካባቢዎ በዚህ ስልክ ላይ ይፈተሻል እና ወደ የትም አይላክም። ያለ እርስዎ መንካት ምንም ፈረቃ አይጀምርም አያልቅምም። በማንኛውም ጊዜ በShaati ቅንብሮች ወይም ከማሳወቂያው ማጥፋት ይችላሉ።</string>
     <string name="w_geo_go">ቀጥል</string>
     <string name="w_geo_not_now">አሁን አይደለም</string>
     <string name="w_geo_always_t">አንድ ተጨማሪ ደረጃ</string>
@@ -89,4 +89,8 @@
     <string name="w_geo_need_always">ያለ “ሁልጊዜ” የአካባቢ ፈቃድ ጥቆማዎች አይመጡም። ከShaati ቅንብሮች እንደገና መሞከር ይችላሉ።</string>
     <string name="w_geo_no_fix">አካባቢው አልተገኘም። በስልኩ ላይ አካባቢን ያብሩ እና እንደገና ይሞክሩ።</string>
     <string name="w_geo_saved">የሥራ ቦታ ተቀምጧል። እዚህ ሲደርሱ Shaati ፈረቃ እንዲጀምሩ ይጠቁማል።</string>
+    <string name="w_geo_always_x">በሚቀጥለው ማያ ገጽ “%1$s” ይምረጡ። ያለዚህ መተግበሪያው ሲዘጋ ስልኩ ፈረቃ መጠቆም አይችልም።</string>
+    <string name="w_geo_notes_t">ጥቆማው በማሳወቂያ ይመጣል</string>
+    <string name="w_geo_notes">የShaati ማሳወቂያዎች ጠፍተዋል፣ ስለዚህ ጥቆማው አይደርስዎትም። በሚቀጥለው ማያ ገጽ ማሳወቂያዎችን ይፍቀዱ።</string>
+    <string name="w_geo_need_notes">የሥራ ቦታ ተቀምጧል፣ ግን ማሳወቂያዎች ጠፍተዋል፣ ስለዚህ ምንም ጥቆማ አይመጣም። በስልኩ ቅንብሮች ውስጥ ያብሯቸው።</string>
 </resources>
