@@ -886,6 +886,7 @@
         { name: 'ניכויים', color: '#e34948', values: trend.map((p) => (p.fields.gross && p.fields.net ? Math.max(0, p.fields.gross.value - p.fields.net.value) : 0)) },
       ], { label: 'נטו וניכויים לפי חודש', fmt: (v) => U.money(v, 0) })}
         <div class="tiny muted">גובה העמודה = ברוטו. ${trend.length} תלושים אחרונים.</div></div>` : ''}
+      ${App.payslipPlusCard ? App.payslipPlusCard() : ''}
       <div class="section-title">${icon('receipt', 's')} ארכיון תלושים</div>
       ${slips.length ? `<div class="list">${slips.map((p) => { const c = (p.summary && p.summary.counts) || {}; return `<button class="item" data-act="payslip-open" data-id="${esc(p.id)}"><span class="lead" style="background:var(--surface-3)">${icon('receipt')}</span>
         <span class="body"><span class="t">${p.period ? U.fmtMonth(p.period) : '—'}</span><span class="s">${c.bad ? `<span class="ps-c bad">${icon('xc', 's')} ${+c.bad}</span> ` : ''}${c.warn ? `<span class="ps-c warn">${icon('alert', 's')} ${+c.warn}</span> ` : ''}${c.ok ? `<span class="ps-c ok">${icon('okc', 's')} ${+c.ok}</span>` : ''}${p.source === 'ai' ? ' · AI' : ''}</span></span>
