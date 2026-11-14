@@ -1535,17 +1535,16 @@ body.fx .cal-day.hello, body.fx .week-row.hello { animation: cal-hello .55s cubi
 .unclean-hint { font-size: .78rem; color: var(--danger, #d93a3a); margin: 4px 4px 0; }
 
 /* ---------- asking for a rating (review.js) ---------- */
-.rv { display: flex; flex-direction: column; align-items: center; text-align: center; padding: 0 4px 6px; }
-.rv .rv-mascot { margin: -4px 0 2px; }
-.rv-stars { display: flex; gap: 8px; margin: 2px 0 12px; direction: ltr; }
-.rv-star { display: grid; place-items: center; width: 42px; height: 42px; will-change: transform; animation: rv-pop .55s cubic-bezier(.34, 1.56, .64, 1) both; animation-delay: calc(.18s + var(--i) * .09s); }
-.rv-star svg { width: 38px; height: 38px; fill: #ffc83d; stroke: #d99a00; stroke-width: 1.4; filter: drop-shadow(0 3px 6px rgba(217, 154, 0, .35)); }
-@keyframes rv-pop { 0% { transform: scale(.4) rotate(-40deg); opacity: 0; } 60% { transform: scale(1.25) rotate(8deg); opacity: 1; } 100% { transform: none; opacity: 1; } }
-.rv-s { margin: 0 0 18px; color: var(--on-surface-var); line-height: 1.55; max-width: 34ch; }
-.rv .btn { margin-bottom: 8px; }
-.rv .rv-go { background: var(--grad-money); color: #2b1a00; }
-.rv .rv-go svg { fill: currentColor; }
-@media (prefers-reduced-motion: reduce) { .rv-star { animation: none; } }
+/* a card in the home queue, a day after a good moment: never a screen over the app */
+.rv-card { display: flex; flex-direction: column; gap: 10px; }
+.rv-top { display: flex; align-items: center; gap: 10px; }
+.rv-top .rv-mascot { flex: none; }
+.rv-txt { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+.rv-txt .small { color: var(--on-surface-var); line-height: 1.5; }
+.rv-btns { flex-wrap: wrap; gap: 6px; }
+.rv-card .rv-go { background: var(--grad-money); color: #2b1a00; }
+.rv-card .rv-go svg { fill: currentColor; }
+.rv-never { align-self: flex-start; background: none; border: 0; padding: 6px 2px; min-height: 32px; font: inherit; font-size: .78rem; color: var(--on-surface-var); text-decoration: underline; cursor: pointer; }
 
 /* ---------- importing an hours report (import.js) ---------- */
 .imp-pick { margin: 6px 0 10px; }

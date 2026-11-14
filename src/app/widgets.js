@@ -130,6 +130,8 @@
     if (data === 'refresh' || data === 'shaati:widgets') { send(true); return; }
     // this Android app shows the notifications itself, at their time, also while the app is closed (app/phone-notes.js)
     if (data === 'shaati:notes') { if (App.phoneNotes) App.phoneNotes.hello(); return; }
+    // Google's In-App Review: the app says it can ask, or answers an ask (app/review.js)
+    if (typeof data === 'string' && data.startsWith('shaati:review')) { if (App.reviewNative) App.reviewNative(data); return; }
     if (typeof data !== 'string' || data.charAt(0) !== '{') return;
     let m = null;
     try { m = JSON.parse(data); } catch (e) { return; }
