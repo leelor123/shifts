@@ -123,6 +123,26 @@
     return { diff, less: diff < 0, small: Math.abs(diff) < Math.max(20, e * 0.02) };
   }
 
-  root.Moments = { quietHour, wageParts, wageLine, youthNow, salaryState, salaryLag, salaryGap, ASK_DAYS };
+  /* ---------------- "the payslip came? you can check it" ---------------- */
+  const SLIP_DAYS = 7; // the card waits a week from the day this person's payslip usually comes
+  /**
+   * Whether the home screen offers to check pay period pk's payslip now. One offer a month: from the day after the pay
+   * date (or the day this person usually saves the payslip, lag), for a week, until it is answered; never in the quiet
+   * hours, never once this period's payslip is in or a payslip was checked since the pay date, and never again after two
+   * "not now"s. o: { pk, payDate, today, nowMs, lag, hasSlip, checkedSince, mem: { done: { pk: at }, n: "not now"s } }.
+   */
+  function slipNudge(o) {
+    if (!o || !o.pk || !o.payDate || !o.today) return false;
+    const mem = o.mem && typeof o.mem === 'object' ? o.mem : {};
+    if ((+mem.n || 0) >= 2) return false;
+    if (mem.done && typeof mem.done === 'object' && mem.done[o.pk]) return false;
+    if (o.hasSlip || o.checkedSince) return false;
+    if (quietHour(o.nowMs)) return false;
+    const lag = Math.max(1, Math.min(10, Math.round(+o.lag || 0)));
+    const from = U.addDays(o.payDate, lag);
+    return o.today >= from && o.today <= U.addDays(from, SLIP_DAYS - 1);
+  }
+
+  root.Moments = { quietHour, wageParts, wageLine, youthNow, salaryState, salaryLag, salaryGap, ASK_DAYS, slipNudge, SLIP_DAYS };
   if (typeof module !== 'undefined') module.exports = root.Moments;
 })(typeof window !== 'undefined' ? window : globalThis);

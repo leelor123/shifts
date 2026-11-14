@@ -353,6 +353,7 @@
     ['guide', () => (App.guideCard ? App.guideCard() : '')],
     ['payday', () => paydayCard()],
     ['salary', () => (App.salaryCard ? App.salaryCard() : '')],
+    ['slipcheck', () => (App.slipNudgeCard ? App.slipNudgeCard() : '')],
     ['consent', () => consentCard()],
     ['wrapped', () => (App.wrappedCard ? App.wrappedCard() : '')],
     ['recap', () => (App.recapCard ? App.recapCard() : '')],

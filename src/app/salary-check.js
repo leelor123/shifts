@@ -117,6 +117,58 @@
     App.rerender();
     App.actions['payslip-new']();
   };
+  /* ---------------- "the payslip came? you can check it" (Moments.slipNudge) ----------------
+   * A gentle card around this person's usual payday, once a month, leading to the payslip check. It waits while the
+   * "did the salary arrive?" card asks (one payday card at a time), and stops after two "not now"s. Its memory
+   * (meta.slipNudge: { done: { pk: at }, n, at }) goes with the account (store.js ACCOUNT_META). */
+  function slipDue() {
+    const emp = S.employers && S.employers[0], M = root.Moments, I = root.Insights;
+    if (!emp || !M || !M.slipNudge || !I || !App.model || S.settings.demo) return null;
+    const today = U.todayKey(), now = Date.now();
+    const mem = S.meta.slipNudge && typeof S.meta.slipNudge === 'object' ? S.meta.slipNudge : {};
+    const lag = I.slipLag ? I.slipLag(S.payslips, emp) : 0;
+    const cur = Engine.periodOf(today, emp);
+    for (const P of [Engine.periodOf(U.addDays(cur.from, -1), emp), cur]) {
+      if (!P.payDate || P.payDate > today) continue;
+      const since = new Date(P.payDate + 'T00:00:00').getTime();
+      const o = { pk: P.key, payDate: P.payDate, today, nowMs: now, lag, mem,
+        hasSlip: !!I.slipFor(S.payslips, P.key, emp), checkedSince: S.payslips.some((x) => +x.createdAt >= since) };
+      if (!M.slipNudge(o)) continue;
+      if (!(Engine.periodSummary(App.model, P.key, emp.id).gross > 0)) continue; // no shifts in it: nothing to compare
+      return P;
+    }
+    return null;
+  }
+  App.slipNudgeCard = function () {
+    const P = slipDue();
+    if (!P || (App.salaryCard && App.salaryCard())) return '';
+    return `<div class="card salary-card slip-nudge" data-key="slip-nudge"><div class="sc-q">${icon('receipt', 's')} התלוש הגיע? אפשר לבדוק אותו</div>
+      <div class="sc-exp">הבדיקה משווה את התלוש למשמרות שרשמת ומראה אם כדאי לבדוק משהו.</div>
+      <div class="btn-row"><button class="btn" data-act="slip-nudge-go">${icon('file', 's')} בדיקת התלוש</button><button class="btn text" data-act="slip-nudge-later">לא עכשיו</button></div></div>`;
+  };
+  async function slipAnswer(P, later) {
+    const mem = S.meta.slipNudge && typeof S.meta.slipNudge === 'object' ? S.meta.slipNudge : {};
+    const done = Object.assign({}, mem.done);
+    done[P.key] = Date.now();
+    const keys = Object.keys(done).sort();
+    while (keys.length > 12) delete done[keys.shift()]; // a year is enough
+    const n = (+mem.n || 0) + (later ? 1 : 0);
+    await Store.setMeta({ slipNudge: { done, n, at: Date.now() } });
+    return n;
+  }
+  App.actions['slip-nudge-go'] = async () => {
+    const P = slipDue();
+    if (P) await slipAnswer(P, false);
+    App.rerender();
+    App.actions['payslip-new']();
+  };
+  App.actions['slip-nudge-later'] = async () => {
+    const P = slipDue(); if (!P) return;
+    const n = await slipAnswer(P, true);
+    UI.toast(n >= 2 ? 'בסדר, לא נציע את זה שוב' : 'בסדר, נציע שוב בחודש הבא');
+    App.rerender();
+  };
+
   /* ---------------- the net that learned from these answers (core/netlearn.js) ---------------- */
   /** The sentence on the learned correction, or ''. */
   App.netLearnText = function () {

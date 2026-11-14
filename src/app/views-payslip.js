@@ -418,7 +418,14 @@
   App.payslipVerify = verifySheet; // tests open it with a ready draft
 
   /* ---------------- analysis ---------------- */
-  const STATUS = { ok: ['okc', 'תקין'], warn: ['alert', 'כדאי לבדוק'], bad: ['xc', 'חסר או שגוי'] };
+  // the check reads a payslip and compares it with the shifts the person entered: a gap it finds is a possible gap to
+  // look into, never a verdict on the employer (an advisory review, 14 Nov 2026: the words carry trust and legal risk)
+  const STATUS = { ok: ['okc', 'תקין'], warn: ['alert', 'כדאי לבדוק'], bad: ['xc', 'ייתכן שיש פער'] };
+  // the calm note on every result: an estimate, not legal advice, and where to ask (sources the rights guide links)
+  const RESULT_NOTE = `<div class="small muted ps-note" id="ps-note" style="margin:0 4px 12px">${icon('info', 's')} זו הערכה לפי מה שהאפליקציה קראה מהתלוש ולפי המשמרות שהזנת, ולא ייעוץ משפטי. לשאלות על הזכויות שלך: <a href="https://www.kolzchut.org.il/he/" target="_blank" rel="noopener">כל זכות</a> או <a href="https://www.gov.il/he/departments/labor" target="_blank" rel="noopener">משרד העבודה</a>.</div>`;
+  // the invite a good result can share: a link to the app and nothing from the payslip (no amount, no month, no name)
+  const INVITE_URL = 'https://leelor123.github.io/shifts/';
+  const INVITE_TEXT = 'שעתי משווה את תלוש השכר למשמרות שרשמת ומראה אם יש פער שכדאי לבדוק. אפשר לנסות:';
   const CONF = { high: 'ביטחון גבוה', medium: 'ביטחון בינוני', low: 'ביטחון נמוך' };
   function prevSlipOf(period, id) {
     return S.payslips.filter((p) => p.period < period && p.id !== id).sort((a, b) => b.period.localeCompare(a.period))[0];
@@ -456,7 +463,7 @@
           </div>`;
         }).join('')}
         <div class="gc-left${c.all ? ' all' : ''}"><small>הפער שנשאר אחרי הבדיקות</small><b>${money(c.left)}</b></div>
-        <div class="small gc-sum">${c.all ? 'הסיבות שמצאנו מסבירות את כל הפער, כך שכנראה לא חסר לך כסף. כדאי לבדוק אותן, ואם משהו עדיין לא מסתדר, המכתב מחכה למטה.'
+        <div class="small gc-sum">${c.all ? 'הסיבות שמצאנו מסבירות את כל הפער, כך שכנראה הכול בסדר. כדאי לבדוק אותן, ואם משהו עדיין לא מסתדר, המכתב מחכה למטה.'
           : c.explained >= 1 ? 'אם בדקת ועדיין חסר, המכתב למטה מבקש רק את הפער שנשאר.' : 'לא מצאנו סיבה תמימה שמסבירה את הפער. המכתב למטה מוכן.'}</div>
         ${c.all ? `${c.nextSlip ? `<button class="btn block" data-gc-remind>${icon('bell', 's')} תזכיר לי לבדוק בתלוש הבא</button>` : ''}
           <button class="btn text sm block gc-letter-anyway" data-go-letter>${icon('send', 's')} להמשיך למכתב בכל זאת</button>`
@@ -575,17 +582,24 @@
     const lines = Payslip.explainLines(slip.fields, prev && prev.fields);
     const deltas = Payslip.compareSlips(prev && prev.fields, slip.fields, a);
     const rc = reconcileOf(slip, a, c);
+    const rcShown = a.noShifts ? null : rc;
     const msg = Payslip.employerMessage(a, { name: S.settings.userName || '', check: c });
     const left = c && c.items.length ? c.left : a.totalMissing;
     const order = { bad: 0, warn: 1, ok: 2 };
-    const hero = a.totalMissing <= 0 ? (counts.bad === 0 ? `<div class="card tonal"><b>${icon('okc', 's')} לא נמצאו חוסרים</b><div class="small">התלוש תואם למשמרות שרשמת${counts.warn ? ', עם כמה נקודות לבדיקה' : ''}.</div></div>` : '')
-      : left < 1 ? `<div class="card tonal"><b>${icon('okc', 's')} כנראה לא חסר לך כסף</b><div class="small">ההפרש של ${money(a.totalMissing)} שנמצא בתלוש מוסבר כולו בסיבות שמצאנו בנתונים שלך.</div></div>`
-        : `<div class="card tonal"><div class="small">הפרש משוער לטובתך</div><div class="hero-num">${money(left)}</div><div class="tiny">${left < a.totalMissing - 0.5 ? `מתוך ${money(a.totalMissing)} שנמצאו, ${money(a.totalMissing - left)} מוסברים בסיבות שמצאנו.` : `סכום הממצאים שמסומנים בסימן ${icon('xc', 's')} בפירוט למטה.`}</div></div>`;
+    const good = a.totalMissing <= 0 ? counts.bad === 0 : left < 1;
+    // no shift logged in the period: the hours could not be compared, said calmly with a way to add them
+    const noShiftsHtml = a.noShifts ? `<div class="card tonal ps-noshifts" id="ps-noshifts"><b>${icon('calendar', 's')} עוד אין משמרות בחודש הזה</b><div class="small">בדקנו את מה שאפשר לבדוק מהתלוש לבד, כמו שכר מינימום, פנסיה, מס וביטוח לאומי. כדי להשוות גם את השעות, אפשר לרשום את המשמרות של החודש או לייבא סידור עבודה.</div>
+      <div class="btn-row" style="margin-top:8px"><button class="btn tonal sm" data-act="shift-new">${icon('plus', 's')} רישום משמרת</button><button class="btn text sm" data-act="import-schedule">${icon('table', 's')} ייבוא סידור עבודה</button></div></div>` : '';
+    const hero = a.noShifts ? noShiftsHtml : a.totalMissing <= 0 ? (counts.bad === 0 ? `<div class="card tonal"><b>${icon('okc', 's')} לא מצאנו פערים</b><div class="small">התלוש תואם למשמרות שרשמת${counts.warn ? ', עם כמה נקודות לבדיקה' : ''}.</div></div>` : '')
+      : left < 1 ? `<div class="card tonal"><b>${icon('okc', 's')} כנראה הכול בסדר</b><div class="small">ההפרש של ${money(a.totalMissing)} שנמצא בתלוש מוסבר כולו בסיבות שמצאנו בנתונים שלך.</div></div>`
+        : `<div class="card tonal"><div class="small">ייתכן שיש פער. כדאי לבדוק</div><div class="hero-num">${money(left)}</div><div class="tiny">${left < a.totalMissing - 0.5 ? `מתוך ${money(a.totalMissing)} שנמצאו, ${money(a.totalMissing - left)} מוסברים בסיבות שמצאנו.` : `סכום הממצאים שמסומנים בסימן ${icon('xc', 's')} בפירוט למטה.`}</div></div>`;
     return `
       ${carryHtml(slip)}
-      <div class="status-summary"><div class="ok">${icon('okc', 's')} ${counts.ok}<div class="tiny">תקין</div></div><div class="warn">${icon('alert', 's')} ${counts.warn}<div class="tiny">לבדוק</div></div><div class="bad">${icon('xc', 's')} ${counts.bad}<div class="tiny">חסר/שגוי</div></div></div>
+      <div class="status-summary"><div class="ok">${icon('okc', 's')} ${counts.ok}<div class="tiny">תקין</div></div><div class="warn">${icon('alert', 's')} ${counts.warn}<div class="tiny">לבדוק</div></div><div class="bad">${icon('xc', 's')} ${counts.bad}<div class="tiny">פער אפשרי</div></div></div>
       ${hero}
-      ${reconcileHtml(rc)}
+      ${RESULT_NOTE}
+      ${good ? inviteHtml() : ''}
+      ${reconcileHtml(rcShown)}
       ${settingsHtml(rc)}
       ${leaveHtml(deltas)}
       ${checkHtml(c)}
@@ -606,8 +620,24 @@
       ${wf ? `<div class="section-title">${icon('chart', 's')} מברוטו לנטו</div><div class="card">${Charts.waterfall(wf, { fmt: (v) => U.money(v), axisFmt: (v) => '₪' + (v >= 1000 ? (v / 1000).toFixed(1).replace('.0', '') + 'K' : Math.round(v)) })}
         <div class="tiny muted">כחול = ברוטו, אדום = ניכויים, ירוק = נטו. לחץ על עמודה לפרטים.</div></div>` : ''}
       ${translatorHtml(slip, lines)}
+      ${wrongHtml()}
       ${DISCLAIMER}`;
   }
+  /** "The reading is wrong": fix the read values in place, or tell the team (nothing from the payslip goes with it). */
+  function wrongHtml() {
+    return `<div class="section-title" id="ps-wrong-t">${icon('help', 's')} משהו נקרא לא נכון?</div>
+      <div class="card ps-wrong" id="ps-wrong"><div class="small">אפשר לתקן כל שורה במקום, והבדיקה תרוץ שוב על המספרים הנכונים.</div>
+        <div class="btn-row" style="margin-top:8px"><button class="btn tonal sm" data-edit>${icon('edit', 's')} תיקון מה שנקרא</button><button class="btn text sm" data-ps-feedback>${icon('mail', 's')} לספר לנו מה השתבש</button></div>
+        <div class="tiny muted" style="margin-top:6px">בפנייה לא יצורפו התלוש או הסכומים שלך. את הטקסט אפשר לקרוא ולערוך לפני השליחה.</div></div>`;
+  }
+  /** On a result with no gap: an invite to the app to share (a link and a sentence, nothing from the payslip). */
+  function inviteHtml() {
+    return `<div class="card ps-invite" id="ps-invite"><div class="small">מכירים עוד אנשים שעובדים במשמרות? אפשר לשלוח להם את שעתי.</div>
+      <button class="btn tonal sm" data-ps-invite style="margin-top:8px">${icon('share', 's')} שליחת קישור לאפליקציה</button>
+      <div class="tiny muted" style="margin-top:6px">נשלחים רק משפט וקישור לאפליקציה, בלי סכומים ובלי פרטים מהתלוש.</div></div>`;
+  }
+  /** The feedback request's first words: how the payslip was read, nothing else (the person adds what went wrong). */
+  const feedbackText = (source) => `הקריאה של התלוש לא הייתה נכונה (${(SOURCE[source] || SOURCE.manual)[1]}). מה נקרא לא נכון: `;
   function gapCheck(slip, a) {
     try { return Payslip.checkGap(a, slip, App.model); } catch (e) { console.warn('gap check', e); return null; }
   }
@@ -750,6 +780,10 @@
             });
             return;
           }
+          // feedback through the help centre's request form: it opens with how the payslip was read, in a box the
+          // person sees and edits before sending; the payslip, its amounts and its text never go with it
+          if (b.hasAttribute('data-ps-feedback')) { if (root.Support) root.Support.newTicket('payslip', feedbackText(slip.source)); else if (App.actions.support) App.actions.support(); return; }
+          if (b.hasAttribute('data-ps-invite')) { await UI.shareText(INVITE_TEXT, { title: 'Shaati', url: INVITE_URL, okText: 'הקישור הועתק. אפשר להדביק בוואטסאפ' }); return; }
           if (b.hasAttribute('data-copy-msg')) { await UI.copied(el.querySelector('#ps-msg').value, 'ההודעה הועתקה'); }
           if (b.hasAttribute('data-share-msg')) { const t = el.querySelector('#ps-msg').value; await UI.shareText(t, { okText: 'הועתק' }); }
           if (b.hasAttribute('data-edit')) { UI.closeTop(); setTimeout(() => verifySheet(Object.assign({}, slip, { id: slip.isNew ? null : slip.id })), 320); }
@@ -856,7 +890,7 @@
       g.font = '150px "Segoe UI Emoji", "Noto Color Emoji", sans-serif'; g.fillText(back ? '🎉' : '🔍', W / 2, 300);
       g.font = F(600, 64); g.fillText(back ? 'קיבלתי בחזרה' : 'שעתי מצאה לי', W / 2, 460);
       g.font = F(700, 210); g.fillText(U.money(amount, 0), W / 2, 700);
-      g.font = F(600, 58); g.globalAlpha = 0.92; g.fillText(back ? 'שהגיעו לי מהעבודה' : 'שחסרים לי בתלוש', W / 2, 800); g.globalAlpha = 1;
+      g.font = F(600, 58); g.globalAlpha = 0.92; g.fillText(back ? 'שהגיעו לי מהעבודה' : 'שכדאי לבדוק בתלוש', W / 2, 800); g.globalAlpha = 1;
       g.fillStyle = 'rgba(255,255,255,.16)';
       const rw = 900, rh = 120, rx = (W - rw) / 2, ry = 930;
       g.beginPath(); if (g.roundRect) g.roundRect(rx, ry, rw, rh, 60); else g.rect(rx, ry, rw, rh); g.fill();
@@ -865,7 +899,7 @@
       g.font = F(600, 44); g.globalAlpha = 0.8; g.fillText('Shaati · שעתי', W / 2, H - 70); g.globalAlpha = 1;
       const blob = await new Promise((r) => c.toBlob(r, 'image/png'));
       if (!blob) throw new Error('no image');
-      await UI.shareFile(back ? 'shaati-back.png' : 'shaati-found.png', blob, back ? 'קיבלתי בחזרה כסף שהגיע לי' : 'שעתי מצאה לי כסף שחסר בתלוש', `${back ? 'קיבלתי בחזרה' : 'שעתי מצאה לי'} ${U.money(amount, 0)} ${back ? 'שהגיעו לי מהעבודה' : 'שחסרים לי בתלוש'}. גם לכם כדאי לבדוק: https://shaati.web.app`);
+      await UI.shareFile(back ? 'shaati-back.png' : 'shaati-found.png', blob, back ? 'קיבלתי בחזרה כסף שהגיע לי' : 'שעתי מצאה לי פער אפשרי בתלוש', `${back ? 'קיבלתי בחזרה' : 'שעתי מצאה לי'} ${U.money(amount, 0)} ${back ? 'שהגיעו לי מהעבודה' : 'שכדאי לבדוק בתלוש'}. גם לכם כדאי לבדוק: https://shaati.web.app`);
     } catch (e) { console.warn('found image', e); UI.toast('לא הצלחנו ליצור תמונה'); }
   };
 

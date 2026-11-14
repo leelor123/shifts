@@ -549,12 +549,18 @@
       return `שים לב: ${overridesInPeriod.length} משמרות בתקופה כוללות עקיפה ידנית (חישוב אוטומטי: ${U.num(autoVal, 2)}).`;
     };
     const dates = (rs) => rs.map((r) => U.fmtDate(r.dateKey, 'short')).join(', ');
+    // no shift logged in the payslip's period (a new user checks a payslip first): there is nothing to compare the
+    // payslip's hours, rate, Shabbat, overtime and travel with, and comparing them with zero warned "the payslip has more
+    // hours than you logged" (14 Nov 2026). Those checks wait for shifts; the checks the payslip answers alone stay
+    // (minimum wage, pension, recuperation, tax and National Insurance, the deductions), and the screen invites the
+    // person to log the shifts or import a schedule (noShifts).
+    const noShifts = !E.shifts.length;
 
     /* 1. total hours */
     let covered = []; // shifts already identified as unpaid — excluded from the OT / rest checks to avoid double counting
     const slipHours = HOUR_FIELDS.reduce((s, k) => s + (qty(F, k) || 0), 0) || val(F, 'workHours');
     const appHours = E.t.hours;
-    if (slipHours == null || slipHours === 0) {
+    if (noShifts) { /* nothing logged to compare with */ } else if (slipHours == null || slipHours === 0) {
       add({ area: 'שעות', status: 'warn', title: 'לא זוהו שעות בתלוש', detail: `באפליקציה רשומות ${U.hours(appHours)} שעות לתקופה. אם התלוש מציג שעות, הוסף אותן במסך האימות כדי לבדוק התאמה.`, basis: 'אין כמות שעות בשורות התלוש שזוהו.', confidence: 'low' });
     } else {
       const diff = appHours - slipHours;
@@ -617,7 +623,7 @@
     const slipRestPay = (val(F, 'rest150') || 0) + (val(F, 'rest175') || 0) + (val(F, 'rest200') || 0);
     const covSum = (f) => covered.reduce((x, r) => x + f(r), 0);
     const appRestH = E.t.restHours - covSum((r) => r.restHours);
-    if (appRestH > 0.01 || slipRestH > 0 || slipRestPay > 0) {
+    if (!noShifts && (appRestH > 0.01 || slipRestH > 0 || slipRestPay > 0)) {
       const restShifts = E.shifts.filter((r) => r.restHours > 0 && !covered.includes(r));
       if (slipRestH === 0 && slipRestPay === 0 && appRestH > 0.25) {
         const amount = E.t.restPremium;
@@ -649,7 +655,7 @@
     const slipOt = (qty(F, 'ot125') || 0) + (qty(F, 'ot150') || 0);
     const appOt1 = E.t.hoursBy.ot1 - covSum((r) => r.hoursBy.ot1), appOt2 = E.t.hoursBy.ot2 - covSum((r) => r.hoursBy.ot2);
     const appOt = appOt1 + appOt2;
-    if (appOt > 0.25 || slipOt > 0) {
+    if (!noShifts && (appOt > 0.25 || slipOt > 0)) {
       const otShifts = E.shifts.filter((r) => r.hoursBy.ot1 + r.hoursBy.ot2 > 0 && !covered.includes(r));
       if (appOt - slipOt > 0.25) {
         const missing125 = Math.max(0, appOt1 - (qty(F, 'ot125') || 0));
@@ -664,7 +670,7 @@
 
     /* 5. travel */
     const slipTravel = val(F, 'travel');
-    if (E.t.travel > 0 || slipTravel) {
+    if (!noShifts && (E.t.travel > 0 || slipTravel)) {
       const d = E.t.travel - (slipTravel || 0);
       const emp = model.ctx.primaryEmployer();
       const basis = `${E.t.workDays} ימי עבודה × ${U.money(emp.travelPerDay)}` + (+emp.travelMonthlyCap ? `, תקרה ${U.money(emp.travelMonthlyCap)}` : '') + '.';
@@ -783,7 +789,7 @@
 
     const bad = findings.filter((f) => f.status === 'bad');
     const totalMissing = bad.reduce((s, f) => s + Math.max(0, f.amount || 0), 0);
-    return { findings, expected: E, auto: A, totalMissing, overridesInPeriod: overridesInPeriod.length, period: slip.period };
+    return { findings, expected: E, auto: A, totalMissing, overridesInPeriod: overridesInPeriod.length, period: slip.period, noShifts };
   }
 
   /* ---------------- before writing to the employer: innocent reasons for a gap ----------------
@@ -1197,7 +1203,7 @@
       const higher = W.rate > aRate;
       add({ id: 'rate', label: 'תעריף לשעה' + (role && role.name ? ' · ' + role.name : ''), slip: U.money(W.rate), app: U.money(aRate), recommend: higher ? 'slip' : 'ask',
         text: higher ? `בתלוש התעריף גבוה מזה שבאפליקציה. אם קיבלת העלאה, אפשר לעדכן את התעריף מ-${U.fmtDate(P.from)}.`
-          : `בתלוש התעריף נמוך מזה שהגדרת. אם התעריף שסוכם הוא ${U.money(aRate)}, חסר לך כסף על כל שעה. אם הוא ${U.money(W.rate)}, כדאי לעדכן.`,
+          : `בתלוש התעריף נמוך מזה שהגדרת. אם התעריף שסוכם הוא ${U.money(aRate)}, ייתכן שיש פער על כל שעה. אם הוא ${U.money(W.rate)}, כדאי לעדכן.`,
         apply: role ? { kind: 'role', id, from: P.from, rate: r2(W.rate) } : null, set: { kind: 'set', k: 'roles', f: 'תעריף' } });
     }
 
