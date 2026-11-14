@@ -594,24 +594,31 @@
   ]
  },
  {
+  "key": "מגיע בעדכון הקרוב של האפליקציה",
+  "kind": "lit",
+  "where": [
+   "app/arrive.js:45"
+  ]
+ },
+ {
   "key": "באפליקציה לאנדרואיד: הצעה להתחיל משמרת כשמגיעים",
   "kind": "lit",
   "where": [
-   "app/arrive.js:42"
+   "app/arrive.js:46"
   ]
  },
  {
   "key": "פועל · ברדיוס {0} מטר",
   "kind": "tpl",
   "where": [
-   "app/arrive.js:43"
+   "app/arrive.js:47"
   ]
  },
  {
   "key": "כבוי",
   "kind": "lit",
   "where": [
-   "app/arrive.js:44",
+   "app/arrive.js:48",
    "app/views-admin.js:50",
    "app/views-settings.js:788",
    "app/views-settings.js:955"
@@ -621,70 +628,77 @@
   "key": "<div class=\"nfc-intro\">{0}<p>כשמגיעים למקום העבודה, שעתי שולחת התראה שמציעה להתחיל משמרת. כשיוצאים ומשמרת רצה, היא מציעה לסיים אותה. משמרת לא מתחילה ולא מסתיימת בלי לחיצה שלך.</p></div>",
   "kind": "tpl",
   "where": [
-   "app/arrive.js:48"
+   "app/arrive.js:52"
   ]
  },
  {
   "key": "<div class=\"tiny muted nfc-note\">המיקום נשמר רק בטלפון הזה. הוא לא נשלח לענן, לא לגיבוי ולא לשום מקום אחר.</div>",
   "kind": "lit",
   "where": [
-   "app/arrive.js:49"
+   "app/arrive.js:53"
+  ]
+ },
+ {
+  "key": "<div class=\"card nfc-card\">{0}\n        <div class=\"tiny muted nfc-note\">האפשרות הזו מגיעה בעדכון הקרוב של שעתי ב־Google Play. אחרי העדכון היא תופיע כאן.</div></div>",
+  "kind": "tpl",
+  "where": [
+   "app/arrive.js:55"
   ]
  },
  {
   "key": "<div class=\"card nfc-card\">{0}\n        <div class=\"tiny muted nfc-note\">זה עובד רק באפליקציית שעתי לאנדרואיד. דפדפן לא יכול לבדוק מיקום כשהאפליקציה סגורה, ולכן כאן אין את האפשרות הזו.</div></div>",
   "kind": "tpl",
   "where": [
-   "app/arrive.js:51"
+   "app/arrive.js:59"
   ]
  },
  {
   "key": "<div class=\"section-title\">רדיוס סביב המקום</div><div class=\"seg\" style=\"margin-bottom:14px\">{0}</div>",
   "kind": "tpl",
   "where": [
-   "app/arrive.js:55"
+   "app/arrive.js:63"
   ]
  },
  {
   "key": "<button data-arrive-r=\"{0}\" class=\"{1}\">{2} מטר</button>",
   "kind": "tpl",
   "where": [
-   "app/arrive.js:55"
+   "app/arrive.js:63"
   ]
  },
  {
   "key": "<div class=\"card nfc-card\">{0}\n          <div class=\"item\" style=\"cursor:default\"><span class=\"lead\">{1}</span><span class=\"body\"><span class=\"t\">פועל</span><span class=\"s\">{2}</span></span></div>\n          <button class=\"btn tonal block\" data-arrive-off>{3} כיבוי</button>\n        </div>\n        {4}\n        <button class=\"btn block\" data-arrive-save>{5} שמירה מחדש מהמקום הנוכחי</button>\n        {6}",
   "kind": "tpl",
   "where": [
-   "app/arrive.js:57"
+   "app/arrive.js:65"
   ]
  },
  {
   "key": "ברדיוס {0} מטר מהמקום ששמרת",
   "kind": "tpl",
   "where": [
-   "app/arrive.js:58"
+   "app/arrive.js:66"
   ]
  },
  {
   "key": "<div class=\"card nfc-card\">{0}\n        {1}\n        {2}\n        <button class=\"btn go block\" data-arrive-save>{3} שמירת המקום הנוכחי כמקום העבודה</button>\n        <div class=\"tiny muted nfc-note\">עומדים במקום העבודה ולוחצים. הטלפון יבקש הרשאת מיקום, וצריך לבחור “לאפשר כל הזמן”.</div>\n      </div>\n      {4}",
   "kind": "tpl",
   "where": [
-   "app/arrive.js:66"
+   "app/arrive.js:74"
   ]
  },
  {
   "key": "<div class=\"tiny nfc-note\">ההרשאה לגשת למיקום כל הזמן בוטלה, ולכן ההצעות נעצרו. אפשר לשמור את המקום שוב.</div>",
   "kind": "lit",
   "where": [
-   "app/arrive.js:67"
+   "app/arrive.js:75"
   ]
  },
  {
   "key": "ההצעות במקום העבודה כבויות",
   "kind": "lit",
   "where": [
-   "app/arrive.js:89"
+   "app/arrive.js:97"
   ]
  },
  {
@@ -8273,82 +8287,87 @@
   ]
  },
  {
-  "key": "התלוש מול החישוב של שעתי",
+  "key": "בדיקת תלוש כבר במסך הראשון",
+  "kind": "lit",
+  "where": [
+   "app/views-guide.js:126"
+  ]
+ },
+ {
+  "key": "יש לך תלוש? אפשר לבדוק אותו בלחיצה אחת, בלי לרשום משמרות ובלי חשבון. התלוש נשאר בטלפון.",
+  "kind": "lit",
+  "where": [
+   "app/views-guide.js:126"
+  ]
+ },
+ {
+  "key": "קריאה מדויקת וזהירה יותר",
   "kind": "lit",
   "where": [
    "app/views-guide.js:127"
   ]
  },
  {
-  "key": "כל הפרש בין התלוש לחישוב מקבל שורה עם הסיבה שלו. כשהסיבה לא ברורה, שעתי שואלת שאלה אחת שסוגרת אותה.",
+  "key": "שעתי קוראת נכון יותר נטו, שעות וימי עבודה, מדברת על פער אפשרי, ומאפשרת לתקן מה שנקרא לא נכון.",
   "kind": "lit",
   "where": [
    "app/views-guide.js:127"
   ]
  },
  {
-  "key": "ההגדרות שלך מול התלוש",
+  "key": "התלוש הגיע?",
   "kind": "lit",
   "where": [
    "app/views-guide.js:128"
   ]
  },
  {
-  "key": "נקודות זיכוי, ותק, נסיעות ופנסיה שכתובים אחרת בתלוש: רואים את שני הערכים, ומעדכנים בלחיצה.",
+  "key": "סביב יום התשלום שעתי מציעה לבדוק את התלוש של החודש.",
   "kind": "lit",
   "where": [
    "app/views-guide.js:128"
   ]
  },
  {
-  "key": "שעתי זוכרת",
+  "key": "מעקב תלושים ב־Plus",
   "kind": "lit",
   "where": [
    "app/views-guide.js:129"
   ]
  },
  {
-  "key": "אחרי שהעלית תלוש, השאלות עליו נפסקות. התשובות שלך נשמרות בחשבון ומגיעות לכל טלפון, ותזכורת התלוש באה ביום שבו בדרך כלל מעלים אותו.",
+  "key": "השוואה בין חודשים, בדיקה של כל התלושים יחד ודוח מפורט לשמירה כ־PDF. בדיקת התלוש עצמה נשארת חינם.",
   "kind": "lit",
   "where": [
    "app/views-guide.js:129"
-  ]
- },
- {
-  "key": "שכחת לרשום משמרת?",
-  "kind": "lit",
-  "where": [
-   "app/views-guide.js:130",
-   "core/noteplan.js:103",
-   "core/noteplan.js:169"
-  ]
- },
- {
-  "key": "אחרי שלושה ימים בלי להיכנס לאפליקציה מגיעה תזכורת. אפשר לכבות או לשנות את מספר הימים בהגדרות › התראות.",
-  "kind": "lit",
-  "where": [
-   "app/views-guide.js:130"
   ]
  },
  {
   "key": "מה חדש? ✨",
   "kind": "lit",
   "where": [
-   "app/views-guide.js:151"
+   "app/views-guide.js:150"
   ]
  },
  {
   "key": "עדכנו את האפליקציה בשבילך! 🎉",
   "kind": "lit",
   "where": [
-   "app/views-guide.js:152"
+   "app/views-guide.js:151"
   ]
  },
  {
   "key": "<button class=\"btn tonal\" data-act=\"changelog\" style=\"flex:0 0 auto\">כל העדכונים</button><button class=\"btn\" data-wn-ok>הבנתי, תודה</button>",
   "kind": "lit",
   "where": [
-   "app/views-guide.js:154"
+   "app/views-guide.js:153"
+  ]
+ },
+ {
+  "key": "בדיקת תלוש כבר במסך הראשון, בלחיצה אחת ובלי חשבון. קורא התלוש קורא נכון יותר נטו, שעות וימי עבודה, מדבר על פער אפשרי, ומאפשר לתקן קריאה שגויה או לספר לנו. בלי משמרות רשומות נבדק רק מה שהתלוש מראה לבד. סביב יום התשלום מגיעה הצעה לבדוק את התלוש. ב־Plus יש עכשיו השוואה בין חודשים, בדיקה של כל התלושים יחד ודוח תלושים מפורט. בקשת הדירוג מופיעה רק אחרי משהו טוב, בכרטיס קטן שלא חוסם את המסך.",
+  "kind": "lit",
+  "where": [
+   "app/views-guide.js:166"
   ]
  },
  {
@@ -24889,6 +24908,14 @@
   "kind": "tpl",
   "where": [
    "core/moments.js:74"
+  ]
+ },
+ {
+  "key": "שכחת לרשום משמרת?",
+  "kind": "lit",
+  "where": [
+   "core/noteplan.js:103",
+   "core/noteplan.js:169"
   ]
  },
  {

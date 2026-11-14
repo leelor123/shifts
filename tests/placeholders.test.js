@@ -13,7 +13,7 @@ T.section('placeholders fit a small phone');
 const I18N = path.join(__dirname, '..', 'i18n');
 const LANGS = ['en', 'ru', 'ar', 'fr', 'es', 'am'];
 const BUDGET = 34;
-const units = (t) => [...t].reduce((a, c) => a + (/[ሀ-᎟ⶀ-⷟꬀-꬯]/.test(c) ? 1.25 : /[Ѐ-ӿ]/.test(c) ? 1.03 : /[​-‏⁠⁦-⁩]|\p{M}/u.test(c) ? 0 : 1), 0);
+const units = (t) => [...t].reduce((a, c) => a + (/[ሀ-᎟ⶀ-⷟꬀-꬯]/.test(c) ? 1.25 : /[Ѐ-ӿ]/.test(c) ? 1.03 : /[​-\u200F⁠\u2066-\u2069]|\p{M}/u.test(c) ? 0 : 1), 0);
 // the placeholders of single-line inputs in a template (the same reading as the browser audit)
 const placeholders = (s) => [...String(s).matchAll(/placeholder="([^"$]*)"/g)].map((m) => (/^<textarea/.test(String(s).slice(String(s).lastIndexOf('<', m.index))) ? null : m[1]));
 const dec = (s) => s.replace(/&#10;/g, '\n').replace(/&quot;/g, '"').replace(/&amp;/g, '&');

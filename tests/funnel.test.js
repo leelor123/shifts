@@ -87,5 +87,5 @@ T.test('the dashboard draws the funnel for 30 and 90 days, a column per platform
   T.eq(first(panel(30)), '1,1,0,0', '30 days: all, Android, browser, iPhone');
   T.eq(first(panel(90)), '2,1,0,1', '90 days');
   T.eq((panel(30).match(/<tr>/g) || []).length, 6, 'a header and five steps');
-  T.ok(!/[‎‏‪-‮⁦-⁩]/.test(src), 'no raw bidi characters in the file');
+  T.ok(!/[\u200E\u200F\u202A-\u202E\u2066-\u2069]/.test(src), 'no raw bidi characters in the file');
 });

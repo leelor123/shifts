@@ -23,9 +23,17 @@ T.test('no i18n file holds a literal direction mark (LRM, RLM, embedding, overri
   const dir = path.join(__dirname, '..', 'i18n');
   const bad = [];
   for (const f of fs.readdirSync(dir).filter((n) => n.endsWith('.json'))) {
-    const n = (fs.readFileSync(path.join(dir, f), 'utf8').match(/[‎‏‪-‮⁦-⁩]/g) || []).length;
+    const n = (fs.readFileSync(path.join(dir, f), 'utf8').match(/[\u200E\u200F\u202A-\u202E\u2066-\u2069]/g) || []).length;
     if (n) bad.push(f + ': ' + n);
   }
+  // the code too: a mark is written as an escape (\u2066 and the like), never typed in (14 Nov 2026)
+  const walk = (d) => fs.readdirSync(d, { withFileTypes: true }).flatMap((e) => (e.isDirectory() ? walk(path.join(d, e.name)) : /\.c?js$/.test(e.name) ? [path.join(d, e.name)] : []));
+  for (const sub of ['src', 'tools', 'tests']) {
+    for (const f of walk(path.join(__dirname, '..', sub))) {
+      const n = (fs.readFileSync(f, 'utf8').match(/[\u200E\u200F\u202A-\u202E\u2066-\u2069]/g) || []).length;
+      if (n) bad.push(path.relative(path.join(__dirname, '..'), f) + ': ' + n);
+    }
+  }
   T.eq(bad.join(', '), '', 'literal direction marks');
-  T.eq(JSON.parse(I.toJson({ a: 'x‏y' })).a, 'x‏y', 'an escaped mark reads back the same');
+  T.eq(JSON.parse(I.toJson({ a: 'x\u200Fy' })).a, 'x\u200Fy', 'an escaped mark reads back the same');
 });

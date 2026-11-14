@@ -121,7 +121,7 @@ function collect() {
 // the invisible direction marks (LRM, RLM, the embeddings and overrides, the isolates) are written as \uXXXX escapes:
 // JSON.parse reads them back the same, and a reviewer sees them in the file instead of an invisible character that
 // can reorder the text around it (14 Nov 2026)
-const BIDI = /[‎‏‪-‮⁦-⁩]/g;
+const BIDI = /[\u200E\u200F\u202A-\u202E\u2066-\u2069]/g; // written as escapes: never the marks themselves
 const toJson = (v) => JSON.stringify(v, null, 1).replace(BIDI, (c) => '\\u' + c.charCodeAt(0).toString(16).toUpperCase().padStart(4, '0')) + '\n';
 function extract() {
   const list = collect();

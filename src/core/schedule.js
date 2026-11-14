@@ -165,7 +165,7 @@
     let head = null; // a table's head: its days in order
     const lines = String(text || '').replace(/\r/g, '').split('\n');
     lines.forEach((raw, li) => {
-      const line = raw.replace(/[‎‏\u202A-\u202E\u2066-\u2069]/g, '').replace(/\*/g, ' ');
+      const line = raw.replace(/[\u200E\u200F\u202A-\u202E\u2066-\u2069]/g, '').replace(/\*/g, ' ');
       if (!line.trim()) return;
       const days = daysIn(line, today);
       const rest = blank(line, days);

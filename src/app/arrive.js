@@ -38,7 +38,11 @@
   // back from the Android app's own screen (or its settings): the status may have changed
   document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'visible') ask(); });
 
+  // inside an Android app built before 1.38 (it talks to the widgets but never announced the geofence): the feature
+  // comes with the app's next update, so it is never told to open "the Android app" it is already in
+  const oldApp = () => !native && !!(App.widgets && App.widgets.connected);
   App.arriveSub = () => {
+    if (oldApp()) return 'מגיע בעדכון הקרוב של האפליקציה';
     if (!native) return 'באפליקציה לאנדרואיד: הצעה להתחיל משמרת כשמגיעים';
     if (status && status.on) return `פועל · ברדיוס ${status.r} מטר`;
     return 'כבוי';
@@ -47,6 +51,10 @@
   App.arriveSection = function () {
     const intro = `<div class="nfc-intro">${UI.tile('pin', 'mint')}<p>כשמגיעים למקום העבודה, שעתי שולחת התראה שמציעה להתחיל משמרת. כשיוצאים ומשמרת רצה, היא מציעה לסיים אותה. משמרת לא מתחילה ולא מסתיימת בלי לחיצה שלך.</p></div>`;
     const privacy = '<div class="tiny muted nfc-note">המיקום נשמר רק בטלפון הזה. הוא לא נשלח לענן, לא לגיבוי ולא לשום מקום אחר.</div>';
+    if (oldApp()) {
+      return `<div class="card nfc-card">${intro}
+        <div class="tiny muted nfc-note">האפשרות הזו מגיעה בעדכון הקרוב של שעתי ב־Google Play. אחרי העדכון היא תופיע כאן.</div></div>`;
+    }
     if (!native) {
       return `<div class="card nfc-card">${intro}
         <div class="tiny muted nfc-note">זה עובד רק באפליקציית שעתי לאנדרואיד. דפדפן לא יכול לבדוק מיקום כשהאפליקציה סגורה, ולכן כאן אין את האפשרות הזו.</div></div>`;

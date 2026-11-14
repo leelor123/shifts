@@ -58,7 +58,7 @@
     let guessedYear = false;
     let exitFirst = false; // a header line with the exit column before the entry column
     String(text || '').split(/\r?\n/).forEach((raw, n) => {
-      const line = raw.replace(/‎|‏|\u202A|\u202B|\u202C|\u2066|\u2067|\u2068|\u2069/g, '').replace(/\s+/g, ' ').trim();
+      const line = raw.replace(/\u200E|\u200F|\u202A|\u202B|\u202C|\u2066|\u2067|\u2068|\u2069/g, '').replace(/\s+/g, ' ').trim();
       if (!line || TOTAL.test(line)) return;
       const iIn = line.search(/כניסה|התחלה|\bin\b|\bstart\b/i), iOut = line.search(/יציאה|סיום|\bout\b|\bend\b/i);
       if (iIn >= 0 && iOut >= 0 && !/\d{1,2}[:.]\d{2}/.test(line)) { exitFirst = iOut < iIn; return; }
@@ -157,7 +157,7 @@
    *      vacation, sickness, a holiday or a weekend without hours are simply no shifts.
    * A phone app's list, where the date is on one line and the hours on the line under it, is read too.
    * ============================================================ */
-  const BIDI = /[‎‏\u202A-\u202E\u2066-\u2069]/g;
+  const BIDI = /[\u200E\u200F\u202A-\u202E\u2066-\u2069]/g;
   const HE_MONTHS = ['ינואר', 'פברואר', 'מרץ', 'אפריל', 'מאי', 'יוני', 'יולי', 'אוגוסט', 'ספטמבר', 'אוקטובר', 'נובמבר', 'דצמבר'];
   const EN_MONTHS = ['jan', 'feb', 'mar', 'apr', 'may', 'jun', 'jul', 'aug', 'sep', 'oct', 'nov', 'dec'];
   const DOW_WORDS = [['ראשון', 'sun', 'sunday'], ['שני', 'mon', 'monday'], ['שלישי', 'tue', 'tues', 'tuesday'], ['רביעי', 'wed', 'wednesday'], ['חמישי', 'thu', 'thur', 'thurs', 'thursday'], ['שישי', 'fri', 'friday'], ['שבת', 'sat', 'saturday']];

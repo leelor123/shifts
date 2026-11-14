@@ -107,7 +107,7 @@ T.test('an amount in a table cell or a list item is wrapped, the cell itself sta
   ctx.globalThis = ctx;
   vm.createContext(ctx);
   vm.runInContext(fs.readFileSync(path.join(SRC, 'app/dom.js'), 'utf8'), ctx);
-  const amount = '‏576.00 ‏₪';
+  const amount = '\u200F576.00 \u200F₪';
   const row = el('tr', [el('td', ['3/11']), el('td', [amount]), el('td', ['16.00 ₪'])]);
   const list = el('ul', [el('li', [amount])]);
   const plain = el('div', [el('span', [amount]), el('b', [amount])]);
@@ -121,7 +121,7 @@ T.test('an amount in a table cell or a list item is wrapped, the cell itself sta
 
   /* The claim report, 6 Nov 2026: "(" ended a line and the amount began the next one. The amount is an inline-block and
    * a line may break between it and the text that touches it; what touches it goes into one no-wrap span with it. */
-  const RLM = '‏';
+  const RLM = '\u200F';
   const amt = RLM + '408.67 ' + RLM + '₪';
   const cell = el('td', ['8 שעות (' + amt + ').']);
   const kids = (n) => n.childNodes.map((c) => (c.nodeType === 3 ? JSON.stringify(c.nodeValue) : c.tagName + '.' + c.className));

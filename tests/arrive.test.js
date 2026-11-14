@@ -11,6 +11,12 @@ const MIN = 60000;
 const now = 1_800_000_000_000;
 
 T.section('a suggestion at work');
+T.test('an Android app from before 1.38 is told the feature comes with its update, never to open "the Android app"', () => {
+  const s = read('src/app/arrive.js');
+  T.ok(/const oldApp = \(\) => !native && !!\(App\.widgets && App\.widgets\.connected\);/.test(s), 'old app: widgets talk, no geofence hello');
+  T.ok(s.indexOf('if (oldApp())') < s.indexOf("if (!native) return 'באפליקציה לאנדרואיד"), 'checked before the browser line (subtitle)');
+  T.ok(s.indexOf('if (oldApp()) {') < s.indexOf('if (!native) {'), 'checked before the browser card (section)');
+});
 T.test('arriving with no shift running suggests a start; with one running, nothing', () => {
   T.eq(A.decide({ kind: 'in', active: false, now }), 'start');
   T.eq(A.decide({ kind: 'in', active: true, now }), null);

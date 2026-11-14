@@ -967,7 +967,7 @@
         try {
           if (file.size > 60 * 1024 * 1024) throw root.U.oops('הקובץ גדול מדי בשביל גיבוי של האפליקציה.');
           let json;
-          try { json = JSON.parse(await file.text()); } catch (e) { throw root.U.oops('זה לא קובץ גיבוי של האפליקציה (צריך קובץ ‎.json‎ שנוצר בגיבוי).'); }
+          try { json = JSON.parse(await file.text()); } catch (e) { throw root.U.oops('זה לא קובץ גיבוי של האפליקציה (צריך קובץ \u200E.json\u200E שנוצר בגיבוי).'); }
           if (!json || typeof json !== 'object' || json.app !== 'shiftpay') throw root.U.oops('זה לא קובץ גיבוי של האפליקציה.');
           const n = Array.isArray(json.shifts) ? json.shifts.length : 0;
           const mode = await UI.dialog({ title: 'שחזור גיבוי', text: `${n === 1 ? 'בקובץ משמרת אחת' : `בקובץ ${n} משמרות`}${/^\d{4}-\d{2}-\d{2}/.test(String(json.exportedAt || '')) ? ` (נוצר ${U.fmtDate(json.exportedAt.slice(0, 10))})` : ''}. מה לעשות?`, buttons: [{ label: 'ביטול', value: null }, { label: 'מיזוג', value: 'merge' }, { label: 'החלפה מלאה', value: 'replace', cls: 'danger' }] });
@@ -1008,7 +1008,7 @@
       <button class="item" data-x="csv"><span class="lead">${icon('table')}</span><span class="body"><span class="t">כל המשמרות (CSV)</span><span class="s">נפתח ב-\u2060Excel ו-\u2060Google Sheets (עברית תקינה)</span></span></button>
       <button class="item" data-x="mcsv"><span class="lead">${icon('table')}</span><span class="body"><span class="t">סיכום חודשי (CSV)</span><span class="s">חודש בכל שורה: שעות, ברוטו, נטו משוער…</span></span></button>
       <button class="item" data-x="pdf"><span class="lead">${icon('printer')}</span><span class="body"><span class="t">דוח חודשי (PDF)</span><span class="s">החודש הנוכחי; לחודשים אחרים: דוחות ← סיכומים</span></span></button>
-      <button class="item" data-x="ics"><span class="lead">${icon('calendar')}</span><span class="body"><span class="t">משמרות ליומן (‎.ics)</span><span class="s">כל המשמרות; מתוכננות עם תזכורת</span></span></button></div>`,
+      <button class="item" data-x="ics"><span class="lead">${icon('calendar')}</span><span class="body"><span class="t">משמרות ליומן (\u200E.ics)</span><span class="s">כל המשמרות; מתוכננות עם תזכורת</span></span></button></div>`,
     mount: (el) => el.querySelectorAll('[data-x]').forEach((b) => (b.onclick = () => {
       const x = b.dataset.x;
       const all = [...App.model.results.values()].sort((a, c) => a.start - c.start);
