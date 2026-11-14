@@ -72,4 +72,22 @@
     <string name="w_ch_money">Salaire, bilans et records</string>
     <string name="w_ch_shifts_d">Avant un service, après, et un chrono resté allumé</string>
     <string name="w_ch_money_d">Jour de paie, bilan de la semaine et du mois, records et objectifs</string>
+    <!-- a suggestion at work (WorkGeo, WorkGeoActivity): the notifications, the disclosure and its steps -->
+    <string name="w_geo_in_t">Vous êtes au travail ?</string>
+    <string name="w_geo_in_b">Si vous venez pour un service, vous pouvez le commencer d\'ici.</string>
+    <string name="w_geo_out_t">Vous quittez le travail ?</string>
+    <string name="w_geo_out_b">Votre service est toujours en cours. Si vous avez fini, vous pouvez le terminer d\'ici.</string>
+    <string name="w_geo_start">Commencer le service</string>
+    <string name="w_geo_stop">Terminer le service</string>
+    <string name="w_geo_off">Désactiver les suggestions</string>
+    <string name="w_geo_disc_t">Une suggestion de service en arrivant au travail</string>
+    <string name="w_geo_disc">Shaati utilise votre position en arrière-plan, même quand l\'application est fermée, uniquement pour vous proposer de commencer un service quand vous arrivez au travail et de le terminer quand vous partez. Votre position reste sur ce téléphone et n\'est envoyée nulle part. Aucun service ne commence ni ne se termine sans votre geste. Désactivez-la à tout moment dans les réglages de Shaati ou depuis la notification.</string>
+    <string name="w_geo_go">Continuer</string>
+    <string name="w_geo_not_now">Pas maintenant</string>
+    <string name="w_geo_always_t">Encore une étape</string>
+    <string name="w_geo_always">Sur l\'écran suivant, choisissez « Toujours autoriser ». Sans cela, le téléphone ne peut pas proposer de service quand l\'application est fermée.</string>
+    <string name="w_geo_need_precise">Pour enregistrer votre lieu de travail, autorisez la position exacte.</string>
+    <string name="w_geo_need_always">Sans l\'autorisation « Toujours », aucune suggestion n\'arrivera. Vous pouvez réessayer depuis les réglages de Shaati.</string>
+    <string name="w_geo_no_fix">Position introuvable. Activez la localisation du téléphone et réessayez.</string>
+    <string name="w_geo_saved">Lieu de travail enregistré. Quand vous arriverez ici, Shaati vous proposera de commencer un service.</string>
 </resources>

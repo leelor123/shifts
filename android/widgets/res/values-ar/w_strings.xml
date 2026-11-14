@@ -75,4 +75,22 @@
     <string name="w_ch_money">الأجر والملخصات والأرقام القياسية</string>
     <string name="w_ch_shifts_d">قبل الوردية وبعدها، ومؤقت ما زال يعمل</string>
     <string name="w_ch_money_d">يوم الراتب، الملخص الأسبوعي والشهري، الأرقام القياسية والأهداف</string>
+    <!-- a suggestion at work (WorkGeo, WorkGeoActivity): the notifications, the disclosure and its steps -->
+    <string name="w_geo_in_t">وصلت إلى العمل؟</string>
+    <string name="w_geo_in_b">إذا جئت لوردية، يمكنك بدؤها من هنا.</string>
+    <string name="w_geo_out_t">غادرت العمل؟</string>
+    <string name="w_geo_out_b">الوردية ما زالت تعمل. إذا انتهيت، يمكنك إنهاؤها من هنا.</string>
+    <string name="w_geo_start">بدء وردية</string>
+    <string name="w_geo_stop">إنهاء الوردية</string>
+    <string name="w_geo_off">إيقاف الاقتراحات</string>
+    <string name="w_geo_disc_t">اقتراح وردية عند الوصول إلى العمل</string>
+    <string name="w_geo_disc">يستخدم Shaati موقعك في الخلفية، حتى عندما يكون التطبيق مغلقًا، فقط ليقترح بدء وردية عند وصولك إلى مكان العمل وإنهاءها عند مغادرتك. يبقى الموقع على هذا الهاتف ولا يُرسل إلى أي مكان. لا تبدأ أي وردية ولا تنتهي دون نقرتك. يمكنك الإيقاف في أي وقت من إعدادات Shaati أو من الإشعار.</string>
+    <string name="w_geo_go">متابعة</string>
+    <string name="w_geo_not_now">ليس الآن</string>
+    <string name="w_geo_always_t">خطوة أخرى</string>
+    <string name="w_geo_always">في الشاشة التالية اختر “السماح طوال الوقت”. بدون ذلك لن يتمكن الهاتف من اقتراح وردية عندما يكون التطبيق مغلقًا.</string>
+    <string name="w_geo_need_precise">لحفظ مكان العمل، اسمح بالموقع الدقيق.</string>
+    <string name="w_geo_need_always">بدون إذن الموقع “طوال الوقت” لن تصل اقتراحات. يمكنك المحاولة مجددًا من إعدادات Shaati.</string>
+    <string name="w_geo_no_fix">لم يُعثر على الموقع. شغّل الموقع في الهاتف وحاول مجددًا.</string>
+    <string name="w_geo_saved">تم حفظ مكان العمل. عندما تصل إلى هنا، سيقترح Shaati بدء وردية.</string>
 </resources>

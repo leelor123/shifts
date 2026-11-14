@@ -7,4 +7,11 @@
         <item name="android:navigationBarColor">@color/w_pick_bg</item>
         <item name="android:windowLightStatusBar">true</item>
     </style>
+    <!-- saving the workplace spot (WorkGeoActivity): nothing of its own on the screen, only the phone's dialogs over the app -->
+    <style name="WorkGeoTheme" parent="@android:style/Theme.Translucent.NoTitleBar">
+        <item name="android:windowIsTranslucent">true</item>
+        <item name="android:windowBackground">@android:color/transparent</item>
+        <item name="android:backgroundDimEnabled">false</item>
+        <item name="android:alertDialogTheme">@android:style/Theme.DeviceDefault.Light.Dialog.Alert</item>
+    </style>
 </resources>

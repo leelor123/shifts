@@ -73,4 +73,22 @@
     <string name="w_ch_money">Зарплата, итоги и рекорды</string>
     <string name="w_ch_shifts_d">До смены, после неё и забытый таймер</string>
     <string name="w_ch_money_d">День зарплаты, итоги недели и месяца, рекорды и цели</string>
+    <!-- a suggestion at work (WorkGeo, WorkGeoActivity): the notifications, the disclosure and its steps -->
+    <string name="w_geo_in_t">Вы на работе?</string>
+    <string name="w_geo_in_b">Если вы пришли на смену, её можно начать отсюда.</string>
+    <string name="w_geo_out_t">Ушли с работы?</string>
+    <string name="w_geo_out_b">Смена всё ещё идёт. Если вы закончили, её можно завершить отсюда.</string>
+    <string name="w_geo_start">Начать смену</string>
+    <string name="w_geo_stop">Завершить смену</string>
+    <string name="w_geo_off">Отключить подсказки</string>
+    <string name="w_geo_disc_t">Подсказка о смене, когда вы приходите на работу</string>
+    <string name="w_geo_disc">Shaati использует ваше местоположение в фоновом режиме, даже когда приложение закрыто, только чтобы предложить начать смену, когда вы приходите на работу, и завершить её, когда уходите. Местоположение остаётся на этом телефоне и никуда не отправляется. Смена не начинается и не заканчивается без вашего нажатия. Отключить можно в любой момент в настройках Shaati или из уведомления.</string>
+    <string name="w_geo_go">Продолжить</string>
+    <string name="w_geo_not_now">Не сейчас</string>
+    <string name="w_geo_always_t">Ещё один шаг</string>
+    <string name="w_geo_always">На следующем экране выберите «Разрешить в любом режиме». Без этого телефон не сможет предложить смену, когда приложение закрыто.</string>
+    <string name="w_geo_need_precise">Чтобы сохранить место работы, разрешите точное местоположение.</string>
+    <string name="w_geo_need_always">Без разрешения «в любом режиме» подсказок не будет. Можно попробовать снова в настройках Shaati.</string>
+    <string name="w_geo_no_fix">Местоположение не найдено. Включите геолокацию на телефоне и попробуйте снова.</string>
+    <string name="w_geo_saved">Место работы сохранено. Когда вы придёте сюда, Shaati предложит начать смену.</string>
 </resources>

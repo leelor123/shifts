@@ -71,4 +71,22 @@
     <string name="w_ch_money">Pay, summaries and records</string>
     <string name="w_ch_shifts_d">Before a shift, after it, and a timer left running</string>
     <string name="w_ch_money_d">Payday, the weekly and monthly summary, records and goals</string>
+    <!-- a suggestion at work (WorkGeo, WorkGeoActivity): the notifications, the disclosure and its steps -->
+    <string name="w_geo_in_t">Arrived at work?</string>
+    <string name="w_geo_in_b">If you came for a shift, you can start it from here.</string>
+    <string name="w_geo_out_t">Left work?</string>
+    <string name="w_geo_out_b">Your shift is still running. If you are done, you can end it from here.</string>
+    <string name="w_geo_start">Start shift</string>
+    <string name="w_geo_stop">End shift</string>
+    <string name="w_geo_off">Turn off suggestions</string>
+    <string name="w_geo_disc_t">A shift suggestion when you get to work</string>
+    <string name="w_geo_disc">Shaati uses your location in the background, even when the app is closed, only to suggest starting a shift when you arrive at your workplace and ending it when you leave. Your location stays on this phone and is never sent anywhere. A shift never starts or ends without your tap. Turn it off any time in Shaati settings or from the notification.</string>
+    <string name="w_geo_go">Continue</string>
+    <string name="w_geo_not_now">Not now</string>
+    <string name="w_geo_always_t">One more step</string>
+    <string name="w_geo_always">On the next screen, choose “Allow all the time”. Without it, the phone cannot suggest a shift while the app is closed.</string>
+    <string name="w_geo_need_precise">To save your workplace, allow precise location.</string>
+    <string name="w_geo_need_always">Without “Allow all the time” location, no suggestions will come. You can try again from Shaati settings.</string>
+    <string name="w_geo_no_fix">Location not found. Turn on location on the phone and try again.</string>
+    <string name="w_geo_saved">Workplace saved. When you get here, Shaati will suggest starting a shift.</string>
 </resources>

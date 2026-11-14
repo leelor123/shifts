@@ -72,4 +72,22 @@
     <string name="w_ch_money">Sueldo, resúmenes y récords</string>
     <string name="w_ch_shifts_d">Antes de un turno, después, y un reloj que sigue en marcha</string>
     <string name="w_ch_money_d">Día de pago, el resumen semanal y mensual, récords y metas</string>
+    <!-- a suggestion at work (WorkGeo, WorkGeoActivity): the notifications, the disclosure and its steps -->
+    <string name="w_geo_in_t">¿Llegaste al trabajo?</string>
+    <string name="w_geo_in_b">Si viniste a un turno, puedes empezarlo desde aquí.</string>
+    <string name="w_geo_out_t">¿Saliste del trabajo?</string>
+    <string name="w_geo_out_b">Tu turno sigue en marcha. Si terminaste, puedes cerrarlo desde aquí.</string>
+    <string name="w_geo_start">Empezar turno</string>
+    <string name="w_geo_stop">Terminar turno</string>
+    <string name="w_geo_off">Desactivar sugerencias</string>
+    <string name="w_geo_disc_t">Una sugerencia de turno al llegar al trabajo</string>
+    <string name="w_geo_disc">Shaati usa tu ubicación en segundo plano, incluso con la app cerrada, solo para sugerirte empezar un turno cuando llegas al trabajo y terminarlo cuando te vas. La ubicación se queda en este teléfono y no se envía a ningún sitio. Ningún turno empieza ni termina sin tu toque. Desactívalo cuando quieras en los ajustes de Shaati o desde la notificación.</string>
+    <string name="w_geo_go">Continuar</string>
+    <string name="w_geo_not_now">Ahora no</string>
+    <string name="w_geo_always_t">Un paso más</string>
+    <string name="w_geo_always">En la siguiente pantalla, elige «Permitir todo el tiempo». Sin eso, el teléfono no puede sugerir un turno con la app cerrada.</string>
+    <string name="w_geo_need_precise">Para guardar tu lugar de trabajo, permite la ubicación precisa.</string>
+    <string name="w_geo_need_always">Sin el permiso de ubicación «todo el tiempo» no llegarán sugerencias. Puedes intentarlo de nuevo en los ajustes de Shaati.</string>
+    <string name="w_geo_no_fix">No se encontró la ubicación. Activa la ubicación del teléfono e inténtalo de nuevo.</string>
+    <string name="w_geo_saved">Lugar de trabajo guardado. Cuando llegues aquí, Shaati te sugerirá empezar un turno.</string>
 </resources>

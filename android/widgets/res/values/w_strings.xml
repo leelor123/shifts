@@ -74,4 +74,22 @@
     <string name="w_ch_money">כסף, סיכומים ושיאים</string>
     <string name="w_ch_shifts_d">לפני משמרת, אחריה, וטיימר שנשאר פועל</string>
     <string name="w_ch_money_d">יום המשכורת, הסיכום השבועי והחודשי, שיאים ויעדים</string>
+    <!-- a suggestion at work (WorkGeo, WorkGeoActivity): the notifications, the disclosure and its steps -->
+    <string name="w_geo_in_t">הגעת לעבודה?</string>
+    <string name="w_geo_in_b">אם באת למשמרת, אפשר להתחיל אותה מכאן.</string>
+    <string name="w_geo_out_t">יצאת מהעבודה?</string>
+    <string name="w_geo_out_b">המשמרת עדיין רצה. אם סיימת, אפשר לסיים אותה מכאן.</string>
+    <string name="w_geo_start">התחלת משמרת</string>
+    <string name="w_geo_stop">סיום משמרת</string>
+    <string name="w_geo_off">כיבוי ההצעות</string>
+    <string name="w_geo_disc_t">הצעה למשמרת כשמגיעים לעבודה</string>
+    <string name="w_geo_disc">שעתי משתמשת במיקום שלך ברקע, גם כשהאפליקציה סגורה, רק כדי להציע לך להתחיל משמרת כשמגיעים למקום העבודה ולסיים אותה כשיוצאים. המיקום נשאר בטלפון ולא נשלח לשום מקום. משמרת לא מתחילה ולא מסתיימת בלי לחיצה שלך. מכבים בכל רגע בהגדרות של שעתי או מההתראה.</string>
+    <string name="w_geo_go">המשך</string>
+    <string name="w_geo_not_now">לא עכשיו</string>
+    <string name="w_geo_always_t">עוד צעד אחד</string>
+    <string name="w_geo_always">במסך הבא בוחרים “לאפשר כל הזמן”. בלי זה הטלפון לא יציע משמרת כשהאפליקציה סגורה.</string>
+    <string name="w_geo_need_precise">כדי לשמור את מקום העבודה צריך לאשר מיקום מדויק.</string>
+    <string name="w_geo_need_always">בלי הרשאת מיקום “כל הזמן” לא יגיעו הצעות. אפשר לנסות שוב מההגדרות של שעתי.</string>
+    <string name="w_geo_no_fix">המיקום לא נמצא. מדליקים את המיקום בטלפון ומנסים שוב.</string>
+    <string name="w_geo_saved">מקום העבודה נשמר. כשתגיעו לכאן, שעתי תציע להתחיל משמרת.</string>
 </resources>

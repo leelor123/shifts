@@ -4,8 +4,10 @@
 <data-extraction-rules>
     <cloud-backup>
         <exclude domain="sharedpref" path="shaati_widgets.xml" />
+        <exclude domain="sharedpref" path="shaati_geo.xml" />
     </cloud-backup>
     <device-transfer>
         <exclude domain="sharedpref" path="shaati_widgets.xml" />
+        <exclude domain="sharedpref" path="shaati_geo.xml" />
     </device-transfer>
 </data-extraction-rules>

@@ -962,6 +962,38 @@ let errors = [];
     if (n !== before + 1) throw new Error('stickers listed: ' + n);
     await ev(() => { delete window.NDEFReader; });
   });
+  // the suggestion at work (app/arrive.js): a browser says it is the Android app's, the app's channel turns it on and
+  // off, and nothing about it lands in the account's data
+  await step('suggestion at work: honest in a browser; with the Android app, radius, status and a one-tap off', async () => {
+    await ev(() => App.sheetsApi.settingsSection('arrive')); await sleep(600);
+    const web = await ev(() => ({ t: (document.querySelector('.sheet.show .nfc-card') || {}).textContent || '', save: !!document.querySelector('.sheet.show [data-arrive-save]') }));
+    await closeAll();
+    if (!web.t.includes('רק באפליקציית שעתי לאנדרואיד') || web.save) throw new Error('browser: ' + JSON.stringify(web));
+    // the Android app's channel, faked: what the page sends is kept
+    await ev(() => { window.__geoSent = []; window.__geoPost = App.widgets.post; App.widgets.post = (m) => { window.__geoSent.push(m); return true; }; App.arrive.hello(); App.arrive.status({ geo: 1, on: false, r: 300, bg: false, fg: false, saved: false }); });
+    let after = null;
+    try {
+    await ev(() => App.sheetsApi.settingsSection('arrive')); await sleep(600);
+    await ev(() => document.querySelector('.sheet.show [data-arrive-r="150"]').click()); await sleep(200);
+    const off = await ev(() => ({ save: !!document.querySelector('.sheet.show [data-arrive-save]'), r: (document.querySelector('.sheet.show [data-arrive-r].on') || { dataset: {} }).dataset.arriveR, sent: window.__geoSent.slice(), url: Arrive.setupUrl(150) }));
+    await page.screenshot({ path: path.join(out, 'arrive-off.png') });
+    if (!off.save || off.r !== '150' || !off.sent.includes('{"geo":1,"ask":1}')) throw new Error('native, off: ' + JSON.stringify(off));
+    // the phone says it is on: one tap turns it off, with no question
+    await ev(() => App.arrive.status({ geo: 1, on: true, r: 150, bg: true, fg: true, saved: true })); await sleep(300);
+    const on = await ev(() => ({ off: !!document.querySelector('.sheet.show [data-arrive-off]'), t: document.querySelector('.sheet.show .nfc-card').textContent }));
+    await page.screenshot({ path: path.join(out, 'arrive-on.png') });
+    if (!on.off || !on.t.includes('ברדיוס 150 מטר')) throw new Error('native, on: ' + JSON.stringify(on));
+    await ev(() => document.querySelector('.sheet.show [data-arrive-off]').click()); await sleep(400);
+    after = await ev(() => ({ dlg: !!document.querySelector('.dialog'), sent: window.__geoSent.slice(), save: !!document.querySelector('.sheet.show [data-arrive-save]'), active: !!Store.S.activeShift, data: JSON.stringify(Store.S.settings) + JSON.stringify(Store.S.meta) }));
+    await closeAll();
+    } finally {
+      // the fake channel goes, whatever happened: the next steps use the real one
+      await ev(() => { App.widgets.post = window.__geoPost; document.querySelectorAll('.dialog').forEach((d) => { if (d._resolve) d._resolve(null); d.remove(); }); UI.closeAll(); });
+      await sleep(500);
+    }
+    if (after.dlg || !after.sent.includes('{"geo":1,"off":1}') || !after.save) throw new Error('off: ' + JSON.stringify(after).slice(0, 300));
+    if (/workGeo|"geo":1|"saved":true/.test(after.data)) throw new Error('the account data holds the suggestion at work');
+  });
   // the 1.35 audit of error and empty states: a server refusal says so (never "no permission"), stays long enough to
   // read, a refused copy opens the text to copy by hand, and an empty search offers to clear it
   await step('errors: a server refusal names the cause and the next step, and stays on screen to be read', async () => {

@@ -19,8 +19,11 @@
   // the signed shift log (core/ledger.js, app/shift-log.js) only grows: its records are never deleted or replaced,
   // here, by the cloud or by a merge (a removed record would break the chain)
   const APPEND_ONLY = ['ledger'];
-  // settings that never leave the phone (cloud.js leaves them out): the AI key, the code lock, the backup dates
-  const LOCAL_SETTINGS = ['ai', 'lock', 'backup'];
+  // settings that never leave the phone (cloud.js leaves them out): the AI key, the code lock, the backup dates, and the
+  // suggestion at work (workGeo: the workplace spot and its radius). The Android app keeps that spot itself
+  // (android/widgets/java/WorkGeo.java) and the page never stores it; the name is kept here so that, if any version
+  // ever puts it in the settings, it still never syncs (tests/sync.test.js)
+  const LOCAL_SETTINGS = ['ai', 'lock', 'backup', 'workGeo'];
 
   /* ---------------- migrations ----------------
    * MIGRATIONS[n] upgrades data from schema n-1 to n. They run on load
@@ -577,7 +580,12 @@
     const keep = {};
     for (const k of localOnlyKeys) keep[k] = S.settings[k];
     S.settings = mergeDeep(root.Defaults.defaultSettings(), remote);
-    for (const k of localOnlyKeys) if (keep[k] !== undefined) S.settings[k] = keep[k];
+    const plain = root.Defaults.defaultSettings();
+    for (const k of localOnlyKeys) {
+      if (keep[k] !== undefined) S.settings[k] = keep[k];
+      // a phone-only setting with no default (workGeo) that came from the account anyway: not taken
+      else if (plain[k] === undefined) delete S.settings[k];
+    }
     S.meta.settingsDirty = false;
     joinMem(); // what the account remembers comes to this phone; what only this phone knew goes up again
     markSettings();

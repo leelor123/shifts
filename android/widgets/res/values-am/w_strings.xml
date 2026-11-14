@@ -71,4 +71,22 @@
     <string name="w_ch_money">ክፍያ፣ ማጠቃለያዎች እና ሪከርዶች</string>
     <string name="w_ch_shifts_d">ከፈረቃ በፊት፣ በኋላ፣ እና የቀረ ሰዓት ቆጣሪ</string>
     <string name="w_ch_money_d">የደመወዝ ቀን፣ ሳምንታዊና ወርሃዊ ማጠቃለያ፣ ሪከርዶችና ግቦች</string>
+    <!-- a suggestion at work (WorkGeo, WorkGeoActivity): the notifications, the disclosure and its steps -->
+    <string name="w_geo_in_t">ሥራ ደረሱ?</string>
+    <string name="w_geo_in_b">ለፈረቃ ከመጡ፣ ከዚህ መጀመር ይችላሉ።</string>
+    <string name="w_geo_out_t">ከሥራ ወጡ?</string>
+    <string name="w_geo_out_b">ፈረቃዎ አሁንም እየሄደ ነው። ከጨረሱ፣ ከዚህ ማጠናቀቅ ይችላሉ።</string>
+    <string name="w_geo_start">ፈረቃ ጀምር</string>
+    <string name="w_geo_stop">ፈረቃ ጨርስ</string>
+    <string name="w_geo_off">ጥቆማዎችን አጥፋ</string>
+    <string name="w_geo_disc_t">ሥራ ሲደርሱ የፈረቃ ጥቆማ</string>
+    <string name="w_geo_disc">Shaati መተግበሪያው ተዘግቶ ቢሆንም አካባቢዎን ከበስተጀርባ ይጠቀማል፣ ይህም ሥራ ቦታ ሲደርሱ ፈረቃ እንዲጀምሩ እና ሲወጡ እንዲያጠናቅቁ ለመጠቆም ብቻ ነው። አካባቢዎ በዚህ ስልክ ላይ ይቀራል እና ወደ የትም አይላክም። ያለ እርስዎ መንካት ምንም ፈረቃ አይጀምርም አያልቅምም። በማንኛውም ጊዜ በShaati ቅንብሮች ወይም ከማሳወቂያው ማጥፋት ይችላሉ።</string>
+    <string name="w_geo_go">ቀጥል</string>
+    <string name="w_geo_not_now">አሁን አይደለም</string>
+    <string name="w_geo_always_t">አንድ ተጨማሪ ደረጃ</string>
+    <string name="w_geo_always">በሚቀጥለው ማያ ገጽ “ሁልጊዜ ፍቀድ” ይምረጡ። ያለዚህ መተግበሪያው ሲዘጋ ስልኩ ፈረቃ መጠቆም አይችልም።</string>
+    <string name="w_geo_need_precise">የሥራ ቦታዎን ለማስቀመጥ ትክክለኛ አካባቢን ይፍቀዱ።</string>
+    <string name="w_geo_need_always">ያለ “ሁልጊዜ” የአካባቢ ፈቃድ ጥቆማዎች አይመጡም። ከShaati ቅንብሮች እንደገና መሞከር ይችላሉ።</string>
+    <string name="w_geo_no_fix">አካባቢው አልተገኘም። በስልኩ ላይ አካባቢን ያብሩ እና እንደገና ይሞክሩ።</string>
+    <string name="w_geo_saved">የሥራ ቦታ ተቀምጧል። እዚህ ሲደርሱ Shaati ፈረቃ እንዲጀምሩ ይጠቁማል።</string>
 </resources>

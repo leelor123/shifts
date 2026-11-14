@@ -27,14 +27,16 @@ From `twa/app/src/main/AndroidManifest.xml`:
 | Permission | Sensitive? | Needed? | Why |
 |---|---|---|---|
 | `android.permission.POST_NOTIFICATIONS` | Runtime permission, not a restricted one | Yes | Weekly and monthly summaries, reminders, and the running-shift notification (1.34.0). It is asked for only when the user turns notifications on. |
+| `ACCESS_FINE_LOCATION`, `ACCESS_COARSE_LOCATION` | Runtime | Only for the opt-in "suggestion at work" | One reading of the spot the user saves as the workplace (`WorkGeoActivity`), after the in-app disclosure. |
+| `ACCESS_BACKGROUND_LOCATION` | **Restricted: needs the location permissions declaration in Play Console** | Only for the opt-in "suggestion at work" | The geofence notices arriving at and leaving the saved workplace while the app is closed, to show a notification that suggests starting or ending a shift. It never starts or ends one itself. Asked last, after the disclosure. See `play-store/APP-CONTENT.md` section 4.1. |
 
-That is the only permission the app declares. There is no location, camera, contacts, SMS, storage or background permission, so no Permissions Declaration form is needed.
+Before the suggestion at work, POST_NOTIFICATIONS was the only permission. The location permissions come in with it; `SHAATI_GEOFENCE=0` builds without them (and without the feature).
 
 Other manifest notes:
 
 - **Exported components.** `PaymentService`, `PostMessageService`, `DelegationService` and `WidgetStyleActivity` are exported. That is standard for TWA billing, notifications and widget setup. `PaymentService` checks its caller at runtime.
 - **Share target.** It accepts text, images, PDF, CSV and Excel shared into the app, for importing schedules and payslips. This needs no permission.
-- **Location.** The web app can ask the browser for location once, to pick the nearest city (`src/app/placepicker.js:273`). The location stays on the phone and only the chosen city is kept. The Android app has no location permission, so in the TWA this request goes through Chrome's own site permission.
+- **Location.** The web app can ask the browser for location once, to pick the nearest city (`src/app/placepicker.js:273`). The location stays on the phone and only the chosen city is kept. In the TWA this request goes through Chrome's own site permission. The suggestion at work is separate: the Android app itself keeps its spot on the phone only (`shaati_geo.xml`, left out of backups) and never sends it to the page or anywhere.
 - **`allowBackup="true"`.** Android backup copies the widgets' snapshot (pay amounts, the running shift, the savings goal) stored by `WidgetData.java`. The rest of the user's data lives in Chrome's storage for the site. Play does not count Android's own backup as collection, so this does not change the form. The next AAB can exclude that file with backup rules (see the scan section below).
 
 ## 2. Data safety answers (draft)

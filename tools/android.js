@@ -24,6 +24,11 @@ const APP = {
   launcherName: 'Shaati',
 };
 const FINGERPRINTS = path.join(ROOT, 'android', 'fingerprints.json');
+// a suggestion at work (android/widgets/java/WorkGeo*.java, src/app/arrive.js): the geofence needs the background
+// location permission, and Google Play reviews every build that has it against the Console's location declaration
+// (play-store/APP-CONTENT.md). SHAATI_GEOFENCE=0 builds without the permissions, the setup screen and the hello, so the
+// page never offers it (the code stays: nothing runs it).
+const WORK_GEOFENCE = process.env.SHAATI_GEOFENCE !== '0';
 
 const CLI = path.join(execSync('npm root -g').toString().trim(), '@bubblewrap', 'cli');
 const core = require(path.join(CLI, 'node_modules', '@bubblewrap', 'core'));
@@ -193,7 +198,9 @@ function patchLauncher() {
                 // this app shows the notifications itself, at their time, also while closed (NoteCenter): the page
                 // sends it the list of the coming days and the ones of now (src/app/phone-notes.js)
                 if (s != null) s.postMessage("shaati:notes", null);
-                sendTaps(s);
+${WORK_GEOFENCE ? `                // this app can suggest a shift at the workplace (WorkGeo): the page offers it in Settings
+                if (s != null) s.postMessage("shaati:geo", null);
+` : ''}                sendTaps(s);
             }
 
             @Override
@@ -202,6 +209,13 @@ function patchLauncher() {
                 // back to the front, the page asks for the starts and ends tapped on a widget meanwhile
                 if ("ask".equals(message)) { sendTaps(widgetSession()); return; }
                 if (NoteCenter.isNotes(message)) { NoteCenter.receive(getApplicationContext(), message); return; }
+                // the suggestion at work: the page asks for its status or turns it off; the answer never holds the spot
+                if (WorkGeo.isGeo(message)) {
+                    String geo = WorkGeo.receive(getApplicationContext(), message);
+                    androidx.browser.customtabs.CustomTabsSession gs = widgetSession();
+                    if (geo != null && gs != null) gs.postMessage(geo, null);
+                    return;
+                }
                 android.util.Log.i("ShaatiWidgets", "numbers received (" + (message == null ? 0 : message.length()) + " chars)");
                 WidgetData.save(getApplicationContext(), message);
             }
@@ -287,6 +301,26 @@ function patchWidgets() {
         </receiver>\n`;
   if (!m.includes('<application')) throw new Error('AndroidManifest.xml template changed: application');
   m = m.replace('<application', '<uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />\n    <application');
+  // the suggestion at work (WorkGeo): precise location for the circle, background location so Android can tell the app
+  // while it is closed. Asked only from WorkGeoActivity, after its disclosure, and only when the user turns it on.
+  if (WORK_GEOFENCE) {
+    m = m.replace('<application', `<uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
+    <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
+    <uses-permission android:name="android.permission.ACCESS_BACKGROUND_LOCATION" />
+    <application`);
+  }
+  const geo = !WORK_GEOFENCE ? '' : `        <!-- the suggestion at work: saving the spot (the disclosure, then the permissions; src/app/arrive.js opens it),
+             and the circle's crossings and the notification's "turn off" (WorkGeo) -->
+        <activity android:name=".WorkGeoActivity" android:exported="true" android:theme="@style/WorkGeoTheme" android:excludeFromRecents="true" android:taskAffinity="">
+            <intent-filter>
+                <action android:name="android.intent.action.VIEW" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.BROWSABLE" />
+                <data android:scheme="shaati-geo" android:host="save" />
+            </intent-filter>
+        </activity>
+        <receiver android:name=".WorkGeoReceiver" android:exported="false" />
+`;
   m = m.replace('</application>', `        <!-- Shaati: the message channel the widgets' numbers come through, and the widgets -->
         <service android:name="androidx.browser.customtabs.PostMessageService" android:exported="true" />
         <!-- choosing a widget's look: the launcher opens it when a widget is added, and from the widget's settings -->
@@ -307,7 +341,7 @@ ${receiver('ShiftWidget', 'shift')}${receiver('MonthWidget', 'month')}${receiver
         <service android:name=".ShiftTile" android:exported="true" android:label="@string/w_tile_name" android:icon="@drawable/w_ic_play" android:permission="android.permission.BIND_QUICK_SETTINGS_TILE">
             <intent-filter><action android:name="android.service.quicksettings.action.QS_TILE" /></intent-filter>
         </service>
-    </application>`);
+${geo}    </application>`);
   // the widgets' pay snapshot stays out of the phone's backups (res/xml/w_backup_rules.xml, w_data_extraction.xml)
   if (!m.includes('android:allowBackup="true"')) throw new Error('AndroidManifest.xml template changed: allowBackup');
   m = m.replace('android:allowBackup="true"', 'android:allowBackup="true"\n        android:fullBackupContent="@xml/w_backup_rules"\n        android:dataExtractionRules="@xml/w_data_extraction"');
@@ -316,6 +350,11 @@ ${receiver('ShiftWidget', 'shift')}${receiver('MonthWidget', 'month')}${receiver
   let g = fs.readFileSync(gf, 'utf8');
   if (!g.includes('            minifyEnabled true\n')) throw new Error('build.gradle template changed');
   g = g.replace('            minifyEnabled true\n', "            minifyEnabled true\n            proguardFiles 'shaati-rules.pro'\n");
+  // the geofence and the one reading of the spot (WorkGeo, WorkGeoActivity): Google Play services' location library,
+  // always compiled in (the classes use it); with SHAATI_GEOFENCE=0 nothing calls it
+  const abh = /^(\s*)implementation 'com\.google\.androidbrowserhelper:androidbrowserhelper:[^']+'\n/m;
+  if (!abh.test(g)) throw new Error('build.gradle template changed: androidbrowserhelper');
+  g = g.replace(abh, (line, sp) => `${line}${sp}implementation 'com.google.android.gms:play-services-location:21.3.0'\n`);
   fs.writeFileSync(gf, g);
   fs.writeFileSync(path.join(TWA, 'app', 'shaati-rules.pro'), '# Shaati: the widgets bridge reads the launcher\'s session (LauncherActivity.widgetSession)\n-keepclassmembers class com.google.androidbrowserhelper.trusted.TwaLauncher { androidx.browser.customtabs.CustomTabsSession *; }\n');
 }
