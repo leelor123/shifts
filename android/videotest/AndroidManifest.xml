@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- The Play location-declaration video (node tools/android.js videotest): a test APK that drives the real Shaati app
+     from its own process (it instruments itself, so taking the app's permissions back never stops it) and moves the
+     phone's location with Android's mock location, so the app's own geofence and notification run as on a phone. -->
+<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+    <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
+    <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
+    <queries>
+        <package android:name="io.github.leelor123.shifts" />
+    </queries>
+    <application android:label="Shaati video test" />
+    <instrumentation
+        android:name="androidx.test.runner.AndroidJUnitRunner"
+        android:targetPackage="io.github.leelor123.shifts.videotest"
+        android:label="Shaati location video" />
+</manifest>

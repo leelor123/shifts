@@ -2,6 +2,8 @@
  *   node tools/android.js generate     regenerate the Android project from the live web manifest
  *   node tools/android.js build        build + sign the .aab (upload to Play) and .apk (sideload test)
  *   node tools/android.js assetlinks   print assetlinks.json for the fingerprints in android/fingerprints.json
+ *   node tools/android.js videotest    the Play location-declaration video's builds (android/videotest): the app with the
+ *                                      geofence and its test APK, in videotest/twa and release/video (Firebase Test Lab)
  * Everything lives in %USERPROFILE%\ShiftPay-Android (override with SHIFTPAY_ANDROID):
  *   keys\shiftpay-upload.jks + keys\KEYSTORE-PASSWORDS.txt   (never commit these)
  *   twa\        generated Android project     release\   signed outputs per version
@@ -13,7 +15,8 @@ const { execSync, spawnSync } = require('child_process');
 const ROOT = path.join(__dirname, '..');
 const pkg = JSON.parse(fs.readFileSync(path.join(ROOT, 'package.json'), 'utf8'));
 const HOME = process.env.SHIFTPAY_ANDROID || path.join(process.env.USERPROFILE || process.env.HOME, 'ShiftPay-Android');
-const TWA = path.join(HOME, 'twa');
+const RELEASE_TWA = path.join(HOME, 'twa');
+let TWA = RELEASE_TWA; // videotest builds in a project of its own, so the release project stays as it was generated
 const KEYSTORE = path.join(HOME, 'keys', 'shiftpay-upload.jks');
 const PASSWORDS = path.join(HOME, 'keys', 'KEYSTORE-PASSWORDS.txt');
 const APP = {
@@ -81,8 +84,8 @@ async function generate() {
   patchNames();
   await shared.generateManifestChecksumFile(file, TWA);
   fs.mkdirSync(path.join(ROOT, 'android'), { recursive: true });
-  // keep a copy in the repo (no secrets in it: only the keystore's location)
-  fs.copyFileSync(file, path.join(ROOT, 'android', 'twa-manifest.json'));
+  // keep a copy in the repo (no secrets in it: only the keystore's location); the video's project is not the release
+  if (TWA === RELEASE_TWA) fs.copyFileSync(file, path.join(ROOT, 'android', 'twa-manifest.json'));
   console.log(`generated ${APP.packageId} v${pkg.version} (${versionCode(pkg.version)}) → ${TWA}`);
 }
 
@@ -377,7 +380,7 @@ function patchNames() {
   }
 }
 
-function build() {
+function buildEnv() {
   const pw = (fs.readFileSync(PASSWORDS, 'utf8').match(/Store password:\s*(\S+)/) || [])[1];
   if (!pw) throw new Error('password not found in ' + PASSWORDS);
   const env = Object.assign({}, process.env, {
@@ -391,14 +394,64 @@ function build() {
   const cfg = JSON.parse(fs.readFileSync(path.join(process.env.USERPROFILE || process.env.HOME, '.bubblewrap', 'config.json'), 'utf8'));
   const pathKey = Object.keys(env).find((k) => k.toLowerCase() === 'path') || 'PATH';
   env[pathKey] = [TWA, path.join(cfg.jdkPath, 'bin'), env[pathKey]].join(path.delimiter);
+  return { env, cfg };
+}
+
+function build(outDir) {
+  const { env } = buildEnv();
   const r = spawnSync(process.platform === 'win32' ? 'bubblewrap.cmd' : 'bubblewrap', ['build', '--skipPwaValidation'], { cwd: TWA, env, stdio: 'inherit', shell: true });
   if (r.status !== 0) throw new Error('bubblewrap build failed');
-  const out = path.join(HOME, 'release', pkg.version);
+  const out = outDir || path.join(HOME, 'release', pkg.version);
   fs.mkdirSync(out, { recursive: true });
   for (const [from, to] of [['app-release-bundle.aab', `shiftpay-${pkg.version}.aab`], ['app-release-signed.apk', `shiftpay-${pkg.version}.apk`]]) {
     fs.copyFileSync(path.join(TWA, from), path.join(out, to));
   }
   console.log('release files →', out);
+}
+
+/**
+ * The video for Play's background-location declaration (play-store/APP-CONTENT.md 4.1), recorded by Firebase Test Lab:
+ * the app with the geofence (generated and signed as for Play, in a project of its own: videotest/twa) and the test
+ * APK that drives it (android/videotest; it instruments itself, so it needs no shared signature and runs on as the
+ * app's permissions are taken back). Both go to release/video, never to a version's release folder.
+ */
+async function videotest() {
+  if (!WORK_GEOFENCE) throw new Error('the video shows the geofence: run without SHAATI_GEOFENCE=0');
+  TWA = path.join(HOME, 'videotest', 'twa');
+  await generate();
+  const out = path.join(HOME, 'release', 'video');
+  build(out);
+  const SRC = path.join(ROOT, 'android', 'videotest').split(path.sep).join('/');
+  const mod = path.join(TWA, 'videotest');
+  fs.mkdirSync(mod, { recursive: true });
+  fs.writeFileSync(path.join(mod, 'build.gradle'), `apply plugin: 'com.android.application'
+repositories { google(); mavenCentral() }
+android {
+    namespace 'io.github.leelor123.shifts.videotest'
+    compileSdkVersion 36
+    defaultConfig { applicationId 'io.github.leelor123.shifts.videotest'; minSdkVersion 24; targetSdkVersion 34; versionCode 1; versionName '1' }
+    compileOptions { sourceCompatibility JavaVersion.VERSION_1_8; targetCompatibility JavaVersion.VERSION_1_8 }
+    sourceSets { main { manifest.srcFile '${SRC}/AndroidManifest.xml'; java.srcDirs = ['${SRC}/java'] } }
+    lint { abortOnError false; checkReleaseBuilds false }
+}
+dependencies {
+    implementation 'androidx.test:runner:1.6.2'
+    implementation 'androidx.test.ext:junit:1.2.1'
+    implementation 'androidx.test.uiautomator:uiautomator:2.3.0'
+    implementation 'junit:junit:4.13.2'
+    implementation 'com.google.android.gms:play-services-location:21.3.0'
+}
+`);
+  const sg = path.join(TWA, 'settings.gradle');
+  if (!fs.readFileSync(sg, 'utf8').includes("':videotest'")) fs.appendFileSync(sg, "\ninclude ':videotest'\n");
+  const { env, cfg } = buildEnv();
+  Object.assign(env, { JAVA_HOME: cfg.jdkPath, ANDROID_HOME: cfg.androidSdkPath, ANDROID_SDK_ROOT: cfg.androidSdkPath });
+  const g = spawnSync(process.platform === 'win32' ? 'gradlew.bat' : './gradlew', [':videotest:assembleDebug'], { cwd: TWA, env, stdio: 'inherit', shell: true });
+  if (g.status !== 0) throw new Error('test APK build failed');
+  fs.copyFileSync(path.join(mod, 'build', 'outputs', 'apk', 'debug', 'videotest-debug.apk'), path.join(out, 'shaati-videotest.apk'));
+  fs.renameSync(path.join(out, `shiftpay-${pkg.version}.apk`), path.join(out, 'shaati-video-app.apk'));
+  fs.rmSync(path.join(out, `shiftpay-${pkg.version}.aab`), { force: true });
+  console.log('video builds →', out, '(shaati-video-app.apk + shaati-videotest.apk: Firebase Test Lab, instrumentation test)');
 }
 
 function assetlinks() {
@@ -413,5 +466,6 @@ const cmd = process.argv[2];
   if (cmd === 'generate') await generate();
   else if (cmd === 'build') build();
   else if (cmd === 'assetlinks') assetlinks();
-  else console.log('usage: node tools/android.js generate | build | assetlinks');
+  else if (cmd === 'videotest') await videotest();
+  else console.log('usage: node tools/android.js generate | build | assetlinks | videotest');
 })().catch((e) => { console.error(e.message || e); process.exit(1); });
