@@ -37,7 +37,9 @@
 
   const radius = (r) => (RADII.includes(+r) ? +r : DEFAULT_R);
   /** A place's name as the user typed it (shown on the suggestion): one line, at most 30 characters. */
-  const cleanName = (n) => Array.from(String(n == null ? '' : n), (ch) => (ch.charCodeAt(0) < 32 || ch.charCodeAt(0) === 127 ? ' ' : ch)).join('').replace(/\s+/g, ' ').trim().slice(0, 30);
+  const cleanName = (n) => Array.from(String(n == null ? '' : n), (ch) => (ch.charCodeAt(0) < 32 || ch.charCodeAt(0) === 127 ? ' ' : ch)).join('').replace(/\s+/g, ' ').trim()
+    // 30 characters, never half of one (an emoji cut in two made encodeURIComponent throw: the save did nothing)
+    .replace(/^.*$/s, (t) => Array.from(t).slice(0, 30).join(''));
   /** An employer id the suggestion starts the shift at (?action=start&emp=…); anything else: none. */
   const cleanEmp = (e) => (typeof e === 'string' && /^[\w-]{1,40}$/.test(e) ? e : '');
   /** The id a new place gets: the first of p1..p3 not taken, or null when MAX_PLACES are saved. */

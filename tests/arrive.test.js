@@ -76,6 +76,16 @@ T.test('the phone keeps the same places rules: the same maximum and ids, the old
   T.ok(j.includes('offIntent(c, id)') && rc.includes('WorkGeo.off(app, i.getStringExtra("id"))'), 'the notification turns off that place only');
   T.ok(read('android/widgets/java/WorkGeoActivity.java').includes('if (!WorkGeo.canSave(this, mId)) { finish(); return; }'), 'full: the screen asks nothing');
 });
+T.test('review fixes (15 Nov 2026): an emoji is never cut in half, the next place starts empty, a failed re-save keeps the place, one crossing uses up one suggestion', () => {
+  const name = 'a'.repeat(29) + String.fromCodePoint(0x1F600) + 'b';
+  T.eq(Array.from(A.cleanName(name)).length, 30);
+  T.ok(A.setupUrl(300, { id: 'p1', name }).includes('&n='), 'the link is built (it threw)');
+  const j = read('android/widgets/java/WorkGeo.java');
+  T.ok(j.includes('Character.isHighSurrogate(t.charAt(29)) ? 29 : 30'), 'the phone cuts the same way');
+  T.ok(/addName = '';\s*addEmp = '';\s*root\.location\.href = url;/.test(read('src/app/arrive.js')), 'the form empties on save');
+  T.ok(read('android/widgets/java/WorkGeoActivity.java').includes('if (mPrev != null) WorkGeo.putBack(getApplicationContext(), mPrev);'), 'a place saved again comes back on a refusal');
+  T.ok(j.includes('o.put("start".equals(x) ? "lastInNote" : "lastOutNote", now);') && j.includes('if (ids.contains(prefs(c).getString("noteFor", ""))) cancel(nm, TAG_IN);'), 'only the noted place counts; leaving another place keeps the suggestion');
+});
 T.test('?action=start&emp=: the shift starts at that employer, after the same question', () => {
   const app = read('src/app/app.js');
   T.ok(app.includes("App.pendingEmp = App.pendingAction === 'start' && root.Arrive ? root.Arrive.cleanEmp(params.get('emp')) : '';"), 'read and cleaned');

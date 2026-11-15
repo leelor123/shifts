@@ -157,7 +157,11 @@
         // an app before 1.39 saves its one place again (it reads the radius only)
         const id = list ? Arrive.nextId(list) : null;
         if (list && list.length && !id) return;
-        root.location.href = Arrive.setupUrl(pick, list ? { id, name: addName, emp } : {});
+        const url = Arrive.setupUrl(pick, list ? { id, name: addName, emp } : {});
+        // the next place starts empty: never the name and employer of the one just saved
+        addName = '';
+        addEmp = '';
+        root.location.href = url;
       };
     }
     // a place saved again from where the phone is now: the same name and employer

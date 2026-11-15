@@ -135,7 +135,9 @@ final class WorkGeo {
             b.append(ch < 32 || ch == 127 ? ' ' : ch);
         }
         String t = b.toString().replaceAll("\\s+", " ").trim();
-        return t.length() > 30 ? t.substring(0, 30) : t;
+        if (t.length() <= 30) return t;
+        // never half of a character (an emoji is two chars)
+        return t.substring(0, Character.isHighSurrogate(t.charAt(29)) ? 29 : 30);
     }
 
     /** An employer id (Arrive.cleanEmp); anything else: none. */
@@ -219,6 +221,29 @@ final class WorkGeo {
         write(c, list);
         prefs(c).edit().putInt("fence", FENCE_UNKNOWN).commit();
         return watch(c, done) ? id : null;
+    }
+
+    /** A saved place as it is now (a copy), or null. */
+    static JSONObject place(Context c, String id) {
+        if (!validId(id)) return null;
+        List<JSONObject> list = places(c);
+        int at = find(list, id);
+        try {
+            return at < 0 ? null : new JSONObject(list.get(at).toString());
+        } catch (Exception e) {
+            return null;
+        }
+    }
+
+    /** Saving a place again failed (Google Play services refused): the place it was before comes back, watched as
+     *  before, instead of being lost. */
+    static void putBack(Context c, JSONObject prev) {
+        List<JSONObject> list = places(c);
+        int at = find(list, prev.optString("id"));
+        if (at >= 0) list.set(at, prev);
+        else if (list.size() < MAX_PLACES) list.add(prev);
+        write(c, list);
+        restore(c);
     }
 
     static int fence(Context c) {
@@ -340,16 +365,21 @@ final class WorkGeo {
                 JSONObject o = list.get(at);
                 String x = decide(in, act, now, o.optLong("lastInNote"), o.optLong("lastExit"), o.optLong("lastOutNote"));
                 if (!in) o.put("lastExit", now);
-                if ("start".equals(x)) o.put("lastInNote", now);
-                if ("stop".equals(x)) o.put("lastOutNote", now);
-                if (x != null && d == null) { d = x; note = o; }
+                // one notification for the crossing: only the place it names counts as suggested (two overlapping
+                // circles: the other one's suggestion is not used up by a notification nobody saw)
+                if (x != null && d == null) {
+                    d = x;
+                    note = o;
+                    o.put("start".equals(x) ? "lastInNote" : "lastOutNote", now);
+                }
             }
         } catch (Exception e) {
             android.util.Log.w("ShaatiGeo", "crossing", e);
         }
         write(c, list);
         if (nm != null) {
-            if (!in) cancel(nm, TAG_IN); // left: "start a shift?" is no longer true
+            // left the place the suggestion is about: "start a shift?" is no longer true (another place's stays)
+            if (!in) { if (ids.contains(prefs(c).getString("noteFor", ""))) cancel(nm, TAG_IN); }
             else cancel(nm, TAG_OUT);
         }
         if (d != null && nm != null) {

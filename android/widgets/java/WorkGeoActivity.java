@@ -41,6 +41,7 @@ public class WorkGeoActivity extends Activity {
     private static final int ASK_FINE = 7311, ASK_BACKGROUND = 7312, ASK_NOTES = 7313, ASK_ACCURACY = 7314;
     private int mRadius = WorkGeo.DEFAULT_R;
     private String mId, mName, mEmp; // which place (saved again) or none (a new one), its name and employer
+    private org.json.JSONObject mPrev; // the place as it was before this save (saved again), or null (a new one)
     private Location mSpot;
     private Context mLang;
 
@@ -140,6 +141,7 @@ public class WorkGeoActivity extends Activity {
 
     private void done() {
         if (mSpot == null) { finish(); return; }
+        mPrev = WorkGeo.place(getApplicationContext(), mId);
         String id = WorkGeo.save(getApplicationContext(), mId, mSpot.getLatitude(), mSpot.getLongitude(), mRadius, mName, mEmp,
                 (ok, code) -> runOnUiThread(() -> watched(ok, code, false)));
         if (id == null) { say(R.string.w_geo_need_always); finish(); return; }
@@ -191,7 +193,10 @@ public class WorkGeoActivity extends Activity {
 
     /** Still refused: the feature stays off (nothing on the page says "on") and the line says what to turn on. */
     private void refused() {
-        WorkGeo.off(getApplicationContext(), mId); // this place; the others stay saved and show as needing attention
+        // a new place is forgotten; a place saved again comes back as it was (it worked before this try). The others
+        // stay saved and show as needing attention
+        if (mPrev != null) WorkGeo.putBack(getApplicationContext(), mPrev);
+        else WorkGeo.off(getApplicationContext(), mId);
         say(R.string.w_geo_no_fence);
         finish();
     }
