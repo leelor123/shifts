@@ -36,7 +36,7 @@ final class WorkGeo {
     static final String ACTION_FENCE = "io.github.leelor123.shifts.GEO_FENCE";
     static final String ACTION_OFF = "io.github.leelor123.shifts.GEO_OFF";
     private static final String FENCE = "work";
-    static final String TAG_IN = "geo-arrive", TAG_OUT = "geo-leave";
+    static final String TAG_IN = "geo-arrive", TAG_OUT = "geo-leave", TAG_SUM = "geo-group";
     private static final String GROUP = "shaati-geo"; // not NoteCenter's group: the web app's "keep" never closes these
     private static final long MIN = 60000L;
     // the same numbers as src/core/arrive.js (tests/arrive.test.js)
@@ -157,6 +157,7 @@ final class WorkGeo {
         if (nm != null) {
             nm.cancel(TAG_IN, 1);
             nm.cancel(TAG_OUT, 1);
+            nm.cancel(TAG_SUM, 1);
         }
     }
 
@@ -177,8 +178,8 @@ final class WorkGeo {
         SharedPreferences.Editor e = p.edit();
         if (!in) {
             e.putLong("lastExit", now);
-            if (nm != null) nm.cancel(TAG_IN, 1); // left: "start a shift?" is no longer true
-        } else if (nm != null) nm.cancel(TAG_OUT, 1);
+            if (nm != null) cancel(nm, TAG_IN); // left: "start a shift?" is no longer true
+        } else if (nm != null) cancel(nm, TAG_OUT);
         if ("start".equals(d)) e.putLong("lastInNote", now);
         if ("stop".equals(d)) e.putLong("lastOutNote", now);
         e.commit();
@@ -189,13 +190,26 @@ final class WorkGeo {
     static void sync(Context c) {
         NotificationManager nm = (NotificationManager) c.getSystemService(Context.NOTIFICATION_SERVICE);
         if (nm == null) return;
-        if (active(c)) nm.cancel(TAG_IN, 1);
-        else nm.cancel(TAG_OUT, 1);
+        if (active(c)) cancel(nm, TAG_IN);
+        else cancel(nm, TAG_OUT);
     }
 
     private static PendingIntent offIntent(Context c) {
         Intent i = new Intent(c, WorkGeoReceiver.class).setAction(ACTION_OFF);
         return PendingIntent.getBroadcast(c, 7321, i, PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE);
+    }
+
+    /** One suggestion closed, and the group's summary with it when no suggestion is left. */
+    private static void cancel(NotificationManager nm, String tag) {
+        nm.cancel(tag, 1);
+        try {
+            for (android.service.notification.StatusBarNotification n : nm.getActiveNotifications()) {
+                if (TAG_IN.equals(n.getTag()) || TAG_OUT.equals(n.getTag())) return;
+            }
+        } catch (Exception e) {
+            // the summary stays; Android closes it with its last child
+        }
+        nm.cancel(TAG_SUM, 1);
     }
 
     private static void post(Context c, NotificationManager nm, boolean start, long now) {
@@ -226,6 +240,23 @@ final class WorkGeo {
                             NoteCenter.open(c, start ? "./?action=start" : "./?action=stop", tag.hashCode() + 1))
                     .addAction(0, lc.getString(R.string.w_geo_off), offIntent(c));
             nm.notify(tag, 1, b.build());
+            // the group's own summary: without one, Android (16 and later) folds a lone grouped notification into one
+            // bundle with the app's other notifications, collapsed, and the suggestion's buttons are hidden (Test Lab,
+            // Pixel 11, 15 Nov 2026). With it the suggestion stands on its own, opened with its buttons when on top.
+            nm.notify(TAG_SUM, 1, new NotificationCompat.Builder(c, "shaati_shifts")
+                    .setSmallIcon(R.drawable.ic_notification_icon)
+                    .setColor(COLOR)
+                    .setContentTitle(title)
+                    .setContentText(body)
+                    .setGroup(GROUP)
+                    .setGroupSummary(true)
+                    .setGroupAlertBehavior(NotificationCompat.GROUP_ALERT_CHILDREN)
+                    .setAutoCancel(true)
+                    .setSilent(true)
+                    .setCategory(NotificationCompat.CATEGORY_REMINDER)
+                    .setContentIntent(NoteCenter.open(c, "./#home", TAG_SUM.hashCode()))
+                    .setTimeoutAfter((start ? 3 * 60 : 2 * 60) * MIN)
+                    .build());
         } catch (Exception e) {
             android.util.Log.w("ShaatiGeo", "post", e);
         }

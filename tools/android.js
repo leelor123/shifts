@@ -174,7 +174,9 @@ function patchLauncher() {
             @Override
             public void onNavigationEvent(int navigationEvent, Bundle extras) {
                 if (inner != null) inner.onNavigationEvent(navigationEvent, extras);
-                if (navigationEvent == NAVIGATION_FINISHED) requestChannel(0);
+                // every page that finishes loading gets its own channel: Chrome ends a channel when the page changes
+                // (the first open moves to the chosen language's page right after loading), and the page can't ask
+                if (navigationEvent == NAVIGATION_FINISHED) { mChannelRequested = false; requestChannel(0); }
             }
 
             @Override

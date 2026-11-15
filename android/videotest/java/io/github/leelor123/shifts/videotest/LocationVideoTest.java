@@ -13,7 +13,6 @@ import androidx.test.ext.junit.runners.AndroidJUnit4;
 import androidx.test.platform.app.InstrumentationRegistry;
 import androidx.test.uiautomator.By;
 import androidx.test.uiautomator.BySelector;
-import androidx.test.uiautomator.Direction;
 import androidx.test.uiautomator.UiDevice;
 import androidx.test.uiautomator.UiObject2;
 import androidx.test.uiautomator.Until;
@@ -297,8 +296,13 @@ public class LocationVideoTest {
 
         Log.i(TAG, "step: saved");
         // 8. the toast and "On"
-        UiObject2 on = d.wait(Until.findObject(By.text("On")), 20000);
-        if (on == null) on = d.wait(Until.findObject(By.textStartsWith("On ")), 3000);
+        UiObject2 on = null;
+        for (int i = 0; i < 16 && on == null; i++) {
+            on = d.findObject(By.text("On"));
+            if (on == null) on = d.findObject(By.textStartsWith("On "));
+            if (on == null) on = d.findObject(By.textContains("of the spot you saved"));
+            if (on == null) SystemClock.sleep(500);
+        }
         Log.i(TAG, "section shows On: " + (on != null)); // the notification below is the proof either way
         pause(STEP + 3000);
 
@@ -328,13 +332,31 @@ public class LocationVideoTest {
         recStart();
         pause(2500); // the notification arrived on the home screen
         d.openNotification();
-        UiObject2 note = d.wait(Until.findObject(By.text("Arrived at work?")), 10000);
+        UiObject2 note = d.wait(Until.findObject(By.textStartsWith("Arrived at work?")), 10000);
         pause(STEP);
-        if (note != null && d.findObject(By.text("Turn off suggestions")) == null) {
-            note.swipe(Direction.DOWN, 0.6f);
+        // opened, with its buttons: the expand arrow next to it, or a pull down on it
+        java.util.regex.Pattern startP = java.util.regex.Pattern.compile("(?i)start shift");
+        for (int i = 0; i < 3 && note != null && d.findObject(By.pkg("com.android.systemui").text(startP)) == null; i++) {
+            Rect nr = note.getVisibleBounds();
+            UiObject2 best = null;
+            for (UiObject2 e : d.findObjects(By.res("android:id/expand_button"))) {
+                if (best == null || Math.abs(e.getVisibleBounds().centerY() - nr.centerY()) < Math.abs(best.getVisibleBounds().centerY() - nr.centerY())) best = e;
+            }
+            if (best != null && Math.abs(best.getVisibleBounds().centerY() - nr.centerY()) < h / 8) best.click();
+            else d.drag(nr.centerX(), nr.centerY(), nr.centerX(), nr.centerY() + h / 6, 40);
             pause(1500);
+            note = d.findObject(By.textStartsWith("Arrived at work?"));
         }
-        pause(8000);
+        UiObject2 start = d.findObject(By.pkg("com.android.systemui").text(startP));
+        Log.i(TAG, "notification opened with its buttons: " + (start != null) + screenTexts());
+        pause(STEP + 2500); // the suggestion and its two buttons, to read
+        // "Start shift": the app opens and asks once more (nothing starts without that answer)
+        if (start != null) {
+            start.click();
+            pause(9000);
+        } else {
+            pause(6000);
+        }
     }
 
     // ---- helpers
@@ -349,21 +371,58 @@ public class LocationVideoTest {
     private void closeApp(int w, int h) throws Exception {
         d.pressRecentApps();
         pause(STEP);
-        // Shaati's card (another app's card may be in the middle): swiped up from where it is
-        UiObject2 card = d.findObject(By.desc("Shaati"));
-        if (card == null) card = d.findObject(By.descStartsWith("Shaati"));
-        if (card == null) card = d.findObject(By.text("Shaati"));
-        Rect r = card != null ? card.getVisibleBounds() : null;
-        int x = r != null ? r.centerX() : w / 2;
-        if (r != null && (r.width() < w / 4 || r.centerY() < h / 6)) {
-            // the label above the card: the card is below it
-            d.swipe(x, Math.min(h * 3 / 4, r.bottom + h / 4), x, h / 12, 25);
-        } else {
-            d.swipe(x, h / 2, x, h / 12, 25);
+        // Shaati's own card, found by its name and brought to the middle (Android's settings page for "Allow all the
+        // time" leaves a Settings card in front of it), then swiped away
+        boolean gone = false;
+        for (int i = 0; i < 5 && !gone; i++) {
+            UiObject2 label = shaatiCard();
+            if (label == null) {
+                Log.i(TAG, "recents: no Shaati card on screen:" + screenTexts());
+                d.swipe(w / 5, h / 2, w * 4 / 5, h / 2, 40);
+                pause(1200);
+                continue;
+            }
+            Rect r = label.getVisibleBounds();
+            if (Math.abs(r.centerX() - w / 2) > w / 5) {
+                int dx = Math.min(Math.abs(r.centerX() - w / 2), w * 3 / 5);
+                if (r.centerX() > w / 2) d.swipe(w / 2 + dx / 2, h / 2, w / 2 - dx / 2, h / 2, 40);
+                else d.swipe(w / 2 - dx / 2, h / 2, w / 2 + dx / 2, h / 2, 40);
+                pause(1200);
+                continue;
+            }
+            pause(800);
+            // the name sits above the card: the swipe starts in the card's middle and flicks it off the top
+            d.swipe(r.centerX(), h / 2, r.centerX(), 0, 12);
+            pause(1200);
+            gone = shaatiCard() == null || Math.abs(shaatiCard().getVisibleBounds().centerX() - w / 2) > w / 5;
+            gone = true;
         }
+        Log.i(TAG, "recents: Shaati swiped away: " + gone);
         pause(1500);
         d.pressHome();
         pause(STEP);
+    }
+
+    private UiObject2 shaatiCard() {
+        for (BySelector b : new BySelector[] { By.desc("Shaati"), By.text("Shaati"), By.descStartsWith("Shaati"), By.descContains("Shaati"), By.textStartsWith("Shaati") }) {
+            for (UiObject2 o : d.findObjects(b)) {
+                if (APP.equals(o.getApplicationPackage()) || "com.android.chrome".equals(o.getApplicationPackage())) continue; // the page itself
+                return o;
+            }
+        }
+        return null;
+    }
+
+    private String screenTexts() {
+        StringBuilder s = new StringBuilder();
+        try {
+            for (UiObject2 o : d.findObjects(By.pkg(java.util.regex.Pattern.compile(".*")))) {
+                String t = o.getText(), c = o.getContentDescription();
+                if (t != null && !t.isEmpty()) s.append(" [").append(t.length() > 40 ? t.substring(0, 40) : t).append(']');
+                else if (c != null && !c.isEmpty()) s.append(" {").append(c.length() > 40 ? c.substring(0, 40) : c).append('}');
+            }
+        } catch (Exception ignored) { }
+        return s.toString();
     }
 
     private void tap(String text, long timeout) {

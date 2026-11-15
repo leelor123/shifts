@@ -400,6 +400,7 @@ T.atest('the widgets channel takes the port Chrome hands over (android-app origi
   hello({ origin: 'https://elsewhere', data: '', ports: [stranger] });
   hello({ origin: 'android-app://other.host', data: '', ports: [stranger] });
   hello({ origin: 'android-app://site', data: 'something else', ports: [stranger] });
+  hello({ origin: 'android-app://site/com.example.other', data: '', ports: [stranger] });
   T.eq(other.length, 0, 'only this site\'s own app, and only the channel hand-over');
   T.eq(c.App.widgets.connected, false);
   hello({ origin: 'android-app://site', data: '', ports: [port] });
@@ -410,6 +411,11 @@ T.atest('the widgets channel takes the port Chrome hands over (android-app origi
   T.eq(got.length, 1, 'the app\'s hello on the port sends them again');
   port.onmessage({ data: 'refresh' });
   T.eq(got.length, 2, 'and so does "refresh"');
+  // Chrome 133 and earlier: the same hand-over from "android-app://" + host + "/" + the app's package
+  const old = { postMessage: (m) => got.push(JSON.parse(m)) };
+  got.length = 0;
+  hello({ origin: 'android-app://site/io.github.leelor123.shifts', data: '', ports: [old] });
+  T.eq(got.length, 1, "an older Chrome's port is kept too, and the numbers go out on it");
 });
 
 T.atest('each strict forget throws when its delete fails (requests, friends card, statistics)', async () => {

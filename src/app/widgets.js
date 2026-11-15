@@ -168,7 +168,12 @@
   // ask); the app's hello ("shaati:widgets") and "refresh" then come through that port. Measured on the phone on
   // 3 Nov 2026: the listener used to wait for the hello on the window, from this page's own origin, so the widgets
   // never got a number.
-  const fromApp = (e) => e.origin === 'android-app://' + location.host || e.origin === location.origin;
+  // Chrome before about 134 hands the source over as it got it, not as an origin: "android-app://" + host + "/" + the
+  // app's package (Chromium's OriginVerifier.getPostMessageUriFromVerifiedOrigin; MessagePortProvider made it an origin
+  // later). Found on Firebase Test Lab, 15 Nov 2026: Chrome 113, 122, 124 and 133 never got the widgets or the arrival
+  // suggestion. Only this app's own package, and only after Chrome checked the site's Digital Asset Links.
+  const APP_ID = 'io.github.leelor123.shifts';
+  const fromApp = (e) => e.origin === 'android-app://' + location.host || e.origin === 'android-app://' + location.host + '/' + APP_ID || e.origin === location.origin;
   root.addEventListener('message', (e) => {
     if (!fromApp(e) || (e.data !== '' && e.data !== 'shaati:widgets') || !e.ports || !e.ports[0]) return;
     // the data may still be loading (Chrome hands the port over right after the page loads): taken once it is there
