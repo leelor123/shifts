@@ -28,14 +28,17 @@ import com.google.android.gms.tasks.CancellationTokenSource;
  *   3. one reading of where the phone is now;
  *   4. from Android 10, "Allow all the time" (Android's own settings screen), after a line that says to pick it,
  *      from Android 11 with Android's own name for that choice (getBackgroundPermissionOptionLabel);
- *   5. the spot is saved on the phone and watched (WorkGeo.save);
+ *   5. the spot is saved on the phone and Android is asked to watch it (WorkGeo.save), and the screen waits for Google
+ *      Play services' answer. A refusal (1000 when Google Location Accuracy is off) brings Play services' own window
+ *      to turn the needed location setting on, then one more try; refused again, the feature is turned off and a line
+ *      says why, so the app never shows "on" for a circle nobody watches;
  *   6. the suggestion is a notification: if Shaati's notifications are off, a line says so and asks for them
  *      (Android 13's notification permission, or the app's notification settings), before the "saved" line.
  * Any link may open this screen (it has to be reachable from the page), so it never saves anything without these
  * steps and the user's own taps.
  */
 public class WorkGeoActivity extends Activity {
-    private static final int ASK_FINE = 7311, ASK_BACKGROUND = 7312, ASK_NOTES = 7313;
+    private static final int ASK_FINE = 7311, ASK_BACKGROUND = 7312, ASK_NOTES = 7313, ASK_ACCURACY = 7314;
     private int mRadius = WorkGeo.DEFAULT_R;
     private Location mSpot;
     private Context mLang;
@@ -130,8 +133,62 @@ public class WorkGeoActivity extends Activity {
 
     private void done() {
         if (mSpot == null) { finish(); return; }
-        boolean ok = WorkGeo.save(getApplicationContext(), mSpot.getLatitude(), mSpot.getLongitude(), mRadius);
-        if (!ok) { say(R.string.w_geo_need_always); finish(); return; }
+        boolean asked = WorkGeo.save(getApplicationContext(), mSpot.getLatitude(), mSpot.getLongitude(), mRadius,
+                (ok, code) -> runOnUiThread(() -> watched(ok, code, false)));
+        if (!asked) { say(R.string.w_geo_need_always); finish(); }
+    }
+
+    /** Google Play services' answer: watched (on to the notifications check), or refused (the location setting). */
+    private void watched(boolean ok, int code, boolean again) {
+        if (isFinishing() || isDestroyed()) return;
+        if (ok) { notesStep(); return; }
+        android.util.Log.w("ShaatiGeo", "circle refused: " + code + (again ? " (after the settings)" : ""));
+        if (again) { refused(); return; }
+        askAccuracy();
+    }
+
+    /** Play services' own window for the location setting a geofence needs (Google Location Accuracy), then a retry. */
+    private void askAccuracy() {
+        com.google.android.gms.location.LocationRequest lr =
+                new com.google.android.gms.location.LocationRequest.Builder(Priority.PRIORITY_HIGH_ACCURACY, 10000).build();
+        com.google.android.gms.location.LocationSettingsRequest req = new com.google.android.gms.location.LocationSettingsRequest.Builder()
+                .addLocationRequest(lr).setAlwaysShow(true).build();
+        LocationServices.getSettingsClient(this).checkLocationSettings(req)
+                .addOnSuccessListener(this, r -> retry()) // the settings are right already: one more try
+                .addOnFailureListener(this, e -> {
+                    if (e instanceof com.google.android.gms.common.api.ResolvableApiException) {
+                        try {
+                            ((com.google.android.gms.common.api.ResolvableApiException) e).startResolutionForResult(this, ASK_ACCURACY);
+                            return;
+                        } catch (Exception x) {
+                            android.util.Log.w("ShaatiGeo", "location settings window", x);
+                        }
+                    }
+                    refused();
+                });
+    }
+
+    @Override
+    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+        super.onActivityResult(requestCode, resultCode, data);
+        if (requestCode != ASK_ACCURACY) return;
+        if (resultCode == RESULT_OK) retry();
+        else refused();
+    }
+
+    private void retry() {
+        boolean asked = WorkGeo.watch(getApplicationContext(), (ok, code) -> runOnUiThread(() -> watched(ok, code, true)));
+        if (!asked) refused();
+    }
+
+    /** Still refused: the feature stays off (nothing on the page says "on") and the line says what to turn on. */
+    private void refused() {
+        WorkGeo.off(getApplicationContext());
+        say(R.string.w_geo_no_fence);
+        finish();
+    }
+
+    private void notesStep() {
         if (notesOn()) { saved(); return; }
         // the suggestion is a notification: with Shaati's notifications off it would never be seen
         dialog()

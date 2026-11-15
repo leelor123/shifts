@@ -615,10 +615,17 @@
   ]
  },
  {
+  "key": "לא פועל: צריך להפעיל את דיוק המיקום",
+  "kind": "lit",
+  "where": [
+   "app/arrive.js:48"
+  ]
+ },
+ {
   "key": "כבוי",
   "kind": "lit",
   "where": [
-   "app/arrive.js:48",
+   "app/arrive.js:49",
    "app/views-admin.js:50",
    "app/views-settings.js:788",
    "app/views-settings.js:955"
@@ -628,77 +635,84 @@
   "key": "<div class=\"nfc-intro\">{0}<p>כשמגיעים למקום העבודה, שעתי שולחת התראה שמציעה להתחיל משמרת. כשיוצאים ומשמרת רצה, היא מציעה לסיים אותה. משמרת לא מתחילה ולא מסתיימת בלי לחיצה שלך.</p></div>",
   "kind": "tpl",
   "where": [
-   "app/arrive.js:52"
+   "app/arrive.js:53"
   ]
  },
  {
   "key": "<div class=\"tiny muted nfc-note\">המיקום נשמר רק בטלפון הזה. הוא לא נשלח לענן, לא לגיבוי ולא לשום מקום אחר.</div>",
   "kind": "lit",
   "where": [
-   "app/arrive.js:53"
+   "app/arrive.js:54"
   ]
  },
  {
   "key": "<div class=\"card nfc-card\">{0}\n        <div class=\"tiny muted nfc-note\">האפשרות הזו מגיעה בעדכון הקרוב של שעתי ב־Google Play. אחרי העדכון היא תופיע כאן.</div></div>",
   "kind": "tpl",
   "where": [
-   "app/arrive.js:55"
+   "app/arrive.js:56"
   ]
  },
  {
   "key": "<div class=\"card nfc-card\">{0}\n        <div class=\"tiny muted nfc-note\">זה עובד רק באפליקציית שעתי לאנדרואיד. דפדפן לא יכול לבדוק מיקום כשהאפליקציה סגורה, ולכן כאן אין את האפשרות הזו.</div></div>",
   "kind": "tpl",
   "where": [
-   "app/arrive.js:59"
+   "app/arrive.js:60"
   ]
  },
  {
   "key": "<div class=\"section-title\">רדיוס סביב המקום</div><div class=\"seg\" style=\"margin-bottom:14px\">{0}</div>",
   "kind": "tpl",
   "where": [
-   "app/arrive.js:63"
+   "app/arrive.js:64"
   ]
  },
  {
   "key": "<button data-arrive-r=\"{0}\" class=\"{1}\">{2} מטר</button>",
   "kind": "tpl",
   "where": [
-   "app/arrive.js:63"
+   "app/arrive.js:64"
   ]
  },
  {
   "key": "<div class=\"card nfc-card\">{0}\n          <div class=\"item\" style=\"cursor:default\"><span class=\"lead\">{1}</span><span class=\"body\"><span class=\"t\">פועל</span><span class=\"s\">{2}</span></span></div>\n          <button class=\"btn tonal block\" data-arrive-off>{3} כיבוי</button>\n        </div>\n        {4}\n        <button class=\"btn block\" data-arrive-save>{5} שמירה מחדש מהמקום הנוכחי</button>\n        {6}",
   "kind": "tpl",
   "where": [
-   "app/arrive.js:65"
+   "app/arrive.js:66"
   ]
  },
  {
   "key": "ברדיוס {0} מטר מהמקום ששמרת",
   "kind": "tpl",
   "where": [
-   "app/arrive.js:66"
+   "app/arrive.js:67"
   ]
  },
  {
-  "key": "<div class=\"card nfc-card\">{0}\n        {1}\n        {2}\n        <button class=\"btn go block\" data-arrive-save>{3} שמירת המקום הנוכחי כמקום העבודה</button>\n        <div class=\"tiny muted nfc-note\">עומדים במקום העבודה ולוחצים. הטלפון יבקש הרשאת מיקום, וצריך לבחור “לאפשר כל הזמן”.</div>\n      </div>\n      {4}",
+  "key": "<div class=\"card nfc-card\">{0}\n        {1}\n        {2}\n        {3}\n        <button class=\"btn go block\" data-arrive-save>{4} שמירת המקום הנוכחי כמקום העבודה</button>\n        <div class=\"tiny muted nfc-note\">עומדים במקום העבודה ולוחצים. הטלפון יבקש הרשאת מיקום, וצריך לבחור “לאפשר כל הזמן”.</div>\n      </div>\n      {5}",
   "kind": "tpl",
   "where": [
-   "app/arrive.js:74"
+   "app/arrive.js:77"
   ]
  },
  {
   "key": "<div class=\"tiny nfc-note\">ההרשאה לגשת למיקום כל הזמן בוטלה, ולכן ההצעות נעצרו. אפשר לשמור את המקום שוב.</div>",
   "kind": "lit",
   "where": [
-   "app/arrive.js:75"
+   "app/arrive.js:78"
+  ]
+ },
+ {
+  "key": "<div class=\"tiny nfc-note\">הטלפון לא מצליח לעקוב אחרי המקום, ולכן ההצעות לא פועלות. בדרך כלל זה קורה כשדיוק המיקום כבוי. אחרי שמפעילים אותו בהגדרות המיקום של הטלפון, אפשר לשמור את המקום שוב.</div>",
+  "kind": "lit",
+  "where": [
+   "app/arrive.js:79"
   ]
  },
  {
   "key": "ההצעות במקום העבודה כבויות",
   "kind": "lit",
   "where": [
-   "app/arrive.js:97"
+   "app/arrive.js:101"
   ]
  },
  {

@@ -94,4 +94,5 @@
     <string name="w_geo_notes_t">La suggestion arrive par notification</string>
     <string name="w_geo_notes">Les notifications de Shaati sont désactivées, donc la suggestion ne peut pas vous parvenir. Sur l\'écran suivant, autorisez les notifications.</string>
     <string name="w_geo_need_notes">Lieu de travail enregistré, mais les notifications sont désactivées et aucune suggestion n\'arrivera. Activez-les dans les réglages du téléphone.</string>
+    <string name="w_geo_no_fence">Shaati ne peut pas surveiller votre lieu de travail, donc aucune suggestion n\'arrivera. Activez la précision de la localisation dans les réglages de localisation du téléphone, puis enregistrez de nouveau le lieu dans les réglages de Shaati.</string>
 </resources>

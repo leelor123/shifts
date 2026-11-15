@@ -51,7 +51,11 @@ T.test('the setup link opens the Android app screen with the radius only', () =>
 });
 T.test('the status message from the phone keeps on, radius and permissions; a spot in it is dropped', () => {
   const s = A.readStatus({ geo: 1, on: true, r: 150, bg: true, fg: true, lat: 32.1, lng: 34.8 });
-  T.eq(JSON.stringify(s), JSON.stringify({ on: true, r: 150, bg: true, fg: true }));
+  T.eq(JSON.stringify(s), JSON.stringify({ on: true, r: 150, bg: true, fg: true, attn: false }));
+  // attn: saved and allowed, but Google Play services refused to watch the place; never together with on
+  T.eq(A.readStatus({ geo: 1, on: false, attn: true, bg: true, fg: true }).attn, true);
+  T.eq(A.readStatus({ geo: 1, on: true, attn: true }).attn, false);
+  T.eq(A.readStatus({ geo: 1, attn: 'yes' }).attn, false);
   T.eq(A.readStatus({ notes: 1 }), null);
   T.eq(A.readStatus(null), null);
   T.eq(A.readStatus({ geo: 1, on: 'yes' }).on, false);

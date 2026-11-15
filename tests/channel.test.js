@@ -61,3 +61,27 @@ T.test('the arrival suggestion has its own group with a summary, so Android show
   T.ok(/nm\.notify\(TAG_SUM, 1,/.test(g), 'posted with the suggestion');
   T.ok(/nm\.cancel\(TAG_SUM, 1\)/.test(g), 'and closed with the last suggestion and when turned off');
 });
+
+// Firebase Test Lab, 15 Nov 2026: with Google Location Accuracy off, Google Play services refuses the geofence (1000,
+// GEOFENCE_NOT_AVAILABLE), while the app said "saved" and showed "on", and no suggestion ever came
+T.test('the workplace is "saved" and "on" only after Google Play services accepted the circle', () => {
+  const code = (s) => s.replace(/\/\*[\s\S]*?\*\//g, '').replace(/\/\/[^\n]*/g, '');
+  const g = code(read('android/widgets/java/WorkGeo.java'));
+  T.ok(/addOnSuccessListener\(v -> answered\(app, true/.test(g) && /answered\(app, false/.test(g), 'the answer is waited for, both ways');
+  T.ok(/putInt\("fence", ok \? FENCE_OK : FENCE_REFUSED\)/.test(g), 'and kept');
+  T.ok(/\.put\("on", on\(c\) && fine && bg && !refused\)/.test(g), 'a refused circle is never reported as on');
+  T.ok(/\.put\("attn", on\(c\) && fine && bg && refused\)/.test(g), 'it is reported as needing attention');
+  T.ok(/static void restore\(Context c\) \{\s*if \(on\(c\)\) watch\(c, null\);/.test(g), 'each open and restart asks again and keeps the answer');
+  const a = code(read('android/widgets/java/WorkGeoActivity.java'));
+  const done = a.slice(a.indexOf('private void done()'), a.indexOf('private void watched('));
+  T.ok(done.length > 50 && !/saved\(\)|notesStep\(\)|w_geo_saved/.test(done), 'saving says nothing before the answer');
+  T.ok(/if \(ok\) \{ notesStep\(\); return; \}/.test(a), '"saved" (after the notifications check) only when accepted');
+  T.ok(/getSettingsClient\(this\)\.checkLocationSettings/.test(a) && /PRIORITY_HIGH_ACCURACY/.test(a) && /startResolutionForResult\(this, ASK_ACCURACY\)/.test(a),
+    "refused: Play services' own window for the location setting");
+  T.ok(/if \(resultCode == RESULT_OK\) retry\(\);\s*else refused\(\);/.test(a), 'then one more try');
+  const refused = a.slice(a.indexOf('private void refused()'), a.indexOf('private void notesStep()'));
+  T.ok(/WorkGeo\.off\(/.test(refused) && /w_geo_no_fence/.test(refused), 'refused again: the feature is off and the line says why');
+  T.ok(/WorkGeo\.sink = /.test(read('tools/android.js')), 'a later answer reaches the open page');
+  const page = read('src/app/arrive.js');
+  T.ok(/status && status\.attn\) return '/.test(page) && /const attn = status && status\.attn;/.test(page), 'the page shows it as needing attention, with Save again');
+});

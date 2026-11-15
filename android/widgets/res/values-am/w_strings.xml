@@ -93,4 +93,5 @@
     <string name="w_geo_notes_t">ጥቆማው በማሳወቂያ ይመጣል</string>
     <string name="w_geo_notes">የShaati ማሳወቂያዎች ጠፍተዋል፣ ስለዚህ ጥቆማው አይደርስዎትም። በሚቀጥለው ማያ ገጽ ማሳወቂያዎችን ይፍቀዱ።</string>
     <string name="w_geo_need_notes">የሥራ ቦታ ተቀምጧል፣ ግን ማሳወቂያዎች ጠፍተዋል፣ ስለዚህ ምንም ጥቆማ አይመጣም። በስልኩ ቅንብሮች ውስጥ ያብሯቸው።</string>
+    <string name="w_geo_no_fence">Shaati የሥራ ቦታዎን መከታተል አይችልም፣ ስለዚህ ጥቆማ አይመጣም። በስልኩ የአካባቢ ቅንብሮች ውስጥ የአካባቢ ትክክለኛነትን ያብሩ፣ ከዚያ ቦታውን በShaati ቅንብሮች ውስጥ እንደገና ያስቀምጡ።</string>
 </resources>

@@ -94,4 +94,5 @@
     <string name="w_geo_notes_t">La sugerencia llega en una notificación</string>
     <string name="w_geo_notes">Las notificaciones de Shaati están desactivadas, así que la sugerencia no te llegará. En la siguiente pantalla, permite las notificaciones.</string>
     <string name="w_geo_need_notes">Lugar de trabajo guardado, pero las notificaciones están desactivadas y no llegará ninguna sugerencia. Actívalas en los ajustes del teléfono.</string>
+    <string name="w_geo_no_fence">Shaati no puede vigilar tu lugar de trabajo, así que no llegará ninguna sugerencia. Activa la precisión de la ubicación en los ajustes de ubicación del teléfono y vuelve a guardar el lugar en los ajustes de Shaati.</string>
 </resources>

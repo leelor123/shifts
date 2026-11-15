@@ -207,6 +207,13 @@ function patchLauncher() {
                 if (s != null) s.postMessage("shaati:review", null);
 ${WORK_GEOFENCE ? `                // this app can suggest a shift at the workplace (WorkGeo): the page offers it in Settings
                 if (s != null) s.postMessage("shaati:geo", null);
+                // and its later answers: Google Play services may refuse the circle after the status went out (Location
+                // Accuracy off), and the page shows it as needing attention, not as on
+                WorkGeo.sink = (st) -> runOnUiThread(() -> {
+                    if (isFinishing()) return;
+                    androidx.browser.customtabs.CustomTabsSession gs = widgetSession();
+                    if (gs != null) gs.postMessage(st, null);
+                });
 ` : ''}                sendTaps(s);
             }
 

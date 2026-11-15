@@ -103,15 +103,31 @@ final class WorkGeo {
         return PendingIntent.getBroadcast(c, 7320, i, flags);
     }
 
-    /** Saves the spot and starts watching it (WorkGeoActivity, once both permissions are there). */
-    static boolean save(Context c, double lat, double lng, int r) {
+    /** The answer from Google Play services: the circle is watched, or not (its status code, e.g. 1000). */
+    interface Done { void result(boolean ok, int code); }
+
+    /** Where a status change goes while the app is open (LauncherActivity: to the page). */
+    interface Sink { void send(String status); }
+    static volatile Sink sink;
+
+    // Google Play services' last answer for the circle: watched, refused, or not known yet (asked, no answer)
+    static final int FENCE_OK = 1, FENCE_UNKNOWN = 0, FENCE_REFUSED = -1;
+
+    /** Saves the spot and asks Android to watch it (WorkGeoActivity, once both permissions are there). done hears
+     *  whether Google Play services accepted the circle: "saved" is said only then. */
+    static boolean save(Context c, double lat, double lng, int r, Done done) {
         prefs(c).edit().putString("lat", Double.toString(lat)).putString("lng", Double.toString(lng)).putInt("r", r)
-                .putBoolean("on", true).putLong("lastInNote", 0).putLong("lastExit", 0).putLong("lastOutNote", 0).commit();
-        return watch(c);
+                .putBoolean("on", true).putInt("fence", FENCE_UNKNOWN)
+                .putLong("lastInNote", 0).putLong("lastExit", 0).putLong("lastOutNote", 0).commit();
+        return watch(c, done);
+    }
+
+    static int fence(Context c) {
+        return prefs(c).getInt("fence", FENCE_UNKNOWN);
     }
 
     /** Asks Android to watch the saved circle (again after a restart or an update: Android forgets geofences then). */
-    static boolean watch(Context c) {
+    static boolean watch(Context c, Done done) {
         SharedPreferences p = prefs(c);
         if (!p.getBoolean("on", false) || !hasFine(c) || !hasBackground(c)) return false;
         double lat, lng;
@@ -132,17 +148,41 @@ final class WorkGeo {
         GeofencingRequest req = new GeofencingRequest.Builder().setInitialTrigger(0).addGeofence(g).build();
         try {
             GeofencingClient gc = LocationServices.getGeofencingClient(c);
+            final Context app = c.getApplicationContext();
+            // the answer is kept: the status says "on" only for a circle Google Play services accepted. It refuses with
+            // 1000 (GEOFENCE_NOT_AVAILABLE) when Google Location Accuracy is off; the app then said "saved" and "on"
+            // and no suggestion ever came (Firebase Test Lab, Android 16 image, 15 Nov 2026)
             gc.addGeofences(req, fenceIntent(c))
-                    .addOnFailureListener(e -> android.util.Log.w("ShaatiGeo", "watch failed", e));
+                    .addOnSuccessListener(v -> answered(app, true, 0, done))
+                    .addOnFailureListener(e -> {
+                        android.util.Log.w("ShaatiGeo", "watch failed", e);
+                        answered(app, false, e instanceof com.google.android.gms.common.api.ApiException
+                                ? ((com.google.android.gms.common.api.ApiException) e).getStatusCode() : -1, done);
+                    });
             return true;
         } catch (SecurityException e) {
             return false;
         }
     }
 
-    /** After a restart or an update (NoteAlarm). */
+    private static void answered(Context c, boolean ok, int code, Done done) {
+        if (!on(c)) return; // turned off meanwhile
+        prefs(c).edit().putInt("fence", ok ? FENCE_OK : FENCE_REFUSED).commit();
+        if (done != null) done.result(ok, code);
+        Sink s = sink;
+        String st = status(c);
+        if (s != null && st != null) {
+            try {
+                s.send(st);
+            } catch (Exception e) {
+                // the page asks again when it comes back to the front
+            }
+        }
+    }
+
+    /** After a restart or an update (NoteAlarm), and on each open of the app: a refusal shows as needing attention. */
     static void restore(Context c) {
-        if (on(c)) watch(c);
+        if (on(c)) watch(c, null);
     }
 
     /** Turns it off: stops watching, forgets the spot, closes our notifications. */
@@ -287,8 +327,10 @@ final class WorkGeo {
         try {
             boolean fine = hasFine(c), bg = hasBackground(c);
             // on, as far as the user can tell: the spot is saved and Android may still watch it
-            return new JSONObject().put("geo", 1).put("on", on(c) && fine && bg).put("r", prefs(c).getInt("r", DEFAULT_R))
-                    .put("saved", on(c)).put("fg", fine).put("bg", bg).toString();
+            boolean refused = fence(c) == FENCE_REFUSED;
+            // attn: saved and allowed, but Google Play services refused to watch the circle (Location Accuracy off)
+            return new JSONObject().put("geo", 1).put("on", on(c) && fine && bg && !refused).put("r", prefs(c).getInt("r", DEFAULT_R))
+                    .put("saved", on(c)).put("fg", fine).put("bg", bg).put("attn", on(c) && fine && bg && refused).toString();
         } catch (Exception e) {
             return null;
         }

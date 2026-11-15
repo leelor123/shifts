@@ -63,7 +63,8 @@
    *  in it would be a mistake and is dropped (the page never holds one). */
   function readStatus(m) {
     if (!m || typeof m !== 'object' || m.geo !== 1) return null;
-    return { on: m.on === true, r: radius(m.r), bg: m.bg === true, fg: m.fg === true };
+    // attn: saved and allowed, but Google Play services refused to watch the place (Location Accuracy off)
+    return { on: m.on === true, r: radius(m.r), bg: m.bg === true, fg: m.fg === true, attn: m.attn === true && m.on !== true };
   }
 
   root.Arrive = { RADII, DEFAULT_R, AWAY_MS, LEAVE_GAP_MS, DWELL_MS, PACKAGE, SCHEME, radius, decide, setupUrl, readStatus };

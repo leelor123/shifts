@@ -93,4 +93,5 @@
     <string name="w_geo_notes_t">The suggestion comes as a notification</string>
     <string name="w_geo_notes">Notifications from Shaati are off, so the suggestion cannot reach you. On the next screen, allow notifications.</string>
     <string name="w_geo_need_notes">Workplace saved, but notifications are off, so no suggestion will come. Turn them on in phone settings.</string>
+    <string name="w_geo_no_fence">Shaati can\'t watch your workplace, so no suggestion will come. Turn on Location Accuracy in the phone\'s location settings, then save the place again in Shaati settings.</string>
 </resources>

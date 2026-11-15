@@ -45,6 +45,7 @@
     if (oldApp()) return 'מגיע בעדכון הקרוב של האפליקציה';
     if (!native) return 'באפליקציה לאנדרואיד: הצעה להתחיל משמרת כשמגיעים';
     if (status && status.on) return `פועל · ברדיוס ${status.r} מטר`;
+    if (status && status.attn) return 'לא פועל: צריך להפעיל את דיוק המיקום';
     return 'כבוי';
   };
 
@@ -71,8 +72,11 @@
         ${privacy}`;
     }
     const lost = status && status.saved && !status.bg;
+    // Google Play services refused to watch the place (Android/WorkGeo: Location Accuracy off): never shown as on
+    const attn = status && status.attn;
     return `<div class="card nfc-card">${intro}
         ${lost ? '<div class="tiny nfc-note">ההרשאה לגשת למיקום כל הזמן בוטלה, ולכן ההצעות נעצרו. אפשר לשמור את המקום שוב.</div>' : ''}
+        ${attn ? '<div class="tiny nfc-note">הטלפון לא מצליח לעקוב אחרי המקום, ולכן ההצעות לא פועלות. בדרך כלל זה קורה כשדיוק המיקום כבוי. אחרי שמפעילים אותו בהגדרות המיקום של הטלפון, אפשר לשמור את המקום שוב.</div>' : ''}
         ${seg}
         <button class="btn go block" data-arrive-save>${icon('pin', 's')} שמירת המקום הנוכחי כמקום העבודה</button>
         <div class="tiny muted nfc-note">עומדים במקום העבודה ולוחצים. הטלפון יבקש הרשאת מיקום, וצריך לבחור “לאפשר כל הזמן”.</div>
