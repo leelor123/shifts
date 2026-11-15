@@ -116,10 +116,11 @@
 
   /* ---------------- what's new (once per big update, for people who already used the app) ---------------- */
   const WHATS_NEW = {
-    id: '1.38.0',
-    // the payslip first, a careful and more accurate check, the payday offer, payslip tools in Plus: news for everyone
-    // (the location offer waits for the Android app's update and joins the list then)
-    seen: [],
+    id: '1.38.1',
+    // 1.38.0: the payslip first, a careful and more accurate check, the payday offer, payslip tools in Plus. 1.38.1
+    // brings fixes for everyone and the location offer only in the Android app (its own disclosure introduces it), so
+    // whoever saw 1.38.0's sheet is not shown it again, and someone coming from before 1.38.0 still gets these items
+    seen: ['1.38.0'],
     // true only when the items hold a real feature: a release of fixes alone opens no sheet (the user, 6 Nov 2026)
     features: true,
     items: [
@@ -163,6 +164,7 @@
   /* ---------------- every update (settings › about › all the updates) ---------------- */
   // newest first: [version, the day it went out, what changed — said to the user, not to a developer]
   const CHANGELOG = [
+    ['1.38.1', '2026-11-15', 'הווידג׳טים והחיבור לאפליקציה לאנדרואיד עובדים גם עם גרסה ישנה של Chrome, ו־Chrome כבר לא מציע לתרגם את שעתי. באפליקציה לאנדרואיד נוספה הצעה לבחירתך להתחיל משמרת כשמגיעים לעבודה. המיקום נשאר בטלפון.'],
     ['1.38.0', '2026-11-14', 'בדיקת תלוש כבר במסך הראשון, בלחיצה אחת ובלי חשבון. קורא התלוש קורא נכון יותר נטו, שעות וימי עבודה, מדבר על פער אפשרי, ומאפשר לתקן קריאה שגויה או לספר לנו. בלי משמרות רשומות נבדק רק מה שהתלוש מראה לבד. סביב יום התשלום מגיעה הצעה לבדוק את התלוש. ב־Plus יש עכשיו השוואה בין חודשים, בדיקה של כל התלושים יחד ודוח תלושים מפורט. בקשת הדירוג מופיעה רק אחרי משהו טוב, בכרטיס קטן שלא חוסם את המסך.'],
     ['1.37.4', '2026-11-13', 'קורא התלוש מקבל רק קובץ PDF או תמונה, עד 25MB, גם כשהקובץ נשלח מאפליקציה אחרת.'],
     ['1.37.3', '2026-11-13', 'תיקוני אבטחה: שעתי לא נפתחת בתוך אתר אחר, והספריות הראשיות לקריאת תלושים וקבצים נטענות רק אם הן זהות לגרסה שבדקנו.'],
