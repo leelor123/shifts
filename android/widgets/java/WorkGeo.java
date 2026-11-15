@@ -399,7 +399,8 @@ final class WorkGeo {
     /** The notification's "turn off" button: that place only (the other places keep their suggestions). */
     private static PendingIntent offIntent(Context c, String id) {
         Intent i = new Intent(c, WorkGeoReceiver.class).setAction(ACTION_OFF).putExtra("id", id);
-        return PendingIntent.getBroadcast(c, 7321, i, PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE);
+        // a request code per place: one shared code let the newest notification's place replace an older one's
+        return PendingIntent.getBroadcast(c, 7321 + (id == null ? 0 : id.hashCode()), i, PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE);
     }
 
     /** One suggestion closed, and the group's summary with it when no suggestion is left. */
