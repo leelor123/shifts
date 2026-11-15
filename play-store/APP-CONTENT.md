@@ -281,7 +281,7 @@ Expected result: **IARC 3+ / PEGI 3 / ESRB Everyone / USK 0**, with interactive 
   keeps it under 500):
 
 ```
-Shaati is a time clock and payslip checker for hourly workers. Feature: "Suggestion when you arrive at work" (Settings > My work). The user saves their workplace once; a geofence around it shows a notification offering to start the shift on arrival, and to end it when they leave during a shift. Workers arrive with the app closed, so foreground location cannot notice the arrival. Off by default; location stays on the device and is never sent. No shift starts or ends without a tap.
+Shaati is a time clock and payslip checker for hourly workers. Feature: "Suggestion when you arrive at work" (Settings > My work). The user saves up to 3 workplaces; a geofence around each shows a notification offering to start the shift on arrival, and to end it when they leave during a shift. Workers arrive with the app closed, so foreground location cannot notice the arrival. Off by default; location stays on the device and is never sent. No shift starts or ends without a tap.
 ```
 
 - Why background: the user arrives at work with the app closed, so only a geofence can notice the arrival. The

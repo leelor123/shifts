@@ -406,7 +406,19 @@ function buildEnv() {
   return { env, cfg };
 }
 
+/** The project's versionName, or null. build() names its files after package.json's version, so a project generated
+ *  for an older version would ship old code under a new name (1.39.0 once held the 1.38.2 build). */
+function projectVersion(dir) {
+  const f = path.join(dir, 'app', 'build.gradle');
+  const m = fs.existsSync(f) && fs.readFileSync(f, 'utf8').match(/versionName\s*=?\s*["']([^"']+)["']/);
+  return m ? m[1] : null;
+}
+
 function build(outDir) {
+  if (!outDir) {
+    const v = projectVersion(TWA);
+    if (v !== pkg.version) throw new Error(`the Android project is ${v || 'missing'}, not ${pkg.version}: run "node tools/android.js generate" first`);
+  }
   const { env } = buildEnv();
   const r = spawnSync(process.platform === 'win32' ? 'bubblewrap.cmd' : 'bubblewrap', ['build', '--skipPwaValidation'], { cwd: TWA, env, stdio: 'inherit', shell: true });
   if (r.status !== 0) throw new Error('bubblewrap build failed');
