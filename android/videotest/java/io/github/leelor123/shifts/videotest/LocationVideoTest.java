@@ -207,15 +207,17 @@ public class LocationVideoTest {
                 pause(1500);
                 ctx.startActivity(open);
             }
-            tap("Just look around (sample data)", 45000);
-            tap("Continue as a guest, without an account", 30000);
+            // each tap again until the next screen shows (a tap can land while the page redraws, e.g. as it takes the
+            // app's channel right after the language move)
+            advance("Just look around (sample data)", "Continue as a guest, without an account");
+            advance("Continue as a guest, without an account", "Continue as a guest?");
             // the dialog's button, by its exact name (the link above starts with the same words)
-            waitFor("Continue as a guest?", 15000);
-            pause(STEP);
-            press(() -> { UiObject2 g = d.findObject(By.text("Continue as a guest")); return g != null ? g : d.findObject(By.desc("Continue as a guest")); }, "the guest dialog's button");
+            for (int i = 0; i < 3 && waitQuiet("I have read and agree to the terms of use and the privacy policy", i == 0 ? 1 : 6000) == null; i++) {
+                pause(STEP);
+                press(() -> { UiObject2 g = d.findObject(By.text("Continue as a guest")); return g != null ? g : d.findObject(By.desc("Continue as a guest")); }, "the guest dialog's button");
+            }
             tap("I have read and agree to the terms of use and the privacy policy", 20000);
-            tap("Agree and continue", 10000);
-            waitFor("Start shift", 30000);
+            advance("Agree and continue", "Start shift");
             pause(STEP);
             // the first open moved to the English page after the channel to the app was made: the app is closed and opened
             // again from the launcher, as on the next day, so the page and the app talk (LauncherActivity's hello)
@@ -231,10 +233,14 @@ public class LocationVideoTest {
                 waitFor("Start shift", 60000);
                 pause(STEP + 1000);
                 // 2. Settings › My work › Suggestion when you arrive at work: Off (the app answered the page)
-                press(() -> bottom("Settings"), "Settings");
+                // a tap can land on a toast or while the page redraws: again until the next screen shows
+                for (int i = 0; i < 3; i++) {
+                    press(() -> bottom("Settings"), "Settings");
+                    if (waitQuiet("My work", 6000) != null) break;
+                    Log.i(TAG, "tapped again: Settings");
+                }
                 pause(STEP);
-                tap("My work", 15000);
-                waitFor("Suggestion when you arrive at work", 15000);
+                advance("My work", "Suggestion when you arrive at work");
                 pause(1500);
                 // the row reads "Suggestion when you arrive at work Off" (the page's sub-line joins the title in Chrome)
                 ready = d.findObject(By.textEndsWith("arrive at work Off")) != null || d.findObject(By.descEndsWith("arrive at work Off")) != null
@@ -243,7 +249,7 @@ public class LocationVideoTest {
             }
             if (!ready) fail("the page never heard from the app (no Off under the suggestion)");
             pause(STEP);
-            tap("Suggestion when you arrive at work", 15000);
+            advance("Suggestion when you arrive at work", "Radius around the spot");
             scrollTo("Save where I am now as my workplace");
             pause(STEP + 1000);
         } else {
@@ -460,6 +466,16 @@ public class LocationVideoTest {
             SystemClock.sleep(700);
         }
         fail("could not tap: " + what);
+    }
+
+    /** Taps text, again (up to three times) until next is on the screen. */
+    private void advance(String text, String next) {
+        for (int i = 0; i < 3; i++) {
+            tap(text, 45000);
+            if (waitQuiet(next, 8000) != null) return;
+            Log.i(TAG, "tapped again: " + text);
+        }
+        waitFor(next, 15000);
     }
 
     private UiObject2 waitQuiet(String text, long timeout) {
