@@ -70,8 +70,10 @@
         plus: !!(S.meta.plus && S.meta.plus.active), plusWeb: !!(S.meta.plus && S.meta.plus.active && S.meta.plus.src === 'web'), plusSeen: !sim && !!S.meta.plusSeen,
         plusWall: !sim && !!S.meta.plusWall, plusTry: !sim && !!S.meta.plusTrial, // reached a free allowance / started the free trial
         // opened the tax refund check, got a month of Plus for an invitation (given or taken), a friend joined through
-        // the link, gave a thank-you tip (20 keys: the most the rules allow)
+        // the link, gave a thank-you tip
         tax: !!S.meta.usedTaxRefund, gift: !!(S.meta.plusGift && S.meta.plusGift.months), inv: !!(S.meta.plusGift && S.meta.plusGift.friends), tip: +S.meta.tips > 0,
+        // a payslip check found money owed; bought a report on its own (22 keys: the most the rules allow)
+        gap: !!S.meta.gapFound, rep: !!(S.meta.reports && Object.keys(S.meta.reports).length),
       }; })(), // an admin's Plus preview is never counted
       t: Date.now(),
     };

@@ -1050,6 +1050,8 @@ body.fx .recap-card:active { transform: scale(.98); }
 .plus-tip { margin-top: 12px; display: grid; gap: 6px; }
 .plus-tip-row { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 4px; }
 .plus-tip-row .btn { flex: 1 1 0; min-width: 72px; font-variant-numeric: tabular-nums; }
+.plus-report { margin-top: 12px; display: grid; gap: 6px; }
+.plus-fun { margin-top: 14px; }
 @media (prefers-reduced-motion: reduce) { .plus-plan { transition: none; } }
 .limit-sheet .plus-list { margin-top: 4px; }
 .limit-sheet .btn.text.block { margin-top: 6px; }

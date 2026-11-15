@@ -20,6 +20,8 @@
   const locked = () => !!(root.Plus && root.Plus.limited && root.Plus.limited());
   const plusTag = () => (root.Plus && root.Plus.visible && root.Plus.visible() ? ' <span class="tag plus-tag">Plus</span>' : '');
   const gate = (fn) => (el) => { if (locked()) { root.Plus.sheet(); return; } fn(el); };
+  /** A report that is also sold on its own, once: open with Plus or once bought (Plus.reportSheet offers either). */
+  const sold = (k, fn) => (el) => { if (root.Plus && root.Plus.reportSheet) root.Plus.reportSheet(k, () => fn(el)); else fn(el); };
   const slips = () => SP.history(S.payslips);
   const fmt = (kind, x) => (kind === 'hours' ? `${U.num(x, 2)} ש׳` : kind === 'rate' ? `${U.money(x)} לשעה` : U.money(x));
   // the sign where the language's own number format puts a minus (a "+" in its place when it went up)
@@ -183,6 +185,6 @@
 
   App.actions['slip-compare'] = gate((el) => compareSheet(el && el.dataset && el.dataset.id));
   App.actions['slip-recheck'] = gate(() => recheckSheet());
-  App.actions['slip-report'] = gate(() => reportSheet());
+  App.actions['slip-report'] = sold('payslip', () => reportSheet());
   App.payslipPlus = { reportHtml, check, locked };
 })(typeof window !== 'undefined' ? window : globalThis);

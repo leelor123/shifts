@@ -41,6 +41,8 @@
   // a thank-you tip (one-time products, used up at once so they can be given again): offered after money came back
   // thanks to the payslip check, only once they exist in Play Console (or on the web: PAY_CONFIG.lemon.tips)
   const TIPS = ['shaati_tip_small', 'shaati_tip_medium', 'shaati_tip_large'];
+  // one report bought on its own, once (one-time products, kept): see "one report, bought once" below
+  const REPORTS = { payslip: 'shaati_report_payslip', tax: 'shaati_report_tax' };
   const LS_API = 'https://api.lemonsqueezy.com/v1/licenses/';
   // Pay-card skins (styles-v3.css .sk-<id>): dark enough everywhere for the card's white text
   const SKINS = {
@@ -62,7 +64,7 @@
   // i18n-keep-end
   const SELLER_EMAIL = 'lybtn48@gmail.com';
   const cfg = () => (root.PAY_CONFIG && root.PAY_CONFIG.lemon) || {};
-  const Plus = { SKU, SUB, YEAR, TIPS, SKINS, available: false, price: '', monthly: true, yearly: null, tips: [] };
+  const Plus = { SKU, SUB, YEAR, TIPS, REPORTS, SKINS, available: false, price: '', monthly: true, yearly: null, tips: [] };
   let plan = 'm'; // the plan chosen in the Plus page ('y' once a yearly one is offered and chosen)
   let playSku = SUB; // what Google Play sells here (the subscription; the one-time product only if that is all there is)
   const owned = () => !!(S.meta.plus && S.meta.plus.active);
@@ -168,11 +170,14 @@
       else {
         let d, failed = false;
         let all = [];
-        try { all = ((await svc.getDetails([SUB, YEAR, SKU].concat(TIPS))) || []).filter(Boolean); d = all.find((x) => x.itemId === SUB) || all.find((x) => x.itemId === SKU) || all.find((x) => x.itemId === YEAR); } catch (e) { failed = true; }
+        try { all = ((await svc.getDetails([SUB, YEAR, SKU].concat(TIPS, Object.values(REPORTS)))) || []).filter(Boolean); d = all.find((x) => x.itemId === SUB) || all.find((x) => x.itemId === SKU) || all.find((x) => x.itemId === YEAR); } catch (e) { failed = true; }
         // the yearly plan beside the monthly one, and the tips, only when they exist in Play Console
         const y = all.find((x) => x.itemId === YEAR);
         if (y && d && d.itemId !== YEAR) Plus.yearly = { sku: YEAR, price: fmtPrice(y.price), value: +(y.price && y.price.value) || 0 };
         Plus.tips = all.filter((x) => TIPS.includes(x.itemId)).map((x) => ({ sku: x.itemId, price: fmtPrice(x.price), value: +(x.price && x.price.value) || 0 })).sort((a, b) => a.value - b.value);
+        Plus.reports = {};
+        Object.entries(REPORTS).forEach(([k, sku]) => { const r = all.find((x) => x.itemId === sku); if (r) Plus.reports[k] = { sku, price: fmtPrice(r.price) }; });
+        if (!failed && Object.keys(Plus.reports).length) await syncReports(svc);
         if (failed) play = null;
         else if (d) {
           Plus.available = true;
@@ -303,6 +308,85 @@
   /** A tap in a sheet that holds the tip card. */
   Plus.tipClick = (e) => { const b = e.target.closest('[data-tip]'); if (b) Plus.tip(Plus.tips[+b.dataset.tip]).then((ok) => { if (ok) UI.closeTop(); }); return !!b; };
 
+  /* ---------------- one report, bought once (Google Play one-time products) ---------------- */
+  // The detailed payslip report and the full tax refund report are part of Plus, and are also sold on their own,
+  // once, where they help: under a gap the payslip check found, and on the tax refund check. Offered only once the
+  // product exists in Play Console (inside the Play app; elsewhere Plus is the way). Bought once, that report stays
+  // open for good, on every phone of the account (S.meta.reports is synced). The gap itself is never gated.
+  Plus.reports = {}; // key → { sku, price } for the ones Google Play sells here
+  const boughtReport = (k) => !!(S.meta.reports && S.meta.reports[k]);
+  Plus.boughtReport = boughtReport;
+  /** The report opens: Plus is on, it was bought on its own, or Plus is not sold here (then everything is open). */
+  Plus.hasReport = (k) => !Plus.limited() || boughtReport(k);
+  /** Which reports Google Play says were bought (a refund drops one); null when it cannot tell. */
+  async function syncReports(svc) {
+    let list;
+    try { list = (await svc.listPurchases()) || []; } catch (e) { return null; }
+    const has = new Set(list.filter(Boolean).map((p) => p.itemId));
+    const cur = Object.assign({}, S.meta.reports);
+    let changed = false;
+    Object.entries(REPORTS).forEach(([k, sku]) => {
+      if (has.has(sku) && !cur[k]) { cur[k] = 'play'; changed = true; }
+      if (!has.has(sku) && cur[k] === 'play') { delete cur[k]; changed = true; }
+    });
+    if (changed) await Store.setMeta({ reports: cur });
+    return cur;
+  }
+  Plus.buyReport = async function (k) {
+    const r = Plus.reports[k];
+    const svc = r ? await service() : null;
+    if (!svc) { UI.toast('הרכישה עוד לא זמינה כאן'); return false; }
+    let res;
+    try {
+      res = await new PaymentRequest([{ supportedMethods: BILLING, data: { sku: r.sku } }], { total: { label: 'Total', amount: { currency: 'ILS', value: '0' } } }).show();
+    } catch (e) {
+      if (!e || e.name !== 'AbortError') UI.toast('הרכישה לא הושלמה. אפשר לנסות שוב');
+      return false;
+    }
+    try {
+      // bought once and kept (never consumed, unlike a tip)
+      const token = res.details && res.details.purchaseToken;
+      if (token && typeof svc.acknowledge === 'function') await svc.acknowledge(token, 'onetime').catch(() => {});
+      await res.complete('success');
+    } catch (e) { /* the payment itself went through */ }
+    await Store.setMeta({ reports: Object.assign({}, S.meta.reports, { [k]: 'play' }) });
+    if (root.Fx) root.Fx.celebrate('big');
+    UI.toast('הדוח פתוח אצלך ✓');
+    return true;
+  };
+  const REPORT_TEXT = {
+    payslip: { t: 'דוח תלושים מפורט (PDF)', s: 'כל השורות והממצאים של כל תלוש, לשמירה, להדפסה או לצירוף לפנייה למעסיק.' },
+    tax: { t: 'דוח החזר מס מלא (PDF)', s: 'כל השנים, הסיבות, מה לצרף ואיפה מגישים, צעד אחרי צעד. ההערכה עצמה נשארת חינם.' },
+  };
+  /** A report that may need buying: opens it when it is open here, else offers it once or with Plus. */
+  Plus.reportSheet = function (k, open) {
+    if (Plus.hasReport(k)) { open(); return; }
+    const r = Plus.reports[k];
+    if (!r) { Plus.sheet(); return; }
+    const x = REPORT_TEXT[k];
+    UI.openSheet({
+      title: x.t,
+      cls: 'plus-sheet',
+      body: `<div class="card"><div class="small">${x.s}</div></div>
+        <button class="btn big block plus-buy" data-report-buy>${icon('file')} לקנות את הדוח · ${esc(r.price)}</button>
+        <div class="tiny muted plus-note">תשלום אחד דרך Google Play, בלי מנוי. הדוח נשאר פתוח אצלך. מתחת לגיל 18: בהסכמת הורה.</div>${sellerNote()}
+        <button class="btn text sm block" data-report-plus>${icon('sparkle', 's')} או כל הדוחות ומעקב התלושים עם Plus</button>`,
+      onMount: (el) => {
+        let busy = false;
+        el.addEventListener('click', async (e) => {
+          if (e.target.closest('[data-report-plus]')) { UI.closeTop(); setTimeout(() => Plus.sheet(), 320); return; }
+          if (!e.target.closest('[data-report-buy]') || busy) return;
+          busy = true;
+          try { if (await Plus.buyReport(k)) { UI.closeTop(); setTimeout(open, 320); } } finally { busy = false; }
+        });
+      },
+    });
+  };
+  /** The small offer under a gap the check found: nothing when the report is open or not sold here. */
+  Plus.reportCard = (k, attr) => (Plus.hasReport(k) || !Plus.reports[k] ? '' : `<div class="card plus-report"><b>${icon('file', 's')} ${REPORT_TEXT[k].t}</b>
+      <div class="small muted">${REPORT_TEXT[k].s}</div>
+      <button class="btn tonal block" ${attr}>${icon('file', 's')} לדוח המלא · ${esc(Plus.reports[k].price)}</button></div>`);
+
   /** Mini cards of every skin (also used in the settings). */
   Plus.skinTiles = (cur, locked) => `<div class="skin-pick">
       <button class="skin-tile ${!cur ? 'on' : ''}" data-skin="" aria-pressed="${!cur}"><b>₪</b><span>רגיל</span></button>
@@ -429,21 +513,22 @@
           <div>${icon('file', 's')}<span><b>דוח תלושים מפורט (PDF)</b><small>כל השורות והממצאים של כל תלוש, לשמירה או להדפסה</small></span></div>
           <div>${icon('chart', 's')}<span><b>ניתוח מתקדם וייצוא דוחות בלי הגבלה</b><small>בחינם: ${QUOTA.analysis.n} ניתוחים ו-${QUOTA.export.n} ייצואים בחודש</small></span></div>
           <div>${icon('calc', 's')}<span><b>דוח החזר מס מלא (PDF)</b><small>כל השנים, הסיבות, מה לצרף ואיפה מגישים. ההערכה עצמה חינם</small></span></div>
+          <div>${icon('check', 's')}<span><b>בדיקת התלוש נשארת חינם</b><small>כל פער שהבדיקה מוצאת, המכתב למעסיק, משמרות, חישוב שכר, זכויות, דוחות ומשחקים</small></span></div>
         </div>
-        ${Plus.skinTiles(Plus.skin(), !on)}
+        <div class="section-title plus-fun">${icon('palette', 's')} וגם, בשביל הכיף</div>
         <div class="card plus-list">
           <div>${icon('palette', 's')}<span><b>${Object.keys(SKINS).length} עיצובים לכרטיס השכר</b><small>זהב, גלקסיה, ניאון, לבה ועוד, בכרטיס שבמסך הבית</small></span></div>
           <div>${icon('trophy', 's')}<span><b>רקע מיוחד בטבלת האלופים</b><small>כולם יראו אותך בעיצוב שבחרת, עם תג Plus</small></span></div>
           <div>${icon('sparkle', 's')}<span><b>תג תומך/ת במסך הבית</b><small>שכולם יידעו מי עוזר/ת לשעתי להישאר בלי פרסומות</small></span></div>
           <div>${icon('star', 's')}<span><b>תודה ענקית ממני</b><small>עוזר להמשיך לפתח, ולהשאיר את האפליקציה בלי פרסומות</small></span></div>
-          <div>${icon('check', 's')}<span><b>בדיקת התלוש נשארת חינם</b><small>כל פער שהבדיקה מוצאת, המכתב למעסיק, משמרות, חישוב שכר, זכויות, דוחות ומשחקים</small></span></div>
         </div>
+        ${Plus.skinTiles(Plus.skin(), !on)}
         ${on && !trial && !gift ? `<div class="plus-done">${icon('check')} ${owned() ? 'Shaati Plus פעיל אצלך' : 'תצוגה מקדימה של מנהל'}</div>
             ${owned() && Plus.monthly ? (manageUrl() ? `<button class="btn text sm block" data-plus-manage>${icon('wallet', 's')} ניהול או ביטול המנוי</button>` : '<div class="tiny muted plus-note">המנוי נקנה באתר. מבטלים אותו מהקישור שבמייל של הקבלה.</div>') : ''}`
           : `${trial ? `<div class="plus-done trial">${icon('sparkle')} תקופת ניסיון · ${trialLeft()}</div>` : ''}
              ${gift && !trial ? `<div class="plus-done trial">${icon('gift')} Plus במתנה עד ${root.U.fmtDate(root.U.epochKey(root.Invite.until()))}</div>` : ''}
              ${plans}
-             ${Plus.canTrial() && !gift ? `<button class="btn big block plus-buy" data-plus-trial>${icon('sparkle')} לנסות ${TRIAL_DAYS} ימים בחינם</button><div class="tiny muted plus-trial-note">בלי פרטי תשלום. בסוף הניסיון הכול חוזר לרגיל, בלי חיוב.</div>` : ''}
+             ${Plus.canTrial() && !gift ? `<button class="btn big block plus-buy" data-plus-trial>${icon('sparkle')} לנסות ${TRIAL_DAYS} ימים בחינם</button><div class="tiny muted plus-trial-note">בלי פרטי תשלום ובלי חיוב. בסוף הניסיון נסגרים מעקב התלושים, הדוחות המלאים והעיצובים, וכל השאר נשאר כרגיל.</div>` : ''}
              <button class="btn ${Plus.canTrial() && !gift ? 'tonal plus-buy2' : 'big plus-buy'} block" data-plus-buy ${(play ? Plus.available : web) || sim() ? '' : 'disabled'}>${icon(Plus.canTrial() && !gift ? 'star' : 'sparkle', Plus.canTrial() && !gift ? 's' : '')} ${trial || gift ? 'להמשיך עם Plus' : yr ? 'מנוי שנתי' : buyWord()}${yr ? ' · ' + esc(Plus.yearly.price) + ' לשנה' : price ? ' · ' + esc(price) : ''}</button>
              ${Plus.workPrice() && !yr ? `<div class="tiny plus-work">${esc(Plus.workPrice())}</div>` : ''}
              <div class="plus-pay">${play ? '<span>Google Play</span><span>כרטיס אשראי</span><span>Google Pay</span><span>PayPal</span>' : '<span>כרטיס אשראי</span><span>Apple Pay</span><span>Google Pay</span><span>PayPal</span>'}</div>

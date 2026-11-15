@@ -617,6 +617,7 @@
         <div class="btn-row" style="margin-top:8px"><button class="btn tonal" data-copy-msg>${icon('copy')} העתק</button><button class="btn tonal" data-share-msg>${icon('share')} שתף</button></div>
         <button class="btn text sm gc-report" data-gc-report>${icon('file', 's')} דוח ומכתב לבירור מול המעסיק</button>
         ${left >= 1 ? `<button class="btn tonal sm found-share" data-act="found-share" data-amount="${Math.round(left)}" data-k="found">${icon('share', 's')} שתף: שעתי מצאה לי ${money(left, 0)}</button>` : ''}</div>` : ''}
+      ${left >= 1 && root.Plus && root.Plus.reportCard ? root.Plus.reportCard('payslip', 'data-ps-full') : ''}
       ${wf ? `<div class="section-title">${icon('chart', 's')} מברוטו לנטו</div><div class="card">${Charts.waterfall(wf, { fmt: (v) => U.money(v), axisFmt: (v) => '₪' + (v >= 1000 ? (v / 1000).toFixed(1).replace('.0', '') + 'K' : Math.round(v)) })}
         <div class="tiny muted">כחול = ברוטו, אדום = ניכויים, ירוק = נטו. לחץ על עמודה לפרטים.</div></div>` : ''}
       ${translatorHtml(slip, lines)}
@@ -765,6 +766,11 @@
           if (b.hasAttribute('data-go-letter')) { const t = el.querySelector('#ps-letter'); if (t) t.scrollIntoView({ block: 'start', behavior: 'smooth' }); return; }
           if (b.dataset.gcSet) { App.sheetsApi.settingsSection(b.dataset.gcSet, b.dataset.f || ''); return; }
           if (b.hasAttribute('data-gc-verify')) { const key = b.dataset.gcVerify; UI.closeTop(); setTimeout(() => verifySheet(Object.assign({}, slip, { id: slip.isNew ? null : slip.id, openKey: key })), 320); return; }
+          if (b.hasAttribute('data-ps-full')) {
+            // the detailed report reads the archive: an unsaved payslip goes in first
+            if (slip.isNew) { UI.closeTop(); await saveSlip(slip, a, c); setTimeout(() => App.actions['slip-report'](), 360); } else App.actions['slip-report']();
+            return;
+          }
           if (b.hasAttribute('data-gc-report')) {
             // an unsaved payslip goes into the archive first, so the report has it
             if (slip.isNew) { UI.closeTop(); await saveSlip(slip, a, c); setTimeout(() => App.claimReport(), 360); } else App.actions['claim-report']();
@@ -841,6 +847,8 @@
     const final = ops.filter((o) => !(o.store === 'gaps' && o.del && reput.has(o.del)));
     // changes vs the previous slip show in the slip's own check, not as notifications (few notifications)
     await App.saveOps(final, 'שמירת תלוש', toastText || 'התלוש נשמר בארכיון');
+    // counted (yes/no) for the admin dashboard: how many saved checks find a gap at all
+    if (counts.bad > 0 && a.totalMissing > 0 && !S.meta.gapFound) Store.setMeta({ gapFound: true }).catch(() => {});
     // a new payslip that matched, or in which the check found money owed: a good moment to ask for a rating (review.js)
     if (slip.isNew && App.reviewMoment) App.reviewMoment(counts.bad > 0 && a.totalMissing > 0 ? 'payslip-owed' : !counts.bad && !counts.warn && counts.ok > 0 ? 'payslip-match' : null);
   }

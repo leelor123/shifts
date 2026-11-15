@@ -786,7 +786,7 @@ let errors = [];
     if (typeof r.ios !== 'boolean') throw new Error('ios');
     if (!/^\d{4}-\d{2}-\d{2}$/.test(r.first) || !/^\d{4}-\d{2}-\d{2}$/.test(r.last)) throw new Error('dates');
     if (!['android', 'pwa', 'web'].includes(r.p) || !['u18', '18p', ''].includes(r.age)) throw new Error('enums');
-    if (Object.keys(r.f).length > 20 || Object.values(r.f).some((x) => typeof x !== 'boolean')) throw new Error('features');
+    if (Object.keys(r.f).length > 22 || Object.values(r.f).some((x) => typeof x !== 'boolean')) throw new Error('features');
     if (JSON.stringify(r).match(/@|uid|name|email/i)) throw new Error('personal data in the record');
   });
   await step('admin dashboard: real numbers, safe from hostile records, add-admin validation', async () => {

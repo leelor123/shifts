@@ -182,9 +182,10 @@
           const g = e.target.closest('[data-tr-gender]');
           if (g) { await setProfile((P, s) => { s.gender = g.dataset.trGender; }); return; }
           if (e.target.closest('[data-tr-report]')) {
-            // the full report is part of Plus where Plus is sold (the estimate and the way to file stay free)
-            if (root.Plus && root.Plus.limited && root.Plus.limited()) { root.Plus.sheet(); return; }
-            if (App.exporter && App.exporter.printHtml) App.exporter.printHtml(report(), 'tax-refund.pdf');
+            // the full report is part of Plus where Plus is sold, and also sold on its own, once (the estimate and
+            // the way to file stay free)
+            const print = () => { if (App.exporter && App.exporter.printHtml) App.exporter.printHtml(report(), 'tax-refund.pdf'); };
+            if (root.Plus && root.Plus.reportSheet) root.Plus.reportSheet('tax', print); else print();
           }
         });
       },

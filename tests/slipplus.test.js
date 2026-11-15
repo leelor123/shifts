@@ -50,7 +50,7 @@ T.test('payslip-plus.js gates only its own extras, and writes nothing to the arc
   const acts = [...p.matchAll(/App\.actions\['([^']+)'\] = (\w+)/g)];
   T.ok(acts.length >= 3);
   T.eq(acts.filter(([, n]) => !n.startsWith('slip-')).length, 0, 'only slip-* actions');
-  T.eq(acts.filter(([, , g]) => g !== 'gate').length, 0, 'each one through the gate');
+  T.eq(acts.filter(([, n, g]) => g !== 'gate' && !(n === 'slip-report' && g === 'sold')).length, 0, 'each one through the gate (the report: also sold on its own)');
   T.ok(!/saveOps|Store\.set|store: 'payslips'|store: 'gaps'/.test(p), 'reads only');
   T.ok(/Plus\.limited\(\)/.test(p), 'open to everyone where Plus cannot be bought');
 });
@@ -59,6 +59,39 @@ T.test('the Plus page leads with the payslip value and says the check stays free
   const i = s.indexOf('<b>מעקב תלושים לאורך זמן</b>'), j = s.indexOf('עיצובים לכרטיס השכר</b>');
   T.ok(i > 0 && j > 0 && i < j, 'payslips before the skins');
   T.ok(s.includes('<b>בדיקת התלוש נשארת חינם</b>'));
+});
+T.section('a report bought on its own, once');
+T.test('the two reports are one-time products, kept, and never turn Plus on', () => {
+  const s = rd('src/app/plus.js');
+  T.ok(s.includes("const REPORTS = { payslip: 'shaati_report_payslip', tax: 'shaati_report_tax' };"));
+  const owns = s.slice(s.indexOf('async function playOwns'), s.indexOf('/* ---------------- the web'));
+  T.ok(owns.length > 0 && !/REPORTS|shaati_report/.test(owns), 'buying a report is not buying Plus');
+  const buy = s.slice(s.indexOf('Plus.buyReport = '), s.indexOf('const REPORT_TEXT'));
+  T.ok(buy.length > 0 && !/consume\(/.test(buy) && /acknowledge\(token, 'onetime'\)/.test(buy), 'kept, never used up like a tip');
+  T.ok(/Plus\.hasReport = \(k\) => !Plus\.limited\(\) \|\| boughtReport\(k\)/.test(s), 'open with Plus, once bought, or where Plus is not sold');
+  T.ok(/Plus\.reportCard = \(k, attr\) => \(Plus\.hasReport\(k\) \|\| !Plus\.reports\[k\] \? ''/.test(s), 'no offer when open or not sold here');
+  T.ok(s.includes('הדוחות המלאים') && s.includes('בסוף הניסיון'), 'the trial says what closes at its end');
+});
+T.test('the offer sits under the gap and never hides it; the tax report opens through the same sheet', () => {
+  const v = rd('src/app/views-payslip.js');
+  const i = v.indexOf("root.Plus.reportCard('payslip', 'data-ps-full')"), j = v.indexOf('id="ps-letter"'), h = v.indexOf('${hero}');
+  T.ok(i > 0 && h > 0 && j > 0 && h < j && j < i, 'after the amount and the letter');
+  T.ok(/left >= 1 && root\.Plus && root\.Plus\.reportCard/.test(v), 'only when the check found money');
+  T.ok(/root\.Plus\.reportSheet\('tax', print\)/.test(rd('src/app/views-taxrefund.js')));
+});
+T.test('the share card never carries the employer, the role or the payslip', () => {
+  const v = rd('src/app/views-payslip.js');
+  const share = v.slice(v.indexOf("App.actions['found-share']"), v.indexOf('/* ---------------- payslips tab'));
+  T.ok(share.length > 200, 'found the share card code');
+  T.ok(!/employer|emp\b|\.name\b|role|slip\.|fields/.test(share), 'only the amount and the app link');
+});
+T.test('statistics: the gap and the report counted, and the rules allow every key', () => {
+  const st = rd('src/app/stats.js');
+  const body = st.slice(st.indexOf('f: (() =>'), st.indexOf('})(), // an admin'));
+  const keys = [...body.matchAll(/(\w+): (?:!|\+)/g)].map((m) => m[1]);
+  T.ok(keys.includes('gap') && keys.includes('rep'));
+  const lim = +(rd('firestore.rules').match(/d\.f is map && d\.f\.size\(\) <= (\d+)/) || [])[1];
+  T.ok(keys.length <= lim, `${keys.length} keys, the rules allow ${lim}`);
 });
 T.test('both files are in the build and in the tests, after the payslip code', () => {
   const b = rd('tools/build.js');
