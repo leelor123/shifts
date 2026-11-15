@@ -355,7 +355,7 @@
     return true;
   };
   const REPORT_TEXT = {
-    payslip: { t: 'דוח תלושים מפורט (PDF)', s: 'כל השורות והממצאים של כל תלוש, לשמירה, להדפסה או לצירוף לפנייה למעסיק.' },
+    payslip: { t: 'דוח תלושים מפורט (PDF)', s: 'הבדיקה והמכתב למעסיק נשארים חינם. הדוח מוסיף את כל השורות והממצאים של כל תלוש, לשמירה, להדפסה או לצירוף לפנייה.' },
     tax: { t: 'דוח החזר מס מלא (PDF)', s: 'כל השנים, הסיבות, מה לצרף ואיפה מגישים, צעד אחרי צעד. ההערכה עצמה נשארת חינם.' },
   };
   /** A report that may need buying: opens it when it is open here, else offers it once or with Plus. */
@@ -369,7 +369,8 @@
       cls: 'plus-sheet',
       body: `<div class="card"><div class="small">${x.s}</div></div>
         <button class="btn big block plus-buy" data-report-buy>${icon('file')} לקנות את הדוח · ${esc(r.price)}</button>
-        <div class="tiny muted plus-note">תשלום אחד דרך Google Play, בלי מנוי. הדוח נשאר פתוח אצלך. מתחת לגיל 18: בהסכמת הורה.</div>${sellerNote()}
+        <div class="tiny muted plus-note">תשלום אחד דרך Google Play, בלי מנוי. הדוח נשאר פתוח אצלך. מתחת לגיל 18: בהסכמת הורה.</div>
+        <div class="tiny muted plus-note">הדוח הוא הערכה לפי הנתונים שבאפליקציה ולא ייעוץ משפטי. כדאי לבדוק אותו מול המעסיק או מול ארגון עובדים.</div>${sellerNote()}
         <button class="btn text sm block" data-report-plus>${icon('sparkle', 's')} או כל הדוחות ומעקב התלושים עם Plus</button>`,
       onMount: (el) => {
         let busy = false;
