@@ -180,7 +180,7 @@ public class MultiPlaceTest {
             logNote(note1);
             check("notification sub-text is p1's name (dumpsys)", subText(note1, NAME1));
             openNote();
-            UiObject2 off = d.findObject(By.pkg("com.android.systemui").text(Pattern.compile("(?i)turn off suggestions")));
+            UiObject2 off = d.findObject(By.pkg("com.android.systemui").text(OFF));
             if (off != null) { off.click(); tapped = true; }
             Log.i(TAG, "turn off tapped: " + tapped + screenTexts());
             pause(6000);
@@ -289,13 +289,19 @@ public class MultiPlaceTest {
         }
     }
 
+    /** The suggestion's title and buttons in the app's language, which is Hebrew unless chosen otherwise (the 15 Nov
+     *  run found both buttons on screen in Hebrew while looking for the English words). */
+    private static final Pattern TITLE = Pattern.compile("(?i)(arrived at work|\u05d4\u05d2\u05e2\u05ea \u05dc\u05e2\u05d1\u05d5\u05d3\u05d4).*");
+    private static final Pattern START = Pattern.compile("(?i)start shift|\u05d4\u05ea\u05d7\u05dc\u05ea \u05de\u05e9\u05de\u05e8\u05ea");
+    private static final Pattern OFF = Pattern.compile("(?i)turn off suggestions|\u05db\u05d9\u05d1\u05d5\u05d9 \u05d4\u05d4\u05e6\u05e2\u05d5\u05ea");
+
     /** The shade, the suggestion opened with its buttons: the start button, or null. */
     private UiObject2 openNote() {
         int h = d.getDisplayHeight();
         d.openNotification();
-        UiObject2 note = d.wait(Until.findObject(By.textStartsWith("Arrived at work?")), 10000);
+        UiObject2 note = d.wait(Until.findObject(By.text(TITLE)), 10000);
         pause(2000);
-        Pattern startP = Pattern.compile("(?i)start shift");
+        Pattern startP = START;
         for (int i = 0; i < 3 && note != null && d.findObject(By.pkg("com.android.systemui").text(startP)) == null; i++) {
             Rect nr = note.getVisibleBounds();
             UiObject2 best = null;
@@ -305,7 +311,7 @@ public class MultiPlaceTest {
             if (best != null && Math.abs(best.getVisibleBounds().centerY() - nr.centerY()) < h / 8) best.click();
             else d.drag(nr.centerX(), nr.centerY(), nr.centerX(), nr.centerY() + h / 6, 40);
             pause(1500);
-            note = d.findObject(By.textStartsWith("Arrived at work?"));
+            note = d.findObject(By.text(TITLE));
         }
         return d.findObject(By.pkg("com.android.systemui").text(startP));
     }
