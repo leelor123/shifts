@@ -17,7 +17,7 @@ public class WorkGeoReceiver extends BroadcastReceiver {
         String a = i == null ? null : i.getAction();
         final Context app = c.getApplicationContext();
         if (WorkGeo.ACTION_OFF.equals(a)) {
-            WorkGeo.off(app);
+            WorkGeo.off(app, i.getStringExtra("id"));
             return;
         }
         if (!WorkGeo.ACTION_FENCE.equals(a)) return;
@@ -26,10 +26,12 @@ public class WorkGeoReceiver extends BroadcastReceiver {
         int t = ev.getGeofenceTransition();
         if (t != Geofence.GEOFENCE_TRANSITION_DWELL && t != Geofence.GEOFENCE_TRANSITION_EXIT) return;
         final boolean in = t == Geofence.GEOFENCE_TRANSITION_DWELL;
+        final java.util.List<String> ids = new java.util.ArrayList<>();
+        if (ev.getTriggeringGeofences() != null) for (Geofence g : ev.getTriggeringGeofences()) ids.add(g.getRequestId());
         final PendingResult r = goAsync();
         new Thread(() -> {
             try {
-                WorkGeo.crossing(app, in);
+                WorkGeo.crossing(app, in, ids);
             } finally {
                 r.finish();
             }

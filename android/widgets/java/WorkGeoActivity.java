@@ -40,15 +40,22 @@ import com.google.android.gms.tasks.CancellationTokenSource;
 public class WorkGeoActivity extends Activity {
     private static final int ASK_FINE = 7311, ASK_BACKGROUND = 7312, ASK_NOTES = 7313, ASK_ACCURACY = 7314;
     private int mRadius = WorkGeo.DEFAULT_R;
+    private String mId, mName, mEmp; // which place (saved again) or none (a new one), its name and employer
     private Location mSpot;
     private Context mLang;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        mRadius = WorkGeo.radius(getIntent() == null ? null : getIntent().getData());
+        Uri u = getIntent() == null ? null : getIntent().getData();
+        mRadius = WorkGeo.radius(u);
+        mId = u == null ? null : u.getQueryParameter("id");
+        mName = WorkGeo.cleanName(u == null ? null : u.getQueryParameter("n"));
+        mEmp = WorkGeo.cleanEmp(u == null ? null : u.getQueryParameter("e"));
         mLang = WidgetLang.context(this);
         if (savedInstanceState != null) { finish(); return; } // turned mid-way: begun again from the app
+        // MAX_PLACES saved already and this is none of them (the page offers no "add" then): nothing to ask
+        if (!WorkGeo.canSave(this, mId)) { finish(); return; }
         dialog()
                 .setTitle(mLang.getString(R.string.w_geo_disc_t))
                 .setMessage(mLang.getString(R.string.w_geo_disc))
@@ -133,9 +140,10 @@ public class WorkGeoActivity extends Activity {
 
     private void done() {
         if (mSpot == null) { finish(); return; }
-        boolean asked = WorkGeo.save(getApplicationContext(), mSpot.getLatitude(), mSpot.getLongitude(), mRadius,
+        String id = WorkGeo.save(getApplicationContext(), mId, mSpot.getLatitude(), mSpot.getLongitude(), mRadius, mName, mEmp,
                 (ok, code) -> runOnUiThread(() -> watched(ok, code, false)));
-        if (!asked) { say(R.string.w_geo_need_always); finish(); }
+        if (id == null) { say(R.string.w_geo_need_always); finish(); return; }
+        mId = id;
     }
 
     /** Google Play services' answer: watched (on to the notifications check), or refused (the location setting). */
@@ -183,7 +191,7 @@ public class WorkGeoActivity extends Activity {
 
     /** Still refused: the feature stays off (nothing on the page says "on") and the line says what to turn on. */
     private void refused() {
-        WorkGeo.off(getApplicationContext());
+        WorkGeo.off(getApplicationContext(), mId); // this place; the others stay saved and show as needing attention
         say(R.string.w_geo_no_fence);
         finish();
     }

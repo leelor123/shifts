@@ -17,7 +17,11 @@ import com.google.android.gms.location.GeofencingClient;
 import com.google.android.gms.location.GeofencingRequest;
 import com.google.android.gms.location.LocationServices;
 
+import org.json.JSONArray;
 import org.json.JSONObject;
+
+import java.util.ArrayList;
+import java.util.List;
 
 import java.util.Calendar;
 
@@ -28,6 +32,10 @@ import java.util.Calendar;
  * notification that suggests starting a shift; leaving while one runs shows one that suggests ending it. Nothing here
  * starts or ends a shift: the buttons open the app at ?action=start / ?action=stop, and the app asks once more.
  *
+ * Up to MAX_PLACES workplaces, each its own circle with its own name and employer (Arrive.MAX_PLACES on the page): the
+ * suggestion says which place, and its start button starts the shift at that employer. An app before 1.39 kept one
+ * spot in plain keys; it becomes the place "work" on the first read (places()).
+ *
  * The spot never leaves the phone: it is not sent to the web page (the status message says only on, radius and the
  * permissions), not backed up (w_backup_rules.xml leaves this file out) and not sent anywhere else.
  */
@@ -35,7 +43,7 @@ final class WorkGeo {
     private static final String PREFS = "shaati_geo";
     static final String ACTION_FENCE = "io.github.leelor123.shifts.GEO_FENCE";
     static final String ACTION_OFF = "io.github.leelor123.shifts.GEO_OFF";
-    private static final String FENCE = "work";
+    static final int MAX_PLACES = 3;
     static final String TAG_IN = "geo-arrive", TAG_OUT = "geo-leave", TAG_SUM = "geo-group";
     private static final String GROUP = "shaati-geo"; // not NoteCenter's group: the web app's "keep" never closes these
     private static final long MIN = 60000L;
@@ -113,43 +121,130 @@ final class WorkGeo {
     // Google Play services' last answer for the circle: watched, refused, or not known yet (asked, no answer)
     static final int FENCE_OK = 1, FENCE_UNKNOWN = 0, FENCE_REFUSED = -1;
 
-    /** Saves the spot and asks Android to watch it (WorkGeoActivity, once both permissions are there). done hears
-     *  whether Google Play services accepted the circle: "saved" is said only then. */
-    static boolean save(Context c, double lat, double lng, int r, Done done) {
-        prefs(c).edit().putString("lat", Double.toString(lat)).putString("lng", Double.toString(lng)).putInt("r", r)
-                .putBoolean("on", true).putInt("fence", FENCE_UNKNOWN)
-                .putLong("lastInNote", 0).putLong("lastExit", 0).putLong("lastOutNote", 0).commit();
-        return watch(c, done);
+    /** A place's id: "work" (the one place of an app before 1.39) or p1..p3 (Arrive.PLACE_ID). */
+    static boolean validId(String id) {
+        return id != null && (id.equals("work") || id.equals("p1") || id.equals("p2") || id.equals("p3"));
+    }
+
+    /** A name as the page sends it (Arrive.cleanName): one line, at most 30 characters. */
+    static String cleanName(String n) {
+        if (n == null) return "";
+        StringBuilder b = new StringBuilder();
+        for (int i = 0; i < n.length(); i++) {
+            char ch = n.charAt(i);
+            b.append(ch < 32 || ch == 127 ? ' ' : ch);
+        }
+        String t = b.toString().replaceAll("\\s+", " ").trim();
+        return t.length() > 30 ? t.substring(0, 30) : t;
+    }
+
+    /** An employer id (Arrive.cleanEmp); anything else: none. */
+    static String cleanEmp(String e) {
+        return e != null && e.matches("[A-Za-z0-9_-]{1,40}") ? e : "";
+    }
+
+    /** The saved places, the old single spot turned into the place "work". */
+    static List<JSONObject> places(Context c) {
+        SharedPreferences p = prefs(c);
+        List<JSONObject> out = new ArrayList<>();
+        String raw = p.getString("places", null);
+        if (raw == null) {
+            if (!p.getBoolean("on", false) || !p.contains("lat")) return out;
+            try {
+                out.add(new JSONObject().put("id", "work").put("lat", Double.parseDouble(p.getString("lat", "")))
+                        .put("lng", Double.parseDouble(p.getString("lng", ""))).put("r", p.getInt("r", DEFAULT_R))
+                        .put("n", "").put("e", "").put("lastInNote", p.getLong("lastInNote", 0))
+                        .put("lastExit", p.getLong("lastExit", 0)).put("lastOutNote", p.getLong("lastOutNote", 0)));
+            } catch (Exception e) {
+                return out;
+            }
+            write(c, out);
+            return out;
+        }
+        try {
+            JSONArray a = new JSONArray(raw);
+            for (int i = 0; i < a.length() && out.size() < MAX_PLACES; i++) {
+                JSONObject o = a.optJSONObject(i);
+                if (o != null && validId(o.optString("id"))) out.add(o);
+            }
+        } catch (Exception e) {
+            // unreadable: no places
+        }
+        return out;
+    }
+
+    private static void write(Context c, List<JSONObject> list) {
+        JSONArray a = new JSONArray();
+        for (JSONObject o : list) a.put(o);
+        prefs(c).edit().putString("places", a.toString()).putBoolean("on", !list.isEmpty())
+                .remove("lat").remove("lng").remove("r").remove("lastInNote").remove("lastExit").remove("lastOutNote").commit();
+    }
+
+    private static int find(List<JSONObject> list, String id) {
+        for (int i = 0; i < list.size(); i++) if (id.equals(list.get(i).optString("id"))) return i;
+        return -1;
+    }
+
+    /** The id a new place takes (Arrive.nextId), or null when MAX_PLACES are saved. */
+    static String nextId(List<JSONObject> list) {
+        if (list.size() >= MAX_PLACES) return null;
+        for (int i = 1; i <= MAX_PLACES; i++) if (find(list, "p" + i) < 0) return "p" + i;
+        return null;
+    }
+
+    /** Whether a setup link may save: it names a saved place (saved again), or there is room for a new one. */
+    static boolean canSave(Context c, String id) {
+        List<JSONObject> list = places(c);
+        return (validId(id) && find(list, id) >= 0) || nextId(list) != null;
+    }
+
+    /** Saves one place and asks Android to watch all of them (WorkGeoActivity, once both permissions are there).
+     *  done hears whether Google Play services accepted the circles: "saved" is said only then. The id says which
+     *  place to save again; none (or one not saved) is a new place. The answer is the place's id, or null. */
+    static String save(Context c, String id, double lat, double lng, int r, String name, String emp, Done done) {
+        List<JSONObject> list = places(c);
+        int at = validId(id) ? find(list, id) : -1;
+        if (at < 0) {
+            id = nextId(list);
+            if (id == null) return null;
+        }
+        try {
+            JSONObject o = new JSONObject().put("id", id).put("lat", lat).put("lng", lng).put("r", r)
+                    .put("n", cleanName(name)).put("e", cleanEmp(emp)).put("lastInNote", 0).put("lastExit", 0).put("lastOutNote", 0);
+            if (at >= 0) list.set(at, o);
+            else list.add(o);
+        } catch (Exception e) {
+            return null;
+        }
+        write(c, list);
+        prefs(c).edit().putInt("fence", FENCE_UNKNOWN).commit();
+        return watch(c, done) ? id : null;
     }
 
     static int fence(Context c) {
         return prefs(c).getInt("fence", FENCE_UNKNOWN);
     }
 
-    /** Asks Android to watch the saved circle (again after a restart or an update: Android forgets geofences then). */
+    /** Asks Android to watch the saved circles (again after a restart or an update: Android forgets geofences then). */
     static boolean watch(Context c, Done done) {
-        SharedPreferences p = prefs(c);
-        if (!p.getBoolean("on", false) || !hasFine(c) || !hasBackground(c)) return false;
-        double lat, lng;
-        try {
-            lat = Double.parseDouble(p.getString("lat", ""));
-            lng = Double.parseDouble(p.getString("lng", ""));
-        } catch (Exception e) {
-            return false;
-        }
-        Geofence g = new Geofence.Builder()
-                .setRequestId(FENCE)
-                .setCircularRegion(lat, lng, p.getInt("r", DEFAULT_R))
-                .setExpirationDuration(Geofence.NEVER_EXPIRE)
-                .setTransitionTypes(Geofence.GEOFENCE_TRANSITION_DWELL | Geofence.GEOFENCE_TRANSITION_EXIT)
-                .setLoiteringDelay(DWELL_MS)
-                .build();
+        List<JSONObject> list = places(c);
+        if (list.isEmpty() || !hasFine(c) || !hasBackground(c)) return false;
         // no crossing on the moment it is saved: the user stands at the spot and starts the shift themselves
-        GeofencingRequest req = new GeofencingRequest.Builder().setInitialTrigger(0).addGeofence(g).build();
+        GeofencingRequest.Builder rb = new GeofencingRequest.Builder().setInitialTrigger(0);
+        for (JSONObject o : list) {
+            rb.addGeofence(new Geofence.Builder()
+                    .setRequestId(o.optString("id"))
+                    .setCircularRegion(o.optDouble("lat"), o.optDouble("lng"), o.optInt("r", DEFAULT_R))
+                    .setExpirationDuration(Geofence.NEVER_EXPIRE)
+                    .setTransitionTypes(Geofence.GEOFENCE_TRANSITION_DWELL | Geofence.GEOFENCE_TRANSITION_EXIT)
+                    .setLoiteringDelay(DWELL_MS)
+                    .build());
+        }
+        GeofencingRequest req = rb.build();
         try {
             GeofencingClient gc = LocationServices.getGeofencingClient(c);
             final Context app = c.getApplicationContext();
-            // the answer is kept: the status says "on" only for a circle Google Play services accepted. It refuses with
+            // the answer is kept: the status says "on" only for circles Google Play services accepted. It refuses with
             // 1000 (GEOFENCE_NOT_AVAILABLE) when Google Location Accuracy is off; the app then said "saved" and "on"
             // and no suggestion ever came (Firebase Test Lab, Android 16 image, 15 Nov 2026)
             gc.addGeofences(req, fenceIntent(c))
@@ -185,19 +280,41 @@ final class WorkGeo {
         if (on(c)) watch(c, null);
     }
 
-    /** Turns it off: stops watching, forgets the spot, closes our notifications. */
-    static void off(Context c) {
-        try {
-            LocationServices.getGeofencingClient(c).removeGeofences(fenceIntent(c));
-        } catch (Exception e) {
-            // nothing was watched
+    /** Turns one place off (its id), or all of them (null): stops watching it and forgets it. With no place left,
+     *  everything is forgotten and our notifications close. */
+    static void off(Context c, String id) {
+        List<JSONObject> list = places(c);
+        int at = validId(id) ? find(list, id) : -1;
+        if (id != null && at < 0) return; // not a saved place: nothing to turn off
+        if (at >= 0) list.remove(at);
+        if (id == null || list.isEmpty()) {
+            try {
+                LocationServices.getGeofencingClient(c).removeGeofences(fenceIntent(c));
+            } catch (Exception e) {
+                // nothing was watched
+            }
+            prefs(c).edit().clear().commit();
+            NotificationManager nm = (NotificationManager) c.getSystemService(Context.NOTIFICATION_SERVICE);
+            if (nm != null) {
+                nm.cancel(TAG_IN, 1);
+                nm.cancel(TAG_OUT, 1);
+                nm.cancel(TAG_SUM, 1);
+            }
+            return;
         }
-        prefs(c).edit().clear().commit();
+        try {
+            List<String> gone = new ArrayList<>();
+            gone.add(id);
+            LocationServices.getGeofencingClient(c).removeGeofences(gone);
+        } catch (Exception e) {
+            // not watched
+        }
+        write(c, list);
+        // its suggestion, if one is up, is no longer true
         NotificationManager nm = (NotificationManager) c.getSystemService(Context.NOTIFICATION_SERVICE);
-        if (nm != null) {
-            nm.cancel(TAG_IN, 1);
-            nm.cancel(TAG_OUT, 1);
-            nm.cancel(TAG_SUM, 1);
+        if (nm != null && id.equals(prefs(c).getString("noteFor", ""))) {
+            cancel(nm, TAG_IN);
+            cancel(nm, TAG_OUT);
         }
     }
 
@@ -207,23 +324,38 @@ final class WorkGeo {
         return o != null && o.optJSONObject("active") != null;
     }
 
-    /** One crossing from Android (WorkGeoReceiver). */
-    static void crossing(Context c, boolean in) {
+    /** One crossing from Android (WorkGeoReceiver), for the places it names (their ids). */
+    static void crossing(Context c, boolean in, List<String> ids) {
         if (!on(c)) return;
-        SharedPreferences p = prefs(c);
+        List<JSONObject> list = places(c);
         long now = System.currentTimeMillis();
         boolean act = active(c);
-        String d = decide(in, act, now, p.getLong("lastInNote", 0), p.getLong("lastExit", 0), p.getLong("lastOutNote", 0));
         NotificationManager nm = (NotificationManager) c.getSystemService(Context.NOTIFICATION_SERVICE);
-        SharedPreferences.Editor e = p.edit();
-        if (!in) {
-            e.putLong("lastExit", now);
-            if (nm != null) cancel(nm, TAG_IN); // left: "start a shift?" is no longer true
-        } else if (nm != null) cancel(nm, TAG_OUT);
-        if ("start".equals(d)) e.putLong("lastInNote", now);
-        if ("stop".equals(d)) e.putLong("lastOutNote", now);
-        e.commit();
-        if (d != null && nm != null) post(c, nm, "start".equals(d), now);
+        JSONObject note = null;
+        String d = null;
+        try {
+            for (String id : ids) {
+                int at = find(list, id);
+                if (at < 0) continue;
+                JSONObject o = list.get(at);
+                String x = decide(in, act, now, o.optLong("lastInNote"), o.optLong("lastExit"), o.optLong("lastOutNote"));
+                if (!in) o.put("lastExit", now);
+                if ("start".equals(x)) o.put("lastInNote", now);
+                if ("stop".equals(x)) o.put("lastOutNote", now);
+                if (x != null && d == null) { d = x; note = o; }
+            }
+        } catch (Exception e) {
+            android.util.Log.w("ShaatiGeo", "crossing", e);
+        }
+        write(c, list);
+        if (nm != null) {
+            if (!in) cancel(nm, TAG_IN); // left: "start a shift?" is no longer true
+            else cancel(nm, TAG_OUT);
+        }
+        if (d != null && nm != null) {
+            prefs(c).edit().putString("noteFor", note.optString("id")).commit();
+            post(c, nm, "start".equals(d), now, note.optString("id"), note.optString("n"), note.optString("e"));
+        }
     }
 
     /** A new snapshot from the app (WidgetData.save): a suggestion the shift already answered is closed. */
@@ -234,8 +366,9 @@ final class WorkGeo {
         else cancel(nm, TAG_OUT);
     }
 
-    private static PendingIntent offIntent(Context c) {
-        Intent i = new Intent(c, WorkGeoReceiver.class).setAction(ACTION_OFF);
+    /** The notification's "turn off" button: that place only (the other places keep their suggestions). */
+    private static PendingIntent offIntent(Context c, String id) {
+        Intent i = new Intent(c, WorkGeoReceiver.class).setAction(ACTION_OFF).putExtra("id", id);
         return PendingIntent.getBroadcast(c, 7321, i, PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE);
     }
 
@@ -252,7 +385,7 @@ final class WorkGeo {
         nm.cancel(TAG_SUM, 1);
     }
 
-    private static void post(Context c, NotificationManager nm, boolean start, long now) {
+    private static void post(Context c, NotificationManager nm, boolean start, long now, String id, String name, String emp) {
         try {
             NoteCenter.channels(c, nm);
             Context lc = WidgetLang.context(c);
@@ -276,9 +409,12 @@ final class WorkGeo {
                     .setTimeoutAfter((start ? 3 * 60 : 2 * 60) * MIN)
                     .setWhen(now)
                     .setShowWhen(true)
+                    // the employer of this place: the shift starts there (the app still asks first)
                     .addAction(0, lc.getString(start ? R.string.w_geo_start : R.string.w_geo_stop),
-                            NoteCenter.open(c, start ? "./?action=start" : "./?action=stop", tag.hashCode() + 1))
-                    .addAction(0, lc.getString(R.string.w_geo_off), offIntent(c));
+                            NoteCenter.open(c, start ? (emp.isEmpty() ? "./?action=start" : "./?action=start&emp=" + Uri.encode(emp)) : "./?action=stop", tag.hashCode() + 1))
+                    .addAction(0, lc.getString(R.string.w_geo_off), offIntent(c, id));
+            // which place, when it has a name (the user's own word for it, e.g. the employer)
+            if (!name.isEmpty()) b.setSubText(name);
             nm.notify(tag, 1, b.build());
             // the group's own summary: without one, Android (16 and later) folds a lone grouped notification into one
             // bundle with the app's other notifications, collapsed, and the suggestion's buttons are hidden (Test Lab,
@@ -316,7 +452,7 @@ final class WorkGeo {
             return null;
         }
         if (o.optInt("geo", 0) < 1) return null;
-        if (o.optInt("off", 0) == 1) off(c);
+        if (o.optInt("off", 0) == 1) off(c, o.has("id") ? o.optString("id") : null);
         // Android drops geofences when the phone's location is turned off and on again: each open of the app watches
         // the circle again (the same id replaces the old one)
         else restore(c);
@@ -326,11 +462,18 @@ final class WorkGeo {
     static String status(Context c) {
         try {
             boolean fine = hasFine(c), bg = hasBackground(c);
-            // on, as far as the user can tell: the spot is saved and Android may still watch it
+            // on, as far as the user can tell: a place is saved and Android may still watch it
             boolean refused = fence(c) == FENCE_REFUSED;
-            // attn: saved and allowed, but Google Play services refused to watch the circle (Location Accuracy off)
-            return new JSONObject().put("geo", 1).put("on", on(c) && fine && bg && !refused).put("r", prefs(c).getInt("r", DEFAULT_R))
-                    .put("saved", on(c)).put("fg", fine).put("bg", bg).put("attn", on(c) && fine && bg && refused).toString();
+            List<JSONObject> list = places(c);
+            JSONArray ps = new JSONArray();
+            // each place's id, radius, name and employer: never its spot
+            for (JSONObject o : list) ps.put(new JSONObject().put("id", o.optString("id")).put("r", o.optInt("r", DEFAULT_R))
+                    .put("n", o.optString("n")).put("e", o.optString("e")));
+            int r = list.isEmpty() ? DEFAULT_R : list.get(0).optInt("r", DEFAULT_R);
+            // attn: saved and allowed, but Google Play services refused to watch the circles (Location Accuracy off)
+            return new JSONObject().put("geo", 1).put("on", on(c) && fine && bg && !refused).put("r", r)
+                    .put("saved", on(c)).put("fg", fine).put("bg", bg).put("attn", on(c) && fine && bg && refused)
+                    .put("places", ps).put("max", MAX_PLACES).toString();
         } catch (Exception e) {
             return null;
         }

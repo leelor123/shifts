@@ -49,6 +49,39 @@ T.test('the setup link opens the Android app screen with the radius only', () =>
   T.eq(u, 'intent://save?r=150#Intent;scheme=shaati-geo;package=io.github.leelor123.shifts;end');
   T.eq(A.setupUrl('9999'), 'intent://save?r=300#Intent;scheme=shaati-geo;package=io.github.leelor123.shifts;end');
 });
+T.test('several workplaces: up to MAX_PLACES, each with its id, radius, name and employer, never a spot', () => {
+  T.eq(A.MAX_PLACES, 3);
+  T.eq(A.nextId([]), 'p1');
+  T.eq(A.nextId([{ id: 'work' }, { id: 'p1' }]), 'p2');
+  T.eq(A.nextId([{ id: 'p2' }]), 'p1');
+  T.eq(A.nextId([{ id: 'work' }, { id: 'p1' }, { id: 'p2' }]), null, 'full');
+  const s = A.readStatus({ geo: 1, on: true, places: [{ id: 'p1', r: 150, n: '  הסניף\n בדיזנגוף ', e: 'emp_1', lat: 32.1, lng: 34.8 }, { id: 'p1' }, { id: 'zz' }, { id: 'p2', e: 'a b' }, { id: 'p3' }, { id: 'work' }] });
+  T.eq(JSON.stringify(s.places), JSON.stringify([{ id: 'p1', r: 150, n: 'הסניף בדיזנגוף', e: 'emp_1' }, { id: 'p2', r: 300, n: '', e: '' }, { id: 'p3', r: 300, n: '', e: '' }]), 'cleaned, no spot, no repeats, at most 3');
+  T.eq(A.readStatus({ geo: 1, on: true }).places, undefined, 'an app before 1.39 sends no list');
+  T.eq(A.cleanName('x'.repeat(50)).length, 30);
+  T.eq(A.cleanEmp('../x'), '');
+  T.eq(A.setupUrl(500, { id: 'p2', name: 'בר', emp: 'e1' }), 'intent://save?r=500&id=p2&n=%D7%91%D7%A8&e=e1#Intent;scheme=shaati-geo;package=io.github.leelor123.shifts;end');
+  T.eq(A.setupUrl(500, { id: '../x', emp: 'a&b' }), 'intent://save?r=500#Intent;scheme=shaati-geo;package=io.github.leelor123.shifts;end', 'nothing else rides in it');
+});
+T.test('the phone keeps the same places rules: the same maximum and ids, the old single spot kept as "work"', () => {
+  const j = read('android/widgets/java/WorkGeo.java');
+  const rc = read('android/widgets/java/WorkGeoReceiver.java');
+  T.ok(j.includes('MAX_PLACES = ' + A.MAX_PLACES + ';'), 'maximum');
+  T.ok(j.includes('id.equals("work") || id.equals("p1") || id.equals("p2") || id.equals("p3")'), 'ids as Arrive.PLACE_ID');
+  T.eq(String(A.PLACE_ID), '/^(work|p[1-3])$/', 'page ids');
+  T.ok(/if \(!p\.getBoolean\("on", false\) \|\| !p\.contains\("lat"\)\) return out;[\s\S]*put\("id", "work"\)/.test(j), 'an update keeps the place saved before 1.39');
+  T.ok(j.includes('.setRequestId(o.optString("id"))'), 'one circle per place');
+  T.ok(rc.includes('ids.add(g.getRequestId())'), 'a crossing names its places');
+  T.ok(j.includes('"./?action=start&emp=" + Uri.encode(emp)'), 'the start button names the employer');
+  T.ok(j.includes('offIntent(c, id)') && rc.includes('WorkGeo.off(app, i.getStringExtra("id"))'), 'the notification turns off that place only');
+  T.ok(read('android/widgets/java/WorkGeoActivity.java').includes('if (!WorkGeo.canSave(this, mId)) { finish(); return; }'), 'full: the screen asks nothing');
+});
+T.test('?action=start&emp=: the shift starts at that employer, after the same question', () => {
+  const app = read('src/app/app.js');
+  T.ok(app.includes("App.pendingEmp = App.pendingAction === 'start' && root.Arrive ? root.Arrive.cleanEmp(params.get('emp')) : '';"), 'read and cleaned');
+  T.ok(/UI\.confirm\('התחל משמרת', emp && S\.employers\.length > 1 \? emp\.name \|\| '' : '', 'התחלה'\)\.then\(\(ok\) => \{ if \(ok && !S\.activeShift\) startAt\(emp\); \}\);/.test(app), 'asks first');
+  T.ok(read('src/app/phone-notes.js').includes("App.pendingEmp = root.Arrive ? root.Arrive.cleanEmp(p.get('emp')) : '';"), 'a tap while the app is open too');
+});
 T.test('the status message from the phone keeps on, radius and permissions; a spot in it is dropped', () => {
   const s = A.readStatus({ geo: 1, on: true, r: 150, bg: true, fg: true, lat: 32.1, lng: 34.8 });
   T.eq(JSON.stringify(s), JSON.stringify({ on: true, r: 150, bg: true, fg: true, attn: false }));
@@ -137,7 +170,7 @@ T.test('the page: off until the Android app says it can, nothing saved in the da
   const w = read('src/app/widgets.js');
   T.ok(w.includes("data === 'shaati:geo'") && /m\.geo === 1\) \{ if \(App\.arrive\) App\.arrive\.status\(m\); return; \}/.test(w), 'the channel hands both over');
   const web = read('src/app/arrive.js');
-  T.ok(/off\.onclick = \(\) => \{\s*if \(App\.widgets\) App\.widgets\.post\(JSON\.stringify\(\{ geo: 1, off: 1 \}\)\);/.test(web), 'off: one tap, no question');
+  T.ok(/const msg = id \? \{ geo: 1, off: 1, id \} : \{ geo: 1, off: 1 \};\s*if \(App\.widgets\) App\.widgets\.post\(JSON\.stringify\(msg\)\);/.test(web), 'off: one tap, no question (one place, or the one place of an older app)');
   T.ok(/if \(!native\) \{/.test(web), 'a browser gets the honest note and no button');
   T.ok(read('android/widgets/java/WorkGeoReceiver.java').includes('WorkGeo.ACTION_OFF.equals(a)'), 'the notification turns it off too');
 });

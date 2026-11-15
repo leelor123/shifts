@@ -1016,6 +1016,8 @@
     try { if (params.get('source') === 'twa' || document.referrer.startsWith('android-app://')) sessionStorage.setItem('androidApp', '1'); } catch (e) { /* ignore */ }
     try { App.androidApp = sessionStorage.getItem('androidApp') === '1'; } catch (e) { App.androidApp = false; }
     App.pendingAction = params.get('action');
+    // the suggestion at one of several workplaces (core/arrive.js): the employer its shift starts at
+    App.pendingEmp = App.pendingAction === 'start' && root.Arrive ? root.Arrive.cleanEmp(params.get('emp')) : '';
     // a tap on the phone's notification: what it is about (core/noteplan.js noteUrl)
     App.pendingNote = App.pendingAction === 'note' ? { type: params.get('type') || '', key: params.get('key') || '', ref: params.get('ref') || '', data: { pk: params.get('pk') || '', year: params.get('year') || '' } } : null;
     App.pendingTag = root.Nfc ? root.Nfc.readOpen(location.search) : null; // ?action=nfc&tag=… (a touch on an NFC sticker)
@@ -1126,9 +1128,20 @@
   };
   /** What an address's ?action= asks (a shortcut, a widget, the NFC sticker, a tap on a notification): done once the
    *  code lock is open. Also from a tap on a notification while the app is open (app/phone-notes.js). */
+  /** ?action=start&emp=…: the suggestion at one of several workplaces names its employer; the shift starts at one of
+   *  its jobs (the last one used there, its only one, or the one picked). Without an employer: the usual start. */
+  const startAt = (emp) => {
+    const roles = emp ? App.roles(emp.id) : [];
+    if (!roles.length) { App.actions['timer-start'](); return; }
+    const last = roles.find((r) => r.id === S.meta.lastRole);
+    if (last || roles.length === 1) { App.startShift((last || roles[0]).id); return; }
+    App.sheetsApi.pickRole('באיזה תפקיד?', (rid) => App.startShift(rid), roles);
+  };
   App.doAction = function (action) {
     App.afterUnlock(() => {
-      if (action === 'start' && !S.activeShift) UI.confirm('התחל משמרת', '', 'התחלה').then((ok) => { if (ok && !S.activeShift) App.actions['timer-start'](); });
+      const emp = action === 'start' && App.pendingEmp ? S.employers.find((e) => e.id === App.pendingEmp) : null;
+      App.pendingEmp = '';
+      if (action === 'start' && !S.activeShift) UI.confirm('התחל משמרת', emp && S.employers.length > 1 ? emp.name || '' : '', 'התחלה').then((ok) => { if (ok && !S.activeShift) startAt(emp); });
       if (action === 'stop' && S.activeShift) UI.confirm('סיום משמרת', '', 'סיום').then((ok) => { if (ok && S.activeShift) App.stopShift(); });
       if (action === 'note' && App.openNote) App.openNote(App.pendingNote || {}); // a tap on the phone's notification (core/noteplan.js noteUrl)
       if (action === 'nfc' && App.nfcOpen) App.nfcOpen(App.pendingTag || ''); // a touch on the NFC sticker at work (app/nfc.js): starts or ends a shift

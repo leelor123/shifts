@@ -28,10 +28,25 @@
   const LEAVE_GAP_MS = 60 * MIN;
   /** How long the phone stays inside before it counts as an arrival (Android's loitering delay): passing by is not one. */
   const DWELL_MS = 5 * MIN;
+  /** Up to this many workplaces, each its own circle (WorkGeo.MAX_PLACES on the phone). */
+  const MAX_PLACES = 3;
+  /** A place's id: "work" is the one place an app before 1.39 saved; new ones are p1..p3. */
+  const PLACE_ID = /^(work|p[1-3])$/;
   const PACKAGE = 'io.github.leelor123.shifts';
   const SCHEME = 'shaati-geo';
 
   const radius = (r) => (RADII.includes(+r) ? +r : DEFAULT_R);
+  /** A place's name as the user typed it (shown on the suggestion): one line, at most 30 characters. */
+  const cleanName = (n) => Array.from(String(n == null ? '' : n), (ch) => (ch.charCodeAt(0) < 32 || ch.charCodeAt(0) === 127 ? ' ' : ch)).join('').replace(/\s+/g, ' ').trim().slice(0, 30);
+  /** An employer id the suggestion starts the shift at (?action=start&emp=…); anything else: none. */
+  const cleanEmp = (e) => (typeof e === 'string' && /^[\w-]{1,40}$/.test(e) ? e : '');
+  /** The id a new place gets: the first of p1..p3 not taken, or null when MAX_PLACES are saved. */
+  function nextId(places) {
+    const used = new Set((places || []).map((p) => p.id));
+    if (used.size >= MAX_PLACES) return null;
+    for (let i = 1; i <= MAX_PLACES; i++) if (!used.has('p' + i)) return 'p' + i;
+    return null;
+  }
 
   /**
    * What one crossing suggests: 'start', 'stop' or null.
@@ -56,17 +71,33 @@
   }
 
   /** The link that opens the Android app's own screen for saving the spot (WorkGeoActivity): it asks there, in the
-   *  phone's own windows, first with the disclosure and then for the location permission. Only the radius rides in it. */
-  const setupUrl = (r) => `intent://save?r=${radius(r)}#Intent;scheme=${SCHEME};package=${PACKAGE};end`;
+   *  phone's own windows, first with the disclosure and then for the location permission. The radius rides in it, and
+   *  for one of several places its id, the name it shows and the employer its shift starts at (never a spot). */
+  function setupUrl(r, o) {
+    o = o || {};
+    let q = `r=${radius(r)}`;
+    if (PLACE_ID.test(o.id || '')) q += `&id=${o.id}`;
+    const n = cleanName(o.name), e = cleanEmp(o.emp);
+    if (n) q += `&n=${encodeURIComponent(n)}`;
+    if (e) q += `&e=${e}`;
+    return `intent://save?${q}#Intent;scheme=${SCHEME};package=${PACKAGE};end`;
+  }
 
   /** What the Android app's status message says ({"geo":1,"on":…,"r":…,"bg":…}), cleaned; anything else: null. A spot
    *  in it would be a mistake and is dropped (the page never holds one). */
   function readStatus(m) {
     if (!m || typeof m !== 'object' || m.geo !== 1) return null;
     // attn: saved and allowed, but Google Play services refused to watch the place (Location Accuracy off)
-    return { on: m.on === true, r: radius(m.r), bg: m.bg === true, fg: m.fg === true, attn: m.attn === true && m.on !== true };
+    const s = { on: m.on === true, r: radius(m.r), bg: m.bg === true, fg: m.fg === true, attn: m.attn === true && m.on !== true };
+    // the places (an app from 1.39): id, radius, name and employer only; an app before it has one place and no list
+    if (Array.isArray(m.places)) {
+      const seen = new Set();
+      s.places = m.places.filter((p) => p && PLACE_ID.test(p.id) && !seen.has(p.id) && seen.add(p.id)).slice(0, MAX_PLACES)
+        .map((p) => ({ id: p.id, r: radius(p.r), n: cleanName(p.n), e: cleanEmp(p.e) }));
+    }
+    return s;
   }
 
-  root.Arrive = { RADII, DEFAULT_R, AWAY_MS, LEAVE_GAP_MS, DWELL_MS, PACKAGE, SCHEME, radius, decide, setupUrl, readStatus };
+  root.Arrive = { RADII, DEFAULT_R, AWAY_MS, LEAVE_GAP_MS, DWELL_MS, MAX_PLACES, PLACE_ID, PACKAGE, SCHEME, radius, cleanName, cleanEmp, nextId, decide, setupUrl, readStatus };
   if (typeof module !== 'undefined') module.exports = root.Arrive;
 })(typeof window !== 'undefined' ? window : globalThis);
