@@ -5,7 +5,7 @@ const T = require('./t.js');
 function setup(mod) {
   const settings = Defaults.defaultSettings();
   settings.startDate = '2025-01-01';
-  const emp = Defaults.defaultEmployer();
+  const emp = Object.assign(Defaults.defaultEmployer(), { otLaw: false }); // the cases were built on 8 h set by hand
   const data = { settings, employers: [emp], roles: Defaults.defaultRoles(), dayRules: [], shifts: [], entries: [] };
   if (mod) mod(data, emp);
   return data;

@@ -127,6 +127,12 @@
    * overtime — so by the law a minor's regular hours are the lower of the two laws' limits. */
   const WEEK_REG_H_MINOR = 40;
   const otByLaw = (emp) => !!emp.otLaw;
+  /** A workplace saved while "by the law" was off by default (before 2026-11-16) that still has the untouched manual
+   *  defaults (8 h a day, 2 h at 125%, then 150%, no short night day) and whose switch the user never turned
+   *  (otLawSet): it goes over to the law once. Anything set by hand stays. */
+  const asDefault = (v, d) => v == null || v === '' || +v === d;
+  const otLawToTurnOn = (emp) => !!emp && !emp.otLaw && !emp.otLawSet && asDefault(emp.otThreshold, 8) && asDefault(emp.otTier1Hours, 2)
+    && asDefault(emp.otTier1Pct, 125) && asDefault(emp.otTier2Pct, 150) && !emp.nightShiftShortDay;
   /** The day's regular hours before overtime starts. youth: { age, eve } for a minor (eve: the day before a rest day). */
   function otDayHours(emp, settings, dateKey, nightShift, youth) {
     if (otByLaw(emp)) {
@@ -1188,7 +1194,7 @@
   }
 
   root.Engine = {
-    LAW_YEARS, LAW_DUE, LAW_KEYS, lawYear, travelCap, LAW_BREAK, validShift, validEntry, otByLaw, otDayHours, otWeekHours, WEEK_REG_H, WEEK_REG_H_MINOR, legalMinWage, minWageFor, youthRules, pensionMinAge, MIN_WAGE, BL_YEARS, RECUP_YEARS, TAX_YEARS, taxLaw, blLimits, recuperationRate,
+    LAW_YEARS, LAW_DUE, LAW_KEYS, lawYear, travelCap, LAW_BREAK, validShift, validEntry, otByLaw, otLawToTurnOn, otDayHours, otWeekHours, WEEK_REG_H, WEEK_REG_H_MINOR, legalMinWage, minWageFor, youthRules, pensionMinAge, MIN_WAGE, BL_YEARS, RECUP_YEARS, TAX_YEARS, taxLaw, blLimits, recuperationRate,
     makeCtx, roleRate, roundMinutes, monthsBetween, buildSegments, hasOverrides, computeShift, computeAll,
     periodByKey, periodOf, dayValue, computeEntries, travelByDay, incomeTaxRaw, netEstimate, pensionActive,
     buildModel, totals, periodSummary, rangeSummary, pensionBaseOf, leaveBalances, holidayPay, vacationEntitlement, recuperationDays, ageAt, isMinor,

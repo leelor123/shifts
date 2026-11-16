@@ -30,7 +30,7 @@ function shift(date, from, to, extra) {
 function model(shifts, mod) {
   const settings = Defaults.defaultSettings();
   settings.startDate = '2025-06-01';
-  const emp = Object.assign(Defaults.defaultEmployer(), { travelPerDay: 22.6 });
+  const emp = Object.assign(Defaults.defaultEmployer(), { travelPerDay: 22.6, otLaw: false }); // these cases were built on 8 h set by hand
   const d = { settings, employers: [emp], roles: Defaults.defaultRoles(), dayRules: [], shifts, entries: [] };
   if (mod) mod(d);
   return Engine.buildModel(d);

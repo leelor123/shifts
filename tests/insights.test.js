@@ -235,7 +235,7 @@ T.test('Fridays again and again with a five-day week: asked once whether the wor
   const all = (d) => Insights.run(Engine.buildModel(d), { now: NOW }).alerts.filter((a) => a.type === 'workweek');
   const law = (mod) => (d) => { d.employers[0].otLaw = true; if (mod) mod(d); }; // the law turned on (off by default)
   const ask = (sh, mod) => all(data(sh, law(mod)));
-  T.eq(all(data(fridays)).length, 0, 'the default (the law off): not asked');
+  T.eq(all(data(fridays, (d) => { d.employers[0].otLaw = false; })).length, 0, 'the law off: not asked');
   T.eq(ask(fridays).length, 1, 'four Fridays in two months');
   T.eq(ask(fridays.slice(0, 2)).length, 0, 'two are not enough');
   T.eq(ask(fridays, (d) => { d.settings.leave.workWeek = 6; }).length, 0, 'a six-day week already chosen');
