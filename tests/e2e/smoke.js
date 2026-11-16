@@ -1188,8 +1188,9 @@ let errors = [];
     const st = await M.e(() => ({ roles: App.roles().map((r) => r.name + ':' + Engine.roleRate(r, U.todayKey())), travel: Store.S.employers[0].travelPerDay, city: Store.S.settings.rest.city, birth: Store.S.settings.birthDate, start: Store.S.settings.startDate, onboarded: Store.S.settings.onboarded, brkPaid: Store.S.employers[0].defaultBreakPaid, otLaw: Store.S.employers[0].otLaw, week: Store.S.settings.leave.workWeek }));
     await M.ctx.close();
     if (st.roles.join() !== 'העבודה שלי:35.4' || st.travel !== 16 || st.city !== 'תל אביב-יפו' || st.birth !== null || st.start !== null || !st.onboarded) throw new Error('defaults: ' + JSON.stringify(st));
-    // a skipped break question is "not sure": unpaid; a skipped work week leaves the flat 8 hours as before
-    if (st.brkPaid !== false || st.otLaw !== false || st.week !== 5) throw new Error('break / work week defaults: ' + JSON.stringify(st));
+    // a skipped break question is "not sure": unpaid; overtime by the law is on for everyone since 1.40.0 (e0a66ea),
+    // with a five-day week
+    if (st.brkPaid !== false || st.otLaw !== true || st.week !== 5) throw new Error('break / work week defaults: ' + JSON.stringify(st));
   });
   await step('Google popup blocked: a clear message and a second try works', async () => {
     const M = await newUserPage();
