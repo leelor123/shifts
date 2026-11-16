@@ -10,7 +10,7 @@
  * A device that started less than a week ago had no time to come back, so the window ends 7 days before today.
  * Demo mode is not counted. The steps, each kept from the one before it:
  *   'installed' has a record;
- *   'shift'     entered a first shift (sh > 0);
+ *   'shift'     entered a first shift (sh > 0, or a planned one: Funnel.entered);
  *   'week'      came back on a later week (used 7 days or more after its first day);
  *   'active'    still used in the last 14 days;
  *   'plus'      has Shaati Plus.
@@ -31,10 +31,12 @@
     if (r.ios === true) return 'ios';
     return 'web';
   }
+  /** Entered a shift: a finished one, or a planned one (a schedule typed in counts too; review 2026-11-16). */
+  const entered = (r) => +r.sh > 0 || !!(r.f && r.f.planned);
   const pct = (a, b) => (b ? Math.round((a / b) * 100) : 0);
   const STEPS = [
     ['installed', () => true],
-    ['shift', (r) => +r.sh > 0],
+    ['shift', (r) => entered(r)],
     ['week', (r) => U.diffDays(r.first, r.last) >= MIN_AGE],
     ['active', (r, o) => r.last >= o.since14],
     ['plus', (r) => !!(r.f && r.f.plus)],
@@ -57,6 +59,6 @@
     return { from, to, steps };
   }
 
-  root.Funnel = { compute, group, PLATFORMS, MIN_AGE, ACTIVE };
+  root.Funnel = { compute, entered, group, PLATFORMS, MIN_AGE, ACTIVE };
   if (typeof module !== 'undefined') module.exports = root.Funnel;
 })(typeof window !== 'undefined' ? window : globalThis);

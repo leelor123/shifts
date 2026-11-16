@@ -27,6 +27,15 @@ T.test('each step is kept from the one before, with its share of the step before
   T.eq(r.steps[2].prev, 4, 'the step before');
 });
 
+T.test('a planned shift counts as entering a shift; nothing at all does not (review 2026-11-16)', () => {
+  const r = F.compute([rec({ sh: 0, f: { planned: true } }), rec({ sh: 0 })], { today, days: 30 });
+  T.eq(r.steps[1].n, 1, 'the planned one passes the shift step');
+  T.eq(F.entered(rec({ sh: 2 })), true);
+  T.eq(F.entered(rec({})), false);
+  const admin = require('fs').readFileSync(require('path').join(__dirname, '..', 'src', 'app', 'views-admin.js'), 'utf8');
+  T.ok(admin.includes('Funnel.entered(r)'), 'the admin funnel uses the same rule');
+});
+
 T.test('back on a later week means 7 days or more after the first day; active means the last 14 days', () => {
   const rows = [rec({ sh: 1, first: day(20), last: day(14) }), rec({ sh: 1, first: day(20), last: day(13) })];
   T.eq(nums(F.compute(rows, { today, days: 30 })), '2,2,1,1,0', '6 days later is not a later week');

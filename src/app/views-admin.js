@@ -74,7 +74,7 @@
     let cur = old;
     for (const [label, keep] of [
       ['התחילו להשתמש', () => true],
-      ['רשמו משמרת', (r) => +r.sh > 0],
+      ['רשמו משמרת', (r) => (root.Funnel ? root.Funnel.entered(r) : +r.sh > 0)],
       ['חזרו אחרי שבוע', (r) => days(r.first, r.last) >= 7],
       ['ראו את Plus', (r) => f(r, 'plusSeen')],
       ['ניסו את Plus (ניסיון או מתנה)', (r) => f(r, 'plusTry') || f(r, 'gift') || f(r, 'plus')],
