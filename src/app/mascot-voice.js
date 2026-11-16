@@ -155,7 +155,7 @@
 
   /* ---------------- the list of voices ---------------- */
   const waiting = new Set(); // lines asked for before the list came
-  const GIVE_UP = 3000; // no voices this long after the first ask: there are none
+  const GIVE_UP = 5000; // no voices this long after the first ask (Android's engine can be slow cold): there are none
   let listening = false, quietTimer = 0;
   /** Listen for the list for the whole page life (Android can fill it in parts). The first ask starts Chrome filling
    *  it; with nothing listed after GIVE_UP the list counts as known and empty. */
@@ -223,9 +223,6 @@
   function rhythm(run) {
     let i = 0;
     const tick = () => {
-      // an end that never came (Android or iOS took the sound away): two quiet checks in a row end the line
-      const S = synth();
-      if (S && !S.speaking && !S.pending) { if (++run.idle >= 2) { ended(run, run.i); return; } } else run.idle = 0;
       mouth(run, RHYTHM[i % RHYTHM.length]);
       if (cur !== run) return;
       if (i % 4 === 0) bob(run);
@@ -258,6 +255,18 @@
       if (S.speaking) { later(run, () => { if (run.u === u) { try { S.speak(u); } catch (e) { finish(run); } } }, 60); return; }
     }
     S.speak(u);
+  }
+  /** While a line plays, the engine is asked every 200 ms: quiet twice in a row means the line is over even when its
+   *  end never came (Android or iOS took the sound away), with word reports or without. */
+  function watch(run, u, i) {
+    let idle = 0;
+    const check = () => {
+      if (run.u !== u) return;
+      const S = synth();
+      if (S && !S.speaking && !S.pending) { if (++idle >= 2) { ended(run, i); return; } } else idle = 0;
+      later(run, check, 200);
+    };
+    later(run, check, 200);
   }
   /** the line is over without its end reported: the next line, or done (the engine silenced if it still holds one) */
   function ended(run, i) {
@@ -297,7 +306,7 @@
     const S = synth();
     if (!S || !elOf(run)) { V.stop(); return; } // the coin left the screen during the pause
     const text = run.lines[i];
-    run.i = i; run.started = false; run.words = false; run.beat = null; run.idle = 0;
+    run.i = i; run.started = false; run.words = false; run.beat = null;
     let u;
     try { u = new root.SpeechSynthesisUtterance(text); } catch (e) { finish(run); return; }
     try { u.voice = run.voice; u.lang = run.voice.lang; u.rate = 1; u.pitch = 1.15; u.volume = 1; } catch (e) { /* the voice's own defaults */ }
@@ -312,6 +321,7 @@
       // a voice that reports no words within a moment gets the steady rhythm
       later(run, () => { if (run.u === u && !run.words) rhythm(run); }, 320);
       later(run, () => { if (run.u === u) ended(run, i); }, capOf(text));
+      watch(run, u, i);
     };
     u.onboundary = (e) => {
       if (!live() || (e.name && e.name !== 'word')) return;
@@ -462,7 +472,10 @@
     if (V.supported() && !V.known()) listenVoices();
     const none = prefs().effects === false || !V.supported() || (V.known() && !voiceFor());
     if (!late && key !== quietKey) quietKey = null;
-    if (late ? !b : none && !quietKey) { if (b) b.remove(); return; }
+    // a button made invisible stays so on its screen, a redraw of that screen included: never a hide and show again.
+    // The next screen decides anew.
+    const keep = late ? !!(b && b.classList.contains('m-spk-none')) : !!quietKey;
+    if (late ? !b : none && !keep) { if (b) b.remove(); return; }
     if (!b) {
       b = doc.createElement('button');
       b.type = 'button';
@@ -475,15 +488,7 @@
       b.setAttribute('aria-pressed', String(on));
       b.innerHTML = root.UI ? root.UI.icon(on ? 'voice' : 'voiceOff') : '';
     }
-    if (none) { quiet(b); if (late) quietKey = step.key; return; }
-    if (b.classList.contains('m-spk-none')) {
-      // a voice came after all: the button shows again in the same place
-      quietKey = null;
-      b.style.visibility = '';
-      b.classList.remove('m-spk-none');
-      b.removeAttribute('aria-hidden');
-      b.removeAttribute('tabindex');
-    }
+    if (none || keep) { quiet(b); if (late) quietKey = step.key; return; }
     if (!invited && prefs().voice === undefined && V.available()) invite(b);
   }
   function bind(v) {

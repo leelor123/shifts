@@ -133,7 +133,7 @@ function load(opt) {
     addEventListener(t, f) { if (t === 'voiceschanged') this.listeners.push(f); },
     removeEventListener(t, f) { this.listeners = this.listeners.filter((x) => x !== f); },
     // how each call behaves: ok (starts, ends), fail, silent (never starts), busy (never reports a start but talks),
-    // lost (starts, then stops talking with no end reported), hang (starts, talks on, no end)
+    // lost (starts, then stops talking with no end reported; lostWords: the same after a word report), hang (talks on)
     speak(u) {
       said.push({ text: u.text, at: Date.now(), voice: u.voice });
       const mode = (opt.modes && opt.modes[said.length - 1]) || opt.mode || 'ok';
@@ -144,6 +144,10 @@ function load(opt) {
         synth.speaking = true;
         if (u.onstart) u.onstart({});
         if (mode === 'lost') setTimeout(() => { synth.speaking = false; }, 100);
+        else if (mode === 'lostWords') {
+          setTimeout(() => u.onboundary && u.onboundary({ name: 'word', charIndex: 0, charLength: 4 }), 10);
+          setTimeout(() => { synth.speaking = false; }, 100);
+        }
         else if (mode === 'ok') setTimeout(() => { synth.speaking = false; if (u.onend) u.onend({}); }, opt.len || 20);
       }, 0);
     },
@@ -296,6 +300,16 @@ T.atest('an end that never comes: the rhythm sees the engine quiet twice and end
   m.V.speak(c, 'שלום לך');
   await wait(800);
   T.eq(m.V.speaking(), false); T.eq(c.cls.has('talking'), false, 'the mouth is at rest');
+});
+T.atest('word reports, then no end: the engine poll ends the line, the next one starts well before the cap', async () => {
+  const m = load({ voices: [LOCAL], modes: ['lostWords', 'ok'] });
+  const c = coin();
+  m.V.speak(c, ['שורה ארוכה למדי לבדיקה', 'שתיים']); // the first line's cap is above 4.5 s
+  await wait(1100);
+  T.eq(m.said.length, 2, 'the second line went out after the pause');
+  T.ok(m.said[1].at - m.said[0].at < 1000, 'gap ' + (m.said[1].at - m.said[0].at));
+  await wait(100);
+  T.eq(m.V.speaking(), false); T.eq(c.cls.has('talking'), false);
 });
 T.atest('an engine that talks on with no end: the line ends at its cap', async () => {
   const m = load({ voices: [LOCAL], mode: 'hang' });
@@ -464,15 +478,30 @@ T.atest('the list in parts: the listener stays, a waiting line speaks once its v
   await wait(650);
   T.ok(b.style.visibility !== 'hidden', 'never hidden');
 });
-T.atest('no voices 3 s after the first ask: known and empty, the button goes quiet in place; a test browser stays "not known"', async () => {
+T.atest('no voices 5 s after the first ask: known and empty, the button goes quiet in place; a test browser stays "not known"', async () => {
   const m = setup({ voices: [] });
   const w = load({ voices: [], webdriver: true });
   m.App.mascotStep(m.s.v, 'name', 'next');
   const b = m.s.btn();
   T.eq(m.V.known(), false);
-  await wait(3100);
+  await wait(3500);
+  T.eq(m.V.known(), false, 'still waiting at 3.5 s (a cold Android engine)');
+  T.ok(b.style.visibility !== 'hidden');
+  await wait(1700);
   T.eq(m.V.known(), true); T.eq(m.V.available(), false);
   T.eq(m.s.btn(), b); T.eq(b.style.visibility, 'hidden');
+  // the voice arrives just after: the button stays invisible on this screen (no hide and show), a redraw of the
+  // same screen keeps it so, and the next screen draws it normally
+  m.synth.voices = [LOCAL]; m.synth.fire();
+  T.eq(b.style.visibility, 'hidden', 'no blink');
+  const again = screen();
+  m.s.v.querySelector = again.v.querySelector;
+  m.App.mascotStep(m.s.v, 'name', 'next');
+  T.eq(again.btn() && again.btn().style.visibility, 'hidden', 'the same screen drawn again: still invisible');
+  const next = screen();
+  m.s.v.querySelector = next.v.querySelector;
+  m.App.mascotStep(m.s.v, 'work', 'next');
+  T.ok(next.btn() && next.btn().style.visibility !== 'hidden' && next.btn().getAttribute('aria-hidden') == null, 'the next screen: a normal button');
   T.eq(w.V.known(), false, 'webdriver: not known, the QA suites see the Settings switch as before');
   T.eq(w.V.showSwitch(), true);
 });
