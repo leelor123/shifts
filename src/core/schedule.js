@@ -256,7 +256,8 @@
         const w = nextRow && nextRow.words.filter((x) => Math.abs(x.cx - c.cx) < h * 3).sort((a, b) => Math.abs(a.cx - c.cx) - Math.abs(b.cx - c.cx))[0];
         if (!w) return null;
         const d = daysIn(w.text, today)[0];
-        if (d && d.date) return d;
+        // a date on another weekday than its column's name is a misreading ("22/11" read as "22/1"): not taken
+        if (d && d.date) return c.dow == null || d.dow === c.dow ? d : null;
         if (c.dow == null || !/^\d{3,6}$/.test(w.text)) return null;
         for (let i = 1; i < w.text.length - 1; i++) {
           if (w.text[i] !== '1') continue;
@@ -267,6 +268,15 @@
       };
       let dated = 0;
       for (const c of cols) { const d = dateFor(c); if (d) { c.date = d.date; c.dow = d.dow; dated++; } }
+      // one date that fits its day dates the columns OCR misread: the days run on in reading order (right to left)
+      const ai = cols.findIndex((c) => c.date && c.dow != null);
+      if (ai >= 0 && dated < cols.length && cols.every((c) => c.dow != null)) {
+        const a = cols[ai];
+        cols.forEach((c, i) => {
+          if (c.date) return;
+          c.date = i > ai ? addDays(a.date, ((c.dow - a.dow) % 7 + 7) % 7) : addDays(a.date, -(((a.dow - c.dow) % 7 + 7) % 7));
+        });
+      }
       const gap = cols.length > 1 ? Math.min(...cols.slice(1).map((c, i) => Math.abs(c.cx - cols[i].cx))) : h * 8;
       const skip = new Set([headIdx]); if (dated >= 2) skip.add(headIdx + 1);
       rows.forEach((r, ri) => {

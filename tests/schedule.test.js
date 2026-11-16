@@ -97,6 +97,20 @@ T.test('a photo\'s dates where OCR read the "/" as a 1: put back when it fits th
   const bad = [w('ראשון', 400, 10), w('שני', 300, 10), w('שלישי', 200, 10), w('21110', 400, 30), w('לי', 500, 60), w('8-16', 400, 60)];
   T.eq(SC.parseWords(bad, { today }).entries[0].date, null);
 });
+/* schedule-test, 16 Nov 2026: OCR read the dates under "ראשון שני שלישי רביעי" as "22/1 2244 24/11 25M". The app
+ * took 22/1 (a Friday in January) over the column's own "ראשון" and put the shift in January. A date that falls on
+ * another weekday than its column is a misreading; one date that agrees dates the whole row. */
+T.test('a photo\'s date that does not fit its column\'s day is dropped; a date that fits dates the other columns', () => {
+  const w = (text, x, y) => ({ text, x0: x, x1: x + 40, y0: y, y1: y + 14 });
+  const head = [w('שם', 600, 10), w('ראשון', 500, 10), w('שני', 400, 10), w('שלישי', 300, 10), w('רביעי', 200, 10)];
+  const words = head.concat([w('22/1', 500, 30), w('2244', 400, 30), w('24/11', 300, 30), w('25M', 200, 30),
+    w('לי', 600, 60), w('16-24', 500, 60), w('8-16', 400, 60), w('9-17', 300, 60), w('חופש', 200, 60)]);
+  T.eq(SC.parseWords(words, { today: '2026-11-16' }).entries.map((e) => e.date + ' ' + e.start).join(','), '2026-11-22 16:00,2026-11-23 08:00,2026-11-24 09:00');
+  // no date agrees with its day: none is taken, the days stay (the week comes from the message or today)
+  const none = head.concat([w('22/1', 500, 30), w('lieu', 400, 30), w('lieu', 300, 30), w('lieu', 200, 30), w('לי', 600, 60), w('8-16', 500, 60)]);
+  const e = SC.parseWords(none, { today: '2026-11-16' }).entries[0];
+  T.eq(e.date + ' ' + e.dow, 'null 0');
+});
 T.test('several days in one line: each shift with the day before it', () => {
   const r = p('סידור לשבוע הבא: ראשון: דני 8-16, לי 16-23 שני: לי 9-17 שלישי חופש רביעי לי ערב');
   T.eq(brief(SC.pick(r, ['לי'])).join(' | '), 'd0 16:00 23:00 לי | d1 09:00 17:00 לי | d3 15:00 23:00 לי');
