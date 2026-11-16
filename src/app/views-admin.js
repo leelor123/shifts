@@ -83,7 +83,7 @@
     const start = old.length;
     return `<div class="section-title">${icon('filter', 's')} המשפך: מהתקנה ועד תשלום</div>
       <div class="card adm-funnel">${steps.map(([label, n, prev], i) => `<div class="adm-bar"><span class="nm">${esc(label)}</span><span class="track"><i style="width:${pct(n, start)}%"></i></span><span class="vv">${n} · ${pct(n, start)}%${i ? `<small class="adm-drop">${pct(n, prev)}% מהקודם</small>` : ''}</span></div>`).join('')}
-        <div class="tiny muted" style="margin-top:8px">מכשירים שהתחילו לפני שבוע לפחות (${start}), בלי מצב הדגמה. כל שלב מתוך מי שעבר את הקודם.</div></div>` + funnelByPlatform(rows);
+        <div class="tiny muted" style="margin-top:8px">מכשירים שהתחילו לפני שבוע לפחות (${start}), בלי מצב הדגמה. כל שלב מתוך מי שעבר את הקודם.</div></div>` + funnelByPlatform(rows) + bySource(rows);
   }
   /* The same way in, by when devices started (the last 30 or 90 days) and by platform (core/funnel.js), from the
    * records already read. Both periods are drawn at once and a tap shows one: no new reading, no redraw. */
@@ -97,6 +97,18 @@
     const { from, to } = cols[0];
     return `<table class="adm-ftable"><thead><tr><td></td>${head}</tr></thead><tbody>${body}</tbody></table>
         <div class="tiny muted" style="margin-top:8px">מכשירים שהתחילו בין ${U.fmtDate(from, 'dm')} ל-⁠${U.fmtDate(to, 'dm')} (${cols[0].steps[0].n}), בלי מצב הדגמה. מי שהתחיל בשבוע האחרון עוד לא יכול היה לחזור, ולכן לא נספר.</div>`;
+  }
+  /* Which page of the website sent devices (stats src, the ?from= of their first opening: tools/site-pages.js appFrom),
+   * of the devices that started in the last 90 days, and how many of them entered a shift. */
+  function bySource(rows) {
+    const since = U.addDays(U.todayKey(), -89);
+    const got = new Map();
+    rows.forEach((r) => { if (!r.src || typeof r.src !== 'string' || !(r.first >= since) || (r.f && r.f.demo)) return; const g = got.get(r.src) || { n: 0, sh: 0 }; g.n++; if (+r.sh > 0) g.sh++; got.set(r.src, g); });
+    if (!got.size) return '';
+    const list = [...got].sort((x, y) => y[1].n - x[1].n);
+    return `<div class="section-title">${icon('filter', 's')} הגיעו מהאתר</div>
+      <div class="card"><table class="adm-ftable"><thead><tr><th scope="col">דף</th><th scope="col">מכשירים</th><th scope="col">רשמו משמרת</th></tr></thead><tbody>${list.map(([src, g]) => `<tr><th scope="row" dir="ltr">${esc(src)}</th><td><b>${g.n}</b></td><td>${g.sh}</td></tr>`).join('')}</tbody></table>
+        <div class="tiny muted" style="margin-top:8px">מכשירים שהתחילו ב-90 הימים האחרונים ונפתחו לראשונה מכפתור באתר (מאז 1.40), בלי מצב הדגמה.</div></div>`;
   }
   function funnelByPlatform(rows) {
     const btn = (d) => `<button class="${d === 30 ? 'on' : ''}" aria-pressed="${d === 30}" data-adm-fw="${d}">${d} ימים</button>`;

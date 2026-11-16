@@ -114,3 +114,50 @@ T.test('hosting headers: only /embed/** may be framed, every other page keeps fr
   T.eq(h.filter((r) => r.headers.some((x) => x.key === 'Content-Security-Policy')).length, 2, 'no other rule sends a second policy');
   T.ok(h.find((r) => r.source === '**').headers.some((x) => x.key === 'X-Content-Type-Options'), 'nosniff on every page');
 });
+
+T.section('website question pages');
+const SITE_DIR = path.join(ROOT, 'site');
+const QUESTION = ['minimum-wage', 'recuperation-pay', 'overtime', 'sick-pay', 'travel-expenses', 'shabbat-pay', 'tax-refund', 'breaks', 'youth-work', 'payslip-check'];
+const readSite = (f) => fs.readFileSync(path.join(SITE_DIR, f), 'utf8');
+T.test('every question page: Hebrew RTL, FAQ data, an official source, "not a government body", in the sitemap', () => {
+  const map = readSite('sitemap.xml');
+  for (const slug of QUESTION) {
+    const h = readSite(slug + '.html');
+    T.ok(/<html lang="he" dir="rtl">/.test(h), slug + ': rtl');
+    const ld = JSON.parse(h.match(/<script type="application\/ld\+json">([\s\S]*?)<\/script>/)[1]);
+    const faq = ld.find((x) => x['@type'] === 'FAQPage');
+    T.ok(faq && faq.mainEntity.length >= 4, slug + ': FAQ data');
+    const shown = [...h.matchAll(/<details><summary>([\s\S]*?)<\/summary>/g)].length;
+    T.eq(shown, faq.mainEntity.length, slug + ': the FAQ data is the questions on the page');
+    T.ok(/href="https:\/\/www\.(gov\.il|btl\.gov\.il)\//.test(h), slug + ': an official source');
+    T.ok(h.includes('שעתי אינה גוף ממשלתי'), slug + ': not a government body');
+    T.ok(map.includes(`<loc>https://shaati.web.app/${slug}</loc>`), slug + ': in the sitemap');
+    T.ok(!/word-break:\s*break-all|hyphens:\s*auto/.test(h), slug + ': no mid-word breaks');
+  }
+});
+T.test('every button to the app says which page sent it (?from=seo-<page>)', () => {
+  const pages = QUESTION.map((s) => [s, s]).concat([['check', 'check'], ['shift-calculator', 'shift-calculator'], ['embed', 'embed'], ['index', 'home']]);
+  for (const [file, tag] of pages) {
+    const links = [...readSite(file + '.html').matchAll(/href="(https:\/\/leelor123\.github\.io\/shifts\/[^"]*)"/g)].map((m) => m[1].replace(/&amp;/g, '&'));
+    T.ok(links.length >= 1, file + ': has an app button');
+    for (const l of links) T.eq(new URL(l).searchParams.get('from'), 'seo-' + tag, file + ': ' + l);
+  }
+});
+T.test('the new pages take their numbers from the engine, not typed in', () => {
+  const MW = Engine.MIN_WAGE[Engine.MIN_WAGE.length - 1];
+  const nis = (n) => n.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + ' ₪';
+  const b = readSite('breaks.html'), y = readSite('youth-work.html'), p = readSite('payslip-check.html');
+  T.ok(b.includes(`<b>${Engine.LAW_BREAK.min} דקות</b>`) && b.includes(`${Engine.LAW_BREAK.afterMin / 60} שעות ומעלה`), 'breaks: the law\'s break');
+  const y17 = Engine.legalMinWage(MW.from, `${+MW.from.slice(0, 4) - 18}-${MW.from.slice(5, 7)}-15`);
+  T.ok(y17.youth && y.includes(nis(y17.hourly)), 'youth: the age-17 minimum wage ' + y17.hourly);
+  T.ok(y.includes(`${Engine.youthRules(16, 5).nightFrom}:00`) && y.includes(`${Engine.youthRules(15, 5).nightFrom}:00`), 'youth: the night limits');
+  T.ok(p.includes(nis(MW.hourly)) && p.includes(`עד ה-${Defaults.defaultEmployer().payDay} בחודש`), 'payslip: minimum wage and pay day');
+  const gen = fs.readFileSync(path.join(ROOT, 'tools', 'site-pages.js'), 'utf8');
+  const block = gen.slice(gen.indexOf("slug: 'breaks'"), gen.indexOf('/* ---------------- the page ---------------- */'));
+  T.ok(!/\d+\.\d\d ₪/.test(block) && !/35\.4|30\.92|27\.94|26\.07/.test(block), 'no shekel figure typed into the new pages');
+});
+T.test('the app\'s service worker serves a website button\'s shortcut from the cache like a plain visit', () => {
+  const sw = fs.readFileSync(path.join(ROOT, 'src', 'sw.js'), 'utf8');
+  const re = new RegExp(sw.match(/\/\^\(site\$\|seo-\)\//)[0].slice(1, -1));
+  T.ok(re.test('seo-tax-refund') && re.test('site') && !re.test('sitex') && !re.test('evil'), 'seo-<page> and the old site');
+});

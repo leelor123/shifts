@@ -1016,6 +1016,8 @@
     try { if (params.get('source') === 'twa' || document.referrer.startsWith('android-app://')) sessionStorage.setItem('androidApp', '1'); } catch (e) { /* ignore */ }
     try { App.androidApp = sessionStorage.getItem('androidApp') === '1'; } catch (e) { App.androidApp = false; }
     App.pendingAction = params.get('action');
+    // the website page that sent this device (?from=seo-<page>): the first one is kept, for the anonymous statistics
+    if (root.Stats && !S.meta.firstFrom) { const src = root.Stats.cleanFrom(params.get('from')); if (src) Store.setMeta({ firstFrom: src }); }
     // the suggestion at one of several workplaces (core/arrive.js): the employer its shift starts at
     App.pendingEmp = App.pendingAction === 'start' && root.Arrive ? root.Arrive.cleanEmp(params.get('emp')) : '';
     // a tap on the phone's notification: what it is about (core/noteplan.js noteUrl)

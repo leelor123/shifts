@@ -145,9 +145,9 @@ self.addEventListener('fetch', (e) => {
       const page = pageOf(lang);
       const cached = await caches.match(page, { ignoreSearch: true });
       // a browser visit: no ?source= (the installed app) and no ?action= (its shortcuts), unless the website sent it
-      // (its buttons add ?from=site, also to a shortcut like ?action=tax-refund)
+      // (its buttons add ?from=seo-<page>, also to a shortcut like ?action=tax-refund; ?from=site before 1.40)
       const p = url.searchParams;
-      if (cached && !p.has('source') && (!p.has('action') || p.get('from') === 'site')) {
+      if (cached && !p.has('source') && (!p.has('action') || /^(site$|seo-)/.test(p.get('from') || ''))) {
         const kept = await keptLive(page);
         if (kept) return kept;
         const ask = askLive(page);

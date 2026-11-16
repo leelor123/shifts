@@ -628,6 +628,39 @@ T.atest('statistics: rules from before the iPhone field refuse it, and the recor
   T.ok(A.S.meta.statsSentAt > 0, 'counted as sent');
 });
 
+// growth pack, 16 Nov 2026: the website's buttons say which page sent the device (?from=seo-<page>), kept from its first opening
+T.atest('statistics: the website page that first opened the app is sent (src), only in the allowed form', async () => {
+  const be = fakeBackend();
+  const A = await phone(be); await A.add('s1');
+  const Stats = await withStats(A);
+  T.eq(Stats.cleanFrom('seo-shabbat-pay'), 'seo-shabbat-pay');
+  T.eq(Stats.cleanFrom(' SEO-Overtime '), 'seo-overtime', 'trimmed, lower case');
+  T.eq(Stats.cleanFrom('site'), 'site', 'the old tag');
+  for (const bad of ['', null, undefined, 'seo-', 'seo-<b>', 'seo-' + 'x'.repeat(37), 'facebook', 'seo-a b', 'me@example.com']) T.eq(Stats.cleanFrom(bad), '', 'dropped: ' + bad);
+  await A.Store.setMeta({ firstFrom: 'seo-breaks' });
+  await A.Cloud.connect(user); await wait(60);
+  const rec = statsDocs(be)[0][1];
+  T.eq(rec.src, 'seo-breaks', 'the page');
+  T.ok(/^(seo-[a-z0-9-]{1,36}|site|embed)$/.test(rec.src), 'the form firestore.rules allow');
+  const rules = fs.readFileSync(path.join(SRC, '..', 'firestore.rules'), 'utf8');
+  T.ok(rules.includes("'ios', 'src',") && rules.includes("d.src.matches('^(seo-[a-z0-9-]{1,36}|site|embed)$')"), 'the rules allow src in that form');
+});
+T.atest('statistics: no website page, no src; old rules that refuse it still get the record', async () => {
+  const be = fakeBackend();
+  const A = await phone(be); await A.add('s1');
+  await withStats(A);
+  await A.Cloud.connect(user); await wait(60);
+  T.ok(!('src' in statsDocs(be)[0][1]), 'not opened from the website');
+  const be2 = fakeBackend();
+  const B = await phone(be2); await B.add('s1');
+  const set = B.ffs.setDoc;
+  B.ffs.setDoc = (ref, d) => (d && 'src' in d && ref.path.startsWith('stats/') ? Promise.reject(Object.assign(new Error('Missing or insufficient permissions.'), { code: 'permission-denied' })) : set(ref, d));
+  await withStats(B);
+  await B.Store.setMeta({ firstFrom: 'seo-overtime' });
+  await B.Cloud.connect(user); await wait(60);
+  const docs = statsDocs(be2);
+  T.ok(docs.length === 1 && !('src' in docs[0][1]), 'sent without the new field');
+});
 T.atest('statistics: off deletes the record and stops sending; never before the policy is accepted', async () => {
   const be = fakeBackend();
   const A = await phone(be);
