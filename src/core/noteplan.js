@@ -68,21 +68,30 @@
     const seen = new Set();
     for (const a of alertsAt(o.now) || []) seen.add(a.key);
     const out = [];
-    const daily = new Set();
+    // o.pushed: the day the app itself last sent one of the others (S.meta.lastAnomalyPush): none more that day
+    const daily = new Set(o.pushed ? [o.pushed] : []);
     const order = { warn: 0, good: 1, info: 2 };
     for (const t of ts) {
       const fresh = (alertsAt(t) || []).filter((a) => !seen.has(a.key));
       for (const a of fresh) seen.add(a.key);
       const keep = fresh.filter((a) => !sent(a.key));
       for (const a of keep.filter((x) => x.push === 'critical')) out.push({ at: t, alert: a });
-      const day = U.epochKey(t);
+      // the others never at night (the app's one night rule, Moments.quietHour): the next morning instead
+      const at = calm(t);
+      const day = U.epochKey(at);
       if (!daily.has(day)) {
         const one = keep.filter((x) => x.push === 'anomaly').sort((x, y) => (order[x.severity] || 3) - (order[y.severity] || 3))[0];
-        if (one) { out.push({ at: t, alert: one }); daily.add(day); }
+        if (one) { out.push({ at, alert: one }); daily.add(day); }
       }
       if (out.length >= max) break;
     }
-    return out.slice(0, max);
+    return out.sort((x, y) => x.at - y.at).slice(0, max);
+  }
+  /** A moment at night (23:00 to 06:00) moves to that morning's 09:00; any other stays. */
+  function calm(t) {
+    if (!root.Moments.quietHour(t)) return t;
+    const k = U.epochKey(t);
+    return U.toEpoch(t < U.toEpoch(k, MORNING) ? k : U.addDays(k, 1), MORNING) + AFTER; // (after midnight: the same day's)
   }
 
   /**

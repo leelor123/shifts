@@ -390,6 +390,7 @@
         for (const [id, v] of remote) {
           const local = S[st].find((x) => x.id === id);
           if (mode === 'merge' && local && (local.updatedAt || 0) >= v.u) continue;
+          if (mode === 'merge' && !local && !v.d && deletedHere(st, id, v.u)) continue;
           if (v.d) { if (local) ops.push({ store: st, del: id }); }
           else ops.push({ store: st, put: decode(st, v, local) });
         }
@@ -423,6 +424,8 @@
       await Store.wipe();
     }
     if (S.meta.cloudUid !== user.uid) {
+      // a restore made before this account was linked: the first merge decides what this account keeps
+      if (S.meta.restorePending) await Store.setMeta({ restorePending: null });
       await Store.forgetSyncState(); // nothing on this phone was ever confirmed by this account
       const t0 = Date.now();
       await initialMerge(user.uid); // needs the network the first time
@@ -441,12 +444,39 @@
   };
 
   /* ---------------- live listeners (cloud → phone) ---------------- */
+  /* One rule for every version heard from the account, applied when it is taken in (not when it was heard: a save on
+   * this phone in between must win, 1.39 review). Returns the op to apply, or null:
+   *   - this phone's copy is as new or newer;
+   *   - deleted here, the tombstone not up yet (the app closed within the push wait): it must not come back;
+   *   - removed by a "replace" restore that the account does not know of yet (S.meta.restorePending, settleRestore);
+   *     a version made after the restore (another phone) is taken. The signed shift log is never removed. */
+  function deletedHere(st, id, u) { return (S.meta.pendingDeletes || []).some((d) => d.store === st && d.id === id && d.at >= u); }
+  function wanted(st, id, v) {
+    const local = S[st].find((x) => x.id === id);
+    if (local && (local.updatedAt || 0) >= v.u) return null;
+    if (v.d) return local ? { store: st, del: id, u: v.u } : null;
+    if (!local && deletedHere(st, id, v.u)) return null;
+    if (!local && S.meta.restorePending && v.u <= S.meta.restorePending && !Store.APPEND_ONLY.includes(st)) return null;
+    return { store: st, put: decode(st, v, local) };
+  }
+  // what the listeners heard, applied together a moment later; detach() drops it and bumps gen, so nothing heard from
+  // an account lands after sign-out or an account switch (the wiped phone would hand it to the next account)
   let incoming = [];
   let flushTimer = null;
-  function queueRemote(ops) {
-    incoming = incoming.concat(ops);
+  let gen = 0;
+  function queueRemote(heardNow) {
+    incoming = incoming.concat(heardNow);
     clearTimeout(flushTimer);
-    flushTimer = setTimeout(async () => { const o = incoming; incoming = []; await Store.applyRemote(o); }, 120);
+    const g = gen;
+    flushTimer = setTimeout(async () => {
+      const h = incoming; incoming = [];
+      if (g !== gen) return;
+      const last = new Map(); // the newest heard of each record
+      for (const x of h) last.set(x.st + '/' + x.id, x);
+      const ops = [];
+      for (const x of last.values()) { const op = wanted(x.st, x.id, x.v); if (op) ops.push(op); }
+      try { await Store.applyRemote(ops); } catch (e) { console.warn('cloud: apply', e); }
+    }, 120);
   }
   // Listening to a whole folder again reads every document in it: Firestore bills a listener that was away for more
   // than 30 minutes as a new query, so every opening read the whole account (300 shifts = 300 of the free plan's 50,000
@@ -472,17 +502,13 @@
     for (const st of SYNC) {
       const folder = fs.collection(db, 'users', uid, st);
       unsubs.push(fs.onSnapshot(since ? fs.query(folder, fs.where('u', '>', since)) : folder, (snap) => {
-        const ops = [];
+        const got = [];
         for (const ch of snap.docChanges()) {
           if (ch.type === 'removed' || ch.doc.metadata.hasPendingWrites) continue;
           const v = ch.doc.data();
-          const id = ch.doc.id;
-          const local = S[st].find((x) => x.id === id);
-          if (local && (local.updatedAt || 0) >= v.u) continue;
-          if (v.d) { if (local) ops.push({ store: st, del: id }); }
-          else ops.push({ store: st, put: decode(st, v, local) });
+          if (wanted(st, ch.doc.id, v)) got.push({ st, id: ch.doc.id, v }); // (asked again when applied)
         }
-        if (ops.length) queueRemote(ops);
+        if (got.length) queueRemote(got);
         if (!snap.metadata.fromCache && Cloud.status === 'syncing') setStatus('synced');
         if (!snap.metadata.fromCache) { const was = heard.size; heard.add(st); if (heard.size === SYNC.length) heardAll(uid, !since && was < SYNC.length); }
       }, onErr));
@@ -498,10 +524,14 @@
     unsubs.push(fs.onSnapshot(fs.doc(db, 'users', uid, 'kv', 'active'), (d) => {
       if (!d.exists() || d.metadata.hasPendingWrites) return;
       const v = d.data();
-      if (v.u > (S.meta.activeUpdatedAt || 0)) Store.applyRemoteActive(v.j ? JSON.parse(v.j) : null, v.u);
+      if (v.u > (S.meta.activeUpdatedAt || 0)) Store.applyRemoteActive(v.j ? JSON.parse(v.j) : null, v.u).catch(() => {});
     }, onErr));
   }
-  function detach() { unsubs.forEach((f) => f()); unsubs = []; Cloud.connected = false; }
+  function detach() {
+    unsubs.forEach((f) => f()); unsubs = [];
+    gen++; clearTimeout(flushTimer); incoming = []; clearTimeout(pushTimer);
+    Cloud.connected = false;
+  }
 
   /* ---------------- push (phone → cloud) ---------------- */
   // A change counts as synced only after the server confirmed it, so nothing is lost if the app is
@@ -524,6 +554,8 @@
     pushing = true;
     try {
       const { fs, db } = fb;
+      if (S.meta.restorePending) { try { await settleRestore(Cloud.user.uid); } catch (e) { /* offline: on the next push */ } }
+      if (!Cloud.user || S.meta.cloudUid !== Cloud.user.uid) return;
       const writes = []; // [key, version, ref, data, onConfirmed]
       for (const { store, rec } of Store.dirtyRecords()) {
         const at = rec.updatedAt;
@@ -573,8 +605,10 @@
     const { fs } = fb;
     const parts = ref.path.split('/'); // users/{uid}/{store}/{id}
     const store = parts[2], id = parts[3];
+    const g = gen;
     try {
       const snap = await fs.getDocFromServer(ref);
+      if (g !== gen) return; // signed out or another account meanwhile: nothing of this one lands here
       const v = snap.exists() ? snap.data() : null;
       if (store === 'kv') {
         if (v && id === 'settings' && v.u > (S.settings._updatedAt || 0)) return Store.applyRemoteSettings(JSON.parse(v.j), LOCAL_ONLY_SETTINGS);
@@ -582,7 +616,8 @@
       } else if (SYNC.includes(store)) {
         const local = S[store].find((x) => x.id === id);
         if (v && (!local || (local.updatedAt || 0) < v.u)) {
-          return Store.applyRemote([v.d ? { store, del: id } : { store, put: decode(store, v, local) }]);
+          // (applyRemote also drops this phone's refused tombstone of it: the account's newer version stands)
+          return Store.applyRemote([v.d ? { store, del: id, u: v.u } : { store, put: decode(store, v, local) }]);
         }
         if (local) { delete local._syncedAt; await Store.saveAll(); }
       }
@@ -604,7 +639,7 @@
   Store.on((ev) => {
     if (!Cloud.user || !Cloud.connected) return;
     if (ev.remote) return;
-    if (ev.type === 'restore') { Cloud.afterRestore(ev.mode); return; }
+    if (ev.type === 'restore') { Cloud.afterRestore(ev.mode).catch(() => {}); return; }
     if (ev.type === 'data' || ev.type === 'settings' || ev.type === 'mem' || ev.type === 'active') Cloud.schedulePush(ev.type === 'active' ? 200 : 1500);
   });
   window.addEventListener('online', () => {
@@ -613,23 +648,35 @@
     if (root.Champions) root.Champions.sync(); // a game played offline reaches the table
   });
   window.addEventListener('offline', () => { if (Cloud.user) setStatus('offline'); });
+  // the app going to the background may be its end (closed, or killed by the phone): what waits for the push goes now
+  if (typeof document !== 'undefined' && document.addEventListener) document.addEventListener('visibilitychange', () => {
+    if (document.visibilityState === 'hidden' && Cloud.user && Cloud.connected && Cloud.hasUnsynced()) push();
+  });
 
-  /** After restoring a backup: make the cloud match this device. */
-  Cloud.afterRestore = async function (mode) {
-    if (mode === 'replace') {
-      await Store.touchAll();
-      try {
-        const R = await fetchAll(Cloud.user.uid);
-        const pend = S.meta.pendingDeletes || (S.meta.pendingDeletes = []);
-        const now = Date.now();
-        const keep = []; // (the signed shift log keeps the account's records: a restore never deletes them)
-        for (const st of SYNC) for (const [id, v] of R.stores[st]) if (!v.d && !S[st].some((x) => x.id === id)) { if (Store.APPEND_ONLY.includes(st)) keep.push({ store: st, put: decode(st, v) }); else pend.push({ store: st, id, at: now }); }
-        await Store.setMeta({ pendingDeletes: pend });
-        if (keep.length) await Store.applyRemote(keep);
-      } catch (e) { /* offline: the restored records still win by timestamp */ }
+  /** After restoring a backup: make the cloud match this device. A "replace" restore already stamped every restored
+   *  record and the settings with its own time and left S.meta.restorePending (Store.importBackup), so it holds also
+   *  when it was made offline or before the account connected: push() settles it once the account answers. */
+  Cloud.afterRestore = async function () { await push(); };
+  /** The account's records that the restore removed (on the account, not on this phone, not changed since the restore)
+   *  become tombstones; the flag goes only once that is done. (The signed shift log keeps the account's records.) */
+  async function settleRestore(uid) {
+    const at = S.meta.restorePending;
+    const g = gen;
+    const R = await fetchAll(uid);
+    if (g !== gen || S.meta.restorePending !== at) return;
+    const pend = S.meta.pendingDeletes || (S.meta.pendingDeletes = []);
+    const now = Math.max(Date.now(), at);
+    const keep = [];
+    for (const st of SYNC) {
+      for (const [id, v] of R.stores[st]) {
+        if (v.d || S[st].some((x) => x.id === id)) continue;
+        if (Store.APPEND_ONLY.includes(st)) keep.push({ store: st, put: decode(st, v) });
+        else if (v.u <= at && !pend.some((d) => d.store === st && d.id === id)) pend.push({ store: st, id, at: now });
+      }
     }
-    await push();
-  };
+    await Store.setMeta({ pendingDeletes: pend, restorePending: null });
+    if (keep.length) await Store.applyRemote(keep);
+  }
 
   /* ---------------- sign out / delete ---------------- */
   /** Sign out and clear this device. Returns false if the user cancelled. */
