@@ -40,7 +40,7 @@
   function compare(report, mine, opts) {
     opts = opts || {};
     const from = opts.from || '0000', to = opts.to || '9999';
-    const R = (report || []).filter((r) => r && r.date && r.date >= from && r.date <= to).map((r, i) => ({ i, r, t: r.start ? span(r.date, r.start, r.end, r.hours) : null }));
+    const R = (report || []).filter((r) => r && r.date && r.date >= from && r.date <= to).map((r, i) => ({ i, r, t: r.start ? span(r.date, r.start, r.end, r.hours) : null, unread: !!r.start && !r.end && !(+r.hours > 0) }));
     const M = (mine || []).filter((m) => m && m.date && m.date >= from && m.date <= to).map((m, i) => ({ i, m, t: span(m.date, m.start, m.end, m.span) }));
     // every possible pair with its distance
     const pairs = [];
@@ -51,9 +51,15 @@
           const overlap = Math.min(x.t.b, y.t.b) - Math.max(x.t.a, y.t.a);
           if (overlap <= 0 && Math.min(ds, de) > NEAR) continue;
           pairs.push({ x, y, d: ds + de });
-        } else if (x.r.date === y.m.date) {
-          // hours only: the same day, the nearest hours
-          pairs.push({ x, y, d: Math.abs((x.r.hours || 0) - (y.m.hours || 0)) * 60 + 1 });
+        } else if (x.unread) {
+          // a start with no end and no hours (the exit time was not read): paired by the start on the same day, and
+          // never a difference ("בדוח 0 שעות" went into the letter, deep review, Nov 2026)
+          const s = mins(x.r.start), ms = mins(y.m.start);
+          if (x.r.date === y.m.date) pairs.push({ x, y, d: (s != null && ms != null ? Math.abs(s - ms) : 0) + 1 });
+        } else if (x.r.date === y.m.date || (x.r.date === U.addDays(y.m.date, 1) && y.t && y.t.b > (dayNo(y.m.date) + 1) * 1440)) {
+          // hours only: the same day, the nearest hours (a night shift may be on the report's next day: it ended
+          // there, and it was reported missing on both sides, deep review, Nov 2026)
+          pairs.push({ x, y, d: Math.abs((x.r.hours || 0) - (y.m.hours || 0)) * 60 + (x.r.date === y.m.date ? 1 : 2) });
         }
       }
     }
@@ -64,7 +70,9 @@
       usedR.add(p.x.i); usedM.add(p.y.i);
       const r = p.x.r, m = p.y.m;
       const it = { type: 'ok', date: m.date, rep: r, mine: m };
-      if (p.x.t && p.y.t) {
+      if (p.x.unread) {
+        it.unread = true;
+      } else if (p.x.t && p.y.t) {
         it.dStart = p.x.t.a - p.y.t.a; // minutes, + = the report starts later
         it.dEnd = p.x.t.b - p.y.t.b; // + = the report ends later
         if (Math.abs(it.dStart) > TOL || Math.abs(it.dEnd) > TOL) it.type = 'diff';

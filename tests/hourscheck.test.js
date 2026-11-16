@@ -79,3 +79,14 @@ T.test('nothing to fix: no message', () => {
   T.eq(H.letter(H.compare([rep('2026-10-01', '08:00', '16:00')], [mine('2026-10-01', '08:00', '16:00')]).items), '');
   T.eq(H.letter([]), '');
 });
+T.test('a report row whose exit time was not read is not a difference', () => {
+  const r = H.compare([rep('2026-09-01', '09:00')], [mine('2026-09-01', '09:00', '17:00')]);
+  T.eq(r.diff, 0); T.eq(r.missingEmp, 0); T.eq(r.missingMine, 0);
+  T.eq(H.letter(r.items), '');
+});
+T.test('a night shift an hours-only report puts on the next day is paired', () => {
+  const r = H.compare([rep('2026-09-02', null, null, 8)], [mine('2026-09-01', '22:00', '06:00')]);
+  T.eq(types(r), '01:ok');
+  // a day shift is not paired with the next day's row
+  T.eq(types(H.compare([rep('2026-09-02', null, null, 8)], [mine('2026-09-01', '09:00', '17:00')])), '01:missingEmp 02:missingMine');
+});

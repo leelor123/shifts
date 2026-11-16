@@ -598,3 +598,94 @@ T.test('a summary table: each total is paired with the column name above it', ()
   const f = Payslip.parseText(lines.join('\n')).fields;
   T.near(f.net.value, 4970); T.near(f.gross.value, 5090); T.ok(!f.base, 'base not taken from the summary');
 });
+
+T.section('payslip: deep review fixes (Nov 2026)');
+const DAYS5 = ['2026-09-01', '2026-09-02', '2026-09-03', '2026-09-06', '2026-09-07'];
+T.test('two workplaces: only the payslip\'s own workplace\'s shifts are counted', () => {
+  const sh = DAYS5.map((d) => shift(d, '09:00', '17:00')).concat(DAYS5.map((d) => shift(d, '18:00', '22:00', { employerId: 'emp2' })));
+  const m2 = model(sh, (d) => { d.employers[0].id = 'emp1'; d.employers[0].travelPerDay = 0; d.employers.push(Object.assign(Defaults.defaultEmployer(), { id: 'emp2', name: 'B', travelPerDay: 0 })); });
+  const ex = Payslip.expected(m2, '2026-09', false, 'emp1');
+  T.near(ex.t.hours, 40); T.eq(ex.shifts.length, 5);
+  const rate = ex.baseRate;
+  const slip = { period: '2026-09', employerId: 'emp1', fields: { base: { value: 40 * rate, qty: 40, rate }, gross: { value: 40 * rate } }, other: [] };
+  const a = Payslip.analyze(slip, m2);
+  T.ok(!a.findings.some((f) => f.area === 'שעות' && f.status === 'bad'), 'no unpaid hours from the other workplace');
+  T.near(a.expected.t.hours, 40);
+  // the slip of the second workplace counts its own shifts
+  T.near(Payslip.analyze(Object.assign({}, slip, { employerId: 'emp2' }), m2).expected.t.hours, 20);
+  // a slip saved before (no employerId): the primary workplace
+  T.near(Payslip.analyze(Object.assign({}, slip, { employerId: undefined }), m2).expected.t.hours, 40);
+});
+T.test('the pay month is not the print date or another full date', () => {
+  T.eq(Payslip.detectPeriod('תאריך הדפסה 05/11/2026\nתלוש שכר לחודש 10/2026'), '2026-10');
+  T.eq(Payslip.detectPeriod('תלוש לחודש אוקטובר 2026\nתאריך 01/11/2026 הדפסה 02/11/2026'), '2026-10');
+  T.eq(Payslip.detectPeriod('תלוש שכר לחודש 09/2026'), '2026-09');
+});
+T.test('payslip hours: an overtime-only sum is not the hours when the base has none', () => {
+  const m1 = model(DAYS5.map((d) => shift(d, '09:00', '17:00')), (d) => { d.employers[0].travelPerDay = 0; });
+  const rate = Payslip.expected(m1, '2026-09', false).baseRate;
+  const F = { base: { value: 40 * rate }, ot125: { value: 2 * rate * 1.25, qty: 2 }, workHours: { value: 42 }, gross: { value: 42.5 * rate } };
+  T.near(Payslip.hoursOnSlip(F), 42);
+  const a = Payslip.analyze({ period: '2026-09', fields: F, other: [] }, m1);
+  T.ok(!a.findings.some((f) => f.area === 'שעות' && f.status === 'bad'), 'no unpaid hours');
+  T.eq(Payslip.hoursOnSlip({ base: { value: 1600 }, ot125: { value: 100, qty: 2 } }), null, 'unknown, never only the overtime');
+  T.near(Payslip.hoursOnSlip({ base: { value: 1600, qty: 40 }, ot125: { value: 100, qty: 2 } }), 42);
+});
+const visualOf = (l) => l.split(/\s+/).reverse().map((t) => (/[֐-׿]/.test(t) ? t.split('').reverse().join('') : t)).join(' ');
+T.test('visual-order lines matched by their tier ("150%") are turned to logical order', () => {
+  const a = Payslip.parseText(visualOf('שעות שבת 150% 4.00 60.00 240.00')).fields;
+  T.ok(a.rest150 && !a.ot150, 'Shabbat, not overtime'); T.near(a.rest150.qty, 4); T.near(a.rest150.rate, 60); T.near(a.rest150.value, 240);
+  const b = Payslip.parseText(visualOf('שעות נוספות 125% 2.00 100.00')).fields.ot125;
+  T.near(b.qty, 2); T.near(b.value, 100);
+  const c = Payslip.parseText(visualOf('שעות 100% 160.00 8,000.00')).fields.base;
+  T.near(c.qty, 160); T.near(c.value, 8000);
+});
+T.test('an hour line with two numbers: the hours are the smaller one, in either order', () => {
+  for (const l of ['שעות נוספות 125% 562.50 10.00', 'שעות נוספות 125% 10.00 562.50']) {
+    const f = Payslip.parseText(l).fields.ot125; T.near(f.qty, 10, 0.005, l); T.near(f.value, 562.5, 0.005, l);
+  }
+  const b = Payslip.parseText('שכר יסוד 8,000.00 160.00').fields.base; T.near(b.qty, 160); T.near(b.value, 8000);
+});
+T.test('a tier printed without "%" is not the hours', () => {
+  const a = Payslip.parseText('ש"נ 125 562.50').fields.ot125;
+  T.near(a.value, 562.5); T.ok(a.qty !== 125, 'never 125 hours');
+  const b = Payslip.parseText('שעות 100 160.00 8,000.00').fields.base;
+  T.near(b.qty, 160); T.near(b.value, 8000);
+});
+T.test('deductions printed with a minus are the same deductions', () => {
+  const neg = Payslip.parseText('מס הכנסה 900.00-\nביטוח לאומי 300.00-\nסה"כ ניכויים 1,200.00-').fields;
+  T.near(neg.incomeTax.value, 900); T.near(neg.nationalInsurance.value, 300); T.near(neg.totalDeductions.value, 1200);
+});
+T.test('a thousands separator read as a dot or a space is never a wrong amount', () => {
+  T.near(Payslip.parseText('נטו לתשלום 8.500.00').fields.net.value, 8500);
+  const sp = Payslip.parseText('נטו לתשלום 8 500.00').fields.net;
+  T.ok(!sp || Math.abs(sp.value - 8500) < 0.01, 'not 500 or 0: ' + (sp && sp.value));
+  const b = Payslip.parseText('שכר יסוד 160.00 50.00 8.000.00').fields.base;
+  T.near(b.value, 8000); T.near(b.qty, 160);
+  T.near(Payslip.parseText('נטו לתשלום 1,821.54').fields.net.value, 1821.54);
+  T.near(Payslip.numbersIn('1.234,56')[0].v, 1234.56);
+});
+T.test('the pension base ("ברוטו לפנסיה") is not the gross', () => {
+  const f = Payslip.parseText('ברוטו לפנסיה 7,500.00\nסה"כ ברוטו 10,000.00').fields;
+  T.near(f.gross.value, 10000); T.ok(!f.pensionEmployee, 'not the pension deduction');
+  T.near(Payslip.parseText('ברוטו 9,000.00\nסה"כ ברוטו 10,000.00').fields.gross.value, 10000, 0.005, 'the total wins');
+});
+T.test('a merged info line: the number after the name', () => {
+  T.near(Payslip.parseText('ימי עבודה 22 שעות עבודה 176.00').fields.workHours.value, 176);
+});
+T.test('two lines of one payment, one without hours: the rate stays the rate', () => {
+  const b = Payslip.parseText('שכר יסוד 40 40 1600\nשכר יסוד 300').fields.base;
+  T.near(b.value, 1900); T.near(b.qty, 40); T.near(b.rate, 40);
+  T.near(Payslip.parseText('שכר יסוד 40.00 1,600.00\nשכר יסוד 300.00').fields.base.rate, 40);
+  const d = Payslip.parseText('שכר יסוד 40 40 1600\nשכר יסוד 10 40 400').fields.base;
+  T.near(d.qty, 50); T.near(d.rate, 40);
+});
+T.test('a line named after a field the slip has is added to it, not dropped', () => {
+  const fields = { pensionEmployee: { value: 300, line: 'פנסיה עובד 300.00' } };
+  const other = [{ line: 'פנסיה עובד 120.00', value: 120, guess: 'pensionEmployee' }];
+  Payslip.addNamedLines(fields, other);
+  T.near(fields.pensionEmployee.value, 420);
+  Payslip.addNamedLines(fields, other);
+  T.near(fields.pensionEmployee.value, 420, 0.005, 'not added twice');
+  T.near(Payslip.addNamedLines({}, [{ line: 'x 50.00', value: -50, guess: 'incomeTax' }]).incomeTax.value, 50);
+});

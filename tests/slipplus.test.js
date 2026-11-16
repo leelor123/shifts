@@ -18,6 +18,9 @@ T.test('a row reads the main lines, the rate per regular hour and the hours', ()
   T.eq(r.social, 190);
   T.eq(r.pensionEmployee, null);
 });
+T.test('the hours: the work-hours total when the base line has no hours (not the overtime alone)', () => {
+  T.eq(SlipPlus.row(slip('2026-09', { base: { value: 1600 }, ot125: { value: 100, qty: 2 }, workHours: { value: 42 } })).hours, 42);
+});
 T.test('changes: only the lines both payslips have, moved by a step at least', () => {
   const ch = SlipPlus.changes(SlipPlus.row(A), SlipPlus.row(B));
   const by = Object.fromEntries(ch.changed.map((x) => [x.key, x]));
