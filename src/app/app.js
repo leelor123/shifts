@@ -402,6 +402,8 @@
     App.rerender();
     clearTimeout(insightTimer);
     insightTimer = setTimeout(() => App.runInsights(), 800);
+    // a shift or a payslip saved here: the statistics see a first one at once (Stats.mark), else this waits its 6 hours
+    if (ev.type === 'data' && !ev.remote && root.Stats && ev.stores && ev.stores.some((x) => x === 'shifts' || x === 'payslips')) root.Stats.report();
   });
   /** Save with an Undo snackbar. */
   App.saveOps = async function (ops, label, toastText) {
