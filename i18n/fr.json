@@ -3730,7 +3730,7 @@
  "ביטוח לאומי ומס בריאות סבירים": "L'Assurance nationale et la taxe santé semblent raisonnables",
  "ביטוח לאומי / בריאות שונים מההערכה": "L'Assurance nationale / la taxe santé diffèrent de l'estimation",
  "נוכו {0}, הערכה {1}.": "{0} a été retenu, estimation {1}.",
- "שיעורים מופחתים עד 60% מהשכר הממוצע, מלאים מעל.": "Taux réduits jusqu'à 60 % du salaire moyen, taux pleins au-delà.",
+ "שיעורים מופחתים עד {0} בחודש, מלאים מעל.": "Taux réduits jusqu'à {0} par mois, taux pleins au-delà.",
  "החשבון ברוטו → נטו נסגר": "Brut → net : le compte est bon",
  "ברוטו פחות ניכויים ≠ נטו": "Brut moins retenues ≠ net",
  "{0} − {1} = {2}; בתלוש נטו {3}.": "{0} − {1} = {2}; le net de la fiche de paie est de {3}.",

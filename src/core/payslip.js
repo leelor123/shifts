@@ -923,7 +923,7 @@
         const actual = (bl || 0) + (ht || 0);
         const expBL = (bl != null ? est.bl : 0) + (ht != null ? est.health : 0);
         const ok = Math.abs(actual - expBL) <= Math.max(15, expBL * 0.1);
-        add({ area: 'ביטוח לאומי', status: ok ? 'ok' : 'warn', title: ok ? 'ביטוח לאומי ומס בריאות סבירים' : 'ביטוח לאומי / בריאות שונים מההערכה', detail: `נוכו ${U.money(actual)}, הערכה ${U.money(expBL)}.`, basis: 'שיעורים מופחתים עד 60% מהשכר הממוצע, מלאים מעל.', confidence: 'medium' });
+        add({ area: 'ביטוח לאומי', status: ok ? 'ok' : 'warn', title: ok ? 'ביטוח לאומי ומס בריאות סבירים' : 'ביטוח לאומי / בריאות שונים מההערכה', detail: `נוכו ${U.money(actual)}, הערכה ${U.money(expBL)}.`, basis: `שיעורים מופחתים עד ${U.money(Engine.blLimits(S.tax || {}, E.P.to).thr, 0)} בחודש, מלאים מעל.`, confidence: 'medium' }); // the year's threshold (LAW_YEARS), not "60% of the average wage" (review 2026-11-16)
       }
       const net = val(F, 'net'), td = val(F, 'totalDeductions');
       if (net != null && td != null) {

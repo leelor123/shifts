@@ -111,3 +111,8 @@ T.test('law: the website\'s question pages show the same numbers as the app (nod
   const ry = Math.max(...Object.keys(Engine.RECUP_YEARS).map(Number));
   T.ok(read('recuperation-pay.html').includes(nis(Engine.RECUP_YEARS[ry])), `site/recuperation-pay.html does not show ${nis(Engine.RECUP_YEARS[ry])}: run node tools/site-pages.js`);
 });
+T.test('law: the payslip check names the reduced-rate threshold in force, not "60% of the average wage"', () => {
+  const src = require('fs').readFileSync(require('path').join(__dirname, '..', 'src', 'core', 'payslip.js'), 'utf8');
+  T.ok(!src.includes('60% מהשכר הממוצע'), 'payslip.js still says the reduced rate runs to 60% of the average wage');
+  T.ok(/basis: `שיעורים מופחתים עד \$\{U\.money\(Engine\.blLimits\(/.test(src), 'the basis reads Engine.blLimits');
+});

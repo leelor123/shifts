@@ -3730,7 +3730,7 @@
  "ביטוח לאומי ומס בריאות סבירים": "National Insurance and health tax look reasonable",
  "ביטוח לאומי / בריאות שונים מההערכה": "National Insurance / health differ from the estimate",
  "נוכו {0}, הערכה {1}.": "{0} was deducted, estimate {1}.",
- "שיעורים מופחתים עד 60% מהשכר הממוצע, מלאים מעל.": "Reduced rates up to 60% of the average wage, full rates above it.",
+ "שיעורים מופחתים עד {0} בחודש, מלאים מעל.": "Reduced rates up to {0} a month, full rates above it.",
  "החשבון ברוטו → נטו נסגר": "Gross → net adds up",
  "ברוטו פחות ניכויים ≠ נטו": "Gross minus deductions ≠ net",
  "{0} − {1} = {2}; בתלוש נטו {3}.": "{0} − {1} = {2}; the payslip’s net is {3}.",
