@@ -141,11 +141,16 @@ T.atest('iPhone: a cut-off sign-in download is tried again; once it works there 
   const C = ctx.Cloud;
   let cut = 1;
   const mod = { getApps: () => [], initializeApp: () => ({}), initializeAuth: () => ({}), browserLocalPersistence: 1, indexedDBLocalPersistence: 2, browserPopupRedirectResolver: 3, initializeFirestore: () => ({}), persistentLocalCache: () => ({}), persistentMultipleTabManager: () => ({}), memoryLocalCache: () => ({}) };
-  C.importer = async (u) => { if (/auth/.test(u) && cut > 0) { cut--; throw new TypeError('Importing a module script failed.'); } return mod; };
+  // WebKit keeps a failed module under its address: the same address fails again, as the real browser does
+  const bad = new Set();
+  const urls = [];
+  C.importer = async (u) => { urls.push(u); if (bad.has(u) || (/auth/.test(u) && cut > 0)) { cut--; bad.add(u); throw new TypeError('Importing a module script failed.'); } return mod; };
   const first = await C.sdk().then(() => 'ok', (e) => e.code);
   T.eq(first, 'shaati/sdk-stuck', 'the cut-off download says to close and reopen');
+  urls.length = 0;
   const second = await C.sdk().then(() => 'ok', (e) => e.code || String(e));
-  T.eq(second, 'ok', 'the next call downloads again instead of failing at once');
+  T.eq(second, 'ok', 'the next call downloads again, under a new address, instead of failing at once');
+  T.eq(urls.map((u) => u.replace(/^.*\//, '')).join(','), 'firebase-app.js,firebase-auth.js?r=1,firebase-firestore.js', 'only the file that failed gets a new address');
   ctx.document.visibilityState = 'hidden';
   listeners.forEach((f) => f());
   T.eq(reloads, 0, 'the sign-in code loaded: hiding the app does not start it over');

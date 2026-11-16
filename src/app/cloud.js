@@ -58,6 +58,14 @@
     return iphone || (/AppleWebKit/.test(ua) && /Safari\//.test(ua) && !/Chrome\/|Chromium|Android|Edg\//.test(ua));
   })();
   let stuck = false;
+  /* WebKit keeps a failed module under its address (the page's module map, and its memory cache even across a
+   * reload: wk-retry, 16 Nov 2026), so the same import() can never work again. A file that failed is asked for
+   * under a new address next time (?r=1, ?r=2: the server ignores it). Only that file: the others keep their address,
+   * so auth and firestore still share the one firebase-app. Kept for the tab (sessionStorage), so a restart uses it too. */
+  const BUST_KEY = 'shaati.sdkRetry';
+  const bust = (function () { try { return JSON.parse(sessionStorage.getItem(BUST_KEY) || '{}') || {}; } catch (e) { return {}; } })();
+  const sdkUrl = (f) => SDK + f + (bust[f] ? '?r=' + bust[f] : '');
+  const failed = (f) => { bust[f] = (bust[f] || 0) + 1; try { sessionStorage.setItem(BUST_KEY, JSON.stringify(bust)); } catch (e) { /* private mode: this page only */ } };
   const offline = () => navigator.onLine === false;
   const failure = (code) => Object.assign(new Error(code), { code });
   function stuckNow() {
@@ -76,7 +84,7 @@
     showGone().then(() => { for (const f of ['firebase-app.js', 'firebase-auth.js', 'firebase-firestore.js']) {
       const l = document.createElement('link');
       l.rel = 'modulepreload';
-      l.href = SDK + f;
+      l.href = sdkUrl(f);
       document.head.appendChild(l);
     } });
   };
@@ -89,7 +97,7 @@
       loading = (async () => {
         await showGone();
         let a, au, fs;
-        try { [a, au, fs] = await Promise.all(['firebase-app.js', 'firebase-auth.js', 'firebase-firestore.js'].map((f) => Cloud.importer(SDK + f))); }
+        try { [a, au, fs] = await Promise.all(['firebase-app.js', 'firebase-auth.js', 'firebase-firestore.js'].map((f) => Cloud.importer(sdkUrl(f)).catch((e) => { failed(f); throw e; }))); }
         catch (e) { if (safari) { stuckNow(); throw failure('shaati/sdk-stuck'); } throw e; }
         stuck = false; // the download worked after all: no restart needed
         const app = a.getApps().length ? a.getApp() : a.initializeApp(root.FIREBASE_CONFIG);
