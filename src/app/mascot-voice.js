@@ -44,19 +44,26 @@
       // n\u00e9(e) is read n\u00e9e for a girl, else n\u00e9; heureux(se) heureuse; a plural (s) is silent, so it is dropped
       t = t.replace(/(\p{L}+)\((\p{L}{1,3})\)/gu, (m, a, b) => (b === 's' || gender !== 'f' ? a : b === 'se' && /x$/.test(a) ? a.slice(0, -1) + b : a + b));
     }
-    return t.replace(/\s*\/\s*/g, ' ').replace(/\s+/g, ' ').replace(/\s+([,.!?:])/g, '$1').replace(/^[,\s]+|[,\s]+$/g, '').trim();
+    return t.replace(/\s*\/\s*/g, ' ').replace(/\s+/g, ' ').replace(/\s+([,.!?:\u060c\u061f\u1362\u1363\u1367])/g, '$1')
+      // a comma left in front of the line's end, or at its very end, once an emoji after it is gone (, ، ፣)
+      .replace(/[,\u060c\u1363]+(?=[.!?:\u061f\u1362\u1367]|$)/g, '')
+      .replace(/^[,\u060c\u1363\s]+|[,\u060c\u1363\s]+$/g, '').trim();
   }
   /** What to say instead of a line, per language. The key is the line as spoken() leaves it (the shown words,
    *  cleaned; a gendered line needs one key per form), the value is what the voice reads. Every Hebrew key has to
    *  match a line in views-onboarding.js (tests/mascot-voice.test.js), so a reworded screen cannot leave one behind. */
   // i18n-keep-start (Hebrew words for the Hebrew voice only, never shown)
   const SAY = { he: {} };
-  /** Hebrew signs a voice reads badly: ₪ and ש"ח become שקלים after the number, % after a number becomes אחוז. */
+  /** Hebrew signs a voice reads badly: ₪ and ש"ח become שקלים after the number (בש"ח: בשקלים), % after a number
+   *  becomes אחוז, and a dash between two numbers (40-50, 50%-60%) becomes עד. */
   function heTokens(t) {
-    // שקל אחד, שקלים, אחוז אחד, אחוז, written as code points
+    // שקל אחד, שקלים, אחוז אחד, אחוז, עד, written as code points
     const shekels = (n) => (n === '1' ? '\u05e9\u05e7\u05dc \u05d0\u05d7\u05d3' : n + ' \u05e9\u05e7\u05dc\u05d9\u05dd');
-    // no lookbehind (Safari before iOS 16.4 cannot read one): the letter before is kept and put back
-    return t.replace(/(^|[^\u0590-\u05ff])\u05e9["\u05f4]\u05d7(?![\u0590-\u05ff])/g, '$1\u20aa')
+    // no lookbehind (Safari before iOS 16.4 cannot read one): the character before is kept and put back.
+    // ש"ח alone turns into ₪ for the number rules below; with a one-letter prefix (ב ל מ ו ה) it reads as one word
+    return t.replace(/(^|[^\u0590-\u05ff])([\u05d1\u05dc\u05de\u05d5\u05d4]?)\u05e9["\u05f4]\u05d7(?![\u0590-\u05ff])/g, (m, a, p) => a + (p ? p + '\u05e9\u05e7\u05dc\u05d9\u05dd' : '\u20aa'))
+      // a dash between two numbers reads עד; a phone number (050-1234567) keeps its dash
+      .replace(/(^|[^\d])(\u20aa?)(\d(?:[\d,.]{0,10}\d)?)([%\u20aa]?)\s*[-\u2013]\s*(?=\u20aa?\d)/g, (m, a, c, n, u) => (/^0\d/.test(n) ? m : a + c + n + u + ' \u05e2\u05d3 '))
       .replace(/\u20aa\s*(\d(?:[\d,.]*\d)?)/g, (m, n) => shekels(n))
       .replace(/(\d(?:[\d,.]*\d)?)\s*\u20aa/g, (m, n) => shekels(n))
       .replace(/\u20aa/g, '\u05e9\u05e7\u05dc\u05d9\u05dd')
@@ -122,12 +129,13 @@
   /** The browser's voices, or null while that is not known yet (Chrome fills the list a moment after the first ask).
    *  No speech in the browser: known, and empty. A browser run by a test never learns its voices, so Settings shows
    *  the switch there as before. */
+  let gaveUp = false; // still no voices a while after the first ask (a WebView without a speech engine): known, empty
   function voiceList() {
     if (!hasApi()) return [];
     if (webdriver()) return null;
     let list = [];
     try { list = root.speechSynthesis.getVoices() || []; } catch (e) { return []; }
-    return list.length ? list : null;
+    return list.length ? list : gaveUp ? [] : null;
   }
   /** an offline voice for the app's language, or null */
   const voiceFor = () => pickVoice(voiceList() || [], LANG);
@@ -147,29 +155,29 @@
 
   /* ---------------- the list of voices ---------------- */
   const waiting = new Set(); // lines asked for before the list came
-  let listening = false;
-  /** Listen once for the list. When it comes, the waiting line decides (speak or stay quiet), and the setup screen
-   *  on show gets its speaker button. */
+  const GIVE_UP = 3000; // no voices this long after the first ask: there are none
+  let listening = false, quietTimer = 0;
+  /** Listen for the list for the whole page life (Android can fill it in parts). The first ask starts Chrome filling
+   *  it; with nothing listed after GIVE_UP the list counts as known and empty. */
   function listenVoices() {
     const S = synth();
     if (listening || !S) return;
     listening = true;
-    const arrived = () => {
-      if (!V.known()) return;
-      try {
-        if (S.removeEventListener) S.removeEventListener('voiceschanged', arrived);
-        if (S.onvoiceschanged === arrived) S.onvoiceschanged = null;
-      } catch (e) { /* none */ }
-      const runs = [...waiting];
-      waiting.clear();
-      runs.forEach(go);
-      const ob = doc.querySelector('.ob3');
-      if (ob && ob.parentElement) speaker(ob.parentElement, null, true);
-    };
-    try { if (S.addEventListener) S.addEventListener('voiceschanged', arrived); else S.onvoiceschanged = arrived; } catch (e) { /* none */ }
+    try { if (S.addEventListener) S.addEventListener('voiceschanged', voicesChanged); else S.onvoiceschanged = voicesChanged; } catch (e) { /* none */ }
+    setTimeout(() => { if (V.known()) return; gaveUp = true; voicesChanged(); }, GIVE_UP);
   }
-  // the first ask starts Chrome filling the list
-  if (V.supported() && !V.known()) listenVoices();
+  /** The list grew (any number of times): a waiting line speaks once its voice is there, and the setup screen on show
+   *  decides on its speaker button again. A voice shows the button at once; no voice hides it only after the list
+   *  has been still for a moment, so a list that comes in parts never blinks the button. */
+  function voicesChanged() {
+    if (!V.known()) return;
+    const ok = !!voiceFor();
+    [...waiting].forEach((run) => { if (ok || gaveUp) go(run); });
+    clearTimeout(quietTimer);
+    const again = () => { const ob = doc.querySelector('.ob3'); if (ob && ob.parentElement) speaker(ob.parentElement, null, true); };
+    if (ok || gaveUp) again(); else quietTimer = setTimeout(again, 600);
+  }
+  if (V.supported()) listenVoices();
   /* ---------------- the mouth ---------------- */
   // 0 closed, 1 small, 2 round, 3 wide open (mascot.js TALK)
   const RHYTHM = [3, 1, 2, 0, 3, 2, 1, 0, 2, 3, 1, 0];
@@ -215,6 +223,9 @@
   function rhythm(run) {
     let i = 0;
     const tick = () => {
+      // an end that never came (Android or iOS took the sound away): two quiet checks in a row end the line
+      const S = synth();
+      if (S && !S.speaking && !S.pending) { if (++run.idle >= 2) { ended(run, run.i); return; } } else run.idle = 0;
       mouth(run, RHYTHM[i % RHYTHM.length]);
       if (cur !== run) return;
       if (i % 4 === 0) bob(run);
@@ -234,7 +245,26 @@
   const guessLen = (text, i) => { const m = /^\S+/.exec(text.slice(i || 0)); return m ? m[0].length : 4; };
   const WAIT = 1500; // the longest a first tap waits for the list of voices
   const PAUSE = 350; // between the bubble's line and the question
-  const NO_START = 2500; // a voice silent this long after the ask never will be
+  // a voice silent this long after the ask never will be; Android's offline voices are slow the first time
+  const NO_START = 2500, NO_START_FIRST = 5000;
+  let everStarted = false; // a voice has started in this page life
+  /** the longest one line may take: past it, an end that never came is taken as the end */
+  const capOf = (text) => 1500 + 150 * text.length;
+  /** The engine stops what plays and takes the line. One still busy right after the cancel gets it a moment later;
+   *  otherwise it is spoken at once, which keeps a tap's own call synchronous (iOS needs that). */
+  function send(run, S, u) {
+    if (S.speaking || S.pending) {
+      S.cancel();
+      if (S.speaking) { later(run, () => { if (run.u === u) { try { S.speak(u); } catch (e) { finish(run); } } }, 60); return; }
+    }
+    S.speak(u);
+  }
+  /** the line is over without its end reported: the next line, or done (the engine silenced if it still holds one) */
+  function ended(run, i) {
+    const S = synth();
+    if (i + 1 >= run.lines.length && S && (S.speaking || S.pending)) { try { S.cancel(); } catch (e) { /* none */ } }
+    next(run, i);
+  }
 
   /** Speak one line or a few, a short pause between them. target: the coin's element, or a function that finds it
    *  (the screen may redraw it). Without an offline voice for the language nothing is said and the mouth stays still. */
@@ -267,7 +297,7 @@
     const S = synth();
     if (!S || !elOf(run)) { V.stop(); return; } // the coin left the screen during the pause
     const text = run.lines[i];
-    run.started = false; run.words = false; run.beat = null;
+    run.i = i; run.started = false; run.words = false; run.beat = null; run.idle = 0;
     let u;
     try { u = new root.SpeechSynthesisUtterance(text); } catch (e) { finish(run); return; }
     try { u.voice = run.voice; u.lang = run.voice.lang; u.rate = 1; u.pitch = 1.15; u.volume = 1; } catch (e) { /* the voice's own defaults */ }
@@ -277,9 +307,11 @@
     u.onstart = () => {
       if (!live() || run.started) return;
       run.started = true;
+      everStarted = true;
       mouth(run, 0);
       // a voice that reports no words within a moment gets the steady rhythm
       later(run, () => { if (run.u === u && !run.words) rhythm(run); }, 320);
+      later(run, () => { if (run.u === u) ended(run, i); }, capOf(text));
     };
     u.onboundary = (e) => {
       if (!live() || (e.name && e.name !== 'word')) return;
@@ -290,16 +322,22 @@
     // failed before or after it started: quiet, never a mouth moving without a voice
     u.onerror = () => { if (live()) finish(run); };
     try {
-      if (S.speaking || S.pending) S.cancel();
       run.spoke = true;
-      S.speak(u);
+      send(run, S, u);
     } catch (e) { finish(run); return; }
-    later(run, () => { if (run.u === u && !run.started) { try { S.cancel(); } catch (x) { /* none */ } finish(run); } }, NO_START);
+    later(run, () => {
+      if (run.u !== u || run.started) return;
+      // talking already, its start never reported: never cut it; the cap ends the line
+      if (S.speaking) { later(run, () => { if (run.u === u) ended(run, i); }, capOf(text)); return; }
+      try { S.cancel(); } catch (x) { /* none */ }
+      finish(run);
+    }, everStarted ? NO_START : NO_START_FIRST);
   }
   /** a line ended: the mouth closes for the pause, then the next line, or done */
   function next(run, i) {
     clearAll(run.timers); clearAll(run.wordTimers);
     run.beat = null;
+    run.u = null; // a late end from this line changes nothing
     if (i + 1 >= run.lines.length) { finish(run); return; }
     mouth(run, 0);
     if (cur !== run) return;
@@ -375,7 +413,8 @@
   function lineOf(scope) {
     const b = scope.querySelector('.content .m-say .bubble'), h = scope.querySelector('.content h1');
     const bt = clean(sayText(b)), ht = clean(sayText(h));
-    return [bt && bt.length <= 60 ? bt : '', ht].filter(Boolean);
+    // 90: a translated greeting with a long name still fits
+    return [bt && bt.length <= 90 ? bt : '', ht].filter(Boolean);
   }
   V.lineOf = lineOf;
   // a tap has happened on this page (the browser lets a page speak only after one)
@@ -400,6 +439,11 @@
   }
   /** invisible and out of reach, in its place: nothing beside it moves */
   function quiet(b) {
+    // the focus never stays on a hidden button: it goes to the screen's question
+    if (doc.activeElement === b) {
+      const ob = b.closest && b.closest('.ob3'), h = ob && ob.querySelector('.content h1');
+      if (h) { h.setAttribute('tabindex', '-1'); try { h.focus({ preventScroll: true }); } catch (e) { /* old browser */ } }
+    }
     b.style.visibility = 'hidden';
     b.classList.add('m-spk-none');
     b.classList.remove('m-spk-invite');
@@ -446,7 +490,7 @@
     if (v._mascotVoice) return;
     v._mascotVoice = true;
     // the setup left the screen (back to the welcome screen, or into the app): quiet
-    new MutationObserver(() => { if (!v.querySelector('.ob3')) { V.stop(); step.key = null; step.timers.forEach(clearTimeout); } }).observe(v, { childList: true });
+    new MutationObserver(() => { if (!v.querySelector('.ob3')) { V.stop(); step.key = null; quietKey = null; step.timers.forEach(clearTimeout); } }).observe(v, { childList: true });
   }
 
   /** Called by the setup questions after each screen is drawn (views-onboarding.js draw()).
@@ -470,7 +514,8 @@
     step.timers.push(setTimeout(() => glance(false), 280));
     if (key === 'done') step.timers.push(setTimeout(() => V.react('party'), 260));
     else if (dir === 'next') step.timers.push(setTimeout(() => V.react('hop'), 140));
-    if (V.enabled() && tapped()) step.timers.push(setTimeout(() => { if (step.key === key) V.speak(current, lineOf(v)); }, 200));
+    // checked again when it fires: the screen, the choice, and the page still in front
+    if (V.enabled() && tapped()) step.timers.push(setTimeout(() => { if (step.key === key && V.enabled() && !doc.hidden) V.speak(current, lineOf(v)); }, 200));
   };
 
   async function setVoice(on) {
@@ -553,6 +598,6 @@
     };
   }
   // the page goes to the background: quiet
-  doc.addEventListener('visibilitychange', () => { if (doc.hidden) V.stop(); });
+  doc.addEventListener('visibilitychange', () => { if (doc.hidden) { V.stop(); step.timers.forEach(clearTimeout); step.timers = []; } });
   root.addEventListener && root.addEventListener('pagehide', () => V.stop());
 })(typeof window !== 'undefined' ? window : globalThis);

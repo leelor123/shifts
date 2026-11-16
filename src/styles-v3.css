@@ -315,8 +315,10 @@ body.fx .nav .fab:active { transform: scale(.9) rotate(90deg); }
 /* a closed, thoughtful mouth while thinking, and for a moment on wrong input with reduced motion (no head shake) */
 .mascot.m-hmm:not(.talking) .m-mouth, .mascot.m-thinking:not(.talking) .m-mouth { opacity: 0; }
 .mascot.m-hmm:not(.talking) .m-talk .t0, .mascot.m-thinking:not(.talking) .m-talk .t0 { opacity: 1; }
-/* the speaker button beside the bubble: reading aloud on or off */
-.m-say .m-spk { position: relative; align-self: flex-end; margin: 0 0 24px; width: 40px; height: 40px; border-radius: 20px; flex: none; display: grid; place-items: center; padding: 0; cursor: pointer;
+/* the speaker button beside the bubble: reading aloud on or off. Pinned to the row's end (margin-inline-start: auto),
+   so it sits in the same place on every screen and stays put while a name is typed; the row's gap keeps 8px from
+   the bubble */
+.m-say .m-spk { position: relative; align-self: flex-end; margin: 0 0 24px; margin-inline-start: auto; width: 40px; height: 40px; border-radius: 20px; flex: none; display: grid; place-items: center; padding: 0; cursor: pointer;
   border: 1px solid var(--line); background: var(--surface-1); color: var(--on-surface-var); box-shadow: var(--sh-1); touch-action: manipulation; -webkit-user-select: none; user-select: none;
   transition: transform .12s cubic-bezier(.23, 1, .32, 1), color .15s ease, background-color .15s ease; animation: bubble-in .4s var(--pop) .06s both; }
 .m-say .m-spk::before { content: ''; position: absolute; inset: -4px; }
@@ -328,7 +330,7 @@ body.fx .nav .fab:active { transform: scale(.9) rotate(90deg); }
    hence the .5s delay), takes no layout room, and ignores taps. Its animationend still fires on the button itself
    (target = the button, pseudoElement '::after'); match animationName 'spk-invite' or 'spk-invite-still', since the
    button's own bubble-in also ends there. Done at 1.7s, inside the JS's 2s fallback. */
-.m-say .m-spk.m-spk-invite::after { content: ''; position: absolute; inset: -1px; border-radius: inherit; border: 2px solid var(--brand); pointer-events: none; animation: spk-invite 1.2s .5s both; }
+.m-say .m-spk.m-spk-invite::after { content: ''; position: absolute; inset: -1px; border-radius: inherit; border: 2px solid var(--brand-strong); pointer-events: none; animation: spk-invite 1.2s .5s both; }
 @keyframes spk-invite {
   0% { opacity: 0; transform: scale(1); animation-timing-function: ease-out; }
   20% { opacity: .7; transform: scale(1.08); animation-timing-function: cubic-bezier(.23, 1, .32, 1); }
@@ -347,7 +349,9 @@ body.fx .nav .fab:active { transform: scale(.9) rotate(90deg); }
 
 .m-say { display: flex; align-items: flex-end; gap: 8px; margin: 2px 0 12px; }
 .bubble { position: relative; background: var(--surface-1); color: var(--on-surface); border-radius: 18px; padding: 10px 14px; font-weight: 600; font-size: .95rem; line-height: 1.45; box-shadow: var(--sh-2); border: 1px solid var(--line); animation: bubble-in .4s var(--pop) both; }
-.m-say .bubble { margin-bottom: 22px; }
+/* min-width 0: a long one-word name may wrap (body breaks a word only when it fits nowhere) instead of pushing the
+   speaker button off the screen */
+.m-say .bubble { margin-bottom: 22px; min-width: 0; }
 .m-say .bubble::before { content: ''; position: absolute; bottom: 12px; inset-inline-start: -7px; width: 12px; height: 12px; background: inherit; transform: rotate(45deg); border-left: 1px solid var(--line); border-bottom: 1px solid var(--line); border-radius: 0 0 0 3px; }
 .bubble.big { display: inline-block; margin: 6px auto 10px; font-size: 1rem; }
 .bubble.big::before { content: ''; position: absolute; top: -7px; left: calc(50% - 6px); width: 12px; height: 12px; background: inherit; transform: rotate(45deg); border-left: 1px solid var(--line); border-top: 1px solid var(--line); border-radius: 3px 0 0 0; }

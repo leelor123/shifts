@@ -129,33 +129,44 @@ function load(opt) {
   const synth = {
     voices: opt.voices || [], speaking: false, pending: false, cancels: 0, listeners: [],
     getVoices() { return this.voices; },
-    cancel() { this.cancels++; },
+    cancel() { this.cancels++; if (!opt.slowCancel) { this.speaking = false; this.pending = false; } },
     addEventListener(t, f) { if (t === 'voiceschanged') this.listeners.push(f); },
     removeEventListener(t, f) { this.listeners = this.listeners.filter((x) => x !== f); },
+    // how each call behaves: ok (starts, ends), fail, silent (never starts), busy (never reports a start but talks),
+    // lost (starts, then stops talking with no end reported), hang (starts, talks on, no end)
     speak(u) {
       said.push({ text: u.text, at: Date.now(), voice: u.voice });
-      if (opt.silent) return;
-      if (opt.fail) { setTimeout(() => u.onerror && u.onerror({}), 5); return; }
-      setTimeout(() => { if (u.onstart) u.onstart({}); setTimeout(() => u.onend && u.onend({}), opt.len || 20); }, 0);
+      const mode = (opt.modes && opt.modes[said.length - 1]) || opt.mode || 'ok';
+      if (mode === 'silent') return;
+      if (mode === 'busy') { synth.speaking = true; return; }
+      if (mode === 'fail') { setTimeout(() => u.onerror && u.onerror({}), 5); return; }
+      setTimeout(() => {
+        synth.speaking = true;
+        if (u.onstart) u.onstart({});
+        if (mode === 'lost') setTimeout(() => { synth.speaking = false; }, 100);
+        else if (mode === 'ok') setTimeout(() => { synth.speaking = false; if (u.onend) u.onend({}); }, opt.len || 20);
+      }, 0);
     },
     fire() { this.listeners.slice().forEach((f) => f()); },
   };
-  const clicks = [];
+  const clicks = [], events = {}, observers = [];
   const page = {
     App: {}, Fx: { prefs: () => opt.prefs || {}, play() {} }, navigator: {},
     document: {
       documentElement: { lang: 'he' },
-      addEventListener(t, f) { if (t === 'click') clicks.push(f); },
+      addEventListener(t, f) { (events[t] = events[t] || []).push(f); if (t === 'click') clicks.push(f); },
       querySelector(sel) { return opt.query ? opt.query(sel) : null; },
       createElement: () => fakeEl(),
     },
-    MutationObserver: function () { this.observe = () => {}; },
+    MutationObserver: function (cb) { observers.push(cb); this.observe = () => {}; },
     setTimeout, clearTimeout, console,
   };
   if (opt.store) page.Store = opt.store;
+  if (opt.webdriver) page.navigator.webdriver = true;
   if (!opt.noSpeech) { page.speechSynthesis = synth; page.SpeechSynthesisUtterance = function (t) { this.text = t; }; }
   vm.runInNewContext(fs.readFileSync(path.join(__dirname, '..', 'src', 'app', 'mascot-voice.js'), 'utf8'), page);
-  return { V: page.App.mascotVoice, App: page.App, synth, said, click: (target) => clicks.forEach((f) => f({ target })) };
+  return { V: page.App.mascotVoice, App: page.App, synth, said, doc: page.document, click: (target) => clicks.forEach((f) => f({ target })),
+    emit: (t) => (events[t] || []).forEach((f) => f({})), observed: () => observers.forEach((cb) => cb([])) };
 }
 /** a stand-in element: classes, attributes, style, listeners, and its place in a parent */
 function fakeEl() {
@@ -176,9 +187,10 @@ function fakeEl() {
 function screen(heading) {
   const say = fakeEl();
   say.querySelector = (sel) => (sel === '.m-spk' ? say.kids[0] || null : null);
-  const h1 = { nodeType: 1, getAttribute: () => null, childNodes: [{ nodeType: 3, nodeValue: heading || 'מה שמך?' }] };
+  const h1 = { nodeType: 1, attrs: {}, focused: null, getAttribute: (n) => (n === 'data-say' ? null : h1.attrs[n] || null), setAttribute: (n, x) => { h1.attrs[n] = x; }, focus: (o) => { h1.focused = o; }, childNodes: [{ nodeType: 3, nodeValue: heading || 'מה שמך?' }] };
   const v = { querySelector: (sel) => (sel === '.content .m-say' ? say : sel === '.content h1' ? h1 : null), isConnected: true };
-  return { v, say, ob: { parentElement: v }, btn: () => say.kids[0] || null };
+  const ob = { parentElement: v, querySelector: (sel) => (sel === '.content h1' ? h1 : null) };
+  return { v, say, h1, ob, btn: () => say.kids[0] || null };
 }
 function coin() {
   const cls = new Set(), attrs = {}, seen = [];
@@ -244,16 +256,72 @@ T.atest('the coin leaving the screen stops the next line', async () => {
   T.eq(said.length, 1); T.eq(V.speaking(), false);
 });
 T.atest('a voice that fails or never starts: quiet, no mouth', async () => {
-  let m = load({ voices: [LOCAL], fail: true });
+  let m = load({ voices: [LOCAL], mode: 'fail' });
   let c = coin();
   m.V.speak(c, 'שלום');
   await wait(40);
   T.eq(m.said.length, 1); T.eq(c.seen.length, 0); T.eq(m.V.speaking(), false);
-  m = load({ voices: [LOCAL], silent: true });
+  // the first line of a page life gets 5 s (Android's offline voices are slow the first time), then it is let go
+  m = load({ voices: [LOCAL], mode: 'silent' });
   c = coin();
   m.V.speak(c, 'שלום');
-  await wait(2600);
+  await wait(2700);
+  T.eq(m.V.speaking(), true, 'still waiting at 2.7 s'); T.eq(m.synth.cancels, 0);
+  await wait(2400);
   T.eq(c.seen.length, 0); T.eq(m.V.speaking(), false); T.ok(m.synth.cancels >= 1, 'the held line was cancelled');
+});
+T.atest('after a voice has started once, a silent line is let go at 2.5 s', async () => {
+  const m = load({ voices: [LOCAL], modes: ['ok', 'silent'] });
+  m.V.speak(coin(), 'שלום');
+  await wait(60);
+  T.eq(m.V.speaking(), false);
+  const c = coin();
+  m.V.speak(c, 'שוב');
+  await wait(2600);
+  T.eq(m.V.speaking(), false); T.eq(c.seen.length, 0);
+});
+T.atest('a voice that talks without reporting its start is never cut at the start limit', async () => {
+  const m = load({ voices: [LOCAL], modes: ['ok', 'busy'] });
+  m.V.speak(coin(), 'שלום');
+  await wait(60);
+  const before = m.synth.cancels;
+  m.V.speak(coin(), 'אב');
+  await wait(2700);
+  T.eq(m.synth.cancels, before, 'not cancelled while the engine talks');
+  T.eq(m.V.speaking(), true);
+});
+T.atest('an end that never comes: the rhythm sees the engine quiet twice and ends the line', async () => {
+  const m = load({ voices: [LOCAL], mode: 'lost' });
+  const c = coin();
+  m.V.speak(c, 'שלום לך');
+  await wait(800);
+  T.eq(m.V.speaking(), false); T.eq(c.cls.has('talking'), false, 'the mouth is at rest');
+});
+T.atest('an engine that talks on with no end: the line ends at its cap', async () => {
+  const m = load({ voices: [LOCAL], mode: 'hang' });
+  const c = coin();
+  m.V.speak(c, 'אב'); // cap 1500 + 2 * 150 ms
+  await wait(1500);
+  T.eq(m.V.speaking(), true);
+  await wait(500);
+  T.eq(m.V.speaking(), false); T.eq(c.cls.has('talking'), false); T.ok(m.synth.cancels >= 1, 'the engine was silenced');
+});
+T.test('an engine still busy right after cancel gets the line 60 ms later; a free one at once', () => {
+  let m = load({ voices: [LOCAL] });
+  m.synth.speaking = true;
+  m.V.speak(coin(), 'שלום');
+  T.eq(m.said.length, 1, 'spoken at once');
+  m = load({ voices: [LOCAL], slowCancel: true });
+  m.synth.speaking = true;
+  m.V.speak(coin(), 'שלום');
+  T.eq(m.said.length, 0, 'held');
+});
+T.atest('...and the held line goes out a moment later', async () => {
+  const m = load({ voices: [LOCAL], slowCancel: true, len: 5000 });
+  m.synth.speaking = true;
+  m.V.speak(coin(), 'שלום');
+  await wait(120);
+  T.eq(m.said.length, 1);
 });
 T.atest('first tap before the voices are listed: it waits for them, then speaks', async () => {
   const { V, synth, said } = load({ voices: [] });
@@ -292,7 +360,7 @@ T.test('the list known with no offline voice: no button is drawn', () => {
   m.App.mascotStep(m.s.v, 'name', 'next');
   T.eq(m.s.btn(), null);
 });
-T.test('the list not known yet: a button; no offline voice arrives: the same button, invisible and inert, in its place', () => {
+T.atest('the list not known yet: a button; no offline voice arrives: the same button, invisible and inert, in its place', async () => {
   const m = setup({ voices: [] });
   m.App.mascotStep(m.s.v, 'name', 'next');
   const b = m.s.btn();
@@ -300,6 +368,8 @@ T.test('the list not known yet: a button; no offline voice arrives: the same but
   T.eq(b.getAttribute('aria-pressed'), 'false');
   m.synth.voices = [NET];
   m.synth.fire();
+  T.ok(b.style.visibility !== 'hidden', 'not at once: more of the list may still come');
+  await wait(650);
   T.eq(m.s.btn(), b, 'still there');
   T.eq(b.style.visibility, 'hidden'); T.eq(b.getAttribute('aria-hidden'), 'true'); T.eq(b.tabIndex, -1);
   T.ok(b.classList.contains('m-spk-none') && !b.classList.contains('m-spk-invite'), 'no pulse on an invisible button');
@@ -375,4 +445,99 @@ T.test('a spoken version can differ by gender ({ m, f }), unknown reads the masc
     T.eq(voiceLine('בדיקה לך?', 'he', 'm'), 'בדיקה לְךָ?');
     T.eq(voiceLine('בדיקה לך?', 'he', ''), 'בדיקה לְךָ?');
   } finally { delete SAY.he[key]; }
+});
+
+T.atest('the list in parts: the listener stays, a waiting line speaks once its voice arrives, the button never blinks', async () => {
+  const m = setup({ voices: [] });
+  m.App.mascotStep(m.s.v, 'name', 'next');
+  const b = m.s.btn();
+  m.V.speak(coin(), 'שלום');
+  m.synth.voices = [NET];
+  m.synth.fire();
+  await wait(100);
+  T.eq(m.said.length, 0, 'no voice for it yet');
+  m.synth.voices = [NET, LOCAL];
+  m.synth.fire();
+  await wait(60);
+  T.eq(m.said.length, 1); T.eq(m.said[0].voice, LOCAL);
+  T.eq(m.synth.listeners.length, 1, 'still listening');
+  await wait(650);
+  T.ok(b.style.visibility !== 'hidden', 'never hidden');
+});
+T.atest('no voices 3 s after the first ask: known and empty, the button goes quiet in place; a test browser stays "not known"', async () => {
+  const m = setup({ voices: [] });
+  const w = load({ voices: [], webdriver: true });
+  m.App.mascotStep(m.s.v, 'name', 'next');
+  const b = m.s.btn();
+  T.eq(m.V.known(), false);
+  await wait(3100);
+  T.eq(m.V.known(), true); T.eq(m.V.available(), false);
+  T.eq(m.s.btn(), b); T.eq(b.style.visibility, 'hidden');
+  T.eq(w.V.known(), false, 'webdriver: not known, the QA suites see the Settings switch as before');
+  T.eq(w.V.showSwitch(), true);
+});
+T.atest('the speak timer checks again when it fires: a hidden page says nothing', async () => {
+  const m = setup({ voices: [LOCAL], prefs: { voice: true } });
+  m.App.mascotStep(m.s.v, 'name', 'next');
+  m.doc.hidden = true;
+  await wait(260);
+  T.eq(m.said.length, 0);
+  const n = setup({ voices: [LOCAL], prefs: { voice: true } });
+  n.App.mascotStep(n.s.v, 'name', 'next');
+  n.doc.hidden = true; n.emit('visibilitychange');
+  n.doc.hidden = false;
+  await wait(260);
+  T.eq(n.said.length, 0, 'the hidden page cleared the timer');
+  const o = setup({ voices: [LOCAL], prefs: { voice: true } });
+  o.App.mascotStep(o.s.v, 'name', 'next');
+  await wait(260);
+  T.eq(o.said.length, 1, 'in front: it speaks');
+});
+T.atest('the setup closing forgets the quiet screen', async () => {
+  const m = setup({ voices: [] });
+  m.App.mascotStep(m.s.v, 'name', 'next');
+  m.synth.voices = [NET]; m.synth.fire();
+  await wait(650);
+  // the setup closes (the observer sees no .ob3), then opens again on the same screen: no button at all
+  m.observed();
+  const again = screen();
+  m.s.v.querySelector = again.v.querySelector;
+  m.App.mascotStep(m.s.v, 'name', 'next');
+  T.eq(again.btn(), null);
+});
+T.atest('a focused button that goes quiet hands the focus to the question', async () => {
+  const m = setup({ voices: [] });
+  m.App.mascotStep(m.s.v, 'name', 'next');
+  const b = m.s.btn();
+  b.closest = (sel) => (sel === '.ob3' ? m.s.ob : null);
+  m.doc.activeElement = b;
+  m.synth.voices = [NET]; m.synth.fire();
+  await wait(650);
+  T.eq(m.s.h1.attrs.tabindex, '-1'); T.ok(m.s.h1.focused && m.s.h1.focused.preventScroll === true, 'focused without a scroll');
+});
+T.test('a comma left before the end once the emoji are gone, in every language', () => {
+  T.eq(spoken('נעים מאוד, 😍🔥!', 'he', ''), 'נעים מאוד!');
+  T.eq(spoken('Nice to meet you, 😍!', 'en', ''), 'Nice to meet you!');
+  T.eq(spoken('تشرفنا، 😍!', 'ar', ''), 'تشرفنا!');
+  T.eq(spoken('ደስ ብሎኛል፣ 😍።', 'am', ''), 'ደስ ብሎኛል።');
+  T.eq(spoken('שלום, 😍', 'he', ''), 'שלום');
+  T.eq(spoken('אחת, שתיים', 'he', ''), 'אחת, שתיים');
+  T.eq(spoken('₪1,240!', 'he', ''), '₪1,240!');
+});
+T.test('the bubble is read up to 90 characters (a translated greeting with a long name)', () => {
+  const m = load({ voices: [LOCAL] });
+  const text = (n) => ({ nodeType: 1, getAttribute: () => null, childNodes: [{ nodeType: 3, nodeValue: 'א'.repeat(n) }] });
+  const scope = (n) => ({ querySelector: (sel) => (sel === '.content .m-say .bubble' ? text(n) : sel === '.content h1' ? text(3) : null) });
+  T.eq(m.V.lineOf(scope(85)).length, 2);
+  T.eq(m.V.lineOf(scope(95)).length, 1);
+});
+T.test('ש"ח with a one-letter prefix, and a dash between numbers reads עד', () => {
+  T.eq(voiceLine('המחיר בש"ח', 'he', ''), 'המחיר בשקלים');
+  T.eq(voiceLine('לש״ח אחד', 'he', ''), 'לשקלים אחד');
+  T.eq(voiceLine('50%-60% מהשכר', 'he', ''), '50 אחוז עד 60 אחוז מהשכר');
+  T.eq(voiceLine('בין 40-50 שעות', 'he', ''), 'בין 40 עד 50 שעות');
+  T.eq(voiceLine('₪30–₪40', 'he', ''), '30 שקלים עד 40 שקלים');
+  T.eq(voiceLine('30-40 ₪', 'he', ''), '30 עד 40 שקלים');
+  T.eq(voiceLine('טלפון 050-1234567', 'he', ''), 'טלפון 050-1234567');
+  T.eq(voiceLine('ל-20 שעות', 'he', ''), 'ל-20 שעות');
 });
