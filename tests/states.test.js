@@ -125,3 +125,28 @@ T.test('money and num never show -0, NaN or Infinity', () => {
   T.ok(/0\.01/.test(U.money(0.006)), 'a cent stays');
   T.ok(/1,234,567/.test(U.money(1234567, 0)), 'a big amount keeps its separators: ' + U.money(1234567, 0));
 });
+
+/* iPhone (wk-retry, 16 Nov): one cut-off download of the sign-in code used to lock sign-in until the app restarted, and
+ * right after a restart WebKit sometimes refused the file once more for a moment, so the restarted page locked itself
+ * again although the next try would have worked. Every call must try again, and a try that works ends the restart. */
+T.atest('iPhone: a cut-off sign-in download is tried again; once it works there is no restart', async () => {
+  const ctx = cloud();
+  const listeners = [];
+  let reloads = 0;
+  ctx.navigator.userAgent = 'Mozilla/5.0 (iPhone; CPU iPhone OS 18_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/18.0 Mobile/15E148 Safari/604.1';
+  ctx.document = { visibilityState: 'visible', addEventListener: (t, f) => listeners.push(f), querySelector: () => null, getElementById: () => null };
+  ctx.location = { reload: () => { reloads++; } };
+  vm.runInContext(rd('app/cloud.js'), ctx, { filename: 'app/cloud.js' }); // again, now that the page looks like Safari
+  ctx.FIREBASE_CONFIG = { apiKey: 'x' };
+  const C = ctx.Cloud;
+  let cut = 1;
+  const mod = { getApps: () => [], initializeApp: () => ({}), initializeAuth: () => ({}), browserLocalPersistence: 1, indexedDBLocalPersistence: 2, browserPopupRedirectResolver: 3, initializeFirestore: () => ({}), persistentLocalCache: () => ({}), persistentMultipleTabManager: () => ({}), memoryLocalCache: () => ({}) };
+  C.importer = async (u) => { if (/auth/.test(u) && cut > 0) { cut--; throw new TypeError('Importing a module script failed.'); } return mod; };
+  const first = await C.sdk().then(() => 'ok', (e) => e.code);
+  T.eq(first, 'shaati/sdk-stuck', 'the cut-off download says to close and reopen');
+  const second = await C.sdk().then(() => 'ok', (e) => e.code || String(e));
+  T.eq(second, 'ok', 'the next call downloads again instead of failing at once');
+  ctx.document.visibilityState = 'hidden';
+  listeners.forEach((f) => f());
+  T.eq(reloads, 0, 'the sign-in code loaded: hiding the app does not start it over');
+});

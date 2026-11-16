@@ -48,7 +48,10 @@
   /* Safari (every iPhone browser) remembers a module that failed to download for the rest of the page's life: a second
    * import() of it fails at once, so after one cut-off download (the app opened offline, a weak signal) Google sign-in
    * and sync never worked until the app was closed. So nothing is downloaded while offline, and if a download does
-   * fail there, the page starts over the next time it is hidden with nothing open (as the version updater does). */
+   * fail there, the page starts over the next time it is hidden with nothing open (as the version updater does).
+   * Every later call still tries the download again: right after a restart WebKit sometimes refuses the file for a
+   * moment and then loads it in the same page (wk-retry caught it), so one failure must never lock sign-in for good;
+   * a try that works ends the stuck state and the restart. */
   const safari = (function () {
     const ua = navigator.userAgent || '';
     const iphone = /iPhone|iPad|iPod/.test(ua) || (/Macintosh/.test(ua) && navigator.maxTouchPoints > 1);
@@ -62,7 +65,7 @@
     stuck = true;
     document.addEventListener('visibilitychange', () => {
       const open = document.querySelector('.sheet, .dialog') || (root.App && root.App.blocking && root.App.blocking !== 'login');
-      if (document.visibilityState === 'hidden' && !open) location.reload();
+      if (document.visibilityState === 'hidden' && stuck && !open) location.reload();
     });
   }
   Cloud.preload = function () {
@@ -77,17 +80,18 @@
       document.head.appendChild(l);
     } });
   };
+  Cloud.importer = (u) => import(u); // one place, so tests can play a cut-off download
   function load() {
     if (fb) return Promise.resolve(fb);
     if (!root.FIREBASE_CONFIG) return Promise.reject(root.U.oops('חסרות הגדרות Firebase'));
-    if (stuck) return Promise.reject(failure('shaati/sdk-stuck'));
     if (!loading && offline()) return Promise.reject(failure('auth/network-request-failed'));
     if (!loading) {
       loading = (async () => {
         await showGone();
         let a, au, fs;
-        try { [a, au, fs] = await Promise.all([import(SDK + 'firebase-app.js'), import(SDK + 'firebase-auth.js'), import(SDK + 'firebase-firestore.js')]); }
+        try { [a, au, fs] = await Promise.all(['firebase-app.js', 'firebase-auth.js', 'firebase-firestore.js'].map((f) => Cloud.importer(SDK + f))); }
         catch (e) { if (safari) { stuckNow(); throw failure('shaati/sdk-stuck'); } throw e; }
+        stuck = false; // the download worked after all: no restart needed
         const app = a.getApps().length ? a.getApp() : a.initializeApp(root.FIREBASE_CONFIG);
         let auth;
         try {
