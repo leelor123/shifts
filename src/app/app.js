@@ -990,6 +990,9 @@
       if ([32.3, 34.32, 34.33].includes(+S.settings.minWageHourly)) await Store.setSettings((s) => { s.minWageHourly = null; });
       await Store.setMeta({ minWageAuto: true });
     }
+    // overtime by the law is on by default since 2026-11-16: a workplace left on the old manual defaults goes over once
+    // (Engine.otLawToTurnOn; one turned by hand, or with its own hours, stays). Synced with the record, so every phone agrees
+    for (const e of S.employers) if (Engine.otLawToTurnOn(e)) await Store.put('employers', Object.assign(Store.clone(e), { otLaw: true }));
     // one-time switch of the untouched default colour to the new design (user choices are kept)
     if (!S.meta.designV2) {
       if (S.settings.accent === 'indigo') await Store.setSettings((s) => { s.accent = 'petrol'; });

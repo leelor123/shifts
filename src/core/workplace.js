@@ -176,6 +176,7 @@
     const today = o.today;
     const emp = Object.assign({}, o.employer);
     for (const k of KEYS) if (k in r) emp[k] = r[k];
+    if ('otLaw' in r) emp.otLawSet = true; // the workplace's own rule: the one-time switch-on (Engine.otLawToTurnOn) keeps it
     if (r.n && !o.keepName) emp.name = r.n;
     const mine = (o.roles || []).filter((x) => !x.archived && x.employerId === emp.id);
     const used = new Set((o.roles || []).map((x) => x.color));

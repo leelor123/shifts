@@ -97,6 +97,7 @@
       else if (path.startsWith('e.')) {
         const emp = Store.clone(App.employer(empId()));
         setPath(emp, path.slice(2), v);
+        if (path === 'e.otLaw') emp.otLawSet = true; // the user's own choice: the one-time switch-on never touches it
         await Store.put('employers', emp);
       }
       UI.toast(msg || 'נשמר', null, { ok: true });

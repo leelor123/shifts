@@ -512,9 +512,9 @@ T.test('Shabbat after the week\'s 42 hours: overtime from its first hour (175%)'
   const r = R(lawModel(5, days.concat(sat)), sat);
   T.near(r.hoursBy.rest, 0); T.near(r.hoursBy.restOt1, 2); T.near(r.hoursBy.restOt2, 1);
 });
-T.test('the law only when turned on: off by default, the daily hours set by hand (8) and no weekly limit', () => {
+T.test('the law: on by default (since 2026-11-16); off = the daily hours set by hand (8) and no weekly limit', () => {
   const s = shift('2026-11-02', '08:00', '18:00');
-  T.ok(!Defaults.defaultEmployer().otLaw, 'off by default');
+  T.ok(Defaults.defaultEmployer().otLaw, 'on by default');
   T.near(R(lawModel(5, [s], { otLaw: false }), s).hoursBy.regular, 8, 1e-6, 'the default: 8');
   T.near(R(lawModel(5, [s], { otLaw: undefined, otThreshold: 9 }), s).hoursBy.regular, 9, 1e-6, 'an employer from before: set by hand, 9');
   T.near(R(lawModel(5, [s], { otLaw: undefined, otThreshold: 8 }), s).hoursBy.regular, 8, 1e-6, 'an employer from before: 8');
@@ -641,3 +641,22 @@ T.test('the assumed break on an eve is the law\'s half hour (§20(א)): Friday 0
     T.near(Engine.leaveBalances(Engine.buildModel(d), '2026-12-31').vacationAccrued, 14, 1e-6);
   });
 }
+
+T.test('overtime by the law: an employer left on the old manual defaults goes over once; one set by hand stays', () => {
+  const E = Engine.otLawToTurnOn;
+  const old = Object.assign(Defaults.defaultEmployer(), { otLaw: false });
+  T.ok(E(old), 'off from the old default, 8 h / 2 h / 125 / 150: turned on');
+  T.ok(E(Object.assign({}, old, { otThreshold: '8', otTier1Pct: undefined })), 'the same values as text or missing');
+  T.ok(!E(Object.assign({}, old, { otLawSet: true })), 'the user turned the switch: kept');
+  T.ok(!E(Object.assign({}, old, { otThreshold: 9 })), 'its own daily hours: kept');
+  T.ok(!E(Object.assign({}, old, { otTier1Pct: 140 })), 'its own percent: kept');
+  T.ok(!E(Object.assign({}, old, { nightShiftShortDay: true })), 'its own night rule: kept');
+  T.ok(!E(Defaults.defaultEmployer()), 'already on: nothing to do');
+  const coded = globalThis.Workplace.apply({ record: { otLaw: false, otThreshold: 8 }, employer: Object.assign({}, old), roles: [], today: '2026-11-16', newId: () => 'x' }).employer;
+  T.ok(!E(coded), 'a workplace code that says the law is off: kept');
+  const fs = require('fs'); const path = require('path');
+  const app = fs.readFileSync(path.join(__dirname, '..', 'src', 'app', 'app.js'), 'utf8');
+  T.ok(app.includes("if (Engine.otLawToTurnOn(e)) await Store.put('employers'"), 'app.js runs it on open');
+  const set = fs.readFileSync(path.join(__dirname, '..', 'src', 'app', 'views-settings.js'), 'utf8');
+  T.ok(set.includes("if (path === 'e.otLaw') emp.otLawSet = true;"), 'the settings switch marks the user’s own choice');
+});
