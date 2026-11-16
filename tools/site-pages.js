@@ -37,6 +37,9 @@ fs.copyFileSync(path.join(ROOT, 'src', 'app', 'sky.js'), path.join(ROOT, 'site',
   fs.writeFileSync(home, out);
 }
 const APP = 'https://leelor123.github.io/shifts/';
+// every button to the app says which page sent it (?from=seo-<page>): the app keeps the first one it was opened with, and
+// the anonymous statistics count where devices came from (app/stats.js src, the admin dashboard)
+const appFrom = (tag, q) => APP + '?' + (q ? q + '&' : '') + 'from=seo-' + tag;
 // the official sources (as in the app's rights screen, views-rights.js GOV)
 const GOV = {
   minwage: 'https://www.gov.il/he/Departments/Guides/minimum-wage',
@@ -46,12 +49,17 @@ const GOV = {
   sick: 'https://www.gov.il/he/Departments/Guides/paid-sick-leave',
   travel: 'https://www.gov.il/he/Departments/Guides/travel-allowance',
   hours: 'https://www.gov.il/he/Departments/Guides/overtime-and-extra-hours',
+  labor: 'https://www.gov.il/he/departments/labor',
+  complaint: 'https://www.gov.il/he/service/work-rights-violation-complaints',
 };
 // the generated pages' footer (the home page and the legal pages have their own)
 const FOOTER = '<footer>שעתי · <a href="./">לאתר</a> · <a href="embed">לארגונים ולבתי ספר</a> · <a href="privacy">פרטיות</a> · <a href="accessibility">הצהרת נגישות</a> · <a href="mailto:lybtn48@gmail.com">יצירת קשר</a></footer>';
 const esc = (s) => String(s).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
 // plain text with a range or a joined word (2020–2025, ב-14) kept on one line: the browser may break after a dash
 const escWhole = (s) => esc(s).replace(/[^\s<>]*[\p{L}\p{N}][-–‑][\p{L}\p{N}][^\s<>]*/gu, (w) => `<span class="nw">${w}</span>`);
+// the same for a page's own HTML: only its text, never inside a tag (a joined word in the answer or a table: ב-06:00, 16–17)
+const NW_WORD = /[^\s<>]*[\p{L}\p{N}][-–‑][\p{L}\p{N}][^\s<>]*/gu;
+const nwHtml = (h) => ('>' + h).replace(/>([^<]+)/g, (m, t) => '>' + t.replace(NW_WORD, (w) => `<span class="nw">${w}</span>`)).slice(1);
 const nis = (n, d = 2) => n.toLocaleString('en-US', { minimumFractionDigits: d, maximumFractionDigits: d }) + ' ₪';
 const today = U.todayKey();
 const dmy = (k) => `${+k.slice(8, 10)}.${+k.slice(5, 7)}.${k.slice(0, 4)}`;
@@ -95,6 +103,14 @@ const TAXEX = [
   [`חייל משוחרר (32 חודשי שירות) שעבד כל השנה ב-10,000 ₪, ולא מסר למעסיק על נקודות השחרור`, TR.estimate(TAX_Y, taxMonths(year12(10000)), { gender: 'm', birthDate: `${TAX_Y - 22}-01-01`, service: { kind: 'army', months: 32, end: `${TAX_Y - 1}-12` } }, taxT)],
   [`בוגר תואר ראשון (${TAX_Y - 1}) שעבד כל השנה ב-12,000 ₪, בלי נקודת התואר`, TR.estimate(TAX_Y, taxMonths(year12(12000)), { gender: 'm', birthDate: `${TAX_Y - 26}-01-01`, degree: { year: TAX_Y - 1, studyYears: 3 } }, taxT)],
 ];
+// breaks (Engine.LAW_BREAK, youthRules), the payslip's day and pension (Defaults), for the breaks, youth and payslip pages
+const BRK = { afterH: Engine.LAW_BREAK.afterMin / 60, min: Engine.LAW_BREAK.min, row: 30 };
+if (!Engine.LAW_BREAK.text.includes(BRK.row + ' ')) throw new Error('the break rule changed: check BRK.row');
+const YB = { after: Y15.breakAfterHours, min: Y15.breakMin };
+const PAY_DAY = +D.payDay;
+if (!(PAY_DAY >= 1 && PAY_DAY <= 31)) throw new Error('the pay day is missing from Defaults.defaultEmployer');
+const PEN = (() => { const p = globalThis.Defaults.defaultSettings().pension; return { after: p.startAfterMonths, emp: p.employeePct, er: p.employerPct, ageM: Engine.pensionMinAge({ gender: 'm' }), ageF: Engine.pensionMinAge({ gender: 'f' }) }; })();
+const pad2 = (n) => String(n).padStart(2, '0');
 const hm = (h) => { const m = Math.round(h * 60); return `${Math.floor(m / 60)}:${String(m % 60).padStart(2, '0')}`; };
 
 /* ---------------- the pages ---------------- */
@@ -276,7 +292,7 @@ const PAGES = [
         <li><b>מגישים באינטרנט</b> בקשה להחזר מס (טופס 135) <a href="${TR.FILE_URL}" rel="noopener">באתר רשות המסים</a>, בקשה אחת לכל שנה. בלי עמלה ובלי רואה חשבון.</li>
         <li><b>ההחזר מגיע לחשבון הבנק</b> עם הפרשי הצמדה וריבית, לרוב תוך כמה חודשים.</li>
       </ol>`,
-    cta: ['שעתי בודקת את זה בשבילך', 'רושמים משמרות או מעלים תלושים, ושעתי מעריכה את ההחזר לכל שנה, עד 6 שנים אחורה, ומסבירה בדיוק מה להגיש. חינם ובלי פרסומות, ומנוי Plus לבחירה.','לבדוק את ההחזר שלי', APP + '?action=tax-refund&from=site'],
+    cta: ['שעתי בודקת את זה בשבילך', 'רושמים משמרות או מעלים תלושים, ושעתי מעריכה את ההחזר לכל שנה, עד 6 שנים אחורה, ומסבירה בדיוק מה להגיש. חינם ובלי פרסומות, ומנוי Plus לבחירה.','לבדוק את ההחזר שלי', appFrom('tax-refund', 'action=tax-refund')],
     faq: [
       ['עד כמה שנים אחורה אפשר לבקש החזר מס?', `עד 6 שנים אחורה, בקשה נפרדת לכל שנה. ב-${today.slice(0, 4)} אפשר לבקש על השנים ${+today.slice(0, 4) - 6}–${+today.slice(0, 4) - 1}.`],
       ['צריך רואה חשבון כדי לקבל החזר מס?', 'לא. אפשר להגיש לבד באתר רשות המסים (טופס 135), בלי עמלה. חברות להחזרי מס גובות לרוב אחוזים מההחזר.'],
@@ -286,6 +302,91 @@ const PAGES = [
     ],
     sources: [['בקשה להחזר מס (טופס 135)', TR.FILE_URL], ['בדיקת זכאות להחזר מס לשכירים', TR.SIMULATOR_URL]],
     note: 'זו הערכה ואינה ייעוץ מס; הקובע הוא החישוב של רשות המסים.',
+  },
+  {
+    slug: 'breaks',
+    title: 'הפסקה בעבודה: כמה מגיע, ומשלמים עליה?',
+    desc: `במשמרת של ${BRK.afterH} שעות ומעלה מגיעה הפסקה של ${BRK.min} דקות לפחות, ${BRK.row} מהן ברצף. מתי ההפסקה בתשלום, ומה מגיע לבני נוער.`,
+    answer: `ביום עבודה של <b>${BRK.afterH} שעות ומעלה</b> מגיעה הפסקה של <b>${BRK.min} דקות לפחות</b>, ומתוכן ${BRK.row} דקות ברצף. בדרך כלל לא משלמים על ההפסקה, חוץ ממקרה אחד: כשהמעסיק לא מרשה לך לצאת ממקום העבודה בזמן ההפסקה.`,
+    body: `
+      <h2>כמה הפסקה מגיעה?</h2>
+      <div class="tbl"><table><thead><tr><th>אורך המשמרת</th><th>הפסקה לפי החוק</th></tr></thead><tbody>
+        <tr><td>פחות מ-${BRK.afterH} שעות</td><td>החוק לא מחייב הפסקה</td></tr>
+        <tr><td>${BRK.afterH} שעות ומעלה</td><td><b>${BRK.min} דקות</b>, מהן ${BRK.row} ברצף</td></tr>
+        <tr><td>בני נוער, ${YB.after} שעות ומעלה</td><td><b>${YB.min} דקות</b>, מהן ${BRK.row} ברצף</td></tr>
+      </tbody></table></div>
+      <h2>משלמים על ההפסקה?</h2>
+      <p>זמן ההפסקה לא נחשב לשעות עבודה, ולכן בדרך כלל לא משלמים עליו. אם המעסיק דורש ממך להישאר במקום העבודה בזמן ההפסקה, למשל כדי לענות ללקוחות, הזמן הזה נחשב לשעות עבודה ומגיע עליו שכר.</p>
+      <h2>דוגמה</h2>
+      <p>משמרת מ-16:00 עד 23:00 היא 7 שעות. אם יצאת להפסקה של ${BRK.min} דקות ומותר היה לך לצאת מהמקום, משלמים לך על ${hm(7 - BRK.min / 60)} שעות. אם ביקשו ממך להישאר ליד הקופה, משלמים על כל 7 השעות.</p>
+      <h2>ומה בתלוש?</h2>
+      <p>תבדקו שמספר השעות בתלוש תואם למה שעבדתם. מעסיק שמוריד הפסקה שלא יצאתם אליה, או מוריד יותר זמן ממה שהיה, משלם פחות ממה שמגיע.</p>`,
+    faq: [
+      ['כמה הפסקה מגיעה במשמרת?', `במשמרת של ${BRK.afterH} שעות ומעלה: ${BRK.min} דקות לפחות, ${BRK.row} מהן ברצף.`],
+      ['משלמים על הפסקה?', 'בדרך כלל לא. אם המעסיק לא מרשה לצאת ממקום העבודה בזמן ההפסקה, הזמן נחשב לשעות עבודה ומגיע עליו שכר.'],
+      ['במשמרת של 4 או 5 שעות מגיעה הפסקה?', `החוק מחייב הפסקה רק מ-${BRK.afterH} שעות. במקומות רבים נותנים הפסקה קצרה גם במשמרת קצרה יותר, לפי ההסכם.`],
+      ['ומה לגבי בני נוער?', `מתחת לגיל 18, ביום של ${YB.after} שעות ומעלה מגיעה הפסקה של ${YB.min} דקות, מהן ${BRK.row} ברצף.`],
+    ],
+    sources: [['שעות עבודה ומנוחה', GOV.hours], ['זכויות בני נוער בעבודה', GOV.youth]],
+  },
+  {
+    slug: 'youth-work',
+    title: `נוער עובד ${mwYear}: שכר, שעות ולילה לפי החוק`,
+    desc: `מה מותר ומה מגיע מתחת לגיל 18: שכר מינימום לנוער (${Y.map((y) => `${y.label} ${nis(y.hourly)}`).join(', ')}), עד ${Y15.dayHours} שעות ביום, ${Engine.WEEK_REG_H_MINOR} בשבוע, ובלי עבודה בלילה.`,
+    answer: `מתחת לגיל 18 מגיע <b>שכר מינימום לנוער</b> לפי הגיל (בגיל 17: ${nis(Y[2].hourly)} לשעה), ומותר לעבוד עד <b>${Y15.dayHours} שעות ביום</b> ו-<b>${Engine.WEEK_REG_H_MINOR} שעות בשבוע</b>. בגיל 16–17 אסור לעבוד בין ${Y16.nightFrom}:00 ל-${pad2(Y16.nightTo)}:00, ומתחת לגיל 16 בין ${Y15.nightFrom}:00 ל-${pad2(Y15.nightTo)}:00.`,
+    body: `
+      <h2>כמה משלמים לנוער?</h2>
+      <div class="tbl"><table><thead><tr><th>גיל</th><th>לשעה</th><th>שעה בשבת (${REST[0]}%)</th></tr></thead><tbody>
+        ${Y.map((y) => `<tr><td>${y.label}</td><td><b>${nis(y.hourly)}</b></td><td>${nis(y.hourly * REST[0] / 100)}</td></tr>`).join('')}
+      </tbody></table></div>
+      <p>שכר מינימום לנוער הוא רצפה. המעסיק רשאי לשלם יותר, ואסור לו לשלם פחות.</p>
+      <h2>כמה שעות מותר לעבוד?</h2>
+      <div class="tbl"><table><thead><tr><th>מה</th><th>מתחת לגיל 16</th><th>בגיל 16–17</th></tr></thead><tbody>
+        <tr><td>שעות ביום</td><td><b>${Y15.dayHours}</b></td><td><b>${Y16.dayHours}</b> במקום עבודה של 5 ימים, אחרת ${Y15.dayHours}</td></tr>
+        <tr><td>ביום שלפני שבת או חג</td><td>${Y15.eveHours}</td><td>${Y16.eveHours}</td></tr>
+        <tr><td>שעות בשבוע</td><td>${Y15.weekHours}</td><td>${Y16.weekHours}</td></tr>
+        <tr><td>אסור לעבוד בין</td><td>${Y15.nightFrom}:00 ל-${pad2(Y15.nightTo)}:00</td><td>${Y16.nightFrom}:00 ל-${pad2(Y16.nightTo)}:00</td></tr>
+      </tbody></table></div>
+      <p>שעות מעבר למותר הן עבודה אסורה, אבל המעסיק <b>חייב לשלם עליהן</b>, כולל גמול שעות נוספות.</p>
+      <h2>מה עוד מגיע?</h2>
+      <p>הפסקה של ${YB.min} דקות ביום של ${YB.after} שעות ומעלה, החזר נסיעות, תלוש שכר בכל חודש ודמי הבראה אחרי שנת עבודה. מתחת לגיל 18 לא מנכים מהשכר ביטוח לאומי ומס בריאות, ובשכר של נוער כמעט אף פעם אין מס הכנסה.</p>`,
+    faq: [
+      ['כמה מקבל נער או נערה בן 16 לשעה?', `${nis(Y[1].hourly)} לשעה לפחות (${Math.round(Y[1].share * 100)}% משכר המינימום).`],
+      ['כמה שעות מותר לעבוד מתחת לגיל 18?', `עד ${Y15.dayHours} שעות ביום (מגיל 16 במקום עבודה של 5 ימים: ${Y16.dayHours}) ועד ${Engine.WEEK_REG_H_MINOR} שעות בשבוע.`],
+      ['עד איזו שעה מותר לעבוד בלילה?', `מגיל 16 עד ${Y16.nightFrom}:00, ומתחת לגיל 16 עד ${Y15.nightFrom}:00.`],
+      ['ירד לי מס הכנסה מהמשכורת. מה עושים?', 'מגישים בקשה להחזר מס אחרי סוף השנה. בשכר של נוער כמעט תמיד כל המס חוזר.'],
+    ],
+    sources: [['זכויות בני נוער בעבודה', GOV.youth], ['שכר מינימום', GOV.minwage]],
+  },
+  {
+    slug: 'payslip-check',
+    title: 'איך בודקים תלוש שכר? 6 דברים שכדאי לבדוק',
+    desc: `מה חייב להופיע בתלוש, עד מתי מקבלים אותו, ואיך בודקים לבד: שעות, שכר מינימום (${nis(MW.hourly)} לשעה מגיל 18), שבת ב-${REST[0]}%, שעות נוספות ופנסיה.`,
+    answer: `המעסיק חייב לתת תלוש שכר <b>עד ה-${PAY_DAY} בחודש</b> שאחרי חודש העבודה. כדי לבדוק אותו, משווים את השעות בתלוש לשעות שעבדתם, ובודקים שהתעריף לשעה לא נמוך משכר המינימום לגיל שלכם ושהתוספות לשבת ולשעות נוספות שולמו.`,
+    body: `
+      <h2>6 דברים לבדוק בתלוש</h2>
+      <div class="tbl"><table><thead><tr><th>מה בודקים</th><th>מה צריך להיות</th></tr></thead><tbody>
+        <tr><td>שעות העבודה</td><td>אותו מספר שעות שרשמתם</td></tr>
+        <tr><td>התעריף לשעה</td><td>לפחות <b>${nis(MW.hourly)}</b> מגיל 18, בגיל 17 <b>${nis(Y[2].hourly)}</b>, בגיל 16 <b>${nis(Y[1].hourly)}</b></td></tr>
+        <tr><td>שעות בשבת ובחג</td><td>לפחות <b>${REST[0]}%</b></td></tr>
+        <tr><td>שעות נוספות</td><td><b>${OT[0]}%</b> ל-${OTL.t1h} הראשונות ביום, <b>${OT[1]}%</b> מהשלישית</td></tr>
+        <tr><td>נסיעות</td><td>עד <b>${nis(TRAVEL_CAP)}</b> ליום שהגעתם</td></tr>
+        <tr><td>פנסיה</td><td>אחרי ${PEN.after} חודשי עבודה (מגיל ${PEN.ageM} לגבר ו-${PEN.ageF} לאישה): ${PEN.emp}% ממך ו-${PEN.er}% מהמעסיק</td></tr>
+      </tbody></table></div>
+      <h2>מה חייב להופיע בתלוש?</h2>
+      <p>שם המעסיק ושם העובד/ת, החודש שעליו משלמים, מספר ימי העבודה והשעות, השכר לשעה או לחודש, כל תוספת בשורה נפרדת, כל ניכוי ומה הסיבה שלו, ברוטו ונטו, ויתרת ימי החופשה והמחלה.</p>
+      <h2>ניכויים: מה מותר להוריד?</h2>
+      <p>מהשכר מותר לנכות מס הכנסה, ביטוח לאומי, מס בריאות ופנסיה, וכל ניכוי אחר רק בהסכמה שלך בכתב. מתחת לגיל 18 לא מנכים ביטוח לאומי ומס בריאות. "קנס" על איחור או על כוס שנשברה הוא ניכוי אסור.</p>
+      <h2>מצאתם טעות?</h2>
+      <p>קודם פונים למעסיק בכתב, עם החישוב שלכם. אם זה לא עוזר, אפשר להגיש תלונה לזרוע העבודה, בלי עלות.</p>`,
+    faq: [
+      ['עד מתי המעסיק צריך לתת תלוש שכר?', `עד ה-${PAY_DAY} בחודש שאחרי חודש העבודה.`],
+      ['מה הדבר הראשון לבדוק בתלוש?', 'את מספר השעות. אחר כך שהתעריף לשעה לא נמוך משכר המינימום לגיל שלך.'],
+      ['מותר למעסיק לנכות מהשכר קנס?', 'לא. מותר לנכות רק מה שהחוק מתיר (מס, ביטוח לאומי, מס בריאות, פנסיה) או מה שהסכמת לו בכתב.'],
+      ['מתי מתחילים לנכות פנסיה?', `אחרי ${PEN.after} חודשי עבודה, מגיל ${PEN.ageM} לגבר ו-${PEN.ageF} לאישה.`],
+      ['מה עושים אם חסר כסף בתלוש?', 'פונים למעסיק בכתב עם החישוב. אם זה לא נפתר, מגישים תלונה לזרוע העבודה.'],
+    ],
+    sources: [['הגשת תלונה על הפרת חוקי עבודה', GOV.complaint], ['זרוע העבודה', GOV.labor]],
   },
 ];
 
@@ -375,13 +476,13 @@ ${FONT_HEAD}
 </head>
 <body>
 <a class="skip" href="#main">דילוג לתוכן</a>
-<header><div class="bar"><a class="logo" href="./"><img src="img/apple-touch-icon.png" alt="">שעתי</a><a class="btn" href="${APP}">לפתוח את שעתי</a></div></header>
+<header><div class="bar"><a class="logo" href="./"><img src="img/apple-touch-icon.png" alt="">שעתי</a><a class="btn" href="${appFrom(p.slug)}">לפתוח את שעתי</a></div></header>
 <main id="main">
   <nav class="crumbs" aria-label="ניווט"><a href="./">שעתי</a> › ${esc(p.title)}</nav>
   <h1>${esc(p.title)}</h1>
-  <div class="answer">${p.answer}</div>
-  ${p.body}
-  ${(([b, t, btn, href]) => `<div class="cta"><b>${b}</b><span>${t}</span><a class="btn" href="${href}">${btn}</a></div>`)(p.cta || ['שעתי מחשבת את זה בשבילך', 'רושמים משמרות, ושעתי מעריכה את השכר לפי חוקי העבודה: שבתות וחגים לפי העיר, שעות נוספות, שכר מינימום לפי הגיל והבראה. חינם ובלי פרסומות, ומנוי Plus לבחירה.', 'לפתוח את שעתי', APP])}
+  <div class="answer">${nwHtml(p.answer)}</div>
+  ${nwHtml(p.body)}
+  ${(([b, t, btn, href]) => `<div class="cta"><b>${b}</b><span>${t}</span><a class="btn" href="${href}">${btn}</a></div>`)(p.cta || ['שעתי מחשבת את זה בשבילך', 'רושמים משמרות, ושעתי מעריכה את השכר לפי חוקי העבודה: שבתות וחגים לפי העיר, שעות נוספות, שכר מינימום לפי הגיל והבראה. חינם ובלי פרסומות, ומנוי Plus לבחירה.', 'לפתוח את שעתי', appFrom(p.slug)])}
   <h2>שאלות נפוצות</h2>
   ${p.faq.map(([q, a]) => `<details><summary>${esc(q)}</summary><p>${escWhole(a)}</p></details>`).join('\n  ')}
   <p class="src">המקור הרשמי: ${p.sources.map(([l, h]) => `<a href="${h}" rel="noopener">${esc(l)} ב-gov.il</a>`).join(' · ')}</p>
@@ -453,7 +554,7 @@ ${FONT_HEAD}
 </head>
 <body>
 <a class="skip" href="#main">דילוג לתוכן</a>
-<header><div class="bar"><a class="logo" href="./"><img src="img/apple-touch-icon.png" alt="">שעתי</a><a class="btn" href="${APP}">לפתוח את שעתי</a></div></header>
+<header><div class="bar"><a class="logo" href="./"><img src="img/apple-touch-icon.png" alt="">שעתי</a><a class="btn" href="${appFrom('check')}">לפתוח את שעתי</a></div></header>
 <main id="main">
   <h1>${esc(CHECK.title)}</h1>
   <p>שתי שאלות, ורואים אם משלמים לך לפחות שכר מינימום לפי החוק. בלי הרשמה, ושום דבר לא נשלח.</p>
@@ -478,7 +579,7 @@ ${FONT_HEAD}
     <div id="ck-why"></div>
     <div class="ck-acts"><button type="button" id="ck-share">📸 תמונה לסטורי</button><button type="button" class="wa" id="ck-wa">שליחה בוואטסאפ</button></div>
   </div>
-  <div class="cta"><b>זה רק שכר המינימום</b><span>שעתי בודקת את כל השאר: שבתות וחגים לפי העיר, שעות נוספות, נסיעות והבראה, ומשווה את התלוש לשעות שרשמת. חינם ובלי פרסומות, ומנוי Plus לבחירה.</span><a class="btn" href="${APP}">לבדוק את התלוש בשעתי</a></div>
+  <div class="cta"><b>זה רק שכר המינימום</b><span>שעתי בודקת את כל השאר: שבתות וחגים לפי העיר, שעות נוספות, נסיעות והבראה, ומשווה את התלוש לשעות שרשמת. חינם ובלי פרסומות, ומנוי Plus לבחירה.</span><a class="btn" href="${appFrom('check')}">לבדוק את התלוש בשעתי</a></div>
   <p class="src">המקור הרשמי: ${[['שכר מינימום', GOV.minwage], ['זכויות בני נוער בעבודה', GOV.youth], ['מנוחה שבועית וחגים', GOV.rest]].map(([l, h]) => `<a href="${h}" rel="noopener">${esc(l)} ב-gov.il</a>`).join(' · ')}</p>
   <div class="note">שעתי אינה גוף ממשלתי ואינה מייצגת גוף ממשלתי. הבדיקה כללית ואינה ייעוץ משפטי: לפי שכר המינימום מ-${dmy(MW.from)} ולפי הגיל; לחניכים, לבעלי מוגבלות ובהסכמים מיוחדים יש כללים אחרים. עודכן ב-${dmy(date)}.</div>
   <h2>עוד שאלות</h2>
@@ -602,13 +703,13 @@ ${FONT_HEAD}
 </head>
 <body>
 <a class="skip" href="#main">דילוג לתוכן</a>
-<header><div class="bar"><a class="logo" href="./"><img src="img/apple-touch-icon.png" alt="">שעתי</a><a class="btn" href="${APP}?from=site">לפתוח את שעתי</a></div></header>
+<header><div class="bar"><a class="logo" href="./"><img src="img/apple-touch-icon.png" alt="">שעתי</a><a class="btn" href="${appFrom('shift-calculator')}">לפתוח את שעתי</a></div></header>
 <main id="main">
   <nav class="crumbs" aria-label="ניווט"><a href="./">שעתי</a> › כמה שווה המשמרת?</nav>
   <h1>כמה שווה המשמרת?</h1>
   <p>ממלאים את פרטי המשמרת ורואים כמה היא שווה לפי חוק העבודה: שבת וחג לפי הזמנים בעיר, שעות נוספות, משמרת לילה ושכר מינימום לפי הגיל. החישוב רץ בטלפון שלך, באותו מנוע שמחשב משמרות באפליקציה שעתי. בלי הרשמה, ושום דבר לא נשלח.</p>
 ${calcForm()}
-  <div class="cta"><b>כל משמרת, מחושבת לבד</b><span>באפליקציה רושמים משמרת בלחיצה, ושעתי מחשבת כל אחת כמו כאן, מסכמת את החודש ומשווה לתלוש. חינם ובלי פרסומות, ומנוי Plus לבחירה.</span><a class="btn" href="${APP}?from=site">לחשב כל משמרת אוטומטית באפליקציה</a></div>
+  <div class="cta"><b>כל משמרת, מחושבת לבד</b><span>באפליקציה רושמים משמרת בלחיצה, ושעתי מחשבת כל אחת כמו כאן, מסכמת את החודש ומשווה לתלוש. חינם ובלי פרסומות, ומנוי Plus לבחירה.</span><a class="btn" href="${appFrom('shift-calculator')}">לחשב כל משמרת אוטומטית באפליקציה</a></div>
   <p class="sc-app">יש לכם אתר של ארגון נוער או בית ספר? <a href="embed">אפשר לשים את המחשבון אצלכם</a>.</p>
   <h2>שאלות נפוצות</h2>
   ${faq.map(([q, a]) => `<details><summary>${esc(q)}</summary><p>${escWhole(a)}</p></details>`).join('\n  ')}
@@ -715,7 +816,7 @@ ${FONT_HEAD}
 </head>
 <body>
 <a class="skip" href="#main">דילוג לתוכן</a>
-<header><div class="bar"><a class="logo" href="./"><img src="img/apple-touch-icon.png" alt="">שעתי</a><a class="btn" href="${APP}?from=site">לפתוח את שעתי</a></div></header>
+<header><div class="bar"><a class="logo" href="./"><img src="img/apple-touch-icon.png" alt="">שעתי</a><a class="btn" href="${appFrom('embed')}">לפתוח את שעתי</a></div></header>
 <main id="main">
   <nav class="crumbs" aria-label="ניווט"><a href="./">שעתי</a> › לארגונים ולבתי ספר</nav>
   <h1>${esc(ORG.title)}</h1>

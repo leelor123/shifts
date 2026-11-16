@@ -6,8 +6,9 @@
  * record to stats/{random install id}: app version, platform,
  * first/last day of use, number of active days, shift and payslip
  * counts, an age group (under / over 18), whether it is an iPhone
- * (yes/no, for the dashboard's funnel per platform, core/funnel.js)
- * and which features are on.
+ * (yes/no, for the dashboard's funnel per platform, core/funnel.js),
+ * which page of the website sent it, if one did (src: "seo-overtime", the
+ * ?from= of its first opening) and which features are on.
  * No name, email, user id, dates of shifts or amounts; the random id
  * is the only link between a device's records, and only admins can
  * read the collection (firestore.rules). The answer can be changed in
@@ -35,6 +36,12 @@
       return /iPhone|iPad|iPod/.test(ua) || (/Macintosh/.test(ua) && navigator.maxTouchPoints > 1);
     } catch (e) { return false; }
   }
+  /** The website's tag on the app's address (?from=seo-<page>, ?from=site before 1.40) in the record's form: lower case
+   *  letters, digits and dashes, at most 40; anything else is dropped (a link someone else made). */
+  Stats.cleanFrom = function (v) {
+    const t = String(v == null ? '' : v).trim().toLowerCase();
+    return /^(seo-[a-z0-9-]{1,36}|site|embed)$/.test(t) ? t : '';
+  };
   /** Count active days on this device (local only). */
   Stats.markActive = async function () {
     const k = today();
@@ -61,6 +68,7 @@
       s30: Math.min(99999, done.filter((s) => U.epochKey(s.start) >= from30).length),
       ps: Math.min(99999, S.payslips.length),
       age: age == null ? '' : age < 18 ? 'u18' : '18p',
+      ...(Stats.cleanFrom(S.meta.firstFrom) ? { src: Stats.cleanFrom(S.meta.firstFrom) } : {}), // the website page that sent it
       f: (() => { const sim = !!(root.Plus && root.Plus.preview && root.Plus.preview()); return {
         rights: !!S.meta.usedRights, ai: !!(S.settings.ai && S.settings.ai.apiKey), lock: !!S.settings.lock.enabled,
         bio: !!S.settings.lock.bioId, dark: S.settings.theme === 'dark', fxOff: !!(S.settings.fx && S.settings.fx.effects === false),
@@ -95,9 +103,9 @@
       if (!force && S.meta.statsSig === sig) { await Store.setMeta({ statsSentAt: Date.now() }); return; }
       const { fs, db } = await Cloud.sdk();
       try { await fs.setDoc(fs.doc(db, 'stats', S.meta.installId), rec); } catch (e) {
-        // rules from before the ios field (1.33) refuse it: the record still goes, without it
+        // rules from before the ios field (1.33) or the src field (1.40) refuse them: the record still goes, without them
         if (!(e && e.code === 'permission-denied')) throw e;
-        delete rec.ios;
+        delete rec.ios; delete rec.src;
         await fs.setDoc(fs.doc(db, 'stats', S.meta.installId), rec);
       }
       await Store.setMeta({ statsSentAt: Date.now(), statsSig: sig });
