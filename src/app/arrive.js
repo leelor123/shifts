@@ -173,7 +173,8 @@
     el.querySelectorAll('[data-arrive-off]').forEach((off) => (off.onclick = () => {
       const id = off.dataset.arriveOff;
       const msg = id ? { geo: 1, off: 1, id } : { geo: 1, off: 1 };
-      if (App.widgets) App.widgets.post(JSON.stringify(msg));
+      // the Android app never got it (the channel is gone): it still watches, so the screen says nothing changed
+      if (!(App.widgets && App.widgets.post(JSON.stringify(msg)))) { console.warn('arrive: off not sent'); return; }
       const left = id && list ? list.filter((p) => p.id !== id) : [];
       if (status) status = Object.assign({}, status, left.length ? { places: left } : { on: false, saved: false, places: list ? [] : undefined });
       UI.toast(left.length ? 'המקום הוסר' : 'ההצעות במקום העבודה כבויות', null, { ok: true });

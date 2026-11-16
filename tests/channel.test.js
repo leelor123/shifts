@@ -85,3 +85,40 @@ T.test('the workplace is "saved" and "on" only after Google Play services accept
   const page = read('src/app/arrive.js');
   T.ok(/status && status\.attn\) return '/.test(page) && /const attn = status && status\.attn;/.test(page), 'the page shows it as needing attention, with Save again');
 });
+
+// Review 16 Nov 2026: signing out, deleting the account or another account on the phone (Store.wipe) left the saved
+// workplaces on the phone, and the "start a shift?" suggestions kept coming for a signed-out person (with the
+// previous person's place names after a switch). The wipe now tells the Android app to forget them all.
+T.test('a wipe (sign-out, account deleted, another account) turns every saved workplace off; a restored backup does not', () => {
+  const vm = require('vm');
+  const sent = [];
+  const listeners = [];
+  const S = { settings: { onboarded: true }, meta: { widgetsTip: 1 }, employers: [] };
+  const noop = () => {};
+  const ctx = {
+    App: { roles: () => [] }, U: { LANG: 'he', money: () => '' }, Engine: {},
+    Store: { S, on: (fn) => listeners.push(fn), setMeta: () => Promise.resolve() },
+    document: { addEventListener: noop, visibilityState: 'hidden' }, addEventListener: noop,
+    setInterval: noop, setTimeout: noop, clearTimeout: noop, console, location: { host: 'site', origin: 'https://site' },
+    __appPort: { postMessage: (t) => sent.push(t) },
+  };
+  vm.runInNewContext(read('src/app/widgets.js'), ctx);
+  T.ok(listeners.length >= 1 && ctx.App.widgets.connected, 'the channel is taken');
+  const offs = () => sent.filter((t) => { try { const m = JSON.parse(t); return m.geo === 1 && m.off === 1; } catch (e) { return false; } });
+  // the user's own backup, restored on the same account: the places stay
+  for (const mode of ['replace', 'merge']) listeners.forEach((fn) => fn({ type: 'restore', mode }));
+  T.eq(offs().length, 0, 'a restored backup leaves the places');
+  S.settings = { onboarded: false };
+  listeners.forEach((fn) => fn({ type: 'restore' }));
+  T.eq(offs().length, 1, 'the wipe sends one "off"');
+  T.ok(!('id' in JSON.parse(offs()[0])), 'with no id: every place');
+  // the wipe is what all three paths reach, and only it emits a restore with no mode
+  const store = read('src/app/store.js');
+  const wipe = store.slice(store.indexOf('async function wipe()'), store.indexOf('root.Store = {'));
+  T.ok(/emit\(\{ type: 'restore' \}\);/.test(wipe), 'Store.wipe emits a restore with no mode');
+  T.ok(/emit\(\{ type: 'restore', mode \}\);/.test(store), 'importBackup emits its mode');
+  const cloud = read('src/app/cloud.js');
+  const shutdown = cloud.slice(cloud.indexOf('async function shutdown()'));
+  T.ok(/await Store\.wipe\(\);/.test(shutdown.slice(0, 400)), 'sign-out and account deletion end in Store.wipe');
+  T.ok((cloud.match(/await Store\.wipe\(\);/g) || []).length >= 2, 'and another account on the phone too');
+});

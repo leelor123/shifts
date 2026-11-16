@@ -218,6 +218,37 @@
     return JSON.stringify(k(a)) === JSON.stringify(k(b));
   }
 
-  root.Workplace = { same, ABC, LEN, CODE_RE, MAX_ROLES, FIELDS, KEYS, code, codeFrom, parse, pretty, pack, clean, check, hasRates, changes, apply, ops };
+  /* ---------- several employers: a shift's employer and role belong together ---------- */
+  // A shift is paid at its role's rate under its employer's rules (Engine.makeCtx), and a role belongs to one employer.
+  // A shift with another employer's role was paid at that rate under the wrong rules and counted in the wrong totals.
+
+  /** The employer a shift goes to when its role is known: the role's own employer wins (the last role chosen may be
+   *  another employer's than the first one); a role that is gone, or has no employer, leaves the fallback. */
+  function employerOf(roles, roleId, fallback) {
+    const r = (roles || []).find((x) => x.id === roleId);
+    return r && r.employerId ? r.employerId : fallback;
+  }
+  /** The role a shift keeps when its employer is chosen: its own role when it is this employer's, else the last role
+   *  chosen when it is this employer's, else this employer's first role (null: the employer has none). */
+  function roleFor(roles, employerId, roleId, lastRole) {
+    const mine = (roles || []).filter((x) => !x.archived && x.employerId === employerId);
+    if (mine.some((x) => x.id === roleId)) return roleId;
+    if (mine.some((x) => x.id === lastRole)) return lastRole;
+    return mine[0] ? mine[0].id : null;
+  }
+  /** The shift's role (when it exists) is its employer's. */
+  function paired(roles, employerId, roleId) {
+    const r = (roles || []).find((x) => x.id === roleId);
+    return !r || !r.employerId || r.employerId === employerId;
+  }
+  /** Something still points at this employer: a saved shift, the running shift (by its employer or its role, which is
+   *  deleted with the employer), or a template. Deleting it then would pay those shifts at 0. */
+  function employerInUse(S, empId) {
+    const roleIds = new Set((S.roles || []).filter((r) => r.employerId === empId).map((r) => r.id));
+    const uses = (x) => !!x && (x.employerId === empId || roleIds.has(x.roleId) || (x.splits || []).some((s) => s && roleIds.has(s.roleId)));
+    return (S.shifts || []).some(uses) || uses(S.activeShift) || (S.templates || []).some(uses);
+  }
+
+  root.Workplace = { same, ABC, LEN, CODE_RE, MAX_ROLES, FIELDS, KEYS, code, codeFrom, parse, pretty, pack, clean, check, hasRates, changes, apply, ops, employerOf, roleFor, paired, employerInUse };
   if (typeof module !== 'undefined') module.exports = root.Workplace;
 })(typeof window !== 'undefined' ? window : globalThis);

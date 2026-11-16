@@ -236,3 +236,39 @@ T.test('an update with the same rules is not a new version: the same rules in an
   T.ok(!W.same(a, Object.assign({}, b, { ro: [{ n: 'ברמן' }, { n: 'מלצר', r: 40.5 }] }))); // the roles' order is theirs
   T.ok(!W.same(a, Object.assign({}, b, { evePct: 0 })));
 });
+
+// Review 16 Nov 2026: an employer could be deleted while its shift was running (the shift was then saved at 0), and
+// the shift editor saved a shift under one employer with another employer's role (paid at that rate under the wrong
+// rules, counted in the wrong totals).
+T.section('several employers: a shift\'s employer and role');
+{
+  const rA = { id: 'rA', employerId: 'empA', archived: false };
+  const rA2 = { id: 'rA2', employerId: 'empA', archived: false };
+  const rB = { id: 'rB', employerId: 'empB', archived: false };
+  const rBold = { id: 'rBold', employerId: 'empB', archived: true };
+  const all = [rA, rA2, rB, rBold];
+  T.test('an employer with a running shift, a saved shift or a template cannot be deleted', () => {
+    T.eq(W.employerInUse({ shifts: [], roles: all, activeShift: { employerId: 'empB', roleId: 'rB' } }, 'empB'), true, 'its shift is running');
+    T.eq(W.employerInUse({ shifts: [], roles: all, activeShift: { employerId: 'empA', roleId: 'rB' } }, 'empB'), true, 'by its role');
+    T.eq(W.employerInUse({ shifts: [], roles: all, activeShift: { employerId: 'empA', roleId: 'rA', splits: [{ roleId: 'rB' }] } }, 'empB'), true, 'by a split');
+    T.eq(W.employerInUse({ shifts: [{ employerId: 'empB', roleId: 'rB' }], roles: all, activeShift: null }, 'empB'), true, 'a saved shift');
+    T.eq(W.employerInUse({ shifts: [], templates: [{ roleId: 'rB' }], roles: all, activeShift: null }, 'empB'), true, 'a template');
+    T.eq(W.employerInUse({ shifts: [{ employerId: 'empA', roleId: 'rA' }], roles: all, activeShift: { employerId: 'empA', roleId: 'rA' } }, 'empB'), false, 'nothing of B');
+    const v = fs.readFileSync(path.join(__dirname, '..', 'src', 'app', 'views-settings.js'), 'utf8');
+    T.ok(/if \(r === 'del'\) \{[\s\S]{0,300}?root\.Workplace\.employerInUse\(S, emp\.id\)/.test(v), 'Settings › employer › delete asks it');
+  });
+  T.test('a new shift takes its employer from its role; another employer takes one of its own roles', () => {
+    T.eq(W.employerOf(all, 'rB', 'empA'), 'empB', 'the last role is B\'s: the shift is B\'s');
+    T.eq(W.employerOf(all, 'gone', 'empA'), 'empA', 'a role that is gone leaves the fallback');
+    T.eq(W.roleFor(all, 'empB', 'rA', 'rA2'), 'rB', 'switched to B: B\'s first role, never A\'s');
+    T.eq(W.roleFor(all, 'empA', 'rB', 'rA2'), 'rA2', 'switched to A: the last role when it is A\'s');
+    T.eq(W.roleFor(all, 'empA', 'rA2', 'rA'), 'rA2', 'its own role stays');
+    T.eq(W.roleFor(all, 'empC', 'rA', 'rA'), null, 'an employer with no role: none');
+    T.eq(W.paired(all, 'empA', 'rB'), false);
+    T.eq(W.paired(all, 'empB', 'rB'), true);
+    const v = fs.readFileSync(path.join(__dirname, '..', 'src', 'app', 'views-shift.js'), 'utf8');
+    T.ok(/const employerId = root\.Workplace\.employerOf\(S\.roles, roleId,/.test(v), 'the new-shift draft');
+    T.ok(/if \(f === 'employerId'\) \{\s*d\.roleId = root\.Workplace\.roleFor\(/.test(v), 'the employer select');
+    T.ok(/if \(!d\.roleId \|\| !root\.Workplace\.paired\(S\.roles, d\.employerId, d\.roleId\)/.test(v), 'and save refuses a mismatch');
+  });
+}

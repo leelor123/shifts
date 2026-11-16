@@ -398,7 +398,8 @@
           const emp = App.employer(b.dataset.empEdit);
           const r = await UI.dialog({ title: emp.name, html: `<label class="field"><span class="lbl">שם המעסיק</span><input class="input" value="${esc(emp.name)}"></label>`, buttons: [...(S.employers.length > 1 ? [{ label: 'מחק', value: 'del', cls: 'danger' }] : []), { label: 'ביטול', value: null }, { label: 'שמור', value: 'input' }] });
           if (r === 'del') {
-            if (S.shifts.some((x) => x.employerId === emp.id)) { UI.toast('יש משמרות של המעסיק, אי אפשר למחוק'); return; }
+            // the running shift too (its role goes with the employer, and it would be saved at 0), and templates
+            if (root.Workplace.employerInUse(S, emp.id)) { UI.toast('יש משמרות של המעסיק, אי אפשר למחוק'); return; }
             if (!(await UI.confirm('למחוק את המעסיק?', 'התפקידים שלו יימחקו.', 'מחק', true))) return;
             await App.saveOps([{ store: 'employers', del: emp.id }, ...S.roles.filter((x) => x.employerId === emp.id).map((x) => ({ store: 'roles', del: x.id }))], 'מחיקת מעסיק');
           } else if (r && String(r).trim() && App.ensureClean(String(r))) await Store.put('employers', Object.assign(Store.clone(emp), { name: String(r).trim().slice(0, 60) }));
