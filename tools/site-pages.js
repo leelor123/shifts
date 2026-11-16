@@ -75,9 +75,9 @@ const dayH = (ww, dk, night) => Engine.otDayHours(lawEmp, { leave: { workWeek: w
 const OTL = { five: dayH(5, '2026-11-02'), six: dayH(6, '2026-11-02'), sixFri: dayH(6, '2026-11-06'), night: dayH(5, '2026-11-02', true), week: Engine.WEEK_REG_H, t1h: +(D.otTier1Hours || 2) };
 // sick pay (kolzchut "ימי מחלה"): 1.5 days a month (the app's default, settings.leave.sickPerMonth), at most 90; the
 // first day unpaid, the 2nd and 3rd at 50%, from the 4th in full. Travel (kolzchut "החזר הוצאות נסיעה"): the bus fare
-// up to 22.60 a day (Defaults.LAW_CHECKED.travel), or a monthly pass when cheaper.
+// up to the daily cap (Engine.travelCap, the yearly law table), or a monthly pass when cheaper.
 const SICK = { perMonth: +((globalThis.Defaults.defaultSettings().leave || {}).sickPerMonth || 1.5), max: 90 };
-const TRAVEL_CAP = 22.6;
+const TRAVEL_CAP = Engine.travelCap(today);
 const Y16 = Engine.youthRules(16, 5), Y15 = Engine.youthRules(15, 5);
 // the tax refund (core/taxrefund.js, as in the app's refund sheet): three common cases in the last whole tax year, a
 // man with no children, the tax taken each month as the payroll takes it (the year's own brackets and points)

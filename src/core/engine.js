@@ -1042,31 +1042,91 @@
    * Adult minimum wage per hour as published (monthly ÷ 182 hours). Under 18 it is a share of the
    * adult monthly wage ÷ 173 hours: 70% under 16, 75% at 16, 83% at 17 (חוק שכר מינימום).
    * New rates take effect every April; add a row here when they are published. */
-  const MIN_WAGE = [
-    { from: '2023-04-01', monthly: 5880.02, hourly: 32.30 },
-    { from: '2025-04-01', monthly: 6247.67, hourly: 34.32 },
-    { from: '2026-04-01', monthly: 6443.85, hourly: 35.40 },
-  ];
-  /* Other yearly legal numbers, by the year they apply to (tests/law.test.js fails once a year runs past its table:
-   * check the new values and add a row). A setting left empty — or still holding a value an earlier version saved
-   * as its default — follows these; any other number the user typed wins.
-   *  - National Insurance: the reduced-rate threshold and the ceiling, monthly (from 2026 indexed to prices, every
-   *    January 1st; 2026: btl.gov.il notice for employers);
-   *  - recuperation pay: the day rate, private sector (extension order; 2026: 451.50, published 18.8.2026, for the
-   *    whole 2026 recuperation year). */
-  const BL_YEARS = { 2025: [7522, 50695], 2026: [7703, 51910] };
-  /* Income tax, by tax year: the monthly brackets [up to ₪, %] and the value of one credit point a month (kolzchut
-   * "מדרגות מס הכנסה", "מדרגות מס הכנסה - נתוני עבר" and "נקודת זיכוי", read 2026-10-30). 2025 is 2024's. 2026: the 20%
-   * bracket goes to 19,000 and the 31% to 25,100 (amendment 288, from January 2026); the point is frozen at 242 through
-   * 2027. The top 50% is 47% and the 3% surtax. A refund can be asked for six years back, so six years are kept. */
-  const TAX_YEARS = {
-    2020: { point: 219, brackets: [[6330, 10], [9080, 14], [14580, 20], [20260, 31], [42160, 35], [54300, 47], [Infinity, 50]] },
-    2021: { point: 218, brackets: [[6290, 10], [9030, 14], [14490, 20], [20140, 31], [41910, 35], [53970, 47], [Infinity, 50]] },
-    2022: { point: 223, brackets: [[6450, 10], [9240, 14], [14840, 20], [20620, 31], [42910, 35], [55270, 47], [Infinity, 50]] },
-    2023: { point: 235, brackets: [[6790, 10], [9730, 14], [15620, 20], [21710, 31], [45180, 35], [58190, 47], [Infinity, 50]] },
-    2024: { point: 242, brackets: [[7010, 10], [10060, 14], [16150, 20], [22440, 31], [46690, 35], [60130, 47], [Infinity, 50]] },
-    2026: { point: 242, brackets: [[7010, 10], [10060, 14], [19000, 20], [25100, 31], [46690, 35], [60130, 47], [Infinity, 50]] },
+  /* ================= THE YEARLY LAW TABLE: every yearly legal number, one row per year =================
+   * The yearly update is filling in one row here (then `node tools/site-pages.js`, and tests/law.test.js lists any
+   * text that still names an old number). Inside a year's row:
+   *   - a value                 = the law for that year (minWage starts on its own `from` date, the rest on January 1st);
+   *   - key left out            = no change that year (the last earlier value goes on);
+   *   - null                    = NOT PUBLISHED YET: the last known value goes on, and tests/law.test.js fails once the
+   *                               grace date in LAW_DUE passes (the message says where the number is published);
+   *   - { same: Y }             = the law says it is year Y's (a freeze), an explicit decision, not a guess.
+   * Never type a number that was not published. Sources:
+   *   minWage  — Ministry of Labor, from April 1st (47.5% of the January average wage; 2026: gov.il, goldfarb.com);
+   *   bl       — [reduced-rate threshold, ceiling] a month, btl.gov.il "שינוי בתשלום דמי ביטוח לאומי ודמי ביטוח בריאות
+   *              לשנת YYYY", late December (from 2026 indexed to prices);
+   *   tax      — monthly brackets [up to ₪, %] + the credit point's value (kolzchut "מדרגות מס הכנסה", "נקודת זיכוי");
+   *              2026: the 20% bracket to 19,000 and the 31% to 25,100 (amendment 288, published 31.3.2026); every tax
+   *              amount is frozen for 2025–2027, indexing resumes in 2028 (ynet s1b8w9tnkl, kolzchut נקודת_זיכוי);
+   *              a refund can be asked for six years back, so six years are kept;
+   *   recup    — recuperation day rate, private sector (extension order; 2026: 451.50, published 18.8.2026; the
+   *              agreement runs to 30.6.2027, chamber.org.il 1856/163015);
+   *   travelCap — the daily travel refund cap (extension order; 22.60, unchanged since 2016, kolzchut החזר_הוצאות_נסיעה). */
+  const LAW_YEARS = {
+    2020: { tax: { point: 219, brackets: [[6330, 10], [9080, 14], [14580, 20], [20260, 31], [42160, 35], [54300, 47], [Infinity, 50]] } },
+    2021: { tax: { point: 218, brackets: [[6290, 10], [9030, 14], [14490, 20], [20140, 31], [41910, 35], [53970, 47], [Infinity, 50]] } },
+    2022: { tax: { point: 223, brackets: [[6450, 10], [9240, 14], [14840, 20], [20620, 31], [42910, 35], [55270, 47], [Infinity, 50]] } },
+    2023: {
+      minWage: { from: '2023-04-01', monthly: 5880.02, hourly: 32.30 },
+      tax: { point: 235, brackets: [[6790, 10], [9730, 14], [15620, 20], [21710, 31], [45180, 35], [58190, 47], [Infinity, 50]] },
+      recup: 418,
+    },
+    2024: { tax: { point: 242, brackets: [[7010, 10], [10060, 14], [16150, 20], [22440, 31], [46690, 35], [60130, 47], [Infinity, 50]] } },
+    2025: {
+      minWage: { from: '2025-04-01', monthly: 6247.67, hourly: 34.32 },
+      bl: [7522, 50695],
+      tax: { same: 2024 }, // the freeze
+      travelCap: 22.6,
+    },
+    2026: {
+      minWage: { from: '2026-04-01', monthly: 6443.85, hourly: 35.40 },
+      bl: [7703, 51910],
+      tax: { point: 242, brackets: [[7010, 10], [10060, 14], [19000, 20], [25100, 31], [46690, 35], [60130, 47], [Infinity, 50]] },
+      recup: 451.5,
+    },
+    2027: { // filled 2026-11-16: only what the law already fixed
+      minWage: null, // Ministry of Labor, ~March 2027, from 2027-04-01
+      bl: null, // btl.gov.il, end of December 2026
+      tax: { same: 2026 }, // frozen through 2027 (indexing resumes in 2028); a 2027 budget law could still change it
+      recup: null, // a new extension order (the 2026 agreement runs to 30.6.2027)
+      travelCap: null, // check the extension order is unchanged (kolzchut החזר_הוצאות_נסיעה)
+    },
   };
+  /* When a null (not published yet) may stay in force: month-day in its own year. Past it, tests/law.test.js fails. */
+  // i18n-keep-start (notes for the yearly update, read by tests only)
+  const LAW_DUE = {
+    minWage: { by: '04-01', where: 'gov.il (Ministry of Labor), the minimum wage from April 1st' },
+    bl: { by: '01-15', where: 'btl.gov.il, "שינוי בתשלום דמי ביטוח לאומי ודמי ביטוח בריאות לשנת YYYY"' },
+    tax: { by: '01-15', where: 'kolzchut "מדרגות מס הכנסה" and "נקודת זיכוי" (or the Tax Authority)' },
+    recup: { by: '09-01', where: 'the recuperation extension order for the private sector (kolzchut "דמי הבראה")' },
+    travelCap: { by: '01-15', where: 'the travel extension order (kolzchut "החזר הוצאות נסיעה")' },
+  };
+  // i18n-keep-end
+  const LAW_KEYS = Object.keys(LAW_DUE);
+  /** One yearly number in force for a date: { value, year, pending } — pending = this year's row says "not published
+   *  yet" and the value is the last one known. tax's { same } is followed. */
+  function lawYear(key, k) {
+    const y = +String(k || U.todayKey()).slice(0, 4);
+    const years = Object.keys(LAW_YEARS).map(Number).filter((x) => x <= y).sort((a, b) => b - a);
+    let pending = false;
+    for (const x of years) {
+      const row = LAW_YEARS[x];
+      if (!(key in row)) continue;
+      let v = row[key];
+      if (v === null) { if (x === y) pending = true; continue; }
+      if (v && v.same) v = LAW_YEARS[v.same][key];
+      if (key === 'minWage' && v.from > k) continue; // this year's rate starts in April
+      return { value: v, year: x, pending };
+    }
+    return { value: null, year: null, pending };
+  }
+  /* The tables the engine always had, built from LAW_YEARS (callers and tests keep their names). */
+  const MIN_WAGE = Object.keys(LAW_YEARS).map(Number).sort((a, b) => a - b).map((y) => LAW_YEARS[y].minWage).filter(Boolean);
+  const pick = (key, f) => { const o = {}; for (const y of Object.keys(LAW_YEARS)) { const v = LAW_YEARS[y][key]; if (v != null) { const r = f ? f(v, y) : v; if (r != null) o[y] = r; } } return o; };
+  const BL_YEARS = pick('bl');
+  const TAX_YEARS = pick('tax', (v) => (v.same ? LAW_YEARS[v.same].tax : v));
+  const RECUP_YEARS = pick('recup');
+  /** The daily travel refund cap for a date (the extension order). */
+  const travelCap = (k) => lawYear('travelCap', k).value;
   const bracketsKey = (b) => (Array.isArray(b) ? b.map(([u, p]) => (u === Infinity || u == null ? 'inf' : +u) + ':' + +p).join(',') : '');
   /** The year's income tax brackets and point value for a date, unless the settings name others (a table any version
    * saved as its default counts as "by the law", so stored copies follow the years too). */
@@ -1081,7 +1141,6 @@
       own: { brackets: ownBrackets, point: !lawValue(T.creditPointValue, tables.map((t) => t.point)) },
     };
   }
-  const RECUP_YEARS = { 2023: 418, 2026: 451.5 };
   function byYear(table, k) {
     const y = +String(k || U.todayKey()).slice(0, 4);
     const years = Object.keys(table).map(Number).sort((a, b) => a - b);
@@ -1129,7 +1188,7 @@
   }
 
   root.Engine = {
-    LAW_BREAK, validShift, validEntry, otByLaw, otDayHours, otWeekHours, WEEK_REG_H, WEEK_REG_H_MINOR, legalMinWage, minWageFor, youthRules, pensionMinAge, MIN_WAGE, BL_YEARS, RECUP_YEARS, TAX_YEARS, taxLaw, blLimits, recuperationRate,
+    LAW_YEARS, LAW_DUE, LAW_KEYS, lawYear, travelCap, LAW_BREAK, validShift, validEntry, otByLaw, otDayHours, otWeekHours, WEEK_REG_H, WEEK_REG_H_MINOR, legalMinWage, minWageFor, youthRules, pensionMinAge, MIN_WAGE, BL_YEARS, RECUP_YEARS, TAX_YEARS, taxLaw, blLimits, recuperationRate,
     makeCtx, roleRate, roundMinutes, monthsBetween, buildSegments, hasOverrides, computeShift, computeAll,
     periodByKey, periodOf, dayValue, computeEntries, travelByDay, incomeTaxRaw, netEstimate, pensionActive,
     buildModel, totals, periodSummary, rangeSummary, pensionBaseOf, leaveBalances, holidayPay, vacationEntitlement, recuperationDays, ageAt, isMinor,

@@ -59,9 +59,17 @@
     ['vacation', 'חופשה שנתית'], ['recup', 'דמי הבראה'], ['sick', 'דמי מחלה'], ['travel', 'החזר הוצאות נסיעה'], ['pension', 'ביטוח פנסיוני חובה'],
     ['labor', 'משרד העבודה'], ['tax', 'רשות המסים (מס הכנסה)'], ['btl', 'המוסד לביטוח לאומי']];
 
+  /* The minimum wage in force, adults and youth, from Engine.LAW_YEARS (never a number typed into the text). */
+  function minWageLine() {
+    const k = U.todayKey();
+    const mw = Engine.legalMinWage(k);
+    const y = +mw.from.slice(0, 4);
+    const youth = (age) => U.money(Engine.legalMinWage(mw.from, `${y - age - 1}-${mw.from.slice(5, 7)}-15`).hourly);
+    return `מאפריל ${y}: <b>${U.money(mw.hourly)} לשעה</b> לעובד מגיל 18. לנוער: עד גיל 16 – ${youth(15)}, בגיל 16 – ${youth(16)}, בגיל 17 – ${youth(17)}.`;
+  }
   /* ---------------- the guide (general rules, short and plain) ---------------- */
   const TOPICS = [
-    { id: 'minwage', gov: () => (App.isMinorNow() ? 'youth' : 'minwage'), ic: 'wallet', t: 'שכר מינימום', b: (c) => `<p>מאפריל 2026: <b>35.40 ₪ לשעה</b> לעובד מגיל 18. לנוער: עד גיל 16 – 26.07 ₪, בגיל 16 – 27.94 ₪, בגיל 17 – 30.92 ₪.</p><p>${c.mw.youth ? `לגיל שלך (${c.mw.age}) המינימום הוא <b>${U.money(c.mw.hourly)}</b>.` : c.mw.age != null ? `המינימום שחל עליך: <b>${U.money(c.mw.hourly)}</b>.` : 'הוסף תאריך לידה בהגדרות כדי לראות את המינימום לגילך.'} מעסיק רשאי לשלם יותר, אבל לא פחות.</p>`, l: () => link(KZ(App.isMinorNow() ? PAGES.youthPay : PAGES.minWage)) },
+    { id: 'minwage', gov: () => (App.isMinorNow() ? 'youth' : 'minwage'), ic: 'wallet', t: 'שכר מינימום', b: (c) => `<p>${minWageLine()}</p><p>${c.mw.youth ? `לגיל שלך (${c.mw.age}) המינימום הוא <b>${U.money(c.mw.hourly)}</b>.` : c.mw.age != null ? `המינימום שחל עליך: <b>${U.money(c.mw.hourly)}</b>.` : 'הוסף תאריך לידה בהגדרות כדי לראות את המינימום לגילך.'} מעסיק רשאי לשלם יותר, אבל לא פחות.</p>`, l: () => link(KZ(App.isMinorNow() ? PAGES.youthPay : PAGES.minWage)) },
     { id: 'overtime', gov: 'hours', ic: 'clock', t: 'שעות נוספות', b: () => '<p>השעתיים הראשונות מעבר ליום עבודה רגיל משולמות ב-<b>125%</b>, ומעבר לכך ב-<b>150%</b>. גם מעבר ל-42 שעות בשבוע מתחילות שעות נוספות.</p><p>באפליקציה: הגדרות › חישוב השכר › חוקי חישוב (מתי מתחילות ובאיזה אחוז).</p>', l: () => link(KZ(PAGES.overtime)) },
     { id: 'shabbat', gov: 'rest', ic: 'candle', t: 'שבת וחגים', b: () => '<p>עבודה במנוחה השבועית (לרוב שבת) משולמת לפחות ב-<b>150%</b>. השעות נקבעות לפי כניסת ויציאת השבת, והאפליקציה מחשבת אותן לפי העיר שלך.</p><p>עובד שעתי זכאי בדרך כלל גם ל<b>דמי חגים</b> אחרי 3 חודשי עבודה, על חג שחל ביום חול, בתנאים שבצו ההרחבה.</p>', l: () => link(KZ(PAGES.weeklyRest)) },
     { id: 'holidays', gov: 'rest', ic: 'calendar', t: 'דמי חגים', b: (c) => `<p>בשכר לפי שעה מגיע תשלום על <b>9 ימי חג</b> בשנה שבהם לא עבדת בגלל החג: ראש השנה, יום כיפור, סוכות, שמחת תורה, פסח ושביעי של פסח, שבועות ויום העצמאות (מי שאינו יהודי יכול לבחור בחגי הדת שלו). התנאים: <b>3 חודשי עבודה</b> במקום, החג חל ביום שבו ${App.g('היית אמור', 'היית אמורה')} לעבוד, ועבדת ביום שלפניו ושאחריו (או שלא שובצת בהם). התשלום: יום עבודה רגיל, לפי ממוצע השעות היומי שלך כפול השכר לשעה. חג ביום שישי או בשבת משתלם רק למי שעובד בימים האלה.</p>${holidayList(c)}`, l: () => link(KZ(PAGES.holidayPay)) },

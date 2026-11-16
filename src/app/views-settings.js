@@ -643,7 +643,7 @@
   RENDER.pay = {
     perEmployer: true,
     render: (e) => `<div class="section-title">${icon('car', 's')} נסיעות</div><div class="card">
-        ${F.num('סכום ליום עבודה ₪', 'e.travelPerDay', e.travelPerDay, 'ברירת מחדל: 22.60 ₪, התקרה היומית לפי צו ההרחבה (2025).')}
+        ${F.num('סכום ליום עבודה ₪', 'e.travelPerDay', e.travelPerDay, `התקרה היומית לפי צו ההרחבה: ${U.money(Engine.travelCap(U.todayKey()))}.`)}
         ${F.num('תקרה חודשית ₪', 'e.travelMonthlyCap', e.travelMonthlyCap, '0 = ללא תקרה. למשל מחיר חופשי-⁠חודשי.')}
         <div class="tiny muted">אפשר לסמן משמרת ספציפית "בלי נסיעות" בעריכת המשמרת.</div></div>
       <div class="section-title">${icon('calendar', 's')} תקופת שכר</div><div class="card">
@@ -702,7 +702,7 @@
           ${L.dayValueMode === 'hours' ? F.num('שעות ליום', 's.leave.dayHours', L.dayHours) : ''}${L.dayValueMode === 'fixed' ? F.num('סכום ליום ₪', 's.leave.dayFixed', L.dayFixed) : ''}
           <div class="grid2">${[0, 1, 2, 3].map((i) => F.num(['מחלה יום 1 %', 'יום 2 %', 'יום 3 %', 'מהיום ה-4 %'][i], 's.leave.sickPct.' + i, L.sickPct[i])).join('')}</div></div>
         <div class="section-title">הבראה</div><div class="card">
-          ${F.num('תעריף ליום הבראה ₪', 's.leave.recuperationRate', Engine.recuperationRate(L, U.todayKey()) !== Engine.recuperationRate({}, U.todayKey()) ? L.recuperationRate : '', 'ריק = לפי צו ההרחבה במגזר הפרטי (מ-2026: 451.50 ₪ ליום)', String(Engine.recuperationRate({}, U.todayKey())))}
+          ${F.num('תעריף ליום הבראה ₪', 's.leave.recuperationRate', Engine.recuperationRate(L, U.todayKey()) !== Engine.recuperationRate({}, U.todayKey()) ? L.recuperationRate : '', `ריק = לפי צו ההרחבה במגזר הפרטי (${U.money(Engine.recuperationRate({}, U.todayKey()))} ליום)`, String(Engine.recuperationRate({}, U.todayKey())))}
           ${F.sel('חודש תשלום', 's.leave.recuperationMonth', [[0, 'בכל חודש (חלק יחסי)'], ...U.MONTHS.map((m, i) => [i + 1, m])], L.recuperationMonth)}</div>`;
     },
   };

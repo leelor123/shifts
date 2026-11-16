@@ -176,11 +176,7 @@
     };
   }
 
-  /* Until when the legal numbers kept here (not by date in Engine) were confirmed right; tests/law.test.js fails
-   * after that day: check them (gov.il, btl.gov.il, the tax authority), update, and move the date on.
-   *  - tax: the monthly brackets and the credit point's value (frozen 2025–2027);
-   *  - travel: the daily cap in the texts (22.60, the extension order; unchanged in 2026). */
-  const LAW_CHECKED = { tax: '2027-12-31', travel: '2026-12-31' };
-
-  root.Defaults = { ROLE_COLORS, defaultEmployer, defaultRoles, defaultSettings, LAW_CHECKED };
+  /* Every yearly legal number (brackets, point, travel cap, minimum wage, National Insurance, recuperation) lives in
+   * Engine.LAW_YEARS; tests/law.test.js guards it. */
+  root.Defaults = { ROLE_COLORS, defaultEmployer, defaultRoles, defaultSettings };
 })(typeof window !== 'undefined' ? window : globalThis);
