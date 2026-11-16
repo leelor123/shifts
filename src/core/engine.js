@@ -19,7 +19,7 @@
   const HebCal = root.HebCal;
   const MIN = U.MIN;
   /** The break the law asks for: in a working day of 6 hours or more, 45 minutes, 30 of them in a row. */
-  const LAW_BREAK = { afterMin: 360, min: 45, text: 'לפי החוק, במשמרת של 6 שעות ומעלה מגיעה הפסקה של 45 דקות לפחות (30 מהן ברצף)' };
+  const LAW_BREAK = { afterMin: 360, min: 45, eveMin: 30, text: 'לפי החוק, במשמרת של 6 שעות ומעלה מגיעה הפסקה של 45 דקות לפחות (30 מהן ברצף)' };
 
   /* ---------------- context helpers ---------------- */
   /** ctx = { settings, employers:[], roles:[], dayRules:[] } -> fast lookup object */
@@ -136,6 +136,10 @@
         h = Math.min(h, youthRules(youth.age, six ? 6 : 5).dayHours);
         if (youth.eve) h = Math.min(h, 7);
       }
+      // חוק שעות עבודה ומנוחה §2(ב): 7 hours "ביום שלפני חג שהעובד אינו עובד בו" (the 2018 order changed only the
+      // week; kolzchut "גמול עבור שעות נוספות" quotes the ruling: "או 7 בערב חג"). Not the five-day week's Friday:
+      // kolzchut sets no day limit for it, its hours count in the 42 (the short day needs no guess).
+      if (youth && youth.holidayEve) h = Math.min(h, 7);
       return h;
     }
     return emp.nightShiftShortDay && nightShift ? +emp.nightShiftThreshold || 7 : +emp.otThreshold || 8;
@@ -148,6 +152,7 @@
    * opts.priorMin  — paid minutes already worked earlier the same workday (daily OT)
    * opts.priorOtMin — of them, the overtime minutes (the day's first two overtime hours are tier 1)
    * opts.weekRegMin — regular (not overtime) minutes already worked earlier the same week (the 42-hour limit)
+   * opts.worksNextDay — there is a shift on the next day (a holiday eve is then a full day)
    * opts.ignoreOverrides — compute as if no manual overrides / day rules existed
    */
   function computeShift(shift, ctx, opts) {
@@ -232,10 +237,15 @@
      * §20; the youth law asks the same), paid or not as the shift says. Entered (a number, 0 too): as entered.
      * One entered on purpose (breakSet: typed in the editor, or taken with the timer) that is shorter than the
      * law's in a long shift is flagged; records from before 1.18 (a plain 0) stay as they were, quietly. */
+    // On the day before the weekly rest or a holiday the law's break is half an hour (§20(א): "ביום שלפני המנוחה
+    // השבועית וביום שלפני חג ההפסקה היא של חצי שעה לפחות"), so the assumed break there is 30 minutes.
+    const restTomorrow = HebCal.restDayInfo(U.addDays(dk, 1), ctx.restCfg);
+    const eveDay = !!restTomorrow && !HebCal.restDayInfo(dk, ctx.restCfg);
+    const lawBreakMin = eveDay ? LAW_BREAK.eveMin : LAW_BREAK.min;
     const breakAuto = shift.breakMin == null || shift.breakMin === '';
-    const breakMin = breakAuto ? (roundedMin >= LAW_BREAK.afterMin ? LAW_BREAK.min : 0) : Math.max(0, +shift.breakMin || 0);
+    const breakMin = breakAuto ? (roundedMin >= LAW_BREAK.afterMin ? lawBreakMin : 0) : Math.max(0, +shift.breakMin || 0);
     const breakPaid = shift.breakPaid !== false;
-    const breakShort = !breakAuto && !!shift.breakSet && roundedMin >= LAW_BREAK.afterMin && breakMin < LAW_BREAK.min;
+    const breakShort = !breakAuto && !!shift.breakSet && roundedMin >= LAW_BREAK.afterMin && breakMin < lawBreakMin;
     if (breakShort) warnings.push(LAW_BREAK.text);
     if (!breakPaid && breakMin >= roundedMin && roundedMin > 0) warnings.push('ההפסקה ארוכה מהמשמרת');
     const paidFactor = breakPaid || roundedMin === 0 ? 1 : Math.max(0, 1 - breakMin / roundedMin);
@@ -250,6 +260,10 @@
     const minor = ageNow != null && ageNow < 18;
     const youth = minor ? { age: ageNow, eve: !!HebCal.restDayInfo(U.addDays(dk, 1), ctx.restCfg) && !HebCal.restDayInfo(dk, ctx.restCfg) } : null;
     let thresholdH = otDayHours(emp, settings, dk, isNightShift, youth);
+    // an adult by the law: 7 hours on the day before a holiday they do not work (§2(ב), below in otDayHours)
+    if (!minor && eveDay && !opts.worksNextDay && restTomorrow.source !== 'shabbat' && restTomorrow.source !== 'manual') {
+      thresholdH = otDayHours(emp, settings, dk, isNightShift, { holidayEve: true });
+    }
     const otOv = ov.ot || null;
     if (otOv && otOv.mode === 'threshold' && +otOv.hours > 0) thresholdH = +otOv.hours;
     const otOff = otOv && otOv.mode === 'off';
@@ -335,7 +349,8 @@
       const sd = seniorityDelta(emp, settings, dk, rate);
       seniority += h * sd * pct / 100;
       if (p.night) hoursBy.night += h;
-      if (p.eve) { hoursBy.eve += h; evePremium += h * rate * (+emp.evePct || 0) / 100; }
+      // the eve supplement is part of the regular wage, so an overtime hour pays it at 125/150% too (§18, below)
+      if (p.eve) { hoursBy.eve += h; evePremium += h * rate * (+emp.evePct || 0) / 100 * pct / 100; }
       const bucket = p.rest ? ['rest', 'restOt1', 'restOt2'][p.tier] : ['regular', 'ot1', 'ot2'][p.tier];
       hoursBy[bucket] += h;
       byRole[p.roleId] = byRole[p.roleId] || { hours: 0, amount: 0 };
@@ -351,7 +366,9 @@
       }
     }
     if (specialTop && specialTop.day) dayRuleHit = true;
-    // night premium
+    // night premium. חוק שעות עבודה ומנוחה §18: for overtime (§16) and the rest day (§17) "שכר רגיל" includes every
+    // supplement the employer pays, so a night (or eve) hour in overtime or on Shabbat pays its supplement at that
+    // hour's own rate too (40 × 1.2 × 1.25 = 60, not 50 + 8). Travel is a refund, not a wage supplement: not here.
     const nightOv = ov.night || null;
     const nightOn = emp.nightEnabled || (nightOv && (nightOv.mode === 'all' || nightOv.mode === 'pct'));
     if (nightOn) {
@@ -362,9 +379,9 @@
       for (const p of pieces) {
         const isN = nightOv && nightOv.mode === 'all' ? true : p.night;
         if (!isN) continue;
-        const h = p.pm / 60;
-        if (emp.nightType === 'fixed' && !(nightOv && nightOv.mode === 'pct')) nightPremium += h * npct;
-        else nightPremium += h * rateOf(p.roleId) * npct / 100;
+        const h = p.pm / 60, mult = pctOf(p) / 100;
+        if (emp.nightType === 'fixed' && !(nightOv && nightOv.mode === 'pct')) nightPremium += h * npct * mult;
+        else nightPremium += h * rateOf(p.roleId) * npct / 100 * mult;
       }
     }
 
@@ -522,7 +539,9 @@
       let prior = 0, priorOt = 0;
       for (const s of list) {
         let r;
-        try { r = computeShift(s, ctx, { priorMin: prior, priorOtMin: priorOt, weekRegMin: weekReg.get(wk) || 0, ignoreOverrides: opts.ignoreOverrides }); } catch (e) {
+        // a shift on the next day too: the eve of a holiday they work is not shortened (§2(ב))
+        const worksNextDay = groups.has(emp + '|' + U.addDays(dk, 1) + '|' + st);
+        try { r = computeShift(s, ctx, { priorMin: prior, priorOtMin: priorOt, weekRegMin: weekReg.get(wk) || 0, worksNextDay, ignoreOverrides: opts.ignoreOverrides }); } catch (e) {
           if (typeof console !== 'undefined') console.warn('shift skipped, it could not be calculated', s.id, e && e.message);
           continue;
         }
@@ -869,6 +888,7 @@
 
   /* ---------------- leave balances ---------------- */
   const VAC_TABLE = { 5: [12, 12, 12, 12, 12, 14, 15, 16, 17, 18, 19, 20, 20, 20], 6: [14, 14, 14, 14, 14, 16, 18, 19, 20, 21, 22, 23, 24, 24] };
+  const VAC_FULL_DAYS = 200; // workdays in a year that earn the full leave (kolzchut "חישוב מספר ימי החופשה השנתית")
   function vacationEntitlement(year, workWeek) {
     const t = VAC_TABLE[workWeek === 6 ? 6 : 5];
     return t[Math.min(year, t.length) - 1];
@@ -888,7 +908,7 @@
    * 2000 §7, as Kol Zchut explains it): the nine rest days of the Jewish holidays, paid when the worker has
    * three months at the workplace, the holiday fell on a day they would have worked and did not work because of
    * it, and they worked the day before and after or were away with the employer's consent (not scheduled counts).
-   * A holiday on Friday or Shabbat is paid only to someone who works on that day. The pay is a regular day's:
+   * A holiday on Shabbat is never paid; one on Friday only to someone who works Fridays. The pay is a regular day's:
    * the average daily hours of the three months before × the hourly rate (no travel).
    * What the app cannot know (whether they "would have worked") is read from their own shifts: a weekday they
    * usually work, or shifts on most days. A holiday they worked on is paid as work; holiday pay comes on top only
@@ -924,8 +944,11 @@
       item.amount = Math.round(item.avgHours * item.rate * 100) / 100;
       const sameWeekday = [...days.keys()].filter((k) => U.dow(k) === dow).length; // of 13 weeks
       const usual = sameWeekday >= 5, busy = days.size / 13 >= 4;
+      // A holiday on Shabbat is never paid as a holiday, even to someone who works Saturdays: the extension order
+      // (framework agreement 2000 §7) excludes it (protocol.co.il/holiday-benefits; kolzchut "דמי חגים לעובדי קבלן").
+      // A Friday holiday is left out only for someone who does not work Fridays.
       if (done.some((r) => r.dateKey === h.key)) item.status = 'worked';
-      else if ((dow === 5 || dow === 6) && !usual) item.status = 'weekend';
+      else if (dow === 6 || (dow === 5 && !usual)) item.status = 'weekend';
       else item.status = usual || busy ? 'due' : 'maybe';
     }
     return out;
@@ -939,11 +962,18 @@
     if (!start || start > asOf) return res;
     res.seniorityMonths = monthsBetween(start, asOf);
     res.seniorityYears = res.seniorityMonths / 12;
-    const hoursByMonth = {};
+    const hoursByMonth = {}, daysByMonth = {};
     for (const r of model.results.values()) {
       if (r.status !== 'done' || r.dateKey < start || r.dateKey > asOf) continue;
       const mk = U.monthKey(r.dateKey);
       hoursByMonth[mk] = (hoursByMonth[mk] || 0) + r.paidHours;
+      (daysByMonth[mk] = daysByMonth[mk] || new Set()).add(r.dateKey);
+    }
+    // paid days off (leave, sick) count as workdays for the year's 200 (kolzchut, below)
+    for (const e of model.entries || []) {
+      if (e.status === 'planned' || e.date < start || e.date > asOf || !/^(vacation|sick)$/.test(e.kind)) continue;
+      const mk = U.monthKey(e.date);
+      (daysByMonth[mk] = daysByMonth[mk] || new Set()).add(e.date);
     }
     const full = +L.fullTimeHours || 182;
     const openingDate = L.vacationOpeningDate || start;
@@ -953,10 +983,19 @@
     while (mk <= last) {
       const h = hoursByMonth[mk] || 0;
       const jp = Math.min(1, h / full);
-      const monthsIn = monthsBetween(start, U.monthEnd(mk) < asOf ? U.monthEnd(mk) : asOf);
-      const year = Math.floor(Math.max(0, monthsIn) / 12) + 1;
+      /* Annual leave by the law (חוק חופשה שנתית; kolzchut "חישוב מספר ימי החופשה השנתית"):
+       * - a work year is a calendar year from January: someone who started in October is in year 2 from 1 January;
+       * - days, not hours: a short day accrues like a full one, and 200 workdays in the year give the full
+       *   entitlement (fewer: a share), so a month is full at 200/12 workdays;
+       * - a minor gets 18 calendar days a year: 14 days off in a five-day week, 16 in a six-day week (or more, by
+       *   the adult table). */
+      const year = +mk.slice(0, 4) - +start.slice(0, 4) + 1;
+      const dayShare = Math.min(1, (daysByMonth[mk] ? daysByMonth[mk].size : 0) / (VAC_FULL_DAYS / 12));
+      const age = S.birthDate ? ageAt(S.birthDate, U.monthEnd(mk) < asOf ? U.monthEnd(mk) : asOf) : null;
+      let ent = vacationEntitlement(year, +L.workWeek);
+      if (age != null && age < 18) ent = Math.max(ent, +L.workWeek === 6 ? 16 : 14);
       if (U.monthEnd(mk) >= openingDate) {
-        res.vacationAccrued += vacationEntitlement(year, +L.workWeek) / 12 * jp;
+        res.vacationAccrued += ent / 12 * dayShare;
         res.sickAccrued += (+L.sickPerMonth || 1.5) * jp;
       }
       jobPcts.push({ mk, jp, h });
