@@ -1,14 +1,15 @@
 /* ============================================================
  * mascot-voice.js — שעתי (the coin, mascot.js) speaks and reacts.
  *
- * Speaking: in the setup questions it reads the question aloud (the bubble line when it is short, then
- * the screen's heading) with the browser's own voice in the app's language, and its mouth moves with the
- * words: on each word the voice reports (a "boundary"), a few mouth shapes from open to closed, and a
- * small bob of the coin. A voice that reports no words gets a steady rhythm instead; no voice for the
- * language, or a voice that fails, still moves the mouth for a moment, and nothing is shown. It speaks
- * only after a tap (each setup screen follows one), stops when the screen changes or the setup closes,
- * and outside the setup only when the coin itself is tapped. A speaker button beside the bubble turns it
- * on or off (settings.fx.voice, also in Settings › Look); it is off while the app's effects are off.
+ * Speaking: in the setup questions it reads the question aloud (the bubble line when it is short, a short
+ * pause, then the screen's heading) with a voice installed on the device for the app's language, and its
+ * mouth moves with the words: on each word the voice reports (a "boundary"), a few mouth shapes from open
+ * to closed, and a small bob of the coin. A voice that reports no words gets a steady rhythm while it
+ * speaks. Only offline voices count (localService): a network voice would send the words to its maker's
+ * servers. No such voice, or a voice that fails, means silence and a still mouth. It reads only when the
+ * user turned it on (settings.fx.voice === true, the speaker button beside the bubble or Settings › Look),
+ * never while the app's effects are off, only after a tap (each setup screen follows one), stops when the
+ * screen changes or the setup closes, and outside the setup only when the coin itself is tapped.
  *
  * Reacting: each move belongs to one event and is one short run (under 600 ms, transform only):
  * thinking while the user types (the head tilts, the eyes go up), a nod when an answer is tapped, a hop
@@ -35,10 +36,67 @@
         // a plural pair: יקרים/ות is read יקרות for girls
         .replace(/([\u0590-\u05ff]+)\u05d9\u05dd\/(\u05d5\u05ea)(?![\u0590-\u05ff])/g, (m, a, b) => (f ? a + b : first(m)))
         .replace(/([\u0590-\u05ff]+)\/(\u05d4|\u05ea|\u05d9|\u05d9\u05ea|\u05d5\u05ea)(?![\u0590-\u05ff])/g, (m, a, b) => (f ? join(a, b) : a));
+    } else if (lang === 'ar') {
+      // a suffix pair (\u062a\u0639\u0645\u0644/\u064a\u0646 is read \u062a\u0639\u0645\u0644\u064a\u0646 for a girl, else \u062a\u0639\u0645\u0644); two whole words (\u0633\u0628\u062a/\u0639\u064a\u062f) stay a pause
+      // letters and vowel marks only: the Arabic question mark \u061f sits in the same block
+      t = t.replace(/([\u0621-\u0652]+)\/(\u064a\u0646|\u064a|\u0629|\u0627\u062a)(?![\u0621-\u0652])/g, (m, a, b) => (gender === 'f' ? a + b : a));
+    } else if (lang === 'fr') {
+      // n\u00e9(e) is read n\u00e9e for a girl, else n\u00e9; heureux(se) heureuse; a plural (s) is silent, so it is dropped
+      t = t.replace(/(\p{L}+)\((\p{L}{1,3})\)/gu, (m, a, b) => (b === 's' || gender !== 'f' ? a : b === 'se' && /x$/.test(a) ? a.slice(0, -1) + b : a + b));
     }
     return t.replace(/\s*\/\s*/g, ' ').replace(/\s+/g, ' ').replace(/\s+([,.!?:])/g, '$1').replace(/^[,\s]+|[,\s]+$/g, '').trim();
   }
-  root.MascotSpeech = { spoken };
+  /** What to say instead of a line, per language. The key is the line as spoken() leaves it (the shown words,
+   *  cleaned; a gendered line needs one key per form), the value is what the voice reads. Every Hebrew key has to
+   *  match a line in views-onboarding.js (tests/mascot-voice.test.js), so a reworded screen cannot leave one behind. */
+  // i18n-keep-start (Hebrew words for the Hebrew voice only, never shown)
+  const SAY = { he: {} };
+  /** Hebrew signs a voice reads badly: ₪ and ש"ח become שקלים after the number, % after a number becomes אחוז. */
+  function heTokens(t) {
+    // שקל אחד, שקלים, אחוז אחד, אחוז, written as code points
+    const shekels = (n) => (n === '1' ? '\u05e9\u05e7\u05dc \u05d0\u05d7\u05d3' : n + ' \u05e9\u05e7\u05dc\u05d9\u05dd');
+    // no lookbehind (Safari before iOS 16.4 cannot read one): the letter before is kept and put back
+    return t.replace(/(^|[^\u0590-\u05ff])\u05e9["\u05f4]\u05d7(?![\u0590-\u05ff])/g, '$1\u20aa')
+      .replace(/\u20aa\s*(\d(?:[\d,.]*\d)?)/g, (m, n) => shekels(n))
+      .replace(/(\d(?:[\d,.]*\d)?)\s*\u20aa/g, (m, n) => shekels(n))
+      .replace(/\u20aa/g, '\u05e9\u05e7\u05dc\u05d9\u05dd')
+      .replace(/(\d(?:[\d,.]*\d)?)\s*%/g, (m, n) => (n === '1' ? '\u05d0\u05d7\u05d5\u05d6 \u05d0\u05d7\u05d3' : n + ' \u05d0\u05d7\u05d5\u05d6'))
+      .replace(/\s+/g, ' ').trim();
+  }
+  // i18n-keep-end
+  /** The words the coin speaks for a shown line: spoken(), then the line's own spoken version (SAY) if it has one,
+   *  then the Hebrew sign rules. */
+  function voiceLine(text, lang, gender) {
+    let t = spoken(text, lang, gender);
+    const own = SAY[lang];
+    // a value is the words, or { m, f } when the same written line is said differently to a girl (לָךְ, not לְךָ)
+    if (own && Object.prototype.hasOwnProperty.call(own, t)) { const v = own[t]; t = String(v && typeof v === 'object' ? (gender === 'f' ? v.f : v.m) || t : v); }
+    return lang === 'he' ? heTokens(t) : t;
+  }
+  const TAGS = { he: 'he-IL', en: 'en-US', ru: 'ru-RU', ar: 'ar-SA', fr: 'fr-FR', es: 'es-ES', am: 'am-ET' };
+  /** An offline voice for the language, or null. A voice with localService false (desktop Chrome's "Google" voices)
+   *  sends the words to its maker's servers, so it never counts. Its own country first (he-IL), then any. */
+  function pickVoice(list, lang) {
+    const tag = (TAGS[lang] || 'he-IL').toLowerCase();
+    const bases = lang === 'he' ? ['he', 'iw'] : [lang || 'he'];
+    const norm = (v) => String((v && v.lang) || '').toLowerCase().replace('_', '-');
+    const mine = (list || []).filter((v) => v && v.localService === true && bases.some((b) => norm(v) === b || norm(v).startsWith(b + '-')));
+    return mine.find((v) => norm(v) === tag) || mine[0] || null;
+  }
+  /** An element's text as the voice should read it: like textContent, but an element with data-say reads its
+   *  data-say value instead (views-onboarding.js g() shows "m/f" and puts the one form to say there: in Arabic the
+   *  two forms are whole phrases). Reads the tree as it is, nothing on the screen changes. */
+  function sayText(node) {
+    if (!node) return '';
+    if (node.nodeType === 3) return node.nodeValue || '';
+    if (node.nodeType !== 1 && node.nodeType !== 9 && node.nodeType !== 11) return '';
+    const say = node.getAttribute ? node.getAttribute('data-say') : null;
+    if (say != null) return say;
+    let s = '';
+    for (const c of node.childNodes || []) s += sayText(c);
+    return s;
+  }
+  root.MascotSpeech = { spoken, voiceLine, pickVoice, sayText, SAY };
 
   const App = root.App;
   const doc = root.document;
@@ -49,36 +107,73 @@
   const reduced = () => !!(root.matchMedia && root.matchMedia('(prefers-reduced-motion: reduce)').matches);
   const prefs = () => (root.Fx && root.Fx.prefs && root.Fx.prefs()) || {};
   const motion = () => (root.Fx && root.Fx.motion ? root.Fx.motion() : !reduced());
-  /** reading aloud: on unless turned off, and never while the app's effects are off */
-  V.enabled = () => prefs().voice !== false && prefs().effects !== false;
+  // the speaker button's choice while it is being saved: it counts from the tap on
+  let chosen = null;
+  /** reading aloud: only when the user turned it on (people who never chose hear nothing), never with the effects off */
+  V.enabled = () => (chosen != null ? chosen : prefs().voice === true) && prefs().effects !== false;
+  const hasApi = () => !!(root.speechSynthesis && root.SpeechSynthesisUtterance);
+  const webdriver = () => !!(root.navigator && root.navigator.webdriver);
   // a browser run by a test (navigator.webdriver: puppeteer, Lighthouse) never speaks: on Windows its speech played on
   // the computer's speakers while the test suites ran (6 Nov 2026)
-  V.supported = () => !!(root.speechSynthesis && root.SpeechSynthesisUtterance) && !(root.navigator && root.navigator.webdriver);
+  V.supported = () => hasApi() && !webdriver();
   const synth = () => (V.supported() ? root.speechSynthesis : null);
 
   const LANG = (root.U && root.U.LANG) || doc.documentElement.lang || 'he';
-  const TAG = { he: 'he-IL', en: 'en-US', ru: 'ru-RU', ar: 'ar-SA', fr: 'fr-FR', es: 'es-ES', am: 'am-ET' }[LANG] || 'he-IL';
-  /** the voice for the app's language: { listed: the browser listed any voices, voice: one for us or null } */
-  function voiceFor() {
+  /** The browser's voices, or null while that is not known yet (Chrome fills the list a moment after the first ask).
+   *  No speech in the browser: known, and empty. A browser run by a test never learns its voices, so Settings shows
+   *  the switch there as before. */
+  function voiceList() {
+    if (!hasApi()) return [];
+    if (webdriver()) return null;
     let list = [];
-    try { list = synth().getVoices() || []; } catch (e) { list = []; }
-    const bases = LANG === 'he' ? ['he', 'iw'] : [LANG];
-    const norm = (v) => String(v.lang || '').toLowerCase().replace('_', '-');
-    const mine = list.filter((v) => bases.some((b) => norm(v) === b || norm(v).startsWith(b + '-')));
-    return { listed: list.length > 0, voice: mine.find((v) => norm(v) === TAG.toLowerCase() && v.localService) || mine.find((v) => norm(v) === TAG.toLowerCase()) || mine.find((v) => v.localService) || mine[0] || null };
+    try { list = root.speechSynthesis.getVoices() || []; } catch (e) { return []; }
+    return list.length ? list : null;
   }
+  /** an offline voice for the app's language, or null */
+  const voiceFor = () => pickVoice(voiceList() || [], LANG);
   V.voiceFor = voiceFor;
-  // Chrome fills the list of voices a moment after the first ask
-  try { if (synth()) synth().getVoices(); } catch (e) { /* none */ }
+  V.known = () => voiceList() !== null;
+  /** the coin can read aloud here: speech works, and the device has an offline voice in the app's language */
+  V.available = () => V.supported() && !!voiceFor();
+  // once shown in this page life, the Settings switch stays: a redraw of Settings never takes it out from under a finger
+  let switchShown = false;
+  /** Settings › Look shows the reading-aloud switch: a voice is here, or the list is not known yet */
+  V.showSwitch = () => (switchShown = switchShown || V.available() || !V.known());
   // the user's gender as the setup learned it (the chip tapped there), else as saved
   let gender = '';
   const genderNow = () => gender || (root.Store && root.Store.S && root.Store.S.settings && root.Store.S.settings.gender) || '';
   const clean = (t) => spoken(t, LANG, genderNow());
   V.clean = clean;
+
+  /* ---------------- the list of voices ---------------- */
+  const waiting = new Set(); // lines asked for before the list came
+  let listening = false;
+  /** Listen once for the list. When it comes, the waiting line decides (speak or stay quiet), and the setup screen
+   *  on show gets its speaker button. */
+  function listenVoices() {
+    const S = synth();
+    if (listening || !S) return;
+    listening = true;
+    const arrived = () => {
+      if (!V.known()) return;
+      try {
+        if (S.removeEventListener) S.removeEventListener('voiceschanged', arrived);
+        if (S.onvoiceschanged === arrived) S.onvoiceschanged = null;
+      } catch (e) { /* none */ }
+      const runs = [...waiting];
+      waiting.clear();
+      runs.forEach(go);
+      const ob = doc.querySelector('.ob3');
+      if (ob && ob.parentElement) speaker(ob.parentElement, null, true);
+    };
+    try { if (S.addEventListener) S.addEventListener('voiceschanged', arrived); else S.onvoiceschanged = arrived; } catch (e) { /* none */ }
+  }
+  // the first ask starts Chrome filling the list
+  if (V.supported() && !V.known()) listenVoices();
   /* ---------------- the mouth ---------------- */
   // 0 closed, 1 small, 2 round, 3 wide open (mascot.js TALK)
   const RHYTHM = [3, 1, 2, 0, 3, 2, 1, 0, 2, 3, 1, 0];
-  let cur = null; // the line being spoken: { getEl, timers, wordTimers, u, started, briefed, flip }
+  let cur = null; // what is being spoken: { getEl, lines, timers, wordTimers, voice, u, started, words, beat, flip }
   const later = (run, fn, ms, set) => { const id = setTimeout(() => { (set || run.timers).delete(id); if (cur === run) fn(); }, ms); (set || run.timers).add(id); return id; };
   const clearAll = (set) => { set.forEach(clearTimeout); set.clear(); };
   function elOf(run) { const e = run.getEl(); return e && e.isConnected ? e : null; }
@@ -116,82 +211,111 @@
     later(run, () => mouth(run, 0), t, run.wordTimers);
     bob(run);
   }
-  /** no word reports from the voice: a steady rhythm while it speaks */
-  function rhythm(run, ticks) {
+  /** no word reports from the voice: a steady rhythm while it speaks (the line's end or a stop ends it) */
+  function rhythm(run) {
     let i = 0;
     const tick = () => {
-      if (ticks != null && i >= ticks) { finish(run); return; }
       mouth(run, RHYTHM[i % RHYTHM.length]);
+      if (cur !== run) return;
       if (i % 4 === 0) bob(run);
       i++;
       run.beat = later(run, tick, 130);
     };
     tick();
   }
-  /** no voice, or it failed: the mouth still moves for a moment, quietly */
-  function brief(run) {
-    if (run.briefed || cur !== run) return;
-    run.briefed = true;
-    clearAll(run.timers); clearAll(run.wordTimers);
-    rhythm(run, 8);
-  }
+  function stopBeat(run) { if (run.beat) { clearTimeout(run.beat); run.timers.delete(run.beat); run.beat = null; } }
+  /** done, or the voice failed: quiet, and the coin's own resting mouth */
   function finish(run) {
     clearAll(run.timers); clearAll(run.wordTimers);
+    waiting.delete(run);
     mouth(run, null);
     if (cur === run) cur = null;
   }
   const guessLen = (text, i) => { const m = /^\S+/.exec(text.slice(i || 0)); return m ? m[0].length : 4; };
+  const WAIT = 1500; // the longest a first tap waits for the list of voices
+  const PAUSE = 350; // between the bubble's line and the question
+  const NO_START = 2500; // a voice silent this long after the ask never will be
 
-  /** Speak a line. target: the coin's element, or a function that finds it (the screen may redraw it). */
-  V.speak = function (target, text) {
+  /** Speak one line or a few, a short pause between them. target: the coin's element, or a function that finds it
+   *  (the screen may redraw it). Without an offline voice for the language nothing is said and the mouth stays still. */
+  V.speak = function (target, what) {
     V.stop();
-    text = clean(text);
-    if (!text) return null;
-    const run = { getEl: typeof target === 'function' ? target : () => target, timers: new Set(), wordTimers: new Set(), text };
+    const lines = (Array.isArray(what) ? what : [what]).map((t) => voiceLine(t, LANG, genderNow())).filter(Boolean);
+    if (!lines.length || !synth()) return null;
+    const run = { getEl: typeof target === 'function' ? target : () => target, timers: new Set(), wordTimers: new Set(), lines };
     cur = run;
+    if (V.known()) go(run);
+    else {
+      // the first tap can come before Chrome has listed its voices: wait a moment for them
+      waiting.add(run);
+      listenVoices();
+      run.wait = later(run, () => go(run), WAIT);
+    }
+    return run;
+  };
+  /** the list is known (or the wait is over): speak with an offline voice, or stay quiet */
+  function go(run) {
+    if (cur !== run || run.going) return;
+    run.going = true;
+    waiting.delete(run);
+    if (run.wait) { clearTimeout(run.wait); run.timers.delete(run.wait); }
+    run.voice = voiceFor();
+    if (!run.voice) { finish(run); return; }
+    line(run, 0);
+  }
+  function line(run, i) {
     const S = synth();
-    const pick = S ? voiceFor() : { listed: false, voice: null };
-    // a browser that lists voices but none in this language would read it in a wrong accent: the mouth alone
-    if (!S || (pick.listed && !pick.voice)) { brief(run); return run; }
+    if (!S || !elOf(run)) { V.stop(); return; } // the coin left the screen during the pause
+    const text = run.lines[i];
+    run.started = false; run.words = false; run.beat = null;
     let u;
-    try { u = new root.SpeechSynthesisUtterance(text); } catch (e) { brief(run); return run; }
-    try {
-      u.lang = pick.voice ? pick.voice.lang : TAG;
-      if (pick.voice) u.voice = pick.voice;
-      u.rate = 1; u.pitch = 1.15; u.volume = 1;
-    } catch (e) { /* the voice's own defaults */ }
+    try { u = new root.SpeechSynthesisUtterance(text); } catch (e) { finish(run); return; }
+    try { u.voice = run.voice; u.lang = run.voice.lang; u.rate = 1; u.pitch = 1.15; u.volume = 1; } catch (e) { /* the voice's own defaults */ }
     run.u = u;
+    // an utterance stopped or replaced reports nothing more
+    const live = () => cur === run && run.u === u;
     u.onstart = () => {
-      if (cur !== run || run.briefed) return;
+      if (!live() || run.started) return;
       run.started = true;
       mouth(run, 0);
       // a voice that reports no words within a moment gets the steady rhythm
-      later(run, () => { if (!run.words) rhythm(run); }, 320);
+      later(run, () => { if (run.u === u && !run.words) rhythm(run); }, 320);
     };
     u.onboundary = (e) => {
-      if (cur !== run || run.briefed || (e.name && e.name !== 'word')) return;
-      if (!run.words) { run.words = true; if (run.beat) { clearTimeout(run.beat); run.timers.delete(run.beat); } }
+      if (!live() || (e.name && e.name !== 'word')) return;
+      if (!run.words) { run.words = true; stopBeat(run); }
       word(run, e.charLength || guessLen(text, e.charIndex));
     };
-    u.onend = () => { if (cur === run) finish(run); };
-    u.onerror = () => { if (cur !== run) return; if (run.started) finish(run); else brief(run); };
+    u.onend = () => { if (live()) next(run, i); };
+    // failed before or after it started: quiet, never a mouth moving without a voice
+    u.onerror = () => { if (live()) finish(run); };
     try {
       if (S.speaking || S.pending) S.cancel();
+      run.spoke = true;
       S.speak(u);
-    } catch (e) { brief(run); return run; }
-    // a voice that never starts (no engine, or the browser holds it back): the mouth moves briefly anyway
-    later(run, () => { if (!run.started && !run.briefed) { try { S.cancel(); } catch (x) { /* none */ } brief(run); } }, 2500);
-    return run;
-  };
-  /** Stop speaking now (the screen changed, the setup closed, the page went to the background). */
+    } catch (e) { finish(run); return; }
+    later(run, () => { if (run.u === u && !run.started) { try { S.cancel(); } catch (x) { /* none */ } finish(run); } }, NO_START);
+  }
+  /** a line ended: the mouth closes for the pause, then the next line, or done */
+  function next(run, i) {
+    clearAll(run.timers); clearAll(run.wordTimers);
+    run.beat = null;
+    if (i + 1 >= run.lines.length) { finish(run); return; }
+    mouth(run, 0);
+    if (cur !== run) return;
+    later(run, () => line(run, i + 1), PAUSE);
+  }
+  /** Stop speaking now (the screen changed, the setup closed, the page went to the background): the voice, a line
+   *  still to come, the pause and the wait for the voices all end here. */
   V.stop = function () {
     const run = cur;
     if (!run) return;
     cur = null;
     clearAll(run.timers); clearAll(run.wordTimers);
+    waiting.delete(run);
     const e = run.getEl();
     if (e) { e.classList.remove('talking'); e.removeAttribute('data-mouth'); }
-    if (run.u) { try { synth().cancel(); } catch (x) { /* none */ } }
+    if (run.spoke) { try { synth().cancel(); } catch (x) { /* none */ } }
   };
   V.speaking = () => !!cur;
 
@@ -246,22 +370,55 @@
   /* ---------------- the setup questions ---------------- */
   const step = { key: null, timers: [] };
   const FIELD = '.content input:not([type="hidden"]), .content .pk-field, .content .ob-city, .content .ob-chips';
-  /** The words of a setup screen: the bubble's line when it is short, then the question. */
+  /** The words of a setup screen, each its own utterance: the bubble's line when it is short, then the question.
+   *  Each line stays as shown (cleaned), so SAY can find it by its words. */
   function lineOf(scope) {
     const b = scope.querySelector('.content .m-say .bubble'), h = scope.querySelector('.content h1');
-    const bt = clean(b && b.textContent), ht = clean(h && h.textContent);
-    return [bt && bt.length <= 60 ? bt : '', ht].filter(Boolean).map((t) => (/[.!?:…؟]$/.test(t) ? t : t + '.')).join(' ');
+    const bt = clean(sayText(b)), ht = clean(sayText(h));
+    return [bt && bt.length <= 60 ? bt : '', ht].filter(Boolean);
   }
   V.lineOf = lineOf;
   // a tap has happened on this page (the browser lets a page speak only after one)
   const tapped = () => !root.navigator || !root.navigator.userActivation || root.navigator.userActivation.hasBeenActive;
 
-  function speaker(v) {
+  // the invitation pulse on the speaker button: once a page life, and never after the button was tapped
+  let invited = false;
+  /** a soft pulse (styles-v3.css m-spk-invite) for someone who never chose; it ends with its own animation */
+  function invite(b) {
+    invited = true;
+    b.classList.add('m-spk-invite');
+    let t = 0;
+    const done = (e) => {
+      // the button's own entrance (bubble-in) ends first: only the pulse's end counts
+      if (e && !/^spk-invite/.test(e.animationName || '')) return;
+      clearTimeout(t);
+      b.removeEventListener('animationend', done);
+      b.classList.remove('m-spk-invite');
+    };
+    b.addEventListener('animationend', done);
+    t = setTimeout(() => done(), 2000);
+  }
+  /** invisible and out of reach, in its place: nothing beside it moves */
+  function quiet(b) {
+    b.style.visibility = 'hidden';
+    b.classList.add('m-spk-none');
+    b.classList.remove('m-spk-invite');
+    b.setAttribute('aria-hidden', 'true');
+    b.tabIndex = -1;
+  }
+  let quietKey = null; // the screen whose button went invisible: drawn again (an answer tapped), it keeps that place
+  /** The speaker button. With the screen (late false): none when the effects are off, speech is missing, or the list
+   *  is known and has no offline voice; otherwise a button, also while the list is not known yet. Later (the list
+   *  came, the button was tapped): a button is never added or taken away, so nothing on the screen moves; with no
+   *  offline voice it turns invisible (quiet) and keeps its place. */
+  function speaker(v, key, late) {
     const say = v.querySelector('.content .m-say');
     if (!say) return;
     let b = say.querySelector('.m-spk');
-    // no voice engine at all, or the effects are off: no button (Settings › Look holds the choice)
-    if (!V.supported() || prefs().effects === false) { if (b) b.remove(); return; }
+    if (V.supported() && !V.known()) listenVoices();
+    const none = prefs().effects === false || !V.supported() || (V.known() && !voiceFor());
+    if (!late && key !== quietKey) quietKey = null;
+    if (late ? !b : none && !quietKey) { if (b) b.remove(); return; }
     if (!b) {
       b = doc.createElement('button');
       b.type = 'button';
@@ -274,6 +431,16 @@
       b.setAttribute('aria-pressed', String(on));
       b.innerHTML = root.UI ? root.UI.icon(on ? 'voice' : 'voiceOff') : '';
     }
+    if (none) { quiet(b); if (late) quietKey = step.key; return; }
+    if (b.classList.contains('m-spk-none')) {
+      // a voice came after all: the button shows again in the same place
+      quietKey = null;
+      b.style.visibility = '';
+      b.classList.remove('m-spk-none');
+      b.removeAttribute('aria-hidden');
+      b.removeAttribute('tabindex');
+    }
+    if (!invited && prefs().voice === undefined && V.available()) invite(b);
   }
   function bind(v) {
     if (v._mascotVoice) return;
@@ -287,7 +454,7 @@
   App.mascotStep = function (v, key, dir) {
     if (!v) return;
     bind(v);
-    speaker(v);
+    speaker(v, key);
     const fresh = key !== step.key;
     step.key = key;
     const e = current();
@@ -317,14 +484,21 @@
     if (!t || !t.closest) return;
     const spk = t.closest('.m-spk');
     if (spk) {
+      invited = true;
+      spk.classList.remove('m-spk-invite');
       const on = !V.enabled();
-      // the screen's buttons react first; the setting is saved, then the button shows it
-      setVoice(on).then(() => {
-        const v = spk.closest('.ob3') ? spk.closest('.ob3').parentElement : null;
-        if (v) speaker(v);
-        if (on && v) V.speak(current, lineOf(v)); else V.stop();
-      });
+      const v = spk.closest('.ob3') ? spk.closest('.ob3').parentElement : null;
+      // the choice counts at once; the button shows it and the voice starts inside this tap (iOS Safari and Android
+      // Chrome let a page start speech only from the user's own tap), and the saving follows
+      chosen = on;
+      if (v) speaker(v, step.key, true);
+      if (on && v) V.speak(current, lineOf(v)); else V.stop();
+      // the click sound plays through Web Audio and leaves the speech alone
       if (root.Fx) root.Fx.play(on ? 'on' : 'off');
+      setVoice(on).then(() => {
+        if (chosen === on) chosen = null;
+        if (v && v.isConnected) speaker(v, step.key, true);
+      });
       return;
     }
     // an answer tapped in the setup: a nod (after the screen redrew itself)
@@ -341,11 +515,12 @@
   /** the words beside a coin outside the setup: its bubble, or the nearest heading and line of text */
   function lineNear(m) {
     const say = m.closest('.m-say');
-    if (say) { const b = say.querySelector('.bubble'); return b ? b.textContent : ''; }
+    if (say) { const b = say.querySelector('.bubble'); return b ? sayText(b) : ''; }
     let p = m.parentElement;
     for (let i = 0; p && i < 3; i++, p = p.parentElement) {
-      const parts = [...p.querySelectorAll('h1, h2, h3, .bubble, p, .lead')].filter((x) => !x.contains(m)).slice(0, 2).map((x) => clean(x.textContent)).filter(Boolean);
-      if (parts.length) return parts.map((s) => (/[.!?:…؟]$/.test(s) ? s : s + '.')).join(' ');
+      const parts = [...p.querySelectorAll('h1, h2, h3, .bubble, p, .lead')].filter((x) => !x.contains(m)).slice(0, 2).map((x) => clean(sayText(x))).filter(Boolean);
+      // joined into one line: a full stop between the parts unless one ends a sentence already (Amharic ። and ፧ too)
+      if (parts.length) return parts.map((s) => (/[.!?:…؟።፧]$/.test(s) ? s : s + '.')).join(' ');
     }
     return '';
   }

@@ -323,10 +323,26 @@ body.fx .nav .fab:active { transform: scale(.9) rotate(90deg); }
 .m-say .m-spk:active { transform: scale(.94); }
 .m-say .m-spk[aria-pressed="true"] { color: var(--brand); }
 .m-say .m-spk .i { width: 20px; height: 20px; }
+/* reading aloud starts off, so the first setup screen invites a tap once: one soft brand ring grows and fades.
+   It lives on ::after, never on the button, so it can't fight the :active press or the entrance (which ends at .46s,
+   hence the .5s delay), takes no layout room, and ignores taps. Its animationend still fires on the button itself
+   (target = the button, pseudoElement '::after'); match animationName 'spk-invite' or 'spk-invite-still', since the
+   button's own bubble-in also ends there. Done at 1.7s, inside the JS's 2s fallback. */
+.m-say .m-spk.m-spk-invite::after { content: ''; position: absolute; inset: -1px; border-radius: inherit; border: 2px solid var(--brand); pointer-events: none; animation: spk-invite 1.2s .5s both; }
+@keyframes spk-invite {
+  0% { opacity: 0; transform: scale(1); animation-timing-function: ease-out; }
+  20% { opacity: .7; transform: scale(1.08); animation-timing-function: cubic-bezier(.23, 1, .32, 1); }
+  100% { opacity: 0; transform: scale(1.4); }
+}
+/* no growth with reduced motion: the ring shows in place and fades, opacity only, same timing */
+@keyframes spk-invite-still { 0%, 100% { opacity: 0; } 25%, 60% { opacity: .7; } }
 @media (prefers-reduced-motion: reduce) {
   /* the mouth still moves with the words; the coin itself stays put */
   .mascot .m-talkb, .mascot .m-act { transform: none !important; transition: none; }
   .mascot .m-look, .m-say .m-spk { transition: none; }
+  /* !important on purpose: styles.css stops every animation here (*::after included), which would leave a hard ring
+     on screen until the JS fallback; this one only fades, and its animationend still lets the JS clean up at 1.7s */
+  .m-say .m-spk.m-spk-invite::after { animation: spk-invite-still 1.2s ease .5s both !important; }
 }
 
 .m-say { display: flex; align-items: flex-end; gap: 8px; margin: 2px 0 12px; }

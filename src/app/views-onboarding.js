@@ -46,9 +46,10 @@
     const STEPS = ['hi', 'me', 'age', 'job', 'rules', 'travel', 'city', 'start', 'done'];
     const QUESTIONS = STEPS.length - 2;
     let step = 0, dir = 'next', saving = false, msg = '', saved = false, demo = false, slip = false, blocked = false, loadFailed = false;
-    // he / she / both, for the questions' wording
-    // he / she wording; not chosen: the neutral form given, or "מקבל/ת" when the feminine word only adds letters
-    const g = (m, f, x) => (A.gender === 'f' ? f : A.gender === 'm' || m === f ? m : x || (f.startsWith(m) ? m + '/' + f.slice(m.length) : m + '/' + f));
+    // he / she wording; not chosen: the neutral form given, or "מקבל/ת" when the feminine word only adds letters.
+    // Not chosen, the coin reads one form aloud (data-say, mascot-voice.js): in a translation the two forms can be
+    // whole phrases ("هل تحصل على/هل تحصلين على"), and a voice would read both one after the other.
+    const g = (m, f, x) => (A.gender === 'f' ? f : A.gender === 'm' || m === f ? m : `<span data-say="${esc(m)}">${x || (f.startsWith(m) ? m + '/' + f.slice(m.length) : m + '/' + f)}</span>`);
     const age = () => (A.birth ? Engine.ageAt(A.birth, today) : null);
     const minWage = () => Engine.legalMinWage(today, A.birth || null).hourly;
     const money = (n) => U.money(n, Number.isInteger(+n) ? 0 : 2);
