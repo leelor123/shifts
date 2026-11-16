@@ -198,7 +198,13 @@
   if (root.__appPort) { if (S.settings) take(root.__appPort); else whenReady(() => { if (root.__appPort) take(root.__appPort); }); }
   // the phone was wiped (signing out, deleting the account): the page reloads right after, so the widgets hear it
   // now, not in 0.7 s
-  Store.on((ev) => { if (ev && ev.type === 'restore' && noData()) send(true); else App.widgets.push(); });
+  Store.on((ev) => {
+    // a wipe (Store.wipe: signed out, account deleted, another account on this phone) has no mode: the saved
+    // workplaces were that person's, so the Android app forgets them all and stops suggesting (app/arrive.js). A
+    // restored backup (mode replace or merge) never holds a place (they stay on the phone only), so they stay.
+    if (ev && ev.type === 'restore' && !ev.mode) App.widgets.post(JSON.stringify({ geo: 1, off: 1 }));
+    if (ev && ev.type === 'restore' && noData()) send(true); else App.widgets.push();
+  });
   // back to the front: the numbers, and any start or end tapped on a widget meanwhile ("ask": the phone answers with them)
   document.addEventListener('visibilitychange', () => {
     if (document.visibilityState !== 'visible') return;

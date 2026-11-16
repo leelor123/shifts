@@ -403,9 +403,7 @@
             readInputs();
             if (!/^\d{4}-\d{2}$/.test(d.period || '')) { UI.invalid('בחרו את חודש התלוש'); return; }
             // mapped unknown lines
-            for (const o of d.other) {
-              if (Payslip.FIELD[o.guess] && !d.fields[o.guess]) d.fields[o.guess] = { value: Math.abs(o.value), line: o.line };
-            }
+            Payslip.addNamedLines(d.fields, d.other);
             for (const k of Object.keys(d.fields)) if (d.fields[k].value == null && d.fields[k].qty == null) delete d.fields[k];
             if (!Object.keys(d.fields).length) { UI.invalid('הוסיפו לפחות שורה אחת מהתלוש'); return; }
             UI.closeTop();

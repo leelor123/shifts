@@ -87,7 +87,9 @@
     };
   }
 
-  /** Send today's record (at most every 6 hours) when signed in and allowed. */
+  /** What the funnel steps on: has a finished shift, a payslip, a planned shift. A change sends without the wait. */
+  Stats.mark = (rec) => [+rec.sh > 0, +rec.ps > 0, !!(rec.f && rec.f.planned)].map(Number).join('');
+  /** Send today's record (at most every 6 hours, or at once when Stats.mark changed) when signed in and allowed. */
   Stats.report = async function (force) {
     try {
       const Cloud = root.Cloud;
@@ -95,12 +97,15 @@
       // turned off (maybe on another phone, the setting syncs): this phone's record goes too
       if (!Stats.enabled()) { if (S.meta.statsSentAt) await Stats.forget(); return; }
       if (App.legalAccepted && !App.legalAccepted()) return; // only after the privacy policy that describes it was accepted
-      if (!force && S.meta.statsSentAt && Date.now() - S.meta.statsSentAt < 6 * 3600000) return;
-      if (!S.meta.installId) await Store.setMeta({ installId: (root.crypto && crypto.randomUUID ? crypto.randomUUID() : U.uid() + U.uid()).replace(/-/g, '') });
+      // the first shift (done or planned) or the first payslip goes up at once: held for six hours, someone who tried
+      // the app once and saved a shift stayed "never entered a shift" in the funnel (review 2026-11-16)
       const rec = record();
+      const mark = Stats.mark(rec);
+      if (!force && S.meta.statsSentAt && Date.now() - S.meta.statsSentAt < 6 * 3600000 && S.meta.statsMark === mark) return;
+      if (!S.meta.installId) await Store.setMeta({ installId: (root.crypto && crypto.randomUUID ? crypto.randomUUID() : U.uid() + U.uid()).replace(/-/g, '') });
       // the same record as the last one sent (the same day, the same counts): nothing new for the dashboard
       const sig = JSON.stringify(Object.assign({}, rec, { t: 0, id: S.meta.installId }));
-      if (!force && S.meta.statsSig === sig) { await Store.setMeta({ statsSentAt: Date.now() }); return; }
+      if (!force && S.meta.statsSig === sig) { await Store.setMeta({ statsSentAt: Date.now(), statsMark: mark }); return; }
       const { fs, db } = await Cloud.sdk();
       try { await fs.setDoc(fs.doc(db, 'stats', S.meta.installId), rec); } catch (e) {
         // rules from before the ios field (1.33) or the src field (1.40) refuse them: the record still goes, without them
@@ -108,7 +113,7 @@
         delete rec.ios; delete rec.src;
         await fs.setDoc(fs.doc(db, 'stats', S.meta.installId), rec);
       }
-      await Store.setMeta({ statsSentAt: Date.now(), statsSig: sig });
+      await Store.setMeta({ statsSentAt: Date.now(), statsSig: sig, statsMark: mark });
     } catch (e) { /* statistics never get in the way */ }
   };
   /** Turning statistics off removes this device's record. opts.strict (deleting the account): a failure throws, so

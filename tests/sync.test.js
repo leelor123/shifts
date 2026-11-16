@@ -11,7 +11,7 @@ const wait = (ms) => new Promise((r) => setTimeout(r, ms));
 
 async function phone(backend, opts) {
   opts = opts || {};
-  const ctx = { console, setTimeout, clearTimeout, setInterval: () => 0, clearInterval() {}, indexedDB: fakeIndexedDB(), navigator: { onLine: true } };
+  const ctx = { console, setTimeout, clearTimeout, setInterval: () => 0, clearInterval() {}, indexedDB: opts.idb || fakeIndexedDB(), navigator: { onLine: true } };
   ctx.window = ctx;
   ctx.addEventListener = () => {};
   ctx.UI = { dialog: async () => opts.answer || 'merge', confirm: async () => true, timeAgo: () => '', toast() {} };
@@ -24,7 +24,7 @@ async function phone(backend, opts) {
     vm.runInContext(fs.readFileSync(path.join(SRC, f), 'utf8'), ctx, { filename: f });
   }
   const { client, fs: ffs } = fakeClient(backend);
-  ctx.Cloud._useSdk({ app: {}, auth: {}, db: {}, au: {}, fs: ffs });
+  ctx.Cloud._useSdk({ app: {}, auth: {}, db: {}, au: { signOut: async () => {} }, fs: ffs });
   await ctx.Store.load();
   const S = ctx.Store.S;
   return {
@@ -359,8 +359,9 @@ T.atest('the Android widgets are told the phone holds no data, at once, when it 
   hello({ origin: 'https://site', data: 'shaati:widgets', ports: [port] });
   T.eq(got.length, 1); T.eq(got[0].gross, '₪1,234', 'the numbers go to the widgets');
   await A.Store.wipe(); // signing out / deleting the account
-  T.eq(got.length, 2, 'sent at once, before the page reloads');
-  const e = got[1];
+  const snaps = got.filter((m) => !m.geo); // (a wipe also turns the workplaces off: {geo, off}, widgets.js)
+  T.eq(snaps.length, 2, 'sent at once, before the page reloads');
+  const e = snaps[1];
   T.ok(e.v >= 1, 'a snapshot the Android app keeps (WidgetData.save takes v >= 1)');
   T.ok(e.empty === true && !('gross' in e) && !('active' in e) && !('payday' in e) && !('goal' in e) && !('saving' in e), 'no numbers: ' + JSON.stringify(e));
   T.ok(e.periodTo < '2001-01-01', 'a period that ended: every widget draws "open Shaati to update"');
@@ -950,4 +951,93 @@ T.atest('shift log: deleting the account deletes its records in the cloud', asyn
   await A.Cloud.deleteAccountData();
   T.eq([...be.docs.keys()].filter((k) => k.startsWith('users/u1/ledger/')).length, 0, 'no log record is left');
   T.eq(A.S.ledger.length, 0, 'and the phone\'s copy is gone');
+});
+
+/* ---- the 1.39 sync review (track 3b): each scenario failed before its fix ---- */
+const editShift = (P, id, note) => P.Store.apply([{ store: 'shifts', put: Object.assign({}, P.shift(id), { note }) }], 'e');
+const offline = (P) => { P.client.online = false; P.ctx.navigator.onLine = false; };
+
+// #1: a "replace" restore made offline (connected, or opened offline and not connected yet) was undone on reconnect
+for (const notConnected of [false, true]) {
+  T.atest('a "replace" restore made offline holds when the network returns' + (notConnected ? ' (opened offline, not connected)' : ''), async () => {
+    const be = fakeBackend(); const idb = fakeIndexedDB();
+    const A = await phone(be, { idb });
+    await A.add('y', 'in backup');
+    await A.Store.setSettings((s) => { s.onboarded = true; s.goal.amount = 1000; });
+    await A.Cloud.connect(user); await wait(100);
+    const backup = JSON.parse(JSON.stringify(await A.Store.exportBackup(false)));
+    await wait(5); await A.add('x', 'made after the backup'); await editShift(A, 'y', 'edited after the backup');
+    await A.Store.setSettings((s) => { s.goal.amount = 9999; }); await A.sync(); await wait(100);
+    offline(A);
+    let B = A;
+    if (notConnected) { A.ctx.Cloud.user = null; be.clients.delete(A.client); B = await phone(be, { idb }); offline(B); }
+    await B.Store.importBackup(backup, 'replace'); await wait(100);
+    B.ctx.navigator.onLine = true;
+    if (notConnected) { B.client.online = true; await B.Cloud.connect(user); } else { await B.client.goOnline(); await B.sync(); }
+    await wait(500);
+    T.eq(B.S.shifts.map((s) => s.id + ':' + s.note).join(','), 'y:in backup', 'the backup\'s shifts only');
+    T.eq(B.S.settings.goal.amount, 1000, 'the backup\'s settings');
+    T.ok(be.docs.get('users/u1/shifts/x').d, 'the shift made after the backup is a tombstone in the account');
+    T.eq(JSON.parse(be.docs.get('users/u1/shifts/y').j).note, 'in backup', 'the account holds the restored version');
+    T.ok(!B.S.meta.restorePending, 'settled');
+  });
+}
+
+// #3: a shift deleted just before the app closed (the push wait not over) came back on the next opening
+T.atest('a shift deleted just before the app closes stays deleted on the next opening', async () => {
+  const be = fakeBackend(); const idb = fakeIndexedDB();
+  const A1 = await phone(be, { idb }); await A1.add('x', 'shift'); await A1.add('k', 'keep');
+  await A1.Cloud.connect(user); await wait(100);
+  await A1.Store.apply([{ store: 'shifts', del: 'x' }], 'del');
+  A1.ctx.Cloud.user = null; be.clients.delete(A1.client); await wait(50); // closed before the push
+  const A2 = await phone(be, { idb });
+  await A2.Cloud.connect(user); await wait(400);
+  T.ok(!A2.shift('x'), 'not back on the phone');
+  T.ok(A2.shift('k'), 'the other shift is there');
+  T.ok(be.docs.get('users/u1/shifts/x').d, 'the tombstone reached the account');
+});
+
+// #4: an offline delete refused by the server (another phone edited later) stayed queued: a sync error on every push
+T.atest('a refused offline delete takes the newer copy and leaves the queue', async () => {
+  const be = fakeBackend();
+  const A = await phone(be); await A.add('x', 'v1'); await A.Cloud.connect(user); await wait(100);
+  const B = await phone(be); await B.Cloud.connect(user); await wait(200);
+  offline(A);
+  await wait(5); await A.Store.apply([{ store: 'shifts', del: 'x' }], 'del'); await A.sync();
+  await wait(5); await editShift(B, 'x', 'B later edit'); await B.sync(); await wait(50);
+  A.ctx.navigator.onLine = true; await A.client.goOnline(); await wait(300);
+  T.eq(A.shift('x') && A.shift('x').note, 'B later edit', 'the newer copy came back');
+  T.eq(A.S.meta.pendingDeletes.length, 0, 'the refused tombstone left the queue');
+  const r0 = be.rejected;
+  for (let i = 0; i < 3; i++) { await A.add('n' + i, 'unrelated'); await A.sync(); await wait(100); }
+  T.eq(be.rejected, r0, 'not sent again');
+  T.ok(A.Cloud.status !== 'error' && !A.Cloud.hasUnsynced(), 'synced');
+});
+
+// #5: a change heard just before sign-out landed in the wiped phone 120 ms later, and went to the next account
+T.atest('nothing heard from an account lands on the phone after sign-out', async () => {
+  const be = fakeBackend(); const u2 = { uid: 'u2', email: 'two@example.com' };
+  const A = await phone(be); await A.Cloud.connect(user); await wait(100);
+  const B = await phone(be); await B.Cloud.connect(user); await wait(200);
+  await B.add('secret', 'u1 private shift'); B.Cloud.schedulePush(0);
+  for (let i = 0; i < 500 && !be.docs.has('users/u1/shifts/secret'); i++) await wait(1); // A hears it as it lands (applied 120 ms later)
+  T.ok(be.docs.has('users/u1/shifts/secret') && !A.shift('secret'), 'heard by A, not applied yet');
+  await A.Cloud.signOut();
+  await wait(200);
+  T.eq(A.S.shifts.length, 0, 'the wiped phone stays empty');
+  await A.Cloud.connect(u2); await wait(200);
+  T.eq([...be.docs.keys()].filter((k) => k.startsWith('users/u2/shifts/')).length, 0, 'the next account got nothing of the first');
+});
+
+// #6: a local edit within the 120 ms between hearing a remote change and applying it was overwritten and never sent
+T.atest('a save made while a heard change waits to be applied wins and is uploaded', async () => {
+  const be = fakeBackend();
+  const A = await phone(be); await A.add('x', 'v1'); await A.Cloud.connect(user); await wait(100);
+  const B = await phone(be); await B.Cloud.connect(user); await wait(200);
+  await editShift(B, 'x', 'B edit'); B.Cloud.schedulePush(0); await wait(40);
+  await editShift(A, 'x', 'A newer edit');
+  await wait(2500);
+  T.eq(A.shift('x').note, 'A newer edit', 'the newer save stays');
+  T.eq(JSON.parse(be.docs.get('users/u1/shifts/x').j).note, 'A newer edit', 'and reached the account');
+  T.eq(A.Store.dirtyRecords().length, 0);
 });

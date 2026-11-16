@@ -200,7 +200,8 @@
     'adminUid', // the account this phone last heard is an admin (the server's rules decide what an admin may do)
     'guest', // this phone is used without an account, by choice (its data lives here only)
     'ledgerChain']; // this phone's own chain in the signed shift log (another phone, or a restored backup, starts its own)
-  const SYNC_META = ['pendingDeletes', 'settingsDirty', 'activeDirty', 'activeUpdatedAt'];
+  // (restorePending: a "replace" restore the account does not know of yet, cloud.js settleRestore)
+  const SYNC_META = ['pendingDeletes', 'settingsDirty', 'activeDirty', 'activeUpdatedAt', 'restorePending'];
   /*
    * What the app remembers about the person, for the account and not for one phone: the answers they gave (did the
    * salary arrive, how much), what they already saw or finished (the guide, the month's story, what's new, a rating
@@ -521,6 +522,15 @@
   async function applyRemote(ops) {
     if (!ops.length) return;
     const writes = [];
+    // a record taken from the account settles this phone's tombstone of it: the account's version stands (else the
+    // refused tombstone was sent again with every push, a sync error for ever, 1.39 review)
+    const pend = S.meta.pendingDeletes || [];
+    const before = pend.length;
+    for (const op of ops) {
+      const id = op.put ? op.put.id : op.del;
+      for (let i = pend.length - 1; i >= 0; i--) if (pend[i].store === op.store && pend[i].id === id) pend.splice(i, 1);
+    }
+    const metaChanged = pend.length !== before;
     for (const op of ops) {
       const arr = S[op.store];
       if (APPEND_ONLY.includes(op.store) && (op.del || (op.put && arr.some((x) => x.id === op.put.id)))) continue; // never removed or replaced
@@ -537,9 +547,10 @@
         writes.push([op.store, null, op.del]);
       }
     }
-    await run([...new Set(ops.map((o) => o.store))], 'readwrite', (t) => {
+    await run([...new Set(ops.map((o) => o.store).concat(metaChanged ? ['kv'] : []))], 'readwrite', (t) => {
       if (!t) return;
       for (const [st, rec, id] of writes) { if (rec) t.objectStore(st).put(rec); else t.objectStore(st).delete(id); }
+      if (metaChanged) t.objectStore('kv').put({ key: 'meta', value: S.meta });
     });
     undoStack.length = 0; // remote changes invalidate local undo history
     emit({ type: 'data', remote: true, stores: ops.map((o) => o.store) });
@@ -817,6 +828,17 @@
       let rate = 0;
       try { rate = root.Engine.minWageFor(S.settings, root.U.todayKey()).hourly || 0; } catch (e) { /* keep 0 */ }
       S.roles.push({ id: 'r_' + root.U.uid(), name: 'העבודה שלי', color: root.Defaults.ROLE_COLORS[0], employerId: S.employers[0].id, rates: [{ from: '2000-01-01', rate }], archived: false });
+    }
+    if (mode === 'replace') {
+      // The restore itself is the newest version of everything, also when it was made offline or before the account
+      // connected (1.39 review: the account's newer copies came back over it on reconnect). Every record and the
+      // settings get the restore's time, and an account linked to this phone learns what the restore removed once it
+      // answers (cloud.js settleRestore, then the flag goes).
+      const now = Date.now();
+      for (const s of SYNC_STORES) for (const r of S[s]) { r.updatedAt = now; delete r._syncedAt; }
+      S.settings._updatedAt = now;
+      S.meta.settingsDirty = true;
+      if (S.meta.cloudUid) S.meta.restorePending = now;
     }
     for (const s of LIST_STORES) S[s].forEach(markRec);
     markActive(); markSettings();

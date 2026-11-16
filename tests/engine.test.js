@@ -574,3 +574,70 @@ T.test('at 18 the adult limits apply again (42 a week, 8.6 a day)', () => {
   const r = youthModel('2008-05-01', 5, [s]).results.get(s.id);
   T.near(r.hoursBy.regular, 8); T.ok(!r.minorOt); T.eq(r.weekH, 42);
 });
+
+T.section('labour-law fixes (audit 2026-11-16)');
+T.test('a holiday on Shabbat is never holiday pay, even for a Saturday worker (extension order, framework agreement 2000 §7)', () => {
+  // protocol.co.il/holiday-benefits; kolzchut "דמי חגים לעובדי קבלן". Sun/Tue/Thu/Sat 09-15, June to September 2026:
+  // before, ראש השנה א׳ (12.9) and סוכות (26.9), both on Shabbat, were 'due' ₪240 each; now neither is due.
+  const rest = new Set(HebCal.holidaysForYear(2026).filter((h) => h.rest).map((h) => h.key));
+  const d = setup((x) => {
+    x.settings.startDate = '2026-01-01';
+    for (let k = '2026-06-01'; k <= '2026-09-30'; k = U.addDays(k, 1)) if ([0, 2, 4, 6].includes(U.dow(k)) && !rest.has(k)) x.shifts.push(shift(k, '09:00', '15:00'));
+  });
+  const list = Engine.holidayPay(Engine.buildModel(d), '2026-09-01', '2026-09-30', '2026-10-21');
+  const sat = list.filter((h) => h.dow === 6);
+  T.eq(sat.map((h) => h.key).join(), '2026-09-12,2026-09-26');
+  for (const h of sat) T.eq(h.status, 'weekend', h.name);
+});
+T.test('night supplement is in the overtime base (חוק שעות עבודה ומנוחה §18): Mon 20:00-06:00 at 20% = ₪488, not ₪484', () => {
+  // 8 regular + 2 at 125%, all 8 hours 22-06 at night: the 2 overtime night hours are 40 × 1.2 × 1.25 = 60 each
+  const r = calc(setup((d) => { Object.assign(d.employers[0], { nightEnabled: true, nightValue: 20 }); }), shift('2026-10-12', '20:00', '06:00'));
+  T.near(r.hoursBy.ot1, 2); T.near(r.nightPremium, 6 * 8 + 2 * 8 * 1.25); T.near(r.wage, 488);
+});
+T.test('eve supplement is in the overtime base too (§18): Friday 06:00-16:00, 10% from 14:00 = ₪430, not ₪428', () => {
+  // 14:00-16:00 are both eve hours and the day's first two overtime hours: 2 × 40 × 10% × 125% = 10 (before: 8)
+  const d = setup((x) => { Object.assign(x.employers[0], { evePct: 10 }); Object.assign(x.settings.rest, { eveFriday: true, eveFrom: '14:00' }); });
+  const r = calc(d, shift('2026-10-16', '06:00', '16:00'));
+  T.near(r.hoursBy.eve, 2); T.near(r.hoursBy.ot1, 2); T.near(r.evePremium, 10); T.near(r.wage, 430);
+});
+T.test('an adult on a holiday eve: 7 regular hours by the law (§2(ב)); erev Pesach 2027 06:00-14:00 = ₪330, not ₪320', () => {
+  const d = setup((x) => { x.employers[0] = Object.assign(Defaults.defaultEmployer(), { otLaw: true }); x.shifts = [shift('2027-04-21', '06:00', '14:00')]; });
+  const r = Engine.buildModel(d).results.get(d.shifts[0].id);
+  T.near(r.hoursBy.regular, 7); T.near(r.hoursBy.ot1, 1); T.near(r.wage, 330);
+});
+T.test('a holiday eve before a holiday they work too: a full day (§2(ב) "חג שהעובד אינו עובד בו")', () => {
+  const d = setup((x) => { x.employers[0] = Object.assign(Defaults.defaultEmployer(), { otLaw: true }); x.shifts = [shift('2027-04-21', '06:00', '14:00'), shift('2027-04-22', '09:00', '12:00')]; });
+  const r = Engine.buildModel(d).results.get(d.shifts[0].id);
+  T.near(r.hoursBy.regular, 8); T.near(r.wage, 320);
+});
+T.test('a five-day worker on Friday: no 7-hour day (kolzchut sets none; the 42 hours cover it)', () => {
+  const d = setup((x) => { x.employers[0] = Object.assign(Defaults.defaultEmployer(), { otLaw: true }); x.shifts = [shift('2026-11-06', '06:00', '14:00')]; });
+  T.near(Engine.buildModel(d).results.get(d.shifts[0].id).hoursBy.regular, 8);
+});
+T.test('the assumed break on an eve is the law\'s half hour (§20(א)): Friday 06:00-13:00 unpaid = 6.5 h, not 6.25', () => {
+  const r = calc(setup(), shift('2026-10-16', '06:00', '13:00', { breakMin: null, breakPaid: false }));
+  T.near(r.paidHours, 6.5); T.near(r.wage, 260);
+  const wk = calc(setup(), shift('2026-10-14', '06:00', '13:00', { breakMin: null, breakPaid: false }));
+  T.near(wk.paidHours, 6.25);
+});
+{
+  // kolzchut "חישוב מספר ימי החופשה השנתית" and "חופשה שנתית לבני נוער עובדים"
+  const year = (d, from, to, dows, a, b) => { for (let k = from; k <= to; k = U.addDays(k, 1)) if (dows.includes(U.dow(k))) d.shifts.push(shift(k, a, b)); };
+  T.test('part-time by hours, full days: five days of 09-15 in 2025 earn 12 days, not 8.6 (days, not hours)', () => {
+    const d = setup((x) => { x.settings.startDate = '2025-01-01'; year(x, '2025-01-01', '2025-12-31', [0, 1, 2, 3, 4], '09:00', '15:00'); });
+    T.near(Engine.leaveBalances(Engine.buildModel(d), '2025-12-31').vacationAccrued, 12, 1e-6);
+  });
+  T.test('two days a week: the share of 200 workdays', () => {
+    const d = setup((x) => { x.settings.startDate = '2025-01-01'; year(x, '2025-01-01', '2025-12-31', [0, 3], '09:00', '15:00'); });
+    const b = Engine.leaveBalances(Engine.buildModel(d), '2025-12-31');
+    T.near(b.vacationAccrued, 12 * 104 / 200, 0.4);
+  });
+  T.test('seniority by calendar year: started 1.10.2020, in 2026 it is year 7 (15 days), not year 6 (14)', () => {
+    const d = setup((x) => { x.settings.startDate = '2020-10-01'; x.settings.leave.vacationOpeningDate = '2026-01-01'; year(x, '2026-01-01', '2026-02-28', [0, 1, 2, 3, 4], '08:00', '16:30'); });
+    T.near(Engine.leaveBalances(Engine.buildModel(d), '2026-02-28').vacationAccrued, 15 / 12 * 2, 1e-6);
+  });
+  T.test('a minor gets 18 calendar days: 14 days off in a five-day week, not 12', () => {
+    const d = setup((x) => { x.settings.startDate = '2026-01-01'; x.settings.birthDate = '2010-03-01'; year(x, '2026-01-01', '2026-12-31', [0, 1, 2, 3, 4], '08:00', '15:00'); });
+    T.near(Engine.leaveBalances(Engine.buildModel(d), '2026-12-31').vacationAccrued, 14, 1e-6);
+  });
+}

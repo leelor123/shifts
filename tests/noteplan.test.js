@@ -165,3 +165,29 @@ T.test('in a browser the worker shows the kept list (no second set of words in s
   T.ok(!/timerT|upT|cdT/.test(sw), 'the old words of their own are gone');
   T.ok(sw.includes("type: 'shaati-open'"), 'a tap while the app is open goes there without loading again');
 });
+
+// 1.39 review: a summary, a record or a goal came at night (the first moment it showed was a shift's, 01:30), and a
+// second one came on a day the app had already sent one
+T.test('the non-urgent ones never at night, and at most one a day counting the app\'s own', () => {
+  const now = U.toEpoch('2026-11-30', '20:00');
+  const r = { status: 'planned', start: U.toEpoch('2026-11-30', '17:00'), rawEnd: U.toEpoch('2026-12-01', '01:00'), dateKey: '2026-11-30' };
+  const ts = NP.times({ results: new Map([['s1', r]]) }, { reminders: { confirmAfter: 30 }, weeklyHour: 20 }, null, 0, now, 2);
+  T.ok(ts.includes(U.toEpoch('2026-12-01', '01:30') + 30000), 'a night moment is in the list');
+  const monthStart = U.toEpoch('2026-12-01', '00:00');
+  const alertsAt = (t) => (t >= monthStart ? [{ key: 'monthly-2026-11', type: 'monthly', push: 'anomaly', severity: 'info' }]
+    .concat(t >= U.toEpoch('2026-12-01', '01:30') ? [{ key: 'confirm-s1', type: 'confirmDone', push: 'critical', severity: 'info' }] : []) : []);
+  const p = NP.plan(alertsAt, ts, { now });
+  const m = p.find((x) => x.alert.key === 'monthly-2026-11');
+  T.eq(U.epochKey(m.at) + ' ' + U.epochHM(m.at), '2026-12-01 09:00', 'the summary waits for the morning');
+  T.ok(!globalThis.Moments.quietHour(m.at));
+  const c = p.find((x) => x.alert.key === 'confirm-s1');
+  T.eq(U.epochHM(c.at), '01:30', 'a critical one keeps its time');
+  for (let i = 1; i < p.length; i++) T.ok(p[i].at >= p[i - 1].at, 'in time order');
+  // the app already sent one today: the plan adds none more today
+  const now2 = U.toEpoch('2026-11-30', '10:00');
+  const ts2 = NP.times({ results: new Map() }, { weeklyHour: 20 }, null, 0, now2, 1);
+  const weekly = (t) => (t >= U.toEpoch('2026-11-30', '20:00') ? [{ key: 'weekly-x', type: 'weekly', push: 'anomaly', severity: 'info' }] : []);
+  T.eq(NP.plan(weekly, ts2, { now: now2, pushed: '2026-11-30' }).filter((x) => U.epochKey(x.at) === '2026-11-30').length, 0, 'none more today');
+  T.eq(NP.plan(weekly, ts2, { now: now2 }).length, 1, '(without one sent, it is planned)');
+  T.ok(/pushed: S\.meta\.lastAnomalyPush/.test(read('src/app/phone-notes.js')), 'the app passes the day it last sent one');
+});

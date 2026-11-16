@@ -52,6 +52,8 @@
   const HOUR_FIELDS = ['base', 'ot125', 'ot150', 'rest150', 'rest175', 'rest200'];
 
   /* ---------------- explanations (plain Hebrew) ---------------- */
+  // the yearly numbers come from Engine.LAW_YEARS when a text is read (getters: never stale, never formatted too early)
+  const law = (key) => Engine.lawYear(key, U.todayKey());
   const EXPLAIN = {
     base: 'השכר על השעות הרגילות (100%): מספר השעות × התעריף לשעה. זה הבסיס לחישוב פנסיה, חופשה ומחלה.',
     ot125: 'שעות נוספות: אחרי יום עבודה מלא (8.6 שעות בשבוע של 5 ימים, 8 בשבוע של 6 ימים, 7 במשמרת לילה), השעתיים הראשונות משולמות ב-125% מהתעריף.',
@@ -61,8 +63,8 @@
     rest200: 'שעות נוספות בשבת או בחג מעבר לשעתיים: 200%.',
     night: 'תוספת על שעות לילה, לפי ההסכם או הנוהג אצל המעסיק (לא חובה בחוק לכל העובדים).',
     seniority: 'תוספת לפי ותק, לפי הסכם קיבוצי או חוזה אישי.',
-    travel: 'החזר הוצאות נסיעה לעבודה: לפי מספר ימי העבודה בפועל, עד תקרה יומית (22.60 ₪ לפי צו ההרחבה, 2025). החזר הנסיעות חייב במס.',
-    recuperation: 'דמי הבראה: אחרי שנת עבודה. מספר ימים לפי ותק × תעריף יומי (451.50 ₪ במגזר הפרטי, 2026) × היקף המשרה.',
+    get travel() { const t = law('travelCap'); return `החזר הוצאות נסיעה לעבודה: לפי מספר ימי העבודה בפועל, עד תקרה יומית (${U.money(t.value)} לפי צו ההרחבה, ${t.year}). החזר הנסיעות חייב במס.`; },
+    get recuperation() { const r = law('recup'); return `דמי הבראה: אחרי שנת עבודה. מספר ימים לפי ותק × תעריף יומי (${U.money(r.value)} במגזר הפרטי, ${r.year}) × היקף המשרה.`; },
     vacationPay: 'תשלום על ימי חופשה שנוצלו, לפי השכר היומי הממוצע.',
     sickPay: 'דמי מחלה לפי חוק: יום ראשון ללא תשלום, ימים 2\u2060–\u20603 ב-50%, מהיום הרביעי 100%.',
     holidayPay: 'דמי חגים: לעובדים שעתיים אחרי 3 חודשי עבודה, על ימי חג שחלו ביום חול ולא עבדו בהם (לפי צו ההרחבה).',
@@ -71,15 +73,15 @@
     gross: 'ברוטו: סך כל התשלומים לפני ניכויים.',
     net: 'נטו: מה שנכנס לחשבון הבנק, ברוטו פחות כל הניכויים.',
     totalDeductions: 'סך כל הניכויים מהברוטו: מס הכנסה, ביטוח לאומי, מס בריאות, פנסיה וניכויים נוספים.',
-    incomeTax: 'מס הכנסה: מחושב לפי מדרגות מס (10%, 14%, 20%...) על השכר החודשי, פחות זיכוי על כל נקודת זיכוי (242 ₪ לנקודה) ופחות זיכוי על הפקדה לפנסיה. אם הוא עלה, לרוב כי הברוטו עלה ונכנסת למדרגה גבוהה יותר.',
-    nationalInsurance: 'ביטוח לאומי (חלק העובד): 1.04% על השכר עד 7,703 ₪ ו-7% מעל (2026). משתנה ישירות עם הברוטו.',
-    healthTax: 'מס בריאות: 3.23% עד 7,703 ₪ ו-5.17% מעל (2026). מממן את קופת החולים.',
+    get incomeTax() { return `מס הכנסה: מחושב לפי מדרגות מס (10%, 14%, 20%...) על השכר החודשי, פחות זיכוי על כל נקודת זיכוי (${U.money(law('tax').value.point, 0)} לנקודה) ופחות זיכוי על הפקדה לפנסיה. אם הוא עלה, לרוב כי הברוטו עלה ונכנסת למדרגה גבוהה יותר.`; },
+    get nationalInsurance() { const b = law('bl'); return `ביטוח לאומי (חלק העובד): 1.04% על השכר עד ${U.money(b.value[0], 0)} ו-7% מעל (${b.year}). משתנה ישירות עם הברוטו.`; },
+    get healthTax() { const b = law('bl'); return `מס בריאות: 3.23% עד ${U.money(b.value[0], 0)} ו-5.17% מעל (${b.year}). מממן את קופת החולים.`; },
     pensionEmployee: 'הפרשת העובד לפנסיה: לרוב 6% מהשכר הקובע. נחסך על שמך ומקטין את מס ההכנסה (זיכוי 35%).',
     pensionEmployer: 'הפרשת המעסיק לתגמולים: לרוב 6.5%. לא יורד מהנטו. זה כסף נוסף שנחסך בשבילך.',
     severance: 'הפרשת המעסיק לפיצויים: 6% עד 8.33%. נצבר בקרן הפנסיה.',
     hishtalmutEmployee: 'קרן השתלמות: חלק העובד (לרוב 2.5%). חיסכון שאפשר למשוך אחרי 6 שנים, פטור ממס עד תקרה.',
     hishtalmutEmployer: 'קרן השתלמות: חלק המעסיק (לרוב 7.5%).',
-    creditPoints: 'נקודות זיכוי: מקטינות את מס ההכנסה (כל נקודה 242 ₪ בחודש). תושב/ת: 2.25; אישה: 2.75; ועוד לפי ילדים, תואר, שחרור מצבא וכו׳.',
+    get creditPoints() { return `נקודות זיכוי: מקטינות את מס ההכנסה (כל נקודה ${U.money(law('tax').value.point, 0)} בחודש). תושב/ת: 2.25; אישה: 2.75; ועוד לפי ילדים, תואר, שחרור מצבא וכו׳.`; },
     vacationBalance: 'כמה ימי חופשה צברת ועדיין לא ניצלת.',
     sickBalance: 'כמה ימי מחלה צברת (1.5 ימים לחודש עבודה מלא, עד 90).',
     ytdGross: 'סכום הברוטו מתחילת השנה.',
@@ -211,20 +213,28 @@
   /** Numbers in a line, in reading order. Handles 1,234.56 / trailing minus / percents. */
   function numbersIn(line) {
     const clean = line.replace(/\b\d{1,2}[\/.]\d{1,2}[\/.]\d{2,4}\b/g, ' ');
-    const re = /(-?)(\d{1,3}(?:,\d{3})+(?:\.\d+)?|\d+(?:\.\d+)?)(-?)(\s*%)?/g;
+    // the first form: thousands read as a dot by OCR ("8.500.00"): the last separator is the decimal point. Read as
+    // two numbers it gave 8.5 and a bare "00", and the net was 0 (deep review, Nov 2026)
+    const re = /(-?)(\d{1,3}(?:[.,]\d{3})+[.,]\d{2}(?!\d)|\d{1,3}(?:,\d{3})+(?:\.\d+)?|\d+(?:\.\d+)?)(-?)(\s*%)?/g;
     const out = [];
     let m;
     while ((m = re.exec(clean))) {
       const raw = m[2];
       if (!raw.includes('.') && !raw.includes(',') && raw.length > 6) continue; // ids
-      let v = parseFloat(raw.replace(/,/g, ''));
+      const thou = /^\d{1,3}(?:[.,]\d{3})+[.,]\d{2}$/.test(raw);
+      let v = thou ? parseFloat(raw.slice(0, -3).replace(/[.,]/g, '') + '.' + raw.slice(-2)) : parseFloat(raw.replace(/,/g, ''));
+      // a whole number of 1 to 3 digits right before "500.00" may be its thousands split by a space ("8 500.00")
+      const spaced = !m[4] && !raw.includes('.') && !raw.includes(',') && raw.length <= 3 && /^ \d{3}[.,]\d{2}(?!\d)/.test(clean.slice(m.index + m[0].length));
       if (m[1] === '-' || m[3] === '-') v = -v;
-      out.push({ v, pct: !!m[4], dec: raw.includes('.'), raw: m[0] });
+      out.push(Object.assign({ v, pct: !!m[4], dec: raw.includes('.') || thou, raw: m[0] }, spaced ? { spaced } : null));
     }
     return out;
   }
   function matchField(line) {
     const n = normalize(line);
+    // the pension or fund base ("ברוטו לפנסיה") is a base, neither the gross nor the pension deduction: it was read as
+    // the gross (deep review, Nov 2026). It waits among the lines to name.
+    if (/ברוטו ל(?:פנסי|קופ|גמל|קה"ש|השתלמות|פיצויים)/.test(n)) return null;
     for (const f of FIELDS) {
       for (const p of f.pats) {
         if (n.includes(p)) {
@@ -244,6 +254,14 @@
       }
     }
     return null;
+  }
+  // i18n-keep the words printed on an Israeli payslip
+  const TIER_IN_NAME = /(?:ש"נ|ש\.נ\.?|נוספות|שעות|חג)\s(100|125|150|175|200)(?![\d.,%])/;
+  /** Did the line match the field by its Hebrew words (not only by a tier such as "150%")? */
+  function byWords(f, line) {
+    const n = normalize(line);
+    if (f.key === 'rest150' && /שבת|חג|מנוחה/.test(n)) return true;
+    return f.pats.some((p) => HEB.test(p) && n.includes(p));
   }
   /* ---------------- money or a count? ----------------
    * A payslip prints counts next to the money: the sick and vacation days (balance, accrued, used), the years of
@@ -323,15 +341,22 @@
       const b = (f.key === 'sickBalance' || f.key === 'vacationBalance') && vals.length >= 3 ? balanceRow(vals) : null;
       return { value: b != null ? b : vals[0] };
     }
+    // a total or a deduction is one amount: "8 500.00" is 8,500 with its thousands split by a space, or two numbers.
+    // Unsure, it is left for the person to fill in (read as the last number it was 500, deep review, Nov 2026)
+    if ((f.kind === 'total' || f.kind === 'ded') && vals.length === 2 && nums.some((x) => x.spaced)) return null;
     const prod = productOf(vals);
     if (prod) return Object.assign(prod, { pct: pcts[0] });
     if (vals.length === 2 && (f.hours || (WEAK_PAY[f.key] && daysAndAmount(vals)))) {
-      // qty + amount (rate missing): hours, or the days of a day-based payment ("ימי מחלה 2.00 350.00")
-      if (!f.hours) { const [q, v] = vals[0] <= vals[1] ? vals : [vals[1], vals[0]]; return { value: v, qty: q, pct: pcts[0] }; }
-      // qty + amount (rate missing)
-      return { value: vals[1], qty: vals[0], pct: pcts[0] };
+      // qty + amount (rate missing): hours, or the days of a day-based payment ("ימי מחלה 2.00 350.00"), in either
+      // order: the count is the smaller one (a pay rate is above 1 ₪). In printed order the amount was read as the
+      // hours when the columns came the other way (deep review, Nov 2026).
+      const [q, v] = Math.abs(vals[0]) <= Math.abs(vals[1]) ? vals : [vals[1], vals[0]];
+      return { value: v, qty: q, pct: pcts[0] };
     }
-    return { value: vals[vals.length - 1], pct: pcts[0] };
+    const last = vals[vals.length - 1];
+    // a bare "00" left of a misread amount is never the amount (the rule: a misreading is not a value)
+    if (last === 0 && vals.some((x) => x !== 0)) return null;
+    return { value: last, pct: pcts[0] };
   }
 
   /** Group pdf.js text items into logical lines (right-to-left). */
@@ -385,13 +410,20 @@
     const counts = {};
     const bump = (y, m) => { if (y < 2000 || y > 2100 || m < 1 || m > 12) return; const k = y + '-' + U.pad(m); counts[k] = (counts[k] || 0) + 1; };
     let m;
+    // a full date (the print date, the start date, the payment date) is not the pay month: its "MM/YYYY" tail was
+    // read as one, and the print date of the next month won (deep review, Nov 2026)
+    const t = text.replace(/(^|[^\d])\d{1,2}[\/.-]\d{1,2}[\/.-]\d{2,4}(?!\d)/g, '$1 ');
+    // a month right after the payslip's own label ("לחודש", "תקופה") counts above a bare one
+    // i18n-keep the words printed on an Israeli payslip
+    const LABEL = /(?:חודש|תקופ[הת]|משכורת|שכר)[\s:'"]*$/;
+    const labelled = (i) => LABEL.test(t.slice(Math.max(0, i - 14), i));
     const re1 = /(?:^|[^\d])(\d{1,2})[\/.-](20\d{2})(?!\d)/g;
-    while ((m = re1.exec(text))) bump(+m[2], +m[1]);
+    while ((m = re1.exec(t))) { const at = m.index + m[0].indexOf(m[1]); bump(+m[2], +m[1]); if (labelled(at)) { bump(+m[2], +m[1]); bump(+m[2], +m[1]); } }
     MONTHS.forEach((name, i) => {
       // i18n-keep a pattern for the Hebrew payslip's text
       const re = new RegExp(name + "\\s*['׳]?\\s*(20\\d{2})", 'g');
       let mm;
-      while ((mm = re.exec(text))) { bump(+mm[1], i + 1); bump(+mm[1], i + 1); }
+      while ((mm = re.exec(t))) { bump(+mm[1], i + 1); bump(+mm[1], i + 1); if (labelled(mm.index)) { bump(+mm[1], i + 1); bump(+mm[1], i + 1); } }
     });
     const best = Object.entries(counts).sort((a, b) => b[1] - a[1])[0];
     return best ? best[0] : null;
@@ -421,6 +453,14 @@
         const alt = fixVisual(raw);
         f = matchField(alt);
         if (f) line = alt;
+      } else if (f && HEB.test(raw.split(' ').pop()) && !byWords(f, raw)) {
+        // matched only by its tier ("150%"): a visual-order line matches that too, and its reversed words ("תבש")
+        // were never read, so Shabbat hours were filed as overtime and the numbers kept their reversed order (deep
+        // review, Nov 2026). A line that ends with its name (the numbers first) is turned to logical order, and wins
+        // when it then matches by its words.
+        const alt = fixVisual(raw);
+        const fa = matchField(alt);
+        if (fa && byWords(fa, alt)) { f = fa; line = alt; }
       }
       if (cumulative && f) {
         // only the year's own lines: the gross and the income tax become the running totals, the rest is skipped
@@ -433,6 +473,13 @@
       let nums = numbersIn(line);
       const code = /^\d{2,6}\s+(?=(?:\d{2,3}%\s+)?[֐-׿])/.exec(line);
       if (code) { const rest = numbersIn(line.slice(code[0].length)); if (rest.length) nums = rest; }
+      // the tier printed without "%" in the name ("ש"נ 125 562.50", "שעות 100 160.00 8,000.00") is not a value: it was
+      // read as 125 overtime hours, or made a third value that hid the hours (deep review, Nov 2026)
+      const tier = f && f.hours && TIER_IN_NAME.exec(normalize(line));
+      if (tier && !productOf(nums.filter((x) => !x.pct).map((x) => x.v))) {
+        const i = nums.findIndex((x) => !x.pct && !x.dec && x.v === +tier[1]);
+        if (i >= 0) nums = nums.slice(0, i).concat(nums.slice(i + 1));
+      }
       if (f && f.kind === 'pay') {
         f = payOrCount(f, line, nums);
         if (!f) continue; // a count (sick days, seniority years) with no money in it: not a payment, not a line to name
@@ -442,16 +489,30 @@
         if (vals.length && HEB.test(line)) other.push({ line, value: vals[vals.length - 1].v, guess: null });
         continue;
       }
+      if (f.kind === 'info') {
+        // the number right after the name: on a merged line ("ימי עבודה 22 שעות עבודה 176.00") the first number
+        // belonged to the line before it, and 22 days were read as the hours (deep review, Nov 2026)
+        const n = normalize(line);
+        const p = f.pats.filter((x) => n.includes(x)).sort((a, b) => n.indexOf(b) - n.indexOf(a))[0];
+        const after = p ? numbersIn(n.slice(n.indexOf(p) + p.length)) : [];
+        if (after.length) nums = after;
+      }
       const pv = pickValues(f, nums);
       if (!pv) continue;
+      // the payslip's own total of the payments wins over another line that only names the gross
+      const GROSS_TOTAL = /סה"כ ברוטו|סך כל התשלומים|סה"כ תשלומים/;
+      if (f.key === 'gross' && fields.gross && GROSS_TOTAL.test(line) && !GROSS_TOTAL.test(fields.gross.line)) delete fields.gross;
       if (fields[f.key]) {
         // a second line for the same field: sum earnings (e.g. two roles' base pay), keep first for others
         if (f.kind === 'pay') {
           const cur = fields[f.key];
+          if (cur.qty && cur.rate == null) cur.rate = cur.value / cur.qty;
           cur.value += pv.value;
-          if (pv.qty != null) cur.qty = (cur.qty || 0) + pv.qty;
           cur.line += ' | ' + line;
-          cur.rate = cur.qty ? cur.value / cur.qty : cur.rate;
+          // the rate is the sum over the hours only when both lines carry hours: a line with no hours (a supplement
+          // of the same name) made 40 h × 40 ₪ + 300 ₪ a rate of 47.5 (deep review, Nov 2026)
+          if (pv.qty != null && cur.qty != null) { cur.qty += pv.qty; cur.rate = cur.qty ? cur.value / cur.qty : cur.rate; }
+          else if (pv.qty != null) { cur.qty = pv.qty; cur.rate = pv.rate != null ? pv.rate : pv.qty ? pv.value / pv.qty : undefined; }
         } else if ((f.kind === 'ded' || f.kind === 'emp') && nums.some((x) => !x.pct && x.dec)) {
           // a second deduction or employer line of the same kind (two pension funds): never dropped silently,
           // it waits among the lines to name (the translator and the check screen show it)
@@ -460,6 +521,9 @@
         }
         continue;
       }
+      // a deduction printed with a minus ("מס הכנסה 900.00-") is the same deduction: stored negative, the checks
+      // passed it ("income tax reasonable -900") and the net reconciliation went off (deep review, Nov 2026)
+      if ((f.kind === 'ded' || f.kind === 'emp' || f.key === 'totalDeductions') && pv.value != null) pv.value = Math.abs(pv.value);
       fields[f.key] = Object.assign({ line }, pv);
     }
     // a guard for running totals printed without a heading: a taxable gross far above the gross is the year's
@@ -561,19 +625,48 @@
   /* ---------------- analysis ---------------- */
   const val = (F, k) => (F[k] && F[k].value != null && !isNaN(F[k].value) ? +F[k].value : null);
   const qty = (F, k) => (F[k] && F[k].qty != null && !isNaN(F[k].qty) ? +F[k].qty : null);
+  /**
+   * The payslip's hours: the sum of the hour lines' quantities, or the work-hours total. When the base line was read
+   * without its hours, the sum held only the overtime and Shabbat hours, and the check reported the rest as unpaid
+   * (deep review, Nov 2026). Then the work-hours total counts (the larger of the two), and with no total the hours
+   * are unknown (null), never a part of them.
+   */
+  function hoursOnSlip(F) {
+    F = F || {};
+    const sum = HOUR_FIELDS.reduce((s, k) => s + (qty(F, k) || 0), 0);
+    const wh = val(F, 'workHours');
+    if (qty(F, 'base') > 0 || (val(F, 'base') == null && !wh)) return sum || wh;
+    if (wh) return Math.max(sum, wh);
+    return null;
+  }
+  const slipHoursOf = (F) => hoursOnSlip(F) || 0;
 
-  /** App-side expectations for a pay period. */
-  function expected(model, pk, useAuto) {
-    const emp = model.ctx.primaryEmployer();
+  /**
+   * The workplace a payslip belongs to: the one it was saved for (slip.employerId), or the primary one. With two or
+   * three workplaces the check counted every workplace's shifts against one employer's payslip and reported the other
+   * workplace's hours as unpaid (deep review, Nov 2026).
+   */
+  function slipEmployer(model, slip) {
+    const id = slip && slip.employerId;
+    return (id && model.ctx.employers.get(id)) || model.ctx.primaryEmployer();
+  }
+  /** The employerId to filter shifts by: only with more than one workplace (as Engine.periodSummary does). */
+  const empFilter = (model, emp) => (model.ctx.employers.size > 1 && emp && emp.id ? emp.id : null);
+
+  /** App-side expectations for a pay period, for one workplace (empId; the primary one when not given). */
+  function expected(model, pk, useAuto, empId) {
+    const emp = (empId && model.ctx.employers.get(empId)) || model.ctx.primaryEmployer();
+    const only = empFilter(model, emp);
     const P = Engine.periodByKey(pk, emp);
     const results = useAuto && model.autoResults && model.autoResults.size ? model.autoResults : model.results;
     const m = Object.assign({}, model, { results });
-    const t = Engine.totals(m, P.from, P.to);
+    const t = Engine.totals(m, P.from, P.to, { employerId: only });
     const pay = { base: 0, ot125: 0, ot150: 0, rest150: 0, rest175: 0, rest200: 0 };
     const hrs = { base: 0, ot125: 0, ot150: 0, rest150: 0, rest175: 0, rest200: 0 };
     const shifts = [];
     for (const r of results.values()) {
       if (r.status !== 'done' || r.dateKey < P.from || r.dateKey > P.to) continue;
+      if (only && r.employerId !== only) continue;
       shifts.push(r);
       for (const l of r.lines) {
         const k = l.rest ? ['rest150', 'rest175', 'rest200'][l.tier] : ['base', 'ot125', 'ot150'][l.tier];
@@ -582,7 +675,7 @@
     }
     shifts.sort((a, b) => a.start - b.start);
     const net = Engine.netEstimate({ gross: t.gross, pensionBase: Engine.pensionBaseOf(t, model.ctx.settings), deductions: t.deductions, periodTo: P.to }, model.ctx.settings);
-    return { P, t, pay, hrs, shifts, net, avgRate: t.hours ? t.wage / t.hours : 0, baseRate: hrs.base ? pay.base / hrs.base : 0 };
+    return { P, emp, only, t, pay, hrs, shifts, net, avgRate: t.hours ? t.wage / t.hours : 0, baseRate: hrs.base ? pay.base / hrs.base : 0 };
   }
 
   /**
@@ -592,8 +685,9 @@
   function analyze(slip, model) {
     const S = model.ctx.settings;
     const F = slip.fields || {};
-    const E = expected(model, slip.period, false);
-    const A = expected(model, slip.period, true);
+    const empId = slipEmployer(model, slip).id;
+    const E = expected(model, slip.period, false, empId);
+    const A = expected(model, slip.period, true, empId);
     const overridesInPeriod = E.shifts.filter((r) => r.overridden || r.dayRuleHit);
     const hasOv = overridesInPeriod.length > 0;
     const findings = [];
@@ -616,7 +710,7 @@
 
     /* 1. total hours */
     let covered = []; // shifts already identified as unpaid — excluded from the OT / rest checks to avoid double counting
-    const slipHours = HOUR_FIELDS.reduce((s, k) => s + (qty(F, k) || 0), 0) || val(F, 'workHours');
+    const slipHours = slipHoursOf(F) || null;
     const appHours = E.t.hours;
     if (noShifts) { /* nothing logged to compare with */ } else if (slipHours == null || slipHours === 0) {
       add({ area: 'שעות', status: 'warn', title: 'לא זוהו שעות בתלוש', detail: `באפליקציה רשומות ${U.hours(appHours)} שעות לתקופה. אם התלוש מציג שעות, הוסף אותן במסך האימות כדי לבדוק התאמה.`, basis: 'אין כמות שעות בשורות התלוש שזוהו.', confidence: 'low' });
@@ -687,11 +781,11 @@
         const amount = E.t.restPremium;
         add({ area: 'שבת וחג', status: 'bad', title: 'לא שולמה תוספת שבת/חג', amount, shifts: restShifts.map((r) => r.id),
           detail: `רשמת ${U.hours(appRestH)} שעות בשבת/חג (${dates(restShifts)}), ובתלוש לא מופיעה שורת שבת/חג. התוספת (מעבר ל-100%) ≈ ${U.money(amount)}.`,
-          basis: 'חלון השבת/חג לפי ' + (S.rest.mode === 'city' ? 'זמני כניסה ויציאה ב' + S.rest.city : 'השעות הקבועות שהגדרת') + ', ' + (model.ctx.primaryEmployer().restPct || 150) + '%.',
+          basis: 'חלון השבת/חג לפי ' + (S.rest.mode === 'city' ? 'זמני כניסה ויציאה ב' + S.rest.city : 'השעות הקבועות שהגדרת') + ', ' + (E.emp.restPct || 150) + '%.',
           confidence: 'medium', fromOverride: ovNote(appRestH, A.t.restHours, 0, 0.1) });
       } else if (slipRestH > 0 && appRestH - slipRestH > 0.25) {
         const missingH = appRestH - slipRestH;
-        const amount = missingH * E.avgRate * ((model.ctx.primaryEmployer().restPct || 150) - 100) / 100;
+        const amount = missingH * E.avgRate * ((E.emp.restPct || 150) - 100) / 100;
         add({ area: 'שבת וחג', status: 'bad', title: 'חסרות שעות שבת/חג', amount, shifts: restShifts.map((r) => r.id),
           detail: `באפליקציה ${U.hours(appRestH)} שעות שבת/חג, בתלוש ${U.hours(slipRestH)}. ${U.hours(missingH)} שעות כנראה שולמו כרגילות; התוספת החסרה ≈ ${U.money(amount)}.`,
           basis: 'השוואת שעות 150%/175%/200% בתלוש לשעות בתוך חלון השבת/חג.', confidence: 'medium',
@@ -721,7 +815,7 @@
         const amount = E.avgRate * (missing125 * 0.25 + missing150 * 0.5);
         add({ area: 'שעות נוספות', status: 'bad', title: 'שעות נוספות חסרות', amount, shifts: otShifts.map((r) => r.id),
           detail: `באפליקציה ${U.hours(appOt1)} ש׳ ב-125% ו-${U.hours(appOt2)} ש׳ ב-150% (${dates(otShifts)})${covered.length ? ', לא כולל המשמרות שחסרות לגמרי' : ''}; בתלוש ${U.hours(qty(F, 'ot125') || 0)} ו-${U.hours(qty(F, 'ot150') || 0)}. התוספת החסרה ≈ ${U.money(amount)}.`,
-          basis: Engine.otByLaw(model.ctx.primaryEmployer()) ? 'שעות נוספות לפי החוק: ביום מעל 8.6 שעות (8 בשבוע של 6 ימים, 7 במשמרת לילה) ובשבוע מעל 42 שעות רגילות.' : 'שעות נוספות יומיות אחרי ' + model.ctx.primaryEmployer().otThreshold + ' שעות (לפי ההגדרות).', confidence: 'medium',
+          basis: Engine.otByLaw(E.emp) ? 'שעות נוספות לפי החוק: ביום מעל 8.6 שעות (8 בשבוע של 6 ימים, 7 במשמרת לילה) ובשבוע מעל 42 שעות רגילות.' : 'שעות נוספות יומיות אחרי ' + E.emp.otThreshold + ' שעות (לפי ההגדרות).', confidence: 'medium',
           fromOverride: ovNote(appOt, A.t.hoursBy.ot1 + A.t.hoursBy.ot2, slipOt, 0.1) });
       } else add({ area: 'שעות נוספות', status: 'ok', title: 'שעות נוספות תקינות', detail: `${U.hours(slipOt)} בתלוש מול ${U.hours(appOt)} באפליקציה.`, basis: 'השוואת שעות 125%/150%.', confidence: 'medium' });
     }
@@ -730,7 +824,7 @@
     const slipTravel = val(F, 'travel');
     if (!noShifts && (E.t.travel > 0 || slipTravel)) {
       const d = E.t.travel - (slipTravel || 0);
-      const emp = model.ctx.primaryEmployer();
+      const emp = E.emp;
       const basis = `${E.t.workDays} ימי עבודה × ${U.money(emp.travelPerDay)}` + (+emp.travelMonthlyCap ? `, תקרה ${U.money(emp.travelMonthlyCap)}` : '') + '.';
       if (d > 1) add({ area: 'נסיעות', status: 'bad', title: 'החזר נסיעות חסר', amount: d, detail: `צפוי ${U.money(E.t.travel)}, בתלוש ${U.money(slipTravel || 0)}.` + (val(F, 'workDays') ? ` המעסיק רשם ${val(F, 'workDays')} ימי עבודה.` : ''), basis, confidence: 'high', fromOverride: ovNote(E.t.travel, A.t.travel, slipTravel, 0.5) });
       else if (d < -1) add({ area: 'נסיעות', status: 'warn', title: 'נסיעות גבוהות מהצפוי', detail: `בתלוש ${U.money(slipTravel)}, צפוי ${U.money(E.t.travel)}. אולי התעריף היומי שהגדרת שונה?`, basis, confidence: 'medium' });
@@ -829,7 +923,7 @@
         const actual = (bl || 0) + (ht || 0);
         const expBL = (bl != null ? est.bl : 0) + (ht != null ? est.health : 0);
         const ok = Math.abs(actual - expBL) <= Math.max(15, expBL * 0.1);
-        add({ area: 'ביטוח לאומי', status: ok ? 'ok' : 'warn', title: ok ? 'ביטוח לאומי ומס בריאות סבירים' : 'ביטוח לאומי / בריאות שונים מההערכה', detail: `נוכו ${U.money(actual)}, הערכה ${U.money(expBL)}.`, basis: 'שיעורים מופחתים עד 60% מהשכר הממוצע, מלאים מעל.', confidence: 'medium' });
+        add({ area: 'ביטוח לאומי', status: ok ? 'ok' : 'warn', title: ok ? 'ביטוח לאומי ומס בריאות סבירים' : 'ביטוח לאומי / בריאות שונים מההערכה', detail: `נוכו ${U.money(actual)}, הערכה ${U.money(expBL)}.`, basis: `שיעורים מופחתים עד ${U.money(Engine.blLimits(S.tax || {}, E.P.to).thr, 0)} בחודש, מלאים מעל.`, confidence: 'medium' }); // the year's threshold (LAW_YEARS), not "60% of the average wage" (review 2026-11-16)
       }
       const net = val(F, 'net'), td = val(F, 'totalDeductions');
       if (net != null && td != null) {
@@ -880,7 +974,6 @@
   /** yes when it closes the finding, maybe when it explains a part of it. */
   const closes = (x, amount) => x >= amount - Math.max(2, amount * 0.1);
   const grade = (x, amount) => (x == null || x < 0.5 ? 'no' : closes(x, amount) ? 'yes' : 'maybe');
-  const slipHoursOf = (F) => HOUR_FIELDS.reduce((s, k) => s + (qty(F, k) || 0), 0) || val(F, 'workHours') || 0;
   // the finding's area (its Hebrew name in this build) → a code
   const AREAS = [['שעות', 'hours'], ['תעריף', 'rate'], ['שבת וחג', 'rest'], ['שעות נוספות', 'ot'], ['נסיעות', 'travel'], ['שכר מינימום', 'minwage'], ['פנסיה', 'pension'], ['ביטוח לאומי', 'ni'], ['מס הכנסה', 'tax']];
   const codeOf = (area) => { const x = AREAS.find((p) => p[0] === area); return x ? x[1] : ''; };
@@ -899,7 +992,7 @@
     const F = slip.fields || {};
     const E = a.expected;
     const P = E.P;
-    const emp = model.ctx.primaryEmployer();
+    const emp = E.emp || model.ctx.primaryEmployer();
     const raw = new Map(((model.data && model.data.shifts) || []).map((s) => [s.id, s]));
     // a list of dates in a Hebrew sentence: isolated left to right (its brackets and commas stay in order) and on one
     // line (no-break spaces between the dates)
@@ -949,7 +1042,7 @@
         for (const d of [1, 21, 26, 25, 20, 16, 15, 24, 11, 10]) { // the common ones first: an even match keeps the first
           if (d === cur) continue;
           const P2 = Engine.periodByKey(slip.period, Object.assign({}, emp, { periodStartDay: d }));
-          const h = Engine.totals(model, P2.from, P2.to).hours;
+          const h = Engine.totals(model, P2.from, P2.to, { employerId: E.only }).hours;
           if (!best || Math.abs(h - slipHours) < Math.abs(best.h - slipHours)) best = { d, h };
         }
         const match = best && Math.abs(best.h - slipHours) <= 0.25;
@@ -1236,7 +1329,7 @@
   function settingsCheck(slip, model, a) {
     a = a || analyze(slip, model);
     const S = model.ctx.settings, F = slip.fields || {}, E = a.expected, P = E.P;
-    const emp = model.ctx.primaryEmployer();
+    const emp = E.emp || model.ctx.primaryEmployer();
     const out = [];
     const add = (o) => out.push(Object.assign({ recommend: 'slip', apply: null, set: null }, o));
     const W = slipWork(F);
@@ -1365,7 +1458,7 @@
       for (const d of [1, 21, 26, 25, 20, 16, 15, 24, 11, 10]) {
         if (d === cur) continue;
         const P2 = Engine.periodByKey(slip.period, Object.assign({}, emp, { periodStartDay: d }));
-        if (Math.abs(Engine.totals(model, P2.from, P2.to).hours - slipHours) <= 0.25) {
+        if (Math.abs(Engine.totals(model, P2.from, P2.to, { employerId: E.only }).hours - slipHours) <= 0.25) {
           add({ id: 'period', label: 'תחילת תקופת השכר', slip: d === 1 ? 'חודש קלנדרי' : `מה-${d} בחודש`, app: cur === 1 ? 'חודש קלנדרי' : `מה-${cur} בחודש`,
             text: 'עם תקופה שמתחילה ביום הזה, השעות בתלוש תואמות בדיוק לשעות שרשמת.',
             apply: { kind: 'employer', patch: { periodStartDay: d } }, set: { kind: 'set', k: 'pay', f: 'התקופה מתחילה ב-' } });
@@ -1402,7 +1495,7 @@
   function reconcile(slip, model, a, c) {
     a = a || analyze(slip, model);
     const S = model.ctx.settings, F = slip.fields || {}, E = a.expected, t = E.t, P = E.P;
-    const emp = model.ctx.primaryEmployer();
+    const emp = E.emp || model.ctx.primaryEmployer();
     const W = slipWork(F);
     const sc = settingsCheck(slip, model, a);
     const scFix = (id) => (sc.some((x) => x.id === id) ? [{ kind: 'sc', id }] : []);
@@ -1797,6 +1890,24 @@
    * amount, its index in slip.other and what the person said it is (guess: 'otherPay' / 'otherDed', or null).
    * A line already turned into a known field (guess = a field key present in F) is left out: it shows as that field.
    */
+  /**
+   * The lines the person named on the verify screen (other[].guess a field key) go into the fields. A line named after
+   * a payment, deduction or employer field the slip already has is added to it (a second pension fund): it was
+   * dropped, and then hidden everywhere because a named line of an existing field is not shown (deep review, Nov
+   * 2026). Runs again safely: a line already in the field is not added twice. Changes fields in place.
+   */
+  function addNamedLines(fields, other) {
+    for (const o of other || []) {
+      const f = o && FIELD[o.guess];
+      if (!f) continue;
+      const cur = fields[o.guess];
+      if (!cur) { fields[o.guess] = { value: Math.abs(+o.value || 0), line: o.line }; continue; }
+      if (!['pay', 'ded', 'emp'].includes(f.kind) || String(cur.line || '').split(' | ').includes(o.line)) continue;
+      cur.value = (+cur.value || 0) + Math.abs(+o.value || 0);
+      cur.line = (cur.line || '') + ' | ' + o.line;
+    }
+    return fields;
+  }
   function unknownLines(other, F) {
     F = F || {};
     const out = [];
@@ -1884,5 +1995,5 @@
     return s.trim();
   }
 
-  root.Payslip = { FIELDS, FIELD, HOUR_FIELDS, EXPLAIN, READ_ORDER, MEANING, MEANING_HE, HE_TERM, KIND_LABEL, printedTerm, unknownLines, labelOther, normalize, fixVisual, numbersIn, matchField, pickValues, linesFromPdfItems, detectPeriod, parseText, redact, aiSchema, aiPrompt, fromAi, expected, analyze, checkGap, reconcile, settingsCheck, waterfall, explainLines, compareSlips, employerMessage };
+  root.Payslip = { FIELDS, FIELD, HOUR_FIELDS, hoursOnSlip, EXPLAIN, READ_ORDER, MEANING, MEANING_HE, HE_TERM, KIND_LABEL, printedTerm, unknownLines, addNamedLines, labelOther, normalize, fixVisual, numbersIn, matchField, pickValues, linesFromPdfItems, detectPeriod, parseText, redact, aiSchema, aiPrompt, fromAi, expected, analyze, checkGap, reconcile, settingsCheck, waterfall, explainLines, compareSlips, employerMessage };
 })(typeof window !== 'undefined' ? window : globalThis);

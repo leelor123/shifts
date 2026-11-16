@@ -190,6 +190,29 @@ T.atest('statistics: the same record as the last one sent is not sent again; a n
   T.eq(writesTo(be, /^stats\//), 2, 'a new shift: the record goes');
 });
 
+T.atest('statistics: the first shift goes up at once, not six hours later; the next one waits (funnel "entered a shift")', async () => {
+  const be = fakeBackend();
+  const A = await phone(be);
+  const ctx = A.ctx;
+  ctx.App = { androidApp: false, roles: () => [], legalAccepted: () => true };
+  ctx.matchMedia = () => ({ matches: false });
+  vm.runInContext(fs.readFileSync(path.join(SRC, 'app/stats.js'), 'utf8'), ctx, { filename: 'app/stats.js' });
+  await A.Store.setSettings((s) => { s.statsAsked = true; s.shareStats = true; });
+  ctx.Cloud.user = user;
+  ctx.Cloud.sdk = async () => ({ fs: A.ffs, db: {} });
+  await ctx.Stats.report(); await wait(20);
+  T.eq(writesTo(be, /^stats\//), 1, 'the open sends the empty record');
+  await A.add('s1', 'the first shift'); // no six hours passed
+  await ctx.Stats.report(); await wait(20);
+  T.eq(writesTo(be, /^stats\//), 2, 'the first shift: sent at once');
+  await A.add('s2', 'a second shift');
+  await ctx.Stats.report(); await wait(20);
+  T.eq(writesTo(be, /^stats\//), 2, 'a second shift waits for the six hours');
+  // the page sends a report after a local shift or payslip save (app.js Store.on)
+  const app = fs.readFileSync(path.join(SRC, 'app/app.js'), 'utf8');
+  T.ok(/ev\.type === 'data' && !ev\.remote && root\.Stats[^\n]*'shifts'[^\n]*'payslips'[^\n]*root\.Stats\.report\(\)/.test(app), 'app.js reports after a local shift save');
+});
+
 T.test('a workplace code: a value no shift uses on either side shows no "משתנה"', () => {
   const W = globalThis.Workplace;
   const emp = { name: 'קפה', otLaw: true, otThreshold: 8, roundingMode: 'none', roundingUnit: 15, travelPerDay: 0, travelMonthlyCap: 0, payDay: 9 };

@@ -107,15 +107,18 @@
       const other = opts.date && opts.date !== U.todayKey();
       const guess = !src && !t ? (other ? App.usualHours() : App.shiftGuess(Date.now())) : null;
       const date = opts.date || (guess ? guess.date : U.todayKey());
+      // the employer and the role belong together: the role's employer wins (the last role may be another employer's)
+      const roleId = (src && src.roleId) || (t && t.roleId) || S.meta.lastRole || (roles[0] && roles[0].id);
+      const employerId = root.Workplace.employerOf(S.roles, roleId, (src && src.employerId) || (t && t.employerId) || emp.id);
       const d = {
         id: null, status: opts.status || (date > U.todayKey() ? 'planned' : 'done'), statusTouched: !!opts.status,
-        employerId: (src && src.employerId) || (t && t.employerId) || emp.id, date,
+        employerId, date,
         startT: src ? U.epochHM(src.start) : t ? t.startT : guess.startT, endT: src ? U.epochHM(src.end) : t ? t.endT : guess.endT,
-        roleId: (src && src.roleId) || (t && t.roleId) || S.meta.lastRole || (roles[0] && roles[0].id),
+        roleId: root.Workplace.roleFor(S.roles, employerId, roleId, S.meta.lastRole) || roleId,
         splits: src ? (src.splits || []).map((x) => ({ t: U.epochHM(x.at), roleId: x.roleId })) : t && t.splits ? t.splits.slice() : [],
         // empty = the law's break (null); a copy keeps its own, a job's default is used when one is set
-        breakMin: src ? (src.breakMin == null ? null : src.breakMin) : t ? (t.breakMin == null ? null : t.breakMin) : (+App.employer(emp.id).defaultBreakMin > 0 ? +App.employer(emp.id).defaultBreakMin : null),
-        breakPaid: src ? src.breakPaid !== false : t ? t.breakPaid !== false : App.employer(emp.id).defaultBreakPaid !== false,
+        breakMin: src ? (src.breakMin == null ? null : src.breakMin) : t ? (t.breakMin == null ? null : t.breakMin) : (+App.employer(employerId).defaultBreakMin > 0 ? +App.employer(employerId).defaultBreakMin : null),
+        breakPaid: src ? src.breakPaid !== false : t ? t.breakPaid !== false : App.employer(employerId).defaultBreakPaid !== false,
         noTravel: src ? !!src.noTravel : t ? !!t.noTravel : false, note: '', items: [], ov: emptyOv(), reason: '',
       };
       return d;
@@ -480,6 +483,11 @@
           if (!f) return;
           const v = e.target.type === 'checkbox' ? e.target.checked : e.target.value;
           setPath(f, v);
+          // another employer: the role (and each split's) becomes one of its own, never the old employer's
+          if (f === 'employerId') {
+            d.roleId = root.Workplace.roleFor(S.roles, d.employerId, d.roleId, S.meta.lastRole);
+            d.splits.forEach((s) => { if (!root.Workplace.paired(S.roles, d.employerId, s.roleId) || !App.role(s.roleId)) s.roleId = d.roleId; });
+          }
           if (f === 'breakMin') d.breakSet = true; // typed on purpose
           if (f === 'date' && !d.statusTouched) {
             const ns = d.date > U.todayKey() ? 'planned' : 'done';
@@ -507,7 +515,7 @@
           else if (t2.dataset.role) { d.roleId = t2.dataset.role; redraw(); }
           else if (t2.hasAttribute('data-add-split')) {
             const others = App.roles(d.employerId).filter((r) => r.id !== d.roleId);
-            d.splits.push({ t: '', roleId: (others[0] || App.roles()[0]).id }); redraw();
+            d.splits.push({ t: '', roleId: (others[0] || App.roles(d.employerId)[0] || App.roles()[0]).id }); redraw();
           } else if (t2.dataset.rmSplit != null) { d.splits.splice(+t2.dataset.rmSplit, 1); redraw(); }
           else if (t2.hasAttribute('data-add-item')) { d.items.push({ id: U.uid(), type: 'bonus', amount: '', label: '' }); redraw(); }
           else if (t2.dataset.rmItem != null) { d.items.splice(+t2.dataset.rmItem, 1); redraw(); }
@@ -524,7 +532,8 @@
 
     async function save() {
       if (!d.date || !d.startT || !d.endT) { UI.invalid('מלא תאריך, שעת התחלה ושעת סיום'); return; }
-      if (!d.roleId) { UI.invalid('בחר תפקיד'); return; }
+      // a role of another employer would be paid under this one's rules and counted in its totals
+      if (!d.roleId || !root.Workplace.paired(S.roles, d.employerId, d.roleId) || d.splits.some((s) => !root.Workplace.paired(S.roles, d.employerId, s.roleId))) { UI.invalid('בחר תפקיד'); return; }
       if (d.date < '2000-01-01' || d.date > U.addDays(U.todayKey(), 366)) { UI.invalid('התאריך לא הגיוני'); return; }
       const sh = shiftFrom(d);
       if (!App.ensureClean(sh.note, sh.overrideReason, ...(sh.items || []).map((x) => x.label || ''), (sh.overrides && sh.overrides.special && sh.overrides.special.reason) || '')) return;

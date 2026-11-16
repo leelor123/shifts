@@ -35,7 +35,8 @@
     const F = (slip && slip.fields) || {};
     const gross = v(F, 'gross'), net = v(F, 'net');
     const baseQ = q(F, 'base'), baseV = v(F, 'base');
-    const hours = add(HOURS.map((k) => q(F, k))) || v(F, 'workHours');
+    // the same hours the check uses (an overtime-only sum is not the payslip's hours)
+    const hours = root.Payslip && root.Payslip.hoursOnSlip ? root.Payslip.hoursOnSlip(F) : add(HOURS.map((k) => q(F, k))) || v(F, 'workHours');
     const ded = v(F, 'totalDeductions') != null ? v(F, 'totalDeductions') : gross != null && net != null ? Math.max(0, gross - net) : null;
     return {
       period: (slip && slip.period) || '', id: (slip && slip.id) || '',

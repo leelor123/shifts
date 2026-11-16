@@ -180,7 +180,38 @@ T.test('the page: off until the Android app says it can, nothing saved in the da
   const w = read('src/app/widgets.js');
   T.ok(w.includes("data === 'shaati:geo'") && /m\.geo === 1\) \{ if \(App\.arrive\) App\.arrive\.status\(m\); return; \}/.test(w), 'the channel hands both over');
   const web = read('src/app/arrive.js');
-  T.ok(/const msg = id \? \{ geo: 1, off: 1, id \} : \{ geo: 1, off: 1 \};\s*if \(App\.widgets\) App\.widgets\.post\(JSON\.stringify\(msg\)\);/.test(web), 'off: one tap, no question (one place, or the one place of an older app)');
+  T.ok(/const msg = id \? \{ geo: 1, off: 1, id \} : \{ geo: 1, off: 1 \};[\s\S]{0,200}?if \(!\(App\.widgets && App\.widgets\.post\(JSON\.stringify\(msg\)\)\)\)/.test(web), 'off: one tap, no question (one place, or the one place of an older app)');
   T.ok(/if \(!native\) \{/.test(web), 'a browser gets the honest note and no button');
   T.ok(read('android/widgets/java/WorkGeoReceiver.java').includes('WorkGeo.ACTION_OFF.equals(a)'), 'the notification turns it off too');
+});
+
+// Review 16 Nov 2026: with the channel to the Android app gone, "remove" and "turn off" said done (and showed "off")
+// while the phone kept watching the place. The screen changes only when the message was sent.
+T.test('turning a place off says done only when the Android app got the message', () => {
+  const vm = require('vm');
+  const toasts = [];
+  let alive = true;
+  const sent = [];
+  const App = { roles: () => [], widgets: { post: (t) => { if (!alive) return false; sent.push(t); return true; }, get connected() { return alive; } } };
+  const ctx = {
+    App, Arrive: A, Store: { S: { employers: [] } }, console: { warn() {} }, location: {},
+    UI: { icon: () => '', esc: (s) => String(s), tile: () => '', toast: (m) => toasts.push(m) },
+    document: { addEventListener() {} },
+  };
+  vm.runInNewContext(read('src/app/arrive.js'), ctx);
+  App.arrive.hello();
+  App.arrive.status({ geo: 1, on: true, saved: true, bg: true, fg: true, r: 300, places: [{ id: 'p1', r: 300, n: 'A', e: '' }, { id: 'p2', r: 150, n: 'B', e: '' }] });
+  const before = App.arriveSub();
+  const btns = [{ dataset: { arriveOff: 'p1' } }, { dataset: { arriveOff: 'p2' } }];
+  const el = { isConnected: true, querySelector: () => null, querySelectorAll: (q) => (q === '[data-arrive-off]' ? btns : []) };
+  alive = false;
+  App.arriveMount(el, () => {});
+  btns[0].onclick();
+  T.eq(toasts.length, 0, 'not sent: no "removed"');
+  T.eq(App.arriveSub(), before, 'and the places are still shown as on');
+  T.ok(App.arrive.on, 'still on');
+  alive = true;
+  btns[0].onclick();
+  T.eq(sent.length >= 1 && JSON.parse(sent[sent.length - 1]).id, 'p1', 'sent: the place goes');
+  T.eq(toasts.length, 1, 'and it says so');
 });
