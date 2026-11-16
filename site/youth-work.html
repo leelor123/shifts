@@ -60,6 +60,9 @@ table { width: 100%; border-collapse: collapse; }
 th, td { padding: 11px 10px; text-align: start; border-bottom: 1px solid var(--line); }
 td { white-space: nowrap; }
 td:first-child { white-space: normal; } /* the label wraps between words; the numbers stay on one line */
+/* a table whose values are sentences (youth-work, payslip-check): every cell wraps, a number keeps .nw */
+.tbl.words td { white-space: normal; }
+.tbl.words td:nth-child(n+2) { text-align: start; }
 th { line-height: 1.3; }
 @media (max-width: 420px) { th, td { padding: 10px 8px; font-size: .95rem; } }
 th { font-size: .9rem; color: var(--ink-2); font-weight: 600; background: var(--surface-2); }
@@ -97,7 +100,7 @@ header :focus-visible, .cta :focus-visible { outline-color: var(--gold); }
       </tbody></table></div>
       <p>שכר מינימום לנוער הוא רצפה. המעסיק רשאי לשלם יותר, ואסור לו לשלם פחות.</p>
       <h2>כמה שעות מותר לעבוד?</h2>
-      <div class="tbl"><table><thead><tr><th>מה</th><th>מתחת לגיל 16</th><th>בגיל <span class="nw">16–17</span></th></tr></thead><tbody>
+      <div class="tbl words"><table><thead><tr><th>מה</th><th>מתחת לגיל 16</th><th>בגיל <span class="nw">16–17</span></th></tr></thead><tbody>
         <tr><td>שעות ביום</td><td><b>8</b></td><td><b>9</b> במקום עבודה של 5 ימים, אחרת 8</td></tr>
         <tr><td>ביום שלפני שבת או חג</td><td>7</td><td>7</td></tr>
         <tr><td>שעות בשבוע</td><td>40</td><td>40</td></tr>

@@ -341,7 +341,7 @@ const PAGES = [
       </tbody></table></div>
       <p>שכר מינימום לנוער הוא רצפה. המעסיק רשאי לשלם יותר, ואסור לו לשלם פחות.</p>
       <h2>כמה שעות מותר לעבוד?</h2>
-      <div class="tbl"><table><thead><tr><th>מה</th><th>מתחת לגיל 16</th><th>בגיל 16–17</th></tr></thead><tbody>
+      <div class="tbl words"><table><thead><tr><th>מה</th><th>מתחת לגיל 16</th><th>בגיל 16–17</th></tr></thead><tbody>
         <tr><td>שעות ביום</td><td><b>${Y15.dayHours}</b></td><td><b>${Y16.dayHours}</b> במקום עבודה של 5 ימים, אחרת ${Y15.dayHours}</td></tr>
         <tr><td>ביום שלפני שבת או חג</td><td>${Y15.eveHours}</td><td>${Y16.eveHours}</td></tr>
         <tr><td>שעות בשבוע</td><td>${Y15.weekHours}</td><td>${Y16.weekHours}</td></tr>
@@ -365,7 +365,7 @@ const PAGES = [
     answer: `המעסיק חייב לתת תלוש שכר <b>עד ה-${PAY_DAY} בחודש</b> שאחרי חודש העבודה. כדי לבדוק אותו, משווים את השעות בתלוש לשעות שעבדתם, ובודקים שהתעריף לשעה לא נמוך משכר המינימום לגיל שלכם ושהתוספות לשבת ולשעות נוספות שולמו.`,
     body: `
       <h2>6 דברים לבדוק בתלוש</h2>
-      <div class="tbl"><table><thead><tr><th>מה בודקים</th><th>מה צריך להיות</th></tr></thead><tbody>
+      <div class="tbl words"><table><thead><tr><th>מה בודקים</th><th>מה צריך להיות</th></tr></thead><tbody>
         <tr><td>שעות העבודה</td><td>אותו מספר שעות שרשמתם</td></tr>
         <tr><td>התעריף לשעה</td><td>לפחות <b>${nis(MW.hourly)}</b> מגיל 18, בגיל 17 <b>${nis(Y[2].hourly)}</b>, בגיל 16 <b>${nis(Y[1].hourly)}</b></td></tr>
         <tr><td>שעות בשבת ובחג</td><td>לפחות <b>${REST[0]}%</b></td></tr>
@@ -417,6 +417,9 @@ table { width: 100%; border-collapse: collapse; }
 th, td { padding: 11px 10px; text-align: start; border-bottom: 1px solid var(--line); }
 td { white-space: nowrap; }
 td:first-child { white-space: normal; } /* the label wraps between words; the numbers stay on one line */
+/* a table whose values are sentences (youth-work, payslip-check): every cell wraps, a number keeps .nw */
+.tbl.words td { white-space: normal; }
+.tbl.words td:nth-child(n+2) { text-align: start; }
 th { line-height: 1.3; }
 @media (max-width: 420px) { th, td { padding: 10px 8px; font-size: .95rem; } }
 th { font-size: .9rem; color: var(--ink-2); font-weight: 600; background: var(--surface-2); }
