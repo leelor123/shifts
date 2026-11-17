@@ -19,7 +19,9 @@
   /** An image file → a canvas of grey, evened-out light, dark text on light paper. */
   DocRead.prep = async function (blob, opts) {
     opts = opts || {};
-    const bmp = await openPicture(blob);
+    // (a picture already decoded, an ImageBitmap or a canvas, is drawn as it is and left to its owner)
+    const own = isFile(blob);
+    const bmp = own ? await openPicture(blob) : blob;
     const long = Math.max(bmp.width, bmp.height);
     // the reader does best with letters ~25-40px tall: big phone photos come down, small screenshots go up
     // (opts.size: a smaller picture, only to see which way up the page is)
@@ -39,7 +41,7 @@
     g.imageSmoothingQuality = 'high';
     if (q) { g.translate(W / 2, H / 2); g.rotate((q * Math.PI) / 180); g.drawImage(bmp, -dw / 2, -dh / 2, dw, dh); g.setTransform(1, 0, 0, 1, 0, 0); }
     else g.drawImage(bmp, 0, 0, W, H);
-    if (bmp.close) bmp.close();
+    if (own && bmp.close) bmp.close();
     const img = g.getImageData(0, 0, W, H), px = img.data, n = W * H;
     const gray = grayOf(px);
     // the paper's own brightness, block by block (the brightest of each block), smoothed over the page:
@@ -112,7 +114,8 @@
     if (blob && typeof blob.size === 'number' && !blob.width && blob.size === 0) throw codeError('docread/empty');
     if (!(blob instanceof Blob)) return createImageBitmap(blob); // a canvas or a bitmap: already a picture
     let head;
-    try { head = new Uint8Array(await blob.slice(0, 65536).arrayBuffer()); } catch (e) { throw codeError(e && e.name === 'NotReadableError' ? 'docread/not-on-phone' : 'docread/unreadable', e); }
+    // (256 KB: EXIF with a thumbnail and an ICC or MPF block can push the size marker past 64 KB)
+    try { head = new Uint8Array(await blob.slice(0, 262144).arrayBuffer()); } catch (e) { throw codeError(e && e.name === 'NotReadableError' ? 'docread/not-on-phone' : 'docread/unreadable', e); }
     const brand = String.fromCharCode(...head.slice(4, 12));
     const heic = /^ftyp(heic|heix|hevc|heim|heis|mif1|msf1)/.test(brand);
     const dim = sizeOf(head);
@@ -126,6 +129,7 @@
       throw codeError(heic ? 'docread/heic' : e && e.name === 'NotReadableError' ? 'docread/not-on-phone' : 'docread/unreadable', e);
     }
   }
+  const isFile = (b) => typeof Blob !== 'undefined' && b instanceof Blob;
   function codeError(code, cause) { return Object.assign(new Error(code), { name: 'DocReadError', code, cause }); }
   /** A JPEG's or PNG's size from its first bytes, as shown (EXIF turns of 90° swap it); null when not found. */
   function sizeOf(b) {
@@ -134,7 +138,7 @@
     }
     if (b[0] !== 0xff || b[1] !== 0xd8) return null;
     let i = 2, turn = 1, w = 0, h = 0;
-    while (i + 9 < b.length) {
+    while (i + 8 < b.length) { // (the frame header reads up to b[i + 8])
       if (b[i] !== 0xff) { i++; continue; }
       const mk = b[i + 1], len = (b[i + 2] << 8) | b[i + 3];
       if (mk === 0xe1 && b[i + 4] === 0x45 && b[i + 5] === 0x78) { // Exif: the orientation tag (0x0112)
@@ -286,7 +290,12 @@
   const stopped = () => Object.assign(new Error('stopped'), { name: 'AbortError' });
   async function pass(image, lang, params, progress, label, signal) {
     if (signal && signal.aborted) throw stopped();
-    const worker = await root.Tesseract.createWorker(lang, 1, {
+    // (the stop is listened for from the start: a person who leaves while the engine is still loading the first
+    // time stops it then, not after a whole reading)
+    let onStop = null;
+    const stop = new Promise((_, no) => { onStop = () => no(stopped()); if (signal) signal.addEventListener('abort', onStop, { once: true }); });
+    stop.catch(() => {});
+    const made = root.Tesseract.createWorker(lang, 1, {
       // (the engine's own stages go to the screen as codes beside the text it shows now: docread/loading-core,
       // docread/loading-language (pct, cached), docread/initializing, docread/reading (pct))
       logger: (m) => {
@@ -298,9 +307,14 @@
         else if (/initializ/.test(m.status)) progress(LOADING, { code: 'docread/initializing', lang, pct });
       },
     });
-    let onStop = null;
+    let worker;
+    try { worker = await Promise.race([made, stop]); } catch (e) {
+      made.then((w) => w.terminate()).catch(() => {}); // made after the person left: ended as soon as it is there
+      if (signal && onStop) signal.removeEventListener('abort', onStop);
+      throw e;
+    }
     try {
-      const stop = new Promise((_, no) => { onStop = () => no(stopped()); if (signal) signal.addEventListener('abort', onStop, { once: true }); });
+      if (signal && signal.aborted) throw stopped();
       if (params) await Promise.race([worker.setParameters(params), stop]);
       const { data } = await Promise.race([worker.recognize(image), stop]);
       let ws = data.words;
@@ -330,27 +344,33 @@
     progress = progress || (() => {});
     await load();
     progress('מכין את התמונה…');
-    let image = opts.prep === false ? blob : await DocRead.prep(blob, opts);
-    if (image.tall && !opts.part) { image.width = image.height = 0; return tallWords(blob, progress, opts); }
+    // the photo is decoded once: every preparation below (the lines taken out, the turns tried, the page turned)
+    // draws from this one picture, let go before the long Hebrew reading
+    let src = blob, opened = false;
+    if (opts.prep !== false && isFile(blob)) { src = await openPicture(blob); opened = true; }
+    const letGo = () => { if (opened && src && src.close) src.close(); opened = false; };
+    try {
+    let image = opts.prep === false ? blob : await DocRead.prep(src, opts);
+    if (image.tall && !opts.part) { image.width = image.height = 0; return await tallWords(src, progress, opts); }
     // the second reading sees the picture in pure black and white: what one reading misses (a faint date,
     // a time by a cell's border) the other often gets (made from the first picture, not prepared again)
     const bw = (im) => (opts.prep === false || opts.bin2 === 0 ? im : im.bw || binary(im, opts.bin2 || 170));
     let image2 = bw(image);
     let dg = [];
     try { dg = await digitsPass(image2, opts, progress, 'קורא את המספרים'); } catch (e) { if (e.name === 'AbortError') throw e; /* the words alone */ }
-    // hardly a time or a date read: the page may lie on its side or upside down. A small copy turned each other
-    // way is read for its numbers, and the page is read again the way that finds clearly more of them
     // hardly a time or a date read on a table drawn with heavy lines: the reader skips numbers that touch a cell's
     // border. The page is prepared again with its lines taken out, and that reading kept when it finds clearly more
     // (on every page it read worse: only here)
     let unlined = false;
     if (opts.prep !== false && !opts.lines && wholes(dg) < 6) {
       try {
-        const im = await DocRead.prep(blob, Object.assign({}, opts, { lines: true }));
+        const im = await DocRead.prep(src, Object.assign({}, opts, { lines: true }));
         const d2 = await digitsPass(bw(im), opts, progress, 'קורא את המספרים');
         if (wholes(d2) >= 6 && wholes(d2) >= wholes(dg) * 2 + 2) { image.width = image.height = 0; image = im; image2 = bw(im); dg = d2; unlined = true; } else im.width = im.height = 0;
       } catch (e) { if (e.name === 'AbortError') throw e; /* as it was */ }
     }
+    // hardly a time or a date read: the page may lie on its side or upside down. A small copy turned each other
+    // way is read for its numbers, and the page is read again the way that finds clearly more of them
     let turn = 0;
     // (not for the payslip's lines reading: a payslip has few times and dates, and its screen turns a sideways page itself)
     if (opts.prep !== false && opts.turn == null && !opts.lines && wholes(dg) < 6) {
@@ -358,16 +378,17 @@
       for (const q of [90, 270, 180]) {
         progress('מכין את התמונה…');
         let n = 0;
-        try { n = wholes(await digitsPass(binary(await DocRead.prep(blob, Object.assign({}, opts, { turn: q, size: 1600 })), opts.bin2 || 170), opts, null, '')); } catch (e) { if (e.name === 'AbortError') throw e; /* not this way */ }
+        try { n = wholes(await digitsPass(binary(await DocRead.prep(src, Object.assign({}, opts, { turn: q, size: 1600 })), opts.bin2 || 170), opts, null, '')); } catch (e) { if (e.name === 'AbortError') throw e; /* not this way */ }
         if (n > best.n) best = { q, n };
       }
       if (best.q && best.n >= 6 && best.n >= wholes(dg) * 2 + 2) {
         turn = best.q;
-        image = await DocRead.prep(blob, Object.assign({}, opts, { turn }));
+        image = await DocRead.prep(src, Object.assign({}, opts, { turn }));
         image2 = bw(image);
         try { dg = await digitsPass(image2, opts, progress, 'קורא את המספרים'); } catch (e) { if (e.name === 'AbortError') throw e; dg = []; }
       }
     }
+    letGo();
     progress(LOADING, { code: 'docread/loading-language', lang: 'heb+eng' });
     const he = await pass(image, 'heb+eng', { tessedit_pageseg_mode: opts.psm || '11', preserve_interword_spaces: '1' }, progress, 'קורא את המילים', opts.signal);
     if (!opts.lines && image.getContext) await hebrewAgain(image, he, opts.signal);
@@ -386,6 +407,7 @@
     // a digits-reading "number" on top of a Hebrew word is the Hebrew word misread: not a number
     const out = words.concat(nums.filter((d) => !words.some((w) => overlap(w, d) > 0.5 && w.conf > 60)));
     return { words: out, he, dg, canvas: image, info: { turn, skew: image.skew || 0, unlined } };
+    } finally { letGo(); }
   };
 
   /**
@@ -393,8 +415,9 @@
    * overlapping, each as a picture of its own; the words put back where they stand on the whole picture, and a
    * word read twice in the overlap kept once (the surer reading).
    */
-  async function tallWords(blob, progress, opts) {
-    const bmp = await createImageBitmap(blob, { imageOrientation: 'from-image' });
+  async function tallWords(src, progress, opts) {
+    const own = isFile(src);
+    const bmp = own ? await openPicture(src) : src;
     const Wd = bmp.width, Hd = bmp.height, sliceH = Math.round(Wd * 1.6), step = Math.round(sliceH * 0.88);
     const out = { words: [], he: [], dg: [] };
     try {
@@ -415,7 +438,7 @@
         }
         got.canvas.width = got.canvas.height = 0;
       }
-    } finally { if (bmp.close) bmp.close(); }
+    } finally { if (own && bmp.close) bmp.close(); }
     return Object.assign(out, { canvas: null, info: { turn: 0, skew: 0, slices: Math.ceil(Hd / step) } });
   }
 
@@ -431,10 +454,18 @@
     const odd = he.filter(latinBit);
     if (!odd.length || heb < 6 || heb < letters.length * 0.5) return;
     if (signal && signal.aborted) throw stopped();
-    const worker = await root.Tesseract.createWorker('heb', 1);
     let onStop = null;
+    const stop = new Promise((_, no) => { onStop = () => no(stopped()); if (signal) signal.addEventListener('abort', onStop, { once: true }); });
+    stop.catch(() => {});
+    const made = root.Tesseract.createWorker('heb', 1);
+    let worker;
+    try { worker = await Promise.race([made, stop]); } catch (e) {
+      made.then((w) => w.terminate()).catch(() => {});
+      if (signal && onStop) signal.removeEventListener('abort', onStop);
+      throw e;
+    }
     try {
-      const stop = new Promise((_, no) => { onStop = () => no(stopped()); if (signal) signal.addEventListener('abort', onStop, { once: true }); });
+      if (signal && signal.aborted) throw stopped();
       await Promise.race([worker.setParameters({ tessedit_pageseg_mode: '7' }), stop]);
       for (const w of odd.slice(0, 40)) {
         const c = cropOf(canvas, w);

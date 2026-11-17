@@ -33,6 +33,7 @@
     DATE_ISO: () => /(?<!\d)(\d{4})-(\d{1,2})-(\d{1,2})(?!\d)/,
     DATE_SHORT: () => /(?<![\d.:])(\d{1,2})[./](\d{1,2})(?![\d.:/])/,
     HOURS: () => /(?<![\d:./-])(\d{1,2}(?:\.\d{1,2})?)(?![\d:./-])/g,
+    PAID: () => /(?<![\d:./-])(\d{1,2}\.\d{1,2})(?![\d:./-])/,
   });
 
   function hm(h, m, ap) {
@@ -140,9 +141,16 @@
       if (!(hours > 0 && hours <= 24)) return;
       if (ym) guessedYear = true;
       const row = { date, start, end, hours: Math.round(hours * 100) / 100, overnight: !!(start && end && toMin(end) <= toMin(start)), line: raw.trim().slice(0, 120), n };
-      // hours printed beside the times that are not their span ("08:00 17:00 8.25": a break taken off): the hours
-      // the report pays, kept for the hours check
-      if (start && end && hoursNum && !sure && Math.abs(hoursNum * 60 - hours * 60) > 10) row.paid = hoursNum;
+      // hours printed after the times that are not their span ("08:00 17:00 8.25": a break taken off): the hours
+      // the report pays, kept for the hours check. Only a number with its decimals, printed after the exit: a row
+      // number ("1 | 05/10/2026 | 08:00 | 17:00") or a day of the month before the times is no pay
+      if (start && end && !sure) {
+        const tm = [...line.matchAll(R.TIME)];
+        const tail = tm.length >= 2 ? line.slice(tm[1].index + tm[1][0].length) : '';
+        const pm = R.PAID.exec(tail);
+        const pv = pm ? +pm[1] : null;
+        if (pv && pv >= 0.5 && pv <= 24 && Math.abs(pv * 60 - hours * 60) > 10) row.paid = pv;
+      }
       rows.push(row);
     });
     return { rows, noStart: rows.filter((r) => !r.start).length, guessedYear, skipped };
@@ -530,12 +538,20 @@
         let gap = null, reach = big[0].at;
         for (const [a, b] of iv) { if (a - reach > (gap ? gap.w : mh)) gap = { at: (a + reach) / 2, w: a - reach }; reach = Math.max(reach, b); }
         if (big[1].at - reach > (gap ? gap.w : mh)) gap = { at: (big[1].at + reach) / 2, w: big[1].at - reach };
+        // ...and only when each half holds two clock columns of its own (an entry and an exit). A clock's export with
+        // a date beside its entry and another beside its exit (תאריך | כניסה | תאריך | יציאה) is one table
+        const clockCols = (left) => {
+          const pts = [];
+          rows.forEach((r, ri) => r.words.forEach((w) => { if (left ? w.x >= gap.at : w.x <= gap.at) return; const t = w.items.find((it) => it.k === 'time' && !it.weak); if (t) pts.push({ x: w.x, ri, v: t.v, pad: t.pad }); }));
+          return cluster(pts, tol).filter((c) => new Set(c.members.map((p) => p.ri)).size >= 3 && c.members.filter((p) => p.pad || minOf(p.v) >= 600).length >= c.members.length * 0.8).length;
+        };
+        if (gap && (clockCols(true) < 2 || clockCols(false) < 2)) { dbg.push('two date columns, one table (a date by the entry and one by the exit)'); gap = null; }
         if (gap) {
           const all = rows.flatMap((r) => r.words);
           const side = (left) => all.filter((w) => (left ? w.x - w.w / 2 < gap.at : w.x + w.w / 2 > gap.at)).map((w) => wl[w.i]);
           const parts = [side(true), side(false)].map((ws) => parseWords(ws, Object.assign({}, opts, { part: true })));
           const res = { rows: [].concat(...parts.map((p) => p.rows)), noStart: 0, guessedYear: parts.some((p) => p.guessedYear),
-            skipped: parts.reduce((n, p) => n + (p.skipped || 0), 0), rtl: parts[0].rtl, text: parts.map((p) => p.text).join('\n') };
+            skipped: parts.reduce((n, p) => n + (p.skipped || 0), 0), undated: parts.reduce((n, p) => n + (p.undated || 0), 0), rtl: parts[0].rtl, text: parts.map((p) => p.text).join('\n') };
           if (opts.debug) res.debug = `two tables side by side, split at ${Math.round(gap.at)}\n` + parts.map((p) => p.debug).join('\n----\n');
           return res;
         }
@@ -618,10 +634,25 @@
     // move: a standard, not an entry or an exit (a fixed schedule has both its columns fixed)
     const distinct = (c) => new Set(c.members.map((p) => p.v)).size;
     const constant = (c) => { const n = new Map(); for (const p of c.members) n.set(p.v, (n.get(p.v) || 0) + 1); return c.members.length >= 4 && Math.max(...n.values()) >= c.members.length * 0.8; };
+    // a third column that is, in most rows, exit minus entry (after a break or not): the pair's total
+    const totalOf = (a, b) => cols.some((c) => {
+      if (c === a || c === b) return false;
+      let n = 0, ok = 0;
+      for (let ri = 0; ri < rows.length; ri++) {
+        const x = at(a, ri), y = at(b, ri), v = at(c, ri);
+        if (!x || !y || !v) continue;
+        n++; if ([0, 15, 30, 45, 60].some((br) => Math.abs(minOf(v) - (span(x, y) - br)) <= 2)) ok++;
+      }
+      return n >= 3 && ok >= n * 0.6;
+    });
     let best = null;
     for (const a of cols) for (const b of cols) {
       if (a === b || named.has(a) || named.has(b)) continue;
-      if ((constant(a) && !constant(b) && distinct(b) >= 3) || (constant(b) && !constant(a) && distinct(a) >= 3)) continue;
+      // (a clock that rounds every entry to 08:00 has a fixed entry column, and that is a shift: a fixed column is
+      // the entry when it comes before the exit in reading order, or when a third column is exit minus it, the
+      // total. Never the exit, unless a total says so)
+      if (constant(b) && !constant(a) && distinct(a) >= 3 && !totalOf(a, b)) continue;
+      if (constant(a) && !constant(b) && distinct(b) >= 3 && !before(a.at, b.at) && !totalOf(a, b)) continue;
       // (a duration column, 7:06 without its leading zero, beside a clock's column that writes 07:06: the
       // report pads its times, so the unpadded one is the total, not an entry or an exit. A hand-made table
       // writes 8:00 in both)
@@ -651,6 +682,9 @@
     // columns whose pairs look like shifts in few of their rows: the reading of this table is not to be trusted
     // (the share of its rows whose entry and exit make a shift of 20 minutes to 16 hours)
     const likely = pairs.length ? rows.map((_, ri) => [at(pairs[0].a, ri), at(pairs[0].b, ri)]).filter(([x, y]) => x && y).map(([x, y]) => plaus(span(x, y)) > 0) : [];
+    // (an entry column without leading zeros found by the numbers alone, no header to name it: it may be a total)
+    const unpaddedEntry = pairs.length > 0 && pairs[0].from === 'numbers' && unpadded(pairs[0].a);
+    if (unpaddedEntry) dbg.push('the entry column has no leading zeros and no header: unsure');
     const weakPair = likely.length >= 3 && (likely.filter(Boolean).length < likely.length * 0.75 || pairs[0].s < pairs[0].n * 0.5);
     if (weakPair) dbg.push('the entry/exit columns make few likely shifts: all unsure');
     dbg.push('time columns: ' + cols.map((c) => `${Math.round(c.at)}(${c.rows}${unpadded(c) ? ',dur' : ''})`).join(' ') + ' | pairs: ' + pairs.map((p) => `${Math.round(p.a.at)}→${Math.round(p.b.at)} ${p.from} ${p.s.toFixed(1)}/${p.n}`).join(', '));
@@ -791,7 +825,12 @@
       // the date
       let date = null, dow = null, dateWord = null;
       const dateIts = items.filter((it) => it.k === 'date' && (it.sure || inDateCol(it.w)));
-      const pref = dateIts.find((it) => inDateCol(it.w)) || dateIts[0];
+      // (two dates in the row, one by the entry and one by the exit: the shift is the entry's day; a night that
+      // ends the next morning is not the next day's shift)
+      // (the nearest date before the entry in reading order: "תאריך | כניסה | תאריך | יציאה" puts each date before its time)
+      const ahead = pairs.length && dateIts.length > 1 ? dateIts.filter((it) => before(it.w.x, pairs[0].a.at)) : [];
+      const byEntry = ahead.length ? ahead.sort((p, q) => Math.abs(p.w.x - pairs[0].a.at) - Math.abs(q.w.x - pairs[0].a.at))[0] : null;
+      const pref = byEntry || dateIts.find((it) => inDateCol(it.w)) || dateIts[0];
       if (pref) { date = { d: pref.d, m: pref.m, y: pref.y || null }; dateWord = pref.w; }
       const dayP = !date && dayCol && dayCol.members.find((p) => p.ri === ri);
       if (dayP) { date = { d: dayP.v, m: dayMonth.m, y: dayMonth.y, day: true }; dateWord = dayP.w; }
@@ -1091,14 +1130,16 @@
         if (d < 10) { dbg.push(`not a shift: ${r.key} ${start}-${end}`); continue; }
         const row = { date: r.key, start, end, hours: Math.round(d / 60 * 100) / 100, overnight: minOf(end) <= minOf(start), line: r.text.slice(0, 120), n: r.ri };
         // (more than 16 hours: more likely a misread than a shift; offered, never saved as read)
-        const doubt = why || (d > 16 * 60 && 'long') || (capped.has(r.ri) && 'total') || (r.lenGarbled && 'total') || r.doubt || ((weakPair || lenClash) && 'table') || (monthOff && 'date') || (!nearTitle(+r.key.slice(5, 7)) && 'date') || (yearClash.has(+r.key.slice(5, 7)) && 'date');
+        const doubt = why || (d > 16 * 60 && 'long') || (capped.has(r.ri) && 'total') || (r.lenGarbled && 'total') || r.doubt || ((weakPair || lenClash || unpaddedEntry) && 'table') || (monthOff && 'date') || (!nearTitle(+r.key.slice(5, 7)) && 'date') || (yearClash.has(+r.key.slice(5, 7)) && 'date');
         if (doubt) row.doubt = doubt;
         // the hours the report pays, when they are not the span (a break taken off): kept for the hours check
         if (r.len != null && r.shifts.length === 1 && Math.abs(r.len - d) > 10) row.paid = Math.round((r.len / 60) * 100) / 100;
         out.push(row);
       }
     }
-    const res = { rows: out, noStart: 0, guessedYear, skipped: skippedNoOut, rtl, text: rows.map((r) => (rtl ? r.words.slice().reverse() : r.words).map((w) => clean(w.text)).join(' ')).join('\n') };
+    // rows with times that got no date the reader could stand behind (left out): for the screen to say how many
+    const undated = list.filter((r) => r.shifts.length && !r.key).length;
+    const res = { rows: out, noStart: 0, guessedYear, skipped: skippedNoOut, undated, rtl, text: rows.map((r) => (rtl ? r.words.slice().reverse() : r.words).map((w) => clean(w.text)).join(' ')).join('\n') };
     if (opts.debug) res.debug = dbg.concat(rows.map((r, i) => `${i}: y${Math.round(r.y)} ${textOf(r)}`)).join('\n');
     return res;
   }

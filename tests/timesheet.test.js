@@ -538,3 +538,55 @@ T.test('a photo whose dates are cut and its year misread (real words): no throw,
   T.eq(shifts(p), '');
   T.ok(p.rows.length > 0, 'offered for checking');
 });
+
+T.section('hours report: round 3 guards (an independent review)');
+T.test('a clock that rounds every entry to 08:00, no header: the fixed entry is the entry, with or without a total', () => {
+  const rows = [['01/10/2026', '08:00', '16:30'], ['02/10/2026', '08:00', '17:10'], ['03/10/2026', '08:00', '15:45'], ['04/10/2026', '08:00', '16:05'], ['05/10/2026', '08:00', '18:20']];
+  const want = '2026-10-01 08:00-16:30 | 2026-10-02 08:00-17:10 | 2026-10-03 08:00-15:45 | 2026-10-04 08:00-16:05 | 2026-10-05 08:00-18:20';
+  const words = (rs) => { const ws = []; rs.forEach((r, ri) => r.forEach((c, i) => { if (c) { const w = c.length * 11, x = 1000 - i * 140; ws.push({ text: c, x0: x - w / 2, x1: x + w / 2, y0: 150 + ri * 50, y1: 180 + ri * 50 }); } })); return ws; };
+  T.eq(shifts(TS.parseWords(words(rows), { today })), want);
+  const tot = rows.map((r, i) => r.concat([['8:30', '9:10', '7:45', '8:05', '10:20'][i]]));
+  T.eq(shifts(TS.parseWords(words(tot), { today })), want, 'the total paired with the exit');
+});
+T.test('a row number or a day of the month on a text line is never the hours paid', () => {
+  const t = TS.parse(['מס | תאריך | כניסה | יציאה', '1 | 05/10/2026 | 08:00 | 17:00', '2 | 06/10/2026 | 08:00 | 17:00'].join('\n'), { today });
+  T.eq(t.rows.map((r) => r.paid === undefined).join(','), 'true,true');
+  T.eq(TS.parse('05/10/2026 ה 5 08:00 17:00', { today }).rows[0].paid, undefined);
+  T.eq(TS.parse('05/10/2026 08:00 17:00 8.25', { today }).rows[0].paid, 8.25);
+});
+T.test('a date by the entry and a date by the exit (תאריך | כניסה | תאריך | יציאה): one table, each shift on its entry\'s day', () => {
+  const p = page(['תאריך', 'כניסה', 'תאריך', 'יציאה', 'סה"כ'], [
+    ['01/10/2026', '08:00', '01/10/2026', '16:30', '8:30'], ['02/10/2026', '22:00', '03/10/2026', '06:00', '8:00'], ['03/10/2026', '08:10', '03/10/2026', '17:00', '8:50'],
+    ['04/10/2026', '09:00', '04/10/2026', '15:00', '6:00'], ['05/10/2026', '07:30', '05/10/2026', '16:00', '8:30'],
+  ]);
+  T.eq(shifts(p), '2026-10-01 08:00-16:30 | 2026-10-02 22:00-06:00 | 2026-10-03 08:10-17:00 | 2026-10-04 09:00-15:00 | 2026-10-05 07:30-16:00');
+});
+T.test('rows with times and no date the reader could stand behind are counted (undated)', () => {
+  const p = page(['תאריך', 'כניסה', 'יציאה'], [['01/10/2026', '08:00', '16:00'], ['02/10/2026', '09:00', '17:00'], ['xx', '08:00', '12:00'], ['zz', '07:00', '15:00'], ['09/10/2026', '08:00', '16:00']]);
+  T.eq(p.undated, 2);
+  T.eq(page(['תאריך', 'כניסה', 'יציאה'], [['01/10/2026', '08:00', '16:00'], ['02/10/2026', '09:00', '17:00']]).undated, 0);
+});
+T.test('a photo\'s size is found past a big EXIF and a 64 KB ICC block, and at the very end of what was read', () => {
+  const sof = [0xff, 0xc0, 0, 17, 8, 0x1f, 0x40, 0x17, 0x70]; // 8000 high, 6000 wide
+  const app1 = [0xff, 0xe1, 30000 >> 8, 30000 & 255, 0x45, 0x78, 0x69, 0x66, 0, 0].concat(new Array(30000 - 8).fill(0));
+  const app2 = [0xff, 0xe2, 0xff, 0xf0].concat(new Array(0xfff0 - 2).fill(0));
+  T.eq(JSON.stringify(DR.sizeOf(Uint8Array.from([0xff, 0xd8, ...app1, ...app2, ...sof]))), '{"w":6000,"h":8000}');
+});
+T.atest('leaving while the engine is still loading stops the read then (no reading after the person left)', async () => {
+  // (no real time: the engine finishes loading only when the test lets it, after the person has left)
+  const saved = globalThis.Tesseract;
+  let recognized = 0, ended = 0, release = null;
+  const engine = { setParameters: async () => {}, recognize: async () => { recognized++; return { data: { words: [] } }; }, terminate: async () => { ended++; } };
+  globalThis.Tesseract = { createWorker: () => new Promise((r) => { release = () => r(engine); }) };
+  const ac = new AbortController();
+  const reading = globalThis.DocRead.words({ width: 10, height: 10 }, () => {}, { prep: false, signal: ac.signal });
+  for (let k = 0; k < 20 && !release; k++) await Promise.resolve(); // until it waits for the engine
+  ac.abort();
+  let err = null;
+  try { await reading; } catch (e) { err = e; }
+  release(); for (let k = 0; k < 5; k++) await Promise.resolve();
+  if (saved === undefined) delete globalThis.Tesseract; else globalThis.Tesseract = saved;
+  T.eq(err && err.name, 'AbortError');
+  T.eq(recognized, 0, 'it read after the stop');
+  T.eq(ended, 1, 'the engine made after the stop was not ended');
+});
