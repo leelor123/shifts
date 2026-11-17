@@ -76,7 +76,9 @@
     DATE_SHORT: () => /(?<![\d:./-])(\d{1,2})[./](\d{1,2})(?![\d:./-])/g,
     DAY_NAME_RE: () => new RegExp(`(?<![${HE}])(ו)?(?:ב?יום\\s+)?(?:ה|ב|ל)?(ראשון|שני|שלישי|רביעי|חמישי|שישי|שבת)(?![${HE}])`, 'g'),
     DAY_LETTER_RE: () => new RegExp(`(?<![${HE}])(?:(?:ב?יום\\s+)([אבגדהוש])['׳"״]?|([אבגדהוש])['׳](?:["״])?)(?![${HE}])`, 'g'),
-    DATE_HE_RE: () => new RegExp(`(?<!\\d)(\\d{1,2})\\s*ב?(${MONTHS_HE.join('|')})[${HE}'׳]*(?:\\s+(\\d{4}))?`, 'g'),
+    // the month whole ("נובמבר") or cut short with its mark ("נוב׳"): a name that starts like a month ("2 מאיה",
+    // "3 יונתן") is no date
+    DATE_HE_RE: () => new RegExp(`(?<!\\d)(\\d{1,2})\\s*ב?(?:(${Object.keys(MONTHS_FULL).join('|')})(?![${HE}])|(${MONTHS_HE.join('|')})(?:['׳.]|(?![${HE}])))(?:\\s+(\\d{4}))?`, 'g'),
     RANGE_RE: () => /(?<![\d:./])(\d{1,2})(?:[:.](\d{2}))?\s*(am|pm)?\s*(?:-|–|—|עד|to)\s*(\d{1,2})(?:[:.](\d{2}))?\s*(am|pm)?(?![\d:./])/gi,
     TIME_RE: () => /(?<![\d:./])(\d{1,2}):(\d{2})(?![\d:./])/g,
     // "16-סגירה", "16:30 עד הסגירה" (it ends when the place closes) and "פתיחה-16" (it starts when it opens);
@@ -88,6 +90,7 @@
   const DAY_EN_RE = /\b(sun|mon|tue|wed|thu|fri|sat)(?:day|sday|nesday|rsday|urday|s|rs|r)?\.?(?![a-z])/gi;
   // a date with the month's Hebrew name: "25 באוקטובר", "26 אוק׳", "3 בנובמבר 2026"
   const MONTHS_HE = ['ינו', 'פבר', 'מרץ', 'אפר', 'מאי', 'יונ', 'יול', 'אוג', 'ספט', 'אוק', 'נוב', 'דצמ'];
+  const MONTHS_FULL = { 'ינואר': 1, 'פברואר': 2, 'מרץ': 3, 'מרס': 3, 'אפריל': 4, 'מאי': 5, 'יוני': 6, 'יולי': 7, 'אוגוסט': 8, 'ספטמבר': 9, 'אוקטובר': 10, 'נובמבר': 11, 'דצמבר': 12 };
 
   /** The date of a day/month without a year: the nearest one from two months back. */
   function nearYear(d, m, today) {
@@ -118,9 +121,9 @@
       if (validDate(y, +m[2], +m[1]) && !found.some((f) => m.index >= f.at && m.index < f.at + f.len)) add(m, null, keyOf(y, +m[2], +m[1]));
     }
     for (const m of text.matchAll(R.DATE_HE_RE)) {
-      const mo = MONTHS_HE.indexOf(m[2]) + 1, d = +m[1];
-      const k = m[3] ? (validDate(+m[3], mo, d) ? keyOf(+m[3], mo, d) : null) : nearYear(d, mo, today);
-      if (k && !found.some((f) => m.index >= f.at && m.index < f.at + f.len)) add(m, null, k, m[3] ? null : { ny: [d, mo] });
+      const mo = m[2] ? MONTHS_FULL[m[2]] : MONTHS_HE.indexOf(m[3]) + 1, d = +m[1];
+      const k = m[4] ? (validDate(+m[4], mo, d) ? keyOf(+m[4], mo, d) : null) : nearYear(d, mo, today);
+      if (k && !found.some((f) => m.index >= f.at && m.index < f.at + f.len)) add(m, null, k, m[4] ? null : { ny: [d, mo] });
     }
     for (const m of text.matchAll(R.DATE_SHORT)) {
       if (found.some((f) => m.index >= f.at && m.index < f.at + f.len)) continue;
@@ -154,18 +157,28 @@
   }
   const lenOf = (a, b) => { let len = toMin(b) - toMin(a); if (len <= 0) len += 1440; return len; };
   const okLen = (len) => len >= 30 && len <= 16 * 60;
-  /** The shifts in a piece of text (no days in it): { at, len, start, end, guess, off, label }. */
-  function shiftsIn(text, named) {
+  /**
+   * The shifts in a piece of text (no days in it): { at, len, start, end, guess, off, label }.
+   * ocr: the text was read off a picture. Tesseract drops the "1" of an hour glued to a Hebrew word ("16-סגירה"
+   * read "6-סגירה", "14-סגירה" read "4-סגירה", "18-סגירה" read "8סגירה") and reads a dash as a colon ("15-23"
+   * read "15:23"): there, one digit glued to a word is no hour (6 or 16 cannot be told), and a time whose
+   * minutes no schedule writes ("15:23") is the range it was.
+   */
+  function shiftsIn(text, named, ocr) {
     const out = [];
     const taken = (i) => out.some((s) => i >= s.at && i < s.at + s.len);
+    const oneDigit = (h, mm) => ocr && h != null && h.length === 1 && mm == null;
     // hours until the place closes or from when it opens: the other end is not written (a guess, the usual length)
     for (const m of text.matchAll(R.TO_CLOSE)) {
+      if (m[3] ? oneDigit(m[1], m[2]) : oneDigit(m[5], m[6])) { out.push({ at: m.index, len: m[0].length, unsure: true }); continue; }
       const a = m[3] ? hhmm(m[1], m[2]) : hhmm(m[5], m[6]);
       if (a) out.push({ at: m.index, len: m[0].length, start: a, end: null, guess: 'single', label: m[0].trim() });
     }
     for (const m of text.matchAll(R.FROM_OPEN)) {
+      if (taken(m.index)) continue;
+      if (m[1] != null ? oneDigit(m[1], m[2]) : oneDigit(m[3], m[4])) { out.push({ at: m.index, len: m[0].length, unsure: true }); continue; }
       const b = m[1] != null ? hhmm(m[1], m[2]) : hhmm(m[3], m[4]);
-      if (b && !taken(m.index)) out.push({ at: m.index, len: m[0].length, start: null, end: b, guess: 'single', label: m[0].trim() });
+      if (b) out.push({ at: m.index, len: m[0].length, start: null, end: b, guess: 'single', label: m[0].trim() });
     }
     for (const m of text.matchAll(R.RANGE_RE)) {
       if (taken(m.index)) continue;
@@ -187,6 +200,9 @@
       if (taken(w.index)) continue;
       const word = w[0].replace(/^[וה](?=(בוקר|ערב|לילה|צהריים|צהרים|פתיחה|סגירה)$)/, '').toLowerCase();
       const n = named[word];
+      // a digit glued to the shift's name ("8סגירה", "6-סגירה"): its hours were written and not read; the name's
+      // usual hours would stand in for other hours
+      if (n && (/\d[-–—]?$/.test(text.slice(0, w.index)) || /^[-–—]?\d/.test(text.slice(w.index + w[0].length)))) { out.push({ at: w.index, len: w[0].length, unsure: true }); continue; }
       if (n) { out.push({ at: w.index, len: w[0].length, start: n[0], end: n[1], guess: 'named', label: w[0] }); continue; }
       if (OFF_WORDS.includes(word) && (word.length > 1 || /^\s*[-–—x]\s*$/i.test(text.trim()) || /(^|[\s,|:;])[-–—x]([\s,|;]|$)/i.test(text.slice(Math.max(0, w.index - 1), w.index + 2)))) {
         out.push({ at: w.index, len: w[0].length, off: true, label: w[0] });
@@ -195,9 +211,23 @@
     for (const m of text.matchAll(R.TIME_RE)) {
       if (taken(m.index)) continue;
       const a = hhmm(m[1], m[2]);
+      if (ocr && a && +m[2] % 5 && +m[2] <= 24) {
+        const b = hhmm(m[2]);
+        if (b && okLen(lenOf(pad(+m[1]) + ':00', b))) { out.push({ at: m.index, len: m[0].length, start: pad(+m[1]) + ':00', end: b, guess: 'ocr', label: m[0] }); continue; }
+      }
       if (a) out.push({ at: m.index, len: m[0].length, start: a, end: null, guess: 'single', label: m[0] });
     }
     out.sort((a, b) => a.at - b.at);
+    // a shift's name right by its hours ("בוקר 8-16", "ערב (16-23)") is their label, not a second shift at the
+    // name's usual hours (it gave two shifts on one day, one of them made up)
+    for (let i = out.length - 1; i >= 0; i--) {
+      const s = out[i];
+      if (s.guess !== 'named') continue;
+      const by = [out[i - 1], out[i + 1]].filter((x) => x && (x.start || x.end) && x.guess !== 'named');
+      if (by.some((x) => /^[\s:()[\]\-–—,|]*$/.test(x.at < s.at ? text.slice(x.at + x.len, s.at) : text.slice(s.at + s.len, x.at)))) out.splice(i, 1);
+    }
+    // what could not be read stays out: its place was only kept so no part of it was taken for something else
+    for (let i = out.length - 1; i >= 0; i--) if (out[i].unsure) out.splice(i, 1);
     // two times side by side ("08:00 16:30", a cell split in two) are one range
     for (let i = 0; i + 1 < out.length; i++) {
       const a = out[i], b = out[i + 1];
@@ -240,15 +270,21 @@
     // "שני" is also a woman's name: in a message where Monday heads a line of its own, or for a person called
     // so, a bare "שני" inside another day's line, right before a shift, is her
     const shaniIsName = (opts.mine || []).some((n) => norm(n).split(' ').includes('שני')) || lines.some((l) => new RegExp(`^\\s*(?:ב?יום\\s+)?שני\\s*(?:[:\\-–—]|$)`).test(l));
+    // a screenshot's lines that open with a day's letter (א׳ - …): a lone letter opening another line is a day
+    // whose mark OCR lost ("ד נדב 9-17")
+    if (opts.ocr && lines.filter((l) => (daysIn(l, today)[0] || {}).style === 'letter' && daysIn(l, today)[0].at < 3).length >= 2) {
+      for (let i = 0; i < lines.length; i++) lines[i] = lines[i].replace(/^(\s*)([אבגדהוש])(?=\s)/,(m0, sp, l) => sp + l + '׳');
+    }
     const seq = sequencer();
     const yearOff = otherYear(lines.flatMap((l) => daysIn(l, today)));
+    let dayInline = false; // the last day's own line had shifts in it
     lines.forEach((line, li) => {
       if (!line.trim()) return;
       let days = daysIn(line, today);
       if (yearOff) for (const d of days) if (d.ny) { d.date = keyOf(+d.date.slice(0, 4) + yearOff, d.ny[1], d.ny[0]); d.dow = dowOf(d.date); }
       if (shaniIsName && days.length >= 2) days = days.filter((d, i) => !(i > 0 && d.bare && !d.date && d.dow === 1 && /^\s*(?:\d|[בעלצ][וקרהי])/.test(line.slice(d.at + d.len))));
       const rest = blank(line, days);
-      const shifts = shiftsIn(rest, named);
+      const shifts = shiftsIn(rest, named, opts.ocr);
       // days with no shifts among them: a table's head
       if (days.length >= 3 && !shifts.some((s) => !s.off)) { head = days; head.forEach(seq); day = null; return; }
       // several days in one line ("ראשון 8-16 שני 9-17", "ראשון-חמישי 8-16"): each shift goes with the days before it
@@ -263,10 +299,10 @@
           from = s.at + s.len;
           if (!s.off) for (const d of g.days) entries.push(entryOf(d, s, who, li));
         }
-        day = groups[groups.length - 1].days;
+        day = groups[groups.length - 1].days; dayInline = true;
         return;
       }
-      if (days.length) { seq(days[0]); day = [days[0]]; head = null; }
+      if (days.length) { seq(days[0]); day = [days[0]]; head = null; dayInline = shifts.length > 0; }
       if (!shifts.length) return;
       // a row under a table's head: one cell per day, in order (the name is what comes before)
       if (head && !days.length) {
@@ -275,6 +311,9 @@
         return;
       }
       if (!day) return;
+      // a picture of a message whose days each open their own line with the shifts beside them: a line with
+      // shifts and no day is a day OCR could not read ("ב׳" read as "12-"), not more of the day above it
+      if (opts.ocr && !days.length && dayInline) return;
       let from = 0;
       const mine = [];
       for (const s of shifts) {
@@ -328,12 +367,14 @@
       d.wk = wk; d.pass = pass; seen.add(d.dow); last = d.dow;
     };
   }
-  function passes(entries) {
+  /** byWho: a table's second head (the same people listed again under days with no dates) is the week after;
+   *  in a message, a day named again is the week after only when the same person works it again. */
+  function passes(entries, byWho) {
     const max = Math.max(0, ...entries.map((e) => e.pass || 0));
     const shift = [0];
     for (let p = 1; p <= max; p++) {
       const prev = entries.filter((e) => (e.pass || 0) === p - 1 && e.date == null), cur = entries.filter((e) => (e.pass || 0) === p && e.date == null);
-      const again = cur.some((e) => prev.some((f) => f.who === e.who && f.dow === e.dow));
+      const again = cur.some((e) => prev.some((f) => f.who === e.who && (byWho || f.dow === e.dow)));
       shift[p] = shift[p - 1] + (again ? Math.max(0, ...prev.map((e) => e.wk || 0)) + 1 : 0);
     }
     for (const e of entries) { if (e.date == null && e.dow != null) e.wk = (e.wk || 0) + shift[e.pass || 0]; delete e.pass; }
@@ -497,7 +538,7 @@
     const read = (pick) => {
       const text = parts.map((p) => (pick && p.b) || p.a).join(' ');
       const one = /^[בצעל]['׳]?$/.test(text.trim()) ? text.trim()[0] : null;
-      const sh = one ? [{ start: named[CELL_LETTERS[one]][0], end: named[CELL_LETTERS[one]][1], guess: 'named', label: text.trim() }] : shiftsIn(text, named).filter((x) => !x.off);
+      const sh = one ? [{ start: named[CELL_LETTERS[one]][0], end: named[CELL_LETTERS[one]][1], guess: 'named', label: text.trim() }] : shiftsIn(text, named, true).filter((x) => !x.off);
       return { text, sh, len: sh.reduce((s, x) => s + (x.start && x.end ? lenOf(x.start, x.end) : 0), 0) };
     };
     const A = read(false);
@@ -541,7 +582,7 @@
       l.items = dayItems(l, today, h);
       const inItems = new Set(l.items.flatMap((it) => it.words));
       l.rest = l.words.filter((w) => !inItems.has(w));
-      l.shifts = shiftsIn(lineText(l.rest), named).filter((s) => !s.off);
+      l.shifts = shiftsIn(lineText(l.rest), named, true).filter((s) => !s.off);
       // two dates with a dash between them are a period ("22.11 - 28.11"), not two columns
       const two = l.items.length === 2 && l.items.every((it) => it.cands.length);
       l.period = two && (l.items[0].X0 - l.items[1].X1 < h * 3 || l.rest.some((w) => /^(?:-|–|—|עד)$/.test(w.text) && w.X < l.items[0].X0 && w.X > l.items[1].X1));
@@ -557,7 +598,12 @@
     const groups = [];
     lines.forEach((l, i) => {
       const g = groups[groups.length - 1];
-      const near = g && l.Y - g.lines[g.lines.length - 1].Y < h * 2.8 && !lines.slice(g.to + 1, i).some((x) => x.shifts.length);
+      // the dates of a head's names (or its names over dates) in the row right under it, a tall row's height away
+      // in a table with room in its cells: still the same head
+      const kind = (x) => (x.items.every((it) => it.dow != null && !it.cands.length) ? 'n' : x.items.every((it) => it.dow == null && it.cands.length) ? 'd' : '');
+      const last = g && g.lines[g.lines.length - 1];
+      const pair = last && l.headLike && kind(l) && kind(last) && kind(l) !== kind(last) && i === g.to + 1;
+      const near = g && l.Y - last.Y < h * (pair ? 4.5 : 2.8) && !lines.slice(g.to + 1, i).some((x) => x.shifts.length);
       if (!l.headLike) {
         // a line of dates OCR broke, right under the head ("25110 2244 25M"), is still the head's
         if (near && !l.shifts.length && l.words.some((w) => /\d/.test(w.text))) { g.lines.push(l); g.to = i; }
@@ -632,7 +678,7 @@
         }
         l.labelText = lineText(l.label);
         l.who = nameIn(l.labelText, named);
-        l.labelShifts = shiftsIn(l.labelText, named).filter((s) => !s.off);
+        l.labelShifts = shiftsIn(l.labelText, named, true).filter((s) => !s.off);
         l.has = l.cells.some((c) => c.length);
       }
       const entryFor = (c, s, who, line) => {
@@ -688,8 +734,9 @@
         }
       }
     });
-    if (!any) return null;
-    return { entries: passes(entries), rows };
+    // a head of days was there and no row under it could be read: a table all the same (see parseWords)
+    if (!any) return { entries: [], rows: 2, head: true };
+    return { entries: passes(entries, true), rows };
   }
 
   /** Days down the side. → { entries, rows }, { text: true } (lines to read as text) or null. */
@@ -697,25 +744,43 @@
     const { today, named } = ctx, h = L.h, lines = L.lines;
     const dayLines = lines.filter((l) => l.items.length && !l.period && !(l.headLike && l.items.length >= 3));
     if (dayLines.length < 2) return null;
-    // the side column: where the days are (most of them one under the other)
-    const sideX = median(dayLines.map((l) => l.items[0].X));
-    const side = dayLines.filter((l) => Math.abs(l.items[0].X - sideX) < h * 4);
+    // the side columns: where the days' names are, and where their dates are when they stand in a column of their
+    // own (each mostly one under the other)
+    const all = dayLines.flatMap((l) => l.items);
+    const nameXs = all.filter((it) => it.dow != null).map((it) => it.X), dateXs = all.filter((it) => it.dow == null && it.cands.length).map((it) => it.X);
+    const colX = [nameXs.length >= 2 ? median(nameXs) : null, dateXs.length >= 2 ? median(dateXs) : null].filter((x) => x != null);
+    if (!colX.length) colX.push(median(dayLines.map((l) => l.items[0].X)));
+    const inSide = (it) => colX.some((x) => Math.abs(it.X - x) < h * 4);
+    let side = dayLines.filter((l) => l.items.some(inSide));
+    // a day's name and its date in two columns, a photo's slant put on two lines ("23/11" a little over "שני"):
+    // one day (a new line object: the lines themselves stay as they are for the reading as text)
+    const merged = new Set();
+    side = side.reduce((out, l) => {
+      const p = out[out.length - 1];
+      const only = (x, k) => x.items.filter(inSide).every((it) => (k === 'n' ? it.dow != null && !it.cands.length : it.dow == null && it.cands.length));
+      if (p && !p.joined && Math.abs(l.Y - p.Y) < h * 1.1 && ((only(p, 'n') && only(l, 'd')) || (only(p, 'd') && only(l, 'n')))) {
+        merged.add(l); merged.add(p.src || p);
+        out[out.length - 1] = { src: p.src || p, Y: p.Y, words: p.words.concat(l.words), items: p.items.concat(l.items), joined: true };
+      } else out.push(l);
+      return out;
+    }, []);
     if (side.length < 2) return null;
+    const sideX = rtlOf(side) ? Math.min(...colX) : Math.max(...colX);
     for (const l of side) {
       // the day of the line: its name and its date, wherever each stands ("ראשון | 22/11")
-      const its = l.items.filter((it) => Math.abs(it.X - sideX) < h * 9);
+      const its = l.items.filter((it) => inSide(it) || Math.abs(it.X - sideX) < h * 9);
       const nm = its.find((it) => it.dow != null);
       l.day = { dow: nm ? nm.dow : null, cands: its.flatMap((it) => it.cands), style: (nm || its[0]).style };
       const used = new Set(its.flatMap((it) => it.words));
       l.cellsWords = l.words.filter((w) => !used.has(w));
-      l.cellShift = shiftsIn(lineText(l.cellsWords), named).filter((s) => !s.off);
+      l.cellShift = shiftsIn(lineText(l.cellsWords), named, true).filter((s) => !s.off);
       l.cellName = nameIn(blankShifts(lineText(l.cellsWords), named), named);
     }
     const withShifts = side.filter((l) => l.cellShift.length);
     // the head: the nearest line above the first day that has words over the cells
-    const first = lines.indexOf(side[0]);
-    const latinDays = side.some((l) => l.day.style === 'en');
-    const rtl = !latinDays;
+    const srcOf = (l) => l.src || l;
+    const first = lines.indexOf(srcOf(side[0]));
+    const rtl = rtlOf(side);
     const cellSide = (w) => (rtl ? w.X < sideX - h * 2 : w.X > sideX + h * 2);
     const headLines = lines.slice(0, first).filter((l) => side[0].Y - l.Y < h * 6 && l.words.some(cellSide));
     const headWords = headLines.length ? headLines.filter((l) => l.Y >= headLines[headLines.length - 1].Y - h * 1.9).flatMap((l) => l.words.filter(cellSide)) : [];
@@ -728,7 +793,7 @@
     for (const c of hcols) {
       c.X = (c.X0 + c.X1) / 2;
       c.text = c.words.slice().sort((a, b) => a.Y - b.Y || b.X - a.X).map((w) => w.text).join(' ');
-      c.sh = shiftsIn(c.text, named).filter((s) => !s.off);
+      c.sh = shiftsIn(c.text, named, true).filter((s) => !s.off);
       c.who = nameIn(blankShifts(c.text, named), named);
     }
     const typeCols = hcols.filter((c) => c.sh.length);
@@ -748,9 +813,10 @@
     const fit = fitSide(cols);
     // the lines between the days' lines (the second line of a tall cell) go to the day right by them
     const owner = new Map();
-    const lastSide = lines.indexOf(side[side.length - 1]);
+    const lastSide = lines.indexOf(srcOf(side[side.length - 1]));
+    const sides = new Set(side.map(srcOf));
     lines.forEach((l, i) => {
-      if (i <= first || side.includes(l) || i > lastSide + 2) return;
+      if (i <= first || sides.has(l) || merged.has(l) || i > lastSide + 2) return;
       const o = nearestLine(l, side, h);
       if (o) (owner.get(o) || owner.set(o, []).get(o)).push(l);
     });
@@ -766,14 +832,16 @@
       for (const w of ws) { let best = -1, bd = Infinity; use.forEach((u, k) => { const dd = Math.abs(u.X - w.X); if (dd < bd) { bd = dd; best = k; } }); if (best >= 0 && bd <= gap * 0.55) cells[best].push(w); }
       cells.forEach((cw, k) => {
         if (!cw.length) return;
-        if (isTypes) { const s = use[k].sh.find((x) => !x.guess) || use[k].sh[0]; cellNames(cw, named).forEach((n) => entries.push(entryOf(d, s, n, lines.indexOf(c.l)))); }
-        else for (const s of cellShifts(cw, h, named).sh) entries.push(entryOf(d, s, use[k].who, lines.indexOf(c.l)));
+        if (isTypes) { const s = use[k].sh.find((x) => !x.guess) || use[k].sh[0]; cellNames(cw, named).forEach((n) => entries.push(entryOf(d, s, n, lines.indexOf(srcOf(c.l))))); }
+        else for (const s of cellShifts(cw, h, named).sh) entries.push(entryOf(d, s, use[k].who, lines.indexOf(srcOf(c.l))));
       });
     });
     if (!entries.length) return null;
     return { entries: passes(entries), rows: 2 };
   }
-  function blankShifts(text, named) { return blank(text, shiftsIn(text, named)); }
+  function blankShifts(text, named) { return blank(text, shiftsIn(text, named, true)); }
+  /** Days written right to left (Hebrew) unless they are English names. */
+  const rtlOf = (ls) => !ls.some((l) => l.items.some((it) => it.style === 'en'));
   /** The days down a side column: as fitDays, with time running down the lines. */
   function fitSide(cols) {
     const names = cols.filter((c) => c.dow != null).length;
@@ -787,7 +855,13 @@
       if (!best || score > best.score) best = { b, n: v.n, near: v.near, agree, dis, score, against: cols.filter((c) => c.cands.length && !v.cols.has(c)).length };
     }
     if (datesAgree(best, names, cols.length)) {
-      for (const c of cols) { c.date = keyN(best.b + c.p); c.off = c.p; }
+      // a line's place counts the days only while no day's line is missing: a day whose own name or date says
+      // otherwise is not given the date of its place (a line OCR lost above it would move it a day)
+      for (const c of cols) {
+        const n = best.b + c.p;
+        c.date = keyN(n); c.off = c.p;
+        if (c.dow != null ? dowN(n) !== c.dow : c.cands.length && !c.cands.some((k) => k.n === n)) c.drop = true;
+      }
       return { dated: true };
     }
     // a day with a date of its own that fits its name keeps it (days that skip: only the days someone works)
@@ -799,7 +873,25 @@
     });
     let off = 0;
     own.forEach((c, i) => { if (i) off += ((c.dow - own[i - 1].dow + 7) % 7) || 7; c.off = off; c.dow0 = own[0].dow; });
+    datedByNeighbours(cols);
     return { dated: false };
+  }
+  /**
+   * Days of one table, some dated and some by their name only: a name alone is the first such day after the
+   * dated day above it (before the one under it, when none is above). The week the screen guesses must never
+   * date a day beside days the table dates itself; a day that fits between none of them is left out.
+   */
+  function datedByNeighbours(cols) {
+    const dated = cols.filter((c) => c.date && !c.drop).sort((a, b) => a.p - b.p);
+    if (!dated.length) return;
+    for (const c of cols) {
+      if (c.date || c.drop) continue;
+      if (c.dow == null) { c.drop = true; continue; }
+      const prev = dated.filter((d) => d.p < c.p).pop(), next = dated.find((d) => d.p > c.p);
+      const n = prev ? dayN(prev.date) + (((c.dow - dowOf(prev.date) + 7) % 7) || 7) : dayN(next.date) - (((dowOf(next.date) - c.dow + 7) % 7) || 7);
+      if ((prev && n <= dayN(prev.date)) || (next && n >= dayN(next.date))) { c.drop = true; continue; }
+      c.date = keyN(n);
+    }
   }
   /** The period a title names: "22/11-28/11", "22-28/11", "29.11.26 - 05.12.26" → its first day, or null. */
   function periodIn(text, today) {
@@ -831,10 +923,20 @@
     if (!L.lines.length) return finish([]);
     const period = L.lines.map((l) => periodIn(lineText(l.words), today)).find(Boolean) || null;
     const ctx = { today, named, period };
-    const t = readAcross(L, ctx) || readSide(L, ctx);
-    if (t && !t.text) return finish(t.entries, t);
+    const across = readAcross(L, ctx);
+    const t = across && across.entries.length ? across : readSide(L, ctx);
+    if (t && !t.text && t.entries.length) return finish(oneCalendar(t.entries), t);
+    // a table's head with nothing under it that could be read: not a message. Read as text, its rows would go to
+    // the days of whatever line stands over them (a date the photo's slant left on a line of its own): nothing
+    if ((across && across.head) || (t && !t.text)) return finish([], { rows: 2 });
     // no table shape: read as text, a line a line
-    return parseText(L.lines.map((l) => lineText(l.words)).join('\n'), opts);
+    return parseText(L.lines.map((l) => lineText(l.words)).join('\n'), Object.assign({}, opts, { ocr: true }));
+  }
+
+  /** A table's days either all have their dates or none does: the week the screen guesses never dates a day of a
+   *  table that dates its other days itself (a day the table left undated is left out). */
+  function oneCalendar(entries) {
+    return entries.some((e) => e.date) ? entries.filter((e) => e.date) : entries;
   }
 
   /* ---------------- whose, which week, the rows ---------------- */
@@ -907,5 +1009,11 @@
     }).filter(Boolean).sort((a, b) => (a.date + a.start).localeCompare(b.date + b.start));
   }
 
-  root.Schedule = { parseText, parseWords, pick, isMine, whoOf, offer, weekStartFor, rowsOf, NAMED };
+  /** Does a row start ticked on the screen? Not when the app has a shift at that time already, nor when it is over
+   *  a week ago: a schedule is a plan, and an old one (last year's photo) would be saved as shifts worked. */
+  function startsOn(row, today, taken) {
+    return !taken && row.date >= addDays(today, -7);
+  }
+
+  root.Schedule = { parseText, parseWords, pick, isMine, whoOf, offer, weekStartFor, rowsOf, startsOn, NAMED };
 })(typeof window !== 'undefined' ? window : globalThis);
