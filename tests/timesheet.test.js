@@ -65,9 +65,10 @@ function page(head, rows, o) {
   rows.forEach((r, ri) => r.forEach((c, i) => add(c, xs[i], 150 + ri * 50)));
   return TS.parseWords(words, { today });
 }
-const shifts = (p) => p.rows.map((r) => `${r.date} ${r.start}-${r.end}`).join(' | ');
-// the shifts kept apart for the user to check (a time worked out, not read)
-const unsure = (p) => (p.unsure || []).map((r) => `${r.date} ${r.start}-${r.end} ${r.unsure}`).join(' | ');
+// the shifts read as they are (the import offers them ticked)
+const shifts = (p) => p.rows.filter((r) => !r.doubt).map((r) => `${r.date} ${r.start}-${r.end}`).join(' | ');
+// the shifts with a doubt (a time worked out, not read): offered unticked, for the user to check
+const unsure = (p) => p.rows.filter((r) => r.doubt).map((r) => `${r.date} ${r.start}-${r.end} ${r.doubt}`).join(' | ');
 T.test('table: columns found by their names, the total and the notes are not shifts', () => {
   const p = page(['תאריך', 'יום', 'כניסה', 'יציאה', 'סה"כ', 'הערות'], [
     ['01/10/2026', 'ה׳', '08:00', '16:30', '8:30', ''],
@@ -301,4 +302,84 @@ T.test('the nights the clock moves: a night shift ends at the exit the report pr
     T.eq(`${String(end.getHours()).padStart(2, '0')}:${String(end.getMinutes()).padStart(2, '0')}`, e, d);
     T.near((t.end - t.start) / 3600000, real, 0.01, d);
   }
+});
+
+/* ---- the picture before it is read (app/docread.js): its rules that need no browser ---- */
+T.section('hours report photo: the picture');
+require(require('path').join(__dirname, '..', 'src', 'app', 'docread.js'));
+const DR = globalThis.DocRead.pure;
+// a grey page of lines of words: each line at its angle (degrees), the top half at `top`, the bottom half at `bottom`
+function inkPage(top, bottom) {
+  const W = 800, H = 1000, px = new Uint8Array(W * H).fill(255);
+  for (let k = 0; k < 22; k++) {
+    const y0 = 40 + k * 42, deg = y0 < H / 2 ? top : bottom, t = Math.tan((deg * Math.PI) / 180);
+    for (let x = 40; x < W - 40; x++) {
+      if (x % 80 > 60) continue; // the gap between words
+      const y = Math.round(y0 + (x - W / 2) * t);
+      for (let d = 0; d < 8; d++) if (y + d >= 0 && y + d < H) px[(y + d) * W + x] = 20;
+    }
+  }
+  return [px, W, H];
+}
+T.test('a page photographed at 8° is turned straight; 2° is left to the table reader', () => {
+  T.near(DR.skewOf(...inkPage(8, 8)), 8, 0.5);
+  T.near(DR.skewOf(...inkPage(-11, -11)), -11, 0.5);
+  T.eq(DR.skewOf(...inkPage(2, 2)), 0);
+  T.eq(DR.skewOf(...inkPage(0, 0)), 0);
+});
+T.test('a page seen from the side (its lines fan out) is not turned by one wrong angle, unless all of it is too steep for the table reader', () => {
+  T.eq(DR.skewOf(...inkPage(1, 9)), 0);
+  const steep = DR.skewOf(...inkPage(12, 16));
+  T.ok(steep >= 13 && steep <= 15, 'steep fan turned by its mean: ' + steep);
+});
+T.test('a PNG with no background: dark letters stay dark on white, light letters become dark on white', () => {
+  const px = new Uint8ClampedArray(20 * 20 * 4); // all see-through
+  for (let i = 0; i < 40; i++) px.set([0, 0, 0, 255], (i * 7) * 4); // dark ink
+  const g = DR.grayOf(px);
+  T.ok(g[0] < 60 && g[1] > 200, `dark ink ${g[0]}, background ${g[1]}`);
+  const lt = new Uint8ClampedArray(20 * 20 * 4);
+  for (let i = 0; i < 40; i++) lt.set([245, 245, 245, 255], (i * 7) * 4); // light ink
+  const h = DR.grayOf(lt);
+  T.ok(h[0] < 60 && h[1] > 200, `light ink ${h[0]}, background ${h[1]}`);
+});
+T.test('which way up: only valid times and dates count (upside down, 08:00 reads "00:80")', () => {
+  T.eq(DR.wholes(['00:80', '08:00', '31/13', '12/11', '16:30-00:30', '0E:91', '24:61'].map((text) => ({ text }))), 3);
+});
+
+T.section('hours report photo: more guards');
+T.test('a column the header names סה"כ is never paired as an entry or an exit (a padded total beside the entry)', () => {
+  const p = page(['תאריך', 'כניסה', 'יציאה', 'תקן', 'סה"כ'], [
+    ['01/10/2026', '07:50', '', '08:00', '06:26'], ['02/10/2026', '16:07', '', '08:00', '06:41'], ['04/10/2026', '09:12', '', '08:00', '08:18'],
+    ['05/10/2026', '14:00', '', '08:00', '07:31'], ['06/10/2026', '16:00', '', '08:00', '06:39'], ['07/10/2026', '09:06', '', '08:00', '06:20'],
+  ]);
+  T.eq(p.rows.length, 0, 'shifts made of the entry and the total: ' + shifts(p) + ' / ' + unsure(p));
+});
+T.test('a year misread in one row (2024 in a report of 2026) takes the report\'s year', () => {
+  const d = (n) => `${String(n).padStart(2, '0')}/10/2026`;
+  const p = page(['תאריך', 'כניסה', 'יציאה'], [['01/10/2024', '08:00', '16:00'], [d(2), '09:00', '17:00'], [d(4), '07:00', '15:00'], [d(5), '08:00', '16:00'], [d(6), '14:00', '22:00']], { title: ['2026'] });
+  T.ok(!/2024/.test(p.rows.map((r) => r.date).join(' ')), 'a shift two years back: ' + shifts(p));
+  T.ok(/2026-10-01 08:00-16:00/.test(shifts(p)), 'its own date: ' + shifts(p));
+});
+T.test('one date on two rows that name different weekdays: the second is misread, the day between is offered', () => {
+  const p = page(['תאריך', 'יום', 'כניסה', 'יציאה'], [
+    ['16/09/2026', 'רביעי', '08:00', '16:00'], ['17/09/2026', 'חמישי', '09:00', '17:00'], ['20/09/2026', 'ראשון', '16:11', '00:47'],
+    ['20/09/2026', 'שני', '15:55', '21:02'], ['22/09/2026', 'שלישי', '08:00', '14:00'], ['23/09/2026', 'רביעי', '07:00', '15:00'],
+  ]);
+  T.ok(!/2026-09-20 15:55/.test(shifts(p) + unsure(p)), 'kept on the 20th: ' + shifts(p));
+  // (a report of worked days only: the day between is offered for checking)
+  T.ok(/2026-09-21 15:55-21:02/.test(shifts(p) + ' ' + unsure(p)), 'not on its day: ' + unsure(p));
+});
+T.test('a date put right stays near its neighbours (a cut "011" is not 01/01 before 02/10)', () => {
+  const p = page(['תאריך', 'כניסה', 'יציאה'], [['011', '07:11', '14:11'], ['02/10/2026', '08:59', '17:37'], ['03/10/2026', '08:10', '16:55'], ['04/10/2026', '09:05', '14:43'], ['05/10/2026', '09:06', '16:26']]);
+  T.ok(!/2026-01-01/.test(p.rows.map((r) => r.date).join(' ')), 'months away: ' + shifts(p));
+});
+T.test('hours paid that are not the span (a break taken off) are kept as paid, on a photo and on a line', () => {
+  const p = page(['תאריך', 'כניסה', 'יציאה', 'שעות'], [['01/10/2026', '08:00', '17:00', '8.25'], ['02/10/2026', '08:00', '16:30', '7.75'], ['03/10/2026', '09:00', '17:00', '8.00'], ['04/10/2026', '07:00', '16:00', '8.25']]);
+  T.eq(p.rows.map((r) => r.paid || '-').join(' '), '8.25 7.75 - 8.25');
+  const t = TS.parse('14/10/2026 08:00 17:00 8.25', { today });
+  T.eq(t.rows[0].paid, 8.25); T.near(t.rows[0].hours, 9);
+});
+T.test('text lines: an entry with no exit is counted as left out', () => {
+  const t = TS.parse('13/10/2026 08:00\n14/10/2026 08:00 16:00\n15/10/2026 09:00 17:00', { today });
+  T.eq(t.rows.length, 2); T.eq(t.skipped, 1);
 });

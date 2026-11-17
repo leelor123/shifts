@@ -20,20 +20,26 @@
     const bmp = await createImageBitmap(blob, { imageOrientation: 'from-image' });
     const long = Math.max(bmp.width, bmp.height);
     // the reader does best with letters ~25-40px tall: big phone photos come down, small screenshots go up
-    const s = long > 2600 ? 2600 / long : long < 1500 ? 1500 / long : 1;
-    const W = Math.round(bmp.width * s), H = Math.round(bmp.height * s);
+    // (opts.size: a smaller picture, only to see which way up the page is)
+    const top = opts.size || 2600, low = Math.min(1500, top);
+    let s = long > top ? top / long : long < low ? low / long : 1;
+    // a long scroll screenshot (an app's list captured down the page) keeps its width: its letters would be
+    // too small to read at the size of a page. DocRead.words reads it in slices
+    const tall = !opts.size && bmp.height > 2600 && (bmp.width * 2600) / bmp.height < 1000;
+    if (tall) s = bmp.width > 1500 ? 1500 / bmp.width : bmp.width < 1000 ? 1000 / bmp.width : 1;
+    // a page photographed on its side or upside down (opts.turn: 90, 180, 270) is turned the right way up
+    const q = (((opts.turn || 0) % 360) + 360) % 360, side = q === 90 || q === 270;
+    const dw = Math.round(bmp.width * s), dh = Math.round(bmp.height * s);
+    const W = side ? dh : dw, H = side ? dw : dh;
     const c = document.createElement('canvas');
     c.width = W; c.height = H;
     const g = c.getContext('2d', { willReadFrequently: true });
     g.imageSmoothingQuality = 'high';
-    g.drawImage(bmp, 0, 0, W, H);
+    if (q) { g.translate(W / 2, H / 2); g.rotate((q * Math.PI) / 180); g.drawImage(bmp, -dw / 2, -dh / 2, dw, dh); g.setTransform(1, 0, 0, 1, 0, 0); }
+    else g.drawImage(bmp, 0, 0, W, H);
     if (bmp.close) bmp.close();
     const img = g.getImageData(0, 0, W, H), px = img.data, n = W * H;
-    const gray = new Uint8ClampedArray(n);
-    let sum = 0;
-    for (let i = 0, j = 0; i < n; i++, j += 4) { const v = (px[j] * 77 + px[j + 1] * 150 + px[j + 2] * 29) >> 8; gray[i] = v; sum += v; }
-    // a dark screen (light letters): the other way round
-    if (sum / n < 110) for (let i = 0; i < n; i++) gray[i] = 255 - gray[i];
+    const gray = grayOf(px);
     // the paper's own brightness, block by block (the brightest of each block), smoothed over the page:
     // every pixel divided by it, so shadow and glare go and the paper is white everywhere
     const B = Math.max(24, Math.round(Math.max(W, H) / 48));
@@ -68,11 +74,102 @@
     }
     if (opts.bin) for (let i = 0; i < n; i++) norm[i] = norm[i] < opts.bin ? 0 : 255;
     if (opts.lines) unline(norm, W, H);
-    const out = g.createImageData(W, H), o = out.data;
-    for (let i = 0, j = 0; i < n; i++, j += 4) { o[j] = o[j + 1] = o[j + 2] = norm[i]; o[j + 3] = 255; }
-    g.putImageData(out, 0, 0);
-    return c;
+    // (written into the picture's own pixels: a second copy of a big photo's pixels is memory a phone may not have)
+    for (let i = 0, j = 0; i < n; i++, j += 4) { px[j] = px[j + 1] = px[j + 2] = norm[i]; px[j + 3] = 255; }
+    g.putImageData(img, 0, 0);
+    // a page photographed at an angle: its lines straightened (the reader misses words on a slant, and a
+    // table's rows run into each other)
+    const deg = opts.straight === false ? 0 : skewOf(norm, W, H);
+    c.skew = deg;
+    const res = deg ? turned(c, deg) : c;
+    res.tall = tall;
+    return res;
   };
+  /** RGBA pixels → grey, dark letters on light (a dark screen turned the other way round). */
+  function grayOf(px) {
+    const n = px.length >> 2;
+    // a picture with see-through pixels (a PNG with no background) read them as black: dark letters on it
+    // became black on black. It is laid on a background opposite to its letters (the mean of its solid
+    // pixels: dark letters on white, light letters on black, which is then turned like a dark screen)
+    let clear = 0, sa = 0, sv = 0;
+    for (let j = 3; j < px.length; j += 16) { const a = px[j]; if (a < 250) clear++; sa += a; sv += a * ((px[j - 3] * 77 + px[j - 2] * 150 + px[j - 1] * 29) >> 8); }
+    const bgA = clear > Math.ceil(n / 4) * 0.01 ? (sa && sv / sa > 128 ? 0 : 255) : -1;
+    const gray = new Uint8ClampedArray(n);
+    let sum = 0;
+    for (let i = 0, j = 0; i < n; i++, j += 4) {
+      let v = (px[j] * 77 + px[j + 1] * 150 + px[j + 2] * 29) >> 8;
+      if (bgA >= 0 && px[j + 3] < 255) v = (v * px[j + 3] + bgA * (255 - px[j + 3])) / 255;
+      gray[i] = v; sum += v;
+    }
+    // a dark screen (light letters): the other way round
+    if (sum / n < 110) for (let i = 0; i < n; i++) gray[i] = 255 - gray[i];
+    return gray;
+  }
+  /**
+   * The page's angle, in degrees (0 when it is straight or not clear): the angle at which the page's lines of ink
+   * line up best, that is the profile of the ink across the page is sharpest. Up to 20° either way; only when it
+   * is clearly sharper than the page as it is, and more than 1° (the table reader takes small angles out itself).
+   */
+  function skewOf(px, W, H) {
+    const step = Math.max(1, Math.round(Math.max(W, H) / 800));
+    const xs = [], ys = [];
+    for (let y = 0; y < H; y += step) for (let x = 0; x < W; x += step) if (px[y * W + x] < 128) { xs.push(x); ys.push(y); }
+    if (xs.length < 300) return 0;
+    const off = W + 2, bins = new Float64Array(Math.ceil((W + H + 4) / step) + 2);
+    const sharp = (deg, from, to) => {
+      const t = (deg * Math.PI) / 180, sn = Math.sin(t), cs = Math.cos(t);
+      bins.fill(0);
+      for (let i = from; i < to; i++) bins[Math.floor((ys[i] * cs - xs[i] * sn + off) / step)]++;
+      let s = 0;
+      for (let i = 0; i < bins.length; i++) s += bins[i] * bins[i];
+      return s;
+    };
+    const angle = (from, to) => {
+      let best = 0, bs = sharp(0, from, to);
+      const flat = bs;
+      for (let d = -20; d <= 20; d += 1) { const v = sharp(d, from, to); if (v > bs) { bs = v; best = d; } }
+      for (let d = best - 0.8; d <= best + 0.81; d += 0.2) { const v = sharp(d, from, to); if (v > bs) { bs = v; best = d; } }
+      return { best, gain: bs / Math.max(1, flat) };
+    };
+    const all = angle(0, xs.length);
+    // a few degrees the table reader takes out itself (turning the picture for them changed what the reader read
+    // more than it helped)
+    if (Math.abs(all.best) < 3 || all.gain < 1.15) return 0;
+    // a page seen from the side has lines that fan out: its top and its bottom lie at different angles, and no
+    // one turn straightens it (the table reader follows such lines). A page only turned has one angle throughout
+    const half = ys.findIndex((y) => y >= H / 2);
+    if (half < 150 || xs.length - half < 150) return 0;
+    const a = angle(0, half).best, b = angle(half, xs.length).best;
+    // (both halves steeper than the table reader can follow, about 6°: turned by their mean, the rest is the
+    // reader's)
+    if (Math.abs(a - b) > 2.5) return Math.sign(a) === Math.sign(b) && Math.min(Math.abs(a), Math.abs(b)) > 6 ? Math.round(((a + b) / 2) * 10) / 10 : 0;
+    return Math.round(all.best * 10) / 10;
+  }
+  /** A canvas turned by -deg (its lines level), on white, the corners kept. */
+  function turned(src, deg) {
+    const t = (-deg * Math.PI) / 180, W = src.width, H = src.height;
+    const W2 = Math.round(Math.abs(W * Math.cos(t)) + Math.abs(H * Math.sin(t))), H2 = Math.round(Math.abs(W * Math.sin(t)) + Math.abs(H * Math.cos(t)));
+    const c = document.createElement('canvas');
+    c.width = W2; c.height = H2;
+    const g = c.getContext('2d', { willReadFrequently: true });
+    g.fillStyle = '#fff'; g.fillRect(0, 0, W2, H2);
+    g.imageSmoothingQuality = 'high';
+    g.translate(W2 / 2, H2 / 2); g.rotate(t); g.drawImage(src, -W / 2, -H / 2);
+    c.skew = deg;
+    src.width = src.height = 0; // the first canvas's memory back at once (a phone has little)
+    return c;
+  }
+  /** The same picture in pure black and white (a second reading sees what the first misses). */
+  function binary(src, cut) {
+    const c = document.createElement('canvas');
+    c.width = src.width; c.height = src.height;
+    const g = c.getContext('2d', { willReadFrequently: true });
+    g.drawImage(src, 0, 0);
+    const img = g.getImageData(0, 0, c.width, c.height), p = img.data;
+    for (let j = 0; j < p.length; j += 4) p[j] = p[j + 1] = p[j + 2] = p[j] < cut ? 0 : 255;
+    g.putImageData(img, 0, 0);
+    return c;
+  }
   /**
    * A table's lines out (to white): the reader skips numbers that touch a cell's border. A line is a run of
    * ink much longer than any letter's stroke; a line in a tilted photo climbs, so a run may step one pixel up
@@ -119,18 +216,23 @@
     if (root.App && root.App.loadLib) return root.App.loadLib(TESSERACT);
     return Promise.reject(root.U && root.U.oops ? root.U.oops('לא ניתן לטעון רכיב') : new Error('no reader'));
   }
-  async function pass(image, lang, params, progress, label) {
+  // opts.signal (an AbortController's): the person left the screen, the reading stops (its worker ends)
+  const stopped = () => Object.assign(new Error('stopped'), { name: 'AbortError' });
+  async function pass(image, lang, params, progress, label, signal) {
+    if (signal && signal.aborted) throw stopped();
     const worker = await root.Tesseract.createWorker(lang, 1, {
       logger: (m) => { if (m.status === 'recognizing text' && progress) progress(`${label}… ${Math.round(m.progress * 100)}%`); },
     });
+    let onStop = null;
     try {
-      if (params) await worker.setParameters(params);
-      const { data } = await worker.recognize(image);
+      const stop = new Promise((_, no) => { onStop = () => no(stopped()); if (signal) signal.addEventListener('abort', onStop, { once: true }); });
+      if (params) await Promise.race([worker.setParameters(params), stop]);
+      const { data } = await Promise.race([worker.recognize(image), stop]);
       let ws = data.words;
       if (!ws && data.blocks) ws = data.blocks.flatMap((b) => (b.paragraphs || []).flatMap((p) => (p.lines || []).flatMap((l) => l.words || [])));
       return (ws || []).filter((w) => w && w.text && w.text.trim())
         .map((w) => ({ text: w.text.trim(), x0: w.bbox.x0, y0: w.bbox.y0, x1: w.bbox.x1, y1: w.bbox.y1, conf: w.confidence }));
-    } finally { await worker.terminate(); }
+    } finally { if (signal && onStop) signal.removeEventListener('abort', onStop); await worker.terminate(); }
   }
   const NUMERIC = /^[\d:./\-–]+$/;
   const overlap = (a, b) => {
@@ -141,25 +243,50 @@
    * The words of a picture with their boxes: the Hebrew reading for words, the digits reading for numbers.
    * opts.prep = false reads the picture as it is.
    */
+  const shape = (t) => (/^\d{1,2}:\d{2}$|^\d{1,2}[./-]\d{1,2}[./-]\d{2,4}$|^\d{1,2}\/\d{1,2}$|^\d{1,2}:\d{2}-\d{1,2}:\d{2}$/.test(t) ? 3 : /^\d+\.\d+$/.test(t) ? 2 : 1);
+  const sh = (w) => shape(w.text.replace(/^[-.:]+|[-.:]+$/g, ''));
+  // how many whole times and dates a reading found: a page on its side or upside down gives almost none
+  // (valid ones: a page upside down reads 08:00 as "00:80", a time in shape only)
+  const valid = (t) => { const m = /^(\d{1,2})[:./-](\d{1,2})(?:[./-](\d{2,4}))?/.exec(t); return m && (t.includes(':') ? +m[1] <= 24 && +m[2] <= 59 && m[2].length === 2 : +m[1] >= 1 && +m[1] <= 31 && +m[2] >= 1 && +m[2] <= 12); };
+  const wholes = (ws) => ws.filter((w) => sh(w) === 3 && valid(w.text.replace(/^[-.:]+|[-.:]+$/g, ''))).length;
+  const digitsPass = (image, opts, progress, label) => pass(image, opts.digitsLang || 'eng', Object.assign({ tessedit_pageseg_mode: opts.psmDigits || '11' }, opts.whitelist ? { tessedit_char_whitelist: '0123456789:./-' } : {}), progress, label, opts.signal);
   DocRead.words = async function (blob, progress, opts) {
     opts = opts || {};
     progress = progress || (() => {});
     await load();
     progress('מכין את התמונה…');
-    const image = opts.prep === false ? blob : await DocRead.prep(blob, opts);
+    let image = opts.prep === false ? blob : await DocRead.prep(blob, opts);
+    if (image.tall && !opts.part) { image.width = image.height = 0; return tallWords(blob, progress, opts); }
     // the second reading sees the picture in pure black and white: what one reading misses (a faint date,
-    // a time by a cell's border) the other often gets
-    const image2 = opts.prep === false || opts.bin2 === 0 ? image : await DocRead.prep(blob, Object.assign({}, opts, { bin: opts.bin2 || 170 }));
-    progress('טוען מנוע זיהוי עברית (פעם ראשונה ~10MB)…');
-    const he = await pass(image, 'heb+eng', { tessedit_pageseg_mode: opts.psm || '11', preserve_interword_spaces: '1' }, progress, 'קורא את המילים');
+    // a time by a cell's border) the other often gets (made from the first picture, not prepared again)
+    const bw = (im) => (opts.prep === false || opts.bin2 === 0 ? im : binary(im, opts.bin2 || 170));
+    let image2 = bw(image);
     let dg = [];
-    try { dg = await pass(image2, opts.digitsLang || 'eng', Object.assign({ tessedit_pageseg_mode: opts.psmDigits || '11' }, opts.whitelist ? { tessedit_char_whitelist: '0123456789:./-' } : {}), progress, 'קורא את המספרים'); } catch (e) { /* the words alone */ }
+    try { dg = await digitsPass(image2, opts, progress, 'קורא את המספרים'); } catch (e) { if (e.name === 'AbortError') throw e; /* the words alone */ }
+    // hardly a time or a date read: the page may lie on its side or upside down. A small copy turned each other
+    // way is read for its numbers, and the page is read again the way that finds clearly more of them
+    let turn = 0;
+    if (opts.prep !== false && opts.turn == null && wholes(dg) < 6) {
+      let best = { q: 0, n: wholes(dg) };
+      for (const q of [90, 270, 180]) {
+        progress('מכין את התמונה…');
+        let n = 0;
+        try { n = wholes(await digitsPass(binary(await DocRead.prep(blob, Object.assign({}, opts, { turn: q, size: 1600 })), opts.bin2 || 170), opts, null, '')); } catch (e) { if (e.name === 'AbortError') throw e; /* not this way */ }
+        if (n > best.n) best = { q, n };
+      }
+      if (best.q && best.n >= 6 && best.n >= wholes(dg) * 2 + 2) {
+        turn = best.q;
+        image = await DocRead.prep(blob, Object.assign({}, opts, { turn }));
+        image2 = bw(image);
+        try { dg = await digitsPass(image2, opts, progress, 'קורא את המספרים'); } catch (e) { if (e.name === 'AbortError') throw e; dg = []; }
+      }
+    }
+    progress('טוען מנוע זיהוי עברית (פעם ראשונה ~10MB)…');
+    const he = await pass(image, 'heb+eng', { tessedit_pageseg_mode: opts.psm || '11', preserve_interword_spaces: '1' }, progress, 'קורא את המילים', opts.signal);
     // the words: Hebrew/English words from the first reading; numbers from whichever reading read them
     // better (a whole time or date over a broken one, then the surer one)
     const isWord = (w) => /[A-Za-zא-ת]/.test(w.text) && !/^[\dOolISB:./-]+$/.test(w.text);
     const words = he.filter(isWord);
-    const shape = (t) => (/^\d{1,2}:\d{2}$|^\d{1,2}[./-]\d{1,2}[./-]\d{2,4}$|^\d{1,2}\/\d{1,2}$|^\d{1,2}:\d{2}-\d{1,2}:\d{2}$/.test(t) ? 3 : /^\d+\.\d+$/.test(t) ? 2 : 1);
-    const sh = (w) => shape(w.text.replace(/^[-.:]+|[-.:]+$/g, ''));
     const better = (a, b) => sh(a) - sh(b) || a.conf - b.conf;
     const nums = [];
     for (const w of dg.concat(he)) {
@@ -170,8 +297,39 @@
     }
     // a digits-reading "number" on top of a Hebrew word is the Hebrew word misread: not a number
     const out = words.concat(nums.filter((d) => !words.some((w) => overlap(w, d) > 0.5 && w.conf > 60)));
-    return { words: out, he, dg, canvas: image };
+    return { words: out, he, dg, canvas: image, info: { turn, skew: image.skew || 0 } };
   };
+
+  /**
+   * A long scroll screenshot (an app's list captured down the page): read in slices one and a half widths tall,
+   * overlapping, each as a picture of its own; the words put back where they stand on the whole picture, and a
+   * word read twice in the overlap kept once (the surer reading).
+   */
+  async function tallWords(blob, progress, opts) {
+    const bmp = await createImageBitmap(blob, { imageOrientation: 'from-image' });
+    const Wd = bmp.width, Hd = bmp.height, sliceH = Math.round(Wd * 1.6), step = Math.round(sliceH * 0.88);
+    const out = { words: [], he: [], dg: [] };
+    try {
+      for (let y0 = 0; y0 < Hd; y0 += step) {
+        const h = Math.min(sliceH, Hd - y0);
+        if (y0 && h < sliceH - step) break; // what is left is all in the overlap already read
+        const piece = await createImageBitmap(bmp, 0, y0, Wd, h);
+        const got = await DocRead.words(piece, progress, Object.assign({}, opts, { part: true, turn: 0, straight: false }));
+        if (piece.close) piece.close();
+        const k = Wd / got.canvas.width;
+        const back = (w) => Object.assign({}, w, { x0: w.x0 * k, x1: w.x1 * k, y0: w.y0 * k + y0, y1: w.y1 * k + y0 });
+        for (const key of ['words', 'he', 'dg']) {
+          for (const w of got[key].map(back)) {
+            const cx = (w.x0 + w.x1) / 2, cy = (w.y0 + w.y1) / 2;
+            const twin = out[key].findIndex((o) => o.text === w.text && Math.abs((o.x0 + o.x1) / 2 - cx) < 6 && Math.abs((o.y0 + o.y1) / 2 - cy) < 6);
+            if (twin < 0) out[key].push(w); else if (w.conf > out[key][twin].conf) out[key][twin] = w;
+          }
+        }
+        got.canvas.width = got.canvas.height = 0;
+      }
+    } finally { if (bmp.close) bmp.close(); }
+    return Object.assign(out, { canvas: null, info: { turn: 0, skew: 0, slices: Math.ceil(Hd / step) } });
+  }
 
   /** A photo of an hours report → shifts (core/timesheet.js parseWords). */
   DocRead.readTimesheet = async function (blob, progress, opts) {
@@ -182,5 +340,7 @@
     return Object.assign(res, { words: got.words }, opts.debug ? { he: got.he, dg: got.dg } : {});
   };
 
+  // the picture rules that need no browser, for the unit tests (tests/timesheet.test.js)
+  DocRead.pure = { grayOf, skewOf, wholes };
   root.DocRead = DocRead;
 })(typeof window !== 'undefined' ? window : globalThis);
