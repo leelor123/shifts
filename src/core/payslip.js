@@ -1329,10 +1329,13 @@
       let l = line;
       if (/(רחוב|רח'|רח׳|כתובת|מיקוד|ת\.ד|דירה|שכונת|ישוב:|יישוב:)/.test(l)) { count++; return '[כתובת הוסתרה]'; }
       // the worker's name ("שם העובד: נדב כהן", "שם: …", "לכבוד …"): the name is what follows the label, to the next
-      // label or number on the line (it went to the AI as it was, readers campaign, Nov 2026)
-      l = l.replace(/(?<=^|\s)(שם העובד|שם עובד|שם העובדת|שם משפחה|שם פרטי|שם|לכבוד)(\s*[:：]\s*|\s+)([^\d:|]+?)(?=\s+(?:מספר|מס'|ת\.ז|ת"ז|ת״ז|זהות|תאריך|מחלקה|תפקיד|סניף|בנק|קוד)|\s*\d|\s*\||$)/g,
-        (m0, a, sep, name) => (/[֐-׿A-Za-z]/.test(name) ? (count++, a + sep + '[שם הוסתר]') : m0));
+      // label or number on the line (it went to the AI as it was, readers campaign, Nov 2026). The marks stay Hebrew in
+      // every language: they are what the AI reads in place of the name.
+      l = l.replace(/(^|\s)(שם העובד|שם עובד|שם העובדת|שם משפחה|שם פרטי|שם|לכבוד)(\s*[:：]\s*|\s+)([^\d:|]+?)(?=\s+(?:מספר|מס'|ת\.ז|ת"ז|ת״ז|זהות|תאריך|מחלקה|תפקיד|סניף|בנק|קוד)|\s*\d|\s*\||$)/g,
+        // i18n-keep
+        (m0, pre, a, sep, name) => (/[֐-׿A-Za-z]/.test(name) ? (count++, pre + a + sep + '[שם הוסתר]') : m0));
       // the employer's name before its company mark ("סופר השכונה בע"מ"): up to four words
+      // i18n-keep
       l = l.replace(/(?:[^\s\d|:]+\s+){0,3}[^\s\d|:]+\s+בע(?:"|״|'')מ/g, () => { count++; return '[שם המעסיק הוסתר]'; });
       // the worker's and the employer's numbers: the employee number, the deductions file, the company number
       l = l.replace(/((?:מספר|מס'|מס׳)\s*עובד|תיק(?:\s*ניכויים)?|ח\.?פ\.?|ע\.?מ\.?|מספר מעסיק|מס' מעסיק)(\s*[:.]?\s*)(\d[\d\-\s]{2,}\d|\d{3,})/g, (m0, a, sep) => { count++; return a + sep + '[מספר הוסתר]'; });

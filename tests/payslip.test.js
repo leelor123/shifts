@@ -698,3 +698,24 @@ T.test('a line named after a field the slip has is added to it, not dropped', ()
 // the reader's guards (readers campaign, Nov 2026): a file of their own, run with this one
 require('./payslip-reader.test.js');
 require('./payslip-ai.test.js');
+
+T.section('payslip verdict: a reading left unsure is no alarm (readers campaign, Nov 2026)');
+T.test('the base pay read without its hours (no evidence of the hours column): the hours are not found short', () => {
+  const m = model(septShifts());
+  // the same payslip, its base line alone with the rate printed first: the reader leaves the hours out
+  const text = SAMPLE.replace('שכר יסוד 40.00 40.00 1,600.00', 'שכר יסוד 40.00 40.00 1,600.00').replace(/^שעות נוספות.*$/m, '').replace(/^שעות שבת.*$/m, '');
+  const p = Payslip.parseText(text.replace('שכר יסוד 40.00 40.00 1,600.00', 'שכר יסוד 40.00 41.00 1,640.00'));
+  T.ok(p.fields.base.qty == null, 'the hours are not guessed: ' + p.fields.base.qty);
+  const a = Payslip.analyze(p, m);
+  const h = a.findings.find((x) => x.area === 'שעות');
+  T.ok(!h || h.status !== 'bad', 'no "hours missing" from hours that were not read: ' + JSON.stringify(h));
+});
+T.test('a line asked for (value null) adds nothing and alarms nothing', () => {
+  const m = model(septShifts());
+  const p = Payslip.parseText(SAMPLE + '\nנטו לתשלום 1,82l.54');
+  T.ok(p.fields.net.value == null || Math.abs(p.fields.net.value - 1821.54) < 0.01, 'the net: ' + JSON.stringify(p.fields.net));
+  const a = Payslip.analyze(p, m);
+  for (const f of a.findings) T.ok(Number.isFinite(f.amount || 0), f.area + ' amount ' + f.amount);
+  const g = Payslip.checkGap(a, p, m);
+  T.ok(JSON.stringify(g).indexOf('NaN') < 0, 'no NaN in the gap');
+});
