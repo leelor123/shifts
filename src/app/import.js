@@ -90,6 +90,35 @@
 
   App.readHoursFile = readFile; // the hours report check reads the same files (app/hours-check.js)
 
+  /**
+   * A night the clock system writes as two rows, cut at midnight ("13/10 22:00–00:00" and "14/10 00:00–06:00", or
+   * the first ending 23:59), is one shift: saved as two, each half had its own day's overtime count and the
+   * seven-hour night day never applied. Rows sorted by day and start; a row is joined only to the row that starts
+   * at 00:00 the next day.
+   */
+  function joinNights(rows) {
+    const out = [];
+    const used = new Set();
+    rows.forEach((r, i) => {
+      if (used.has(i)) return;
+      let cur = r;
+      while (cur.start && (cur.end === '00:00' || cur.end === '23:59')) {
+        const last = cur.parts ? cur.parts[cur.parts.length - 1] : cur;
+        const next = U.addDays(last.date, 1);
+        const j = rows.findIndex((x, k) => !used.has(k) && k !== i && x.date === next && x.start === '00:00' && x.end && x.end !== '00:00');
+        if (j < 0) break;
+        used.add(j);
+        const b = rows[j];
+        const hours = Math.round((cur.hours + (cur.end === '23:59' ? 1 / 60 : 0) + b.hours) * 100) / 100;
+        if (hours > 16) break; // longer than any shift the reader accepts: not one shift
+        cur = Object.assign({}, cur, { end: b.end, hours, overnight: true, parts: (cur.parts || [cur]).concat([b]) });
+      }
+      out.push(cur);
+    });
+    return out;
+  }
+  App.importJoinNights = joinNights; // tests
+
   /* ---------------- the screen ---------------- */
   // from the add menu the menu goes; from a settings page it stays under (back returns there)
   App.actions['import-hours'] = () => App.importHours();
@@ -109,14 +138,32 @@
     const showSave = (on) => { const f = entry.sh.querySelector('.sh-foot'); if (f) f.style.display = on ? '' : 'none'; };
     const role = () => App.roles().find((r) => r.id === roleId) || App.roles()[0];
     const toEpoch = (k, hm) => U.toEpoch(k, hm);
-    // where each row lands, and whether that time is already taken
+    // where each row lands, and what already stands there
     const place = (r) => {
-      const t = root.Timesheet.times(r, startFor, toEpoch);
+      let t;
+      if (r.start && r.end) {
+        // by the clock, as the report writes it. "start + hours" ended an hour off on the two nights a year the
+        // clocks change (22:00–06:00 was saved as 22:00–05:00 or 22:00–07:00)
+        const start = toEpoch(r.date, r.start);
+        let end = toEpoch(r.date, r.end);
+        if (end <= start) end = toEpoch(U.addDays(r.date, 1), r.end);
+        t = { start, end };
+      } else t = root.Timesheet.times(r, startFor, toEpoch);
       if (!t) return null;
       const emp = role() && role().employerId;
-      t.taken = S.shifts.some((x) => x.employerId === emp && x.start < t.end && x.end > t.start);
+      const there = S.shifts.filter((x) => x.employerId === emp && x.start < t.end && x.end > t.start);
+      // a shift I planned for that time, and the report says it was worked: it becomes the done one when added
+      // (it stayed "planned" beside a row marked as already there, so the pay never counted it)
+      t.planned = t.end <= Date.now() && there.length === 1 && there[0].status === 'planned' && !(there[0].splits && there[0].splits.length) ? there[0] : null;
+      t.over = t.planned ? null : there[0] || null;
+      const a = S.activeShift;
+      t.taken = !!t.over
+        || !!(a && a.employerId === emp && a.start < t.end && Date.now() > t.start) // the shift running now
+        || (!r.start && S.shifts.some((x) => x.employerId === emp && U.epochKey(x.start) === r.date)); // hours only: that day has a shift
       return t;
     };
+    // the year too, when it is not this year (a report of last December read "14/12", like this year's)
+    const dateOf = (k) => U.fmtDate(k, 'short') + (k.slice(0, 4) === U.todayKey().slice(0, 4) ? '' : '/' + k.slice(0, 4));
 
     function start() {
       showSave(false);
@@ -146,7 +193,7 @@
         const day = U.DAYS ? U.DAYS[U.dow(r.date)] : '';
         const when = r.start ? `\u2066${r.start}\u2060–\u2060${r.end}\u2069` : `${U.num(r.hours, 2)} שעות · ${startFor ? 'מ-' + startFor : 'שעה לא ידועה'}`;
         return `<button class="imp-row ${r.on ? 'on' : ''}" data-i="${i}" aria-pressed="${r.on}"><span class="imp-check" aria-hidden="true">${icon('check', 's')}</span>
-          <span class="imp-d"><b>${esc(day)} ${U.fmtDate(r.date, 'short')}</b><small>${when}${r.overnight ? ' · לילה' : ''}</small></span>
+          <span class="imp-d"><b>${esc(day)} ${dateOf(r.date)}</b><small>${when}${r.overnight ? ' · לילה' : ''}</small></span>
           <span class="imp-h">${U.num(r.hours, 2)} ש׳${t && t.taken ? '<i class="tag">כבר קיימת</i>' : ''}${t && t.end > Date.now() ? '<i class="tag planned">עתידית</i>' : ''}</span></button>`;
       }).join('');
       const first = rows[0].date, last = rows[rows.length - 1].date;
@@ -155,7 +202,7 @@
         ${noStart ? `<label class="field"><span class="lbl">${noStart === 1 ? 'במשמרת אחת' : `ב-${noStart} משמרות`} כתוב רק כמה שעות. באיזו שעה הן מתחילות?</span><input class="input" type="time" id="imp-start" value="${startFor}"></label>` : ''}
         ${noExit ? `<div class="tiny muted imp-note">${icon('info', 's')} ${noExit === 1 ? 'בשורה אחת' : `ב-${noExit} שורות`} יש כניסה בלי יציאה, ולכן ${noExit === 1 ? 'היא לא נכנסה' : 'הן לא נכנסו'}. אפשר להוסיף ${noExit === 1 ? 'אותה' : 'אותן'} ידנית.</div>` : ''}
         ${guessedYear ? `<div class="tiny muted imp-note">${icon('info', 's')} בשורות בלי שנה לקחנו את התאריך האחרון שכבר עבר.</div>` : ''}
-        <div class="imp-head"><b>${first === last ? U.fmtDate(first, 'short') : `\u2066${U.fmtDate(first, 'short')}\u2060–\u2060${U.fmtDate(last, 'short')}\u2069`}</b><button class="btn text sm" data-imp-all>${rows.every((r) => r.on) ? 'לבטל הכול' : 'לסמן הכול'}</button></div>
+        <div class="imp-head"><b>${first === last ? dateOf(first) : `\u2066${dateOf(first)}\u2060–\u2060${dateOf(last)}\u2069`}</b><button class="btn text sm" data-imp-all>${rows.every((r) => r.on) ? 'לבטל הכול' : 'לסמן הכול'}</button></div>
         <div class="imp-list">${list}</div>`;
       showSave(true);
       count();
@@ -174,8 +221,8 @@
       const p = typeof got === 'string' ? root.Timesheet.parse(text, { today: U.todayKey() }) : got.result;
       // the same shift twice in one report (two sheets, a repeated line): once
       const seen = new Set();
-      rows = p.rows.filter((r) => { const k = r.date + r.start + r.end + r.hours; if (seen.has(k)) return false; seen.add(k); return true; })
-        .sort((a, b) => (a.date + (a.start || '')).localeCompare(b.date + (b.start || '')));
+      rows = joinNights(p.rows.filter((r) => { const k = r.date + r.start + r.end + r.hours; if (seen.has(k)) return false; seen.add(k); return true; })
+        .sort((a, b) => (a.date + (a.start || '')).localeCompare(b.date + (b.start || ''))));
       noStart = rows.filter((r) => !r.start).length;
       guessedYear = p.guessedYear;
       noExit = p.skipped || 0; // an entry without an exit (a missed clock-out)
@@ -193,21 +240,35 @@
         UI.invalid(root.U.ours(e) ? e.message : 'לא הצלחנו לקרוא את הקובץ. אפשר לנסות קובץ אחר או להדביק טקסט');
       }
     }
+    let adding = false;
     async function add() {
       const r0 = role();
       if (!r0) return;
       const emp = App.employer(r0.employerId) || S.employers[0];
+      if (adding) return;
       const ops = [];
+      const turned = new Set(); // planned shifts already turned into done ones by a row before
+      let clash = null;
       for (const r of rows) {
         if (!r.on) continue;
         const t = place(r);
         if (!t) continue;
+        if (t.planned && !turned.has(t.planned.id)) {
+          turned.add(t.planned.id);
+          ops.push({ store: 'shifts', put: Object.assign({}, t.planned, { status: 'done', start: t.start, end: t.end }) });
+          continue;
+        }
+        if (t.over && !clash) clash = t.over;
         ops.push({ store: 'shifts', put: {
           id: U.uid(), kind: 'shift', employerId: r0.employerId, roleId: r0.id, status: t.end > Date.now() ? 'planned' : 'done', start: t.start, end: t.end,
           breakMin: null, breakPaid: emp.defaultBreakPaid !== false, noTravel: false, splits: [], items: [], note: 'יובא מדוח שעות',
         } });
       }
       if (!ops.length) return;
+      adding = true; // from here a second tap adds nothing (also while the question below is open)
+      // a row I turned on over a shift that is already there: asked, as the shift editor asks (two shifts over each
+      // other were saved without a word, and the day was paid twice)
+      if (clash && !(await UI.confirm('חפיפה עם משמרת אחרת', `קיימת משמרת ב-${U.fmtDate(U.epochKey(clash.start))} \u2066${U.epochHM(clash.start)}\u2060–\u2060${U.epochHM(clash.end)}\u2069. לשמור בכל זאת?`, 'שמור'))) { adding = false; return; }
       save.disabled = true;
       UI.closeTop();
       await App.saveOps(ops, 'ייבוא דוח שעות', ops.length === 1 ? 'נוספה משמרת אחת מהדוח' : `נוספו ${ops.length} משמרות מהדוח`);
@@ -223,15 +284,16 @@
       if (!b) return;
       if (b.hasAttribute('data-imp-read')) { const t = box.querySelector('#imp-text').value; if (t.trim()) parse(t); else UI.invalid('מדביקים קודם את הטקסט'); }
       else if (b.hasAttribute('data-imp-again')) start();
-      else if (b.dataset.impRole) { roleId = b.dataset.impRole; rows.forEach((r) => { r.on = null; }); review(); if (root.Fx) root.Fx.play('on'); }
+      else if (b.dataset.impRole) { roleId = b.dataset.impRole; rows.forEach((r) => { if (!r.mine) r.on = null; }); review(); if (root.Fx) root.Fx.play('on'); }
       else if (b.hasAttribute('data-imp-all')) {
         const all = rows.every((r) => r.on);
-        rows.forEach((r) => { r.on = !all; });
+        rows.forEach((r) => { r.on = !all; r.mine = true; });
         box.querySelectorAll('.imp-row').forEach((x) => { x.classList.toggle('on', !all); x.setAttribute('aria-pressed', String(!all)); });
         count();
       } else if (b.classList.contains('imp-row')) {
         const r = rows[+b.dataset.i];
         r.on = !r.on;
+        r.mine = true; // my own choice: choosing a job later does not turn it back (a row taken out came back on)
         b.classList.toggle('on', r.on); b.setAttribute('aria-pressed', String(r.on));
         if (root.Fx) root.Fx.play(r.on ? 'on' : 'off');
         count();

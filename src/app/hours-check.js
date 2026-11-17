@@ -23,8 +23,10 @@
   function rowsOf(got) {
     const p = typeof got === 'string' ? root.Timesheet.parse(got, { today: U.todayKey() }) : got.result;
     const seen = new Set();
-    return (p.rows || []).filter((r) => { const k = r.date + r.start + r.end + r.hours; if (seen.has(k)) return false; seen.add(k); return true; })
+    const rows = (p.rows || []).filter((r) => { const k = r.date + r.start + r.end + r.hours; if (seen.has(k)) return false; seen.add(k); return true; })
       .sort((a, b) => (a.date + (a.start || '')).localeCompare(b.date + (b.start || '')));
+    // a night the report cuts at midnight is one row here too (app/import.js), so "add to my shifts" adds one shift
+    return App.importJoinNights ? App.importJoinNights(rows) : rows;
   }
   /** The pay period(s) the report covers, up to today. */
   function periodOf(rows, emp) {
@@ -33,8 +35,10 @@
     const today = U.todayKey();
     return { from: P1.from, to: P2.to < today ? P2.to : today, label: P1.key === P2.key ? P1.label : '', first, last };
   }
-  /** My done shifts of this job in the period, as core/hourscheck.js reads them. */
+  /** My done shifts of this job in the period, as core/hourscheck.js reads them (and those of the day before it: a
+   *  night that runs into the period meets a row that starts at midnight on its first day). */
   function mineOf(empId, from, to) {
+    from = U.addDays(from, -1);
     const out = [];
     for (const r of App.model.results.values()) {
       if (r.status !== 'done' || r.employerId !== empId || r.dateKey < from || r.dateKey > to || !(r.end > r.start)) continue;
@@ -49,17 +53,31 @@
     if (e <= s) e = at(U.addDays(rep.date, 1), rep.end);
     return { start: s, end: e };
   }
-  /** What each difference is worth: the period calculated again with the report's hours (it.worth, shekels). */
+  /** A time moved by minutes on the clock (so a move over the night the clocks change stays the hour the report says). */
+  const moved = (ms, min) => { const d = new Date(ms); d.setMinutes(d.getMinutes() + Math.round(min)); return d.getTime(); };
+  /** What each difference is worth: the period calculated again with the report's hours (it.worth, shekels).
+   *  A difference moves my shift's start and end by what the report says (the first and the last of them when the
+   *  report has one row over several shifts of mine); rows that leave a gap inside my shift make that gap unpaid. */
   function worth(items, emp) {
     const role = App.roles().find((r) => r.employerId === emp.id) || App.roles()[0];
     const changed = new Map(), extra = [];
     items.forEach((it, i) => {
       if (it.type === 'diff') {
-        const s = App.shift(it.mine.id);
-        if (!s) return;
-        if (it.rep.start && it.rep.end) Object.assign(it, { trial: Object.assign({}, s, repTimes(it.rep)) });
-        else it.trial = Object.assign({}, s, { end: s.end + Math.round((it.dHours || 0) * 60) * 60000 });
-        changed.set(s.id, it.trial);
+        const mineNow = (it.mine.ids || [it.mine.id]).map((id) => App.shift(id)).filter(Boolean);
+        if (!mineNow.length) return;
+        it.ids = mineNow.map((x) => x.id);
+        const trial = mineNow.map((x) => Object.assign({}, x));
+        const first = trial[0], last = trial[trial.length - 1];
+        if (it.dHours != null) last.end += Math.round(it.dHours * 60) * 60000;
+        else { first.start = moved(first.start, it.dStart || 0); last.end = moved(last.end, it.dEnd || 0); }
+        if (it.gap > 0) {
+          const r = App.model.results.get(first.id);
+          first.breakMin = Math.max(it.gap, r && !r.breakPaid ? r.breakMin || 0 : 0);
+          first.breakPaid = false;
+        }
+        // nothing left of it by the report: the whole shift is the difference
+        if (trial.some((x) => !(x.end > x.start))) it.gone = true;
+        else trial.forEach((x) => changed.set(x.id, x));
       } else if (it.type === 'missingMine' && role) {
         it.trial = Object.assign({ id: 'hc-' + i, kind: 'shift', employerId: emp.id, roleId: role.id, status: 'done', breakMin: null, breakPaid: emp.defaultBreakPaid !== false, noTravel: false, splits: [], items: [] }, repTimes(it.rep));
         extra.push(it.trial);
@@ -70,9 +88,10 @@
       trial = Engine.buildModel({ settings: S.settings, employers: S.employers, roles: S.roles, dayRules: S.dayRules, shifts: S.shifts.map((s) => changed.get(s.id) || s).concat(extra), entries: S.entries });
     } catch (e) { console.warn('hours check', e); }
     const wage = (m, id) => { const r = m && m.results.get(id); return r ? r.wage : 0; };
+    const sum = (m, ids) => (ids || []).reduce((t, id) => t + wage(m, id), 0);
     for (const it of items) {
       if (it.type === 'missingEmp') it.worth = wage(App.model, it.mine.id);
-      else if (it.type === 'diff') it.worth = trial ? wage(App.model, it.mine.id) - wage(trial, it.mine.id) : 0;
+      else if (it.type === 'diff') it.worth = it.gone ? sum(App.model, it.ids) : trial ? sum(App.model, it.ids) - sum(trial, it.ids) : 0;
       else if (it.type === 'missingMine') it.worth = trial && it.trial ? wage(trial, it.trial.id) : 0;
       else it.worth = 0;
     }
@@ -119,10 +138,10 @@
     const typeName = { missingEmp: 'חסר אצל המעסיק', diff: 'שעות שונות', missingMine: 'חסר אצלך' };
     function itemHtml(it, i) {
       const day = `${U.DAYS[U.dow(it.date)]} ${U.fmtDate(it.date, 'short')}`;
-      const sideOf = (x) => (x.start && x.end ? range(x.start, x.end) : `${U.num(x.hours, 2)} שעות`);
+      const sideOf = root.HoursCheck.side;
       const lines = [];
       if (it.rep) lines.push(`<span>בדוח: <b class="num">${sideOf(it.rep)}</b></span>`);
-      if (it.mine) lines.push(`<span>אצלך: <b class="num">${sideOf(it.mine)}</b></span>`);
+      if (it.mine) lines.push(`<span>אצלך: <b class="num">${sideOf(it.mineSide || it.mine)}</b></span>`);
       const w = Math.round(it.worth || 0);
       let val = '';
       if (it.type === 'missingEmp') val = `<b class="money">${U.money(w, 0)}</b><small>שכר המשמרת</small>`;
@@ -191,13 +210,22 @@
         }),
       });
     }
+    let adding = false; // a second tap while the first is being saved added the shift twice
     async function addMine(i) {
       const it = res.items[i];
-      if (!it || !it.trial) return;
-      const s = Object.assign({}, it.trial, { id: U.uid(), note: 'נוסף מדוח הנוכחות' });
-      await App.saveOps([{ store: 'shifts', put: s }], 'משמרת מדוח הנוכחות', 'המשמרת נוספה');
-      compute();
-      result();
+      if (adding || !it || !it.trial) return;
+      adding = true;
+      try {
+        // a shift I planned for that time is this shift: it becomes done with the report's hours (a second one
+        // was added beside it, and the planned one stayed)
+        const planned = S.shifts.filter((x) => x.status === 'planned' && x.employerId === it.trial.employerId && x.start < it.trial.end && x.end > it.trial.start);
+        const s = planned.length === 1 && !(planned[0].splits && planned[0].splits.length)
+          ? Object.assign({}, planned[0], { status: 'done', start: it.trial.start, end: it.trial.end })
+          : Object.assign({}, it.trial, { id: U.uid(), note: 'נוסף מדוח הנוכחות' });
+        await App.saveOps([{ store: 'shifts', put: s }], 'משמרת מדוח הנוכחות', 'המשמרת נוספה');
+        compute();
+        result();
+      } finally { adding = false; }
     }
 
     entry.sh.addEventListener('change', (e) => { if (e.target.id === 'hc-file') fromFile(e.target.files && e.target.files[0]); });
