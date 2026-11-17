@@ -713,10 +713,16 @@
         // a row per worker: a line with no name by a named line is that worker's second line
         const labelled = body.filter((l) => l.who);
         const rowsOf = new Map();
+        // a range a narrow cell wrapped ("08:00-" over "16:00"): every cell of the line under it goes on a cell of
+        // the line above that ends with a dash. One row, not two (two rows with no name were nobody's: nothing read)
+        const ends = (c) => c.length && /(?:[-–—]|עד)$/.test(c.slice().sort((a, b) => a.Y - b.Y || a.X - b.X).pop().text);
+        const wraps = (up, l) => up && l.Y - up.Y < h * 2.2 && l.cells.some((c) => c.length) && l.cells.every((c, i) => !c.length || ends(up.cells[i]));
+        let prev = null;
         for (const l of body) {
           if (!l.has) continue;
-          const owner = l.who ? l : nearestLine(l, labelled, h) || l;
+          const owner = l.who ? l : nearestLine(l, labelled, h) || (wraps(prev, l) ? prev.owner : l);
           (rowsOf.get(owner) || rowsOf.set(owner, []).get(owner)).push(l);
+          l.owner = owner; prev = l;
         }
         // the same name on two rows (two workers called the same): told apart by their order
         const count = new Map(), nth = new Map();

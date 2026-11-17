@@ -257,3 +257,30 @@ T.test('a row starts ticked unless the app has that shift already or it is over 
   T.ok(!SC.startsOn({ date: '2025-11-23' }, today, false));
   T.ok(!SC.startsOn({ date: '2026-11-22' }, today, true));
 });
+
+/* ---- round 2: the intake session's findings in these files (18 Nov 2026) ---- */
+T.test('a range a narrow cell wrapped ("08:00-" over "16:00") is one shift of one row, not two rows and two starts', () => {
+  // intake sched.wrapped.png: 1.40.1 offered 8 one-time starts (16:00, 23:00 as shifts of their own); the first
+  // fix of this campaign took the two lines for two nameless rows and offered nothing
+  const rows = [['ראשון 22/11', 'שני 23/11', 'שלישי 24/11', 'רביעי 25/11', 'חמישי 26/11'], ['08:00-\n16:00', '08:00-\n16:00', '', '16:00-\n23:00', '07:00-\n15:00']];
+  const r = SC.parseWords(table(rows, { rowH: 60 }), { today });
+  T.ok(r.personal);
+  T.eq(brief(r.entries).join(' | '), '2026-11-22 08:00 16:00 | 2026-11-23 08:00 16:00 | 2026-11-25 16:00 23:00 | 2026-11-26 07:00 15:00');
+  // two nameless rows that do not wrap stay two rows: nobody's
+  const two = [['ראשון 22/11', 'שני 23/11'], ['08:00-16:00', '09:00-17:00'], ['16:00-23:00', '']];
+  T.eq(SC.parseWords(table(two, { rowH: 40 }), { today }).entries.length, 0);
+});
+T.test('the schedule import: a read that ends after its sheet was closed draws, plays and says nothing; the picker is keyboard-reachable', () => {
+  // intake S1 (the sound and the error landed on another screen) and S4 (a hidden input: no Tab, no button)
+  const src = require('fs').readFileSync(require('path').join(__dirname, '../src/app/schedule-import.js'), 'utf8');
+  T.ok(/function parse\(read\) \{\s*(?:\/\/[^\n]*\n\s*)*if \(entry\.closed\) return;/.test(src), 'parse() stops first when the sheet is closed');
+  const body = (name) => src.slice(src.indexOf('async function ' + name), src.indexOf('\n    }\n', src.indexOf('async function ' + name)));
+  for (const fn of ['fromFile', 'viaClaude']) {
+    const b = body(fn);
+    T.ok(/catch \(e\) \{\s*console\.warn\([^)]*\);\s*if \(entry\.closed\) return;/.test(b), fn + ': its failure is not shown on another screen');
+    // every awaited step that is not the confirm dialog is followed by the check
+    const awaits = b.split('\n').filter((l) => /await /.test(l) && !/viaClaude\(file\)/.test(l));
+    T.ok(awaits.every((l) => b.indexOf('if (entry.closed) return;', b.indexOf(l)) > -1), fn + ': checked after each await');
+  }
+  T.ok(/<input type="file" id="sc-file"(?![^>]*\bhidden\b)[^>]*class="sr"/.test(src), 'the file input is visually hidden, not hidden');
+});

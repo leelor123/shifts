@@ -56,7 +56,7 @@
       const name = myNames()[0] || '';
       box.innerHTML = `${App.mascotSays ? App.mascotSays('happy', 'קיבלת סידור עבודה? צלם אותו או הדבק את ההודעה, ואכניס את המשמרות שלך ללוח 📅', { size: 64 }) : ''}
         <label class="field"><span class="lbl">השם שלך בסידור</span><input class="input" id="sc-name" value="${esc(name)}" placeholder="למשל: לי" autocomplete="given-name"></label>
-        <label class="btn big block imp-pick">${icon('camera')} צילום או צילום מסך של הסידור<input type="file" id="sc-file" hidden accept="image/*,application/pdf"></label>
+        <label class="btn big block imp-pick">${icon('camera')} צילום או צילום מסך של הסידור<input type="file" id="sc-file" class="sr" accept="image/*,application/pdf"></label>
         ${opts.text ? '' : `<details class="imp-paste"${opts.paste ? ' open' : ''}><summary>${icon('chat', 's')} או להדביק את ההודעה מוואטסאפ</summary>
           <textarea class="input" id="sc-text" rows="6" placeholder="למשל:&#10;ראשון: דני 8-16, לי 16-24&#10;שני: לי 8-16"></textarea>
           <button class="btn tonal block" data-sc-read>${icon('check', 's')} קריאה</button></details>`}
@@ -76,6 +76,8 @@
     }
     // what was read → whose (the person's name, or the names to choose from) → the review
     function parse(read) {
+      // the sheet was closed while it read (a photo takes seconds): nothing is drawn, played or said any more
+      if (entry.closed) return;
       let r;
       try { r = read(); } catch (e) { console.warn('schedule', e); r = null; }
       if (!r || !r.entries.length) { none(r && r.text); return; }
@@ -159,12 +161,14 @@
       busy('קורא את הסידור…');
       try {
         const got = await App.readDocWords(file, progress);
+        if (entry.closed) return;
         // the words with their places only: parseWords reads a picture that is no table as text itself, line by
         // line. Its text read again as one line put a whole table's shifts on its last date, nobody's name on
         // them (schedule bench, 17 Nov 2026)
         parse(() => Object.assign(SC().parseWords(got.words, { today: U.todayKey(), named: named(), mine: myNames() }), { text: got.text }));
       } catch (e) {
         console.warn('schedule', e);
+        if (entry.closed) return;
         start();
         UI.invalid(root.U.ours(e) ? e.message : 'לא הצלחנו לקרוא את הסידור. אפשר לנסות שוב או להדביק את ההודעה');
       }
@@ -172,6 +176,7 @@
     // the picture, read by Claude (the person's own key; asked first, since it goes to Anthropic)
     async function viaClaude(file) {
       const ok = await UI.confirm('קריאה חכמה עם Claude', 'התמונה של הסידור, עם השמות שבה, תישלח ל-\u2060Anthropic עם המפתח שלך, רק כדי לקרוא אותה. השימוש מחויב בחשבון ה-\u2060API שלך.', 'לשלוח');
+      if (entry.closed) return;
       if (!ok) { start(); return; }
       busy('Claude קורא את הסידור…');
       try {
@@ -183,6 +188,7 @@
         parse(() => fromAi(json));
       } catch (e) {
         console.warn('schedule ai', e);
+        if (entry.closed) return;
         start();
         UI.dialog({ title: 'הקריאה החכמה נכשלה', text: root.U.ours(e) ? e.message : 'לא הצלחנו לקרוא את התשובה של Claude. נסו שוב, או הוסיפו את המשמרות ידנית.', buttons: [{ label: 'סגור', value: true }] });
       }
