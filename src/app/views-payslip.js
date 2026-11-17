@@ -195,6 +195,7 @@
     };
     const isNum = (w) => w.k === 'N' && !/%$/.test(w.text);
     const isCode = (w) => w.k === 'N' && /^\d{2,6}$/.test(w.text);
+    const isPct = (w) => w.k === 'N' && /%$/.test(w.text);
     const hasDec = (w) => w.k === 'N' && /\.\d/.test(w.text);
     /** Does this label name a payslip line on its own (asked of the parser itself)? */
     const named = (label) => { try { return !!Payslip.matchField(label); } catch (e) { return false; } };
@@ -218,9 +219,11 @@
           while (j < src.length && src[j].k === 'H') j++;
           const run = src.slice(i, j);
           const label = (numsFirst ? run.slice().reverse() : run).map((x) => x.text).join(' ');
-          if (!(run.length === 1 && UNIT.test(run[0].text)) && (seenDec || named(label))) {
+          // (nothing but a code before it is that name's own code, read first on a page that prints numbers first)
+          if (!(run.length === 1 && UNIT.test(run[0].text)) && (seenDec || named(label)) && !cur.every(isCode)) {
             const code = [];
-            while (cur.length > 1 && isCode(cur[cur.length - 1]) && cur.slice(0, -1).some(hasDec)) code.unshift(cur.pop());
+            // a code, or a percentage that is part of the name ("שעות נוספות 125%"), right before the name goes with it
+            while (cur.length > 1 && (isCode(cur[cur.length - 1]) || isPct(cur[cur.length - 1])) && cur.slice(0, -1).some(hasDec)) code.unshift(cur.pop());
             segs.push(cur); cur = code; seenN = false; seenDec = false;
           }
         }
@@ -228,19 +231,42 @@
         if (isNum(w)) { seenN = true; if (hasDec(w)) seenDec = true; }
       }
       if (cur.length) segs.push(cur);
-      return numsFirst ? segs.map((x) => x.reverse()).reverse() : segs;
+      return numsFirst ? segs.map((x) => order(x.reverse())).reverse() : segs;
     };
-    // which way the page prints: the name first (right) and its numbers after it, or the numbers first
+    /**
+     * A cell of a page that prints the numbers first ("5,840.00 36.50 160.00 שכר יסוד 110": amount, rate, hours,
+     * name, code) in the order the parser reads a line: code, name, then the numbers from the name outwards
+     * ("110 שכר יסוד 160.00 36.50 5,840.00"). As printed, the code at the end was taken for the amount: income tax
+     * 510 for 212.00.
+     */
+    function order(seg) {
+      const n = seg.findIndex((w) => w.k === 'H');
+      if (n <= 0) return seg;
+      let e = n;
+      while (e < seg.length && (seg[e].k === 'H' || seg[e].k === 'X' || isPct(seg[e]))) e++;
+      const after = seg.slice(e), codes = after.filter(isCode);
+      if (codes.length !== after.length) return seg; // numbers on both sides: left as printed
+      return codes.concat(seg.slice(n, e), seg.slice(0, n).reverse());
+    }
+    // which way a row prints: the name first (right) and its numbers after it ('name'), or the numbers first ('num'),
+    // or it does not say (''). A line code at the row's end ("... שכר יסוד 110") or start ("0001 שכר יסוד ...") is
+    // passed over: it hid the way the row prints
+    const rowWay = (r) => {
+      if (r.length < 2) return '';
+      let i = 0, j = r.length - 1;
+      if (isCode(r[0]) && r[1].k === 'H') i = 1;
+      if (isCode(r[j]) && r[j - 1].k === 'H') j--;
+      const a = r[i], b = r[j];
+      return a.k === 'H' && hasDec(b) ? 'name' : hasDec(a) && b.k === 'H' ? 'num' : '';
+    };
+    // the page's way, for the rows that do not say. One page can print both ways (a payments table with the amount
+    // on the right over a summary with the names on the right): each row that says goes its own way
     const numbersFirst = (rows) => {
       let nameFirst = 0, numFirst = 0;
-      for (const r of rows) {
-        if (r.length < 2) continue;
-        const a = r[0], b = r[r.length - 1];
-        if (a.k === 'H' && hasDec(b)) nameFirst++;
-        else if (hasDec(a) && b.k === 'H') numFirst++;
-      }
+      for (const r of rows) { const w = rowWay(r); if (w === 'name') nameFirst++; else if (w === 'num') numFirst++; }
       return numFirst >= 3 && numFirst > nameFirst * 2;
     };
+    const wayOf = (r, page) => { const w = rowWay(r); return w ? w === 'num' : page; };
     /** Rows of words → the payslip's lines, as text and as words (review asks a line which numbers were unsure). */
     R.lines = function (rows) {
       const hs = [].concat(...rows).map((w) => (w.y1 || 0) - (w.y0 || 0)).filter((x) => x > 0).sort((a, b) => a - b);
@@ -280,7 +306,7 @@
         if (paired) { for (const p of paired) push(p.cell.map((w) => Object.assign({}, w)).concat(p.a.ws)); continue; }
         if (nums.length && !row.some((w) => w.k === 'H')) { push(row); continue; } // numbers alone: the names row stays for the next one
         head = null;
-        for (const seg of R.cells(row, numsFirst)) push(seg);
+        for (const seg of R.cells(row, wayOf(row, numsFirst))) push(seg);
       }
       return out;
     };
@@ -295,7 +321,7 @@
       const rows = lines.map((l) => String(l).split(/\s+/).filter(Boolean).map((t) => ({ text: t, k: kindOf(t) === 'N' && numTok(t) !== t ? 'X' : kindOf(t) })));
       const numsFirst = numbersFirst(rows);
       const out = [];
-      for (const r of rows) for (const seg of R.cells(r, numsFirst)) out.push(seg.map((w) => w.text).join(' '));
+      for (const r of rows) for (const seg of R.cells(r, wayOf(r, numsFirst))) out.push(seg.map((w) => w.text).join(' '));
       return out;
     };
     /**
@@ -310,7 +336,7 @@
      *    work days fit the work hours);
      *  - from any source a value that cannot be is emptied: a deduction above all the deductions or the gross, a
      *    payment above the gross, hours × rate that is not the line's amount, a year's total below this month's,
-     *    40 credit points, 45 work days, 18 work hours over 18 days;
+     *    45 credit points (a mother of three small children has 16), 45 work days, 18 work hours over 18 days;
      *  - a line with a word that was not read may be another line than the one it was taken for: it goes to the lines
      *    to name, with its amount.
      * An answer of the optional AI (source 'ai') passes the same checks of what cannot be.
@@ -350,9 +376,12 @@
       if (c3b) ['gross', 'net'].concat(deds).forEach((k) => ok.add(k));
       // hours × rate printed on one line: the amount it gives confirms the line, another amount says it was misread
       // (a line put together from several lines is confirmed by none of them, and given away by any)
-      const prod = (v) => (v.qty != null && v.rate != null && v.value != null ? Math.abs(v.qty * v.rate - v.value) <= Math.max(0.02, Math.abs(v.value) * 0.002) : null);
-      for (const k of Object.keys(F)) if (prod(F[k]) === true && !String(F[k].line).includes(' | ')) ok.add(k);
       const tokOf = (v, x) => wordsOf(v).find((w) => { if (w.k !== 'N') return false; const m = Payslip.numbersIn(w.text)[0]; return m && Math.abs(Math.abs(m.v) - Math.abs(x)) < 0.005; });
+      // From a picture the amount and the rate must have been read with their agorot: a lost decimal point can multiply
+      // out by chance ("10.00 45.63 456.30" read "10.00 4563 456.30" gave 10 × 456.30 = 4,563 as the overtime pay)
+      const dec = (v, x) => { const w = tokOf(v, x); return !!w && /\.\d/.test(w.text); };
+      const prod = (v) => (v.qty != null && v.rate != null && v.value != null ? Math.abs(v.qty * v.rate - v.value) <= Math.max(0.02, Math.abs(v.value) * 0.002) && (!ocr || (dec(v, v.value) && dec(v, v.rate))) : null);
+      for (const k of Object.keys(F)) if (prod(F[k]) === true && !String(F[k].line).includes(' | ')) ok.add(k);
       // read the same by both readings (or by the one that saw it), surely
       const firm = (w) => !!w && w.doubt == null && !w.one && w.conf >= 90;
       // the work days and the work hours check each other: 4 to 13 hours a day on average (as read, before review)
@@ -371,7 +400,7 @@
         else if (!ok.has(k)) {
           if (f.kind === 'ded' && ((td != null && v.value > td + 2) || (g != null && v.value >= g))) why = 'sum';
           else if (f.kind === 'pay' && g != null && v.value > g + 2) why = 'sum';
-          else if (k === 'creditPoints' && !(v.value >= 0 && v.value <= 15)) why = 'range';
+          else if (k === 'creditPoints' && !(v.value >= 0 && v.value <= 30)) why = 'range';
           else if (k === 'workDays' && !(v.value >= 0 && v.value <= 31)) why = 'range';
           else if (k === 'workHours' && !(v.value >= 0 && v.value <= 400)) why = 'range';
           else if ((k === 'workDays' || k === 'workHours') && days0 != null && hours0 != null && !dayFit) why = 'range';
@@ -625,7 +654,9 @@
       UI.closeTop();
       // a month the file does not say is left for the person to choose ("continue" asks for it): last month put in
       // its place looked read, and the check then compared the payslip with another month's shifts
-      setTimeout(() => verifySheet({ fields: parsed.fields, other: parsed.other, period: parsed.period || '', text, source, fileId, fileName: file.name }), 320);
+      // and a month that cannot be a payslip's (after this month: "02/2078" from a blurred "04/2026") is not one read
+      const period = parsed.period && parsed.period >= '2000-01' && parsed.period <= U.todayKey().slice(0, 7) ? parsed.period : '';
+      setTimeout(() => verifySheet({ fields: parsed.fields, other: parsed.other, period, text, source, fileId, fileName: file.name }), 320);
     } catch (e) {
       console.error(e);
       if (gone) return;

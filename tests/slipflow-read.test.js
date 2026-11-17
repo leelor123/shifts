@@ -83,6 +83,14 @@ T.test('the rate of a line is never taken for its hours', () => {
   T.eq(F.ot125.qty, 5); T.eq(F.ot125.value, 218.75);
 });
 
+T.test('from a picture, hours × rate confirms a line only with the agorot read', () => {
+  // the rate 45.63 read "4563": 10 × 456.30 = 4,563 multiplied out by chance and overtime pay showed ₪4,563
+  const lost = read(row(100, ['111', 'שעות', 'נוספות', '125%', '10.00', '4563', '456.30']));
+  T.ok(!lost.F.ot125 || lost.F.ot125.value == null || Math.abs(lost.F.ot125.value - 456.3) < 0.01, 'got ' + (lost.F.ot125 && lost.F.ot125.value));
+  const fine = read(row(100, ['111', 'שעות', 'נוספות', '125%', '10.00', '45.63', '456.30']));
+  T.eq(val(fine.F, 'ot125'), 456.3); T.eq(fine.F.ot125.qty, 10);
+});
+
 T.test('a payment put together from lines that are not it: the amount is not shown', () => {
   // the title's year and the hourly rate were added to the base: 2026 + 34.32 + 4,135.56 = 6,195.88, above the gross
   const he = row(100, ['תלוש', 'משכורת', 'לחודש', 'ספטמבר', '2026']).concat(row(140, ['היקף', 'משרה', '100%', 'שכר', 'שעה', '34.32']),
@@ -154,6 +162,24 @@ T.test('a PDF\'s row of column names over a row of numbers: each number under it
   T.eq(val(p.fields, 'creditPoints'), 2.75); T.eq(val(p.fields, 'vacationBalance'), 3.21); T.eq(val(p.fields, 'sickBalance'), 9);
 });
 
+T.test('a page that prints the amount right of the name: each line keeps its own amount, never its code', () => {
+  // "5,840.00 36.50 160.00 שכר יסוד 110 | 212.00 מס הכנסה 510" (two tables, amount | rate | hours | name | code): the
+  // page was taken as printing names first, the cells were cut on the wrong side and income tax was 510 (its code)
+  const ws = [];
+  const put = (y, texts) => { let x = 1600; for (const t of texts) { ws.push({ text: t, x0: x - t.length * 9, x1: x, y0: y, y1: y + 18 }); x -= t.length * 9 + 30; } };
+  put(100, ['5,840.00', '36.50', '160.00', 'שכר יסוד', '110', '212.00', 'מס הכנסה', '510']);
+  put(130, ['456.30', '45.63', '10.00', 'שעות נוספות', '125%', '111', '175.33', 'ביטוח לאומי', '511']);
+  put(160, ['395.60', 'החזר נסיעות', '114', '233.10', 'מס בריאות', '512']);
+  put(200, ['פיצויים', '486.30', 'שעות עבודה', '176.00']); // the same page, a table with the names first
+  const lines = R.pdfLines(ws);
+  const p = Payslip.parseText(lines.map((l) => l.text).join('\n'));
+  R.review(p, lines, 'pdf');
+  T.eq(val(p.fields, 'incomeTax'), 212); T.eq(val(p.fields, 'nationalInsurance'), 175.33); T.eq(val(p.fields, 'healthTax'), 233.1);
+  T.eq(val(p.fields, 'base'), 5840); T.eq(p.fields.base.qty, 160);
+  T.eq(val(p.fields, 'ot125'), 456.3); T.eq(p.fields.ot125.qty, 10); T.eq(val(p.fields, 'travel'), 395.6);
+  T.eq(val(p.fields, 'severance'), 486.3); T.eq(val(p.fields, 'workHours'), 176);
+});
+
 T.test('the payslip flow reads through SlipRead, and lets go of a reading whose sheet was closed', () => {
   const src = fs.readFileSync(SRC, 'utf8');
   const start = src.slice(src.indexOf('async function startExtraction'), src.indexOf('/* ---------------- verification'));
@@ -179,7 +205,8 @@ T.test('a month the file does not say is not filled in for the person', () => {
   // last month in its place looked read, and the check compared the payslip with another month's shifts
   const src = fs.readFileSync(SRC, 'utf8');
   const start = src.slice(src.indexOf('async function startExtraction'), src.indexOf('/* ---------------- verification'));
-  T.ok(/period: parsed\.period \|\| ''/.test(start), 'an unread month stays empty');
+  T.ok(/const period = parsed\.period && parsed\.period >= '2000-01' && parsed\.period <= U\.todayKey\(\)\.slice\(0, 7\) \? parsed\.period : '';/.test(start), 'an unread or impossible month (after this month) stays empty');
+  T.ok(/verifySheet\(\{ fields: parsed\.fields, other: parsed\.other, period, /.test(start), 'and that is the month the check screen gets');
   T.ok(!/defaultPeriod\(\)/.test(start), 'no guessed month on a read file');
   T.ok(/UI\.invalid\('בחרו את חודש התלוש'\)/.test(src), '"continue" asks for the month');
 });
