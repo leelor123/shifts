@@ -20,7 +20,7 @@
     { key: 'ytdTax', label: 'מס הכנסה מצטבר', kind: 'info', pats: ['מס הכנסה מצטבר', 'מס מצטבר'] },
     { key: 'taxableGross', label: 'ברוטו למס', kind: 'info', pats: ['ברוטו למס', 'הכנסה חייבת', 'שכר חייב'] },
     { key: 'net', label: 'נטו לתשלום', kind: 'total', pats: ['נטו לתשלום', 'שכר נטו', 'סה"כ נטו', 'סה״כ נטו', 'נטו', 'סכום בבנק', 'סכום לבנק', 'העברה לבנק'] },
-    { key: 'totalDeductions', label: 'סה״כ ניכויים', kind: 'total', pats: ['סה"כ ניכויים', 'סה״כ ניכויים', 'סך הניכויים', 'סך ניכויים', 'סה"כ ניכויי חובה'] },
+    { key: 'totalDeductions', label: 'סה״כ ניכויים', kind: 'total', pats: ['סה"כ ניכויים', 'סה״כ ניכויים', 'סך הניכויים', 'סך ניכויים', 'סה"כ ניכויי חובה', 'ניכויים:'] },
     { key: 'gross', label: 'ברוטו', kind: 'total', pats: ['סה"כ ברוטו', 'סה״כ ברוטו', 'שכר ברוטו', 'סך כל התשלומים', 'סה"כ תשלומים', 'סה״כ תשלומים', 'ברוטו'] },
     { key: 'pensionEmployer', label: 'פנסיה (חלק המעסיק)', kind: 'emp', pats: ['תגמולי מעביד', 'תגמולי מעסיק', 'פנסיה מעביד', 'פנסיה מעסיק', 'גמל מעביד', 'גמל מעסיק', 'הפרשת מעביד', 'הפרשת מעסיק'] },
     { key: 'severance', label: 'פיצויים (מעסיק)', kind: 'emp', pats: ['פיצויים'] },
@@ -207,26 +207,129 @@
   function fixVisual(line) {
     return line.split(/\s+/).reverse().map((t) => (HEB.test(t) ? revStr(t) : t)).join(' ');
   }
-  function normalize(s) {
-    return s.replace(/[\u200e\u200f\u202A-\u202E]/g, '').replace(/[״“”]/g, '"').replace(/[׳‘’`]/g, "'").replace(/\s+/g, ' ').trim();
+  // i18n-keep-start (the characters a photo's text recognition puts in a payslip's words and numbers)
+  /* A letter that looks like a digit inside an amount ("3,O45.00", "5o.75", "29l.07"): the digit it stands for. Only
+   * in a token shaped like an amount (it ends in a separator and two digits), so a word never becomes a number; "l"
+   * and "I" only between digits (at the edge they may be a table's border). Read as it was, "3,o45.00" gave 3 and
+   * 45.00, and the pay was 45 ₪ (readers campaign, Nov 2026). */
+  const LOOK = { O: '0', o: '0', 'ס': '0', I: '1', l: '1' };
+  const LOOK_TOKEN = /^[-+(₪]*[\dOoס][\dOoIlס,.]*[.,][\dOoס]{2}\)?%?-?₪?$/;
+  function fixDigits(s) {
+    if (!/[OoIlס]/.test(s)) return s;
+    return s.split(' ').map((t) => (/\d/.test(t) && /[OoIlס]/.test(t) && LOOK_TOKEN.test(t) ? t.replace(/[OoIlס]/g, (c) => LOOK[c]) : t)).join(' ');
   }
-  /** Numbers in a line, in reading order. Handles 1,234.56 / trailing minus / percents. */
+  function normalize(s) {
+    return fixDigits(s.replace(/[\u200b-\u200f\u202a-\u202e\u2066-\u2069\ufeff]/g, '').replace(/[״“”]|''/g, '"').replace(/[׳‘’`]/g, "'")
+      // "סה"כ" as a photo gives it ("סהייכ", "סה'כ", "סהכ")
+      // (and "סה'יכ", the gershayim read as an apostrophe and a yod: round 2, from the payslip screen's sample)
+      .replace(/(^|\s)סה(?:יי|['"]י?|י['"])?כ(?=\s)/g, '$1סה"כ')
+      // a table's border read as a token ("101 | שעות עבודה רגילות 100.50 |"): it hid the symbol code before the name,
+      // and the code was read as the hours (readers campaign, Nov 2026)
+      .replace(/(^|\s)[|_¦]+(?=\s|$)/g, ' ')
+      // a name glued to its number by a colon, an amount glued to its currency
+      .replace(/([֐-׿"'])([:=])(?=[-₪]?\d)/g, '$1$2 ').replace(/(\d)(ש"ח|₪)/g, '$1 $2')
+      .replace(/\s+/g, ' ').trim());
+  }
+  // i18n-keep-end
+  /** Numbers in a line, in reading order. Handles 1,234.56 / trailing minus / percents. The result's `dirty` counts
+   *  the tokens that mix digits with letters ("3,S45.00", "נטו5,000"): what they hold is not read, and a line with
+   *  one is read only when its own arithmetic confirms it. */
   function numbersIn(line) {
-    const clean = line.replace(/\b\d{1,2}[\/.]\d{1,2}[\/.]\d{2,4}\b/g, ' ');
+    // dates are not values: a full date, and the pay month as "07/2026" or "07-2026" (the title "תלוש משכורת 07-2026"
+    // was read as a base pay of 2,026 ₪ for 7 hours, readers campaign, Nov 2026)
+    let clean = line.replace(/\b\d{1,2}[\/.-]\d{1,2}[\/.-]\d{2,4}\b/g, ' ').replace(/(^|[^\d.,])\d{1,2}[\/.-]20\d{2}(?![\d.,]\d)/g, '$1 ');
+    let dirty = 0;
+    if (/\d/.test(clean) && /[A-Za-z֐-׿]/.test(clean)) {
+      clean = clean.split(' ').map((t) => {
+        if (!/\d/.test(t) || !/[A-Za-z֐-׿]/.test(t)) return t;
+        // a one-letter prefix ("ב-150%", "ל-2026", "מ-1") is a word before a clean number
+        const pre = /^[֐-׿]{1,2}[-־](?=\d)/.exec(t);
+        if (pre && !/[A-Za-z֐-׿]/.test(t.slice(pre[0].length))) return t.slice(pre[0].length);
+        dirty++;
+        return ' ';
+      }).join(' ');
+    }
+    // A space the recognition put inside an amount: before its point ("56 .32") or after its thousands comma ("6,
+    // 287.57"). Read as two numbers it gave 32 ₪ of National Insurance and a gross of 287.57 (readers campaign, Nov
+    // 2026). A point with two digits never starts a number, and a comma never ends one.
+    clean = clean.replace(/(\d) +([.,]\d{2})(?![\d.,])/g, '$1$2').replace(/(^|[^\d.,])(\d{1,3}), +(\d{3}(?:\.\d{1,2})?)(?![\d,])/g, '$1$2,$3');
+    // "6,82344": groups of three after a comma, then two more digits: the decimal point was dropped (6,823.44). Read
+    // as it was it gave 6,823 and a bare 44, and the gross was 44 (readers campaign, Nov 2026)
+    clean = clean.replace(/(^|[^\d.,])(\d{1,3}(?:,\d{3})*,\d{3})(\d{2})(?![\d.,])/g, '$1$2.$3');
+    // Two amounts glued by the text recognition ("57.00669.75", "60.003,045.00", "6,287.57748.45"): the first one ends
+    // two digits after its point, the second follows. Read as one number it was 60,003,045 ₪ of base pay or 57.00669
+    // ₪ (readers campaign, Nov 2026). A token that is no number as printed (more than two digits after the point,
+    // thousands marked by a dot and a comma both, a first group of "0") is cut there. One that is a number too
+    // ("1.500.00": 1,500 with its thousands read as a dot, or 1.50 glued to 0.00) stays one, and the cut reading is
+    // kept as `alt`: the line's own arithmetic picks it (readLine). The glued token holds the two as they sit on the
+    // page, the left one first: in a line read from the right, the right one comes first. Which column each one was
+    // is not sure, so `glued` marks the line: a total or a row of totals is not read from it.
+    let alt = null, glued = 0;
+    if (/\d\.\d{2}\d/.test(clean)) {
+      const cut = [];
+      const pieces = clean.split(' ').map((t) => {
+        const g = GLUED.exec(t);
+        if (!g) return t;
+        const two = g[3] + g[4] + ' ' + g[1] + g[2];
+        if (!ONE_NUMBER.test(t.replace(/^-|-$/g, ''))) { glued++; return two; }
+        cut.push(two);
+        return t;
+      });
+      clean = pieces.join(' ');
+      if (cut.length) { let k = 0; alt = clean.split(' ').map((t) => (GLUED.test(t) && ONE_NUMBER.test(t.replace(/^-|-$/g, '')) ? cut[k++] : t)).join(' '); }
+    }
+    // A decimal point lost to a space ("56 32", "2,576 25"): a whole number and two digits after it. Read as they are
+    // they were 32 ₪ of National Insurance (readers campaign, Nov 2026); joined they may be hours and a rate ("8 65"
+    // in a whole-shekel sheet). The line's arithmetic picks the joined reading (`alt`); without it the line is unsure
+    // (`gap`: it is read only when its own arithmetic holds as it is).
+    let gap = 0;
+    const joinGaps = (t, count) => {
+      const w = t.split(' ');
+      const o = [];
+      for (let i = 0; i < w.length; i++) {
+        // (the tier in the name, "ש"נ 125 10 25", is no amount)
+        const tier = /^(?:100|125|150|175|200)$/.test(w[i]) && i > 0 && TIER_IN_NAME.test(w[i - 1] + ' ' + w[i]);
+        if (!tier && /^-?(?:\d{1,3}(?:,\d{3})+|\d+)$/.test(w[i]) && /^\d{2}-?$/.test(w[i + 1] || '')) { o.push(w[i] + '.' + w[i + 1]); i++; if (count) gap++; } else o.push(w[i]);
+      }
+      return o.join(' ');
+    };
+    const gapped = joinGaps(clean, true);
+    if (gap) alt = joinGaps(alt != null ? alt : clean, false);
+    const out = readNumbers(clean);
+    if (alt != null) { out.alt = readNumbers(alt); if (glued || alt !== gapped) out.alt.glued = glued + 1; }
+    if (glued) out.glued = glued;
+    if (gap) out.gap = gap;
+    if (dirty) { out.dirty = dirty; if (out.alt) out.alt.dirty = dirty; }
+    return out;
+  }
+  // i18n-keep-start (number shapes)
+  const GLUED = /^(-?)(\d{1,3}(?:,\d{3})*\.\d{2}|\d+\.\d{2})(\d{1,3}(?:,\d{3})*\.\d{2}|\d+\.\d{2})(-?)$/;
+  /** One number as a payslip prints it: whole, with up to two decimals, or thousands in one separator (the same one
+   *  throughout, never the decimal's when it is a comma) and its two decimals. */
+  const ONE_NUMBER = /^(?:[1-9]\d{0,2}(?:\.\d{3})+[.,]\d{2}|[1-9]\d{0,2}(?:,\d{3})+(?:\.\d{1,2})?|\d+(?:[.,]\d{1,2})?)$/;
+  // i18n-keep-end
+  function readNumbers(clean) {
     // the first form: thousands read as a dot by OCR ("8.500.00"): the last separator is the decimal point. Read as
     // two numbers it gave 8.5 and a bare "00", and the net was 0 (deep review, Nov 2026)
-    const re = /(-?)(\d{1,3}(?:[.,]\d{3})+[.,]\d{2}(?!\d)|\d{1,3}(?:,\d{3})+(?:\.\d+)?|\d+(?:\.\d+)?)(-?)(\s*%)?/g;
+    // the third form: a decimal comma ("56,32", "1234,56", a European sheet's export). A comma before one or two digits
+    // is never a thousands separator; read as two numbers it gave 56 and 32, and the deduction was 32 (readers
+    // campaign, Nov 2026)
+    // the fourth form: hours as h:mm ("33:30" is 33.5 hours; read as 33 and 30 it hid the hours × rate = pay, readers
+    // campaign, Nov 2026)
+    const re = /(-?)(\d{1,3}:[0-5]\d(?![\d:.,])|\d{1,3}(?:[.,]\d{3})+[.,]\d{2}(?!\d)|\d{1,3}(?:,\d{3})+(?:\.\d+)?(?![,\d])|\d+,\d{1,2}(?![\d,])|\d+(?:\.\d+)?)(-?)(\s*%)?/g;
     const out = [];
     let m;
     while ((m = re.exec(clean))) {
       const raw = m[2];
       if (!raw.includes('.') && !raw.includes(',') && raw.length > 6) continue; // ids
       const thou = /^\d{1,3}(?:[.,]\d{3})+[.,]\d{2}$/.test(raw);
-      let v = thou ? parseFloat(raw.slice(0, -3).replace(/[.,]/g, '') + '.' + raw.slice(-2)) : parseFloat(raw.replace(/,/g, ''));
+      const comma = /^\d+,\d{1,2}$/.test(raw);
+      const hm = /^\d{1,3}:[0-5]\d$/.test(raw);
+      let v = hm ? +raw.split(':')[0] + raw.split(':')[1] / 60 : thou ? parseFloat(raw.slice(0, -3).replace(/[.,]/g, '') + '.' + raw.slice(-2)) : comma ? parseFloat(raw.replace(',', '.')) : parseFloat(raw.replace(/,/g, ''));
       // a whole number of 1 to 3 digits right before "500.00" may be its thousands split by a space ("8 500.00")
       const spaced = !m[4] && !raw.includes('.') && !raw.includes(',') && raw.length <= 3 && /^ \d{3}[.,]\d{2}(?!\d)/.test(clean.slice(m.index + m[0].length));
       if (m[1] === '-' || m[3] === '-') v = -v;
-      out.push(Object.assign({ v, pct: !!m[4], dec: raw.includes('.') || thou, raw: m[0] }, spaced ? { spaced } : null));
+      out.push(Object.assign({ v, pct: !!m[4], dec: raw.includes('.') || thou || comma || hm, raw: m[0] }, spaced ? { spaced } : null));
     }
     return out;
   }
@@ -235,6 +338,9 @@
     // the pension or fund base ("ברוטו לפנסיה") is a base, neither the gross nor the pension deduction: it was read as
     // the gross (deep review, Nov 2026). It waits among the lines to name.
     if (/ברוטו ל(?:פנסי|קופ|גמל|קה"ש|השתלמות|פיצויים)/.test(n)) return null;
+    // the job percent ("היקף משרה 100%") is no 100% tier: the header line became a base pay (round 2, from the payslip
+    // screen's sample)
+    if (/(?:היקף|אחוז|חלקיות) משרה|% משרה/.test(n)) return null;
     for (const f of FIELDS) {
       for (const p of f.pats) {
         if (n.includes(p)) {
@@ -248,7 +354,13 @@
           // ("הפרשי", "הפרש", "הפרשים"): the employer's NI provision was read as a pay difference (real payslip, Nov 2026)
           if (f.key === 'diff' && p.startsWith('הפרש') && !/הפרש(?:י|ים)?(?![א-ת])/.test(n)) continue;
           // the employee's NI deduction, not the NI gross or the employer's NI provision
+          // (the bare "ניכויים:" of a summary strip, not the deductions file "תיק ניכויים:")
+          // i18n-keep
+          if (f.key === 'totalDeductions' && p === 'ניכויים:' && /תיק/.test(n)) continue;
           if (f.key === 'nationalInsurance' && /ברוטו|הפרש[תו]|מעסיק|מעביד/.test(n)) continue;
+          // the employer's share named after the fund ("פנסיה - מעסיק", "קרן השתלמות (מעביד)"): it was filed as a
+          // second deduction of the worker's (readers campaign, Nov 2026)
+          if ((f.key === 'pensionEmployee' || f.key === 'hishtalmutEmployee') && /מעסיק|מעביד/.test(n) && !/עובד/.test(n)) return FIELD[f.key === 'pensionEmployee' ? 'pensionEmployer' : 'hishtalmutEmployer'];
           return f;
         }
       }
@@ -283,13 +395,35 @@
   /** A count line of these kinds is the balance (information), never the payment. */
   const BALANCE_OF = { sickPay: 'sickBalance', vacationPay: 'vacationBalance' };
   const close = (a, b) => Math.abs(a - b) <= Math.max(0.011, Math.abs(b) * 0.002);
-  /** qty × rate = amount among the values (the shape of a real payment line), or null. */
-  function productOf(vals) {
+  /** qty × rate = amount among the values (the shape of a real payment line), or null. Which factor is the quantity:
+   *  on an hours line (`hours`), one below 7 is (no hourly wage is that low, not even a youth's), and `sure` says so.
+   *  A supplement may be paid by the hour at less than 7 ("ותק 160.00 1.50 240.00": 160 hours at 1.50 ₪), so on
+   *  other lines the size proves nothing.
+   *  Otherwise by its place: the amount closes the row, so the quantity is the factor further from it (the first
+   *  one in a row that ends with its amount, the last one in a row printed the other way round: "367.50 105.00 3.50"
+   *  is 3.5 hours at 105, and it was read as 105 hours, readers campaign, Nov 2026). `byPlace`: the place rule and
+   *  the size agree, or (not sure) the place rule alone decided. */
+  function productOf(vals, hours, strict) {
     if (vals.length < 3) return null;
     for (let i = 0; i < vals.length; i++) for (let j = i + 1; j < vals.length; j++) for (let k = 0; k < vals.length; k++) {
       if (k === i || k === j) continue;
       const prod = vals[i] * vals[j];
-      if (vals[k] !== 0 && Math.abs(prod - vals[k]) / Math.abs(vals[k]) < 0.015) return { value: vals[k], qty: vals[i], rate: vals[j] };
+      // (as close as a rate rounded to agorot allows: half an agora for each hour, and the agora of the amount's own
+      // rounding, or of its shekel when it is printed whole; and within 1.5% of it. At 1.5% alone, "חופשה 15.50 083 1.00
+      // 15.33" was 15.50 × 1.00 = 15.33, and a vacation balance became a vacation payment, readers campaign, Nov 2026)
+      const diff = Math.abs(prod - vals[k]);
+      // (a factor of 1 makes the amount and the rate the same number: within rounding, either could be the amount.
+      // "שעות שבת 175% 1 85 85.31" read the rate 85.31 as the pay of 85 ₪. Only an exact match is a product then)
+      if ((Math.abs(vals[i]) === 1 || Math.abs(vals[j]) === 1) && diff > 0.005) continue;
+      if (vals[k] !== 0 && diff / Math.abs(vals[k]) < 0.015 && diff <= 0.011 + (strict ? 0 : (Number.isInteger(vals[k]) ? 0.5 : 0) + 0.0051 * Math.max(Math.abs(vals[i]), Math.abs(vals[j])))) {
+        let [q, r] = k < i ? [j, i] : [i, j];
+        const aq = Math.abs(vals[q]), ar = Math.abs(vals[r]);
+        // (equal factors, "40 40 1600": nothing to decide)
+        const sure = !!hours && Math.min(aq, ar) < 7 && Math.max(aq, ar) >= 7;
+        const byPlace = !sure || aq < ar;
+        if (sure && aq > ar) [q, r] = [r, q];
+        return { value: vals[k], qty: vals[q], rate: vals[r], sure, byPlace, even: aq === ar, mid: k > Math.min(i, j) && k < Math.max(i, j) };
+      }
     }
     return null;
   }
@@ -316,14 +450,20 @@
     // only the payments whose name also names a count (the hour lines carry hours by design, travel its days)
     if (!f || f.kind !== 'pay' || !WEAK_PAY[f.key]) return f;
     const vals = nums.filter((x) => !x.pct).map((x) => x.v);
-    const prod = productOf(vals);
+    // (a product is the proof of a payment only on a whole line, and not with a factor of 1: x × 1 = x proves nothing.
+    // "מחלה 16.75 1.00ו 1.00 16.75", a balance row with a stray letter, became a sick payment, readers campaign)
+    const prod0 = numbersIn(line).dirty ? null : productOf(vals);
+    const prod = prod0 && Math.abs(prod0.qty) !== 1 && Math.abs(prod0.rate) !== 1 ? prod0 : null;
     const named = WEAK_PAY[f.key].test(line);
-    const row = !prod && vals.length >= 3 ? balanceRow(vals) : null;
+    // a row of four that adds up (previous + accrued − used = balance) is a balance row even when two of its numbers
+    // multiply to a third by chance (15.50 × 1.00 ≈ 15.33 made the vacation balance a vacation payment, readers
+    // campaign, Nov 2026)
+    const row = vals.length === 4 ? balanceRow(vals) : !prod && vals.length >= 3 ? balanceRow(vals) : null;
     // the balance it shows, when the line is the balance (a usage or accrual line alone is not the balance)
     const asBalance = () => (BALANCE_OF[f.key] && (row != null || /יתר[הת]/.test(line)) ? FIELD[BALANCE_OF[f.key]] : null);
     // a balance, accrual or usage line: information (a named payment with qty × rate = amount stays a payment)
-    if (BALANCE_WORD.test(line) && !(named && prod)) return asBalance();
     if (row != null) return asBalance();
+    if (BALANCE_WORD.test(line) && !(named && prod)) return asBalance();
     if (prod) return f;
     if (QTY_WORD.test(line)) return daysAndAmount(vals) ? f : null;
     if (named) return f;
@@ -332,51 +472,305 @@
   }
 
   /** Choose amount / qty / rate from a line's numbers. */
+  /** productOf, also when one number lost its decimal point ("5.00 47.50 23750"): quantity × rate says where it was. */
+  function productFix(nums, vals, hours) {
+    vals = vals || nums.filter((x) => !x.pct).map((x) => x.v);
+    // (on a line with a decimal point lost to a space, a whole amount is no whole-shekel amount: "7.75 411 53" is not
+    // 7.75 × 53 = 411, readers campaign, Nov 2026)
+    const strict = !!nums.gap;
+    const prod = productOf(vals, hours, strict);
+    if (prod || vals.length < 3) return prod;
+    const flat = nums.filter((x) => !x.pct);
+    if (flat.length !== vals.length) return null;
+    const fixes = [];
+    for (let i = 0; i < flat.length; i++) {
+      if (flat[i].dec || Math.abs(flat[i].v) < 100 || strict) continue;
+      const fixed = productOf(vals.map((v, j) => (j === i ? v / 100 : v)), hours, strict);
+      if (fixed && [fixed.value, fixed.qty, fixed.rate].includes(vals[i] / 100)) fixes.push(fixed);
+    }
+    // two numbers could each be the one that lost its point ("136 4875 6630"): the reading with a rate a person is paid
+    const sane = fixes.length > 1 ? fixes.filter((x) => Math.abs(x.rate) >= 7 && Math.abs(x.rate) <= 500) : fixes;
+    return sane.length === 1 ? sane[0] : null;
+  }
   function pickValues(f, nums) {
-    const vals = nums.filter((x) => !x.pct).map((x) => x.v);
+    let vals = nums.filter((x) => !x.pct).map((x) => x.v);
     const pcts = nums.filter((x) => x.pct).map((x) => x.v);
     if (!vals.length) return null;
+    // (two amounts glued on a total or information line: which one is it is not sure)
+    if (nums.glued && (f.kind === 'total' || f.kind === 'info' || f.kind === 'emp')) return null;
     if (f.kind === 'info') {
+      // (an unread token on an information line: the number after the name may be the wrong one; and an information
+      // line is one number, or a balance row: "שעות עבודה בפועל 60.00 50.75 3 045.00" is a payment's row)
+      if (nums.dirty || nums.some((x) => x.spaced)) return null;
+      if (!(f.key === 'sickBalance' || f.key === 'vacationBalance') && vals.length > 2) return null;
       // a balance row's closing balance (not the previous balance it starts with)
-      const b = (f.key === 'sickBalance' || f.key === 'vacationBalance') && vals.length >= 3 ? balanceRow(vals) : null;
-      return { value: b != null ? b : vals[0] };
+      // (read in printed order only: backwards, three numbers add up by chance, "חופשה 2.25 1.25 1.00" with its last
+      // column lost gave 1.00 + 1.25 = 2.25 and a balance of 2.25, readers campaign, Nov 2026. A row of three or more
+      // that does not add up is asked for, never its first number)
+      const bal = f.key === 'sickBalance' || f.key === 'vacationBalance';
+      if (bal && vals.length >= 3) {
+        const fwd = vals.length === 4 ? (close(vals[0] + vals[1] - vals[2], vals[3]) ? vals[3] : null) : vals.length === 3 && close(vals[0] + vals[1], vals[2]) ? vals[2] : null;
+        return fwd != null && !vals.some((v) => v < 0) ? { value: fwd } : null;
+      }
+      return { value: vals[0] };
     }
-    // a total or a deduction is one amount: "8 500.00" is 8,500 with its thousands split by a space, or two numbers.
-    // Unsure, it is left for the person to fill in (read as the last number it was 500, deep review, Nov 2026)
-    if ((f.kind === 'total' || f.kind === 'ded') && vals.length === 2 && nums.some((x) => x.spaced)) return null;
-    const prod = productOf(vals);
+    // "8 500.00" is 8,500 with its thousands split by a space, or two numbers (8 hours, 500 ₪). The line's own
+    // arithmetic decides: the reading in which quantity × rate = amount. With no such proof the line is left for the
+    // person to fill in: read as the last number it was 500, and "50.75 60.00 3 045.00" a pay of 45 ₪ (deep review
+    // and readers campaign, Nov 2026). A travel refund is never thousands: its days and its sum.
+    if (nums.some((x) => x.spaced)) {
+      if (f.kind === 'total' || f.kind === 'ded' || f.kind === 'emp') return null;
+      const joined = [];
+      const flat = nums.filter((x) => !x.pct);
+      for (let i = 0; i < flat.length; i++) {
+        if (flat[i].spaced && flat[i + 1]) { joined.push((Math.abs(flat[i].v) * 1000 + Math.abs(flat[i + 1].v)) * (flat[i].v < 0 || flat[i + 1].v < 0 ? -1 : 1)); i++; } else joined.push(flat[i].v);
+      }
+      const pj = productOf(joined), ps = productOf(vals);
+      if (pj && !ps) vals = joined;
+      else if (!(ps && !pj) && !(f.key === 'travel' && vals.length === 2)) return null;
+    }
+    const prod = productFix(nums, vals, f.hours);
     if (prod) return Object.assign(prod, { pct: pcts[0] });
+    // a token that mixes digits and letters ("3,S45.00") was not read: without the product's proof, the numbers
+    // left on the line are not the whole line
+    if (nums.dirty) return null;
+    // a deduction next to its base or its running total ("מס הכנסה 243.18 1,215.90", "ביטוח לאומי 6,090.53 63.34"):
+    // the deduction is the smaller one, whichever column comes first (read as the last number it was the year's
+    // total, readers campaign, Nov 2026)
+    // (and a deduction next to a whole number on a line that has agorot: "ביטוח לאומי 16395 1,475.55" is 163.95 with its
+    // point lost, and the other one the year's total: the line is asked for)
+    if ((f.kind === 'ded' || f.kind === 'emp' || f.kind === 'total') && vals.length >= 2 && nums.some((x) => !x.pct && x.dec) && nums.some((x) => !x.pct && !x.dec && Math.abs(x.v) >= 100)) return null;
+    if (f.kind === 'ded' && vals.length === 2 && nums.filter((x) => !x.pct).every((x) => x.dec)) return { value: Math.min(Math.abs(vals[0]), Math.abs(vals[1])), pct: pcts[0] };
     if (vals.length === 2 && (f.hours || (WEAK_PAY[f.key] && daysAndAmount(vals)))) {
       // qty + amount (rate missing): hours, or the days of a day-based payment ("ימי מחלה 2.00 350.00"), in either
       // order: the count is the smaller one (a pay rate is above 1 ₪). In printed order the amount was read as the
       // hours when the columns came the other way (deep review, Nov 2026).
       const [q, v] = Math.abs(vals[0]) <= Math.abs(vals[1]) ? vals : [vals[1], vals[0]];
-      return { value: v, qty: q, pct: pcts[0] };
+      // (an hours line: the two may also be its rate and amount, or its hours and rate, with a column lost: parseText
+      // checks them against the slip's hourly wage, `two`)
+      return Object.assign({ value: v, qty: q, pct: pcts[0] }, f.hours ? { two: true } : null);
     }
+    // (a payment with three numbers or more whose hours × rate = amount fails: its own arithmetic does not hold, the
+    // last one is a guess. "מחלה 29.50 1.500.00 31.00" was a sick pay of 31 ₪, readers campaign, Nov 2026)
+    if (f.kind === 'pay' && vals.length >= 3) return null;
     const last = vals[vals.length - 1];
     // a bare "00" left of a misread amount is never the amount (the rule: a misreading is not a value)
     if (last === 0 && vals.some((x) => x !== 0)) return null;
-    return { value: last, pct: pcts[0] };
+    // (an hours line with one number: its pay, or its hours with the rest of the row lost; parseText checks it, `two`)
+    return Object.assign({ value: last, pct: pcts[0] }, bareInt(nums, last) ? { bare: true } : null, f.hours && vals.length === 1 ? { one: true } : null);
+  }
+  /** Was this value printed as a whole number of four digits or more, with no separator ("89315")? */
+  const bareInt = (nums, v) => nums.some((x) => !x.pct && !x.dec && x.v === v && Math.abs(x.v) >= 1000 && /^-?\d+-?$/.test(x.raw.trim()));
+
+  /* ---------------- one printed row, several lines ----------------
+   * Payslips print two tables side by side (the payments on the right, the deductions on the left), two totals on one
+   * row, or a row of small details ("ותק 2.4 אחוז משרה 100.00"). Read as one line, the row took the first name it
+   * matched and every number on it: the base pay became the income tax, the union fee became the travel refund, the
+   * job percent became a seniority payment (readers campaign, Nov 2026). A row is cut into its parts, each a name
+   * with its own numbers. A word between the numbers of ONE line stays in it: a unit ("שעות", "ש"ח"), the words of a
+   * balance row ("יתרה קודמת … ניצול … יתרה"), or any word the quantity × rate = amount product runs across. */
+  // i18n-keep-start (the words printed on an Israeli payslip)
+  const NUM_TOKEN = /^[-+(₪]*\d[\d.,:\/-]*\)?%?-?₪?$/;
+  const TIER_TOKEN = /^(?:100|125|150|175|200)%$/;
+  const NOISE_TOKEN = /^[|_\-–—:;.,=*×xX₪%'"`~]+$/;
+  /** The currency printed after an amount ("3,045.00 ש"ח"): no name. Read as one, a row ending with it was taken for a
+   *  sheet built left to right, turned around, and its symbol code became the pay (readers campaign, Nov 2026). */
+  const CURRENCY_TOKEN = /^(?:ש"ח|ש''ח|שח|NIS|ILS)$/;
+  const UNIT_WORDS = /^(?:ש"ח|ש''ח|שח|שעות|שעה|ש'|ימים|יום|ימי|יח'|כמות|תעריף|סכום|אחוז|לשעה|ליום|כפול|א|קופה)$/;
+  const ROW_WORDS = /^(?:יתר[הת]|קודמת|צבירה|נצבר|זיכוי|ניצול|נוצל|זכאות|חדשה|פתיחה|סגירה|נוכחית|סופית|חודשית)$/;
+  // i18n-keep-end
+  /** The runs of a line: words (a name) and numbers, in printed order. A tier ("125%") belongs to the name. */
+  function runsOf(line) {
+    const runs = [];
+    for (const t of line.split(' ')) {
+      if (!t) continue;
+      const kind = NOISE_TOKEN.test(t) || CURRENCY_TOKEN.test(t) ? null : TIER_TOKEN.test(t) ? 'w' : NUM_TOKEN.test(t) || (/\d/.test(t) && !/[֐-׿]{3}/.test(t)) ? 'n' : 'w';
+      const last = runs[runs.length - 1];
+      if (kind == null) { if (last) last.t.push(t); continue; }
+      if (last && last.kind === kind) last.t.push(t);
+      else runs.push({ kind, t: [t] });
+    }
+    return runs;
+  }
+  const wordsOf = (run) => run.t.filter((t) => !NOISE_TOKEN.test(t) && !CURRENCY_TOKEN.test(t));
+  const valsOf = (run) => numbersIn(run.t.join(' ')).filter((x) => !x.pct).map((x) => x.v);
+  // i18n-keep-start (the words printed on an Israeli payslip)
+  const VOCAB = new Set(FIELDS.reduce((a, f) => a.concat(f.pats.join(' ').split(' ')), []).concat(['תלוש', 'שכר', 'שעות', 'עובד', 'מעסיק', 'מעביד', 'חודש', 'תשלומים', 'ניכויים', 'סכום', 'כמות', 'תעריף', 'יתרה', 'מצטבר',
+    'חשבון', 'בנק', 'סניף', 'כתובת', 'תאריך', 'זהות', 'מספר', 'עבודה', 'ימים', 'אחוז', 'משרה', 'חובה', 'רשות', 'קופות', 'מבוטח', 'צבירה', 'ניצול', 'קודמת', 'תחילת', 'משפחתי', 'מינימום', 'לחודש', 'לשעה', 'הדפסה'])
+    .filter((w) => /^[א-ת]{3,}$/.test(w)));
+  // i18n-keep-end
+  /** Are the line's Hebrew words written backwards (visual order)? More of them are payslip words when reversed. */
+  function reversedWords(line) {
+    const v = wordVotes(line);
+    return v.back > v.fwd;
+  }
+  /** How many of the line's Hebrew words are payslip words as they are (fwd) and backwards (back). */
+  function wordVotes(line) {
+    let fwd = 0, back = 0;
+    for (const t of line.split(' ')) {
+      const w = t.replace(/^[^א-ת]+|[^א-ת]+$/g, '');
+      if (!/^[א-ת]{3,}$/.test(w)) continue;
+      if (VOCAB.has(w)) fwd++;
+      if (VOCAB.has(revStr(w))) back++;
+    }
+    return { fwd, back };
+  }
+  // i18n-keep-start (the words printed on an Israeli payslip)
+  const NAME_PATS = FIELDS.reduce((a, f) => a.concat(f.pats.filter((x) => HEB.test(x))), []).sort((a, b) => b.length - a.length);
+  const NAME_EXTRA = /^(?:שוטף|לתשלום|בש"ח|חודשי|החודש)$/;
+  // i18n-keep-end
+  /**
+   * A row of column names ("ברוטו שוטף סה"כ ניכויים שכר נטו סכום בבנק"): its names in order, [{ text, f }], when every
+   * word of the row belongs to a name the reader knows (two at least). One unknown word and the row is left alone:
+   * its numbers could not be paired for sure.
+   */
+  function nameRow(line) {
+    const found = [];
+    let rest = ' ' + line + ' ';
+    for (const pat of NAME_PATS) {
+      let at;
+      while ((at = rest.indexOf(' ' + pat + ' ')) >= 0) {
+        found.push({ at, text: pat });
+        rest = rest.slice(0, at + 1) + '\u0000'.repeat(pat.length) + rest.slice(at + 1 + pat.length);
+      }
+    }
+    if (found.length < 2) return null;
+    found.sort((a, b) => a.at - b.at);
+    // the words between the names: only the ones that go with a name ("שוטף", "לתשלום")
+    const left = rest.replace(/\u0000+/g, ' ').split(' ').filter(Boolean);
+    if (!left.every((w) => NAME_EXTRA.test(w))) return null;
+    const list = found.map((x) => ({ text: x.text, f: matchField(x.text) }));
+    return list.every((x) => x.f) ? list : null;
+  }
+  /** Is this text one whole name the reader knows ("ברוטו שוטף", "שכר נטו"), not a word of one ("ימי", "עבודה")? */
+  function wholeName(t) {
+    // (any of the names it may hold: "שכר נטו לתשלום" is "שכר נטו" and "לתשלום", though "נטו לתשלום" is a name too)
+    return NAME_PATS.some((p) => (t === p || t.startsWith(p + ' ') || t.endsWith(' ' + p)) && t.replace(p, ' ').split(' ').filter(Boolean).every((w) => NAME_EXTRA.test(w)));
+  }
+  /** The numbers first and the name last (a symbol code may follow the name): a row printed the other way round. */
+  function nameLast(line) {
+    const runs = runsOf(line);
+    const w = runs.map((r) => r.kind).lastIndexOf('w');
+    if (w < 1 || runs[0].kind !== 'n' || runs.slice(0, w).some((r) => r.kind === 'w' && !r.t.every((t) => TIER_TOKEN.test(t)))) return false;
+    const tail = runs.slice(w + 1);
+    return !tail.length || (tail.length === 1 && tail[0].t.length === 1 && /^\d{1,6}$/.test(tail[0].t[0]));
+  }
+  /** A printed row → its lines, each a name followed by its numbers (a row with one name comes back as it is). */
+  function segments(line, rowsAfter) {
+    let runs = runsOf(line);
+    const code0 = runs.length > 1 && runs[0].kind === 'n' && runs[0].t.length === 1 && /^\d{1,6}$/.test(runs[0].t[0]) && runs[1].kind === 'w';
+    // the numbers before the names (a sheet built left to right): mirrored, so every name leads its numbers. Not when
+    // the first number is a symbol code before a name ("0006 דמי חגים 320.00 ניכויי חובה": turned around, the code
+    // became the holiday pay, readers campaign, Nov 2026)
+    const numsFirst = runs.length > 1 && runs[0].kind === 'n' && runs[runs.length - 1].kind === 'w' && !code0;
+    if (numsFirst) runs = runs.slice().reverse();
+    const segs = [];
+    // numbers before the first name, when that name has numbers of its own after it, are not its numbers (they are the
+    // line before it, its name left on a line of its own: "3.50 105.00 367.50 ביטוח לאומי 56.32" gave a National
+    // Insurance of 367.50, readers campaign, Nov 2026). A lone whole number there is the name's symbol code.
+    // (not in a row printed the other way round with its symbol code last, "146.03 53.10 2.75 ש.נ 150% 91")
+    if (!numsFirst && runs.length >= 3 && runs[0].kind === 'n' && runs[1].kind === 'w' && runs[2].kind === 'n' && !code0 && !nameLast(line)) {
+      segs.push([runs[0]]);
+      runs = runs.slice(1);
+    }
+    if (segs.length === 0 && runs.filter((r) => r.kind === 'w').length < 2) return [line];
+    let cur = [], named = false, vals = [], numRun = false;
+    const close = () => { if (cur.length) segs.push(cur); cur = []; named = false; vals = []; numRun = false; };
+    runs.forEach((r, i) => {
+      // (a run counts as the name's numbers even when none of them could be read: "ביטוח לאומי l63.95 שעות נוספות
+      // 125% 8.50 65.00 552.50" was one line, and the deduction took the overtime's amount)
+      if (r.kind === 'n') { cur.push(r); if (named) { vals = vals.concat(valsOf(r)); numRun = true; } return; }
+      const next = runs[i + 1];
+      const words = wordsOf(r);
+      // a second name: it has numbers before it (of the name this part began with) and numbers of its own after it
+      // (a tier alone between the numbers, "שעות שבת 3.50 105.00 175% 367.50", is the row's percent column, not a
+      // second name: cut there, the amount became a second Shabbat line and the pay was counted twice, readers
+      // campaign, Nov 2026)
+      if (named && numRun && next && next.kind === 'n' && !words.every((w) => ROW_WORDS.test(w)) && !words.every((w) => TIER_TOKEN.test(w))) {
+        const own = !!matchField(words.join(' '));
+        const across = !productOf(vals) && !!productOf(vals.concat(valsOf(next)));
+        if (own || (!across && !words.every((w) => UNIT_WORDS.test(w)))) {
+          // a whole number right before the name is its symbol code, when the line before it has its amounts
+          const prev = cur[cur.length - 1];
+          // (the line before it is whole without it: its product holds, or it has an amount and the number is short)
+          const lastT = prev.kind === 'n' && prev.t.length > 1 && /^\d{1,6}$/.test(prev.t[prev.t.length - 1]) ? +prev.t[prev.t.length - 1] : null;
+          const rest = lastT != null ? vals.slice(0, -1) : vals;
+          // (two digits after a whole number are its agorot with the point lost, "5,956 05": no code)
+          const agorot = lastT != null && /^\d{2}$/.test(prev.t[prev.t.length - 1]) && /^-?[\d,]+$/.test(prev.t[prev.t.length - 2]);
+          const isCode = lastT != null && !agorot && prev.t.slice(0, -1).some((t) => /\d[.,]\d{2}\D*$/.test(t)) && !productOf(rest.concat(lastT / 100))
+            && (productOf(rest) ? true : !productOf(vals) && lastT < 10000);
+          const code = isCode ? prev.t.pop() : null;
+          close();
+          if (code) cur.push({ kind: 'n', t: [code] });
+        }
+      }
+      // words after the name's numbers with nothing after them (a heading or another row's name the recognition joined
+      // to this line: "קרן פנסיה 319.95 הפרשות מעסיק" was the employer's pension) are a part of their own
+      // Which side the numbers go with: the name before them when it is a payslip line ("קרן פנסיה"), else the name
+      // after them when that one is ("תשלומים 3,045.00 60.00 50.75 שכר רגיל", a sheet built left to right with its
+      // heading joined: cut after the numbers, the base pay took the next row's numbers, readers campaign, Nov 2026).
+      if (named && numRun && !next && !words.every((w) => UNIT_WORDS.test(w) || ROW_WORDS.test(w) || TIER_TOKEN.test(w))) {
+        const lead = [];
+        for (const x of cur) { if (x.kind !== 'w') break; lead.push(...wordsOf(x)); }
+        // (a row of column names joined after a number, "120.00 קופות גמל שכר מבוטח עובד מעביד פיצויים", is no name)
+        if (!rowsAfter || matchField(lead.join(' ')) || !matchField(words.join(' ')) || words.length > 4) close();
+        else { const k = cur.findIndex((x) => x.kind === 'n'); segs.push(cur.slice(0, k)); cur = cur.slice(k); }
+      }
+      cur.push(r);
+      named = true;
+    });
+    close();
+    if (segs.length < 2) return [line];
+    return segs.map((s) => s.map((r) => r.t.join(' ')).join(' '));
   }
 
   /** Group pdf.js text items into logical lines (right-to-left). */
   function linesFromPdfItems(items) {
+    // A row's pieces sit a little above or below each other (another font, a bold amount): measured from the row's
+    // first piece, a piece 3 points off began a new line, and a row's amount was left on a line of its own (readers
+    // campaign, Nov 2026). The pieces are sorted by height and a row grows while the next one is within 3 points of
+    // the one before it.
     const rows = [];
-    for (const it of items) {
-      if (!it.str || !it.str.trim()) continue;
-      const x = it.transform[4], y = it.transform[5];
-      let row = rows.find((r) => Math.abs(r.y - y) < 3);
-      if (!row) { row = { y, items: [] }; rows.push(row); }
-      row.items.push({ x, s: it.str, w: it.width || 0 });
+    const list = items.filter((it) => it.str && it.str.trim()).map((it) => ({ x: it.transform[4], y: it.transform[5], s: it.str, w: it.width || 0 })).sort((a, b) => b.y - a.y);
+    let last = null;
+    for (const it of list) {
+      if (!last || last.y - it.y >= 3) rows.push({ y: it.y, items: [] });
+      rows[rows.length - 1].items.push({ x: it.x, s: it.s, w: it.w });
+      last = it;
     }
-    rows.sort((a, b) => b.y - a.y);
     const out = [];
     rows.forEach((r, i) => {
       r.items.sort((a, b) => b.x - a.x);
+      r.items = joinPieces(r.items);
       out.push(r.items.map((it) => it.s).join(' '));
       out.push(...tableColumns(rows[i - 1], r));
     });
     return out;
+  }
+  /**
+   * A PDF may draw one number or one word in pieces ("3,04" + "5.00", or a letter at a time). Joined with spaces from
+   * right to left, an amount came out as "5.00 3,04" and was read as 4 ₪, a word as single letters (readers campaign,
+   * Nov 2026). Pieces that touch (no gap a space would leave) are one token again: a number's pieces from left to
+   * right, a Hebrew word's from right to left. items: one row, sorted from the right.
+   */
+  function joinPieces(items) {
+    const out = [];
+    const cw = (it) => (it.w > 0 && it.s.trim().length ? it.w / it.s.trim().length : 0);
+    const kind = (it) => (HEB.test(it.s) ? 'h' : /\d/.test(it.s) ? 'n' : 'o');
+    for (const it of items) {
+      const g = out[out.length - 1];
+      const prev = g && g.p[g.p.length - 1];
+      const c = prev ? Math.min(cw(prev), cw(it)) : 0;
+      const gap = prev ? prev.x - (it.x + it.w) : 0;
+      const k = kind(it);
+      // the same kind (a mark such as "%" or a quote goes with either), no space at the touching edges, and closer
+      // than a third of a character
+      if (prev && c > 0 && (k === g.kind || k === 'o' || g.kind === 'o') && gap < c * 0.3 && gap > -c && !/^\s|\s$/.test(it.s) && !/^\s|\s$/.test(prev.s)) {
+        g.p.push(it);
+        if (g.kind === 'o') g.kind = k;
+      } else out.push({ p: [it], kind: k });
+    }
+    return out.map((g) => { const right = g.p[0], left = g.p[g.p.length - 1]; return { s: (g.kind === 'h' ? g.p : g.p.slice().reverse()).map((it) => it.s).join(''), x: left.x, w: right.x + right.w - left.x }; });
   }
   /**
    * A summary table printed as a row of column names over a row of numbers ("ברוטו שוטף … שכר נטו … סכום בבנק"
@@ -392,9 +786,14 @@
     const names = head.items.map((it) => ({ s: normalize(it.s), x: it.x, w: it.w })).filter((it) => it.s);
     if (nums.length < 3 || names.length < 3 || !nums.every((it) => NUM_CELL.test(it.s))) return [];
     if (!names.every((it) => HEB.test(it.s) && !/\d/.test(it.s))) return [];
+    // A PDF gives each word of a name as its own piece: paired word by word with the nearest number, "ימי עבודה שעות
+    // עבודה …" shifted by a column and the work hours were 18 (readers campaign round 2, from the payslip screen's
+    // sample). When the row's names, read whole, are as many as its numbers, the row under a row of names is read by
+    // parseText in order (heads); here only a piece that is a whole name by itself is paired.
     const mid = (it) => it.x + it.w / 2;
     const lines = [];
     for (const nm of names) {
+      if (!wholeName(nm.s)) continue;
       let best = null;
       for (const nu of nums) { const d = Math.abs(mid(nu) - mid(nm)); if (!best || d < best.d) best = { d, nu }; }
       if (!best || best.d > Math.max(nm.w, best.nu.w) * 0.75 + 4) continue;
@@ -429,50 +828,242 @@
     return best ? best[0] : null;
   }
 
+  // i18n-keep-start (the words printed on an Israeli payslip)
+  /** The amount that reaches the bank, after every deduction ("שכר נטו" may still be before the voluntary ones). */
+  const NET_FINAL = /נטו לתשלום|בבנק|לבנק/;
+  /** The total of the mandatory deductions only: not the total of all the deductions. */
+  const MAND_TOTAL = /ניכויי חובה/;
+  /** The heading of the year's block, inside a line. */
+  const CUM_HEAD = /(?:סכומים|נתונים|ערכים) מצטברים|מצטבר שנתי|מצטבר מתחילת/;
+  const GROSS_TOTAL = /סה"כ ברוטו|סך כל התשלומים|סה"כ תשלומים|סה"כ התשלומים/;
+  /** The columns of a fund table: the worker's share, the employer's, the severance. */
+  const FUND_COLS = [['emp', /עובד/], ['er', /מעביד|מעסיק/], ['sev', /פיצויים/]];
+  const FUND_KEYS = { pensionEmployee: { emp: 'pensionEmployee', er: 'pensionEmployer', sev: 'severance' }, hishtalmutEmployee: { emp: 'hishtalmutEmployee', er: 'hishtalmutEmployer' } };
+  // i18n-keep-end
+  /**
+   * A fund row that prints the worker's and the employer's shares side by side ("5,332.50 6.00% 319.95 6.50% 346.61
+   * 8.33% 444.20"): each percent with its amount, in printed order, or null when the row is not of that shape. The
+   * amounts must fit their percents (of the insured wage on the row, or of one wage they share). Read as one
+   * deduction the row gave its last number, the severance, as the worker's pension (readers campaign, Nov 2026).
+   */
+  function fundShares(nums) {
+    const fitsAll = (pairs, b) => pairs.every((x) => Math.abs(b * x.p / 100 - x.v) <= Math.max(0.03, x.v * 0.003));
+    const pIdx = nums.map((x, i) => (x.pct ? i : -1)).filter((i) => i >= 0);
+    const vals = nums.filter((x) => !x.pct).map((x) => x.v);
+    if (pIdx.length >= 2) {
+      for (const dir of [1, -1]) {
+        const pairs = pIdx.map((i) => { const a = nums[i + dir]; return a && !a.pct ? { p: nums[i].v, v: a.v } : null; });
+        if (pairs.some((x) => !x || !(x.p > 0))) continue;
+        if (vals.some((b) => fitsAll(pairs, b)) || fitsAll(pairs, pairs[0].v / pairs[0].p * 100)) return pairs;
+      }
+      return null;
+    }
+    if (pIdx.length) return null;
+    // the percents printed without "%": a wage on the row, and two or more (percent, amount) pairs that fit it
+    for (const b of vals) {
+      if (!(b >= 100)) continue;
+      const pairs = [];
+      for (let i = 0; i + 1 < nums.length; i++) {
+        const p = nums[i].v, v = nums[i + 1].v;
+        if (p > 0 && p <= 25 && v !== b && Math.abs(b * p / 100 - v) <= Math.max(0.03, v * 0.003)) { pairs.push({ p, v }); i++; }
+      }
+      if (pairs.length >= 2) return pairs;
+    }
+    return null;
+  }
+
   /**
    * Parse raw text (one line per row).
-   * Returns { fields:{key:{value,qty,rate,pct,line}}, other:[{line,value,guess}], period, lineCount }
+   * Returns { fields:{key:{value,qty,rate,pct,line}}, other:[{line,value,guess}], period, lineCount }.
+   * A field with value null is a line that was seen and could not be read for sure: the check screen asks for it.
    */
+  /**
+   * Some PDFs store each line backwards, letter by letter and digit by digit ("00.0 הסנכה סמ", "50.659,5"): the
+   * Hebrew words are reversed and so are the amounts, so the words were not matched and the amounts became other
+   * numbers (5,956.05 read as 50.659, readers campaign, Nov 2026). An amount with agorot ("5,956.05") reversed no
+   * longer has its two decimals at the end: a line whose amounts read right only backwards is turned around, and so
+   * is a line with no amount to tell when the rest of the payslip is backwards and its words read right backwards.
+   */
+  const MONEY_SHAPE = /^\d{1,3}(?:,\d{3})*\.\d{2}$|^\d+\.\d{2}$/;
+  /** A number as it may be printed forwards: whole or with one or two decimals, thousands in threes, no "00." start. */
+  const FWD_SHAPE = /^(?:0|[1-9]\d{0,2}(?:,\d{3})+|[1-9]\d*)(?:\.\d{1,2})?$|^(?:[1-9]\d{0,2}(?:\.\d{3})+|\d+),\d{2}$/;
+  /** How many of the line's numbers read right as they are (fwd) and only backwards (back). A backwards vote needs a
+   *  number no payslip prints forwards ("00.0", "50.659,5", "%571"): "35.4" is a rate as it is, though "4.53" would be
+   *  an amount (a visual-order payslip with its digits intact was turned around on that, readers campaign). The year
+   *  on the month's line votes too ("6202" by a month's name). */
+  function moneyVotes(line) {
+    let fwd = 0, back = 0;
+    const month = MONTHS.some((m) => line.includes(m) || line.includes(revStr(m)));
+    for (const t of line.split(' ')) {
+      if (/^%\d+(?:\.\d+)?$/.test(t)) { back++; continue; }
+      if (/^\d+(?:\.\d+)?%$/.test(t)) { fwd++; continue; }
+      if (month && /^\d{4}$/.test(t)) { if (/^20[0-4]\d$/.test(t)) fwd++; else if (/^20[0-4]\d$/.test(revStr(t))) back++; continue; }
+      const n = t.replace(/^[-₪(]+|[-₪)]+$/g, '');
+      if (!/^\d[\d.,]*\d$/.test(n)) continue;
+      const a = MONEY_SHAPE.test(n), b = MONEY_SHAPE.test(revStr(n));
+      // (a vote either way needs the other reading to be one no payslip prints: "4.53" read backwards is the rate "35.4")
+      if (a && !b && !FWD_SHAPE.test(revStr(n))) fwd++;
+      if (b && !a && !FWD_SHAPE.test(n)) back++;
+    }
+    return { fwd, back };
+  }
+  function unreverse(lines) {
+    const votes = lines.map(moneyVotes);
+    const fwd = votes.reduce((s, v) => s + v.fwd, 0), back = votes.reduce((s, v) => s + v.back, 0);
+    const words = lines.map(wordVotes).reduce((a, w) => ({ fwd: a.fwd + w.fwd, back: a.back + w.back }), { fwd: 0, back: 0 });
+    const doc = (back >= 2 && back > fwd * 2) || (back >= 1 && fwd === 0 && words.back > words.fwd * 2);
+    return lines.map((l, i) => {
+      const v = votes[i];
+      // (the words have the last say: "ותק 12.5" has an amount shape only backwards, "5.21", and its word reads forwards)
+      const w = wordVotes(l);
+      if (w.fwd > w.back) return l;
+      if (v.back > v.fwd || (doc && !v.fwd && w.fwd <= w.back)) return normalize(revStr(l));
+      return l;
+    });
+  }
   function parseText(text) {
-    const rawLines = text.split(/\r?\n/).map(normalize).filter(Boolean);
+    const allLines = unreverse(text.split(/\r?\n/).map(normalize).filter(Boolean));
+    // Two payslips in one file (the worker's copy and the employer's, two months downloaded together, two workplaces):
+    // read as one, every payment was counted twice (readers campaign, Nov 2026). The second one starts at the second
+    // title line ("תלוש שכר לחודש 07/2026"); only the first is read, and what the second one holds is not added to it.
+    // (or where the payslip's first three lines come again, the same copy printed twice with no title word)
+    const titles = allLines.map((l, i) => ((/תלוש/.test(l) || /^חודש\b/.test(l)) && /\d/.test(l) && detectPeriod(l) ? i : -1)).filter((i) => i >= 0);
+    let cut = titles.length > 1 && titles[1] - titles[0] > 3 ? titles[1] : allLines.length;
+    for (let j = 4; j + 2 < cut; j++) if (allLines[j] === allLines[0] && allLines[j + 1] === allLines[1] && allLines[j + 2] === allLines[2]) { cut = j; break; }
+    const rawLines = allLines.slice(0, cut);
+    // Which side of its numbers a name is printed on, over the whole payslip: before them (read from the right) or
+    // after them (a sheet built left to right). A name left alone on its line takes the numbers at the start of the
+    // next line only on a payslip of the first kind: on the other, those are the next row's (readers campaign).
+    // The side is counted apart for the rows (payments, deductions) and for the totals and information: a sheet may
+    // print its rows left to right and its totals right to left ("36160 נסיעות" took the next row's amount).
+    // A column of symbol codes printed right after the names ("שעות עבודה בפועל 301 35.40 …", "דמי חגים 304 960.00"):
+    // whole numbers that rise by 1 to 3 from row to row. Read as a value, the code was a holiday pay of 304 ₪ (readers
+    // campaign, Nov 2026). They are taken out of their lines.
+    {
+      const cand = rawLines.map((l) => { const rs = runsOf(l); return rs.length >= 2 && rs[0].kind === 'w' && rs[1].kind === 'n' && /^\d{2,4}$/.test(rs[1].t[0]) && matchField(rs[0].t.join(' ')) ? +rs[1].t[0] : null; });
+      let best = [], cur = [];
+      cand.forEach((c, i) => {
+        if (c == null) return;
+        if (cur.length && c - cand[cur[cur.length - 1]] >= 1 && c - cand[cur[cur.length - 1]] <= 3) cur.push(i); else cur = [i];
+        if (cur.length > best.length) best = cur.slice();
+      });
+      // (two rows are enough when their codes follow each other and are of three digits or more: 301, 302)
+      if (best.length >= 3 || (best.length === 2 && cand[best[1]] - cand[best[0]] === 1 && cand[best[0]] >= 100)) for (const i of best) { const rs = runsOf(rawLines[i]); rs[1].t.shift(); rawLines[i] = rs.filter((r) => r.t.length).map((r) => r.t.join(' ')).join(' '); }
+    }
+    const side = { row: [0, 0], sum: [0, 0] };
+    const groupOf = (fd) => (fd.kind === 'total' || fd.kind === 'info' ? 'sum' : 'row');
+    for (const l of rawLines) {
+      if (!/\d/.test(l) || !HEB.test(l)) continue;
+      const rs = runsOf(l);
+      const lead = rs[0] && rs[0].kind === 'n' && rs[0].t.length === 1 && /^\d{1,6}$/.test(rs[0].t[0]) && rs[1] && rs[1].kind === 'w' ? rs.slice(1) : rs;
+      const f1 = lead.length >= 2 && lead[0].kind === 'w' && lead[1].kind === 'n' ? matchField(lead[0].t.join(' ')) : null;
+      if (f1) { side[groupOf(f1)][0]++; continue; }
+      const f2 = nameLast(l) ? matchField(l) : null;
+      if (f2) side[groupOf(f2)][1]++;
+    }
+    const allFirst = side.row[0] + side.sum[0] > side.row[1] + side.sum[1];
+    /** Is a name printed before its numbers, for this field's section? */
+    const joinNextFor = (fd) => { const g = side[groupOf(fd)]; return g[0] + g[1] ? g[0] > g[1] : allFirst; };
+    const rowsAfter = !(side.row[0] + side.row[1] ? side.row[0] > side.row[1] : allFirst);
     const fields = {};
     const other = [];
     let cumulative = false;
-    for (const raw of rawLines) {
+    let hourRate = null; // the hourly rate printed in the header, when there is one
+    let colHint = 0; // from the payments table's heading: 1 = the rate next to the amount (hours further), 2 = the other way
+    let fundCols = null; // the order of a fund table's columns, from its heading
+    let mand = null; // the total of the mandatory deductions, kept apart from the total of all of them
+    let heads = null; // a row of column names, waiting for the row of numbers under it
+    let pending = null; // a total's name printed alone, waiting for the number on the next line
+    const ask = (f, line) => { if (!fields[f.key]) fields[f.key] = { line, value: null }; };
+    const logical = []; // the lines in logical order, for the pay month
+    const unsure = new Set(); // payments with a line that could not be read: their sum stays unknown
+    const money = [], bare = []; // the amounts' style (with agorot or not), and the amounts read from a bare whole number
+    const parts = {}, votes = { ok: 0, no: 0, amb: 0 }; // the hour lines' quantity and rate, and what their sizes say about the column order
+
+    /** A line named after a field whose numbers could not be read for sure. */
+    function notRead(f, line) {
+      // a line that would win over the one read before it (the amount to the bank over a net before the voluntary
+      // deductions, the total of the payments over another gross) and cannot be read: the field is asked for. The
+      // earlier one stayed, and "שכר נטו" was shown as the net paid (readers campaign, Nov 2026)
+      const prior = fields[f.key];
+      if (prior && prior.value != null && ((f.key === 'net' && NET_FINAL.test(line) && !NET_FINAL.test(prior.line)) || (f.key === 'gross' && GROSS_TOTAL.test(line) && !GROSS_TOTAL.test(prior.line)))) {
+        fields[f.key] = { line: prior.line + ' | ' + line, value: null };
+        return;
+      }
+      // (a payment in several lines with one of them unread is not the sum of the others: "שכר יסוד" for two
+      // roles came out as the first role's pay alone, readers campaign, Nov 2026)
+      if (f.kind === 'pay' && fields[f.key]) { fields[f.key] = { line: fields[f.key].line + ' | ' + line, value: null }; unsure.add(f.key); }
+      else if (f.kind !== 'info') { ask(f, line); if (f.kind === 'pay') unsure.add(f.key); }
+      return;
+    }
+    /** A line of names with no numbers: a row of column names, a fund table's heading, the year's block. Returns true
+     *  when it opened the year's block (the line is read no further). */
+    function heading(raw) {
+      const vis = reversedWords(raw);
+      const list = nameRow(vis ? fixVisual(raw) : raw);
+      if (list) heads = { list, visual: vis };
+      const words = raw.split(' ').length;
+      const head = [raw, fixVisual(raw)];
+      // the heading of a fund table: the order of its columns (the worker's, the employer's, the severance)
+      const fh = head.find((h) => FUND_COLS[0][1].test(h) && FUND_COLS[1][1].test(h));
+      if (fh) fundCols = FUND_COLS.filter((c) => c[1].test(fh)).sort((a, b) => fh.search(a[1]) - fh.search(b[1])).map((c) => c[0]);
       // a block of the year's running totals ("- סכומים מצטברים -", "נתונים מצטברים"): its gross and tax are the
       // year's, not the month's (the year's taxable gross was read as the month's, real payslip, Nov 2026). It
       // starts at its heading (a line with no numbers) and ends at the next heading: a "- name -" line or a row
-      // of three or more column names.
-      if (!/\d/.test(raw) && HEB.test(raw)) {
-        if (/מצטבר/.test(raw) && raw.split(' ').length <= 5) { cumulative = true; continue; }
-        if (cumulative && (/^[-–*].*[-–*]$/.test(raw) || raw.split(' ').length >= 3)) cumulative = false;
-      }
-      let f = matchField(raw);
-      let line = raw;
-      if (!f && HEB.test(raw)) {
-        const alt = fixVisual(raw);
-        f = matchField(alt);
-        if (f) line = alt;
-      } else if (f && HEB.test(raw.split(' ').pop()) && !byWords(f, raw)) {
-        // matched only by its tier ("150%"): a visual-order line matches that too, and its reversed words ("תבש")
-        // were never read, so Shabbat hours were filed as overtime and the numbers kept their reversed order (deep
-        // review, Nov 2026). A line that ends with its name (the numbers first) is turned to logical order, and wins
-        // when it then matches by its words.
-        const alt = fixVisual(raw);
-        const fa = matchField(alt);
-        if (fa && byWords(fa, alt)) { f = fa; line = alt; }
+      // of three or more column names. The heading of two columns ("החודש מצטבר") opens no block: the month's
+      // numbers are on its lines too (every deduction under it was read as the year's, readers campaign, Nov 2026).
+      // the heading of the payments table ("כמות תעריף סכום"): the rate next to the amount, or the hours
+      const tw = raw.split(' ');
+      const iq = tw.findIndex((w) => /^(?:כמות|שעות|ימים)$/.test(w)), ir = tw.findIndex((w) => /^תעריף$/.test(w)), ia = tw.findIndex((w) => /^(?:סכום|סה"כ)$/.test(w));
+      if (iq >= 0 && ir >= 0 && ia >= 0) colHint = Math.abs(ir - ia) < Math.abs(iq - ia) ? 1 : 2;
+      const cum = head.find((h) => /מצטבר/.test(h));
+      if (cum && words <= 5 && !/חודש|שוטף|נוכחי/.test(cum)) { cumulative = true; return true; }
+      if (cumulative && (/^[-–*].*[-–*]$/.test(raw) || words >= 3)) cumulative = false;
+      return false;
+    }
+    function readLine(line, moved) {
+      // the hourly rate printed in the header ("שכר שעה 36.00", "תעריף לשעה 60.00") and the job percent ("היקף משרה
+      // 100%"): no pay line. They were summed into the base pay (round 2); the rate is kept as evidence of which column
+      // of the hour lines is the rate, and both are taken out of the line
+      const rm = /(?:שכר|תעריף|ערך) ?ל?שעה(?![א-ת]):? *(\d+(?:\.\d+)?)(?![\d.,%])/.exec(line);
+      if (rm) { if (+rm[1] > 0) hourRate = +rm[1]; line = line.replace(rm[0], ' '); }
+      line = line.replace(/(?:היקף|אחוז|חלקיות) משרה:? *\d+(?:\.\d+)?%?/g, ' ').replace(/\s+/g, ' ').trim();
+      if (!line) return;
+      let f = matchField(line);
+      // a line matched by its tier alone ("150%") whose name was not read: no Hebrew word, or Latin letters in its name
+      // ("שעות naw 150%" for שבת). It was Shabbat pay filed as overtime (round 2, from the payslip screen's sample); it
+      // waits among the lines to name
+      if (f && f.hours && !byWords(f, line)) {
+        const words = line.replace(/[\d.,%₪:/-]+/g, ' ').trim();
+        // (a name of single letters is still a name: "125% נ.ש" is overtime; refusing it lost 2 fields of every such
+        // payslip in round 2's first try)
+        if (!/[֐-׿]/.test(words) || /[A-Za-z]{2,}/.test(words)) f = null;
       }
       if (cumulative && f) {
         // only the year's own lines: the gross and the income tax become the running totals, the rest is skipped
         f = f.key === 'gross' ? FIELD.ytdGross : f.key === 'incomeTax' ? FIELD.ytdTax : f.key === 'ytdGross' || f.key === 'ytdTax' ? f : null;
-        if (!f) continue;
+        if (!f) return;
       }
       // a payroll system's symbol code before the name ("9268 שעות בפועל 147.33", "300 125% …") is not a value:
       // the hours and days were read as the code (real payslip, Nov 2026). A whole number at the start, right before
       // the Hebrew name, with a value after it.
       let nums = numbersIn(line);
-      const code = /^\d{2,6}\s+(?=(?:\d{2,3}%\s+)?[֐-׿])/.exec(line);
-      if (code) { const rest = numbersIn(line.slice(code[0].length)); if (rest.length) nums = rest; }
+      const code = /^\d{1,6}\s+(?=(?:\d{2,3}%\s+)?[֐-׿])/.exec(line);
+      if (code) { const rest = numbersIn(line.slice(code[0].length)); if (rest.length || (f && joinNextFor(f) && /^\d{1,6}\s+[֐-׿]/.test(line))) nums = rest; }
+      // (on a payslip that prints its names before their numbers, a whole number before a name with nothing after it
+      // is its symbol code: "0003 נסיעות" with the amount on a lower line was a travel refund of 3 ₪, readers campaign)
+      // a token that is one number or two glued ("1.500.00"): two, when only that reading adds up (hours × rate = pay,
+      // or a balance row: "מחלה 29.50 1.500.00 31.00" is 29.50 + 1.50 − 0.00 = 31.00, not a sick pay of 1,500 ₪)
+      if (nums.alt) {
+        const sums = (l) => { const v = l.filter((x) => !x.pct).map((x) => x.v); return !!(productOf(v) || (v.length >= 3 && v.length <= 4 && balanceRow(v) != null)); };
+        // (a decimal point lost to a space: the joined reading wins whenever it adds up, also when the whole shekels
+        // add up too, "8,50 65.00 552 50" is 552.50 and not 552 with a stray 50)
+        // (with the line as it is, only an exact product holds then: "8 65 520" in a whole-shekel sheet; "7.75 411 53"
+        // is no 7.75 × 53 = 411 but 411.53, "386.81 3,868 10" no 386.81 × 10 = 3,868 but a year's total of 3,868.10)
+        if (nums.gap ? sums(nums.alt) : sums(nums.alt) && !sums(nums)) nums = nums.alt;
+      }
+      if (nums.gap) nums.dirty = (nums.dirty || 0) + nums.gap;
+      const glued = nums.glued;
       // the tier printed without "%" in the name ("ש"נ 125 562.50", "שעות 100 160.00 8,000.00") is not a value: it was
       // read as 125 overtime hours, or made a third value that hid the hours (deep review, Nov 2026)
       const tier = f && f.hours && TIER_IN_NAME.exec(normalize(line));
@@ -480,15 +1071,25 @@
         const i = nums.findIndex((x) => !x.pct && !x.dec && x.v === +tier[1]);
         if (i >= 0) nums = nums.slice(0, i).concat(nums.slice(i + 1));
       }
+      // the hours line of a small payslip ("שעות עבודה 120 40 4,800": hours × rate = pay) is the base pay, not only
+      // the hours total: the pay was dropped and 120 kept (readers campaign, Nov 2026)
+      if (f && f.key === 'workHours' && !cumulative && productFix(nums)) f = FIELD.base;
+      // the payslip's title ("תלוש משכורת …") names no payment
+      if (f && f.kind === 'pay' && /תלוש/.test(line)) return;
       if (f && f.kind === 'pay') {
         f = payOrCount(f, line, nums);
-        if (!f) continue; // a count (sick days, seniority years) with no money in it: not a payment, not a line to name
+        if (!f) return; // a count (sick days, seniority years) with no money in it: not a payment, not a line to name
       }
       if (!f) {
         const vals = nums.filter((x) => !x.pct && x.dec);
         if (vals.length && HEB.test(line)) other.push({ line, value: vals[vals.length - 1].v, guess: null });
-        continue;
+        return;
       }
+      // a name with no number on its line: the number may be alone on the next one (a box with its title above it)
+      // (every number on it unreadable, "נטו לתשלום 3,898.9l": the line is not read, it does not wait for a number)
+      if (!nums.length && numbersIn(line).dirty) { notRead(f, line); return; }
+      // (a percent alone is the name's tier, "שעות שבת 175%": the name still waits for its numbers)
+      if (!nums.some((x) => !x.pct) && !numbersIn(line).dirty) { if (line.split(' ').length <= 5) pending = { f, line }; return; }
       if (f.kind === 'info') {
         // the number right after the name: on a merged line ("ימי עבודה 22 שעות עבודה 176.00") the first number
         // belonged to the line before it, and 22 days were read as the hours (deep review, Nov 2026)
@@ -497,11 +1098,49 @@
         const after = p ? numbersIn(n.slice(n.indexOf(p) + p.length)) : [];
         if (after.length) nums = after;
       }
+      // a fund row with the employer's columns: the worker's share by the table's heading, never by its place alone
+      const fk = FUND_KEYS[f.key];
+      // (with a decimal point lost to a space, the joined reading when its amounts fit their percents)
+      const shares = fk ? (nums.gap ? (nums.alt && fundShares(nums.alt)) || null : fundShares(nums)) : null;
+      if (fk && !shares && nums.filter((x) => x.pct).length >= 2) { ask(f, line); return; }
+      if (shares) {
+        const cols = fundCols && fundCols.length === shares.length ? fundCols : null;
+        const same = shares.every((x) => x.v === shares[0].v) || (shares.length === 3 && shares[0].v === shares[2].v);
+        const own = cols && cols.includes('emp') ? shares[cols.indexOf('emp')] : same ? shares[0] : null;
+        if (!own) { ask(f, line); return; }
+        if (!fields[f.key] || fields[f.key].value == null) fields[f.key] = { line, value: Math.abs(own.v), pct: own.p };
+        if (cols) for (const c of cols) if (c !== 'emp' && fk[c] && !fields[fk[c]]) fields[fk[c]] = { line, value: Math.abs(shares[cols.indexOf(c)].v), pct: shares[cols.indexOf(c)].p };
+        return;
+      }
+      // (a token that mixes digits and letters makes the whole line unsure, whatever was cut from the list since: the
+      // tier's copy lost the mark, and "ש"נ 150 2.75 53.I0 l46.03" gave a pay of 2.75 ₪, readers campaign, Nov 2026)
+      const unread = numbersIn(line).dirty;
+      if (unread) nums.dirty = unread;
+      if (glued) nums.glued = glued;
       const pv = pickValues(f, nums);
-      if (!pv) continue;
+      if (!pv) { notRead(f, line); return; }
+      if (unsure.has(f.key)) { fields[f.key].line += ' | ' + line; return; }
+      // the hour lines, to settle which factor is the hours once every line was read
+      // (the amount between the two factors, or numbers brought from the next line: their places do not say which is the
+      // hours. "שעות עבודה 60 3045 50.75" was 60 hours at 50.75 ₪; the size rule or the slip's wage decides, or neither)
+      const placeless = pv.rate != null && !pv.sure && !pv.even && (pv.mid || moved);
+      if (placeless && !f.hours) { delete pv.qty; delete pv.rate; }
+      if (f.hours && placeless) (parts[f.key] = parts[f.key] || []).push({ qty: pv.qty, rate: pv.rate, amb: false, mid: true, value: pv.value });
+      else if (f.hours && pv.even) (parts[f.key] = parts[f.key] || []).push({ qty: pv.qty, rate: pv.rate, amb: false });
+      else if (f.hours && pv.rate != null && pv.sure != null && !pv.mid && !moved) { votes[pv.sure ? (pv.byPlace ? 'ok' : 'no') : 'amb']++; (parts[f.key] = parts[f.key] || []).push({ qty: pv.qty, rate: pv.rate, amb: !pv.sure }); }
+      else if (f.hours) (parts[f.key] = parts[f.key] || []).push({ qty: pv.qty, rate: pv.rate, amb: false, two: !!pv.two, one: !!pv.one, value: pv.value });
+      delete pv.two; delete pv.one;
+      delete pv.sure; delete pv.byPlace; delete pv.mid; delete pv.even;
+      if (f.kind !== 'info') { money.push(...nums.filter((x) => !x.pct).map((x) => x.dec)); if (pv.bare) bare.push({ f, line }); }
+      delete pv.bare;
+      // the total of the mandatory deductions is kept apart: it is the total of all the deductions only on a payslip
+      // with no others (it was read as the total, and the gross minus it was not the net, readers campaign, Nov 2026)
+      if (f.key === 'totalDeductions' && MAND_TOTAL.test(line)) { if (mand == null) mand = { line, value: Math.abs(pv.value) }; return; }
       // the payslip's own total of the payments wins over another line that only names the gross
-      const GROSS_TOTAL = /סה"כ ברוטו|סך כל התשלומים|סה"כ תשלומים/;
       if (f.key === 'gross' && fields.gross && GROSS_TOTAL.test(line) && !GROSS_TOTAL.test(fields.gross.line)) delete fields.gross;
+      // the amount paid to the bank wins over a net printed before the voluntary deductions
+      if (f.key === 'net' && fields.net && NET_FINAL.test(line) && !NET_FINAL.test(fields.net.line)) delete fields.net;
+      if (fields[f.key] && fields[f.key].value == null) delete fields[f.key]; // asked for, and now read
       if (fields[f.key]) {
         // a second line for the same field: sum earnings (e.g. two roles' base pay), keep first for others
         if (f.kind === 'pay') {
@@ -516,19 +1155,218 @@
         } else if ((f.kind === 'ded' || f.kind === 'emp') && nums.some((x) => !x.pct && x.dec)) {
           // a second deduction or employer line of the same kind (two pension funds): never dropped silently,
           // it waits among the lines to name (the translator and the check screen show it)
-          const vals = nums.filter((x) => !x.pct && x.dec);
-          other.push({ line, value: vals[vals.length - 1].v, guess: null });
+          other.push({ line, value: Math.abs(pv.value), guess: null });
         }
-        continue;
+        return;
       }
       // a deduction printed with a minus ("מס הכנסה 900.00-") is the same deduction: stored negative, the checks
       // passed it ("income tax reasonable -900") and the net reconciliation went off (deep review, Nov 2026)
       if ((f.kind === 'ded' || f.kind === 'emp' || f.key === 'totalDeductions') && pv.value != null) pv.value = Math.abs(pv.value);
       fields[f.key] = Object.assign({ line }, pv);
     }
+
+    for (let li = 0; li < rawLines.length; li++) {
+      let raw = rawLines[li];
+      const was = pending;
+      pending = null;
+      // a name alone on its line, and the numbers at the start of the next one: they are its numbers (a photo's lines
+      // drift apart). A total takes one number; a payment its hours, rate and amount, with the words that go between
+      // them ("20 ימים 236.00"). What follows on that line is read on its own.
+      if (was && joinNextFor(was.f)) {
+        const runs = runsOf(raw);
+        let n = 0;
+        while (n < runs.length && (runs[n].kind === 'n' || wordsOf(runs[n]).every((w) => UNIT_WORDS.test(w)))) n++;
+        const lead = runs.slice(0, n).map((r) => r.t.join(' ')).join(' ');
+        // (a lone whole number before a name is that name's symbol code: "ניכויים:" over "9001 ביטוח לאומי 62.31")
+        const code1 = runs[0].kind === 'n' && runs[0].t.length === 1 && /^\d{1,6}$/.test(runs[0].t[0]) && runs[1] && runs[1].kind === 'w';
+        if (n && runs[0].kind === 'n' && !code1 && !/[A-Za-z]/.test(lead)) {
+          const ns = numbersIn(lead);
+          if (ns.length && (was.f.kind === 'pay' || (ns.length === 1 && !ns[0].pct))) readLine(was.line + ' ' + lead);
+          if (n === runs.length) continue;
+          raw = runs.slice(n).map((r) => r.t.join(' ')).join(' ');
+        }
+      }
+      // the numbers under a row of column names
+      const names = heads;
+      heads = null;
+      if (names && !HEB.test(raw) && !/[A-Za-z]/.test(raw)) {
+        const ns = numbersIn(raw);
+        // (as many numbers as names: "18 142.75" under "ימי עבודה שעות עבודה" is two columns, not 18,142.75)
+        if (ns.length === names.list.length && !ns.dirty && !ns.glued && !ns.gap && !ns.some((x) => x.pct)) {
+          (names.visual ? ns.slice().reverse() : ns).forEach((x, i) => { const nm = names.list[i]; if (nm.f.kind === 'total' || nm.f.kind === 'info') readLine(nm.text + ' ' + x.raw.trim()); });
+          logical.push(raw);
+          continue;
+        }
+      }
+      if (!/\d/.test(raw) && HEB.test(raw) && heading(raw)) continue;
+      // the heading of the year's block joined to the line after it ("- סכומים מצטברים - ברוטו למס 75,051.41"): the
+      // block starts on this line (its taxable gross was read as the month's, readers campaign, Nov 2026)
+      if (/\d/.test(raw) && CUM_HEAD.test(raw)) cumulative = true;
+      let line = raw;
+      const f0 = matchField(raw);
+      if (reversedWords(raw)) {
+        // more of the line's words are payslip words when read backwards: a line in visual order. A row of two
+        // tables matched a tier ("150%") as it was, and its Shabbat hours were filed as overtime (readers
+        // campaign, Nov 2026)
+        line = fixVisual(raw);
+      } else if (!f0 && HEB.test(raw)) {
+        const alt = fixVisual(raw);
+        // (by its words, not by a tier alone: a header turned around matched "100%")
+        const fv = matchField(alt);
+        if (fv && byWords(fv, alt)) line = alt;
+      } else if (f0 && nameLast(raw) && !byWords(f0, raw)) {
+        // matched only by its tier ("150%"): a visual-order line matches that too, and its reversed words ("תבש")
+        // were never read, so Shabbat hours were filed as overtime and the numbers kept their reversed order (deep
+        // review, Nov 2026). A line that ends with its name (the numbers first) is turned to logical order, and wins
+        // when it then matches by its words.
+        const alt = fixVisual(raw);
+        const fa = matchField(alt);
+        if (fa && byWords(fa, alt)) line = alt;
+      }
+      logical.push(line);
+      // (a part with no numbers, cut from a line that has some, may be a heading the recognition joined to the line)
+      // the rest of a payment's row on the next line, numbers only ("שעות שבת 150% 7" over "51.48 360"): joined when
+      // only together they add up (hours × rate = pay)
+      // (or the numbers at the start of the next line, before a name with numbers of its own: the row's amount column on
+      // a lower baseline, "שעות 100% 50:45" over "60.00 3,045.00 מס הכנסה 0.00"). Only the line's last part takes them.
+      const nx = rawLines[li + 1];
+      let moved = null;
+      if (nx && /\d/.test(line)) {
+        const rs = runsOf(nx);
+        let lead = null, rest = null;
+        if (!HEB.test(nx) && !/[A-Za-z]/.test(nx)) lead = nx;
+        else if (rs.length >= 3 && rs[0].kind === 'n' && rs[1].kind === 'w' && rs[2].kind === 'n' && !(rs[0].t.length === 1 && /^\d{1,6}$/.test(rs[0].t[0]))) {
+          lead = rs[0].t.join(' ');
+          rest = rs.slice(1).map((r) => r.t.join(' ')).join(' ');
+        }
+        if (lead) {
+          const sg = segments(line, rowsAfter);
+          const lastSeg = sg[sg.length - 1];
+          const vs = (t) => numbersIn(t).filter((x) => !x.pct).map((x) => x.v);
+          const v1 = vs(lastSeg), v2 = vs(lastSeg + ' ' + lead);
+          const fm = matchField(lastSeg);
+          if (fm && (fm.kind === 'pay' || fm.key === 'workHours') && !productOf(v1) && productOf(v2) && v2.length <= 4) {
+            line = line + ' ' + lead;
+            moved = lastSeg + ' ' + lead;
+            if (rest == null) li++; else rawLines[li + 1] = rest;
+          }
+        }
+      }
+      for (const seg of segments(line, rowsAfter)) { if (seg !== line && !/\d/.test(seg) && HEB.test(seg) && heading(seg)) continue; readLine(seg, seg === moved); }
+    }
+    // a payslip that prints its amounts with agorot ("893.15") and one amount as a bare whole number ("89315"): the
+    // decimal point was probably dropped by the text recognition. Such an amount is asked for, never shown as read
+    // (it was 89,315 ₪ of deductions, readers campaign, Nov 2026)
+    if (bare.length && money.length >= 6 && money.filter(Boolean).length >= money.length * 0.8) {
+      for (const b of bare) { const F = fields[b.f.key]; if (F && String(F.line).split(' | ').includes(b.line)) fields[b.f.key] = { line: F.line, value: null }; }
+    }
+    // the hours and the rate of a line where both could be the hours ("50.75 60.00 3,045.00"): the table's columns
+    // are in one order, and the lines whose sizes leave no doubt ("2.00 75.00 150.00") say which
+    // Its place alone is a guess: a sheet may print the rate before the hours ("שעות עבודה בפועל 35.40 168.25
+    // 5,956.05" was 35.40 hours at 168.25 ₪, readers campaign, Nov 2026). The evidence on the slip decides: the lines
+    // whose sizes leave no doubt (votes), the one wage the lines agree on (each rate over its tier), the hours total
+    // printed on the slip. With no evidence, or evidence both ways, the hours and the rate are left out (the amount
+    // stays: it is the product either way).
+    const TIERS = { base: 1, ot125: 1.25, ot150: 1.5, rest150: 1.5, rest175: 1.75, rest200: 2 };
+    if (Object.keys(parts).some((k) => parts[k].some((x) => x.amb))) {
+      const hp = [];
+      for (const k of Object.keys(parts)) for (const p of parts[k]) if (TIERS[k] && p.rate > 0 && !p.two && !p.mid && !p.one) hp.push({ k, p });
+      const agree = (sw) => {
+        const ws = hp.map(({ k, p }) => Math.abs(sw && p.amb ? p.qty : p.rate) / TIERS[k]);
+        return ws.reduce((best, a) => Math.max(best, ws.filter((b) => Math.abs(b - a) <= a * 0.02).length), 0);
+      };
+      const a1 = agree(false), a2 = agree(true);
+      const wh = fields.workHours && fields.workHours.value;
+      const tot = (sw) => hp.reduce((t, { p }) => t + Math.abs(sw && p.amb ? p.rate : p.qty), 0);
+      const h1 = wh ? Math.abs(tot(false) - wh) <= 0.05 : false, h2 = wh ? Math.abs(tot(true) - wh) <= 0.05 : false;
+      // in order of weight: the lines whose sizes decide; the table's heading (is the rate next to the amount?); the
+      // hours total; the one wage, only when one reading has the lines agree and the other is far off (a rate a little
+      // below the others is what the check is for: it must not turn the line around)
+      const far = (sw) => { const ws = hp.map(({ k, p }) => Math.abs(sw && p.amb ? p.qty : p.rate) / TIERS[k]); const m = ws.slice().sort((x, y) => x - y)[ws.length >> 1]; return ws.some((w) => Math.abs(w - m) > m * 0.25); };
+      let ev = 0;
+      if (votes.ok && !votes.no) ev = 1;
+      else if (votes.no && !votes.ok) ev = 2;
+      else if (!votes.ok && !votes.no && hourRate && hp.some(({ k, p }) => k === 'base' && p.amb && (Math.abs(p.rate - hourRate) <= 0.005 || Math.abs(p.qty - hourRate) <= 0.005))) {
+        const b = hp.find(({ k, p }) => k === 'base' && p.amb).p;
+        ev = Math.abs(b.rate - hourRate) <= 0.005 ? 1 : 2;
+      } else if (!votes.ok && !votes.no && colHint) ev = colHint;
+      else if (!votes.ok && !votes.no && h1 !== h2) ev = h1 ? 1 : 2;
+      else if (!votes.ok && !votes.no && hp.length >= 2 && a2 === hp.length && far(false) && !far(true)) ev = 2;
+      else if (!votes.ok && !votes.no && hp.length >= 2 && a1 === hp.length && far(true) && !far(false)) ev = 1;
+      const for1 = ev === 1, for2 = ev === 2;
+      for (const k of Object.keys(parts)) {
+        const F = fields[k];
+        if (!F || F.value == null || !parts[k].some((x) => x.amb)) continue;
+        if (for2 && !for1) {
+          const q = parts[k].reduce((t, x) => t + (x.amb ? x.rate : x.qty || 0), 0);
+          if (q > 0) { F.qty = q; F.rate = F.value / q; }
+        } else if (!(for1 && !for2)) { delete F.qty; delete F.rate; }
+      }
+    }
+    // An hours line with two numbers: its hours and its pay, or (a column lost, a row split by the PDF) its hours and
+    // its rate, or its rate and its pay. "שעות שבת 150% 8.25 57.00" was read as a Shabbat pay of 57 ₪ (readers campaign,
+    // Nov 2026). The hourly wage the slip's whole lines agree on (hours × rate = pay, each rate over its tier) decides:
+    // the pay over the hours must be that wage at the line's tier, or the smaller number is the rate itself (the hours
+    // were lost). With whole lines that do not agree on one wage, or with none and a pay of under 20 ₪ an hour, the
+    // line is asked for.
+    const TIER = { base: 1, ot125: 1.25, ot150: 1.5, rest150: 1.5, rest175: 1.75, rest200: 2 };
+    const whole = [];
+    for (const k of Object.keys(parts)) for (const p of parts[k]) if (!p.two && !p.mid && p.rate > 0 && TIER[k]) whole.push(Math.abs(p.rate) / TIER[k]);
+    const wage = whole.length && whole.every((r) => Math.abs(r - whole[0]) <= whole[0] * 0.02) ? whole[0] : null;
+    // a line whose places say nothing: its rate is the factor that is the slip's wage at the line's tier, or the hours
+    // and the rate are left out (the amount stays: it is the product either way)
+    for (const k of Object.keys(parts)) {
+      const F = fields[k];
+      const mids = parts[k].filter((p) => p.mid);
+      if (!F || F.value == null || !mids.length) continue;
+      const want = wage != null && TIER[k] ? wage * TIER[k] : null;
+      if (parts[k].length === 1 && want != null) {
+        const p = mids[0];
+        const r = [p.qty, p.rate].find((x) => Math.abs(Math.abs(x) - want) <= want * 0.01);
+        if (r != null && Math.abs(p.qty) !== Math.abs(p.rate)) { F.rate = r; F.qty = r === p.qty ? p.rate : p.qty; continue; }
+      }
+      delete F.qty; delete F.rate;
+    }
+    // (with no whole line, the slip's two-number hours lines are of one kind: when one of them cannot be hours and a pay,
+    // "35.40 125.00" with its amount cut off, none of them is read as hours and a pay: "53.10 1.25" was a rate and hours)
+    const twoAllFit = Object.keys(parts).every((k) => !TIER[k] || parts[k].every((p) => !p.two || (p.value / p.qty / TIER[k] >= 24 && p.value / p.qty <= 1000)));
+    for (const k of Object.keys(parts)) {
+      const F = fields[k];
+      // (an hours line with one number on a payslip whose hour lines are whole: "שעות שבת 150% 7" with its rate and pay
+      // on the next line was a Shabbat pay of 7 ₪, readers campaign, Nov 2026)
+      if (F && F.value != null && TIER[k] && whole.length && parts[k].length === 1 && parts[k][0].one) { fields[k] = { line: F.line, value: null }; continue; }
+      const two = parts[k].filter((p) => p.two);
+      if (!F || F.value == null || !two.length || !TIER[k]) continue;
+      const want = wage != null ? wage * TIER[k] : hourRate != null ? hourRate * TIER[k] : null;
+      // (with no whole line to give the wage: the pay over the hours, over the tier, is at least a youth's minimum wage)
+      const fits = (p) => (want != null ? Math.abs(p.value / p.qty - want) <= want * 0.02 : !whole.length && p.value / p.qty / TIER[k] >= 24 && p.value / p.qty <= 1000);
+      if (two.every(fits) && (want != null || twoAllFit)) continue;
+      if (parts[k].length === 1 && want != null && Math.abs(two[0].qty - want) <= want * 0.01) { F.rate = two[0].qty; F.qty = Math.round(F.value / F.rate * 100) / 100; continue; }
+      // (no wage on the slip and two numbers that are not hours and their pay, "שעות נוספות 125% 43.75 218.75": a rate and
+      // its pay (5 hours at 43.75 ₪) or hours and a rate with the pay lost (43.75 hours at 218.75 ₪, or 142.50 hours at
+      // 38 ₪ in "38.00 142.50 שכר רגיל") cannot be told apart. Tried in round 2, it read the second kind as the first:
+      // the line is asked for)
+      fields[k] = { line: F.line, value: null };
+    }
+    // The hours lines read from one or two numbers (their places not proven by hours × rate = pay) stand only when the
+    // payments add up to the gross: "שעות רגילות 140.25" with its pay on a lower line was a base pay of 140.25 ₪, and
+    // "105.00 3.50 שעות שבת 175%" with its amount cut off a Shabbat pay of 105 ₪ (readers campaign, Nov 2026).
+    if (fields.gross && fields.gross.value != null) {
+      const weak = Object.keys(parts).filter((k) => TIER[k] && fields[k] && fields[k].value != null && parts[k].some((p) => p.two || p.one));
+      if (weak.length) {
+        const sum = FIELDS.filter((x) => x.kind === 'pay' && fields[x.key] && fields[x.key].value != null).reduce((t, x) => t + fields[x.key].value, 0);
+        if (Math.abs(sum - fields.gross.value) > Math.max(2, Math.abs(fields.gross.value) * 0.005)) for (const k of weak) fields[k] = { line: fields[k].line, value: null };
+      }
+    }
+    // the mandatory deductions' total stands for the total only when the payslip's own numbers say it is one
+    if (!fields.totalDeductions && mand) {
+      const g = fields.gross && fields.gross.value, n = fields.net && fields.net.value;
+      if (g != null && n != null && Math.abs(g - mand.value - n) <= 2) fields.totalDeductions = mand;
+    }
     // a guard for running totals printed without a heading: a taxable gross far above the gross is the year's
     if (fields.taxableGross && fields.gross && fields.taxableGross.value > fields.gross.value * 2) delete fields.taxableGross;
-    return { fields, other, period: detectPeriod(text), lineCount: rawLines.length };
+    // (secondSlip: the file held more after the first payslip, and it was not read: the screen can say so)
+    return { fields, other, period: detectPeriod(logical.join('\n')) || detectPeriod(text), lineCount: rawLines.length, secondSlip: cut < allLines.length };
   }
 
   /* ---------------- redaction (before optional AI) ---------------- */
@@ -537,13 +1375,30 @@
     const lines = text.split(/\r?\n/).map((line) => {
       let l = line;
       if (/(רחוב|רח'|רח׳|כתובת|מיקוד|ת\.ד|דירה|שכונת|ישוב:|יישוב:)/.test(l)) { count++; return '[כתובת הוסתרה]'; }
+      // the worker's name ("שם העובד: נדב כהן", "שם: …", "לכבוד …"): the name is what follows the label, to the next
+      // label or number on the line (it went to the AI as it was, readers campaign, Nov 2026). The marks stay Hebrew in
+      // every language: they are what the AI reads in place of the name.
+      l = l.replace(/(^|\s)(שם העובד|שם עובד|שם העובדת|שם משפחה|שם פרטי|שם|לכבוד)(\s*[:：]\s*|\s+)([^\d:|]+?)(?=\s+(?:מספר|מס'|ת\.ז|ת"ז|ת״ז|זהות|תאריך|מחלקה|תפקיד|סניף|בנק|קוד)|\s*\d|\s*\||$)/g,
+        // i18n-keep
+        (m0, pre, a, sep, name) => (/[֐-׿A-Za-z]/.test(name) ? (count++, pre + a + sep + '[שם הוסתר]') : m0));
+      // the employer's name before its company mark ("סופר השכונה בע"מ"): up to four words
+      // i18n-keep
+      l = l.replace(/(?:[^\s\d|:]+\s+){0,3}[^\s\d|:]+\s+בע(?:"|״|'')מ/g, () => { count++; return '[שם המעסיק הוסתר]'; });
+      // the worker's and the employer's numbers: the employee number, the deductions file, the company number
+      l = l.replace(/((?:מספר|מס'|מס׳)\s*עובד|תיק(?:\s*ניכויים)?|ח\.?פ\.?|ע\.?מ\.?|מספר מעסיק|מס' מעסיק)(\s*[:.]?\s*)(\d[\d\-\s]{2,}\d|\d{3,})/g, (m0, a, sep) => { count++; return a + sep + '[מספר הוסתר]'; });
       if (/(בנק|סניף|חשבון|IBAN|מס' חשבון)/i.test(l)) {
-        l = l.replace(/\d[\d\-\s]{2,}\d/g, () => { count++; return '[פרטי בנק הוסתרו]'; });
+        // (to the end of the run, slashes too: "10-802-123456/78" left "/78", round 2 from the intake session)
+        l = l.replace(/\d[\d\-\s/]{2,}\d/g, () => { count++; return '[פרטי בנק הוסתרו]'; });
       }
+      // a birth date ("תאריך לידה 12/03/1999"): it passed (round 2, from the intake session)
+      // i18n-keep
+      if (/תאריך לידה|ת\. ?לידה|יום הולדת/.test(l)) l = l.replace(/\d{1,2}[./-]\d{1,2}[./-]\d{2,4}/g, () => { count++; return '[תאריך הוסתר]'; });
       if (/(ת\.ז|ת"ז|ת״ז|תעודת זהות|מספר זהות|מס' זהות|זהות)/.test(l)) {
         l = l.replace(/\d[\d\-\s]{4,}\d/g, () => { count++; return '[ת״ז הוסתרה]'; });
       }
       l = l.replace(/\b\d{9}\b/g, () => { count++; return '[מספר הוסתר]'; });
+      // (an ID number printed in groups, "012 345 678" or "012-345-678", with no label on its line)
+      l = l.replace(/\b\d{3}[\s-]\d{3}[\s-]\d{3}\b/g, () => { count++; return '[מספר הוסתר]'; });
       l = l.replace(/[\w.+-]+@[\w-]+\.[\w.]+/g, () => { count++; return '[אימייל הוסתר]'; });
       l = l.replace(/(?:\+972[-\s]?|\b0)(?:5\d|[2-489]|7\d)[-\s]?\d{3}[-\s]?\d{4}\b/g, () => { count++; return '[טלפון הוסתר]'; });
       return l;
@@ -608,18 +1463,70 @@
     return v >= 50;
   }
   /** Convert AI JSON to the same {fields, other, period} shape as parseText. */
+  /**
+   * A number from the AI's answer: a finite number or a plain numeric string ("1234.56", not "1,234.56" or "12 שעות"),
+   * within what a month's payslip holds. Anything else is no number (null): read as it came, a string became NaN on
+   * the screen, a negative tax passed the checks, and a value of a billion shekels went into the analysis (readers
+   * campaign, Nov 2026).
+   */
+  const MAX_AMOUNT = 1e6, MAX_QTY = 744; // a month's money for an hourly worker, a month's hours (31 × 24)
+  function aiNum(x, max) {
+    const n = typeof x === 'number' ? x : typeof x === 'string' && /^\s*-?\d+(?:\.\d+)?\s*$/.test(x) ? +x : NaN;
+    return Number.isFinite(n) && Math.abs(n) <= max ? (Object.is(n, -0) ? 0 : n) : null;
+  }
+  const own = (o, k) => Object.prototype.hasOwnProperty.call(o, k);
   function fromAi(json) {
+    json = json && typeof json === 'object' ? json : {};
     const fields = {};
-    const list = (json.fields || []).filter((x) => x && FIELD[x.key] && x.value != null && Number.isFinite(+x.value));
-    const balances = list.filter((x) => FIELD[x.key].kind === 'info').map((x) => +x.value);
+    const other = [];
+    // (a key is one of the reader's own fields: "__proto__" or "constructor" never reach the object)
+    const list = (Array.isArray(json.fields) ? json.fields : []).filter((x) => x && typeof x === 'object' && typeof x.key === 'string' && own(FIELD, x.key))
+      .map((x) => ({ key: x.key, value: aiNum(x.value, FIELD[x.key].kind === 'info' ? 10000 : MAX_AMOUNT), qty: aiNum(x.qty, MAX_QTY), rate: aiNum(x.rate, MAX_AMOUNT) }))
+      .filter((x) => x.value != null);
+    const balances = list.filter((x) => FIELD[x.key].kind === 'info').map((x) => x.value);
     for (const x of list) {
+      const f = FIELD[x.key];
       // a count the AI put in a money field (the sick-day balance as sick pay, the seniority years as a seniority
       // payment): left out, as the text reader does (payOrCount)
       if (WEAK_PAY[x.key] && !countFree(x, balances)) continue;
-      fields[x.key] = { value: +x.value, qty: x.qty ? +x.qty : undefined, rate: x.rate ? +x.rate : undefined, line: 'AI' };
+      // a minus is the way a deduction is printed, not a negative deduction; a negative payment is only a correction
+      // (הפרשים); a negative total or count is no reading
+      let value = x.value;
+      if (f.kind === 'ded' || f.kind === 'emp') value = Math.abs(value);
+      else if (value < 0 && x.key !== 'diff') continue;
+      const qty = x.qty && x.qty > 0 ? x.qty : undefined, rate = x.rate && x.rate > 0 ? x.rate : undefined;
+      const F = { value, qty, rate, line: 'AI' };
+      // the same field twice: two lines of one payment add up (two roles' base pay); any other second line waits among
+      // the lines to name (kept, the second base pay was the base pay)
+      if (fields[x.key]) {
+        if (f.kind === 'pay') {
+          const P = fields[x.key];
+          const q = P.qty != null && qty != null ? P.qty + qty : undefined;
+          fields[x.key] = { value: P.value + value, qty: q, rate: q ? (P.value + value) / q : undefined, line: 'AI' };
+        } else other.push({ line: f.label, value, guess: null });
+        continue;
+      }
+      fields[x.key] = F;
     }
-    const other = (json.otherLines || []).map((o) => ({ line: o.label, value: o.amount, guess: o.type === 'deduction' ? 'otherDed' : o.type === 'payment' ? 'otherPay' : 'ignore' }));
-    return { fields, other, period: /^\d{4}-\d{2}$/.test(json.period || '') ? json.period : null, notes: json.notes || '' };
+    // the hours times the rate is the amount, or the hours and the rate are not the AI's to give
+    for (const k of Object.keys(fields)) {
+      const F = fields[k];
+      if (F.qty != null && F.rate != null && Math.abs(F.qty * F.rate - F.value) > Math.max(1, F.value * 0.01)) { F.qty = undefined; F.rate = undefined; }
+    }
+    // gross, deductions and net that cannot be one payslip (the net above the gross, a total of deductions above the
+    // gross): swapped or misread, none of the three is shown as read, they are asked for
+    const g = fields.gross && fields.gross.value, n = fields.net && fields.net.value, d = fields.totalDeductions && fields.totalDeductions.value;
+    if ((g != null && n != null && n > g + 0.01) || (g != null && d != null && d > g + 0.01)) {
+      for (const k of ['gross', 'net', 'totalDeductions']) if (fields[k]) fields[k] = { value: null, line: 'AI' };
+    }
+    for (const o of Array.isArray(json.otherLines) ? json.otherLines : []) {
+      if (!o || typeof o !== 'object') continue;
+      const value = aiNum(o.amount, MAX_AMOUNT);
+      if (value == null) continue;
+      other.push({ line: String(o.label == null ? '' : o.label).slice(0, 120), value, guess: o.type === 'deduction' ? 'otherDed' : o.type === 'payment' ? 'otherPay' : 'ignore' });
+    }
+    const period = typeof json.period === 'string' && /^(\d{4})-(0[1-9]|1[0-2])$/.test(json.period) ? json.period : null;
+    return { fields, other, period, notes: typeof json.notes === 'string' ? json.notes.slice(0, 500) : '' };
   }
 
   /* ---------------- analysis ---------------- */
@@ -679,14 +1586,45 @@
   }
 
   /**
+   * A payslip may print every hour at 100% in the base line and only the supplement (25%, 50%, 75%, 100%) on the
+   * overtime and Shabbat lines: a lawful way to print the same pay. Checked as if each premium line carried the whole
+   * rate, a right payslip was "a Shabbat rate of 20 ₪ an hour, 160 ₪ missing", and its hours were counted twice, which
+   * hid a shift that was not paid (round 2, the verdict-layer check; israeli-attendance-wage-checker Step 1b: establish
+   * the convention first). It is that convention when every premium line's rate is the base rate times its supplement
+   * and the base line holds all the hours (the app's, or the payslip's own total). The checks then see the same pay in
+   * the full-rate form: the base line with the ordinary hours, each premium line with its whole rate.
+   */
+  const SUPPLEMENT = { ot125: 0.25, ot150: 0.5, rest150: 0.5, rest175: 0.75, rest200: 1 };
+  function fullRateView(F, appHours) {
+    const bq = qty(F, 'base'), bv = val(F, 'base');
+    if (!(bq > 0) || !(bv > 0)) return F;
+    const br = F.base.rate || bv / bq;
+    const prem = Object.keys(SUPPLEMENT).filter((k) => qty(F, k) > 0 && val(F, k) > 0);
+    if (!prem.length) return F;
+    const fits = prem.every((k) => Math.abs(val(F, k) / qty(F, k) - br * SUPPLEMENT[k]) <= Math.max(0.02, br * SUPPLEMENT[k] * 0.02));
+    const ph = prem.reduce((t, k) => t + qty(F, k), 0);
+    const wh = val(F, 'workHours');
+    const allHours = (appHours > 0 && Math.abs(bq - appHours) <= Math.max(0.25, ph * 0.5) && Math.abs(bq - appHours) < Math.abs(bq + ph - appHours)) || (wh != null && Math.abs(bq - wh) <= 0.25);
+    // (rates that fit the supplements are that convention unless, read in the full-rate form, the hours are the app's:
+    // a shift missing as well left the base line short of all the hours, and the Shabbat line was read as paid at 50%)
+    const fullFits = appHours > 0 && Math.abs(bq + ph - appHours) <= 0.25;
+    if (!fits || (!allHours && fullFits) || ph >= bq) return F;
+    const G = Object.assign({}, F);
+    G.base = Object.assign({}, F.base, { qty: bq - ph, value: (bq - ph) * br, rate: br, convention: 'supplement' });
+    for (const k of prem) G[k] = Object.assign({}, F[k], { value: val(F, k) / SUPPLEMENT[k] * (1 + SUPPLEMENT[k]), rate: br * (1 + SUPPLEMENT[k]) });
+    return G;
+  }
+
+  /**
    * Compare a verified payslip to the recorded shifts.
    * slip = { period:'YYYY-MM', fields:{...}, other:[{line,value,guess}] }
    */
   function analyze(slip, model) {
     const S = model.ctx.settings;
-    const F = slip.fields || {};
     const empId = slipEmployer(model, slip).id;
     const E = expected(model, slip.period, false, empId);
+    // (the payslip's lines in the full-rate form; checkGap, settingsCheck and reconcile read the same view, a.fields)
+    const F = fullRateView(slip.fields || {}, E.t.hours);
     const A = expected(model, slip.period, true, empId);
     const overridesInPeriod = E.shifts.filter((r) => r.overridden || r.dayRuleHit);
     const hasOv = overridesInPeriod.length > 0;
@@ -761,6 +1699,18 @@
           detail: `בתלוש ${U.money(slipRate)} לשעה, ${mixed ? `נמוך מהתעריף הנמוך ביותר שלך בתקופה (${U.money(minRate)})` : `התעריף שהגדרת ${U.money(minRate)}`}. על ${U.hours(bq)} שעות רגילות ≈ ${U.money(amount)}.`,
           basis: 'שכר יסוד ÷ שעות רגילות בתלוש, מול התעריף לפי תאריך המשמרת (כולל היסטוריית תעריפים).',
           confidence: mixed ? 'medium' : 'high', fromOverride: ovNote(E.baseRate, A.baseRate, slipRate, 0.01) });
+      } else if (mixed && Math.abs(bq - E.hrs.base) <= 0.25 && new Set([].concat(...E.shifts.map((r) => r.lines.map((l) => l.roleId)))).size === 1 && bv < E.pay.base - Math.max(2, E.pay.base * 0.003)) {
+        // one role whose rate changed in the period (a raise from a date): the same hours paid less money is the raise
+        // not paid on the hours after it. Read as "an average a little low, maybe another role", it said nothing missing
+        // (round 2, the verdict-layer check)
+        const amount = E.pay.base - bv;
+        // TRANSLATE (the lead): the title and the detail below are new texts, Hebrew in every language until translated
+        // i18n-keep-start
+        add({ area: 'תעריף', status: 'bad', title: 'התעריף החדש לא שולם על כל השעות', amount,
+          detail: `התעריף שלך השתנה בתקופה (\u2066${U.money(minRate)}\u2060–\u2060${U.money(maxRate)}\u2069). על ${U.hours(bq)} שעות רגילות מגיע ${U.money(E.pay.base)} לפי תאריך כל משמרת, ובתלוש ${U.money(bv)}: חסרים ≈ ${U.money(amount)}.`,
+          basis: 'שכר יסוד בתלוש מול השעות הרגילות כפול התעריף לפי תאריך המשמרת (היסטוריית תעריפים), באותו מספר שעות.',
+          confidence: 'high', fromOverride: ovNote(E.pay.base, A.pay.base, bv, 1) });
+        // i18n-keep-end
       } else if (mixed && slipRate < E.baseRate - 0.02 && Math.abs(bq - E.hrs.base) <= 0.25) {
         add({ area: 'תעריף', status: 'warn', title: 'תעריף ממוצע נמוך מהצפוי', amount: (E.baseRate - slipRate) * bq,
           detail: `בתלוש ${U.money(slipRate)} לשעה בממוצע; לפי המשמרות שרשמת הממוצע המשוקלל ${U.money(E.baseRate)} (תעריפים \u2066${U.money(minRate)}\u2060–\u2060${U.money(maxRate)}\u2069). ייתכן שחלק מהשעות שולמו בתעריף של תפקיד זול יותר, או שחסרות שעות בתפקיד היקר.`,
@@ -941,7 +1891,7 @@
 
     const bad = findings.filter((f) => f.status === 'bad');
     const totalMissing = bad.reduce((s, f) => s + Math.max(0, f.amount || 0), 0);
-    return { findings, expected: E, auto: A, totalMissing, overridesInPeriod: overridesInPeriod.length, period: slip.period, noShifts };
+    return { findings, expected: E, auto: A, totalMissing, overridesInPeriod: overridesInPeriod.length, period: slip.period, noShifts, fields: F };
   }
 
   /* ---------------- before writing to the employer: innocent reasons for a gap ----------------
@@ -989,7 +1939,7 @@
    */
   function checkGap(a, slip, model) {
     const S = model.ctx.settings;
-    const F = slip.fields || {};
+    const F = (a && a.fields) || slip.fields || {};
     const E = a.expected;
     const P = E.P;
     const emp = E.emp || model.ctx.primaryEmployer();
@@ -1046,7 +1996,11 @@
           if (!best || Math.abs(h - slipHours) < Math.abs(best.h - slipHours)) best = { d, h };
         }
         const match = best && Math.abs(best.h - slipHours) <= 0.25;
-        add({ id: 'period', found: match ? 'yes' : 'no', amount: match ? f.amount : null, title: 'תקופת השכר',
+        // (a period from an unusual day, the 10th or the 11th, matches by chance whenever the missing hours are those of
+        // the last shifts before that day: a shift really unpaid was explained away and nothing was left for the letter,
+        // round 2. The common first days close the gap; another one may)
+        const common = match && [1, 15, 16, 20, 21, 25, 26].includes(best.d);
+        add({ id: 'period', found: match ? (common ? 'yes' : 'maybe') : 'no', amount: common ? f.amount : null, title: 'תקופת השכר',
           text: !match ? 'בדקנו תקופות שמתחילות בימים אחרים בחודש, ואף אחת לא תואמת לשעות בתלוש.'
             : best.d === 1 ? 'אם המעסיק סופר את השעות לפי חודש קלנדרי, השעות בתלוש תואמות בדיוק. אפשר לשנות את תחילת התקופה בהגדרות.'
               : `אם המעסיק סופר את החודש מה-${best.d} בחודש, השעות בתלוש תואמות בדיוק. אפשר לשנות את תחילת התקופה בהגדרות.`,
@@ -1158,7 +2112,12 @@
         }
         const baseRates = new Set();
         for (const r of E.shifts) for (const l of r.lines) if (!l.rest && l.tier === 0) baseRates.add(Math.round(l.rate * 100));
-        add({ id: 'rate', found: raise ? 'yes' : 'maybe', amount: raise ? f.amount : null, title: 'התעריף לשעה',
+        // (a raise from the period's first day or its last days may start later at the employer, payroll often moves it
+        // to the next payslip; one from the middle of it, set by
+        // the person, is what the payslip did not pay: it stays in the gap, the reason shown. Closing it erased a raise
+        // never paid, round 2, the verdict-layer check)
+        const late = raise && (raise.from <= U.addDays(P.from, 1) || raise.from > U.addDays(P.to, -7));
+        add({ id: 'rate', found: raise ? (late ? 'yes' : 'maybe') : 'maybe', amount: late ? f.amount : null, title: 'התעריף לשעה',
           text: raise ? `הגדרת העלאה ל-${U.money(raise.rate)} מ-${U.fmtDate(raise.from)}, ובתלוש מופיע התעריף הקודם (${U.money(raise.old)}). אם ההעלאה מתחילה אצל המעסיק מאוחר יותר, כדאי לבדוק את התאריך בתפקיד.`
             : baseRates.size > 1 ? 'בתקופה יש משמרות בכמה תפקידים בתעריפים שונים. אם משמרת נרשמה בתפקיד הלא נכון, התעריף יוצא שונה.'
               : `בתלוש ${U.money(slipRate)} לשעה, ובאפליקציה ${U.money(E.baseRate)}. כדאי לבדוק שהתעריף שהגדרת הוא התעריף שסוכם.`,
@@ -1328,7 +2287,7 @@
    */
   function settingsCheck(slip, model, a) {
     a = a || analyze(slip, model);
-    const S = model.ctx.settings, F = slip.fields || {}, E = a.expected, P = E.P;
+    const S = model.ctx.settings, F = (a && a.fields) || slip.fields || {}, E = a.expected, P = E.P;
     const emp = E.emp || model.ctx.primaryEmployer();
     const out = [];
     const add = (o) => out.push(Object.assign({ recommend: 'slip', apply: null, set: null }, o));
@@ -1494,7 +2453,7 @@
    */
   function reconcile(slip, model, a, c) {
     a = a || analyze(slip, model);
-    const S = model.ctx.settings, F = slip.fields || {}, E = a.expected, t = E.t, P = E.P;
+    const S = model.ctx.settings, F = (a && a.fields) || slip.fields || {}, E = a.expected, t = E.t, P = E.P;
     const emp = E.emp || model.ctx.primaryEmployer();
     const W = slipWork(F);
     const sc = settingsCheck(slip, model, a);
@@ -1898,10 +2857,13 @@
    */
   function addNamedLines(fields, other) {
     for (const o of other || []) {
-      const f = o && FIELD[o.guess];
+      const f = o && typeof o.guess === 'string' && own(FIELD, o.guess) ? FIELD[o.guess] : null;
       if (!f) continue;
       const cur = fields[o.guess];
       if (!cur) { fields[o.guess] = { value: Math.abs(+o.value || 0), line: o.line }; continue; }
+      // (a field the reader asked for, value null, has a line it could not read: a named line added to it is a part of
+      // the sum shown as the whole, round 2. It stays asked for)
+      if (cur.value == null) continue;
       if (!['pay', 'ded', 'emp'].includes(f.kind) || String(cur.line || '').split(' | ').includes(o.line)) continue;
       cur.value = (+cur.value || 0) + Math.abs(+o.value || 0);
       cur.line = (cur.line || '') + ' | ' + o.line;
