@@ -355,6 +355,7 @@
           if (f.key === 'diff' && p.startsWith('הפרש') && !/הפרש(?:י|ים)?(?![א-ת])/.test(n)) continue;
           // the employee's NI deduction, not the NI gross or the employer's NI provision
           // (the bare "ניכויים:" of a summary strip, not the deductions file "תיק ניכויים:")
+          // i18n-keep
           if (f.key === 'totalDeductions' && p === 'ניכויים:' && /תיק/.test(n)) continue;
           if (f.key === 'nationalInsurance' && /ברוטו|הפרש[תו]|מעסיק|מעביד/.test(n)) continue;
           // the employer's share named after the fund ("פנסיה - מעסיק", "קרן השתלמות (מעביד)"): it was filed as a
@@ -1585,14 +1586,45 @@
   }
 
   /**
+   * A payslip may print every hour at 100% in the base line and only the supplement (25%, 50%, 75%, 100%) on the
+   * overtime and Shabbat lines: a lawful way to print the same pay. Checked as if each premium line carried the whole
+   * rate, a right payslip was "a Shabbat rate of 20 ₪ an hour, 160 ₪ missing", and its hours were counted twice, which
+   * hid a shift that was not paid (round 2, the verdict-layer check; israeli-attendance-wage-checker Step 1b: establish
+   * the convention first). It is that convention when every premium line's rate is the base rate times its supplement
+   * and the base line holds all the hours (the app's, or the payslip's own total). The checks then see the same pay in
+   * the full-rate form: the base line with the ordinary hours, each premium line with its whole rate.
+   */
+  const SUPPLEMENT = { ot125: 0.25, ot150: 0.5, rest150: 0.5, rest175: 0.75, rest200: 1 };
+  function fullRateView(F, appHours) {
+    const bq = qty(F, 'base'), bv = val(F, 'base');
+    if (!(bq > 0) || !(bv > 0)) return F;
+    const br = F.base.rate || bv / bq;
+    const prem = Object.keys(SUPPLEMENT).filter((k) => qty(F, k) > 0 && val(F, k) > 0);
+    if (!prem.length) return F;
+    const fits = prem.every((k) => Math.abs(val(F, k) / qty(F, k) - br * SUPPLEMENT[k]) <= Math.max(0.02, br * SUPPLEMENT[k] * 0.02));
+    const ph = prem.reduce((t, k) => t + qty(F, k), 0);
+    const wh = val(F, 'workHours');
+    const allHours = (appHours > 0 && Math.abs(bq - appHours) <= Math.max(0.25, ph * 0.5) && Math.abs(bq - appHours) < Math.abs(bq + ph - appHours)) || (wh != null && Math.abs(bq - wh) <= 0.25);
+    // (rates that fit the supplements are that convention unless, read in the full-rate form, the hours are the app's:
+    // a shift missing as well left the base line short of all the hours, and the Shabbat line was read as paid at 50%)
+    const fullFits = appHours > 0 && Math.abs(bq + ph - appHours) <= 0.25;
+    if (!fits || (!allHours && fullFits) || ph >= bq) return F;
+    const G = Object.assign({}, F);
+    G.base = Object.assign({}, F.base, { qty: bq - ph, value: (bq - ph) * br, rate: br, convention: 'supplement' });
+    for (const k of prem) G[k] = Object.assign({}, F[k], { value: val(F, k) / SUPPLEMENT[k] * (1 + SUPPLEMENT[k]), rate: br * (1 + SUPPLEMENT[k]) });
+    return G;
+  }
+
+  /**
    * Compare a verified payslip to the recorded shifts.
    * slip = { period:'YYYY-MM', fields:{...}, other:[{line,value,guess}] }
    */
   function analyze(slip, model) {
     const S = model.ctx.settings;
-    const F = slip.fields || {};
     const empId = slipEmployer(model, slip).id;
     const E = expected(model, slip.period, false, empId);
+    // (the payslip's lines in the full-rate form; checkGap, settingsCheck and reconcile read the same view, a.fields)
+    const F = fullRateView(slip.fields || {}, E.t.hours);
     const A = expected(model, slip.period, true, empId);
     const overridesInPeriod = E.shifts.filter((r) => r.overridden || r.dayRuleHit);
     const hasOv = overridesInPeriod.length > 0;
@@ -1667,6 +1699,18 @@
           detail: `בתלוש ${U.money(slipRate)} לשעה, ${mixed ? `נמוך מהתעריף הנמוך ביותר שלך בתקופה (${U.money(minRate)})` : `התעריף שהגדרת ${U.money(minRate)}`}. על ${U.hours(bq)} שעות רגילות ≈ ${U.money(amount)}.`,
           basis: 'שכר יסוד ÷ שעות רגילות בתלוש, מול התעריף לפי תאריך המשמרת (כולל היסטוריית תעריפים).',
           confidence: mixed ? 'medium' : 'high', fromOverride: ovNote(E.baseRate, A.baseRate, slipRate, 0.01) });
+      } else if (mixed && Math.abs(bq - E.hrs.base) <= 0.25 && new Set([].concat(...E.shifts.map((r) => r.lines.map((l) => l.roleId)))).size === 1 && bv < E.pay.base - Math.max(2, E.pay.base * 0.003)) {
+        // one role whose rate changed in the period (a raise from a date): the same hours paid less money is the raise
+        // not paid on the hours after it. Read as "an average a little low, maybe another role", it said nothing missing
+        // (round 2, the verdict-layer check)
+        const amount = E.pay.base - bv;
+        // TRANSLATE (the lead): the title and the detail below are new texts, Hebrew in every language until translated
+        // i18n-keep-start
+        add({ area: 'תעריף', status: 'bad', title: 'התעריף החדש לא שולם על כל השעות', amount,
+          detail: `התעריף שלך השתנה בתקופה (\u2066${U.money(minRate)}\u2060–\u2060${U.money(maxRate)}\u2069). על ${U.hours(bq)} שעות רגילות מגיע ${U.money(E.pay.base)} לפי תאריך כל משמרת, ובתלוש ${U.money(bv)}: חסרים ≈ ${U.money(amount)}.`,
+          basis: 'שכר יסוד בתלוש מול השעות הרגילות כפול התעריף לפי תאריך המשמרת (היסטוריית תעריפים), באותו מספר שעות.',
+          confidence: 'high', fromOverride: ovNote(E.pay.base, A.pay.base, bv, 1) });
+        // i18n-keep-end
       } else if (mixed && slipRate < E.baseRate - 0.02 && Math.abs(bq - E.hrs.base) <= 0.25) {
         add({ area: 'תעריף', status: 'warn', title: 'תעריף ממוצע נמוך מהצפוי', amount: (E.baseRate - slipRate) * bq,
           detail: `בתלוש ${U.money(slipRate)} לשעה בממוצע; לפי המשמרות שרשמת הממוצע המשוקלל ${U.money(E.baseRate)} (תעריפים \u2066${U.money(minRate)}\u2060–\u2060${U.money(maxRate)}\u2069). ייתכן שחלק מהשעות שולמו בתעריף של תפקיד זול יותר, או שחסרות שעות בתפקיד היקר.`,
@@ -1847,7 +1891,7 @@
 
     const bad = findings.filter((f) => f.status === 'bad');
     const totalMissing = bad.reduce((s, f) => s + Math.max(0, f.amount || 0), 0);
-    return { findings, expected: E, auto: A, totalMissing, overridesInPeriod: overridesInPeriod.length, period: slip.period, noShifts };
+    return { findings, expected: E, auto: A, totalMissing, overridesInPeriod: overridesInPeriod.length, period: slip.period, noShifts, fields: F };
   }
 
   /* ---------------- before writing to the employer: innocent reasons for a gap ----------------
@@ -1895,7 +1939,7 @@
    */
   function checkGap(a, slip, model) {
     const S = model.ctx.settings;
-    const F = slip.fields || {};
+    const F = (a && a.fields) || slip.fields || {};
     const E = a.expected;
     const P = E.P;
     const emp = E.emp || model.ctx.primaryEmployer();
@@ -1952,7 +1996,11 @@
           if (!best || Math.abs(h - slipHours) < Math.abs(best.h - slipHours)) best = { d, h };
         }
         const match = best && Math.abs(best.h - slipHours) <= 0.25;
-        add({ id: 'period', found: match ? 'yes' : 'no', amount: match ? f.amount : null, title: 'תקופת השכר',
+        // (a period from an unusual day, the 10th or the 11th, matches by chance whenever the missing hours are those of
+        // the last shifts before that day: a shift really unpaid was explained away and nothing was left for the letter,
+        // round 2. The common first days close the gap; another one may)
+        const common = match && [1, 15, 16, 20, 21, 25, 26].includes(best.d);
+        add({ id: 'period', found: match ? (common ? 'yes' : 'maybe') : 'no', amount: common ? f.amount : null, title: 'תקופת השכר',
           text: !match ? 'בדקנו תקופות שמתחילות בימים אחרים בחודש, ואף אחת לא תואמת לשעות בתלוש.'
             : best.d === 1 ? 'אם המעסיק סופר את השעות לפי חודש קלנדרי, השעות בתלוש תואמות בדיוק. אפשר לשנות את תחילת התקופה בהגדרות.'
               : `אם המעסיק סופר את החודש מה-${best.d} בחודש, השעות בתלוש תואמות בדיוק. אפשר לשנות את תחילת התקופה בהגדרות.`,
@@ -2064,7 +2112,12 @@
         }
         const baseRates = new Set();
         for (const r of E.shifts) for (const l of r.lines) if (!l.rest && l.tier === 0) baseRates.add(Math.round(l.rate * 100));
-        add({ id: 'rate', found: raise ? 'yes' : 'maybe', amount: raise ? f.amount : null, title: 'התעריף לשעה',
+        // (a raise from the period's first day or its last days may start later at the employer, payroll often moves it
+        // to the next payslip; one from the middle of it, set by
+        // the person, is what the payslip did not pay: it stays in the gap, the reason shown. Closing it erased a raise
+        // never paid, round 2, the verdict-layer check)
+        const late = raise && (raise.from <= U.addDays(P.from, 1) || raise.from > U.addDays(P.to, -7));
+        add({ id: 'rate', found: raise ? (late ? 'yes' : 'maybe') : 'maybe', amount: late ? f.amount : null, title: 'התעריף לשעה',
           text: raise ? `הגדרת העלאה ל-${U.money(raise.rate)} מ-${U.fmtDate(raise.from)}, ובתלוש מופיע התעריף הקודם (${U.money(raise.old)}). אם ההעלאה מתחילה אצל המעסיק מאוחר יותר, כדאי לבדוק את התאריך בתפקיד.`
             : baseRates.size > 1 ? 'בתקופה יש משמרות בכמה תפקידים בתעריפים שונים. אם משמרת נרשמה בתפקיד הלא נכון, התעריף יוצא שונה.'
               : `בתלוש ${U.money(slipRate)} לשעה, ובאפליקציה ${U.money(E.baseRate)}. כדאי לבדוק שהתעריף שהגדרת הוא התעריף שסוכם.`,
@@ -2234,7 +2287,7 @@
    */
   function settingsCheck(slip, model, a) {
     a = a || analyze(slip, model);
-    const S = model.ctx.settings, F = slip.fields || {}, E = a.expected, P = E.P;
+    const S = model.ctx.settings, F = (a && a.fields) || slip.fields || {}, E = a.expected, P = E.P;
     const emp = E.emp || model.ctx.primaryEmployer();
     const out = [];
     const add = (o) => out.push(Object.assign({ recommend: 'slip', apply: null, set: null }, o));
@@ -2400,7 +2453,7 @@
    */
   function reconcile(slip, model, a, c) {
     a = a || analyze(slip, model);
-    const S = model.ctx.settings, F = slip.fields || {}, E = a.expected, t = E.t, P = E.P;
+    const S = model.ctx.settings, F = (a && a.fields) || slip.fields || {}, E = a.expected, t = E.t, P = E.P;
     const emp = E.emp || model.ctx.primaryEmployer();
     const W = slipWork(F);
     const sc = settingsCheck(slip, model, a);
@@ -2804,10 +2857,13 @@
    */
   function addNamedLines(fields, other) {
     for (const o of other || []) {
-      const f = o && FIELD[o.guess];
+      const f = o && typeof o.guess === 'string' && own(FIELD, o.guess) ? FIELD[o.guess] : null;
       if (!f) continue;
       const cur = fields[o.guess];
       if (!cur) { fields[o.guess] = { value: Math.abs(+o.value || 0), line: o.line }; continue; }
+      // (a field the reader asked for, value null, has a line it could not read: a named line added to it is a part of
+      // the sum shown as the whole, round 2. It stays asked for)
+      if (cur.value == null) continue;
       if (!['pay', 'ded', 'emp'].includes(f.kind) || String(cur.line || '').split(' | ').includes(o.line)) continue;
       cur.value = (+cur.value || 0) + Math.abs(+o.value || 0);
       cur.line = (cur.line || '') + ' | ' + o.line;
