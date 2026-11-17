@@ -119,17 +119,19 @@ T.test('a line whose name was not read waits to be named, with its amount', () =
   const he = row(100, ['שעות', 'naw', '150%', '12.00', '51.48', '617.76']);
   const { F, parsed } = read(he);
   T.ok(!val(F, 'ot150') && !val(F, 'rest150'), 'no overtime or Shabbat amount from an unread name');
-  T.ok(F.ot150 && F.ot150.asked && /617\.76/.test(F.ot150.line), 'the row is asked for, with the line it was read from (round 3: moved away, the check read it as missing)');
+  // the row the parser named is asked for with its line (round 3: moved to the unnamed lines, the check read it as
+  // missing); the round-2 parser names no row from such a line and keeps it among the unnamed lines itself
+  T.ok(F.ot150 ? F.ot150.asked && /617\.76/.test(F.ot150.line) : parsed.other.some((o) => /617\.76/.test(o.line)), 'asked for, with the line it was read from');
   // a line with no name at all: "150% 10 52.50 525.00"
   const r2 = read(row(100, ['150%', '10', '52.50', '525.00']));
-  T.ok(!val(r2.F, 'ot150') && r2.F.ot150.asked, 'a percentage alone names no line: asked for');
+  T.ok(!val(r2.F, 'ot150') && (!r2.F.ot150 || r2.F.ot150.asked), 'a percentage alone names no line: no amount, asked for');
 });
 
 T.test('direction marks around a word do not hide it from the check', () => {
   const RLM = String.fromCharCode(0x200f), LRM = String.fromCharCode(0x200e);
   const he = row(100, [RLM + 'שעות' + LRM, 'naw', '150%', '12.00', '51.48', '617.76']);
   const { F } = read(he);
-  T.ok(F.ot150 && F.ot150.asked && F.ot150.why === 'name', 'the unread word is still seen');
+  T.ok(val(F, 'ot150') == null && (!F.ot150 || F.ot150.asked), 'the unread word is still seen: no amount shown (asked for, or the parser leaves the line unnamed)');
 });
 
 T.test('a line the parser keeps normalized still finds the words it was read from', () => {
@@ -251,6 +253,19 @@ T.test('an amount the review empties stays on the payslip as asked for: { value:
   T.eq(val(F, 'base'), 1600, 'what the line proves stays');
   T.ok(!F.base.asked);
 });
+T.test('an hour line without its hours, next to hour lines with theirs, is asked for its hours', () => {
+  // Shabbat 240 read, its hours not: the check added the other lines' hours and said "שעות שלא שולמו 240"
+  const he = row(100, ['שכר', 'יסוד', '40.00', '40.00', '1,600.00']).concat(row(140, ['שעות', 'שבת', '150%', '240.00']));
+  const { F } = read(he, [], 'pdf');
+  T.eq(F.base.qty, 40); T.ok(!F.base.asked);
+  // (the round-2 parser asks for such a line's amount itself; either way nothing goes on without the person)
+  T.ok(F.rest150.asked, 'asked for');
+  if (val(F, 'rest150') != null) { T.eq(val(F, 'rest150'), 240, 'the amount stays'); T.ok(F.rest150.qty == null && F.rest150.why === 'qty', 'its hours are asked for'); }
+  // with no hour line that has hours, nothing is asked (the check cannot add up hours, and says so itself)
+  const one = read(row(100, ['שעות', 'שבת', '150%', '240.00']), [], 'pdf');
+  T.ok(!one.F.rest150.asked || val(one.F, 'rest150') == null, 'no hours asked when no line has hours');
+});
+
 T.test('a field the parser itself leaves without an amount is asked for too', () => {
   const p = { fields: { base: { value: null, line: 'שכר יסוד 40.00 4X.00' }, travel: { value: 135.6, line: 'נסיעות 135.60' } }, other: [] };
   R.review(p, [], 'pdf');
@@ -260,7 +275,8 @@ T.test('a field the parser itself leaves without an amount is asked for too', ()
 T.test('"המשך" does not go on while a row asked for is neither typed in nor removed', () => {
   const src = fs.readFileSync(SRC, 'utf8');
   const go = src.slice(src.indexOf("else if (b.hasAttribute('data-go')) {"), src.indexOf('setTimeout(() => analysisSheet('));
-  const gate = go.indexOf("const open = Payslip.FIELDS.map((f) => f.key).find((k) => d.fields[k] && d.fields[k].asked && d.fields[k].value == null);");
+  T.ok(go.includes("const lacks = (k) => { const v = d.fields[k]; return !!v && v.asked && (v.value == null || (v.why === 'qty' && !(v.qty > 0))); };"), 'an asked amount, or asked hours, lacks');
+  const gate = go.indexOf('const open = Payslip.FIELDS.map((f) => f.key).find(lacks);');
   T.ok(gate > 0, 'the gate is there');
   T.ok(/if \(open\) \{[\s\S]*?return;\s*\}/.test(go.slice(gate)), 'it stops');
   T.ok(gate < go.indexOf('Payslip.addNamedLines(d.fields, d.other);'), 'before named lines are added (a named line does not fill an asked row)');

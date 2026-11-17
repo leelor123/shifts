@@ -465,6 +465,14 @@
         // a line the parser itself asks for (it found the line, not its amount) is asked for here too
         if (v.value == null && !v.asked) { v.asked = true; v.why = v.why || 'read'; }
       }
+      // The hours of an hour line, when another hour line has its hours: the check adds them up, and a line without
+      // its hours (unsure, or left out by the parser) made the sum short and said "שעות שלא שולמו" for its whole
+      // amount (round 3: Shabbat 240 read right, its 4 hours unsure, "240 owed"). Asked for: { asked: true, why: 'qty' }
+      // with the amount kept; the person types the hours from the payslip (or removes the line).
+      const hourKeys = Payslip.FIELDS.filter((f) => f.hours && F[f.key]).map((f) => f.key);
+      if (hourKeys.some((k) => F[k].qty != null)) {
+        for (const k of hourKeys) if (F[k].value != null && F[k].qty == null && !F[k].asked) { F[k].asked = true; F[k].why = 'qty'; unsure[k + '.qty'] = unsure[k + '.qty'] || 'missing'; }
+      }
       return unsure;
     };
     return R;
@@ -939,15 +947,18 @@
             // the payslip does not have, and a correct payslip "owed" its travel and pension (round 3, review t13).
             // The first one opens with its input and the line it was read from; a named line does not fill it (one of
             // two base lines named as the base was shown as the whole base).
-            const open = Payslip.FIELDS.map((f) => f.key).find((k) => d.fields[k] && d.fields[k].asked && d.fields[k].value == null);
+            // (an hour line asked for its hours stays open until its hours are typed)
+            const lacks = (k) => { const v = d.fields[k]; return !!v && v.asked && (v.value == null || (v.why === 'qty' && !(v.qty > 0))); };
+            const open = Payslip.FIELDS.map((f) => f.key).find(lacks);
             if (open) {
               if (root.Fx && root.Fx.nope) root.Fx.nope();
               const r = el.querySelector(`[data-row="${open}"]`);
               if (r && !r.classList.contains('open')) openRow(open, true);
-              else if (r) { const i = r.querySelector('[data-v]'); if (i) { i.focus(); r.scrollIntoView({ block: 'nearest', behavior: 'smooth' }); } }
+              const i = r && (d.fields[open].value != null ? r.querySelector('[data-q]') : r.querySelector('[data-v]'));
+              if (i) setTimeout(() => { i.focus(); r.scrollIntoView({ block: 'nearest', behavior: 'smooth' }); }, 80);
               return;
             }
-            for (const k of Object.keys(d.fields)) if (d.fields[k].value != null) { delete d.fields[k].asked; delete d.fields[k].why; }
+            for (const k of Object.keys(d.fields)) if (!lacks(k)) { delete d.fields[k].asked; delete d.fields[k].why; }
             // mapped unknown lines
             Payslip.addNamedLines(d.fields, d.other);
             for (const k of Object.keys(d.fields)) if (d.fields[k].value == null && d.fields[k].qty == null) delete d.fields[k];
