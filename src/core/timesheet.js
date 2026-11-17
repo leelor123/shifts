@@ -673,7 +673,10 @@
         // quarter: its times were misread (a hand-written 8 read 3), or it is not this table. Nothing is sure
         const vs = c.members.map((p) => p.v).sort((p, q) => p - q);
         const near = c.members.filter((p) => { const a = at(pairs[0].a, p.ri), b = at(pairs[0].b, p.ri); return a && b && BREAKS.some((br) => Math.abs(p.v * 60 - (span(a, b) - br)) < 15); }).length;
-        if (m >= 4 && m >= pairs[0].n * 0.5 && vs[vs.length >> 1] >= 2 && near < m * 0.5) lenClash = true;
+        // (a column that agrees with fewer than the 60% it takes to check the rows by it: a rounded one by its
+        // quarters, any other to the minute)
+        const quarters = vs.filter((v) => Math.abs(v * 4 - Math.round(v * 4)) < 0.01).length >= vs.length * 0.9;
+        if (m >= 4 && m >= pairs[0].n * 0.5 && vs[vs.length >> 1] >= 2 && (quarters ? near : n) < m * 0.6) lenClash = true;
       }
       if (decCol) lenClash = false;
       if (lenClash) dbg.push('a column of hours disagrees with most rows: all unsure');
@@ -690,19 +693,32 @@
     // checks the hours, not the minutes
     const lens = rows.map((_, ri) => lenAt(ri)).filter((v) => v != null);
     const roundQ = lens.length >= 3 && lens.filter((v) => v % 15 === 0).length >= lens.length * 0.9;
-    const fits = (sp, L, br) => Math.abs(sp - L - br) <= 2 || (roundQ && Math.abs(sp - L - br) < 15);
+    // (a clock's own total is a minute off at most, from the seconds it does not print)
+    const fits = (sp, L, br) => Math.abs(sp - L - br) <= 1 || (roundQ && Math.abs(sp - L - br) < 15);
+    // hours written as a decimal are as exact as their digits: 5.78 is 5:46.8-5:47.4, so an exit read a minute off
+    // (19:45 for 19:46) no longer agrees. The employer rounds, cuts or lifts the last digit
+    const fitsRow = (ri, sp, L, br) => {
+      const p = !totalCol && decCol && decCol.members.find((q) => q.ri === ri);
+      if (!p || roundQ) return fits(sp, L, br);
+      const d = (digits(clean(p.w.text)).split('.')[1] || '').length, k = Math.pow(10, d), h = ((sp - br) / 60) * k, v = Math.round(p.v * k);
+      return [Math.round(h), Math.floor(h + 1e-9), Math.ceil(h - 1e-9)].includes(v);
+    };
     const seenBr = new Map();
     let withLen = 0;
     if (pairs.length) for (let ri = 0; ri < rows.length; ri++) {
       const a = at(pairs[0].a, ri), b = at(pairs[0].b, ri), L = lenAt(ri);
       if (!a || !b || L == null || pairs.slice(1).some((p) => at(p.a, ri) || at(p.b, ri))) continue;
       withLen++;
-      const br = BREAKS.find((x) => fits(span(a, b), L, x));
+      const br = BREAKS.find((x) => fitsRow(ri, span(a, b), L, x));
       if (br != null) seenBr.set(br, (seenBr.get(br) || 0) + 1);
     }
     const okBreaks = BREAKS.filter((br) => !br || (seenBr.get(br) || 0) >= Math.max(2, withLen * 0.15));
     const differsBy = (x, y) => [...x].filter((ch, i) => ch !== y[i]).length;
 
+    // a date column cut at the picture's edge: its dates end in a bare "15/". A date there with one digit of month
+    // ("22/1" of 22/11) or its digits run together ("171") may be cut too
+    const cutDates = rows.reduce((n, r) => n + r.words.filter((w) => inDateCol(w) && /^\d{1,2}[./-]$/.test(clean(w.text))).length, 0) >= 2;
+    if (cutDates) dbg.push('the date column is cut at the edge');
     /* ---- each row: its date, its times ---- */
     const found = [];
     let pendingLen = null;
@@ -751,7 +767,7 @@
           // the times and the length disagree: one of them was misread, and which one cannot be known (an exit
           // read 02:23 for 22:23, or a total read 8:11 for 8:17). The likelier reading (one digit of the exit,
           // or else of the entry, that makes them agree) is offered, never saved as sure
-          if (a && b && sure && !okBreaks.some((br) => fits(span(a, b), len, br))) {
+          if (a && b && sure && !okBreaks.some((br) => (rest ? fits(span(a, b), len, br) : fitsRow(ri, span(a, b), len, br)))) {
             const fixB = fromMin(minOf(a) + len), fixA = fromMin(minOf(b) - len);
             const fix = differsBy(b, fixB) === 1 ? [[a, fixB]] : differsBy(a, fixA) === 1 ? [[fixA, b]] : [];
             if (fix.length) { dbg.push(`total disagrees: ${a}-${b}, likely ${fix[0].join('-')}`); [a, b] = fix[0]; }
@@ -792,7 +808,8 @@
       if (shifts.length) pendingLen = null;
       const isTotalRow = SKIP_ROW.test(text) && !date;
       if (isTotalRow) return;
-      const row = { ri, y: r.y, date, dow, mash: mash ? mash.s : null, shifts, text, dateCell: r.words.some((w) => inDateCol(w)), len: sure ? len : null };
+      const cut = cutDates && ((date && !date.y && dateWord && /[./-]\d$/.test(clean(dateWord.text))) || (!date && mash));
+      const row = { ri, y: r.y, date, dow, mash: mash ? mash.s : null, shifts, text, dateCell: r.words.some((w) => inDateCol(w)), len: sure ? len : null, doubt: cut ? 'date' : null };
       if (date || mash || shifts.length || dow != null) found.push(row);
     });
     // an app's card: the date on a line of its own, the hours on the line above or under it. Each row of hours
@@ -805,6 +822,13 @@
     }
     lend.sort((p, q) => p[2] - q[2]);
     for (const [r, d] of lend) if (!r.lendFrom && !d.lent) { r.lendFrom = d; d.lent = true; }
+    // (every card puts its date at the same place, say a line under its hours: a date at another distance or on
+    // the other side is the next card's, taken because this card's own date was not read)
+    const offs = found.filter((r) => r.lendFrom).map((r) => r.lendFrom.y - r.y).sort((p, q) => p - q);
+    if (offs.length >= 3) {
+      const mo = offs[offs.length >> 1];
+      for (const r of found) if (r.lendFrom && Math.abs(r.lendFrom.y - r.y - mo) > mh * 1.2) { r.lendFrom.lent = false; delete r.lendFrom; }
+    }
     // ...only when the report is made of such cards. In a table, where the date and the hours of a day share
     // one row, a date-only row is a day off, and a row with hours and no readable date next to it is another
     // day: it must not take the day off's date
@@ -937,6 +961,18 @@
     }
 
     if (opts.debug) for (const r of list) dbg.push(`row ${r.ri}: ${r.key || '-'}${r.dow != null ? ' dow' + r.dow : ''} ${r.shifts.map((s) => s.join('-')).join(' ')}`);
+    // the same date as the row before it, in a report of every day whose next day is then missing (18, 18, 20):
+    // the second is the 19th misread, offered as the 19th for checking. A split day (18, 18, 19) stays as it is
+    if (daily) {
+      const ds = list.filter((r) => r.key);
+      for (let i = 1; i + 1 < ds.length; i++) {
+        const r = ds[i];
+        if (r.key === ds[i - 1].key && r.shifts.length && ds[i - 1].shifts.length && addDays(r.key, fwd ? 2 : -2) === ds[i + 1].key) {
+          dbg.push(`a day twice and the next missing: ${r.key} → ${addDays(r.key, fwd ? 1 : -1)}?`);
+          r.key = addDays(r.key, fwd ? 1 : -1); r.doubt = 'date';
+        }
+      }
+    }
     /* ---- the shifts ---- */
     // a shift with something the report did not say outright (an exit worked out from the total, times that
     // disagree with the total, a date worked out from its neighbours) carries doubt (why): the import screen
@@ -947,6 +983,12 @@
     // ...and when many of the dates read are of another month, the page was read badly (a hand-written table):
     // its times too, even where a date came out right
     const datedRows = list.filter((r) => r.date);
+    // two years for one month (13/11/2024 and 17/11/2026 on one page, not a December and a January): a year was
+    // misread and which one cannot be known. Every date of such a month is unsure
+    const yearsOf = new Map();
+    for (const r of datedRows) if (r.date.y) { const k = r.date.m; if (!yearsOf.has(k)) yearsOf.set(k, new Map()); yearsOf.get(k).set(r.date.y, (yearsOf.get(k).get(r.date.y) || 0) + 1); }
+    const yearClash = new Set([...yearsOf.entries()].filter(([, ys]) => [...ys.values()].filter((n) => n >= 2).length >= 2).map(([m]) => m));
+    if (yearClash.size) dbg.push('two years for one month: ' + [...yearClash].join(','));
     const monthOff = docMonth && datedRows.length && (!datedRows.some((r) => nearTitle(r.date.m)) || datedRows.filter((r) => !nearTitle(r.date.m)).length >= datedRows.length * 0.4);
     if (monthOff) dbg.push(`no date read is in the page's month (${docMonth}): all unsure`);
     for (const r of list) {
@@ -957,7 +999,7 @@
         if (d < 10) { dbg.push(`not a shift: ${r.key} ${start}-${end}`); continue; }
         const row = { date: r.key, start, end, hours: Math.round(d / 60 * 100) / 100, overnight: minOf(end) <= minOf(start), line: r.text.slice(0, 120), n: r.ri };
         // (more than 16 hours: more likely a misread than a shift; offered, never saved as read)
-        const doubt = why || (d > 16 * 60 && 'long') || r.doubt || ((weakPair || lenClash) && 'table') || (monthOff && 'date') || (!nearTitle(+r.key.slice(5, 7)) && 'date');
+        const doubt = why || (d > 16 * 60 && 'long') || r.doubt || ((weakPair || lenClash) && 'table') || (monthOff && 'date') || (!nearTitle(+r.key.slice(5, 7)) && 'date') || (yearClash.has(+r.key.slice(5, 7)) && 'date');
         if (doubt) row.doubt = doubt;
         // the hours the report pays, when they are not the span (a break taken off): kept for the hours check
         if (r.len != null && r.shifts.length === 1 && Math.abs(r.len - d) > 10) row.paid = Math.round((r.len / 60) * 100) / 100;
