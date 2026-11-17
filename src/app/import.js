@@ -90,34 +90,8 @@
 
   App.readHoursFile = readFile; // the hours report check reads the same files (app/hours-check.js)
 
-  /**
-   * A night the clock system writes as two rows, cut at midnight ("13/10 22:00–00:00" and "14/10 00:00–06:00", or
-   * the first ending 23:59), is one shift: saved as two, each half had its own day's overtime count and the
-   * seven-hour night day never applied. Rows sorted by day and start; a row is joined only to the row that starts
-   * at 00:00 the next day.
-   */
-  function joinNights(rows) {
-    const out = [];
-    const used = new Set();
-    rows.forEach((r, i) => {
-      if (used.has(i)) return;
-      let cur = r;
-      while (cur.start && (cur.end === '00:00' || cur.end === '23:59')) {
-        const last = cur.parts ? cur.parts[cur.parts.length - 1] : cur;
-        const next = U.addDays(last.date, 1);
-        const j = rows.findIndex((x, k) => !used.has(k) && k !== i && x.date === next && x.start === '00:00' && x.end && x.end !== '00:00');
-        if (j < 0) break;
-        used.add(j);
-        const b = rows[j];
-        const hours = Math.round((cur.hours + (cur.end === '23:59' ? 1 / 60 : 0) + b.hours) * 100) / 100;
-        if (hours > 16) break; // longer than any shift the reader accepts: not one shift
-        cur = Object.assign({}, cur, { end: b.end, hours, overnight: true, parts: (cur.parts || [cur]).concat([b]) });
-      }
-      out.push(cur);
-    });
-    return out;
-  }
-  App.importJoinNights = joinNights; // tests
+  // a night the report cuts at midnight is one row (core/hourscheck.js joinNights)
+  const joinNights = (rows) => root.HoursCheck.joinNights(rows);
 
   /* ---------------- the screen ---------------- */
   // from the add menu the menu goes; from a settings page it stays under (back returns there)
@@ -185,16 +159,18 @@
         <button class="btn tonal block" data-imp-again>${icon('upload', 's')} לנסות קובץ אחר</button>
         <button class="btn text block" data-act="support">לשלוח לנו את הדוח ונעזור</button>`;
     }
+    const TO_CHECK = 'לבדיקה'; // the tag's text alone, so it is the one already translated
     function review() {
       const roles = App.roles();
       const list = rows.map((r, i) => {
         const t = place(r);
-        if (r.on == null) r.on = !(t && t.taken);
+        // a row the reader was not sure of starts left out and is marked: it is added only when the person turns it on
+        if (r.on == null) r.on = !(t && t.taken) && !r.doubt;
         const day = U.DAYS ? U.DAYS[U.dow(r.date)] : '';
         const when = r.start ? `\u2066${r.start}\u2060–\u2060${r.end}\u2069` : `${U.num(r.hours, 2)} שעות · ${startFor ? 'מ-' + startFor : 'שעה לא ידועה'}`;
         return `<button class="imp-row ${r.on ? 'on' : ''}" data-i="${i}" aria-pressed="${r.on}"><span class="imp-check" aria-hidden="true">${icon('check', 's')}</span>
           <span class="imp-d"><b>${esc(day)} ${dateOf(r.date)}</b><small>${when}${r.overnight ? ' · לילה' : ''}</small></span>
-          <span class="imp-h">${U.num(r.hours, 2)} ש׳${t && t.taken ? '<i class="tag">כבר קיימת</i>' : ''}${t && t.end > Date.now() ? '<i class="tag planned">עתידית</i>' : ''}</span></button>`;
+          <span class="imp-h">${U.num(r.hours, 2)} ש׳${t && t.taken ? '<i class="tag">כבר קיימת</i>' : r.doubt ? `<i class="tag">${TO_CHECK}</i>` : ''}${t && t.end > Date.now() ? '<i class="tag planned">עתידית</i>' : ''}</span></button>`;
       }).join('');
       const first = rows[0].date, last = rows[rows.length - 1].date;
       box.innerHTML = `${App.mascotSays ? App.mascotSays('love', `מצאתי ${rows.length === 1 ? 'משמרת אחת' : `${rows.length} משמרות`}! 🎉 בודקים רגע ומוסיפים`, { size: 64 }) : ''}

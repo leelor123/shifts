@@ -26,7 +26,7 @@
     const rows = (p.rows || []).filter((r) => { const k = r.date + r.start + r.end + r.hours; if (seen.has(k)) return false; seen.add(k); return true; })
       .sort((a, b) => (a.date + (a.start || '')).localeCompare(b.date + (b.start || '')));
     // a night the report cuts at midnight is one row here too (app/import.js), so "add to my shifts" adds one shift
-    return App.importJoinNights ? App.importJoinNights(rows) : rows;
+    return root.HoursCheck.joinNights(rows);
   }
   /** The pay period(s) the report covers, up to today. */
   function periodOf(rows, emp) {
@@ -78,9 +78,15 @@
         // nothing left of it by the report: the whole shift is the difference
         if (trial.some((x) => !(x.end > x.start))) it.gone = true;
         else trial.forEach((x) => changed.set(x.id, x));
-      } else if (it.type === 'missingMine' && role) {
-        it.trial = Object.assign({ id: 'hc-' + i, kind: 'shift', employerId: emp.id, roleId: role.id, status: 'done', breakMin: null, breakPaid: emp.defaultBreakPaid !== false, noTravel: false, splits: [], items: [] }, repTimes(it.rep));
+      } else if (it.type === 'missingMine' && role && !it.unread) { // no exit read: no length, nothing to add or price
+        const t = repTimes(it.rep);
+        // over the shift running now: that is this shift, not one to add beside it (it would be paid twice)
+        const a = S.activeShift;
+        if (a && a.employerId === emp.id && a.start < t.end && Date.now() > t.start) return;
+        it.trial = Object.assign({ id: 'hc-' + i, kind: 'shift', employerId: emp.id, roleId: role.id, status: 'done', breakMin: null, breakPaid: emp.defaultBreakPaid !== false, noTravel: false, splits: [], items: [] }, t);
         extra.push(it.trial);
+        // only a row with its own times becomes a shift of mine: an hours-only row has no start (09:00 is only for its worth)
+        it.canAdd = !!(it.rep.start && it.rep.end);
       }
     });
     let trial = null;
@@ -135,7 +141,12 @@
       worth(res.items, emp());
       for (const it of res.items) it.after = it.date > per.last; // after the report's last row: maybe not in it yet
     }
-    const typeName = { missingEmp: 'חסר אצל המעסיק', diff: 'שעות שונות', missingMine: 'חסר אצלך' };
+    const typeName = { missingEmp: 'חסר אצל המעסיק', diff: 'שעות שונות', missingMine: 'חסר אצלך', ok: 'כדאי לבדוק' };
+    // what the person should look at: every difference, and a row whose exit was not read (its hours are not known)
+    const shown = (it) => it.type !== 'ok' || it.unread;
+    // a row the reader was not sure of (core/timesheet.js doubt): its difference may be a misread
+    const doubtful = (it) => !!(it.rep && (it.rep.doubt || (it.rep.parts || []).some((p) => p && p.doubt)));
+    const TO_CHECK = 'לבדיקה'; // the tag's text alone, so it is the one already translated
     function itemHtml(it, i) {
       const day = `${U.DAYS[U.dow(it.date)]} ${U.fmtDate(it.date, 'short')}`;
       const sideOf = root.HoursCheck.side;
@@ -147,19 +158,20 @@
       if (it.type === 'missingEmp') val = `<b class="money">${U.money(w, 0)}</b><small>שכר המשמרת</small>`;
       else if (it.type === 'diff') val = Math.abs(w) < 1 ? '<small>אותו שכר</small>' : w > 0 ? `<b class="money">${U.money(w, 0)}</b><small>פחות בדוח</small>` : `<b class="money">${U.money(-w, 0)}</b><small>יותר בדוח</small>`;
       else if (it.type === 'missingMine') val = w >= 1 ? `<b class="money">${U.money(w, 0)}</b><small>לפי הדוח</small>` : '';
-      return `<div class="hc-item ${it.type}"><div class="hc-top"><span class="hc-tag">${typeName[it.type]}</span><b>${esc(day)}</b></div>
+      return `<div class="hc-item ${it.type}"><div class="hc-top"><span class="hc-tag">${typeName[it.type]}</span><b>${esc(day)}</b>${doubtful(it) ? `<i class="tag">${TO_CHECK}</i>` : ''}</div>
         <div class="hc-body"><div class="hc-lines">${lines.join('')}</div><div class="hc-val">${val}</div></div>
         ${it.after ? `<div class="tiny muted">אחרי השורה האחרונה בדוח. אולי הדוח עוד לא כולל את היום הזה.</div>` : ''}
-        ${it.type === 'missingMine' && it.trial ? `<button class="btn tonal sm" data-hc-add="${i}">${icon('plus', 's')} להוספה למשמרות שלי</button>` : ''}</div>`;
+        ${it.type === 'missingMine' && it.trial && it.canAdd ? `<button class="btn tonal sm" data-hc-add="${i}">${icon('plus', 's')} להוספה למשמרות שלי</button>` : ''}</div>`;
     }
     function result() {
-      const bad = res.items.filter((x) => x.type !== 'ok');
+      const bad = res.items.filter(shown);
       const owed = bad.reduce((s, x) => s + (x.type === 'missingEmp' || (x.type === 'diff' && x.worth > 0) ? x.worth : 0), 0);
       const nEmp = res.missingEmp + res.diff;
       const say = !bad.length ? 'הדוח תואם למשמרות שלך. אפשר לחכות לתלוש בראש שקט 🎉'
         : nEmp ? `מצאתי ${nEmp === 1 ? 'הבדל אחד' : `${nEmp} הבדלים`} שכדאי לבקש לתקן${owed >= 1 ? `, בשווי כ-${U.money(owed, 0)}` : ''}.`
+          : !bad.some((x) => x.type === 'missingMine' && !x.unread) ? 'כדאי לבדוק' // only rows whose exit was not read: never "the same"
           : res.missingMine === 1 ? 'בדוח יש משמרת אחת שלא רשמת. כדאי לבדוק אותה.' : `בדוח יש ${res.missingMine} משמרות שלא רשמת. כדאי לבדוק אותן.`;
-      const okItems = res.items.filter((x) => x.type === 'ok');
+      const okItems = res.items.filter((x) => !shown(x));
       const span = per.label ? esc(per.label) : range(U.fmtDate(per.from, 'short'), U.fmtDate(per.to, 'short'));
       box.innerHTML = `${App.mascotSays ? App.mascotSays(bad.length ? 'think' : 'love', say, { size: 64 }) : ''}
         ${App.multiEmp() ? `<div class="field"><span class="lbl">של איזו עבודה הדוח?</span><div class="chips">${S.employers.map((e) => `<button class="chip ${e.id === empId ? 'on' : ''}" data-hc-emp="${esc(e.id)}" aria-pressed="${e.id === empId}">${esc(e.name || '')}</button>`).join('')}</div></div>` : ''}
@@ -168,7 +180,7 @@
           <div class="kpi"><div class="l">חסר אצל המעסיק</div><div class="v">${res.missingEmp}</div></div>
           <div class="kpi"><div class="l">שעות שונות</div><div class="v">${res.diff}</div></div>
           <div class="kpi"><div class="l">חסר אצלך</div><div class="v">${res.missingMine}</div></div></div>
-        <div class="hc-list">${res.items.map((it, i) => (it.type === 'ok' ? '' : itemHtml(it, i))).join('')}</div>
+        <div class="hc-list">${res.items.map((it, i) => (shown(it) ? itemHtml(it, i) : '')).join('')}</div>
         ${okItems.length ? `<details class="imp-paste hc-ok"><summary>${icon('check', 's')} ${okItems.length === 1 ? 'יום אחד תואם' : `${okItems.length} ימים תואמים`}</summary>
           ${okItems.map((it) => `<div class="kv"><span>${esc(U.DAYS[U.dow(it.date)])} ${U.fmtDate(it.date, 'short')}</span><span class="num">${it.mine.start && it.mine.end ? range(it.mine.start, it.mine.end) : ''}</span></div>`).join('')}</details>` : ''}
         <div class="tiny muted">השווי לפי החישוב של האפליקציה, כולל שעות נוספות, לילה ושבת. הפרש של עד 10 דקות נחשב תואם.</div>
@@ -213,7 +225,7 @@
     let adding = false; // a second tap while the first is being saved added the shift twice
     async function addMine(i) {
       const it = res.items[i];
-      if (adding || !it || !it.trial) return;
+      if (adding || !it || !it.trial || !it.canAdd) return;
       adding = true;
       try {
         // a shift I planned for that time is this shift: it becomes done with the report's hours (a second one
