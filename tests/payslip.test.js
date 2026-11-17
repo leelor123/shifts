@@ -659,7 +659,8 @@ T.test('deductions printed with a minus are the same deductions', () => {
 T.test('a thousands separator read as a dot or a space is never a wrong amount', () => {
   T.near(Payslip.parseText('נטו לתשלום 8.500.00').fields.net.value, 8500);
   const sp = Payslip.parseText('נטו לתשלום 8 500.00').fields.net;
-  T.ok(!sp || Math.abs(sp.value - 8500) < 0.01, 'not 500 or 0: ' + (sp && sp.value));
+  // read as 8,500, or left for the person to fill in (value null: the check screen asks for it); never 500 or 0
+  T.ok(!sp || sp.value == null || Math.abs(sp.value - 8500) < 0.01, 'not 500 or 0: ' + (sp && sp.value));
   const b = Payslip.parseText('שכר יסוד 160.00 50.00 8.000.00').fields.base;
   T.near(b.value, 8000); T.near(b.qty, 160);
   T.near(Payslip.parseText('נטו לתשלום 1,821.54').fields.net.value, 1821.54);

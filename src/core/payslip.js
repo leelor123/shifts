@@ -219,7 +219,7 @@
     return s.split(' ').map((t) => (/\d/.test(t) && /[OoIlס]/.test(t) && LOOK_TOKEN.test(t) ? t.replace(/[OoIlס]/g, (c) => LOOK[c]) : t)).join(' ');
   }
   function normalize(s) {
-    return fixDigits(s.replace(/[​-‏‪-‮⁦-⁩﻿]/g, '').replace(/[״“”]|''/g, '"').replace(/[׳‘’`]/g, "'")
+    return fixDigits(s.replace(/[\u200b-\u200f\u202a-\u202e\u2066-\u2069\ufeff]/g, '').replace(/[״“”]|''/g, '"').replace(/[׳‘’`]/g, "'")
       // "סה"כ" as a photo gives it ("סהייכ", "סה'כ", "סהכ")
       .replace(/(^|\s)סה(?:יי|['"])?כ(?=\s)/g, '$1סה"כ')
       // a name glued to its number by a colon, an amount glued to its currency
@@ -323,12 +323,14 @@
   const BALANCE_OF = { sickPay: 'sickBalance', vacationPay: 'vacationBalance' };
   const close = (a, b) => Math.abs(a - b) <= Math.max(0.011, Math.abs(b) * 0.002);
   /** qty × rate = amount among the values (the shape of a real payment line), or null. Which factor is the quantity:
-   *  one below 7 is (no pay rate is that low, not even a 25% supplement of the lowest wage), and `sure` says so.
+   *  on an hours line (`hours`), one below 7 is (no hourly wage is that low, not even a youth's), and `sure` says so.
+   *  A supplement may be paid by the hour at less than 7 ("ותק 160.00 1.50 240.00": 160 hours at 1.50 ₪), so on
+   *  other lines the size proves nothing.
    *  Otherwise by its place: the amount closes the row, so the quantity is the factor further from it (the first
    *  one in a row that ends with its amount, the last one in a row printed the other way round: "367.50 105.00 3.50"
    *  is 3.5 hours at 105, and it was read as 105 hours, readers campaign, Nov 2026). `byPlace`: the place rule and
    *  the size agree, or (not sure) the place rule alone decided. */
-  function productOf(vals) {
+  function productOf(vals, hours) {
     if (vals.length < 3) return null;
     for (let i = 0; i < vals.length; i++) for (let j = i + 1; j < vals.length; j++) for (let k = 0; k < vals.length; k++) {
       if (k === i || k === j) continue;
@@ -336,7 +338,7 @@
       if (vals[k] !== 0 && Math.abs(prod - vals[k]) / Math.abs(vals[k]) < 0.015) {
         let [q, r] = k < i ? [j, i] : [i, j];
         const aq = Math.abs(vals[q]), ar = Math.abs(vals[r]);
-        const sure = Math.min(aq, ar) < 7 && Math.max(aq, ar) >= 7;
+        const sure = !!hours && Math.min(aq, ar) < 7 && Math.max(aq, ar) >= 7;
         const byPlace = !sure || aq < ar;
         if (sure && aq > ar) [q, r] = [r, q];
         return { value: vals[k], qty: vals[q], rate: vals[r], sure, byPlace };
@@ -387,16 +389,16 @@
 
   /** Choose amount / qty / rate from a line's numbers. */
   /** productOf, also when one number lost its decimal point ("5.00 47.50 23750"): quantity × rate says where it was. */
-  function productFix(nums, vals) {
+  function productFix(nums, vals, hours) {
     vals = vals || nums.filter((x) => !x.pct).map((x) => x.v);
-    const prod = productOf(vals);
+    const prod = productOf(vals, hours);
     if (prod || vals.length < 3) return prod;
     const flat = nums.filter((x) => !x.pct);
     if (flat.length !== vals.length) return null;
     const fixes = [];
     for (let i = 0; i < flat.length; i++) {
       if (flat[i].dec || Math.abs(flat[i].v) < 100) continue;
-      const fixed = productOf(vals.map((v, j) => (j === i ? v / 100 : v)));
+      const fixed = productOf(vals.map((v, j) => (j === i ? v / 100 : v)), hours);
       if (fixed && [fixed.value, fixed.qty, fixed.rate].includes(vals[i] / 100)) fixes.push(fixed);
     }
     // two numbers could each be the one that lost its point ("136 4875 6630"): the reading with a rate a person is paid
@@ -427,7 +429,7 @@
       if (pj && !ps) vals = joined;
       else if (!(ps && !pj) && !(f.key === 'travel' && vals.length === 2)) return null;
     }
-    const prod = productFix(nums, vals);
+    const prod = productFix(nums, vals, f.hours);
     if (prod) return Object.assign(prod, { pct: pcts[0] });
     // a token that mixes digits and letters ("3,S45.00") was not read: without the product's proof, the numbers
     // left on the line are not the whole line
