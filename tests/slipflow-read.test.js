@@ -276,11 +276,13 @@ T.test('"המשך" does not go on while a row asked for is neither typed in nor 
   const src = fs.readFileSync(SRC, 'utf8');
   const go = src.slice(src.indexOf("else if (b.hasAttribute('data-go')) {"), src.indexOf('setTimeout(() => analysisSheet('));
   T.ok(go.includes("const lacks = (k) => { const v = d.fields[k]; return !!v && v.asked && (v.value == null || (v.why === 'qty' && !(v.qty > 0))); };"), 'an asked amount, or asked hours, lacks');
-  const gate = go.indexOf('const open = Payslip.FIELDS.map((f) => f.key).find(lacks);');
+  const gate = go.indexOf('const open = [].concat(...GROUPS.map((g) => Payslip.FIELDS.filter((f) => f.kind === g[0]).map((f) => f.key))).find(lacks);');
   T.ok(gate > 0, 'the gate is there');
-  T.ok(/if \(open\) \{[\s\S]*?return;\s*\}/.test(go.slice(gate)), 'it stops');
+  T.ok(/const passAsked = Payslip\.ASKED_SAFE === true;\s*if \(open && !passAsked\) \{[\s\S]*?return;\s*\}/.test(go.slice(gate)), 'it stops, unless the check reads asked lines as "not read" (ASKED_SAFE)');
   T.ok(gate < go.indexOf('Payslip.addNamedLines(d.fields, d.other);'), 'before named lines are added (a named line does not fill an asked row)');
-  T.ok(gate < go.indexOf('if (d.fields[k].value == null && d.fields[k].qty == null) delete d.fields[k];'), 'before empty rows are dropped');
+  const drop = go.indexOf('if (d.fields[k].value == null && d.fields[k].qty == null && !d.fields[k].asked) delete d.fields[k];');
+  T.ok(gate < drop, 'before empty rows are dropped, and an asked line is never dropped as an empty row');
+  T.ok(!/if \(d\.fields\[k\]\.value == null && d\.fields\[k\]\.qty == null\) delete d\.fields\[k\];/.test(go), 'no drop of every value-null field');
 });
 T.test('t13 through the flow: no money said owed for a line that was read but not sure', () => {
   // what "המשך" hands the check: with the gate, either the person typed the asked rows (here: the payslip's own

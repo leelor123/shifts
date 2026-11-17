@@ -949,8 +949,13 @@
             // two base lines named as the base was shown as the whole base).
             // (an hour line asked for its hours stays open until its hours are typed)
             const lacks = (k) => { const v = d.fields[k]; return !!v && v.asked && (v.value == null || (v.why === 'qty' && !(v.qty > 0))); };
-            const open = Payslip.FIELDS.map((f) => f.key).find(lacks);
-            if (open) {
+            // the first as the screen shows them: payments, deductions, the employer's, totals, information
+            const open = [].concat(...GROUPS.map((g) => Payslip.FIELDS.filter((f) => f.kind === g[0]).map((f) => f.key))).find(lacks);
+            // With a check that reads an asked line as "not read, check it on the payslip" (Payslip.ASKED_SAFE, agreed with
+            // the parser session, round 3) the asked lines go on to it as they are, and a line the person names may fill
+            // one. With a check that does not, they stop here: whichever is merged first, no asked line becomes "owed".
+            const passAsked = Payslip.ASKED_SAFE === true;
+            if (open && !passAsked) {
               if (root.Fx && root.Fx.nope) root.Fx.nope();
               const r = el.querySelector(`[data-row="${open}"]`);
               if (r && !r.classList.contains('open')) openRow(open, true);
@@ -961,7 +966,8 @@
             for (const k of Object.keys(d.fields)) if (!lacks(k)) { delete d.fields[k].asked; delete d.fields[k].why; }
             // mapped unknown lines
             Payslip.addNamedLines(d.fields, d.other);
-            for (const k of Object.keys(d.fields)) if (d.fields[k].value == null && d.fields[k].qty == null) delete d.fields[k];
+            // a row the person added and left empty goes; an asked line stays as asked (it reaches here only with ASKED_SAFE)
+            for (const k of Object.keys(d.fields)) if (d.fields[k].value == null && d.fields[k].qty == null && !d.fields[k].asked) delete d.fields[k];
             if (!Object.keys(d.fields).length) { UI.invalid('הוסיפו לפחות שורה אחת מהתלוש'); return; }
             UI.closeTop();
             setTimeout(() => analysisSheet({ id: d.id || 'ps_' + U.uid(), period: d.period, fields: d.fields, other: d.other, text: d.text, source: d.source, file: d.file, fileId: d.fileId, fileName: d.fileName, isNew: !d.id, edited: !!d.id }), 320);
