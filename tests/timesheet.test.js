@@ -383,3 +383,64 @@ T.test('text lines: an entry with no exit is counted as left out', () => {
   const t = TS.parse('13/10/2026 08:00\n14/10/2026 08:00 16:00\n15/10/2026 09:00 17:00', { today });
   T.eq(t.rows.length, 2); T.eq(t.skipped, 1);
 });
+T.test('a decimal total is as exact as its digits (19:45 beside 5.78 is a minute off); a clock total to the minute', () => {
+  const p = page(['תאריך', 'כניסה', 'יציאה', 'שעות'], [['01/10/2026', '13:59', '19:45', '5.78'], ['02/10/2026', '08:00', '16:30', '8.50'], ['04/10/2026', '09:00', '17:15', '8.25'], ['05/10/2026', '07:30', '15:00', '7.50'], ['06/10/2026', '14:00', '20:30', '6.50']]);
+  T.ok(!/2026-10-01/.test(shifts(p)) && /2026-10-01/.test(unsure(p)), 'saved as read: ' + shifts(p));
+  const q = page(['תאריך', 'כניסה', 'יציאה', 'סה"כ'], [['01/10/2026', '15:58', '23:34', '07:38'], ['02/10/2026', '08:00', '16:30', '08:30'], ['04/10/2026', '09:00', '17:15', '08:15'], ['05/10/2026', '07:30', '15:00', '07:30']]);
+  T.ok(!/2026-10-01/.test(shifts(q)) && /2026-10-01/.test(unsure(q)), 'two minutes off saved: ' + shifts(q));
+});
+T.test('a day read as the day before it, in a report of every day whose next day is then missing: offered as that day', () => {
+  const d = (n) => `${String(n).padStart(2, '0')}/10/2026`;
+  const p = page(['תאריך', 'כניסה', 'יציאה'], [[d(1), '08:00', '16:00'], [d(2), '09:00', '17:00'], [d(3), '08:00', '16:00'], [d(4), '07:00', '15:00'], [d(4), '09:01', '15:51'], [d(6), '08:00', '16:00'], [d(7), '09:00', '17:00'],
+    [d(8), '08:00', '16:00'], [d(9), '09:00', '17:00'], [d(10), '08:00', '16:00'], [d(11), '07:00', '15:00'], [d(12), '08:00', '16:00']]);
+  T.ok(!/2026-10-04 09:01/.test(shifts(p)), 'kept as a second shift of the 4th: ' + shifts(p));
+  T.ok(/2026-10-05 09:01-15:51 date/.test(unsure(p)), 'not offered as the 5th: ' + unsure(p));
+});
+T.test('an app card whose own date was not read does not take the date of the card above', () => {
+  const words = [];
+  const add = (text, x, y) => words.push({ text, x0: x - 40, x1: x + 40, y0: y, y1: y + 30 });
+  [['01/10', '08:56', '16:43'], ['02/10', '09:08', '15:30'], ['1', '08:00', '14:19'], ['04/10', '15:55', '23:39'], ['05/10', '07:00', '13:00']].forEach(([d, a, b], i) => {
+    const y = 100 + i * 140;
+    add('יום', 900, y); add(a, 700, y + 30); add(b, 560, y + 30); add(d, 900, y + 66);
+  });
+  const p = TS.parseWords(words.concat([{ text: '2026', x0: 500, x1: 560, y0: 10, y1: 40 }]), { today });
+  T.ok(!/2026-10-02 08:00/.test(shifts(p) + unsure(p)), 'took the card above\'s date: ' + shifts(p));
+});
+T.test('a date column cut at the edge ("01/", "02/", "03/1"): a one-digit month there is not January', () => {
+  const p = page(['תאריך', 'כניסה', 'יציאה'], [['01/', '08:00', '16:00'], ['02/', '09:00', '17:00'], ['03/1', '08:00', '16:00'], ['04/', '07:00', '15:00'], ['05/1', '08:00', '12:00']]);
+  T.ok(!/2026-01|2025-01/.test(shifts(p)), 'January saved: ' + shifts(p));
+});
+T.test('two years for one month on one page (2024 and 2026): every date of it is unsure', () => {
+  const p = page(['תאריך', 'כניסה', 'יציאה'], [['01/10/2024', '08:00', '16:00'], ['02/10/2024', '09:00', '17:00'], ['03/10/2026', '08:00', '16:00'], ['04/10/2026', '07:00', '15:00'], ['05/10/2024', '08:00', '12:00'], ['06/10/2026', '14:00', '22:00']]);
+  T.eq(shifts(p), '');
+});
+T.test('an hours column that agrees with few rows: the table is unsure', () => {
+  const p = page(['תאריך', 'כניסה', 'יציאה', 'שעות'], [['01/10/2026', '08:00', '16:00', '6.50'], ['02/10/2026', '09:00', '17:00', '5.25'], ['04/10/2026', '08:00', '16:00', '8.00'], ['05/10/2026', '07:00', '15:00', '9.75'], ['06/10/2026', '08:00', '12:00', '7.10'], ['07/10/2026', '14:00', '22:00', '3.40']]);
+  T.eq(shifts(p), '');
+});
+T.test('digits run together never give a year no report has ("04012045")', () => {
+  const p = page(['תאריך', 'כניסה', 'יציאה'], [['01/10/2026', '08:00', '16:00'], ['02/10/2026', '09:00', '17:00'], ['04012045', '08:00', '16:00'], ['05/10/2026', '07:00', '15:00']]);
+  T.ok(!/2045/.test(p.rows.map((r) => r.date).join(' ')), p.rows.map((r) => r.date).join(' '));
+});
+T.test('a column of bare times (1545) beside the dates is no second table', () => {
+  const p = page(['תאריך', 'כניסה', 'יציאה', 'הערה'], [['01/10/2026', '08:00', '16:00', '1545'], ['02/10/2026', '09:00', '17:00', '1615'], ['04/10/2026', '08:00', '16:00', '0930'], ['05/10/2026', '07:00', '15:00', '1200']]);
+  T.eq(shifts(p), '2026-10-01 08:00-16:00 | 2026-10-02 09:00-17:00 | 2026-10-04 08:00-16:00 | 2026-10-05 07:00-15:00');
+});
+T.test('an app card whose date line came out run together ("12101") keeps its own card\'s date, not the one above', () => {
+  const words = [];
+  const add = (text, x, y) => words.push({ text, x0: x - 40, x1: x + 40, y0: y, y1: y + 30 });
+  [['10/10', '08:56', '16:43'], ['11/10', '09:08', '15:30'], ['12101', '08:00', '14:19'], ['13/10', '15:55', '23:39']].forEach(([d, a, b], i) => {
+    const y = 100 + i * 140;
+    add('יום', 900, y); add(a, 700, y + 30); add(b, 560, y + 30); add(d, 900, y + 66);
+  });
+  const p = TS.parseWords(words.concat([{ text: '2026', x0: 500, x1: 560, y0: 10, y1: 40 }]), { today });
+  T.ok(!/2026-10-11 08:00/.test(shifts(p) + unsure(p)), 'took the card above\'s date: ' + shifts(p));
+});
+T.test('a date put right with no read date around it to check against is offered, not sure', () => {
+  const p = page(['תאריך', 'כניסה', 'יציאה'], [['0110', '08:00', '16:00']]);
+  T.eq(shifts(p), '');
+});
+T.test('many dates off the month the page names (a hand-written table read badly): the whole page is unsure', () => {
+  const p = page(['תאריך', 'כניסה', 'יציאה'], [['01/09', '08:00', '16:00'], ['2/1', '09:00', '17:00'], ['3/1', '08:00', '16:00'], ['04/09', '07:00', '15:00'], ['5/1', '08:00', '12:00']], { title: ['ספטמבר', '2026'] });
+  T.eq(shifts(p), '');
+});
