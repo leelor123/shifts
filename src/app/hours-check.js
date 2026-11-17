@@ -160,7 +160,7 @@
     // what the person should look at: every difference, and a row whose exit was not read (its hours are not known)
     const shown = (it) => it.type !== 'ok' || it.unread;
     // a row the reader was not sure of (core/timesheet.js doubt): its difference may be a misread
-    const doubtful = (it) => !!(it.rep && (it.rep.doubt || (it.rep.parts || []).some((p) => p && p.doubt)));
+    const doubtful = (it) => !!it.doubt; // core/hourscheck.js: from a row the reader doubted, or a shift that may be that row
     const TO_CHECK = 'לבדיקה'; // the tag's text alone, so it is the one already translated
     function itemHtml(it, i) {
       const day = `${U.DAYS[U.dow(it.date)]} ${U.fmtDate(it.date, 'short')}`;
@@ -180,11 +180,13 @@
     }
     function result() {
       const bad = res.items.filter(shown);
-      const owed = bad.reduce((s, x) => s + (x.type === 'missingEmp' || (x.type === 'diff' && x.worth > 0) ? x.worth : 0), 0);
-      const nEmp = res.missingEmp + res.diff;
+      // money only for what is sure: a finding from a doubted row is listed and tagged, not summed
+      const owed = bad.reduce((s, x) => s + (!x.doubt && (x.type === 'missingEmp' || (x.type === 'diff' && x.worth > 0)) ? x.worth : 0), 0);
+      // the employer-side findings that are sure (a doubted one is to be checked first: no claim, no letter line)
+      const nEmp = res.items.filter((x) => (x.type === 'missingEmp' || x.type === 'diff') && !x.doubt).length;
       const say = !bad.length ? 'הדוח תואם למשמרות שלך. אפשר לחכות לתלוש בראש שקט 🎉'
         : nEmp ? `מצאתי ${nEmp === 1 ? 'הבדל אחד' : `${nEmp} הבדלים`} שכדאי לבקש לתקן${owed >= 1 ? `, בשווי כ-${U.money(owed, 0)}` : ''}.`
-          : !bad.some((x) => x.type === 'missingMine' && !x.unread) ? 'כדאי לבדוק' // only rows whose exit was not read: never "the same"
+          : !bad.some((x) => x.type === 'missingMine' && !x.unread && !x.doubt) ? 'כדאי לבדוק' // only unread or doubted rows: never "the same", never a claim
           : res.missingMine === 1 ? 'בדוח יש משמרת אחת שלא רשמת. כדאי לבדוק אותה.' : `בדוח יש ${res.missingMine} משמרות שלא רשמת. כדאי לבדוק אותן.`;
       const okItems = res.items.filter((x) => !shown(x));
       const span = per.label ? esc(per.label) : range(U.fmtDate(per.from, 'short'), U.fmtDate(per.to, 'short'));

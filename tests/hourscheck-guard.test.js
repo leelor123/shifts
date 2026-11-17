@@ -189,3 +189,16 @@ T.test('the report pays fewer hours than its own times (a break taken out): a di
   T.eq(types(H.compare([rep(day(5), '08:00', '17:00', 9, { paid: 8.25 })], [mine(day(5), '08:00', '17:00', 8.25)])), '05:ok');
   T.eq(H.joinNights([rep(day(13), '22:00', '00:00', 2), rep(day(14), '00:00', '06:00', 6, { paid: 5.5 })])[0].paid, 7.5);
 });
+T.test('a row the reader doubted: its finding is marked, never in the letter; a shift of mine at its hours on another day is not "missing" for sure', () => {
+  const r = H.compare([rep(day(11), '08:00', '16:00'), rep(day(21), '06:00', '14:00', 8, { doubt: 'date' })], [mine(day(11), '08:00', '16:00'), mine(day(12), '06:00', '14:00')], OCT);
+  T.eq(types(r), '11:ok 12:missingEmp 21:missingMine');
+  T.ok(r.items.every((x) => x.type === 'ok' || x.doubt), 'both marked');
+  T.eq(H.letter(r.items), '');
+  // a doubted row that differs on its own day: marked, not claimed; a sure difference beside it is claimed
+  const d = H.compare([rep(day(11), '08:00', '15:00', 7, { doubt: 'total' }), rep(day(13), '08:00', '15:00')], [mine(day(11), '08:00', '16:00'), mine(day(13), '08:00', '16:00')], OCT);
+  T.ok(d.items[0].doubt && !d.items[1].doubt);
+  T.eq(H.letter(d.items).split('\n').filter((l) => l.startsWith('•')).length, 1);
+  // a real missing shift at other hours stays sure
+  const m = H.compare([rep(day(21), '06:00', '14:00', 8, { doubt: 'date' })], [mine(day(12), '16:00', '23:00')], OCT);
+  T.ok(!m.items.find((x) => x.type === 'missingEmp').doubt);
+});

@@ -206,6 +206,18 @@
     // a row whose exit was not read and no shift of mine that day: still only the report's, but its length is unknown
     for (const x of R) if (!usedR.has(x.i)) out.push(x.unread ? { type: 'missingMine', date: x.r.date, rep: x.r, unread: true } : { type: 'missingMine', date: x.r.date, rep: x.r });
 
+    /* ---- rows the reader was not sure of (core/timesheet.js doubt) ---- */
+    // a finding that comes from such a row is to be checked, not claimed (it.doubt: never in the letter)
+    const unsure = (r) => !!(r && (r.doubt || (r.parts || []).some((p) => p && p.doubt)));
+    for (const it of out) if (it.type !== 'ok' && unsure(it.rep)) it.doubt = true;
+    // a doubted row left alone (its date misread) and a shift of mine "missing" at the same hours on another day:
+    // most likely the same shift, so that shift is not called missing for sure either
+    for (const x of out) {
+      if (x.type !== 'missingMine' || !x.doubt || !x.rep.start || !x.rep.end) continue;
+      const y = out.find((m) => m.type === 'missingEmp' && !m.doubt && Math.abs(mins(m.mine.start) - mins(x.rep.start)) <= TOL && Math.abs(mins(m.mine.end) - mins(x.rep.end)) <= TOL);
+      if (y) y.doubt = true;
+    }
+
     /* ---- small differences add up: how many minutes the report is short over the pairs that "match" ---- */
     const shortOf = (it) => {
       if (it.type !== 'ok' || it.unread) return 0;
@@ -277,6 +289,7 @@
   function letter(items, label) {
     const lines = [];
     for (const it of items || []) {
+      if (it.doubt) continue; // from a row the reader was not sure of: checked first, never claimed
       if (it.type === 'missingEmp') lines.push(`• ${dayOf(it.date)}: עבדתי ${side(it.mine)}, והמשמרת לא מופיעה בדוח.`);
       else if (it.type === 'diff') lines.push(`• ${dayOf(it.date)}: בדוח ${side(it.rep, it.hoursToo)}, ואצלי ${side(it.mineSide || it.mine, it.hoursToo)}.`);
     }

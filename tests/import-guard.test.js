@@ -43,3 +43,8 @@ T.test('round 2: leaving stops the reading; the picker is a control; files by th
   T.ok(imp.includes("got.source === 'ocr' ? { result: res, text } : text"));
   T.ok(/const breakOf = \(r\) =>/.test(imp) && /breakMin: b, breakPaid: b != null \? false/.test(imp));
 });
+T.test('hours check: a doubted finding is tagged, not summed and not counted as a claim', () => {
+  T.ok(hc.includes('const doubtful = (it) => !!it.doubt;'));
+  T.ok(hc.includes("!x.doubt && (x.type === 'missingEmp' || (x.type === 'diff' && x.worth > 0))"));
+  T.ok(hc.includes("(x.type === 'missingEmp' || x.type === 'diff') && !x.doubt).length"));
+});
