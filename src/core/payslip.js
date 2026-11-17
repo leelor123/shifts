@@ -1319,7 +1319,8 @@
     }
     // a guard for running totals printed without a heading: a taxable gross far above the gross is the year's
     if (fields.taxableGross && fields.gross && fields.taxableGross.value > fields.gross.value * 2) delete fields.taxableGross;
-    return { fields, other, period: detectPeriod(logical.join('\n')) || detectPeriod(text), lineCount: rawLines.length };
+    // (secondSlip: the file held more after the first payslip, and it was not read: the screen can say so)
+    return { fields, other, period: detectPeriod(logical.join('\n')) || detectPeriod(text), lineCount: rawLines.length, secondSlip: cut < allLines.length };
   }
 
   /* ---------------- redaction (before optional AI) ---------------- */

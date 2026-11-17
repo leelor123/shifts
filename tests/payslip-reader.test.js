@@ -126,6 +126,8 @@ T.test('two copies of one payslip in a file are read once; a second month is not
   T.near(f.base.value, 3045); T.near(f.travel.value, 82.6);
   const two = F(one.concat(['תלוש שכר לחודש 08/2026', 'שכר יסוד 10.00 60.00 600.00']).join('\n'));
   T.near(two.base.value, 3045);
+  T.ok(Payslip.parseText(one.concat(one).join('\n')).secondSlip, 'the reader says a second one was left');
+  T.ok(!Payslip.parseText(one.join('\n')).secondSlip, 'one payslip: nothing left');
   const bare = ['חברה בע"מ תיק ניכויים 960904402', 'חודש: 07/2026', 'שם העובד: נדב', 'שכר יסוד 50.75 60.00 3,045.00'];
   T.near(F(bare.concat(bare).join('\n')).base.value, 3045);
 });
