@@ -543,6 +543,9 @@
       // checks them against the slip's hourly wage, `two`)
       return Object.assign({ value: v, qty: q, pct: pcts[0] }, f.hours ? { two: true } : null);
     }
+    // (a payment with three numbers or more whose hours × rate = amount fails: its own arithmetic does not hold, the
+    // last one is a guess. "מחלה 29.50 1.500.00 31.00" was a sick pay of 31 ₪, readers campaign, Nov 2026)
+    if (f.kind === 'pay' && vals.length >= 3) return null;
     const last = vals[vals.length - 1];
     // a bare "00" left of a misread amount is never the amount (the rule: a misreading is not a value)
     if (last === 0 && vals.some((x) => x !== 0)) return null;

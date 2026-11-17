@@ -694,3 +694,6 @@ T.test('a line named after a field the slip has is added to it, not dropped', ()
   T.near(fields.pensionEmployee.value, 420, 0.005, 'not added twice');
   T.near(Payslip.addNamedLines({}, [{ line: 'x 50.00', value: -50, guess: 'incomeTax' }]).incomeTax.value, 50);
 });
+
+// the reader's guards (readers campaign, Nov 2026): a file of their own, run with this one
+require('./payslip-reader.test.js');
