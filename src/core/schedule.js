@@ -563,15 +563,20 @@
   }
   /** A line with no label of its own (the second line of a tall cell) goes to the labelled line right by it:
    *  the nearest, within reach, and clearly nearer than the one on its other side. */
-  function nearestLine(line, labelled, h) {
+  function nearestLine(line, labelled, h, fits) {
     let a = null, b = null;
     for (const l of labelled) { const d = Math.abs(l.Y - line.Y); if (!a || d < a.d) { b = a; a = { l, d }; } else if (!b || d < b.d) b = { l, d }; }
     // a row of its own whose name was not read is a whole row's height away, like the named rows from each
-    // other: only a line clearly nearer than that is a cell's second line
+    // other: only a line clearly nearer than that is a cell's second line. The row's height is the SMALLEST step
+    // between named lines: rows whose names were not read sit between named ones, and the middle step counted
+    // them in (two unread names made one step three rows tall, and the row under the person's became theirs)
     const ys = labelled.map((l) => l.Y).sort((x, y) => x - y);
-    const pitch = ys.length > 1 ? median(ys.slice(1).map((y, i) => y - ys[i])) : 0;
-    const reach = Math.min(h * 1.9, pitch ? pitch * 0.75 : h * 1.3);
-    return a && a.d <= reach && (!b || b.d >= a.d * 1.4) ? a.l : null;
+    const steps = ys.slice(1).map((y, i) => y - ys[i]).filter((d) => d > h * 0.5);
+    const pitch = steps.length ? Math.min(...steps) : 0;
+    // a cell's next line is at most about one and a half text heights under its first; table rows are hardly ever
+    // closer than that (1.9 let a dense row whose name was not read pass, when too few names were read to measure)
+    const reach = Math.min(h * 1.45, pitch ? pitch * 0.75 : h * 1.3);
+    return a && a.d <= reach && (!b || b.d >= a.d * 1.4) && (!fits || fits(a.l)) ? a.l : null;
   }
 
   /** Days across the top. → { entries, rows } or null. */
@@ -648,6 +653,9 @@
         }
       }
       cols = cols.filter((c) => !c.drop).sort((a, b) => a.X - b.X);
+      // no column kept its day (dates only, and they do not follow each other: "03/11 17/11 29/11"): no day can be
+      // trusted, so nothing under this head is read (it threw here, and the screen lost the whole picture)
+      if (!cols.length) return;
       // no dates in the head: the period in the title ("סידור 22/11-28/11") dates the first day when it falls on it
       if (!fit.dated && cols.length) {
         const first = cols.slice().sort((a, b) => a.off - b.off)[0];
@@ -720,7 +728,16 @@
         let prev = null;
         for (const l of body) {
           if (!l.has) continue;
-          const owner = l.who ? l : nearestLine(l, labelled, h) || (wraps(prev, l) ? prev.owner : l);
+          // a cell's second line goes on under the cells its row filled, or is one half of a cell drawn centred on
+          // the row (its other half as far on the other side of the name, in the same column). A line with a shift
+          // in a column the named line left empty and nothing mirroring it is a row of its own (another worker's,
+          // whose name was not read), never theirs
+          const mirrored = (o, i) => body.some((m) => m !== l && !m.who && (m.Y - o.Y) * (l.Y - o.Y) < 0 && Math.abs(l.Y - o.Y) <= h && Math.abs(Math.abs(m.Y - o.Y) - Math.abs(l.Y - o.Y)) < h * 0.6 && m.cells[i].length);
+          // and a person's two shifts in one cell never overlap: an overlapping one is another person's row
+          const span = (s) => { const a = toMin(s.start); let b = toMin(s.end); if (b <= a) b += 1440; return [a, b]; };
+          const clash = (o, i) => { const mine = cellShifts(o.cells[i], h, named).sh.filter((s) => s.start && s.end).map(span); return cellShifts(l.cells[i], h, named).sh.filter((s) => s.start && s.end).map(span).some(([a, b]) => mine.some(([x, y]) => a < y && x < b)); };
+          const under = (o) => l.cells.every((c, i) => !c.length || (o.cells[i].length ? !clash(o, i) : mirrored(o, i)));
+          const owner = l.who ? l : nearestLine(l, labelled, h, under) || (wraps(prev, l) ? prev.owner : l);
           (rowsOf.get(owner) || rowsOf.set(owner, []).get(owner)).push(l);
           l.owner = owner; prev = l;
         }
@@ -997,11 +1014,6 @@
     const entries = res.personal ? res.entries.slice() : res.entries.filter((e) => set.has(e.who));
     return { who, ask: !res.personal && !who.length, week, entries, needsWeek: entries.some((e) => e.date == null) };
   }
-  /** The person's entries: theirs by name, or all of them in a schedule with no names. */
-  function pick(res, mine) {
-    if (res.personal) return res.entries.slice();
-    return res.entries.filter((e) => isMine(e.who, mine));
-  }
   /** Entries → rows with a date and both times: a day name lands in the week from weekStart (wk weeks on); a
    * single time lasts lenMin. Each row keeps its entry (src). */
   function rowsOf(entries, weekStart, lenMin) {
@@ -1033,5 +1045,5 @@
     return sched && hours ? 'ask' : sched ? 'schedule' : hours ? 'hours' : null;
   }
 
-  root.Schedule = { parseText, parseWords, pick, isMine, whoOf, offer, weekStartFor, rowsOf, startsOn, shareKind, NAMED };
+  root.Schedule = { parseText, parseWords, isMine, whoOf, offer, weekStartFor, rowsOf, startsOn, shareKind, NAMED };
 })(typeof window !== 'undefined' ? window : globalThis);

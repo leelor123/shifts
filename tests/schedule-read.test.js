@@ -298,3 +298,53 @@ T.test('text shared to the app: a schedule opens the schedule, a report the hour
   T.ok(/const what = file \? \{ file \} : \{ text \};[\s\S]*App\.importHours\(what\)/.test(share), 'the hours tile with the text');
   T.ok(/\$\{file \? tile\('payslip'/.test(share), 'no payslip tile for text');
 });
+
+/* ---- round 3: the merge review's findings (18 Nov 2026) ---- */
+/** Rows of a table at a given pitch, the names column on the right; null: a name OCR did not read. */
+function rowsAt(rows, pitch, o) {
+  o = o || {};
+  const words = [];
+  const add = (text, x, y) => { const w = text.length * 9; words.push({ text, x0: x - w / 2, x1: x + w / 2, y0: y, y1: y + 20 }); };
+  DAYS.slice(0, 5).forEach((d, i) => { add(d, 800 - i * 120, 50); add(['22/11', '23/11', '24/11', '25/11', '26/11'][i], 800 - i * 120, 76); });
+  add('שם', 950, 50);
+  rows.forEach(([name, cells], r) => {
+    const y = 130 + r * pitch;
+    if (name) add(name, 950, y);
+    cells.forEach((c, i) => { if (!c) return; String(c).split('\n').forEach((t, j, all) => add(t, 800 - i * 120, all.length > 1 && o.centred ? y + (j - 0.5) * 32 : y + j * 26)); });
+  });
+  return words;
+}
+T.test('rows whose names OCR did not read, right under the person\'s, never become the person\'s', () => {
+  // review t3: נדב, two rows with no name read, דנה, יוסי at a 30 px pitch: the person got the 23/11 and 25/11 shifts of
+  // the row under them (the row height was measured on named lines only, so it counted three rows as one)
+  const rows = [['נדב', ['08:00-16:00', '', '08:00-16:00', '', '']], [null, ['', '16:00-23:00', '', '16:00-23:00', '']], [null, ['', '', '', '', '07:00-15:00']],
+    ['דנה', ['16:00-23:00', '', '', '', '']], ['יוסי', ['', '08:00-16:00', '', '', '']]];
+  for (const pitch of [26, 30, 40, 52]) T.eq(brief(mineOf(SC.parseWords(rowsAt(rows, pitch), { today }), ['נדב'])).join(' | '), '2026-11-22 08:00 16:00 נדב | 2026-11-24 08:00 16:00 נדב', 'pitch ' + pitch);
+  // an unread row on the person's own days, with too few names read to measure the rows: its shifts overlap the
+  // person's own, and a person's two shifts in one cell never overlap
+  const same = [[null, ['07:00-15:00', '', '', '', '']], ['נדב', ['08:00-16:00', '', '07:00-15:00', '', '']], [null, ['16:00-23:00', '', '08:00-16:00', '', '']], [null, ['', '', '', '', '9-17']], ['דנה', ['', '9-17', '', '', '']]];
+  for (const pitch of [26, 30, 36]) T.eq(brief(mineOf(SC.parseWords(rowsAt(same, pitch), { today }), ['נדב'])).join(' | '), '2026-11-22 08:00 16:00 נדב | 2026-11-24 07:00 15:00 נדב', 'same days, pitch ' + pitch);
+  // still the person's: a cell on two lines under its first (top-aligned) or drawn centred on the row
+  const two = [['נדב', ['07:00-11:00\n16:00-20:00', '', '08:00-16:00', '', '']], ['דנה', ['', '9-17', '', '', '']], ['יוסי', ['', '', '', '9-17', '']]];
+  for (const centred of [false, true]) T.eq(brief(mineOf(SC.parseWords(rowsAt(two, 70, { centred }), { today }), ['נדב'])).join(' | '), '2026-11-22 07:00 11:00 נדב | 2026-11-22 16:00 20:00 נדב | 2026-11-24 08:00 16:00 נדב', centred ? 'centred' : 'top');
+});
+T.test('no page of words throws: a head whose dates do not follow each other is no head (it threw, the picture was lost)', () => {
+  // review t9: three dates that do not follow each other dropped every column, and cols[0].X threw
+  const w = (text, x, y) => ({ text, x0: x, x1: x + 60, y0: y, y1: y + 20 });
+  T.eq(SC.parseWords([w('03/11', 800, 50), w('17/11', 650, 50), w('29/11', 500, 50), w('נדב', 950, 100), w('08:00-16:00', 800, 100)], { today }).entries.length, 0);
+  // random pages (a smaller run of work/sched/fuzz.js: 3,000 pages threw 146 times before)
+  let seed = 5; const rnd = () => { seed = (seed * 16807) % 2147483647; return (seed - 1) / 2147483646; };
+  const TOK = ['ראשון', 'שני', 'שלישי', 'רביעי', 'שבת', 'א׳', 'Sun', '03/11', '17/11', '29/11', '22/11', '25110', '22/1', '8-16', '08:00-16:00', '16-סגירה', 'בוקר', 'ע', 'X', '-', 'נדב', 'דני כ.', 'שם', 'סה"כ', '15:23', '7-3', '07:00-', '15:00', '22/11-28/11'];
+  let threw = 0;
+  for (let i = 0; i < 400; i++) {
+    const words = [], cols = 2 + Math.floor(rnd() * 6), rows = 1 + Math.floor(rnd() * 6), h = 10 + Math.floor(rnd() * 20);
+    for (let r = 0; r < rows; r++) for (let c = 0; c < cols; c++) { if (rnd() < 0.3) continue; const t = TOK[Math.floor(rnd() * TOK.length)], x = 900 - c * (60 + rnd() * 80), y = 20 + r * h * (1 + rnd() * 2.5); words.push({ text: t, x0: x, x1: x + t.length * 8, y0: y, y1: y + h }); }
+    try { SC.offer(SC.parseWords(words, { today }), { today, mine: ['נדב'] }); } catch (e) { threw++; }
+  }
+  T.eq(threw, 0);
+});
+T.test('the schedule import: leaving the sheet stops the reading itself (the OCR gets a stop signal)', () => {
+  const src = require('fs').readFileSync(require('path').join(__dirname, '../src/app/schedule-import.js'), 'utf8');
+  T.ok(/onClose: \(\) => \{ if \(stop\) stop\.abort\(\); \}/.test(src), 'the sheet aborts on close');
+  T.ok(/App\.readDocWords\(file, progress, stop \? \{ signal: stop\.signal \} : undefined\)/.test(src), 'the reading gets the signal');
+});

@@ -3,6 +3,8 @@ const T = require('./t.js');
 const SC = globalThis.Schedule;
 const today = '2026-10-22'; // a Thursday
 const p = (text, named) => SC.parseText(text, { today, named });
+// the person's shifts the way the screen chooses them (Schedule.offer: exact names, the family name decides)
+const pick = (r, mine) => SC.offer(r, { today, mine }).entries;
 const brief = (es) => es.map((e) => [e.date || 'd' + e.dow, e.start, e.end, e.who].join(' '));
 T.section('work schedule');
 T.test('a personal message: day names, ranges, a shift name, a day off', () => {
@@ -14,8 +16,8 @@ T.test('a personal message: day names, ranges, a shift name, a day off', () => {
 T.test('a group message: each shift keeps its name, the person picks theirs', () => {
   const r = p('סידור עבודה לשבוע הבא:\nראשון: דני 8-16, לי 16-24\nשני: לי 8-16, מאיה 16-24\nשלישי - מאיה 7:30-15:30 | דני 15:30 עד 23');
   T.eq(r.names.join(','), 'דני,לי,מאיה');
-  T.eq(brief(SC.pick(r, ['לי'])).join(' | '), 'd0 16:00 00:00 לי | d1 08:00 16:00 לי');
-  T.eq(brief(SC.pick(r, ['דני'])).join(' | '), 'd0 08:00 16:00 דני | d2 15:30 23:00 דני');
+  T.eq(brief(pick(r, ['לי'])).join(' | '), 'd0 16:00 00:00 לי | d1 08:00 16:00 לי');
+  T.eq(brief(pick(r, ['דני'])).join(' | '), 'd0 08:00 16:00 דני | d2 15:30 23:00 דני');
 });
 T.test('a name is a whole word: "לי" is not "לילך"', () => {
   T.ok(SC.isMine('לי', ['לי בטן'])); T.ok(SC.isMine('לי בטן', ['לי']));
@@ -23,8 +25,8 @@ T.test('a name is a whole word: "לי" is not "לילך"', () => {
 });
 T.test('a table pasted as text: a head of days, a row per person, a dash is a day off', () => {
   const r = p('שם\tראשון\tשני\tשלישי\tרביעי\tחמישי\nדני\t8-16\t16-24\t-\t8-16\tחופש\nלי\t16-24\t8-16\t8-16\t-\tערב');
-  T.eq(brief(SC.pick(r, ['לי'])).join(' | '), 'd0 16:00 00:00 לי | d1 08:00 16:00 לי | d2 08:00 16:00 לי | d4 15:00 23:00 לי');
-  T.eq(brief(SC.pick(r, ['דני'])).length, 3);
+  T.eq(brief(pick(r, ['לי'])).join(' | '), 'd0 16:00 00:00 לי | d1 08:00 16:00 לי | d2 08:00 16:00 לי | d4 15:00 23:00 לי');
+  T.eq(brief(pick(r, ['דני'])).length, 3);
 });
 T.test('dates: with and without a year, a name and its date as one day', () => {
   const r = p('ראשון 26/10 8-16\n27.10.26 9-17\n2026-10-28 10:00-18:00\nיום ה׳ 29/10 לילה');
@@ -70,8 +72,8 @@ T.test('a table\'s words (a photo): days across the top, a row per person, a row
     w('לי', 500, 90), w('16:00', 395, 90), w('-', 420, 90), w('24:00', 440, 90), w('בוקר', 300, 90), w('8-16', 200, 90),
   ];
   const r = SC.parseWords(words, { today });
-  T.eq(brief(SC.pick(r, ['לי'])).join(' | '), '2026-10-25 16:00 00:00 לי | 2026-10-26 07:00 15:00 לי | 2026-10-27 08:00 16:00 לי');
-  T.eq(brief(SC.pick(r, ['דני'])).join(' | '), '2026-10-25 08:00 16:00 דני | 2026-10-26 16:00 00:00 דני');
+  T.eq(brief(pick(r, ['לי'])).join(' | '), '2026-10-25 16:00 00:00 לי | 2026-10-26 07:00 15:00 לי | 2026-10-27 08:00 16:00 לי');
+  T.eq(brief(pick(r, ['דני'])).join(' | '), '2026-10-25 08:00 16:00 דני | 2026-10-26 16:00 00:00 דני');
 });
 T.test('a table\'s words with the days down the side: a column per person', () => {
   const w = (text, x, y) => ({ text, x0: x, x1: x + 40, y0: y, y1: y + 14 });
@@ -81,7 +83,7 @@ T.test('a table\'s words with the days down the side: a column per person', () =
     w('שני', 420, 70), w('חופש', 300, 70), w('9-17', 200, 70),
   ];
   const r = SC.parseWords(words, { today });
-  T.eq(brief(SC.pick(r, ['לי'])).join(' | '), 'd0 16:00 00:00 לי | d1 09:00 17:00 לי');
+  T.eq(brief(pick(r, ['לי'])).join(' | '), 'd0 16:00 00:00 לי | d1 09:00 17:00 לי');
 });
 T.test('dates with the month\'s Hebrew name', () => {
   const r = p('25 באוקטובר 8-16\nיום שני 26 אוק׳ 9-17\n3 בנובמבר 2026 10-18');
@@ -113,7 +115,7 @@ T.test('a photo\'s date that does not fit its column\'s day is dropped; a date t
 });
 T.test('several days in one line: each shift with the day before it', () => {
   const r = p('סידור לשבוע הבא: ראשון: דני 8-16, לי 16-23 שני: לי 9-17 שלישי חופש רביעי לי ערב');
-  T.eq(brief(SC.pick(r, ['לי'])).join(' | '), 'd0 16:00 23:00 לי | d1 09:00 17:00 לי | d3 15:00 23:00 לי');
+  T.eq(brief(pick(r, ['לי'])).join(' | '), 'd0 16:00 23:00 לי | d1 09:00 17:00 לי | d3 15:00 23:00 לי');
 });
 
 // the accuracy campaign's guards (17 Nov 2026), in a file of their own
