@@ -11,6 +11,8 @@ for (const f of ['cards.test.js', 'taxrefund.test.js', 'undef.test.js', 'icons.t
 }
 // readers campaign (17 Nov 2026): the payslip check end to end
 require('./slipflow-read.test.js');
+// readers campaign (18 Nov 2026): the lead's texts (failure reasons, loading line, long PDFs, pickers)
+require('./readers-lead.test.js');
 T.section('cloud sync (simulated phones)');
 require('./sync.test.js');
 T.section('Firestore reads');
