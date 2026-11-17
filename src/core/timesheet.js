@@ -204,7 +204,7 @@
       if (validHM(...a) && validHM(...b)) return [{ k: 'range', a: hmOf(...a), b: hmOf(...b) }];
     }
     if ((m = /^(\d{4})-(\d{1,2})-(\d{1,2})$/.exec(t))) return [{ k: 'date', d: +m[3], m: +m[2], y: +m[1], sure: true }];
-    if ((m = /^(\d{1,2})[./-](\d{1,2})[./-](\d{2}|\d{4})$/.exec(t))) { let y = +m[3]; if (y < 100) y += 2000; return [{ k: 'date', d: +m[1], m: +m[2], y, sure: true }]; }
+    if ((m = /^(\d{1,2})[./-](\d{1,2})[./-](\d{2}|\d{4})$/.exec(t))) { let y = +m[3]; const yy = y < 100; if (yy) y += 2000; return [{ k: 'date', d: +m[1], m: +m[2], y, sure: true, yy }]; }
     if ((m = /^(\d{1,2})\/(\d{1,2})$/.exec(t))) return [{ k: 'date', d: +m[1], m: +m[2], sure: true }];
     if ((m = /^(\d{1,2}):(\d{2})(?::(\d{2}))?$/.exec(t))) { if (validHM(+m[1], +m[2])) out.push({ k: 'time', v: hmOf(+m[1], +m[2]), pad: m[1].length === 2 }); return out; }
     if ((m = /^(\d{1,2})\.(\d{1,2})$/.exec(t))) {
@@ -444,6 +444,11 @@
     if (header) dbg.push('header: ' + header.roles.map((x) => x.role + (x.n || '') + '@' + Math.round(x.x)).join(' '));
 
     /* ---- year and month of the report (for dates without a year) ---- */
+    // a date cut at the picture's edge ("01-11-20" of 01-11-2026) reads as a year of two digits, 2020: when the
+    // page prints its year in full elsewhere (20xx, not 2020), such a year is the cut one and is not known
+    const fullYears = new Set();
+    for (const r of rows) for (const w of r.words) for (const it of w.items) if ((it.k === 'date' && it.y && !it.yy) || it.k === 'year') fullYears.add(it.y || it.v);
+    if ([...fullYears].some((y) => y !== 2020)) for (const r of rows) for (const w of r.words) for (const it of w.items) if (it.k === 'date' && it.yy && it.y === 2020) it.y = null;
     const years = new Map();
     let docMonth = null;
     for (const r of rows) for (const w of r.words) for (const it of w.items) {
@@ -494,6 +499,9 @@
     };
     // a duration column prints 8:09, a clock 08:09: a column of times under 10:00 with no leading zero is a total
     const unpadded = (c) => { const small = c.members.filter((p) => minOf(p.v) < 600); return small.length >= 2 && small.filter((p) => !p.pad).length >= small.length * 0.8; };
+    const padded = (c) => { const small = c.members.filter((p) => minOf(p.v) < 600); return small.length >= 2 && small.filter((p) => p.pad).length >= small.length * 0.8; };
+    // the page's clock writes 07:06 (a column of such times): a 1:53 on it is a length, not a time of day
+    const pagePads = cols.some((c) => padded(c) && c.members.filter((p) => minOf(p.v) < 600).length >= 3);
     const hRole = (role) => (header ? header.roles.filter((x) => x.role === role).sort((a, b) => (before(a.x, b.x) ? -1 : 1)) : []);
     const nearest = (x) => cols.filter((c) => Math.abs(c.at - x) < colW * 1.6).sort((a, b) => Math.abs(a.at - x) - Math.abs(b.at - x))[0] || null;
     const pairs = [];
@@ -504,9 +512,18 @@
         if (a && b && a !== b) pairs.push({ a, b, from: 'header', ...pairScore(a, b) });
       }
     }
+    // a column with one value in nearly every row (08:36, the day's standard hours) beside one whose values
+    // move: a standard, not an entry or an exit (a fixed schedule has both its columns fixed)
+    const distinct = (c) => new Set(c.members.map((p) => p.v)).size;
+    const constant = (c) => { const n = new Map(); for (const p of c.members) n.set(p.v, (n.get(p.v) || 0) + 1); return c.members.length >= 4 && Math.max(...n.values()) >= c.members.length * 0.8; };
     let best = null;
     for (const a of cols) for (const b of cols) {
       if (a === b) continue;
+      if ((constant(a) && !constant(b) && distinct(b) >= 3) || (constant(b) && !constant(a) && distinct(a) >= 3)) continue;
+      // (a duration column, 7:06 without its leading zero, beside a clock's column that writes 07:06: the
+      // report pads its times, so the unpadded one is the total, not an entry or an exit. A hand-made table
+      // writes 8:00 in both)
+      if ((unpadded(a) && padded(b)) || (unpadded(b) && padded(a))) continue;
       const sc = pairScore(a, b);
       let s = sc.s;
       if (unpadded(a) || unpadded(b)) s -= sc.n * 0.5;
@@ -579,7 +596,7 @@
 
     /* ---- each row: its date, its times ---- */
     const found = [];
-    let lastDateRow = null, pendingLen = null;
+    let pendingLen = null;
     // where the entry and the exit sit in rows read with both (an app's cards): a lone time is the one it is nearer
     const sides = { a: [], b: [] };
     const mid = (xs) => xs.slice().sort((p, q) => p - q)[xs.length >> 1];
@@ -643,7 +660,7 @@
         // times in the row outside the known columns (a row the columns missed): two of them, in reading order
         // (a time that stands in one of the table's columns is that column's: a standard-hours column, a total or
         // a lone entry never pairs up with another loose time into a shift that is not in the report)
-        const ts = r.words.filter((w) => !inDateCol(w)).map((w) => ({ w, t: w.items.find((it) => it.k === 'time' && !it.weak) })).filter((x) => x.t && !cols.some((c) => (pairs.length || c === totalCol || unpadded(c)) && c.members.some((m) => m.w === x.w)));
+        const ts = r.words.filter((w) => !inDateCol(w)).map((w) => ({ w, t: w.items.find((it) => it.k === 'time' && !it.weak) })).filter((x) => x.t && !(pagePads && !x.t.pad && minOf(x.t.v) < 600) && !cols.some((c) => (pairs.length || c === totalCol || unpadded(c) || constant(c)) && c.members.some((m) => m.w === x.w)));
         if (ts.length === 2) {
           // which one starts: the order that makes a likelier shift; when both could, two times close together
           // ("08:51 - 16:37" in one cell) read left to right like any number, two apart in the reading order
@@ -667,16 +684,20 @@
       const isTotalRow = SKIP_ROW.test(text) && !date;
       if (isTotalRow) return;
       const row = { ri, y: r.y, date, dow, mash: mash ? mash.s : null, shifts, text };
-      // an app's card: the date on its own line, the hours on the next one
-      if (!date && !mash && shifts.length && lastDateRow && !lastDateRow.shifts.length && !lastDateRow.lent && r.y - lastDateRow.y < mh * 4) {
-        row.lendFrom = lastDateRow; lastDateRow.lent = true;
-      }
       if (date || mash || shifts.length || dow != null) found.push(row);
-      if (date) lastDateRow = row;
     });
+    // an app's card: the date on a line of its own, the hours on the line above or under it. Each row of hours
+    // without a date takes the nearest date-only row (each date once, the nearest pairs first)...
+    const lend = [];
+    for (const r of found) {
+      if (r.date || r.mash || !r.shifts.length) continue;
+      for (const d of found) if (d.date && !d.shifts.length && Math.abs(d.y - r.y) < mh * 4) lend.push([r, d, Math.abs(d.y - r.y)]);
+    }
+    lend.sort((p, q) => p[2] - q[2]);
+    for (const [r, d] of lend) if (!r.lendFrom && !d.lent) { r.lendFrom = d; d.lent = true; }
     // ...only when the report is made of such cards. In a table, where the date and the hours of a day share
-    // one row, a date-only row is a day off, and the row under it with hours and no readable date is the
-    // next day: it must not take the day off's date
+    // one row, a date-only row is a day off, and a row with hours and no readable date next to it is another
+    // day: it must not take the day off's date
     // (a table row that a photo broke in two, its date a little above its hours, is still one row: closer to its
     // date than half the distance from one dated row to the next)
     const cardRows = found.filter((r) => r.lendFrom).length, sameRow = found.filter((r) => r.date && r.shifts.length).length;
@@ -684,7 +705,7 @@
     const pitch = gaps.length ? gaps[gaps.length >> 1] : 0;
     for (const r of found) {
       if (!r.lendFrom) continue;
-      if (cardRows > sameRow || r.y - r.lendFrom.y < pitch * 0.5) { r.date = r.lendFrom.date; r.dow = r.dow == null ? r.lendFrom.dow : r.dow; r.lendFrom.used = true; }
+      if (cardRows > sameRow || Math.abs(r.y - r.lendFrom.y) < pitch * 0.5) { r.date = r.lendFrom.date; r.dow = r.dow == null ? r.lendFrom.dow : r.dow; r.lendFrom.used = true; }
       delete r.lendFrom;
     }
     // date-only rows that lent their date to the next row are not rows of their own
