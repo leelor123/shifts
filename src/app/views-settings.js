@@ -956,7 +956,7 @@
           <div class="btn-row" style="margin-top:8px"><button class="btn tonal" data-bk="dl">${icon('download')} הורד קובץ</button><button class="btn tonal" data-bk="files">${icon('file')} כולל קובצי תלושים</button></div></div>
         <div class="card">${F.sel('גיבוי אוטומטי', 's.backup.autoEvery', [['weekly', 'כל שבוע'], ['monthly', 'כל חודש'], ['off', 'כבוי']], B.autoEvery, S.meta.cloudUid ? 'החשבון שלך מחובר, והנתונים כבר נשמרים בענן, לכן לא יורדים קבצים אוטומטית. אפשר תמיד להוריד גיבוי ידני.' : 'בפתיחת האפליקציה, כשהגיע הזמן, קובץ גיבוי יורד אוטומטית לתיקיית ההורדות.').replace('data-s=', 'data-keep-str data-s=')}</div>
         <div class="section-title">${icon('upload', 's')} שחזור</div>
-        <div class="card"><label class="btn tonal block">${icon('upload')} בחר קובץ גיבוי (.json)<input type="file" accept="application/json,.json" id="bk-file" hidden></label>
+        <div class="card"><label class="btn tonal block">${icon('upload')} בחר קובץ גיבוי (.json)<input type="file" accept="application/json,.json" id="bk-file" class="sr"></label>
           <div class="tiny muted" style="margin-top:8px">אפשר להחליף את כל הנתונים או למזג (להוסיף רק רשומות חסרות). גיבוי מגרסה ישנה יעבור הגירה אוטומטית.</div></div>
         <div class="section-title" style="color:var(--bad)">${icon('trash', 's')} אזור מסוכן</div>
         <div class="card"><button class="btn danger block" data-wipe>מחק את כל הנתונים</button></div>`;

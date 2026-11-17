@@ -55,7 +55,7 @@
     // policy already forbids eval, this keeps it closed without leaning on that)
     const doc = await pdfjs.getDocument({ data: await file.arrayBuffer(), isEvalSupported: false }).promise;
     let lines = [];
-    for (let p = 1; p <= Math.min(doc.numPages, 4); p++) {
+    for (let p = 1; p <= Math.min(doc.numPages, 8); p++) { // the same 8 pages as App.readDocWords (the import reads both)
       progress(`קורא עמוד ${p} מתוך ${doc.numPages}…`);
       const page = await doc.getPage(p);
       const tc = await page.getTextContent();
@@ -75,7 +75,7 @@
   }
   async function ocr(image, progress) {
     await loadScript(LIBS.tesseract);
-    progress('טוען מנוע זיהוי עברית (פעם ראשונה ~10MB)…');
+    progress('מכין את מנוע הקריאה…');
     const worker = await root.Tesseract.createWorker('heb+eng', 1, {
       logger: (m) => { if (m.status === 'recognizing text') progress(`מזהה טקסט… ${Math.round(m.progress * 100)}%`); },
     });
@@ -91,36 +91,540 @@
   // the hours-report import reads PDFs and pictures the same way (import.js)
   App.readDocText = extract;
   App.loadLib = loadScript;
+
+  /* ---------------- a payslip's lines from where its words sit ----------------
+   * A payslip is a dense table, often two tables side by side. Read as one block of text (Tesseract's own line
+   * order) a photo gave the name of one cell the amount of the next, and a misread digit looked as real as a right
+   * one: of 96 test pictures, 114 values on the check screen were wrong (readers campaign, 17 Nov 2026). Now the
+   * picture is read by DocRead (two readings with boxes), its words are put into rows by where they sit, each row is
+   * cut into its cells, and what the reader is not sure of is left for the person to fill in (SlipRead.review). */
+  const SlipRead = (function () {
+    const R = {};
+    const HEBW = /[א-ת]/;
+    const DATE = /^\d{1,2}[/.]\d{1,2}[/.]\d{2,4}$|^\d{1,2}[/.]\d{4}$/;
+    const UNIT = /^(?:ש"ח|ש״ח|שח|שנים|שנה|חודשים|ימים|יום|ליום|שעות|שעה|לשעה|ש'|אחוז|אחוזים)$/;
+    // the shekel sign and the direction marks a PDF or a reader puts around a number (built from their codes: the
+    // source holds no literal direction mark)
+    const ch = (c) => String.fromCharCode(c);
+    const MARKS = new RegExp('[' + ch(0x20aa) + ch(0x200e) + ch(0x200f) + ch(0x202a) + '-' + ch(0x202e) + ch(0x2066) + '-' + ch(0x2069) + ']', 'g');
+    /** A word as the number it prints ("₪6,937.29" → "6,937.29", "418.00-", "125%"), or '' when it is not a number. */
+    function numTok(t) {
+      const s = String(t).replace(MARKS, '').replace(/^[|[\](){}'"`:;!_~=<>*+]+/, '').replace(/[|[\](){}'"`:;!_~=<>*+.,]+$/, '');
+      return /^-?\d[\d,]*(?:\.\d+)?-?%?$/.test(s) && !/,(?!\d{3}(?:\D|$))/.test(s) ? s : '';
+    }
+    const kindOf = (t) => (DATE.test(t) ? 'D' : numTok(t) ? 'N' : HEBW.test(t) ? 'H' : 'X');
+    const shape = (s) => (/^-?\d{1,3}(?:,\d{3})*\.\d{2}-?$/.test(s) ? 3 : /\.\d/.test(s) ? 2 : 1);
+    const overlap = (a, b) => {
+      const ix = Math.max(0, Math.min(a.x1, b.x1) - Math.max(a.x0, b.x0)), iy = Math.max(0, Math.min(a.y1, b.y1) - Math.max(a.y0, b.y0));
+      return ix * iy / Math.max(1, Math.min((a.x1 - a.x0) * (a.y1 - a.y0), (b.x1 - b.x0) * (b.y1 - b.y0)));
+    };
+    /**
+     * The two readings of a picture (DocRead.words: `he` the Hebrew model, `dg` the digits reading) → one list of
+     * words. Hebrew words come from the Hebrew reading. A number both readings agree on is sure (`both`); one they
+     * read differently keeps the better-shaped (an amount with agorot over a bare number), then the surer one, and
+     * remembers the other (`doubt`); one only the digits reading saw is marked `one`.
+     */
+    R.words = function (he, dg) {
+      const out = [];
+      for (const w of he || []) {
+        const k = kindOf(w.text);
+        // letters that are not Hebrew where a payslip has Hebrew: a word the reader could not read, kept as a mark
+        // (a line with one is not sure of its name); a speck or a piece of a table border is dropped
+        if (k === 'X' && !(/[A-Za-z]{2}/.test(w.text) && w.x1 - w.x0 >= (w.y1 - w.y0) * 1.2)) continue;
+        out.push({ text: k === 'N' ? numTok(w.text) : w.text.replace(MARKS, ''), x0: w.x0, y0: w.y0, x1: w.x1, y1: w.y1, conf: w.conf, k });
+      }
+      for (const d of dg || []) {
+        const k = kindOf(d.text);
+        if (k !== 'N' && k !== 'D') continue;
+        const text = k === 'N' ? numTok(d.text) : d.text;
+        const near = out.filter((h) => overlap(h, d) > 0.3);
+        if (!near.length) { if (d.conf >= 40) out.push({ text, x0: d.x0, y0: d.y0, x1: d.x1, y1: d.y1, conf: d.conf, k, one: true }); continue; }
+        if (near.some((h) => h.k === 'H' && h.conf >= 60)) continue; // a Hebrew word the digits reading took for a number
+        const nums = near.filter((h) => h.k === 'N' || h.k === 'D');
+        if (nums.length > 1) continue;
+        if (!nums.length) {
+          // the Hebrew reading saw unsure letters where the digits reading sees a whole amount
+          if (d.conf >= 60 && (k === 'D' || shape(text) >= 2)) { for (const h of near) out.splice(out.indexOf(h), 1); out.push({ text, x0: d.x0, y0: d.y0, x1: d.x1, y1: d.y1, conf: d.conf, k, one: true }); }
+          continue;
+        }
+        const h = nums[0];
+        if (h.text === text) { h.both = true; continue; }
+        const dWins = k === h.k ? (shape(text) - shape(h.text) || d.conf - h.conf) > 0 : k === 'D';
+        const other = dWins ? h.text : text;
+        if (dWins) Object.assign(h, { text, k, conf: d.conf, x0: d.x0, y0: d.y0, x1: d.x1, y1: d.y1, dg: true });
+        h.doubt = other;
+      }
+      return out;
+    };
+    /** Words → rows (top to bottom), each right to left. A tilted photo: the tilt is measured and taken out first. */
+    R.rows = function (words, flat) {
+      if (!words.length) return [];
+      const hs = words.map((w) => w.y1 - w.y0).sort((a, b) => a - b);
+      const h = hs[hs.length >> 1] || 20;
+      const cx = (w) => (w.x0 + w.x1) / 2, cy = (w) => (w.y0 + w.y1) / 2;
+      const slopes = [];
+      for (const a of words) {
+        let best = null;
+        for (const b of words) {
+          if (b === a) continue;
+          const dx = cx(b) - cx(a);
+          if (dx <= h * 1.5 || dx > h * 30) continue;
+          const dy = cy(b) - cy(a);
+          if (Math.abs(dy) > Math.max(h * 0.7, dx * 0.2)) continue;
+          if (!best || dx < best.dx) best = { dx, dy };
+        }
+        if (best) slopes.push(best.dy / best.dx);
+      }
+      slopes.sort((a, b) => a - b);
+      const sl = !flat && slopes.length >= 5 ? slopes[slopes.length >> 1] : 0;
+      const yy = (w) => cy(w) - sl * cx(w);
+      const rows = [];
+      for (const w of words.slice().sort((a, b) => b.x1 - a.x1)) {
+        let best = null;
+        for (const r of rows) {
+          const last = r.words[r.words.length - 1];
+          const d = Math.abs(yy(w) - yy(last));
+          const tol = 0.5 * Math.min(Math.max(w.y1 - w.y0, last.y1 - last.y0), 1.6 * h);
+          if (d < tol && (!best || d < best.d)) best = { d, r };
+        }
+        if (best) best.r.words.push(w); else rows.push({ words: [w] });
+      }
+      for (const r of rows) r.y = r.words.reduce((s, w) => s + yy(w), 0) / r.words.length;
+      rows.sort((a, b) => a.y - b.y);
+      return rows.map((r) => r.words.sort((a, b) => b.x1 - a.x1));
+    };
+    const isNum = (w) => w.k === 'N' && !/%$/.test(w.text);
+    const isCode = (w) => w.k === 'N' && /^\d{2,6}$/.test(w.text);
+    const isPct = (w) => w.k === 'N' && /%$/.test(w.text);
+    const hasDec = (w) => w.k === 'N' && /\.\d/.test(w.text);
+    /** Does this label name a payslip line on its own (asked of the parser itself)? */
+    const named = (label) => { try { return !!Payslip.matchField(label); } catch (e) { return false; } };
+    /**
+     * A row that holds several cells (two tables side by side, or a strip of "name value name value") → one line
+     * per name with its own numbers. Read as one line, a row gave the first table's amount to the second table's
+     * name: "שכר יסוד 168.00 42.00 7,056.00 מס הכנסה 418.00" was income tax of 7,056. A new cell starts where a
+     * Hebrew name follows a number; a short whole number right before the name is that line's code. On a page
+     * whose numbers come before their names (numsFirst) the cut is the mirror of it.
+     */
+    R.cells = function (row, numsFirst) {
+      const src = numsFirst ? row.slice().reverse() : row;
+      const segs = [];
+      let cur = [], seenN = false, seenDec = false;
+      for (let i = 0; i < src.length; i++) {
+        const w = src[i];
+        if (w.k === 'H' && seenN && (i === 0 || src[i - 1].k !== 'H')) {
+          // the name that starts here: a unit after a number ("168.00 שעות") is not one; after a whole number only a
+          // name the reader knows starts a cell ("סעיף 14 מעסיק" stays one name)
+          let j = i;
+          while (j < src.length && src[j].k === 'H') j++;
+          const run = src.slice(i, j);
+          const label = (numsFirst ? run.slice().reverse() : run).map((x) => x.text).join(' ');
+          // (nothing but a code before it is that name's own code, read first on a page that prints numbers first)
+          if (!(run.length === 1 && UNIT.test(run[0].text)) && (seenDec || named(label)) && !cur.every(isCode)) {
+            const code = [];
+            // a code, or a percentage that is part of the name ("שעות נוספות 125%"), right before the name goes with it
+            while (cur.length > 1 && (isCode(cur[cur.length - 1]) || isPct(cur[cur.length - 1])) && cur.slice(0, -1).some(hasDec)) code.unshift(cur.pop());
+            segs.push(cur); cur = code; seenN = false; seenDec = false;
+          }
+        }
+        cur.push(w);
+        if (isNum(w)) { seenN = true; if (hasDec(w)) seenDec = true; }
+      }
+      if (cur.length) segs.push(cur);
+      return numsFirst ? segs.map((x) => order(x.reverse())).reverse() : segs;
+    };
+    /**
+     * A cell of a page that prints the numbers first ("5,840.00 36.50 160.00 שכר יסוד 110": amount, rate, hours,
+     * name, code) in the order the parser reads a line: code, name, then the numbers from the name outwards
+     * ("110 שכר יסוד 160.00 36.50 5,840.00"). As printed, the code at the end was taken for the amount: income tax
+     * 510 for 212.00.
+     */
+    function order(seg) {
+      const n = seg.findIndex((w) => w.k === 'H');
+      if (n <= 0) return seg;
+      let e = n;
+      while (e < seg.length && (seg[e].k === 'H' || seg[e].k === 'X' || isPct(seg[e]))) e++;
+      const after = seg.slice(e), codes = after.filter(isCode);
+      if (codes.length !== after.length) return seg; // numbers on both sides: left as printed
+      return codes.concat(seg.slice(n, e), seg.slice(0, n).reverse());
+    }
+    // which way a row prints: the name first (right) and its numbers after it ('name'), or the numbers first ('num'),
+    // or it does not say (''). A line code at the row's end ("... שכר יסוד 110") or start ("0001 שכר יסוד ...") is
+    // passed over: it hid the way the row prints
+    const rowWay = (r) => {
+      if (r.length < 2) return '';
+      let i = 0, j = r.length - 1;
+      if (isCode(r[0]) && r[1].k === 'H') i = 1;
+      if (isCode(r[j]) && r[j - 1].k === 'H') j--;
+      const a = r[i], b = r[j];
+      return a.k === 'H' && hasDec(b) ? 'name' : hasDec(a) && b.k === 'H' ? 'num' : '';
+    };
+    // the page's way, for the rows that do not say. One page can print both ways (a payments table with the amount
+    // on the right over a summary with the names on the right): each row that says goes its own way
+    const numbersFirst = (rows) => {
+      let nameFirst = 0, numFirst = 0;
+      for (const r of rows) { const w = rowWay(r); if (w === 'name') nameFirst++; else if (w === 'num') numFirst++; }
+      return numFirst >= 3 && numFirst > nameFirst * 2;
+    };
+    const wayOf = (r, page) => { const w = rowWay(r); return w ? w === 'num' : page; };
+    /** Rows of words → the payslip's lines, as text and as words (review asks a line which numbers were unsure). */
+    R.lines = function (rows) {
+      const hs = [].concat(...rows).map((w) => (w.y1 || 0) - (w.y0 || 0)).filter((x) => x > 0).sort((a, b) => a - b);
+      const h = hs[hs.length >> 1] || 0;
+      const numsFirst = numbersFirst(rows);
+      const out = [];
+      const push = (ws) => { if (ws.length) out.push({ text: ws.map((w) => w.text).join(' '), words: ws }); };
+      let head = null; // a row of column names waiting for its row of values
+      for (const row of rows) {
+        const nums = row.filter(isNum);
+        if (!nums.length && row.filter((w) => w.k === 'H').length >= 2) { head = h ? row : null; push(row); continue; }
+        // values under a row of column names: each takes the name above it, by its place in the row; the names are
+        // cut where the row of names has its widest gaps, and only when those gaps stand out
+        let paired = null;
+        if (head && nums.length) {
+          const anchors = [];
+          for (const w of row) {
+            const last = anchors[anchors.length - 1];
+            if (w.k === 'H' || w.k === 'X') { if (last && last.label) last.ws.push(w); else anchors.push({ label: true, ws: [w] }); } else anchors.push({ ws: [w] });
+          }
+          const k = anchors.length;
+          if (k >= 2 && k <= head.length) {
+            const gaps = [];
+            for (let i = 1; i < head.length; i++) gaps.push({ i, g: head[i - 1].x0 - head[i].x1 });
+            const cut = gaps.slice().sort((a, b) => b.g - a.g).slice(0, k - 1);
+            const inner = gaps.filter((g) => !cut.includes(g));
+            const minCut = cut.length ? Math.min(...cut.map((g) => g.g)) : Infinity, maxIn = inner.length ? Math.max(...inner.map((g) => g.g)) : 0;
+            if (minCut > Math.max(maxIn * 1.4, h * 0.5)) {
+              const at = new Set(cut.map((g) => g.i));
+              const cells = [[]];
+              head.forEach((w, i) => { if (at.has(i)) cells.push([]); cells[cells.length - 1].push(w); });
+              const pairs = anchors.map((a, i) => ({ a, label: cells[i].map((w) => w.text).join(' '), cell: cells[i] })).filter((p) => !p.a.label && p.a.ws[0].k === 'N');
+              if (pairs.some((p) => named(p.label))) paired = pairs;
+            }
+          }
+        }
+        if (paired) { for (const p of paired) push(p.cell.map((w) => Object.assign({}, w)).concat(p.a.ws)); continue; }
+        if (nums.length && !row.some((w) => w.k === 'H')) { push(row); continue; } // numbers alone: the names row stays for the next one
+        head = null;
+        for (const seg of R.cells(row, wayOf(row, numsFirst))) push(seg);
+      }
+      return out;
+    };
+    /** A PDF's own words with their boxes (Timesheet.wordsFromPdfItems) → lines, as a picture's: every word sure. */
+    R.pdfLines = function (ws) {
+      const words = R.words((ws || []).map((w) => Object.assign({ conf: 100 }, w)), []);
+      for (const w of words) w.both = true;
+      return R.lines(R.rows(words, true)); // a PDF page is never tilted: small offsets between its pieces (a form field a little higher) read as a tilt and moved values a row
+    };
+    /** Text lines (a PDF's own text) cut into cells the same way. */
+    R.textLines = function (lines) {
+      const rows = lines.map((l) => String(l).split(/\s+/).filter(Boolean).map((t) => ({ text: t, k: kindOf(t) === 'N' && numTok(t) !== t ? 'X' : kindOf(t) })));
+      const numsFirst = numbersFirst(rows);
+      const out = [];
+      for (const r of rows) for (const seg of R.cells(r, wayOf(r, numsFirst))) out.push(seg.map((w) => w.text).join(' '));
+      return out;
+    };
+    /**
+     * What the reader is not sure of is not shown as a value: the line stays on the check screen asking to be filled
+     * in, with the text it was read from. Sure are the amounts the payslip's own arithmetic confirms: the payment
+     * lines add up to the gross, the deductions to their total, gross less deductions is the net, hours × rate is the
+     * line's amount. Of the rest:
+     *  - from a picture (source 'ocr') a payment, a deduction or a total is emptied: one misread digit gives another
+     *    amount that looks just as real, and nothing on the page says so. The employer's lines and the information
+     *    (days, balances, credit points) stay only when both readings of the picture read the same number surely,
+     *    and when what they can be checked against agrees (an employer's part is a few percent of the gross, the
+     *    work days fit the work hours);
+     *  - from any source a value that cannot be is emptied: a deduction above all the deductions or the gross, a
+     *    payment above the gross, hours × rate that is not the line's amount, a year's total below this month's,
+     *    45 credit points (a mother of three small children has 16), 45 work days, 18 work hours over 18 days;
+     *  - a line with a word that was not read may be another line than the one it was taken for: it goes to the lines
+     *    to name, with its amount.
+     * An answer of the optional AI (source 'ai') passes the same checks of what cannot be.
+     * Returns { key: why } for what was emptied ('sum', 'read', 'name', 'range').
+     */
+    R.review = function (parsed, lines, source) {
+      const F = parsed.fields, unsure = {};
+      parsed.other = parsed.other || [];
+      const ocr = source === 'ocr';
+      const num = (k) => (F[k] && F[k].value != null ? +F[k].value : null);
+      const keys = (kind) => Payslip.FIELDS.filter((f) => f.kind === kind && num(f.key) != null).map((f) => f.key);
+      const sum = (ks) => ks.reduce((a, k) => a + num(k), 0);
+      const same = (a, b) => Math.abs(a - b) <= 0.05;
+      // a field knows the line it came from by its text, as the parser kept it (direction marks and spaces aside)
+      // The parser keeps a line as IT read it (Payslip.normalize: quotes, "סה'יכ" as סה"כ, a table border dropped), and
+      // may keep a part of a row or a row with the next one's numbers: both sides are normalized the same way, and a
+      // part or a longer line finds its row by containment (round 2: found by the exact text only, such a field had no
+      // words and from a photo it was emptied though read right)
+      const tkey = (t) => {
+        let s = String(t).replace(MARKS, '');
+        try { if (Payslip.normalize) s = Payslip.normalize(s); } catch (e) { /* as it is */ }
+        return s.replace(/\s+/g, ' ').trim();
+      };
+      const keyed = (lines || []).map((l) => ({ k: tkey(l.text), l }));
+      const byText = new Map(keyed.map((x) => [x.k, x.l]));
+      const lineOf = (t) => {
+        const k = tkey(t);
+        if (byText.has(k)) return byText.get(k);
+        if (k.length < 6) return null;
+        const part = keyed.filter((x) => x.k.length >= 6 && x.k.includes(k)).sort((a, b) => a.k.length - b.k.length)[0];
+        if (part) return part.l;
+        const head = keyed.filter((x) => x.k.length >= 6 && k.startsWith(x.k)).sort((a, b) => b.k.length - a.k.length)[0];
+        return head ? head.l : null;
+      };
+      const wordsOf = (v) => [].concat(...String(v.line || '').split(' | ').map(lineOf).filter(Boolean).map((l) => l.words || []));
+      // a line whose name has a word the reader could not read may be another line, and so may a line with no name
+      // at all ("150% 10 52.50 525.00": overtime or Shabbat?): it waits to be named, with its amount
+      for (const k of Object.keys(F)) {
+        const v = F[k];
+        if (source === 'ai' || !Payslip.FIELD[k] || (HEBW.test(String(v.line || '')) && !wordsOf(v).some((w) => w.k === 'X'))) continue;
+        if (v.value != null) parsed.other.push({ line: v.line, value: v.value, guess: 'ignore' });
+        delete F[k];
+        unsure[k] = 'name';
+      }
+      const g = num('gross'), n = num('net'), td = num('totalDeductions');
+      const pays = keys('pay'), deds = keys('ded');
+      const ok = new Set();
+      const c1 = g != null && pays.length && same(sum(pays), g);
+      const c2 = td != null && deds.length && same(sum(deds), td);
+      const c3 = g != null && n != null && td != null && same(g - td, n);
+      const c3b = g != null && n != null && td == null && deds.length && same(g - sum(deds), n);
+      if (c1) ['gross'].concat(pays).forEach((k) => ok.add(k));
+      if (c2) ['totalDeductions'].concat(deds).forEach((k) => ok.add(k));
+      if (c3) ['gross', 'net', 'totalDeductions'].forEach((k) => ok.add(k));
+      if (c3b) ['gross', 'net'].concat(deds).forEach((k) => ok.add(k));
+      // hours × rate printed on one line: the amount it gives confirms the line, another amount says it was misread
+      // (a line put together from several lines is confirmed by none of them, and given away by any)
+      const tokOf = (v, x) => wordsOf(v).find((w) => { if (w.k !== 'N') return false; const m = Payslip.numbersIn(w.text)[0]; return m && Math.abs(Math.abs(m.v) - Math.abs(x)) < 0.005; });
+      // From a picture the amount and the rate must have been read with their agorot: a lost decimal point can multiply
+      // out by chance ("10.00 45.63 456.30" read "10.00 4563 456.30" gave 10 × 456.30 = 4,563 as the overtime pay)
+      const dec = (v, x) => { const w = tokOf(v, x); return !!w && /\.\d/.test(w.text); };
+      const prod = (v) => (v.qty != null && v.rate != null && v.value != null ? Math.abs(v.qty * v.rate - v.value) <= Math.max(0.02, Math.abs(v.value) * 0.002) && (!ocr || (dec(v, v.value) && dec(v, v.rate))) : null);
+      for (const k of Object.keys(F)) if (prod(F[k]) === true && !String(F[k].line).includes(' | ')) ok.add(k);
+      // The same proof when the parser did not say which number is the hours (it leaves the hours out without a
+      // column heading to tell): two other numbers on the amount's own line that multiply to it confirm the amount,
+      // and the hours stay the parser's call. (With the parser of round 2 "10.00 45.63 456.30" came without hours
+      // and rate, and a right amount from a photo was left to fill in.)
+      const pairProof = (v) => {
+        if (v.value == null || v.qty != null || String(v.line).includes(' | ')) return false;
+        const ws = wordsOf(v).filter((w) => w.k === 'N' && !/%$/.test(w.text));
+        const own = tokOf(v, v.value);
+        if (!own || (ocr && !/\.\d/.test(own.text))) return false;
+        // (from a picture the amount and at least one of the two with agorot: a whole number of hours is common, and a
+        // lost decimal point does not multiply out to an amount read with its agorot)
+        const ns = ws.filter((w) => w !== own).map((w) => { const m = Payslip.numbersIn(w.text)[0]; return m ? { v: Math.abs(m.v), d: /\.\d/.test(w.text) } : null; }).filter((x) => x && x.v > 0);
+        for (let i = 0; i < ns.length; i++) for (let j = i + 1; j < ns.length; j++) if ((!ocr || ns[i].d || ns[j].d) && Math.abs(ns[i].v * ns[j].v - v.value) <= Math.max(0.02, Math.abs(v.value) * 0.002)) return true;
+        return false;
+      };
+      for (const k of Object.keys(F)) if (Payslip.FIELD[k] && Payslip.FIELD[k].hours && pairProof(F[k])) ok.add(k);
+      // read the same by both readings (or by the one that saw it), surely
+      const firm = (w) => !!w && w.doubt == null && !w.one && w.conf >= 90;
+      // the work days and the work hours check each other: 4 to 13 hours a day on average (as read, before review)
+      const days0 = num('workDays'), hours0 = num('workHours');
+      const tax0 = num('incomeTax');
+      // the year's gross so far holds this month's: below any amount of the month it lost a digit
+      const most = Math.max(0, ...Payslip.FIELDS.filter((x) => x.kind === 'pay' || x.kind === 'total').map((x) => num(x.key) || 0));
+      const dayFit = days0 != null && hours0 != null && days0 > 0 && hours0 / days0 >= 2 && hours0 / days0 <= 14;
+      for (const k of Object.keys(F)) {
+        const v = F[k], f = Payslip.FIELD[k];
+        if (!f) continue;
+        const p0 = prod(v), money = f.kind === 'pay' || f.kind === 'ded' || f.kind === 'total';
+        let why = '';
+        if (v.value == null) why = '';
+        else if (p0 === false && !ok.has(k)) why = 'sum';
+        else if (!ok.has(k)) {
+          if (f.kind === 'ded' && ((td != null && v.value > td + 2) || (g != null && v.value >= g))) why = 'sum';
+          else if (f.kind === 'pay' && g != null && v.value > g + 2) why = 'sum';
+          else if (k === 'creditPoints' && !(v.value >= 0 && v.value <= 30)) why = 'range';
+          else if (k === 'workDays' && !(v.value >= 0 && v.value <= 31)) why = 'range';
+          else if (k === 'workHours' && !(v.value >= 0 && v.value <= 400)) why = 'range';
+          else if ((k === 'workDays' || k === 'workHours') && days0 != null && hours0 != null && !dayFit) why = 'range';
+          else if ((k === 'vacationBalance' || k === 'sickBalance') && !(v.value > -100 && v.value <= 400)) why = 'range';
+          else if (k === 'ytdGross' && v.value < most - 2) why = 'range';
+          else if (k === 'ytdTax' && tax0 != null && v.value < tax0 - 2) why = 'range';
+          else if (ocr && money) why = 'sum';
+          else if (ocr && f.kind === 'emp' && !(g != null && v.value >= g * 0.015 && v.value <= g * 0.09)) why = 'range';
+          else if (ocr) {
+            const w = tokOf(v, v.value);
+            const whole = k === 'workDays' || (k === 'workHours' && dayFit);
+            if (!firm(w) || (!whole && !/[.]\d/.test(w.text)) || (k === 'workDays' && !dayFit)) why = 'read';
+          }
+        }
+        if (why) { unsure[k] = why; v.value = null; }
+        // the hours of a line: sure when hours × rate is the line's amount; with no rate printed, when the amount is
+        // sure and over the hours gives an hourly rate there can be (15 to 500), and the hours were read surely. The
+        // rate of a line ("43.75") taken for its hours (5) gave 43.75 hours of overtime
+        if (v.qty != null) {
+          const perHour = v.rate == null && v.value != null && v.qty > 0 ? v.value / v.qty : null;
+          const sure = (p0 === true && v.value != null) || (perHour != null && perHour >= 15 && perHour <= 500 && (!ocr || firm(tokOf(v, v.qty))));
+          if (!(v.qty > 0 && v.qty <= 400) || !sure) { unsure[k + '.qty'] = 'read'; v.qty = null; }
+        }
+        if (v.rate != null && (v.value == null || v.qty == null)) delete v.rate;
+      }
+      return unsure;
+    };
+    return R;
+  }());
+  App.SlipRead = SlipRead;
+  /** A picture of a payslip (a photo, a screenshot, a scanned page) → its lines (SlipRead). */
+  async function slipLinesOf(image, progress, signal) {
+    if (!root.DocRead) {
+      // without the table reader: Tesseract's own text, line by line, with nothing marked sure
+      const text = await ocr(image, progress);
+      return text.split('\n').map((t) => ({ text: t.trim(), words: [] })).filter((l) => l.text);
+    }
+    const readOf = async (img) => {
+      // the table's ruled lines taken out first: a digit touching a cell's border was lost with it
+      // signal: the person left the screen, the reading stops (a DocRead that knows it ends its workers)
+      const got = await root.DocRead.words(img, progress, { lines: true, signal });
+      const cv = got.canvas || {};
+      return { lines: SlipRead.lines(SlipRead.rows(SlipRead.words(got.he, got.dg))), heb: got.he.filter((w) => /[א-ת]{2}/.test(w.text) && w.conf >= 70).length, wide: cv.width > cv.height * 1.1 };
+    };
+    let best = await readOf(image);
+    // a page photographed sideways (no orientation in the file) reads as nothing: a picture wider than it is tall is
+    // turned and read again (a payslip is a standing page; a tall picture that read nothing is not read three times)
+    if (best.heb < 12 && best.wide) {
+      for (const deg of [90, 270]) {
+        if (signal && signal.aborted) break;
+        const r = await readOf(await turned(image, deg));
+        if (r.heb >= 12 && r.heb > best.heb * 2) { best = r; break; }
+      }
+    }
+    return best.lines;
+  }
+  /** A picture turned by 90 or 270 degrees, on a canvas no longer than the reader uses (2600px). */
+  async function turned(image, deg) {
+    const src = image instanceof HTMLCanvasElement ? image : await createImageBitmap(image, { imageOrientation: 'from-image' });
+    const s = Math.min(1, 2600 / Math.max(src.width, src.height));
+    const w = Math.round(src.width * s), h = Math.round(src.height * s);
+    const c = document.createElement('canvas');
+    c.width = h; c.height = w;
+    const g = c.getContext('2d');
+    g.translate(h / 2, w / 2);
+    g.rotate((deg * Math.PI) / 180);
+    g.drawImage(src, -w / 2, -h / 2, w, h);
+    if (src.close) src.close();
+    return c;
+  }
+  /**
+   * A PDF page's text items, with the value of every filled form field as one more item at the field's place.
+   * pdf.js gives form fields only through the annotations: a payslip whose amounts are form fields showed its names
+   * and the hours column but no amount, and the hours became the base pay (intake W2, 17 Nov 2026).
+   */
+  async function pageItems(page) {
+    const tc = await page.getTextContent();
+    let an = [];
+    try { an = await page.getAnnotations({ intent: 'display' }); } catch (e) { /* none */ }
+    const form = (an || []).filter((a) => a && a.subtype === 'Widget' && !a.hidden && typeof a.fieldValue === 'string' && a.fieldValue.trim() && Array.isArray(a.rect))
+      .map((a) => {
+        // as wide as its text, where the field puts it (left, centre, right): as wide as the field's box, the value
+        // touched the next column and was glued to it ("6,200.0038.75", no amount read)
+        const str = a.fieldValue.trim(), h = a.rect[3] - a.rect[1], size = h * 0.6, box = a.rect[2] - a.rect[0] - 4;
+        const w = Math.max(1, Math.min(box, str.length * size * 0.55));
+        const x = a.textAlignment === 2 ? a.rect[2] - 2 - w : a.textAlignment === 1 ? a.rect[0] + (a.rect[2] - a.rect[0] - w) / 2 : a.rect[0] + 2;
+        return { str, dir: 'ltr', transform: [size, 0, 0, size, x, a.rect[1] + h * 0.25], width: w, height: size };
+      });
+    return tc.items.concat(form);
+  }
+  App.pdfPageItems = pageItems;
+  /**
+   * A PDF page drawn as a picture for the reader: 2.5 times its size, but never above 12 million pixels (an odd page
+   * size at 2.5 passed the canvas limit of a phone's browser, and its memory).
+   */
+  async function pagePicture(page) {
+    const v1 = page.getViewport({ scale: 1 });
+    const scale = Math.min(2.5, Math.sqrt(12e6 / Math.max(1, v1.width * v1.height)));
+    const vp = page.getViewport({ scale });
+    const canvas = document.createElement('canvas');
+    canvas.width = Math.round(vp.width); canvas.height = Math.round(vp.height);
+    await page.render({ canvasContext: canvas.getContext('2d'), viewport: vp }).promise;
+    return { canvas, scale };
+  }
+  /**
+   * A payslip file → { text, lines, source }. A PDF: the text of its pages (pdf.js), cut into cells; a PDF with no
+   * text (scanned): each page read as a picture until one holds a payslip. A PDF of several payslips (a year's file)
+   * is read up to where the next payslip, of another month, begins: added together, two months gave double amounts.
+   */
+  async function extractSlip(file, progress, signal) {
+    if (root.DocRead) await root.DocRead.check(file); // an empty file, a cloud file not on the phone yet: said as such
+    const isPdf = file.type === 'application/pdf' || /\.pdf$/i.test(file.name || '');
+    if (!isPdf) { const lines = await slipLinesOf(file, progress, signal); return { lines, text: lines.map((l) => l.text).join('\n'), source: 'ocr' }; }
+    await loadScript(LIBS.pdf);
+    const pdfjs = root.pdfjsLib;
+    pdfjs.GlobalWorkerOptions.workerSrc = LIBS.pdfWorker;
+    const doc = await pdfjs.getDocument({ data: await file.arrayBuffer(), isEvalSupported: false }).promise;
+    const pages = Math.min(doc.numPages, 4);
+    const holdsSlip = (text) => { const p = Payslip.parseText(text).fields; return !!(p.gross || p.net || p.base || p.totalDeductions); };
+    let all = [], period = null;
+    for (let p = 1; p <= pages; p++) {
+      progress(`קורא עמוד ${p} מתוך ${doc.numPages}…`);
+      const items = await pageItems(await doc.getPage(p));
+      // the words with their boxes, through the same rows and cells as a picture: a row of column names over a row of
+      // numbers is paired by where the columns are (by the text alone "שעות עבודה" took the work days, 18)
+      const lines = root.Timesheet && root.Timesheet.wordsFromPdfItems ? SlipRead.pdfLines(root.Timesheet.wordsFromPdfItems(items, (p - 1) * 5000))
+        : SlipRead.textLines(Payslip.linesFromPdfItems(items)).map((t) => ({ text: t, words: [] }));
+      const t = lines.map((l) => l.text).join('\n');
+      if (t.replace(/\s/g, '').length <= 80) continue;
+      const per = Payslip.detectPeriod(t);
+      if (all.length && period && per && per !== period && holdsSlip(t)) break; // the next month's payslip
+      if (!period && holdsSlip(t)) period = per;
+      all = all.concat(lines);
+    }
+    if (all.length) return { lines: all, text: all.map((l) => l.text).join('\n'), source: 'pdf' };
+    // scanned: each page as a picture, until one holds a payslip
+    progress('ה-⁠PDF סרוק: מריץ זיהוי טקסט…');
+    let first = null;
+    for (let p = 1; p <= pages; p++) {
+      if (signal && signal.aborted) break;
+      const { canvas } = await pagePicture(await doc.getPage(p));
+      const lines = await slipLinesOf(canvas, progress, signal);
+      canvas.width = canvas.height = 0; // the page's pixels let go at once (a phone's memory)
+      const text = lines.map((l) => l.text).join('\n');
+      if (!first) first = { lines, text, source: 'ocr' };
+      if (holdsSlip(text)) return { lines, text, source: 'ocr' };
+    }
+    return first || { lines: [], text: '', source: 'ocr' };
+  }
   /**
    * A picture or a PDF → its words, each with its box ({ text, x0, y0, x1, y1 }, y down), for reading a table
    * (a work schedule): a picture through the same Hebrew OCR, a PDF from its own text (an OCR of the first page
    * when it is scanned).
    */
-  App.readDocWords = async function (file, progress) {
+  App.readDocWords = async function (file, progress, opts) {
+    opts = opts || {};
+    if (root.DocRead) await root.DocRead.check(file);
     const isPdf = file.type === 'application/pdf' || /\.pdf$/i.test(file.name || '');
     if (isPdf) {
       await loadScript(LIBS.pdf);
       const pdfjs = root.pdfjsLib;
       pdfjs.GlobalWorkerOptions.workerSrc = LIBS.pdfWorker;
       const doc = await pdfjs.getDocument({ data: await file.arrayBuffer(), isEvalSupported: false }).promise;
-      // every page (a month's report can run to a second page), each below the one before; letters drawn one by
-      // one or spread out are put back into words (Timesheet.wordsFromPdfItems)
-      let words = [];
-      for (let p = 1; p <= Math.min(doc.numPages, 4); p++) {
-        const pg = await doc.getPage(p);
-        const tc = await pg.getTextContent();
-        words = words.concat(root.Timesheet.wordsFromPdfItems(tc.items, (p - 1) * 5000));
+      // every page up to 8 (a month's report can run to a second page), each below the one before; letters drawn one
+      // by one or spread out are put back into words (Timesheet.wordsFromPdfItems). Was: 4 pages of text, and only
+      // the FIRST page of a scanned report, shown as if it were the whole report (intake D2: 2 of 8 shifts)
+      const pagesRead = Math.min(doc.numPages, 8);
+      const pageWords = [];
+      for (let p = 1; p <= pagesRead; p++) pageWords.push(root.Timesheet.wordsFromPdfItems(await pageItems(await doc.getPage(p)), (p - 1) * 5000));
+      const meta = { pages: doc.numPages, pagesRead };
+      // a PDF with text keeps its text pages (a thin page, a cover or an empty last page, is not read as a picture)
+      if (pageWords.some((ws) => ws.length > 6)) {
+        const words = [].concat(...pageWords.filter((ws) => ws.length > 6));
+        return Object.assign({ words, text: words.map((w) => w.text).join(' '), source: 'pdf' }, meta);
       }
-      if (words.length > 6) return { words, text: words.map((w) => w.text).join(' '), source: 'pdf' };
-      const page = await doc.getPage(1);
+      // scanned: every page read as a picture, its words brought back to the page's own size and place
       progress('ה-⁠PDF סרוק: מריץ זיהוי טקסט…');
-      const vp = page.getViewport({ scale: 2.5 });
-      const canvas = document.createElement('canvas');
-      canvas.width = vp.width; canvas.height = vp.height;
-      await page.render({ canvasContext: canvas.getContext('2d'), viewport: vp }).promise;
-      return Object.assign(await ocrWords(canvas, progress), { source: 'ocr' });
+      let words = [], text = [];
+      for (let p = 1; p <= pagesRead; p++) {
+        if (opts.signal && opts.signal.aborted) break;
+        const { canvas, scale } = await pagePicture(await doc.getPage(p));
+        const got = await ocrWords(canvas, progress, opts);
+        const k = (got.width ? canvas.width / got.width : 1) / scale;
+        canvas.width = canvas.height = 0;
+        words = words.concat(got.words.map((w) => Object.assign({}, w, { x0: w.x0 * k, x1: w.x1 * k, y0: w.y0 * k + (p - 1) * 5000, y1: w.y1 * k + (p - 1) * 5000 })));
+        text.push(got.text);
+      }
+      return Object.assign({ words, text: text.join(' '), source: 'ocr' }, meta);
     }
-    return Object.assign(await ocrWords(file, progress), { source: 'ocr' });
+    return Object.assign(await ocrWords(file, progress, opts), { source: 'ocr' });
   };
   async function ocrPass(image, lang, progress, label) {
     const worker = await root.Tesseract.createWorker(lang, 1, {
@@ -142,11 +646,12 @@
    * came out "60 ה"), so a second pass reads the picture with the English model only, which reads digits well:
    * hours it finds where the first pass has no hours take the place of what the first pass read there.
    */
-  async function ocrWords(image, progress) {
-    // the picture made easy to read first (app/docread.js: light evened out, two readings)
-    if (root.DocRead) { const got = await root.DocRead.words(image, progress); return { words: got.words, text: got.he.map((w) => w.text).join(' ') }; }
+  async function ocrWords(image, progress, opts) {
+    // the picture made easy to read first (app/docread.js: light evened out, two readings); width: the size it was
+    // read at, so a caller can bring the boxes back to its own size
+    if (root.DocRead) { const got = await root.DocRead.words(image, progress, opts || {}); return { words: got.words, text: got.he.map((w) => w.text).join(' '), width: got.canvas ? got.canvas.width : 0 }; }
     await loadScript(LIBS.tesseract);
-    progress('טוען מנוע זיהוי עברית (פעם ראשונה ~10MB)…');
+    progress('מכין את מנוע הקריאה…');
     const he = await ocrPass(image, 'heb+eng', progress, 'מזהה טקסט');
     let en;
     try { en = await ocrPass(image, 'eng', progress, 'בודק את השעות'); } catch (e) { return he; }
@@ -170,8 +675,8 @@
     UI.openSheet({
       title: 'ניתוח תלוש שכר',
       body: `<div class="small muted" style="margin-bottom:12px">העלה את התלוש (PDF או צילום). הקריאה מתבצעת בטלפון: התלוש לא נשלח לשום מקום.</div>
-        <label class="btn big" style="margin-bottom:10px">${icon('upload')} בחר קובץ PDF או תמונה<input type="file" accept="application/pdf,image/*" id="ps-file" hidden></label>
-        <label class="btn tonal block" style="margin-bottom:10px">${icon('camera')} צלם את התלוש<input type="file" accept="image/*" capture="environment" id="ps-cam" hidden></label>
+        <label class="btn big" style="margin-bottom:10px">${icon('upload')} בחר קובץ PDF או תמונה<input type="file" accept="application/pdf,image/*" id="ps-file" class="sr"></label>
+        <label class="btn tonal block" style="margin-bottom:10px">${icon('camera')} צלם את התלוש<input type="file" accept="image/*" capture="environment" id="ps-cam" class="sr"></label>
         <button class="btn outlined block" data-manual>${icon('edit')} הזנה ידנית (בלי קובץ)</button>
         <div class="tiny muted" style="margin-top:12px">טיפ: PDF מקורי מדויק יותר מצילום. בצילום: תאורה טובה, ישר מלמעלה, כל התלוש בפריים.</div>${DISCLAIMER}`,
       onMount: (el) => {
@@ -209,24 +714,44 @@
   async function startExtraction(file) {
     const bad = payslipFileProblem(file);
     if (bad) { UI.invalid(bad); return; }
-    let statusEl = null;
+    let statusEl = null, gone = false;
+    const stop = typeof AbortController === 'function' ? new AbortController() : null;
     UI.openSheet({
       title: 'קורא את התלוש…',
       body: `<div class="empty"><div class="art">${icon('receipt')}</div><h3 id="ps-status">מתחיל…</h3><div class="small">${esc(file.name)}</div></div>`,
-      onMount: (el) => { statusEl = el.querySelector('#ps-status'); },
+      onMount: (el) => { statusEl = el.querySelector('#ps-status'); statusEl.setAttribute('role', 'status'); },
+      // closed while reading: the reading is let go (and stopped). When it ended it closed whatever sheet was on top
+      // then (another payslip being read, a setting) and opened its check over it
+      onClose: () => { gone = true; if (stop) stop.abort(); },
     });
-    const progress = (t) => { if (statusEl) statusEl.textContent = t; };
+    // the stage is said by a screen reader, the percent that follows it is only seen ("קורא את המילים… 37%" was
+    // announced at every percent)
+    const progress = (t) => {
+      if (!statusEl || gone) return;
+      const m = /^(.*?)(\s*\d+%)$/.exec(String(t));
+      if (!m) { statusEl.textContent = t; return; }
+      statusEl.innerHTML = `${esc(m[1])}<span aria-hidden="true">${esc(m[2])}</span>`;
+    };
     try {
-      const fileId = 'file_' + U.uid();
-      await Store.putFile(fileId, file, file.name, file.type);
-      const { text, source } = await extract(file, progress);
+      const { text, lines, source } = await extractSlip(file, progress, stop && stop.signal);
+      if (gone) return;
       const parsed = Payslip.parseText(text);
+      SlipRead.review(parsed, lines, source);
       UI.closeTop();
-      setTimeout(() => verifySheet({ fields: parsed.fields, other: parsed.other, period: parsed.period || defaultPeriod(), text, source, fileId, fileName: file.name }), 320);
+      // a month the file does not say is left for the person to choose ("continue" asks for it): last month put in
+      // its place looked read, and the check then compared the payslip with another month's shifts
+      // and a month that cannot be a payslip's (after this month: "02/2078" from a blurred "04/2026") is not one read
+      const period = parsed.period && parsed.period >= '2000-01' && parsed.period <= U.todayKey().slice(0, 7) ? parsed.period : '';
+      // the file itself waits in the draft: it is stored only with a saved payslip (saveSlip). Stored before reading,
+      // every file read stayed on the phone and in backups, after a failed read, a closed check, a deleted payslip
+      setTimeout(() => verifySheet({ fields: parsed.fields, other: parsed.other, period, text, source, file, fileName: file.name }), 320);
     } catch (e) {
       console.error(e);
-      progress(root.U.ours(e) ? e.message : 'לא הצלחנו לקרוא את התלוש מהקובץ');
-      UI.toast('הקריאה נכשלה. אפשר להזין ידנית.');
+      if (gone) return;
+      // back to the start, where a manual entry and another file wait, with what went wrong: the reading sheet said
+      // "you can enter it by hand" and offered only "close" (intake S3)
+      UI.closeTop();
+      setTimeout(() => { App.actions['payslip-new'](); UI.toast((root.DocRead && root.DocRead.trouble(e)) || (root.U.ours(e) ? e.message : 'הקריאה נכשלה. אפשר להזין ידנית.')); }, 320);
     }
   }
 
@@ -239,7 +764,7 @@
   const SOURCE = { pdf: ['file', 'נקרא מ-\u2060PDF'], ocr: ['camera', 'נקרא מצילום'], ai: ['sparkle', 'נותח בעזרת AI'], manual: ['edit', 'הזנה ידנית'] };
   const ESSENTIAL = ['gross', 'net', 'base', 'workHours'];
   function verifySheet(draft) {
-    const d = { period: draft.period, fields: Store.clone(draft.fields) || {}, other: (draft.other || []).map((o) => Object.assign({ guess: o.guess || 'ignore' }, o)), text: draft.text || '', source: draft.source, fileId: draft.fileId, fileName: draft.fileName, id: draft.id, notes: draft.notes || '' };
+    const d = { period: draft.period, fields: Store.clone(draft.fields) || {}, other: (draft.other || []).map((o) => Object.assign({ guess: o.guess || 'ignore' }, o)), text: draft.text || '', source: draft.source, file: draft.file, fileId: draft.fileId, fileName: draft.fileName, id: draft.id, notes: draft.notes || '' };
     let sheetEl = null;
     const val = (k) => (d.fields[k] && d.fields[k].value != null && d.fields[k].value !== '' ? +d.fields[k].value : null);
     const shown = (f) => {
@@ -398,16 +923,16 @@
           else if (b.dataset.rm) { readInputs(); delete d.fields[b.dataset.rm]; redraw(); }
           else if (b.dataset.add) addField(b.dataset.add);
           else if (b.hasAttribute('data-addmenu')) { readInputs(); addMenu(); }
-          else if (b.hasAttribute('data-ai')) { readInputs(); App.aiAnalyze(d.text, (res) => { Object.assign(d.fields, res.fields); d.other = res.other.length ? res.other : d.other; if (res.period) d.period = res.period; d.notes = res.notes; d.source = 'ai'; redraw(); }); }
+          else if (b.hasAttribute('data-ai')) { readInputs(); App.aiAnalyze(d.text, (res) => { SlipRead.review(res, [], 'ai'); for (const [k, v] of Object.entries(res.fields)) if (v.value != null || !d.fields[k]) d.fields[k] = v; d.other = res.other.length ? res.other : d.other; if (res.period) d.period = res.period; d.notes = res.notes; d.source = 'ai'; redraw(); }); }
           else if (b.hasAttribute('data-go')) {
             readInputs();
-            if (!/^\d{4}-\d{2}$/.test(d.period || '')) { UI.invalid('בחרו את חודש התלוש'); return; }
+            if (!/^\d{4}-\d{2}$/.test(d.period || '')) { UI.invalid('בחרו את חודש התלוש'); const m = el.querySelector('#vf-period'); if (m) m.scrollIntoView({ block: 'nearest', behavior: 'smooth' }); return; }
             // mapped unknown lines
             Payslip.addNamedLines(d.fields, d.other);
             for (const k of Object.keys(d.fields)) if (d.fields[k].value == null && d.fields[k].qty == null) delete d.fields[k];
             if (!Object.keys(d.fields).length) { UI.invalid('הוסיפו לפחות שורה אחת מהתלוש'); return; }
             UI.closeTop();
-            setTimeout(() => analysisSheet({ id: d.id || 'ps_' + U.uid(), period: d.period, fields: d.fields, other: d.other, text: d.text, source: d.source, fileId: d.fileId, fileName: d.fileName, isNew: !d.id, edited: !!d.id }), 320);
+            setTimeout(() => analysisSheet({ id: d.id || 'ps_' + U.uid(), period: d.period, fields: d.fields, other: d.other, text: d.text, source: d.source, file: d.file, fileId: d.fileId, fileName: d.fileName, isNew: !d.id, edited: !!d.id }), 320);
           }
         });
       },
@@ -813,6 +1338,12 @@
     const counts = { ok: 0, warn: 0, bad: 0 };
     // a finding the innocent reasons explain in full counts as "to check", as on the screen
     a.findings.forEach((f) => { const it = itemOf(f); counts[f.status === 'bad' && it && it.left < 1 ? 'warn' : f.status]++; });
+    // the file read is stored here, with the payslip it belongs to, once (intake P1)
+    if (slip.file && !slip.fileId) {
+      const id = 'file_' + U.uid();
+      try { await Store.putFile(id, slip.file, slip.file.name, slip.file.type); slip.fileId = id; } catch (e) { console.warn('payslip file', e); }
+      delete slip.file;
+    }
     const rec = {
       id: slip.id, period: slip.period, employerId: S.employers[0].id, fields: slip.fields, other: slip.other,
       text: slip.text, source: slip.source, fileId: slip.fileId || null, fileName: slip.fileName || '',

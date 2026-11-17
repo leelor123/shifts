@@ -90,3 +90,5 @@ T.test('a night shift an hours-only report puts on the next day is paired', () =
   // a day shift is not paired with the next day's row
   T.eq(types(H.compare([rep('2026-09-02', null, null, 8)], [mine('2026-09-01', '09:00', '17:00')])), '01:missingEmp 02:missingMine');
 });
+require('./hourscheck-guard.test.js');
+require('./import-guard.test.js');

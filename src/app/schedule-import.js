@@ -59,7 +59,7 @@
       const name = myNames()[0] || '';
       box.innerHTML = `${App.mascotSays ? App.mascotSays('happy', 'קיבלת סידור עבודה? צלם אותו או הדבק את ההודעה, ואכניס את המשמרות שלך ללוח 📅', { size: 64 }) : ''}
         <label class="field"><span class="lbl">השם שלך בסידור</span><input class="input" id="sc-name" value="${esc(name)}" placeholder="למשל: לי" autocomplete="given-name"></label>
-        <label class="btn big block imp-pick">${icon('camera')} צילום או צילום מסך של הסידור<input type="file" id="sc-file" hidden accept="image/*,application/pdf"></label>
+        <label class="btn big block imp-pick">${icon('camera')} צילום או צילום מסך של הסידור<input type="file" id="sc-file" class="sr" accept="image/*,application/pdf"></label>
         ${opts.text ? '' : `<details class="imp-paste"${opts.paste ? ' open' : ''}><summary>${icon('chat', 's')} או להדביק את ההודעה מוואטסאפ</summary>
           <textarea class="input" id="sc-text" rows="6" placeholder="למשל:&#10;ראשון: דני 8-16, לי 16-24&#10;שני: לי 8-16"></textarea>
           <button class="btn tonal block" data-sc-read>${icon('check', 's')} קריאה</button></details>`}
@@ -126,6 +126,7 @@
           <button class="sc-time" data-sc-time="${i}" aria-label="שינוי השעות"><span class="num">\u2066${r.start}\u2060–\u2060${r.end}\u2069</span>${icon('edit', 's')}</button></div>`;
       }).join('');
       box.innerHTML = `${head}
+        ${res.pages > res.pagesRead ? `<div class="tiny muted imp-note">${icon('info', 's')} קראנו את ${res.pagesRead} העמודים הראשונים מתוך ${res.pages}. את השאר אפשר להעלות בקובץ נפרד.</div>` : ''}
         ${names.length ? `<div class="field"><span class="lbl">${who.length ? 'המשמרות של' : 'מי את/ה בסידור?'}</span><div class="chips sc-names">${names.map((n) => `<button class="chip ${who.includes(n) ? 'on' : ''}" data-sc-who="${esc(n)}" aria-pressed="${who.includes(n)}">${esc(n)}</button>`).join('')}</div></div>` : ''}
         ${res.needsWeek && (who.length || !names.length) ? `<div class="field"><span class="lbl">לאיזה שבוע?</span><div class="chips sc-week">${[[thisWeek, 'השבוע'], [nextWeek, 'שבוע הבא']].map(([k, t]) => `<button class="chip ${week === k ? 'on' : ''}" data-sc-week="${k}" aria-pressed="${week === k}">${t} · מ-${U.fmtDate(k, 'short')}</button>`).join('')}</div></div>` : ''}
         ${roles.length > 1 && rows.length ? `<div class="field"><span class="lbl">לאיזה תפקיד לשייך?</span><div class="chips imp-roles">${roles.map((r) => `<button class="chip ${r.id === roleId ? 'on' : ''}" data-sc-role="${esc(r.id)}"><span class="sw" style="background:${r.color}"></span>${esc(r.name)}${App.multiEmp() ? ' · ' + esc((App.employer(r.employerId) || {}).name || '') : ''}</button>`).join('')}</div></div>` : ''}
@@ -168,12 +169,13 @@
         // the words with their places only: parseWords reads a picture that is no table as text itself, line by
         // line. Its text read again as one line put a whole table's shifts on its last date, nobody's name on
         // them (schedule bench, 17 Nov 2026)
-        parse(() => Object.assign(SC().parseWords(got.words, { today: U.todayKey(), named: named(), mine: myNames() }), { text: got.text }));
+        // (pages, pagesRead: a long PDF read on its first pages only, said on the review)
+        parse(() => Object.assign(SC().parseWords(got.words, { today: U.todayKey(), named: named(), mine: myNames() }), { text: got.text, pages: got.pages, pagesRead: got.pagesRead }));
       } catch (e) {
         console.warn('schedule', e);
         if (entry.closed) return;
         start();
-        UI.invalid(root.U.ours(e) ? e.message : 'לא הצלחנו לקרוא את הסידור. אפשר לנסות שוב או להדביק את ההודעה');
+        UI.invalid(root.DocRead.trouble(e) || (root.U.ours(e) ? e.message : 'לא הצלחנו לקרוא את הסידור. אפשר לנסות שוב או להדביק את ההודעה'));
       }
     }
     // the picture, read by Claude (the person's own key; asked first, since it goes to Anthropic)
@@ -193,7 +195,7 @@
         console.warn('schedule ai', e);
         if (entry.closed) return;
         start();
-        UI.dialog({ title: 'הקריאה החכמה נכשלה', text: root.U.ours(e) ? e.message : 'לא הצלחנו לקרוא את התשובה של Claude. נסו שוב, או הוסיפו את המשמרות ידנית.', buttons: [{ label: 'סגור', value: true }] });
+        UI.dialog({ title: 'הקריאה החכמה נכשלה', text: root.DocRead.trouble(e) || (root.U.ours(e) ? e.message : 'לא הצלחנו לקרוא את התשובה של Claude. נסו שוב, או הוסיפו את המשמרות ידנית.'), buttons: [{ label: 'סגור', value: true }] });
       }
     }
     async function add() {
