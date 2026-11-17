@@ -757,3 +757,75 @@ T.test('a pay period from an unusual day that matches by chance does not explain
     T.ok(!per || per.found !== 'yes' || [1, 15, 16, 20, 21, 25, 26].some((d) => per.text.includes('מה-' + d + ' ')) || per.text.includes('קלנדרי'), 'only a common first day closes it: ' + (per && per.text));
   }
 });
+
+T.section('payslip: round 3 (the merge review)');
+const slip3 = (text, keep) => { const p = Payslip.parseText(text); p.period = '2026-09'; if (keep) for (const k of Object.keys(p.fields)) if (p.fields[k].value == null) p.fields[k].asked = true; return p; };
+T.test('a line asked for and left empty is "not read, check by hand": never owed, never in the letter', () => {
+  const m = model(septShifts());
+  const p = slip3(['תלוש שכר לחודש 09/2026', 'שכר יסוד 40.00 40.00 1,600.00', 'שעות נוספות 125% 2.00 50.00 100.00', 'שעות שבת 150% 4.00 60.00 240.00'].join('\n'));
+  p.fields.travel = { value: null, asked: true, line: 'נסיעות 1 3 5 . 6 0' };
+  p.fields.pensionEmployee = { value: null, asked: true, line: 'פנסיה עובד 1l6.40' };
+  const a = Payslip.analyze(p, m);
+  T.eq(a.totalMissing, 0, JSON.stringify(a.findings.filter((f) => f.status === 'bad').map((f) => [f.area, f.amount])));
+  const nr = a.findings.find((f) => f.area === 'לא נקרא');
+  T.ok(nr && nr.status === 'warn' && nr.asked.includes('travel') && nr.asked.includes('pensionEmployee'), 'the lines are named for a check by hand');
+  const c = Payslip.checkGap(a, p, m);
+  T.eq(c.items.length, 0, 'nothing for the gap check');
+  T.eq(Payslip.employerMessage(a, { name: 'x', check: c }), '', 'no letter');
+  const rc = Payslip.reconcile(p, m, a, c);
+  const tr = rc.gross.items.find((x) => x.id === 'travel');
+  T.ok(tr && tr.state === 'ask' && tr.asked, 'the reconciliation asks for the travel line: ' + JSON.stringify(tr && [tr.state, tr.text]));
+  // an hours line asked for makes the hours unknown, not 1,686.96 ₪ of hours unpaid
+  const q = slip3(['שכר יסוד 20.00 40.00 800.00', 'שכר יסוד 20.00 4X.00 8Q0.00', 'שעות נוספות 125% 2.00 50.00 100.00'].join('\n'), true);
+  T.eq(Payslip.hoursOnSlip(q.fields), null);
+  T.ok(!Payslip.analyze(q, m).findings.some((f) => f.area === 'שעות' && f.status === 'bad'), 'no hours alarm');
+});
+T.test('a line the person names fills a field the reader asked for', () => {
+  const f = { base: { value: null, asked: true, line: 'שכר יסוד 4X.00' } };
+  Payslip.addNamedLines(f, [{ line: 'שכר יסוד 40.00 40.00 1,600.00', value: 1600, guess: 'base' }]);
+  T.near(f.base.value, 1600); T.ok(!f.base.asked, 'no longer asked');
+  T.eq(Payslip.parseText(['שכר נטו 4,198.91', 'נטו לתשלום 3,898.9l'].join('\n')).fields.net.asked, true, 'the reader marks what it asks for');
+});
+T.test('a payslip of two pages that prints its header on each page is one payslip; another month is a second one', () => {
+  const head = 'סופר השכונה בע"מ\nתלוש שכר לחודש 09/2026\nשם העובד: ישראל ישראלי';
+  const two = Payslip.parseText(head + '\nשכר יסוד 40.00 40.00 1,600.00\nעמוד 1 מתוך 2\n' + head + '\nשעות שבת 150% 4.00 60.00 240.00\nנסיעות 135.60\nסה"כ ברוטו 1,975.60\nנטו לתשלום 1,800.00');
+  T.near(two.fields.base.value, 1600); T.near(two.fields.rest150.value, 240); T.near(two.fields.travel.value, 135.6); T.ok(!two.secondSlip);
+  const months = Payslip.parseText(head + '\nשכר יסוד 40.00 40.00 1,600.00\n' + head.replace('09/2026', '10/2026') + '\nשכר יסוד 10.00 40.00 400.00');
+  T.near(months.fields.base.value, 1600); T.ok(months.secondSlip);
+});
+T.test('under "החודש מצטבר" every line takes the month\'s amount, not the year\'s', () => {
+  const f = Payslip.parseText(['החודש מצטבר', 'שכר יסוד 40.00 40.00 1,600.00 14,400.00', 'נסיעות 135.60 1,220.40', 'סה"כ ברוטו 2,075.60 18,680.40', 'סה"כ ניכויים 204.06 1,836.54', 'נטו לתשלום 1,871.54 16,843.86'].join('\n')).fields;
+  T.near(f.base.value, 1600); T.near(f.travel.value, 135.6); T.near(f.gross.value, 2075.6); T.near(f.totalDeductions.value, 204.06); T.near(f.net.value, 1871.54);
+});
+T.test('overtime is checked by its rate too; a printed hours total does not override the app\'s hours', () => {
+  const m = model(septShifts());
+  for (const extra of ['', 'סה"כ שעות 40.00\n']) {
+    const p = slip3(extra + 'שכר יסוד 40.00 40.00 1,600.00\nשעות נוספות 125% 2.00 10.00 20.00\nשעות שבת 150% 4.00 20.00 80.00\nנסיעות 135.60\nפנסיה עובד 116.40');
+    const a = Payslip.analyze(p, m);
+    const ot = a.findings.find((f) => f.area === 'שעות נוספות'), sh = a.findings.find((f) => f.area === 'שבת וחג');
+    T.eq(ot.status, 'bad', extra + 'overtime at 25%'); T.near(ot.amount, 80, 0.01); T.near(sh.amount, 160, 0.01);
+    T.ok(!a.findings.some((f) => f.area === 'שעות' && f.status === 'bad'), 'no "hours missing" for a premium paid short');
+  }
+});
+T.test('"ניכויים:" glued to a deduction names the deduction; a line from a past payslip waits to be named', () => {
+  const f = Payslip.parseText('ניכויים: ביטוח לאומי 21.35\nסה"כ ניכויים 204.06').fields;
+  T.near(f.nationalInsurance.value, 21.35); T.near(f.totalDeductions.value, 204.06);
+  const p = Payslip.parseText('תלוש שכר לחודש 09/2026\nהפרשי שכר מתלוש קודם 350.00');
+  T.ok(!p.fields.diff && p.other.some((o) => o.value === 350), 'to the lines to name: ' + JSON.stringify(p.other));
+  T.eq(Payslip.parseText('תלוש משכורת לחודש ספטמבר 2026').other.length, 0, 'the title itself is no line');
+});
+T.test('redaction: a row of labels and its values, more labels, reversed lines, an address by its town, "בעמ"', () => {
+  const r = (t) => Payslip.redact(t).text;
+  T.ok(!r('שם העובד מספר עובד מחלקה\nנדב כהן 1234 מכירות').includes('נדב'));
+  T.ok(r('שם העובד מספר עובד מחלקה\nנדב כהן 1234 מכירות').includes('מספר עובד'), 'the labels stay');
+  for (const t of ['עובד: נדב כהן', 'שם העובד/ת: נדב כהן', 'םש :דבועה ןהכ בדנ', 'ןהכ בדנ :דבועה םש']) T.ok(!/נדב|בדנ/.test(r(t)), t + ' => ' + r(t));
+  T.ok(!r('מספר זהות\n01234567-8').includes('01234567'));
+  T.ok(!r('בנק סניף חשבון\n12 600 123456').includes('123456'));
+  T.ok(!r('הרצל 12 תל אביב 6713201').includes('הרצל'));
+  T.ok(!r('סופר השכונה בעמ').includes('השכונה')); T.ok(!r('מעסיק: סופר השכונה').includes('השכונה'));
+  T.ok(r('שכר יסוד 160.00 40.00 6,400.00\nתחילת עבודה 01/02/2024').includes('6,400.00'), 'the money stays');
+});
+T.test('the AI: a year\'s gross above 10,000 is kept', () => {
+  T.near(Payslip.fromAi({ fields: [{ key: 'ytdGross', value: 41250.8, qty: 0, rate: 0 }], otherLines: [] }).fields.ytdGross.value, 41250.8);
+  T.ok(!Payslip.fromAi({ fields: [{ key: 'workDays', value: 300, qty: 0, rate: 0 }], otherLines: [] }).fields.workDays, 'a count keeps its bound');
+});
