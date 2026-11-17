@@ -157,7 +157,7 @@
       return out;
     };
     /** Words → rows (top to bottom), each right to left. A tilted photo: the tilt is measured and taken out first. */
-    R.rows = function (words) {
+    R.rows = function (words, flat) {
       if (!words.length) return [];
       const hs = words.map((w) => w.y1 - w.y0).sort((a, b) => a - b);
       const h = hs[hs.length >> 1] || 20;
@@ -176,7 +176,7 @@
         if (best) slopes.push(best.dy / best.dx);
       }
       slopes.sort((a, b) => a - b);
-      const sl = slopes.length >= 5 ? slopes[slopes.length >> 1] : 0;
+      const sl = !flat && slopes.length >= 5 ? slopes[slopes.length >> 1] : 0;
       const yy = (w) => cy(w) - sl * cx(w);
       const rows = [];
       for (const w of words.slice().sort((a, b) => b.x1 - a.x1)) {
@@ -314,7 +314,7 @@
     R.pdfLines = function (ws) {
       const words = R.words((ws || []).map((w) => Object.assign({ conf: 100 }, w)), []);
       for (const w of words) w.both = true;
-      return R.lines(R.rows(words));
+      return R.lines(R.rows(words, true)); // a PDF page is never tilted: small offsets between its pieces (a form field a little higher) read as a tilt and moved values a row
     };
     /** Text lines (a PDF's own text) cut into cells the same way. */
     R.textLines = function (lines) {
@@ -382,6 +382,22 @@
       const dec = (v, x) => { const w = tokOf(v, x); return !!w && /\.\d/.test(w.text); };
       const prod = (v) => (v.qty != null && v.rate != null && v.value != null ? Math.abs(v.qty * v.rate - v.value) <= Math.max(0.02, Math.abs(v.value) * 0.002) && (!ocr || (dec(v, v.value) && dec(v, v.rate))) : null);
       for (const k of Object.keys(F)) if (prod(F[k]) === true && !String(F[k].line).includes(' | ')) ok.add(k);
+      // The same proof when the parser did not say which number is the hours (it leaves the hours out without a
+      // column heading to tell): two other numbers on the amount's own line that multiply to it confirm the amount,
+      // and the hours stay the parser's call. (With the parser of round 2 "10.00 45.63 456.30" came without hours
+      // and rate, and a right amount from a photo was left to fill in.)
+      const pairProof = (v) => {
+        if (v.value == null || v.qty != null || String(v.line).includes(' | ')) return false;
+        const ws = wordsOf(v).filter((w) => w.k === 'N' && !/%$/.test(w.text));
+        const own = tokOf(v, v.value);
+        if (!own || (ocr && !/\.\d/.test(own.text))) return false;
+        // (from a picture the amount and at least one of the two with agorot: a whole number of hours is common, and a
+        // lost decimal point does not multiply out to an amount read with its agorot)
+        const ns = ws.filter((w) => w !== own).map((w) => { const m = Payslip.numbersIn(w.text)[0]; return m ? { v: Math.abs(m.v), d: /\.\d/.test(w.text) } : null; }).filter((x) => x && x.v > 0);
+        for (let i = 0; i < ns.length; i++) for (let j = i + 1; j < ns.length; j++) if ((!ocr || ns[i].d || ns[j].d) && Math.abs(ns[i].v * ns[j].v - v.value) <= Math.max(0.02, Math.abs(v.value) * 0.002)) return true;
+        return false;
+      };
+      for (const k of Object.keys(F)) if (Payslip.FIELD[k] && Payslip.FIELD[k].hours && pairProof(F[k])) ok.add(k);
       // read the same by both readings (or by the one that saw it), surely
       const firm = (w) => !!w && w.doubt == null && !w.one && w.conf >= 90;
       // the work days and the work hours check each other: 4 to 13 hours a day on average (as read, before review)
@@ -481,7 +497,14 @@
     let an = [];
     try { an = await page.getAnnotations({ intent: 'display' }); } catch (e) { /* none */ }
     const form = (an || []).filter((a) => a && a.subtype === 'Widget' && !a.hidden && typeof a.fieldValue === 'string' && a.fieldValue.trim() && Array.isArray(a.rect))
-      .map((a) => { const h = a.rect[3] - a.rect[1]; return { str: a.fieldValue.trim(), dir: 'ltr', transform: [h * 0.6, 0, 0, h * 0.6, a.rect[0] + 2, a.rect[1] + h * 0.25], width: Math.max(1, a.rect[2] - a.rect[0] - 4), height: h * 0.6 }; });
+      .map((a) => {
+        // as wide as its text, where the field puts it (left, centre, right): as wide as the field's box, the value
+        // touched the next column and was glued to it ("6,200.0038.75", no amount read)
+        const str = a.fieldValue.trim(), h = a.rect[3] - a.rect[1], size = h * 0.6, box = a.rect[2] - a.rect[0] - 4;
+        const w = Math.max(1, Math.min(box, str.length * size * 0.55));
+        const x = a.textAlignment === 2 ? a.rect[2] - 2 - w : a.textAlignment === 1 ? a.rect[0] + (a.rect[2] - a.rect[0] - w) / 2 : a.rect[0] + 2;
+        return { str, dir: 'ltr', transform: [size, 0, 0, size, x, a.rect[1] + h * 0.25], width: w, height: size };
+      });
     return tc.items.concat(form);
   }
   App.pdfPageItems = pageItems;

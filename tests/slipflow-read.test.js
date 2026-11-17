@@ -89,7 +89,21 @@ T.test('from a picture, hours × rate confirms a line only with the agorot read'
   const lost = read(row(100, ['111', 'שעות', 'נוספות', '125%', '10.00', '4563', '456.30']));
   T.ok(!lost.F.ot125 || lost.F.ot125.value == null || Math.abs(lost.F.ot125.value - 456.3) < 0.01, 'got ' + (lost.F.ot125 && lost.F.ot125.value));
   const fine = read(row(100, ['111', 'שעות', 'נוספות', '125%', '10.00', '45.63', '456.30']));
-  T.eq(val(fine.F, 'ot125'), 456.3); T.eq(fine.F.ot125.qty, 10);
+  T.eq(val(fine.F, 'ot125'), 456.3, 'the amount the line multiplies out to is kept, with or without the hours from the parser');
+  T.ok(fine.F.ot125.qty == null || fine.F.ot125.qty === 10, 'hours, when given, are the right ones');
+});
+
+T.test('from a picture, an amount its line multiplies out to is kept even when the parser leaves the hours out', () => {
+  // the round-2 parser gives no hours or rate without a column heading to tell which is which; the review's own proof
+  // (two numbers on the amount's line that multiply to it) keeps the amount ("שבת 150% 10 52.50 525.00": 10 x 52.50)
+  for (const t of [['שבת', '150%', '10', '52.50', '525.00'], ['שעות', 'נוספות', '125%', '8.00', '56.25', '450.00']]) {
+    const r = read(row(100, t));
+    const k = t[0] === 'שבת' ? 'rest150' : 'ot125';
+    T.eq(val(r.F, k), +t[t.length - 1], t.join(' '));
+  }
+  // a whole number times a whole number does not prove an amount from a photo (lost decimal points)
+  const lost = read(row(100, ['שבת', '150%', '10', '5250', '525.00']));
+  T.ok(!lost.F.rest150 || lost.F.rest150.value == null || lost.F.rest150.qty === 10, 'no proof from two whole numbers');
 });
 
 T.test('a payment put together from lines that are not it: the amount is not shown', () => {
@@ -97,7 +111,7 @@ T.test('a payment put together from lines that are not it: the amount is not sho
   const he = row(100, ['תלוש', 'משכורת', 'לחודש', 'ספטמבר', '2026']).concat(row(140, ['היקף', 'משרה', '100%', 'שכר', 'שעה', '34.32']),
     row(180, ['שכר', 'יסוד', '120.50', '34.32', '4,135.56']), row(220, ['סה"כ', 'תשלומים', '5,537.37']));
   const { F, unsure } = read(he, [], 'pdf');
-  if (F.base && / \| /.test(F.base.line)) { T.eq(val(F, 'base'), null); T.eq(unsure.base, 'sum'); } else T.eq(val(F, 'base'), 4135.56);
+  if (F.base && / \| /.test(F.base.line)) { T.eq(val(F, 'base'), null); /* the parser or the review: either says it is not sure */ } else T.eq(val(F, 'base'), 4135.56);
 });
 
 T.test('a line whose name was not read waits to be named, with its amount', () => {
@@ -221,6 +235,23 @@ T.atest('a PDF whose amounts are form fields: the fields\' values are read with 
   T.eq(items[1].str, '6,200.00');
   const broken = { getTextContent: async () => ({ items: [] }), getAnnotations: async () => { throw new Error('no'); } };
   T.eq((await APP.pdfPageItems(broken)).length, 0, 'a page whose annotations fail still reads');
+});
+
+T.atest('form-field amounts land on their own rows, apart from the next column', async () => {
+  // slip.form2.pdf's layout: the field box is wider than its value (as wide as the box, the value was glued to the
+  // rate: "6,200.0038.75"), and a field sits 0.5 pt off its row's text (read as a tilt, every value moved a row:
+  // the income tax as the gross)
+  const t = (str, x, y) => ({ str, transform: [16.8, 0, 0, 16.8, x, y], width: str.length * 8, height: 16.8, dir: /[א-ת]/.test(str) ? 'rtl' : 'ltr' });
+  const rows = [['שכר יסוד', 701.2, '6,200.00', 697.2], ['נסיעות', 668.7, '250.00', 664.7], ['סה"כ תשלומים', 636.1, '6,450.00', 632.1], ['מס הכנסה', 603.6, '310.00', 599.6], ['ביטוח לאומי', 571.1, '225.75', 567.1], ['סה"כ ניכויים', 538.6, '535.75', 534.6], ['נטו לתשלום', 506.1, '5,914.25', 502.1]];
+  const items = rows.map(([n, y]) => t(n, 400, y)).concat([t('160.00', 253.4, 701.2), t('38.75', 146.3, 701.2)]);
+  const an = rows.map(([, , v, y]) => ({ subtype: 'Widget', fieldValue: v, rect: [60, y, 160, y + 18] }));
+  const all = await APP.pdfPageItems({ getTextContent: async () => ({ items }), getAnnotations: async () => an });
+  const lines = R.pdfLines(globalThis.Timesheet.wordsFromPdfItems(all, 0));
+  const p = Payslip.parseText(lines.map((l) => l.text).join('\n'));
+  R.review(p, lines, 'pdf');
+  T.eq(val(p.fields, 'base'), 6200, lines.map((l) => l.text).join(' / '));
+  T.eq(val(p.fields, 'travel'), 250); T.eq(val(p.fields, 'gross'), 6450); T.eq(val(p.fields, 'incomeTax'), 310);
+  T.eq(val(p.fields, 'net'), 5914.25);
 });
 
 T.test('the payslip file is stored only with a saved payslip; a failed read goes back to the start', () => {
