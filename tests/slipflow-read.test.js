@@ -16,10 +16,11 @@ function loadSlipRead() {
   try {
     delete require.cache[SRC];
     require(SRC);
-    return g.App.SlipRead;
+    return g.App;
   } finally { for (const k of Object.keys(stubs)) if (saved[k] === undefined) delete g[k]; }
 }
-const R = loadSlipRead();
+const APP = loadSlipRead();
+const R = APP.SlipRead;
 
 // a word as a reader gives it: text, its box (y down), its confidence. A row is listed right to left, as Hebrew reads.
 let X = 0;
@@ -200,6 +201,44 @@ T.test('the optional AI\'s answer passes the same checks of what cannot be', () 
   T.eq(res.other.length, 0);
   const src = fs.readFileSync(SRC, 'utf8');
   T.ok(/App\.aiAnalyze\(d\.text, \(res\) => \{ SlipRead\.review\(res, \[\], 'ai'\);/.test(src), 'the screen reviews the answer before showing it');
+});
+
+T.section('payslip check: taking the file in (intake findings, round 2)');
+
+T.atest('a PDF whose amounts are form fields: the fields\' values are read with the page\'s text', async () => {
+  // pdf.js gives a filled form field only as an annotation: the amounts were missing and the hours became the base
+  const page = {
+    getTextContent: async () => ({ items: [{ str: 'שכר יסוד', transform: [10, 0, 0, 10, 400, 700], width: 40, height: 10, dir: 'rtl' }] }),
+    getAnnotations: async () => [
+      { subtype: 'Widget', fieldValue: '6,200.00', rect: [100, 698, 160, 712] },
+      { subtype: 'Widget', fieldValue: '', rect: [10, 698, 60, 712] },
+      { subtype: 'Widget', fieldValue: 'x', hidden: true, rect: [10, 600, 60, 612] },
+      { subtype: 'Link', url: 'https://example.com', rect: [0, 0, 1, 1] },
+    ],
+  };
+  const items = await APP.pdfPageItems(page);
+  T.eq(items.length, 2);
+  T.eq(items[1].str, '6,200.00');
+  const broken = { getTextContent: async () => ({ items: [] }), getAnnotations: async () => { throw new Error('no'); } };
+  T.eq((await APP.pdfPageItems(broken)).length, 0, 'a page whose annotations fail still reads');
+});
+
+T.test('the payslip file is stored only with a saved payslip; a failed read goes back to the start', () => {
+  const src = fs.readFileSync(SRC, 'utf8');
+  const start = src.slice(src.indexOf('async function startExtraction'), src.indexOf('/* ---------------- verification'));
+  const save = src.slice(src.indexOf('async function saveSlip'), src.indexOf('async function saveSlip') + 1200);
+  T.ok(/if \(slip\.file && !slip\.fileId\)/.test(save) && /Store\.putFile\(id, slip\.file/.test(save), 'saveSlip stores the file');
+  T.ok(/setTimeout\(\(\) => \{ App\.actions\['payslip-new'\]\(\); UI\.toast\(/.test(start), 'after a failure the start sheet (manual entry, another file) opens');
+  T.ok(/i\.hidden = false; i\.classList\.add\('sr'\)/.test(src), 'the pickers are reachable by keyboard');
+  T.ok(/statusEl\.setAttribute\('role', 'status'\)/.test(start) && /aria-hidden="true"/.test(start), 'the stage is announced, the percent is not');
+});
+
+T.test('a PDF page drawn for the reader stays under 12 million pixels; a scanned report is read on every page', () => {
+  const src = fs.readFileSync(SRC, 'utf8');
+  T.ok(/Math\.min\(2\.5, Math\.sqrt\(12e6 \/ Math\.max\(1, v1\.width \* v1\.height\)\)\)/.test(src), 'scale capped');
+  T.ok(!/getViewport\(\{ scale: 2\.5 \}\)/.test(src.slice(src.indexOf('async function pagePicture'))), 'no page drawn at a fixed 2.5 after pagePicture');
+  const rd = src.slice(src.indexOf('App.readDocWords = async function'), src.indexOf('async function ocrPass'));
+  T.ok(/const pagesRead = Math\.min\(doc\.numPages, 8\)/.test(rd) && /for \(let p = 1; p <= pagesRead; p\+\+\) \{\n\s+if \(opts\.signal/.test(rd), 'every scanned page up to 8');
 });
 
 T.test('a month the file does not say is not filled in for the person', () => {
