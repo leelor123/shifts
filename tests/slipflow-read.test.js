@@ -118,18 +118,18 @@ T.test('a line whose name was not read waits to be named, with its amount', () =
   // "שעות naw 150%": שבת misread as Latin letters; taken as overtime 150% it was shown as overtime
   const he = row(100, ['שעות', 'naw', '150%', '12.00', '51.48', '617.76']);
   const { F, parsed } = read(he);
-  T.ok(!F.ot150 && !F.rest150, 'no overtime or Shabbat line from an unread name');
-  T.ok(parsed.other.some((o) => Math.abs(o.value - 617.76) < 0.01), 'the amount is among the lines to name');
+  T.ok(!val(F, 'ot150') && !val(F, 'rest150'), 'no overtime or Shabbat amount from an unread name');
+  T.ok(F.ot150 && F.ot150.asked && /617\.76/.test(F.ot150.line), 'the row is asked for, with the line it was read from (round 3: moved away, the check read it as missing)');
   // a line with no name at all: "150% 10 52.50 525.00"
   const r2 = read(row(100, ['150%', '10', '52.50', '525.00']));
-  T.ok(!r2.F.ot150, 'a percentage alone names no line');
+  T.ok(!val(r2.F, 'ot150') && r2.F.ot150.asked, 'a percentage alone names no line: asked for');
 });
 
 T.test('direction marks around a word do not hide it from the check', () => {
   const RLM = String.fromCharCode(0x200f), LRM = String.fromCharCode(0x200e);
   const he = row(100, [RLM + 'שעות' + LRM, 'naw', '150%', '12.00', '51.48', '617.76']);
   const { F } = read(he);
-  T.ok(!F.ot150, 'the unread word is still seen');
+  T.ok(F.ot150 && F.ot150.asked && F.ot150.why === 'name', 'the unread word is still seen');
 });
 
 T.test('a line the parser keeps normalized still finds the words it was read from', () => {
@@ -138,12 +138,12 @@ T.test('a line the parser keeps normalized still finds the words it was read fro
   const lines = R.lines(R.rows(R.words(row(100, ['סה״כ', 'ניכויים', 'naw', '547.61']), [])));
   const parsed = { fields: { totalDeductions: { value: 547.61, line: 'סה"כ ניכויים naw 547.61' } }, other: [] };
   R.review(parsed, lines, 'ocr');
-  T.ok(!parsed.fields.totalDeductions, 'the unread word is seen, the line waits to be named');
+  T.ok(parsed.fields.totalDeductions.asked && parsed.fields.totalDeductions.why === 'name', 'the unread word is seen, the line is asked for');
   // a part of a row (the parser drops the line code) is found in its row
   const l2 = R.lines(R.rows(R.words(row(100, ['9001', 'ביטוח', 'לאומי', 'qxzw', '287.45']), [])));
   const p2 = { fields: { nationalInsurance: { value: 287.45, line: 'ביטוח לאומי qxzw 287.45' } }, other: [] };
   R.review(p2, l2, 'ocr');
-  T.ok(!p2.fields.nationalInsurance, 'found by containment');
+  T.ok(p2.fields.nationalInsurance.asked && p2.fields.nationalInsurance.why === 'name', 'found by containment');
 });
 
 T.test('numbers that cannot be are not shown', () => {
@@ -229,6 +229,73 @@ T.test('the optional AI\'s answer passes the same checks of what cannot be', () 
   T.eq(res.other.length, 0);
   const src = fs.readFileSync(SRC, 'utf8');
   T.ok(/App\.aiAnalyze\(d\.text, \(res\) => \{ SlipRead\.review\(res, \[\], 'ai'\);/.test(src), 'the screen reviews the answer before showing it');
+});
+
+T.section('payslip check: a line read but not sure never becomes money owed (round 3)');
+
+// review t13: a correct payslip photographed with its gross line cut off. Travel and pension are read right but
+// nothing on the page confirms them; emptied and then dropped at "המשך", the check said the payslip lacks them
+const T13 = ['תלוש שכר לחודש 09/2026', 'שכר יסוד 40.00 40.00 1,600.00', 'שעות נוספות 125% 2.00 50.00 100.00', 'שעות שבת 150% 4.00 60.00 240.00', 'נסיעות 135.60', 'פנסיה עובד 116.40'];
+const t13 = () => {
+  const he = [].concat(...T13.map((t, i) => row(100 + i * 40, t.split(' '))));
+  return read(he);
+};
+T.test('an amount the review empties stays on the payslip as asked for: { value: null, asked: true }', () => {
+  const { F, unsure } = t13();
+  for (const k of ['travel', 'pensionEmployee']) {
+    T.ok(F[k], k + ' kept');
+    T.eq(F[k].value, null, k);
+    T.eq(F[k].asked, true, k + ' asked');
+    T.eq(F[k].why, unsure[k], k + ' why');
+  }
+  T.eq(val(F, 'base'), 1600, 'what the line proves stays');
+  T.ok(!F.base.asked);
+});
+T.test('a field the parser itself leaves without an amount is asked for too', () => {
+  const p = { fields: { base: { value: null, line: 'שכר יסוד 40.00 4X.00' }, travel: { value: 135.6, line: 'נסיעות 135.60' } }, other: [] };
+  R.review(p, [], 'pdf');
+  T.eq(p.fields.base.asked, true);
+  T.ok(!p.fields.travel.asked);
+});
+T.test('"המשך" does not go on while a row asked for is neither typed in nor removed', () => {
+  const src = fs.readFileSync(SRC, 'utf8');
+  const go = src.slice(src.indexOf("else if (b.hasAttribute('data-go')) {"), src.indexOf('setTimeout(() => analysisSheet('));
+  const gate = go.indexOf("const open = Payslip.FIELDS.map((f) => f.key).find((k) => d.fields[k] && d.fields[k].asked && d.fields[k].value == null);");
+  T.ok(gate > 0, 'the gate is there');
+  T.ok(/if \(open\) \{[\s\S]*?return;\s*\}/.test(go.slice(gate)), 'it stops');
+  T.ok(gate < go.indexOf('Payslip.addNamedLines(d.fields, d.other);'), 'before named lines are added (a named line does not fill an asked row)');
+  T.ok(gate < go.indexOf('if (d.fields[k].value == null && d.fields[k].qty == null) delete d.fields[k];'), 'before empty rows are dropped');
+});
+T.test('t13 through the flow: no money said owed for a line that was read but not sure', () => {
+  // what "המשך" hands the check: with the gate, either the person typed the asked rows (here: the payslip's own
+  // values) or removed them; the check on what was typed finds nothing missing for them
+  const { F, parsed } = t13();
+  const open = Payslip.FIELDS.map((f) => f.key).filter((k) => F[k] && F[k].asked && F[k].value == null);
+  T.ok(open.includes('travel') && open.includes('pensionEmployee'), 'the gate stops on these: ' + open.join(','));
+  // the old flow: asked rows dropped as if absent
+  const dropped = Object.fromEntries(Object.entries(F).filter(([, v]) => v.value != null));
+  T.ok(!dropped.travel && !dropped.pensionEmployee, 'dropped, they look absent (what the gate now prevents)');
+  T.ok(parsed.fields === F);
+});
+
+T.test('no regex in the payslip screen lost a backslash (a shell heredoc ate them twice)', () => {
+  // round 3 review: /^(.*?)(s*d+%)$/ for /^(.*?)(\s*\d+%)$/ (the screen reader's percent split) and /.pdf$/i for
+  // /\.pdf$/i. Every regex literal is read from the source; a bare s*, s+, d+, d{, w+ or a ".pdf" with an unescaped dot
+  // is what a lost backslash leaves
+  const acorn = require('acorn');
+  const walk = require('acorn-walk');
+  const bad = [];
+  for (const f of ['views-payslip.js', 'payslip-plus.js', 'salary-check.js', 'claim-report.js']) {
+    const code = fs.readFileSync(path.join(__dirname, '..', 'src', 'app', f), 'utf8');
+    walk.simple(acorn.parse(code, { ecmaVersion: 'latest' }), {
+      Literal(n) {
+        if (!n.regex) return;
+        const p = n.regex.pattern.replace(/\\./g, '__');
+        if (/(^|[^A-Za-z_])[sdw][*+{]/.test(p) || /(^|[^\\_])\.(?:pdf|jpe?g|png)\b/i.test(n.regex.pattern.replace(/\\\./g, '__'))) bad.push(f + ': /' + n.regex.pattern + '/');
+      },
+    });
+  }
+  T.eq(bad.join('  '), '');
 });
 
 T.section('payslip check: taking the file in (intake findings, round 2)');

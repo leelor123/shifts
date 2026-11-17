@@ -373,12 +373,13 @@
       };
       const wordsOf = (v) => [].concat(...String(v.line || '').split(' | ').map(lineOf).filter(Boolean).map((l) => l.words || []));
       // a line whose name has a word the reader could not read may be another line, and so may a line with no name
-      // at all ("150% 10 52.50 525.00": overtime or Shabbat?): it waits to be named, with its amount
+      // at all ("150% 10 52.50 525.00": overtime or Shabbat?): no amount is shown for it; the row is asked for, with
+      // the line it was read from. (Moved to the unnamed lines, as in round 2, the check then read it as a line the
+      // payslip does not have and reported its pay as missing.)
       for (const k of Object.keys(F)) {
         const v = F[k];
         if (source === 'ai' || !Payslip.FIELD[k] || (HEBW.test(String(v.line || '')) && !wordsOf(v).some((w) => w.k === 'X'))) continue;
-        if (v.value != null) parsed.other.push({ line: v.line, value: v.value, guess: 'ignore' });
-        delete F[k];
+        F[k] = { value: null, qty: null, line: v.line, asked: true, why: 'name' };
         unsure[k] = 'name';
       }
       const g = num('gross'), n = num('net'), td = num('totalDeductions');
@@ -449,7 +450,9 @@
             if (!firm(w) || (!whole && !/[.]\d/.test(w.text)) || (k === 'workDays' && !dayFit)) why = 'read';
           }
         }
-        if (why) { unsure[k] = why; v.value = null; }
+        // emptied, it stays as a line the reader saw and asks for: { value: null, asked: true } (the shape agreed with
+        // the parser, round 3), never dropped as if the payslip did not have it
+        if (why) { unsure[k] = why; v.value = null; v.asked = true; v.why = why; }
         // the hours of a line: sure when hours × rate is the line's amount; with no rate printed, when the amount is
         // sure and over the hours gives an hourly rate there can be (15 to 500), and the hours were read surely. The
         // rate of a line ("43.75") taken for its hours (5) gave 43.75 hours of overtime
@@ -459,6 +462,8 @@
           if (!(v.qty > 0 && v.qty <= 400) || !sure) { unsure[k + '.qty'] = 'read'; v.qty = null; }
         }
         if (v.rate != null && (v.value == null || v.qty == null)) delete v.rate;
+        // a line the parser itself asks for (it found the line, not its amount) is asked for here too
+        if (v.value == null && !v.asked) { v.asked = true; v.why = v.why || 'read'; }
       }
       return unsure;
     };
@@ -590,7 +595,7 @@
    */
   App.readDocWords = async function (file, progress, opts) {
     opts = opts || {};
-    const isPdf = file.type === 'application/pdf' || /.pdf$/i.test(file.name || '');
+    const isPdf = file.type === 'application/pdf' || /\.pdf$/i.test(file.name || '');
     if (isPdf) {
       await loadScript(LIBS.pdf);
       const pdfjs = root.pdfjsLib;
@@ -730,7 +735,7 @@
     // announced at every percent)
     const progress = (t) => {
       if (!statusEl || gone) return;
-      const m = /^(.*?)(s*d+%)$/.exec(String(t));
+      const m = /^(.*?)(\s*\d+%)$/.exec(String(t));
       if (!m) { statusEl.textContent = t; return; }
       statusEl.innerHTML = `${esc(m[1])}<span aria-hidden="true">${esc(m[2])}</span>`;
     };
@@ -929,6 +934,20 @@
           else if (b.hasAttribute('data-go')) {
             readInputs();
             if (!/^\d{4}-\d{2}$/.test(d.period || '')) { UI.invalid('בחרו את חודש התלוש'); const m = el.querySelector('#vf-period'); if (m) m.scrollIntoView({ block: 'nearest', behavior: 'smooth' }); return; }
+            // A line the reader saw but was not sure of ({ value: null, asked: true }) is typed in from the payslip or
+            // removed ("not on my slip") before the check runs. Dropped here as before, the check read it as a line
+            // the payslip does not have, and a correct payslip "owed" its travel and pension (round 3, review t13).
+            // The first one opens with its input and the line it was read from; a named line does not fill it (one of
+            // two base lines named as the base was shown as the whole base).
+            const open = Payslip.FIELDS.map((f) => f.key).find((k) => d.fields[k] && d.fields[k].asked && d.fields[k].value == null);
+            if (open) {
+              if (root.Fx && root.Fx.nope) root.Fx.nope();
+              const r = el.querySelector(`[data-row="${open}"]`);
+              if (r && !r.classList.contains('open')) openRow(open, true);
+              else if (r) { const i = r.querySelector('[data-v]'); if (i) { i.focus(); r.scrollIntoView({ block: 'nearest', behavior: 'smooth' }); } }
+              return;
+            }
+            for (const k of Object.keys(d.fields)) if (d.fields[k].value != null) { delete d.fields[k].asked; delete d.fields[k].why; }
             // mapped unknown lines
             Payslip.addNamedLines(d.fields, d.other);
             for (const k of Object.keys(d.fields)) if (d.fields[k].value == null && d.fields[k].qty == null) delete d.fields[k];
