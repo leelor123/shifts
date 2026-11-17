@@ -361,6 +361,7 @@
           if (f.key === 'totalDeductions' && p === 'ניכויים:' && /תיק/.test(n)) continue;
           // (a section heading glued to its first deduction, "ניכויים: ביטוח לאומי 21.35": the deduction it names wins,
           // read as the total it lost National Insurance, round 3)
+          // i18n-keep
           if (f.key === 'totalDeductions' && p === 'ניכויים:') { const g = matchField(n.replace('ניכויים:', ' ')); if (g) return g; }
           if (f.key === 'nationalInsurance' && /ברוטו|הפרש[תו]|מעסיק|מעביד/.test(n)) continue;
           // the employer's share named after the fund ("פנסיה - מעסיק", "קרן השתלמות (מעביד)"): it was filed as a
@@ -1109,6 +1110,20 @@
       // the hours line of a small payslip ("שעות עבודה 120 40 4,800": hours × rate = pay) is the base pay, not only
       // the hours total: the pay was dropped and 120 kept (readers campaign, Nov 2026)
       if (f && f.key === 'workHours' && !cumulative && productFix(nums)) f = FIELD.base;
+      // overtime named with no tier number ("שעות נוספות"): its tier by the letter after it ("א'" the first two hours,
+      // "ב'" the rest), or by its rate against the base rate read above it. Filed as 125% by default, "שעות נוספות ב'"
+      // was added to the 125% line (round 3, the first look at a new layout family). With neither, a line whose rate
+      // is not the 125% one is asked for
+      if (f && f.key === 'ot125' && !/125/.test(line) && /נוספות/.test(line)) {
+        // i18n-keep
+        const mark = /נוספות\s*([אב])(?:['׳"]|(?=\s|$))/.exec(line);
+        if (mark) f = mark[1] === 'ב' ? FIELD.ot150 : FIELD.ot125;
+        else if (fields.base && fields.base.rate > 0) {
+          const p = productOf(nums.filter((x) => !x.pct).map((x) => x.v), true);
+          if (p && Math.abs(p.rate / fields.base.rate - 1.5) <= 0.02) f = FIELD.ot150;
+          else if (p && Math.abs(p.rate / fields.base.rate - 1.25) > 0.02) { ask(f, line); return; }
+        }
+      }
       // the payslip's title ("תלוש משכורת …") names no payment. Another line that names a payslip ("הפרשי שכר מתלוש
       // קודם 350.00") is a payment of another month: it waits among the lines to name, with its amount (it was
       // dropped silently, round 3)

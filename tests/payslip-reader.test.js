@@ -260,3 +260,9 @@ T.test('OCR forms of סה"כ are read', () => {
   T.near(f.totalDeductions.value, 547.61); T.near(f.gross.value, 5537.37);
   T.near(v('סהייכ ניכויים 547.61', 'totalDeductions'), 547.61);
 });
+T.test('round 3: overtime named by a letter ("שעות נוספות ב\'") is its tier, not 125%', () => {
+  const f = F(['שעות רגילות 160.00 40.00 6,400.00', "שעות נוספות א' 8.50 50.00 425.00", "שעות נוספות ב' 4.75 60.00 285.00"].join('\n'));
+  T.near(f.ot125.value, 425); T.near(f.ot125.qty, 8.5); T.near(f.ot150.value, 285); T.near(f.ot150.qty, 4.75);
+  // no letter, its rate is 150% of the base rate
+  T.near(F('שכר יסוד 160.00 40.00 6,400.00\nשעות נוספות 4.75 60.00 285.00').ot150.value, 285);
+});
