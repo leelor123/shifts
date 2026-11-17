@@ -432,7 +432,7 @@
   }());
   App.SlipRead = SlipRead;
   /** A picture of a payslip (a photo, a screenshot, a scanned page) → its lines (SlipRead). */
-  async function slipLinesOf(image, progress) {
+  async function slipLinesOf(image, progress, signal) {
     if (!root.DocRead) {
       // without the table reader: Tesseract's own text, line by line, with nothing marked sure
       const text = await ocr(image, progress);
@@ -440,7 +440,8 @@
     }
     const readOf = async (img) => {
       // the table's ruled lines taken out first: a digit touching a cell's border was lost with it
-      const got = await root.DocRead.words(img, progress, { lines: true });
+      // signal: the person left the screen, the reading stops (a DocRead that knows it ends its workers)
+      const got = await root.DocRead.words(img, progress, { lines: true, signal });
       const cv = got.canvas || {};
       return { lines: SlipRead.lines(SlipRead.rows(SlipRead.words(got.he, got.dg))), heb: got.he.filter((w) => /[א-ת]{2}/.test(w.text) && w.conf >= 70).length, wide: cv.width > cv.height * 1.1 };
     };
@@ -449,6 +450,7 @@
     // turned and read again (a payslip is a standing page; a tall picture that read nothing is not read three times)
     if (best.heb < 12 && best.wide) {
       for (const deg of [90, 270]) {
+        if (signal && signal.aborted) break;
         const r = await readOf(await turned(image, deg));
         if (r.heb >= 12 && r.heb > best.heb * 2) { best = r; break; }
       }
@@ -470,13 +472,40 @@
     return c;
   }
   /**
+   * A PDF page's text items, with the value of every filled form field as one more item at the field's place.
+   * pdf.js gives form fields only through the annotations: a payslip whose amounts are form fields showed its names
+   * and the hours column but no amount, and the hours became the base pay (intake W2, 17 Nov 2026).
+   */
+  async function pageItems(page) {
+    const tc = await page.getTextContent();
+    let an = [];
+    try { an = await page.getAnnotations({ intent: 'display' }); } catch (e) { /* none */ }
+    const form = (an || []).filter((a) => a && a.subtype === 'Widget' && !a.hidden && typeof a.fieldValue === 'string' && a.fieldValue.trim() && Array.isArray(a.rect))
+      .map((a) => { const h = a.rect[3] - a.rect[1]; return { str: a.fieldValue.trim(), dir: 'ltr', transform: [h * 0.6, 0, 0, h * 0.6, a.rect[0] + 2, a.rect[1] + h * 0.25], width: Math.max(1, a.rect[2] - a.rect[0] - 4), height: h * 0.6 }; });
+    return tc.items.concat(form);
+  }
+  App.pdfPageItems = pageItems;
+  /**
+   * A PDF page drawn as a picture for the reader: 2.5 times its size, but never above 12 million pixels (an odd page
+   * size at 2.5 passed the canvas limit of a phone's browser, and its memory).
+   */
+  async function pagePicture(page) {
+    const v1 = page.getViewport({ scale: 1 });
+    const scale = Math.min(2.5, Math.sqrt(12e6 / Math.max(1, v1.width * v1.height)));
+    const vp = page.getViewport({ scale });
+    const canvas = document.createElement('canvas');
+    canvas.width = Math.round(vp.width); canvas.height = Math.round(vp.height);
+    await page.render({ canvasContext: canvas.getContext('2d'), viewport: vp }).promise;
+    return { canvas, scale };
+  }
+  /**
    * A payslip file → { text, lines, source }. A PDF: the text of its pages (pdf.js), cut into cells; a PDF with no
    * text (scanned): each page read as a picture until one holds a payslip. A PDF of several payslips (a year's file)
    * is read up to where the next payslip, of another month, begins: added together, two months gave double amounts.
    */
-  async function extractSlip(file, progress) {
+  async function extractSlip(file, progress, signal) {
     const isPdf = file.type === 'application/pdf' || /\.pdf$/i.test(file.name || '');
-    if (!isPdf) { const lines = await slipLinesOf(file, progress); return { lines, text: lines.map((l) => l.text).join('\n'), source: 'ocr' }; }
+    if (!isPdf) { const lines = await slipLinesOf(file, progress, signal); return { lines, text: lines.map((l) => l.text).join('\n'), source: 'ocr' }; }
     await loadScript(LIBS.pdf);
     const pdfjs = root.pdfjsLib;
     pdfjs.GlobalWorkerOptions.workerSrc = LIBS.pdfWorker;
@@ -486,11 +515,11 @@
     let all = [], period = null;
     for (let p = 1; p <= pages; p++) {
       progress(`קורא עמוד ${p} מתוך ${doc.numPages}…`);
-      const tc = await (await doc.getPage(p)).getTextContent();
+      const items = await pageItems(await doc.getPage(p));
       // the words with their boxes, through the same rows and cells as a picture: a row of column names over a row of
       // numbers is paired by where the columns are (by the text alone "שעות עבודה" took the work days, 18)
-      const lines = root.Timesheet && root.Timesheet.wordsFromPdfItems ? SlipRead.pdfLines(root.Timesheet.wordsFromPdfItems(tc.items, (p - 1) * 5000))
-        : SlipRead.textLines(Payslip.linesFromPdfItems(tc.items)).map((t) => ({ text: t, words: [] }));
+      const lines = root.Timesheet && root.Timesheet.wordsFromPdfItems ? SlipRead.pdfLines(root.Timesheet.wordsFromPdfItems(items, (p - 1) * 5000))
+        : SlipRead.textLines(Payslip.linesFromPdfItems(items)).map((t) => ({ text: t, words: [] }));
       const t = lines.map((l) => l.text).join('\n');
       if (t.replace(/\s/g, '').length <= 80) continue;
       const per = Payslip.detectPeriod(t);
@@ -503,12 +532,9 @@
     progress('ה-⁠PDF סרוק: מריץ זיהוי טקסט…');
     let first = null;
     for (let p = 1; p <= pages; p++) {
-      const page = await doc.getPage(p);
-      const vp = page.getViewport({ scale: 2.5 });
-      const canvas = document.createElement('canvas');
-      canvas.width = vp.width; canvas.height = vp.height;
-      await page.render({ canvasContext: canvas.getContext('2d'), viewport: vp }).promise;
-      const lines = await slipLinesOf(canvas, progress);
+      if (signal && signal.aborted) break;
+      const { canvas } = await pagePicture(await doc.getPage(p));
+      const lines = await slipLinesOf(canvas, progress, signal);
       canvas.width = canvas.height = 0; // the page's pixels let go at once (a phone's memory)
       const text = lines.map((l) => l.text).join('\n');
       if (!first) first = { lines, text, source: 'ocr' };
@@ -521,31 +547,41 @@
    * (a work schedule): a picture through the same Hebrew OCR, a PDF from its own text (an OCR of the first page
    * when it is scanned).
    */
-  App.readDocWords = async function (file, progress) {
-    const isPdf = file.type === 'application/pdf' || /\.pdf$/i.test(file.name || '');
+  App.readDocWords = async function (file, progress, opts) {
+    opts = opts || {};
+    const isPdf = file.type === 'application/pdf' || /.pdf$/i.test(file.name || '');
     if (isPdf) {
       await loadScript(LIBS.pdf);
       const pdfjs = root.pdfjsLib;
       pdfjs.GlobalWorkerOptions.workerSrc = LIBS.pdfWorker;
       const doc = await pdfjs.getDocument({ data: await file.arrayBuffer(), isEvalSupported: false }).promise;
-      // every page (a month's report can run to a second page), each below the one before; letters drawn one by
-      // one or spread out are put back into words (Timesheet.wordsFromPdfItems)
-      let words = [];
-      for (let p = 1; p <= Math.min(doc.numPages, 4); p++) {
-        const pg = await doc.getPage(p);
-        const tc = await pg.getTextContent();
-        words = words.concat(root.Timesheet.wordsFromPdfItems(tc.items, (p - 1) * 5000));
+      // every page up to 8 (a month's report can run to a second page), each below the one before; letters drawn one
+      // by one or spread out are put back into words (Timesheet.wordsFromPdfItems). Was: 4 pages of text, and only
+      // the FIRST page of a scanned report, shown as if it were the whole report (intake D2: 2 of 8 shifts)
+      const pagesRead = Math.min(doc.numPages, 8);
+      const pageWords = [];
+      for (let p = 1; p <= pagesRead; p++) pageWords.push(root.Timesheet.wordsFromPdfItems(await pageItems(await doc.getPage(p)), (p - 1) * 5000));
+      const meta = { pages: doc.numPages, pagesRead };
+      // a PDF with text keeps its text pages (a thin page, a cover or an empty last page, is not read as a picture)
+      if (pageWords.some((ws) => ws.length > 6)) {
+        const words = [].concat(...pageWords.filter((ws) => ws.length > 6));
+        return Object.assign({ words, text: words.map((w) => w.text).join(' '), source: 'pdf' }, meta);
       }
-      if (words.length > 6) return { words, text: words.map((w) => w.text).join(' '), source: 'pdf' };
-      const page = await doc.getPage(1);
+      // scanned: every page read as a picture, its words brought back to the page's own size and place
       progress('ה-⁠PDF סרוק: מריץ זיהוי טקסט…');
-      const vp = page.getViewport({ scale: 2.5 });
-      const canvas = document.createElement('canvas');
-      canvas.width = vp.width; canvas.height = vp.height;
-      await page.render({ canvasContext: canvas.getContext('2d'), viewport: vp }).promise;
-      return Object.assign(await ocrWords(canvas, progress), { source: 'ocr' });
+      let words = [], text = [];
+      for (let p = 1; p <= pagesRead; p++) {
+        if (opts.signal && opts.signal.aborted) break;
+        const { canvas, scale } = await pagePicture(await doc.getPage(p));
+        const got = await ocrWords(canvas, progress, opts);
+        const k = (got.width ? canvas.width / got.width : 1) / scale;
+        canvas.width = canvas.height = 0;
+        words = words.concat(got.words.map((w) => Object.assign({}, w, { x0: w.x0 * k, x1: w.x1 * k, y0: w.y0 * k + (p - 1) * 5000, y1: w.y1 * k + (p - 1) * 5000 })));
+        text.push(got.text);
+      }
+      return Object.assign({ words, text: text.join(' '), source: 'ocr' }, meta);
     }
-    return Object.assign(await ocrWords(file, progress), { source: 'ocr' });
+    return Object.assign(await ocrWords(file, progress, opts), { source: 'ocr' });
   };
   async function ocrPass(image, lang, progress, label) {
     const worker = await root.Tesseract.createWorker(lang, 1, {
@@ -567,9 +603,10 @@
    * came out "60 ה"), so a second pass reads the picture with the English model only, which reads digits well:
    * hours it finds where the first pass has no hours take the place of what the first pass read there.
    */
-  async function ocrWords(image, progress) {
-    // the picture made easy to read first (app/docread.js: light evened out, two readings)
-    if (root.DocRead) { const got = await root.DocRead.words(image, progress); return { words: got.words, text: got.he.map((w) => w.text).join(' ') }; }
+  async function ocrWords(image, progress, opts) {
+    // the picture made easy to read first (app/docread.js: light evened out, two readings); width: the size it was
+    // read at, so a caller can bring the boxes back to its own size
+    if (root.DocRead) { const got = await root.DocRead.words(image, progress, opts || {}); return { words: got.words, text: got.he.map((w) => w.text).join(' '), width: got.canvas ? got.canvas.width : 0 }; }
     await loadScript(LIBS.tesseract);
     progress('טוען מנוע זיהוי עברית (פעם ראשונה ~10MB)…');
     const he = await ocrPass(image, 'heb+eng', progress, 'מזהה טקסט');
@@ -600,6 +637,10 @@
         <button class="btn outlined block" data-manual>${icon('edit')} הזנה ידנית (בלי קובץ)</button>
         <div class="tiny muted" style="margin-top:12px">טיפ: PDF מקורי מדויק יותר מצילום. בצילום: תאורה טובה, ישר מלמעלה, כל התלוש בפריים.</div>${DISCLAIMER}`,
       onMount: (el) => {
+        // the pickers reached by Tab and named as buttons: a hidden input left the label as plain text to a screen
+        // reader and out of the keyboard's way (intake S4). Visually hidden instead (set here: the markup is a
+        // translated text)
+        el.querySelectorAll('#ps-file, #ps-cam').forEach((i) => { i.hidden = false; i.classList.add('sr'); });
         const go = async (file) => {
           if (!file) return;
           UI.closeTop();
@@ -635,20 +676,26 @@
     const bad = payslipFileProblem(file);
     if (bad) { UI.invalid(bad); return; }
     let statusEl = null, gone = false;
+    const stop = typeof AbortController === 'function' ? new AbortController() : null;
     UI.openSheet({
       title: 'קורא את התלוש…',
       body: `<div class="empty"><div class="art">${icon('receipt')}</div><h3 id="ps-status">מתחיל…</h3><div class="small">${esc(file.name)}</div></div>`,
-      onMount: (el) => { statusEl = el.querySelector('#ps-status'); },
-      // closed while reading: the reading is let go. When it ended it closed whatever sheet was on top then (another
-      // payslip being read, a setting) and opened its check over it
-      onClose: () => { gone = true; },
+      onMount: (el) => { statusEl = el.querySelector('#ps-status'); statusEl.setAttribute('role', 'status'); },
+      // closed while reading: the reading is let go (and stopped). When it ended it closed whatever sheet was on top
+      // then (another payslip being read, a setting) and opened its check over it
+      onClose: () => { gone = true; if (stop) stop.abort(); },
     });
-    const progress = (t) => { if (statusEl && !gone) statusEl.textContent = t; };
+    // the stage is said by a screen reader, the percent that follows it is only seen ("קורא את המילים… 37%" was
+    // announced at every percent)
+    const progress = (t) => {
+      if (!statusEl || gone) return;
+      const m = /^(.*?)(s*d+%)$/.exec(String(t));
+      if (!m) { statusEl.textContent = t; return; }
+      statusEl.innerHTML = `${esc(m[1])}<span aria-hidden="true">${esc(m[2])}</span>`;
+    };
     try {
-      const fileId = 'file_' + U.uid();
-      await Store.putFile(fileId, file, file.name, file.type);
-      const { text, lines, source } = await extractSlip(file, progress);
-      if (gone) { Store.delFile(fileId).catch(() => {}); return; }
+      const { text, lines, source } = await extractSlip(file, progress, stop && stop.signal);
+      if (gone) return;
       const parsed = Payslip.parseText(text);
       SlipRead.review(parsed, lines, source);
       UI.closeTop();
@@ -656,12 +703,16 @@
       // its place looked read, and the check then compared the payslip with another month's shifts
       // and a month that cannot be a payslip's (after this month: "02/2078" from a blurred "04/2026") is not one read
       const period = parsed.period && parsed.period >= '2000-01' && parsed.period <= U.todayKey().slice(0, 7) ? parsed.period : '';
-      setTimeout(() => verifySheet({ fields: parsed.fields, other: parsed.other, period, text, source, fileId, fileName: file.name }), 320);
+      // the file itself waits in the draft: it is stored only with a saved payslip (saveSlip). Stored before reading,
+      // every file read stayed on the phone and in backups, after a failed read, a closed check, a deleted payslip
+      setTimeout(() => verifySheet({ fields: parsed.fields, other: parsed.other, period, text, source, file, fileName: file.name }), 320);
     } catch (e) {
       console.error(e);
       if (gone) return;
-      progress(root.U.ours(e) ? e.message : 'לא הצלחנו לקרוא את התלוש מהקובץ');
-      UI.toast('הקריאה נכשלה. אפשר להזין ידנית.');
+      // back to the start, where a manual entry and another file wait, with what went wrong: the reading sheet said
+      // "you can enter it by hand" and offered only "close" (intake S3)
+      UI.closeTop();
+      setTimeout(() => { App.actions['payslip-new'](); UI.toast(root.U.ours(e) ? e.message : 'הקריאה נכשלה. אפשר להזין ידנית.'); }, 320);
     }
   }
 
@@ -674,7 +725,7 @@
   const SOURCE = { pdf: ['file', 'נקרא מ-\u2060PDF'], ocr: ['camera', 'נקרא מצילום'], ai: ['sparkle', 'נותח בעזרת AI'], manual: ['edit', 'הזנה ידנית'] };
   const ESSENTIAL = ['gross', 'net', 'base', 'workHours'];
   function verifySheet(draft) {
-    const d = { period: draft.period, fields: Store.clone(draft.fields) || {}, other: (draft.other || []).map((o) => Object.assign({ guess: o.guess || 'ignore' }, o)), text: draft.text || '', source: draft.source, fileId: draft.fileId, fileName: draft.fileName, id: draft.id, notes: draft.notes || '' };
+    const d = { period: draft.period, fields: Store.clone(draft.fields) || {}, other: (draft.other || []).map((o) => Object.assign({ guess: o.guess || 'ignore' }, o)), text: draft.text || '', source: draft.source, file: draft.file, fileId: draft.fileId, fileName: draft.fileName, id: draft.id, notes: draft.notes || '' };
     let sheetEl = null;
     const val = (k) => (d.fields[k] && d.fields[k].value != null && d.fields[k].value !== '' ? +d.fields[k].value : null);
     const shown = (f) => {
@@ -842,7 +893,7 @@
             for (const k of Object.keys(d.fields)) if (d.fields[k].value == null && d.fields[k].qty == null) delete d.fields[k];
             if (!Object.keys(d.fields).length) { UI.invalid('הוסיפו לפחות שורה אחת מהתלוש'); return; }
             UI.closeTop();
-            setTimeout(() => analysisSheet({ id: d.id || 'ps_' + U.uid(), period: d.period, fields: d.fields, other: d.other, text: d.text, source: d.source, fileId: d.fileId, fileName: d.fileName, isNew: !d.id, edited: !!d.id }), 320);
+            setTimeout(() => analysisSheet({ id: d.id || 'ps_' + U.uid(), period: d.period, fields: d.fields, other: d.other, text: d.text, source: d.source, file: d.file, fileId: d.fileId, fileName: d.fileName, isNew: !d.id, edited: !!d.id }), 320);
           }
         });
       },
@@ -1248,6 +1299,12 @@
     const counts = { ok: 0, warn: 0, bad: 0 };
     // a finding the innocent reasons explain in full counts as "to check", as on the screen
     a.findings.forEach((f) => { const it = itemOf(f); counts[f.status === 'bad' && it && it.left < 1 ? 'warn' : f.status]++; });
+    // the file read is stored here, with the payslip it belongs to, once (intake P1)
+    if (slip.file && !slip.fileId) {
+      const id = 'file_' + U.uid();
+      try { await Store.putFile(id, slip.file, slip.file.name, slip.file.type); slip.fileId = id; } catch (e) { console.warn('payslip file', e); }
+      delete slip.file;
+    }
     const rec = {
       id: slip.id, period: slip.period, employerId: S.employers[0].id, fields: slip.fields, other: slip.other,
       text: slip.text, source: slip.source, fileId: slip.fileId || null, fileName: slip.fileName || '',

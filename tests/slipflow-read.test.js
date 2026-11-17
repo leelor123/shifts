@@ -183,9 +183,10 @@ T.test('a page that prints the amount right of the name: each line keeps its own
 T.test('the payslip flow reads through SlipRead, and lets go of a reading whose sheet was closed', () => {
   const src = fs.readFileSync(SRC, 'utf8');
   const start = src.slice(src.indexOf('async function startExtraction'), src.indexOf('/* ---------------- verification'));
-  T.ok(/extractSlip\(file, progress\)/.test(start), 'the picture goes through extractSlip');
+  T.ok(/extractSlip\(file, progress, stop && stop\.signal\)/.test(start), 'the picture goes through extractSlip, stoppable');
+  T.ok(!/Store\.putFile/.test(start), 'nothing is stored before the payslip is saved (intake P1)');
   T.ok(/SlipRead\.review\(parsed, lines, source\)/.test(start), 'what is not sure is left to fill in');
-  T.ok(/onClose: \(\) => \{ gone = true; \}/.test(start) && /if \(gone\) \{[^\n]*return; \}/.test(start), 'a closed reading opens nothing');
+  T.ok(/onClose: \(\) => \{ gone = true; if \(stop\) stop\.abort\(\); \}/.test(start) && /if \(gone\) return;/.test(start), 'a closed reading opens nothing and stops');
   T.ok(/DocRead\.words\(img, progress, \{ lines: true \}\)/.test(src), 'the table lines are taken out before reading');
 });
 
