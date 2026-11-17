@@ -507,3 +507,34 @@ T.test('a stray line with only a weekday between two rows takes no day from them
   ]);
   T.ok(/2026-10-18 07:10-14:38/.test(shifts(p)), shifts(p) + ' / ' + unsure(p));
 });
+T.test('a page whose weekdays mostly disagree with its dates (its year misread: 2024 for 2026): every date is unsure', () => {
+  const day = (n) => ['ראשון', 'שני', 'שלישי', 'רביעי', 'חמישי', 'שישי', 'שבת'][new Date(2026, 9, n).getDay()];
+  const p = page(['תאריך', 'יום', 'כניסה', 'יציאה'], [1, 2, 4, 5, 6, 7].map((d) => [`0${d}/10/2024`, day(d), '08:00', '16:00']), { title: ['2024'] });
+  T.eq(shifts(p), '');
+});
+T.test('messy pages (dates misread, weekdays wrong, cells lost, stray words): the reader never throws, and never saves a date the page does not hold', () => {
+  let seed = 7;
+  const rnd = () => { seed = (seed * 16807) % 2147483647; return seed / 2147483647; };
+  const pick = (a) => a[Math.floor(rnd() * a.length)];
+  const days = ['ראשון', 'שני', 'שלישי', 'רביעי', 'חמישי', 'שישי', 'שבת', 'ה', 'ב׳', 'ny', ''];
+  for (let k = 0; k < 1500; k++) {
+    const rows = [];
+    for (let d = 1; d <= 20; d++) {
+      const date = pick([`${String(d).padStart(2, '0')}/10/2026`, `${d}/1`, `${d}/`, `${d}1172`, `${d}/10/2024`, '', String(d), `${d}/10`]);
+      const a = pick(['08:00', '07:5', '16:11', '', '0800', '8.30']), b = pick(['16:00', '23:59', '', '14:4', '1600']);
+      rows.push([date, pick(days), a, b, pick(["8.00", "7:53", "77", "", "0.50"])]);
+      if (rnd() < 0.1) rows.push(["", "", pick(["09:00", "13:00"]), pick(["15:00", "17:30"]), ""]);
+      if (rnd() < 0.15) rows.push(['', pick(days), '', '', '']);
+    }
+    let p;
+    try { p = page(['תאריך', 'יום', 'כניסה', 'יציאה', 'סה"כ'], rows, rnd() < 0.5 ? { title: ['10/2026'] } : {}); } catch (e) { throw new Error(`page ${k} threw: ${e.message}`); }
+    for (const r of p.rows) T.ok(!r.doubt ? /^20(24|25|26)-\d\d-\d\d$/.test(r.date) : true, `page ${k}: ${r.date}`);
+  }
+});
+T.test('a photo whose dates are cut and its year misread (real words): no throw, and nothing saved as sure', () => {
+  // a trusted row that lost its date later was still taken as a neighbour: the reader threw (the import failed)
+  const fx = require('./timesheet-oketz-cut.json');
+  const p = TS.parseWords(fx.words, { today: fx.today });
+  T.eq(shifts(p), '');
+  T.ok(p.rows.length > 0, 'offered for checking');
+});

@@ -996,6 +996,12 @@
     }
     const trusted = new Set();
     for (let a = len.indexOf(Math.max(0, ...len)); a >= 0 && idx.length; a = from[a]) trusted.add(idx[a]);
+    // most rows name a weekday that is not their date's (a year or a month misread on the whole page): one row's
+    // weekday may be misread, most of them cannot. Every date is unsure
+    {
+      const wd = list.filter((r) => r.key && r.dow != null), bad = wd.filter((r) => dowOf(r.key) !== r.dow).length;
+      if (wd.length >= 4 && bad > wd.length * 0.5) { dbg.push(`${bad} of ${wd.length} weekdays disagree with their dates: all unsure`); for (const r of list) if (r.key) r.doubt = r.doubt || 'date'; }
+    }
     // (dates made of a day number and the title's month: sure only when the weekdays of their rows say the same,
     // three of them at least and nearly all; a misread title month would move every one of them)
     if (list.some((r) => r.date && r.date.day)) {
@@ -1014,8 +1020,9 @@
       // (a line with a weekday and nothing else, no date and no hours, a stray word between two rows: it has no day
       // to be given, and giving it one took that day from the row that has it)
       if (!r.date && !r.mash && !r.shifts.length) continue;
-      let p = i - 1; while (p >= 0 && !trusted.has(p)) p--;
-      let q = i + 1; while (q < list.length && !trusted.has(q)) q++;
+      // (a neighbour is a trusted row that still has its date)
+      let p = i - 1; while (p >= 0 && !(trusted.has(p) && list[p].key)) p--;
+      let q = i + 1; while (q < list.length && !(trusted.has(q) && list[q].key)) q++;
       const prev = p >= 0 ? list[p] : null, next = q < list.length ? list[q] : null;
       // (the same date as the row by it is a second shift of that day, unless the two rows name different days of
       // the week: then one date was misread)
@@ -1042,7 +1049,7 @@
       if (r.key && inOrder(r.key) && (dowOk(r, r.key) || !cands.length)) continue; // as read (a day letter misread is likelier)
       // (a date put right with no trusted date on either side to check it against: offered, not sure)
       if (cands.length === 1) { dbg.push(`date fixed: "${r.text.slice(0, 40)}" ${r.key || '?'} → ${cands[0]}`); r.key = cands[0]; trusted.add(i); if (!prev && !next) r.doubt = 'date'; }
-      else if (r.key || r.shifts.length) { dbg.push(`date unclear, left out: ${r.key || '?'} "${r.text.slice(0, 40)}" (${cands.join(',')})`); r.key = null; }
+      else if (r.key || r.shifts.length) { dbg.push(`date unclear, left out: ${r.key || '?'} "${r.text.slice(0, 40)}" (${cands.join(',')})`); r.key = null; trusted.delete(i); }
     }
 
     if (opts.debug) for (const r of list) dbg.push(`row ${r.ri}: ${r.key || '-'}${r.dow != null ? ' dow' + r.dow : ''} ${r.shifts.map((s) => s.join('-')).join(' ')}`);
