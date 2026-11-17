@@ -56,8 +56,36 @@
   const round2 = (v) => Math.round(v * 100) / 100;
   const okDate = (k) => typeof k === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(k);
 
+  /**
+   * The report rows whose printed paid hours (core/timesheet.js 'paid') can be trusted as the hours the employer pays:
+   * the rest between the times and them is a break of 10 minutes to 3 hours, and the number is neither the row's
+   * day of the month nor part of a column that counts the rows (1, 2, 3 ... read as hours made a claim of 7.5 hours
+   * a day, review Nov 2026). A Set of the rows; the import saves a break, and the hours check claims one, only from these.
+   */
+  const BREAK_MAX = 180;
+  function paidOk(rows) {
+    const list = (rows || []).filter((r) => r && r.start && r.end && +r.paid > 0 && isFinite(+r.paid));
+    const bad = new Set();
+    // a run of three or more whole numbers each one more than the one before: a column numbering the rows
+    for (let i = 0; i < list.length; i++) {
+      let j = i;
+      while (j + 1 < list.length && Number.isInteger(+list[j].paid) && +list[j + 1].paid === +list[j].paid + 1) j++;
+      if (j - i >= 2 && Number.isInteger(+list[i].paid)) for (let k = i; k <= j; k++) bad.add(list[k]);
+      if (j > i) i = j;
+    }
+    const ok = new Set();
+    for (const r of list) {
+      if (bad.has(r)) continue;
+      if (okDate(r.date) && +r.paid === +r.date.slice(8)) continue; // the day of the month
+      const brk = Math.round(((+r.hours || (span(r.date, r.start, r.end) ? len(span(r.date, r.start, r.end)) / 60 : 0)) - +r.paid) * 60);
+      if (brk >= TOL && brk <= BREAK_MAX) ok.add(r);
+    }
+    return ok;
+  }
+
   function compare(report, mine, opts) {
     opts = opts || {};
+    const paidSure = paidOk(report);
     const from = opts.from || '0000', to = opts.to || '9999';
     const inPeriod = (k) => k >= from && k <= to;
     const R = (report || []).filter((r) => r && okDate(r.date) && inPeriod(r.date)).map((r, i) => ({ i, r, t: r.start ? span(r.date, r.start, r.end, r.hours) : null, unread: !!r.start && !r.end && !(+r.hours > 0) }));
@@ -188,7 +216,7 @@
         // the hours the report pays, when it prints them apart from its times (core/timesheet.js 'paid': a break the
         // employer took out): what the times do not already explain, against my paid hours
         const pd = +r.paid, mh = +m.hours;
-        if (r.paid != null && pd > 0 && isFinite(pd) && m.hours != null && isFinite(mh)) {
+        if (paidSure.has(r) && pd > 0 && isFinite(pd) && m.hours != null && isFinite(mh)) {
           it.dPaid = Math.round((pd - mh) * 60) - (it.dEnd - it.dStart);
           if (it.dPaid < -TOL) { it.type = 'diff'; it.lessPaid = -it.dPaid; it.hoursToo = true; }
         }
@@ -206,10 +234,34 @@
     // a row whose exit was not read and no shift of mine that day: still only the report's, but its length is unknown
     for (const x of R) if (!usedR.has(x.i)) out.push(x.unread ? { type: 'missingMine', date: x.r.date, rep: x.r, unread: true } : { type: 'missingMine', date: x.r.date, rep: x.r });
 
+    const unsure = (r) => !!(r && (r.doubt || (r.parts || []).some((p) => p && p.doubt)));
+
+    /* ---- small differences add up: how many minutes the report is short over the pairs that "match" ---- */
+    // Only sure rows make a sure difference: doubted rows each a few minutes short once became sure claims in the
+    // letter (the doubt marking ran before this; review Nov 2026). When the sum is over only with the doubted rows
+    // counted, every small difference is to be checked.
+    const shortOf = (it) => {
+      if (it.type !== 'ok' || it.unread) return 0;
+      if (it.short != null) return Math.max(-TOL, Math.min(TOL, it.short));
+      if (it.dHours != null) return -it.dHours * 60;
+      return (it.dStart || 0) - (it.dEnd || 0) - (it.dPaid || 0);
+    };
+    const drift = Math.round(out.reduce((t, it) => t + shortOf(it), 0));
+    const driftSure = Math.round(out.reduce((t, it) => t + (unsure(it.rep) ? 0 : shortOf(it)), 0));
+    if (drift > DRIFT) {
+      for (const it of out) {
+        if (!(shortOf(it) >= 1)) continue;
+        it.type = 'diff'; it.small = true;
+        if (driftSure <= DRIFT || unsure(it.rep)) it.doubt = true;
+      }
+    }
+
     /* ---- rows the reader was not sure of (core/timesheet.js doubt) ---- */
     // a finding that comes from such a row is to be checked, not claimed (it.doubt: never in the letter)
-    const unsure = (r) => !!(r && (r.doubt || (r.parts || []).some((p) => p && p.doubt)));
     for (const it of out) if (it.type !== 'ok' && unsure(it.rep)) it.doubt = true;
+    // rows the reader saw and could not read (opts.unreadRows: a time with no trusted date, an entry with no exit):
+    // any shift of mine the report "lacks" may be one of them, so none is called missing for sure
+    if (+opts.unreadRows > 0) for (const it of out) if (it.type === 'missingEmp') it.doubt = true;
     // a doubted row left alone (its date misread) and a shift of mine "missing" at the same hours on another day:
     // most likely the same shift, so that shift is not called missing for sure either
     for (const x of out) {
@@ -218,15 +270,6 @@
       if (y) y.doubt = true;
     }
 
-    /* ---- small differences add up: how many minutes the report is short over the pairs that "match" ---- */
-    const shortOf = (it) => {
-      if (it.type !== 'ok' || it.unread) return 0;
-      if (it.short != null) return Math.max(-TOL, Math.min(TOL, it.short));
-      if (it.dHours != null) return -it.dHours * 60;
-      return (it.dStart || 0) - (it.dEnd || 0) - (it.dPaid || 0);
-    };
-    const drift = Math.round(out.reduce((s, it) => s + shortOf(it), 0));
-    if (drift > DRIFT) for (const it of out) if (shortOf(it) >= 1) { it.type = 'diff'; it.small = true; }
 
     const order = { missingEmp: 0, diff: 1, missingMine: 2, ok: 3 };
     out.sort((a, b) => a.date.localeCompare(b.date) || order[a.type] - order[b.type] || String((a.rep || a.mine).start || '').localeCompare(String((b.rep || b.mine).start || '')));
@@ -298,6 +341,6 @@
     return `שלום,\nעברתי על דוח הנוכחות${label ? ` של ${label}` : ''} לפני הכנת התלוש. ${head}\n${lines.join('\n')}\nאפשר לבדוק ולעדכן לפני שהתלוש יוצא? תודה רבה!`;
   }
 
-  root.HoursCheck = { compare, letter, span, side, joinNights, TOL, DRIFT };
+  root.HoursCheck = { compare, letter, span, side, joinNights, paidOk, TOL, DRIFT };
   if (typeof module !== 'undefined') module.exports = root.HoursCheck;
 })(typeof window !== 'undefined' ? window : globalThis);

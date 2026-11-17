@@ -202,3 +202,36 @@ T.test('a row the reader doubted: its finding is marked, never in the letter; a 
   const m = H.compare([rep(day(21), '06:00', '14:00', 8, { doubt: 'date' })], [mine(day(12), '16:00', '23:00')], OCT);
   T.ok(!m.items.find((x) => x.type === 'missingEmp').doubt);
 });
+
+T.section('hours check: round 3 (review of the merge)');
+T.test('small shortfalls of doubted rows never become a sure claim (the drift rule ran before the doubt marking)', () => {
+  const ds = [5, 6, 7, 8, 11].map(day);
+  const r = H.compare(ds.map((d) => rep(d, '08:00', '16:52', 8.87, { doubt: 'total' })), ds.map((d) => mine(d, '08:00', '17:00', 9)), OCT);
+  T.eq(r.diff, 5); T.ok(r.items.every((x) => x.doubt)); T.eq(H.letter(r.items), '');
+  // four sure rows 7 minutes short and one doubted: over the line only with the doubted one, so all to be checked
+  const m = H.compare(ds.map((d, i) => rep(d, '08:00', i === 4 ? '16:52' : '16:53', 8.9, i === 4 ? { doubt: 'total' } : {})), ds.map((d) => mine(d, '08:00', '17:00', 9)), OCT);
+  T.ok(m.items.every((x) => x.type === 'diff' && x.doubt)); T.eq(H.letter(m.items), '');
+  // the same with five sure rows: sure
+  const s = H.compare(ds.map((d) => rep(d, '08:00', '16:52', 8.87)), ds.map((d) => mine(d, '08:00', '17:00', 9)), OCT);
+  T.ok(s.items.every((x) => x.type === 'diff' && !x.doubt)); T.eq(H.letter(s.items).split('\n').filter((l) => l.startsWith('•')).length, 5);
+});
+T.test('rows the reader could not read: no shift of mine is called missing for sure', () => {
+  const report = [1, 2, 6, 8].map((d) => rep('2026-11-0' + d, '08:00', '16:00', 8));
+  const mm = [1, 2, 4, 6, 8].map((d) => mine('2026-11-0' + d, '08:00', '16:00'));
+  const NOV = { from: '2026-11-01', to: '2026-11-18' };
+  const sure = H.compare(report, mm, NOV);
+  T.ok(!sure.items.find((x) => x.type === 'missingEmp').doubt);
+  const r = H.compare(report, [1, 2, 4, 6, 8].map((d) => mine('2026-11-0' + d, '08:00', '16:00')), Object.assign({ unreadRows: 1 }, NOV));
+  T.ok(r.items.find((x) => x.type === 'missingEmp').doubt); T.eq(H.letter(r.items), '');
+});
+T.test('paid hours: a row-number column or the day of the month is never a break; a printed 8.25 is', () => {
+  const rows = [5, 6, 7].map((d, i) => rep(day(d), '08:00', '17:00', 9, { paid: i + 1 }));
+  T.eq(H.paidOk(rows).size, 0);
+  const r = H.compare(rows, [5, 6, 7].map((d) => mine(day(d), '08:00', '17:00', 8.5)), OCT);
+  T.ok(r.items.every((x) => x.type === 'ok' && !x.lessPaid), JSON.stringify(r.items.map((x) => x.type)));
+  // row numbers that happen to look like hours (6, 7, 8 on 9-hour shifts) are still a numbering
+  T.eq(H.paidOk([5, 6, 7].map((d, i) => rep(day(d), '08:00', '17:00', 9, { paid: 6 + i }))).size, 0);
+  T.eq(H.paidOk([rep(day(5), '08:00', '17:00', 9, { paid: 5 })]).size, 0, 'the day of the month');
+  T.eq(H.paidOk([rep(day(5), '08:00', '17:00', 9, { paid: 4 })]).size, 0, 'five hours of break');
+  T.eq(H.paidOk([rep(day(5), '08:00', '17:00', 9, { paid: 8.25 }), rep(day(6), '08:00', '17:00', 9, { paid: 8.5 })]).size, 2);
+});
