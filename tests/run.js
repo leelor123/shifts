@@ -9,6 +9,8 @@ const T = require('./t.js');
 for (const f of ['cards.test.js', 'taxrefund.test.js', 'undef.test.js', 'icons.test.js', 'redraw.test.js', 'changelog.test.js', 'engine.test.js', 'planner.test.js', 'insights.test.js', 'payslip.test.js', 'links.test.js', 'games.test.js', 'recap.test.js', 'leaderboard.test.js', 'friends.test.js', 'referral.test.js', 'ledger.test.js', 'workplace.test.js', 'places.test.js', 'clean.test.js', 'timesheet.test.js', 'schedule.test.js', 'law.test.js', 'i18n.test.js', 'fonts.test.js', 'webkit.test.js', 'sitecalc.test.js', 'sitesky.test.js', 'moments.test.js', 'hourscheck.test.js', 'netlearn.test.js', 'errors.test.js', 'mascot-voice.test.js', 'runnote.test.js', 'noteplan.test.js', 'account.test.js', 'funnel.test.js', 'nfc.test.js', 'arrive.test.js', 'playpay.test.js', 'android-strings.test.js', 'states.test.js', 'memory.test.js', 'security.test.js', 'placeholders.test.js', 'slipfirst.test.js', 'slipplus.test.js', 'review.test.js', 'payslip-trust.test.js', 'geo-audit.test.js', 'channel.test.js']) {
   try { require(path.join(__dirname, f)); } catch (e) { if (e.code !== 'MODULE_NOT_FOUND') throw e; }
 }
+// readers campaign (17 Nov 2026): the payslip check end to end
+require('./slipflow-read.test.js');
 T.section('cloud sync (simulated phones)');
 require('./sync.test.js');
 T.section('Firestore reads');
