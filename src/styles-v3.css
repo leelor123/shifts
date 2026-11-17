@@ -550,7 +550,9 @@ body.fx .nav .fab:active { transform: scale(.9) rotate(90deg); }
 .home-hero, .home-action .btn.start, .timer-card, .recap-card, .nav .pill, .nav .pill .ic { will-change: transform; }
 .hh-dial::before { content: ''; position: absolute; inset: 0; border-radius: 50%; background: conic-gradient(from 0deg, transparent 0 290deg, rgba(255, 255, 255, .15) 320deg, rgba(255, 255, 255, .95) 359deg, transparent 360deg); animation: dial-sweep 7s linear infinite; }
 @keyframes dial-sweep { to { transform: rotate(360deg); } }
-.timer-card.running { position: relative; overflow: hidden; isolation: isolate; }
+/* z-index 1 on the two animated home blocks: they paint after the later positioned content, so Chrome does not
+   squash that content (travel switch, banner button, shift list) into layers sized for an animation it cannot measure */
+.timer-card.running { position: relative; z-index: 1; overflow: hidden; isolation: isolate; }
 .home-action .btn.start { position: relative; overflow: hidden; isolation: isolate; }
 /* the first look at the home screen: one short, orchestrated entrance */
 .view.first .home-top, .view.first .home-hero, .view.first .hh-assume, .view.first .home-action, .view.first .timer-card, .view.first .card.guide, .view.first .highlight, .view.first .shortcuts, .view.first .home-list-head, .view.first .home-list, .view.first .empty.fun { animation: rise .55s cubic-bezier(.2, .8, .2, 1) both; }
@@ -1404,7 +1406,7 @@ body:not(.fx) .gm-rays, body:not(.fx) .hw-vs, body:not(.fx) .hw-q, body:not(.fx)
 .gfx-screen { position: fixed; inset: 0; z-index: 9997; pointer-events: none; will-change: transform; } /* a layer of its own, always */
 /* the start button breathes: a soft green halo spreads out from it every few seconds (on its own layer, under
    the button; it carries on from the same clock when home is redrawn) */
-.home-action { position: relative; }
+.home-action { position: relative; z-index: 1; }
 .start-halo { position: absolute; top: 0; left: 0; right: 0; height: 66px; border-radius: 20px; background: radial-gradient(closest-side, rgba(33, 212, 127, .55), rgba(33, 212, 127, .25) 70%, transparent); pointer-events: none; will-change: transform, opacity; animation: start-halo 2.8s ease-out infinite; animation-delay: var(--ph, 0ms); }
 @keyframes start-halo { 0% { transform: scale(.96, .9); opacity: 0; } 15% { opacity: .9; } 75%, 100% { transform: scale(1.07, 1.45); opacity: 0; } }
 /* a new timer card springs in; the start button springs back when the shift ends */
