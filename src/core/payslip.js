@@ -277,9 +277,27 @@
       clean = pieces.join(' ');
       if (cut.length) { let k = 0; alt = clean.split(' ').map((t) => (GLUED.test(t) && ONE_NUMBER.test(t.replace(/^-|-$/g, '')) ? cut[k++] : t)).join(' '); }
     }
+    // A decimal point lost to a space ("56 32", "2,576 25"): a whole number and two digits after it. Read as they are
+    // they were 32 ₪ of National Insurance (readers campaign, Nov 2026); joined they may be hours and a rate ("8 65"
+    // in a whole-shekel sheet). The line's arithmetic picks the joined reading (`alt`); without it the line is unsure
+    // (`gap`: it is read only when its own arithmetic holds as it is).
+    let gap = 0;
+    const joinGaps = (t, count) => {
+      const w = t.split(' ');
+      const o = [];
+      for (let i = 0; i < w.length; i++) {
+        // (the tier in the name, "ש"נ 125 10 25", is no amount)
+        const tier = /^(?:100|125|150|175|200)$/.test(w[i]) && i > 0 && TIER_IN_NAME.test(w[i - 1] + ' ' + w[i]);
+        if (!tier && /^-?(?:\d{1,3}(?:,\d{3})+|\d+)$/.test(w[i]) && /^\d{2}-?$/.test(w[i + 1] || '')) { o.push(w[i] + '.' + w[i + 1]); i++; if (count) gap++; } else o.push(w[i]);
+      }
+      return o.join(' ');
+    };
+    const gapped = joinGaps(clean, true);
+    if (gap) alt = joinGaps(alt != null ? alt : clean, false);
     const out = readNumbers(clean);
-    if (alt != null) { out.alt = readNumbers(alt); out.alt.glued = glued + 1; }
+    if (alt != null) { out.alt = readNumbers(alt); if (glued || alt !== gapped) out.alt.glued = glued + 1; }
     if (glued) out.glued = glued;
+    if (gap) out.gap = gap;
     if (dirty) { out.dirty = dirty; if (out.alt) out.alt.dirty = dirty; }
     return out;
   }
@@ -378,7 +396,7 @@
    *  one in a row that ends with its amount, the last one in a row printed the other way round: "367.50 105.00 3.50"
    *  is 3.5 hours at 105, and it was read as 105 hours, readers campaign, Nov 2026). `byPlace`: the place rule and
    *  the size agree, or (not sure) the place rule alone decided. */
-  function productOf(vals, hours) {
+  function productOf(vals, hours, strict) {
     if (vals.length < 3) return null;
     for (let i = 0; i < vals.length; i++) for (let j = i + 1; j < vals.length; j++) for (let k = 0; k < vals.length; k++) {
       if (k === i || k === j) continue;
@@ -390,13 +408,14 @@
       // (a factor of 1 makes the amount and the rate the same number: within rounding, either could be the amount.
       // "שעות שבת 175% 1 85 85.31" read the rate 85.31 as the pay of 85 ₪. Only an exact match is a product then)
       if ((Math.abs(vals[i]) === 1 || Math.abs(vals[j]) === 1) && diff > 0.005) continue;
-      if (vals[k] !== 0 && diff / Math.abs(vals[k]) < 0.015 && diff <= 0.011 + (Number.isInteger(vals[k]) ? 0.5 : 0) + 0.0051 * Math.max(Math.abs(vals[i]), Math.abs(vals[j]))) {
+      if (vals[k] !== 0 && diff / Math.abs(vals[k]) < 0.015 && diff <= 0.011 + (strict ? 0 : (Number.isInteger(vals[k]) ? 0.5 : 0) + 0.0051 * Math.max(Math.abs(vals[i]), Math.abs(vals[j])))) {
         let [q, r] = k < i ? [j, i] : [i, j];
         const aq = Math.abs(vals[q]), ar = Math.abs(vals[r]);
+        // (equal factors, "40 40 1600": nothing to decide)
         const sure = !!hours && Math.min(aq, ar) < 7 && Math.max(aq, ar) >= 7;
         const byPlace = !sure || aq < ar;
         if (sure && aq > ar) [q, r] = [r, q];
-        return { value: vals[k], qty: vals[q], rate: vals[r], sure, byPlace, mid: k > Math.min(i, j) && k < Math.max(i, j) };
+        return { value: vals[k], qty: vals[q], rate: vals[r], sure, byPlace, even: aq === ar, mid: k > Math.min(i, j) && k < Math.max(i, j) };
       }
     }
     return null;
@@ -449,14 +468,17 @@
   /** productOf, also when one number lost its decimal point ("5.00 47.50 23750"): quantity × rate says where it was. */
   function productFix(nums, vals, hours) {
     vals = vals || nums.filter((x) => !x.pct).map((x) => x.v);
-    const prod = productOf(vals, hours);
+    // (on a line with a decimal point lost to a space, a whole amount is no whole-shekel amount: "7.75 411 53" is not
+    // 7.75 × 53 = 411, readers campaign, Nov 2026)
+    const strict = !!nums.gap;
+    const prod = productOf(vals, hours, strict);
     if (prod || vals.length < 3) return prod;
     const flat = nums.filter((x) => !x.pct);
     if (flat.length !== vals.length) return null;
     const fixes = [];
     for (let i = 0; i < flat.length; i++) {
-      if (flat[i].dec || Math.abs(flat[i].v) < 100) continue;
-      const fixed = productOf(vals.map((v, j) => (j === i ? v / 100 : v)), hours);
+      if (flat[i].dec || Math.abs(flat[i].v) < 100 || strict) continue;
+      const fixed = productOf(vals.map((v, j) => (j === i ? v / 100 : v)), hours, strict);
       if (fixed && [fixed.value, fixed.qty, fixed.rate].includes(vals[i] / 100)) fixes.push(fixed);
     }
     // two numbers could each be the one that lost its point ("136 4875 6630"): the reading with a rate a person is paid
@@ -470,8 +492,10 @@
     // (two amounts glued on a total or information line: which one is it is not sure)
     if (nums.glued && (f.kind === 'total' || f.kind === 'info' || f.kind === 'emp')) return null;
     if (f.kind === 'info') {
-      // (an unread token on an information line: the number after the name may be the wrong one)
-      if (nums.dirty) return null;
+      // (an unread token on an information line: the number after the name may be the wrong one; and an information
+      // line is one number, or a balance row: "שעות עבודה בפועל 60.00 50.75 3 045.00" is a payment's row)
+      if (nums.dirty || nums.some((x) => x.spaced)) return null;
+      if (!(f.key === 'sickBalance' || f.key === 'vacationBalance') && vals.length > 2) return null;
       // a balance row's closing balance (not the previous balance it starts with)
       // (read in printed order only: backwards, three numbers add up by chance, "חופשה 2.25 1.25 1.00" with its last
       // column lost gave 1.00 + 1.25 = 2.25 and a balance of 2.25, readers campaign, Nov 2026. A row of three or more
@@ -656,7 +680,9 @@
           // (the line before it is whole without it: its product holds, or it has an amount and the number is short)
           const lastT = prev.kind === 'n' && prev.t.length > 1 && /^\d{1,6}$/.test(prev.t[prev.t.length - 1]) ? +prev.t[prev.t.length - 1] : null;
           const rest = lastT != null ? vals.slice(0, -1) : vals;
-          const isCode = lastT != null && prev.t.slice(0, -1).some((t) => /\d[.,]\d{2}\D*$/.test(t)) && !productOf(rest.concat(lastT / 100))
+          // (two digits after a whole number are its agorot with the point lost, "5,956 05": no code)
+          const agorot = lastT != null && /^\d{2}$/.test(prev.t[prev.t.length - 1]) && /^-?[\d,]+$/.test(prev.t[prev.t.length - 2]);
+          const isCode = lastT != null && !agorot && prev.t.slice(0, -1).some((t) => /\d[.,]\d{2}\D*$/.test(t)) && !productOf(rest.concat(lastT / 100))
             && (productOf(rest) ? true : !productOf(vals) && lastT < 10000);
           const code = isCode ? prev.t.pop() : null;
           close();
@@ -890,6 +916,20 @@
     // next line only on a payslip of the first kind: on the other, those are the next row's (readers campaign).
     // The side is counted apart for the rows (payments, deductions) and for the totals and information: a sheet may
     // print its rows left to right and its totals right to left ("36160 נסיעות" took the next row's amount).
+    // A column of symbol codes printed right after the names ("שעות עבודה בפועל 301 35.40 …", "דמי חגים 304 960.00"):
+    // whole numbers that rise by 1 to 3 from row to row. Read as a value, the code was a holiday pay of 304 ₪ (readers
+    // campaign, Nov 2026). They are taken out of their lines.
+    {
+      const cand = rawLines.map((l) => { const rs = runsOf(l); return rs.length >= 2 && rs[0].kind === 'w' && rs[1].kind === 'n' && /^\d{2,4}$/.test(rs[1].t[0]) && matchField(rs[0].t.join(' ')) ? +rs[1].t[0] : null; });
+      let best = [], cur = [];
+      cand.forEach((c, i) => {
+        if (c == null) return;
+        if (cur.length && c - cand[cur[cur.length - 1]] >= 1 && c - cand[cur[cur.length - 1]] <= 3) cur.push(i); else cur = [i];
+        if (cur.length > best.length) best = cur.slice();
+      });
+      // (two rows are enough when their codes follow each other and are of three digits or more: 301, 302)
+      if (best.length >= 3 || (best.length === 2 && cand[best[1]] - cand[best[0]] === 1 && cand[best[0]] >= 100)) for (const i of best) { const rs = runsOf(rawLines[i]); rs[1].t.shift(); rawLines[i] = rs.filter((r) => r.t.length).map((r) => r.t.join(' ')).join(' '); }
+    }
     const side = { row: [0, 0], sum: [0, 0] };
     const groupOf = (fd) => (fd.kind === 'total' || fd.kind === 'info' ? 'sum' : 'row');
     for (const l of rawLines) {
@@ -908,6 +948,7 @@
     const fields = {};
     const other = [];
     let cumulative = false;
+    let colHint = 0; // from the payments table's heading: 1 = the rate next to the amount (hours further), 2 = the other way
     let fundCols = null; // the order of a fund table's columns, from its heading
     let mand = null; // the total of the mandatory deductions, kept apart from the total of all of them
     let heads = null; // a row of column names, waiting for the row of numbers under it
@@ -950,6 +991,10 @@
       // starts at its heading (a line with no numbers) and ends at the next heading: a "- name -" line or a row
       // of three or more column names. The heading of two columns ("החודש מצטבר") opens no block: the month's
       // numbers are on its lines too (every deduction under it was read as the year's, readers campaign, Nov 2026).
+      // the heading of the payments table ("כמות תעריף סכום"): the rate next to the amount, or the hours
+      const tw = raw.split(' ');
+      const iq = tw.findIndex((w) => /^(?:כמות|שעות|ימים)$/.test(w)), ir = tw.findIndex((w) => /^תעריף$/.test(w)), ia = tw.findIndex((w) => /^(?:סכום|סה"כ)$/.test(w));
+      if (iq >= 0 && ir >= 0 && ia >= 0) colHint = Math.abs(ir - ia) < Math.abs(iq - ia) ? 1 : 2;
       const cum = head.find((h) => /מצטבר/.test(h));
       if (cum && words <= 5 && !/חודש|שוטף|נוכחי/.test(cum)) { cumulative = true; return true; }
       if (cumulative && (/^[-–*].*[-–*]$/.test(raw) || words >= 3)) cumulative = false;
@@ -974,8 +1019,13 @@
       // or a balance row: "מחלה 29.50 1.500.00 31.00" is 29.50 + 1.50 − 0.00 = 31.00, not a sick pay of 1,500 ₪)
       if (nums.alt) {
         const sums = (l) => { const v = l.filter((x) => !x.pct).map((x) => x.v); return !!(productOf(v) || (v.length >= 3 && v.length <= 4 && balanceRow(v) != null)); };
-        if (sums(nums.alt) && !sums(nums)) nums = nums.alt;
+        // (a decimal point lost to a space: the joined reading wins whenever it adds up, also when the whole shekels
+        // add up too, "8,50 65.00 552 50" is 552.50 and not 552 with a stray 50)
+        // (with the line as it is, only an exact product holds then: "8 65 520" in a whole-shekel sheet; "7.75 411 53"
+        // is no 7.75 × 53 = 411 but 411.53, "386.81 3,868 10" no 386.81 × 10 = 3,868 but a year's total of 3,868.10)
+        if (nums.gap ? sums(nums.alt) : sums(nums.alt) && !sums(nums)) nums = nums.alt;
       }
+      if (nums.gap) nums.dirty = (nums.dirty || 0) + nums.gap;
       const glued = nums.glued;
       // the tier printed without "%" in the name ("ש"נ 125 562.50", "שעות 100 160.00 8,000.00") is not a value: it was
       // read as 125 overtime hours, or made a third value that hid the hours (deep review, Nov 2026)
@@ -1013,7 +1063,8 @@
       }
       // a fund row with the employer's columns: the worker's share by the table's heading, never by its place alone
       const fk = FUND_KEYS[f.key];
-      const shares = fk ? fundShares(nums) : null;
+      // (with a decimal point lost to a space, the joined reading when its amounts fit their percents)
+      const shares = fk ? (nums.gap ? (nums.alt && fundShares(nums.alt)) || null : fundShares(nums)) : null;
       if (fk && !shares && nums.filter((x) => x.pct).length >= 2) { ask(f, line); return; }
       if (shares) {
         const cols = fundCols && fundCols.length === shares.length ? fundCols : null;
@@ -1035,13 +1086,14 @@
       // the hour lines, to settle which factor is the hours once every line was read
       // (the amount between the two factors, or numbers brought from the next line: their places do not say which is the
       // hours. "שעות עבודה 60 3045 50.75" was 60 hours at 50.75 ₪; the size rule or the slip's wage decides, or neither)
-      const placeless = pv.rate != null && !pv.sure && (pv.mid || moved);
+      const placeless = pv.rate != null && !pv.sure && !pv.even && (pv.mid || moved);
       if (placeless && !f.hours) { delete pv.qty; delete pv.rate; }
       if (f.hours && placeless) (parts[f.key] = parts[f.key] || []).push({ qty: pv.qty, rate: pv.rate, amb: false, mid: true, value: pv.value });
+      else if (f.hours && pv.even) (parts[f.key] = parts[f.key] || []).push({ qty: pv.qty, rate: pv.rate, amb: false });
       else if (f.hours && pv.rate != null && pv.sure != null && !pv.mid && !moved) { votes[pv.sure ? (pv.byPlace ? 'ok' : 'no') : 'amb']++; (parts[f.key] = parts[f.key] || []).push({ qty: pv.qty, rate: pv.rate, amb: !pv.sure }); }
       else if (f.hours) (parts[f.key] = parts[f.key] || []).push({ qty: pv.qty, rate: pv.rate, amb: false, two: !!pv.two, one: !!pv.one, value: pv.value });
       delete pv.two; delete pv.one;
-      delete pv.sure; delete pv.byPlace; delete pv.mid;
+      delete pv.sure; delete pv.byPlace; delete pv.mid; delete pv.even;
       if (f.kind !== 'info') { money.push(...nums.filter((x) => !x.pct).map((x) => x.dec)); if (pv.bare) bare.push({ f, line }); }
       delete pv.bare;
       // the total of the mandatory deductions is kept apart: it is the total of all the deductions only on a payslip
@@ -1168,12 +1220,42 @@
     }
     // the hours and the rate of a line where both could be the hours ("50.75 60.00 3,045.00"): the table's columns
     // are in one order, and the lines whose sizes leave no doubt ("2.00 75.00 150.00") say which
-    if (votes.no && !votes.ok) {
+    // Its place alone is a guess: a sheet may print the rate before the hours ("שעות עבודה בפועל 35.40 168.25
+    // 5,956.05" was 35.40 hours at 168.25 ₪, readers campaign, Nov 2026). The evidence on the slip decides: the lines
+    // whose sizes leave no doubt (votes), the one wage the lines agree on (each rate over its tier), the hours total
+    // printed on the slip. With no evidence, or evidence both ways, the hours and the rate are left out (the amount
+    // stays: it is the product either way).
+    const TIERS = { base: 1, ot125: 1.25, ot150: 1.5, rest150: 1.5, rest175: 1.75, rest200: 2 };
+    if (Object.keys(parts).some((k) => parts[k].some((x) => x.amb))) {
+      const hp = [];
+      for (const k of Object.keys(parts)) for (const p of parts[k]) if (TIERS[k] && p.rate > 0 && !p.two && !p.mid && !p.one) hp.push({ k, p });
+      const agree = (sw) => {
+        const ws = hp.map(({ k, p }) => Math.abs(sw && p.amb ? p.qty : p.rate) / TIERS[k]);
+        return ws.reduce((best, a) => Math.max(best, ws.filter((b) => Math.abs(b - a) <= a * 0.02).length), 0);
+      };
+      const a1 = agree(false), a2 = agree(true);
+      const wh = fields.workHours && fields.workHours.value;
+      const tot = (sw) => hp.reduce((t, { p }) => t + Math.abs(sw && p.amb ? p.rate : p.qty), 0);
+      const h1 = wh ? Math.abs(tot(false) - wh) <= 0.05 : false, h2 = wh ? Math.abs(tot(true) - wh) <= 0.05 : false;
+      // in order of weight: the lines whose sizes decide; the table's heading (is the rate next to the amount?); the
+      // hours total; the one wage, only when one reading has the lines agree and the other is far off (a rate a little
+      // below the others is what the check is for: it must not turn the line around)
+      const far = (sw) => { const ws = hp.map(({ k, p }) => Math.abs(sw && p.amb ? p.qty : p.rate) / TIERS[k]); const m = ws.slice().sort((x, y) => x - y)[ws.length >> 1]; return ws.some((w) => Math.abs(w - m) > m * 0.25); };
+      let ev = 0;
+      if (votes.ok && !votes.no) ev = 1;
+      else if (votes.no && !votes.ok) ev = 2;
+      else if (!votes.ok && !votes.no && colHint) ev = colHint;
+      else if (!votes.ok && !votes.no && h1 !== h2) ev = h1 ? 1 : 2;
+      else if (!votes.ok && !votes.no && hp.length >= 2 && a2 === hp.length && far(false) && !far(true)) ev = 2;
+      else if (!votes.ok && !votes.no && hp.length >= 2 && a1 === hp.length && far(true) && !far(false)) ev = 1;
+      const for1 = ev === 1, for2 = ev === 2;
       for (const k of Object.keys(parts)) {
         const F = fields[k];
         if (!F || F.value == null || !parts[k].some((x) => x.amb)) continue;
-        const q = parts[k].reduce((s, x) => s + (x.amb ? x.rate : x.qty || 0), 0);
-        if (q > 0) { F.qty = q; F.rate = F.value / q; }
+        if (for2 && !for1) {
+          const q = parts[k].reduce((t, x) => t + (x.amb ? x.rate : x.qty || 0), 0);
+          if (q > 0) { F.qty = q; F.rate = F.value / q; }
+        } else if (!(for1 && !for2)) { delete F.qty; delete F.rate; }
       }
     }
     // An hours line with two numbers: its hours and its pay, or (a column lost, a row split by the PDF) its hours and
@@ -1200,6 +1282,9 @@
       }
       delete F.qty; delete F.rate;
     }
+    // (with no whole line, the slip's two-number hours lines are of one kind: when one of them cannot be hours and a pay,
+    // "35.40 125.00" with its amount cut off, none of them is read as hours and a pay: "53.10 1.25" was a rate and hours)
+    const twoAllFit = Object.keys(parts).every((k) => !TIER[k] || parts[k].every((p) => !p.two || (p.value / p.qty / TIER[k] >= 24 && p.value / p.qty <= 1000)));
     for (const k of Object.keys(parts)) {
       const F = fields[k];
       // (an hours line with one number on a payslip whose hour lines are whole: "שעות שבת 150% 7" with its rate and pay
@@ -1208,10 +1293,21 @@
       const two = parts[k].filter((p) => p.two);
       if (!F || F.value == null || !two.length || !TIER[k]) continue;
       const want = wage != null ? wage * TIER[k] : null;
-      const fits = (p) => (want != null ? Math.abs(p.value / p.qty - want) <= want * 0.02 : !whole.length && p.value / p.qty >= 20 && p.value / p.qty <= 1000);
-      if (two.every(fits)) continue;
+      // (with no whole line to give the wage: the pay over the hours, over the tier, is at least a youth's minimum wage)
+      const fits = (p) => (want != null ? Math.abs(p.value / p.qty - want) <= want * 0.02 : !whole.length && p.value / p.qty / TIER[k] >= 24 && p.value / p.qty <= 1000);
+      if (two.every(fits) && (want != null || twoAllFit)) continue;
       if (parts[k].length === 1 && want != null && Math.abs(two[0].qty - want) <= want * 0.01) { F.rate = two[0].qty; F.qty = Math.round(F.value / F.rate * 100) / 100; continue; }
       fields[k] = { line: F.line, value: null };
+    }
+    // The hours lines read from one or two numbers (their places not proven by hours × rate = pay) stand only when the
+    // payments add up to the gross: "שעות רגילות 140.25" with its pay on a lower line was a base pay of 140.25 ₪, and
+    // "105.00 3.50 שעות שבת 175%" with its amount cut off a Shabbat pay of 105 ₪ (readers campaign, Nov 2026).
+    if (fields.gross && fields.gross.value != null) {
+      const weak = Object.keys(parts).filter((k) => TIER[k] && fields[k] && fields[k].value != null && parts[k].some((p) => p.two || p.one));
+      if (weak.length) {
+        const sum = FIELDS.filter((x) => x.kind === 'pay' && fields[x.key] && fields[x.key].value != null).reduce((t, x) => t + fields[x.key].value, 0);
+        if (Math.abs(sum - fields.gross.value) > Math.max(2, Math.abs(fields.gross.value) * 0.005)) for (const k of weak) fields[k] = { line: fields[k].line, value: null };
+      }
     }
     // the mandatory deductions' total stands for the total only when the payslip's own numbers say it is one
     if (!fields.totalDeductions && mand) {

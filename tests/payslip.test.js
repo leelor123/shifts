@@ -661,8 +661,12 @@ T.test('a thousands separator read as a dot or a space is never a wrong amount',
   const sp = Payslip.parseText('נטו לתשלום 8 500.00').fields.net;
   // read as 8,500, or left for the person to fill in (value null: the check screen asks for it); never 500 or 0
   T.ok(!sp || sp.value == null || Math.abs(sp.value - 8500) < 0.01, 'not 500 or 0: ' + (sp && sp.value));
-  const b = Payslip.parseText('שכר יסוד 160.00 50.00 8.000.00').fields.base;
+  // (which factor is the hours needs evidence on the slip: here the table's heading; alone, the hours are left out,
+  // never 50)
+  const b = Payslip.parseText('תיאור כמות תעריף סכום\nשכר יסוד 160.00 50.00 8.000.00').fields.base;
   T.near(b.value, 8000); T.near(b.qty, 160);
+  const b1 = Payslip.parseText('שכר יסוד 160.00 50.00 8.000.00').fields.base;
+  T.near(b1.value, 8000); T.ok(b1.qty == null || Math.abs(b1.qty - 160) < 0.01, 'never 50 hours: ' + b1.qty);
   T.near(Payslip.parseText('נטו לתשלום 1,821.54').fields.net.value, 1821.54);
   T.near(Payslip.numbersIn('1.234,56')[0].v, 1234.56);
 });
