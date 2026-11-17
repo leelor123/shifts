@@ -291,7 +291,9 @@
     // the third form: a decimal comma ("56,32", "1234,56", a European sheet's export). A comma before one or two digits
     // is never a thousands separator; read as two numbers it gave 56 and 32, and the deduction was 32 (readers
     // campaign, Nov 2026)
-    const re = /(-?)(\d{1,3}(?:[.,]\d{3})+[.,]\d{2}(?!\d)|\d{1,3}(?:,\d{3})+(?:\.\d+)?(?![,\d])|\d+,\d{1,2}(?![\d,])|\d+(?:\.\d+)?)(-?)(\s*%)?/g;
+    // the fourth form: hours as h:mm ("33:30" is 33.5 hours; read as 33 and 30 it hid the hours × rate = pay, readers
+    // campaign, Nov 2026)
+    const re = /(-?)(\d{1,3}:[0-5]\d(?![\d:.,])|\d{1,3}(?:[.,]\d{3})+[.,]\d{2}(?!\d)|\d{1,3}(?:,\d{3})+(?:\.\d+)?(?![,\d])|\d+,\d{1,2}(?![\d,])|\d+(?:\.\d+)?)(-?)(\s*%)?/g;
     const out = [];
     let m;
     while ((m = re.exec(clean))) {
@@ -299,11 +301,12 @@
       if (!raw.includes('.') && !raw.includes(',') && raw.length > 6) continue; // ids
       const thou = /^\d{1,3}(?:[.,]\d{3})+[.,]\d{2}$/.test(raw);
       const comma = /^\d+,\d{1,2}$/.test(raw);
-      let v = thou ? parseFloat(raw.slice(0, -3).replace(/[.,]/g, '') + '.' + raw.slice(-2)) : comma ? parseFloat(raw.replace(',', '.')) : parseFloat(raw.replace(/,/g, ''));
+      const hm = /^\d{1,3}:[0-5]\d$/.test(raw);
+      let v = hm ? +raw.split(':')[0] + raw.split(':')[1] / 60 : thou ? parseFloat(raw.slice(0, -3).replace(/[.,]/g, '') + '.' + raw.slice(-2)) : comma ? parseFloat(raw.replace(',', '.')) : parseFloat(raw.replace(/,/g, ''));
       // a whole number of 1 to 3 digits right before "500.00" may be its thousands split by a space ("8 500.00")
       const spaced = !m[4] && !raw.includes('.') && !raw.includes(',') && raw.length <= 3 && /^ \d{3}[.,]\d{2}(?!\d)/.test(clean.slice(m.index + m[0].length));
       if (m[1] === '-' || m[3] === '-') v = -v;
-      out.push(Object.assign({ v, pct: !!m[4], dec: raw.includes('.') || thou || comma, raw: m[0] }, spaced ? { spaced } : null));
+      out.push(Object.assign({ v, pct: !!m[4], dec: raw.includes('.') || thou || comma || hm, raw: m[0] }, spaced ? { spaced } : null));
     }
     return out;
   }
@@ -502,7 +505,8 @@
     const last = vals[vals.length - 1];
     // a bare "00" left of a misread amount is never the amount (the rule: a misreading is not a value)
     if (last === 0 && vals.some((x) => x !== 0)) return null;
-    return Object.assign({ value: last, pct: pcts[0] }, bareInt(nums, last) ? { bare: true } : null);
+    // (an hours line with one number: its pay, or its hours with the rest of the row lost; parseText checks it, `two`)
+    return Object.assign({ value: last, pct: pcts[0] }, bareInt(nums, last) ? { bare: true } : null, f.hours && vals.length === 1 ? { one: true } : null);
   }
   /** Was this value printed as a whole number of four digits or more, with no separator ("89315")? */
   const bareInt = (nums, v) => nums.some((x) => !x.pct && !x.dec && x.v === v && Math.abs(x.v) >= 1000 && /^-?\d+-?$/.test(x.raw.trim()));
@@ -518,6 +522,9 @@
   const NUM_TOKEN = /^[-+(₪]*\d[\d.,:\/-]*\)?%?-?₪?$/;
   const TIER_TOKEN = /^(?:100|125|150|175|200)%$/;
   const NOISE_TOKEN = /^[|_\-–—:;.,=*×xX₪%'"`~]+$/;
+  /** The currency printed after an amount ("3,045.00 ש"ח"): no name. Read as one, a row ending with it was taken for a
+   *  sheet built left to right, turned around, and its symbol code became the pay (readers campaign, Nov 2026). */
+  const CURRENCY_TOKEN = /^(?:ש"ח|ש''ח|שח|NIS|ILS)$/;
   const UNIT_WORDS = /^(?:ש"ח|ש''ח|שח|שעות|שעה|ש'|ימים|יום|ימי|יח'|כמות|תעריף|סכום|אחוז|לשעה|ליום|כפול|א|קופה)$/;
   const ROW_WORDS = /^(?:יתר[הת]|קודמת|צבירה|נצבר|זיכוי|ניצול|נוצל|זכאות|חדשה|פתיחה|סגירה|נוכחית|סופית|חודשית)$/;
   // i18n-keep-end
@@ -526,7 +533,7 @@
     const runs = [];
     for (const t of line.split(' ')) {
       if (!t) continue;
-      const kind = NOISE_TOKEN.test(t) ? null : TIER_TOKEN.test(t) ? 'w' : NUM_TOKEN.test(t) || (/\d/.test(t) && !/[֐-׿]{3}/.test(t)) ? 'n' : 'w';
+      const kind = NOISE_TOKEN.test(t) || CURRENCY_TOKEN.test(t) ? null : TIER_TOKEN.test(t) ? 'w' : NUM_TOKEN.test(t) || (/\d/.test(t) && !/[֐-׿]{3}/.test(t)) ? 'n' : 'w';
       const last = runs[runs.length - 1];
       if (kind == null) { if (last) last.t.push(t); continue; }
       if (last && last.kind === kind) last.t.push(t);
@@ -534,7 +541,7 @@
     }
     return runs;
   }
-  const wordsOf = (run) => run.t.filter((t) => !NOISE_TOKEN.test(t));
+  const wordsOf = (run) => run.t.filter((t) => !NOISE_TOKEN.test(t) && !CURRENCY_TOKEN.test(t));
   const valsOf = (run) => numbersIn(run.t.join(' ')).filter((x) => !x.pct).map((x) => x.v);
   // i18n-keep-start (the words printed on an Israeli payslip)
   const VOCAB = new Set(FIELDS.reduce((a, f) => a.concat(f.pats.join(' ').split(' ')), []).concat(['תלוש', 'שכר', 'שעות', 'עובד', 'מעסיק', 'מעביד', 'חודש', 'תשלומים', 'ניכויים', 'סכום', 'כמות', 'תעריף', 'יתרה', 'מצטבר',
@@ -595,22 +602,35 @@
   /** A printed row → its lines, each a name followed by its numbers (a row with one name comes back as it is). */
   function segments(line) {
     let runs = runsOf(line);
-    if (runs.filter((r) => r.kind === 'w').length < 2) return [line];
-    // the numbers before the names (a sheet built left to right): mirrored, so every name leads its numbers
-    const numsFirst = runs[0].kind === 'n' && runs[runs.length - 1].kind === 'w';
+    const code0 = runs.length > 1 && runs[0].kind === 'n' && runs[0].t.length === 1 && /^\d{1,6}$/.test(runs[0].t[0]) && runs[1].kind === 'w';
+    // the numbers before the names (a sheet built left to right): mirrored, so every name leads its numbers. Not when
+    // the first number is a symbol code before a name ("0006 דמי חגים 320.00 ניכויי חובה": turned around, the code
+    // became the holiday pay, readers campaign, Nov 2026)
+    const numsFirst = runs.length > 1 && runs[0].kind === 'n' && runs[runs.length - 1].kind === 'w' && !code0;
     if (numsFirst) runs = runs.slice().reverse();
     const segs = [];
-    let cur = [], named = false, vals = [];
-    const close = () => { if (cur.length) segs.push(cur); cur = []; named = false; vals = []; };
+    // numbers before the first name, when that name has numbers of its own after it, are not its numbers (they are the
+    // line before it, its name left on a line of its own: "3.50 105.00 367.50 ביטוח לאומי 56.32" gave a National
+    // Insurance of 367.50, readers campaign, Nov 2026). A lone whole number there is the name's symbol code.
+    // (not in a row printed the other way round with its symbol code last, "146.03 53.10 2.75 ש.נ 150% 91")
+    if (!numsFirst && runs.length >= 3 && runs[0].kind === 'n' && runs[1].kind === 'w' && runs[2].kind === 'n' && !code0 && !nameLast(line)) {
+      segs.push([runs[0]]);
+      runs = runs.slice(1);
+    }
+    if (segs.length === 0 && runs.filter((r) => r.kind === 'w').length < 2) return [line];
+    let cur = [], named = false, vals = [], numRun = false;
+    const close = () => { if (cur.length) segs.push(cur); cur = []; named = false; vals = []; numRun = false; };
     runs.forEach((r, i) => {
-      if (r.kind === 'n') { cur.push(r); if (named) vals = vals.concat(valsOf(r)); return; }
+      // (a run counts as the name's numbers even when none of them could be read: "ביטוח לאומי l63.95 שעות נוספות
+      // 125% 8.50 65.00 552.50" was one line, and the deduction took the overtime's amount)
+      if (r.kind === 'n') { cur.push(r); if (named) { vals = vals.concat(valsOf(r)); numRun = true; } return; }
       const next = runs[i + 1];
       const words = wordsOf(r);
       // a second name: it has numbers before it (of the name this part began with) and numbers of its own after it
       // (a tier alone between the numbers, "שעות שבת 3.50 105.00 175% 367.50", is the row's percent column, not a
       // second name: cut there, the amount became a second Shabbat line and the pay was counted twice, readers
       // campaign, Nov 2026)
-      if (named && vals.length && next && next.kind === 'n' && !words.every((w) => ROW_WORDS.test(w)) && !words.every((w) => TIER_TOKEN.test(w))) {
+      if (named && numRun && next && next.kind === 'n' && !words.every((w) => ROW_WORDS.test(w)) && !words.every((w) => TIER_TOKEN.test(w))) {
         const own = !!matchField(words.join(' '));
         const across = !productOf(vals) && !!productOf(vals.concat(valsOf(next)));
         if (own || (!across && !words.every((w) => UNIT_WORDS.test(w)))) {
@@ -625,6 +645,18 @@
           close();
           if (code) cur.push({ kind: 'n', t: [code] });
         }
+      }
+      // words after the name's numbers with nothing after them (a heading or another row's name the recognition joined
+      // to this line: "קרן פנסיה 319.95 הפרשות מעסיק" was the employer's pension) are a part of their own
+      // Which side the numbers go with: the name before them when it is a payslip line ("קרן פנסיה"), else the name
+      // after them when that one is ("תשלומים 3,045.00 60.00 50.75 שכר רגיל", a sheet built left to right with its
+      // heading joined: cut after the numbers, the base pay took the next row's numbers, readers campaign, Nov 2026).
+      if (named && numRun && !next && !words.every((w) => UNIT_WORDS.test(w) || ROW_WORDS.test(w))) {
+        const lead = [];
+        for (const x of cur) { if (x.kind !== 'w') break; lead.push(...wordsOf(x)); }
+        // (a row of column names joined after a number, "120.00 קופות גמל שכר מבוטח עובד מעביד פיצויים", is no name)
+        if (matchField(lead.join(' ')) || !matchField(words.join(' ')) || words.length > 4) close();
+        else { const k = cur.findIndex((x) => x.kind === 'n'); segs.push(cur.slice(0, k)); cur = cur.slice(k); }
       }
       cur.push(r);
       named = true;
@@ -738,6 +770,8 @@
   const NET_FINAL = /נטו לתשלום|בבנק|לבנק/;
   /** The total of the mandatory deductions only: not the total of all the deductions. */
   const MAND_TOTAL = /ניכויי חובה/;
+  /** The heading of the year's block, inside a line. */
+  const CUM_HEAD = /(?:סכומים|נתונים|ערכים) מצטברים|מצטבר שנתי|מצטבר מתחילת/;
   const GROSS_TOTAL = /סה"כ ברוטו|סך כל התשלומים|סה"כ תשלומים|סה"כ התשלומים/;
   /** The columns of a fund table: the worker's share, the employer's, the severance. */
   const FUND_COLS = [['emp', /עובד/], ['er', /מעביד|מעסיק/], ['sev', /פיצויים/]];
@@ -825,6 +859,18 @@
   }
   function parseText(text) {
     const rawLines = unreverse(text.split(/\r?\n/).map(normalize).filter(Boolean));
+    // Which side of its numbers a name is printed on, over the whole payslip: before them (read from the right) or
+    // after them (a sheet built left to right). A name left alone on its line takes the numbers at the start of the
+    // next line only on a payslip of the first kind: on the other, those are the next row's (readers campaign).
+    let nameFirst = 0, nameAfter = 0;
+    for (const l of rawLines) {
+      if (!/\d/.test(l) || !HEB.test(l)) continue;
+      const rs = runsOf(l);
+      const lead = rs[0] && rs[0].kind === 'n' && rs[0].t.length === 1 && /^\d{1,6}$/.test(rs[0].t[0]) && rs[1] && rs[1].kind === 'w' ? rs.slice(1) : rs;
+      if (lead.length >= 2 && lead[0].kind === 'w' && lead[1].kind === 'n' && matchField(lead[0].t.join(' '))) nameFirst++;
+      else if (nameLast(l) && matchField(l)) nameAfter++;
+    }
+    const joinNext = nameFirst > nameAfter;
     const fields = {};
     const other = [];
     let cumulative = false;
@@ -853,6 +899,27 @@
       if (f.kind === 'pay' && fields[f.key]) { fields[f.key] = { line: fields[f.key].line + ' | ' + line, value: null }; unsure.add(f.key); }
       else if (f.kind !== 'info') { ask(f, line); if (f.kind === 'pay') unsure.add(f.key); }
       return;
+    }
+    /** A line of names with no numbers: a row of column names, a fund table's heading, the year's block. Returns true
+     *  when it opened the year's block (the line is read no further). */
+    function heading(raw) {
+      const vis = reversedWords(raw);
+      const list = nameRow(vis ? fixVisual(raw) : raw);
+      if (list) heads = { list, visual: vis };
+      const words = raw.split(' ').length;
+      const head = [raw, fixVisual(raw)];
+      // the heading of a fund table: the order of its columns (the worker's, the employer's, the severance)
+      const fh = head.find((h) => FUND_COLS[0][1].test(h) && FUND_COLS[1][1].test(h));
+      if (fh) fundCols = FUND_COLS.filter((c) => c[1].test(fh)).sort((a, b) => fh.search(a[1]) - fh.search(b[1])).map((c) => c[0]);
+      // a block of the year's running totals ("- סכומים מצטברים -", "נתונים מצטברים"): its gross and tax are the
+      // year's, not the month's (the year's taxable gross was read as the month's, real payslip, Nov 2026). It
+      // starts at its heading (a line with no numbers) and ends at the next heading: a "- name -" line or a row
+      // of three or more column names. The heading of two columns ("החודש מצטבר") opens no block: the month's
+      // numbers are on its lines too (every deduction under it was read as the year's, readers campaign, Nov 2026).
+      const cum = head.find((h) => /מצטבר/.test(h));
+      if (cum && words <= 5 && !/חודש|שוטף|נוכחי/.test(cum)) { cumulative = true; return true; }
+      if (cumulative && (/^[-–*].*[-–*]$/.test(raw) || words >= 3)) cumulative = false;
+      return false;
     }
     function readLine(line) {
       let f = matchField(line);
@@ -898,7 +965,8 @@
       // a name with no number on its line: the number may be alone on the next one (a box with its title above it)
       // (every number on it unreadable, "נטו לתשלום 3,898.9l": the line is not read, it does not wait for a number)
       if (!nums.length && numbersIn(line).dirty) { notRead(f, line); return; }
-      if (!nums.length) { if (f.kind !== 'pay' && line.split(' ').length <= 4) pending = { f, line }; return; }
+      // (a percent alone is the name's tier, "שעות שבת 175%": the name still waits for its numbers)
+      if (!nums.some((x) => !x.pct) && !numbersIn(line).dirty) { if (line.split(' ').length <= 5) pending = { f, line }; return; }
       if (f.kind === 'info') {
         // the number right after the name: on a merged line ("ימי עבודה 22 שעות עבודה 176.00") the first number
         // belonged to the line before it, and 22 days were read as the hours (deep review, Nov 2026)
@@ -930,8 +998,8 @@
       if (unsure.has(f.key)) { fields[f.key].line += ' | ' + line; return; }
       // the hour lines, to settle which factor is the hours once every line was read
       if (f.hours && pv.rate != null && pv.sure != null) { votes[pv.sure ? (pv.byPlace ? 'ok' : 'no') : 'amb']++; (parts[f.key] = parts[f.key] || []).push({ qty: pv.qty, rate: pv.rate, amb: !pv.sure }); }
-      else if (f.hours) (parts[f.key] = parts[f.key] || []).push({ qty: pv.qty, rate: pv.rate, amb: false, two: !!pv.two, value: pv.value });
-      delete pv.two;
+      else if (f.hours) (parts[f.key] = parts[f.key] || []).push({ qty: pv.qty, rate: pv.rate, amb: false, two: !!pv.two, one: !!pv.one, value: pv.value });
+      delete pv.two; delete pv.one;
       delete pv.sure; delete pv.byPlace;
       if (f.kind !== 'info') { money.push(...nums.filter((x) => !x.pct).map((x) => x.dec)); if (pv.bare) bare.push({ f, line }); }
       delete pv.bare;
@@ -967,14 +1035,24 @@
       fields[f.key] = Object.assign({ line }, pv);
     }
 
-    for (const raw of rawLines) {
+    for (let li = 0; li < rawLines.length; li++) {
+      let raw = rawLines[li];
       const was = pending;
       pending = null;
-      // a number alone on the line after a total's name
-      if (was && !HEB.test(raw)) {
-        const ns = numbersIn(raw);
-        if (ns.length === 1 && !ns[0].pct && !/[A-Za-z]/.test(raw)) readLine(was.line + ' ' + raw);
-        continue;
+      // a name alone on its line, and the numbers at the start of the next one: they are its numbers (a photo's lines
+      // drift apart). A total takes one number; a payment its hours, rate and amount, with the words that go between
+      // them ("20 ימים 236.00"). What follows on that line is read on its own.
+      if (was && joinNext) {
+        const runs = runsOf(raw);
+        let n = 0;
+        while (n < runs.length && (runs[n].kind === 'n' || wordsOf(runs[n]).every((w) => UNIT_WORDS.test(w)))) n++;
+        const lead = runs.slice(0, n).map((r) => r.t.join(' ')).join(' ');
+        if (n && runs[0].kind === 'n' && !/[A-Za-z]/.test(lead)) {
+          const ns = numbersIn(lead);
+          if (ns.length && (was.f.kind === 'pay' || (ns.length === 1 && !ns[0].pct))) readLine(was.line + ' ' + lead);
+          if (n === runs.length) continue;
+          raw = runs.slice(n).map((r) => r.t.join(' ')).join(' ');
+        }
       }
       // the numbers under a row of column names
       const names = heads;
@@ -987,24 +1065,10 @@
           continue;
         }
       }
-      if (!/\d/.test(raw) && HEB.test(raw)) {
-        const vis = reversedWords(raw);
-        const list = nameRow(vis ? fixVisual(raw) : raw);
-        if (list) heads = { list, visual: vis };
-        const words = raw.split(' ').length;
-        const head = [raw, fixVisual(raw)];
-        // the heading of a fund table: the order of its columns (the worker's, the employer's, the severance)
-        const fh = head.find((h) => FUND_COLS[0][1].test(h) && FUND_COLS[1][1].test(h));
-        if (fh) fundCols = FUND_COLS.filter((c) => c[1].test(fh)).sort((a, b) => fh.search(a[1]) - fh.search(b[1])).map((c) => c[0]);
-        // a block of the year's running totals ("- סכומים מצטברים -", "נתונים מצטברים"): its gross and tax are the
-        // year's, not the month's (the year's taxable gross was read as the month's, real payslip, Nov 2026). It
-        // starts at its heading (a line with no numbers) and ends at the next heading: a "- name -" line or a row
-        // of three or more column names. The heading of two columns ("החודש מצטבר") opens no block: the month's
-        // numbers are on its lines too (every deduction under it was read as the year's, readers campaign, Nov 2026).
-        const cum = head.find((h) => /מצטבר/.test(h));
-        if (cum && words <= 5 && !/חודש|שוטף|נוכחי/.test(cum)) { cumulative = true; continue; }
-        if (cumulative && (/^[-–*].*[-–*]$/.test(raw) || words >= 3)) cumulative = false;
-      }
+      if (!/\d/.test(raw) && HEB.test(raw) && heading(raw)) continue;
+      // the heading of the year's block joined to the line after it ("- סכומים מצטברים - ברוטו למס 75,051.41"): the
+      // block starts on this line (its taxable gross was read as the month's, readers campaign, Nov 2026)
+      if (/\d/.test(raw) && CUM_HEAD.test(raw)) cumulative = true;
       let line = raw;
       const f0 = matchField(raw);
       if (reversedWords(raw)) {
@@ -1025,7 +1089,16 @@
         if (fa && byWords(fa, alt)) line = alt;
       }
       logical.push(line);
-      for (const seg of segments(line)) readLine(seg);
+      // (a part with no numbers, cut from a line that has some, may be a heading the recognition joined to the line)
+      // the rest of a payment's row on the next line, numbers only ("שעות שבת 150% 7" over "51.48 360"): joined when
+      // only together they add up (hours × rate = pay)
+      const nx = rawLines[li + 1];
+      if (nx && /\d/.test(nx) && !HEB.test(nx) && !/[A-Za-z]/.test(nx) && /\d/.test(line)) {
+        const v1 = numbersIn(line).filter((x) => !x.pct).map((x) => x.v), v2 = numbersIn(line + ' ' + nx).filter((x) => !x.pct).map((x) => x.v);
+        const fm = matchField(line);
+        if (fm && (fm.kind === 'pay' || fm.key === 'workHours') && !productOf(v1) && productOf(v2) && v2.length <= 4) { line = line + ' ' + nx; li++; }
+      }
+      for (const seg of segments(line)) { if (seg !== line && !/\d/.test(seg) && HEB.test(seg) && heading(seg)) continue; readLine(seg); }
     }
     // a payslip that prints its amounts with agorot ("893.15") and one amount as a bare whole number ("89315"): the
     // decimal point was probably dropped by the text recognition. Such an amount is asked for, never shown as read
@@ -1055,6 +1128,9 @@
     const wage = whole.length && whole.every((r) => Math.abs(r - whole[0]) <= whole[0] * 0.02) ? whole[0] : null;
     for (const k of Object.keys(parts)) {
       const F = fields[k];
+      // (an hours line with one number on a payslip whose hour lines are whole: "שעות שבת 150% 7" with its rate and pay
+      // on the next line was a Shabbat pay of 7 ₪, readers campaign, Nov 2026)
+      if (F && F.value != null && TIER[k] && whole.length && parts[k].length === 1 && parts[k][0].one) { fields[k] = { line: F.line, value: null }; continue; }
       const two = parts[k].filter((p) => p.two);
       if (!F || F.value == null || !two.length || !TIER[k]) continue;
       const want = wage != null ? wage * TIER[k] : null;
