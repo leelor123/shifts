@@ -820,6 +820,10 @@
       // (only from a column that agrees with the times in most rows; a card's "8.25 שעות" only fills a
       // missing exit)
       let len = lenAt(ri), sure = len != null, card = false;
+      // the hours column checks this table, and this row's cell in it holds digits that are no length ("77" for
+      // 5.17): its times cannot be checked, and a misread minute would pass as read
+      const lc = totalCol || decCol;
+      const garbled = !!lc && len == null && r.words.some((w) => Math.abs(w.x - lc.at) <= tol && /\d/.test(w.text) && !w.items.some((it) => it.k === 'time' || (it.k === 'num' && it.v >= 0.25 && it.v <= 16)));
       if (len == null) {
         const dec = items.find((it) => it.k === 'num' && !Number.isInteger(it.v) && it.v >= 0.5 && it.v <= 16) ;
         if (dec && /שעות|hours|ש["׳']/i.test(textOf(r))) len = Math.round(dec.v * 60);
@@ -878,7 +882,7 @@
       const isTotalRow = SKIP_ROW.test(text) && !date;
       if (isTotalRow) return;
       const cut = cutDates && ((date && !date.day && !date.y && dateWord && /[./-]\d$/.test(clean(dateWord.text))) || (!date && mash));
-      const row = { ri, y: r.y, date, dow, mash: mash ? mash.s : null, shifts, text, dateCell: r.words.some((w) => inDateCol(w)), len: sure ? len : null, doubt: cut ? 'date' : null };
+      const row = { lenGarbled: garbled, ri, y: r.y, date, dow, mash: mash ? mash.s : null, shifts, text, dateCell: r.words.some((w) => inDateCol(w)), len: sure ? len : null, doubt: cut ? 'date' : null };
       if (date || mash || shifts.length || dow != null) found.push(row);
     });
     // an app's card: the date on a line of its own, the hours on the line above or under it. Each row of hours
@@ -1007,6 +1011,9 @@
     for (let i = 0; i < list.length; i++) {
       const r = list[i];
       if (trusted.has(i) && dowOk(r, r.key)) continue;
+      // (a line with a weekday and nothing else, no date and no hours, a stray word between two rows: it has no day
+      // to be given, and giving it one took that day from the row that has it)
+      if (!r.date && !r.mash && !r.shifts.length) continue;
       let p = i - 1; while (p >= 0 && !trusted.has(p)) p--;
       let q = i + 1; while (q < list.length && !trusted.has(q)) q++;
       const prev = p >= 0 ? list[p] : null, next = q < list.length ? list[q] : null;
@@ -1077,7 +1084,7 @@
         if (d < 10) { dbg.push(`not a shift: ${r.key} ${start}-${end}`); continue; }
         const row = { date: r.key, start, end, hours: Math.round(d / 60 * 100) / 100, overnight: minOf(end) <= minOf(start), line: r.text.slice(0, 120), n: r.ri };
         // (more than 16 hours: more likely a misread than a shift; offered, never saved as read)
-        const doubt = why || (d > 16 * 60 && 'long') || (capped.has(r.ri) && 'total') || r.doubt || ((weakPair || lenClash) && 'table') || (monthOff && 'date') || (!nearTitle(+r.key.slice(5, 7)) && 'date') || (yearClash.has(+r.key.slice(5, 7)) && 'date');
+        const doubt = why || (d > 16 * 60 && 'long') || (capped.has(r.ri) && 'total') || (r.lenGarbled && 'total') || r.doubt || ((weakPair || lenClash) && 'table') || (monthOff && 'date') || (!nearTitle(+r.key.slice(5, 7)) && 'date') || (yearClash.has(+r.key.slice(5, 7)) && 'date');
         if (doubt) row.doubt = doubt;
         // the hours the report pays, when they are not the span (a break taken off): kept for the hours check
         if (r.len != null && r.shifts.length === 1 && Math.abs(r.len - d) > 10) row.paid = Math.round((r.len / 60) * 100) / 100;

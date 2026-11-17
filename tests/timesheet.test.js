@@ -492,3 +492,18 @@ T.test('the picture step: a photo\'s size from its first bytes (EXIF turned), sh
   T.ok(DR.latinBit({ text: 'am' }) && DR.latinBit({ text: 'ny,' }) && !DR.latinBit({ text: 'Total' }) && !DR.latinBit({ text: '08:00' }));
   T.ok(DR.heWord('נדב') && DR.heWord("ב'") && DR.heWord('דני כ.') === false && !DR.heWord('am') && !DR.heWord('16-סגירה'));
 });
+T.test('a row whose cell in the hours column is garbled ("77" for 5.17) cannot be checked: unsure', () => {
+  const p = page(['תאריך', 'כניסה', 'יציאה', 'שעות'], [['01/10/2026', '08:00', '16:30', '8.50'], ['02/10/2026', '09:00', '17:15', '8.25'], ['04/10/2026', '16:11', '21:24', '77'], ['05/10/2026', '07:30', '15:00', '7.50'], ['06/10/2026', '14:00', '20:30', '6.50']]);
+  T.ok(!/2026-10-04/.test(shifts(p)) && /2026-10-04 16:11-21:24 total/.test(unsure(p)), shifts(p) + ' / ' + unsure(p));
+  // an empty cell is no garbled one: the row stays as read
+  const q = page(['תאריך', 'כניסה', 'יציאה', 'שעות'], [['01/10/2026', '08:00', '16:30', '8.50'], ['02/10/2026', '09:00', '17:15', '8.25'], ['04/10/2026', '16:11', '21:24', ''], ['05/10/2026', '07:30', '15:00', '7.50'], ['06/10/2026', '14:00', '20:30', '6.50']]);
+  T.ok(/2026-10-04 16:11-21:24/.test(shifts(q)), shifts(q));
+});
+T.test('a stray line with only a weekday between two rows takes no day from them', () => {
+  const day = (n) => ['ראשון', 'שני', 'שלישי', 'רביעי', 'חמישי', 'שישי', 'שבת'][new Date(2026, 9, n).getDay()];
+  const p = page(['תאריך', 'יום', 'כניסה', 'יציאה'], [
+    ['15/10/2026', day(15), '08:00', '16:00'], ['16/10/2026', day(16), '09:00', '17:00'], ['', day(18), '', ''], ['18/1072', day(18), '07:10', '14:38'],
+    ['19/10/2026', day(19), '08:00', '12:00'], ['20/10/2026', day(20), '14:00', '22:00'],
+  ]);
+  T.ok(/2026-10-18 07:10-14:38/.test(shifts(p)), shifts(p) + ' / ' + unsure(p));
+});
