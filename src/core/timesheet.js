@@ -243,40 +243,114 @@
     const ws = words.map((w, i) => ({ ...w, i, cx: (w.x0 + w.x1) / 2, cy: (w.y0 + w.y1) / 2, h: Math.max(1, w.y1 - w.y0), w: Math.max(1, w.x1 - w.x0) }));
     const hs = ws.map((w) => w.h).sort((a, b) => a - b);
     const mh = hs[Math.floor(hs.length / 2)] || 20;
-    const parent = ws.map((_, i) => i);
+    let slope = 0;
+    const turn = () => { const th = Math.atan(slope), cos = Math.cos(th), sin = Math.sin(th); for (const w of ws) { w.x = w.cx * cos + w.cy * sin; w.y = -w.cx * sin + w.cy * cos; } };
+    turn();
+    const tall = (w) => w.h > mh * 2;
+    // what is left after the one angle: a page seen from the side (its lines fan out) or one that does not lie
+    // flat (its lines bend) climbs differently in each part of the picture. The climb between words already
+    // known to be neighbours is kept per part of the page (a grid), and a line is followed along it
+    const G = 8;
+    let X0 = Infinity, X1 = -Infinity, Y0 = Infinity, Y1 = -Infinity;
+    for (const w of ws) { X0 = Math.min(X0, w.x); X1 = Math.max(X1, w.x); Y0 = Math.min(Y0, w.y); Y1 = Math.max(Y1, w.y); }
+    const gi = (v, lo, hi) => Math.max(0, Math.min(G - 1, Math.floor(((v - lo) / (hi - lo + 1)) * G)));
+    let field = null;
+    const climbAt = (x, y) => (field ? field[gi(y, Y0, Y1) * G + gi(x, X0, X1)] : 0);
+    const lineAt = (a, x) => { // where the line through word a is at x
+      if (!field) return a.y;
+      let y = a.y, px = a.x;
+      const n = Math.max(1, Math.min(12, Math.round(Math.abs(x - a.x) / (mh * 3)))), dx = (x - a.x) / n;
+      for (let i = 0; i < n; i++) { y += climbAt(px + dx / 2, y) * dx; px += dx; }
+      return y;
+    };
+    let parent = null;
     const find = (i) => (parent[i] === i ? i : (parent[i] = find(parent[i])));
-    const vov = (a, b) => (Math.min(a.y1, b.y1) - Math.max(a.y0, b.y0)) / Math.min(a.h, b.h);
-    // each word joins the nearest word to its right that shares its line (tall boxes — a logo, two lines
-    // read as one — join nothing)
-    for (const a of ws) {
-      if (a.h > mh * 2.4) continue;
-      let best = null, bd = Infinity;
-      for (const b of ws) {
-        if (b === a || b.h > mh * 2.4 || b.cx <= a.cx) continue;
-        if (vov(a, b) < 0.45) continue;
-        const d = b.x0 - a.x1 + Math.abs(b.cy - a.cy) * 4;
-        if (d < bd) { bd = d; best = b; }
+    // each word joins the nearest word to its right that shares its line (their boxes overlap by nearly half a
+    // letter's height, once the line's climb between them is taken out). A box much taller than a line (two
+    // lines read as one, a logo, a big title) would tie two rows together: such boxes join only each other
+    const linkAll = () => {
+      parent = ws.map((_, i) => i);
+      const links = [];
+      for (const a of ws) {
+        let best = null, bd = Infinity;
+        for (const b of ws) {
+          if (b === a || tall(b) !== tall(a) || b.x <= a.x) continue;
+          const off = Math.abs(b.y - lineAt(a, b.x));
+          if (off > (a.h + b.h) / 2 - 0.45 * Math.min(a.h, b.h)) continue;
+          const d = (b.x - b.w / 2) - (a.x + a.w / 2) + off * 4;
+          if (d < bd) { bd = d; best = b; }
+        }
+        if (best) { parent[find(a.i)] = find(best.i); links.push([a, best]); }
       }
-      if (best) parent[find(a.i)] = find(best.i);
+      return links;
+    };
+    let links = linkAll();
+    // the page's angle: how much a line climbs from each word to the next one on it, the middle of them all (a
+    // link that joined two lines by mistake is one odd step among many). The page is turned by it and the words
+    // are linked again, along the page's own lines now: rows of a photo taken at an angle broke in two where a
+    // cell was empty, and the two halves then took each other's dates. Never more than 12° (a picture turned
+    // more than that is straightened before it is read, app/docread.js)
+    for (let pass = 0; pass < 3; pass++) {
+      const steps = [];
+      for (const [p, q] of links) { const dx = q.x - p.x; if (!tall(p) && dx > mh * 2 && Math.abs(p.h - q.h) < mh * 0.5) steps.push((q.y - p.y) / dx); }
+      if (steps.length < 3) break;
+      steps.sort((p, q) => p - q);
+      const more = steps[steps.length >> 1];
+      if (Math.abs(more) < 0.003) break;
+      slope = Math.max(-0.21, Math.min(0.21, (slope + more) / (1 - slope * more)));
+      turn();
+      links = linkAll();
+    }
+    for (let pass = 0; pass < 2; pass++) {
+      // the climb in each part of the page: the middle one of its neighbours' (close ones only: a far link may be a slip)
+      const cells = Array.from({ length: G * G }, () => []);
+      for (const [a, b] of links) {
+        const dx = b.x - a.x;
+        // (two words of one height, a few letters apart: a short step or a small letter next to a tall one says little)
+        if (tall(a) || dx < mh * 4 || dx > mh * 16 || Math.abs(a.h - b.h) > mh * 0.2) continue;
+        cells[gi((a.y + b.y) / 2, Y0, Y1) * G + gi((a.x + b.x) / 2, X0, X1)].push((b.y - a.y) / dx);
+      }
+      const f = new Float64Array(G * G), known = new Uint8Array(G * G);
+      cells.forEach((c, i) => { if (c.length >= 3) { c.sort((p, q) => p - q); f[i] = c[c.length >> 1]; known[i] = 1; } });
+      if (known.reduce((s, v) => s + v, 0) < 4) break;
+      // parts of the page with no neighbours take what is around them, then all is smoothed
+      for (let round = 0; round < G; round++) {
+        const add = [];
+        for (let i = 0; i < G * G; i++) {
+          if (known[i]) continue;
+          let s = 0, n = 0;
+          for (const [dy, dx] of [[-1, 0], [1, 0], [0, -1], [0, 1]]) { const y = Math.floor(i / G) + dy, x = (i % G) + dx; if (y >= 0 && y < G && x >= 0 && x < G && known[y * G + x]) { s += f[y * G + x]; n++; } }
+          if (n) add.push([i, s / n]);
+        }
+        if (!add.length) break;
+        for (const [i, v] of add) { f[i] = v; known[i] = 1; }
+      }
+      const sm = new Float64Array(G * G);
+      for (let i = 0; i < G * G; i++) {
+        let s = f[i] * 2, n = 2;
+        for (const [dy, dx] of [[-1, 0], [1, 0], [0, -1], [0, 1]]) { const y = Math.floor(i / G) + dy, x = (i % G) + dx; if (y >= 0 && y < G && x >= 0 && x < G) { s += f[y * G + x]; n++; } }
+        sm[i] = s / n;
+      }
+      // a straight page has no such climb: it stays as it is (no risk added to what already reads well)
+      if (!sm.some((v) => Math.abs(v) > 0.02)) break;
+      field = sm;
+      links = linkAll();
     }
     const groups = new Map();
     for (const w of ws) { const r = find(w.i); (groups.get(r) || groups.set(r, []).get(r)).push(w); }
-    let rows = [...groups.values()];
-    // the angle: how much a line climbs from each word to the next one in its row, the middle of them all
-    // (a row that joined two lines by mistake is one odd step among many), never more than 8°
-    const slopes = [];
-    for (const r of rows) {
-      const s = r.slice().sort((a, b) => a.cx - b.cx);
-      for (let i = 1; i < s.length; i++) {
-        const dx = s[i].cx - s[i - 1].cx;
-        if (dx > mh * 2 && Math.abs(s[i].h - s[i - 1].h) < mh * 0.5) slopes.push((s[i].cy - s[i - 1].cy) / dx);
-      }
+    let parts = [...groups.values()].map((r) => r.sort((a, b) => a.x - b.x));
+    const yOf = (r) => r.map((w) => w.y).sort((a, b) => a - b)[r.length >> 1];
+    // a tall box that is one number (a date read together with the line under it): it belongs to the one row
+    // inside its height that has nothing where it stands
+    for (const T of parts.filter((r) => r.length === 1 && tall(r[0]) && r[0].h <= mh * 3.4 && /\d/.test(r[0].text) && !/\s/.test(String(r[0].text).trim()))) {
+      const t = T[0];
+      const yNear = (r) => r.reduce((p, w) => (Math.abs(w.x - t.x) < Math.abs(p.x - t.x) ? w : p), r[0]).y;
+      const free = parts.filter((r) => r !== T && !tall(r[0]) && !r.gone && Math.abs(yNear(r) - t.y) < t.h / 2 - mh * 0.2
+        && !r.some((w) => Math.min(w.x + w.w / 2, t.x + t.w / 2) - Math.max(w.x - w.w / 2, t.x - t.w / 2) > 0));
+      if (free.length === 1) { t.y = yNear(free[0]); free[0].push(t); T.gone = true; }
     }
-    slopes.sort((a, b) => a - b);
-    const slope = slopes.length >= 3 ? Math.max(-0.14, Math.min(0.14, slopes[Math.floor(slopes.length / 2)])) : 0;
-    const th = Math.atan(slope), cos = Math.cos(th), sin = Math.sin(th);
-    for (const w of ws) { w.x = w.cx * cos + w.cy * sin; w.y = -w.cx * sin + w.cy * cos; }
-    rows = rows.map((r) => r.sort((a, b) => a.x - b.x)).map((r) => ({ words: r, y: r.map((w) => w.y).sort((a, b) => a - b)[Math.floor(r.length / 2)] }));
+    parts = parts.filter((r) => !r.gone);
+    const rows = parts.map((r) => r.sort((a, b) => a.x - b.x)).map((r) => ({ words: r, y: yOf(r) }));
     rows.sort((a, b) => a.y - b.y);
     return { rows, mh, slope };
   }
