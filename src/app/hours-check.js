@@ -19,6 +19,12 @@
   const range = (a, b) => `\u2066${a}\u2060–\u2060${b}\u2069`;
   const DEFAULT_START = '09:00'; // a row with hours only and no start (only for its worth)
 
+  /** Lines of the report's text holding an entry and an exit (two clock times) beyond the rows read from it: rows
+   *  the reader saw and left out (a garbled date), whatever the reader itself counts. */
+  function droppedOf(text, nRows) {
+    const lines = String(text || '').split(/\r?\n/).filter((l) => (l.match(/\b\d{1,2}:\d{2}\b/g) || []).length >= 2).length;
+    return Math.max(0, lines - nRows);
+  }
   /** The report's rows, each once, in order. */
   function rowsOf(got) {
     const p = typeof got === 'string' ? root.Timesheet.parse(got, { today: U.todayKey() }) : got.result;
@@ -28,7 +34,7 @@
     // a night the report cuts at midnight is one row here too (app/import.js), so "add to my shifts" adds one shift
     const out = root.HoursCheck.joinNights(rows);
     // rows the reader saw and could not read: a time with no trusted date (undated), an entry with no exit (skipped)
-    out.unreadRows = (+p.undated || 0) + (+p.skipped || 0);
+    out.unreadRows = Math.max((+p.undated || 0) + (+p.skipped || 0), droppedOf(typeof got === 'string' ? got : got.text, (p.rows || []).length));
     return out;
   }
   /** The pay period(s) the report covers, up to today. */

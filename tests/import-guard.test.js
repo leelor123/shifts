@@ -53,5 +53,13 @@ T.test('round 3: "mark all" skips doubted rows; both tags; paid only when truste
   T.ok(!imp.includes('rows.every((r) => r.on)'));
   T.ok(imp.includes("(t && t.taken ? '<i class=\"tag\">כבר קיימת</i>' : '') + (r.doubt ?"), 'both tags');
   T.ok(imp.includes('paidSure = root.HoursCheck.paidOk(rows);') && imp.includes('!paidSure.has(r)'));
-  T.ok(hc.includes('out.unreadRows = (+p.undated || 0) + (+p.skipped || 0);') && hc.includes('to: per.to, unreadRows }'));
+  T.ok(hc.includes('out.unreadRows = Math.max((+p.undated || 0) + (+p.skipped || 0), droppedOf(') && hc.includes('to: per.to, unreadRows }'));
+});
+T.test('round 3: the check counts report lines with an entry and an exit that gave no row (a garbled date)', () => {
+  const vm = require('vm');
+  const src = hc.slice(hc.indexOf('  function droppedOf('), hc.indexOf('  /** The report\'s rows, each once, in order. */'));
+  const ctx = {}; vm.runInNewContext(src + '; this.droppedOf = droppedOf;', ctx);
+  T.eq(ctx.droppedOf('01/11/2026 08:00 16:00\n0?/1l 08:00 16:00\n06/11/2026 08:00 16:00', 2), 1);
+  T.eq(ctx.droppedOf('01/11/2026 08:00 16:00\nסה"כ 16.00 8.00\n02/11/2026 08:00 12:00 16:00 20:00', 2), 0, 'decimals and a split day are not dropped rows');
+  T.ok(hc.includes('droppedOf(typeof got === \'string\' ? got : got.text, (p.rows || []).length)'));
 });
