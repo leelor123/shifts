@@ -620,24 +620,30 @@
       const rest = pairs.slice(1).reduce((s, p) => { const a = at(p.a, ri), b = at(p.b, ri); return a && b ? s + span(a, b) : s; }, 0);
       if (len != null && rest) len -= rest;
       for (const p of pairs) {
-        let a = at(p.a, ri), b = at(p.b, ri);
+        let a = at(p.a, ri), b = at(p.b, ri), why = null;
         if (p === pairs[0] && len != null && len > 0) {
-          // an exit the reader got one digit wrong (02:23 for 22:23), or missed, put right from the length
+          // the times and the length disagree: one of them was misread, and which one cannot be known (an exit
+          // read 02:23 for 22:23, or a total read 8:11 for 8:17). The likelier reading (one digit of the exit,
+          // or else of the entry, that makes them agree) is offered, never saved as sure
           if (a && b && sure && !BREAKS.some((br) => Math.abs(span(a, b) - len - br) <= 2)) {
             const fixB = fromMin(minOf(a) + len), fixA = fromMin(minOf(b) - len);
-            if (differsBy(b, fixB) === 1) { dbg.push(`exit fixed from the total: ${a}-${b} → ${fixB}`); b = fixB; }
-            else if (differsBy(a, fixA) === 1) { dbg.push(`entry fixed from the total: ${a}-${b} → ${fixA}`); a = fixA; }
-          } else if (a && !b) { b = fromMin(minOf(a) + len); dbg.push(`exit from the total: ${a}+${len}m`); }
-          else if (!a && b && (sure || card)) { a = fromMin(minOf(b) - len); dbg.push(`entry from the total: ${b}-${len}m`); }
+            const fix = differsBy(b, fixB) === 1 ? [[a, fixB]] : differsBy(a, fixA) === 1 ? [[fixA, b]] : [];
+            if (fix.length) { dbg.push(`total disagrees: ${a}-${b}, likely ${fix[0].join('-')}`); [a, b] = fix[0]; }
+            else dbg.push(`total disagrees: ${a}-${b} (${len}m)`);
+            why = 'total';
+          } else if (a && !b) { b = fromMin(minOf(a) + len); why = 'exit-from-total'; dbg.push(`exit from the total: ${a}+${len}m`); }
+          else if (!a && b && (sure || card)) { a = fromMin(minOf(b) - len); why = 'entry-from-total'; dbg.push(`entry from the total: ${b}-${len}m`); }
         }
-        if (a && b) shifts.push([a, b]);
+        if (a && b) shifts.push(why ? [a, b, why] : [a, b]);
         else if (a && !b && p === pairs[0]) skippedNoOut++;
       }
       const range = items.find((it) => it.k === 'range');
       if (!shifts.length && range) shifts.push([range.a, range.b]);
       if (!shifts.length) {
         // times in the row outside the known columns (a row the columns missed): two of them, in reading order
-        const ts = r.words.filter((w) => !inDateCol(w)).map((w) => ({ w, t: w.items.find((it) => it.k === 'time' && !it.weak) })).filter((x) => x.t && !cols.some((c) => (c === totalCol || unpadded(c)) && c.members.some((m) => m.w === x.w)));
+        // (a time that stands in one of the table's columns is that column's: a standard-hours column, a total or
+        // a lone entry never pairs up with another loose time into a shift that is not in the report)
+        const ts = r.words.filter((w) => !inDateCol(w)).map((w) => ({ w, t: w.items.find((it) => it.k === 'time' && !it.weak) })).filter((x) => x.t && !cols.some((c) => (pairs.length || c === totalCol || unpadded(c)) && c.members.some((m) => m.w === x.w)));
         if (ts.length === 2) {
           // which one starts: the order that makes a likelier shift; when both could, two times close together
           // ("08:51 - 16:37" in one cell) read left to right like any number, two apart in the reading order
@@ -650,10 +656,10 @@
         else if (ts.length === 1 && len != null && !pairs.length) {
           const x = ts[0].w.x, t = ts[0].t.v;
           const exit = sides.a.length && sides.b.length && Math.abs(mid(sides.a) - mid(sides.b)) > mh * 2 && Math.abs(x - mid(sides.b)) < Math.abs(x - mid(sides.a));
-          shifts.push(exit ? [fromMin(minOf(t) - len), t] : [t, fromMin(minOf(t) + len)]);
+          shifts.push(exit ? [fromMin(minOf(t) - len), t, 'from-hours'] : [t, fromMin(minOf(t) + len), 'from-hours']);
           dbg.push(`one time read, the other from the hours: ${shifts[0].join('-')}`);
         }
-        else if (ts.length === 1 && len != null && Math.abs(ts[0].w.x - pairs[0].a.at) < tol * 2) shifts.push([ts[0].t.v, fromMin(minOf(ts[0].t.v) + len)]);
+        else if (ts.length === 1 && len != null && Math.abs(ts[0].w.x - pairs[0].a.at) < tol * 2) shifts.push([ts[0].t.v, fromMin(minOf(ts[0].t.v) + len), 'exit-from-total']);
       }
       // a card's hours line (no times): for the times under it
       if (!shifts.length && len != null && /שעות|hours|ש["׳']/i.test(text)) { pendingLen = { min: len, y: r.y }; if (!date) return; }
@@ -662,12 +668,25 @@
       if (isTotalRow) return;
       const row = { ri, y: r.y, date, dow, mash: mash ? mash.s : null, shifts, text };
       // an app's card: the date on its own line, the hours on the next one
-      if (!date && !mash && shifts.length && lastDateRow && !lastDateRow.shifts.length && !lastDateRow.used && r.y - lastDateRow.y < mh * 4) {
-        row.date = lastDateRow.date; row.dow = row.dow == null ? lastDateRow.dow : row.dow; lastDateRow.used = true;
+      if (!date && !mash && shifts.length && lastDateRow && !lastDateRow.shifts.length && !lastDateRow.lent && r.y - lastDateRow.y < mh * 4) {
+        row.lendFrom = lastDateRow; lastDateRow.lent = true;
       }
       if (date || mash || shifts.length || dow != null) found.push(row);
       if (date) lastDateRow = row;
     });
+    // ...only when the report is made of such cards. In a table, where the date and the hours of a day share
+    // one row, a date-only row is a day off, and the row under it with hours and no readable date is the
+    // next day: it must not take the day off's date
+    // (a table row that a photo broke in two, its date a little above its hours, is still one row: closer to its
+    // date than half the distance from one dated row to the next)
+    const cardRows = found.filter((r) => r.lendFrom).length, sameRow = found.filter((r) => r.date && r.shifts.length).length;
+    const dated = found.filter((r) => r.date), gaps = dated.slice(1).map((r, i) => r.y - dated[i].y).sort((p, q) => p - q);
+    const pitch = gaps.length ? gaps[gaps.length >> 1] : 0;
+    for (const r of found) {
+      if (!r.lendFrom) continue;
+      if (cardRows > sameRow || r.y - r.lendFrom.y < pitch * 0.5) { r.date = r.lendFrom.date; r.dow = r.dow == null ? r.lendFrom.dow : r.dow; r.lendFrom.used = true; }
+      delete r.lendFrom;
+    }
     // date-only rows that lent their date to the next row are not rows of their own
     const list = found.filter((r) => !(r.used && !r.shifts.length));
 
@@ -767,18 +786,21 @@
     }
 
     /* ---- the shifts ---- */
-    const out = [];
+    // a shift with something the report did not say outright (an exit worked out from the total, times that
+    // disagree with the total) is kept apart in unsure: never saved without the user seeing it
+    const out = [], unsure = [];
     let guessedYear = false;
     for (const r of list) {
       if (!r.key || !r.shifts.length) continue;
       if (r.date && !r.date.y && !docYear) guessedYear = true;
-      for (const [start, end] of r.shifts) {
+      for (const [start, end, why] of r.shifts) {
         const d = span(start, end) || 1440;
         if (d < 10 || d > 16 * 60) { dbg.push(`not a shift: ${r.key} ${start}-${end}`); continue; }
-        out.push({ date: r.key, start, end, hours: Math.round(d / 60 * 100) / 100, overnight: minOf(end) <= minOf(start), line: r.text.slice(0, 120), n: r.ri });
+        const row = { date: r.key, start, end, hours: Math.round(d / 60 * 100) / 100, overnight: minOf(end) <= minOf(start), line: r.text.slice(0, 120), n: r.ri };
+        if (why) unsure.push(Object.assign(row, { unsure: why })); else out.push(row);
       }
     }
-    const res = { rows: out, noStart: 0, guessedYear, skipped: skippedNoOut, rtl, text: rows.map((r) => (rtl ? r.words.slice().reverse() : r.words).map((w) => clean(w.text)).join(' ')).join('\n') };
+    const res = { rows: out, unsure, noStart: 0, guessedYear, skipped: skippedNoOut, rtl, text: rows.map((r) => (rtl ? r.words.slice().reverse() : r.words).map((w) => clean(w.text)).join(' ')).join('\n') };
     if (opts.debug) res.debug = dbg.concat(rows.map((r, i) => `${i}: y${Math.round(r.y)} ${textOf(r)}`)).join('\n');
     return res;
   }

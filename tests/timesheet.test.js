@@ -66,6 +66,8 @@ function page(head, rows, o) {
   return TS.parseWords(words, { today });
 }
 const shifts = (p) => p.rows.map((r) => `${r.date} ${r.start}-${r.end}`).join(' | ');
+// the shifts kept apart for the user to check (a time worked out, not read)
+const unsure = (p) => (p.unsure || []).map((r) => `${r.date} ${r.start}-${r.end} ${r.unsure}`).join(' | ');
 T.test('table: columns found by their names, the total and the notes are not shifts', () => {
   const p = page(['תאריך', 'יום', 'כניסה', 'יציאה', 'סה"כ', 'הערות'], [
     ['01/10/2026', 'ה׳', '08:00', '16:30', '8:30', ''],
@@ -90,9 +92,10 @@ T.test('table: a date the reader ran together (25110) and one it misread are put
   ]);
   T.eq(shifts(p), ['2026-10-25 08:00-16:00', '2026-10-26 08:00-16:00', '2026-10-27 09:00-17:00'].join(' | '));
 });
-T.test('table: an exit read one digit wrong is put right from the total; no exit, no shift', () => {
+T.test('table: an exit one digit away from the total is offered put right, for the user to check (never saved as read); no exit, no shift', () => {
   const p = page(['תאריך', 'כניסה', 'יציאה', 'סה"כ'], [['1/10/2026', '14:06', '02:23', '8:17'], ['2/10/2026', '08:00', '16:00', '8:00'], ['3/10/2026', '08:00', '', '']]);
-  T.eq(shifts(p), ['2026-10-01 14:06-22:23', '2026-10-02 08:00-16:00'].join(' | '));
+  T.eq(shifts(p), '2026-10-02 08:00-16:00');
+  T.eq(unsure(p), '2026-10-01 14:06-22:23 total');
   T.eq(p.skipped, 1);
 });
 T.test('table: a split day\'s total is both shifts together, so neither time is "put right"', () => {
@@ -128,7 +131,8 @@ T.test('an app\'s cards: one time unreadable, the other from the card\'s hours (
     if (a) add(a, 700, y + 60); if (b) add(b, 880, y + 60);
   });
   const p = TS.parseWords(words.concat([{ text: '2026', x0: 500, x1: 560, y0: 10, y1: 40 }]), { today });
-  T.eq(shifts(p), ['2026-10-04 08:51-16:37', '2026-10-08 07:03-13:35', '2026-10-12 09:12-18:00', '2026-10-13 16:08-21:30'].join(' | '));
+  T.eq(shifts(p), ['2026-10-04 08:51-16:37', '2026-10-13 16:08-21:30'].join(' | '));
+  T.eq(unsure(p), ['2026-10-08 07:03-13:35 exit-from-total', '2026-10-12 09:12-18:00 entry-from-total'].join(' | '));
 });
 
 T.section('a PDF report drawn letter by letter (the "HoursAnalysisInfo" report)');
