@@ -62,7 +62,7 @@
           <button class="btn tonal block" data-sc-read>${icon('check', 's')} קריאה</button></details>`}
         ${hasKey() ? `<label class="switch-row sc-ai"><span class="body"><span class="t">קריאה חכמה עם Claude</span><span class="s">לטבלאות מסובכות. התמונה נשלחת ל-\u2060Anthropic עם המפתח שלך</span></span><input type="checkbox" class="switch" id="sc-ai" ${S.meta.schedAi ? 'checked' : ''}></label>` : ''}
         <div class="tiny muted imp-privacy">${icon('shield', 's')} ${hasKey() ? 'בלי קריאה חכמה, ' : ''}הסידור נקרא בטלפון בלבד, ולא נשלח לשום מקום.</div>`;
-      if (opts.text) { const t = opts.text; opts.text = null; parse(() => Object.assign(SC().parseText(t, { today: U.todayKey(), named: named() }), { text: t })); }
+      if (opts.text) { const t = opts.text; opts.text = null; parse(() => Object.assign(SC().parseText(t, { today: U.todayKey(), named: named(), mine: myNames() }), { text: t })); }
     }
     function busy(text) { showSave(false); box.innerHTML = `<div class="imp-busy">${App.mascot ? App.mascot('think', { size: 84 }) : ''}<div class="imp-bar" aria-hidden="true"><i></i></div><div class="small" id="sc-progress" role="status">${esc(text)}</div></div>`; }
     function progress(text) { const p = box.querySelector('#sc-progress'); if (p) p.textContent = text; }
@@ -76,23 +76,24 @@
     }
     // what was read → whose (the person's name, or the names to choose from) → the review
     function parse(read) {
+      // the sheet was closed while it read (a photo takes seconds): nothing is drawn, played or said any more
+      if (entry.closed) return;
       let r;
       try { r = read(); } catch (e) { console.warn('schedule', e); r = null; }
       if (!r || !r.entries.length) { none(r && r.text); return; }
       res = r;
-      // the message names its week ("סידור לשבוע הבא", "השבוע"): that one, whatever day it is today
-      if (r.needsWeek && r.text) {
-        const thisW = U.addDays(U.todayKey(), -U.dow(U.todayKey()));
-        if (/שבוע הבא|next week/i.test(r.text)) week = U.addDays(thisW, 7);
-        else if (/(^|[^א-ת])ה?שבוע הזה|(^|[^א-ת])השבוע($|[^א-ת])|this week/i.test(r.text)) week = thisW;
-      }
-      const mine = myNames();
-      who = res.personal ? [] : res.names.filter((n) => SC().isMine(n, mine));
+      // whose and which week: core/schedule.js decides (one code for the screen and its tests). A first name the
+      // schedule gives two people ("דני כ.", "דני ל.") is not taken for either unless the person's family name
+      // tells which; the week the message names ("סידור לשבוע הבא") wins over the usual one
+      const o = SC().offer(r, { today: U.todayKey(), mine: myNames(), text: r.text || '' });
+      who = o.who;
+      week = o.week;
       if (root.Fx) root.Fx.play('pick');
       review();
     }
     function placed() {
-      const es = res.personal ? res.entries : res.entries.filter((e) => who.some((w) => SC().isMine(e.who, [w])));
+      // the names chosen, each exactly: choosing "דני" never brings "דני כ." with it
+      const es = res.personal ? res.entries : res.entries.filter((e) => who.includes(e.who));
       const prev = new Map(rows.map((r) => [r.k, r]));
       rows = SC().rowsOf(es, week, usualMin()).map((r) => {
         const k = [r.date, r.start, r.end].join('|');
@@ -101,7 +102,7 @@
         let end = U.toEpoch(r.date, r.end); if (end <= start) end = U.toEpoch(U.addDays(r.date, 1), r.end);
         const emp = role() && role().employerId;
         const taken = S.shifts.some((x) => x.employerId === emp && x.start < end && x.end > start);
-        return Object.assign(r, { k, s: start, e: end, taken, on: old ? old.on : !taken });
+        return Object.assign(r, { k, s: start, e: end, taken, on: old ? old.on : SC().startsOn(r, U.todayKey(), taken) });
       });
     }
     function review() {
@@ -160,14 +161,14 @@
       busy('קורא את הסידור…');
       try {
         const got = await App.readDocWords(file, progress);
-        parse(() => {
-          const r = SC().parseWords(got.words, { today: U.todayKey(), named: named() });
-          if (!r.entries.length && got.text) Object.assign(r, SC().parseText(got.text, { today: U.todayKey(), named: named() }));
-          r.text = got.text;
-          return r;
-        });
+        if (entry.closed) return;
+        // the words with their places only: parseWords reads a picture that is no table as text itself, line by
+        // line. Its text read again as one line put a whole table's shifts on its last date, nobody's name on
+        // them (schedule bench, 17 Nov 2026)
+        parse(() => Object.assign(SC().parseWords(got.words, { today: U.todayKey(), named: named(), mine: myNames() }), { text: got.text }));
       } catch (e) {
         console.warn('schedule', e);
+        if (entry.closed) return;
         start();
         UI.invalid(root.U.ours(e) ? e.message : 'לא הצלחנו לקרוא את הסידור. אפשר לנסות שוב או להדביק את ההודעה');
       }
@@ -175,6 +176,7 @@
     // the picture, read by Claude (the person's own key; asked first, since it goes to Anthropic)
     async function viaClaude(file) {
       const ok = await UI.confirm('קריאה חכמה עם Claude', 'התמונה של הסידור, עם השמות שבה, תישלח ל-\u2060Anthropic עם המפתח שלך, רק כדי לקרוא אותה. השימוש מחויב בחשבון ה-\u2060API שלך.', 'לשלוח');
+      if (entry.closed) return;
       if (!ok) { start(); return; }
       busy('Claude קורא את הסידור…');
       try {
@@ -186,6 +188,7 @@
         parse(() => fromAi(json));
       } catch (e) {
         console.warn('schedule ai', e);
+        if (entry.closed) return;
         start();
         UI.dialog({ title: 'הקריאה החכמה נכשלה', text: root.U.ours(e) ? e.message : 'לא הצלחנו לקרוא את התשובה של Claude. נסו שוב, או הוסיפו את המשמרות ידנית.', buttons: [{ label: 'סגור', value: true }] });
       }
@@ -221,7 +224,7 @@
         const t = box.querySelector('#sc-text').value;
         const n = (box.querySelector('#sc-name') || {}).value;
         if (n && n.trim()) S.meta.schedName = n.trim();
-        if (t.trim()) parse(() => Object.assign(SC().parseText(t, { today: U.todayKey(), named: named() }), { text: t })); else UI.invalid('מדביקים קודם את ההודעה');
+        if (t.trim()) parse(() => Object.assign(SC().parseText(t, { today: U.todayKey(), named: named(), mine: myNames() }), { text: t })); else UI.invalid('מדביקים קודם את ההודעה');
       } else if (b.hasAttribute('data-sc-again')) start();
       else if (b.hasAttribute('data-sc-ai-now') && lastFile) viaClaude(lastFile);
       else if (b.dataset.scWho != null) {
@@ -245,7 +248,8 @@
         const en = await UI.pickTime({ value: r.end, title: 'שעת סיום' });
         if (!en) return;
         // the change is kept for this shift (its key changes, so it is found by its place in the list)
-        const src = res.entries.find((x) => (x.date || U.addDays(week, x.dow)) === r.date && x.start === r.start);
+        // the row's own entry (found by date and start, a second week's shift changed the first week's)
+        const src = r.src;
         if (src) { src.start = st; src.end = en; src.guess = null; }
         review();
       } else if (b.hasAttribute('data-sc-save')) add();
@@ -315,27 +319,29 @@ A cell with only a shift name and no hours: use בוקר 07:00-15:00, צהריי
     if (!(await UI.confirm('לפתוח את מה ששיתפת עם שעתי?', file ? file.name : text.slice(0, 80), 'אישור'))) return;
     if (!file) {
       if (!text.trim()) return;
-      const today = U.todayKey();
-      const asSchedule = SC().parseText(text, { today, named: named() }).entries.length;
-      if (!asSchedule && root.Timesheet && root.Timesheet.parse(text, { today }).rows.length) App.importHours({ text });
-      else App.importSchedule({ text });
-      return;
+      // read by both (an hours report's lines are also dated shifts): the person says which it is
+      const kind = SC().shareKind(text, { today: U.todayKey(), named: named(), mine: myNames() }, root.Timesheet);
+      if (kind === 'hours') { App.importHours({ text }); return; }
+      if (kind !== 'ask') { App.importSchedule({ text }); return; }
     }
-    if (/\.(xlsx|xlsm|xls|ods|csv|tsv)$/i.test(file.name) || /spreadsheet|excel|csv/i.test(file.type)) { App.importHours({ file }); return; }
+    if (file && (/\.(xlsx|xlsm|xls|ods|csv|tsv)$/i.test(file.name) || /spreadsheet|excel|csv/i.test(file.type))) { App.importHours({ file }); return; }
     if (UI.sheets.length) UI.closeAll();
     const tile = (k, ic, tint, t, sub) => `<button class="am-tile" data-share-as="${k}">${UI.tile(ic, tint)}<span class="am-t">${t}</span><span class="am-s">${sub}</span></button>`;
     UI.openSheet({
       title: 'מה שיתפת?', cls: 'share-sheet',
-      body: `<div class="am-grid share-as">${tile('schedule', 'calendar', 'sky', 'סידור עבודה', 'למשמרות בלוח')}${tile('payslip', 'receipt', 'mint', 'תלוש שכר', 'לבדיקה')}${tile('hours', 'upload', 'violet', 'דוח שעות', 'למשמרות שהיו')}</div>`,
+      // a payslip is read from a file only: shared text offers the two that read text
+      body: `<div class="am-grid share-as">${tile('schedule', 'calendar', 'sky', 'סידור עבודה', 'למשמרות בלוח')}${file ? tile('payslip', 'receipt', 'mint', 'תלוש שכר', 'לבדיקה') : ''}${tile('hours', 'upload', 'violet', 'דוח שעות', 'למשמרות שהיו')}</div>`,
       onMount: (el) => el.addEventListener('click', (e) => {
         const b = e.target.closest('[data-share-as]');
         if (!b) return;
         const k = b.dataset.shareAs;
         UI.closeTop();
         setTimeout(() => {
-          if (k === 'schedule') App.importSchedule({ file });
+          // each with what was shared: the file, or the text (the hours tile opened an empty import for text)
+          const what = file ? { file } : { text };
+          if (k === 'schedule') App.importSchedule(what);
           else if (k === 'payslip') App.payslipFromFile(file);
-          else App.importHours({ file });
+          else App.importHours(what);
         }, 320);
       }),
     });
