@@ -1021,5 +1021,17 @@
     return !taken && row.date >= addDays(today, -7);
   }
 
-  root.Schedule = { parseText, parseWords, pick, isMine, whoOf, offer, weekStartFor, rowsOf, startsOn, NAMED };
+  /**
+   * Text shared to the app: a work schedule, an hours report, or either ('ask': the person chooses). A report's
+   * lines ("01/11/2026 08:00 16:30") read as a schedule too, and the schedule used to win: a month already worked
+   * opened as planned shifts. ts: the hours reader (core/timesheet.js). → 'schedule' | 'hours' | 'ask' | null
+   */
+  function shareKind(text, opts, ts) {
+    opts = opts || {};
+    const sched = parseText(text, opts).entries.length > 0;
+    const hours = !!(ts && ts.parse(text, { today: opts.today }).rows.length);
+    return sched && hours ? 'ask' : sched ? 'schedule' : hours ? 'hours' : null;
+  }
+
+  root.Schedule = { parseText, parseWords, pick, isMine, whoOf, offer, weekStartFor, rowsOf, startsOn, shareKind, NAMED };
 })(typeof window !== 'undefined' ? window : globalThis);

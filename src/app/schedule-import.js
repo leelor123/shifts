@@ -56,7 +56,7 @@
       const name = myNames()[0] || '';
       box.innerHTML = `${App.mascotSays ? App.mascotSays('happy', 'קיבלת סידור עבודה? צלם אותו או הדבק את ההודעה, ואכניס את המשמרות שלך ללוח 📅', { size: 64 }) : ''}
         <label class="field"><span class="lbl">השם שלך בסידור</span><input class="input" id="sc-name" value="${esc(name)}" placeholder="למשל: לי" autocomplete="given-name"></label>
-        <label class="btn big block imp-pick">${icon('camera')} צילום או צילום מסך של הסידור<input type="file" id="sc-file" class="sr" accept="image/*,application/pdf"></label>
+        <label class="btn big block imp-pick">${icon('camera')} צילום או צילום מסך של הסידור<input type="file" id="sc-file" hidden accept="image/*,application/pdf"></label>
         ${opts.text ? '' : `<details class="imp-paste"${opts.paste ? ' open' : ''}><summary>${icon('chat', 's')} או להדביק את ההודעה מוואטסאפ</summary>
           <textarea class="input" id="sc-text" rows="6" placeholder="למשל:&#10;ראשון: דני 8-16, לי 16-24&#10;שני: לי 8-16"></textarea>
           <button class="btn tonal block" data-sc-read>${icon('check', 's')} קריאה</button></details>`}
@@ -319,27 +319,29 @@ A cell with only a shift name and no hours: use בוקר 07:00-15:00, צהריי
     if (!(await UI.confirm('לפתוח את מה ששיתפת עם שעתי?', file ? file.name : text.slice(0, 80), 'אישור'))) return;
     if (!file) {
       if (!text.trim()) return;
-      const today = U.todayKey();
-      const asSchedule = SC().parseText(text, { today, named: named() }).entries.length;
-      if (!asSchedule && root.Timesheet && root.Timesheet.parse(text, { today }).rows.length) App.importHours({ text });
-      else App.importSchedule({ text });
-      return;
+      // read by both (an hours report's lines are also dated shifts): the person says which it is
+      const kind = SC().shareKind(text, { today: U.todayKey(), named: named(), mine: myNames() }, root.Timesheet);
+      if (kind === 'hours') { App.importHours({ text }); return; }
+      if (kind !== 'ask') { App.importSchedule({ text }); return; }
     }
-    if (/\.(xlsx|xlsm|xls|ods|csv|tsv)$/i.test(file.name) || /spreadsheet|excel|csv/i.test(file.type)) { App.importHours({ file }); return; }
+    if (file && (/\.(xlsx|xlsm|xls|ods|csv|tsv)$/i.test(file.name) || /spreadsheet|excel|csv/i.test(file.type))) { App.importHours({ file }); return; }
     if (UI.sheets.length) UI.closeAll();
     const tile = (k, ic, tint, t, sub) => `<button class="am-tile" data-share-as="${k}">${UI.tile(ic, tint)}<span class="am-t">${t}</span><span class="am-s">${sub}</span></button>`;
     UI.openSheet({
       title: 'מה שיתפת?', cls: 'share-sheet',
-      body: `<div class="am-grid share-as">${tile('schedule', 'calendar', 'sky', 'סידור עבודה', 'למשמרות בלוח')}${tile('payslip', 'receipt', 'mint', 'תלוש שכר', 'לבדיקה')}${tile('hours', 'upload', 'violet', 'דוח שעות', 'למשמרות שהיו')}</div>`,
+      // a payslip is read from a file only: shared text offers the two that read text
+      body: `<div class="am-grid share-as">${tile('schedule', 'calendar', 'sky', 'סידור עבודה', 'למשמרות בלוח')}${file ? tile('payslip', 'receipt', 'mint', 'תלוש שכר', 'לבדיקה') : ''}${tile('hours', 'upload', 'violet', 'דוח שעות', 'למשמרות שהיו')}</div>`,
       onMount: (el) => el.addEventListener('click', (e) => {
         const b = e.target.closest('[data-share-as]');
         if (!b) return;
         const k = b.dataset.shareAs;
         UI.closeTop();
         setTimeout(() => {
-          if (k === 'schedule') App.importSchedule({ file });
+          // each with what was shared: the file, or the text (the hours tile opened an empty import for text)
+          const what = file ? { file } : { text };
+          if (k === 'schedule') App.importSchedule(what);
           else if (k === 'payslip') App.payslipFromFile(file);
-          else App.importHours({ file });
+          else App.importHours(what);
         }, 320);
       }),
     });

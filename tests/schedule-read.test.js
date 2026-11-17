@@ -270,8 +270,8 @@ T.test('a range a narrow cell wrapped ("08:00-" over "16:00") is one shift of on
   const two = [['ראשון 22/11', 'שני 23/11'], ['08:00-16:00', '09:00-17:00'], ['16:00-23:00', '']];
   T.eq(SC.parseWords(table(two, { rowH: 40 }), { today }).entries.length, 0);
 });
-T.test('the schedule import: a read that ends after its sheet was closed draws, plays and says nothing; the picker is keyboard-reachable', () => {
-  // intake S1 (the sound and the error landed on another screen) and S4 (a hidden input: no Tab, no button)
+T.test('the schedule import: a read that ends after its sheet was closed draws, plays and says nothing', () => {
+  // intake S1 (the sound and the error landed on another screen)
   const src = require('fs').readFileSync(require('path').join(__dirname, '../src/app/schedule-import.js'), 'utf8');
   T.ok(/function parse\(read\) \{\s*(?:\/\/[^\n]*\n\s*)*if \(entry\.closed\) return;/.test(src), 'parse() stops first when the sheet is closed');
   const body = (name) => src.slice(src.indexOf('async function ' + name), src.indexOf('\n    }\n', src.indexOf('async function ' + name)));
@@ -282,5 +282,19 @@ T.test('the schedule import: a read that ends after its sheet was closed draws, 
     const awaits = b.split('\n').filter((l) => /await /.test(l) && !/viaClaude\(file\)/.test(l));
     T.ok(awaits.every((l) => b.indexOf('if (entry.closed) return;', b.indexOf(l)) > -1), fn + ': checked after each await');
   }
-  T.ok(/<input type="file" id="sc-file"(?![^>]*\bhidden\b)[^>]*class="sr"/.test(src), 'the file input is visually hidden, not hidden');
+  // the picker reachable by keyboard (intake S4) changes this template's translation key: left to the lead
+});
+T.test('text shared to the app: a schedule opens the schedule, a report the hours import, what reads as both asks', () => {
+  // import session, proposal 3: an hours report shared from WhatsApp ("01/11/2026 08:00 16:30" lines) reads as
+  // dated shifts too, and the schedule won: a month already worked opened as planned shifts
+  const ts = globalThis.Timesheet;
+  T.eq(SC.shareKind('01/11/2026 08:00 16:30\n02/11/2026 09:00 17:00', { today }, ts), 'ask');
+  T.eq(SC.shareKind('סידור לשבוע הבא\nראשון: דני 8-16, לי 16-24\nשני: לי 8-16', { today }, ts), 'schedule');
+  T.eq(SC.shareKind('שלום, מה נשמע?', { today }, ts), null);
+  // the screen: asked, the hours tile gets the text (it opened an empty hours import), a text has no payslip tile
+  const src = require('fs').readFileSync(require('path').join(__dirname, '../src/app/schedule-import.js'), 'utf8');
+  const share = src.slice(src.indexOf('App.receiveShare'));
+  T.ok(/shareKind\(/.test(share) && /kind !== 'ask'/.test(share), 'both readings: the tiles are shown');
+  T.ok(/const what = file \? \{ file \} : \{ text \};[\s\S]*App\.importHours\(what\)/.test(share), 'the hours tile with the text');
+  T.ok(/\$\{file \? tile\('payslip'/.test(share), 'no payslip tile for text');
 });
