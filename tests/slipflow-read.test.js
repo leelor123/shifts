@@ -132,6 +132,20 @@ T.test('direction marks around a word do not hide it from the check', () => {
   T.ok(!F.ot150, 'the unread word is still seen');
 });
 
+T.test('a line the parser keeps normalized still finds the words it was read from', () => {
+  // "סה״כ" (gershayim) is kept as סה"כ by the parser: looked up by its exact text the line had no words, so its unread word was
+  // not seen (and from a photo nothing on it could be confirmed)
+  const lines = R.lines(R.rows(R.words(row(100, ['סה״כ', 'ניכויים', 'naw', '547.61']), [])));
+  const parsed = { fields: { totalDeductions: { value: 547.61, line: 'סה"כ ניכויים naw 547.61' } }, other: [] };
+  R.review(parsed, lines, 'ocr');
+  T.ok(!parsed.fields.totalDeductions, 'the unread word is seen, the line waits to be named');
+  // a part of a row (the parser drops the line code) is found in its row
+  const l2 = R.lines(R.rows(R.words(row(100, ['9001', 'ביטוח', 'לאומי', 'qxzw', '287.45']), [])));
+  const p2 = { fields: { nationalInsurance: { value: 287.45, line: 'ביטוח לאומי qxzw 287.45' } }, other: [] };
+  R.review(p2, l2, 'ocr');
+  T.ok(!p2.fields.nationalInsurance, 'found by containment');
+});
+
 T.test('numbers that cannot be are not shown', () => {
   // the year's gross below this month's base (a lost leading digit: 1,250.80 for 41,250.80)
   const a = read(row(100, ['שכר', 'יסוד', '120.50', '34.32', '4,135.56']).concat(row(140, ['ברוטו', 'מצטבר', '1,250.80'])), [], 'pdf');

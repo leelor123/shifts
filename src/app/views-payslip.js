@@ -351,9 +351,27 @@
       const sum = (ks) => ks.reduce((a, k) => a + num(k), 0);
       const same = (a, b) => Math.abs(a - b) <= 0.05;
       // a field knows the line it came from by its text, as the parser kept it (direction marks and spaces aside)
-      const tkey = (t) => String(t).replace(MARKS, '').replace(/\s+/g, ' ').trim();
-      const byText = new Map((lines || []).map((l) => [tkey(l.text), l]));
-      const wordsOf = (v) => [].concat(...String(v.line || '').split(' | ').map((t) => byText.get(tkey(t))).filter(Boolean).map((l) => l.words || []));
+      // The parser keeps a line as IT read it (Payslip.normalize: quotes, "סה'יכ" as סה"כ, a table border dropped), and
+      // may keep a part of a row or a row with the next one's numbers: both sides are normalized the same way, and a
+      // part or a longer line finds its row by containment (round 2: found by the exact text only, such a field had no
+      // words and from a photo it was emptied though read right)
+      const tkey = (t) => {
+        let s = String(t).replace(MARKS, '');
+        try { if (Payslip.normalize) s = Payslip.normalize(s); } catch (e) { /* as it is */ }
+        return s.replace(/\s+/g, ' ').trim();
+      };
+      const keyed = (lines || []).map((l) => ({ k: tkey(l.text), l }));
+      const byText = new Map(keyed.map((x) => [x.k, x.l]));
+      const lineOf = (t) => {
+        const k = tkey(t);
+        if (byText.has(k)) return byText.get(k);
+        if (k.length < 6) return null;
+        const part = keyed.filter((x) => x.k.length >= 6 && x.k.includes(k)).sort((a, b) => a.k.length - b.k.length)[0];
+        if (part) return part.l;
+        const head = keyed.filter((x) => x.k.length >= 6 && k.startsWith(x.k)).sort((a, b) => b.k.length - a.k.length)[0];
+        return head ? head.l : null;
+      };
+      const wordsOf = (v) => [].concat(...String(v.line || '').split(' | ').map(lineOf).filter(Boolean).map((l) => l.words || []));
       // a line whose name has a word the reader could not read may be another line, and so may a line with no name
       // at all ("150% 10 52.50 525.00": overtime or Shabbat?): it waits to be named, with its amount
       for (const k of Object.keys(F)) {
