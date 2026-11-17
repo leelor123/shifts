@@ -196,7 +196,8 @@
       out.push(it);
     }
     for (const y of M) if (!usedM.has(y.i)) out.push({ type: 'missingEmp', date: y.m.date, mine: y.m });
-    for (const x of R) if (!usedR.has(x.i)) out.push({ type: 'missingMine', date: x.r.date, rep: x.r });
+    // a row whose exit was not read and no shift of mine that day: still only the report's, but its length is unknown
+    for (const x of R) if (!usedR.has(x.i)) out.push(x.unread ? { type: 'missingMine', date: x.r.date, rep: x.r, unread: true } : { type: 'missingMine', date: x.r.date, rep: x.r });
 
     /* ---- small differences add up: how many minutes the report is short over the pairs that "match" ---- */
     const shortOf = (it) => {
@@ -211,7 +212,41 @@
     const order = { missingEmp: 0, diff: 1, missingMine: 2, ok: 3 };
     out.sort((a, b) => a.date.localeCompare(b.date) || order[a.type] - order[b.type] || String((a.rep || a.mine).start || '').localeCompare(String((b.rep || b.mine).start || '')));
     const count = (t) => out.filter((x) => x.type === t).length;
-    return { items: out, missingEmp: count('missingEmp'), diff: count('diff'), missingMine: count('missingMine'), ok: count('ok'), drift };
+    return { items: out, missingEmp: count('missingEmp'), diff: count('diff'), missingMine: count('missingMine'), ok: count('ok'), drift,
+      // rows read without their exit: nothing is known of their hours, so the report cannot be called the same
+      unread: out.filter((x) => x.unread).length };
+  }
+
+  /**
+   * A night the clock system writes as two rows, cut at midnight ("13/10 22:00–00:00" and "14/10 00:00–06:00", or
+   * the first ending 23:59), is one shift: saved as two, each half had its own day's overtime count and the
+   * seven-hour night day never applied. Rows sorted by day and start; a row is joined only to a row that starts at
+   * 00:00 the next day, and only while the whole stays a shift (16 hours at most). The import review and the hours
+   * check both read the report through this.
+   */
+  function joinNights(rows) {
+    const list = (rows || []).filter(Boolean);
+    const out = [];
+    const used = new Set();
+    list.forEach((r, i) => {
+      if (used.has(i)) return;
+      let cur = r;
+      while (cur.start && (cur.end === '00:00' || cur.end === '23:59')) {
+        const last = cur.parts ? cur.parts[cur.parts.length - 1] : cur;
+        const next = U.addDays(last.date, 1);
+        const j = list.findIndex((x, k) => !used.has(k) && k !== i && x.date === next && x.start === '00:00' && x.end && x.end !== '00:00');
+        if (j < 0) break;
+        const b = list[j];
+        const hours = round2((+cur.hours || 0) + (cur.end === '23:59' ? 1 / 60 : 0) + (+b.hours || 0));
+        // longer than any shift the reader accepts: two shifts (the morning row was taken and then lost, Nov 2026)
+        if (hours > 16) break;
+        used.add(j);
+        cur = Object.assign({}, cur, { end: b.end, hours, overnight: true, parts: (cur.parts || [cur]).concat([b]), doubt: cur.doubt || b.doubt });
+        if (!cur.doubt) delete cur.doubt;
+      }
+      out.push(cur);
+    });
+    return out;
   }
 
   /** "08:00–16:30", kept left to right inside Hebrew text and on one line. */
@@ -221,6 +256,7 @@
   function side(x) {
     if (x.parts && x.parts.length > 1 && x.parts.every((p) => p.start && p.end)) return x.parts.map((p) => range(p.start, p.end)).join(', ');
     if (x.start && x.end) return range(x.start, x.end);
+    if (x.start && !(+x.hours > 0)) return range(x.start, '?'); // the exit was not read (it read "0 שעות")
     return `${hoursOf(x.hours)} שעות`;
   }
   const dayOf = (k) => `${U.DAYS[U.dow(k)]} ${U.fmtDate(k, 'short')}`;
@@ -237,6 +273,6 @@
     return `שלום,\nעברתי על דוח הנוכחות${label ? ` של ${label}` : ''} לפני הכנת התלוש. ${head}\n${lines.join('\n')}\nאפשר לבדוק ולעדכן לפני שהתלוש יוצא? תודה רבה!`;
   }
 
-  root.HoursCheck = { compare, letter, span, side, TOL, DRIFT };
+  root.HoursCheck = { compare, letter, span, side, joinNights, TOL, DRIFT };
   if (typeof module !== 'undefined') module.exports = root.HoursCheck;
 })(typeof window !== 'undefined' ? window : globalThis);
