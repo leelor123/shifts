@@ -38,7 +38,8 @@
   function hm(h, m, ap) {
     h = +h; m = +m;
     if (ap) { const p = ap.toLowerCase() === 'p'; if (h === 12) h = p ? 12 : 0; else if (p) h += 12; }
-    return h < 24 && m < 60 ? pad(h) + ':' + pad(m) : null;
+    // (24:00, the end of the day, is midnight)
+    return h < 24 && m < 60 ? pad(h) + ':' + pad(m) : h === 24 && m === 0 && !ap ? '00:00' : null;
   }
   /** The latest date with this day and month that is not after today. */
   function yearFor(m, d, today) {
@@ -92,14 +93,26 @@
       let start = null, end = null, hours = null;
       // more times than a pair (a column of standard hours, a total, a second pair): the pair whose length is
       // printed on the same line is the shift ("8:00 8:55 16:12 7:17" → 08:55-16:12)
-      let sure = null;
+      // (the pair the total measures most closely: "08:36 08:02 16:40 8:38" is 08:02-16:40, not 08:36-16:40 that
+      // is 2 minutes off a time on the line; the total may be after a break printed on the line too:
+      // "08:00 16:30 00:30 08:00")
+      // (closest first, then the pair nearer the start of the line: the entry and the exit come before the rest)
+      let sure = null, sureErr = Infinity;
+      const take = (e, i, j) => { if (e <= 2.5 && e + 0.5 * (i + j - 1) < sureErr) { sureErr = e + 0.5 * (i + j - 1); sure = [times[i], times[j]]; } };
       if (times.length >= 3) {
-        for (let i = 0; i < times.length && !sure; i++) {
-          for (let j = 0; j < times.length && !sure; j++) {
+        for (let i = 0; i < times.length; i++) {
+          for (let j = 0; j < times.length; j++) {
             if (i === j) continue;
             const d = (toMin(times[j]) - toMin(times[i]) + 1440) % 1440;
             if (d < 30 || d > 16 * 60) continue;
-            if (times.some((t, k) => k !== i && k !== j && Math.abs(toMin(t) - d) <= 2)) sure = [times[i], times[j]];
+            times.forEach((t, k) => {
+              if (k === i || k === j) return;
+              take(Math.abs(toMin(t) - d), i, j);
+              times.forEach((b, l) => {
+                if (l === i || l === j || l === k || toMin(b) > 120) return;
+                take(Math.abs(toMin(t) - (d - toMin(b))) + 0.5, i, j);
+              });
+            });
           }
         }
       }
@@ -132,6 +145,13 @@
     const s = row.start || startFor;
     if (!s) return null;
     const start = toEpoch(row.date, s);
+    // the exit as the report prints it, on the next day for a night: on the night the clock moves (end of
+    // October, end of March) a 22:00-06:00 shift is 9 or 7 real hours and still ends at 06:00. Adding the
+    // printed hours to the start ended it an hour off
+    if (row.start && row.end) {
+      const d = new Date(+row.date.slice(0, 4), +row.date.slice(5, 7) - 1, +row.date.slice(8, 10) + (toMin(row.end) <= toMin(row.start) ? 1 : 0), 12);
+      return { start, end: toEpoch(key(d.getFullYear(), d.getMonth() + 1, d.getDate()), row.end) };
+    }
     const end = start + Math.round(row.hours * 60) * 60000;
     return { start, end };
   }
@@ -397,8 +417,8 @@
     opts = opts || {};
     const today = opts.today || new Date().toISOString().slice(0, 10);
     const wl = (words || []).filter((w) => w && w.text && clean(w.text));
-    const { rows, mh } = rowsOf(wl);
-    const dbg = [];
+    const { rows, mh, slope } = rowsOf(wl);
+    const dbg = [`angle ${(Math.atan(slope) * 180 / Math.PI).toFixed(1)}°`];
     // a reader that lost the colons read "08:02:26" as three numbers side by side: one time again
     for (const r of rows) {
       const ws = r.words, out = [];
@@ -462,6 +482,13 @@
       if (it.k === 'month' && !docMonth) docMonth = it.v;
     }
     const docYear = years.size ? [...years.entries()].sort((a, b) => b[1] - a[1])[0][0] : null;
+    // a date whose year is not the report's (01/11/2024 in a report of 2026: a 6 read as a 4) takes the report's
+    // year, unless it is a December before or a January after it (a report across the new year)
+    if (docYear) for (const r of rows) for (const w of r.words) for (const it of w.items) {
+      if (it.k !== 'date' || !it.y || it.y === docYear || (years.get(it.y) || 0) * 2 > years.get(docYear)) continue;
+      if ((it.y === docYear - 1 && it.m === 12) || (it.y === docYear + 1 && it.m === 1)) continue;
+      it.y = null;
+    }
 
     /* ---- the date column ---- */
     const datePts = [];
@@ -515,7 +542,9 @@
     });
     let cols = cluster(timePts, tol).map((c, i) => ({ i, at: c.at, members: c.members, rows: new Set(c.members.map((p) => p.ri)).size, strong: c.members.filter((p) => !p.weak).length }));
     // a column of bare "0800" or of dotted "8.30" counts only when it is a real column (most of it times)
-    cols = cols.filter((c) => c.rows >= 2 && c.strong >= c.members.length * 0.5);
+    // (a column of dotted 8.30 under a column named כניסה / יציאה is that column's times)
+    const underInOut = (c) => header && header.roles.some((x) => (x.role === 'in' || x.role === 'out') && Math.abs(x.x - c.at) < colW);
+    cols = cols.filter((c) => c.rows >= 2 && (c.strong >= c.members.length * 0.5 || underInOut(c)));
     const at = (c, ri) => { const p = c.members.find((q) => q.ri === ri); return p ? p.v : null; };
     // the pair of columns that is entry → exit
     const pairScore = (a, b) => {
@@ -539,6 +568,13 @@
     const nearest = (x) => cols.filter((c) => Math.abs(c.at - x) < colW * 1.6).sort((a, b) => Math.abs(a.at - x) - Math.abs(b.at - x))[0] || null;
     const pairs = [];
     const hin = hRole('in'), hout = hRole('out');
+    // a column of times the header names a total or a break (סה"כ, הפסקה) is never found to be an entry or an
+    // exit: the header word nearest to it is that name
+    const named = new Set();
+    if (header) for (const c of cols) {
+      const h = header.roles.slice().sort((p, q) => Math.abs(p.x - c.at) - Math.abs(q.x - c.at))[0];
+      if (h && (h.role === 'total' || h.role === 'break') && Math.abs(h.x - c.at) < colW * 1.2) named.add(c);
+    }
     if (hin.length && hout.length) {
       for (let k = 0; k < Math.min(hin.length, hout.length); k++) {
         const a = nearest(hin[k].x), b = nearest(hout[k].x);
@@ -551,7 +587,7 @@
     const constant = (c) => { const n = new Map(); for (const p of c.members) n.set(p.v, (n.get(p.v) || 0) + 1); return c.members.length >= 4 && Math.max(...n.values()) >= c.members.length * 0.8; };
     let best = null;
     for (const a of cols) for (const b of cols) {
-      if (a === b) continue;
+      if (a === b || named.has(a) || named.has(b)) continue;
       if ((constant(a) && !constant(b) && distinct(b) >= 3) || (constant(b) && !constant(a) && distinct(a) >= 3)) continue;
       // (a duration column, 7:06 without its leading zero, beside a clock's column that writes 07:06: the
       // report pads its times, so the unpadded one is the total, not an entry or an exit. A hand-made table
@@ -580,7 +616,9 @@
     }
     const pairCols = new Set(pairs.flatMap((p) => [p.a, p.b]));
     // columns whose pairs look like shifts in few of their rows: the reading of this table is not to be trusted
-    const weakPair = pairs.length > 0 && pairs[0].n >= 3 && pairs[0].s < pairs[0].n * 0.6;
+    // (the share of its rows whose entry and exit make a shift of 20 minutes to 16 hours)
+    const likely = pairs.length ? rows.map((_, ri) => [at(pairs[0].a, ri), at(pairs[0].b, ri)]).filter(([x, y]) => x && y).map(([x, y]) => plaus(span(x, y)) > 0) : [];
+    const weakPair = likely.length >= 3 && (likely.filter(Boolean).length < likely.length * 0.75 || pairs[0].s < pairs[0].n * 0.5);
     if (weakPair) dbg.push('the entry/exit columns make few likely shifts: all unsure');
     dbg.push('time columns: ' + cols.map((c) => `${Math.round(c.at)}(${c.rows}${unpadded(c) ? ',dur' : ''})`).join(' ') + ' | pairs: ' + pairs.map((p) => `${Math.round(p.a.at)}→${Math.round(p.b.at)} ${p.from} ${p.s.toFixed(1)}/${p.n}`).join(', '));
 
@@ -609,7 +647,8 @@
     let decCol = null;
     if (pairs.length && !totalCol) {
       const pts = [];
-      rows.forEach((r, ri) => r.words.forEach((w) => { const it = w.items.find((x) => x.k === 'num' && !Number.isInteger(x.v) && x.v >= 0.25 && x.v <= 16); if (it) pts.push({ x: w.x, ri, v: it.v, w }); }));
+      // (8.00 is as much a length as 7.75: a whole number written with its decimals)
+      rows.forEach((r, ri) => r.words.forEach((w) => { const it = w.items.find((x) => x.k === 'num' && (!Number.isInteger(x.v) || /\d\.\d/.test(clean(w.text))) && x.v >= 0.25 && x.v <= 16); if (it) pts.push({ x: w.x, ri, v: it.v, w }); }));
       let bestK = 0;
       for (const c of cluster(pts, tol)) {
         let n = 0, m = 0;
@@ -630,13 +669,18 @@
     if (totalCol || decCol) dbg.push('length column ' + Math.round((totalCol || decCol).at));
     // the breaks this report takes off its total: those seen in a fair share of its rows. One row an hour off
     // where no other row has an hour's break is an hour misread (08:13 for 09:13), not a break
+    // an employer that rounds the total to a quarter of an hour (8:07 worked, 8:00 written): the total then
+    // checks the hours, not the minutes
+    const lens = rows.map((_, ri) => lenAt(ri)).filter((v) => v != null);
+    const roundQ = lens.length >= 3 && lens.filter((v) => v % 15 === 0).length >= lens.length * 0.9;
+    const fits = (sp, L, br) => Math.abs(sp - L - br) <= 2 || (roundQ && Math.abs(sp - L - br) < 15);
     const seenBr = new Map();
     let withLen = 0;
     if (pairs.length) for (let ri = 0; ri < rows.length; ri++) {
       const a = at(pairs[0].a, ri), b = at(pairs[0].b, ri), L = lenAt(ri);
       if (!a || !b || L == null || pairs.slice(1).some((p) => at(p.a, ri) || at(p.b, ri))) continue;
       withLen++;
-      const br = BREAKS.find((x) => Math.abs(span(a, b) - L - x) <= 2);
+      const br = BREAKS.find((x) => fits(span(a, b), L, x));
       if (br != null) seenBr.set(br, (seenBr.get(br) || 0) + 1);
     }
     const okBreaks = BREAKS.filter((br) => !br || (seenBr.get(br) || 0) >= Math.max(2, withLen * 0.15));
@@ -690,7 +734,7 @@
           // the times and the length disagree: one of them was misread, and which one cannot be known (an exit
           // read 02:23 for 22:23, or a total read 8:11 for 8:17). The likelier reading (one digit of the exit,
           // or else of the entry, that makes them agree) is offered, never saved as sure
-          if (a && b && sure && !okBreaks.some((br) => Math.abs(span(a, b) - len - br) <= 2)) {
+          if (a && b && sure && !okBreaks.some((br) => fits(span(a, b), len, br))) {
             const fixB = fromMin(minOf(a) + len), fixA = fromMin(minOf(b) - len);
             const fix = differsBy(b, fixB) === 1 ? [[a, fixB]] : differsBy(a, fixA) === 1 ? [[fixA, b]] : [];
             if (fix.length) { dbg.push(`total disagrees: ${a}-${b}, likely ${fix[0].join('-')}`); [a, b] = fix[0]; }
@@ -731,7 +775,7 @@
       if (shifts.length) pendingLen = null;
       const isTotalRow = SKIP_ROW.test(text) && !date;
       if (isTotalRow) return;
-      const row = { ri, y: r.y, date, dow, mash: mash ? mash.s : null, shifts, text };
+      const row = { ri, y: r.y, date, dow, mash: mash ? mash.s : null, shifts, text, dateCell: r.words.some((w) => inDateCol(w)) };
       if (date || mash || shifts.length || dow != null) found.push(row);
     });
     // an app's card: the date on a line of its own, the hours on the line above or under it. Each row of hours
@@ -795,6 +839,8 @@
     const candidatesFor = (r) => {
       const c = [];
       if (r.mash) for (const x of mashDates(r.mash, docYear)) c.push(x);
+      // a date cut short ("011" of 01/11): its day in the report's month
+      if (r.mash && mainMonth) for (let dl = 1; dl <= 2; dl++) { const d = +r.mash.slice(0, dl); if (d >= 1 && d <= 31) c.push({ d, m: mainMonth }); }
       if (r.date) {
         const { d, m } = r.date;
         const ds = String(d);
@@ -831,21 +877,34 @@
     }
     const trusted = new Set();
     for (let a = len.indexOf(Math.max(0, ...len)); a >= 0 && idx.length; a = from[a]) trusted.add(idx[a]);
+    // a report of every day (its trusted dates a day apart, nearly all)
+    const tk = [...trusted].sort((p, q) => p - q).map((i) => list[i].key);
+    const daily = tk.length >= 4 && tk.slice(1).filter((k, i) => addDays(tk[i], fwd ? 1 : -1) === k).length >= (tk.length - 1) * 0.7;
     for (let i = 0; i < list.length; i++) {
       const r = list[i];
       if (trusted.has(i) && dowOk(r, r.key)) continue;
       let p = i - 1; while (p >= 0 && !trusted.has(p)) p--;
       let q = i + 1; while (q < list.length && !trusted.has(q)) q++;
       const prev = p >= 0 ? list[p] : null, next = q < list.length ? list[q] : null;
-      const inOrder = (k) => (!prev || cmp(prev.key, k) || (prev.key === k && r.shifts.length && prev.shifts.length)) && (!next || cmp(k, next.key) || (k === next.key && r.shifts.length && next.shifts.length));
+      // (the same date as the row by it is a second shift of that day, unless the two rows name different days of
+      // the week: then one date was misread)
+      const same = (o) => o.key === r.key && r.shifts.length && o.shifts.length && !(o.dow != null && r.dow != null && o.dow !== r.dow);
+      const inOrder = (k) => (!prev || cmp(prev.key, k) || (prev.key === k && same(prev))) && (!next || cmp(k, next.key) || (k === next.key && same(next)));
       // the possible readings of what was read that fit between its neighbours (and its day of the week)
-      const all = [...new Set(candidatesFor(r))].filter(inOrder);
+      // (a reading weeks away from the rows around it is no reading of this row: 01/01 before 02/11)
+      const daysTo = (a, b) => Math.abs((new Date(a) - new Date(b)) / 864e5);
+      const near = (k) => (!prev || daysTo(prev.key, k) <= 14) && (!next || daysTo(next.key, k) <= 14);
+      const all = [...new Set(candidatesFor(r))].filter((k) => inOrder(k) && near(k));
       let cands = all.filter((k) => dowOk(r, k));
       // nothing to read from: the dates between the neighbours, with its day of the week
       if (!cands.length && !(r.key && inOrder(r.key)) && prev && next) {
         const between = [];
         for (let k = addDays(prev.key, fwd ? 1 : -1), n = 0; k !== next.key && n < 10; k = addDays(k, fwd ? 1 : -1), n++) between.push(k);
         cands = between.filter((k) => dowOk(r, k) && (r.dow != null || between.length === 1));
+        // a day worked out from the rows around it, not read: sure only in a report of every day, on a row that
+        // has something in its date cell or names its day. An empty date cell may be the same day's second line
+        // (a split shift), and a report of worked days only skips days
+        if (cands.length === 1 && !(daily && (r.dateCell || r.dow != null))) r.doubt = 'date';
       }
       // the one day between its neighbours, and the date read says that day too: the day letter was misread
       if (!cands.length && prev && next && all.length === 1 && all[0] === addDays(prev.key, fwd ? 1 : -1) && addDays(all[0], fwd ? 1 : -1) === next.key) cands = all;
@@ -868,9 +927,10 @@
       if (r.date && !r.date.y && !docYear) guessedYear = true;
       for (const [start, end, why] of r.shifts) {
         const d = span(start, end) || 1440;
-        if (d < 10 || d > 16 * 60) { dbg.push(`not a shift: ${r.key} ${start}-${end}`); continue; }
+        if (d < 10) { dbg.push(`not a shift: ${r.key} ${start}-${end}`); continue; }
         const row = { date: r.key, start, end, hours: Math.round(d / 60 * 100) / 100, overnight: minOf(end) <= minOf(start), line: r.text.slice(0, 120), n: r.ri };
-        const doubt = why || (weakPair && 'table') || (monthOff && 'date');
+        // (more than 16 hours: more likely a misread than a shift; offered, never saved as read)
+        const doubt = why || (d > 16 * 60 && 'long') || r.doubt || (weakPair && 'table') || (monthOff && 'date');
         if (doubt) unsure.push(Object.assign(row, { unsure: doubt })); else out.push(row);
       }
     }

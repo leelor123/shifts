@@ -257,3 +257,48 @@ T.test('the page names its month and no date read is of it (4/1 read for 4/9): t
   T.eq(shifts(p), '');
   T.ok(/date/.test(unsure(p)), 'not offered as unsure: ' + unsure(p));
 });
+T.test('a day worked out from the rows around it: sure in a report of every day with something in its date cell; an empty date cell may be a second line of the day before', () => {
+  const daily = page(['תאריך', 'כניסה', 'יציאה'], [
+    ['01/10/2026', '08:00', '16:00'], ['02/10/2026', '09:00', '17:00'], ['03/10/2026', '08:00', '12:00'], ['ii', '08:10', '14:40'],
+    ['05/10/2026', '07:00', '15:00'], ['06/10/2026', '08:00', '16:30'],
+  ]);
+  T.ok(/2026-10-04 08:10-14:40/.test(shifts(daily)), 'a lost date in a daily report: ' + shifts(daily));
+  const second = page(['תאריך', 'כניסה', 'יציאה'], [['02/10/2026', '08:00', '12:00'], ['03/10/2026', '08:00', '12:00'], ['', '13:00', '17:00'], ['05/10/2026', '09:00', '17:00'], ['06/10/2026', '09:00', '13:00']]);
+  T.ok(!/13:00-17:00/.test(shifts(second)), 'a second line taken for the next day: ' + shifts(second));
+  T.ok(/2026-10-04 13:00-17:00 date/.test(unsure(second)), 'offered for checking: ' + unsure(second));
+});
+T.test('a shift of more than 16 hours is offered for checking, never saved as read', () => {
+  const p = page(['תאריך', 'כניסה', 'יציאה'], [['01/10/2026', '06:00', '23:00'], ['02/10/2026', '08:00', '16:00'], ['03/10/2026', '09:00', '17:00'], ['04/10/2026', '07:00', '15:00'], ['05/10/2026', '14:00', '22:00']]);
+  T.eq(shifts(p), '2026-10-02 08:00-16:00 | 2026-10-03 09:00-17:00 | 2026-10-04 07:00-15:00 | 2026-10-05 14:00-22:00');
+  T.eq(unsure(p), '2026-10-01 06:00-23:00 long');
+});
+T.test('a total rounded to quarter hours by the employer (8:00 for 8:07) agrees with the times', () => {
+  const p = page(['תאריך', 'כניסה', 'יציאה', 'סה"כ'], [['01/10/2026', '08:00', '16:00', '8.00'], ['02/10/2026', '08:00', '16:07', '8.00'], ['03/10/2026', '09:00', '17:00', '8.00'], ['04/10/2026', '08:00', '15:30', '7.50'], ['05/10/2026', '08:03', '16:00', '7.75']]);
+  T.eq(shifts(p), '2026-10-01 08:00-16:00 | 2026-10-02 08:00-16:07 | 2026-10-03 09:00-17:00 | 2026-10-04 08:00-15:30 | 2026-10-05 08:03-16:00');
+  // ...and an hour off is still caught
+  const q = page(['תאריך', 'כניסה', 'יציאה', 'סה"כ'], [['01/10/2026', '08:00', '17:00', '8:00'], ['02/10/2026', '08:00', '16:00', '8:00'], ['03/10/2026', '09:00', '17:00', '8:00'], ['04/10/2026', '08:00', '15:30', '7:30']]);
+  T.ok(!/2026-10-01/.test(shifts(q)), 'an hour off saved: ' + shifts(q));
+});
+T.test('dotted times (8.30 / 16.00) in columns named כניסה / יציאה are times', () => {
+  const p = page(['תאריך', 'כניסה', 'יציאה'], [['01/10/2026', '8.30', '16.00'], ['02/10/2026', '7.45', '15.15'], ['03/10/2026', '9.00', '17.30']]);
+  T.eq(shifts(p), '2026-10-01 08:30-16:00 | 2026-10-02 07:45-15:15 | 2026-10-03 09:00-17:30');
+});
+T.section('hours report lines (text, a PDF)');
+T.test('a line with a break and a total: the pair the total measures after the break, the entry and exit first', () => {
+  const r = one('01/10/2026 08:00 16:30 00:30 08:00');
+  T.eq(`${r.start}-${r.end}`, '08:00-16:30');
+  const s = one('01/10/2026 08:36 08:02 16:40 8:38');
+  T.eq(`${s.start}-${s.end}`, '08:02-16:40');
+});
+T.test('24:00 is the end of the day', () => {
+  const r = one('01/10/2026 16:00 24:00');
+  T.eq(`${r.start}-${r.end}`, '16:00-00:00'); T.ok(r.overnight); T.near(r.hours, 8);
+});
+T.test('the nights the clock moves: a night shift ends at the exit the report prints', () => {
+  for (const [d, s, e, real] of [['2026-10-24', '22:00', '06:00', 9], ['2026-03-26', '22:00', '06:00', 7], ['2026-11-10', '22:00', '06:00', 8], ['2026-10-25', '00:30', '08:00', 8.5]]) {
+    const t = TS.times(TS.parse(`${d} ${s} ${e}`, { today: '2026-12-01' }).rows[0], null, U.toEpoch);
+    const end = new Date(t.end);
+    T.eq(`${String(end.getHours()).padStart(2, '0')}:${String(end.getMinutes()).padStart(2, '0')}`, e, d);
+    T.near((t.end - t.start) / 3600000, real, 0.01, d);
+  }
+});
