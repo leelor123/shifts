@@ -217,3 +217,46 @@ T.test('generated slips: what is read is right, no NaN, no negative zero, idempo
     T.eq(JSON.stringify(Payslip.parseText(text).fields), JSON.stringify(p.fields), 'the same text reads the same');
   }
 });
+
+T.section('payslip reader: round 2 (samples from the payslip screen and intake sessions)');
+T.test('a PDF row of names, word by word, over its numbers: each number goes with its whole name', () => {
+  const it = (s, x, y) => ({ str: s, transform: [1, 0, 0, 1, x, y], width: s.length * 4.6 });
+  // each Hebrew word its own piece, as pdf.js gives them
+  const items = [it('ימי', 540, 60), it('עבודה', 515, 60), it('שעות', 440, 60), it('עבודה', 415, 60), it('נקודות', 340, 60), it('זיכוי', 312, 60),
+    it('יתרת', 240, 60), it('חופשה', 215, 60), it('יתרת', 140, 60), it('מחלה', 115, 60),
+    it('18', 525, 45), it('142.75', 420, 45), it('2.75', 320, 45), it('3.21', 222, 45), it('9.00', 122, 45)];
+  const f = F(Payslip.linesFromPdfItems(items).join('\n'));
+  T.near(f.workDays.value, 18); T.near(f.workHours.value, 142.75); T.near(f.creditPoints.value, 2.75);
+  T.near(f.vacationBalance.value, 3.21); T.near(f.sickBalance.value, 9);
+});
+T.test('a tier with no name read is no overtime; a name of single letters is still a name', () => {
+  const f = F('150% 10 52.50 525.00\nשעות naw 150% 12.00 51.48 617.76');
+  T.ok(!f.ot150 && !f.rest150, 'no 150% line from a tier alone: ' + JSON.stringify(f));
+  T.near(v('91 125% נ.ש 15.75 65.00 1,023.75', 'ot125'), 1023.75);
+});
+T.test('the hourly rate and the job percent in the header are no pay line; the rate tells the hours column', () => {
+  const f = F(['תלוש משכורת לחודש ספטמבר 2026', 'תאריך תחילת עבודה: 15/06/2025 בנק 10 סניף 812 ח-ן 445566 היקף משרה 100% שכר שעה 36.00', 'שכר יסוד 120.50 36.00 4,338.00'].join('\n'));
+  T.near(f.base.value, 4338); T.near(f.base.qty, 120.5); T.near(f.base.rate, 36);
+  // rate first on the line, and the header's rate says so
+  const r = F('תעריף שעה 35.40\nשכר יסוד 35.40 168.25 5,956.05').base;
+  T.near(r.value, 5956.05); T.near(r.qty, 168.25);
+});
+T.test('a summary strip\'s bare "ניכויים:" is the total; the deductions file and a code under a heading are not', () => {
+  T.near(v('ברוטו: 7,438.40\nניכויים: 1,005.96\nנטו לתשלום: 6,432.44', 'totalDeductions'), 1005.96);
+  const f = F('ניכויים:\n9001 ביטוח לאומי 62.31\nתיק ניכויים: 94-1234567');
+  T.ok(!f.totalDeductions, 'no total from a code or the file: ' + JSON.stringify(f.totalDeductions)); T.near(f.nationalInsurance.value, 62.31);
+});
+T.test('hours missing from an hours line with two numbers: asked for, never the rate as hours', () => {
+  never('שעות נוספות 125% 43.75 218.75', 'ot125', 218.75);
+  const f = F('שעות נוספות 125% 43.75 218.75').ot125;
+  T.ok(!f || f.qty == null || Math.abs(f.qty - 5) < 0.01, 'never 43.75 hours');
+  never('38.00 142.50 שכר רגיל', 'base', 5415);
+  never('שכר יסוד 160.00 38.75', 'base', 6200, 'a quantity and a rate with the amount blank (a PDF form field)');
+  const g = F('שכר יסוד 160.00 38.75').base;
+  T.ok(!g || g.value == null, 'the quantity is no base pay');
+});
+T.test('OCR forms of סה"כ are read', () => {
+  const f = F('סה\'יכ ניכויים 547.61\nסה\'\'כ תשלומים 5,537.37');
+  T.near(f.totalDeductions.value, 547.61); T.near(f.gross.value, 5537.37);
+  T.near(v('סהייכ ניכויים 547.61', 'totalDeductions'), 547.61);
+});

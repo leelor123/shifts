@@ -221,7 +221,8 @@
   function normalize(s) {
     return fixDigits(s.replace(/[\u200b-\u200f\u202a-\u202e\u2066-\u2069\ufeff]/g, '').replace(/[״“”]|''/g, '"').replace(/[׳‘’`]/g, "'")
       // "סה"כ" as a photo gives it ("סהייכ", "סה'כ", "סהכ")
-      .replace(/(^|\s)סה(?:יי|['"])?כ(?=\s)/g, '$1סה"כ')
+      // (and "סה'יכ", the gershayim read as an apostrophe and a yod: round 2, from the payslip screen's sample)
+      .replace(/(^|\s)סה(?:יי|['"]י?|י['"])?כ(?=\s)/g, '$1סה"כ')
       // a table's border read as a token ("101 | שעות עבודה רגילות 100.50 |"): it hid the symbol code before the name,
       // and the code was read as the hours (readers campaign, Nov 2026)
       .replace(/(^|\s)[|_¦]+(?=\s|$)/g, ' ')
@@ -642,8 +643,8 @@
   }
   /** Is this text one whole name the reader knows ("ברוטו שוטף", "שכר נטו"), not a word of one ("ימי", "עבודה")? */
   function wholeName(t) {
-    const p = NAME_PATS.find((x) => t === x || t.startsWith(x + ' ') || t.endsWith(' ' + x));
-    return !!p && t.replace(p, ' ').split(' ').filter(Boolean).every((w) => NAME_EXTRA.test(w));
+    // (any of the names it may hold: "שכר נטו לתשלום" is "שכר נטו" and "לתשלום", though "נטו לתשלום" is a name too)
+    return NAME_PATS.some((p) => (t === p || t.startsWith(p + ' ') || t.endsWith(' ' + p)) && t.replace(p, ' ').split(' ').filter(Boolean).every((w) => NAME_EXTRA.test(w)));
   }
   /** The numbers first and the name last (a symbol code may follow the name): a row printed the other way round. */
   function nameLast(line) {
@@ -1033,7 +1034,9 @@
       // waits among the lines to name
       if (f && f.hours && !byWords(f, line)) {
         const words = line.replace(/[\d.,%₪:/-]+/g, ' ').trim();
-        if (!/[֐-׿]{2,}/.test(words) || /[A-Za-z]{2,}/.test(words)) f = null;
+        // (a name of single letters is still a name: "125% נ.ש" is overtime; refusing it lost 2 fields of every such
+        // payslip in round 2's first try)
+        if (!/[֐-׿]/.test(words) || /[A-Za-z]{2,}/.test(words)) f = null;
       }
       if (cumulative && f) {
         // only the year's own lines: the gross and the income tax become the running totals, the rest is skipped
@@ -1338,13 +1341,10 @@
       const fits = (p) => (want != null ? Math.abs(p.value / p.qty - want) <= want * 0.02 : !whole.length && p.value / p.qty / TIER[k] >= 24 && p.value / p.qty <= 1000);
       if (two.every(fits) && (want != null || twoAllFit)) continue;
       if (parts[k].length === 1 && want != null && Math.abs(two[0].qty - want) <= want * 0.01) { F.rate = two[0].qty; F.qty = Math.round(F.value / F.rate * 100) / 100; continue; }
-      // (no wage on the slip: "שעות נוספות 125% 43.75 218.75" cannot be 43.75 hours at 5 ₪; as a rate and its pay it is
-      // 5 hours, a whole quarter of an hour, at 43.75 ₪. That reading is taken when it is the only one a person is paid
-      // at, round 2, from the payslip screen's sample)
-      if (parts[k].length === 1 && want == null && !whole.length) {
-        const p = two[0], h = p.value / p.qty;
-        if (p.qty / TIER[k] >= 24 && p.qty <= 1000 && h > 0 && h <= 300 && Math.abs(h * 4 - Math.round(h * 4)) < 0.01 && !(p.value / p.qty / TIER[k] >= 24)) { F.rate = p.qty; F.qty = Math.round(h * 100) / 100; continue; }
-      }
+      // (no wage on the slip and two numbers that are not hours and their pay, "שעות נוספות 125% 43.75 218.75": a rate and
+      // its pay (5 hours at 43.75 ₪) or hours and a rate with the pay lost (43.75 hours at 218.75 ₪, or 142.50 hours at
+      // 38 ₪ in "38.00 142.50 שכר רגיל") cannot be told apart. Tried in round 2, it read the second kind as the first:
+      // the line is asked for)
       fields[k] = { line: F.line, value: null };
     }
     // The hours lines read from one or two numbers (their places not proven by hours × rate = pay) stand only when the

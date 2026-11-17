@@ -49,3 +49,7 @@ T.test('two lines of one payment add up; hours and a rate that do not make the a
   T.near(r.fields.ot125.value, 500); T.ok(r.fields.ot125.qty === undefined, '50 hours at 2 ₪ is not 500');
   T.near(r.fields.incomeTax.value, 100); T.ok(r.other.some((o) => o.value === 120), 'the second one waits to be named');
 });
+T.test('round 2: a birth date and the whole bank number, slashes too, are hidden', () => {
+  const r = Payslip.redact('תאריך לידה 12/03/1999\nחשבון בנק: 10-802-123456/78').text;
+  T.ok(!r.includes('1999') && !r.includes('12/03'), r); T.ok(!r.includes('/78') && !r.includes('123456'), r);
+});
