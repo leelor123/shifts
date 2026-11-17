@@ -1328,6 +1328,14 @@
     const lines = text.split(/\r?\n/).map((line) => {
       let l = line;
       if (/(רחוב|רח'|רח׳|כתובת|מיקוד|ת\.ד|דירה|שכונת|ישוב:|יישוב:)/.test(l)) { count++; return '[כתובת הוסתרה]'; }
+      // the worker's name ("שם העובד: נדב כהן", "שם: …", "לכבוד …"): the name is what follows the label, to the next
+      // label or number on the line (it went to the AI as it was, readers campaign, Nov 2026)
+      l = l.replace(/(?<=^|\s)(שם העובד|שם עובד|שם העובדת|שם משפחה|שם פרטי|שם|לכבוד)(\s*[:：]\s*|\s+)([^\d:|]+?)(?=\s+(?:מספר|מס'|ת\.ז|ת"ז|ת״ז|זהות|תאריך|מחלקה|תפקיד|סניף|בנק|קוד)|\s*\d|\s*\||$)/g,
+        (m0, a, sep, name) => (/[֐-׿A-Za-z]/.test(name) ? (count++, a + sep + '[שם הוסתר]') : m0));
+      // the employer's name before its company mark ("סופר השכונה בע"מ"): up to four words
+      l = l.replace(/(?:[^\s\d|:]+\s+){0,3}[^\s\d|:]+\s+בע(?:"|״|'')מ/g, () => { count++; return '[שם המעסיק הוסתר]'; });
+      // the worker's and the employer's numbers: the employee number, the deductions file, the company number
+      l = l.replace(/((?:מספר|מס'|מס׳)\s*עובד|תיק(?:\s*ניכויים)?|ח\.?פ\.?|ע\.?מ\.?|מספר מעסיק|מס' מעסיק)(\s*[:.]?\s*)(\d[\d\-\s]{2,}\d|\d{3,})/g, (m0, a, sep) => { count++; return a + sep + '[מספר הוסתר]'; });
       if (/(בנק|סניף|חשבון|IBAN|מס' חשבון)/i.test(l)) {
         l = l.replace(/\d[\d\-\s]{2,}\d/g, () => { count++; return '[פרטי בנק הוסתרו]'; });
       }
@@ -1335,6 +1343,8 @@
         l = l.replace(/\d[\d\-\s]{4,}\d/g, () => { count++; return '[ת״ז הוסתרה]'; });
       }
       l = l.replace(/\b\d{9}\b/g, () => { count++; return '[מספר הוסתר]'; });
+      // (an ID number printed in groups, "012 345 678" or "012-345-678", with no label on its line)
+      l = l.replace(/\b\d{3}[\s-]\d{3}[\s-]\d{3}\b/g, () => { count++; return '[מספר הוסתר]'; });
       l = l.replace(/[\w.+-]+@[\w-]+\.[\w.]+/g, () => { count++; return '[אימייל הוסתר]'; });
       l = l.replace(/(?:\+972[-\s]?|\b0)(?:5\d|[2-489]|7\d)[-\s]?\d{3}[-\s]?\d{4}\b/g, () => { count++; return '[טלפון הוסתר]'; });
       return l;
@@ -1399,18 +1409,70 @@
     return v >= 50;
   }
   /** Convert AI JSON to the same {fields, other, period} shape as parseText. */
+  /**
+   * A number from the AI's answer: a finite number or a plain numeric string ("1234.56", not "1,234.56" or "12 שעות"),
+   * within what a month's payslip holds. Anything else is no number (null): read as it came, a string became NaN on
+   * the screen, a negative tax passed the checks, and a value of a billion shekels went into the analysis (readers
+   * campaign, Nov 2026).
+   */
+  const MAX_AMOUNT = 1e6, MAX_QTY = 744; // a month's money for an hourly worker, a month's hours (31 × 24)
+  function aiNum(x, max) {
+    const n = typeof x === 'number' ? x : typeof x === 'string' && /^\s*-?\d+(?:\.\d+)?\s*$/.test(x) ? +x : NaN;
+    return Number.isFinite(n) && Math.abs(n) <= max ? (Object.is(n, -0) ? 0 : n) : null;
+  }
+  const own = (o, k) => Object.prototype.hasOwnProperty.call(o, k);
   function fromAi(json) {
+    json = json && typeof json === 'object' ? json : {};
     const fields = {};
-    const list = (json.fields || []).filter((x) => x && FIELD[x.key] && x.value != null && Number.isFinite(+x.value));
-    const balances = list.filter((x) => FIELD[x.key].kind === 'info').map((x) => +x.value);
+    const other = [];
+    // (a key is one of the reader's own fields: "__proto__" or "constructor" never reach the object)
+    const list = (Array.isArray(json.fields) ? json.fields : []).filter((x) => x && typeof x === 'object' && typeof x.key === 'string' && own(FIELD, x.key))
+      .map((x) => ({ key: x.key, value: aiNum(x.value, FIELD[x.key].kind === 'info' ? 10000 : MAX_AMOUNT), qty: aiNum(x.qty, MAX_QTY), rate: aiNum(x.rate, MAX_AMOUNT) }))
+      .filter((x) => x.value != null);
+    const balances = list.filter((x) => FIELD[x.key].kind === 'info').map((x) => x.value);
     for (const x of list) {
+      const f = FIELD[x.key];
       // a count the AI put in a money field (the sick-day balance as sick pay, the seniority years as a seniority
       // payment): left out, as the text reader does (payOrCount)
       if (WEAK_PAY[x.key] && !countFree(x, balances)) continue;
-      fields[x.key] = { value: +x.value, qty: x.qty ? +x.qty : undefined, rate: x.rate ? +x.rate : undefined, line: 'AI' };
+      // a minus is the way a deduction is printed, not a negative deduction; a negative payment is only a correction
+      // (הפרשים); a negative total or count is no reading
+      let value = x.value;
+      if (f.kind === 'ded' || f.kind === 'emp') value = Math.abs(value);
+      else if (value < 0 && x.key !== 'diff') continue;
+      const qty = x.qty && x.qty > 0 ? x.qty : undefined, rate = x.rate && x.rate > 0 ? x.rate : undefined;
+      const F = { value, qty, rate, line: 'AI' };
+      // the same field twice: two lines of one payment add up (two roles' base pay); any other second line waits among
+      // the lines to name (kept, the second base pay was the base pay)
+      if (fields[x.key]) {
+        if (f.kind === 'pay') {
+          const P = fields[x.key];
+          const q = P.qty != null && qty != null ? P.qty + qty : undefined;
+          fields[x.key] = { value: P.value + value, qty: q, rate: q ? (P.value + value) / q : undefined, line: 'AI' };
+        } else other.push({ line: f.label, value, guess: null });
+        continue;
+      }
+      fields[x.key] = F;
     }
-    const other = (json.otherLines || []).map((o) => ({ line: o.label, value: o.amount, guess: o.type === 'deduction' ? 'otherDed' : o.type === 'payment' ? 'otherPay' : 'ignore' }));
-    return { fields, other, period: /^\d{4}-\d{2}$/.test(json.period || '') ? json.period : null, notes: json.notes || '' };
+    // the hours times the rate is the amount, or the hours and the rate are not the AI's to give
+    for (const k of Object.keys(fields)) {
+      const F = fields[k];
+      if (F.qty != null && F.rate != null && Math.abs(F.qty * F.rate - F.value) > Math.max(1, F.value * 0.01)) { F.qty = undefined; F.rate = undefined; }
+    }
+    // gross, deductions and net that cannot be one payslip (the net above the gross, a total of deductions above the
+    // gross): swapped or misread, none of the three is shown as read, they are asked for
+    const g = fields.gross && fields.gross.value, n = fields.net && fields.net.value, d = fields.totalDeductions && fields.totalDeductions.value;
+    if ((g != null && n != null && n > g + 0.01) || (g != null && d != null && d > g + 0.01)) {
+      for (const k of ['gross', 'net', 'totalDeductions']) if (fields[k]) fields[k] = { value: null, line: 'AI' };
+    }
+    for (const o of Array.isArray(json.otherLines) ? json.otherLines : []) {
+      if (!o || typeof o !== 'object') continue;
+      const value = aiNum(o.amount, MAX_AMOUNT);
+      if (value == null) continue;
+      other.push({ line: String(o.label == null ? '' : o.label).slice(0, 120), value, guess: o.type === 'deduction' ? 'otherDed' : o.type === 'payment' ? 'otherPay' : 'ignore' });
+    }
+    const period = typeof json.period === 'string' && /^(\d{4})-(0[1-9]|1[0-2])$/.test(json.period) ? json.period : null;
+    return { fields, other, period, notes: typeof json.notes === 'string' ? json.notes.slice(0, 500) : '' };
   }
 
   /* ---------------- analysis ---------------- */

@@ -697,3 +697,4 @@ T.test('a line named after a field the slip has is added to it, not dropped', ()
 
 // the reader's guards (readers campaign, Nov 2026): a file of their own, run with this one
 require('./payslip-reader.test.js');
+require('./payslip-ai.test.js');
