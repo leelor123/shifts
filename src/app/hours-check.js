@@ -75,6 +75,15 @@
           first.breakMin = Math.max(it.gap, r && !r.breakPaid ? r.breakMin || 0 : 0);
           first.breakPaid = false;
         }
+        // the report pays fewer hours than its own times: the rest is an unpaid break (its paid hours, core 'paid')
+        if (it.lessPaid > 0 && trial.length === 1) {
+          const r = App.model.results.get(first.id);
+          if (r) {
+            const target = r.paidMin + (it.dEnd || 0) - (it.dStart || 0) - it.lessPaid;
+            first.breakMin = Math.max(0, Math.round((first.end - first.start) / 60000 - target));
+            first.breakPaid = false;
+          }
+        }
         // nothing left of it by the report: the whole shift is the difference
         if (trial.some((x) => !(x.end > x.start))) it.gone = true;
         else trial.forEach((x) => changed.set(x.id, x));
@@ -107,8 +116,11 @@
   App.actions['hours-check'] = () => { if (UI.sheets.length) { UI.closeAll(); setTimeout(() => App.hoursCheck(), 320); } else App.hoursCheck(); };
   App.hoursCheck = function () {
     let rows = [], empId = S.employers[0].id, res = null, per = null;
+    // leaving the sheet ends the reading (its OCR workers) and nothing of it lands on the next screen
+    const stop = typeof AbortController !== 'undefined' ? new AbortController() : null;
     const entry = UI.openSheet({
       title: 'בדיקת דוח הנוכחות', full: true, cls: 'import-sheet hc-sheet',
+      onClose: () => { if (stop) stop.abort(); },
       body: '<div id="hc"></div>',
       foot: `<button class="btn big" data-hc-letter>${icon('chat', 's')} הודעה למעסיק</button>`,
     });
@@ -125,6 +137,9 @@
           <textarea class="input" id="hc-text" rows="6" placeholder="למשל:&#10;14/10/2026 08:00 16:30&#10;15/10/2026 16:00 23:00"></textarea>
           <button class="btn tonal block" data-hc-read>${icon('check', 's')} השוואה</button></details>
         <div class="tiny muted imp-privacy">${icon('shield', 's')} הדוח נקרא בטלפון בלבד, ולא נשלח לשום מקום. המשמרות שלך לא משתנות בלי אישור שלך.</div>`;
+      // the picker is a real control: reached by Tab and named to a screen reader (hidden took it out of both; intake S4)
+      const pick = box.querySelector('#hc-file');
+      if (pick) { pick.hidden = false; pick.classList.add('sr'); }
     }
     function busy(text) { showFoot(false); box.innerHTML = `<div class="imp-busy">${App.mascot ? App.mascot('think', { size: 84 }) : ''}<div class="imp-bar" aria-hidden="true"><i></i></div><div class="small" id="hc-progress" role="status">${esc(text)}</div></div>`; }
     function progress(text) { const p = box.querySelector('#hc-progress'); if (p) p.textContent = text; }
@@ -151,8 +166,8 @@
       const day = `${U.DAYS[U.dow(it.date)]} ${U.fmtDate(it.date, 'short')}`;
       const sideOf = root.HoursCheck.side;
       const lines = [];
-      if (it.rep) lines.push(`<span>בדוח: <b class="num">${sideOf(it.rep)}</b></span>`);
-      if (it.mine) lines.push(`<span>אצלך: <b class="num">${sideOf(it.mineSide || it.mine)}</b></span>`);
+      if (it.rep) lines.push(`<span>בדוח: <b class="num">${sideOf(it.rep, it.hoursToo)}</b></span>`);
+      if (it.mine) lines.push(`<span>אצלך: <b class="num">${sideOf(it.mineSide || it.mine, it.hoursToo)}</b></span>`);
       const w = Math.round(it.worth || 0);
       let val = '';
       if (it.type === 'missingEmp') val = `<b class="money">${U.money(w, 0)}</b><small>שכר המשמרת</small>`;
@@ -199,7 +214,12 @@
       if (!file) return;
       if (file.size > 25 * 1024 * 1024) { UI.invalid('הקובץ גדול מדי (עד 25MB)'); return; }
       busy('קורא את הדוח…');
-      try { await read(await App.readHoursFile(file, progress)); } catch (e) {
+      try {
+        const got = await App.readHoursFile(file, progress, stop ? { signal: stop.signal } : undefined);
+        if (entry.closed) return;
+        await read(got);
+      } catch (e) {
+        if (entry.closed) return; // left while it read: no toast on another screen
         console.warn('hours check', e);
         start();
         UI.invalid(U.ours(e) ? e.message : 'לא הצלחנו לקרוא את הקובץ. אפשר לנסות קובץ אחר או להדביק טקסט');

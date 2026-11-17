@@ -185,6 +185,13 @@
         it.dEnd = p.x.t.b - p.y.t.b; // + = the report ends later
         // each end, and the length: 9 minutes late in and 9 early out is 18 minutes less
         if (Math.abs(it.dStart) > TOL || Math.abs(it.dEnd) > TOL || Math.abs(it.dEnd - it.dStart) > TOL) it.type = 'diff';
+        // the hours the report pays, when it prints them apart from its times (core/timesheet.js 'paid': a break the
+        // employer took out): what the times do not already explain, against my paid hours
+        const pd = +r.paid, mh = +m.hours;
+        if (r.paid != null && pd > 0 && isFinite(pd) && m.hours != null && isFinite(mh)) {
+          it.dPaid = Math.round((pd - mh) * 60) - (it.dEnd - it.dStart);
+          if (it.dPaid < -TOL) { it.type = 'diff'; it.lessPaid = -it.dPaid; it.hoursToo = true; }
+        }
       } else {
         // the report's hours against the paid hours or the whole span, whichever it is closer to (a report may or
         // may not take the break out)
@@ -204,7 +211,7 @@
       if (it.type !== 'ok' || it.unread) return 0;
       if (it.short != null) return Math.max(-TOL, Math.min(TOL, it.short));
       if (it.dHours != null) return -it.dHours * 60;
-      return (it.dStart || 0) - (it.dEnd || 0);
+      return (it.dStart || 0) - (it.dEnd || 0) - (it.dPaid || 0);
     };
     const drift = Math.round(out.reduce((s, it) => s + shortOf(it), 0));
     if (drift > DRIFT) for (const it of out) if (shortOf(it) >= 1) { it.type = 'diff'; it.small = true; }
@@ -242,6 +249,10 @@
         if (hours > 16) break;
         used.add(j);
         cur = Object.assign({}, cur, { end: b.end, hours, overnight: true, parts: (cur.parts || [cur]).concat([b]), doubt: cur.doubt || b.doubt });
+        // the paid hours of the whole, when the report printed them for a part
+        const parts = cur.parts;
+        if (parts.some((p) => +p.paid > 0)) cur.paid = round2(parts.reduce((t, p, k) => t + (+p.paid > 0 ? +p.paid : (+p.hours || 0) + (k < parts.length - 1 && p.end === '23:59' ? 1 / 60 : 0)), 0));
+        else delete cur.paid;
         if (!cur.doubt) delete cur.doubt;
       }
       out.push(cur);
@@ -253,9 +264,10 @@
   const range = (a, b) => '\u2066' + a + '\u2060–\u2060' + b + '\u2069';
   const hoursOf = (h) => U.num(h, 2);
   /** How one side of a difference reads: its times (each part of it, when it is several rows or shifts), or its hours. */
-  function side(x) {
+  function side(x, withHours) {
     if (x.parts && x.parts.length > 1 && x.parts.every((p) => p.start && p.end)) return x.parts.map((p) => range(p.start, p.end)).join(', ');
-    if (x.start && x.end) return range(x.start, x.end);
+    // with the hours too, when the difference is in the paid hours and not in the times
+    if (x.start && x.end) return withHours && +(x.paid || x.hours) > 0 ? range(x.start, x.end) + ' · ' + `${hoursOf(+(x.paid || x.hours))} שעות` : range(x.start, x.end);
     if (x.start && !(+x.hours > 0)) return range(x.start, '?'); // the exit was not read (it read "0 שעות")
     return `${hoursOf(x.hours)} שעות`;
   }
@@ -266,7 +278,7 @@
     const lines = [];
     for (const it of items || []) {
       if (it.type === 'missingEmp') lines.push(`• ${dayOf(it.date)}: עבדתי ${side(it.mine)}, והמשמרת לא מופיעה בדוח.`);
-      else if (it.type === 'diff') lines.push(`• ${dayOf(it.date)}: בדוח ${side(it.rep)}, ואצלי ${side(it.mineSide || it.mine)}.`);
+      else if (it.type === 'diff') lines.push(`• ${dayOf(it.date)}: בדוח ${side(it.rep, it.hoursToo)}, ואצלי ${side(it.mineSide || it.mine, it.hoursToo)}.`);
     }
     if (!lines.length) return '';
     const head = lines.length === 1 ? 'מצאתי הבדל אחד מהרישום שלי:' : 'מצאתי כמה הבדלים מהרישום שלי:';

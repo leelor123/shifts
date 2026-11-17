@@ -37,3 +37,9 @@ T.test('hours check: "add to my shifts" only for a row with its own times, never
   T.ok(/it\.trial && it\.canAdd \?/.test(hc) && /!it\.trial \|\| !it\.canAdd\) return;/.test(hc));
   T.ok(/a\.employerId === emp\.id && a\.start < t\.end && Date\.now\(\) > t\.start\) return;/.test(hc));
 });
+T.test('round 2: leaving stops the reading; the picker is a control; files by their bytes; OCR text never re-read as lines', () => {
+  for (const s of [imp, hc]) { T.ok(/onClose: \(\) => \{ if \(stop\) stop\.abort\(\); \}/.test(s)); T.ok(/if \(entry\.closed\) return;/.test(s)); T.ok(/pick\.hidden = false; pick\.classList\.add\('sr'\);/.test(s)); }
+  T.ok(/async function sniff\(file\)/.test(imp) && /const kind = await sniff\(file\);/.test(imp));
+  T.ok(imp.includes("got.source === 'ocr' ? { result: res, text } : text"));
+  T.ok(/const breakOf = \(r\) =>/.test(imp) && /breakMin: b, breakPaid: b != null \? false/.test(imp));
+});

@@ -52,16 +52,43 @@
     }
     return lines.join('\n');
   }
-  async function readFile(file, progress) {
+  /**
+   * What a file is by its first bytes: a picture with no type (some share sheets and cloud apps give none), a PDF
+   * named .jpg, a photo named .txt were refused, failed, or read as text junk (intake M4). The name and the type
+   * decide only when the bytes say nothing (CSV and plain text have no signature).
+   */
+  async function sniff(file) {
+    let b;
+    try { b = new Uint8Array(await file.slice(0, 16).arrayBuffer()); } catch (e) { return null; }
+    const at = (i, str) => [...str].every((c, k) => b[i + k] === c.charCodeAt(0));
+    if (at(0, '%PDF')) return { kind: 'pdf', type: 'application/pdf', ext: 'pdf' };
+    if (b[0] === 0xFF && b[1] === 0xD8 && b[2] === 0xFF) return { kind: 'image', type: 'image/jpeg', ext: 'jpg' };
+    if (b[0] === 0x89 && at(1, 'PNG')) return { kind: 'image', type: 'image/png', ext: 'png' };
+    if (at(0, 'GIF8')) return { kind: 'image', type: 'image/gif', ext: 'gif' };
+    if (at(0, 'RIFF') && at(8, 'WEBP')) return { kind: 'image', type: 'image/webp', ext: 'webp' };
+    if (at(0, 'BM') && !b[6] && !b[7] && !b[8] && !b[9]) return { kind: 'image', type: 'image/bmp', ext: 'bmp' };
+    if (at(4, 'ftypavif') || at(4, 'ftypavis')) return { kind: 'image', type: 'image/avif', ext: 'avif' };
+    if (at(4, 'ftyphei') || at(4, 'ftypmif1') || at(4, 'ftypheix') || at(4, 'ftyphevc')) return { kind: 'image', type: 'image/heic', ext: 'heic' };
+    if (at(0, 'PK') && b[2] === 3 && b[3] === 4) return { kind: 'sheet' };
+    if (b[0] === 0xD0 && b[1] === 0xCF && b[2] === 0x11 && b[3] === 0xE0) return { kind: 'sheet' };
+    return null;
+  }
+  async function readFile(file, progress, opts) {
+    const kind = await sniff(file);
+    // a picture or a PDF by its bytes: passed on with the right type and ending, as the readers below decide by them
+    if (kind && kind.type && file.type !== kind.type) {
+      const base = (file.name || 'file').replace(/\.[a-z0-9]{1,5}$/i, '');
+      file = new File([file], base + '.' + kind.ext, { type: kind.type });
+    }
     const name = file.name || '';
-    if (/\.(xlsx|xlsm|xls|ods)$/i.test(name) || /spreadsheet|excel/i.test(file.type)) {
+    if ((kind && kind.kind === 'sheet') || (!kind && (/\.(xlsx|xlsm|xls|ods)$/i.test(name) || /spreadsheet|excel/i.test(file.type)))) {
       progress('קורא את הגיליון…');
       await App.loadLib(XLSX_SRC);
       const X = root.XLSX;
       const wb = X.read(await file.arrayBuffer(), { type: 'array', cellNF: true });
       return wb.SheetNames.slice(0, 12).map((n) => sheetText(X, wb.Sheets[n])).join('\n');
     }
-    if (/\.(csv|tsv|txt)$/i.test(name) || /^text\//.test(file.type)) {
+    if (!kind && (/\.(csv|tsv|txt)$/i.test(name) || /^text\//.test(file.type))) {
       return decode(await file.arrayBuffer()).replace(/[;,\t]/g, ' | ');
     }
     const isPdf = /\.pdf$/i.test(name) || file.type === 'application/pdf';
@@ -71,10 +98,10 @@
       // table: each word where it stands on the page (core/timesheet.js parseWords)
       let lines = null;
       if (isPdf) {
-        const doc = await App.readDocText(file, progress, { noOcr: true });
+        const doc = await App.readDocText(file, progress, Object.assign({ noOcr: true }, opts));
         if (doc.source === 'pdf' && root.Timesheet.parse(doc.text, { today: U.todayKey() }).rows.length >= 2) lines = doc.text;
       }
-      const got = await App.readDocWords(file, progress);
+      const got = await App.readDocWords(file, progress, opts);
       progress('מסדר את הטבלה…');
       const res = root.Timesheet.parseWords(got.words, { today: U.todayKey() });
       // a PDF read both ways: the table (it knows the columns, their names and the total — a column of standard
@@ -82,7 +109,7 @@
       if (lines != null && res.rows.length < root.Timesheet.parse(lines, { today: U.todayKey() }).rows.length) return lines;
       // the words read in reading order, for the "what was read" box and as a last try as plain text
       const text = res.text || '';
-      if (!res.rows.length) return lines != null ? lines : text;
+      if (!res.rows.length) return lines != null ? lines : got.source === 'ocr' ? { result: res, text } : text;
       return { result: res, text };
     }
     throw root.U.oops('סוג קובץ שלא מכירים. אפשר Excel, \u200fCSV, \u200fPDF, תמונה או טקסט');
@@ -101,10 +128,13 @@
     let rows = [], noStart = 0, guessedYear = false, noExit = 0;
     let roleId = S.meta.lastRole && App.roles().some((r) => r.id === S.meta.lastRole) ? S.meta.lastRole : (App.roles()[0] || {}).id;
     let startFor = '09:00';
+    // leaving the sheet ends the reading (its OCR workers) and nothing of it lands on the next screen
+    const stop = typeof AbortController !== 'undefined' ? new AbortController() : null;
     const entry = UI.openSheet({
       title: 'ייבוא דוח שעות', full: true, cls: 'import-sheet',
       body: '<div id="imp"></div>',
       foot: '<button class="btn big" data-imp-save></button>',
+      onClose: () => { if (stop) stop.abort(); },
     });
     const box = entry.sh.querySelector('#imp');
     const save = entry.sh.querySelector('[data-imp-save]');
@@ -148,6 +178,9 @@
           <textarea class="input" id="imp-text" rows="6" placeholder="למשל:&#10;14/10/2026 08:00 16:30&#10;15/10/2026 16:00 23:00"></textarea>
           <button class="btn tonal block" data-imp-read>${icon('check', 's')} קריאה</button></details>
         <div class="tiny muted imp-privacy">${icon('shield', 's')} הקובץ נקרא בטלפון בלבד, ולא נשלח לשום מקום. צילום נקרא כטבלה: כל דוח, בכל סידור עמודות.</div>`;
+      // the picker is a real control: reached by Tab and named to a screen reader (hidden took it out of both; intake S4)
+      const pick = box.querySelector('#imp-file');
+      if (pick) { pick.hidden = false; pick.classList.add('sr'); }
     }
     function busy(text) { box.innerHTML = `<div class="imp-busy">${App.mascot ? App.mascot('think', { size: 84 }) : ''}<div class="imp-bar" aria-hidden="true"><i></i></div><div class="small" id="imp-progress" role="status">${esc(text)}</div></div>`; }
     function progress(text) { const p = box.querySelector('#imp-progress'); if (p) p.textContent = text; }
@@ -170,7 +203,7 @@
         const when = r.start ? `\u2066${r.start}\u2060–\u2060${r.end}\u2069` : `${U.num(r.hours, 2)} שעות · ${startFor ? 'מ-' + startFor : 'שעה לא ידועה'}`;
         return `<button class="imp-row ${r.on ? 'on' : ''}" data-i="${i}" aria-pressed="${r.on}"><span class="imp-check" aria-hidden="true">${icon('check', 's')}</span>
           <span class="imp-d"><b>${esc(day)} ${dateOf(r.date)}</b><small>${when}${r.overnight ? ' · לילה' : ''}</small></span>
-          <span class="imp-h">${U.num(r.hours, 2)} ש׳${t && t.taken ? '<i class="tag">כבר קיימת</i>' : r.doubt ? `<i class="tag">${TO_CHECK}</i>` : ''}${t && t.end > Date.now() ? '<i class="tag planned">עתידית</i>' : ''}</span></button>`;
+          <span class="imp-h">${U.num(+r.paid > 0 ? r.paid : r.hours, 2)} ש׳${t && t.taken ? '<i class="tag">כבר קיימת</i>' : r.doubt ? `<i class="tag">${TO_CHECK}</i>` : ''}${t && t.end > Date.now() ? '<i class="tag planned">עתידית</i>' : ''}</span></button>`;
       }).join('');
       const first = rows[0].date, last = rows[rows.length - 1].date;
       box.innerHTML = `${App.mascotSays ? App.mascotSays('love', `מצאתי ${rows.length === 1 ? 'משמרת אחת' : `${rows.length} משמרות`}! 🎉 בודקים רגע ומוסיפים`, { size: 64 }) : ''}
@@ -210,12 +243,23 @@
       if (!file) return;
       if (file.size > 25 * 1024 * 1024) { UI.invalid('הקובץ גדול מדי (עד 25MB)'); return; }
       busy('קורא את הקובץ…');
-      try { await parse(await readFile(file, progress)); } catch (e) {
+      try {
+        const got = await readFile(file, progress, stop ? { signal: stop.signal } : undefined);
+        if (entry.closed) return;
+        await parse(got);
+      } catch (e) {
+        if (entry.closed) return; // left while it read: no toast on another screen
         console.warn('import', e);
         start();
         UI.invalid(root.U.ours(e) ? e.message : 'לא הצלחנו לקרוא את הקובץ. אפשר לנסות קובץ אחר או להדביק טקסט');
       }
     }
+    /** Minutes of unpaid break a row's printed hours show (span minus paid, 10 minutes to 3 hours), or null. */
+    const breakOf = (r) => {
+      if (!(r.start && r.end) || !(+r.paid > 0) || !(+r.hours > 0)) return null;
+      const m = Math.round((+r.hours - +r.paid) * 60);
+      return m >= 10 && m <= 180 ? m : null;
+    };
     let adding = false;
     async function add() {
       const r0 = role();
@@ -231,13 +275,15 @@
         if (!t) continue;
         if (t.planned && !turned.has(t.planned.id)) {
           turned.add(t.planned.id);
-          ops.push({ store: 'shifts', put: Object.assign({}, t.planned, { status: 'done', start: t.start, end: t.end }) });
+          const b0 = breakOf(r);
+          ops.push({ store: 'shifts', put: Object.assign({}, t.planned, { status: 'done', start: t.start, end: t.end }, b0 != null ? { breakMin: b0, breakPaid: false } : {}) });
           continue;
         }
         if (t.over && !clash) clash = t.over;
+        const b = breakOf(r);
         ops.push({ store: 'shifts', put: {
           id: U.uid(), kind: 'shift', employerId: r0.employerId, roleId: r0.id, status: t.end > Date.now() ? 'planned' : 'done', start: t.start, end: t.end,
-          breakMin: null, breakPaid: emp.defaultBreakPaid !== false, noTravel: false, splits: [], items: [], note: 'יובא מדוח שעות',
+          breakMin: b, breakPaid: b != null ? false : emp.defaultBreakPaid !== false, noTravel: false, splits: [], items: [], note: 'יובא מדוח שעות',
         } });
       }
       if (!ops.length) return;

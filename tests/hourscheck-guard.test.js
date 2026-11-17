@@ -180,3 +180,12 @@ T.test('the letter lists exactly the findings on the employer\'s side', () => {
     T.eq(lines, r.missingEmp + r.diff);
   }
 });
+
+T.section('hours check: round 2 (the reader\'s paid hours)');
+T.test('the report pays fewer hours than its own times (a break taken out): a difference with the hours on both sides', () => {
+  const r = H.compare([rep(day(5), '08:00', '17:00', 9, { paid: 8.25 })], [mine(day(5), '08:00', '17:00', 9)]);
+  T.eq(types(r), '05:diff'); T.eq(r.items[0].lessPaid, 45);
+  T.ok(H.letter(r.items).includes('8.25 שעות') && H.letter(r.items).includes('9 שעות'));
+  T.eq(types(H.compare([rep(day(5), '08:00', '17:00', 9, { paid: 8.25 })], [mine(day(5), '08:00', '17:00', 8.25)])), '05:ok');
+  T.eq(H.joinNights([rep(day(13), '22:00', '00:00', 2), rep(day(14), '00:00', '06:00', 6, { paid: 5.5 })])[0].paid, 7.5);
+});
