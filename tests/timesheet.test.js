@@ -462,3 +462,33 @@ T.test('a cell of the hours column read with a colon ("7:53" for 7.53) is still 
   const p = page(['תאריך', 'כניסה', 'יציאה', 'שעות'], [['01/10/2026', '06:53', '12:56', '6.05'], ['02/10/2026', '14:08', '20:31', '6.38'], ['04/10/2026', '04:57', '14:59', '7:53'], ['05/10/2026', '08:00', '16:30', '8.50'], ['06/10/2026', '09:00', '17:15', '8.25']]);
   T.ok(!/2026-10-04/.test(shifts(p)), 'saved as read: ' + shifts(p));
 });
+T.test('a report that prints only the day of the month, its month in the title ("חודש: 10/2026"): read when the weekdays agree, offered for checking when they cannot say', () => {
+  const day = (n) => ['א׳', 'ב׳', 'ג׳', 'ד׳', 'ה׳', 'ו׳', 'ש׳'][new Date(2026, 9, n).getDay()];
+  const rows = [[1, '08:00', '16:00'], [2, '09:00', '17:00'], [4, '07:00', '15:00'], [5, '08:00', '12:00'], [6, '14:00', '22:00'], [7, '08:00', '16:00']];
+  const withDays = page(['תאריך', 'יום', 'כניסה', 'יציאה'], rows.map(([d, a, b]) => [String(d), day(d), a, b]), { title: ['10/2026'] });
+  T.eq(shifts(withDays), rows.map(([d, a, b]) => `2026-10-0${d} ${a}-${b}`).join(' | '));
+  const noDays = page(['תאריך', 'כניסה', 'יציאה'], rows.map(([d, a, b]) => [String(d), a, b]), { title: ['10/2026'] });
+  T.eq(shifts(noDays), '');
+  T.eq(unsure(noDays).split(' | ').length, rows.length);
+  // weekdays that say another month (the title misread): nothing sure
+  const off = page(['תאריך', 'יום', 'כניסה', 'יציאה'], rows.map(([d, a, b]) => [String(d), day(d + 1), a, b]), { title: ['10/2026'] });
+  T.eq(shifts(off), '');
+});
+T.test('a cut date column ("15/", "22/1" of 22/10) with the month in the title: the day numbers in the title\'s month, checked by the weekdays', () => {
+  const day = (n) => ['ראשון', 'שני', 'שלישי', 'רביעי', 'חמישי', 'שישי', 'שבת'][new Date(2026, 9, n).getDay()];
+  const rows = [[12, '08:00', '16:00'], [13, '09:00', '17:00'], [14, '07:00', '15:00'], [15, '08:00', '12:00'], [18, '14:00', '22:00'], [19, '08:00', '16:00']];
+  const p = page(['תאריך', 'יום', 'כניסה', 'יציאה'], rows.map(([d, a, b], i) => [i % 2 ? `${d}/` : `${d}/1`, day(d), a, b]), { title: ['אוקטובר', '2026'] });
+  T.eq(shifts(p), rows.map(([d, a, b]) => `2026-10-${d} ${a}-${b}`).join(' | '));
+});
+T.test('the picture step: a photo\'s size from its first bytes (EXIF turned), short Latin words on a Hebrew page, what may replace them', () => {
+  const png = new Uint8Array(32); png.set([0x89, 0x50, 0x4e, 0x47], 0); new DataView(png.buffer).setUint32(16, 8000); new DataView(png.buffer).setUint32(20, 6000);
+  T.eq(JSON.stringify(DR.sizeOf(png)), '{"w":8000,"h":6000}');
+  // a JPEG with Exif orientation 6 (turned 90°) and its frame 8000 wide, 6000 high: shown 6000 x 8000
+  const exif = [0xff, 0xe1, 0x00, 0x22, 0x45, 0x78, 0x69, 0x66, 0x00, 0x00, 0x49, 0x49, 0x2a, 0x00, 0x08, 0x00, 0x00, 0x00, 0x01, 0x00, 0x12, 0x01, 0x03, 0x00, 0x01, 0x00, 0x00, 0x00, 0x06, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00];
+  const sof = [0xff, 0xc0, 0x00, 0x11, 0x08, 0x17, 0x70, 0x1f, 0x40, 0x03, 0x01, 0x22, 0x00];
+  const jpg = new Uint8Array([0xff, 0xd8, ...exif, ...sof, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]);
+  T.eq(JSON.stringify(DR.sizeOf(jpg)), '{"w":6000,"h":8000}');
+  T.eq(DR.sizeOf(new Uint8Array([1, 2, 3])), null);
+  T.ok(DR.latinBit({ text: 'am' }) && DR.latinBit({ text: 'ny,' }) && !DR.latinBit({ text: 'Total' }) && !DR.latinBit({ text: '08:00' }));
+  T.ok(DR.heWord('נדב') && DR.heWord("ב'") && DR.heWord('דני כ.') === false && !DR.heWord('am') && !DR.heWord('16-סגירה'));
+});

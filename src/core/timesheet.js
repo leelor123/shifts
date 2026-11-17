@@ -234,6 +234,8 @@
     if ((m = /^(\d{4})-(\d{1,2})-(\d{1,2})$/.exec(t))) return [{ k: 'date', d: +m[3], m: +m[2], y: +m[1], sure: true }];
     if ((m = /^(\d{1,2})[./-](\d{1,2})[./-](\d{2}|\d{4})$/.exec(t))) { let y = +m[3]; const yy = y < 100; if (yy) y += 2000; return [{ k: 'date', d: +m[1], m: +m[2], y, sure: true, yy }]; }
     if ((m = /^(\d{1,2})\/(\d{1,2})$/.exec(t))) return [{ k: 'date', d: +m[1], m: +m[2], sure: true }];
+    // the report's month in its title: "חודש: 11/2026"
+    if ((m = /^(\d{1,2})[./-](20\d\d)$/.exec(t)) && +m[1] >= 1 && +m[1] <= 12) return [{ k: 'monthyear', m: +m[1], y: +m[2] }];
     if ((m = /^(\d{1,2}):(\d{2})(?::(\d{2}))?$/.exec(t))) { if (validHM(+m[1], +m[2])) out.push({ k: 'time', v: hmOf(+m[1], +m[2]), pad: m[1].length === 2 }); return out; }
     if ((m = /^(\d{1,2})\.(\d{1,2})$/.exec(t))) {
       // 14.10 a date, 08.30 a time, 8.5 hours: each is kept as a possibility, the column decides
@@ -540,6 +542,27 @@
       }
     }
 
+    // a report that prints only the day of the month ("1", "02" … under תאריך or יום) and its month once, in its
+    // title ("חודש: 11/2026", or "נובמבר 2026"): the column of day numbers that rise row by row, under a header word
+    // for the date or the day. Its dates are worked out (the title's month), so they are sure only when the rows'
+    // weekdays agree with them (checked further down)
+    let dayCol = null, dayMonth = null;
+    {
+      const my = rows.flatMap((r) => r.words.flatMap((w) => w.items.filter((it) => it.k === 'monthyear')))[0];
+      dayMonth = my ? { m: my.m, y: my.y } : docMonth && docYear ? { m: docMonth, y: docYear } : null;
+      const hd = header ? header.roles.filter((x) => x.role === 'date' || x.role === 'dow') : [];
+      if (dayMonth && hd.length && (!dateCol || dateCol.rows < 3)) {
+        const pts = [];
+        rows.forEach((r, ri) => { if (header && ri <= header.ri) return; r.words.forEach((w) => { const t = clean(w.text); if (/^\d{1,2}$/.test(t) && +t >= 1 && +t <= 31) pts.push({ x: w.x, ri, v: +t, w }); }); });
+        for (const c of cluster(pts, tol)) {
+          if (!hd.some((x) => Math.abs(x.x - c.at) < colW * 1.6)) continue;
+          const byRow = [...new Map(c.members.map((p) => [p.ri, p])).values()].sort((p, q) => p.ri - q.ri);
+          const up = byRow.slice(1).filter((p, i) => p.v > byRow[i].v).length;
+          if (byRow.length >= 4 && up >= (byRow.length - 1) * 0.9 && (!dayCol || byRow.length > dayCol.members.length)) dayCol = { at: c.at, members: byRow };
+        }
+        if (dayCol) dbg.push(`day-of-month column at ${Math.round(dayCol.at)}, month ${dayMonth.m}/${dayMonth.y}`);
+      }
+    }
     /* ---- the time columns ---- */
     const timePts = [];
     rows.forEach((r, ri) => {
@@ -770,6 +793,17 @@
       const dateIts = items.filter((it) => it.k === 'date' && (it.sure || inDateCol(it.w)));
       const pref = dateIts.find((it) => inDateCol(it.w)) || dateIts[0];
       if (pref) { date = { d: pref.d, m: pref.m, y: pref.y || null }; dateWord = pref.w; }
+      const dayP = !date && dayCol && dayCol.members.find((p) => p.ri === ri);
+      if (dayP) { date = { d: dayP.v, m: dayMonth.m, y: dayMonth.y, day: true }; dateWord = dayP.w; }
+      // in a date column cut at the edge, "15/" or "22/1" (of 22/11) is a day number whose month was cut: the
+      // title's month, when the digit left of the month is its first one
+      if (cutDates && dayMonth) {
+        const cw = r.words.find((w) => inDateCol(w) && /^\d{1,2}[./-]\d?$/.test(clean(w.text)));
+        const cm = cw && /^(\d{1,2})[./-](\d?)$/.exec(clean(cw.text));
+        if (cm && +cm[1] >= 1 && +cm[1] <= 31 && (!cm[2] || String(dayMonth.m).startsWith(cm[2])) && (!date || (!date.y && cw === dateWord))) {
+          date = { d: +cm[1], m: dayMonth.m, y: dayMonth.y, day: true }; dateWord = cw;
+        }
+      }
       const mash = !date && items.find((it) => it.k === 'mash' && inDateCol(it.w));
       // "13 באוקטובר", "Oct 13"
       if (!date) {
@@ -843,7 +877,7 @@
       if (shifts.length) pendingLen = null;
       const isTotalRow = SKIP_ROW.test(text) && !date;
       if (isTotalRow) return;
-      const cut = cutDates && ((date && !date.y && dateWord && /[./-]\d$/.test(clean(dateWord.text))) || (!date && mash));
+      const cut = cutDates && ((date && !date.day && !date.y && dateWord && /[./-]\d$/.test(clean(dateWord.text))) || (!date && mash));
       const row = { ri, y: r.y, date, dow, mash: mash ? mash.s : null, shifts, text, dateCell: r.words.some((w) => inDateCol(w)), len: sure ? len : null, doubt: cut ? 'date' : null };
       if (date || mash || shifts.length || dow != null) found.push(row);
     });
@@ -958,6 +992,15 @@
     }
     const trusted = new Set();
     for (let a = len.indexOf(Math.max(0, ...len)); a >= 0 && idx.length; a = from[a]) trusted.add(idx[a]);
+    // (dates made of a day number and the title's month: sure only when the weekdays of their rows say the same,
+    // three of them at least and nearly all; a misread title month would move every one of them)
+    if (list.some((r) => r.date && r.date.day)) {
+      const dr = list.filter((r) => r.date && r.date.day && r.key), wd = dr.filter((r) => r.dow != null);
+      const ok = wd.filter((r) => dowOf(r.key) === r.dow).length;
+      const confirmed = wd.length >= 3 && ok >= wd.length * 0.8;
+      dbg.push(`day numbers: ${ok} of ${wd.length} weekdays agree${confirmed ? '' : ': unsure'}`);
+      if (!confirmed) for (const r of dr) r.doubt = r.doubt || 'date';
+    }
     // a report of every day (its trusted dates a day apart, nearly all)
     const tk = [...trusted].sort((p, q) => p - q).map((i) => list[i].key);
     const daily = tk.length >= 4 && tk.slice(1).filter((k, i) => addDays(tk[i], fwd ? 1 : -1) === k).length >= (tk.length - 1) * 0.7;

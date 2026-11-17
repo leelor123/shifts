@@ -12,12 +12,14 @@
   'use strict';
   const TESSERACT = 'https://cdn.jsdelivr.net/npm/tesseract.js@5.1.1/dist/tesseract.min.js';
   const DocRead = {};
+  // the line the screens show while the engine loads (unchanged; DocRead.words passes codes beside it)
+  const LOADING = 'טוען מנוע זיהוי עברית (פעם ראשונה ~10MB)…';
 
   /* ---------------- the picture ---------------- */
   /** An image file → a canvas of grey, evened-out light, dark text on light paper. */
   DocRead.prep = async function (blob, opts) {
     opts = opts || {};
-    const bmp = await createImageBitmap(blob, { imageOrientation: 'from-image' });
+    const bmp = await openPicture(blob);
     const long = Math.max(bmp.width, bmp.height);
     // the reader does best with letters ~25-40px tall: big phone photos come down, small screenshots go up
     // (opts.size: a smaller picture, only to see which way up the page is)
@@ -73,6 +75,18 @@
       }
     }
     if (opts.bin) for (let i = 0; i < n; i++) norm[i] = norm[i] < opts.bin ? 0 : 255;
+    // with the table's lines taken out, the black and white copy is made as it always was: cut to black and white
+    // first, then its lines out (the lines come out cleaner from black and white than from grey)
+    let bwc = null;
+    if (opts.lines && !opts.bin && opts.bin2 !== 0) {
+      const nb = new Uint8ClampedArray(n), cut = opts.bin2 || 170;
+      for (let i = 0; i < n; i++) nb[i] = norm[i] < cut ? 0 : 255;
+      unline(nb, W, H);
+      bwc = document.createElement('canvas'); bwc.width = W; bwc.height = H;
+      const gb = bwc.getContext('2d', { willReadFrequently: true }), ib = gb.createImageData(W, H), pb = ib.data;
+      for (let i = 0, j = 0; i < n; i++, j += 4) { pb[j] = pb[j + 1] = pb[j + 2] = nb[i]; pb[j + 3] = 255; }
+      gb.putImageData(ib, 0, 0);
+    }
     if (opts.lines) unline(norm, W, H);
     // (written into the picture's own pixels: a second copy of a big photo's pixels is memory a phone may not have)
     for (let i = 0, j = 0; i < n; i++, j += 4) { px[j] = px[j + 1] = px[j + 2] = norm[i]; px[j + 3] = 255; }
@@ -82,9 +96,60 @@
     const deg = opts.straight === false ? 0 : skewOf(norm, W, H);
     c.skew = deg;
     const res = deg ? turned(c, deg) : c;
+    if (bwc) res.bw = deg ? turned(bwc, deg) : bwc;
     res.tall = tall;
     return res;
   };
+  /**
+   * A file → its picture (EXIF orientation applied). A file that is not one throws an error with a code for the
+   * screens to explain (no text here: the screens own their words):
+   *   docread/empty (0 bytes), docread/heic (an iPhone HEIC the browser cannot open), docread/unreadable (any other
+   *   picture that does not open), docread/not-on-phone (a cloud file whose bytes do not come: NotReadableError).
+   * A photo of more than 20 MP (a 48 or 50 MP phone camera) is decoded straight to the size it is read at, when
+   * the browser can: decoding it whole takes ~200 MB, which a phone may not have.
+   */
+  async function openPicture(blob) {
+    if (blob && typeof blob.size === 'number' && !blob.width && blob.size === 0) throw codeError('docread/empty');
+    if (!(blob instanceof Blob)) return createImageBitmap(blob); // a canvas or a bitmap: already a picture
+    let head;
+    try { head = new Uint8Array(await blob.slice(0, 65536).arrayBuffer()); } catch (e) { throw codeError(e && e.name === 'NotReadableError' ? 'docread/not-on-phone' : 'docread/unreadable', e); }
+    const brand = String.fromCharCode(...head.slice(4, 12));
+    const heic = /^ftyp(heic|heix|hevc|heim|heis|mif1|msf1)/.test(brand);
+    const dim = sizeOf(head);
+    try {
+      if (dim && dim.w * dim.h > 20e6) {
+        const k = 2600 / Math.max(dim.w, dim.h);
+        return await createImageBitmap(blob, { imageOrientation: 'from-image', resizeWidth: Math.round(dim.w * k), resizeHeight: Math.round(dim.h * k), resizeQuality: 'high' });
+      }
+      return await createImageBitmap(blob, { imageOrientation: 'from-image' });
+    } catch (e) {
+      throw codeError(heic ? 'docread/heic' : e && e.name === 'NotReadableError' ? 'docread/not-on-phone' : 'docread/unreadable', e);
+    }
+  }
+  function codeError(code, cause) { return Object.assign(new Error(code), { name: 'DocReadError', code, cause }); }
+  /** A JPEG's or PNG's size from its first bytes, as shown (EXIF turns of 90° swap it); null when not found. */
+  function sizeOf(b) {
+    if (b[0] === 0x89 && b[1] === 0x50 && b[2] === 0x4e && b[3] === 0x47) {
+      const v = new DataView(b.buffer); return b.length > 24 ? { w: v.getUint32(16), h: v.getUint32(20) } : null;
+    }
+    if (b[0] !== 0xff || b[1] !== 0xd8) return null;
+    let i = 2, turn = 1, w = 0, h = 0;
+    while (i + 9 < b.length) {
+      if (b[i] !== 0xff) { i++; continue; }
+      const mk = b[i + 1], len = (b[i + 2] << 8) | b[i + 3];
+      if (mk === 0xe1 && b[i + 4] === 0x45 && b[i + 5] === 0x78) { // Exif: the orientation tag (0x0112)
+        const t = i + 10, le = b[t] === 0x49;
+        const u16 = (o) => (le ? b[t + o] | (b[t + o + 1] << 8) : (b[t + o] << 8) | b[t + o + 1]);
+        const ifd = le ? b[t + 4] | (b[t + 5] << 8) | (b[t + 6] << 16) | (b[t + 7] << 24) : (b[t + 4] << 24) | (b[t + 5] << 16) | (b[t + 6] << 8) | b[t + 7];
+        const n = t + ifd + 2 < b.length ? u16(ifd) : 0;
+        for (let k = 0; k < n && t + ifd + 2 + k * 12 + 10 < b.length; k++) { const e = ifd + 2 + k * 12; if (u16(e) === 0x0112) turn = u16(e + 8); }
+      }
+      if (mk >= 0xc0 && mk <= 0xcf && mk !== 0xc4 && mk !== 0xc8 && mk !== 0xcc) { h = (b[i + 5] << 8) | b[i + 6]; w = (b[i + 7] << 8) | b[i + 8]; break; }
+      i += 2 + len;
+    }
+    if (!w || !h) return null;
+    return turn >= 5 && turn <= 8 ? { w: h, h: w } : { w, h };
+  }
   /** RGBA pixels → grey, dark letters on light (a dark screen turned the other way round). */
   function grayOf(px) {
     const n = px.length >> 2;
@@ -132,9 +197,10 @@
       return { best, gain: bs / Math.max(1, flat) };
     };
     const all = angle(0, xs.length);
-    // a few degrees the table reader takes out itself (turning the picture for them changed what the reader read
-    // more than it helped)
-    if (Math.abs(all.best) < 3 || all.gain < 1.15) return 0;
+    // a few degrees the table readers take out themselves (turning the picture for them changed what was read more
+    // than it helped)
+    // (from 4.5°: on the hours, schedule and payslip benches, turning a 3-4° page lost words, 5° and more gained)
+    if (Math.abs(all.best) < 4.5 || all.gain < 1.15) return 0;
     // a page seen from the side has lines that fan out: its top and its bottom lie at different angles, and no
     // one turn straightens it (the table reader follows such lines). A page only turned has one angle throughout
     const half = ys.findIndex((y) => y >= H / 2);
@@ -221,7 +287,16 @@
   async function pass(image, lang, params, progress, label, signal) {
     if (signal && signal.aborted) throw stopped();
     const worker = await root.Tesseract.createWorker(lang, 1, {
-      logger: (m) => { if (m.status === 'recognizing text' && progress) progress(`${label}… ${Math.round(m.progress * 100)}%`); },
+      // (the engine's own stages go to the screen as codes beside the text it shows now: docread/loading-core,
+      // docread/loading-language (pct, cached), docread/initializing, docread/reading (pct))
+      logger: (m) => {
+        if (!progress) return;
+        const pct = Math.round((m.progress || 0) * 100);
+        if (m.status === 'recognizing text') progress(`${label}… ${pct}%`, { code: 'docread/reading', lang, pct });
+        else if (/loading language traineddata/.test(m.status)) progress(LOADING, { code: 'docread/loading-language', lang, pct, cached: /cache/.test(m.status) });
+        else if (/loading tesseract core/.test(m.status)) progress(LOADING, { code: 'docread/loading-core', pct });
+        else if (/initializ/.test(m.status)) progress(LOADING, { code: 'docread/initializing', lang, pct });
+      },
     });
     let onStop = null;
     try {
@@ -259,14 +334,26 @@
     if (image.tall && !opts.part) { image.width = image.height = 0; return tallWords(blob, progress, opts); }
     // the second reading sees the picture in pure black and white: what one reading misses (a faint date,
     // a time by a cell's border) the other often gets (made from the first picture, not prepared again)
-    const bw = (im) => (opts.prep === false || opts.bin2 === 0 ? im : binary(im, opts.bin2 || 170));
+    const bw = (im) => (opts.prep === false || opts.bin2 === 0 ? im : im.bw || binary(im, opts.bin2 || 170));
     let image2 = bw(image);
     let dg = [];
     try { dg = await digitsPass(image2, opts, progress, 'קורא את המספרים'); } catch (e) { if (e.name === 'AbortError') throw e; /* the words alone */ }
     // hardly a time or a date read: the page may lie on its side or upside down. A small copy turned each other
     // way is read for its numbers, and the page is read again the way that finds clearly more of them
+    // hardly a time or a date read on a table drawn with heavy lines: the reader skips numbers that touch a cell's
+    // border. The page is prepared again with its lines taken out, and that reading kept when it finds clearly more
+    // (on every page it read worse: only here)
+    let unlined = false;
+    if (opts.prep !== false && !opts.lines && wholes(dg) < 6) {
+      try {
+        const im = await DocRead.prep(blob, Object.assign({}, opts, { lines: true }));
+        const d2 = await digitsPass(bw(im), opts, progress, 'קורא את המספרים');
+        if (wholes(d2) >= 6 && wholes(d2) >= wholes(dg) * 2 + 2) { image.width = image.height = 0; image = im; image2 = bw(im); dg = d2; unlined = true; } else im.width = im.height = 0;
+      } catch (e) { if (e.name === 'AbortError') throw e; /* as it was */ }
+    }
     let turn = 0;
-    if (opts.prep !== false && opts.turn == null && wholes(dg) < 6) {
+    // (not for the payslip's lines reading: a payslip has few times and dates, and its screen turns a sideways page itself)
+    if (opts.prep !== false && opts.turn == null && !opts.lines && wholes(dg) < 6) {
       let best = { q: 0, n: wholes(dg) };
       for (const q of [90, 270, 180]) {
         progress('מכין את התמונה…');
@@ -281,8 +368,9 @@
         try { dg = await digitsPass(image2, opts, progress, 'קורא את המספרים'); } catch (e) { if (e.name === 'AbortError') throw e; dg = []; }
       }
     }
-    progress('טוען מנוע זיהוי עברית (פעם ראשונה ~10MB)…');
+    progress(LOADING, { code: 'docread/loading-language', lang: 'heb+eng' });
     const he = await pass(image, 'heb+eng', { tessedit_pageseg_mode: opts.psm || '11', preserve_interword_spaces: '1' }, progress, 'קורא את המילים', opts.signal);
+    if (!opts.lines && image.getContext) await hebrewAgain(image, he, opts.signal);
     // the words: Hebrew/English words from the first reading; numbers from whichever reading read them
     // better (a whole time or date over a broken one, then the surer one)
     const isWord = (w) => /[A-Za-zא-ת]/.test(w.text) && !/^[\dOolISB:./-]+$/.test(w.text);
@@ -297,7 +385,7 @@
     }
     // a digits-reading "number" on top of a Hebrew word is the Hebrew word misread: not a number
     const out = words.concat(nums.filter((d) => !words.some((w) => overlap(w, d) > 0.5 && w.conf > 60)));
-    return { words: out, he, dg, canvas: image, info: { turn, skew: image.skew || 0 } };
+    return { words: out, he, dg, canvas: image, info: { turn, skew: image.skew || 0, unlined } };
   };
 
   /**
@@ -331,6 +419,48 @@
     return Object.assign(out, { canvas: null, info: { turn: 0, skew: 0, slices: Math.ceil(Hd / step) } });
   }
 
+  /**
+   * A short Hebrew word read as Latin letters on a Hebrew page (a name in a table cell: "נדב" read "am"): the
+   * Hebrew and English reading of the whole page took it for English. Each such word is read again alone, its box
+   * enlarged to letters ~40 px tall, by the Hebrew model on one line; the Hebrew reading replaces it only when it
+   * is all Hebrew and sure (80+). At most 40 words a page. (Not for the payslip's lines reading, opts.lines.)
+   */
+  async function hebrewAgain(canvas, he, signal) {
+    const letters = he.filter((w) => /[A-Za-zא-ת]{2}/.test(w.text));
+    const heb = letters.filter((w) => /[א-ת]/.test(w.text)).length;
+    const odd = he.filter(latinBit);
+    if (!odd.length || heb < 6 || heb < letters.length * 0.5) return;
+    if (signal && signal.aborted) throw stopped();
+    const worker = await root.Tesseract.createWorker('heb', 1);
+    let onStop = null;
+    try {
+      const stop = new Promise((_, no) => { onStop = () => no(stopped()); if (signal) signal.addEventListener('abort', onStop, { once: true }); });
+      await Promise.race([worker.setParameters({ tessedit_pageseg_mode: '7' }), stop]);
+      for (const w of odd.slice(0, 40)) {
+        const c = cropOf(canvas, w);
+        const { data } = await Promise.race([worker.recognize(c), stop]);
+        c.width = c.height = 0;
+        const t = String(data.text || '').trim();
+        if (heWord(t) && data.confidence >= 80) { w.text = t; w.conf = Math.round(data.confidence); }
+      }
+    } finally { if (signal && onStop) signal.removeEventListener('abort', onStop); await worker.terminate(); }
+  }
+  // 1-4 Latin letters and nothing else: on a Hebrew page, a Hebrew word misread
+  const latinBit = (w) => /^[A-Za-z]{1,4}$/.test(String(w.text).replace(/[.,:;'"|]/g, ''));
+  // what may replace it: Hebrew letters only (a geresh, a dot or a dash between them), 2 to 12 of them
+  const heWord = (t) => /^[א-ת][א-ת'׳".-]{1,11}$/.test(t) && !/[A-Za-z0-9]/.test(t);
+  /** The box of a word with half its height around it, on white, enlarged to letters about 40 px tall. */
+  function cropOf(canvas, w) {
+    const h = Math.max(1, w.y1 - w.y0), k = Math.max(1, Math.min(4, 40 / h));
+    const x0 = Math.max(0, w.x0 - h * 0.5), x1 = Math.min(canvas.width, w.x1 + h * 0.5), y0 = Math.max(0, w.y0 - h * 0.6), y1 = Math.min(canvas.height, w.y1 + h * 0.6);
+    const c = document.createElement('canvas');
+    c.width = Math.max(1, Math.round((x1 - x0) * k)); c.height = Math.max(1, Math.round((y1 - y0) * k));
+    const g = c.getContext('2d');
+    g.fillStyle = '#fff'; g.fillRect(0, 0, c.width, c.height); g.imageSmoothingQuality = 'high';
+    g.drawImage(canvas, x0, y0, x1 - x0, y1 - y0, 0, 0, c.width, c.height);
+    return c;
+  }
+
   /** A photo of an hours report → shifts (core/timesheet.js parseWords). */
   DocRead.readTimesheet = async function (blob, progress, opts) {
     opts = opts || {};
@@ -341,6 +471,6 @@
   };
 
   // the picture rules that need no browser, for the unit tests (tests/timesheet.test.js)
-  DocRead.pure = { grayOf, skewOf, wholes };
+  DocRead.pure = { grayOf, skewOf, wholes, latinBit, heWord, sizeOf };
   root.DocRead = DocRead;
 })(typeof window !== 'undefined' ? window : globalThis);
