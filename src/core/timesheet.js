@@ -655,6 +655,35 @@
     if (!totalCol && hTotal && pairs.length) totalCol = cols.filter((c) => !pairCols.has(c) && Math.abs(c.at - hTotal.x) < colW * 1.6).sort((p, q) => Math.abs(p.at - hTotal.x) - Math.abs(q.at - hTotal.x))[0] || null;
     // or hours as a number (8.75): the column of numbers that is the shift's length in most rows
     let decCol = null, lenClash = false;
+    const capped = new Set(); // rows whose capped "regular hours" is above its cap: misread
+    if (pairs.length) {
+      const pts = [];
+      rows.forEach((r, ri) => r.words.forEach((w) => { const it = w.items.find((x) => x.k === 'num' && (!Number.isInteger(x.v) || /\d\.\d/.test(clean(w.text))) && x.v >= 0.25 && x.v <= 16); if (it) pts.push({ x: w.x, ri, v: it.v, w }); }));
+      // a column of regular hours capped at the day's standard (5.55, 7.53, 8.00, 8.00 …) beside the total (8.43 on a
+      // long day): it never passes its cap. A value above it (8.67 for 6.67) is misread, and an entry misread with it
+      // the same way (04:53 for 06:53) would agree with it: the row is unsure
+      const dcs = cluster(pts, tol).filter((c) => c.members.length >= 5);
+      for (const c of dcs) {
+        const cnt = new Map();
+        for (const p of c.members) cnt.set(p.v, (cnt.get(p.v) || 0) + 1);
+        const [cap, times] = [...cnt.entries()].sort((p, q) => q[1] - p[1] || q[0] - p[0])[0];
+        const above = c.members.filter((p) => p.v > cap + 0.001);
+        // (its most common value, the cap, at least twice; what passes it a minority: the sibling column decides)
+        if (times < 2 || cap < 4 || !above.length || above.length > c.members.length * 0.3) continue;
+        // (its sibling: the total, equal to it under the cap and at least the cap on the capped days)
+        const sib = dcs.find((o) => o !== c && (() => {
+          let ok = 0, n = 0;
+          for (const p of c.members) {
+            if (p.v > cap + 0.001) continue;
+            const q = o.members.find((x) => x.ri === p.ri);
+            if (!q) continue;
+            n++; if (p.v < cap - 0.001 ? Math.abs(q.v - p.v) < 0.015 : q.v >= cap - 0.001) ok++;
+          }
+          return n >= 4 && ok >= n * 0.8;
+        })());
+        if (sib) for (const p of above) { capped.add(p.ri); dbg.push(`regular hours above their cap ${cap}: row ${p.ri}`); }
+      }
+    }
     if (pairs.length && !totalCol) {
       const pts = [];
       // (8.00 is as much a length as 7.75: a whole number written with its decimals)
@@ -680,6 +709,12 @@
       }
       if (decCol) lenClash = false;
       if (lenClash) dbg.push('a column of hours disagrees with most rows: all unsure');
+      // a cell of that column read with a colon ("7:53" for 7.53) is still its hours, not a time of day
+      if (decCol) for (let ri = 0; ri < rows.length; ri++) {
+        if (decCol.members.some((p) => p.ri === ri)) continue;
+        const w = rows[ri].words.find((x) => Math.abs(x.x - decCol.at) <= tol && /^\d{1,2}:\d{2}$/.test(digits(clean(x.text))));
+        if (w) { const [h, m] = digits(clean(w.text)).split(':'); decCol.members.push({ x: w.x, ri, v: +h + +m / 100, w }); }
+      }
     }
     const lenAt = (ri) => {
       if (totalCol && at(totalCol, ri)) return minOf(at(totalCol, ri));
@@ -999,7 +1034,7 @@
         if (d < 10) { dbg.push(`not a shift: ${r.key} ${start}-${end}`); continue; }
         const row = { date: r.key, start, end, hours: Math.round(d / 60 * 100) / 100, overnight: minOf(end) <= minOf(start), line: r.text.slice(0, 120), n: r.ri };
         // (more than 16 hours: more likely a misread than a shift; offered, never saved as read)
-        const doubt = why || (d > 16 * 60 && 'long') || r.doubt || ((weakPair || lenClash) && 'table') || (monthOff && 'date') || (!nearTitle(+r.key.slice(5, 7)) && 'date') || (yearClash.has(+r.key.slice(5, 7)) && 'date');
+        const doubt = why || (d > 16 * 60 && 'long') || (capped.has(r.ri) && 'total') || r.doubt || ((weakPair || lenClash) && 'table') || (monthOff && 'date') || (!nearTitle(+r.key.slice(5, 7)) && 'date') || (yearClash.has(+r.key.slice(5, 7)) && 'date');
         if (doubt) row.doubt = doubt;
         // the hours the report pays, when they are not the span (a break taken off): kept for the hours check
         if (r.len != null && r.shifts.length === 1 && Math.abs(r.len - d) > 10) row.paid = Math.round((r.len / 60) * 100) / 100;

@@ -444,3 +444,21 @@ T.test('many dates off the month the page names (a hand-written table read badly
   const p = page(['תאריך', 'כניסה', 'יציאה'], [['01/09', '08:00', '16:00'], ['2/1', '09:00', '17:00'], ['3/1', '08:00', '16:00'], ['04/09', '07:00', '15:00'], ['5/1', '08:00', '12:00']], { title: ['ספטמבר', '2026'] });
   T.eq(shifts(p), '');
 });
+
+T.section('hours report photo: round 2 guards');
+// an Oketz-style table: entry, exit, break, regular hours (capped at 8.00), total
+const oketz = (rows) => page(['תאריך', 'כניסה', 'יציאה', 'הפסקה', 'רגילות', 'סה"כ'], rows.map(([d, a, b, reg, tot]) => [d, a, b, '0.50', reg, tot]));
+T.test('regular hours above their cap (8.67 in a column capped at 8.00) are misread: an entry and a total misread the same way (06:53→04:53, 6.67→8.67) agree, the row is unsure', () => {
+  const p = oketz([
+    ['01/10/2026', '06:53', '13:05', '5.70', '5.70'], ['02/10/2026', '08:00', '16:30', '8.00', '8.00'], ['04/10/2026', '07:00', '16:00', '8.00', '8.50'],
+    ['05/10/2026', '09:00', '15:30', '6.00', '6.00'], ['06/10/2026', '04:53', '14:03', '8.67', '8.67'], ['07/10/2026', '14:00', '20:30', '6.00', '6.00'],
+    ['08/10/2026', '06:30', '16:00', '8.00', '9.00'], ['09/10/2026', '07:10', '13:40', '6.00', '6.00'],
+  ]);
+  T.ok(!/2026-10-06/.test(shifts(p)), 'saved as read: ' + shifts(p));
+  T.ok(/2026-10-06 04:53-14:03 total/.test(unsure(p)), 'not offered: ' + unsure(p));
+  T.ok(/2026-10-04 07:00-16:00/.test(shifts(p)) && /2026-10-08 06:30-16:00/.test(shifts(p)), 'a long day under the cap made unsure: ' + shifts(p));
+});
+T.test('a cell of the hours column read with a colon ("7:53" for 7.53) is still its hours, and checks the row', () => {
+  const p = page(['תאריך', 'כניסה', 'יציאה', 'שעות'], [['01/10/2026', '06:53', '12:56', '6.05'], ['02/10/2026', '14:08', '20:31', '6.38'], ['04/10/2026', '04:57', '14:59', '7:53'], ['05/10/2026', '08:00', '16:30', '8.50'], ['06/10/2026', '09:00', '17:15', '8.25']]);
+  T.ok(!/2026-10-04/.test(shifts(p)), 'saved as read: ' + shifts(p));
+});
