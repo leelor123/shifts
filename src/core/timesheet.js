@@ -396,7 +396,8 @@
   function parseWords(words, opts) {
     opts = opts || {};
     const today = opts.today || new Date().toISOString().slice(0, 10);
-    const { rows, mh } = rowsOf((words || []).filter((w) => w && w.text && clean(w.text)));
+    const wl = (words || []).filter((w) => w && w.text && clean(w.text));
+    const { rows, mh } = rowsOf(wl);
     const dbg = [];
     // a reader that lost the colons read "08:02:26" as three numbers side by side: one time again
     for (const r of rows) {
@@ -446,6 +447,10 @@
     /* ---- year and month of the report (for dates without a year) ---- */
     // a date cut at the picture's edge ("01-11-20" of 01-11-2026) reads as a year of two digits, 2020: when the
     // page prints its year in full elsewhere (20xx, not 2020), such a year is the cut one and is not known
+    // a year no report of one's hours has (2045, 2030 from "2.2.30", 2000 from "2.2.00"): a misread number, not
+    // a date. Reports reach back years for a claim, never into the future
+    const ty = +today.slice(0, 4);
+    for (const r of rows) for (const w of r.words) w.items = w.items.filter((it) => !((it.k === 'date' && it.y && (it.y < ty - 8 || it.y > ty + 1)) || (it.k === 'year' && (it.v < ty - 8 || it.v > ty + 1))));
     const fullYears = new Set();
     for (const r of rows) for (const w of r.words) for (const it of w.items) if ((it.k === 'date' && it.y && !it.yy) || it.k === 'year') fullYears.add(it.y || it.v);
     if ([...fullYears].some((y) => y !== 2020)) for (const r of rows) for (const w of r.words) for (const it of w.items) if (it.k === 'date' && it.yy && it.y === 2020) it.y = null;
@@ -469,6 +474,34 @@
     if (hDate) dateCol = dateCols.filter((c) => Math.abs(c.at - hDate.x) < colW * 1.5).sort((a, b) => b.rows - a.rows)[0] || null;
     if (!dateCol) dateCol = dateCols.filter((c) => c.rows >= 2).sort((a, b) => b.rows - a.rows)[0] || null;
     const inDateCol = (w) => dateCol && Math.abs(w.x - dateCol.at) <= tol * 1.6;
+    // two tables side by side (two months on one page, two pages in one photo): two date columns on the same
+    // lines. Read as one, each line's hours went to one date. Each table is read on its own, split at the
+    // widest empty strip between the two date columns (a word across it, a title, goes to both)
+    if (!opts.part) {
+      const big = dateCols.filter((c) => c.rows >= 3).sort((p, q) => q.rows - p.rows).slice(0, 2).sort((p, q) => p.at - q.at);
+      const rs = big.map((c) => new Set(c.members.map((p) => p.ri)));
+      const shared = big.length === 2 ? [...rs[0]].filter((ri) => rs[1].has(ri)).length : 0;
+      if (big.length === 2 && big[0].rows >= big[1].rows * 0.4 && big[1].rows >= big[0].rows * 0.4 && shared >= Math.min(rs[0].size, rs[1].size) * 0.5) {
+        const iv = [];
+        for (const ri of new Set([...rs[0], ...rs[1]])) for (const w of rows[ri].words) {
+          const a = w.x - w.w / 2, b = w.x + w.w / 2;
+          if (b > big[0].at && a < big[1].at) iv.push([Math.max(a, big[0].at), Math.min(b, big[1].at)]);
+        }
+        iv.sort((p, q) => p[0] - q[0]);
+        let gap = null, reach = big[0].at;
+        for (const [a, b] of iv) { if (a - reach > (gap ? gap.w : mh)) gap = { at: (a + reach) / 2, w: a - reach }; reach = Math.max(reach, b); }
+        if (big[1].at - reach > (gap ? gap.w : mh)) gap = { at: (big[1].at + reach) / 2, w: big[1].at - reach };
+        if (gap) {
+          const all = rows.flatMap((r) => r.words);
+          const side = (left) => all.filter((w) => (left ? w.x - w.w / 2 < gap.at : w.x + w.w / 2 > gap.at)).map((w) => wl[w.i]);
+          const parts = [side(true), side(false)].map((ws) => parseWords(ws, Object.assign({}, opts, { part: true })));
+          const res = { rows: [].concat(...parts.map((p) => p.rows)), unsure: [].concat(...parts.map((p) => p.unsure)), noStart: 0, guessedYear: parts.some((p) => p.guessedYear),
+            skipped: parts.reduce((n, p) => n + (p.skipped || 0), 0), rtl: parts[0].rtl, text: parts.map((p) => p.text).join('\n') };
+          if (opts.debug) res.debug = `two tables side by side, split at ${Math.round(gap.at)}\n` + parts.map((p) => p.debug).join('\n----\n');
+          return res;
+        }
+      }
+    }
 
     /* ---- the time columns ---- */
     const timePts = [];
@@ -546,6 +579,9 @@
       if (second) pairs.push(second);
     }
     const pairCols = new Set(pairs.flatMap((p) => [p.a, p.b]));
+    // columns whose pairs look like shifts in few of their rows: the reading of this table is not to be trusted
+    const weakPair = pairs.length > 0 && pairs[0].n >= 3 && pairs[0].s < pairs[0].n * 0.6;
+    if (weakPair) dbg.push('the entry/exit columns make few likely shifts: all unsure');
     dbg.push('time columns: ' + cols.map((c) => `${Math.round(c.at)}(${c.rows}${unpadded(c) ? ',dur' : ''})`).join(' ') + ' | pairs: ' + pairs.map((p) => `${Math.round(p.a.at)}→${Math.round(p.b.at)} ${p.from} ${p.s.toFixed(1)}/${p.n}`).join(', '));
 
     // the column of the shift's length (סה"כ): the one that, row after row, is exit − entry (or that minus a
@@ -592,6 +628,18 @@
       return p ? Math.round(p.v * 60) : null;
     };
     if (totalCol || decCol) dbg.push('length column ' + Math.round((totalCol || decCol).at));
+    // the breaks this report takes off its total: those seen in a fair share of its rows. One row an hour off
+    // where no other row has an hour's break is an hour misread (08:13 for 09:13), not a break
+    const seenBr = new Map();
+    let withLen = 0;
+    if (pairs.length) for (let ri = 0; ri < rows.length; ri++) {
+      const a = at(pairs[0].a, ri), b = at(pairs[0].b, ri), L = lenAt(ri);
+      if (!a || !b || L == null || pairs.slice(1).some((p) => at(p.a, ri) || at(p.b, ri))) continue;
+      withLen++;
+      const br = BREAKS.find((x) => Math.abs(span(a, b) - L - x) <= 2);
+      if (br != null) seenBr.set(br, (seenBr.get(br) || 0) + 1);
+    }
+    const okBreaks = BREAKS.filter((br) => !br || (seenBr.get(br) || 0) >= Math.max(2, withLen * 0.15));
     const differsBy = (x, y) => [...x].filter((ch, i) => ch !== y[i]).length;
 
     /* ---- each row: its date, its times ---- */
@@ -642,7 +690,7 @@
           // the times and the length disagree: one of them was misread, and which one cannot be known (an exit
           // read 02:23 for 22:23, or a total read 8:11 for 8:17). The likelier reading (one digit of the exit,
           // or else of the entry, that makes them agree) is offered, never saved as sure
-          if (a && b && sure && !BREAKS.some((br) => Math.abs(span(a, b) - len - br) <= 2)) {
+          if (a && b && sure && !okBreaks.some((br) => Math.abs(span(a, b) - len - br) <= 2)) {
             const fixB = fromMin(minOf(a) + len), fixA = fromMin(minOf(b) - len);
             const fix = differsBy(b, fixB) === 1 ? [[a, fixB]] : differsBy(a, fixA) === 1 ? [[fixA, b]] : [];
             if (fix.length) { dbg.push(`total disagrees: ${a}-${b}, likely ${fix[0].join('-')}`); [a, b] = fix[0]; }
@@ -699,13 +747,13 @@
     // one row, a date-only row is a day off, and a row with hours and no readable date next to it is another
     // day: it must not take the day off's date
     // (a table row that a photo broke in two, its date a little above its hours, is still one row: closer to its
-    // date than half the distance from one dated row to the next)
+    // date than half the distance from one row of the table to the next)
     const cardRows = found.filter((r) => r.lendFrom).length, sameRow = found.filter((r) => r.date && r.shifts.length).length;
-    const dated = found.filter((r) => r.date), gaps = dated.slice(1).map((r, i) => r.y - dated[i].y).sort((p, q) => p - q);
+    const gaps = found.slice(1).map((r, i) => r.y - found[i].y).filter((g) => g > mh * 0.5).sort((p, q) => p - q);
     const pitch = gaps.length ? gaps[gaps.length >> 1] : 0;
     for (const r of found) {
       if (!r.lendFrom) continue;
-      if (cardRows > sameRow || Math.abs(r.y - r.lendFrom.y) < pitch * 0.5) { r.date = r.lendFrom.date; r.dow = r.dow == null ? r.lendFrom.dow : r.dow; r.lendFrom.used = true; }
+      if (cardRows > sameRow || Math.abs(r.y - r.lendFrom.y) < pitch * 0.5) { dbg.push(`date from the line by it: ${r.ri} ← ${r.lendFrom.ri} (pitch ${Math.round(pitch)}, cards ${cardRows}/${sameRow})`); r.date = r.lendFrom.date; r.dow = r.dow == null ? r.lendFrom.dow : r.dow; r.lendFrom.used = true; }
       delete r.lendFrom;
     }
     // date-only rows that lent their date to the next row are not rows of their own
@@ -806,11 +854,15 @@
       else if (r.key || r.shifts.length) { dbg.push(`date unclear, left out: ${r.key || '?'} "${r.text.slice(0, 40)}" (${cands.join(',')})`); r.key = null; }
     }
 
+    if (opts.debug) for (const r of list) dbg.push(`row ${r.ri}: ${r.key || '-'}${r.dow != null ? ' dow' + r.dow : ''} ${r.shifts.map((s) => s.join('-')).join(' ')}`);
     /* ---- the shifts ---- */
     // a shift with something the report did not say outright (an exit worked out from the total, times that
     // disagree with the total) is kept apart in unsure: never saved without the user seeing it
     const out = [], unsure = [];
     let guessedYear = false;
+    // the page names its month (נובמבר) and not one date read is of it, or of a month by it: the dates were misread
+    const monthOff = docMonth && list.some((r) => r.date) && !list.some((r) => r.date && [docMonth, docMonth % 12 + 1, (docMonth + 10) % 12 + 1].includes(r.date.m));
+    if (monthOff) dbg.push(`no date read is in the page's month (${docMonth}): all unsure`);
     for (const r of list) {
       if (!r.key || !r.shifts.length) continue;
       if (r.date && !r.date.y && !docYear) guessedYear = true;
@@ -818,7 +870,8 @@
         const d = span(start, end) || 1440;
         if (d < 10 || d > 16 * 60) { dbg.push(`not a shift: ${r.key} ${start}-${end}`); continue; }
         const row = { date: r.key, start, end, hours: Math.round(d / 60 * 100) / 100, overnight: minOf(end) <= minOf(start), line: r.text.slice(0, 120), n: r.ri };
-        if (why) unsure.push(Object.assign(row, { unsure: why })); else out.push(row);
+        const doubt = why || (weakPair && 'table') || (monthOff && 'date');
+        if (doubt) unsure.push(Object.assign(row, { unsure: doubt })); else out.push(row);
       }
     }
     const res = { rows: out, unsure, noStart: 0, guessedYear, skipped: skippedNoOut, rtl, text: rows.map((r) => (rtl ? r.words.slice().reverse() : r.words).map((w) => clean(w.text)).join(' ')).join('\n') };
