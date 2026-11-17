@@ -187,7 +187,7 @@ T.test('the payslip flow reads through SlipRead, and lets go of a reading whose 
   T.ok(!/Store\.putFile/.test(start), 'nothing is stored before the payslip is saved (intake P1)');
   T.ok(/SlipRead\.review\(parsed, lines, source\)/.test(start), 'what is not sure is left to fill in');
   T.ok(/onClose: \(\) => \{ gone = true; if \(stop\) stop\.abort\(\); \}/.test(start) && /if \(gone\) return;/.test(start), 'a closed reading opens nothing and stops');
-  T.ok(/DocRead\.words\(img, progress, \{ lines: true \}\)/.test(src), 'the table lines are taken out before reading');
+  T.ok(/DocRead\.words\(img, progress, \{ lines: true, signal \}\)/.test(src), 'the table lines are taken out before reading');
 });
 
 T.test('the optional AI\'s answer passes the same checks of what cannot be', () => {
