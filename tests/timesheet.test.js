@@ -167,3 +167,93 @@ T.test('dates drawn the other way round (10/01, 10/02 … in a monthly report) a
   const p = TS.parseWords(words.concat([{ text: '2026', x0: 300, x1: 360, y0: 10, y1: 30 }]), { today });
   T.eq(shifts(p), '2026-10-01 08:55-16:12 | 2026-10-02 09:04-14:08 | 2026-10-05 16:51-23:37 | 2026-10-08 15:54-21:55 | 2026-10-09 08:55-15:01');
 });
+
+/* ---- the reader's guards (2026-11 accuracy campaign): each a mechanism that once made a shift that is not in the
+ * report, on words as the picture reader gives them. A shift the reader is not sure of goes to `unsure`, never
+ * to `rows` (rows are saved as they are) ---- */
+T.section('hours report photo: no shift that is not in the report');
+const days10 = (n, from) => Array.from({ length: n }, (_, i) => `${String((from || 1) + i).padStart(2, '0')}/10/2026`);
+T.test('a time in the standard-hours column never pairs with a lone entry (a missed clock-out)', () => {
+  const d = days10(6);
+  const p = page(['תאריך', 'כניסה', 'יציאה', 'תקן', 'סה"כ'], [
+    [d[0], '08:00', '16:10', '08:36', '8:10'], [d[1], '07:06', '', '08:36', ''], [d[2], '09:00', '17:00', '08:36', '8:00'],
+    [d[3], '08:12', '16:30', '08:36', '8:18'], [d[4], '', '16:04', '08:36', ''], [d[5], '14:00', '22:00', '08:36', '8:00'],
+  ]);
+  T.eq(shifts(p), '2026-10-01 08:00-16:10 | 2026-10-03 09:00-17:00 | 2026-10-04 08:12-16:30 | 2026-10-06 14:00-22:00');
+  T.eq(unsure(p), '');
+});
+T.test('in a table, a day off does not lend its date to the next row whose date was not read', () => {
+  const p = page(['תאריך', 'כניסה', 'יציאה'], [
+    ['01/10/2026', '08:00', '16:00'], ['02/10/2026', '09:00', '17:00'], ['03/10/2026', '', ''], ['18', '08:10', '14:44'],
+    ['05/10/2026', '07:00', '15:00'], ['06/10/2026', '08:00', '16:30'],
+  ]);
+  T.ok(!/2026-10-03/.test(shifts(p)), 'the day off took the shift: ' + shifts(p));
+});
+T.test('an app\'s cards with the date UNDER the hours: each card its own date', () => {
+  const words = [];
+  const add = (text, x, y) => words.push({ text, x0: x - 40, x1: x + 40, y0: y, y1: y + 30 });
+  [['01/10', '08:56', '16:43'], ['02/10', '09:08', '15:30'], ['03/10', '08:05', '16:28'], ['04/10', '15:55', '23:39']].forEach(([d, a, b], i) => {
+    const y = 100 + i * 140;
+    add('יום', 900, y); add(a, 700, y + 30); add(b, 560, y + 30); add(d, 900, y + 60);
+  });
+  const p = TS.parseWords(words.concat([{ text: '2026', x0: 500, x1: 560, y0: 10, y1: 40 }]), { today });
+  T.eq(shifts(p), '2026-10-01 08:56-16:43 | 2026-10-02 09:08-15:30 | 2026-10-03 08:05-16:28 | 2026-10-04 15:55-23:39');
+});
+T.test('a date cut at the picture\'s edge ("01-10-20" of 01-10-2026) is not in 2020', () => {
+  const p = page(['תאריך', 'כניסה', 'יציאה'], [['01-10-20', '08:00', '16:00'], ['02-10-20', '09:00', '17:00'], ['04-10-20', '07:30', '15:00'], ['05-10-20', '08:00', '12:00']],
+    { title: ['01-10-2026', '31-10-2026'] });
+  T.eq(shifts(p), '2026-10-01 08:00-16:00 | 2026-10-02 09:00-17:00 | 2026-10-04 07:30-15:00 | 2026-10-05 08:00-12:00');
+});
+T.test('a blurred clock report whose exits were not read: the total and the standard hours make no shift', () => {
+  const p = page(['תאריך', 'כניסה', '', 'תקן', ''], [
+    ['01/10/2026', '09:14', '', '08:36', '8:56'], ['02/10/2026', '16:01', '', '08:36', '6:49'], ['04/10/2026', '15:55', '', '08:36', '7:15'],
+    ['05/10/2026', '14:04', '', '08:36', '7:49'], ['06/10/2026', '08:57', '', '08:36', '5:28'], ['07/10/2026', '15:50', '', '08:36', '5:57'],
+  ]);
+  T.eq(shifts(p), '');
+});
+T.test('an entry read an hour off is not taken for an hour\'s break the report never takes', () => {
+  const d = days10(6);
+  const p = page(['תאריך', 'כניסה', 'יציאה', 'סה"כ'], [
+    [d[0], '08:13', '15:15', '6:02'], [d[1], '09:13', '16:45', '7:32'], [d[2], '14:13', '22:47', '8:34'],
+    [d[3], '07:03', '12:55', '5:52'], [d[4], '08:05', '14:46', '6:41'], [d[5], '14:09', '23:03', '8:54'],
+  ]);
+  T.ok(!/2026-10-01/.test(shifts(p)), 'saved as read: ' + shifts(p));
+  T.eq(unsure(p).slice(0, 10), '2026-10-01');
+});
+T.test('a report that does take an hour\'s break off its totals is read as it is', () => {
+  const d = days10(4);
+  const p = page(['תאריך', 'כניסה', 'יציאה', 'סה"כ'], [[d[0], '08:00', '17:00', '8:00'], [d[1], '09:00', '18:00', '8:00'], [d[2], '07:00', '16:30', '8:30'], [d[3], '08:00', '12:00', '4:00']]);
+  T.eq(shifts(p), '2026-10-01 08:00-17:00 | 2026-10-02 09:00-18:00 | 2026-10-03 07:00-16:30 | 2026-10-04 08:00-12:00');
+});
+T.test('where many dates were lost, a day off still lends its date to no row (the row pitch is every row\'s)', () => {
+  const p = page(['תאריך', 'כניסה', 'יציאה'], [
+    ['01/10/2026', '08:00', '16:00'], ['', '09:00', '17:00'], ['', '08:30', '16:30'], ['04/10/2026', '', ''], ['', '07:00', '15:00'],
+    ['', '08:00', '14:00'], ['07/10/2026', '09:00', '17:00'], ['', '08:00', '16:00'], ['', '10:00', '18:00'], ['10/10/2026', '07:30', '15:30'],
+  ]);
+  T.ok(!/2026-10-04/.test(shifts(p)), 'the day off took the next row\'s shift: ' + shifts(p));
+});
+T.test('two months side by side on one page: each table read apart, every row its own date', () => {
+  const words = [];
+  const add = (text, x, y) => { const w = String(text).length * 11; words.push({ text, x0: x - w / 2, x1: x + w / 2, y0: y, y1: y + 30 }); };
+  [[1400, '09'], [700, '10']].forEach(([x0, m]) => {
+    ['תאריך', 'כניסה', 'יציאה', 'סה"כ'].forEach((h, i) => add(h, x0 - i * 140, 100));
+    [['01', '08:00', '16:00', '8:00'], ['02', '09:00', '15:00', '6:00'], ['03', '16:00', '23:00', '7:00'], ['06', '08:30', '16:30', '8:00']].forEach((r, ri) =>
+      [`${r[0]}/${m}/2026`, r[1], r[2], r[3]].forEach((c, i) => add(c, x0 - i * 140, 150 + ri * 50)));
+  });
+  const p = TS.parseWords(words, { today });
+  T.eq(shifts(p).split(' | ').sort().join(' | '), ['2026-09-01 08:00-16:00', '2026-09-02 09:00-15:00', '2026-09-03 16:00-23:00', '2026-09-06 08:30-16:30',
+    '2026-10-01 08:00-16:00', '2026-10-02 09:00-15:00', '2026-10-03 16:00-23:00', '2026-10-06 08:30-16:30'].join(' | '));
+});
+T.test('a year no report has (2045, read from a time) is no date and sets no year', () => {
+  const p = page(['תאריך', 'כניסה', 'יציאה'], [['4/10', '07:00', '14:00'], ['5/10', '08:00', '15:30'], ['6/10', '09:00', '17:00'], ['2045', '14:00', '']]);
+  T.eq(shifts(p), '2026-10-04 07:00-14:00 | 2026-10-05 08:00-15:30 | 2026-10-06 09:00-17:00');
+});
+T.test('entry/exit columns that make few likely shifts: nothing saved as sure', () => {
+  const p = page(['תאריך', 'כניסה', 'יציאה'], [['01/10/2026', '14:00', '01:00'], ['02/10/2026', '07:45', '15:50'], ['03/10/2026', '23:50', '16:15'], ['04/10/2026', '20:00', '14:00'], ['05/10/2026', '01:00', '00:45']]);
+  T.eq(shifts(p), '');
+});
+T.test('the page names its month and no date read is of it (4/1 read for 4/9): the dates are unsure', () => {
+  const p = page(['תאריך', 'כניסה', 'יציאה'], [['4/1', '07:00', '14:00'], ['5/1', '07:45', '15:50'], ['6/1', '09:00', '17:00']], { title: ['ספטמבר', '2026'] });
+  T.eq(shifts(p), '');
+  T.ok(/date/.test(unsure(p)), 'not offered as unsure: ' + unsure(p));
+});
