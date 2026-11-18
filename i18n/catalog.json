@@ -429,7 +429,7 @@
   "where": [
    "app/app.js:717",
    "app/import.js:214",
-   "app/schedule-import.js:117"
+   "app/schedule-import.js:145"
   ]
  },
  {
@@ -438,7 +438,7 @@
   "where": [
    "app/app.js:717",
    "app/import.js:214",
-   "app/schedule-import.js:117"
+   "app/schedule-import.js:145"
   ]
  },
  {
@@ -2365,7 +2365,7 @@
   "where": [
    "app/hours-check.js:170",
    "app/import.js:198",
-   "app/schedule-import.js:338"
+   "app/schedule-import.js:392"
   ]
  },
  {
@@ -2514,7 +2514,7 @@
   "where": [
    "app/hours-check.js:204",
    "app/import.js:219",
-   "app/schedule-import.js:129"
+   "app/schedule-import.js:158"
   ]
  },
  {
@@ -2551,7 +2551,7 @@
   "where": [
    "app/hours-check.js:230",
    "app/import.js:253",
-   "app/schedule-import.js:162",
+   "app/schedule-import.js:205",
    "app/views-payslip.js:794"
   ]
  },
@@ -2740,8 +2740,7 @@
   "key": "<i class=\"tag\">כבר קיימת</i>",
   "kind": "lit",
   "where": [
-   "app/import.js:211",
-   "app/schedule-import.js:125"
+   "app/import.js:211"
   ]
  },
  {
@@ -2763,7 +2762,7 @@
   "kind": "tpl",
   "where": [
    "app/import.js:215",
-   "app/schedule-import.js:132"
+   "app/schedule-import.js:162"
   ]
  },
  {
@@ -5171,8 +5170,8 @@
   "key": "ייבוא סידור עבודה",
   "kind": "lit",
   "where": [
-   "app/schedule-import.js:45",
-   "app/schedule-import.js:216",
+   "app/schedule-import.js:47",
+   "app/schedule-import.js:264",
    "app/views-settings.js:153",
    "app/views-shift.js:42",
    "manifest"
@@ -5182,133 +5181,183 @@
   "key": "{0}\n        <label class=\"field\"><span class=\"lbl\">השם שלך בסידור</span><input class=\"input\" id=\"sc-name\" value=\"{1}\" placeholder=\"למשל: לי\" autocomplete=\"given-name\"></label>\n        <label class=\"btn big block imp-pick\">{2} צילום או צילום מסך של הסידור<input type=\"file\" id=\"sc-file\" class=\"sr\" accept=\"image/*,application/pdf\"></label>\n        {3}\n        {4}\n        <div class=\"tiny muted imp-privacy\">{5} {6}הסידור נקרא בטלפון בלבד, ולא נשלח לשום מקום.</div>",
   "kind": "tpl",
   "where": [
-   "app/schedule-import.js:60"
+   "app/schedule-import.js:62"
   ]
  },
  {
   "key": "קיבלת סידור עבודה? צלם אותו או הדבק את ההודעה, ואכניס את המשמרות שלך ללוח 📅",
   "kind": "lit",
   "where": [
-   "app/schedule-import.js:60"
+   "app/schedule-import.js:62"
   ]
  },
  {
   "key": "<details class=\"imp-paste\"{0}><summary>{1} או להדביק את ההודעה מוואטסאפ</summary>\n          <textarea class=\"input\" id=\"sc-text\" rows=\"6\" placeholder=\"למשל:&#10;ראשון: דני 8-16, לי 16-24&#10;שני: לי 8-16\"></textarea>\n          <button class=\"btn tonal block\" data-sc-read>{2} קריאה</button></details>",
   "kind": "tpl",
   "where": [
-   "app/schedule-import.js:63"
+   "app/schedule-import.js:65"
   ]
  },
  {
   "key": "<label class=\"switch-row sc-ai\"><span class=\"body\"><span class=\"t\">קריאה חכמה עם Claude</span><span class=\"s\">לטבלאות מסובכות. התמונה נשלחת ל-⁠Anthropic עם המפתח שלך</span></span><input type=\"checkbox\" class=\"switch\" id=\"sc-ai\" {0}></label>",
   "kind": "tpl",
   "where": [
-   "app/schedule-import.js:66"
+   "app/schedule-import.js:68"
   ]
  },
  {
   "key": "בלי קריאה חכמה, ",
   "kind": "lit",
   "where": [
-   "app/schedule-import.js:67"
+   "app/schedule-import.js:69"
   ]
  },
  {
   "key": "{0}\n        <div class=\"card small imp-tips\"><b>מה עוזר:</b><ul><li>צילום ישר, חד ומואר של הטבלה (צילום מסך הכי טוב)</li><li>להדביק את ההודעה מוואטסאפ במקום תמונה שלה</li><li>שליד כל יום יהיו שעות, למשל: ראשון 8-16</li></ul></div>\n        {1}\n        {2}\n        <button class=\"btn tonal block\" data-sc-again>{3} לנסות שוב</button>",
   "kind": "tpl",
   "where": [
-   "app/schedule-import.js:74"
+   "app/schedule-import.js:76"
   ]
  },
  {
   "key": "לא מצאתי בסידור משמרות שאני יודע לקרוא 🤔",
   "kind": "lit",
   "where": [
-   "app/schedule-import.js:74"
+   "app/schedule-import.js:76"
   ]
  },
  {
   "key": "<details class=\"imp-paste\"><summary>מה שנקרא</summary><div class=\"code\">{0}</div></details>",
   "kind": "tpl",
   "where": [
-   "app/schedule-import.js:76"
+   "app/schedule-import.js:78"
   ]
  },
  {
   "key": "<button class=\"btn tonal block\" data-sc-ai-now>{0} לנסות קריאה חכמה עם Claude</button>",
   "kind": "tpl",
   "where": [
-   "app/schedule-import.js:77"
+   "app/schedule-import.js:79"
+  ]
+ },
+ {
+  "key": "מסידור העבודה",
+  "kind": "lit",
+  "where": [
+   "app/schedule-import.js:117",
+   "app/schedule-import.js:251"
+  ]
+ },
+ {
+  "key": "כבר קיימת",
+  "kind": "lit",
+  "where": [
+   "app/schedule-import.js:124"
+  ]
+ },
+ {
+  "key": "מחליפה את \u2066{0}⁠–⁠{1}\u2069",
+  "kind": "tpl",
+  "where": [
+   "app/schedule-import.js:125"
+  ]
+ },
+ {
+  "key": "שעה משוערת",
+  "kind": "lit",
+  "where": [
+   "app/schedule-import.js:126"
+  ]
+ },
+ {
+  "key": "עברה",
+  "kind": "lit",
+  "where": [
+   "app/schedule-import.js:127"
+  ]
+ },
+ {
+  "key": "ועוד משמרת אחת",
+  "kind": "lit",
+  "where": [
+   "app/schedule-import.js:134"
+  ]
+ },
+ {
+  "key": "ועוד {0} משמרות",
+  "kind": "tpl",
+  "where": [
+   "app/schedule-import.js:134"
   ]
  },
  {
   "key": "מצאתי בסידור {0} שמות. מי את/ה?",
   "kind": "tpl",
   "where": [
-   "app/schedule-import.js:116"
+   "app/schedule-import.js:144"
   ]
  },
  {
   "key": "מצאתי {0} שלך! 🎉 בודקים רגע ומוסיפים",
   "kind": "tpl",
   "where": [
-   "app/schedule-import.js:117"
+   "app/schedule-import.js:145"
   ]
  },
  {
   "key": "לא מצאתי משמרות בשם הזה",
   "kind": "lit",
   "where": [
-   "app/schedule-import.js:117"
+   "app/schedule-import.js:145"
   ]
  },
  {
-  "key": "<div class=\"imp-row sc-row {0} {1}\" data-i=\"{2}\">\n          <button class=\"sc-tog\" data-sc-tog=\"{3}\" aria-pressed=\"{4}\" aria-label=\"{5}\"><span class=\"imp-check\" aria-hidden=\"true\">{6}</span>\n            <span class=\"imp-d\"><b>{7} {8}</b><small>{9}{10}{11}</small></span>{12}</button>\n          <button class=\"sc-time\" data-sc-time=\"{13}\" aria-label=\"שינוי השעות\"><span class=\"num\">\u2066{14}⁠–⁠{15}\u2069</span>{16}</button></div>",
+  "key": "<div class=\"imp-row sc-row {0} {1}\" data-i=\"{2}\">\n          <button class=\"sc-tog\" data-sc-tog=\"{3}\" aria-pressed=\"{4}\" aria-label=\"{5}\"><span class=\"imp-check\" aria-hidden=\"true\">{6}</span>\n            <span class=\"imp-d\"><b>{7} {8}</b><small>{9}{10}</small></span></button>\n          <button class=\"sc-time\" data-sc-time=\"{11}\" aria-label=\"שינוי השעות\"><span class=\"num\">\u2066{12}⁠–⁠{13}\u2069</span>{14}</button></div>",
   "kind": "tpl",
   "where": [
-   "app/schedule-import.js:123"
-  ]
- },
- {
-  "key": "<i class=\"tag warn\">שעה משוערת</i>",
-  "kind": "lit",
-  "where": [
-   "app/schedule-import.js:125"
-  ]
- },
- {
-  "key": "<i class=\"tag\">עברה</i>",
-  "kind": "lit",
-  "where": [
-   "app/schedule-import.js:125"
+   "app/schedule-import.js:152"
   ]
  },
  {
   "key": "המשמרות של",
   "kind": "lit",
   "where": [
-   "app/schedule-import.js:130"
+   "app/schedule-import.js:159"
   ]
  },
  {
   "key": "מי את/ה בסידור?",
   "kind": "lit",
   "where": [
-   "app/schedule-import.js:130"
+   "app/schedule-import.js:159"
+  ]
+ },
+ {
+  "key": "<button class=\"chip sc-u-chip {0}\" data-sc-unread aria-expanded=\"{1}\" aria-controls=\"sc-unread\">השורה שלי בלי שם</button>",
+  "kind": "tpl",
+  "where": [
+   "app/schedule-import.js:159"
+  ]
+ },
+ {
+  "key": "<div class=\"imp-list sc-u-list\" id=\"sc-unread\" role=\"group\" aria-label=\"השורות בלי שם בסידור\">{0}</div>",
+  "kind": "tpl",
+  "where": [
+   "app/schedule-import.js:160"
   ]
  },
  {
   "key": "<div class=\"field\"><span class=\"lbl\">לאיזה שבוע?</span><div class=\"chips sc-week\">{0}</div></div>",
   "kind": "tpl",
   "where": [
-   "app/schedule-import.js:131"
+   "app/schedule-import.js:161"
   ]
  },
  {
   "key": "השבוע",
   "kind": "lit",
   "where": [
-   "app/schedule-import.js:131",
+   "app/schedule-import.js:161",
    "app/views-leaderboard.js:17",
    "app/views-leaderboard.js:430"
   ]
@@ -5317,35 +5366,35 @@
   "key": "שבוע הבא",
   "kind": "lit",
   "where": [
-   "app/schedule-import.js:131"
+   "app/schedule-import.js:161"
   ]
  },
  {
   "key": "<button class=\"chip {0}\" data-sc-week=\"{1}\" aria-pressed=\"{2}\">{3} · מ-{4}</button>",
   "kind": "tpl",
   "where": [
-   "app/schedule-import.js:131"
+   "app/schedule-import.js:161"
   ]
  },
  {
   "key": "<div class=\"tiny muted imp-note\">{0} \"שעה משוערת\": לפי שם המשמרת או האורך הרגיל שלך. לחיצה על השעות משנה אותן.</div>",
   "kind": "tpl",
   "where": [
-   "app/schedule-import.js:135"
+   "app/schedule-import.js:165"
   ]
  },
  {
   "key": "<label class=\"switch-row\"><span class=\"body\"><span class=\"t\">להזכיר לי לפני כל משמרת</span><span class=\"s\">שעה לפני, בהתראה</span></span><input type=\"checkbox\" class=\"switch\" id=\"sc-remind\"></label>",
   "kind": "tpl",
   "where": [
-   "app/schedule-import.js:136"
+   "app/schedule-import.js:166"
   ]
  },
  {
   "key": "המשמרת הכי משתלמת השבוע",
   "kind": "lit",
   "where": [
-   "app/schedule-import.js:152",
+   "app/schedule-import.js:184",
    "app/views-calendar.js:97"
   ]
  },
@@ -5353,91 +5402,91 @@
   "key": "המשמרת הכי משתלמת בשבוע הבא",
   "kind": "lit",
   "where": [
-   "app/schedule-import.js:152"
+   "app/schedule-import.js:184"
   ]
  },
  {
   "key": "המשמרת הכי משתלמת בסידור",
   "kind": "lit",
   "where": [
-   "app/schedule-import.js:152"
+   "app/schedule-import.js:184"
   ]
  },
  {
   "key": "הוספת משמרת אחת ללוח",
   "kind": "lit",
   "where": [
-   "app/schedule-import.js:157"
+   "app/schedule-import.js:200"
   ]
  },
  {
   "key": "הוספת {0} משמרות ללוח",
   "kind": "tpl",
   "where": [
-   "app/schedule-import.js:157"
+   "app/schedule-import.js:200"
   ]
  },
  {
   "key": "קורא את הסידור…",
   "kind": "lit",
   "where": [
-   "app/schedule-import.js:165"
+   "app/schedule-import.js:208"
   ]
  },
  {
   "key": "לא הצלחנו לקרוא את הסידור. אפשר לנסות שוב או להדביק את ההודעה",
   "kind": "lit",
   "where": [
-   "app/schedule-import.js:178"
+   "app/schedule-import.js:221"
   ]
  },
  {
   "key": "קריאה חכמה עם Claude",
   "kind": "lit",
   "where": [
-   "app/schedule-import.js:183"
+   "app/schedule-import.js:226"
   ]
  },
  {
   "key": "התמונה של הסידור, עם השמות שבה, תישלח ל-⁠Anthropic עם המפתח שלך, רק כדי לקרוא אותה. השימוש מחויב בחשבון ה-⁠API שלך.",
   "kind": "lit",
   "where": [
-   "app/schedule-import.js:183"
+   "app/schedule-import.js:226"
   ]
  },
  {
   "key": "לשלוח",
   "kind": "lit",
   "where": [
-   "app/schedule-import.js:183"
+   "app/schedule-import.js:226"
   ]
  },
  {
   "key": "Claude קורא את הסידור…",
   "kind": "lit",
   "where": [
-   "app/schedule-import.js:186"
+   "app/schedule-import.js:229"
   ]
  },
  {
   "key": "הקריאה החכמה נכשלה",
   "kind": "lit",
   "where": [
-   "app/schedule-import.js:198"
+   "app/schedule-import.js:241"
   ]
  },
  {
   "key": "לא הצלחנו לקרוא את התשובה של Claude. נסו שוב, או הוסיפו את המשמרות ידנית.",
   "kind": "lit",
   "where": [
-   "app/schedule-import.js:198"
+   "app/schedule-import.js:241"
   ]
  },
  {
   "key": "סגור",
   "kind": "lit",
   "where": [
-   "app/schedule-import.js:198",
+   "app/schedule-import.js:241",
    "app/views-login.js:23",
    "app/views-payslip.js:1607",
    "app/views-settings.js:980",
@@ -5445,59 +5494,52 @@
   ]
  },
  {
-  "key": "מסידור העבודה",
-  "kind": "lit",
-  "where": [
-   "app/schedule-import.js:207"
-  ]
- },
- {
   "key": "משמרת אחת נוספה ללוח",
   "kind": "lit",
   "where": [
-   "app/schedule-import.js:216"
+   "app/schedule-import.js:264"
   ]
  },
  {
   "key": "{0} משמרות נוספו ללוח 📅",
   "kind": "tpl",
   "where": [
-   "app/schedule-import.js:216"
+   "app/schedule-import.js:264"
   ]
  },
  {
   "key": "מדביקים קודם את ההודעה",
   "kind": "lit",
   "where": [
-   "app/schedule-import.js:232"
+   "app/schedule-import.js:280"
   ]
  },
  {
   "key": "שעת התחלה",
   "kind": "lit",
   "where": [
-   "app/schedule-import.js:251"
+   "app/schedule-import.js:305"
   ]
  },
  {
   "key": "שעת סיום",
   "kind": "lit",
   "where": [
-   "app/schedule-import.js:253"
+   "app/schedule-import.js:307"
   ]
  },
  {
   "key": "לפתוח את מה ששיתפת עם שעתי?",
   "kind": "lit",
   "where": [
-   "app/schedule-import.js:324"
+   "app/schedule-import.js:378"
   ]
  },
  {
   "key": "אישור",
   "kind": "lit",
   "where": [
-   "app/schedule-import.js:324",
+   "app/schedule-import.js:378",
    "app/ui.js:423",
    "app/views-login.js:20"
   ]
@@ -5506,14 +5548,14 @@
   "key": "מה שיתפת?",
   "kind": "lit",
   "where": [
-   "app/schedule-import.js:336"
+   "app/schedule-import.js:390"
   ]
  },
  {
   "key": "סידור עבודה",
   "kind": "lit",
   "where": [
-   "app/schedule-import.js:338",
+   "app/schedule-import.js:392",
    "manifest"
   ]
  },
@@ -5521,14 +5563,14 @@
   "key": "למשמרות בלוח",
   "kind": "lit",
   "where": [
-   "app/schedule-import.js:338"
+   "app/schedule-import.js:392"
   ]
  },
  {
   "key": "תלוש שכר",
   "kind": "lit",
   "where": [
-   "app/schedule-import.js:338",
+   "app/schedule-import.js:392",
    "app/views-guide.js:275",
    "app/views-support.js:28",
    "core/games.js:190"
@@ -5538,14 +5580,14 @@
   "key": "דוח שעות",
   "kind": "lit",
   "where": [
-   "app/schedule-import.js:338"
+   "app/schedule-import.js:392"
   ]
  },
  {
   "key": "למשמרות שהיו",
   "kind": "lit",
   "where": [
-   "app/schedule-import.js:338"
+   "app/schedule-import.js:392"
   ]
  },
  {

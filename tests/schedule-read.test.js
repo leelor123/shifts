@@ -348,3 +348,47 @@ T.test('the schedule import: leaving the sheet stops the reading itself (the OCR
   T.ok(/onClose: \(\) => \{ if \(stop\) stop\.abort\(\); \}/.test(src), 'the sheet aborts on close');
   T.ok(/App\.readDocWords\(file, progress, stop \? \{ signal: stop\.signal \} : undefined\)/.test(src), 'the reading gets the signal');
 });
+T.test('rows whose name was not read are kept apart ("#1", "#2"), so the person can say which is theirs', () => {
+  // the person's own name is often the one OCR missed ("נדב" read "am"): their row had no name and was dropped
+  const rows = [[null, ['08:00-16:00', '', '08:00-16:00', '', '']], ['דנה', ['16:00-23:00', '', '', '', '']], ['יוסי', ['', '08:00-16:00', '', '', '']], [null, ['', '', '', '', '07:00-15:00']]];
+  const r = SC.parseWords(rowsAt(rows, 52), { today });
+  T.eq(r.names.join(','), 'דנה,יוסי', 'a row tag is never a name');
+  T.eq(r.unnamed.join(','), '#1,#2');
+  const o = SC.offer(r, { today, mine: ['נדב'] });
+  T.ok(o.ask, 'the name was not found: the screen asks');
+  T.eq(o.who.length, 0, 'no unnamed row is taken by itself');
+  T.eq(brief(SC.offer(r, { today, mine: ['נדב'], who: ['#1'] }).entries).join(' | '), '2026-11-22 08:00 16:00 #1 | 2026-11-24 08:00 16:00 #1');
+  T.eq(brief(SC.offer(r, { today, mine: ['נדב'], who: ['#2'] }).entries).join(' | '), '2026-11-26 07:00 15:00 #2');
+  T.ok(SC.isRowTag('#2') && !SC.isRowTag('דני (2)') && !SC.isRowTag('') && !SC.isRowTag('#'));
+  // the person's name read: theirs, as before (an unnamed row never joins it)
+  const named = SC.parseWords(rowsAt([['נדב', rows[0][1]]].concat(rows.slice(1)), 52), { today });
+  T.eq(brief(mineOf(named, ['נדב'])).join(' | '), '2026-11-22 08:00 16:00 נדב | 2026-11-24 08:00 16:00 נדב');
+  T.eq(named.unnamed.join(','), '#1');
+  // no name read at all: still nobody's (nothing offered), and a message with no names is still the person's own
+  const none = SC.parseWords(rowsAt(rows.map(([, c]) => [null, c]), 52), { today });
+  T.eq(none.entries.length, 0); T.eq(none.unnamed.length, 0);
+  const own = p('ראשון 8-16\nשני 16-24');
+  T.ok(own.personal); T.eq(own.unnamed.length, 0); T.eq(own.entries.map((e) => e.who).join(','), ',');
+});
+T.test('a changed schedule: the shift a new one moves (Monday 08-16 → 16-24) is the one it replaces, only when sure', () => {
+  const at = (date, a, b) => { const s = Date.parse(date + 'T' + a + ':00Z'); let e = Date.parse(date + 'T' + b + ':00Z'); if (e <= s) e += 864e5; return { date, s, e }; };
+  const old = [Object.assign(at('2026-11-23', '08:00', '16:00'), { id: 'a' }), Object.assign(at('2026-11-24', '08:00', '16:00'), { id: 'b' })];
+  const ids = (m) => [...m].map(([i, o]) => i + ':' + o.id).join(',');
+  // Monday moved, Tuesday the same shift (overlaps: "already there", not replaced), Wednesday new
+  T.eq(ids(SC.moved([at('2026-11-23', '16:00', '00:00'), Object.assign(at('2026-11-24', '08:00', '16:00'), { taken: true }), at('2026-11-25', '08:00', '16:00')], old)), '0:a');
+  // two shifts on that day in the new schedule: which one replaces it is not known
+  T.eq(ids(SC.moved([at('2026-11-23', '16:00', '20:00'), at('2026-11-23', '20:30', '23:00')], old)), '');
+  // two old shifts that day: not known either
+  T.eq(ids(SC.moved([at('2026-11-23', '16:00', '00:00')], old.concat([Object.assign(at('2026-11-23', '00:00', '04:00'), { id: 'c' })]))), '');
+  // a night shift of the new schedule the day before runs into the old one: not a move
+  T.eq(ids(SC.moved([at('2026-11-22', '23:00', '09:00'), at('2026-11-23', '16:00', '00:00')], old)), '');
+  // nothing from an earlier schedule: nothing replaced
+  T.eq(ids(SC.moved([at('2026-11-23', '16:00', '00:00')], [])), '');
+});
+T.test('the schedule import: a moved shift goes in the same save as the new one; a row with no name is never remembered as the name', () => {
+  const src = require('fs').readFileSync(require('path').join(__dirname, '../src/app/schedule-import.js'), 'utf8');
+  T.ok(/SC\(\)\.moved\(rows, before\)/.test(src), 'the rows are matched with the earlier schedule\'s planned shifts');
+  T.ok(/ops\.push\(\{ store: 'shifts', del: id \}\)/.test(src) && src.indexOf("del: id }") < src.indexOf('App.saveOps(ops'), 'the old shift is removed in the one save (one undo)');
+  T.ok(/who\.find\(\(n\) => !SC\(\)\.isRowTag\(n\)\)/.test(src), 'the name remembered skips "#2"');
+  T.ok(/data-sc-unread/.test(src) && /res\.unnamed/.test(src), 'the rows with no name are offered');
+});
