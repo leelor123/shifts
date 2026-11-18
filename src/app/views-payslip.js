@@ -638,7 +638,7 @@
     const doc = await pdfjs.getDocument({ data: await file.arrayBuffer(), isEvalSupported: false }).promise;
     const pages = Math.min(doc.numPages, 4);
     const holdsSlip = (text) => { const p = Payslip.parseText(text).fields; return !!(p.gross || p.net || p.base || p.totalDeductions); };
-    let all = [], period = null;
+    let all = [], period = null, more = false;
     for (let p = 1; p <= pages; p++) {
       progress(`קורא עמוד ${p} מתוך ${doc.numPages}…`);
       const items = await pageItems(await doc.getPage(p));
@@ -649,11 +649,12 @@
       const t = lines.map((l) => l.text).join('\n');
       if (t.replace(/\s/g, '').length <= 80) continue;
       const per = Payslip.detectPeriod(t);
-      if (all.length && period && per && per !== period && holdsSlip(t)) break; // the next month's payslip
+      // the next month's payslip: not read, and the check says the file holds more than one (more)
+      if (all.length && period && per && per !== period && holdsSlip(t)) { more = true; break; }
       if (!period && holdsSlip(t)) period = per;
       all = all.concat(lines);
     }
-    if (all.length) return { lines: all, text: all.map((l) => l.text).join('\n'), source: 'pdf' };
+    if (all.length) return { lines: all, text: all.map((l) => l.text).join('\n'), source: 'pdf', more };
     // scanned: each page as a picture, until one holds a payslip
     progress('ה-⁠PDF סרוק: מריץ זיהוי טקסט…');
     let first = null;
@@ -817,7 +818,7 @@
       statusEl.innerHTML = `${esc(m[1])}<span aria-hidden="true">${esc(m[2])}</span>`;
     };
     try {
-      const { text, lines, source } = await extractSlip(file, progress, stop && stop.signal);
+      const { text, lines, source, more } = await extractSlip(file, progress, stop && stop.signal);
       if (gone) return;
       const parsed = Payslip.parseText(text);
       SlipRead.review(parsed, lines, source);
@@ -828,7 +829,10 @@
       const period = parsed.period && parsed.period >= '2000-01' && parsed.period <= U.todayKey().slice(0, 7) ? parsed.period : '';
       // the file itself waits in the draft: it is stored only with a saved payslip (saveSlip). Stored before reading,
       // every file read stayed on the phone and in backups, after a failed read, a closed check, a deleted payslip
-      setTimeout(() => verifySheet({ fields: parsed.fields, other: parsed.other, period, text, source, file, fileName: file.name }), 320);
+      // monthAsk: a line under the month box says the file did not give it (only "continue" said so before).
+      // more: the file holds another payslip after the first, in its text (the parser's secondSlip) or on a PDF page of
+      // another month, and only the first was read
+      setTimeout(() => verifySheet({ fields: parsed.fields, other: parsed.other, period, monthAsk: !period, more: !!(parsed.secondSlip || more), text, source, file, fileName: file.name }), 320);
     } catch (e) {
       console.error(e);
       if (gone) return;
@@ -848,7 +852,7 @@
   const SOURCE = { pdf: ['file', 'נקרא מ-\u2060PDF'], ocr: ['camera', 'נקרא מצילום'], ai: ['sparkle', 'נותח בעזרת AI'], manual: ['edit', 'הזנה ידנית'] };
   const ESSENTIAL = ['gross', 'net', 'base', 'workHours'];
   function verifySheet(draft) {
-    const d = { period: draft.period, fields: Store.clone(draft.fields) || {}, other: (draft.other || []).map((o) => Object.assign({ guess: o.guess || 'ignore' }, o)), text: draft.text || '', source: draft.source, file: draft.file, fileId: draft.fileId, fileName: draft.fileName, id: draft.id, notes: draft.notes || '' };
+    const d = { period: draft.period, fields: Store.clone(draft.fields) || {}, other: (draft.other || []).map((o) => Object.assign({ guess: o.guess || 'ignore' }, o)), text: draft.text || '', source: draft.source, file: draft.file, fileId: draft.fileId, fileName: draft.fileName, id: draft.id, notes: draft.notes || '', monthAsk: !!draft.monthAsk && !draft.period, more: !!draft.more };
     let sheetEl = null;
     const val = (k) => (d.fields[k] && d.fields[k].value != null && d.fields[k].value !== '' ? +d.fields[k].value : null);
     const shown = (f) => {
@@ -860,14 +864,19 @@
       if (!f.hours || !v.qty) return '';
       return `${U.num(v.qty, 2)} ש׳${val(f.key) ? ' · ' + money(val(f.key) / v.qty) + ' לשעה' : ''}`;
     };
+    // An hour line read from the file with its amount and no hours (the parser leaves the base's hours out when nothing
+    // on the payslip proves which number they are): the row says so, so the person can type them and the check can
+    // compare the hours. Drawn with the row only (typing in it leaves it in place: no jump above the input).
+    const noHours = (f) => { const v = d.fields[f.key]; return !!(f.hours && v && v.line && val(f.key) != null && !(+v.qty > 0)); };
     const rowHtml = (f) => {
       const v = d.fields[f.key] || {};
       const src = v.line && v.line !== 'AI' ? `<div class="vf-src">${icon('file', 's')}<span>${esc(v.line)}</span></div>` : v.line === 'AI' ? `<div class="vf-src">${icon('sparkle', 's')}<span>זוהה ע״י AI</span></div>` : '';
       return `<div class="vf-row${val(f.key) == null ? ' need' : ''}" data-row="${f.key}">
         <button class="vf-line" data-open="${f.key}" aria-expanded="false"><span class="vf-l"><span>${esc(f.label)}</span><small data-sub>${subOf(f)}</small></span><span class="vf-v" data-shown>${shown(f)}</span><span class="vf-pen">${icon('edit', 's')}</span></button>
+        ${noHours(f) ? `<div class="vf-hint" id="vf-hint-${f.key}">${icon('clock', 's')}<span>לא זיהינו בוודאות כמה שעות רשומות בשורה הזאת. אפשר להקליד אותן מהתלוש.</span></div>` : ''}
         <div class="vf-edit">${src}
           <div class="vf-inputs">
-            ${f.hours ? `<label class="field"><span class="lbl">שעות</span><input class="input" type="number" step="any" inputmode="decimal" data-q="${f.key}" value="${v.qty != null ? esc(String(v.qty)) : ''}"></label>` : ''}
+            ${f.hours ? `<label class="field"><span class="lbl">שעות</span><input class="input" type="number" step="any" inputmode="decimal" data-q="${f.key}" value="${v.qty != null ? esc(String(v.qty)) : ''}"${noHours(f) ? ` aria-describedby="vf-hint-${f.key}"` : ''}></label>` : ''}
             <label class="field"><span class="lbl">${f.kind === 'info' ? 'ערך' : 'סכום בשקלים'}</span><input class="input" type="number" step="any" inputmode="decimal" data-v="${f.key}" value="${v.value != null ? esc(String(v.value)) : ''}"></label>
           </div>
           <div class="vf-acts"><button class="btn text sm" data-rm="${f.key}">${icon('trash', 's')} הסרה</button><button class="btn tonal sm" data-close-row>${icon('check', 's')} סיום</button></div>
@@ -900,10 +909,12 @@
       const src = SOURCE[d.source] || SOURCE.manual;
       const empty = !present.length;
       return `<div class="vf-head">
-          <label class="field vf-month"><span class="lbl">חודש התלוש</span><input class="input" type="month" id="vf-period" value="${d.period || ''}" min="2000-01" max="${U.todayKey().slice(0, 7)}"></label>
+          <label class="field vf-month"><span class="lbl">חודש התלוש</span><input class="input" type="month" id="vf-period" value="${d.period || ''}" min="2000-01" max="${U.todayKey().slice(0, 7)}"${d.monthAsk ? ' aria-describedby="vf-month-note"' : ''}></label>
           <span class="vf-badge">${icon(src[0], 's')}${src[1]}</span>
         </div>
+        ${d.monthAsk ? `<div class="vf-tip need" id="vf-month-note">${icon('calendar', 's')}<span>לא מצאנו בתלוש את החודש. בחרו אותו כאן.</span></div>` : ''}
         <div class="card vf-top" data-top>${top()}</div>
+        ${d.more ? `<div class="vf-tip">${icon('file', 's')}<span>בקובץ יש יותר מתלוש אחד. קראנו את הראשון, ואת השאר אפשר להעלות בנפרד.</span></div>` : ''}
         ${d.source === 'ocr' ? `<div class="vf-tip">${icon('eye', 's')}<span>זיהוי מצילום עלול לטעות בספרות. כדאי להשוות כל שורה לתלוש.</span></div>` : ''}
         ${d.notes ? `<div class="vf-tip">${icon('sparkle', 's')}<span>${esc(d.notes)}</span></div>` : ''}
         ${empty ? `<div class="card vf-start"><b>אילו שורות יש בתלוש?</b><div class="small muted">מספיק להתחיל בעיקר: ברוטו, נטו ושעות.</div>
@@ -946,19 +957,32 @@
       const row = sheetEl.querySelector(`[data-row="${key}"]`);
       if (f && row) {
         row.querySelector('[data-shown]').innerHTML = shown(f);
-        row.querySelector('[data-sub]').innerHTML = subOf(f);
+        // the hours line under the name appears (or goes) when the row closes: shown while typing the hours, it pushed
+        // the box being typed in down a line (19 Nov 2026, frame check at 360px)
+        const sub = row.querySelector('[data-sub]'), next = subOf(f);
+        if (!sub.innerHTML === !next) { sub.innerHTML = next; delete sub.dataset.later; } else sub.dataset.later = '1';
         row.classList.toggle('need', val(key) == null);
         const gs = sheetEl.querySelector(`.vf-group[data-g="${f.kind}"] > summary`);
         if (gs) gs.innerHTML = groupHead(f.kind) + `<span class="vf-chev">${icon('left', 's')}</span>`;
       }
       sheetEl.querySelector('[data-top]').innerHTML = top();
     }
+    // a row that closes shows its hours line as typed (live() kept it for this moment, when the row changes height anyway),
+    // and the hint that asked for the hours goes once they are there
+    function settleSub(r) {
+      const sub = r.querySelector('[data-sub]'), f = Payslip.FIELD[r.dataset.row];
+      if (!f) return;
+      if (sub && sub.dataset.later) { sub.innerHTML = subOf(f); delete sub.dataset.later; }
+      const hint = r.querySelector('.vf-hint');
+      if (hint && !noHours(f)) { const q = r.querySelector('[data-q]'); if (q) q.removeAttribute('aria-describedby'); hint.remove(); }
+    }
     function openRow(key, focus) {
-      sheetEl.querySelectorAll('.vf-row.open').forEach((r) => { if (r.dataset.row !== key) { r.classList.remove('open'); r.querySelector('[data-open]').setAttribute('aria-expanded', 'false'); } });
+      sheetEl.querySelectorAll('.vf-row.open').forEach((r) => { if (r.dataset.row !== key) { r.classList.remove('open'); r.querySelector('[data-open]').setAttribute('aria-expanded', 'false'); settleSub(r); } });
       const row = sheetEl.querySelector(`[data-row="${key}"]`);
       if (!row) return;
       const was = row.classList.contains('open');
       row.classList.toggle('open', !was);
+      if (was) settleSub(row);
       row.querySelector('[data-open]').setAttribute('aria-expanded', String(!was));
       if (!was) {
         const g = row.closest('details');
@@ -1007,7 +1031,7 @@
           else if (b.dataset.rm) { readInputs(); delete d.fields[b.dataset.rm]; redraw(); }
           else if (b.dataset.add) addField(b.dataset.add);
           else if (b.hasAttribute('data-addmenu')) { readInputs(); addMenu(); }
-          else if (b.hasAttribute('data-ai')) { readInputs(); App.aiAnalyze(d.text, (res) => { SlipRead.review(res, [], 'ai'); for (const [k, v] of Object.entries(res.fields)) if (v.value != null || !d.fields[k]) d.fields[k] = v; d.other = res.other.length ? res.other : d.other; if (res.period) d.period = res.period; d.notes = res.notes; d.source = 'ai'; redraw(); }); }
+          else if (b.hasAttribute('data-ai')) { readInputs(); App.aiAnalyze(d.text, (res) => { SlipRead.review(res, [], 'ai'); for (const [k, v] of Object.entries(res.fields)) if (v.value != null || !d.fields[k]) d.fields[k] = v; d.other = res.other.length ? res.other : d.other; if (res.period) { d.period = res.period; d.monthAsk = false; } d.notes = res.notes; d.source = 'ai'; redraw(); }); }
           else if (b.hasAttribute('data-go')) {
             readInputs();
             if (!/^\d{4}-\d{2}$/.test(d.period || '')) { UI.invalid('בחרו את חודש התלוש'); const m = el.querySelector('#vf-period'); if (m) m.scrollIntoView({ block: 'nearest', behavior: 'smooth' }); return; }
@@ -1039,7 +1063,7 @@
             for (const k of Object.keys(d.fields)) if (d.fields[k].value == null && d.fields[k].qty == null && !d.fields[k].asked) delete d.fields[k];
             if (!Object.keys(d.fields).length) { UI.invalid('הוסיפו לפחות שורה אחת מהתלוש'); return; }
             UI.closeTop();
-            setTimeout(() => analysisSheet({ id: d.id || 'ps_' + U.uid(), period: d.period, fields: d.fields, other: d.other, text: d.text, source: d.source, file: d.file, fileId: d.fileId, fileName: d.fileName, isNew: !d.id, edited: !!d.id }), 320);
+            setTimeout(() => analysisSheet({ id: d.id || 'ps_' + U.uid(), period: d.period, fields: d.fields, other: d.other, text: d.text, source: d.source, file: d.file, fileId: d.fileId, fileName: d.fileName, more: d.more, isNew: !d.id, edited: !!d.id }), 320);
           }
         });
       },

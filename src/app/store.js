@@ -169,6 +169,9 @@
       await saveAll();
     }
     await rawKv('schemaVersion', SCHEMA_VERSION);
+    // the files no payslip names (a payslip deleted in an earlier opening, or a read never saved, kept by older versions): a few
+    // seconds after the start, out of the way of the first screen
+    sweepSoon(4000);
     return S;
   }
   function runMigrations(state, from) {
@@ -467,6 +470,7 @@
         if (i >= 0) arr[i] = obj; else arr.push(obj);
         markRec(obj);
         writes.push([op.store, obj]);
+        if (op.store === 'payslips' && obj.fileId) freshFiles.delete(obj.fileId); // its file is named now (sweepFiles)
         const pi = pend.findIndex((d) => d.store === op.store && d.id === obj.id);
         if (pi >= 0) { pend.splice(pi, 1); metaChanged = true; }
       } else if (op.del) {
@@ -507,8 +511,11 @@
     if (settingsChanged) emit({ type: 'settings', keys: [...new Set(ops.filter((o) => o.setting).map((o) => o.setting.path[0]))] });
     if (label && opts.undo !== false) {
       undoStack.push({ label, ops: inverse.reverse() });
-      if (undoStack.length > 30) undoStack.shift();
+      // the oldest step can no longer be undone: a payslip it would bring back is gone for good, and so is its file
+      if (undoStack.length > 30 && stepFiles(undoStack.shift()).length) sweepSoon();
     }
+    // a payslip saved, deleted or undone: a file nothing can show any more goes (one kept for an undo stays)
+    if (ops.some((o) => o.store === 'payslips')) sweepSoon();
     // every change to a worked shift (the timer, the editor, an undo, an import) gets its record in the signed log
     if (shiftChanges.length && root.ShiftLog) root.ShiftLog.onShifts(shiftChanges, opts.via);
     emit({ type: 'data', stores: ops.map((o) => o.store).filter(Boolean) });
@@ -552,6 +559,8 @@
       for (const [st, rec, id] of writes) { if (rec) t.objectStore(st).put(rec); else t.objectStore(st).delete(id); }
       if (metaChanged) t.objectStore('kv').put({ key: 'meta', value: S.meta });
     });
+    // (a payslip deleted here and kept for its undo, or deleted on another phone: its file goes with the undo)
+    if (undoStack.some((s) => stepFiles(s).length) || ops.some((o) => o.store === 'payslips')) sweepSoon();
     undoStack.length = 0; // remote changes invalidate local undo history
     emit({ type: 'data', remote: true, stores: ops.map((o) => o.store) });
   }
@@ -695,9 +704,48 @@
     return _undo();
   }
 
-  /* ---------------- files (payslip images / PDFs) ---------------- */
+  /* ---------------- files (payslip images / PDFs) ----------------
+   * A payslip's file (a photo of it: a name, an ID number, a bank account, the pay) stays on the phone only while
+   * something can still show it: a saved payslip that names it, or an undo step that would bring such a payslip back.
+   * A payslip deleted for good (the undo gone: 30 steps later, a change from another phone, a restore, the app
+   * opened again, or the undo of its own save) leaves no file behind, and neither does a read that was never saved.
+   * Before, every file read stayed on the phone and in "backup with files" after the payslip was deleted (intake P1).
+   * The sweep reads the payslips on the phone too (a record the app could not load still names its file), and a file
+   * stored a moment ago for a payslip being saved waits for it (freshFiles). */
+  const freshFiles = new Map(); // id → when it was stored, until a payslip names it (at most 10 minutes)
+  const FRESH_MS = 10 * 60 * 1000;
   async function putFile(id, blob, name, type) {
+    freshFiles.set(id, Date.now());
     await rawPut('files', { id, blob, name, type, at: Date.now() });
+  }
+  const stepFiles = (step) => (step && step.ops || []).filter((o) => o.store === 'payslips' && o.put && o.put.fileId).map((o) => o.put.fileId);
+  /** Deletes every stored file no payslip names and no undo step can bring back; returns how many went. */
+  async function sweepFiles() {
+    if (memoryOnly) return 0;
+    let keysReq = null, slipsReq = null;
+    await run(['files', 'payslips'], 'readonly', (t) => {
+      if (!t) return;
+      keysReq = t.objectStore('files').getAllKeys();
+      slipsReq = t.objectStore('payslips').getAll();
+    });
+    const ids = (keysReq && keysReq.result) || [];
+    if (!ids.length) return 0;
+    // what names a file is gathered after the read, right before the delete (nothing awaits in between)
+    const keep = new Set();
+    const now = Date.now();
+    for (const [id, at] of freshFiles) { if (now - at < FRESH_MS) keep.add(id); else freshFiles.delete(id); }
+    for (const p of S.payslips.concat((slipsReq && slipsReq.result) || [])) if (p && p.fileId) keep.add(p.fileId);
+    for (const step of undoStack) for (const id of stepFiles(step)) keep.add(id);
+    const gone = ids.filter((id) => !keep.has(id));
+    if (gone.length) await run(['files'], 'readwrite', (t) => { if (t) for (const id of gone) t.objectStore('files').delete(id); });
+    return gone.length;
+  }
+  // a sweep soon after a change that may have let a payslip go for good (several changes in a row: one sweep)
+  let sweepTimer = null;
+  function sweepSoon(ms) {
+    clearTimeout(sweepTimer);
+    sweepTimer = setTimeout(() => { sweepTimer = null; sweepFiles().catch((e) => console.warn('file sweep', e)); }, ms == null ? 1500 : ms);
+    if (sweepTimer && sweepTimer.unref) sweepTimer.unref(); // (a test in node does not wait for it)
   }
   async function getFile(id) {
     let req = null;
@@ -846,8 +894,10 @@
     for (const f of json.files || []) {
       if (!f || !safeId(f.id)) continue;
       try { const b = dataUrlToBlob(f.data); await putFile(f.id, b, String(f.name || '').slice(0, 120), b.type); } catch (e) { console.warn('file restore skipped', e); }
+      freshFiles.delete(f.id); // (a file in the backup is kept only if a payslip names it: older backups carried others)
     }
     undoStack.length = 0;
+    sweepSoon();
     emit({ type: 'restore', mode });
   }
   async function wipe() {
@@ -867,7 +917,7 @@
 
   root.Store = {
     S, load, on, apply, isMemoryOnly: () => memoryOnly, accountHint, keepHint, put, del, undo: undoAny, canUndo, setSettings, setMeta, setActive, find, clone,
-    putFile, getFile, delFile, exportBackup, importBackup, wipe, saveAll, SCHEMA_VERSION, DB_NAME, cleanIcon,
+    putFile, getFile, delFile, sweepFiles, exportBackup, importBackup, wipe, saveAll, SCHEMA_VERSION, DB_NAME, cleanIcon,
     SYNC_STORES, APPEND_ONLY, LOCAL_SETTINGS, ACCOUNT_META, mergeMem, flushMem, sameRecord, applyRemote, markSynced, dirtyRecords, touchAll, forgetSyncState, applyRemoteSettings, applyRemoteActive,
   };
 })(typeof window !== 'undefined' ? window : globalThis);
