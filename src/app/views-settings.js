@@ -691,7 +691,7 @@
           <div class="kpi"><div class="l">היקף משרה (12 ח׳)</div><div class="v">${U.num(B.jobPct * 100, 0)}%</div></div>
           <div class="kpi"><div class="l">יתרת חופשה</div><div class="v">${U.num(B.vacationAccrued - B.vacationUsed, 1)}</div><div class="d">צבירה ${U.num(B.vacationAccrued, 1)} · ניצול ${B.vacationUsed}</div></div>
           <div class="kpi"><div class="l">יתרת מחלה</div><div class="v">${U.num(B.sickAccrued - B.sickUsed, 1)}</div><div class="d">צבירה ${U.num(B.sickAccrued, 1)} · ניצול ${B.sickUsed}</div></div></div>
-          <div class="small" style="margin-top:10px">${B.recuperation && B.recuperation.eligible ? `דמי הבראה לשנה: ${B.recuperation.days} ימים × ${U.money(B.recuperation.rate, 0)} × ${U.num(B.jobPct * 100, 0)}% ≈ <b>${U.money(B.recuperation.amount, 0)}</b>` : `דמי הבראה מגיעים אחרי שנת עבודה (מ-${B.recuperation ? U.fmtDate(B.recuperation.eligibleFrom) : '—'}).`}</div>
+          <div class="small" style="margin-top:10px">${B.recuperation && B.recuperation.eligible ? `דמי הבראה לשנה: ${B.recuperation.days - B.recuperation.cut} ימים × ${U.money(B.recuperation.rate, 0)} × ${U.num(B.jobPct * 100, 0)}% ≈ <b>${U.money(B.recuperation.amount, 0)}</b>` : `דמי הבראה מגיעים אחרי שנת עבודה (מ-${B.recuperation ? U.fmtDate(B.recuperation.eligibleFrom) : '—'}).`}</div>
           <div class="tiny" style="opacity:.8;margin-top:6px">הערכה לפי השעות שרשמת. היקף משרה = שעות חודשיות ÷ ${L.fullTimeHours}.</div></div>` : ''}
         <div class="section-title">חופשה</div><div class="card">
           ${F.sel('שבוע עבודה', 's.leave.workWeek', [[5, '5 ימים'], [6, '6 ימים']], L.workWeek, '5 ימים: 12 ימי חופשה בשנים 1\u2060–\u20605; 6 ימים: 14 (לפי היקף משרה).')}

@@ -1021,8 +1021,8 @@
     const eligible = res.seniorityMonths >= 12;
     const days = recuperationDays(Math.max(1, year));
     res.recuperation = {
-      eligible, yearOfService: year, days, rate: recuperationRate(L, asOf),
-      amount: eligible ? days * recuperationRate(L, asOf) * res.jobPct : 0,
+      eligible, yearOfService: year, days, rate: recuperationRate(L, asOf), cut: recupCut(asOf),
+      amount: eligible ? Math.max(0, days - recupCut(asOf)) * recuperationRate(L, asOf) * res.jobPct : 0,
       eligibleFrom: U.addMonths(start, 12),
     };
     return res;
@@ -1064,8 +1064,20 @@
    *              2026: the 20% bracket to 19,000 and the 31% to 25,100 (amendment 288, published 31.3.2026); every tax
    *              amount is frozen for 2025–2027, indexing resumes in 2028 (ynet s1b8w9tnkl, kolzchut נקודת_זיכוי);
    *              a refund can be asked for six years back, so six years are kept;
-   *   recup    — recuperation day rate, private sector (extension order; 2026: 451.50, published 18.8.2026; the
-   *              agreement runs to 30.6.2027, chamber.org.il 1856/163015);
+   *   recup    — recuperation day rate, private sector, by RECUPERATION YEAR, not calendar year: row Y holds the rate
+   *              of recuperation year Y, which runs 1.7.(Y-1) to 30.6.Y (Ministry of Labor position paper, October
+   *              2023); the rate follows that year, not the payment date (kolzchut "דמי הבראה"). Checked 2026-11-19:
+   *                2023 (1.7.2022–30.6.2023): 378 (ice.co.il 974571, 982493: an employer who paid 378 owes 40 a day);
+   *                2024 (from 1.7.2023): 418, extension order 7016/2023 of 20.9.2023 (malam-payroll, "מיום 1.7.2023
+   *                     ועד ליום 30.6.2024");
+   *                2025 (1.7.2024–30.6.2025): no new order; 418 stayed (the freeze laws, RECUP_CUT);
+   *                2026 (1.7.2025–30.6.2026): 451.50, the agreement of 22.6.2026 extended by the order published in
+   *                     Reshumot on 18.8.2026 (kolzchut "דמי הבראה": "לגבי התקופה שהחל מ-1.7.2025 ועד 30.6.2026";
+   *                     arnontl.com, taxcollege.co.il: "שנת ההבראה 2026 היא התקופה שמיום 1.7.2025 ועד יום 30.6.2026").
+   *                     An employer who paid 418 for that period owes 33.50 a day. News items that say "from the
+   *                     start of 2026" (calcalist, walla) shortened it: the order's year starts on 1.7.2025;
+   *                2027 (from 1.7.2026): not published; no source found that the 2026 agreement covers it.
+   *              The public service (511.60 in 2026) is a separate track the order excludes; the app uses the private rate;
    *   travelCap — the daily travel refund cap (extension order; 22.60, unchanged since 2016, kolzchut החזר_הוצאות_נסיעה). */
   const LAW_YEARS = {
     2020: { tax: { point: 219, brackets: [[6330, 10], [9080, 14], [14580, 20], [20260, 31], [42160, 35], [54300, 47], [Infinity, 50]] } },
@@ -1074,9 +1086,12 @@
     2023: {
       minWage: { from: '2023-04-01', monthly: 5880.02, hourly: 32.30 },
       tax: { point: 235, brackets: [[6790, 10], [9730, 14], [15620, 20], [21710, 31], [45180, 35], [58190, 47], [Infinity, 50]] },
-      recup: 418,
+      recup: 378, // recuperation year 2023 = 1.7.2022–30.6.2023
     },
-    2024: { tax: { point: 242, brackets: [[7010, 10], [10060, 14], [16150, 20], [22440, 31], [46690, 35], [60130, 47], [Infinity, 50]] } },
+    2024: {
+      tax: { point: 242, brackets: [[7010, 10], [10060, 14], [16150, 20], [22440, 31], [46690, 35], [60130, 47], [Infinity, 50]] },
+      recup: 418, // from 1.7.2023 (and frozen through 30.6.2025)
+    },
     2025: {
       minWage: { from: '2025-04-01', monthly: 6247.67, hourly: 34.32 },
       bl: [7522, 50695],
@@ -1087,13 +1102,13 @@
       minWage: { from: '2026-04-01', monthly: 6443.85, hourly: 35.40 },
       bl: [7703, 51910],
       tax: { point: 242, brackets: [[7010, 10], [10060, 14], [19000, 20], [25100, 31], [46690, 35], [60130, 47], [Infinity, 50]] },
-      recup: 451.5,
+      recup: 451.5, // recuperation year 2026 = 1.7.2025–30.6.2026
     },
     2027: { // filled 2026-11-16: only what the law already fixed
       minWage: null, // Ministry of Labor, ~March 2027, from 2027-04-01
       bl: null, // btl.gov.il, end of December 2026
       tax: { same: 2026 }, // frozen through 2027 (indexing resumes in 2028); a 2027 budget law could still change it
-      recup: null, // a new extension order (the 2026 agreement runs to 30.6.2027)
+      recup: null, // recuperation year 2027 = 1.7.2026–30.6.2027: a new agreement and extension order
       travelCap: null, // check the extension order is unchanged (kolzchut החזר_הוצאות_נסיעה)
     },
   };
@@ -1103,7 +1118,8 @@
     minWage: { by: '04-01', where: 'gov.il (Ministry of Labor), the minimum wage from April 1st' },
     bl: { by: '01-15', where: 'btl.gov.il, "שינוי בתשלום דמי ביטוח לאומי ודמי ביטוח בריאות לשנת YYYY"' },
     tax: { by: '01-15', where: 'kolzchut "מדרגות מס הכנסה" and "נקודת זיכוי" (or the Tax Authority)' },
-    recup: { by: '09-01', where: 'the recuperation extension order for the private sector (kolzchut "דמי הבראה")' },
+    // row Y's year starts 1.7.(Y-1); orders come late (2026's on 18.8.2026), so the grace runs to 1 Sep of Y itself
+    recup: { by: '09-01', where: 'the recuperation extension order for the private sector, recuperation year YYYY = 1.7.(YYYY-1)–30.6.YYYY (kolzchut "דמי הבראה")' },
     travelCap: { by: '01-15', where: 'the travel extension order (kolzchut "החזר הוצאות נסיעה")' },
   };
   // i18n-keep-end
@@ -1111,7 +1127,8 @@
   /** One yearly number in force for a date: { value, year, pending } — pending = this year's row says "not published
    *  yet" and the value is the last one known. tax's { same } is followed. */
   function lawYear(key, k) {
-    const y = +String(k || U.todayKey()).slice(0, 4);
+    k = String(k || U.todayKey());
+    const y = key === 'recup' ? recupYearOf(k) : +k.slice(0, 4);
     const years = Object.keys(LAW_YEARS).map(Number).filter((x) => x <= y).sort((a, b) => b - a);
     let pending = false;
     for (const x of years) {
@@ -1131,6 +1148,18 @@
   const BL_YEARS = pick('bl');
   const TAX_YEARS = pick('tax', (v) => (v.same ? LAW_YEARS[v.same].tax : v));
   const RECUP_YEARS = pick('recup');
+  /** The recuperation year a date falls in: 1.7.(Y-1) to 30.6.Y is year Y (see recup above). */
+  function recupYearOf(k) {
+    k = String(k || U.todayKey());
+    return +k.slice(0, 4) + (+k.slice(5, 7) >= 7 ? 1 : 0);
+  }
+  /* Recuperation days the law took off a payment, by the calendar year it was paid in: one day in 2024 and in 2025
+   * ("חוק הקפאה והפחתה של דמי הבראה בשנת 2024 לשם תקצוב הטבות לחיילי מילואים"; the 2025 law in Reshumot 27.3.2025,
+   * Tax Authority circular 14.5.2025; malam-payroll "חוק הקפאה והפחתה של דמי הבראה בשנת 2025 – הנחיות ליישום": the
+   * employer deducts one day's value from the recuperation pay actually paid that year, pro rata for part time).
+   * Not for a household worker of a private person (the app cannot tell). No such law for 2026 (checked 2026-11-19). */
+  const RECUP_CUT = { 2024: 1, 2025: 1 };
+  const recupCut = (k) => RECUP_CUT[+String(k || U.todayKey()).slice(0, 4)] || 0;
   /** The daily travel refund cap for a date (the extension order). */
   const travelCap = (k) => lawYear('travelCap', k).value;
   const bracketsKey = (b) => (Array.isArray(b) ? b.map(([u, p]) => (u === Infinity || u == null ? 'inf' : +u) + ':' + +p).join(',') : '');
@@ -1166,7 +1195,7 @@
   }
   /** The recuperation day rate for a date, unless the settings name another. */
   function recuperationRate(L, k) {
-    return lawValue(L.recuperationRate, Object.values(RECUP_YEARS)) ? byYear(RECUP_YEARS, k) : +L.recuperationRate;
+    return lawValue(L.recuperationRate, Object.values(RECUP_YEARS)) ? byYear(RECUP_YEARS, String(recupYearOf(k))) : +L.recuperationRate;
   }
   const round2 = (x) => Math.round(x * 100) / 100;
   function legalMinWage(k, birthKey) {
@@ -1194,7 +1223,7 @@
   }
 
   root.Engine = {
-    LAW_YEARS, LAW_DUE, LAW_KEYS, lawYear, travelCap, LAW_BREAK, validShift, validEntry, otByLaw, otLawToTurnOn, otDayHours, otWeekHours, WEEK_REG_H, WEEK_REG_H_MINOR, legalMinWage, minWageFor, youthRules, pensionMinAge, MIN_WAGE, BL_YEARS, RECUP_YEARS, TAX_YEARS, taxLaw, blLimits, recuperationRate,
+    LAW_YEARS, LAW_DUE, LAW_KEYS, lawYear, travelCap, LAW_BREAK, validShift, validEntry, otByLaw, otLawToTurnOn, otDayHours, otWeekHours, WEEK_REG_H, WEEK_REG_H_MINOR, legalMinWage, minWageFor, youthRules, pensionMinAge, MIN_WAGE, BL_YEARS, RECUP_YEARS, recupYearOf, RECUP_CUT, recupCut, TAX_YEARS, taxLaw, blLimits, recuperationRate,
     makeCtx, roleRate, roundMinutes, monthsBetween, buildSegments, hasOverrides, computeShift, computeAll,
     periodByKey, periodOf, dayValue, computeEntries, travelByDay, incomeTaxRaw, netEstimate, pensionActive,
     buildModel, totals, periodSummary, rangeSummary, pensionBaseOf, leaveBalances, holidayPay, vacationEntitlement, recuperationDays, ageAt, isMinor,

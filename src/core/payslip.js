@@ -2152,8 +2152,10 @@
       const rec = val(F, 'recuperation');
       if (rm === 0 || rm === month) {
         const exp = rm === 0 ? L.recuperation.amount / 12 : L.recuperation.amount;
-        if (askedIn(F, 'recuperation')) { /* not read */ } else if (!rec) add({ area: 'הבראה', status: 'warn', title: 'לא נמצאו דמי הבראה', amount: exp, detail: `לפי ותק ${U.num(L.seniorityYears, 1)} שנים והיקף משרה ~${U.num(L.jobPct * 100, 0)}%: ≈ ${U.money(exp)}.`, basis: 'צו ההרחבה לדמי הבראה (מגזר פרטי).', confidence: 'low', note: 'מעסיקים משלמים בחודשים שונים. אם קיבלת בחודש אחר, הכול בסדר.' });
-        else add({ area: 'הבראה', status: 'ok', title: 'שולמו דמי הבראה', detail: `${U.money(rec)} (הערכה: ${U.money(exp)}).`, basis: 'צו ההרחבה לדמי הבראה.', confidence: 'low' });
+        // 2024 and 2025 payments: the freeze law took one recuperation day off (Engine.RECUP_CUT); the estimate already has
+        const cutNote = L.recuperation.cut ? ' ' + `בניכוי יום הבראה אחד, לפי חוק ההקפאה וההפחתה של דמי הבראה בשנת ${slip.period.slice(0, 4)}.` : '';
+        if (askedIn(F, 'recuperation')) { /* not read */ } else if (!rec) add({ area: 'הבראה', status: 'warn', title: 'לא נמצאו דמי הבראה', amount: exp, detail: `לפי ותק ${U.num(L.seniorityYears, 1)} שנים והיקף משרה ~${U.num(L.jobPct * 100, 0)}%: ≈ ${U.money(exp)}.` + cutNote, basis: 'צו ההרחבה לדמי הבראה (מגזר פרטי).', confidence: 'low', note: 'מעסיקים משלמים בחודשים שונים. אם קיבלת בחודש אחר, הכול בסדר.' });
+        else add({ area: 'הבראה', status: 'ok', title: 'שולמו דמי הבראה', detail: `${U.money(rec)} (הערכה: ${U.money(exp)}).` + cutNote, basis: 'צו ההרחבה לדמי הבראה.', confidence: 'low' });
       }
     }
 
