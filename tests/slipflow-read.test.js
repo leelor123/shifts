@@ -106,6 +106,20 @@ T.test('from a picture, an amount its line multiplies out to is kept even when t
   T.ok(!lost.F.rest150 || lost.F.rest150.value == null || lost.F.rest150.qty === 10, 'no proof from two whole numbers');
 });
 
+T.test('the parser\'s unordered factors prove an amount read from a photo', () => {
+  // the round-3 parser keeps "10.00 45.63" as factors when it cannot tell the hours column; their product is the amount
+  const lines = R.lines(R.rows(R.words(row(100, ['שעות', 'נוספות', '125%', '10.00', '45.63', '456.30']), [])));
+  const p = { fields: { ot125: { value: 456.3, line: lines[0].text, factors: [45.63, 10] } }, other: [] };
+  R.review(p, lines, 'ocr');
+  T.eq(val(p.fields, 'ot125'), 456.3);
+  // factors that do not multiply to it, on a line whose own numbers do not either: no proof, the amount is asked for
+  const l2 = R.lines(R.rows(R.words(row(100, ['שעות', 'נוספות', '125%', '456.30']), [])));
+  const wrong = { fields: { ot125: { value: 456.3, line: l2[0].text, factors: [45.63, 11] } }, other: [] };
+  R.review(wrong, l2, 'ocr');
+  T.eq(val(wrong.fields, 'ot125'), null);
+  T.ok(wrong.fields.ot125.asked);
+});
+
 T.test('a payment put together from lines that are not it: the amount is not shown', () => {
   // the title's year and the hourly rate were added to the base: 2026 + 34.32 + 4,135.56 = 6,195.88, above the gross
   const he = row(100, ['תלוש', 'משכורת', 'לחודש', 'ספטמבר', '2026']).concat(row(140, ['היקף', 'משרה', '100%', 'שכר', 'שעה', '34.32']),
@@ -118,18 +132,20 @@ T.test('a line whose name was not read waits to be named, with its amount', () =
   // "שעות naw 150%": שבת misread as Latin letters; taken as overtime 150% it was shown as overtime
   const he = row(100, ['שעות', 'naw', '150%', '12.00', '51.48', '617.76']);
   const { F, parsed } = read(he);
-  T.ok(!F.ot150 && !F.rest150, 'no overtime or Shabbat line from an unread name');
-  T.ok(parsed.other.some((o) => Math.abs(o.value - 617.76) < 0.01), 'the amount is among the lines to name');
+  T.ok(!val(F, 'ot150') && !val(F, 'rest150'), 'no overtime or Shabbat amount from an unread name');
+  // the row the parser named is asked for with its line (round 3: moved to the unnamed lines, the check read it as
+  // missing); the round-2 parser names no row from such a line and keeps it among the unnamed lines itself
+  T.ok(F.ot150 ? F.ot150.asked && /617\.76/.test(F.ot150.line) : parsed.other.some((o) => /617\.76/.test(o.line)), 'asked for, with the line it was read from');
   // a line with no name at all: "150% 10 52.50 525.00"
   const r2 = read(row(100, ['150%', '10', '52.50', '525.00']));
-  T.ok(!r2.F.ot150, 'a percentage alone names no line');
+  T.ok(!val(r2.F, 'ot150') && (!r2.F.ot150 || r2.F.ot150.asked), 'a percentage alone names no line: no amount, asked for');
 });
 
 T.test('direction marks around a word do not hide it from the check', () => {
   const RLM = String.fromCharCode(0x200f), LRM = String.fromCharCode(0x200e);
   const he = row(100, [RLM + 'שעות' + LRM, 'naw', '150%', '12.00', '51.48', '617.76']);
   const { F } = read(he);
-  T.ok(!F.ot150, 'the unread word is still seen');
+  T.ok(val(F, 'ot150') == null && (!F.ot150 || F.ot150.asked), 'the unread word is still seen: no amount shown (asked for, or the parser leaves the line unnamed)');
 });
 
 T.test('a line the parser keeps normalized still finds the words it was read from', () => {
@@ -138,12 +154,12 @@ T.test('a line the parser keeps normalized still finds the words it was read fro
   const lines = R.lines(R.rows(R.words(row(100, ['סה״כ', 'ניכויים', 'naw', '547.61']), [])));
   const parsed = { fields: { totalDeductions: { value: 547.61, line: 'סה"כ ניכויים naw 547.61' } }, other: [] };
   R.review(parsed, lines, 'ocr');
-  T.ok(!parsed.fields.totalDeductions, 'the unread word is seen, the line waits to be named');
+  T.ok(parsed.fields.totalDeductions.asked && parsed.fields.totalDeductions.why === 'name', 'the unread word is seen, the line is asked for');
   // a part of a row (the parser drops the line code) is found in its row
   const l2 = R.lines(R.rows(R.words(row(100, ['9001', 'ביטוח', 'לאומי', 'qxzw', '287.45']), [])));
   const p2 = { fields: { nationalInsurance: { value: 287.45, line: 'ביטוח לאומי qxzw 287.45' } }, other: [] };
   R.review(p2, l2, 'ocr');
-  T.ok(!p2.fields.nationalInsurance, 'found by containment');
+  T.ok(p2.fields.nationalInsurance.asked && p2.fields.nationalInsurance.why === 'name', 'found by containment');
 });
 
 T.test('numbers that cannot be are not shown', () => {
@@ -229,6 +245,175 @@ T.test('the optional AI\'s answer passes the same checks of what cannot be', () 
   T.eq(res.other.length, 0);
   const src = fs.readFileSync(SRC, 'utf8');
   T.ok(/App\.aiAnalyze\(d\.text, \(res\) => \{ SlipRead\.review\(res, \[\], 'ai'\);/.test(src), 'the screen reviews the answer before showing it');
+});
+
+T.section('payslip check: a line read but not sure never becomes money owed (round 3)');
+
+// review t13: a correct payslip photographed with its gross line cut off. Travel and pension are read right but
+// nothing on the page confirms them; emptied and then dropped at "המשך", the check said the payslip lacks them
+const T13 = ['תלוש שכר לחודש 09/2026', 'שכר יסוד 40.00 40.00 1,600.00', 'שעות נוספות 125% 2.00 50.00 100.00', 'שעות שבת 150% 4.00 60.00 240.00', 'נסיעות 135.60', 'פנסיה עובד 116.40'];
+const t13 = () => {
+  const he = [].concat(...T13.map((t, i) => row(100 + i * 40, t.split(' '))));
+  return read(he);
+};
+T.test('an amount the review empties stays on the payslip as asked for: { value: null, asked: true }', () => {
+  const { F, unsure } = t13();
+  for (const k of ['travel', 'pensionEmployee']) {
+    T.ok(F[k], k + ' kept');
+    T.eq(F[k].value, null, k);
+    T.eq(F[k].asked, true, k + ' asked');
+    T.eq(F[k].why, unsure[k], k + ' why');
+  }
+  T.eq(val(F, 'base'), 1600, 'what the line proves stays');
+  T.ok(!F.base.asked);
+});
+T.test('an hour line without its hours, next to hour lines with theirs, is asked for its hours', () => {
+  // Shabbat 240 read, its hours not: the check added the other lines' hours and said "שעות שלא שולמו 240"
+  const he = row(100, ['שכר', 'יסוד', '40.00', '40.00', '1,600.00']).concat(row(140, ['שעות', 'שבת', '150%', '240.00']));
+  const { F } = read(he, [], 'pdf');
+  T.eq(F.base.qty, 40); T.ok(!F.base.asked);
+  // (the round-2 parser asks for such a line's amount itself; either way nothing goes on without the person)
+  T.ok(F.rest150.asked, 'asked for');
+  if (val(F, 'rest150') != null) { T.eq(val(F, 'rest150'), 240, 'the amount stays'); T.ok(F.rest150.qty == null && F.rest150.why === 'qty', 'its hours are asked for'); }
+  // with no hour line that has hours, nothing is asked (the check cannot add up hours, and says so itself)
+  const one = read(row(100, ['שעות', 'שבת', '150%', '240.00']), [], 'pdf');
+  T.ok(!one.F.rest150.asked || val(one.F, 'rest150') == null, 'no hours asked when no line has hours');
+});
+
+T.test('a field the parser itself leaves without an amount is asked for too', () => {
+  const p = { fields: { base: { value: null, line: 'שכר יסוד 40.00 4X.00' }, travel: { value: 135.6, line: 'נסיעות 135.60' } }, other: [] };
+  R.review(p, [], 'pdf');
+  T.eq(p.fields.base.asked, true);
+  T.ok(!p.fields.travel.asked);
+});
+T.test('"המשך" does not go on while a row asked for is neither typed in nor removed', () => {
+  const src = fs.readFileSync(SRC, 'utf8');
+  const go = src.slice(src.indexOf("else if (b.hasAttribute('data-go')) {"), src.indexOf('setTimeout(() => analysisSheet('));
+  T.ok(go.includes("const lacks = (k) => { const v = d.fields[k]; return !!v && v.asked && (v.value == null || (v.why === 'qty' && !(v.qty > 0))); };"), 'an asked amount, or asked hours, lacks');
+  const gate = go.indexOf('const open = [].concat(...GROUPS.map((g) => Payslip.FIELDS.filter((f) => f.kind === g[0]).map((f) => f.key))).find(lacks);');
+  T.ok(gate > 0, 'the gate is there');
+  T.ok(/const passAsked = Payslip\.ASKED_SAFE === true;\s*if \(open && !passAsked\) \{[\s\S]*?return;\s*\}/.test(go.slice(gate)), 'it stops, unless the check reads asked lines as "not read" (ASKED_SAFE)');
+  T.ok(gate < go.indexOf('Payslip.addNamedLines(d.fields, d.other);'), 'before named lines are added (a named line does not fill an asked row)');
+  const drop = go.indexOf('if (d.fields[k].value == null && d.fields[k].qty == null && !d.fields[k].asked) delete d.fields[k];');
+  T.ok(gate < drop, 'before empty rows are dropped, and an asked line is never dropped as an empty row');
+  T.ok(!/if \(d\.fields\[k\]\.value == null && d\.fields\[k\]\.qty == null\) delete d\.fields\[k\];/.test(go), 'no drop of every value-null field');
+});
+T.test('t13 through the flow: no money said owed for a line that was read but not sure', () => {
+  // what "המשך" hands the check: with the gate, either the person typed the asked rows (here: the payslip's own
+  // values) or removed them; the check on what was typed finds nothing missing for them
+  const { F, parsed } = t13();
+  const open = Payslip.FIELDS.map((f) => f.key).filter((k) => F[k] && F[k].asked && F[k].value == null);
+  T.ok(open.includes('travel') && open.includes('pensionEmployee'), 'the gate stops on these: ' + open.join(','));
+  // the old flow: asked rows dropped as if absent
+  const dropped = Object.fromEntries(Object.entries(F).filter(([, v]) => v.value != null));
+  T.ok(!dropped.travel && !dropped.pensionEmployee, 'dropped, they look absent (what the gate now prevents)');
+  T.ok(parsed.fields === F);
+});
+
+T.test('no regex in the payslip screen lost a backslash (a shell heredoc ate them twice)', () => {
+  // round 3 review: /^(.*?)(s*d+%)$/ for /^(.*?)(\s*\d+%)$/ (the screen reader's percent split) and /.pdf$/i for
+  // /\.pdf$/i. Every regex literal is read from the source; a bare s*, s+, d+, d{, w+ or a ".pdf" with an unescaped dot
+  // is what a lost backslash leaves
+  const acorn = require('acorn');
+  const walk = require('acorn-walk');
+  const bad = [];
+  for (const f of ['views-payslip.js', 'payslip-plus.js', 'salary-check.js', 'claim-report.js']) {
+    const code = fs.readFileSync(path.join(__dirname, '..', 'src', 'app', f), 'utf8');
+    walk.simple(acorn.parse(code, { ecmaVersion: 'latest' }), {
+      Literal(n) {
+        if (!n.regex) return;
+        const p = n.regex.pattern.replace(/\\./g, '__');
+        if (/(^|[^A-Za-z_])[sdw][*+{]/.test(p) || /(^|[^\\_])\.(?:pdf|jpe?g|png)\b/i.test(n.regex.pattern.replace(/\\\./g, '__'))) bad.push(f + ': /' + n.regex.pattern + '/');
+      },
+    });
+  }
+  T.eq(bad.join('  '), '');
+});
+
+T.section('payslip check: the parser\'s never-seen family through the screen (round 3)');
+
+T.test('a balance line keeps its columns: the balance is the last one, not the previous', () => {
+  // cut into four, "חופשה: יתרה קודמת 1.75" gave the previous balance as the balance (1,196 wrong on the agency layout)
+  const lines = R.lines(R.rows(R.words(row(100, ['חופשה:', 'יתרה', 'קודמת', '1.75', 'זיכוי', '1.00', 'ניצול', '0.00', 'יתרה', '2.75']), [])));
+  T.eq(lines.length, 1, lines.map((l) => l.text).join(' / '));
+  // the same with a column word a photo misread ('זיכו"')
+  T.eq(R.lines(R.rows(R.words(row(100, ['חופשה:', 'יתרה', 'קודמת', '1.75', 'זיכו"', '1.00', 'ניצול', '0.00', 'יתרה', '2.75']), []))).length, 1);
+  // and a balance line cut after "קודמת" anyway: its number is the previous balance, not shown
+  const cut = { fields: { vacationBalance: { value: 1.75, line: 'חופשה: יתרה קודמת 1.75' } }, other: [] };
+  R.review(cut, [], 'pdf');
+  T.eq(cut.fields.vacationBalance.value, null);
+  // two tables side by side are still two lines
+  T.eq(R.lines(R.rows(R.words(row(100, ['שכר', 'יסוד', '168.00', '42.00', '7,056.00', 'מס', 'הכנסה', '418.00']), []))).length, 2);
+});
+T.test('a line code printed after the amount is the code, not the amount', () => {
+  // "704 | נסיעות | 82.60" read right to left: travel 704 for 82.60
+  const { F } = read(row(100, ['נסיעות', '82.60', '704']), [], 'pdf');
+  T.eq(val(F, 'travel'), 82.6);
+  // a whole-shekel amount that hours × rate make is the amount: "שעות עבודה 168.25 35.4 5956" keeps 5956 last
+  const l = R.lines(R.rows(R.words(row(100, ['שעות', 'רגילות', '168.25', '35.4', '5956']), [])));
+  T.ok(/5956$/.test(l[0].text), l[0].text);
+});
+T.test('on an hour line, the rate taken for the hours is not kept', () => {
+  // "שעות שבת 7.25 60.00 435.00" read as 60 hours at 7.25: a "low Shabbat rate" of 3,165 owed
+  const p = { fields: { rest150: { value: 435, qty: 60, rate: 7.25, line: 'שעות שבת 7.25 60.00 435.00' } }, other: [] };
+  R.review(p, [], 'pdf');
+  T.eq(p.fields.rest150.value, 435, 'the amount stays');
+  T.eq(p.fields.rest150.qty, null, 'the hours do not');
+});
+T.test('an hour line whose two numbers the parser could not order is asked for its hours', () => {
+  const p = { fields: { ot125: { value: 362.5, line: 'שעות נוספות 125% 7.25 50.00 362.50', factors: [7.25, 50] } }, other: [] };
+  R.review(p, [], 'pdf');
+  T.eq(p.fields.ot125.value, 362.5);
+  T.ok(p.fields.ot125.asked && p.fields.ot125.why === 'qty');
+});
+T.test('hour lines without hours on a payslip that prints its work hours are asked for their hours', () => {
+  // round 4's parser leaves every line's hours out without a heading; judged by pay, the overtime was "21.09 missing"
+  const p = { fields: { base: { value: 7046, line: 'שכר יסוד 7,046.00' }, ot125: { value: 552.5, line: 'שעות נוספות 125% 552.50' }, workHours: { value: 148.75, line: 'שעות עבודה 148.75' } }, other: [] };
+  R.review(p, [], 'pdf');
+  T.ok(p.fields.ot125.asked && p.fields.ot125.why === 'qty' && p.fields.base.asked, 'asked');
+  const none = { fields: { ot125: { value: 552.5, line: 'שעות נוספות 125% 552.50' } }, other: [] };
+  R.review(none, [], 'pdf');
+  T.ok(!none.fields.ot125.asked, 'no hours anywhere: nothing to ask');
+});
+T.test('an unnamed line with an unread word that names a line without it is asked for under that name', () => {
+  // round 4's parser leaves "שעות naw 150% …" unnamed; the check then took its pay as not paid
+  const lines = R.lines(R.rows(R.words(row(100, ['שעות', 'naw', '150%', '12.00', '51.48', '617.76']), [])));
+  const p = { fields: {}, other: [{ line: lines[0].text, value: 617.76 }] };
+  R.review(p, lines, 'ocr');
+  const k = Object.keys(p.fields)[0];
+  T.ok(k && p.fields[k].asked && p.fields[k].value == null && /617\.76/.test(p.fields[k].line), 'asked: ' + JSON.stringify(p.fields));
+  // a line the parser dropped altogether (no Hebrew of its name read) is asked for too
+  const l3 = R.lines(R.rows(R.words(row(100, ['nivw', 'naw', '150%', 'iisx', '12.00', '51.48', '617.76']), [])));
+  const p3 = { fields: {}, other: [] };
+  R.review(p3, l3, 'ocr');
+  const k3 = Object.keys(p3.fields)[0];
+  T.ok(k3 && p3.fields[k3].asked && p3.fields[k3].value == null, 'asked: ' + JSON.stringify(p3.fields) + ' from ' + l3.map((l) => l.text).join(' / '));
+  // no name and a tier misread ("50%" for 150%), but hours × rate = pay: asked as an hour line
+  const l4 = R.lines(R.rows(R.words(row(100, ['Nive', 'nagx', '50%', '12.00', '51.48', '617.76']), [])));
+  const p4 = { fields: {}, other: [] };
+  R.review(p4, l4, 'ocr');
+  const k4 = Object.keys(p4.fields)[0];
+  T.ok(k4 && Payslip.FIELD[k4].hours && p4.fields[k4].asked && p4.fields[k4].value == null, 'asked as an hour line: ' + JSON.stringify(p4.fields));
+  // a clean unnamed line stays among the unnamed lines
+  const l2 = R.lines(R.rows(R.words(row(100, ['קרן', 'מילואים', '617.76']), [])));
+  const p2 = { fields: {}, other: [{ line: l2[0].text, value: 617.76 }] };
+  R.review(p2, l2, 'ocr');
+  T.eq(Object.keys(p2.fields).length, 0);
+});
+T.test('the year\'s figures read as the month\'s are not shown', () => {
+  // the month's gross taken as the year's gross (outside January), and the year's taxable gross as the month's
+  const a = { period: '2026-07', fields: { gross: { value: 5415.1, line: 'שכר ברוטו 5,415.10' }, ytdGross: { value: 5415.1, line: 'שכר ברוטו 5,415.10' } }, other: [] };
+  R.review(a, [], 'pdf');
+  T.eq(a.fields.ytdGross.value, null);
+  const jan = { period: '2026-01', fields: { gross: { value: 5415.1, line: 'שכר ברוטו 5,415.10' }, ytdGross: { value: 5415.1, line: 'ברוטו מצטבר 5,415.10' } }, other: [] };
+  R.review(jan, [], 'pdf');
+  T.eq(jan.fields.ytdGross.value, 5415.1, 'in January the year is the month');
+  const b = { fields: { taxableGross: { value: 35815.82, line: 'ברוטו למס 35,815.82' }, ytdGross: { value: 5415.1, line: 'שכר ברוטו 5,415.10' } }, other: [] };
+  R.review(b, [], 'pdf');
+  T.eq(b.fields.taxableGross.value, null); T.eq(b.fields.ytdGross.value, null);
+  const c = { fields: { base: { value: 3000, line: 'שכר יסוד 3,000.00' }, taxableGross: { value: 35815.82, line: 'ברוטו למס 35,815.82' } }, other: [] };
+  R.review(c, [], 'pdf');
+  T.eq(c.fields.taxableGross.value, null, 'far above every amount of the month');
 });
 
 T.section('payslip check: taking the file in (intake findings, round 2)');
