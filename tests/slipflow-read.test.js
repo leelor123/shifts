@@ -359,7 +359,7 @@ T.test('the payslip file is stored only with a saved payslip; a failed read goes
   const save = src.slice(src.indexOf('async function saveSlip'), src.indexOf('async function saveSlip') + 1200);
   T.ok(/if \(slip\.file && !slip\.fileId\)/.test(save) && /Store\.putFile\(id, slip\.file/.test(save), 'saveSlip stores the file');
   T.ok(/setTimeout\(\(\) => \{ App\.actions\['payslip-new'\]\(\); UI\.toast\(/.test(start), 'after a failure the start sheet (manual entry, another file) opens');
-  T.ok(/i\.hidden = false; i\.classList\.add\('sr'\)/.test(src), 'the pickers are reachable by keyboard');
+  T.ok(/id="ps-file" class="sr"/.test(src) && /id="ps-cam" class="sr"/.test(src), 'the pickers are reachable by keyboard');
   T.ok(/statusEl\.setAttribute\('role', 'status'\)/.test(start) && /aria-hidden="true"/.test(start), 'the stage is announced, the percent is not');
 });
 

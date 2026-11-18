@@ -55,7 +55,7 @@
     // policy already forbids eval, this keeps it closed without leaning on that)
     const doc = await pdfjs.getDocument({ data: await file.arrayBuffer(), isEvalSupported: false }).promise;
     let lines = [];
-    for (let p = 1; p <= Math.min(doc.numPages, 4); p++) {
+    for (let p = 1; p <= Math.min(doc.numPages, 8); p++) { // the same 8 pages as App.readDocWords (the import reads both)
       progress(`קורא עמוד ${p} מתוך ${doc.numPages}…`);
       const page = await doc.getPage(p);
       const tc = await page.getTextContent();
@@ -75,7 +75,7 @@
   }
   async function ocr(image, progress) {
     await loadScript(LIBS.tesseract);
-    progress('טוען מנוע זיהוי עברית (פעם ראשונה ~10MB)…');
+    progress('מכין את מנוע הקריאה…');
     const worker = await root.Tesseract.createWorker('heb+eng', 1, {
       logger: (m) => { if (m.status === 'recognizing text') progress(`מזהה טקסט… ${Math.round(m.progress * 100)}%`); },
     });
@@ -558,6 +558,7 @@
    * is read up to where the next payslip, of another month, begins: added together, two months gave double amounts.
    */
   async function extractSlip(file, progress, signal) {
+    if (root.DocRead) await root.DocRead.check(file); // an empty file, a cloud file not on the phone yet: said as such
     const isPdf = file.type === 'application/pdf' || /\.pdf$/i.test(file.name || '');
     if (!isPdf) { const lines = await slipLinesOf(file, progress, signal); return { lines, text: lines.map((l) => l.text).join('\n'), source: 'ocr' }; }
     await loadScript(LIBS.pdf);
@@ -603,6 +604,7 @@
    */
   App.readDocWords = async function (file, progress, opts) {
     opts = opts || {};
+    if (root.DocRead) await root.DocRead.check(file);
     const isPdf = file.type === 'application/pdf' || /\.pdf$/i.test(file.name || '');
     if (isPdf) {
       await loadScript(LIBS.pdf);
@@ -662,7 +664,7 @@
     // read at, so a caller can bring the boxes back to its own size
     if (root.DocRead) { const got = await root.DocRead.words(image, progress, opts || {}); return { words: got.words, text: got.he.map((w) => w.text).join(' '), width: got.canvas ? got.canvas.width : 0 }; }
     await loadScript(LIBS.tesseract);
-    progress('טוען מנוע זיהוי עברית (פעם ראשונה ~10MB)…');
+    progress('מכין את מנוע הקריאה…');
     const he = await ocrPass(image, 'heb+eng', progress, 'מזהה טקסט');
     let en;
     try { en = await ocrPass(image, 'eng', progress, 'בודק את השעות'); } catch (e) { return he; }
@@ -686,15 +688,11 @@
     UI.openSheet({
       title: 'ניתוח תלוש שכר',
       body: `<div class="small muted" style="margin-bottom:12px">העלה את התלוש (PDF או צילום). הקריאה מתבצעת בטלפון: התלוש לא נשלח לשום מקום.</div>
-        <label class="btn big" style="margin-bottom:10px">${icon('upload')} בחר קובץ PDF או תמונה<input type="file" accept="application/pdf,image/*" id="ps-file" hidden></label>
-        <label class="btn tonal block" style="margin-bottom:10px">${icon('camera')} צלם את התלוש<input type="file" accept="image/*" capture="environment" id="ps-cam" hidden></label>
+        <label class="btn big" style="margin-bottom:10px">${icon('upload')} בחר קובץ PDF או תמונה<input type="file" accept="application/pdf,image/*" id="ps-file" class="sr"></label>
+        <label class="btn tonal block" style="margin-bottom:10px">${icon('camera')} צלם את התלוש<input type="file" accept="image/*" capture="environment" id="ps-cam" class="sr"></label>
         <button class="btn outlined block" data-manual>${icon('edit')} הזנה ידנית (בלי קובץ)</button>
         <div class="tiny muted" style="margin-top:12px">טיפ: PDF מקורי מדויק יותר מצילום. בצילום: תאורה טובה, ישר מלמעלה, כל התלוש בפריים.</div>${DISCLAIMER}`,
       onMount: (el) => {
-        // the pickers reached by Tab and named as buttons: a hidden input left the label as plain text to a screen
-        // reader and out of the keyboard's way (intake S4). Visually hidden instead (set here: the markup is a
-        // translated text)
-        el.querySelectorAll('#ps-file, #ps-cam').forEach((i) => { i.hidden = false; i.classList.add('sr'); });
         const go = async (file) => {
           if (!file) return;
           UI.closeTop();
@@ -766,7 +764,7 @@
       // back to the start, where a manual entry and another file wait, with what went wrong: the reading sheet said
       // "you can enter it by hand" and offered only "close" (intake S3)
       UI.closeTop();
-      setTimeout(() => { App.actions['payslip-new'](); UI.toast(root.U.ours(e) ? e.message : 'הקריאה נכשלה. אפשר להזין ידנית.'); }, 320);
+      setTimeout(() => { App.actions['payslip-new'](); UI.toast((root.DocRead && root.DocRead.trouble(e)) || (root.U.ours(e) ? e.message : 'הקריאה נכשלה. אפשר להזין ידנית.')); }, 320);
     }
   }
 

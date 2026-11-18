@@ -593,6 +593,9 @@ body:not(.fx) .hh-dial::before, body:not(.fx) .ob-bg i { animation: none !import
 
 /* keyboard users always see where they are */
 :where(button, a, input, select, textarea, summary, [tabindex]):focus-visible { outline: 3px solid hsla(var(--h), 85%, 60%, .55); outline-offset: 2px; }
+/* a file picker is a visually hidden input (.sr) inside its label.btn: the ring goes on the button the person sees.
+   :focus-visible, not :focus-within: a tap on the label focuses the input too, and a ring stayed after the picker */
+label.btn:has(> input.sr:focus-visible) { outline: 3px solid hsla(var(--h), 85%, 60%, .55); outline-offset: 2px; }
 .btn.sm { min-height: 40px; }
 .brand-name, .wizard.ob3 h1, .topbar h1, .home-top h1 { font-family: var(--display); font-weight: 700; }
 .kpi .v, .pk-big .d, .pk-clock, .timer-card .clock { font-family: var(--display); }

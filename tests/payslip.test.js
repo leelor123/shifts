@@ -659,9 +659,14 @@ T.test('deductions printed with a minus are the same deductions', () => {
 T.test('a thousands separator read as a dot or a space is never a wrong amount', () => {
   T.near(Payslip.parseText('נטו לתשלום 8.500.00').fields.net.value, 8500);
   const sp = Payslip.parseText('נטו לתשלום 8 500.00').fields.net;
-  T.ok(!sp || Math.abs(sp.value - 8500) < 0.01, 'not 500 or 0: ' + (sp && sp.value));
-  const b = Payslip.parseText('שכר יסוד 160.00 50.00 8.000.00').fields.base;
+  // read as 8,500, or left for the person to fill in (value null: the check screen asks for it); never 500 or 0
+  T.ok(!sp || sp.value == null || Math.abs(sp.value - 8500) < 0.01, 'not 500 or 0: ' + (sp && sp.value));
+  // (which factor is the hours needs evidence on the slip: here the table's heading; alone, the hours are left out,
+  // never 50)
+  const b = Payslip.parseText('תיאור כמות תעריף סכום\nשכר יסוד 160.00 50.00 8.000.00').fields.base;
   T.near(b.value, 8000); T.near(b.qty, 160);
+  const b1 = Payslip.parseText('שכר יסוד 160.00 50.00 8.000.00').fields.base;
+  T.near(b1.value, 8000); T.ok(b1.qty == null || Math.abs(b1.qty - 160) < 0.01, 'never 50 hours: ' + b1.qty);
   T.near(Payslip.parseText('נטו לתשלום 1,821.54').fields.net.value, 1821.54);
   T.near(Payslip.numbersIn('1.234,56')[0].v, 1234.56);
 });
@@ -688,4 +693,67 @@ T.test('a line named after a field the slip has is added to it, not dropped', ()
   Payslip.addNamedLines(fields, other);
   T.near(fields.pensionEmployee.value, 420, 0.005, 'not added twice');
   T.near(Payslip.addNamedLines({}, [{ line: 'x 50.00', value: -50, guess: 'incomeTax' }]).incomeTax.value, 50);
+});
+
+// the reader's guards (readers campaign, Nov 2026): a file of their own, run with this one
+require('./payslip-reader.test.js');
+require('./payslip-ai.test.js');
+
+T.section('payslip verdict: a reading left unsure is no alarm (readers campaign, Nov 2026)');
+T.test('the base pay read without its hours (no evidence of the hours column): the hours are not found short', () => {
+  const m = model(septShifts());
+  // the same payslip, its base line alone with the rate printed first: the reader leaves the hours out
+  const text = SAMPLE.replace('שכר יסוד 40.00 40.00 1,600.00', 'שכר יסוד 40.00 40.00 1,600.00').replace(/^שעות נוספות.*$/m, '').replace(/^שעות שבת.*$/m, '');
+  const p = Payslip.parseText(text.replace('שכר יסוד 40.00 40.00 1,600.00', 'שכר יסוד 40.00 41.00 1,640.00'));
+  T.ok(p.fields.base.qty == null, 'the hours are not guessed: ' + p.fields.base.qty);
+  const a = Payslip.analyze(p, m);
+  const h = a.findings.find((x) => x.area === 'שעות');
+  T.ok(!h || h.status !== 'bad', 'no "hours missing" from hours that were not read: ' + JSON.stringify(h));
+});
+T.test('a line asked for (value null) adds nothing and alarms nothing', () => {
+  const m = model(septShifts());
+  const p = Payslip.parseText(SAMPLE + '\nנטו לתשלום 1,82l.54');
+  T.ok(p.fields.net.value == null || Math.abs(p.fields.net.value - 1821.54) < 0.01, 'the net: ' + JSON.stringify(p.fields.net));
+  const a = Payslip.analyze(p, m);
+  for (const f of a.findings) T.ok(Number.isFinite(f.amount || 0), f.area + ' amount ' + f.amount);
+  const g = Payslip.checkGap(a, p, m);
+  T.ok(JSON.stringify(g).indexOf('NaN') < 0, 'no NaN in the gap');
+});
+
+T.section('payslip verdict: round 2 (false alarm / false calm scenarios against the engine)');
+T.test('the supplement-only convention (all hours at 100%, premiums as 25% / 50%) is a right payslip, not a low Shabbat rate', () => {
+  // 5 × 8 h + a 10 h day (2 h at 125%) + 4 h on Saturday, at 40 ₪: 54 hours in all
+  const m = model(septShifts());
+  const text = ['תלוש שכר לחודש 09/2026', 'תיאור כמות תעריף סכום', 'שכר יסוד 50.00 40.00 2,000.00', 'שעות נוספות 125% 2.00 10.00 20.00', 'שעות שבת 150% 4.00 20.00 80.00', 'נסיעות 135.60', 'סה"כ ברוטו 2,235.60'].join('\n');
+  const p = Payslip.parseText(text); p.period = '2026-09';
+  const a = Payslip.analyze(p, m);
+  const bad = a.findings.filter((f) => f.status === 'bad' && f.area !== 'פנסיה'); // (this sample prints no pension lines)
+  T.eq(bad.length, 0, 'no alarm: ' + JSON.stringify(bad.map((f) => [f.area, f.amount])));
+  T.ok(!Payslip.checkGap(a, p, m).items.some((it) => it.area !== 'פנסיה' && it.left >= 1), 'nothing left for the letter');
+  // the same convention with a shift missing: the hours are found short, not the Shabbat rate
+  const short = Payslip.parseText(text.replace('שכר יסוד 50.00 40.00 2,000.00', 'שכר יסוד 42.00 40.00 1,680.00')); short.period = '2026-09';
+  const s = Payslip.analyze(short, m).findings.filter((f) => f.status === 'bad').map((f) => f.area);
+  T.ok(s.includes('שעות') && !s.includes('שבת וחג'), 'the hours: ' + s.join(','));
+});
+T.test('a raise from the middle of the month, not paid: the money for the same hours is missing', () => {
+  const m = model(septShifts().concat([shift('2026-09-23', '08:00', '16:00'), shift('2026-09-24', '08:00', '16:00')]), (d) => { d.roles[0].rates = [{ from: '2000-01-01', rate: 40 }, { from: '2026-09-16', rate: 44 }]; });
+  const p = Payslip.parseText(['תלוש שכר לחודש 09/2026', 'תיאור כמות תעריף סכום', 'שכר יסוד 56.00 40.00 2,240.00', 'שעות נוספות 125% 2.00 50.00 100.00', 'שעות שבת 150% 4.00 60.00 240.00'].join('\n')); p.period = '2026-09';
+  const a = Payslip.analyze(p, m);
+  const f = a.findings.find((x) => x.area === 'תעריף');
+  T.eq(f.status, 'bad'); T.near(f.amount, 64, 0.01, '16 hours × 4 ₪');
+  const c = Payslip.checkGap(a, p, m);
+  const it = c.items.find((x) => x.area === 'תעריף');
+  T.eq(it.reasons.find((r) => r.id === 'rate').found, 'maybe'); T.near(it.left, 64, 0.01, 'it stays in the letter');
+});
+T.test('a pay period from an unusual day that matches by chance does not explain an unpaid shift away', () => {
+  const m = model(septShifts());
+  // the 10 h day of 8/9 missing: a period from the 9th would match the hours by chance
+  const p = Payslip.parseText(SAMPLE.replace('שכר יסוד 40.00 40.00 1,600.00', 'שכר יסוד 32.00 40.00 1,280.00')); p.period = '2026-09';
+  const a = Payslip.analyze(p, m);
+  const c = Payslip.checkGap(a, p, m);
+  const it = c.items.find((x) => x.area === 'שעות');
+  if (it) {
+    const per = it.reasons.find((r) => r.id === 'period');
+    T.ok(!per || per.found !== 'yes' || [1, 15, 16, 20, 21, 25, 26].some((d) => per.text.includes('מה-' + d + ' ')) || per.text.includes('קלנדרי'), 'only a common first day closes it: ' + (per && per.text));
+  }
 });
