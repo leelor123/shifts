@@ -34,7 +34,9 @@
     opts = opts || {};
     if (UI.sheets.length && !opts.over) UI.closeAll();
     let res = null; // what was read: { entries, names, personal, needsWeek }
-    let who = []; // whose shifts (names)
+    let who = []; // whose shifts (names, or "#2": a row whose name was not read)
+    let found = false; // the app found the person's name itself (then the rows with no name are not offered)
+    let unread = false; // the rows with no name are open under the names
     let week = SC().weekStartFor(U.todayKey());
     let rows = [];
     let roleId = S.meta.lastRole && App.roles().some((r) => r.id === S.meta.lastRole) ? S.meta.lastRole : (App.roles()[0] || {}).id;
@@ -90,6 +92,8 @@
       // tells which; the week the message names ("סידור לשבוע הבא") wins over the usual one
       const o = SC().offer(r, { today: U.todayKey(), mine: myNames(), text: r.text || '' });
       who = o.who;
+      found = who.length > 0;
+      unread = false;
       week = o.week;
       if (root.Fx) root.Fx.play('pick');
       review();
@@ -107,11 +111,35 @@
         const taken = S.shifts.some((x) => x.employerId === emp && x.start < end && x.end > start);
         return Object.assign(r, { k, s: start, e: end, taken, on: old ? old.on : SC().startsOn(r, U.todayKey(), taken) });
       });
+      // a changed schedule: the planned shift an earlier one put on a day this one moves goes when the new one is
+      // added (one save, so one undo brings both back). Only a shift the schedule added and nobody filled in since
+      const r0 = role();
+      const before = r0 ? S.shifts.filter((x) => x.employerId === r0.employerId && x.roleId === r0.id && x.status === 'planned' && x.note === 'מסידור העבודה' && !(x.items || []).length && !(x.splits || []).length)
+        .map((x) => ({ id: x.id, date: U.epochKey(x.start), s: x.start, e: x.end })) : [];
+      const mv = SC().moved(rows, before);
+      rows.forEach((r, i) => { r.replaces = mv.get(i) || null; });
+    }
+    // a row's tags: what the person should know before it is added (also read out with the row)
+    const tagsOf = (r) => [
+      r.taken ? ['', 'כבר קיימת'] : null,
+      r.replaces ? ['planned', `מחליפה את \u2066${U.epochHM(r.replaces.s)}\u2060–\u2060${U.epochHM(r.replaces.e)}\u2069`] : null,
+      r.guess ? ['warn', 'שעה משוערת'] : null,
+      r.e < Date.now() ? ['', 'עברה'] : null,
+    ].filter(Boolean);
+    // a row whose name was not read, shown by its first shifts ("א׳ 08:00–16:00  ג׳ 16:00–23:00", a comma between them for a screen reader)
+    function unreadRow(tag) {
+      const rs = SC().rowsOf(res.entries.filter((e) => e.who === tag), week, usualMin());
+      const day = (r) => (U.DAYS_SHORT ? U.DAYS_SHORT[U.dow(r.date)] : U.fmtDate(r.date, 'short'));
+      const shown = rs.slice(0, 3).map((r) => `<span class="sc-u-sh">${esc(day(r))} <span class="num">\u2066${r.start}\u2060–\u2060${r.end}\u2069</span></span>`).join('<span class="sr">, </span>');
+      const more = rs.length > 3 ? `<small>${rs.length - 3 === 1 ? 'ועוד משמרת אחת' : `ועוד ${rs.length - 3} משמרות`}</small>` : '';
+      return `<button class="imp-row sc-u ${who.includes(tag) ? 'on' : ''}" data-sc-who="${esc(tag)}" aria-pressed="${who.includes(tag)}"><span class="imp-check" aria-hidden="true">${icon('check', 's')}</span><span class="imp-d"><span class="sc-u-l">${shown}</span>${more}</span></button>`;
     }
     function review() {
       placed();
       const roles = App.roles();
       const names = res.personal ? [] : res.names;
+      // the rows whose name was not read: offered when the person's name was not found (OCR often misses it)
+      const nameless = names.length && !found ? res.unnamed || [] : [];
       const head = names.length && !who.length
         ? `${App.mascotSays ? App.mascotSays('think', `מצאתי בסידור ${names.length} שמות. מי את/ה?`, { size: 64 }) : ''}`
         : `${App.mascotSays ? App.mascotSays('love', rows.length ? `מצאתי ${rows.length === 1 ? 'משמרת אחת' : `${rows.length} משמרות`} שלך! 🎉 בודקים רגע ומוסיפים` : 'לא מצאתי משמרות בשם הזה', { size: 64 }) : ''}`;
@@ -120,14 +148,16 @@
       const list = rows.map((r, i) => {
         const p = pay.get('sc' + i);
         const day = U.DAYS ? U.DAYS[U.dow(r.date)] : '';
+        const tags = tagsOf(r);
         return `<div class="imp-row sc-row ${r.on ? 'on' : ''} ${best && best.id === 'sc' + i ? 'best' : ''}" data-i="${i}">
-          <button class="sc-tog" data-sc-tog="${i}" aria-pressed="${r.on}" aria-label="${esc(day + ' ' + U.fmtDate(r.date, 'short'))}"><span class="imp-check" aria-hidden="true">${icon('check', 's')}</span>
-            <span class="imp-d"><b>${esc(day)} ${U.fmtDate(r.date, 'short')}</b><small>${r.taken ? '<i class="tag">כבר קיימת</i>' : ''}${r.guess ? '<i class="tag warn">שעה משוערת</i>' : ''}${r.e < Date.now() ? '<i class="tag">עברה</i>' : ''}</small></span>${p && p.wage > 0 ? `<span class="sc-pay">${best && best.id === 'sc' + i ? `<span class="sc-star" aria-hidden="true">${icon('star', 's')}</span>` : ''}<span class="num">${UI.money(p.wage, 0)}</span></span>` : ''}</button>
+          <button class="sc-tog" data-sc-tog="${i}" aria-pressed="${r.on}" aria-label="${esc([day + ' ' + U.fmtDate(r.date, 'short')].concat(p && p.wage > 0 ? [U.money(p.wage, 0)] : [], tags.map((t) => t[1])).join(', '))}"><span class="imp-check" aria-hidden="true">${icon('check', 's')}</span>
+            <span class="imp-d"><b>${esc(day)} ${U.fmtDate(r.date, 'short')}</b><small>${p && p.wage > 0 ? `<span class="sc-pay">${best && best.id === 'sc' + i ? `<span class="sc-star" aria-hidden="true">${icon('star', 's')}</span>` : ''}<span class="num">${UI.money(p.wage, 0)}</span></span>` : ''}${tags.map(([c, t]) => `<i class="tag${c ? ' ' + c : ''}">${t}</i>`).join('')}</small></span></button>
           <button class="sc-time" data-sc-time="${i}" aria-label="שינוי השעות"><span class="num">\u2066${r.start}\u2060–\u2060${r.end}\u2069</span>${icon('edit', 's')}</button></div>`;
       }).join('');
       box.innerHTML = `${head}
         ${res.pages > res.pagesRead ? `<div class="tiny muted imp-note">${icon('info', 's')} קראנו את ${res.pagesRead} העמודים הראשונים מתוך ${res.pages}. את השאר אפשר להעלות בקובץ נפרד.</div>` : ''}
-        ${names.length ? `<div class="field"><span class="lbl">${who.length ? 'המשמרות של' : 'מי את/ה בסידור?'}</span><div class="chips sc-names">${names.map((n) => `<button class="chip ${who.includes(n) ? 'on' : ''}" data-sc-who="${esc(n)}" aria-pressed="${who.includes(n)}">${esc(n)}</button>`).join('')}</div></div>` : ''}
+        ${names.length ? `<div class="field"><span class="lbl">${who.length ? 'המשמרות של' : 'מי את/ה בסידור?'}</span><div class="chips wrap sc-names">${names.map((n) => `<button class="chip ${who.includes(n) ? 'on' : ''}" data-sc-who="${esc(n)}" aria-pressed="${who.includes(n)}">${esc(n)}</button>`).join('')}${nameless.length ? `<button class="chip sc-u-chip ${unread ? 'on' : ''}" data-sc-unread aria-expanded="${unread}" aria-controls="sc-unread">השורה שלי בלי שם</button>` : ''}</div>
+          ${nameless.length && unread ? `<div class="imp-list sc-u-list" id="sc-unread" role="group" aria-label="השורות בלי שם בסידור">${nameless.map(unreadRow).join('')}</div>` : ''}</div>` : ''}
         ${res.needsWeek && (who.length || !names.length) ? `<div class="field"><span class="lbl">לאיזה שבוע?</span><div class="chips sc-week">${[[thisWeek, 'השבוע'], [nextWeek, 'שבוע הבא']].map(([k, t]) => `<button class="chip ${week === k ? 'on' : ''}" data-sc-week="${k}" aria-pressed="${week === k}">${t} · מ-${U.fmtDate(k, 'short')}</button>`).join('')}</div></div>` : ''}
         ${roles.length > 1 && rows.length ? `<div class="field"><span class="lbl">לאיזה תפקיד לשייך?</span><div class="chips imp-roles">${roles.map((r) => `<button class="chip ${r.id === roleId ? 'on' : ''}" data-sc-role="${esc(r.id)}"><span class="sw" style="background:${r.color}"></span>${esc(r.name)}${App.multiEmp() ? ' · ' + esc((App.employer(r.employerId) || {}).name || '') : ''}</button>`).join('')}</div></div>` : ''}
         ${rows.length && best && App.planner ? App.planner.bestLine(best, scope) : ''}
@@ -144,12 +174,25 @@
       if (!r0 || !root.Planner || !App.model) return none;
       const emp = App.employer(r0.employerId) || S.employers[0] || {};
       const cands = rows.map((r, i) => (r.taken ? null : { id: 'sc' + i, kind: 'shift', employerId: r0.employerId, roleId: r0.id, status: 'planned', start: r.s, end: r.e, breakMin: null, breakPaid: emp.defaultBreakPaid !== false, splits: [], items: [] })).filter(Boolean);
+      // a shift the new schedule moves is not in the week it is paid with
+      const gone = new Set(rows.filter((r) => r.replaces).map((r) => r.replaces.id));
       let pay;
-      try { pay = root.Planner.expected(S.shifts, App.model.ctx, cands); } catch (e) { console.warn('schedule pay', e); return none; }
+      try { pay = root.Planner.expected(gone.size ? S.shifts.filter((x) => !gone.has(x.id)) : S.shifts, App.model.ctx, cands); } catch (e) { console.warn('schedule pay', e); return none; }
       const best = App.planner.best(pay.values());
       const weeks = new Set(rows.map((r) => root.Planner.weekOf(r.s)));
       const w = weeks.size === 1 ? [...weeks][0] : null;
       return { pay, best, scope: w === thisWeek ? 'המשמרת הכי משתלמת השבוע' : w === nextWeek ? 'המשמרת הכי משתלמת בשבוע הבא' : 'המשמרת הכי משתלמת בסידור' };
+    }
+    // a tap that draws the review again keeps the control tapped where it was under the finger (the text over it
+    // can grow: "who are you?" becomes "found 2 shifts of yours" on two lines, and pushed the rows down)
+    function redraw(b) {
+      const body = entry.sh.querySelector('.sh-body');
+      const a = b && ['data-sc-who', 'data-sc-unread', 'data-sc-week', 'data-sc-role', 'data-sc-time'].find((x) => b.hasAttribute(x));
+      const sel = a ? `[${a}${b.getAttribute(a) ? `="${CSS.escape(b.getAttribute(a))}"` : ''}]` : null;
+      const top = sel && b.isConnected ? b.getBoundingClientRect().top : null;
+      review();
+      const n = top != null && body ? box.querySelector(sel) : null;
+      if (n) body.scrollTop += n.getBoundingClientRect().top - top;
     }
     function count() {
       const n = rows.filter((r) => r.on).length;
@@ -202,18 +245,23 @@
       const r0 = role();
       if (!r0) return;
       const emp = App.employer(r0.employerId) || S.employers[0];
-      const ops = rows.filter((r) => r.on).map((r) => ({ store: 'shifts', put: {
+      const on = rows.filter((r) => r.on);
+      const ops = on.map((r) => ({ store: 'shifts', put: {
         id: U.uid(), kind: 'shift', employerId: r0.employerId, roleId: r0.id, status: r.e > Date.now() ? 'planned' : 'done', start: r.s, end: r.e,
         breakMin: null, breakPaid: emp.defaultBreakPaid !== false, noTravel: false, splits: [], items: [], note: 'מסידור העבודה',
       } }));
       if (!ops.length) return;
+      // the shifts the new schedule moved: removed in the same save (one undo restores them)
+      for (const id of new Set(on.filter((r) => r.replaces).map((r) => r.replaces.id))) ops.push({ store: 'shifts', del: id });
       save.disabled = true;
       const remind = !!(box.querySelector('#sc-remind') || {}).checked;
-      const name = (who[0] || (box.querySelector('#sc-name') || {}).value || '').trim();
+      // the name to remember is a name: never "#2" (a row with no name the person pointed at)
+      const name = (who.find((n) => !SC().isRowTag(n)) || (box.querySelector('#sc-name') || {}).value || '').trim();
       UI.closeTop();
       if (name && name !== S.meta.schedName) await Store.setMeta({ schedName: name });
       if (remind) await Store.setSettings((st) => { st.alerts.remindPlanned = true; });
-      await App.saveOps(ops, 'ייבוא סידור עבודה', ops.length === 1 ? 'משמרת אחת נוספה ללוח' : `${ops.length} משמרות נוספו ללוח 📅`);
+      const n = on.length;
+      await App.saveOps(ops, 'ייבוא סידור עבודה', n === 1 ? 'משמרת אחת נוספה ללוח' : `${n} משמרות נוספו ללוח 📅`);
       if (root.Fx) root.Fx.celebrate('big');
     }
 
@@ -236,9 +284,15 @@
         const n = b.dataset.scWho;
         who = who.includes(n) ? who.filter((x) => x !== n) : who.concat([n]);
         if (root.Fx) root.Fx.play('on');
-        review();
-      } else if (b.dataset.scWeek) { week = b.dataset.scWeek; if (root.Fx) root.Fx.play('on'); review(); }
-      else if (b.dataset.scRole) { roleId = b.dataset.scRole; rows.forEach((r) => { r.on = null; }); rows = []; if (root.Fx) root.Fx.play('on'); review(); }
+        redraw(b);
+      } else if (b.hasAttribute('data-sc-unread')) {
+        // closing the list lets go of the rows picked in it
+        unread = !unread;
+        if (!unread) who = who.filter((n) => !SC().isRowTag(n));
+        if (root.Fx) root.Fx.play(unread ? 'on' : 'off');
+        redraw(b);
+      } else if (b.dataset.scWeek) { week = b.dataset.scWeek; if (root.Fx) root.Fx.play('on'); redraw(b); }
+      else if (b.dataset.scRole) { roleId = b.dataset.scRole; rows.forEach((r) => { r.on = null; }); rows = []; if (root.Fx) root.Fx.play('on'); redraw(b); }
       else if (b.dataset.scTog != null) {
         const r = rows[+b.dataset.scTog];
         r.on = !r.on;
@@ -256,7 +310,7 @@
         // the row's own entry (found by date and start, a second week's shift changed the first week's)
         const src = r.src;
         if (src) { src.start = st; src.end = en; src.guess = null; }
-        review();
+        redraw(b);
       } else if (b.hasAttribute('data-sc-save')) add();
     });
     start();

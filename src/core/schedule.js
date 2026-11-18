@@ -386,14 +386,23 @@
     return e;
   }
   function finish(entries, more) {
+    const names = [...new Set(entries.map((e) => e.who).filter(Boolean))];
+    // a table's row whose name was not read, in a table with names: "#2" (its number down the page), offered apart
+    // from the names. The person's own name is often the one OCR missed ("נדב" read "am"), and their row was dropped
+    for (const e of entries) {
+      if (e.row && !e.who && names.length) e.who = '#' + e.row;
+      delete e.row;
+    }
     // the same shift twice (a message repeated): once
     const seen = new Set();
     const out = entries.filter((e) => { const k = [e.date || e.dow + '+' + (e.wk || 0), e.start, e.end, e.who].join('|'); if (seen.has(k)) return false; seen.add(k); return true; });
-    const names = [...new Set(out.map((e) => e.who).filter(Boolean))];
+    const unnamed = [...new Set(out.map((e) => e.who).filter(isRowTag))];
     // a table with several rows and none of their names read is not the person's own: whose shifts they are is not known
     const nameless = !names.length && !!(more && more.rows > 1);
-    return { entries: nameless ? [] : out, names, personal: !names.length && !nameless, nameless, needsWeek: !nameless && out.some((e) => e.date == null) };
+    return { entries: nameless ? [] : out, names, unnamed, personal: !names.length && !nameless, nameless, needsWeek: !nameless && out.some((e) => e.date == null) };
   }
+  /** "#2": a row whose name was not read (never a name: a name has letters) */
+  function isRowTag(who) { return /^#\d+$/.test(String(who || '')); }
 
   /* ---------------- a table's words ---------------- */
   /** The words straightened and put in lines: { h, lines: [{ Y, words (right to left) }] }. */
@@ -583,6 +592,7 @@
   function readAcross(L, ctx) {
     const { today, named } = ctx, h = L.h;
     const lines = L.lines;
+    let unread = 0; // the rows whose name was not read, numbered down the page (one number per row, over all heads)
     for (const l of lines) {
       l.items = dayItems(l, today, h);
       const inItems = new Set(l.items.flatMap((it) => it.words));
@@ -748,12 +758,14 @@
           let who = owner.who;
           if (who && count.get(who) > 1) { nth.set(who, (nth.get(who) || 0) + 1); who = who + ' (' + nth.get(who) + ')'; }
           let got = false;
+          // a row whose name was not read keeps its number (finish() offers it when the person's name is not found)
+          const row = who ? 0 : unread + 1;
           order.forEach((i) => {
             const ws = ls.flatMap((l) => l.cells[i]);
             if (!ws.length) return;
-            for (const s of cellShifts(ws, h, named).sh) { entries.push(entryFor(cols[i], s, who, lines.indexOf(owner))); got = true; }
+            for (const s of cellShifts(ws, h, named).sh) { const e = entryFor(cols[i], s, who, lines.indexOf(owner)); if (row) e.row = row; entries.push(e); got = true; }
           });
-          if (got) { rows++; any = true; }
+          if (got) { rows++; any = true; if (row) unread = row; }
         }
       }
     });
@@ -1027,6 +1039,29 @@
     }).filter(Boolean).sort((a, b) => (a.date + a.start).localeCompare(b.date + b.start));
   }
 
+  /**
+   * A changed schedule: the planned shift an earlier schedule put on a day the new one moves (Monday 08-16 became
+   * Monday 16-24). rows: [{ date, s, e, taken }] (s, e: epoch ms); old: the shifts an earlier schedule added for
+   * this role that are still planned, [{ id, date (the day it starts), s, e }]. → Map(row index → old shift).
+   * Only a sure pair: one row of the new schedule that day, one old shift that day, at other hours (overlapping
+   * is the same shift, "already there"), and no other row of the new schedule touching the old one (a night shift
+   * the day before). Anything less sure is left as it was: the new shift beside the old.
+   */
+  function moved(rows, old) {
+    const out = new Map();
+    const hit = (a, b) => a.s < b.e && b.s < a.e;
+    rows.forEach((r, i) => {
+      if (r.taken) return;
+      if (rows.filter((x) => x.date === r.date).length !== 1) return;
+      const day = (old || []).filter((o) => o.date === r.date);
+      if (day.length !== 1) return;
+      const o = day[0];
+      if (rows.some((x) => hit(o, x))) return;
+      out.set(i, o);
+    });
+    return out;
+  }
+
   /** Does a row start ticked on the screen? Not when the app has a shift at that time already, nor when it is over
    *  a week ago: a schedule is a plan, and an old one (last year's photo) would be saved as shifts worked. */
   function startsOn(row, today, taken) {
@@ -1045,5 +1080,5 @@
     return sched && hours ? 'ask' : sched ? 'schedule' : hours ? 'hours' : null;
   }
 
-  root.Schedule = { parseText, parseWords, isMine, whoOf, offer, weekStartFor, rowsOf, startsOn, shareKind, NAMED };
+  root.Schedule = { parseText, parseWords, isMine, isRowTag, whoOf, offer, weekStartFor, rowsOf, moved, startsOn, shareKind, NAMED };
 })(typeof window !== 'undefined' ? window : globalThis);

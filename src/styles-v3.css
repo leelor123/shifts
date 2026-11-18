@@ -1615,11 +1615,27 @@ body.fx .cal-day.hello, body.fx .week-row.hello { animation: cal-hello .55s cubi
 .sc-row .sc-time { flex: none; display: inline-flex; align-items: center; gap: 6px; margin-inline-end: 8px; padding: 8px 10px; border-radius: 12px; border: 1px solid var(--line); background: var(--surface-2); color: var(--on-surface); font: 700 .95rem var(--font); font-variant-numeric: tabular-nums; cursor: pointer; transition: scale .14s cubic-bezier(.3, .7, .4, 1); }
 .sc-row .sc-time:active { scale: .94; }
 .sc-row .sc-time svg { width: 14px; height: 14px; color: var(--brand); }
-.sc-row .imp-d small { display: flex; flex-wrap: wrap; gap: 4px; }
+.sc-row .imp-d small { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 8px; }
 .sc-row .imp-d small:empty { display: none; }
 .sc-row .tag { font-style: normal; font-size: .75rem; }
+/* the row in two lines: the day and its date beside the hours; under them, across the row, what it pays and its
+   tags ("מחליפה את 08:00–16:00"). Side by side in one line, a 360 px phone broke the day mid-word ("Mond|ay",
+   "23/1|1") once the pay and its star were there. The toggle spans the whole row (a tap under the hours ticks it) */
+.imp-row.sc-row { display: grid; grid-template-columns: auto minmax(0, 1fr) auto; grid-template-rows: auto auto; column-gap: 12px; row-gap: 2px; align-items: center; }
+.sc-row .sc-tog { grid-column: 1 / -1; grid-row: 1 / -1; display: grid; grid-template-columns: subgrid; grid-template-rows: subgrid; gap: 2px 12px; }
+.sc-row .sc-tog .imp-check { grid-column: 1; grid-row: 1 / -1; }
+.sc-row .sc-tog .imp-d { display: contents; }
+.sc-row .sc-tog .imp-d b { grid-column: 2; grid-row: 1; overflow-wrap: normal; }
+.sc-row .sc-tog .imp-d small { grid-column: 2 / -1; grid-row: 2; }
+.sc-row .sc-time { grid-column: 3; grid-row: 1; margin-block: 8px; position: relative; z-index: 1; }
+.sc-row:has(.imp-d small:empty) .imp-d b, .sc-row:has(.imp-d small:empty) .sc-time { grid-row: 1 / -1; }
 .sched-sheet .sc-ai { margin-top: 4px; }
 .sched-sheet .sc-names .chip, .sched-sheet .sc-week .chip { font-weight: 600; }
+/* the rows whose name was not read: each shown by its first shifts, one of them the person's */
+.sched-sheet .sc-u-list { margin-top: 8px; padding-bottom: 0; }
+.sched-sheet .sc-u-l { display: flex; flex-wrap: wrap; align-items: baseline; gap: 2px 16px; font-weight: 600; }
+.sched-sheet .sc-u-sh { white-space: nowrap; }
+.sched-sheet .sc-u-sh .num { font-variant-numeric: tabular-nums; }
 
 /* ---- the language picker (lang.js): the first open's screen, the opening show's sky, six doors ---- */
 .lp-host { position: fixed; inset: 0; z-index: 9000; color: #fff; overflow: hidden;
