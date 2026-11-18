@@ -572,6 +572,16 @@ T.test('a photo\'s size is found past a big EXIF and a 64 KB ICC block, and at t
   const app2 = [0xff, 0xe2, 0xff, 0xf0].concat(new Array(0xfff0 - 2).fill(0));
   T.eq(JSON.stringify(DR.sizeOf(Uint8Array.from([0xff, 0xd8, ...app1, ...app2, ...sof]))), '{"w":6000,"h":8000}');
 });
+T.test('no header, a break column (00:30) and a total (05:57) after the pair: no second shift of the day', () => {
+  const words = [];
+  [['01/10/2026', '08:00', '14:27', '00:30', '05:57'], ['02/10/2026', '09:00', '14:48', '00:30', '05:18'], ['04/10/2026', '07:30', '14:03', '00:30', '06:03'],
+    ['05/10/2026', '14:00', '21:56', '00:30', '07:26'], ['06/10/2026', '08:10', '14:05', '00:00', '05:55'], ['07/10/2026', '09:00', '15:55', '00:00', '06:55']]
+    .forEach((r, ri) => r.forEach((c, i) => { const w = c.length * 11, x = 100 + i * 150; words.push({ text: c, x0: x - w / 2, x1: x + w / 2, y0: 150 + ri * 50, y1: 180 + ri * 50 }); }));
+  ['Timesheet', 'Employee:', 'Nadav', 'Levi'].forEach((t, i) => words.push({ text: t, x0: 100 + i * 150, x1: 200 + i * 150, y0: 60, y1: 90 })); // an English report
+  const p = TS.parseWords(words, { today });
+  T.eq(p.rows.length, 6, p.rows.map((r) => r.date + ' ' + r.start + '-' + r.end).join(' | '));
+  T.ok(!/00:30-|00:00-/.test(shifts(p) + unsure(p)), shifts(p));
+});
 T.atest('leaving while the engine is still loading stops the read then (no reading after the person left)', async () => {
   // (no real time: the engine finishes loading only when the test lets it, after the person has left)
   const saved = globalThis.Tesseract;

@@ -673,6 +673,11 @@
       for (const a of cols) for (const b of cols) {
         if ([best.a, best.b].includes(a) || [best.a, best.b].includes(b) || a === b || unpadded(a) || unpadded(b)) continue;
         if (!before(best.b.at, a.at) || !before(a.at, b.at)) continue;
+        // (a split day's second entry comes after its first exit, within hours, in nearly every row: a break column
+        // (00:30) and a total (05:57) beside a pair are no second shift)
+        let after = 0, both = 0;
+        for (let ri = 0; ri < rows.length; ri++) { const x = at(best.b, ri), y = at(a, ri); if (!x || !y) continue; both++; if (span(x, y) <= 6 * 60) after++; }
+        if (!both || after < both * 0.8) continue;
         const sc = pairScore(a, b);
         if (sc.n >= 2 && sc.s >= sc.n * 0.8 && (!second || sc.s > second.s)) second = { a, b, from: 'numbers', ...sc };
       }
