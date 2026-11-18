@@ -95,6 +95,10 @@
     const n = data.slides.length;
     const el = document.createElement('div');
     el.className = 'story';
+    // Plus: the whole story in the design chosen for the pay card (a photo stays on the card: white text on a
+    // photo is not readable on every card). Without Plus the cards change colour, as always
+    const skin = root.Plus && root.Plus.skin ? root.Plus.skin() : '';
+    if (skin && root.Plus.SKINS[skin]) el.classList.add('st-skin', 'sk-' + skin);
     el.setAttribute('role', 'dialog');
     el.setAttribute('aria-modal', 'true');
     el.setAttribute('aria-label', 'הסיכום של ' + data.label);
@@ -128,7 +132,7 @@
       const dir = k > i ? 'fwd' : 'back';
       i = k;
       const s = data.slides[i];
-      el.dataset.bg = BG[i % BG.length];
+      if (!el.classList.contains('st-skin')) el.dataset.bg = BG[i % BG.length];
       card.className = 'st-card ' + dir;
       card.innerHTML = CARD[s.k](s);
       void card.offsetWidth;

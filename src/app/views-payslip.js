@@ -1487,6 +1487,8 @@
     for (const f of a.findings.filter((x) => x.status === 'bad' && x.amount > 0)) {
       const it = itemOf(f);
       const gap = { id: slip.id + '_' + f.area, payslipId: slip.id, period: slip.period, area: f.area, title: f.title, amount: Math.round(f.amount * 100) / 100, status: 'open' };
+      // the same finding saved again keeps "a tip was offered for it" (gap-set offers it once per finding)
+      if ((S.gaps.find((x) => x.id === gap.id) || {}).tipAsked) gap.tipAsked = true;
       // explained in full: kept as "maybe", and when the next payslip may pay it, that payslip's check asks about it
       if (it && it.left < 1) Object.assign(gap, it.nextSlip ? { status: 'maybe', checkIn: next, note: `לבדוק בתלוש של ${U.fmtMonth(next)}: ${it.by}` } : { status: 'maybe', note: `ייתכן שמוסבר: ${it.by}` });
       else if (it && it.explained >= 1) gap.amount = Math.round(it.left * 100) / 100;
@@ -1528,15 +1530,21 @@
   App.actions['gap-set'] = async (el) => {
     const g = S.gaps.find((x) => x.id === el.dataset.id);
     if (!g) return;
-    await App.saveOps([{ store: 'gaps', put: Object.assign({}, g, { status: el.dataset.s }) }], 'עדכון פער', el.dataset.s === 'resolved' ? 'סומן כהוחזר' : 'עודכן');
+    // a thank-you tip is offered once per finding, ever (kept on the finding, so marking it again, or another phone
+    // of the account, offers nothing); never before the money came back
+    const back = el.dataset.s === 'resolved' && g.amount > 0;
+    const tip = back && !g.tipAsked && root.Plus && root.Plus.tipCard ? root.Plus.tipCard() : '';
+    await App.saveOps([{ store: 'gaps', put: Object.assign({}, g, { status: el.dataset.s }, tip ? { tipAsked: true } : {}) }], 'עדכון פער', el.dataset.s === 'resolved' ? 'סומן כהוחזר' : 'עודכן');
     // the money came back thanks to the check: the best moment there is — celebrated, and shareable
-    if (el.dataset.s === 'resolved' && g.amount > 0) {
+    if (back) {
       if (root.Fx) root.Fx.celebrate('money');
-      const back = S.gaps.filter((x) => x.status === 'resolved').reduce((sum, x) => sum + x.amount, 0) + (g.status === 'resolved' ? 0 : g.amount);
+      // every finding marked as paid back, this one once: S.gaps may already hold it as resolved after the save
+      // (it was counted twice: "₪480 in total" for one finding of ₪240)
+      const total = S.gaps.filter((x) => x.status === 'resolved' && x.id !== g.id).reduce((sum, x) => sum + x.amount, 0) + g.amount;
       UI.openSheet({ title: 'הכסף חזר אליך! 🎉', body: `${App.mascotSays ? App.mascotSays('party', `קיבלת בחזרה ${U.money(g.amount, 0)} שהגיעו לך. כל הכבוד שבדקת!`, { size: 72 }) : ''}
-        ${back > g.amount ? `<div class="small muted" style="margin:6px 0 12px">בסך הכול שעתי החזירה לך ${U.money(back, 0)}.</div>` : ''}
+        ${total > g.amount ? `<div class="small muted" style="margin:6px 0 12px">בסך הכול שעתי החזירה לך ${U.money(total, 0)}.</div>` : ''}
         <button class="btn big block" data-act="found-share" data-amount="${Math.round(g.amount)}" data-k="back">${icon('share')} לשתף ולעזור לחברים לבדוק</button>
-        ${root.Plus && root.Plus.tipCard ? root.Plus.tipCard() : ''}`,
+        ${tip}`,
         // a thank-you tip, once, when tips can be given here (plus.js)
         onMount: (el) => el.addEventListener('click', (e) => { if (root.Plus && root.Plus.tipClick) root.Plus.tipClick(e); }) });
       if (App.reviewMoment) App.reviewMoment('money-back'); // once that screen is closed (review.js)
