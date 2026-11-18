@@ -125,30 +125,57 @@
     return `<small class="lb-at">${txt}</small>`;
   }
   const inflight = new Map();
-  // Every board read costs up to 20 reads of the free daily quota: a board is kept an hour, on the phone too (opening
-  // the app again does not read it again), the one on screen is refreshed quietly once it is 10 minutes old, and a score
-  // of mine updates my own row in place. The key holds the day (Israel's), so a new day, week or month reads anew.
-  const KEEP_MS = 60 * 60000, FRESH_MS = 10 * 60000;
+  // Every board read costs up to 20 reads of the free plan's 50,000 a day. The rule for reading a board again: only
+  // when the copy kept on this phone (memory and localStorage) is older than its period's freshness: today's board an
+  // hour, this week's 3 hours, this month's, this year's and all time's 6 hours (their top 20 rarely moves). The key
+  // holds the day (Israel's), so a new day reads every board anew. A kept board past its freshness is still drawn at
+  // once and read again quietly; one older than 6 hours is not drawn. My own scores move my row in place (no read).
+  const FRESH = { d: 60 * 60000, w: 3 * 3600000, m: 6 * 3600000, y: 6 * 3600000, a: 6 * 3600000 };
+  const KEEP_MS = 6 * 3600000;
+  // the games list loads the table's first board ahead only for whoever opened the table on this phone in the last
+  // 14 days (a player who never opens it cost 20 reads at every visit to the games list); others load it on the tap
+  const SEEN_MS = 14 * 86400000;
+  Champions.FRESH = FRESH; Champions.KEEP_MS = KEEP_MS; Champions.SEEN_MS = SEEN_MS;
   const SAVED = 'shaati.lb';
   let loadedFor = null;
+  let seen = 0; // when this phone last opened the table
+  let places = {}; // game|day → my place that day after my last game there (the games list's line, with no read)
+  let synced = ''; // what sync() would send, as it was when my row last had all of it (the same: an opening reads nothing)
   /** The boards kept on this phone for this account (once per account). */
   function restore() {
     if (!signedIn() || loadedFor === uid()) return;
     loadedFor = uid();
     try {
       const o = JSON.parse(root.localStorage.getItem(SAVED) || 'null');
-      if (o && o.uid === uid()) for (const [k, c] of Object.entries(o.b || {})) if (!boards.has(k) && c && Array.isArray(c.rows) && Date.now() - c.at < KEEP_MS) boards.set(k, c);
+      if (o && o.uid === uid()) {
+        for (const [k, c] of Object.entries(o.b || {})) if (!boards.has(k) && c && Array.isArray(c.rows) && Date.now() - c.at < KEEP_MS) boards.set(k, c);
+        seen = Math.max(seen, +o.seen || 0);
+        places = Object.assign({}, o.pl || {}, places);
+        if (!synced && typeof o.fp === 'string') synced = o.fp;
+      }
     } catch (e) { /* no storage: from memory only */ }
   }
-  /** Today's boards onto the phone (the older ones are dropped). */
+  /** Today's boards and places onto the phone (the older ones are dropped). */
   function keep() {
     if (!signedIn()) return;
+    restore(); // (what the phone kept is read first: writing before it was read wiped it)
     try {
-      const b = {};
+      const b = {}, pl = {};
       for (const [k, c] of boards) if (k.endsWith('|' + today()) && Date.now() - c.at < KEEP_MS) b[k] = c;
-      root.localStorage.setItem(SAVED, JSON.stringify({ uid: uid(), b }));
+      for (const [k, v] of Object.entries(places)) if (k.endsWith('|' + today())) pl[k] = v;
+      places = pl;
+      root.localStorage.setItem(SAVED, JSON.stringify({ uid: uid(), b, seen, pl, fp: synced }));
     } catch (e) { /* full or blocked: from memory only */ }
   }
+  /** What sync() would send, in short: the day, the phone's scores and bests, and my name and look. */
+  function print() {
+    const s = JSON.stringify([uid(), today(), S.meta.lbLocal || {}, S.meta.games || {}, profile()]);
+    let h = 5381;
+    for (let i = 0; i < s.length; i++) h = (h * 33 + s.charCodeAt(i)) | 0;
+    return s.length + ':' + h;
+  }
+  /** My row's name or look differs from what this phone would publish. */
+  const looksOld = (row, pr) => ['n', 'e', 'bg', 'p'].some((k) => (row[k] == null ? (k === 'p' ? false : '') : row[k]) !== pr[k]);
   const cached = (game, period, maxAge) => { restore(); const c = boards.get(`${game}|${period}|${today()}`); return c && Date.now() - c.at < (maxAge || KEEP_MS) ? c.rows : null; };
   /** The top of a board, from Firestore (kept 10 minutes; one request per board at a time). */
   function board(game, period, fresh) {
@@ -206,7 +233,11 @@
       if (Object.keys(patch).length) await writeMine(patch);
       const vals = patch[game] || {};
       // a count that the server refuses (an older rule) or fails: the board itself, as before
+      // my row now has everything this phone has: the next opening's sync needs no read (a look not sent: it does)
+      if (row.exists && !looksOld(row, profile())) synced = print();
       const rank = await placeToday(game, row).catch(async () => { const meRow = (await board(game, 'd', true)).find((x) => x.uid === uid()); return meRow ? meRow.rank : null; });
+      places[`${game}|${today()}`] = rank;
+      keep();
       return { rank, before: before ? before.rank : null, improved: Object.keys(vals).filter((k) => k !== 't') };
     } catch (e) { return null; }
   };
@@ -242,10 +273,12 @@
   /** A small card for the games list: the place today in the last game played. */
   const hubSub = () => {
     const last = (S.meta.lbLast && LB.MAX[S.meta.lbLast]) ? S.meta.lbLast : 'coins';
-    // a board of any age would say an old place (the card's line is written again when warm() brings a fresh one)
-    const c = signedIn() ? cached(last, 'd') : null;
+    // a board of any age would say an old place (the card's line is written again when warm() brings a fresh one);
+    // without a fresh board, the place my last game there gave today (no read)
+    const c = signedIn() ? cached(last, 'd', FRESH.d) : null;
     const r = c ? c.find((x) => x.uid === uid()) : null;
-    return !signedIn() ? 'מתחברים ומתחרים על המקום הראשון' : !joined() ? 'היום, השבוע, החודש ובכל הזמנים' : r ? `המקום שלך היום ב${SHORT[last]}: ${r.rank}` : 'מי במקום הראשון היום?';
+    const rank = c ? (r ? r.rank : null) : signedIn() ? places[`${last}|${today()}`] : null;
+    return !signedIn() ? 'מתחברים ומתחרים על המקום הראשון' : !joined() ? 'היום, השבוע, החודש ובכל הזמנים' : rank ? `המקום שלך היום ב${SHORT[last]}: ${rank}` : 'מי במקום הראשון היום?';
   };
   Champions.hubCard = function () {
     return `<button class="ach-card lb-card" data-lb-hub><span class="ach-card-e" aria-hidden="true">🏆</span><span class="gm-txt"><b>טבלת האלופים</b><span data-lb-sub>${esc(hubSub())}</span></span>${icon('left', 's')}</button>`;
@@ -259,6 +292,7 @@
     let game = LB.MAX[startGame] ? startGame : (LB.MAX[S.meta.lbLast] ? S.meta.lbLast : 'coins');
     let period = 'd';
     let seq = 0;
+    if (signedIn()) { restore(); seen = Date.now(); keep(); }
     // only what differs changes: the rows that stay are the same elements (a switch took 88-128 ms on a 4x slower CPU,
     // now 56-96) and an empty board's mascot does not wave again
     const set = (node, html) => { if (node && node.__html !== html) { root.Dom.patch(node, html); node.__html = html; } };
@@ -324,7 +358,7 @@
       if (now) {
         body.classList.remove('lb-busy'); paint(el, now);
         // kept a while: shown at once, and read again quietly if it is no longer fresh
-        if (!cached(game, period, FRESH_MS)) {
+        if (!cached(game, period, FRESH[period])) {
           const g = game, p = period;
           board(g, p, true).then((rows) => { if (my === seq && el.isConnected && g === game && p === period) paint(el, rows); }).catch(() => {});
         }
@@ -410,13 +444,17 @@
       },
     });
   };
-  /** The games list warms the last game's board of today, so the table opens at once. */
-  Champions.warm = function (el) {
+  /** The games list warms the last game's board of today, so the table opens at once: for whoever opened the table
+   *  lately (SEEN_MS), and for anyone at the touch of the table's card (the sheet's slide-in hides the wait). */
+  Champions.warm = function (el, now) {
     if (!signedIn()) return;
     const last = LB.MAX[S.meta.lbLast] ? S.meta.lbLast : 'coins';
-    if (cached(last, 'd')) return;
+    const hub = !now && el && el.querySelector && el.querySelector('[data-lb-hub]');
+    if (hub && hub.addEventListener) hub.addEventListener('pointerdown', () => Champions.warm(el, true), { once: true });
+    if (cached(last, 'd')) return; // kept: the table draws it at once (and reads it again quietly if it is old)
+    if (!now && !(Date.now() - seen < SEEN_MS)) return;
     // when it arrives, the card's line says my place (only the text changes)
-    board(last, 'd').then(() => { const sub = el && el.querySelector('[data-lb-sub]'); if (sub && sub.isConnected) { const t = hubSub(); if (sub.textContent !== t) sub.textContent = t; } }).catch(() => {});
+    board(last, 'd').then(() => { const sub = el && el.querySelector && el.querySelector('[data-lb-sub]'); if (sub && sub.isConnected) { const t = hubSub(); if (sub.textContent !== t) sub.textContent = t; } }).catch(() => {});
   };
 
   /* ---------------- "share my place": an image for friends and stories ---------------- */
@@ -563,13 +601,18 @@
       if (signedIn()) { const { fs, db } = await Cloud().sdk(); await fs.deleteDoc(fs.doc(db, 'lb', uid())); }
       else if (opts && opts.strict) throw root.U.oops('אין חשבון מחובר');
     } catch (e) { if (opts && opts.strict) throw e; /* offline: the row stays until the next try */ }
-    mine = null; boards.clear(); keep();
+    mine = null; boards.clear(); places = {}; synced = ''; keep();
     if (S.settings.lb && S.settings.lb.on) await Store.setSettings((s) => { s.lb = Object.assign({}, s.lb, { on: false }); });
   };
   /** A changed profile (or Plus turning on or off) reaches the row at the next game; this sends it now. */
   let syncing = false;
   Champions.sync = async function () {
     if (!joined() || syncing) return;
+    restore();
+    // nothing to send since my row last had all of it (no game, no new day, the same name and look): no read (it was
+    // one read on every opening of every player in the table)
+    const fp = print();
+    if (fp === synced) return;
     syncing = true;
     try {
       const row = await readMine(true);
@@ -577,12 +620,13 @@
       if (row.exists) {
         const p = missing(row), pr = profile();
         // the scores the table is missing, or a changed name, emoji or look (Plus ended: the background goes)
-        if (Object.keys(p).length || ['n', 'e', 'bg', 'p'].some((k) => (row[k] == null ? (k === 'p' ? false : '') : row[k]) !== pr[k])) await writeMine(p);
+        if (Object.keys(p).length || looksOld(row, pr)) await writeMine(p);
       }
+      synced = fp; keep();
     } catch (e) { /* next time */ }
     syncing = false;
   };
   // (tests: as if this phone had never read a board)
-  Champions._reset = () => { mine = null; boards.clear(); loadedFor = null; try { root.localStorage.removeItem(SAVED); } catch (e) { /* none */ } };
+  Champions._reset = () => { mine = null; boards.clear(); loadedFor = null; seen = 0; places = {}; synced = ''; try { root.localStorage.removeItem(SAVED); } catch (e) { /* none */ } };
   App.actions.leaderboard = (el) => Champions.open(el && el.dataset && el.dataset.game);
 })(typeof window !== 'undefined' ? window : globalThis);

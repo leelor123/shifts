@@ -71,12 +71,12 @@ function server(SRC) {
   return be;
 }
 
-/** The day, step by step: { step: reads }. */
+/** The day, step by step: { step: reads } (out.lb: the champions table's part of each step). */
 async function measure(SRC) {
   const be = server(SRC);
   const phone = { idb: fakeIndexedDB(), storage: fakeStorage(), clock: { ms: 0 } };
-  const out = {};
-  const step = async (name, fn) => { const a = be.reads; await fn(); await wait(150); out[name] = be.reads - a; };
+  const out = {}, lb = {};
+  const step = async (name, fn) => { const a = be.reads, b = be.lbReads || 0; await fn(); await wait(150); out[name] = be.reads - a; lb[name] = be.lbReads - b; };
   // the first sign-in on this phone takes the whole account (once per phone)
   let A = await open(SRC, be, phone);
   await step('first sign-in on a phone', async () => { await A.Cloud.connect(user); await wait(150); });
@@ -90,13 +90,21 @@ async function measure(SRC) {
   await reopen('opening the app', 1);
   await step('the games list', () => A.Champions.warm(null));
   for (let i = 1; i <= 3; i++) await step('a game played (' + i + ')', () => A.Champions.submit('coins', 100 + i * 50));
+  await step('the games list after the games', () => A.Champions.warm(null));
   await step('opening the table', async () => { A.Champions.open('coins'); await wait(400); });
   await step('switching a period', async () => { A.__sheet.tap({ period: 'w' }); await wait(100); });
   await step('switching a game', async () => { A.__sheet.tap({ game: 'quiz' }); await wait(100); });
   await step('opening the table again', async () => { A.Champions.open('coins'); await wait(400); });
   await reopen('opening the app again later', 0.75);
+  await step('the games list later', () => A.Champions.warm(null));
   await step('the table after opening again', async () => { A.Champions.open('coins'); await wait(400); });
-  out.total = Object.keys(out).filter((k) => k !== 'first sign-in on a phone').reduce((s, k) => s + out[k], 0);
+  await reopen('opening the app hours later', 3);
+  await step('the games list hours later', () => A.Champions.warm(null));
+  await step('the table hours later', async () => { A.Champions.open('coins'); await wait(400); });
+  const sum = (o) => Object.keys(o).filter((k) => k !== 'first sign-in on a phone').reduce((s, k) => s + o[k], 0);
+  out.total = sum(out);
+  lb.total = sum(lb);
+  out.lb = lb;
   return out;
 }
 
@@ -112,6 +120,50 @@ if (require.main === module) {
     T.ok(r['opening the table again'] === 0, 'opening the table again soon reads nothing: ' + say);
     T.ok(r['the table after opening again'] <= 25, 'after the app was closed: the board kept on the phone: ' + say);
     T.ok(r.total <= 150, 'the whole day: ' + say);
+    // the champions table's own reads (each board is up to 20): a guard against reading ahead or reading again
+    const lb = r.lb;
+    T.eq(lb['opening the app'], 0, 'an opening with nothing new to send does not read my row: ' + say);
+    T.eq(lb['opening the app again later'] + lb['opening the app hours later'], 0, 'nor any later opening that day: ' + say);
+    T.eq(lb['the games list'] + lb['the games list after the games'], 0, 'the games list reads no board for a table never opened: ' + say);
+    T.eq(lb['the games list after the games'], 0, 'the games list\'s line is my place from the last game: ' + say);
+    for (let i = 1; i <= 3; i++) T.ok(lb['a game played (' + i + ')'] <= 2, 'a game: my row and one count: ' + say);
+    T.ok(lb['opening the table'] <= 20, 'the table: the board on screen only (20 rows): ' + say);
+    T.ok(lb['switching a period'] <= 20 && lb['switching a game'] <= 20, 'a switch: that one board: ' + say);
+    T.eq(lb['opening the table again'], 0, 'opening the table again soon reads nothing: ' + say);
+    T.eq(lb['the games list later'] + lb['the table after opening again'], 0, 'within today\'s board\'s hour, after the app was closed: nothing: ' + say);
+    T.eq(lb['the games list hours later'], 0, 'a board kept on the phone is not read ahead: ' + say);
+    T.ok(lb['the table hours later'] <= 20, 'hours later: the board on screen, once: ' + say);
+    T.ok(lb.total <= 90, 'the champions table, the whole day: ' + say);
+  });
+
+  /* Reading less must not send less: what sync skips is only what my row already has. */
+  T.atest('Champions sync: no read when nothing changed, and a change still reaches my row', async () => {
+    const be = server(path.join(__dirname, '..', 'src'));
+    const phone = { idb: fakeIndexedDB(), storage: fakeStorage(), clock: { ms: 0 } };
+    const SRC = path.join(__dirname, '..', 'src');
+    let A = await open(SRC, be, phone);
+    await A.Cloud.connect(user); await wait(150);
+    await A.Champions.submit('coins', 50); // my row in the table
+    await A.Champions.sync(); await wait(50);
+    const reads = async (fn) => { const a = be.lbReads; await fn(); await wait(80); return be.lbReads - a; };
+    T.eq(await reads(() => A.Champions.sync()), 0, 'nothing new: no read');
+    // a game played offline: only the phone's copy has it
+    await A.Champions.record('coins', 77);
+    T.ok(await reads(() => A.Champions.sync()) >= 1, 'a new game: my row is read');
+    T.eq(be.docs.get('lb/me').g.coins.a, 77, 'and the score reached it');
+    T.eq(await reads(() => A.Champions.sync()), 0, 'then nothing again');
+    // a new nickname (another phone of mine, or the profile sheet before its write went through)
+    await A.Store.setSettings((s) => { s.lb = Object.assign({}, s.lb, { n: 'new name' }); });
+    await A.Champions.sync(); await wait(50);
+    T.eq(be.docs.get('lb/me').n, 'new name', 'a changed name reaches my row');
+    // the next opening of the app on this phone: still nothing to read
+    phone.clock.ms += 3600000;
+    A = await open(SRC, be, phone);
+    await A.Cloud.connect(user); await wait(100);
+    T.eq(await reads(() => A.Champions.sync()), 0, 'the next opening remembers it (kept on the phone)');
+    await A.Champions.record('coins', 99);
+    T.ok(await reads(() => A.Champions.sync()) >= 1, 'a game after the opening: read and sent');
+    T.eq(be.docs.get('lb/me').g.coins.a, 99, 'the new best is in my row');
   });
 }
 
