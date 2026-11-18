@@ -131,7 +131,7 @@
   App.actions['import-hours'] = () => App.importHours();
   App.importHours = function (opts) {
     if (UI.sheets.length && !(opts && opts.over)) UI.closeAll();
-    let rows = [], noStart = 0, guessedYear = false, noExit = 0, capped = null;
+    let rows = [], noStart = 0, guessedYear = false, noExit = 0, paidSure = new Set(), capped = null;
     let roleId = S.meta.lastRole && App.roles().some((r) => r.id === S.meta.lastRole) ? S.meta.lastRole : (App.roles()[0] || {}).id;
     let startFor = '09:00';
     // leaving the sheet ends the reading (its OCR workers) and nothing of it lands on the next screen
@@ -196,6 +196,8 @@
         <button class="btn text block" data-act="support">לשלוח לנו את הדוח ונעזור</button>`;
     }
     const TO_CHECK = 'לבדיקה'; // the tag's text alone, so it is the one already translated
+    // every row on, but those the reader doubted, which only their own tap turns on
+    const allOn = () => rows.every((r) => r.on || r.doubt);
     function review() {
       const roles = App.roles();
       const list = rows.map((r, i) => {
@@ -206,7 +208,7 @@
         const when = r.start ? `\u2066${r.start}\u2060–\u2060${r.end}\u2069` : `${U.num(r.hours, 2)} שעות · ${startFor ? 'מ-' + startFor : 'שעה לא ידועה'}`;
         return `<button class="imp-row ${r.on ? 'on' : ''}" data-i="${i}" aria-pressed="${r.on}"><span class="imp-check" aria-hidden="true">${icon('check', 's')}</span>
           <span class="imp-d"><b>${esc(day)} ${dateOf(r.date)}</b><small>${when}${r.overnight ? ' · לילה' : ''}</small></span>
-          <span class="imp-h">${U.num(+r.paid > 0 ? r.paid : r.hours, 2)} ש׳${t && t.taken ? '<i class="tag">כבר קיימת</i>' : r.doubt ? `<i class="tag">${TO_CHECK}</i>` : ''}${t && t.end > Date.now() ? '<i class="tag planned">עתידית</i>' : ''}</span></button>`;
+          <span class="imp-h">${U.num(paidSure.has(r) ? r.paid : r.hours, 2)} ש׳${(t && t.taken ? '<i class="tag">כבר קיימת</i>' : '') + (r.doubt ? `<i class="tag">${TO_CHECK}</i>` : '')}${t && t.end > Date.now() ? '<i class="tag planned">עתידית</i>' : ''}</span></button>`;
       }).join('');
       const first = rows[0].date, last = rows[rows.length - 1].date;
       box.innerHTML = `${App.mascotSays ? App.mascotSays('love', `מצאתי ${rows.length === 1 ? 'משמרת אחת' : `${rows.length} משמרות`}! 🎉 בודקים רגע ומוסיפים`, { size: 64 }) : ''}
@@ -215,7 +217,7 @@
         ${noExit ? `<div class="tiny muted imp-note">${icon('info', 's')} ${noExit === 1 ? 'בשורה אחת' : `ב-${noExit} שורות`} יש כניסה בלי יציאה, ולכן ${noExit === 1 ? 'היא לא נכנסה' : 'הן לא נכנסו'}. אפשר להוסיף ${noExit === 1 ? 'אותה' : 'אותן'} ידנית.</div>` : ''}
         ${guessedYear ? `<div class="tiny muted imp-note">${icon('info', 's')} בשורות בלי שנה לקחנו את התאריך האחרון שכבר עבר.</div>` : ''}
         ${capped ? `<div class="tiny muted imp-note">${icon('info', 's')} קראנו את ${capped.pagesRead} העמודים הראשונים מתוך ${capped.pages}. את השאר אפשר להעלות בקובץ נפרד.</div>` : ''}
-        <div class="imp-head"><b>${first === last ? dateOf(first) : `\u2066${dateOf(first)}\u2060–\u2060${dateOf(last)}\u2069`}</b><button class="btn text sm" data-imp-all>${rows.every((r) => r.on) ? 'לבטל הכול' : 'לסמן הכול'}</button></div>
+        <div class="imp-head"><b>${first === last ? dateOf(first) : `\u2066${dateOf(first)}\u2060–\u2060${dateOf(last)}\u2069`}</b><button class="btn text sm" data-imp-all>${allOn() ? 'לבטל הכול' : 'לסמן הכול'}</button></div>
         <div class="imp-list">${list}</div>`;
       showSave(true);
       count();
@@ -226,7 +228,7 @@
       save.disabled = !n;
       save.innerHTML = `${icon('plus', 's')} ${n === 1 ? 'הוספת משמרת אחת' : `הוספת ${n} משמרות`}`;
       const all = box.querySelector('[data-imp-all]');
-      if (all) all.textContent = rows.every((r) => r.on) ? 'לבטל הכול' : 'לסמן הכול';
+      if (all) all.textContent = allOn() ? 'לבטל הכול' : 'לסמן הכול';
     }
     async function parse(got) {
       // read as a table (a picture) or as lines of text
@@ -236,6 +238,8 @@
       const seen = new Set();
       rows = joinNights(p.rows.filter((r) => { const k = r.date + r.start + r.end + r.hours; if (seen.has(k)) return false; seen.add(k); return true; })
         .sort((a, b) => (a.date + (a.start || '')).localeCompare(b.date + (b.start || ''))));
+      // printed paid hours that can be a break the report took out (core/hourscheck.js paidOk), the rest ignored
+      paidSure = root.HoursCheck.paidOk(rows);
       noStart = rows.filter((r) => !r.start).length;
       guessedYear = p.guessedYear;
       noExit = p.skipped || 0; // an entry without an exit (a missed clock-out)
@@ -261,7 +265,7 @@
     }
     /** Minutes of unpaid break a row's printed hours show (span minus paid, 10 minutes to 3 hours), or null. */
     const breakOf = (r) => {
-      if (!(r.start && r.end) || !(+r.paid > 0) || !(+r.hours > 0)) return null;
+      if (!(r.start && r.end) || !paidSure.has(r) || !(+r.hours > 0)) return null;
       const m = Math.round((+r.hours - +r.paid) * 60);
       return m >= 10 && m <= 180 ? m : null;
     };
@@ -313,9 +317,9 @@
       else if (b.hasAttribute('data-imp-again')) start();
       else if (b.dataset.impRole) { roleId = b.dataset.impRole; rows.forEach((r) => { if (!r.mine) r.on = null; }); review(); if (root.Fx) root.Fx.play('on'); }
       else if (b.hasAttribute('data-imp-all')) {
-        const all = rows.every((r) => r.on);
-        rows.forEach((r) => { r.on = !all; r.mine = true; });
-        box.querySelectorAll('.imp-row').forEach((x) => { x.classList.toggle('on', !all); x.setAttribute('aria-pressed', String(!all)); });
+        const all = allOn();
+        rows.forEach((r) => { if (all || !r.doubt) { r.on = !all; r.mine = true; } });
+        box.querySelectorAll('.imp-row').forEach((x) => { const on = !!rows[+x.dataset.i].on; x.classList.toggle('on', on); x.setAttribute('aria-pressed', String(on)); });
         count();
       } else if (b.classList.contains('imp-row')) {
         const r = rows[+b.dataset.i];
