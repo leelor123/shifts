@@ -408,13 +408,21 @@
       // A line the parser left unnamed because a word on it was not read ("שעות naw 150% 12.00 51.48 617.76", שבת
       // misread): when it names a line once that word is set aside, it is asked for under that name. Left among the
       // unnamed lines only, the check took its pay as not paid ("שעות שלא שולמו" 527 too much, round 4's parser).
+      // So is a line the parser dropped altogether because none of its name was read ("nivw naw 150% iis 12.00 51.48
+      // 617.76"): a line read with an amount and unread words that no field and no unnamed line took.
       if (source !== 'ai') {
-        for (const o of parsed.other) {
-          const ws = wordsOf({ line: o.line });
-          if (!ws.some((w) => w.k === 'X')) continue;
+        const askFrom = (ws, line) => {
+          if (!ws.some((w) => w.k === 'X')) return;
           let f = null;
           try { f = Payslip.matchField(ws.filter((w) => w.k !== 'X').map((w) => w.text).join(' ')); } catch (e) { f = null; }
-          if (f && !F[f.key]) { F[f.key] = { value: null, qty: null, line: o.line, asked: true, why: 'name' }; unsure[f.key] = 'name'; }
+          if (f && !F[f.key]) { F[f.key] = { value: null, qty: null, line, asked: true, why: 'name' }; unsure[f.key] = 'name'; }
+        };
+        for (const o of parsed.other) askFrom(wordsOf({ line: o.line }), o.line);
+        const taken = [].concat(...Object.values(F).map((v) => String(v.line || '').split(' | ')), parsed.other.map((o) => String(o.line))).map(tkey);
+        for (const l of lines || []) {
+          const k = tkey(l.text);
+          if (!(l.words || []).some(hasDec) || taken.some((t) => t && (t === k || t.includes(k) || k.includes(t)))) continue;
+          askFrom(l.words || [], l.text);
         }
       }
       const g = num('gross'), n = num('net'), td = num('totalDeductions');

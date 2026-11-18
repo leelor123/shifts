@@ -382,6 +382,12 @@ T.test('an unnamed line with an unread word that names a line without it is aske
   R.review(p, lines, 'ocr');
   const k = Object.keys(p.fields)[0];
   T.ok(k && p.fields[k].asked && p.fields[k].value == null && /617\.76/.test(p.fields[k].line), 'asked: ' + JSON.stringify(p.fields));
+  // a line the parser dropped altogether (no Hebrew of its name read) is asked for too
+  const l3 = R.lines(R.rows(R.words(row(100, ['nivw', 'naw', '150%', 'iisx', '12.00', '51.48', '617.76']), [])));
+  const p3 = { fields: {}, other: [] };
+  R.review(p3, l3, 'ocr');
+  const k3 = Object.keys(p3.fields)[0];
+  T.ok(k3 && p3.fields[k3].asked && p3.fields[k3].value == null, 'asked: ' + JSON.stringify(p3.fields) + ' from ' + l3.map((l) => l.text).join(' / '));
   // a clean unnamed line stays among the unnamed lines
   const l2 = R.lines(R.rows(R.words(row(100, ['קרן', 'מילואים', '617.76']), [])));
   const p2 = { fields: {}, other: [{ line: l2[0].text, value: 617.76 }] };
