@@ -33,6 +33,7 @@ function fakeIndexedDB() {
                 delete: (k) => op(() => { st.rows.delete(k); }),
                 clear: () => op(() => { st.rows.clear(); }),
                 getAll: () => op(() => [...st.rows.values()].map(clone)),
+                getAllKeys: () => op(() => [...st.rows.keys()]),
                 get: (k) => op(() => clone(st.rows.get(k))),
               };
             };
