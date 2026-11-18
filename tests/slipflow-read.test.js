@@ -388,6 +388,12 @@ T.test('an unnamed line with an unread word that names a line without it is aske
   R.review(p3, l3, 'ocr');
   const k3 = Object.keys(p3.fields)[0];
   T.ok(k3 && p3.fields[k3].asked && p3.fields[k3].value == null, 'asked: ' + JSON.stringify(p3.fields) + ' from ' + l3.map((l) => l.text).join(' / '));
+  // no name and a tier misread ("50%" for 150%), but hours × rate = pay: asked as an hour line
+  const l4 = R.lines(R.rows(R.words(row(100, ['Nive', 'nagx', '50%', '12.00', '51.48', '617.76']), [])));
+  const p4 = { fields: {}, other: [] };
+  R.review(p4, l4, 'ocr');
+  const k4 = Object.keys(p4.fields)[0];
+  T.ok(k4 && Payslip.FIELD[k4].hours && p4.fields[k4].asked && p4.fields[k4].value == null, 'asked as an hour line: ' + JSON.stringify(p4.fields));
   // a clean unnamed line stays among the unnamed lines
   const l2 = R.lines(R.rows(R.words(row(100, ['קרן', 'מילואים', '617.76']), [])));
   const p2 = { fields: {}, other: [{ line: l2[0].text, value: 617.76 }] };

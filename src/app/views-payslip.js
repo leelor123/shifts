@@ -415,6 +415,15 @@
           if (!ws.some((w) => w.k === 'X')) return;
           let f = null;
           try { f = Payslip.matchField(ws.filter((w) => w.k !== 'X').map((w) => w.text).join(' ')); } catch (e) { f = null; }
+          // (no name at all, "Nive nag 50% 12.00 51.48 617.76": numbers that multiply out, hours × rate = pay, say an
+          // hour line was there; asked as one, so the check takes its hours as unknown, never as unpaid)
+          if (!f) {
+            const ns = ws.filter((w) => w.k === 'N' && hasDec(w)).map((w) => { const m = Payslip.numbersIn(w.text)[0]; return m ? Math.abs(m.v) : 0; });
+            let proven = false;
+            for (let a = 0; a < ns.length && !proven; a++) for (let b = a + 1; b < ns.length && !proven; b++) for (let c = 0; c < ns.length; c++) if (c !== a && c !== b && ns[a] > 0 && ns[b] > 0 && Math.abs(ns[a] * ns[b] - ns[c]) <= Math.max(0.02, ns[c] * 0.002)) { proven = true; break; }
+            const free = ['rest150', 'ot150', 'ot125'].find((k) => !F[k]);
+            if (proven && free) f = Payslip.FIELD[free];
+          }
           if (f && !F[f.key]) { F[f.key] = { value: null, qty: null, line, asked: true, why: 'name' }; unsure[f.key] = 'name'; }
         };
         for (const o of parsed.other) askFrom(wordsOf({ line: o.line }), o.line);
