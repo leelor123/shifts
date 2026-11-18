@@ -260,3 +260,74 @@ T.test('OCR forms of סה"כ are read', () => {
   T.near(f.totalDeductions.value, 547.61); T.near(f.gross.value, 5537.37);
   T.near(v('סהייכ ניכויים 547.61', 'totalDeductions'), 547.61);
 });
+T.test('round 3: overtime named by a letter ("שעות נוספות ב\'") is its tier, not 125%', () => {
+  const f = F(['שעות רגילות 160.00 40.00 6,400.00', "שעות נוספות א' 8.50 50.00 425.00", "שעות נוספות ב' 4.75 60.00 285.00"].join('\n'));
+  T.near(f.ot125.value, 425); T.near(f.ot125.qty, 8.5); T.near(f.ot150.value, 285); T.near(f.ot150.qty, 4.75);
+  // no letter, its rate is 150% of the base rate
+  T.near(F('שכר יסוד 160.00 40.00 6,400.00\nשעות נוספות 4.75 60.00 285.00').ot150.value, 285);
+});
+
+T.section('payslip reader: round 4 (unsure, not wrong, on a layout never seen)');
+const asked = (text, key) => { const f = F(text)[key]; T.ok(!f || f.value == null, key + ' asked or absent: ' + JSON.stringify(f)); };
+T.test('a code printed after the amount: a column of codes is taken out; a lone one makes the line unsure', () => {
+  const rows = ['שעות רגילות 160.00 40.00 6,400.00 701', 'נסיעות 82.60 702', 'דמי חגים 960.00 703', 'בונוס 500.00 704'];
+  const f = F(rows.join('\n'));
+  T.near(f.travel.value, 82.6); T.near(f.holidayPay.value, 960); T.near(f.bonus.value, 500);
+  const down = F(rows.slice().reverse().join('\n'));
+  T.near(down.travel.value, 82.6, 0.005, 'a falling column too');
+  asked('נסיעות 82.60 704', 'travel');
+});
+T.test('on a payslip that prints agorot, an amount read from a bare whole number is asked for', () => {
+  const t = ['שכר יסוד 160.00 40.00 6,400.00', 'שעות נוספות 125% 2.00 50.00 100.00', 'מס בריאות 174.91', 'ביטוח לאומי 56.32', 'פנסיה עובד 319.95', 'נסיעות 703', 'סה"כ ברוטו 6,952.60'].join('\n');
+  asked(t, 'travel');
+});
+T.test('a page read from its bottom up is put back in order; the year\'s tax has no sign', () => {
+  const up = ['תלוש שכר לחודש 09/2026', 'שכר יסוד 40.00 40.00 1,600.00', 'מס הכנסה 243.18', 'סה"כ ברוטו 1,600.00', 'נתונים מצטברים', 'ברוטו למס 14,400.00', 'מס הכנסה 2,188.62', 'קופות גמל 864.00'];
+  const f = F(up.slice().reverse().join('\n'));
+  T.near(f.incomeTax.value, 243.18); T.near(f.ytdTax.value, 2188.62);
+  T.near(F('נתונים מצטברים\nמס הכנסה 243.18-').ytdTax.value, 243.18);
+  T.ok(!Object.is(F('נתונים מצטברים\nמס הכנסה 0.00-').ytdTax.value, -0), 'no -0');
+});
+T.test('the payslip\'s own sums: lines above their total are asked for, a line with its own proof stands', () => {
+  // the payments hold more than the gross: the travel line is the misread one (the base proves itself)
+  const f = F(['שכר יסוד 160.00 40.00 6,400.00', 'נסיעות 704.00', 'סה"כ ברוטו 6,482.60', 'סה"כ ניכויים 500.00', 'נטו לתשלום 5,982.60'].join('\n'));
+  T.near(f.base.value, 6400); T.ok(f.travel.value == null && f.travel.asked, 'travel asked');
+  T.near(f.gross.value, 6482.6, 0.005, 'the gross confirmed by the net');
+  // the deductions hold more than their total: the year's figures read as the month's
+  const d = F(['סה"כ ברוטו 2,000.00', 'ביטוח לאומי 394.24', 'מס בריאות 1,224.37', 'סה"כ ניכויים 300.00', 'נטו לתשלום 1,700.00'].join('\n'));
+  T.ok(d.nationalInsurance.value == null && d.healthTax.value == null, 'asked');
+  // a sum below its total is no sign of a misread line (a line not read): kept
+  T.near(F('שכר יסוד 160.00 40.00 6,400.00\nנסיעות 82.60\nסה"כ ברוטו 7,000.00').travel.value, 82.6);
+  // gross less deductions is not the net, and both sums close: the net is asked for
+  const n = F(['שכר יסוד 160.00 40.00 6,400.00', 'סה"כ ברוטו 6,400.00', 'ביטוח לאומי 100.00', 'סה"כ ניכויים 100.00', 'נטו לתשלום 6,000.00'].join('\n'));
+  T.ok(n.net.value == null, 'net asked'); T.near(n.gross.value, 6400); T.near(n.totalDeductions.value, 100);
+});
+T.test('a deduction read twice with two values is asked for, unless the deductions close with both', () => {
+  asked('ביטוח לאומי 56.32\nביטוח לאומי 394.24', 'nationalInsurance');
+  const two = F(['פנסיה עובד 300.00', 'פנסיה עובד 120.00', 'ביטוח לאומי 50.00', 'סה"כ ניכויים 470.00'].join('\n'));
+  T.near(two.pensionEmployee.value, 300, 0.005, 'two funds: the sum closes with both');
+});
+T.test('round 4 (through the payslip screen): the header rate, a page upside down without its month, a Shabbat tier by rate', () => {
+  // two placements; the header's rate is the second one's: the lines are not turned around
+  const f = F(['תעריף שעה 36.00', 'שעות רגילות אחמ"ש 46.50 39.50 1,836.75', 'שעות רגילות צוות 70.00 36.00 2,520.00', 'שעות שבת 18.75 54.00 1,012.50'].join('\n'));
+  T.near(f.base.qty, 116.5); T.near(f.rest150.qty, 18.75);
+  // the header's lines at the end and none at the start (the title lost its month): the page is read bottom up
+  const page = ['סופר השכונה בע"מ תיק ניכויים 959423796', 'תלוש משכורת', 'שם העובד: אחמד חטיב', 'כתובת: ויצמן תל אביב', 'תשלומים', 'שכר יסוד 40.00 40.00 1,600.00', 'מס הכנסה 243.18', 'נתונים מצטברים', 'מס הכנסה 2,188.62'];
+  T.near(F(page.slice().reverse().join('\n')).incomeTax.value, 243.18);
+  // a Shabbat line with no tier: 175% by its rate (and 50% of the rate on a supplement-only payslip is the 150% tier)
+  T.near(F('שכר יסוד 50.75 60.00 3,045.00\nנ.ש שבת 3.50 105.00 367.50').rest175.value, 367.5);
+  T.near(F('שכר יסוד 50.00 40.00 2,000.00\nשבת 4.00 20.00 80.00').rest150.value, 80);
+});
+T.test('round 4: a line that names its payment twice, and a payment\'s name with no amount, make it unsure', () => {
+  asked('שעות רגילות שעות צוות רגילות 81.25 4,225.00 52.00', 'base');
+  const f = F(['שעות רגילות צוות 81.75 42.50 3,474.38', 'שעות רגילות אחמ"ש', 'מס הכנסה 0.00'].join('\n'));
+  T.ok(f.base.value == null && f.base.asked, 'the base of two placements, one without its amount: ' + JSON.stringify(f.base));
+  // a base line of two numbers beside the printed hours total: the smaller one is the rate
+  const b = F('שעות רגילות 42.50 5,790.63\nשעות עבודה 136.25').base;
+  T.near(b.qty, 136.25); T.near(b.rate, 42.5);
+});
+T.test('round 4: a word split by a stray space inside it is joined before matching, only into a known word', () => {
+  const f = F(['נסיעו ת 452.00', 'מס בריאו ת 286.40', 'שעו ת ע בודה 195.50', 'שעו ת נוספו ת 125% 2.00 50.00 100.00', 'מס הכנסה 120.00'].join('\n'));
+  T.near(f.travel.value, 452); T.near(f.healthTax.value, 286.4); T.near(f.workHours.value, 195.5); T.near(f.ot125.value, 100); T.near(f.incomeTax.value, 120);
+  T.ok(!F('ו תק 2.4').seniority, 'the years of seniority are still no payment');
+});
