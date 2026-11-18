@@ -570,3 +570,14 @@ T.test('ש"ח with a one-letter prefix, and a dash between numbers reads עד', 
   T.eq(voiceLine('טלפון 050-1234567', 'he', ''), 'טלפון 050-1234567');
   T.eq(voiceLine('ל-20 שעות', 'he', ''), 'ל-20 שעות');
 });
+T.test('a word a voice reads two ways gets its nikud in any line, by gender; the shown line keeps its letters', () => {
+  const { voiceLine } = globalThis.MascotSpeech;
+  T.eq(voiceLine('גיל 15! יש לך זכויות מיוחדות, נדאג להן 🛡️', 'he', 'f'), 'גיל 15! יש לָךְ זכויות מיוחדות, נדאג להן.'.replace(/\.$/, ''));
+  T.eq(voiceLine('גיל 17! יש לך זכויות', 'he', 'm'), 'גיל 17! יש לְךָ זכויות');
+  T.eq(voiceLine('מתי נולדת?', 'he', ''), 'מתי נוֹלַדְתָּ?');
+  T.eq(voiceLine('מתי התחלת לעבוד שם?', 'he', 'f'), 'מתי הִתְחַלְתְּ לעבוד שם?');
+  T.eq(voiceLine('אחלה! עכשיו נדע כמה הרווחת.', 'he', 'f'), 'אחלה! עכשיו נדע כמה הִרְוַחְתְּ.');
+  T.eq(voiceLine('ולך הביתה', 'he', 'f'), 'ולך הביתה', 'only a whole word');
+  T.eq(voiceLine('איפה את עובדת?', 'he', 'f'), 'איפה אַתְּ עובדת?');
+  T.eq(voiceLine('Shall I tell you', 'en', 'f'), 'Shall I tell you');
+});

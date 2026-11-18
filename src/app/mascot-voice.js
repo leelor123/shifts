@@ -53,7 +53,22 @@
    *  cleaned; a gendered line needs one key per form), the value is what the voice reads. Every Hebrew key has to
    *  match a line in views-onboarding.js (tests/mascot-voice.test.js), so a reworded screen cannot leave one behind. */
   // i18n-keep-start (Hebrew words for the Hebrew voice only, never shown)
-  const SAY = { he: {} };
+  // a line that needs its own reading; the words below cover the rest
+  const SAY = { he: {
+    // את here is "at" (you), not the object marker
+    'איפה את עובדת?': 'איפה אַתְּ עובדת?',
+  } };
+  /** Hebrew words a voice can read two ways, read with nikud in any line: for a girl the second form, otherwise the
+   *  first (לך: lecha / lach, and never lech, "go"). Only whole words; the word as shown on screen never changes. */
+  const HE_WORDS = {
+    'לך': ['לְךָ', 'לָךְ'],
+    'נולדת': ['נוֹלַדְתָּ', 'נוֹלַדְתְּ'],
+    'הרווחת': ['הִרְוַחְתָּ', 'הִרְוַחְתְּ'],
+    'התחלת': ['הִתְחַלְתָּ', 'הִתְחַלְתְּ'],
+  };
+  function heWords(t, gender) {
+    return t.replace(/[א-ת]+/g, (w) => (Object.prototype.hasOwnProperty.call(HE_WORDS, w) ? HE_WORDS[w][gender === 'f' ? 1 : 0] : w));
+  }
   /** Hebrew signs a voice reads badly: ₪ and ש"ח become שקלים after the number (בש"ח: בשקלים), % after a number
    *  becomes אחוז, and a dash between two numbers (40-50, 50%-60%) becomes עד. */
   function heTokens(t) {
@@ -78,7 +93,7 @@
     const own = SAY[lang];
     // a value is the words, or { m, f } when the same written line is said differently to a girl (לָךְ, not לְךָ)
     if (own && Object.prototype.hasOwnProperty.call(own, t)) { const v = own[t]; t = String(v && typeof v === 'object' ? (gender === 'f' ? v.f : v.m) || t : v); }
-    return lang === 'he' ? heTokens(t) : t;
+    return lang === 'he' ? heTokens(heWords(t, gender)) : t;
   }
   const TAGS = { he: 'he-IL', en: 'en-US', ru: 'ru-RU', ar: 'ar-SA', fr: 'fr-FR', es: 'es-ES', am: 'am-ET' };
   /** An offline voice for the language, or null. A voice with localService false (desktop Chrome's "Google" voices)
