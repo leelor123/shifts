@@ -410,6 +410,8 @@
         const ws = wordsOf(v).filter((w) => w.k === 'N' && !/%$/.test(w.text));
         const own = tokOf(v, v.value);
         if (!own || (ocr && !/\.\d/.test(own.text))) return false;
+        // the parser's own two numbers, in no order (`factors`, round 3): their product is the amount
+        if (Array.isArray(v.factors) && v.factors.length === 2 && v.factors.every((x) => +x > 0) && Math.abs(v.factors[0] * v.factors[1] - v.value) <= Math.max(0.02, Math.abs(v.value) * 0.002)) return true;
         // (from a picture the amount and at least one of the two with agorot: a whole number of hours is common, and a
         // lost decimal point does not multiply out to an amount read with its agorot)
         const ns = ws.filter((w) => w !== own).map((w) => { const m = Payslip.numbersIn(w.text)[0]; return m ? { v: Math.abs(m.v), d: /\.\d/.test(w.text) } : null; }).filter((x) => x && x.v > 0);

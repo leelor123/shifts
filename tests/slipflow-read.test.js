@@ -106,6 +106,20 @@ T.test('from a picture, an amount its line multiplies out to is kept even when t
   T.ok(!lost.F.rest150 || lost.F.rest150.value == null || lost.F.rest150.qty === 10, 'no proof from two whole numbers');
 });
 
+T.test('the parser\'s unordered factors prove an amount read from a photo', () => {
+  // the round-3 parser keeps "10.00 45.63" as factors when it cannot tell the hours column; their product is the amount
+  const lines = R.lines(R.rows(R.words(row(100, ['שעות', 'נוספות', '125%', '10.00', '45.63', '456.30']), [])));
+  const p = { fields: { ot125: { value: 456.3, line: lines[0].text, factors: [45.63, 10] } }, other: [] };
+  R.review(p, lines, 'ocr');
+  T.eq(val(p.fields, 'ot125'), 456.3);
+  // factors that do not multiply to it, on a line whose own numbers do not either: no proof, the amount is asked for
+  const l2 = R.lines(R.rows(R.words(row(100, ['שעות', 'נוספות', '125%', '456.30']), [])));
+  const wrong = { fields: { ot125: { value: 456.3, line: l2[0].text, factors: [45.63, 11] } }, other: [] };
+  R.review(wrong, l2, 'ocr');
+  T.eq(val(wrong.fields, 'ot125'), null);
+  T.ok(wrong.fields.ot125.asked);
+});
+
 T.test('a payment put together from lines that are not it: the amount is not shown', () => {
   // the title's year and the hourly rate were added to the base: 2026 + 34.32 + 4,135.56 = 6,195.88, above the gross
   const he = row(100, ['תלוש', 'משכורת', 'לחודש', 'ספטמבר', '2026']).concat(row(140, ['היקף', 'משרה', '100%', 'שכר', 'שעה', '34.32']),
