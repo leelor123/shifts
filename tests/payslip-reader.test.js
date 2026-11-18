@@ -326,3 +326,8 @@ T.test('round 4: a line that names its payment twice, and a payment\'s name with
   const b = F('שעות רגילות 42.50 5,790.63\nשעות עבודה 136.25').base;
   T.near(b.qty, 136.25); T.near(b.rate, 42.5);
 });
+T.test('round 4: a word split by a stray space inside it is joined before matching, only into a known word', () => {
+  const f = F(['נסיעו ת 452.00', 'מס בריאו ת 286.40', 'שעו ת ע בודה 195.50', 'שעו ת נוספו ת 125% 2.00 50.00 100.00', 'מס הכנסה 120.00'].join('\n'));
+  T.near(f.travel.value, 452); T.near(f.healthTax.value, 286.4); T.near(f.workHours.value, 195.5); T.near(f.ot125.value, 100); T.near(f.incomeTax.value, 120);
+  T.ok(!F('ו תק 2.4').seniority, 'the years of seniority are still no payment');
+});

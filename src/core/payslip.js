@@ -610,6 +610,23 @@
     'חשבון', 'בנק', 'סניף', 'כתובת', 'תאריך', 'זהות', 'מספר', 'עבודה', 'ימים', 'אחוז', 'משרה', 'חובה', 'רשות', 'קופות', 'מבוטח', 'צבירה', 'ניצול', 'קודמת', 'תחילת', 'משפחתי', 'מינימום', 'לחודש', 'לשעה', 'הדפסה'])
     .filter((w) => /^[א-ת]{3,}$/.test(w)));
   // i18n-keep-end
+  /**
+   * A word split by a stray space inside it ("נסיעו ת", "ע בודה", "מס בריאו ת", some PDFs' own text): a fragment of one
+   * or two Hebrew letters is joined to the neighbour that then makes a payslip word, the one before it first. Left as
+   * it was, travel, health tax and the work hours stayed unnamed and a right payslip "owed" its travel (round 4, the
+   * payslip screen's combined run). Only a join that makes a known word is made: "מס הכנסה" stays two words.
+   */
+  function joinSplitWords(line) {
+    if (!/(^|\s)[א-ת]{1,2}(?=\s|$)/.test(line)) return line;
+    const t = line.split(' ');
+    const known = (w) => VOCAB.has(w.replace(/[:'"]+$/, ''));
+    for (let i = 0; i < t.length; i++) {
+      if (!/^[א-ת]{1,2}$/.test(t[i]) || known(t[i])) continue;
+      if (i > 0 && /[א-ת]$/.test(t[i - 1]) && !known(t[i - 1]) && known(t[i - 1] + t[i])) { t.splice(i - 1, 2, t[i - 1] + t[i]); i--; continue; }
+      if (i + 1 < t.length && /^[א-ת]/.test(t[i + 1]) && !known(t[i + 1]) && known(t[i] + t[i + 1])) { t.splice(i, 2, t[i] + t[i + 1]); i--; }
+    }
+    return t.join(' ');
+  }
   /** Are the line's Hebrew words written backwards (visual order)? More of them are payslip words when reversed. */
   function reversedWords(line) {
     const v = wordVotes(line);
@@ -1350,6 +1367,7 @@
         const fa = matchField(alt);
         if (fa && byWords(fa, alt)) line = alt;
       }
+      line = joinSplitWords(line);
       logical.push(line);
       // (a part with no numbers, cut from a line that has some, may be a heading the recognition joined to the line)
       // the rest of a payment's row on the next line, numbers only ("שעות שבת 150% 7" over "51.48 360"): joined when
@@ -1911,7 +1929,10 @@
     // name whose amount fits the component may be it: that one is checkGap's "unplaced" reason. Then it is a check by
     // hand, never money owed (round 3, from the payslip screen session).
     const partialRead = slip.source === 'ocr' || slip.source === 'ai';
-    const notFound = (keys) => keys.every((k) => !F[k]) && partialRead;
+    // (or, from any source, a line the reader could not name holds an amount the component may be, half to twice what
+    // the shifts give for it: "נסיעו ת 452.00" left unnamed was "travel missing 272", round 4)
+    const plausibleUnnamed = (amount) => amount > 0 && (slip.other || []).some((o) => (!o.guess || o.guess === 'ignore') && Math.abs(+o.value || 0) >= amount * 0.5 && Math.abs(+o.value || 0) <= amount * 2);
+    const notFound = (keys, expAmount) => keys.every((k) => !F[k]) && (partialRead || plausibleUnnamed(expAmount));
     // TRANSLATE (the lead): new texts, Hebrew in every language until translated
     // i18n-keep-start
     const notFoundWarn = (area, label) => add({ area, status: 'warn', amount: 0, confidence: 'low', title: 'לא נמצא בתלוש שנקרא',

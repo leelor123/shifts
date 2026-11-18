@@ -871,3 +871,12 @@ T.test('round 4 (through the payslip screen): hours unknown are never "missing";
   const it = c.items.find((x) => x.area === 'שעות');
   T.ok(it && it.reasons.some((r) => r.id === 'unread' && r.found === 'yes') && it.left < 1, JSON.stringify(it && it.reasons.map((r) => r.id + ':' + r.found)));
 });
+T.test('round 4: a component absent while an unnamed line holds a plausible amount for it is unsure, never owed', () => {
+  const m = model(septShifts());
+  const fields = { base: { value: 1600, qty: 40 }, ot125: { value: 100, qty: 2 }, rest150: { value: 240, qty: 4 }, pensionEmployee: { value: 116.4 } };
+  const a = Payslip.analyze({ period: '2026-09', source: 'pdf', fields, other: [{ line: 'נסיעו ת 140.00', value: 140, guess: null }] }, m);
+  const tr = a.findings.find((f) => f.area === 'נסיעות');
+  T.eq(tr.status, 'warn'); T.eq(a.totalMissing, 0);
+  // with no such line, a PDF without a travel line keeps the rule
+  T.eq(Payslip.analyze({ period: '2026-09', source: 'pdf', fields, other: [] }, m).findings.find((f) => f.area === 'נסיעות').status, 'bad');
+});
