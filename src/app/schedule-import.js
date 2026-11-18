@@ -39,10 +39,13 @@
     let rows = [];
     let roleId = S.meta.lastRole && App.roles().some((r) => r.id === S.meta.lastRole) ? S.meta.lastRole : (App.roles()[0] || {}).id;
     let lastFile = null;
+    // leaving the sheet ends the reading itself (its OCR workers), not only what would land on the next screen
+    const stop = typeof AbortController !== 'undefined' ? new AbortController() : null;
     const entry = UI.openSheet({
       title: 'ייבוא סידור עבודה', full: true, cls: 'import-sheet sched-sheet',
       body: '<div id="sc"></div>',
       foot: '<button class="btn big" data-sc-save></button>',
+      onClose: () => { if (stop) stop.abort(); },
     });
     const box = entry.sh.querySelector('#sc');
     const save = entry.sh.querySelector('[data-sc-save]');
@@ -161,7 +164,7 @@
       if (ai) { await viaClaude(file); return; }
       busy('קורא את הסידור…');
       try {
-        const got = await App.readDocWords(file, progress);
+        const got = await App.readDocWords(file, progress, stop ? { signal: stop.signal } : undefined);
         if (entry.closed) return;
         // the words with their places only: parseWords reads a picture that is no table as text itself, line by
         // line. Its text read again as one line put a whole table's shifts on its last date, nobody's name on
