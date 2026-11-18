@@ -508,7 +508,8 @@
       // So is a line whose two numbers the parser could not order (`factors`): its hours are on the payslip, and with
       // amounts only the check judged the overtime by its pay ("שעות נוספות חסרות 21.09" on a right payslip, round 3)
       const hourKeys = Payslip.FIELDS.filter((f) => f.hours && F[f.key]).map((f) => f.key);
-      const withHours = hourKeys.some((k) => F[k].qty != null);
+      // (a payslip that prints its work hours prints its lines' hours too: with all of them left out, round 4's parser)
+      const withHours = hourKeys.some((k) => F[k].qty != null) || hours0 > 0;
       for (const k of hourKeys) if (F[k].value != null && F[k].qty == null && !F[k].asked && (withHours || Array.isArray(F[k].factors))) { F[k].asked = true; F[k].why = 'qty'; unsure[k + '.qty'] = unsure[k + '.qty'] || 'missing'; }
       return unsure;
     };

@@ -360,6 +360,15 @@ T.test('an hour line whose two numbers the parser could not order is asked for i
   T.eq(p.fields.ot125.value, 362.5);
   T.ok(p.fields.ot125.asked && p.fields.ot125.why === 'qty');
 });
+T.test('hour lines without hours on a payslip that prints its work hours are asked for their hours', () => {
+  // round 4's parser leaves every line's hours out without a heading; judged by pay, the overtime was "21.09 missing"
+  const p = { fields: { base: { value: 7046, line: 'שכר יסוד 7,046.00' }, ot125: { value: 552.5, line: 'שעות נוספות 125% 552.50' }, workHours: { value: 148.75, line: 'שעות עבודה 148.75' } }, other: [] };
+  R.review(p, [], 'pdf');
+  T.ok(p.fields.ot125.asked && p.fields.ot125.why === 'qty' && p.fields.base.asked, 'asked');
+  const none = { fields: { ot125: { value: 552.5, line: 'שעות נוספות 125% 552.50' } }, other: [] };
+  R.review(none, [], 'pdf');
+  T.ok(!none.fields.ot125.asked, 'no hours anywhere: nothing to ask');
+});
 T.test('the year\'s figures read as the month\'s are not shown', () => {
   // the month's gross taken as the year's gross (outside January), and the year's taxable gross as the month's
   const a = { period: '2026-07', fields: { gross: { value: 5415.1, line: 'שכר ברוטו 5,415.10' }, ytdGross: { value: 5415.1, line: 'שכר ברוטו 5,415.10' } }, other: [] };
