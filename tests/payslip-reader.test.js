@@ -307,3 +307,22 @@ T.test('a deduction read twice with two values is asked for, unless the deductio
   const two = F(['פנסיה עובד 300.00', 'פנסיה עובד 120.00', 'ביטוח לאומי 50.00', 'סה"כ ניכויים 470.00'].join('\n'));
   T.near(two.pensionEmployee.value, 300, 0.005, 'two funds: the sum closes with both');
 });
+T.test('round 4 (through the payslip screen): the header rate, a page upside down without its month, a Shabbat tier by rate', () => {
+  // two placements; the header's rate is the second one's: the lines are not turned around
+  const f = F(['תעריף שעה 36.00', 'שעות רגילות אחמ"ש 46.50 39.50 1,836.75', 'שעות רגילות צוות 70.00 36.00 2,520.00', 'שעות שבת 18.75 54.00 1,012.50'].join('\n'));
+  T.near(f.base.qty, 116.5); T.near(f.rest150.qty, 18.75);
+  // the header's lines at the end and none at the start (the title lost its month): the page is read bottom up
+  const page = ['סופר השכונה בע"מ תיק ניכויים 959423796', 'תלוש משכורת', 'שם העובד: אחמד חטיב', 'כתובת: ויצמן תל אביב', 'תשלומים', 'שכר יסוד 40.00 40.00 1,600.00', 'מס הכנסה 243.18', 'נתונים מצטברים', 'מס הכנסה 2,188.62'];
+  T.near(F(page.slice().reverse().join('\n')).incomeTax.value, 243.18);
+  // a Shabbat line with no tier: 175% by its rate (and 50% of the rate on a supplement-only payslip is the 150% tier)
+  T.near(F('שכר יסוד 50.75 60.00 3,045.00\nנ.ש שבת 3.50 105.00 367.50').rest175.value, 367.5);
+  T.near(F('שכר יסוד 50.00 40.00 2,000.00\nשבת 4.00 20.00 80.00').rest150.value, 80);
+});
+T.test('round 4: a line that names its payment twice, and a payment\'s name with no amount, make it unsure', () => {
+  asked('שעות רגילות שעות צוות רגילות 81.25 4,225.00 52.00', 'base');
+  const f = F(['שעות רגילות צוות 81.75 42.50 3,474.38', 'שעות רגילות אחמ"ש', 'מס הכנסה 0.00'].join('\n'));
+  T.ok(f.base.value == null && f.base.asked, 'the base of two placements, one without its amount: ' + JSON.stringify(f.base));
+  // a base line of two numbers beside the printed hours total: the smaller one is the rate
+  const b = F('שעות רגילות 42.50 5,790.63\nשעות עבודה 136.25').base;
+  T.near(b.qty, 136.25); T.near(b.rate, 42.5);
+});

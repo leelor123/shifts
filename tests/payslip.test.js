@@ -856,3 +856,18 @@ T.test('round 3 (with the payslip screen): hours unknown, a line not seen on a p
   const fx = Payslip.parseText('שבת 150% 10 52.50 525.00').fields.rest150;
   T.ok(fx.qty == null && fx.factors && fx.factors[0] * fx.factors[1] === 525, JSON.stringify(fx));
 });
+T.test('round 4 (through the payslip screen): hours unknown are never "missing"; a shortfall the gross covers is explained', () => {
+  const m = model(septShifts());
+  // overtime with its amount and no hours, and the base read without hours (a whole-shekel sheet): no overtime alarm
+  const a = Payslip.analyze({ period: '2026-09', source: 'ocr', fields: { base: { value: 1600 }, ot125: { value: 100 }, rest150: { value: 240 }, travel: { value: 135.6 }, pensionEmployee: { value: 116.4 } }, other: [] }, m);
+  T.ok(!a.findings.some((f) => f.area === 'שעות נוספות' && f.status === 'bad'), 'no overtime alarm');
+  T.ok(!a.findings.some((f) => f.area === 'שבת וחג' && f.status === 'ok'), 'and no "Shabbat correct" either');
+  // overtime hours with no base line at all (it was not read): hours unknown
+  T.eq(Payslip.hoursOnSlip({ ot150: { value: 146.03, qty: 2.75 } }), null);
+  // a shortfall in hours that the payslip's own gross covers (a line not read): "a line not read", not owed
+  const p = { period: '2026-09', source: 'pdf', fields: { base: { value: 1280, qty: 32, rate: 40 }, ot125: { value: 100, qty: 2 }, rest150: { value: 240, qty: 4 }, travel: { value: 135.6 }, pensionEmployee: { value: 116.4 }, gross: { value: 2075.6 } }, other: [] };
+  const pa = Payslip.analyze(p, m);
+  const c = Payslip.checkGap(pa, p, m);
+  const it = c.items.find((x) => x.area === 'שעות');
+  T.ok(it && it.reasons.some((r) => r.id === 'unread' && r.found === 'yes') && it.left < 1, JSON.stringify(it && it.reasons.map((r) => r.id + ':' + r.found)));
+});

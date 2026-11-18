@@ -940,7 +940,11 @@
     {
       const isTitle = (l) => (/תלוש/.test(l) || /^חודש\b/.test(l)) && /\d/.test(l) && !!detectPeriod(l);
       const nL = allLines.length;
-      if (nL >= 8 && allLines.slice(-4).some(isTitle) && !allLines.slice(0, 4).some(isTitle)) allLines = allLines.slice().reverse();
+      // (or, when the title lost its month on the way, two of the header's lines at the end and none at the start: the
+      // employer's file, the company mark, the worker's name, the title word; round 4 from the payslip screen session)
+      const isHead = (l) => isTitle(l) || /תיק ניכויים|בע"מ|שם העובד|^תלוש\b/.test(l);
+      const headsAt = (ls) => ls.filter(isHead).length;
+      if (nL >= 8 && ((allLines.slice(-4).some(isTitle) && !allLines.slice(0, 4).some(isTitle)) || (headsAt(allLines.slice(-5)) >= 2 && headsAt(allLines.slice(0, 5)) === 0))) allLines = allLines.slice().reverse();
     }
     // Two payslips in one file (the worker's copy and the employer's, two months downloaded together, two workplaces):
     // read as one, every payment was counted twice (readers campaign, Nov 2026). The second one starts at the second
@@ -1026,6 +1030,7 @@
     let pending = null; // a total's name printed alone, waiting for the number on the next line
     const ask = (f, line) => { if (!fields[f.key]) fields[f.key] = { line, value: null }; };
     const proven = {}; // a field whose every line held its own proof, hours × rate = amount
+    const baseRates = []; // the rate of each base line read (two placements, two rates)
     const conflicts = new Set(); // a field read on two lines with two values (not a payment: those add up)
     const logical = []; // the lines in logical order, for the pay month
     const unsure = new Set(); // payments with a line that could not be read: their sum stays unknown
@@ -1142,6 +1147,21 @@
       // "ב'" the rest), or by its rate against the base rate read above it. Filed as 125% by default, "שעות נוספות ב'"
       // was added to the 125% line (round 3, the first look at a new layout family). With neither, a line whose rate
       // is not the 125% one is asked for
+      // (a Shabbat or holiday line printed with no tier, "נ.ש שבת 3.50 105.00 367.50": by its rate against the base rate,
+      // 150%, 175% or 200%; another rate is asked for. Filed as 150% by default, a 175% line was a 150% one, round 4
+      // from the payslip screen session)
+      // (against each base line's own rate, two placements have two; and a supplement-only payslip carries 50%, 75% or
+      // 100% on its Shabbat lines: those are its tiers too)
+      if (f && f.key === 'rest150' && !/1[57]5|200/.test(line) && baseRates.length) {
+        const p = productOf(nums.filter((x) => !x.pct).map((x) => x.v), true);
+        const TIERS_REST = [[1.5, 'rest150'], [1.75, 'rest175'], [2, 'rest200'], [0.5, 'rest150'], [0.75, 'rest175'], [1, 'rest200']];
+        const tierOf = (rate) => { for (const b of baseRates) { const t = TIERS_REST.find(([m]) => Math.abs(rate / b - m) <= 0.02); if (t) return t[1]; } return null; };
+        if (p) {
+          const t = tierOf(p.rate) || tierOf(p.qty);
+          if (t) f = FIELD[t];
+          else { ask(f, line); return; }
+        }
+      }
       if (f && f.key === 'ot125' && !/125/.test(line) && /נוספות/.test(line)) {
         // i18n-keep
         const mark = /נוספות\s*([אב])(?:['׳"]|(?=\s|$))/.exec(line);
@@ -1151,6 +1171,14 @@
           if (p && Math.abs(p.rate / fields.base.rate - 1.5) <= 0.02) f = FIELD.ot150;
           else if (p && Math.abs(p.rate / fields.base.rate - 1.25) > 0.02) { ask(f, line); return; }
         }
+      }
+      // a line that names its payment twice ("שעות רגילות שעות צוות רגילות 81.25 4,225.00 52.00") is two rows the
+      // recognition merged: what it holds may be one of them. Asked for (round 4, from the payslip screen session: the
+      // base pay of one placement of two was shown as the base)
+      if (f && f.kind === 'pay') {
+        const pat = f.pats.find((p) => HEB.test(p) && line.includes(p));
+        const ws = line.split(' ');
+        if (pat && pat.split(' ').every((w) => ws.filter((x) => x === w).length >= 2)) { notRead(f, line); return; }
       }
       // the payslip's title ("תלוש משכורת …") names no payment. Another line that names a payslip ("הפרשי שכר מתלוש
       // קודם 350.00") is a payment of another month: it waits among the lines to name, with its amount (it was
@@ -1217,6 +1245,7 @@
       const byProduct = pv.byPlace != null && pv.value != null;
       delete pv.sure; delete pv.byPlace; delete pv.mid; delete pv.even;
       proven[f.key] = (proven[f.key] == null ? true : proven[f.key]) && byProduct;
+      if (f.key === 'base' && byProduct && pv.rate > 0) baseRates.push(Math.abs(pv.rate), Math.abs(pv.qty));
       if (f.kind !== 'info') { money.push(...nums.filter((x) => !x.pct).map((x) => x.dec)); if (pv.bare) bare.push({ f, line }); }
       delete pv.bare;
       // the total of the mandatory deductions is kept apart: it is the total of all the deductions only on a payslip
@@ -1265,6 +1294,10 @@
       // a name alone on its line, and the numbers at the start of the next one: they are its numbers (a photo's lines
       // drift apart). A total takes one number; a payment its hours, rate and amount, with the words that go between
       // them ("20 ימים 236.00"). What follows on that line is read on its own.
+      // (a payment's name left alone, whose numbers do not come on the next line: a line seen without its amount, the
+      // payment is unsure. It vanished, and a base of two placements was shown as one, round 4 from the payslip screen
+      // session)
+      let joined = false;
       if (was && joinNextFor(was.f)) {
         const runs = runsOf(raw);
         let n = 0;
@@ -1274,11 +1307,12 @@
         const code1 = runs[0].kind === 'n' && runs[0].t.length === 1 && /^\d{1,6}$/.test(runs[0].t[0]) && runs[1] && runs[1].kind === 'w';
         if (n && runs[0].kind === 'n' && !code1 && !/[A-Za-z]/.test(lead)) {
           const ns = numbersIn(lead);
-          if (ns.length && (was.f.kind === 'pay' || (ns.length === 1 && !ns[0].pct))) readLine(was.line + ' ' + lead);
+          if (ns.length && (was.f.kind === 'pay' || (ns.length === 1 && !ns[0].pct))) { readLine(was.line + ' ' + lead); joined = true; }
           if (n === runs.length) continue;
           raw = runs.slice(n).map((r) => r.t.join(' ')).join(' ');
         }
       }
+      if (was && !joined && was.f.kind === 'pay') notRead(was.f, was.line);
       // the numbers under a row of column names
       const names = heads;
       heads = null;
@@ -1347,6 +1381,7 @@
       }
       for (const seg of segments(line, rowsAfter)) { if (seg !== line && !/\d/.test(seg) && HEB.test(seg) && heading(seg)) continue; readLine(seg, seg === moved); }
     }
+    if (pending && pending.f.kind === 'pay') notRead(pending.f, pending.line); // (the last line a payment's name alone)
     // a payslip that prints its amounts with agorot ("893.15") and one amount as a bare whole number ("89315"): the
     // decimal point was probably dropped by the text recognition. Such an amount is asked for, never shown as read
     // (it was 89,315 ₪ of deductions, readers campaign, Nov 2026)
@@ -1379,8 +1414,11 @@
       if (votes.ok && !votes.no) ev = 1;
       else if (votes.no && !votes.ok) ev = 2;
       else if (!votes.ok && !votes.no && hourRate && hp.some(({ k, p }) => k === 'base' && p.amb && (Math.abs(p.rate - hourRate) <= 0.005 || Math.abs(p.qty - hourRate) <= 0.005))) {
-        const b = hp.find(({ k, p }) => k === 'base' && p.amb).p;
-        ev = Math.abs(b.rate - hourRate) <= 0.005 ? 1 : 2;
+        // (the base line whose factor is the header's rate: with two placements the first base line was another one,
+        // its rate was not the header's, and every hours line was turned around, 54 hours at 21 ₪ for 21 at 54, round 4
+        // from the payslip screen session)
+        const hits = hp.filter(({ k, p }) => k === 'base' && p.amb).map(({ p }) => (Math.abs(p.rate - hourRate) <= 0.005 ? 1 : Math.abs(p.qty - hourRate) <= 0.005 ? 2 : 0)).filter(Boolean);
+        ev = hits.every((x) => x === hits[0]) ? hits[0] : 0;
       } else if (!votes.ok && !votes.no && colHint) ev = colHint;
       else if (!votes.ok && !votes.no && h1 !== h2) ev = h1 ? 1 : 2;
       else if (!votes.ok && !votes.no && hp.length >= 2 && a2 === hp.length && far(false) && !far(true)) ev = 2;
@@ -1437,6 +1475,17 @@
       const want = wage != null ? wage * TIER_OF[k] : hourRate != null ? hourRate * TIER_OF[k] : null;
       // (with no whole line to give the wage: the pay over the hours, over the tier, is at least a youth's minimum wage)
       const fits = (p) => (want != null ? Math.abs(p.value / p.qty - want) <= want * 0.02 : !whole.length && p.value / p.qty / TIER_OF[k] >= 24 && p.value / p.qty <= 1000);
+      // (the payslip's printed hours total decides a base line of two numbers: the amount over the smaller one is the
+      // total, so the smaller one is the rate and the hours are the total; or the smaller one is not the hours the total
+      // leaves for the base line, and the line is asked for. "שעות רגילות 42.50 5,790.63" beside "שעות עבודה 136.25" was
+      // 42.5 hours at 136.25 ₪, round 4 from the payslip screen session)
+      const whT = fields.workHours && fields.workHours.value;
+      if (k === 'base' && whT > 0 && parts[k].length === 1) {
+        const otherH = Object.keys(parts).filter((x) => x !== 'base').reduce((t, x) => t + parts[x].reduce((u, p) => u + (p.qty > 0 && !p.two ? p.qty : 0), 0), 0);
+        const left = whT - otherH;
+        if (Math.abs(F.value / two[0].qty - left) <= 0.05) { F.rate = two[0].qty; F.qty = Math.round(left * 100) / 100; continue; }
+        if (Math.abs(two[0].qty - left) > 0.05) { fields[k] = { line: F.line, value: null }; continue; }
+      }
       if (two.every(fits) && (want != null || twoAllFit)) continue;
       if (parts[k].length === 1 && want != null && Math.abs(two[0].qty - want) <= want * 0.01) { F.rate = two[0].qty; F.qty = Math.round(F.value / F.rate * 100) / 100; continue; }
       // (no wage on the slip and two numbers that are not hours and their pay, "שעות נוספות 125% 43.75 218.75": a rate and
@@ -1747,6 +1796,9 @@
     // (and an hours line with its amount and no hours, beside one that has hours: "base 1600 / 40 h + Shabbat 240" was
     // "240 ₪ of hours not paid", round 3 from the payslip screen session)
     if (sum > 0 && HOUR_FIELDS.some((k) => val(F, k) > 0 && !(qty(F, k) > 0))) return wh || null;
+    // (overtime or Shabbat hours with no base line at all: the base line was not read, a payslip with overtime has
+    // regular hours; the overtime alone was "1,824 ₪ of hours not paid", round 4 from the payslip screen session)
+    if (sum > 0 && !F.base) return wh || null;
     if (qty(F, 'base') > 0 || (val(F, 'base') == null && !wh)) return sum || wh;
     if (wh) return Math.max(sum, wh);
     return null;
@@ -1970,7 +2022,8 @@
         } else add({ area: 'שבת וחג', status: 'ok', title: 'שעות שבת/חג תקינות', detail: `${U.hours(slipRestH)} שעות בתלוש מול ${U.hours(appRestH)} באפליקציה.`, basis: 'שעות 150%/175%/200%.', confidence: 'medium' });
       } else if (slipRestH > appRestH + 0.25) {
         add({ area: 'שבת וחג', status: 'warn', title: 'בתלוש יותר שעות שבת/חג', detail: `בתלוש ${U.hours(slipRestH)}, באפליקציה ${U.hours(appRestH)}. ייתכן שהמעסיק מגדיר את חלון השבת אחרת. אפשר לכוון בהגדרות › שבת וחגים.`, basis: 'השוואת שעות.', confidence: 'low' });
-      } else add({ area: 'שבת וחג', status: 'ok', title: 'שעות שבת/חג תקינות', detail: `${U.hours(slipRestH)} שעות.`, basis: 'השוואת שעות.', confidence: 'medium' });
+      } else if (!(slipRestPay > 0 && slipRestH === 0)) add({ area: 'שבת וחג', status: 'ok', title: 'שעות שבת/חג תקינות', detail: `${U.hours(slipRestH)} שעות.`, basis: 'השוואת שעות.', confidence: 'medium' });
+      // (paid with no hours read: neither "correct" nor "missing", round 4)
     }
 
     /* 4. overtime */
@@ -1979,7 +2032,11 @@
     const appOt = appOt1 + appOt2;
     if (!noShifts && !askedIn(F, 'ot125') && !askedIn(F, 'ot150') && (appOt > 0.25 || slipOt > 0)) {
       const otShifts = E.shifts.filter((r) => r.hoursBy.ot1 + r.hoursBy.ot2 > 0 && !covered.includes(r));
-      if (appOt - slipOt > 0.25 && notFound(['ot125', 'ot150'], E.pay.ot125 + E.pay.ot150)) notFoundWarn('שעות נוספות', 'שעות נוספות');
+      // (an overtime line with its amount and no hours read: its hours are unknown, not none. Counted as none, a whole-
+      // shekel payslip whose hours column was not proven said "overtime missing", round 4 from the payslip screen session)
+      const otHoursUnknown = ['ot125', 'ot150'].some((k) => val(F, k) > 0 && !(qty(F, k) > 0));
+      if (otHoursUnknown) { /* not judged by hours; the rate check below needs the hours too */ }
+      else if (appOt - slipOt > 0.25 && notFound(['ot125', 'ot150'], E.pay.ot125 + E.pay.ot150)) notFoundWarn('שעות נוספות', 'שעות נוספות');
       else if (appOt - slipOt > 0.25) {
         const missing125 = Math.max(0, appOt1 - (qty(F, 'ot125') || 0));
         const missing150 = Math.max(0, appOt2 - (qty(F, 'ot150') || 0));
@@ -2179,7 +2236,7 @@
   const AREAS = [['שעות', 'hours'], ['תעריף', 'rate'], ['שבת וחג', 'rest'], ['שעות נוספות', 'ot'], ['נסיעות', 'travel'], ['שכר מינימום', 'minwage'], ['פנסיה', 'pension'], ['ביטוח לאומי', 'ni'], ['מס הכנסה', 'tax']];
   const codeOf = (area) => { const x = AREAS.find((p) => p[0] === area); return x ? x[1] : ''; };
   const AREA_FIELDS = { hours: HOUR_FIELDS.concat('workHours'), rate: ['base'], rest: ['rest150', 'rest175', 'rest200'], ot: ['ot125', 'ot150'], travel: ['travel', 'workDays'], minwage: ['base'], pension: ['pensionEmployee', 'pensionEmployer'], ni: ['nationalInsurance', 'healthTax'], tax: ['incomeTax'] };
-  const RANK = { edge: 1, period: 2, travelDays: 2, minAge: 2, pensionStart: 2, birth18: 2, break: 3, otLaw: 3, restWindow: 3, rate: 3, travelRate: 3, unplaced: 4, travelMonth: 4, estimate: 4, long: 5, travelCap: 5, entered: 6, rounding: 6, ocr: 7 };
+  const RANK = { edge: 1, period: 2, travelDays: 2, minAge: 2, pensionStart: 2, birth18: 2, break: 3, otLaw: 3, restWindow: 3, rate: 3, travelRate: 3, unplaced: 4, unread: 4, travelMonth: 4, estimate: 4, long: 5, travelCap: 5, entered: 6, rounding: 6, ocr: 7 };
   const FOUND = { yes: 0, maybe: 1, no: 2 };
 
   /**
@@ -2441,6 +2498,21 @@
           text: 'מס הכנסה, ביטוח לאומי ופנסיה באפליקציה הם הערכה לפי ההגדרות שלך. הם משנים רק את הנטו, לא את הברוטו.' });
       }
 
+      /* the payslip's lines fall short of its own gross: the missing pay may be on a line not read (round 4, from the
+       * payslip screen session: two placements, one of them lost on a photo, were "hours not paid") */
+      if (['hours', 'rate', 'rest', 'ot', 'travel'].includes(code) && val(F, 'gross') != null) {
+        const pays = FIELDS.filter((x) => x.kind === 'pay' && val(F, x.key) != null).reduce((t, x) => t + val(F, x.key), 0);
+        const unread = val(F, 'gross') - pays - otherSum(slip, 'otherPay');
+        if (unread > Math.max(2, f.amount * 0.1)) {
+          // TRANSLATE (the lead): new texts, Hebrew in every language until translated
+          // i18n-keep-start
+          const closesIt = unread >= f.amount - Math.max(2, f.amount * 0.1);
+          add({ id: 'unread', found: closesIt ? 'yes' : 'maybe', amount: closesIt ? f.amount : unread, title: 'שורה שלא נקראה',
+            text: `שורות התשלום שנקראו מסתכמות ב-${U.money(pays)}, והברוטו בתלוש ${U.money(val(F, 'gross'))}. ייתכן שהתשלום הזה נמצא בשורה שלא נקראה.`,
+            fix: { kind: 'verify', key: 'gross' } });
+          // i18n-keep-end
+        }
+      }
       /* a payslip line the reader could not place: maybe this payment under another name */
       if (code !== 'ni' && code !== 'tax') {
         const lines = (slip.other || []).filter((o) => o.guess !== 'otherDed' && !FIELD[o.guess] && +o.value > 0);
