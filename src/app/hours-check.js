@@ -124,7 +124,7 @@
   /* ---------------- the screen ---------------- */
   App.actions['hours-check'] = () => { if (UI.sheets.length) { UI.closeAll(); setTimeout(() => App.hoursCheck(), 320); } else App.hoursCheck(); };
   App.hoursCheck = function () {
-    let rows = [], empId = S.employers[0].id, res = null, per = null, unreadRows = 0;
+    let rows = [], empId = S.employers[0].id, res = null, per = null, unreadRows = 0, capped = null;
     // leaving the sheet ends the reading (its OCR workers) and nothing of it lands on the next screen
     const stop = typeof AbortController !== 'undefined' ? new AbortController() : null;
     const entry = UI.openSheet({
@@ -140,15 +140,12 @@
     function start() {
       showFoot(false);
       box.innerHTML = `${App.mascotSays ? App.mascotSays('happy', 'קיבלת דוח נוכחות מהעבודה? נשווה אותו למשמרות שלך, יום אחרי יום, לפני שהתלוש יוצא.', { size: 64 }) : ''}
-        <label class="btn big block imp-pick">${icon('upload')} בחירת קובץ או צילום<input type="file" id="hc-file" hidden accept=".xlsx,.xls,.xlsm,.ods,.csv,.tsv,.txt,.pdf,image/*,text/*,application/pdf,application/vnd.ms-excel,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"></label>
+        <label class="btn big block imp-pick">${icon('upload')} בחירת קובץ או צילום<input type="file" id="hc-file" class="sr" accept=".xlsx,.xls,.xlsm,.ods,.csv,.tsv,.txt,.pdf,image/*,text/*,application/pdf,application/vnd.ms-excel,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"></label>
         <div class="imp-kinds">${[['camera', 'צילום הדוח'], ['file', 'PDF'], ['file', 'Excel']].map(([ic, t]) => `<span>${icon(ic, 's')}${t}</span>`).join('')}</div>
         <details class="imp-paste"><summary>${icon('edit', 's')} או להדביק טקסט</summary>
           <textarea class="input" id="hc-text" rows="6" placeholder="למשל:&#10;14/10/2026 08:00 16:30&#10;15/10/2026 16:00 23:00"></textarea>
           <button class="btn tonal block" data-hc-read>${icon('check', 's')} השוואה</button></details>
         <div class="tiny muted imp-privacy">${icon('shield', 's')} הדוח נקרא בטלפון בלבד, ולא נשלח לשום מקום. המשמרות שלך לא משתנות בלי אישור שלך.</div>`;
-      // the picker is a real control: reached by Tab and named to a screen reader (hidden took it out of both; intake S4)
-      const pick = box.querySelector('#hc-file');
-      if (pick) { pick.hidden = false; pick.classList.add('sr'); }
     }
     function busy(text) { showFoot(false); box.innerHTML = `<div class="imp-busy">${App.mascot ? App.mascot('think', { size: 84 }) : ''}<div class="imp-bar" aria-hidden="true"><i></i></div><div class="small" id="hc-progress" role="status">${esc(text)}</div></div>`; }
     function progress(text) { const p = box.querySelector('#hc-progress'); if (p) p.textContent = text; }
@@ -195,12 +192,16 @@
       const nEmp = res.items.filter((x) => (x.type === 'missingEmp' || x.type === 'diff') && !x.doubt).length;
       const say = !bad.length ? 'הדוח תואם למשמרות שלך. אפשר לחכות לתלוש בראש שקט 🎉'
         : nEmp ? `מצאתי ${nEmp === 1 ? 'הבדל אחד' : `${nEmp} הבדלים`} שכדאי לבקש לתקן${owed >= 1 ? `, בשווי כ-${U.money(owed, 0)}` : ''}.`
-          : !bad.some((x) => x.type === 'missingMine' && !x.unread && !x.doubt) ? 'כדאי לבדוק' // only unread or doubted rows: never "the same", never a claim
+          // only unread or doubted rows: never "the same", never a claim. Rows whose exit was not read say so
+          : !bad.some((x) => x.type === 'missingMine' && !x.unread && !x.doubt) ? (!bad.every((x) => x.unread) ? 'כדאי לבדוק'
+            : bad.length === 1 ? 'בשורה אחת בדוח לא קראתי את שעת היציאה, אז אי אפשר לדעת אם הדוח תואם. כדאי לבדוק אותה בדוח עצמו.'
+              : `ב-${bad.length} שורות בדוח לא קראתי את שעת היציאה, אז אי אפשר לדעת אם הדוח תואם. כדאי לבדוק אותן בדוח עצמו.`)
           : res.missingMine === 1 ? 'בדוח יש משמרת אחת שלא רשמת. כדאי לבדוק אותה.' : `בדוח יש ${res.missingMine} משמרות שלא רשמת. כדאי לבדוק אותן.`;
       const okItems = res.items.filter((x) => !shown(x));
       const span = per.label ? esc(per.label) : range(U.fmtDate(per.from, 'short'), U.fmtDate(per.to, 'short'));
       box.innerHTML = `${App.mascotSays ? App.mascotSays(bad.length ? 'think' : 'love', say, { size: 64 }) : ''}
         ${App.multiEmp() ? `<div class="field"><span class="lbl">של איזו עבודה הדוח?</span><div class="chips">${S.employers.map((e) => `<button class="chip ${e.id === empId ? 'on' : ''}" data-hc-emp="${esc(e.id)}" aria-pressed="${e.id === empId}">${esc(e.name || '')}</button>`).join('')}</div></div>` : ''}
+        ${capped ? `<div class="tiny muted imp-note">${icon('info', 's')} קראנו את ${capped.pagesRead} העמודים הראשונים מתוך ${capped.pages}. את השאר אפשר להעלות בקובץ נפרד.</div>` : ''}
         <div class="hc-period small muted">${span} · ${rows.length === 1 ? 'שורה אחת בדוח' : `${rows.length} שורות בדוח`}</div>
         <div class="kpis three hc-kpis">
           <div class="kpi"><div class="l">חסר אצל המעסיק</div><div class="v">${res.missingEmp}</div></div>
@@ -209,7 +210,7 @@
         <div class="hc-list">${res.items.map((it, i) => (shown(it) ? itemHtml(it, i) : '')).join('')}</div>
         ${okItems.length ? `<details class="imp-paste hc-ok"><summary>${icon('check', 's')} ${okItems.length === 1 ? 'יום אחד תואם' : `${okItems.length} ימים תואמים`}</summary>
           ${okItems.map((it) => `<div class="kv"><span>${esc(U.DAYS[U.dow(it.date)])} ${U.fmtDate(it.date, 'short')}</span><span class="num">${it.mine.start && it.mine.end ? range(it.mine.start, it.mine.end) : ''}</span></div>`).join('')}</details>` : ''}
-        <div class="tiny muted">השווי לפי החישוב של האפליקציה, כולל שעות נוספות, לילה ושבת. הפרש של עד 10 דקות נחשב תואם.</div>
+        <div class="tiny muted">השווי לפי החישוב של האפליקציה, כולל שעות נוספות, לילה ושבת. הפרש של עד 10 דקות נחשב תואם, אלא אם ההפרשים הקטנים מצטברים בדוח ליותר מחצי שעה לטובת המעסיק.</div>
         <button class="btn text block" data-hc-again>${icon('upload', 's')} דוח אחר</button>`;
       showFoot(nEmp > 0);
     }
@@ -218,6 +219,7 @@
       const all = rowsOf(got);
       unreadRows = all.unreadRows || 0;
       rows = all.filter((r) => r.date <= U.todayKey());
+      capped = got && got.pages > got.pagesRead ? got : null; // a long PDF: only its first pages were read
       if (!rows.length) { none(); return; }
       compute();
       if (root.Fx) root.Fx.play('pick');
@@ -235,7 +237,7 @@
         if (entry.closed) return; // left while it read: no toast on another screen
         console.warn('hours check', e);
         start();
-        UI.invalid(U.ours(e) ? e.message : 'לא הצלחנו לקרוא את הקובץ. אפשר לנסות קובץ אחר או להדביק טקסט');
+        UI.invalid(root.DocRead.trouble(e) || (U.ours(e) ? e.message : 'לא הצלחנו לקרוא את הקובץ. אפשר לנסות קובץ אחר או להדביק טקסט'));
       }
     }
     function letterSheet() {

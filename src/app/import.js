@@ -74,6 +74,8 @@
     return null;
   }
   async function readFile(file, progress, opts) {
+    // an empty file, or a cloud file the phone has not downloaded yet: said as such (app/docread.js)
+    if (root.DocRead) await root.DocRead.check(file);
     const kind = await sniff(file);
     // a picture or a PDF by its bytes: passed on with the right type and ending, as the readers below decide by them
     if (kind && kind.type && file.type !== kind.type) {
@@ -104,13 +106,17 @@
       const got = await App.readDocWords(file, progress, opts);
       progress('מסדר את הטבלה…');
       const res = root.Timesheet.parseWords(got.words, { today: U.todayKey() });
+      // a PDF longer than the pages read (8): the screens say so, the rest can come in another file. Text comes back
+      // as the result of its lines then, so the note travels with it
+      const capped = got.pages > got.pagesRead ? { pages: got.pages, pagesRead: got.pagesRead } : null;
+      const out = (v) => (!capped ? v : Object.assign(typeof v === 'string' ? { result: root.Timesheet.parse(v, { today: U.todayKey() }), text: v } : v, capped));
       // a PDF read both ways: the table (it knows the columns, their names and the total — a column of standard
       // hours never becomes the entry) unless the lines found more shifts
-      if (lines != null && res.rows.length < root.Timesheet.parse(lines, { today: U.todayKey() }).rows.length) return lines;
+      if (lines != null && res.rows.length < root.Timesheet.parse(lines, { today: U.todayKey() }).rows.length) return out(lines);
       // the words read in reading order, for the "what was read" box and as a last try as plain text
       const text = res.text || '';
-      if (!res.rows.length) return lines != null ? lines : got.source === 'ocr' ? { result: res, text } : text;
-      return { result: res, text };
+      if (!res.rows.length) return out(lines != null ? lines : got.source === 'ocr' ? { result: res, text } : text);
+      return out({ result: res, text });
     }
     throw root.U.oops('סוג קובץ שלא מכירים. אפשר Excel, \u200fCSV, \u200fPDF, תמונה או טקסט');
   }
@@ -125,7 +131,7 @@
   App.actions['import-hours'] = () => App.importHours();
   App.importHours = function (opts) {
     if (UI.sheets.length && !(opts && opts.over)) UI.closeAll();
-    let rows = [], noStart = 0, guessedYear = false, noExit = 0, paidSure = new Set();
+    let rows = [], noStart = 0, guessedYear = false, noExit = 0, paidSure = new Set(), capped = null;
     let roleId = S.meta.lastRole && App.roles().some((r) => r.id === S.meta.lastRole) ? S.meta.lastRole : (App.roles()[0] || {}).id;
     let startFor = '09:00';
     // leaving the sheet ends the reading (its OCR workers) and nothing of it lands on the next screen
@@ -172,15 +178,12 @@
     function start() {
       showSave(false);
       box.innerHTML = `${App.mascotSays ? App.mascotSays('happy', 'יש לך דוח שעות מהעבודה? אכניס את כל המשמרות בבת אחת 📄', { size: 64 }) : ''}
-        <label class="btn big block imp-pick">${icon('upload')} בחירת קובץ<input type="file" id="imp-file" hidden accept=".xlsx,.xls,.xlsm,.ods,.csv,.tsv,.txt,.pdf,image/*,text/*,application/pdf,application/vnd.ms-excel,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"></label>
+        <label class="btn big block imp-pick">${icon('upload')} בחירת קובץ<input type="file" id="imp-file" class="sr" accept=".xlsx,.xls,.xlsm,.ods,.csv,.tsv,.txt,.pdf,image/*,text/*,application/pdf,application/vnd.ms-excel,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"></label>
         <div class="imp-kinds">${[['file', 'Excel'], ['file', 'CSV'], ['file', 'PDF'], ['camera', 'צילום או צילום מסך']].map(([ic, t]) => `<span>${icon(ic, 's')}${t}</span>`).join('')}</div>
         <details class="imp-paste"><summary>${icon('edit', 's')} או להדביק טקסט</summary>
           <textarea class="input" id="imp-text" rows="6" placeholder="למשל:&#10;14/10/2026 08:00 16:30&#10;15/10/2026 16:00 23:00"></textarea>
           <button class="btn tonal block" data-imp-read>${icon('check', 's')} קריאה</button></details>
         <div class="tiny muted imp-privacy">${icon('shield', 's')} הקובץ נקרא בטלפון בלבד, ולא נשלח לשום מקום. צילום נקרא כטבלה: כל דוח, בכל סידור עמודות.</div>`;
-      // the picker is a real control: reached by Tab and named to a screen reader (hidden took it out of both; intake S4)
-      const pick = box.querySelector('#imp-file');
-      if (pick) { pick.hidden = false; pick.classList.add('sr'); }
     }
     function busy(text) { box.innerHTML = `<div class="imp-busy">${App.mascot ? App.mascot('think', { size: 84 }) : ''}<div class="imp-bar" aria-hidden="true"><i></i></div><div class="small" id="imp-progress" role="status">${esc(text)}</div></div>`; }
     function progress(text) { const p = box.querySelector('#imp-progress'); if (p) p.textContent = text; }
@@ -213,6 +216,7 @@
         ${noStart ? `<label class="field"><span class="lbl">${noStart === 1 ? 'במשמרת אחת' : `ב-${noStart} משמרות`} כתוב רק כמה שעות. באיזו שעה הן מתחילות?</span><input class="input" type="time" id="imp-start" value="${startFor}"></label>` : ''}
         ${noExit ? `<div class="tiny muted imp-note">${icon('info', 's')} ${noExit === 1 ? 'בשורה אחת' : `ב-${noExit} שורות`} יש כניסה בלי יציאה, ולכן ${noExit === 1 ? 'היא לא נכנסה' : 'הן לא נכנסו'}. אפשר להוסיף ${noExit === 1 ? 'אותה' : 'אותן'} ידנית.</div>` : ''}
         ${guessedYear ? `<div class="tiny muted imp-note">${icon('info', 's')} בשורות בלי שנה לקחנו את התאריך האחרון שכבר עבר.</div>` : ''}
+        ${capped ? `<div class="tiny muted imp-note">${icon('info', 's')} קראנו את ${capped.pagesRead} העמודים הראשונים מתוך ${capped.pages}. את השאר אפשר להעלות בקובץ נפרד.</div>` : ''}
         <div class="imp-head"><b>${first === last ? dateOf(first) : `\u2066${dateOf(first)}\u2060–\u2060${dateOf(last)}\u2069`}</b><button class="btn text sm" data-imp-all>${allOn() ? 'לבטל הכול' : 'לסמן הכול'}</button></div>
         <div class="imp-list">${list}</div>`;
       showSave(true);
@@ -239,6 +243,7 @@
       noStart = rows.filter((r) => !r.start).length;
       guessedYear = p.guessedYear;
       noExit = p.skipped || 0; // an entry without an exit (a missed clock-out)
+      capped = got && got.pages > got.pagesRead ? got : null; // a long PDF: only its first pages were read
       if (!rows.length) { none(text); return; }
       if (root.Fx) root.Fx.play('pick');
       review();
@@ -255,7 +260,7 @@
         if (entry.closed) return; // left while it read: no toast on another screen
         console.warn('import', e);
         start();
-        UI.invalid(root.U.ours(e) ? e.message : 'לא הצלחנו לקרוא את הקובץ. אפשר לנסות קובץ אחר או להדביק טקסט');
+        UI.invalid(root.DocRead.trouble(e) || (root.U.ours(e) ? e.message : 'לא הצלחנו לקרוא את הקובץ. אפשר לנסות קובץ אחר או להדביק טקסט'));
       }
     }
     /** Minutes of unpaid break a row's printed hours show (span minus paid, 10 minutes to 3 hours), or null. */
