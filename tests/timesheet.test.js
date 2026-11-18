@@ -598,5 +598,6 @@ T.atest('leaving while the engine is still loading stops the read then (no readi
   if (saved === undefined) delete globalThis.Tesseract; else globalThis.Tesseract = saved;
   T.eq(err && err.name, 'AbortError');
   T.eq(recognized, 0, 'it read after the stop');
+  T.eq(globalThis.DocRead.trouble ? globalThis.DocRead.trouble(err) : '', '', 'a stop is no trouble to tell the person about');
   T.eq(ended, 1, 'the engine made after the stop was not ended');
 });

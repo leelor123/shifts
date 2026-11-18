@@ -12,8 +12,20 @@
   'use strict';
   const TESSERACT = 'https://cdn.jsdelivr.net/npm/tesseract.js@5.1.1/dist/tesseract.min.js';
   const DocRead = {};
-  // the line the screens show while the engine loads (unchanged; DocRead.words passes codes beside it)
-  const LOADING = 'טוען מנוע זיהוי עברית (פעם ראשונה ~10MB)…';
+  // the line the screens show while the engine loads (DocRead.words passes codes beside it). The first time a language
+  // is downloaded (all of it ~4.7 MB on the wire: the core, eng, heb); after that it comes from the phone. Tesseract
+  // 5.1.1 never says "from cache" (its status is "loading language traineddata" either way, measured 18 Nov 2026),
+  // so the phone remembers which languages it has already read with. Was one line on every read, with a wrong size (10 MB)
+  const HAVE = 'shaati.ocrLangs';
+  const haveLangs = () => { try { return String(localStorage.getItem(HAVE) || '').split(',').filter(Boolean); } catch (e) { return []; } };
+  const gotLangs = (lang) => { try { const s = new Set(haveLangs()); String(lang).split('+').forEach((l) => s.add(l)); localStorage.setItem(HAVE, [...s].join(',')); } catch (e) { /* private window: asked again */ } };
+  /** The loading line for a reading in `lang` ("heb+eng"); pct: the share of its language files loaded (0-100). */
+  function loadingText(lang, pct) {
+    const have = haveLangs();
+    if (String(lang || 'eng').split('+').every((l) => have.includes(l))) return 'מכין את מנוע הקריאה…';
+    // the percent only while it moves (0% stood still for the whole download on a slow network)
+    return pct > 0 && pct < 100 ? `מוריד את מנוע הקריאה, רק בפעם הראשונה (כ-\u20605MB)… ${pct}%` : 'מוריד את מנוע הקריאה, רק בפעם הראשונה (כ-\u20605MB)…';
+  }
 
   /* ---------------- the picture ---------------- */
   /** An image file → a canvas of grey, evened-out light, dark text on light paper. */
@@ -130,6 +142,39 @@
     }
   }
   const isFile = (b) => typeof Blob !== 'undefined' && b instanceof Blob;
+  /**
+   * Before a file is read: one with no bytes, or one whose bytes do not come (a Drive or OneDrive file the picker lists
+   * but the phone has not downloaded: NotReadableError). Every reader calls it first (payslip, hours report, hours
+   * check, schedule), so the person hears what to do instead of "could not read the file" (intake M5).
+   */
+  DocRead.check = async function (file) {
+    if (typeof Blob === 'undefined' || !(file instanceof Blob)) return;
+    if (file.size === 0) throw codeError('docread/empty');
+    try { await file.slice(0, 1).arrayBuffer(); } catch (e) { throw codeError(e && e.name === 'NotReadableError' ? 'docread/not-on-phone' : 'docread/unreadable', e); }
+  };
+  // what the person can do about a file that does not open, by code: one table for every reader
+  const TROUBLE = {
+    'docread/heic': 'זו תמונה בפורמט HEIC, שהטלפון לא מצליח לפתוח כאן. אפשר להעלות צילום מסך שלה, או לשנות במצלמה את הפורמט ל-\u2060JPG.',
+    'docread/locked': 'ה-\u2060PDF נעול בסיסמה. אפשר לפתוח אותו, לצלם צילום מסך ולהעלות את הצילום.',
+    'docread/empty': 'הקובץ ריק או פגום. אפשר להוריד אותו שוב, או לצלם את המסמך.',
+    'docread/not-on-phone': 'הקובץ עוד לא ירד לטלפון. פותחים אותו פעם אחת באפליקציה שבה הוא שמור, ואז מנסים שוב.',
+  };
+  TROUBLE['docread/damaged'] = TROUBLE['docread/unreadable'] = TROUBLE['docread/empty'];
+  /**
+   * An error's code: ours (docread/…), or the browser's and pdf.js's own by name: a PDF with a password
+   * (PasswordException) → docread/locked; a broken or empty PDF (InvalidPDFException) → docread/damaged; bytes that do
+   * not come (NotReadableError) → docread/not-on-phone. '' for anything else (the screen says its own sentence).
+   */
+  DocRead.codeOf = function (e) {
+    if (!e) return '';
+    if (typeof e.code === 'string' && /^docread\//.test(e.code)) return e.code;
+    if (e.name === 'PasswordException') return 'docread/locked';
+    if (e.name === 'InvalidPDFException') return 'docread/damaged';
+    if (e.name === 'NotReadableError') return 'docread/not-on-phone';
+    return '';
+  };
+  /** The sentence for a file that failed, or '' (the reader's own general sentence then). */
+  DocRead.trouble = (e) => TROUBLE[DocRead.codeOf(e)] || '';
   function codeError(code, cause) { return Object.assign(new Error(code), { name: 'DocReadError', code, cause }); }
   /** A JPEG's or PNG's size from its first bytes, as shown (EXIF turns of 90° swap it); null when not found. */
   function sizeOf(b) {
@@ -302,9 +347,9 @@
         if (!progress) return;
         const pct = Math.round((m.progress || 0) * 100);
         if (m.status === 'recognizing text') progress(`${label}… ${pct}%`, { code: 'docread/reading', lang, pct });
-        else if (/loading language traineddata/.test(m.status)) progress(LOADING, { code: 'docread/loading-language', lang, pct, cached: /cache/.test(m.status) });
-        else if (/loading tesseract core/.test(m.status)) progress(LOADING, { code: 'docread/loading-core', pct });
-        else if (/initializ/.test(m.status)) progress(LOADING, { code: 'docread/initializing', lang, pct });
+        else if (/loading language traineddata/.test(m.status)) progress(loadingText(lang, pct), { code: 'docread/loading-language', lang, pct, cached: /cache/.test(m.status) });
+        else if (/loading tesseract core/.test(m.status)) progress(loadingText(lang, 0), { code: 'docread/loading-core', pct });
+        else if (/initializ/.test(m.status)) progress(loadingText(lang, 0), { code: 'docread/initializing', lang, pct });
       },
     });
     let worker;
@@ -313,6 +358,7 @@
       if (signal && onStop) signal.removeEventListener('abort', onStop);
       throw e;
     }
+    gotLangs(lang); // its languages are on the phone now
     try {
       if (signal && signal.aborted) throw stopped();
       if (params) await Promise.race([worker.setParameters(params), stop]);
@@ -389,7 +435,7 @@
       }
     }
     letGo();
-    progress(LOADING, { code: 'docread/loading-language', lang: 'heb+eng' });
+    progress(loadingText('heb+eng', 0), { code: 'docread/loading-language', lang: 'heb+eng' });
     const he = await pass(image, 'heb+eng', { tessedit_pageseg_mode: opts.psm || '11', preserve_interword_spaces: '1' }, progress, 'קורא את המילים', opts.signal);
     if (!opts.lines && image.getContext) await hebrewAgain(image, he, opts.signal);
     // the words: Hebrew/English words from the first reading; numbers from whichever reading read them
@@ -502,6 +548,6 @@
   };
 
   // the picture rules that need no browser, for the unit tests (tests/timesheet.test.js)
-  DocRead.pure = { grayOf, skewOf, wholes, latinBit, heWord, sizeOf };
+  DocRead.pure = { grayOf, skewOf, wholes, latinBit, heWord, sizeOf, loadingText };
   root.DocRead = DocRead;
 })(typeof window !== 'undefined' ? window : globalThis);
