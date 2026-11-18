@@ -122,6 +122,9 @@
   }
 
   App.readHoursFile = readFile; // the hours report check reads the same files (app/hours-check.js)
+  /** Rows of the report the reader saw and could not read (n > 0): said under the period line, here and in the hours
+   *  check, so a row left out is never silent. */
+  App.unreadRowsNote = (n) => `<div class="tiny muted imp-note imp-unread">${icon('info', 's')} ${n === 1 ? 'שורה אחת בדוח לא נקראה בבירור. כדאי לבדוק אותה בדוח עצמו.' : `${n} שורות בדוח לא נקראו בבירור. כדאי לבדוק אותן בדוח עצמו.`}</div>`;
 
   // a night the report cuts at midnight is one row (core/hourscheck.js joinNights)
   const joinNights = (rows) => root.HoursCheck.joinNights(rows);
@@ -131,7 +134,7 @@
   App.actions['import-hours'] = () => App.importHours();
   App.importHours = function (opts) {
     if (UI.sheets.length && !(opts && opts.over)) UI.closeAll();
-    let rows = [], noStart = 0, guessedYear = false, noExit = 0, paidSure = new Set(), capped = null;
+    let rows = [], noStart = 0, guessedYear = false, noExit = 0, paidSure = new Set(), capped = null, unread = 0;
     let roleId = S.meta.lastRole && App.roles().some((r) => r.id === S.meta.lastRole) ? S.meta.lastRole : (App.roles()[0] || {}).id;
     let startFor = '09:00';
     // leaving the sheet ends the reading (its OCR workers) and nothing of it lands on the next screen
@@ -208,7 +211,7 @@
         const when = r.start ? `\u2066${r.start}\u2060–\u2060${r.end}\u2069` : `${U.num(r.hours, 2)} שעות · ${startFor ? 'מ-' + startFor : 'שעה לא ידועה'}`;
         return `<button class="imp-row ${r.on ? 'on' : ''}" data-i="${i}" aria-pressed="${r.on}"><span class="imp-check" aria-hidden="true">${icon('check', 's')}</span>
           <span class="imp-d"><b>${esc(day)} ${dateOf(r.date)}</b><small>${when}${r.overnight ? ' · לילה' : ''}</small></span>
-          <span class="imp-h">${U.num(paidSure.has(r) ? r.paid : r.hours, 2)} ש׳${(t && t.taken ? '<i class="tag">כבר קיימת</i>' : '') + (r.doubt ? `<i class="tag">${TO_CHECK}</i>` : '')}${t && t.end > Date.now() ? '<i class="tag planned">עתידית</i>' : ''}</span></button>`;
+          <span class="imp-h">${U.num(paidSure.has(r) ? r.paid : r.hours, 2)} ש׳${(t && t.taken ? '<i class="tag">כבר קיימת</i>' : '') + (r.doubt ? `<i class="tag">${TO_CHECK}</i>` : '') + (t && t.planned ? `<i class="tag" data-imp-plan="${esc(t.planned.id)}">תסומן כבוצעה</i>` : '')}${t && t.end > Date.now() ? '<i class="tag planned">עתידית</i>' : ''}</span></button>`;
       }).join('');
       const first = rows[0].date, last = rows[rows.length - 1].date;
       box.innerHTML = `${App.mascotSays ? App.mascotSays('love', `מצאתי ${rows.length === 1 ? 'משמרת אחת' : `${rows.length} משמרות`}! 🎉 בודקים רגע ומוסיפים`, { size: 64 }) : ''}
@@ -218,15 +221,28 @@
         ${guessedYear ? `<div class="tiny muted imp-note">${icon('info', 's')} בשורות בלי שנה לקחנו את התאריך האחרון שכבר עבר.</div>` : ''}
         ${capped ? `<div class="tiny muted imp-note">${icon('info', 's')} קראנו את ${capped.pagesRead} העמודים הראשונים מתוך ${capped.pages}. את השאר אפשר להעלות בקובץ נפרד.</div>` : ''}
         <div class="imp-head"><b>${first === last ? dateOf(first) : `\u2066${dateOf(first)}\u2060–\u2060${dateOf(last)}\u2069`}</b><button class="btn text sm" data-imp-all>${allOn() ? 'לבטל הכול' : 'לסמן הכול'}</button></div>
+        ${unread ? App.unreadRowsNote(unread) : ''}
         <div class="imp-list">${list}</div>`;
       showSave(true);
       count();
     }
     // a row on or off: in place (nothing else moves), and the button says how many
     function count() {
-      const n = rows.filter((r) => r.on && (r.start || startFor)).length;
+      const adds = rows.filter((r) => r.on && (r.start || startFor));
+      const n = adds.length;
+      // the rows the reader doubted that the person turned on: the button says how many of them go in
+      const k = adds.filter((r) => r.doubt).length;
+      const unsure = !k ? '' : n === 1 ? '(לבדיקה)' : k === 1 ? '(אחת לבדיקה)' : `(${k} לבדיקה)`;
       save.disabled = !n;
-      save.innerHTML = `${icon('plus', 's')} ${n === 1 ? 'הוספת משמרת אחת' : `הוספת ${n} משמרות`}`;
+      save.innerHTML = `${icon('plus', 's')} ${n === 1 ? 'הוספת משמרת אחת' : `הוספת ${n} משמרות`}${unsure ? ' ' + unsure : ''}`;
+      // two rows over one planned shift: only the first one turned on makes it done (add() below), so only it says so
+      const plan = new Map();
+      box.querySelectorAll('[data-imp-plan]').forEach((tg) => { const id = tg.dataset.impPlan; if (!plan.has(id)) plan.set(id, []); plan.get(id).push(tg); });
+      plan.forEach((tags) => {
+        if (tags.length < 2) return;
+        const lead = tags.find((tg) => rows[+tg.closest('.imp-row').dataset.i].on) || tags[0];
+        tags.forEach((tg) => { tg.style.display = tg === lead ? '' : 'none'; });
+      });
       const all = box.querySelector('[data-imp-all]');
       if (all) all.textContent = allOn() ? 'לבטל הכול' : 'לסמן הכול';
     }
@@ -244,6 +260,9 @@
       guessedYear = p.guessedYear;
       noExit = p.skipped || 0; // an entry without an exit (a missed clock-out)
       capped = got && got.pages > got.pagesRead ? got : null; // a long PDF: only its first pages were read
+      // rows the reader saw and could not read: a time with no trusted date, a line with two times it left out (an
+      // entry without an exit has its own note above)
+      unread = Math.max(+p.undated || 0, App.droppedRows ? App.droppedRows(text, (p.rows || []).length) : 0);
       if (!rows.length) { none(text); return; }
       if (root.Fx) root.Fx.play('pick');
       review();

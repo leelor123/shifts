@@ -63,3 +63,45 @@ T.test('round 3: the check counts report lines with an entry and an exit that ga
   T.eq(ctx.droppedOf('01/11/2026 08:00 16:00\nסה"כ 16.00 8.00\n02/11/2026 08:00 12:00 16:00 20:00', 2), 0, 'decimals and a split day are not dropped rows');
   T.ok(hc.includes('droppedOf(typeof got === \'string\' ? got : got.text, (p.rows || []).length)'));
 });
+
+// the screen additions the readers campaign left (Nov 2026): rows not read, doubted rows in the save button, a planned
+// shift a row makes done, a long PDF read in part
+T.test('both screens say how many report rows were not read, under the period line, in the right number form', () => {
+  const vm = require('vm');
+  const line = imp.split('\n').find((l) => l.includes('App.unreadRowsNote = (n) =>'));
+  T.ok(line, 'one note for both screens');
+  const ctx = { App: {}, icon: () => '<svg></svg>' };
+  vm.runInNewContext(line, ctx);
+  T.ok(ctx.App.unreadRowsNote(1).includes('שורה אחת בדוח לא נקראה בבירור. כדאי לבדוק אותה בדוח עצמו.'), 'one row');
+  T.ok(ctx.App.unreadRowsNote(2).includes('2 שורות בדוח לא נקראו בבירור. כדאי לבדוק אותן בדוח עצמו.'), 'two rows');
+  T.ok(ctx.App.unreadRowsNote(7).includes('7 שורות בדוח'), 'many rows');
+  // where: right under the period line of each screen, and only when a row was missed
+  T.ok(/data-imp-all>\$\{allOn\(\) \? 'לבטל הכול' : 'לסמן הכול'\}<\/button><\/div>\s*\$\{unread \? App\.unreadRowsNote\(unread\) : ''\}\s*<div class="imp-list">/.test(imp), 'import: under the dates line');
+  T.ok(/<div class="hc-period small muted">[^\n]*<\/div>\s*\$\{unreadRows \? App\.unreadRowsNote\(unreadRows\) : ''\}\s*<div class="kpis/.test(hc), 'check: under the period line');
+  // the import counts what its own notes do not: an entry without an exit already has its note (noExit)
+  T.ok(imp.includes('unread = Math.max(+p.undated || 0, App.droppedRows ? App.droppedRows(text, (p.rows || []).length) : 0);'));
+  T.ok(hc.includes('App.droppedRows = droppedOf;'), 'one counter of dropped lines for both screens');
+});
+T.test('import: the add button says how many of the rows it adds are doubted', () => {
+  const line = imp.split('\n').find((l) => l.includes('const unsure = '));
+  T.ok(line && imp.includes("${unsure ? ' ' + unsure : ''}`;") && imp.includes('const k = adds.filter((r) => r.doubt).length;'));
+  const unsure = (n, k) => new Function('n', 'k', line.trim() + ' return unsure;')(n, k);
+  T.eq(unsure(5, 0), '', 'no doubted row: nothing more');
+  T.eq(unsure(1, 1), '(לבדיקה)', 'one shift, and it is doubted');
+  T.eq(unsure(5, 1), '(אחת לבדיקה)', 'one of several');
+  T.eq(unsure(5, 2), '(2 לבדיקה)', 'two');
+  T.eq(unsure(5, 4), '(4 לבדיקה)', 'more');
+  // counted from the rows the button adds (on, with a start), as n is
+  T.ok(imp.includes('const adds = rows.filter((r) => r.on && (r.start || startFor));') && imp.includes('const n = adds.length;'));
+});
+T.test('import: a row that makes a planned shift done says so, on the one row that does it', () => {
+  T.ok(imp.includes('(t && t.planned ? `<i class="tag" data-imp-plan="${esc(t.planned.id)}">תסומן כבוצעה</i>` : \'\')'));
+  // add() turns the planned shift done from the first row turned on; the tag follows the same rule
+  T.ok(imp.includes("const lead = tags.find((tg) => rows[+tg.closest('.imp-row').dataset.i].on) || tags[0];"));
+  T.ok(/if \(t\.planned && !turned\.has\(t\.planned\.id\)\) \{/.test(imp));
+});
+T.test('both screens: a PDF longer than the pages read says how many were read, with the real numbers', () => {
+  const note = 'קראנו את ${capped.pagesRead} העמודים הראשונים מתוך ${capped.pages}. את השאר אפשר להעלות בקובץ נפרד.';
+  T.ok(imp.includes(note) && hc.includes(note));
+  T.ok(imp.includes('const capped = got.pages > got.pagesRead ? { pages: got.pages, pagesRead: got.pagesRead } : null;'), 'readFile carries both numbers');
+});

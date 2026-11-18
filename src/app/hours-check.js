@@ -122,6 +122,7 @@
   }
 
   /* ---------------- the screen ---------------- */
+  App.droppedRows = droppedOf; // the hours import counts them the same way (app/import.js)
   App.actions['hours-check'] = () => { if (UI.sheets.length) { UI.closeAll(); setTimeout(() => App.hoursCheck(), 320); } else App.hoursCheck(); };
   App.hoursCheck = function () {
     let rows = [], empId = S.employers[0].id, res = null, per = null, unreadRows = 0, capped = null;
@@ -203,6 +204,7 @@
         ${App.multiEmp() ? `<div class="field"><span class="lbl">של איזו עבודה הדוח?</span><div class="chips">${S.employers.map((e) => `<button class="chip ${e.id === empId ? 'on' : ''}" data-hc-emp="${esc(e.id)}" aria-pressed="${e.id === empId}">${esc(e.name || '')}</button>`).join('')}</div></div>` : ''}
         ${capped ? `<div class="tiny muted imp-note">${icon('info', 's')} קראנו את ${capped.pagesRead} העמודים הראשונים מתוך ${capped.pages}. את השאר אפשר להעלות בקובץ נפרד.</div>` : ''}
         <div class="hc-period small muted">${span} · ${rows.length === 1 ? 'שורה אחת בדוח' : `${rows.length} שורות בדוח`}</div>
+        ${unreadRows ? App.unreadRowsNote(unreadRows) : ''}
         <div class="kpis three hc-kpis">
           <div class="kpi"><div class="l">חסר אצל המעסיק</div><div class="v">${res.missingEmp}</div></div>
           <div class="kpi"><div class="l">שעות שונות</div><div class="v">${res.diff}</div></div>

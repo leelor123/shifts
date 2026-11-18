@@ -328,7 +328,7 @@
   "kind": "lit",
   "where": [
    "app/app.js:579",
-   "app/import.js:302",
+   "app/import.js:321",
    "app/ui.js:430",
    "app/views-settings.js:400",
    "app/views-settings.js:913",
@@ -428,7 +428,7 @@
   "kind": "lit",
   "where": [
    "app/app.js:717",
-   "app/import.js:214",
+   "app/import.js:217",
    "app/schedule-import.js:117"
   ]
  },
@@ -437,7 +437,7 @@
   "kind": "tpl",
   "where": [
    "app/app.js:717",
-   "app/import.js:214",
+   "app/import.js:217",
    "app/schedule-import.js:117"
   ]
  },
@@ -1315,7 +1315,7 @@
   "where": [
    "app/claim-report.js:167",
    "app/claim-report.js:168",
-   "app/hours-check.js:254"
+   "app/hours-check.js:256"
   ]
  },
  {
@@ -1323,7 +1323,7 @@
   "kind": "lit",
   "where": [
    "app/claim-report.js:167",
-   "app/hours-check.js:254"
+   "app/hours-check.js:256"
   ]
  },
  {
@@ -2283,78 +2283,78 @@
   "key": "בדיקת דוח הנוכחות",
   "kind": "lit",
   "where": [
-   "app/hours-check.js:131"
+   "app/hours-check.js:132"
   ]
  },
  {
   "key": "<button class=\"btn big\" data-hc-letter>{0} הודעה למעסיק</button>",
   "kind": "tpl",
   "where": [
-   "app/hours-check.js:134"
+   "app/hours-check.js:135"
   ]
  },
  {
   "key": "{0}\n        <label class=\"btn big block imp-pick\">{1} בחירת קובץ או צילום<input type=\"file\" id=\"hc-file\" class=\"sr\" accept=\".xlsx,.xls,.xlsm,.ods,.csv,.tsv,.txt,.pdf,image/*,text/*,application/pdf,application/vnd.ms-excel,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet\"></label>\n        <div class=\"imp-kinds\">{2}</div>\n        <details class=\"imp-paste\"><summary>{3} או להדביק טקסט</summary>\n          <textarea class=\"input\" id=\"hc-text\" rows=\"6\" placeholder=\"למשל:&#10;14/10/2026 08:00 16:30&#10;15/10/2026 16:00 23:00\"></textarea>\n          <button class=\"btn tonal block\" data-hc-read>{4} השוואה</button></details>\n        <div class=\"tiny muted imp-privacy\">{5} הדוח נקרא בטלפון בלבד, ולא נשלח לשום מקום. המשמרות שלך לא משתנות בלי אישור שלך.</div>",
   "kind": "tpl",
   "where": [
-   "app/hours-check.js:142"
+   "app/hours-check.js:143"
   ]
  },
  {
   "key": "קיבלת דוח נוכחות מהעבודה? נשווה אותו למשמרות שלך, יום אחרי יום, לפני שהתלוש יוצא.",
   "kind": "lit",
   "where": [
-   "app/hours-check.js:142"
+   "app/hours-check.js:143"
   ]
  },
  {
   "key": "צילום הדוח",
   "kind": "lit",
   "where": [
-   "app/hours-check.js:144"
+   "app/hours-check.js:145"
   ]
  },
  {
   "key": "{0}\n        <div class=\"card small imp-tips\"><b>מה עוזר:</b><ul><li>שבכל שורה יהיו תאריך ושעות</li><li>בצילום: שהדוח ישר, חד ומואר</li><li>קובץ PDF או Excel מהמעסיק נקרא הכי טוב</li></ul></div>\n        <button class=\"btn tonal block\" data-hc-again>{1} לנסות קובץ אחר</button>",
   "kind": "tpl",
   "where": [
-   "app/hours-check.js:154"
+   "app/hours-check.js:155"
   ]
  },
  {
   "key": "לא מצאתי בדוח ימים ושעות שאני יודע לקרוא 🤔",
   "kind": "lit",
   "where": [
-   "app/hours-check.js:154"
+   "app/hours-check.js:155"
   ]
  },
  {
   "key": "חסר אצל המעסיק",
   "kind": "lit",
   "where": [
-   "app/hours-check.js:165"
+   "app/hours-check.js:166"
   ]
  },
  {
   "key": "שעות שונות",
   "kind": "lit",
   "where": [
-   "app/hours-check.js:165"
+   "app/hours-check.js:166"
   ]
  },
  {
   "key": "חסר אצלך",
   "kind": "lit",
   "where": [
-   "app/hours-check.js:165"
+   "app/hours-check.js:166"
   ]
  },
  {
   "key": "כדאי לבדוק",
   "kind": "lit",
   "where": [
-   "app/hours-check.js:165",
-   "app/hours-check.js:196",
+   "app/hours-check.js:166",
+   "app/hours-check.js:197",
    "app/payslip-plus.js:31",
    "app/views-payslip.js:1053"
   ]
@@ -2363,8 +2363,8 @@
   "key": "לבדיקה",
   "kind": "lit",
   "where": [
-   "app/hours-check.js:170",
-   "app/import.js:198",
+   "app/hours-check.js:171",
+   "app/import.js:201",
    "app/schedule-import.js:338"
   ]
  },
@@ -2372,148 +2372,148 @@
   "key": "<span>בדוח: <b class=\"num\">{0}</b></span>",
   "kind": "tpl",
   "where": [
-   "app/hours-check.js:175"
+   "app/hours-check.js:176"
   ]
  },
  {
   "key": "<span>אצלך: <b class=\"num\">{0}</b></span>",
   "kind": "tpl",
   "where": [
-   "app/hours-check.js:176"
+   "app/hours-check.js:177"
   ]
  },
  {
   "key": "<b class=\"money\">{0}</b><small>שכר המשמרת</small>",
   "kind": "tpl",
   "where": [
-   "app/hours-check.js:179"
+   "app/hours-check.js:180"
   ]
  },
  {
   "key": "<small>אותו שכר</small>",
   "kind": "lit",
   "where": [
-   "app/hours-check.js:180"
+   "app/hours-check.js:181"
   ]
  },
  {
   "key": "<b class=\"money\">{0}</b><small>פחות בדוח</small>",
   "kind": "tpl",
   "where": [
-   "app/hours-check.js:180"
+   "app/hours-check.js:181"
   ]
  },
  {
   "key": "<b class=\"money\">{0}</b><small>יותר בדוח</small>",
   "kind": "tpl",
   "where": [
-   "app/hours-check.js:180"
+   "app/hours-check.js:181"
   ]
  },
  {
   "key": "<b class=\"money\">{0}</b><small>לפי הדוח</small>",
   "kind": "tpl",
   "where": [
-   "app/hours-check.js:181"
+   "app/hours-check.js:182"
   ]
  },
  {
   "key": "<div class=\"tiny muted\">אחרי השורה האחרונה בדוח. אולי הדוח עוד לא כולל את היום הזה.</div>",
   "kind": "tpl",
   "where": [
-   "app/hours-check.js:184"
+   "app/hours-check.js:185"
   ]
  },
  {
   "key": "<button class=\"btn tonal sm\" data-hc-add=\"{0}\">{1} להוספה למשמרות שלי</button>",
   "kind": "tpl",
   "where": [
-   "app/hours-check.js:185"
+   "app/hours-check.js:186"
   ]
  },
  {
   "key": "הדוח תואם למשמרות שלך. אפשר לחכות לתלוש בראש שקט 🎉",
   "kind": "lit",
   "where": [
-   "app/hours-check.js:193"
+   "app/hours-check.js:194"
   ]
  },
  {
   "key": "מצאתי {0} שכדאי לבקש לתקן{1}.",
   "kind": "tpl",
   "where": [
-   "app/hours-check.js:194"
+   "app/hours-check.js:195"
   ]
  },
  {
   "key": "הבדל אחד",
   "kind": "lit",
   "where": [
-   "app/hours-check.js:194"
+   "app/hours-check.js:195"
   ]
  },
  {
   "key": "{0} הבדלים",
   "kind": "tpl",
   "where": [
-   "app/hours-check.js:194"
+   "app/hours-check.js:195"
   ]
  },
  {
   "key": ", בשווי כ-{0}",
   "kind": "tpl",
   "where": [
-   "app/hours-check.js:194"
+   "app/hours-check.js:195"
   ]
  },
  {
   "key": "בשורה אחת בדוח לא קראתי את שעת היציאה, אז אי אפשר לדעת אם הדוח תואם. כדאי לבדוק אותה בדוח עצמו.",
   "kind": "lit",
   "where": [
-   "app/hours-check.js:197"
+   "app/hours-check.js:198"
   ]
  },
  {
   "key": "ב-{0} שורות בדוח לא קראתי את שעת היציאה, אז אי אפשר לדעת אם הדוח תואם. כדאי לבדוק אותן בדוח עצמו.",
   "kind": "tpl",
   "where": [
-   "app/hours-check.js:198"
+   "app/hours-check.js:199"
   ]
  },
  {
   "key": "בדוח יש משמרת אחת שלא רשמת. כדאי לבדוק אותה.",
   "kind": "lit",
   "where": [
-   "app/hours-check.js:199"
+   "app/hours-check.js:200"
   ]
  },
  {
   "key": "בדוח יש {0} משמרות שלא רשמת. כדאי לבדוק אותן.",
   "kind": "tpl",
   "where": [
-   "app/hours-check.js:199"
+   "app/hours-check.js:200"
   ]
  },
  {
-  "key": "{0}\n        {1}\n        {2}\n        <div class=\"hc-period small muted\">{3} · {4}</div>\n        <div class=\"kpis three hc-kpis\">\n          <div class=\"kpi\"><div class=\"l\">חסר אצל המעסיק</div><div class=\"v\">{5}</div></div>\n          <div class=\"kpi\"><div class=\"l\">שעות שונות</div><div class=\"v\">{6}</div></div>\n          <div class=\"kpi\"><div class=\"l\">חסר אצלך</div><div class=\"v\">{7}</div></div></div>\n        <div class=\"hc-list\">{8}</div>\n        {9}\n        <div class=\"tiny muted\">השווי לפי החישוב של האפליקציה, כולל שעות נוספות, לילה ושבת. הפרש של עד 10 דקות נחשב תואם, אלא אם ההפרשים הקטנים מצטברים בדוח ליותר מחצי שעה לטובת המעסיק.</div>\n        <button class=\"btn text block\" data-hc-again>{10} דוח אחר</button>",
-  "kind": "tpl",
-  "where": [
-   "app/hours-check.js:202"
-  ]
- },
- {
-  "key": "<div class=\"field\"><span class=\"lbl\">של איזו עבודה הדוח?</span><div class=\"chips\">{0}</div></div>",
+  "key": "{0}\n        {1}\n        {2}\n        <div class=\"hc-period small muted\">{3} · {4}</div>\n        {5}\n        <div class=\"kpis three hc-kpis\">\n          <div class=\"kpi\"><div class=\"l\">חסר אצל המעסיק</div><div class=\"v\">{6}</div></div>\n          <div class=\"kpi\"><div class=\"l\">שעות שונות</div><div class=\"v\">{7}</div></div>\n          <div class=\"kpi\"><div class=\"l\">חסר אצלך</div><div class=\"v\">{8}</div></div></div>\n        <div class=\"hc-list\">{9}</div>\n        {10}\n        <div class=\"tiny muted\">השווי לפי החישוב של האפליקציה, כולל שעות נוספות, לילה ושבת. הפרש של עד 10 דקות נחשב תואם, אלא אם ההפרשים הקטנים מצטברים בדוח ליותר מחצי שעה לטובת המעסיק.</div>\n        <button class=\"btn text block\" data-hc-again>{11} דוח אחר</button>",
   "kind": "tpl",
   "where": [
    "app/hours-check.js:203"
   ]
  },
  {
+  "key": "<div class=\"field\"><span class=\"lbl\">של איזו עבודה הדוח?</span><div class=\"chips\">{0}</div></div>",
+  "kind": "tpl",
+  "where": [
+   "app/hours-check.js:204"
+  ]
+ },
+ {
   "key": "<div class=\"tiny muted imp-note\">{0} קראנו את {1} העמודים הראשונים מתוך {2}. את השאר אפשר להעלות בקובץ נפרד.</div>",
   "kind": "tpl",
   "where": [
-   "app/hours-check.js:204",
-   "app/import.js:219",
+   "app/hours-check.js:205",
+   "app/import.js:222",
    "app/schedule-import.js:129"
   ]
  },
@@ -2521,36 +2521,36 @@
   "key": "שורה אחת בדוח",
   "kind": "lit",
   "where": [
-   "app/hours-check.js:205"
+   "app/hours-check.js:206"
   ]
  },
  {
   "key": "{0} שורות בדוח",
   "kind": "tpl",
   "where": [
-   "app/hours-check.js:205"
+   "app/hours-check.js:206"
   ]
  },
  {
   "key": "יום אחד תואם",
   "kind": "lit",
   "where": [
-   "app/hours-check.js:211"
+   "app/hours-check.js:213"
   ]
  },
  {
   "key": "{0} ימים תואמים",
   "kind": "tpl",
   "where": [
-   "app/hours-check.js:211"
+   "app/hours-check.js:213"
   ]
  },
  {
   "key": "הקובץ גדול מדי (עד 25MB)",
   "kind": "lit",
   "where": [
-   "app/hours-check.js:230",
-   "app/import.js:253",
+   "app/hours-check.js:232",
+   "app/import.js:272",
    "app/schedule-import.js:162",
    "app/views-payslip.js:794"
   ]
@@ -2559,72 +2559,72 @@
   "key": "קורא את הדוח…",
   "kind": "lit",
   "where": [
-   "app/hours-check.js:231"
+   "app/hours-check.js:233"
   ]
  },
  {
   "key": "לא הצלחנו לקרוא את הקובץ. אפשר לנסות קובץ אחר או להדביק טקסט",
   "kind": "lit",
   "where": [
-   "app/hours-check.js:240",
-   "app/import.js:263"
+   "app/hours-check.js:242",
+   "app/import.js:282"
   ]
  },
  {
   "key": "אין מה לבקש לתקן בדוח הזה",
   "kind": "lit",
   "where": [
-   "app/hours-check.js:245"
+   "app/hours-check.js:247"
   ]
  },
  {
   "key": "הודעה למעסיק",
   "kind": "lit",
   "where": [
-   "app/hours-check.js:247"
+   "app/hours-check.js:249"
   ]
  },
  {
   "key": "<div class=\"small muted\" style=\"margin-bottom:8px\">אפשר לערוך לפני ששולחים.</div><textarea class=\"input\" id=\"hc-letter\" rows=\"12\">{0}</textarea>",
   "kind": "tpl",
   "where": [
-   "app/hours-check.js:248"
+   "app/hours-check.js:250"
   ]
  },
  {
   "key": "<button class=\"btn tonal\" data-hc-copy>{0} העתקה</button><button class=\"btn\" data-hc-share>{1} שיתוף</button>",
   "kind": "tpl",
   "where": [
-   "app/hours-check.js:249"
+   "app/hours-check.js:251"
   ]
  },
  {
   "key": "נוסף מדוח הנוכחות",
   "kind": "lit",
   "where": [
-   "app/hours-check.js:271"
+   "app/hours-check.js:273"
   ]
  },
  {
   "key": "משמרת מדוח הנוכחות",
   "kind": "lit",
   "where": [
-   "app/hours-check.js:272"
+   "app/hours-check.js:274"
   ]
  },
  {
   "key": "המשמרת נוספה",
   "kind": "lit",
   "where": [
-   "app/hours-check.js:272"
+   "app/hours-check.js:274"
   ]
  },
  {
   "key": "מדביקים קודם את הטקסט",
   "kind": "lit",
   "where": [
-   "app/hours-check.js:282",
-   "app/import.js:316"
+   "app/hours-check.js:284",
+   "app/import.js:335"
   ]
  },
  {
@@ -2649,11 +2649,25 @@
   ]
  },
  {
+  "key": "שורה אחת בדוח לא נקראה בבירור. כדאי לבדוק אותה בדוח עצמו.",
+  "kind": "lit",
+  "where": [
+   "app/import.js:127"
+  ]
+ },
+ {
+  "key": "{0} שורות בדוח לא נקראו בבירור. כדאי לבדוק אותן בדוח עצמו.",
+  "kind": "tpl",
+  "where": [
+   "app/import.js:127"
+  ]
+ },
+ {
   "key": "ייבוא דוח שעות",
   "kind": "lit",
   "where": [
-   "app/import.js:140",
-   "app/import.js:305",
+   "app/import.js:143",
+   "app/import.js:324",
    "app/views-settings.js:152",
    "app/views-shift.js:40"
   ]
@@ -2662,56 +2676,56 @@
   "key": "{0}\n        <label class=\"btn big block imp-pick\">{1} בחירת קובץ<input type=\"file\" id=\"imp-file\" class=\"sr\" accept=\".xlsx,.xls,.xlsm,.ods,.csv,.tsv,.txt,.pdf,image/*,text/*,application/pdf,application/vnd.ms-excel,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet\"></label>\n        <div class=\"imp-kinds\">{2}</div>\n        <details class=\"imp-paste\"><summary>{3} או להדביק טקסט</summary>\n          <textarea class=\"input\" id=\"imp-text\" rows=\"6\" placeholder=\"למשל:&#10;14/10/2026 08:00 16:30&#10;15/10/2026 16:00 23:00\"></textarea>\n          <button class=\"btn tonal block\" data-imp-read>{4} קריאה</button></details>\n        <div class=\"tiny muted imp-privacy\">{5} הקובץ נקרא בטלפון בלבד, ולא נשלח לשום מקום. צילום נקרא כטבלה: כל דוח, בכל סידור עמודות.</div>",
   "kind": "tpl",
   "where": [
-   "app/import.js:180"
+   "app/import.js:183"
   ]
  },
  {
   "key": "יש לך דוח שעות מהעבודה? אכניס את כל המשמרות בבת אחת 📄",
   "kind": "lit",
   "where": [
-   "app/import.js:180"
+   "app/import.js:183"
   ]
  },
  {
   "key": "צילום או צילום מסך",
   "kind": "lit",
   "where": [
-   "app/import.js:182"
+   "app/import.js:185"
   ]
  },
  {
   "key": "{0}\n        <div class=\"card small imp-tips\"><b>מה עוזר:</b><ul><li>שבכל שורה יהיו תאריך ושעות (למשל 14/10/2026 08:00 16:30)</li><li>קובץ Excel או CSV נקרא הכי טוב</li><li>בצילום: שהדוח ישר, חד ומואר</li></ul></div>\n        {1}\n        <button class=\"btn tonal block\" data-imp-again>{2} לנסות קובץ אחר</button>\n        <button class=\"btn text block\" data-act=\"support\">לשלוח לנו את הדוח ונעזור</button>",
   "kind": "tpl",
   "where": [
-   "app/import.js:192"
+   "app/import.js:195"
   ]
  },
  {
   "key": "לא מצאתי בדוח משמרות שאני יודע לקרוא 🤔",
   "kind": "lit",
   "where": [
-   "app/import.js:192"
+   "app/import.js:195"
   ]
  },
  {
   "key": "<details class=\"imp-paste\"><summary>מה שנקרא מהקובץ</summary><div class=\"code\">{0}</div></details>",
   "kind": "tpl",
   "where": [
-   "app/import.js:194"
+   "app/import.js:197"
   ]
  },
  {
   "key": "{0} שעות · {1}",
   "kind": "tpl",
   "where": [
-   "app/import.js:208"
+   "app/import.js:211"
   ]
  },
  {
   "key": "מ-",
   "kind": "lit",
   "where": [
-   "app/import.js:208",
+   "app/import.js:211",
    "app/views-settings.js:138"
   ]
  },
@@ -2719,50 +2733,57 @@
   "key": "שעה לא ידועה",
   "kind": "lit",
   "where": [
-   "app/import.js:208"
+   "app/import.js:211"
   ]
  },
  {
   "key": "<button class=\"imp-row {0}\" data-i=\"{1}\" aria-pressed=\"{2}\"><span class=\"imp-check\" aria-hidden=\"true\">{3}</span>\n          <span class=\"imp-d\"><b>{4} {5}</b><small>{6}{7}</small></span>\n          <span class=\"imp-h\">{8} ש׳{9}{10}</span></button>",
   "kind": "tpl",
   "where": [
-   "app/import.js:209"
+   "app/import.js:212"
   ]
  },
  {
   "key": " · לילה",
   "kind": "lit",
   "where": [
-   "app/import.js:210"
+   "app/import.js:213"
   ]
  },
  {
   "key": "<i class=\"tag\">כבר קיימת</i>",
   "kind": "lit",
   "where": [
-   "app/import.js:211",
+   "app/import.js:214",
    "app/schedule-import.js:125"
   ]
  },
  {
-  "key": "<i class=\"tag planned\">עתידית</i>",
-  "kind": "lit",
-  "where": [
-   "app/import.js:211"
-  ]
- },
- {
-  "key": "מצאתי {0}! 🎉 בודקים רגע ומוסיפים",
+  "key": "<i class=\"tag\" data-imp-plan=\"{0}\">תסומן כבוצעה</i>",
   "kind": "tpl",
   "where": [
    "app/import.js:214"
   ]
  },
  {
+  "key": "<i class=\"tag planned\">עתידית</i>",
+  "kind": "lit",
+  "where": [
+   "app/import.js:214"
+  ]
+ },
+ {
+  "key": "מצאתי {0}! 🎉 בודקים רגע ומוסיפים",
+  "kind": "tpl",
+  "where": [
+   "app/import.js:217"
+  ]
+ },
+ {
   "key": "<div class=\"field\"><span class=\"lbl\">לאיזה תפקיד לשייך?</span><div class=\"chips imp-roles\">{0}</div></div>",
   "kind": "tpl",
   "where": [
-   "app/import.js:215",
+   "app/import.js:218",
    "app/schedule-import.js:132"
   ]
  },
@@ -2770,128 +2791,149 @@
   "key": "<label class=\"field\"><span class=\"lbl\">{0} כתוב רק כמה שעות. באיזו שעה הן מתחילות?</span><input class=\"input\" type=\"time\" id=\"imp-start\" value=\"{1}\"></label>",
   "kind": "tpl",
   "where": [
-   "app/import.js:216"
+   "app/import.js:219"
   ]
  },
  {
   "key": "במשמרת אחת",
   "kind": "lit",
   "where": [
-   "app/import.js:216"
+   "app/import.js:219"
   ]
  },
  {
   "key": "ב-{0} משמרות",
   "kind": "tpl",
   "where": [
-   "app/import.js:216"
+   "app/import.js:219"
   ]
  },
  {
   "key": "<div class=\"tiny muted imp-note\">{0} {1} יש כניסה בלי יציאה, ולכן {2}. אפשר להוסיף {3} ידנית.</div>",
   "kind": "tpl",
   "where": [
-   "app/import.js:217"
+   "app/import.js:220"
   ]
  },
  {
   "key": "בשורה אחת",
   "kind": "lit",
   "where": [
-   "app/import.js:217"
+   "app/import.js:220"
   ]
  },
  {
   "key": "ב-{0} שורות",
   "kind": "tpl",
   "where": [
-   "app/import.js:217"
+   "app/import.js:220"
   ]
  },
  {
   "key": "היא לא נכנסה",
   "kind": "lit",
   "where": [
-   "app/import.js:217"
+   "app/import.js:220"
   ]
  },
  {
   "key": "הן לא נכנסו",
   "kind": "lit",
   "where": [
-   "app/import.js:217"
+   "app/import.js:220"
   ]
  },
  {
   "key": "אותה",
   "kind": "lit",
   "where": [
-   "app/import.js:217"
+   "app/import.js:220"
   ]
  },
  {
   "key": "אותן",
   "kind": "lit",
   "where": [
-   "app/import.js:217"
+   "app/import.js:220"
   ]
  },
  {
   "key": "<div class=\"tiny muted imp-note\">{0} בשורות בלי שנה לקחנו את התאריך האחרון שכבר עבר.</div>",
   "kind": "tpl",
   "where": [
-   "app/import.js:218"
+   "app/import.js:221"
   ]
  },
  {
   "key": "לבטל הכול",
   "kind": "lit",
   "where": [
-   "app/import.js:220",
-   "app/import.js:231"
+   "app/import.js:223",
+   "app/import.js:247"
   ]
  },
  {
   "key": "לסמן הכול",
   "kind": "lit",
   "where": [
-   "app/import.js:220",
-   "app/import.js:231"
+   "app/import.js:223",
+   "app/import.js:247"
+  ]
+ },
+ {
+  "key": "(לבדיקה)",
+  "kind": "lit",
+  "where": [
+   "app/import.js:235"
+  ]
+ },
+ {
+  "key": "(אחת לבדיקה)",
+  "kind": "lit",
+  "where": [
+   "app/import.js:235"
+  ]
+ },
+ {
+  "key": "({0} לבדיקה)",
+  "kind": "tpl",
+  "where": [
+   "app/import.js:235"
   ]
  },
  {
   "key": "הוספת משמרת אחת",
   "kind": "lit",
   "where": [
-   "app/import.js:229"
+   "app/import.js:237"
   ]
  },
  {
   "key": "הוספת {0} משמרות",
   "kind": "tpl",
   "where": [
-   "app/import.js:229"
+   "app/import.js:237"
   ]
  },
  {
   "key": "קורא את הקובץ…",
   "kind": "lit",
   "where": [
-   "app/import.js:254"
+   "app/import.js:273"
   ]
  },
  {
   "key": "יובא מדוח שעות",
   "kind": "lit",
   "where": [
-   "app/import.js:295"
+   "app/import.js:314"
   ]
  },
  {
   "key": "חפיפה עם משמרת אחרת",
   "kind": "lit",
   "where": [
-   "app/import.js:302",
+   "app/import.js:321",
    "app/views-shift.js:564"
   ]
  },
@@ -2899,7 +2941,7 @@
   "key": "קיימת משמרת ב-{0} \u2066{1}⁠–⁠{2}\u2069. לשמור בכל זאת?",
   "kind": "tpl",
   "where": [
-   "app/import.js:302",
+   "app/import.js:321",
    "app/views-shift.js:564"
   ]
  },
@@ -2907,14 +2949,14 @@
   "key": "נוספה משמרת אחת מהדוח",
   "kind": "lit",
   "where": [
-   "app/import.js:305"
+   "app/import.js:324"
   ]
  },
  {
   "key": "נוספו {0} משמרות מהדוח",
   "kind": "tpl",
   "where": [
-   "app/import.js:305"
+   "app/import.js:324"
   ]
  },
  {
