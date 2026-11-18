@@ -198,7 +198,9 @@
     const isPct = (w) => w.k === 'N' && /%$/.test(w.text);
     const hasDec = (w) => w.k === 'N' && /\.\d/.test(w.text);
     // the columns of a balance line (previous, credited, used, left): words that are no line of their own
-    const BAL_COL = /^(?:יתרה|יתרת|קודמת|זיכוי|זכאות|ניצול|נוצל|ניצל|צבירה|נצבר|נצברו|מימוש|פתיחה|סגירה)[:.]?$/;
+    // (letters only: a photo reads "זיכוי" as 'זיכו"')
+    const BAL_WORD = /^(?:יתרה|יתרת|קודמת|זיכוי|זיכו|זכאות|ניצול|נוצל|ניצל|צבירה|נצבר|נצברו|מימוש|פתיחה|סגירה)$/;
+    const BAL_COL = { test: (t) => BAL_WORD.test(String(t).replace(/[^א-ת]/g, '')) };
     /** Does this label name a payslip line on its own (asked of the parser itself)? */
     const named = (label) => { try { return !!Payslip.matchField(label); } catch (e) { return false; } };
     /**
@@ -403,6 +405,18 @@
         F[k] = { value: null, qty: null, line: v.line, asked: true, why: 'name' };
         unsure[k] = 'name';
       }
+      // A line the parser left unnamed because a word on it was not read ("שעות naw 150% 12.00 51.48 617.76", שבת
+      // misread): when it names a line once that word is set aside, it is asked for under that name. Left among the
+      // unnamed lines only, the check took its pay as not paid ("שעות שלא שולמו" 527 too much, round 4's parser).
+      if (source !== 'ai') {
+        for (const o of parsed.other) {
+          const ws = wordsOf({ line: o.line });
+          if (!ws.some((w) => w.k === 'X')) continue;
+          let f = null;
+          try { f = Payslip.matchField(ws.filter((w) => w.k !== 'X').map((w) => w.text).join(' ')); } catch (e) { f = null; }
+          if (f && !F[f.key]) { F[f.key] = { value: null, qty: null, line: o.line, asked: true, why: 'name' }; unsure[f.key] = 'name'; }
+        }
+      }
       const g = num('gross'), n = num('net'), td = num('totalDeductions');
       const pays = keys('pay'), deds = keys('ded');
       const ok = new Set();
@@ -461,6 +475,8 @@
           if (f.kind === 'ded' && ((td != null && v.value > td + 2) || (g != null && v.value >= g))) why = 'sum';
           else if (f.kind === 'pay' && g != null && v.value > g + 2) why = 'sum';
           else if (k === 'creditPoints' && !(v.value >= 0 && v.value <= 30)) why = 'range';
+          // a balance whose number follows "קודמת" is the previous balance (a balance line cut after it, round 3)
+          else if ((k === 'vacationBalance' || k === 'sickBalance') && /קודמ[תה]\s*[\d.,]+\s*$/.test(String(v.line || '').replace(MARKS, '').split(' | ').pop())) why = 'name';
           else if (k === 'workDays' && !(v.value >= 0 && v.value <= 31)) why = 'range';
           else if (k === 'workHours' && !(v.value >= 0 && v.value <= 400)) why = 'range';
           else if ((k === 'workDays' || k === 'workHours') && days0 != null && hours0 != null && !dayFit) why = 'range';

@@ -336,6 +336,12 @@ T.test('a balance line keeps its columns: the balance is the last one, not the p
   // cut into four, "חופשה: יתרה קודמת 1.75" gave the previous balance as the balance (1,196 wrong on the agency layout)
   const lines = R.lines(R.rows(R.words(row(100, ['חופשה:', 'יתרה', 'קודמת', '1.75', 'זיכוי', '1.00', 'ניצול', '0.00', 'יתרה', '2.75']), [])));
   T.eq(lines.length, 1, lines.map((l) => l.text).join(' / '));
+  // the same with a column word a photo misread ('זיכו"')
+  T.eq(R.lines(R.rows(R.words(row(100, ['חופשה:', 'יתרה', 'קודמת', '1.75', 'זיכו"', '1.00', 'ניצול', '0.00', 'יתרה', '2.75']), []))).length, 1);
+  // and a balance line cut after "קודמת" anyway: its number is the previous balance, not shown
+  const cut = { fields: { vacationBalance: { value: 1.75, line: 'חופשה: יתרה קודמת 1.75' } }, other: [] };
+  R.review(cut, [], 'pdf');
+  T.eq(cut.fields.vacationBalance.value, null);
   // two tables side by side are still two lines
   T.eq(R.lines(R.rows(R.words(row(100, ['שכר', 'יסוד', '168.00', '42.00', '7,056.00', 'מס', 'הכנסה', '418.00']), []))).length, 2);
 });
@@ -368,6 +374,19 @@ T.test('hour lines without hours on a payslip that prints its work hours are ask
   const none = { fields: { ot125: { value: 552.5, line: 'שעות נוספות 125% 552.50' } }, other: [] };
   R.review(none, [], 'pdf');
   T.ok(!none.fields.ot125.asked, 'no hours anywhere: nothing to ask');
+});
+T.test('an unnamed line with an unread word that names a line without it is asked for under that name', () => {
+  // round 4's parser leaves "שעות naw 150% …" unnamed; the check then took its pay as not paid
+  const lines = R.lines(R.rows(R.words(row(100, ['שעות', 'naw', '150%', '12.00', '51.48', '617.76']), [])));
+  const p = { fields: {}, other: [{ line: lines[0].text, value: 617.76 }] };
+  R.review(p, lines, 'ocr');
+  const k = Object.keys(p.fields)[0];
+  T.ok(k && p.fields[k].asked && p.fields[k].value == null && /617\.76/.test(p.fields[k].line), 'asked: ' + JSON.stringify(p.fields));
+  // a clean unnamed line stays among the unnamed lines
+  const l2 = R.lines(R.rows(R.words(row(100, ['קרן', 'מילואים', '617.76']), [])));
+  const p2 = { fields: {}, other: [{ line: l2[0].text, value: 617.76 }] };
+  R.review(p2, l2, 'ocr');
+  T.eq(Object.keys(p2.fields).length, 0);
 });
 T.test('the year\'s figures read as the month\'s are not shown', () => {
   // the month's gross taken as the year's gross (outside January), and the year's taxable gross as the month's
