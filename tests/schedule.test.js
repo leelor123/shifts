@@ -115,3 +115,6 @@ T.test('several days in one line: each shift with the day before it', () => {
   const r = p('סידור לשבוע הבא: ראשון: דני 8-16, לי 16-23 שני: לי 9-17 שלישי חופש רביעי לי ערב');
   T.eq(brief(SC.pick(r, ['לי'])).join(' | '), 'd0 16:00 23:00 לי | d1 09:00 17:00 לי | d3 15:00 23:00 לי');
 });
+
+// the accuracy campaign's guards (17 Nov 2026), in a file of their own
+require('./schedule-read.test.js');

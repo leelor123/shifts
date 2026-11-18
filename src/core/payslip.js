@@ -1829,13 +1829,10 @@
         // not paid on the hours after it. Read as "an average a little low, maybe another role", it said nothing missing
         // (round 2, the verdict-layer check)
         const amount = E.pay.base - bv;
-        // TRANSLATE (the lead): the title and the detail below are new texts, Hebrew in every language until translated
-        // i18n-keep-start
         add({ area: 'תעריף', status: 'bad', title: 'התעריף החדש לא שולם על כל השעות', amount,
           detail: `התעריף שלך השתנה בתקופה (\u2066${U.money(minRate)}\u2060–\u2060${U.money(maxRate)}\u2069). על ${U.hours(bq)} שעות רגילות מגיע ${U.money(E.pay.base)} לפי תאריך כל משמרת, ובתלוש ${U.money(bv)}: חסרים ≈ ${U.money(amount)}.`,
           basis: 'שכר יסוד בתלוש מול השעות הרגילות כפול התעריף לפי תאריך המשמרת (היסטוריית תעריפים), באותו מספר שעות.',
           confidence: 'high', fromOverride: ovNote(E.pay.base, A.pay.base, bv, 1) });
-        // i18n-keep-end
       } else if (mixed && slipRate < E.baseRate - 0.02 && Math.abs(bq - E.hrs.base) <= 0.25) {
         add({ area: 'תעריף', status: 'warn', title: 'תעריף ממוצע נמוך מהצפוי', amount: (E.baseRate - slipRate) * bq,
           detail: `בתלוש ${U.money(slipRate)} לשעה בממוצע; לפי המשמרות שרשמת הממוצע המשוקלל ${U.money(E.baseRate)} (תעריפים \u2066${U.money(minRate)}\u2060–\u2060${U.money(maxRate)}\u2069). ייתכן שחלק מהשעות שולמו בתעריף של תפקיד זול יותר, או שחסרות שעות בתפקיד היקר.`,
