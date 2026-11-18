@@ -467,7 +467,9 @@ T.test('guard: the app-vs-payslip gap is fully itemized, with the unexplained pa
   const m = model(shifts);
   // a lower rate, travel at 20 a day, a seniority line, credit points 2.75, and a gross 30 above its own lines
   const text = SAMPLE.replace('שכר יסוד 40.00 40.00 1,600.00', 'שכר יסוד 40.00 39.00 1,560.00').replace('נסיעות 135.60', 'נסיעות 120.00')
-    .replace('סה"כ ברוטו 2,075.60', 'סה"כ ברוטו 2,130.00').replace('נקודות זיכוי 2.25', 'נקודות זיכוי 2.75') + '\nתוספת ותק 80.00';
+    .replace('סה"כ ברוטו 2,075.60', 'סה"כ ברוטו 2,130.00').replace('נקודות זיכוי 2.25', 'נקודות זיכוי 2.75')
+    // (its net is the gross less the deductions: a payslip whose totals do not close is asked for, round 4)
+    .replace('נטו לתשלום 1,821.54', 'נטו לתשלום 1,875.94') + '\nתוספת ותק 80.00';
   const p = Payslip.parseText(text);
   T.near(p.fields.seniority.value, 80); T.near(p.fields.gross.value, 2130);
   const a = Payslip.analyze(p, m);
@@ -490,7 +492,7 @@ T.test('guard: the app-vs-payslip gap is fully itemized, with the unexplained pa
 });
 T.test('guard: settings the payslip says otherwise are listed, each with the payslip\'s value to take', () => {
   const m = model(septShifts());
-  const text = SAMPLE.replace('נסיעות 135.60', 'נסיעות 120.00').replace('סה"כ ברוטו 2,075.60', 'סה"כ ברוטו 2,040.00')
+  const text = SAMPLE.replace('נסיעות 135.60', 'נסיעות 120.00').replace('סה"כ ברוטו 2,075.60', 'סה"כ ברוטו 2,140.00') // (the gross holds its lines: above it, a line is misread, round 4)
     .replace('נקודות זיכוי 2.25', 'נקודות זיכוי 2.75') + '\nתוספת ותק 80.00\nימי עבודה 6';
   const p = Payslip.parseText(text);
   const sc = Payslip.settingsCheck(p, m);
@@ -527,7 +529,8 @@ T.test('a payslip that pays only the overtime supplement reads the same as the a
 });
 T.test('guard: income tax above the estimate is asked about, apart from the credit points', () => {
   const m = model(septShifts(), (d) => { d.settings.startDate = '2020-01-01'; });
-  const p = Payslip.parseText(SAMPLE.replace('נקודות זיכוי 2.25', 'נקודות זיכוי 2.75') + '\nמס הכנסה 300.00');
+  // (the total deductions hold the tax: an income tax above them is a misread line, round 4)
+  const p = Payslip.parseText(SAMPLE.replace('נקודות זיכוי 2.25', 'נקודות זיכוי 2.75').replace('סה"כ ניכויים 254.06', 'סה"כ ניכויים 554.06').replace('נטו לתשלום 1,821.54', 'נטו לתשלום 1,521.54') + '\nמס הכנסה 300.00');
   const rc = Payslip.reconcile(p, m);
   const tax = rc.net.items.find((x) => x.id === 'tax');
   T.eq(tax.state, 'ask'); T.ok(/מעסיק אחר|101/.test(tax.ask), tax.ask);

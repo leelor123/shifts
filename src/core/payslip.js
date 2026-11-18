@@ -556,6 +556,9 @@
       // checks them against the slip's hourly wage, `two`)
       return Object.assign({ value: v, qty: q, pct: pcts[0] }, f.hours ? { two: true } : null);
     }
+    // (the amount column holds agorot: a line whose last number is whole while another of its numbers has agorot ends
+    // with something else, a code or a count, round 4: "נסיעות 82.60 704" was a travel refund of 704 ₪. Asked for)
+    { const flat = nums.filter((x) => !x.pct); if (!f.hours && flat.length >= 2 && !flat[flat.length - 1].dec && flat.slice(0, -1).some((x) => x.dec)) return null; }
     // (a payment with three numbers or more whose hours × rate = amount fails: its own arithmetic does not hold, the
     // last one is a guess. "מחלה 29.50 1.500.00 31.00" was a sick pay of 31 ₪, readers campaign, Nov 2026)
     if (f.kind === 'pay' && vals.length >= 3) return null;
@@ -566,7 +569,9 @@
     return Object.assign({ value: last, pct: pcts[0] }, bareInt(nums, last) ? { bare: true } : null, f.hours && vals.length === 1 ? { one: true } : null);
   }
   /** Was this value printed as a whole number of four digits or more, with no separator ("89315")? */
-  const bareInt = (nums, v) => nums.some((x) => !x.pct && !x.dec && x.v === v && Math.abs(x.v) >= 1000 && /^-?\d+-?$/.test(x.raw.trim()));
+  // (any size from 10, round 4: a code read alone as the amount, "נסיעות 703" with the amount on a lower line, is a bare
+  // whole number on a payslip that prints agorot just as a dropped point is)
+  const bareInt = (nums, v) => nums.some((x) => !x.pct && !x.dec && x.v === v && Math.abs(x.v) >= 10 && /^-?\d+-?$/.test(x.raw.trim()));
 
   /* ---------------- one printed row, several lines ----------------
    * Payslips print two tables side by side (the payments on the right, the deductions on the left), two totals on one
@@ -928,7 +933,15 @@
     });
   }
   function parseText(text) {
-    const allLines = unreverse(text.split(/\r?\n/).map(normalize).filter(Boolean));
+    let allLines = unreverse(text.split(/\r?\n/).map(normalize).filter(Boolean));
+    // A page read from its bottom to its top (a scan turned and its lines given last first): the title is at the end and
+    // the year's block heading after its own lines, so the year's figures were read as the month's (round 4). The title
+    // in the last lines and none in the first ones: the lines are put back in order.
+    {
+      const isTitle = (l) => (/תלוש/.test(l) || /^חודש\b/.test(l)) && /\d/.test(l) && !!detectPeriod(l);
+      const nL = allLines.length;
+      if (nL >= 8 && allLines.slice(-4).some(isTitle) && !allLines.slice(0, 4).some(isTitle)) allLines = allLines.slice().reverse();
+    }
     // Two payslips in one file (the worker's copy and the employer's, two months downloaded together, two workplaces):
     // read as one, every payment was counted twice (readers campaign, Nov 2026). The second one starts at the second
     // title line ("תלוש שכר לחודש 07/2026"); only the first is read, and what the second one holds is not added to it.
@@ -972,6 +985,19 @@
       });
       // (two rows are enough when their codes follow each other and are of three digits or more: 301, 302)
       if (best.length >= 3 || (best.length === 2 && cand[best[1]] - cand[best[0]] === 1 && cand[best[0]] >= 100)) for (const i of best) { const rs = runsOf(rawLines[i]); rs[1].t.shift(); rawLines[i] = rs.filter((r) => r.t.length).map((r) => r.t.join(' ')).join(' '); }
+      // (and printed after the amounts, the row's last token: "נסיעות 82.60 704" took the code 704 for the travel refund,
+      // round 4, the first look at a new layout family)
+      const tail = rawLines.map((l) => { const t = l.split(' '); const last = t[t.length - 1]; return t.length >= 3 && /^\d{2,4}$/.test(last) && /\d[.,]\d{2}-?$/.test(t[t.length - 2]) && matchField(l) ? +last : null; });
+      let bestT = [], curT = [];
+      tail.forEach((c, i) => {
+        if (c == null) return;
+        // (rising, or falling on a page read from the bottom up)
+        const d = curT.length ? c - tail[curT[curT.length - 1]] : 0;
+        const dir = curT.length > 1 ? Math.sign(tail[curT[1]] - tail[curT[0]]) : 0;
+        if (curT.length && Math.abs(d) >= 1 && Math.abs(d) <= 3 && (!dir || Math.sign(d) === dir)) curT.push(i); else curT = [i];
+        if (curT.length > bestT.length) bestT = curT.slice();
+      });
+      if (bestT.length >= 3 || (bestT.length === 2 && Math.abs(tail[bestT[1]] - tail[bestT[0]]) === 1 && tail[bestT[0]] >= 100)) for (const i of bestT) rawLines[i] = rawLines[i].replace(/\s+\d{2,4}$/, '');
     }
     const side = { row: [0, 0], sum: [0, 0] };
     const groupOf = (fd) => (fd.kind === 'total' || fd.kind === 'info' ? 'sum' : 'row');
@@ -999,6 +1025,8 @@
     let heads = null; // a row of column names, waiting for the row of numbers under it
     let pending = null; // a total's name printed alone, waiting for the number on the next line
     const ask = (f, line) => { if (!fields[f.key]) fields[f.key] = { line, value: null }; };
+    const proven = {}; // a field whose every line held its own proof, hours × rate = amount
+    const conflicts = new Set(); // a field read on two lines with two values (not a payment: those add up)
     const logical = []; // the lines in logical order, for the pay month
     const unsure = new Set(); // payments with a line that could not be read: their sum stays unknown
     const money = [], bare = []; // the amounts' style (with agorot or not), and the amounts read from a bare whole number
@@ -1186,7 +1214,9 @@
       else if (f.hours && pv.rate != null && pv.sure != null && !pv.mid && !moved) { votes[pv.sure ? (pv.byPlace ? 'ok' : 'no') : 'amb']++; (parts[f.key] = parts[f.key] || []).push({ qty: pv.qty, rate: pv.rate, amb: !pv.sure }); }
       else if (f.hours) (parts[f.key] = parts[f.key] || []).push({ qty: pv.qty, rate: pv.rate, amb: false, two: !!pv.two, one: !!pv.one, value: pv.value });
       delete pv.two; delete pv.one;
+      const byProduct = pv.byPlace != null && pv.value != null;
       delete pv.sure; delete pv.byPlace; delete pv.mid; delete pv.even;
+      proven[f.key] = (proven[f.key] == null ? true : proven[f.key]) && byProduct;
       if (f.kind !== 'info') { money.push(...nums.filter((x) => !x.pct).map((x) => x.dec)); if (pv.bare) bare.push({ f, line }); }
       delete pv.bare;
       // the total of the mandatory deductions is kept apart: it is the total of all the deductions only on a payslip
@@ -1197,6 +1227,10 @@
       // the amount paid to the bank wins over a net printed before the voluntary deductions
       if (f.key === 'net' && fields.net && NET_FINAL.test(line) && !NET_FINAL.test(fields.net.line)) delete fields.net;
       if (fields[f.key] && fields[f.key].value == null) delete fields[f.key]; // asked for, and now read
+      // (a deduction, a total or a piece of information read again with another value: the payslip says two things, and
+      // the first is not surely the month's; the year's block read as the month's gave National Insurance 394.24 for
+      // 56.32, round 4. Settled by the sums below, else asked for)
+      if (fields[f.key] && f.kind !== 'pay' && fields[f.key].value != null && pv.value != null && Math.abs(Math.abs(pv.value) - Math.abs(fields[f.key].value)) > 0.011) conflicts.add(f.key);
       if (fields[f.key]) {
         // a second line for the same field: sum earnings (e.g. two roles' base pay), keep first for others
         if (f.kind === 'pay') {
@@ -1218,6 +1252,9 @@
       // a deduction printed with a minus ("מס הכנסה 900.00-") is the same deduction: stored negative, the checks
       // passed it ("income tax reasonable -900") and the net reconciliation went off (deep review, Nov 2026)
       if ((f.kind === 'ded' || f.kind === 'emp' || f.key === 'totalDeductions') && pv.value != null) pv.value = Math.abs(pv.value);
+      // (the year's figures and the taxable gross are amounts: printed "243.18-" they were a negative year's tax, round 4)
+      if ((f.key === 'ytdGross' || f.key === 'ytdTax' || f.key === 'taxableGross') && pv.value != null) pv.value = Math.abs(pv.value);
+      if (Object.is(pv.value, -0)) pv.value = 0;
       fields[f.key] = Object.assign({ line }, pv);
     }
 
@@ -1425,6 +1462,65 @@
     }
     // a guard for running totals printed without a heading: a taxable gross far above the gross is the year's
     if (fields.taxableGross && fields.gross && fields.taxableGross.value > fields.gross.value * 2) delete fields.taxableGross;
+    /* The payslip's own sums, the last word on what was read (round 4). A layout never seen gives a wrong value in ways
+     * no rule foresaw (a code printed after the amount, the year's figures read as the month's): every first look at a
+     * new family had 3 to 8% of its fields wrong. What a wrong value cannot do is keep the payslip's own arithmetic: the
+     * payments add up to the gross, the deductions to their total, the gross less the deductions is the net. A line that
+     * holds its own proof (hours × rate = amount) stands; where a sum does not close, the lines without one are asked
+     * for, and a total the other sums do not confirm is asked for too. The lines the reader could not name may be the
+     * missing part of a sum (any of them, up to ten). */
+    {
+      const v = (k) => (fields[k] && fields[k].value != null ? fields[k].value : null);
+      const tolOf = (t) => Math.max(1, Math.abs(t) * 0.001);
+      const loose = other.map((o) => Math.abs(+o.value || 0)).filter((x) => x > 0).slice(0, 10);
+      const closes = (sum, total) => {
+        if (Math.abs(sum - total) <= tolOf(total)) return true;
+        for (let m = 1; m < 1 << loose.length; m++) {
+          let t = sum;
+          for (let i = 0; i < loose.length; i++) if (m & (1 << i)) t += loose[i];
+          if (Math.abs(t - total) <= tolOf(total)) return true;
+        }
+        return false;
+      };
+      const pays = FIELDS.filter((x) => x.kind === 'pay' && v(x.key) != null).map((x) => x.key);
+      const deds = FIELDS.filter((x) => x.kind === 'ded' && v(x.key) != null).map((x) => x.key);
+      const g = v('gross'), td = v('totalDeductions'), n = v('net');
+      const sumOf = (ks) => ks.reduce((t, k) => t + v(k), 0);
+      const netEq = g != null && td != null && n != null ? Math.abs(g - td - n) <= tolOf(g) : null;
+      // (a sum below its total is no sign of a misread line: a line not read makes it so, and the reconciliation shows
+      // that part on its own. Above its total, a read line holds more than it should: a code read as an amount, the
+      // year's column read as the month's)
+      const over = (sum, total) => sum > total + tolOf(total);
+      const payEq = g != null && pays.length ? (over(sumOf(pays), g) ? false : closes(sumOf(pays), g) ? true : null) : null;
+      const dedEq = td != null && deds.length ? (over(sumOf(deds), td) ? false : closes(sumOf(deds), td) ? true : null) : null;
+      const askF = (k) => { if (fields[k] && fields[k].value != null) fields[k] = { line: fields[k].line, value: null, why: 'sum' }; };
+      if (payEq === false) {
+        for (const k of pays) if (!proven[k]) askF(k);
+        if (netEq !== true) askF('gross');
+      }
+      if (dedEq === false) {
+        for (const k of deds) askF(k);
+        if (netEq !== true) askF('totalDeductions');
+      }
+      // the three totals do not close and the sums leave one of them unconfirmed
+      // (gross less the deductions is not the net: the totals the line sums do not confirm are asked for, and the net when
+      // both others are confirmed)
+      if (netEq === false) {
+        if (payEq !== true) askF('gross');
+        if (dedEq !== true) askF('totalDeductions');
+        if (payEq === true && dedEq === true) askF('net');
+      }
+      // a field read with two values: settled when its sum closes (a second pension fund among the deductions), else asked
+      for (const k of conflicts) {
+        const kind = FIELD[k].kind;
+        const settled = kind === 'ded' || kind === 'emp' ? dedEq === true : k === 'gross' ? payEq === true && netEq !== false : k === 'totalDeductions' ? dedEq === true && netEq !== false : k === 'net' ? netEq === true : false;
+        if (!settled) askF(k);
+      }
+      // the year's figures are at least the month's: below them, they are not the year's
+      if (v('ytdGross') != null && g != null && v('ytdGross') < g - 2) askF('ytdGross');
+      if (v('ytdTax') != null && v('incomeTax') != null && v('ytdTax') < v('incomeTax') - 2) askF('ytdTax');
+      if (v('taxableGross') != null && g != null && v('taxableGross') > g * 1.5 + 2) askF('taxableGross');
+    }
     for (const k of Object.keys(fields)) if (fields[k].value == null) fields[k].asked = true;
     // (secondSlip: the file held more after the first payslip, and it was not read: the screen can say so)
     return { fields, other, period: detectPeriod(logical.join('\n')) || detectPeriod(text), lineCount: rawLines.length, secondSlip: cut < allLines.length };
