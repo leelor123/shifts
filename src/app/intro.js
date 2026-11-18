@@ -212,14 +212,15 @@
    * on its first frame (the splash, the phone's own) until that answer, a second at most (often it is in already: this
    * code arrives after the first frame), and once the server has said a newer version is live, a moment more for its
    * code. The newer version opens in this page's place with the very same first frame, so nothing is seen to change;
-   * else the show plays on. The installed app (?source=) and offline (answered at once) never wait. The start-up work
+   * else the show plays on. Offline (answered at once) never waits. The installed app asks too (18 Nov 2026: its first
+   * open after a release ran the old version). The start-up work
    * waits too (Intro.drawn). */
   const ASK_MAX = 1000;
   const ASK_CODE = 1500; // after 'found': the new version's code on its way
   const ASK_REPLY = 150; // a worker that does not know the question (an older one) is not waited for
   function askFirst() {
     const sw = navigator.serviceWorker;
-    if (!sw || !sw.controller || /[?&]source=/.test(location.search) || typeof MessageChannel === 'undefined') { begin(); return; }
+    if (!sw || !sw.controller || typeof MessageChannel === 'undefined') { begin(); return; }
     const ch = new MessageChannel();
     let timer = 0;
     const go = () => { clearTimeout(timer); ch.port1.onmessage = null; begin(); };

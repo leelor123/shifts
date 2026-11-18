@@ -5,7 +5,7 @@
  * background and activates when the user taps "עדכן".
  * IndexedDB data is never touched by updates.
  * ============================================================ */
-const VERSION = '1.41.0-380a1c72';
+const VERSION = '1.41.0-0387e01d';
 const SHELL = 'shiftpay-shell-' + VERSION;
 const RUNTIME = 'shiftpay-runtime-v1';
 const FONTS = ['rubik-hebrew', 'rubik-latin', 'rubik-latin-ext', 'rubik-arabic', 'rubik-cyrillic', 'rubik-cyrillic-ext', 'fredoka-hebrew', 'fredoka-latin', 'fredoka-latin-ext'].map((f) => './fonts/' + f + '.woff2');
@@ -32,10 +32,11 @@ const manifestOf = (l) => (l === 'he' ? './manifest.webmanifest' : './manifest.'
 // a page that names its file (index.ru.html) is that file; the app's own address (./, ./?source=twa) is the chosen one
 const PAGE_FILE = /\/index(?:\.(ar|ru|en|fr|es|am))?\.html$/;
 
-/* ---- a visit in a browser gets the version that is live now ----
- * The installed app (its address carries ?source=) opens from the copy kept here at once and switches to a new
- * version when it goes to the background. A visit in a browser (from the website, a shared link) asks the server
- * for the page first, for a moment: a copy kept from an earlier visit was an old version. The question is cheap
+/* ---- every open gets the version that is live now ----
+ * The app asks the server for the page first, for a moment: a copy kept from an earlier visit was an old version.
+ * The installed app too (its address carries ?source=): it used to open from its copy and switch only when it went to
+ * the background, so the first open after a release ran the old version and "what's new" came a launch later (the
+ * owner, 18 Nov 2026). A shortcut or a notification (?action=) still opens from the copy at once. The question is cheap
  * (the browser asks "changed since?" and gets "no" when it hasn't); offline it fails at once and the copy opens.
  * A slow answer still counts: see keepLive below (the user, 24 Oct: the website's button opened an old version). */
 const FRESH_WAIT = 800;
@@ -144,10 +145,10 @@ self.addEventListener('fetch', (e) => {
       const lang = named ? named[1] || 'he' : await chosenLang();
       const page = pageOf(lang);
       const cached = await caches.match(page, { ignoreSearch: true });
-      // a browser visit: no ?source= (the installed app) and no ?action= (its shortcuts), unless the website sent it
-      // (its buttons add ?from=seo-<page>, also to a shortcut like ?action=tax-refund; ?from=site before 1.40)
+      // any open but a shortcut or a notification (?action=), unless the website sent it (its buttons add
+      // ?from=seo-<page>, also to a shortcut like ?action=tax-refund; ?from=site before 1.40)
       const p = url.searchParams;
-      if (cached && !p.has('source') && (!p.has('action') || /^(site$|seo-)/.test(p.get('from') || ''))) {
+      if (cached && (!p.has('action') || /^(site$|seo-)/.test(p.get('from') || ''))) {
         const kept = await keptLive(page);
         if (kept) return kept;
         const ask = askLive(page);
