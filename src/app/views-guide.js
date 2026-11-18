@@ -116,11 +116,11 @@
 
   /* ---------------- what's new (once per big update, for people who already used the app) ---------------- */
   const WHATS_NEW = {
-    id: '1.41.0',
+    id: '1.41.1',
     // 1.40.0: overtime by the law on for everyone (a visible change in the numbers), law and payslip-reader fixes,
-    // the iPhone sign-in retry. 1.40.1 (coin voice) and 1.41.0 (photo and PDF readers) bring fixes only: whoever saw
+    // the iPhone sign-in retry. 1.40.1 (coin voice), 1.41.0 and 1.41.1 (photo and PDF readers) bring fixes only: whoever saw
     // 1.40.0's sheet is not shown it again, and someone coming from 1.39 or before still gets these items
-    seen: ['1.40.0', '1.40.1'],
+    seen: ['1.40.0', '1.40.1', '1.41.0'],
     // true only when the items hold a real feature: a release of fixes alone opens no sheet (the user, 6 Nov 2026)
     features: true,
     items: [
@@ -164,6 +164,7 @@
   /* ---------------- every update (settings › about › all the updates) ---------------- */
   // newest first: [version, the day it went out, what changed — said to the user, not to a developer]
   const CHANGELOG = [
+    ['1.41.1', '2026-11-18', 'אם שעתי לא מצאה את השם שלך בסידור העבודה, אפשר לבחור את השורה שלך מתוך השורות בלי שם, וסידור מעודכן מחליף משמרת שזזה. בבדיקת התלוש ובשעות שעתי אומרת מה לא נקרא בבירור, ותלוש שמחקת לא משאיר את הקובץ שלו בטלפון. אחרי עדכון, האפליקציה נפתחת ישר בגרסה החדשה.'],
     ['1.41.0', '2026-11-18', 'שעתי קוראת בדיוק רב יותר תלושים, סידורי עבודה ודוחות שעות מתמונה או מקובץ PDF. כששעתי לא בטוחה במספר, היא מבקשת לבדוק אותו ולא מנחשת. תלוש של שני עמודים נקרא עד הסוף, משמרות של עובד אחר בסידור לא נרשמות אצלך, וקובץ נעול או פגום מקבל הסבר מה לעשות.'],
     ['1.40.1', '2026-11-17', 'המטבע בשאלות הפתיחה מקריא בקול רק אחרי שמפעילים את הרמקול שלידו או בהגדרות › מראה. הוא משתמש רק בקול שמותקן בטלפון ועובד בלי אינטרנט, כך שהמילים לא יוצאות מהטלפון, ובטלפון בלי קול כזה אין רמקול. המטבע מזיז את הפה רק כשהוא מדבר, קורא את הבועה ואת השאלה כשני משפטים עם הפסקה קצרה, ואומר מספרים עם %, ₪ או ש"ח במילים.'],
     ['1.40.0', '2026-11-17', 'שעות נוספות מחושבות עכשיו לפי החוק, ומי שקבע שעות משלו נשאר כמו שהיה. תיקנו את החישוב של חג בשבת, תוספת לילה בשעות נוספות, ערב חג וימי חופשה. קורא התלושים מדויק יותר, מחיקות ושחזורים נשמרים גם בלי רשת, ובאייפון ההתחברות מתאוששת אחרי חיבור שנקטע.'],
