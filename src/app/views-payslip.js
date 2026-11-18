@@ -197,6 +197,8 @@
     const isCode = (w) => w.k === 'N' && /^\d{2,6}$/.test(w.text);
     const isPct = (w) => w.k === 'N' && /%$/.test(w.text);
     const hasDec = (w) => w.k === 'N' && /\.\d/.test(w.text);
+    // the columns of a balance line (previous, credited, used, left): words that are no line of their own
+    const BAL_COL = /^(?:יתרה|יתרת|קודמת|זיכוי|זכאות|ניצול|נוצל|ניצל|צבירה|נצבר|נצברו|מימוש|פתיחה|סגירה)[:.]?$/;
     /** Does this label name a payslip line on its own (asked of the parser itself)? */
     const named = (label) => { try { return !!Payslip.matchField(label); } catch (e) { return false; } };
     /**
@@ -220,7 +222,11 @@
           const run = src.slice(i, j);
           const label = (numsFirst ? run.slice().reverse() : run).map((x) => x.text).join(' ');
           // (nothing but a code before it is that name's own code, read first on a page that prints numbers first)
-          if (!(run.length === 1 && UNIT.test(run[0].text)) && (seenDec || named(label)) && !cur.every(isCode)) {
+          // A line of information (a balance) keeps its own columns, unless what follows names a line of its own:
+          // "חופשה: יתרה קודמת 1.75 זיכוי 1.00 ניצול 0.00 יתרה 2.75" cut into four, the first piece gave the PREVIOUS
+          // balance as the balance (round 3, the parser's never-seen agency family: 1,196 balances wrong)
+          const subColumn = run.every((x) => BAL_COL.test(x.text)) && !named(label);
+          if (!(run.length === 1 && UNIT.test(run[0].text)) && (seenDec || named(label)) && !cur.every(isCode) && !subColumn) {
             const code = [];
             // a code, or a percentage that is part of the name ("שעות נוספות 125%"), right before the name goes with it
             while (cur.length > 1 && (isCode(cur[cur.length - 1]) || isPct(cur[cur.length - 1])) && cur.slice(0, -1).some(hasDec)) code.unshift(cur.pop());
@@ -231,8 +237,23 @@
         if (isNum(w)) { seenN = true; if (hasDec(w)) seenDec = true; }
       }
       if (cur.length) segs.push(cur);
-      return numsFirst ? segs.map((x) => order(x.reverse())).reverse() : segs;
+      return numsFirst ? segs.map((x) => order(x.reverse())).reverse() : segs.map(codeLast);
     };
+    /**
+     * A line code printed after the amount ("704 | נסיעות | 82.60" read right to left: "נסיעות 82.60 704"): a short
+     * whole number at the end of a cell, right after an amount with agorot, is the code, and goes before the name where
+     * the parser takes a code ("704 נסיעות 82.60"). Left at the end it was the amount: travel 704 for 82.60 (round 3,
+     * the parser's never-seen agency family).
+     */
+    function codeLast(seg) {
+      const n = seg.length;
+      if (n < 3 || !isCode(seg[n - 1]) || !hasDec(seg[n - 2]) || !seg.some((w) => w.k === 'H')) return seg;
+      // (a whole-shekel amount that two numbers before it multiply out to is the amount: "168.25 35.4 5956")
+      const v = (w) => { const m = Payslip.numbersIn(w.text)[0]; return m ? Math.abs(m.v) : 0; };
+      const last = v(seg[n - 1]), nums = seg.slice(0, n - 1).filter(isNum).map(v);
+      for (let i = 0; i < nums.length; i++) for (let j = i + 1; j < nums.length; j++) if (Math.abs(nums[i] * nums[j] - last) <= Math.max(1, last * 0.005)) return seg;
+      return [seg[n - 1]].concat(seg.slice(0, n - 1));
+    }
     /**
      * A cell of a page that prints the numbers first ("5,840.00 36.50 160.00 שכר יסוד 110": amount, rate, hours,
      * name, code) in the order the parser reads a line: code, name, then the numbers from the name outwards
@@ -426,6 +447,8 @@
       const tax0 = num('incomeTax');
       // the year's gross so far holds this month's: below any amount of the month it lost a digit
       const most = Math.max(0, ...Payslip.FIELDS.filter((x) => x.kind === 'pay' || x.kind === 'total').map((x) => num(x.key) || 0));
+      const paySum0 = sum(pays);
+      const tg0 = num('taxableGross'), yg0 = num('ytdGross');
       const dayFit = days0 != null && hours0 != null && days0 > 0 && hours0 / days0 >= 2 && hours0 / days0 <= 14;
       for (const k of Object.keys(F)) {
         const v = F[k], f = Payslip.FIELD[k];
@@ -443,6 +466,13 @@
           else if ((k === 'workDays' || k === 'workHours') && days0 != null && hours0 != null && !dayFit) why = 'range';
           else if ((k === 'vacationBalance' || k === 'sickBalance') && !(v.value > -100 && v.value <= 400)) why = 'range';
           else if (k === 'ytdGross' && v.value < most - 2) why = 'range';
+          // the year's gross that IS this month's gross (outside January) is the month's line taken for the year's; a
+          // taxable gross far above every amount of the month is the year's (round 3: a page read upside down puts the
+          // year's heading after its lines)
+          else if (k === 'ytdGross' && !/-01$/.test(String(parsed.period || '')) && (g != null ? Math.abs(v.value - g) <= 1 : Math.abs(v.value - most) <= 1 || (pays.length > 1 && Math.abs(v.value - paySum0) <= 1))) why = 'range';
+          else if (k === 'taxableGross' && most > 0 && v.value > most * 1.6 + 500) why = 'range';
+          // the month's taxable gross far above the year's gross: one is the other's (both)
+          else if ((k === 'taxableGross' || k === 'ytdGross') && tg0 != null && yg0 != null && tg0 > yg0 * 1.6 + 500) why = 'range';
           else if (k === 'ytdTax' && tax0 != null && v.value < tax0 - 2) why = 'range';
           else if (ocr && money) why = 'sum';
           else if (ocr && f.kind === 'emp' && !(g != null && v.value >= g * 0.015 && v.value <= g * 0.09)) why = 'range';
@@ -461,7 +491,11 @@
         if (v.qty != null) {
           const perHour = v.rate == null && v.value != null && v.qty > 0 ? v.value / v.qty : null;
           const sure = (p0 === true && v.value != null) || (perHour != null && perHour >= 15 && perHour <= 500 && (!ocr || firm(tokOf(v, v.qty))));
-          if (!(v.qty > 0 && v.qty <= 400) || !sure) { unsure[k + '.qty'] = 'read'; v.qty = null; }
+          // (hours × rate is the amount both ways round: on an hour line, hours whose rate is under any wage, 15 ₪, are
+          // the rate taken for the hours: "שעות שבת 7.25 60.00 435.00" as 60 hours at 7.25, a "low Shabbat rate" of
+          // 3,165 ₪ owed; round 3, the parser's never-seen upside-down page)
+          const swapped = f.hours && v.rate != null && !(+v.rate >= 15);
+          if (!(v.qty > 0 && v.qty <= 400) || !sure || swapped) { unsure[k + '.qty'] = 'read'; v.qty = null; }
         }
         if (v.rate != null && (v.value == null || v.qty == null)) delete v.rate;
         // a line the parser itself asks for (it found the line, not its amount) is asked for here too
@@ -471,10 +505,11 @@
       // its hours (unsure, or left out by the parser) made the sum short and said "שעות שלא שולמו" for its whole
       // amount (round 3: Shabbat 240 read right, its 4 hours unsure, "240 owed"). Asked for: { asked: true, why: 'qty' }
       // with the amount kept; the person types the hours from the payslip (or removes the line).
+      // So is a line whose two numbers the parser could not order (`factors`): its hours are on the payslip, and with
+      // amounts only the check judged the overtime by its pay ("שעות נוספות חסרות 21.09" on a right payslip, round 3)
       const hourKeys = Payslip.FIELDS.filter((f) => f.hours && F[f.key]).map((f) => f.key);
-      if (hourKeys.some((k) => F[k].qty != null)) {
-        for (const k of hourKeys) if (F[k].value != null && F[k].qty == null && !F[k].asked) { F[k].asked = true; F[k].why = 'qty'; unsure[k + '.qty'] = unsure[k + '.qty'] || 'missing'; }
-      }
+      const withHours = hourKeys.some((k) => F[k].qty != null);
+      for (const k of hourKeys) if (F[k].value != null && F[k].qty == null && !F[k].asked && (withHours || Array.isArray(F[k].factors))) { F[k].asked = true; F[k].why = 'qty'; unsure[k + '.qty'] = unsure[k + '.qty'] || 'missing'; }
       return unsure;
     };
     return R;

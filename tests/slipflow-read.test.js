@@ -330,6 +330,52 @@ T.test('no regex in the payslip screen lost a backslash (a shell heredoc ate the
   T.eq(bad.join('  '), '');
 });
 
+T.section('payslip check: the parser\'s never-seen family through the screen (round 3)');
+
+T.test('a balance line keeps its columns: the balance is the last one, not the previous', () => {
+  // cut into four, "חופשה: יתרה קודמת 1.75" gave the previous balance as the balance (1,196 wrong on the agency layout)
+  const lines = R.lines(R.rows(R.words(row(100, ['חופשה:', 'יתרה', 'קודמת', '1.75', 'זיכוי', '1.00', 'ניצול', '0.00', 'יתרה', '2.75']), [])));
+  T.eq(lines.length, 1, lines.map((l) => l.text).join(' / '));
+  // two tables side by side are still two lines
+  T.eq(R.lines(R.rows(R.words(row(100, ['שכר', 'יסוד', '168.00', '42.00', '7,056.00', 'מס', 'הכנסה', '418.00']), []))).length, 2);
+});
+T.test('a line code printed after the amount is the code, not the amount', () => {
+  // "704 | נסיעות | 82.60" read right to left: travel 704 for 82.60
+  const { F } = read(row(100, ['נסיעות', '82.60', '704']), [], 'pdf');
+  T.eq(val(F, 'travel'), 82.6);
+  // a whole-shekel amount that hours × rate make is the amount: "שעות עבודה 168.25 35.4 5956" keeps 5956 last
+  const l = R.lines(R.rows(R.words(row(100, ['שעות', 'רגילות', '168.25', '35.4', '5956']), [])));
+  T.ok(/5956$/.test(l[0].text), l[0].text);
+});
+T.test('on an hour line, the rate taken for the hours is not kept', () => {
+  // "שעות שבת 7.25 60.00 435.00" read as 60 hours at 7.25: a "low Shabbat rate" of 3,165 owed
+  const p = { fields: { rest150: { value: 435, qty: 60, rate: 7.25, line: 'שעות שבת 7.25 60.00 435.00' } }, other: [] };
+  R.review(p, [], 'pdf');
+  T.eq(p.fields.rest150.value, 435, 'the amount stays');
+  T.eq(p.fields.rest150.qty, null, 'the hours do not');
+});
+T.test('an hour line whose two numbers the parser could not order is asked for its hours', () => {
+  const p = { fields: { ot125: { value: 362.5, line: 'שעות נוספות 125% 7.25 50.00 362.50', factors: [7.25, 50] } }, other: [] };
+  R.review(p, [], 'pdf');
+  T.eq(p.fields.ot125.value, 362.5);
+  T.ok(p.fields.ot125.asked && p.fields.ot125.why === 'qty');
+});
+T.test('the year\'s figures read as the month\'s are not shown', () => {
+  // the month's gross taken as the year's gross (outside January), and the year's taxable gross as the month's
+  const a = { period: '2026-07', fields: { gross: { value: 5415.1, line: 'שכר ברוטו 5,415.10' }, ytdGross: { value: 5415.1, line: 'שכר ברוטו 5,415.10' } }, other: [] };
+  R.review(a, [], 'pdf');
+  T.eq(a.fields.ytdGross.value, null);
+  const jan = { period: '2026-01', fields: { gross: { value: 5415.1, line: 'שכר ברוטו 5,415.10' }, ytdGross: { value: 5415.1, line: 'ברוטו מצטבר 5,415.10' } }, other: [] };
+  R.review(jan, [], 'pdf');
+  T.eq(jan.fields.ytdGross.value, 5415.1, 'in January the year is the month');
+  const b = { fields: { taxableGross: { value: 35815.82, line: 'ברוטו למס 35,815.82' }, ytdGross: { value: 5415.1, line: 'שכר ברוטו 5,415.10' } }, other: [] };
+  R.review(b, [], 'pdf');
+  T.eq(b.fields.taxableGross.value, null); T.eq(b.fields.ytdGross.value, null);
+  const c = { fields: { base: { value: 3000, line: 'שכר יסוד 3,000.00' }, taxableGross: { value: 35815.82, line: 'ברוטו למס 35,815.82' } }, other: [] };
+  R.review(c, [], 'pdf');
+  T.eq(c.fields.taxableGross.value, null, 'far above every amount of the month');
+});
+
 T.section('payslip check: taking the file in (intake findings, round 2)');
 
 T.atest('a PDF whose amounts are form fields: the fields\' values are read with the page\'s text', async () => {
