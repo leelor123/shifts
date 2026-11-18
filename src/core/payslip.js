@@ -1355,7 +1355,13 @@
         if (for2 && !for1) {
           const q = parts[k].reduce((t, x) => t + (x.amb ? x.rate : x.qty || 0), 0);
           if (q > 0) { F.qty = q; F.rate = F.value / q; }
-        } else if (!(for1 && !for2)) { delete F.qty; delete F.rate; }
+        } else if (!(for1 && !for2)) {
+          // (the two numbers stay, in no order, as `factors`: the screen proves the amount by factors[0] × factors[1] =
+          // value without taking either for the hours, round 3 from the payslip screen session)
+          if (parts[k].length === 1 && F.qty != null && F.rate != null) F.factors = [F.qty, F.rate];
+          if (parts[k].length === 1 && F.qty != null && F.rate != null) F.factors = [F.qty, F.rate];
+      delete F.qty; delete F.rate;
+        }
       }
     }
     // An hours line with two numbers: its hours and its pay, or (a column lost, a row split by the PDF) its hours and
@@ -1642,6 +1648,9 @@
     // (an hours line asked for, with no hours on it, makes the payslip's hours unknown unless it prints their total:
     // the overtime hours alone were "1,686.96 ₪ of hours not paid", round 3)
     if (HOUR_FIELDS.some((k) => askedIn(F, k) && !(qty(F, k) > 0))) return wh || null;
+    // (and an hours line with its amount and no hours, beside one that has hours: "base 1600 / 40 h + Shabbat 240" was
+    // "240 ₪ of hours not paid", round 3 from the payslip screen session)
+    if (sum > 0 && HOUR_FIELDS.some((k) => val(F, k) > 0 && !(qty(F, k) > 0))) return wh || null;
     if (qty(F, 'base') > 0 || (val(F, 'base') == null && !wh)) return sum || wh;
     if (wh) return Math.max(sum, wh);
     return null;
@@ -1748,6 +1757,19 @@
     // (minimum wage, pension, recuperation, tax and National Insurance, the deductions), and the screen invites the
     // person to log the shifts or import a schedule (noShifts).
     const noShifts = !E.shifts.length;
+    // A component missing from what was read is a shortfall only when the reading saw the whole payslip: a text PDF or
+    // a payslip typed by hand. From a photo or the AI's reading, a line may simply not have been read (the pension
+    // lines of a folded photo were "no pension, 775.63 ₪" on a payslip that pays it); and a line the reader could not
+    // name whose amount fits the component may be it: that one is checkGap's "unplaced" reason. Then it is a check by
+    // hand, never money owed (round 3, from the payslip screen session).
+    const partialRead = slip.source === 'ocr' || slip.source === 'ai';
+    const notFound = (keys) => keys.every((k) => !F[k]) && partialRead;
+    // TRANSLATE (the lead): new texts, Hebrew in every language until translated
+    // i18n-keep-start
+    const notFoundWarn = (area, label) => add({ area, status: 'warn', amount: 0, confidence: 'low', title: 'לא נמצא בתלוש שנקרא',
+      detail: `לא מצאנו בתלוש שורת ${label}. ייתכן שהשורה לא נקראה, או שהיא בין השורות שלא זוהו. כדאי לבדוק בתלוש עצמו.`,
+      basis: 'השורה לא נמצאה בקריאה של התלוש.' });
+    // i18n-keep-end
 
     /* 1. total hours */
     let covered = []; // shifts already identified as unpaid — excluded from the OT / rest checks to avoid double counting
@@ -1831,7 +1853,8 @@
     const askedRest = ['rest150', 'rest175', 'rest200'].some((k) => askedIn(F, k));
     if (!noShifts && !askedRest && (appRestH > 0.01 || slipRestH > 0 || slipRestPay > 0)) {
       const restShifts = E.shifts.filter((r) => r.restHours > 0 && !covered.includes(r));
-      if (slipRestH === 0 && slipRestPay === 0 && appRestH > 0.25) {
+      if (slipRestH === 0 && slipRestPay === 0 && appRestH > 0.25 && notFound(['rest150', 'rest175', 'rest200'], E.pay.rest150 + E.pay.rest175 + E.pay.rest200)) notFoundWarn('שבת וחג', 'שבת/חג');
+      else if (slipRestH === 0 && slipRestPay === 0 && appRestH > 0.25) {
         const amount = E.t.restPremium;
         add({ area: 'שבת וחג', status: 'bad', title: 'לא שולמה תוספת שבת/חג', amount, shifts: restShifts.map((r) => r.id),
           detail: `רשמת ${U.hours(appRestH)} שעות בשבת/חג (${dates(restShifts)}), ובתלוש לא מופיעה שורת שבת/חג. התוספת (מעבר ל-100%) ≈ ${U.money(amount)}.`,
@@ -1863,7 +1886,8 @@
     const appOt = appOt1 + appOt2;
     if (!noShifts && !askedIn(F, 'ot125') && !askedIn(F, 'ot150') && (appOt > 0.25 || slipOt > 0)) {
       const otShifts = E.shifts.filter((r) => r.hoursBy.ot1 + r.hoursBy.ot2 > 0 && !covered.includes(r));
-      if (appOt - slipOt > 0.25) {
+      if (appOt - slipOt > 0.25 && notFound(['ot125', 'ot150'], E.pay.ot125 + E.pay.ot150)) notFoundWarn('שעות נוספות', 'שעות נוספות');
+      else if (appOt - slipOt > 0.25) {
         const missing125 = Math.max(0, appOt1 - (qty(F, 'ot125') || 0));
         const missing150 = Math.max(0, appOt2 - (qty(F, 'ot150') || 0));
         const amount = E.avgRate * (missing125 * 0.25 + missing150 * 0.5);
@@ -1900,7 +1924,8 @@
       const d = E.t.travel - (slipTravel || 0);
       const emp = E.emp;
       const basis = `${E.t.workDays} ימי עבודה × ${U.money(emp.travelPerDay)}` + (+emp.travelMonthlyCap ? `, תקרה ${U.money(emp.travelMonthlyCap)}` : '') + '.';
-      if (d > 1) add({ area: 'נסיעות', status: 'bad', title: 'החזר נסיעות חסר', amount: d, detail: `צפוי ${U.money(E.t.travel)}, בתלוש ${U.money(slipTravel || 0)}.` + (val(F, 'workDays') ? ` המעסיק רשם ${val(F, 'workDays')} ימי עבודה.` : ''), basis, confidence: 'high', fromOverride: ovNote(E.t.travel, A.t.travel, slipTravel, 0.5) });
+      if (d > 1 && notFound(['travel'], E.t.travel)) notFoundWarn('נסיעות', 'נסיעות');
+      else if (d > 1) add({ area: 'נסיעות', status: 'bad', title: 'החזר נסיעות חסר', amount: d, detail: `צפוי ${U.money(E.t.travel)}, בתלוש ${U.money(slipTravel || 0)}.` + (val(F, 'workDays') ? ` המעסיק רשם ${val(F, 'workDays')} ימי עבודה.` : ''), basis, confidence: 'high', fromOverride: ovNote(E.t.travel, A.t.travel, slipTravel, 0.5) });
       else if (d < -1) add({ area: 'נסיעות', status: 'warn', title: 'נסיעות גבוהות מהצפוי', detail: `בתלוש ${U.money(slipTravel)}, צפוי ${U.money(E.t.travel)}. אולי התעריף היומי שהגדרת שונה?`, basis, confidence: 'medium' });
       else add({ area: 'נסיעות', status: 'ok', title: 'נסיעות תקינות', detail: U.money(slipTravel || 0), basis, confidence: 'high' });
     }
@@ -1926,7 +1951,8 @@
     const active = Engine.pensionActive(S, E.P.to);
     const pe = val(F, 'pensionEmployee'), pr = val(F, 'pensionEmployer');
     if (S.pension.enabled) {
-      if (askedIn(F, 'pensionEmployee')) { /* not read: listed below as a line to check by hand */ } else if (active && !pe) {
+      if (askedIn(F, 'pensionEmployee')) { /* not read: listed below as a line to check by hand */ } else if (active && !pe && notFound(['pensionEmployee'], pBase * (+S.pension.employeePct || 6) / 100)) notFoundWarn('פנסיה', 'פנסיה');
+      else if (active && !pe) {
         const amount = pBase * ((+S.pension.employerPct || 0) + (+S.pension.severancePct || 0)) / 100;
         add({ area: 'פנסיה', status: 'bad', title: 'לא נמצאה הפרשה לפנסיה', amount,
           detail: `לפי תאריך תחילת העבודה (${S.startDate ? U.fmtDate(S.startDate) : '—'}) ההפרשות היו אמורות להתחיל אחרי ${S.pension.startAfterMonths} חודשים. חלק המעסיק (תגמולים + פיצויים) ≈ ${U.money(amount)} בחודש.`,
@@ -2325,9 +2351,15 @@
       /* a payslip line the reader could not place: maybe this payment under another name */
       if (code !== 'ni' && code !== 'tax') {
         const lines = (slip.other || []).filter((o) => o.guess !== 'otherDed' && !FIELD[o.guess] && +o.value > 0);
-        const near = lines.slice().sort((x, y) => Math.abs(+x.value - f.amount) - Math.abs(+y.value - f.amount))[0];
+        const whole0 = { rest: E.pay.rest150 + E.pay.rest175 + E.pay.rest200, ot: E.pay.ot125 + E.pay.ot150, travel: E.t.travel }[code] || f.amount;
+        const dist = (x) => Math.min(Math.abs(+x.value - f.amount), Math.abs(+x.value - whole0));
+        const near = lines.slice().sort((x, y) => dist(x) - dist(y))[0];
         if (near && +near.value >= f.amount * 0.3) {
-          add({ id: 'unplaced', found: Math.abs(+near.value - f.amount) <= Math.max(2, f.amount * 0.1) ? 'yes' : 'maybe', amount: +near.value, line: near.line,
+          // (or the component's whole pay, not only what is missing of it: an unnamed "שעות naw 150% … 240.00" is the
+          // Shabbat line whose premium of 80 ₪ was "not paid", round 3 from the payslip screen session)
+          const whole = { rest: E.pay.rest150 + E.pay.rest175 + E.pay.rest200, ot: E.pay.ot125 + E.pay.ot150, travel: E.t.travel }[code];
+          const fits = Math.abs(+near.value - f.amount) <= Math.max(2, f.amount * 0.1) || (whole > 0 && Math.abs(+near.value - whole) <= Math.max(2, whole * 0.05));
+          add({ id: 'unplaced', found: fits ? 'yes' : 'maybe', amount: fits ? f.amount : +near.value, line: near.line,
             title: 'שורה שלא זוהתה',
             text: `בתלוש יש שורה שהאפליקציה לא שייכה, על ${U.money(+near.value)}. ייתכן שזה התשלום הזה בשם אחר.`,
             fix: { kind: 'verify', key: '' } });
@@ -3099,5 +3131,8 @@
     return s.trim();
   }
 
-  root.Payslip = { FIELDS, FIELD, HOUR_FIELDS, hoursOnSlip, EXPLAIN, READ_ORDER, MEANING, MEANING_HE, HE_TERM, KIND_LABEL, printedTerm, unknownLines, addNamedLines, labelOther, normalize, fixVisual, numbersIn, matchField, pickValues, linesFromPdfItems, detectPeriod, parseText, redact, aiSchema, aiPrompt, fromAi, expected, analyze, checkGap, reconcile, settingsCheck, waterfall, explainLines, compareSlips, employerMessage };
+  // ASKED_SAFE: analyze, checkGap, reconcile and the letter treat a field { value: null, asked: true } as "not read, check
+  // by hand", and addNamedLines fills it: the screen may keep such fields through "המשך" (agreed with the payslip
+  // screen session, round 3)
+  root.Payslip = { ASKED_SAFE: true, FIELDS, FIELD, HOUR_FIELDS, hoursOnSlip, EXPLAIN, READ_ORDER, MEANING, MEANING_HE, HE_TERM, KIND_LABEL, printedTerm, unknownLines, addNamedLines, labelOther, normalize, fixVisual, numbersIn, matchField, pickValues, linesFromPdfItems, detectPeriod, parseText, redact, aiSchema, aiPrompt, fromAi, expected, analyze, checkGap, reconcile, settingsCheck, waterfall, explainLines, compareSlips, employerMessage };
 })(typeof window !== 'undefined' ? window : globalThis);

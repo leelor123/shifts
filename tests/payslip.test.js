@@ -829,3 +829,27 @@ T.test('the AI: a year\'s gross above 10,000 is kept', () => {
   T.near(Payslip.fromAi({ fields: [{ key: 'ytdGross', value: 41250.8, qty: 0, rate: 0 }], otherLines: [] }).fields.ytdGross.value, 41250.8);
   T.ok(!Payslip.fromAi({ fields: [{ key: 'workDays', value: 300, qty: 0, rate: 0 }], otherLines: [] }).fields.workDays, 'a count keeps its bound');
 });
+T.test('round 3 (with the payslip screen): hours unknown, a line not seen on a photo, an unnamed line that fits, the flag', () => {
+  const m = model(septShifts());
+  const base = () => ({ base: { value: 1600, qty: 40 }, ot125: { value: 100, qty: 2 }, travel: { value: 135.6 }, pensionEmployee: { value: 116.4 } });
+  // an hours line with its amount and no hours beside one that has hours: hours unknown, not "240 ₪ unpaid"
+  const h = { period: '2026-09', fields: Object.assign(base(), { rest150: { value: 240 } }), other: [] };
+  T.eq(Payslip.hoursOnSlip(h.fields), null);
+  T.ok(!Payslip.analyze(h, m).findings.some((f) => f.status === 'bad'), 'no alarm');
+  // a photo whose pension lines were not read at all: a check by hand, never "no pension"
+  const f0 = base(); delete f0.pensionEmployee;
+  const photo = Payslip.analyze({ period: '2026-09', source: 'ocr', fields: Object.assign(f0, { rest150: { value: 240, qty: 4 } }), other: [] }, m);
+  const pen = photo.findings.find((f) => f.area === 'פנסיה');
+  T.eq(pen.status, 'warn'); T.eq(photo.totalMissing, 0);
+  const pdf = Payslip.analyze({ period: '2026-09', source: 'pdf', fields: Object.assign(base(), { pensionEmployee: undefined, rest150: { value: 240, qty: 4 } }), other: [] }, m);
+  T.eq(pdf.findings.find((f) => f.area === 'פנסיה').status, 'bad', 'a PDF that has no pension line keeps the rule');
+  // an unnamed line whose amount fits the component: Shabbat is "maybe that line", not "not paid"
+  const un = Payslip.analyze({ period: '2026-09', source: 'pdf', fields: base(), other: [{ line: 'שעות naw 150% 4.00 60.00 240.00', value: 240, guess: null }] }, m);
+  const unSlip = { period: '2026-09', source: 'pdf', fields: base(), other: [{ line: 'שעות naw 150% 4.00 60.00 240.00', value: 240, guess: null }] };
+  const cg = Payslip.checkGap(un, unSlip, m);
+  T.ok(cg.items.every((it) => it.left < 1), 'the unnamed line explains it: ' + JSON.stringify(cg.items.map((it) => [it.area, it.left, it.reasons.map((r) => r.id + ':' + r.found)])));
+  T.eq(Payslip.ASKED_SAFE, true);
+  // the two numbers of a line whose hours column is not proven stay as factors, in no order
+  const fx = Payslip.parseText('שבת 150% 10 52.50 525.00').fields.rest150;
+  T.ok(fx.qty == null && fx.factors && fx.factors[0] * fx.factors[1] === 525, JSON.stringify(fx));
+});
