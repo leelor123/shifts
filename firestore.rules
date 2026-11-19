@@ -14,7 +14,7 @@ service cloud.firestore {
 
       match /{collection}/{docId} {
         allow read, delete: if request.auth != null && request.auth.uid == uid;
-        // records are stored as {u: updatedAt, d: deleted?, j: json}; cap each document at ~900KB
+        // records are stored as {u: updatedAt, d: deleted?, j: json, s: when it reached the server}; cap each document at ~900KB
         allow create: if valid(uid, collection);
         // never replace a newer version with an older one (a phone that was offline for a while)
         allow update: if valid(uid, collection) && request.resource.data.u >= resource.data.u
@@ -356,8 +356,11 @@ service cloud.firestore {
     function valid(uid, collection) {
       return request.auth != null && request.auth.uid == uid
         && collection in ['employers', 'roles', 'shifts', 'entries', 'templates', 'dayRules', 'payslips', 'gaps', 'ledger', 'kv']
-        && request.resource.data.keys().hasOnly(['u', 'd', 'j'])
+        && request.resource.data.keys().hasOnly(['u', 'd', 'j', 's'])
         && request.resource.data.u is number
+        // s, the upload stamp (cloud.js stamped): only the server's own time of this write; the app's listeners ask
+        // for it. Optional: 1.41.1 and older write without it
+        && (!('s' in request.resource.data) || request.resource.data.s == request.time)
         && (request.resource.data.j == null || request.resource.data.j.size() < 900000);
     }
   }

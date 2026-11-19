@@ -1041,3 +1041,35 @@ T.atest('a save made while a heard change waits to be applied wins and is upload
   T.eq(JSON.parse(be.docs.get('users/u1/shifts/x').j).note, 'A newer edit', 'and reached the account');
   T.eq(A.Store.dirtyRecords().length, 0);
 });
+
+// review 16.11.2026, sync #2: every record and tombstone carries s, the server's time when it arrived (fs.serverTimestamp)
+T.atest('sync #2: a record and a tombstone go up with the server\'s upload time; the rules allow it and check it', async () => {
+  const be = fakeBackend();
+  const A = await phone(be);
+  await A.add('x', 'one'); await A.add('z', 'two');
+  await A.Cloud.connect(user); await wait(30);
+  await A.Store.apply([{ store: 'shifts', del: 'z' }], 'del');
+  await A.sync(); await wait(30);
+  T.ok(typeof be.docs.get('users/u1/shifts/x').s === 'number', 'the record has s');
+  T.ok(be.docs.get('users/u1/shifts/z').d === true && typeof be.docs.get('users/u1/shifts/z').s === 'number', 'the tombstone has s');
+  const rules = fs.readFileSync(path.join(SRC, '..', 'firestore.rules'), 'utf8');
+  T.ok(rules.includes("hasOnly(['u', 'd', 'j', 's'])"), 'the rules allow s');
+  T.ok(rules.includes("(!('s' in request.resource.data) || request.resource.data.s == request.time)"), 'only as the server\'s own time, and a write without it (1.41.1) still goes');
+});
+T.atest('sync #2: rules from before s refuse it, and the records still go up without it', async () => {
+  const be = fakeBackend();
+  be.oldRules = true;
+  const A = await phone(be);
+  await A.add('x', 'one');
+  await A.Cloud.connect(user); await wait(400);
+  await A.Store.apply([{ store: 'shifts', put: Object.assign({}, A.shift('x'), { note: 'edited' }) }], 'edit');
+  await A.add('y', 'new');
+  await A.Store.apply([{ store: 'shifts', del: 'x' }], 'del');
+  await A.sync(); await wait(400);
+  T.ok(be.rejected >= 1, 'the first stamped write was refused');
+  T.ok(be.docs.get('users/u1/shifts/x').d === true && !('s' in be.docs.get('users/u1/shifts/x')), 'the tombstone went up without s');
+  T.eq(JSON.parse(be.docs.get('users/u1/shifts/y').j).note, 'new', 'the new record too');
+  T.eq(A.Store.dirtyRecords().length, 0, 'nothing waits');
+  T.eq((A.S.meta.pendingDeletes || []).length, 0, 'no tombstone waits');
+  T.eq(A.Cloud.status, 'synced');
+});

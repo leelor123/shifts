@@ -355,6 +355,13 @@
   }
   const encodeActive = () => ({ u: S.meta.activeUpdatedAt || Date.now(), j: S.activeShift ? JSON.stringify(S.activeShift) : null });
   const userDoc = (...p) => fb.fs.doc(fb.db, 'users', Cloud.user.uid, ...p);
+  /* The upload stamp s: the server's time when a record (or a tombstone) reached it, set by the server itself. The
+   * listeners ask for what reached the server since this phone last heard (s), not for what was edited since (u): a
+   * phone that edited offline and went online days later wrote a u older than the other phones' window, so they did not
+   * hear it until the weekly full read (review 16.11.2026, sync #2). Rules from before s refuse it: then the writes go
+   * without it until the app opens again (stampOk), and nothing waits on a rules deploy. */
+  let stampOk = true;
+  const stamped = (data) => (stampOk && fb.fs.serverTimestamp ? Object.assign({}, data, { s: fb.fs.serverTimestamp() }) : data);
 
   /* ---------------- first connection on a device ---------------- */
   async function fetchAll(uid) {
@@ -495,6 +502,7 @@
   // reads a day). Now an opening listens only to what changed since this phone last heard from the server (S.meta.heard,
   // this phone's clock), two days back for a phone whose clock is off; once a week the whole folder, to be sure.
   const HEARD_BACK = 2 * 86400000, HEARD_FULL = 7 * 86400000;
+  Cloud.OLD_APPS_UNTIL = Date.UTC(2027, 1, 1); // 1 Feb 2027 (attach)
   function heardSince(uid) {
     const h = S.meta.heard;
     if (!h || h.uid !== uid || !(h.at > 0) || !(Date.now() - (h.full || 0) < HEARD_FULL)) return 0;
@@ -510,10 +518,17 @@
     const { fs, db } = fb;
     const onErr = (e) => setStatus('error', e);
     const since = fs.query && fs.where ? heardSince(uid) : 0;
-    const heard = new Set();
-    for (const st of SYNC) {
+    // since an opening: what reached the server since (s, the upload stamp). Until OLD_APPS_UNTIL also what was edited
+    // since (u): an app from before the stamp (1.41.1 and older) writes no s. The installed app opens the live version,
+    // so those go within days; after that date a record of one still arrives with the weekly full read. Two plain
+    // listeners, not one or(): each needs only Firestore's automatic one-field index (the second costs a read per folder).
+    const asks = !since ? [null] : !fs.Timestamp ? [['u', since]]
+      : [['s', fs.Timestamp.fromMillis(since)]].concat(Date.now() < Cloud.OLD_APPS_UNTIL ? [['u', since]] : []);
+    const heard = new Set(), all = SYNC.length * asks.length;
+    for (const st of SYNC) for (const ask of asks) {
       const folder = fs.collection(db, 'users', uid, st);
-      unsubs.push(fs.onSnapshot(since ? fs.query(folder, fs.where('u', '>', since)) : folder, (snap) => {
+      const key = st + (ask ? '/' + ask[0] : '');
+      unsubs.push(fs.onSnapshot(ask ? fs.query(folder, fs.where(ask[0], '>', ask[1])) : folder, (snap) => {
         const got = [];
         for (const ch of snap.docChanges()) {
           if (ch.type === 'removed' || ch.doc.metadata.hasPendingWrites) continue;
@@ -522,7 +537,7 @@
         }
         if (got.length) queueRemote(got);
         if (!snap.metadata.fromCache && Cloud.status === 'syncing') setStatus('synced');
-        if (!snap.metadata.fromCache) { const was = heard.size; heard.add(st); if (heard.size === SYNC.length) heardAll(uid, !since && was < SYNC.length); }
+        if (!snap.metadata.fromCache) { const was = heard.size; heard.add(key); if (heard.size === all) heardAll(uid, !since && was < all); }
       }, onErr));
     }
     unsubs.push(fs.onSnapshot(fs.doc(db, 'users', uid, 'kv', 'settings'), (d) => {
@@ -571,9 +586,9 @@
       const writes = []; // [key, version, ref, data, onConfirmed]
       for (const { store, rec } of Store.dirtyRecords()) {
         const at = rec.updatedAt;
-        writes.push([store + '/' + rec.id, at, userDoc(store, rec.id), encode(store, rec), () => acked.items.push({ store, id: rec.id, at })]);
+        writes.push([store + '/' + rec.id, at, userDoc(store, rec.id), stamped(encode(store, rec)), () => acked.items.push({ store, id: rec.id, at })]);
       }
-      for (const d of S.meta.pendingDeletes || []) writes.push([d.store + '/' + d.id, 'del' + d.at, userDoc(d.store, d.id), { u: d.at, d: true, j: null }, () => acked.dels.push(d)]);
+      for (const d of S.meta.pendingDeletes || []) writes.push([d.store + '/' + d.id, 'del' + d.at, userDoc(d.store, d.id), stamped({ u: d.at, d: true, j: null }), () => acked.dels.push(d)]);
       if (S.meta.settingsDirty) { const u = S.settings._updatedAt; writes.push(['kv/settings', u, userDoc('kv', 'settings'), encodeSettings(), () => { acked.settingsU = u; }]); }
       if (S.meta.activeDirty) { const u = S.meta.activeUpdatedAt; writes.push(['kv/active', u, userDoc('kv', 'active'), encodeActive(), () => { acked.activeU = u; }]); }
       const fresh = writes.filter(([key, ver]) => inflight.get(key) !== ver);
@@ -590,7 +605,7 @@
         for (const [key, ver, ref, data, onConfirmed] of fresh) {
           inflight.set(key, ver);
           fs.setDoc(ref, data)
-            .then(() => { onConfirmed(); clearTimeout(ackTimer); ackTimer = setTimeout(flushAcks, 0); }, (e) => onRejected(ref, e))
+            .then(() => { onConfirmed(); clearTimeout(ackTimer); ackTimer = setTimeout(flushAcks, 0); }, (e) => onRejected(ref, e, 's' in data))
             .finally(() => { if (inflight.get(key) === ver) inflight.delete(key); });
         }
         setStatus(navigator.onLine ? 'syncing' : 'offline');
@@ -613,7 +628,7 @@
     return U.same(S.meta.userMark, m) ? null : m;
   };
   /** The server refused a write. If the cloud holds a newer version, take it; otherwise keep ours dirty. */
-  async function onRejected(ref, e) {
+  async function onRejected(ref, e, hadStamp) {
     const { fs } = fb;
     const parts = ref.path.split('/'); // users/{uid}/{store}/{id}
     const store = parts[2], id = parts[3];
@@ -632,6 +647,9 @@
           return Store.applyRemote([v.d ? { store, del: id, u: v.u } : { store, put: decode(store, v, local) }]);
         }
         if (local) { delete local._syncedAt; await Store.saveAll(); }
+        // not an older version: the rules may be from before the upload stamp. Once more without it (the record and
+        // the tombstone are still waiting: dirty, or in pendingDeletes); a refusal for another reason stays an error
+        if (hadStamp && stampOk && g === gen && e && e.code === 'permission-denied') { stampOk = false; Cloud.schedulePush(300); return; }
       }
     } catch (err) { /* offline: retried on the next push */ }
     setStatus('error', e);

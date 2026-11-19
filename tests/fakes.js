@@ -54,6 +54,15 @@ function fakeIndexedDB() {
 function fakeBackend() {
   return { docs: new Map(), clients: new Set(), rejected: 0 };
 }
+/** fs.serverTimestamp(): the server puts its own time (Date.now() here) in its place when the write reaches it; the
+ *  writer's own copy has null there until then, as with Firestore. */
+const SERVER_TIME = '__fake_server_time__';
+const withTime = (data, t) => {
+  if (!data || typeof data !== 'object') return data;
+  const o = Object.assign({}, data);
+  for (const k of Object.keys(o)) if (o[k] === SERVER_TIME) o[k] = t;
+  return o;
+};
 const parentOf = (p) => p.split('/').slice(0, -1).join('/');
 const idOf = (p) => p.split('/').pop();
 
@@ -80,8 +89,18 @@ function fakeClient(backend) {
     }
   }
   function serverApply(path, data) {
+    data = withTime(data, backend.now ? backend.now() : Date.now());
     // emulate the security rule: refuse an update that is older than the stored version
     const cur = backend.docs.get(path);
+    // and the shape of a record under users/ (firestore.rules valid()): u, d, j and the upload stamp s, the server's
+    // time; backend.oldRules = the rules from before s, which refuse it
+    const rec = data && /^users\/[^/]+\/[^/]+\/[^/]+$/.test(path);
+    const keys = backend.oldRules ? ['u', 'd', 'j'] : ['u', 'd', 'j', 's'];
+    if (rec && (Object.keys(data).some((k) => !keys.includes(k)) || ('s' in data && typeof data.s !== 'number'))) {
+      backend.rejected++;
+      const e = new Error('Missing or insufficient permissions.'); e.code = 'permission-denied';
+      throw e;
+    }
     // and the signed shift log's rule: a record's text never changes and never becomes a tombstone
     const ledgerChange = data && cur && /\/ledger\/[^/]+$/.test(path) && (cur.d || data.d || data.j !== cur.j);
     if (ledgerChange || (data && cur && typeof cur.u === 'number' && typeof data.u === 'number' && data.u < cur.u)) {
@@ -95,7 +114,7 @@ function fakeClient(backend) {
   function write(path, data) {
     // every write a phone sends, in order (tests/noop.test.js: a save with nothing new sends nothing)
     (backend.writes || (backend.writes = [])).push(path);
-    notify(path, data, true);
+    notify(path, withTime(data, null), true);
     return new Promise((resolve, reject) => {
       const job = () => { try { serverApply(path, data); resolve(); } catch (e) { reject(e); } };
       if (client.online) setTimeout(job, 0); else queue.push(job);
@@ -118,6 +137,7 @@ function fakeClient(backend) {
     doc: (db, ...p) => ({ path: p.join('/') }),
     collection: (db, ...p) => ({ path: p.join('/') }),
     setDoc: (ref, data) => write(ref.path, data),
+    serverTimestamp: () => SERVER_TIME,
     deleteDoc: (ref) => write(ref.path, undefined),
     writeBatch: () => { const ops = []; return { set: (r, d) => ops.push([r.path, d]), delete: (r) => ops.push([r.path, undefined]), commit: () => Promise.all(ops.map(([p, d]) => write(p, d))) }; },
     getDocsFromServer: async (c) => { needOnline(); return { docs: [...backend.docs].filter(([k]) => parentOf(k) === c.path).map(([k, v]) => snapDoc(k, v, false)) }; },
@@ -163,6 +183,7 @@ function billedClient(backend) {
   }
   const coll = (q) => ({ path: q.path });
   const fs = Object.assign({}, base, {
+    Timestamp: { fromMillis: (ms) => ms }, // (the server's times are kept as numbers here)
     where: (f, op, v) => ({ t: 'where', f, op, v }), orderBy: (f, d) => ({ t: 'order', f, d }), limit: (n) => ({ t: 'limit', n }),
     query: (c, ...cons) => ({ path: c.path, c: (c.c || []).concat(cons) }),
     getDoc: async (d) => { bill(1); return base.getDoc(d); },
