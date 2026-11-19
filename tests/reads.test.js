@@ -9,6 +9,7 @@ const T = require('./t.js');
 const { fakeIndexedDB, fakeBackend, billedClient } = require('./fakes.js');
 
 const wait = (ms) => new Promise((r) => setTimeout(r, ms));
+const OLD_APPS_UNTIL = Date.UTC(2027, 1, 1), FOLDERS = 9; // (cloud.js Cloud.OLD_APPS_UNTIL, Store.SYNC_STORES)
 const GAMES = ['coins', 'quiz', 'facts', 'pairs', 'hours'];
 const user = { uid: 'me', email: 'me@example.com', displayName: 'Me' };
 
@@ -17,8 +18,9 @@ function fakeStorage() {
   const m = new Map();
   return { getItem: (k) => (m.has(k) ? m.get(k) : null), setItem: (k, v) => { m.set(k, String(v)); }, removeItem: (k) => { m.delete(k); } };
 }
-/** One opening of the app on a phone (idb and storage are the phone's; clock.ms moves its time forward). */
-async function open(SRC, be, phone) {
+/** One opening of the app on a phone (idb and storage are the phone's; clock.ms moves its time forward).
+ *  opts.old: an app from before the upload stamp (1.41.1 and older), which writes no s. */
+async function open(SRC, be, phone, opts) {
   const R = Date, clock = phone.clock;
   class D extends R { constructor(...a) { super(...(a.length ? a : [R.now() + clock.ms])); } static now() { return R.now() + clock.ms; } }
   const ctx = { console, Date: D, setTimeout: (f, ms) => setTimeout(f, Math.min(ms || 0, 30)), clearTimeout, setInterval: () => 0, clearInterval() {},
@@ -37,6 +39,7 @@ async function open(SRC, be, phone) {
   if (phone.ctx) be.clients.delete(phone.ctx.__client);
   const { client, fs: ffs } = billedClient(be);
   ctx.__client = client; phone.ctx = ctx;
+  if (opts && opts.old) delete ffs.serverTimestamp;
   ctx.Cloud._useSdk({ app: {}, auth: {}, db: {}, au: {}, fs: ffs });
   await ctx.Store.load();
   return ctx;
@@ -72,11 +75,12 @@ function server(SRC) {
 }
 
 /** The day, step by step: { step: reads } (out.lb: the champions table's part of each step). */
-async function measure(SRC) {
+async function measure(SRC, start) {
   const be = server(SRC);
-  const phone = { idb: fakeIndexedDB(), storage: fakeStorage(), clock: { ms: 0 } };
+  const phone = { idb: fakeIndexedDB(), storage: fakeStorage(), clock: { ms: start || 0 } };
+  if (start) be.now = () => Date.now() + phone.clock.ms; // the server's clock goes with the phone's
   const out = {}, lb = {};
-  const step = async (name, fn) => { const a = be.reads, b = be.lbReads || 0; await fn(); await wait(150); out[name] = be.reads - a; lb[name] = be.lbReads - b; };
+  const step = async (name, fn) => { const a = be.reads, b = be.lbReads || 0; await fn(); await wait(150); out[name] = be.reads - a; lb[name] = (be.lbReads || 0) - b; };
   // the first sign-in on this phone takes the whole account (once per phone)
   let A = await open(SRC, be, phone);
   await step('first sign-in on a phone', async () => { await A.Cloud.connect(user); await wait(150); });
@@ -114,11 +118,19 @@ if (require.main === module) {
   T.atest('Firestore reads: a day of use stays small (the free plan is 50,000 a day for everyone)', async () => {
     const r = await measure(path.join(__dirname, '..', 'src'));
     const say = JSON.stringify(r);
-    T.ok(r['opening the app'] <= 20, 'an opening reads what changed, not the whole account: ' + say);
+    // (until 1 Feb 2027 an opening also listens for the records of apps from before the upload stamp: a read a folder)
+    const old = Date.now() < OLD_APPS_UNTIL ? FOLDERS : 0;
+    T.ok(r['opening the app'] <= 20 + old, 'an opening reads what changed, not the whole account: ' + say);
     T.ok(r['a game played (2)'] <= 3, 'a game: my row and my place, not the board: ' + say);
     T.ok(r['opening the table'] <= 25, 'the table: the board on screen only: ' + say);
     T.ok(r['opening the table again'] === 0, 'opening the table again soon reads nothing: ' + say);
     T.ok(r['the table after opening again'] <= 25, 'after the app was closed: the board kept on the phone: ' + say);
+    T.ok(r.total <= 150 + 2 * old, 'the whole day: ' + say);
+  });
+  T.atest('Firestore reads: after 1 Feb 2027 an opening listens for the upload stamp only', async () => {
+    const r = await measure(path.join(__dirname, '..', 'src'), OLD_APPS_UNTIL - Date.now() + 86400000);
+    const say = JSON.stringify(r);
+    T.ok(r['opening the app'] <= 20, 'an opening reads what changed: ' + say);
     T.ok(r.total <= 150, 'the whole day: ' + say);
     // the champions table's own reads (each board is up to 20): a guard against reading ahead or reading again
     const lb = r.lb;
@@ -170,12 +182,17 @@ if (require.main === module) {
 /* What an opening reads is only what changed: it must still get every change made while the app was closed. */
 const newPhone = () => ({ idb: fakeIndexedDB(), storage: fakeStorage(), clock: { ms: 0 } });
 const rec = (A, id) => A.Store.S.shifts.find((x) => x.id === id);
-async function twoPhones(SRC) {
+async function twoPhones(SRC, start) {
   const be = server(SRC);
   const pa = newPhone(), pb = newPhone();
+  // (start: the phones' and the server's clocks this far ahead; clock(h) moves all three on)
+  let shift = start || 0;
+  pa.clock.ms = pb.clock.ms = shift;
+  be.now = () => Date.now() + shift;
+  const clock = (h) => { shift += h * 3600000; pa.clock.ms = pb.clock.ms = shift; };
   let A = await open(SRC, be, pa); await A.Cloud.connect(user); await wait(150);
   const B = await open(SRC, be, pb); await B.Cloud.connect(user); await wait(150);
-  return { be, pa, pb, A, B, reopenA: async (hours) => { pa.clock.ms += hours * 3600000; A = await open(SRC, be, pa); await A.Cloud.connect(user); await wait(200); return A; } };
+  return { be, pa, pb, A, B, clock, reopenA: async (hours) => { pa.clock.ms += hours * 3600000; A = await open(SRC, be, pa); await A.Cloud.connect(user); await wait(200); return A; } };
 }
 const edit = async (P, id, note) => { await P.Store.apply([{ store: 'shifts', put: Object.assign({}, rec(P, id), { note }) }], 'x'); await P.Cloud.syncNow(); await wait(100); };
 if (require.main !== module) {
@@ -204,6 +221,42 @@ if (require.main !== module) {
     await edit(B, 's9', 'from a slow clock');
     const A = await t.reopenA(5);
     T.eq(rec(A, 's9').note, 'from a slow clock');
+  });
+  // review 16.11.2026, sync #2: the listeners asked for u (the edit time on the editing phone). A phone that edited
+  // offline and went online days later wrote a u older than the other phone's window: unheard for up to a week.
+  // (open: A is open, listening since its last opening, when the edits go up; otherwise closed, and opened after)
+  const lateUpload = async (start, open) => {
+    const t = await twoPhones(SRC, start);
+    t.be.clients.delete(t.A.__client); // A is closed
+    const B = t.B;
+    B.__client.online = false; B.navigator.onLine = false;
+    await edit(B, 's5', 'edited offline on B');
+    await B.Store.apply([{ store: 'shifts', put: { id: 'y', kind: 'shift', employerId: 'e1', roleId: 'r1', status: 'done', start: 1, end: 2, note: 'new offline on B' } }], 'x');
+    await B.Cloud.syncNow(); await wait(50);
+    t.clock(3 * 24); // three days later
+    let A = await t.reopenA(0); // A opens and hears everything up to now
+    T.ok(A.Store.S.meta.heard.at > rec(B, 's5').updatedAt + 2 * 86400000, 'A heard the server more than two days after the edit');
+    t.clock(1);
+    A = await t.reopenA(0); // closed and opened again: it listens to what changed since then
+    if (!open) t.be.clients.delete(A.__client);
+    B.navigator.onLine = true; await B.__client.goOnline(); await wait(100); // B is back online: its offline work goes up
+    T.eq(JSON.parse(t.be.docs.get('users/me/shifts/s5').j).note, 'edited offline on B', 'the server has the edit');
+    if (!open) { t.clock(1); A = await t.reopenA(0); }
+    T.eq(rec(A, 's5').note, 'edited offline on B', open ? 'the late edit reached A while open' : 'the late edit reached A at its next opening');
+    T.ok(rec(A, 'y'), 'and the shift added offline');
+    T.ok(typeof t.be.docs.get('users/me/shifts/s5').s === 'number', 'with the time it reached the server');
+  };
+  T.atest("sync #2: a phone's offline edits that go up days later reach the other phone at its next opening", () => lateUpload(0));
+  T.atest('sync #2: and while the other phone is open', () => lateUpload(0, true));
+  T.atest('sync #2: the same after 1 Feb 2027 (the upload stamp alone)', () => lateUpload(OLD_APPS_UNTIL - Date.now() + 86400000));
+  T.atest('until 1 Feb 2027 an opening still hears the changes of an app from before the upload stamp', async () => {
+    const t = await twoPhones(SRC);
+    t.be.clients.delete(t.A.__client);
+    const B = await open(SRC, t.be, t.pb, { old: true }); await B.Cloud.connect(user); await wait(150);
+    await edit(B, 's6', 'from 1.41.1');
+    T.ok(!('s' in t.be.docs.get('users/me/shifts/s6')), 'the old app wrote no stamp');
+    const A = await t.reopenA(2);
+    T.eq(rec(A, 's6').note, 'from 1.41.1');
   });
   T.atest('once a week an opening listens to the whole account again', async () => {
     const t = await twoPhones(SRC);
