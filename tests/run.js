@@ -20,6 +20,8 @@ require('./sync.test.js');
 T.section('Firestore reads');
 require('./reads.test.js');
 require('./noop.test.js');
+// looping animations run on the compositor (19 Nov 2026: the running-shift pulse repainted every frame)
+require('./loop-motion.test.js');
 (async () => {
   await T.runAsync();
   console.log(`\n${T.results.pass} passed, ${T.results.fail} failed`);
