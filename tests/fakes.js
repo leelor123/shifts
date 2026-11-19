@@ -144,12 +144,14 @@ function fakeClient(backend) {
  * A phone's Firestore client that also answers queries (where, orderBy, limit, count) and counts the document reads
  * the way Firestore bills them (backend.reads): a document read is 1, a query is its documents (1 when it finds none),
  * a count is 1, a new listener is everything it matches (a listener away for more than 30 minutes is billed as a new
- * query: every opening of the app), and each change it is sent is 1.
+ * query: every opening of the app), and each change it is sent is 1. backend.lbReads: the part of them that read the
+ * champions table (lb/...).
  */
 function billedClient(backend) {
   const { client, fs: base } = fakeClient(backend);
   backend.reads = backend.reads || 0;
-  const bill = (n) => { backend.reads += n; };
+  backend.lbReads = backend.lbReads || 0;
+  const bill = (n, path) => { backend.reads += n; if (/^lb(\/|$)/.test(String(path || ''))) backend.lbReads += n; };
   const field = (o, f) => f.split('.').reduce((x, k) => (x == null ? undefined : x[k]), o);
   const OPS = { '>': (a, b) => a > b, '>=': (a, b) => a >= b, '<': (a, b) => a < b, '<=': (a, b) => a <= b, '==': (a, b) => a === b };
   const matches = (q, data) => !q.c || q.c.every((c) => c.t !== 'where' || (data !== undefined && field(data, c.f) != null && OPS[c.op](field(data, c.f), c.v)));
@@ -165,18 +167,18 @@ function billedClient(backend) {
   const fs = Object.assign({}, base, {
     where: (f, op, v) => ({ t: 'where', f, op, v }), orderBy: (f, d) => ({ t: 'order', f, d }), limit: (n) => ({ t: 'limit', n }),
     query: (c, ...cons) => ({ path: c.path, c: (c.c || []).concat(cons) }),
-    getDoc: async (d) => { bill(1); return base.getDoc(d); },
-    getDocFromServer: async (d) => { const r = await base.getDocFromServer(d); bill(1); return r; },
-    getDocsFromServer: async (q) => { const r = run(q, (await base.getDocsFromServer(coll(q))).docs); bill(Math.max(1, r.length)); return { docs: r }; },
+    getDoc: async (d) => { bill(1, d.path); return base.getDoc(d); },
+    getDocFromServer: async (d) => { const r = await base.getDocFromServer(d); bill(1, d.path); return r; },
+    getDocsFromServer: async (q) => { const r = run(q, (await base.getDocsFromServer(coll(q))).docs); bill(Math.max(1, r.length), q.path); return { docs: r }; },
     getDocs: async (q) => fs.getDocsFromServer(q),
-    getCountFromServer: async (q) => { const n = run(q, (await base.getDocsFromServer(coll(q))).docs).length; bill(Math.max(1, Math.ceil(n / 1000))); return { data: () => ({ count: n }) }; },
+    getCountFromServer: async (q) => { const n = run(q, (await base.getDocsFromServer(coll(q))).docs).length; bill(Math.max(1, Math.ceil(n / 1000)), q.path); return { data: () => ({ count: n }) }; },
     onSnapshot: (target, cb) => {
       const isColl = target.path.split('/').length % 2 === 1;
       let first = true;
       return base.onSnapshot(coll(target), (snap) => {
-        if (!isColl) { if (!snap.metadata.hasPendingWrites) bill(1); return cb(snap); }
+        if (!isColl) { if (!snap.metadata.hasPendingWrites) bill(1, target.path); return cb(snap); }
         const changes = snap.docChanges().filter((ch) => ch.doc.metadata.hasPendingWrites || matches(target, ch.doc.data()));
-        bill(first ? Math.max(1, changes.length) : changes.filter((ch) => !ch.doc.metadata.hasPendingWrites).length);
+        bill(first ? Math.max(1, changes.length) : changes.filter((ch) => !ch.doc.metadata.hasPendingWrites).length, target.path);
         first = false;
         cb({ docChanges: () => changes, metadata: snap.metadata });
       });
