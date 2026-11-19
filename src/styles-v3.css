@@ -961,6 +961,8 @@ body.fx .recap-card:active { transform: scale(.98); }
 .story[data-bg="grad-c"] { background: linear-gradient(165deg, #053b2c, #047857 55%, #0f766e); }
 .story[data-bg="grad-d"] { background: linear-gradient(165deg, #082f49, #0369a1 55%, #1d4ed8); }
 .story[data-bg="grad-e"] { background: linear-gradient(165deg, #6b0f3a, #be185d 55%, #9d174d); }
+/* Plus: the story in the pay card's design (.sk-<id> below sets --grad-hero) */
+.story.st-skin { background: var(--grad-hero); }
 .st-bars { display: flex; gap: 4px; padding: 0 2px; }
 .st-bars i { flex: 1; height: 3px; border-radius: 2px; background: rgba(255, 255, 255, .32); overflow: hidden; }
 .st-bars b { display: block; height: 100%; background: #fff; transform: scaleX(0); transform-origin: right; }
@@ -1076,6 +1078,11 @@ body.fx .recap-card:active { transform: scale(.98); }
 .plus-plan b { font-weight: 700; }
 .plus-plan span { font-size: .84rem; color: var(--on-surface-var); font-variant-numeric: tabular-nums; }
 .plus-plan.on { border-color: var(--brand); background: var(--brand-soft); }
+.plus-plan small { font-size: .76rem; font-weight: 600; color: var(--brand-strong); font-variant-numeric: tabular-nums; }
+/* Google Play's offer on the plan (a free trial, the founders' price): the terms in full, before paying */
+.plus-offer { display: flex; align-items: flex-start; gap: 8px; margin-top: 12px; padding: 10px 12px; border-radius: 14px; background: var(--brand-soft); color: var(--on-surface); line-height: 1.5; }
+.plus-offer svg { flex: none; margin-top: 3px; color: var(--brand-strong); }
+.plus-offer span { min-width: 0; }
 .plus-save { position: absolute; top: -10px; inset-inline-end: 10px; padding: 1px 8px; border-radius: 999px; background: var(--grad-money); color: #2b1a00; font: 700 .75rem var(--font); font-style: normal; white-space: nowrap; }
 /* inviting a friend: a month of Plus for both */
 .plus-invite { margin-top: 14px; display: grid; gap: 8px; }

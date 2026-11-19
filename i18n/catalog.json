@@ -1517,7 +1517,7 @@
   "kind": "lit",
   "where": [
    "app/cloud.js:228",
-   "app/plus.js:250"
+   "app/plus.js:312"
   ]
  },
  {
@@ -1990,7 +1990,7 @@
    "app/export.js:43",
    "app/views-payslip.js:851",
    "app/views-payslip.js:898",
-   "app/views-payslip.js:1591",
+   "app/views-payslip.js:1599",
    "app/views-reports.js:217",
    "core/payslip.js:2212"
   ]
@@ -2134,7 +2134,7 @@
    "app/views-home.js:220",
    "app/views-home.js:220",
    "app/views-payslip.js:898",
-   "app/views-recap.js:217",
+   "app/views-recap.js:221",
    "app/views-reports.js:109",
    "app/views-settings.js:715",
    "app/views-settings.js:856",
@@ -3290,7 +3290,7 @@
   "kind": "lit",
   "where": [
    "app/payslip-plus.js:58",
-   "app/plus.js:358"
+   "app/plus.js:421"
   ]
  },
  {
@@ -3575,7 +3575,7 @@
   "kind": "lit",
   "where": [
    "app/pickers.js:95",
-   "app/plus.js:676",
+   "app/plus.js:765",
    "app/views-home.js:251",
    "core/insights.js:545",
    "core/noteplan.js:133"
@@ -3975,10 +3975,157 @@
   ]
  },
  {
+  "key": "{0} לשבוע",
+  "kind": "tpl",
+  "where": [
+   "app/plus.js:136"
+  ]
+ },
+ {
+  "key": "{0} ל-{1} שבועות",
+  "kind": "tpl",
+  "where": [
+   "app/plus.js:136"
+  ]
+ },
+ {
+  "key": "בשבוע הראשון",
+  "kind": "lit",
+  "where": [
+   "app/plus.js:136"
+  ]
+ },
+ {
+  "key": "בשבועיים הראשונים",
+  "kind": "lit",
+  "where": [
+   "app/plus.js:136"
+  ]
+ },
+ {
+  "key": "ב-{0} השבועות הראשונים",
+  "kind": "tpl",
+  "where": [
+   "app/plus.js:136"
+  ]
+ },
+ {
+  "key": "{0} לחודש",
+  "kind": "tpl",
+  "where": [
+   "app/plus.js:137"
+  ]
+ },
+ {
+  "key": "{0} ל-{1} חודשים",
+  "kind": "tpl",
+  "where": [
+   "app/plus.js:137"
+  ]
+ },
+ {
+  "key": "בחודש הראשון",
+  "kind": "lit",
+  "where": [
+   "app/plus.js:137"
+  ]
+ },
+ {
+  "key": "בחודשיים הראשונים",
+  "kind": "lit",
+  "where": [
+   "app/plus.js:137"
+  ]
+ },
+ {
+  "key": "ב-{0} החודשים הראשונים",
+  "kind": "tpl",
+  "where": [
+   "app/plus.js:137"
+  ]
+ },
+ {
+  "key": "{0} לשנה",
+  "kind": "tpl",
+  "where": [
+   "app/plus.js:138",
+   "app/plus.js:151",
+   "app/plus.js:299"
+  ]
+ },
+ {
+  "key": "{0} ל-{1} שנים",
+  "kind": "tpl",
+  "where": [
+   "app/plus.js:138"
+  ]
+ },
+ {
+  "key": "בשנה הראשונה",
+  "kind": "lit",
+  "where": [
+   "app/plus.js:138"
+  ]
+ },
+ {
+  "key": "בשנתיים הראשונות",
+  "kind": "lit",
+  "where": [
+   "app/plus.js:138"
+  ]
+ },
+ {
+  "key": "ב-{0} השנים הראשונות",
+  "kind": "tpl",
+  "where": [
+   "app/plus.js:138"
+  ]
+ },
+ {
+  "key": "יום אחד",
+  "kind": "lit",
+  "where": [
+   "app/plus.js:140",
+   "app/views-settings.js:741"
+  ]
+ },
+ {
+  "key": "יומיים",
+  "kind": "lit",
+  "where": [
+   "app/plus.js:140",
+   "app/views-settings.js:741"
+  ]
+ },
+ {
+  "key": "{0} ימים",
+  "kind": "tpl",
+  "where": [
+   "app/plus.js:140",
+   "app/views-rights.js:128",
+   "app/views-rights.js:129",
+   "app/views-settings.js:741"
+  ]
+ },
+ {
+  "key": "{0} בחינם. החיוב הראשון ב-{1}, ותזכורת תגיע יום לפני. מבטלים עד אז ב-⁠Google Play ולא משלמים כלום.",
+  "kind": "tpl",
+  "where": [
+   "app/plus.js:165"
+  ]
+ },
+ {
+  "key": "מחיר מייסדים: {0}, ואחר כך {1}.",
+  "kind": "tpl",
+  "where": [
+   "app/plus.js:166"
+  ]
+ },
+ {
   "key": " לחודש",
   "kind": "lit",
   "where": [
-   "app/plus.js:114",
+   "app/plus.js:170",
    "app/views-settings.js:138",
    "app/views-settings.js:651"
   ]
@@ -3987,255 +4134,255 @@
   "key": "מנוי חודשי",
   "kind": "lit",
   "where": [
-   "app/plus.js:115"
+   "app/plus.js:171"
   ]
  },
  {
   "key": "קנייה חד-פעמית",
   "kind": "lit",
   "where": [
-   "app/plus.js:115"
+   "app/plus.js:171"
   ]
  },
  {
   "key": "בלי התחייבות, מבטלים בכל רגע",
   "kind": "lit",
   "where": [
-   "app/plus.js:116"
+   "app/plus.js:172"
   ]
  },
  {
   "key": "תשלום אחד, בלי מנוי",
   "kind": "lit",
   "where": [
-   "app/plus.js:116"
+   "app/plus.js:172"
   ]
  },
  {
   "key": "תצוגה מקדימה: כאן ייפתח התשלום. הוא יעבוד אחרי שחשבון התשלומים יוגדר",
   "kind": "lit",
   "where": [
-   "app/plus.js:210",
-   "app/plus.js:217"
+   "app/plus.js:269",
+   "app/plus.js:276"
   ]
  },
  {
   "key": "הרכישה עוד לא זמינה כאן",
   "kind": "lit",
   "where": [
-   "app/plus.js:217",
-   "app/plus.js:222",
-   "app/plus.js:338"
+   "app/plus.js:276",
+   "app/plus.js:281",
+   "app/plus.js:401"
   ]
  },
  {
   "key": "הרכישה לא הושלמה. אפשר לנסות שוב",
   "kind": "lit",
   "where": [
-   "app/plus.js:228",
-   "app/plus.js:343"
+   "app/plus.js:287",
+   "app/plus.js:406"
   ]
  },
  {
   "key": "התשלום עדיין בטיפול אצל Google. Plus יופעל כשהוא יושלם",
   "kind": "lit",
   "where": [
-   "app/plus.js:238"
+   "app/plus.js:300"
   ]
  },
  {
   "key": "הקוד לא נראה תקין. מעתיקים אותו במלואו מהמייל של הקבלה",
   "kind": "lit",
   "where": [
-   "app/plus.js:247"
+   "app/plus.js:309"
   ]
  },
  {
   "key": "הפעלת קוד עוד לא זמינה",
   "kind": "lit",
   "where": [
-   "app/plus.js:248"
+   "app/plus.js:310"
   ]
  },
  {
   "key": "השירות לא זמין כרגע. נסו שוב בעוד רגע",
   "kind": "lit",
   "where": [
-   "app/plus.js:250",
-   "app/plus.js:260"
+   "app/plus.js:312",
+   "app/plus.js:322"
   ]
  },
  {
   "key": "הקוד כבר הופעל בכמה מכשירים. אפשר לפנות אלינו בעזרה ותמיכה",
   "kind": "lit",
   "where": [
-   "app/plus.js:261"
+   "app/plus.js:323"
   ]
  },
  {
   "key": "הקוד שייך למוצר אחר",
   "kind": "lit",
   "where": [
-   "app/plus.js:262"
+   "app/plus.js:324"
   ]
  },
  {
   "key": "הקוד בוטל (למשל אחרי החזר כספי)",
   "kind": "lit",
   "where": [
-   "app/plus.js:262"
+   "app/plus.js:324"
   ]
  },
  {
   "key": "הקוד לא נמצא. בודקים שהועתק במלואו מהמייל",
   "kind": "lit",
   "where": [
-   "app/plus.js:262"
+   "app/plus.js:324"
   ]
  },
  {
   "key": "Shaati Plus פעיל ✓",
   "kind": "lit",
   "where": [
-   "app/plus.js:270"
+   "app/plus.js:332"
   ]
  },
  {
   "key": "Shaati Plus שוחזר ✓",
   "kind": "lit",
   "where": [
-   "app/plus.js:270"
+   "app/plus.js:332"
   ]
  },
  {
   "key": "לא נמצאה רכישה בחשבון Google הזה",
   "kind": "lit",
   "where": [
-   "app/plus.js:270"
+   "app/plus.js:332"
   ]
  },
  {
   "key": "לא נמצאה רכישה. אפשר להזין את הקוד מהמייל",
   "kind": "lit",
   "where": [
-   "app/plus.js:270"
+   "app/plus.js:332"
   ]
  },
  {
   "key": "אפשר לתת טיפ רק באפליקציה מ-Google Play",
   "kind": "lit",
   "where": [
-   "app/plus.js:286"
+   "app/plus.js:348"
   ]
  },
  {
   "key": "התשלום לא הושלם. אפשר לנסות שוב",
   "kind": "lit",
   "where": [
-   "app/plus.js:291"
+   "app/plus.js:353"
   ]
  },
  {
   "key": "תודה ענקית! זה עוזר להשאיר את שעתי חינם ובלי פרסומות 💜",
   "kind": "lit",
   "where": [
-   "app/plus.js:301"
+   "app/plus.js:363"
   ]
  },
  {
   "key": "<div class=\"card plus-tip\"><b>שעתי עזרה לך? 💜</b>\n      <div class=\"small muted\">אפשר לפרגן בטיפ קטן, פעם אחת, בלי מנוי. זה עוזר להשאיר את שעתי חינם ובלי פרסומות.</div>\n      <div class=\"plus-tip-row\">{0}</div></div>",
   "kind": "tpl",
   "where": [
-   "app/plus.js:305"
+   "app/plus.js:368"
   ]
  },
  {
   "key": "הדוח פתוח אצלך ✓",
   "kind": "lit",
   "where": [
-   "app/plus.js:354"
+   "app/plus.js:417"
   ]
  },
  {
   "key": "הבדיקה והמכתב למעסיק נשארים חינם. הדוח מוסיף את כל השורות והממצאים של כל תלוש, לשמירה, להדפסה או לצירוף לפנייה.",
   "kind": "lit",
   "where": [
-   "app/plus.js:358"
+   "app/plus.js:421"
   ]
  },
  {
   "key": "דוח החזר מס מלא (PDF)",
   "kind": "lit",
   "where": [
-   "app/plus.js:359"
+   "app/plus.js:422"
   ]
  },
  {
   "key": "כל השנים, הסיבות, מה לצרף ואיפה מגישים, צעד אחרי צעד. ההערכה עצמה נשארת חינם.",
   "kind": "lit",
   "where": [
-   "app/plus.js:359"
+   "app/plus.js:422"
   ]
  },
  {
   "key": "<div class=\"card\"><div class=\"small\">{0}</div></div>\n        <button class=\"btn big block plus-buy\" data-report-buy>{1} לקנות את הדוח · {2}</button>\n        <div class=\"tiny muted plus-note\">תשלום אחד דרך Google Play, בלי מנוי. הדוח נשאר פתוח אצלך. מתחת לגיל 18: בהסכמת הורה.</div>\n        <div class=\"tiny muted plus-note\">הדוח הוא הערכה לפי הנתונים שבאפליקציה ולא ייעוץ משפטי. כדאי לבדוק אותו מול המעסיק או מול ארגון עובדים.</div>{3}\n        <button class=\"btn text sm block\" data-report-plus>{4} או כל הדוחות ומעקב התלושים עם Plus</button>",
   "kind": "tpl",
   "where": [
-   "app/plus.js:370"
+   "app/plus.js:433"
   ]
  },
  {
   "key": "<div class=\"card plus-report\"><b>{0} {1}</b>\n      <div class=\"small muted\">{2}</div>\n      <button class=\"btn tonal block\" {3}>{4} לדוח המלא · {5}</button></div>",
   "kind": "tpl",
   "where": [
-   "app/plus.js:387"
+   "app/plus.js:450"
   ]
  },
  {
   "key": "<div class=\"skin-pick\">\n      <button class=\"skin-tile {0}\" data-skin=\"\" aria-pressed=\"{1}\"><b>₪</b><span>רגיל</span></button>\n      {2}\n      {3}\n    </div>",
   "kind": "tpl",
   "where": [
-   "app/plus.js:392"
+   "app/plus.js:455"
   ]
  },
  {
   "key": "<button class=\"skin-tile sk-photo-tile {0} {1}\" data-skin=\"{2}\" aria-pressed=\"{3}\" aria-label=\"תמונה שלי{4}\" {5}>{6}<span>{7}</span>{8}</button>",
   "kind": "tpl",
   "where": [
-   "app/plus.js:400"
+   "app/plus.js:463"
   ]
  },
  {
   "key": " (לחיצה מחליפה את התמונה)",
   "kind": "lit",
   "where": [
-   "app/plus.js:400"
+   "app/plus.js:463"
   ]
  },
  {
   "key": "החלפה",
   "kind": "lit",
   "where": [
-   "app/plus.js:400",
-   "app/plus.js:711",
-   "app/plus.js:723"
+   "app/plus.js:463",
+   "app/plus.js:800",
+   "app/plus.js:812"
   ]
  },
  {
   "key": "תמונה שלי",
   "kind": "lit",
   "where": [
-   "app/plus.js:400",
-   "app/plus.js:711",
-   "app/plus.js:713",
-   "app/plus.js:723"
+   "app/plus.js:463",
+   "app/plus.js:800",
+   "app/plus.js:802",
+   "app/plus.js:812"
   ]
  },
  {
   "key": "צריך לבחור תמונה",
   "kind": "lit",
   "where": [
-   "app/plus.js:457",
+   "app/plus.js:520",
    "app/views-settings.js:513"
   ]
  },
@@ -4243,7 +4390,7 @@
   "key": "התמונה גדולה מדי",
   "kind": "lit",
   "where": [
-   "app/plus.js:458",
+   "app/plus.js:521",
    "app/views-settings.js:514"
   ]
  },
@@ -4251,14 +4398,14 @@
   "key": "בודקים את התמונה… 🔍",
   "kind": "lit",
   "where": [
-   "app/plus.js:459"
+   "app/plus.js:522"
   ]
  },
  {
   "key": "לא הצלחנו לפתוח את התמונה. אפשר לנסות אחרת",
   "kind": "lit",
   "where": [
-   "app/plus.js:461",
+   "app/plus.js:524",
    "app/views-settings.js:516"
   ]
  },
@@ -4266,308 +4413,357 @@
   "key": "כדי לבדוק את התמונה צריך אינטרנט (רק בפעם הראשונה). נסו שוב כשיש חיבור",
   "kind": "lit",
   "where": [
-   "app/plus.js:463"
+   "app/plus.js:526"
   ]
  },
  {
   "key": "התמונה הזאת לא מתאימה לכרטיס 🙂 אפשר לבחור תמונה אחרת",
   "kind": "lit",
   "where": [
-   "app/plus.js:464"
+   "app/plus.js:527"
   ]
  },
  {
   "key": "התמונה מוכנה ✨",
   "kind": "lit",
   "where": [
-   "app/plus.js:468"
+   "app/plus.js:531"
   ]
  },
  {
   "key": "התמונה על כרטיס השכר ✨",
   "kind": "lit",
   "where": [
-   "app/plus.js:475"
+   "app/plus.js:538"
   ]
  },
  {
   "key": "<div class=\"tiny muted plus-note plus-seller\">המוכר: {0}. אפשר לבטל תוך 14 יום ולקבל את כל הכסף, או בכל עת <a href=\"mailto:{1}\">באימייל</a>. <a href=\"#\" data-legal=\"terms\">תנאי השימוש</a></div>",
   "kind": "tpl",
   "where": [
-   "app/plus.js:482"
+   "app/plus.js:545"
   ]
  },
  {
-  "key": "<div class=\"plus-plans\" role=\"radiogroup\" aria-label=\"מסלול\">\n          <button class=\"plus-plan {0}\" data-plan=\"m\" role=\"radio\" aria-checked=\"{1}\"><b>חודשי</b><span>{2}</span></button>\n          <button class=\"plus-plan {3}\" data-plan=\"y\" role=\"radio\" aria-checked=\"{4}\"><b>שנתי</b><span>{5} לשנה</span>{6}</button></div>",
+  "key": "<small>{0} בחינם</small>",
   "kind": "tpl",
   "where": [
-   "app/plus.js:495"
+   "app/plus.js:559"
+  ]
+ },
+ {
+  "key": "<small>מחיר מייסדים {0}</small>",
+  "kind": "tpl",
+  "where": [
+   "app/plus.js:559"
+  ]
+ },
+ {
+  "key": "<div class=\"plus-plans\" role=\"radiogroup\" aria-label=\"מסלול\">\n          <button class=\"plus-plan {0}\" data-plan=\"m\" role=\"radio\" aria-checked=\"{1}\"><b>חודשי</b><span>{2}</span>{3}</button>\n          <button class=\"plus-plan {4}\" data-plan=\"y\" role=\"radio\" aria-checked=\"{5}\"><b>שנתי</b><span>{6} לשנה</span>{7}{8}</button></div>",
+  "kind": "tpl",
+  "where": [
+   "app/plus.js:561"
   ]
  },
  {
   "key": "<i class=\"plus-save\">חיסכון {0}%</i>",
   "kind": "tpl",
   "where": [
-   "app/plus.js:497"
+   "app/plus.js:563"
   ]
  },
  {
-  "key": "<div class=\"card plus-invite\">\n          <div class=\"pi-t\">{0}<b>חודש Plus במתנה, לך ולחבר/ה</b></div>\n          <div class=\"small muted\">כל חבר/ה שמצטרף/ת עם הקישור שלך ורושם/ת משמרת: חודש Plus במתנה לכל אחד מכם (עד {1} חודשים).</div>\n          {2}\n          <button class=\"btn tonal block\" data-plus-invite>{3} להזמין חבר/ה</button></div>",
+  "key": "<div class=\"tiny muted plus-note\">ניסיון חינם ב-⁠Google Play עד {0}. אחר כך {1}, אלא אם מבטלים. תזכורת תגיע יום לפני.</div>",
   "kind": "tpl",
   "where": [
-   "app/plus.js:500"
-  ]
- },
- {
-  "key": "<div class=\"small pi-n\">הצטרפו בזכותך: <b>{0}</b></div>",
-  "kind": "tpl",
-  "where": [
-   "app/plus.js:503"
-  ]
- },
- {
-  "key": "מנוי שנתי דרך Google Play, מתחדש כל שנה. מבטלים בכל רגע ב-⁠Google Play › תשלומים ומינויים, ו-⁠Plus נשאר עד סוף השנה ששולמה.",
-  "kind": "lit",
-  "where": [
-   "app/plus.js:506"
-  ]
- },
- {
-  "key": "מנוי שנתי בדף תשלום מאובטח של Lemon Squeezy, מתחדש כל שנה. מבטלים בכל רגע מהקישור שבמייל. אחרי התשלום מגיע במייל קוד הפעלה.",
-  "kind": "lit",
-  "where": [
-   "app/plus.js:506"
-  ]
- },
- {
-  "key": "מנוי חודשי דרך Google Play, מתחדש כל חודש. מבטלים בכל רגע ב-⁠Google Play › תשלומים ומינויים, ו-⁠Plus נשאר עד סוף החודש ששולם.",
-  "kind": "lit",
-  "where": [
-   "app/plus.js:508"
-  ]
- },
- {
-  "key": "מנוי חודשי בדף תשלום מאובטח של Lemon Squeezy, מתחדש כל חודש. מבטלים בכל רגע מהקישור שבמייל. אחרי התשלום מגיע במייל קוד הפעלה.",
-  "kind": "lit",
-  "where": [
-   "app/plus.js:508"
-  ]
- },
- {
-  "key": "תשלום אחד דרך Google Play, בלי מנוי ובלי חיובים נוספים.",
-  "kind": "lit",
-  "where": [
-   "app/plus.js:509"
-  ]
- },
- {
-  "key": "תשלום אחד בדף תשלום מאובטח של Lemon Squeezy, בלי מנוי. אחרי התשלום מגיע במייל קוד הפעלה.",
-  "kind": "lit",
-  "where": [
-   "app/plus.js:509"
-  ]
- },
- {
-  "key": "\n        {0}\n        <div class=\"card plus-list\">\n          <div>{1}<span><b>מעקב תלושים לאורך זמן</b><small>השוואה בין חודשים, ובדיקה של כל התלושים יחד מול המשמרות</small></span></div>\n          <div>{2}<span><b>דוח תלושים מפורט (PDF)</b><small>כל השורות והממצאים של כל תלוש, לשמירה או להדפסה</small></span></div>\n          <div>{3}<span><b>ניתוח מתקדם וייצוא דוחות בלי הגבלה</b><small>בחינם: {4} ניתוחים ו-{5} ייצואים בחודש</small></span></div>\n          <div>{6}<span><b>דוח החזר מס מלא (PDF)</b><small>כל השנים, הסיבות, מה לצרף ואיפה מגישים. ההערכה עצמה חינם</small></span></div>\n          <div>{7}<span><b>בדיקת התלוש נשארת חינם</b><small>כל פער שהבדיקה מוצאת, המכתב למעסיק, משמרות, חישוב שכר, זכויות, דוחות ומשחקים</small></span></div>\n        </div>\n        <div class=\"section-title plus-fun\">{8} וגם, בשביל הכיף</div>\n        <div class=\"card plus-list\">\n          <div>{9}<span><b>{10} עיצובים לכרטיס השכר</b><small>זהב, גלקסיה, ניאון, לבה ועוד, בכרטיס שבמסך הבית</small></span></div>\n          <div>{11}<span><b>רקע מיוחד בטבלת האלופים</b><small>כולם יראו אותך בעיצוב שבחרת, עם תג Plus</small></span></div>\n          <div>{12}<span><b>תג תומך/ת במסך הבית</b><small>שכולם יידעו מי עוזר/ת לשעתי להישאר בלי פרסומות</small></span></div>\n          <div>{13}<span><b>תודה ענקית ממני</b><small>עוזר להמשיך לפתח, ולהשאיר את האפליקציה בלי פרסומות</small></span></div>\n        </div>\n        {14}\n        {15}\n        {16}\n        {17}\n        <div class=\"plus-links\">{18}\n          {19}</div>",
-  "kind": "tpl",
-  "where": [
-   "app/plus.js:510"
-  ]
- },
- {
-  "key": "תודה שאת/ה איתנו! 💜",
-  "kind": "lit",
-  "where": [
-   "app/plus.js:511"
-  ]
- },
- {
-  "key": "רוצים לעקוב אחרי התלושים מחודש לחודש?",
-  "kind": "lit",
-  "where": [
-   "app/plus.js:511"
-  ]
- },
- {
-  "key": "Shaati Plus פעיל אצלך",
-  "kind": "lit",
-  "where": [
-   "app/plus.js:527"
-  ]
- },
- {
-  "key": "תצוגה מקדימה של מנהל",
-  "kind": "lit",
-  "where": [
-   "app/plus.js:527"
-  ]
- },
- {
-  "key": "<button class=\"btn text sm block\" data-plus-manage>{0} ניהול או ביטול המנוי</button>",
-  "kind": "tpl",
-  "where": [
-   "app/plus.js:528"
-  ]
- },
- {
-  "key": "<div class=\"tiny muted plus-note\">המנוי נקנה באתר. מבטלים אותו מהקישור שבמייל של הקבלה.</div>",
-  "kind": "lit",
-  "where": [
-   "app/plus.js:528"
-  ]
- },
- {
-  "key": "{0}\n             {1}\n             {2}\n             {3}\n             <button class=\"btn {4} block\" data-plus-buy {5}>{6} {7}{8}</button>\n             {9}\n             <div class=\"plus-pay\">{10}</div>\n             <div class=\"tiny muted plus-note\">{11} מתחת לגיל 18: בהסכמת הורה.</div>{12}",
-  "kind": "tpl",
-  "where": [
-   "app/plus.js:529"
-  ]
- },
- {
-  "key": "<div class=\"plus-done trial\">{0} תקופת ניסיון · {1}</div>",
-  "kind": "tpl",
-  "where": [
-   "app/plus.js:529"
-  ]
- },
- {
-  "key": "<div class=\"plus-done trial\">{0} Plus במתנה עד {1}</div>",
-  "kind": "tpl",
-  "where": [
-   "app/plus.js:530"
-  ]
- },
- {
-  "key": "<button class=\"btn big block plus-buy\" data-plus-trial>{0} לנסות {1} ימים בחינם</button><div class=\"tiny muted plus-trial-note\">בלי פרטי תשלום ובלי חיוב. בסוף הניסיון נסגרים מעקב התלושים, הדוחות המלאים והעיצובים, וכל השאר נשאר כרגיל.</div>",
-  "kind": "tpl",
-  "where": [
-   "app/plus.js:532"
+   "app/plus.js:567"
   ]
  },
  {
   "key": "להמשיך עם Plus",
   "kind": "lit",
   "where": [
-   "app/plus.js:533"
+   "app/plus.js:568"
+  ]
+ },
+ {
+  "key": "{0} בחינם, ואז {1}",
+  "kind": "tpl",
+  "where": [
+   "app/plus.js:569"
   ]
  },
  {
   "key": "מנוי שנתי",
   "kind": "lit",
   "where": [
-   "app/plus.js:533"
+   "app/plus.js:570"
   ]
  },
  {
   "key": " לשנה",
   "kind": "lit",
   "where": [
-   "app/plus.js:533"
+   "app/plus.js:570"
+  ]
+ },
+ {
+  "key": "<div class=\"card plus-invite\">\n          <div class=\"pi-t\">{0}<b>חודש Plus במתנה, לך ולחבר/ה</b></div>\n          <div class=\"small muted\">כל חבר/ה שמצטרף/ת עם הקישור שלך ורושם/ת משמרת: חודש Plus במתנה לכל אחד מכם (עד {1} חודשים).</div>\n          {2}\n          <button class=\"btn tonal block\" data-plus-invite>{3} להזמין חבר/ה</button></div>",
+  "kind": "tpl",
+  "where": [
+   "app/plus.js:573"
+  ]
+ },
+ {
+  "key": "<div class=\"small pi-n\">הצטרפו בזכותך: <b>{0}</b></div>",
+  "kind": "tpl",
+  "where": [
+   "app/plus.js:576"
+  ]
+ },
+ {
+  "key": "מנוי שנתי דרך Google Play, מתחדש כל שנה. מבטלים בכל רגע ב-⁠Google Play › תשלומים ומינויים, ו-⁠Plus נשאר עד סוף השנה ששולמה.",
+  "kind": "lit",
+  "where": [
+   "app/plus.js:579"
+  ]
+ },
+ {
+  "key": "מנוי שנתי בדף תשלום מאובטח של Lemon Squeezy, מתחדש כל שנה. מבטלים בכל רגע מהקישור שבמייל. אחרי התשלום מגיע במייל קוד הפעלה.",
+  "kind": "lit",
+  "where": [
+   "app/plus.js:579"
+  ]
+ },
+ {
+  "key": "מנוי חודשי דרך Google Play, מתחדש כל חודש. מבטלים בכל רגע ב-⁠Google Play › תשלומים ומינויים, ו-⁠Plus נשאר עד סוף החודש ששולם.",
+  "kind": "lit",
+  "where": [
+   "app/plus.js:581"
+  ]
+ },
+ {
+  "key": "מנוי חודשי בדף תשלום מאובטח של Lemon Squeezy, מתחדש כל חודש. מבטלים בכל רגע מהקישור שבמייל. אחרי התשלום מגיע במייל קוד הפעלה.",
+  "kind": "lit",
+  "where": [
+   "app/plus.js:581"
+  ]
+ },
+ {
+  "key": "תשלום אחד דרך Google Play, בלי מנוי ובלי חיובים נוספים.",
+  "kind": "lit",
+  "where": [
+   "app/plus.js:582"
+  ]
+ },
+ {
+  "key": "תשלום אחד בדף תשלום מאובטח של Lemon Squeezy, בלי מנוי. אחרי התשלום מגיע במייל קוד הפעלה.",
+  "kind": "lit",
+  "where": [
+   "app/plus.js:582"
+  ]
+ },
+ {
+  "key": "\n        {0}\n        <div class=\"card plus-list\">\n          <div>{1}<span><b>מעקב תלושים לאורך זמן</b><small>השוואה בין חודשים, ובדיקה של כל התלושים יחד מול המשמרות</small></span></div>\n          <div>{2}<span><b>דוח תלושים מפורט (PDF)</b><small>כל השורות והממצאים של כל תלוש, לשמירה או להדפסה</small></span></div>\n          <div>{3}<span><b>ניתוח מתקדם וייצוא דוחות בלי הגבלה</b><small>בחינם: {4} ניתוחים ו-{5} ייצואים בחודש</small></span></div>\n          <div>{6}<span><b>דוח החזר מס מלא (PDF)</b><small>כל השנים, הסיבות, מה לצרף ואיפה מגישים. ההערכה עצמה חינם</small></span></div>\n          <div>{7}<span><b>בדיקת התלוש נשארת חינם</b><small>כל פער שהבדיקה מוצאת, המכתב למעסיק, משמרות, חישוב שכר, זכויות, דוחות ומשחקים</small></span></div>\n        </div>\n        <div class=\"section-title plus-fun\">{8} וגם, בשביל הכיף</div>\n        <div class=\"card plus-list\">\n          <div>{9}<span><b>{10} עיצובים לכרטיס השכר</b><small>זהב, גלקסיה, ניאון, לבה ועוד, בכרטיס שבמסך הבית</small></span></div>\n          <div>{11}<span><b>הסיכום החודשי בעיצוב שלך</b><small>סיכום החודש וסיכום השנה בצבעים של הכרטיס שבחרת</small></span></div>\n          <div>{12}<span><b>רקע מיוחד בטבלת האלופים</b><small>כולם יראו אותך בעיצוב שבחרת, עם תג Plus</small></span></div>\n          <div>{13}<span><b>תג תומך/ת במסך הבית</b><small>שכולם יידעו מי עוזר/ת לשעתי להישאר בלי פרסומות</small></span></div>\n          <div>{14}<span><b>תודה ענקית ממני</b><small>עוזר להמשיך לפתח, ולהשאיר את האפליקציה בלי פרסומות</small></span></div>\n        </div>\n        {15}\n        {16}\n        {17}\n        {18}\n        <div class=\"plus-links\">{19}\n          {20}</div>",
+  "kind": "tpl",
+  "where": [
+   "app/plus.js:583"
+  ]
+ },
+ {
+  "key": "תודה שאת/ה איתנו! 💜",
+  "kind": "lit",
+  "where": [
+   "app/plus.js:584"
+  ]
+ },
+ {
+  "key": "רוצים לעקוב אחרי התלושים מחודש לחודש?",
+  "kind": "lit",
+  "where": [
+   "app/plus.js:584"
+  ]
+ },
+ {
+  "key": "Shaati Plus פעיל אצלך",
+  "kind": "lit",
+  "where": [
+   "app/plus.js:601"
+  ]
+ },
+ {
+  "key": "תצוגה מקדימה של מנהל",
+  "kind": "lit",
+  "where": [
+   "app/plus.js:601"
+  ]
+ },
+ {
+  "key": "<button class=\"btn text sm block\" data-plus-manage>{0} ניהול או ביטול המנוי</button>",
+  "kind": "tpl",
+  "where": [
+   "app/plus.js:603"
+  ]
+ },
+ {
+  "key": "<div class=\"tiny muted plus-note\">המנוי נקנה באתר. מבטלים אותו מהקישור שבמייל של הקבלה.</div>",
+  "kind": "lit",
+  "where": [
+   "app/plus.js:603"
+  ]
+ },
+ {
+  "key": "{0}\n             {1}\n             {2}\n             {3}\n             {4}\n             <button class=\"btn {5} block\" data-plus-buy {6}>{7} {8}</button>\n             {9}\n             <div class=\"plus-pay\">{10}</div>\n             <div class=\"tiny muted plus-note\">{11} מתחת לגיל 18: בהסכמת הורה.</div>{12}",
+  "kind": "tpl",
+  "where": [
+   "app/plus.js:604"
+  ]
+ },
+ {
+  "key": "<div class=\"plus-done trial\">{0} תקופת ניסיון · {1}</div>",
+  "kind": "tpl",
+  "where": [
+   "app/plus.js:604"
+  ]
+ },
+ {
+  "key": "<div class=\"plus-done trial\">{0} Plus במתנה עד {1}</div>",
+  "kind": "tpl",
+  "where": [
+   "app/plus.js:605"
+  ]
+ },
+ {
+  "key": "<button class=\"btn big block plus-buy\" data-plus-trial>{0} לנסות {1} ימים בחינם</button><div class=\"tiny muted plus-trial-note\">בלי פרטי תשלום ובלי חיוב. בסוף הניסיון נסגרים מעקב התלושים, הדוחות המלאים והעיצובים, וכל השאר נשאר כרגיל.</div>",
+  "kind": "tpl",
+  "where": [
+   "app/plus.js:607"
   ]
  },
  {
   "key": "<span>Google Play</span><span>כרטיס אשראי</span><span>Google Pay</span><span>PayPal</span>",
   "kind": "lit",
   "where": [
-   "app/plus.js:535"
+   "app/plus.js:611"
   ]
  },
  {
   "key": "<span>כרטיס אשראי</span><span>Apple Pay</span><span>Google Pay</span><span>PayPal</span>",
   "kind": "lit",
   "where": [
-   "app/plus.js:535"
+   "app/plus.js:611"
   ]
  },
  {
   "key": "<div class=\"card plus-code {0}\"><label class=\"field\"><span class=\"lbl\">{1}</span>\n            <input class=\"input\" id=\"plus-key\" dir=\"ltr\" autocomplete=\"off\" spellcheck=\"false\" placeholder=\"XXXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXXXX\"></label>\n            <button class=\"btn tonal block\" data-plus-redeem>{2} הפעלה</button></div>",
   "kind": "tpl",
   "where": [
-   "app/plus.js:538"
+   "app/plus.js:614"
   ]
  },
  {
   "key": "שילמת? מדביקים כאן את הקוד מהמייל",
   "kind": "lit",
   "where": [
-   "app/plus.js:538"
+   "app/plus.js:614"
   ]
  },
  {
   "key": "כבר יש לי קוד מהמייל",
   "kind": "lit",
   "where": [
-   "app/plus.js:538"
+   "app/plus.js:614"
   ]
  },
  {
   "key": "<button class=\"btn text sm\" data-plus-restore>שחזור רכישה</button>",
   "kind": "lit",
   "where": [
-   "app/plus.js:541"
+   "app/plus.js:617"
   ]
  },
  {
   "key": "<label class=\"tiny plus-preview\"><input type=\"checkbox\" data-plus-preview {0}> תצוגה מקדימה (מנהל)</label>",
   "kind": "tpl",
   "where": [
-   "app/plus.js:542"
+   "app/plus.js:618"
+  ]
+ },
+ {
+  "key": "הניסיון החינמי של Shaati Plus נגמר מחר",
+  "kind": "lit",
+  "where": [
+   "app/plus.js:686"
+  ]
+ },
+ {
+  "key": "מחר Google Play יחייב {0}, אלא אם ביטלת. מבטלים ב-⁠Google Play › תשלומים ומינויים.",
+  "kind": "tpl",
+  "where": [
+   "app/plus.js:687"
+  ]
+ },
+ {
+  "key": "את המנוי",
+  "kind": "lit",
+  "where": [
+   "app/plus.js:687"
   ]
  },
  {
   "key": "חודש ה-Plus במתנה נגמר מחר",
   "kind": "lit",
   "where": [
-   "app/plus.js:609"
+   "app/plus.js:698"
   ]
  },
  {
   "key": "הניסיון של Shaati Plus נגמר מחר",
   "kind": "lit",
   "where": [
-   "app/plus.js:609"
+   "app/plus.js:698"
   ]
  },
  {
   "key": "כרטיס השכר יחזור לעיצוב הרגיל, ולא יהיה שום חיוב.",
   "kind": "lit",
   "where": [
-   "app/plus.js:611"
+   "app/plus.js:700"
   ]
  },
  {
   "key": "נשאר יום אחד",
   "kind": "lit",
   "where": [
-   "app/plus.js:614"
+   "app/plus.js:703"
   ]
  },
  {
   "key": "נשארו {0} ימים",
   "kind": "tpl",
   "where": [
-   "app/plus.js:614"
+   "app/plus.js:703"
   ]
  },
  {
   "key": "{0} ימים של Shaati Plus במתנה ✨",
   "kind": "tpl",
   "where": [
-   "app/plus.js:623"
+   "app/plus.js:712"
   ]
  },
  {
   "key": "≈ {0} מהעבודה שלך{1} (לפי ממוצע של {2} לשעה)",
   "kind": "tpl",
   "where": [
-   "app/plus.js:641"
+   "app/plus.js:730"
   ]
  },
  {
   "key": " בחודש",
   "kind": "lit",
   "where": [
-   "app/plus.js:641",
+   "app/plus.js:730",
    "app/workplace.js:75"
   ]
  },
@@ -4575,260 +4771,260 @@
   "key": "ניתוחים המתקדמים",
   "kind": "lit",
   "where": [
-   "app/plus.js:649"
+   "app/plus.js:738"
   ]
  },
  {
   "key": "ניתוח",
   "kind": "lit",
   "where": [
-   "app/plus.js:649"
+   "app/plus.js:738"
   ]
  },
  {
   "key": "בחודש",
   "kind": "lit",
   "where": [
-   "app/plus.js:649",
-   "app/plus.js:650"
+   "app/plus.js:738",
+   "app/plus.js:739"
   ]
  },
  {
   "key": "ייצואי הדוחות (PDF ואקסל)",
   "kind": "lit",
   "where": [
-   "app/plus.js:650"
+   "app/plus.js:739"
   ]
  },
  {
   "key": "ייצוא",
   "kind": "lit",
   "where": [
-   "app/plus.js:650"
+   "app/plus.js:739"
   ]
  },
  {
   "key": "נשאר עוד {0} אחד חינם {1}",
   "kind": "tpl",
   "where": [
-   "app/plus.js:670"
+   "app/plus.js:759"
   ]
  },
  {
   "key": "להיום",
   "kind": "lit",
   "where": [
-   "app/plus.js:670"
+   "app/plus.js:759"
   ]
  },
  {
   "key": "לחודש הזה",
   "kind": "lit",
   "where": [
-   "app/plus.js:670"
+   "app/plus.js:759"
   ]
  },
  {
   "key": "ב-{0}",
   "kind": "tpl",
   "where": [
-   "app/plus.js:676"
+   "app/plus.js:765"
   ]
  },
  {
   "key": "נגמרה המכסה החינמית",
   "kind": "lit",
   "where": [
-   "app/plus.js:679"
+   "app/plus.js:768"
   ]
  },
  {
   "key": "{0}\n        <div class=\"card plus-list\">\n          <div>{1}<span><b>עם Shaati Plus: בלי הגבלה</b><small>ניתוח מתקדם וייצוא דוחות בלי הגבלה, השוואת תלושים בין חודשים, דוח תלושים מפורט ו-{2} עיצובים</small></span></div>\n          <div>{3}<span><b>כל השאר נשאר חינם</b><small>בדיקת תלוש, משמרות, חישוב שכר, זכויות, דוחות במסך, משחקים, גיבוי וסנכרון</small></span></div>\n        </div>\n        {4}\n        {5}\n        <button class=\"btn text block\" data-limit-later>{6}, תודה</button>",
   "kind": "tpl",
   "where": [
-   "app/plus.js:681"
+   "app/plus.js:770"
   ]
  },
  {
   "key": "השתמשת ב-{0} ה{1} החינמיים {2}. {3} יש עוד {4}.",
   "kind": "tpl",
   "where": [
-   "app/plus.js:681"
+   "app/plus.js:770"
   ]
  },
  {
   "key": "של היום",
   "kind": "lit",
   "where": [
-   "app/plus.js:681"
+   "app/plus.js:770"
   ]
  },
  {
   "key": "של החודש",
   "kind": "lit",
   "where": [
-   "app/plus.js:681"
+   "app/plus.js:770"
   ]
  },
  {
   "key": "<button class=\"btn big block plus-buy\" data-limit-trial>{0} לנסות {1} ימים בחינם</button>",
   "kind": "tpl",
   "where": [
-   "app/plus.js:686"
+   "app/plus.js:775"
   ]
  },
  {
   "key": "תמונה שלי (לחיצה מחליפה את התמונה)",
   "kind": "lit",
   "where": [
-   "app/plus.js:713"
+   "app/plus.js:802"
   ]
  },
  {
   "key": "תמונה שלי (בחירת תמונה)",
   "kind": "lit",
   "where": [
-   "app/plus.js:713"
+   "app/plus.js:802"
   ]
  },
  {
   "key": "<section class=\"home-hero\"><div class=\"hh-label\">ברוטו החודש עד עכשיו</div><div class=\"hero-num\">₪1,240</div></section>",
   "kind": "lit",
   "where": [
-   "app/plus.js:729"
+   "app/plus.js:818"
   ]
  },
  {
   "key": "\n        <div class=\"design-prev {0}\" aria-hidden=\"true\" inert>{1}</div>\n        <div class=\"skin-pick design-pick\">\n          <button class=\"skin-tile {2}\" data-pick=\"\" aria-pressed=\"{3}\"><b>₪</b><span>רגיל</span></button>\n          {4}\n          {5}\n        </div>\n        {6}",
   "kind": "tpl",
   "where": [
-   "app/plus.js:742"
+   "app/plus.js:831"
   ]
  },
  {
   "key": "<button class=\"btn big block\" data-design-save>{0} שמירה</button>\n            {1}",
   "kind": "tpl",
   "where": [
-   "app/plus.js:749"
+   "app/plus.js:838"
   ]
  },
  {
   "key": "<div class=\"tiny muted plus-note\">תקופת ניסיון · {0} · <button class=\"btn text sm\" data-design-buy>להמשיך עם Plus</button></div>",
   "kind": "tpl",
   "where": [
-   "app/plus.js:750"
+   "app/plus.js:839"
   ]
  },
  {
   "key": "{0}\n             <button class=\"btn {1} block\" data-design-buy {2}>{3} {4}{5}</button>\n             <div class=\"tiny muted plus-note\">{6}{7} · כל השאר נשאר חינם</div>",
   "kind": "tpl",
   "where": [
-   "app/plus.js:751"
+   "app/plus.js:840"
   ]
  },
  {
   "key": "<button class=\"btn big block plus-buy\" data-design-trial>{0} לנסות {1} ימים בחינם</button>",
   "kind": "tpl",
   "where": [
-   "app/plus.js:751"
+   "app/plus.js:840"
   ]
  },
  {
   "key": "עיצוב כרטיס השכר",
   "kind": "lit",
   "where": [
-   "app/plus.js:756"
+   "app/plus.js:845"
   ]
  },
  {
   "key": "<button class=\"icon-btn plus-nudge-x\" data-act=\"plus-nudge-x\" aria-label=\"סגירה ל-24 שעות\">",
   "kind": "lit",
   "where": [
-   "app/plus.js:803"
+   "app/plus.js:892"
   ]
  },
  {
   "key": "<div class=\"card plus-nudge sk-{0}\">{1}\n        <div class=\"pn-t\">חודש ה-Plus במתנה הסתיים 🎁</div><div class=\"pn-s\">להמשיך עם Plus? {2}{3}. ואפשר גם להזמין עוד חברים: חודש במתנה על כל אחד.</div>\n        <div class=\"pn-a\"><button class=\"btn sm\" data-act=\"plus-open\">{4} להמשיך</button><button class=\"btn text sm\" data-act=\"plus-nudge-x\">לא, תודה</button></div></div>",
   "kind": "tpl",
   "where": [
-   "app/plus.js:806"
+   "app/plus.js:895"
   ]
  },
  {
   "key": "המיוחד",
   "kind": "lit",
   "where": [
-   "app/plus.js:811"
+   "app/plus.js:900"
   ]
  },
  {
   "key": "<div class=\"card plus-nudge sk-{0}\">{1}\n        <div class=\"pn-t\">הניסיון של Shaati Plus הסתיים</div><div class=\"pn-s\">להשאיר את הכרטיס ב{2}? {3}{4}{5}.</div>\n        <div class=\"pn-a\"><button class=\"btn sm\" data-act=\"plus-open\">{6} להשאיר</button><button class=\"btn text sm\" data-act=\"plus-nudge-x\">לא, תודה</button></div></div>",
   "kind": "tpl",
   "where": [
-   "app/plus.js:812"
+   "app/plus.js:901"
   ]
  },
  {
   "key": "<div class=\"card plus-nudge sk-galaxy\">{0}\n      <div class=\"pn-t\">✨ כרטיס השכר שלך יכול להיראות ככה</div><div class=\"pn-s\">השוואת תלושים בין חודשים, דוח תלושים מפורט ו-{1} עיצובים לכרטיס. {2}</div>\n      <div class=\"pn-a\"><button class=\"btn sm\" data-act=\"plus-design\">{3} {4}</button><button class=\"btn text sm\" data-act=\"plus-nudge-x\">לא עכשיו</button><button class=\"btn text sm\" data-act=\"plus-nudge-never\">לא להציג שוב</button></div></div>",
   "kind": "tpl",
   "where": [
-   "app/plus.js:821"
+   "app/plus.js:910"
   ]
  },
  {
   "key": "אפשר לנסות {0} ימים בחינם.",
   "kind": "tpl",
   "where": [
-   "app/plus.js:822"
+   "app/plus.js:911"
   ]
  },
  {
   "key": "לנסות על הכרטיס שלי",
   "kind": "lit",
   "where": [
-   "app/plus.js:823"
+   "app/plus.js:912"
   ]
  },
  {
   "key": "לראות",
   "kind": "lit",
   "where": [
-   "app/plus.js:823"
+   "app/plus.js:912"
   ]
  },
  {
   "key": "מצב משתמש חינמי: מכחול על כרטיס השכר, ניסיון חינם ומכסות לניתוח ולייצוא",
   "kind": "lit",
   "where": [
-   "app/plus.js:848"
+   "app/plus.js:937"
   ]
  },
  {
   "key": "מצב מנוי Plus: 12 עיצובים, רקע בטבלה ובלי הגבלות",
   "kind": "lit",
   "where": [
-   "app/plus.js:848"
+   "app/plus.js:937"
   ]
  },
  {
   "key": "התצוגה המקדימה כבויה",
   "kind": "lit",
   "where": [
-   "app/plus.js:848"
+   "app/plus.js:937"
   ]
  },
  {
   "key": "ההצעה מופיעה עכשיו במסך הבית, מתחת לשורת העדכונים",
   "kind": "lit",
   "where": [
-   "app/plus.js:856"
+   "app/plus.js:945"
   ]
  },
  {
   "key": "אופס: אפשר לנסות שוב את הניסיון, המכסות וההצעה",
   "kind": "lit",
   "where": [
-   "app/plus.js:862"
+   "app/plus.js:951"
   ]
  },
  {
@@ -5530,7 +5726,7 @@
   "where": [
    "app/schedule-import.js:241",
    "app/views-login.js:23",
-   "app/views-payslip.js:1631",
+   "app/views-payslip.js:1639",
    "app/views-settings.js:980",
    "app/views-settings.js:1002"
   ]
@@ -6873,7 +7069,7 @@
   "where": [
    "app/views-assistant.js:137",
    "app/views-login.js:320",
-   "app/views-payslip.js:1642"
+   "app/views-payslip.js:1650"
   ]
  },
  {
@@ -9385,7 +9581,7 @@
   "where": [
    "app/views-guide.js:271",
    "app/views-payslip.js:898",
-   "app/views-payslip.js:1590",
+   "app/views-payslip.js:1598",
    "app/views-settings.js:856",
    "core/games.js:186",
    "core/payslip.js:2204",
@@ -10872,8 +11068,8 @@
   "kind": "lit",
   "where": [
    "app/views-leaderboard.js:468",
-   "app/views-payslip.js:1570",
-   "app/views-recap.js:230"
+   "app/views-payslip.js:1578",
+   "app/views-recap.js:234"
   ]
  },
  {
@@ -10895,8 +11091,8 @@
   "kind": "lit",
   "where": [
    "app/views-leaderboard.js:477",
-   "app/views-payslip.js:1574",
-   "app/views-recap.js:236"
+   "app/views-payslip.js:1582",
+   "app/views-recap.js:240"
   ]
  },
  {
@@ -13470,277 +13666,277 @@
   "key": "לבדוק בתלוש של {0}: {1}",
   "kind": "tpl",
   "where": [
-   "app/views-payslip.js:1491"
+   "app/views-payslip.js:1493"
   ]
  },
  {
   "key": "ייתכן שמוסבר: {0}",
   "kind": "tpl",
   "where": [
-   "app/views-payslip.js:1491"
+   "app/views-payslip.js:1493"
   ]
  },
  {
   "key": "בתלוש {0} יש שורת הפרשים של {1}",
   "kind": "tpl",
   "where": [
-   "app/views-payslip.js:1501"
+   "app/views-payslip.js:1503"
   ]
  },
  {
   "key": "שמירת תלוש",
   "kind": "lit",
   "where": [
-   "app/views-payslip.js:1509"
+   "app/views-payslip.js:1511"
   ]
  },
  {
   "key": "התלוש נשמר בארכיון",
   "kind": "lit",
   "where": [
-   "app/views-payslip.js:1509"
+   "app/views-payslip.js:1511"
   ]
  },
  {
   "key": "<div class=\"card gc gc-carry\"><div class=\"gc-fh\"><span class=\"fi\">{0}</span><b>מהתלוש הקודם: לבדוק כאן</b></div>\n      {1}</div>",
   "kind": "tpl",
   "where": [
-   "app/views-payslip.js:1519"
+   "app/views-payslip.js:1521"
   ]
  },
  {
   "key": "<div class=\"gc-r\"><b class=\"gc-rt\">{0} · {1}</b><div class=\"gc-t\">ההפרש הוסבר אז במשמרות שאולי ישולמו בתלוש הזה ({2}). אם הן מופיעות בו, הכול בסדר.</div>\n        <div class=\"gc-fix\"><button class=\"btn text sm\" data-act=\"gap-set\" data-id=\"{3}\" data-s=\"resolved\">{4} שולם בתלוש הזה</button><button class=\"btn text sm\" data-act=\"gap-set\" data-id=\"{5}\" data-s=\"open\">{6} לא שולם</button></div></div>",
   "kind": "tpl",
   "where": [
-   "app/views-payslip.js:1520"
+   "app/views-payslip.js:1522"
   ]
  },
  {
   "key": "עדכון פער",
   "kind": "lit",
   "where": [
-   "app/views-payslip.js:1531"
+   "app/views-payslip.js:1537"
   ]
  },
  {
   "key": "סומן כהוחזר",
   "kind": "lit",
   "where": [
-   "app/views-payslip.js:1531"
+   "app/views-payslip.js:1537"
   ]
  },
  {
   "key": "עודכן",
   "kind": "lit",
   "where": [
-   "app/views-payslip.js:1531"
+   "app/views-payslip.js:1537"
   ]
  },
  {
   "key": "הכסף חזר אליך! 🎉",
   "kind": "lit",
   "where": [
-   "app/views-payslip.js:1536"
+   "app/views-payslip.js:1544"
   ]
  },
  {
   "key": "{0}\n        {1}\n        <button class=\"btn big block\" data-act=\"found-share\" data-amount=\"{2}\" data-k=\"back\">{3} לשתף ולעזור לחברים לבדוק</button>\n        {4}",
   "kind": "tpl",
   "where": [
-   "app/views-payslip.js:1536"
+   "app/views-payslip.js:1544"
   ]
  },
  {
   "key": "קיבלת בחזרה {0} שהגיעו לך. כל הכבוד שבדקת!",
   "kind": "tpl",
   "where": [
-   "app/views-payslip.js:1536"
+   "app/views-payslip.js:1544"
   ]
  },
  {
   "key": "<div class=\"small muted\" style=\"margin:6px 0 12px\">בסך הכול שעתי החזירה לך {0}.</div>",
   "kind": "tpl",
   "where": [
-   "app/views-payslip.js:1537"
+   "app/views-payslip.js:1545"
   ]
  },
  {
   "key": "קיבלתי בחזרה",
   "kind": "lit",
   "where": [
-   "app/views-payslip.js:1562",
-   "app/views-payslip.js:1573"
+   "app/views-payslip.js:1570",
+   "app/views-payslip.js:1581"
   ]
  },
  {
   "key": "שעתי מצאה לי",
   "kind": "lit",
   "where": [
-   "app/views-payslip.js:1562",
-   "app/views-payslip.js:1573"
+   "app/views-payslip.js:1570",
+   "app/views-payslip.js:1581"
   ]
  },
  {
   "key": "שהגיעו לי מהעבודה",
   "kind": "lit",
   "where": [
-   "app/views-payslip.js:1564",
-   "app/views-payslip.js:1573"
+   "app/views-payslip.js:1572",
+   "app/views-payslip.js:1581"
   ]
  },
  {
   "key": "שכדאי לבדוק בתלוש",
   "kind": "lit",
   "where": [
-   "app/views-payslip.js:1564",
-   "app/views-payslip.js:1573"
+   "app/views-payslip.js:1572",
+   "app/views-payslip.js:1581"
   ]
  },
  {
   "key": "גם לכם מגיע לבדוק 👇",
   "kind": "lit",
   "where": [
-   "app/views-payslip.js:1568"
+   "app/views-payslip.js:1576"
   ]
  },
  {
   "key": "קיבלתי בחזרה כסף שהגיע לי",
   "kind": "lit",
   "where": [
-   "app/views-payslip.js:1573"
+   "app/views-payslip.js:1581"
   ]
  },
  {
   "key": "שעתי מצאה לי פער אפשרי בתלוש",
   "kind": "lit",
   "where": [
-   "app/views-payslip.js:1573"
+   "app/views-payslip.js:1581"
   ]
  },
  {
   "key": "{0} {1} {2}. גם לכם כדאי לבדוק: https://shaati.web.app",
   "kind": "tpl",
   "where": [
-   "app/views-payslip.js:1573"
+   "app/views-payslip.js:1581"
   ]
  },
  {
   "key": "<button class=\"btn big\" data-act=\"payslip-new\" style=\"margin-bottom:12px\">{0} העלה תלוש לניתוח</button>\n      <button class=\"btn tonal block\" data-act=\"tax-refund\" style=\"margin-bottom:12px\">{1} בדיקת החזר מס (עד 6 שנים אחורה)</button>\n      {2}\n      {3}\n      {4}\n      <div class=\"section-title\">{5} ארכיון תלושים</div>\n      {6}\n      {7}",
   "kind": "tpl",
   "where": [
-   "app/views-payslip.js:1582"
+   "app/views-payslip.js:1590"
   ]
  },
  {
   "key": "<div class=\"section-title\">{0} פערים פתוחים<span class=\"spacer\"></span><span class=\"small\">{1}</span></div>\n        <div class=\"list\">{2}</div>\n        <button class=\"btn tonal block\" data-act=\"claim-report\" style=\"margin-top:8px\">{3} דוח ומכתב לבירור מול המעסיק</button>",
   "kind": "tpl",
   "where": [
-   "app/views-payslip.js:1584"
+   "app/views-payslip.js:1592"
   ]
  },
  {
   "key": "<div class=\"item\" style=\"cursor:default\"><span class=\"lead\" style=\"background:{0};color:{1}\">{2}</span>\n          <span class=\"body\"><span class=\"t\">{3} · {4}</span><span class=\"s\">{5}</span></span>\n          <span class=\"trail\"><span class=\"a\">{6}</span><br><button class=\"btn text sm\" data-act=\"gap-set\" data-id=\"{7}\" data-s=\"resolved\">הוחזר ✓</button></span></div>",
   "kind": "tpl",
   "where": [
-   "app/views-payslip.js:1585"
+   "app/views-payslip.js:1593"
   ]
  },
  {
   "key": "ייתכן שהוחזר",
   "kind": "lit",
   "where": [
-   "app/views-payslip.js:1586"
+   "app/views-payslip.js:1594"
   ]
  },
  {
   "key": "עוד לא הוחזר",
   "kind": "lit",
   "where": [
-   "app/views-payslip.js:1586"
+   "app/views-payslip.js:1594"
   ]
  },
  {
   "key": "<div class=\"section-title\">{0} מגמות</div><div class=\"card\">{1}\n        <div class=\"tiny muted\">גובה העמודה = ברוטו. {2} תלושים אחרונים.</div></div>",
   "kind": "tpl",
   "where": [
-   "app/views-payslip.js:1589"
+   "app/views-payslip.js:1597"
   ]
  },
  {
   "key": "נטו וניכויים לפי חודש",
   "kind": "lit",
   "where": [
-   "app/views-payslip.js:1592"
+   "app/views-payslip.js:1600"
   ]
  },
  {
   "key": "<button class=\"item\" data-act=\"payslip-open\" data-id=\"{0}\"><span class=\"lead\" style=\"background:var(--surface-3)\">{1}</span>\n        <span class=\"body\"><span class=\"t\">{2}</span><span class=\"s\">{3}{4}{5}{6}</span></span>\n        <span class=\"trail\"><span class=\"a\">{7}</span><br><span class=\"tiny muted\">נטו</span></span></button>",
   "kind": "tpl",
   "where": [
-   "app/views-payslip.js:1596"
+   "app/views-payslip.js:1604"
   ]
  },
  {
   "key": "עוד אין תלושים",
   "kind": "lit",
   "where": [
-   "app/views-payslip.js:1599"
+   "app/views-payslip.js:1607"
   ]
  },
  {
   "key": "אפשר להעלות תלוש ולבדוק שקיבלת את כל מה שמגיע לך: שעות, שבתות, נסיעות, פנסיה ועוד.",
   "kind": "lit",
   "where": [
-   "app/views-payslip.js:1599"
+   "app/views-payslip.js:1607"
   ]
  },
  {
   "key": "ניתוח חכם דורש מפתח API",
   "kind": "lit",
   "where": [
-   "app/views-payslip.js:1607"
+   "app/views-payslip.js:1615"
   ]
  },
  {
   "key": "אפשר להזין מפתח של Claude בהגדרות › עוזר AI ואודות › מפתח AI. בלי מפתח, הניתוח המקומי ממשיך לעבוד כרגיל.",
   "kind": "lit",
   "where": [
-   "app/views-payslip.js:1607"
+   "app/views-payslip.js:1615"
   ]
  },
  {
   "key": "להגדרות",
   "kind": "lit",
   "where": [
-   "app/views-payslip.js:1607"
+   "app/views-payslip.js:1615"
   ]
  },
  {
   "key": "לפני שליחה ל-⁠Claude",
   "kind": "lit",
   "where": [
-   "app/views-payslip.js:1612"
+   "app/views-payslip.js:1620"
   ]
  },
  {
   "key": "<div class=\"banner warn\">{0}<div>זה <b>בדיוק</b> הטקסט שיישלח ({1} פרטים אישיים הוסתרו אוטומטית). בדוק וערוך. אפשר למחוק גם שם או כל פרט אחר. הקובץ עצמו לא נשלח.</div></div>\n        <textarea class=\"input\" id=\"ai-text\" rows=\"16\" style=\"font-family:ui-monospace,monospace;font-size:.8rem\">{2}</textarea>\n        <div class=\"small muted\" style=\"margin-top:8px\">יישלח אל Anthropic (מודל {3}) עם המפתח שלך. השימוש מחויב בחשבון ה-⁠API שלך.</div>",
   "kind": "tpl",
   "where": [
-   "app/views-payslip.js:1613"
+   "app/views-payslip.js:1621"
   ]
  },
  {
   "key": "<button class=\"btn tonal\" data-cancel>ביטול</button><button class=\"btn\" data-send>{0} אני מאשר, שלח</button>",
   "kind": "tpl",
   "where": [
-   "app/views-payslip.js:1616"
+   "app/views-payslip.js:1624"
   ]
  },
  {
   "key": "שולח…",
   "kind": "lit",
   "where": [
-   "app/views-payslip.js:1621",
+   "app/views-payslip.js:1629",
    "app/views-support.js:223"
   ]
  },
@@ -13748,98 +13944,98 @@
   "key": "Claude זיהה {0} שדות. בדוק לפני ניתוח",
   "kind": "tpl",
   "where": [
-   "app/views-payslip.js:1627"
+   "app/views-payslip.js:1635"
   ]
  },
  {
   "key": "נסה שוב",
   "kind": "lit",
   "where": [
-   "app/views-payslip.js:1630"
+   "app/views-payslip.js:1638"
   ]
  },
  {
   "key": "הניתוח החכם נכשל",
   "kind": "lit",
   "where": [
-   "app/views-payslip.js:1631"
+   "app/views-payslip.js:1639"
   ]
  },
  {
   "key": "לא הצלחנו לקרוא את התשובה של Claude. נסו שוב, או הזינו את התלוש ידנית.",
   "kind": "lit",
   "where": [
-   "app/views-payslip.js:1631"
+   "app/views-payslip.js:1639"
   ]
  },
  {
   "key": "צריך מפתח API של Claude (הגדרות › עוזר AI ואודות › מפתח AI)",
   "kind": "lit",
   "where": [
-   "app/views-payslip.js:1643"
+   "app/views-payslip.js:1651"
   ]
  },
  {
   "key": "מפתח ה-⁠API לא תקין (401). בדוק אותו בהגדרות.",
   "kind": "lit",
   "where": [
-   "app/views-payslip.js:1660"
+   "app/views-payslip.js:1668"
   ]
  },
  {
   "key": "למפתח אין הרשאה למודל הזה (403).",
   "kind": "lit",
   "where": [
-   "app/views-payslip.js:1661"
+   "app/views-payslip.js:1669"
   ]
  },
  {
   "key": "המודל לא נמצא (404). בחר מודל אחר בהגדרות.",
   "kind": "lit",
   "where": [
-   "app/views-payslip.js:1662"
+   "app/views-payslip.js:1670"
   ]
  },
  {
   "key": "יותר מדי בקשות (429). נסה שוב בעוד דקה.",
   "kind": "lit",
   "where": [
-   "app/views-payslip.js:1663"
+   "app/views-payslip.js:1671"
   ]
  },
  {
   "key": "בעיית תקשורת עם השרת. בדוק את החיבור.",
   "kind": "lit",
   "where": [
-   "app/views-payslip.js:1664"
+   "app/views-payslip.js:1672"
   ]
  },
  {
   "key": "השירות של Claude לא הצליח לענות כרגע. נסו שוב בעוד רגע, או הזינו את התלוש ידנית.",
   "kind": "lit",
   "where": [
-   "app/views-payslip.js:1665"
+   "app/views-payslip.js:1673"
   ]
  },
  {
   "key": "הבקשה נדחתה על ידי המודל",
   "kind": "lit",
   "where": [
-   "app/views-payslip.js:1668"
+   "app/views-payslip.js:1676"
   ]
  },
  {
   "key": "התשובה נקטעה. נסה לקצר את הטקסט.",
   "kind": "lit",
   "where": [
-   "app/views-payslip.js:1669"
+   "app/views-payslip.js:1677"
   ]
  },
  {
   "key": "לא התקבלה תשובה",
   "kind": "lit",
   "where": [
-   "app/views-payslip.js:1671"
+   "app/views-payslip.js:1679"
   ]
  },
  {
@@ -14120,85 +14316,85 @@
   "key": "הסיכום של ",
   "kind": "lit",
   "where": [
-   "app/views-recap.js:100"
+   "app/views-recap.js:104"
   ]
  },
  {
   "key": "<div class=\"st-bars\">{0}</div>\n      <button class=\"st-x icon-btn\" data-st-close aria-label=\"סגירה\">{1}</button>\n      <div class=\"st-card\" aria-live=\"polite\"></div>\n      <div class=\"st-hint\" aria-hidden=\"true\">{2} הקשה למעבר</div>",
   "kind": "tpl",
   "where": [
-   "app/views-recap.js:101"
+   "app/views-recap.js:105"
   ]
  },
  {
   "key": "השנה שלי בעבודה · Shaati Wrapped",
   "kind": "lit",
   "where": [
-   "app/views-recap.js:214"
+   "app/views-recap.js:218"
   ]
  },
  {
   "key": "הסיכום החודשי שלי",
   "kind": "lit",
   "where": [
-   "app/views-recap.js:214",
-   "app/views-recap.js:233"
+   "app/views-recap.js:218",
+   "app/views-recap.js:237"
   ]
  },
  {
   "key": "⏱️ {0} שעות ב-{1} משמרות",
   "kind": "tpl",
   "where": [
-   "app/views-recap.js:218"
+   "app/views-recap.js:222"
   ]
  },
  {
   "key": "🏆 היום הכי רווחי: {0}",
   "kind": "tpl",
   "where": [
-   "app/views-recap.js:219"
+   "app/views-recap.js:223"
   ]
  },
  {
   "key": "⭐ תוספות: {0}",
   "kind": "tpl",
   "where": [
-   "app/views-recap.js:220"
+   "app/views-recap.js:224"
   ]
  },
  {
   "key": "{0} שווה ל-{1} {2}",
   "kind": "tpl",
   "where": [
-   "app/views-recap.js:221"
+   "app/views-recap.js:225"
   ]
  },
  {
   "key": "השנה שלי בעבודה",
   "kind": "lit",
   "where": [
-   "app/views-recap.js:233"
+   "app/views-recap.js:237"
   ]
  },
  {
   "key": "השנה שלי בעבודה: {0} ב-{1} משמרות 💪 #ShaatiWrapped https://shaati.web.app",
   "kind": "tpl",
   "where": [
-   "app/views-recap.js:233"
+   "app/views-recap.js:237"
   ]
  },
  {
   "key": "<button class=\"recap-card wrapped-card\" style=\"{0}\" data-act=\"recap-open\" data-pk=\"Y{1}\"><span class=\"rc-spark\" aria-hidden=\"true\">{2}</span>\n      <span class=\"rc-t\"><b>השנה שלך ב-Shaati: {3}</b><span>{4} משמרות · {5}. הסיפור של השנה מחכה</span></span>{6}</button>",
   "kind": "tpl",
   "where": [
-   "app/views-recap.js:248"
+   "app/views-recap.js:252"
   ]
  },
  {
   "key": "<button class=\"recap-card\" style=\"{0}\" data-act=\"recap-open\" data-pk=\"{1}\"><span class=\"rc-spark\" aria-hidden=\"true\">{2}</span>\n      <span class=\"rc-t\"><b>הסיכום של {3} מוכן</b><span>{4} משמרות · {5}. בואו לראות</span></span>{6}</button>",
   "kind": "tpl",
   "where": [
-   "app/views-recap.js:260"
+   "app/views-recap.js:264"
   ]
  },
  {
@@ -15408,15 +15604,6 @@
   "kind": "lit",
   "where": [
    "app/views-rights.js:128"
-  ]
- },
- {
-  "key": "{0} ימים",
-  "kind": "tpl",
-  "where": [
-   "app/views-rights.js:128",
-   "app/views-rights.js:129",
-   "app/views-settings.js:741"
   ]
  },
  {
@@ -18555,20 +18742,6 @@
   "where": [
    "app/views-settings.js:741",
    "core/games.js:240"
-  ]
- },
- {
-  "key": "יום אחד",
-  "kind": "lit",
-  "where": [
-   "app/views-settings.js:741"
-  ]
- },
- {
-  "key": "יומיים",
-  "kind": "lit",
-  "where": [
-   "app/views-settings.js:741"
   ]
  },
  {

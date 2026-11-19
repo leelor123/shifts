@@ -110,6 +110,62 @@
     if (!p) return '';
     try { return new Intl.NumberFormat(root.U.LOCALE, { style: 'currency', currency: p.currency, minimumFractionDigits: +p.value % 1 ? 2 : 0, maximumFractionDigits: 2 }).format(+p.value); } catch (e) { return `${p.value} ${p.currency}`; }
   }
+  /* ---------------- Google Play's offers on a subscription ----------------
+   * Play Console can put one offer on a subscription's base plan: a free trial (7 days) and/or an introductory
+   * price (the founders' price). Google Play returns it only to someone it may give it to (a new subscriber), and
+   * the purchase sheet takes it by itself; the app only says what it is, so the user knows before paying. */
+  /** An ISO period from Google Play ("P7D", "P1W", "P1M", "P1Y") in days (a month as 30); 0 for none. */
+  const periodDays = (p) => { const m = /^P(\d+)([DWMY])$/.exec(String(p || '')); return m ? +m[1] * { D: 1, W: 7, M: 30, Y: 365 }[m[2]] : 0; };
+  Plus.periodDays = periodDays;
+  /** The offer Google Play returned with a subscription: { trial: days, intro: { price, value, per, n } }. */
+  function offerOf(d) {
+    const o = {};
+    const t = periodDays(d && d.freeTrialPeriod);
+    if (t > 0) o.trial = t;
+    const ip = d && d.introductoryPrice;
+    // a lower price for the first periods only (not a higher one: that is no offer)
+    if (ip && +ip.value > 0 && +ip.value < +(d.price && d.price.value) && /^P\d+[WMY]$/.test(d.introductoryPricePeriod || '')) {
+      o.intro = { price: fmtPrice(ip), value: +ip.value, per: d.introductoryPricePeriod, n: Math.max(1, Math.round(+d.introductoryPriceCycles || 1)) };
+    }
+    return o;
+  }
+  Plus.offerOf = offerOf;
+  Plus.offers = {}; // sku → its offer, for the subscriptions Google Play sells here
+  // whole phrases (each one is translated as it is): a price per period, and how long the price lasts
+  const UNIT = {
+    W: { per: (p, k) => (k === 1 ? `${p} לשבוע` : `${p} ל-${k} שבועות`), first: (k) => (k === 1 ? 'בשבוע הראשון' : k === 2 ? 'בשבועיים הראשונים' : `ב-${k} השבועות הראשונים`) },
+    M: { per: (p, k) => (k === 1 ? `${p} לחודש` : `${p} ל-${k} חודשים`), first: (k) => (k === 1 ? 'בחודש הראשון' : k === 2 ? 'בחודשיים הראשונים' : `ב-${k} החודשים הראשונים`) },
+    Y: { per: (p, k) => (k === 1 ? `${p} לשנה` : `${p} ל-${k} שנים`), first: (k) => (k === 1 ? 'בשנה הראשונה' : k === 2 ? 'בשנתיים הראשונות' : `ב-${k} השנים הראשונות`) },
+  };
+  const daysWord = (n) => (n === 1 ? 'יום אחד' : n === 2 ? 'יומיים' : `${n} ימים`);
+  /** The introductory price as it is said: "₪3.90 לחודש ב-3 החודשים הראשונים". */
+  Plus.introText = (o) => {
+    const m = /^P(\d+)([WMY])$/.exec(o.per);
+    const u = UNIT[m[2]], each = +m[1];
+    return `${u.per(o.price, each)} ${u.first(each * o.n)}`;
+  };
+  /** The plan chosen in the page: its sku, its regular price as it is said, and Google Play's offer on it. */
+  const chosen = () => {
+    const yr = plan === 'y' && !!Plus.yearly;
+    const sku = yr ? YEAR : playSku;
+    return { sku, regular: yr ? `${Plus.yearly.price} לשנה` : Plus.priceText(), offer: inPlayApp() ? Plus.offers[sku] || {} : {} };
+  };
+  /** What is charged once the free trial is over: the introductory price when there is one, else the regular one. */
+  const afterTrial = (c) => {
+    const ip = c.offer.intro;
+    if (!ip) return c.regular;
+    const m = /^P(\d+)([WMY])$/.exec(ip.per);
+    return UNIT[m[2]].per(ip.price, +m[1]);
+  };
+  /** The offer in words, above the terms ('' when Google Play offers nothing on this plan). */
+  function offerNote(c) {
+    const o = c.offer;
+    if (!o.trial && !o.intro) return '';
+    const parts = [];
+    if (o.trial) parts.push(`${daysWord(o.trial)} בחינם. החיוב הראשון ב-${root.U.fmtDate(root.U.epochKey(Date.now() + o.trial * DAY))}, ותזכורת תגיע יום לפני. מבטלים עד אז ב-⁠Google Play ולא משלמים כלום.`);
+    if (o.intro) parts.push(`מחיר מייסדים: ${Plus.introText(o.intro)}, ואחר כך ${c.regular}.`);
+    return `<div class="small plus-offer">${icon('gift', 's')}<span>${parts.join(' ')}</span></div>`;
+  }
   /** The price as it is said: "₪6.90 לחודש" for the subscription. */
   Plus.priceText = () => { const pr = Plus.price || cfg().price || ''; return pr ? pr + (Plus.monthly ? ' לחודש' : '') : ''; };
   const buyWord = () => (Plus.monthly ? 'מנוי חודשי' : 'קנייה חד-פעמית');
@@ -174,6 +230,9 @@
         // the yearly plan beside the monthly one, and the tips, only when they exist in Play Console
         const y = all.find((x) => x.itemId === YEAR);
         if (y && d && d.itemId !== YEAR) Plus.yearly = { sku: YEAR, price: fmtPrice(y.price), value: +(y.price && y.price.value) || 0 };
+        // a free trial or a founders' price on a subscription, only when Google Play offers it to this account
+        Plus.offers = {};
+        all.filter((x) => x.itemId === SUB || x.itemId === YEAR).forEach((x) => { const o = offerOf(x); if (o.trial || o.intro) Plus.offers[x.itemId] = o; });
         Plus.tips = all.filter((x) => TIPS.includes(x.itemId)).map((x) => ({ sku: x.itemId, price: fmtPrice(x.price), value: +(x.price && x.price.value) || 0 })).sort((a, b) => a.value - b.value);
         Plus.reports = {};
         Object.entries(REPORTS).forEach(([k, sku]) => { const r = all.find((x) => x.itemId === sku); if (r) Plus.reports[k] = { sku, price: fmtPrice(r.price) }; });
@@ -235,6 +294,9 @@
       await res.complete('success');
     } catch (e) { /* the payment itself went through */ }
     const has = await playOwns(svc);
+    // bought with Google Play's free trial: its end is kept, for the reminder the day before it (endAlert)
+    const o = Plus.offers[sku] || {};
+    if (o.trial && has !== false) await Store.setMeta({ plusPlayTrial: { sku, from: Date.now(), until: Date.now() + o.trial * DAY, then: afterTrial({ offer: o, regular: sku === YEAR && Plus.yearly ? `${Plus.yearly.price} לשנה` : Plus.priceText() }) } });
     if (has === false) { UI.toast('התשלום עדיין בטיפול אצל Google. Plus יופעל כשהוא יושלם'); return false; }
     await setOwned(true, 'play'); // (has === null: no answer right now; confirmed again at the next start)
     if (root.Fx) root.Fx.celebrate('big');
@@ -301,8 +363,9 @@
     UI.toast('תודה ענקית! זה עוזר להשאיר את שעתי חינם ובלי פרסומות 💜');
     return true;
   };
-  /** The tip offer, after money came back thanks to the payslip check (nothing when no tip can be given here). */
-  Plus.tipCard = () => (Plus.tips.length && !sim() ? `<div class="card plus-tip"><b>שעתי עזרה לך? 💜</b>
+  /** The tip offer, after money came back thanks to the payslip check (nothing when no tip can be given here, and
+   *  never to someone under 18: the law protects minors from sales pressure, as with the offer on home). */
+  Plus.tipCard = () => (Plus.tips.length && !sim() && !root.Engine.isMinor(S.settings) ? `<div class="card plus-tip"><b>שעתי עזרה לך? 💜</b>
       <div class="small muted">אפשר לפרגן בטיפ קטן, פעם אחת, בלי מנוי. זה עוזר להשאיר את שעתי חינם ובלי פרסומות.</div>
       <div class="plus-tip-row">${Plus.tips.map((t, i) => `<button class="btn tonal" data-tip="${i}">${esc(t.price)}</button>`).join('')}</div></div>` : '');
   /** A tap in a sheet that holds the tip card. */
@@ -491,10 +554,20 @@
       const trial = Plus.inTrial();
       const gift = Plus.gifted();
       const yr = plan === 'y' && !!Plus.yearly;
+      const c = chosen();
+      // Google Play's offer on a plan, in a word under its price (the full terms are above the button)
+      const tag = (sku) => { const o = (play && Plus.offers[sku]) || {}; return o.trial ? `<small>${daysWord(o.trial)} בחינם</small>` : o.intro ? `<small>מחיר מייסדים ${esc(o.intro.price)}</small>` : ''; };
       // the plans, once a yearly one is offered: chosen in place (the page is patched, nothing flashes)
       const plans = Plus.yearly ? `<div class="plus-plans" role="radiogroup" aria-label="מסלול">
-          <button class="plus-plan ${!yr ? 'on' : ''}" data-plan="m" role="radio" aria-checked="${!yr}"><b>חודשי</b><span>${esc(price)}</span></button>
-          <button class="plus-plan ${yr ? 'on' : ''}" data-plan="y" role="radio" aria-checked="${yr}"><b>שנתי</b><span>${esc(Plus.yearly.price)} לשנה</span>${Plus.saving() ? `<i class="plus-save">חיסכון ${Plus.saving()}%</i>` : ''}</button></div>` : '';
+          <button class="plus-plan ${!yr ? 'on' : ''}" data-plan="m" role="radio" aria-checked="${!yr}"><b>חודשי</b><span>${esc(price)}</span>${tag(playSku)}</button>
+          <button class="plus-plan ${yr ? 'on' : ''}" data-plan="y" role="radio" aria-checked="${yr}"><b>שנתי</b><span>${esc(Plus.yearly.price)} לשנה</span>${tag(YEAR)}${Plus.saving() ? `<i class="plus-save">חיסכון ${Plus.saving()}%</i>` : ''}</button></div>` : '';
+      // bought with Google Play's free trial: until when, and what comes after it
+      const pt = S.meta.plusPlayTrial;
+      const playTrial = owned() && Plus.source() === 'play' && pt && +pt.until > Date.now()
+        ? `<div class="tiny muted plus-note">ניסיון חינם ב-⁠Google Play עד ${root.U.fmtDate(root.U.epochKey(pt.until))}. אחר כך ${esc(pt.then || '')}, אלא אם מבטלים. תזכורת תגיע יום לפני.</div>` : '';
+      const buyLabel = trial || gift ? 'להמשיך עם Plus'
+        : c.offer.trial ? `${daysWord(c.offer.trial)} בחינם, ואז ${esc(afterTrial(c))}`
+          : (yr ? 'מנוי שנתי' : buyWord()) + (yr ? ' · ' + esc(Plus.yearly.price) + ' לשנה' : price ? ' · ' + esc(price) : '');
       // inviting a friend: a month for each of them (not for someone who pays already: the friend's month is still there)
       const g = root.Invite ? root.Invite.gift() : null;
       const invite = g && !owned() && !S.settings.demo && root.Cloud && root.Cloud.user ? `<div class="card plus-invite">
@@ -519,18 +592,21 @@
         <div class="section-title plus-fun">${icon('palette', 's')} וגם, בשביל הכיף</div>
         <div class="card plus-list">
           <div>${icon('palette', 's')}<span><b>${Object.keys(SKINS).length} עיצובים לכרטיס השכר</b><small>זהב, גלקסיה, ניאון, לבה ועוד, בכרטיס שבמסך הבית</small></span></div>
+          <div>${icon('star', 's')}<span><b>הסיכום החודשי בעיצוב שלך</b><small>סיכום החודש וסיכום השנה בצבעים של הכרטיס שבחרת</small></span></div>
           <div>${icon('trophy', 's')}<span><b>רקע מיוחד בטבלת האלופים</b><small>כולם יראו אותך בעיצוב שבחרת, עם תג Plus</small></span></div>
           <div>${icon('sparkle', 's')}<span><b>תג תומך/ת במסך הבית</b><small>שכולם יידעו מי עוזר/ת לשעתי להישאר בלי פרסומות</small></span></div>
           <div>${icon('star', 's')}<span><b>תודה ענקית ממני</b><small>עוזר להמשיך לפתח, ולהשאיר את האפליקציה בלי פרסומות</small></span></div>
         </div>
         ${Plus.skinTiles(Plus.skin(), !on)}
         ${on && !trial && !gift ? `<div class="plus-done">${icon('check')} ${owned() ? 'Shaati Plus פעיל אצלך' : 'תצוגה מקדימה של מנהל'}</div>
+            ${playTrial}
             ${owned() && Plus.monthly ? (manageUrl() ? `<button class="btn text sm block" data-plus-manage>${icon('wallet', 's')} ניהול או ביטול המנוי</button>` : '<div class="tiny muted plus-note">המנוי נקנה באתר. מבטלים אותו מהקישור שבמייל של הקבלה.</div>') : ''}`
           : `${trial ? `<div class="plus-done trial">${icon('sparkle')} תקופת ניסיון · ${trialLeft()}</div>` : ''}
              ${gift && !trial ? `<div class="plus-done trial">${icon('gift')} Plus במתנה עד ${root.U.fmtDate(root.U.epochKey(root.Invite.until()))}</div>` : ''}
              ${plans}
              ${Plus.canTrial() && !gift ? `<button class="btn big block plus-buy" data-plus-trial>${icon('sparkle')} לנסות ${TRIAL_DAYS} ימים בחינם</button><div class="tiny muted plus-trial-note">בלי פרטי תשלום ובלי חיוב. בסוף הניסיון נסגרים מעקב התלושים, הדוחות המלאים והעיצובים, וכל השאר נשאר כרגיל.</div>` : ''}
-             <button class="btn ${Plus.canTrial() && !gift ? 'tonal plus-buy2' : 'big plus-buy'} block" data-plus-buy ${(play ? Plus.available : web) || sim() ? '' : 'disabled'}>${icon(Plus.canTrial() && !gift ? 'star' : 'sparkle', Plus.canTrial() && !gift ? 's' : '')} ${trial || gift ? 'להמשיך עם Plus' : yr ? 'מנוי שנתי' : buyWord()}${yr ? ' · ' + esc(Plus.yearly.price) + ' לשנה' : price ? ' · ' + esc(price) : ''}</button>
+             ${offerNote(c)}
+             <button class="btn ${Plus.canTrial() && !gift ? 'tonal plus-buy2' : 'big plus-buy'} block" data-plus-buy ${(play ? Plus.available : web) || sim() ? '' : 'disabled'}>${icon(Plus.canTrial() && !gift ? 'star' : 'sparkle', Plus.canTrial() && !gift ? 's' : '')} ${buyLabel}</button>
              ${Plus.workPrice() && !yr ? `<div class="tiny plus-work">${esc(Plus.workPrice())}</div>` : ''}
              <div class="plus-pay">${play ? '<span>Google Play</span><span>כרטיס אשראי</span><span>Google Pay</span><span>PayPal</span>' : '<span>כרטיס אשראי</span><span>Apple Pay</span><span>Google Pay</span><span>PayPal</span>'}</div>
              <div class="tiny muted plus-note">${note} מתחת לגיל 18: בהסכמת הורה.</div>${sellerNote()}`}
@@ -597,7 +673,20 @@
   Plus.giftChanged = () => { watchTrial(); App.applyTheme(); if (!App.blocking) App.rerender(); };
   /** A day before the trial or the gift ends: a note and the phone's notification (App.runInsights), once. */
   Plus.endAlert = (at) => {
-    if (owned() || sim()) return null;
+    if (sim()) return null;
+    // Google Play's free trial (bought with it on this phone): the day before the first charge, what it will be and
+    // where to stop it. A notice, not an offer
+    const pt = S.meta.plusPlayTrial;
+    if (owned()) {
+      if (!pt || Plus.source() !== 'play' || !(+pt.until > 0)) return null;
+      const left = pt.until - (at || Date.now());
+      if (left > DAY || left < 3600000) return null;
+      return {
+        key: 'plusplay-' + Math.round(pt.until / 60000), type: 'plusend', cat: 'reminder', severity: 'info', push: 'anomaly',
+        title: 'הניסיון החינמי של Shaati Plus נגמר מחר',
+        body: `מחר Google Play יחייב ${pt.then || 'את המנוי'}, אלא אם ביטלת. מבטלים ב-⁠Google Play › תשלומים ומינויים.`,
+      };
+    }
     const trialUntil = Plus.inTrial() ? +S.meta.plusTrial.until : 0;
     const giftUntil = Plus.gifted() ? root.Invite.until() : 0;
     const until = Math.max(trialUntil, giftUntil);
