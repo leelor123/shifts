@@ -313,8 +313,13 @@ textarea.input { min-height: 90px; resize: vertical; }
 .timer-card .meta { margin: 6px 0 14px; color: var(--on-surface-var); font-size: .9rem; }
 .timer-card.running { background: var(--primary-container); color: var(--on-primary-container); }
 .timer-card.running .meta { color: inherit; opacity: .85; }
-.pulse { display: inline-block; width: 10px; height: 10px; border-radius: 50%; background: var(--bad-mark); margin-inline-end: 6px; animation: pulse 1.6s infinite; }
-@keyframes pulse { 0% { box-shadow: 0 0 0 0 rgba(208, 59, 59, .55); } 70% { box-shadow: 0 0 0 10px rgba(208, 59, 59, 0); } 100% { box-shadow: 0 0 0 0 rgba(208, 59, 59, 0); } }
+.pulse { position: relative; display: inline-block; width: 10px; height: 10px; border-radius: 50%; background: var(--bad-mark); margin-inline-end: 6px; }
+/* The ring that spreads from the dot: a 30px disc scaled from the dot's size (1/3) to its own, and faded, so the
+ * compositor runs it (an animated box-shadow repainted the card every frame). z-index -1 puts it under the dot and
+ * the card's text, where the shadow was; .timer-card.running is the stacking context that keeps it above the card.
+ * Same curve as the shadow: radius 5 -> 15px and alpha .55 -> 0 by 70%, then back to the dot's size unseen. */
+.pulse::before { content: ''; position: absolute; inset: -10px; z-index: -1; border-radius: 50%; background: rgb(208, 59, 59); opacity: 0; transform: scale(.3333); animation: pulse 1.6s infinite; }
+@keyframes pulse { 0% { transform: scale(.3333); opacity: .55; } 70% { transform: scale(1); opacity: 0; } 100% { transform: scale(.3333); opacity: 0; } }
 .role-picker { display: flex; gap: 8px; flex-wrap: wrap; justify-content: center; margin-bottom: 12px; }
 
 /* ---------- progress ---------- */
@@ -659,8 +664,18 @@ details.collapse { background: var(--surface-1); border: 1px solid var(--line); 
 /* birthday */
 .card.bday { position: relative; overflow: hidden; background: var(--amber-soft); border-color: transparent; } /* (.card.bday: the later .card rule painted it plain) */
 .bday-title { font-size: 1.5rem; font-weight: 800; margin-bottom: 4px; }
-.bday-confetti { position: absolute; inset: 0; pointer-events: none; background-image: radial-gradient(circle, var(--amber) 2px, transparent 2.5px), radial-gradient(circle, var(--primary) 1.6px, transparent 2px), radial-gradient(circle, var(--bad-mark) 1.6px, transparent 2px); background-size: 46px 46px, 38px 38px, 58px 58px; background-position: 0 0, 18px 12px, 30px 26px; opacity: .35; animation: confetti 6s linear infinite; }
-@keyframes confetti { to { background-position: 0 92px, 18px 88px, 30px 142px; } }
+/* Three layers of dots falling at three speeds, each one two tiles in 6 s so the loop has no seam. They move by
+ * transform (the compositor), not background-position (a repaint of the card every frame): the box itself carries
+ * the red dots (116px a loop) and stands 116px higher so the card is always covered; ::before carries the violet
+ * ones (-40px of its own, 76px in all) and ::after the amber ones (-24px, 92px in all), on top as before. The
+ * three start together and wrap together; each background offset keeps the dots where the old layers had them. */
+.bday-confetti { position: absolute; inset: -116px 0 0; pointer-events: none; background: radial-gradient(circle, var(--bad-mark) 1.6px, transparent 2px) 30px 26px / 58px 58px; opacity: .35; animation: confetti 6s linear infinite; }
+.bday-confetti::before, .bday-confetti::after { content: ''; position: absolute; inset: 0; }
+.bday-confetti::before { background: radial-gradient(circle, var(--primary) 1.6px, transparent 2px) 18px 14px / 38px 38px; animation: confetti-b 6s linear infinite; }
+.bday-confetti::after { background: radial-gradient(circle, var(--amber) 2px, transparent 2.5px) 0 24px / 46px 46px; animation: confetti-a 6s linear infinite; }
+@keyframes confetti { to { transform: translateY(116px); } }
+@keyframes confetti-b { to { transform: translateY(-40px); } }
+@keyframes confetti-a { to { transform: translateY(-24px); } }
 .bday > div:not(.bday-confetti) { position: relative; }
 
 /* assistant chat */

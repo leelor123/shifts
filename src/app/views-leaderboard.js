@@ -406,7 +406,7 @@
       title: 'טבלת האלופים 🏆',
       full: true,
       cls: 'lb-sheet',
-      body: '<div data-lb-tabs></div><div class="lb-body" data-lb-body></div>',
+      body: '<div data-lb-tabs></div><div class="lb-bar" aria-hidden="true"><i></i></div><div class="lb-body" data-lb-body></div>',
       foot: '<div class="lb-me" data-lb-me></div>',
       onMount: (el) => {
         tabs(el);

@@ -569,7 +569,7 @@ body.fx .nav .fab:active { transform: scale(.9) rotate(90deg); }
 .ob-bg i:nth-child(2) { animation-duration: 29s; animation-delay: -9s; }
 @keyframes ob-blob { to { transform: translate(28px, 40px) scale(1.12); } }
 /* each running animation keeps its phase across a redraw (App.phase), so nothing restarts in sight */
-.hh-dial::before, .rc-spark, .pulse { animation-delay: var(--ph, 0ms); }
+.hh-dial::before, .rc-spark, .pulse::before { animation-delay: var(--ph, 0ms); }
 @media (prefers-reduced-motion: reduce) { .hh-dial::before, .view.first *, .ob-bg i { animation: none !important; } }
 body:not(.fx) .hh-dial::before, body:not(.fx) .ob-bg i { animation: none !important; }
 
@@ -582,14 +582,20 @@ body:not(.fx) .hh-dial::before, body:not(.fx) .ob-bg i { animation: none !import
 @keyframes tk-draw { to { stroke-dashoffset: 0; } }
 /* loading: shimmering placeholders instead of "loading…" text */
 .skel-wrap { display: grid; gap: 12px; padding: 4px 0; }
-.skel { display: block; background: linear-gradient(90deg, var(--surface-2) 0%, var(--surface-3) 40%, var(--surface-2) 80%); background-size: 300% 100%; animation: skel 1.4s ease-in-out infinite; border-radius: 10px; }
+/* The shimmer moves by transform on ::after (the compositor), not by background-position (a repaint every frame).
+ * ::after is seven widths wide (from -3 to +4 widths) and slides from -2 to +2 widths (2/7 of itself), so it
+ * covers the placeholder with a width to spare on each side (edge to edge, a pixel showed through at the end of a
+ * sweep); its gradient is three widths a tile (3/7) from its own start, so each frame matches the old 300%-wide
+ * background going from 100% to -100%. */
+.skel { position: relative; display: block; overflow: hidden; border-radius: 10px; }
+.skel::after { content: ''; position: absolute; top: 0; bottom: 0; left: -300%; width: 700%; background: linear-gradient(90deg, var(--surface-2) 0%, var(--surface-3) 40%, var(--surface-2) 80%) 0 0 / calc(300% / 7) 100%; animation: skel 1.4s ease-in-out infinite; }
 .skel-card { height: 110px; border-radius: var(--radius); }
 .skel-row { display: flex; gap: 12px; align-items: center; padding: 10px 4px; }
 .skel-dot { width: 40px; height: 40px; border-radius: 12px; flex: none; }
 .skel-lines { flex: 1; display: grid; gap: 8px; }
 .skel-line { height: 12px; } .skel-line.short { width: 40%; height: 10px; }
-@keyframes skel { from { background-position: 100% 0; } to { background-position: -100% 0; } }
-@media (prefers-reduced-motion: reduce) { .skel, .toast .tk, .toast .tk * { animation: none !important; } .toast .tk path { stroke-dashoffset: 0; } }
+@keyframes skel { from { transform: translateX(calc(-200% / 7)); } to { transform: translateX(calc(200% / 7)); } }
+@media (prefers-reduced-motion: reduce) { .skel::after, .toast .tk, .toast .tk * { animation: none !important; } .toast .tk path { stroke-dashoffset: 0; } }
 
 /* keyboard users always see where they are */
 :where(button, a, input, select, textarea, summary, [tabindex]):focus-visible { outline: 3px solid hsla(var(--h), 85%, 60%, .55); outline-offset: 2px; }
@@ -1200,11 +1206,17 @@ body.fx .recap-card:active { transform: scale(.98); }
 /* at least the sheet's height: a short board never pulls a sheet scrolled a little (the tabs in sight) back up */
 .lb-body { position: relative; min-height: 100%; }
 /* the line shows only for a wait over .3 s (a board that came 80 ms after the tap blinked it) */
-.lb-body.lb-busy::before { content: ''; position: absolute; top: -4px; inset-inline: 0; height: 3px; border-radius: 3px; background: linear-gradient(90deg, transparent, var(--brand), transparent); background-size: 50% 100%; background-repeat: no-repeat; opacity: 0; animation: lb-load 1s linear infinite, lb-wait .2s ease-out .3s forwards; }
+/* It sits in .lb-bar, an empty box of no height right before .lb-body (views-leaderboard.js), so it stays when the
+ * board is drawn again. The <i> is the line (it clips, fades in); its ::before is the glow, half its width, moved by
+ * transform from -25% to 75% of the line (the compositor), where background-position repainted it every frame. */
+.lb-bar { position: relative; height: 0; }
+.lb-bar i { display: none; position: absolute; top: -4px; inset-inline: 0; height: 3px; border-radius: 3px; overflow: hidden; opacity: 0; }
+.lb-bar:has(+ .lb-body.lb-busy) i { display: block; animation: lb-wait .2s ease-out .3s forwards; }
+.lb-bar i::before { content: ''; position: absolute; top: 0; bottom: 0; left: 0; width: 50%; background: linear-gradient(90deg, transparent, var(--brand), transparent); animation: lb-load 1s linear infinite; }
 @keyframes lb-wait { to { opacity: 1; } }
-@keyframes lb-load { from { background-position: -50% 0; } to { background-position: 150% 0; } }
+@keyframes lb-load { from { transform: translateX(-50%); } to { transform: translateX(150%); } }
 @keyframes lb-wait-still { to { opacity: .5; } }
-@media (prefers-reduced-motion: reduce) { .lb-body.lb-busy::before { animation: lb-wait-still 0s .3s forwards; background-size: 100% 100%; } }
+@media (prefers-reduced-motion: reduce) { .lb-bar:has(+ .lb-body.lb-busy) i { animation: lb-wait-still 0s .3s forwards; } .lb-bar i::before { animation: none; width: 100%; } }
 
 /* the music button in a game's title bar */
 .sh-head .gm-music { margin-inline-start: auto; }
@@ -1426,7 +1438,7 @@ body:not(.fx) .gm-rays, body:not(.fx) .hw-vs, body:not(.fx) .hw-q, body:not(.fx)
 /* a break: the clock breathes, the dot turns amber and stands still */
 .timer-card.on-break .clock { animation: tc-break 2.4s ease-in-out infinite; }
 @keyframes tc-break { 50% { opacity: .45; } }
-.timer-card.on-break .pulse { background: #ffb524; animation: none; }
+.timer-card.on-break .pulse { background: #ffb524; } .timer-card.on-break .pulse::before { animation: none; }
 body:not(.fx) .timer-card.tc-enter, body:not(.fx) .timer-card.tc-enter .clock, body:not(.fx) .home-action.ha-enter .btn.start, body:not(.fx) .timer-card.on-break .clock { animation: none; }
 body:not(.fx) .start-halo { animation: none; opacity: 0; }
 /* the clock keeps a layer of its own: its spring-in and its breathing would otherwise make one and drop it */
