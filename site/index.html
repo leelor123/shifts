@@ -47,7 +47,7 @@
   "offers": { "@type": "Offer", "price": "0", "priceCurrency": "ILS" }
 }
 </script>
-<script type="application/ld+json" id="faq-ld">{"@context":"https://schema.org","@type":"FAQPage","mainEntity":[{"@type":"Question","name":"זה באמת חינם?","acceptedAnswer":{"@type":"Answer","text":"רישום משמרות, חישוב השכר, הזכויות, בדיקת התלוש, דוחות במסך והמשחקים חינם. ניתוח מתקדם וייצוא PDF ואקסל: עד 3 ו-5 בחודש בחינם, ובלי הגבלה ב-Shaati Plus, מנוי לבחירה שיש בו גם עיצובים ותוספות."}},{"@type":"Question","name":"איך שעתי יודעת מתי שבת וחג?","acceptedAnswer":{"@type":"Answer","text":"לפי העיר שבחרת: כל היישובים בישראל, עם זמני כניסת ויציאת השבת והחגים של אותו מקום. אפשר גם לסמן ידנית יום מיוחד, כמו יום בחירות ב-200%."}},{"@type":"Question","name":"אני מתחת לגיל 18. זה מתאים לי?","acceptedAnswer":{"@type":"Answer","text":"בדיוק בשבילך. שעתי מחשבת שכר מינימום לפי הגיל, מזכירה כמה שעות מותר לעבוד ומתי מגיעה הפסקה, ומסבירה את חוק עבודת הנוער בשפה פשוטה."}},{"@type":"Question","name":"זה ייעוץ משפטי?","acceptedAnswer":{"@type":"Answer","text":"לא. שעתי היא כלי עזר שמעריך את השכר לפי חוקי העבודה והנתונים שהזנת. בהסכם קיבוצי או בחוזה מיוחד ייתכנו הבדלים, ובמקרה של ספק כדאי לפנות למשאבי אנוש, לארגון העובדים או לאתר \"כל זכות\"."}},{"@type":"Question","name":"יש גם לאייפון?","acceptedAnswer":{"@type":"Answer","text":"כן, דרך הדפדפן: פותחים את שעתי בספארי ומוסיפים למסך הבית (שלושה צעדים). היא עובדת כמו אפליקציה, גם בלי אינטרנט."}},{"@type":"Question","name":"מה קורה אם מחליפים טלפון?","acceptedAnswer":{"@type":"Answer","text":"מתחברים עם אותו חשבון Google והכול חוזר. אפשר גם לשמור קובץ גיבוי ולשחזר אותו בטלפון החדש."}}]}</script>
+<script type="application/ld+json" id="faq-ld">{"@context":"https://schema.org","@type":"FAQPage","mainEntity":[{"@type":"Question","name":"זה באמת חינם?","acceptedAnswer":{"@type":"Answer","text":"רישום משמרות, חישוב השכר, הזכויות, בדיקת התלוש, דוחות במסך והמשחקים חינם. ניתוח מתקדם וייצוא PDF ואקסל: עד 3 ו-5 בחודש בחינם, ובלי הגבלה ב-Shaati Plus, מנוי לבחירה שיש בו גם עיצובים ותוספות."}},{"@type":"Question","name":"איך שעתי יודעת מתי שבת וחג?","acceptedAnswer":{"@type":"Answer","text":"לפי העיר שבחרת: כל היישובים בישראל, עם זמני כניסת ויציאת השבת והחגים של אותו מקום. אפשר גם לסמן ידנית יום מיוחד, כמו יום בחירות ב-200%."}},{"@type":"Question","name":"אני מתחת לגיל 18. זה מתאים לי?","acceptedAnswer":{"@type":"Answer","text":"בדיוק בשבילך. שעתי מחשבת שכר מינימום לפי הגיל, מזכירה כמה שעות מותר לעבוד ומתי מגיעה הפסקה, ומסבירה את חוק עבודת הנוער בשפה פשוטה."}},{"@type":"Question","name":"זה ייעוץ משפטי?","acceptedAnswer":{"@type":"Answer","text":"לא. שעתי היא כלי עזר שמעריך את השכר לפי חוקי העבודה והנתונים שהזנת. בהסכם קיבוצי או בחוזה מיוחד ייתכנו הבדלים, ובמקרה של ספק כדאי לפנות למשאבי אנוש, לארגון העובדים או לאתר \"כל זכות\"."}},{"@type":"Question","name":"יש גם לאייפון?","acceptedAnswer":{"@type":"Answer","text":"כן, דרך הדפדפן: פותחים את שעתי בספארי ומוסיפים למסך הבית (ארבעה צעדים). היא עובדת כמו אפליקציה, גם בלי אינטרנט."}},{"@type":"Question","name":"מה קורה אם מחליפים טלפון?","acceptedAnswer":{"@type":"Answer","text":"מתחברים עם אותו חשבון Google והכול חוזר. אפשר גם לשמור קובץ גיבוי ולשחזר אותו בטלפון החדש."}}]}</script>
 <style>
 /* ============================================================
  * shaati.web.app — the home page (2026-11-02). One idea carries it: the sky of the app's opening (sky.js), the real
@@ -276,7 +276,9 @@ input[type=range]::-moz-range-thumb { width: 26px; height: 26px; border: 0; bord
 .ios-tip { margin-top: 16px; font-size: .98rem; color: rgba(255, 255, 255, .9); text-shadow: 0 1px 12px rgba(5, 15, 45, .5); }
 .ios-tip a { color: #fff; text-decoration: underline; text-underline-offset: 3px; }
 .ios-note { margin-top: 22px; color: var(--mute); font-size: .95rem; max-width: 46em; }
-@media (max-width: 860px) { .steps { grid-template-columns: 1fr; } }
+.steps-4 { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+@media (max-width: 1100px) { .steps-4 { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+@media (max-width: 860px) { .steps, .steps-4 { grid-template-columns: 1fr; } }
 
 /* the storage notice, once on a first visit: what the site keeps on this device (the city), and that it keeps nothing
    else (the user, 2 Nov: a cookie approval). Fixed at the bottom, so nothing on the page moves when it comes */
@@ -412,7 +414,7 @@ footer .note { margin-top: 12px; font-size: .85rem; }
           <a class="btn btn-gold" href="https://leelor123.github.io/shifts/?from=seo-home">לפתוח את שעתי</a>
           <a class="btn btn-glass" href="#calc">לחשב משמרת</a>
         </div>
-        <p class="ios-tip" data-ios hidden>באייפון? <a href="#iphone">כך שמים את שעתי על מסך הבית</a>, בשלושה צעדים.</p>
+        <p class="ios-tip" data-ios hidden>באייפון? <a href="#iphone">כך שמים את שעתי על מסך הבית</a>, בארבעה צעדים.</p>
         <fieldset class="cities" data-cities>
           <legend>השמיים מעל העיר שלך, עכשיו. ככה נפתחת האפליקציה:</legend>
           <div class="seg">
@@ -546,12 +548,14 @@ footer .note { margin-top: 12px; font-size: .85rem; }
 
   <section class="sec" id="iphone">
     <div class="wrap">
-      <div class="sec-head"><h2>באייפון: שעתי על מסך הבית, בשלושה צעדים</h2><p>פותחים את שעתי בספארי ומוסיפים אותה למסך הבית. היא נפתחת במסך מלא ועובדת גם בלי אינטרנט.</p></div>
-      <ol class="steps">
-        <li><h3>פותחים את שעתי ולוחצים "שיתוף"</h3><p>לוחצים <a href="https://leelor123.github.io/shifts/?from=seo-home">"לפתוח את שעתי"</a>, ובאפליקציה שנפתחה לוחצים על כפתור השיתוף בשורה שבתחתית המסך (באייפד: למעלה).</p></li>
-        <li><h3>"הוספה למסך הבית"</h3><p>לא רואים? גוללים מטה ברשימה שנפתחה.</p></li>
-        <li><h3>לוחצים "הוספה"</h3><p>ושעתי על המסך, כמו כל אפליקציה.</p></li>
+      <div class="sec-head"><h2>באייפון: שעתי על מסך הבית, בארבעה צעדים</h2><p>פותחים את שעתי בספארי ומוסיפים אותה למסך הבית. היא נפתחת במסך מלא ועובדת גם בלי אינטרנט.</p></div>
+      <ol class="steps steps-4">
+        <li><h3>פותחים את שעתי ולוחצים על ⋯</h3><p>לוחצים <a href="https://leelor123.github.io/shifts/?from=seo-home">"לפתוח את שעתי"</a>, ובספארי שנפתח לוחצים על ⋯ ליד שורת הכתובת, בתחתית המסך (באייפד: למעלה).</p></li>
+        <li><h3>בוחרים "שיתוף"</h3><p>כפתור השיתוף כבר מופיע בשורה? אפשר ללחוץ עליו ישר.</p></li>
+        <li><h3>"הוספה למסך הבית"</h3><p>לא רואים? גוללים מטה ברשימה שנפתחה, או לוחצים "עוד".</p></li>
+        <li><h3>לוחצים "הוספה"</h3><p>המתג של פתיחה כאפליקציה נשאר דלוק, ושעתי על המסך כמו כל אפליקציה.</p></li>
       </ol>
+      <p class="ios-note">באייפון עם iOS 18 ומטה, כפתור השיתוף נמצא ישר בשורה שבתחתית המסך, בלי ⋯. בכרום לאייפון הוא ליד שורת הכתובת.</p>
       <p class="ios-note">כדאי להוסיף לפני שמתחילים: האפליקציה שעל מסך הבית שומרת נתונים בנפרד מספארי. כבר יש משמרות? מתחברים עם Google, ואחרי ההוספה מתחברים שוב, והכול חוזר.</p>
     </div>
   </section>
@@ -577,7 +581,7 @@ footer .note { margin-top: 12px; font-size: .85rem; }
         <details><summary>איך שעתי יודעת מתי שבת וחג?</summary><p>לפי העיר שבחרת: כל היישובים בישראל, עם זמני כניסת ויציאת השבת והחגים של אותו מקום. אפשר גם לסמן ידנית יום מיוחד, כמו יום בחירות ב-200%.</p></details>
         <details><summary>אני מתחת לגיל 18. זה מתאים לי?</summary><p>בדיוק בשבילך. שעתי מחשבת שכר מינימום לפי הגיל, מזכירה כמה שעות מותר לעבוד ומתי מגיעה הפסקה, ומסבירה את חוק עבודת הנוער בשפה פשוטה.</p></details>
         <details><summary>זה ייעוץ משפטי?</summary><p>לא. שעתי היא כלי עזר שמעריך את השכר לפי חוקי העבודה והנתונים שהזנת. בהסכם קיבוצי או בחוזה מיוחד ייתכנו הבדלים, ובמקרה של ספק כדאי לפנות למשאבי אנוש, לארגון העובדים או לאתר "כל זכות".</p></details>
-        <details><summary>יש גם לאייפון?</summary><p>כן, דרך הדפדפן: פותחים את שעתי בספארי ומוסיפים למסך הבית (<a href="#iphone">שלושה צעדים</a>). היא עובדת כמו אפליקציה, גם בלי אינטרנט.</p></details>
+        <details><summary>יש גם לאייפון?</summary><p>כן, דרך הדפדפן: פותחים את שעתי בספארי ומוסיפים למסך הבית (<a href="#iphone">ארבעה צעדים</a>). היא עובדת כמו אפליקציה, גם בלי אינטרנט.</p></details>
         <details><summary>מה קורה אם מחליפים טלפון?</summary><p>מתחברים עם אותו חשבון Google והכול חוזר. אפשר גם לשמור קובץ גיבוי ולשחזר אותו בטלפון החדש.</p></details>
       </div>
       <div class="guides"><span>עוד תשובות:</span><a href="shift-calculator">כמה שווה המשמרת?</a><a href="check">מרמים אותך? בדיקה של 10 שניות</a><a href="tax-refund">מגיע לי החזר מס?</a><a href="minimum-wage">שכר מינימום 2026 (גם לנוער)</a><a href="overtime">שעות נוספות</a><a href="shabbat-pay">תוספת שבת</a><a href="travel-expenses">דמי נסיעה</a><a href="sick-pay">דמי מחלה</a><a href="recuperation-pay">דמי הבראה</a></div>

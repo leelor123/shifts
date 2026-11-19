@@ -523,14 +523,41 @@
     if (root.Stats) root.Stats.forget();
     App.rerender();
   };
+  /* The way to the home screen differs by browser (iOS 26 moved Safari's share button behind ⋯):
+   *  safari26: Safari 26 and later. Its UA keeps the system at 18_6, so the Safari version ("Version/26") tells.
+   *    The compact layout (the default) has ⋯ next to the address bar; the bottom/top layouts show the share button.
+   *  safari: older Safari, the share button in the bottom bar (on an iPad, at the top).
+   *  other: Chrome, Edge or Firefox for iPhone (iOS 16.4 and later): the share button by the address bar.
+   *  inapp: inside Instagram, TikTok and the like: no way to add from there, Safari first. */
+  App.iosWay = function () {
+    const ua = navigator.userAgent || '';
+    if (App.inAppBrowser && App.inAppBrowser()) return 'inapp';
+    if (/CriOS|FxiOS|EdgiOS/.test(ua)) return 'other';
+    return +((ua.match(/Version\/(\d+)/) || [])[1] || 0) >= 26 ? 'safari26' : 'safari';
+  };
+  // the steps of each way: [icon, what to tap, a hint]
+  const iosSteps = (way) => {
+    const add = ['addSq', 'בוחרים "הוספה למסך הבית"', 'לא רואים? גוללים מטה ברשימה או לוחצים על "עוד"'];
+    if (way === 'safari26') {
+      return [
+        ['dots', 'לוחצים על ⋯', 'ליד שורת הכתובת, בתחתית המסך (באייפד: למעלה)'],
+        ['iosShare', 'בוחרים "שיתוף"', 'כפתור השיתוף כבר מופיע בשורה? אפשר ללחוץ עליו ישר'],
+        add,
+        ['check', 'לוחצים "הוספה"', 'אם מופיע מתג של פתיחה כאפליקציה, משאירים אותו דלוק'],
+      ];
+    }
+    if (way === 'other') return [['iosShare', 'לוחצים על כפתור השיתוף', 'ליד שורת הכתובת, או בתפריט של הדפדפן'], add, ['check', 'לוחצים "הוספה"', '']];
+    return [['iosShare', 'לוחצים על כפתור השיתוף', 'בשורה שבתחתית המסך (באייפד: למעלה)'], add, ['check', 'לוחצים "הוספה"', '']];
+  };
   function iosCard() {
     if (!App.iosBrowser()) return '';
     const m = S.meta.iosInstall || {};
     if ((m.n || 0) >= 2 || (m.x && Date.now() - m.x < IOS_REST)) return '';
+    const way = App.iosWay();
     return `<div class="card ios-card"><div class="ic-head"><span class="ic-app">${icon('addSq')}</span><div class="ic-t"><b>שעתי על מסך הבית</b>
         <div class="small">כך הנתונים שלך נשמרים, ותזכורות למשמרות עובדות גם באייפון.</div></div>
         <button class="icon-btn" data-act="ios-install-x" aria-label="סגירה">${icon('x', 's')}</button></div>
-      <button class="btn go block" data-act="ios-install">${icon('iosShare', 's')} איך מוסיפים? 3 צעדים</button></div>`;
+      <button class="btn go block" data-act="ios-install">${icon('iosShare', 's')} ${way === 'inapp' ? 'איך מוסיפים?' : `איך מוסיפים? ${iosSteps(way).length} צעדים`}</button></div>`;
   }
   App.actions['ios-install-x'] = async () => {
     const m = S.meta.iosInstall || {};
@@ -538,6 +565,21 @@
     App.rerender();
   };
   App.actions['ios-install'] = () => {
+    const way = App.iosWay();
+    // inside another app: only Safari (or Chrome) can add it, so the way there, and the link to paste
+    if (way === 'inapp') {
+      UI.openSheet({
+        title: 'הוספה למסך הבית',
+        cls: 'ios-install',
+        body: `<div class="ii-first warn">${icon('alert', 's')}<div><b>מכאן אי אפשר להוסיף למסך הבית.</b> פותחים את שעתי בספארי, ושם מוסיפים.</div></div>
+          <div class="ii-steps">
+            ${[['dots', 'לוחצים על <b>⋯</b> בפינת המסך'], ['compass', 'בוחרים <bdi><b>"פתיחה ב-⁠Safari"</b></bdi> או <bdi><b>"Open in browser"</b></bdi>']].map(([ic, t], i) => `<div class="ii-step"><span class="ii-n">${i + 1}</span><div class="ii-b"><div class="ii-t">${t}</div></div><span class="ii-ic">${icon(ic)}</span></div>`).join('')}
+          </div>
+          <button class="btn tonal block" data-copy-link>${icon('copy', 's')} העתק את הקישור</button>`,
+        onMount: (el) => { if (App.bindOpenInBrowser) App.bindOpenInBrowser(el); },
+      });
+      return;
+    }
     const step = (n, ic, t, s) => `<div class="ii-step"><span class="ii-n">${n}</span><div class="ii-b"><div class="ii-t">${t}</div>${s ? `<div class="small">${s}</div>` : ''}</div><span class="ii-ic">${icon(ic)}</span></div>`;
     // the app on the home screen starts with its own, empty storage: the shifts move over through the account
     const first = !S.shifts.length
@@ -550,9 +592,7 @@
       title: 'הוספה למסך הבית',
       cls: 'ios-install',
       body: `${first}<div class="ii-steps">
-          ${step(1, 'iosShare', 'לוחצים על כפתור השיתוף', 'בספארי: בשורה שבתחתית המסך. לא רואים אותו? לוחצים קודם על ⋯ (באייפד ובכרום: למעלה)')}
-          ${step(2, 'addSq', 'בוחרים "הוספה למסך הבית"', 'לא רואים? גוללים מטה ברשימה או לוחצים על "עוד"')}
-          ${step(3, 'check', 'לוחצים "הוספה"', 'אם מופיע מתג של פתיחה כאפליקציה, משאירים אותו דלוק')}
+          ${iosSteps(way).map(([ic, t, s], i) => step(i + 1, ic, t, s)).join('')}
         </div>
         <div class="section-title">למה כדאי</div>
         <div class="card small ii-why"><div>${icon('lock', 's')} ספארי עלול למחוק נתונים של אתר שלא נפתח 7 ימים. אפליקציה על מסך הבית שומרת עליהם.</div>

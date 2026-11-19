@@ -66,7 +66,7 @@ const check = (name, ok, info) => { results.push(!!ok); console.log((ok ? 'ok ' 
   await page.waitForFunction(() => !document.getElementById('intro'), { timeout: 20000 });
   await page.evaluate(() => document.getElementById('lg-ok').click()); await sleep(100);
   await page.click('#lg-go'); await page.waitForSelector('[data-demo]');
-  await page.click('[data-demo]'); await sleep(2500); await page.click('[data-save]'); await sleep(2500);
+  await page.click('[data-demo]'); await sleep(2500); if (await page.$('[data-save]')) { await page.click('[data-save]'); await sleep(2500); }
   await page.evaluate(() => { document.querySelectorAll('.coach').forEach((x) => x.remove()); UI.closeAll(); });
   await sleep(700);
 

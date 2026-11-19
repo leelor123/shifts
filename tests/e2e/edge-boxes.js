@@ -236,19 +236,13 @@ if (require.main === module) (async () => {
       await B.page.waitForFunction(() => !document.getElementById('intro'), { timeout: 15000 });
       await pickLang(B.page, B.ev, lang);
       await B.page.waitForSelector('[data-demo]', { timeout: 8000 });
-      await B.page.click('[data-demo]'); await sleep(1200);
-      // the terms' own question may come first (a checkbox and a button)
-      for (let i = 0; i < 4 && !(await B.page.$('.ob-done')); i++) {
-        await B.ev(() => { const d = [...document.querySelectorAll('.dialog, .wizard')].pop(); if (!d) return; const c = d.querySelector('input[type=checkbox]:not(:checked)'); if (c) c.click(); const b = d.querySelector('.btn.primary:not(:disabled), [data-ok]'); if (b) b.click(); });
-        await sleep(900);
-      }
-      if (!(await B.page.$('.ob-done'))) throw new Error('no last screen');
-      await sleep(600);
-      await look(B.page, 'demo ready (last setup screen)', tag);
-      // on as a guest (no account): a warning first (its last button goes on), then the app with the demo's data
-      await B.page.click('[data-guest]'); await sleep(700);
-      await B.ev(() => { const d = [...document.querySelectorAll('.dialog')].pop(); const bs = d ? d.querySelectorAll('button') : []; if (bs.length) bs[bs.length - 1].click(); }); await sleep(1800);
+      // 'just a look' opens the app at once, as a guest (no last setup screen since the onboarding change, 19 Nov 2026):
+      // the terms' own screen first (appScreens agrees to it), then the demo's data
+      await B.page.click('[data-demo]'); await sleep(1800);
+      if (await B.page.$('.ob-done')) throw new Error('the demo still stops on the last setup screen');
       await appScreens(B.page, B.ev, tag);
+      const st = await B.ev(() => ({ guest: !!Store.S.meta.guest, demo: !!Store.S.settings.demo, local: !!App.localOnly, blocking: App.blocking || '' }));
+      if (!st.guest || !st.demo || !st.local || st.blocking) throw new Error('the demo did not open as a guest with the sample data: ' + JSON.stringify(st));
     } catch (e) { errors.push(tag + ' demo: ' + e.message.split('\n')[0]); }
     await B.ctx.close();
   }
@@ -259,7 +253,7 @@ if (require.main === module) (async () => {
       await ev(() => scrollTo(0, document.documentElement.scrollHeight)); await sleep(150); await look(page, 'terms to agree to (end)', tag);
       await page.click('#lg-ok'); await page.click('#lg-go'); await sleep(1500);
     }
-    for (let i = 0; i < 6 && (await page.$('.coach')); i++) { await page.click('.coach').catch(() => {}); await sleep(300); }
+    for (let i = 0; i < 6 && (await page.$('.coach')); i++) { await page.click('.coach-tip').catch(() => {}); await sleep(300); }
     if (!(await ev(() => typeof App !== 'undefined' && !App.blocking))) { errors.push(tag + ' the app did not open: ' + (await ev(() => (typeof App !== 'undefined' ? App.blocking : 'no App') + ' | ' + document.body.innerText.slice(0, 160).replace(/s+/g, ' ')))); await page.screenshot({ path: path.join(out, tag + '-not-open.png') }); return; }
     const close = () => ev(() => { document.querySelectorAll('.dialog').forEach((d) => { if (d._resolve) d._resolve(null); d.remove(); }); UI.closeAll(); }).then(() => sleep(450));
     for (const tab of ['home', 'calendar', 'reports', 'settings']) {

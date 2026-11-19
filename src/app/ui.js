@@ -36,6 +36,9 @@
     iosShare: '<path d="M8.5 8H7a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-9a2 2 0 0 0-2-2h-1.5M12 3v11M8.5 6.5 12 3l3.5 3.5"/>',
     nfc: '<rect x="3" y="2.5" width="11" height="19" rx="2.5"/><path d="M8.5 18h.01M17.5 9a4.5 4.5 0 0 1 0 6M20.5 6.5a8 8 0 0 1 0 11"/>',
     addSq: '<rect x="4" y="4" width="16" height="16" rx="4"/><path d="M12 8.5v7M8.5 12h7"/>',
+    // Safari's ⋯ (the page menu by the address bar since iOS 26) and its compass
+    dots: '<circle cx="12" cy="12" r="9.5"/><path d="M7.6 12h.01M12 12h.01M16.4 12h.01" stroke-width="2.6"/>',
+    compass: '<circle cx="12" cy="12" r="9.5"/><path d="m15.5 8.5-2 5-5 2 2-5z"/>',
     finger: '<path d="M12 11v2.5a7 7 0 0 1-1.2 4"/><path d="M9 11a3 3 0 0 1 6 0v1.5a10 10 0 0 1-.8 4"/><path d="M6.2 14.5A8 8 0 0 0 7 11a5 5 0 0 1 8.6-3.5"/><path d="M17.6 9.5A5 5 0 0 1 18 11v1.5c0 1.6-.2 3.1-.6 4.5"/><path d="M4.5 9A8 8 0 0 1 16 4.3"/><path d="M19.4 7a8 8 0 0 1 .6 3"/>',
     hand: '<path d="M18 11V6a2 2 0 0 0-4 0v5M14 10V4a2 2 0 0 0-4 0v6M10 10.5V6a2 2 0 0 0-4 0v8"/><path d="M18 8a2 2 0 1 1 4 0v6a8 8 0 0 1-8 8h-2c-2.8 0-4.5-.9-6-2.3l-3.6-3.6a2 2 0 0 1 2.8-2.8L7 15"/>',
     lock: '<rect x="4" y="11" width="16" height="11" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/>',

@@ -66,36 +66,82 @@
   };
 
   /* ---------------- coach marks ---------------- */
-  /** steps: [{ el: selector | element, text, round }]. A spotlight on each, with the mascot explaining. */
+  /** steps: [{ el: selector | element, text, round }]. A spotlight on each, with the mascot explaining.
+   * The lit button is the real one (the onboarding review, 16 Nov 2026: step 1 said "tap here" and a tap there only moved
+   * the tour on): four clear panes cover the screen around it, so a tap on it reaches the app (its own press feedback
+   * too), ends the tour and does what the button does. A tap anywhere else, or on the bubble, goes to the next step;
+   * "דלג" and Escape end it. The panes cover the hole's padding ring too, so a tap that misses by a little never lands
+   * on a neighbour (the FAB sits between the tabs). */
   UI.coach = function (steps, done) {
-    let i = -1;
+    let i = -1, target = null, over = false;
     const el = document.createElement('div');
     el.className = 'coach';
     el.setAttribute('role', 'dialog');
     document.body.appendChild(el);
     // a sheet or dialog that opens meanwhile wins: the tour steps aside
-    const watch = setInterval(() => { if (document.querySelector('.sheet.show, .dialog')) { i = steps.length; next(); } }, 400);
+    const watch = setInterval(() => { if (document.querySelector('.sheet.show, .dialog')) end(); }, 400);
+    const PAD = 8;
+    /** where the hole, the panes and the bubble go, from the target's place now (also after a scroll or a turn) */
+    function place() {
+      if (!target || !el.firstChild) return;
+      const s = steps[i];
+      const r = target.getBoundingClientRect();
+      const W = innerWidth, H = innerHeight;
+      const px = (n) => Math.round(n) + 'px';
+      const hole = el.querySelector('.coach-hole');
+      Object.assign(hole.style, { left: px(r.left - PAD), top: px(r.top - PAD), width: px(r.width + PAD * 2), height: px(r.height + PAD * 2), borderRadius: s.round ? '50%' : '24px' });
+      const [top, bottom, start, end2] = el.querySelectorAll('.coach-b');
+      Object.assign(top.style, { left: '0', top: '0', width: px(W), height: px(Math.max(0, r.top)) });
+      Object.assign(bottom.style, { left: '0', top: px(r.bottom), width: px(W), height: px(Math.max(0, H - r.bottom)) });
+      Object.assign(start.style, { left: '0', top: px(r.top), width: px(Math.max(0, r.left)), height: px(r.height) });
+      Object.assign(end2.style, { left: px(r.right), top: px(r.top), width: px(Math.max(0, W - r.right)), height: px(r.height) });
+      const tip = el.querySelector('.coach-tip');
+      const below = r.top + r.height / 2 < H / 2;
+      tip.classList.toggle('below', below); tip.classList.toggle('above', !below);
+      tip.style.top = below ? px(r.bottom + 18) : '';
+      tip.style.bottom = below ? '' : px(H - r.top + 18);
+    }
+    function end() {
+      if (over) return;
+      over = true;
+      clearInterval(watch);
+      document.removeEventListener('click', through, true);
+      document.removeEventListener('keydown', key, true);
+      root.removeEventListener('resize', place);
+      root.removeEventListener('scroll', place, true);
+      el.classList.add('out');
+      setTimeout(() => el.remove(), 260);
+      if (done) done();
+    }
     function next() {
+      if (over) return;
       i++;
-      if (i >= steps.length) {
-        clearInterval(watch);
-        el.classList.add('out');
-        setTimeout(() => el.remove(), 260);
-        if (done) done();
-        return;
-      }
+      if (i >= steps.length) { end(); return; }
       const s = steps[i];
       const t = typeof s.el === 'string' ? document.querySelector(s.el) : s.el;
       if (!t || !t.getBoundingClientRect().width) { next(); return; }
-      const r = t.getBoundingClientRect();
-      const pad = 8;
-      const below = r.top + r.height / 2 < innerHeight / 2;
-      el.innerHTML = `<div class="coach-hole" style="left:${r.left - pad}px;top:${r.top - pad}px;width:${r.width + pad * 2}px;height:${r.height + pad * 2}px;border-radius:${s.round ? '50%' : '24px'}"></div>
-        <div class="coach-tip ${below ? 'below' : 'above'}" style="${below ? `top:${Math.round(r.bottom + 18)}px` : `bottom:${Math.round(innerHeight - r.top + 18)}px`}">
-          ${App.mascot(i === steps.length - 1 ? 'party' : 'wave', { size: 58 })}<div><div class="ct-t">${s.text}</div><div class="ct-n">${steps.length > 1 ? `${i + 1} מתוך ${steps.length} · ` : ''}לחצו להמשך</div></div></div>`;
+      target = t;
+      const last = i === steps.length - 1;
+      el.innerHTML = `<div class="coach-hole"></div><div class="coach-b"></div><div class="coach-b"></div><div class="coach-b"></div><div class="coach-b"></div>
+        <div class="coach-tip">${App.mascot(last ? 'party' : 'wave', { size: 58 })}<div class="ct-b"><div class="ct-t">${s.text}</div><div class="ct-n">${steps.length > 1 ? `${i + 1} מתוך ${steps.length} · ` : ''}לחצו להמשך</div></div>
+          ${last ? '' : '<button class="btn text sm coach-skip" data-coach-skip>דלג</button>'}</div>`;
+      place();
       if (Fx()) Fx().play('pop');
     }
-    el.addEventListener('click', (e) => { e.stopPropagation(); next(); });
+    // a tap on the lit button itself: the app takes it (this listener only watches), and the tour is over
+    function through(e) {
+      if (over || el.contains(e.target)) return;
+      if (target && target.contains(e.target)) end();
+    }
+    function key(e) { if (e.key === 'Escape') { e.stopPropagation(); end(); } }
+    el.addEventListener('click', (e) => {
+      e.stopPropagation();
+      if (e.target.closest('[data-coach-skip]')) end(); else next();
+    });
+    document.addEventListener('click', through, true);
+    document.addEventListener('keydown', key, true);
+    root.addEventListener('resize', place);
+    root.addEventListener('scroll', place, true);
     next();
   };
 
