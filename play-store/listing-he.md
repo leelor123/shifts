@@ -129,3 +129,8 @@ Swapping these lines adds about 120 characters (3492 to about 3610, under 4000):
 - a new line after it: `• התראה לבחירתך בזמן משמרת, עם הסכום עד עכשיו וכפתור סיום` (1.34.0)
 - `• בעברית, באנגלית, בערבית, ברוסית, בצרפתית ובספרדית` becomes
   `• בעברית, באנגלית, בערבית, ברוסית, בצרפתית, בספרדית ובאמהרית` (Amharic since 1.32.4)
+
+## Note (19 Nov 2026)
+The Plus paragraph is back in all 8 listings in Play Console (the subscription is live). The Console text is newer than this file. Hebrew paragraph, placed before "מקורות רשמיים":
+Shaati Plus (לבחירתך)
+12 עיצובים לכרטיס השכר, דוח החזר מס מלא, וניתוח וייצוא בלי הגבלה. מנוי חודשי או שנתי דרך Google Play, מבטלים בכל רגע. כל השאר כלול גם בלי Plus.
