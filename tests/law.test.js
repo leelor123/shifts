@@ -97,10 +97,52 @@ T.test('law: by-year values — 2025 and 2026 National Insurance, the recuperati
   // a threshold an earlier version saved as its default still follows the law; one the user typed stays
   T.eq(Engine.blLimits({ blReducedThreshold: 7522 }, '2026-06-30').thr, 7703);
   T.eq(Engine.blLimits({ blReducedThreshold: 8000 }, '2026-06-30').thr, 8000);
-  T.eq(Engine.recuperationRate(s.leave, '2025-12-31'), 418);
+  T.eq(Engine.recuperationRate(s.leave, '2025-12-31'), 451.5, 'recuperation year 2026 starts 1.7.2025');
   T.eq(Engine.recuperationRate(s.leave, '2026-07-01'), 451.5);
   T.eq(Engine.recuperationRate({ recuperationRate: 418 }, '2026-07-01'), 451.5);
   T.eq(Engine.recuperationRate({ recuperationRate: 500 }, '2026-07-01'), 500);
+});
+/* Guard: the recuperation day rate goes by the recuperation year (1.7 to 30.6), private sector, and the freeze laws
+ * took one day off what was paid in 2024 and 2025. Sources in Engine.LAW_YEARS (recup) and Engine.RECUP_CUT. A change
+ * here is a change in the law: check the extension order first. */
+T.test('law: recuperation rate by recuperation year — 378 / 418 / 451.50 at the exact edges, and the 2024–2025 cut', () => {
+  const r = (k) => Engine.recuperationRate({}, k);
+  T.eq(Engine.recupYearOf('2025-06-30'), 2025); T.eq(Engine.recupYearOf('2025-07-01'), 2026); T.eq(Engine.recupYearOf('2026-06-30'), 2026);
+  T.eq(r('2023-06-30'), 378, 'year 2023 (to 30.6.2023)');
+  T.eq(r('2023-07-01'), 418, 'from 1.7.2023, order 7016/2023');
+  T.eq(r('2025-06-30'), 418, 'frozen through 30.6.2025');
+  T.eq(r('2025-07-01'), 451.5, 'year 2026 = 1.7.2025–30.6.2026, order of 18.8.2026');
+  T.eq(r('2026-06-30'), 451.5);
+  T.eq(Engine.lawYear('recup', '2025-07-01').year, 2026);
+  // from 1.7.2026 nothing is published yet: 451.50 goes on, marked pending until 2027's row has a number
+  if (Engine.LAW_YEARS[2027].recup === null) {
+    T.eq(Engine.lawYear('recup', '2026-07-01').pending, true);
+    T.eq(Engine.lawYear('recup', '2026-06-30').pending, false);
+    T.eq(r('2026-11-19'), 451.5);
+  }
+  T.eq(451.5 - 418, 33.5, 'the top-up owed a day where 418 was paid for 1.7.2025–30.6.2026');
+  T.eq(Engine.recupCut('2023-12-31'), 0); T.eq(Engine.recupCut('2024-08-01'), 1); T.eq(Engine.recupCut('2025-12-31'), 1); T.eq(Engine.recupCut('2026-01-01'), 0);
+  // a user's own rate still wins; a stored law rate of any year still follows the law
+  T.eq(Engine.recuperationRate({ recuperationRate: 378 }, '2025-08-01'), 451.5);
+  T.eq(Engine.recuperationRate({ recuperationRate: 471.4 }, '2025-08-01'), 471.4);
+});
+T.test('law: the recuperation estimate takes the cut day off in 2025 and not in 2026 (leaveBalances)', () => {
+  const settings = Defaults.defaultSettings();
+  settings.startDate = '2021-01-01';
+  const emp = Object.assign(Defaults.defaultEmployer(), { otLaw: false, otThreshold: 8 });
+  const roles = Defaults.defaultRoles();
+  const shifts = [];
+  for (let k = '2024-07-01'; k <= '2026-08-31'; k = U.addDays(k, 1)) {
+    if (U.dow(k) < 5) shifts.push({ id: 's' + k, kind: 'shift', employerId: emp.id, roleId: roles[0].id, status: 'done', start: U.toEpoch(k, '08:00'), end: U.toEpoch(k, '12:00'), breakMin: 0, breakPaid: true, items: [] });
+  }
+  const m = Engine.buildModel({ settings, employers: [emp], roles, dayRules: [], shifts, entries: [] });
+  const b25 = Engine.leaveBalances(m, '2025-08-31'); const r25 = b25.recuperation;
+  const b26 = Engine.leaveBalances(m, '2026-08-31'); const r26 = b26.recuperation;
+  T.ok(b25.jobPct > 0 && b26.jobPct > 0, 'a part-time job');
+  T.eq(r25.days, 7); T.eq(r25.cut, 1); T.eq(r25.rate, 451.5);
+  T.near(r25.amount, 6 * 451.5 * b25.jobPct, 1e-6, '2025: (7 - 1) days × 451.50 × job share');
+  T.eq(r26.days, 7); T.eq(r26.cut, 0); T.eq(r26.rate, 451.5);
+  T.near(r26.amount, 7 * 451.5 * b26.jobPct, 1e-6, '2026: 7 days × 451.50 × job share');
 });
 T.test('law: the website\'s question pages show the same numbers as the app (node tools/site-pages.js after a change)', () => {
   const fs = require('fs'); const path = require('path');
