@@ -570,6 +570,11 @@ body.fx .nav .fab:active { transform: scale(.9) rotate(90deg); }
 @keyframes rise { from { opacity: 0; transform: translateY(12px) scale(.985); } }
 .view.first .hero-num { animation: num-in .7s cubic-bezier(.2, .8, .2, 1) .12s both; }
 @keyframes num-in { from { opacity: 0; transform: scale(.92); filter: blur(4px); } }
+/* ...but the home screen's sky is there whole from its first frame (it does not rise), so the block that sits on it is
+   there too: the greeting, the pay card with its number and the start button never rise. Rising, they left a few
+   frames of sky alone after the setup questions, the demo and the sign-in (19 Nov 2026, qa/home-handover-test.js).
+   The cards under them still rise in turn. */
+.view.first > .home-sky ~ :is(.home-top, .home-hero, .hh-assume, .home-action, .timer-card), .view.first > .home-sky ~ .home-hero .hero-num { animation: none; }
 /* the setup questions: the background shapes drift slowly */
 .ob-bg i { will-change: transform; animation: ob-blob 24s ease-in-out infinite alternate; }
 .ob-bg i:nth-child(2) { animation-duration: 29s; animation-delay: -9s; }
