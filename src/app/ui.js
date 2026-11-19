@@ -466,7 +466,42 @@
     document.body.appendChild(a); a.click(); a.remove();
     setTimeout(() => URL.revokeObjectURL(url), 4000);
   }
+  /** An image made from the demo's invented numbers says so on itself: a band across its top, kept wherever the picture
+   *  goes (a share card "Shaati found me ₪X" from the demo must never pass for a real payslip). A picture that could not
+   *  be marked is not shared. */
+  const DEMO_MARK = 'מצב הדגמה: נתונים לדוגמה';
+  const isDemo = () => !!(root.Store && root.Store.S.settings && root.Store.S.settings.demo);
+  async function demoMarked(blob) {
+    let img = null, url = '';
+    try {
+      if (root.createImageBitmap) img = await createImageBitmap(blob);
+      else {
+        url = URL.createObjectURL(blob);
+        img = await new Promise((ok, no) => { const i = new Image(); i.onload = () => ok(i); i.onerror = no; i.src = url; });
+      }
+      const W = img.width, H = img.height;
+      const c = document.createElement('canvas'); c.width = W; c.height = H;
+      const g = c.getContext('2d');
+      g.drawImage(img, 0, 0);
+      const bh = Math.max(44, Math.round(Math.min(W, H) * 0.085));
+      g.fillStyle = 'rgba(15, 23, 42, .86)'; g.fillRect(0, 0, W, bh);
+      g.fillStyle = '#fde68a'; g.textAlign = 'center'; g.textBaseline = 'middle'; g.direction = U.RTL ? 'rtl' : 'ltr';
+      let px = Math.round(bh * 0.46);
+      const font = () => `600 ${px}px Fredoka, Rubik, "Segoe UI", Arial, sans-serif`;
+      g.font = font();
+      while (px > 12 && g.measureText(DEMO_MARK).width > W * 0.92) { px -= 2; g.font = font(); }
+      g.fillText(DEMO_MARK, W / 2, bh / 2);
+      const out = await new Promise((r) => c.toBlob(r, 'image/png'));
+      return out;
+    } catch (e) { return null; } finally { if (url) URL.revokeObjectURL(url); if (img && img.close) img.close(); }
+  }
   async function shareFile(filename, blob, title, text) {
+    if (isDemo() && blob && /^image\//.test(blob.type || '')) {
+      blob = await demoMarked(blob);
+      if (!blob) { toast('לא הצלחנו ליצור תמונה'); return false; }
+      filename = 'demo-' + String(filename).replace(/\.[a-z0-9]+$/i, '') + '.png';
+      if (text) text = DEMO_MARK + '. ' + text;
+    }
     try {
       const file = new File([blob], filename, { type: blob.type });
       if (navigator.canShare && navigator.canShare({ files: [file] })) {

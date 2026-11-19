@@ -284,7 +284,7 @@ service cloud.firestore {
       return request.auth != null && exists(/databases/$(database)/documents/admins/$(request.auth.uid));
     }
     function validStats(d) {
-      return d.keys().hasOnly(['v', 'p', 'ios', 'src', 'first', 'last', 'days', 'sh', 's30', 'ps', 'age', 'f', 't'])
+      return d.keys().hasOnly(['v', 'p', 'ios', 'src', 'first', 'last', 'days', 'sh', 's30', 'ps', 'fsd', 'age', 'f', 't'])
         && d.v is string && d.v.size() <= 20
         && d.p in ['android', 'pwa', 'web']
         && (!('ios' in d) || d.ios is bool)
@@ -295,6 +295,8 @@ service cloud.firestore {
         && d.sh is int && d.sh >= 0 && d.sh < 1000000
         && d.s30 is int && d.s30 >= 0 && d.s30 < 100000
         && d.ps is int && d.ps >= 0 && d.ps < 100000
+        // days from the first day of use to the first shift (1.42, the admin funnel's "within a day"); optional
+        && (!('fsd' in d) || (d.fsd is int && d.fsd >= 0 && d.fsd < 10000))
         && d.age in ['u18', '18p', '']
         && d.f is map && d.f.size() <= 22
         && d.t is int;

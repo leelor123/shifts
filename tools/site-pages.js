@@ -391,6 +391,22 @@ const PAGES = [
 ];
 
 /* ---------------- the page ---------------- */
+// the same questions in Arabic and Russian (tools/site-pages-intl.js), from the same numbers: site/ar/<slug>, site/ru/<slug>
+const INTL = require('./site-pages-intl')({
+  MW, mwYear, prevMW: Engine.MIN_WAGE.length > 1 ? Engine.MIN_WAGE[Engine.MIN_WAGE.length - 2] : null, Y, RECUP, recupYear,
+  recupDays: recupRows.map(([, d]) => d), HOURLY_EX, OTL, OT, REST, nis, dmy, hm, GOV,
+  minor: { day: Y15.dayHours, day16: Y16.dayHours, eve: Y16.eveHours, week: Engine.WEEK_REG_H_MINOR },
+  BRK, YB, Y15, Y16, PAY_DAY, PEN, TRAVEL_CAP, pad2,
+});
+const LANGS = Object.keys(INTL); // ar, ru
+const urlOf = (slug, lang) => `${SITE}/${lang && lang !== 'he' ? lang + '/' : ''}${slug}`;
+const langsOf = (slug) => ['he'].concat(LANGS.filter((l) => INTL[l].pages[slug]));
+const LANG_NAME = { he: 'עברית', ar: 'العربية', ru: 'Русский' };
+// the link to the app in the page's own language (index.<lang>.html), with the page that sent it
+const appIn = (lang, slug) => (lang === 'he' ? appFrom(slug) : APP + `index.${lang}.html?from=seo-${lang}-${slug}`);
+// in a language folder the fonts are one level up, and the page preloads its own script's font
+const fontHead = (lang) => (lang === 'he' ? FONT_HEAD : [{ ar: 'rubik-arabic', ru: 'rubik-cyrillic' }[lang], 'rubik-latin'].map((x) => `<link rel="preload" href="../fonts/${x}.woff2" as="font" type="font/woff2" crossorigin>`).join('\n') + '\n<style id="fonts">' + FONT_CSS.replace(/url\(fonts\//g, 'url(../fonts/') + '</style>');
+
 const CSS = `
 :root { --bg: #f7f8fb; --surface: #fff; --surface-2: #eef1f8; --ink: #0f1a33; --ink-2: #556078; --line: #e2e6ef; --brand: #0d2b6b; --brand-2: #16398a; --gold: #e9c987; --cta-1: #0d2b6b; --cta-2: #06173d; color-scheme: light; }
 @media (prefers-color-scheme: dark) { :root { --bg: #0a0f1f; --surface: #111a30; --surface-2: #16203a; --ink: #eef1f8; --ink-2: #a4adc4; --line: #222c46; --brand: #a9c0f2; --brand-2: #c3d3f7; color-scheme: dark; } }
@@ -443,25 +459,35 @@ footer { text-align: center; color: var(--ink-2); font-size: .9rem; padding: 0 1
 header :focus-visible, .cta :focus-visible { outline-color: var(--gold); }
 .nw { white-space: nowrap; }`;
 
-function page(p, date) {
-  const url = `${SITE}/${p.slug}`;
+function page(p, date, lang) {
+  lang = lang || 'he';
+  const L = lang === 'he' ? null : INTL[lang];
+  if (L) p = Object.assign({ slug: p.slug }, L.pages[p.slug]);
+  const url = urlOf(p.slug, lang);
+  const up = L ? '../' : '';
+  const alt = langsOf(p.slug);
+  const hreflang = alt.length > 1 ? alt.map((l) => `<link rel="alternate" hreflang="${l === 'he' ? 'he-IL' : l}" href="${urlOf(p.slug, l)}">`).join('\n') + `\n<link rel="alternate" hreflang="x-default" href="${urlOf(p.slug)}">\n` : '';
+  const name = L ? L.name : 'שעתי';
   const ld = [
     { '@context': 'https://schema.org', '@type': 'FAQPage', mainEntity: p.faq.map(([q, a]) => ({ '@type': 'Question', name: q, acceptedAnswer: { '@type': 'Answer', text: a } })) },
-    { '@context': 'https://schema.org', '@type': 'BreadcrumbList', itemListElement: [{ '@type': 'ListItem', position: 1, name: 'שעתי', item: SITE + '/' }, { '@type': 'ListItem', position: 2, name: p.title, item: url }] },
+    { '@context': 'https://schema.org', '@type': 'BreadcrumbList', itemListElement: [{ '@type': 'ListItem', position: 1, name, item: SITE + '/' }, { '@type': 'ListItem', position: 2, name: p.title, item: url }] },
   ];
-  const others = PAGES.filter((x) => x !== p);
+  const others = L ? PAGES.filter((x) => x.slug !== p.slug && L.pages[x.slug]).map((x) => Object.assign({ slug: x.slug }, L.pages[x.slug])) : PAGES.filter((x) => x.slug !== p.slug);
+  const cta = L ? L.cta.concat(appIn(lang, p.slug)) : p.cta || ['שעתי מחשבת את זה בשבילך', 'רושמים משמרות, ושעתי מעריכה את השכר לפי חוקי העבודה: שבתות וחגים לפי העיר, שעות נוספות, שכר מינימום לפי הגיל והבראה. חינם ובלי פרסומות, ומנוי Plus לבחירה.', 'לפתוח את שעתי', appFrom(p.slug)];
+  const note = L ? `${L.note} ${L.updated(dmy(date))}` : `שעתי אינה גוף ממשלתי ואינה מייצגת גוף ממשלתי. המידע כללי ואינו ייעוץ משפטי; בהסכם קיבוצי, צו הרחבה ענפי או חוזה אישי ייתכנו זכויות נוספות.${p.note ? ' ' + p.note : ''} עודכן ב-${dmy(date)}.`;
+  const moreLangs = alt.length > 1 ? `<p class="src">${L ? L.langs : 'עוד שפות:'} ${alt.filter((l) => l !== lang).map((l) => `<a href="${l === 'he' ? '../' + p.slug : (L ? '../' : '') + l + '/' + p.slug}" lang="${l}" hreflang="${l === 'he' ? 'he-IL' : l}">${LANG_NAME[l]}</a>`).join(' · ')}</p>` : '';
   return `<!doctype html>
-<html lang="he" dir="rtl">
+<html lang="${lang}" dir="${L ? L.dir : 'rtl'}">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>${esc(p.title)} · שעתי</title>
+<title>${esc(p.title)} · ${name}</title>
 <meta name="description" content="${esc(p.desc)}">
 <link rel="canonical" href="${url}">
-<meta name="theme-color" content="#071a45">
+${hreflang}<meta name="theme-color" content="#071a45">
 <meta property="og:type" content="article">
-<meta property="og:locale" content="he_IL">
-<meta property="og:site_name" content="שעתי">
+<meta property="og:locale" content="${L ? L.og : 'he_IL'}">
+<meta property="og:site_name" content="${name}">
 <meta property="og:title" content="${esc(p.title)}">
 <meta property="og:description" content="${esc(p.desc)}">
 <meta property="og:url" content="${url}">
@@ -469,31 +495,31 @@ function page(p, date) {
 <meta property="og:image:type" content="image/jpeg">
 <meta property="og:image:width" content="1200">
 <meta property="og:image:height" content="630">
-<meta property="og:image:alt" content="שעתי: כמה באמת מגיע לך על כל שעה. האפליקציה בטלפון, עם השכר של החודש">
+<meta property="og:image:alt" content="${L ? esc(L.ogAlt) : 'שעתי: כמה באמת מגיע לך על כל שעה. האפליקציה בטלפון, עם השכר של החודש'}">
 <meta name="twitter:card" content="summary_large_image">
-<link rel="icon" href="img/favicon-48.png" sizes="48x48">
-<link rel="apple-touch-icon" href="img/apple-touch-icon.png">
-${FONT_HEAD}
+<link rel="icon" href="${up}img/favicon-48.png" sizes="48x48">
+<link rel="apple-touch-icon" href="${up}img/apple-touch-icon.png">
+${fontHead(lang)}
 <script type="application/ld+json">${JSON.stringify(ld)}</script>
 <style>${CSS}</style>
 </head>
 <body>
-<a class="skip" href="#main">דילוג לתוכן</a>
-<header><div class="bar"><a class="logo" href="./"><img src="img/apple-touch-icon.png" alt="">שעתי</a><a class="btn" href="${appFrom(p.slug)}">לפתוח את שעתי</a></div></header>
+<a class="skip" href="#main">${L ? L.skip : 'דילוג לתוכן'}</a>
+<header><div class="bar"><a class="logo" href="${up || './'}"><img src="${up}img/apple-touch-icon.png" alt="">${name}</a><a class="btn" href="${appIn(lang, p.slug)}">${L ? L.open : 'לפתוח את שעתי'}</a></div></header>
 <main id="main">
-  <nav class="crumbs" aria-label="ניווט"><a href="./">שעתי</a> › ${esc(p.title)}</nav>
+  <nav class="crumbs" aria-label="${L ? L.crumbs : 'ניווט'}"><a href="${up || './'}">${name}</a> › ${esc(p.title)}</nav>
   <h1>${esc(p.title)}</h1>
   <div class="answer">${nwHtml(p.answer)}</div>
   ${nwHtml(p.body)}
-  ${(([b, t, btn, href]) => `<div class="cta"><b>${b}</b><span>${t}</span><a class="btn" href="${href}">${btn}</a></div>`)(p.cta || ['שעתי מחשבת את זה בשבילך', 'רושמים משמרות, ושעתי מעריכה את השכר לפי חוקי העבודה: שבתות וחגים לפי העיר, שעות נוספות, שכר מינימום לפי הגיל והבראה. חינם ובלי פרסומות, ומנוי Plus לבחירה.', 'לפתוח את שעתי', appFrom(p.slug)])}
-  <h2>שאלות נפוצות</h2>
+  ${(([b, t, btn, href]) => `<div class="cta"><b>${b}</b><span>${t}</span><a class="btn" href="${href}">${btn}</a></div>`)(cta)}
+  <h2>${L ? L.faq : 'שאלות נפוצות'}</h2>
   ${p.faq.map(([q, a]) => `<details><summary>${esc(q)}</summary><p>${escWhole(a)}</p></details>`).join('\n  ')}
-  <p class="src">המקור הרשמי: ${p.sources.map(([l, h]) => `<a href="${h}" rel="noopener">${esc(l)} ב-gov.il</a>`).join(' · ')}</p>
-  <div class="note">שעתי אינה גוף ממשלתי ואינה מייצגת גוף ממשלתי. המידע כללי ואינו ייעוץ משפטי; בהסכם קיבוצי, צו הרחבה ענפי או חוזה אישי ייתכנו זכויות נוספות.${p.note ? ' ' + p.note : ''} עודכן ב-${dmy(date)}.</div>
-  <h2>עוד שאלות</h2>
-  <div class="more"><a href="shift-calculator">${esc(CALC.title)}</a><a href="check">${esc(CHECK.title)}</a>${others.map((x) => `<a href="${x.slug}">${esc(x.title)}</a>`).join('')}</div>
+  <p class="src">${L ? L.src : 'המקור הרשמי:'} ${p.sources.map(([l, h]) => `<a href="${h}" rel="noopener">${esc(L ? L.srcOn(l) : l + ' ב-gov.il')}</a>`).join(' · ')}</p>
+${moreLangs ? '  ' + moreLangs + '\n' : ''}  <div class="note">${note}</div>
+  <h2>${L ? L.more : 'עוד שאלות'}</h2>
+  <div class="more">${L ? '' : `<a href="shift-calculator">${esc(CALC.title)}</a><a href="check">${esc(CHECK.title)}</a>`}${others.map((x) => `<a href="${x.slug}">${esc(x.title)}</a>`).join('')}</div>
 </main>
-${FOOTER}
+${L ? L.footer : FOOTER}
 </body>
 </html>
 `;
@@ -872,9 +898,10 @@ const CHECK_DATA = {
 const headOf = (rel) => { try { return require('child_process').execSync('git show HEAD:' + rel, { cwd: ROOT, stdio: ['ignore', 'pipe', 'ignore'] }).toString(); } catch (e) { return ''; } };
 const NOTE_DATE = /עודכן ב-(\d{1,2})\.(\d{1,2})\.(\d{4})\./;
 const dated = {};
-function writeDated(file, make) {
-  const rel = 'site/' + file, now = make(today), head = headOf(rel), m = head.match(NOTE_DATE);
-  const same = m && head.replace(NOTE_DATE, '') === now.replace(NOTE_DATE, '');
+function writeDated(file, make, re) {
+  const DATE = re || NOTE_DATE; // the page's own "updated on" (the Arabic and Russian pages say it in their language)
+  const rel = 'site/' + file, now = make(today), head = headOf(rel), m = head.match(DATE);
+  const same = m && head.replace(DATE, '') === now.replace(DATE, '');
   const date = same ? `${m[3]}-${m[2].padStart(2, '0')}-${m[1].padStart(2, '0')}` : today;
   fs.writeFileSync(path.join(ROOT, rel), same ? make(date) : now);
   dated[file] = date;
@@ -892,17 +919,25 @@ fs.writeFileSync(path.join(ROOT, 'site', 'calc.js'), calcJs());
 fs.writeFileSync(path.join(ROOT, 'site', 'check.js'), fs.readFileSync(path.join(__dirname, 'site-check.js'), 'utf8').replace('const D = __DATA__;', 'const D = ' + JSON.stringify(CHECK_DATA) + ';'));
 
 for (const p of PAGES) writeDated(p.slug + '.html', (d) => page(p, d));
+for (const l of LANGS) {
+  fs.mkdirSync(path.join(ROOT, 'site', l), { recursive: true });
+  for (const p of PAGES) if (INTL[l].pages[p.slug]) writeDated(`${l}/${p.slug}.html`, (d) => page(p, d, l), INTL[l].dateRe);
+}
 fs.writeFileSync(path.join(ROOT, 'site', 'sitemap.xml'), `<?xml version="1.0" encoding="UTF-8"?>
-<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9" xmlns:xhtml="http://www.w3.org/1999/xhtml">
   <url><loc>${SITE}/</loc><lastmod>${homeDate}</lastmod></url>
   <url><loc>${SITE}/shift-calculator</loc><lastmod>${dated['shift-calculator.html']}</lastmod></url>
   <url><loc>${SITE}/check</loc><lastmod>${dated['check.html']}</lastmod></url>
   <url><loc>${SITE}/embed</loc><lastmod>${dated['embed.html']}</lastmod></url>
-${PAGES.map((p) => `  <url><loc>${SITE}/${p.slug}</loc><lastmod>${dated[p.slug + '.html']}</lastmod></url>`).join('\n')}
+${PAGES.map((p) => langsOf(p.slug).map((l) => {
+  const alt = langsOf(p.slug);
+  const links = alt.length > 1 ? alt.map((a) => `<xhtml:link rel="alternate" hreflang="${a === 'he' ? 'he-IL' : a}" href="${urlOf(p.slug, a)}"/>`).join('') + `<xhtml:link rel="alternate" hreflang="x-default" href="${urlOf(p.slug)}"/>` : '';
+  return `  <url><loc>${urlOf(p.slug, l)}</loc><lastmod>${dated[(l === 'he' ? '' : l + '/') + p.slug + '.html']}</lastmod>${links}</url>`;
+}).join('\n')).join('\n')}
 </urlset>
 `);
 // the legal pages, the website's own copies (a link to the app's address opens the app on a phone that has it)
 const legal = require('./legal-pages').build(path.join(ROOT, 'src'), path.join(ROOT, 'site'), true);
 fs.writeFileSync(path.join(ROOT, 'site', 'robots.txt'), `User-agent: *\nAllow: /\nSitemap: ${SITE}/sitemap.xml\n`);
-console.log('wrote', PAGES.map((p) => p.slug + '.html').join(', '), '+', legal.join(', '), '+ sitemap.xml, robots.txt');
+console.log('wrote', PAGES.map((p) => p.slug + '.html').join(', '), '+', LANGS.map((l) => `${l}/ ${Object.keys(INTL[l].pages).length}`).join(', '), '+', legal.join(', '), '+ sitemap.xml, robots.txt');
 console.log('minimum wage', MW.from, MW.hourly, '· youth', Y.map((y) => y.hourly).join(' / '), '· recuperation', recupYear, RECUP, '· rest', REST.join('/'));

@@ -5,7 +5,8 @@
  * Once a day, a signed-in device whose user said yes writes one small
  * record to stats/{random install id}: app version, platform,
  * first/last day of use, number of active days, shift and payslip
- * counts, an age group (under / over 18), whether it is an iPhone
+ * counts, how many days after the first day the first shift was entered
+ * (fsd, for the funnel's "within a day" step), an age group (under / over 18), whether it is an iPhone
  * (yes/no, for the dashboard's funnel per platform, core/funnel.js),
  * which page of the website sent it, if one did (src: "seo-overtime", the
  * ?from= of its first opening) and which features are on.
@@ -57,6 +58,7 @@
     const from30 = U.addDays(k, -30);
     const done = S.shifts.filter((s) => s.status === 'done');
     const age = S.settings.birthDate ? root.Engine.ageAt(S.settings.birthDate, k) : null;
+    const fsd = root.Funnel ? root.Funnel.firstShiftDays(S.meta.firstActiveDay || k, S.shifts.map((s) => s.createdAt)) : null;
     return {
       v: String(root.APP_VERSION || '').slice(0, 20),
       p: platform(),
@@ -67,6 +69,7 @@
       sh: Math.min(999999, done.length),
       s30: Math.min(99999, done.filter((s) => U.epochKey(s.start) >= from30).length),
       ps: Math.min(99999, S.payslips.length),
+      ...(fsd == null ? {} : { fsd }), // days from the first day to the first shift (core/funnel.js); none without a shift
       age: age == null ? '' : age < 18 ? 'u18' : '18p',
       ...(Stats.cleanFrom(S.meta.firstFrom) ? { src: Stats.cleanFrom(S.meta.firstFrom) } : {}), // the website page that sent it
       f: (() => { const sim = !!(root.Plus && root.Plus.preview && root.Plus.preview()); return {
@@ -108,9 +111,10 @@
       if (!force && S.meta.statsSig === sig) { await Store.setMeta({ statsSentAt: Date.now(), statsMark: mark }); return; }
       const { fs, db } = await Cloud.sdk();
       try { await fs.setDoc(fs.doc(db, 'stats', S.meta.installId), rec); } catch (e) {
-        // rules from before the ios field (1.33) or the src field (1.40) refuse them: the record still goes, without them
+        // rules from before the ios field (1.33), the src field (1.40) or the fsd field (1.42) refuse them: the record
+        // still goes, without them
         if (!(e && e.code === 'permission-denied')) throw e;
-        delete rec.ios; delete rec.src;
+        delete rec.ios; delete rec.src; delete rec.fsd;
         await fs.setDoc(fs.doc(db, 'stats', S.meta.installId), rec);
       }
       await Store.setMeta({ statsSentAt: Date.now(), statsSig: sig, statsMark: mark });

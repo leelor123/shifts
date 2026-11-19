@@ -109,14 +109,31 @@
       await Invite.refresh(true);
       if (root.Fx) root.Fx.celebrate('big');
       UI.toast('קיבלת חודש Shaati Plus במתנה 🎁');
-      // the gift is the designs: straight to choosing one for the card
-      if (root.Plus && root.Plus.design && !App.blocking && !document.querySelector('.sheet, .dialog')) setTimeout(() => root.Plus.design(), 900);
+      // the gift is the designs: straight to choosing one for the card, once the screen is clear
+      designsWhenClear();
       return true;
     } catch (e) {
       if (e && /permission/i.test(e.code || e.message || '')) drop(); // invited once already, or the code is gone
       return false;
     } finally { claiming = false; }
   };
+
+  /* The designs to choose from, when nothing else is on the screen: the gift comes right after the first shift was
+   * saved, while that shift's own sheet is usually still open, and the picker was skipped then, so most new friends
+   * never saw it (plus-grow-test, 19 Nov 2026). It waits until the screen has been clear for a second, up to two
+   * minutes, the way the rating ask does (review.js), and never opens over a sheet or a question. */
+  function designsWhenClear() {
+    if (!(root.Plus && root.Plus.design)) return;
+    const clear = () => !UI.sheets.length && !document.querySelector('.dialog') && !App.blocking && document.visibilityState === 'visible';
+    let calm = 0, tries = 0;
+    const wait = setInterval(() => {
+      if (++tries > 240) { clearInterval(wait); return; }
+      calm = clear() ? calm + 500 : 0;
+      if (calm < 1000) return;
+      clearInterval(wait);
+      root.Plus.design();
+    }, 500);
+  }
 
   /** At start, and after the numbers changed (a shift was saved): the link's gift, then the gift as it stands. */
   Invite.boot = () => { setTimeout(() => { Invite.claim().then((took) => { if (!took) Invite.refresh(); }); }, 4000); };

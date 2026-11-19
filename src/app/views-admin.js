@@ -64,7 +64,9 @@
         <div class="tiny muted" style="margin-top:8px">מהסטטיסטיקה האנונימית (מכשירים שלא כיבו אותה), מתעדכן כל כמה שעות. הסכומים המדויקים ותשלומי המס בדוחות של Google Play ושל Lemon Squeezy.</div></div>`;
   }
   /* The way in: of the devices that started a week ago or more (they had the time; the demo is not counted), how
-   * many got to each step, each step out of the one before it — where people are lost shows at once. */
+   * many got to each step, each step out of the one before it — where people are lost shows at once. The first shift
+   * counts on the first day of use or the next one (Funnel.firstDay, the record's fsd); a record from an older version
+   * has no fsd, so a shift on it passes the step and the note says how many passed that way. */
   function funnel(rows) {
     const k = U.todayKey();
     const days = (a, b) => Math.round((Date.parse(b) - Date.parse(a)) / 86400000);
@@ -74,16 +76,17 @@
     let cur = old;
     for (const [label, keep] of [
       ['התחילו להשתמש', () => true],
-      ['רשמו משמרת', (r) => (root.Funnel ? root.Funnel.entered(r) : +r.sh > 0)],
+      ['רשמו משמרת ראשונה תוך יום', (r) => { const d = root.Funnel.firstDay(r); return d == null ? root.Funnel.entered(r) : d; }],
       ['חזרו אחרי שבוע', (r) => days(r.first, r.last) >= 7],
       ['ראו את Plus', (r) => f(r, 'plusSeen')],
       ['ניסו את Plus (ניסיון או מתנה)', (r) => f(r, 'plusTry') || f(r, 'gift') || f(r, 'plus')],
       ['שילמו', (r) => f(r, 'plus')],
     ]) { const prev = cur.length; cur = cur.filter(keep); steps.push([label, cur.length, prev]); }
     const start = old.length;
+    const unknown = old.filter((r) => root.Funnel.firstDay(r) == null && root.Funnel.entered(r)).length;
     return `<div class="section-title">${icon('filter', 's')} המשפך: מהתקנה ועד תשלום</div>
       <div class="card adm-funnel">${steps.map(([label, n, prev], i) => `<div class="adm-bar"><span class="nm">${esc(label)}</span><span class="track"><i style="width:${pct(n, start)}%"></i></span><span class="vv">${n} · ${pct(n, start)}%${i ? `<small class="adm-drop">${pct(n, prev)}% מהקודם</small>` : ''}</span></div>`).join('')}
-        <div class="tiny muted" style="margin-top:8px">מכשירים שהתחילו לפני שבוע לפחות (${start}), בלי מצב הדגמה. כל שלב מתוך מי שעבר את הקודם.</div></div>` + funnelByPlatform(rows) + bySource(rows);
+        <div class="tiny muted" style="margin-top:8px">מכשירים שהתחילו לפני שבוע לפחות (${start}), בלי מצב הדגמה. כל שלב מתוך מי שעבר את הקודם.${unknown ? ' ' + (unknown === 1 ? 'גרסה קודמת של האפליקציה לא מדווחת מתי נרשמה המשמרת הראשונה: מכשיר אחד כזה נספר בשלב השני כי רשם משמרת.' : `גרסה קודמת של האפליקציה לא מדווחת מתי נרשמה המשמרת הראשונה: ${unknown} מכשירים כאלה נספרו בשלב השני כי רשמו משמרת.`) : ''}</div></div>` + funnelByPlatform(rows) + bySource(rows);
   }
   /* The same way in, by when devices started (the last 30 or 90 days) and by platform (core/funnel.js), from the
    * records already read. Both periods are drawn at once and a tap shows one: no new reading, no redraw. */

@@ -780,9 +780,11 @@ let errors = [];
     await closeAll();
   });
   await step('anonymous stats: record has only the allowed fields', async () => {
-    const r = await ev(() => Stats._record());
+    const [r, hasShift] = await ev(() => [Stats._record(), Store.S.shifts.some((s) => +s.createdAt > 0)]);
     const keys = Object.keys(r).sort().join(',');
-    if (keys !== 'age,days,f,first,ios,last,p,ps,s30,sh,t,v') throw new Error('keys: ' + keys);
+    // fsd (days from the first day to the first shift, the funnel's 'within a day') is there exactly when a shift is
+    if (keys !== (hasShift ? 'age,days,f,first,fsd,ios,last,p,ps,s30,sh,t,v' : 'age,days,f,first,ios,last,p,ps,s30,sh,t,v')) throw new Error('keys: ' + keys);
+    if ('fsd' in r && !(Number.isInteger(r.fsd) && r.fsd >= 0 && r.fsd < 10000)) throw new Error('fsd: ' + r.fsd);
     if (typeof r.ios !== 'boolean') throw new Error('ios');
     if (!/^\d{4}-\d{2}-\d{2}$/.test(r.first) || !/^\d{4}-\d{2}-\d{2}$/.test(r.last)) throw new Error('dates');
     if (!['android', 'pwa', 'web'].includes(r.p) || !['u18', '18p', ''].includes(r.age)) throw new Error('enums');
