@@ -71,6 +71,9 @@
       Object.assign(row, data, { exists: true, g: row.g || {} });
       for (const [game, vals] of Object.entries(gp || {})) row.g[game] = LB.mergeGame(row.g[game], vals);
     }
+    // the row now holds this look: the sync mark follows every write (a save with Plus on kept the mark from before,
+    // so when Plus ended the look matched that old mark and the background stayed in the table, 19 Nov 2026)
+    synced = Object.keys(missing(row)).length ? '' : print();
     placeMe(row, gPatch, pr);
   }
   /** My new scores, name and look go into the boards kept on the phone, in place (reading a board again after every

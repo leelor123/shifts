@@ -765,9 +765,9 @@
    *  the phone for permission first (mount below), and it stays off when the answer is no. */
   function runNoteRow(A, perm) {
     const on = A.runNote === true;
-    const sub = !on ? 'מתי התחלת, בערך כמה הרווחת וכפתור לסיום. בלי צליל'
-      : perm === 'granted' ? 'בלי צליל. הסכום מתעדכן כשהאפליקציה פתוחה'
-        : 'ההתראות חסומות בטלפון, ולכן היא לא מופיעה';
+    // the same line on and off: a line that changed with the switch (two lines to one) moved the switch and the
+    // rows under it 9px a quarter second after the tap (19 Nov 2026). Only a phone that blocks notifications says so.
+    const sub = on && perm !== 'granted' ? 'ההתראות חסומות בטלפון, ולכן היא לא מופיעה' : 'מתי התחלת, בערך כמה הרווחת וכפתור לסיום. בלי צליל';
     return `<label class="switch-row"><span class="body"><span class="t">התראה קבועה בזמן משמרת</span><span class="s">${sub}</span></span><input type="checkbox" class="switch" data-runnote ${on ? 'checked' : ''}></label>`;
   }
   RENDER.alerts = {

@@ -257,7 +257,7 @@
   "where": [
    "app/app.js:411",
    "app/views-friends.js:147",
-   "app/views-leaderboard.js:566"
+   "app/views-leaderboard.js:569"
   ]
  },
  {
@@ -271,7 +271,7 @@
    "app/shift-end.js:31",
    "app/ui.js:426",
    "app/ui.js:433",
-   "app/views-leaderboard.js:426",
+   "app/views-leaderboard.js:429",
    "app/views-login.js:95",
    "app/views-login.js:119",
    "app/views-payslip.js:1215",
@@ -504,7 +504,7 @@
   "where": [
    "app/app.js:891",
    "app/run-note.js:109",
-   "app/views-leaderboard.js:426",
+   "app/views-leaderboard.js:429",
    "app/views-settings.js:910"
   ]
  },
@@ -607,7 +607,7 @@
   "kind": "tpl",
   "where": [
    "app/arrive.js:33",
-   "app/views-leaderboard.js:494"
+   "app/views-leaderboard.js:497"
   ]
  },
  {
@@ -760,7 +760,7 @@
   "where": [
    "app/arrive.js:100",
    "app/nfc.js:137",
-   "app/views-leaderboard.js:440"
+   "app/views-leaderboard.js:443"
   ]
  },
  {
@@ -1010,7 +1010,7 @@
    "app/pickers.js:95",
    "app/views-home.js:251",
    "app/views-leaderboard.js:17",
-   "app/views-leaderboard.js:468",
+   "app/views-leaderboard.js:471",
    "core/noteplan.js:132",
    "core/noteplan.js:164"
   ]
@@ -5314,7 +5314,7 @@
   "where": [
    "app/salary-check.js:72",
    "app/views-friends.js:131",
-   "app/views-leaderboard.js:544",
+   "app/views-leaderboard.js:547",
    "app/views-settings.js:549"
   ]
  },
@@ -5597,7 +5597,7 @@
   "where": [
    "app/schedule-import.js:161",
    "app/views-leaderboard.js:17",
-   "app/views-leaderboard.js:468"
+   "app/views-leaderboard.js:471"
   ]
  },
  {
@@ -6056,7 +6056,7 @@
   "kind": "lit",
   "where": [
    "app/ui.js:504",
-   "app/views-leaderboard.js:515",
+   "app/views-leaderboard.js:518",
    "app/views-payslip.js:1582",
    "app/views-recap.js:240"
   ]
@@ -7333,7 +7333,7 @@
   "where": [
    "app/views-friends.js:24",
    "app/views-leaderboard.js:17",
-   "app/views-leaderboard.js:468",
+   "app/views-leaderboard.js:471",
    "app/views-onboarding.js:125",
    "app/views-quick.js:51"
   ]
@@ -7344,7 +7344,7 @@
   "where": [
    "app/views-friends.js:24",
    "app/views-leaderboard.js:17",
-   "app/views-leaderboard.js:468",
+   "app/views-leaderboard.js:471",
    "app/views-reports.js:57",
    "app/views-reports.js:57"
   ]
@@ -7390,7 +7390,7 @@
   "kind": "lit",
   "where": [
    "app/views-friends.js:131",
-   "app/views-leaderboard.js:544"
+   "app/views-leaderboard.js:547"
   ]
  },
  {
@@ -7398,7 +7398,7 @@
   "kind": "lit",
   "where": [
    "app/views-friends.js:144",
-   "app/views-leaderboard.js:562"
+   "app/views-leaderboard.js:565"
   ]
  },
  {
@@ -7406,7 +7406,7 @@
   "kind": "lit",
   "where": [
    "app/views-friends.js:157",
-   "app/views-leaderboard.js:584"
+   "app/views-leaderboard.js:587"
   ]
  },
  {
@@ -7569,7 +7569,7 @@
   "kind": "lit",
   "where": [
    "app/views-friends.js:264",
-   "app/views-leaderboard.js:301"
+   "app/views-leaderboard.js:304"
   ]
  },
  {
@@ -7640,7 +7640,7 @@
   "kind": "lit",
   "where": [
    "app/views-friends.js:321",
-   "app/views-leaderboard.js:587"
+   "app/views-leaderboard.js:590"
   ]
  },
  {
@@ -7697,7 +7697,7 @@
   "kind": "lit",
   "where": [
    "app/views-friends.js:374",
-   "app/views-leaderboard.js:602",
+   "app/views-leaderboard.js:605",
    "app/views-support.js:103"
   ]
  },
@@ -10701,456 +10701,456 @@
   "key": "השיא נקבע היום ב-{0}",
   "kind": "tpl",
   "where": [
-   "app/views-leaderboard.js:124"
+   "app/views-leaderboard.js:127"
   ]
  },
  {
   "key": "השיא נקבע אתמול ב-{0}",
   "kind": "tpl",
   "where": [
-   "app/views-leaderboard.js:124"
+   "app/views-leaderboard.js:127"
   ]
  },
  {
   "key": "השיא נקבע ב-{0}, {1}",
   "kind": "tpl",
   "where": [
-   "app/views-leaderboard.js:124"
+   "app/views-leaderboard.js:127"
   ]
  },
  {
   "key": "<button class=\"btn text sm\" data-lb-open>{0} להתחרות בטבלת האלופים</button>",
   "kind": "tpl",
   "where": [
-   "app/views-leaderboard.js:255"
+   "app/views-leaderboard.js:258"
   ]
  },
  {
   "key": "<span class=\"muted\">🏆 בודקים את המקום שלך…</span>",
   "kind": "lit",
   "where": [
-   "app/views-leaderboard.js:259"
+   "app/views-leaderboard.js:262"
   ]
  },
  {
   "key": "שיא של כל הזמנים!",
   "kind": "lit",
   "where": [
-   "app/views-leaderboard.js:263"
+   "app/views-leaderboard.js:266"
   ]
  },
  {
   "key": "שיא שנתי חדש!",
   "kind": "lit",
   "where": [
-   "app/views-leaderboard.js:263"
+   "app/views-leaderboard.js:266"
   ]
  },
  {
   "key": "שיא חודשי חדש!",
   "kind": "lit",
   "where": [
-   "app/views-leaderboard.js:263"
+   "app/views-leaderboard.js:266"
   ]
  },
  {
   "key": "שיא שבועי חדש!",
   "kind": "lit",
   "where": [
-   "app/views-leaderboard.js:263"
+   "app/views-leaderboard.js:266"
   ]
  },
  {
   "key": "עוד לא בטופ 20 של היום. עוד סיבוב?",
   "kind": "lit",
   "where": [
-   "app/views-leaderboard.js:265"
+   "app/views-leaderboard.js:268"
   ]
  },
  {
   "key": "👑 מקום ראשון היום!",
   "kind": "lit",
   "where": [
-   "app/views-leaderboard.js:266"
+   "app/views-leaderboard.js:269"
   ]
  },
  {
   "key": "🚀 עלית למקום {0} היום!",
   "kind": "tpl",
   "where": [
-   "app/views-leaderboard.js:266"
+   "app/views-leaderboard.js:269"
   ]
  },
  {
   "key": "🏆 מקום {0} היום",
   "kind": "tpl",
   "where": [
-   "app/views-leaderboard.js:266"
+   "app/views-leaderboard.js:269"
   ]
  },
  {
   "key": "<span><b>{0}</b>{1}</span><button class=\"btn text sm\" data-lb-open>לטבלה</button>",
   "kind": "tpl",
   "where": [
-   "app/views-leaderboard.js:267"
+   "app/views-leaderboard.js:270"
   ]
  },
  {
   "key": "מתחברים ומתחרים על המקום הראשון",
   "kind": "lit",
   "where": [
-   "app/views-leaderboard.js:281"
+   "app/views-leaderboard.js:284"
   ]
  },
  {
   "key": "היום, השבוע, החודש ובכל הזמנים",
   "kind": "lit",
   "where": [
-   "app/views-leaderboard.js:281"
+   "app/views-leaderboard.js:284"
   ]
  },
  {
   "key": "המקום שלך היום ב{0}: {1}",
   "kind": "tpl",
   "where": [
-   "app/views-leaderboard.js:281"
+   "app/views-leaderboard.js:284"
   ]
  },
  {
   "key": "מי במקום הראשון היום?",
   "kind": "lit",
   "where": [
-   "app/views-leaderboard.js:281"
+   "app/views-leaderboard.js:284"
   ]
  },
  {
   "key": "<button class=\"ach-card lb-card\" data-lb-hub><span class=\"ach-card-e\" aria-hidden=\"true\">🏆</span><span class=\"gm-txt\"><b>טבלת האלופים</b><span data-lb-sub>{0}</span></span>{1}</button>",
   "kind": "tpl",
   "where": [
-   "app/views-leaderboard.js:284"
+   "app/views-leaderboard.js:287"
   ]
  },
  {
   "key": "<button class=\"icon-btn lb-rm\" data-rm=\"{0}\" aria-label=\"הסרת {1} מהטבלה\">{2}</button>",
   "kind": "tpl",
   "where": [
-   "app/views-leaderboard.js:302"
+   "app/views-leaderboard.js:305"
   ]
  },
  {
   "key": "<div class=\"lb-pod p{0} empty\"><div class=\"lb-av\"><span aria-hidden=\"true\">?</span></div><b class=\"lb-n\">פנוי</b><div class=\"lb-step\"><span>{1}</span></div></div>",
   "kind": "tpl",
   "where": [
-   "app/views-leaderboard.js:306"
+   "app/views-leaderboard.js:309"
   ]
  },
  {
   "key": "עוד לא שיחקת היום",
   "kind": "lit",
   "where": [
-   "app/views-leaderboard.js:309"
+   "app/views-leaderboard.js:312"
   ]
  },
  {
   "key": "עוד לא שיחקת השבוע",
   "kind": "lit",
   "where": [
-   "app/views-leaderboard.js:309"
+   "app/views-leaderboard.js:312"
   ]
  },
  {
   "key": "עוד לא שיחקת החודש",
   "kind": "lit",
   "where": [
-   "app/views-leaderboard.js:309"
+   "app/views-leaderboard.js:312"
   ]
  },
  {
   "key": "עוד לא שיחקת השנה",
   "kind": "lit",
   "where": [
-   "app/views-leaderboard.js:309"
+   "app/views-leaderboard.js:312"
   ]
  },
  {
   "key": "עוד לא שיחקת כאן",
   "kind": "lit",
   "where": [
-   "app/views-leaderboard.js:309"
+   "app/views-leaderboard.js:312"
   ]
  },
  {
   "key": "עוד אף אחד לא שיחק היום ב\"{0}\".",
   "kind": "tpl",
   "where": [
-   "app/views-leaderboard.js:310"
+   "app/views-leaderboard.js:313"
   ]
  },
  {
   "key": "עוד אף אחד לא שיחק השבוע ב\"{0}\".",
   "kind": "tpl",
   "where": [
-   "app/views-leaderboard.js:310"
+   "app/views-leaderboard.js:313"
   ]
  },
  {
   "key": "עוד אף אחד לא שיחק החודש ב\"{0}\".",
   "kind": "tpl",
   "where": [
-   "app/views-leaderboard.js:310"
+   "app/views-leaderboard.js:313"
   ]
  },
  {
   "key": "עוד אף אחד לא שיחק השנה ב\"{0}\".",
   "kind": "tpl",
   "where": [
-   "app/views-leaderboard.js:310"
+   "app/views-leaderboard.js:313"
   ]
  },
  {
   "key": "עוד אף אחד לא נכנס לטבלה במשחק הזה.",
   "kind": "lit",
   "where": [
-   "app/views-leaderboard.js:310"
+   "app/views-leaderboard.js:313"
   ]
  },
  {
   "key": "20 הראשונים",
   "kind": "lit",
   "where": [
-   "app/views-leaderboard.js:326"
+   "app/views-leaderboard.js:329"
   ]
  },
  {
   "key": " שחקנים",
   "kind": "lit",
   "where": [
-   "app/views-leaderboard.js:326"
+   "app/views-leaderboard.js:329"
   ]
  },
  {
   "key": "עוד אין שחקנים",
   "kind": "lit",
   "where": [
-   "app/views-leaderboard.js:326"
+   "app/views-leaderboard.js:329"
   ]
  },
  {
   "key": "{0}<div class=\"empty fun lb-empty\">{1}<h3>המקום הראשון פנוי!</h3><div>{2}</div>\n          <button class=\"btn\" data-lb-play>{3} לשחק ולתפוס אותו</button></div>",
   "kind": "tpl",
   "where": [
-   "app/views-leaderboard.js:329"
+   "app/views-leaderboard.js:332"
   ]
  },
  {
   "key": "<div class=\"lb-admin tiny muted\">מנהל: {0}</div>",
   "kind": "tpl",
   "where": [
-   "app/views-leaderboard.js:335"
+   "app/views-leaderboard.js:338"
   ]
  },
  {
   "key": "<button class=\"btn text sm\" data-rm=\"{0}\">הסרת {1}</button>",
   "kind": "tpl",
   "where": [
-   "app/views-leaderboard.js:335"
+   "app/views-leaderboard.js:338"
   ]
  },
  {
   "key": "<div class=\"lb-report-row\"><button class=\"btn text sm\" data-lb-report>{0} דיווח על כינוי לא מתאים</button></div>",
   "kind": "tpl",
   "where": [
-   "app/views-leaderboard.js:336"
+   "app/views-leaderboard.js:339"
   ]
  },
  {
   "key": "<div class=\"lb-me-t\"><b>רוצה להופיע כאן?</b><small>בוחרים כינוי ואימוג׳י, בלי שם אמיתי</small></div><button class=\"btn sm\" data-lb-profile>{0} הצטרפות</button>",
   "kind": "tpl",
   "where": [
-   "app/views-leaderboard.js:340"
+   "app/views-leaderboard.js:343"
   ]
  },
  {
   "key": "<div class=\"lb-me-t\"><b>{0}</b><small>{1}</small></div><button class=\"icon-btn lb-share\" data-lb-share aria-label=\"שיתוף המקום שלי\">{2}</button><button class=\"btn sm\" data-lb-play>{3} לשחק</button>",
   "kind": "tpl",
   "where": [
-   "app/views-leaderboard.js:343"
+   "app/views-leaderboard.js:346"
   ]
  },
  {
   "key": "👑 את/ה במקום הראשון!",
   "kind": "lit",
   "where": [
-   "app/views-leaderboard.js:343"
+   "app/views-leaderboard.js:346"
   ]
  },
  {
   "key": "המקום שלך: {0}",
   "kind": "tpl",
   "where": [
-   "app/views-leaderboard.js:343"
+   "app/views-leaderboard.js:346"
   ]
  },
  {
   "key": "עוד {0}{1} כדי לעקוף את {2}",
   "kind": "tpl",
   "where": [
-   "app/views-leaderboard.js:343"
+   "app/views-leaderboard.js:346"
   ]
  },
  {
   "key": "תשמרו על הכתר 😎",
   "kind": "lit",
   "where": [
-   "app/views-leaderboard.js:343"
+   "app/views-leaderboard.js:346"
   ]
  },
  {
   "key": "<div class=\"lb-me-t\"><b>{0}</b><small>{1}</small></div><button class=\"btn sm\" data-lb-play>{2} לשחק</button>",
   "kind": "tpl",
   "where": [
-   "app/views-leaderboard.js:346"
+   "app/views-leaderboard.js:349"
   ]
  },
  {
   "key": "עוד לא בטופ 20",
   "kind": "lit",
   "where": [
-   "app/views-leaderboard.js:346"
+   "app/views-leaderboard.js:349"
   ]
  },
  {
   "key": "צריך יותר מ-{0}{1}",
   "kind": "tpl",
   "where": [
-   "app/views-leaderboard.js:346"
+   "app/views-leaderboard.js:349"
   ]
  },
  {
   "key": "משחק אחד וכבר את/ה בטבלה",
   "kind": "lit",
   "where": [
-   "app/views-leaderboard.js:346"
+   "app/views-leaderboard.js:349"
   ]
  },
  {
   "key": "<div class=\"card lb-join\">{0}\n          <button class=\"btn block\" data-lb-signin>{1} התחברות לחשבון</button></div>",
   "kind": "tpl",
   "where": [
-   "app/views-leaderboard.js:353"
+   "app/views-leaderboard.js:356"
   ]
  },
  {
   "key": "הטבלה שמורה בחשבון Google. מתחברים, בוחרים כינוי ומתחרים!",
   "kind": "lit",
   "where": [
-   "app/views-leaderboard.js:353"
+   "app/views-leaderboard.js:356"
   ]
  },
  {
   "key": "<div class=\"empty\"><h3>הטבלה לא נטענה</h3><div class=\"small muted\">{0}</div><button class=\"btn tonal\" data-lb-retry>נסו שוב</button></div>",
   "kind": "tpl",
   "where": [
-   "app/views-leaderboard.js:374"
+   "app/views-leaderboard.js:377"
   ]
  },
  {
   "key": "\n        <div class=\"seg lb-games\" role=\"tablist\" aria-label=\"משחק\">{0}</div>\n        <div class=\"seg lb-periods\" role=\"tablist\" aria-label=\"תקופה\">{1}</div>\n        {2}",
   "kind": "tpl",
   "where": [
-   "app/views-leaderboard.js:383"
+   "app/views-leaderboard.js:386"
   ]
  },
  {
   "key": "<button class=\"lb-mine\" data-lb-profile><span class=\"lb-av sm {0}\"><span aria-hidden=\"true\">{1}</span></span><span>{2}</span>{3}<span class=\"vh\">עריכת הכינוי</span></button>",
   "kind": "tpl",
   "where": [
-   "app/views-leaderboard.js:386"
+   "app/views-leaderboard.js:389"
   ]
  },
  {
   "key": "טבלת האלופים 🏆",
   "kind": "lit",
   "where": [
-   "app/views-leaderboard.js:406",
-   "app/views-leaderboard.js:491"
+   "app/views-leaderboard.js:409",
+   "app/views-leaderboard.js:494"
   ]
  },
  {
   "key": "דיווח על כינוי",
   "kind": "lit",
   "where": [
-   "app/views-leaderboard.js:426"
+   "app/views-leaderboard.js:429"
   ]
  },
  {
   "key": "<label class=\"field\"><span class=\"lbl\">על איזה שחקן?</span><select class=\"input\" name=\"who\">{0}</select></label><div class=\"tiny muted\">הדיווח מגיע לצוות האפליקציה, והשחקן לא יודע מי דיווח.</div>",
   "kind": "tpl",
   "where": [
-   "app/views-leaderboard.js:426"
+   "app/views-leaderboard.js:429"
   ]
  },
  {
   "key": "דיווח על כינוי בטבלת האלופים: \"{0}\" ({1}).\nמה לא מתאים בו: ",
   "kind": "tpl",
   "where": [
-   "app/views-leaderboard.js:430"
+   "app/views-leaderboard.js:433"
   ]
  },
  {
   "key": "להסיר מהטבלה?",
   "kind": "lit",
   "where": [
-   "app/views-leaderboard.js:440"
+   "app/views-leaderboard.js:443"
   ]
  },
  {
   "key": "השורה של השחקן תימחק (למשל כינוי לא מתאים). הוא יוכל להצטרף שוב.",
   "kind": "lit",
   "where": [
-   "app/views-leaderboard.js:440"
+   "app/views-leaderboard.js:443"
   ]
  },
  {
   "key": "ההסרה נכשלה",
   "kind": "lit",
   "where": [
-   "app/views-leaderboard.js:441"
+   "app/views-leaderboard.js:444"
   ]
  },
  {
   "key": "בכל הזמנים",
   "kind": "lit",
   "where": [
-   "app/views-leaderboard.js:468"
+   "app/views-leaderboard.js:471"
   ]
  },
  {
   "key": "{0} ב\"{1}\"",
   "kind": "tpl",
   "where": [
-   "app/views-leaderboard.js:495"
+   "app/views-leaderboard.js:498"
   ]
  },
  {
   "key": "מי עוקף אותי? 😎",
   "kind": "lit",
   "where": [
-   "app/views-leaderboard.js:505"
+   "app/views-leaderboard.js:508"
   ]
  },
  {
   "key": "בואו לנסות לעקוף אותי 😉",
   "kind": "lit",
   "where": [
-   "app/views-leaderboard.js:505"
+   "app/views-leaderboard.js:508"
   ]
  },
  {
   "key": "Shaati · שעתי",
   "kind": "lit",
   "where": [
-   "app/views-leaderboard.js:506",
+   "app/views-leaderboard.js:509",
    "app/views-payslip.js:1578",
    "app/views-recap.js:234"
   ]
@@ -11159,77 +11159,77 @@
   "key": "{0} מקום {1} {2} ב\"{3}\" בשעתי! מי עוקף אותי? https://leelor123.github.io/shifts/",
   "kind": "tpl",
   "where": [
-   "app/views-leaderboard.js:510"
+   "app/views-leaderboard.js:513"
   ]
  },
  {
   "key": "טבלת האלופים",
   "kind": "lit",
   "where": [
-   "app/views-leaderboard.js:511"
+   "app/views-leaderboard.js:514"
   ]
  },
  {
   "key": "הפרופיל שלי בטבלה",
   "kind": "lit",
   "where": [
-   "app/views-leaderboard.js:530"
+   "app/views-leaderboard.js:533"
   ]
  },
  {
   "key": "הצטרפות לטבלת האלופים",
   "kind": "lit",
   "where": [
-   "app/views-leaderboard.js:530"
+   "app/views-leaderboard.js:533"
   ]
  },
  {
   "key": "<ol class=\"lb-list lb-preview\" aria-hidden=\"true\">{0}</ol>\n        <label class=\"field\"><span class=\"lbl\">השם שלך בטבלה (מופיע לכולם)</span>\n          <span class=\"lb-nick\"><input class=\"input\" id=\"lb-n\" maxlength=\"16\" autocomplete=\"given-name\" placeholder=\"השם הפרטי שלך\" value=\"{1}\"></span>\n          <span class=\"tiny lb-err\" id=\"lb-err\" role=\"alert\"></span></label>\n        <div class=\"section-title\">אימוג׳י</div>\n        <div class=\"lb-emoji\" role=\"radiogroup\" aria-label=\"אימוג׳י\">{2}</div>\n        {3}\n        <div class=\"tiny muted lb-note\">בטבלה מופיעים רק השם שבחרת, האימוג׳י, הרקע והתוצאות במשחקים. מספיק שם פרטי, בלי שם משפחה ובלי מספר טלפון. אפשר לצאת מהטבלה בכל רגע, והשורה נמחקת.</div>\n        <button class=\"btn big block\" data-save>{4} {5}</button>\n        {6}",
   "kind": "tpl",
   "where": [
-   "app/views-leaderboard.js:532"
+   "app/views-leaderboard.js:535"
   ]
  },
  {
   "key": "<div class=\"section-title\">רקע בטבלה <span class=\"tag plus-tag\">Plus</span></div>\n          <div class=\"skin-pick lb-bgs\">\n            <button class=\"skin-tile {0}\" data-bg=\"\" aria-pressed=\"{1}\"><b>—</b><span>בלי</span></button>\n            {2}\n          </div>",
   "kind": "tpl",
   "where": [
-   "app/views-leaderboard.js:538"
+   "app/views-leaderboard.js:541"
   ]
  },
  {
   "key": "<button class=\"btn text block danger\" data-leave>יציאה מהטבלה</button>",
   "kind": "lit",
   "where": [
-   "app/views-leaderboard.js:545"
+   "app/views-leaderboard.js:548"
   ]
  },
  {
   "key": "נשמר ✓",
   "kind": "lit",
   "where": [
-   "app/views-leaderboard.js:577"
+   "app/views-leaderboard.js:580"
   ]
  },
  {
   "key": "ברוכים הבאים לטבלה! 🏆",
   "kind": "lit",
   "where": [
-   "app/views-leaderboard.js:577"
+   "app/views-leaderboard.js:580"
   ]
  },
  {
   "key": "לצאת מהטבלה?",
   "kind": "lit",
   "where": [
-   "app/views-leaderboard.js:587"
+   "app/views-leaderboard.js:590"
   ]
  },
  {
   "key": "השורה שלך והתוצאות שבה יימחקו מהטבלה. השיאים בטלפון נשארים.",
   "kind": "lit",
   "where": [
-   "app/views-leaderboard.js:587"
+   "app/views-leaderboard.js:590"
   ]
  },
  {
@@ -18898,21 +18898,14 @@
   ]
  },
  {
-  "key": "מתי התחלת, בערך כמה הרווחת וכפתור לסיום. בלי צליל",
-  "kind": "lit",
-  "where": [
-   "app/views-settings.js:768"
-  ]
- },
- {
-  "key": "בלי צליל. הסכום מתעדכן כשהאפליקציה פתוחה",
-  "kind": "lit",
-  "where": [
-   "app/views-settings.js:769"
-  ]
- },
- {
   "key": "ההתראות חסומות בטלפון, ולכן היא לא מופיעה",
+  "kind": "lit",
+  "where": [
+   "app/views-settings.js:770"
+  ]
+ },
+ {
+  "key": "מתי התחלת, בערך כמה הרווחת וכפתור לסיום. בלי צליל",
   "kind": "lit",
   "where": [
    "app/views-settings.js:770"
