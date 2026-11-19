@@ -10,7 +10,7 @@
   const pad = (n) => String(n).padStart(2, '0');
   const idle = (fn) => ('requestIdleCallback' in window ? requestIdleCallback(fn, { timeout: 1500 }) : setTimeout(fn, 80));
   const Sky = window.Sky;
-  /* on an iPhone that has not added Shaati to the home screen yet: a line under the buttons to the three steps. In an
+  /* on an iPhone that has not added Shaati to the home screen yet: a line under the buttons to the four steps. In an
      app's own browser (Instagram, WhatsApp) there is no "add to home screen": it says to open the page in Safari. */
   (function iosTip() {
     const tip = $('[data-ios]');

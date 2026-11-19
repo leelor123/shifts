@@ -431,11 +431,15 @@
         App.slipFirst();
       } else if (b.hasAttribute('data-demo')) {
         // "just a look" and "I have an account" are not an agreement: the app asks with the terms' own screen
-        // (App.ensureLegal, a checkbox) before it opens, unless the account already agreed
-        demo = true;
-        go(STEPS.length - 1);
+        // (App.ensureLegal, a checkbox) before it opens, unless the account already agreed.
+        // A look needs no account (the onboarding review, 16 Nov 2026: it went to the "save with Google" screen first):
+        // not signed in, it is a guest like the payslip's way in, and an account can be saved later in Settings
+        if (saving) return;
+        demo = true; saving = true;
+        if (needsLogin()) { App.localOnly = true; await Store.setMeta({ guest: true }).catch((x) => console.warn(x)); }
         await ensureSaved(true);
-        draw();
+        saving = false;
+        enterApp();
       } else if (b.hasAttribute('data-have')) {
         v.onclick = null; v.oninput = null; App.go = prevGo;
         App.blocking = null;

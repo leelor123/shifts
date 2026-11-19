@@ -1040,7 +1040,7 @@
       ${App.androidApp || navigator.standalone || (root.matchMedia && root.matchMedia('(display-mode: standalone)').matches)
     ? `<div class="card small ab-installed">${icon('check', 's')} שעתי מותקנת כאפליקציה במכשיר הזה.</div>`
     : App.iosBrowser && App.iosBrowser()
-      ? `<div class="card small">באייפון: כפתור השיתוף ← "הוספה למסך הבית" ← "הוספה".<button class="btn tonal block" style="margin-top:10px" data-act="ios-install">${icon('iosShare', 's')} הדרכה צעד אחר צעד</button></div>`
+      ? `<div class="card small">${App.iosWay && App.iosWay() === 'safari26' ? 'באייפון: ⋯ ← "שיתוף" ← "הוספה למסך הבית" ← "הוספה".' : 'באייפון: כפתור השיתוף ← "הוספה למסך הבית" ← "הוספה".'}<button class="btn tonal block" style="margin-top:10px" data-act="ios-install">${icon('iosShare', 's')} הדרכה צעד אחר צעד</button></div>`
       : `<div class="card small">ב-\u2060Chrome: תפריט ⋮ ← "הוספה למסך הבית" ← "התקנה". אחרי ההתקנה: לחיצה ארוכה על האייקון ← "התחל משמרת" / "הוסף משמרת".<br>באייפון: בספארי, כפתור השיתוף ← "הוספה למסך הבית".</div>`}
       <div class="section-title">איך זה עובד</div>
       <div class="card small">כל החישובים מתבצעים בטלפון, כולל זמני שבת וחגים (לוח עברי וחישוב שקיעה מקומיים). האפליקציה עובדת בלי אינטרנט. חיבור נדרש רק בפעם הראשונה של קריאת PDF / זיהוי טקסט מתמונה (טעינת הרכיב), ולניתוח AI אם בחרת בו.</div>
@@ -1057,6 +1057,8 @@
   App.actions['demo-clear'] = async () => {
     if (!(await UI.confirm('למחוק את נתוני הדוגמה?', 'רק נתוני הדוגמה יימחקו; מה שהוספת בעצמך יישאר.', 'מחק', true))) return;
     await App.demo.clear();
+    // someone who came in through "just a look" never saw the first steps: they start now, with their own data
+    if (!S.meta.guide) await Store.setMeta({ guide: Date.now() }).catch(() => {});
     UI.toast('נתוני הדוגמה נמחקו');
   };
 })(typeof window !== 'undefined' ? window : globalThis);

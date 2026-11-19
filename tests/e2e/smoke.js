@@ -103,7 +103,24 @@ let errors = [];
     if (await ev(() => !!App.blocking)) throw new Error('wizard did not finish');
     await sleep(1500);
     // the first-run tour: close it so the next steps can tap freely
-    for (let i = 0; i < 5 && (await page.$('.coach')); i++) { await page.click('.coach'); await sleep(350); }
+    for (let i = 0; i < 5 && (await page.$('.coach')); i++) { await page.click('.coach-tip'); await sleep(350); }
+  });
+  await step('the tour: a tap on the lit card goes through to it (and ends the tour), a tap beside it only moves on, דלג ends it', async () => {
+    await ev(() => { UI.closeAll(); App.go('home'); scrollTo(0, 0); }); await sleep(500);
+    const start = () => ev(() => { const b = document.querySelector('.home-action .btn.start').getBoundingClientRect(); return { x: b.left + b.width / 2, y: b.top + b.height / 2, top: b.top }; });
+    await ev(() => UI.coach([{ el: '.home-action .btn.start', text: 'a' }, { el: '#nav .fab', text: 'b', round: true }, { el: '.home-hero', text: 'c' }])); await sleep(500);
+    // 4px above the button: inside the lit ring, but a pane takes it (a near miss never lands on a neighbour)
+    let b = await start(); await page.mouse.click(b.x, b.top - 4); await sleep(400);
+    let st = await ev(() => ({ coach: !!document.querySelector('.coach:not(.out)'), n: (document.querySelector('.coach .ct-n') || {}).textContent || '', running: !!Store.S.activeShift }));
+    if (!st.coach || !/2/.test(st.n) || st.running) throw new Error('a tap beside the button: ' + JSON.stringify(st));
+    await page.click('.coach [data-coach-skip]'); await sleep(450);
+    if (await page.$('.coach')) throw new Error('דלג did not end the tour');
+    // the lit pay card (it opens the month's summary; a started shift would sync to the cloud: tests/e2e has no network)
+    await ev(() => UI.coach([{ el: '.home-hero', text: 'a' }, { el: '#nav .fab', text: 'b', round: true }])); await sleep(500);
+    const h = await ev(() => { const r = document.querySelector('.home-hero').getBoundingClientRect(); return { x: r.left + r.width / 2, y: r.top + r.height / 2 }; });
+    await page.mouse.click(h.x, h.y); await sleep(900);
+    st = await ev(() => ({ coach: !!document.querySelector('.coach:not(.out)'), tab: App.tab }));
+    if (st.coach || st.tab !== 'reports') throw new Error('a tap on the lit pay card: ' + JSON.stringify(st));
   });
   await step('every button on the main screens can really be tapped', async () => {
     const bad = [];
@@ -1174,7 +1191,7 @@ let errors = [];
   });
   await step('new user: a short tour points at the main buttons, then the first-steps card', async () => {
     await p2.waitForSelector('.coach', { timeout: 4000 });
-    for (let i = 0; i < 5 && (await p2.$('.coach')); i++) { await p2.click('.coach'); await sleep(350); }
+    for (let i = 0; i < 5 && (await p2.$('.coach')); i++) { await p2.click('.coach-tip'); await sleep(350); }
     await sleep(400);
     if (await p2.$('.coach')) throw new Error('tour did not close');
     if (!(await p2.$('.card.guide'))) throw new Error('no first-steps card');

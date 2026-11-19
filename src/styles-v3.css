@@ -234,7 +234,13 @@ body.fx .nav .fab:active { transform: scale(.9) rotate(90deg); }
 .gs-acts { display: flex; gap: 8px; flex-wrap: wrap; }
 
 /* coach marks */
-.coach { position: fixed; inset: 0; z-index: 9990; cursor: pointer; animation: coach-in .3s ease both; }
+/* the overlay lets taps through; the four panes around the lit button and the bubble take them (views-guide.js) */
+.coach { position: fixed; inset: 0; z-index: 9990; pointer-events: none; animation: coach-in .3s ease both; }
+.coach-b { position: absolute; pointer-events: auto; cursor: pointer; touch-action: none; }
+.coach-tip { pointer-events: auto; cursor: pointer; }
+.coach-tip .ct-b { flex: 1; min-width: 0; }
+.coach-skip { flex: none; margin-inline-start: auto; }
+.coach.out .coach-b, .coach.out .coach-tip { pointer-events: none; }
 .coach.out { animation: coach-out .25s ease forwards; }
 @keyframes coach-in { from { opacity: 0; } }
 @keyframes coach-out { to { opacity: 0; } }
