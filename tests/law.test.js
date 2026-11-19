@@ -110,6 +110,13 @@ T.test('law: the website\'s question pages show the same numbers as the app (nod
   T.ok(read('minimum-wage.html').includes(nis(mw.hourly)), `site/minimum-wage.html does not show ${nis(mw.hourly)}: run node tools/site-pages.js`);
   const ry = Math.max(...Object.keys(Engine.RECUP_YEARS).map(Number));
   T.ok(read('recuperation-pay.html').includes(nis(Engine.RECUP_YEARS[ry])), `site/recuperation-pay.html does not show ${nis(Engine.RECUP_YEARS[ry])}: run node tools/site-pages.js`);
+  // the same pages in Arabic and Russian (tools/site-pages-intl.js) come from the same run
+  for (const l of ['ar', 'ru']) {
+    T.ok(read(l + '/minimum-wage.html').includes(nis(mw.hourly)), `site/${l}/minimum-wage.html does not show ${nis(mw.hourly)}: run node tools/site-pages.js`);
+    T.ok(read(l + '/recuperation-pay.html').includes(nis(Engine.RECUP_YEARS[ry])), `site/${l}/recuperation-pay.html is not up to date: run node tools/site-pages.js`);
+  }
+  const intl = fs.readFileSync(path.join(__dirname, '..', 'tools', 'site-pages-intl.js'), 'utf8');
+  T.ok(!/\d+\.\d\d ₪|\d,\d{3}/.test(intl), 'tools/site-pages-intl.js types no amount by hand: every number comes from the engine');
 });
 T.test('law: the payslip check names the reduced-rate threshold in force, not "60% of the average wage"', () => {
   const src = require('fs').readFileSync(require('path').join(__dirname, '..', 'src', 'core', 'payslip.js'), 'utf8');

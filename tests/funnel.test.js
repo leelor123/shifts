@@ -98,3 +98,44 @@ T.test('the dashboard draws the funnel for 30 and 90 days, a column per platform
   T.eq((panel(30).match(/<tr>/g) || []).length, 6, 'a header and five steps');
   T.ok(!/[\u200E\u200F\u202A-\u202E\u2066-\u2069]/.test(src), 'no raw bidi characters in the file');
 });
+
+T.test('the first shift within a day: the record says how many days after the first day it was entered (fsd)', () => {
+  const at = (k, hm) => U.toEpoch(k, hm || '12:00');
+  T.eq(F.firstShiftDays('2026-11-01', []), null, 'no shift: nothing to say');
+  T.eq(F.firstShiftDays('2026-11-01', [0, undefined, null]), null, 'shifts without a creation time');
+  T.eq(F.firstShiftDays('2026-11-01', [at('2026-11-01', '23:50')]), 0, 'the same day');
+  T.eq(F.firstShiftDays('2026-11-01', [at('2026-11-09'), at('2026-11-02', '00:10')]), 1, 'the earliest shift counts, the next day');
+  T.eq(F.firstShiftDays('2026-11-05', [at('2026-10-20')]), 0, 'shifts from another phone or a backup, older than the first day: 0');
+  T.eq(F.firstShiftDays('2010-01-01', [at('2040-01-01')]), 9999, 'at most 9999, as the rules allow');
+  T.eq(F.firstShiftDays('', [at('2026-11-01')]), null, 'no first day');
+  T.eq(F.firstDay({ fsd: 0 }), true); T.eq(F.firstDay({ fsd: 1 }), true, 'the day after counts');
+  T.eq(F.firstDay({ fsd: 2 }), false); T.eq(F.firstDay({}), null, 'a record from before fsd: unknown');
+  T.eq(F.firstDay({ fsd: '0' }), null, 'only a whole number'); T.eq(F.firstDay({ fsd: -3 }), null);
+  const rules = require('fs').readFileSync(require('path').join(__dirname, '..', 'firestore.rules'), 'utf8');
+  T.ok(rules.includes("'ps', 'fsd', 'age'"), 'allowed by the rules');
+  T.ok(rules.includes("(!('fsd' in d) || (d.fsd is int && d.fsd >= 0 && d.fsd < 10000))"), 'optional (the live app sends none), 0 to 9999');
+  const stats = require('fs').readFileSync(require('path').join(__dirname, '..', 'src', 'app', 'stats.js'), 'utf8');
+  T.ok(stats.includes('Funnel.firstShiftDays(') && stats.includes('delete rec.fsd'), 'stats.js sends it, and drops it when older rules refuse it');
+});
+
+T.test('the dashboard funnel: install, first shift within a day, back after a week, saw Plus, tried, paid', () => {
+  const fs = require('fs'), path = require('path'), vm = require('vm');
+  const esc = (s) => String(s).replace(/[&<>"']/g, (c) => '&#' + c.charCodeAt(0) + ';');
+  const c = { U, Funnel: F, UI: { icon: () => '', esc }, App: { actions: {} }, Charts: { bars: () => '' }, Store: {}, PAY_CONFIG: {} };
+  c.window = c; vm.createContext(c);
+  vm.runInContext(fs.readFileSync(path.join(__dirname, '..', 'src', 'app', 'views-admin.js'), 'utf8'), c, { filename: 'app/views-admin.js' });
+  const k = U.todayKey(), ago = (n) => U.addDays(k, -n);
+  const rows = [
+    rec({ first: ago(20), last: ago(20) }), // installed only
+    rec({ first: ago(20), last: ago(18), sh: 2, fsd: 4 }), // a shift, but on the fifth day
+    rec({ first: ago(20), last: ago(5), sh: 2, fsd: 1, f: { plusSeen: true, plusTry: true, plus: true } }), // all the way
+    rec({ first: ago(20), last: ago(19), sh: 1, fsd: 0 }), // a shift on day one, never back
+    rec({ first: ago(20), last: ago(5), sh: 3 }), // an older version: a shift, no fsd
+  ];
+  const html = c.App.adminView(rows, [], 'me');
+  const card = html.slice(html.indexOf('adm-funnel'), html.indexOf('</div></div>', html.indexOf('adm-funnel')));
+  const counts = (card.match(/<span class="vv">(\d+)/g) || []).map((x) => x.replace(/\D/g, '')).join(',');
+  T.eq(counts, '5,3,2,1,1,1', 'each step out of the one before');
+  T.ok(card.includes('רשמו משמרת ראשונה תוך יום'), 'the step is named');
+  T.ok(card.includes('מכשיר אחד כזה נספר'), 'the older record is counted and said, in the singular');
+});
