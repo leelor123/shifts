@@ -142,3 +142,8 @@ An advisory council found the pitch buried: the payslip check, which no competin
 A background-location audit for Google Play: the listing has to name the feature that uses location in the background.
 The new bullet after the widgets says what it does, that it works with the app closed or not in use, that it is the
 user's choice and that the location is checked on the phone (android/widgets/java/WorkGeo*.java). Count: 3807.
+
+## Note (19 Nov 2026)
+The Plus paragraph is back in all 8 listings in Play Console (the subscription is live). The Console text is newer than this file. Hebrew paragraph, placed before "מקורות רשמיים":
+Shaati Plus (לבחירתך)
+12 עיצובים לכרטיס השכר, דוח החזר מס מלא, וניתוח וייצוא בלי הגבלה. מנוי חודשי או שנתי דרך Google Play, מבטלים בכל רגע. כל השאר כלול גם בלי Plus.
