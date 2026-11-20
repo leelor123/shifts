@@ -92,6 +92,7 @@ const AMBIG = {
   'נולדת': { m: 'נוֹלַדְתָּ', f: 'נוֹלַדְתְּ', note: 'noladta (m) / nolad\'t (f)' },
   'הרווחת': { m: 'הִרְוַחְתָּ', f: 'הִרְוַחְתְּ', note: 'hirvachta (m) / hirvacht (f)' },
   'התחלת': { m: 'הִתְחַלְתָּ', f: 'הִתְחַלְתְּ', note: 'hitchalta (m) / hitchalt (f)' },
+  'מעולה': { m: 'מְעוּלֶּה', f: 'מְעוּלֶּה', note: 'meule; a voice may read meula' },
   'את': { f: 'אַתְּ', note: 'at, "you" (f); a voice may read et, the object marker', only: /(^|[^א-ת])את [א-ת]+ת(?![א-ת])/ },
 };
 function flagsOf(lang, gender, display, spoken) {
@@ -127,9 +128,10 @@ function flagsOf(lang, gender, display, spoken) {
 }
 
 /* ---------------- the sheet ---------------- */
-function build() {
+/** langs: the languages to list (all by default); tests/mascot-voice.test.js lists Hebrew only */
+function build(langs = LANGS) {
   const out = [], skipped = [];
-  for (const lang of LANGS) {
+  for (const lang of langs) {
     const code = screensCode(lang);
     for (const gender of GENDERS) {
       const seen = new Set();
@@ -159,6 +161,8 @@ function build() {
   }
   return { out, skipped };
 }
+
+module.exports = { build };
 
 if (require.main === module) {
   const file = process.argv[2];

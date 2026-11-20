@@ -575,9 +575,54 @@ T.test('a word a voice reads two ways gets its nikud in any line, by gender; the
   T.eq(voiceLine('גיל 15! יש לך זכויות מיוחדות, נדאג להן 🛡️', 'he', 'f'), 'גיל 15! יש לָךְ זכויות מיוחדות, נדאג להן.'.replace(/\.$/, ''));
   T.eq(voiceLine('גיל 17! יש לך זכויות', 'he', 'm'), 'גיל 17! יש לְךָ זכויות');
   T.eq(voiceLine('מתי נולדת?', 'he', ''), 'מתי נוֹלַדְתָּ?');
-  T.eq(voiceLine('מתי התחלת לעבוד שם?', 'he', 'f'), 'מתי הִתְחַלְתְּ לעבוד שם?');
-  T.eq(voiceLine('אחלה! עכשיו נדע כמה הרווחת.', 'he', 'f'), 'אחלה! עכשיו נדע כמה הִרְוַחְתְּ.');
+  // in a line of its own (the setup's two lines with these words are read in other words, SAY)
+  T.eq(voiceLine('מתי התחלת?', 'he', 'f'), 'מתי הִתְחַלְתְּ?');
+  T.eq(voiceLine('כמה הרווחת היום?', 'he', 'f'), 'כמה הִרְוַחְתְּ היום?');
   T.eq(voiceLine('ולך הביתה', 'he', 'f'), 'ולך הביתה', 'only a whole word');
   T.eq(voiceLine('איפה את עובדת?', 'he', 'f'), 'איפה אַתְּ עובדת?');
   T.eq(voiceLine('Shall I tell you', 'en', 'f'), 'Shall I tell you');
+});
+T.test('the owner\'s listening (20 Nov 2026): every Hebrew setup line, for him and for her, says exactly this', () => {
+  // the real setup screens, run the way tools/voice-lines.js lists them (a stop added where a line has none)
+  const { build } = require(path.join(__dirname, '..', 'tools', 'voice-lines.js'));
+  const rows = build(['he']).out;
+  const said = (g) => rows.filter((r) => r.gender === g).map((r) => r.display + ' => ' + r.spoken);
+  // the same for both: lines the owner marked good, and the two read in other words
+  const both = (name, f) => [
+    `${f ? 'בוא/י' : 'בוא/י'} נכיר 😊 => ${f ? 'בואי' : 'בוא'} נכיר.`,
+    `איך קוראים לך? => איך קוראים ${f ? 'לָךְ' : 'לְךָ'}?`,
+    `נעים מאוד, ${name}! 😍 => נעים מאוד, ${name}!`,
+    'שאלה קטנה על הגיל 🎂 => שאלה קטנה על הגיל.',
+    `מתי נולדת? => מתי ${f ? 'נוֹלַדְתְּ' : 'נוֹלַדְתָּ'}?`,
+    `גיל 16! יש לך זכויות מיוחדות, נדאג להן 🛡️ => גיל 16! יש ${f ? 'לָךְ' : 'לְךָ'} זכויות מיוחדות, נדאג להן.`,
+    'גיל 25, מעולה 👍 => גיל 25, מְעוּלֶּה.',
+    'איפה עובדים? 🤔 => איפה עובדים?',
+    f ? 'איפה את עובדת? => איפה אַתְּ עובדת?' : 'איפה אתה עובד? => איפה אתה עובד?',
+    'אחלה! עכשיו נדע כמה הרווחת 💸 => אחלה! עכשיו נדע כמה מרוויחים.',
+    'שתי שאלות קצרות על העבודה ⏱️ => שתי שאלות קצרות על העבודה.',
+    `משלמים לך על ההפסקה? => משלמים ${f ? 'לָךְ' : 'לְךָ'} על ההפסקה?`,
+    'הרבה שוכחים את זה! 🚌 => הרבה שוכחים את זה!',
+    f ? 'מקבלת כסף על נסיעות? => מקבלת כסף על נסיעות?' : 'מקבל כסף על נסיעות? => מקבל כסף על נסיעות?',
+    'בשבת מרוויחים לפחות 150%! 🤑 => בשבת מרוויחים לפחות 150 אחוז!',
+    'באיזו עיר העבודה? => באיזו עיר העבודה?',
+    'אחרונה! 🏁 => אחרונה!',
+    'מתי התחלת לעבוד שם? => ממתי עובדים שם?',
+    `הכול מוכן, ${name}! 🎉 => הכול מוכן, ${name}!`,
+    'הכול מוכן! 🎉 => הכול מוכן!',
+    'הנתונים לדוגמה מוכנים! => הנתונים לדוגמה מוכנים!',
+  ];
+  T.eq(said('m').join('\n'), both('נדב', false).join('\n'), 'him (נדב)');
+  T.eq(said('f').join('\n'), both('מיכל', true).join('\n'), 'her (מיכל)');
+  // a gendered word never reaches the voice bare, and her lines never carry his forms (or his hers)
+  const HIS = ['לְךָ', 'נוֹלַדְתָּ', 'הִרְוַחְתָּ', 'הִתְחַלְתָּ', 'אתה', 'עובד?', 'מקבל '], HERS = ['לָךְ', 'נוֹלַדְתְּ', 'הִרְוַחְתְּ', 'הִתְחַלְתְּ', 'אַתְּ', 'עובדת', 'מקבלת', 'בואי'];
+  for (const r of rows) {
+    const words = r.spoken.split(/[^א-תְ-ׇ]+/);
+    for (const w of ['לך', 'נולדת', 'הרווחת', 'התחלת', 'מעולה']) T.ok(!words.includes(w), `"${w}" without nikud in: ${r.spoken} (${r.gender || '-'})`);
+    if (r.gender === 'f') for (const w of HIS) T.ok(!r.spoken.includes(w), `his "${w}" in her line: ${r.spoken}`);
+    if (r.gender === 'm') for (const w of HERS) T.ok(!r.spoken.includes(w), `her "${w}" in his line: ${r.spoken}`);
+  }
+  // what the app itself passes (no stop added): the two lines in other words, by their shown text
+  T.eq(voiceLine('אחלה! עכשיו נדע כמה הרווחת 💸', 'he', 'f'), 'אחלה! עכשיו נדע כמה מרוויחים');
+  T.eq(voiceLine('מתי התחלת לעבוד שם?', 'he', 'm'), 'ממתי עובדים שם?');
+  T.eq(voiceLine('גיל 25, מעולה 👍', 'he', 'f'), 'גיל 25, מְעוּלֶּה');
 });

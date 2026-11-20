@@ -57,14 +57,21 @@
   const SAY = { he: {
     // את here is "at" (you), not the object marker
     'איפה את עובדת?': 'איפה אַתְּ עובדת?',
+    // the owner's listening (20 Nov 2026): the phone voice read הרווחת and התחלת wrong, with nikud too, for him and
+    // for her. These two lines say the same thing in words it read right on other lines (מרוויחים, עובדים), the
+    // same for both genders.
+    'אחלה! עכשיו נדע כמה הרווחת': 'אחלה! עכשיו נדע כמה מרוויחים',
+    'מתי התחלת לעבוד שם?': 'ממתי עובדים שם?',
   } };
   /** Hebrew words a voice can read two ways, read with nikud in any line: for a girl the second form, otherwise the
-   *  first (לך: lecha / lach, and never lech, "go"). Only whole words; the word as shown on screen never changes. */
+   *  first (לך: lecha / lach, and never lech, "go"). Only whole words; the word as shown on screen never changes.
+   *  A word with one reading has the same form twice (מעולה: meule, never meula). */
   const HE_WORDS = {
     'לך': ['לְךָ', 'לָךְ'],
     'נולדת': ['נוֹלַדְתָּ', 'נוֹלַדְתְּ'],
     'הרווחת': ['הִרְוַחְתָּ', 'הִרְוַחְתְּ'],
     'התחלת': ['הִתְחַלְתָּ', 'הִתְחַלְתְּ'],
+    'מעולה': ['מְעוּלֶּה', 'מְעוּלֶּה'],
   };
   function heWords(t, gender) {
     return t.replace(/[א-ת]+/g, (w) => (Object.prototype.hasOwnProperty.call(HE_WORDS, w) ? HE_WORDS[w][gender === 'f' ? 1 : 0] : w));
