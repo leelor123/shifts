@@ -55,14 +55,25 @@
   // i18n-keep-start (Hebrew words for the Hebrew voice only, never shown)
   // a line that needs its own reading; the words below cover the rest
   const SAY = { he: {
-    // את here is "at" (you), not the object marker
-    'איפה את עובדת?': 'איפה אַתְּ עובדת?',
-    // the owner's listening (20 Nov 2026): the phone voice read הרווחת and התחלת wrong, with nikud too, for him and
-    // for her. These two lines say the same thing in words it read right on other lines (מרוויחים, עובדים), the
-    // same for both genders.
+    // the owner's listening (20 Nov 2026): the phone voice read הרווחת, התחלת and ממתי wrong, with nikud too, for him
+    // and for her. These two lines say the same thing in words it read right, the same for both genders.
     'אחלה! עכשיו נדע כמה הרווחת': 'אחלה! עכשיו נדע כמה מרוויחים',
-    'מתי התחלת לעבוד שם?': 'ממתי עובדים שם?',
+    'מתי התחלת לעבוד שם?': 'מתי היה היום הראשון בעבודה?',
   } };
+  /** Her lines: the phone voice cannot say the feminine forms לָךְ (it says lecha), נוֹלַדְתְּ and אַתְּ ("ate"), with
+   *  nikud or without (the owner's listening, 20 Nov 2026). So for a girl these words are said in neutral ones. Whole
+   *  phrases, matched as whole words in any line; every phrase has to be in views-onboarding.js (the guard test). */
+  const HE_FOR_HER = [
+    ['איך קוראים לך', 'מה השם'],
+    ['מתי נולדת', 'מה תאריך הלידה'],
+    ['יש לך זכויות', 'בגיל הזה יש זכויות'],
+    ['משלמים לך על', 'משלמים על'],
+    ['איפה את עובדת', 'מה מקום העבודה'],
+  ];
+  function forHer(t) {
+    for (const [a, b] of HE_FOR_HER) t = t.replace(new RegExp('(^|[^\\u05d0-\\u05ea])' + a + '(?![\\u05d0-\\u05ea])', 'g'), (m, p) => p + b);
+    return t;
+  }
   /** Hebrew words a voice can read two ways, read with nikud in any line: for a girl the second form, otherwise the
    *  first (לך: lecha / lach, and never lech, "go"). Only whole words; the word as shown on screen never changes.
    *  A word with one reading has the same form twice (מעולה: meule, never meula). */
@@ -100,7 +111,7 @@
     const own = SAY[lang];
     // a value is the words, or { m, f } when the same written line is said differently to a girl (לָךְ, not לְךָ)
     if (own && Object.prototype.hasOwnProperty.call(own, t)) { const v = own[t]; t = String(v && typeof v === 'object' ? (gender === 'f' ? v.f : v.m) || t : v); }
-    return lang === 'he' ? heTokens(heWords(t, gender)) : t;
+    return lang === 'he' ? heTokens(heWords(gender === 'f' ? forHer(t) : t, gender)) : t;
   }
   const TAGS = { he: 'he-IL', en: 'en-US', ru: 'ru-RU', ar: 'ar-SA', fr: 'fr-FR', es: 'es-ES', am: 'am-ET' };
   /** An offline voice for the language, or null. A voice with localService false (desktop Chrome's "Google" voices)
@@ -125,7 +136,7 @@
     for (const c of node.childNodes || []) s += sayText(c);
     return s;
   }
-  root.MascotSpeech = { spoken, voiceLine, pickVoice, sayText, SAY };
+  root.MascotSpeech = { spoken, voiceLine, pickVoice, sayText, SAY, HE_FOR_HER };
 
   const App = root.App;
   const doc = root.document;
