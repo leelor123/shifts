@@ -314,6 +314,11 @@
       // a picture of a message whose days each open their own line with the shifts beside them: a line with
       // shifts and no day is a day OCR could not read ("ב׳" read as "12-"), not more of the day above it
       if (opts.ocr && !days.length && dayInline) return;
+      // a picture's line with no day and shifts side by side with no name between them ("נדב 7-15 23-7 23-7"): a
+      // table's row whose head of days OCR could not read, not more of the one day it did read ("ג׳" of
+      // "א׳ ב׳ ג׳…" put every row's shifts on Tuesday)
+      const timed = shifts.filter((s) => !s.off);
+      if (opts.ocr && !days.length && timed.some((s, i) => i && !nameIn(rest.slice(timed[i - 1].at + timed[i - 1].len, s.at), named))) return;
       let from = 0;
       const mine = [];
       for (const s of shifts) {

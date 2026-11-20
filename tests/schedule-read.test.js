@@ -348,3 +348,11 @@ T.test('the schedule import: leaving the sheet stops the reading itself (the OCR
   T.ok(/onClose: \(\) => \{ if \(stop\) stop\.abort\(\); \}/.test(src), 'the sheet aborts on close');
   T.ok(/App\.readDocWords\(file, progress, stop \? \{ signal: stop\.signal \} : undefined\)/.test(src), 'the reading gets the signal');
 });
+T.test('a picture whose head of days OCR read one day of: the rows are not put on that day', () => {
+  // A-letters-nodates on the merged OCR: "א׳ ב׳ ג׳ ד׳ ה׳ ו׳" read "אי בי ג' al שי"; read as text, every row's shifts went
+  // to Tuesday (נדב got a 07:00-15:00 on Tuesday; theirs was 23:00-07:00)
+  const words = shot(["עובד אי בי ג' al שי", 'דני 23-7 7-15 15-23 15-23', 'נדב 7-15 23-7 23-7 7-15 22-6 8-13', 'מאיה 23-7 22-6 8-13']);
+  T.eq(SC.parseWords(words, { today }).entries.length, 0);
+  // a message's day heading the lines under it still holds, one shift for each name
+  T.eq(brief(SC.parseWords(shot(['שלישי:', 'דני 7-15', 'נדב 15-23 מאיה 23-7']), { today }).entries).join(' | '), 'd2 07:00 15:00 דני | d2 15:00 23:00 נדב | d2 23:00 07:00 מאיה');
+});
