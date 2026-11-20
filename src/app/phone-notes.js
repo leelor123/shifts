@@ -37,6 +37,21 @@
     return { at, tag: a.key, type: a.type, title: n.title, body: n.body, sub: '', ch: n.ch, url: n.url, when: n.when || 0,
       until: until(a, at, App.model), acts: n.acts.slice(0, 2).map((x) => ({ id: x.id, title: x.title, url: x.url })) };
   }
+  /** A Shaati notification already came today: shown by the app or the worker (./__shown), or due earlier today in the
+   *  list the phone had (its own alarms show those while the app is closed, ./__plan). Then no daily message today. */
+  async function shownToday(now) {
+    if (!root.caches) return false;
+    const from = U.toEpoch(U.epochKey(now), '00:00');
+    try {
+      const c = await caches.open('shiftpay-shown');
+      const sr = await c.match('./__shown');
+      const shown = sr ? await sr.json() : {};
+      if (Object.keys(shown).some((k) => k.indexOf('daily-') !== 0 && shown[k] >= from && shown[k] <= now)) return true;
+      const pr = await c.match('./__plan');
+      const plan = pr ? await pr.json() : null;
+      return !!(plan && Array.isArray(plan.notes) && plan.notes.some((n) => n && n.at >= from && n.at <= now));
+    } catch (e) { return false; }
+  }
   const idle = () => new Promise((res) => (root.requestIdleCallback ? root.requestIdleCallback(() => res(), { timeout: 400 }) : setTimeout(res, 16)));
 
   /** The notifications of the coming days, in words. */
@@ -53,6 +68,13 @@
     const A = S.settings.alerts;
     const off = NP.away(now, { on: (A.types || {}).away !== false, days: A.awayDays, hasShifts: S.shifts.some((s) => s.status === 'done' && !s.deleted), active: !!a });
     if (off) list.push(off);
+    // one useful message a day, on the days nothing else comes (core/noteplan.js daily)
+    if ((A.types || {}).daily !== false) {
+      const busy = new Set(list.map((x) => U.epochKey(x.at)));
+      if (await shownToday(now)) busy.add(U.epochKey(now));
+      const R = A.reminders || {};
+      for (const x of NP.daily(App.model, { now, hour: A.dailyHour, busy: (k) => busy.has(k), eveReminder: A.remindPlanned === true && !!R.eveOn })) list.push(x);
+    }
     return list.map((x) => item(x.alert, App.noteLook(x.alert, x.at), x.at));
   }
 

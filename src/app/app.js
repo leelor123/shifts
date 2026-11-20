@@ -1153,6 +1153,7 @@
       if (action === 'note' && App.openNote) App.openNote(App.pendingNote || {}); // a tap on the phone's notification (core/noteplan.js noteUrl)
       if (action === 'nfc' && App.nfcOpen) App.nfcOpen(App.pendingTag || ''); // a touch on the NFC sticker at work (app/nfc.js): starts or ends a shift
       if (action === 'add') App.sheetsApi.shiftEditor();
+      if (action === 'rights' && App.actions.rights) setTimeout(() => App.actions.rights(), 300); // the daily message's fact on a right (core/noteplan.js)
       if (action === 'schedule' && App.importSchedule) App.importSchedule(); // the app icon's shortcut
       if (action === 'share-in' && App.receiveShare) App.receiveShare(); // shared to the app (sw.js)
       if (action === 'support' && App.actions.support) setTimeout(() => App.actions.support(), 300); // Play testers' feedback link

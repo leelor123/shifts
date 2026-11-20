@@ -146,10 +146,12 @@
           timer: true, plannedPast: true, idle: true, suspicious: true, payslipDue: true, backup: true, upcoming: true, weekly: true, confirmDone: true,
           recuperation: true, birthday: true, minwage: true, youth: true,
           away: true, // "forgot to log a shift?" after some days without opening the app (app/phone-notes.js)
+          daily: true, // one useful message a day, on the days nothing else comes (core/noteplan.js daily)
         },
         longShiftHours: 12, minRestHours: 8, streakDays: 6, weekHoursMax: 50,
         awayDays: 3, timerHours: 12, idleDays: 7, suspiciousHours: 20, backupDays: 30, upcomingMin: 60,
         weeklyDay: 6, weeklyHour: 21,
+        dailyHour: 19, // the daily message's hour (the morning before a rest day, the evening after one)
         remindPlanned: false, // a reminder before a planned shift: off unless switched on (few notifications)
         runNote: false, // a notification that stays while a shift runs, with an end button (app/run-note.js): off unless switched on
         // the reminders around a planned shift, all the user's to choose: minutes before (any number of them), the

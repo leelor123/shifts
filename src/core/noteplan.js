@@ -112,6 +112,82 @@
       title: 'שכחת לרשום משמרת?', body: '' } };
   }
 
+  /* ---- the daily message (the user, 21 Nov 2026: "at least one notification a day, useful, not spam") ----
+   * One a day at the user's hour (19:00 by default), only on a day that holds no other Shaati notification. What it
+   * says comes from the user's own data, the most useful first: tomorrow's planned shift (when no reminder of its own
+   * is on), "did you work today?" on a weekday this person usually works and logged nothing, how the pay period stands
+   * so far, or a short fact on a right (each day another one). On a rest day it waits for the evening after it, and on
+   * the day before one it comes in the morning. Planned with the rest, so the phone shows it while the app is closed;
+   * an open of the app makes the list again with the fresh numbers. */
+  const DAILY_HOUR = 19;
+  /** Short facts on rights, said positively (never "your employer broke the law"). adult: only for 18 and over. */
+  const TIPS = [
+    { id: 'overtime', adult: true, title: 'שעה נוספת שווה יותר', body: 'השעתיים הנוספות הראשונות ביום משולמות לפחות 125%, ומהשלישית 150%.' },
+    { id: 'rest', title: 'עבודה בשבת', body: 'שעת עבודה ביום המנוחה השבועי משולמת לפחות 150%.' },
+    { id: 'break', title: 'הפסקה במשמרת ארוכה', body: 'במשמרת של 6 שעות ומעלה מגיעה הפסקה של 45 דקות, ו-30 מהן ברצף.' },
+    { id: 'sick', title: 'ימי מחלה', body: 'היום הראשון לא משולם, השני והשלישי בחצי שכר, ומהרביעי שכר מלא. צריך אישור מרופא.' },
+    { id: 'vacation', title: 'ימי חופשה', body: 'גם בעבודה לפי שעה צוברים ימי חופשה בתשלום. בשעתי אפשר לראות כמה צברת.' },
+    { id: 'recup', title: 'דמי הבראה', body: 'אחרי שנת עבודה מגיעים דמי הבראה, גם במשרה חלקית, לפי היקף המשרה.' },
+    { id: 'travel', title: 'דמי נסיעות', body: 'על כל יום שנסעת לעבודה בתחבורה ציבורית, המעסיק משתתף בעלות עד תקרה יומית.' },
+    { id: 'payday', title: 'מתי מגיעה המשכורת', body: 'השכר של החודש צריך להגיע עד ה-9 בחודש שאחריו.' },
+    { id: 'holiday', title: 'תשלום על חג', body: 'אחרי 3 חודשי עבודה, עובדים לפי שעה מקבלים תשלום גם על חג שלא עבדו בו, אם עבדו ביום שלפניו וביום שאחריו.' },
+  ];
+  const dayNo = (k) => Math.round(U.toEpoch(k, '12:00') / DAY);
+  /** At what moment the day's message comes: the user's hour; the morning before a rest day; the evening after one. */
+  function dailyAt(k, hour, restCfg) {
+    const rest = (x) => !!(restCfg && root.HebCal && root.HebCal.restDayInfo(x, restCfg));
+    if (rest(k)) return U.toEpoch(k, '21:00') + AFTER;
+    if (rest(U.addDays(k, 1))) return U.toEpoch(k, '10:00') + AFTER;
+    return U.toEpoch(k, U.pad(hour) + ':00') + AFTER;
+  }
+  /** This person usually works on this weekday: three of the last four (with a logged shift on any of them). */
+  function usualDay(model, k) {
+    const done = new Set();
+    for (const r of model.results.values()) if (r.status === 'done') done.add(r.dateKey);
+    let n = 0;
+    for (let w = 1; w <= 4; w++) if (done.has(U.addDays(k, -7 * w))) n++;
+    return n >= 3;
+  }
+  /**
+   * The daily messages of the coming days: [{ at, alert }]. o: { now, days, on, hour, busy(dayKey): another
+   * notification comes that day, eveReminder: the evening-before reminder is on (then it speaks of tomorrow's shift) }.
+   */
+  function daily(model, o) {
+    o = o || {};
+    if (o.on === false || !model) return [];
+    const now = o.now || Date.now();
+    const hour = Math.min(21, Math.max(8, Math.round(+o.hour) || DAILY_HOUR));
+    const restCfg = model.ctx && model.ctx.restCfg;
+    const st = (model.ctx && model.ctx.settings) || {};
+    const age = st.birthDate && Engine.ageAt ? Engine.ageAt(st.birthDate, U.epochKey(now)) : null;
+    const tips = TIPS.filter((t) => !(t.adult && age != null && age < 18));
+    const emp = model.ctx && model.ctx.primaryEmployer ? model.ctx.primaryEmployer() : null;
+    const byDay = new Map();
+    for (const r of model.results.values()) { if (!byDay.has(r.dateKey)) byDay.set(r.dateKey, []); byDay.get(r.dateKey).push(r); }
+    const out = [];
+    for (let d = 0, k = U.epochKey(now); d <= (o.days || DAYS); d++, k = U.addDays(k, 1)) {
+      const at = dailyAt(k, hour, restCfg);
+      if (at <= now || (o.busy && o.busy(k))) continue;
+      const tomorrow = (byDay.get(U.addDays(k, 1)) || []).filter((r) => r.status === 'planned').sort((x, y) => x.start - y.start)[0];
+      const today = byDay.get(k) || [];
+      let alert = null;
+      if (tomorrow && !o.eveReminder) {
+        alert = { type: 'daily', ref: tomorrow.id, data: { kind: 'tomorrow' } };
+      } else if (!today.length && usualDay(model, k)) {
+        alert = { type: 'daily', data: { kind: 'usual', dow: U.dow(k) } };
+      } else {
+        const P = emp ? Engine.periodOf(k, emp) : null;
+        const t = P ? Engine.rangeSummary(model, P.from, k) : null;
+        if (t && t.shifts && dayNo(k) % 2 === 0) alert = { type: 'daily', data: { kind: 'month', shifts: t.shifts, hours: t.hours, gross: t.gross, left: Math.max(0, Math.round((U.toEpoch(P.to, '12:00') - U.toEpoch(k, '12:00')) / DAY)) } };
+        else if (tips.length) alert = { type: 'daily', data: { kind: 'tip', tip: tips[Math.floor(dayNo(k) / 2) % tips.length].id } };
+      }
+      if (!alert) continue;
+      Object.assign(alert, { key: 'daily-' + k, push: 'critical', severity: 'info', title: '', body: '' });
+      out.push({ at, alert });
+    }
+    return out;
+  }
+
   /* ---- how each one looks ---- */
   // the phone's notification channels (Android): reminders about a shift ring; pay, summaries and good news are quiet
   const CH = { upcoming: 'shifts', confirmDone: 'shifts', timer: 'shifts', away: 'shifts' };
@@ -179,6 +255,30 @@
       n.body = `לא נכנסת לשעתי כבר ${d} ימים. אם עבדת בהם, רישום של דקה שומר את השכר שלך מדויק.`;
       n.sub = 'תזכורת';
       n.acts.push({ id: 'add', title: 'להוסיף משמרת', url: './?action=add#home' });
+    } else if (t === 'daily' && a.data) {
+      const D = a.data;
+      n.sub = 'הודעה יומית';
+      if (D.kind === 'tomorrow' && r) {
+        n.title = `מחר ב-${U.epochHM(r.start)}: משמרת ${role(r)}`;
+        n.body = amount(r) ? `${span(r)} · צפוי לך כ-${amount(r)} על המשמרת הזאת.` : `${span(r)}. תזכורת מהלוח שלך.`;
+        n.when = r.start;
+        n.acts.push({ id: 'open', title: 'לפרטי המשמרת', url: n.url });
+      } else if (D.kind === 'usual') {
+        n.title = 'עבדת היום?';
+        n.body = `ביום ${U.DAYS[D.dow] || ''} יש לך בדרך כלל משמרת. אם עבדת, רישום של דקה שומר את החישוב מדויק.`;
+        n.url = './?action=add#home';
+        n.acts.push({ id: 'add', title: 'להוסיף משמרת', url: n.url });
+      } else if (D.kind === 'month') {
+        n.title = `בתקופת השכר עד עכשיו: ${U.money(D.gross, 0)} ברוטו`;
+        n.body = `${D.shifts === 1 ? 'משמרת אחת' : `${D.shifts} משמרות`} · ${U.num(D.hours, 1)} שעות. ${D.left === 0 ? 'התקופה נגמרת היום.' : D.left === 1 ? 'התקופה נגמרת מחר.' : `עוד ${D.left} ימים עד סוף התקופה.`}`;
+        n.url = './#home';
+      } else if (D.kind === 'tip') {
+        const tip = TIPS.find((x) => x.id === D.tip) || TIPS[0];
+        n.title = tip.title;
+        n.body = tip.body;
+        n.url = './?action=rights#home';
+        n.acts.push({ id: 'rights', title: 'לכל הזכויות', url: n.url });
+      }
     } else if (t === 'weekly' && a.data && a.data.from && model) {
       const tt = Engine.totals(model, a.data.from, a.data.to);
       if (!o.hideMoney && tt.gross > 0) n.title = `השבוע שלך: ${U.money(tt.gross, 0)} ברוטו`;
@@ -211,6 +311,6 @@
     return n;
   }
 
-  root.NotePlan = { DAYS, MAX, MORNING, times, plan, away, look, dayWord, noteUrl };
+  root.NotePlan = { DAYS, MAX, MORNING, DAILY_HOUR, TIPS, times, plan, away, daily, dailyAt, look, dayWord, noteUrl };
   if (typeof module !== 'undefined') module.exports = root.NotePlan;
 })(typeof window !== 'undefined' ? window : globalThis);

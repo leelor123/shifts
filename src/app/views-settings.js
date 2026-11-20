@@ -778,7 +778,9 @@
       return `<div class="card">${F.sw('התראות פוש בטלפון', perm === 'granted' ? 'מאושר' : perm === 'denied' ? (App.androidApp ? 'חסום. יש לאשר בהגדרות הטלפון › אפליקציות › Shaati › התראות' : 'חסום. יש לאשר בהגדרות האתר ב-\u2060Chrome') : 'דורש אישור', 's.alerts.push', A.push)}
           ${perm !== 'granted' && perm !== 'unsupported' ? `<button class="btn tonal block" data-perm>${icon('bell')} אשר התראות</button>` : ''}
           ${perm === 'granted' ? `<button class="btn text sm" data-test>${icon('send', 's')} שלח התראת בדיקה</button>` : ''}
-          <div class="tiny muted" style="margin-top:6px">מעט התראות: הסיכום השבועי והחודשי, שיאים ויעדים, ותזכורות חשובות בלבד. בלי התראות על חריגות.</div></div>
+          <div class="tiny muted" style="margin-top:6px">מעט התראות: הודעה אחת ביום, הסיכום השבועי והחודשי, שיאים ויעדים ותזכורות חשובות. בלי התראות על חריגות.</div></div>
+        <div class="section-title">הודעה יומית</div><div class="card">${F.sw('הודעה אחת ביום', 'רק ביום שאין בו התראה אחרת: המשמרת של מחר, איך החודש מתקדם או זכות שכדאי להכיר', 's.alerts.types.daily', A.types.daily !== false).replace('data-s=', 'data-redraw data-s=')}
+          ${A.types.daily !== false ? `<div class="grid2">${F.sel('בשעה', 's.alerts.dailyHour', Array.from({ length: 14 }, (x, i) => [i + 8, U.pad(i + 8) + ':00']), A.dailyHour || 19)}</div>` : ''}</div>
         <div class="section-title">סיכומים</div><div class="card">${t('weekly', 'סיכום שבועי')}
           <div class="grid2">${F.sel('ביום', 's.alerts.weeklyDay', U.DAYS.map((d, i) => [i, d]), A.weeklyDay)}${F.num('בשעה', 's.alerts.weeklyHour', A.weeklyHour)}</div>
           ${t('monthly', 'סיכום חודשי (כשתקופת השכר נגמרת)')}</div>

@@ -191,3 +191,73 @@ T.test('the non-urgent ones never at night, and at most one a day counting the a
   T.eq(NP.plan(weekly, ts2, { now: now2 }).length, 1, '(without one sent, it is planned)');
   T.ok(/pushed: S\.meta\.lastAnomalyPush/.test(read('src/app/phone-notes.js')), 'the app passes the day it last sent one');
 });
+
+T.section('the daily message (the user, 21 Nov 2026: at least one a day, useful, not spam)');
+// 2026-11-09 is a Monday; Saturday 14 Nov is the rest day, Friday 13 its eve
+const DNOW = U.toEpoch('2026-11-09', '08:00');
+const words = (model, x, o) => NP.look(x.alert, model, Object.assign({ now: x.at, roleName: () => 'סדרן' }, o || {}));
+T.test('one a day, at 19:00, never at night; the morning before a rest day and its evening after', () => {
+  const model = Engine.buildModel(data([]));
+  const list = NP.daily(model, { now: DNOW });
+  const days = list.map((x) => U.epochKey(x.at));
+  T.eq(new Set(days).size, days.length, 'never two on one day');
+  T.ok(list.length >= 7, 'every day of the week ahead: ' + list.length);
+  for (const x of list) T.ok(!globalThis.Moments.quietHour(x.at), 'not at night: ' + new Date(x.at).toString());
+  const at = (k) => list.find((x) => U.epochKey(x.at) === k);
+  T.eq(U.epochHM(at('2026-11-09').at), '19:00');
+  T.eq(U.epochHM(at('2026-11-13').at), '10:00', 'Friday: in the morning, before Shabbat');
+  T.eq(U.epochHM(at('2026-11-14').at), '21:00', 'Saturday: after Shabbat');
+  T.ok(list.every((x) => x.alert.push === 'critical' && x.alert.key === 'daily-' + U.epochKey(x.at)), 'planned as its own day, one tag a day');
+});
+T.test('the same words never two days running', () => {
+  const shifts = [];
+  for (let i = 1; i <= 8; i++) shifts.push(shift(U.addDays('2026-11-09', -i * 3), '09:00', '15:00', 'done'));
+  const model = Engine.buildModel(data(shifts));
+  const list = NP.daily(model, { now: DNOW }).map((x) => words(model, x));
+  for (let i = 1; i < list.length; i++) T.ok(list[i].title + list[i].body !== list[i - 1].title + list[i - 1].body, 'day ' + i + ': ' + list[i].title);
+  for (const n of list) { T.ok(n.title && n.body, 'has words'); T.ok(!/undefined|NaN/.test(n.title + n.body), n.body); }
+});
+T.test('nothing on a day another notification comes, nothing for today when one came, off by its switch', () => {
+  const model = Engine.buildModel(data([]));
+  const list = NP.daily(model, { now: DNOW, busy: (k) => k === '2026-11-10' });
+  T.ok(!list.some((x) => U.epochKey(x.at) === '2026-11-10'), 'busy day skipped');
+  T.eq(NP.daily(model, { now: DNOW, on: false }).length, 0, 'switched off');
+  T.ok(!NP.daily(model, { now: U.toEpoch('2026-11-09', '19:30') }).some((x) => U.epochKey(x.at) === '2026-11-09'), 'its hour passed: tomorrow');
+  T.eq(U.epochHM(NP.daily(model, { now: DNOW, hour: 9 })[0].at), '09:00', 'the user picks the hour');
+});
+T.test('what it says: tomorrow\'s shift first, then "did you work today?" on a usual day', () => {
+  const p = shift('2026-11-10', '16:00', '22:00');
+  const model = Engine.buildModel(data([p]));
+  const first = NP.daily(model, { now: DNOW })[0];
+  T.eq(first.alert.data.kind, 'tomorrow');
+  T.ok(/^מחר ב-16:00: משמרת/.test(words(model, first).title), words(model, first).title);
+  T.ok(NP.daily(model, { now: DNOW, eveReminder: true })[0].alert.data.kind !== 'tomorrow', 'the evening-before reminder already speaks of it');
+  const usual = [1, 2, 3].map((w) => shift(U.addDays('2026-11-09', -7 * w), '09:00', '15:00', 'done'));
+  const m2 = Engine.buildModel(data(usual));
+  const mon = NP.daily(m2, { now: DNOW })[0];
+  T.eq(mon.alert.data.kind, 'usual');
+  T.eq(words(m2, mon).title, 'עבדת היום?');
+  T.ok(words(m2, mon).url.includes('action=add'), 'a tap adds the shift');
+});
+T.test('rights facts: a tap opens the rights, a minor gets no overtime fact, hidden amounts stay hidden', () => {
+  const minor = Engine.buildModel(data([], (x) => { x.settings.birthDate = '2010-05-01'; }));
+  const ids = NP.daily(minor, { now: DNOW, days: 40 }).filter((x) => x.alert.data.kind === 'tip').map((x) => x.alert.data.tip);
+  T.ok(ids.length > 5 && !ids.includes('overtime'), ids.join(','));
+  const model = Engine.buildModel(data([]));
+  const tip = NP.daily(model, { now: DNOW }).find((x) => x.alert.data.kind === 'tip');
+  T.ok(words(model, tip).url.includes('action=rights'), 'opens the rights');
+  for (const t of NP.TIPS) T.ok(!/—/.test(t.title + t.body) && t.body.length <= 120, 'short, no em dash: ' + t.id);
+  const shifts = [shift('2026-11-02', '09:00', '15:00', 'done')];
+  const m3 = Engine.buildModel(data(shifts));
+  const month = NP.daily(m3, { now: DNOW, days: 4 }).find((x) => x.alert.data.kind === 'month');
+  T.ok(month && /₪/.test(words(m3, month).title), 'the period so far, with its amount');
+  T.ok(!/₪/.test(JSON.stringify(words(m3, month, { hideMoney: true }))), 'amounts hidden: none on the lock screen');
+});
+T.test('the app hands it to the phone, with its switch and hour', () => {
+  const src = read('src/app/phone-notes.js');
+  T.ok(src.includes('NP.daily(App.model,') && src.includes('shownToday(now)'), 'planned with the rest, not on a day one already came');
+  const A = Defaults.defaultSettings().alerts;
+  T.eq(A.types.daily, true); T.eq(A.dailyHour, 19);
+  T.ok(read('src/app/views-settings.js').includes("'s.alerts.types.daily'"), 'a switch in Settings');
+  T.ok(read('src/app/app.js').includes("action === 'rights'"), 'the tap on a fact opens the rights');
+});
