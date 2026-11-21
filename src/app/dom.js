@@ -134,6 +134,23 @@
     patchChildren(el, t.content);
   };
 
+  /** a scrolling body redrawn where it stands: the same scroll, and when the new content ends above the place the
+   * user scrolled to, a blank space at the end holds it there. Without it the browser scrolled back and every row on
+   * screen moved down at once (turning off "away" near the end of the alerts settings, 21 Nov 2026). */
+  Dom.redraw = function (el, html) {
+    const y = el.scrollTop;
+    Dom.patch(el, html);
+    const need = y - (el.scrollHeight - el.clientHeight);
+    if (need > 0.5) {
+      const hold = document.createElement('div');
+      hold.className = 'dom-hold';
+      hold.setAttribute('aria-hidden', 'true');
+      hold.style.height = Math.ceil(need) + 'px';
+      el.appendChild(hold);
+    }
+    el.scrollTop = y;
+  };
+
   /* ---------------- amounts, marked for the privacy blur ---------------- */
   // a game's coins and points, and a price, are not the user's money
   const SKIP = '.money, .pub, .game-sheet, .games-sheet, .lb-sheet, [data-plus-buy], [data-limit-buy], [data-design-buy], script, style, textarea, [contenteditable]';

@@ -114,7 +114,7 @@
     let empId = S.employers[0].id;
     let sheetEl = null;
     const empPicker = () => (opts.perEmployer && App.multiEmp() ? `<div class="chips">${S.employers.map((e) => `<button class="chip ${e.id === empId ? 'on' : ''}" data-emp="${e.id}">${icon('briefcase', 's')} ${esc(e.name)}</button>`).join('')}</div>` : '');
-    const draw = () => { const b = sheetEl.querySelector('.sh-body'); const y = b.scrollTop; root.Dom.patch(b, empPicker() + render(App.employer(empId))); b.scrollTop = y; if (opts.mount) opts.mount(sheetEl, draw); };
+    const draw = () => { const b = sheetEl.querySelector('.sh-body'); root.Dom.redraw(b, empPicker() + render(App.employer(empId))); if (opts.mount) opts.mount(sheetEl, draw); };
     UI.openSheet({
       title, full: true, body: empPicker() + render(App.employer(empId)),
       onMount: (el) => {

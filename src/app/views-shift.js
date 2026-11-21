@@ -457,9 +457,7 @@
     }
     function redraw() {
       const b = sheetEl.querySelector('.sh-body');
-      const y = b.scrollTop;
-      root.Dom.patch(b, body());
-      b.scrollTop = y;
+      root.Dom.redraw(b, body());
       preview();
     }
     function setPath(path, value) {

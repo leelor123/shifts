@@ -945,9 +945,7 @@
     }
     function redraw(openKey) {
       const b = sheetEl.querySelector('.sh-body');
-      const y = b.scrollTop;
-      root.Dom.patch(b, body());
-      b.scrollTop = y;
+      root.Dom.redraw(b, body());
       if (openKey) openRow(openKey, true);
     }
     /* typing updates the row, its group and the summary right away (no redraw, so the keyboard stays) */
@@ -1375,9 +1373,7 @@
           c = gapCheck(slip, a);
           const ta = el.querySelector('#ps-msg');
           const typed = msgEdited && ta ? ta.value : null;
-          const y = body.scrollTop;
-          root.Dom.patch(body, analysisHtml(slip, a, c));
-          body.scrollTop = y;
+          root.Dom.redraw(body, analysisHtml(slip, a, c));
           const ta2 = el.querySelector('#ps-msg');
           if (ta2) ta2.value = typed != null ? typed : ta2.textContent;
         };
