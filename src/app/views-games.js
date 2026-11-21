@@ -852,8 +852,21 @@
     const rate = own > 0 ? Math.round(own * 100) / 100 : 40;
     let chain, i, streak, answered;
     const money = (v) => `${v.toLocaleString('en-US')} ₪`;
-    const item = (t, open, cls) => `<div class="hw-card ${cls || ''}"><span class="hw-e" aria-hidden="true">${t.e}</span><b>${esc(t.name)}</b>
+    const item = (t, open, cls) => `<div class="hw-card ${cls || ''}"><span class="hw-e" aria-hidden="true">${t.e}</span><b class="no-fit">${esc(t.name)}</b>
       ${open ? `<span class="hw-p">${money(t.price)}</span><span class="hw-h">${Games.workTime(t.price / rate)}</span>` : '<span class="hw-q" aria-label="מחיר מוסתר">?</span>'}</div>`;
+    // a name is one long word in some languages (Russian "электровелосипедов"): it gets a smaller letter until it fits
+    // its card, never a break inside the word and never a card wider than its half (seen in the QA, 21 Nov 2026).
+    // Done before the frame is drawn, so nothing jumps. ("no-fit": the page's own label fitting, Dom.fit, stops at 80%
+    // and then put the name back to its full size, over this one.)
+    function fit() {
+      for (const t of box.querySelectorAll('.hw-card b')) {
+        t.style.fontSize = '';
+        const w = t.clientWidth;
+        if (!w || t.scrollWidth <= w + 1) continue;
+        let px = parseFloat(getComputedStyle(t).fontSize) * w / t.scrollWidth;
+        for (let k = 0; k < 6; k++) { t.style.fontSize = Math.max(10, Math.floor(px * 2) / 2) + 'px'; if (t.scrollWidth <= w + 1 || px <= 10) break; px -= 0.5; }
+      }
+    }
     function start() { clearTimeout(next); chain = Games.hoursRound(seed(), 60); i = 0; streak = 0; show(); }
     function show() {
       if (!alive) return;
@@ -864,6 +877,7 @@
         <div class="hw-ask">${esc(b.name)}: יותר או פחות שעות עבודה?</div>
         <div class="tf-btns"><button class="btn big hw-more" data-a="1">${icon('up')} יותר</button><button class="btn big hw-less" data-a="0">${icon('down')} פחות</button></div>
         <div class="qz-x" aria-live="polite"></div>`;
+      fit();
       box.querySelector('.tf-btns').onclick = (e) => { const x = e.target.closest('[data-a]'); if (x) answer(x.dataset.a === '1'); };
     }
     function answer(more) {
@@ -874,6 +888,7 @@
       box.querySelectorAll('.tf-btns .btn').forEach((x) => { x.disabled = true; x.classList.toggle('picked', (x.dataset.a === '1') === more); });
       const card = box.querySelector('.hw-card.b');
       card.outerHTML = item(b, true, 'b shown ' + (ok ? 'ok' : 'no'));
+      fit();
       // the price rolls up like a slot machine
       const shown = box.querySelector('.hw-card.b');
       if (root.GameFx) root.GameFx.countUp(shown.querySelector('.hw-p'), { ms: 520 });
@@ -904,7 +919,12 @@
       });
     }
     start();
-    return () => { alive = false; clearTimeout(next); fx.close(); };
+    // measured again once the display font has come (the first pair was measured in the narrower stand-in font) and
+    // when the screen turns or the window changes width
+    const refit = () => { if (alive) fit(); };
+    if (document.fonts && document.fonts.status !== 'loaded') document.fonts.ready.then(refit);
+    root.addEventListener('resize', refit);
+    return () => { alive = false; clearTimeout(next); root.removeEventListener('resize', refit); fx.close(); };
   }
 
   App.games = { LIST, best, play: playGame };

@@ -7829,7 +7829,7 @@
   "kind": "lit",
   "where": [
    "app/views-games.js:33",
-   "app/views-games.js:899"
+   "app/views-games.js:914"
   ]
  },
  {
@@ -8420,7 +8420,7 @@
   "kind": "lit",
   "where": [
    "app/views-games.js:673",
-   "app/views-games.js:885"
+   "app/views-games.js:900"
   ]
  },
  {
@@ -8634,42 +8634,42 @@
   "key": "<div class=\"qz-top\"><span class=\"hw-rate\">{0} {1} לשעה</span><span class=\"qz-score\" data-sc>🔥 {2}</span></div>\n        <div class=\"hw-pair\">{3}<span class=\"hw-vs\" aria-hidden=\"true\">או</span>{4}</div>\n        <div class=\"hw-ask\">{5}: יותר או פחות שעות עבודה?</div>\n        <div class=\"tf-btns\"><button class=\"btn big hw-more\" data-a=\"1\">{6} יותר</button><button class=\"btn big hw-less\" data-a=\"0\">{7} פחות</button></div>\n        <div class=\"qz-x\" aria-live=\"polite\"></div>",
   "kind": "tpl",
   "where": [
-   "app/views-games.js:862"
+   "app/views-games.js:875"
   ]
  },
  {
   "key": "לפי השכר שלך",
   "kind": "lit",
   "where": [
-   "app/views-games.js:862"
+   "app/views-games.js:875"
   ]
  },
  {
   "key": "לפי שכר של",
   "kind": "lit",
   "where": [
-   "app/views-games.js:862"
+   "app/views-games.js:875"
   ]
  },
  {
   "key": "{0} ברצף! 🔥",
   "kind": "tpl",
   "where": [
-   "app/views-games.js:885"
+   "app/views-games.js:900"
   ]
  },
  {
   "key": "<div class=\"qz-xt no\">הפעם לא</div><div>{0} עולה {1}: {2} של עבודה, {3} מ{4}.</div>\n          <button class=\"btn\" data-next>לתוצאה</button>",
   "kind": "tpl",
   "where": [
-   "app/views-games.js:889"
+   "app/views-games.js:904"
   ]
  },
  {
   "key": "יותר",
   "kind": "lit",
   "where": [
-   "app/views-games.js:889",
+   "app/views-games.js:904",
    "core/insights.js:667"
   ]
  },
@@ -8677,7 +8677,7 @@
   "key": "פחות",
   "kind": "lit",
   "where": [
-   "app/views-games.js:889",
+   "app/views-games.js:904",
    "core/insights.js:667"
   ]
  },
@@ -8685,35 +8685,35 @@
   "key": "יודעים בדיוק מה שווה כסף!",
   "kind": "lit",
   "where": [
-   "app/views-games.js:900"
+   "app/views-games.js:915"
   ]
  },
  {
   "key": "יפה!",
   "kind": "lit",
   "where": [
-   "app/views-games.js:900"
+   "app/views-games.js:915"
   ]
  },
  {
   "key": "שווה עוד סיבוב",
   "kind": "lit",
   "where": [
-   "app/views-games.js:900"
+   "app/views-games.js:915"
   ]
  },
  {
   "key": "{0} <small>ברצף</small>",
   "kind": "tpl",
   "where": [
-   "app/views-games.js:901"
+   "app/views-games.js:916"
   ]
  },
  {
   "key": "כל מחיר הוא גם שעות של עבודה",
   "kind": "lit",
   "where": [
-   "app/views-games.js:902"
+   "app/views-games.js:917"
   ]
  },
  {
