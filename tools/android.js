@@ -78,6 +78,9 @@ async function generate() {
   fs.mkdirSync(TWA, { recursive: true });
   const file = path.join(TWA, 'twa-manifest.json');
   await tm.saveToFile(file);
+  // the generator only writes its own files: a Java file another branch's build added stayed and broke this build
+  // (SignInActivity.java of 1.44.0 in a 1.43.0 build, 2026-11-22), so the sources start empty every time
+  fs.rmSync(path.join(TWA, 'app', 'src'), { recursive: true, force: true });
   await new core.TwaGenerator().createTwaProject(TWA, tm, new core.ConsoleLog('generate'));
   patchLauncher();
   patchWidgets();
