@@ -24,6 +24,13 @@
   const fromMin = (m) => { m = ((m % 1440) + 1440) % 1440; return pad(Math.floor(m / 60)) + ':' + pad(m % 60); };
 
   const TOTAL = /סה["״']?כ|סיכום|total|sum\b/i;
+  // the page's own lines, printed around the table: when it was printed or made, its page, its period, whose it
+  // is ("הופק בתאריך 02/11/2026 בשעה 10:15 עמוד 1"). A date and a time on such a line are no shift. Only when the
+  // word comes before the line's first date or time: a shift's note after its times ("08:00 16:00 עדכון ידני")
+  // stays a shift
+  const META = /הופק|הודפס|הדפס|הפקה|הנפקה|נוצר|עודכן|עדכון|עמוד|דף\s*\d|תקופ|מתאריך|עד\s*תאריך|לחודש|מס['׳"]?\s*עובד|מספר\s*עובד|ת[."״]\s?ז|תעודת\s*זהות|printed|print\s*date|generated|created|updated|update|page|period|from\s*date|employee\s*(no|id|#|number)/i;
+  // a number that names something else, right before it: a page, an employee, a branch, a count of days
+  const NOT_HOURS = /(עמוד|עובד|סניף|מחלקה|ימים|ימי\s*עבודה|ימי|תקן|קוד|מס['׳"]?|מספר|page|days?|no\.?|#|id)\s*[:.]?\s*$/i;
   // a time: 8:00, 08:00:00, 8:00 PM; a range may also use dots (08.30-16.00)
   // lookbehinds: built on first use (U.lazyRx: Safari before iOS 16.4 cannot read them)
   const R = root.U.lazyRx({
@@ -31,6 +38,7 @@
     RANGE_DOT: () => /(?<![\d.:])(\d{1,2})\.(\d{2})\s*[-–—]\s*(\d{1,2})\.(\d{2})(?![\d.])/,
     DATE_FULL: () => /(?<!\d)(\d{1,2})[./-](\d{1,2})[./-](\d{2}|\d{4})(?!\d)/,
     DATE_ISO: () => /(?<!\d)(\d{4})-(\d{1,2})-(\d{1,2})(?!\d)/,
+    DATE_SLASH: () => /(?<![\d.:/])(\d{1,2})\/(\d{1,2})(?:\/(\d{2}|\d{4}))?(?![\d.:/])/,
     DATE_SHORT: () => /(?<![\d.:])(\d{1,2})[./](\d{1,2})(?![\d.:/])/,
     HOURS: () => /(?<![\d:./-])(\d{1,2}(?:\.\d{1,2})?)(?![\d:./-])/g,
     PAID: () => /(?<![\d:./-])(\d{1,2}\.\d{1,2})(?![\d:./-])/,
@@ -62,6 +70,9 @@
     String(text || '').split(/\r?\n/).forEach((raw, n) => {
       const line = raw.replace(/\u200E|\u200F|\u202A|\u202B|\u202C|\u2066|\u2067|\u2068|\u2069/g, '').replace(/\s+/g, ' ').trim();
       if (!line || TOTAL.test(line)) return;
+      const firstVal = line.search(/\d{1,2}[./:-]\d{1,2}/);
+      const meta = line.search(META);
+      if (firstVal >= 0 && meta >= 0 && meta < firstVal) return;
       const iIn = line.search(/כניסה|התחלה|\bin\b|\bstart\b/i), iOut = line.search(/יציאה|סיום|\bout\b|\bend\b/i);
       if (iIn >= 0 && iOut >= 0 && !/\d{1,2}[:.]\d{2}/.test(line)) { exitFirst = iOut < iIn; return; }
       // the times first (so a time is never read as a date)
@@ -83,13 +94,23 @@
       }
       // hours as a number ("8.5", "8"), not part of anything else
       const nums = [];
-      rest.replace(R.HOURS, (all, v) => { nums.push(+v); return all; });
+      rest.replace(R.HOURS, (all, v, at, str) => { if (!NOT_HOURS.test(str.slice(0, at))) nums.push(+v); return all; });
       if (!date && (mm = rest.match(R.DATE_SHORT)) && (times.length || nums.length)) {
         const d = +mm[1], m = +mm[2];
         const y = yearFor(m, d, today);
-        if (validDate(y, m, d)) { date = key(y, m, d); ym = true; rest = rest.replace(mm[0], ' '); nums.length = 0; rest.replace(R.HOURS, (all, v) => { nums.push(+v); return all; }); }
+        if (validDate(y, m, d)) { date = key(y, m, d); ym = true; rest = rest.replace(mm[0], ' '); nums.length = 0; rest.replace(R.HOURS, (all, v, at, str) => { if (!NOT_HOURS.test(str.slice(0, at))) nums.push(+v); return all; }); }
       }
       if (!date) return;
+      // a second date that is not the next day: a period ("01/10/2026 עד 31/10/2026"), no shift. The next day is the
+      // exit of a night, printed by some clocks ("15/10/2026 22:00 16/10/2026 06:00")
+      const other = rest.match(R.DATE_ISO) || rest.match(R.DATE_FULL) || rest.match(R.DATE_SLASH);
+      if (other) {
+        const iso = /^\d{4}/.test(other[0]);
+        const od = +(iso ? other[3] : other[1]), om = +other[2];
+        const oy = iso ? +other[1] : other[3] ? (+other[3] < 100 ? +other[3] + 2000 : +other[3]) : +date.slice(0, 4);
+        const gap = (Date.UTC(oy, om - 1, od) - Date.UTC(+date.slice(0, 4), +date.slice(5, 7) - 1, +date.slice(8, 10))) / 864e5;
+        if (validDate(oy, om, od) && gap !== 0 && gap !== 1) return;
+      }
       const hoursNum = nums.find((v) => v >= 0.5 && v <= 24 && (v % 1 !== 0 || v <= 16));
       let start = null, end = null, hours = null;
       // more times than a pair (a column of standard hours, a total, a second pair): the pair whose length is
