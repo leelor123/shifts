@@ -105,3 +105,9 @@ T.test('both screens: a PDF longer than the pages read says how many were read, 
   T.ok(imp.includes(note) && hc.includes(note));
   T.ok(imp.includes('const capped = got.pages > got.pagesRead ? { pages: got.pages, pagesRead: got.pagesRead } : null;'), 'readFile carries both numbers');
 });
+T.test('a PDF read as lines wins over its table only when the lines hold every day the table found', () => {
+  // a print line at the foot of the page ("הופק 02/11/2026 10:15 עמוד 1") made the lines one shift longer, and
+  // "more rows wins" brought that extra shift in
+  T.ok(/res\.rows\.length < lr\.length && res\.rows\.every\(\(t\) => lr\.some\(\(l\) => l\.date === t\.date\)\)/.test(imp), 'the lines must hold every table day');
+  T.ok(!/res\.rows\.length < root\.Timesheet\.parse\(lines/.test(imp), 'no plain "more rows wins"');
+});

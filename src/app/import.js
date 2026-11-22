@@ -112,7 +112,12 @@
       const out = (v) => (!capped ? v : Object.assign(typeof v === 'string' ? { result: root.Timesheet.parse(v, { today: U.todayKey() }), text: v } : v, capped));
       // a PDF read both ways: the table (it knows the columns, their names and the total — a column of standard
       // hours never becomes the entry) unless the lines found more shifts
-      if (lines != null && res.rows.length < root.Timesheet.parse(lines, { today: U.todayKey() }).rows.length) return out(lines);
+      // (and only when they hold every day the table found: lines that miss a day of the table and add another read
+      // something else on the page as a shift)
+      if (lines != null) {
+        const lr = root.Timesheet.parse(lines, { today: U.todayKey() }).rows;
+        if (res.rows.length < lr.length && res.rows.every((t) => lr.some((l) => l.date === t.date))) return out(lines);
+      }
       // the words read in reading order, for the "what was read" box and as a last try as plain text
       const text = res.text || '';
       if (!res.rows.length) return out(lines != null ? lines : got.source === 'ocr' ? { result: res, text } : text);

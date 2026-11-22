@@ -54,6 +54,20 @@ T.test('nonsense is not a shift', () => {
   T.eq(TS.parse('31/02/2026 08:00 16:00\n14/10/2026 25:00 26:00\nשלום', { today }).rows.length, 0);
 });
 
+T.test('the page\'s own lines (printed, made, updated, page, period, employee number) are no shift', () => {
+  const base = 'תאריך כניסה יציאה סה"כ\n01/10/2026 08:00 16:00 8.00\n02/10/2026 08:00 17:00 9.00\n';
+  for (const extra of ['הופק בתאריך 02/11/2026 בשעה 10:15 עמוד 1', "מס' עובד 12 תאריך הדפסה 01/11/2026",
+    'תקופה 01/10/2026 עד 31/10/2026 ימי עבודה 2', 'שם: נדב כהן  תאריך 31/10/2026  שעות תקן 8',
+    'Printed 02/11/2026 10:15 Page 1 of 2', 'נוצר ב-01/11/2026 09:30 - 11:45', 'עדכון אחרון 05/11/2026 08:12 16:40',
+    'מחלקה 3 סניף 7 מתאריך 1/10 עד 31/10', '01/10/2026 - 31/10/2026 8']) {
+    T.eq(TS.parse(base + extra, { today }).rows.length, 2, extra);
+  }
+});
+T.test('a shift\'s own note, a night printed with its exit day and an hours-only day stay shifts', () => {
+  const p = TS.parse('15/10/2026 22:00 16/10/2026 06:00\n05/10/2026 08:00 16:00 עדכון ידני\nחופשה 06/10/2026 8', { today });
+  T.eq(p.rows.map((r) => `${r.date} ${r.start}-${r.end} ${r.hours}`).join(' | '), '2026-10-15 22:00-06:00 8 | 2026-10-05 08:00-16:00 8 | 2026-10-06 null-null 8');
+});
+
 /* ---- a photo read as a table: words with their place on the page (parseWords) ---- */
 // a table drawn right to left: each row's cells at the columns' x, the page tilted by `tilt` px per 1000px
 function page(head, rows, o) {
