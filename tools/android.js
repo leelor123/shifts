@@ -323,7 +323,12 @@ function patchWidgets() {
     m = m.replace('<application', `<uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
     <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
     <uses-permission android:name="android.permission.ACCESS_BACKGROUND_LOCATION" />
+    <uses-feature android:name="android.hardware.location" android:required="false" />
+    <uses-feature android:name="android.hardware.location.gps" android:required="false" />
+    <uses-feature android:name="android.hardware.location.network" android:required="false" />
     <application`);
+    // the location permissions make Play assume GPS is required and hide the app from devices without it (8 dropped
+    // in 13800/13900); the suggestion at work is optional, so the hardware is too (tests/arrive.test.js)
   }
   const geo = !WORK_GEOFENCE ? '' : `        <!-- the suggestion at work: saving the spot (the disclosure, then the permissions; src/app/arrive.js opens it),
              and the circle's crossings and the notification's "turn off" (WorkGeo) -->

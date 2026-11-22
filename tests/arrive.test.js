@@ -171,6 +171,9 @@ T.test('the Android build: the permissions, the screen and the receiver go in to
   T.ok(t.includes('<receiver android:name=".WorkGeoReceiver" android:exported="false" />'), 'the receiver is not exported');
   T.ok(/\$\{WORK_GEOFENCE \? `[^`]*postMessage\("shaati:geo", null\)/.test(t), 'the hello behind the switch');
   T.ok(t.includes("play-services-location:"), 'the location library');
+  for (const f of ['android.hardware.location', 'android.hardware.location.gps', 'android.hardware.location.network']) {
+    T.ok(t.includes(`<uses-feature android:name="${f}" android:required="false" />`), `${f} is optional, so Play keeps devices without it`);
+  }
   T.ok(!/noHistory/.test(t.slice(t.indexOf('WorkGeoActivity'), t.indexOf('WorkGeoReceiver'))), 'the screen survives Android\'s settings page (background permission)');
 });
 T.test('the page: off until the Android app says it can, nothing saved in the database, one tap turns it off', () => {
