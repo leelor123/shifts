@@ -316,7 +316,7 @@
   }
 
   /** "08:00–16:30", kept left to right inside Hebrew text and on one line. */
-  const range = (a, b) => '\u2066' + a + '\u2060–\u2060' + b + '\u2069';
+  const range = U.span;
   const hoursOf = (h) => U.num(h, 2);
   /** How one side of a difference reads: its times (each part of it, when it is several rows or shifts), or its hours. */
   function side(x, withHours) {

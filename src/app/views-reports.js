@@ -17,7 +17,7 @@
     if (type === 'week') { const ws = U.weekStart(anchor, S.settings.weekStart || 0); return { from: ws, to: U.addDays(ws, 6), label: `${U.fmtDate(ws, 'dm')} – ${U.fmtDate(U.addDays(ws, 6), 'dm')}` }; }
     if (type === 'month') { const P = Engine.periodOf(anchor, emp); return { from: P.from, to: P.to, label: P.label, sub: emp.periodStartDay > 1 ? `\u2066${U.fmtDate(P.from, 'short')}\u2060–\u2060${U.fmtDate(P.to, 'short')}\u2069` : '' }; }
     if (type === 'year') { const y = anchor.slice(0, 4); return { from: y + '-01-01', to: y + '-12-31', label: 'שנת ' + y }; }
-    return { from: st.from, to: st.to, label: `${U.fmtDate(st.from, 'short')} – ${U.fmtDate(st.to, 'short')}` };
+    return { from: st.from, to: st.to, label: U.span(U.fmtDate(st.from, 'short'), U.fmtDate(st.to, 'short')) };
   }
   function shiftAnchor(type, anchor, dir) {
     if (type === 'week') return U.addDays(anchor, 7 * dir);

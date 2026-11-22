@@ -486,7 +486,7 @@
   function pendingCard(pending) {
     if (!pending.length) return '';
     const total = pending.reduce((s, r) => s + (r.wage || 0), 0);
-    const row = (r) => `<div class="pd-row"><button class="pd-info" data-act="shift-open" data-id="${r.id}"><b>${U.fmtDate(r.dateKey, 'short')} · ${(U.LANG === 'he' ? U.DAYS : U.DAYS_SHORT)[U.dow(r.dateKey)]}</b><span>${U.epochHM(r.start)}–${U.epochHM(r.end)} · ${esc(App.roleName(r.segments[0] && r.segments[0].roleId))}</span></button>
+    const row = (r) => `<div class="pd-row"><button class="pd-info" data-act="shift-open" data-id="${r.id}"><b>${U.fmtDate(r.dateKey, 'short')} · ${(U.LANG === 'he' ? U.DAYS : U.DAYS_SHORT)[U.dow(r.dateKey)]}</b><span>${U.span(U.epochHM(r.start), U.epochHM(r.end))} · ${esc(App.roleName(r.segments[0] && r.segments[0].roleId))}</span></button>
       <button class="btn go pd-ok" data-act="mark-done" data-id="${r.id}">${icon('check', 's')} עבדתי · ${money(r.wage, 0)}</button></div>`;
     return `<div class="card pending-card"><div class="pd-head">${icon('alert', 's')}<div><b>${pending.length === 1 ? 'עבדת במשמרת הזאת?' : 'עבדת במשמרות האלה?'}</b><div class="small">משמרת מתוכננת נכנסת לשכר רק אחרי שמאשרים שעבדת בה.</div></div></div>
       ${pending.slice(0, 3).map(row).join('')}

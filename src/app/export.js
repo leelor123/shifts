@@ -82,7 +82,7 @@
     const roles = Object.entries(t.byRole).map(([id, v]) => `<tr><td>${esc(App.roleName(id))}</td><td>${U.hours(v.hours)}</td><td>${U.money(v.amount)}</td></tr>`).join('');
     const el = document.getElementById('print-root');
     el.innerHTML = `<div dir="rtl">
-      <h1>דוח שכר: ${esc(label)}</h1><div>${U.fmtDate(from)} – ${U.fmtDate(to)} · הופק ${U.fmtDate(U.todayKey())}</div><br>
+      <h1>דוח שכר: ${esc(label)}</h1><div>${U.span(U.fmtDate(from), U.fmtDate(to))} · הופק ${U.fmtDate(U.todayKey())}</div><br>
       <span class="kp">ברוטו: <b>${U.money(t.gross)}</b></span><span class="kp">נטו משוער: <b>${U.money(t.net.net)}</b></span><span class="kp">שעות: <b>${U.hours(t.hours)}</b></span><span class="kp">משמרות: <b>${t.shifts}</b></span><span class="kp">נסיעות: <b>${U.money(t.travel)}</b></span><span class="kp">ממוצע לשעה: <b>${U.money(t.avgHourly)}</b></span>
       <h3>לפי תפקיד</h3><table><tr><th>תפקיד</th><th>שעות</th><th>סכום</th></tr>${roles}</table>
       <h3>לפי סוג שעה</h3><table><tr><th>רגילות</th><th>125%</th><th>150%</th><th>שבת/חג</th><th>שבת/חג + נוספות</th><th>לילה</th></tr><tr><td>${U.hours(t.hoursBy.regular)}</td><td>${U.hours(t.hoursBy.ot1)}</td><td>${U.hours(t.hoursBy.ot2)}</td><td>${U.hours(t.hoursBy.rest)}</td><td>${U.hours(t.hoursBy.restOt1 + t.hoursBy.restOt2)}</td><td>${U.hours(t.hoursBy.night)}</td></tr></table>

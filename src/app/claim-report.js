@@ -78,7 +78,7 @@
     const row = (cells) => `<tr>${cells.map((c) => `<td>${c}</td>`).join('')}</tr>`;
     el.innerHTML = `<div dir="rtl" class="claim">
       <h1>דוח לבירור שכר וזכויות</h1>
-      <div>${esc(S.settings.userName || '')}${emp.name ? ' · ' + esc(emp.name) : ''} · ${U.fmtDate(d.from)} – ${U.fmtDate(d.to)} · הופק ${U.fmtDate(U.todayKey())}</div><br>
+      <div>${esc(S.settings.userName || '')}${emp.name ? ' · ' + esc(emp.name) : ''} · ${U.span(U.fmtDate(d.from), U.fmtDate(d.to))} · הופק ${U.fmtDate(U.todayKey())}</div><br>
       <span class="kp">משמרות: <b>${sum.shifts}</b></span><span class="kp">שעות: <b>${U.hours(sum.hours)}</b></span><span class="kp">שכר מחושב (ברוטו): <b>${U.money(sum.gross)}</b></span>${t > 0 ? `<span class="kp">הפרש משוער: <b>${U.money(t)}</b></span>` : ''}
       <h3>מה נמצא</h3>
       ${d.findings.length || d.holidays.length || d.lowRoles.length ? `<table><tr><th>תקופה</th><th>נושא</th><th>פירוט</th><th>הפרש משוער</th></tr>

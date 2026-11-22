@@ -173,6 +173,20 @@
     const a = Math.abs(m);
     return sign + Math.floor(a / 60) + ':' + pad(a % 60);
   }
+  /** Text kept left to right inside a right-to-left sentence (Hebrew, Arabic): a range or a list of dates or times.
+   *  Without the isolate, the bidi algorithm lays the items out from the right while each one reads from the left, so
+   *  "6/12, 7/12" or "08:00–16:00" come out scrambled. One mechanism for every such run (tests/bidi.test.js guards it). */
+  function ltr(s) {
+    return '\u2066' + s + '\u2069';
+  }
+  /** A range "a–b", left to right and on one line (word joiners around the dash). */
+  function span(a, b) {
+    return ltr(a + '\u2060–\u2060' + b);
+  }
+  /** Date keys as "6/12, 7/12, 8/12", left to right and on one line (no-break spaces). */
+  function dateList(keys) {
+    return ltr(keys.map((k) => fmtDate(k, 'short')).join(',\u00a0'));
+  }
   const dateFmts = {};
   const intl = (k, opts) => (dateFmts[JSON.stringify(opts)] || (dateFmts[JSON.stringify(opts)] = new Intl.DateTimeFormat(LOCALE, opts))).format(new Date(+k.slice(0, 4), +k.slice(5, 7) - 1, +k.slice(8, 10) || 1, 12));
   /** A date key as text: 'short' 5/1, 'long' with the day of the week, 'dmy' the same without the word "day",
@@ -244,7 +258,7 @@
     same, single,
     pad, MIN, HOUR, DAY, uid, dateKey, parseKey, keyToDate, addDays, addMonths, dow, diffDays,
     toEpoch, dayStart, epochKey, epochHM, todayKey, monthKey, monthStart, monthEnd, addMonthKey,
-    weekStart, rangeKeys, inRange, clamp, round2, sum, money, num, hours, hm, fmtDate, fmtMonth, pct, oops, ours, plural, lazyRx,
+    weekStart, rangeKeys, inRange, clamp, round2, sum, money, num, hours, hm, ltr, span, dateList, fmtDate, fmtMonth, pct, oops, ours, plural, lazyRx,
     LANG, RTL, LOCALE, MONTHS, MONTHS_SHORT, DAYS, DAYS_SHORT,
   };
 })(typeof window !== 'undefined' ? window : globalThis);
