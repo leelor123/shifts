@@ -24,4 +24,12 @@
         <item name="android:textColorAlertDialogListItem">@color/w_geo_title</item>
         <item name="android:colorAccent">@color/w_geo_button</item>
     </style>
+    <!-- Google sign-in in Android's own account picker (SignInActivity): nothing of its own on the screen and no
+         animation in or out, so the app under it stays exactly as it was; only Android's picker shows -->
+    <style name="SignInTheme" parent="@android:style/Theme.Translucent.NoTitleBar">
+        <item name="android:windowIsTranslucent">true</item>
+        <item name="android:windowBackground">@android:color/transparent</item>
+        <item name="android:backgroundDimEnabled">false</item>
+        <item name="android:windowAnimationStyle">@null</item>
+    </style>
 </resources>

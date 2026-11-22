@@ -1,6 +1,7 @@
 /* Admin helper that reuses the Firebase CLI login (dev tool, not part of the app).
  *   node tools/fbapi.js domains <projectId> <domain>    add an authorized sign-in domain
  *   node tools/fbapi.js authcfg <projectId>             show Auth config (providers, domains)
+ *   node tools/fbapi.js googleclient <projectId>        print the Google sign-in web client ID (public)
  *   node tools/fbapi.js ruletest <projectId>            run security-rule test cases
  *   node tools/fbapi.js emaillink <projectId>           turn on signing in with an email link (no password) */
 const path = require('path');
@@ -35,6 +36,12 @@ async function main() {
     // never print secrets (client secret, password-hash keys)
     for (const c of p.body.defaultSupportedIdpConfigs || []) console.log('provider:', c.name.split('/').pop(), c.enabled ? 'enabled' : 'disabled');
     if (p.body.error) console.log('providers: error', p.body.error);
+  }
+  if (cmd === 'googleclient') {
+    // the Google sign-in's web client ID (public, it is in every ID token's "aud"): the Android app asks Android's
+    // account picker for a token for this client (tools/android.js GOOGLE_WEB_CLIENT). The secret is never read.
+    const p = await idt.get(`/projects/${project}/defaultSupportedIdpConfigs/google.com`);
+    console.log(p.body.clientId);
   }
   if (cmd === 'redirectcheck') {
     // asks Google whether <arg>/__/auth/handler is an allowed redirect for the Google sign-in client
