@@ -59,7 +59,7 @@
     function start() {
       showSave(false);
       const name = myNames()[0] || '';
-      box.innerHTML = `${App.mascotSays ? App.mascotSays('happy', 'קיבלת סידור עבודה? צלם אותו או הדבק את ההודעה, ואכניס את המשמרות שלך ללוח 📅', { size: 64 }) : ''}
+      box.innerHTML = `${App.mascotSays ? App.mascotSays('happy', 'קיבלת סידור עבודה? אפשר לצלם אותו או להדביק את ההודעה, ואכניס את המשמרות שלך ללוח 📅', { size: 64 }) : ''}
         <label class="field"><span class="lbl">השם שלך בסידור</span><input class="input" id="sc-name" value="${esc(name)}" placeholder="למשל: לי" autocomplete="given-name"></label>
         <label class="btn big block imp-pick">${icon('camera')} צילום או צילום מסך של הסידור<input type="file" id="sc-file" class="sr" accept="image/*,application/pdf"></label>
         ${opts.text ? '' : `<details class="imp-paste"${opts.paste ? ' open' : ''}><summary>${icon('chat', 's')} או להדביק את ההודעה מוואטסאפ</summary>

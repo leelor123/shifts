@@ -273,7 +273,7 @@
         } catch (e) { UI.toast('ההוספה נכשלה: ' + (e.code || e.message)); }
       };
     } catch (e) {
-      if (!entry.closed) body.innerHTML = `<div class="banner warn">${icon('alert')}<div>לא ניתן לטעון את הנתונים (${esc(e.code || e.message || '')}). בדוק חיבור לאינטרנט.</div></div>`;
+      if (!entry.closed) body.innerHTML = `<div class="banner warn">${icon('alert')}<div>לא ניתן לטעון את הנתונים (${esc(e.code || e.message || '')}). כדאי לבדוק את החיבור לאינטרנט.</div></div>`;
     } };
     load();
   };

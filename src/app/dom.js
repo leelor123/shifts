@@ -269,6 +269,20 @@
     }
     return false;
   }
+  // a word of the element's own text split over two lines (a hyphen inside a word counts: "Demi-/heure")
+  function brokeWord(el) {
+    for (const n of el.childNodes) {
+      if (n.nodeType !== 3) continue;
+      const re = /\S+/g; let m;
+      while ((m = re.exec(n.nodeValue))) {
+        const rg = document.createRange(); rg.setStart(n, m.index); rg.setEnd(n, m.index + m[0].length);
+        const tops = [];
+        for (const r of rg.getClientRects()) { if (r.width < 1) continue; if (!tops.some((t) => Math.abs(t - r.top) < 3)) tops.push(r.top); }
+        if (tops.length > 1) return true;
+      }
+    }
+    return false;
+  }
   // on two lines, or cut (a one-line box that hides what does not fit: "…")
   const tight = (el) => wraps(el) || (el.scrollWidth > el.clientWidth + 1 && getComputedStyle(el).overflowX !== 'visible');
   Dom.fit = function (node) {
@@ -302,8 +316,15 @@
       for (const el of todo) { el.style.fontSize = (el.__fitBase * k).toFixed(2) + 'px'; Dom.keep(el, ['style']); }
       todo = todo.filter((el) => tight(el));
     }
-    // too long even at 80%: its own size, on two lines between words (smaller and still broken helps nobody)
-    for (const el of todo) { el.style.fontSize = ''; el.__fitBase = 0; }
+    // too long even at 80%: its own size, on two lines between words (smaller and still broken helps nobody). But a
+    // box narrower than one of its words breaks that word in the middle ("Auc/un", "Termine/r le service" in French
+    // at 320px, 23 Nov 2026): such a label takes the largest size that keeps every word whole, down to 68%.
+    for (const el of todo) {
+      el.style.fontSize = '';
+      let k = 0;
+      if (brokeWord(el)) for (const s of [...FIT_STEPS, 0.74, 0.68]) { el.style.fontSize = (el.__fitBase * s).toFixed(2) + 'px'; if (!brokeWord(el)) { k = s; break; } }
+      if (!k) { el.style.fontSize = ''; el.__fitBase = 0; }
+    }
   };
   // everything added to the page or changed in it, before it is drawn
   if (typeof MutationObserver !== 'undefined' && typeof document !== 'undefined') {

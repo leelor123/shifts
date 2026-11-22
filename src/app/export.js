@@ -64,7 +64,7 @@
     }
     lines.push('END:VCALENDAR');
     UI.download(filename || 'shifts.ics', lines.join('\r\n'), 'text/calendar;charset=utf-8');
-    UI.toast('קובץ יומן נשמר. פתח אותו כדי להוסיף ליומן');
+    UI.toast('קובץ יומן נשמר. פותחים אותו כדי להוסיף ליומן');
   }
   function gcalLink(sh, r) {
     const roles = [...new Set(r.segments.map((s) => App.roleName(s.roleId)))].join(' → ');

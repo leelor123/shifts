@@ -250,3 +250,33 @@ T.test('the weekly sentence says "one shift" in words, never "ב-1 משמרות"
   const w = r.alerts.find((a) => a.type === 'weekly');
   T.ok(w && w.body.includes('במשמרת אחת') && !w.body.includes('ב-1 משמרות'), w && w.body);
 });
+
+T.section('the period so far against the one before, by the same day');
+T.test('by the 12th: this month\'s shifts up to today against last month\'s up to the 12th', () => {
+  // today = 12 Oct. September: 3 shifts by the 12th, 2 after it. October: 4 shifts by the 12th
+  const shifts = ['2026-09-01', '2026-09-03', '2026-09-10', '2026-09-20', '2026-09-25', '2026-10-01', '2026-10-04', '2026-10-07', '2026-10-11']
+    .map((k) => shift(k, '09:00', '14:00'));
+  const r = Insights.run(Engine.buildModel(data(shifts)), { now: NOW });
+  const sf = r.soFar;
+  T.ok(sf, 'soFar computed');
+  T.eq(sf.day, 12); T.eq(sf.prevTo, '2026-09-12');
+  T.eq(sf.curShifts, 4); T.eq(sf.prevShifts, 3, 'the shifts after 12 Sep are not counted');
+  T.near(sf.diff, sf.cur / 4, 0.01, 'one shift more = one shift\'s pay more');
+  const live = r.live.find((x) => x.type === 'soFar');
+  T.ok(live && live.title.includes('יותר') && live.body.includes('עד ה-12 בחודש'), 'a live line says it');
+});
+T.test('no comparison when last month was not kept from its start (it would look empty)', () => {
+  const shifts = ['2026-09-20', '2026-09-25', '2026-10-01'].map((k) => shift(k, '09:00', '14:00'));
+  const r = Insights.run(Engine.buildModel(data(shifts)), { now: NOW });
+  T.eq(r.soFar, null);
+  T.ok(!r.live.some((x) => x.type === 'soFar'));
+});
+T.test('day 31 against a 30-day month counts that whole month', () => {
+  const shifts = ['2026-09-02', '2026-09-30', '2026-10-30'].map((k) => shift(k, '09:00', '14:00'));
+  const r = Insights.run(Engine.buildModel(data(shifts)), { now: U.toEpoch('2026-10-31', '20:00') });
+  T.eq(r.soFar.prevTo, '2026-09-30'); T.eq(r.soFar.prevShifts, 2);
+});
+T.test('the home card shows the difference under the big number', () => {
+  const src = require('fs').readFileSync(require('path').join(__dirname, '../src/app/views-home.js'), 'utf8');
+  T.ok(/\$\{soFarLine\(bigNet, netShare, emp\)\}/.test(src) && /App\.insights && App\.insights\.soFar/.test(src));
+});

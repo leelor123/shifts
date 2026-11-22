@@ -847,7 +847,7 @@
     const tryBio = async () => { try { if (await App.bio.verify(L.bioId)) unlock(); } catch (e) { /* cancelled: the code still works */ } };
     const draw = () => {
       const wait = Math.ceil((pinWaitUntil - Date.now()) / 1000);
-      body.innerHTML = `<h2 style="--i:0">${icon('lock', 's')} האפליקציה נעולה</h2><div class="small muted lock-say" style="--i:0">${wait > 0 ? `יותר מדי ניסיונות. נסה שוב בעוד ${wait} שניות` : 'הזן קוד'}</div>
+      body.innerHTML = `<h2 style="--i:0">${icon('lock', 's')} האפליקציה נעולה</h2><div class="small muted lock-say" style="--i:0">${wait > 0 ? `יותר מדי ניסיונות. אפשר לנסות שוב בעוד ${wait} שניות` : 'הזן קוד'}</div>
         <div class="pin-dots" style="--i:1">${[0, 1, 2, 3, 4, 5, 6, 7].slice(0, Math.max(4, (L.len || 4))).map((i) => `<i class="${i < pin.length ? 'f' : ''}"></i>`).join('')}</div>
         <div class="pin-pad" style="--i:2">${[1, 2, 3, 4, 5, 6, 7, 8, 9, L.bioId ? 'bio' : '', 0, '⌫'].map((k) => k === '' ? '<span></span>' : k === 'bio' ? `<button data-bio aria-label="פתח בטביעת אצבע">${icon('finger')}</button>` : `<button data-k="${k}" ${wait > 0 ? 'disabled' : ''}>${k}</button>`).join('')}</div>`;
       if (wait > 0) setTimeout(() => { if (el.isConnected) draw(); }, 1000);
@@ -887,7 +887,7 @@
     if (!L || !L.enabled || !L.hash) return true;
     if (L.bioId) { try { if (await App.bio.verify(L.bioId)) return true; } catch (e) { /* cancelled: the code still works */ } }
     const wait = Math.ceil((pinWaitUntil - Date.now()) / 1000);
-    if (wait > 0) { UI.invalid(`יותר מדי ניסיונות. נסה שוב בעוד ${wait} שניות`); return false; }
+    if (wait > 0) { UI.invalid(`יותר מדי ניסיונות. אפשר לנסות שוב בעוד ${wait} שניות`); return false; }
     const pin = await UI.promptText('הקוד הנוכחי', 'כדי לשנות את הנעילה', '', { type: 'password', inputmode: 'numeric', ltr: true, ok: 'המשך' });
     if (!pin) return false;
     if ((await App.hashPin(pin, L.salt)) === L.hash) { pinFails = 0; pinWaitUntil = 0; keepPinFails(); return true; }

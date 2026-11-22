@@ -61,7 +61,7 @@
       req.onerror = () => reject(req.error);
       // another page of the app still holds the older version: it closes on versionchange, so wait a little for it
       // (rejecting at once ran the app from memory: no data, no account, "signed out", 11 Nov 2026)
-      req.onblocked = () => setTimeout(() => reject(root.U.oops('מסד הנתונים חסום. סגור לשוניות אחרות של האפליקציה')), 4000);
+      req.onblocked = () => setTimeout(() => reject(root.U.oops('מסד הנתונים חסום. צריך לסגור לשוניות אחרות של האפליקציה')), 4000);
     });
   }
   /** Opening the database fails now and then on Android Chrome for a moment ("Internal error opening backing store");

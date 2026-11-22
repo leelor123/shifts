@@ -175,7 +175,7 @@
   const AUTH_ERRORS = {
     'auth/popup-closed-by-user': 'חלון ההתחברות נסגר לפני שההתחברות הושלמה.',
     'auth/cancelled-popup-request': 'ההתחברות בוטלה.',
-    'auth/network-request-failed': 'אין חיבור לאינטרנט. נסה שוב כשיש רשת.',
+    'auth/network-request-failed': 'אין חיבור לאינטרנט. אפשר לנסות שוב כשיש רשת.',
     'auth/unauthorized-domain': 'הכתובת של האפליקציה לא מאושרת בהגדרות Firebase (Authorized domains).',
     'auth/operation-not-allowed': 'סוג ההתחברות הזה עוד לא הופעל. אפשר בינתיים להתחבר עם Google.',
     'auth/invalid-email': 'כתובת האימייל לא תקינה.',
@@ -183,15 +183,15 @@
     'auth/invalid-action-code': 'הקישור כבר נוצל או שפג תוקפו. שלחו קישור חדש מהאפליקציה.',
     'auth/expired-action-code': 'פג תוקף הקישור. שלחו קישור חדש מהאפליקציה.',
     'auth/quota-exceeded': 'נשלחו יותר מדי קישורים היום. נסו שוב מחר, או התחברו עם Google.',
-    'auth/too-many-requests': 'יותר מדי ניסיונות. נסה שוב בעוד כמה דקות.',
+    'auth/too-many-requests': 'יותר מדי ניסיונות. אפשר לנסות שוב בעוד כמה דקות.',
     'auth/user-disabled': 'החשבון חסום.',
-    'auth/popup-blocked': 'הדפדפן חסם את חלון האישור של Google. אפשר חלונות קופצים ונסה שוב.',
-    'auth/requires-recent-login': 'כדי למחוק את החשבון צריך התחברות טרייה: התנתק, התחבר שוב ונסה מיד.',
-    'auth/user-mismatch': 'נבחר חשבון Google אחר. בחר את החשבון שמחובר לאפליקציה.',
-    'auth/internal-error': 'משהו השתבש בהתחברות. נסה שוב.',
-    'auth/web-storage-unsupported': 'הדפדפן חוסם שמירת נתונים (אולי גלישה בסתר). פתח את האפליקציה בדפדפן רגיל ונסה שוב.',
-    'auth/operation-not-supported-in-this-environment': 'הדפדפן הזה לא תומך בהתחברות. פתח את הקישור ב-\u2060Chrome או ב-\u2060Safari.',
-    'auth/timeout': 'ההתחברות לקחה יותר מדי זמן. בדוק את החיבור ונסה שוב.',
+    'auth/popup-blocked': 'הדפדפן חסם את חלון האישור של Google. כדאי לאפשר חלונות קופצים ולנסות שוב.',
+    'auth/requires-recent-login': 'כדי למחוק את החשבון צריך התחברות טרייה: מתנתקים, מתחברים שוב ומנסים מיד.',
+    'auth/user-mismatch': 'נבחר חשבון Google אחר. צריך לבחור את החשבון שמחובר לאפליקציה.',
+    'auth/internal-error': 'משהו השתבש בהתחברות. אפשר לנסות שוב.',
+    'auth/web-storage-unsupported': 'הדפדפן חוסם שמירת נתונים (אולי גלישה בסתר). כדאי לפתוח את האפליקציה בדפדפן רגיל ולנסות שוב.',
+    'auth/operation-not-supported-in-this-environment': 'הדפדפן הזה לא תומך בהתחברות. כדאי לפתוח את הקישור ב-\u2060Chrome או ב-\u2060Safari.',
+    'auth/timeout': 'ההתחברות לקחה יותר מדי זמן. כדאי לבדוק את החיבור ולנסות שוב.',
     'shaati/sdk-stuck': 'החיבור נקטע בזמן שההתחברות נטענה. סגרו את שעתי, פתחו אותה שוב ונסו שוב.',
     // an email and a password
     'auth/email-already-in-use': 'כבר יש חשבון עם האימייל הזה. התחברו אליו עם הסיסמה שלו.',
@@ -453,7 +453,7 @@
         try { await fb.au.signOut(fb.auth); } catch (e) { /* ignore */ }
         Cloud.user = null;
         setStatus('idle');
-        throw Object.assign(root.U.oops(`החיבור בוטל. התחבר עם ${prev} כדי שהשינויים יעלו לחשבון שלו.`), { code: 'app/switch-cancelled' });
+        throw Object.assign(root.U.oops(`החיבור בוטל. צריך להתחבר עם ${prev} כדי שהשינויים יעלו לחשבון שלו.`), { code: 'app/switch-cancelled' });
       }
       await Store.wipe();
     }

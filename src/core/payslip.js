@@ -2141,7 +2141,10 @@
         }
       } else if (!active) {
         const minorP = Engine.isMinor(S, E.P.to);
-        add({ area: 'פנסיה', status: 'ok', title: 'פנסיה עוד לא חובה', detail: minorP ? 'מתחת לגיל 18 אין חובת הפרשה לפנסיה.' : `ההפרשות מתחילות אחרי ${S.pension.startAfterMonths} חודשי עבודה.`, basis: 'צו ההרחבה לפנסיה חובה.', confidence: S.startDate ? 'medium' : 'low' });
+        // 18 to 20/21: not active because of the age (the order starts at 21 for men, 20 for women), not the months
+        const ageP = Engine.ageAt(S.birthDate, E.P.to), minAgeP = Engine.pensionMinAge(S);
+        const youngP = !minorP && ageP != null && ageP < minAgeP;
+        add({ area: 'פנסיה', status: 'ok', title: 'פנסיה עוד לא חובה', detail: minorP ? 'מתחת לגיל 18 אין חובת הפרשה לפנסיה.' : youngP ? `לפני גיל ${minAgeP} אין חובת הפרשה לפנסיה.` : `ההפרשות מתחילות אחרי ${S.pension.startAfterMonths} חודשי עבודה.`, basis: 'צו ההרחבה לפנסיה חובה.', confidence: S.startDate ? 'medium' : 'low' });
       }
     }
 

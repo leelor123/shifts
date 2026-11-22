@@ -171,10 +171,12 @@ body.fx .pk-field, body.fx .ach-card, body.fx .home-hero .hh-skin { transition: 
 .rc-row { border-top: 1px solid var(--line); }
 .rc-row > summary { display: flex; align-items: center; gap: 8px; padding: 10px 2px; cursor: pointer; list-style: none; }
 .rc-row > summary::-webkit-details-marker { display: none; }
-.rc-row .rc-l { flex: 1; min-width: 0; }
+/* the line's name never goes under its longest word ("Обыч/ные" at 125% text, 23 Nov 2026): the note under the amount
+   wraps between words instead, and the amount itself stays on one line */
+.rc-row .rc-l { flex: 1; min-width: min-content; }
 .rc-row .rc-l small { display: block; color: var(--on-surface-var); font-size: .76rem; }
-.rc-row .rc-d { flex: none; white-space: nowrap; font-weight: 700; font-variant-numeric: tabular-nums; }
-.rc-row .rc-d small { display: block; font-weight: 500; font-size: .7rem; color: var(--on-surface-var); text-align: end; }
+.rc-row .rc-d { flex: 0 1 auto; min-width: min-content; white-space: nowrap; font-weight: 700; font-variant-numeric: tabular-nums; }
+.rc-row .rc-d small { display: block; white-space: normal; font-weight: 500; font-size: .7rem; color: var(--on-surface-var); text-align: end; }
 .rc-tag { flex: none; display: inline-grid; color: var(--good-mark); }
 .rc-row.ask .rc-tag { color: var(--warn-mark); }
 .rc-row.ask .rc-d { color: var(--warn); }
@@ -360,3 +362,7 @@ html[dir="ltr"] .ps-tr-he, html[dir="ltr"] .ps-tr-orig { text-align: left; }
 .ob-wp-after { margin-top: 14px; justify-content: center; }
 .wp-role { display: block; }
 .ob-wp-ok { margin: 0 0 14px; }
+/* the period so far against the one before by the same day, under the big number */
+.home-hero .hh-cmp { margin: -8px auto 12px; font-size: .8rem; line-height: 1.35; color: rgba(255, 255, 255, .82); text-align: center; overflow-wrap: normal; word-break: keep-all; text-wrap: balance; }
+.home-hero .hh-cmp.up::before { content: "▲"; font-size: .6rem; margin-inline-end: 4px; color: #9fe0b0; vertical-align: 1px; }
+.home-hero .hh-cmp.down::before { content: "▼"; font-size: .6rem; margin-inline-end: 4px; color: rgba(255, 255, 255, .6); vertical-align: 1px; }

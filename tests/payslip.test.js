@@ -880,3 +880,12 @@ T.test('round 4: a component absent while an unnamed line holds a plausible amou
   // with no such line, a PDF without a travel line keeps the rule
   T.eq(Payslip.analyze({ period: '2026-09', source: 'pdf', fields, other: [] }, m).findings.find((f) => f.area === 'נסיעות').status, 'bad');
 });
+/* A worker of 18–20 has no pension because of the age (the order starts at 21, 20 for a woman); the finding said
+ * "contributions start after 6 months of work" even after years at the job (audit 2026-11-23). */
+T.test('pension: not yet due because of the age says the age, not the months', () => {
+  const at = (birth, gender) => Payslip.analyze(slipOf({ base: [40, 1600], travel: 113, gross: 1713 }), model(week(5, '08:00', '16:00'), (d) => { d.settings.birthDate = birth; d.settings.gender = gender; d.settings.startDate = '2024-01-01'; })).findings.find((f) => f.area === 'פנסיה');
+  const m19 = at('2007-03-01', 'm');
+  T.eq(m19.title, 'פנסיה עוד לא חובה'); T.eq(m19.detail, 'לפני גיל 21 אין חובת הפרשה לפנסיה.');
+  T.eq(at('2006-06-01', 'f').status, 'bad', 'a woman of 20 with years at the job: the pension is missing');
+  T.eq(at('2009-01-01', 'm').detail, 'מתחת לגיל 18 אין חובת הפרשה לפנסיה.');
+});

@@ -226,11 +226,21 @@
       <span class="hh-dial" aria-hidden="true" style="${App.phase()}"></span>
       <div class="hh-label">${bigNet ? netT : grossT} ${emp.periodStartDay > 1 ? 'בתקופת השכר' : 'ב' + periodName} עד עכשיו</div>
       <div class="hero-num">${money(bigNet ? sum.net.net : sum.gross, 0)}</div>
+      ${soFarLine(bigNet, netShare, emp)}
       <div class="hh-stats"><span><b>${money(bigNet ? sum.gross : sum.net.net, 0)}</b><small>${bigNet ? grossT : netT}</small></span><span><b class="num">${U.hm(sum.hours * 60)}</b><small>שעות</small></span><span><b>${sum.shifts}</b><small>${sum.shifts === 1 ? 'משמרת' : 'משמרות'}</small></span></div>
       ${goal ? `<div class="hh-goal"><div class="progress thin"><b style="width:${projPct}%"></b><i style="width:${pct}%"></i></div>
         <div class="hh-goal-l">${U.num(pct, 0)}% מיעד ${money(goal, 0)}${fc ? ` · צפי ${money(fcShown(goalNet), 0)}${fcNote}` : ''}</div></div>`
         : (fc ? `<div class="hh-goal-l">${emp.periodStartDay > 1 ? 'צפי לסוף התקופה' : 'צפי לסוף החודש'}: ${money(fcShown(bigNet), 0)}${fcNote}</div>` : '')}
     </section>`;
+  }
+
+  // the period so far against the one before by the same day ("+420 ₪ from this time last month"), in the big number's kind
+  function soFarLine(bigNet, netShare, emp) {
+    const sf = App.insights && App.insights.soFar;
+    if (!sf || Math.abs(sf.diff) < 1) return '';
+    const d = bigNet ? sf.diff * netShare : sf.diff;
+    const then = emp.periodStartDay > 1 ? 'מאותו זמן בתקופה הקודמת' : 'מאותו זמן בחודש שעבר';
+    return `<div class="hh-cmp ${d > 0 ? 'up' : 'down'}">${d > 0 ? 'יותר ב-' : 'פחות ב-'}${money(Math.abs(d), 0)} ${then}</div>`;
   }
 
   App.homeHero = hero; // the "try it on your card" preview (plus.js)
@@ -318,7 +328,7 @@
   /* the slim lines: each one is its own card in the queue below (homeCards) */
   function memoryBanner() {
     if (!(Store.isMemoryOnly && Store.isMemoryOnly())) return '';
-    return `<div class="banner slim warn">${icon('alert', 's')}<div style="flex:1">${root.Cloud && root.Cloud.user ? 'הדפדפן לא שומר נתונים בטלפון כרגע. הכול נשמר בחשבון שלך.' : 'הדפדפן לא שומר נתונים בטלפון. התחבר לחשבון כדי לא לאבד אותם.'}</div></div>`;
+    return `<div class="banner slim warn">${icon('alert', 's')}<div style="flex:1">${root.Cloud && root.Cloud.user ? 'הדפדפן לא שומר נתונים בטלפון כרגע. הכול נשמר בחשבון שלך.' : 'הדפדפן לא שומר נתונים בטלפון. כדאי להתחבר לחשבון כדי לא לאבד אותם.'}</div></div>`;
   }
   function demoBanner() {
     return S.settings.demo ? `<div class="banner slim">${icon('flask', 's')}<div style="flex:1">מצב הדגמה: נתונים לדוגמה</div><button class="btn text sm" data-act="demo-clear">מחק</button></div>` : '';

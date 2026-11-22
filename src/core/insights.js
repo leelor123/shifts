@@ -433,6 +433,28 @@
           ? `${U.money(curSum.gross, 0)} עד היום, ועוד המשמרות המתוכננות עד ${U.fmtDate(lastPlan, 'short')}${lastPlan < curP.to && elapsed >= 3 ? ', ואחריהן לפי הקצב שלך' : ''}.`
           : `${U.money(curSum.gross, 0)} עד היום ב-${elapsed} מתוך ${total} ימים, מוכפל לפי הקצב.` });
     }
+    // the period so far against the period before at the same point: by day N now, and by day N then.
+    // Only when the person kept shifts from that period's first week, or the old part looks empty and misleads.
+    let soFar = null;
+    if (first && first <= U.addDays(lastP.from, 6) && first < curP.from) {
+      const dayN = U.addDays(lastP.from, elapsed - 1);
+      const sameTo = dayN < lastP.to ? dayN : lastP.to; // a 31st day against a 30-day month: its whole
+      const before = Engine.totals(model, lastP.from, sameTo, { employerId: model.ctx.employers.size > 1 ? emp.id : null });
+      if (curSum.shifts + before.shifts > 0) {
+        soFar = { day: elapsed, cur: curSum.gross, prev: before.gross, diff: curSum.gross - before.gross,
+          curShifts: curSum.shifts, prevShifts: before.shifts, curHours: curSum.hours, prevHours: before.hours, prevTo: sameTo, period: lastP };
+        if (on('projection') && Math.abs(soFar.diff) >= 1) {
+          const custom = emp.periodStartDay > 1;
+          const dayTxt = custom ? `עד היום ה-${elapsed} בתקופה` : `עד ה-${elapsed} בחודש`;
+          const then = custom ? 'בתקופה הקודמת' : 'בחודש שעבר';
+          const part = (sum, n) => (n ? `${U.money(sum, 0)} ${n === 1 ? 'במשמרת אחת' : `ב-${n} משמרות`}` : 'לא היו משמרות');
+          live.push({ type: 'soFar', priority: 1.5,
+            title: soFar.diff > 0 ? `${U.money(soFar.diff, 0)} יותר מאשר באותו זמן ${then}` : `${U.money(-soFar.diff, 0)} פחות מאשר באותו זמן ${then}`,
+            body: `ברוטו ${dayTxt}: ${part(soFar.cur, soFar.curShifts)}. ${then}, עד אותו יום: ${part(soFar.prev, soFar.prevShifts)}.`,
+            explain: `אותם ${elapsed} ימים מתחילת התקופה, עכשיו ובתקופה הקודמת (עד ${U.fmtDate(sameTo, 'short')}).` });
+        }
+      }
+    }
     if (goal > 0) {
       const target = goal;
       const val = goalNet ? curVal : curSum.gross;
@@ -578,7 +600,7 @@
       const at = U.addDays(pd, lag);
       if (today >= at && !has && first && first <= lastP.to && U.diffDays(pd, today) <= 20 + lag) {
         alerts.push({ key: 'payslip-' + lastP.key, type: 'payslipDue', severity: 'info', push: 'critical', data: { pk: lastP.key },
-          title: 'הגיע יום התשלום: הזן את התלוש', body: `העלה את התלוש של ${lastP.label} כדי לבדוק שקיבלת את כל מה שמגיע לך.`,
+          title: 'הגיע יום התשלום: זמן להזין את התלוש', body: `כדאי להעלות את התלוש של ${lastP.label} כדי לבדוק שקיבלת את כל מה שמגיע לך.`,
           explain: lag ? `בדרך כלל התלוש שלך נשמר כ-${lag} ימים אחרי יום התשלום (${emp.payDay} לחודש), ולכן התזכורת באה אז.` : 'יום התשלום מוגדר: ' + emp.payDay + ' לחודש.' });
       }
     }
@@ -642,7 +664,7 @@
       al.cat = (TYPE_INFO[al.type] || {}).cat || 'info';
       if (al.key.indexOf('undefined') >= 0) al.key = al.type + '-' + al.title;
     }
-    return { alerts, live, projection, weekly, weekCmp };
+    return { alerts, live, projection, soFar, weekly, weekCmp };
   }
 
   /** Plain-language weekly sentence. */

@@ -165,3 +165,17 @@ T.test('law: the payslip check names the reduced-rate threshold in force, not "6
   T.ok(!src.includes('60% מהשכר הממוצע'), 'payslip.js still says the reduced rate runs to 60% of the average wage');
   T.ok(/basis: `שיעורים מופחתים עד \$\{U\.money\(Engine\.blLimits\(/.test(src), 'the basis reads Engine.blLimits');
 });
+/* The minimum wage of each past April (btl.gov.il "שכר מינימום"): 5,571.75 from 1.4.2023 and 5,880.02 from 1.4.2024.
+ * The table once had 5,880.02 from 2023, so every check of 2023–early 2024 asked 32.30 an hour where the law said
+ * 30.61 and called a lawful wage "below the minimum" (audit 2026-11-23). */
+T.test('law: the minimum wage by its own dates, 2023 on', () => {
+  const at = (k) => Engine.legalMinWage(k, null);
+  T.eq(at('2023-04-01').monthly, 5571.75); T.eq(at('2023-04-01').hourly, 30.61);
+  T.eq(at('2024-03-31').hourly, 30.61, 'March 2024 is still the 2023 rate');
+  T.eq(at('2024-04-01').monthly, 5880.02); T.eq(at('2024-04-01').hourly, 32.30);
+  T.eq(at('2025-03-31').hourly, 32.30);
+  T.eq(at('2025-04-01').hourly, 34.32);
+  T.eq(Engine.lawYear('minWage', '2023-12-01').value.monthly, 5571.75);
+  // a youth's rate is a share of that year's adult monthly wage ÷ 173
+  T.eq(Engine.legalMinWage('2023-10-01', '2007-01-01').hourly, Math.round(5571.75 * 0.75 / 173 * 100) / 100);
+});

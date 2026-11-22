@@ -759,7 +759,7 @@
     if (UI.sheets.length) UI.closeAll();
     UI.openSheet({
       title: 'ניתוח תלוש שכר',
-      body: `<div class="small muted" style="margin-bottom:12px">העלה את התלוש (PDF או צילום). הקריאה מתבצעת בטלפון: התלוש לא נשלח לשום מקום.</div>
+      body: `<div class="small muted" style="margin-bottom:12px">מעלים את התלוש (PDF או צילום). הקריאה מתבצעת בטלפון: התלוש לא נשלח לשום מקום.</div>
         <label class="btn big" style="margin-bottom:10px">${icon('upload')} בחר קובץ PDF או תמונה<input type="file" accept="application/pdf,image/*" id="ps-file" class="sr"></label>
         <label class="btn tonal block" style="margin-bottom:10px">${icon('camera')} צלם את התלוש<input type="file" accept="image/*" capture="environment" id="ps-cam" class="sr"></label>
         <button class="btn outlined block" data-manual>${icon('edit')} הזנה ידנית (בלי קובץ)</button>
@@ -1271,7 +1271,7 @@
         ${left >= 1 ? `<button class="btn tonal sm found-share" data-act="found-share" data-amount="${Math.round(left)}" data-k="found">${icon('share', 's')} שתף: שעתי מצאה לי ${money(left, 0)}</button>` : ''}</div>` : ''}
       ${left >= 1 && root.Plus && root.Plus.reportCard ? root.Plus.reportCard('payslip', 'data-ps-full') : ''}
       ${wf ? `<div class="section-title">${icon('chart', 's')} מברוטו לנטו</div><div class="card">${Charts.waterfall(wf, { fmt: (v) => U.money(v), axisFmt: (v) => '₪' + (v >= 1000 ? (v / 1000).toFixed(1).replace('.0', '') + 'K' : Math.round(v)) })}
-        <div class="tiny muted">כחול = ברוטו, אדום = ניכויים, ירוק = נטו. לחץ על עמודה לפרטים.</div></div>` : ''}
+        <div class="tiny muted">כחול = ברוטו, אדום = ניכויים, ירוק = נטו. לחיצה על עמודה מציגה פרטים.</div></div>` : ''}
       ${translatorHtml(slip, lines)}
       ${wrongHtml()}
       ${DISCLAIMER}`;
@@ -1614,7 +1614,7 @@
     const red = Payslip.redact(text);
     UI.openSheet({
       title: 'לפני שליחה ל-\u2060Claude', full: true,
-      body: `<div class="banner warn">${icon('shield')}<div>זה <b>בדיוק</b> הטקסט שיישלח (${red.count} פרטים אישיים הוסתרו אוטומטית). בדוק וערוך. אפשר למחוק גם שם או כל פרט אחר. הקובץ עצמו לא נשלח.</div></div>
+      body: `<div class="banner warn">${icon('shield')}<div>זה <b>בדיוק</b> הטקסט שיישלח (${red.count} פרטים אישיים הוסתרו אוטומטית). כדאי לבדוק ולערוך. אפשר למחוק גם שם או כל פרט אחר. הקובץ עצמו לא נשלח.</div></div>
         <textarea class="input" id="ai-text" rows="16" style="font-family:ui-monospace,monospace;font-size:.8rem">${esc(red.text)}</textarea>
         <div class="small muted" style="margin-top:8px">יישלח אל Anthropic (מודל ${esc(S.settings.ai.model)}) עם המפתח שלך. השימוש מחויב בחשבון ה-\u2060API שלך.</div>`,
       foot: `<button class="btn tonal" data-cancel>ביטול</button><button class="btn" data-send>${icon('send')} אני מאשר, שלח</button>`,
@@ -1663,9 +1663,9 @@
     } catch (err) {
       if (err instanceof Anthropic.AuthenticationError) throw root.U.oops('מפתח ה-\u2060API לא תקין (401). בדוק אותו בהגדרות.');
       if (err instanceof Anthropic.PermissionDeniedError) throw root.U.oops('למפתח אין הרשאה למודל הזה (403).');
-      if (err instanceof Anthropic.NotFoundError) throw root.U.oops('המודל לא נמצא (404). בחר מודל אחר בהגדרות.');
-      if (err instanceof Anthropic.RateLimitError) throw root.U.oops('יותר מדי בקשות (429). נסה שוב בעוד דקה.');
-      if (err instanceof Anthropic.APIConnectionError) throw root.U.oops('בעיית תקשורת עם השרת. בדוק את החיבור.');
+      if (err instanceof Anthropic.NotFoundError) throw root.U.oops('המודל לא נמצא (404). אפשר לבחור מודל אחר בהגדרות.');
+      if (err instanceof Anthropic.RateLimitError) throw root.U.oops('יותר מדי בקשות (429). אפשר לנסות שוב בעוד דקה.');
+      if (err instanceof Anthropic.APIConnectionError) throw root.U.oops('בעיית תקשורת עם השרת. כדאי לבדוק את החיבור.');
       if (err instanceof Anthropic.APIError) throw root.U.oops('השירות של Claude לא הצליח לענות כרגע. נסו שוב בעוד רגע, או הזינו את התלוש ידנית.');
       throw err;
     }

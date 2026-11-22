@@ -105,7 +105,7 @@
       const head = el.querySelector('[data-view]');
       const okBtn = el.querySelector('[data-pk-ok]');
       function drawBig() {
-        big.innerHTML = sel ? `<span class="d">${parse(sel).d}</span><span class="r"><b>${U.DAYS[U.dow(sel)]}</b><span>${MONTHS[parse(sel).m - 1]} ${parse(sel).y}</span></span>` : `<span class="r"><b>${opts.mode === 'birth' ? 'מתי נולדת?' : 'בחר יום'}</b><span>${view === 'years' ? 'קודם השנה' : 'לחץ על יום בלוח'}</span></span>`;
+        big.innerHTML = sel ? `<span class="d">${parse(sel).d}</span><span class="r"><b>${U.DAYS[U.dow(sel)]}</b><span>${MONTHS[parse(sel).m - 1]} ${parse(sel).y}</span></span>` : `<span class="r"><b>${opts.mode === 'birth' ? 'מתי נולדת?' : 'בחר יום'}</b><span>${view === 'years' ? 'קודם השנה' : 'לוחצים על יום בלוח'}</span></span>`;
         okBtn.disabled = !sel;
       }
       function draw(anim) {

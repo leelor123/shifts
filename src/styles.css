@@ -998,7 +998,10 @@ body.fx .item:active:not(:has(:is(button, a, input, select, label, summary, [dat
 .timer-card .tc-head { display: flex; align-items: center; gap: 4px; font-size: .88rem; font-weight: 700; text-align: start; }
 .timer-card .tc-head .tiny { opacity: .75; font-weight: 500; }
 .timer-card .tc-actions { display: flex; gap: 10px; align-items: center; }
-.timer-card .tc-actions .btn.big { flex: 1; }
+/* the end button takes the room its two round neighbours leave and never more: at its own longest word ("Terminer le
+   service" at 320px) it pushed the third button out of the card and still broke "Termine/r". At a fixed width Dom.fit
+   finds the size that keeps every word whole (23 Nov 2026) */
+.timer-card .tc-actions .btn.big { flex: 1; min-width: 0; padding-inline: 12px; }
 .icon-btn.lg { width: 56px; height: 56px; border-radius: 16px; flex: none; }
 .timer-card.running .icon-btn.tonal { background: rgba(255, 255, 255, .12); color: inherit; }
 .highlight { display: flex; align-items: center; gap: 10px; width: 100%; border: 0; border-radius: 14px; padding: 13px 14px; margin: 0 0 22px; background: var(--surface-2); color: var(--on-surface); font: 500 .92rem/1.3 var(--font); text-align: start; cursor: pointer; }

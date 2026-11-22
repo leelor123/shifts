@@ -156,6 +156,8 @@ function check(only) {
       if (t == null) { problems.push(['missing', e.key]); continue; }
       if (placeholders(t) !== placeholders(e.key)) problems.push(['placeholders', e.key, t]);
       else if (tags(t) !== tags(e.key)) problems.push(['tags', e.key, t]);
+      // a named marker a translator wrote for an invisible character ({WJ}, {LRM}) is shown to the user as text
+      else if (/\{[A-Za-z_]+\}/.test(t) && !/\{[A-Za-z_]+\}/.test(e.key)) problems.push(['marker', e.key, t]);
       else if (HE.test(t.replace(/\{\d+\}/g, '')) && !/^[\s\S]*$/.test('')) problems.push(['hebrew', e.key, t]);
       else if (HE.test(t)) problems.push(['hebrew', e.key, t]);
     }
@@ -209,9 +211,21 @@ function applyHtml(html, lang, dict) {
   for (const r of htmlRuns(html).sort((a, b) => b.length - a.length)) if (dict[r]) out = out.split(r).join(dict[r]);
   return out;
 }
+// A hyphen or a slash inside a short compound is a place the browser may end a line: "e-/mail", "peut-/être", "1-/й",
+// "(начало/конец)". The Hebrew source glues those by hand with a word joiner (ב-⁠Google); the translations get it here,
+// in the text only (never inside a tag, a link or an address). A long compound (over 14 characters) keeps its break
+// point: a box narrower than the whole compound would otherwise break it between two letters (23 Nov 2026).
+const GLUE_RUN = /[\p{L}\p{N}]+(?:[-/][\p{L}\p{N}]+)+/gu;
+function glue(text) {
+  return text.split(/(<[^>]*>)/).map((part, i) => (i % 2 ? part : part.replace(/[^\s<>]+/g, (tok) => (/:\/\/|@|www\.|\.[a-z]{2,4}\//i.test(tok) ? tok
+    : tok.replace(GLUE_RUN, (run) => (run.length > 14 ? run : run.replace(/([-/])(?=[\p{L}\p{N}])/gu, '$1⁠'))))))).join('');
+}
 function dictOf(lang) {
   const file = path.join(DIR, lang + '.json');
-  return fs.existsSync(file) ? JSON.parse(fs.readFileSync(file, 'utf8')) : {};
+  if (!fs.existsSync(file)) return {};
+  const dict = JSON.parse(fs.readFileSync(file, 'utf8'));
+  for (const k of Object.keys(dict)) if (typeof dict[k] === 'string') dict[k] = glue(dict[k]);
+  return dict;
 }
 
 module.exports = { LANGS, KEEP_FILES, nodesOf, applyCode, applyHtml, dictOf, collect, extract, check, toJson, BIDI };

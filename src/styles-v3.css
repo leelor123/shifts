@@ -1784,7 +1784,9 @@ html:not([lang="he"]) .lb-games button, html:not([lang="he"]) .lb-periods button
 .hm-recent { display: flex; align-items: center; flex-wrap: wrap; gap: 8px 12px; padding: 12px 4px; }
 .hm-recent .t { flex: 1 1 130px; font-weight: 600; }
 .hm-recent .seg { flex: 0 1 220px; min-width: 0; }
-.hm-recent .seg button { min-width: 0; }
+/* each button starts from its own label, so "None" takes the room the digits do not need ("Ning/uno" in four equal
+   quarters at 320px, 23 Nov 2026) */
+.hm-recent .seg button { min-width: 0; flex: 1 1 auto; }
 /* the friends' competition (views-friends.js): rows like the champions table's, each a button */
 .fr-list { margin: 12px 0 14px; }
 .fr-row { width: 100%; display: flex; align-items: center; gap: 10px; min-height: 52px; padding: 8px 12px; border-radius: 14px; background: var(--surface-1); border: 1px solid var(--line); color: inherit; font: inherit; text-align: start; cursor: pointer; transition: scale .12s; }

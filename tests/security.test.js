@@ -104,3 +104,34 @@ T.test('every website page turns off camera, microphone, location, payment and U
   T.ok(pages.some((f) => f.startsWith('embed/')), 'subfolders are read too (embed/)');
   T.ok(!/geolocation|getUserMedia|PaymentRequest|navigator\.usb/.test(pages.map((f) => read('site/' + f)).join('\n')), 'no website page needs them');
 });
+
+T.section('security: database rules (audit 23 Nov 2026)');
+const rulesSrc = read('firestore.rules');
+T.test('the account marker users/{uid} takes only when, the schema and the version (it used to take any field)', () => {
+  const m = /match \/users\/\{uid\} \{([\s\S]*?)match \/\{collection\}/.exec(rulesSrc);
+  T.ok(m, 'the users/{uid} block');
+  T.ok(!/allow [^:]*\bwrite\b/.test(m[1]), 'no blanket write');
+  T.ok(m[1].includes("keys().hasOnly(['updatedAt', 'schema', 'app'])"), 'a fixed shape');
+  const cloud = read('src/app/cloud.js');
+  const w = /fs\.setDoc\(fs\.doc\(db, 'users', Cloud\.user\.uid\), \{([^}]*)\}\)/.exec(cloud);
+  T.ok(w, 'the app writes the marker');
+  T.eq(w[1].split(',').map((p) => p.split(':')[0].trim()).sort().join(','), 'app,schema,updatedAt', 'the app writes those three fields and no more');
+});
+T.test('a synced record: the tombstone flag is a yes or no, the record JSON text or nothing', () => {
+  T.ok(rulesSrc.includes("request.resource.data.get('d', false) is bool"), 'd');
+  T.ok(rulesSrc.includes("(request.resource.data.get('j', null) == null || request.resource.data.j is string)"), 'j');
+});
+T.test('deleting the account reaches every folder the rules let an account write (nothing left behind)', () => {
+  const list = /collection in \[([^\]]*)\]/.exec(rulesSrc)[1].split(',').map((s) => s.trim().replace(/'/g, '')).sort();
+  const sync = /const SYNC_STORES = \[([^\]]*)\]/.exec(read('src/app/store.js'))[1].split(',').map((s) => s.trim().replace(/'/g, ''));
+  T.eq(list.join(','), sync.concat(['kv']).sort().join(','), 'rules folders = Store.SYNC_STORES + kv');
+  T.ok(/for \(const st of SYNC\.concat\(\['kv'\]\)\)/.test(read('src/app/cloud.js')), 'Cloud.deleteAccount walks SYNC + kv');
+});
+
+T.section('accessibility: notes are read aloud');
+T.test('the note box (role=status) is on the page before its first note, so a screen reader reads the first one too', () => {
+  const ui = read('src/app/ui.js');
+  T.ok(/function toastBox\(\)[\s\S]*?setAttribute\('role', 'status'\)/.test(ui), 'a live region');
+  T.ok(/if \(document\.body\) \{ try \{ toastBox\(\); \}/.test(ui), 'made as ui.js loads');
+  T.ok(/function toast\(text, action, opts\) \{\n    const el = toastBox\(\);/.test(ui), 'toast() fills the same box');
+});

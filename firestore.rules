@@ -10,7 +10,14 @@ rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
     match /users/{uid} {
-      allow read, write: if request.auth != null && request.auth.uid == uid;
+      allow read, delete: if request.auth != null && request.auth.uid == uid;
+      // the account's marker (cloud.js): when, the data's schema and the app's version, nothing else (no email, no free
+      // text; any field used to be accepted here, audit 23 Nov 2026)
+      allow create, update: if request.auth != null && request.auth.uid == uid
+        && request.resource.data.keys().hasOnly(['updatedAt', 'schema', 'app'])
+        && request.resource.data.get('updatedAt', 0) is number
+        && request.resource.data.get('schema', 0) is number
+        && request.resource.data.get('app', '') is string && request.resource.data.get('app', '').size() <= 20;
 
       match /{collection}/{docId} {
         allow read, delete: if request.auth != null && request.auth.uid == uid;
@@ -360,6 +367,10 @@ service cloud.firestore {
         && collection in ['employers', 'roles', 'shifts', 'entries', 'templates', 'dayRules', 'payslips', 'gaps', 'ledger', 'kv']
         && request.resource.data.keys().hasOnly(['u', 'd', 'j', 's'])
         && request.resource.data.u is number
+        // d, the tombstone flag, is a yes or no; j, the record, is its JSON text or nothing (a tombstone): any value
+        // used to pass here (audit 23 Nov 2026)
+        && request.resource.data.get('d', false) is bool
+        && (request.resource.data.get('j', null) == null || request.resource.data.j is string)
         // s, the upload stamp (cloud.js stamped): only the server's own time of this write; the app's listeners ask
         // for it. Optional: 1.41.1 and older write without it
         && (!('s' in request.resource.data) || request.resource.data.s == request.time)

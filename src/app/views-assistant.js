@@ -169,19 +169,19 @@
         });
         const final = await stream.finalMessage();
         if (final.stop_reason === 'refusal') acc = acc || 'לא אוכל לענות על השאלה הזו. אפשר לשאול על זכויות בעבודה, שכר או האפליקציה.';
-        if (!acc) acc = 'לא התקבלה תשובה. נסה לנסח מחדש.';
+        if (!acc) acc = 'לא התקבלה תשובה. אפשר לנסח את השאלה מחדש.';
         await Store.setMeta({ chat: chat().concat([{ role: 'assistant', text: acc }]).slice(-MAX_HISTORY) });
       } catch (err) {
         console.error(err);
-        let msg = 'משהו השתבש. נסה שוב בעוד רגע.';
-        if (!Anthropic) msg = 'לא ניתן לטעון את רכיב ה-\u2060AI. בדוק את החיבור לאינטרנט.';
+        let msg = 'משהו השתבש. אפשר לנסות שוב בעוד רגע.';
+        if (!Anthropic) msg = 'לא ניתן לטעון את רכיב ה-\u2060AI. כדאי לבדוק את החיבור לאינטרנט.';
         else if (err instanceof Anthropic.AuthenticationError) msg = 'מפתח ה-\u2060API לא תקין. אפשר לעדכן אותו בהגדרות › עוזר AI ואודות › מפתח AI.';
         else if (err instanceof Anthropic.PermissionDeniedError) msg = 'למפתח אין הרשאה למודל שנבחר. אפשר לבחור מודל אחר בהגדרות › עוזר AI ואודות › מפתח AI.';
-        else if (err instanceof Anthropic.NotFoundError) msg = 'המודל שנבחר לא זמין. בחר מודל אחר בהגדרות › עוזר AI ואודות › מפתח AI.';
-        else if (err instanceof Anthropic.RateLimitError) msg = 'יותר מדי בקשות כרגע. נסה שוב בעוד דקה.';
-        else if (err instanceof Anthropic.APIConnectionError) msg = 'בעיית תקשורת. בדוק את החיבור לאינטרנט.';
+        else if (err instanceof Anthropic.NotFoundError) msg = 'המודל שנבחר לא זמין. אפשר לבחור מודל אחר בהגדרות › עוזר AI ואודות › מפתח AI.';
+        else if (err instanceof Anthropic.RateLimitError) msg = 'יותר מדי בקשות כרגע. אפשר לנסות שוב בעוד דקה.';
+        else if (err instanceof Anthropic.APIConnectionError) msg = 'בעיית תקשורת. כדאי לבדוק את החיבור לאינטרנט.';
         else if (err instanceof Anthropic.APIError && (err.status === 402 || err.type === 'billing_error')) msg = 'נגמרה היתרה בחשבון ה-\u2060API שלך אצל Anthropic.';
-        else if (err instanceof Anthropic.APIError) msg = 'שגיאה מהשרת (' + (err.status || '') + '). נסה שוב בעוד רגע.';
+        else if (err instanceof Anthropic.APIError) msg = 'שגיאה מהשרת (' + (err.status || '') + '). אפשר לנסות שוב בעוד רגע.';
         bubble.classList.add('error');
         acc = acc ? acc + '\n\n(התשובה נקטעה)' : msg;
         await Store.setMeta({ chat: chat().concat([{ role: 'assistant', text: acc, error: true }]).slice(-MAX_HISTORY) });

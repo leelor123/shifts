@@ -291,7 +291,7 @@
       if (STEPS[step] === 'done' && fx) setTimeout(() => fx.celebrate('big'), 250);
       if (STEPS[step] === 'done' && needsLogin() && !root.Cloud.sdkReady()) {
         // Google normally finished loading long ago; on a slow network the button waits for it
-        root.Cloud.sdk().then(() => { if (App.blocking === 'onboarding') draw(); }, (e) => { loadFailed = true; if (App.blocking === 'onboarding') { msg = e && e.code === 'shaati/sdk-stuck' ? root.Cloud.errorText(e) : navigator.onLine ? 'לא הצלחנו לטעון את Google. נסה שוב בעוד רגע.' : 'אין חיבור לאינטרנט. אפשר להמשיך בינתיים, ונשמור בחשבון כשהרשת תחזור.'; draw(); } });
+        root.Cloud.sdk().then(() => { if (App.blocking === 'onboarding') draw(); }, (e) => { loadFailed = true; if (App.blocking === 'onboarding') { msg = e && e.code === 'shaati/sdk-stuck' ? root.Cloud.errorText(e) : navigator.onLine ? 'לא הצלחנו לטעון את Google. אפשר לנסות שוב בעוד רגע.' : 'אין חיבור לאינטרנט. אפשר להמשיך בינתיים, ונשמור בחשבון כשהרשת תחזור.'; draw(); } });
       }
     }
     // answering a one-tap question moves on by itself

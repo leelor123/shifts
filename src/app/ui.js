@@ -172,9 +172,19 @@
   let toastTimer = null;
   // opts.ok: something was saved: a little check mark draws itself next to the message
   const TICK = '<span class="tk" aria-hidden="true"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="11"/><path d="m7 12.5 3.2 3.2L17 9"/></svg></span>';
-  function toast(text, action, opts) {
+  // the note's box is a live region (role=status): a screen reader reads a change inside one that is already on the
+  // page, and skips a region that arrives together with its text (TalkBack and NVDA said nothing for the first note:
+  // a11y audit, 23 Nov 2026). So the empty box is put on the page as the app starts, hidden like a note that ended.
+  function toastBox() {
     let el = document.getElementById('toast');
-    if (!el) { el = document.createElement('div'); el.id = 'toast'; el.className = 'toast'; el.setAttribute('role', 'status'); document.body.appendChild(el); }
+    if (!el && document.body) { el = document.createElement('div'); el.id = 'toast'; el.className = 'toast'; el.setAttribute('role', 'status'); document.body.appendChild(el); }
+    return el;
+  }
+  if (typeof document !== 'undefined' && document.getElementById) {
+    if (document.body) { try { toastBox(); } catch (e) { /* a page without a DOM to add to */ } } else if (document.addEventListener) document.addEventListener('DOMContentLoaded', toastBox, { once: true });
+  }
+  function toast(text, action, opts) {
+    const el = toastBox();
     const wasShown = el.classList.contains('show');
     el.innerHTML = (opts && opts.ok ? TICK : '') + `<div style="flex:1">${esc(text)}</div>` + (action ? `<button class="act">${esc(action.label)}</button>` : '');
     // a new note over one still showing: the box gives a little bump (its own layer, its own transform). Sliding
