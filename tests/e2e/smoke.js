@@ -51,7 +51,7 @@ let errors = [];
   const page = await browser.newPage();
   await require('./quiet.js').quiet(page);
   page.on('pageerror', (e) => errors.push('pageerror: ' + e.message));
-  page.on('console', (m) => { if (m.type() === 'error' && !/vibrate|favicon|ERR_|net::/.test(m.text())) errors.push('console: ' + m.text()); });
+  page.on('console', (m) => { if (m.type() === 'error' && !/vibrate|favicon|ERR_|net::|Failed to launch 'shaati-signin:/.test(m.text())) errors.push('console: ' + m.text()); });
   page.on('dialog', async (d) => { errors.push('native dialog: ' + d.message()); await d.dismiss(); });
   await page.setViewport({ width: 412, height: 860, deviceScaleFactor: 1, isMobile: true, hasTouch: true });
   await page.emulateMediaFeatures([{ name: 'prefers-reduced-motion', value: 'no-preference' }]);
@@ -224,6 +224,43 @@ let errors = [];
     const up = got.plan.find((n) => n.tag === 'up-e2e-plan-60');
     if (!up) throw new Error('the reminder before the planned shift is not in the list: ' + got.plan.map((n) => n.tag).join(','));
     if (!up.title || !up.body || up.ch !== 'shifts' || !up.acts.length || !(up.at > Date.now()) || !up.url.includes('action=note')) throw new Error('its look: ' + JSON.stringify(up));
+  });
+  // (22 Nov 2026: people said the app looked like it ran "inside Google") in the Android app, Google opens Android's
+  // own account picker: the page asks the app over the channel, and only a token with the page's nonce counts
+  // (app/native-signin.js). This browser has no app for shaati-signin://, so it says it could not open it: expected.
+  await step('the Android app: Google sign-in asks Android\'s own picker over the channel, never Google\'s window', async () => {
+    const got = await ev(async () => {
+      const wait = (ms) => new Promise((r) => setTimeout(r, ms));
+      const was = App.androidApp;
+      App.androidApp = true;
+      const ch = new MessageChannel();
+      const msgs = [];
+      ch.port1.onmessage = (e) => msgs.push(e.data);
+      window.postMessage('', location.origin, [ch.port2]); // as Chrome hands the page its end of the channel
+      await wait(300);
+      ch.port1.postMessage('shaati:widgets');
+      ch.port1.postMessage('shaati:signin');
+      await wait(300);
+      const way = NativeSignIn.way();
+      const p = NativeSignIn.token();
+      await wait(300);
+      const ask = msgs.map((m) => { try { return JSON.parse(m); } catch (e) { return null; } }).find((m) => m && m.signin === 1 && m.ask === 1);
+      let ok = false;
+      if (ask) {
+        const b64 = (o) => btoa(JSON.stringify(o)).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
+        const t = b64({ alg: 'RS256' }) + '.' + b64({ nonce: ask.n, aud: 'x' }) + '.sig';
+        ch.port1.postMessage(JSON.stringify({ signin: 1, n: 'not-this-ask-0000000000', t: t.replace(ask.n, 'x') }));
+        ch.port1.postMessage(JSON.stringify({ signin: 1, n: ask.n, open: 1 }));
+        ch.port1.postMessage(JSON.stringify({ signin: 1, n: ask.n, t }));
+        ok = (await Promise.race([p, wait(3000).then(() => 'timeout')])) === t;
+      }
+      App.androidApp = was;
+      return { way, ask, ok, still: location.protocol };
+    });
+    if (got.way !== 'native') throw new Error('the hello did not count: ' + got.way);
+    if (!got.ask || !/^[A-Za-z0-9_-]{22}$/.test(got.ask.n)) throw new Error('no ask over the channel');
+    if (!got.ok) throw new Error('the token did not come back');
+    if (got.still !== 'http:') throw new Error('the page left: ' + got.still);
   });
   // (the user, 6 Nov 2026: nothing is saved, versioned or said to be updated without a change; a double tap does a thing once)
   await step('a double tap starts one shift and ends it once; "save" twice saves one shift; a save with no change says so', async () => {

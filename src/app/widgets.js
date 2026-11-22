@@ -128,6 +128,10 @@
   }
   function fromPhone(data) {
     if (data === 'refresh' || data === 'shaati:widgets') { send(true); return; }
+    // this Android app signs in to Google with Android's own account picker (app/native-signin.js); it says so right
+    // after the widgets' hello, so an app whose next hello is another one is an app before 1.44
+    if (data === 'shaati:signin') { if (root.NativeSignIn) root.NativeSignIn.hello(); return; }
+    if (typeof data === 'string' && data.startsWith('shaati:') && root.NativeSignIn) root.NativeSignIn.other();
     // this Android app shows the notifications itself, at their time, also while the app is closed (app/phone-notes.js)
     if (data === 'shaati:notes') { if (App.phoneNotes) App.phoneNotes.hello(); return; }
     // Google's In-App Review: the app says it can ask, or answers an ask (app/review.js)
@@ -138,6 +142,7 @@
     let m = null;
     try { m = JSON.parse(data); } catch (e) { return; }
     if (m && m.geo === 1) { if (App.arrive) App.arrive.status(m); return; }
+    if (m && m.signin === 1) { if (root.NativeSignIn) root.NativeSignIn.answer(m); return; }
     if (m && Array.isArray(m.taps) && m.taps.length) whenReady(() => applyTaps(m.taps));
   }
 

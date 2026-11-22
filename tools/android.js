@@ -65,6 +65,12 @@ async function generate() {
     // Google Play Billing (Digital Goods API + Payment Request) for the optional Shaati Plus purchase (src/app/plus.js)
     features: { playBilling: { enabled: true } },
     orientation: 'portrait',
+    // a phone with no browser that can run the app as an app (no Chrome, Samsung Internet, Edge…; the launcher opens
+    // Chrome whenever it is installed) opens it as a browser tab, with an address bar. "webview" would hide the bar but
+    // break more than it fixes there: Google refuses its sign-in inside an embedded WebView (disallowed_useragent) and
+    // the native sign-in, the widgets' numbers, the phone's own notifications and the rating ask all need the browser's
+    // message channel, which a WebView does not have; Play Billing (Digital Goods API) and web notifications are
+    // missing too. A tab keeps all of the web app working, so the rare phone keeps a working app (tests/signin.test.js)
     fallbackType: 'customtabs',
     minSdkVersion: 24, // androidbrowserhelper 2.7 needs Android 7.0+
     enableSiteSettingsShortcut: true,
@@ -203,6 +209,14 @@ function patchLauncher() {
                 androidx.browser.customtabs.CustomTabsSession s = widgetSession();
                 int sent = s == null ? -1 : s.postMessage("shaati:widgets", null);
                 android.util.Log.i("ShaatiWidgets", "channel ready; hello sent: " + sent);
+                // Google sign-in in Android's own account picker (SignInActivity): said right after the widgets' hello,
+                // so a page that hears another hello first knows it is in an app without it (src/app/native-signin.js)
+                if (s != null) s.postMessage("shaati:signin", null);
+                SignInActivity.sink = (m) -> runOnUiThread(() -> {
+                    if (isFinishing()) return;
+                    androidx.browser.customtabs.CustomTabsSession ss = widgetSession();
+                    if (ss != null) ss.postMessage(m, null);
+                });
                 // this app shows the notifications itself, at their time, also while closed (NoteCenter): the page
                 // sends it the list of the coming days and the ones of now (src/app/phone-notes.js)
                 if (s != null) s.postMessage("shaati:notes", null);
@@ -228,6 +242,8 @@ ${WORK_GEOFENCE ? `                // this app can suggest a shift at the workpl
                 if (NoteCenter.isNotes(message)) { NoteCenter.receive(getApplicationContext(), message); return; }
                 // Google's review window (src/app/review.js), started on the main thread from this activity
                 if ("shaati:review".equals(message)) { runOnUiThread(() -> PlayReview.ask(LauncherActivity.this, widgetSession())); return; }
+                // Google sign-in: the page's ask, the one nonce SignInActivity may go on with
+                if (SignInActivity.isSignIn(message)) { SignInActivity.expect(message); return; }
                 // the suggestion at work: the page asks for its status or turns it off; the answer never holds the spot
                 if (WorkGeo.isGeo(message)) {
                     String geo = WorkGeo.receive(getApplicationContext(), message);
@@ -345,7 +361,19 @@ function patchWidgets() {
         </activity>
         <receiver android:name=".WorkGeoReceiver" android:exported="false" />
 `;
-  m = m.replace('</application>', `        <!-- Shaati: the message channel the widgets' numbers come through, and the widgets -->
+  m = m.replace('</application>', `        <!-- Google sign-in in Android's own account picker (SignInActivity; src/app/native-signin.js opens it). In the
+             app's own task, over the app, see-through: no task switch, nothing moves. Android never makes it again for a
+             turned phone or a new theme, so the picker's answer always finds it. -->
+        <activity android:name=".SignInActivity" android:exported="true" android:theme="@style/SignInTheme"
+            android:configChanges="orientation|screenSize|screenLayout|smallestScreenSize|uiMode|density|fontScale|locale|layoutDirection|keyboard|keyboardHidden|navigation">
+            <intent-filter>
+                <action android:name="android.intent.action.VIEW" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.BROWSABLE" />
+                <data android:scheme="shaati-signin" android:host="google" />
+            </intent-filter>
+        </activity>
+        <!-- Shaati: the message channel the widgets' numbers come through, and the widgets -->
         <service android:name="androidx.browser.customtabs.PostMessageService" android:exported="true" />
         <!-- choosing a widget's look: the launcher opens it when a widget is added, and from the widget's settings -->
         <activity android:name=".WidgetStyleActivity" android:exported="true" android:theme="@style/WidgetPickTheme" android:excludeFromRecents="true" android:taskAffinity="">
@@ -382,8 +410,13 @@ ${geo}    </application>`);
   const abh = /^(\s*)implementation 'com\.google\.androidbrowserhelper:androidbrowserhelper:[^']+'\n/m;
   if (!abh.test(g)) throw new Error('build.gradle template changed: androidbrowserhelper');
   g = g.replace(abh, (line, sp) => `${line}${sp}implementation 'com.google.android.gms:play-services-location:21.3.0'\n`);
+  // Google sign-in in Android's own account picker (SignInActivity): Credential Manager, its Google Play services part,
+  // and Sign in with Google's option and token
+  g = g.replace(abh, (line, sp) => `${line}${['androidx.credentials:credentials:1.5.0', 'androidx.credentials:credentials-play-services-auth:1.5.0', 'com.google.android.libraries.identity.googleid:googleid:1.1.1'].map((d) => `${sp}implementation '${d}'\n`).join('')}`);
   fs.writeFileSync(gf, g);
-  fs.writeFileSync(path.join(TWA, 'app', 'shaati-rules.pro'), '# Shaati: the widgets bridge reads the launcher\'s session (LauncherActivity.widgetSession)\n-keepclassmembers class com.google.androidbrowserhelper.trusted.TwaLauncher { androidx.browser.customtabs.CustomTabsSession *; }\n');
+  fs.writeFileSync(path.join(TWA, 'app', 'shaati-rules.pro'), '# Shaati: the widgets bridge reads the launcher\'s session (LauncherActivity.widgetSession)\n-keepclassmembers class com.google.androidbrowserhelper.trusted.TwaLauncher { androidx.browser.customtabs.CustomTabsSession *; }\n'
+    // Google sign-in (SignInActivity): Credential Manager finds its Google Play services part by its name
+    + '-if class androidx.credentials.CredentialManager\n-keep class androidx.credentials.playservices.** { *; }\n');
 }
 
 /** The app is called "שעתי" on phones set to Hebrew (android/res/values-iw); the default name stays "Shaati", as the

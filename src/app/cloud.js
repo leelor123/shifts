@@ -256,10 +256,26 @@
    *  (every iPhone browser, and Safari on a Mac) keeps another site's storage apart, so there it comes back signed
    *  out with no error: on Safari the Google window is the only way, and a second tap opens it. */
   Cloud.redirectOk = !safari;
+  /** In the Android app from 1.44, Google's own window would leave the app's address (Chrome then shows its address
+   *  bar): Android's own account picker gives a Google ID token instead (app/native-signin.js), and Firebase signs in
+   *  with it. use(sdk, credential) signs in or confirms; web() is the web way, for when the app can't (its picker
+   *  failed, an app before 1.44). Called straight from the tap, like the window. */
+  function viaAndroid(use, web) {
+    const N = root.NativeSignIn;
+    if (!N || N.way() === 'web') return web();
+    return N.token().then(
+      (token) => load().then((sdk) => use(sdk, sdk.au.GoogleAuthProvider.credential(token))),
+      (e) => { if (e && e.code === 'shaati/native-web') return web(); throw e; });
+  }
   Cloud.signIn = function (opts) {
-    const go = ({ auth, au }) => {
+    const id = (opts && opts.provider) || 'google.com';
+    const web = () => (fb ? go(fb) : load().then(go));
+    if (id === 'google.com' && !(opts && opts.redirect)) {
+      return viaAndroid(({ auth, au }, cred) => au.signInWithCredential(auth, cred).then((c) => { Cloud.user = c.user; return c.user; }), web);
+    }
+    return web();
+    function go({ auth, au }) {
       // opts.provider: another sign-in service (window.AUTH_PROVIDERS), once it is registered and turned on in Firebase
-      const id = (opts && opts.provider) || 'google.com';
       const provider = id === 'google.com' ? new au.GoogleAuthProvider() : id === 'github.com' ? new au.GithubAuthProvider() : new au.OAuthProvider(id);
       if (id === 'google.com' || id === 'microsoft.com') provider.setCustomParameters({ prompt: 'select_account' });
       if (opts && opts.redirect && Cloud.redirectOk) return au.signInWithRedirect(auth, provider).then(() => null);
@@ -268,8 +284,7 @@
         if (Cloud.redirectOk && ['auth/operation-not-supported-in-this-environment', 'auth/web-storage-unsupported'].includes(e.code)) return au.signInWithRedirect(auth, provider).then(() => null);
         throw e;
       });
-    };
-    return fb ? go(fb) : load().then(go);
+    }
   };
 
   /* ---------------- signing in with an email and a password ---------------- */
@@ -744,7 +759,8 @@
     const via = pd.length ? pd[0].providerId : 'google.com';
     if (user.delete && Date.now() - last > 4 * 60 * 1000) {
       if (via === 'password') await au.reauthenticateWithCredential(user, au.EmailAuthProvider.credential(user.email, String((opts && opts.password) || '')));
-      else if (via === 'google.com') await au.reauthenticateWithPopup(user, new au.GoogleAuthProvider());
+      // in the Android app, Android's own account picker (app/native-signin.js): Google's window would leave the app
+      else if (via === 'google.com') await viaAndroid((sdk, cred) => au.reauthenticateWithCredential(user, cred), () => au.reauthenticateWithPopup(user, new au.GoogleAuthProvider()));
       else await au.reauthenticateWithPopup(user, via === 'github.com' ? new au.GithubAuthProvider() : new au.OAuthProvider(via));
     }
     detach();
