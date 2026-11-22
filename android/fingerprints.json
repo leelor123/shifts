@@ -1,4 +1,5 @@
 [
-  { "name": "upload key (keys/shiftpay-upload.jks)", "sha256": "47:7A:E3:29:FB:50:79:DB:B1:BC:2B:79:6B:F3:60:59:16:3D:2C:70:08:A8:0D:51:4D:3D:0B:31:99:E8:3A:84" },
-  { "name": "Play app signing key (Play Console › App integrity)", "sha256": "3E:E2:CE:71:7D:5F:82:C0:3E:5E:8C:1C:C0:24:0F:6C:C4:53:CC:01:31:FD:16:39:21:AF:8C:3D:E8:C1:23:8E" }
+  { "name": "upload key (keys/shiftpay-upload.jks); SHA-1 6B:37:87:E8:5C:B4:F1:5D:27:E0:87:C6:D1:78:C4:89:EC:61:AA:8A", "sha256": "47:7A:E3:29:FB:50:79:DB:B1:BC:2B:79:6B:F3:60:59:16:3D:2C:70:08:A8:0D:51:4D:3D:0B:31:99:E8:3A:84" },
+  { "name": "Play app signing key, the first one (Play Console › App integrity › previous keys, first used 21 Oct 2026); SHA-1 06:5E:30:03:0B:BF:4A:92:14:03:B4:F0:D7:EC:3E:66:D2:69:24:B8", "sha256": "3E:E2:CE:71:7D:5F:82:C0:3E:5E:8C:1C:C0:24:0F:6C:C4:53:CC:01:31:FD:16:39:21:AF:8C:3D:E8:C1:23:8E" },
+  { "name": "Play app signing key in use since the upgrade (classic key, post-quantum ready); SHA-1 BF:CD:8E:FD:FD:30:7E:46:93:65:83:BB:30:12:BF:30:73:92:61:15. Its post-quantum key: SHA-1 C5:6E:21:5C:E3:2E:F7:67:31:A5:FE:F8:CF:73:00:09:83:C1:BB:CC, SHA-256 E8:D7:29:4A:AE:58:7D:F3:C2:5E:8E:3A:91:5B:89:9F:23:3A:74:5E:25:8D:F6:91:FC:F1:37:C4:06:36:A6:5D. Every SHA-1 here is in the Firebase Android app (Google sign-in, SignInActivity)", "sha256": "68:2F:94:13:9B:FA:77:F4:9C:82:09:93:94:05:DE:47:B8:7D:4D:05:F1:2C:F0:8B:11:EB:C0:84:6C:E0:6B:C6" }
 ]
