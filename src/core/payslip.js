@@ -2375,7 +2375,7 @@
         const x = byLaw ? 0 : whatIf(slip, model, 'otLaw', (d) => ({ employers: (d.employers || []).map((e) => Object.assign({}, e, { otLaw: true })) }), f);
         add({ id: 'otLaw', found: grade(x, f.amount), amount: x || null, title: 'מתי מתחילות שעות נוספות',
           text: byLaw ? 'באפליקציה שעות נוספות כבר מחושבות לפי החוק.'
-            : x >= 0.5 ? `באפליקציה שעות נוספות מתחילות אחרי ${+emp.otThreshold || 8} שעות ביום. לפי החוק, בשבוע של 5 ימים הן מתחילות רק מעל 8.6 שעות ביום או מעל 42 שעות בשבוע, ולכן המעסיק סופר פחות שעות נוספות.`
+            : x >= 0.5 ? `באפליקציה שעות נוספות מתחילות אחרי ${+emp.otThreshold || 8} שעות ביום. לפי החוק, בשבוע של ${Engine.lawDayHours(model.ctx.settings) === 8 ? 6 : 5} ימים הן מתחילות רק מעל ${U.num(Engine.lawDayHours(model.ctx.settings), 1)} שעות ביום או מעל 42 שעות בשבוע, ולכן המעסיק סופר פחות שעות נוספות.`
               : 'חישוב לפי החוק לא משנה את השעות הנוספות בתקופה הזו.',
           fix: byLaw ? null : { kind: 'set', k: 'calc', f: 'לפי החוק (מומלץ)' } });
       }
@@ -2842,7 +2842,7 @@
         if (totalSame) {
           h.text = `סך השעות זהה (${U.hours(slipHours)}), אבל המעסיק מחלק אחרת בין שעות רגילות לשעות נוספות.` + (r ? ' ' + r.text : '');
           h.fixes = r ? fixOfReason(r) : [{ kind: 'set', k: 'calc', f: 'שעות רגילות ביום' }];
-          if (!r) { h.state = 'ask'; h.ask = 'המעסיק סופר שעות נוספות רק מעל 8.6 שעות ביום, או מעל מספר אחר?'; }
+          if (!r) { h.state = 'ask'; h.ask = `המעסיק סופר שעות נוספות רק מעל ${U.num(Engine.lawDayHours(model.ctx.settings), 1)} שעות ביום, או מעל מספר אחר?`; }
         } else if (r) {
           h.text = r.title + ': ' + r.text;
           h.fixes = fixOfReason(r).concat(scFix('period'));
@@ -2902,7 +2902,7 @@
         it.fixes = [{ kind: 'set', k: 'calc', f: id === 'ot' ? 'אחוז דרגה 1' : 'שבת/חג %' }];
       } else {
         it.text = `בתלוש ${U.hours(sq)} שעות, ובאפליקציה ${U.hours(appHrs)}.`;
-        it.ask = id === 'ot' ? 'המעסיק סופר שעות נוספות לפי החוק (מעל 8.6 שעות ביום או 42 בשבוע) או לפי מספר אחר?'
+        it.ask = id === 'ot' ? `המעסיק סופר שעות נוספות לפי החוק (מעל ${U.num(Engine.lawDayHours(model.ctx.settings), 1)} שעות ביום או 42 בשבוע) או לפי מספר אחר?`
           : (S.rest.mode === 'city' ? 'המעסיק סופר את השבת לפי זמני כניסת השבת בעיר, או משעה קבועה?' : 'מאיזו שעה המעסיק סופר את השבת והחג?');
         it.fixes = [{ kind: 'set', k: id === 'ot' ? 'calc' : 'rest', f: setF }];
       }

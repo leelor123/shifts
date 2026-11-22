@@ -133,11 +133,16 @@
   const asDefault = (v, d) => v == null || v === '' || +v === d;
   const otLawToTurnOn = (emp) => !!emp && !emp.otLaw && !emp.otLawSet && asDefault(emp.otThreshold, 8) && asDefault(emp.otTier1Hours, 2)
     && asDefault(emp.otTier1Pct, 125) && asDefault(emp.otTier2Pct, 150) && !emp.nightShiftShortDay;
+  /** The law's full working day: 8.6 hours in a five-day week, 8 in a six-day one (its Friday 7, a night shift 7: otDayHours).
+   *  Every text that names the day's length takes it from here, so it follows the work-week setting. */
+  function lawDayHours(settings) {
+    return +((settings && settings.leave) || {}).workWeek === 6 ? 8 : 8.6;
+  }
   /** The day's regular hours before overtime starts. youth: { age, eve } for a minor (eve: the day before a rest day). */
   function otDayHours(emp, settings, dateKey, nightShift, youth) {
     if (otByLaw(emp)) {
       const six = +((settings && settings.leave) || {}).workWeek === 6;
-      let h = nightShift ? 7 : six ? (U.dow(dateKey) === 5 ? 7 : 8) : 8.6;
+      let h = nightShift ? 7 : six && U.dow(dateKey) === 5 ? 7 : lawDayHours(settings);
       if (youth && youth.age != null && youth.age < 18) {
         h = Math.min(h, youthRules(youth.age, six ? 6 : 5).dayHours);
         if (youth.eve) h = Math.min(h, 7);
@@ -1223,7 +1228,7 @@
   }
 
   root.Engine = {
-    LAW_YEARS, LAW_DUE, LAW_KEYS, lawYear, travelCap, LAW_BREAK, validShift, validEntry, otByLaw, otLawToTurnOn, otDayHours, otWeekHours, WEEK_REG_H, WEEK_REG_H_MINOR, legalMinWage, minWageFor, youthRules, pensionMinAge, MIN_WAGE, BL_YEARS, RECUP_YEARS, recupYearOf, RECUP_CUT, recupCut, TAX_YEARS, taxLaw, blLimits, recuperationRate,
+    LAW_YEARS, LAW_DUE, LAW_KEYS, lawYear, travelCap, LAW_BREAK, validShift, validEntry, otByLaw, otLawToTurnOn, lawDayHours, otDayHours, otWeekHours, WEEK_REG_H, WEEK_REG_H_MINOR, legalMinWage, minWageFor, youthRules, pensionMinAge, MIN_WAGE, BL_YEARS, RECUP_YEARS, recupYearOf, RECUP_CUT, recupCut, TAX_YEARS, taxLaw, blLimits, recuperationRate,
     makeCtx, roleRate, roundMinutes, monthsBetween, buildSegments, hasOverrides, computeShift, computeAll,
     periodByKey, periodOf, dayValue, computeEntries, travelByDay, incomeTaxRaw, netEstimate, pensionActive,
     buildModel, totals, periodSummary, rangeSummary, pensionBaseOf, leaveBalances, holidayPay, vacationEntitlement, recuperationDays, ageAt, isMinor,
