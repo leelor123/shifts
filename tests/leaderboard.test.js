@@ -217,3 +217,7 @@ T.test('the code lock: guards in the code', () => {
   T.ok(ui.includes("const locked = !!lock && !lock.classList.contains('out')"), 'while locked, every other layer is inert');
   T.ok(app.includes('if (action) App.doAction(action);') && /App\.doAction = function \(action\) \{\s*App\.afterUnlock\(/.test(app), 'a shortcut (and a tap on a notification) waits for the code');
 });
+T.test('the champions tabs shrink in whole steps: the last size (0.60rem) is really tried', () => {
+  const src = require('fs').readFileSync(require('path').join(__dirname, '../src/app/views-leaderboard.js'), 'utf8');
+  T.ok(!/f -= 0\.04/.test(src) && /i >= 15; i--\) b\.style\.fontSize = \(i \* 0\.04\)/.test(src), 'no float loop that stops at 0.5999…');
+});

@@ -391,13 +391,15 @@
       // slightly smaller font instead of being cut off (measured once, before the sheet is painted)
       // (the text's own width, to the fraction of a pixel: the ellipsis shows as soon as it is wider at all)
       const over = (b) => {
-        const cs = getComputedStyle(b), r = document.createRange(); r.selectNodeContents(b);
+        // the words themselves: a range over the button's contents also reports the line's own box, wider than its
+        // text once the name may wrap (French "Aujourd'hui" read 58.3 px for 49 px of text, and shrank for nothing)
+        const cs = getComputedStyle(b), r = document.createRange(); const t = [...b.childNodes].find((n) => n.nodeType === 3 && n.nodeValue.trim()); if (t) r.selectNodeContents(t); else r.selectNodeContents(b);
         // the button's width to the fraction too: clientWidth is rounded (57 for 56.8), so "כל הזמנים" at 360 px passed
         // as fitting and was drawn cut ("כל הזמנ…")
         return r.getBoundingClientRect().width > b.getBoundingClientRect().width - parseFloat(cs.paddingLeft) - parseFloat(cs.paddingRight) - parseFloat(cs.borderLeftWidth) - parseFloat(cs.borderRightWidth);
       };
       el.querySelectorAll('.lb-games button, .lb-periods button').forEach((b) => {
-        for (let f = 0.76; b.clientWidth && over(b) && f >= 0.6; f -= 0.04) b.style.fontSize = f.toFixed(2) + 'rem';
+        for (let i = 19; b.clientWidth && over(b) && i >= 15; i--) b.style.fontSize = (i * 0.04).toFixed(2) + 'rem'; // whole steps: 0.76 − 4 × 0.04 is 0.5999…, the 0.60 step was never tried
       });
     }
     /** Only the marks move; the buttons themselves stay. */
