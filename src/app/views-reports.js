@@ -34,17 +34,21 @@
     for (const r of App.model.results.values()) if (r.status === 'done' && (!f || r.dateKey < f)) f = r.dateKey;
     return f;
   }
-  /** Average of metric over N previous ranges (only ranges after data started). */
-  function averages(type, r, n) {
+  /** Average of metric over N previous ranges (only ranges after data started). While r is still going (w.partial),
+   * each range counts only its first w.day days, like the range it is compared with (Insights.samePoint). */
+  function averages(type, r, n, w) {
     if (type === 'year' || type === 'custom') return null;
     const first = firstData();
     const list = [];
     let cur = r;
     const count = type === 'week' ? (n === 3 ? 13 : 52) : n;
+    const partial = w && w.partial;
     for (let i = 0; i < count; i++) {
       cur = prevRange(type, cur);
       if (!first || cur.to < first) break;
-      list.push(Engine.rangeSummary(App.model, cur.from, cur.to));
+      const part = partial ? root.Insights.samePoint(r, cur, w.cur.to, first) : null;
+      if (part && !part.based) break;
+      list.push(part ? Engine.rangeSummary(App.model, part.prev.from, part.prev.to) : Engine.rangeSummary(App.model, cur.from, cur.to));
     }
     if (!list.length) return null;
     const avg = (f) => list.reduce((s, x) => s + f(x), 0) / list.length;
@@ -93,18 +97,32 @@
   }
 
   /* ---------------- summary ---------------- */
-  App.summaryData = function (type, anchor) {
+  /* t: the whole range, as shown. tc / p: the two sides of the comparison. While the range is still going (this
+   * week, month, year, or a free range that ends after today) they are days 1..N of it and of the one before
+   * (Insights.samePoint, the home card's rule), and w.partial says so; p is null when the history starts too late
+   * in the previous range to compare with. */
+  App.summaryData = function (type, anchor, today) {
     const r = rangeFor(type, anchor);
     const t = Engine.rangeSummary(App.model, r.from, r.to);
     const pr = prevRange(type, r);
-    const p = Engine.rangeSummary(App.model, pr.from, pr.to);
-    return { r, t, pr, p };
+    const w = root.Insights.samePoint(r, pr, today || U.todayKey(), firstData());
+    const tc = w.partial ? Engine.rangeSummary(App.model, w.cur.from, w.cur.to) : t;
+    const p = w.partial && !w.based ? null : Engine.rangeSummary(App.model, w.prev.from, w.prev.to);
+    return { r, t, tc, pr, p, w };
   };
-
-  function kpi(label, cur, prev, fmt, invert) {
-    return `<div class="kpi"><div class="l">${label}</div><div class="v">${fmt(cur)}</div><div class="d">${UI.delta(cur, prev, { invert })}</div></div>`;
+  // the words after the hero's arrow: whole sentences (a phrase put inside another reads wrong in other languages)
+  function vsLine(type, w, d, m) {
+    if (!w.partial) return `${d} לעומת התקופה הקודמת (${m})`;
+    if (type === 'week') return `${d} לעומת אותו זמן בשבוע שעבר (${m})`;
+    if (type === 'year') return `${d} לעומת אותו זמן בשנה שעברה (${m})`;
+    if (type === 'month' && S.employers[0].periodStartDay <= 1) return `${d} לעומת אותו זמן בחודש שעבר (${m})`;
+    return `${d} לעומת אותו זמן בתקופה הקודמת (${m})`;
   }
-  function compareTable(t, p, a3, a12, type) {
+
+  function kpi(label, show, cur, prev, fmt, invert) {
+    return `<div class="kpi"><div class="l">${label}</div><div class="v">${fmt(show)}</div><div class="d">${UI.delta(cur, prev, { invert })}</div></div>`;
+  }
+  function compareTable(t, p, a3, a12, type, w) {
     const rows = [
       ['ברוטו', (x) => x.gross, (v) => U.money(v, 0)], ['נטו משוער', (x) => (x.net && x.net.net != null ? x.net.net : x.net), (v) => U.money(v, 0)],
       ['שעות', (x) => x.hours, (v) => U.num(v, 1)], ['משמרות', (x) => x.shifts, (v) => U.num(v, 1)],
@@ -115,12 +133,13 @@
       const cur = f(t);
       const cell = (v) => `<span class="num">${fmt(v)}</span> ${UI.delta(cur, v, { compact: true })}`;
       const fa = (a) => (a ? f(Object.assign({}, a, { net: a.net })) : null);
-      h += `<div class="compare-row"><span><b>${lab}</b><br><span class="num small">${fmt(cur)}</span></span><span class="small">${cell(f(p))}</span>${a3 ? `<span class="small">${cell(fa(a3))}</span>` : ''}${a12 ? `<span class="small">${cell(fa(a12))}</span>` : ''}</div>`;
+      h += `<div class="compare-row"><span><b>${lab}</b><br><span class="num small">${fmt(cur)}</span></span><span class="small">${p ? cell(f(p)) : '<span class="delta flat">—</span>'}</span>${a3 ? `<span class="small">${cell(fa(a3))}</span>` : ''}${a12 ? `<span class="small">${cell(fa(a12))}</span>` : ''}</div>`;
     }
-    return h + `</div><div class="tiny muted" style="margin-top:6px">החיצים: שינוי של התקופה הנוכחית ביחס לכל עמודה. ${type === 'week' ? 'ממוצעים לשבוע' : 'ממוצעים לחודש'}${a3 ? ` (3 ח׳ = ${a3.n} ${type === 'week' ? 'שבועות' : 'תקופות'})` : ''}${a12 ? `, (12 ח׳ = ${a12.n})` : ''}, רק מתקופות שיש בהן נתונים.</div>`;
+    const soFar = w && w.partial ? (w.day === 1 ? 'התקופה עוד לא הסתיימה, אז כל עמודה סופרת רק את היום הראשון שלה. ' : `התקופה עוד לא הסתיימה, אז כל עמודה סופרת רק את ${w.day} הימים הראשונים שלה. `) : '';
+    return h + `</div><div class="tiny muted" style="margin-top:6px">${soFar}החיצים: שינוי של התקופה הנוכחית ביחס לכל עמודה. ${type === 'week' ? 'ממוצעים לשבוע' : 'ממוצעים לחודש'}${a3 ? ` (3 ח׳ = ${a3.n} ${type === 'week' ? 'שבועות' : 'תקופות'})` : ''}${a12 ? `, (12 ח׳ = ${a12.n})` : ''}, רק מתקופות שיש בהן נתונים.</div>`;
   }
 
-  function yearExtras(t, r) {
+  function yearExtras(t, r, tc, pt, w) {
     const y = r.from.slice(0, 4);
     const months = [];
     for (let m = 1; m <= 12; m++) {
@@ -133,9 +152,8 @@
     const worst = worked.slice().sort((a, b) => a.t.gross - b.t.gross)[0];
     const seasons = [['חורף (דצמ׳\u2060–\u2060פבר׳)', [12, 1, 2], '#2a78d6'], ['אביב (מרץ\u2060–\u2060מאי)', [3, 4, 5], '#1baf7a'], ['קיץ (יוני\u2060–\u2060אוג׳)', [6, 7, 8], '#eda100'], ['סתיו (ספט׳\u2060–\u2060נוב׳)', [9, 10, 11], '#eb6834']]
       .map(([name, ms, color]) => ({ name: name.split(' ')[0], full: name, color, value: months.filter((m) => ms.includes(+m.mk.slice(5))).reduce((s, m) => s + m.t.gross, 0) }));
-    // previous year
+    // previous year (pt from summaryData: while this year is still going, only up to the same day of it)
     const py = String(+y - 1);
-    const pt = Engine.rangeSummary(App.model, py + '-01-01', py + '-12-31');
     // Form-106 style + refund estimate
     const T = S.settings.tax;
     let withheld = 0, withheldSrc = 0, bl = 0, health = 0, pension = 0, pensionEr = 0, sev = 0, hish = 0, hishEr = 0, taxable = 0;
@@ -161,7 +179,7 @@
       <div class="card">${Charts.bars(months.map((m) => ({ label: U.MONTHS_SHORT[+m.mk.slice(5) - 1], value: m.t.gross, tip: `${U.fmtMonth(m.mk)}: ${U.money(m.t.gross, 0)} · ${U.num(m.t.hours, 1)} ש׳` })), { label: 'ברוטו לפי חודש', axisFmt: (v) => '₪' + (v >= 1000 ? +(v / 1000).toFixed(1) + 'K' : v) })}
         ${best ? `<div class="kv"><span>${icon('up', 's')} החודש הכי טוב</span><b>${U.fmtMonth(best.mk)} · ${U.money(best.t.gross, 0)}</b></div>` : ''}
         ${worst && worst !== best ? `<div class="kv"><span>${icon('down', 's')} החודש הכי חלש</span><b>${U.fmtMonth(worst.mk)} · ${U.money(worst.t.gross, 0)}</b></div>` : ''}
-        <div class="kv"><span>מול ${py}</span><span>${U.money(pt.gross, 0)} ${UI.delta(t.gross, pt.gross)}</span></div></div>
+        ${pt ? `<div class="kv"><span>${w.partial ? `מול אותו זמן ב-${py}` : `מול ${py}`}</span><span>${U.money(pt.gross, 0)} ${UI.delta(tc.gross, pt.gross)}</span></div>` : ''}</div>
       <div class="section-title">${icon('sun', 's')} התפלגות עונתית</div>
       <div class="card">${Charts.hbars(seasons, (v) => U.money(v, 0))}</div>
       <div class="section-title">${icon('file', 's')} סיכום בסגנון טופס 106</div>
@@ -187,8 +205,9 @@
   // the employer's hours report against the shifts, before the payslip (app/hours-check.js)
   const hoursCheckBtn = () => `<button class="btn tonal block hc-entry" data-act="hours-check">${icon('table', 's')} בדיקת דוח הנוכחות לפני התלוש</button>`;
   function summaryView() {
-    const { r, t, p } = App.summaryData(st.type, st.anchor);
-    const a3 = averages(st.type, r, 3), a12 = averages(st.type, r, 12);
+    const { r, t, tc, p, w } = App.summaryData(st.type, st.anchor);
+    const a3 = averages(st.type, r, 3, w), a12 = averages(st.type, r, 12, w);
+    const pv = (f) => (p ? f(p) : null); // no comparison: UI.delta draws nothing
     const roles = Object.entries(t.byRole).map(([id, v]) => ({ id, role: App.role(id), ...v })).sort((a, b) => b.hours - a.hours);
     const hb = t.hoursBy;
     const types = [
@@ -205,24 +224,24 @@
         : `<div class="cal-nav"><button class="icon-btn" data-act="rep-nav" data-dir="-1" aria-label="הקודם">${icon('right')}</button><h2>${esc(r.label)}${r.sub ? `<div class="tiny muted" style="font-weight:400">${r.sub}</div>` : ''}</h2><button class="icon-btn" data-act="rep-nav" data-dir="1" aria-label="הבא">${icon('left')}</button></div>`}
       <div id="rep-swipe" class="swipe-area">
       <div class="card tonal">
-        <div class="tiny" style="opacity:.8">ברוטו</div><div class="hero-num">${money(t.gross, 0)}</div><div class="small">${UI.delta(t.gross, p.gross)} לעומת התקופה הקודמת (${U.money(p.gross, 0)})</div>
+        <div class="tiny" style="opacity:.8">ברוטו</div><div class="hero-num">${money(t.gross, 0)}</div><div class="small">${p ? vsLine(st.type, w, UI.delta(tc.gross, p.gross), U.money(p.gross, 0)) : UI.delta(tc.gross, 0)}</div>
         <div class="kpis" style="margin-top:12px">
-          ${kpi('נטו משוער', t.net.net, p.net.net, (v) => money(v, 0))}
-          ${kpi('שעות', t.hours, p.hours, (v) => `<span class="num">${U.hm(v * 60)}</span>`)}
-          ${kpi('משמרות', t.shifts, p.shifts, (v) => v)}
-          ${kpi('נסיעות', t.travel, p.travel, (v) => money(v, 0))}
-          ${kpi('ממוצע לשעה', t.avgHourly, p.avgHourly, (v) => money(v))}
-          ${kpi('שעות למשמרת', t.avgShift, p.avgShift, (v) => U.num(v, 1))}
-          ${kpi('בונוסים ותוספות', t.bonus + t.additions, p.bonus + p.additions, (v) => money(v, 0))}
-          ${kpi('ניכויים', t.deductions, p.deductions, (v) => money(v, 0), true)}
+          ${kpi('נטו משוער', t.net.net, tc.net.net, pv((x) => x.net.net), (v) => money(v, 0))}
+          ${kpi('שעות', t.hours, tc.hours, pv((x) => x.hours), (v) => `<span class="num">${U.hm(v * 60)}</span>`)}
+          ${kpi('משמרות', t.shifts, tc.shifts, pv((x) => x.shifts), (v) => v)}
+          ${kpi('נסיעות', t.travel, tc.travel, pv((x) => x.travel), (v) => money(v, 0))}
+          ${kpi('ממוצע לשעה', t.avgHourly, tc.avgHourly, pv((x) => x.avgHourly), (v) => money(v))}
+          ${kpi('שעות למשמרת', t.avgShift, tc.avgShift, pv((x) => x.avgShift), (v) => U.num(v, 1))}
+          ${kpi('בונוסים ותוספות', t.bonus + t.additions, tc.bonus + tc.additions, pv((x) => x.bonus + x.additions), (v) => money(v, 0))}
+          ${kpi('ניכויים', t.deductions, tc.deductions, pv((x) => x.deductions), (v) => money(v, 0), true)}
         </div>
         ${learnedLine(t) + (t.tips ? `<div class="small" style="margin-top:8px">טיפים (מחוץ לתלוש): <b>${U.money(t.tips, 0)}</b></div>` : '')}
         ${t.leavePay ? `<div class="small" style="margin-top:4px">כולל ימי חופשה/מחלה: <b>${U.money(t.leavePay, 0)}</b></div>` : ''}
       </div>
       ${t.overridden ? `<div class="banner warn">${icon('hand')}<div>${t.overridden} משמרות בתקופה כוללות עקיפה ידנית, הן נכללות בסכומים.</div></div>` : ''}
       <button class="an-entry" data-act="analysis-open">${UI.tile('sparkle', 'violet')}<span class="an-entry-t"><b>ניתוח מתקדם</b><small>איזה יום ושעה הכי משתלמים לך, השיאים שלך ו"מה אם"</small></span>${icon('left', 's')}</button>
-      ${st.type !== 'custom' && st.type !== 'year' ? `<div class="section-title">${icon('up', 's')} השוואה</div><div class="card">${compareTable(t, p, a3, a12, st.type)}</div>` : ''}
-      ${st.type === 'custom' ? `<div class="section-title">${icon('up', 's')} השוואה לתקופה קודמת באותו אורך</div><div class="card">${compareTable(t, p, null, null, st.type)}</div>` : ''}
+      ${st.type !== 'custom' && st.type !== 'year' ? `<div class="section-title">${icon('up', 's')} השוואה</div><div class="card">${compareTable(tc, p, a3, a12, st.type, w)}</div>` : ''}
+      ${st.type === 'custom' ? `<div class="section-title">${icon('up', 's')} השוואה לתקופה קודמת באותו אורך</div><div class="card">${compareTable(tc, p, null, null, st.type, w)}</div>` : ''}
       ${st.type !== 'custom' ? avgCard() : ''}
       <div class="section-title">${icon('users', 's')} לפי תפקיד</div>
       <div class="card">${roles.length ? Charts.hbars(roles.map((x) => ({ name: x.role ? x.role.name : '?', value: x.hours, color: x.role ? x.role.color : '#999', text: U.num(x.hours, 1) + ' ש׳' })))
@@ -239,7 +258,7 @@
         <div class="kpi"><div class="l">חופשה / מחלה</div><div class="v">${t.vacationDays} / ${t.sickDays}</div></div></div>
         ${longest ? `<div class="kv" style="margin-top:8px"><span>המשמרת הארוכה ביותר</span><b>${U.fmtDate(longest.dateKey, 'short')} · <span class="num">${U.hm(longest.paidMin)}</span> ש׳</b></div>` : ''}
         ${t.bestDay ? `<div class="kv"><span>היום הרווחי ביותר</span><b>${U.fmtDate(t.bestDay.key, 'short')} · ${U.money(t.bestDay.amount, 0)}</b></div>` : ''}</div>
-      ${st.type === 'year' ? yearExtras(t, r) : ''}
+      ${st.type === 'year' ? yearExtras(t, r, tc, p, w) : ''}
       </div>
       ${st.type === 'month' && t.shifts > 0 && App.recap ? `<button class="btn recap-btn block" data-act="recap-open" data-pk="${Engine.periodOf(r.from, S.employers[0]).key}">✨ הסיכום של החודש כסיפור</button>` : ''}
       ${(st.type === 'year' && t.shifts > 0 && App.recap ? `<button class="btn recap-btn block" data-act="recap-open" data-pk="Y${r.from.slice(0, 4)}">🎁 השנה שלך כסיפור (Wrapped)</button>` : '') + hoursCheckBtn()}
@@ -372,5 +391,5 @@
     App.exporter.shiftsCsv(list, `shifts-${r.from}_${r.to}.csv`);
   };
   App.actions['rep-pdf'] = () => { const r = rangeFor(st.type, st.anchor); App.exporter.printReport(r.from, r.to, r.label); };
-  App.actions['rep-share-img'] = () => { const { r, t, p } = App.summaryData(st.type, st.anchor); App.exporter.summaryImage(r, t, p); };
+  App.actions['rep-share-img'] = () => { const { r, t, tc, p, w } = App.summaryData(st.type, st.anchor); App.exporter.summaryImage(r, t, p, undefined, { cur: tc, partial: w.partial }); };
 })(typeof window !== 'undefined' ? window : globalThis);

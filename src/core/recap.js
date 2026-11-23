@@ -40,14 +40,16 @@
 
   /**
    * t, prev: totals objects from Engine.periodSummary / totals (prev may be missing).
-   * opts: { key, label, prevLabel, net, roleName(id) }
+   * opts: { key, label, prevLabel, net, cmpCur (totals of the days so far, when the period is still going), roleName(id) }
    * Returns { key, label, slides: [{ k, ... }] } or null when there was no work that month.
    */
   function build(t, prev, opts) {
     opts = opts || {};
     if (!t || !(t.shifts > 0) || !(t.gross > 0)) return null;
     const slides = [{ k: 'intro', label: opts.label || '' }];
-    const delta = prev && prev.gross > 0 ? Math.round((t.gross / prev.gross - 1) * 100) : null;
+    // a period still going compares its days so far (opts.cmpCur) with the same days of prev (Insights.samePoint)
+    const cur = opts.cmpCur || t;
+    const delta = prev && prev.gross > 0 ? Math.round((cur.gross / prev.gross - 1) * 100) : null;
     slides.push({ k: 'earned', gross: r2(t.gross), net: opts.net > 0 ? r2(opts.net) : null, delta: delta != null && Math.abs(delta) < 1000 ? delta : null, prevLabel: opts.prevLabel || '' });
     slides.push({
       k: 'time', hours: r2(t.hours), shifts: t.shifts, workDays: t.workDays || 0,

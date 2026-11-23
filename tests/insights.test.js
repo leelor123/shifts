@@ -288,3 +288,79 @@ T.test('an entry dated later this period (a bonus on the 30th) waits for its day
   const m1 = Engine.buildModel(data(shifts, (d) => { d.entries.push({ id: 'b1', kind: 'adjustment', type: 'bonus', employerId: 'emp1', date: '2026-10-30', amount: 500, status: 'done' }); }));
   T.near(Engine.totals(m1, '2026-10-01', '2026-10-31').gross - r0.cur, 500, 0.01, 'the bonus itself is counted in the month');
 });
+
+T.section('one rule for every period comparison: a period still going against the same part of the one before');
+const SP = (cf, ct, pf, pt, today, first) => Insights.samePoint({ from: cf, to: ct }, { from: pf, to: pt }, today, first);
+T.test('23 Nov: 1-23 Nov against 1-23 Oct (the reports bug of 23 Nov 2026)', () => {
+  const w = SP('2026-11-01', '2026-11-30', '2026-10-01', '2026-10-31', '2026-11-23');
+  T.eq(w.cur.from, '2026-11-01'); T.eq(w.cur.to, '2026-11-23', 'today counts whole, like the home card');
+  T.eq(w.prev.from, '2026-10-01'); T.eq(w.prev.to, '2026-10-23');
+  T.eq(w.day, 23); T.ok(w.partial, 'said as "at the same point"');
+});
+T.test('a period that ended compares whole to whole; one not started yet too', () => {
+  const w = SP('2026-10-01', '2026-10-31', '2026-09-01', '2026-09-30', '2026-11-23');
+  T.eq(w.cur.to, '2026-10-31'); T.eq(w.prev.to, '2026-09-30'); T.ok(!w.partial); T.eq(w.day, null);
+  const f = SP('2026-12-01', '2026-12-31', '2026-11-01', '2026-11-30', '2026-11-23');
+  T.eq(f.cur.to, '2026-12-31'); T.ok(!f.partial);
+});
+T.test('month lengths: 31 against 30 and 28 take the whole shorter month; Feb 28 against January is cut', () => {
+  const a = SP('2026-12-01', '2026-12-31', '2026-11-01', '2026-11-30', '2026-12-31');
+  T.eq(a.prev.to, '2026-11-30'); T.ok(!a.partial, 'the whole of November: no "same point" words');
+  const b = SP('2026-03-01', '2026-03-31', '2026-02-01', '2026-02-28', '2026-03-30');
+  T.eq(b.prev.to, '2026-02-28'); T.eq(b.cur.to, '2026-03-30'); T.ok(!b.partial);
+  const c = SP('2026-02-01', '2026-02-28', '2026-01-01', '2026-01-31', '2026-02-28');
+  T.eq(c.prev.to, '2026-01-28'); T.ok(c.partial, 'the last day of February against 1-28 January');
+  const d = SP('2026-11-01', '2026-11-30', '2026-10-01', '2026-10-31', '2026-11-30');
+  T.eq(d.prev.to, '2026-10-30'); T.ok(d.partial, '30 Nov against 1-30 Oct, the 31st waits');
+});
+T.test('year boundaries: January against December, a week across New Year, a year against a leap year', () => {
+  const m = SP('2027-01-01', '2027-01-31', '2026-12-01', '2026-12-31', '2027-01-10');
+  T.eq(m.prev.from, '2026-12-01'); T.eq(m.prev.to, '2026-12-10');
+  const wk = SP('2026-12-27', '2027-01-02', '2026-12-20', '2026-12-26', '2027-01-01');
+  T.eq(wk.day, 6); T.eq(wk.prev.to, '2026-12-25');
+  const y = SP('2026-01-01', '2026-12-31', '2025-01-01', '2025-12-31', '2026-11-23');
+  T.eq(y.prev.to, '2025-11-23'); T.eq(y.day, 327);
+  const ly = SP('2025-01-01', '2025-12-31', '2024-01-01', '2024-12-31', '2025-03-01');
+  T.eq(ly.prev.to, '2024-02-29', 'the same 60 days, Feb 29 included');
+  const ny = SP('2027-01-01', '2027-12-31', '2026-01-01', '2026-12-31', '2027-01-01');
+  T.eq(ny.prev.to, '2026-01-01'); T.ok(ny.partial);
+});
+T.test('DST: the clock change days move no day (date keys only)', () => {
+  const end = SP('2026-10-25', '2026-10-31', '2026-10-18', '2026-10-24', '2026-10-27'); // Israel winter time from 25 Oct 2026
+  T.eq(end.day, 3); T.eq(end.prev.to, '2026-10-20');
+  const start = SP('2026-03-22', '2026-03-28', '2026-03-15', '2026-03-21', '2026-03-28'); // summer time from 27 Mar 2026
+  T.eq(start.day, 7); T.eq(start.prev.to, '2026-03-21'); T.ok(!start.partial);
+  const mo = SP('2026-04-01', '2026-04-30', '2026-03-01', '2026-03-31', '2026-04-29');
+  T.eq(mo.prev.to, '2026-03-29');
+});
+T.test('the first period with no previous data: no base, so no comparison', () => {
+  T.ok(!SP('2026-11-01', '2026-11-30', '2026-10-01', '2026-10-31', '2026-11-23', '2026-10-15').based, 'started mid-October: 1-23 Oct looks emptier than it was');
+  T.ok(SP('2026-11-01', '2026-11-30', '2026-10-01', '2026-10-31', '2026-11-23', '2026-10-05').based, 'kept from its first week');
+  T.ok(!SP('2026-11-01', '2026-11-30', '2026-10-01', '2026-10-31', '2026-11-23', '2026-11-02').based, 'started this month');
+  T.ok(!SP('2026-11-22', '2026-11-28', '2026-11-15', '2026-11-21', '2026-11-24', '2026-11-18').based, 'a week: from its first day or so');
+  T.ok(SP('2026-11-22', '2026-11-28', '2026-11-15', '2026-11-21', '2026-11-24', '2026-11-16').based);
+  T.ok(SP('2026-11-01', '2026-11-30', '2026-10-01', '2026-10-31', '2026-11-23', null).based, 'unknown history: compare');
+});
+T.test('like for like: the same shifts each month give 0% on every metric, the ratios too', () => {
+  // the same five shifts each month, two of them after the 23rd: the whole of October against 1-23 Nov looked like -40%
+  // weekdays in both months (no Shabbat premium on one side only)
+  const days = (mk) => ['05', '12', '19', '26', '29'].map((d) => shift(mk + '-' + d, '09:00', '17:00'));
+  const model = Engine.buildModel(data([...days('2026-10'), ...days('2026-11').slice(0, 3)]));
+  const w = Insights.samePoint({ from: '2026-11-01', to: '2026-11-30' }, { from: '2026-10-01', to: '2026-10-31' }, '2026-11-23', Insights.firstShiftKey(model));
+  const cur = Engine.rangeSummary(model, w.cur.from, w.cur.to), prev = Engine.rangeSummary(model, w.prev.from, w.prev.to);
+  T.ok(w.based);
+  T.near(cur.gross, prev.gross, 0.01); T.eq(cur.shifts, prev.shifts); T.near(cur.hours, prev.hours, 0.01);
+  T.near(cur.avgHourly, prev.avgHourly, 0.01); T.near(cur.avgShift, prev.avgShift, 0.01);
+  T.eq(Engine.rangeSummary(model, '2026-10-01', '2026-10-31').shifts, 5, 'the whole October had more');
+});
+T.test('guard: every comparison of periods goes through Insights.samePoint', () => {
+  const rd = (f) => require('fs').readFileSync(require('path').join(__dirname, '../src', f), 'utf8');
+  const rep = rd('app/views-reports.js'), recap = rd('app/views-recap.js'), ins = rd('core/insights.js'), exp = rd('app/export.js');
+  T.ok(/Insights\.samePoint\(r, pr,/.test(rep), 'reports summary');
+  T.ok(/Insights\.samePoint\(r, cur,/.test(rep), 'reports 3/12 averages');
+  T.ok(/לעומת אותו זמן בחודש שעבר/.test(rep) && /if \(!w\.partial\) return `\$\{d\} לעומת התקופה הקודמת/.test(rep), 'the hero says which');
+  T.ok(!/UI\.delta\(t\.gross, p\.gross\)/.test(rep) && !/UI\.delta\(t\.gross, pt\.gross\)/.test(rep), 'no whole-range delta against a cut one');
+  T.ok(/Insights\.samePoint\(cur, prev,/.test(recap), 'the recap story');
+  T.ok(/const w = samePoint\(curP, lastP, today, first\)/.test(ins), 'the home card');
+  T.ok(/cmp && cmp\.partial/.test(exp), 'the shared image');
+});

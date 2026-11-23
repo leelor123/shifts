@@ -28,10 +28,18 @@
     const t = Engine.periodSummary(App.model, pk, emp.id);
     const ppk = U.addMonthKey(pk, -1);
     const prev = Engine.periodSummary(App.model, ppk, emp.id);
-    return Recap.build(t, prev, {
-      key: pk, label: monthName(pk), prevLabel: monthName(ppk), net: t.net && t.net.net,
-      roleName: (id) => App.roleName(id),
+    const cmp = samePart(t.period, prev.period, { employerId: App.model.ctx.employers.size > 1 ? emp.id : null });
+    return Recap.build(t, cmp ? cmp.prev : prev, {
+      key: pk, label: monthName(pk), prevLabel: cmp ? `אותו זמן ב${monthName(ppk)}` : monthName(ppk), net: t.net && t.net.net,
+      cmpCur: cmp && cmp.cur, roleName: (id) => App.roleName(id),
     });
+  }
+  /** A period still going (its story opened from the reports) against the same days of the one before, the
+   * home card's rule (Insights.samePoint); null when it ended, so the whole one counts. prev null: too little history. */
+  function samePart(cur, prev, by) {
+    const w = root.Insights.samePoint(cur, prev, U.todayKey(), root.Insights.firstShiftKey(App.model));
+    if (!w.partial) return null;
+    return { cur: Engine.totals(App.model, w.cur.from, w.cur.to, by), prev: w.based ? Engine.totals(App.model, w.prev.from, w.prev.to, by) : null };
   }
   function monthName(pk) { return U.MONTHS[+pk.slice(5, 7) - 1]; }
   /** The whole year as a story ("Shaati Wrapped"): its totals, the net as the months' nets added up (tax goes by
@@ -40,6 +48,7 @@
     const emp = S.employers[0];
     const t = Engine.totals(App.model, y + '-01-01', y + '-12-31', {});
     const prev = Engine.totals(App.model, (y - 1) + '-01-01', (y - 1) + '-12-31', {});
+    const cmp = samePart({ from: y + '-01-01', to: y + '-12-31' }, { from: (y - 1) + '-01-01', to: (y - 1) + '-12-31' }, {});
     let net = 0, best = null;
     for (let m = 1; m <= 12; m++) {
       const pk = y + '-' + String(m).padStart(2, '0');
@@ -47,7 +56,8 @@
       net += (ms.net && ms.net.net) || 0;
       if (ms.shifts > 0 && (!best || ms.gross > best.amount)) best = { label: U.MONTHS[m - 1], amount: Math.round(ms.gross * 100) / 100 };
     }
-    const data = Recap.build(t, prev, { key: 'Y' + y, label: String(y), prevLabel: String(y - 1), net, roleName: (id) => App.roleName(id) });
+    const data = Recap.build(t, cmp ? cmp.prev : prev, { key: 'Y' + y, label: String(y), prevLabel: cmp ? `אותו זמן ב-${y - 1}` : String(y - 1), net,
+      cmpCur: cmp && cmp.cur, roleName: (id) => App.roleName(id) });
     if (!data) return null;
     data.year = true;
     if (best && t.shifts > 1) data.slides.splice(2, 0, Object.assign({ k: 'bestMonth' }, best));

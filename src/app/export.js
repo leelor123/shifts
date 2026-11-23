@@ -95,7 +95,9 @@
   }
 
   /* ---------------- summary as image ---------------- */
-  async function summaryImage(r, t, p, sentence) {
+  // cmp (optional): { cur, partial } from App.summaryData: a period still going compares its days so far with the
+  // same days of the one before (cur = those days of it), and says so
+  async function summaryImage(r, t, p, sentence, cmp) {
     try { await document.fonts.ready; } catch (e) { /* ignore */ }
     const W = 1080, H = 1350;
     const c = document.createElement('canvas');
@@ -117,9 +119,11 @@
     g.fillStyle = sub; g.font = font(500, 36); g.fillText('ברוטו', X, 320);
     g.fillStyle = ink; g.font = font(800, 130); g.fillText(U.money(t.gross, 0), X, 450);
     if (p && p.gross) {
-      const d = ((t.gross - p.gross) / p.gross) * 100;
+      const cur = cmp && cmp.cur ? cmp.cur : t;
+      const d = ((cur.gross - p.gross) / p.gross) * 100;
+      const pct = Math.abs(Math.round(d));
       g.fillStyle = d >= 0 ? '#0a7d0a' : '#c62828'; g.font = font(700, 40);
-      g.fillText(`${d >= 0 ? '▲' : '▼'} ${Math.abs(Math.round(d))}% מהתקופה הקודמת`, X, 520);
+      g.fillText(cmp && cmp.partial ? `${d >= 0 ? '▲' : '▼'} ${pct}% מאותו זמן בתקופה הקודמת` : `${d >= 0 ? '▲' : '▼'} ${pct}% מהתקופה הקודמת`, X, 520);
     }
     const tiles = [['נטו משוער', U.money(t.net.net, 0)], ['שעות', U.hm(t.hours * 60)], ['משמרות', String(t.shifts)], ['ממוצע לשעה', U.money(t.avgHourly)]];
     tiles.forEach(([l, v], i) => {

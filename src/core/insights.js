@@ -214,16 +214,35 @@
     const curP = Engine.periodOf(today, emp);
     const lastP = Engine.periodByKey(U.addMonthKey(curP.key, -1), emp);
     const first = firstShiftKey(model);
-    if (!first || first > U.addDays(lastP.from, 6) || first >= curP.from) return null;
-    const elapsed = Math.max(1, U.diffDays(curP.from, today) + 1);
-    const dayN = U.addDays(lastP.from, elapsed - 1);
-    const sameTo = dayN < lastP.to ? dayN : lastP.to;
+    if (!first || first >= curP.from) return null;
+    const w = samePoint(curP, lastP, today, first);
+    if (!w.based) return null;
     const by = { employerId: model.ctx.employers.size > 1 ? emp.id : null };
-    const now = Engine.totals(model, curP.from, today < curP.to ? today : curP.to, by);
-    const before = Engine.totals(model, lastP.from, sameTo, by);
+    const now = Engine.totals(model, w.cur.from, w.cur.to, by);
+    const before = Engine.totals(model, w.prev.from, w.prev.to, by);
     if (now.shifts + before.shifts === 0) return null;
-    return { day: elapsed, cur: now.gross, prev: before.gross, diff: now.gross - before.gross, curShifts: now.shifts, prevShifts: before.shifts,
-      curHours: now.hours, prevHours: before.hours, prevTo: sameTo, period: lastP };
+    return { day: w.day, cur: now.gross, prev: before.gross, diff: now.gross - before.gross, curShifts: now.shifts, prevShifts: before.shifts,
+      curHours: now.hours, prevHours: before.hours, prevTo: w.prev.to, period: lastP };
+  }
+
+  /**
+   * The one rule for comparing a period with the one before it (home card, reports, recap, shared image).
+   * cur, prev: { from, to } date keys. While `today` is inside cur, the period is still going: days 1..N of it
+   * (today counted whole, as on the home card) go against days 1..N of prev; a prev shorter than N gives its
+   * whole (31 Dec against a 30-day November). A period that ended (or has not started) compares whole to whole.
+   * Date keys only, so DST and month lengths never move a day.
+   * Returns { cur, prev, day: N or null, partial: prev was cut short (say "at the same point"), based }.
+   * based: the history reaches the start of prev's window (first kept day within its first week, a day for a
+   * week), so a prev side that looks empty is not just "before the person started". `first` null: unknown, true.
+   */
+  function samePoint(cur, prev, today, first) {
+    const grace = Math.min(6, Math.floor((U.diffDays(prev.from, prev.to) + 1) / 4));
+    const based = !first || first <= U.addDays(prev.from, grace);
+    if (!(today >= cur.from && today <= cur.to)) return { cur: { from: cur.from, to: cur.to }, prev: { from: prev.from, to: prev.to }, day: null, partial: false, based };
+    const day = U.diffDays(cur.from, today) + 1;
+    const dayN = U.addDays(prev.from, day - 1);
+    const prevTo = dayN < prev.to ? dayN : prev.to;
+    return { cur: { from: cur.from, to: today }, prev: { from: prev.from, to: prevTo }, day, partial: prevTo < prev.to, based };
   }
 
   /**
@@ -709,5 +728,5 @@
     return { from, to, t, avgHours: ah, sentence, explain: `השבוע \u2066${U.fmtDate(from, 'short')}\u2060–\u2060${U.fmtDate(to, 'short')}\u2069, בהשוואה לממוצע 4 השבועות שלפניו (${U.num(ah, 1)} ש׳).` };
   }
 
-  root.Insights = { run, soFarOf, metrics, compareSeries, weeklySummary, TYPE_INFO, pctDev, slipPeriod, slipFor, slipLag, resolvedNotes };
+  root.Insights = { run, soFarOf, samePoint, firstShiftKey, metrics, compareSeries, weeklySummary, TYPE_INFO, pctDev, slipPeriod, slipFor, slipLag, resolvedNotes };
 })(typeof window !== 'undefined' ? window : globalThis);
