@@ -217,7 +217,7 @@ function applyHtml(html, lang, dict) {
 // point: a box narrower than the whole compound would otherwise break it between two letters (23 Nov 2026).
 const GLUE_RUN = /[\p{L}\p{N}]+(?:[-/][\p{L}\p{N}]+)+/gu;
 function glue(text) {
-  return text.split(/(<[^>]*>)/).map((part, i) => (i % 2 ? part : part.replace(/[^\s<>]+/g, (tok) => (/:\/\/|@|www\.|\.[a-z]{2,4}\//i.test(tok) ? tok
+  return text.split(/(<[^>]*>)/).map((part, i) => (i % 2 ? part : part.replace(/[^\s<>]+/g, (tok) => (/:\/\/|@|www\.|\.[a-z]{2,4}\/|[="{}_#]/i.test(tok) ? tok
     : tok.replace(GLUE_RUN, (run) => (run.length > 14 ? run : run.replace(/([-/])(?=[\p{L}\p{N}])/gu, '$1⁠'))))))).join('');
 }
 function dictOf(lang) {

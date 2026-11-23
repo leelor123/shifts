@@ -1022,9 +1022,13 @@
     }
     const last12 = jobPcts.slice(-12);
     res.jobPct = last12.length ? last12.reduce((s, x) => s + x.jp, 0) / last12.length : 0;
-    const year = Math.floor(res.seniorityMonths / 12);
+    /* Recuperation days go by the year of seniority the worker is IN, not by completed years (the extension order's
+     * table, kolzchut "דמי הבראה": "שנים רביעית עד עשירית – 7 ימים"; its example: in the third year, 6 days, and
+     * after 15 months year two is paid at 6 days). 12–23 months = year 2 = 6 days, 36–47 months = year 4 = 7 days.
+     * The right comes only after a full first year (eligible). */
+    const year = Math.floor(res.seniorityMonths / 12) + 1;
     const eligible = res.seniorityMonths >= 12;
-    const days = recuperationDays(Math.max(1, year));
+    const days = recuperationDays(year);
     res.recuperation = {
       eligible, yearOfService: year, days, rate: recuperationRate(L, asOf), cut: recupCut(asOf),
       amount: eligible ? Math.max(0, days - recupCut(asOf)) * recuperationRate(L, asOf) * res.jobPct : 0,

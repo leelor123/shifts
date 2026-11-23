@@ -278,5 +278,13 @@ T.test('day 31 against a 30-day month counts that whole month', () => {
 });
 T.test('the home card shows the difference under the big number', () => {
   const src = require('fs').readFileSync(require('path').join(__dirname, '../src/app/views-home.js'), 'utf8');
-  T.ok(/\$\{soFarLine\(bigNet, netShare, emp\)\}/.test(src) && /App\.insights && App\.insights\.soFar/.test(src));
+  T.ok(/\$\{soFarLine\(bigNet, netShare, emp\)\}/.test(src) && /root\.Insights\.soFarOf\(App\.model, emp, U\.todayKey\(\)\)/.test(src), 'computed in the same render as the big number, not 800 ms later');
+});
+T.test('an entry dated later this period (a bonus on the 30th) waits for its day', () => {
+  const shifts = ['2026-09-01', '2026-09-03', '2026-10-01', '2026-10-04'].map((k) => shift(k, '09:00', '14:00'));
+  const r0 = Insights.soFarOf(Engine.buildModel(data(shifts)), Defaults.defaultEmployer(), '2026-10-12');
+  const r1 = Insights.soFarOf(Engine.buildModel(data(shifts, (d) => { d.entries.push({ id: 'b1', kind: 'adjustment', type: 'bonus', employerId: 'emp1', date: '2026-10-30', amount: 500, status: 'done' }); })), Defaults.defaultEmployer(), '2026-10-12');
+  T.near(r1.cur, r0.cur, 0.01, 'the bonus of the 30th is not in "by the 12th"');
+  const m1 = Engine.buildModel(data(shifts, (d) => { d.entries.push({ id: 'b1', kind: 'adjustment', type: 'bonus', employerId: 'emp1', date: '2026-10-30', amount: 500, status: 'done' }); }));
+  T.near(Engine.totals(m1, '2026-10-01', '2026-10-31').gross - r0.cur, 500, 0.01, 'the bonus itself is counted in the month');
 });

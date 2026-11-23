@@ -236,7 +236,7 @@
 
   // the period so far against the one before by the same day ("+420 ₪ from this time last month"), in the big number's kind
   function soFarLine(bigNet, netShare, emp) {
-    const sf = App.insights && App.insights.soFar;
+    const sf = root.Insights.soFarOf(App.model, emp, U.todayKey());
     if (!sf || Math.abs(sf.diff) < 1) return '';
     const d = bigNet ? sf.diff * netShare : sf.diff;
     const then = emp.periodStartDay > 1 ? 'מאותו זמן בתקופה הקודמת' : 'מאותו זמן בחודש שעבר';

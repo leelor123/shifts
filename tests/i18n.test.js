@@ -37,3 +37,11 @@ T.test('no i18n file holds a literal direction mark (LRM, RLM, embedding, overri
   T.eq(bad.join(', '), '', 'literal direction marks');
   T.eq(JSON.parse(I.toJson({ a: 'x\u200Fy' })).a, 'x\u200Fy', 'an escaped mark reads back the same');
 });
+T.test('the word joiner never lands inside code: an attribute fragment keeps its name whole', () => {
+  const I = require('../tools/i18n.js');
+  for (const lang of ['en', 'ru', 'ar', 'fr', 'es', 'am']) {
+    const dict = I.dictOf(lang);
+    const bad = Object.values(dict).filter((v) => typeof v === 'string' && /[-/]⁠[w-]*=/.test(v));
+    T.eq(bad.length, 0, lang + ': ' + bad.slice(0, 2).join(' | '));
+  }
+});

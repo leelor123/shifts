@@ -204,6 +204,29 @@
   }
 
   /**
+   * The period so far against the period before at the same point: days 1..N now against days 1..N then (a 31st day
+   * against a 30-day month takes its whole). Pure, so the home card computes it in the same render as its big number
+   * (no line that appears or changes a moment later). Both sides stop at day N: an entry dated later this period
+   * (a bonus on the 30th, vacation logged ahead) waits for its day. null until the person kept shifts from the previous
+   * period's first week, or its early part looks empty and misleads.
+   */
+  function soFarOf(model, emp, today) {
+    const curP = Engine.periodOf(today, emp);
+    const lastP = Engine.periodByKey(U.addMonthKey(curP.key, -1), emp);
+    const first = firstShiftKey(model);
+    if (!first || first > U.addDays(lastP.from, 6) || first >= curP.from) return null;
+    const elapsed = Math.max(1, U.diffDays(curP.from, today) + 1);
+    const dayN = U.addDays(lastP.from, elapsed - 1);
+    const sameTo = dayN < lastP.to ? dayN : lastP.to;
+    const by = { employerId: model.ctx.employers.size > 1 ? emp.id : null };
+    const now = Engine.totals(model, curP.from, today < curP.to ? today : curP.to, by);
+    const before = Engine.totals(model, lastP.from, sameTo, by);
+    if (now.shifts + before.shifts === 0) return null;
+    return { day: elapsed, cur: now.gross, prev: before.gross, diff: now.gross - before.gross, curShifts: now.shifts, prevShifts: before.shifts,
+      curHours: now.hours, prevHours: before.hours, prevTo: sameTo, period: lastP };
+  }
+
+  /**
    * Run all checks.
    * state = { now, activeShift, payslips, gaps, lastBackup, roleName(id) }
    * Returns { alerts:[], live:[] (non-persistent insights for the home card), weekly }
@@ -435,25 +458,17 @@
     }
     // the period so far against the period before at the same point: by day N now, and by day N then.
     // Only when the person kept shifts from that period's first week, or the old part looks empty and misleads.
-    let soFar = null;
-    if (first && first <= U.addDays(lastP.from, 6) && first < curP.from) {
-      const dayN = U.addDays(lastP.from, elapsed - 1);
-      const sameTo = dayN < lastP.to ? dayN : lastP.to; // a 31st day against a 30-day month: its whole
-      const before = Engine.totals(model, lastP.from, sameTo, { employerId: model.ctx.employers.size > 1 ? emp.id : null });
-      if (curSum.shifts + before.shifts > 0) {
-        soFar = { day: elapsed, cur: curSum.gross, prev: before.gross, diff: curSum.gross - before.gross,
-          curShifts: curSum.shifts, prevShifts: before.shifts, curHours: curSum.hours, prevHours: before.hours, prevTo: sameTo, period: lastP };
-        if (on('projection') && Math.abs(soFar.diff) >= 1) {
-          const custom = emp.periodStartDay > 1;
-          const dayTxt = custom ? `עד היום ה-${elapsed} בתקופה` : `עד ה-${elapsed} בחודש`;
-          const then = custom ? 'בתקופה הקודמת' : 'בחודש שעבר';
-          const part = (sum, n) => (n ? `${U.money(sum, 0)} ${n === 1 ? 'במשמרת אחת' : `ב-${n} משמרות`}` : 'לא היו משמרות');
-          live.push({ type: 'soFar', priority: 1.5,
-            title: soFar.diff > 0 ? `${U.money(soFar.diff, 0)} יותר מאשר באותו זמן ${then}` : `${U.money(-soFar.diff, 0)} פחות מאשר באותו זמן ${then}`,
-            body: `ברוטו ${dayTxt}: ${part(soFar.cur, soFar.curShifts)}. ${then}, עד אותו יום: ${part(soFar.prev, soFar.prevShifts)}.`,
-            explain: `אותם ${elapsed} ימים מתחילת התקופה, עכשיו ובתקופה הקודמת (עד ${U.fmtDate(sameTo, 'short')}).` });
-        }
-      }
+    const soFar = soFarOf(model, emp, today);
+    if (soFar && on('projection') && Math.abs(soFar.diff) >= 1) {
+      const elapsed = soFar.day;
+      const custom = emp.periodStartDay > 1;
+      const dayTxt = custom ? `עד היום ה-${elapsed} בתקופה` : `עד ה-${elapsed} בחודש`;
+      const then = custom ? 'בתקופה הקודמת' : 'בחודש שעבר';
+      const part = (sum, n) => (n ? `${U.money(sum, 0)} ${n === 1 ? 'במשמרת אחת' : `ב-${n} משמרות`}` : 'לא היו משמרות');
+      live.push({ type: 'soFar', priority: 1.5,
+        title: soFar.diff > 0 ? `${U.money(soFar.diff, 0)} יותר מאשר באותו זמן ${then}` : `${U.money(-soFar.diff, 0)} פחות מאשר באותו זמן ${then}`,
+        body: `ברוטו ${dayTxt}: ${part(soFar.cur, soFar.curShifts)}. ${then}, עד אותו יום: ${part(soFar.prev, soFar.prevShifts)}.`,
+        explain: `אותם ${elapsed} ימים מתחילת התקופה, עכשיו ובתקופה הקודמת (עד ${U.fmtDate(soFar.prevTo, 'short')}).` });
     }
     if (goal > 0) {
       const target = goal;
@@ -694,5 +709,5 @@
     return { from, to, t, avgHours: ah, sentence, explain: `השבוע \u2066${U.fmtDate(from, 'short')}\u2060–\u2060${U.fmtDate(to, 'short')}\u2069, בהשוואה לממוצע 4 השבועות שלפניו (${U.num(ah, 1)} ש׳).` };
   }
 
-  root.Insights = { run, metrics, compareSeries, weeklySummary, TYPE_INFO, pctDev, slipPeriod, slipFor, slipLag, resolvedNotes };
+  root.Insights = { run, soFarOf, metrics, compareSeries, weeklySummary, TYPE_INFO, pctDev, slipPeriod, slipFor, slipLag, resolvedNotes };
 })(typeof window !== 'undefined' ? window : globalThis);

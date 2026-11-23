@@ -144,6 +144,21 @@ T.test('law: the recuperation estimate takes the cut day off in 2025 and not in 
   T.eq(r26.days, 7); T.eq(r26.cut, 0); T.eq(r26.rate, 451.5);
   T.near(r26.amount, 7 * 451.5 * b26.jobPct, 1e-6, '2026: 7 days × 451.50 × job share');
 });
+/* Guard: recuperation days follow the seniority year the worker is in (kolzchut "דמי הבראה": the 4th year is 7
+ * days, the 2nd is 6), never completed years, which lag a year behind. */
+T.test('law: recuperation days by the current year of seniority — 12 months = year 2 (6), 36 months = year 4 (7)', () => {
+  const settings = Defaults.defaultSettings();
+  settings.startDate = '2020-01-01';
+  const m = Engine.buildModel({ settings, employers: [Defaults.defaultEmployer()], roles: Defaults.defaultRoles(), dayRules: [], shifts: [], entries: [] });
+  const at = (k) => Engine.leaveBalances(m, k).recuperation;
+  T.ok(!at('2020-12-31').eligible, 'not before a full year');
+  T.eq(at('2021-01-01').days, 6); T.eq(at('2021-01-01').yearOfService, 2); T.ok(at('2021-01-01').eligible);
+  T.eq(at('2022-12-31').days, 6, 'year 3');
+  T.eq(at('2023-01-01').days, 7, 'year 4 (3 full years done) is 7 days');
+  T.eq(at('2029-12-31').days, 7, 'year 10');
+  T.eq(at('2030-01-01').days, 8, 'year 11');
+  T.eq(at('2039-01-01').days, 10, 'year 20');
+});
 T.test('law: the website\'s question pages show the same numbers as the app (node tools/site-pages.js after a change)', () => {
   const fs = require('fs'); const path = require('path');
   const read = (f) => fs.readFileSync(path.join(__dirname, '..', 'site', f), 'utf8');

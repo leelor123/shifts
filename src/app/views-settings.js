@@ -672,7 +672,7 @@
         <div class="section-title">פנסיה</div><div class="card">
           ${F.sw('פנסיה חובה', '', 's.pension.enabled', P.enabled)}
           <div class="grid3">${F.num('עובד %', 's.pension.employeePct', P.employeePct)}${F.num('מעסיק %', 's.pension.employerPct', P.employerPct)}${F.num('פיצויים %', 's.pension.severancePct', P.severancePct)}</div>
-          ${F.num('מתחילה אחרי (חודשים)', 's.pension.startAfterMonths', P.startAfterMonths, 'ללא קרן קודמת: 6 חודשים. עם קרן פעילה: 3 חודשים.')}
+          ${F.num('מתחילה אחרי (חודשים)', 's.pension.startAfterMonths', P.startAfterMonths, 'ללא קרן קודמת: 6 חודשים. עם קרן פעילה: 0, כי ההפרשה מגיעה מהיום הראשון (המעסיק מפקיד אותה אחרי 3 חודשים, גם על החודשים שעברו).')}
           ${F.sel('בסיס לחישוב', 's.pension.base', [['base', 'שכר יסוד (שעות × תעריף, בלי תוספות)'], ['all', 'כל השכר חוץ מנסיעות']], P.base)}</div>
         <div class="section-title">קרן השתלמות</div><div class="card">
           ${F.sw('יש קרן השתלמות', '', 's.hishtalmut.enabled', Hs.enabled).replace('data-s=', 'data-redraw data-s=')}
