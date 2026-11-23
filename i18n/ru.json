@@ -1358,7 +1358,7 @@
  "חזור מהפסקה": "Вернуться с перерыва",
  "הפסקה": "Перерыв",
  "<button class=\"icon-btn tonal lg\" data-act=\"timer-switch\" aria-label=\"החלף תפקיד\">{0}</button>": "<button class=\"icon-btn tonal lg\" data-act=\"timer-switch\" aria-label=\"Сменить должность\">{0}</button>",
- "<div class=\"home-action{0}\">\n      <span class=\"start-halo\" aria-hidden=\"true\" style=\"{1}\"></span>\n      <button class=\"btn big start\" style=\"{2}\" data-act=\"timer-start\" data-role=\"{3}\">{4} התחל משמרת</button>\n      {5}\n    </div>": "<div class=\"home-action{0}\">\n      <span class=\"start-halo\" aria-hidden=\"true\" style=\"{1}\"></span>\n      <button class=\"btn big start\" style=\"{2}\" data-act=\"timer-start\" data-role=\"{3}\">{4} Начать смену</button>\n      {5}\n    </div>",
+ "<div class=\"home-action{0}\">\n      <button class=\"btn big start\" data-act=\"timer-start\" data-role=\"{1}\">{2} התחל משמרת</button>\n      {3}\n    </div>": "<div class=\"home-action{0}\">\n      <button class=\"btn big start\" data-act=\"timer-start\" data-role=\"{1}\">{2} Начать смену</button>\n      {3}\n    </div>",
  "<button class=\"role-chip\" data-act=\"choose-role\" aria-label=\"בחר תפקיד\">{0}<span class=\"rc-n\">{1}</span><span class=\"chev\">{2}</span></button>": "<button class=\"role-chip\" data-act=\"choose-role\" aria-label=\"Выбрать должность\">{0}<span class=\"rc-n\">{1}</span><span class=\"chev\">{2}</span></button>",
  "על {0} מגיעים לך <span class=\"money-glue\">כ-<b>{1}</b></span> {2}<span class=\"money-glue\">({3} ברוטו)</span>.": "За {0} вам положено около <span class=\"money-glue\"><b>{1}</b></span> {2}<span class=\"money-glue\">({3} брутто)</span>.",
  "נטו ": "нетто ",

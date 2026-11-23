@@ -165,8 +165,7 @@
     const sel = S.meta.lastRole && App.role(S.meta.lastRole) ? S.meta.lastRole : roles[0] && roles[0].id;
     const role = App.role(sel);
     return `<div class="home-action${once('justStopped') ? ' ha-enter' : ''}">
-      <span class="start-halo" aria-hidden="true" style="${App.phase()}"></span>
-      <button class="btn big start" style="${App.phase()}" data-act="timer-start" data-role="${sel || ''}">${icon('play')} התחל משמרת</button>
+      <button class="btn big start" data-act="timer-start" data-role="${sel || ''}">${icon('play')} התחל משמרת</button>
       ${roles.length > 1 && role ? `<button class="role-chip" data-act="choose-role" aria-label="בחר תפקיד">${UI.roleMini(role)}<span class="rc-n">${esc(role.name)}</span><span class="chev">${icon('left', 's')}</span></button>` : ''}
     </div>`;
   }
