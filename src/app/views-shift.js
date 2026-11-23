@@ -258,19 +258,23 @@
   }
 
   App.sheetsApi.shiftDetail = function (id) {
-    const sh = App.shift(id);
-    const r = App.result(id);
+    let sh = App.shift(id);
+    let r = App.result(id);
     if (!sh || !r) return;
-    const hd = HebCal.hebrewDate(r.dateKey);
-    // the signed shift log's line (recorded in real time, or when it was added or edited) goes above the override box
-    const logLine = r.status !== 'planned' && root.ShiftLog ? root.ShiftLog.lineHtml(sh) : '';
-    const ovBox = logLine + (r.overridden || r.dayRuleHit ? `<div class="banner warn">${icon('hand')}<div style="flex:1"><b>עקיפה ידנית:</b> ${esc([...r.overrideList, r.dayRuleHit ? 'כלל יום (ביטול/הוספה גורפת של שבת/חג)' : ''].filter(Boolean).join(' · '))}${sh.overrideReason ? `<br>סיבה: ${esc(sh.overrideReason)}` : ''}</div></div>` : '');
-    const autoDiff = r.overridden && App.model.autoResults.get(id) ? App.model.autoResults.get(id).wage - r.wage : 0;
-    // a planned shift that pays above an ordinary one says why (core/planner.js)
-    const why = r.status === 'planned' && root.Planner ? root.Planner.reasons(r)[0] : null;
-    UI.openSheet({
-      title: U.fmtDate(r.dateKey, 'long'),
-      body: `<div class="small muted" style="margin-bottom:8px">${esc(hd.toString())} ${App.restTag(r)} ${r.status === 'planned' ? (r.end <= Date.now() ? '<span class="tag warn">ממתינה לאישור</span>' : '<span class="tag planned">מתוכננת</span>') : ''}</div>
+    // drawn again on every change while it is open (UI.openSheet live): a sync from another phone, an undo; a shift
+    // that is gone meanwhile leaves the sheet as it was
+    const body = () => {
+      const sh2 = App.shift(id), r2 = App.result(id);
+      if (!sh2 || !r2) return null;
+      sh = sh2; r = r2;
+      const hd = HebCal.hebrewDate(r.dateKey);
+      // the signed shift log's line (recorded in real time, or when it was added or edited) goes above the override box
+      const logLine = r.status !== 'planned' && root.ShiftLog ? root.ShiftLog.lineHtml(sh) : '';
+      const ovBox = logLine + (r.overridden || r.dayRuleHit ? `<div class="banner warn">${icon('hand')}<div style="flex:1"><b>עקיפה ידנית:</b> ${esc([...r.overrideList, r.dayRuleHit ? 'כלל יום (ביטול/הוספה גורפת של שבת/חג)' : ''].filter(Boolean).join(' · '))}${sh.overrideReason ? `<br>סיבה: ${esc(sh.overrideReason)}` : ''}</div></div>` : '');
+      const autoDiff = r.overridden && App.model.autoResults.get(id) ? App.model.autoResults.get(id).wage - r.wage : 0;
+      // a planned shift that pays above an ordinary one says why (core/planner.js)
+      const why = r.status === 'planned' && root.Planner ? root.Planner.reasons(r)[0] : null;
+      return `<div class="small muted" style="margin-bottom:8px">${esc(hd.toString())} ${App.restTag(r)} ${r.status === 'planned' ? (r.end <= Date.now() ? '<span class="tag warn">ממתינה לאישור</span>' : '<span class="tag planned">מתוכננת</span>') : ''}</div>
         ${r.status === 'planned' && r.end <= Date.now() ? `<div class="card done-cta"><div class="dc-t">${icon('alert', 's')} המשמרת עוד לא נכנסה לשכר</div><div class="dc-s">משמרת מתוכננת נספרת בשכר רק אחרי שמאשרים שעבדת בה.</div><button class="btn go big block" data-x="done">${icon('check')} עבדתי, להכניס לשכר · ${money(r.wage, 0)}</button></div>` : ''}
         ${ovBox}
         ${r.breakShort ? `<div class="banner warn">${icon('alert')}<div style="flex:1">${esc(Engine.LAW_BREAK.text)}. בהפסקה שנרשמה: ${r.breakMin} דקות.</div></div>` : ''}
@@ -291,7 +295,12 @@
           <button class="item" data-x="tpl"><span class="lead">${icon('layers')}</span><span class="body"><span class="t">שמור כתבנית</span></span></button>
           <button class="item" data-x="gcal"><span class="lead">${icon('calendar')}</span><span class="body"><span class="t">הוסף ל-\u2060Google Calendar</span></span></button>
           ${r.overridden ? `<button class="item" data-x="auto"><span class="lead">${icon('refresh')}</span><span class="body"><span class="t">חזור לחישוב אוטומטי</span><span class="s">מבטל את כל העקיפות במשמרת</span></span></button>` : ''}
-        </div>`,
+        </div>`;
+    };
+    UI.openSheet({
+      title: U.fmtDate(r.dateKey, 'long'),
+      body: body(),
+      live: body,
       foot: `<button class="btn danger" data-x="del">${icon('trash')} מחק</button><button class="btn" data-x="edit">${icon('edit')} ערוך</button>`,
       onMount: (el) => {
         el.addEventListener('click', async (e) => {
@@ -627,28 +636,37 @@
 
   /* ---------------- day sheet ---------------- */
   App.sheetsApi.daySheet = function (k) {
-    const cfg = App.model.ctx.restCfg;
-    const results = [...App.model.results.values()].filter((r) => r.dateKey === k).sort((a, b) => a.start - b.start);
-    const entries = S.entries.filter((e) => e.date === k);
-    const hols = HebCal.holidaysOn(k);
-    const info = HebCal.restDayInfo(k, cfg);
-    const autoInfo = HebCal.restDayInfo(k, cfg, true);
-    const rule = S.dayRules.find((x) => x.date === k);
-    const wins = HebCal.restWindows(U.addDays(k, -1), U.addDays(k, 1), cfg).filter((w) => U.epochKey(w.start) <= k && U.epochKey(w.end) >= k);
-    const sum = results.filter((r) => r.status === 'done').reduce((s, r) => s + r.total, 0);
-    let restLine = '';
-    if (wins.length) restLine = wins.map((w) => `${icon('candle', 's')} ${esc(w.label)}: ${U.fmtDate(U.epochKey(w.start), 'short')} ${U.epochHM(w.start)} → ${U.fmtDate(U.epochKey(w.end), 'short')} ${U.epochHM(w.end)}`).join('<br>');
+    let rule = null;
+    // the day as it is saved now: drawn when the sheet opens and again on every change while it is open (UI.openSheet
+    // live), so a shift deleted, edited or copied in a sheet above it, or brought back by "undo", shows here at once
+    const body = () => {
+      const cfg = App.model.ctx.restCfg;
+      const results = [...App.model.results.values()].filter((r) => r.dateKey === k).sort((a, b) => a.start - b.start);
+      const entries = S.entries.filter((e) => e.date === k);
+      const hols = HebCal.holidaysOn(k);
+      const info = HebCal.restDayInfo(k, cfg);
+      const autoInfo = HebCal.restDayInfo(k, cfg, true);
+      rule = S.dayRules.find((x) => x.date === k) || null;
+      const wins = HebCal.restWindows(U.addDays(k, -1), U.addDays(k, 1), cfg).filter((w) => U.epochKey(w.start) <= k && U.epochKey(w.end) >= k);
+      const sum = results.filter((r) => r.status === 'done').reduce((s, r) => s + r.total, 0);
+      let restLine = '';
+      if (wins.length) restLine = wins.map((w) => `${icon('candle', 's')} ${esc(w.label)}: ${U.fmtDate(U.epochKey(w.start), 'short')} ${U.epochHM(w.start)} → ${U.fmtDate(U.epochKey(w.end), 'short')} ${U.epochHM(w.end)}`).join('<br>');
+      // each block has its own key: a redraw that drops the list and the total (or brings them back) keeps the
+      // buttons below as the very same elements (Dom.patch)
+      return `<div class="small muted" style="margin-bottom:10px">${esc(HebCal.hebrewDate(k).toString())}${hols.length ? ' · ' + esc(hols.map((h) => h.name).join(', ')) : ''}</div>
+          ${restLine ? `<div class="banner" data-key="ds-rest">${'<div>' + restLine + '</div>'}</div>` : ''}
+          ${rule ? `<div class="banner warn" data-key="ds-rule">${icon('hand')}<div style="flex:1">${rule.type === 'cancel' ? 'תעריף שבת/חג בוטל ידנית לתאריך זה' : rule.type === 'pct' ? `תעריף מיוחד ${+rule.pct}% לכל שעה ביום הזה` : 'סומן ידנית כיום מנוחה (150%)'}${rule.reason ? ': ' + esc(rule.reason) : ''}</div><button class="btn sm" data-rule-del>בטל</button></div>` : ''}
+          ${results.length || entries.length ? `<div class="list" data-key="ds-list">${results.map((r) => App.shiftItem(r, { noDate: true })).join('')}${entries.map(App.entryItem).join('')}</div>${sum ? `<div class="small" data-key="ds-sum" style="margin:0 4px 12px">סה״כ ביום: <b>${U.money(sum)}</b></div>` : ''}` : '<div class="muted small" data-key="ds-none" style="margin:6px 4px 14px">אין רישומים ביום זה.</div>'}
+          <div class="btn-row" data-key="ds-add"><button class="btn" data-add-shift>${icon('plus')} משמרת</button><button class="btn tonal" data-add-other>${icon('beach')} חופשה / מחלה / תוספת</button></div>
+          <div class="divider" data-key="ds-div"></div>
+          ${!rule && autoInfo ? `<button class="btn outlined block" data-rule="cancel">${icon('hand', 's')} בטל 150% בתאריך זה לכל המשמרות</button><div class="tiny muted" style="margin:6px 4px">למשל חג שזוהה בטעות. אפשר לבטל.</div>` : ''}
+          ${!rule ? `<button class="btn outlined block" data-rule="pct">${icon('star', 's')} תעריף מיוחד לכל היום (למשל יום בחירות)</button><div class="tiny muted" style="margin:6px 4px 10px">באחוזים, לכל המשמרות ביום הזה. למשל ביום בחירות: 200%.</div>` : ''}
+          ${!rule && !info ? `<button class="btn outlined block" data-rule="force">${icon('candle', 's')} סמן כיום מנוחה (150%)</button>` : ''}`;
+    };
     UI.openSheet({
       title: U.fmtDate(k, 'long'),
-      body: `<div class="small muted" style="margin-bottom:10px">${esc(HebCal.hebrewDate(k).toString())}${hols.length ? ' · ' + esc(hols.map((h) => h.name).join(', ')) : ''}</div>
-        ${restLine ? `<div class="banner">${'<div>' + restLine + '</div>'}</div>` : ''}
-        ${rule ? `<div class="banner warn">${icon('hand')}<div style="flex:1">${rule.type === 'cancel' ? 'תעריף שבת/חג בוטל ידנית לתאריך זה' : rule.type === 'pct' ? `תעריף מיוחד ${+rule.pct}% לכל שעה ביום הזה` : 'סומן ידנית כיום מנוחה (150%)'}${rule.reason ? ': ' + esc(rule.reason) : ''}</div><button class="btn sm" data-rule-del>בטל</button></div>` : ''}
-        ${results.length || entries.length ? `<div class="list">${results.map((r) => App.shiftItem(r, { noDate: true })).join('')}${entries.map(App.entryItem).join('')}</div>${sum ? `<div class="small" style="margin:0 4px 12px">סה״כ ביום: <b>${U.money(sum)}</b></div>` : ''}` : '<div class="muted small" style="margin:6px 4px 14px">אין רישומים ביום זה.</div>'}
-        <div class="btn-row"><button class="btn" data-add-shift>${icon('plus')} משמרת</button><button class="btn tonal" data-add-other>${icon('beach')} חופשה / מחלה / תוספת</button></div>
-        <div class="divider"></div>
-        ${!rule && autoInfo ? `<button class="btn outlined block" data-rule="cancel">${icon('hand', 's')} בטל 150% בתאריך זה לכל המשמרות</button><div class="tiny muted" style="margin:6px 4px">למשל חג שזוהה בטעות. אפשר לבטל.</div>` : ''}
-        ${!rule ? `<button class="btn outlined block" data-rule="pct">${icon('star', 's')} תעריף מיוחד לכל היום (למשל יום בחירות)</button><div class="tiny muted" style="margin:6px 4px 10px">באחוזים, לכל המשמרות ביום הזה. למשל ביום בחירות: 200%.</div>` : ''}
-        ${!rule && !info ? `<button class="btn outlined block" data-rule="force">${icon('candle', 's')} סמן כיום מנוחה (150%)</button>` : ''}`,
+      body: body(),
+      live: body,
       onMount: (el) => {
         el.addEventListener('click', async (e) => {
           const b = e.target.closest('button');
@@ -675,7 +693,7 @@
             UI.closeTop();
             await App.saveOps([{ store: 'dayRules', put: { id: 'dr_' + k, date: k, type: b.dataset.rule, reason } }], 'כלל יום', b.dataset.rule === 'cancel' ? 'תעריף 150% בוטל לכל המשמרות בתאריך' : 'היום סומן כיום מנוחה');
           }
-          if (b.hasAttribute('data-rule-del')) { UI.closeTop(); await App.saveOps([{ store: 'dayRules', del: rule.id }], 'ביטול כלל יום', 'החישוב חזר לאוטומטי'); }
+          if (b.hasAttribute('data-rule-del') && rule) { UI.closeTop(); await App.saveOps([{ store: 'dayRules', del: rule.id }], 'ביטול כלל יום', 'החישוב חזר לאוטומטי'); }
         });
       },
     });
