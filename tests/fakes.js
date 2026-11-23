@@ -6,9 +6,9 @@ const clone = (o) => (o === undefined ? undefined : JSON.parse(JSON.stringify(o)
 /* ---------------- IndexedDB ---------------- */
 function fakeIndexedDB() {
   const dbs = new Map();
-  function request(fn) {
+  function request(fn, after) {
     const req = { onsuccess: null, onerror: null, result: undefined };
-    setTimeout(() => { try { req.result = fn(); req.onsuccess && req.onsuccess({ target: req }); } catch (e) { req.error = e; req.onerror && req.onerror(e); } }, 0);
+    setTimeout(() => { try { req.result = fn(); req.onsuccess && req.onsuccess({ target: req }); } catch (e) { req.error = e; req.onerror && req.onerror(e); } if (after) after(); }, 0);
     return req;
   }
   return {
@@ -24,10 +24,13 @@ function fakeIndexedDB() {
           transaction(names) {
             const t = { oncomplete: null, onerror: null, onabort: null };
             let timer = null;
-            const schedule = () => { clearTimeout(timer); timer = setTimeout(() => t.oncomplete && t.oncomplete(), 3); };
+            // a transaction completes after its requests ran, as IndexedDB does: on a busy machine the timer fired
+            // first now and then, and a read came back empty (tests/parked.test.js, 23 Nov 2026)
+            let pending = 0;
+            const schedule = () => { clearTimeout(timer); timer = setTimeout(() => { if (pending) schedule(); else if (t.oncomplete) t.oncomplete(); }, 3); };
             t.objectStore = (n) => {
               const st = stores.get(n);
-              const op = (fn) => { schedule(); return request(fn); };
+              const op = (fn) => { schedule(); pending++; return request(fn, () => { pending--; }); };
               return {
                 put: (obj) => op(() => { st.rows.set(obj[st.keyPath], clone(obj)); }),
                 delete: (k) => op(() => { st.rows.delete(k); }),
