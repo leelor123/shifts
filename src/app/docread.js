@@ -385,6 +385,27 @@
   const valid = (t) => { const m = /^(\d{1,2})[:./-](\d{1,2})(?:[./-](\d{2,4}))?/.exec(t); return m && (t.includes(':') ? +m[1] <= 24 && +m[2] <= 59 && m[2].length === 2 : +m[1] >= 1 && +m[1] <= 31 && +m[2] >= 1 && +m[2] <= 12); };
   const wholes = (ws) => ws.filter((w) => sh(w) === 3 && valid(w.text.replace(/^[-.:]+|[-.:]+$/g, ''))).length;
   const digitsPass = (image, opts, progress, label) => pass(image, opts.digitsLang || 'eng', Object.assign({ tessedit_pageseg_mode: opts.psmDigits || '11' }, opts.whitelist ? { tessedit_char_whitelist: '0123456789:./-' } : {}), progress, label, opts.signal);
+  /** The two readings as one list of words (for the unit tests too). */
+  function mergeWords(he, dg) {
+    // the words: Hebrew/English words from the first reading; numbers from whichever reading read them
+    // better (a whole time or date over a broken one, then the surer one)
+    const isWord = (w) => /[A-Za-zא-ת]/.test(w.text) && !/^[\dOolISB:./-]+$/.test(w.text);
+    const words = he.filter(isWord);
+    const better = (a, b) => sh(a) - sh(b) || a.conf - b.conf;
+    const nums = [];
+    for (const w of dg.concat(he)) {
+      if (isWord(w) || !/\d/.test(w.text) || !NUMERIC.test(w.text.replace(/[|[\]()'"`,;]/g, '')) || !(w.conf > 15 || sh(w) >= 2)) continue; // a whole time read unsurely is still a time
+      const k = nums.findIndex((d) => overlap(d, w) > 0.3);
+      if (k < 0) nums.push(w);
+      else if (better(w, nums[k]) > 0) nums[k] = w;
+    }
+    // a digits-reading "number" on top of a Hebrew word is the Hebrew word misread: not a number. And a time
+    // under the same time with its AM/PM ("3:53" under "3:53PM", however unsure) is that word read again: kept
+    // both, the time stood twice in its cell, once without its PM
+    const holds = (w, d) => { const m = /^(.+?)\s*[AaPp]\.?[Mm]\.?$/.exec(w.text); return !!m && m[1] === d.text.replace(/^[-.:]+|[-.:]+$/g, ''); };
+    const out = words.concat(nums.filter((d) => !words.some((w) => overlap(w, d) > 0.5 && (w.conf > 60 || holds(w, d)))));
+    return out;
+  }
   DocRead.words = async function (blob, progress, opts) {
     opts = opts || {};
     progress = progress || (() => {});
@@ -438,20 +459,7 @@
     progress(loadingText('heb+eng', 0), { code: 'docread/loading-language', lang: 'heb+eng' });
     const he = await pass(image, 'heb+eng', { tessedit_pageseg_mode: opts.psm || '11', preserve_interword_spaces: '1' }, progress, 'קורא את המילים', opts.signal);
     if (!opts.lines && image.getContext) await hebrewAgain(image, he, opts.signal);
-    // the words: Hebrew/English words from the first reading; numbers from whichever reading read them
-    // better (a whole time or date over a broken one, then the surer one)
-    const isWord = (w) => /[A-Za-zא-ת]/.test(w.text) && !/^[\dOolISB:./-]+$/.test(w.text);
-    const words = he.filter(isWord);
-    const better = (a, b) => sh(a) - sh(b) || a.conf - b.conf;
-    const nums = [];
-    for (const w of dg.concat(he)) {
-      if (isWord(w) || !/\d/.test(w.text) || !NUMERIC.test(w.text.replace(/[|[\]()'"`,;]/g, '')) || !(w.conf > 15 || sh(w) >= 2)) continue; // a whole time read unsurely is still a time
-      const k = nums.findIndex((d) => overlap(d, w) > 0.3);
-      if (k < 0) nums.push(w);
-      else if (better(w, nums[k]) > 0) nums[k] = w;
-    }
-    // a digits-reading "number" on top of a Hebrew word is the Hebrew word misread: not a number
-    const out = words.concat(nums.filter((d) => !words.some((w) => overlap(w, d) > 0.5 && w.conf > 60)));
+    const out = mergeWords(he, dg);
     return { words: out, he, dg, canvas: image, info: { turn, skew: image.skew || 0, unlined } };
     } finally { letGo(); }
   };
@@ -548,6 +556,6 @@
   };
 
   // the picture rules that need no browser, for the unit tests (tests/timesheet.test.js)
-  DocRead.pure = { grayOf, skewOf, wholes, latinBit, heWord, sizeOf, loadingText };
+  DocRead.pure = { grayOf, skewOf, wholes, mergeWords, latinBit, heWord, sizeOf, loadingText };
   root.DocRead = DocRead;
 })(typeof window !== 'undefined' ? window : globalThis);

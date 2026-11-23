@@ -5,7 +5,7 @@
  * background and activates when the user taps "עדכן".
  * IndexedDB data is never touched by updates.
  * ============================================================ */
-const VERSION = '1.44.0-19d48edb';
+const VERSION = '1.44.0-4635d438';
 const SHELL = 'shiftpay-shell-' + VERSION;
 const RUNTIME = 'shiftpay-runtime-v1';
 const FONTS = ['rubik-hebrew', 'rubik-latin', 'rubik-latin-ext', 'rubik-arabic', 'rubik-cyrillic', 'rubik-cyrillic-ext', 'fredoka-hebrew', 'fredoka-latin', 'fredoka-latin-ext'].map((f) => './fonts/' + f + '.woff2');

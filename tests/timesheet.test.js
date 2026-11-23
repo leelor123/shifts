@@ -113,6 +113,14 @@ T.test('table: an exit one digit away from the total is offered put right, for t
   T.eq(unsure(p), '2026-10-01 14:06-22:23 total');
   T.eq(p.skipped, 1);
 });
+T.test('table: an exit read without its colon and one digit short ("121" of 12:11) is offered put right from the total, never as 01:21', () => {
+  const p = page(['תאריך', 'כניסה', 'יציאה', 'סה"כ'], [['1/10/2026', '07:51', '13:46', '5:55'], ['2/10/2026', '07:00', '121', '5:11'], ['3/10/2026', '08:00', '16:00', '8:00'], ['4/10/2026', '09:02', '17:53', '8:51']]);
+  T.eq(shifts(p), ['2026-10-01 07:51-13:46', '2026-10-03 08:00-16:00', '2026-10-04 09:02-17:53'].join(' | '));
+  T.eq(unsure(p), '2026-10-02 07:00-12:11 total');
+  // a whole digit lost and nothing the total explains: left as read, still unsure
+  const q = page(['תאריך', 'כניסה', 'יציאה', 'סה"כ'], [['1/10/2026', '07:51', '13:46', '5:55'], ['2/10/2026', '07:00', '121', '7:11'], ['3/10/2026', '08:00', '16:00', '8:00'], ['4/10/2026', '09:02', '17:53', '8:51']]);
+  T.eq(unsure(q), '2026-10-02 07:00-01:21 total');
+});
 T.test('table: a split day\'s total is both shifts together, so neither time is "put right"', () => {
   const p = page(['תאריך', 'כניסה 1', 'יציאה 1', 'כניסה 2', 'יציאה 2', 'סה"כ'], [
     ['1/10/2026', '09:13', '15:34', '', '', '6:21'], ['2/10/2026', '14:02', '19:35', '21:08', '23:52', '8:17'],
@@ -358,6 +366,18 @@ T.test('a PNG with no background: dark letters stay dark on white, light letters
 });
 T.test('which way up: only valid times and dates count (upside down, 08:00 reads "00:80")', () => {
   T.eq(DR.wholes(['00:80', '08:00', '31/13', '12/11', '16:30-00:30', '0E:91', '24:61'].map((text) => ({ text }))), 3);
+});
+T.test('the two readings as one: a time the word on it already holds ("3:53" under an unsure "3:53PM") is kept once, with its PM', () => {
+  const box = (text, x0, conf) => ({ text, x0, x1: x0 + text.length * 14, y0: 100, y1: 130, conf });
+  const he = [box('Fri', 370, 90), box('8:51', 666, 94), box('AM', 744, 94), box('3:53PM', 918, 55)];
+  const dg = [box('8:51', 666, 96), box('3:53', 918, 94), box('7.03', 1160, 97)];
+  const texts = DR.mergeWords(he, dg).map((w) => w.text).sort();
+  T.eq(texts.join(' '), ['3:53PM', '7.03', '8:51', 'AM', 'Fri'].sort().join(' '));
+  // a number under an unsure word that does not hold it (a misread word) is still the number
+  const kept = DR.mergeWords([box('אבג', 918, 40)], [box('3:53', 918, 94)]).map((w) => w.text);
+  T.ok(kept.includes('3:53'));
+  // nor a date under an unsure word that only holds it among stray letters ("X120/09/2026" over 20/09/2026)
+  T.ok(DR.mergeWords([box("'X120/09/2026", 1207, 12)], [box('20/09/2026', 1230, 94)]).some((w) => w.text === '20/09/2026'));
 });
 
 T.section('hours report photo: more guards');

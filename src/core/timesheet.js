@@ -832,6 +832,13 @@
     }
     const okBreaks = BREAKS.filter((br) => !br || (seenBr.get(br) || 0) >= Math.max(2, withLen * 0.15));
     const differsBy = (x, y) => [...x].filter((ch, i) => ch !== y[i]).length;
+    // a time cell read as bare digits ("121") that is the time v ("12:11") with one of its digits lost
+    const cellAt = (c, ri) => c.members.find((q) => q.ri === ri) || null;
+    const lostDigit = (p, v) => {
+      if (!p || !p.bare || !p.w) return false;
+      const raw = digits(clean(p.w.text)), full = v.replace(':', '');
+      return /^\d{3}$/.test(raw) && [...full].some((_, i) => full.slice(0, i) + full.slice(i + 1) === raw);
+    };
 
     // a date column cut at the picture's edge: its dates end in a bare "15/". A date there with one digit of month
     // ("22/1" of 22/11) or its digits run together ("171") may be cut too
@@ -907,7 +914,9 @@
           // or else of the entry, that makes them agree) is offered, never saved as sure
           if (a && b && sure && !okBreaks.some((br) => (rest ? fits(span(a, b), len, br) : fitsRow(ri, span(a, b), len, br)))) {
             const fixB = fromMin(minOf(a) + len), fixA = fromMin(minOf(b) - len);
-            const fix = differsBy(b, fixB) === 1 ? [[a, fixB]] : differsBy(a, fixA) === 1 ? [[fixA, b]] : [];
+            // (or a cell read without its colon and one digit short: "121" of 12:11, which reads as 01:21)
+            const fix = differsBy(b, fixB) === 1 ? [[a, fixB]] : differsBy(a, fixA) === 1 ? [[fixA, b]]
+              : lostDigit(cellAt(p.b, ri), fixB) ? [[a, fixB]] : lostDigit(cellAt(p.a, ri), fixA) ? [[fixA, b]] : [];
             if (fix.length) { dbg.push(`total disagrees: ${a}-${b}, likely ${fix[0].join('-')}`); [a, b] = fix[0]; }
             else dbg.push(`total disagrees: ${a}-${b} (${len}m)`);
             why = 'total';
