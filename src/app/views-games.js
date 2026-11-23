@@ -853,8 +853,10 @@
     let chain, i, streak, answered;
     const money = (v) => `${v.toLocaleString('en-US')} ₪`;
     // a hyphen holds its two halves on one line (T-shirt, бургер-обед broke there on a 320px phone): fit() shrinks the name instead
-    const item = (t, open, cls) => `<div class="hw-card ${cls || ''}"><span class="hw-e" aria-hidden="true">${t.e}</span><b class="no-fit">${esc(t.name).replace(/-/g, '-⁠')}</b>
+    const item = (t, open, cls) => `<div class="hw-card ${cls || ''}"><span class="hw-e" aria-hidden="true">${t.e}</span><b class="no-fit${String(t.name).trim().split(/\s+/).length <= 3 ? ' one' : ''}">${esc(t.name).replace(/-/g, '-⁠')}</b>
       ${open ? `<span class="hw-p">${money(t.price)}</span><span class="hw-h">${Games.workTime(t.price / rate)}</span>` : '<span class="hw-q" aria-label="מחיר מוסתר">?</span>'}</div>`;
+    // a short name (up to three words, "קונסולת משחקים") stays on one line and gets a smaller letter instead of a
+    // second line (wrap-audit at 360px, 23 Nov 2026); a longer one may wrap between words.
     // a name is one long word in some languages (Russian "электровелосипедов"): it gets a smaller letter until it fits
     // its card, never a break inside the word and never a card wider than its half (seen in the QA, 21 Nov 2026).
     // Done before the frame is drawn, so nothing jumps. ("no-fit": the page's own label fitting, Dom.fit, stops at 80%

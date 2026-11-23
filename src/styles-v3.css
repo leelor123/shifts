@@ -865,6 +865,7 @@ body.fx .qz-opt:active:not(:disabled) { transform: scale(.96); }
 .hw-card.shown.no { border-color: #e5484d; background: color-mix(in srgb, #e5484d 9%, var(--surface-1)); }
 .hw-e { font-size: 2.6rem; line-height: 1.1; }
 .hw-card b { max-width: 100%; overflow-wrap: normal; font: 700 1rem/1.3 var(--display); }
+.hw-card b.one { white-space: nowrap; }
 .hw-p { font-size: .85rem; color: var(--on-surface-var); font-variant-numeric: tabular-nums; }
 .hw-h { font: 700 1.05rem var(--display); color: var(--brand-strong); }
 .hw-q { display: grid; place-items: center; width: 64px; height: 44px; border-radius: 14px; background: var(--brand-soft); color: var(--brand-strong); font: 800 2rem var(--display); }
