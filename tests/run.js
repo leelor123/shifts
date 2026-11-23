@@ -15,6 +15,8 @@ require('./slipflow-read.test.js');
 require('./readers-lead.test.js');
 // after the readers campaign (19 Nov 2026): payslip files go with the payslip; what the reading could not tell is said
 require('./slipfiles.test.js');
+// signing out keeps the phone-only items (payslip files, their text, the AI key, the lock) for the same account
+require('./parked.test.js');
 T.section('cloud sync (simulated phones)');
 require('./sync.test.js');
 T.section('Firestore reads');

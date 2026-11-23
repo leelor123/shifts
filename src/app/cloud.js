@@ -455,6 +455,8 @@
         setStatus('idle');
         throw Object.assign(root.U.oops(`החיבור בוטל. צריך להתחבר עם ${prev} כדי שהשינויים יעלו לחשבון שלו.`), { code: 'app/switch-cancelled' });
       }
+      // what only this phone held for the previous account waits for it here (unencrypted: its key is in its account)
+      try { await Store.park(S.meta.cloudUid, null); } catch (e) { console.warn('park', e); }
       await Store.wipe();
     }
     if (S.meta.cloudUid !== user.uid) {
@@ -473,6 +475,7 @@
     await push();
     if (root.Stats) { root.Stats.report(); Cloud.adminCheck = root.Stats.checkAdmin(); } // the opening show waits for this one
     if (root.Support) root.Support.check();
+    await unparkFor(user); // this account's own phone-only items, if it signed out on this phone before
     // what the champions table is missing (a game played offline, a write that failed), a little after the opening
     setTimeout(() => { if (root.Champions && Cloud.user === user) root.Champions.sync(); }, 4000);
   };
@@ -723,27 +726,85 @@
     if (keep.length) await Store.applyRemote(keep);
   }
 
+  /* ---------------- the account's key for what it parks on this phone ----------------
+   * A random AES-GCM key kept in the account itself (users/{uid}/kv/vault, readable by that account only). What the
+   * account parks on this phone when it signs out (Store.park: payslip files, their raw text, the AI key, the code
+   * lock) is encrypted with it, so the phone holds only ciphertext and only that account, signed in again, can open
+   * it; deleting the account deletes the key too. The key never encrypts anything that goes to the server.
+   * Returns the CryptoKey, false when the account has none (and create is off), or null (no connection, no crypto). */
+  const vaultRef = (uid) => fb.fs.doc(fb.db, 'users', uid, 'kv', 'vault');
+  const within = (pr, ms) => Promise.race([pr, sleep(ms).then(() => { throw new Error('timeout'); })]);
+  async function vaultKey(uid, create) {
+    const sub = root.crypto && root.crypto.subtle;
+    if (!fb || !sub || !uid) return null;
+    try {
+      const snap = await within(fb.fs.getDocFromServer(vaultRef(uid)), 8000);
+      let raw = null;
+      if (snap.exists()) { try { raw = Uint8Array.from(atob(JSON.parse(snap.data().j).k), (c) => c.charCodeAt(0)); } catch (e) { raw = null; } }
+      if (!raw || raw.length !== 32) {
+        if (!create) return false;
+        raw = root.crypto.getRandomValues(new Uint8Array(32));
+        // kept only once the server has it: a key lost on the way would lock the files away for good. u is minus the
+        // time, so the rules (no update to a lower u) refuse a later phone's key over this one: a key something is
+        // already locked with is never replaced. The key used is the one the server then holds.
+        try { await within(fb.fs.setDoc(vaultRef(uid), { u: -Date.now(), d: false, j: JSON.stringify({ k: btoa(String.fromCharCode.apply(null, raw)) }) }), 8000); }
+        catch (e) { if (!e || e.code !== 'permission-denied') throw e; } // (another phone made it first: its key is read below)
+        const again = await within(fb.fs.getDocFromServer(vaultRef(uid)), 8000);
+        raw = again.exists() ? Uint8Array.from(atob(JSON.parse(again.data().j).k), (c) => c.charCodeAt(0)) : null;
+        if (!raw || raw.length !== 32) return null;
+      }
+      return await sub.importKey('raw', raw, { name: 'AES-GCM' }, false, ['encrypt', 'decrypt']);
+    } catch (e) { console.warn('vault key', e); return null; }
+  }
+  Cloud._vaultKey = vaultKey;
+  /** After a sign-in: what this same account parked on this phone comes back (another account's stays where it is). */
+  async function unparkFor(user) {
+    try {
+      const has = await Store.parked(user.uid);
+      if (!has.n || Cloud.user !== user) return;
+      const key = has.enc ? await vaultKey(user.uid, false) : null;
+      if (Cloud.user !== user) return;
+      await Store.unpark(user.uid, key); // (-1: no connection for the key, tried again at the next opening)
+    } catch (e) { console.warn('unpark', e); }
+  }
+
   /* ---------------- sign out / delete ---------------- */
-  /** Sign out and clear this device. Returns false if the user cancelled. */
-  Cloud.signOut = async function () {
+  /** Sign out and clear this device. Returns false if the user cancelled.
+   *  opts.removeLocal: the phone-only items (payslip files, their text, the AI key, the code lock) go too, instead of
+   *  waiting on the phone, hidden, for this same account to sign in again (a shared phone). */
+  Cloud.signOut = async function (opts) {
+    const removeLocal = !!(opts && opts.removeLocal);
+    const uid = (Cloud.user && Cloud.user.uid) || S.meta.cloudUid || null;
     if (fb && Cloud.user) {
       await push();
-      try { await Promise.race([fb.fs.waitForPendingWrites(fb.db), sleep(8000).then(() => { throw new Error('timeout'); })]); }
+      try { await within(fb.fs.waitForPendingWrites(fb.db), 8000); }
       catch (e) {
         const ok = await UI.confirm('יש שינויים שעוד לא עלו לענן', 'כנראה אין חיבור לאינטרנט. אם תתנתק עכשיו, השינויים האחרונים מהטלפון הזה יאבדו.', 'התנתק בכל זאת', true);
         if (!ok) return false;
       }
     }
-    await shutdown();
+    if (uid && !removeLocal) {
+      try {
+        const key = fb && Cloud.user ? await vaultKey(uid, true) : null;
+        await Store.park(uid, key || null);
+      } catch (e) {
+        console.warn('park', e);
+        const ok = await UI.confirm('אין מקום לשמור את הקבצים', 'אין מספיק מקום בטלפון כדי להשאיר בו את קובצי התלושים ואת שאר מה שנשמר רק בו. אם תתנתק עכשיו, הם יימחקו.', 'התנתק בכל זאת', true);
+        if (!ok) return false;
+      }
+    }
+    await shutdown(removeLocal ? uid : null);
     return true;
   };
-  async function shutdown() {
+  /** dropUid: that account's parked items go too (removed from the phone, or the account deleted). */
+  async function shutdown(dropUid) {
     detach();
     if (fb) {
       try { await fb.au.signOut(fb.auth); } catch (e) { /* ignore */ }
       try { await fb.fs.terminate(fb.db); await fb.fs.clearIndexedDbPersistence(fb.db); } catch (e) { /* ignore */ }
     }
     await Store.wipe();
+    if (dropUid) await Store.dropParked(dropUid);
   }
   /** Permanently delete everything stored for this user in the cloud, delete the sign-in account
    *  itself (required by Google Play's account-deletion policy), then clear this device. */
@@ -791,7 +852,7 @@
     }
     await fs.deleteDoc(fs.doc(db, 'users', uid));
     if (user.delete) await au.deleteUser(user);
-    await shutdown();
+    await shutdown(uid); // (with anything it parked on this phone: its key went with kv above)
   };
 
   Cloud.statusText = function () {

@@ -467,7 +467,7 @@ textarea.input { min-height: 90px; resize: vertical; }
 .dialog { position: fixed; z-index: 50; inset: 0; display: grid; place-items: center; padding: 24px; }
 .dialog .box { background: var(--surface-hi); border-radius: 28px; padding: 24px; width: 100%; max-width: 400px; box-shadow: var(--shadow); animation: pop .2s var(--ease); }
 .dialog .box h3 { margin: 0 0 8px; font-size: 1.2rem; }
-.dialog .box .actions { display: flex; justify-content: flex-end; gap: 8px; margin-top: 20px; }
+.dialog .box .actions { display: flex; flex-wrap: wrap; justify-content: flex-end; gap: 8px; margin-top: 20px; }
 @keyframes pop { from { transform: scale(.94); opacity: 0; } to { transform: none; opacity: 1; } }
 .toast {
   position: fixed; z-index: 70; left: 16px; right: 16px; bottom: calc(var(--nav-h) + var(--safe-b) + 12px); margin: 0 auto; max-width: 560px;

@@ -300,7 +300,7 @@
       <div class="card"><label class="switch-row"><span class="body"><span class="t">שיתוף סטטיסטיקת שימוש</span><span class="s">מספר משמרות, ימי שימוש ותכונות פעילות, בלי פרטים מזהים (שם, אימייל או סכומים). רק מנהלי האפליקציה רואים אותה, כדי לדעת מה לשפר.</span></span><input type="checkbox" class="switch" data-share-stats ${root.Stats && root.Stats.enabled() ? 'checked' : ''}></label>
         ${u ? `<div class="kv" style="margin-top:6px"><span class="small">מזהה משתמש (למנהלים)</span><button class="btn text sm" data-copy-uid dir="ltr">${esc(u.uid.slice(0, 8))}… העתק</button></div>` : ''}</div>
       <button class="btn outlined block" data-signout>${icon('lock')} התנתק</button>
-      <div class="tiny muted" style="margin:6px 4px 16px">ההתנתקות מוחקת את הנתונים מהטלפון הזה בלבד. הם נשארים בחשבון וחוזרים בהתחברות הבאה.</div>
+      <div class="tiny muted" style="margin:6px 4px 16px">הנתונים נשארים בחשבון וחוזרים בהתחברות הבאה. מה שנשמר רק בטלפון נשאר בו מוסתר, וחוזר רק בהתחברות לאותו חשבון.</div>
       <div class="section-title" style="color:var(--bad)">${icon('trash', 's')} אזור מסוכן</div>
       <div class="card"><button class="btn danger block" data-delete-cloud>מחק את כל הנתונים מהחשבון</button>
         <div class="tiny muted" style="margin-top:8px">מוחק לצמיתות את הנתונים מהענן ומהטלפון, ואת החשבון באפליקציה. חשבון Google שלך, אם התחברת איתו, לא נפגע.</div></div>`;
@@ -321,8 +321,22 @@
     };
     if (q('[data-sync-now]')) q('[data-sync-now]').onclick = async () => { try { await Cloud.syncNow(); UI.toast('הסנכרון הופעל'); } catch (e) { UI.toast(Cloud.errorText(e)); } draw(); };
     if (q('[data-signout]')) q('[data-signout]').onclick = async () => {
-      if (!(await UI.confirm('להתנתק?', 'הנתונים יימחקו מהטלפון הזה ויישארו בחשבון שלך.', 'התנתק'))) return;
-      if (await Cloud.signOut()) location.reload();
+      // what only this phone holds (payslip files, their text, the AI key, the code lock) stays on it, hidden, for this
+      // account alone; on a shared phone it can go too. The question says which is which (it said everything stays in
+      // the account, and the payslip files were then deleted for good, 23 Nov 2026)
+      const local = await Store.phoneOnly().catch(() => ({ any: false }));
+      let removeLocal = false;
+      if (local.any) {
+        const v = await UI.dialog({
+          title: 'להתנתק?',
+          text: 'המשמרות, התלושים וההגדרות נשמרים בחשבון וחוזרים בהתחברות הבאה. מה שנשמר רק בטלפון הזה (קובצי התלושים, מפתח ה-\u2060API וקוד הנעילה) נשאר בו מוסתר, וחוזר רק בהתחברות לאותו חשבון. בטלפון משותף אפשר למחוק גם אותו.',
+          // (the removal first: when the three do not fit one row, it takes its own and "cancel" stays by "sign out")
+          buttons: [{ label: 'התנתק ומחק גם אותו', value: 'remove', cls: 'text danger-text' }, { label: 'ביטול', value: null }, { label: 'התנתק', value: 'keep', cls: '' }],
+        });
+        if (!v) return;
+        removeLocal = v === 'remove';
+      } else if (!(await UI.confirm('להתנתק?', 'הנתונים יימחקו מהטלפון הזה ויישארו בחשבון שלך.', 'התנתק'))) return;
+      if (await Cloud.signOut({ removeLocal })) location.reload();
     };
     if (q('[data-delete-cloud]')) q('[data-delete-cloud]').onclick = async () => {
       if (!(await UI.confirm('למחוק את החשבון ואת כל הנתונים?', 'כל המשמרות, התלושים וההגדרות יימחקו לצמיתות מהענן ומהטלפון, והחשבון באפליקציה יימחק. ייתכן ש-\u2060Google תבקש לאשר את החשבון שוב. מומלץ לגבות קודם.', 'מחק הכול', true))) return;

@@ -10,10 +10,12 @@
   const U = root.U;
 
   const DB_NAME = 'shiftpay';
-  const DB_VERSION = 2; // bump only to add object stores / indexes (2: ledger, the signed shift log)
+  const DB_VERSION = 3; // bump only to add object stores / indexes (2: ledger, the signed shift log; 3: parked)
   const SCHEMA_VERSION = 1; // bump when the shape of saved records changes (see MIGRATIONS)
-  const STORES = ['kv', 'employers', 'roles', 'shifts', 'entries', 'templates', 'dayRules', 'payslips', 'files', 'notifications', 'gaps', 'ledger'];
-  const LIST_STORES = STORES.filter((s) => s !== 'kv' && s !== 'files');
+  const STORES = ['kv', 'employers', 'roles', 'shifts', 'entries', 'templates', 'dayRules', 'payslips', 'files', 'notifications', 'gaps', 'ledger', 'parked'];
+  // parked: what only this phone held for an account that signed out (payslip files, their raw text, the AI key, the
+  // code lock), kept for that account alone until it signs in here again (see "parked" below)
+  const LIST_STORES = STORES.filter((s) => s !== 'kv' && s !== 'files' && s !== 'parked');
   // stores mirrored to the cloud (notifications are derived per device; files stay on the phone)
   const SYNC_STORES = ['employers', 'roles', 'shifts', 'entries', 'templates', 'dayRules', 'payslips', 'gaps', 'ledger'];
   // the signed shift log (core/ledger.js, app/shift-log.js) only grows: its records are never deleted or replaced,
@@ -900,10 +902,189 @@
     sweepSoon();
     emit({ type: 'restore', mode });
   }
+  /* ---------------- parked: an account's phone-only items while it is signed out ----------------
+   * Signing out empties the phone, and what the account holds comes back with the next sign-in. Some things never go
+   * to the account: the payslip files (a photo or PDF with a name, an ID number, a bank account), the raw text read
+   * from them, the Claude API key, the code lock and this phone's own photos. Signing out used to delete them for good
+   * (the user's 3 payslip files, 23 Nov 2026), while the question said everything stays in the account. Now they are
+   * parked here under the account's id, out of every screen, backup and sweep, and come back only when the SAME account
+   * signs in on this phone again (Cloud.connect). Another account never gets them: unpark reads only its own uid.
+   * When the account's key could be read (cloud.js vaultKey: a random key kept in the account itself, kv/vault), every
+   * parked item is encrypted with it (AES-GCM), so the phone alone holds only ciphertext and the key is only in the
+   * account; without a connection they are parked as they are, still under the uid. Nothing parked ever leaves the phone.
+   * Records: { id: uid + '/data' | uid + '/f/' + fileId, uid, at, enc, iv, b } (b: the base64 of the bytes). */
+  const PARK_META = ['skinPhoto', 'rolePhotos'];
+  const subtle = () => (root.crypto && root.crypto.subtle) || null;
+  function toB64(bytes) {
+    let s = '';
+    for (let i = 0; i < bytes.length; i += 0x8000) s += String.fromCharCode.apply(null, bytes.subarray(i, i + 0x8000));
+    return btoa(s);
+  }
+  function fromB64(b) {
+    const s = atob(b);
+    const out = new Uint8Array(s.length);
+    for (let i = 0; i < s.length; i++) out[i] = s.charCodeAt(i);
+    return out;
+  }
+  // one item as bytes: a 4-byte length, its JSON head, then the file's own bytes (if any)
+  function pack(head, body) {
+    const h = new TextEncoder().encode(JSON.stringify(head));
+    const b = body || new Uint8Array(0);
+    const out = new Uint8Array(4 + h.length + b.length);
+    new DataView(out.buffer).setUint32(0, h.length);
+    out.set(h, 4); out.set(b, 4 + h.length);
+    return out;
+  }
+  function unpack(bytes) {
+    const n = new DataView(bytes.buffer, bytes.byteOffset, bytes.byteLength).getUint32(0);
+    return { head: JSON.parse(new TextDecoder().decode(bytes.subarray(4, 4 + n))), body: bytes.subarray(4 + n) };
+  }
+  // (the record's id is bound into the encryption: an item copied under another id or account does not open)
+  async function seal(uid, id, bytes, key, at) {
+    const rec = { id: uid + id, uid, at, enc: false, iv: '', b: '' };
+    if (key && subtle()) {
+      const iv = root.crypto.getRandomValues(new Uint8Array(12));
+      rec.b = toB64(new Uint8Array(await subtle().encrypt({ name: 'AES-GCM', iv, additionalData: new TextEncoder().encode(rec.id) }, key, bytes)));
+      rec.iv = toB64(iv); rec.enc = true;
+    } else rec.b = toB64(bytes);
+    return rec;
+  }
+  async function unseal(rec, key) {
+    const bytes = fromB64(rec.b);
+    if (!rec.enc) return bytes;
+    return new Uint8Array(await subtle().decrypt({ name: 'AES-GCM', iv: fromB64(rec.iv), additionalData: new TextEncoder().encode(rec.id) }, key, bytes));
+  }
+  async function fileBytes(blob) {
+    if (blob && typeof blob.arrayBuffer === 'function') return { bytes: new Uint8Array(await blob.arrayBuffer()), str: false };
+    return { bytes: new TextEncoder().encode(String(blob == null ? '' : blob)), str: true };
+  }
+  /** What this phone holds that the account does not: { files, any } (the sign-out question says it). */
+  async function phoneOnly() {
+    const files = memoryOnly ? 0 : (await getAll('files')).length;
+    const st = S.settings || {};
+    const any = !!(files || (st.ai && st.ai.apiKey) || (st.lock && st.lock.enabled) || S.payslips.some((p) => p && p.text) || PARK_META.some((k) => S.meta[k] != null));
+    return { files, any };
+  }
+  /** Parks this phone's phone-only items for uid (key: the account's CryptoKey, or null). Returns how many items.
+   *  Throws when the phone could not keep them (storage full): the caller asks before anything is deleted. */
+  async function park(uid, key) {
+    if (memoryOnly || !uid) return 0;
+    const at = Date.now();
+    const defaults = root.Defaults.defaultSettings();
+    const settings = {};
+    for (const k of LOCAL_SETTINGS) if (S.settings[k] !== undefined && !U.same(S.settings[k], defaults[k])) settings[k] = clone(S.settings[k]);
+    const slips = {};
+    for (const p of S.payslips) {
+      if (!p || !safeId(p.id)) continue;
+      const o = {};
+      for (const f of ['text', 'fileId', 'fileName']) if (p[f]) o[f] = p[f];
+      if (Object.keys(o).length) slips[p.id] = o;
+    }
+    const meta = {};
+    for (const k of PARK_META) if (S.meta[k] != null) meta[k] = clone(S.meta[k]);
+    const recs = [];
+    if (Object.keys(settings).length || Object.keys(slips).length || Object.keys(meta).length) recs.push(await seal(uid, '/data', pack({ settings, slips, meta }), key, at));
+    for (const f of await getAll('files')) {
+      if (!f || !safeId(f.id)) continue;
+      const { bytes, str } = await fileBytes(f.blob);
+      recs.push(await seal(uid, '/f/' + f.id, pack({ id: f.id, name: f.name, type: f.type, at: f.at, str }, bytes), key, at));
+    }
+    if (!recs.length) return 0;
+    // one transaction, without run()'s fall-back to memory: all of them are kept, or (storage full) none, and the
+    // caller hears it before the phone is emptied
+    if (!db) db = await openDb();
+    const tx = db.transaction(['parked'], 'readwrite');
+    for (const r of recs) tx.objectStore('parked').put(r);
+    await done(tx);
+    return recs.length;
+  }
+  async function parkedOf(uid) {
+    if (memoryOnly || !uid) return [];
+    return (await getAll('parked')).filter((r) => r && r.uid === uid);
+  }
+  /** What is parked for uid: { n, enc } (enc: some of it needs the account's key). */
+  async function parked(uid) {
+    if (memoryOnly || !uid) return { n: 0, enc: false };
+    // (every opening asks: the ids first, so another account's parked files are never read into memory)
+    let keys = null;
+    await run(['parked'], 'readonly', (t) => { if (t) keys = t.objectStore('parked').getAllKeys(); });
+    if (!((keys && keys.result) || []).some((k) => String(k).startsWith(uid + '/'))) return { n: 0, enc: false };
+    const list = await parkedOf(uid);
+    return { n: list.length, enc: list.some((r) => r.enc) };
+  }
+  /** Removes what uid parked here ("also remove from this phone", the account deleted). */
+  async function dropParked(uid) {
+    const list = await parkedOf(uid);
+    if (list.length) await run(['parked'], 'readwrite', (t) => { if (t) for (const r of list) t.objectStore('parked').delete(r.id); });
+    return list.length;
+  }
+  /** Brings back what uid parked here (key: the account's CryptoKey; false: the account has no key, so encrypted items
+   *  can never be read and go). Only what the phone lacks is filled in: a setting made since stays. Returns the number
+   *  of files that came back, or -1 when encrypted items wait for the key (no connection: tried at the next opening). */
+  async function unpark(uid, key) {
+    const list = await parkedOf(uid);
+    if (!list.length) return 0;
+    if (list.some((r) => r.enc) && !key && key !== false) return -1;
+    const files = [];
+    let data = null;
+    for (const r of list) {
+      if (r.enc && !key) continue; // (the account's key is gone: these can never be read)
+      try {
+        const { head, body } = unpack(await unseal(r, key));
+        if (r.id === uid + '/data') data = head;
+        else if (safeId(head.id)) files.push({ id: head.id, blob: head.str ? new TextDecoder().decode(body) : new Blob([body], { type: head.type || '' }), name: String(head.name || '').slice(0, 120), type: head.type, at: head.at || Date.now() });
+      } catch (e) { console.warn('parked item unreadable', e); }
+    }
+    const slipsPut = [];
+    if (data) {
+      const defaults = root.Defaults.defaultSettings();
+      const back = {};
+      for (const k of LOCAL_SETTINGS) {
+        const v = data.settings && data.settings[k];
+        if (v === undefined) continue;
+        const cur = S.settings[k];
+        if (k === 'ai') { if (!(cur && cur.apiKey) && v.apiKey) back.ai = Object.assign({}, cur, v); }
+        else if (k === 'lock') { if (!(cur && cur.enabled)) back.lock = v; }
+        else if (cur === undefined || U.same(cur, defaults[k])) back[k] = v;
+      }
+      if (Object.keys(back).length) {
+        Object.assign(S.settings, back);
+        markSettings();
+        await rawKv('settings', S.settings); // (local-only settings: nothing goes to the account)
+        emit({ type: 'settings', keys: Object.keys(back) });
+      }
+      const metaBack = {};
+      for (const k of PARK_META) if (data.meta && data.meta[k] != null && S.meta[k] == null) metaBack[k] = data.meta[k];
+      if (Object.keys(metaBack).length) { Object.assign(S.meta, metaBack); await rawKv('meta', S.meta); }
+      // a payslip's own fields come back onto the account's copy of it (the same version: nothing to upload)
+      for (const p of S.payslips) {
+        const o = data.slips && data.slips[p.id];
+        if (!o) continue;
+        let changed = false;
+        for (const f of ['text', 'fileId', 'fileName']) if (o[f] && !p[f]) { p[f] = o[f]; changed = true; }
+        if (changed) slipsPut.push(p);
+      }
+    }
+    // the payslips that name the files and the files, together; then the parked copies go
+    for (const f of files) freshFiles.set(f.id, Date.now());
+    await run(['payslips', 'files', 'parked'], 'readwrite', (t) => {
+      if (!t) return;
+      for (const p of slipsPut) t.objectStore('payslips').put(p);
+      for (const f of files) t.objectStore('files').put(f);
+      for (const r of list) t.objectStore('parked').delete(r.id);
+    });
+    for (const f of files) freshFiles.delete(f.id);
+    if (slipsPut.length) emit({ type: 'data', remote: true, stores: ['payslips'] });
+    sweepSoon(); // a file whose payslip the account no longer has goes, as any other
+    return files.length;
+  }
+
   async function wipe() {
     // the phone no longer belongs to the account (signed out, deleted, another account): no reconnecting by itself
     try { localStorage.removeItem(HINT); } catch (e) { /* private mode */ }
-    await run(STORES, 'readwrite', (t) => { if (t) for (const s of STORES) t.objectStore(s).clear(); });
+    // (parked items stay: they belong to an account that is not here, and only it takes them back or removes them)
+    const clear = STORES.filter((s) => s !== 'parked');
+    await run(clear, 'readwrite', (t) => { if (t) for (const s of clear) t.objectStore(s).clear(); });
     S.settings = root.Defaults.defaultSettings();
     S.meta = {}; S.activeShift = null;
     for (const s of LIST_STORES) S[s] = [];
@@ -917,7 +1098,7 @@
 
   root.Store = {
     S, load, on, apply, isMemoryOnly: () => memoryOnly, accountHint, keepHint, put, del, undo: undoAny, canUndo, setSettings, setMeta, setActive, find, clone,
-    putFile, getFile, delFile, sweepFiles, exportBackup, importBackup, wipe, saveAll, SCHEMA_VERSION, DB_NAME, cleanIcon,
+    putFile, getFile, delFile, sweepFiles, phoneOnly, park, parked, unpark, dropParked, exportBackup, importBackup, wipe, saveAll, SCHEMA_VERSION, DB_NAME, cleanIcon,
     SYNC_STORES, APPEND_ONLY, LOCAL_SETTINGS, ACCOUNT_META, mergeMem, flushMem, sameRecord, applyRemote, markSynced, dirtyRecords, touchAll, forgetSyncState, applyRemoteSettings, applyRemoteActive,
   };
 })(typeof window !== 'undefined' ? window : globalThis);

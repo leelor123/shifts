@@ -118,7 +118,7 @@ T.test('a wipe (sign-out, account deleted, another account) turns every saved wo
   T.ok(/emit\(\{ type: 'restore' \}\);/.test(wipe), 'Store.wipe emits a restore with no mode');
   T.ok(/emit\(\{ type: 'restore', mode \}\);/.test(store), 'importBackup emits its mode');
   const cloud = read('src/app/cloud.js');
-  const shutdown = cloud.slice(cloud.indexOf('async function shutdown()'));
+  const shutdown = cloud.slice(cloud.indexOf('async function shutdown('));
   T.ok(/await Store\.wipe\(\);/.test(shutdown.slice(0, 400)), 'sign-out and account deletion end in Store.wipe');
   T.ok((cloud.match(/await Store\.wipe\(\);/g) || []).length >= 2, 'and another account on the phone too');
 });

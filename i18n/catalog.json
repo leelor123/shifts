@@ -274,6 +274,7 @@
    "app/views-leaderboard.js:431",
    "app/views-login.js:95",
    "app/views-login.js:119",
+   "app/views-login.js:334",
    "app/views-payslip.js:1213",
    "app/views-settings.js:394",
    "app/views-settings.js:971",
@@ -1682,28 +1683,43 @@
   "key": "יש שינויים שעוד לא עלו לענן",
   "kind": "lit",
   "where": [
-   "app/cloud.js:733"
+   "app/cloud.js:782"
   ]
  },
  {
   "key": "כנראה אין חיבור לאינטרנט. אם תתנתק עכשיו, השינויים האחרונים מהטלפון הזה יאבדו.",
   "kind": "lit",
   "where": [
-   "app/cloud.js:733"
+   "app/cloud.js:782"
   ]
  },
  {
   "key": "התנתק בכל זאת",
   "kind": "lit",
   "where": [
-   "app/cloud.js:733"
+   "app/cloud.js:782",
+   "app/cloud.js:792"
+  ]
+ },
+ {
+  "key": "אין מקום לשמור את הקבצים",
+  "kind": "lit",
+  "where": [
+   "app/cloud.js:792"
+  ]
+ },
+ {
+  "key": "אין מספיק מקום בטלפון כדי להשאיר בו את קובצי התלושים ואת שאר מה שנשמר רק בו. אם תתנתק עכשיו, הם יימחקו.",
+  "kind": "lit",
+  "where": [
+   "app/cloud.js:792"
   ]
  },
  {
   "key": "לא מחובר",
   "kind": "lit",
   "where": [
-   "app/cloud.js:799",
+   "app/cloud.js:860",
    "app/views-settings.js:134"
   ]
  },
@@ -1711,35 +1727,35 @@
   "key": "מסונכרן",
   "kind": "lit",
   "where": [
-   "app/cloud.js:800"
+   "app/cloud.js:861"
   ]
  },
  {
   "key": "מסנכרן…",
   "kind": "lit",
   "where": [
-   "app/cloud.js:801"
+   "app/cloud.js:862"
   ]
  },
  {
   "key": "אין חיבור. יסונכרן כשתחזור הרשת",
   "kind": "lit",
   "where": [
-   "app/cloud.js:802"
+   "app/cloud.js:863"
   ]
  },
  {
   "key": "שגיאת סנכרון: ",
   "kind": "lit",
   "where": [
-   "app/cloud.js:803"
+   "app/cloud.js:864"
   ]
  },
  {
   "key": "מחובר",
   "kind": "lit",
   "where": [
-   "app/cloud.js:804"
+   "app/cloud.js:865"
   ]
  },
  {
@@ -5997,35 +6013,35 @@
   "key": "מסד הנתונים חסום. צריך לסגור לשוניות אחרות של האפליקציה",
   "kind": "lit",
   "where": [
-   "app/store.js:64"
+   "app/store.js:66"
   ]
  },
  {
   "key": "הקובץ אינו גיבוי של האפליקציה",
   "kind": "lit",
   "where": [
-   "app/store.js:829"
+   "app/store.js:831"
   ]
  },
  {
   "key": "הגיבוי נוצר בגרסה חדשה יותר של האפליקציה. עדכן קודם את האפליקציה.",
   "kind": "lit",
   "where": [
-   "app/store.js:830"
+   "app/store.js:832"
   ]
  },
  {
   "key": "הקובץ פגום ואי אפשר לשחזר ממנו. הנתונים בטלפון לא השתנו.",
   "kind": "lit",
   "where": [
-   "app/store.js:844"
+   "app/store.js:846"
   ]
  },
  {
   "key": "העבודה שלי",
   "kind": "lit",
   "where": [
-   "app/store.js:878",
+   "app/store.js:880",
    "app/views-onboarding.js:147",
    "app/views-onboarding.js:148",
    "app/views-onboarding.js:153",
@@ -6832,7 +6848,7 @@
   "kind": "lit",
   "where": [
    "app/views-admin.js:238",
-   "app/views-login.js:330",
+   "app/views-login.js:344",
    "app/views-payslip.js:1453",
    "app/views-settings.js:394",
    "app/views-settings.js:398",
@@ -11500,7 +11516,7 @@
   "kind": "lit",
   "where": [
    "app/views-login.js:21",
-   "app/views-login.js:330",
+   "app/views-login.js:344",
    "app/views-settings.js:930",
    "app/views-settings.js:996"
   ]
@@ -11886,7 +11902,7 @@
   ]
  },
  {
-  "key": "<div class=\"card\" style=\"display:flex;gap:14px;align-items:center\">\n        {0}\n        <div style=\"min-width:0\"><div class=\"bold\">{1}</div><div class=\"small muted\" style=\"direction:ltr;text-align:right\">{2}</div></div></div>\n      <div class=\"card\"><div class=\"kv\"><span>מצב</span><b>{3}</b></div>\n        <div class=\"kv\"><span>שינויים שממתינים להעלאה</span><b>{4}</b></div>\n        <div class=\"btn-row\" style=\"margin-top:10px\"><button class=\"btn tonal\" data-sync-now>{5} סנכרן עכשיו</button></div></div>\n      <div class=\"card small\"><b>מה נשמר בענן:</b> משמרות, חופשה ומחלה, תוספות, תפקידים ותעריפים, הגדרות, תבניות, תלושים (הנתונים שהוזנו) ופערים פתוחים.<br><b>מה נשאר רק בטלפון:</b> מפתח ה-⁠API של Claude, קוד הנעילה, קובצי התלושים עצמם (תמונה/PDF) והטקסט הגולמי שזוהה מהם.</div>\n      <div class=\"card\"><label class=\"switch-row\"><span class=\"body\"><span class=\"t\">שיתוף סטטיסטיקת שימוש</span><span class=\"s\">מספר משמרות, ימי שימוש ותכונות פעילות, בלי פרטים מזהים (שם, אימייל או סכומים). רק מנהלי האפליקציה רואים אותה, כדי לדעת מה לשפר.</span></span><input type=\"checkbox\" class=\"switch\" data-share-stats {6}></label>\n        {7}</div>\n      <button class=\"btn outlined block\" data-signout>{8} התנתק</button>\n      <div class=\"tiny muted\" style=\"margin:6px 4px 16px\">ההתנתקות מוחקת את הנתונים מהטלפון הזה בלבד. הם נשארים בחשבון וחוזרים בהתחברות הבאה.</div>\n      <div class=\"section-title\" style=\"color:var(--bad)\">{9} אזור מסוכן</div>\n      <div class=\"card\"><button class=\"btn danger block\" data-delete-cloud>מחק את כל הנתונים מהחשבון</button>\n        <div class=\"tiny muted\" style=\"margin-top:8px\">מוחק לצמיתות את הנתונים מהענן ומהטלפון, ואת החשבון באפליקציה. חשבון Google שלך, אם התחברת איתו, לא נפגע.</div></div>",
+  "key": "<div class=\"card\" style=\"display:flex;gap:14px;align-items:center\">\n        {0}\n        <div style=\"min-width:0\"><div class=\"bold\">{1}</div><div class=\"small muted\" style=\"direction:ltr;text-align:right\">{2}</div></div></div>\n      <div class=\"card\"><div class=\"kv\"><span>מצב</span><b>{3}</b></div>\n        <div class=\"kv\"><span>שינויים שממתינים להעלאה</span><b>{4}</b></div>\n        <div class=\"btn-row\" style=\"margin-top:10px\"><button class=\"btn tonal\" data-sync-now>{5} סנכרן עכשיו</button></div></div>\n      <div class=\"card small\"><b>מה נשמר בענן:</b> משמרות, חופשה ומחלה, תוספות, תפקידים ותעריפים, הגדרות, תבניות, תלושים (הנתונים שהוזנו) ופערים פתוחים.<br><b>מה נשאר רק בטלפון:</b> מפתח ה-⁠API של Claude, קוד הנעילה, קובצי התלושים עצמם (תמונה/PDF) והטקסט הגולמי שזוהה מהם.</div>\n      <div class=\"card\"><label class=\"switch-row\"><span class=\"body\"><span class=\"t\">שיתוף סטטיסטיקת שימוש</span><span class=\"s\">מספר משמרות, ימי שימוש ותכונות פעילות, בלי פרטים מזהים (שם, אימייל או סכומים). רק מנהלי האפליקציה רואים אותה, כדי לדעת מה לשפר.</span></span><input type=\"checkbox\" class=\"switch\" data-share-stats {6}></label>\n        {7}</div>\n      <button class=\"btn outlined block\" data-signout>{8} התנתק</button>\n      <div class=\"tiny muted\" style=\"margin:6px 4px 16px\">הנתונים נשארים בחשבון וחוזרים בהתחברות הבאה. מה שנשמר רק בטלפון נשאר בו מוסתר, וחוזר רק בהתחברות לאותו חשבון.</div>\n      <div class=\"section-title\" style=\"color:var(--bad)\">{9} אזור מסוכן</div>\n      <div class=\"card\"><button class=\"btn danger block\" data-delete-cloud>מחק את כל הנתונים מהחשבון</button>\n        <div class=\"tiny muted\" style=\"margin-top:8px\">מוחק לצמיתות את הנתונים מהענן ומהטלפון, ואת החשבון באפליקציה. חשבון Google שלך, אם התחברת איתו, לא נפגע.</div></div>",
   "kind": "tpl",
   "where": [
    "app/views-login.js:293"
@@ -11924,42 +11940,58 @@
   "key": "להתנתק?",
   "kind": "lit",
   "where": [
-   "app/views-login.js:324"
+   "app/views-login.js:331",
+   "app/views-login.js:338"
   ]
  },
  {
-  "key": "הנתונים יימחקו מהטלפון הזה ויישארו בחשבון שלך.",
+  "key": "המשמרות, התלושים וההגדרות נשמרים בחשבון וחוזרים בהתחברות הבאה. מה שנשמר רק בטלפון הזה (קובצי התלושים, מפתח ה-⁠API וקוד הנעילה) נשאר בו מוסתר, וחוזר רק בהתחברות לאותו חשבון. בטלפון משותף אפשר למחוק גם אותו.",
   "kind": "lit",
   "where": [
-   "app/views-login.js:324"
+   "app/views-login.js:332"
+  ]
+ },
+ {
+  "key": "התנתק ומחק גם אותו",
+  "kind": "lit",
+  "where": [
+   "app/views-login.js:334"
   ]
  },
  {
   "key": "התנתק",
   "kind": "lit",
   "where": [
-   "app/views-login.js:324"
+   "app/views-login.js:334",
+   "app/views-login.js:338"
+  ]
+ },
+ {
+  "key": "הנתונים יימחקו מהטלפון הזה ויישארו בחשבון שלך.",
+  "kind": "lit",
+  "where": [
+   "app/views-login.js:338"
   ]
  },
  {
   "key": "למחוק את החשבון ואת כל הנתונים?",
   "kind": "lit",
   "where": [
-   "app/views-login.js:328"
+   "app/views-login.js:342"
   ]
  },
  {
   "key": "כל המשמרות, התלושים וההגדרות יימחקו לצמיתות מהענן ומהטלפון, והחשבון באפליקציה יימחק. ייתכן ש-⁠Google תבקש לאשר את החשבון שוב. מומלץ לגבות קודם.",
   "kind": "lit",
   "where": [
-   "app/views-login.js:328"
+   "app/views-login.js:342"
   ]
  },
  {
   "key": "מחק הכול",
   "kind": "lit",
   "where": [
-   "app/views-login.js:328",
+   "app/views-login.js:342",
    "app/views-settings.js:994"
   ]
  },
@@ -11967,7 +11999,7 @@
   "key": "אישור סופי",
   "kind": "lit",
   "where": [
-   "app/views-login.js:329",
+   "app/views-login.js:343",
    "app/views-settings.js:995"
   ]
  },
@@ -11975,7 +12007,7 @@
   "key": "הקלד \"מחק\" כדי לאשר",
   "kind": "lit",
   "where": [
-   "app/views-login.js:329",
+   "app/views-login.js:343",
    "app/views-settings.js:995"
   ]
  },
