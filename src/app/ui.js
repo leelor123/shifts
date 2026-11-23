@@ -319,8 +319,36 @@
     sh.querySelector('.sh-head').addEventListener('touchstart', (e) => { y0 = e.touches[0].clientY; }, { passive: true });
     head.addEventListener('touchstart', (e) => { y0 = e.touches[0].clientY; }, { passive: true });
     sh.addEventListener('touchend', (e) => { if (y0 != null && e.changedTouches[0].clientY - y0 > 80) closeTop(); y0 = null; });
+    if (opts.live) liveSheet(entry);
     if (opts.onMount) opts.onMount(sh, entry);
     return entry;
+  }
+  /* A sheet that shows saved data (opts.live: () => the body's html, or null to leave it) is drawn again on every
+   * change of the data while it is open: an edit, a delete or an undo in a sheet above it, a sync from another phone.
+   * It showed a deleted shift and the old day total under the toast until it was closed (the day sheet, user report,
+   * 23 Nov 2026). Only what changed is touched (Dom.redraw keeps every row that stayed, so nothing enters again), and
+   * a sheet whose height changes glides to the new height instead of jumping. A sheet already on its way out is left. */
+  function liveSheet(entry) {
+    const St = root.Store;
+    if (!St || !St.on) return;
+    const sh = entry.sh;
+    entry.offLive = St.on((ev) => {
+      // 'mem' remembers a "seen"; 'active' is the running timer: neither changes what a sheet lists
+      if (!ev || ev.type === 'mem' || ev.type === 'active') return;
+      if (entry.closed || entry.leaving || !sh.isConnected) return;
+      const body = sh.querySelector('.sh-body');
+      if (!body || !root.Dom) return;
+      let html;
+      try { html = entry.opts.live(); } catch (e) { console.error('sheet redraw', e); return; }
+      if (html == null) return;
+      const h0 = sh.offsetHeight; // where it stands now (mid-glide too)
+      if (entry.glide) { entry.glide.cancel(); entry.glide = null; }
+      root.Dom.redraw(body, html);
+      const h1 = sh.offsetHeight;
+      if (Math.abs(h1 - h0) < 1 || !sh.animate || !sh.classList.contains('show')) return;
+      if (root.matchMedia && root.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+      entry.glide = sh.animate([{ height: h0 + 'px' }, { height: h1 + 'px' }], { duration: 260, easing: 'cubic-bezier(.32, .72, 0, 1)' });
+    });
   }
   /*
    * Dialogs and pickers are layers too: each owns a history entry like a sheet, so the back
@@ -352,6 +380,7 @@
   function removeSheet(entry) {
     if (entry.closed) return;
     unwatch(entry);
+    if (entry.offLive) { entry.offLive(); entry.offLive = null; }
     if (entry.layer) {
       entry.closed = true;
       const i = sheets.indexOf(entry);

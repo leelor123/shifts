@@ -305,14 +305,8 @@
   App.actions['settings-cat'] = (el) => {
     const c = CATS.find((x) => x.id === el.dataset.cat);
     if (!c) return;
-    let off = null;
-    const list = () => c.keys.map(sectionRow).join('');
-    UI.openSheet({
-      title: c.title, cls: 'set-cat-sheet',
-      body: `<div class="set-cat-head">${UI.tile(c.icon, c.tint)}<div class="small muted">${esc(c.sub())}</div></div><div class="list set-list" id="set-cat-list">${list()}</div>`,
-      onMount: (sh) => { off = Store.on(() => { const l = sh.querySelector('#set-cat-list'); if (l) root.Dom.patch(l, list()); }); },
-      onClose: () => { if (off) off(); },
-    });
+    const body = () => `<div class="set-cat-head">${UI.tile(c.icon, c.tint)}<div class="small muted">${esc(c.sub())}</div></div><div class="list set-list" id="set-cat-list">${c.keys.map(sectionRow).join('')}</div>`;
+    UI.openSheet({ title: c.title, cls: 'set-cat-sheet', body: body(), live: body });
   };
   App.actions['settings-legal'] = () => UI.openSheet({
     title: 'מידע משפטי',

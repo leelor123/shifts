@@ -176,3 +176,35 @@ T.test('the glue span keeps an amount and its brackets on one line', () => {
   T.ok(rule && /display: inline-block/.test(rule[1]), '.money-phrase is an inline-block');
   T.ok(rule && !/nowrap/.test(rule[1]), '.money-phrase is not nowrap (a phrase wider than the line wraps, it is never cut)');
 });
+
+T.section('sheets that list saved data stay true');
+// the day sheet showed a deleted shift and the old day total under the toast until it was closed (user report,
+// 23 Nov 2026): a sheet that lists shifts or entries is drawn again (UI.openSheet live) on every change while open
+T.test('UI.openSheet redraws a live sheet on a data change, by Dom.redraw, and stops listening when it closes', () => {
+  const ui = read('app/ui.js');
+  T.ok(/if \(opts\.live\) liveSheet\(entry\)/.test(ui), 'openSheet starts liveSheet for opts.live');
+  const fn = ui.slice(ui.indexOf('function liveSheet'), ui.indexOf('function pushLayer'));
+  T.ok(/root\.Dom\.redraw\(body, html\)/.test(fn), 'the body is patched, not replaced');
+  T.ok(/entry\.closed \|\| entry\.leaving/.test(fn), 'a sheet on its way out is left as it is');
+  T.ok(/\.animate\(\[\{ height: h0/.test(fn), 'a new height is reached by a glide, not a jump');
+  T.ok(/if \(entry\.offLive\) \{ entry\.offLive\(\)/.test(ui.slice(ui.indexOf('function removeSheet'))), 'removeSheet unsubscribes');
+});
+T.test('every sheet that lists shifts or entries is live', () => {
+  let seen = 0;
+  for (const f of appFiles) {
+    const src = read(f);
+    for (let i = src.indexOf('UI.openSheet({'); i >= 0; i = src.indexOf('UI.openSheet({', i + 1)) {
+      // the sheet's own options up to its onMount, and the body function they draw with (body: body())
+      const opts = src.slice(i, i + 8000).split('onMount')[0];
+      const named = /body: (\w+)\(\)/.exec(opts);
+      const def = named ? src.lastIndexOf(`const ${named[1]} = `, i) : -1;
+      if (!/App\.(shiftItem|entryItem)\b/.test(opts + (def >= 0 ? src.slice(def, i) : ''))) continue;
+      seen++;
+      T.ok(/\blive: /.test(opts), `${f}: the sheet on line ${src.slice(0, i).split('\n').length} lists shifts or entries but is not live`);
+    }
+  }
+  T.ok(seen >= 1, 'the day sheet is found');
+  const shift = read('app/views-shift.js');
+  T.ok(/body: body\(\),\s*live: body,/.test(shift.slice(shift.indexOf('App.sheetsApi.daySheet'))), 'the day sheet is live');
+  T.ok(/body: body\(\),\s*live: body,/.test(shift.slice(shift.indexOf('App.sheetsApi.shiftDetail'), shift.indexOf('App.weeklyCopies'))), 'the shift detail is live');
+});
