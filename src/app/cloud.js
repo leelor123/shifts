@@ -455,7 +455,8 @@
         setStatus('idle');
         throw Object.assign(root.U.oops(`החיבור בוטל. צריך להתחבר עם ${prev} כדי שהשינויים יעלו לחשבון שלו.`), { code: 'app/switch-cancelled' });
       }
-      // what only this phone held for the previous account waits for it here (unencrypted: its key is in its account)
+      // what only this phone held for the previous account waits for it here (unencrypted: its key is in its account;
+      // its secrets, the AI key and the lock code, are dropped rather than kept readable: Store.park)
       try { await Store.park(S.meta.cloudUid, null); } catch (e) { console.warn('park', e); }
       await Store.wipe();
     }

@@ -162,7 +162,8 @@
 
   /* ---------------- what's new (once per big update, for people who already used the app) ---------------- */
   const WHATS_NEW = {
-    id: '1.44.1',
+    id: '1.44.2',
+    // 1.44.2 (found on the user's phone) brings fixes only: whoever saw 1.44.0's sheet is not shown it again.
     // 1.44.1 (hours-report photos) brings fixes only: whoever saw 1.44.0's sheet is not shown it again.
     // 1.44.0: the period so far against the one before by the same day, under the big number (the user, 23 Nov 2026).
     // Google sign-in in the Android app opens Android's own account picker. A sign-in happens once, so it opens
@@ -171,7 +172,7 @@
     // 1.42.1 (the coin's spoken lines) brings fixes only: whoever saw 1.42.0's sheet is not shown it again.
     // (1.40.0's items, overtime by the law and the rest, stay in the full list of updates.)
     // 1.43.0: the daily message (the user, 21 Nov 2026); everyone gets it, with where to switch it off.
-    seen: ['1.44.0'],
+    seen: ['1.44.0', '1.44.1'],
     // true only when the items hold a real feature: a release of fixes alone opens no sheet (the user, 6 Nov 2026)
     features: true,
     items: [
@@ -212,6 +213,7 @@
   /* ---------------- every update (settings › about › all the updates) ---------------- */
   // newest first: [version, the day it went out, what changed — said to the user, not to a developer]
   const CHANGELOG = [
+    ['1.44.2', '2026-11-23', 'האפליקציה נפתחת מהר יותר אחרי סגירה ובלי הבהוב לבן. הדוחות משווים את החודש עד היום לאותם ימים בחודש הקודם. חלון היום בלוח השנה מתעדכן מיד אחרי מחיקה או עריכה. התנתקות לא מוחקת יותר את קובצי התלושים מהטלפון. ולכפתור התחלת משמרת יש עיצוב חדש.'],
     ['1.44.1', '2026-11-23', 'דוח שעות מתמונה נקרא נכון גם כשבתמונה נמחקה ספרה משעת היציאה, וגם כשהשעה כתובה עם AM או PM.'],
     ['1.44.0', '2026-11-23', 'מתחת לסכום בכרטיס הראשי רואים כמה יותר או פחות הרווחת לעומת אותו יום בחודש שעבר. באפליקציה לאנדרואיד, ההתחברות עם Google פותחת את חלון בחירת החשבון של הטלפון, בלי מעבר לדפדפן. בדיקת התלוש משתמשת בשכר המינימום הנכון של אפריל 2023 עד מרץ 2024, והודעות רבות כתובות עכשיו בלשון שמתאימה לכולם.'],
     ['1.43.0', '2026-11-21', 'פעם ביום, ביום שאין בו התראה אחרת, שעתי שולחת הודעה קצרה: המשמרת של מחר, איך תקופת השכר מתקדמת או עובדה על זכות. בשבת ובחג ההודעה מחכה לערב. בהגדרות › התראות אפשר לבחור שעה או לכבות אותה.'],

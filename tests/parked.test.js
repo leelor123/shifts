@@ -168,6 +168,10 @@ T.atest('offline at sign-out: parked without the key, still for the same account
   P = await phone(be, idb);
   await P.Cloud.connect(A); await wait(60);
   T.eq(await files(P.Store), 'pixels-1,pixels-2,pixels-3', 'A gets them back');
+  // secrets are never parked readable: without the key, the AI key and the lock code are dropped (security review)
+  const plain = rows.map((r) => Buffer.from(r.b, 'base64').toString('latin1')).join('');
+  T.ok(!plain.includes('sk-ant-secret') && !/"lock"/.test(plain), 'no AI key or lock code among the unencrypted parked items');
+  T.eq(P.S.settings.ai.apiKey, '', 'so the AI key does not come back after an offline sign-out');
 });
 
 T.atest('the phone too full to keep them: the person is asked, and "cancel" signs nothing out', async () => {

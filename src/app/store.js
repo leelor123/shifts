@@ -26,6 +26,7 @@
   // (android/widgets/java/WorkGeo.java) and the page never stores it; the name is kept here so that, if any version
   // ever puts it in the settings, it still never syncs (tests/sync.test.js)
   const LOCAL_SETTINGS = ['ai', 'lock', 'backup', 'workGeo'];
+  const SECRET_SETTINGS = ['ai', 'lock']; // parked only encrypted (park)
 
   /* ---------------- migrations ----------------
    * MIGRATIONS[n] upgrades data from schema n-1 to n. They run on load
@@ -972,7 +973,12 @@
     const at = Date.now();
     const defaults = root.Defaults.defaultSettings();
     const settings = {};
-    for (const k of LOCAL_SETTINGS) if (S.settings[k] !== undefined && !U.same(S.settings[k], defaults[k])) settings[k] = clone(S.settings[k]);
+    // secrets (the AI key, the lock code) are parked only encrypted: without the account's key (offline, or another
+    // account signing in over this one) they are dropped, never left readable on the phone
+    for (const k of LOCAL_SETTINGS) {
+      if (!key && SECRET_SETTINGS.includes(k)) continue;
+      if (S.settings[k] !== undefined && !U.same(S.settings[k], defaults[k])) settings[k] = clone(S.settings[k]);
+    }
     const slips = {};
     for (const p of S.payslips) {
       if (!p || !safeId(p.id)) continue;
