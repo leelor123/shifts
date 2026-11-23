@@ -9,7 +9,7 @@
  * ============================================================ */
 :root {
   --gold: #e9c987; --gold-ink: #8a6a23; --gold-line: rgba(233, 201, 135, .45);
-  --go: #0b6b49;
+  --go: #0b6b49; --go-press: #08573b;
   /* one family: Rubik for headings, numbers and labels (Fredoka stays only inside the games' canvases) */
   --display: var(--font);
   /* calm motion: a strong ease-out instead of the overshoot (impeccable: bounce reads dated; Emil: ease-out) */
@@ -71,8 +71,13 @@ h1, h2, .home-top h1, .wizard h1, .sheet .sh-head h2 { font-family: var(--font);
 .home-hero .hh-stats > span + span { border-inline-start: 1px solid rgba(255, 255, 255, .12); }
 .home-hero .hh-stats b { font-family: var(--font); font-variant-numeric: tabular-nums; }
 
-/* the one daily action: solid green (the running glint is gone: impeccable marquee) */
-.home-action .btn.start { background: var(--go); box-shadow: none; }
+/* the one daily action: solid green (the running glint is gone: impeccable marquee; the breathing halo too, 23 Nov
+   2026: DESIGN.md has no coloured glows or drifting halos). A 1px light on the top edge gives the key its body, the
+   play mark is a filled green triangle on a white disc (the media symbol, never mirrored; nudged 0.5px toward its
+   point, where its weight sits), the label is semi-bold. Pressed: 0.97 and a deeper green at once, released in 160ms. */
+.home-action .btn.start { background: var(--go); box-shadow: inset 0 1px 0 rgba(255, 255, 255, .16); gap: 12px; padding-inline: 20px; font-weight: 600; letter-spacing: 0; text-wrap: balance; }
+.home-action .btn.start:active { background: var(--go-press); filter: none; }
+.home-action .btn.start svg { box-sizing: border-box; width: 32px; height: 32px; padding: 7px 6.5px 7px 7.5px; border-radius: 50%; background: #fff; color: var(--go); fill: currentColor; stroke-width: 1.5; }
 /* the month's summary: ink with a gold title and a drawn star */
 .recap-card { background: linear-gradient(120deg, hsl(var(--h) var(--s) 20%), hsl(var(--h) var(--s) 26%)); box-shadow: none; }
 .recap-card .rc-t b { font-family: var(--font); color: var(--gold); }

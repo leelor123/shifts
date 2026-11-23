@@ -1358,7 +1358,7 @@
  "חזור מהפסקה": "ከእረፍት ተመልሻለሁ",
  "הפסקה": "እረፍት",
  "<button class=\"icon-btn tonal lg\" data-act=\"timer-switch\" aria-label=\"החלף תפקיד\">{0}</button>": "<button class=\"icon-btn tonal lg\" data-act=\"timer-switch\" aria-label=\"የሥራ መደብ ቀይር\">{0}</button>",
- "<div class=\"home-action{0}\">\n      <span class=\"start-halo\" aria-hidden=\"true\" style=\"{1}\"></span>\n      <button class=\"btn big start\" style=\"{2}\" data-act=\"timer-start\" data-role=\"{3}\">{4} התחל משמרת</button>\n      {5}\n    </div>": "<div class=\"home-action{0}\">\n      <span class=\"start-halo\" aria-hidden=\"true\" style=\"{1}\"></span>\n      <button class=\"btn big start\" style=\"{2}\" data-act=\"timer-start\" data-role=\"{3}\">{4} ፈረቃ ጀምር</button>\n      {5}\n    </div>",
+ "<div class=\"home-action{0}\">\n      <button class=\"btn big start\" data-act=\"timer-start\" data-role=\"{1}\">{2} התחל משמרת</button>\n      {3}\n    </div>": "<div class=\"home-action{0}\">\n      <button class=\"btn big start\" data-act=\"timer-start\" data-role=\"{1}\">{2} ፈረቃ ጀምር</button>\n      {3}\n    </div>",
  "<button class=\"role-chip\" data-act=\"choose-role\" aria-label=\"בחר תפקיד\">{0}<span class=\"rc-n\">{1}</span><span class=\"chev\">{2}</span></button>": "<button class=\"role-chip\" data-act=\"choose-role\" aria-label=\"የሥራ መደብ ይምረጡ\">{0}<span class=\"rc-n\">{1}</span><span class=\"chev\">{2}</span></button>",
  "על {0} מגיעים לך <span class=\"money-glue\">כ-<b>{1}</b></span> {2}<span class=\"money-glue\">({3} ברוטו)</span>.": "ለ{0} ፣ በግምት የሚገባዎት <span class=\"money-glue\"><b>{1}</b></span> {2}<span class=\"money-glue\">({3} ጠቅላላ)</span>።",
  "נטו ": "የተጣራ ",

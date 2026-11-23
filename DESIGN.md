@@ -40,7 +40,8 @@ The gold hairline dial on the pay card (`.hh-dial`): ring, ticks and second hand
 
 ## Components
 
-Tab bar: one frosted material (`color-mix` of the ground + blur), ink pill for the current tab, the add button ink
+Start-shift button: solid go-green, a 1px light on its top edge, a filled green play mark on a white disc, a
+semi-bold label; it stands still (no halo) and presses to 0.97 with a deeper green. Tab bar: one frosted material (`color-mix` of the ground + blur), ink pill for the current tab, the add button ink
 with a gold plus. Shortcut tiles: ink icon on a soft ink tint; two by two when the row is under 18rem. Notices: one
 quiet row each. Icons: drawn SVG (ui.js), never emoji.
 
