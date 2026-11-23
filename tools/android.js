@@ -289,7 +289,26 @@ ${WORK_GEOFENCE ? `                // this app can suggest a shift at the workpl
         }
         return null;
     }
+
+    // Shaati: Chrome 152+ (CustomTabsConnection.receiveFile, crrev 8031565) takes the splash image only when the
+    // calling app holds a recorded grant on its URI. Android records none for the provider's own app on a plain read
+    // grant (the owner can read it anyway), so the transfer failed ("Failed to transfer splash image."), Chrome opened
+    // its opaque tab and a white screen stood before the page's first paint (the user's phone, 23 Nov 2026). A
+    // persistable grant to ourselves is recorded. The same fix as android-browser-helper PR #648 (merged 23 Nov 2026,
+    // not in 2.7.4): drop this once a release that has it is in build.gradle.
+    private void grantSplashToSelf() {
+        try {
+            java.io.File file = new java.io.File(new java.io.File(getFilesDir(), "twa_splash"), "splash_image.png");
+            android.net.Uri uri = androidx.core.content.FileProvider.getUriForFile(this, getString(R.string.providerAuthority), file);
+            grantUriPermission(getPackageName(), uri, android.content.Intent.FLAG_GRANT_READ_URI_PERMISSION
+                    | android.content.Intent.FLAG_GRANT_PERSISTABLE_URI_PERMISSION);
+        } catch (RuntimeException e) {
+            android.util.Log.w("ShaatiSplash", "self-grant failed", e);
+        }
+    }
 `);
+  need('    protected void onCreate(Bundle savedInstanceState) {\n');
+  src = src.replace('    protected void onCreate(Bundle savedInstanceState) {\n', '    protected void onCreate(Bundle savedInstanceState) {\n        grantSplashToSelf(); // before super.onCreate, which starts the splash transfer\n');
   src = src.replace('        super.onCreate(savedInstanceState);\n', `        super.onCreate(savedInstanceState);
         if (mAskNotifications && !isFinishing()) {
             getSharedPreferences(PREFS, MODE_PRIVATE).edit().putBoolean(ASKED, true).apply();

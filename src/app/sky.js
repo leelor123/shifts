@@ -292,7 +292,13 @@
       for (let i = 0; i < 3; i++) g.appendChild(el('ellipse', { class: 'sk-leaf', cx: (r() * W).toFixed(1), cy: -10, rx: 3, ry: 1.6, fill: ['#d9822b', '#c4562d', '#e0a43a'][i], style: `--d:${(-r() * 14).toFixed(1)}s;--t:${(10 + r() * 6).toFixed(1)}s;--x:${(-30 - r() * 40).toFixed(0)}px` }));
       const top = drawing(); top.appendChild(g); host.appendChild(top);
     }
-    return { phase, season, weather, kind, top: sky[0] };
+    // the colour of the first row that is actually seen: the drawing is at least H0 tall and anchored at its bottom
+    // (xMidYMax slice), so a shorter box crops its top and the gradient's first stop is never on screen. The status bar
+    // took that stop and sat navy over a mauve sky (the user's phone, 23 Nov 2026).
+    const bw = o.width || W, bh = o.height || H, k = Math.max(bw / W, bh / H);
+    const t = Math.min(1, Math.max(0, (H - bh / k) / H));
+    const top = t <= .58 ? mix(sky[0], sky[1], t / .58) : mix(sky[1], sky[2], (t - .58) / .42);
+    return { phase, season, weather, kind, top };
   }
 
   // MET Norway's symbol codes (clearsky_day, fair_night, lightrainshowersandthunder_day, heavysleet...) to the scene's

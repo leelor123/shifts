@@ -126,9 +126,22 @@
     if (!meta) return;
     const st = S.settings || {};
     const dark = st.theme === 'dark' || (st.theme !== 'light' && matchMedia('(prefers-color-scheme: dark)').matches);
-    const c = document.getElementById('intro') ? '#0d2b6b' : App.tab === 'home' && !App.blocking && App.skyTop && App.skyInView !== false ? App.skyTop : dark ? '#0e1118' : '#f6f4ee';
+    let c = document.getElementById('intro') ? '#0d2b6b' : App.tab === 'home' && !App.blocking && App.skyTop && App.skyInView !== false ? App.skyTop : dark ? '#0e1118' : '#f6f4ee';
+    // a sheet or dialog dims the page under it: the bar is dimmed the same way, or it stood bright over the dark
+    // (the user's phone, 23 Nov 2026)
+    // (each open layer dims it once more: a confirm over a sheet is darker still)
+    for (const bd of document.querySelectorAll('.backdrop.show')) {
+      const m = /rgba?\(([\d.]+),\s*([\d.]+),\s*([\d.]+)(?:,\s*([\d.]+))?/.exec(getComputedStyle(bd).backgroundColor);
+      if (m && /^#[0-9a-f]{6}$/i.test(c)) {
+        const a = m[4] == null ? 1 : +m[4];
+        c = '#' + [1, 3, 5].map((i, k) => Math.round(parseInt(c.slice(i, i + 2), 16) * (1 - a) + +m[k + 1] * a).toString(16).padStart(2, '0')).join('');
+      }
+    }
     if (meta.content !== c) meta.content = c;
   };
+  // the bar follows every sheet and dialog as its dimmed backdrop comes and goes
+  new MutationObserver((ms) => { if (ms.some((m) => m.target.classList && m.target.classList.contains('backdrop'))) App.statusBar(); })
+    .observe(document.body, { subtree: true, attributes: true, attributeFilter: ['class'] });
   matchMedia('(prefers-color-scheme: dark)').addEventListener('change', () => App.applyTheme());
 
   /* ---------------- navigation ---------------- */

@@ -38,7 +38,10 @@
   const CALM_MS = 450; // the first screen sits under the show at least this long
   const SKIP_CALM_MS = 250; // ... or this long after a tap to skip
   // the short splash (no show to cover the first screen's last changes, like the pay card's forecast): a little longer
-  const STILL_CALM_MS = 700;
+  const STILL_CALM_MS = 700; // the most it waits for the screen under it to stop changing
+  const STILL_MIN_MS = 250; // ... and the least, after the first draw
+  const QUIET_MS = 200; // still for this long: nothing more is coming
+  let lastChange = 0;
   const HOLD_MAX = 2500; // the most the show waits for start-up work after it could have left
   let drawnAt = 0, holdUntil = 0, recheck = 0;
   const holds = new Set();
@@ -93,6 +96,11 @@
     if (closed || leaving || !ready || !played || quickOn) return;
     const t = performance.now();
     let wait = drawnAt + (skipped ? SKIP_CALM_MS : full ? CALM_MS : STILL_CALM_MS) - t;
+    // the short splash leaves once the screen under it has been still for a moment, not after a fixed wait: on the
+    // phone the home screen was whole 0.25 s after the first draw and the splash stood 0.75 s more over nothing
+    // (the user, 23 Nov 2026: "opening after closing it fully is a bit slow"). A screen that keeps changing (a late
+    // forecast) still gets up to STILL_CALM_MS.
+    if (!skipped && !full) wait = Math.min(wait, Math.max(drawnAt + STILL_MIN_MS, lastChange + QUIET_MS) - t);
     if (wait <= 0 && holds.size) {
       if (!holdUntil) holdUntil = t + HOLD_MAX;
       wait = holdUntil - t;
@@ -268,7 +276,16 @@
   if (view) {
     const mo = new MutationObserver(() => {
       mo.disconnect();
-      drawnAt = performance.now();
+      drawnAt = lastChange = performance.now();
+      // every later change to the page under the splash (not the splash itself, not the sky's slow life) restarts the
+      // quiet the short splash waits for (maybeClose)
+      const own = (n) => { const e = n && (n.nodeType === 1 ? n : n.parentElement); return !!e && (el.contains(e) || !!(e.closest && e.closest('.sky'))); };
+      const still = new MutationObserver((ms) => {
+        if (closed) { still.disconnect(); return; }
+        if (ms.some((m) => !own(m.target))) lastChange = performance.now();
+      });
+      still.observe(document.body, { childList: true, subtree: true, attributes: true, characterData: true });
+      leaveFns.push(() => still.disconnect());
       requestAnimationFrame(() => requestAnimationFrame(() => setTimeout(Intro.ready, 60)));
     });
     mo.observe(view, { childList: true, subtree: true });
