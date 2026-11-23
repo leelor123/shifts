@@ -367,6 +367,8 @@
     ['wrapped', () => (App.wrappedCard ? App.wrappedCard() : '')],
     ['recap', () => (App.recapCard ? App.recapCard() : '')],
     ['bday', () => birthdayCard()],
+    // the Android app's testers: feedback for Google Play, only when no card above it waits (review.js)
+    ['tester', (keys) => (App.testerCard ? App.testerCard(keys) : '')],
     // a rating or a share, only in the day after a good moment (review.js)
     ['review', () => (App.reviewCard ? App.reviewCard() : '')],
     ['highlight', () => ((S.settings.home || {}).highlight !== false ? highlight() : '')],
@@ -381,7 +383,8 @@
     const keys = [], html = [];
     for (const [k, fn] of HOME_QUEUE) {
       if (keys.length >= HOME_CARDS_MAX) break;
-      const h = fn();
+      if (k === 'plus' && keys.includes('tester')) continue; // one ask on home at a time: no offer beside the testers' card
+      const h = fn(keys);
       if (h) { keys.push(k); html.push(h); }
     }
     App.homeCardKeys = keys; // for the tests

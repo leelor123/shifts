@@ -46,6 +46,7 @@
   /** Someone who uses the app, and who may still be asked (the counts and gaps above). */
   function mayAsk(now) {
     if (S.settings.demo || (S.meta.guide && !S.meta.guideDone) || !App.model) return false;
+    if (tester.open) return false; // the testers' card is on home in this open: one ask at a time
     if ((S.meta.activeDays || 0) < 5) return false;
     if (doneShifts() < 6 && (S.payslips || []).length < 2) return false;
     const st = state();
@@ -145,7 +146,7 @@
     close(play ? { rated: true, at: Date.now() } : { done: true, at: Date.now() });
     if (preview) return;
     if (root.Fx && !quiet(Date.now())) root.Fx.celebrate('small');
-    if (play) setTimeout(() => { root.location.href = STORE_APP; }, 260);
+    if (play) setTimeout(() => App.openPlayStore(STORE_APP), 260);
     else setTimeout(() => App.actions['share-app'] && App.actions['share-app'](), 200);
   };
   App.actions['rv-idea'] = () => { close({ at: Date.now() }); setTimeout(() => root.Support && root.Support.newTicket('idea'), 200); };
@@ -159,6 +160,65 @@
   };
   App.actions['review-preview'] = () => { if (!App.isAdmin) return; UI.closeAll(); setTimeout(() => App.reviewNow(), 350); };
 
+  /** Shaati's page in the Play Store app (Chrome hands the intent over; the web page when the store app is missing). */
+  App.openPlayStore = function (href) { root.location.href = href || STORE_APP; };
+
+  /* ---------------- the testers' card: feedback while the app is in testing on Google Play ----------------
+   * Google turned down production access (23 Nov 2026) for too little tester feedback. Until the app is in
+   * production, everyone in the Android app is a tester, so a quiet card on home asks them once or twice.
+   * Who: the Android app only (never the website), after 3 days of use, past the guide, not the demo.
+   * When: decided once per open, on the first home screen drawn with the app ready, so the card is there from the
+   * first frame (under the opening show) and never slides in under the user's eyes. Never on an open with the
+   * what's-new sheet, the rating card or Google's rating window, and only when no other card waits on home.
+   * How often: at most 2 days in all, 5 days apart; "not now" hides it until then; either feedback button ends it
+   * for good. One record per account (meta.testerNudge, store.js ACCOUNT_META), so another phone does not ask again. */
+  // turn off when production access is granted (or let the date pass): the card never shows after this day
+  const TESTER_NUDGE = { until: '2027-01-31' };
+  const TN_MAX = 2, TN_GAP = 5 * DAY, TN_DAYS = 3;
+  const tester = { decided: false, open: false }; // this open's decision, in memory only
+  const tnState = () => S.meta.testerNudge || {};
+  const dayKey = (ms) => { const d = new Date(ms); return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`; };
+  async function tnNote(patch) { await Store.setMeta({ testerNudge: Object.assign({}, tnState(), patch) }); }
+  /** May this person see the card now? (open: also no other ask in this open) */
+  function testerMay(now, open) {
+    if (!App.androidApp || dayKey(now) > TESTER_NUDGE.until) return false;
+    if (!S.settings.onboarded || S.settings.demo || (S.meta.guide && !S.meta.guideDone) || !App.model) return false;
+    if ((S.meta.activeDays || 0) < TN_DAYS) return false;
+    const st = tnState();
+    if (st.done) return false;
+    if (open && (App.whatsNewThisOpen || (App.whatsNewPending && App.whatsNewPending()) || pending)) return false;
+    const today = dayKey(now);
+    if (st.day === today) return st.later !== today; // the same day's card again after a reopen (not after "not now")
+    if ((st.n || 0) >= TN_MAX) return false;
+    return !st.at || now - st.at >= TN_GAP;
+  }
+  /** The home queue's card (views-home.js HOME_QUEUE). others: the cards already given a place in this draw. */
+  App.testerCard = function (others) {
+    const now = Date.now();
+    if (!tester.decided) {
+      // the first home screen of this open with the app ready decides; an earlier one (setup, sign-in) does not
+      if (!App.model || !S.settings.onboarded) return '';
+      tester.decided = true;
+      tester.open = !(others && others.length) && testerMay(now, true);
+      if (tester.open && tnState().day !== dayKey(now)) setTimeout(() => tnNote({ day: dayKey(now), at: Date.now(), n: (tnState().n || 0) + 1 }).catch(() => {}), 0);
+    }
+    if (!tester.open || !testerMay(now, false)) return '';
+    return `<div class="card ios-card tn-card" role="region" aria-label="${'משוב מהבודקים'}"><div class="ic-head"><span class="ic-app">${icon('chat')}</span><div class="ic-t"><b>${'תודה שהצטרפת לבודקים הראשונים'}</b>
+        <div class="small">${'מה חסר לך בשעתי, ומה לא ברור? משפט אחד ממך ב-⁠Google Play עוזר לנו לקבל אישור לפתוח את האפליקציה לכולם.'}</div>
+        <div class="small tn-how">${'בעמוד של שעתי ב-⁠Play יש "שליחת משוב למפתח".'}</div></div></div>
+      <button class="btn block tn-play" data-act="tn-play">${icon('star', 's')} ${'לכתוב משוב ב-⁠Google Play'}</button>
+      <div class="btn-row tn-btns"><button class="btn tonal" data-act="tn-here">${icon('chat', 's')} ${'לכתוב לנו כאן'}</button><button class="btn text" data-act="tn-later">${'לא עכשיו'}</button></div></div>`;
+  };
+  const tnEnd = (patch) => { tester.open = false; tnNote(Object.assign({ at: Date.now() }, patch)).catch(() => {}); App.rerender(); };
+  App.actions['tn-play'] = () => { tnEnd({ done: 'play' }); setTimeout(() => App.openPlayStore(STORE_APP), 200); };
+  App.actions['tn-here'] = () => { tnEnd({ done: 'here' }); setTimeout(() => root.Support && root.Support.newTicket('idea'), 200); };
+  App.actions['tn-later'] = () => {
+    const last = (tnState().n || 0) >= TN_MAX;
+    tnEnd({ later: dayKey(Date.now()) });
+    UI.toast(last ? 'בסדר, לא נשאל שוב' : 'בסדר, נזכיר בעוד כמה ימים');
+  };
+
   // for the tests
+  App._tester = { may: testerMay, TESTER_NUDGE, STORE_APP, get open() { return tester.open; }, reset() { tester.decided = false; tester.open = false; } };
   App._review = { mayAsk, cardHtml, get pending() { return pending; }, set pending(p) { pending = p; }, reset() { pending = null; native = false; errorAt = 0; } };
 })(typeof window !== 'undefined' ? window : globalThis);

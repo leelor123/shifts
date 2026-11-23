@@ -13,19 +13,20 @@ const SRC = read('src/app/review.js');
 const DAY = 86400000;
 
 function load(opts) {
-  const o = Object.assign({ activeDays: 8, shifts: 12, review: undefined, hour: 12 }, opts);
-  let now = new Date(2026, 10, 10, o.hour, 0, 0).getTime();
+  const o = Object.assign({ activeDays: 8, shifts: 12, review: undefined, hour: 12, date: [2026, 10, 10] }, opts);
+  let now = new Date(o.date[0], o.date[1], o.date[2], o.hour, 0, 0).getTime();
   const intervals = [], timeouts = [];
   const results = new Map();
   for (let i = 0; i < o.shifts; i++) results.set('s' + i, { status: 'done', dateKey: '2026-11-0' + ((i % 9) + 1) });
-  const meta = { activeDays: o.activeDays, guideDone: true, review: o.review };
+  const meta = { activeDays: o.activeDays, guideDone: true, review: o.review, testerNudge: o.tester };
   const posted = [], listeners = {};
   const App = {
     actions: {}, model: { results }, tab: 'home', blocking: false, androidApp: !!o.android, rerenders: 0,
     rerender() { App.rerenders++; }, go(t) { App.tab = t; },
     widgets: o.channel ? { connected: true, post: (m) => { posted.push(m); return true; } } : undefined,
   };
-  const Store = { S: { meta, settings: { demo: !!o.demo }, payslips: [] }, async setMeta(p) { Object.assign(meta, p); } };
+  if (o.wnPending) App.whatsNewPending = () => true;
+  const Store = { S: { meta, settings: { demo: !!o.demo, onboarded: true }, payslips: [] }, async setMeta(p) { Object.assign(meta, p); } };
   const UI = { icon: () => '', esc: (s) => String(s), sheets: [], toast() {}, closeAll() {} };
   const ctx = {
     App, Store, UI,
@@ -45,7 +46,7 @@ function load(opts) {
   vm.runInContext(SRC, ctx);
   const tick = (ms) => { for (let t = 0; t < ms; t += 500) { now += 500; intervals.forEach((f) => f && f()); } };
   const flush = () => { while (timeouts.length) timeouts.shift()(); };
-  return { App, meta, posted, listeners, UI, tick, flush, later: (ms) => { now += ms; } };
+  return { App, meta, posted, listeners, UI, ctx, tick, flush, later: (ms) => { now += ms; } };
 }
 
 T.section('rating ask');
@@ -118,4 +119,61 @@ T.test('wired: home queue, payslip moments, the widgets channel, the Android bui
   T.ok(an.includes("implementation 'com.google.android.play:review:"), 'gradle dependency');
   T.ok(an.includes('s.postMessage("shaati:review", null)') && an.includes('PlayReview.ask('), 'launcher hello and ask');
   T.ok(fs.existsSync(path.join(ROOT, 'android/widgets/java/PlayReview.java')), 'PlayReview.java');
+});
+
+/* The testers' card (review.js App.testerCard): the Android app only, after 3 days, decided once per open, at most 2
+ * days in all and 5 days apart, gone for good after either feedback button, off after TESTER_NUDGE.until. */
+T.section('testers\' card');
+const card = (r, others) => r.App.testerCard(others || []);
+T.test('the website never; the Android app only after 3 days of use', () => {
+  T.eq(card(load({ android: false })), '', 'website');
+  T.eq(card(load({ android: true, activeDays: 2 })), '', 'two days');
+  T.eq(card(load({ android: true, demo: true })), '', 'demo');
+  const html = card(load({ android: true, activeDays: 3 }));
+  T.ok(html.includes('tn-card'), 'three days in the Android app');
+  for (const a of ['tn-play', 'tn-here', 'tn-later']) T.ok(html.includes(`data-act="${a}"`), a);
+});
+T.test('decided once per open: never beside another card, the what\'s-new sheet or a rating ask', () => {
+  let r = load({ android: true });
+  T.eq(card(r, ['salary']), '', 'another card waits'); T.eq(card(r), '', 'and not later in the same open');
+  r = load({ android: true, wnPending: true }); T.eq(card(r), '', 'what\'s new pending');
+  r = load({ android: true }); r.App.whatsNewThisOpen = true; T.eq(card(r), '', 'what\'s new shown');
+  r = load({ android: true }); r.App._review.pending = { why: 'milestone', n: 10, until: Date.now() + DAY }; T.eq(card(r), '', 'rating card');
+  r = load({ android: true }); r.App.androidApp = false; T.eq(card(r), '', 'website');
+  r = load({ android: true }); r.App.androidApp = true; T.ok(card(r) !== '', 'shown'); r.later(61000);
+  T.eq(r.App.reviewDue(), false, 'no rating ask while the testers\' card is on home');
+});
+T.test('counted once a day; the same day after a reopen; at most 2 days, 5 days apart', () => {
+  const at = new Date(2026, 10, 10, 12).getTime();
+  let r = load({ android: true }); card(r); r.flush(); card(r); r.flush();
+  T.eq(r.meta.testerNudge.n, 1, 'one show'); T.eq(r.meta.testerNudge.day, '2026-11-10');
+  r = load({ android: true, tester: { n: 1, day: '2026-11-10', at: at - 3600000 } }); T.ok(card(r) !== '', 'same day reopen'); r.flush(); T.eq(r.meta.testerNudge.n, 1, 'not counted again');
+  T.eq(card(load({ android: true, tester: { n: 1, day: '2026-11-07', at: at - 3 * DAY } })), '', '3 days later');
+  r = load({ android: true, tester: { n: 1, day: '2026-11-05', at: at - 5 * DAY } }); T.ok(card(r) !== '', '5 days later'); r.flush(); T.eq(r.meta.testerNudge.n, 2);
+  T.eq(card(load({ android: true, tester: { n: 2, day: '2026-10-01', at: at - 40 * DAY } })), '', 'two shows: done');
+});
+T.test('"not now" hides it for 5 days; either feedback button ends it for good', () => {
+  let r = load({ android: true }); card(r); r.flush();
+  r.App.actions['tn-later'](); r.flush();
+  T.eq(r.meta.testerNudge.later, '2026-11-10'); T.eq(card(r), '', 'gone after not now');
+  r = load({ android: true, tester: r.meta.testerNudge }); T.eq(card(r), '', 'not on a reopen the same day');
+  r.later(4 * DAY); r.App._tester.reset(); T.eq(card(r), '', '4 days after not now');
+  r.later(DAY + 1000); r.App._tester.reset(); T.ok(card(r) !== '', '5 days after not now');
+  for (const [act, done] of [['tn-play', 'play'], ['tn-here', 'here']]) {
+    r = load({ android: true }); let opened = '', ticket = '';
+    r.App.openPlayStore = (h) => { opened = h; }; r.ctx.Support = { newTicket: (k) => { ticket = k; } };
+    card(r); r.flush(); r.App.actions[act](); r.flush();
+    T.eq(r.meta.testerNudge.done, done, act);
+    if (act === 'tn-play') T.ok(opened.includes('details?id=io.github.leelor123.shifts') && opened.includes(encodeURIComponent('https://play.google.com/store/apps/details?id=io.github.leelor123.shifts')), 'the Play listing');
+    else T.eq(ticket, 'idea', 'the support form');
+    r.later(400 * DAY); r.App._tester.reset(); T.eq(card(r), '', 'never again after ' + act);
+  }
+});
+T.test('kill switch: off after TESTER_NUDGE.until', () => {
+  const r = load({ android: true });
+  T.ok(/turn off when production access is granted/.test(SRC) && /const TESTER_NUDGE = \{ until: '\d{4}-\d\d-\d\d' \}/.test(SRC), 'one constant, with its note');
+  const u = r.App._tester.TESTER_NUDGE.until.split('-').map(Number);
+  T.ok(card(load({ android: true, date: [u[0], u[1] - 1, u[2]] })) !== '', 'on the last day');
+  T.eq(card(load({ android: true, date: [u[0], u[1] - 1, u[2] + 1] })), '', 'the day after');
+  T.ok(/\['tester', \(keys\) => \(App\.testerCard/.test(read('src/app/views-home.js')), 'home queue');
 });

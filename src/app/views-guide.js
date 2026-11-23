@@ -192,6 +192,7 @@
     Store.setMeta({ whatsNew: WHATS_NEW.id }).catch(() => {});
     if (!WHATS_NEW.features) return; // fixes only: nothing to show
     if (S.meta.guide && Date.now() - S.meta.guide < 3 * U.DAY) return; // a brand-new user already got the tour
+    App.whatsNewThisOpen = true; // the sheet is on its way: no other ask on this open (review.js, the testers' card)
     // a moment after the opening show has gone (it never slides up under the leaving show)
     const later = (fn) => (root.Intro && root.Intro.after ? root.Intro.after(fn, 900) : setTimeout(fn, 1400));
     later(() => {
@@ -205,6 +206,10 @@
       });
     });
   };
+
+  /** A what's-new sheet is still to come for this person (asked before the first screen is drawn, when App.whatsNew has
+   *  not run yet): the testers' card (review.js) keeps out of that open. */
+  App.whatsNewPending = () => !!(S.settings.onboarded && !S.settings.demo && WHATS_NEW.features && S.meta.whatsNew !== WHATS_NEW.id && !WHATS_NEW.seen.includes(S.meta.whatsNew));
 
   // a phone often brings the app back from the background instead of starting it again: a sheet held back at night
   // shows on that return too

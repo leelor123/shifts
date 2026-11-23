@@ -224,6 +224,8 @@
     ms: { kind: 'maxEach' }, plusNudge: { kind: 'maxEach' }, review: { kind: 'latest' }, lastRole: { kind: 'last' },
     // the monthly "the payslip came?" offer: the pay periods answered and the "not now"s (n), so no phone offers it again
     slipNudge: { kind: 'latest' },
+    // the Android testers' card (review.js): the days it showed (n), the last "not now", and whether feedback was given
+    testerNudge: { kind: 'latest' },
   };
   const isMap = (v) => !!v && typeof v === 'object' && !Array.isArray(v);
   const verNum = (v) => String(v || '').split('.').map((x) => +x || 0);

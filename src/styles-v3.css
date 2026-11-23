@@ -1819,6 +1819,9 @@ html:not([lang="he"]) .lb-games button, html:not([lang="he"]) .lb-periods button
 .ios-card .ic-t { flex: 1; min-width: 0; }
 .ios-card .ic-t .small { color: var(--on-surface-var); margin-top: 2px; }
 .ios-card .icon-btn { margin: -6px -6px 0 0; flex: none; }
+/* the Android testers' card (review.js): the same frame, a full-width way to Play, then the two quieter ones */
+.tn-card .ic-t .tn-how { margin-top: 6px; }
+.tn-card .tn-btns { margin-top: 8px; }
 .ios-install .ii-first { display: flex; gap: 10px; align-items: flex-start; padding: 12px 14px; margin-bottom: 12px; border-radius: 16px; background: var(--brand-soft); line-height: 1.45; }
 .ios-install .ii-first > svg { flex: none; margin-top: 3px; color: var(--brand); }
 .ios-install .ii-first.warn { background: color-mix(in srgb, var(--warn) 14%, var(--surface-1)); border: 1.5px solid var(--warn); }
