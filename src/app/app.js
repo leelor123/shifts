@@ -121,6 +121,21 @@
   };
   /** The phone's status bar takes the colour of what is under it: the opening's navy, the home screen's sky while it is
    * in view (its top colour, set by App.homeSky), otherwise the page (a beige bar sat above the night sky). */
+  /** In the installed app a long press never opens the browser's own menu (copy, Google search, open the image); on a
+   * chat message it copies the message's text with the app's toast. What is being typed keeps the phone's own menu. */
+  App.copyOnHold = function (e) {
+    const t = e.target;
+    if (!t || !t.closest || t.closest('input, textarea, [contenteditable="true"]')) return;
+    e.preventDefault();
+    const m = t.closest('.msg');
+    if (!m || m.classList.contains('typing') || !root.UI) return;
+    const c = m.cloneNode(true);
+    c.querySelectorAll('.tiny, button').forEach((x) => x.remove()); // the time and the sender line are not the message
+    const text = (c.innerText || c.textContent || '').trim();
+    if (!text) return;
+    if (root.UI.vibrate) root.UI.vibrate(10);
+    root.UI.copied(text, 'הטקסט הועתק');
+  };
   App.statusBar = function () {
     const meta = document.querySelector('meta[name="theme-color"]');
     if (!meta) return;
@@ -1040,6 +1055,9 @@
       document.documentElement.classList.add('app-shell');
       const vp = document.querySelector('meta[name="viewport"]');
       if (vp && !/user-scalable/.test(vp.content)) vp.content += ', maximum-scale=1, user-scalable=no';
+      // copying is the app's own: a long press on a chat message (support, the assistant) copies its text, with the
+      // app's toast and a short buzz, instead of the browser's selection and its Google search bar
+      document.addEventListener('contextmenu', App.copyOnHold);
     }
     App.pendingAction = params.get('action');
     // the website page that sent this device (?from=seo-<page>): the first one is kept, for the anonymous statistics

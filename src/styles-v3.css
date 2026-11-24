@@ -1967,7 +1967,9 @@ button, [role="button"], .btn, .nav a, .chip { -webkit-user-select: none; user-s
 
 /* The installed app (the Android app, or the site added to the home screen) behaves like one: a long press on a label
    or a calendar day selected its text and opened the browser's copy / Google search bar (the user's phone, 24 Nov
-   2026). Text a person may want to copy stays selectable: what they type, support messages, the legal texts, and
-   anything marked .selectable. The website in a browser tab is left as it is. */
+   2026). Only what is being typed stays selectable; copying is the app's own: the copy buttons (a code, the user's id,
+   a payslip message) and a long press on a chat message (App.copyOnHold), with the app's toast. The website in a
+   browser tab is left as it is. */
 html.app-shell body { -webkit-user-select: none; user-select: none; -webkit-touch-callout: none; }
-html.app-shell :is(input, textarea, [contenteditable="true"], .selectable, .legal, .msg) { -webkit-user-select: text; user-select: text; -webkit-touch-callout: default; }
+html.app-shell :is(input, textarea, [contenteditable="true"]) { -webkit-user-select: text; user-select: text; -webkit-touch-callout: default; }
+html.app-shell .wp-code-t { -webkit-user-select: none; user-select: none; }
