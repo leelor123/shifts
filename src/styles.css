@@ -270,6 +270,11 @@ svg.i.l { width: 32px; height: 32px; }
 .item .s { font-size: .82rem; color: var(--on-surface-var); white-space: normal; overflow-wrap: normal; }
 .item .trail { text-align: end; flex: none; }
 .item .trail .a { font-weight: 700; }
+/* a copy kept in the app (Settings > backup): when the restore button leaves the date and its line too little room
+   (a small phone, big text, a long word for "restore"), the button goes under them, at the row's end */
+.snap-row { flex-wrap: wrap; row-gap: 4px; }
+.snap-row .body { flex: 1 1 7em; }
+.snap-row > .btn { margin-inline-start: auto; }
 .role-bar { width: 6px; align-self: stretch; border-radius: 3px; flex: none; }
 .tag { display: inline-flex; align-items: center; gap: 4px; font-size: .75rem; font-weight: 700; padding: 2px 8px; border-radius: 8px; background: var(--surface-3); color: var(--on-surface-var); vertical-align: middle; }
 .tag.override { background: var(--override-bg); color: var(--override); }

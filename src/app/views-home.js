@@ -670,5 +670,6 @@
     if (n) await Store.put('notifications', Object.assign({}, n, { read: true }));
   };
   App.actions['settings-goal'] = (el, e) => { e.stopPropagation(); App.sheetsApi.settingsSection('goal'); };
-  App.actions['backup-now'] = () => App.doBackup(false);
+  // the banner's "back up" opens the backup page, where the person chooses a file or Drive (no file at once)
+  App.actions['backup-now'] = () => App.sheetsApi.settingsSection('backup');
 })(typeof window !== 'undefined' ? window : globalThis);

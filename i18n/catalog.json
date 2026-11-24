@@ -284,7 +284,7 @@
    "app/views-login.js:334",
    "app/views-payslip.js:1213",
    "app/views-settings.js:394",
-   "app/views-settings.js:971",
+   "app/views-settings.js:951",
    "app/views-shift.js:321",
    "app/views-shift.js:680"
   ]
@@ -349,7 +349,7 @@
   "kind": "lit",
   "where": [
    "app/app.js:654",
-   "app/app.js:1240",
+   "app/app.js:1237",
    "app/nfc.js:37",
    "app/run-note.js:73"
   ]
@@ -438,6 +438,7 @@
    "app/app.js:786",
    "app/import.js:222",
    "app/schedule-import.js:145",
+   "app/views-settings.js:963",
    "core/noteplan.js:273"
   ]
  },
@@ -448,6 +449,7 @@
    "app/app.js:786",
    "app/import.js:222",
    "app/schedule-import.js:145",
+   "app/views-settings.js:963",
    "core/noteplan.js:273"
   ]
  },
@@ -526,60 +528,53 @@
   ]
  },
  {
-  "key": "גיבוי אוטומטי נשמר בהורדות",
-  "kind": "lit",
-  "where": [
-   "app/app.js:998"
-  ]
- },
- {
   "key": "קובץ הגיבוי נשמר",
   "kind": "lit",
   "where": [
-   "app/app.js:998"
+   "app/app.js:995"
   ]
  },
  {
   "key": "שתף ל-⁠Drive",
   "kind": "lit",
   "where": [
-   "app/app.js:998"
+   "app/app.js:995"
   ]
  },
  {
   "key": "גיבוי משמרות",
   "kind": "lit",
   "where": [
-   "app/app.js:998",
-   "app/views-settings.js:989"
+   "app/app.js:995",
+   "app/views-settings.js:1021"
   ]
  },
  {
   "key": "הדפדפן לא נתן לשעתי לפתוח את הנתונים שבטלפון. סגרו את שעתי בלשוניות אחרות ונסו שוב. בגלישה בסתר, פתחו את שעתי בחלון רגיל.",
   "kind": "lit",
   "where": [
-   "app/app.js:1024"
+   "app/app.js:1021"
   ]
  },
  {
   "key": "לא הצלחנו לפתוח את הנתונים",
   "kind": "lit",
   "where": [
-   "app/app.js:1025"
+   "app/app.js:1022"
   ]
  },
  {
   "key": "<button class=\"btn\" data-boot-retry>נסו שוב</button>",
   "kind": "lit",
   "where": [
-   "app/app.js:1025"
+   "app/app.js:1022"
   ]
  },
  {
   "key": "באיזה תפקיד?",
   "kind": "lit",
   "where": [
-   "app/app.js:1233",
+   "app/app.js:1230",
    "app/views-home.js:626"
   ]
  },
@@ -587,7 +582,7 @@
   "key": "התחל משמרת",
   "kind": "lit",
   "where": [
-   "app/app.js:1239",
+   "app/app.js:1236",
    "app/nfc.js:30",
    "manifest",
    "manifest"
@@ -597,7 +592,7 @@
   "key": "התחלה",
   "kind": "lit",
   "where": [
-   "app/app.js:1239",
+   "app/app.js:1236",
    "app/export.js:22",
    "app/nfc.js:30"
   ]
@@ -606,7 +601,7 @@
   "key": "סיום",
   "kind": "lit",
   "where": [
-   "app/app.js:1240",
+   "app/app.js:1237",
    "app/export.js:22",
    "app/nfc.js:37",
    "app/views-onboarding.js:269"
@@ -670,7 +665,7 @@
    "app/arrive.js:61",
    "app/views-admin.js:50",
    "app/views-settings.js:786",
-   "app/views-settings.js:953"
+   "app/views-settings.js:971"
   ]
  },
  {
@@ -5813,8 +5808,9 @@
    "app/schedule-import.js:241",
    "app/views-login.js:23",
    "app/views-payslip.js:1640",
-   "app/views-settings.js:976",
-   "app/views-settings.js:998"
+   "app/views-settings.js:992",
+   "app/views-settings.js:1012",
+   "app/views-settings.js:1030"
   ]
  },
  {
@@ -6072,41 +6068,48 @@
   "key": "מסד הנתונים חסום. צריך לסגור לשוניות אחרות של האפליקציה",
   "kind": "lit",
   "where": [
-   "app/store.js:67"
+   "app/store.js:68"
   ]
  },
  {
   "key": "הקובץ אינו גיבוי של האפליקציה",
   "kind": "lit",
   "where": [
-   "app/store.js:834"
+   "app/store.js:836"
   ]
  },
  {
   "key": "הגיבוי נוצר בגרסה חדשה יותר של האפליקציה. עדכן קודם את האפליקציה.",
   "kind": "lit",
   "where": [
-   "app/store.js:835"
+   "app/store.js:837"
   ]
  },
  {
   "key": "הקובץ פגום ואי אפשר לשחזר ממנו. הנתונים בטלפון לא השתנו.",
   "kind": "lit",
   "where": [
-   "app/store.js:849"
+   "app/store.js:851"
   ]
  },
  {
   "key": "העבודה שלי",
   "kind": "lit",
   "where": [
-   "app/store.js:883",
+   "app/store.js:887",
    "app/views-onboarding.js:147",
    "app/views-onboarding.js:148",
    "app/views-onboarding.js:153",
    "app/views-onboarding.js:156",
    "app/views-onboarding.js:207",
    "app/views-settings.js:173"
+  ]
+ },
+ {
+  "key": "העותק הזה כבר לא שמור בטלפון.",
+  "kind": "lit",
+  "where": [
+   "app/store.js:978"
   ]
  },
  {
@@ -6912,8 +6915,8 @@
    "app/views-settings.js:394",
    "app/views-settings.js:398",
    "app/views-settings.js:555",
-   "app/views-settings.js:996",
-   "app/views-settings.js:1054",
+   "app/views-settings.js:1028",
+   "app/views-settings.js:1086",
    "app/views-shift.js:312",
    "app/views-shift.js:532",
    "app/views-shift.js:608",
@@ -10844,7 +10847,7 @@
   "key": "השבוע \u2066{0}⁠–⁠{1}\u2069",
   "kind": "tpl",
   "where": [
-   "app/views-insights.js:84"
+   "app/views-insights.js:86"
   ]
  },
  {
@@ -11605,7 +11608,7 @@
    "app/views-login.js:21",
    "app/views-login.js:344",
    "app/views-settings.js:930",
-   "app/views-settings.js:996"
+   "app/views-settings.js:1028"
   ]
  },
  {
@@ -11613,7 +11616,7 @@
   "kind": "lit",
   "where": [
    "app/views-login.js:23",
-   "app/views-settings.js:998"
+   "app/views-settings.js:1030"
   ]
  },
  {
@@ -12079,7 +12082,7 @@
   "kind": "lit",
   "where": [
    "app/views-login.js:342",
-   "app/views-settings.js:994"
+   "app/views-settings.js:1026"
   ]
  },
  {
@@ -12087,7 +12090,7 @@
   "kind": "lit",
   "where": [
    "app/views-login.js:343",
-   "app/views-settings.js:995"
+   "app/views-settings.js:1027"
   ]
  },
  {
@@ -12095,7 +12098,7 @@
   "kind": "lit",
   "where": [
    "app/views-login.js:343",
-   "app/views-settings.js:995"
+   "app/views-settings.js:1027"
   ]
  },
  {
@@ -16914,7 +16917,7 @@
   ]
  },
  {
-  "key": "גיבוי שחזור קובץ",
+  "key": "גיבוי שחזור קובץ עותק עותקים",
   "kind": "lit",
   "where": [
    "app/views-settings.js:167"
@@ -19850,269 +19853,340 @@
   ]
  },
  {
-  "key": "<div class=\"banner warn\">{0}<div>הנתונים שמורים רק בטלפון הזה. שמור גיבוי ב-⁠Google Drive כדי לא לאבד אותם אם הטלפון יוחלף או יאופס.</div></div>\n        <div class=\"card\"><div class=\"small\">גיבוי אחרון: <b>{1}</b></div>\n          <div class=\"btn-row\" style=\"margin-top:12px\"><button class=\"btn\" data-bk=\"share\">{2} גבה ושתף ל-⁠Drive</button></div>\n          <div class=\"btn-row\" style=\"margin-top:8px\"><button class=\"btn tonal\" data-bk=\"dl\">{3} הורד קובץ</button><button class=\"btn tonal\" data-bk=\"files\">{4} כולל קובצי תלושים</button></div></div>\n        <div class=\"card\">{5}</div>\n        <div class=\"section-title\">{6} שחזור</div>\n        <div class=\"card\"><label class=\"btn tonal block\">{7} בחר קובץ גיבוי (.json)<input type=\"file\" accept=\"application/json,.json\" id=\"bk-file\" class=\"sr\"></label>\n          <div class=\"tiny muted\" style=\"margin-top:8px\">אפשר להחליף את כל הנתונים או למזג (להוסיף רק רשומות חסרות). גיבוי מגרסה ישנה יעבור הגירה אוטומטית.</div></div>\n        <div class=\"section-title\" style=\"color:var(--bad)\">{8} אזור מסוכן</div>\n        <div class=\"card\"><button class=\"btn danger block\" data-wipe>מחק את כל הנתונים</button></div>",
-  "kind": "tpl",
-  "where": [
-   "app/views-settings.js:949"
-  ]
- },
- {
-  "key": "אף פעם",
-  "kind": "lit",
-  "where": [
-   "app/views-settings.js:950"
-  ]
- },
- {
-  "key": "גיבוי אוטומטי",
-  "kind": "lit",
-  "where": [
-   "app/views-settings.js:953"
-  ]
- },
- {
-  "key": "כל שבוע",
-  "kind": "lit",
-  "where": [
-   "app/views-settings.js:953"
-  ]
- },
- {
-  "key": "כל חודש",
-  "kind": "lit",
-  "where": [
-   "app/views-settings.js:953"
-  ]
- },
- {
-  "key": "החשבון שלך מחובר, והנתונים כבר נשמרים בענן, לכן לא יורדים קבצים אוטומטית. אפשר תמיד להוריד גיבוי ידני.",
-  "kind": "lit",
-  "where": [
-   "app/views-settings.js:953"
-  ]
- },
- {
-  "key": "בפתיחת האפליקציה, כשהגיע הזמן, קובץ גיבוי יורד אוטומטית לתיקיית ההורדות.",
-  "kind": "lit",
-  "where": [
-   "app/views-settings.js:953"
-  ]
- },
- {
-  "key": "הקובץ גדול מדי בשביל גיבוי של האפליקציה.",
-  "kind": "lit",
-  "where": [
-   "app/views-settings.js:966"
-  ]
- },
- {
-  "key": "זה לא קובץ גיבוי של האפליקציה (צריך קובץ \u200E.json\u200E שנוצר בגיבוי).",
-  "kind": "lit",
-  "where": [
-   "app/views-settings.js:968"
-  ]
- },
- {
-  "key": "זה לא קובץ גיבוי של האפליקציה.",
-  "kind": "lit",
-  "where": [
-   "app/views-settings.js:969"
-  ]
- },
- {
   "key": "שחזור גיבוי",
   "kind": "lit",
   "where": [
-   "app/views-settings.js:971"
+   "app/views-settings.js:951"
   ]
  },
  {
-  "key": "{0}{1}. מה לעשות?",
+  "key": "{0}{1} מה לעשות?",
   "kind": "tpl",
   "where": [
-   "app/views-settings.js:971"
+   "app/views-settings.js:951"
   ]
  },
  {
-  "key": "בקובץ משמרת אחת",
+  "key": " לפני השחזור האפליקציה תשמור עותק של הנתונים של עכשיו.",
   "kind": "lit",
   "where": [
-   "app/views-settings.js:971"
-  ]
- },
- {
-  "key": "בקובץ {0} משמרות",
-  "kind": "tpl",
-  "where": [
-   "app/views-settings.js:971"
-  ]
- },
- {
-  "key": " (נוצר {0})",
-  "kind": "tpl",
-  "where": [
-   "app/views-settings.js:971"
+   "app/views-settings.js:951"
   ]
  },
  {
   "key": "מיזוג",
   "kind": "lit",
   "where": [
-   "app/views-settings.js:971"
+   "app/views-settings.js:951"
   ]
  },
  {
   "key": "החלפה מלאה",
   "kind": "lit",
   "where": [
-   "app/views-settings.js:971"
+   "app/views-settings.js:951"
   ]
  },
  {
   "key": "השחזור הושלם",
   "kind": "lit",
   "where": [
-   "app/views-settings.js:974"
+   "app/views-settings.js:954"
+  ]
+ },
+ {
+  "key": "<div class=\"item snap-row\" style=\"cursor:default\"><span class=\"body\"><span class=\"t\">{0}</span><span class=\"s\"><span class=\"num\">{1}</span> · {2}</span></span><button class=\"btn text sm\" data-snap=\"{3}\">שחזור</button></div>",
+  "kind": "tpl",
+  "where": [
+   "app/views-settings.js:964"
+  ]
+ },
+ {
+  "key": "לפני שחזור · {0}",
+  "kind": "tpl",
+  "where": [
+   "app/views-settings.js:964"
+  ]
+ },
+ {
+  "key": "{0}\n        <div class=\"card\"><div class=\"small\">גיבוי אחרון: <b>{1}</b></div>\n          <div class=\"btn-row\" style=\"margin-top:12px\"><button class=\"btn\" data-bk=\"share\">{2} גבה ושתף ל-⁠Drive</button></div>\n          <div class=\"btn-row\" style=\"margin-top:8px\"><button class=\"btn tonal\" data-bk=\"dl\">{3} הורד קובץ</button><button class=\"btn tonal\" data-bk=\"files\">{4} כולל קובצי תלושים</button></div>\n          <div class=\"tiny muted\" style=\"margin-top:8px\">קובץ נשמר בטלפון רק כשלוחצים על אחד הכפתורים האלה.</div></div>\n        <div class=\"section-title\">{5} עותקים בתוך האפליקציה</div>\n        <div class=\"card\">{6}\n          {7}\n          <div class=\"tiny muted\" style=\"margin-top:10px\">{8}</div></div>\n        <div class=\"section-title\">{9} שחזור</div>\n        <div class=\"card\"><label class=\"btn tonal block\">{10} בחר קובץ גיבוי (.json)<input type=\"file\" accept=\"application/json,.json\" id=\"bk-file\" class=\"sr\"></label>\n          <div class=\"tiny muted\" style=\"margin-top:8px\">אפשר להחליף את כל הנתונים או למזג (להוסיף רק רשומות חסרות). גיבוי מגרסה ישנה יעבור הגירה אוטומטית.</div></div>\n        <div class=\"section-title\" style=\"color:var(--bad)\">{11} אזור מסוכן</div>\n        <div class=\"card\"><button class=\"btn danger block\" data-wipe>מחק את כל הנתונים</button></div>",
+  "kind": "tpl",
+  "where": [
+   "app/views-settings.js:965"
+  ]
+ },
+ {
+  "key": "<div class=\"banner warn\">{0}<div>הנתונים שמורים רק בטלפון הזה. שמור גיבוי ב-⁠Google Drive כדי לא לאבד אותם אם הטלפון יוחלף או יאופס.</div></div>",
+  "kind": "tpl",
+  "where": [
+   "app/views-settings.js:965"
+  ]
+ },
+ {
+  "key": "אף פעם",
+  "kind": "lit",
+  "where": [
+   "app/views-settings.js:966"
+  ]
+ },
+ {
+  "key": "עותק אוטומטי",
+  "kind": "lit",
+  "where": [
+   "app/views-settings.js:971"
+  ]
+ },
+ {
+  "key": "כל שבוע",
+  "kind": "lit",
+  "where": [
+   "app/views-settings.js:971"
+  ]
+ },
+ {
+  "key": "כל חודש",
+  "kind": "lit",
+  "where": [
+   "app/views-settings.js:971"
+  ]
+ },
+ {
+  "key": "האפליקציה שומרת אצלה עותק של הנתונים, בלי להוריד קבצים לטלפון. נשמרים 4 העותקים האחרונים, בלי קובצי התלושים.",
+  "kind": "lit",
+  "where": [
+   "app/views-settings.js:971"
+  ]
+ },
+ {
+  "key": "העותקים כבויים, ולא נשמר אף עותק.",
+  "kind": "lit",
+  "where": [
+   "app/views-settings.js:972"
+  ]
+ },
+ {
+  "key": "עוד אין עותק שמור. העותק הראשון יישמר כשיהיו משמרות, בפתיחה הבאה של האפליקציה.",
+  "kind": "lit",
+  "where": [
+   "app/views-settings.js:972"
+  ]
+ },
+ {
+  "key": "העותקים שמורים רק בטלפון הזה ועוזרים לחזור אחורה אחרי שחזור או מחיקה בטעות (שינוי כזה מגיע גם לחשבון). הסרת האפליקציה או ניקוי הנתונים שלה מוחקים אותם. את כל הנתונים החשבון שומר בענן.",
+  "kind": "lit",
+  "where": [
+   "app/views-settings.js:973"
+  ]
+ },
+ {
+  "key": "העותקים שמורים רק בטלפון הזה ועוזרים לחזור אחורה אחרי שחזור או מחיקה בטעות. הסרת האפליקציה או ניקוי הנתונים שלה מוחקים גם אותם. כדי לא לאבד נתונים כשמחליפים טלפון, כדאי להוריד קובץ גיבוי או להתחבר לחשבון, שישמור הכול בענן.",
+  "kind": "lit",
+  "where": [
+   "app/views-settings.js:973"
+  ]
+ },
+ {
+  "key": "הקובץ גדול מדי בשביל גיבוי של האפליקציה.",
+  "kind": "lit",
+  "where": [
+   "app/views-settings.js:986"
+  ]
+ },
+ {
+  "key": "זה לא קובץ גיבוי של האפליקציה (צריך קובץ \u200E.json\u200E שנוצר בגיבוי).",
+  "kind": "lit",
+  "where": [
+   "app/views-settings.js:988"
+  ]
+ },
+ {
+  "key": "זה לא קובץ גיבוי של האפליקציה.",
+  "kind": "lit",
+  "where": [
+   "app/views-settings.js:989"
+  ]
+ },
+ {
+  "key": "בקובץ משמרת אחת",
+  "kind": "lit",
+  "where": [
+   "app/views-settings.js:991"
+  ]
+ },
+ {
+  "key": "בקובץ {0} משמרות",
+  "kind": "tpl",
+  "where": [
+   "app/views-settings.js:991"
+  ]
+ },
+ {
+  "key": " (נוצר {0})",
+  "kind": "tpl",
+  "where": [
+   "app/views-settings.js:991"
   ]
  },
  {
   "key": "השחזור נכשל",
   "kind": "lit",
   "where": [
-   "app/views-settings.js:976"
+   "app/views-settings.js:992",
+   "app/views-settings.js:1012"
+  ]
+ },
+ {
+  "key": "{0} (נשמר {1}).",
+  "kind": "tpl",
+  "where": [
+   "app/views-settings.js:1011"
+  ]
+ },
+ {
+  "key": "בעותק משמרת אחת",
+  "kind": "lit",
+  "where": [
+   "app/views-settings.js:1011"
+  ]
+ },
+ {
+  "key": "בעותק {0} משמרות",
+  "kind": "tpl",
+  "where": [
+   "app/views-settings.js:1011"
   ]
  },
  {
   "key": "למחוק את כל הנתונים?",
   "kind": "lit",
   "where": [
-   "app/views-settings.js:994"
+   "app/views-settings.js:1026"
   ]
  },
  {
   "key": "כל המשמרות, התלושים וההגדרות יימחקו לצמיתות מהטלפון ומהחשבון בענן. מומלץ לגבות קודם.",
   "kind": "lit",
   "where": [
-   "app/views-settings.js:994"
+   "app/views-settings.js:1026"
   ]
  },
  {
   "key": "<div class=\"list\">\n      <button class=\"item\" data-x=\"csv\"><span class=\"lead\">{0}</span><span class=\"body\"><span class=\"t\">כל המשמרות (CSV)</span><span class=\"s\">נפתח ב-⁠Excel ו-⁠Google Sheets (עברית תקינה)</span></span></button>\n      <button class=\"item\" data-x=\"mcsv\"><span class=\"lead\">{1}</span><span class=\"body\"><span class=\"t\">סיכום חודשי (CSV)</span><span class=\"s\">חודש בכל שורה: שעות, ברוטו, נטו משוער…</span></span></button>\n      <button class=\"item\" data-x=\"pdf\"><span class=\"lead\">{2}</span><span class=\"body\"><span class=\"t\">דוח חודשי (PDF)</span><span class=\"s\">החודש הנוכחי; לחודשים אחרים: דוחות ← סיכומים</span></span></button>\n      <button class=\"item\" data-x=\"ics\"><span class=\"lead\">{3}</span><span class=\"body\"><span class=\"t\">משמרות ליומן (\u200E.ics)</span><span class=\"s\">כל המשמרות; מתוכננות עם תזכורת</span></span></button></div>",
   "kind": "tpl",
   "where": [
-   "app/views-settings.js:1005"
+   "app/views-settings.js:1037"
   ]
  },
  {
   "key": "אין משמרות",
   "kind": "lit",
   "where": [
-   "app/views-settings.js:1015"
+   "app/views-settings.js:1047"
   ]
  },
  {
   "key": "<div class=\"card\"><div class=\"small\" style=\"margin-bottom:12px\">מצב הדגמה ממלא את האפליקציה בכ-4 חודשים של משמרות לדוגמה (כולל שבתות, חגים, שעות נוספות, פיצולים, עקיפה ידנית ותלוש לדוגמה), כדי לראות איך הכול עובד. אחר כך אפשר למחוק רק את נתוני הדוגמה.</div>\n      {0}</div>",
   "kind": "tpl",
   "where": [
-   "app/views-settings.js:1021"
+   "app/views-settings.js:1053"
   ]
  },
  {
   "key": "<button class=\"btn danger block\" data-demo-clear>{0} מחק את נתוני הדוגמה</button>",
   "kind": "tpl",
   "where": [
-   "app/views-settings.js:1022"
+   "app/views-settings.js:1054"
   ]
  },
  {
   "key": "<button class=\"btn block\" data-demo-load>{0} טען נתוני דוגמה</button>",
   "kind": "tpl",
   "where": [
-   "app/views-settings.js:1022"
+   "app/views-settings.js:1054"
   ]
  },
  {
   "key": "נתוני הדוגמה נטענו",
   "kind": "lit",
   "where": [
-   "app/views-settings.js:1025"
+   "app/views-settings.js:1057"
   ]
  },
  {
   "key": "<div class=\"list cl-open\"><button class=\"item\" data-act=\"changelog\"><span class=\"lead\">{0}</span><span class=\"body\"><span class=\"t\">כל העדכונים</span><span class=\"s\">מה השתנה בכל גרסה, מהראשונה ועד {1}</span></span>{2}</button></div>\n      <div class=\"card\"><div class=\"kv\"><span>גרסת אפליקציה</span><b>{3}</b></div><div class=\"kv\"><span>מבנה נתונים</span><b>{4}</b></div>\n        <div class=\"kv\"><span>משמרות</span><b>{5}</b></div><div class=\"kv\"><span>תלושים</span><b>{6}</b></div><div class=\"kv\"><span>אחסון בשימוש</span><b id=\"ab-storage\">…</b></div><div class=\"kv\"><span>אחסון קבוע</span><b id=\"ab-persist\">…</b></div></div>\n      <div class=\"section-title\">התקנה כאפליקציה</div>\n      {7}\n      <div class=\"section-title\">איך זה עובד</div>\n      <div class=\"card small\">כל החישובים מתבצעים בטלפון, כולל זמני שבת וחגים (לוח עברי וחישוב שקיעה מקומיים). האפליקציה עובדת בלי אינטרנט. חיבור נדרש רק בפעם הראשונה של קריאת PDF / זיהוי טקסט מתמונה (טעינת הרכיב), ולניתוח AI אם בחרת בו.</div>\n      <div class=\"disclaimer\">{8}<div>האפליקציה היא כלי עזר אישי. החישובים (נטו, מס, זכויות) הם הערכה ואינם ייעוץ משפטי, חשבונאי או מס.</div></div>",
   "kind": "tpl",
   "where": [
-   "app/views-settings.js:1032"
+   "app/views-settings.js:1064"
   ]
  },
  {
   "key": "<div class=\"card small ab-installed\">{0} שעתי מותקנת כאפליקציה במכשיר הזה.</div>",
   "kind": "tpl",
   "where": [
-   "app/views-settings.js:1037"
+   "app/views-settings.js:1069"
   ]
  },
  {
   "key": "<div class=\"card small\">{0}<button class=\"btn tonal block\" style=\"margin-top:10px\" data-act=\"ios-install\">{1} הדרכה צעד אחר צעד</button></div>",
   "kind": "tpl",
   "where": [
-   "app/views-settings.js:1039"
+   "app/views-settings.js:1071"
   ]
  },
  {
   "key": "באייפון: ⋯ ← \"שיתוף\" ← \"הוספה למסך הבית\" ← \"הוספה\".",
   "kind": "lit",
   "where": [
-   "app/views-settings.js:1039"
+   "app/views-settings.js:1071"
   ]
  },
  {
   "key": "באייפון: כפתור השיתוף ← \"הוספה למסך הבית\" ← \"הוספה\".",
   "kind": "lit",
   "where": [
-   "app/views-settings.js:1039"
+   "app/views-settings.js:1071"
   ]
  },
  {
   "key": "<div class=\"card small\">ב-⁠Chrome: תפריט ⋮ ← \"הוספה למסך הבית\" ← \"התקנה\". אחרי ההתקנה: לחיצה ארוכה על האייקון ← \"התחל משמרת\" / \"הוסף משמרת\".<br>באייפון: בספארי, כפתור השיתוף ← \"הוספה למסך הבית\".</div>",
   "kind": "tpl",
   "where": [
-   "app/views-settings.js:1040"
+   "app/views-settings.js:1072"
   ]
  },
  {
   "key": "כן ✓",
   "kind": "lit",
   "where": [
-   "app/views-settings.js:1048"
+   "app/views-settings.js:1080"
   ]
  },
  {
   "key": "לא (התקן כאפליקציה)",
   "kind": "lit",
   "where": [
-   "app/views-settings.js:1048"
+   "app/views-settings.js:1080"
   ]
  },
  {
   "key": "למחוק את נתוני הדוגמה?",
   "kind": "lit",
   "where": [
-   "app/views-settings.js:1054"
+   "app/views-settings.js:1086"
   ]
  },
  {
   "key": "רק נתוני הדוגמה יימחקו; מה שהוספת בעצמך יישאר.",
   "kind": "lit",
   "where": [
-   "app/views-settings.js:1054"
+   "app/views-settings.js:1086"
   ]
  },
  {
   "key": "נתוני הדוגמה נמחקו",
   "kind": "lit",
   "where": [
-   "app/views-settings.js:1058"
+   "app/views-settings.js:1090"
   ]
  },
  {

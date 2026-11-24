@@ -979,23 +979,20 @@
   });
 
   /* ---------------- auto backup ---------------- */
+  // The automatic backup is a copy kept inside the app (Store.autoSnapshot), with an account too: a restore or a mass
+  // delete reaches the account as well, and the copy brings the data back. It never makes a file: until 1.44.4 it put
+  // a file in the phone's Downloads with no tap (users: "the app downloads something to my phone"). A file is made only
+  // by App.doBackup, and only a tap on "download" in Settings > backup calls it (tests/nodownload.test.js).
   App.autoBackupCheck = async function () {
-    const B = S.settings.backup;
-    if (!B.autoEvery || B.autoEvery === 'off' || !S.shifts.length) return;
-    // with an account the data is already kept in the cloud: no weekly files piling up in Downloads
-    if (S.settings.demo || S.meta.cloudUid) return;
-    const days = B.autoEvery === 'monthly' ? 30 : 7;
-    const last = Math.max(B.lastBackup || 0, B.lastAuto || 0);
-    if (Date.now() - last < days * U.DAY) return;
-    await App.doBackup(false, true);
+    try { await Store.autoSnapshot(); } catch (e) { console.warn('automatic copy skipped', e); }
   };
-  App.doBackup = async function (includeFiles, auto) {
+  App.doBackup = async function (includeFiles) {
     const data = await Store.exportBackup(includeFiles);
     const name = `shiftpay-backup-${U.todayKey()}.json`;
     const blob = new Blob([JSON.stringify(data)], { type: 'application/json' });
     UI.download(name, blob);
-    await Store.setSettings((s) => { s.backup.lastBackup = Date.now(); if (auto) s.backup.lastAuto = Date.now(); });
-    UI.toast(auto ? 'גיבוי אוטומטי נשמר בהורדות' : 'קובץ הגיבוי נשמר', { label: 'שתף ל-\u2060Drive', fn: () => UI.shareFile(name, blob, 'גיבוי משמרות') });
+    await Store.setSettings((s) => { s.backup.lastBackup = Date.now(); });
+    UI.toast('קובץ הגיבוי נשמר', { label: 'שתף ל-\u2060Drive', fn: () => UI.shareFile(name, blob, 'גיבוי משמרות') });
   };
 
   /* ---------------- boot ---------------- */

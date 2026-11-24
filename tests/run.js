@@ -17,6 +17,8 @@ require('./readers-lead.test.js');
 require('./slipfiles.test.js');
 // signing out keeps the phone-only items (payslip files, their text, the AI key, the lock) for the same account
 require('./parked.test.js');
+// nothing is downloaded without a tap: the automatic backup is a copy inside the app (24 Nov 2026)
+require('./nodownload.test.js');
 T.section('cloud sync (simulated phones)');
 require('./sync.test.js');
 T.section('Firestore reads');

@@ -164,7 +164,7 @@
     net: 'מס מס הכנסה נקודות זיכוי פנסיה ביטוח לאומי מס בריאות השתלמות נטו', leave: 'חופשה מחלה הבראה ותק תחילת עבודה',
     goal: 'יעד יעדים חיסכון חוסכים', alerts: 'התראות תזכורות פוש הודעות', nfc: 'nfc מדבקה מדבקות תג נגיעה כניסה יציאה החתמה שעון נוכחות אוטומטי', arrive: 'מיקום gps הגעה לעבודה יציאה מהעבודה תזכורת התחלת משמרת אוטומטי מקום העבודה', templates: 'תבנית תבניות משמרת קבועה',
     lang: 'שפה שפות language english русский русский язык العربية عربي ערבית רוסית אנגלית צרפתית ספרדית français francais español espanol french spanish תרגום אמהרית amharic አማርኛ', look: 'צבע צבעים ערכת נושא כהה בהיר מצב לילה גופן גופנים מראה צלילים רטט מוזיקה עיצוב כרטיס plus פלוס מסך הבית קיצורים קיצורי דרך משמרות אחרונות תאריך עברי שורת עדכון home screen accueil inicio', security: 'קוד נעילה טביעת אצבע סיסמה',
-    assistant: 'בינה מלאכותית עוזר שאלות ai', ai: 'מפתח api claude ניתוח תלוש', backup: 'גיבוי שחזור קובץ', schedule: 'סידור עבודה סידור משמרות שבוע הבא צילום תמונה צילום מסך וואטסאפ whatsapp הודעה טבלה מתוכננות לוח', import: 'ייבוא דוח שעות נוכחות שעון אקסל excel csv pdf צילום קובץ להעלות משמרות מהעבודה', export: 'ייצוא אקסל excel csv pdf יומן',
+    assistant: 'בינה מלאכותית עוזר שאלות ai', ai: 'מפתח api claude ניתוח תלוש', backup: 'גיבוי שחזור קובץ עותק עותקים', schedule: 'סידור עבודה סידור משמרות שבוע הבא צילום תמונה צילום מסך וואטסאפ whatsapp הודעה טבלה מתוכננות לוח', import: 'ייבוא דוח שעות נוכחות שעון אקסל excel csv pdf צילום קובץ להעלות משמרות מהעבודה', export: 'ייצוא אקסל excel csv pdf יומן',
     demo: 'דוגמה הדגמה', about: 'גרסה התקנה אודות', rights: 'זכויות שכר מינימום',
   };
   // the page is a few colourful doors; each opens its own small page with the sections behind it
@@ -943,14 +943,34 @@
     mount: (el, draw) => { const c = el.querySelector('[data-ai-clear]'); if (c) c.onclick = async () => { await Store.setSettings((s) => { s.ai.apiKey = ''; }); draw(); }; },
   };
 
+  /** The one restore question, for a file and for a copy kept in the app (what: what it holds). Store.importBackup
+   *  keeps a copy of the data as it is now first, when the copies are on, so a wrong choice can be undone. */
+  async function restore(json, what) {
+    const B = S.settings.backup;
+    const kept = B.autoEvery !== 'off' && !S.settings.demo && (S.shifts.length || S.entries.length || S.payslips.length);
+    const mode = await UI.dialog({ title: 'שחזור גיבוי', text: `${what}${kept ? ' לפני השחזור האפליקציה תשמור עותק של הנתונים של עכשיו.' : ''} מה לעשות?`, buttons: [{ label: 'ביטול', value: null }, { label: 'מיזוג', value: 'merge' }, { label: 'החלפה מלאה', value: 'replace', cls: 'danger' }] });
+    if (!mode) return;
+    await Store.importBackup(json, mode);
+    UI.toast('השחזור הושלם');
+    UI.closeAll();
+  }
   RENDER.backup = {
     render: () => {
       const B = S.settings.backup;
-      return `<div class="banner warn">${icon('cloud')}<div>הנתונים שמורים רק בטלפון הזה. שמור גיבוי ב-\u2060Google Drive כדי לא לאבד אותם אם הטלפון יוחלף או יאופס.</div></div>
+      const cloud = !!S.meta.cloudUid;
+      // the copies kept inside the app (Store.snaps): never a file; only the buttons in the first card make a file
+      const snaps = B.autoEvery === 'off' ? [] : Store.snaps();
+      const count = (m) => (m.shifts === 1 ? 'משמרת אחת' : `${m.shifts} משמרות`);
+      const rows = snaps.map((m) => `<div class="item snap-row" style="cursor:default"><span class="body"><span class="t">${U.fmtDate(U.epochKey(m.at))}</span><span class="s"><span class="num">${U.epochHM(m.at)}</span> · ${m.kind === 'before' ? `לפני שחזור · ${count(m)}` : count(m)}</span></span><button class="btn text sm" data-snap="${esc(m.id)}">שחזור</button></div>`).join('');
+      return `${cloud ? '' : `<div class="banner warn">${icon('cloud')}<div>הנתונים שמורים רק בטלפון הזה. שמור גיבוי ב-\u2060Google Drive כדי לא לאבד אותם אם הטלפון יוחלף או יאופס.</div></div>`}
         <div class="card"><div class="small">גיבוי אחרון: <b>${B.lastBackup ? U.fmtDate(U.epochKey(B.lastBackup)) + ' (' + UI.timeAgo(B.lastBackup) + ')' : 'אף פעם'}</b></div>
           <div class="btn-row" style="margin-top:12px"><button class="btn" data-bk="share">${icon('share')} גבה ושתף ל-\u2060Drive</button></div>
-          <div class="btn-row" style="margin-top:8px"><button class="btn tonal" data-bk="dl">${icon('download')} הורד קובץ</button><button class="btn tonal" data-bk="files">${icon('file')} כולל קובצי תלושים</button></div></div>
-        <div class="card">${F.sel('גיבוי אוטומטי', 's.backup.autoEvery', [['weekly', 'כל שבוע'], ['monthly', 'כל חודש'], ['off', 'כבוי']], B.autoEvery, S.meta.cloudUid ? 'החשבון שלך מחובר, והנתונים כבר נשמרים בענן, לכן לא יורדים קבצים אוטומטית. אפשר תמיד להוריד גיבוי ידני.' : 'בפתיחת האפליקציה, כשהגיע הזמן, קובץ גיבוי יורד אוטומטית לתיקיית ההורדות.').replace('data-s=', 'data-keep-str data-s=')}</div>
+          <div class="btn-row" style="margin-top:8px"><button class="btn tonal" data-bk="dl">${icon('download')} הורד קובץ</button><button class="btn tonal" data-bk="files">${icon('file')} כולל קובצי תלושים</button></div>
+          <div class="tiny muted" style="margin-top:8px">קובץ נשמר בטלפון רק כשלוחצים על אחד הכפתורים האלה.</div></div>
+        <div class="section-title">${icon('clock', 's')} עותקים בתוך האפליקציה</div>
+        <div class="card">${F.sel('עותק אוטומטי', 's.backup.autoEvery', [['weekly', 'כל שבוע'], ['monthly', 'כל חודש'], ['off', 'כבוי']], B.autoEvery, 'האפליקציה שומרת אצלה עותק של הנתונים, בלי להוריד קבצים לטלפון. נשמרים 4 העותקים האחרונים, בלי קובצי התלושים.').replace('data-s=', 'data-keep-str data-s=')}
+          ${rows ? `<div class="list snap-list" style="margin-top:12px;background:var(--surface-2)">${rows}</div>` : `<div class="tiny muted" style="margin-top:10px">${B.autoEvery === 'off' ? 'העותקים כבויים, ולא נשמר אף עותק.' : 'עוד אין עותק שמור. העותק הראשון יישמר כשיהיו משמרות, בפתיחה הבאה של האפליקציה.'}</div>`}
+          <div class="tiny muted" style="margin-top:10px">${cloud ? 'העותקים שמורים רק בטלפון הזה ועוזרים לחזור אחורה אחרי שחזור או מחיקה בטעות (שינוי כזה מגיע גם לחשבון). הסרת האפליקציה או ניקוי הנתונים שלה מוחקים אותם. את כל הנתונים החשבון שומר בענן.' : 'העותקים שמורים רק בטלפון הזה ועוזרים לחזור אחורה אחרי שחזור או מחיקה בטעות. הסרת האפליקציה או ניקוי הנתונים שלה מוחקים גם אותם. כדי לא לאבד נתונים כשמחליפים טלפון, כדאי להוריד קובץ גיבוי או להתחבר לחשבון, שישמור הכול בענן.'}</div></div>
         <div class="section-title">${icon('upload', 's')} שחזור</div>
         <div class="card"><label class="btn tonal block">${icon('upload')} בחר קובץ גיבוי (.json)<input type="file" accept="application/json,.json" id="bk-file" class="sr"></label>
           <div class="tiny muted" style="margin-top:8px">אפשר להחליף את כל הנתונים או למזג (להוסיף רק רשומות חסרות). גיבוי מגרסה ישנה יעבור הגירה אוטומטית.</div></div>
@@ -968,18 +988,30 @@
           try { json = JSON.parse(await file.text()); } catch (e) { throw root.U.oops('זה לא קובץ גיבוי של האפליקציה (צריך קובץ \u200E.json\u200E שנוצר בגיבוי).'); }
           if (!json || typeof json !== 'object' || json.app !== 'shiftpay') throw root.U.oops('זה לא קובץ גיבוי של האפליקציה.');
           const n = Array.isArray(json.shifts) ? json.shifts.length : 0;
-          const mode = await UI.dialog({ title: 'שחזור גיבוי', text: `${n === 1 ? 'בקובץ משמרת אחת' : `בקובץ ${n} משמרות`}${/^\d{4}-\d{2}-\d{2}/.test(String(json.exportedAt || '')) ? ` (נוצר ${U.fmtDate(json.exportedAt.slice(0, 10))})` : ''}. מה לעשות?`, buttons: [{ label: 'ביטול', value: null }, { label: 'מיזוג', value: 'merge' }, { label: 'החלפה מלאה', value: 'replace', cls: 'danger' }] });
-          if (!mode) return;
-          await Store.importBackup(json, mode);
-          UI.toast('השחזור הושלם');
-          UI.closeAll();
+          await restore(json, `${n === 1 ? 'בקובץ משמרת אחת' : `בקובץ ${n} משמרות`}${/^\d{4}-\d{2}-\d{2}/.test(String(json.exportedAt || '')) ? ` (נוצר ${U.fmtDate(json.exportedAt.slice(0, 10))})` : ''}.`);
         } catch (err) { UI.dialog({ title: 'השחזור נכשל', text: root.Cloud.errorText(err), buttons: [{ label: 'סגור', value: true }] }); }
       };
       if (el._bkBound) return;
       el._bkBound = true;
+      // the automatic copies switched off: the copies kept go too (the list says so); switched on: the first copy now
+      el.addEventListener('change', async (e) => {
+        const t = e.target;
+        if (!t || t.dataset.s !== 's.backup.autoEvery') return;
+        try { if (t.value === 'off') await Store.dropSnaps(); else await Store.autoSnapshot(); } catch (err) { console.warn('copies', err); }
+        draw();
+      });
       el.addEventListener('click', async (e) => {
         const b = e.target.closest('button');
         if (!b) return;
+        if (b.dataset.snap) {
+          const m = Store.snaps().find((x) => x.id === b.dataset.snap);
+          if (!m) { draw(); return; }
+          try {
+            const json = await Store.snapData(m.id);
+            await restore(json, `${m.shifts === 1 ? 'בעותק משמרת אחת' : `בעותק ${m.shifts} משמרות`} (נשמר ${U.fmtDate(U.epochKey(m.at))}).`);
+          } catch (err) { UI.dialog({ title: 'השחזור נכשל', text: root.Cloud.errorText(err), buttons: [{ label: 'סגור', value: true }] }); }
+          return;
+        }
         if (b.dataset.bk === 'dl') { await App.doBackup(false); draw(); }
         if (b.dataset.bk === 'files') { await App.doBackup(true); draw(); }
         if (b.dataset.bk === 'share') {

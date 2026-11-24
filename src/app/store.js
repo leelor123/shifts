@@ -10,12 +10,13 @@
   const U = root.U;
 
   const DB_NAME = 'shiftpay';
-  const DB_VERSION = 3; // bump only to add object stores / indexes (2: ledger, the signed shift log; 3: parked)
+  const DB_VERSION = 4; // bump only to add object stores / indexes (2: ledger, the signed shift log; 3: parked; 4: snaps)
   const SCHEMA_VERSION = 1; // bump when the shape of saved records changes (see MIGRATIONS)
-  const STORES = ['kv', 'employers', 'roles', 'shifts', 'entries', 'templates', 'dayRules', 'payslips', 'files', 'notifications', 'gaps', 'ledger', 'parked'];
+  const STORES = ['kv', 'employers', 'roles', 'shifts', 'entries', 'templates', 'dayRules', 'payslips', 'files', 'notifications', 'gaps', 'ledger', 'parked', 'snaps'];
+  // snaps: the automatic copies of the data kept inside the app (see "snapshots" below), never a file on the phone
   // parked: what only this phone held for an account that signed out (payslip files, their raw text, the AI key, the
   // code lock), kept for that account alone until it signs in here again (see "parked" below)
-  const LIST_STORES = STORES.filter((s) => s !== 'kv' && s !== 'files' && s !== 'parked');
+  const LIST_STORES = STORES.filter((s) => s !== 'kv' && s !== 'files' && s !== 'parked' && s !== 'snaps');
   // stores mirrored to the cloud (notifications are derived per device; files stay on the phone)
   const SYNC_STORES = ['employers', 'roles', 'shifts', 'entries', 'templates', 'dayRules', 'payslips', 'gaps', 'ledger'];
   // the signed shift log (core/ledger.js, app/shift-log.js) only grows: its records are never deleted or replaced,
@@ -157,6 +158,7 @@
     for (const s of LIST_STORES) S[s].forEach(markRec);
     markActive(); markSettings();
     if (S.meta.cloudUid) keepHint(); // a phone signed in before this version gets its hint now
+    await loadSnaps();
     // first run: default employer
     if (!S.employers.length) {
       S.employers = [root.Defaults.defaultEmployer()];
@@ -848,6 +850,8 @@
       console.warn('backup refused', e);
       throw root.U.oops('הקובץ פגום ואי אפשר לשחזר ממנו. הנתונים בטלפון לא השתנו.');
     }
+    // the data as it is now is kept inside the app first, so a wrong file or a wrong choice can be undone
+    try { await snapshot('before'); } catch (e) { console.warn('copy before restore skipped', e); }
     const keepKey = S.settings && S.settings.ai ? S.settings.ai.apiKey : '';
     const keepPlus = (S.settings && S.settings.plusKey) || '';
     // the code lock is this phone's: a backup never turns it off, changes the code or brings another phone's
@@ -904,6 +908,80 @@
     undoStack.length = 0;
     sweepSoon();
     emit({ type: 'restore', mode });
+  }
+  /* ---------------- snapshots: automatic copies kept inside the app ----------------
+   * Until 1.44.4 the automatic backup put a file in the phone's Downloads every week or month, with no tap (users told
+   * the owner "the app downloads something to my phone"). Nothing automatic leaves the app now: the copies are kept in
+   * this database ('snaps'), up to SNAP_KEEP automatic ones plus the one taken just before a restore. They hold what a
+   * backup file holds without the payslip files (exportBackup(false): no AI key, no lock, no Plus code), and they live
+   * only on this phone: uninstalling the app or clearing its data removes them, as "delete everything" and signing
+   * out do (wipe). Only a tap on "download" or "share" makes a file. */
+  const SNAP_KEEP = { auto: 4, before: 1 };
+  const SNAP_MAX = 12 * 1024 * 1024; // one copy bigger than this is not kept (characters of JSON)
+  const SNAP_ROOM = 20 * 1024 * 1024; // free space the phone keeps after a copy
+  let snapMeta = []; // what the settings list shows, newest first: { id, kind, at, shifts, size }
+  const metaOf = (r) => ({ id: r.id, kind: r.kind, at: r.at, shifts: r.shifts, size: r.size });
+  async function loadSnaps() {
+    try { snapMeta = (await getAll('snaps')).filter((r) => r && typeof r.id === 'string' && Number.isFinite(r.at)).map(metaOf).sort((a, b) => b.at - a.at); } catch (e) { snapMeta = []; }
+  }
+  /** The copies kept in the app, newest first (metadata only). */
+  function snaps() { return snapMeta.slice(); }
+  /** How much room the phone has left for this origin (Infinity when the browser does not say). */
+  async function freeRoom() {
+    try { if (navigator.storage && navigator.storage.estimate) { const e = await navigator.storage.estimate(); if (Number.isFinite(e.quota) && Number.isFinite(e.usage)) return e.quota - e.usage; } } catch (e) { /* unknown */ }
+    return Infinity;
+  }
+  async function dropSnap(id) {
+    await rawDel('snaps', id);
+    snapMeta = snapMeta.filter((m) => m.id !== id);
+  }
+  /** Keeps a copy of the data as it is now. kind: 'auto' (the weekly or monthly copy) or 'before' (just before a
+   *  restore). Returns the copy's metadata, or null when none was kept (switched off, the demo, nothing to keep, the
+   *  phone keeps no database, too big, no room). Never makes a file. */
+  async function snapshot(kind) {
+    kind = kind === 'before' ? 'before' : 'auto';
+    const B = (S.settings && S.settings.backup) || {};
+    if (memoryOnly || !S.settings || S.settings.demo || B.autoEvery === 'off') return null;
+    if (!S.shifts.length && !S.entries.length && !S.payslips.length) return null;
+    const json = JSON.stringify(await exportBackup(false));
+    if (json.length > SNAP_MAX) return null;
+    // the oldest copies of this kind go first: to stay within the count, then while the phone is short of room
+    const same = snapMeta.filter((m) => m.kind === kind).sort((a, b) => a.at - b.at);
+    while (same.length >= SNAP_KEEP[kind]) await dropSnap(same.shift().id);
+    while ((await freeRoom()) < json.length * 2 + SNAP_ROOM) {
+      if (!same.length) return null;
+      await dropSnap(same.shift().id);
+    }
+    const rec = { id: 'snap_' + root.U.uid(), kind, at: Date.now(), shifts: S.shifts.length, size: json.length, json };
+    await rawPut('snaps', rec);
+    if (memoryOnly) return null; // (the database stopped working while saving)
+    snapMeta = [metaOf(rec)].concat(snapMeta.filter((m) => m.id !== rec.id)).sort((a, b) => b.at - a.at);
+    return metaOf(rec);
+  }
+  /** The weekly or monthly copy, when it is due (on opening the app). Users from before this change whose file
+   *  download was due get this copy instead: nothing is downloaded. */
+  async function autoSnapshot(now) {
+    const B = (S.settings && S.settings.backup) || {};
+    if (!B.autoEvery || B.autoEvery === 'off' || S.settings.demo) return null;
+    const days = B.autoEvery === 'monthly' ? 30 : 7;
+    const last = snapMeta.filter((m) => m.kind === 'auto').reduce((a, m) => Math.max(a, m.at), 0);
+    if ((now || Date.now()) - last < days * root.U.DAY) return null;
+    const m = await snapshot('auto');
+    if (m) await setSettings((s) => { s.backup.lastAuto = m.at; });
+    return m;
+  }
+  /** One copy's data, as a backup file holds it (for importBackup). */
+  async function snapData(id) {
+    let req = null;
+    await run(['snaps'], 'readonly', (t) => { if (t) req = t.objectStore('snaps').get(id); });
+    const rec = req && req.result;
+    if (!rec || typeof rec.json !== 'string') throw root.U.oops('העותק הזה כבר לא שמור בטלפון.');
+    return JSON.parse(rec.json);
+  }
+  /** Removes every copy (the automatic copies switched off). */
+  async function dropSnaps() {
+    await run(['snaps'], 'readwrite', (t) => { if (t) t.objectStore('snaps').clear(); });
+    snapMeta = [];
   }
   /* ---------------- parked: an account's phone-only items while it is signed out ----------------
    * Signing out empties the phone, and what the account holds comes back with the next sign-in. Some things never go
@@ -1095,6 +1173,7 @@
     await run(clear, 'readwrite', (t) => { if (t) for (const s of clear) t.objectStore(s).clear(); });
     S.settings = root.Defaults.defaultSettings();
     S.meta = {}; S.activeShift = null;
+    snapMeta = []; // (the copies went with the rest: "delete everything" and signing out leave none behind)
     for (const s of LIST_STORES) S[s] = [];
     S.employers = [root.Defaults.defaultEmployer()];
     for (const s of LIST_STORES) S[s].forEach(markRec);
@@ -1106,7 +1185,7 @@
 
   root.Store = {
     S, load, on, apply, isMemoryOnly: () => memoryOnly, accountHint, keepHint, put, del, undo: undoAny, canUndo, setSettings, setMeta, setActive, find, clone,
-    putFile, getFile, delFile, sweepFiles, phoneOnly, park, parked, unpark, dropParked, exportBackup, importBackup, wipe, saveAll, SCHEMA_VERSION, DB_NAME, cleanIcon,
+    putFile, getFile, delFile, sweepFiles, phoneOnly, park, parked, unpark, dropParked, exportBackup, importBackup, snaps, snapshot, autoSnapshot, snapData, dropSnaps, wipe, saveAll, SCHEMA_VERSION, DB_NAME, cleanIcon,
     SYNC_STORES, APPEND_ONLY, LOCAL_SETTINGS, ACCOUNT_META, mergeMem, flushMem, sameRecord, applyRemote, markSynced, dirtyRecords, touchAll, forgetSyncState, applyRemoteSettings, applyRemoteActive,
   };
 })(typeof window !== 'undefined' ? window : globalThis);
