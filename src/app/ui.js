@@ -560,7 +560,7 @@
   async function saveFile(filename, content, type) {
     const blob = content instanceof Blob ? content : new Blob([content], { type: type || 'text/plain;charset=utf-8' });
     if (document.documentElement.classList.contains('app-shell')) return shareFile(filename, blob);
-    download(filename, blob);
+    root.UI.download(filename, blob); // through UI, so one stub or wrapper sees every file
     return false;
   }
   async function copyText(t) {

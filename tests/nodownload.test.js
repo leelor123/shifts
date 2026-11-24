@@ -180,7 +180,7 @@ T.test('every call that makes a file is one a tap starts', () => {
   const ALLOWED = {
     'app/app.js': 2, // App.doBackup: UI.download, and "share to Drive" on its toast (Settings > backup "download")
     'app/export.js': 4, // CSV (2), ICS, the summary picture: export buttons
-    'app/ui.js': 3, // the helpers themselves (shareFile, shareText: navigator.share; download: a.download)
+    'app/ui.js': 4, // the helpers themselves (shareFile, shareText: navigator.share; download: a.download; saveFile hands a download to UI.download)
     'app/views-settings.js': 1, // "back up and share to Drive"
     'app/views-payslip.js': 2, // a payslip PDF's share button; the share card
     'app/views-recap.js': 1, // the recap's share button
