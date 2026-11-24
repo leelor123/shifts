@@ -161,7 +161,9 @@
     const layersBefore = new Set(document.querySelectorAll(LAYERS));
     let target = el, d = null, t0 = 0, gone = false, calm = 0;
     const current = () => {
-      if (target.isConnected) return target;
+      // still drawn where it was tapped: the same control. One still in the page but somewhere else (a redraw gave
+      // its element to the next tab) is looked for at the tap's place like a replaced one.
+      if (target.isConnected && hits(target, cx, cy)) return target;
       for (let n = document.elementFromPoint(cx, cy); n && n !== document.body; n = n.parentElement) if (sig(n) === sig0) return n;
       return null;
     };
