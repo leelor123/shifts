@@ -162,7 +162,8 @@
 
   /* ---------------- what's new (once per big update, for people who already used the app) ---------------- */
   const WHATS_NEW = {
-    id: '1.44.3',
+    id: '1.44.4',
+    // 1.44.4 (the Android app feels like an app: no text selection, no pinch zoom) opens no sheet.
     // 1.44.3 (a card that asks Android testers for feedback) opens no sheet: whoever saw 1.44.0's sheet is not shown it again.
     // 1.44.2 (found on the user's phone) brings fixes only: whoever saw 1.44.0's sheet is not shown it again.
     // 1.44.1 (hours-report photos) brings fixes only: whoever saw 1.44.0's sheet is not shown it again.
@@ -173,7 +174,7 @@
     // 1.42.1 (the coin's spoken lines) brings fixes only: whoever saw 1.42.0's sheet is not shown it again.
     // (1.40.0's items, overtime by the law and the rest, stay in the full list of updates.)
     // 1.43.0: the daily message (the user, 21 Nov 2026); everyone gets it, with where to switch it off.
-    seen: ['1.44.0', '1.44.1', '1.44.2'],
+    seen: ['1.44.0', '1.44.1', '1.44.2', '1.44.3'],
     // true only when the items hold a real feature: a release of fixes alone opens no sheet (the user, 6 Nov 2026)
     features: true,
     items: [
@@ -219,6 +220,7 @@
   /* ---------------- every update (settings › about › all the updates) ---------------- */
   // newest first: [version, the day it went out, what changed — said to the user, not to a developer]
   const CHANGELOG = [
+    ['1.44.4', '2026-11-24', 'באפליקציה לאנדרואיד לחיצה ארוכה כבר לא מסמנת טקסט, והמסך לא מתקרב בצביטה, כמו באפליקציה רגילה. גודל הטקסט נקבע בהגדרות.'],
     ['1.44.3', '2026-11-24', 'מי שבודק את האפליקציה באנדרואיד יכול לשלוח לנו משוב ישירות מהמסך הראשי, ב-Google Play או כאן באפליקציה.'],
     ['1.44.2', '2026-11-23', 'האפליקציה נפתחת מהר יותר אחרי סגירה ובלי הבהוב לבן. הדוחות משווים את החודש עד היום לאותם ימים בחודש הקודם. חלון היום בלוח השנה מתעדכן מיד אחרי מחיקה או עריכה. התנתקות לא מוחקת יותר את קובצי התלושים מהטלפון. ולכפתור התחלת משמרת יש עיצוב חדש.'],
     ['1.44.1', '2026-11-23', 'דוח שעות מתמונה נקרא נכון גם כשבתמונה נמחקה ספרה משעת היציאה, וגם כשהשעה כתובה עם AM או PM.'],

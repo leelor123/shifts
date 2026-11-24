@@ -1033,6 +1033,14 @@
     // opened from the Android app (Trusted Web Activity): remembered for this session
     try { if (params.get('source') === 'twa' || document.referrer.startsWith('android-app://')) sessionStorage.setItem('androidApp', '1'); } catch (e) { /* ignore */ }
     try { App.androidApp = sessionStorage.getItem('androidApp') === '1'; } catch (e) { App.androidApp = false; }
+    // the installed app: no text selection on its controls and labels (styles-v3.css html.app-shell), and no pinch
+    // zoom, like an app (the user, 24 Nov 2026). Text size stays the person's: the app's own size setting and the
+    // phone's font size; Chrome's accessibility "force enable zoom" still overrides user-scalable=no.
+    if (App.androidApp || (root.matchMedia && root.matchMedia('(display-mode: standalone)').matches) || navigator.standalone) {
+      document.documentElement.classList.add('app-shell');
+      const vp = document.querySelector('meta[name="viewport"]');
+      if (vp && !/user-scalable/.test(vp.content)) vp.content += ', maximum-scale=1, user-scalable=no';
+    }
     App.pendingAction = params.get('action');
     // the website page that sent this device (?from=seo-<page>): the first one is kept, for the anonymous statistics
     if (root.Stats && !S.meta.firstFrom) { const src = root.Stats.cleanFrom(params.get('from')); if (src) Store.setMeta({ firstFrom: src }); }
