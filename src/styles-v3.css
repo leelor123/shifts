@@ -1973,3 +1973,11 @@ button, [role="button"], .btn, .nav a, .chip { -webkit-user-select: none; user-s
 html.app-shell body { -webkit-user-select: none; user-select: none; -webkit-touch-callout: none; }
 html.app-shell :is(input, textarea, [contenteditable="true"]) { -webkit-user-select: text; user-select: text; -webkit-touch-callout: default; }
 html.app-shell .wp-code-t { -webkit-user-select: none; user-select: none; }
+/* The installed app, the rest of what told it was a website (24 Nov 2026): no scroll bar on a touch screen (a thick grey
+   bar stood at a sheet's edge on the user's phone; the lists still scroll, and a mouse keeps its bar); no sideways
+   overscroll either, which Chrome turns into its "go back" arrow; a picture or a link is never dragged off the screen. */
+@media (pointer: coarse) { html.app-shell, html.app-shell * { scrollbar-width: none; } }
+html.app-shell, html.app-shell body { overscroll-behavior: none; }
+html.app-shell :is(img, a, svg) { -webkit-user-drag: none; }
+/* a payslip's picture, opened over the app (views-payslip.js data-file) */
+.ps-file-img { display: block; width: 100%; max-height: 64dvh; object-fit: contain; border-radius: 12px; background: var(--surface-2, transparent); }

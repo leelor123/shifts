@@ -554,6 +554,15 @@
     download(filename, blob);
     return false;
   }
+  /** A file the person asked for (a CSV export): in the installed app the phone's share sheet (Drive, Sheets, WhatsApp,
+   *  e-mail), as an app hands a file on; Chrome's download notice is the browser's. In a browser tab, a download as before.
+   *  True when the share sheet took it (or the person closed it): the caller's "saved in downloads" note is not shown. */
+  async function saveFile(filename, content, type) {
+    const blob = content instanceof Blob ? content : new Blob([content], { type: type || 'text/plain;charset=utf-8' });
+    if (document.documentElement.classList.contains('app-shell')) return shareFile(filename, blob);
+    download(filename, blob);
+    return false;
+  }
   async function copyText(t) {
     try { await navigator.clipboard.writeText(t); return true; } catch (e) {
       const ta = document.createElement('textarea'); ta.value = t; document.body.appendChild(ta); ta.select();
@@ -633,5 +642,5 @@
     fit();
   })();
 
-  root.UI = { on, syncInert, pushLayer, closeLayer, tile, skeleton, invalid, icon, esc, money, numv, delta, roleDot, roleLead, roleMini, rolePhoto, ink, emptyState, toast, toastMs, openSheet, closeTop, closeAll, dialog, confirm, promptText, onSwipe, vibrate, download, shareFile, copyText, copied, shareText, numIn, timeAgo, sheets };
+  root.UI = { on, syncInert, pushLayer, closeLayer, tile, skeleton, invalid, icon, esc, money, numv, delta, roleDot, roleLead, roleMini, rolePhoto, ink, emptyState, toast, toastMs, openSheet, closeTop, closeAll, dialog, confirm, promptText, onSwipe, vibrate, download, saveFile, shareFile, copyText, copied, shareText, numIn, timeAgo, sheets };
 })(typeof window !== 'undefined' ? window : globalThis);

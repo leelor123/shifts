@@ -136,6 +136,47 @@
     if (root.UI.vibrate) root.UI.vibrate(10);
     root.UI.copied(text, 'הטקסט הועתק');
   };
+  /** True for an address that is not the app itself: another site, or a page of this site outside the app (the
+   *  website's own pages). mailto:, tel: and an app's intent: belong to the phone and are not "leaving". */
+  App.leavesApp = function (href, here) {
+    let u, h;
+    try { h = new URL(here || location.href); u = new URL(href, h); } catch (e) { return false; }
+    if (!/^https?:$/.test(u.protocol)) return false;
+    if (u.origin !== h.origin) return true;
+    const dir = h.pathname.replace(/[^/]*$/, '');
+    return !(u.pathname === dir || new RegExp('^' + dir.replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + 'index(\\.[a-z]{2})?\\.html$').test(u.pathname));
+  };
+  /** The installed app: a tap on a link out of it opens a window over the app (target _blank), never in the app's
+   *  own place, where Chrome added an address bar and the app's screen was gone until Back. */
+  App.linkOut = function (e) {
+    if (e.defaultPrevented || e.button) return;
+    const a = e.target && e.target.closest && e.target.closest('a[href]');
+    if (!a || a.hasAttribute('download') || a.target === '_blank' || (a.getAttribute('href') || '').startsWith('#')) return;
+    if (!App.leavesApp(a.href)) return;
+    e.preventDefault();
+    root.open(a.href, '_blank', 'noopener');
+  };
+  /** Fields that ask for nothing personal (break minutes, an hourly rate, a note) say so: autocomplete="off", or
+   *  Chrome on Android offered addresses, cards and passwords in the bar above the keyboard (the user's phone, on
+   *  the break-minutes field, 24 Nov 2026). A field that does ask for something personal names it itself (email,
+   *  given-name, current-password), and is left as it is. Every field, as it is drawn. */
+  const NO_HINT = /^(checkbox|radio|file|range|hidden|button|submit|reset|color|image)$/;
+  App.fieldHint = (el) => { if (!el.hasAttribute('autocomplete') && !NO_HINT.test(el.type || '')) el.setAttribute('autocomplete', 'off'); };
+  let hintsOn = false;
+  App.fieldHints = function (scope) {
+    (scope || document).querySelectorAll('input, textarea').forEach(App.fieldHint);
+    if (hintsOn || typeof MutationObserver !== 'function') return;
+    hintsOn = true;
+    new MutationObserver((ms) => {
+      for (const m of ms) {
+        for (const n of m.addedNodes) {
+          if (n.nodeType !== 1) continue;
+          if (n.matches('input, textarea')) App.fieldHint(n);
+          else if (n.firstElementChild) n.querySelectorAll('input, textarea').forEach(App.fieldHint);
+        }
+      }
+    }).observe(document.documentElement, { childList: true, subtree: true });
+  };
   App.statusBar = function () {
     const meta = document.querySelector('meta[name="theme-color"]');
     if (!meta) return;
@@ -1058,7 +1099,15 @@
       // copying is the app's own: a long press on a chat message (support, the assistant) copies its text, with the
       // app's toast and a short buzz, instead of the browser's selection and its Google search bar
       document.addEventListener('contextmenu', App.copyOnHold);
+      // a long press that drags a picture or a link off the screen is the browser's, not the app's
+      document.addEventListener('dragstart', (e) => { if (!(e.target && e.target.closest && e.target.closest('input, textarea, [draggable="true"]'))) e.preventDefault(); });
+      // Chrome's own "install this app" offer has no place inside the installed app
+      root.addEventListener('beforeinstallprompt', (e) => e.preventDefault());
+      // a link to another site (Kol Zchut, gov.il, Bituah Leumi) opens over the app (in the Android app Chrome shows it
+      // in its own window with a close button), and the app is never navigated away (App.leavesApp)
+      document.addEventListener('click', App.linkOut);
     }
+    App.fieldHints(document); // fields that are not personal never get Chrome's address, card and password offers
     App.pendingAction = params.get('action');
     // the website page that sent this device (?from=seo-<page>): the first one is kept, for the anonymous statistics
     if (root.Stats && !S.meta.firstFrom) { const src = root.Stats.cleanFrom(params.get('from')); if (src) Store.setMeta({ firstFrom: src }); }

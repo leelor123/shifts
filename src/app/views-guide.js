@@ -61,7 +61,7 @@
   };
   App.actions['guide-notif'] = async () => {
     if (hasNotif()) { try { await Notification.requestPermission(); } catch (e) { /* ignore */ } }
-    if (hasNotif() && Notification.permission === 'denied') UI.toast('ההתראות חסומות בהגדרות הדפדפן. אפשר לאשר שם בכל רגע.');
+    if (hasNotif() && Notification.permission === 'denied') UI.toast(App.androidApp ? 'ההתראות חסומות בהגדרות הטלפון. מאשרים שם: אפליקציות › Shaati › התראות.' : 'ההתראות חסומות בהגדרות הדפדפן. אפשר לאשר שם בכל רגע.'); // the Android app has no browser settings: its notifications are the phone's
     App.rerender();
   };
 

@@ -168,7 +168,7 @@ self.addEventListener('fetch', (e) => {
         // the language's page, kept for next time (and offline)
         if (res.ok && !named) caches.open(SHELL).then((c) => c.put(page, res.clone())).catch(() => {});
         return res;
-      } catch (err) { return new Response(T(lang).offline, { status: 503, headers: { 'Content-Type': 'text/plain; charset=utf-8' } }); }
+      } catch (err) { return offlinePage(lang); }
     })());
     return;
   }
@@ -255,9 +255,26 @@ self.addEventListener('notificationclick', (e) => {
  * shared with the app: ./__shown). Inside the Android app the phone's own alarms show them (NoteCenter.java). */
 // what the worker says itself, in each language
 const WORDS = {
-  he: { offline: 'אין חיבור' }, ar: { offline: 'لا يوجد اتصال' }, ru: { offline: 'Нет подключения' }, en: { offline: 'No connection' },
-  fr: { offline: 'Pas de connexion' }, es: { offline: 'Sin conexión' }, am: { offline: 'ግንኙነት የለም' },
+  he: { offline: 'אין חיבור', first: 'בפתיחה הראשונה שעתי צריכה אינטרנט. אחר כך היא עובדת גם בלי.', retry: 'לנסות שוב' },
+  ar: { offline: 'لا يوجد اتصال', first: 'يحتاج Shaati إلى الإنترنت عند فتحه أول مرة. بعد ذلك يعمل بدونه أيضًا.', retry: 'حاول مرة أخرى' },
+  ru: { offline: 'Нет подключения', first: 'При первом запуске Shaati нужен интернет. Потом приложение работает и без него.', retry: 'Попробовать снова' },
+  en: { offline: 'No connection', first: 'Shaati needs the internet the first time it opens. After that it works offline too.', retry: 'Try again' },
+  fr: { offline: 'Pas de connexion', first: 'Shaati a besoin d’internet à la première ouverture. Ensuite, l’application fonctionne aussi hors ligne.', retry: 'Réessayer' },
+  es: { offline: 'Sin conexión', first: 'Shaati necesita internet la primera vez que se abre. Después funciona también sin conexión.', retry: 'Reintentar' },
+  am: { offline: 'ግንኙነት የለም', first: 'Shaati ለመጀመሪያ ጊዜ ሲከፈት ኢንተርኔት ያስፈልገዋል። ከዚያ በኋላ ያለ ኢንተርኔትም ይሰራል።', retry: 'እንደገና ይሞክሩ' },
 };
+/** No connection and no copy of the app kept yet (its first open, or the phone cleared it): a screen in the app's own
+ *  colours with a way to try again, not a line of plain text on white (in the Android app that was a browser's page).
+ *  The link with no address opens the same address again (?source=twa and all). */
+function offlinePage(lang) {
+  const w = T(lang), dir = lang === 'he' || lang === 'ar' ? 'rtl' : 'ltr';
+  const html = '<!doctype html><html lang="' + lang + '" dir="' + dir + '"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">'
+    + '<meta name="theme-color" content="#0d2b6b"><title>Shaati</title><style>html,body{margin:0;height:100%;background:#0d2b6b;color:#fff;-webkit-tap-highlight-color:transparent;-webkit-user-select:none;user-select:none;overscroll-behavior:none}'
+    + 'body{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;padding:24px;box-sizing:border-box;text-align:center;font:400 17px/1.5 system-ui,-apple-system,"Segoe UI",Roboto,Arial,sans-serif}'
+    + 'h1{margin:0;font-size:1.4rem;font-weight:700}p{margin:0;max-width:22em;opacity:.85;text-wrap:balance}a{margin-top:10px;display:inline-block;padding:13px 28px;border-radius:999px;background:#fff;color:#0d2b6b;font-weight:700;text-decoration:none;touch-action:manipulation;transition:transform .12s ease-out}a:active{transform:scale(.96)}</style></head>'
+    + '<body><h1>' + w.offline + '</h1><p>' + w.first + '</p><a href="">' + w.retry + '</a></body></html>';
+  return new Response(html, { status: 503, headers: { 'Content-Type': 'text/html; charset=utf-8' } });
+}
 const T = (l) => WORDS[l] || WORDS.he;
 function readDb() {
   return new Promise((resolve) => {

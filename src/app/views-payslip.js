@@ -1447,7 +1447,12 @@
             const f = await Store.getFile(slip.fileId);
             // only a PDF or a picture is opened, in a window with no way back into the app (never an HTML or SVG of the app's origin)
             const ft = f && f.blob && /^(application\/pdf|image\/(png|jpeg|webp|gif|heic|heif))$/.test(f.blob.type) ? f.blob.type : '';
-            if (ft) window.open(URL.createObjectURL(new Blob([f.blob], { type: ft })), '_blank', 'noopener'); else UI.toast('הקובץ לא נמצא');
+            // the installed app: a picture opens over the app, a PDF goes to the phone's share sheet (a PDF viewer,
+            // Drive); a blob: address opened as a window there is Chrome's, with an address bar
+            if (ft && document.documentElement.classList.contains('app-shell')) {
+              if (ft === 'application/pdf') await UI.shareFile(f.name || 'payslip.pdf', f.blob, slip.period || '');
+              else { const u = URL.createObjectURL(f.blob); await UI.dialog({ title: 'התלוש ששמרת', html: `<img class="ps-file-img" src="${u}" alt="">`, buttons: [{ label: 'סגירה', value: true }] }); URL.revokeObjectURL(u); }
+            } else if (ft) window.open(URL.createObjectURL(new Blob([f.blob], { type: ft })), '_blank', 'noopener'); else UI.toast('הקובץ לא נמצא');
           }
           if (b.hasAttribute('data-del')) {
             if (!(await UI.confirm('למחוק את התלוש מהארכיון?', '', 'מחק', true))) return;

@@ -31,8 +31,10 @@
         r.status === 'planned' ? 'מתוכננת' : 'בוצעה', r.overridden || r.dayRuleHit ? [...r.overrideList, r.dayRuleHit ? 'כלל יום' : ''].filter(Boolean).join('; ') : '', sh.overrideReason || '', sh.note || '',
       ]);
     }
-    UI.download(filename || 'shifts.csv', csv(rows), 'text/csv;charset=utf-8');
-    UI.toast('קובץ CSV נשמר. נפתח ב-\u2060Excel / Google Sheets');
+    // the installed app hands the file to the share sheet (UI.saveFile); the note is for a file saved in the downloads
+    UI.saveFile(filename || 'shifts.csv', csv(rows), 'text/csv;charset=utf-8').then((shared) => {
+      if (!shared) UI.toast('קובץ CSV נשמר. נפתח ב-\u2060Excel / Google Sheets');
+    });
   }
   function monthlyCsv() {
     if (!allowed()) return;
@@ -45,7 +47,7 @@
       const s = Engine.periodSummary(App.model, pk, emp.id);
       rows.push([pk, s.shifts, n2(s.hours), n2(s.hoursBy.regular), n2(s.hoursBy.ot1 + s.hoursBy.ot2), n2(s.restHours), n2(s.wage), n2(s.travel), n2(s.bonus + s.additions), n2(s.leavePay), n2(s.deductions), n2(s.gross), n2(s.net.net), n2(s.net.incomeTax), n2(s.net.bl + s.net.health), n2(s.net.pensionEmployee)]);
     }
-    UI.download('monthly-summary.csv', csv(rows), 'text/csv;charset=utf-8');
+    UI.saveFile('monthly-summary.csv', csv(rows), 'text/csv;charset=utf-8');
   }
 
   /* ---------------- calendar ---------------- */
