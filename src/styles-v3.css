@@ -1979,5 +1979,14 @@ html.app-shell .wp-code-t { -webkit-user-select: none; user-select: none; }
 @media (pointer: coarse) { html.app-shell, html.app-shell * { scrollbar-width: none; } }
 html.app-shell, html.app-shell body { overscroll-behavior: none; }
 html.app-shell :is(img, a, svg) { -webkit-user-drag: none; }
+/* The app's own scroll indicator in place of the hidden bars (sbar.js): a 3 px thumb in the app's ink at 46% with a
+   1 px ring of the ground, so it reads on the cream page and on the navy pay card; the same two tokens turn light in
+   dark. Inline-end (left in Hebrew), never takes a touch; display: none when gone, so it leaves no layer. The track is
+   placed by sbar.js (a list's box) or by the page (under the status bar, above the bottom bar). */
+.sbar { position: absolute; z-index: 6; width: 3px; pointer-events: none; contain: layout size style; opacity: 1 !important; animation: none !important; }
+.sbar[hidden] { display: none; }
+.sbar.pg { position: fixed; top: calc(var(--safe-t) + 8px); inset-inline-end: 3px; z-index: 35; }
+.sbar > i { display: block; width: 3px; height: 40px; border-radius: 3px; background: color-mix(in srgb, var(--brand-strong) 46%, transparent);
+  box-shadow: 0 0 0 1px color-mix(in srgb, var(--surface) 55%, transparent); will-change: transform; }
 /* a payslip's picture, opened over the app (views-payslip.js data-file) */
 .ps-file-img { display: block; width: 100%; max-height: 64dvh; object-fit: contain; border-radius: 12px; background: var(--surface-2, transparent); }
