@@ -25,7 +25,11 @@
   const PH = /--ph:\s*-?[\d.]+ms;?/; // a looping decoration's clock: differs on every draw, the live one is kept
 
   const strong = (n) => (n.nodeType === 1 ? n.id || n.getAttribute('data-key') || n.getAttribute('data-id') || '' : '');
-  const firstClass = (n) => { const c = n.getAttribute('class'); return c ? c.trim().split(/\s+/)[0] : ''; };
+  // a state written as the only class (class="${on ? 'on' : ''}") says how a control looks, not what it is: taken
+  // for its kind, the picked tab of a row never matched itself, so the row's buttons swapped elements on each switch
+  // and the tapped one moved to the other place (week to month in the calendar had no tap ring, 24 Nov 2026)
+  const STATE = new Set(['on', 'off', 'cur', 'ok', 'no', 'pl', 'unk', 'f', 'slip']);
+  const firstClass = (n) => { const c = n.getAttribute('class'); return c ? c.trim().split(/\s+/).filter((x) => !STATE.has(x))[0] || '' : ''; };
   const keyOf = (n) => (n.nodeType === 1 ? n.tagName + '|' + strong(n) + '|' + firstClass(n) : '#' + n.nodeType);
 
   const kept = (a, c) => STICKY.has(c) || (a.__keep && a.__keep.c.has(c));

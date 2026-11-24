@@ -208,3 +208,31 @@ T.test('every sheet that lists shifts or entries is live', () => {
   T.ok(/body: body\(\),\s*live: body,/.test(shift.slice(shift.indexOf('App.sheetsApi.daySheet'))), 'the day sheet is live');
   T.ok(/body: body\(\),\s*live: body,/.test(shift.slice(shift.indexOf('App.sheetsApi.shiftDetail'), shift.indexOf('App.weeklyCopies'))), 'the shift detail is live');
 });
+
+/* The calendar, 24 Nov 2026: week to month had no tap ring. A state written as an element's only class
+ * (class="${on ? 'on' : ''}") was taken by Dom.patch for the element's kind, so the picked tab never matched itself, the
+ * row's buttons swapped elements on every switch and the tapped one moved to the other place. Every such state class
+ * is one Dom.patch looks past; the ring finds its control at the tap's place, not by the element it was given. */
+T.section('a picked tab stays the same element');
+T.test('every class a condition writes alone (or empty) is a state Dom.patch looks past', () => {
+  const dom = read('app/dom.js');
+  const m = /const STATE = new Set\(\[([^\]]*)\]\)/.exec(dom);
+  T.ok(m && dom.includes('.filter((x) => !STATE.has(x))'), 'dom.js has the state set and its kind skips it');
+  const known = new Set(((m && m[1]) || '').split(',').map((x) => x.trim().slice(1, -1)));
+  const bad = new Set();
+  for (const f of appFiles) {
+    for (const c of read(f).matchAll(/class="\$\{([^}"]{0,120})\}"/g)) {
+      // one side of a choice is empty: the other is a state of the same element, not another kind of element
+      for (const s of c[1].matchAll(/\?\s*'([\w-]*)'\s*:\s*'([\w-]*)'/g)) {
+        if (s[1] && s[2]) continue;
+        const st = s[1] || s[2];
+        if (st && !known.has(st)) bad.add(`${f}: ${st}`);
+      }
+    }
+  }
+  T.eq([...bad].join(' | '), '', 'add the state to STATE in dom.js');
+  for (const s of ['on', 'off', 'cur', 'pl']) T.ok(known.has(s), s + ' is a state');
+});
+T.test('the tap ring looks for its control at the tap\'s place', () => {
+  T.ok(read('app/fx.js').includes('if (target.isConnected && hits(target, cx, cy)) return target;'), 'fx.js current() checks the place');
+});
