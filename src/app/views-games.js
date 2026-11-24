@@ -864,6 +864,9 @@
     function fit() {
       for (const t of box.querySelectorAll('.hw-card b')) {
         t.style.fontSize = '';
+        // a short name kept on one line that would need a letter under 12px (Russian "поездка на автобусе" at 320px)
+        // may break between its words after all: never a card or a sheet wider than the screen (hours-fit-test)
+        if (t.classList.contains('one') && t.clientWidth && t.scrollWidth * 12 > (t.clientWidth + 1) * parseFloat(getComputedStyle(t).fontSize)) t.classList.remove('one');
         const w = t.clientWidth;
         if (!w || t.scrollWidth <= w + 1) continue;
         let px = parseFloat(getComputedStyle(t).fontSize) * w / t.scrollWidth;
