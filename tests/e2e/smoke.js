@@ -1131,7 +1131,9 @@ let errors = [];
     const ctx = await (browser.createBrowserContext ? browser.createBrowserContext() : browser.createIncognitoBrowserContext());
     const p = await ctx.newPage();
     p.on('pageerror', (e) => errors.push('pageerror: ' + e.message));
-    p.on('console', (m) => { if (m.type() === 'error' && !/vibrate|favicon|ERR_|net::|Failed to fetch|dynamically imported/.test(m.text())) errors.push('console: ' + m.text()); });
+    // this page has no network (every request off localhost is refused below): a setting saved once the stubbed
+    // account is in (the statistics answer, 1.45) sends Firestore looking for its server, and it says so
+    p.on('console', (m) => { if (m.type() === 'error' && !/vibrate|favicon|ERR_|net::|Failed to fetch|dynamically imported|Could not reach Cloud Firestore backend/.test(m.text())) errors.push('console: ' + m.text()); });
     await p.setViewport({ width: 412, height: 860, deviceScaleFactor: 1, isMobile: true, hasTouch: true });
     await p.setRequestInterception(true);
     p.on('request', (r) => (r.url().startsWith(`http://localhost:${PORT}/`) ? r.continue() : r.abort()));
@@ -1226,8 +1228,19 @@ let errors = [];
     if (st.roles.join() !== 'מלצרות:50' || !st.birth || st.city !== 'חיפה' || st.travel !== 16 || st.cp !== 2.75 || st.name !== 'נועה' || !st.start) throw new Error('answers not saved ' + JSON.stringify(st));
     await shot('ob-home');
   });
-  await step('new user: a short tour points at the main buttons, then the first-steps card', async () => {
+  await step('new user: the statistics question first (switch on in Israel), then a short tour, then the first-steps card', async () => {
+    // a new account is asked once, right after the setup (views-home.js App.statsAsk); the tour waits for the answer
+    await p2.waitForSelector('.sheet.stats-ask.show', { timeout: 6000 });
+    if (await p2.$('.coach')) throw new Error('the tour came under the statistics question');
+    await sleep(400);
+    // the switch turned off first: a "no" (a "yes" here would send a record to the real cloud, which this test has not)
+    const on = await e2(() => document.querySelector('.sheet.stats-ask [data-ask-on]').checked);
+    if (on !== (await e2(() => App.statsAskOn()))) throw new Error('the switch does not start as the time zone says');
+    if (on) { await p2.click('.sheet.stats-ask .sa-switch'); await sleep(250); }
+    await p2.click('.sheet.stats-ask [data-ask-ok]');
     await p2.waitForSelector('.coach', { timeout: 4000 });
+    const ans = await e2(() => ({ asked: Store.S.settings.statsAsked, share: Store.S.settings.shareStats }));
+    if (!ans.asked || ans.share !== false) throw new Error('statistics answer: ' + JSON.stringify(ans));
     for (let i = 0; i < 5 && (await p2.$('.coach')); i++) { await p2.click('.coach-tip'); await sleep(350); }
     await sleep(400);
     if (await p2.$('.coach')) throw new Error('tour did not close');
