@@ -1268,7 +1268,10 @@
     const Intro = root.Intro;
     if (root.Plus) root.Plus.init().catch(() => {});
     if (Intro && Intro.hold && document.fonts && document.fonts.ready) requestAnimationFrame(() => Intro.hold(document.fonts.ready));
-    if (App.whatsNew) App.whatsNew();
+    // the statistics question (views-home.js) is this open's one ask when it is due: what's new waits for the next
+    // open; an open for a shortcut, a widget or a notification asks nothing
+    const asked = !action && App.statsAsk && App.statsAsk();
+    if (!asked && App.whatsNew) App.whatsNew();
     if (root.FriendsView) root.FriendsView.boot(); // an invitation that came with the address, accepted ones of mine
     if (root.Invite) root.Invite.boot(); // a month of Plus for inviting a friend (or being invited)
     if (root.WorkplaceCode) root.WorkplaceCode.boot(); // a workplace code that came with the address (its rules, to check and apply)

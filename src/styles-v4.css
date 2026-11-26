@@ -373,3 +373,14 @@ html[dir="ltr"] .ps-tr-he, html[dir="ltr"] .ps-tr-orig { text-align: left; }
 .home-hero .hh-cmp { margin: -8px auto 12px; font-size: .8rem; line-height: 1.35; color: rgba(255, 255, 255, .82); text-align: center; overflow-wrap: normal; word-break: keep-all; text-wrap: balance; }
 .home-hero .hh-cmp.up::before { content: "▲"; font-size: .6rem; margin-inline-end: 4px; color: #9fe0b0; vertical-align: 1px; }
 .home-hero .hh-cmp.down::before { content: "▼"; font-size: .6rem; margin-inline-end: 4px; color: rgba(255, 255, 255, .6); vertical-align: 1px; }
+/* a firm sheet (UI.openSheet firm: one question, answered only by its button) has no handle: its title keeps that room */
+.sheet.firm .sh-head { padding-block: 22px 4px; padding-inline: 16px; }
+/* the statistics question (views-home.js): what goes and what does not; the switch, on a card of its own, and the
+   button stay together at the bottom, in view on any screen */
+.stats-ask .sa-lead { margin: 0 0 4px; line-height: 1.6; }
+.stats-ask .sa-row { display: flex; gap: 12px; align-items: flex-start; padding: 8px 0; }
+.stats-ask .sa-row > div { min-width: 0; line-height: 1.5; }
+.stats-ask .sh-foot { flex-direction: column; gap: 10px; }
+.stats-ask .sh-foot .btn { flex: none; }
+.stats-ask .sa-switch { padding: 8px 14px; background: var(--surface-1); border: 1px solid var(--line); border-radius: 18px; }
+.stats-ask .sa-policy { display: inline-block; padding-block: 6px 2px; }

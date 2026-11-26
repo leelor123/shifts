@@ -363,7 +363,6 @@
     ['payday', () => paydayCard()],
     ['salary', () => (App.salaryCard ? App.salaryCard() : '')],
     ['slipcheck', () => (App.slipNudgeCard ? App.slipNudgeCard() : '')],
-    ['consent', () => consentCard()],
     ['wrapped', () => (App.wrappedCard ? App.wrappedCard() : '')],
     ['recap', () => (App.recapCard ? App.recapCard() : '')],
     ['bday', () => birthdayCard()],
@@ -517,24 +516,78 @@
     const home = navigator.standalone || (root.matchMedia && root.matchMedia('(display-mode: standalone)').matches);
     return ios && !home;
   };
-  /* anonymous statistics: asked once, and off until a yes; the two answers look the same (a consent is not nudged) (the user, 2 Nov: a cookie approval; launch check: an id the
-   * app does not need may be kept only with consent). The answer can be changed in Settings › account and sync. */
-  function consentCard() {
-    if (S.settings.statsAsked || !root.Stats) return '';
-    return `<div class="card ios-card consent-card"><div class="ic-head"><span class="ic-app">${icon('shield')}</span><div class="ic-t"><b>לשתף סטטיסטיקת שימוש?</b>
-        <div class="small">פעם ביום, בלי שם, אימייל או סכומים: כמה ימים השתמשת, כמה משמרות ואילו תכונות. רק מנהלי האפליקציה רואים את זה, כדי לדעת מה לשפר. אפשר לשנות בהגדרות. <a href="#" data-legal="privacy">מדיניות הפרטיות</a></div></div></div>
-      <div class="btn-row"><button class="btn tonal" data-act="stats-no">לא, תודה</button><button class="btn tonal" data-act="stats-yes">לשתף</button></div></div>`;
+  /* ---------------- the statistics question ----------------
+   * One sheet with one switch and one "confirm" (the user, 26 Nov 2026). It replaced the home card of 2 Nov, whose
+   * two equal buttons most people passed by. A signed-in person sees it once: an existing one on an open of the app,
+   * a new one right after the setup questions (the tour waits for it, views-guide.js). Nothing is sent before the
+   * confirm, and the switch's position then is the answer (errors.js reads the same answer for error reports).
+   * The switch starts on only in Israel's time zone: Israeli law takes a consent "explicitly or by implication"
+   * (Privacy Protection Law, s. 1), the GDPR does not count a switch that starts on (CJEU Planet49), so anywhere
+   * else it starts off. A "no" (here, on the old card or in Settings) is never asked again. A close without an
+   * answer (the back button) asks again after 3 days, and the sheet shows twice at most; Settings › account and
+   * sync keeps the switch. The admin is shown it once more as a preview, and from the dashboard at any time. */
+  const ASK_REST = 3 * U.DAY, ASK_MAX = 2;
+  const inIsrael = () => { try { return /^Asia\/(Jerusalem|Tel_Aviv)$/.test(Intl.DateTimeFormat().resolvedOptions().timeZone || ''); } catch (e) { return false; } };
+  const askState = () => S.meta.statsAsk || {};
+  App.statsAskOn = inIsrael; // the switch's first position (for the tests)
+  /** Is the question due for this person now? */
+  App.statsAskDue = function () {
+    if (!root.Stats || !S.settings.onboarded || S.settings.demo) return false;
+    if (!(root.Cloud && root.Cloud.user) && !S.meta.cloudUid) return false; // a guest sends nothing: asked once signed in
+    const st = askState();
+    if (App.isAdmin && !st.adminSeen) return true;
+    if (S.settings.statsAsked || (st.n || 0) >= ASK_MAX) return false;
+    return !st.at || Date.now() - st.at >= ASK_REST;
+  };
+  let askArmed = false; // the app is in (the first screen asked once): a return from the background may ask too
+  /** With the first screen: true when the question is on its way, the one ask of this open (what's new waits). */
+  App.statsAsk = function () {
+    askArmed = true;
+    if (App.statsAsking || !App.statsAskDue() || (root.Moments && root.Moments.quietHour(Date.now()))) return false;
+    App.statsAsking = true;
+    const later = (fn) => (root.Intro && root.Intro.after ? root.Intro.after(fn, 700) : setTimeout(fn, 700));
+    later(() => App.afterUnlock(() => {
+      // something else holds the screen: not now, a later open asks (nothing is counted)
+      if (App.blocking || App.tab !== 'home' || document.querySelector('.sheet, .dialog, .coach') || !App.statsAskDue()) { App.statsAsking = false; return; }
+      askSheet(false);
+    }));
+    return true;
+  };
+  if (typeof document !== 'undefined') document.addEventListener('visibilitychange', () => { if (!document.hidden && askArmed && !App.blocking) App.statsAsk(); });
+  App.actions['stats-ask-preview'] = () => {
+    if (!App.isAdmin) return;
+    UI.closeAll();
+    setTimeout(() => { if (!App.blocking && !document.querySelector('.sheet, .dialog')) askSheet(true); }, 350);
+  };
+  function askSheet(preview) {
+    App.statsAsking = true;
+    const st = askState();
+    // counted when shown, so a phone closed with the sheet up does not ask for ever; the admin's preview counts nothing
+    if (!preview) Store.setMeta({ statsAsk: Object.assign({}, st, App.isAdmin && !st.adminSeen ? { adminSeen: Date.now() } : { n: (st.n || 0) + 1 }, { at: Date.now() }) }).catch(() => {});
+    let answered = false;
+    UI.openSheet({
+      title: 'עוזרים לנו לשפר את שעתי?',
+      firm: true,
+      cls: 'stats-ask',
+      body: `<p class="sa-lead">פעם ביום שעתי שולחת לנו כמה מספרים על השימוש בה, בלי פרטים מזהים. רק מנהלי שעתי רואים אותם, כדי לדעת מה לשפר.</p>
+        <div class="sa-row">${UI.tile('check', 'mint')}<div><b>נשלח</b><div class="small muted">כמה ימים השתמשת, כמה משמרות ותלושים יש, אילו תכונות פעילות וקבוצת גיל (מתחת ל־18 או מעל). כשמשהו נכשל, גם דיווח טכני על התקלה.</div></div></div>
+        <div class="sa-row">${UI.tile('lock', 'sky')}<div><b>לא נשלח</b><div class="small muted">שם, אימייל, תאריכי משמרות, סכומים ומה שהקלדת.</div></div></div>
+        <a href="#" class="small sa-policy" data-legal="privacy">מדיניות הפרטיות</a>`,
+      // the switch stands by the button, in view on any screen (on a small phone it scrolled out of sight under the text)
+      foot: `<label class="switch-row sa-switch"><span class="body"><span class="t">שיתוף סטטיסטיקת שימוש</span><span class="s">זה לא חובה, וגם עם מתג כבוי האפליקציה עובדת אותו דבר. אפשר לשנות בכל רגע בהגדרות.</span></span><input type="checkbox" class="switch" data-ask-on ${inIsrael() ? 'checked' : ''}></label>
+        <button class="btn" data-ask-ok>אישור</button>`,
+      onMount: (el) => {
+        el.querySelector('[data-ask-ok]').onclick = () => {
+          if (answered) return;
+          answered = true;
+          const yes = el.querySelector('[data-ask-on]').checked;
+          UI.closeTop();
+          Store.setSettings((s) => { s.statsAsked = true; s.shareStats = yes; }).then(() => (yes ? root.Stats.report(true) : root.Stats.forget())).catch((e) => console.warn('stats answer', e));
+        };
+      },
+      onClose: () => { App.statsAsking = false; },
+    });
   }
-  App.actions['stats-yes'] = async () => {
-    await Store.setSettings((s) => { s.statsAsked = true; s.shareStats = true; });
-    if (root.Stats) root.Stats.report(true);
-    App.rerender();
-  };
-  App.actions['stats-no'] = async () => {
-    await Store.setSettings((s) => { s.statsAsked = true; s.shareStats = false; });
-    if (root.Stats) root.Stats.forget();
-    App.rerender();
-  };
   /* The way to the home screen differs by browser (iOS 26 moved Safari's share button behind ⋯):
    *  safari26: Safari 26 and later. Its UA keeps the system at 18_6, so the Safari version ("Version/26") tells.
    *    The compact layout (the default) has ⋯ next to the address bar; the bottom/top layouts show the share button.

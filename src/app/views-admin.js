@@ -49,7 +49,7 @@
         <div class="tiny muted">רק בטלפון הזה: לא נספר בסטטיסטיקה ולא נראה לשחקנים אחרים. אמיתי ייפתח לכולם כשחשבון התשלומים יוגדר.</div>
         <div class="seg">${simBtn('', 'כבוי')}${simBtn('free', 'משתמש חינמי')}${simBtn('plus', 'מנוי Plus')}</div>
         <div class="tiny adm-preview-l">חינמי: מכחול על כרטיס השכר בבית, ניסיון חינם ל-3 ימים, מכסות לניתוח המתקדם (דוחות) ולייצוא, ושורת Plus בהגדרות. מנוי: 12 עיצובים (הגדרות › מראה ונעילה), רקע בטבלת האלופים ותג במסך הבית.</div>
-        <div class="btn-row"><button class="btn tonal sm" data-act="plus-sim-offer">${icon('sparkle', 's')} להציג את ההצעה בבית</button><button class="btn text sm" data-act="plus-sim-reset">איפוס ניסיון ומכסות</button><button class="btn text sm" data-act="review-preview">${icon('star', 's')} מסך בקשת הדירוג</button></div></div>`;
+        <div class="btn-row"><button class="btn tonal sm" data-act="plus-sim-offer">${icon('sparkle', 's')} להציג את ההצעה בבית</button><button class="btn text sm" data-act="plus-sim-reset">איפוס ניסיון ומכסות</button><button class="btn text sm" data-act="review-preview">${icon('star', 's')} מסך בקשת הדירוג</button><button class="btn text sm" data-act="stats-ask-preview">${icon('chart', 's')} מסך שאלת הסטטיסטיקה</button></div></div>`;
     return `<div class="section-title">${icon('sparkle', 's')} Shaati Plus והכנסות</div>
       ${preview}
       <div class="card"><div class="kpis">${kpi(C.monthly ? 'מנויים' : 'קונים', buyers, `${play} באנדרואיד · ${web} באתר`)}${kpi('משלמים', U.num(share, 1) + '%', `מכל המשתמשים · היעד ${GOAL}%`)}${kpi(C.monthly ? 'הכנסה בחודש' : 'הכנסה משוערת', money(gross), '≈ ' + money(net) + ' אחרי עמלות')}${kpi('קנו אחרי ניסיון', pct(triedBought, tried) + '%', `${tried} ניסו בחינם`)}</div>

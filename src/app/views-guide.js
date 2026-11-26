@@ -150,19 +150,26 @@
     // right after the setup questions: a short tour of the three things that matter
     if (!App.firstRun || S.meta.coachDone) return;
     App.firstRun = false;
-    setTimeout(() => {
-      if (App.tab !== 'home' || App.blocking || document.querySelector('.sheet, .dialog')) return;
+    // the statistics question comes first (views-home.js App.statsAsk): the tour waits until it is answered and its
+    // sheet has gone (a minute at most), then starts; any other sheet or dialog in the way skips the tour, as before
+    let waits = 0;
+    const start = () => {
+      if (App.tab !== 'home' || App.blocking) return;
+      if (App.statsAsking) waits = Math.max(waits, 1);
+      if (App.statsAsking || document.querySelector('.sheet, .dialog')) { if (waits && waits++ < 150) setTimeout(start, 400); return; }
       UI.coach([
         { el: '.home-action .btn.start', text: 'כשמגיעים לעבודה לוחצים כאן.<br>בסוף לוחצים "סיים משמרת". זה הכול!' },
         { el: '#nav .fab', text: 'שכחת ללחוץ? כאן מוסיפים משמרת שכבר הייתה, חופשה, בונוס ותלוש', round: true },
         { el: '.home-hero', text: 'וכאן רואים כמה הרווחת החודש.<br>לחיצה פותחת את כל הפירוט' },
       ], () => Store.setMeta({ coachDone: Date.now() }).catch(() => {}));
-    }, 900);
+    };
+    setTimeout(start, 900);
   };
 
   /* ---------------- what's new (once per big update, for people who already used the app) ---------------- */
   const WHATS_NEW = {
-    id: '1.44.4',
+    id: '1.45.0',
+    // 1.45.0 (the statistics question, a sheet of its own: views-home.js App.statsAsk) opens no what's-new sheet.
     // 1.44.4 (the Android app feels like an app: no text selection, no pinch zoom) opens no sheet.
     // 1.44.3 (a card that asks Android testers for feedback) opens no sheet: whoever saw 1.44.0's sheet is not shown it again.
     // 1.44.2 (found on the user's phone) brings fixes only: whoever saw 1.44.0's sheet is not shown it again.
@@ -174,7 +181,7 @@
     // 1.42.1 (the coin's spoken lines) brings fixes only: whoever saw 1.42.0's sheet is not shown it again.
     // (1.40.0's items, overtime by the law and the rest, stay in the full list of updates.)
     // 1.43.0: the daily message (the user, 21 Nov 2026); everyone gets it, with where to switch it off.
-    seen: ['1.44.0', '1.44.1', '1.44.2', '1.44.3'],
+    seen: ['1.44.0', '1.44.1', '1.44.2', '1.44.3', '1.44.4'],
     // true only when the items hold a real feature: a release of fixes alone opens no sheet (the user, 6 Nov 2026)
     features: true,
     items: [
@@ -220,6 +227,7 @@
   /* ---------------- every update (settings › about › all the updates) ---------------- */
   // newest first: [version, the day it went out, what changed — said to the user, not to a developer]
   const CHANGELOG = [
+    ['1.45.0', '2026-11-26', 'שעתי שואלת פעם אחת, בחלון קטן, אם לשתף סטטיסטיקת שימוש בלי פרטים מזהים. שום דבר לא נשלח לפני שלוחצים "אישור", ואפשר לשנות את התשובה בכל רגע בהגדרות.'],
     ['1.44.4', '2026-11-24', 'האפליקציה לאנדרואיד מרגישה יותר כמו אפליקציה: בלי סימון טקסט בלחיצה ארוכה ובלי הגדלה בצביטה, עם פס גלילה משלה. הגיבוי האוטומטי נשמר בתוך האפליקציה ולא מוריד קבצים לטלפון. והמעבר בין חודש לשבוע בלוח השנה מגיב בשני הכיוונים.'],
     ['1.44.3', '2026-11-24', 'מי שבודק את האפליקציה באנדרואיד יכול לשלוח לנו משוב ישירות מהמסך הראשי, ב-Google Play או כאן באפליקציה.'],
     ['1.44.2', '2026-11-23', 'האפליקציה נפתחת מהר יותר אחרי סגירה ובלי הבהוב לבן. הדוחות משווים את החודש עד היום לאותם ימים בחודש הקודם. חלון היום בלוח השנה מתעדכן מיד אחרי מחיקה או עריכה. התנתקות לא מוחקת יותר את קובצי התלושים מהטלפון. ולכפתור התחלת משמרת יש עיצוב חדש.'],

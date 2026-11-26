@@ -292,17 +292,20 @@
     if (wasTop && o && o.isConnected && o !== document.body && !o.closest('[inert]')) { try { o.focus({ preventScroll: true }); } catch (e) { /* gone */ } }
   }
   function openSheet(opts) {
-    // opts: { title, body (html), foot (html), full, onMount(el), onClose(), cls }
+    // opts: { title, body (html), foot (html), full, onMount(el), onClose(), cls, firm }
+    // firm: a question that only its own button answers (views-home.js, the statistics): no handle, no ✕, no swipe down and
+    // no tap outside, so a stray touch never answers or loses it. The back button still closes it.
+    const firm = !!opts.firm;
     const bd = document.createElement('div');
     bd.className = 'backdrop';
     const sh = document.createElement('div');
-    sh.className = 'sheet' + (opts.full ? ' full' : '') + (opts.cls ? ' ' + opts.cls : '');
+    sh.className = 'sheet' + (opts.full ? ' full' : '') + (firm ? ' firm' : '') + (opts.cls ? ' ' + opts.cls : '');
     sh.setAttribute('role', 'dialog');
     sh.setAttribute('aria-modal', 'true');
     // screen readers announce the sheet by its title
     const hid = 'sh-t-' + (++sheetSeq);
     sh.setAttribute('aria-labelledby', hid);
-    sh.innerHTML = `<div class="grab"></div><div class="sh-head"><h2 id="${hid}">${opts.title || ''}</h2><button class="icon-btn" data-close aria-label="סגור">${icon('x')}</button></div><div class="sh-body">${opts.body || ''}</div>${opts.foot ? `<div class="sh-foot">${opts.foot}</div>` : ''}`;
+    sh.innerHTML = `${firm ? '' : '<div class="grab"></div>'}<div class="sh-head"><h2 id="${hid}">${opts.title || ''}</h2>${firm ? '' : `<button class="icon-btn" data-close aria-label="סגור">${icon('x')}</button>`}</div><div class="sh-body">${opts.body || ''}</div>${opts.foot ? `<div class="sh-foot">${opts.foot}</div>` : ''}`;
     document.body.append(bd, sh);
     const entry = { bd, sh, opts, closed: false, pushed: false };
     // a sheet on its way out takes no more taps: "save" pressed twice (the second while the sheet was closing) saved a
@@ -311,14 +314,16 @@
     entry.modal = modalOpen([bd, sh], sh);
     track(entry);
     requestAnimationFrame(() => { bd.classList.add('show'); sh.classList.add('show'); });
-    bd.onclick = () => closeTop();
-    sh.querySelector('[data-close]').onclick = () => closeTop();
-    // swipe down on the grab handle to close
-    let y0 = null;
-    const head = sh.querySelector('.grab');
-    sh.querySelector('.sh-head').addEventListener('touchstart', (e) => { y0 = e.touches[0].clientY; }, { passive: true });
-    head.addEventListener('touchstart', (e) => { y0 = e.touches[0].clientY; }, { passive: true });
-    sh.addEventListener('touchend', (e) => { if (y0 != null && e.changedTouches[0].clientY - y0 > 80) closeTop(); y0 = null; });
+    if (!firm) {
+      bd.onclick = () => closeTop();
+      sh.querySelector('[data-close]').onclick = () => closeTop();
+      // swipe down on the grab handle to close
+      let y0 = null;
+      const head = sh.querySelector('.grab');
+      sh.querySelector('.sh-head').addEventListener('touchstart', (e) => { y0 = e.touches[0].clientY; }, { passive: true });
+      head.addEventListener('touchstart', (e) => { y0 = e.touches[0].clientY; }, { passive: true });
+      sh.addEventListener('touchend', (e) => { if (y0 != null && e.changedTouches[0].clientY - y0 > 80) closeTop(); y0 = null; });
+    }
     if (opts.live) liveSheet(entry);
     if (opts.onMount) opts.onMount(sh, entry);
     return entry;

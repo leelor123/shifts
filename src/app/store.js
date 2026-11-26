@@ -228,6 +228,8 @@
     slipNudge: { kind: 'latest' },
     // the Android testers' card (review.js): the days it showed (n), the last "not now", and whether feedback was given
     testerNudge: { kind: 'latest' },
+    // the statistics question (views-home.js): when it last showed, how many times (n) and the admin's one preview
+    statsAsk: { kind: 'latest' },
   };
   const isMap = (v) => !!v && typeof v === 'object' && !Array.isArray(v);
   const verNum = (v) => String(v || '').split('.').map((x) => +x || 0);
