@@ -1110,6 +1110,8 @@
     if (root.Stats && !S.meta.firstFrom) { const src = root.Stats.cleanFrom(params.get('from')); if (src) Store.setMeta({ firstFrom: src }); }
     // the suggestion at one of several workplaces (core/arrive.js): the employer its shift starts at
     App.pendingEmp = App.pendingAction === 'start' && root.Arrive ? root.Arrive.cleanEmp(params.get('emp')) : '';
+    // its "start a shift" from the Android app 1.45 (?action=arrive&t=…&emp=…): the employer, and when the person came
+    if (App.pendingAction === 'arrive' && root.Arrive) { App.pendingEmp = root.Arrive.cleanEmp(params.get('emp')); App.pendingArrive = root.Arrive.arrivedAt(params.get('t'), Date.now()); }
     // a tap on the phone's notification: what it is about (core/noteplan.js noteUrl)
     App.pendingNote = App.pendingAction === 'note' ? { type: params.get('type') || '', key: params.get('key') || '', ref: params.get('ref') || '', data: { pk: params.get('pk') || '', year: params.get('year') || '' } } : null;
     App.pendingTag = root.Nfc ? root.Nfc.readOpen(location.search) : null; // ?action=nfc&tag=… (a touch on an NFC sticker)
@@ -1231,8 +1233,12 @@
   };
   App.doAction = function (action) {
     App.afterUnlock(() => {
-      const emp = action === 'start' && App.pendingEmp ? S.employers.find((e) => e.id === App.pendingEmp) : null;
+      const emp = (action === 'start' || action === 'arrive') && App.pendingEmp ? S.employers.find((e) => e.id === App.pendingEmp) : null;
+      const came = App.pendingArrive;
       App.pendingEmp = '';
+      App.pendingArrive = null;
+      // the arrival suggestion: when did you come, and are you still there (app/arrive.js)
+      if (action === 'arrive' && !S.activeShift && App.arriveSheet) App.arriveSheet(emp, came);
       if (action === 'start' && !S.activeShift) UI.confirm('התחל משמרת', emp && S.employers.length > 1 ? emp.name || '' : '', 'התחלה').then((ok) => { if (ok && !S.activeShift) startAt(emp); });
       if (action === 'stop' && S.activeShift) UI.confirm('סיום משמרת', '', 'סיום').then((ok) => { if (ok && S.activeShift) App.stopShift(); });
       if (action === 'note' && App.openNote) App.openNote(App.pendingNote || {}); // a tap on the phone's notification (core/noteplan.js noteUrl)

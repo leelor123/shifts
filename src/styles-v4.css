@@ -384,3 +384,8 @@ html[dir="ltr"] .ps-tr-he, html[dir="ltr"] .ps-tr-orig { text-align: left; }
 .stats-ask .sh-foot .btn { flex: none; }
 .stats-ask .sa-switch { padding: 8px 14px; background: var(--surface-1); border: 1px solid var(--line); border-radius: 18px; }
 .stats-ask .sa-policy { display: inline-block; padding-block: 6px 2px; }
+/* the arrival suggestion's question (app/arrive.js): the time large under the title, the question, the two answers */
+.arrive-ask .aa-place { margin: 0 0 8px; }
+.arrive-ask .aa-time { margin: 6px 0 0; }
+.arrive-ask .aa-time .pk-field { min-height: 64px; font-size: 1.6rem; font-variant-numeric: tabular-nums; }
+.arrive-ask .aa-q { margin: 20px 4px 4px; font-size: 1.15rem; font-weight: 700; }

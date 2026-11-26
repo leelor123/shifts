@@ -155,7 +155,8 @@
       if (u.origin !== location.origin) return;
       const p = u.searchParams;
       const action = p.get('action');
-      if (action === 'start') App.pendingEmp = root.Arrive ? root.Arrive.cleanEmp(p.get('emp')) : '';
+      if (action === 'start' || action === 'arrive') App.pendingEmp = root.Arrive ? root.Arrive.cleanEmp(p.get('emp')) : '';
+      if (action === 'arrive') App.pendingArrive = root.Arrive ? root.Arrive.arrivedAt(p.get('t'), Date.now()) : null;
       if (action === 'note') App.pendingNote = { type: p.get('type') || '', key: p.get('key') || '', ref: p.get('ref') || '', data: { pk: p.get('pk') || '', year: p.get('year') || '' } };
       if (action && App.doAction && !App.blocking) App.doAction(action);
       else if (!action && !App.blocking && !document.querySelector('.sheet, .dialog') && App.tab !== 'home') App.go('home');

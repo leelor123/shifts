@@ -5,7 +5,8 @@
  * asks Android for a geofence (android/widgets/java/WorkGeo.java); when the phone stays inside it for a few minutes
  * the app shows a notification that suggests starting a shift, and when the phone leaves it while a shift runs, one
  * that suggests ending it. Nothing starts or ends by itself: someone may come to the workplace without working, and
- * the notification's button opens the app at ?action=start / ?action=stop, which asks once more (App.doAction).
+ * the notification's button opens the app at ?action=arrive (from the Android app 1.45: when did you come, are you still
+ * there? app/arrive.js App.arriveSheet; before it ?action=start) / ?action=stop, which asks once more (App.doAction).
  *
  * The spot never reaches this page, the app's database, the cloud, Sentry or the statistics: the page only learns
  * whether the feature is on and its radius. The decision below is the one WorkGeo.decide makes on the phone; the
@@ -42,6 +43,24 @@
     .replace(/^.*$/s, (t) => Array.from(t).slice(0, 30).join(''));
   /** An employer id the suggestion starts the shift at (?action=start&emp=…); anything else: none. */
   const cleanEmp = (e) => (typeof e === 'string' && /^[\w-]{1,40}$/.test(e) ? e : '');
+  /** When the person came, from the arrival suggestion's ?action=arrive&t= (the moment the phone had stayed DWELL_MS
+   *  inside, from the Android app 1.45): that moment less DWELL_MS, on the whole minute. Anything else (not a number, in
+   *  the future, over a day old): null, and the question starts at now. */
+  function arrivedAt(t, now) {
+    const n = Number(t);
+    if (t == null || t === '' || !Number.isFinite(n) || n > now + MIN || now - n > 24 * 60 * MIN) return null;
+    return Math.min(now, Math.floor((n - DWELL_MS) / MIN) * MIN);
+  }
+  /** A time of day typed as 'HH:MM', as the last such moment up to now: today, or yesterday when today's is still to
+   *  come (the suggestion answered after midnight, about an arrival before it). Not a time: null. */
+  function lastAt(hm, now) {
+    const m = /^(\d\d):(\d\d)$/.exec(String(hm == null ? '' : hm));
+    if (!m || +m[1] > 23 || +m[2] > 59) return null;
+    const d = new Date(now);
+    d.setHours(+m[1], +m[2], 0, 0);
+    if (d.getTime() > now) { d.setDate(d.getDate() - 1); d.setHours(+m[1], +m[2], 0, 0); }
+    return d.getTime();
+  }
   /** The id a new place gets: the first of p1..p3 not taken, or null when MAX_PLACES are saved. */
   function nextId(places) {
     const used = new Set((places || []).map((p) => p.id));
@@ -100,6 +119,6 @@
     return s;
   }
 
-  root.Arrive = { RADII, DEFAULT_R, AWAY_MS, LEAVE_GAP_MS, DWELL_MS, MAX_PLACES, PLACE_ID, PACKAGE, SCHEME, radius, cleanName, cleanEmp, nextId, decide, setupUrl, readStatus };
+  root.Arrive = { RADII, DEFAULT_R, AWAY_MS, LEAVE_GAP_MS, DWELL_MS, MAX_PLACES, PLACE_ID, PACKAGE, SCHEME, radius, cleanName, cleanEmp, nextId, decide, setupUrl, readStatus, arrivedAt, lastAt };
   if (typeof module !== 'undefined') module.exports = root.Arrive;
 })(typeof window !== 'undefined' ? window : globalThis);

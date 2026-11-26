@@ -80,6 +80,7 @@
     <string name="w_geo_start">Commencer le service</string>
     <string name="w_geo_stop">Terminer le service</string>
     <string name="w_geo_off">Désactiver les suggestions</string>
+    <string name="w_geo_no">Non merci</string>
     <string name="w_geo_disc_t">Suggestion en arrivant au travail</string>
     <string name="w_geo_disc">Shaati collecte des données de localisation pour activer la suggestion en arrivant au travail, même lorsque l\'application est fermée ou n\'est pas utilisée. Quand vous arrivez sur l\'un des lieux de travail enregistrés (jusqu\'à 3), une notification vous propose de commencer un service. Si vous partez pendant un service, une notification vous propose de le terminer. Votre position est vérifiée sur ce téléphone et n\'est jamais envoyée nulle part. Aucun service ne commence ni ne se termine sans votre geste. Désactivez-la à tout moment dans les réglages de Shaati ou depuis la notification.</string>
     <string name="w_geo_go">Continuer</string>

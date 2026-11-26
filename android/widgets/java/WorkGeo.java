@@ -43,6 +43,8 @@ final class WorkGeo {
     private static final String PREFS = "shaati_geo";
     static final String ACTION_FENCE = "io.github.leelor123.shifts.GEO_FENCE";
     static final String ACTION_OFF = "io.github.leelor123.shifts.GEO_OFF";
+    // the arrival suggestion's "no, thanks" (1.45): only closes it; the place keeps its suggestions
+    static final String ACTION_NO = "io.github.leelor123.shifts.GEO_NO";
     static final int MAX_PLACES = 3;
     static final String TAG_IN = "geo-arrive", TAG_OUT = "geo-leave", TAG_SUM = "geo-group";
     private static final String GROUP = "shaati-geo"; // not NoteCenter's group: the web app's "keep" never closes these
@@ -403,6 +405,18 @@ final class WorkGeo {
         return PendingIntent.getBroadcast(c, 7321 + (id == null ? 0 : id.hashCode()), i, PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE);
     }
 
+    /** The arrival suggestion's "no, thanks": it closes, and nothing else changes. */
+    private static PendingIntent noIntent(Context c) {
+        Intent i = new Intent(c, WorkGeoReceiver.class).setAction(ACTION_NO);
+        return PendingIntent.getBroadcast(c, 7318, i, PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE);
+    }
+
+    /** "No, thanks" pressed: the arrival suggestion goes (with the group's summary when it was the last). */
+    static void dismiss(Context c) {
+        NotificationManager nm = (NotificationManager) c.getSystemService(Context.NOTIFICATION_SERVICE);
+        if (nm != null) cancel(nm, TAG_IN);
+    }
+
     /** One suggestion closed, and the group's summary with it when no suggestion is left. */
     private static void cancel(NotificationManager nm, String tag) {
         nm.cancel(tag, 1);
@@ -440,10 +454,13 @@ final class WorkGeo {
                     .setTimeoutAfter((start ? 3 * 60 : 2 * 60) * MIN)
                     .setWhen(now)
                     .setShowWhen(true)
-                    // the employer of this place: the shift starts there (the app still asks first)
+                    // arriving (the user, 26 Nov 2026): "start a shift" or "no, thanks". The start opens the app at
+                    // ?action=arrive with this moment (t) and the place's employer: the app asks when the person came and
+                    // whether they are still at work (app/arrive.js App.arriveSheet). Leaving: "end the shift" or turn
+                    // that place's suggestions off.
                     .addAction(0, lc.getString(start ? R.string.w_geo_start : R.string.w_geo_stop),
-                            NoteCenter.open(c, start ? (emp.isEmpty() ? "./?action=start" : "./?action=start&emp=" + Uri.encode(emp)) : "./?action=stop", tag.hashCode() + 1))
-                    .addAction(0, lc.getString(R.string.w_geo_off), offIntent(c, id));
+                            NoteCenter.open(c, start ? "./?action=arrive&t=" + now + (emp.isEmpty() ? "" : "&emp=" + Uri.encode(emp)) : "./?action=stop", tag.hashCode() + 1))
+                    .addAction(0, lc.getString(start ? R.string.w_geo_no : R.string.w_geo_off), start ? noIntent(c) : offIntent(c, id));
             // which place, when it has a name (the user's own word for it, e.g. the employer)
             if (!name.isEmpty()) b.setSubText(name);
             nm.notify(tag, 1, b.build());

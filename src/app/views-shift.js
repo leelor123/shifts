@@ -108,8 +108,9 @@
       const guess = !src && !t ? (other ? App.usualHours() : App.shiftGuess(Date.now())) : null;
       const date = opts.date || (guess ? guess.date : U.todayKey());
       // the employer and the role belong together: the role's employer wins (the last role may be another employer's)
-      const roleId = (src && src.roleId) || (t && t.roleId) || S.meta.lastRole || (roles[0] && roles[0].id);
-      const employerId = root.Workplace.employerOf(S.roles, roleId, (src && src.employerId) || (t && t.employerId) || emp.id);
+      // opts.roleId / employerId / startT / endT: hours that are already known (the arrival suggestion, app/arrive.js)
+      const roleId = (src && src.roleId) || (t && t.roleId) || opts.roleId || S.meta.lastRole || (roles[0] && roles[0].id);
+      const employerId = root.Workplace.employerOf(S.roles, roleId, (src && src.employerId) || (t && t.employerId) || opts.employerId || emp.id);
       const d = {
         id: null, status: opts.status || (date > U.todayKey() ? 'planned' : 'done'), statusTouched: !!opts.status,
         employerId, date,
@@ -121,6 +122,8 @@
         breakPaid: src ? src.breakPaid !== false : t ? t.breakPaid !== false : App.employer(employerId).defaultBreakPaid !== false,
         noTravel: src ? !!src.noTravel : t ? !!t.noTravel : false, note: '', items: [], ov: emptyOv(), reason: '',
       };
+      if (!src && !t && opts.startT) d.startT = opts.startT;
+      if (!src && !t && opts.endT) d.endT = opts.endT;
       return d;
     }
     const ov = emptyOv();
@@ -364,6 +367,63 @@
       breakMin: sh.breakMin == null ? null : sh.breakMin, breakPaid: sh.breakPaid !== false, noTravel: !!sh.noTravel,
       splits: (sh.splits || []).map((x) => ({ t: U.epochHM(x.at), roleId: x.roleId })),
     } }], 'שמירת תבנית', 'התבנית נשמרה');
+  };
+
+  /* ---------------- the suggestion's "start a shift" (?action=arrive, the Android app from 1.45) ----------------
+   * (here, with the shifts: app/arrive.js is the setting, which never starts a shift)
+   * The user, 26 Nov 2026: the arrival suggestion has two buttons, "start a shift" and "no, thanks". The start asks when
+   * the person came (ready with the moment the phone had stayed inside, less those minutes: core/arrive.js arrivedAt)
+   * and whether they are still at work. Still there: the timer runs from that time. Gone already: the usual "add a
+   * shift", with that time as its start and now as its end, to check and save. A time still to come today reads as
+   * yesterday's (core/arrive.js lastAt); one over 16 hours back is a slip of the finger, not a shift, and is refused. */
+  const LONG_AGO = 16 * 3600000;
+  /** The role a shift at this employer starts in: the last one used there, or its only one; null: asked. */
+  function roleAt(emp) {
+    const roles = emp ? App.roles(emp.id) : App.roles();
+    return roles.find((r) => r.id === S.meta.lastRole) || (roles.length === 1 ? roles[0] : null);
+  }
+  App.arriveSheet = function (emp, came) {
+    const now = Date.now();
+    const t0 = came != null && came <= now && now - came < U.DAY ? came : now;
+    let done = false;
+    UI.openSheet({
+      title: 'באיזו שעה הגעת?',
+      cls: 'arrive-ask',
+      body: `${emp && S.employers.length > 1 && emp.name ? `<p class="small muted aa-place">${esc(emp.name)}</p>` : ''}
+        <label class="field aa-time"><span class="lbl sr">שעת ההגעה</span><input class="input" type="time" data-aa-time value="${U.epochHM(t0)}"></label>
+        <p class="aa-q">עדיין בעבודה?</p>`,
+      foot: '<button class="btn tonal" data-aa-gone>לא, כבר סיימתי</button><button class="btn go" data-aa-here>כן, עדיין בעבודה</button>',
+      onMount: (el) => {
+        // the time asked for, as a moment (the field always holds one: the picker gives no empty answer)
+        const pick = () => {
+          const at = root.Arrive.lastAt(el.querySelector('[data-aa-time]').value, Date.now());
+          const ok = at != null && Date.now() - at <= LONG_AGO;
+          if (!ok) UI.toast('השעה שבחרת עוד לא הגיעה');
+          return ok ? at : null;
+        };
+        el.querySelector('[data-aa-here]').onclick = () => {
+          const at = pick();
+          if (at == null || done) return;
+          done = true;
+          UI.closeTop();
+          setTimeout(() => {
+            if (S.activeShift) return; // another phone, or the widget, started one meanwhile
+            const go = (rid) => App.startShift(rid, { startAt: at });
+            const r = roleAt(emp);
+            if (r) go(r.id);
+            else App.sheetsApi.pickRole('באיזה תפקיד?', go, emp ? App.roles(emp.id) : undefined);
+          }, 320);
+        };
+        el.querySelector('[data-aa-gone]').onclick = () => {
+          const at = pick();
+          if (at == null || done) return;
+          done = true;
+          UI.closeTop();
+          const r = roleAt(emp) || (emp && App.roles(emp.id)[0]) || null;
+          setTimeout(() => App.sheetsApi.shiftEditor(null, { date: U.epochKey(at), startT: U.epochHM(at), endT: U.epochHM(Date.now()), roleId: r ? r.id : undefined, employerId: emp ? emp.id : undefined }), 320);
+        };
+      },
+    });
   };
 
   /* ---------------- shift editor ---------------- */

@@ -80,6 +80,7 @@
     <string name="w_geo_start">Empezar turno</string>
     <string name="w_geo_stop">Terminar turno</string>
     <string name="w_geo_off">Desactivar sugerencias</string>
+    <string name="w_geo_no">No, gracias</string>
     <string name="w_geo_disc_t">Sugerencia al llegar al trabajo</string>
     <string name="w_geo_disc">Shaati recopila datos de ubicación para activar la sugerencia al llegar al trabajo, incluso cuando la app está cerrada o no se está usando. Cuando llegas a uno de los lugares de trabajo que guardaste (hasta 3), una notificación te propone empezar un turno. Si te vas durante un turno, otra te propone terminarlo. La ubicación se comprueba en este teléfono y nunca se envía a ningún sitio. Ningún turno empieza ni termina sin tu toque. Desactívalo cuando quieras en los ajustes de Shaati o desde la notificación.</string>
     <string name="w_geo_go">Continuar</string>

@@ -8,8 +8,8 @@ import com.google.android.gms.location.Geofence;
 import com.google.android.gms.location.GeofencingEvent;
 
 /**
- * The workplace circle's crossings from Google Play services (WorkGeo.watch), and the "turn off" button on its
- * notifications. Not exported: only this app's own pending intents reach it.
+ * The workplace circle's crossings from Google Play services (WorkGeo.watch), and the buttons on its notifications
+ * that stay on the phone ("no, thanks" on the arrival, "turn off" on the leaving). Not exported: only this app's own pending intents reach it.
  */
 public class WorkGeoReceiver extends BroadcastReceiver {
     @Override
@@ -18,6 +18,10 @@ public class WorkGeoReceiver extends BroadcastReceiver {
         final Context app = c.getApplicationContext();
         if (WorkGeo.ACTION_OFF.equals(a)) {
             WorkGeo.off(app, i.getStringExtra("id"));
+            return;
+        }
+        if (WorkGeo.ACTION_NO.equals(a)) {
+            WorkGeo.dismiss(app);
             return;
         }
         if (!WorkGeo.ACTION_FENCE.equals(a)) return;

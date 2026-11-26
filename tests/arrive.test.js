@@ -72,7 +72,7 @@ T.test('the phone keeps the same places rules: the same maximum and ids, the old
   T.ok(/if \(!p\.getBoolean\("on", false\) \|\| !p\.contains\("lat"\)\) return out;[\s\S]*put\("id", "work"\)/.test(j), 'an update keeps the place saved before 1.39');
   T.ok(j.includes('.setRequestId(o.optString("id"))'), 'one circle per place');
   T.ok(rc.includes('ids.add(g.getRequestId())'), 'a crossing names its places');
-  T.ok(j.includes('"./?action=start&emp=" + Uri.encode(emp)'), 'the start button names the employer');
+  T.ok(j.includes('"./?action=arrive&t=" + now + (emp.isEmpty() ? "" : "&emp=" + Uri.encode(emp))'), 'the start button names the moment and the employer');
   T.ok(j.includes('offIntent(c, id)') && rc.includes('WorkGeo.off(app, i.getStringExtra("id"))'), 'the notification turns off that place only');
   T.ok(read('android/widgets/java/WorkGeoActivity.java').includes('if (!WorkGeo.canSave(this, mId)) { finish(); return; }'), 'full: the screen asks nothing');
 });
@@ -91,6 +91,30 @@ T.test('?action=start&emp=: the shift starts at that employer, after the same qu
   T.ok(app.includes("App.pendingEmp = App.pendingAction === 'start' && root.Arrive ? root.Arrive.cleanEmp(params.get('emp')) : '';"), 'read and cleaned');
   T.ok(/UI\.confirm\('התחל משמרת', emp && S\.employers\.length > 1 \? emp\.name \|\| '' : '', 'התחלה'\)\.then\(\(ok\) => \{ if \(ok && !S\.activeShift\) startAt\(emp\); \}\);/.test(app), 'asks first');
   T.ok(read('src/app/phone-notes.js').includes("App.pendingEmp = root.Arrive ? root.Arrive.cleanEmp(p.get('emp')) : '';"), 'a tap while the app is open too');
+});
+T.test('the arrival suggestion (1.45): "start a shift" asks when you came; "no, thanks" only closes it', () => {
+  const j = read('android/widgets/java/WorkGeo.java');
+  const rc = read('android/widgets/java/WorkGeoReceiver.java');
+  T.ok(j.includes('lc.getString(start ? R.string.w_geo_no : R.string.w_geo_off), start ? noIntent(c) : offIntent(c, id)'), 'arriving: no, thanks; leaving: turn off');
+  T.ok(rc.includes('if (WorkGeo.ACTION_NO.equals(a)) {') && j.includes('if (nm != null) cancel(nm, TAG_IN);'), 'no, thanks closes the arrival suggestion and nothing else');
+  for (const l of ['', '-en', '-ru', '-ar', '-fr', '-es', '-am']) T.ok(/<string name="w_geo_no">[^<]+<\/string>/.test(read('android/widgets/res/values' + l + '/w_strings.xml')), 'w_geo_no ' + (l || 'he'));
+  const app = read('src/app/app.js');
+  T.ok(app.includes("App.pendingArrive = root.Arrive.arrivedAt(params.get('t'), Date.now());") && app.includes("if (action === 'arrive' && !S.activeShift && App.arriveSheet) App.arriveSheet(emp, came);"), 'the app asks');
+  T.ok(read('src/app/phone-notes.js').includes("if (action === 'arrive') App.pendingArrive"), 'a tap while the app is open too');
+  // when you came: the moment the phone had stayed inside, less the dwell, on the whole minute
+  const now = new Date(2026, 10, 26, 13, 7, 30).getTime();
+  T.eq(A.arrivedAt(String(now - 60000), now), new Date(2026, 10, 26, 13, 1).getTime());
+  T.eq(A.arrivedAt(String(now + 3600000), now), null, 'in the future');
+  T.eq(A.arrivedAt(String(now - 25 * 3600000), now), null, 'over a day old');
+  T.eq(A.arrivedAt('x', now), null);
+  T.eq(A.arrivedAt(null, now), null);
+  T.eq(A.arrivedAt('', now), null);
+  // a time of day typed: today, or yesterday when today's is still to come
+  T.eq(A.lastAt('12:30', now), new Date(2026, 10, 26, 12, 30).getTime());
+  T.eq(A.lastAt('13:07', now), new Date(2026, 10, 26, 13, 7).getTime());
+  T.eq(A.lastAt('22:10', now), new Date(2026, 10, 25, 22, 10).getTime(), 'after midnight about the evening before');
+  T.eq(A.lastAt('24:00', now), null);
+  T.eq(A.lastAt('7:00', now), null);
 });
 T.test('the status message from the phone keeps on, radius and permissions; a spot in it is dropped', () => {
   const s = A.readStatus({ geo: 1, on: true, r: 150, bg: true, fg: true, lat: 32.1, lng: 34.8 });
@@ -125,11 +149,16 @@ T.test('quiet hours: the phone uses the app\'s one night rule (Moments.quietHour
   T.ok(java.includes('return h >= 23 || h < 6;'), 'WorkGeo.quietHour is the same');
   T.ok(/\.setSilent\(quiet\)/.test(java), 'silent at night, not dropped (a night shift starts then)');
 });
-T.test('it never starts or ends a shift itself: the buttons open ?action=start / ?action=stop, which ask first', () => {
+T.test('it never starts or ends a shift itself: the buttons open ?action=arrive / ?action=stop, which ask first', () => {
   T.ok(!/WidgetData\.tap\s*\(|"taps"|startShift|stopShift/.test(code(all)), 'no widget tap and no shift change in WorkGeo*');
-  T.ok(java.includes('"./?action=start"') && java.includes('"./?action=stop"'), 'the two buttons');
+  T.ok(java.includes('"./?action=arrive&t="') && java.includes('"./?action=stop"'), 'the two buttons');
   const app = read('src/app/app.js');
-  T.ok(/action === 'start' && !S\.activeShift\) UI\.confirm\(/.test(app), '?action=start asks');
+  T.ok(/action === 'start' && !S\.activeShift\) UI\.confirm\(/.test(app), '?action=start (an Android app before 1.45) asks');
+  // ?action=arrive asks when you came and whether you are still there: the shift starts only from that sheet's "still at work"
+  const sh = read('src/app/views-shift.js');
+  const ask = sh.slice(sh.indexOf('App.arriveSheet = function'), sh.indexOf('App.sheetsApi.shiftEditor = function'));
+  const here = ask.indexOf("el.querySelector('[data-aa-here]').onclick"), gone = ask.indexOf("el.querySelector('[data-aa-gone]').onclick");
+  T.ok(ask.length > 100 && (ask.match(/startShift/g) || []).length === 1 && ask.indexOf('startShift') > here && ask.indexOf('startShift') < gone && here > 0, '?action=arrive asks first');
   T.ok(/action === 'stop' && S\.activeShift\) UI\.confirm\(/.test(app), '?action=stop asks');
   const web = code(read('src/app/arrive.js'));
   T.ok(!/startShift|stopShift|timer-start/.test(web), 'the settings section never starts a shift');
