@@ -232,3 +232,37 @@ T.test('no ? & = # % / spaces in the email, the same in the app and the rules; t
   T.ok(src.includes('<a href="mailto:${esc(Support.mailHref(t.email))}?subject='), 'the admin link uses it');
   T.ok(src.includes('(!anon || Support.mailOk(mail))'), 'the form checks it');
 });
+
+T.section('security: Android receivers and backups (audit 27 Nov 2026)');
+T.test('the exported NoteAlarm takes only the system broadcasts; the app\'s own alarms go to NoteWake, not exported', () => {
+  const J = (f) => read('android/widgets/java/' + f + '.java');
+  const alarm = J('NoteAlarm'), wake = J('NoteWake'), nc = J('NoteCenter'), rn = J('RunningNote');
+  T.ok(!alarm.includes('RunningNote.TICK') && !alarm.includes('NoteCenter.ACTION.equals'), 'NoteAlarm no longer takes TICK or the notification alarm');
+  T.ok(/if \(!\(Intent\.ACTION_BOOT_COMPLETED\.equals\(a\) \|\| Intent\.ACTION_MY_PACKAGE_REPLACED\.equals\(a\)\s*\|\| Intent\.ACTION_TIME_CHANGED\.equals\(a\) \|\| Intent\.ACTION_TIMEZONE_CHANGED\.equals\(a\)\)\) return;/.test(alarm), 'anything else is ignored');
+  T.ok(wake.includes('RunningNote.TICK.equals(a)') && wake.includes('if (!NoteCenter.ACTION.equals(a)) return;'), 'NoteWake takes the two');
+  T.ok(nc.includes('Intent i = new Intent(c, NoteWake.class).setAction(ACTION);'), 'the notification alarm goes to NoteWake');
+  T.ok(rn.includes('Intent i = new Intent(c, NoteWake.class).setAction(TICK);'), 'the bar\'s alarm too');
+  T.eq(((nc + rn).match(/new Intent\(c, NoteAlarm\.class\)/g) || []).length, 1, 'NoteAlarm is named once: to cancel an older version\'s alarms');
+  T.ok(/static void dropOldAlarms[\s\S]{0,600}new Intent\(c, NoteAlarm\.class\)[\s\S]{0,40}PendingIntent\.FLAG_NO_CREATE|static void dropOldAlarms[\s\S]{0,400}FLAG_NO_CREATE[\s\S]{0,300}new Intent\(c, NoteAlarm\.class\)/.test(nc), 'there, only to find and cancel');
+  T.ok(alarm.includes('NoteCenter.dropOldAlarms(app)'), 'after an update the old alarms are cancelled');
+  const tools = read('tools/android.js');
+  T.ok(tools.includes('<receiver android:name=".NoteWake" android:exported="false" />'), 'NoteWake is not exported');
+  const m = /<receiver android:name="\.NoteAlarm" android:exported="true">([\s\S]*?)<\/receiver>/.exec(tools);
+  T.ok(m, 'NoteAlarm in the manifest');
+  const acts = [...m[1].matchAll(/<action android:name="([^"]+)"/g)].map((x) => x[1]).sort();
+  T.eq(acts.join(','), 'android.intent.action.BOOT_COMPLETED,android.intent.action.MY_PACKAGE_REPLACED,android.intent.action.TIMEZONE_CHANGED,android.intent.action.TIME_SET', 'system broadcasts only');
+});
+T.test('the notifications\' store (shaati_notes.xml) stays out of backups and moves to a new phone', () => {
+  const b = read('android/widgets/res/xml/w_backup_rules.xml'), d = read('android/widgets/res/xml/w_data_extraction.xml');
+  T.eq((b.match(/<exclude domain="sharedpref" path="shaati_notes\.xml" \/>/g) || []).length, 1, 'full backup (Android 11 and older)');
+  T.eq((d.match(/<exclude domain="sharedpref" path="shaati_notes\.xml" \/>/g) || []).length, 2, 'cloud backup and device transfer');
+  T.ok(read('android/widgets/java/NoteCenter.java').includes('PREFS = "shaati_notes"'), 'the file NoteCenter uses');
+});
+T.test('commit() only where the order on disk matters; apply() elsewhere', () => {
+  const J = (f) => read('android/widgets/java/' + f + '.java');
+  T.eq((J('WidgetData').match(/\.commit\(\)/g) || []).length, 0, 'WidgetData');
+  T.eq((J('WorkGeo').match(/\.commit\(\)/g) || []).length, 0, 'WorkGeo');
+  const nc = J('NoteCenter');
+  T.eq((nc.match(/\.commit\(\)/g) || []).length, 1, 'NoteCenter: only the shown list');
+  T.ok(/commit, not apply: each tag is shown once[\s\S]{0,300}putString\(SHOWN, keep\.toString\(\)\)\.commit\(\);/.test(nc), 'with the reason');
+});

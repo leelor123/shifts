@@ -62,17 +62,19 @@ final class RunningNote {
                 return;
             }
             post(c, nm, a, run);
-            tick(c, true);
+            tick(c, Build.VERSION.SDK_INT >= 36);
         } catch (Exception e) {
             android.util.Log.w("ShaatiRun", "sync", e);
         }
     }
 
-    /** The alarm that moves the bar on while the shift runs (NoteAlarm hands it back to sync). */
+    /** The alarm that moves the bar on while the shift runs (NoteWake hands it back to sync). Only on Android 16 and later
+     *  (API 36), where the bar is a progress line that needs it; below that the notification's chronometer counts by
+     *  itself and nothing has to wake the phone every 5 minutes. */
     private static void tick(Context c, boolean on) {
         AlarmManager am = (AlarmManager) c.getSystemService(Context.ALARM_SERVICE);
         if (am == null) return;
-        Intent i = new Intent(c, NoteAlarm.class).setAction(TICK);
+        Intent i = new Intent(c, NoteWake.class).setAction(TICK); // (not exported: no other app can send it)
         PendingIntent p = PendingIntent.getBroadcast(c, 7402, i, PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE);
         if (on) am.setAndAllowWhileIdle(AlarmManager.RTC, System.currentTimeMillis() + EVERY, p);
         else am.cancel(p);

@@ -5,29 +5,29 @@ import android.content.Context;
 import android.content.Intent;
 
 /**
- * Wakes NoteCenter up: at a notification's time (its own alarm), and when the phone forgets the alarms or their times
- * move: a restart (BOOT_COMPLETED), an update of the app (MY_PACKAGE_REPLACED), a new clock or time zone.
+ * Wakes NoteCenter up when the phone forgets the alarms or their times move: a restart (BOOT_COMPLETED), an update of
+ * the app (MY_PACKAGE_REPLACED), a new clock or time zone. Exported for these system broadcasts only (only Android may
+ * send them); the app's own alarms go to NoteWake, which is not exported, and anything else is ignored here.
  */
 public class NoteAlarm extends BroadcastReceiver {
     @Override
     public void onReceive(Context c, Intent i) {
         String a = i == null ? null : i.getAction();
-        if (a == null) return;
-        // the running shift's bar moves on (RunningNote): its own alarm, while a shift runs
-        if (RunningNote.TICK.equals(a)) { RunningNote.sync(c.getApplicationContext()); return; }
-        if (NoteCenter.ACTION.equals(a) || Intent.ACTION_BOOT_COMPLETED.equals(a) || Intent.ACTION_MY_PACKAGE_REPLACED.equals(a)
-                || Intent.ACTION_TIME_CHANGED.equals(a) || Intent.ACTION_TIMEZONE_CHANGED.equals(a)) {
-            final PendingResult r = goAsync();
-            final Context app = c.getApplicationContext();
-            new Thread(() -> {
-                try {
-                    NoteCenter.run(app);
-                    // Android forgets geofences on a restart and an update: the workplace circle is watched again (WorkGeo)
-                    if (!NoteCenter.ACTION.equals(a)) { WorkGeo.restore(app); RunningNote.sync(app); }
-                } finally {
-                    r.finish();
-                }
-            }).start();
-        }
+        if (!(Intent.ACTION_BOOT_COMPLETED.equals(a) || Intent.ACTION_MY_PACKAGE_REPLACED.equals(a)
+                || Intent.ACTION_TIME_CHANGED.equals(a) || Intent.ACTION_TIMEZONE_CHANGED.equals(a))) return;
+        final PendingResult r = goAsync();
+        final Context app = c.getApplicationContext();
+        new Thread(() -> {
+            try {
+                // an update from a version whose alarms pointed here: those are cancelled, NoteCenter sets them anew
+                if (Intent.ACTION_MY_PACKAGE_REPLACED.equals(a)) NoteCenter.dropOldAlarms(app);
+                NoteCenter.run(app);
+                // Android forgets geofences on a restart and an update: the workplace circle is watched again (WorkGeo)
+                WorkGeo.restore(app);
+                RunningNote.sync(app);
+            } finally {
+                r.finish();
+            }
+        }).start();
     }
 }

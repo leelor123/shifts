@@ -403,8 +403,10 @@ function patchWidgets() {
         <activity android:name=".WidgetStyleActivity" android:exported="true" android:theme="@style/WidgetPickTheme" android:excludeFromRecents="true" android:taskAffinity="">
             <intent-filter><action android:name="android.appwidget.action.APPWIDGET_CONFIGURE" /></intent-filter>
         </activity>
-${receiver('ShiftWidget', 'shift')}${receiver('MonthWidget', 'month')}${receiver('GoalWidget', 'goal')}${receiver('PaydayWidget', 'payday')}${receiver('ComboWidget', 'combo')}        <!-- the notifications at their time, also while the app is closed (NoteCenter): the alarm, and after a restart,
-             an update or a new clock the alarms are set again -->
+${receiver('ShiftWidget', 'shift')}${receiver('MonthWidget', 'month')}${receiver('GoalWidget', 'goal')}${receiver('PaydayWidget', 'payday')}${receiver('ComboWidget', 'combo')}        <!-- the notifications at their time, also while the app is closed (NoteCenter): the app's own alarms come to
+             NoteWake (not exported: no other app can send them); after a restart, an update or a new clock NoteAlarm
+             sets them again (exported for those system broadcasts only, which only Android can send) -->
+        <receiver android:name=".NoteWake" android:exported="false" />
         <receiver android:name=".NoteAlarm" android:exported="true">
             <intent-filter>
                 <action android:name="android.intent.action.BOOT_COMPLETED" />
