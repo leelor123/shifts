@@ -220,6 +220,9 @@ function patchLauncher() {
                 // this app shows the notifications itself, at their time, also while closed (NoteCenter): the page
                 // sends it the list of the coming days and the ones of now (src/app/phone-notes.js)
                 if (s != null) s.postMessage("shaati:notes", null);
+                // and the running shift as its own live notification (RunningNote, from 1.46): the page sends its words
+                // with the widgets' snapshot; an app before it never says this, and the page keeps the browser's one
+                if (s != null) s.postMessage("shaati:run", null);
                 // this app can ask for Google Play's In-App Review (PlayReview): the page asks right after a good moment
                 if (s != null) s.postMessage("shaati:review", null);
 ${WORK_GEOFENCE ? `                // this app can suggest a shift at the workplace (WorkGeo): the page offers it in Settings
@@ -355,6 +358,8 @@ function patchWidgets() {
         </receiver>\n`;
   if (!m.includes('<application')) throw new Error('AndroidManifest.xml template changed: application');
   m = m.replace('<application', '<uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />\n    <application');
+  // the running shift as a Live Update on Android 16 and later (RunningNote): pinned on the lock screen, a chip up top
+  m = m.replace('<application', '<uses-permission android:name="android.permission.POST_PROMOTED_NOTIFICATIONS" />\n    <application');
   // the suggestion at work (WorkGeo): precise location for the circle, background location so Android can tell the app
   // while it is closed. Asked only from WorkGeoActivity, after its disclosure, and only when the user turns it on.
   if (WORK_GEOFENCE) {

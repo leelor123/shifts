@@ -74,6 +74,8 @@
     <string name="w_ch_money">כסף, סיכומים ושיאים</string>
     <string name="w_ch_shifts_d">לפני משמרת, אחריה, וטיימר שנשאר פועל</string>
     <string name="w_ch_money_d">יום המשכורת, הסיכום השבועי והחודשי, שיאים ויעדים</string>
+    <string name="w_ch_run">משמרת רצה</string>
+    <string name="w_ch_run_d">התראה שקטה כשמשמרת רצה: הזמן, בערך כמה הרווחת וכפתור לסיום</string>
     <!-- a suggestion at work (WorkGeo, WorkGeoActivity): the notifications, the disclosure and its steps -->
     <string name="w_geo_in_t">הגעת לעבודה?</string>
     <string name="w_geo_in_b">אם באת למשמרת, אפשר להתחיל אותה מכאן.</string>

@@ -463,6 +463,9 @@ final class WorkGeo {
                     .addAction(0, lc.getString(start ? R.string.w_geo_no : R.string.w_geo_off), start ? noIntent(c) : offIntent(c, id));
             // which place, when it has a name (the user's own word for it, e.g. the employer)
             if (!name.isEmpty()) b.setSubText(name);
+            // the coin of Shaati, as on every other notification of the app (NoteCenter): cool arriving, happy leaving
+            android.graphics.Bitmap coin = NoteCenter.bitmap(c, start ? R.drawable.w_coin_cool : R.drawable.w_coin_happy);
+            if (coin != null) b.setLargeIcon(coin);
             nm.notify(tag, 1, b.build());
             // the group's own summary: without one, Android (16 and later) folds a lone grouped notification into one
             // bundle with the app's other notifications, collapsed, and the suggestion's buttons are hidden (Test Lab,

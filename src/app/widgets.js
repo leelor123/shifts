@@ -79,6 +79,8 @@
       payday: paySum && paySum.gross > 0 ? { date: next.payDate, amount: m0(paySum.net.net) } : null,
       // taps: this app takes the starts and ends tapped on a widget (an older one would never save them)
       saving, active, next: go, wid: +S.meta.widgetDone || 0, taps: 1,
+      // the running-shift notification the phone shows itself (app/run-note.js, RunningNote.java): null when none
+      run: active && App.runNote && App.runNote.native ? App.runNote.native() : null,
     };
   };
 
@@ -134,6 +136,8 @@
     if (typeof data === 'string' && data.startsWith('shaati:') && root.NativeSignIn) root.NativeSignIn.other();
     // this Android app shows the notifications itself, at their time, also while the app is closed (app/phone-notes.js)
     if (data === 'shaati:notes') { if (App.phoneNotes) App.phoneNotes.hello(); return; }
+    // the Android app shows the running shift itself (RunningNote, 1.46): app/run-note.js stops showing its own
+    if (data === 'shaati:run') { App.nativeRun = true; if (App.runNote) App.runNote.sync(true); return; }
     // Google's In-App Review: the app says it can ask, or answers an ask (app/review.js)
     if (typeof data === 'string' && data.startsWith('shaati:review')) { if (App.reviewNative) App.reviewNative(data); return; }
     // this Android app can suggest a shift at the workplace (app/arrive.js); its status answers come as {"geo":1,...}

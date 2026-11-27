@@ -829,7 +829,12 @@
       const p = el.querySelector('[data-perm]');
       if (p) p.onclick = async () => { await Notification.requestPermission(); draw(); };
       const t = el.querySelector('[data-test]');
-      if (t) t.onclick = async () => { const reg = await navigator.serviceWorker.getRegistration(); const o = { body: 'ההתראות עובדות 👍', icon: 'icon-192.png', lang: 'he', dir: 'rtl' }; if (reg) reg.showNotification('מעקב משמרות', o); else new Notification('מעקב משמרות', o); };
+      if (t) t.onclick = async () => {
+        // a test looks like the real ones: the phone's own inside the Android app, the browser's only in a browser (App.webNote)
+        const look = { title: 'מעקב משמרות', body: 'ההתראות עובדות 👍', sub: '', ch: 'money', url: './#home', acts: [], when: 0 };
+        if (App.androidApp) { if (App.phoneNotes) App.phoneNotes.later({ key: 'test-' + Date.now(), type: 'test' }, look); return; }
+        App.webNote(look.title, { body: look.body, icon: 'icon-192.png', badge: 'badge-96.png', lang: U.LANG, dir: U.RTL ? 'rtl' : 'ltr' });
+      };
     },
   };
 

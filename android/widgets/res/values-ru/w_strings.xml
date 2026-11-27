@@ -73,6 +73,8 @@
     <string name="w_ch_money">Зарплата, итоги и рекорды</string>
     <string name="w_ch_shifts_d">До смены, после неё и забытый таймер</string>
     <string name="w_ch_money_d">День зарплаты, итоги недели и месяца, рекорды и цели</string>
+    <string name="w_ch_run">Идёт смена</string>
+    <string name="w_ch_run_d">Тихое уведомление, пока идёт смена: время, примерный заработок и кнопка завершения</string>
     <!-- a suggestion at work (WorkGeo, WorkGeoActivity): the notifications, the disclosure and its steps -->
     <string name="w_geo_in_t">Вы на работе?</string>
     <string name="w_geo_in_b">Если вы пришли на смену, её можно начать отсюда.</string>

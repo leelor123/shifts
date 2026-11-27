@@ -145,7 +145,7 @@ final class NoteCenter {
         }
     }
 
-    private static Bitmap bitmap(Context c, int res) {
+    static Bitmap bitmap(Context c, int res) {
         try {
             Drawable d = c.getDrawable(res);
             if (d == null) return null;

@@ -72,6 +72,8 @@
     <string name="w_ch_money">Salaire, bilans et records</string>
     <string name="w_ch_shifts_d">Avant un service, après, et un chrono resté allumé</string>
     <string name="w_ch_money_d">Jour de paie, bilan de la semaine et du mois, records et objectifs</string>
+    <string name="w_ch_run">Service en cours</string>
+    <string name="w_ch_run_d">Une notification silencieuse pendant le service : le temps, environ combien vous avez gagné et un bouton pour terminer</string>
     <!-- a suggestion at work (WorkGeo, WorkGeoActivity): the notifications, the disclosure and its steps -->
     <string name="w_geo_in_t">Vous êtes au travail ?</string>
     <string name="w_geo_in_b">Si vous venez pour un service, vous pouvez le commencer d\'ici.</string>

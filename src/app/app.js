@@ -625,6 +625,7 @@
     if (App.shiftMoment) App.shiftMoment('start', opts && opts.at); else root.Fx.celebrate('start');
     UI.toast('המשמרת התחילה. בהצלחה!');
     App.askNotifyPermission();
+    if (App.runNote && App.runNote.offer) App.runNote.offer(); // the Android app: the running shift on the lock screen?
   });
   /** Ends the running shift now, or at endAt (an earlier moment: "end at 16:10" for a shift left running). One end at
    *  a time: a second tap while the first is saving saved the same shift twice. */
@@ -715,6 +716,21 @@
   /** How a notification looks on the phone (core/noteplan.js look): the same here, in the worker and in the Android app. */
   App.noteLook = (n, at) => (root.NotePlan ? root.NotePlan.look(n, App.model, { now: at || Date.now(), roleName: App.roleName, hideMoney: !!S.settings.hideMoney })
     : { title: n.title, body: n.body, sub: '', ch: 'money', url: './#home', acts: [], when: 0 });
+  /* ---------------- the one way a notification goes through the browser ----------------
+   * Inside the Android app every notification is the phone's own (NoteCenter, RunningNote, WorkGeo): one shown by the
+   * browser came through Chrome with the site's address and the site's icon on it ("leelor123.github.io", the user,
+   * 27 Nov 2026: the running-shift notification and the first ones of an open, before the channel to the Android app
+   * was up). So no code shows a web notification but through here, and here it is refused inside the Android app
+   * (tests/notify-gate.test.js keeps every showNotification and new Notification in this function and in sw.js). */
+  App.webNote = async function (title, opt) {
+    // the one exception: the running shift in an Android app before 1.46, which has no RunningNote (it would be gone)
+    if (App.androidApp && !(opt && opt.oldApp && !App.nativeRun)) return false;
+    if (!('Notification' in window) || Notification.permission !== 'granted') return false;
+    const reg = 'serviceWorker' in navigator ? await navigator.serviceWorker.getRegistration() : null;
+    if (reg) await reg.showNotification(title, opt);
+    else { const o = Object.assign({}, opt); delete o.actions; new Notification(title, o); }
+    return true;
+  };
   async function push(n) {
     if (!S.settings.alerts.push) return;
     try {
@@ -731,8 +747,8 @@
         App.shownNote(n.key, true);
         return;
       }
-      if (!('Notification' in window) || Notification.permission !== 'granted') return;
-      const reg = await navigator.serviceWorker.getRegistration();
+      // inside the Android app with its channel not up yet: it waits for it (never Chrome's look)
+      if (App.androidApp) { if (App.phoneNotes) App.phoneNotes.later(n, look); return; }
       const acts = {};
       for (const x of look.acts) acts[x.id] = x.url;
       const opt = { body: look.body, tag: n.key, icon: 'icon-192.png', badge: 'badge-96.png', lang: U.LANG, dir: U.RTL ? 'rtl' : 'ltr',
@@ -743,8 +759,7 @@
         if (R.sticky) opt.requireInteraction = true;
         if (R.silent) opt.silent = true;
       }
-      if (reg) await reg.showNotification(look.title, opt); else { delete opt.actions; new Notification(look.title, opt); }
-      App.shownNote(n.key, true);
+      if (await App.webNote(look.title, opt)) App.shownNote(n.key, true);
     } catch (e) { console.warn(e); }
   }
   /** The notifications shown, shared with the offline worker (sw.js reads and writes the same list). */

@@ -144,6 +144,7 @@ final class WidgetData {
     }
 
     static void updateAll(Context c) {
+        RunningNote.sync(c); // the running-shift notification follows the same shift (a stop tapped anywhere closes it)
         AppWidgetManager m = AppWidgetManager.getInstance(c);
         for (Class<?> k : WIDGETS) {
             int[] ids = m.getAppWidgetIds(new ComponentName(c, k));

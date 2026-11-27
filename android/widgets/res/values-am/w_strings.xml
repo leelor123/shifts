@@ -71,6 +71,8 @@
     <string name="w_ch_money">ክፍያ፣ ማጠቃለያዎች እና ሪከርዶች</string>
     <string name="w_ch_shifts_d">ከፈረቃ በፊት፣ በኋላ፣ እና የቀረ ሰዓት ቆጣሪ</string>
     <string name="w_ch_money_d">የደመወዝ ቀን፣ ሳምንታዊና ወርሃዊ ማጠቃለያ፣ ሪከርዶችና ግቦች</string>
+    <string name="w_ch_run">ፈረቃ እየሄደ ነው</string>
+    <string name="w_ch_run_d">ፈረቃ በሚሄድበት ጊዜ ጸጥ ያለ ማሳወቂያ፦ ጊዜው፣ በግምት ምን ያህል እንዳገኙ እና የማጠናቀቂያ ቁልፍ</string>
     <!-- a suggestion at work (WorkGeo, WorkGeoActivity): the notifications, the disclosure and its steps -->
     <string name="w_geo_in_t">ሥራ ደረሱ?</string>
     <string name="w_geo_in_b">ለፈረቃ ከመጡ፣ ከዚህ መጀመር ይችላሉ።</string>

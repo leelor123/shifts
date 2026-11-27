@@ -5,7 +5,7 @@
  * background and activates when the user taps "עדכן".
  * IndexedDB data is never touched by updates.
  * ============================================================ */
-const VERSION = '1.45.0-df16c058';
+const VERSION = '1.46.0-9f403068';
 const SHELL = 'shiftpay-shell-' + VERSION;
 const RUNTIME = 'shiftpay-runtime-v1';
 const FONTS = ['rubik-hebrew', 'rubik-latin', 'rubik-latin-ext', 'rubik-arabic', 'rubik-cyrillic', 'rubik-cyrillic-ext', 'fredoka-hebrew', 'fredoka-latin', 'fredoka-latin-ext'].map((f) => './fonts/' + f + '.woff2');
@@ -307,6 +307,9 @@ async function backgroundCheck() {
   const planR = await c.match('./__plan');
   const plan = planR ? await planR.json().catch(() => null) : null;
   if (!plan || !Array.isArray(plan.notes)) return;
+  // inside the Android app the phone shows them itself (NoteCenter): one from here came through Chrome, with the
+  // site's address on it (27 Nov 2026)
+  if (plan.native) return;
   const shownR = await c.match('./__shown');
   const shown = shownR ? await shownR.json().catch(() => ({})) : {};
   let changed = false;

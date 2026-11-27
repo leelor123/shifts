@@ -41,8 +41,18 @@
   }
 
   let last = null; // { key, at } of the last showing in this session
+  let nativeRun = null; // inside the Android app: the words of the phone's own notification (App.runNote.native)
+  let webClosed = false;
+  let heard = false; // the Android app's hellos were waited for once
+  async function closeWeb() {
+    if (webClosed) return;
+    webClosed = true;
+    const r = await reg();
+    try { if (r && r.getNotifications) (await r.getNotifications({ tag: R.TAG })).forEach((n) => n.close()); } catch (e) { /* none */ }
+  }
   async function close() {
     last = null;
+    if (nativeRun) { nativeRun = null; if (App.widgets) App.widgets.push(); }
     const r = await reg();
     if (!r || !r.getNotifications) return;
     try { (await r.getNotifications({ tag: R.TAG })).forEach((n) => n.close()); } catch (e) { /* ignore */ }
@@ -53,7 +63,11 @@
     if (running) { again = true; return; }
     running = true;
     try {
+      // inside the Android app: first hear whether it shows the running shift itself (its hellos come a moment after the
+      // page opens: "shaati:notes", then "shaati:run"), so not even one showing goes through Chrome by mistake
+      if (App.androidApp && !App.nativeRun && App.phoneNotes && !heard) { heard = true; if (await App.phoneNotes.ready()) await new Promise((res) => setTimeout(res, 400)); }
       const a = S.activeShift;
+      if (App.nativeRun) await closeWeb(); // one left by an Android app before 1.46: the phone's own replaces it
       if (!a || !a.start || !wanted() || !allowed()) { await close(); return; }
       if (!App.model) return;
       const key = R.keyOf(a) + '|' + (S.settings.hideMoney ? 1 : 0);
@@ -66,10 +80,19 @@
       let wage = null;
       try { const p = App.previewActive(); wage = p ? p.wage : null; } catch (e) { /* the amount is left out */ }
       const c = R.content({ start: a.start, now, wage, hideMoney: !!S.settings.hideMoney, onBreak: App.onBreak && App.onBreak() });
-      await r.showNotification(c.title, {
+      // inside the Android app the phone shows it itself, pinned as a live notification (android/widgets/java/
+      // RunningNote.java): the words go with the widgets' snapshot, the time counts there by itself
+      if (App.nativeRun) {
+        nativeRun = { start: a.start, title: c.title, body: c.body, pub: c.title, onBreak: !!(App.onBreak && App.onBreak()) };
+        last = { key, at: now };
+        if (App.widgets) App.widgets.push();
+        return;
+      }
+      // an Android app before 1.46 cannot show it itself: the browser's, as before (App.webNote lets this one through)
+      await App.webNote(c.title, {
         body: c.body, tag: R.TAG, renotify: false, silent: true, requireInteraction: true, timestamp: a.start,
         icon: 'icon-192.png', badge: 'badge-96.png', lang: U.LANG, dir: U.RTL ? 'rtl' : 'ltr',
-        data: { url: './#home', run: a.start },
+        data: { url: './#home', run: a.start }, oldApp: true,
         actions: [{ action: 'stop', title: 'סיום משמרת' }],
       });
       last = { key, at: now };
@@ -126,7 +149,21 @@
     await Store.setSettings((st) => { st.alerts.runNote = false; });
     await close();
   }
-  App.runNote = { sync, close, takeStop, turnOn, turnOff, wanted, allowed };
+  /** Inside the Android app, the first shift that starts with it off: one question, shown once (the user, 27 Nov
+   *  2026: the running shift on the lock screen). A dialog already open (the phone's own question about notifications)
+   *  leaves it for the next start. */
+  function offer() {
+    if (!App.androidApp || wanted() || S.meta.runNoteOffered) return;
+    setTimeout(async () => {
+      if (!S.activeShift || wanted() || App.blocking || document.querySelector('.sheet, .dialog')) return;
+      await Store.setMeta({ runNoteOffered: Date.now() });
+      const yes = await UI.confirm('להציג את המשמרת במסך הנעילה?', 'כשמשמרת רצה, התראה שקטה מראה כמה זמן עבדת ובערך כמה הרווחת, במסך הנעילה ובראש המסך, עם כפתור לסיום. אפשר לכבות בכל רגע בהגדרות › התראות.', 'להפעיל');
+      if (yes && S.activeShift) turnOn();
+    }, 1800);
+  }
+  /** The widgets' snapshot: what the Android app's running-shift notification says, or null (none to show). */
+  const nativeNote = () => (nativeRun && S.activeShift && S.activeShift.start === nativeRun.start && wanted() ? nativeRun : null);
+  App.runNote = { sync, close, takeStop, turnOn, turnOff, wanted, allowed, native: nativeNote, offer };
 
   let soon = 0;
   const later = () => { clearTimeout(soon); soon = setTimeout(() => sync(false), 400); };

@@ -19,6 +19,7 @@
   const MIN = 60000, DAY = 24 * 60 * MIN;
 
   let native = false;
+  const queued = []; // [alert, look] to show once the Android app says it can (App.phoneNotes.later)
   const waiters = [];
   /** How long a notification still makes sense when the phone shows it late (it was off): a reminder before a shift
    *  until the shift starts, "did you work it?" for three days, a timer left running for a day, the rest until the
@@ -88,10 +89,11 @@
       if (json === last) return;
       last = json;
       if (native && App.widgets) App.widgets.post(JSON.stringify({ notes: 1, plan }));
-      // the offline worker's copy (a browser, or the Android app before it could show them itself)
+      // the offline worker's copy: it shows them in a browser; inside the Android app (native) it only reads them for
+      // "was there a notification today" and shows none (sw.js backgroundCheck)
       if (root.caches) {
         const c = await caches.open('shiftpay-shown');
-        await c.put('./__plan', new Response(JSON.stringify({ at: Date.now(), notes: plan }), { headers: { 'Content-Type': 'application/json' } }));
+        await c.put('./__plan', new Response(JSON.stringify({ at: Date.now(), notes: plan, native: native || !!App.androidApp }), { headers: { 'Content-Type': 'application/json' } }));
       }
     } catch (e) { console.warn('phone notes', e); } finally {
       busy = false;
@@ -105,6 +107,8 @@
     hello() {
       native = true;
       last = '';
+      // what came before the channel was up: shown now, in the phone's own look
+      for (const [a, n] of queued.splice(0)) { if (App.widgets) App.widgets.post(JSON.stringify({ notes: 1, show: [item(a, n, Date.now())] })); if (App.shownNote) App.shownNote(a.key, true); }
       waiters.splice(0).forEach((f) => f(true));
       soon(500);
     },
@@ -135,6 +139,8 @@
         }
       } catch (e) { /* none to close */ }
     },
+    /** Inside the Android app before its hello: kept and shown at the hello (a notification never goes through Chrome). */
+    later(a, n) { if (native) { this.show(a, n); return; } if (!queued.some(([x]) => x.key === a.key)) queued.push([a, n]); },
     show(a, n) { if (native && App.widgets) App.widgets.post(JSON.stringify({ notes: 1, show: [item(a, n, Date.now())] })); },
     send: () => soon(0),
     build,

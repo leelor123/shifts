@@ -71,6 +71,8 @@
     <string name="w_ch_money">Pay, summaries and records</string>
     <string name="w_ch_shifts_d">Before a shift, after it, and a timer left running</string>
     <string name="w_ch_money_d">Payday, the weekly and monthly summary, records and goals</string>
+    <string name="w_ch_run">Shift running</string>
+    <string name="w_ch_run_d">A silent notification while a shift runs: the time, about how much you earned, and an end button</string>
     <!-- a suggestion at work (WorkGeo, WorkGeoActivity): the notifications, the disclosure and its steps -->
     <string name="w_geo_in_t">Arrived at work?</string>
     <string name="w_geo_in_b">If you came for a shift, you can start it from here.</string>

@@ -72,6 +72,8 @@
     <string name="w_ch_money">Sueldo, resúmenes y récords</string>
     <string name="w_ch_shifts_d">Antes de un turno, después, y un reloj que sigue en marcha</string>
     <string name="w_ch_money_d">Día de pago, el resumen semanal y mensual, récords y metas</string>
+    <string name="w_ch_run">Turno en curso</string>
+    <string name="w_ch_run_d">Una notificación silenciosa mientras corre el turno: el tiempo, cuánto ganaste aproximadamente y un botón para terminar</string>
     <!-- a suggestion at work (WorkGeo, WorkGeoActivity): the notifications, the disclosure and its steps -->
     <string name="w_geo_in_t">¿Llegaste al trabajo?</string>
     <string name="w_geo_in_b">Si viniste a un turno, puedes empezarlo desde aquí.</string>

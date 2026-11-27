@@ -75,6 +75,8 @@
     <string name="w_ch_money">الأجر والملخصات والأرقام القياسية</string>
     <string name="w_ch_shifts_d">قبل الوردية وبعدها، ومؤقت ما زال يعمل</string>
     <string name="w_ch_money_d">يوم الراتب، الملخص الأسبوعي والشهري، الأرقام القياسية والأهداف</string>
+    <string name="w_ch_run">وردية جارية</string>
+    <string name="w_ch_run_d">إشعار صامت أثناء الوردية: الوقت والمبلغ التقريبي وزر للإنهاء</string>
     <!-- a suggestion at work (WorkGeo, WorkGeoActivity): the notifications, the disclosure and its steps -->
     <string name="w_geo_in_t">وصلت إلى العمل؟</string>
     <string name="w_geo_in_b">إذا جئت لوردية، يمكنك بدؤها من هنا.</string>

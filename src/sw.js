@@ -307,6 +307,9 @@ async function backgroundCheck() {
   const planR = await c.match('./__plan');
   const plan = planR ? await planR.json().catch(() => null) : null;
   if (!plan || !Array.isArray(plan.notes)) return;
+  // inside the Android app the phone shows them itself (NoteCenter): one from here came through Chrome, with the
+  // site's address on it (27 Nov 2026)
+  if (plan.native) return;
   const shownR = await c.match('./__shown');
   const shown = shownR ? await shownR.json().catch(() => ({})) : {};
   let changed = false;
