@@ -15,6 +15,8 @@ async function phone(backend, opts) {
   ctx.window = ctx;
   ctx.addEventListener = () => {};
   ctx.UI = { dialog: async () => opts.answer || 'merge', confirm: async () => true, timeAgo: () => '', toast() {} };
+  // (a browser always has crypto.getRandomValues: the statistics id; subtle and the rest only with the ledger)
+  ctx.crypto = { getRandomValues: (x) => require('crypto').webcrypto.getRandomValues(x) };
   if (opts.ledger) Object.assign(ctx, { crypto: require('crypto').webcrypto, TextEncoder });
   vm.createContext(ctx);
   // (opts.ledger: with the signed shift log, as the app has it)
@@ -244,10 +246,8 @@ async function withOutside(A) {
   c.App = Object.assign(c.App || {}, { actions: {}, games: { LIST: [] } });
   c.UI.icon = () => ''; c.UI.esc = (s) => String(s);
   // the queries the modules make (where field == value), on top of the fake server's collections
-  A.ffs.where = (f, op, v) => ({ f, v });
-  A.ffs.query = (coll, w) => ({ path: coll.path, w });
-  const getDocs = A.ffs.getDocs;
-  A.ffs.getDocs = async (q) => { const r = await getDocs(q); return q.w ? { docs: r.docs.filter((d) => d.data()[q.w.f] === q.w.v) } : r; };
+  // (fakes.js answers them: where, orderBy, startAfter, limit)
+  A.ffs.where = (f, op, v) => ({ t: 'where', f, op, v });
   for (const f of ['app/views-support.js', 'app/views-leaderboard.js', 'app/views-friends.js']) vm.runInContext(fs.readFileSync(path.join(SRC, f), 'utf8'), c, { filename: f });
 }
 function seedOutside(be) {
@@ -334,6 +334,36 @@ T.atest('retention: the dashboard deletes closed requests without an account aft
   T.eq(A.ctx.App.oldStats(docs, today)[0], docs[0]);
   T.eq(A.ctx.App.oldStats(Array.from({ length: 80 }, () => doc('2020-01-01')), today).length, 50, 'at most 50 at a time');
   T.eq(U.addMonths(today, -13), '2025-10-03');
+});
+// security audit 27 Nov 2026: the dashboard read every statistics record and request in one query; the rules now let an
+// admin list at most 500 at a time, so it reads in pages and every record still counts
+T.atest('admin reads: requests and statistics in pages; the totals see every record; a query over the cap is refused', async () => {
+  const be = fakeBackend();
+  const A = await phone(be);
+  await A.Cloud.connect(user); await wait(30);
+  await withOutside(A);
+  A.ctx.UI.tile = () => ''; A.ctx.App.isAdmin = true;
+  const now = Date.now();
+  for (let i = 0; i < 7; i++) be.docs.set('tickets/t' + i, { uid: 'u' + i, reason: 'other', text: 'hello there', status: i < 3 ? 'open' : 'closed', created: now, updated: now, last: 'user', seen: true });
+  for (let i = 0; i < 9; i++) be.docs.set('stats/s' + String(i).padStart(18, '0'), { last: '2026-11-20' });
+  A.ctx.Cloud.PAGE = 3;
+  be.maxList = 3; // the rules' cap, scaled down
+  be.queries = [];
+  const inbox = await A.ctx.Support.adminInbox();
+  T.eq(inbox.total, 7, 'every request'); T.eq(inbox.count, 3, 'the open ones counted'); T.eq(inbox.closed.length, 4);
+  T.eq(be.queries.filter((p) => p === 'tickets').length, 3, 'three pages of up to 3');
+  const stats = await A.ctx.Cloud.readAll(A.ffs, A.ffs.collection(null, 'stats'));
+  T.eq(stats.length, 9, 'every statistics record, none twice');
+  T.eq(new Set(stats.map((d) => d.id)).size, 9);
+  let refused = null;
+  try { await A.ctx.Cloud.readAll(A.ffs, A.ffs.collection(null, 'stats'), 10); } catch (e) { refused = e; }
+  T.ok(refused && refused.code === 'permission-denied', 'a page over the cap is refused');
+  const rules = fs.readFileSync(path.join(SRC, '..', 'firestore.rules'), 'utf8');
+  T.ok(rules.includes('allow list: if isAdmin() && request.query.limit <= 500;'), 'stats: lists of at most 500');
+  T.ok(rules.includes('allow list: if (isAdmin() && request.query.limit <= 500) || (request.auth != null && resource.data.uid == request.auth.uid);'), 'tickets too');
+  T.eq(A.ctx.Cloud.PAGE = 500, 500);
+  const adm = fs.readFileSync(path.join(SRC, 'app/views-admin.js'), 'utf8');
+  T.ok(adm.includes("root.Cloud.readAll(fs, fs.collection(db, 'stats'))") && !adm.includes("getDocsFromServer(fs.collection(db, 'stats'))"), 'the dashboard pages');
 });
 
 // privacy audit, 3 Nov 2026 (B5): after signing out or deleting the account the home-screen widgets kept the numbers
@@ -951,6 +981,41 @@ T.atest('shift log: deleting the account deletes its records in the cloud', asyn
   await A.Cloud.deleteAccountData();
   T.eq([...be.docs.keys()].filter((k) => k.startsWith('users/u1/ledger/')).length, 0, 'no log record is left');
   T.eq(A.S.ledger.length, 0, 'and the phone\'s copy is gone');
+  T.ok(!be.docs.has('users/u1'), 'nor the account marker');
+});
+// security audit 27 Nov 2026: the log's records could be deleted one by one by any write of the account
+T.atest('shift log: a record cannot be deleted on its own, only in a batch that deletes the account marker', async () => {
+  const be = fakeBackend();
+  const A = await phone(be, { ledger: true });
+  await A.add('s1'); await A.ctx.ShiftLog.done();
+  await A.Cloud.connect(user); await wait(30);
+  const key = [...be.docs.keys()].find((k) => k.startsWith('users/u1/ledger/'));
+  T.ok(key, 'a log record is in the cloud');
+  let refused = null;
+  try { await A.ffs.deleteDoc({ path: key }); } catch (e) { refused = e; }
+  T.ok(refused && refused.code === 'permission-denied', 'a lone delete is refused');
+  T.ok(be.docs.has(key), 'the record stays');
+  const b = A.ffs.writeBatch(); b.delete({ path: key }); refused = null;
+  try { await b.commit(); } catch (e) { refused = e; }
+  T.ok(refused, 'a batch without the marker is refused too');
+  const rules = fs.readFileSync(path.join(SRC, '..', 'firestore.rules'), 'utf8');
+  T.ok(rules.includes("&& (collection != 'ledger' || (exists(/databases/$(database)/documents/users/$(uid))\n            && !existsAfter(/databases/$(database)/documents/users/$(uid))));"), 'the rule');
+  T.ok(!/match \/\{collection\}\/\{docId\} \{\s*allow read, delete:/.test(rules), 'no blanket delete for every folder');
+});
+T.atest('a new record without the upload stamp is refused (rules of 27 Nov 2026); after one fallback the stamp returns', async () => {
+  const be = fakeBackend();
+  const A = await phone(be);
+  await A.add('x', 'one');
+  await A.Cloud.connect(user); await wait(60);
+  T.ok(typeof be.docs.get('users/u1/shifts/x').s === 'number', 'the app stamps it');
+  let refused = null;
+  try { await A.ffs.setDoc({ path: 'users/u1/shifts/y' }, { u: 1, d: false, j: '{}' }); } catch (e) { refused = e; }
+  T.ok(refused && refused.code === 'permission-denied', 'an unstamped new record is refused');
+  await A.ffs.setDoc({ path: 'users/u1/kv/k1' }, { u: 1, d: false, j: '{}' });
+  T.ok(be.docs.has('users/u1/kv/k1'), 'kv is written without it (settings, the shift in progress, the vault key)');
+  const src = fs.readFileSync(path.join(SRC, 'app', 'cloud.js'), 'utf8');
+  T.ok(src.includes('if (!hadStamp && !stampOk && e && e.code === \'permission-denied\') stampOk = true;'), 'a refused unstamped write brings the stamp back');
+  T.ok(src.includes('!stampFellBack'), 'the fallback happens once a session (no loop)');
 });
 
 /* ---- the 1.39 sync review (track 3b): each scenario failed before its fix ---- */

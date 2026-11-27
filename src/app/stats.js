@@ -43,6 +43,14 @@
     const t = String(v == null ? '' : v).trim().toLowerCase();
     return /^(seo-[a-z0-9-]{1,36}|site|embed)$/.test(t) ? t : '';
   };
+  /** A new random install id: 32 hex digits from the browser's secure random source (the rules take letters and digits,
+   *  16 to 40). The time-and-Math.random fallback could be guessed (audit 27 Nov 2026); null without a secure source. */
+  Stats.newId = function () {
+    const c = root.crypto;
+    if (c && c.randomUUID) return c.randomUUID().replace(/-/g, '');
+    if (c && c.getRandomValues) return Array.from(c.getRandomValues(new Uint8Array(16)), (b) => (b < 16 ? '0' : '') + b.toString(16)).join('');
+    return null;
+  };
   /** Count active days on this device (local only). */
   Stats.markActive = async function () {
     const k = today();
@@ -105,7 +113,7 @@
       const rec = record();
       const mark = Stats.mark(rec);
       if (!force && S.meta.statsSentAt && Date.now() - S.meta.statsSentAt < 6 * 3600000 && S.meta.statsMark === mark) return;
-      if (!S.meta.installId) await Store.setMeta({ installId: (root.crypto && crypto.randomUUID ? crypto.randomUUID() : U.uid() + U.uid()).replace(/-/g, '') });
+      if (!S.meta.installId) { const id = Stats.newId(); if (!id) return; await Store.setMeta({ installId: id }); }
       // the same record as the last one sent (the same day, the same counts): nothing new for the dashboard
       const sig = JSON.stringify(Object.assign({}, rec, { t: 0, id: S.meta.installId }));
       if (!force && S.meta.statsSig === sig) { await Store.setMeta({ statsSentAt: Date.now(), statsMark: mark }); return; }

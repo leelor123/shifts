@@ -183,10 +183,13 @@
     for (let v = from + 1; v <= SCHEMA_VERSION; v++) if (MIGRATIONS[v]) MIGRATIONS[v](state);
   }
 
+  // keys that would reach an object's prototype: never copied from a file, the cloud or a merge (audit 27 Nov 2026)
+  const BAD_KEYS = ['__proto__', 'constructor', 'prototype'];
   function mergeDeep(base, over) {
     if (!over || typeof over !== 'object' || Array.isArray(over)) return over === undefined ? base : over;
     const out = Array.isArray(base) ? base.slice() : Object.assign({}, base);
     for (const k of Object.keys(over)) {
+      if (BAD_KEYS.includes(k)) continue;
       if (base && typeof base[k] === 'object' && base[k] !== null && !Array.isArray(base[k]) && typeof over[k] === 'object' && over[k] !== null && !Array.isArray(over[k])) out[k] = mergeDeep(base[k], over[k]);
       else out[k] = over[k];
     }
@@ -833,6 +836,27 @@
     inc.employers = inc.employers.map((e) => Object.assign(root.Defaults.defaultEmployer(e.id), e, { name: String(e.name == null ? '' : e.name).slice(0, 60) }));
     return inc;
   }
+  /** The settings of a backup file (anyone may have made it), against the defaults: a known field keeps its kind (a
+   *  number stays a number or a number's text, a yes/no or a text stays a plain value, a group a group), else it is dropped and the default
+   *  stands; a field the defaults do not know is kept as it is; __proto__, constructor and prototype never pass. Values
+   *  put into the page are escaped there too (UI.esc); this keeps a crafted file from breaking the screens. */
+  function cleanSettings(over, base) {
+    const out = {};
+    if (!isObj(over)) return out;
+    for (const k of Object.keys(over)) {
+      if (BAD_KEYS.includes(k)) continue;
+      const d = isObj(base) ? base[k] : undefined, v = over[k];
+      const num = (x) => typeof x === 'number' && Number.isFinite(x);
+      if (d === undefined || d === null) out[k] = isObj(v) ? cleanSettings(v, null) : v;
+      else if (isObj(d)) { if (isObj(v)) out[k] = cleanSettings(v, d); }
+      else if (Array.isArray(d)) { if (Array.isArray(v)) out[k] = v.filter((x) => x == null || typeof x !== 'object' || Array.isArray(x) || isObj(x)).map((x) => (isObj(x) ? cleanSettings(x, null) : x)); }
+      else if (typeof d === 'number') { if (num(v) || v === '' || v === null || (typeof v === 'string' && v.length < 30 && v.trim() !== '' && Number.isFinite(+v))) out[k] = v; }
+      // (a yes/no or a text field: any plain value; some hold a third state such as null or a word)
+      else if (typeof d === 'boolean' || typeof d === 'string') { if (v === null || (typeof v !== 'object' && typeof v !== 'function' && v !== undefined)) out[k] = v; }
+      else out[k] = v;
+    }
+    return out;
+  }
   /** mode: 'replace' | 'merge' */
   async function importBackup(json, mode) {
     if (!isObj(json) || json.app !== 'shiftpay') throw root.U.oops('הקובץ אינו גיבוי של האפליקציה');
@@ -841,6 +865,8 @@
     for (const s of LIST_STORES) incoming[s] = json[s] || [];
     cleanIncoming(incoming);
     runMigrations(incoming, +json.schemaVersion || 1);
+    // (after the migrations, which bring an older file's settings to today's shape)
+    incoming.settings = cleanSettings(incoming.settings, root.Defaults.defaultSettings());
     // calculate it once on the side; a file that can't be calculated is refused before anything changes
     try {
       const trial = root.Engine.buildModel({

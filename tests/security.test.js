@@ -135,3 +135,134 @@ T.test('the note box (role=status) is on the page before its first note, so a sc
   T.ok(/if \(document\.body\) \{ try \{ toastBox\(\); \}/.test(ui), 'made as ui.js loads');
   T.ok(/function toast\(text, action, opts\) \{\n    const el = toastBox\(\);/.test(ui), 'toast() fills the same box');
 });
+
+T.section('security: anonymous statistics records (audit 27 Nov 2026)');
+T.test('stats: every feature flag is a named yes or no; the time and the id have bounds; still no identity', () => {
+  const v = /function validStats\(d\) \{([\s\S]*?)\n    \}/.exec(rulesSrc)[1];
+  const listed = /d\.f\.keys\(\)\.hasOnly\(\[([^\]]*)\]\)/.exec(v)[1].split(',').map((s) => s.trim().replace(/'/g, ''));
+  const checked = [...v.matchAll(/statsF\(d\.f, \[([^\]]*)\]\)/g)].flatMap((m) => m[1].split(',').map((s) => s.trim().replace(/'/g, '')));
+  T.eq(checked.slice().sort().join(','), listed.slice().sort().join(','), 'each listed name is checked as a bool');
+  T.ok(/function statsF\(f, k\) \{[\s\S]*?k\[10\], false\) is bool;/.test(rulesSrc), 'statsF checks 11 names');
+  const st = read('src/app/stats.js');
+  const fBlock = st.slice(st.indexOf('f: (() => {'), st.indexOf('})(), // an admin'));
+  const sent = [...fBlock.replace(/\/\/.*$/gm, '').matchAll(/(?:\{|,)\s*([a-zA-Z]+): /g)].map((m) => m[1]).filter((k) => k !== 'return');
+  T.eq(sent.slice().sort().join(','), listed.slice().sort().join(','), 'the app sends exactly the names the rules take');
+  T.ok(v.includes('d.t is int && d.t >= 1735689600000 && d.t < 4102444800000'), 't bounded');
+  T.ok(!/\buid\b|email|name/.test(/d\.keys\(\)\.hasOnly\(\[([^\]]*)\]\)/.exec(v)[1]), 'no field that names the person');
+  T.ok(rulesSrc.includes("id.matches('^[0-9a-z]{16,40}$') && validStats("), 'the id: letters and digits, 16 to 40');
+  T.ok(!st.includes('U.uid() + U.uid()'), 'no guessable time-based install id');
+  const ctx = { crypto: require('crypto').webcrypto };
+  const Stats = {}; new Function('Stats', 'root', /Stats\.newId = function \(\) \{[\s\S]*?\n  \};/.exec(st)[0])(Stats, ctx);
+  T.ok(/^[0-9a-f]{32}$/.test(Stats.newId()), 'a 32-digit hex id');
+  ctx.crypto = { getRandomValues: (a) => require('crypto').webcrypto.getRandomValues(a) };
+  T.ok(/^[0-9a-f]{32}$/.test(Stats.newId()), 'also without randomUUID');
+  ctx.crypto = undefined;
+  T.eq(Stats.newId(), null, 'no secure source: no id (no record)');
+});
+
+T.section('security: CSV formula injection (audit 27 Nov 2026)');
+T.test('a CSV cell that starts with = + - @ tab or CR is text; a plain number stays a number', () => {
+  const src = read('src/app/export.js');
+  const m = /const csvCell = \(v\) => \{[\s\S]*?\n  \};/.exec(src);
+  T.ok(m, 'csvCell');
+  const csvCell = new Function(m[0] + '\nreturn csvCell;')();
+  T.eq(csvCell('=HYPERLINK("http://x","y")'), '"\'=HYPERLINK(""http://x"",""y"")"');
+  T.eq(csvCell('+1+1'), "'+1+1"); T.eq(csvCell('@SUM(A1)'), "'@SUM(A1)"); T.eq(csvCell('-2+3'), "'-2+3");
+  T.eq(csvCell('\tx'), "'\tx"); T.eq(csvCell('\rx'), '"\'\rx"');
+  T.eq(csvCell('-12.50'), '-12.50', 'a negative amount'); T.eq(csvCell(-3), '-3'); T.eq(csvCell('מלצר'), 'מלצר');
+  T.eq(csvCell(null), ''); T.eq(csvCell('a=b'), 'a=b', 'only a leading sign');
+});
+T.test('names received from a workplace code lose a leading = + - @', () => {
+  const W = require('../src/core/workplace.js');
+  const r = W.clean({ n: '=cmd|"/c calc"!A1', ww: 5, ro: [{ n: '+@-=SUM(1)' }, { n: '-' }, { n: 'מלצר - ערב' }] });
+  T.eq(r.n, 'cmd|"/c calc"!A1');
+  T.eq(r.ro.map((x) => x.n).join('|'), 'SUM(1)|מלצר - ערב', 'a name of only signs is dropped; a dash inside stays');
+  T.eq(W.pack({ employer: { name: 'My place' }, roles: [{ name: 'Cook' }] }).n, 'My place', 'own names are packed as before');
+});
+
+T.section('security: settings values in the page, and settings from a backup file (audit 27 Nov 2026)');
+T.test('settings-derived values are escaped where they go into HTML; a sheet title is text', () => {
+  const tr = read('src/app/views-taxrefund.js');
+  for (const v of ['f.gross', 'f.tax', 'f.pension', 'sv.months', 'sv.end', 'dg.year', 'dg.studyYears']) {
+    T.ok(tr.includes('value="${esc(' + v + ' || '), 'tax refund ' + v);
+    T.ok(!tr.includes('value="${' + v), 'no raw ' + v);
+  }
+  const st = read('src/app/views-settings.js');
+  for (const v of ['B.sickUsed', 'L.fullTimeHours', 'S.settings.lock.timeoutMin']) T.ok(st.includes('${esc(' + v + ')}'), 'settings ' + v);
+  T.ok(st.includes("'בערב שלפני ב-' + esc(R.eve || '20:00')"), 'the reminder hour');
+  T.ok(read('src/app/views-reports.js').includes('<b>${esc(T.creditPoints)}</b>'), 'credit points');
+  T.ok(read('src/app/ui.js').includes('<h2 id="${hid}">${esc(opts.title || \'\')}</h2>'), 'sheet title escaped');
+});
+T.test('a backup file\'s settings: known fields keep their kind, prototype keys never pass (mergeDeep too)', () => {
+  const s = read('src/app/store.js');
+  const pick = (re) => { const m = re.exec(s); T.ok(m, String(re)); return m[0]; };
+  const code = [pick(/const isObj = [^\n]*/), pick(/const BAD_KEYS = [^\n]*/), pick(/function mergeDeep\(base, over\) \{[\s\S]*?\n  \}/), pick(/function cleanSettings\(over, base\) \{[\s\S]*?\n  \}/)].join('\n');
+  const { mergeDeep, cleanSettings } = new Function(code + '\nreturn { mergeDeep, cleanSettings };')();
+  const def = { userName: '', goal: { amount: 0 }, theme: 'auto', fx: { effects: true }, list: [], opt: null };
+  const bad = JSON.parse('{"__proto__": {"polluted": 1}, "constructor": {"x": 1}, "userName": "<img src=x onerror=alert(1)>", "goal": {"amount": {"$gt": 1}}, "theme": ["dark"], "fx": "off", "list": [1, {"__proto__": {"p": 1}}], "opt": {"prototype": 1, "a": 2}, "extra": 5}');
+  const c = cleanSettings(bad, def);
+  T.ok(!Object.prototype.hasOwnProperty.call(c, '__proto__') && !Object.prototype.hasOwnProperty.call(c, 'constructor'), 'no prototype keys');
+  T.eq(c.userName, '<img src=x onerror=alert(1)>', 'a string stays a string (escaped where it is shown)');
+  T.eq(JSON.stringify(c.goal), '{}', 'a number field that holds an object is dropped');
+  T.ok(!('theme' in c) && !('fx' in c), 'a list for a string, a string for a group: dropped');
+  T.eq(JSON.stringify(c.opt), '{"a":2}', 'an unknown group keeps its fields, without prototype keys');
+  T.eq(c.extra, 5, 'an unknown field is kept');
+  const m = mergeDeep(def, c);
+  T.eq(m.goal.amount, 0, 'the default stands'); T.eq(m.theme, 'auto'); T.eq(m.fx.effects, true);
+  T.eq(({}).polluted, undefined, 'Object.prototype untouched');
+  const m2 = mergeDeep(def, bad);
+  T.eq(Object.getPrototypeOf(m2), Object.prototype, 'mergeDeep does not take __proto__');
+  T.eq(m2.polluted, undefined);
+  T.eq(JSON.stringify(cleanSettings({ goal: { amount: '1500' }, fx: { effects: false } }, def)), '{"goal":{"amount":"1500"},"fx":{"effects":false}}', 'ordinary values pass (a number typed as text too)');
+  T.ok(/runMigrations\(incoming, \+json\.schemaVersion \|\| 1\);\n[^\n]*\n    incoming\.settings = cleanSettings\(incoming\.settings, root\.Defaults\.defaultSettings\(\)\);/.test(s), 'importBackup cleans after the migrations');
+});
+
+T.section('security: the email of a request without an account (audit 27 Nov 2026)');
+T.test('no ? & = # % / spaces in the email, the same in the app and the rules; the mail link encodes it', () => {
+  const src = read('src/app/views-support.js');
+  const Support = {};
+  new Function('Support', [/Support\.mailOk = [^\n]*/.exec(src)[0], /Support\.mailHref = [^\n]*/.exec(src)[0]].join('\n'))(Support);
+  const ruleRe = /request\.resource\.data\.email\.matches\('([^']*)'\)/.exec(rulesSrc)[1].split('\\\\').join('\\'); // (a rules string writes \\s for \s)
+  const rules = new RegExp(ruleRe);
+  const good = ['name@example.com', 'first.last+tag@mail.co.il', 'a_b-c@x.org'];
+  const bad = ['a@b.com?cc=evil@x.com', 'a@b.com&body=x', 'a=b@c.com', 'a b@c.com', 'a@b.c', 'a@b.com#x', 'a%40b@c.com', 'a/b@c.com', 'a@b@c.com', 'a@b.com\nbcc:x@y.com', 'nodomain'];
+  for (const m of good) { T.ok(Support.mailOk(m), 'app takes ' + m); T.ok(rules.test(m), 'rules take ' + m); }
+  for (const m of bad) { T.ok(!Support.mailOk(m), 'app refuses ' + JSON.stringify(m)); T.ok(!rules.test(m), 'rules refuse ' + JSON.stringify(m)); }
+  T.eq(Support.mailHref('a@b.com?cc=x@y.com'), 'a@b.com%3Fcc%3Dx@y.com', 'an old request: ? and = are encoded');
+  T.ok(src.includes('<a href="mailto:${esc(Support.mailHref(t.email))}?subject='), 'the admin link uses it');
+  T.ok(src.includes('(!anon || Support.mailOk(mail))'), 'the form checks it');
+});
+
+T.section('security: Android receivers and backups (audit 27 Nov 2026)');
+T.test('the exported NoteAlarm takes only the system broadcasts; the app\'s own alarms go to NoteWake, not exported', () => {
+  const J = (f) => read('android/widgets/java/' + f + '.java');
+  const alarm = J('NoteAlarm'), wake = J('NoteWake'), nc = J('NoteCenter'), rn = J('RunningNote');
+  T.ok(!alarm.includes('RunningNote.TICK') && !alarm.includes('NoteCenter.ACTION.equals'), 'NoteAlarm no longer takes TICK or the notification alarm');
+  T.ok(/if \(!\(Intent\.ACTION_BOOT_COMPLETED\.equals\(a\) \|\| Intent\.ACTION_MY_PACKAGE_REPLACED\.equals\(a\)\s*\|\| Intent\.ACTION_TIME_CHANGED\.equals\(a\) \|\| Intent\.ACTION_TIMEZONE_CHANGED\.equals\(a\)\)\) return;/.test(alarm), 'anything else is ignored');
+  T.ok(wake.includes('RunningNote.TICK.equals(a)') && wake.includes('if (!NoteCenter.ACTION.equals(a)) return;'), 'NoteWake takes the two');
+  T.ok(nc.includes('Intent i = new Intent(c, NoteWake.class).setAction(ACTION);'), 'the notification alarm goes to NoteWake');
+  T.ok(rn.includes('Intent i = new Intent(c, NoteWake.class).setAction(TICK);'), 'the bar\'s alarm too');
+  T.eq(((nc + rn).match(/new Intent\(c, NoteAlarm\.class\)/g) || []).length, 1, 'NoteAlarm is named once: to cancel an older version\'s alarms');
+  T.ok(/static void dropOldAlarms[\s\S]{0,600}new Intent\(c, NoteAlarm\.class\)[\s\S]{0,40}PendingIntent\.FLAG_NO_CREATE|static void dropOldAlarms[\s\S]{0,400}FLAG_NO_CREATE[\s\S]{0,300}new Intent\(c, NoteAlarm\.class\)/.test(nc), 'there, only to find and cancel');
+  T.ok(alarm.includes('NoteCenter.dropOldAlarms(app)'), 'after an update the old alarms are cancelled');
+  const tools = read('tools/android.js');
+  T.ok(tools.includes('<receiver android:name=".NoteWake" android:exported="false" />'), 'NoteWake is not exported');
+  const m = /<receiver android:name="\.NoteAlarm" android:exported="true">([\s\S]*?)<\/receiver>/.exec(tools);
+  T.ok(m, 'NoteAlarm in the manifest');
+  const acts = [...m[1].matchAll(/<action android:name="([^"]+)"/g)].map((x) => x[1]).sort();
+  T.eq(acts.join(','), 'android.intent.action.BOOT_COMPLETED,android.intent.action.MY_PACKAGE_REPLACED,android.intent.action.TIMEZONE_CHANGED,android.intent.action.TIME_SET', 'system broadcasts only');
+});
+T.test('the notifications\' store (shaati_notes.xml) stays out of backups and moves to a new phone', () => {
+  const b = read('android/widgets/res/xml/w_backup_rules.xml'), d = read('android/widgets/res/xml/w_data_extraction.xml');
+  T.eq((b.match(/<exclude domain="sharedpref" path="shaati_notes\.xml" \/>/g) || []).length, 1, 'full backup (Android 11 and older)');
+  T.eq((d.match(/<exclude domain="sharedpref" path="shaati_notes\.xml" \/>/g) || []).length, 2, 'cloud backup and device transfer');
+  T.ok(read('android/widgets/java/NoteCenter.java').includes('PREFS = "shaati_notes"'), 'the file NoteCenter uses');
+});
+T.test('commit() only where the order on disk matters; apply() elsewhere', () => {
+  const J = (f) => read('android/widgets/java/' + f + '.java');
+  T.eq((J('WidgetData').match(/\.commit\(\)/g) || []).length, 0, 'WidgetData');
+  T.eq((J('WorkGeo').match(/\.commit\(\)/g) || []).length, 0, 'WorkGeo');
+  const nc = J('NoteCenter');
+  T.eq((nc.match(/\.commit\(\)/g) || []).length, 1, 'NoteCenter: only the shown list');
+  T.ok(/commit, not apply: each tag is shown once[\s\S]{0,300}putString\(SHOWN, keep\.toString\(\)\)\.commit\(\);/.test(nc), 'with the reason');
+});

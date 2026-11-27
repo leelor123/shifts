@@ -185,7 +185,7 @@
       const m = box.querySelector('#sp-mail');
       const text = t ? t.value.trim() : '';
       const mail = m ? m.value.trim() : '';
-      return { text, mail, ok: reason && text.length >= 10 && (!anon || /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(mail)) };
+      return { text, mail, ok: reason && text.length >= 10 && (!anon || Support.mailOk(mail)) };
     };
     // the button always answers: until the request is ready it looks paler, and a tap says what is missing
     const check = () => { send.setAttribute('aria-disabled', String(!val().ok)); };
@@ -269,7 +269,7 @@
       const label = reasonOf(t.reason)[3];
       const bubble = (from, text, at) => `<div class="msg ${from === 'admin' ? 'assistant' : 'user'}">${esc(text)}<div class="tiny" style="opacity:.7;margin-top:4px">${from === 'admin' ? '💬 צוות Shaati · ' : ''}${UI.timeAgo(at)}</div></div>`;
       body.innerHTML = `<div class="sp-head">${reasonTile(t.reason)}<div><b>${esc(label)}</b><div class="tiny muted"><span class="sp-st ${STATUS[t.status] ? STATUS[t.status][1] : ''}">${STATUS[t.status] ? STATUS[t.status][0] : ''}</span> · נפתחה ${U.fmtDate(U.epochKey(t.created))}</div></div></div>
-        ${asAdmin ? `<div class="card small sp-meta">${t.name ? `<div>שם: <b>${esc(t.name)}</b></div>` : ''}${t.email ? `<div>אימייל: <a href="mailto:${esc(t.email)}?subject=${encodeURIComponent('Shaati: הפנייה שלך')}" dir="ltr">${esc(t.email)}</a> (לא מחובר, לענות במייל)</div>` : ''}${t.v ? `<div dir="ltr" style="text-align:left">${esc(t.v)} · ${esc(t.p || '')}<br><span class="tiny">${esc(t.dev || '')}</span></div>` : '<div class="tiny muted">בלי פרטים טכניים</div>'}</div>` : ''}
+        ${asAdmin ? `<div class="card small sp-meta">${t.name ? `<div>שם: <b>${esc(t.name)}</b></div>` : ''}${t.email ? `<div>אימייל: <a href="mailto:${esc(Support.mailHref(t.email))}?subject=${encodeURIComponent('Shaati: הפנייה שלך')}" dir="ltr">${esc(t.email)}</a> (לא מחובר, לענות במייל)</div>` : ''}${t.v ? `<div dir="ltr" style="text-align:left">${esc(t.v)} · ${esc(t.p || '')}<br><span class="tiny">${esc(t.dev || '')}</span></div>` : '<div class="tiny muted">בלי פרטים טכניים</div>'}</div>` : ''}
         <div class="chat-log">${bubble('user', t.text, t.created)}${msgs.map((m) => bubble(m.from, m.text, m.t)).join('')}</div>
         ${t.status !== 'closed' ? `<button class="btn text sm" data-sp-close>${icon('check', 's')} ${asAdmin ? 'סגור את הפנייה' : 'הבעיה נפתרה, אפשר לסגור'}</button>` : ''}
         ${asAdmin && t.status === 'closed' ? `<button class="btn text sm danger-text" data-sp-del>${icon('trash', 's')} מחק את הפנייה</button>` : ''}`;
@@ -348,6 +348,12 @@
     return n;
   };
 
+  /** An email to answer to: no spaces, and none of ? & = # % / < > " , ; : (they would add a copy, a subject or a body to
+   *  the admin's mail link). The same pattern as firestore.rules tickets (audit 27 Nov 2026). */
+  Support.mailOk = (m) => typeof m === 'string' && m.length <= 100 && /^[^\s@?&=#%/<>",;:]+@[^\s@?&=#%/<>",;:]+\.[^\s@?&=#%/<>",;:]{2,}$/.test(m);
+  /** The address part of a mailto: link, encoded (an older request may hold anything); @ stays readable. */
+  Support.mailHref = (m) => encodeURIComponent(String(m || '')).replace(/%40/g, '@');
+
   /* ---------------- admin: the inbox ---------------- */
   /** A request written without an account (only an email to answer to) is deleted 12 months after it was closed (the
    *  privacy policy's retention). From the list an admin already read: no extra reading, at most 20 at a time. */
@@ -359,7 +365,8 @@
    *  account are deleted quietly on the way (a failure waits for the next opening). */
   Support.adminInbox = async function (opts) {
     const { fs, db } = await Cloud().sdk();
-    let list = (await fs.getDocsFromServer(fs.collection(db, 'tickets'))).docs.map((d) => Object.assign({ id: d.id }, d.data()));
+    // (in pages of 500, the most the rules let an admin's list read: the counts still see every request)
+    let list = (await Cloud().readAll(fs, fs.collection(db, 'tickets'))).map((d) => Object.assign({ id: d.id }, d.data()));
     if (opts && opts.purge) {
       const old = Support.oldGuestTickets(list);
       if (old.length) {

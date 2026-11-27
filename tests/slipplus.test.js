@@ -93,7 +93,8 @@ T.test('statistics: the gap and the report counted, and the rules allow every ke
   const body = st.slice(st.indexOf('f: (() =>'), st.indexOf('})(), // an admin'));
   const keys = [...body.matchAll(/(\w+): (?:!|\+)/g)].map((m) => m[1]);
   T.ok(keys.includes('gap') && keys.includes('rep'));
-  const lim = +(rd('firestore.rules').match(/d\.f is map && d\.f\.size\(\) <= (\d+)/) || [])[1];
+  // (since 27 Nov 2026 the rules name each key; security.test.js checks the two lists are the same)
+  const lim = ((rd('firestore.rules').match(/d\.f\.keys\(\)\.hasOnly\(\[([^\]]*)\]\)/) || [])[1] || '').split(',').filter((s) => s.trim()).length;
   T.ok(keys.length <= lim, `${keys.length} keys, the rules allow ${lim}`);
 });
 T.test('both files are in the build and in the tests, after the payslip code', () => {

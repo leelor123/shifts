@@ -37,7 +37,9 @@ final class WidgetData {
         }
         SharedPreferences p = c.getSharedPreferences(PREFS, Context.MODE_PRIVATE);
         if (json.equals(p.getString(KEY, null))) return;
-        p.edit().putString(KEY, json).commit();
+        // apply, not commit: everything that reads it next runs in this process (raw(), updateAll, the widgets), and
+        // apply changes the memory at once; only the disk write follows, off the main thread (it waited here before)
+        p.edit().putString(KEY, json).apply();
         // the taps the app has done (or, wiped, never will): gone
         JSONObject o = raw(c);
         long done = o == null ? Long.MAX_VALUE : o.optLong("wid", 0);
@@ -46,7 +48,7 @@ final class WidgetData {
             JSONObject t = all.optJSONObject(i); // a broken entry (never written by this code) is dropped, not a crash
             if (t != null && t.optLong("id", 0) > done) left.put(t);
         }
-        if (left.length() != all.length()) p.edit().putString(TAPS, left.toString()).commit();
+        if (left.length() != all.length()) p.edit().putString(TAPS, left.toString()).apply();
         updateAll(c);
         WorkGeo.sync(c); // a shift started or ended: the suggestion at work it answers is closed
     }
@@ -138,7 +140,7 @@ final class WidgetData {
         } catch (Exception e) {
             return;
         }
-        p.edit().putString(TAPS, all.toString()).commit();
+        p.edit().putString(TAPS, all.toString()).apply(); // (read in this process; a receiver's end waits for the disk)
         updateAll(c);
         WorkGeo.sync(c); // a start on a widget or the tile answers "start a shift?" too
     }

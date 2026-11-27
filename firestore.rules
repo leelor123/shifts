@@ -20,9 +20,19 @@ service cloud.firestore {
         && request.resource.data.get('app', '') is string && request.resource.data.get('app', '').size() <= 20;
 
       match /{collection}/{docId} {
-        allow read, delete: if request.auth != null && request.auth.uid == uid;
-        // records are stored as {u: updatedAt, d: deleted?, j: json, s: when it reached the server}; cap each document at ~900KB
-        allow create: if valid(uid, collection);
+        allow read: if request.auth != null && request.auth.uid == uid;
+        // the signed shift log is deleted only with the account: in a batch that also deletes the account's marker
+        // users/{uid} (Cloud.deleteAccountData writes the marker first, then each batch of 400 records deletes it again).
+        // A single record of it can no longer be removed on its own. (The owner can still delete the whole account, and
+        // with it the log: that is the right to deletion, not a hole.) Audit 27 Nov 2026.
+        allow delete: if request.auth != null && request.auth.uid == uid
+          && (collection != 'ledger' || (exists(/databases/$(database)/documents/users/$(uid))
+            && !existsAfter(/databases/$(database)/documents/users/$(uid))));
+        // records are stored as {u: updatedAt, d: deleted?, j: json, s: when it reached the server}; cap each document at ~900KB.
+        // A new record of a synced folder must carry s, the server's own time (cloud.js stamped). kv is not stamped
+        // (settings, the shift in progress, the vault key). 1.41.1 and older wrote without s: their new records wait
+        // on the phone (still dirty) until it updates, then go up stamped; nothing is lost. Audit 27 Nov 2026.
+        allow create: if valid(uid, collection) && (collection == 'kv' || request.resource.data.get('s', null) == request.time);
         // never replace a newer version with an older one (a phone that was offline for a while)
         allow update: if valid(uid, collection) && request.resource.data.u >= resource.data.u
           // the signed shift log only grows: a record's text stays as written and never becomes a tombstone
@@ -33,9 +43,12 @@ service cloud.firestore {
     // anonymous usage statistics (stats.js): a signed-in device writes its own record under a random id,
     // with a fixed shape and no personal data; only admins can read them
     match /stats/{id} {
-      allow create, update: if request.auth != null && id.size() >= 16 && id.size() <= 40 && validStats(request.resource.data);
+      // the id: a random install id (stats.js, 32 hex digits; letters and digits only, 16 to 40)
+      allow create, update: if request.auth != null && id.matches('^[0-9a-z]{16,40}$') && validStats(request.resource.data);
       allow delete: if request.auth != null;
-      allow read: if isAdmin();
+      // admins read them in pages of at most 500 (Cloud.readAll): one query never pulls the whole collection
+      allow get: if isAdmin();
+      allow list: if isAdmin() && request.query.limit <= 500;
     }
     // error reports (app/errors.js): part of the usage statistics, sent only with the same yes. Written once by a signed-in
     // device under a random id, never changed; a fixed shape with no personal data (validErr); read by admins only,
@@ -63,9 +76,10 @@ service cloud.firestore {
       allow create: if validTicket(request.resource.data)
         && request.resource.data.status == 'open' && request.resource.data.last == 'user' && request.resource.data.seen == true
         && ((request.auth != null && request.resource.data.uid == request.auth.uid)
-          || (request.auth == null && request.resource.data.uid == '' && 'email' in request.resource.data && request.resource.data.email.matches('^[^@ ]+@[^@ ]+[.][^@ ]+$')));
+          || (request.auth == null && request.resource.data.uid == '' && 'email' in request.resource.data && request.resource.data.email.matches('^[^@\\s?&=#%/<>",;:]+@[^@\\s?&=#%/<>",;:]+[.][^@\\s?&=#%/<>",;:]{2,}$')));
       allow get: if isAdmin() || ownTicket();
-      allow list: if isAdmin() || (request.auth != null && resource.data.uid == request.auth.uid);
+      // an admin's inbox reads in pages of at most 500 (Cloud.readAll); a writer lists their own
+      allow list: if (isAdmin() && request.query.limit <= 500) || (request.auth != null && resource.data.uid == request.auth.uid);
       // a conversation only moves forward: who wrote last, status, when, and whether the reply was seen
       allow update: if validTicket(request.resource.data)
         && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['status', 'updated', 'last', 'seen'])
@@ -305,8 +319,21 @@ service cloud.firestore {
         // days from the first day of use to the first shift (1.42, the admin funnel's "within a day"); optional
         && (!('fsd' in d) || (d.fsd is int && d.fsd >= 0 && d.fsd < 10000))
         && d.age in ['u18', '18p', '']
-        && d.f is map && d.f.size() <= 22
-        && d.t is int;
+        // which features are on: these 22 names, each a yes or no (any value used to pass; audit 27 Nov 2026). Every
+        // name a version of the app ever sent is here (stats.js); a name not listed is refused, and the app's record
+        // simply does not go (statistics never get in the way)
+        && d.f is map && d.f.keys().hasOnly(['rights', 'ai', 'lock', 'bio', 'dark', 'fxOff', 'goal', 'demo', 'planned', 'roles', 'notif',
+          'plus', 'plusWeb', 'plusSeen', 'plusWall', 'plusTry', 'tax', 'gift', 'inv', 'tip', 'gap', 'rep'])
+        && statsF(d.f, ['rights', 'ai', 'lock', 'bio', 'dark', 'fxOff', 'goal', 'demo', 'planned', 'roles', 'notif'])
+        && statsF(d.f, ['plus', 'plusWeb', 'plusSeen', 'plusWall', 'plusTry', 'tax', 'gift', 'inv', 'tip', 'gap', 'rep'])
+        // when it was sent (ms since 1970): 2025 to 2100, not any number
+        && d.t is int && d.t >= 1735689600000 && d.t < 4102444800000;
+    }
+    // each of these names in f is a yes or no when it is there
+    function statsF(f, k) {
+      return f.get(k[0], false) is bool && f.get(k[1], false) is bool && f.get(k[2], false) is bool && f.get(k[3], false) is bool
+        && f.get(k[4], false) is bool && f.get(k[5], false) is bool && f.get(k[6], false) is bool && f.get(k[7], false) is bool
+        && f.get(k[8], false) is bool && f.get(k[9], false) is bool && f.get(k[10], false) is bool;
     }
 
     function validErr(d) {
@@ -372,7 +399,7 @@ service cloud.firestore {
         && request.resource.data.get('d', false) is bool
         && (request.resource.data.get('j', null) == null || request.resource.data.j is string)
         // s, the upload stamp (cloud.js stamped): only the server's own time of this write; the app's listeners ask
-        // for it. Optional: 1.41.1 and older write without it
+        // for it. Optional here for an update and for kv; a new record of a synced folder must carry it (allow create)
         && (!('s' in request.resource.data) || request.resource.data.s == request.time)
         && (request.resource.data.j == null || request.resource.data.j.size() < 900000);
     }

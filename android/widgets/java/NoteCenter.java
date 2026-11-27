@@ -112,9 +112,23 @@ final class NoteCenter {
         if (lead > 15 * MIN) am.setWindow(AlarmManager.RTC_WAKEUP, at - 10 * MIN, 10 * MIN, early);
     }
 
+    // to NoteWake, which is not exported (no other app can send it): until 27 Nov 2026 to the exported NoteAlarm
     private static PendingIntent alarm(Context c, int code) {
-        Intent i = new Intent(c, NoteAlarm.class).setAction(ACTION);
+        Intent i = new Intent(c, NoteWake.class).setAction(ACTION);
         return PendingIntent.getBroadcast(c, code, i, PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE);
+    }
+
+    /** After an update: the alarms an older version set (to NoteAlarm: these two and the running shift's) are cancelled;
+     *  NoteAlarm ignores them now, and run() sets the new ones. */
+    static void dropOldAlarms(Context c) {
+        AlarmManager am = (AlarmManager) c.getSystemService(Context.ALARM_SERVICE);
+        if (am == null) return;
+        int f = PendingIntent.FLAG_NO_CREATE | PendingIntent.FLAG_IMMUTABLE;
+        String[][] old = { { ACTION, "0" }, { ACTION, "1" }, { RunningNote.TICK, "7402" } };
+        for (String[] o : old) {
+            PendingIntent p = PendingIntent.getBroadcast(c, Integer.parseInt(o[1]), new Intent(c, NoteAlarm.class).setAction(o[0]), f);
+            if (p != null) { am.cancel(p); p.cancel(); }
+        }
     }
 
     /** The address a tap opens, inside the app (always on Shaati's own site; anything else opens the home screen). */
@@ -286,6 +300,8 @@ final class NoteCenter {
                 String k = it.next();
                 if (now - o.optLong(k, 0) < 8 * DAY) keep.put(k, o.optLong(k, 0));
             }
+            // commit, not apply: each tag is shown once, and this runs on the alarm's own thread (NoteWake), not the
+            // main one, so waiting for the disk costs nothing and a notification already shown is on record at once
             prefs(c).edit().putString(SHOWN, keep.toString()).commit();
         } catch (Exception e) {
             // a broken list: started again

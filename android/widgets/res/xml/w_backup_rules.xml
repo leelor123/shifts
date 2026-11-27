@@ -5,4 +5,6 @@
     <exclude domain="sharedpref" path="shaati_widgets.xml" />
     <!-- the workplace spot (WorkGeo) never leaves the phone, not even in a backup -->
     <exclude domain="sharedpref" path="shaati_geo.xml" />
+    <!-- the notifications' plan and what was shown (NoteCenter): their words carry hours and pay; the app sends them anew -->
+    <exclude domain="sharedpref" path="shaati_notes.xml" />
 </full-backup-content>

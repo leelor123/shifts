@@ -305,7 +305,7 @@
     // screen readers announce the sheet by its title
     const hid = 'sh-t-' + (++sheetSeq);
     sh.setAttribute('aria-labelledby', hid);
-    sh.innerHTML = `${firm ? '' : '<div class="grab"></div>'}<div class="sh-head"><h2 id="${hid}">${opts.title || ''}</h2>${firm ? '' : `<button class="icon-btn" data-close aria-label="סגור">${icon('x')}</button>`}</div><div class="sh-body">${opts.body || ''}</div>${opts.foot ? `<div class="sh-foot">${opts.foot}</div>` : ''}`;
+    sh.innerHTML = `${firm ? '' : '<div class="grab"></div>'}<div class="sh-head"><h2 id="${hid}">${esc(opts.title || '')}</h2>${firm ? '' : `<button class="icon-btn" data-close aria-label="סגור">${icon('x')}</button>`}</div><div class="sh-body">${opts.body || ''}</div>${opts.foot ? `<div class="sh-foot">${opts.foot}</div>` : ''}`;
     document.body.append(bd, sh);
     const entry = { bd, sh, opts, closed: false, pushed: false };
     // a sheet on its way out takes no more taps: "save" pressed twice (the second while the sheet was closing) saved a

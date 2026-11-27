@@ -375,7 +375,7 @@
    * phone that edited offline and went online days later wrote a u older than the other phones' window, so they did not
    * hear it until the weekly full read (review 16.11.2026, sync #2). Rules from before s refuse it: then the writes go
    * without it until the app opens again (stampOk), and nothing waits on a rules deploy. */
-  let stampOk = true;
+  let stampOk = true, stampFellBack = false;
   const stamped = (data) => (stampOk && fb.fs.serverTimestamp ? Object.assign({}, data, { s: fb.fs.serverTimestamp() }) : data);
 
   /* ---------------- first connection on a device ---------------- */
@@ -668,7 +668,10 @@
         if (local) { delete local._syncedAt; await Store.saveAll(); }
         // not an older version: the rules may be from before the upload stamp. Once more without it (the record and
         // the tombstone are still waiting: dirty, or in pendingDeletes); a refusal for another reason stays an error
-        if (hadStamp && stampOk && g === gen && e && e.code === 'permission-denied') { stampOk = false; Cloud.schedulePush(300); return; }
+        // (once a session: since 27 Nov 2026 the rules require s on a new record, so when the write without it is
+        // refused too, the stamp was not the reason and it comes back; no loop between the two)
+        if (hadStamp && stampOk && !stampFellBack && g === gen && e && e.code === 'permission-denied') { stampOk = false; stampFellBack = true; Cloud.schedulePush(300); return; }
+        if (!hadStamp && !stampOk && e && e.code === 'permission-denied') stampOk = true;
       }
     } catch (err) { /* offline: retried on the next push */ }
     setStatus('error', e);
@@ -843,17 +846,39 @@
       if (Cloud.user && Cloud.user.uid === uid) { attach(uid); Cloud.connected = true; }
       throw e;
     }
+    const marker = fs.doc(db, 'users', uid);
     for (const st of SYNC.concat(['kv'])) {
       const snap = await fs.getDocs(fs.collection(db, 'users', uid, st));
       for (let i = 0; i < snap.docs.length; i += 400) {
+        // the signed shift log is deleted only in a batch that also deletes the account's marker (firestore.rules):
+        // the marker is written first, so each batch of the log finds it and takes it with it
+        const log = st === 'ledger';
+        if (log) await fs.setDoc(marker, { updatedAt: Date.now(), schema: Store.SCHEMA_VERSION, app: String(root.APP_VERSION || '') });
         const b = fs.writeBatch(db);
         snap.docs.slice(i, i + 400).forEach((d) => b.delete(d.ref));
+        if (log) b.delete(marker);
         await b.commit();
       }
     }
-    await fs.deleteDoc(fs.doc(db, 'users', uid));
+    await fs.deleteDoc(marker);
     if (user.delete) await au.deleteUser(user);
     await shutdown(uid); // (with anything it parked on this phone: its key went with kv above)
+  };
+
+  /** Every document of a collection, read in pages by document id: the rules let an admin list at most 500 at a time
+   *  (stats, tickets), and the dashboard's totals need all of them, so nothing is cut off. The reads cost the same (one
+   *  per document, one more per page). (fs: the Firestore module; coll: a collection reference.) Audit 27 Nov 2026. */
+  Cloud.PAGE = 500;
+  Cloud.readAll = async function (fs, coll, page) {
+    const n = page || Cloud.PAGE, out = [];
+    let last = null;
+    for (let i = 0; i < 2000; i++) {
+      const snap = await fs.getDocsFromServer(fs.query(coll, fs.orderBy(fs.documentId()), ...(last ? [fs.startAfter(last)] : []), fs.limit(n)));
+      out.push(...snap.docs);
+      if (snap.docs.length < n) break;
+      last = snap.docs[snap.docs.length - 1];
+    }
+    return out;
   };
 
   Cloud.statusText = function () {

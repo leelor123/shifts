@@ -89,6 +89,8 @@ final class WorkGeo {
         return h >= 23 || h < 6;
     }
 
+    // apply everywhere here (27 Nov 2026): every reader is in this process and sees the change at once; the writes reach
+    // the disk in order, and a receiver's end (the geofence's, NoteAlarm's) waits for them
     private static SharedPreferences prefs(Context c) {
         return c.getSharedPreferences(PREFS, Context.MODE_PRIVATE);
     }
@@ -181,7 +183,7 @@ final class WorkGeo {
         JSONArray a = new JSONArray();
         for (JSONObject o : list) a.put(o);
         prefs(c).edit().putString("places", a.toString()).putBoolean("on", !list.isEmpty())
-                .remove("lat").remove("lng").remove("r").remove("lastInNote").remove("lastExit").remove("lastOutNote").commit();
+                .remove("lat").remove("lng").remove("r").remove("lastInNote").remove("lastExit").remove("lastOutNote").apply();
     }
 
     private static int find(List<JSONObject> list, String id) {
@@ -221,7 +223,7 @@ final class WorkGeo {
             return null;
         }
         write(c, list);
-        prefs(c).edit().putInt("fence", FENCE_UNKNOWN).commit();
+        prefs(c).edit().putInt("fence", FENCE_UNKNOWN).apply();
         return watch(c, done) ? id : null;
     }
 
@@ -289,7 +291,7 @@ final class WorkGeo {
 
     private static void answered(Context c, boolean ok, int code, Done done) {
         if (!on(c)) return; // turned off meanwhile
-        prefs(c).edit().putInt("fence", ok ? FENCE_OK : FENCE_REFUSED).commit();
+        prefs(c).edit().putInt("fence", ok ? FENCE_OK : FENCE_REFUSED).apply();
         if (done != null) done.result(ok, code);
         Sink s = sink;
         String st = status(c);
@@ -320,7 +322,7 @@ final class WorkGeo {
             } catch (Exception e) {
                 // nothing was watched
             }
-            prefs(c).edit().clear().commit();
+            prefs(c).edit().clear().apply();
             NotificationManager nm = (NotificationManager) c.getSystemService(Context.NOTIFICATION_SERVICE);
             if (nm != null) {
                 nm.cancel(TAG_IN, 1);
@@ -385,7 +387,7 @@ final class WorkGeo {
             else cancel(nm, TAG_OUT);
         }
         if (d != null && nm != null) {
-            prefs(c).edit().putString("noteFor", note.optString("id")).commit();
+            prefs(c).edit().putString("noteFor", note.optString("id")).apply();
             post(c, nm, "start".equals(d), now, note.optString("id"), note.optString("n"), note.optString("e"));
         }
     }

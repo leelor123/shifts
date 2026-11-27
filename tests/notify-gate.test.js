@@ -62,7 +62,8 @@ T.test('the running shift inside the Android app is the phone\'s own live notifi
   const j = read('android/widgets/java/RunningNote.java');
   for (const s of ['n.extras.putBoolean(PROMOTED, true);', '"android.requestPromotedOngoing"', '.setOngoing(true)', '.setUsesChronometer(!onBreak)', '.setWhen(start)', 'ShaatiWidget.tap(c, "stop", 7401)', 'new Notification.ProgressStyle()', 'setProgressTrackerIcon', 'nm.cancel(TAG, 1);']) T.ok(j.includes(s), s);
   T.ok(read('android/widgets/java/WidgetData.java').includes('RunningNote.sync(c);'), 'follows every snapshot and tap');
-  T.ok(j.includes('if (RunningNote.TICK.equals(a))') || read('android/widgets/java/NoteAlarm.java').includes('if (RunningNote.TICK.equals(a))'), 'the bar moves on with the app closed');
+  T.ok(read('android/widgets/java/NoteWake.java').includes('if (RunningNote.TICK.equals(a)) { RunningNote.sync(app); return; }'), 'the bar moves on with the app closed (its own alarm, NoteWake)');
+  T.ok(j.includes('tick(c, Build.VERSION.SDK_INT >= 36);'), 'the 5-minute alarm only on Android 16+, where the bar needs it (the chronometer counts below)');
   T.ok(read('tools/android.js').includes('android.permission.POST_PROMOTED_NOTIFICATIONS'), 'the permission for a Live Update');
   for (const l of ['', '-en', '-ru', '-ar', '-fr', '-es', '-am']) {
     const x = read('android/widgets/res/values' + l + '/w_strings.xml');

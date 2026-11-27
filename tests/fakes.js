@@ -66,6 +66,7 @@ const withTime = (data, t) => {
   for (const k of Object.keys(o)) if (o[k] === SERVER_TIME) o[k] = t;
   return o;
 };
+const DOC_ID = '__name__';
 const parentOf = (p) => p.split('/').slice(0, -1).join('/');
 const idOf = (p) => p.split('/').pop();
 
@@ -91,8 +92,21 @@ function fakeClient(backend) {
       }
     }
   }
-  function serverApply(path, data) {
+  // batch: the paths of the batch this write came with (writeBatch), for the signed shift log's delete rule
+  function serverApply(path, data, batch) {
     data = withTime(data, backend.now ? backend.now() : Date.now());
+    const refuse = () => {
+      backend.rejected++;
+      const e = new Error('Missing or insufficient permissions.'); e.code = 'permission-denied';
+      throw e;
+    };
+    // a new record of a synced folder (not kv) must carry s (firestore.rules create, audit 27 Nov 2026)
+    const parts = path.split('/');
+    const userRec = parts.length === 4 && parts[0] === 'users';
+    if (!backend.oldRules && data && !backend.docs.has(path) && userRec && parts[2] !== 'kv' && typeof data.s !== 'number') refuse();
+    // the signed shift log is deleted only in a batch that also deletes the account's marker, which existed
+    const marker = parts.slice(0, 2).join('/');
+    if (data === undefined && userRec && parts[2] === 'ledger' && !(batch && batch.includes(marker) && batch.marker)) refuse();
     // emulate the security rule: refuse an update that is older than the stored version
     const cur = backend.docs.get(path);
     // and the shape of a record under users/ (firestore.rules valid()): u, d, j and the upload stamp s, the server's
@@ -114,12 +128,12 @@ function fakeClient(backend) {
     if (data === undefined) backend.docs.delete(path); else backend.docs.set(path, clone(data));
     notify(path, data, false);
   }
-  function write(path, data) {
+  function write(path, data, batch) {
     // every write a phone sends, in order (tests/noop.test.js: a save with nothing new sends nothing)
     (backend.writes || (backend.writes = [])).push(path);
     notify(path, withTime(data, null), true);
     return new Promise((resolve, reject) => {
-      const job = () => { try { serverApply(path, data); resolve(); } catch (e) { reject(e); } };
+      const job = () => { try { serverApply(path, data, batch); resolve(); } catch (e) { reject(e); } };
       if (client.online) setTimeout(job, 0); else queue.push(job);
     });
   }
@@ -142,8 +156,33 @@ function fakeClient(backend) {
     setDoc: (ref, data) => write(ref.path, data),
     serverTimestamp: () => SERVER_TIME,
     deleteDoc: (ref) => write(ref.path, undefined),
-    writeBatch: () => { const ops = []; return { set: (r, d) => ops.push([r.path, d]), delete: (r) => ops.push([r.path, undefined]), commit: () => Promise.all(ops.map(([p, d]) => write(p, d))) }; },
-    getDocsFromServer: async (c) => { needOnline(); return { docs: [...backend.docs].filter(([k]) => parentOf(k) === c.path).map(([k, v]) => snapDoc(k, v, false)) }; },
+    writeBatch: () => { const ops = []; return { set: (r, d) => ops.push([r.path, d]), delete: (r) => ops.push([r.path, undefined]), commit: () => {
+      // (what the rules' exists() sees: the state before the batch)
+      const batch = ops.filter(([, d]) => d === undefined).map(([p]) => p);
+      const isMarker = (p) => p.split('/').length === 2 && p.startsWith('users/');
+      batch.marker = batch.some((p) => isMarker(p) && backend.docs.has(p));
+      // the marker's own delete runs last here, so the records' checks see the state from before the batch
+      const order = ops.filter(([p]) => !isMarker(p)).concat(ops.filter(([p]) => isMarker(p)));
+      return Promise.all(order.map(([p, d]) => write(p, d, batch)));
+    } }; },
+    // queries: orderBy (a field or documentId()), startAfter (a document, by id order), limit, and a where a test adds
+    // (no where here: cloud.js would then ask its listeners for queries, which this fake does not filter)
+    orderBy: (f, d) => ({ t: 'order', f, d }), limit: (n) => ({ t: 'limit', n }),
+    startAfter: (d) => ({ t: 'after', d }), documentId: () => DOC_ID,
+    query: (c, ...cons) => ({ path: c.path, c: (c.c || []).concat(cons) }),
+    getDocsFromServer: async (c) => {
+      needOnline();
+      let docs = [...backend.docs].filter(([k]) => parentOf(k) === c.path).map(([k, v]) => snapDoc(k, v, false));
+      const OPS = { '==': (a, b) => a === b, '<': (a, b) => a < b, '<=': (a, b) => a <= b, '>': (a, b) => a > b, '>=': (a, b) => a >= b };
+      for (const q of c.c || []) {
+        if (q.t === 'where') docs = docs.filter((d) => { const x = d.data(); return x && OPS[q.op](x[q.f], q.v); });
+        if (q.t === 'order') docs.sort((a, b) => { const x = q.f === DOC_ID ? a.id : a.data()[q.f], y = q.f === DOC_ID ? b.id : b.data()[q.f]; return (x < y ? -1 : x > y ? 1 : 0) * (q.d === 'desc' ? -1 : 1); });
+        if (q.t === 'after') docs = docs.filter((d) => d.id > q.d.id);
+        if (q.t === 'limit') { if (backend.maxList && q.n > backend.maxList) { const e = new Error('Missing or insufficient permissions.'); e.code = 'permission-denied'; throw e; } docs = docs.slice(0, q.n); }
+      }
+      (backend.queries || (backend.queries = [])).push(c.path);
+      return { docs };
+    },
     getDocs: async (c) => fs.getDocsFromServer(c),
     getDocFromServer: async (d) => { needOnline(); return snapDoc(d.path, backend.docs.get(d.path), false); },
     getDoc: async (d) => snapDoc(d.path, backend.docs.get(d.path), false),

@@ -187,7 +187,7 @@
         ${[['סה״כ הכנסה ברוטו (משכורת)', taxable], ['מס הכנסה שנוכה', withheld], ['ביטוח לאומי (עובד)', bl], ['מס בריאות', health], ['הפרשת עובד לפנסיה', pension], ['הפרשת מעסיק לתגמולים', pensionEr], ['הפרשת מעסיק לפיצויים', sev], ['קרן השתלמות (עובד)', hish], ['קרן השתלמות (מעסיק)', hishEr]]
           .map(([l, v]) => `<div class="kv"><span>${l}</span><b class="money">${U.money(v)}</b></div>`).join('')}
         <div class="kv"><span>חודשי עבודה</span><b>${monthsWithIncome.length}</b></div>
-        <div class="kv"><span>נקודות זיכוי</span><b>${T.creditPoints}</b></div>
+        <div class="kv"><span>נקודות זיכוי</span><b>${esc(T.creditPoints)}</b></div>
         <div class="tiny muted" style="margin-top:8px">${withheldSrc ? 'חלק מהשורות מבוססות על תלושים שהזנת; השאר: הערכה.' : 'כל הנתונים הם הערכה לפי המשמרות. הזנת תלושים תשפר את הדיוק.'} הטופס הרשמי (106) מתקבל מהמעסיק.</div></div>
       ${(() => {
         // the tax refund, as the refund sheet works it out (one estimate everywhere: core/taxrefund.js)

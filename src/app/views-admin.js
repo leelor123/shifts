@@ -218,7 +218,8 @@
     const body = entry.sh.querySelector('.sh-body');
     const load = async () => { try {
       const { fs, db } = await root.Cloud.sdk();
-      const snap = await fs.getDocsFromServer(fs.collection(db, 'stats'));
+      // (in pages of 500, the most the rules let a list read: every record still counts)
+      const snap = { docs: await root.Cloud.readAll(fs, fs.collection(db, 'stats')) };
       const purge = !purged;
       purged = true;
       // records past the policy's retention are deleted quietly and not counted (a failure waits for the next opening)
