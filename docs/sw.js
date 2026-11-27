@@ -5,10 +5,12 @@
  * background and activates when the user taps "עדכן".
  * IndexedDB data is never touched by updates.
  * ============================================================ */
-const VERSION = '1.46.4-13ea7563';
+const VERSION = '1.47.0-7590745b';
 const SHELL = 'shiftpay-shell-' + VERSION;
 const RUNTIME = 'shiftpay-runtime-v1';
 const FONTS = ['rubik-hebrew', 'rubik-latin', 'rubik-latin-ext', 'rubik-arabic', 'rubik-cyrillic', 'rubik-cyrillic-ext', 'fredoka-hebrew', 'fredoka-latin', 'fredoka-latin-ext'].map((f) => './fonts/' + f + '.woff2');
+// Amharic's letters (Noto Sans Ethiopic, 194 KB): kept for whoever chose Amharic, not fetched by everyone
+const FONTS_AM = ['./fonts/noto-ethiopic.woff2'];
 const ASSETS = ['./', './index.html', './manifest.webmanifest', './icon-192.png', './icon-512.png', './icon-maskable-512.png', './badge-96.png', './favicon-48.png'];
 
 /* ---- the language ----
@@ -87,7 +89,7 @@ self.addEventListener('install', (e) => {
     await c.addAll(list.map((u) => new Request(u, { cache: 'reload' })));
     // the fonts (fonts/, served here): kept apart from the version, they are fetched once and work offline
     const fc = await caches.open(RUNTIME);
-    await Promise.all(FONTS.map(async (f) => { if (!(await fc.match(f))) await fc.add(f).catch(() => {}); }));
+    await Promise.all(FONTS.concat(l === 'am' ? FONTS_AM : []).map(async (f) => { if (!(await fc.match(f))) await fc.add(f).catch(() => {}); }));
   })());
 });
 self.addEventListener('activate', (e) => {
