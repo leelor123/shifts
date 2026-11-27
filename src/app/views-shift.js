@@ -164,7 +164,7 @@
     const sh = {
       id: d.id || U.uid(), kind: 'shift', status: d.status, employerId: d.employerId, roleId: d.roleId,
       start, end, splits: d.splits.filter((x) => x.t && x.roleId).map((x) => ({ at: at(x.t), roleId: x.roleId })),
-      breakMin: numOrNull(d.breakMin) == null ? null : +d.breakMin, breakPaid: !!d.breakPaid, noTravel: !!d.noTravel, note: d.note || '',
+      breakMin: numOrNull(d.breakMin) == null ? null : Math.max(0, +d.breakMin), /* a typed minus is no break */ breakPaid: !!d.breakPaid, noTravel: !!d.noTravel, note: d.note || '',
       items: d.items.filter((x) => +x.amount), overrides: Object.keys(ov).length ? ov : null, overrideReason: Object.keys(ov).length ? d.reason : '',
     };
     if (d.breakSet && sh.breakMin != null) sh.breakSet = true; // typed on purpose: a short one is flagged
@@ -172,16 +172,8 @@
     if (d.demo) sh.demo = true;
     return sh;
   }
-  function priorMinFor(sh) {
-    const k = U.epochKey(sh.start);
-    let m = 0;
-    for (const s of S.shifts) {
-      if (s.id === sh.id || s.employerId !== sh.employerId || (s.status === 'planned') !== (sh.status === 'planned')) continue;
-      if (U.epochKey(s.start) === k && s.start < sh.start) { const r = App.result(s.id); if (r) m += r.paidMin; }
-    }
-    return m;
-  }
-  App.previewShift = (sh) => Engine.computeShift(sh, App.model.ctx, { priorMin: priorMinFor(sh) });
+  // the same context as computeAll (the day's and the week's earlier work): the preview equals the saved shift
+  App.previewShift = (sh) => Engine.computeShift(sh, App.model.ctx, Engine.shiftContext(sh, App.model.results));
 
   /* ---------------- breakdown & timeline (shared) ---------------- */
   App.timelineHtml = function (r) {
@@ -436,7 +428,7 @@
     const ovCount = () => ['rest', 'ot', 'night', 'travel', 'rate', 'special'].filter((k) => d.ov[k].on).length;
     const sel = (f, options, v) => `<select class="input" data-f="${f}">${options.map(([val, lab]) => `<option value="${val}" ${String(v) === String(val) ? 'selected' : ''}>${lab}</option>`).join('')}</select>`;
     const inp = (f, v, extra) => `<input class="input" data-f="${f}" value="${esc(v == null ? '' : v)}" ${extra || ''}>`;
-    const numIn = (f, v, ph) => inp(f, v, `type="number" inputmode="decimal" step="any" placeholder="${esc(ph || '')}"`);
+    const numIn = (f, v, ph, more) => inp(f, v, `type="number" inputmode="decimal" step="any" placeholder="${esc(ph || '')}"${more ? ' ' + more : ''}`);
 
     function ovBlock(key, title, sub, inner) {
       const o = d.ov[key];
@@ -462,7 +454,7 @@
             <button class="icon-btn" data-rm-split="${i}" aria-label="הסר">${icon('x')}</button></div>`).join('')}
           <button class="btn text sm" data-add-split>${icon('plus', 's')} הוסף מעבר תפקיד</button></div></details>
         <div class="grid2">
-          <label class="field"><span class="lbl">הפסקה (דקות)</span>${numIn('breakMin', d.breakMin == null ? '' : d.breakMin, 'אוטומטי')}</label>
+          <label class="field"><span class="lbl">הפסקה (דקות)</span>${numIn('breakMin', d.breakMin == null ? '' : d.breakMin, 'אוטומטי', 'min="0"')}</label>
           <label class="switch-row" style="padding-top:26px"><span class="body"><span class="t small">בתשלום</span></span><input type="checkbox" class="switch" data-f="breakPaid" ${d.breakPaid ? 'checked' : ''}></label>
         </div>
         <div class="brk-note" data-brk aria-live="polite"></div>
@@ -645,7 +637,7 @@
     const d = orig ? Store.clone(orig) : { kind: opts.kind || 'vacation', type: opts.type || 'bonus', date: opts.date || U.todayKey(), status: 'done', employerId: S.employers[0].id, amount: '', label: '', note: '' };
     const titles = { vacation: 'יום חופשה', sick: 'יום מחלה', adjustment: d.type === 'deduction' ? 'ניכוי' : 'תוספת / בונוס' };
     const val = orig && App.model.entryVals.get(orig.id);
-    const auto = d.kind !== 'adjustment' ? Engine.dayValue(d.date, App.model.ctx, App.model.results) : null;
+    const auto = d.kind !== 'adjustment' ? Engine.dayValue(d.date, App.model.ctx, App.model.results, d.employerId) : null;
     UI.openSheet({
       title: (orig ? 'עריכת ' : '') + titles[d.kind],
       body: `

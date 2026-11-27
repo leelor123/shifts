@@ -595,16 +595,10 @@
     if (Date.now() - previewCache.t < 15000 && previewCache.r && previewCache.key === key) return previewCache.r;
     const sh = App.activeAsShift();
     if (!sh) return null;
-    const r = Engine.computeShift(sh, App.model.ctx, { priorMin: priorMinutes(sh) });
+    const r = Engine.computeShift(sh, App.model.ctx, Engine.shiftContext(sh, App.model.results)); // the day's and the week's earlier work, as computeAll
     previewCache = { t: Date.now(), r, key };
     return r;
   };
-  function priorMinutes(sh) {
-    const k = U.epochKey(sh.start);
-    let m = 0;
-    for (const r of App.model.results.values()) if (r.status === 'done' && r.dateKey === k && r.employerId === sh.employerId && r.start < sh.start) m += r.paidMin;
-    return m;
-  }
 
   // (U.single: a double tap, the opening's quick start and the home button at once, start one shift and log one start)
   App.startShift = U.single(async function (roleId, opts) {
