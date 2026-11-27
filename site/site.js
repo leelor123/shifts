@@ -40,7 +40,7 @@
     const s = Math.min(1.6, Math.max(1, k.w / 900));
     return { width: Math.round(k.w / s), height: Math.round(k.h / s) };
   };
-  const draw = (svg, box, extra) => { if (Sky) Sky.render(svg, Object.assign({ now: Date.now(), place: CITIES[city] }, sized(box), extra || {})); };
+  const draw = (svg, box, extra) => { if (Sky) Sky.render(svg, Object.assign({ now: Date.now(), place: CITIES[city], dark: false }, sized(box), extra || {})); };
 
   /* ---------- the bar on top: glass once the page moves, paper once the sky is behind ---------- */
   const top = $('[data-top]'), hero = $('.hero');
