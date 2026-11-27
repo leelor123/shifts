@@ -19,6 +19,8 @@ require('./slipfiles.test.js');
 require('./parked.test.js');
 // nothing is downloaded without a tap: the automatic backup is a copy inside the app (24 Nov 2026)
 require('./nodownload.test.js');
+// app flows and data (1.46 review, 27 Nov 2026): a shift's end and undo, the storage, the first sign-in, NFC
+require('./appflow.test.js');
 T.section('cloud sync (simulated phones)');
 require('./sync.test.js');
 T.section('Firestore reads');

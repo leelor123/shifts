@@ -1023,6 +1023,12 @@ body.fx .item:active:not(:has(:is(button, a, input, select, label, summary, [dat
 .home-list-head { display: flex; align-items: center; justify-content: space-between; font-size: .85rem; font-weight: 700; color: var(--on-surface-var); margin: 0 4px 8px; }
 .banner.slim { padding: 8px 12px; font-size: .85rem; gap: 8px; margin-bottom: 10px; }
 .banner.slim .btn.text { padding: 4px 8px; min-height: 0; }
+/* the storage banner: its buttons under the text, the first lined up with the text's edge */
+.mem-banner { align-items: flex-start; }
+.mem-acts { display: flex; flex-wrap: wrap; gap: 4px; margin-top: 4px; margin-inline-start: -8px; }
+/* the storage banner: its buttons under the text, the first one lined up with the text's edge */
+.mem-banner { align-items: flex-start; }
+.mem-acts { display: flex; flex-wrap: wrap; gap: 4px; margin-top: 4px; margin-inline-start: -8px; }
 
 /* ---- my rights ---- */
 .rights .rt-intro { display: flex; gap: 12px; align-items: center; padding: 4px 4px 12px; }

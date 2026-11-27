@@ -624,9 +624,34 @@
     return { canvas, scale };
   }
   /**
+   * A payslip's pages joined: readPage(p) → the lines of page p (1..n). Every page is read up to where the next payslip,
+   * of another month, begins (more: the file holds more than one); a page with next to no text is left out. Both kinds
+   * of PDF go through here: a scanned one stopped at the first page that held a payslip, and the second page's lines
+   * (pension, the net...) were "not found" on a correct payslip (1.46 review). → { lines, more, first }, first: the
+   * first page's lines (shown when nothing held a payslip).
+   */
+  async function slipPages(n, readPage, signal) {
+    const holdsSlip = (text) => { const p = Payslip.parseText(text).fields; return !!(p.gross || p.net || p.base || p.totalDeductions); };
+    let all = [], period = null, more = false, first = null;
+    for (let p = 1; p <= n; p++) {
+      if (signal && signal.aborted) break;
+      const lines = (await readPage(p)) || [];
+      if (!first) first = lines;
+      const t = lines.map((l) => l.text).join('\n');
+      if (t.replace(/\s/g, '').length <= 80) continue;
+      const per = Payslip.detectPeriod(t);
+      // the next month's payslip: not read, and the check says the file holds more than one (more)
+      if (all.length && period && per && per !== period && holdsSlip(t)) { more = true; break; }
+      if (!period && holdsSlip(t)) period = per;
+      all = all.concat(lines);
+    }
+    return { lines: all, more, first: first || [] };
+  }
+  App.slipPages = slipPages; // (tests)
+  /**
    * A payslip file → { text, lines, source }. A PDF: the text of its pages (pdf.js), cut into cells; a PDF with no
-   * text (scanned): each page read as a picture until one holds a payslip. A PDF of several payslips (a year's file)
-   * is read up to where the next payslip, of another month, begins: added together, two months gave double amounts.
+   * text (scanned): each page read as a picture. A PDF of several payslips (a year's file) is read up to where the next
+   * payslip, of another month, begins: added together, two months gave double amounts (slipPages).
    */
   async function extractSlip(file, progress, signal) {
     if (root.DocRead) await root.DocRead.check(file); // an empty file, a cloud file not on the phone yet: said as such
@@ -637,37 +662,25 @@
     pdfjs.GlobalWorkerOptions.workerSrc = LIBS.pdfWorker;
     const doc = await pdfjs.getDocument({ data: await file.arrayBuffer(), isEvalSupported: false }).promise;
     const pages = Math.min(doc.numPages, 4);
-    const holdsSlip = (text) => { const p = Payslip.parseText(text).fields; return !!(p.gross || p.net || p.base || p.totalDeductions); };
-    let all = [], period = null, more = false;
-    for (let p = 1; p <= pages; p++) {
+    const txt = await slipPages(pages, async (p) => {
       progress(`קורא עמוד ${p} מתוך ${doc.numPages}…`);
       const items = await pageItems(await doc.getPage(p));
       // the words with their boxes, through the same rows and cells as a picture: a row of column names over a row of
       // numbers is paired by where the columns are (by the text alone "שעות עבודה" took the work days, 18)
-      const lines = root.Timesheet && root.Timesheet.wordsFromPdfItems ? SlipRead.pdfLines(root.Timesheet.wordsFromPdfItems(items, (p - 1) * 5000))
+      return root.Timesheet && root.Timesheet.wordsFromPdfItems ? SlipRead.pdfLines(root.Timesheet.wordsFromPdfItems(items, (p - 1) * 5000))
         : SlipRead.textLines(Payslip.linesFromPdfItems(items)).map((t) => ({ text: t, words: [] }));
-      const t = lines.map((l) => l.text).join('\n');
-      if (t.replace(/\s/g, '').length <= 80) continue;
-      const per = Payslip.detectPeriod(t);
-      // the next month's payslip: not read, and the check says the file holds more than one (more)
-      if (all.length && period && per && per !== period && holdsSlip(t)) { more = true; break; }
-      if (!period && holdsSlip(t)) period = per;
-      all = all.concat(lines);
-    }
-    if (all.length) return { lines: all, text: all.map((l) => l.text).join('\n'), source: 'pdf', more };
-    // scanned: each page as a picture, until one holds a payslip
+    });
+    if (txt.lines.length) return { lines: txt.lines, text: txt.lines.map((l) => l.text).join('\n'), source: 'pdf', more: txt.more };
+    // scanned: each page as a picture, all of them joined as the text pages are
     progress('ה-⁠PDF סרוק: מריץ זיהוי טקסט…');
-    let first = null;
-    for (let p = 1; p <= pages; p++) {
-      if (signal && signal.aborted) break;
+    const ocr = await slipPages(pages, async (p) => {
       const { canvas } = await pagePicture(await doc.getPage(p));
       const lines = await slipLinesOf(canvas, progress, signal);
       canvas.width = canvas.height = 0; // the page's pixels let go at once (a phone's memory)
-      const text = lines.map((l) => l.text).join('\n');
-      if (!first) first = { lines, text, source: 'ocr' };
-      if (holdsSlip(text)) return { lines, text, source: 'ocr' };
-    }
-    return first || { lines: [], text: '', source: 'ocr' };
+      return lines;
+    }, signal);
+    const lines = ocr.lines.length ? ocr.lines : ocr.first;
+    return { lines, text: lines.map((l) => l.text).join('\n'), source: 'ocr', more: ocr.more };
   }
   /**
    * A picture or a PDF → its words, each with its box ({ text, x0, y0, x1, y1 }, y down), for reading a table
@@ -938,8 +951,18 @@
     function readInputs() {
       const el = sheetEl;
       d.period = el.querySelector('#vf-period').value || d.period;
+      // the amounts and hours as they were, to tell a box the person changed
+      const was = {};
+      for (const k of Object.keys(d.fields)) was[k] = { v: d.fields[k] && d.fields[k].value, q: d.fields[k] && d.fields[k].qty };
       el.querySelectorAll('[data-v]').forEach((i) => { const k = i.dataset.v; d.fields[k] = d.fields[k] || {}; d.fields[k].value = UI.numIn(i); });
-      el.querySelectorAll('[data-q]').forEach((i) => { const k = i.dataset.q; d.fields[k] = d.fields[k] || {}; d.fields[k].qty = UI.numIn(i); if (d.fields[k].qty && d.fields[k].value) d.fields[k].rate = d.fields[k].value / d.fields[k].qty; });
+      el.querySelectorAll('[data-q]').forEach((i) => {
+        const k = i.dataset.q, f = d.fields[k] = d.fields[k] || {};
+        f.qty = UI.numIn(i);
+        if (f.qty && f.value) f.rate = f.value / f.qty;
+        // the hours or the amount emptied: the rate worked out from them is gone too (it stayed, and the check took
+        // that old rate as the payslip's); a rate the payslip printed, on a line whose boxes were not touched, stays
+        else if (f.rate != null && was[k] && (was[k].q !== f.qty || was[k].v !== f.value)) delete f.rate;
+      });
       el.querySelectorAll('[data-og]').forEach((s) => { d.other[+s.dataset.og].guess = s.value; });
       el.querySelectorAll('[data-ov]').forEach((i) => { d.other[+i.dataset.ov].value = UI.numIn(i) || 0; });
     }
@@ -1080,7 +1103,7 @@
   const INVITE_TEXT = 'שעתי משווה את תלוש השכר למשמרות שרשמת ומראה אם יש פער שכדאי לבדוק. אפשר לנסות:';
   const CONF = { high: 'ביטחון גבוה', medium: 'ביטחון בינוני', low: 'ביטחון נמוך' };
   function prevSlipOf(period, id) {
-    return S.payslips.filter((p) => p.period < period && p.id !== id).sort((a, b) => b.period.localeCompare(a.period))[0];
+    return S.payslips.filter((p) => Payslip.hasPeriod(p) && p.period < period && p.id !== id).sort((a, b) => U.byPeriodDesc(a, b))[0];
   }
   /* ---------------- before writing to the employer ----------------
    * When money looks missing, the likely innocent reasons come first (Payslip.checkGap), each checked on the
@@ -1352,6 +1375,7 @@
     });
   }
   function analysisSheet(slip) {
+    if (!Payslip.hasPeriod(slip)) { verifySheet(Object.assign({}, slip, { id: slip.isNew ? null : slip.id, monthAsk: true })); return; }
     let a = Payslip.analyze(slip, App.model);
     let c = gapCheck(slip, a);
     let off = null, msgEdited = false;
@@ -1525,7 +1549,10 @@
   }
   App.sheetsApi.payslip = (id) => {
     const p = S.payslips.find((x) => x.id === id);
-    if (p) analysisSheet(Object.assign({}, p, { isNew: false }));
+    if (!p) return;
+    // a payslip kept without its month (a damaged record): its check needs one, so its screen asks for it first
+    if (!Payslip.hasPeriod(p)) { verifySheet(Object.assign({}, p, { monthAsk: true })); return; }
+    analysisSheet(Object.assign({}, p, { isNew: false }));
   };
   App.actions['payslip-open'] = (el) => App.sheetsApi.payslip(el.dataset.id);
   App.actions['gap-set'] = async (el) => {
@@ -1585,9 +1612,10 @@
 
   /* ---------------- payslips tab (in reports) ---------------- */
   App.payslipsTab = function () {
-    const slips = S.payslips.slice().sort((a, b) => b.period.localeCompare(a.period));
-    const gaps = S.gaps.filter((g) => g.status !== 'resolved').sort((a, b) => b.period.localeCompare(a.period));
-    const trend = slips.slice(0, 12).reverse();
+    // (a payslip or a finding without a month sorts last; the trend has only months)
+    const slips = S.payslips.slice().sort((a, b) => U.byPeriodDesc(a, b));
+    const gaps = S.gaps.filter((g) => g.status !== 'resolved').sort((a, b) => U.byPeriodDesc(a, b));
+    const trend = slips.filter((p) => Payslip.hasPeriod(p)).slice(0, 12).reverse();
     return `<button class="btn big" data-act="payslip-new" style="margin-bottom:12px">${icon('upload')} העלה תלוש לניתוח</button>
       <button class="btn tonal block" data-act="tax-refund" style="margin-bottom:12px">${icon('calc', 's')} בדיקת החזר מס (עד 6 שנים אחורה)</button>
       ${gaps.length ? `<div class="section-title">${icon('alert', 's')} פערים פתוחים<span class="spacer"></span><span class="small">${U.money(gaps.filter((g) => g.status === 'open').reduce((s, g) => s + g.amount, 0), 0)}</span></div>

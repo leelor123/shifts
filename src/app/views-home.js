@@ -325,9 +325,13 @@
       <div>יום הולדת ${age} שמח 🎂 שתהיה שנה של משמרות טובות, בוסים הוגנים ותלושים בלי הפתעות.</div>${age === 18 ? '<div class="small" style="margin-top:6px">מהיום החישוב כולל ניכויי חובה רגילים.</div>' : ''}</div>`;
   }
   /* the slim lines: each one is its own card in the queue below (homeCards) */
+  // the phone's storage stopped (at the start or later): what to do about it is one tap away, a backup file (the person
+  // taps it: a download only from a tap) and, without an account, the sign-in. It goes once the storage works again.
   function memoryBanner() {
     if (!(Store.isMemoryOnly && Store.isMemoryOnly())) return '';
-    return `<div class="banner slim warn">${icon('alert', 's')}<div style="flex:1">${root.Cloud && root.Cloud.user ? 'הדפדפן לא שומר נתונים בטלפון כרגע. הכול נשמר בחשבון שלך.' : 'הדפדפן לא שומר נתונים בטלפון. כדאי להתחבר לחשבון כדי לא לאבד אותם.'}</div></div>`;
+    const signed = !!(root.Cloud && root.Cloud.user);
+    return `<div class="banner slim warn mem-banner">${icon('alert', 's')}<div style="flex:1">${signed ? 'הדפדפן לא שומר נתונים בטלפון כרגע. הכול נשמר בחשבון שלך.' : 'הדפדפן לא שומר נתונים בטלפון. כדאי להתחבר לחשבון כדי לא לאבד אותם.'}
+      <div class="mem-acts"><button class="btn text sm" data-act="storage-backup">${icon('download', 's')} שמירת גיבוי</button>${signed ? '' : `<button class="btn text sm" data-act="ios-signin">${icon('cloud', 's')} התחברות</button>`}</div></div></div>`;
   }
   function demoBanner() {
     return S.settings.demo ? `<div class="banner slim">${icon('flask', 's')}<div style="flex:1">מצב הדגמה: נתונים לדוגמה</div><button class="btn text sm" data-act="demo-clear">מחק</button></div>` : '';
@@ -725,4 +729,6 @@
   App.actions['settings-goal'] = (el, e) => { e.stopPropagation(); App.sheetsApi.settingsSection('goal'); };
   // the banner's "back up" opens the backup page, where the person chooses a file or Drive (no file at once)
   App.actions['backup-now'] = () => App.sheetsApi.settingsSection('backup');
+  // the storage banner's own button: a backup file at once (the data lives only in memory then), from the tap itself
+  App.actions['storage-backup'] = () => App.doBackup(false);
 })(typeof window !== 'undefined' ? window : globalThis);

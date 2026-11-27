@@ -50,7 +50,7 @@
     };
     const cur = Engine.periodOf(today, emp).key;
     const L = Engine.leaveBalances(m, today);
-    const slip = S.payslips.slice().sort((a, b) => b.period.localeCompare(a.period))[0];
+    const slip = S.payslips.slice().sort((a, b) => U.byPeriodDesc(a, b))[0];
     const st = S.settings;
     return {
       today,

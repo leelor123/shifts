@@ -394,7 +394,7 @@
           const r = await UI.dialog({ title: emp.name, html: `<label class="field"><span class="lbl">שם המעסיק</span><input class="input" value="${esc(emp.name)}"></label>`, buttons: [...(S.employers.length > 1 ? [{ label: 'מחק', value: 'del', cls: 'danger' }] : []), { label: 'ביטול', value: null }, { label: 'שמור', value: 'input' }] });
           if (r === 'del') {
             // the running shift too (its role goes with the employer, and it would be saved at 0), and templates
-            if (root.Workplace.employerInUse(S, emp.id)) { UI.toast('יש משמרות של המעסיק, אי אפשר למחוק'); return; }
+            if (root.Workplace.employerInUse(S, emp.id)) { UI.toast('יש למעסיק הזה משמרות, תלושים או רישומים, אז אי אפשר למחוק אותו'); return; }
             if (!(await UI.confirm('למחוק את המעסיק?', 'התפקידים שלו יימחקו.', 'מחק', true))) return;
             await App.saveOps([{ store: 'employers', del: emp.id }, ...S.roles.filter((x) => x.employerId === emp.id).map((x) => ({ store: 'roles', del: x.id }))], 'מחיקת מעסיק');
           } else if (r && String(r).trim() && App.ensureClean(String(r))) await Store.put('employers', Object.assign(Store.clone(emp), { name: String(r).trim().slice(0, 60) }));
@@ -461,7 +461,10 @@
     const read = () => {
       d.name = el.querySelector('#re-name').value.trim().slice(0, 40);
       el.querySelectorAll('[data-rr]').forEach((i) => { const r = d.rates[+i.dataset.rr]; if (r) r.rate = UI.numIn(i); });
-      el.querySelectorAll('[data-rf]').forEach((i) => { const r = d.rates[+i.dataset.rf]; if (r) r.from = i.value; });
+      const dated = new Set();
+      el.querySelectorAll('[data-rf]').forEach((i) => { const r = d.rates[+i.dataset.rf]; if (r) { r.from = i.value; dated.add(r); } });
+      // the rate "from the start" has no date box: an old record's odd date there is not the person's to fix
+      d.rates.forEach((r) => { if (!dated.has(r) && !/^\d{4}-\d{2}-\d{2}$/.test(r.from || '')) r.from = '2000-01-01'; });
       const em = el.querySelector('#re-emp'); if (em) d.employerId = em.value;
     };
     // the list may just have changed (a rate removed), so the screen is redrawn from d without reading it again
@@ -538,6 +541,10 @@
             if (!d.name) { UI.invalid('הזן שם'); return; }
             if (!App.ensureClean(d.name)) return;
             if (d.rates.some((r) => !(r.rate > 0))) { UI.invalid('הזן תעריף לשעה'); return; }
+            // each rate from its own day: an empty date sorted first and took the place of the rate "from the start",
+            // and two rates from one day left the pay to the order they happened to be in
+            if (d.rates.some((r) => !(typeof r.from === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(r.from)))) { UI.invalid('בחר תאריך'); return; }
+            if (new Set(d.rates.map((r) => r.from)).size !== d.rates.length) { UI.invalid('יש שני תעריפים מאותו תאריך'); return; }
             // a rate far above any hourly job is most likely a typo (99999 was saved silently; launch check, forms)
             const top = Math.max(...d.rates.map((r) => r.rate));
             if (top > 200 && !(await UI.confirm('לשמור את התעריף?', `${money(top)} לשעה זה הרבה מעל הרגיל. אולי נוספה ספרה?`, 'שמירה'))) return;
@@ -546,7 +553,8 @@
             redrawParent();
           }
           if (b.hasAttribute('data-del')) {
-            const usedBy = S.shifts.filter((s) => s.roleId === d.id || (s.splits || []).some((x) => x.roleId === d.id)).length;
+            // the running shift counts too: deleted under it, the role's rate was gone and the shift was paid ₪0
+            const usedBy = root.Workplace.roleUses(S, d.id);
             if (usedBy) {
               if (!(await UI.confirm('להעביר לארכיון?', `יש ${usedBy} משמרות בתפקיד הזה. הוא יוסתר מהבחירה אבל המשמרות יישמרו.`, 'העבר לארכיון'))) return;
               UI.closeTop();

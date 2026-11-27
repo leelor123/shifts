@@ -41,6 +41,13 @@
   // true when this browser can't keep a local database (some private modes, a broken storage engine):
   // the app then runs from memory and the cloud account keeps the data
   let memoryOnly = false;
+  // when the storage stopped (0: it did not, or is not tried again), and whether it failed at the start (the database
+  // was never read then)
+  let lostAt = 0, lostAtStart = false, reviving = null;
+  let retryMs = 30000; // the database is tried again this long after it stopped, at the next save
+  // what memory-only mode would have written to the stores kept apart from the lists (a payslip's file, a parked item,
+  // an automatic copy): written to the database once it works again. The lists and kv are written from memory then.
+  let journal = [];
   const S = { settings: null, meta: {}, activeShift: null };
   LIST_STORES.forEach((s) => (S[s] = []));
   const listeners = new Set();
@@ -104,7 +111,12 @@
    */
   async function run(stores, mode, body) {
     for (let attempt = 0; ; attempt++) {
-      if (memoryOnly) return body(null);
+      if (memoryOnly) {
+        // the phone's storage may work again (storage freed, the connection back): tried again now and then, never
+        // locked for the whole session (one QuotaExceeded made every later save memory-only, 1.46 review)
+        if (lostAt && Date.now() - lostAt >= retryMs && !reviving) reviving = revive().finally(() => { reviving = null; });
+        return body(memTx());
+      }
       try {
         if (!db) db = await openDb();
         const t = db.transaction(stores, mode || 'readonly');
@@ -120,15 +132,82 @@
           if (!e || !e.name || STORAGE_LOST.includes(e.name)) {
             console.warn('local database lost, continuing from memory', e);
             memoryOnly = true;
+            lostAt = Date.now();
             db = null;
             emit({ type: 'storage-lost' });
-            return body(null);
+            return body(memTx());
           }
           throw e;
         }
         await pause(120 * (attempt + 1));
       }
     }
+  }
+  /** In memory-only mode: a stand-in for a transaction. The lists and kv live in memory (S) already; a write to the
+   *  other stores (files, parked, snaps) is kept in the journal, and a read of one finds what the journal holds. */
+  const JOURNAL_STORES = ['files', 'parked', 'snaps'];
+  function memTx() {
+    return {
+      objectStore(name) {
+        const keep = JOURNAL_STORES.includes(name);
+        const latest = (id) => {
+          for (let i = journal.length - 1; i >= 0; i--) { const j = journal[i]; if (j.store !== name) continue; if (j.clear) return undefined; if (j.id === id) return j.rec; }
+          return undefined;
+        };
+        return {
+          put(rec) { if (keep) journal.push({ store: name, id: rec && rec.id, rec }); return {}; },
+          delete(id) { if (keep) journal.push({ store: name, id, rec: undefined }); return {}; },
+          clear() { if (keep) journal.push({ store: name, clear: true }); return {}; },
+          get(id) { return { result: keep ? latest(id) : undefined }; },
+          getAll() { return { result: undefined }; },
+          getAllKeys() { return { result: undefined }; },
+        };
+      },
+    };
+  }
+  /**
+   * The database tried again after the storage stopped. When it opens, everything in memory is written to it (the
+   * lists, the settings, the running shift, the journal) and the app works from the phone's storage again
+   * ('storage-back'). A database that failed at the start was never read: when it opens holding data of its own, that
+   * data is never overwritten (this session stays in memory, the next opening reads it); an empty one takes this
+   * session's data.
+   */
+  async function revive() {
+    let d;
+    try { d = await openDb(); } catch (e) { lostAt = Date.now(); return false; }
+    if (lostAtStart) {
+      let had = null;
+      try {
+        const t = d.transaction(['kv'], 'readonly');
+        const req = t.objectStore('kv').get('schemaVersion'); // written by every opening that read the database
+        await done(t);
+        had = req.result;
+      } catch (e) { had = true; }
+      if (had) { try { d.close(); } catch (x) { /* closed */ } lostAt = 0; return false; } // not tried again this session
+    }
+    db = d;
+    d.onclose = () => { if (db === d) db = null; };
+    d.onversionchange = () => { d.close(); if (db === d) db = null; };
+    memoryOnly = false;
+    try {
+      await saveAll();
+      const j = journal;
+      if (j.length && !memoryOnly) {
+        await run(JOURNAL_STORES, 'readwrite', (t) => {
+          if (!t || memoryOnly) return; // (stopped again: the journal stays as it is)
+          for (const x of j) { const os = t.objectStore(x.store); if (x.clear) os.clear(); else if (x.rec === undefined) os.delete(x.id); else os.put(x.rec); }
+        });
+      }
+      if (memoryOnly) return false; // it stopped again while writing (run said so): tried again later, the journal kept
+      journal = journal.slice(j.length);
+    } catch (e) {
+      console.warn('local database still not working', e);
+      memoryOnly = true; lostAt = Date.now(); db = null;
+      return false;
+    }
+    lostAt = 0; lostAtStart = false;
+    emit({ type: 'storage-back' });
+    return true;
   }
   /** Reads every record of a store. */
   async function getAll(store) {
@@ -144,6 +223,7 @@
       // no local database in this browser: keep going from memory (the cloud account keeps the data)
       console.warn('local database unavailable, running from memory', e);
       memoryOnly = true;
+      lostAt = Date.now(); lostAtStart = true;
       db = null;
     }
     try { if (navigator.storage && navigator.storage.persist) await navigator.storage.persist(); } catch (e) { /* optional */ }
@@ -177,6 +257,8 @@
     // the files no payslip names (a payslip deleted in an earlier opening, or a read never saved, kept by older versions): a few
     // seconds after the start, out of the way of the first screen
     sweepSoon(4000);
+    // the app hears it at the start too (the home screen's banner, with its backup and sign-in buttons), not only later
+    if (memoryOnly) emit({ type: 'storage-lost', startup: true });
     return S;
   }
   function runMigrations(state, from) {
@@ -207,6 +289,7 @@
     'heard', // { uid, at, full }: when this phone last heard everything from the account (cloud.js: openings read only what changed)
     'adminUid', // the account this phone last heard is an admin (the server's rules decide what an admin may do)
     'guest', // this phone is used without an account, by choice (its data lives here only)
+    'setupAt', 'settingsEditedAt', // when this phone's setup was saved, and its settings last edited here (cloud.js initialMerge)
     'ledgerChain']; // this phone's own chain in the signed shift log (another phone, or a restored backup, starts its own)
   // (restorePending: a "replace" restore the account does not know of yet, cloud.js settleRestore)
   const SYNC_META = ['pendingDeletes', 'settingsDirty', 'activeDirty', 'activeUpdatedAt', 'restorePending'];
@@ -460,7 +543,7 @@
     const now = Date.now();
     const writes = []; // [store, record] or [store, null, id] for a delete
     const pend = S.meta.pendingDeletes || (S.meta.pendingDeletes = []);
-    let metaChanged = false, settingsChanged = false;
+    let metaChanged = false, settingsChanged = false, activeChanged = false;
     const shiftChanges = []; // [before, after] of each shift, for the signed shift log (shift-log.js)
     for (const op of ops) {
       const arr = S[op.store];
@@ -497,6 +580,17 @@
         inverse.push({ meta: { key: k, value: was === undefined ? undefined : clone(was) } });
         if (op.meta.value === undefined) delete S.meta[k]; else S.meta[k] = op.meta.value;
         metaChanged = true;
+      } else if ('active' in op) {
+        // the running shift, in the same step as the records: the end of a shift saves it and stops the timer in one
+        // write, and its undo brings the timer back as it was (two writes lost the shift on undo, and a crash between
+        // them left the timer running with the shift saved: ending it again saved it twice)
+        const next = op.active == null ? null : op.active;
+        if (canon(next) === canon(S.activeShift)) continue;
+        inverse.push({ active: clone(S.activeShift) });
+        S.activeShift = next;
+        S.meta.activeUpdatedAt = now;
+        S.meta.activeDirty = true;
+        activeChanged = true; metaChanged = true;
       } else if (op.setting) {
         // a setting that changes together with the records (a workplace code's work week): saved and undone with them
         const p = op.setting.path, last = p[p.length - 1];
@@ -510,13 +604,15 @@
     }
     // nothing differs from what is saved: nothing is written, sent, logged or offered to undo (null: the caller says so)
     if (!writes.length && !metaChanged && !settingsChanged) return null;
-    if (settingsChanged) { S.settings._updatedAt = now; S.meta.settingsDirty = true; metaChanged = true; }
+    if (settingsChanged) { S.settings._updatedAt = now; S.meta.settingsDirty = true; S.meta.settingsEditedAt = now; metaChanged = true; }
     await run([...new Set(ops.map((o) => o.store).filter(Boolean).concat(['kv']))], 'readwrite', (t) => {
       if (!t) return;
       for (const [st, rec, id] of writes) { if (rec) t.objectStore(st).put(rec); else t.objectStore(st).delete(id); }
       if (metaChanged) t.objectStore('kv').put({ key: 'meta', value: S.meta });
       if (settingsChanged) t.objectStore('kv').put({ key: 'settings', value: S.settings });
+      if (activeChanged) t.objectStore('kv').put({ key: 'activeShift', value: S.activeShift });
     });
+    if (activeChanged) markActive();
     if (settingsChanged) emit({ type: 'settings', keys: [...new Set(ops.filter((o) => o.setting).map((o) => o.setting.path[0]))] });
     if (label && opts.undo !== false) {
       undoStack.push({ label, ops: inverse.reverse() });
@@ -527,7 +623,7 @@
     if (ops.some((o) => o.store === 'payslips')) sweepSoon();
     // every change to a worked shift (the timer, the editor, an undo, an import) gets its record in the signed log
     if (shiftChanges.length && root.ShiftLog) root.ShiftLog.onShifts(shiftChanges, opts.via);
-    emit({ type: 'data', stores: ops.map((o) => o.store).filter(Boolean) });
+    emit({ type: 'data', stores: ops.map((o) => o.store).filter(Boolean), active: activeChanged || undefined });
     return !!(label && opts.undo !== false); // (null is kept for "nothing changed")
   }
 
@@ -638,6 +734,8 @@
   async function undo() {
     const step = undoStack.pop();
     if (!step) return null;
+    // an ended shift brought back while another one runs (started since): it would replace the new one
+    if (step.ops.some((o) => 'active' in o && o.active) && S.activeShift) return null;
     await apply(step.ops, null, { undo: false });
     return step.label;
   }
@@ -657,6 +755,7 @@
     if (keys.some((k) => !LOCAL_SETTINGS.includes(k))) {
       S.settings._updatedAt = Date.now();
       S.meta.settingsDirty = true;
+      S.meta.settingsEditedAt = S.settings._updatedAt; // edited here (the account's memory, settings.mem, is not an edit)
       await rawKv('meta', S.meta);
     }
     await rawKv('settings', S.settings);
@@ -705,6 +804,7 @@
       S.settings._updatedAt = Date.now();
       markSettings();
       S.meta.settingsDirty = true;
+      S.meta.settingsEditedAt = S.settings._updatedAt;
       await rawKv('meta', S.meta);
       await rawKv('settings', S.settings);
       emit({ type: 'settings' });
@@ -1186,7 +1286,8 @@
   }
 
   root.Store = {
-    S, load, on, apply, isMemoryOnly: () => memoryOnly, accountHint, keepHint, put, del, undo: undoAny, canUndo, setSettings, setMeta, setActive, find, clone,
+    S, load, on, apply, isMemoryOnly: () => memoryOnly, _retryMs: (ms) => { retryMs = ms; }, // (tests: how soon the storage is tried again)
+    accountHint, keepHint, put, del, undo: undoAny, canUndo, setSettings, setMeta, setActive, find, clone,
     putFile, getFile, delFile, sweepFiles, phoneOnly, park, parked, unpark, dropParked, exportBackup, importBackup, snaps, snapshot, autoSnapshot, snapData, dropSnaps, wipe, saveAll, SCHEMA_VERSION, DB_NAME, cleanIcon,
     SYNC_STORES, APPEND_ONLY, LOCAL_SETTINGS, ACCOUNT_META, mergeMem, flushMem, sameRecord, applyRemote, markSynced, dirtyRecords, touchAll, forgetSyncState, applyRemoteSettings, applyRemoteActive,
   };
