@@ -168,7 +168,8 @@
 
   /* ---------------- what's new (once per big update, for people who already used the app) ---------------- */
   const WHATS_NEW = {
-    id: '1.46.2',
+    id: '1.46.3',
+    // 1.46.3 (a space between the running-shift title and its live time) opens no sheet.
     // 1.46.2 (the running-shift notification: the role below the title, one coin) opens no sheet.
     // 1.46.1 (the running-shift notification's new look in the Android app) opens no sheet.
     // 1.46.0 (every notification in the Android app is the phone's own; the running shift on the lock screen) opens no sheet.
@@ -184,7 +185,7 @@
     // 1.42.1 (the coin's spoken lines) brings fixes only: whoever saw 1.42.0's sheet is not shown it again.
     // (1.40.0's items, overtime by the law and the rest, stay in the full list of updates.)
     // 1.43.0: the daily message (the user, 21 Nov 2026); everyone gets it, with where to switch it off.
-    seen: ['1.44.0', '1.44.1', '1.44.2', '1.44.3', '1.44.4', '1.45.0', '1.46.0', '1.46.1'],
+    seen: ['1.44.0', '1.44.1', '1.44.2', '1.44.3', '1.44.4', '1.45.0', '1.46.0', '1.46.1', '1.46.2'],
     // true only when the items hold a real feature: a release of fixes alone opens no sheet (the user, 6 Nov 2026)
     features: true,
     items: [
@@ -230,6 +231,7 @@
   /* ---------------- every update (settings › about › all the updates) ---------------- */
   // newest first: [version, the day it went out, what changed — said to the user, not to a developer]
   const CHANGELOG = [
+    ['1.46.3', '2026-11-27', 'בהתראה של משמרת שרצה יש רווח בין הכותרת לבין הזמן שרץ.'],
     ['1.46.2', '2026-11-27', 'בהתראה של משמרת שרצה, שם התפקיד עבר לשורה שמתחת לכותרת, כדי שלא ייחתך.'],
     ['1.46.1', '2026-11-27', 'באנדרואיד, ההתראה של משמרת שרצה קיבלה עיצוב חדש: פס התקדמות עד הסוף הרגיל של המשמרת, עם המטבע של שעתי, והיא מופיעה מעל שאר ההתראות.'],
     ['1.46.0', '2026-11-27', 'באפליקציה לאנדרואיד כל ההתראות מגיעות בעיצוב של שעתי, בלי כתובת האתר. משמרת שרצה מוצגת במסך הנעילה ובראש המסך, עם הזמן שרץ וכפתור לסיום (הגדרות › התראות), ובמשמרת הראשונה שעתי מציעה להפעיל את זה.'],

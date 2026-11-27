@@ -92,7 +92,9 @@
         nativeRun = {
           start: a.start, onBreak: brk, total: (App.usualShiftMs && App.usualShiftMs(a.roleId)) || 8 * 3600000,
           // the title stays short: beside the live time a long role was cut ("אחמ...", the user's phone, 27 Nov 2026)
-          title: 'משמרת רצה',
+          // an em space at its end: Android draws the live time right beside the title, glued to it without one
+          // (seen on the user's phone, 27 Nov 2026)
+          title: 'משמרת רצה' + ' ',
           body: [brk ? 'בהפסקה' : '', role, since, money].filter(Boolean).join(' · '), pub: since,
         };
         last = { key, at: now };
