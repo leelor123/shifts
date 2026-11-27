@@ -865,6 +865,22 @@
     await shutdown(uid); // (with anything it parked on this phone: its key went with kv above)
   };
 
+  /** Every document of a collection, read in pages by document id: the rules let an admin list at most 500 at a time
+   *  (stats, tickets), and the dashboard's totals need all of them, so nothing is cut off. The reads cost the same (one
+   *  per document, one more per page). (fs: the Firestore module; coll: a collection reference.) Audit 27 Nov 2026. */
+  Cloud.PAGE = 500;
+  Cloud.readAll = async function (fs, coll, page) {
+    const n = page || Cloud.PAGE, out = [];
+    let last = null;
+    for (let i = 0; i < 2000; i++) {
+      const snap = await fs.getDocsFromServer(fs.query(coll, fs.orderBy(fs.documentId()), ...(last ? [fs.startAfter(last)] : []), fs.limit(n)));
+      out.push(...snap.docs);
+      if (snap.docs.length < n) break;
+      last = snap.docs[snap.docs.length - 1];
+    }
+    return out;
+  };
+
   Cloud.statusText = function () {
     const st = Cloud.status;
     if (!Cloud.user) return 'לא מחובר';

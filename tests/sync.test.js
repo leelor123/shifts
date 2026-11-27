@@ -246,10 +246,8 @@ async function withOutside(A) {
   c.App = Object.assign(c.App || {}, { actions: {}, games: { LIST: [] } });
   c.UI.icon = () => ''; c.UI.esc = (s) => String(s);
   // the queries the modules make (where field == value), on top of the fake server's collections
-  A.ffs.where = (f, op, v) => ({ f, v });
-  A.ffs.query = (coll, w) => ({ path: coll.path, w });
-  const getDocs = A.ffs.getDocs;
-  A.ffs.getDocs = async (q) => { const r = await getDocs(q); return q.w ? { docs: r.docs.filter((d) => d.data()[q.w.f] === q.w.v) } : r; };
+  // (fakes.js answers them: where, orderBy, startAfter, limit)
+  A.ffs.where = (f, op, v) => ({ t: 'where', f, op, v });
   for (const f of ['app/views-support.js', 'app/views-leaderboard.js', 'app/views-friends.js']) vm.runInContext(fs.readFileSync(path.join(SRC, f), 'utf8'), c, { filename: f });
 }
 function seedOutside(be) {
@@ -336,6 +334,36 @@ T.atest('retention: the dashboard deletes closed requests without an account aft
   T.eq(A.ctx.App.oldStats(docs, today)[0], docs[0]);
   T.eq(A.ctx.App.oldStats(Array.from({ length: 80 }, () => doc('2020-01-01')), today).length, 50, 'at most 50 at a time');
   T.eq(U.addMonths(today, -13), '2025-10-03');
+});
+// security audit 27 Nov 2026: the dashboard read every statistics record and request in one query; the rules now let an
+// admin list at most 500 at a time, so it reads in pages and every record still counts
+T.atest('admin reads: requests and statistics in pages; the totals see every record; a query over the cap is refused', async () => {
+  const be = fakeBackend();
+  const A = await phone(be);
+  await A.Cloud.connect(user); await wait(30);
+  await withOutside(A);
+  A.ctx.UI.tile = () => ''; A.ctx.App.isAdmin = true;
+  const now = Date.now();
+  for (let i = 0; i < 7; i++) be.docs.set('tickets/t' + i, { uid: 'u' + i, reason: 'other', text: 'hello there', status: i < 3 ? 'open' : 'closed', created: now, updated: now, last: 'user', seen: true });
+  for (let i = 0; i < 9; i++) be.docs.set('stats/s' + String(i).padStart(18, '0'), { last: '2026-11-20' });
+  A.ctx.Cloud.PAGE = 3;
+  be.maxList = 3; // the rules' cap, scaled down
+  be.queries = [];
+  const inbox = await A.ctx.Support.adminInbox();
+  T.eq(inbox.total, 7, 'every request'); T.eq(inbox.count, 3, 'the open ones counted'); T.eq(inbox.closed.length, 4);
+  T.eq(be.queries.filter((p) => p === 'tickets').length, 3, 'three pages of up to 3');
+  const stats = await A.ctx.Cloud.readAll(A.ffs, A.ffs.collection(null, 'stats'));
+  T.eq(stats.length, 9, 'every statistics record, none twice');
+  T.eq(new Set(stats.map((d) => d.id)).size, 9);
+  let refused = null;
+  try { await A.ctx.Cloud.readAll(A.ffs, A.ffs.collection(null, 'stats'), 10); } catch (e) { refused = e; }
+  T.ok(refused && refused.code === 'permission-denied', 'a page over the cap is refused');
+  const rules = fs.readFileSync(path.join(SRC, '..', 'firestore.rules'), 'utf8');
+  T.ok(rules.includes('allow list: if isAdmin() && request.query.limit <= 500;'), 'stats: lists of at most 500');
+  T.ok(rules.includes('allow list: if (isAdmin() && request.query.limit <= 500) || (request.auth != null && resource.data.uid == request.auth.uid);'), 'tickets too');
+  T.eq(A.ctx.Cloud.PAGE = 500, 500);
+  const adm = fs.readFileSync(path.join(SRC, 'app/views-admin.js'), 'utf8');
+  T.ok(adm.includes("root.Cloud.readAll(fs, fs.collection(db, 'stats'))") && !adm.includes("getDocsFromServer(fs.collection(db, 'stats'))"), 'the dashboard pages');
 });
 
 // privacy audit, 3 Nov 2026 (B5): after signing out or deleting the account the home-screen widgets kept the numbers

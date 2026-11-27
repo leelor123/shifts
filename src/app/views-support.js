@@ -365,7 +365,8 @@
    *  account are deleted quietly on the way (a failure waits for the next opening). */
   Support.adminInbox = async function (opts) {
     const { fs, db } = await Cloud().sdk();
-    let list = (await fs.getDocsFromServer(fs.collection(db, 'tickets'))).docs.map((d) => Object.assign({ id: d.id }, d.data()));
+    // (in pages of 500, the most the rules let an admin's list read: the counts still see every request)
+    let list = (await Cloud().readAll(fs, fs.collection(db, 'tickets'))).map((d) => Object.assign({ id: d.id }, d.data()));
     if (opts && opts.purge) {
       const old = Support.oldGuestTickets(list);
       if (old.length) {

@@ -66,6 +66,7 @@ const withTime = (data, t) => {
   for (const k of Object.keys(o)) if (o[k] === SERVER_TIME) o[k] = t;
   return o;
 };
+const DOC_ID = '__name__';
 const parentOf = (p) => p.split('/').slice(0, -1).join('/');
 const idOf = (p) => p.split('/').pop();
 
@@ -164,7 +165,24 @@ function fakeClient(backend) {
       const order = ops.filter(([p]) => !isMarker(p)).concat(ops.filter(([p]) => isMarker(p)));
       return Promise.all(order.map(([p, d]) => write(p, d, batch)));
     } }; },
-    getDocsFromServer: async (c) => { needOnline(); return { docs: [...backend.docs].filter(([k]) => parentOf(k) === c.path).map(([k, v]) => snapDoc(k, v, false)) }; },
+    // queries: orderBy (a field or documentId()), startAfter (a document, by id order), limit, and a where a test adds
+    // (no where here: cloud.js would then ask its listeners for queries, which this fake does not filter)
+    orderBy: (f, d) => ({ t: 'order', f, d }), limit: (n) => ({ t: 'limit', n }),
+    startAfter: (d) => ({ t: 'after', d }), documentId: () => DOC_ID,
+    query: (c, ...cons) => ({ path: c.path, c: (c.c || []).concat(cons) }),
+    getDocsFromServer: async (c) => {
+      needOnline();
+      let docs = [...backend.docs].filter(([k]) => parentOf(k) === c.path).map(([k, v]) => snapDoc(k, v, false));
+      const OPS = { '==': (a, b) => a === b, '<': (a, b) => a < b, '<=': (a, b) => a <= b, '>': (a, b) => a > b, '>=': (a, b) => a >= b };
+      for (const q of c.c || []) {
+        if (q.t === 'where') docs = docs.filter((d) => { const x = d.data(); return x && OPS[q.op](x[q.f], q.v); });
+        if (q.t === 'order') docs.sort((a, b) => { const x = q.f === DOC_ID ? a.id : a.data()[q.f], y = q.f === DOC_ID ? b.id : b.data()[q.f]; return (x < y ? -1 : x > y ? 1 : 0) * (q.d === 'desc' ? -1 : 1); });
+        if (q.t === 'after') docs = docs.filter((d) => d.id > q.d.id);
+        if (q.t === 'limit') { if (backend.maxList && q.n > backend.maxList) { const e = new Error('Missing or insufficient permissions.'); e.code = 'permission-denied'; throw e; } docs = docs.slice(0, q.n); }
+      }
+      (backend.queries || (backend.queries = [])).push(c.path);
+      return { docs };
+    },
     getDocs: async (c) => fs.getDocsFromServer(c),
     getDocFromServer: async (d) => { needOnline(); return snapDoc(d.path, backend.docs.get(d.path), false); },
     getDoc: async (d) => snapDoc(d.path, backend.docs.get(d.path), false),
