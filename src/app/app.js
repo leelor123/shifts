@@ -456,10 +456,12 @@
   const LOOK_KEYS = new Set(['hideMoney', 'theme', 'accent', 'font', 'fontScale', 'skin', 'fx', 'home']);
   Store.on((ev) => {
     if (ev.type === 'storage-lost') {
-      UI.toast('השמירה בטלפון לא עובדת כרגע. ' + (root.Cloud && root.Cloud.user ? 'הנתונים נשמרים בחשבון שלך ☁️' : 'כדאי להתחבר לחשבון כדי לא לאבד נתונים.'));
-      App.rerender();
+      // at the start the home screen's banner says it (its backup and sign-in buttons); a toast is for a change mid-session
+      if (!ev.startup) UI.toast('השמירה בטלפון לא עובדת כרגע. ' + (root.Cloud && root.Cloud.user ? 'הנתונים נשמרים בחשבון שלך ☁️' : 'כדאי להתחבר לחשבון כדי לא לאבד נתונים.'));
+      if (App.model) App.rerender();
       return;
     }
+    if (ev.type === 'storage-back') { if (App.model) App.rerender(); return; } // the banner goes
     if (ev.type === 'active') { App.rerender(); return; }
     // something remembered (an answer, a "seen"): the screen that saved it draws itself again; no new calculation
     if (ev.type === 'mem') return;
@@ -484,8 +486,10 @@
     if (doneShift) App.milestones();
   };
   App.undo = async function () {
+    const had = Store.canUndo();
     const l = await Store.undo();
-    UI.toast(l ? 'בוטל: ' + l : 'אין מה לבטל');
+    // (an ended shift is not brought back over one that started since: Store.undo)
+    UI.toast(l ? 'בוטל: ' + l : had && S.activeShift ? 'אי אפשר לבטל כי משמרת אחרת כבר רצה' : 'אין מה לבטל');
   };
 
   /* ---------------- event delegation ---------------- */
@@ -571,9 +575,9 @@
     return { end, why, usual: end - a.start };
   };
 
-  /** Shift object for the running timer (for previews and saving). */
-  App.activeAsShift = function (end, forSave) {
-    const a = S.activeShift;
+  /** Shift object for the running timer (for previews and saving); a: that running shift as it ends (saveStop). */
+  App.activeAsShift = function (end, forSave, a) {
+    a = a || S.activeShift;
     if (!a) return null;
     const now = end || Date.now();
     const brkMs = (a.breaks || []).reduce((s, b) => s + ((b.to || now) - b.from), 0);
@@ -632,23 +636,26 @@
     try { sh = await saveStop(a, endAt, opts); } finally { stopping = false; }
     if (sh) return afterStop(a, sh, at, endAt);
   };
-  /** The end itself: the shift saved and the timer off. Returns the saved shift (null: one under a minute, not kept). */
+  /** The end itself: the shift saved and the timer off, in one step (Store.apply's active op): one write, so a crash
+   *  never leaves both the saved shift and the running timer, and its undo brings the timer back exactly as it was.
+   *  Returns the saved shift (null: one under a minute, not kept). */
   async function saveStop(a, endAt, opts) {
     const end = endAt && endAt > a.start && endAt < Date.now() ? endAt : Date.now();
-    // breaks after the end are dropped, one still open closes at the end
-    if (a.breaks && a.breaks.length) a.breaks = a.breaks.filter((b) => b.from < end).map((b) => ({ from: b.from, to: Math.min(b.to || end, end) }));
-    const sh = App.activeAsShift(end, true);
+    // breaks after the end are dropped, one still open closes at the end (on a copy: the running shift stays as it
+    // was, for the undo)
+    const done = Object.assign({}, a);
+    if (a.breaks && a.breaks.length) done.breaks = a.breaks.filter((b) => b.from < end).map((b) => ({ from: b.from, to: Math.min(b.to || end, end) }));
+    const sh = App.activeAsShift(end, true, done);
     sh.id = U.uid();
     if ((sh.end - sh.start) < 60000) {
       const ok = await UI.confirm('משמרת קצרה מאוד', 'המשמרת נמשכה פחות מדקה. לשמור בכל זאת?', 'שמור');
       if (!ok) { await Store.setActive(null); return null; }
     }
-    const ops = [{ store: 'shifts', put: sh }];
+    const ops = [{ store: 'shifts', put: sh }, { active: null }];
     const planned = a.fromPlanned && App.shift(a.fromPlanned);
     if (planned && planned.status === 'planned') ops.push({ store: 'shifts', del: planned.id });
-    await Store.apply(ops, 'סיום משמרת', { via: opts && opts.widget ? 'widget' : 'timer' }); // (via: for the signed shift log)
     App.justStopped = Date.now(); // the start button springs back in
-    await Store.setActive(null);
+    await Store.apply(ops, 'סיום משמרת', { via: opts && opts.widget ? 'widget' : 'timer' }); // (via: for the signed shift log)
     return sh;
   }
   /** What follows an end: the moment, the toast, a forgotten timer's question, the shift's screen. */
@@ -684,7 +691,10 @@
     App.sheetsApi.shiftDetail && App.sheetsApi.shiftDetail(sh.id);
     if (App.reviewAfterShift) App.reviewAfterShift(); // a good moment, once that screen is closed
   }
+  // a break or a role switch only while a shift runs: a tap that lands just after the end (a second tap, a widget, the
+  // lock screen) made a "running shift" of a break alone, with no start, and the next end saved it
   App.toggleBreak = async function (at) {
+    if (!S.activeShift) return;
     const a = Object.assign({}, S.activeShift);
     a.breaks = (a.breaks || []).slice();
     const last = a.breaks[a.breaks.length - 1];
@@ -693,6 +703,7 @@
     await Store.setActive(a);
   };
   App.switchRole = async function (roleId) {
+    if (!S.activeShift || !roleId) return;
     const a = Object.assign({}, S.activeShift);
     a.splits = (a.splits || []).concat([{ at: Date.now(), roleId }]);
     await Store.setActive(a);

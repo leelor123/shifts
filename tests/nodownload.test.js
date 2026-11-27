@@ -201,5 +201,8 @@ T.test('the backup reminder and the home banner open the backup page, never a fi
   T.ok(/App\.actions\['backup-now'\] = \(\) => App\.sheetsApi\.settingsSection\('backup'\)/.test(read('app/views-home.js')), 'the banner opens the page');
   const calls = [];
   for (const f of fs.readdirSync(path.join(SRC, 'app'))) if (f.endsWith('.js')) for (const m of read('app/' + f).matchAll(/App\.doBackup\(/g)) calls.push(f + '@' + m.index);
-  T.eq(calls.filter((c) => !c.startsWith('views-settings.js')).length, 0, 'only the backup page\'s buttons call doBackup');
+  // and the storage banner's button (shown only while the phone's storage does not work, views-home.js): a tap, once
+  T.eq(calls.filter((c) => !c.startsWith('views-settings.js') && !c.startsWith('views-home.js')).length, 0, 'only the backup page\'s buttons and the storage banner call doBackup');
+  T.eq(calls.filter((c) => c.startsWith('views-home.js')).length, 1, 'the banner: one call');
+  T.ok(/App\.actions\['storage-backup'\] = \(\) => App\.doBackup\(false\);/.test(read('app/views-home.js')), 'from its button\'s tap');
 });

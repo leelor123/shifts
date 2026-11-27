@@ -409,6 +409,13 @@
     const localHas = S.shifts.length + S.entries.length + S.payslips.length > 0;
     let mode = !cloudHas ? 'local' : !localHas ? 'cloud' : (await askMode()) || 'merge';
     const ops = [];
+    // what this phone's setup made and nobody changed since (S.meta.setupAt): its answers are not newer than the account.
+    // Every phone's first employer has the same id (emp1) and the setup stamped it now, so on a new phone it beat the
+    // account's own emp1, and the setup's whole settings (tax profile, pension...) replaced the account's (1.46 review).
+    // The account wins those; a record or a setting edited after the setup is the person's own and is merged as before.
+    const setupAt = +S.meta.setupAt || 0;
+    const setupOnly = (local) => !!setupAt && (local.updatedAt || 0) <= setupAt + 1000;
+    const settingsSetupOnly = !!setupAt && (+S.meta.settingsEditedAt || 0) <= setupAt + 1000;
     if (mode === 'local') {
       if (cloudHas) {
         await Store.touchAll();
@@ -423,7 +430,7 @@
         const remote = R.stores[st];
         for (const [id, v] of remote) {
           const local = S[st].find((x) => x.id === id);
-          if (mode === 'merge' && local && (local.updatedAt || 0) >= v.u) continue;
+          if (mode === 'merge' && local && (local.updatedAt || 0) >= v.u && !(setupOnly(local) && !v.d)) continue;
           if (mode === 'merge' && !local && !v.d && deletedHere(st, id, v.u)) continue;
           if (v.d) { if (local) ops.push({ store: st, del: id }); }
           else ops.push({ store: st, put: decode(st, v, local) });
@@ -432,7 +439,7 @@
       }
       if (mode === 'cloud') S.meta.pendingDeletes = [];
       await Store.applyRemote(ops);
-      if (R.settings && (mode === 'cloud' || R.settings.u > (S.settings._updatedAt || 0))) await Store.applyRemoteSettings(JSON.parse(R.settings.j), LOCAL_ONLY_SETTINGS);
+      if (R.settings && (mode === 'cloud' || settingsSetupOnly || R.settings.u > (S.settings._updatedAt || 0))) await Store.applyRemoteSettings(JSON.parse(R.settings.j), LOCAL_ONLY_SETTINGS);
       else await Store.setMeta({ settingsDirty: true });
       await Store.flushMem(); // what this phone remembered from before 1.36.4 (answers, "seen"), now with the account's
       if (R.active && (mode === 'cloud' || R.active.u > (S.meta.activeUpdatedAt || 0))) await Store.applyRemoteActive(R.active.j ? JSON.parse(R.active.j) : null, R.active.u);
@@ -692,7 +699,7 @@
     if (!Cloud.user || !Cloud.connected) return;
     if (ev.remote) return;
     if (ev.type === 'restore') { Cloud.afterRestore(ev.mode).catch(() => {}); return; }
-    if (ev.type === 'data' || ev.type === 'settings' || ev.type === 'mem' || ev.type === 'active') Cloud.schedulePush(ev.type === 'active' ? 200 : 1500);
+    if (ev.type === 'data' || ev.type === 'settings' || ev.type === 'mem' || ev.type === 'active') Cloud.schedulePush(ev.type === 'active' || ev.active ? 200 : 1500);
   });
   window.addEventListener('online', () => {
     if (!Cloud.user || !Cloud.connected) return;

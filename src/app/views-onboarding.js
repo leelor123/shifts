@@ -339,6 +339,9 @@
         await Store.apply(ops, null);
         // the effects choices (the speaker button sets one during the setup) are not the setup's to overwrite
         await Store.setSettings((s) => Object.assign(s, st, { fx: s.fx || st.fx }));
+        // what the setup wrote, and when: an account signed in to later keeps its own employer and settings over these
+        // answers, unless they are changed after this (cloud.js initialMerge)
+        await Store.setMeta({ setupAt: Date.now() });
         if (withDemo) await App.demo.load();
       } catch (e) {
         console.warn('saving the setup answers', e);

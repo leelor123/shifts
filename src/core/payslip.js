@@ -1899,7 +1899,11 @@
    * Compare a verified payslip to the recorded shifts.
    * slip = { period:'YYYY-MM', fields:{...}, other:[{line,value,guess}] }
    */
+  /** A payslip's month as the app writes it ('YYYY-MM'). One without (store.js keeps a damaged one with period null,
+   *  shown without a month) cannot be compared with any period: analyze gives null, and the screens ask for the month. */
+  const hasPeriod = (slip) => !!slip && typeof slip.period === 'string' && /^\d{4}-\d{2}$/.test(slip.period);
   function analyze(slip, model) {
+    if (!hasPeriod(slip)) return null;
     const S = model.ctx.settings;
     const empId = slipEmployer(model, slip).id;
     const E = expected(model, slip.period, false, empId);
@@ -2263,6 +2267,7 @@
     if (!m) return null;
     let a2;
     try { a2 = analyze(slip, m); } catch (e) { return null; }
+    if (!a2) return null;
     const f2 = badIn(a2, f.area);
     return Math.max(0, f.amount - (f2 ? Math.max(0, f2.amount || 0) : 0));
   }
@@ -2283,6 +2288,7 @@
    * key } | null }.
    */
   function checkGap(a, slip, model) {
+    if (!a) return null;
     const S = model.ctx.settings;
     const F = (a && a.fields) || slip.fields || {};
     const E = a.expected;
@@ -2652,6 +2658,7 @@
    */
   function settingsCheck(slip, model, a) {
     a = a || analyze(slip, model);
+    if (!a) return [];
     const S = model.ctx.settings, F = (a && a.fields) || slip.fields || {}, E = a.expected, P = E.P;
     const emp = E.emp || model.ctx.primaryEmployer();
     const out = [];
@@ -2822,6 +2829,7 @@
    */
   function reconcile(slip, model, a, c) {
     a = a || analyze(slip, model);
+    if (!a) return null;
     const S = model.ctx.settings, F = (a && a.fields) || slip.fields || {}, E = a.expected, t = E.t, P = E.P;
     const emp = E.emp || model.ctx.primaryEmployer();
     const W = slipWork(F);
@@ -3340,5 +3348,5 @@
   // ASKED_SAFE: analyze, checkGap, reconcile and the letter treat a field { value: null, asked: true } as "not read, check
   // by hand", and addNamedLines fills it: the screen may keep such fields through "המשך" (agreed with the payslip
   // screen session, round 3)
-  root.Payslip = { ASKED_SAFE: true, FIELDS, FIELD, HOUR_FIELDS, hoursOnSlip, EXPLAIN, READ_ORDER, MEANING, MEANING_HE, HE_TERM, KIND_LABEL, printedTerm, unknownLines, addNamedLines, labelOther, normalize, fixVisual, numbersIn, matchField, pickValues, linesFromPdfItems, detectPeriod, parseText, redact, aiSchema, aiPrompt, fromAi, expected, analyze, checkGap, reconcile, settingsCheck, waterfall, explainLines, compareSlips, employerMessage };
+  root.Payslip = { ASKED_SAFE: true, hasPeriod, FIELDS, FIELD, HOUR_FIELDS, hoursOnSlip, EXPLAIN, READ_ORDER, MEANING, MEANING_HE, HE_TERM, KIND_LABEL, printedTerm, unknownLines, addNamedLines, labelOther, normalize, fixVisual, numbersIn, matchField, pickValues, linesFromPdfItems, detectPeriod, parseText, redact, aiSchema, aiPrompt, fromAi, expected, analyze, checkGap, reconcile, settingsCheck, waterfall, explainLines, compareSlips, employerMessage };
 })(typeof window !== 'undefined' ? window : globalThis);

@@ -254,8 +254,14 @@
     };
   }
 
+  /** Records by their month (a payslip, a finding), the newest first; one with no month (null, from a damaged record)
+   *  last, instead of a crash in the sort. */
+  function byPeriodDesc(a, b) {
+    const x = (a && typeof a.period === 'string') ? a.period : '', y = (b && typeof b.period === 'string') ? b.period : '';
+    return y < x ? -1 : y > x ? 1 : 0;
+  }
   root.U = {
-    same, single,
+    same, single, byPeriodDesc,
     pad, MIN, HOUR, DAY, uid, dateKey, parseKey, keyToDate, addDays, addMonths, dow, diffDays,
     toEpoch, dayStart, epochKey, epochHM, todayKey, monthKey, monthStart, monthEnd, addMonthKey,
     weekStart, rangeKeys, inRange, clamp, round2, sum, money, num, hours, hm, ltr, span, dateList, fmtDate, fmtMonth, pct, oops, ours, plural, lazyRx,

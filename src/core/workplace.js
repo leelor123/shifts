@@ -246,13 +246,21 @@
     return !r || !r.employerId || r.employerId === employerId;
   }
   /** Something still points at this employer: a saved shift, the running shift (by its employer or its role, which is
-   *  deleted with the employer), or a template. Deleting it then would pay those shifts at 0. */
+   *  deleted with the employer), a template, an entry (a sick day, a vacation, an amount) or a payslip saved for it.
+   *  Deleting it then would pay those shifts at 0, and the entries and payslips would lose their workplace. */
   function employerInUse(S, empId) {
     const roleIds = new Set((S.roles || []).filter((r) => r.employerId === empId).map((r) => r.id));
     const uses = (x) => !!x && (x.employerId === empId || roleIds.has(x.roleId) || (x.splits || []).some((s) => s && roleIds.has(s.roleId)));
-    return (S.shifts || []).some(uses) || uses(S.activeShift) || (S.templates || []).some(uses);
+    return (S.shifts || []).some(uses) || uses(S.activeShift) || (S.templates || []).some(uses)
+      || (S.entries || []).some((x) => !!x && x.employerId === empId) || (S.payslips || []).some((x) => !!x && x.employerId === empId);
+  }
+  /** How many shifts use this role (as theirs or in a switch), the running shift counted too: a role with any is
+   *  archived, never deleted (the running shift, ended with its role gone, was paid ₪0). */
+  function roleUses(S, roleId) {
+    const uses = (x) => !!x && (x.roleId === roleId || (x.splits || []).some((s) => s && s.roleId === roleId));
+    return (S.shifts || []).filter(uses).length + (uses(S.activeShift) ? 1 : 0);
   }
 
-  root.Workplace = { same, ABC, LEN, CODE_RE, MAX_ROLES, FIELDS, KEYS, code, codeFrom, parse, pretty, pack, clean, check, hasRates, changes, apply, ops, employerOf, roleFor, paired, employerInUse };
+  root.Workplace = { same, ABC, LEN, CODE_RE, MAX_ROLES, FIELDS, KEYS, code, codeFrom, parse, pretty, pack, clean, check, hasRates, changes, apply, ops, employerOf, roleFor, paired, employerInUse, roleUses };
   if (typeof module !== 'undefined') module.exports = root.Workplace;
 })(typeof window !== 'undefined' ? window : globalThis);

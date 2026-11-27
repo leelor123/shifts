@@ -46,12 +46,37 @@
     const gaps = S.gaps.filter((g) => g.status !== 'resolved' && g.period >= from.slice(0, 7) && g.period <= to.slice(0, 7));
     const holidays = Engine.holidayPay ? Engine.holidayPay(App.model, from, to, today).filter((h) => h.status === 'due') : [];
     const mw = Engine.minWageFor(S.settings, today);
-    const lowRoles = App.roles().filter((r) => { const rate = Engine.roleRate(r, today); return rate > 0 && rate + 0.005 < mw.hourly; });
     const shifts = [...App.model.results.values()].filter((r) => r.status === 'done' && r.dateKey >= from && r.dateKey <= to).sort((a, b) => a.start - b.start);
+    const lowRoles = lowRates(shifts, to < today ? to : today);
     const sum = Engine.rangeSummary(App.model, from, to);
     return { from, to, slips, findings, gaps, holidays, mw, lowRoles, shifts, sum };
   }
-  const total = (d) => d.findings.filter((f) => f.status === 'bad').reduce((a, f) => a + f.left, 0) + d.holidays.reduce((a, h) => a + h.amount, 0);
+  /**
+   * The roles paid under the minimum wage in the period, each day by the minimum in force that day (by the age that day
+   * too): a rate under the minimum of April 2026 was not under the minimum of the March before it. Was: every role by
+   * today's rate and today's minimum. The days worked in the role, and the end of the period for a role in use that was
+   * not worked in it. → [{ id, name, rate, mw, from, to }], the rate and the minimum of the last such day.
+   */
+  function lowRates(shifts, last) {
+    const by = new Map();
+    const look = (role, k) => {
+      if (!role) return;
+      const rate = Engine.roleRate(role, k), min = Engine.minWageFor(S.settings, k).hourly;
+      if (!(rate > 0 && rate + 0.005 < min)) return;
+      const o = by.get(role.id) || { id: role.id, name: role.name, rate, mw: min, from: k, to: k };
+      if (k < o.from) o.from = k;
+      if (k >= o.to) Object.assign(o, { to: k, rate, mw: min });
+      by.set(role.id, o);
+    };
+    const seen = new Set();
+    for (const r of shifts) for (const id of new Set(r.segments.map((s) => s.roleId))) { seen.add(id); look(App.role(id), r.dateKey); }
+    for (const role of App.roles()) if (!seen.has(role.id)) look(role, last);
+    return [...by.values()];
+  }
+  /** What a finding asks for: what the innocent reasons leave of it, or its amount. The table shows it, the total adds it. */
+  const owed = (f) => (f.explained >= 1 ? f.left : f.amount > 0 ? f.amount : 0);
+  // every finding the table lists (a "check" one with an amount too) and the holidays: the table and the total agree
+  const total = (d) => d.findings.reduce((a, f) => a + owed(f), 0) + d.holidays.reduce((a, h) => a + h.amount, 0);
   /** The findings to ask about: those the innocent reasons leave open; when they explain them all, all of them (never blocked). */
   const asked = (d) => { const bad = d.findings.filter((x) => x.status === 'bad'); const open = bad.filter((x) => x.left >= 1 || !(x.amount > 0)); return open.length || d.holidays.length || d.lowRoles.length ? open : bad; };
 
@@ -60,10 +85,11 @@
     const items = [];
     for (const f of asked(d)) { const amt = f.left >= 1 ? f.left : f.amount; items.push(`${U.fmtMonth(f.period)}: ${f.title}${amt > 0 ? ` (הפרש משוער ${U.money(amt)})` : ''}.`); }
     for (const h of d.holidays) items.push(`דמי חג על ${h.name} (${U.fmtDate(h.key, 'short')}): לפי ממוצע השעות שלי, כ-${U.money(h.amount)}.`);
-    for (const r of d.lowRoles) items.push(`התעריף ב${r.name} (${U.money(Engine.roleRate(r, U.todayKey()))} לשעה) נמוך משכר המינימום (${U.money(d.mw.hourly)}).`);
+    for (const r of d.lowRoles) items.push(`התעריף ב${r.name} (${U.money(r.rate)} לשעה) נמוך משכר המינימום (${U.money(r.mw)}).`);
     if (!items.length) return '';
     const name = S.settings.userName || '';
-    const t = total(d);
+    // the letter's total is of what it lists
+    const t = asked(d).reduce((a, f) => a + (f.left >= 1 ? f.left : f.amount > 0 ? f.amount : 0), 0) + d.holidays.reduce((a, h) => a + h.amount, 0);
     return `שלום,\n\nבדקתי את השכר שלי לתקופה ${U.fmtDate(d.from)} עד ${U.fmtDate(d.to)} מול רישום המשמרות שלי ומול הזכויות לפי החוק, ויש כמה דברים שאשמח שנבדוק יחד:\n\n${items.map((x, i) => `${i + 1}. ${x}`).join('\n')}\n${t > 0 ? `\nסה״כ הפרש משוער: ${U.money(t)}.\n` : ''}\nמצורף דוח מפורט עם כל המשמרות והחישוב. אשמח שתבדקו ותעדכנו אותי, ואם צריך, שיתוקן בתלוש הבא. אם פספסתי משהו, אשמח להסבר.\n\nתודה רבה,\n${name}`.trim();
   }
 
@@ -82,13 +108,13 @@
       <span class="kp">משמרות: <b>${sum.shifts}</b></span><span class="kp">שעות: <b>${U.hours(sum.hours)}</b></span><span class="kp">שכר מחושב (ברוטו): <b>${U.money(sum.gross)}</b></span>${t > 0 ? `<span class="kp">הפרש משוער: <b>${U.money(t)}</b></span>` : ''}
       <h3>מה נמצא</h3>
       ${d.findings.length || d.holidays.length || d.lowRoles.length ? `<table><tr><th>תקופה</th><th>נושא</th><th>פירוט</th><th>הפרש משוער</th></tr>
-        ${d.findings.map((f) => row([U.fmtMonth(f.period), esc(f.title), esc(f.detail || '') + (f.explained >= 1 && f.why.length ? ` · ייתכן שמוסבר: ${esc(f.why.join(', '))} (${U.money(f.explained)})` : ''), f.status === 'bad' && f.explained >= 1 ? U.money(f.left) : f.amount > 0 ? U.money(f.amount) : '—'])).join('')}
+        ${d.findings.map((f) => row([U.fmtMonth(f.period), esc(f.title), esc(f.detail || '') + (f.explained >= 1 && f.why.length ? ` · ייתכן שמוסבר: ${esc(f.why.join(', '))} (${U.money(f.explained)})` : ''), owed(f) > 0 ? U.money(owed(f)) : '—'])).join('')}
         ${d.holidays.map((h) => row([U.fmtDate(h.key, 'short'), 'דמי חג: ' + esc(h.name), `לא היה יום עבודה בגלל החג. ממוצע ${U.num(h.avgHours, 1)} שעות ביום × ${U.money(h.rate)} (3 חודשים לפני החג)`, U.money(h.amount)])).join('')}
-        ${d.lowRoles.map((r) => row(['היום', 'שכר מינימום: ' + esc(r.name), `${U.money(Engine.roleRate(r, U.todayKey()))} לשעה, המינימום ${U.money(d.mw.hourly)}`, '—'])).join('')}</table>`
+        ${d.lowRoles.map((r) => row([r.from === r.to ? U.fmtDate(r.to, 'short') : U.span(U.fmtDate(r.from, 'short'), U.fmtDate(r.to, 'short')), 'שכר מינימום: ' + esc(r.name), `${U.money(r.rate)} לשעה, המינימום ${U.money(r.mw)}`, '—'])).join('')}</table>`
         : '<div>לא נמצאו פערים בתלושים שהוזנו או זכויות שנראות חסרות לתקופה הזאת.</div>'}
       ${d.slips.length ? `<div style="font-size:9pt">תלושים שנבדקו: ${d.slips.map((p) => U.fmtMonth(p.period)).join(', ')}.</div>` : '<div style="font-size:9pt">לא הוזנו תלושים לתקופה הזאת. בדיקת תלוש (בהוספה +) משווה כל תלוש לרישום המשמרות.</div>'}
       <h3>לפי סוג שעה</h3><table><tr><th>רגילות</th><th>125%</th><th>150%</th><th>שבת/חג</th><th>שבת/חג + נוספות</th><th>לילה</th></tr>${row([U.hours(sum.hoursBy.regular), U.hours(sum.hoursBy.ot1), U.hours(sum.hoursBy.ot2), U.hours(sum.hoursBy.rest), U.hours(sum.hoursBy.restOt1 + sum.hoursBy.restOt2), U.hours(sum.hoursBy.night)])}</table>
-      <h3>המשמרות</h3><table><tr><th>תאריך</th><th>תפקיד</th><th>שעות</th><th>זמן</th><th>נוספות</th><th>שבת/חג</th><th>שכר מחושב</th></tr>
+      <h3>המשמרות</h3><table><tr><th>תאריך</th><th>תפקיד</th><th>זמן</th><th>שעות</th><th>נוספות</th><th>שבת/חג</th><th>שכר מחושב</th></tr>
         ${d.shifts.map((r) => row([`${U.fmtDate(r.dateKey, 'short')}\u00a0${U.DAYS_SHORT[U.dow(r.dateKey)]}`, esc([...new Set(r.segments.map((s) => App.roleName(s.roleId)))].join(' → ')), `\u2066${U.epochHM(r.start)}–${U.epochHM(r.end)}\u2069`, U.hours(r.paidHours), r.otHours ? U.hours(r.otHours) : '', r.restHours ? U.hours(r.restHours) : '', U.money(r.wage)])).join('')}</table>
       <h3>על מה זה נשען</h3><table>${LAWS.map(([a, b]) => row([`<b>${a}</b>`, b])).join('')}</table>
       <div style="font-size:8pt;color:#555;margin-top:10pt">חושב באפליקציית Shaati לפי המשמרות והתלושים שהוזנו בה, וההגדרות (תעריף, שעות נוספות, שבת וחגים לפי ${esc((S.settings.rest && S.settings.rest.city) || 'העיר שנבחרה')}). זה כלי עזר ואינו ייעוץ משפטי: הסכם קיבוצי, צו הרחבה ענפי או החוזה שלך יכולים לקבוע אחרת. מומלץ לצרף את התלושים ודוחות הנוכחות. מידע נוסף: kolzchut.org.il</div>

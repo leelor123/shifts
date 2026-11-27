@@ -22,19 +22,29 @@
   App.nfcSupported = () => typeof root.NDEFReader === 'function';
 
   /** The app was opened from a sticker (app.js, after the code lock). tag: its id ('' when the address had none). */
+  // a question on screen: a second read of the same touch meanwhile does not ask again
+  let asking = false;
+  async function ask(title, ok) {
+    asking = true;
+    try { return await UI.confirm(title, '', ok); } finally { asking = false; }
+  }
   App.nfcOpen = async function (tag) {
+    if (asking) return;
     const d = Nfc.decide({ active: !!S.activeShift, tags: tags(), tag, last: lastAt(), now: Date.now() });
     if (d.kind === 'same') return;
-    setLast(Date.now());
+    // a touch counts as handled once it is acted on: one answered "cancel" is not a touch, so touching again a moment
+    // later asks again (it was ignored for 10 seconds)
     if (d.kind === 'start') {
-      if (d.ask && !(await UI.confirm('התחל משמרת', '', 'התחלה'))) return;
+      if (d.ask && !(await ask('התחל משמרת', 'התחלה'))) return;
+      setLast(Date.now());
       if (S.activeShift) return;
       // the sticker's own role, while it is still in use; otherwise the home screen's start button decides
       if (d.roleId && App.roles().some((r) => r.id === d.roleId)) await App.startShift(d.roleId);
       else App.actions['timer-start']();
       return;
     }
-    if (d.ask && !(await UI.confirm('סיום משמרת', '', 'סיום'))) return;
+    if (d.ask && !(await ask('סיום משמרת', 'סיום'))) return;
+    setLast(Date.now());
     if (S.activeShift) App.stopShift();
   };
 

@@ -334,7 +334,8 @@
     // month totals always count the whole month; only the rows are cut at `shown`
     let left = shown;
     const months = Object.entries(groups).map(([mk, rs]) => { const rows = rs.slice(0, Math.max(0, left)); left -= rows.length; return [mk, rs, rows]; }).filter(([, , rows]) => rows.length);
-    const entries = S.entries.filter((e) => (!f.from || e.date >= f.from) && (!f.to || e.date <= f.to) && !f.role && !f.ov && !f.q).sort((a, b) => b.date.localeCompare(a.date));
+    // (the done / planned filter too: a planned vacation showed under done)
+    const entries = S.entries.filter((e) => (!f.from || e.date >= f.from) && (!f.to || e.date <= f.to) && !f.role && !f.ov && !f.q && (f.status === 'all' || (e.status || 'done') === f.status)).sort((a, b) => b.date.localeCompare(a.date));
     return `
       <div class="field" style="position:relative"><input class="input" id="flt-q" aria-label="חיפוש בהערות, תפקיד, תאריך…" placeholder="חיפוש בהערות, תפקיד, תאריך…" value="${esc(f.q)}" style="padding-inline-start:44px"><span style="position:absolute;inset-inline-start:12px;top:14px" class="muted">${icon('search')}</span></div>
       <div class="chips">

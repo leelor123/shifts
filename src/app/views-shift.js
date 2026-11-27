@@ -574,7 +574,10 @@
           else if (t2.dataset.role) { d.roleId = t2.dataset.role; redraw(); }
           else if (t2.hasAttribute('data-add-split')) {
             const others = App.roles(d.employerId).filter((r) => r.id !== d.roleId);
-            d.splits.push({ t: '', roleId: (others[0] || App.roles(d.employerId)[0] || App.roles()[0]).id }); redraw();
+            // every role archived: nothing to switch to (it threw here)
+            const to = others[0] || App.roles(d.employerId)[0] || App.roles()[0];
+            if (!to) { UI.toast('אין תפקיד פעיל לעבור אליו'); return; }
+            d.splits.push({ t: '', roleId: to.id }); redraw();
           } else if (t2.dataset.rmSplit != null) { d.splits.splice(+t2.dataset.rmSplit, 1); redraw(); }
           else if (t2.hasAttribute('data-add-item')) { d.items.push({ id: U.uid(), type: 'bonus', amount: '', label: '' }); redraw(); }
           else if (t2.dataset.rmItem != null) { d.items.splice(+t2.dataset.rmItem, 1); redraw(); }

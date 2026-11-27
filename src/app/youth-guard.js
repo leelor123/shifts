@@ -63,5 +63,5 @@
   }
   setInterval(check, 20000);
   // soon after a start (the shift's first moment has played)
-  if (Store.on) Store.on((ev) => { if (ev && ev.type === 'active') setTimeout(check, 1500); });
+  if (Store.on) Store.on((ev) => { if (ev && (ev.type === 'active' || ev.active)) setTimeout(check, 1500); });
 })(typeof window !== 'undefined' ? window : globalThis);
