@@ -179,3 +179,40 @@ T.test('names received from a workplace code lose a leading = + - @', () => {
   T.eq(r.ro.map((x) => x.n).join('|'), 'SUM(1)|מלצר - ערב', 'a name of only signs is dropped; a dash inside stays');
   T.eq(W.pack({ employer: { name: 'My place' }, roles: [{ name: 'Cook' }] }).n, 'My place', 'own names are packed as before');
 });
+
+T.section('security: settings values in the page, and settings from a backup file (audit 27 Nov 2026)');
+T.test('settings-derived values are escaped where they go into HTML; a sheet title is text', () => {
+  const tr = read('src/app/views-taxrefund.js');
+  for (const v of ['f.gross', 'f.tax', 'f.pension', 'sv.months', 'sv.end', 'dg.year', 'dg.studyYears']) {
+    T.ok(tr.includes('value="${esc(' + v + ' || '), 'tax refund ' + v);
+    T.ok(!tr.includes('value="${' + v), 'no raw ' + v);
+  }
+  const st = read('src/app/views-settings.js');
+  for (const v of ['B.sickUsed', 'L.fullTimeHours', 'S.settings.lock.timeoutMin']) T.ok(st.includes('${esc(' + v + ')}'), 'settings ' + v);
+  T.ok(st.includes("'בערב שלפני ב-' + esc(R.eve || '20:00')"), 'the reminder hour');
+  T.ok(read('src/app/views-reports.js').includes('<b>${esc(T.creditPoints)}</b>'), 'credit points');
+  T.ok(read('src/app/ui.js').includes('<h2 id="${hid}">${esc(opts.title || \'\')}</h2>'), 'sheet title escaped');
+});
+T.test('a backup file\'s settings: known fields keep their kind, prototype keys never pass (mergeDeep too)', () => {
+  const s = read('src/app/store.js');
+  const pick = (re) => { const m = re.exec(s); T.ok(m, String(re)); return m[0]; };
+  const code = [pick(/const isObj = [^\n]*/), pick(/const BAD_KEYS = [^\n]*/), pick(/function mergeDeep\(base, over\) \{[\s\S]*?\n  \}/), pick(/function cleanSettings\(over, base\) \{[\s\S]*?\n  \}/)].join('\n');
+  const { mergeDeep, cleanSettings } = new Function(code + '\nreturn { mergeDeep, cleanSettings };')();
+  const def = { userName: '', goal: { amount: 0 }, theme: 'auto', fx: { effects: true }, list: [], opt: null };
+  const bad = JSON.parse('{"__proto__": {"polluted": 1}, "constructor": {"x": 1}, "userName": "<img src=x onerror=alert(1)>", "goal": {"amount": {"$gt": 1}}, "theme": ["dark"], "fx": "off", "list": [1, {"__proto__": {"p": 1}}], "opt": {"prototype": 1, "a": 2}, "extra": 5}');
+  const c = cleanSettings(bad, def);
+  T.ok(!Object.prototype.hasOwnProperty.call(c, '__proto__') && !Object.prototype.hasOwnProperty.call(c, 'constructor'), 'no prototype keys');
+  T.eq(c.userName, '<img src=x onerror=alert(1)>', 'a string stays a string (escaped where it is shown)');
+  T.eq(JSON.stringify(c.goal), '{}', 'a number field that holds an object is dropped');
+  T.ok(!('theme' in c) && !('fx' in c), 'a list for a string, a string for a group: dropped');
+  T.eq(JSON.stringify(c.opt), '{"a":2}', 'an unknown group keeps its fields, without prototype keys');
+  T.eq(c.extra, 5, 'an unknown field is kept');
+  const m = mergeDeep(def, c);
+  T.eq(m.goal.amount, 0, 'the default stands'); T.eq(m.theme, 'auto'); T.eq(m.fx.effects, true);
+  T.eq(({}).polluted, undefined, 'Object.prototype untouched');
+  const m2 = mergeDeep(def, bad);
+  T.eq(Object.getPrototypeOf(m2), Object.prototype, 'mergeDeep does not take __proto__');
+  T.eq(m2.polluted, undefined);
+  T.eq(JSON.stringify(cleanSettings({ goal: { amount: '1500' }, fx: { effects: false } }, def)), '{"goal":{"amount":"1500"},"fx":{"effects":false}}', 'ordinary values pass (a number typed as text too)');
+  T.ok(/runMigrations\(incoming, \+json\.schemaVersion \|\| 1\);\n[^\n]*\n    incoming\.settings = cleanSettings\(incoming\.settings, root\.Defaults\.defaultSettings\(\)\);/.test(s), 'importBackup cleans after the migrations');
+});

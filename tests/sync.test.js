@@ -15,6 +15,8 @@ async function phone(backend, opts) {
   ctx.window = ctx;
   ctx.addEventListener = () => {};
   ctx.UI = { dialog: async () => opts.answer || 'merge', confirm: async () => true, timeAgo: () => '', toast() {} };
+  // (a browser always has crypto.getRandomValues: the statistics id; subtle and the rest only with the ledger)
+  ctx.crypto = { getRandomValues: (x) => require('crypto').webcrypto.getRandomValues(x) };
   if (opts.ledger) Object.assign(ctx, { crypto: require('crypto').webcrypto, TextEncoder });
   vm.createContext(ctx);
   // (opts.ledger: with the signed shift log, as the app has it)

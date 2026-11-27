@@ -87,9 +87,9 @@
         <div class="tr-106">
           <div class="small"><b>יש לך טופס 106 לשנה הזו?</b> הקלדת שלושה מספרים ממנו הופכת את ההערכה למדויקת יותר (סכום כל המעסיקים).</div>
           <div class="tr-in">
-            <label><span>ברוטו שנתי ₪</span><input class="input" type="number" inputmode="decimal" step="any" data-tr106="${x.y}.gross" value="${f.gross || ''}"></label>
-            <label><span>מס שנוכה ₪</span><input class="input" type="number" inputmode="decimal" step="any" data-tr106="${x.y}.tax" value="${f.tax || ''}"></label>
-            <label><span>הפקדת עובד לפנסיה ₪</span><input class="input" type="number" inputmode="decimal" step="any" data-tr106="${x.y}.pension" value="${f.pension || ''}"></label>
+            <label><span>ברוטו שנתי ₪</span><input class="input" type="number" inputmode="decimal" step="any" data-tr106="${x.y}.gross" value="${esc(f.gross || '')}"></label>
+            <label><span>מס שנוכה ₪</span><input class="input" type="number" inputmode="decimal" step="any" data-tr106="${x.y}.tax" value="${esc(f.tax || '')}"></label>
+            <label><span>הפקדת עובד לפנסיה ₪</span><input class="input" type="number" inputmode="decimal" step="any" data-tr106="${x.y}.pension" value="${esc(f.pension || '')}"></label>
           </div>
         </div>
       </div>
@@ -118,11 +118,11 @@
           <option value="army"${sv.kind === 'army' ? ' selected' : ''}>שירות צבאי (חובה)</option>
           <option value="national"${sv.kind === 'national' ? ' selected' : ''}>שירות לאומי או אזרחי</option></select></label>
         ${sv.kind ? `<div class="tr-pair">
-          <label class="field"><span class="lbl">כמה חודשים שירתת</span><input class="input" type="number" inputmode="numeric" min="0" max="48" data-tr="service.months" value="${sv.months || ''}"></label>
-          <label class="field"><span class="lbl">חודש השחרור</span><input class="input" type="month" data-tr="service.end" value="${sv.end || ''}" max="${U.todayKey().slice(0, 7)}"></label></div>` : ''}
+          <label class="field"><span class="lbl">כמה חודשים שירתת</span><input class="input" type="number" inputmode="numeric" min="0" max="48" data-tr="service.months" value="${esc(sv.months || '')}"></label>
+          <label class="field"><span class="lbl">חודש השחרור</span><input class="input" type="month" data-tr="service.end" value="${esc(sv.end || '')}" max="${U.todayKey().slice(0, 7)}"></label></div>` : ''}
         <div class="tr-pair">
-          <label class="field"><span class="lbl">שנת סיום תואר ראשון</span><input class="input" type="number" inputmode="numeric" min="2000" max="${U.todayKey().slice(0, 4)}" placeholder="אין" data-tr="degree.year" value="${dg.year || ''}"></label>
-          ${+dg.year >= 2023 ? `<label class="field"><span class="lbl">כמה שנים למדת</span><input class="input" type="number" inputmode="numeric" min="1" max="5" data-tr="degree.studyYears" value="${dg.studyYears || 3}"></label>` : ''}
+          <label class="field"><span class="lbl">שנת סיום תואר ראשון</span><input class="input" type="number" inputmode="numeric" min="2000" max="${U.todayKey().slice(0, 4)}" placeholder="אין" data-tr="degree.year" value="${esc(dg.year || '')}"></label>
+          ${+dg.year >= 2023 ? `<label class="field"><span class="lbl">כמה שנים למדת</span><input class="input" type="number" inputmode="numeric" min="1" max="5" data-tr="degree.studyYears" value="${esc(dg.studyYears || 3)}"></label>` : ''}
         </div>
         <div class="tiny muted">לא נכללים כאן: מגורים ביישוב מוטב, ילדים, עולה חדש, הורה יחיד, נכות, תרומות ועוד. אם אחד מהם נוגע לך, ההחזר יכול להיות גדול יותר: <a href="${TR.SIMULATOR_URL}" target="_blank" rel="noopener">הבדיקה של רשות המסים ↗</a></div>
       </div>
