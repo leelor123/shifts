@@ -216,3 +216,19 @@ T.test('a backup file\'s settings: known fields keep their kind, prototype keys 
   T.eq(JSON.stringify(cleanSettings({ goal: { amount: '1500' }, fx: { effects: false } }, def)), '{"goal":{"amount":"1500"},"fx":{"effects":false}}', 'ordinary values pass (a number typed as text too)');
   T.ok(/runMigrations\(incoming, \+json\.schemaVersion \|\| 1\);\n[^\n]*\n    incoming\.settings = cleanSettings\(incoming\.settings, root\.Defaults\.defaultSettings\(\)\);/.test(s), 'importBackup cleans after the migrations');
 });
+
+T.section('security: the email of a request without an account (audit 27 Nov 2026)');
+T.test('no ? & = # % / spaces in the email, the same in the app and the rules; the mail link encodes it', () => {
+  const src = read('src/app/views-support.js');
+  const Support = {};
+  new Function('Support', [/Support\.mailOk = [^\n]*/.exec(src)[0], /Support\.mailHref = [^\n]*/.exec(src)[0]].join('\n'))(Support);
+  const ruleRe = /request\.resource\.data\.email\.matches\('([^']*)'\)/.exec(rulesSrc)[1].split('\\\\').join('\\'); // (a rules string writes \\s for \s)
+  const rules = new RegExp(ruleRe);
+  const good = ['name@example.com', 'first.last+tag@mail.co.il', 'a_b-c@x.org'];
+  const bad = ['a@b.com?cc=evil@x.com', 'a@b.com&body=x', 'a=b@c.com', 'a b@c.com', 'a@b.c', 'a@b.com#x', 'a%40b@c.com', 'a/b@c.com', 'a@b@c.com', 'a@b.com\nbcc:x@y.com', 'nodomain'];
+  for (const m of good) { T.ok(Support.mailOk(m), 'app takes ' + m); T.ok(rules.test(m), 'rules take ' + m); }
+  for (const m of bad) { T.ok(!Support.mailOk(m), 'app refuses ' + JSON.stringify(m)); T.ok(!rules.test(m), 'rules refuse ' + JSON.stringify(m)); }
+  T.eq(Support.mailHref('a@b.com?cc=x@y.com'), 'a@b.com%3Fcc%3Dx@y.com', 'an old request: ? and = are encoded');
+  T.ok(src.includes('<a href="mailto:${esc(Support.mailHref(t.email))}?subject='), 'the admin link uses it');
+  T.ok(src.includes('(!anon || Support.mailOk(mail))'), 'the form checks it');
+});

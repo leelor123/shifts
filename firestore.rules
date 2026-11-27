@@ -74,7 +74,7 @@ service cloud.firestore {
       allow create: if validTicket(request.resource.data)
         && request.resource.data.status == 'open' && request.resource.data.last == 'user' && request.resource.data.seen == true
         && ((request.auth != null && request.resource.data.uid == request.auth.uid)
-          || (request.auth == null && request.resource.data.uid == '' && 'email' in request.resource.data && request.resource.data.email.matches('^[^@ ]+@[^@ ]+[.][^@ ]+$')));
+          || (request.auth == null && request.resource.data.uid == '' && 'email' in request.resource.data && request.resource.data.email.matches('^[^@\\s?&=#%/<>",;:]+@[^@\\s?&=#%/<>",;:]+[.][^@\\s?&=#%/<>",;:]{2,}$')));
       allow get: if isAdmin() || ownTicket();
       allow list: if isAdmin() || (request.auth != null && resource.data.uid == request.auth.uid);
       // a conversation only moves forward: who wrote last, status, when, and whether the reply was seen
