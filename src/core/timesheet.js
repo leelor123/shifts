@@ -474,6 +474,10 @@
     }
     // every word's possibilities
     for (const r of rows) for (const w of r.words) w.items = itemsOf(w.text);
+    // a page on a 12-hour clock: its times carry AM / PM (on the word, or as the next word). One of them unread
+    // (a PM lost to the photo) reads as the morning: the shifts below put it right when only that makes sense
+    let ampm = 0;
+    for (const r of rows) for (const w of r.words) if (/(^|\d)\s*[AaPp]\.?[Mm]\.?$/.test(clean(w.text))) ampm++;
     // "7:11" then "PM": the afternoon
     for (const r of rows) r.words.forEach((w, i) => {
       const t = w.items.find((it) => it.k === 'time');
@@ -1160,7 +1164,16 @@
     for (const r of list) {
       if (!r.key || !r.shifts.length) continue;
       if (r.date && !r.date.y && !docYear) guessedYear = true;
-      for (const [start, end, why] of r.shifts) {
+      for (const [start, end0, why0] of r.shifts) {
+        let end = end0, why = why0;
+        // a 12-hour page (two AM / PM marks or more) and an exit of the morning that makes a shift of over 16 hours,
+        // when the same time in the evening makes one of 16 hours at most: its PM was lost in the photo (16:13 then
+        // "9:33" is 21:33, tsbed H-ampm-photo, 27 Nov 2026). Offered for checking, as all worked out
+        if (ampm >= 2 && minOf(end) < 720 && (span(start, end) || 1440) > 16 * 60) {
+          const pm = hmOf(Math.floor(minOf(end) / 60) + 12, minOf(end) % 60);
+          const d2 = span(start, pm);
+          if (d2 >= 10 && d2 <= 16 * 60) { dbg.push(`a lost PM: ${r.key} ${start}-${end} → ${pm}`); end = pm; why = why || 'table'; }
+        }
         const d = span(start, end) || 1440;
         if (d < 10) { dbg.push(`not a shift: ${r.key} ${start}-${end}`); continue; }
         const row = { date: r.key, start, end, hours: Math.round(d / 60 * 100) / 100, overnight: minOf(end) <= minOf(start), line: r.text.slice(0, 120), n: r.ri };

@@ -93,6 +93,14 @@ T.test('table: columns found by their names, the total and the notes are not shi
   T.eq(shifts(p), ['2026-10-01 08:00-16:30', '2026-10-04 22:00-06:00', '2026-10-05 09:15-17:45'].join(' | '));
   T.ok(p.rows[1].overnight);
 });
+T.test('a 12-hour page with one PM lost in the photo: the evening, offered for checking (tsbed H-ampm-photo, 27 Nov 2026)', () => {
+  const p = page(['תאריך', 'כניסה', 'יציאה'], [['01/10/2026', '8:00 AM', '4:30 PM'], ['04/10/2026', '4:13 PM', '9:33'], ['05/10/2026', '9:00 AM', '5:00 PM']]);
+  T.eq(p.rows.map((r) => `${r.date} ${r.start}-${r.end}`).join(' | '), ['2026-10-01 08:00-16:30', '2026-10-04 16:13-21:33', '2026-10-05 09:00-17:00'].join(' | '));
+  T.ok(p.rows[1].doubt, 'worked out: offered for checking');
+  // a page on a 24-hour clock keeps a night as it is read
+  const n = page(['תאריך', 'כניסה', 'יציאה'], [['01/10/2026', '22:00', '06:00'], ['02/10/2026', '08:00', '16:00']]);
+  T.eq(shifts(n), ['2026-10-01 22:00-06:00', '2026-10-02 08:00-16:00'].join(' | '));
+});
 T.test('table: the exit column printed before the entry, and a tilted photo', () => {
   const p = page(['תאריך', 'יציאה', 'כניסה'], [['1/10/26', '16:00', '08:00'], ['2/10/26', '17:10', '09:05'], ['5/10/26', '15:00', '07:30']], { tilt: 40 });
   T.eq(shifts(p), ['2026-10-01 08:00-16:00', '2026-10-02 09:05-17:10', '2026-10-05 07:30-15:00'].join(' | '));

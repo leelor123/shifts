@@ -170,7 +170,8 @@
     setTimeout(async () => {
       if (!S.activeShift || wanted() || App.blocking || document.querySelector('.sheet, .dialog')) return;
       await Store.setMeta({ runNoteOffered: Date.now() });
-      const yes = await UI.confirm('להציג את המשמרת במסך הנעילה?', 'כשמשמרת רצה, התראה שקטה מראה כמה זמן עבדת ובערך כמה הרווחת, במסך הנעילה ובראש המסך, עם כפתור לסיום. אפשר לכבות בכל רגע בהגדרות › התראות.', 'להפעיל');
+      // an offer, not a task: "not now" rather than "cancel" (the user's phone, 27 Nov 2026)
+      const yes = await UI.dialog({ title: 'להציג את המשמרת במסך הנעילה?', text: 'כשמשמרת רצה, התראה שקטה מראה כמה זמן עבדת ובערך כמה הרווחת, במסך הנעילה ובראש המסך, עם כפתור לסיום. אפשר לכבות בכל רגע בהגדרות › התראות.', buttons: [{ label: 'לא עכשיו', value: false }, { label: 'להפעיל', value: true }] });
       if (yes && S.activeShift) turnOn();
     }, 1800);
   }
