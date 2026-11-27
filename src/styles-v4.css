@@ -273,7 +273,7 @@ html.lp-first #lp-static { display: block; }
 .salary-card .btn-row { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 12px; }
 .salary-card .btn-row .btn { flex: 1 1 auto; }
 .salary-card .sc-in { display: flex; gap: 8px; margin-top: 12px; }
-.salary-card .sc-in input { flex: 1; min-width: 0; font-size: 16px; }
+.salary-card .sc-in input { flex: 1; min-width: 0; font-size: max(16px, 1rem); }
 .salary-card .sc-gap { margin-top: 6px; }
 
 /* the hours report check (app/hours-check.js) */
@@ -310,7 +310,7 @@ button.pl-best:active { scale: .98; }
 .plb-ic svg { width: 15px; height: 15px; }
 .plb-b { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
 .plb-t { font-size: .9rem; line-height: 1.4; }
-.plb-t b { white-space: nowrap; }
+.plb-t b { display: inline-block; max-width: 100%; } /* goes to the next line whole, and wraps between words only with a big phone font (it ran off the screen as nowrap, 27 Nov 2026) */
 .plb-s { font-size: .8rem; line-height: 1.35; color: var(--on-surface-var); }
 .sc-row .sc-pay { flex: none; display: inline-flex; align-items: center; gap: 4px; font-size: .9rem; font-weight: 700; color: var(--on-surface-var); font-variant-numeric: tabular-nums; white-space: nowrap; }
 .sc-row.best .sc-pay { color: var(--good); }

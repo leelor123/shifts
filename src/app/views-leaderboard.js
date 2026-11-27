@@ -525,8 +525,9 @@
   /* ---------------- my nickname, emoji and background ---------------- */
   Champions.profile = function (done) {
     const l = S.settings.lb || {};
-    // the name: the one chosen before, or the user's first name (a made-up nickname felt childish)
-    let n = l.n || LB.firstName(S.settings.userName), e = LB.EMOJI.includes(l.e) ? l.e : LB.EMOJI[Math.floor(Math.random() * LB.EMOJI.length)], bg = l.bg || '';
+    // the name: the one chosen before, or a neutral nickname to start from. The real first name is never filled in:
+    // the table is public to every signed-in user and many players are 14-17 (27 Nov 2026); a person may still type it.
+    let n = l.n || LB.randomNick(), e = LB.EMOJI.includes(l.e) ? l.e : LB.EMOJI[Math.floor(Math.random() * LB.EMOJI.length)], bg = l.bg || '';
     const skins = (root.Plus && root.Plus.SKINS) || {};
     const canBg = plusOn(); // an admin's preview may choose too (it shows only on this phone)
     const showBg = !!(root.Plus && (root.Plus.visible() || canBg));
@@ -535,8 +536,8 @@
       title: l.on ? 'הפרופיל שלי בטבלה' : 'הצטרפות לטבלת האלופים',
       cls: 'lb-profile',
       body: `<ol class="lb-list lb-preview" aria-hidden="true">${preview()}</ol>
-        <label class="field"><span class="lbl">השם שלך בטבלה (מופיע לכולם)</span>
-          <span class="lb-nick"><input class="input" id="lb-n" maxlength="16" autocomplete="given-name" placeholder="השם הפרטי שלך" value="${esc(n)}"></span>
+        <label class="field"><span class="lbl">הכינוי שלך בטבלה (מופיע לכולם)</span>
+          <span class="lb-nick"><input class="input" id="lb-n" maxlength="16" autocomplete="off" placeholder="כינוי" value="${esc(n)}"></span>
           <span class="tiny lb-err" id="lb-err" role="alert"></span></label>
         <div class="section-title">אימוג׳י</div>
         <div class="lb-emoji" role="radiogroup" aria-label="אימוג׳י">${LB.EMOJI.map((x) => `<button role="radio" aria-checked="${x === e}" class="${x === e ? 'on' : ''}" data-e="${x}">${x}</button>`).join('')}</div>
@@ -545,7 +546,7 @@
             <button class="skin-tile ${!bg ? 'on' : ''}" data-bg="" aria-pressed="${!bg}"><b>—</b><span>בלי</span></button>
             ${Object.entries(skins).map(([k, name]) => `<button class="skin-tile sk-${k} ${bg === k ? 'on' : ''}" data-bg="${k}" aria-pressed="${bg === k}" aria-label="${name}${canBg ? '' : ' (Plus)'}"><b>${e}</b><span>${name}</span>${canBg ? '' : `<i class="skin-lock" aria-hidden="true">${icon('lock', 's')}</i>`}</button>`).join('')}
           </div>` : ''}
-        <div class="tiny muted lb-note">בטבלה מופיעים רק השם שבחרת, האימוג׳י, הרקע והתוצאות במשחקים. מספיק שם פרטי, בלי שם משפחה ובלי מספר טלפון. אפשר לצאת מהטבלה בכל רגע, והשורה נמחקת.</div>
+        <div class="tiny muted lb-note">בטבלה מופיעים רק הכינוי שבחרת, האימוג׳י, הרקע והתוצאות במשחקים. אפשר להשאיר את הכינוי שהצענו או לכתוב אחר, בלי שם משפחה ובלי מספר טלפון. אפשר לצאת מהטבלה בכל רגע, והשורה נמחקת.</div>
         <button class="btn big block" data-save>${icon('check')} ${l.on ? 'שמירה' : 'הצטרפות'}</button>
         ${l.on ? '<button class="btn text block danger" data-leave>יציאה מהטבלה</button>' : ''}`,
       onMount: (el) => {

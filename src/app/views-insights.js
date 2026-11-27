@@ -62,7 +62,7 @@
     // (opening the app from the phone's notification once downloaded a file at once)
     else if (rec.type === 'backup') later(() => App.sheetsApi.settingsSection('backup'));
     else if (rec.type === 'workweek') later(() => App.sheetsApi.settingsSection('calc'));
-    else if (rec.type === 'plusend' && root.Plus) later(() => root.Plus.sheet());
+    else if (rec.type === 'plusend' && root.Plus && !root.Plus.noOffers()) later(() => root.Plus.sheet()); // a notice; never a sale to a minor
     else if (rec.type === 'taxrefund') later(() => App.actions['tax-refund']({ dataset: { year: data.year } }));
     else if (rec.type === 'payslipDue') {
       // the payslip came in since (here or on another phone): its check opens, never a request to upload it again

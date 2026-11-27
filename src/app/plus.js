@@ -365,7 +365,7 @@
   };
   /** The tip offer, after money came back thanks to the payslip check (nothing when no tip can be given here, and
    *  never to someone under 18: the law protects minors from sales pressure, as with the offer on home). */
-  Plus.tipCard = () => (Plus.tips.length && !sim() && !root.Engine.isMinor(S.settings) ? `<div class="card plus-tip"><b>שעתי עזרה לך? 💜</b>
+  Plus.tipCard = () => (Plus.tips.length && !sim() && !Plus.noOffers() ? `<div class="card plus-tip"><b>שעתי עזרה לך? 💜</b>
       <div class="small muted">אפשר לפרגן בטיפ קטן, פעם אחת, בלי מנוי. זה עוזר להשאיר את שעתי חינם ובלי פרסומות.</div>
       <div class="plus-tip-row">${Plus.tips.map((t, i) => `<button class="btn tonal" data-tip="${i}">${esc(t.price)}</button>`).join('')}</div></div>` : '');
   /** A tap in a sheet that holds the tip card. */
@@ -759,9 +759,14 @@
     if (left === 2) UI.toast(`נשאר עוד ${q.one} אחד חינם ${q.per === 'day' ? 'להיום' : 'לחודש הזה'}`);
     return true;
   };
-  /** "That was the free allowance": when it comes back, and the way to unlimited. */
+  /** Someone under 18 is never offered Plus unasked (the law protects minors from sales pressure, privacy audit 3 Nov
+   *  2026): no nudge card, no tip card, no buy or trial button when an allowance runs out, and a trial-end notice
+   *  opens nothing. The Plus page stays open to them when they open it themselves, with its parent-consent line. */
+  Plus.noOffers = () => !sim() && !!root.Engine.isMinor(S.settings);
+  /** "That was the free allowance": when it comes back, and the way to unlimited (not for a minor: Plus.noOffers). */
   Plus.limitSheet = function (id) {
     const q = QUOTA[id];
+    const minor = Plus.noOffers();
     const back = q.per === 'day' ? 'מחר' : `ב-${root.U.fmtDate(root.U.addMonthKey(root.U.todayKey().slice(0, 7), 1) + '-01', 'dm')}`;
     const price = Plus.priceText();
     UI.openSheet({
@@ -769,11 +774,11 @@
       cls: 'plus-sheet limit-sheet',
       body: `${App.mascotSays ? App.mascotSays('think', `השתמשת ב-${q.n} ה${q.what} החינמיים ${q.per === 'day' ? 'של היום' : 'של החודש'}. ${back} יש עוד ${q.n}.`, { size: 64 }) : ''}
         <div class="card plus-list">
-          <div>${icon('sparkle', 's')}<span><b>עם Shaati Plus: בלי הגבלה</b><small>ניתוח מתקדם וייצוא דוחות בלי הגבלה, השוואת תלושים בין חודשים, דוח תלושים מפורט ו-${Object.keys(SKINS).length} עיצובים</small></span></div>
+          ${minor ? '' : `<div>${icon('sparkle', 's')}<span><b>עם Shaati Plus: בלי הגבלה</b><small>ניתוח מתקדם וייצוא דוחות בלי הגבלה, השוואת תלושים בין חודשים, דוח תלושים מפורט ו-${Object.keys(SKINS).length} עיצובים</small></span></div>`}
           <div>${icon('check', 's')}<span><b>כל השאר נשאר חינם</b><small>בדיקת תלוש, משמרות, חישוב שכר, זכויות, דוחות במסך, משחקים, גיבוי וסנכרון</small></span></div>
         </div>
-        ${Plus.canTrial() ? `<button class="btn big block plus-buy" data-limit-trial>${icon('sparkle')} לנסות ${TRIAL_DAYS} ימים בחינם</button>` : `<button class="btn big block plus-buy" data-limit-buy>${icon('sparkle')} Shaati Plus${price ? ' · ' + esc(price) : ''}</button>`}
-        ${Plus.workPrice() ? `<div class="tiny plus-work">${esc(Plus.workPrice())} · ${termsWord()}</div>` : ''}
+        ${minor ? '' : Plus.canTrial() ? `<button class="btn big block plus-buy" data-limit-trial>${icon('sparkle')} לנסות ${TRIAL_DAYS} ימים בחינם</button>` : `<button class="btn big block plus-buy" data-limit-buy>${icon('sparkle')} Shaati Plus${price ? ' · ' + esc(price) : ''}</button>`}
+        ${!minor && Plus.workPrice() ? `<div class="tiny plus-work">${esc(Plus.workPrice())} · ${termsWord()}</div>` : ''}
         <button class="btn text block" data-limit-later>${back}, תודה</button>`,
       onMount: (el) => {
         el.addEventListener('click', async (e) => {
@@ -887,7 +892,7 @@
     if ((document.documentElement.dataset.skin || '') !== want) App.applyTheme();
     if (!buyable() || Plus.active() || (S.meta.guide && !S.meta.guideDone)) return '';
     const n = S.meta.plusNudge || {};
-    if (!sim() && (n.never || root.Engine.isMinor(S.settings))) return '';
+    if (!sim() && (n.never || Plus.noOffers())) return '';
     if (n.x && Date.now() - n.x < NUDGE_REST) return '';
     const close = '<button class="icon-btn plus-nudge-x" data-act="plus-nudge-x" aria-label="סגירה ל-24 שעות">' + icon('x', 's') + '</button>';
     const giftEnd = root.Invite ? root.Invite.until() : 0;

@@ -147,7 +147,7 @@
       const m = mine(e.id);
       const r = packFor(e, m ? m.rates : rates);
       return `<div class="wp-share">
-        ${needName() ? `<label class="field wp-name"><span class="lbl">איך קוראים למקום העבודה?</span><input class="input" id="wp-name" value="${esc(typed)}" placeholder="למשל: קפה גרג רמת אביב" maxlength="40" autocomplete="organization"><span class="hint">השם נשמר גם אצלך, וזה מה שחברים לעבודה יראו.</span></label>` : ''}
+        ${needName() ? `<label class="field wp-name"><span class="lbl">איך קוראים למקום העבודה?</span><input class="input" id="wp-name" value="${esc(typed)}" placeholder="למשל: בית הקפה ברמת אביב" maxlength="40" autocomplete="organization"><span class="hint">השם נשמר גם אצלך, וזה מה שחברים לעבודה יראו.</span></label>` : ''}
         ${m ? `<div class="card wp-code-card"><div class="small muted">הקוד של ${esc(e.name)}</div>${codeHtml(m.c)}<div class="tiny muted">גרסה ${m.v}${m.rates ? ' · כולל שכר לשעה' : ''}</div>
           <div class="wp-acts"><button class="btn" data-wp-send ${busy ? 'disabled' : ''}>${icon('share', 's')} שליחת הקישור</button><button class="btn tonal" data-wp-copy>${icon('copy', 's')} העתקת הקוד</button></div></div>`
         : `<p class="small wp-intro">${needName() ? 'חברים לעבודה מקבלים את החוקים בלחיצה אחת, ולא צריכים להגדיר הכול לבד.' : `חברים לעבודה מקבלים את החוקים של ${esc(e.name)} בלחיצה אחת, ולא צריכים להגדיר הכול לבד.`}</p>`}

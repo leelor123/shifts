@@ -525,7 +525,7 @@
     };
     UI.openSheet({
       title: orig ? 'עריכת תפקיד' : 'תפקיד חדש', body: body(),
-      foot: `${orig ? `<button class="btn danger" data-del style="flex:0 0 auto">${icon('trash')}</button>` : ''}<button class="btn" data-save>${icon('check')} שמור</button>`,
+      foot: `${orig ? `<button class="btn danger" data-del style="flex:0 0 auto" aria-label="מחיקת התפקיד">${icon('trash')}</button>` : ''}<button class="btn" data-save>${icon('check')} שמור</button>`,
       onMount: (sh) => {
         el = sh;
         // the picture's letter follows the name as it is typed
@@ -863,7 +863,7 @@
       <div class="section-title">צבע הדגשה</div><div class="color-pick" style="margin-bottom:16px">${Object.entries(App.ACCENTS).map(([k, a]) => `<button data-accent="${k}" class="${S.settings.accent === k ? 'on' : ''}" style="background:hsl(${a[0]} ${a[1]}% 45%)" aria-label="${a[2]}"></button>`).join('')}</div>
       ${root.Plus && root.Plus.visible() ? `<div class="section-title">כרטיס השכר בבית <span class="tag plus-tag">Plus</span></div>${root.Plus.skinTiles(root.Plus.skin(), !root.Plus.active())}` : ''}
       <div class="section-title">גופן</div>
-      <div class="font-pick">${Object.entries(App.FONTS).map(([k, f]) => `<button data-font="${k}" class="${(S.settings.font || 'rubik') === k ? 'on' : ''}" style="font-family:'${f[0]}', system-ui, sans-serif"><span class="fp-sample">משמרת ערב · ${esc(f[2])}<small>${f[0]}</small></span><span class="fp-num">₪1,240</span></button>`).join('')}</div>
+      <div class="tiny muted" style="margin:-4px 0 8px">גופן שאינו Rubik נטען מ-⁠Google Fonts רק כשבוחרים בו.</div><div class="font-pick">${Object.entries(App.FONTS).map(([k, f]) => `<button data-font="${k}" class="${(S.settings.font || 'rubik') === k ? 'on' : ''}" style="font-family:'${f[0]}', system-ui, sans-serif"><span class="fp-sample">משמרת ערב · ${esc(f[2])}<small>${f[0]}</small></span><span class="fp-num">₪1,240</span></button>`).join('')}</div>
       <div class="section-title">גודל טקסט</div><div class="seg">${[[0.9, 'קטן'], [1, 'רגיל'], [1.1, 'גדול'], [1.2, 'גדול מאוד']].map(([k, l]) => `<button data-fs="${k}" class="${+S.settings.fontScale === k ? 'on' : ''}">${l}</button>`).join('')}</div>
       <div class="section-title" style="margin-top:16px">מסך הבית</div>
       <div class="card"><div class="hm-recent"><span class="t">המספר הגדול בכרטיס השכר</span><div class="seg">${[['gross', 'ברוטו'], ['net', 'נטו']].map(([k, l]) => `<button data-home-big="${k}" class="${((S.settings.home || {}).big === 'net' ? 'net' : 'gross') === k ? 'on' : ''}">${l}</button>`).join('')}</div></div>
@@ -883,11 +883,8 @@
         <button class="btn tonal sm" data-fx-try style="margin-top:8px">${icon('sparkle', 's')} נסה</button>
         <div class="tiny muted" style="margin-top:8px">כשבטלפון מופעלת "הפחתת אנימציות", האנימציות כבויות גם כאן. עוצמת הצלילים לפי עוצמת המדיה.</div></div>`,
     mount: (el, draw) => {
-      // load every family once so the previews show the real fonts
-      for (const k of Object.keys(App.FONTS)) {
-        if (document.querySelector(`link[data-preview="${k}"]`)) continue;
-        const l = document.createElement('link'); l.rel = 'stylesheet'; l.href = App.fontCss(k); l.dataset.preview = k; document.head.appendChild(l);
-      }
+      // nothing is fetched to draw the previews: a font from Google Fonts is loaded only once it is chosen (the privacy
+      // policy says so; all six used to load the moment this page opened, 27 Nov 2026). The chosen one shows itself.
       if (el._lookBound) return;
       el._lookBound = true;
       el.addEventListener('click', async (e) => {
