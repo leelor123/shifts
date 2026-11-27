@@ -20,9 +20,19 @@ service cloud.firestore {
         && request.resource.data.get('app', '') is string && request.resource.data.get('app', '').size() <= 20;
 
       match /{collection}/{docId} {
-        allow read, delete: if request.auth != null && request.auth.uid == uid;
-        // records are stored as {u: updatedAt, d: deleted?, j: json, s: when it reached the server}; cap each document at ~900KB
-        allow create: if valid(uid, collection);
+        allow read: if request.auth != null && request.auth.uid == uid;
+        // the signed shift log is deleted only with the account: in a batch that also deletes the account's marker
+        // users/{uid} (Cloud.deleteAccountData writes the marker first, then each batch of 400 records deletes it again).
+        // A single record of it can no longer be removed on its own. (The owner can still delete the whole account, and
+        // with it the log: that is the right to deletion, not a hole.) Audit 27 Nov 2026.
+        allow delete: if request.auth != null && request.auth.uid == uid
+          && (collection != 'ledger' || (exists(/databases/$(database)/documents/users/$(uid))
+            && !existsAfter(/databases/$(database)/documents/users/$(uid))));
+        // records are stored as {u: updatedAt, d: deleted?, j: json, s: when it reached the server}; cap each document at ~900KB.
+        // A new record of a synced folder must carry s, the server's own time (cloud.js stamped). kv is not stamped
+        // (settings, the shift in progress, the vault key). 1.41.1 and older wrote without s: their new records wait
+        // on the phone (still dirty) until it updates, then go up stamped; nothing is lost. Audit 27 Nov 2026.
+        allow create: if valid(uid, collection) && (collection == 'kv' || request.resource.data.get('s', null) == request.time);
         // never replace a newer version with an older one (a phone that was offline for a while)
         allow update: if valid(uid, collection) && request.resource.data.u >= resource.data.u
           // the signed shift log only grows: a record's text stays as written and never becomes a tombstone
@@ -372,7 +382,7 @@ service cloud.firestore {
         && request.resource.data.get('d', false) is bool
         && (request.resource.data.get('j', null) == null || request.resource.data.j is string)
         // s, the upload stamp (cloud.js stamped): only the server's own time of this write; the app's listeners ask
-        // for it. Optional: 1.41.1 and older write without it
+        // for it. Optional here for an update and for kv; a new record of a synced folder must carry it (allow create)
         && (!('s' in request.resource.data) || request.resource.data.s == request.time)
         && (request.resource.data.j == null || request.resource.data.j.size() < 900000);
     }

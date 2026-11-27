@@ -951,6 +951,41 @@ T.atest('shift log: deleting the account deletes its records in the cloud', asyn
   await A.Cloud.deleteAccountData();
   T.eq([...be.docs.keys()].filter((k) => k.startsWith('users/u1/ledger/')).length, 0, 'no log record is left');
   T.eq(A.S.ledger.length, 0, 'and the phone\'s copy is gone');
+  T.ok(!be.docs.has('users/u1'), 'nor the account marker');
+});
+// security audit 27 Nov 2026: the log's records could be deleted one by one by any write of the account
+T.atest('shift log: a record cannot be deleted on its own, only in a batch that deletes the account marker', async () => {
+  const be = fakeBackend();
+  const A = await phone(be, { ledger: true });
+  await A.add('s1'); await A.ctx.ShiftLog.done();
+  await A.Cloud.connect(user); await wait(30);
+  const key = [...be.docs.keys()].find((k) => k.startsWith('users/u1/ledger/'));
+  T.ok(key, 'a log record is in the cloud');
+  let refused = null;
+  try { await A.ffs.deleteDoc({ path: key }); } catch (e) { refused = e; }
+  T.ok(refused && refused.code === 'permission-denied', 'a lone delete is refused');
+  T.ok(be.docs.has(key), 'the record stays');
+  const b = A.ffs.writeBatch(); b.delete({ path: key }); refused = null;
+  try { await b.commit(); } catch (e) { refused = e; }
+  T.ok(refused, 'a batch without the marker is refused too');
+  const rules = fs.readFileSync(path.join(SRC, '..', 'firestore.rules'), 'utf8');
+  T.ok(rules.includes("&& (collection != 'ledger' || (exists(/databases/$(database)/documents/users/$(uid))\n            && !existsAfter(/databases/$(database)/documents/users/$(uid))));"), 'the rule');
+  T.ok(!/match \/\{collection\}\/\{docId\} \{\s*allow read, delete:/.test(rules), 'no blanket delete for every folder');
+});
+T.atest('a new record without the upload stamp is refused (rules of 27 Nov 2026); after one fallback the stamp returns', async () => {
+  const be = fakeBackend();
+  const A = await phone(be);
+  await A.add('x', 'one');
+  await A.Cloud.connect(user); await wait(60);
+  T.ok(typeof be.docs.get('users/u1/shifts/x').s === 'number', 'the app stamps it');
+  let refused = null;
+  try { await A.ffs.setDoc({ path: 'users/u1/shifts/y' }, { u: 1, d: false, j: '{}' }); } catch (e) { refused = e; }
+  T.ok(refused && refused.code === 'permission-denied', 'an unstamped new record is refused');
+  await A.ffs.setDoc({ path: 'users/u1/kv/k1' }, { u: 1, d: false, j: '{}' });
+  T.ok(be.docs.has('users/u1/kv/k1'), 'kv is written without it (settings, the shift in progress, the vault key)');
+  const src = fs.readFileSync(path.join(SRC, 'app', 'cloud.js'), 'utf8');
+  T.ok(src.includes('if (!hadStamp && !stampOk && e && e.code === \'permission-denied\') stampOk = true;'), 'a refused unstamped write brings the stamp back');
+  T.ok(src.includes('!stampFellBack'), 'the fallback happens once a session (no loop)');
 });
 
 /* ---- the 1.39 sync review (track 3b): each scenario failed before its fix ---- */
