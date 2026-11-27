@@ -83,16 +83,17 @@
       // inside the Android app the phone shows it itself, pinned as a live notification (android/widgets/java/
       // RunningNote.java): the words go with the widgets' snapshot, the time counts there by itself
       if (App.nativeRun) {
-        // the phone's own look (RunningNote.java): a short title with the role (its live time stands beside it), the
-        // start and about how much below, and the bar's length: this role's usual shift
+        // the phone's own look (RunningNote.java): a short title (its live time stands beside it), the role, the start
+        // and about how much below, and the bar's length: this role's usual shift
         const brk = !!(App.onBreak && App.onBreak());
         const role = App.roleName ? App.roleName(a.roleId) : '';
         const money = !S.settings.hideMoney && wage != null && +wage >= 1 ? `בערך ${U.money(+wage, 0)}` : '';
         const since = `התחלת ב-${U.epochHM(a.start)}`;
         nativeRun = {
           start: a.start, onBreak: brk, total: (App.usualShiftMs && App.usualShiftMs(a.roleId)) || 8 * 3600000,
-          title: role ? `משמרת רצה · ${role}` : 'משמרת רצה',
-          body: [brk ? 'בהפסקה' : '', since, money].filter(Boolean).join(' · '), pub: since,
+          // the title stays short: beside the live time a long role was cut ("אחמ...", the user's phone, 27 Nov 2026)
+          title: 'משמרת רצה',
+          body: [brk ? 'בהפסקה' : '', role, since, money].filter(Boolean).join(' · '), pub: since,
         };
         last = { key, at: now };
         if (App.widgets) App.widgets.push();

@@ -111,7 +111,7 @@ final class RunningNote {
                     .setStyle(ps)
                     .setPublicVersion(pb.build())
                     .addAction(new Notification.Action.Builder(null, lc.getString(R.string.w_geo_stop), stop).build());
-            if (coin != null) b.setLargeIcon(coin);
+            // the coin rides on the bar: no second one in the corner
             n = b.build();
         } else {
             Notification pubN = compat(c, start, onBreak, open).setContentTitle(pub).build();
