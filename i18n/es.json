@@ -1237,6 +1237,7 @@
  "מה חדש? ✨": "¿Qué hay de nuevo? ✨",
  "עדכנו את האפליקציה בשבילך! 🎉": "¡Actualizamos la app para ti! 🎉",
  "<button class=\"btn tonal\" data-act=\"changelog\" style=\"flex:0 0 auto\">כל העדכונים</button><button class=\"btn\" data-wn-ok>הבנתי, תודה</button>": "<button class=\"btn tonal\" data-act=\"changelog\" style=\"flex:0 0 auto\">Todas las actualizaciones</button><button class=\"btn\" data-wn-ok>Entendido, gracias</button>",
+ "קריאת דוח שעות מצילום מבינה שעת ערב שה-PM שלה לא נקלט בתמונה. ההודעה היומית לא חוזרת על אותו טיפ יומיים ברצף.": "La lectura de un informe de horas desde una foto entiende una hora de la tarde cuyo PM no salió en la imagen. El mensaje diario no repite el mismo consejo dos días seguidos.",
  "בהתראה של משמרת שרצה יש רווח בין הכותרת לבין הזמן שרץ.": "La notificación del turno en curso tiene un espacio entre el título y el tiempo que corre.",
  "בהתראה של משמרת שרצה, שם התפקיד עבר לשורה שמתחת לכותרת, כדי שלא ייחתך.": "En la notificación del turno en curso, el nombre del puesto pasó a la línea bajo el título, para que no se corte.",
  "באנדרואיד, ההתראה של משמרת שרצה קיבלה עיצוב חדש: פס התקדמות עד הסוף הרגיל של המשמרת, עם המטבע של שעתי, והיא מופיעה מעל שאר ההתראות.": "En Android, la notificación del turno en curso tiene un nuevo aspecto: una barra de progreso hasta el final habitual del turno, con la moneda de Shaati, encima de las demás notificaciones.",

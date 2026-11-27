@@ -1237,6 +1237,7 @@
  "מה חדש? ✨": "What's new? ✨",
  "עדכנו את האפליקציה בשבילך! 🎉": "We've updated the app for you! 🎉",
  "<button class=\"btn tonal\" data-act=\"changelog\" style=\"flex:0 0 auto\">כל העדכונים</button><button class=\"btn\" data-wn-ok>הבנתי, תודה</button>": "<button class=\"btn tonal\" data-act=\"changelog\" style=\"flex:0 0 auto\">All updates</button><button class=\"btn\" data-wn-ok>Got it, thanks</button>",
+ "קריאת דוח שעות מצילום מבינה שעת ערב שה-PM שלה לא נקלט בתמונה. ההודעה היומית לא חוזרת על אותו טיפ יומיים ברצף.": "Reading an hours report from a photo understands an evening time whose PM did not come out in the picture. The daily message never repeats the same tip two days running.",
  "בהתראה של משמרת שרצה יש רווח בין הכותרת לבין הזמן שרץ.": "The running-shift notification has a space between its title and the running time.",
  "בהתראה של משמרת שרצה, שם התפקיד עבר לשורה שמתחת לכותרת, כדי שלא ייחתך.": "In the running-shift notification, the role name moved to the line under the title, so it is no longer cut off.",
  "באנדרואיד, ההתראה של משמרת שרצה קיבלה עיצוב חדש: פס התקדמות עד הסוף הרגיל של המשמרת, עם המטבע של שעתי, והיא מופיעה מעל שאר ההתראות.": "On Android, the running-shift notification has a new look: a progress bar to the shift's usual end, with Shaati's coin, shown above the other notifications.",

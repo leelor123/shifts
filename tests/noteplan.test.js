@@ -217,6 +217,18 @@ T.test('the same words never two days running', () => {
   for (let i = 1; i < list.length; i++) T.ok(list[i].title + list[i].body !== list[i - 1].title + list[i - 1].body, 'day ' + i + ': ' + list[i].title);
   for (const n of list) { T.ok(n.title && n.body, 'has words'); T.ok(!/undefined|NaN/.test(n.title + n.body), n.body); }
 });
+T.test('the same words never two days running, from any start day (a tip by half days repeated: qa daily-note, 27 Nov 2026)', () => {
+  for (const withShifts of [false, true]) {
+    const shifts = [];
+    if (withShifts) for (let i = 1; i <= 8; i++) shifts.push(shift(U.addDays('2026-11-09', -i * 3), '09:00', '15:00', 'done'));
+    const model = Engine.buildModel(data(shifts));
+    for (let d = 0; d < 60; d++) {
+      const now = U.toEpoch(U.addDays('2026-10-01', d), '08:00');
+      const list = NP.daily(model, { now }).map((x) => words(model, x, { now }));
+      for (let i = 1; i < list.length; i++) T.ok(list[i].title + list[i].body !== list[i - 1].title + list[i - 1].body, U.addDays('2026-10-01', d) + ' day ' + i + ': ' + list[i].title);
+    }
+  }
+});
 T.test('nothing on a day another notification comes, nothing for today when one came, off by its switch', () => {
   const model = Engine.buildModel(data([]));
   const list = NP.daily(model, { now: DNOW, busy: (k) => k === '2026-11-10' });

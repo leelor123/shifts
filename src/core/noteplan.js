@@ -165,6 +165,7 @@
     const byDay = new Map();
     for (const r of model.results.values()) { if (!byDay.has(r.dateKey)) byDay.set(r.dateKey, []); byDay.get(r.dateKey).push(r); }
     const out = [];
+    let lastTip = null;
     for (let d = 0, k = U.epochKey(now); d <= (o.days || DAYS); d++, k = U.addDays(k, 1)) {
       const at = dailyAt(k, hour, restCfg);
       if (at <= now || (o.busy && o.busy(k))) continue;
@@ -179,7 +180,14 @@
         const P = emp ? Engine.periodOf(k, emp) : null;
         const t = P ? Engine.rangeSummary(model, P.from, k) : null;
         if (t && t.shifts && dayNo(k) % 2 === 0) alert = { type: 'daily', data: { kind: 'month', shifts: t.shifts, hours: t.hours, gross: t.gross, left: Math.max(0, Math.round((U.toEpoch(P.to, '12:00') - U.toEpoch(k, '12:00')) / DAY)) } };
-        else if (tips.length) alert = { type: 'daily', data: { kind: 'tip', tip: tips[Math.floor(dayNo(k) / 2) % tips.length].id } };
+        else if (tips.length) {
+          // a tip a day, never the one before it (by half days, two days running said the same tip: qa daily-note,
+          // 27 Nov 2026)
+          let i = dayNo(k) % tips.length;
+          if (tips.length > 1 && tips[i].id === lastTip) i = (i + 1) % tips.length;
+          lastTip = tips[i].id;
+          alert = { type: 'daily', data: { kind: 'tip', tip: lastTip } };
+        }
       }
       if (!alert) continue;
       Object.assign(alert, { key: 'daily-' + k, push: 'critical', severity: 'info', title: '', body: '' });
