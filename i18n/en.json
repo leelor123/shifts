@@ -2915,6 +2915,7 @@
  " (לא בתשלום)": " (unpaid)",
  "{0}<span>במשמרת של פחות מ-6 שעות החוק לא מחייב הפסקה.</span>": "{0}<span>For a shift under 6 hours, the law doesn’t require a break.</span>",
  "עריכת משמרת": "Edit shift",
+ "{0}<div class=\"ed-total\">{1}</div><button class=\"btn\" data-save>{2} שמור</button>": "{0}<div class=\"ed-total\">{1}</div><button class=\"btn\" data-save>{2} Save</button>",
  "חזרה לחישוב אוטומטי. שמור כדי להחיל": "Back to automatic calculation. Save to apply",
  "אפשר לבטל מיד אחרי.": "You can undo right after.",
  "מלא תאריך, שעת התחלה ושעת סיום": "Fill in the date, start time and end time",

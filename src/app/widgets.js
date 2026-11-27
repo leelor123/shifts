@@ -32,8 +32,28 @@
     return (S.meta.lastRole && roles.find((r) => r.id === S.meta.lastRole)) || (roles.length === 1 ? roles[0] : null);
   };
 
-  /** What the widgets show now, or null before the app has data. */
+  /** What the widgets show now, or null before the app has data. With "hide amounts" on (settings.hideMoney) every
+   *  amount goes as a mask the widgets draw like any amount (the phone's home screen is seen by others more than the
+   *  app is); hours, counts and the goal's percent stay. */
   App.widgetSnapshot = function () {
+    const snap = snapshot();
+    return snap && S.settings.hideMoney ? App.widgetMask(snap) : snap;
+  };
+  const MASK = '₪•••';
+  App.widgetMask = function (snap) {
+    const o = JSON.parse(JSON.stringify(snap));
+    const hide = (obj, ...keys) => { if (obj) for (const k of keys) if (obj[k]) obj[k] = MASK; };
+    hide(o, 'gross', 'net', 'pace');
+    o.today = ''; // (the small widget shows today only when it has earned something)
+    hide(o.goal, 'of', 'left');
+    hide(o.payday, 'amount');
+    hide(o.saving, 'left');
+    if (o.active && o.active.rate) o.active.rate = '';
+    if (o.next && o.next.rate) o.next.rate = '';
+    o.masked = 1;
+    return o;
+  };
+  function snapshot() {
     const emp = S.employers[0];
     if (!emp || !App.model || !S.settings.onboarded) return null;
     const today = U.todayKey();
@@ -82,7 +102,7 @@
       // the running-shift notification the phone shows itself (app/run-note.js, RunningNote.java): null when none
       run: active && App.runNote && App.runNote.native ? App.runNote.native() : null,
     };
-  };
+  }
 
   /** The phone no longer holds the data the widgets show (signed out, the account deleted, "delete everything"): the
    *  widgets must not keep showing the last numbers (privacy audit, 3 Nov 2026). The Android app (WidgetData.save)

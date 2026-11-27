@@ -258,7 +258,9 @@
   App.syncDot = function () {
     const st = Cloud.user ? Cloud.status : 'off';
     if (st !== 'error' && st !== 'offline') return '';
-    return `<button class="icon-btn" data-act="settings-open" data-k="account" aria-label="${esc(Cloud.statusText())}" style="color:${st === 'error' ? 'var(--bad)' : 'var(--warn)'}">${icon(st === 'error' ? 'alert' : 'cloud')}</button>`;
+    // its colour comes from its class (styles-v4.css): over the home sky the icon is white with a coloured mark, as
+    // dark red on the blue sky read at 1.4:1
+    return `<button class="icon-btn sync-${st}" data-act="settings-open" data-k="account" aria-label="${esc(Cloud.statusText())}">${icon(st === 'error' ? 'alert' : 'cloud')}</button>`;
   };
   App.cloudBadge = function () {
     const st = Cloud.user ? Cloud.status : 'off';

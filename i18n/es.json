@@ -2915,6 +2915,7 @@
  " (לא בתשלום)": " (sin pagar)",
  "{0}<span>במשמרת של פחות מ-6 שעות החוק לא מחייב הפסקה.</span>": "{0}<span>Para un turno de menos de 6 horas, la ley no exige descanso.</span>",
  "עריכת משמרת": "Editar turno",
+ "{0}<div class=\"ed-total\">{1}</div><button class=\"btn\" data-save>{2} שמור</button>": "{0}<div class=\"ed-total\">{1}</div><button class=\"btn\" data-save>{2} Guardar</button>",
  "חזרה לחישוב אוטומטי. שמור כדי להחיל": "Vuelta al cálculo automático. Guarda para aplicarlo",
  "אפשר לבטל מיד אחרי.": "Puedes deshacerlo justo después.",
  "מלא תאריך, שעת התחלה ושעת סיום": "Rellena la fecha, la hora de inicio y la hora de fin",

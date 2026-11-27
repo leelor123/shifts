@@ -500,6 +500,7 @@
 
   /* ---------------- live timer ---------------- */
   App.tickTimer = function () {
+    App.armTick();
     const a = S.activeShift;
     document.querySelectorAll('[data-clock]').forEach((el) => {
       if (!a) return;
@@ -528,7 +529,16 @@
     if (card && !!App.overdue() !== !!card.querySelector('.tc-overdue')) App.rerender();
   };
   let coinStep = null;
-  setInterval(App.tickTimer, 1000);
+  // the second hand runs only while a shift runs and the app is seen: no shift, or the app hidden, and nothing wakes
+  // every second (battery). Every draw and every return to the app calls tickTimer, which starts it again.
+  let tickId = 0;
+  App.armTick = function () {
+    const want = !!(S && S.activeShift) && document.visibilityState !== 'hidden';
+    if (want && !tickId) tickId = setInterval(App.tickTimer, 1000);
+    else if (!want && tickId) { clearInterval(tickId); tickId = 0; }
+  };
+  App.armTick();
+  document.addEventListener('visibilitychange', () => App.armTick());
 
   /* ---------------- "forgot to end the shift?" ----------------
    * A shift that runs well past its planned end, or well past how long this person's shifts in that role usually

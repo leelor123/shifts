@@ -26,6 +26,8 @@ require('./reads.test.js');
 require('./noop.test.js');
 // looping animations run on the compositor (19 Nov 2026: the running-shift pulse repainted every frame)
 require('./loop-motion.test.js');
+// the fx-perf pass (27 Nov 2026): blur, refits, the tap ring, audio and tick asleep, dark ink, widgets' hidden amounts
+require('./perf-fx.test.js');
 (async () => {
   await T.runAsync();
   console.log(`\n${T.results.pass} passed, ${T.results.fail} failed`);

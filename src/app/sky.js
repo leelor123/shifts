@@ -45,6 +45,17 @@
     golden: { sky: ['#243f86', '#8a5470', '#ffc27a'], ink: '#2a2346', lights: .2, stars: 0 },
     dusk: { sky: ['#14214f', '#5a3b78', '#e07a5f'], ink: '#120f2c', lights: .8, stars: .5 },
   };
+  // how far a day sky goes towards the night's navy in the dark theme
+  const DARK_DIM = .62;
+  /** The app's theme is dark: its own choice (the page's data-theme, or the kept look before the app has painted it),
+   * else the phone's. */
+  function isDark() {
+    try {
+      let t = document.documentElement.dataset.theme;
+      if (!t) { const k = JSON.parse(localStorage.getItem('shaati.look') || 'null'); t = (k && k.theme) || ''; }
+      return t === 'dark' || (t !== 'light' && !!(root.matchMedia && root.matchMedia('(prefers-color-scheme: dark)').matches));
+    } catch (e) { return false; }
+  }
   const GREY = { cloudy: .45, rain: .6, storm: .72, fog: .5, snow: .4 }; // a grey day dulls the sky
   // i18n-keep-start the city names are keys (the settings keep them in Hebrew), never shown from here
   const TLV = { name: 'תל אביב-יפו', lat: 32.0809, lon: 34.7806 };
@@ -158,7 +169,11 @@
     const phase = o.phase || st.phase, season = o.season || st.season, weather = o.weather || 'clear';
     const P = PHASES[phase], grey = GREY[weather] || 0, night = phase === 'night' || phase === 'dusk';
     // grey weather: a slate grey, dark enough for the white words on it
-    const sky = P.sky.map((c, i) => mix(c, night ? '#1c2233' : i === 2 ? '#a9b4c2' : '#55647a', grey)), ink = P.ink;
+    // the dark theme: the same hour's sky dimmed towards the night's navy (the time of day still shows: the sun, the
+    // dawn's warm horizon), so a bright day sky never glares over a dark app. The show and the page under it ask the
+    // same (isDark), so the hand-over stays unseen.
+    const dark = o.dark != null ? !!o.dark : isDark(), dim = dark && phase !== 'night' ? DARK_DIM : 0;
+    const sky = P.sky.map((c, i) => mix(mix(c, night ? '#1c2233' : i === 2 ? '#a9b4c2' : '#55647a', grey), PHASES.night.sky[i], dim)), ink = dim ? mix(P.ink, PHASES.night.ink, dim) : P.ink;
     const r = rng(String(place.name || 'x').split('').reduce((a, c) => (a * 31 + c.charCodeAt(0)) | 0, 7));
     const kind = placeKind(place.name, place.lon);
     const id = 'sk' + (++uid) + '-';
@@ -172,7 +187,7 @@
     host.style.setProperty('--skw', String(W));
     host.style.setProperty('--skh', String(H));
     scale(host);
-    Object.assign(host.dataset, { phase, weather, kind, season });
+    Object.assign(host.dataset, { phase, weather, kind, season, dark: dim ? '1' : '' });
     const defs = el('defs');
     defs.appendChild(el('linearGradient', { id: id + 'sky', x1: 0, y1: 0, x2: 0, y2: 1 }, [el('stop', { offset: 0, 'stop-color': sky[0] }), el('stop', { offset: .58, 'stop-color': sky[1] }), el('stop', { offset: 1, 'stop-color': sky[2] })]));
     defs.appendChild(el('radialGradient', { id: id + 'glow' }, [el('stop', { offset: 0, 'stop-color': phase === 'night' ? '#cfe0ff' : '#fff4d6', 'stop-opacity': .55 }), el('stop', { offset: 1, 'stop-color': '#fff4d6', 'stop-opacity': 0 })]));
@@ -216,7 +231,8 @@
     }
     // clouds drift slowly to the left, above or below the greeting; more, and greyer, on a grey day
     const nClouds = { clear: season === 'summer' ? 0 : 1, hot: 0, partly: 2, cloudy: 3, rain: 3, storm: 3, fog: 2, snow: 3 }[weather];
-    const cloudFill = grey ? mix(sky[1], phase === 'night' ? '#2a3350' : '#e8edf3', .55) : phase === 'night' ? '#20305e' : night || phase === 'golden' || phase === 'dawn' ? '#ffd9c2' : '#ffffff';
+    const cloudFill0 = grey ? mix(sky[1], phase === 'night' ? '#2a3350' : '#e8edf3', .55) : phase === 'night' ? '#20305e' : night || phase === 'golden' || phase === 'dawn' ? '#ffd9c2' : '#ffffff';
+    const cloudFill = dim ? mix(cloudFill0, sky[1], .5) : cloudFill0;
     for (let i = 0; i < (nClouds == null ? 1 : nClouds) * Math.max(1, Math.ceil((W / W0) * .6)); i++) {
       const style = `--t:${(70 + r() * 70).toFixed(0)}s;--d:${(-r() * 120).toFixed(0)}s`;
       moving('sk-cloud', style, [cloud(r, r() < .5 ? 6 + r() * 10 : HZ - 36 + r() * 14, .7 + r() * .7, cloudFill, grey ? .85 : .7)]);
@@ -372,5 +388,5 @@
     try { return new Intl.DateTimeFormat(document.documentElement.lang || 'he', { weekday: 'long', day: 'numeric', month: 'long' }).format(now || Date.now()); } catch (e) { return ''; }
   }
 
-  root.Sky = { render, state, greeting, firstName, dateLine, placeKind, fromSymbol, fromForecast, prefs, remember, weatherNow, refreshWeather, PHASES, TLV, CREDIT, CREDIT_URL, LICENSE_URL };
+  root.Sky = { render, state, isDark, greeting, firstName, dateLine, placeKind, fromSymbol, fromForecast, prefs, remember, weatherNow, refreshWeather, PHASES, TLV, CREDIT, CREDIT_URL, LICENSE_URL };
 })(typeof window !== 'undefined' ? window : globalThis);

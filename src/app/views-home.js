@@ -431,7 +431,7 @@
       a.after(svg);
       if (root.Dom) root.Dom.own(svg, a);
     }
-    const p = Sky.prefs(), key = [w, Math.round(h / 12), p.place && p.place.name, Sky.weatherNow(p)].join('|');
+    const p = Sky.prefs(), key = [w, Math.round(h / 12), p.place && p.place.name, Sky.weatherNow(p), Sky.isDark && Sky.isDark() ? 'dark' : ''].join('|');
     if (svg.dataset.key === key && Date.now() - (+svg.dataset.at || 0) < 600000) return;
     try {
       const out = Sky.render(svg, { now: Date.now(), place: p.place, weather: Sky.weatherNow(p), width: w, height: h });

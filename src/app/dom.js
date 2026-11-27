@@ -259,7 +259,9 @@
    * משמרת") — it looked broken, in a narrow phone, a bigger text size or a longer language. Dom.fit makes such a label
    * a little smaller (down to 80%) until it fits one line, before the screen is drawn; a longer text (a sentence)
    * still goes to a new line between words, and nothing is ever cut. */
-  const FIT_SKIP = '#intro, svg, canvas, input, textarea, select, [contenteditable], .hero-num, .pp-row, .compare-row.h, .no-fit'; // (the comparison's column titles: one shrunk and its neighbour not looked like a mistake)
+  // (live text that changes every second, the running clock and pay, and the tap effects: refitting them on each change
+  // laid the page out once a second for a label that never moves)
+  const FIT_SKIP = '#intro, svg, canvas, input, textarea, select, [contenteditable], .hero-num, .pp-row, .compare-row.h, .no-fit, [data-clock], [data-live-pay], .fx-ring, .fx-coin, .fx-canvas'; // (the comparison's column titles: one shrunk and its neighbour not looked like a mistake)
   const FIT_STEPS = [0.92, 0.86, 0.8];
   const shortText = (el) => { const t = (el.textContent || '').trim(); return t.length > 1 && t.length <= 32 && t.split(/\s+/).length <= 3; };
   // the element's own text spans more than one line (a text node's boxes on different rows)
@@ -343,7 +345,9 @@
     // the room changes: the window, the text size (settings), a sheet that opened, a section that opened
     const fitAll = () => { if (document.body) Dom.fit(document.body); };
     Dom.fitAll = fitAll;
-    root.addEventListener('resize', fitAll);
+    // a resize fires many times while the window or the keyboard moves: once a frame is enough
+    let fitFrame = 0;
+    root.addEventListener('resize', () => { if (!fitFrame) fitFrame = requestAnimationFrame(() => { fitFrame = 0; fitAll(); }); });
     document.addEventListener('toggle', (e) => Dom.fit(e.target), true);
     if (document.fonts && document.fonts.addEventListener) document.fonts.addEventListener('loadingdone', fitAll);
   }

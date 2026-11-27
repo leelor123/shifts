@@ -2915,6 +2915,7 @@
  " (לא בתשלום)": " (non payée)",
  "{0}<span>במשמרת של פחות מ-6 שעות החוק לא מחייב הפסקה.</span>": "{0}<span>Pour un service de moins de 6 heures, la loi n'impose pas de pause.</span>",
  "עריכת משמרת": "Modifier le service",
+ "{0}<div class=\"ed-total\">{1}</div><button class=\"btn\" data-save>{2} שמור</button>": "{0}<div class=\"ed-total\">{1}</div><button class=\"btn\" data-save>{2} Enregistrer</button>",
  "חזרה לחישוב אוטומטי. שמור כדי להחיל": "Retour au calcul automatique. Enregistrez pour appliquer",
  "אפשר לבטל מיד אחרי.": "Vous pourrez annuler juste après.",
  "מלא תאריך, שעת התחלה ושעת סיום": "Remplissez la date, l'heure de début et l'heure de fin",
