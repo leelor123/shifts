@@ -8,8 +8,12 @@
   const S = Store.S;
   const { esc } = UI;
 
+  // a cell that starts with = + - @, a tab or a CR is a formula to Excel and Sheets (CSV injection): a role or an employer
+  // name can come from another person's workplace code. Such a cell gets a leading ' (shown as text); a plain number
+  // such as -12.50 stays a number. Audit 27 Nov 2026.
   const csvCell = (v) => {
-    const s = v == null ? '' : String(v);
+    let s = v == null ? '' : String(v);
+    if (/^[=+\-@\t\r]/.test(s) && !/^-?\d+(\.\d+)?$/.test(s)) s = "'" + s;
     return /[",\n\r]/.test(s) ? '"' + s.replace(/"/g, '""') + '"' : s;
   };
   function csv(rows) { return '\uFEFF' + rows.map((r) => r.map(csvCell).join(',')).join('\r\n'); }

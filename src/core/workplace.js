@@ -72,6 +72,9 @@
     return v >= lo && v <= hi;
   }
   const cleanName = (s, max) => (typeof s === 'string' ? s.replace(/[\u0000-\u001f\u007f<>]/g, '').replace(/\s+/g, ' ').trim().slice(0, max) : '');
+  // a name read from a workplace code (anyone may have written it) never starts with = + - @: a spreadsheet would run
+  // it as a formula when the person exports their shifts to CSV (audit 27 Nov 2026; export.js guards the cell too)
+  const codeName = (s, max) => cleanName(s, max).replace(/^[=+\-@\s]+/, '').trim();
   const rateOf = (role, today) => {
     const rs = (role.rates || []).filter((r) => r && r.from <= today && +r.rate > 0).sort((a, b) => a.from.localeCompare(b.from));
     return rs.length ? +rs[rs.length - 1].rate : 0;
@@ -104,11 +107,11 @@
   function clean(r) {
     if (!r || typeof r !== 'object' || Array.isArray(r)) return null;
     const out = {};
-    const n = cleanName(r.n, 40); if (n) out.n = n;
+    const n = codeName(r.n, 40); if (n) out.n = n;
     if (r.ww === 5 || r.ww === 6) out.ww = r.ww;
     for (const f of FIELDS) if (fieldOk(f, r[f[0]])) out[f[0]] = r[f[0]];
     out.ro = (Array.isArray(r.ro) ? r.ro : []).slice(0, MAX_ROLES).map((x) => {
-      const nm = x && cleanName(x.n, 40);
+      const nm = x && codeName(x.n, 40);
       if (!nm) return null;
       const one = { n: nm };
       if (typeof x.r === 'number' && x.r > 0 && x.r < 1000) one.r = Math.round(x.r * 100) / 100;

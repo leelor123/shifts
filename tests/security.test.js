@@ -159,3 +159,23 @@ T.test('stats: every feature flag is a named yes or no; the time and the id have
   ctx.crypto = undefined;
   T.eq(Stats.newId(), null, 'no secure source: no id (no record)');
 });
+
+T.section('security: CSV formula injection (audit 27 Nov 2026)');
+T.test('a CSV cell that starts with = + - @ tab or CR is text; a plain number stays a number', () => {
+  const src = read('src/app/export.js');
+  const m = /const csvCell = \(v\) => \{[\s\S]*?\n  \};/.exec(src);
+  T.ok(m, 'csvCell');
+  const csvCell = new Function(m[0] + '\nreturn csvCell;')();
+  T.eq(csvCell('=HYPERLINK("http://x","y")'), '"\'=HYPERLINK(""http://x"",""y"")"');
+  T.eq(csvCell('+1+1'), "'+1+1"); T.eq(csvCell('@SUM(A1)'), "'@SUM(A1)"); T.eq(csvCell('-2+3'), "'-2+3");
+  T.eq(csvCell('\tx'), "'\tx"); T.eq(csvCell('\rx'), '"\'\rx"');
+  T.eq(csvCell('-12.50'), '-12.50', 'a negative amount'); T.eq(csvCell(-3), '-3'); T.eq(csvCell('מלצר'), 'מלצר');
+  T.eq(csvCell(null), ''); T.eq(csvCell('a=b'), 'a=b', 'only a leading sign');
+});
+T.test('names received from a workplace code lose a leading = + - @', () => {
+  const W = require('../src/core/workplace.js');
+  const r = W.clean({ n: '=cmd|"/c calc"!A1', ww: 5, ro: [{ n: '+@-=SUM(1)' }, { n: '-' }, { n: 'מלצר - ערב' }] });
+  T.eq(r.n, 'cmd|"/c calc"!A1');
+  T.eq(r.ro.map((x) => x.n).join('|'), 'SUM(1)|מלצר - ערב', 'a name of only signs is dropped; a dash inside stays');
+  T.eq(W.pack({ employer: { name: 'My place' }, roles: [{ name: 'Cook' }] }).n, 'My place', 'own names are packed as before');
+});
