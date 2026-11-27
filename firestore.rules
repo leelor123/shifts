@@ -43,7 +43,8 @@ service cloud.firestore {
     // anonymous usage statistics (stats.js): a signed-in device writes its own record under a random id,
     // with a fixed shape and no personal data; only admins can read them
     match /stats/{id} {
-      allow create, update: if request.auth != null && id.size() >= 16 && id.size() <= 40 && validStats(request.resource.data);
+      // the id: a random install id (stats.js, 32 hex digits; letters and digits only, 16 to 40)
+      allow create, update: if request.auth != null && id.matches('^[0-9a-z]{16,40}$') && validStats(request.resource.data);
       allow delete: if request.auth != null;
       allow read: if isAdmin();
     }
@@ -315,8 +316,21 @@ service cloud.firestore {
         // days from the first day of use to the first shift (1.42, the admin funnel's "within a day"); optional
         && (!('fsd' in d) || (d.fsd is int && d.fsd >= 0 && d.fsd < 10000))
         && d.age in ['u18', '18p', '']
-        && d.f is map && d.f.size() <= 22
-        && d.t is int;
+        // which features are on: these 22 names, each a yes or no (any value used to pass; audit 27 Nov 2026). Every
+        // name a version of the app ever sent is here (stats.js); a name not listed is refused, and the app's record
+        // simply does not go (statistics never get in the way)
+        && d.f is map && d.f.keys().hasOnly(['rights', 'ai', 'lock', 'bio', 'dark', 'fxOff', 'goal', 'demo', 'planned', 'roles', 'notif',
+          'plus', 'plusWeb', 'plusSeen', 'plusWall', 'plusTry', 'tax', 'gift', 'inv', 'tip', 'gap', 'rep'])
+        && statsF(d.f, ['rights', 'ai', 'lock', 'bio', 'dark', 'fxOff', 'goal', 'demo', 'planned', 'roles', 'notif'])
+        && statsF(d.f, ['plus', 'plusWeb', 'plusSeen', 'plusWall', 'plusTry', 'tax', 'gift', 'inv', 'tip', 'gap', 'rep'])
+        // when it was sent (ms since 1970): 2025 to 2100, not any number
+        && d.t is int && d.t >= 1735689600000 && d.t < 4102444800000;
+    }
+    // each of these names in f is a yes or no when it is there
+    function statsF(f, k) {
+      return f.get(k[0], false) is bool && f.get(k[1], false) is bool && f.get(k[2], false) is bool && f.get(k[3], false) is bool
+        && f.get(k[4], false) is bool && f.get(k[5], false) is bool && f.get(k[6], false) is bool && f.get(k[7], false) is bool
+        && f.get(k[8], false) is bool && f.get(k[9], false) is bool && f.get(k[10], false) is bool;
     }
 
     function validErr(d) {

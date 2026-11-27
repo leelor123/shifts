@@ -135,3 +135,27 @@ T.test('the note box (role=status) is on the page before its first note, so a sc
   T.ok(/if \(document\.body\) \{ try \{ toastBox\(\); \}/.test(ui), 'made as ui.js loads');
   T.ok(/function toast\(text, action, opts\) \{\n    const el = toastBox\(\);/.test(ui), 'toast() fills the same box');
 });
+
+T.section('security: anonymous statistics records (audit 27 Nov 2026)');
+T.test('stats: every feature flag is a named yes or no; the time and the id have bounds; still no identity', () => {
+  const v = /function validStats\(d\) \{([\s\S]*?)\n    \}/.exec(rulesSrc)[1];
+  const listed = /d\.f\.keys\(\)\.hasOnly\(\[([^\]]*)\]\)/.exec(v)[1].split(',').map((s) => s.trim().replace(/'/g, ''));
+  const checked = [...v.matchAll(/statsF\(d\.f, \[([^\]]*)\]\)/g)].flatMap((m) => m[1].split(',').map((s) => s.trim().replace(/'/g, '')));
+  T.eq(checked.slice().sort().join(','), listed.slice().sort().join(','), 'each listed name is checked as a bool');
+  T.ok(/function statsF\(f, k\) \{[\s\S]*?k\[10\], false\) is bool;/.test(rulesSrc), 'statsF checks 11 names');
+  const st = read('src/app/stats.js');
+  const fBlock = st.slice(st.indexOf('f: (() => {'), st.indexOf('})(), // an admin'));
+  const sent = [...fBlock.replace(/\/\/.*$/gm, '').matchAll(/(?:\{|,)\s*([a-zA-Z]+): /g)].map((m) => m[1]).filter((k) => k !== 'return');
+  T.eq(sent.slice().sort().join(','), listed.slice().sort().join(','), 'the app sends exactly the names the rules take');
+  T.ok(v.includes('d.t is int && d.t >= 1735689600000 && d.t < 4102444800000'), 't bounded');
+  T.ok(!/\buid\b|email|name/.test(/d\.keys\(\)\.hasOnly\(\[([^\]]*)\]\)/.exec(v)[1]), 'no field that names the person');
+  T.ok(rulesSrc.includes("id.matches('^[0-9a-z]{16,40}$') && validStats("), 'the id: letters and digits, 16 to 40');
+  T.ok(!st.includes('U.uid() + U.uid()'), 'no guessable time-based install id');
+  const ctx = { crypto: require('crypto').webcrypto };
+  const Stats = {}; new Function('Stats', 'root', /Stats\.newId = function \(\) \{[\s\S]*?\n  \};/.exec(st)[0])(Stats, ctx);
+  T.ok(/^[0-9a-f]{32}$/.test(Stats.newId()), 'a 32-digit hex id');
+  ctx.crypto = { getRandomValues: (a) => require('crypto').webcrypto.getRandomValues(a) };
+  T.ok(/^[0-9a-f]{32}$/.test(Stats.newId()), 'also without randomUUID');
+  ctx.crypto = undefined;
+  T.eq(Stats.newId(), null, 'no secure source: no id (no record)');
+});
