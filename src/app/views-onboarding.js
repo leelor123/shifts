@@ -618,7 +618,7 @@
           ot125: { value: f(pay.ot125), qty: f(hrs.ot125) }, ot150: { value: f(pay.ot150), qty: f(hrs.ot150) },
           rest150: { value: f(pay.rest150), qty: f(hrs.rest150) }, rest175: { value: f(pay.rest175 + pay.rest200), qty: f(hrs.rest175 + hrs.rest200) },
           travel: { value: f(travel) }, gross: { value: f(gross) }, nationalInsurance: { value: f(n.bl) }, healthTax: { value: f(n.health) },
-          incomeTax: { value: f(n.incomeTax) }, creditPoints: { value: S.settings.tax.creditPoints },
+          incomeTax: { value: f(n.incomeTax) }, creditPoints: { value: (+S.settings.tax.creditPoints || 0) + Engine.youthCreditPoint(S.settings, P.to) }, // a real payslip counts the youth point in
           totalDeductions: { value: f(n.bl + n.health + n.incomeTax + n.pensionEmployee) }, net: { value: f(gross - n.bl - n.health - n.incomeTax - n.pensionEmployee) },
         };
         if (n.pensionActive) { fields.pensionEmployee = { value: f(n.pensionEmployee) }; fields.pensionEmployer = { value: f(n.pensionEmployer) }; }

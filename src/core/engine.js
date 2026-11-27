@@ -462,6 +462,9 @@
     /* ---- travel ---- */
     let travel = { mode: 'auto', amount: +emp.travelPerDay || 0 };
     if (shift.noTravel) travel = { mode: 'none', amount: 0 };
+    // no paid time (a shift that rounds to 0 minutes, or a break as long as it): no day of work to travel to. A fare
+    // typed in by hand (below) still stands
+    if (Math.round(paidMin) <= 0) travel = { mode: 'none', amount: 0 };
     if (ov.travel) {
       if (ov.travel.mode === 'off') { travel = { mode: 'none', amount: 0 }; overrideList.push('ביטול נסיעות'); }
       else if (ov.travel.mode === 'amount') { travel = { mode: 'manual', amount: +ov.travel.amount || 0 }; overrideList.push('נסיעות ידני'); }
@@ -564,6 +567,25 @@
     }
     return out;
   }
+  /**
+   * The context computeAll gives a shift (the day's earlier minutes and overtime, the week's regular minutes, a shift
+   * the next day), worked out from the other shifts' results: for one shift computed alone (the editor's preview, the
+   * running timer). Without it the week's 42 hours were never reached there and weekly overtime showed as 100%.
+   */
+  function shiftContext(sh, results) {
+    const dk = U.epochKey(sh.start), wk0 = U.addDays(dk, -U.dow(dk)), next = U.addDays(dk, 1);
+    const planned = sh.status === 'planned';
+    const c = { priorMin: 0, priorOtMin: 0, weekRegMin: 0, worksNextDay: false };
+    for (const r of (results && results.values ? results.values() : [])) {
+      if (r.id === sh.id || r.employerId !== sh.employerId || (r.status === 'planned') !== planned) continue;
+      if (r.dateKey === next) c.worksNextDay = true;
+      const earlier = r.dateKey < dk || (r.dateKey === dk && r.start < sh.start);
+      if (!earlier) continue;
+      if (r.dateKey === dk) { c.priorMin += r.paidMin || 0; c.priorOtMin += r.otMin || 0; }
+      if (r.dateKey >= wk0) c.weekRegMin += r.regMin || 0;
+    }
+    return c;
+  }
 
   /* ---------------- pay periods ---------------- */
   /** Pay period identified by the month in which it ends. */
@@ -592,16 +614,17 @@
   }
 
   /* ---------------- leave day values ---------------- */
-  function primaryRate(ctx, k) {
-    const r = [...ctx.roles.values()].filter((x) => !x.archived)[0];
+  function primaryRate(ctx, k, empId) {
+    const live = [...ctx.roles.values()].filter((x) => !x.archived);
+    const r = (empId && live.find((x) => x.employerId === empId)) || live[0];
     return r ? roleRate(r, k) : 0;
   }
   /** Value of one paid leave day before `k`. */
-  function dayValue(k, ctx, results) {
+  function dayValue(k, ctx, results, empId) {
     const L = ctx.settings.leave;
     if (L.dayValueMode === 'fixed' && +L.dayFixed > 0) return { value: +L.dayFixed, basis: 'סכום קבוע שהוגדר' };
     if (L.dayValueMode === 'hours') {
-      const v = (+L.dayHours || 8) * primaryRate(ctx, k);
+      const v = (+L.dayHours || 8) * primaryRate(ctx, k, empId);
       return { value: v, basis: L.dayHours + ' ש׳ × התעריף של התפקיד הראשי' };
     }
     const from = U.addDays(k, -90);
@@ -609,11 +632,12 @@
     const days = new Set();
     for (const r of results.values()) {
       if (r.status !== 'done' || r.dateKey < from || r.dateKey >= k) continue;
+      if (empId && r.employerId !== empId) continue;
       base += r.base;
       days.add(r.dateKey);
     }
     if (days.size >= 3) return { value: base / days.size, basis: 'ממוצע שכר יומי רגיל ב-90 הימים הקודמים (' + days.size + ' ימי עבודה)' };
-    const v = (+L.dayHours || 8) * primaryRate(ctx, k);
+    const v = (+L.dayHours || 8) * primaryRate(ctx, k, empId);
     return { value: v, basis: 'אין מספיק נתונים: ' + (L.dayHours || 8) + ' ש׳ × תעריף בסיס' };
   }
 
@@ -635,13 +659,13 @@
       idx = same ? idx + 1 : 1;
       const pcts = L.sickPct || [0, 50, 50, 100];
       const pct = pcts[Math.min(idx, pcts.length) - 1];
-      const dv = e.amount != null && e.amount !== '' ? { value: +e.amount, basis: 'סכום ידני' } : dayValue(e.date, ctx, results);
+      const dv = e.amount != null && e.amount !== '' ? { value: +e.amount, basis: 'סכום ידני' } : dayValue(e.date, ctx, results, e.employerId);
       out.set(e.id, { amount: e.amount != null && e.amount !== '' ? +e.amount : dv.value * pct / 100, pct, dayIndex: idx, basis: dv.basis + ' · יום ' + idx + ' למחלה: ' + pct + '%', label: 'יום מחלה' });
       prev = e;
     }
     for (const e of entries) {
       if (e.kind === 'vacation') {
-        const dv = e.amount != null && e.amount !== '' ? { value: +e.amount, basis: 'סכום ידני' } : dayValue(e.date, ctx, results);
+        const dv = e.amount != null && e.amount !== '' ? { value: +e.amount, basis: 'סכום ידני' } : dayValue(e.date, ctx, results, e.employerId);
         out.set(e.id, { amount: dv.value, pct: 100, basis: dv.basis, label: 'יום חופשה' });
       } else if (e.kind === 'adjustment') {
         out.set(e.id, { amount: +e.amount || 0, label: e.label || ADJ_LABELS[e.type] || 'תוספת', basis: 'הוזן ידנית', type: e.type });
@@ -678,10 +702,12 @@
     for (const pp of perPeriod.values()) {
       const f = pp.cap > 0 && pp.total > pp.cap ? pp.cap / pp.total : 1;
       for (const d of pp.list) {
-        const cur = out.get(d.date) || { amount: 0, raw: 0, capped: false };
+        const cur = out.get(d.date) || { amount: 0, raw: 0, capped: false, byEmp: {} };
         cur.amount += d.raw * f;
         cur.raw += d.raw;
         cur.capped = cur.capped || f < 1;
+        const be = cur.byEmp[d.emp] || (cur.byEmp[d.emp] = { amount: 0, raw: 0 });
+        be.amount += d.raw * f; be.raw += d.raw;
         out.set(d.date, cur);
       }
     }
@@ -708,6 +734,19 @@
     return a;
   }
   const isMinor = (settings, k) => { const a = ageAt(settings.birthDate, k || U.todayKey()); return a != null && a < 18; };
+  /** The working youth's extra credit point at 16 and 17 (kolzchut "נקודות זיכוי ממס הכנסה"). settings.tax.creditPoints
+   * never includes it: netEstimate adds it by the birth date. A payslip's points do include it (form 101). */
+  const youthCreditPoint = (settings, k) => { const a = ageAt(settings.birthDate, k || U.todayKey()); return a != null && a >= 16 && a < 18 ? 1 : 0; };
+  /** A payslip's credit points in the settings' terms: without the youth point, which netEstimate adds itself. */
+  const pointsFromSlip = (cp, settings, k) => Math.max(0, Math.round((+cp - youthCreditPoint(settings, k)) * 100) / 100);
+  /** The credit points after a change of gender: a woman has half a point more (2.75 against 2.25, as onboarding sets).
+   * Only a number that is still the old gender's default moves; a number the user set (children, a degree) stays. */
+  const genderPoints = (g) => (g === 'f' ? 2.75 : 2.25);
+  function creditPointsForGender(points, oldG, newG) {
+    const v = +points;
+    if (!isFinite(v) || Math.abs(v - genderPoints(oldG)) >= 0.001) return points;
+    return genderPoints(newG);
+  }
   /** Mandatory pension (צו ההרחבה לביטוח פנסיוני) starts at 21 for men and 20 for women. */
   const pensionMinAge = (settings) => (settings.gender === 'f' ? 20 : 21);
   function pensionActive(settings, periodTo) {
@@ -732,11 +771,10 @@
     if (isMinor(settings, p.periodTo)) {
       const deductions = +p.deductions || 0;
       const k = p.periodTo || U.todayKey();
-      const age = ageAt(settings.birthDate, k);
       const law = taxLaw(T, k);
       const brackets = law.brackets.map(([u, pct]) => [u === Infinity || u == null ? Infinity : u * months, pct]);
       const taxBefore = incomeTaxRaw(gross, brackets);
-      const points = (+T.creditPoints || 0) + (age != null && age >= 16 ? 1 : 0);
+      const points = (+T.creditPoints || 0) + youthCreditPoint(settings, k);
       const credits = points * law.point * months;
       const incomeTax = Math.max(0, taxBefore - credits);
       return { gross, taxBefore, credits, pensionCredit: 0, incomeTax, bl: 0, health: 0, pensionEmployee: 0, pensionEmployer: 0, severance: 0, hishtalmut: 0, hishtalmutEmployer: 0, deductions, net: gross - incomeTax - deductions, pensionActive: false, minor: true };
@@ -823,8 +861,10 @@
       if (status === 'planned') { t.travel += r.travel.amount; }
     }
     if (status === 'done') {
-      for (const [k, v] of model.travel) {
+      for (const [k, v0] of model.travel) {
         if (k < from || k > to) continue;
+        const v = opts.employerId ? (v0.byEmp && v0.byEmp[opts.employerId]) : v0; // one employer: only its fares
+        if (!v) continue;
         t.travel += v.amount; t.travelRaw += v.raw;
         t.dayTotals[k] = (t.dayTotals[k] || 0) + v.amount;
       }
@@ -988,6 +1028,20 @@
     }
     const full = +L.fullTimeHours || 182;
     const openingDate = L.vacationOpeningDate || start;
+    /* A balance given "as of" a date already holds the month that ends on it: a payslip's balance on 30 June holds
+     * June's accrual, so accrual starts with July. Without an opening date the first month of work counts. */
+    const accrues = (mk) => (L.vacationOpeningDate ? U.monthEnd(mk) > openingDate : U.monthEnd(mk) >= openingDate);
+    /* Sick days build up to 90 at most (חוק דמי מחלה; kolzchut): the cap is on the balance, month by month, after the
+     * days taken. Capped on the accrual before the days taken were subtracted, someone with 95 accrued and 10 used
+     * was shown 80 left instead of 85. */
+    const sickUsedBy = {};
+    let sickBal = +L.sickOpening || 0;
+    for (const e of model.entries || []) {
+      if (e.kind !== 'sick' || e.status === 'planned' || e.date > asOf || e.date < openingDate) continue;
+      const k = U.monthKey(e.date);
+      sickUsedBy[k] = (sickUsedBy[k] || 0) + 1;
+    }
+    for (const k of Object.keys(sickUsedBy)) if (k < U.monthKey(start)) sickBal -= sickUsedBy[k];
     let mk = U.monthKey(start);
     const last = U.monthKey(asOf);
     const jobPcts = [];
@@ -1005,21 +1059,22 @@
       const age = S.birthDate ? ageAt(S.birthDate, U.monthEnd(mk) < asOf ? U.monthEnd(mk) : asOf) : null;
       let ent = vacationEntitlement(year, +L.workWeek);
       if (age != null && age < 18) ent = Math.max(ent, +L.workWeek === 6 ? 16 : 14);
-      if (U.monthEnd(mk) >= openingDate) {
+      if (accrues(mk)) {
         res.vacationAccrued += ent / 12 * dayShare;
-        res.sickAccrued += (+L.sickPerMonth || 1.5) * jp;
+        sickBal += (+L.sickPerMonth || 1.5) * jp;
       }
+      sickBal = Math.min(90, sickBal - (sickUsedBy[mk] || 0));
       jobPcts.push({ mk, jp, h });
       mk = U.addMonthKey(mk, 1);
     }
     res.months = jobPcts;
     res.vacationAccrued += +L.vacationOpening || 0;
-    res.sickAccrued = Math.min(90, res.sickAccrued + (+L.sickOpening || 0));
     for (const e of model.entries) {
       if (e.status === 'planned' || e.date > asOf || e.date < openingDate) continue;
       if (e.kind === 'vacation') res.vacationUsed++;
       if (e.kind === 'sick') res.sickUsed++;
     }
+    res.sickAccrued = sickBal + res.sickUsed; // the screens show accrued − used: that is the capped balance
     const last12 = jobPcts.slice(-12);
     res.jobPct = last12.length ? last12.reduce((s, x) => s + x.jp, 0) / last12.length : 0;
     /* Recuperation days go by the year of seniority the worker is IN, not by completed years (the extension order's
@@ -1234,9 +1289,9 @@
 
   root.Engine = {
     LAW_YEARS, LAW_DUE, LAW_KEYS, lawYear, travelCap, LAW_BREAK, validShift, validEntry, otByLaw, otLawToTurnOn, lawDayHours, otDayHours, otWeekHours, WEEK_REG_H, WEEK_REG_H_MINOR, legalMinWage, minWageFor, youthRules, pensionMinAge, MIN_WAGE, BL_YEARS, RECUP_YEARS, recupYearOf, RECUP_CUT, recupCut, TAX_YEARS, taxLaw, blLimits, recuperationRate,
-    makeCtx, roleRate, roundMinutes, monthsBetween, buildSegments, hasOverrides, computeShift, computeAll,
+    makeCtx, roleRate, roundMinutes, monthsBetween, buildSegments, hasOverrides, computeShift, computeAll, shiftContext, creditPointsForGender,
     periodByKey, periodOf, dayValue, computeEntries, travelByDay, incomeTaxRaw, netEstimate, pensionActive,
-    buildModel, totals, periodSummary, rangeSummary, pensionBaseOf, leaveBalances, holidayPay, vacationEntitlement, recuperationDays, ageAt, isMinor,
+    buildModel, totals, periodSummary, rangeSummary, pensionBaseOf, leaveBalances, holidayPay, vacationEntitlement, recuperationDays, ageAt, isMinor, youthCreditPoint, pointsFromSlip,
     dataIssues, ADJ_LABELS,
   };
 })(typeof window !== 'undefined' ? window : globalThis);

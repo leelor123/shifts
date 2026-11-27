@@ -1856,8 +1856,10 @@
       }
     }
     shifts.sort((a, b) => a.start - b.start);
+    let rH = 0, rPay = 0;
+    for (const r of shifts) for (const l of r.lines) { rH += l.hours; rPay += l.hours * l.rate; }
     const net = Engine.netEstimate({ gross: t.gross, pensionBase: Engine.pensionBaseOf(t, model.ctx.settings), deductions: t.deductions, periodTo: P.to }, model.ctx.settings);
-    return { P, emp, only, t, pay, hrs, shifts, net, avgRate: t.hours ? t.wage / t.hours : 0, baseRate: hrs.base ? pay.base / hrs.base : 0 };
+    return { P, emp, only, t, pay, hrs, shifts, net, avgRate: t.hours ? t.wage / t.hours : 0, baseRate: hrs.base ? pay.base / hrs.base : 0, regRate: rH ? rPay / rH : 0 };
   }
 
   /**
@@ -2017,26 +2019,28 @@
     const slipRestPay = (val(F, 'rest150') || 0) + (val(F, 'rest175') || 0) + (val(F, 'rest200') || 0);
     const covSum = (f) => covered.reduce((x, r) => x + f(r), 0);
     const appRestH = E.t.restHours - covSum((r) => r.restHours);
+    const restPayOf = (r) => r.lines.reduce((x, l) => x + (l.rest ? l.amount : 0), 0);
+    const premRate = E.regRate || E.baseRate || E.avgRate; // a premium is a share of the regular rate
     const askedRest = ['rest150', 'rest175', 'rest200'].some((k) => askedIn(F, k));
     if (!noShifts && !askedRest && (appRestH > 0.01 || slipRestH > 0 || slipRestPay > 0)) {
       const restShifts = E.shifts.filter((r) => r.restHours > 0 && !covered.includes(r));
       if (slipRestH === 0 && slipRestPay === 0 && appRestH > 0.25 && notFound(['rest150', 'rest175', 'rest200'], E.pay.rest150 + E.pay.rest175 + E.pay.rest200)) notFoundWarn('שבת וחג', 'שבת/חג');
       else if (slipRestH === 0 && slipRestPay === 0 && appRestH > 0.25) {
-        const amount = E.t.restPremium;
+        const amount = E.t.restPremium - covSum((r) => r.restPremium || 0);
         add({ area: 'שבת וחג', status: 'bad', title: 'לא שולמה תוספת שבת/חג', amount, shifts: restShifts.map((r) => r.id),
           detail: `רשמת ${U.hours(appRestH)} שעות בשבת/חג (${dates(restShifts)}), ובתלוש לא מופיעה שורת שבת/חג. התוספת (מעבר ל-100%) ≈ ${U.money(amount)}.`,
           basis: 'חלון השבת/חג לפי ' + (S.rest.mode === 'city' ? 'זמני כניסה ויציאה ב' + S.rest.city : 'השעות הקבועות שהגדרת') + ', ' + (E.emp.restPct || 150) + '%.',
           confidence: 'medium', fromOverride: ovNote(appRestH, A.t.restHours, 0, 0.1) });
       } else if (slipRestH > 0 && appRestH - slipRestH > 0.25) {
         const missingH = appRestH - slipRestH;
-        const amount = missingH * E.avgRate * ((E.emp.restPct || 150) - 100) / 100;
+        const amount = missingH * premRate * ((E.emp.restPct || 150) - 100) / 100;
         add({ area: 'שבת וחג', status: 'bad', title: 'חסרות שעות שבת/חג', amount, shifts: restShifts.map((r) => r.id),
           detail: `באפליקציה ${U.hours(appRestH)} שעות שבת/חג, בתלוש ${U.hours(slipRestH)}. ${U.hours(missingH)} שעות כנראה שולמו כרגילות; התוספת החסרה ≈ ${U.money(amount)}.`,
           basis: 'השוואת שעות 150%/175%/200% בתלוש לשעות בתוך חלון השבת/חג.', confidence: 'medium',
           fromOverride: ovNote(appRestH, A.t.restHours, slipRestH, 0.1) });
       } else if (slipRestH > 0 && slipRestPay > 0) {
         const eff = slipRestPay / slipRestH;
-        const exp = E.pay.rest150 + E.pay.rest175 + E.pay.rest200;
+        const exp = E.pay.rest150 + E.pay.rest175 + E.pay.rest200 - covSum(restPayOf);
         const expRate = appRestH > 0 ? exp / appRestH : 0;
         if (expRate > 0 && eff < expRate * 0.97) {
           const amount = (expRate - eff) * slipRestH;
@@ -2062,7 +2066,7 @@
       else if (appOt - slipOt > 0.25) {
         const missing125 = Math.max(0, appOt1 - (qty(F, 'ot125') || 0));
         const missing150 = Math.max(0, appOt2 - (qty(F, 'ot150') || 0));
-        const amount = E.avgRate * (missing125 * 0.25 + missing150 * 0.5);
+        const amount = (E.regRate || E.baseRate || E.avgRate) * (missing125 * 0.25 + missing150 * 0.5); // the premium on the regular rate
         add({ area: 'שעות נוספות', status: 'bad', title: 'שעות נוספות חסרות', amount, shifts: otShifts.map((r) => r.id),
           detail: `באפליקציה ${U.hours(appOt1)} ש׳ ב-125% ו-${U.hours(appOt2)} ש׳ ב-150% (${dates(otShifts)})${covered.length ? ', לא כולל המשמרות שחסרות לגמרי' : ''}; בתלוש ${U.hours(qty(F, 'ot125') || 0)} ו-${U.hours(qty(F, 'ot150') || 0)}. התוספת החסרה ≈ ${U.money(amount)}.`,
           basis: Engine.otByLaw(E.emp) ? 'שעות נוספות לפי החוק: ביום מעל 8.6 שעות (8 בשבוע של 6 ימים, 7 במשמרת לילה) ובשבוע מעל 42 שעות רגילות.' : 'שעות נוספות יומיות אחרי ' + E.emp.otThreshold + ' שעות (לפי ההגדרות).', confidence: 'medium',
@@ -2166,6 +2170,8 @@
     /* 9-10. the leave balances and the credit points are settings the payslip can correct: settingsCheck() lists
      * them with what the payslip says, what the settings say and a way to take the payslip's value */
     const cp = val(F, 'creditPoints');
+    // the payslip's points include the working youth's point (16-17); the settings' points never do, the estimate adds it
+    const cpS = cp != null ? Engine.pointsFromSlip(cp, S, E.P.to) : null;
 
     /* 11-12. tax & social security */
     const minor = Engine.isMinor(S, E.P.to);
@@ -2178,7 +2184,7 @@
         // compared with the engine's estimate for the period, and only one clearly above it is flagged
         let estT = 0;
         try {
-          const est = Engine.netEstimate({ gross: gross || E.t.gross, pensionBase: pBase, pensionActive: !!pe, deductions: 0, periodTo: E.P.to }, Object.assign({}, S, { tax: Object.assign({}, S.tax, { creditPoints: cp != null ? cp : S.tax.creditPoints }) }));
+          const est = Engine.netEstimate({ gross: gross || E.t.gross, pensionBase: pBase, pensionActive: !!pe, deductions: 0, periodTo: E.P.to }, Object.assign({}, S, { tax: Object.assign({}, S.tax, { creditPoints: cpS != null ? cpS : S.tax.creditPoints }) }));
           estT = Math.max(0, +est.incomeTax || 0);
         } catch (e) { estT = 0; }
         const over = itm - estT;
@@ -2188,7 +2194,8 @@
       if (!blm && !itm) add({ area: 'ביטוח לאומי', status: 'ok', title: 'ללא ניכויי חובה (מתחת לגיל 18)', detail: 'הנטו אמור להיות שווה לברוטו (פחות ניכויים אישיים, אם יש).', basis: 'פטור לנער עד גיל 18.', confidence: 'medium' });
     }
     if (gross && !minor) {
-      const est = Engine.netEstimate({ gross, pensionBase: pe ? pe / (S.pension.employeePct / 100) : pBase, pensionActive: !!pe, deductions: 0, periodTo: E.P.to }, Object.assign({}, S, { tax: Object.assign({}, S.tax, { creditPoints: cp != null ? cp : S.tax.creditPoints }) }));
+      // the pension base from the payslip's deduction only with a known rate (0 or empty divided by zero: a NaN tax shown as fine)
+      const est = Engine.netEstimate({ gross, pensionBase: pe > 0 && +S.pension.employeePct > 0 ? pe / (+S.pension.employeePct / 100) : pBase, pensionActive: !!pe, deductions: 0, periodTo: E.P.to }, Object.assign({}, S, { tax: Object.assign({}, S.tax, { creditPoints: cpS != null ? cpS : S.tax.creditPoints }) }));
       const it = val(F, 'incomeTax');
       if (it != null) {
         const over = it - est.incomeTax;
@@ -2202,12 +2209,15 @@
         const ok = Math.abs(actual - expBL) <= Math.max(15, expBL * 0.1);
         add({ area: 'ביטוח לאומי', status: ok ? 'ok' : 'warn', title: ok ? 'ביטוח לאומי ומס בריאות סבירים' : 'ביטוח לאומי / בריאות שונים מההערכה', detail: `נוכו ${U.money(actual)}, הערכה ${U.money(expBL)}.`, basis: `שיעורים מופחתים עד ${U.money(Engine.blLimits(S.tax || {}, E.P.to).thr, 0)} בחודש, מלאים מעל.`, confidence: 'medium' }); // the year's threshold (LAW_YEARS), not "60% of the average wage" (review 2026-11-16)
       }
+      // the gross against the app's own calculation: reconcile() takes it apart line by line
+    }
+    // the payslip's own arithmetic, for a minor too
+    if (gross) {
       const net = val(F, 'net'), td = val(F, 'totalDeductions');
       if (net != null && td != null) {
         const ok = Math.abs(gross - td - net) <= 2;
         add({ area: 'נטו', status: ok ? 'ok' : 'warn', title: ok ? 'החשבון ברוטו → נטו נסגר' : 'ברוטו פחות ניכויים ≠ נטו', detail: `${U.money(gross)} − ${U.money(td)} = ${U.money(gross - td)}; בתלוש נטו ${U.money(net)}.`, basis: 'בדיקה אריתמטית.', confidence: 'high' });
       }
-      // the gross against the app's own calculation: reconcile() takes it apart line by line
     }
 
     /* 13. unexplained deductions */
@@ -2418,7 +2428,7 @@
         const pct = ((emp.restPct || 150) - 100) / 100;
         const slipRestH = (qty(F, 'rest150') || 0) + (qty(F, 'rest175') || 0) + (qty(F, 'rest200') || 0);
         const missingH = Math.max(0, E.t.restHours - slipRestH);
-        const x = edgeH * E.avgRate * pct;
+        const x = edgeH * (E.regRate || E.baseRate || E.avgRate) * pct; // the premium on the regular rate
         const fits = edgeH > 0.05 && edgeH >= missingH - 0.25;
         const city = S.rest.mode === 'city';
         add({ id: 'restWindow', found: fits ? 'yes' : edgeH > 0.05 ? 'maybe' : 'no', amount: edgeH > 0.05 ? (fits ? f.amount : x) : null, shifts: restShifts.map((r) => r.id),
@@ -2650,12 +2660,16 @@
     const slipHours = slipHoursOf(F);
 
     /* credit points: the employer applies form 101, and the app's net follows the settings */
+    // the payslip counts the working youth's point (16-17) in; the settings never do (the estimate adds it), so the
+    // two are compared, shown and taken over with that point on the same side
     const cp = val(F, 'creditPoints');
-    if (cp != null && Math.abs(cp - (+S.tax.creditPoints || 0)) >= 0.01) {
-      add({ id: 'creditPoints', label: 'נקודות זיכוי', slip: U.num(cp, 2), app: U.num(+S.tax.creditPoints || 0, 2),
-        text: cp < +S.tax.creditPoints ? `המעסיק מחשב את המס לפי ${U.num(cp, 2)} נקודות. אם מגיעות לך יותר (ילדים, תואר, שחרור מצבא), צריך למסור לו טופס 101 מעודכן. עד אז, הנטו באפליקציה יתאים לתלוש רק עם המספר שבתלוש.`
+    const youth = Engine.youthCreditPoint(S, P.to);
+    const cpS = cp != null ? Engine.pointsFromSlip(cp, S, P.to) : null;
+    if (cp != null && Math.abs(cpS - (+S.tax.creditPoints || 0)) >= 0.01) {
+      add({ id: 'creditPoints', label: 'נקודות זיכוי', slip: U.num(cp, 2), app: U.num((+S.tax.creditPoints || 0) + youth, 2),
+        text: cpS < +S.tax.creditPoints ? `המעסיק מחשב את המס לפי ${U.num(cp, 2)} נקודות. אם מגיעות לך יותר (ילדים, תואר, שחרור מצבא), צריך למסור לו טופס 101 מעודכן. עד אז, הנטו באפליקציה יתאים לתלוש רק עם המספר שבתלוש.`
           : `המעסיק מחשב את המס לפי ${U.num(cp, 2)} נקודות, לפי טופס 101 שמסרת. עם המספר הזה הנטו באפליקציה יתאים לתלוש.`,
-        apply: { kind: 'settings', path: 'tax.creditPoints', value: cp }, set: { kind: 'set', k: 'net', f: 'נקודות זיכוי' } });
+        apply: { kind: 'settings', path: 'tax.creditPoints', value: cpS }, set: { kind: 'set', k: 'net', f: 'נקודות זיכוי' } });
     }
 
     /* the hourly rate: one job in the period, the payslip's rate for its regular hours */
@@ -3081,7 +3095,8 @@
         cpts == null ? S : Object.assign({}, S, { tax: Object.assign({}, S.tax, { creditPoints: cpts }) }));
       const T1 = est(null);
       const cp = val(F, 'creditPoints');
-      const T2 = cp != null && Math.abs(cp - (+S.tax.creditPoints || 0)) >= 0.01 ? est(cp) : T1;
+      const cpS = cp != null ? Engine.pointsFromSlip(cp, S, P.to) : null; // without the youth point, the estimate adds it
+      const T2 = cpS != null && Math.abs(cpS - (+S.tax.creditPoints || 0)) >= 0.01 ? est(cpS) : T1;
       // a deduction's line: its part on the net is minus what the payslip deducts more
       const ded = (o) => {
         const parts = o.parts.filter((p) => Math.abs(p.amount) >= 0.5);
