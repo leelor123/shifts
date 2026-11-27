@@ -18,34 +18,8 @@
   };
   const f106 = (y) => ((S.settings.taxProfile || {}).y106 || {})[y] || null;
 
-  /** One year's months with income: the payslip's numbers where there is one, otherwise the shifts' (all jobs). */
-  function monthsOf(year) {
-    const out = [];
-    let minorTaxed = false;
-    for (let m = 1; m <= 12; m++) {
-      const key = year + '-' + pad(m);
-      const slip = S.payslips.find((x) => x.period === key);
-      const sf = slip ? slip.fields || {} : {};
-      if (slip && sf.gross && +sf.gross.value > 0) {
-        const tax = sf.incomeTax ? +sf.incomeTax.value || 0 : 0;
-        out.push({ mk: key, gross: +sf.gross.value, tax, pension: sf.pensionEmployee ? +sf.pensionEmployee.value || 0 : 0, src: 'slip' });
-        if (tax > 0 && Engine.isMinor(S.settings, key + '-15')) minorTaxed = true;
-        continue;
-      }
-      let gross = 0, pensionBase = 0, to = key + '-28';
-      for (const emp of S.employers) {
-        const ps = Engine.periodSummary(App.model, key, emp.id);
-        if (!ps || !(ps.gross > 0)) continue;
-        gross += ps.gross;
-        pensionBase += Engine.pensionBaseOf(ps, S.settings);
-        to = Engine.periodByKey(key, emp).to;
-      }
-      if (!(gross > 0)) continue;
-      const n = Engine.netEstimate({ gross, pensionBase, deductions: 0, periodTo: to }, S.settings);
-      out.push({ mk: key, gross, tax: n.incomeTax, pension: n.pensionEmployee, src: 'shifts' });
-    }
-    return { months: out, minorTaxed };
-  }
+  /** One year's months with income: every payslip of the month, and the shifts of a job with none (core/taxrefund.js). */
+  const monthsOf = (year) => TR.monthsOf(year, { payslips: S.payslips, employers: S.employers, model: App.model, settings: S.settings });
   /** The estimate of one year (null: no income known that year). */
   App.taxRefundYear = function (year) {
     const { months, minorTaxed } = monthsOf(year);
@@ -64,6 +38,8 @@
   };
   const SRC = { slips: 'לפי התלושים שלך', mixed: 'לפי התלושים והמשמרות', shifts: 'הערכה לפי המשמרות', '106': 'לפי טופס 106' };
 
+  /** Payslips whose income tax is not known are left out of the tax taken: said under the numbers. */
+  const unknownNote = (r) => (r.taxUnknown ? `<div class="tiny muted">${r.taxUnknown === 1 ? 'בתלוש אחד לא ידוע כמה מס הכנסה נוכה, והוא לא נספר כאן.' : `ב-${r.taxUnknown} תלושים לא ידוע כמה מס הכנסה נוכה, והם לא נספרו כאן.`} אם נוכה בהם מס, ההחזר גדול יותר. אפשר להשלים את המספר בתלוש.</div>` : '');
   function yearCard(x, cur) {
     const r = x.r;
     const big = r.refund > 150;
@@ -82,7 +58,7 @@
         <div class="kv"><span>המס לפי השנה כולה</span><b class="money">${U.money(r.liability, 0)}</b></div>
         <div class="kv"><span>נקודות זיכוי (ממוצע לחודש)</span><b>${U.num(r.points, 2)}</b></div>
         ${pts ? `<div class="tiny muted">מתוכן: ${esc(pts)} · שווי נקודה ב-${x.y}: <span class="money">${U.money(r.pointValue, 0)}</span> לחודש</div>` : `<div class="tiny muted">שווי נקודה ב-${x.y}: <span class="money">${U.money(r.pointValue, 0)}</span> לחודש</div>`}
-        ${r.reasons.length ? `<ul class="tr-why">${r.reasons.map((k) => `<li>${REASON[k]}</li>`).join('')}</ul>` : ''}
+        ${(r.reasons.length ? `<ul class="tr-why">${r.reasons.map((k) => `<li>${REASON[k]}</li>`).join('')}</ul>` : '') + unknownNote(r)}
         ${thisYear ? '<div class="small muted">על השנה הזו אפשר לבקש החזר רק אחרי שהיא נגמרת.</div>' : ''}
         <div class="tr-106">
           <div class="small"><b>יש לך טופס 106 לשנה הזו?</b> הקלדת שלושה מספרים ממנו הופכת את ההערכה למדויקת יותר (סכום כל המעסיקים).</div>
@@ -180,7 +156,7 @@
         });
         sh.addEventListener('click', async (e) => {
           const g = e.target.closest('[data-tr-gender]');
-          if (g) { await setProfile((P, s) => { s.gender = g.dataset.trGender; }); return; }
+          if (g) { await setProfile((P, s) => { if (s.tax) s.tax.creditPoints = Engine.creditPointsForGender(s.tax.creditPoints, s.gender || '', g.dataset.trGender); s.gender = g.dataset.trGender; }); return; }
           if (e.target.closest('[data-tr-report]')) {
             // the full report is part of Plus where Plus is sold, and also sold on its own, once (the estimate and
             // the way to file stay free)

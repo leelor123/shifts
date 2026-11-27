@@ -68,6 +68,51 @@
   };
 
   /**
+   * One year's months with income. Every payslip of the month counts (two jobs: two payslips, both grosses and both
+   * taxes); a job with no payslip that month comes from its shifts. A payslip whose income tax was asked for and not
+   * answered has an unknown tax, never 0: the month says so (taxUnknown) and the withheld sum leaves it out.
+   * d = { payslips, employers, model, settings }. Returns { months, minorTaxed }.
+   */
+  TR.monthsOf = function (year, d) {
+    const out = [];
+    let minorTaxed = false;
+    const emps = d.employers || [];
+    const num = (f) => (f && f.value != null && f.value !== '' && !isNaN(f.value) ? +f.value : null);
+    for (let m = 1; m <= 12; m++) {
+      const key = mk(year, m);
+      const slips = (d.payslips || []).filter((x) => x.period === key && x.fields && num(x.fields.gross) > 0);
+      const covered = new Set();
+      if (slips.length) {
+        let gross = 0, tax = 0, pension = 0, unknown = 0;
+        for (const x of slips) {
+          const sf = x.fields;
+          gross += num(sf.gross);
+          // no income tax line: none was taken. A line asked for and not answered: not known
+          if (sf.incomeTax && (sf.incomeTax.asked || num(sf.incomeTax) == null)) unknown++;
+          else tax += num(sf.incomeTax) || 0;
+          pension += num(sf.pensionEmployee) || 0;
+          covered.add(x.employerId || (emps[0] && emps[0].id));
+        }
+        out.push({ mk: key, gross, tax, pension, src: 'slip', taxUnknown: unknown });
+        if (tax > 0 && Engine.isMinor(d.settings, key + '-15')) minorTaxed = true;
+      }
+      let gross = 0, pensionBase = 0, to = key + '-28';
+      for (const emp of emps) {
+        if (covered.has(emp.id)) continue;
+        const ps = Engine.periodSummary(d.model, key, emp.id);
+        if (!ps || !(ps.gross > 0)) continue;
+        gross += ps.gross;
+        pensionBase += Engine.pensionBaseOf(ps, d.settings);
+        to = Engine.periodByKey(key, emp).to;
+      }
+      if (!(gross > 0)) continue;
+      const n = Engine.netEstimate({ gross, pensionBase, deductions: 0, periodTo: to }, d.settings);
+      out.push({ mk: key, gross, tax: n.incomeTax, pension: n.pensionEmployee, src: 'shifts' });
+    }
+    return { months: out, minorTaxed };
+  };
+
+  /**
    * One year's estimate.
    * months: [{ mk: 'YYYY-MM', gross, tax, pension, src: 'slip'|'shifts' }] — the months with income (from payslips
    *   where there are, otherwise from the shifts); f106: { gross, tax, pension } for the whole year (wins when given);
@@ -81,6 +126,7 @@
     const gross = from106 ? +f106.gross : worked.reduce((s, x) => s + +x.gross, 0);
     const withheld = from106 ? +f106.tax || 0 : worked.reduce((s, x) => s + (+x.tax || 0), 0);
     const pension = from106 ? +f106.pension || 0 : worked.reduce((s, x) => s + (+x.pension || 0), 0);
+    const taxUnknown = from106 ? 0 : worked.reduce((s, x) => s + (+x.taxUnknown || 0), 0); // payslips whose tax is not known
     const points = TR.pointsByMonth(profile, year);
     const pointsSum = points.reduce((s, x) => s + x.total, 0);
     const taxBefore = Engine.incomeTaxRaw(gross, brackets);
@@ -103,7 +149,7 @@
     for (const x of points) for (const k of Object.keys(extraParts)) extraParts[k] += x.parts[k];
     return {
       year, gross, withheld, pension, taxBefore, credits, pensionCredit, liability, refund, reasons,
-      points: pointsSum / 12, pointParts: extraParts, pointValue: law.point, workedMonths,
+      points: pointsSum / 12, pointParts: extraParts, pointValue: law.point, workedMonths, taxUnknown,
       src: from106 ? '106' : worked.length && worked.every((x) => x.src === 'slip') ? 'slips' : worked.some((x) => x.src === 'slip') ? 'mixed' : 'shifts',
     };
   };

@@ -93,7 +93,11 @@
       const [ok, fixed, msg] = checkNumber(path, v);
       if (!ok) { UI.invalid(msg); if (redraw) redraw(); return; }
       if (fixed !== v) { v = fixed; t.value = fixed; }
-      if (path.startsWith('s.')) await Store.setSettings((st) => setPath(st, path.slice(2), v));
+      if (path.startsWith('s.')) await Store.setSettings((st) => {
+        // a new gender moves the default credit points with it (2.25 / 2.75); a number set by hand stays
+        if (path === 's.gender' && st.tax) st.tax.creditPoints = Engine.creditPointsForGender(st.tax.creditPoints, st.gender || '', v || '');
+        setPath(st, path.slice(2), v);
+      });
       else if (path.startsWith('e.')) {
         const emp = Store.clone(App.employer(empId()));
         setPath(emp, path.slice(2), v);
@@ -358,7 +362,7 @@
       const age = Engine.ageAt(S.settings.birthDate, U.todayKey());
       return `<div class="card">${F.text('שם (לא חובה)', 's.userName', S.settings.userName, 'מופיע בברכות ובחתימה של הודעות למעסיק.', 'maxlength="40"')}
         ${F.date('תאריך לידה (לא חובה)', 's.birthDate', S.settings.birthDate, 'לברכה ביום ההולדת, לשכר המינימום לפי גיל, לבדיקות חוק עבודת הנוער ולגיל הפנסיה.').replace('data-s=', 'data-redraw data-s=')}
-        ${F.chips('מגדר (לא חובה)', 's.gender', [['m', 'גבר', '👨'], ['f', 'אישה', '👩'], ['', 'לא צוין', '🙂']], S.settings.gender || '', 'רק לחישוב הפנסיה: חובת הפרשה מגיל 21 לגבר ומגיל 20 לאישה.')}</div>
+        ${F.chips('מגדר (לא חובה)', 's.gender', [['m', 'גבר', '👨'], ['f', 'אישה', '👩'], ['', 'לא צוין', '🙂']], S.settings.gender || '', 'לחישוב הפנסיה (חובת הפרשה מגיל 21 לגבר ומגיל 20 לאישה) ולנקודות הזיכוי: לאישה חצי נקודה יותר.')}</div>
         ${age != null ? `<div class="card ${age < 18 ? 'tonal' : ''}"><div class="kv"><span>גיל</span><b>${age}</b></div>
           ${age < 18 ? `<div class="small" style="margin-top:8px">${icon('info', 's')} מתחת לגיל 18 לא מנוכים ביטוח לאומי, מס בריאות ופנסיה. מס הכנסה יורד רק בחודש של משכורת גבוהה, ולכן <b>הנטו קרוב לברוטו</b> (פחות ניכויים אישיים כמו ארוחות, אם יש). מגיל 18 החישוב עובר אוטומטית לניכויים הרגילים.</div>` : ''}</div>` : ''}
         <div class="tiny muted" style="margin:6px 4px">תאריך הלידה נשמר בחשבון שלך ולא משותף עם אף אחד.</div>`;
