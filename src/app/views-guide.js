@@ -168,7 +168,8 @@
 
   /* ---------------- what's new (once per big update, for people who already used the app) ---------------- */
   const WHATS_NEW = {
-    id: '1.46.0',
+    id: '1.46.1',
+    // 1.46.1 (the running-shift notification's new look in the Android app) opens no sheet.
     // 1.46.0 (every notification in the Android app is the phone's own; the running shift on the lock screen) opens no sheet.
     // 1.45.0 (the statistics question, a sheet of its own: views-home.js App.statsAsk) opens no what's-new sheet.
     // 1.44.4 (the Android app feels like an app: no text selection, no pinch zoom) opens no sheet.
@@ -182,7 +183,7 @@
     // 1.42.1 (the coin's spoken lines) brings fixes only: whoever saw 1.42.0's sheet is not shown it again.
     // (1.40.0's items, overtime by the law and the rest, stay in the full list of updates.)
     // 1.43.0: the daily message (the user, 21 Nov 2026); everyone gets it, with where to switch it off.
-    seen: ['1.44.0', '1.44.1', '1.44.2', '1.44.3', '1.44.4', '1.45.0'],
+    seen: ['1.44.0', '1.44.1', '1.44.2', '1.44.3', '1.44.4', '1.45.0', '1.46.0'],
     // true only when the items hold a real feature: a release of fixes alone opens no sheet (the user, 6 Nov 2026)
     features: true,
     items: [
@@ -228,6 +229,7 @@
   /* ---------------- every update (settings › about › all the updates) ---------------- */
   // newest first: [version, the day it went out, what changed — said to the user, not to a developer]
   const CHANGELOG = [
+    ['1.46.1', '2026-11-27', 'באנדרואיד, ההתראה של משמרת שרצה קיבלה עיצוב חדש: פס התקדמות עד הסוף הרגיל של המשמרת, עם המטבע של שעתי, והיא מופיעה מעל שאר ההתראות.'],
     ['1.46.0', '2026-11-27', 'באפליקציה לאנדרואיד כל ההתראות מגיעות בעיצוב של שעתי, בלי כתובת האתר. משמרת שרצה מוצגת במסך הנעילה ובראש המסך, עם הזמן שרץ וכפתור לסיום (הגדרות › התראות), ובמשמרת הראשונה שעתי מציעה להפעיל את זה.'],
     ['1.45.0', '2026-11-26', 'שעתי שואלת פעם אחת, בחלון קטן, אם לשתף סטטיסטיקת שימוש בלי פרטים מזהים. שום דבר לא נשלח לפני שלוחצים "אישור", ואפשר לשנות את התשובה בכל רגע בהגדרות. באפליקציה לאנדרואיד, ההצעה כשמגיעים לעבודה שואלת באיזו שעה הגעת ואם עדיין בעבודה: אם כן, הטיימר רץ מאותה שעה, ואם לא, שומרים את המשמרת כרגיל.'],
     ['1.44.4', '2026-11-24', 'האפליקציה לאנדרואיד מרגישה יותר כמו אפליקציה: בלי סימון טקסט בלחיצה ארוכה ובלי הגדלה בצביטה, עם פס גלילה משלה. הגיבוי האוטומטי נשמר בתוך האפליקציה ולא מוריד קבצים לטלפון. והמעבר בין חודש לשבוע בלוח השנה מגיב בשני הכיוונים.'],

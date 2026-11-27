@@ -13,6 +13,8 @@ public class NoteAlarm extends BroadcastReceiver {
     public void onReceive(Context c, Intent i) {
         String a = i == null ? null : i.getAction();
         if (a == null) return;
+        // the running shift's bar moves on (RunningNote): its own alarm, while a shift runs
+        if (RunningNote.TICK.equals(a)) { RunningNote.sync(c.getApplicationContext()); return; }
         if (NoteCenter.ACTION.equals(a) || Intent.ACTION_BOOT_COMPLETED.equals(a) || Intent.ACTION_MY_PACKAGE_REPLACED.equals(a)
                 || Intent.ACTION_TIME_CHANGED.equals(a) || Intent.ACTION_TIMEZONE_CHANGED.equals(a)) {
             final PendingResult r = goAsync();
@@ -21,7 +23,7 @@ public class NoteAlarm extends BroadcastReceiver {
                 try {
                     NoteCenter.run(app);
                     // Android forgets geofences on a restart and an update: the workplace circle is watched again (WorkGeo)
-                    if (!NoteCenter.ACTION.equals(a)) WorkGeo.restore(app);
+                    if (!NoteCenter.ACTION.equals(a)) { WorkGeo.restore(app); RunningNote.sync(app); }
                 } finally {
                     r.finish();
                 }

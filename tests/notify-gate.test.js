@@ -57,11 +57,12 @@ T.test('the offline worker shows none of the Android app\'s (it shows them itsel
 });
 T.test('the running shift inside the Android app is the phone\'s own live notification', () => {
   const rn = code(read('src/app/run-note.js'));
-  T.ok(/if \(App\.nativeRun\) \{\s*nativeRun = /.test(rn), 'the words go to the phone');
+  T.ok(/if \(App\.nativeRun\) \{[\s\S]{0,1200}?nativeRun = \{[\s\S]{0,400}?total:/.test(rn), 'the words go to the phone, with the bar\'s length');
   T.ok(code(read('src/app/widgets.js')).includes('run: active && App.runNote && App.runNote.native ? App.runNote.native() : null'), 'with the snapshot');
   const j = read('android/widgets/java/RunningNote.java');
-  for (const s of ['n.extras.putBoolean(PROMOTED, true);', '"android.requestPromotedOngoing"', '.setOngoing(true)', '.setUsesChronometer(!onBreak)', '.setWhen(start)', 'ShaatiWidget.tap(c, "stop", 7401)', '.setPublicVersion(pub)', 'nm.cancel(TAG, 1);']) T.ok(j.includes(s), s);
+  for (const s of ['n.extras.putBoolean(PROMOTED, true);', '"android.requestPromotedOngoing"', '.setOngoing(true)', '.setUsesChronometer(!onBreak)', '.setWhen(start)', 'ShaatiWidget.tap(c, "stop", 7401)', 'new Notification.ProgressStyle()', 'setProgressTrackerIcon', 'nm.cancel(TAG, 1);']) T.ok(j.includes(s), s);
   T.ok(read('android/widgets/java/WidgetData.java').includes('RunningNote.sync(c);'), 'follows every snapshot and tap');
+  T.ok(j.includes('if (RunningNote.TICK.equals(a))') || read('android/widgets/java/NoteAlarm.java').includes('if (RunningNote.TICK.equals(a))'), 'the bar moves on with the app closed');
   T.ok(read('tools/android.js').includes('android.permission.POST_PROMOTED_NOTIFICATIONS'), 'the permission for a Live Update');
   for (const l of ['', '-en', '-ru', '-ar', '-fr', '-es', '-am']) {
     const x = read('android/widgets/res/values' + l + '/w_strings.xml');
