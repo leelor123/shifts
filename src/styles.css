@@ -9,7 +9,7 @@
   --fs: 1;
   --radius: 14px;
   --radius-s: 10px;
-  --nav-h: 72px;
+  --nav-h: calc(60px + min(.75rem, 18px)); /* 72px; taller with a bigger phone font, as its labels grow (to 18px) */
   --safe-b: env(safe-area-inset-bottom, 0px);
   --safe-t: env(safe-area-inset-top, 0px);
   --ease: cubic-bezier(.32, .72, 0, 1);
@@ -117,7 +117,7 @@
 }
 
 * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
-html { font-size: calc(16px * var(--fs)); }
+html { font-size: calc(100% * var(--fs)); } /* 100%: the phone's own font size (16px by default) times the app's text-size setting */
 html, body { margin: 0; height: 100%; }
 body {
   font-family: var(--font);
@@ -173,7 +173,7 @@ svg.i.l { width: 32px; height: 32px; }
 .nav-inner { display: grid; grid-template-columns: repeat(5, 1fr); width: 100%; max-width: 600px; align-items: center; }
 .nav button {
   background: none; border: 0; display: flex; flex-direction: column; align-items: center; gap: 4px;
-  font-size: .75rem; font-weight: 600; color: var(--on-surface-var); padding: 10px 0; cursor: pointer;
+  font-size: min(.75rem, 18px); font-weight: 600; color: var(--on-surface-var); padding: 10px 0; cursor: pointer; white-space: nowrap;
 }
 .nav button .pill { width: 60px; height: 32px; border-radius: 16px; display: grid; place-items: center; transition: background .2s; position: relative; }
 .nav button.on { color: var(--on-surface); }
@@ -296,7 +296,7 @@ svg.i.l { width: 32px; height: 32px; }
 textarea.input { min-height: 90px; resize: vertical; }
 .input:focus { border-color: var(--primary); box-shadow: 0 0 0 3px hsla(var(--h), 70%, 55%, .18); }
 .input[type="time"], .input[type="date"], .input[type="number"], .input.ltr { direction: ltr; text-align: right; }
-.grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.grid2 { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 10px; } /* two equal halves even with a big phone font (a 1fr grew past the sheet) */
 .grid3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; }
 .switch-row { display: flex; align-items: center; gap: 12px; padding: 12px 4px; min-height: 56px; cursor: pointer; }
 .switch-row .body { flex: 1; }
@@ -351,23 +351,31 @@ textarea.input { min-height: 90px; resize: vertical; }
 .cal-nav { display: flex; align-items: center; gap: 4px; margin-bottom: 8px; }
 .cal-nav h2 { flex: 1; text-align: center; font-size: 1.1rem; margin: 0; }
 .cal-dow { display: grid; grid-template-columns: repeat(7, 1fr); text-align: center; font-size: .75rem; color: var(--on-surface-var); font-weight: 600; margin-bottom: 4px; }
-.cal-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 4px; touch-action: pan-y; }
+.cal-grid { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); grid-auto-rows: 1fr; gap: 4px; touch-action: pan-y; }
 .cal-day {
   aspect-ratio: .78; border-radius: 12px; background: var(--surface-1); border: 0; padding: 4px 2px; display: flex; flex-direction: column; align-items: center;
-  cursor: pointer; position: relative; min-width: 0; overflow: hidden;
+  cursor: pointer; position: relative; min-width: 0; overflow: clip;
+  /* a larger text size makes a day taller instead of hiding its amount under the edge (27 Nov 2026): clip, unlike
+     hidden, keeps the content-based minimum height of an aspect-ratio box; the row takes its tallest day and every
+     day in it stretches to that height */
+  justify-self: stretch; align-self: stretch; container-type: inline-size;
 }
+/* a day too narrow for its amount at the phone's font size (a big font on a narrow phone) shows the dots without it;
+   the amount is in the day's sheet and its label. rem here is the page's text size, so it scales with it */
+@container (max-width: 1.8rem) { .cal-day .amt { display: none; } }
+@container (max-width: 1.5rem) { .cal-day .hd { display: none; } }
 .cal-day.other { opacity: .38; }
 .cal-day.rest { background: var(--rest-tint); }
 .cal-day.today { box-shadow: inset 0 0 0 2px var(--primary); }
 .cal-day.sel { background: var(--secondary-container); }
 .cal-day .dn { font-weight: 700; font-size: .95rem; line-height: 1.2; }
-.cal-day .hd { font-size: .58rem; color: var(--on-surface-var); line-height: 1; }
+.cal-day .hd { font-size: .68rem; color: var(--on-surface-var); line-height: 1; }
 .cal-day .dots { display: flex; gap: 2px; margin-top: 3px; flex-wrap: wrap; justify-content: center; }
 .cal-day .dots i { width: 7px; height: 7px; border-radius: 50%; }
 .cal-day .dots i.pl { background: transparent !important; box-shadow: inset 0 0 0 1.5px currentColor; }
-.cal-day .amt { font-size: .6rem; font-weight: 700; margin-top: auto; direction: ltr; white-space: nowrap; }
+.cal-day .amt { font-size: .72rem; font-weight: 700; margin-top: auto; direction: ltr; white-space: nowrap; max-width: 100%; overflow: hidden; flex: none; } /* readable (was 9.6 px, 27 Nov 2026); a narrow cell shrinks it through Dom.fit, down to 80% */
 .cal-day .ovr { position: absolute; top: 3px; inset-inline-end: 3px; width: 8px; height: 8px; border-radius: 50%; background: var(--override); }
-.cal-day .hol { position: absolute; top: 3px; inset-inline-start: 3px; font-size: .55rem; }
+.cal-day .hol { position: absolute; top: 3px; inset-inline-start: 3px; font-size: .68rem; line-height: 1; }
 .legend { display: flex; flex-wrap: wrap; gap: 10px 14px; font-size: .78rem; color: var(--on-surface-var); margin: 10px 4px; }
 .legend span { display: inline-flex; align-items: center; gap: 6px; }
 .legend i { width: 10px; height: 10px; border-radius: 50%; display: inline-block; }
@@ -572,7 +580,7 @@ details.collapse > .in { padding: 0 16px 14px; }
 h1, h2, .topbar h1, .wizard h1, .sheet .sh-head h2, .hero-num, .bday-title, .chat-hello { font-family: var(--display); }
 .topbar h1 { font-size: 1.65rem; font-weight: 700; letter-spacing: -.01em; }
 .topbar .sub { font-size: .82rem; }
-.hero-num { font-weight: 700; font-size: 2.6rem; letter-spacing: -.025em; }
+.hero-num { font-weight: 700; font-size: min(2.6rem, 12vw); letter-spacing: -.025em; }
 .kpi .v { font-weight: 600; font-variant-numeric: tabular-nums; }
 .section-title { font-size: .78rem; font-weight: 600; color: var(--on-surface-var); letter-spacing: .02em; margin: 24px 2px 10px; }
 .section-title::after { content: ''; flex: 1; height: 1px; background: var(--line); margin-inline-start: 6px; order: 99; }
@@ -986,11 +994,11 @@ body.fx .item:active:not(:has(:is(button, a, input, select, label, summary, [dat
 .home-top { display: flex; align-items: center; gap: 2px; min-height: 60px; padding: 6px 0 0; }
 .home-top .titles { flex: 1; min-width: 0; }
 .home-top h1 { font-size: 1.3rem; font-weight: 700; margin: 0; letter-spacing: -.01em; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.home-top .sub { font-size: .8rem; color: var(--on-surface-var); margin-top: 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.home-top .sub { font-size: .8rem; color: var(--on-surface-var); margin-top: 2px; } /* wraps between words with a big phone font (was cut with an ellipsis) */
 .home-top .icon-btn { position: relative; }
 .home-hero { text-align: center; padding: 34px 8px 26px; margin: 4px -8px 6px; border-radius: 24px; cursor: pointer; -webkit-tap-highlight-color: transparent; transition: background-color .15s; }
 .home-hero .hh-label { font-size: .85rem; font-weight: 600; color: var(--on-surface-var); }
-.home-hero .hero-num { font-size: 3.4rem; line-height: 1.05; margin: 6px 0 10px; }
+.home-hero .hero-num { font-size: min(3.4rem, 15vw); line-height: 1.05; margin: 6px 0 10px; }
 .home-hero .hh-stats { display: flex; justify-content: center; align-items: center; flex-wrap: wrap; gap: 6px 10px; font-size: .88rem; color: var(--on-surface-var); }
 .home-hero .hh-stats b { color: var(--on-surface); font-weight: 700; }
 .home-hero .hh-stats i { width: 3px; height: 3px; border-radius: 50%; background: var(--outline); opacity: .6; }

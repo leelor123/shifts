@@ -1362,7 +1362,7 @@
       // numbers and only what changed is drawn again (a letter the person edited keeps its text)
       onClose: () => { if (off) off(); },
       foot: slip.isNew ? `<button class="btn tonal" data-edit>${icon('edit')} תקן נתונים</button><button class="btn" data-save>${icon('check')} שמור בארכיון</button>`
-        : `<button class="btn danger" data-del style="flex:0 0 auto" aria-label="מחיקת התלוש">${icon('trash')}</button><button class="btn tonal" data-edit>${icon('edit')} תקן נתונים</button>${slip.fileId ? `<button class="btn tonal" data-file style="flex:0 0 auto">${icon('file')}</button>` : ''}`,
+        : `<button class="btn danger" data-del style="flex:0 0 auto" aria-label="מחיקת התלוש">${icon('trash')}</button><button class="btn tonal" data-edit>${icon('edit')} תקן נתונים</button>${slip.fileId ? `<button class="btn tonal" data-file style="flex:0 0 auto" aria-label="הקובץ המקורי של התלוש">${icon('file')}</button>` : ''}`,
       onMount: (el) => {
         el.addEventListener('input', (e) => { if (e.target.id === 'ps-msg') msgEdited = true; });
         // the check runs again on the current numbers and only what changed is drawn again (an edited letter keeps its text)
@@ -1542,8 +1542,8 @@
       // every finding marked as paid back, this one once: S.gaps may already hold it as resolved after the save
       // (it was counted twice: "₪480 in total" for one finding of ₪240)
       const total = S.gaps.filter((x) => x.status === 'resolved' && x.id !== g.id).reduce((sum, x) => sum + x.amount, 0) + g.amount;
-      UI.openSheet({ title: 'הכסף חזר אליך! 🎉', body: `${App.mascotSays ? App.mascotSays('party', `קיבלת בחזרה ${U.money(g.amount, 0)} שהגיעו לך. כל הכבוד שבדקת!`, { size: 72 }) : ''}
-        ${total > g.amount ? `<div class="small muted" style="margin:6px 0 12px">בסך הכול שעתי החזירה לך ${U.money(total, 0)}.</div>` : ''}
+      UI.openSheet({ title: 'הפער נסגר 🎉', body: `${App.mascotSays ? App.mascotSays('party', `סימנת שהמעסיק השלים ${U.money(g.amount, 0)} מהפער שמצאת. כל הכבוד שבדקת!`, { size: 72 }) : ''}
+        ${total > g.amount ? `<div class="small muted" style="margin:6px 0 12px">בסך הכול סימנת ${U.money(total, 0)} שהמעסיק השלים אחרי בדיקה בשעתי.</div>` : ''}
         <button class="btn big block" data-act="found-share" data-amount="${Math.round(g.amount)}" data-k="back">${icon('share')} לשתף ולעזור לחברים לבדוק</button>
         ${tip}`,
         // a thank-you tip, once, when tips can be given here (plus.js)

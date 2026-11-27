@@ -513,7 +513,7 @@
     function previewHtml(r) {
       if (!r) return '<div class="muted small">מלא תאריך ושעות</div>';
       const sh = shiftFrom(d);
-      return App.timelineHtml(r) + `<div class="row-flex" style="margin:10px 0"><div class="hero-num" style="font-size:1.8rem">${money(r.total)}</div><span class="spacer"></span><div class="small muted"><span class="num">${U.hm(r.paidMin)}</span> ש׳</div></div>` + App.breakdownHtml(r, sh);
+      return App.timelineHtml(r) + `<div class="row-flex" style="margin:10px 0;flex-wrap:wrap"><div class="hero-num" style="font-size:1.8rem">${money(r.total)}</div><span class="spacer"></span><div class="small muted"><span class="num">${U.hm(r.paidMin)}</span> ש׳</div></div>` + App.breakdownHtml(r, sh);
     }
     /** Under the break field: the law's break when it is left empty, or a warning when the one typed is short. */
     function breakNote(r) {
@@ -540,7 +540,7 @@
       title: orig ? 'עריכת משמרת' : opts && opts.status === 'planned' ? 'משמרת מתוכננת' : 'משמרת חדשה',
       full: true,
       body: body(),
-      foot: `${orig ? `<button class="btn danger" data-del style="flex:0 0 auto">${icon('trash')}</button>` : ''}<button class="btn" data-save>${icon('check')} שמור</button>`,
+      foot: `${orig ? `<button class="btn danger" data-del style="flex:0 0 auto" aria-label="מחיקת המשמרת">${icon('trash')}</button>` : ''}<button class="btn" data-save>${icon('check')} שמור</button>`,
       onMount: (el) => {
         sheetEl = el;
         preview();
@@ -658,7 +658,7 @@
         ${d.kind === 'adjustment' ? `<label class="field"><span class="lbl">תיאור</span><input class="input" id="en-label" value="${esc(d.label || '')}" placeholder="למשל: בונוס חג"></label>` : ''}
         ${App.multiEmp() ? `<label class="field"><span class="lbl">מעסיק</span><select class="input" id="en-emp">${S.employers.map((e) => `<option value="${e.id}" ${e.id === d.employerId ? 'selected' : ''}>${esc(e.name)}</option>`).join('')}</select></label>` : ''}
         <label class="field"><span class="lbl">הערה</span><input class="input" id="en-note" value="${esc(d.note || '')}"></label>`,
-      foot: `${orig ? `<button class="btn danger" data-del style="flex:0 0 auto">${icon('trash')}</button>` : ''}<button class="btn" data-save>${icon('check')} שמור</button>`,
+      foot: `${orig ? `<button class="btn danger" data-del style="flex:0 0 auto" aria-label="מחיקת הרישום">${icon('trash')}</button>` : ''}<button class="btn" data-save>${icon('check')} שמור</button>`,
       onMount: (el) => {
         el.addEventListener('click', async (e) => {
           const b = e.target.closest('button');

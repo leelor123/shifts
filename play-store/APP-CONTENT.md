@@ -17,7 +17,8 @@ Path in Play Console: **Policy and programs › App content** (Hebrew UI: מדי
 | Settings: optional name, birth date, gender, chosen town (name + town-centre lat/lon), tax profile (army service, degree, form 106), pay rules, Plus licence key, invite code | IndexedDB; Firestore `users/{uid}/kv/settings` once signed in | Only when signed in | `src/core/defaults.js:75-82, 126, 129, 158`; `src/app/cloud.js:22, 273-277` |
 | Never synced: Claude API key, PIN lock, backup timestamps, payslip raw text, payslip image/PDF files, assistant chat history, pay-card photo | Phone only | No | `src/app/cloud.js:12-14, 22-23`; `src/app/views-assistant.js:7, 140`; `src/app/plus.js:48-51` |
 | Account: Firebase UID, email, Google display name + photo URL, password (email/password accounts, held by Firebase Auth only) | Firebase Authentication (Google, USA) | Yes, when the user signs in | `src/app/cloud.js:183-213, 361`; `src/app/firebase-config.js:9` (email+password ON), `:7` (email link OFF) |
-| Usage statistics (opt-in, off by default): random install ID, app version, platform, first/last day, active days, shift/payslip counts, age group, feature flags incl. Plus yes/no and where bought | Firestore `stats/{installId}` (admins only) | Only after an explicit yes, and only when signed in | `src/app/stats.js:36-66, 70-83`; `firestore.rules:25-29, 195-208`; `src/core/defaults.js:124` |
+| Usage statistics (opt-in: the switch may start on in Israel, but nothing is collected or sent before the user taps the confirm in the consent window, `stats.js:54` `Stats.enabled`): random install ID, app version, platform, first/last day, active days, shift/payslip counts, age group, feature flags incl. Plus yes/no and where bought | Firestore `stats/{installId}` (admins only) | Only after an explicit yes, and only when signed in | `src/app/stats.js:36-66, 70-83`; `firestore.rules:25-29, 195-208`; `src/core/defaults.js:124` |
+| Error reports (part of the statistics consent, same yes): app version, language, OS + browser main versions, screen (tab), kind of failure, cleaned error message and short stack (file names only). No shifts, amounts, names, email, user ID or typed text; at most 5 a day per device; deleted after 30 days | Firestore `errors/{id}` (admins read) **and Sentry, EU region (Germany), as a service provider**, sent without an SDK and without the IP address | Yes, only after the statistics yes | `src/app/errors.js` (header, `Stats.enabled()` gate at :137); `firestore.rules` validErr |
 | Champions table (opt-in): nickname, emoji, background, Plus badge, best game scores | Firestore `lb/{uid}`, readable by every signed-in user | Yes, by choice | `firestore.rules:73-82, 210-245`; leave: `src/app/views-leaderboard.js:455, 506-510` |
 | Friends' competition (opt-in): nickname, emoji, friend UIDs, optionally gross month/year/all-time and pay per hour | Firestore `fr/{uid}`, readable only by listed friends; invitations `inv/{code}` | Yes, by choice | `firestore.rules:87-107, 151-165`; `src/app/views-friends.js:94-110, 171, 208, 359-371` |
 | Invite a friend: invite code `refc/{code}`, record `ref/{uid}` = who invited whom (UIDs + date) | Firestore | Yes, by choice; `ref` is never deleted | `firestore.rules:112-130`; `src/app/invite.js:133-144` |
@@ -36,8 +37,8 @@ Path in Play Console: **Policy and programs › App content** (Hebrew UI: מדי
 | Notifications: local only, no push service, no FCM token | Phone | No | no `push` listener / `pushManager` / `getToken` anywhere in `src/` |
 | Home-screen widgets: numbers passed over the TWA postMessage channel | Phone | No | `src/app/widgets.js:60-95` |
 
-Not in the app at all: ads, analytics SDKs, crash reporting, tracking cookies, Advertising ID (searched `src/` for
-adsbygoogle/admob/gtag/analytics/sponsor: no hits).
+Not in the app at all: ads, analytics SDKs, tracking cookies, Advertising ID (searched `src/` for
+adsbygoogle/admob/gtag/analytics/sponsor: no hits). Crash reporting **is** in the app since 1.36.3 (9 Nov 2026): the opt-in error reports above (`src/app/errors.js`), with no SDK.
 
 ---
 
@@ -87,7 +88,8 @@ Select exactly these types (everything not listed: leave unticked).
 | **App activity › App interactions** | Yes | No | No | Optional | Analytics | Opt-in stats: active days, shift/payslip counts, feature flags `stats.js:38-66` |
 | **App activity › Other user-generated content** | Yes | No (b) | No | Optional | App functionality | Shifts, notes, role/employer names, templates `store.js:18`; questions sent to the AI assistant with the user's key `views-assistant.js:139-160` |
 | **App activity › Other actions** | Yes | No (b: shown on the champions table by choice) | No | Optional | App functionality | Game scores per period on `lb/{uid}` (`firestore.rules:210-245`). Google's own example for "Other actions" is gameplay |
-| **App info and performance › Diagnostics** | Yes | No | No | Optional | App functionality | Support ticket "לצרף פרטים טכניים" (on by default, can be unticked): app version, platform, full User-Agent `views-support.js:162, 216` |
+| **App info and performance › Crash logs** | Yes | No (a: Sentry processes the reports as a service provider, EU) | No | Optional (only with the statistics yes) | Analytics (finding and fixing faults) | Error reports with the error message and a short stack, `src/app/errors.js`; to Firestore `errors/{id}` and Sentry EU; deleted after 30 days |
+| **App info and performance › Diagnostics** | Yes | No (a: Sentry, service provider, for the error reports) | No | Optional | App functionality | Support ticket "לצרף פרטים טכניים" (on by default, can be unticked): app version, platform, full User-Agent `views-support.js:162, 216` | Also the error reports' app version, language, OS and browser versions and screen (`src/app/errors.js`), only with the statistics yes.
 | **Device or other IDs** | Yes | No | No | Optional | Analytics | Random install ID = document ID of `stats/{installId}`, only after opting in to statistics `stats.js:78-80` |
 
 NOT ticked (and why):
@@ -103,14 +105,19 @@ NOT ticked (and why):
 - Contacts: none.
 - Web browsing / in-app search history: none.
 - Installed apps: none.
-- Crash logs, Other app performance data: no crash reporting (`app.js:1063-1067` only silences storage errors).
+- Other app performance data: none. (Crash logs and Diagnostics **are** ticked above since 1.36.3: the opt-in error reports, `src/app/errors.js`.)
 - Precise location: on-device only (see above). The suggestion when you arrive at work (Android app, opt-in) also keeps its precise spot on the phone only and never transmits it (`WorkGeo.java`: the status the page gets has no coordinates; `tests/arrive.test.js` guards it), so it is still **not collected**.
+
+> **Owner action (27 Nov 2026):** the Data safety form in Play Console still says no crash logs. Update it by hand: tick
+> App info and performance › **Crash logs** (and keep **Diagnostics**), Collected, not Shared, Optional, purpose Analytics,
+> then submit. Only the owner can change the Console.
 
 ### 1.3 Notes the reviewer may ask about
 - **Firebase (Google)** is a service provider (exception a). Firestore region me-west1 (Tel Aviv); Auth in the USA.
 - **Anthropic**: the user pastes their own API key (`views-settings.js:909`), sees the redacted text first, and taps the
   AI button; nothing goes to Anthropic otherwise. This is a user-initiated transfer (exception b), so not "Shared".
 - **MET Norway**: see D1.
+- **Sentry** (Functional Software, EU region, Germany): receives the same cleaned error report that goes to Firestore, only after the statistics yes, without the IP address; deletes it after 30 days. A service provider (exception a), so Crash logs and Diagnostics are "Collected", not "Shared".
 - **Lemon Squeezy**: merchant of record for web purchases; in the Android app it is only asked to validate a licence
   key the account already holds (`plus.js:125-148`). Service provider (exception a).
 - **Google Play Billing**: purchases in the Android app go through Google Play; Google does not ask developers to

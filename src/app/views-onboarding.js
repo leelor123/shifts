@@ -88,7 +88,7 @@
       },
       job: () => `${say(jobValid().length ? 'love' : 'think', jobValid().length ? 'אחלה! עכשיו נדע כמה הרווחת 💸' : 'איפה עובדים? 🤔')}
         <h1>${g('איפה אתה עובד?', 'איפה את עובדת?', 'איפה את/ה עובד/ת?')}</h1>
-        <label class="field ob-emp"><span class="lbl">שם מקום העבודה</span><input class="input" id="ob-emp" value="${esc(A.empName)}" placeholder="למשל: סופר יוחננוף, קפה גרג" maxlength="40" autocomplete="organization"></label>
+        <label class="field ob-emp"><span class="lbl">שם מקום העבודה</span><input class="input" id="ob-emp" value="${esc(A.empName)}" placeholder="למשל: הסופר בשכונה, בית קפה" maxlength="40" autocomplete="organization"></label>
         ${root.WorkplaceCode ? (A.wpUsed ? `<div class="ob-live ob-wp-ok">${icon('check', 's')} החוקים מהקוד נכנסו. אפשר לשנות אותם אחר כך בהגדרות</div>` : `<button class="btn text sm ob-wp" data-wp-code>${icon('key', 's')} יש לך קוד ממקום העבודה?</button>`) : ''}
         <div class="ob-sub">ומה התפקיד שלך שם? אפשר לבחור מהרעיונות או לכתוב:</div>
         <div class="ob-chips small">${JOBS.map((j) => chip('data-jobname', j, j, A.jobs.some((x) => x.name === j))).join('')}</div>

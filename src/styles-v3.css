@@ -172,7 +172,7 @@ body.fx .nav .fab:active { transform: scale(.9) rotate(90deg); }
 .hh-spark { display: none; }
 .home-hero .hh-label, .home-hero .hh-stats, .home-hero .hh-goal-l { color: rgba(255, 255, 255, .86); }
 .home-hero .hh-stats b, .home-hero .hero-num { color: #fff; }
-.home-hero .hero-num { font-family: var(--display); font-weight: 700; letter-spacing: -.01em; font-size: 3.5rem; line-height: 1.05; margin: 8px 0 16px; }
+.home-hero .hero-num { font-family: var(--display); font-weight: 700; letter-spacing: -.01em; font-size: min(3.5rem, 15vw); line-height: 1.05; margin: 8px 0 16px; }
 .home-hero .hh-stats { display: grid; grid-template-columns: repeat(3, 1fr); gap: 0; max-width: 340px; margin: 0 auto; background: rgba(255, 255, 255, .1); border: 1px solid rgba(255, 255, 255, .14); border-radius: 16px; padding: 10px 4px; }
 .home-hero .hh-stats > span { display: flex; flex-direction: column; align-items: center; gap: 2px; }
 .home-hero .hh-stats > span + span { border-inline-start: 1px solid rgba(255, 255, 255, .16); }
@@ -369,7 +369,7 @@ body.fx .nav .fab:active { transform: scale(.9) rotate(90deg); }
 .pk-field .i { color: var(--brand); flex: none; }
 .pk-field .v { font-weight: 600; flex: 1; }
 .pk-field .ph { color: var(--on-surface-var); flex: 1; }
-.pk-field.pk-time { justify-content: center; }
+.pk-field.pk-time { justify-content: center; flex-wrap: wrap; row-gap: 2px; }
 .pk-field.pk-time .v { flex: none; font-size: 1.15rem; font-weight: 700; font-variant-numeric: tabular-nums; direction: ltr; }
 .pk-field:active { transform: scale(.985); }
 .pk-field:disabled { opacity: .5; }
@@ -697,7 +697,7 @@ body.fx .chart[data-anim].in .bar, body.fx .chart[data-anim].in .ln, body.fx .ch
 .set-cat { position: relative; display: flex; flex-direction: column; align-items: flex-start; gap: 6px; min-height: 118px; padding: 14px; border-radius: 20px; border: 1px solid var(--line); background: var(--surface-1); color: var(--on-surface); text-align: start; cursor: pointer; box-shadow: var(--sh-1); transition: transform .22s var(--pop); overflow: hidden; }
 .set-cat .itile { width: 44px; height: 44px; border-radius: 14px; }
 .set-cat .t { font: 800 .98rem/1.25 var(--display, var(--font)); }
-.set-cat .s { font-size: .78rem; line-height: 1.35; color: var(--on-surface-var); display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+.set-cat .s { font-size: .78rem; line-height: 1.35; color: var(--on-surface-var); } /* never cut: a big phone font makes the card taller (27 Nov 2026) */
 .set-cat .n { position: absolute; top: 12px; inset-inline-end: 12px; min-width: 22px; height: 22px; padding: 0 6px; border-radius: 11px; background: var(--surface-2); color: var(--on-surface-var); font: 700 .75rem/22px var(--font); text-align: center; }
 .set-cat:active { transform: scale(.96); }
 .view.first .set-cat { animation: rise .5s cubic-bezier(.2, .8, .2, 1) both; animation-delay: calc(var(--i) * 35ms + 60ms); }
@@ -1973,6 +1973,10 @@ button, [role="button"], .btn, .nav a, .chip { -webkit-user-select: none; user-s
 html.app-shell body { -webkit-user-select: none; user-select: none; -webkit-touch-callout: none; }
 html.app-shell :is(input, textarea, [contenteditable="true"]) { -webkit-user-select: text; user-select: text; -webkit-touch-callout: default; }
 html.app-shell .wp-code-t { -webkit-user-select: none; user-select: none; }
+/* Reading text stays the reader's (WCAG, 27 Nov 2026): a paragraph, a list item, a legal or rights text can be selected
+   and copied with the phone's own menu (App.READ_TEXT in app.js; the long press is let through there). Controls and
+   anything inside one stay unselectable. */
+html.app-shell :is(p, li, dd, blockquote, .legal, .read-text):not(:is(button, a, label, summary, [role="button"], [role="tab"], [role="switch"], [role="radio"], [role="checkbox"], [onclick]) *) { -webkit-user-select: text; user-select: text; -webkit-touch-callout: default; }
 /* The installed app, the rest of what told it was a website (24 Nov 2026): no scroll bar on a touch screen (a thick grey
    bar stood at a sheet's edge on the user's phone; the lists still scroll, and a mouse keeps its bar); no sideways
    overscroll either, which Chrome turns into its "go back" arrow; a picture or a link is never dragged off the screen. */

@@ -121,11 +121,15 @@
   };
   /** The phone's status bar takes the colour of what is under it: the opening's navy, the home screen's sky while it is
    * in view (its top colour, set by App.homeSky), otherwise the page (a beige bar sat above the night sky). */
-  /** In the installed app a long press never opens the browser's own menu (copy, Google search, open the image); on a
-   * chat message it copies the message's text with the app's toast. What is being typed keeps the phone's own menu. */
+  /** In the installed app a long press on a control never opens the browser's own menu (copy, Google search, open
+   * the image); on a chat message it copies the message's text with the app's toast. What is being typed, and reading
+   * text (a paragraph, a list item, the rights texts), keep the phone's own menu so a person can select and copy it. */
+  App.READ_TEXT = 'p, li, dd, blockquote, .legal, .read-text';
+  App.CONTROL = 'button, a, label, select, summary, [role="button"], [role="tab"], [role="switch"], [role="radio"], [role="checkbox"], [onclick]';
   App.copyOnHold = function (e) {
     const t = e.target;
     if (!t || !t.closest || t.closest('input, textarea, [contenteditable="true"]')) return;
+    if (!t.closest('.msg') && t.closest(App.READ_TEXT) && !t.closest(App.CONTROL)) return;
     e.preventDefault();
     const m = t.closest('.msg');
     if (!m || m.classList.contains('typing') || !root.UI) return;
@@ -199,6 +203,26 @@
   new MutationObserver((ms) => { if (ms.some((m) => m.target.classList && m.target.classList.contains('backdrop'))) App.statusBar(); })
     .observe(document.body, { subtree: true, attributes: true, attributeFilter: ['class'] });
   matchMedia('(prefers-color-scheme: dark)').addEventListener('change', () => App.applyTheme());
+  /** A segmented control (.seg) and the colour and font pickers are sets of toggle buttons: a screen reader hears which
+   *  one is chosen through aria-pressed, kept equal to the button's 'on' class wherever it is drawn or changed, so no
+   *  view has to remember it (WCAG 4.1.2, 27 Nov 2026). A .seg that is a tab list (role="tablist") uses aria-selected
+   *  on its tabs instead and is left alone. tests/a11y-seg.test.js guards it. */
+  App.SEG_BTN = '.seg:not([role="tablist"]) > button, .color-pick > button, .font-pick > button';
+  App.segPressed = function (b) {
+    if (!b.matches || !b.matches(App.SEG_BTN)) return;
+    const v = String(b.classList.contains('on'));
+    if (b.getAttribute('aria-pressed') !== v) b.setAttribute('aria-pressed', v);
+  };
+  App.segSync = function (scope) { (scope || document).querySelectorAll(App.SEG_BTN).forEach(App.segPressed); };
+  if (typeof MutationObserver === 'function') {
+    new MutationObserver((ms) => {
+      for (const m of ms) {
+        if (m.type === 'attributes') { App.segPressed(m.target); continue; }
+        for (const n of m.addedNodes) if (n.nodeType === 1) { App.segPressed(n); if (n.firstElementChild) App.segSync(n); }
+      }
+    }).observe(document.documentElement, { childList: true, subtree: true, attributes: true, attributeFilter: ['class', 'aria-pressed'] }); // (a redraw by Dom.patch takes away what its HTML lacks: put back)
+  }
+  App.segSync(document);
 
   /* ---------------- navigation ---------------- */
   const TABS = [
@@ -1102,8 +1126,10 @@
     try { if (params.get('source') === 'twa' || document.referrer.startsWith('android-app://')) sessionStorage.setItem('androidApp', '1'); } catch (e) { /* ignore */ }
     try { App.androidApp = sessionStorage.getItem('androidApp') === '1'; } catch (e) { App.androidApp = false; }
     // the installed app: no text selection on its controls and labels (styles-v3.css html.app-shell), and no pinch
-    // zoom, like an app (the user, 24 Nov 2026). Text size stays the person's: the app's own size setting and the
-    // phone's font size; Chrome's accessibility "force enable zoom" still overrides user-scalable=no.
+    // zoom, like other apps (the owner, 24 Nov 2026, confirmed 27 Nov 2026). What makes up for it (WCAG 1.4.4, IS 5568):
+    // every text size is in rem/em, so the text follows the phone's own font size (Chrome on Android scales the root)
+    // and the app's text-size setting, and the screens hold at 200% (no clipping, overlap, sideways scroll or broken
+    // word; shaati-handoff/qa big-text check). Chrome's accessibility "force enable zoom" still overrides this.
     if (App.androidApp || (root.matchMedia && root.matchMedia('(display-mode: standalone)').matches) || navigator.standalone) {
       document.documentElement.classList.add('app-shell');
       const vp = document.querySelector('meta[name="viewport"]');
