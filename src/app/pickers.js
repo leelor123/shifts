@@ -470,8 +470,14 @@
     (rootEl || document).querySelectorAll(SEL).forEach(enhance);
     (rootEl || document).querySelectorAll('select:not([data-pk])').forEach(enhanceSelect);
   }
+  // only what was added is looked through (each tap's ring, a clock tick, a toast rescanned the whole page twice)
+  function scanAdded(n) {
+    if (n.nodeType !== 1 || !n.isConnected) return;
+    if (n.matches(SEL)) enhance(n); else if (n.matches('select:not([data-pk])')) enhanceSelect(n);
+    if (n.firstElementChild) scan(n);
+  }
   const mo = new MutationObserver((list) => {
-    for (const r of list) if (r.addedNodes.length) { scan(document.body); return; }
+    for (const r of list) for (const n of r.addedNodes) scanAdded(n);
   });
   function start() { scan(document.body); mo.observe(document.body, { childList: true, subtree: true }); }
   if (document.body) start(); else document.addEventListener('DOMContentLoaded', start);

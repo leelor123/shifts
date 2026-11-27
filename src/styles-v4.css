@@ -102,8 +102,10 @@ body.fx .pk-field, body.fx .ach-card, body.fx .home-hero .hh-skin { transition: 
 .chart-tip.pop { animation: tip-in .18s var(--ease-out); }
 @keyframes tip-in { from { opacity: 0; transform: translate(-50%, -90%) scale(.95); } }
 
-/* the tab bar: one frosted material (apple-design), ink for where you are, the add button ink with gold */
-.nav { background: color-mix(in srgb, var(--surface) 84%, transparent); -webkit-backdrop-filter: saturate(1.4) blur(18px); backdrop-filter: saturate(1.4) blur(18px); border-top: 1px solid var(--line); }
+/* the tab bar: one opaque material, ink for where you are, the add button ink with gold. No backdrop blur (the v3
+   decision, styles-v3.css .nav): the bar is under every sheet and dialog, and a blur recomputed under moving layers
+   flashes for a frame on Android GPUs. tests/perf-fx.test.js guards it */
+.nav { background: var(--surface); -webkit-backdrop-filter: none; backdrop-filter: none; border-top: 1px solid var(--line); }
 .nav button.on { color: var(--brand-strong); }
 .nav button.on .pill { background: var(--brand-soft); color: var(--brand-strong); }
 .nav .nav-add, .nav button.add .pill, .nav .fab { background: hsl(var(--h) var(--s) 24%); color: var(--gold); box-shadow: var(--sh-brand); }
@@ -234,7 +236,17 @@ html.lp-first #lp-static { display: block; }
 .home-sky ~ *:not(.home-hero ~ *) { position: relative; z-index: 1; }
 .home-sky + .home-top h1 { color: #fff; text-shadow: 0 1px 12px rgba(5, 15, 45, .5); }
 .home-sky + .home-top .sub { color: rgba(255, 255, 255, .88); text-shadow: 0 1px 10px rgba(5, 15, 45, .5); }
-.home-sky + .home-top .icon-btn { background: rgba(255, 255, 255, .14); border-color: rgba(255, 255, 255, .24); color: #fff; box-shadow: none; -webkit-backdrop-filter: blur(10px); backdrop-filter: blur(10px); }
+/* no backdrop blur here either: the sky under these buttons moves all the time (clouds, birds), so a blur would be
+   recomputed every frame; a plain see-through tint is drawn once */
+.home-sky + .home-top .icon-btn { background: rgba(255, 255, 255, .18); border-color: rgba(255, 255, 255, .26); color: #fff; box-shadow: none; -webkit-backdrop-filter: none; backdrop-filter: none; }
+/* the sync warning (App.syncDot): its colour off the sky; on the sky white like its neighbours, with a mark in the
+   warning colour ringed in white (dark red or brown on the blue sky was 1.4:1) */
+.icon-btn.sync-error { color: var(--bad); }
+.icon-btn.sync-offline { color: var(--warn); }
+.home-sky + .home-top .icon-btn[class*="sync-"] { position: relative; color: #fff; }
+.home-sky + .home-top .icon-btn[class*="sync-"]::after { content: ""; position: absolute; top: 7px; inset-inline-end: 7px; width: 10px; height: 10px; border-radius: 50%; box-shadow: 0 0 0 2px #fff; pointer-events: none; }
+.home-sky + .home-top .icon-btn.sync-error::after { background: var(--bad-mark); }
+.home-sky + .home-top .icon-btn.sync-offline::after { background: var(--warn-mark); }
 .home-sky ~ .home-hero { box-shadow: 0 0 0 1px rgba(255, 255, 255, .12), 0 24px 48px rgba(3, 10, 30, .32); }
 @media (prefers-reduced-transparency: reduce) { .home-sky + .home-top .icon-btn { -webkit-backdrop-filter: none; backdrop-filter: none; background: #16398a; } }
 
@@ -389,3 +401,9 @@ html[dir="ltr"] .ps-tr-he, html[dir="ltr"] .ps-tr-orig { text-align: left; }
 .arrive-ask .aa-time { margin: 6px 0 0; }
 .arrive-ask .aa-time .pk-field { min-height: 64px; font-size: 1.6rem; font-variant-numeric: tabular-nums; }
 .arrive-ask .aa-q { margin: 20px 4px 4px; font-size: 1.15rem; font-weight: 700; }
+
+/* the shift editor's footer: the estimated total next to Save (views-shift.js footTotal). A fixed width, so the total
+   changing while the hours are typed never moves the buttons; the label and the number on two short lines */
+.sheet .sh-foot .ed-total { flex: 0 0 7.2em; min-width: 0; display: grid; align-content: center; gap: 1px; line-height: 1.15; text-align: start; }
+.sheet .sh-foot .ed-total .ed-tot-k { font-size: .74rem; color: var(--on-surface-var); }
+.sheet .sh-foot .ed-total .ed-tot-v { font-size: 1.08rem; font-weight: 800; color: var(--on-surface); font-variant-numeric: tabular-nums; white-space: nowrap; }

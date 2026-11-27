@@ -501,6 +501,15 @@
       const r = previewResult();
       if (r) breakNote(r);
       root.Dom.patch(el, previewHtml(r));
+      footTotal(r);
+    }
+    // the total next to Save, in the sheet's footer (the calculation card is at the end of a long form): a box of its own
+    // width, so a total that grows or shrinks while typing never moves the buttons; only its text changes
+    const TOTAL = 'סה״כ';
+    const footTotalHtml = (r) => `<span class="ed-tot-k">${TOTAL}</span><b class="ed-tot-v">${r ? money(r.total) : '–'}</b>`;
+    function footTotal(r) {
+      const el = sheetEl && sheetEl.querySelector('.ed-total');
+      if (el) root.Dom.patch(el, footTotalHtml(r));
     }
     function previewHtml(r) {
       if (!r) return '<div class="muted small">מלא תאריך ושעות</div>';
@@ -532,7 +541,7 @@
       title: orig ? 'עריכת משמרת' : opts && opts.status === 'planned' ? 'משמרת מתוכננת' : 'משמרת חדשה',
       full: true,
       body: body(),
-      foot: `${orig ? `<button class="btn danger" data-del style="flex:0 0 auto">${icon('trash')}</button>` : ''}<button class="btn" data-save>${icon('check')} שמור</button>`,
+      foot: `${orig ? `<button class="btn danger" data-del style="flex:0 0 auto">${icon('trash')}</button>` : ''}<div class="ed-total">${footTotalHtml(previewResult())}</div><button class="btn" data-save>${icon('check')} שמור</button>`,
       onMount: (el) => {
         sheetEl = el;
         preview();

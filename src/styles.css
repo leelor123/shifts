@@ -748,7 +748,9 @@ textarea.input.chat-input { min-height: 46px; height: 46px; max-height: 140px; r
 
 /* ---- feedback effects (Settings › Look › Effects & sounds) ---- */
 /* tap ring: the outline of the tapped control expands from its centre and fades */
-.fx-ring { position: fixed; z-index: 9999; pointer-events: none; box-sizing: border-box; animation: fx-ring .5s cubic-bezier(.2, .7, .3, 1) forwards; }
+/* its own small layer (the halo repaints only there, never a screen-sized layer under it); it follows its control by
+   transform from its top-left corner (fx.js Fx.ring) */
+.fx-ring { position: fixed; z-index: 9999; pointer-events: none; box-sizing: border-box; will-change: transform; transform-origin: 0 0; animation: fx-ring .5s cubic-bezier(.2, .7, .3, 1) forwards; }
 @keyframes fx-ring {
   from { box-shadow: 0 0 0 0 color-mix(in srgb, var(--primary) 55%, transparent); }
   to { box-shadow: 0 0 0 12px color-mix(in srgb, var(--primary) 0%, transparent); }

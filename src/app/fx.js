@@ -22,14 +22,28 @@
   const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 
   /* ---------------- sound ---------------- */
-  let ac = null;
+  let ac = null, idle = 0, slept = false;
+  // a running audio context keeps the phone's audio hardware awake (battery) even when nothing plays: it sleeps a few
+  // seconds after the last sound and when the app is hidden, and wakes with the next sound. The games' music asks
+  // for it while it plays (music.js calls Fx.audio for every bar), so it is never put to sleep under the music.
+  const IDLE_MS = 5000;
+  const sleepAudio = () => {
+    idle = 0;
+    if (!ac || ac.state !== 'running') return;
+    if (!document.hidden && root.Music && root.Music.playing) { idle = setTimeout(sleepAudio, IDLE_MS); return; }
+    slept = true; // (it was allowed to play: a quiet sound ({strict}) may wake it)
+    ac.suspend().catch(() => {});
+  };
   function audio() {
     const AC = root.AudioContext || root.webkitAudioContext;
     if (!AC) return null;
     if (!ac) { try { ac = new AC(); } catch (e) { return null; } }
     if (ac.state === 'suspended') ac.resume().catch(() => {});
+    clearTimeout(idle); idle = setTimeout(sleepAudio, IDLE_MS);
     return ac;
   }
+  // (a short wait: the music's own fade-out when hidden is 50 ms)
+  if (typeof document !== 'undefined') document.addEventListener('visibilitychange', () => { if (document.hidden && ac) { clearTimeout(idle); idle = setTimeout(sleepAudio, 300); } });
   // notes: [frequency, start (s), duration (s), wave, volume, glide-to frequency]. The wave 'noise' is a
   // burst of filtered noise (a swish, a thud): its frequency is the filter's centre, and glides like a tone.
   const SOUNDS = {
@@ -83,7 +97,7 @@
     if (prefs().sound === false) return;
     const notes = SOUNDS[name];
     const c = notes && audio();
-    if (!c || (opts && opts.strict && c.state !== 'running')) return;
+    if (!c || (opts && opts.strict && c.state !== 'running' && !slept)) return;
     const k = (opts && opts.pitch) || 1;
     const t0 = c.currentTime + 0.005;
     for (const [f0, at, dur, wave, vol, glide0] of notes) {
@@ -159,7 +173,8 @@
     const sig = (n) => n.tagName + '|' + (n.getAttribute('data-act') || '') + '|' + (n.getAttribute('data-tab') || '') + '|' + (n.getAttribute('data-s') || '');
     const sig0 = sig(el);
     const layersBefore = new Set(document.querySelectorAll(LAYERS));
-    let target = el, d = null, t0 = 0, gone = false, calm = 0;
+    let target = el, d = null, t0 = 0, gone = false, calm = 0, dirty = false, mo = null, base = null, last = null;
+    const stop = () => { gone = true; if (mo) { mo.disconnect(); mo = null; } };
     const current = () => {
       // still drawn where it was tapped: the same control. One still in the page but somewhere else (a redraw gave
       // its element to the next tab) is looked for at the tap's place like a replaced one.
@@ -169,31 +184,50 @@
     };
     const step = () => {
       if (gone) return;
-      target = current();
-      const r = target && target.getBoundingClientRect();
-      const ok = r && r.width > 0
-        && Math.abs(r.left + r.width / 2 - cx) <= 1.5 && Math.abs(r.top + r.height / 2 - cy) <= 1.5
-        && Math.abs(r.width - r0.width) < r0.width * 0.2
-        && !target.closest('.dialog.out, .sheet:not(.show), .story.out')
-        && ![...document.querySelectorAll(LAYERS)].some((l) => !layersBefore.has(l) && !l.contains(target))
-        && (d ? hits(target, cx, cy) : inView(target, r));
-      if (!ok) { if (d) { gone = true; d.remove(); } return; }
+      if (d && !d.isConnected) { stop(); return; } // a newer tap's ring took over
+      // once the ring shows, only its control's box is read each frame; the costly checks (what lies at the tap's
+      // place, a new sheet or dialog) run again only when the page changed or the control moved
+      const r1 = d && target && target.isConnected ? target.getBoundingClientRect() : null;
+      const moved = !r1 || !last || Math.abs(r1.left - last.left) > 0.1 || Math.abs(r1.top - last.top) > 0.1 || Math.abs(r1.width - last.width) > 0.1 || Math.abs(r1.height - last.height) > 0.1;
+      let r = r1;
+      if (!d || dirty || moved) {
+        dirty = false;
+        target = current();
+        r = target && target.getBoundingClientRect();
+        const ok = r && r.width > 0
+          && Math.abs(r.left + r.width / 2 - cx) <= 1.5 && Math.abs(r.top + r.height / 2 - cy) <= 1.5
+          && Math.abs(r.width - r0.width) < r0.width * 0.2
+          && !target.closest('.dialog.out, .sheet:not(.show), .story.out')
+          && ![...document.querySelectorAll(LAYERS)].some((l) => !layersBefore.has(l) && !l.contains(target))
+          && (d ? hits(target, cx, cy) : inView(target, r));
+        if (!ok) { if (d) { d.remove(); stop(); } else gone = true; return; }
+      }
       // three calm frames first (~50ms): a tap that redraws or shakes its control shows that, not a ring
       // that would be gone again a frame later
       if (!d && ++calm < 3) { requestAnimationFrame(step); return; }
-      if (d && !d.isConnected) { gone = true; return; } // a newer tap's ring took over
       if (!d) {
         d = document.createElement('div');
         d.className = 'fx-ring';
         d.style.borderRadius = getComputedStyle(target).borderRadius || '12px';
+        // placed once; it follows the control (a press that shrinks it, a scroll) by transform only, so no frame
+        // lays the page out again for the ring
+        base = { left: r.left, top: r.top, width: r.width, height: r.height };
+        d.style.left = r.left + 'px';
+        d.style.top = r.top + 'px';
+        d.style.width = r.width + 'px';
+        d.style.height = r.height + 'px';
         document.body.appendChild(d);
+        if (typeof MutationObserver !== 'undefined') {
+          mo = new MutationObserver((list) => { for (const m of list) if (m.target !== d && !(m.type === 'childList' && [...m.addedNodes].every((n) => n === d))) { dirty = true; return; } });
+          mo.observe(document.body, { childList: true, subtree: true, attributes: true, attributeFilter: ['class', 'style', 'open', 'hidden'] });
+        } else dirty = true;
         t0 = performance.now();
+      } else if (moved) {
+        d.style.transform = `translate(${(r.left - base.left).toFixed(2)}px, ${(r.top - base.top).toFixed(2)}px) scale(${(r.width / base.width).toFixed(4)}, ${(r.height / base.height).toFixed(4)})`;
       }
-      d.style.left = r.left + 'px';
-      d.style.top = r.top + 'px';
-      d.style.width = r.width + 'px';
-      d.style.height = r.height + 'px';
-      if (performance.now() - t0 < 560) requestAnimationFrame(step); else { gone = true; d.remove(); }
+      last = { left: r.left, top: r.top, width: r.width, height: r.height };
+      if (!mo) dirty = true;
+      if (performance.now() - t0 < 560) requestAnimationFrame(step); else { d.remove(); stop(); }
     };
     requestAnimationFrame(step);
   };
