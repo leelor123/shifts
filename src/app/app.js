@@ -218,7 +218,8 @@
     new MutationObserver((ms) => {
       for (const m of ms) {
         if (m.type === 'attributes') { App.segPressed(m.target); continue; }
-        for (const n of m.addedNodes) if (n.nodeType === 1) { App.segPressed(n); if (n.firstElementChild) App.segSync(n); }
+        // (a long list drawn at once, the place picker's: a subtree with no button inside is not searched)
+        for (const n of m.addedNodes) if (n.nodeType === 1) { if (n.tagName === 'BUTTON') App.segPressed(n); else if (n.getElementsByTagName('button').length) App.segSync(n); }
       }
     }).observe(document.documentElement, { childList: true, subtree: true, attributes: true, attributeFilter: ['class', 'aria-pressed'] }); // (a redraw by Dom.patch takes away what its HTML lacks: put back)
   }

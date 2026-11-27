@@ -30,7 +30,7 @@
   const sleepAudio = () => {
     idle = 0;
     if (!ac || ac.state !== 'running') return;
-    if (!document.hidden && root.Music && root.Music.playing) { idle = setTimeout(sleepAudio, IDLE_MS); return; }
+    if (!document.hidden && root.Music && (root.Music.busy ? root.Music.busy() : root.Music.playing)) { idle = setTimeout(sleepAudio, IDLE_MS); return; }
     slept = true; // (it was allowed to play: a quiet sound ({strict}) may wake it)
     ac.suspend().catch(() => {});
   };

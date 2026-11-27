@@ -364,6 +364,9 @@ T.atest('admin reads: requests and statistics in pages; the totals see every rec
   T.eq(A.ctx.Cloud.PAGE = 500, 500);
   const adm = fs.readFileSync(path.join(SRC, 'app/views-admin.js'), 'utf8');
   T.ok(adm.includes("root.Cloud.readAll(fs, fs.collection(db, 'stats'))") && !adm.includes("getDocsFromServer(fs.collection(db, 'stats'))"), 'the dashboard pages');
+  // a Firestore stand-in without paged queries (the QA's admin fakes): one plain read, so the inbox still lists all
+  const plain = await A.ctx.Cloud.readAll({ getDocsFromServer: async () => ({ docs: [1, 2, 3] }) }, { path: 'tickets' });
+  T.eq(plain.length, 3, 'no paging functions: one plain read');
 });
 
 // privacy audit, 3 Nov 2026 (B5): after signing out or deleting the account the home-screen widgets kept the numbers

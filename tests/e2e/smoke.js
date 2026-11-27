@@ -47,7 +47,7 @@ const results = [];
 let errors = [];
 (async () => {
   await new Promise((r) => server.listen(PORT, r));
-  const browser = await puppeteer.launch({ executablePath: process.env.CHROME_PATH || 'C:/Program Files/Google/Chrome/Application/chrome.exe', headless: true, args: ['--hide-scrollbars'] });
+  const browser = await puppeteer.launch({ executablePath: process.env.CHROME_PATH || 'C:/Program Files/Google/Chrome/Application/chrome.exe', headless: true, args: ['--hide-scrollbars'].concat(process.env.NOGPU ? ['--disable-gpu'] : []) }); // NOGPU=1: drawn without the graphics card (its path stopped giving frames on the test PC, 27 Nov 2026)
   const page = await browser.newPage();
   await require('./quiet.js').quiet(page);
   page.on('pageerror', (e) => errors.push('pageerror: ' + e.message));

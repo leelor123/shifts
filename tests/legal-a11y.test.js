@@ -46,6 +46,9 @@ T.test('installed app: a long press on reading text keeps the phone\'s menu; on 
 T.test('toggle buttons say which one is on (aria-pressed), and every icon-only button has a name', () => {
   T.ok(/App\.SEG_BTN = '\.seg:not\(\[role="tablist"\]\) > button, \.color-pick > button, \.font-pick > button'/.test(app), 'the shared selector');
   T.ok(/attributeFilter: \['class', 'aria-pressed'\]/.test(app), 'kept in step with the on class, also after a redraw');
+  // a redraw (Dom.patch) gives the new tree its aria-pressed first: the same screen drawn again changes nothing, and
+  // the observer never takes it off and puts it back (redraw-guard, 27 Nov 2026)
+  T.ok(/A\.segSync\(t\.content\);[\s\S]{0,300}patchChildren\(el, t\.content\)/.test(read('app/dom.js')), 'Dom.patch syncs aria-pressed in the new tree');
   const bad = [];
   for (const f of fs.readdirSync(path.join(SRC, 'app')).filter((x) => x.endsWith('.js'))) {
     const s = read('app/' + f); const re = /<button([^>]*)>\s*\$\{icon\('[\w-]+'(?:, '[\w-]+')?\)\}\s*<\/button>/g; let m;

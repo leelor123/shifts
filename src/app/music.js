@@ -217,6 +217,7 @@
   }
   function tick() {
     if (!song || !ctx) return;
+    if (ctx.state === 'suspended' && !document.hidden) Fx.audio(); // put to sleep by anything else: the music wakes it
     // fell far behind (the phone slept a moment): skip ahead rather than play a burst of notes
     if (nextAt < ctx.currentTime - 0.25) nextAt = ctx.currentTime + 0.05;
     while (nextAt < ctx.currentTime + LOOK) {
@@ -277,6 +278,8 @@
     if (document.hidden) { const w = wanted; halt(0.05); wanted = w; }
     else if (wanted && enabled()) start(wanted);
   });
+  /** still sounding: a song plays or its last notes ring out (fx.js never puts the audio to sleep under them) */
+  Music.busy = () => !!Music.playing || voices > 0;
   Music._stats = () => ({ voices, playing: Music.playing, wanted, step });
   /** For tests: renders a song's first bars offline and measures its loudness (peak and RMS). */
   Music._measure = async function (id, bars, raw) {

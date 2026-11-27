@@ -878,6 +878,8 @@
   Cloud.PAGE = 500;
   Cloud.readAll = async function (fs, coll, page) {
     const n = page || Cloud.PAGE, out = [];
+    // a Firestore module without paged queries (the QA's stand-in, an older bundle): one plain read, as before 1.47
+    if (!fs.query || !fs.orderBy || !fs.documentId || !fs.startAfter || !fs.limit) return (await fs.getDocsFromServer(coll)).docs;
     let last = null;
     for (let i = 0; i < 2000; i++) {
       const snap = await fs.getDocsFromServer(fs.query(coll, fs.orderBy(fs.documentId()), ...(last ? [fs.startAfter(last)] : []), fs.limit(n)));

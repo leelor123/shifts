@@ -164,7 +164,7 @@
     const sh = {
       id: d.id || U.uid(), kind: 'shift', status: d.status, employerId: d.employerId, roleId: d.roleId,
       start, end, splits: d.splits.filter((x) => x.t && x.roleId).map((x) => ({ at: at(x.t), roleId: x.roleId })),
-      breakMin: numOrNull(d.breakMin) == null ? null : Math.max(0, +d.breakMin), /* a typed minus is no break */ breakPaid: !!d.breakPaid, noTravel: !!d.noTravel, note: d.note || '',
+      breakMin: numOrNull(d.breakMin) == null ? null : +d.breakMin, /* a typed minus stays one: save refuses it */ breakPaid: !!d.breakPaid, noTravel: !!d.noTravel, note: d.note || '',
       items: d.items.filter((x) => +x.amount), overrides: Object.keys(ov).length ? ov : null, overrideReason: Object.keys(ov).length ? d.reason : '',
     };
     if (d.breakSet && sh.breakMin != null) sh.breakSet = true; // typed on purpose: a short one is flagged

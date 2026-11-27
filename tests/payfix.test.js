@@ -140,10 +140,11 @@ T.test('no travel for a shift with no paid time', () => {
   T.near(Engine.totals(m, '2026-09-01', '2026-09-30').travel, 0);
 });
 
-T.test('break minutes: no negative number in the editor or in the saved shift', () => {
+T.test('break minutes: no negative number in the editor or in the saved shift (refused, not clamped)', () => {
   const v = src('app/views-shift.js');
   T.ok(/numIn\('breakMin'[^\n]*min="0"/.test(v), 'min="0" on the field');
-  T.ok(/breakMin: numOrNull\(d\.breakMin\) == null \? null : Math\.max\(0, \+d\.breakMin\)/.test(v), 'clamped on save');
+  T.ok(/breakMin: numOrNull\(d\.breakMin\) == null \? null : \+d\.breakMin,/.test(v), 'not clamped: a typed minus reaches the check');
+  T.ok(/sh\.breakMin != null && \(!\(sh\.breakMin >= 0\)[^\n]*UI\.invalid\('/.test(v), 'save refuses a negative break');
 });
 
 T.test('one employer\'s totals: only its own travel; a leave day is worth that employer\'s average day', () => {

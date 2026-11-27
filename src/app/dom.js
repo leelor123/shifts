@@ -135,6 +135,13 @@
     const t = document.createElement('template');
     t.innerHTML = html;
     if (!el.closest(SKIP)) Dom.markMoney(t.content); // marked as the live tree is, so the two compare equal
+    // the toggle buttons' aria-pressed (App.segPressed) is given to the new tree too, so a patch neither takes it away
+    // nor makes the shared observer put it back: drawing the same screen again changes nothing (redraw-guard)
+    const A = root.App;
+    if (A && A.segSync) {
+      A.segSync(t.content);
+      if (el.matches(A.SEG_BTN.replace(/ > button/g, ''))) for (const c of t.content.children) if (c.tagName === 'BUTTON') c.setAttribute('aria-pressed', String(c.classList.contains('on')));
+    }
     patchChildren(el, t.content);
   };
 

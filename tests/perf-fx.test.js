@@ -49,6 +49,9 @@ T.test('the audio context sleeps when idle or hidden, and wakes with the next so
   const fx = read('app/fx.js');
   T.ok(/ac\.suspend\(\)/.test(fx) && /visibilitychange/.test(fx) && /ac\.resume\(\)/.test(fx), 'suspend + resume');
   T.ok(/Music\.playing/.test(fx), 'never put to sleep under the games\' music');
+  const mu = read('app/music.js');
+  T.ok(/root\.Music\.busy\(\)/.test(fx) && /Music\.busy = \(\) => !!Music\.playing \|\| voices > 0/.test(mu), '...nor under its last notes (they would never end)');
+  T.ok(/ctx\.state === 'suspended' && !document\.hidden\) Fx\.audio\(\)/.test(mu), 'the music wakes a sleeping context itself');
 });
 T.test('the 1 s tick runs only with a running shift and the app seen', () => {
   const app = read('app/app.js');
