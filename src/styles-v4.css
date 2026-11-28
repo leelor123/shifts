@@ -405,5 +405,5 @@ html[dir="ltr"] .ps-tr-he, html[dir="ltr"] .ps-tr-orig { text-align: left; }
 /* the shift editor's footer: the estimated total next to Save (views-shift.js footTotal). A fixed width, so the total
    changing while the hours are typed never moves the buttons; the label and the number on two short lines */
 .sheet .sh-foot .ed-total { flex: 0 0 7.2em; min-width: 0; display: grid; align-content: center; gap: 1px; line-height: 1.15; text-align: start; }
-.sheet .sh-foot .ed-total .ed-tot-k { font-size: .74rem; color: var(--on-surface-var); }
+.sheet .sh-foot .ed-total .ed-tot-k { font-size: .75rem; color: var(--on-surface-var); }
 .sheet .sh-foot .ed-total .ed-tot-v { font-size: 1.08rem; font-weight: 800; color: var(--on-surface); font-variant-numeric: tabular-nums; white-space: nowrap; }
